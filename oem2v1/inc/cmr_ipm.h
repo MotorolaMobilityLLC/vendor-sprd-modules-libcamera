@@ -37,6 +37,7 @@ struct ipm_frame_in {
     cmr_handle caller_handle;
     void *private_data;
     cmr_u32 adgain;
+    float ev[HDR_CAP_NUM];
 };
 
 struct ipm_frame_out {
@@ -50,6 +51,20 @@ struct ipm_frame_out {
 typedef cmr_int (*ipm_callback)(cmr_u32 class_type,
                                 struct ipm_frame_out *cb_parm);
 
+struct ipm_md_ops {
+    cmr_int (*channel_reproc)(cmr_handle oem_handle,
+                              struct buffer_cfg *buf_cfg);
+    cmr_int (*mem_malloc)(cmr_u32 mem_type, cmr_handle oem_handle,
+                          cmr_u32 *size, cmr_u32 *sum, cmr_uint *phy_addr,
+                          cmr_uint *vir_addr, cmr_s32 *fd);
+    cmr_int (*mem_free)(cmr_u32 mem_type, cmr_handle oem_handle,
+                        cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
+                        cmr_u32 sum);
+    cmr_int (*img_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
+                         struct img_frm *src, struct img_frm *dst,
+                         struct cmr_op_mean *mean);
+};
+
 struct ipm_init_in {
     cmr_handle oem_handle;
     cmr_uint sensor_id;
@@ -59,6 +74,7 @@ struct ipm_init_in {
                                 struct common_sn_cmd_param *parm);
     cmr_int (*ipm_isp_ioctl)(cmr_handle oem_handle, cmr_uint cmd_type,
                              struct common_isp_cmd_param *parm);
+    struct ipm_md_ops ops;
 };
 
 struct ipm_open_in {
@@ -72,9 +88,17 @@ struct ipm_open_in {
     cmr_u32 adgain;
 };
 
+struct ipm_version {
+    cmr_u8 major;
+    cmr_u8 minor;
+    cmr_u8 micro;
+    cmr_u8 nano;
+};
+
 struct ipm_open_out {
     enum img_fmt format;
     cmr_uint total_frame_number;
+    struct ipm_version version;
 };
 
 struct ipm_capability {

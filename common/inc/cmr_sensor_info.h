@@ -607,6 +607,18 @@ struct sensor_pdaf_info {
     struct pd_vch2_info vch2_info;
 };
 
+struct sensor_4in1_info {
+    cmr_u32 is_4in1_supported;
+    cmr_u32 limited_4in1_width;
+    cmr_u32 limited_4in1_height;
+    cmr_u32 *sns_mode;//sensor mode for 4in1
+};
+
+struct frame_4in1_info{
+    cmr_int im_addr_in;
+    cmr_int im_addr_out;
+};
+
 struct sensor_ex_exposure {
     cmr_u32 exposure;
     cmr_u32 dummy;

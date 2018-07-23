@@ -637,8 +637,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
              config->frm_num, config->cfg.dst_img_size.width,
              config->cfg.dst_img_size.height, config->cfg.slowmotion);
 
-    CMR_LOGI("src_img_fmt %d dst_img_fmt %d.", config->cfg.src_img_fmt,
-             config->cfg.dst_img_fmt);
+    CMR_LOGI("src_img_fmt %d dst_img_fmt %d.4in1 %d", config->cfg.src_img_fmt,
+             config->cfg.dst_img_fmt, config->cfg.need_4in1);
 
     parm.dst_size.w = config->cfg.dst_img_size.width;
     parm.dst_size.h = config->cfg.dst_img_size.height;
@@ -675,6 +675,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     function_mode.need_3dnr = config->cfg.need_3dnr;
     function_mode.dual_cam = config->cfg.dual_cam;
+    function_mode.need_4in1 = config->cfg.need_4in1;
+
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, &function_mode);
 
     *channel_id = ch_id;
@@ -721,7 +723,73 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
 
     CMR_LOGV("chn_id=%d, cnt=%d, base_id=0x%x ", buf_cfg->channel_id,
              buf_cfg->count, buf_cfg->base_id);
+    if (!buf_cfg->is_4in1) {
+        /* firstly , set the base index for each channel */
+        parm.frame_base_id = buf_cfg->base_id;
+        parm.channel_id = buf_cfg->channel_id;
+        ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRM_ID_BASE, &parm);
+        CMR_RTN_IF_ERR(ret);
+    }
+    /* secondly , set the frame address */
+    parm.channel_id = buf_cfg->channel_id;
+    parm.is_reserved_buf = buf_cfg->is_reserved_buf;
+    parm.buf_flag = buf_cfg->flag;
+    parm.buffer_count = buf_cfg->count;
+    parm.reserved[0] = buf_cfg->zsl_private;
+    for (i = 0; i < buf_cfg->count; i++) {
+        parm.frame_addr_array[i].y = buf_cfg->addr[i].addr_y;
+        parm.frame_addr_array[i].u = buf_cfg->addr[i].addr_u;
+        parm.frame_addr_array[i].v = buf_cfg->addr[i].addr_v;
+        parm.frame_addr_vir_array[i].y = buf_cfg->addr_vir[i].addr_y;
+        parm.frame_addr_vir_array[i].u = buf_cfg->addr_vir[i].addr_u;
+        parm.frame_addr_vir_array[i].v = buf_cfg->addr_vir[i].addr_v;
+        parm.fd_array[i] = buf_cfg->fd[i];
+        parm.index = buf_cfg->index[i];
+        CMR_LOGD("chn_id=%d, i=%d, fd=0x%x, y=0x%lx, u=0x%lx, reserved=%d",
+                 buf_cfg->channel_id, i, buf_cfg->fd[i],
+                 buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
+                 buf_cfg->is_reserved_buf);
+    }
+    if (buf_cfg->count > 0) {
+        if (buf_cfg->is_4in1) {
+            CMR_LOGD("4in1. set raw addr");
+            ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_4IN1_ADDR, &parm);
+            if (ret) {
+                CMR_LOGE("Failed to QBuf i=%d, ret=%ld,", i, ret);
+                goto exit;
+            }
+        } else {
+            ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRAME_ADDR, &parm);
+            if (ret) {
+                CMR_LOGE("Failed to QBuf i=%d, ret=%ld,", i, ret);
+                goto exit;
+            }
+        }
+    }
 
+exit:
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
+                             struct buffer_cfg *buf_cfg) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = 0;
+    cmr_u32 i;
+    struct cmr_grab *p_grab;
+    struct sprd_img_parm parm;
+
+    if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX)
+        return -1;
+    p_grab = (struct cmr_grab *)grab_handle;
+
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    CMR_LOGV("chn_id=%d, cnt=%d, base_id=0x%x ", buf_cfg->channel_id,
+             buf_cfg->count, buf_cfg->base_id);
     /* firstly , set the base index for each channel */
     parm.frame_base_id = buf_cfg->base_id;
     parm.channel_id = buf_cfg->channel_id;
@@ -751,7 +819,8 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
     }
 
     if (buf_cfg->count > 0) {
-        ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRAME_ADDR, &parm);
+        CMR_LOGD("4in1 raw->yuv");
+        ret = ioctl(p_grab->fd, SPRD_IMG_IO_4IN1_POST_PROC, &parm);
         if (ret) {
             CMR_LOGE("Failed to QBuf i=%d, ret=%ld,", i, ret);
             goto exit;
@@ -1135,12 +1204,13 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
     }
     capability->capture_pause = 1;
     capability->support_3dnr_mode = op.parm.capability.support_3dnr_mode;
-
+    capability->support_4in1 = op.parm.capability.support_4in1;
     CMR_LOGV("video prev %d scale %d capture_no_trim %d capture_pause %d "
-             "zoom_post_proc %d, support_3dnr_mode %d",
+             "zoom_post_proc %d, support_3dnr_mode %d,support_4in1=%d",
              capability->is_video_prev_diff, capability->hw_scale_available,
              capability->capture_no_trim, capability->capture_pause,
-             capability->zoom_post_proc, capability->support_3dnr_mode);
+             capability->zoom_post_proc, capability->support_3dnr_mode,
+             capability->support_4in1);
 
     ATRACE_END();
     return ret;
@@ -1281,12 +1351,18 @@ static void *cmr_grab_thread_proc(void *data) {
             continue;
         } else {
             // normal irq
-            if (op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
+            if (op.parm.frame.irq_type == CAMERA_IRQ_IMG ||
+                op.parm.frame.irq_type == CAMERA_IRQ_4IN1_DONE) {
                 evt_id = cmr_grab_evt_id(op.evt);
                 if (CMR_GRAB_MAX == evt_id) {
                     continue;
                 }
 
+                if (op.parm.frame.irq_type == CAMERA_IRQ_4IN1_DONE) {
+                    frame.is_4in1_frame = 1;
+                } else {
+                    frame.is_4in1_frame = 0;
+                }
                 frame.channel_id = op.parm.frame.channel_id;
 
                 CMR_LOGV("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
@@ -1312,6 +1388,8 @@ static void *cmr_grab_thread_proc(void *data) {
                 frame.uaddr_vir = op.parm.frame.uaddr_vir;
                 frame.vaddr_vir = op.parm.frame.vaddr_vir;
                 frame.fd = op.parm.frame.mfd;
+                frame.frame_num = op.parm.frame.frame_id;
+                frame.zoom_ratio = op.parm.frame.zoom_ratio;
 
                 pthread_mutex_lock(&p_grab->status_mutex);
                 on_flag = p_grab->is_on;

@@ -983,6 +983,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_ADJUST_FLASH_LEVEL");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_ADJUST_FLASH_LEVEL);
             break;
+        case ANDROID_SPRD_AUTO_HDR_ENABLED:
+            HAL_LOGI("ANDROID_SPRD_AUTO_HDR_ENABLED");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTO_HDR_ENABLED);
+            break;
         default:
             HAL_LOGV("other tag");
             break;
@@ -1068,6 +1072,17 @@ int SprdCamera3MetadataChannel::getCapRequestPara(
         request_para->sprd_hdr_plus_enable = sprddefInfo.sprd_hdr_plus_enable;
     }
 
+    /**add for sprd auto HDR enable begin*/
+    if (metadata.exists(ANDROID_SPRD_AUTO_HDR_ENABLED)) {
+        request_para->sprd_auto_hdr_enable =
+            metadata.find(ANDROID_SPRD_AUTO_HDR_ENABLED).data.u8[0];
+        HAL_LOGD("sprd_auto_hdr_enable exist, set sprd_auto_hdr_enables %d",
+                 request_para->sprd_auto_hdr_enable);
+    } else {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        request_para->sprd_auto_hdr_enable = sprddefInfo.sprd_auto_hdr_enable;
+    }
     return NO_ERROR;
 }
 

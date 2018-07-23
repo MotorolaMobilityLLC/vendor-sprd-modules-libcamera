@@ -734,6 +734,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *m3DNRPrevScaleHeapReserverd[PRE_SW_3DNR_RESERVE_NUM];
     sprd_camera_memory_t *m3DNRHeapReserverd;
     sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
+    sprd_camera_memory_t *m4in1HeapArray[CAP_4IN1_NUM];
+    sprd_camera_memory_t *mAISceneScaleHeapReserverd;
 
     uint32_t mPreviewHeapBakUseFlag;
     uint32_t mPreviewHeapArray_size[kPreviewBufferCount +
@@ -772,6 +774,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
 
+    /* enable/disable powerhint for CNR (only for capture)*/
+    uint32_t mCNRMode;
     SprdCameraSystemPerformance *mSysPerformace;
 
     /* 1- start acceleration, 0 - finish acceleration*/

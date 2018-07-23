@@ -288,6 +288,13 @@ struct prev_context {
     cmr_uint cap_zsl_mem_num;
     cmr_int cap_zsl_mem_valid_num;
 
+    cmr_uint cap_4in1_phys_addr_array[CAP_4IN1_NUM];
+    cmr_uint cap_4in1_virt_addr_array[CAP_4IN1_NUM];
+    cmr_s32 cap_4in1_fd_array[CAP_4IN1_NUM];
+    cmr_uint cap_4in1_mem_size;
+    cmr_uint cap_4in1_mem_num;
+    cmr_int cap_4in1_mem_valid_num;
+
     cmr_uint is_reprocessing;
 
     /*depthmap*/
@@ -342,6 +349,7 @@ struct prev_context {
     cmr_handle fd_handle;
     cmr_handle refocus_handle;
     cmr_handle prev_3dnr_handle;
+    cmr_handle ai_scence_handle;
     cmr_uint recovery_status;
     cmr_uint recovery_cnt;
     cmr_u64 recovery_start_time;
@@ -498,6 +506,12 @@ static cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
 static cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                  cmr_u32 is_restart);
+static cmr_int prev_alloc_4in1_buf(struct prev_handle *handle,
+                                   cmr_u32 camera_id, cmr_u32 is_restart,
+                                   cmr_u32 is_cap_zsl);
+
+static cmr_int prev_free_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
+                                  cmr_u32 is_restart);
 
 static cmr_int prev_free_cap_reserve_buf(struct prev_handle *handle,
                                          cmr_u32 camera_id, cmr_u32 is_restart);
@@ -655,6 +669,14 @@ static cmr_int prev_3dnr_send_data(struct prev_handle *handle,
                                    struct camera_frame_type *frame_type,
                                    struct img_frm *frm,
                                    struct img_frm *video_frm);
+
+static cmr_int prev_ai_scene_start(struct prev_handle *handle);
+
+static cmr_int prev_ai_scene_stop(struct prev_handle *handle);
+
+static cmr_int prev_ai_scene_send_data(struct prev_handle *handle,
+                                       cmr_u32 camera_id, struct img_frm *frm,
+                                       struct frm_info *frm_info);
 
 static cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
                                   struct sensor_data_info *otp_data);
@@ -3806,6 +3828,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             video_param.dcam_size.width = sensor_mode_info->trim_width;
             video_param.dcam_size.height = sensor_mode_info->trim_height;
 #endif
+            video_param.mode_4in1 = prev_cxt->prev_param.mode_4in1;
             ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
             if (ret) {
                 CMR_LOGE("isp start video failed");
@@ -3877,6 +3900,10 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_depthmap_open(handle, camera_id, &sensor_otp.total_otp);
         }
 #endif
+        /*start ai scene*/
+        if (prev_cxt->prev_param.ai_scene_enable) {
+            prev_ai_scene_start(handle);
+        }
     }
 #if defined(CONFIG_CAMERA_PDAF)
     if (pdaf_enable) {
@@ -3904,6 +3931,7 @@ exit:
             prev_free_cap_buf(handle, camera_id, 0);
             prev_free_cap_reserve_buf(handle, camera_id, 0);
             prev_free_zsl_buf(handle, camera_id, 0);
+            prev_free_4in1_buf(handle, camera_id, 0);
         }
         if (pdaf_enable) {
             prev_free_pdaf_raw_buf(handle, camera_id, 0);
@@ -3999,18 +4027,11 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         }
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.is_3dnr == 1) {
-            struct sprd_img_3dnr_param stream_info;
-            stream_info.w = 0;
-            stream_info.h = 0;
-            stream_info.is_3dnr = 0;
-            CMR_LOGD("sw_3dnr_info_cfg, %d, %d, %d", stream_info.w, stream_info.h,
-                     stream_info.is_3dnr);
-            ret = handle->ops.sw_3dnr_info_cfg(handle->oem_handle, &stream_info);
-            if (ret) {
-                CMR_LOGE("sw 3dnr info cfg failed, ret %ld", ret);
-            }
-
             prev_3dnr_close(handle, camera_id);
+        }
+        /*stop ai scene*/
+        if (prev_cxt->prev_param.ai_scene_enable) {
+            prev_ai_scene_stop(handle);
         }
     }
 
@@ -4063,7 +4084,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_free_cap_reserve_buf(handle, camera_id, is_restart);
     prev_free_zsl_buf(handle, camera_id, is_restart);
-
+    prev_free_4in1_buf(handle, camera_id, 0);
     prev_cxt->prev_frm_cnt = 0;
     prev_cxt->video_frm_cnt = 0;
     prev_cxt->cap_zsl_frm_cnt = 0;
@@ -5635,6 +5656,144 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     return ret;
 }
 
+cmr_int prev_free_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
+                           cmr_u32 is_restart) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    struct memory_param *mem_ops = NULL;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    mem_ops = &prev_cxt->prev_param.memory_setting;
+
+    if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
+        CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,
+                 mem_ops->free_mem);
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    if (!(PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1)) {
+        return ret;
+    }
+
+    if (!is_restart) {
+        mem_ops->free_mem(CAMERA_4IN1_PROC, handle->oem_handle,
+                          prev_cxt->cap_4in1_phys_addr_array,
+                          prev_cxt->cap_4in1_virt_addr_array,
+                          prev_cxt->cap_4in1_fd_array,
+                          prev_cxt->cap_4in1_mem_num);
+
+        cmr_bzero(prev_cxt->cap_4in1_phys_addr_array,
+                  (CAP_4IN1_NUM) * sizeof(cmr_uint));
+        cmr_bzero(prev_cxt->cap_4in1_virt_addr_array,
+                  (CAP_4IN1_NUM) * sizeof(cmr_uint));
+        cmr_bzero(prev_cxt->cap_4in1_fd_array,
+                  (CAP_4IN1_NUM) * sizeof(cmr_s32));
+    }
+
+    CMR_LOGD("out");
+    return ret;
+}
+
+cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
+                            cmr_u32 is_restart, cmr_u32 is_cap_zsl) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 buffer_size = 0;
+    cmr_u32 frame_size = 0;
+    cmr_u32 frame_num = 0;
+    cmr_u32 i = 0;
+    cmr_u32 width, height = 0;
+    cmr_u32 prev_num = 0;
+    cmr_u32 cap_rot = 0;
+    cmr_uint reserved_count = 1;
+    cmr_u32 aligned_type = 0;
+    struct prev_context *prev_cxt = NULL;
+    struct memory_param *mem_ops = NULL;
+    cmr_int zoom_post_proc = 0;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    CMR_LOGD("is_restart %d,is_cap_zsl=%d", is_restart, is_cap_zsl);
+
+    cmr_bzero(prev_cxt->cap_4in1_phys_addr_array,
+              (CAP_4IN1_NUM) * sizeof(cmr_uint));
+    cmr_bzero(prev_cxt->cap_4in1_virt_addr_array,
+              (CAP_4IN1_NUM) * sizeof(cmr_uint));
+    cmr_bzero(prev_cxt->cap_4in1_fd_array, (CAP_4IN1_NUM) * sizeof(cmr_s32));
+
+    prev_cxt->cap_4in1_mem_valid_num = 0;
+    prev_cxt->cap_4in1_mem_num = 0;
+
+    if (!(PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1)) {
+        goto exit;
+    }
+
+    prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
+    mem_ops = &prev_cxt->prev_param.memory_setting;
+
+    width = cxt->sn_cxt.sensor_info.source_width_max;
+    height = cxt->sn_cxt.sensor_info.source_height_max;
+    CMR_LOGD("4in1 width %d height %d", width, height);
+
+    /*init  memory info*/
+    if (is_cap_zsl) {
+        prev_cxt->cap_4in1_mem_num = CAP_4IN1_NUM;
+    } else {
+        prev_cxt->cap_4in1_mem_num = 1;
+    }
+
+    prev_cxt->cap_4in1_mem_size = (width * height * 5) / 4;
+    /*alloc  buffer*/
+    if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
+        CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,
+                 mem_ops->free_mem);
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    if (!is_restart) {
+
+        prev_cxt->cap_4in1_mem_valid_num = 0;
+        mem_ops->alloc_mem(CAMERA_4IN1_PROC, handle->oem_handle,
+                           (cmr_u32 *)&prev_cxt->cap_4in1_mem_size,
+                           (cmr_u32 *)&prev_cxt->cap_4in1_mem_num,
+                           prev_cxt->cap_4in1_phys_addr_array,
+                           prev_cxt->cap_4in1_virt_addr_array,
+                           prev_cxt->cap_4in1_fd_array);
+
+        /*check memory valid*/
+        CMR_LOGD("4in1 prev_mem_size 0x%lx, mem_num %ld",
+                 prev_cxt->cap_4in1_mem_size, prev_cxt->cap_4in1_mem_num);
+        for (i = 0; i < prev_cxt->cap_4in1_mem_num; i++) {
+            CMR_LOGD("%d, virt_addr 0x%lx, fd 0x%x", i,
+                     prev_cxt->cap_4in1_virt_addr_array[i],
+                     prev_cxt->cap_4in1_fd_array[i]);
+
+            if ((0 == prev_cxt->cap_4in1_virt_addr_array[i]) ||
+                0 == prev_cxt->cap_4in1_fd_array[i]) {
+                if (i >= CAP_4IN1_NUM) {
+                    CMR_LOGE("memory is invalid");
+                    return CMR_CAMERA_NO_MEM;
+                }
+            } else {
+                if (i < CAP_4IN1_NUM) {
+                    prev_cxt->cap_4in1_mem_valid_num++;
+                }
+            }
+        }
+    }
+exit:
+
+    ATRACE_END();
+    CMR_LOGD("out %ld", ret);
+    return ret;
+}
+
 cmr_int prev_alloc_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                 cmr_u32 is_restart, struct buffer_cfg *buffer) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -6744,6 +6903,8 @@ cmr_int prev_construct_frame(
 
         if (prev_cxt->prev_param.is_support_fd &&
             prev_cxt->prev_param.is_fd_on) {
+            /*after image processed, timestamp and zoom ratio will be needed*/
+            frm_ptr->reserved = info;
             prev_fd_send_data(handle, camera_id, frm_ptr);
         }
 
@@ -6758,6 +6919,9 @@ cmr_int prev_construct_frame(
                                       frm_ptr, video_frm_ptr);
         }
 
+        if (prev_cxt->prev_param.ai_scene_enable) {
+            prev_ai_scene_send_data(handle, camera_id, frm_ptr, info);
+        }
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "preview")) {
@@ -7368,7 +7532,10 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     chn_param.cap_inf_cfg.cfg.flip_on = 0;
-
+    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1) {
+        CMR_LOGD("prev config 4in1");
+        chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
+    }
     /*config channel*/
     ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id,
                                   &chn_param, &channel_id, &endian);
@@ -8133,6 +8300,9 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         chn_param.cap_inf_cfg.hdr_cap = 1;
     else
         chn_param.cap_inf_cfg.hdr_cap = 0;
+    // config 4in1 flag
+    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1)
+        chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
 
     /*config capture ability*/
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
@@ -8175,6 +8345,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
     }
+    ret = prev_alloc_4in1_buf(handle, camera_id, is_restart, is_capture_zsl);
 
     ret = prev_alloc_cap_reserve_buf(handle, camera_id, is_restart);
     if (ret) {
@@ -8292,6 +8463,19 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->cap_channel_id = CHN_MAX;
             prev_cxt->cap_data_endian = prev_cxt->video_data_endian;
         }
+    }
+    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1) {
+        CMR_LOGD("4in1 buffer cfg");
+        cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+        buf_cfg.count = prev_cxt->cap_4in1_mem_num;
+        buf_cfg.length = (cmr_u32)prev_cxt->cap_4in1_mem_size;
+        buf_cfg.is_4in1 = 1;
+        for (cmr_u32 i = 0; i < buf_cfg.count; i++) {
+            buf_cfg.addr[i].addr_y = prev_cxt->cap_4in1_phys_addr_array[i];
+            buf_cfg.addr_vir[i].addr_y = prev_cxt->cap_4in1_virt_addr_array[i];
+            buf_cfg.fd[i] = prev_cxt->cap_4in1_fd_array[i];
+        }
+        ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
     }
 
     /*save channel start param for restart*/
@@ -8577,6 +8761,8 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
+    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1)
+        chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
 
     ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id,
                                   &chn_param, &channel_id, &endian);
@@ -11438,6 +11624,12 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
 
     /*copy face-detect info*/
     cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
+    struct frm_info *info = cb_param->dst_frame.reserved;
+    if (info != NULL) {
+        frame_type.frame_num = info->frame_num;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+    }
+    frame_type.is_update_isp = cb_param->is_plus;
     frame_type.width = cb_param->dst_frame.size.width;
     frame_type.height = cb_param->dst_frame.size.height;
     frame_type.face_num = (cmr_u32)cb_param->face_area.face_count;
@@ -11455,12 +11647,16 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         frame_type.face_info[i].brightness =
             cb_param->face_area.range[i].brightness;
         frame_type.face_info[i].angle = cb_param->face_area.range[i].angle;
+        frame_type.face_info[i].score = cb_param->face_area.range[i].score;
         frame_type.face_info[i].pose = cb_param->face_area.range[i].pose;
         frame_type.face_info[i].smile_level =
             cb_param->face_area.range[i].smile_level;
         frame_type.face_info[i].blink_level =
             cb_param->face_area.range[i].blink_level;
     }
+    CMR_LOGD(" frame_type.timestamp:%lld   frame_type.face_num  :%u,  "
+             "frame_type.frame_num:%u ",
+             frame_type.timestamp, frame_type.face_num, frame_type.frame_num);
 
     /*notify fd info directly*/
     cb_data_info.cb_type = PREVIEW_EVT_CB_FD;
@@ -11659,6 +11855,97 @@ cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id) {
             CMR_LOGE("failed to post proc frame to 3dnr preview %ld", ret);
         }
     }
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int prev_ai_scene_start(struct prev_handle *handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_cmd_parm;
+    cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
+    CHECK_HANDLE_VALID(handle);
+
+    CMR_LOGI("start");
+
+    if (!handle->ops.isp_ioctl) {
+        CMR_LOGE("ops isp_ioctl is null");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    ret = handle->ops.isp_ioctl(handle->oem_handle, COM_ISP_SET_AI_SCENE_START,
+                                &isp_cmd_parm);
+    if (ret) {
+        CMR_LOGE("failed to start ai scene %ld", ret);
+        goto exit;
+    }
+exit:
+    CMR_LOGI("end");
+    return ret;
+}
+
+cmr_int prev_ai_scene_stop(struct prev_handle *handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_cmd_parm;
+    cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
+    CHECK_HANDLE_VALID(handle);
+
+    CMR_LOGI("start");
+    if (!handle->ops.isp_ioctl) {
+        CMR_LOGE("ops isp_ioctl is null");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    ret = handle->ops.isp_ioctl(handle->oem_handle, COM_ISP_SET_AI_SCENE_STOP,
+                                &isp_cmd_parm);
+    if (ret) {
+        CMR_LOGE("failed to stop ai scene %ld", ret);
+        goto exit;
+    }
+
+exit:
+    CMR_LOGI("end");
+    return ret;
+}
+
+cmr_int prev_ai_scene_send_data(struct prev_handle *handle, cmr_u32 camera_id,
+                                struct img_frm *frm,
+                                struct frm_info *frm_info) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = NULL;
+    struct ipm_context *ipm_cxt = NULL;
+    struct ipm_frame_in ipm_in_param;
+    struct prev_ai_scene_info ai_scene_info;
+    cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
+    cmr_bzero(&ai_scene_info, sizeof(struct prev_ai_scene_info));
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    cxt = (struct camera_context *)handle->oem_handle;
+    ipm_cxt = (struct ipm_context *)(&cxt->ipm_cxt);
+    if (!ipm_cxt->ai_scene_handle) {
+        CMR_LOGE("ai scene closed");
+        ret = CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ipm_in_param.private_data = (void *)(&ai_scene_info);
+    ai_scene_info.caller_handle = (void *)handle;
+    ai_scene_info.camera_id = camera_id;
+    ai_scene_info.data = *frm_info;
+    ipm_in_param.src_frame = *frm;
+    ipm_in_param.dst_frame = *frm;
+    ipm_in_param.caller_handle = (void *)handle;
+    ret = ipm_transfer_frame(ipm_cxt->ai_scene_handle, &ipm_in_param, NULL);
+    if (ret) {
+        CMR_LOGE("failed to transfer frame to ipm %ld", ret);
+        goto exit;
+    }
+exit:
+    CMR_LOGV("ret %ld", ret);
     ATRACE_END();
     return ret;
 }

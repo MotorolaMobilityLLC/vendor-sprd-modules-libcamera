@@ -67,6 +67,7 @@ struct sensor_context {
     struct sensor_exp_info sensor_info_slv;
     EXIF_SPEC_PIC_TAKING_COND_T exif_info;
     struct sensor_ex_info cur_sns_ex_info;
+    struct sensor_4in1_info info_4in1;
 };
 
 struct isp_context {
@@ -110,12 +111,19 @@ struct ipm_context {
     cmr_handle yde_handle;
     cmr_handle refocus_handle;
     cmr_handle threednr_handle;
+    cmr_handle cnr_handle;
+    cmr_handle handle_4in1;
+    cmr_handle ai_scene_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
     cmr_u32 hdr_num;
     cmr_u32 threednr_num;
     cmr_u32 padding;
     cmr_u32 filter_inited;
+    cmr_u32 cnr_inited;
+    cmr_u32 ai_scene_inited;
+    struct ipm_version hdr_version;
+    cmr_u32 four_in_one_inited;
 };
 
 struct preview_context {
@@ -145,7 +153,7 @@ struct snapshot_context {
     cmr_u32 skip_num;
     cmr_u32 channel_bits;
     cmr_u32 is_hdr;
-    cmr_u32 filter_type;
+    cmr_uint filter_type;
     cmr_u32 sprd_hdr_plus_enable; //  hdr+nor mode 1, other mode 0
     cmr_u32 is_3dnr;
     cmr_u32 is_sw_3dnr;
@@ -158,6 +166,7 @@ struct snapshot_context {
     cmr_uint is_req_snp;
     cmr_s64 cap_time_stamp;
     cmr_s64 cap_need_time_stamp;
+    float hdr_ev[HDR_CAP_NUM];
     struct img_size request_size;
     struct img_size capture_align_size;
     struct img_size actual_capture_size;
@@ -253,6 +262,8 @@ struct camera_context {
     cmr_uint is_discard_frm;
     sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
+    sem_t cnr_flag_sm;
+    sem_t ai_scene_flag_sm;
     sem_t threednr_flag_sm;
     sem_t threednr_proc_sm;
     sem_t filter_sm;
@@ -318,6 +329,8 @@ struct camera_context {
 
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
+    cmr_uint cmr_set_env;
+    cmr_u8 mode_4in1;
 };
 
 struct prev_threednr_info {
@@ -325,6 +338,13 @@ struct prev_threednr_info {
     struct img_frm frm_smallpreview;
     struct img_frm frm_video;
     struct camera_frame_type framtype;
+    unsigned long camera_id;
+    void *caller_handle;
+    struct frm_info data;
+};
+
+struct prev_ai_scene_info {
+    struct img_frm frm_preview;
     unsigned long camera_id;
     void *caller_handle;
     struct frm_info data;

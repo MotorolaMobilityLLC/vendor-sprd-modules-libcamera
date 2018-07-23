@@ -295,11 +295,14 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
             fd_handle->frame_in.src_frame.size.width;
         fd_handle->frame_out.dst_frame.size.height =
             fd_handle->frame_in.src_frame.size.height;
+        fd_handle->frame_out.dst_frame.reserved =
+            fd_handle->frame_in.dst_frame.reserved;
 
         /*callback*/
         if (fd_handle->frame_cb) {
             fd_handle->frame_out.private_data = in->private_data;
             fd_handle->frame_out.caller_handle = in->caller_handle;
+            fd_handle->frame_out.is_plus = 0;
             fd_handle->frame_cb(IPM_TYPE_FD, &fd_handle->frame_out);
         }
         if (fd_handle->frame_cb) {
@@ -943,6 +946,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.src_frame.size.width;
         class_handle->frame_out.dst_frame.size.height =
             class_handle->frame_in.src_frame.size.height;
+        class_handle->frame_out.dst_frame.reserved =
+            class_handle->frame_in.dst_frame.reserved;
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
         CMR_LOGI("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms",
@@ -953,6 +958,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         if (class_handle->frame_cb) {
             class_handle->frame_out.private_data = start_param->private_data;
             class_handle->frame_out.caller_handle = start_param->caller_handle;
+            class_handle->frame_out.is_plus = 1;
             class_handle->frame_cb(IPM_TYPE_FD, &class_handle->frame_out);
         }
 

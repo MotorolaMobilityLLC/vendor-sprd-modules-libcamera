@@ -270,7 +270,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsPreAllocCapMem(0),
 #endif
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
-      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
+      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0),
       mSysPerformace(NULL), mGyroInit(0), mGyroExit(0), mEisPreviewInit(false),
       mEisVideoInit(false), mGyroNum(0), mSprdEisEnabled(false),
       mIsUpdateRangeFps(false), mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0),
@@ -431,6 +431,7 @@ getHalOem_fail:
     memset(mIspPreviewYReserved, 0, sizeof(mIspPreviewYReserved));
     memset(m3DNRPrevHeapReserverd, 0, sizeof(m3DNRPrevHeapReserverd));
     memset(m3DNRScaleHeapReserverd, 0, sizeof(m3DNRScaleHeapReserverd));
+    memset(m4in1HeapArray, 0, sizeof(m4in1HeapArray));
 
     mJpegRotaSet = false;
     mPicCaptureCnt = 0;
@@ -460,6 +461,7 @@ getHalOem_fail:
     mPdafRawHeapReserved = NULL;
     mIspAntiFlickerHeapReserved = NULL;
     m3DNRHeapReserverd = NULL;
+    mAISceneScaleHeapReserverd = NULL;
 
     mVideoShotFlag = 0;
     mVideoShotNum = 0;
@@ -2949,6 +2951,11 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
 
         Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+    }
+
+    if (NULL != mAISceneScaleHeapReserverd) {
+        freeCameraMem(mAISceneScaleHeapReserverd);
+        mAISceneScaleHeapReserverd = NULL;
     }
 
     HAL_LOGI(":hal3: X");
@@ -5587,6 +5594,22 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGI("is_takepicture_with_flash = %d",
                  sprddefInfo.is_takepicture_with_flash);
         break;
+    case CAMERA_EVT_CB_HDR_SCENE: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
+        mSetting->setSPRDDEFTag(sprdInfo);
+        HAL_LOGI("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
+        break;
+    } break;
+    case CAMERA_EVT_CB_AI_SCENE: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        sprdInfo.sprd_ai_scene_type_current = *(cmr_u8 *)parm4;
+        mSetting->setSPRDDEFTag(sprdInfo);
+        HAL_LOGD("sprdInfo.sprd_ai_scene_type_current :%u",
+                 sprdInfo.sprd_ai_scene_type_current);
+    } break;
     default:
         break;
     }
@@ -6540,6 +6563,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.sprd_adjust_flash_level);
     } break;
 
+    case ANDROID_SPRD_AUTO_HDR_ENABLED: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        HAL_LOGD("sprdInfo.sprd_auto_hdr_enables=%d ",
+                 sprdInfo.sprd_auto_hdr_enable);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+                 sprdInfo.sprd_auto_hdr_enable);
+    } break;
     default:
         ret = BAD_VALUE;
         break;
@@ -8002,6 +8033,23 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
             m3DNRPrevScaleHeapReserverd[i] = NULL;
         }
     }
+
+    if (type == CAMERA_4IN1_PROC) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != m4in1HeapArray[i]) {
+                freeCameraMem(m4in1HeapArray[i]);
+            }
+            m4in1HeapArray[i] = NULL;
+        }
+    }
+
+    if (type == CAMERA_PREVIEW_SCALE_AI_SCENE) {
+        if (NULL != mAISceneScaleHeapReserverd) {
+            freeCameraMem(mAISceneScaleHeapReserverd);
+        }
+        mAISceneScaleHeapReserverd = NULL;
+    }
+
     return 0;
 }
 
@@ -8272,6 +8320,32 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *vir_addr++ = (cmr_uint)m3DNRPrevScaleHeapReserverd[i]->data;
             *fd++ = m3DNRPrevScaleHeapReserverd[i]->fd;
         }
+    } else if (type == CAMERA_4IN1_PROC) {
+        for (i = 0; i < sum; i++) {
+            if (m4in1HeapArray[i] == NULL) {
+                memory = allocCameraMem(size, 1, true);
+                if (NULL == memory) {
+                    HAL_LOGE("error memory is null,malloced type %d", type);
+                    goto mem_fail;
+                }
+                m4in1HeapArray[i] = memory;
+            }
+            *phy_addr++ = (cmr_uint)m4in1HeapArray[i]->phys_addr;
+            *vir_addr++ = (cmr_uint)m4in1HeapArray[i]->data;
+            *fd++ = m4in1HeapArray[i]->fd;
+        }
+    } else if (type == CAMERA_PREVIEW_SCALE_AI_SCENE) {
+        if (mAISceneScaleHeapReserverd == NULL) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("memory is null.");
+                goto mem_fail;
+            }
+            mAISceneScaleHeapReserverd = memory;
+        }
+        *phy_addr++ = (cmr_uint)mAISceneScaleHeapReserverd->phys_addr;
+        *vir_addr++ = (cmr_uint)mAISceneScaleHeapReserverd->data;
+        *fd++ = mAISceneScaleHeapReserverd->fd;
     }
 
     return 0;
@@ -8330,8 +8404,9 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_SNAPSHOT_3DNR_DST == type ||
-               CAMERA_PREVIEW_3DNR == type ||
-               CAMERA_PREVIEW_SCALE_3DNR == type) {
+               CAMERA_PREVIEW_3DNR == type || CAMERA_4IN1_PROC == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type ||
+               CAMERA_PREVIEW_SCALE_AI_SCENE == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
     }
 
@@ -8388,8 +8463,9 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_SNAPSHOT_3DNR_DST == type ||
-               CAMERA_PREVIEW_3DNR == type ||
-               CAMERA_PREVIEW_SCALE_3DNR == type) {
+               CAMERA_PREVIEW_3DNR == type || CAMERA_4IN1_PROC == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type ||
+               CAMERA_PREVIEW_SCALE_AI_SCENE == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
     }

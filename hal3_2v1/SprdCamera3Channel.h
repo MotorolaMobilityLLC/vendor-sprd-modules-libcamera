@@ -57,6 +57,7 @@ typedef struct {
     uint8_t scene_mode;
     uint8_t sprd_refocus_enabled;
     uint8_t sprd_hdr_plus_enable;
+    uint8_t sprd_auto_hdr_enable;
 } CapRequestPara;
 
 class SprdCamera3OEMIf;

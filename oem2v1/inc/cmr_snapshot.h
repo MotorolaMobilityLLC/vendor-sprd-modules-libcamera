@@ -169,6 +169,7 @@ struct snapshot_md_ops {
                                struct isp_adgain_exp_info *adgain_exp_info_ptr);
     cmr_int (*get_jpeg_param_info)(cmr_handle oem_handle,
                                    struct jpeg_param *param);
+    cmr_int (*ipm_process)(cmr_handle oem_handle, void *data);
 };
 
 struct snapshot_init_param {
@@ -208,6 +209,7 @@ struct snapshot_param {
     cmr_u32 is_3dcalibration_mode;
     cmr_u32 is_yuv_callback_mode;
     cmr_uint filter_type;
+    cmr_u32 is_cnr;
 };
 
 struct encode_cb_param {

@@ -85,7 +85,7 @@ extern "C" {
 #define CAMERA_DEPTH_META_DATA_TYPE 0x35
 #define CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE 4
 #define CAMERA_EMBEDDED_INFO_TYPE 0x12
-
+#define CAP_4IN1_NUM 5
 #define HDR_CAP_NUM 3
 #define PRE_3DNR_NUM 2
 #define CAP_3DNR_NUM 5
@@ -377,6 +377,12 @@ enum common_isp_cmd_type {
     COM_ISP_SET_SENSITIVITY,
     COM_ISP_SET_AF_BYPASS,
     COM_ISP_SET_AF_POS,
+    COM_ISP_GET_CNR2_PARAM,
+    COM_ISP_SET_AUTO_HDR,
+    COM_ISP_SET_AI_SCENE_START,
+    COM_ISP_SET_AI_SCENE_STOP,
+    COM_ISP_SET_AI_SCENE_IMAGE,
+    COM_ISP_GET_AI_SCENE_IMAGE_REQ_FLAG,
     COM_ISP_TYPE_MAX
 };
 
@@ -411,6 +417,7 @@ enum common_sn_cmd_type {
     COM_SN_SET_HDR_EV,
     COM_SN_GET_INFO,
     COM_SN_GET_FLASH_LEVEL,
+    COM_SN_GET_4IN1_FORMAT_CONVERT,
     COM_SN_TYPE_MAX,
 };
 
@@ -442,6 +449,31 @@ enum blur_tips_type {
     BLUR_TIPS_NEED_LIGHT,
     BLUR_TIPS_UNABLED,
     BLUR_TIPS_DEFAULT
+};
+
+enum hdr_type {
+    HDR_TYPE_OPEN = 1,
+    HDR_TYPE_AUTO,
+    HDR_TYPE_MAX };
+
+enum hal_ai_scene_type {
+    HAL_AI_SCENE_DEFAULT = 0,
+    HAL_AI_SCENE_FOOD,
+    HAL_AI_SCENE_PORTRAIT,
+    HAL_AI_SCENE_FOLIAGE,
+    HAL_AI_SCENE_SKY,
+    HAL_AI_SCENE_NIGHT,
+    HAL_AI_SCENE_BACKLIGHT,
+    HAL_AI_SCENE_TEXT,
+    HAL_AI_SCENE_SUNRISE,
+    HAL_AI_SCENE_BUILDING,
+    HAL_AI_SCENE_LANDSCAPE,
+    HAL_AI_SCENE_SNOW,
+    HAL_AI_SCENE_FIREWORK,
+    HAL_AI_SCENE_BEACH,
+    HAL_AI_SCENE_PET,
+    HAL_AI_SCENE_FLOWER,
+    HAL_AI_SCENE_MAX
 };
 
 struct img_addr {
@@ -530,6 +562,7 @@ struct video_start_param {
     struct img_size live_view_sz;
     struct img_size lv_size;
     struct img_size video_size;
+    cmr_uint mode_4in1;
 };
 
 struct memory_param {
@@ -627,6 +660,7 @@ struct img_frm_cap {
     cmr_u32 need_isp;
     cmr_u32 need_binning;
     cmr_u32 need_isp_tool;
+    cmr_u32 need_4in1;
     cmr_u32 need_3dnr;
     cmr_u32 dual_cam;
     struct dcam_regular_desc regular_desc;
@@ -652,6 +686,7 @@ struct buffer_cfg {
     struct img_addr addr_vir[GRAB_BUF_MAX];
     cmr_u32 fd[GRAB_BUF_MAX];
     cmr_uint zsl_private;
+    cmr_uint is_4in1;
 };
 
 struct cap_cfg {
@@ -690,6 +725,7 @@ struct cmr_path_capability {
     uint32_t capture_pause;
     uint32_t zoom_post_proc;
     uint32_t support_3dnr_mode;
+    uint32_t support_4in1;
 };
 
 struct dual_sensor_luma_info {
@@ -854,7 +890,19 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
+#ifdef CONFIG_CAMERA_CNR
+        struct isp_sw_cnr2_info cnr2_param;
+#endif
+#ifdef CONFIG_CAMERA_AI_SCENE
+        struct isp_ai_img_param ai_img_param;
+        struct isp_ai_img_status ai_img_status;
+#endif
     };
+};
+
+struct raw_format_postproc_info {
+    struct img_frm src;
+    struct img_frm dst;
 };
 
 struct common_sn_cmd_param {
@@ -866,6 +914,7 @@ struct common_sn_cmd_param {
         cmr_u32 padding;
         struct yuv_sn_af_param yuv_sn_af_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
+        struct raw_format_postproc_info postproc_info;
     };
 };
 /**************************** common ctrl end *********************************/
@@ -905,6 +954,9 @@ enum ipm_class_type {
     IPM_TYPE_3DNR = 0x00000020,
     IPM_TYPE_3DNR_PRE = 0x00000040,
     IPM_TYPE_FILTER = 0x00000080,
+    IPM_TYPE_CNR = 0x00000100,
+    IPM_TYPE_4IN1 = 0x00000101,
+    IPM_TYPE_AI_SCENE = 0x00000200,
 };
 
 enum img_fmt {
@@ -1194,6 +1246,8 @@ enum camera_cb_type {
     CAMERA_EVT_SENSOR_DATATYPE,
     CAMERA_EVT_HDR_PLUS,
     CAMERA_EVT_CB_AE_FLASH_FIRED,
+    CAMERA_EVT_CB_HDR_SCENE,
+    CAMERA_EVT_CB_AI_SCENE,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1298,6 +1352,7 @@ enum camera_param_type {
 #ifdef CONFIG_CAMERA_OFFLINE
     CAMERA_PARAM_CALLBACK_ENABLE_ZSL,
 #endif
+    CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1330,6 +1385,7 @@ struct camera_face_info {
     cmr_u32 brightness;
     cmr_u32 angle;
     cmr_u32 pose;
+    cmr_u32 score;
     cmr_u32 smile_level;
     cmr_u32 blink_level;
     cmr_u32 padding;
@@ -1361,6 +1417,8 @@ struct camera_frame_type {
     cmr_uint uv_vir_addr;
     cmr_u32 fd;
     cmr_s64 timestamp;
+    cmr_u32 frame_num;
+    cmr_int is_update_isp;
     cmr_int status;
     cmr_int type;
     cmr_int lls_info;

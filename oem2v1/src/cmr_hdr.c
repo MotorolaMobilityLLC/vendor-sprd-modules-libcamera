@@ -24,11 +24,26 @@
 #include "cmr_sensor.h"
 #include "cmr_oem.h"
 #ifdef CONFIG_SPRD_HDR_LIB
-#include "../../arithmetic/inc/HDR_SPRD.h"
-#else
-#include "../../arithmetic/inc/HDR2.h"
+#include "HDR_SPRD.h"
+#endif
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+#include "sprd_hdr_api.h"
 #endif
 #include <cutils/properties.h>
+
+#ifndef CONFIG_SPRD_HDR_LIB_VERSION_2
+#define HDR_NEED_FRAME_NUM (HDR_CAP_NUM)
+#else
+#define HDR_NEED_FRAME_NUM ((HDR_CAP_NUM)-1)
+#endif
+
+struct class_hdr_lib_context {
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+    hdr_inst_t lib_handle;
+#endif
+    float ev[HDR_CAP_NUM];
+    struct ipm_version version;
+};
 
 struct class_hdr {
     struct ipm_common common;
@@ -42,6 +57,7 @@ struct class_hdr {
     struct img_addr dst_addr;
     ipm_callback reg_cb;
     struct ipm_frame_in frame_in;
+    struct class_hdr_lib_context lib_cxt;
     cmr_uint ev_effect_frame_interval;
 };
 
@@ -97,6 +113,14 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
                             cmr_u32 height);
 static cmr_int req_hdr_send_normal_frame(cmr_handle class_handle,
                                          struct ipm_frame_in *in);
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+static cmr_int hdr_sprd_version_init(struct class_hdr *hdr_handle);
+static cmr_int hdr_sprd_version_deinit(struct class_hdr *hdr_handle);
+static cmr_int hdr_sprd_version_process(struct class_hdr *hdr_handle,
+                                        cmr_u32 width, cmr_u32 height);
+static cmr_int hdr_sprd_version_detect(struct class_hdr *hdr_handle,
+                                       void *param, float *ev);
+#endif
 
 static struct class_ops hdr_ops_tab_info = {
     hdr_open, hdr_close, hdr_transfer_frame, hdr_pre_proc, hdr_post_proc,
@@ -163,6 +187,22 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     sprd_hdr_pool_init();
     sprd_hdr_set_stop_flag(HDR_NORMAL);
 #endif
+
+    out->version.major = 1;
+    out->version.minor = 0;
+    out->version.micro = 0;
+    out->version.nano = 0;
+
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+    ret = hdr_sprd_version_init(hdr_handle);
+    if (ret) {
+        goto free_all;
+    }
+    out->version.major = hdr_handle->lib_cxt.version.major;
+    out->version.minor = hdr_handle->lib_cxt.version.minor;
+    out->version.micro = hdr_handle->lib_cxt.version.micro;
+    out->version.nano = hdr_handle->lib_cxt.version.nano;
+#endif
     return ret;
 
 free_all:
@@ -183,10 +223,17 @@ static cmr_int hdr_close(cmr_handle class_handle) {
     sprd_hdr_set_stop_flag(HDR_STOP);
 #endif
 
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+    ret = hdr_sprd_version_deinit(hdr_handle);
+#endif
     ret = hdr_thread_destroy(hdr_handle);
     if (ret) {
         CMR_LOGE("HDR failed to destroy hdr thread.");
     }
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+    CMR_LOGI("close hdr");
+    ret = sprd_hdr_close(hdr_handle->lib_cxt.lib_handle);
+#endif
 
     if (NULL != hdr_handle)
         free(hdr_handle);
@@ -516,8 +563,12 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
     if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
         LAUNCHLOGE(CMR_CAPTURE_RECEIVE_FRAME_T);
         LAUNCHLOGS(CMR_HDR_DO_T);
+#ifndef CONFIG_SPRD_HDR_LIB_VERSION_2
         ret = HDR_Function(temp_addr0, temp_addr1, temp_addr2, temp_addr0,
                            height, width, p_format);
+#else
+        ret = hdr_sprd_version_process(hdr_handle, width, height);
+#endif
         if (ret != 0) {
             if (ret == 1) {
                 CMR_LOGI("hdr not executed completely");
@@ -563,6 +614,10 @@ static cmr_int hdr_save_frame(cmr_handle class_handle,
         return CMR_CAMERA_FAIL;
     }
 
+    hdr_handle->lib_cxt.ev[0] = in->ev[0];
+    hdr_handle->lib_cxt.ev[1] = in->ev[1];
+    CMR_LOGI("ev: %f, %f", hdr_handle->lib_cxt.ev[0],
+             hdr_handle->lib_cxt.ev[1]);
     y_size = in->src_frame.size.height * in->src_frame.size.width;
     uv_size = in->src_frame.size.height * in->src_frame.size.width / 2;
     frame_sn = hdr_handle->common.save_frame_count - 1 -
@@ -793,5 +848,123 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
 
     return ret;
 }
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+static cmr_int hdr_sprd_version_init(struct class_hdr *hdr_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    hdr_version_t lib_version;
+    hdr_config_t cfg;
 
+    if (!hdr_handle) {
+        CMR_LOGE("error:hdr handle is NULL\n");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    memset(&lib_version, 0, sizeof(hdr_version_t));
+    memset(&cfg, 0, sizeof(hdr_config_t));
+
+    if (!sprd_hdr_version(&lib_version)) {
+        hdr_handle->lib_cxt.version.major = lib_version.major;
+        hdr_handle->lib_cxt.version.minor = lib_version.minor;
+        hdr_handle->lib_cxt.version.micro = lib_version.micro;
+        hdr_handle->lib_cxt.version.nano = lib_version.nano;
+        CMR_LOGD("major:%d minor:%d micro:%d nano:%d \n", lib_version.major,
+                 lib_version.minor, lib_version.micro, lib_version.nano);
+        CMR_LOGD("buiid date:%s build time:%s build rev:%s \n",
+                 lib_version.built_date, lib_version.built_time,
+                 lib_version.built_rev);
+    } else {
+        CMR_LOGE("failed to get verion!");
+    }
+
+    ret = sprd_hdr_config_default(&cfg);
+    if (!ret) {
+        cfg.img_width = hdr_handle->width;
+        cfg.img_height = hdr_handle->height;
+        cfg.img_stride = hdr_handle->width;
+        cfg.img_num = HDR_NEED_FRAME_NUM;
+        cfg.max_width = hdr_handle->width;
+        cfg.max_height = hdr_handle->height;
+        cfg.core_str = "_4_0_1_2_3";
+        ret = sprd_hdr_open(&hdr_handle->lib_cxt.lib_handle, &cfg);
+        if (ret) {
+            CMR_LOGE("failed to open lib!\n");
+            goto exit;
+        }
+    } else {
+        CMR_LOGE("failed to get cfg!");
+        goto exit;
+    }
+exit:
+    CMR_LOGD("done %ld", ret);
+    return ret;
+}
+
+static cmr_int hdr_sprd_version_deinit(struct class_hdr *hdr_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!hdr_handle) {
+        CMR_LOGE("error:hdr handle is NULL\n");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto deinit_exit;
+    }
+    CMR_LOGI("stop hdr");
+    ret = sprd_hdr_fast_stop(hdr_handle->lib_cxt.lib_handle);
+
+deinit_exit:
+    CMR_LOGD("done %ld", ret);
+    return ret;
+}
+
+static cmr_int hdr_sprd_version_process(struct class_hdr *hdr_handle,
+                                        cmr_u32 width, cmr_u32 height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    ldr_image_t input_img[HDR_NEED_FRAME_NUM];
+    cmr_u8 *out_img;
+
+    if (!hdr_handle) {
+        CMR_LOGE("error:hdr handle is NULL\n");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto process_exit;
+    }
+    input_img[0].data = hdr_handle->alloc_addr[0];
+    input_img[0].ev = hdr_handle->lib_cxt.ev[0];
+    input_img[0].width = width;
+    input_img[0].height = height;
+    input_img[0].stride = width;
+    input_img[1].data = hdr_handle->alloc_addr[2];
+    input_img[1].ev = hdr_handle->lib_cxt.ev[1];
+    input_img[1].width = width;
+    input_img[1].height = height;
+    input_img[1].stride = width;
+    out_img = hdr_handle->alloc_addr[0];
+    CMR_LOGI("addr: 0x%lx, 0x%lx, ev: %f, %f", input_img[0].data,
+             input_img[1].data, input_img[0].ev, input_img[1].ev);
+    ret = sprd_hdr_process(hdr_handle->lib_cxt.lib_handle, &input_img[0],
+                           out_img);
+    if (ret) {
+        CMR_LOGE("faild to hdr process\n");
+    }
+process_exit:
+    CMR_LOGD("done %ld", ret);
+    return ret;
+}
+
+static cmr_int hdr_sprd_version_detect(struct class_hdr *hdr_handle,
+                                       void *param, float *ev) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!hdr_handle || !param || !ev) {
+        CMR_LOGE("input param is NULL\n");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        return ret;
+    }
+    ret = sprd_hdr_detect(hdr_handle->lib_cxt.lib_handle, (hdr_stat_t *)param,
+                          ev);
+    if (ret) {
+        CMR_LOGE("failed to detect\n");
+    }
+    CMR_LOGI("done %ld", ret);
+    return ret;
+}
+#endif
 #endif

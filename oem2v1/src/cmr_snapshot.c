@@ -3770,7 +3770,7 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
 
     if (0 == snp_get_request(snp_handle)) {
         if (IPM_WORKING == snp_get_status(snp_handle)) {
-            if (cxt->req_param.filter_type) {
+            if (cxt->req_param.filter_type || cxt->req_param.is_cnr) {
                 sem_wait(&cxt->filter_sync_sm);
             } else {
                 sem_post(&cxt->hdr_sync_sm);

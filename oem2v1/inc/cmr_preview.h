@@ -65,6 +65,14 @@ enum preview_frame_type {
     PREVIEW_ZSL_CANCELED_FRAME,
     PREVIEW_FRAME_TYPE_MAX
 };
+
+enum preview_4in1_mode {
+    PREVIEW_4IN1_OFF,
+    PREVIEW_4IN1_BINNING,
+    PREVIEW_4IN1_FULL,
+    PREVIEW_4IN1_MAX
+};
+
 typedef cmr_int (*preview_cb_func)(cmr_handle oem_handle,
                                    enum preview_cb_type cb_type,
                                    enum preview_func_type func_type,
@@ -144,6 +152,8 @@ struct preview_md_ops {
     cmr_int (*get_tuning_info)(cmr_handle oem_handle,
                                struct isp_adgain_exp_info *adgain_exp_info_ptr);
     cmr_int (*start_capture)(cmr_handle oem_handle);
+    cmr_int (*isp_ioctl)(cmr_handle oem_handle, cmr_uint cmd_type,
+                         struct common_isp_cmd_param *parm);
 };
 
 struct preview_init_param {
@@ -161,6 +171,7 @@ struct preview_param {
     cmr_uint prev_rot;
     cmr_uint is_fd_on;
     cmr_uint is_support_fd;
+    cmr_uint ai_scene_enable;
     struct img_size preview_size;
     struct img_size video_size;
     /*snapshot param*/
@@ -187,6 +198,7 @@ struct preview_param {
     cmr_u32 tool_eb;
     cmr_u32 refocus_eb;
     cmr_u32 pdaf_eb;
+    cmr_u32 mode_4in1;
     struct cmr_zoom_param zoom_setting;
     struct memory_param memory_setting;
     void *private_data;

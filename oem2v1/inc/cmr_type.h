@@ -145,6 +145,9 @@ struct frm_info {
     cmr_uint zsl_private;
     cmr_u32 fd;
     cmr_s64 monoboottime;
+    cmr_uint is_4in1_frame;
+    cmr_u32 frame_num;
+    cmr_u32 zoom_ratio;
 };
 
 struct beauty_info {

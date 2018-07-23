@@ -20,7 +20,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/inc \
     $(LOCAL_PATH)/../sensor/dummy \
     $(LOCAL_PATH)/../sensor/af_drv \
-    $(LOCAL_PATH)/../sensor/otp_drv
+    $(LOCAL_PATH)/../sensor/otp_drv \
+    $(LOCAL_PATH)/../arithmetic/inc
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -52,13 +53,17 @@ LOCAL_SRC_FILES+= \
     src/cmr_img_debug.c \
     src/cmr_filter.c \
     src/exif_writer.c \
-    src/jpeg_stream.c
+    src/jpeg_stream.c \
+    src/cmr_4in1.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprdface/inc
 LOCAL_SRC_FILES += src/cmr_fd_sprd.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AI_SCENE)),true)
+        LOCAL_SRC_FILES += src/cmr_ai_scene.c
+endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/eis/inc
 endif
@@ -88,6 +93,12 @@ LOCAL_SHARED_LIBRARIES += libsprd3dnr
 endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
+	LOCAL_CFLAGS += -DCONFIG_CAMERA_CNR
+	LOCAL_SRC_FILES+= src/cmr_cnr.c
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libcnr/inc
+	LOCAL_SHARED_LIBRARIES += libsprdcnr
+endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
 LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0
@@ -118,6 +129,10 @@ LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfar
 LOCAL_SHARED_LIBRARIES += libsprdfd
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AI_SCENE)),true)
+	LOCAL_CFLAGS += -DCONFIG_CAMERA_AI_SCENE
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_SHARED_LIBRARIES += libgyrostab
 endif
@@ -127,8 +142,13 @@ LOCAL_SHARED_LIBRARIES +=libgui
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
+LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB_VERSION_2
+LOCAL_SHARED_LIBRARIES += libsprdhdr
+else
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)

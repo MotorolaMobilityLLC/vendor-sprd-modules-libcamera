@@ -377,6 +377,8 @@ typedef struct {
     uint8_t sprd_auto_hdr_enable;
     uint8_t sprd_is_hdr_scene;
     uint8_t availabe_auto_hdr;
+    uint8_t availabe_ai_scene;
+    uint8_t sprd_ai_scene_type_current;
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
 } SPRD_DEF_Tag;
 

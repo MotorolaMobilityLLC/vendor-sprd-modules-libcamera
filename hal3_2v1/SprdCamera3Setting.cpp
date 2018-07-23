@@ -93,6 +93,8 @@ typedef struct {
     int32_t max_output_streams[3];
     uint8_t availableBrightNess[7];
     uint8_t availableIso[7];
+    uint8_t availableAutoHdr;
+    uint8_t availableAiScene;
 } camera3_common_t;
 
 typedef struct {
@@ -278,8 +280,19 @@ const int32_t max_output_streams[3] = {0, 2, 1};
 const uint8_t availableBrightNess[] = {0, 1, 2, 3, 4, 5, 6};
 const uint8_t availableContrast[] = {0, 1, 2, 3, 4, 5, 6};
 const uint8_t availableSaturation[] = {0, 1, 2, 3, 4, 5, 6};
+#ifdef CONFIG_SUPPROT_AUTO_HDR
+const uint8_t availableAutoHDR = 1;
+#else
+const uint8_t availableAutoHDR = 0;
+#endif
 
 const uint8_t availableSlowMotion[] = {0, 1, 4};
+
+#ifdef CONFIG_SUPPROT_AI_SCENE
+const uint8_t availableAiScene = 1;
+#else
+const uint8_t availableAiScene = 0;
+#endif
 
 enum {
     CAMERA_ISO_AUTO = 0,
@@ -568,6 +581,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SYNC_MAX_LATENCY,
     ANDROID_SPRD_AVAILABLE_AUTO_HDR,
     ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
+    ANDROID_SPRD_AVAILABLE_AI_SCENE,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -1171,6 +1185,9 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            sizeof(availableIso));
     memcpy(camera3_default_info.common.availableFaceDetectModes,
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
+    camera3_default_info.common.availableAutoHdr = availableAutoHDR;
+
+    camera3_default_info.common.availableAiScene = availableAiScene;
 
     return 0;
 }
@@ -1624,6 +1641,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            sizeof(camera3_default_info.common.availableFaceDetectModes));
     s_setting[cameraId].sprddefInfo.flash_mode_support = 1;
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
+    s_setting[cameraId].sprddefInfo.availabe_auto_hdr =
+        camera3_default_info.common.availableAutoHdr;
 
 #ifdef CONFIG_VIDEO_SNAPSHOT_NOT_SUPPORT
     s_setting[cameraId].sprddefInfo.rec_snap_support =
@@ -1658,8 +1677,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
             CONFIG_AVAILABLE_FLASH_LEVEL;
     }
 #endif
-    HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d", cameraId,
-             s_setting[cameraId].sprddefInfo.sprd_available_flash_level);
+    s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene = 0;
+    HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d, availableAutohdr %d ", cameraId,
+             s_setting[cameraId].sprddefInfo.sprd_available_flash_level,s_setting[cameraId].sprddefInfo.availabe_auto_hdr);
+    s_setting[cameraId].sprddefInfo.availabe_ai_scene =
+        camera3_default_info.common.availableAiScene;
+    s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current =
+        HAL_AI_SCENE_DEFAULT;
+    HAL_LOGI(
+        "cameraId:%d, availabe_ai_scene:%d,  sprd_ai_scene_type_current:%d",
+        cameraId, s_setting[cameraId].sprddefInfo.availabe_ai_scene,
+        s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current);
 
     Vector<uint8_t> available_cam_features;
 
@@ -2021,6 +2049,12 @@ int SprdCamera3Setting::initStaticMetadata(
         ANDROID_SPRD_AVAILABLE_AUTO_HDR,
         &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
 
+ staticInfo.update(
+        ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
+        &(s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current), 1);
+
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
+                      &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);
     FILL_CAM_INFO_ARRAY(
         s_setting[cameraId].sprddefInfo.sprd_cam_feature_list, 0,
         CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
@@ -3094,6 +3128,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 
     uint8_t sprdIsHdrScene = 0;
     requestInfo.update(ANDROID_SPRD_IS_HDR_SCENE, &sprdIsHdrScene, 1);
+    uint8_t sprdAiSceneType = HAL_AI_SCENE_DEFAULT;
+    requestInfo.update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT, &sprdAiSceneType, 1);
 
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
@@ -3922,6 +3958,14 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].sprddefInfo.sprd_adjust_flash_level);
     }
 
+    if (frame_settings.exists(ANDROID_SPRD_AUTO_HDR_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable =
+            frame_settings.find(ANDROID_SPRD_AUTO_HDR_ENABLED).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_AUTO_HDR_ENABLED);
+        HAL_LOGV("sprd auto hdr enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable);
+    }
+
     HAL_LOGD(
         "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
         "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
@@ -4022,6 +4066,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     int32_t maxRegionsAe = 0;
     int32_t maxRegionsAwb = 0;
     int32_t maxRegionsAf = 0;
+    char prop2[PROPERTY_VALUE_MAX] = {0}; // for test
     maxRegionsAe = s_setting[mCameraId].controlInfo.max_regions[0];
     maxRegionsAwb = s_setting[mCameraId].controlInfo.max_regions[1];
     maxRegionsAf = s_setting[mCameraId].controlInfo.max_regions[2];
@@ -4370,10 +4415,14 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash), 1);
 
-    HAL_LOGI("auto hdr scene report %d", s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
+    HAL_LOGV("auto hdr scene report %d",
+             s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
+    camMetadata.update(ANDROID_SPRD_IS_HDR_SCENE,
+                       &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
+                       1);
     camMetadata.update(
-        ANDROID_SPRD_IS_HDR_SCENE,
-        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene), 1);
+        ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
+        &(s_setting[mCameraId].sprddefInfo.sprd_ai_scene_type_current), 1);
 
     resultMetadata = camMetadata.release();
     return resultMetadata;
