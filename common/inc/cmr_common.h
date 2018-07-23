@@ -1400,7 +1400,7 @@ struct cmr_focus_param {
 
 typedef enum {
     MODE_SINGLE_CAMERA = 0,
-    MODE_3D_VIDEO = 5,
+    MODE_3D_VIDEO,
     MODE_RANGE_FINDER,
     MODE_3D_CAPTURE,
     MODE_3D_CALIBRATION,
@@ -1421,6 +1421,7 @@ typedef enum {
     MODE_CAMERA_MAX
 } multiCameraMode;
 
+// hal and app interface
 typedef enum {
     SPRD_MULTI_CAMERA_BASE_ID = 16,
     SPRD_3D_VIDEO_ID,
@@ -1441,7 +1442,14 @@ typedef enum {
     SPRD_DUAL_FACEID_REGISTER_ID,
     SPRD_DUAL_FACEID_UNLOCK_ID,
     SPRD_MULTI_CAMERA_MAX_ID
-} multiCameraId; // hal and app interforce
+} multiCameraId;
+
+// hal and gallery interface
+typedef enum {
+    SPRD_MIMETPYE_NONE = 0,
+    SPRD_MIMETPYE_BLUR = 12,
+    SPRD_MIMETPYE_BOKEH = 16
+} multiCameraMimetype;
 
 struct img_sbs_info {
     cmr_u32 sbs_mode;

@@ -1458,7 +1458,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::saveCaptureBokehParams(
 bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     sidebyside_queue_msg_t capture_msg;
-    int mime_type = (int)MODE_BLUR;
+    int mime_type = (int)SPRD_MIMETPYE_BLUR;
     int ret = 0;
     uint32_t frame_number = 0;
     cmr_s64 timestamp = 0;
@@ -1876,11 +1876,11 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
 
             /*if (BLUR_TIPS_OK == mSidebyside->mCoveredValue ||
                 m3dVerificationEnable) {
-                mime_type = (1 << 8) | (int)MODE_BLUR;
+                mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BLUR;
             } else {
                 mime_type = 0;
             }*/
-            mime_type = (1 << 8) | (int)MODE_BLUR;
+            mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BLUR;
             mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                          &mime_type, NULL);
 

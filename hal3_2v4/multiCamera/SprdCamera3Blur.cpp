@@ -1356,7 +1356,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
 bool SprdCamera3Blur::CaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     blur_queue_msg_t capture_msg;
-    int mime_type = (int)MODE_BLUR;
+    int mime_type = (int)SPRD_MIMETPYE_BLUR;
     HAL_LOGV("run");
 
     while (!mCaptureMsgList.empty()) {
@@ -1541,7 +1541,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 input_buffer->buffer = capture_msg.combo_buff.buffer;
             } else {
                 input_buffer->buffer = output_buffer;
-                mime_type = (int)MODE_BLUR;
+                mime_type = (int)SPRD_MIMETPYE_BLUR;
             }
             mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                          &mime_type, NULL);

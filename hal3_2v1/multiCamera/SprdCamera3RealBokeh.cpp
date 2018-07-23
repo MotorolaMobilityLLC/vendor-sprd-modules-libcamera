@@ -2226,13 +2226,13 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                         mBokehResult = false;
                         HAL_LOGE("sprdBokehCaptureHandle failed");
                     } else {
-                        mime_type = (int)MODE_BOKEH;
+                        mime_type = (int)SPRD_MIMETPYE_BOKEH;
                     }
                 }
                 if (mBokehResult == false) {
                     mime_type = 0;
                 } else if (mAbokehGallery) {
-                    mime_type = (1 << 8) | (int)MODE_BOKEH;
+                    mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BOKEH;
                 }
 #ifdef YUV_CONVERT_TO_JPEG
                 if (mBokehResult) {
@@ -2260,9 +2260,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     mime_type = 0;
                 } else {
                     if (mAbokehGallery) {
-                        mime_type = (1 << 8) | (int)MODE_BOKEH;
+                        mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BOKEH;
                     } else {
-                        mime_type = (int)MODE_BOKEH;
+                        mime_type = (int)SPRD_MIMETPYE_BOKEH;
                     }
 #ifdef YUV_CONVERT_TO_JPEG
                     mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,

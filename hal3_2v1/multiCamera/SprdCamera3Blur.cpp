@@ -1708,7 +1708,7 @@ int SprdCamera3Blur::CaptureThread::blurProcessVerN(
  *==========================================================================*/
 bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
     buffer_handle_t *combe_buffer, buffer_handle_t *output_buffer) {
-    int mime_type = (int)MODE_BLUR;
+    int mime_type = (int)SPRD_MIMETPYE_BLUR;
     camera3_capture_request_t request;
     camera3_stream_buffer_t output_stream_buff;
     camera3_stream_buffer_t input_stream_buff;
@@ -1731,7 +1731,7 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
         input_stream_buff.buffer = combe_buffer;
     } else {
         input_stream_buff.buffer = output_buffer;
-        mime_type = (int)MODE_BLUR;
+        mime_type = (int)SPRD_MIMETPYE_BLUR;
     }
     mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE, &mime_type, NULL);
 
