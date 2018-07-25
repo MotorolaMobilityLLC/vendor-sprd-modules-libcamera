@@ -61,7 +61,7 @@ typedef struct {
     camera_channel_type_t channel_type;
 } stream_info_t;
 
-#define MIN_MULTI_CAMERA_FAKE_ID 5
+#define MIN_MULTI_CAMERA_FAKE_ID 6
 #define MAX_MULTI_CAMERA_FAKE_ID 50
 
 class SprdCamera3HWI {

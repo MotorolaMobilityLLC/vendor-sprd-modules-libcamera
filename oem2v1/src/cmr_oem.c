@@ -659,7 +659,7 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
         CMR_LOGI("open 2 camera");
         if (cxt->is_refocus_mode == 1) {
             ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
-                                             SENSOR_DEVICE2,
+                                             SENSOR_MAIN2,
                                              AL3200_CMD_DEPTH_MAP_MODE);
             if (ret) {
                 CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id,
@@ -667,14 +667,14 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
             }
         } else {
             ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
-                                             SENSOR_DEVICE2,
+                                             SENSOR_SUB2,
                                              AL3200_CMD_BYPASS_MODE);
             if (ret) {
                 CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id,
                          ret);
             }
         }
-        ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, SENSOR_DEVICE2,
+        ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, SENSOR_MAIN2,
                                      on_off);
         if (ret) {
             CMR_LOGE("err to set stream %ld", ret);
@@ -2792,7 +2792,7 @@ cmr_int camera_sensor_init(cmr_handle oem_handle, cmr_uint is_autotest) {
     }
 #ifdef CONFIG_CAMERA_RT_REFOCUS
     if (cxt->camera_id == SENSOR_MAIN) {
-        camera_id_bits = 1 << SENSOR_DEVICE2;
+        camera_id_bits = 1 << SENSOR_MAIN2;
         ret = cmr_sensor_open(sensor_handle, camera_id_bits);
         if (ret) {
             CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
@@ -2843,7 +2843,7 @@ cmr_int camera_sensor_deinit(cmr_handle oem_handle) {
     cmr_sensor_close(sensor_handle, (1 << cxt->camera_id));
 #ifdef CONFIG_CAMERA_RT_REFOCUS
     if (cxt->camera_id == SENSOR_MAIN) {
-        ret = cmr_sensor_close(sensor_handle, 1 << SENSOR_DEVICE2);
+        ret = cmr_sensor_close(sensor_handle, 1 << SENSOR_MAIN2);
         if (ret) {
             CMR_LOGE("close %d sensor failed %ld", cxt->camera_id, ret);
             goto exit;
@@ -6142,6 +6142,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     cmr_int isp_raw_buf_num = 0;
     struct setting_cmd_parameter setting_param;
     struct sensor_ex_info *sns_ex_info_ptr;
+    struct sensor_exp_info *sensor_info_ptr;
 
     if (!param_ptr || !oem_handle) {
         CMR_LOGE("in parm error");
@@ -6307,6 +6308,11 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
                 goto exit;
             }
         }
+        sensor_info_ptr = &cxt->sn_cxt.sensor_info;
+        if(NULL != sns_ex_info_ptr->sns_binning_factor&&sns_ex_info_ptr->sns_binning_factor[sn_mode] !=0)
+            sensor_info_ptr->mode_info[sn_mode].binning_factor = sns_ex_info_ptr->sns_binning_factor[sn_mode];
+        else
+            sensor_info_ptr->mode_info[sn_mode].binning_factor = 1;//sns_ex_info_ptr->sns_binning_factor[sn_mode];
         isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
         isp_param.capture_skip_num = sns_ex_info_ptr->capture_skip_num;
         CMR_LOGD("isp_param:max_gain:%d skip_num:%d",
@@ -11202,8 +11208,8 @@ cmr_int camera_stream_ctrl(cmr_handle oem_handle, cmr_u32 on_off) {
     cmr_int ret;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CMR_LOGD("set %u", on_off);
-    if (cxt->camera_id != SENSOR_DEVICE2)
-        CMR_LOGW("should not direct open sensors except for SENSOR_DEVICE2");
+    if (cxt->camera_id != SENSOR_MAIN2)
+        CMR_LOGW("should not direct open sensors except for SENSOR_MAIN2");
     if (on_off == 0)
         ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                SENSOR_STREAM_OFF, 0);

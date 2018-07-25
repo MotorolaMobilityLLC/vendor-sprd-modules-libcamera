@@ -439,7 +439,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 
     {0, "0", NULL, {NULL, 0}, NULL}};
 
-const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
+const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 // ov area
 #ifdef OV2680
     {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, NULL},
@@ -480,7 +480,7 @@ const SENSOR_MATCH_T back_ext_sensor_infor_tab[] = {
 
     {0, "0", NULL, {NULL, 0}, NULL}};
 
-const SENSOR_MATCH_T front_ext_sensor_infor_tab[] = {
+const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 // ov area
 #ifdef OV2680_SBS
     {MODULE_SUNNY, "ov2680_sbs", &g_ov2680_sbs_mipi_raw_info, {NULL, 0}, &ov2680_cmk_drv_entry},
@@ -499,6 +499,25 @@ const SENSOR_MATCH_T front_ext_sensor_infor_tab[] = {
 #endif
 
     {0, "0", NULL, {NULL, 0}, NULL}};
+const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
+#ifdef OV7251
+        {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#ifdef OV7251_DUAL
+        {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
+    {0, "0", NULL, {NULL, 0}, NULL}};
+
+const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
+#ifdef OV7251
+            {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#ifdef OV7251_DUAL
+            {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+
+    {0, "0", NULL, {NULL, 0}, NULL}};
 
 SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
     SENSOR_MATCH_T *sensor_reg_tab_ptr = NULL;
@@ -510,12 +529,17 @@ SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
     case SENSOR_SUB:
         sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_sensor_infor_tab;
         break;
-    case SENSOR_DEVICE2:
-        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)back_ext_sensor_infor_tab;
+    case SENSOR_MAIN2:
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)back_sensor2_infor_tab;
         break;
-    case SENSOR_DEVICE3:
-        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_ext_sensor_infor_tab;
+    case SENSOR_SUB2:
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_sensor2_infor_tab;
         break;
+    case SENSOR_MAIN3:
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)back_sensor3_infor_tab;
+        break;
+    case SENSOR_SUB3:
+        sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_sensor3_infor_tab;
     }
 
     return (SENSOR_MATCH_T *)sensor_reg_tab_ptr;
@@ -531,12 +555,19 @@ char *sensor_get_name_list(cmr_u32 sensor_id) {
     case SENSOR_SUB:
         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT;
         break;
-    case SENSOR_DEVICE2:
-        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK_EXT;
+    case SENSOR_MAIN2:
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK2;
         break;
-    case SENSOR_DEVICE3:
-        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT_EXT;
+    case SENSOR_SUB2:
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT2;
         break;
+    case SENSOR_MAIN3:
+         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK3;
+         break;
+    case SENSOR_SUB3:
+         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT3;
+         break;
+
     }
 
     return (char *)sensor_name_list_ptr;

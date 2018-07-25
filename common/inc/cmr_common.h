@@ -215,6 +215,8 @@ enum camera_index {
     CAMERA_ID_1,
     CAMERA_ID_2,
     CAMERA_ID_3,
+    CAMERA_ID_4,
+    CAMERA_ID_5,
     CAMERA_ID_MAX
 };
 
@@ -823,6 +825,7 @@ struct sensor_mode_info {
     struct img_rect scaler_trim;
     cmr_u16 out_width;  // sensor output width after binning and trimming
     cmr_u16 out_height; // sensor outpout width after binning and trimming
+    cmr_u32 binning_factor; // sensor binning factor: default--average(1)
 };
 
 struct sensor_ae_info {

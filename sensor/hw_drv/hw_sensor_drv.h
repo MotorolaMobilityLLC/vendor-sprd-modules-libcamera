@@ -67,11 +67,14 @@ enum {
 typedef enum {
     SENSOR_MAIN = 0,
     SENSOR_SUB,
-    SENSOR_DEVICE2,
-    SENSOR_DEVICE3,
+    SENSOR_MAIN2,
+    SENSOR_SUB2,
+    SENSOR_MAIN3,
+    SENSOR_SUB3,
+    SENSOR_ID_MAX,
     SENSOR_DEV_2,
-    SENSOR_ATV = 5,
-    SENSOR_ID_MAX
+    SENSOR_ATV,
+    SENSOR_ID_MAX_ALL
 } SENSOR_ID_E;
 
 typedef enum {

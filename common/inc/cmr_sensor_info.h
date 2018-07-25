@@ -161,6 +161,7 @@ struct sensor_ex_info {
     cmr_s8 *name;
     cmr_s8 *sensor_version_info;
     struct af_pose_dis pos_dis;
+    cmr_u32 *sns_binning_factor;
 };
 
 struct sensor_raw_resolution_info_tab {

@@ -134,7 +134,7 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
 };
 
-static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0};
+static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0,0,0};
 
 static front_flash_type front_flash[] = {
     {"2", "lcd"}, {"1", "led"}, {"2", "flash"},
@@ -430,6 +430,59 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #else
     {1600, 1200},
 #endif
+#if defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_21M)
+    {5312, 3984},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_20M)
+    {5120, 3840},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_16M)
+    {4608, 3456},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_13M)
+    {4160, 3120},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_12M)
+    {4000, 3000},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_8M)
+    {3264, 2448},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_5M)
+    {2592, 1944},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_3M)
+    {2048, 1536},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_2M_1080P)
+    {1920, HEIGHT_2M},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_2M)
+    {1600, 1200},
+#elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_SIZE_0M3)
+    {640, 480},
+#else
+    {1600, 1200},
+#endif
+
+#if defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_21M)
+    {5312, 3984},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_20M)
+    {5120, 3840},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_16M)
+    {4608, 3456},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_13M)
+    {4160, 3120},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_12M)
+    {4000, 3000},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_8M)
+    {3264, 2448},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_5M)
+    {2592, 1944},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_3M)
+    {2048, 1536},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_2M_1080P)
+    {1920, HEIGHT_2M},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_2M)
+    {1600, 1200},
+#elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_0M3)
+    {640, 480},
+#else
+    {1600, 1200},
+#endif
+
+
 };
 
 const cam_stream_info_t stream_info[] = {
@@ -735,11 +788,21 @@ const camera_info kCameraInfo[] = {
 
     {CAMERA_FACING_FRONT, 270, /*orientation*/
      0, 0, 0, 0, 0},
+
+    {CAMERA_FACING_BACK, 90, /*orientation*/
+     0, 0, 0, 0, 0},
+
+    {CAMERA_FACING_FRONT, 270, /*orientation*/
+     0, 0, 0, 0, 0},
 };
 
-const int camera_is_supprort[] = {
-    BACK_CAMERA_SENSOR_SUPPORT, FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK_EXT_CAMERA_SENSOR_SUPPORT, FRONT_EXT_CAMERA_SENSOR_SUPPORT,
+const int camera_is_supprort [] = {
+    BACK_CAMERA_SENSOR_SUPPORT,
+    FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK2_CAMERA_SENSOR_SUPPORT,
+    FRONT2_CAMERA_SENSOR_SUPPORT,
+    BACK3_CAMERA_SENSOR_SUPPORT,
+    FRONT3_CAMERA_SENSOR_SUPPORT,
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;

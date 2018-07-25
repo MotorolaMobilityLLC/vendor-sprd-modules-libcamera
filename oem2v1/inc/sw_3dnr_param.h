@@ -84,11 +84,11 @@ char *sensor_get_name_list(cmr_u32 sensor_id) {
     case SENSOR_SUB:
         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT;
         break;
-    case SENSOR_DEVICE2:
-        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK_EXT;
+    case SENSOR_MAIN2:
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK2;
         break;
-    case SENSOR_DEVICE3:
-        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT_EXT;
+    case SENSOR_SUB2:
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT2;
         break;
     }
 
