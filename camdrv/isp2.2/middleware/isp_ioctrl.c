@@ -199,7 +199,9 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	memset((void *)&ioctl_data, 0, sizeof(struct isp_pm_param_data));
 	memset((void *)&awbc_cfg, 0, sizeof(struct isp_awbc_cfg));
 	memset((void *)&result, 0, sizeof(struct awb_gain));
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	switch (awb_mode) {
 	case ISP_AWB_AUTO:
@@ -230,7 +232,9 @@ static cmr_int _ispAwbModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		rtn = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WB_MODE, (void *)&awb_id, NULL);
 		ISP_TRACE_IF_FAIL(rtn, ("awb set wb mode error"));
 	}
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_AWB_MODE);
+#endif
 	return rtn;
 }
 
@@ -278,7 +282,9 @@ static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_ev set_ev = { 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -287,7 +293,9 @@ static cmr_int _ispEVIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	set_ev.level = *(cmr_u32 *) param_ptr;
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EV_OFFSET, &set_ev, NULL);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_EV);
+#endif
 	ISP_LOGV("ISP_AE: AE_SET_EV_OFFSET=%d, rtn=%ld", set_ev.level, rtn);
 
 	return rtn;
@@ -340,7 +348,9 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_flicker set_flicker = { 0 };
 	cmr_int bypass = 0;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -351,7 +361,9 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &set_flicker, NULL);
 	ISP_LOGV("ISP_AE: AE_SET_FLICKER=%d, rtn=%ld", set_flicker.mode, rtn);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        call_back(isp_alg_handle,ISP_CTRL_FLICKER);
+#endif
 	ispctl_flicker_bypass(isp_alg_handle, bypass);
 
 	return rtn;
@@ -599,12 +611,28 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 	return rtn;
 }
 
+static cmr_int _ispctlFlashModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 flash_mode = 0;
+	UNUSED(call_back);
+
+	flash_mode = *(cmr_u32 *)param_ptr;
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLASH_MODE, &flash_mode, NULL);
+
+	return ret;
+}
+
 static cmr_int _ispIsoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_iso set_iso = { 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr)
 		return ISP_PARAM_NULL;
@@ -613,7 +641,9 @@ static cmr_int _ispIsoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_ISO, &set_iso, NULL);
 	ISP_LOGV("ISP_AE: AE_SET_ISO=%d, rtn=%ld", set_iso.mode, rtn);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_ISO);
+#endif
 	return rtn;
 }
 
@@ -643,14 +673,18 @@ static cmr_int _ispBrightnessIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_BRIGHT, ISP_BLK_BRIGHT, &cfg, sizeof(cfg));
 
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        call_back(isp_alg_handle,ISP_CTRL_BRIGHTNESS);
+#endif
 	return rtn;
 }
 
@@ -662,14 +696,18 @@ static cmr_int _ispContrastIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CONTRAST, ISP_BLK_CONTRAST, &cfg, sizeof(cfg));
 
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_CONTRAST);
+#endif
 	return rtn;
 }
 
@@ -681,14 +719,18 @@ static cmr_int _ispSaturationIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, 
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SATURATION, ISP_BLK_SATURATION, &cfg, sizeof(cfg));
 
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_SATURATION);
+#endif
 	return rtn;
 }
 
@@ -784,7 +826,9 @@ static cmr_int _ispRangeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_range_fps *range_fps = (struct isp_range_fps *)param_ptr;
 	struct ae_set_fps fps;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == range_fps) {
 		ISP_LOGE("fail to get valid param !");
@@ -797,7 +841,9 @@ static cmr_int _ispRangeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cm
 	fps.max_fps = range_fps->max_fps;
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FPS, &fps, NULL);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_RANGE_FPS);
+#endif
 	return rtn;
 }
 
@@ -1249,7 +1295,9 @@ static cmr_int _ispAeMeasureLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_weight set_weight = { 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to  get valid param!");
@@ -1260,7 +1308,9 @@ static cmr_int _ispAeMeasureLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_WEIGHT, &set_weight, NULL);
 	ISP_LOGV("ISP_AE: AE_SET_WEIGHT=%d, rtn=%ld", set_weight.mode, rtn);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_AE_MEASURE_LUM);
+#endif
 	return rtn;
 }
 
@@ -1269,7 +1319,9 @@ static cmr_int _ispSceneModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_scene set_scene = { 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to  get valid param !");
@@ -1280,7 +1332,9 @@ static cmr_int _ispSceneModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, c
 	cxt->commn_cxt.scene_flag = set_scene.mode;
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_MODE, &set_scene, NULL);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_SCENE_MODE);
+#endif
 	return rtn;
 }
 
@@ -1395,7 +1449,6 @@ static cmr_int _ispAfIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	}
 	if (cxt->ops.af_ops.ioctrl)
 		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_START, (void *)&trig_info, NULL);
-
 	return rtn;
 }
 
@@ -1416,13 +1469,17 @@ static cmr_int _ispSpecialEffectIOCtrl(cmr_handle isp_alg_handle, void *param_pt
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	memset((void *)&param_data, 0, sizeof(struct isp_pm_param_data));
 
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SPECIAL_EFFECT, ISP_BLK_CCE, param_ptr, sizeof(param_ptr));
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SPECIAL_EFFECT, (void *)&input, (void *)&output);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_SPECIAL_EFFECT);
+#endif
 	return rtn;
 }
 
@@ -1713,7 +1770,6 @@ static cmr_int _ispAeTouchIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr
 		if (cxt->ops.lsc_ops.ioctrl)
 			rtn = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_GET_TOUCH, NULL, NULL);
 	}
-
 	ISP_LOGV("w,h=(%d,%d)", touch_zone.touch_zone.w, touch_zone.touch_zone.h);
 
 	return rtn;
@@ -1755,7 +1811,6 @@ static cmr_int _ispAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_
 
 	if (cxt->ops.af_ops.ioctrl)
 		rtn = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_MODE, (void *)&set_mode, NULL);
-
 	return rtn;
 }
 
@@ -2031,7 +2086,9 @@ static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 night_mode = 0;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -2042,7 +2099,9 @@ static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_p
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_NIGHT_MODE, &night_mode, NULL);
 
 	ISP_LOGV("ISP_AE: AE_SET_NIGHT_MODE=%d, rtn=%ld", night_mode, rtn);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	call_back(isp_alg_handle,ISP_CTRL_SET_AE_NIGHT_MODE);
+#endif
 	return rtn;
 }
 
@@ -2052,7 +2111,9 @@ static cmr_int _ispSetAeAwbLockUnlock(cmr_handle isp_alg_handle, void *param_ptr
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_calc_out ae_result;
 	cmr_u32 ae_awb_mode = 0;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -2083,7 +2144,9 @@ static cmr_int _ispSetAeAwbLockUnlock(cmr_handle isp_alg_handle, void *param_ptr
 	} else {
 		ISP_LOGV("Unsupported AE & AWB mode (%d)\n", ae_awb_mode);
 	}
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        call_back(isp_alg_handle,ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK);
+#endif
 	return ISP_SUCCESS;
 }
 
@@ -2093,7 +2156,9 @@ static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, c
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_calc_out ae_result;
 	cmr_u32 ae_mode;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
 	UNUSED(call_back);
+#endif
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -2112,7 +2177,9 @@ static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, c
 	} else {
 		ISP_LOGV("Unsupported AE  mode (%d)\n", ae_mode);
 	}
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        call_back(isp_alg_handle,ISP_CTRL_SET_AE_LOCK_UNLOCK);
+#endif
 	return ISP_SUCCESS;
 }
 
@@ -2556,6 +2623,161 @@ static cmr_int _ispPost3DNR(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(
 	return rtn;
 }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+static cmr_int _ispSetReqFrameInfo(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct req_frame_info frame_info;
+	cmr_int req_index,res_index = 0;
+	UNUSED(call_back);
+	ISP_LOGI("E");
+
+	if (cxt == NULL || param_ptr == NULL) {
+		ISP_LOGE("[PFC] Error exit: cxt/param_ptr is NULL");
+		ret = ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	frame_info = *(struct req_frame_info *)param_ptr;
+	cxt->req_frame_num = frame_info.frame_num;
+
+	ISP_LOGI("[PFC] req_frame_num %u", cxt->req_frame_num);
+	if (cxt->req_frame_num == 0) {
+		ISP_LOGI("[PFC] clear request queue");
+		memset(cxt->perCxt_req, 0 , sizeof(struct isp_mw_per_frame_cxt) * MAX_PIPE_LINE_DEPTH);
+		memset(cxt->perCxt_res, 0 , sizeof(struct isp_mw_per_frame_cxt) * (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET));
+		cxt->perCxt_req[0].is_only_capture =  frame_info.is_only_capture;
+		cxt->valid_sof_idx = RESET_VALUE;
+		cxt->reserved_sof_idx = 0;
+	} else {
+		req_index = cxt->req_frame_num % MAX_PIPE_LINE_DEPTH;
+		cxt->perCxt_req[req_index].request_frame_num  = cxt->req_frame_num;
+		cxt->perCxt_req[req_index].is_only_capture =  frame_info.is_only_capture;
+		res_index = cxt->req_frame_num % (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET);
+		cxt->perCxt_res[res_index].request_frame_num  = cxt->req_frame_num;
+	}
+
+	ISP_LOGI("[PFC]  perframe queue request_frame_num [%d %d %d %d]",
+	                    cxt->perCxt_req[0].request_frame_num,
+	                    cxt->perCxt_req[1].request_frame_num,
+	                    cxt->perCxt_req[2].request_frame_num,
+	                   cxt->perCxt_req[3].request_frame_num);
+exit:
+	ISP_LOGI("X");
+	return ret;
+}
+
+static cmr_int _ispGetPerFrameResult(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ()) {
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_mw_per_frame_cxt *per_frame_res;
+	cmr_int req_index,i;
+	cmr_int res_index = 0;
+	cmr_u32 get_iso = 0;
+	cmr_u32 get_sensitivity = 0;
+	enum isp_ctrl_cmd io_cmd;
+	UNUSED(call_back);
+	ISP_LOGI("E");
+
+	if (cxt == NULL || param_ptr == NULL) {
+		ISP_LOGE("[PFC] Error exit: param_ptr is NULL");
+		ret = ISP_PARAM_ERROR;
+		goto exit;
+	}
+	per_frame_res = (struct isp_mw_per_frame_cxt *)param_ptr;
+	req_index = per_frame_res->request_frame_num % MAX_PIPE_LINE_DEPTH;
+	res_index = per_frame_res->request_frame_num % (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET);
+	if (cxt->perCxt_res[res_index].act_set_cnt  >= MAX_SETTING) {
+		ISP_LOGE("[PFC] Error exit: Settings stored more than MAX_SETTING at res_index %ld", res_index);
+		ret = ISP_ERROR;
+		goto exit;
+	}
+
+	if (cxt->perCxt_res[res_index].request_frame_num != per_frame_res->request_frame_num) {
+		ISP_LOGE("[PFC] Error exit: not expected frame number in result queue");
+		ret = ISP_ERROR;
+		goto exit;
+	}
+
+	ISP_LOGI("[PFC] [Debug] Result queue [%ld]: [Result frame: %u] frame result requested: %u",
+			res_index, cxt->perCxt_res[res_index].request_frame_num,
+			per_frame_res->request_frame_num);
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, (void *)&get_iso);
+		ispalg_save_frame_info(&cxt->perCxt_res[res_index], ISP_CTRL_AE_GET_ISO, &get_iso, cxt->perCxt_res[res_index].request_frame_num);
+		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_SENSITIVITY, (void *)&get_sensitivity, NULL);
+		ispalg_save_frame_info(&cxt->perCxt_res[res_index], ISP_CTRL_AE_GET_SENSITIVITY, &get_sensitivity, cxt->perCxt_res[res_index].request_frame_num);
+		ISP_LOGI("[PFC] ISO %d sensitivity %d", get_iso, get_sensitivity);
+	}
+
+	for (i = 0; i < cxt->perCxt_res[res_index].act_set_cnt; i++) {
+		io_cmd = cxt->perCxt_res[res_index].cmd_set[i].cmd;
+		ISP_LOGD("[PFC] [Debug] Result queue [%ld]: [Result frame: %u][frame: %u act_set_cnt: %d cmd array[%ld]: cmd: %d ",
+				res_index, per_frame_res->request_frame_num,
+				cxt->perCxt_res[res_index].cmd_set[i].frame_num,
+				cxt->perCxt_res[res_index].act_set_cnt, i, cxt->perCxt_res[res_index].cmd_set[i].cmd);
+		ret = isp_alg_update_result_metadata(cxt, (void *)per_frame_res/*dest*/,&cxt->perCxt_res[res_index]/*src*/,io_cmd);
+	}
+
+	cxt->perCxt_req[req_index].is_applied = 0;
+	cxt->perCxt_req[req_index].act_set_cnt = 0;
+	cxt->perCxt_req[req_index].request_frame_num = RESET_VALUE;
+	cxt->perCxt_res[res_index].act_set_cnt = 0;
+	cxt->perCxt_res[res_index].request_frame_num = RESET_VALUE;
+	memset(cxt->perCxt_req[req_index].cmd_set, 0 , sizeof(struct cmd_setting) * MAX_SETTING);
+	memset(cxt->perCxt_res[res_index].cmd_set, 0 , sizeof(struct cmd_setting) * MAX_SETTING);
+
+	ISP_LOGI("[PFC] [Debug] perframe queue requese_frame_num [%d %d %d %d]",
+			cxt->perCxt_req[0].request_frame_num,
+			cxt->perCxt_req[1].request_frame_num,
+			cxt->perCxt_req[2].request_frame_num,
+			cxt->perCxt_req[3].request_frame_num);
+exit:
+        ISP_LOGI("X");
+        return ret;
+}
+
+static cmr_int _ispSetValidFlag(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ()) {
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	UNUSED(call_back);
+	ISP_LOGV("E");
+
+	if (cxt == NULL || param_ptr == NULL) {
+		ISP_LOGE("[PFC] Error exit: cxt/param_ptr is NULL");
+		ret = ISP_PARAM_ERROR;
+		goto exit;
+	}
+	cxt->valid_flag = *(uint32_t *)param_ptr;
+	ISP_LOGV("[PFC] valid flag %d", cxt->valid_flag);
+exit:
+	ISP_LOGV("X");
+	return ret;
+}
+
+static cmr_int _ispSetTxReserved(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ()) {
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	UNUSED(call_back);
+	UNUSED(param_ptr);
+	ISP_LOGV("E");
+
+	if (cxt == NULL ) {
+		ISP_LOGE("[PFC] Error exit: cxt is NULL");
+		ret = ISP_PARAM_ERROR;
+		goto exit;
+	}
+	cxt->valid_sof_idx--;
+	cxt->reserved_sof_idx++;
+	ISP_LOGV("[PFC]    RESERVED  valid_sof_idx %d", cxt->valid_sof_idx);
+exit:
+	ISP_LOGV("X");
+	return ret;
+}
+#endif
+
 static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, _ispSnapshotNoticeIOCtrl},
 	{ISP_CTRL_AE_MEASURE_LUM, _ispAeMeasureLumIOCtrl},
@@ -2566,6 +2788,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SENSITIVITY, _ispSensitivityIOCtrl},
 	{ISP_CTRL_AE_TOUCH, _ispAeTouchIOCtrl},
 	{ISP_CTRL_FLASH_NOTICE, _ispFlashNoticeIOCtrl},
+	{ISP_CTRL_SET_FLASH_MODE,_ispctlFlashModeIOCtrl},
 	{ISP_CTRL_VIDEO_MODE, _ispVideoModeIOCtrl},
 	{ISP_CTRL_SCALER_TRIM, _ispScalerTrimIOCtrl},
 	{ISP_CTRL_RANGE_FPS, _ispRangeFpsIOCtrl},
@@ -2633,6 +2856,12 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
 	{ISP_CTRL_POST_3DNR, _ispPost3DNR}, //for 3dnr module
 	{ISP_CTRL_3DNR, _isp3dnrIOCtrl},
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	{ISP_CTRL_SET_REQ_FRAME_INFO, _ispSetReqFrameInfo},
+	{ISP_CTRL_SET_VALID_FRAME, _ispSetValidFlag},
+	{ISP_CTRL_GET_PER_FRAME_RESULT, _ispGetPerFrameResult},
+	{ISP_CTRL_SET_TX_RESERVED, _ispSetTxReserved},
+#endif
 	{ISP_CTRL_MAX, NULL}
 };
 

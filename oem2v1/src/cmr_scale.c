@@ -18,12 +18,15 @@
 
 #include <cutils/trace.h>
 #include <fcntl.h>
+#include <math.h>
 #include <sys/ioctl.h>
 #include "cmr_type.h"
 #include "cmr_msg.h"
 #include "cmr_cvt.h"
 #include "sprd_cpp.h"
-
+#ifdef  CONFIG_LIBYUV
+#include "cmr_yuvprocess.h"
+#endif
 #define CMR_EVT_SCALE_INIT (CMR_EVT_OEM_BASE + 16)
 #define CMR_EVT_SCALE_START (CMR_EVT_OEM_BASE + 17)
 #define CMR_EVT_SCALE_EXIT (CMR_EVT_OEM_BASE + 18)
@@ -59,7 +62,6 @@ extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 static char scaler_dev_name[50] = "/dev/sprd_cpp";
 
 static cmr_int cmr_scale_restart(struct scale_file *file);
-
 static unsigned int cmr_scale_fmt_cvt(cmr_u32 cmt_fmt) {
     unsigned int sc_fmt = SCALE_FTM_MAX;
 
@@ -156,46 +158,62 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
     struct sprd_cpp_scale_cfg_parm *frame_params = NULL;
     if (!cfg_params || !file) {
         CMR_LOGE("scale erro: cfg_params is null");
-        return CMR_CAMERA_INVALID_PARAM;
+        ret = CMR_CAMERA_INVALID_PARAM;
+        goto exit;
     }
     frame_params = &cfg_params->frame_params;
     if (!frame_params) {
         CMR_LOGE("scale erro: frame_params is null");
-        return CMR_CAMERA_INVALID_PARAM;
+        ret = CMR_CAMERA_INVALID_PARAM;
+        goto exit;
     }
 
-//    if (frame_params->input_size.w >= frame_params->output_size.w &&
-//        frame_params->input_size.h >= frame_params->output_size.h) {
-        src.addr_vir.addr_y = frame_params->input_addr_vir.y;
-        src.addr_vir.addr_u = frame_params->input_addr_vir.u;
-        // src.addr_vir.addr_v = frame_params->input_addr_vir.v;
-        src.size.width = frame_params->input_size.w;
-        src.size.height = frame_params->input_size.h;
-        dst.addr_vir.addr_y = frame_params->output_addr_vir.y;
-        dst.addr_vir.addr_u = frame_params->output_addr_vir.u;
-        // dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
-        dst.size.width = frame_params->output_size.w;
-        dst.size.height = frame_params->output_size.h;
+    float input_ratio =
+        (float)frame_params->input_size.w / frame_params->input_size.h;
+    float output_ratio =
+        (float)frame_params->output_size.w / frame_params->output_size.h;
+    if (fabsf(input_ratio - output_ratio) < 0.015) {
+        match_ratio = 1;
+    }
+
+    src.addr_vir.addr_y = frame_params->input_addr_vir.y;
+    src.addr_vir.addr_u = frame_params->input_addr_vir.u;
+    // src.addr_vir.addr_v = frame_params->input_addr_vir.v;
+    src.size.width = frame_params->input_size.w;
+    src.size.height = frame_params->input_size.h;
+    dst.addr_vir.addr_y = frame_params->output_addr_vir.y;
+    dst.addr_vir.addr_u = frame_params->output_addr_vir.u;
+    // dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
+    dst.size.width = frame_params->output_size.w;
+    dst.size.height = frame_params->output_size.h;
+
+    if (match_ratio) {
         ret = cmr_scaling_down(&src, &dst);
-        if (ret) {
-            goto exit;
-        }
-        if (cfg_params->scale_cb) {
-            sem_post(&file->sync_sem);
-        }
-        if (cfg_params->scale_cb) {
-            memset((void *)&frame, 0x00, sizeof(frame));
-            frame.size.width = frame_params->output_size.w;
-            frame.size.height = frame_params->output_size.h;
-            frame.addr_phy.addr_y = (cmr_uint)frame_params->output_addr.y;
-            frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
-            frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
-            (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
-                                    cfg_params->cb_handle);
-        }
-//    } else {
-//       ret = CMR_CAMERA_FAIL;
-//    }
+    } else {
+        CMR_LOGV("ratio is not match, input_ratio:%f, output_ratio:%f ",
+                 input_ratio, output_ratio);
+ #ifdef  CONFIG_LIBYUV
+        ret = yuv_scale_nv21((void *)&frame_params->input_rect, &src, &dst);
+ #else
+        ret = -1;
+ #endif
+    }
+    if (ret) {
+        goto exit;
+    }
+    if (cfg_params->scale_cb) {
+        sem_post(&file->sync_sem);
+    }
+    if (cfg_params->scale_cb) {
+        memset((void *)&frame, 0x00, sizeof(frame));
+        frame.size.width = frame_params->output_size.w;
+        frame.size.height = frame_params->output_size.h;
+        frame.addr_phy.addr_y = (cmr_uint)frame_params->output_addr.y;
+        frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
+        frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
+        (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
+                                cfg_params->cb_handle);
+    }
 exit:
     CMR_LOGI("done ret %ld", ret);
     return ret;
@@ -256,8 +274,16 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
                (CMR_CAMERA_SUCCESS == file->err_code)) {
             file->err_code = CMR_CAMERA_SUCCESS;
 
+            if (is_hw_scaling) {
+                ret =
+                    ioctl(file->handle, SPRD_CPP_IO_START_SCALE, frame_params);
+                if (ret) {
+                    CMR_LOGI("CPP error ret %ld; HW scaler also not working",
+                             ret);
+                }
+            }
             // if cpp hw don't support, do software scaling and return
-            if (!is_hw_scaling) {
+            if ((!is_hw_scaling) || ret) {
                 if (cmr_scale_sw_start(cfg_params, file)) {
                     CMR_PERROR;
                     CMR_LOGE("software scaling failed");
@@ -268,12 +294,6 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
                 }
                 break;
             }
-
-            ret = ioctl(file->handle, SPRD_CPP_IO_START_SCALE, frame_params);
-            if (ret) {
-                CMR_LOGI("CPP error ret %ld; HW scaler also not working", ret);
-            }
-            CMR_LOGI("scale started");
 
             if (CMR_CAMERA_SUCCESS != ret) {
                 file->err_code = CMR_CAMERA_INVALID_PARAM;

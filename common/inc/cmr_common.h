@@ -383,6 +383,10 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AI_SCENE_STOP,
     COM_ISP_SET_AI_SCENE_IMAGE,
     COM_ISP_GET_AI_SCENE_IMAGE_REQ_FLAG,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    COM_ISP_SET_REQ_FRAME_INFO,
+    COM_ISP_GET_PER_FRAME_RESULT,
+#endif
     COM_ISP_TYPE_MAX
 };
 
@@ -629,6 +633,10 @@ enum cmr_v4l2_evt {
     CMR_GRAB_CSI2_ERR,
     CMR_GRAB_TIME_OUT,
     CMR_GRAB_CANCELED_BUF,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CMR_GRAB_SOF_DONE,
+    CMR_GRAB_TX_RESERVED,
+#endif
     CMR_GRAB_MAX,
 };
 enum channel_num { CHN_0 = 0, CHN_1, CHN_2, CHN_3, CHN_MAX = GRAB_CHANNEL_MAX };
@@ -670,6 +678,8 @@ struct img_frm_cap {
     cmr_u32 sence_mode;
     cmr_u32 slowmotion;
     cmr_u32 chn_skip_num;
+    cmr_u32 is_high_fps;
+    cmr_u32 high_fps_skip_num;
 };
 
 struct buffer_cfg {
@@ -896,6 +906,10 @@ struct common_isp_cmd_param {
 #ifdef CONFIG_CAMERA_AI_SCENE
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;
+#endif
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        struct req_frame_info req_info;
+        struct isp_mw_per_frame_cxt *per_frame_res;
 #endif
     };
 };
@@ -1248,6 +1262,16 @@ enum camera_cb_type {
     CAMERA_EVT_CB_AE_FLASH_FIRED,
     CAMERA_EVT_CB_HDR_SCENE,
     CAMERA_EVT_CB_AI_SCENE,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CAMERA_EVT_CB_AWB_LOCK_NOTIFY,
+    CAMERA_EVT_CB_AWB_UNLOCK_NOTIFY,
+    CAMERA_EVT_CB_CONVERT_AWB_MODE,
+    CAMERA_EVT_CB_CONVERT_SCENE_MODE,
+    CAMERA_EVT_CB_CONVERT_ANTIBANDING_MODE,
+    CAMERA_EVT_CB_CONVERT_EFFECT_MODE,
+    CAMERA_EVT_CB_CONVERT_EV,
+    CAMERA_EVT_CB_AF_MODE,
+#endif
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1262,6 +1286,9 @@ enum camera_func_type {
     CAMERA_FUNC_RELEASE_PICTURE,
     CAMERA_FUNC_AE_STATE_CALLBACK,
     CAMERA_FUNC_SENSOR_DATATYPE,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CAMERA_FUNC_CONVERT_PARAM,
+#endif
     CAMERA_FUNC_TYPE_MAX
 };
 
@@ -1352,8 +1379,14 @@ enum camera_param_type {
 #ifdef CONFIG_CAMERA_OFFLINE
     CAMERA_PARAM_CALLBACK_ENABLE_ZSL,
 #endif
+    CAMERA_PARAM_SPRD_ENABLE_CNR,
+    CAMERA_PARAM_SPRD_SET_APPMODE,
     CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CAMERA_PARAM_REQ_FRAME_INFO,
+#endif
     CAMERA_PARAM_TYPE_MAX
+
 };
 
 enum camera_data {
@@ -1809,6 +1842,11 @@ typedef struct oem_ops {
 #ifdef CAMERA_SUPPORT_ROLLING_SHUTTER_SKEW // Added only for HAL3_2v1 and oem2v1
     cmr_int (*camera_get_rolling_shutter)(cmr_handle camera_handle,
                                           cmr_s64 *rolling_shutter_skew);
+#endif
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    // perFrame_res: to get per frame result metadata from ISP
+    cmr_uint (*camera_get_isp_perFrame_result)(
+        cmr_handle camera_handle, struct isp_mw_per_frame_cxt *perFrame_res);
 #endif
 } oem_ops_t;
 

@@ -86,10 +86,6 @@ typedef int64_t nsecs_t;
 #define NSEC_PER_USEC 1000
 #define NSEC_PER_33MSEC 33000000LL
 #define NSEC_PER_40MSEC 40000000LL
-#define MIN_FPS_RANGE 5
-#define MAX_FPS_RANGE_BACK_CAM 30
-#define MAX_FPS_RANGE_FRONT_CAM 30
-#define MIDDLE_FPS_RANGE 20
 #define SPRD_SHADING_FACTOR_NUM (2 * 2) //(>1*1*4,<=64*64*4)
 #define SPRD_MAX_TONE_CURVE_POINT 64    //>=64
 #define SPRD_FACE_BEAUTY_PARAM_NUM 9
@@ -122,6 +118,10 @@ typedef int64_t nsecs_t;
 
 /*set EV value to 17 in auto mode, same as AE_LEVEL_AUTO*/
 #define CAMERA_AE_LEVEL_AUTO 17
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+#define MAX_PIPELINE_DEPTH 4
+#endif
 
 typedef struct {
     uint8_t correction_mode;
@@ -320,6 +320,11 @@ typedef struct {
     uint8_t type;
     int32_t id;
     int32_t frame_count;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    int32_t frame_number; /*Frame number to save request frame settings in PFC
+                             queue*/
+    int32_t is_only_capture;
+#endif
     int32_t available_characteristics_keys[100];
     int32_t available_request_keys[50];
     int32_t available_result_keys[50];
@@ -382,6 +387,29 @@ typedef struct {
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
 } SPRD_DEF_Tag;
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+typedef struct {
+    int32_t framenum;
+    uint8_t capture_intent;
+    uint8_t ae_precap_trigger;
+    int32_t ae_precapture_id;
+    uint8_t face_detect_mode;
+    int64_t frame_duration;
+    uint8_t sprd_eis_enabled;
+    uint8_t capture_mode;
+    uint8_t sensor_orientation;
+    int32_t sensor_rotation;
+    LENS_Tag lensInfo;
+    TONEMAP_Tag toneInfo;
+    EDGE_Tag edgeInfo;
+    NOISE_Tag noiseInfo;
+    SHADING_Tag shadingInfo;
+    JPEG_Tag jpgInfo;
+    SPRD_DEF_Tag sprddefInfo;
+} HAL_PFC_Tag; // This structure includes keys to implement per frame control at
+               // HAL only
+#endif
+
 typedef struct {
     camera_face_t face[10];
     int angle[10];
@@ -409,6 +437,10 @@ typedef struct {
 
     COLOR_Tag colorInfo;
     CONTROL_Tag controlInfo;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CONTROL_Tag resultInfo;
+    SPRD_DEF_Tag sprddeResultfInfo;
+#endif
     EDGE_Tag edgeInfo;
     FLASH_Tag flashInfo;
     FLASH_INFO_Tag flash_InfoInfo;
@@ -442,6 +474,9 @@ typedef struct {
     EIS_CROP_Tag eiscrop_Info;
     OTP_Tag otpInfo;
     VCM_Tag vcmInfo;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    HAL_PFC_Tag pfcinfo[MAX_PIPELINE_DEPTH];
+#endif
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -489,6 +524,13 @@ class SprdCamera3Setting {
     int getDefaultParameters(SprdCameraParameters &params);
     int popAndroidParaTag();
     int popSprdParaTag();
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    int getAndroidParaTagSize();
+    int getSprdParaTagSize();
+    int setResultTag(CONTROL_Tag resultInfo);
+    int getResultTag(CONTROL_Tag *resultInfo);
+    int constructDefaultResultMetadata(void *result_metadata);
+#endif
     void releaseAndroidParaTag();
 
     int setPreviewSize(cam_dimension_t size);
@@ -535,6 +577,19 @@ class SprdCamera3Setting {
                                        int8_t *convertDrvMode);
     int androidSceneModeToDrvMode(uint8_t androidScreneMode,
                                   int8_t *convertDrvMode);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    int androidDrvSceneModeToSceneMode(int8_t androidDrvSceneMode,
+                                       uint8_t *convertSceneMode);
+    int drvModeToAndroidEffectMode(int8_t convertDrvMode,
+                                   uint8_t *androidEffectMode);
+    int androidDrvAwbModeToAwbMode(int8_t androidDrvAwbMode,
+                                   uint8_t *convertAwbMode);
+    int
+    drvAntibandingModeToAndroidAntibandingMode(int8_t convertAntibandingMode,
+                                               uint8_t *androidAntibandingMode);
+    int androidDrvAfModeToAfMode(int8_t androidDrvAfMode,
+                                 uint8_t *convertAfMode);
+#endif
     int androidIsoToDrvMode(uint8_t androidIso, int8_t *convertDrvMode);
     int androidEffectModeToDrvMode(uint8_t androidEffectMode,
                                    int8_t *convertDrvMode);
@@ -575,8 +630,19 @@ class SprdCamera3Setting {
     int setSENSORTag(SENSOR_Tag sensorInfo);
     int getSENSORTag(SENSOR_Tag *sensorInfo);
 
+    int setRollingShutterTag(int64_t rollingShutterSkew);
+
+    int setSensorTimestampTag(int64_t sensor_timestamp);
+
+    int setExposureTimeTag(int64_t exposureTime);
+
     int setResultSENSORTag(SENSOR_Tag resultInfo);
     int getResultSENSORTag(SENSOR_Tag *resultInfo);
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    int setSPRDDefResultfInfo(SPRD_DEF_Tag sprddeResultfInfo);
+    int getSPRDDefResultfInfo(SPRD_DEF_Tag *sprddeResultfInfo);
+#endif
 
     int setSHADINGTag(SHADING_Tag shadingInfo);
     int getSHADINGTag(SHADING_Tag *shadingInfo);
@@ -608,6 +674,9 @@ class SprdCamera3Setting {
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
     static SprdCameraParameters mDefaultParameters;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CameraMetadata defaultInfo;
+#endif
     camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
     static sprd_setting_info_t s_setting[CAMERA_ID_COUNT];
     static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];

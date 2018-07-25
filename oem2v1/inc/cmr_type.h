@@ -72,6 +72,7 @@ struct zoom_info {
 };
 
 struct cmr_zoom_param {
+    cmr_uint update_sync;
     cmr_uint mode;
     union {
         cmr_uint zoom_level;

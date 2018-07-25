@@ -70,6 +70,10 @@ struct isp_statis_info {
 	cmr_u32 sec;
 	cmr_u32	usec;
 	cmr_s64 monoboottime;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	cmr_u32 valid_sof_idx;
+	cmr_u32 valid_flag;
+#endif
 };
 
 enum isp_fetch_format {

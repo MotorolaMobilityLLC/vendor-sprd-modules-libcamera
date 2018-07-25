@@ -199,6 +199,8 @@ struct preview_param {
     cmr_u32 refocus_eb;
     cmr_u32 pdaf_eb;
     cmr_u32 mode_4in1;
+    cmr_u32 limited_4in1_width;
+    cmr_u32 limited_4in1_height;
     struct cmr_zoom_param zoom_setting;
     struct memory_param memory_setting;
     void *private_data;

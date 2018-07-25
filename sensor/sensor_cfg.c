@@ -90,6 +90,9 @@ extern SENSOR_INFO_T g_ov13855a_mipi_raw_info;
 #ifdef OV13850R2A
 extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
 #endif
+#ifdef OV16885
+extern SENSOR_INFO_T g_ov16885_mipi_raw_info;
+#endif
 
 // imx 258
 #ifdef IMX135
@@ -281,6 +284,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #endif
 #ifdef OV13855A
     {MODULE_SUNNY, "ov13855a", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, &ov13855_altek_drv_entry},
+#endif
+#ifdef OV16885
+    {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, NULL},//{&dw9718s_drv_entry, 0}, &ov13855_drv_entry},
 #endif
 
 // imx area

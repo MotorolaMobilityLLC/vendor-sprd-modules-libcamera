@@ -40,8 +40,6 @@
 
 #define CMR_GRAB_DEV_NAME "/dev/sprd_image"
 
-#define CMR_CPP_DEV_NAME "/dev/sprd_cpp"
-
 #define CMR_CHECK_HANDLE                                                       \
     do {                                                                       \
         if (!p_grab) {                                                         \
@@ -656,6 +654,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.rt_refocus = config->cfg.pdaf_ctrl.mode;
 #endif
     parm.slowmotion = config->cfg.slowmotion;
+    parm.is_high_fps = config->cfg.is_high_fps;
+    parm.high_fps_skip_num = config->cfg.high_fps_skip_num;
 
     parm.crop_rect.x = config->cfg.src_img_rect.start_x;
     parm.crop_rect.y = config->cfg.src_img_rect.start_y;
@@ -795,8 +795,8 @@ cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
     parm.channel_id = buf_cfg->channel_id;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRM_ID_BASE, &parm);
     CMR_RTN_IF_ERR(ret);
-
     /* secondly , set the frame address */
+
     parm.channel_id = buf_cfg->channel_id;
     parm.is_reserved_buf = buf_cfg->is_reserved_buf;
     parm.buf_flag = buf_cfg->flag;
@@ -1244,6 +1244,15 @@ static cmr_s32 cmr_grab_evt_id(cmr_s32 isr_flag) {
         ret = CMR_GRAB_CANCELED_BUF;
         break;
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    case IMG_PATH_SOF:
+        ret = CMR_GRAB_SOF_DONE;
+        break;
+
+    case IMG_TX_RESERVED:
+        ret = CMR_GRAB_TX_RESERVED;
+        break;
+#endif
     default:
         CMR_LOGI("isr_flag 0x%x", isr_flag);
         break;
@@ -1341,8 +1350,26 @@ static void *cmr_grab_thread_proc(void *data) {
             CMR_LOGE("read failed");
             break;
         }
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        if (IMG_PATH_SOF == op.evt) {
+            evt_id = cmr_grab_evt_id(op.evt);
+            frame.channel_id = op.parm.frame.channel_id;
+            CMR_LOGI("frame.channel_id %d", frame.channel_id);
+            if (p_grab->grab_evt_cb) {
+                (*p_grab->grab_evt_cb)(evt_id, &frame,
+                                       (void *)p_grab->init_param.oem_handle);
+            }
+        } else if (IMG_TX_RESERVED == op.evt) {
+            evt_id = cmr_grab_evt_id(op.evt);
+            CMR_LOGI("IMG_TX_RESERVED  ");
+            if (p_grab->grab_evt_cb) {
+                (*p_grab->grab_evt_cb)(evt_id, &frame,
+                                       (void *)p_grab->init_param.oem_handle);
+            }
+        } else if (IMG_TX_STOP == op.evt) {
+#else
         if (IMG_TX_STOP == op.evt) {
+#endif
             // stopped , to do release resource
             CMR_LOGI("TX Stopped, exit thread");
             break;
@@ -1675,15 +1702,22 @@ cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt) {
 
 cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line) {
     cmr_int ret = 0;
+    cmr_u32 is_on;
     struct cmr_grab *p_grab;
 
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
-    ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_PULSE_LINE, &line);
-    if (ret) {
-        CMR_LOGE("error");
+    pthread_mutex_lock(&p_grab->status_mutex);
+    is_on = p_grab->is_on;
+    pthread_mutex_unlock(&p_grab->status_mutex);
+    if (is_on) {
+        ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_PULSE_LINE, &line);
+        if (ret) {
+            CMR_LOGE("error");
+        }
     }
+
     return ret;
 }
 

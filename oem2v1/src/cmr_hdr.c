@@ -413,10 +413,12 @@ static cmr_int hdr_pre_proc(cmr_handle class_handle) {
     }
     message.msg_type = CMR_EVT_HDR_PRE_PROC;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+
     ret = cmr_thread_msg_send(hdr_handle->hdr_thread, &message);
     if (ret) {
         CMR_LOGE("Failed to send one msg to hdr thread.");
     }
+
     return ret;
 }
 
@@ -442,6 +444,7 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
         ret = CMR_CAMERA_INVALID_PARAM;
         return ret;
     }
+
     frame_in_cnt = ++hdr_handle->common.receive_frame_count;
     sensor_id = hdr_handle->common.ipm_cxt->init_in.sensor_id;
     get_sensor_info = hdr_handle->common.ipm_cxt->init_in.get_sensor_info;
@@ -464,9 +467,7 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
         ev_level = OEM_EV_LEVEL_2;
         break;
     }
-
     get_sensor_info(oem_handle, sensor_id, &sensor_info);
-
     CMR_LOGI("HDR enable = %d", hdr_enable);
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
@@ -557,9 +558,9 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
     temp_addr0 = hdr_handle->alloc_addr[0];
     temp_addr1 = hdr_handle->alloc_addr[1];
     temp_addr2 = hdr_handle->alloc_addr[2];
+
     CMR_LOGD("width %d,height %d.", width, height);
     /*save_input_data(width,height);*/
-
     if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
         LAUNCHLOGE(CMR_CAPTURE_RECEIVE_FRAME_T);
         LAUNCHLOGS(CMR_HDR_DO_T);
@@ -686,6 +687,7 @@ static cmr_int hdr_thread_proc(struct cmr_msg *message, void *private_data) {
         cmr_u8 *p = class_handle->alloc_addr[1];
         class_handle->alloc_addr[1] = class_handle->alloc_addr[2];
         class_handle->alloc_addr[2] = p;
+
         hdr_arithmetic(class_handle, &class_handle->dst_addr,
                        class_handle->width, class_handle->height);
         CMR_LOGI("HDR thread proc done ");

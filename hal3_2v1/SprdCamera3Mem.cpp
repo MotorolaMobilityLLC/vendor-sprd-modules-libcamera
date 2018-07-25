@@ -265,7 +265,7 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
         HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
         return -EINVAL;
     }
-    HAL_LOGD("E");
+    HAL_LOGV("E");
 
     int width = ADP_WIDTH(*buffer_handle);
     int height = ADP_HEIGHT(*buffer_handle);
@@ -320,7 +320,7 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
     // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
+    HAL_LOGV("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
              "%d,height =%d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
              mem_info->size, width, height);

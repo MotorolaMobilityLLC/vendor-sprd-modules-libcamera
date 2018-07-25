@@ -540,6 +540,20 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 	return ret;
 }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+cmr_s32 ispalg_effect_frame_cb(cmr_handle isp_alg_handle,cmr_u32 cmd)
+{
+	cmr_int ret = ISP_SUCCESS;
+	if(isp_alg_handle != NULL){
+		struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+		cxt->effect_frame.effect_frame_offset = 2; //fixed offset value
+		ISP_LOGI("[PFC]perframe control setting ioctl cmd: %d effect_frame_offset: %d",cmd,cxt->effect_frame.effect_frame_offset );
+	}else
+		ret = ISP_ERROR;
+	return ret;
+}
+#endif
+
 cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		  cmr_u32 * ae_stat_r, cmr_u32 * ae_stat_g, cmr_u32 * ae_stat_b,
 		  struct awb_size * stat_img_size,
@@ -553,6 +567,13 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	cmr_handle pm_handle = cxt->handle_pm;
+	cmr_s32 bv_gain = 0;
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_BV_BY_GAIN"));
+	}
+
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -605,6 +626,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		gAWBGainB = awb_b_gain;
 
 		calc_param.bv = ae_in->ae_output.cur_bv;
+		calc_param.bv_gain = bv_gain;
 		calc_param.ae_stable = ae_stable;
 		calc_param.isp_mode = cxt->commn_cxt.isp_mode;
 		calc_param.isp_id = ISP_2_0;
@@ -644,6 +666,474 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 
 	return ret;
 }
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+static cmr_int is_setting_handled_per_frame (enum isp_ctrl_cmd cmd) {
+
+	switch (cmd) {
+		case ISP_CTRL_RANGE_FPS:
+		case ISP_CTRL_SET_AE_LOCK_UNLOCK:
+		case ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK:
+		case ISP_CTRL_AE_TOUCH:
+		case ISP_CTRL_AWB_MODE:
+		case ISP_CTRL_SCENE_MODE:
+		case ISP_CTRL_SET_AE_NIGHT_MODE:
+		case ISP_CTRL_EV:
+		case ISP_CTRL_FLICKER:
+		case ISP_CTRL_SPECIAL_EFFECT:
+		case ISP_CTRL_AE_GET_ISO:
+		case ISP_CTRL_AE_GET_EXP_TIME:
+		case ISP_CTRL_BRIGHTNESS:
+		case ISP_CTRL_CONTRAST:
+		case ISP_CTRL_SATURATION:
+		case ISP_CTRL_AE_MEASURE_LUM:
+		case ISP_CTRL_ISO:
+		case ISP_CTRL_SET_AE_EXP_TIME:
+		case ISP_CTRL_SENSITIVITY:
+		case ISP_CTRL_AE_GET_SENSITIVITY:
+			return ISP_PFC_CMD_HANDLED;
+		default:
+			return ISP_CMD_NOT_HANDLED;
+	}
+}
+
+cmr_int ispalg_save_frame_info(struct isp_mw_per_frame_cxt *cxt, enum isp_ctrl_cmd cmd, void *param_ptr, cmr_u32 frame_num) {
+	cmr_int rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	ISP_LOGV("[PFC]: E");
+
+	if (cxt == NULL || param_ptr == NULL) {
+		ISP_LOGE("[PFC] Error exit: param_ptr is NULL");
+		rtn = ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	//Error exit: when result queue index exceeds with settings MAX_SETTING(20)
+	if (cxt->act_set_cnt >= MAX_SETTING) {
+		ISP_LOGE("[PFC] Error exit: No space in cmd_set array with actual count %d", cxt->act_set_cnt);
+		rtn = ISP_ERROR;
+		goto exit;
+	}
+	ISP_LOGI("[PFC]: cmd %d", cmd);
+	switch(cmd) {
+		case ISP_CTRL_AE_GET_ISO:
+		{
+			cxt->get_iso = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->get_iso;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_ISO:
+		{
+			cxt->set_iso = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->set_iso;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_AE_TOUCH:
+		{
+			struct isp_pos_rect *rect = (struct isp_pos_rect *)param_ptr;
+			cxt->ae_rect.start_x = rect->start_x;
+			cxt->ae_rect.start_y = rect->start_y;
+			cxt->ae_rect.end_x = rect->end_x;
+			cxt->ae_rect.end_y = rect->end_y;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->ae_rect;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_AWB_MODE:
+		{
+			cxt->awb_mode = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->awb_mode;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_RANGE_FPS:
+		{
+			struct isp_range_fps *fps = (struct isp_range_fps *)param_ptr;
+			cxt->range_fps.min_fps = fps->min_fps;
+			cxt->range_fps.max_fps = fps->max_fps;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->range_fps;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SET_AE_LOCK_UNLOCK:
+		{
+			cxt->ae_lock = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->ae_lock;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK:
+		{
+			cxt->awb_lock= *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->awb_lock;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SCENE_MODE:
+		case ISP_CTRL_SET_AE_NIGHT_MODE:
+		{
+			cxt->scene_mode = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->scene_mode;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_EV:
+		{
+			cxt->ev_level = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->ev_level;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_FLICKER:
+		{
+			cxt->antibanding_mode = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->antibanding_mode;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SPECIAL_EFFECT:
+		{
+			cxt->effect_mode = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->effect_mode;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_BRIGHTNESS:
+		{
+			cxt->brightness = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->brightness;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_CONTRAST:
+		{
+			cxt->contrast = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->contrast;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SATURATION:
+		{
+			cxt->saturation = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->saturation;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_AE_MEASURE_LUM:
+		{
+			cxt->metering_mode = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->metering_mode;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SET_AE_EXP_TIME:
+		{
+			cxt->set_exp = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para= (void *)&cxt->set_exp;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_SENSITIVITY:
+		{
+			cxt->set_sensitivity = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->set_sensitivity;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		case ISP_CTRL_AE_GET_SENSITIVITY:
+		{
+			cxt->get_sensitivity = *(cmr_u32*)param_ptr;
+			cxt->cmd_set[cxt->act_set_cnt].cmd = cmd;
+			cxt->cmd_set[cxt->act_set_cnt].para = (void *)&cxt->get_sensitivity;
+			cxt->cmd_set[cxt->act_set_cnt].frame_num = frame_num;
+		}
+		break;
+		default:
+		{
+			ISP_LOGE("[PFC] ISP cmd %d not handle", cmd);
+			goto exit;
+		}
+		break;
+	}
+
+	if (ISP_PFC_CMD_HANDLED == is_setting_handled_per_frame(cmd)) {
+		ISP_LOGV("[PFC] [Debug] queue: [updated cmd %d cmd array[%d] frame_num: %d]", cmd, cxt->act_set_cnt, frame_num);
+		cxt->act_set_cnt++;
+	}
+
+exit:
+	ISP_LOGV("[PFC]: X");
+	return rtn;
+}
+
+cmr_int isp_alg_update_result_metadata(cmr_handle isp_alg_handle, struct isp_mw_per_frame_cxt *dst, struct isp_mw_per_frame_cxt *src, enum isp_ctrl_cmd cmd) {
+	cmr_int ret = ISP_SUCCESS;
+	cmr_int i =0;
+	cmr_u32 af_mode = 0;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	ISP_LOGV("[PFC] E");
+
+	if (src == NULL || dst == NULL || cxt == NULL) {
+		ISP_LOGE("[PFC] Error exit: src/dst/cxt is NULL");
+		ret = ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	switch (cmd) {
+		case ISP_CTRL_RANGE_FPS:
+	        {
+	                dst->range_fps.min_fps = src->range_fps.min_fps;
+	                dst->range_fps.max_fps = src->range_fps.max_fps;
+		}
+		break;
+		case ISP_CTRL_SET_AE_LOCK_UNLOCK:
+		{
+			dst->ae_lock = src->ae_lock;
+		}
+		break;
+		case ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK:
+		{
+			dst->awb_lock = src->awb_lock;
+		}
+		break;
+		case ISP_CTRL_AWB_MODE:
+		{
+		        dst->awb_mode = src->awb_mode;
+			if (cxt->commn_cxt.callback != NULL) {
+			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CONVERT_CALLBACK |cmd, (void *)dst, sizeof(struct isp_mw_per_frame_cxt));
+			}
+		}
+		break;
+		case ISP_CTRL_SCENE_MODE:
+		case ISP_CTRL_SET_AE_NIGHT_MODE:
+		{
+			dst->scene_mode = src->scene_mode;
+			if (cxt->commn_cxt.callback != NULL) {
+				cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CONVERT_CALLBACK |cmd, (void *)dst, sizeof(struct isp_mw_per_frame_cxt));
+			}
+		}
+		break;
+		case ISP_CTRL_AE_GET_ISO:
+		{
+			dst->get_iso = src->get_iso;
+		}
+		break;
+		case ISP_CTRL_ISO:
+		{
+			dst->set_iso = src->set_iso;
+		}
+		break;
+		case ISP_CTRL_EV:
+		{
+			dst->ev_level = src->ev_level;
+			if (cxt->commn_cxt.callback != NULL) {
+				cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CONVERT_CALLBACK |cmd, (void *)dst, sizeof(struct isp_mw_per_frame_cxt));
+			}
+		}
+		break;
+		case ISP_CTRL_FLICKER:
+		{
+			dst->antibanding_mode = src->antibanding_mode;
+			if (cxt->commn_cxt.callback != NULL) {
+				cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CONVERT_CALLBACK |cmd, (void *)dst, sizeof(struct isp_mw_per_frame_cxt));
+			}
+		}
+		break;
+		case ISP_CTRL_SPECIAL_EFFECT:
+		{
+			dst->effect_mode = src->effect_mode;
+			if (cxt->commn_cxt.callback != NULL) {
+				cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CONVERT_CALLBACK |cmd, (void *)dst, sizeof(struct isp_mw_per_frame_cxt));
+			}
+		}
+		break;
+		case ISP_CTRL_BRIGHTNESS:
+		{
+			dst->brightness = src->brightness;
+		}
+		break;
+		case ISP_CTRL_CONTRAST:
+		{
+		        dst->contrast = src->contrast;
+		}
+		break;
+		case ISP_CTRL_SATURATION:
+		{
+			dst->saturation = src->saturation;
+		}
+		break;
+		case ISP_CTRL_AE_MEASURE_LUM:
+		{
+			dst->metering_mode = src->metering_mode;
+		}
+		break;
+		case ISP_CTRL_SET_AE_EXP_TIME:
+		{
+			dst->set_exp = src->set_exp;
+		}
+		break;
+		case ISP_CTRL_SENSITIVITY:
+		{
+			dst->set_sensitivity = src->set_sensitivity;
+		}
+		break;
+		case ISP_CTRL_AE_GET_SENSITIVITY:
+		{
+			dst->get_sensitivity = src->get_sensitivity;
+		}
+		break;
+		default:
+			ISP_LOGV("[PFC] No entry matched");
+		break;
+	}
+exit:
+        ISP_LOGV("[PFC] X");
+        return ret;
+}
+
+static cmr_int ispalg_apply_request_setting(cmr_handle isp_alg_handle)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	int valid_index, cur_index, res_index,i;
+	cmr_u32 get_iso = 0;
+	cmr_u32 get_sensitivity = 0;
+	cmr_u32 exposure_time = 0;
+	enum isp_ctrl_cmd io_cmd;
+	void *param_ptr;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	io_fun io_ctrl = NULL;
+	int offset = 0;
+	int apply_settings = FALSE;
+	ISP_LOGV("[PFC]: E");
+
+	if (cxt == NULL) {
+		ISP_LOGE("[PFC] Error exit: param_ptr is NULL");
+		rtn = ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	//Error exit: when framework request frame number exceeds more than 4 than valid_sof_idx
+	 if ((cxt->req_frame_num - cxt->valid_sof_idx)  > MAX_PIPE_LINE_DEPTH) {
+		ISP_LOGE("[PFC] Error exit: cxt->req_frame_num %u  cxt->valid_sof_idx %u",
+			 cxt->req_frame_num, cxt->valid_sof_idx);
+	        rtn = ISP_ERROR;
+		goto exit;
+	 }
+
+	 if (cxt->valid_sof_idx == RESET_VALUE) {
+		cur_index = 0;
+		valid_index = 0;
+		res_index = 0;
+	} else {
+	        cur_index = cxt->valid_sof_idx % MAX_PIPE_LINE_DEPTH;
+		valid_index = (cxt->valid_sof_idx + 1) % MAX_PIPE_LINE_DEPTH;
+		res_index = cxt->valid_sof_idx % (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET);
+	}
+
+	if(((cxt->perCxt_req[cur_index].request_frame_num == cxt->valid_sof_idx) || (cxt->valid_sof_idx == RESET_VALUE)) &&
+			(cxt->perCxt_req[cur_index].is_applied == FALSE) && cxt->perCxt_req[cur_index].act_set_cnt) {
+		valid_index = cur_index;
+		apply_settings = TRUE;
+	} else if (cxt->perCxt_req[valid_index].request_frame_num == (cxt->valid_sof_idx + 1) &&
+			(cxt->perCxt_req[valid_index].is_applied == FALSE) && cxt->perCxt_req[valid_index].act_set_cnt) {
+		apply_settings = TRUE;
+		if(cxt->perCxt_req[valid_index].is_only_capture == 1)
+		{	cxt->valid_sof_idx ++;
+			cxt->reserved_sof_idx --;
+			ISP_LOGI("[PFC] Set valid_sof_idx for capture %d", cxt->valid_sof_idx);
+		}
+	} else {
+        	apply_settings = FALSE;
+		if (cxt->statis_info.valid_flag){
+			ISP_LOGV("[PFC] Frame SOF= %d  NO SETTINGS APPLIED", cxt->perCxt_req[cur_index].request_frame_num);
+		}
+		else{
+			ISP_LOGV("[PFC] Resrved Frame  NO SETTINGS APPLIED");
+       }}
+
+	if(apply_settings) {
+		if (cxt->statis_info.valid_flag){
+		ISP_LOGV(" [PFC] Frame SOF= %d setting apply for frame= %d act_set_cnt %d valid_sof_idx %d, valid_index %d",
+				cxt->perCxt_req[cur_index].request_frame_num,
+				cxt->perCxt_req[valid_index].request_frame_num,
+				cxt->perCxt_req[valid_index].act_set_cnt,
+				cxt->valid_sof_idx, valid_index);
+		}
+		else{
+		ISP_LOGV(" [PFC] RESERVED FRAME setting apply for frame= %d act_set_cnt %d valid_sof_idx %d, valid_index %d",
+                                cxt->perCxt_req[valid_index].request_frame_num,
+                                cxt->perCxt_req[valid_index].act_set_cnt,
+                                cxt->valid_sof_idx, valid_index);
+		}
+
+		for (i = 0; i < cxt->perCxt_req[valid_index].act_set_cnt; i++) {
+			io_cmd = cxt->perCxt_req[valid_index].cmd_set[i].cmd;
+			param_ptr = cxt->perCxt_req[valid_index].cmd_set[i].para;
+			if (NULL == param_ptr) {
+				ISP_LOGE("[PFC] Error: fail to  get valid param !");
+				continue;
+			}
+	                cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
+			ISP_LOGV("[PFC] Request queue [%d]:: [frame_num: %d cmd array [%d]: cmd: %d]", valid_index, cxt->perCxt_req[valid_index].cmd_set[i].frame_num, i, io_cmd);
+			io_ctrl = _ispGetIOCtrlFun(io_cmd);
+			if (NULL != io_ctrl) {
+				rtn = io_ctrl(cxt, param_ptr,  ispalg_effect_frame_cb); //for debug
+				if (rtn) {
+					ISP_LOGE("[PFC] Error exit");
+					goto exit;
+				}
+
+				offset = cxt->effect_frame.effect_frame_offset; //for debug
+				if (0 <= offset && offset <= MAX_ISP_3A_OFFSET) {
+					res_index =  (cxt->perCxt_req[valid_index].request_frame_num  + offset) % (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET);
+					ispalg_save_frame_info(&cxt->perCxt_res[res_index], io_cmd, param_ptr, cxt->perCxt_req[valid_index].cmd_set[i].frame_num);
+				} else
+					ISP_LOGE("[PFC] Error exit: wrong offset");
+			} else {
+					ISP_LOGE("[PFC] io_ctrl fun is null, cmd %d", io_cmd);
+			}
+			cxt->perCxt_req[valid_index].is_applied = 1;
+		}
+		if (cxt->valid_sof_idx == RESET_VALUE)
+			res_index = 0;
+		else
+			res_index = cxt->valid_sof_idx % (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET);
+
+		if (NULL != cxt->commn_cxt.callback) {
+			for (i = 0; i < cxt->perCxt_res[res_index].act_set_cnt; i++) {
+				io_cmd = cxt->perCxt_res[res_index].cmd_set[i].cmd;
+				param_ptr = cxt->perCxt_res[res_index].cmd_set[i].para;
+				ISP_LOGV("[PFC] [Debug] Result queue[%d]:: [frame: %d] callback [cmd: %d]", res_index, cxt->perCxt_res[res_index].request_frame_num, io_cmd);
+				cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CTRL_CALLBACK |io_cmd, param_ptr, sizeof(cmr_int));
+			}
+		}
+	}
+
+exit:
+	cxt->statis_info.valid_flag = 0;
+	ISP_LOGV("[PFC]: X");
+	return rtn;
+}
+#endif
 
 static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 {
@@ -744,13 +1234,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_calc_in in_param;
-	struct awb_gain gain;
-	struct awb_gain cur_gain;
+	struct awb_gain gain = {0, 0, 0};
+	struct awb_gain cur_gain = {0, 0, 0};
 	struct ae_calc_out ae_result;
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 	cmr_u32 awb_mode = 0;
-	struct afl_ctrl_proc_out afl_info;
+	struct afl_ctrl_proc_out afl_info = {0, 0};
 	cmr_int nxt_flicker = 0;
 
 	if (cxt->ops.awb_ops.ioctrl) {
@@ -1171,6 +1661,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->ae_rlt_info.target_lum = ae_in->ae_output.target_lum;
 		ae_info->ae_rlt_info.target_lum_ori = ae_in->ae_output.target_lum_ori;
 		ae_info->ae_rlt_info.flag4idx = ae_in->ae_output.flag4idx;
+		ae_info->ae_rlt_info.face_stable= ae_in->ae_output.face_stable;
 		ae_info->ae_rlt_info.cur_ev = ae_in->ae_output.cur_ev;
 		ae_info->ae_rlt_info.cur_index = ae_in->ae_output.cur_index;
 		ae_info->ae_rlt_info.cur_iso = ae_in->ae_output.cur_iso;
@@ -1870,6 +2361,9 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	struct isp_statis_info *statis_info = NULL;
+#endif
 
 	if (!message || !p_data) {
 		ISP_LOGE("fail to check input param ");
@@ -1885,12 +2379,50 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_SOF:
+		ISP_LOGV(" ISP_CTRL_EVT_SOF:E ");
 		if (cxt->gamma_sof_cnt_eb) {
 			cxt->gamma_sof_cnt++;
 			if (cxt->gamma_sof_cnt >= 2) {
 				cxt->update_gamma_eb = 1;
 			}
 		}
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	statis_info = (struct isp_statis_info *)message->data;
+	if (statis_info != NULL) {
+		cxt->statis_info.valid_flag = statis_info->valid_flag;
+		/*log to be removed later*/
+		if (statis_info->valid_sof_idx != cxt->valid_sof_idx) {
+			if(statis_info->valid_flag == 0)
+			ISP_LOGD("[PFC] Reserved Frame exit: sof idx %d not in sync with global sof idx %d so will not process",
+			statis_info->valid_sof_idx,cxt->valid_sof_idx);
+			else
+			ISP_LOGE("[PFC] ERROR exit: sof idx %d not in sync with global sof idx %d so will not process",
+			statis_info->valid_sof_idx,cxt->valid_sof_idx);
+
+			ret = ISP_ERROR;
+			goto exit;
+		}
+		else {
+		/*log to be removed later*/
+			if(cxt->statis_info.valid_flag){
+			ISP_LOGV("[PFC] [Debug] Frame recieved with sof idx %d valid_flag %d %d global sof idx %d ",
+					statis_info->valid_sof_idx, statis_info->valid_flag, cxt->statis_info.valid_flag,
+					cxt->valid_sof_idx);
+			}
+			else {
+			ISP_LOGV("[PFC] [Debug] RESERVED Frame recieved last sof idx %d valid_flag %d %d global sof idx %d ",
+	                                statis_info->valid_sof_idx, statis_info->valid_flag, cxt->statis_info.valid_flag,
+	                                cxt->valid_sof_idx);
+			}
+		}
+	}
+	ISP_LOGV("[PFC] applying settings: E");
+	ret = ispalg_apply_request_setting((cmr_handle) cxt);
+	if (ret != ISP_SUCCESS) {
+		ISP_LOGE("[PFC] Error: failed to set request setting");//need handle rtn by goto Exit.
+	}
+	ISP_LOGV("[PFC] applying settings: X");
+#endif
 
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
@@ -1900,6 +2432,7 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void *p_data)
 			ISP_LOGE("fail to start awb process");
 		cxt->aem_is_update = 0;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
+                ISP_LOGV(" ISP_CTRL_EVT_SOF:X ");
 		break;
 	case ISP_CTRL_EVT_BINNING:
 		ret = ispalg_binning_stats_parser((cmr_handle) cxt, message->data);
@@ -2269,22 +2802,20 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 is_af_support = 1;
 	struct afctrl_init_in af_input;
-	struct isp_pm_ioctl_input af_pm_input;
-	struct isp_pm_ioctl_output af_pm_output;
 	struct af_log_info af_param = {NULL, 0};
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
-	if (NULL == cxt || NULL == cxt->ioctrl_ptr)
-		return ret;
+	if (NULL == cxt || NULL == cxt->ioctrl_ptr) {
+		ISP_LOGE("fail to check param");
+		return ISP_PARAM_ERROR;
+	}
 
 	if (NULL == cxt->ioctrl_ptr->set_pos)
 		is_af_support = 0;
 
 	memset((void *)&af_input, 0, sizeof(af_input));
-	memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
-	memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
 
 	af_input.camera_id = cxt->camera_id;
 	af_input.lib_param = cxt->lib_use_info->af_lib_info;
@@ -2321,6 +2852,26 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 			af_input.pdaftuning_data_len = output.param_data[0].data_size;
 		}
 	}
+
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE:
+		af_input.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+
+	case ISP_DUAL_NORMAL:
+		af_input.is_multi_mode = ISP_ALG_DUAL_NORMAL;
+		break;
+
+	case ISP_DUAL_SBS:
+		af_input.is_multi_mode = ISP_ALG_DUAL_SBS;
+		break;
+
+	default:
+		af_input.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
+		cxt->is_master, cxt->is_multi_mode);
 
 	af_input.otp_info_ptr = cxt->otp_data;
 	af_input.is_master = cxt->is_master;
@@ -2382,7 +2933,6 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_adv_handle_t lsc_adv_handle = NULL;
 	struct lsc_adv_init_param lsc_param;
 	cmr_handle pm_handle = cxt->handle_pm;
-	cmr_u16 *lsc_table = NULL;
 
 	struct isp_pm_ioctl_input io_pm_input;
 	struct isp_pm_ioctl_output io_pm_output;
@@ -2464,25 +3014,26 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
+	lsc_param.output_gain_pattern = lsc_param.gain_pattern;   //default setting
+	lsc_param.change_pattern_flag = 0;                        //default setting
+	//lsc_param.output_gain_pattern = LSC_GAIN_PATTERN_BGGR;      //camdrv set output lsc pattern
+	//lsc_param.change_pattern_flag = 1;                          //camdrv set pattern flag when changing lsc pattern
+	ISP_LOGV("alsc_init, gain_pattern=%d, output_gain_pattern=%d, flag=%d", lsc_param.gain_pattern, lsc_param.output_gain_pattern, lsc_param.change_pattern_flag);
+
 	lsc_param.is_master     = cxt->is_master;
 	lsc_param.is_multi_mode = cxt->is_multi_mode;
 
-	lsc_table = lsc_param.lsc_otp_table_addr;
 	if (NULL == cxt->lsc_cxt.handle) {
 		if (cxt->ops.lsc_ops.init) {
 			ret = cxt->ops.lsc_ops.init(&lsc_param, &lsc_adv_handle);
 			if (NULL == lsc_adv_handle) {
 				ISP_LOGE("fail to do lsc adv init");
-				if (NULL != lsc_table)
-					free(lsc_table);
 				return ISP_ERROR;
 			}
 		}
 
 		cxt->lsc_cxt.handle = lsc_adv_handle;
 	}
-	if (NULL != lsc_table)
-		free(lsc_table);
 
 	return ret;
 }
@@ -2836,7 +3387,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	}
 
 	ret = isp_pm_sw_init(cxt, input_ptr->init_param);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	cxt->effect_frame.effect_frame_offset = 0;
+#endif
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
 	isp_alg_input.lib_use_info = sensor_raw_info_ptr->libuse_info;
 	isp_alg_input.size.w = input_ptr->init_param->size.w;
@@ -2849,6 +3402,17 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	cxt->valid_flag = 0;
+	cxt->valid_sof_idx = RESET_VALUE;
+	cxt->reserved_sof_idx = 0;
+	cxt->req_frame_num = RESET_VALUE;
+	cxt->statis_info.valid_sof_idx = RESET_VALUE;
+	cxt->statis_info.valid_flag = 0;
+	memset(cxt->perCxt_req, 0 , sizeof(struct isp_mw_per_frame_cxt) * MAX_PIPE_LINE_DEPTH);
+	memset(cxt->perCxt_res, 0 , sizeof(struct isp_mw_per_frame_cxt) * (MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET));
+#endif
 
 	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));
 	if (!binning_info) {
@@ -3340,12 +3904,30 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
 	cmr_s32 mode = 0, dv_mode = 0;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	int  cur_index = 0;
+#endif
 
 	if (!isp_alg_handle || !in_ptr) {
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+                cur_index = cxt->req_frame_num % MAX_PIPE_LINE_DEPTH;
+                /*To hadle FLUSH issue */
+                if (cxt->req_frame_num !=0 && cxt->req_frame_num != RESET_VALUE && cxt->state == ISP_STOP) {
+                                if(cxt->perCxt_req[cur_index].is_only_capture)
+                                               cxt->valid_sof_idx = cxt->req_frame_num;
+                                else
+                                                cxt->valid_sof_idx = cxt->req_frame_num -1;
 
+                                ret = ispalg_apply_request_setting((cmr_handle) cxt);
+                                if (ret == ISP_ERROR) {
+                                                ISP_LOGE("[PFC] Error: failed to set request setting");//need handle rtn by goto Exit.
+                                }
+                                cxt->state = ISP_START;
+                }
+#endif
 	cxt->capture_mode = in_ptr->capture_mode;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
 	cxt->sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
@@ -3507,6 +4089,10 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	cxt->state = ISP_STOP;
+	cxt->valid_flag = 0;
+#endif
 	ISP_RETURN_IF_FAIL(ret, ("fail to stop isp alg fw"));
 
 exit:
@@ -3694,7 +4280,34 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_ctrl_cmd cmd = io_cmd & 0x7fffffff;
 	io_fun io_ctrl = NULL;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	cmr_s32 req_index = 0;
 
+	/*Save settings*/
+	if (ISP_PFC_CMD_HANDLED == is_setting_handled_per_frame(cmd)) {
+		if (param_ptr == NULL) {
+			ISP_LOGE("[PFC] Error exit: param_ptr is NULL");
+			return ISP_PARAM_ERROR;
+		}
+		req_index = cxt->req_frame_num % MAX_PIPE_LINE_DEPTH;
+
+		/*Partial setting handling*/
+		if (cxt->perCxt_req[req_index].request_frame_num == cxt->req_frame_num)
+			cxt->perCxt_req[req_index].is_applied = 0;
+
+		ispalg_save_frame_info(&cxt->perCxt_req[req_index], io_cmd, param_ptr, cxt->perCxt_req[req_index].request_frame_num);
+	} else if (ISP_CMD_NOT_HANDLED == is_setting_handled_per_frame(cmd)) {
+		ISP_LOGD("[PFC] apply setting directly %d", cmd);
+		cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
+		io_ctrl = _ispGetIOCtrlFun(cmd);
+		if (NULL != io_ctrl) {
+			ret = io_ctrl(cxt, param_ptr, call_back);
+		} else {
+			ISP_LOGV("[PFC] io_ctrl fun is null, cmd %d", cmd);
+		}
+			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CTRL_CALLBACK | cmd, NULL, ISP_ZERO);
+	}
+#else
 	cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
 	io_ctrl = _ispGetIOCtrlFun(cmd);
 	if (NULL != io_ctrl) {
@@ -3707,6 +4320,9 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_CTRL_CALLBACK | cmd, NULL, ISP_ZERO);
 	}
 
+#endif
+exit:
+	ISP_LOGV(" X ");
 	return ret;
 }
 

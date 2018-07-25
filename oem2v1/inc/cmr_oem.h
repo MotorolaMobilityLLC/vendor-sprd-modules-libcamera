@@ -43,7 +43,6 @@ extern "C" {
 #define ISP_ANTI_FLICKER_BUF_SIZE (750 * 1024) /* 3120*4*61 */
 #define ISP_ANTI_FLICKER_BUF_NUM 1
 #define ISP_B4AWB_BUF_CNT 2
-#define ISP_B4AWB_BUF_SIZE 640 * 480 * 2
 
 #define ISP_CLOSE_3DNR_TIMEOUT 2 /*sec*/
 /* should only define just one of the following two */
@@ -518,6 +517,11 @@ cmr_int camera_get_grab_capability(cmr_handle oem_handle,
 cmr_int camera_get_isp_handle_raw(cmr_handle, void **isp_handle);
 cmr_int camera_local_start_scale(cmr_handle oem_handle,
                                  struct img_frm **scale_param);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+cmr_uint
+camera_get_isp_per_frame_result(cmr_handle oem_handle,
+                                struct isp_mw_per_frame_cxt *perFrame_res);
+#endif
 
 #ifdef __cplusplus
 }

@@ -74,38 +74,14 @@ namespace sprdcamera {
         s_use_time = (s_end_timestamp - s_start_timestamp) / 1000000;          \
     } while (0)
 #define ZSL_FRAME_TIMEOUT 1000000000LL /*1000ms*/
-#define SET_PARAM_TIMEOUT 2000000000LL /*2000ms*/
 #define CAP_TIMEOUT 5000000000LL       /*5000ms*/
 #define PREV_TIMEOUT 2000000000LL      /*2000ms*/
-#define CAP_START_TIMEOUT 5000000000LL /* 5000ms*/
 #define PREV_STOP_TIMEOUT 3000000000LL /* 3000ms*/
 #define CANCEL_AF_TIMEOUT 500000000LL  /*1000ms*/
 
-#define SET_PARAMS_TIMEOUT 250 /*250 means 250*10ms*/
-#define ON_OFF_ACT_TIMEOUT 50  /*50 means 50*10ms*/
-#define IS_ZOOM_SYNC 0
-#define NO_FREQ_REQ 0
-#define NO_FREQ_STR "0"
-#if defined(CONFIG_CAMERA_SMALL_PREVSIZE)
-#define BASE_FREQ_REQ 192
-#define BASE_FREQ_STR "0" /*base mode can treated with AUTO*/
-#define MEDIUM_FREQ_REQ 200
-#define MEDIUM_FREQ_STR "200000"
-#define HIGH_FREQ_REQ 300
-#define HIGH_FREQ_STR "300000"
-#else
-#define BASE_FREQ_REQ 200
-#define BASE_FREQ_STR "0" /*base mode can treated with AUTO*/
-#define MEDIUM_FREQ_REQ 300
-#define MEDIUM_FREQ_STR "300000"
-#define HIGH_FREQ_REQ 500
-#define HIGH_FREQ_STR "500000"
-#endif
 #define DUALCAM_TIME_DIFF (15e6) /**add for 3d capture*/
 #define DUALCAM_ZSL_NUM (7)      /**add for 3d capture*/
 #define DUALCAM_MAX_ZSL_NUM (4)
-
-#define SHINWHITED_NOT_DETECTFD_MAXNUM 10
 
 // 300 means 300ms
 #define ZSL_SNAPSHOT_THRESHOLD_TIME 300
@@ -117,8 +93,6 @@ enum VIDEO_3DNR {
 };
 
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM /*pre alloc memory for capture*/
-#define HAS_CAMERA_HINTS 1
-//#define CONFIG_NEED_UNMAP
 
 /*ZSL Thread*/
 #define ZSLMode_MONITOR_QUEUE_SIZE 50
@@ -238,7 +212,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
-      mUsingSW3DNR(false), mVideoProcessedWithPreview(false),
+      mUsingSW3DNR(false), mVideoProcessedWithPreview(false), mRedisplayFum(0),
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
       mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
@@ -333,6 +307,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(&mHDRPlusBackupFrm_info, 0, sizeof(frm_info));
     memset(m3DNRGraphicArray, 0, sizeof(m3DNRGraphicArray));
     memset(m3DNRGraphicPathArray, 0, sizeof(m3DNRGraphicPathArray));
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    memset(&mPerFrameResult, 0, sizeof(isp_mw_per_frame_cxt));
+#endif
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -639,7 +616,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
 #ifdef CONFIG_CAMERA_EIS
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        if (sprddefInfo.sprd_eis_enabled == 1) {
+        if (sprddefInfo.sprd_eis_enabled == 1 && mGyroInit) {
             mSprdEisEnabled = true;
         } else {
             mSprdEisEnabled = false;
@@ -700,6 +677,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
     int ret = NO_ERROR;
     int capture_intent = 0;
+    Mutex::Autolock l(&mLock);
 
     HAL_LOGI("channel_type = %d, frame_number = %d", channel_type,
              frame_number);
@@ -802,7 +780,6 @@ int SprdCamera3OEMIf::takePicture() {
     if (isCapturing()) {
         WaitForCaptureDone();
     }
-
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
 
     LENS_Tag lensInfo;
@@ -849,10 +826,24 @@ int SprdCamera3OEMIf::takePicture() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
-    HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
+    HAL_LOGD("mSprdZslEnabled=%d,  mCaptureMode:%d", mSprdZslEnabled,
+             mCaptureMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
              (cmr_uint)mSprdZslEnabled);
 
+    if (mSprdAppmodeId < 0 && (mCaptureMode == CAMERA_NORMAL_MODE) &&
+        (mRawWidth != 0 && mRawHeight != 0) &&
+        (mCaptureWidth != 0 && mCaptureHeight != 0)) {
+        float capture_ratio = mCaptureWidth * 1.0 / mCaptureHeight;
+        float raw_ratio = mRawWidth * 1.0 / mRawHeight;
+        if (capture_ratio != raw_ratio) {
+            HAL_LOGD("raw and capture size ratio is not "
+                     "match, set capture ratio");
+            mSetCapRatioFlag = true;
+            setCameraConvertCropRegion(true);
+            mSetCapRatioFlag = false;
+        }
+    }
     setCameraPreviewFormat();
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (CMR_CAMERA_SUCCESS !=
@@ -872,6 +863,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     ATRACE_CALL();
 
     uint32_t ret = 0;
+    struct timespec t1;
     HAL_LOGI("E");
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -884,7 +876,8 @@ int SprdCamera3OEMIf::zslTakePicture() {
         deinitCapture(mIsPreAllocCapMem);
     }
 
-    mZslSnapshotTime = systemTime();
+    clock_gettime(CLOCK_BOOTTIME, &t1);
+    mZslSnapshotTime = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
 
     if (isCapturing()) {
         WaitForCaptureDone();
@@ -1398,7 +1391,14 @@ status_t SprdCamera3OEMIf::autoFocus() {
                      CAMERA_FOCUS_MODE_AUTO);
         }
     }
-    controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
+    if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
+    } else if (controlInfo.af_mode ==
+               ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+    } else {
+        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
+    }
     mSetting->setAfCONTROLTag(&controlInfo);
     if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
         HAL_LOGE("auto foucs fail.");
@@ -1443,8 +1443,17 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
         if (!(controlInfo.af_state ==
                   ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED &&
               (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START ||
-               controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_IDLE)))
-            controlInfo.af_state = ANDROID_CONTROL_AF_STATE_INACTIVE;
+               controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_IDLE))) {
+            if (controlInfo.af_mode ==
+                    ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+                controlInfo.af_mode ==
+                    ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+                controlInfo.af_state =
+                    ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED;
+            } else {
+                controlInfo.af_state = ANDROID_CONTROL_AF_STATE_INACTIVE;
+            }
+        }
         /*auto focus resume to caf*/
         if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE &&
             mCameraId == 0 && mIsAutoFocus) {
@@ -1522,14 +1531,15 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
     }
     case CAMERA_IOCTRL_GET_FULLSCAN_INFO: {
         int version = *(int *)param2;
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
         struct isp_af_fullscan_info *af_fullscan_info =
             (struct isp_af_fullscan_info *)param1;
-        if (version == 3 && af_fullscan_info->distance_reminder != 1) {
+        if (version == 3 && af_fullscan_info->distance_reminder == 0) {
             mIsBlur2Zsl = true;
         } else {
             mIsBlur2Zsl = false;
         }
-        break;
+        return ret;
     }
     case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
         mNeededTimestamp = *(uint64_t *)param1;
@@ -1591,10 +1601,17 @@ status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state) {
     status_t ret = 0;
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CONTROL_Tag resultInfo;
+    mSetting->getCONTROLTag(&resultInfo);
+    resultInfo.ae_state = state;
+    mSetting->setResultTag(resultInfo);
+    HAL_LOGD("[PFC] ae sta %d", state);
+#else
     mSetting->getCONTROLTag(&controlInfo);
     controlInfo.ae_state = state;
     mSetting->setAeCONTROLTag(&controlInfo);
+#endif
     HAL_LOGD("ae sta %d", state);
     return ret;
 }
@@ -1766,6 +1783,14 @@ void SprdCamera3OEMIf::adjustFpsByTemp() {
 void SprdCamera3OEMIf::setSprdCameraLowpower(int flag) {
     mSprdCameraLowpower = flag;
 }
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+void SprdCamera3OEMIf::setRequestFrameInfo(struct req_frame_info *info) {
+    HAL_LOGD("[PFC] call CAMERA_PARAM_REQ_FRAME_INFO");
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_REQ_FRAME_INFO,
+             (cmr_uint)info);
+}
+#endif
 
 bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
     uint32_t local_width = 0, local_height = 0;
@@ -1973,7 +1998,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
         // 3dnr video recording on
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
-            fps_param.min_fps = 5;
+            fps_param.min_fps = 18;
             if (mUsingSW3DNR) {
                 HAL_LOGD("sw 3dnr mode, adjust max fps to 20");
                 fps_param.max_fps = 20;
@@ -2538,15 +2563,18 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*read refoucs mode begin*/
         if (MODE_SINGLE_CAMERA != mMultiCameraMode &&
             MODE_3D_CAPTURE != mMultiCameraMode &&
-            MODE_BLUR != mMultiCameraMode && MODE_BOKEH != mMultiCameraMode) {
+            MODE_BLUR != mMultiCameraMode && MODE_BOKEH != mMultiCameraMode &&
+            MODE_DUAL_FACEID_REGISTER != mMultiCameraMode &&
+            MODE_DUAL_FACEID_UNLOCK != mMultiCameraMode) {
             mSprdRefocusEnabled = true;
             CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
         }
         /*read refoucs mode end*/
 
         /*read refoucs otp begin*/
-        if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true) &&
-            mCameraId == 0) {
+        if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true ||
+             MODE_DUAL_FACEID_UNLOCK == mMultiCameraMode) &&
+            mCameraId < 2) {
             OTP_Tag otpInfo;
             memset(&otpInfo, 0, sizeof(OTP_Tag));
             mSetting->getOTPTag(&otpInfo);
@@ -2611,7 +2639,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
         for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-            HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
+            HAL_LOGV("trim w=%d, h=%d", mode_info[i].trim_width,
                      mode_info[i].trim_height);
             if (mode_info[i].trim_width * mode_info[i].trim_height >=
                 sprddefInfo.sprd_3dcalibration_cap_size[0] *
@@ -2622,7 +2650,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                     mode_info[i].trim_height;
             }
         }
-        HAL_LOGI("sprd_3dcalibration_cap_size w=%d, h=%d",
+        HAL_LOGV("sprd_3dcalibration_cap_size w=%d, h=%d",
                  sprddefInfo.sprd_3dcalibration_cap_size[0],
                  sprddefInfo.sprd_3dcalibration_cap_size[1]);
         mSetting->setSPRDDEFTag(sprddefInfo);
@@ -3210,6 +3238,20 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
     }
 
+    // if raw szie ratio is not match capture size ratio, need
+    // set crop again for it might be set by takePicture.
+    if (mSprdAppmodeId < 0 && (mRawWidth != 0 && mRawHeight != 0) &&
+        (mCaptureWidth != 0 && mCaptureHeight != 0)) {
+        float capture_ratio = mCaptureWidth * 1.0 / mCaptureHeight;
+        float raw_ratio = mRawWidth * 1.0 / mRawHeight;
+        if (capture_ratio != raw_ratio) {
+            HAL_LOGD("raw and capture size ratio is not "
+                     "match, set raw ratio again");
+            mSetCapRatioFlag = false;
+            setCameraConvertCropRegion(true);
+        }
+    }
+
     HAL_LOGD("mCaptureMode=%d", mCaptureMode);
     ret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
     if (ret != CMR_CAMERA_SUCCESS) {
@@ -3770,6 +3812,76 @@ void SprdCamera3OEMIf::calculateTimestampForSlowmotion(int64_t frm_timestamp) {
     mSlowPara.last_frm_timestamp = frm_timestamp;
 }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+void SprdCamera3OEMIf::updateResultMetadata(uint32_t frame_num) {
+    uint8_t antibandingMode;
+    uint8_t effect_mode;
+    uint8_t scene_mode;
+    uint8_t awbMode;
+    int i = 0;
+    struct img_rect sensor_trim = {0, 0, 0, 0};
+    struct img_rect ae_aera = {0, 0, 0, 0};
+    CONTROL_Tag resultInfo;
+    SENSOR_Tag resultSensorInfo;
+    SENSOR_Tag sensorInfo;
+    CONTROL_Tag controlInfo;
+    SPRD_DEF_Tag sprddeResultfInfo;
+    mSetting->getSENSORTag(&sensorInfo);
+    mSetting->getResultTag(&resultInfo);
+    mSetting->getResultSENSORTag(&resultSensorInfo);
+    mSetting->getSPRDDefResultfInfo(&sprddeResultfInfo);
+    HAL_LOGV("E");
+
+    mPerFrameResult.request_frame_num = frame_num;
+    if (CMR_CAMERA_SUCCESS !=
+        mHalOem->ops->camera_get_isp_perFrame_result(mCameraHandle,
+                                                     &mPerFrameResult)) {
+        HAL_LOGE("[PFC] param null");
+        goto exit;
+    }
+
+    /*ANDROID_CONTROL_AE_TARGET_FPS_RANGE*/
+    resultInfo.ae_target_fps_range[0] = mPerFrameResult.range_fps.min_fps;
+    resultInfo.ae_target_fps_range[1] = mPerFrameResult.range_fps.max_fps;
+    /*ANDROID_CONTROL_AE_LOCK*/
+    resultInfo.ae_lock = mPerFrameResult.ae_lock;
+    /*ANDROID_CONTROL_AWB_LOCK*/
+    resultInfo.awb_lock = mPerFrameResult.awb_lock;
+    resultInfo.ae_exposure_compensation = mPerFrameResult.ev_level;
+    resultInfo.antibanding_mode = mPerFrameResult.antibanding_mode;
+    resultInfo.effect_mode = mPerFrameResult.effect_mode;
+    /*ANDROID_CONTROL_AWB_MODE*/
+    resultInfo.awb_mode = mPerFrameResult.awb_mode;
+    /*ANDROID_CONTROL_SCENE_MODE*/
+    resultInfo.scene_mode = mPerFrameResult.scene_mode;
+    sprddeResultfInfo.brightness = mPerFrameResult.brightness;
+    sprddeResultfInfo.contrast = mPerFrameResult.contrast;
+    sprddeResultfInfo.saturation = mPerFrameResult.saturation;
+    sprddeResultfInfo.iso = mPerFrameResult.get_iso;
+    if (0 != mPerFrameResult.request_frame_num)
+        resultSensorInfo.sensitivity = mPerFrameResult.get_sensitivity;
+    else
+        resultSensorInfo.sensitivity = sensorInfo.sensitivity;
+
+    HAL_LOGI("[PFC] [Debug] Frame: [%d] [fps: [%d %d] ae_lock: %d awb_mode: %d "
+             "awb_lock: %d scene_mode: %d effect_mode: %d ev_level: %d "
+             "antibanding_mode: %d iso: %d sensitivity: %d]",
+             frame_num, mPerFrameResult.range_fps.min_fps,
+             mPerFrameResult.range_fps.max_fps, mPerFrameResult.ae_lock,
+             mPerFrameResult.awb_mode, mPerFrameResult.awb_lock,
+             mPerFrameResult.scene_mode, mPerFrameResult.effect_mode,
+             mPerFrameResult.ev_level, mPerFrameResult.antibanding_mode,
+             mPerFrameResult.get_iso, mPerFrameResult.get_sensitivity);
+
+    mSetting->setResultTag(resultInfo);
+    mSetting->setResultSENSORTag(resultSensorInfo);
+    mSetting->setSPRDDefResultfInfo(sprddeResultfInfo);
+
+exit:
+    HAL_LOGV("X");
+}
+#endif
+
 void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     ATRACE_CALL();
 
@@ -3862,7 +3974,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 mIsUpdateRangeFps = false;
             } else {
                 timestamp = frame->timestamp - mPrvBufferTimestamp;
-                HAL_LOGD("timestamp is %lld", timestamp);
+                HAL_LOGV("timestamp is %lld", timestamp);
                 if ((timestamp > fps_range_low) && (timestamp < fps_range_up)) {
                     buffer_timestamp_fps = frame->timestamp;
                 } else {
@@ -3891,14 +4003,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #else
     int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
-    SENSOR_Tag sensorInfo;
-
-    mSetting->getSENSORTag(&sensorInfo);
-    ret = mHalOem->ops->camera_get_rolling_shutter(
-        mCameraHandle, &(sensorInfo.rollingShutterSkew));
+    int64_t rollingShutterSkew = 0;
+    ret = mHalOem->ops->camera_get_rolling_shutter(mCameraHandle,
+                                                   &rollingShutterSkew);
     if (ret)
         CMR_LOGE("Failed to update rolling shutter skew");
-    sensorInfo.sensor_timestamp = buffer_timestamp;
+    else {
+        mSetting->setRollingShutterTag(rollingShutterSkew);
+    }
+    mSetting->setSensorTimestampTag(buffer_timestamp);
+
     // use boottime not monotonic time for AR
     buffer_timestamp = frame->monoboottime;
     if (0 == buffer_timestamp)
@@ -3951,8 +4065,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
     beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
 #endif
-    sensorInfo.timestamp = buffer_timestamp;
-    mSetting->setSENSORTag(sensorInfo);
 
     if (channel == NULL) {
         HAL_LOGE("channel=%p", channel);
@@ -3999,6 +4111,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
                                frame->width * frame->height * 3 / 2);
             }
+        } else if (!isPreviewing() && frame->type == PREVIEW_FRAME) {
+            HAL_LOGD("discarding preview frame while stopping preview");
+            goto exit;
         }
     } else if (PREVIEW_ZSL_FRAME != frame->type) {
         deinit_fb_handle(&face_beauty);
@@ -4102,6 +4217,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (ret) {
             pre_stream = NULL;
 
+            goto bypass_pre;
+        }
+
+        if (mRedisplayFum && mRedisplayFum == frame_num) {
+            HAL_LOGD("redisplay frame,skip");
             goto bypass_pre;
         }
 
@@ -4380,11 +4500,9 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(
                     ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
                                                         &addr_phy, &ion_fd);
             } else {
-                ret = pre_stream->getQBuffFirstVir(&addr_vir);
-                if (ret == NO_ERROR) {
-                    ret = pre_stream->getQBuffFirstNum(&frame_num);
-                }
-                pre_stream->getQBuffFirstFd(&ion_fd);
+                frame_num = mPictureFrameNum;
+                ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
+                                                    &addr_phy, &ion_fd);
             }
             HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d, ret = %d", addr_vir,
                      frame_num, ret);
@@ -4467,9 +4585,11 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
                 SprdCamera3RegularChannel *regularChannel =
                     reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
                 if (regularChannel) {
-                    regularChannel->channelClearInvalidQBuff(
-                        mPictureFrameNum, timestamp,
-                        CAMERA_STREAM_TYPE_PREVIEW);
+                    if (mRedisplayFum && frame_num != mRedisplayFum) {
+                        regularChannel->channelClearInvalidQBuff(
+                            mPictureFrameNum, timestamp,
+                            CAMERA_STREAM_TYPE_PREVIEW);
+                    }
                     regularChannel->channelClearInvalidQBuff(
                         mPictureFrameNum, timestamp,
                         CAMERA_STREAM_TYPE_CALLBACK);
@@ -4701,23 +4821,6 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
             goto exit;
         }
         dst_vaddr = (cmr_uint)mReDisplayHeap->data;
-
-        // workaround patch to skip rediplay if aspect ratio of prev and capture
-        // do not match
-        // when sw trim is fixed, we will remove this patch
-        cmr_int match_ratio = 0;
-        float input_ratio = (float)frame->width / frame->height;
-        float output_ratio = (float)dst_width / dst_height;
-        if (fabsf(input_ratio - output_ratio) < 0.015) {
-            match_ratio = 1;
-        }
-        if (!match_ratio) {
-            HAL_LOGE(
-                "scale erro: cfg_params ratio does not match,skip redisplay");
-            goto exit;
-        }
-        // end workaround
-
         ret = mHalOem->ops->camera_get_redisplay_data(
             mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
             frame->fd, frame->y_phy_addr, frame->uv_phy_addr, frame->y_vir_addr,
@@ -4761,6 +4864,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     unsigned char is_raw_capture = 0;
     void *ispInfoAddr = NULL;
     int ispInfoSize = 0;
+    int64_t exposureTime = 0;
 
     HAL_LOGD("E encInfo->size = %d, enc->buffer = %p, encInfo->need_free = %d "
              "time=%lld",
@@ -4772,17 +4876,17 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-    SENSOR_Tag sensorInfo;
-    mSetting->getSENSORTag(&sensorInfo);
     if (0 != frame->sensor_info.exposure_time_denominator) {
-        sensorInfo.exposure_time = 1000000000ll *
-                                   frame->sensor_info.exposure_time_numerator /
-                                   frame->sensor_info.exposure_time_denominator;
+        exposureTime = 1000000000ll *
+                       frame->sensor_info.exposure_time_numerator /
+                       frame->sensor_info.exposure_time_denominator;
+        mSetting->setExposureTimeTag(exposureTime);
     }
-    sensorInfo.timestamp = frame->timestamp;
-    mSetting->setSENSORTag(sensorInfo);
-    timestamp = sensorInfo.timestamp;
+    timestamp = frame->timestamp;
+
+    SENSOR_Tag sensorInfo;
     SENSOR_Tag resultInfo;
+    mSetting->getSENSORTag(&sensorInfo);
     mSetting->getResultSENSORTag(&resultInfo);
     resultInfo.exposure_time = sensorInfo.exposure_time;
     mSetting->setResultSENSORTag(resultInfo);
@@ -4873,21 +4977,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         setCaptureReprocessMode(false, mRawWidth, mRawHeight);
     }
 
-    if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
-        mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||
-        mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
-        SprdCamera3RegularChannel *regularChannel =
-            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-        if (regularChannel) {
-            regularChannel->channelClearInvalidQBuff(
-                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-            regularChannel->channelClearInvalidQBuff(
-                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_VIDEO);
-            regularChannel->channelClearInvalidQBuff(
-                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
-        }
-    }
-
     if (encInfo->need_free) {
         if (!iSZslMode() && !mHDRPlusFillState) {
             deinitCapture(mIsPreAllocCapMem);
@@ -4905,6 +4994,21 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
 exit:
+    if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
+        mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||
+        mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
+        SprdCamera3RegularChannel *regularChannel =
+            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        if (regularChannel) {
+            regularChannel->channelClearInvalidQBuff(
+                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+            regularChannel->channelClearInvalidQBuff(
+                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_VIDEO);
+            regularChannel->channelClearInvalidQBuff(
+                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+        }
+    }
+
     HAL_LOGD("X");
 }
 
@@ -5116,13 +5220,24 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void *parm4) {
                  getCameraStateStr(tmpPrevState));
         transitionState(tmpPrevState, SPRD_ERROR, STATE_PREVIEW);
     }
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CONTROL_Tag resultInfo;
+    mSetting->getResultTag(&resultInfo);
+    resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
+    resultInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
+    HAL_LOGD("[PFC] ae_state %d awb_state %d", resultInfo.ae_state,
+             resultInfo.awb_state);
+    mSetting->setResultTag(resultInfo);
+#else
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
-    controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
+    if (ANDROID_CONTROL_AE_STATE_LOCKED != controlInfo.ae_state) {
+        controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
+    }
     controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
     mSetting->setAeCONTROLTag(&controlInfo);
     mSetting->setAwbCONTROLTag(&controlInfo);
+#endif
     HAL_LOGD("state = %s", getCameraStateStr(getPreviewState()));
     ATRACE_END();
 }
@@ -5374,6 +5489,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
     HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCaptureState()));
     int32_t ret = 0;
+    int64_t rollingShutterSkew = 0;
 
     switch (cb) {
     case CAMERA_RSP_CB_SUCCESS:
@@ -5381,15 +5497,15 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("CAMERA_EXIT_CB_DONE");
-        SENSOR_Tag sensorInfo;
-        mSetting->getSENSORTag(&sensorInfo);
         LAUNCHLOGS(CMR_CAPTURE_HAL_CB_T);
 
-        ret = mHalOem->ops->camera_get_rolling_shutter(
-            mCameraHandle, &(sensorInfo.rollingShutterSkew));
-        if (ret)
+        ret = mHalOem->ops->camera_get_rolling_shutter(mCameraHandle,
+                                                       &rollingShutterSkew);
+        if (ret) {
             CMR_LOGE("Failed to update rolling shutter skew");
-        mSetting->setSENSORTag(sensorInfo);
+        } else {
+            mSetting->setRollingShutterTag(rollingShutterSkew);
+        }
         if (!WaitForCaptureJpegState()) {
             // HAL_LOGE("state error");
             break;
@@ -5555,14 +5671,31 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CONTROL_Tag resultInfo;
+    mSetting->getResultTag(&resultInfo);
+#else
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
+#endif
     HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
 
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        if (resultInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
+            resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+        }
+        if (resultInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
+            resultInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
+        }
+
+        mSetting->setResultTag(resultInfo);
+        HAL_LOGV(
+            "[PFC] CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d awb_state = %d",
+            resultInfo.ae_state, resultInfo.awb_state);
+#else
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
             mSetting->setAeCONTROLTag(&controlInfo);
@@ -5573,18 +5706,33 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
         HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
+#endif
         break;
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
-        // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
-        // mSetting->setAeCONTROLTag(&controlInfo);
+// controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
+// mSetting->setAeCONTROLTag(&controlInfo);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
+        mSetting->setResultTag(resultInfo);
+        HAL_LOGI("[PFC] CAMERA_EVT_CB_AE_LOCK_NOTIFY, ae_state = %d",
+                 resultInfo.ae_state);
+#else
         HAL_LOGI("CAMERA_EVT_CB_AE_LOCK_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
+#endif
         break;
     case CAMERA_EVT_CB_AE_UNLOCK_NOTIFY:
-        // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
-        // mSetting->setAeCONTROLTag(&controlInfo);
+// controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+// mSetting->setAeCONTROLTag(&controlInfo);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+        mSetting->setResultTag(resultInfo);
+        HAL_LOGI("[PFC] CAMERA_EVT_CB_AE_UNLOCK_NOTIFY, ae_state = %d",
+                 resultInfo.ae_state);
+#else
         HAL_LOGI("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
+#endif
         break;
     case CAMERA_EVT_CB_AE_FLASH_FIRED:
         SPRD_DEF_Tag sprddefInfo;
@@ -5610,6 +5758,20 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGD("sprdInfo.sprd_ai_scene_type_current :%u",
                  sprdInfo.sprd_ai_scene_type_current);
     } break;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    case CAMERA_EVT_CB_AWB_LOCK_NOTIFY:
+        resultInfo.awb_state = ANDROID_CONTROL_AWB_STATE_LOCKED;
+        mSetting->setResultTag(resultInfo);
+        HAL_LOGI("[PFC] CAMERA_EVT_CB_AWB_LOCK_NOTIFY, awb_state = %d",
+                 resultInfo.awb_state);
+        break;
+    case CAMERA_EVT_CB_AWB_UNLOCK_NOTIFY:
+        resultInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
+        mSetting->setResultTag(resultInfo);
+        HAL_LOGI("[PFC] CAMERA_EVT_CB_AWB_UNLOCK_NOTIFY, awb_state = %d",
+                 resultInfo.awb_state);
+        break;
+#endif
     default:
         break;
     }
@@ -5636,6 +5798,66 @@ void SprdCamera3OEMIf::HandleStopCamera(enum camera_cb_type cb, void *parm4) {
     HAL_LOGD("out, state = %s", getCameraStateStr(getCameraState()));
 }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+void SprdCamera3OEMIf::HandleConvertToAndroid(enum camera_cb_type cb,
+                                              void *parm4) {
+    CONTROL_Tag controlInfo;
+    uint8_t param;
+    struct isp_mw_per_frame_cxt *dst = (struct isp_mw_per_frame_cxt *)parm4;
+
+    if (dst == NULL) {
+        HAL_LOGE("[PFC] param is NULL");
+        return;
+    }
+    HAL_LOGD("[PFC] cb = %d", cb);
+    switch (cb) {
+    case CAMERA_EVT_CB_CONVERT_AWB_MODE: {
+        mSetting->androidDrvAwbModeToAwbMode(dst->awb_mode, &param);
+        dst->awb_mode = param;
+        HAL_LOGV("[PFC] converted back to hal compatible awb mode %d",
+                 dst->awb_mode);
+        break;
+    }
+    case CAMERA_EVT_CB_CONVERT_SCENE_MODE: {
+        mSetting->androidDrvSceneModeToSceneMode(dst->scene_mode, &param);
+        dst->scene_mode = param;
+        HAL_LOGV("[PFC] converted back to hal compatible scene mode %d",
+                 dst->scene_mode);
+        break;
+    }
+    case CAMERA_EVT_CB_CONVERT_ANTIBANDING_MODE: {
+        mSetting->drvAntibandingModeToAndroidAntibandingMode(
+            dst->antibanding_mode, &param);
+        dst->antibanding_mode = param;
+        HAL_LOGV("[PFC] converted back to hal compatible antibanding mode %d",
+                 dst->antibanding_mode);
+        break;
+    }
+    case CAMERA_EVT_CB_CONVERT_EFFECT_MODE: {
+        mSetting->drvModeToAndroidEffectMode(dst->effect_mode, &param);
+        dst->effect_mode = param;
+        HAL_LOGV("[PFC] converted back to hal compatible effect mode %d",
+                 dst->effect_mode);
+        break;
+    }
+    case CAMERA_EVT_CB_CONVERT_EV: {
+        mSetting->getCONTROLTag(&controlInfo);
+        HAL_LOGV("[PFC] converted before convert ev level %d", dst->ev_level);
+        HAL_LOGV("[PFC] ae_compensation_range[1] %d",
+                 controlInfo.ae_compensation_range[1]);
+        dst->ev_level =
+            2 * dst->ev_level - controlInfo.ae_compensation_range[1];
+        HAL_LOGV("[PFC] converted back to hal compatible ev level %d",
+                 dst->ev_level);
+        break;
+    }
+    default:
+        HAL_LOGD("[PFC] case not handled");
+        break;
+    }
+}
+#endif
+
 void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
                                  const void *client_data,
                                  enum camera_func_type func, void *parm4) {
@@ -5652,6 +5874,12 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
     case CAMERA_FUNC_STOP_PREVIEW:
         obj->HandleStopPreview(cb, parm4);
         break;
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    case CAMERA_FUNC_CONVERT_PARAM:
+        obj->HandleConvertToAndroid(cb, parm4);
+        break;
+#endif
 
     case CAMERA_FUNC_RELEASE_PICTURE:
         obj->HandleCancelPicture(cb, parm4);
@@ -5784,7 +6012,7 @@ void SprdCamera3OEMIf::setCamPreformaceScene(
     }
 }
 
-int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
+int SprdCamera3OEMIf::setCameraConvertCropRegion(bool update_sync) {
     float zoomWidth, zoomHeight, zoomRatio = 1.0f;
     float prevAspectRatio, capAspectRatio, videoAspectRatio;
     float sensorAspectRatio, outputAspectRatio;
@@ -5803,9 +6031,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     cropRegion.start_y = scaleInfo.crop_region[1];
     cropRegion.width = scaleInfo.crop_region[2];
     cropRegion.height = scaleInfo.crop_region[3];
-    HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d",
+    HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d, update_sync:%d",
              cropRegion.start_x, cropRegion.start_y, cropRegion.width,
-             cropRegion.height);
+             cropRegion.height, update_sync);
 
     mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
 
@@ -5862,6 +6090,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO)
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
 
+    mZoomInfo.update_sync = update_sync ? 1 : 0;
     mZoomInfo.mode = ZOOM_INFO;
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = prevAspectRatio;
@@ -5988,6 +6217,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    CONTROL_Tag resultInfo;
+    mSetting->getResultTag(&resultInfo);
+#endif
+
     mSetting->getSENSORTag(&sensorInfo);
     mSetting->getCONTROLTag(&controlInfo);
     switch (cameraParaTag) {
@@ -6001,6 +6235,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
+        HAL_LOGV(" controlInfo.scene_mode: %d drvSceneMode: %d",
+                 controlInfo.scene_mode, drvSceneMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
     } break;
 
@@ -6021,10 +6257,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
         HAL_LOGD("awb mode:%d", controlInfo.awb_mode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbMode);
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
         if (controlInfo.awb_mode != ANDROID_CONTROL_AWB_MODE_AUTO)
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
         else if (!controlInfo.awb_lock)
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
+#endif
     } break;
 
     case ANDROID_CONTROL_AWB_LOCK: {
@@ -6034,14 +6272,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (awb_lock && controlInfo.awb_mode == ANDROID_CONTROL_AWB_MODE_AUTO) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
                      awb_lock);
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_LOCKED;
             mSetting->setAwbCONTROLTag(&controlInfo);
+#endif
         } else if (!awb_lock &&
                    controlInfo.awb_state == ANDROID_CONTROL_AWB_STATE_LOCKED) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
                      awb_lock);
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
             mSetting->setAwbCONTROLTag(&controlInfo);
+#endif
         }
     } break;
 
@@ -6136,6 +6378,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         fb_param.largeLevel = sprddefInfo.perfect_skin_level[8];
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL,
                  (cmr_uint) & (fb_param));
+        mFbOn = fb_param.blemishLevel || fb_param.smoothLevel ||
+                fb_param.skinColor || fb_param.skinLevel ||
+                fb_param.brightLevel || fb_param.lipColor ||
+                fb_param.lipLevel || fb_param.slimLevel || fb_param.largeLevel;
+
     } break;
     case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6176,6 +6423,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                     AfMode) { /*dv mode but recording not start*/
                 AfMode = CAMERA_FOCUS_MODE_CAF_VIDEO;
             }
+            HAL_LOGD(" AfMode: %d", AfMode);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, AfMode);
         }
     } break;
@@ -6226,38 +6474,43 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_CONTROL_AE_MODE:
-        if (mCameraId == 0 || mCameraId == 1) {
-            int8_t drvAeMode;
-            mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
+        int8_t drvAeMode;
+        mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
-            HAL_LOGD("ae_mode:%d, drvAeMode:%d, mFlashMode:%d",
-                     controlInfo.ae_mode, drvAeMode, mFlashMode);
+        HAL_LOGD("ae_mode:%d, drvAeMode:%d, mFlashMode:%d", controlInfo.ae_mode,
+                 drvAeMode, mFlashMode);
 
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
-                     controlInfo.ae_mode);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
+                 controlInfo.ae_mode);
 
-            if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
-                if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
-                    mFlashMode != CAMERA_FLASH_MODE_TORCH) {
-                    if (mFlashMode != drvAeMode) {
-                        mFlashMode = drvAeMode;
-                        HAL_LOGD(
-                            "set flash mode capture_state:%d mFlashMode:%d",
-                            mCameraState.capture_state, mFlashMode);
-                        if (mCameraState.capture_state ==
-                            SPRD_FLASH_IN_PROGRESS) {
-                            break;
-                        } else {
-                            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                                     mFlashMode);
-                        }
-                        if (controlInfo.ae_state !=
-                            ANDROID_CONTROL_AE_STATE_LOCKED) {
-                            controlInfo.ae_state =
-                                ANDROID_CONTROL_AE_STATE_SEARCHING;
-                            mSetting->setAeCONTROLTag(&controlInfo);
-                        }
+        if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+            if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
+                mFlashMode != CAMERA_FLASH_MODE_TORCH) {
+                if (mFlashMode != drvAeMode) {
+                    mFlashMode = drvAeMode;
+                    HAL_LOGD("set flash mode capture_state:%d mFlashMode:%d",
+                             mCameraState.capture_state, mFlashMode);
+                    if (mCameraState.capture_state == SPRD_FLASH_IN_PROGRESS) {
+                        break;
+                    } else {
+                        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
+                                 mFlashMode);
                     }
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+                    if (resultInfo.ae_state !=
+                        ANDROID_CONTROL_AE_STATE_LOCKED) {
+                        resultInfo.ae_state =
+                            ANDROID_CONTROL_AE_STATE_SEARCHING;
+                        mSetting->setResultTag(resultInfo);
+                    }
+#else
+                    if (controlInfo.ae_state !=
+                        ANDROID_CONTROL_AE_STATE_LOCKED) {
+                        controlInfo.ae_state =
+                            ANDROID_CONTROL_AE_STATE_SEARCHING;
+                        mSetting->setAeCONTROLTag(&controlInfo);
+                    }
+#endif
                 }
             }
         }
@@ -6270,14 +6523,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (ae_lock && controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
             mSetting->setAeCONTROLTag(&controlInfo);
+#endif
         } else if (!ae_lock &&
                    controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
             mSetting->setAeCONTROLTag(&controlInfo);
+#endif
         }
     } break;
 
@@ -6286,6 +6543,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         struct img_rect sensor_trim = {0, 0, 0, 0};
         struct img_rect ae_aera = {0, 0, 0, 0};
 
+        HAL_LOGD(" ae_regions [0] %d [1] %d [2] %d [3] %d [4] %d",
+                 controlInfo.ae_regions[0], controlInfo.ae_regions[1],
+                 controlInfo.ae_regions[2], controlInfo.ae_regions[3],
+                 controlInfo.ae_regions[4]);
         ae_aera.start_x = controlInfo.ae_regions[0];
         ae_aera.start_y = controlInfo.ae_regions[1];
         ae_aera.width = controlInfo.ae_regions[2] - controlInfo.ae_regions[0];
@@ -6304,7 +6565,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         ae_param.win_area.rect[0].width = ae_aera.width;
         ae_param.win_area.rect[0].height = ae_aera.height;
 
-        HAL_LOGI("after crop ae region is %d %d %d %d",
+        HAL_LOGV("after crop ae region is %d %d %d %d",
                  ae_param.win_area.rect[0].start_x,
                  ae_param.win_area.rect[0].start_y,
                  ae_param.win_area.rect[0].width,
@@ -6478,8 +6739,31 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
     case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag sprddefInfo;
+        char value[PROPERTY_VALUE_MAX] = {
+            0,
+        };
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
+                 sprddefInfo.sprd_appmode_id);
+
+        if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
+            (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
+            (CAMERA_MODE_3DNR_PHOTO != mSprdAppmodeId) && (0 == mFbOn) &&
+            (0 == mMultiCameraMode) &&
+            (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
+            (false == mRecordingMode)) {
+            property_get("persist.sys.cam.cnr.mode", value, "0");
+            if (atoi(value)) {
+                mCNRMode = 1;
+            }
+        } else {
+            mCNRMode = 0;
+        }
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR,
+                 mCNRMode);
+
+        HAL_LOGD("mCNRMode = %d  ", mCNRMode);
     } break;
 
     case ANDROID_SPRD_3DNR_ENABLED: /*add for 3dnr*/
@@ -6667,7 +6951,12 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
             mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
             mRecordingMode = false;
-            mPicCaptureCnt = 100;
+            if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
+                mSprdAppmodeId == CAMERA_MODE_MANUAL) {
+                mPicCaptureCnt = 1;
+            } else {
+                mPicCaptureCnt = 100;
+            }
             mZslPreviewMode = false;
             if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
                 HAL_LOGE("enter isp tuning mode ");
@@ -9319,7 +9608,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             break;
         }
 
-        if (mZslSnapshotTime > zsl_frame.timestamp) {
+        if (mZslSnapshotTime > zsl_frame.timestamp &&
+            (getMultiCameraMode() != MODE_BOKEH)) {
             diff_ms = (mZslSnapshotTime - zsl_frame.timestamp) / 1000000;
             HAL_LOGV("diff_ms=%lld", diff_ms);
             // make single capture frame time > mZslSnapshotTime
@@ -9335,7 +9625,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         // single capture wait the caf focused frame
         if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
-            zsl_frame.timestamp < obj->mLastCafDoneTime) {
+            zsl_frame.timestamp < obj->mLastCafDoneTime &&
+            (getMultiCameraMode() != MODE_BOKEH)) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
@@ -9661,7 +9952,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
     memset(&frame_out_preview, 0x00, sizeof(vsOutFrame));
 
     if (mGyromaxtimestamp) {
-        HAL_LOGD("in frame timestamp: %lf, mGyromaxtimestamp %lf",
+        HAL_LOGV("in frame timestamp: %lf, mGyromaxtimestamp %lf",
                  frame_in.timestamp, mGyromaxtimestamp);
         video_stab_write_frame(mPreviewInst, &frame_in);
         do {
@@ -9682,30 +9973,29 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             }
             ret_eis = video_stab_check_gyro(mPreviewInst);
             if (ret_eis == 0) {
-                HAL_LOGD("gyro is ready ");
+                HAL_LOGV("gyro is ready ");
                 break;
             } else {
                 ret_eis = 1;
-                HAL_LOGD("gyro is NOT ready,check  gyro again");
+                HAL_LOGV("gyro is NOT ready,check  gyro again");
             }
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
                                      mReadGyroPreviewLock, 30000000))) {
-                HAL_LOGD("gyro data is too slow for eis process");
+                HAL_LOGW("gyro data is too slow for eis process");
                 break;
             }
         } while (ret_eis == 1);
 
         ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
         if (ret_eis == 0)
-            HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+            HAL_LOGV("out frame_num =%d,frame timestamp %lf, frame_out %p",
                      frame_out_preview.frame_num, frame_out_preview.timestamp,
                      frame_out_preview.frame_data);
         else
-            HAL_LOGD("no frame out");
+            HAL_LOGV("no frame out");
     } else
-        HAL_LOGD("no gyro data to process EIS");
-
+        HAL_LOGV("no gyro data to process EIS");
     return frame_out_preview;
 }
 
@@ -9742,7 +10032,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             }
             ret_eis = video_stab_check_gyro(mVideoInst);
             if (ret_eis == 0) {
-                HAL_LOGD("gyro is ready ");
+                HAL_LOGV("gyro is ready ");
                 break;
             } else {
                 ret_eis = 1;
@@ -9758,13 +10048,13 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
 
         ret_eis = video_stab_read(mVideoInst, &frame_out_video);
         if (ret_eis == 0)
-            HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+            HAL_LOGV("out frame_num =%d,frame timestamp %lf, frame_out %p",
                      frame_out_video.frame_num, frame_out_video.timestamp,
                      frame_out_video.frame_data);
         else
-            HAL_LOGD("no frame out");
+            HAL_LOGV("no frame out");
     } else
-        HAL_LOGD("no gyro data to process EIS");
+        HAL_LOGV("no gyro data to process EIS");
 
     return frame_out_video;
 }
@@ -9791,7 +10081,9 @@ void SprdCamera3OEMIf::popEISPreviewQueue(vsGyro *gyro, int gyro_num) {
                      gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
         } else
             HAL_LOGW("gyro data is null in %d", i);
-        mGyroPreviewInfo.erase(mGyroPreviewInfo.begin());
+
+        if (!mGyroPreviewInfo.empty())
+            mGyroPreviewInfo.erase(mGyroPreviewInfo.begin());
     }
 }
 
@@ -9817,7 +10109,9 @@ void SprdCamera3OEMIf::popEISVideoQueue(vsGyro *gyro, int gyro_num) {
                      gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
         } else
             HAL_LOGW("gyro data is null in %d", i);
-        mGyroVideoInfo.erase(mGyroVideoInfo.begin());
+
+        if (!mGyroVideoInfo.empty())
+            mGyroVideoInfo.erase(mGyroVideoInfo.begin());
     }
 }
 
@@ -9845,7 +10139,7 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         frame_in.zoom = (double)zoom_ratio;
         frame_in.frame_num = 0;
         frame_out = processPreviewEIS(frame_in);
-        HAL_LOGD(
+        HAL_LOGV(
             "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
             frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
             frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
@@ -10078,33 +10372,50 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     ALooper *mLooper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
     ASensorEventQueue *sensorEventQueue =
         ASensorManager_createEventQueue(mSensorManager, mLooper, 0, NULL, NULL);
-
     if (accelerometerSensor != NULL) {
         if (ASensorEventQueue_registerSensor(
                 sensorEventQueue, accelerometerSensor, GsensorRate, 0) < 0) {
-            HAL_LOGE(
-                "Unable to register sensorUnable to register sensor %d with "
-                "rate %d and report latency %d" PRId64 "",
-                ASENSOR_TYPE_ACCELEROMETER, GsensorRate, 0);
+            HAL_LOGE("Unable to register sensorUnable to register sensor "
+                     "%d with "
+                     "rate %d and report latency %d" PRId64 "",
+                     ASENSOR_TYPE_ACCELEROMETER, GsensorRate, 0);
             goto exit;
         } else {
+            HAL_LOGI("acc enable");
             Gsensor_flag = 1;
         }
     }
-    if (gyroSensor != NULL) {
-        if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
-                                             GyroRate, 0) < 0) {
-            HAL_LOGE(
-                "Unable to register sensorUnable to register sensor %d with "
-                "rate %d and report latency %d" PRId64 "",
-                ASENSOR_TYPE_GYROSCOPE, GyroRate, 0);
-            goto exit;
-        } else {
-            Gyro_flag = 1;
-        }
-    }
+
     struct cmr_af_aux_sensor_info sensor_info;
+    SPRD_DEF_Tag sprddefInfo;
     while (true == obj->mGyroInit) {
+        obj->mSetting->getSPRDDEFTag(&sprddefInfo);
+        if (!sprddefInfo.sprd_eis_enabled && gyroSensor != NULL) {
+            if (Gyro_flag) {
+                HAL_LOGI("gyro disable");
+                ASensorEventQueue_disableSensor(sensorEventQueue, gyroSensor);
+                Gyro_flag = 0;
+                obj->mGyromaxtimestamp = 0;
+            }
+        }
+
+        if (gyroSensor != NULL && sprddefInfo.sprd_eis_enabled && !Gyro_flag &&
+            (mCount < 10)) {
+            if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
+                                                 GyroRate, 0) < 0) {
+                mCount++;
+                HAL_LOGE("Unable to register sensorUnable to register sensor "
+                         "%d with "
+                         "rate %d and report latency %d" PRId64 ",mCount = %d",
+                         ASENSOR_TYPE_GYROSCOPE, GyroRate, 0, mCount);
+            } else {
+                HAL_LOGI("gyro enable");
+                if (mCount != 0)
+                    mCount = 0;
+                Gyro_flag = 1;
+            }
+        }
+
         if ((n = ASensorEventQueue_getEvents(sensorEventQueue, buffer, 8)) >
             0) {
             gyro_get_data(p_data, buffer, n, &sensor_info);
@@ -10113,14 +10424,15 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     }
 
     if (Gsensor_flag) {
+        HAL_LOGI("close camera,sensor disable");
         ASensorEventQueue_disableSensor(sensorEventQueue, accelerometerSensor);
         Gsensor_flag = 0;
     }
     if (Gyro_flag) {
+        HAL_LOGI("close camera, gyro disable");
         ASensorEventQueue_disableSensor(sensorEventQueue, gyroSensor);
         Gyro_flag = 0;
     }
-
 exit:
     ASensorManager_destroyEventQueue(mSensorManager, sensorEventQueue);
     sem_post(&obj->mGyro_sem);
@@ -10289,7 +10601,6 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
 
     if (obj->mGyroInit) {
         obj->mGyroInit = 0;
-
         if (!obj->mGyroExit) {
             if (clock_gettime(CLOCK_REALTIME, &ts)) {
                 HAL_LOGE("get time failed");
@@ -10307,7 +10618,6 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
                 HAL_LOGW("wait for gyro timeout");
         } else
             HAL_LOGW("gyro thread already end");
-
         sem_destroy(&obj->mGyro_sem);
         // ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
         obj->mGyroMsgQueHandle = 0;

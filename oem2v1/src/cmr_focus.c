@@ -1593,7 +1593,7 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
                 pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
             }
             if (0 == af_cxt->isp_af_win_val) {
-                CMR_LOGE("isp focus failed");
+                CMR_LOGD("isp focus failed");
                 ret = -1;
             }
             CMR_LOGD("isp focus ret %ld", ret);

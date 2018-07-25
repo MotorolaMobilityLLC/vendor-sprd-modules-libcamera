@@ -18,7 +18,6 @@
 
 #define LOG_TAG "camera_fb"
 
-#include <time.h>
 #include <cutils/properties.h>
 #include <stdlib.h>
 #include <utils/Log.h>
@@ -27,6 +26,8 @@
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
 #define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
+int dumpFrameCount = 0;
+
 void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
@@ -45,7 +46,8 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
         } else {
             faceBeauty->fb_mode = 0;
         }
-    } 
+        faceBeauty->noFaceFrmCnt = 0;
+    }
 }
 
 void deinit_fb_handle(struct class_fb *faceBeauty) {
@@ -56,6 +58,7 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
             FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
             faceBeauty->hSprdFB = NULL;
         }
+        faceBeauty->noFaceFrmCnt = 0;
     }
 }
 
@@ -107,90 +110,6 @@ void construct_fb_level(struct class_fb *faceBeauty,
     if (!faceBeauty) {
         ALOGE("construct_fb_level faceBeauty is null");
         return;
-    }
-    // init the static parameters table. save the value until the process is
-    // restart or the device is restart.
-    unsigned char preview_whitenLevel[NUM_LEVELS] = {0,  15, 20, 30, 40, 45,
-                                                     50, 55, 60, 65, 70};
-    unsigned char preview_cleanLevel[NUM_LEVELS] = {0,  15, 20, 30, 40, 45,
-                                                    50, 55, 60, 65, 70};
-    unsigned char picture_whitenLevel[NUM_LEVELS] = {0,  10, 15, 20, 25, 30,
-                                                     35, 40, 45, 50, 55};
-    unsigned char picture_cleanLevel[NUM_LEVELS] = {0,  10, 15, 20, 25, 30,
-                                                    35, 40, 45, 50, 55};
-    unsigned char face_slimLevel[NUM_LEVELS] = {0,  6,  8,  10, 15, 18,
-                                                25, 30, 35, 40, 45};
-    unsigned char eye_largeLevel[NUM_LEVELS] = {0,  8,  10, 15, 20, 25,
-                                                30, 40, 45, 50, 55};
-    unsigned char tab_skinWhitenLevel[NUM_LEVELS];
-    unsigned char tab_skinCleanLevel[NUM_LEVELS];
-    unsigned char tab_faceSlimLevel[NUM_LEVELS] = {0};
-    unsigned char tab_eyeLargeLevel[NUM_LEVELS] = {0};
-
-    if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
-        memcpy(tab_skinWhitenLevel, preview_whitenLevel,
-               sizeof(unsigned char) * NUM_LEVELS);
-        memcpy(tab_skinCleanLevel, preview_cleanLevel,
-               sizeof(unsigned char) * NUM_LEVELS);
-    } else {
-        if (faceBeauty->fb_mode == 1) {
-            memcpy(tab_skinWhitenLevel, preview_whitenLevel,
-                   sizeof(unsigned char) * NUM_LEVELS);
-            memcpy(tab_skinCleanLevel, preview_cleanLevel,
-                   sizeof(unsigned char) * NUM_LEVELS);
-        } else {
-            memcpy(tab_skinWhitenLevel, picture_whitenLevel,
-                   sizeof(unsigned char) * NUM_LEVELS);
-            memcpy(tab_skinCleanLevel, picture_cleanLevel,
-                   sizeof(unsigned char) * NUM_LEVELS);
-        }
-        memcpy(tab_faceSlimLevel, face_slimLevel,
-               sizeof(unsigned char) * NUM_LEVELS);
-        memcpy(tab_eyeLargeLevel, eye_largeLevel,
-               sizeof(unsigned char) * NUM_LEVELS);
-    }
-    // get the property level and parameters value and save in the parameters
-    // table.
-    // one time only adjust one level's parameters. In order to adjust all the
-    // values, six time should be done.
-    {
-        char str_adb_level[PROPERTY_VALUE_MAX];
-        char str_adb_white[PROPERTY_VALUE_MAX];
-        char str_adb_clean[PROPERTY_VALUE_MAX];
-        char str_adb_faceSlim[PROPERTY_VALUE_MAX];
-        char str_adb_eyeLarge[PROPERTY_VALUE_MAX];
-        int adb_level_val = 0;
-        int adb_white_val = 0;
-        int adb_clean_val = 0;
-        int adb_faceSlim_val = 0;
-        int adb_eyeLarge_val = 0;
-        if ((property_get("persist.vendor.camera.beauty.level", str_adb_level,
-                          "0")) &&
-            (property_get("persist.vendor.camera.beauty.white", str_adb_white,
-                          "0")) &&
-            (property_get("persist.vendor.camera.beauty.clean", str_adb_clean,
-                          "0")) &&
-            (property_get("persist.vendor.camera.beauty.slim", str_adb_faceSlim,
-                          "0")) &&
-            (property_get("persist.vendor.camera.beauty.large", str_adb_eyeLarge,
-                          "0"))) {
-            adb_level_val = atoi(str_adb_level);
-            adb_level_val = CLIP(adb_level_val, 0, 10);
-            adb_white_val = atoi(str_adb_white);
-            adb_white_val = CLIP(adb_white_val, 0, 100);
-            adb_clean_val = atoi(str_adb_clean);
-            adb_clean_val = CLIP(adb_clean_val, 0, 100);
-            adb_faceSlim_val = atoi(str_adb_faceSlim);
-            adb_faceSlim_val = CLIP(adb_faceSlim_val, 0, 100);
-            adb_eyeLarge_val = atoi(str_adb_eyeLarge);
-            adb_eyeLarge_val = CLIP(adb_eyeLarge_val, 0, 100);
-
-            // replace the static value.
-            tab_skinWhitenLevel[adb_level_val] = adb_white_val;
-            tab_skinCleanLevel[adb_level_val] = adb_clean_val;
-            tab_faceSlimLevel[adb_level_val] = adb_faceSlim_val;
-            tab_eyeLargeLevel[adb_level_val] = adb_eyeLarge_val;
-        }
     }
 
     // convert the skin_level set by APP to skinLevel & smoothLevel according to
@@ -281,7 +200,8 @@ void construct_fb_level(struct class_fb *faceBeauty,
     }
 }
 
-void save_yuv_data(int num, int width, int height, unsigned char *addr_y) {
+void save_yuv_data(int num, int width, int height, unsigned char *addr_y,
+                   char flag[10]) {
     char file_name[80];
     char tmp_str[20];
     FILE *fp = NULL;
@@ -336,11 +256,23 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             if (faceBeauty->noFaceFrmCnt < 10)
                 faceCount = faceCount > 0 ? faceCount : 1;
         }
-
+        property_get("debug.camera.dump.frame", value, "null");
+        if (!strcmp(value, "fb")) {
+            save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
+                          faceBeauty->fb_image.height,
+                          faceBeauty->fb_image.yData, "be");
+        }
         retVal =
             FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
                                    &(faceBeauty->fb_option),
                                    faceBeauty->fb_face, faceCount, bokehData);
+        if (!strcmp(value, "fb")) {
+            save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
+                          faceBeauty->fb_image.height,
+                          faceBeauty->fb_image.yData, "af");
+            dumpFrameCount++;
+        }
+
         clock_gettime(CLOCK_BOOTTIME, &end_time);
         duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000;

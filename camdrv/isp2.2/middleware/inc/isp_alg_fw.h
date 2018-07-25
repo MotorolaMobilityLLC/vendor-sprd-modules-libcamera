@@ -34,6 +34,8 @@
 #include "isp_dev_access.h"
 #include "isp_blocks_cfg.h"
 
+#define TRUE 1
+#define FALSE 0
 
 struct commn_info {
 	cmr_s32 isp_mode;
@@ -143,6 +145,12 @@ struct lsc_info {
 	cmr_u32 lsc_sprd_version;
 };
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+struct isp_per_frame_info {
+	cmr_u32 effect_frame_offset;
+};
+#endif
+
 struct ispalg_ae_ctrl_ops {
 	cmr_s32 (*init)(struct ae_init_in *input_ptr, cmr_handle *handle_ae, cmr_handle result);
 	cmr_int (*deinit)(cmr_handle * isp_afl_handle);
@@ -209,6 +217,14 @@ struct ispalg_lib_ops {
 	struct ispalg_lsc_ctrl_ops lsc_ops;
 };
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+enum isp_handle_type {
+	ISP_PFC_CMD_HANDLED = 0,    //Save frame settings based on request frame number and apply.
+	ISP_CMD_NOT_HANDLED,        //Don't save, apply directly
+	ISP_CMD_ERROR
+};
+#endif
+
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
@@ -245,6 +261,9 @@ struct isp_alg_fw_context {
 	cmr_u32 lsc_flash_onoff;
 	cmr_u32 capture_mode;
 	struct isp_flash_param *pm_flash_info;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	struct isp_per_frame_info effect_frame;
+#endif
 
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
@@ -252,6 +271,16 @@ struct isp_alg_fw_context {
 	cmr_u16 *binning_statis_ptr;
 	struct isp_statis_buf_input afl_stat_buf;
 	struct awb_ctrl_calc_param awb_param;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        cmr_u32 req_frame_num;		/*Store request frame number from HAL*/
+        cmr_u32 valid_flag;		/*store validity of frame buffer (0:reserved 1:valid)*/
+        cmr_u32 valid_sof_idx;		/*valid frame index*/
+        cmr_u32 reserved_sof_idx;	/*reserved frame index*/
+        enum isp_state state;		/*store tate of isp start/stop*/
+        struct isp_statis_info statis_info;
+	struct isp_mw_per_frame_cxt perCxt_req[MAX_PIPE_LINE_DEPTH];				/*perFrame request queue*/
+        struct isp_mw_per_frame_cxt perCxt_res[MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET];	/*perFrame result queue.*/
+#endif
 };
 
 struct isp_alg_fw_init_in {
@@ -267,5 +296,8 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle);
 cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr);
 cmr_int isp_alg_proc_next(cmr_handle isp_alg_handle, struct ipn_in_param *in_ptr);
 cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd cmd, void *param_ptr);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+cmr_int isp_alg_update_result_metadata(cmr_handle isp_alg_handle, struct isp_mw_per_frame_cxt *dst, struct isp_mw_per_frame_cxt *src, enum isp_ctrl_cmd cmd);
+cmr_int ispalg_save_frame_info(struct isp_mw_per_frame_cxt *cxt, enum isp_ctrl_cmd cmd, void *param_ptr, cmr_u32 frame_num);
+#endif
 #endif

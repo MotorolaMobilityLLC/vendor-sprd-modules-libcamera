@@ -1162,6 +1162,27 @@ exit:
     return ret;
 }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+cmr_uint
+camera_get_isp_perFrame_result(cmr_handle camera_handle,
+                               struct isp_mw_per_frame_cxt *perFrame_res) {
+    cmr_uint ret = CMR_CAMERA_SUCCESS;
+    if (!camera_handle || !perFrame_res) {
+        CMR_LOGE("error 0x%lx info=0x%lx", (cmr_uint)camera_handle,
+                 (cmr_uint)perFrame_res);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    CMR_LOGD("[PFC] perFrame_res %p", perFrame_res);
+    ret = camera_get_isp_per_frame_result(camera_handle, perFrame_res);
+
+exit:
+    CMR_LOGV("[PFC] done %ld", ret);
+    return ret;
+}
+#endif
+
 #if defined(CONFIG_ISP_2_1)
 cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
                                cmr_s32 *point_y) {
@@ -1241,7 +1262,11 @@ static oem_ops_t oem_module_ops = {
 #if defined(CONFIG_ISP_2_3)
     camera_set_gpu_mem_ops,
 #endif
-    camera_get_rolling_shutter};
+    camera_get_rolling_shutter,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    camera_get_isp_perFrame_result
+#endif
+};
 
 struct oem_module OEM_MODULE_INFO_SYM = {
     .tag = 0, .ops = &oem_module_ops, .dso = NULL};

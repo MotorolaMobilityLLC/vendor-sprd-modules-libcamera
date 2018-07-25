@@ -206,8 +206,9 @@ const int32_t kexposureCompensationRange[2] = {-3, 3};
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {
     0, 0, 256, 144, 320, 240, 432, 288
-#ifdef  CAMERA_SERNSOR_SUPPORT_4224
-    , 528, 392
+#ifdef CAMERA_SERNSOR_SUPPORT_4224
+    ,
+    528, 392
 #endif
 };
 const int64_t kFrameDurationRange[2] = {
@@ -688,30 +689,20 @@ const uint8_t kavailable_noise_reduction_modes[] = {
 const camera_info kCameraInfo[] = {
     {CAMERA_FACING_BACK, 90, /*orientation*/
      0, 0, 100, 0, 0},
-#ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
+
     {CAMERA_FACING_FRONT, 270, /*orientation*/
      0, 0, 100, 0, 0},
-#else
-    {-1, -1, /*orientation*/
-     0, 0, 0, 0, 0},
-#endif
 
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
     {CAMERA_FACING_BACK, 90, /*orientation*/
      0, 0, 0, 0, 0},
-#else
-    {-1, -1, /*orientation*/
-     0, 0, 0, 0, 0},
-#endif
 
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
     {CAMERA_FACING_FRONT, 270, /*orientation*/
      0, 0, 0, 0, 0},
-#else
-    {-1, -1, /*orientation*/
-     0, 0, 0, 0, 0},
-#endif
+};
 
+const int camera_is_supprort[] = {
+    BACK_CAMERA_SENSOR_SUPPORT, FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK_EXT_CAMERA_SENSOR_SUPPORT, FRONT_EXT_CAMERA_SENSOR_SUPPORT,
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
@@ -1054,11 +1045,12 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
 
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
+    int i;
+    int id = -1;
+
     if (cameraInfo) {
-        int id = -1;
-        for (int i = 0; i < (int)(sizeof(kCameraInfo) / sizeof(kCameraInfo[0]));
-             i++) {
-            if (kCameraInfo[i].orientation != -1)
+        for (i = 0; i < (int)ARRAY_SIZE(kCameraInfo); i++) {
+            if (camera_is_supprort[i])
                 id++;
             if (id == cameraId) {
                 cameraInfo->facing = kCameraInfo[i].facing;
@@ -1073,14 +1065,8 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
-    int i, j = 0;
 
-    j = ARRAY_SIZE(kCameraInfo);
-    for (i = 0; i < j; i++) {
-        if (kCameraInfo[i].orientation != -1)
-            num++;
-    }
-
+    num = CAMERA_SENSOR_NUM;
     LOGI("getNumberOfCameras:%d", num);
 
     return num;
@@ -1482,8 +1468,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     {
-        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -127;
-        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 127;
+        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -6;
+        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 6;
     }
     {
         // s_setting[cameraId].controlInfo.available_effects[0] =
@@ -2041,15 +2027,12 @@ int SprdCamera3Setting::initStaticMetadata(
         ANDROID_SPRD_AVAILABLE_FLASH_LEVEL,
         &(s_setting[cameraId].sprddefInfo.sprd_available_flash_level), 1);
 
-    staticInfo.update(
-        ANDROID_SPRD_IS_HDR_SCENE,
-        &(s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene), 1);
+    staticInfo.update(ANDROID_SPRD_IS_HDR_SCENE,
+                      &(s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene), 1);
 
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_HDR,
+                      &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
     staticInfo.update(
-        ANDROID_SPRD_AVAILABLE_AUTO_HDR,
-        &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
-
- staticInfo.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
         &(s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current), 1);
 
@@ -3142,11 +3125,128 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    defaultInfo = requestInfo;
+#endif
     mDefaultMetadata[type] = requestInfo.release();
     *metadata = mDefaultMetadata[type];
 
     return 0;
 }
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+int SprdCamera3Setting::constructDefaultResultMetadata(void *result_metadata) {
+    uint8_t valueU8 = 0;
+    float valueFloat = 0.0f;
+    int32_t valueI32 = 0;
+    int64_t valueI64 = 0;
+    struct isp_mw_per_frame_cxt *pfc_metadata = NULL;
+    if (result_metadata == NULL) {
+        HAL_LOGE("meta data is NULL");
+        return 0;
+    }
+
+    pfc_metadata = (struct isp_mw_per_frame_cxt *)result_metadata;
+    HAL_LOGV("E");
+
+    if (defaultInfo.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
+        pfc_metadata->range_fps.min_fps =
+            defaultInfo.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[0];
+        pfc_metadata->range_fps.max_fps =
+            defaultInfo.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1];
+        HAL_LOGD("default min_fps %d max_fps %d",
+                 pfc_metadata->range_fps.min_fps,
+                 pfc_metadata->range_fps.max_fps);
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_AE_LOCK)) {
+        pfc_metadata->ae_lock =
+            defaultInfo.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_AWB_LOCK)) {
+        pfc_metadata->awb_lock =
+            defaultInfo.find(ANDROID_CONTROL_AWB_LOCK).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_AWB_MODE)) {
+        pfc_metadata->awb_mode =
+            defaultInfo.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_SPRD_BRIGHTNESS)) {
+        pfc_metadata->brightness =
+            defaultInfo.find(ANDROID_SPRD_BRIGHTNESS).data.i32[0];
+    }
+    if (defaultInfo.exists(ANDROID_SPRD_CONTRAST)) {
+        pfc_metadata->contrast =
+            defaultInfo.find(ANDROID_SPRD_CONTRAST).data.i32[0];
+    }
+    if (defaultInfo.exists(ANDROID_SPRD_SATURATION)) {
+        pfc_metadata->saturation =
+            defaultInfo.find(ANDROID_SPRD_SATURATION).data.i32[0];
+    }
+    if (defaultInfo.exists(ANDROID_SPRD_METERING_MODE)) {
+        pfc_metadata->metering_mode =
+            defaultInfo.find(ANDROID_SPRD_METERING_MODE).data.i32[0];
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_SCENE_MODE)) {
+        pfc_metadata->scene_mode =
+            defaultInfo.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_SENSOR_SENSITIVITY)) {
+        pfc_metadata->get_sensitivity =
+            defaultInfo.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+    }
+    if (defaultInfo.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
+        pfc_metadata->exposure_time =
+            defaultInfo.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
+        pfc_metadata->antibanding_mode =
+            defaultInfo.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_EFFECT_MODE)) {
+        pfc_metadata->effect_mode =
+            defaultInfo.find(ANDROID_CONTROL_EFFECT_MODE).data.u8[0];
+    }
+    // HAL specifc PFC keys default value fill starts
+    if (defaultInfo.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {
+        s_setting[mCameraId].pfcinfo[0].capture_intent =
+            defaultInfo.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_LENS_FOCAL_LENGTH)) {
+        s_setting[mCameraId].pfcinfo[0].lensInfo.focal_length =
+            defaultInfo.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
+    }
+    if (defaultInfo.exists(ANDROID_EDGE_MODE)) {
+        s_setting[mCameraId].pfcinfo[0].edgeInfo.mode =
+            defaultInfo.find(ANDROID_EDGE_MODE).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_NOISE_REDUCTION_MODE)) {
+        s_setting[mCameraId].pfcinfo[0].noiseInfo.reduction_mode =
+            defaultInfo.find(ANDROID_NOISE_REDUCTION_MODE).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_SHADING_MODE)) {
+        s_setting[mCameraId].pfcinfo[0].shadingInfo.mode =
+            defaultInfo.find(ANDROID_SHADING_MODE).data.u8[0];
+    }
+    if (defaultInfo.exists(ANDROID_SENSOR_FRAME_DURATION)) {
+        s_setting[mCameraId].pfcinfo[0].frame_duration =
+            defaultInfo.find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0];
+    }
+    if (defaultInfo.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)) {
+        s_setting[mCameraId].pfcinfo[0].ae_precapture_id =
+            defaultInfo.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.i32[0];
+    }
+
+    HAL_LOGV("X");
+    return 0;
+}
+
+int SprdCamera3Setting::getAndroidParaTagSize() {
+    int count = 0;
+    count = mParaChangedTagQueue.size();
+    HAL_LOGE("[PFC] count %d", count);
+    return count;
+}
+#endif
 
 int SprdCamera3Setting::popAndroidParaTag() {
     int ret;
@@ -3158,6 +3258,16 @@ int SprdCamera3Setting::popAndroidParaTag() {
     mParaChangedTagQueue.removeAt(0);
     return ret;
 }
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+int SprdCamera3Setting::getSprdParaTagSize() {
+    int count = 0;
+    count = mSprdParaChangedTagQueue.size();
+    HAL_LOGD("[PFC] count %d", count);
+    return count;
+}
+#endif
+
 int SprdCamera3Setting::popSprdParaTag() {
     int ret;
 
@@ -3198,7 +3308,11 @@ int SprdCamera3Setting::updateWorkParameters(
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    int32_t frame_number = 0;
+    int32_t prev_frame_number = 0;
+    uint8_t pfc_index = 0;
+#endif
     Mutex::Autolock l(mLock);
 
 #define GET_VALUE_IF_DIF(x, y, tag)                                            \
@@ -3211,6 +3325,28 @@ int SprdCamera3Setting::updateWorkParameters(
 
     tagCnt = frame_settings.entryCount();
     HAL_LOGV("cnt %d", tagCnt);
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    frame_number = s_setting[mCameraId].requestInfo.frame_number;
+    pfc_index = frame_number % MAX_PIPE_LINE_DEPTH;
+    prev_frame_number = frame_number - 1;
+    // Below code to store previous frame settings into current frame settings
+    if (frame_number != 0) {
+        memcpy(&s_setting[mCameraId].pfcinfo[pfc_index],
+               &s_setting[mCameraId]
+                    .pfcinfo[prev_frame_number % MAX_PIPE_LINE_DEPTH],
+               sizeof(HAL_PFC_Tag));
+    }
+    s_setting[mCameraId].pfcinfo[pfc_index].framenum =
+        s_setting[mCameraId].requestInfo.frame_number;
+    HAL_LOGD("[PFC] [HAL] requestInfo frame_number %d pfc_index %d",
+             s_setting[mCameraId].requestInfo.frame_number, pfc_index);
+    HAL_LOGD("[PFC] [HAL] pfcinfo[%d %d %d %d]",
+             s_setting[mCameraId].pfcinfo[0].framenum,
+             s_setting[mCameraId].pfcinfo[1].framenum,
+             s_setting[mCameraId].pfcinfo[2].framenum,
+             s_setting[mCameraId].pfcinfo[3].framenum);
+#endif
 
     if (tagCnt == 0) {
         return rc;
@@ -3228,6 +3364,10 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.capture_intent,
                          valueU8, ANDROID_CONTROL_CAPTURE_INTENT)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(s_setting[mCameraId].pfcinfo[pfc_index].capture_intent,
+                         valueU8, ANDROID_CONTROL_CAPTURE_INTENT)
+#endif
         if (ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE ==
                 s_setting[mCameraId].controlInfo.capture_intent ||
             ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT ==
@@ -3241,6 +3381,11 @@ int SprdCamera3Setting::updateWorkParameters(
         valueFloat = frame_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focal_length, valueFloat,
                          ANDROID_LENS_FOCAL_LENGTH)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].pfcinfo[pfc_index].lensInfo.focal_length,
+            valueFloat, ANDROID_LENS_FOCAL_LENGTH)
+#endif
         HAL_LOGV("lens focal len is %f", valueFloat);
     }
     if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
@@ -3278,6 +3423,12 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_EDGE_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].edgeInfo.mode, valueU8,
                          ANDROID_EDGE_MODE)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(s_setting[mCameraId].pfcinfo[pfc_index].edgeInfo.mode,
+                         valueU8, ANDROID_EDGE_MODE)
+        HAL_LOGV("[PFC] [HAL] edge mode %d",
+                 s_setting[mCameraId].pfcinfo[pfc_index].edgeInfo.mode);
+#endif
         HAL_LOGV("android edge mode %d", valueU8);
     }
 
@@ -3286,6 +3437,11 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_NOISE_REDUCTION_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].noiseInfo.reduction_mode, valueU8,
                          ANDROID_NOISE_REDUCTION_MODE)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].pfcinfo[pfc_index].noiseInfo.reduction_mode,
+            valueU8, ANDROID_NOISE_REDUCTION_MODE)
+#endif
         HAL_LOGV("android noise reduction mode %d", valueU8);
     }
 
@@ -3294,6 +3450,14 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_SHADING_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].shadingInfo.mode, valueU8,
                          ANDROID_SHADING_MODE)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].pfcinfo[pfc_index].shadingInfo.mode, valueU8,
+            ANDROID_SHADING_MODE)
+        HAL_LOGI("[PFC] [HAL] framenum %d shading mode %d",
+                 s_setting[mCameraId].pfcinfo[pfc_index].framenum,
+                 s_setting[mCameraId].pfcinfo[pfc_index].shadingInfo.mode);
+#endif
         HAL_LOGV("android shading mode %d", valueU8);
     }
 
@@ -3326,6 +3490,10 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_TONEMAP_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].toneInfo.mode, valueU8,
                          ANDROID_TONEMAP_MODE)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(s_setting[mCameraId].pfcinfo[pfc_index].toneInfo.mode,
+                         valueU8, ANDROID_TONEMAP_MODE)
+#endif
         HAL_LOGV("android tonemap mode %d", valueU8);
     }
 
@@ -3397,6 +3565,12 @@ int SprdCamera3Setting::updateWorkParameters(
                 frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[i];
             HAL_LOGD("face beauty level %d : %d .", i, perfectskinlevel[i]);
         }
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        memcpy(s_setting[mCameraId]
+                   .pfcinfo[pfc_index]
+                   .sprddefInfo.perfect_skin_level,
+               perfectskinlevel, sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
+#endif
         memcpy(s_setting[mCameraId].sprddefInfo.perfect_skin_level,
                perfectskinlevel, sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
         pushAndroidParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
@@ -3405,7 +3579,10 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_EIS_ENABLED)) {
         int32_t sprd_eis_enabled =
             frame_settings.find(ANDROID_SPRD_EIS_ENABLED).data.u8[0];
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].sprd_eis_enabled =
+            sprd_eis_enabled;
+#endif
         s_setting[mCameraId].sprddefInfo.sprd_eis_enabled = sprd_eis_enabled;
         pushAndroidParaTag(ANDROID_SPRD_EIS_ENABLED);
     }
@@ -3432,6 +3609,14 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_JPEG_QUALITY).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.quality, valueU8,
                          ANDROID_JPEG_QUALITY)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.quality, valueU8,
+            ANDROID_JPEG_QUALITY)
+        HAL_LOGD("[PFC] [HAL] JpgInfo quality %d frame number %d",
+                 s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.quality,
+                 s_setting[mCameraId].pfcinfo[pfc_index].framenum);
+#endif
         HAL_LOGV("jpeg quality is %d", valueU8);
     }
 
@@ -3440,6 +3625,14 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.thumbnail_quality,
                          valueU8, ANDROID_JPEG_THUMBNAIL_QUALITY)
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.thumbnail_quality,
+            valueU8, ANDROID_JPEG_THUMBNAIL_QUALITY)
+        HAL_LOGI(
+            "[PFC] [HAL] JpgInfo quality %d",
+            s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.thumbnail_quality);
+#endif
         HAL_LOGV("thumnail quality %d",
                  s_setting[mCameraId].jpgInfo.thumbnail_quality);
     }
@@ -3453,6 +3646,12 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].jpgInfo.thumbnail_size[1] != thumH) {
             s_setting[mCameraId].jpgInfo.thumbnail_size[0] = thumW;
             s_setting[mCameraId].jpgInfo.thumbnail_size[1] = thumH;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+            s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.thumbnail_size[0] =
+                thumW;
+            s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.thumbnail_size[1] =
+                thumH;
+#endif
             pushAndroidParaTag(ANDROID_JPEG_THUMBNAIL_SIZE);
         }
         HAL_LOGV("jpeg thumnail size is %dx%d", thumW, thumH);
@@ -3476,6 +3675,10 @@ int SprdCamera3Setting::updateWorkParameters(
         }
 
         s_setting[mCameraId].jpgInfo.orientation = jpeg_orientation;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.orientation_original =
+            jpeg_orientation;
+#endif
         pushAndroidParaTag(ANDROID_JPEG_ORIENTATION);
     }
 
@@ -3484,8 +3687,13 @@ int SprdCamera3Setting::updateWorkParameters(
              i < frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count; i++) {
             s_setting[mCameraId].jpgInfo.gps_coordinates[i] =
                 frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d[i];
-            HAL_LOGD("GPS coordinates %lf",
-                     s_setting[mCameraId].jpgInfo.gps_coordinates[i]);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+            s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_coordinates[i] =
+                frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d[i];
+            HAL_LOGD("GPS coordinates %lf frame number %d",
+                     s_setting[mCameraId].jpgInfo.gps_coordinates[i],
+                     s_setting[mCameraId].pfcinfo[pfc_index].framenum);
+#endif
         }
         pushAndroidParaTag(ANDROID_JPEG_GPS_COORDINATES);
     }
@@ -3498,9 +3706,20 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].jpgInfo.gps_processing_method[i] =
                 frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD)
                     .data.u8[i];
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+            s_setting[mCameraId]
+                .pfcinfo[pfc_index]
+                .jpgInfo.gps_processing_method[i] =
+                frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD)
+                    .data.u8[i];
+#endif
         }
         s_setting[mCameraId].jpgInfo.gps_processing_method
             [frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count] = 0;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_processing_method
+            [frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count] = 0;
+#endif
         HAL_LOGD("GPS processin method %s",
                  s_setting[mCameraId].jpgInfo.gps_processing_method);
         pushAndroidParaTag(ANDROID_JPEG_GPS_PROCESSING_METHOD);
@@ -3509,6 +3728,10 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_JPEG_GPS_TIMESTAMP) && is_capture) {
         s_setting[mCameraId].jpgInfo.gps_timestamp =
             frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_timestamp =
+            frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
+#endif
         HAL_LOGD("GPS timestamp %lld",
                  s_setting[mCameraId].jpgInfo.gps_timestamp);
         pushAndroidParaTag(ANDROID_JPEG_GPS_TIMESTAMP);
@@ -3560,7 +3783,7 @@ int SprdCamera3Setting::updateWorkParameters(
             org_ae_compensat;
         ae_compensat =
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-                 .data.i32[0];
+                .data.i32[0];
 
         // GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation,
         // ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
@@ -3790,6 +4013,9 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)
                       .data.u8[0];
         s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].ae_precap_trigger = valueU8;
+#endif
         if (valueU8 == 1) {
             pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
             HAL_LOGD("AE precap trigger status = %d", valueU8);
@@ -3798,6 +4024,10 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
         s_setting[mCameraId].controlInfo.ae_precapture_id =
             frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_ID).data.i32[0];
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].ae_precapture_id =
+            frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_ID).data.i32[0];
+#endif
         pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_ID);
         HAL_LOGD("AE precap trigger id = %d",
                  s_setting[mCameraId].controlInfo.ae_precapture_id);
@@ -3901,6 +4131,9 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
         s_setting[mCameraId].statisticsInfo.face_detect_mode = valueU8;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        s_setting[mCameraId].pfcinfo[pfc_index].face_detect_mode = valueU8;
+#endif
         pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
         HAL_LOGV("fd mode %d", valueU8);
     }
@@ -4067,9 +4300,27 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     int32_t maxRegionsAwb = 0;
     int32_t maxRegionsAf = 0;
     char prop2[PROPERTY_VALUE_MAX] = {0}; // for test
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    int32_t frame_number = 0;
+    uint8_t pfc_index = 0;
+#endif
     maxRegionsAe = s_setting[mCameraId].controlInfo.max_regions[0];
     maxRegionsAwb = s_setting[mCameraId].controlInfo.max_regions[1];
     maxRegionsAf = s_setting[mCameraId].controlInfo.max_regions[2];
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    frame_number = s_setting[mCameraId].requestInfo.frame_count;
+    pfc_index = frame_number % MAX_PIPE_LINE_DEPTH;
+    /*debugging purpose*/
+    s_setting[mCameraId].pfcinfo[pfc_index].framenum =
+        s_setting[mCameraId].requestInfo.frame_count;
+    HAL_LOGD("[PFC] [HAL] requestInfo frame_number %d pfc_index %d",
+             s_setting[mCameraId].requestInfo.frame_count, pfc_index);
+    HAL_LOGD("[PFC] [HAL] pfcinfo[%d %d %d %d]",
+             s_setting[mCameraId].pfcinfo[0].framenum,
+             s_setting[mCameraId].pfcinfo[1].framenum,
+             s_setting[mCameraId].pfcinfo[2].framenum,
+             s_setting[mCameraId].pfcinfo[3].framenum);
+#endif
 
     // HAL_LOGD("timestamp = %lld, request_id = %d, frame_count = %d, mCameraId
     // = %d",s_setting[mCameraId].sensorInfo.timestamp,
@@ -4106,18 +4357,58 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
                        &(s_setting[mCameraId].controlInfo.ae_abtibanding_mode),
                        1);
-    camMetadata.update(
-        ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
-        &(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation), 1);
     camMetadata.update(ANDROID_CONTROL_AE_MODE,
                        &(s_setting[mCameraId].controlInfo.ae_mode), 1);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    camMetadata.update(
+        ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+        s_setting[mCameraId].resultInfo.ae_target_fps_range,
+        ARRAY_SIZE(s_setting[mCameraId].resultInfo.ae_target_fps_range));
+    camMetadata.update(
+        ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+        &(s_setting[mCameraId].resultInfo.org_ae_exposure_compensation), 1);
+    camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
+                       &(s_setting[mCameraId].resultInfo.ae_abtibanding_mode),
+                       1);
+    camMetadata.update(ANDROID_CONTROL_AWB_LOCK,
+                       &(s_setting[mCameraId].resultInfo.awb_lock), 1);
+    camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
+                       &(s_setting[mCameraId].resultInfo.scene_mode), 1);
+    camMetadata.update(ANDROID_CONTROL_EFFECT_MODE,
+                       &(s_setting[mCameraId].resultInfo.effect_mode), 1);
+    /*SPRD ISP specific keys*/
+    camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
+                       &(s_setting[mCameraId].resultSensorInfo.sensitivity), 1);
+    camMetadata.update(ANDROID_SPRD_BRIGHTNESS,
+                       &(s_setting[mCameraId].sprddeResultfInfo.brightness), 1);
+    camMetadata.update(ANDROID_SPRD_CONTRAST,
+                       &(s_setting[mCameraId].sprddeResultfInfo.contrast), 1);
+    camMetadata.update(ANDROID_SPRD_SATURATION,
+                       &(s_setting[mCameraId].sprddeResultfInfo.saturation), 1);
+    camMetadata.update(ANDROID_SPRD_ISO,
+                       &(s_setting[mCameraId].sprddeResultfInfo.iso), 1);
+    HAL_LOGI("[PFC] sensitivity %d",
+             s_setting[mCameraId].resultSensorInfo.sensitivity);
+#else
     camMetadata.update(
         ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
         s_setting[mCameraId].controlInfo.ae_target_fps_range,
         ARRAY_SIZE(s_setting[mCameraId].controlInfo.ae_target_fps_range));
-    camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
-                       &(s_setting[mCameraId].controlInfo.ae_precap_trigger),
+    camMetadata.update(
+        ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+        &(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation), 1);
+    camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
+                       &(s_setting[mCameraId].controlInfo.ae_abtibanding_mode),
                        1);
+    camMetadata.update(ANDROID_CONTROL_AWB_LOCK,
+                       &(s_setting[mCameraId].controlInfo.awb_lock), 1);
+    camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
+                       &(s_setting[mCameraId].controlInfo.scene_mode), 1);
+    camMetadata.update(ANDROID_CONTROL_EFFECT_MODE,
+                       &(s_setting[mCameraId].controlInfo.effect_mode), 1);
+    camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
+                       &(s_setting[mCameraId].sensorInfo.sensitivity), 1);
+#endif
     /*for (int i = 0; i < 5; i++)
             area[i] = s_setting[mCameraId].controlInfo.af_regions[i];
     area[2] += area[0];
@@ -4223,13 +4514,39 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].controlInfo.ae_state), 1);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    camMetadata.update(ANDROID_CONTROL_AE_STATE,
+                       &(s_setting[mCameraId].resultInfo.ae_state), 1);
+    camMetadata.update(ANDROID_CONTROL_AE_LOCK,
+                       &(s_setting[mCameraId].resultInfo.ae_lock), 1);
+    camMetadata.update(ANDROID_CONTROL_AWB_MODE,
+                       &(s_setting[mCameraId].resultInfo.awb_mode), 1);
+    camMetadata.update(ANDROID_CONTROL_AWB_STATE,
+                       &(s_setting[mCameraId].resultInfo.awb_state), 1);
+    // perfect_level
+    camMetadata.update(
+        ANDROID_SPRD_UCAM_SKIN_LEVEL,
+        s_setting[mCameraId].pfcinfo[pfc_index].sprddefInfo.perfect_skin_level,
+        SPRD_FACE_BEAUTY_PARAM_NUM);
+#else
+    camMetadata.update(ANDROID_CONTROL_AE_STATE,
+                       &(s_setting[mCameraId].controlInfo.ae_state), 1);
+    camMetadata.update(ANDROID_CONTROL_AE_LOCK,
+                       &(s_setting[mCameraId].controlInfo.ae_lock), 1);
+    camMetadata.update(ANDROID_CONTROL_AWB_MODE,
+                       &(s_setting[mCameraId].controlInfo.awb_mode), 1);
+    camMetadata.update(ANDROID_CONTROL_AWB_STATE,
+                       &(s_setting[mCameraId].controlInfo.awb_state), 1);
+    // perfect_level
+    camMetadata.update(ANDROID_SPRD_UCAM_SKIN_LEVEL,
+                       s_setting[mCameraId].sprddefInfo.perfect_skin_level,
+                       SPRD_FACE_BEAUTY_PARAM_NUM);
+#endif
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
     //			s_setting[mCameraId].controlInfo.ae_precapture_id);
     camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
                        &(s_setting[mCameraId].controlInfo.ae_precapture_id), 1);
-    camMetadata.update(ANDROID_CONTROL_AE_LOCK,
-                       &(s_setting[mCameraId].controlInfo.ae_lock), 1);
 
     // s_setting[mCameraId].controlInfo.awb_mode =
     // ANDROID_CONTROL_AWB_MODE_AUTO;
@@ -4239,8 +4556,24 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // ANDROID_CONTROL_AWB_STATE_INACTIVE;
     camMetadata.update(ANDROID_CONTROL_AWB_STATE,
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
-    camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
-                       s_setting[mCameraId].jpgInfo.thumbnail_size, 2);
+    uint8_t hardware_level_limited = 0;
+    if (s_setting[mCameraId].supported_hardware_level ==
+        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
+        hardware_level_limited = 1;
+    if ((s_setting[mCameraId].jpgInfo.orientation_original == 90 ||
+         s_setting[mCameraId].jpgInfo.orientation_original == 270) &&
+        (hardware_level_limited)) {
+        int32_t rotated_thumbnail_size[2];
+        rotated_thumbnail_size[0] =
+            s_setting[mCameraId].jpgInfo.thumbnail_size[1];
+        rotated_thumbnail_size[1] =
+            s_setting[mCameraId].jpgInfo.thumbnail_size[0];
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE, rotated_thumbnail_size,
+                           2);
+    } else {
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
+                           s_setting[mCameraId].jpgInfo.thumbnail_size, 2);
+    }
     camMetadata.update(ANDROID_JPEG_ORIENTATION,
                        &(s_setting[mCameraId].jpgInfo.orientation_original), 1);
     camMetadata.update(ANDROID_JPEG_QUALITY,
@@ -4372,14 +4705,22 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                            &(s_setting[mCameraId].sensorInfo.frame_duration),
        1);
     */
-    camMetadata.update(ANDROID_SENSOR_FRAME_DURATION,
-                       &(s_setting[mCameraId].resultSensorInfo.frame_duration),
-                       1);
     // s_setting[mCameraId].sensorInfo.exposure_time =
     // (int64_t)(NSEC_PER_SEC/s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
-    camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
-                       &(s_setting[mCameraId].resultSensorInfo.exposure_time),
-                       1);
+    if (s_setting[mCameraId].controlInfo.ae_mode == 0 &&
+        s_setting[mCameraId].preview_size.width >= 1920) {
+        camMetadata.update(ANDROID_SENSOR_FRAME_DURATION,
+                           &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+        camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
+                           &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+    } else {
+        camMetadata.update(
+            ANDROID_SENSOR_FRAME_DURATION,
+            &(s_setting[mCameraId].resultSensorInfo.frame_duration), 1);
+        camMetadata.update(
+            ANDROID_SENSOR_EXPOSURE_TIME,
+            &(s_setting[mCameraId].resultSensorInfo.exposure_time), 1);
+    }
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
                        &(s_setting[mCameraId].sensorInfo.sensitivity), 1);
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,
@@ -4423,6 +4764,115 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
         &(s_setting[mCameraId].sprddefInfo.sprd_ai_scene_type_current), 1);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    camMetadata.update(
+        ANDROID_SHADING_MODE,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].shadingInfo.mode), 1);
+    HAL_LOGD("[PFC] [HAL] framenum %d shading mode %d",
+             s_setting[mCameraId].pfcinfo[pfc_index].framenum,
+             s_setting[mCameraId].pfcinfo[pfc_index].shadingInfo.mode);
+    camMetadata.update(
+        ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].ae_precap_trigger), 1);
+    camMetadata.update(
+        ANDROID_CONTROL_CAPTURE_INTENT,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].capture_intent), 1);
+    camMetadata.update(ANDROID_EDGE_MODE,
+                       &(s_setting[mCameraId].pfcinfo[pfc_index].edgeInfo.mode),
+                       1);
+    HAL_LOGD("[PFC] [HAL] framenum %d edge mode %d",
+             s_setting[mCameraId].pfcinfo[pfc_index].framenum,
+             s_setting[mCameraId].pfcinfo[pfc_index].edgeInfo.mode);
+    camMetadata.update(
+        ANDROID_CONTROL_AE_PRECAPTURE_ID,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].ae_precapture_id), 1);
+    camMetadata.update(
+        ANDROID_JPEG_THUMBNAIL_SIZE,
+        s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.thumbnail_size, 2);
+    camMetadata.update(
+        ANDROID_JPEG_ORIENTATION,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.orientation_original),
+        1);
+    HAL_LOGD("[PFC] [HAL] JpgInfo quality %d frame number %d",
+             s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.quality,
+             s_setting[mCameraId].pfcinfo[pfc_index].framenum);
+    camMetadata.update(
+        ANDROID_JPEG_QUALITY,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.quality), 1);
+    camMetadata.update(
+        ANDROID_JPEG_THUMBNAIL_QUALITY,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.thumbnail_quality),
+        1);
+    camMetadata.update(
+        ANDROID_JPEG_GPS_COORDINATES,
+        s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_coordinates, 3);
+    HAL_LOGD("[PFC] [HAL] Gps coordinates [%lf %lf %lf] frame number %d",
+             s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_coordinates[0],
+             s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_coordinates[1],
+             s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_coordinates[2],
+             s_setting[mCameraId].pfcinfo[pfc_index].framenum);
+    camMetadata.update(
+        ANDROID_JPEG_GPS_PROCESSING_METHOD,
+        s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_processing_method,
+        36);
+    camMetadata.update(
+        ANDROID_JPEG_GPS_TIMESTAMP,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].jpgInfo.gps_timestamp), 1);
+    camMetadata.update(
+        ANDROID_LENS_FOCAL_LENGTH,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].lensInfo.focal_length), 1);
+    camMetadata.update(ANDROID_TONEMAP_MODE,
+                       &(s_setting[mCameraId].pfcinfo[pfc_index].toneInfo.mode),
+                       1);
+    camMetadata.update(
+        ANDROID_NOISE_REDUCTION_MODE,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].noiseInfo.reduction_mode), 1);
+    camMetadata.update(
+        ANDROID_STATISTICS_FACE_DETECT_MODE,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].face_detect_mode), 1);
+    camMetadata.update(
+        ANDROID_SPRD_EIS_ENABLED,
+        &(s_setting[mCameraId].pfcinfo[pfc_index].sprd_eis_enabled), 1);
+#else
+
+    camMetadata.update(ANDROID_SHADING_MODE,
+                       &(s_setting[mCameraId].shadingInfo.mode), 1);
+    camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+                       &(s_setting[mCameraId].controlInfo.ae_precap_trigger),
+                       1);
+    camMetadata.update(ANDROID_CONTROL_CAPTURE_INTENT,
+                       &(s_setting[mCameraId].controlInfo.capture_intent), 1);
+    camMetadata.update(ANDROID_EDGE_MODE, &(s_setting[mCameraId].edgeInfo.mode),
+                       1);
+    camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
+                       &(s_setting[mCameraId].controlInfo.ae_precapture_id), 1);
+    camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
+                       s_setting[mCameraId].jpgInfo.thumbnail_size, 2);
+    camMetadata.update(ANDROID_JPEG_ORIENTATION,
+                       &(s_setting[mCameraId].jpgInfo.orientation_original), 1);
+    camMetadata.update(ANDROID_JPEG_QUALITY,
+                       &(s_setting[mCameraId].jpgInfo.quality), 1);
+    camMetadata.update(ANDROID_JPEG_THUMBNAIL_QUALITY,
+                       &(s_setting[mCameraId].jpgInfo.thumbnail_quality), 1);
+    camMetadata.update(ANDROID_JPEG_GPS_COORDINATES,
+                       s_setting[mCameraId].jpgInfo.gps_coordinates, 3);
+    camMetadata.update(ANDROID_JPEG_GPS_PROCESSING_METHOD,
+                       s_setting[mCameraId].jpgInfo.gps_processing_method, 36);
+    camMetadata.update(ANDROID_JPEG_GPS_TIMESTAMP,
+                       &(s_setting[mCameraId].jpgInfo.gps_timestamp), 1);
+    camMetadata.update(ANDROID_LENS_FOCAL_LENGTH,
+                       &(s_setting[mCameraId].lensInfo.focal_length), 1);
+    camMetadata.update(ANDROID_TONEMAP_MODE,
+                       &(s_setting[mCameraId].toneInfo.mode), 1);
+    camMetadata.update(ANDROID_NOISE_REDUCTION_MODE,
+                       &(s_setting[mCameraId].noiseInfo.reduction_mode), 1);
+    camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE,
+                       &(s_setting[mCameraId].statisticsInfo.face_detect_mode),
+                       1);
+    camMetadata.update(ANDROID_SPRD_EIS_ENABLED,
+                       &(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled), 1);
+
+#endif
 
     resultMetadata = camMetadata.release();
     return resultMetadata;
@@ -4778,6 +5228,162 @@ int SprdCamera3Setting::androidAntibandingModeToDrvAntibandingMode(
     }
     return ret;
 }
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+int SprdCamera3Setting::drvModeToAndroidEffectMode(int8_t convertDrvMode,
+                                                   uint8_t *androidEffectMode) {
+    int ret = 0;
+    HAL_LOGD("[PFC] effect %d", convertDrvMode);
+    switch (convertDrvMode) {
+    case CAMERA_EFFECT_NONE:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_OFF;
+        break;
+    case CAMERA_EFFECT_MONO:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_MONO;
+        break;
+    case CAMERA_EFFECT_NEGATIVE:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_NEGATIVE;
+        break;
+    case CAMERA_EFFECT_SEPIA:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_SEPIA;
+        break;
+    case CAMERA_EFFECT_YELLOW:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_SOLARIZE; // old
+        break;
+    case CAMERA_EFFECT_BLUE:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_AQUA; // clod color
+        break;
+    default:
+        *androidEffectMode = ANDROID_CONTROL_EFFECT_MODE_OFF;
+        break;
+    }
+    return ret;
+}
+
+int SprdCamera3Setting::androidDrvAfModeToAfMode(int8_t androidDrvAfMode,
+                                                 uint8_t *convertAfMode) {
+    int ret = 0;
+    HAL_LOGI("[PFC] before conversion DrvAfMode %d", androidDrvAfMode);
+    switch (androidDrvAfMode) {
+    case CAMERA_FOCUS_MODE_AUTO:
+        *convertAfMode = ANDROID_CONTROL_AF_MODE_AUTO;
+        break;
+    case CAMERA_FOCUS_MODE_MACRO_FIXED:
+    case CAMERA_FOCUS_MODE_MACRO:
+        *convertAfMode = ANDROID_CONTROL_AF_MODE_MACRO;
+        break;
+    case CAMERA_FOCUS_MODE_INFINITY:
+        *convertAfMode =
+            ANDROID_CONTROL_AF_MODE_OFF; // ANDROID_CONTROL_AF_MODE_EDOF
+        break;
+    case CAMERA_FOCUS_MODE_CAF_VIDEO:
+        *convertAfMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        break;
+    case CAMERA_FOCUS_MODE_CAF:
+        *convertAfMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        break;
+    default:
+        *convertAfMode = ANDROID_CONTROL_AF_MODE_OFF;
+        break;
+    }
+    HAL_LOGI("[PFC] after conversion AfMode %d", *convertAfMode);
+
+    return ret;
+}
+
+int SprdCamera3Setting::androidDrvAwbModeToAwbMode(int8_t androidDrvAwbMode,
+                                                   uint8_t *convertAwbMode) {
+    int ret = 0;
+
+    HAL_LOGI("[PFC] before DrvawbMode %d", androidDrvAwbMode);
+    switch (androidDrvAwbMode) {
+    case CAMERA_WB_AUTO:
+        *convertAwbMode = ANDROID_CONTROL_AWB_MODE_AUTO;
+        break;
+    case CAMERA_WB_INCANDESCENT:
+        *convertAwbMode = ANDROID_CONTROL_AWB_MODE_INCANDESCENT;
+        break;
+    case CAMERA_WB_FLUORESCENT:
+        *convertAwbMode = ANDROID_CONTROL_AWB_MODE_FLUORESCENT;
+        break;
+    case CAMERA_WB_DAYLIGHT:
+        *convertAwbMode = ANDROID_CONTROL_AWB_MODE_DAYLIGHT;
+        break;
+    case CAMERA_WB_CLOUDY_DAYLIGHT:
+        *convertAwbMode = ANDROID_CONTROL_AWB_MODE_CLOUDY_DAYLIGHT;
+        break;
+    default:
+        *convertAwbMode = ANDROID_CONTROL_AWB_MODE_OFF;
+        break;
+    }
+    HAL_LOGI("[PFC] after awbMode %d", *convertAwbMode);
+    return ret;
+}
+
+int SprdCamera3Setting::androidDrvSceneModeToSceneMode(
+    int8_t androidDrvSceneMode, uint8_t *convertSceneMode) {
+    int ret = 0;
+    CONTROL_Tag controlInfo;
+    getCONTROLTag(&controlInfo);
+    HAL_LOGV("[PFC] before scene_mode %d controlInfo.scene_mode: %d",
+             androidDrvSceneMode, controlInfo.scene_mode);
+
+    switch (androidDrvSceneMode) {
+    case CAMERA_SCENE_MODE_AUTO: {
+        /*Workaround for Scene mode FACE_PRIORITY and HDR*/
+        if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY)
+            *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY;
+        else if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR)
+            *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_HDR;
+        else
+            *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_DISABLED;
+    } break;
+    case CAMERA_SCENE_MODE_ACTION:
+        *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_ACTION;
+        break;
+    case CAMERA_SCENE_MODE_NIGHT:
+        *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_NIGHT;
+        break;
+    case CAMERA_SCENE_MODE_PORTRAIT:
+        *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_PORTRAIT;
+        break;
+    case CAMERA_SCENE_MODE_LANDSCAPE:
+        *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_LANDSCAPE;
+        break;
+    case CAMERA_SCENE_MODE_HDR:
+        *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_HDR;
+        break;
+    default:
+        *convertSceneMode = ANDROID_CONTROL_SCENE_MODE_DISABLED;
+        break;
+    }
+    HAL_LOGI("[PFC] after scene_mode %d", *convertSceneMode);
+    return ret;
+}
+
+int SprdCamera3Setting::drvAntibandingModeToAndroidAntibandingMode(
+    int8_t convertAntibandingMode, uint8_t *androidAntibandingMode) {
+    int ret = 0;
+    HAL_LOGD("local antibanding mode %d", convertAntibandingMode);
+    switch (convertAntibandingMode) {
+    case 0:
+        *androidAntibandingMode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_50HZ;
+        break;
+    case 1:
+        *androidAntibandingMode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_60HZ;
+        break;
+    case 3:
+        *androidAntibandingMode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO;
+        break;
+    case 2:
+        *androidAntibandingMode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_OFF;
+        break;
+    default:
+        *androidAntibandingMode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_50HZ;
+        break;
+    }
+    return ret;
+}
+#endif
 
 int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
                                                  int8_t *convertDrvMode) {
@@ -4972,6 +5578,29 @@ int SprdCamera3Setting::setCONTROLTag(CONTROL_Tag *controlInfo) {
     s_setting[mCameraId].controlInfo = *controlInfo;
     return 0;
 }
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+int SprdCamera3Setting::setResultTag(CONTROL_Tag resultInfo) {
+    Mutex::Autolock l(mLock);
+    s_setting[mCameraId].resultInfo = resultInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::setSPRDDefResultfInfo(SPRD_DEF_Tag sprddeResultfInfo) {
+    s_setting[mCameraId].sprddeResultfInfo = sprddeResultfInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::getResultTag(CONTROL_Tag *resultInfo) {
+    Mutex::Autolock l(mLock);
+    *resultInfo = s_setting[mCameraId].resultInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::getSPRDDefResultfInfo(SPRD_DEF_Tag *sprddeResultfInfo) {
+    *sprddeResultfInfo = s_setting[mCameraId].sprddeResultfInfo;
+    return 0;
+}
+#endif
 
 int SprdCamera3Setting::setAeCONTROLTag(CONTROL_Tag *controlInfo) {
     Mutex::Autolock l(mLock);
@@ -5075,6 +5704,24 @@ int SprdCamera3Setting::setSENSORTag(SENSOR_Tag sensorInfo) {
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
     Mutex::Autolock l(mLock);
     *sensorInfo = s_setting[mCameraId].sensorInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::setRollingShutterTag(int64_t rollingShutterSkew) {
+    Mutex::Autolock l(mLock);
+    s_setting[mCameraId].sensorInfo.rollingShutterSkew = rollingShutterSkew;
+    return 0;
+}
+
+int SprdCamera3Setting::setSensorTimestampTag(int64_t sensor_timestamp) {
+    Mutex::Autolock l(mLock);
+    s_setting[mCameraId].sensorInfo.sensor_timestamp = sensor_timestamp;
+    return 0;
+}
+
+int SprdCamera3Setting::setExposureTimeTag(int64_t exposureTime) {
+    Mutex::Autolock l(mLock);
+    s_setting[mCameraId].sensorInfo.exposure_time = exposureTime;
     return 0;
 }
 

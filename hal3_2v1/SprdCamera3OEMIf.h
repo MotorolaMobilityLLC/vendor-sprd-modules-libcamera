@@ -192,7 +192,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int start(camera_channel_type_t channel_type, uint32_t frame_number);
     int stop(camera_channel_type_t channel_type, uint32_t frame_number);
     int releasePreviewFrame(int i);
-    int setCameraConvertCropRegion(void);
+    int setCameraConvertCropRegion(bool update_sync = false);
     int CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sensorHeight,
                                 struct img_rect *cropRegion);
     inline bool isCameraInit();
@@ -234,6 +234,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isVideoCopyFromPreview();
     int getCppMaxSize(cam_dimension_t *);
     void setMimeType(int type);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    void setRequestFrameInfo(struct req_frame_info *info);
+    void updateResultMetadata(uint32_t frame_num);
+#endif
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);
@@ -282,6 +286,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_CAMERA_OFFLINE
     bool mCallbackZslEnabled;
 #endif
+    uint32_t mRedisplayFum;
+
   private:
     inline void print_time();
 
@@ -351,6 +357,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void doFaceMakeup(struct camera_frame_type *frame);
     int getCameraTemp();
     void adjustFpsByTemp();
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    void HandleConvertToAndroid(enum camera_cb_type cb, void *parm4);
+#endif
 
     enum Sprd_camera_state {
         SPRD_INIT,
@@ -776,6 +785,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     /* enable/disable powerhint for CNR (only for capture)*/
     uint32_t mCNRMode;
+
+    bool mFbOn = 0;
     SprdCameraSystemPerformance *mSysPerformace;
 
     /* 1- start acceleration, 0 - finish acceleration*/
@@ -835,6 +846,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // grab capability
     struct cmr_path_capability grab_capability;
 
+  public:
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    struct isp_mw_per_frame_cxt mPerFrameResult;
+#endif
     int64_t mLastCafDoneTime;
 };
 

@@ -336,14 +336,45 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info = malloc(sizeof(*statis_info));
 
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    struct isp_alg_fw_context *isp_alg_fw_cxt =
+        (struct isp_alg_fw_context *)(cxt->evt_alg_handle);
+#endif
 	irq_info = (struct sprd_irq_info *)param_ptr;
 
 	statis_info->irq_property = irq_info->irq_property;
 
 	if (irq_info->irq_property == IRQ_DCAM_SOF) {
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        /* if valid then increment valid_sof_idx and reserved_sof_idx */
+        if (isp_alg_fw_cxt != NULL) {
+            if (isp_alg_fw_cxt->valid_flag) {
+                if (isp_alg_fw_cxt->valid_sof_idx == RESET_VALUE)
+                    isp_alg_fw_cxt->valid_sof_idx = 0;
+                else
+                    isp_alg_fw_cxt->valid_sof_idx++; /*increement valid(non
+                                                        reserved frames) sof
+                                                        index at ISP */
+            } else {
+                isp_alg_fw_cxt->reserved_sof_idx++;
+                ISP_LOGE("[PFC] reserved frame");
+            }
+        }
+        statis_info->valid_sof_idx = isp_alg_fw_cxt->valid_sof_idx;
+        statis_info->valid_flag = isp_alg_fw_cxt->valid_flag;
+        ISP_LOGD("[PFC] valid_flag: %d, %d valid_sof_idx: %d, %d "
+                 "reserved_sof_idx: %d",
+                 isp_alg_fw_cxt->valid_flag, statis_info->valid_flag,
+                 isp_alg_fw_cxt->valid_sof_idx, statis_info->valid_sof_idx,
+                 isp_alg_fw_cxt->reserved_sof_idx);
+#endif
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb) (ISP_CTRL_EVT_SOF, statis_info, (void *)cxt->evt_alg_handle);
 		}
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        isp_alg_fw_cxt->valid_flag = 0;
+#endif
 	} else if (irq_info->irq_property == IRQ_RAW_CAP_DONE) {
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb) (ISP_CTRL_EVT_TX, NULL, (void *)cxt->evt_alg_handle);

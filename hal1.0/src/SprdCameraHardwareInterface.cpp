@@ -164,42 +164,28 @@ const camera_info SprdCameraHardware::kCameraInfo[] = {
         CAMERA_FACING_BACK, 90, /*orientation*/
         0, 0, 0, 0, 0,
     },
-#ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
+
     {
         CAMERA_FACING_FRONT, 270, /*orientation*/
         0, 0, 0, 0, 0,
     },
-#else
-    {
-        -1, -1, /*orientation*/
-        0, 0, 0, 0, 0,
-    },
-#endif
 
-#ifdef CONFIG_DCAM_SENSOR_MAIN2_SUPPORT
     {
         CAMERA_FACING_BACK, 90, /*orientation*/
         0, 0, 0, 0, 0,
     },
-#else
-    {
-        -1, -1, /*orientation*/
-        0, 0, 0, 0, 0,
-    },
-#endif
 
-#ifdef CONFIG_DCAM_SENSOR_SUB2_SUPPORT
     {
         CAMERA_FACING_FRONT, 270, /*orientation*/
         0, 0, 0, 0, 0,
     },
-#else
-    {
-        -1, -1, /*orientation*/
-        0, 0, 0, 0, 0,
-    },
-#endif
+};
 
+const int camera_is_supprort [] = {
+    BACK_CAMERA_SENSOR_SUPPORT,
+    FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK_EXT_CAMERA_SENSOR_SUPPORT,
+    FRONT_EXT_CAMERA_SENSOR_SUPPORT,
 };
 
 const camera_info SprdCameraHardware::kCameraInfo3[] = {
@@ -247,12 +233,7 @@ int SprdCameraHardware::getNumberOfCameras() {
         num = sizeof(SprdCameraHardware::kCameraInfo3) /
               sizeof(SprdCameraHardware::kCameraInfo3[0]);
     } else {
-        j = sizeof(SprdCameraHardware::kCameraInfo) /
-            sizeof(SprdCameraHardware::kCameraInfo[0]);
-        for (int i = 0; i < j; i++) {
-            if (SprdCameraHardware::kCameraInfo[i].orientation != -1)
-                num++;
-        }
+        num = CAMERA_SENSOR_NUM;
     }
 
     LOGI("getNumberOfCameras:%d", num);
@@ -336,9 +317,10 @@ int SprdCameraHardware::getCameraInfo(int cameraId,
     if (1 == getPropertyAtv()) {
         memcpy(cameraInfo, &kCameraInfo3[cameraId], sizeof(CameraInfo));
     } else {
+        int i;
         int id = -1;
-        for (int i = 0;; i++) {
-            if (SprdCameraHardware::kCameraInfo[i].orientation != -1)
+        for (i = 0; i < (int)ARRAY_SIZE(kCameraInfo); i++) {
+            if (camera_is_supprort[i])
                 id++;
             if (id == cameraId) {
                 memcpy(cameraInfo, &kCameraInfo[i], sizeof(CameraInfo));
@@ -701,10 +683,8 @@ int SprdCameraHardware::getCameraIndex() {
     } else {
         int vindex = 0;
         int i;
-        for (i = 0; i < sizeof(SprdCameraHardware::kCameraInfo) /
-                            sizeof(SprdCameraHardware::kCameraInfo[0]);
-             i++) {
-            if (SprdCameraHardware::kCameraInfo[i].orientation != -1) {
+        for (i = 0; i < (int)ARRAY_SIZE(kCameraInfo); i++) {
+            if (camera_is_supprort[i]) {
                 if (vindex == mCameraId) {
                     break;
                 }

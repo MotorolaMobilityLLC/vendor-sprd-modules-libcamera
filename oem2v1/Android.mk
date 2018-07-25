@@ -7,6 +7,7 @@ LOCAL_LDFLAGS += -ldl
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../sensor/inc
 ifeq ($(strip $(OEM_DIR)),oem2v1)
 LOCAL_C_INCLUDES += \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
@@ -57,15 +58,18 @@ LOCAL_SRC_FILES+= \
     src/cmr_4in1.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprdface/inc
-LOCAL_SRC_FILES += src/cmr_fd_sprd.c
+	LOCAL_C_INCLUDES += \
+		$(LOCAL_PATH)/../arithmetic/sprdface/inc
+	LOCAL_SRC_FILES+= src/cmr_fd_sprd.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AI_SCENE)),true)
         LOCAL_SRC_FILES += src/cmr_ai_scene.c
 endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/eis/inc
+	LOCAL_C_INCLUDES += \
+			$(LOCAL_PATH)/../arithmetic/eis/inc
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
@@ -78,7 +82,12 @@ LOCAL_SRC_FILES += src/cmr_hdr.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-LOCAL_SRC_FILES += src/cmr_uvdenoise.c
+	LOCAL_SRC_FILES+= src/cmr_uvdenoise.c
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor/al3200
+	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
@@ -107,6 +116,13 @@ LOCAL_SRC_FILES+= src/sprd_filter.c
 LOCAL_SHARED_LIBRARIES += libSprdImageFilter
 else
 LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
+endif
+
+ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0),)
+        LOCAL_CFLAGS += -DCONFIG_LIBYUV
+        LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc
+        LOCAL_SRC_FILES += ../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c
+        LOCAL_SHARED_LIBRARIES += libyuv
 endif
 
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_

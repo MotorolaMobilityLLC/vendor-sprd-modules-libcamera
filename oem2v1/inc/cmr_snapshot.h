@@ -116,7 +116,8 @@ struct jpeg_param {
 struct snapshot_md_ops {
     cmr_int (*start_encode)(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
-                            struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
+                            struct cmr_op_mean *mean,
+                            struct jpeg_enc_cb_param *enc_cb_param);
     cmr_int (*start_decode)(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
                             struct cmr_op_mean *mean);

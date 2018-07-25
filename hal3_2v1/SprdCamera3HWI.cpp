@@ -462,7 +462,9 @@ camera_metadata_t *SprdCamera3HWI::constructDefaultMetadata(int type) {
         return NULL;
     }
     mSetting->constructDefaultMetadata(type, &metadata);
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    mSetting->constructDefaultResultMetadata(&(mOEMIf->mPerFrameResult));
+#endif
     if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_FLUSH) {
         mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     }
@@ -693,7 +695,24 @@ int SprdCamera3HWI::configureStreams(
         // for CTS
         if ((stream_type == CAMERA_STREAM_TYPE_DEFAULT) &&
             (channel_type == CAMERA_CHANNEL_TYPE_RAW_CALLBACK)) {
-            if (callback_stream_flag == false)
+            if (streamList->num_streams == 2 &&
+                streamList->streams[(i + 1) % 2]->stream_type ==
+                    CAMERA3_STREAM_OUTPUT &&
+                streamList->streams[(i + 1) % 2]->format ==
+                    HAL_PIXEL_FORMAT_YCbCr_420_888) {
+                if (newStream->width <=
+                        streamList->streams[(i + 1) % 2]->width &&
+                    !callback_stream_flag) {
+                    callback_stream_flag = true;
+                    stream_type = CAMERA_STREAM_TYPE_PREVIEW;
+                    channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+
+                } else {
+                    stream_type = CAMERA_STREAM_TYPE_DEFAULT;
+                    channel_type = CAMERA_CHANNEL_TYPE_RAW_CALLBACK;
+                }
+
+            } else if (callback_stream_flag == false)
                 callback_stream_flag = true;
             else {
                 stream_type = CAMERA_STREAM_TYPE_PREVIEW;
@@ -1055,7 +1074,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     uint16_t max_sensor_width = 0, max_sensor_height = 0;
     Mutex::Autolock l(mLock);
     cam_dimension_t max_cpp_size = {0, 0};
+    cam_dimension_t preview_size = {0, 0};
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    REQUEST_Tag requestInfo;
+    struct req_frame_info info;
+#endif
     ret = validateCaptureRequest(request);
     if (ret) {
         HAL_LOGE("incoming request is not valid");
@@ -1065,10 +1089,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mFrameNum = request->frame_number;
     meta = request->settings;
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    mSetting->getREQUESTTag(&requestInfo);
+    requestInfo.frame_number = mFrameNum;
+    mSetting->setREQUESTTag(&requestInfo);
+#endif
+
     /*fix 30fps for blur mode**/
     if ((mMultiCameraMode == MODE_REFOCUS || mMultiCameraMode == MODE_BOKEH ||
          mMultiCameraMode == MODE_RANGE_FINDER ||
-         mMultiCameraMode == MODE_TUNING) &&
+         mMultiCameraMode == MODE_TUNING ||
+         mMultiCameraMode == MODE_DUAL_FACEID_REGISTER ||
+         mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
         meta.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
         int32_t aeTargetFpsRange[2] = {20, 20};
         meta.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE, aeTargetFpsRange,
@@ -1197,8 +1229,27 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->setCameraConvertCropRegion();
             mOEMIf->mSetCapRatioFlag = false;
         }
+
+        if (output1.stream->format == HAL_PIXEL_FORMAT_BLOB &&
+            output2.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
+            sprddefInfo.sprd_zsl_enabled == false) {
+            mOEMIf->mRedisplayFum = request->frame_number;
+        }
     }
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    mSetting->getREQUESTTag(&requestInfo);
+    if (mPictureRequest && request->num_output_buffers == 1) {
+        info.is_only_capture = 1;
+        HAL_LOGV("[PFC] FOR CAPTURE FRAME is_only_capture  %d",
+                 info.is_only_capture);
+    } else {
+        info.is_only_capture = 0;
+    }
+    info.frame_num = mFrameNum;
+    HAL_LOGD("[PFC] frame_number %d", info.frame_num);
+    mOEMIf->setRequestFrameInfo(&info); // send frame number  to ISP
+#endif
 #ifndef MINICAMERA
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
@@ -1358,6 +1409,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             requestedBuf.buffer = output.buffer;
             pendingRequest.buffers.push_back(requestedBuf);
         }
+
+        mSetting->getCONTROLTag(&controlInfo);
+        mSetting->getPreviewSize(&preview_size);
+        if (controlInfo.ae_mode == 0 && preview_size.width >= 1920) {
+            receive_req_max = 1;
+        }
+        HAL_LOGV("receive_req_max %d", receive_req_max);
         pendingRequest.receive_req_max = receive_req_max;
 
         mPendingRequestsList.push_back(pendingRequest);
@@ -1452,8 +1510,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     {
         Mutex::Autolock lr(mRequestLock);
         size_t pendingCount = 0;
-        while (mPendingRequest >= receive_req_max) {
+        while ((mPendingRequest >= receive_req_max) || mHDRProcessFlag) {
             mRequestSignal.waitRelative(mRequestLock, kPendingTime);
+            if (mHDRProcessFlag && (mPendingRequest == 0))
+                mHDRProcessFlag = false;
             if (pendingCount > kPendingTimeOut / kPendingTime) {
                 HAL_LOGE("TimeOut pendingCount=%d", pendingCount);
                 ret = -ENODEV;
@@ -1550,6 +1610,14 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                         sensor_timestamp - prev_timestamp;
                 else
                     resultInfo.frame_duration = resultInfo.exposure_time;
+                // Frame duration must be less than exposure time.
+                if (resultInfo.frame_duration < resultInfo.exposure_time) {
+                    HAL_LOGE("Frame duration=%lld found to be less than "
+                             "exposure time=%lld",
+                             resultInfo.frame_duration,
+                             resultInfo.exposure_time);
+                    resultInfo.frame_duration = resultInfo.exposure_time;
+                }
                 int64_t minFrameDuration = resultInfo.frame_duration;
                 GET_MIN_FRAME_DURATION(minFrameDuration)
                 // Frame duration must be less than minimum frame duration.
@@ -1568,6 +1636,10 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                        5 * sizeof(i->meta_info.af_regions[0]));
                 mSetting->setMETAInfo(metaInfo);
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+                HAL_LOGD("[PFC] i->frame_number %d", i->frame_number);
+                mOEMIf->updateResultMetadata(i->frame_number);
+#endif
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;
@@ -1580,7 +1652,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
             i++;
         } else if (i->frame_number == frame_number) {
-            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
+            HAL_LOGV("i->frame_num=%d, frame_num=%d, i->req_id=%d",
                      i->frame_number, frame_number, i->request_id);
 
             if (!i->bNotified) {
@@ -1610,6 +1682,14 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                         sensor_timestamp - prev_timestamp;
                 else
                     resultInfo.frame_duration = resultInfo.exposure_time;
+                // Frame duration must be less than exposure time.
+                if (resultInfo.frame_duration < resultInfo.exposure_time) {
+                    HAL_LOGV("Frame duration=%lld found to be less than "
+                             "exposure time=%lld",
+                             resultInfo.frame_duration,
+                             resultInfo.exposure_time);
+                    resultInfo.frame_duration = resultInfo.exposure_time;
+                }
                 int64_t minFrameDuration = resultInfo.frame_duration;
                 GET_MIN_FRAME_DURATION(minFrameDuration)
                 // Frame duration must be less than minimum frame duration.
@@ -1628,6 +1708,10 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                        5 * sizeof(i->meta_info.af_regions[0]));
                 mSetting->setMETAInfo(metaInfo);
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+                HAL_LOGD("[PFC] i->frame_number %d", i->frame_number);
+                mOEMIf->updateResultMetadata(i->frame_number);
+#endif
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;
@@ -1674,8 +1758,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 }
             }
 
-            HAL_LOGD("num_bufs=%d, mPendingReq=%d", i->num_buffers,
-                     mPendingRequest);
+            HAL_LOGD("num_bufs=%d, mPendingReq=%d,frame_number=%d",
+                     i->num_buffers, mPendingRequest, result.frame_number);
 
             if (0 == i->num_buffers) {
                 receive_req_max = i->receive_req_max;
@@ -1761,7 +1845,7 @@ int SprdCamera3HWI::flush() {
     /*Enable lock when we implement this function */
     int ret = NO_ERROR;
     int64_t timestamp = 0;
-// Mutex::Autolock l(mLock);
+    // Mutex::Autolock l(mLock);
     if (mOEMIf) {
         mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     }
@@ -1777,6 +1861,7 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = true;
+    mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     Mutex::Autolock l(mLock);
 
     // for performance tuning: close camera
@@ -1804,13 +1889,9 @@ int SprdCamera3HWI::flush() {
         return -ENODEV;
     }
 
-    if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD)
-        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-    else
-        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
-
-    mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     mFlush = false;
+    if (mOEMIf)
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
 
     HAL_LOGI(":hal3: X");
     LAUNCHLOGE(CMR_FLUSH_T);

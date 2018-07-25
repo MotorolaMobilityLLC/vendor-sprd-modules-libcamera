@@ -74,6 +74,13 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define Y_GAMMA_SMART_WITH_RGB_GAMMA
 #define ISP_PARAM_VERSION                    (0x00030002)
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+#define MAX_SETTING     25
+#define MAX_PIPE_LINE_DEPTH 4
+#define MAX_ISP_3A_OFFSET 2
+#define RESET_VALUE 0xffffffff
+#endif
+
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
 	ISP_AE_SET_MONITOR,
@@ -142,6 +149,9 @@ enum isp_callback_cmd {
 	ISP_AE_CB_FLASH_FIRED = 0x00004000,
 	ISP_AE_CALCOUT_NOTIFY = 0x00005000,
 	ISP_AUTO_HDR_STATUS_CALLBACK = 0x00006000,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	ISP_CONVERT_CALLBACK = 0x00007000,
+#endif
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -369,6 +379,15 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_3DNR,
 	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_AUTO_HDR_MODE,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+	ISP_CTRL_SET_REQ_FRAME_INFO,	//109
+        ISP_CTRL_GET_PER_FRAME_RESULT,	//110
+	ISP_CTRL_SET_VALID_FRAME,	//111
+	ISP_CTRL_AE_GET_ISO,		//112
+	ISP_CTRL_AE_GET_EXP_TIME,	//113
+	ISP_CTRL_AE_GET_SENSITIVITY,	//114
+	ISP_CTRL_SET_TX_RESERVED,
+#endif
 	ISP_CTRL_MAX
 };
 
@@ -418,6 +437,7 @@ struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
 	cmr_u32 bv;
+	cmr_u32 lowlight_flag;
 };
 
 struct isp_yimg_info {
@@ -845,6 +865,55 @@ struct isp_init_param {
 	cmr_s32 dcam_fd;
 };
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+enum isp_state {
+	ISP_START,
+	ISP_STOP
+};
+
+struct req_frame_info {
+	uint32_t frame_num;
+	int is_only_capture;
+};
+
+struct cmd_setting {
+	enum isp_ctrl_cmd cmd;	/* isp command received*/
+	void *para;	/* ispcommand value */
+	cmr_u32 frame_num;	/*cmd frame number [debugging purpose]*/
+};
+struct isp_mw_per_frame_cxt {
+	/*Add request keys below*/
+	struct isp_range_fps range_fps;	/*store FPS range*/
+	cmr_u32 ae_lock;
+	cmr_u32 awb_lock;
+	cmr_u32 awb_mode;
+	cmr_u32 isp_af_mode;
+	cmr_u32 af_bypass;
+	cmr_u32 scene_mode;
+	struct isp_pos_rect ae_rect;
+	struct isp_af_win af_param;
+	cmr_u32 set_iso;
+	cmr_u32 get_iso;
+	cmr_u32 set_sensitivity;
+	cmr_u32 get_sensitivity;
+	cmr_u32 exposure_time;
+	cmr_u32 set_exp;
+	cmr_int ev_level;
+	cmr_u32 antibanding_mode;
+	cmr_u32 effect_mode;
+	cmr_u32 brightness;
+	cmr_u32 contrast;
+	cmr_u32 saturation;
+	cmr_u32 metering_mode;
+	/*Per frame handling*/
+	cmr_u32 request_frame_num;		/* store per frame request number */
+	int act_set_cnt;			/* actual setting set count in cmd array */
+	cmr_u32 is_applied;			/* ensure setting is appied or not */
+	struct cmd_setting cmd_set[MAX_SETTING];/* structure to store ISP cmds received */
+	int is_only_capture;
+};
+
+#endif
 typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint * size_ptr, cmr_uint * sum_ptr, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * mfd, void *private_data);
 typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * fd, cmr_uint sum, void *private_data);
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);

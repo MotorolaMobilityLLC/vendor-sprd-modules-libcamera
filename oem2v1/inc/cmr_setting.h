@@ -77,6 +77,7 @@ enum setting_cmd_type {
     SETTING_CLEAR_HDR,
     SETTING_GET_SPRD_HDR_NORMAL_ENABLED,
     SETTING_GET_FILTER_TEYP,
+    SETTING_GET_APPMODE,
     SETTING_GET_CNRMODE,
     SETTING_SET_EXIF_EXPOSURE_TIME,
     SETTING_TYPE_MAX
@@ -124,6 +125,9 @@ struct setting_cmd_parameter {
         struct cmr_range_fps_param range_fps;
         struct touch_coordinate touch_param;
         struct cmr_ae_compensation_param ae_compensation_param;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        struct req_frame_info req_info;
+#endif
     };
 };
 
