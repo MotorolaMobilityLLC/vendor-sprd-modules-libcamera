@@ -45,6 +45,7 @@
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
 #define AE_CFG_NUM 8
 #define AE_FD_NUM 20
+#define AE_BASE_GAIN 128
 
 enum ae_environ_mod {
 	ae_environ_night,
@@ -132,6 +133,24 @@ enum ae_flicker_mode {
 	AE_FLICKER_AUTO,
 	AE_FLICKER_MAX
 };
+
+enum ae_ai_scene_type {
+ 	AE_AI_SCENE_FOOD,
+ 	AE_AI_SCENE_PORTRAIT,
+ 	AE_AI_SCENE_FOLIAGE,
+ 	AE_AI_SCENE_SKY,
+ 	AE_AI_SCENE_NIGHT,
+ 	AE_AI_SCENE_BACKLIGHT,
+ 	AE_AI_SCENE_TEXT,
+ 	AE_AI_SCENE_SUNRISE,
+ 	AE_AI_SCENE_BUILDING,
+ 	AE_AI_SCENE_LANDSCAPE,
+ 	AE_AI_SCENE_SNOW,
+ 	AE_AI_SCENE_FIREWORK,
+ 	AE_AI_SCENE_BEACH,
+ 	AE_AI_SCENE_PET,
+ 	AE_AI_SCENE_MAX
+ };
 
 typedef cmr_handle ae_handle_t;
 
@@ -389,6 +408,64 @@ struct ae_stats_sensor_info {
 	struct ae_stats_accelerator_info accelerator;
 };
 
+enum ai_task0 {
+	AE_AI_SCENE_TASK0_INDOOR,
+	AE_AI_SCENE_TASK0_OUTDOOR,
+	AE_AI_SCENE_TASK0_MAX
+};
+
+enum ai_task1 {
+	AE_AI_SCENE_TASK1_NIGHT,
+	AE_AI_SCENE_TASK1_BACKLIGHT,
+	AE_AI_SCENE_TASK1_SUNRISESET,
+	AE_AI_SCENE_TASK1_FIREWORK,
+	AE_AI_SCENE_TASK1_OTHERS,
+	AE_AI_SCENE_TASK1_MAX
+};
+
+enum ai_task2 {
+	AE_AI_SCENE_TASK2_FOOD,
+	AE_AI_SCENE_TASK2_GREENPLANT,
+	AE_AI_SCENE_TASK2_DOCUMENT,
+	AE_AI_SCENE_TASK2_CATDOG,
+	AE_AI_SCENE_TASK2_FLOWER,
+	AE_AI_SCENE_TASK2_BLUESKY,
+	AE_AI_SCENE_TASK2_BUILDING,
+	AE_AI_SCENE_TASK2_SNOW,
+	AE_AI_SCENE_TASK2_OTHERS,
+	AE_AI_SCENE_TASK2_MAX
+};
+
+struct ai_task0_rt {
+	enum ai_task0 id;
+	cmr_u16 reliability;
+};
+
+struct ai_task1_rt {
+	enum ai_task1 id;
+	cmr_u16 reliability;
+};
+
+struct ai_task2_rt {
+	enum ai_task2 id;
+	cmr_u16 reliability;
+};
+
+struct ai_scene_detect {
+	cmr_u32 frame_id;
+	enum ae_ai_scene_type scene_id;
+	struct ai_task0_rt task0[AE_AI_SCENE_TASK0_MAX];
+	struct ai_task1_rt task1[AE_AI_SCENE_TASK1_MAX];
+	struct ai_task2_rt task2[AE_AI_SCENE_TASK2_MAX];
+};
+
+struct ae_hist_info {
+	cmr_u32 value[256];
+	cmr_s32 frame_id;
+	cmr_u32 sec;
+	cmr_u32 usec;
+};
+
 struct ae_settings {
 	cmr_u16 ver;
 	cmr_u8 force_lock_ae;
@@ -458,8 +535,8 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
 	cmr_u8 led_state;			//0:off, 1:on
-	cmr_u8 flash_fired;			//just notify APP in flash auto
-	cmr_s32 flash_mode;
+	cmr_u8 flash_fired;		//just notify APP in flash auto
+	cmr_s32 flash_mode;		//0:off, 1:force, 3:auto
 //caliberation for bv match with lv
 	float lv_cali_lv;
 	float lv_cali_bv;
@@ -477,18 +554,26 @@ struct ae_alg_calc_param {
 	//for face AE
 	struct ae1_fd_param ae1_finfo;
 //adv_alg module init
-	cmr_handle adv[8];
+	cmr_handle adv[12];
 	/*
 	   0:region
-	   1:flat
+	   1: flat
 	   2: mulaes
 	   3: touch ae
 	   4: face ae
-	   5:flash ae????
+	   5: flash ae
+	   6: backlight
+	   7: sky
+	   8: foliage
+	   9: lowlight
+	   10: outdoor
+	   11: indoor
 	 */
 	struct ae_settings settings;
 	cmr_u32 awb_mode;
 	struct ae_alg_rgb_gain awb_cur_gain;
+	struct ai_scene_detect detect_scene;
+	struct ae_hist_info hist_info;
 };
 
 struct ae1_senseor_out {
@@ -529,11 +614,20 @@ struct ae_alg_calc_result {
 	void *pmulaes;
 	void *pflat;
 	void *pregion;
+	void *pnight;
+	void *pfoliage;
+	void *psky;
+	void *pbacklight;
+	void *pindoor;
+	void *poutdoor;
+	void *psnow;
 	void *ptc;					/*Bethany add touch info to debug info */
 	void *pface_ae;
 	struct ae1_senseor_out wts;
 	cmr_handle log;
 	cmr_u32 flag4idx;
+	cmr_u32 face_stable;
+	cmr_u32 face_trigger;
 	cmr_u32 *reserved;			/*resurve for future */
 };
 

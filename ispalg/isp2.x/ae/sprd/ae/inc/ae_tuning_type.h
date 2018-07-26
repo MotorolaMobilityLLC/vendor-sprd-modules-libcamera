@@ -21,6 +21,7 @@
 #define MULAES_CFG_NUM AE_CFG_NUM
 #define REGION_CFG_NUM AE_CFG_NUM
 #define FLAT_CFG_NUM AE_CFG_NUM
+#define FACE_CFG_NUM AE_CFG_NUM
 
 struct ae_param_tmp_001 {
 	cmr_u32 version;
@@ -91,14 +92,30 @@ struct flat_tuning_param {
 	struct ae_piecewise_func in_piecewise;	/*17 * 4bytes */
 };								/*51 * 4bytes */
 
+struct face_cfg {
+	cmr_s16 x_idx;
+	cmr_u8 y_lum;
+	cmr_u8 up_limit;
+	cmr_u8 down_limit;
+	cmr_u8 ratio_block;			//10~100 will trans 0~1
+	cmr_u8 ratio_position;		//10~100 will trans 0~1
+	cmr_u8 max_with_ratio;		//10~100 will trans 0~1
+};
+
 struct face_tuning_param {
 	cmr_u8 face_tuning_enable;
 	cmr_u8 face_target;			//except to get the face lum
 	cmr_u8 face_tuning_lum1;	// scope is [0,256]
 	cmr_u8 face_tuning_lum2;	//if face lum > this value, offset will set to be 0
 	cmr_u16 cur_offset_weight;	//10~100 will trans 0~1
-	cmr_u16 max_face_offset;	//limit max face offset
-	cmr_u16 reserved[40];	//?
+	cmr_u16 up_face_offset;		//limit up face offset
+	cmr_u16 down_face_offset;	//limit down face offset
+	cmr_u8 ratio_block;			//10~100 will trans 0~1
+	cmr_u8 ratio_position;		//10~100 will trans 0~1
+	cmr_u8 max_with_ratio;		//10~100 will trans 0~1
+	cmr_u8 num;
+	struct face_cfg cfg[FACE_CFG_NUM];	/*8 * 6bytes */
+	cmr_u16 reserved[5];		//?
 };
 
 struct ae_touch_param {
@@ -154,6 +171,16 @@ struct ae_monitor_tuning_param {
 	cmr_s32 reserved;
 };
 
+struct ai_cfg {
+	cmr_s16 y_lum;         /*1 * 2bytes*/
+};
+
+struct ae_ai_tuning_param {
+	cmr_u8 enable;		/*1 * 1bytes*/
+	cmr_u8 reserved;		/*1 * 1bytes*/
+	struct ai_cfg cfg_ai;	/*1 * 2bytes*/
+};
+
 struct ae_tuning_param {		//total bytes must be 263480
 	cmr_u32 version;
 	cmr_u32 verify;
@@ -207,7 +234,14 @@ struct ae_tuning_param {		//total bytes must be 263480
 	struct ae_flash_control_param flash_control_param;
 	struct ae_video_set_fps_param ae_video_fps;
 	struct ae_monitor_tuning_param monitor_param;
-	cmr_u32 reserved[2011];
+	struct ae_ai_tuning_param backlight_param; /*1 * 4bytes */
+	struct ae_ai_tuning_param sky_param; /*1 * 4bytes */
+	struct ae_ai_tuning_param foliage_param; /*1 * 4bytes */
+	struct ae_ai_tuning_param night_param; /*1 * 4bytes */
+	struct ae_ai_tuning_param outdoor_param; /*1 * 4bytes */
+	struct ae_ai_tuning_param indoor_param; /*1 * 4bytes */
+	cmr_u32 ai_effect_enable;
+	cmr_u32 reserved[2004];
 };
 
 #endif

@@ -532,6 +532,7 @@ extern "C" {
 		cmr_s32 ae_data_size;
 		cmr_u32 target_lum_ori;
 		cmr_u32 flag4idx;
+		cmr_u32 face_stable;
 		cmr_s32 cur_bv;
 		float exposure_time;
 		cmr_u32 sec;

@@ -3064,6 +3064,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_r
 	result->ae_output.target_lum = alg_rt->target_lum;
 	result->ae_output.target_lum_ori = alg_rt->target_lum_ori;
 	result->ae_output.flag4idx = alg_rt->flag4idx;
+	result->ae_output.face_stable = alg_rt->face_stable;
 	result->ae_output.cur_bv = alg_rt->cur_bv;
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 
@@ -3097,6 +3098,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_re
 	result->ae_output.target_lum = alg_rt->target_lum;
 	result->ae_output.target_lum_ori = alg_rt->target_lum_ori;
 	result->ae_output.flag4idx = alg_rt->flag4idx;
+	result->ae_output.face_stable = alg_rt->face_stable;
 	result->ae_output.cur_bv = alg_rt->cur_bv;
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 
