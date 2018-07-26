@@ -105,7 +105,7 @@ void SprdCameraSystemPerformance::freeSysPerformance(
 
 void SprdCameraSystemPerformance::setCamPreformaceScene(
     sys_performance_camera_scene camera_scene) {
-
+#ifndef CONFIG_CAMERA_DFS_FIXED_MAXLEVEL
     switch (camera_scene) {
     case CAM_PERFORMANCE_LEVEL_6:
         setPowerHint(CAM_POWER_PERFORMACE_ON);
@@ -131,6 +131,30 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
 
     HAL_LOGD("x camera scene:%d", camera_scene);
 }
+#else
+#if (CONFIG_CAMERA_DFS_FIXED_MAXLEVEL == 3)
+    changeDfsPolicy(CAM_VERYHIGH);
+#elif(CONFIG_CAMERA_DFS_FIXED_MAXLEVEL == 2)
+    changeDfsPolicy(CAM_NORMAL);
+#endif
+
+    switch (camera_scene) {
+    case CAM_PERFORMANCE_LEVEL_6:
+        setPowerHint(CAM_POWER_PERFORMACE_ON);
+        break;
+    case CAM_PERFORMANCE_LEVEL_5:
+    case CAM_PERFORMANCE_LEVEL_4:
+        setPowerHint(CAM_POWER_NORMAL);
+        break;
+    case CAM_PERFORMANCE_LEVEL_3:
+    case CAM_PERFORMANCE_LEVEL_2:
+    case CAM_PERFORMANCE_LEVEL_1:
+        setPowerHint(CAM_POWER_LOWPOWER_ON);
+        break;
+    default:
+        HAL_LOGI("camera scene not support");
+    }
+#endif
 
 void SprdCameraSystemPerformance::initPowerHint() {
 
@@ -139,8 +163,10 @@ void SprdCameraSystemPerformance::initPowerHint() {
         mPowerManager = new ::android::PowerHALManager();
         if (mPowerManager) {
             mPowerManager->init();
-            mSceneLowPower = mPowerManager->createPowerHintScene("camera", 0, "camera_lowpower");
-            mScenePerformance = mPowerManager->createPowerHintScene("camera", 0, "camera_perf");
+            mSceneLowPower = mPowerManager->createPowerHintScene(
+                "camera", 0, "camera_lowpower");
+            mScenePerformance =
+                mPowerManager->createPowerHintScene("camera", 0, "camera_perf");
 
             mPowermanageInited = true;
             mCurrentPowerHint = CAM_POWER_NORMAL;
@@ -182,7 +208,7 @@ void SprdCameraSystemPerformance::setPowerHint(
     switch (mCurrentPowerHint) {
     case CAM_POWER_NORMAL:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            //thermalEnabled(false);
+            // thermalEnabled(false);
             acquirePowerHint(mScenePerformance);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
@@ -202,17 +228,17 @@ void SprdCameraSystemPerformance::setPowerHint(
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             releasePowerHint(mScenePerformance);
             acquirePowerHint(mSceneLowPower);
-            //thermalEnabled(true);
+            // thermalEnabled(true);
             mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
         } else if (powerhint_id == CAM_POWER_NORMAL) {
             releasePowerHint(mScenePerformance);
-            //thermalEnabled(true);
+            // thermalEnabled(true);
             mCurrentPowerHint = CAM_POWER_NORMAL;
         }
         break;
     case CAM_POWER_LOWPOWER_ON:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
-            //thermalEnabled(false);
+            // thermalEnabled(false);
             releasePowerHint(mSceneLowPower);
             acquirePowerHint(mScenePerformance);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
@@ -376,5 +402,4 @@ void SprdCameraSystemPerformance::releasePowerHint(
     }
 }
 #endif
-
 };
