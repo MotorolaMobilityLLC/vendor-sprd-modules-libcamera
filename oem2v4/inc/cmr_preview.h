@@ -137,6 +137,9 @@ struct preview_md_ops {
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
     cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
+    cmr_int (* start_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
+                           struct img_frm *src, struct img_frm *dst,
+                           struct cmr_op_mean *mean);
 };
 
 struct preview_init_param {

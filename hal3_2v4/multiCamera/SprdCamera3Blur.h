@@ -379,6 +379,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         uint8_t getIspAfFullscanInfo();
         int blurHandle(struct private_handle_t *input1, void *input2,
                        struct private_handle_t *output);
+        void CallSnapBackResult(camera3_buffer_status_t buffer_status);
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -432,9 +433,6 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void BlurFaceMakeup(private_handle_t *private_handle);
     };
     sp<CaptureThread> mCaptureThread;
-    Mutex mMergequeueFinishMutex;
-    Condition mMergequeueFinishSignal;
-
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);

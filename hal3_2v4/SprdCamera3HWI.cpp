@@ -68,7 +68,7 @@ multiCameraMode SprdCamera3HWI::mMultiCameraMode = MODE_SINGLE_CAMERA;
 //   4 - show ALOGE, ALOGW, ALOGI and ALOGD
 //   5 - show ALOGE, ALOGW, ALOGI and ALOGD, ALOGV
 // use the following command to change gHALLogLevel:
-//   adb shell setprop persist.vendor.cam.hal.log 1
+//   adb shell setprop persist.sys.camera.hal.log 1
 volatile uint32_t gHALLogLevel = 4;
 
 camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
@@ -91,7 +91,7 @@ static camera3_device_t *g_cam_device = NULL;
 
 #define SPRD_CONTROL_CAPTURE_INTENT_FLUSH 0xFE
 #define SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE 0xFF
-
+#define SPRD_INTERP_PREVIEW_ONLINE_MAX_SIZE (2592 * 1952)
 SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     : mCameraId(cameraId), mOEMIf(NULL), mCameraOpened(false),
       mCameraInitialized(false), mLastFrmNum(0), mCallbackOps(NULL),
@@ -103,7 +103,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
 
     // for camera id 2&3 debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.id", value, "0");
+    property_get("persist.sys.camera.id", value, "0");
     if (mCameraId == 0) {
         if (!strcmp(value, "2"))
             mCameraId = 2;
@@ -173,7 +173,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
     }
 
     if (mOEMIf) {
-        mOEMIf->setCamPreformaceScene(CAM_EXIT_S);
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         // for performance tuning: close camera
         mOEMIf->setSensorCloseFlag();
     }
@@ -535,6 +535,14 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
                 *channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
                 new_stream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
                 new_stream->usage |= GRALLOC_USAGE_PRIVATE_1;
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+                if (new_stream->width * new_stream->height >
+                    SPRD_INTERP_PREVIEW_ONLINE_MAX_SIZE) {
+                    *stream_type = CAMERA_STREAM_TYPE_CALLBACK;
+                    *channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                    HAL_LOGD("For Interpolation:preview size out of 5M ,need use callbcak stream");
+                }
+#endif
             }
             break;
         case HAL_PIXEL_FORMAT_YV12:
@@ -699,7 +707,7 @@ int SprdCamera3HWI::configureStreams(
         char value[PROPERTY_VALUE_MAX];
         char value1[PROPERTY_VALUE_MAX];
         property_get("debug.camera.save.refocus", value, "0");
-        property_get("persist.vendor.cam.save.refocus", value1, "0");
+        property_get("persist.camera.save.refocus", value1, "0");
         if ((atoi(value) == 2 || atoi(value1) == 2) &&
             stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
             newStream->width = 480;
@@ -708,7 +716,7 @@ int SprdCamera3HWI::configureStreams(
 #endif
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("vendor.cam.volte.incall.camera.enable", value, "false");
+        property_get("volte.incall.camera.enable", value, "false");
         if (!strcmp(value, "true") &&
             stream_type == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
             channel_type == CAMERA_CHANNEL_TYPE_PICTURE) {
@@ -1052,15 +1060,15 @@ void SprdCamera3HWI::getLogLevel() {
     int val = 0;
     int turn_off_flag = 0;
 
-    property_get("persist.vendor.cam.hal.log", value, "0");
+    property_get("persist.sys.camera.hal.log", value, "0");
     val = atoi(value);
     if (val > 0) {
         gHALLogLevel = (uint32_t)val;
     }
 
     // to turn off camera log:
-    // adb shell setprop persist.vendor.cam.log off
-    property_get("persist.vendor.cam.log", value, "on");
+    // adb shell setprop persist.sys.camera.log off
+    property_get("persist.sys.camera.log", value, "on");
     if (!strcmp(value, "off")) {
         turn_off_flag = 1;
     }
@@ -2130,18 +2138,18 @@ void SprdCamera3HWI::timer_handler(union sigval arg) {
     HAL_LOGD("X");
 }
 
-void SprdCamera3HWI::setMultiCameraMode(multiCameraMode Mode) {
-    mMultiCameraMode = Mode;
+void SprdCamera3HWI::setMultiCameraMode(multiCameraMode multiCameraModeId) {
+    mMultiCameraMode = multiCameraModeId;
     HAL_LOGD("mMultiCameraMode=%d ", mMultiCameraMode);
 }
 
-bool SprdCamera3HWI::isMultiCameraMode(int Mode) {
-    bool ret = false;
-    if (Mode > MODE_SINGLE_CAMERA && Mode < MODE_CAMERA_MAX) {
-        ret = true;
-    }
-
-    return ret;
+bool SprdCamera3HWI::isMultiCameraMode(int cameraId) {
+    HAL_LOGD("cameraId= %d ", cameraId);
+    if ((MIN_MULTI_CAMERA_FAKE_ID <= cameraId) &&
+        (cameraId <= MAX_MULTI_CAMERA_FAKE_ID))
+        return true;
+    else
+        return false;
 }
 
 void SprdCamera3HWI::setSprdCameraLowpower(int flag) {

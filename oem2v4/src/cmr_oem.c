@@ -181,7 +181,7 @@ static cmr_int camera_preview_post_proc(cmr_handle oem_handle,
 static cmr_int camera_start_encode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
-                                   struct cmr_op_mean *mean);
+                                   struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
@@ -326,7 +326,6 @@ static cmr_int camera_check_cap_time(cmr_handle snp_handle,
 static void camera_snapshot_started(cmr_handle oem_handle);
 static cmr_uint camera_param_to_isp(cmr_uint cmd,
                                     struct common_isp_cmd_param *parm);
-static cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm);
 static cmr_int camera_restart_rot(cmr_handle oem_handle);
 static cmr_uint camera_set_vendor_hdr_ev(cmr_handle oem_handle);
 static cmr_uint
@@ -1010,10 +1009,12 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
 
     switch (evt) {
     case CMR_JPEG_ENC_DONE:
+        CMR_LOGI("evt CMR_JPEG_ENC_DONE");
         camera_take_snapshot_step(CMR_STEP_JPG_ENC_E);
         temp_evt = SNAPSHOT_EVT_JPEG_ENC_DONE;
         break;
     case CMR_JPEG_DEC_DONE:
+        CMR_LOGI("evt CMR_JPEG_DEC_DONE");
         temp_evt = SNAPSHOT_EVT_JPEG_DEC_DONE;
         break;
     case CMR_JPEG_ENC_ERR:
@@ -3416,7 +3417,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         CMR_LOGE("fail to get static info");
     }
 
-    property_get("persist.vendor.cam.pdaf.off", value, "0");
+    property_get("persist.sys.camera.pdaf.off", value, "0");
     if (atoi(value)) {
         isp_param.ex_info.pdaf_supported = 0;
     }
@@ -3649,6 +3650,7 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
     init_param.ops.hdr_set_ev = camera_hdr_set_ev;
     init_param.ops.set_3dnr_ev = camera_3dnr_set_ev;
+    init_param.ops.start_scale = camera_start_scale;
     init_param.oem_cb = camera_preview_cb;
     init_param.private_data = NULL;
     init_param.sensor_bits = (1 << cxt->camera_id);
@@ -4689,6 +4691,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     struct img_frm pic_enc = param->pic_enc;
     struct img_frm dst = param->last_dst;
     struct cmr_op_mean mean;
+    struct jpeg_enc_cb_param enc_cb_param;
     struct jpeg_context *jpeg_cxt = NULL;
     int ret = CMR_CAMERA_SUCCESS;
     int need_exif_flag = (dst.addr_vir.addr_y == 0) ? 0 : 1;
@@ -4715,7 +4718,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 
     // 2.call jpeg interface
     ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &src, &pic_enc,
-                          (struct jpg_op_mean *)&mean);
+                          (struct jpg_op_mean *)&mean, &enc_cb_param);
 
     if (ret) {
         cxt->jpeg_cxt.enc_caller_handle = (cmr_handle)0;
@@ -4723,7 +4726,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
         goto exit;
     }
 
-    param->stream_real_size = pic_enc.buf_size;
+    param->stream_real_size = enc_cb_param.stream_size;
     CMR_LOGD("need_exif_flag:%d, param->stream_real_size:%u,is_sync=%d",
              need_exif_flag, param->stream_real_size, mean.is_sync);
     if (need_exif_flag) {
@@ -4745,7 +4748,7 @@ exit:
 
 cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
-                            struct cmr_op_mean *mean) {
+                            struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -4774,13 +4777,13 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     cxt->jpeg_cxt.enc_caller_handle = caller_handle;
     sem_wait(&cxt->access_sm);
 
-    if (!caller_handle || !oem_handle || !src || !dst || !mean) {
+    if (!caller_handle || !oem_handle || !src || !dst || !mean ) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
 
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -4961,17 +4964,19 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
                 CMR_LOGD("face_beauty done");
             }
-#endif
+#endif//CONFIG_FACE_BEAUTY
         }
 
+        CMR_LOGI("is_sync=%d, is_thumb=%d", mean->is_sync, mean->is_thumb);
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
-                              (struct jpg_op_mean *)mean);
+                              (struct jpg_op_mean *)mean, enc_cb_param);
         if (ret) {
             CMR_LOGE("failed to jpeg codec %ld", ret);
         }
     } else {
+        CMR_LOGI("is_sync=%d, is_thumb=%d", mean->is_sync, mean->is_thumb);
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, src, dst,
-                              (struct jpg_op_mean *)mean);
+                              (struct jpg_op_mean *)mean, enc_cb_param);
         if (ret) {
             CMR_LOGE("failed to jpeg codec %ld", ret);
         }
@@ -5847,7 +5852,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     struct sensor_exp_info exp_info;
 
     char prop[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.dual.preview", prop, "0");
+    property_get("persist.sys.cam.dual.preview", prop, "0");
 
     if (!param_ptr || !oem_handle) {
         CMR_LOGE("in parm error");
@@ -6091,6 +6096,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.sensor_fps.min_fps, isp_param.size.w, isp_param.size.h,
         isp_param.lsc_phys_addr, isp_param.lsc_virt_addr, isp_param.work_mode,
         isp_param.dv_mode, isp_param.capture_mode);
+	isp_param.is_restart = param_ptr->is_restart;
 
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (ret) {
@@ -6148,7 +6154,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.dual.preview", prop, "0");
+    property_get("persist.sys.cam.dual.preview", prop, "0");
 
     if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
         CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
@@ -6748,7 +6754,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                                 SENSOR_EXIF_CTRL_FLASH, 1);
         }
         char value1[PROPERTY_VALUE_MAX];
-        property_get("persist.vendor.cam.flash.torch.cfg", value1, "06");
+        property_get("persist.camera.flash.torch.cfg", value1, "06");
 
         /*cfg torch value*/
         if (param_ptr->cmd_value == FLASH_TORCH) {
@@ -7068,44 +7074,6 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm) {
     return out_param;
 }
 
-cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
-    cmr_int in_param = parm->ae_compensation_param.ae_exposure_compensation;
-    cmr_int out_param = in_param;
-    switch (in_param) {
-    case -6:
-        out_param = 0;
-        break;
-
-    case -4:
-        out_param = 1;
-        break;
-
-    case -2:
-        out_param = 2;
-        break;
-
-    case 0:
-        out_param = 3;
-        break;
-
-    case 2:
-        out_param = 4;
-        break;
-
-    case 4:
-        out_param = 5;
-        break;
-
-    case 6:
-        out_param = 6;
-        break;
-
-    default:
-        break;
-    }
-    return out_param;
-}
-
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
                                   int *size) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -7154,7 +7122,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_ae_fps ae_fps;
     struct isp_hdr_param hdr_param;
     struct isp_3dnr_ctrl_param param_3dnr;
-    struct isp_exp_comprnsation exp_comprnsation;
 
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
@@ -7260,23 +7227,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
-        if (param_ptr->ae_compensation_param.ae_state == 3) { // lock
-            isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
-            ptr_flag = 1;
-            exp_comprnsation.idx =
-                param_ptr->ae_compensation_param.ae_compensation_step;
-            exp_comprnsation.value =
-                param_ptr->ae_compensation_param.ae_exposure_compensation;
-            isp_param_ptr = (void *)&exp_comprnsation;
-        } else {
-            isp_cmd = ISP_CTRL_EV;
-            isp_param = camera_isp_ev_switch(param_ptr); // compatible manual
+        isp_cmd = ISP_CTRL_EV;
+        isp_param = param_ptr->cmd_value;
 #if defined(CONFIG_CAMERA_ISP_VERSION_V4)
-            isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
+        isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
 #endif
-        }
+        CMR_LOGD("ev %d", isp_param);
         break;
-
     case COM_ISP_SET_AWB_MODE:
         CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,
                  isp_param);
@@ -7595,7 +7552,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
     out_param_ptr->memory_setting.free_mem = camera_free;
 
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7757,7 +7714,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     else if (1 == out_param_ptr->preview_eb)
         out_param_ptr->pdaf_eb = 0;
 
-    property_get("persist.vendor.cam.pdaf.off", value, "0");
+    property_get("persist.sys.camera.pdaf.off", value, "0");
     if (atoi(value)) {
         out_param_ptr->pdaf_eb = 0;
     }
@@ -8099,6 +8056,9 @@ cmr_int camera_set_preview_param(cmr_handle oem_handle,
         goto exit;
     }
 
+    prev_cxt->actual_picture_size.width = start_param.picture_size.width;
+    prev_cxt->actual_picture_size.height = start_param.picture_size.height;
+
     cmr_bzero(&preview_out, sizeof(struct preview_out_param));
     ret = cmr_preview_set_param(prev_cxt->preview_handle, cxt->camera_id,
                                 &start_param, &preview_out);
@@ -8390,8 +8350,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_EXPOSURE_COMPENSATION:
-        setting_param.ae_compensation_param =
-            *(struct cmr_ae_compensation_param *)param;
+        setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
@@ -9009,9 +8968,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     if (CAMERA_ISP_SIMULATION_MODE == mode) {
         struct frm_info frame;
-        char file_name[128];
-        strcpy(file_name, CAMERA_DUMP_PATH);
-        char tmp_name[64];
+        char file_name[200];
         cmr_int read_size;
         cmr_u32 sec = 0;
         cmr_u32 usec = 0;
@@ -9031,7 +8988,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGI("parse file_name = %s", value);
         if (CMR_CAMERA_SUCCESS ==
             camera_parse_raw_filename(value, &scene_param)) {
-            sprintf(tmp_name, "%s", value);
+            sprintf(file_name, "/data/misc/cameraserver/%s", value);
             //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
             CMR_LOGI(
@@ -9053,7 +9010,6 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 CMR_LOGE("get scene param error");
                 goto exit;
             }
-            strcat(file_name, tmp_name);
             read_size = camera_get_data_from_file(
                 file_name, IMG_DATA_TYPE_RAW, scene_param.width,
                 scene_param.height, &isp_cap_raw.addr_vir);
@@ -10523,8 +10479,8 @@ cmr_int cmr_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *type) {
     // Just 4 bv test tmp
     char min_bv[PROPERTY_VALUE_MAX];
     char max_bv[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.minbv.test", min_bv, "500");
-    property_get("persist.vendor.cam.maxbv.test", max_bv, "700");
+    property_get("persist.sys.cam.minbv.test", min_bv, "500");
+    property_get("persist.sys.cam.maxbv.test", max_bv, "700");
 
     cmr_u32 Min_bv;
     cmr_u32 Max_bv;

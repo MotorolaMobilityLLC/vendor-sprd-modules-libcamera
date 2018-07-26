@@ -118,7 +118,6 @@ struct setting_cmd_parameter {
         struct cmr_ae_param ae_param;
         struct cmr_range_fps_param range_fps;
         struct touch_coordinate touch_param;
-        struct cmr_ae_compensation_param ae_compensation_param;
     };
 };
 

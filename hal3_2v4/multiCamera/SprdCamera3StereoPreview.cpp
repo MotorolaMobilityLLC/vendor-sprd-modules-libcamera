@@ -675,7 +675,7 @@ int SprdCamera3StereoPreview::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hw->setMultiCameraMode(MODE_3D_PREVIEW);
+        hw->setMultiCameraMode((multiCameraMode)camera_id);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);
@@ -927,74 +927,71 @@ void SprdCamera3StereoPreview::ReProcessThread::preview_3d_convert_face_info(
  *==========================================================================*/
 void SprdCamera3StereoPreview::ReProcessThread::preview_3d_doFaceMakeup(
     private_handle_t *private_handle, int perfect_level, int *face_info) {
-    /*
-     // init the parameters table. save the value until the process is restart
-     or
-     // the device is restart.
-     int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
-     int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
-     struct camera_frame_type preview_3d_frame;
-     bzero(&preview_3d_frame, sizeof(struct camera_frame_type));
-     struct camera_frame_type *frame = &preview_3d_frame;
-     frame->y_vir_addr = (cmr_uint)private_handle->base;
-     frame->width = private_handle->width;
-     frame->height = private_handle->height;
+   /*
+    // init the parameters table. save the value until the process is restart or
+    // the device is restart.
+    int tab_skinWhitenLevel[10] = {0, 15, 25, 35, 45, 55, 65, 75, 85, 95};
+    int tab_skinCleanLevel[10] = {0, 25, 45, 50, 55, 60, 70, 80, 85, 95};
+    struct camera_frame_type preview_3d_frame;
+    bzero(&preview_3d_frame, sizeof(struct camera_frame_type));
+    struct camera_frame_type *frame = &preview_3d_frame;
+    frame->y_vir_addr = (cmr_uint)private_handle->base;
+    frame->width = private_handle->width;
+    frame->height = private_handle->height;
 
-     TSRect Tsface;
-     YuvFormat yuvFormat = TSFB_FMT_NV21;
-     if (face_info[0] != 0 || face_info[1] != 0 || face_info[2] != 0 ||
-         face_info[3] != 0) {
-         preview_3d_convert_face_info(face_info, frame->width, frame->height);
-         Tsface.left = face_info[0];
-         Tsface.top = face_info[1];
-         Tsface.right = face_info[2];
-         Tsface.bottom = face_info[3];
-         HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left, Tsface.top,
-                  Tsface.right, Tsface.bottom);
+    TSRect Tsface;
+    YuvFormat yuvFormat = TSFB_FMT_NV21;
+    if (face_info[0] != 0 || face_info[1] != 0 || face_info[2] != 0 ||
+        face_info[3] != 0) {
+        preview_3d_convert_face_info(face_info, frame->width, frame->height);
+        Tsface.left = face_info[0];
+        Tsface.top = face_info[1];
+        Tsface.right = face_info[2];
+        Tsface.bottom = face_info[3];
+        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld", Tsface.left, Tsface.top,
+                 Tsface.right, Tsface.bottom);
 
-         int level = perfect_level;
-         int skinWhitenLevel = 0;
-         int skinCleanLevel = 0;
-         int level_num = 0;
-         // convert the skin_level set by APP to skinWhitenLevel &
-     skinCleanLevel
-         // according to the table saved.
-         level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
-         level_num = level / 10;
-         skinWhitenLevel = tab_skinWhitenLevel[level_num];
-         skinCleanLevel = tab_skinCleanLevel[level_num];
-         HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d "
-                  "frame->height %d frame->width %d",
-                  skinWhitenLevel, skinCleanLevel, frame->height, frame->width);
+        int level = perfect_level;
+        int skinWhitenLevel = 0;
+        int skinCleanLevel = 0;
+        int level_num = 0;
+        // convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel
+        // according to the table saved.
+        level = (level < 0) ? 0 : ((level > 90) ? 90 : level);
+        level_num = level / 10;
+        skinWhitenLevel = tab_skinWhitenLevel[level_num];
+        skinCleanLevel = tab_skinCleanLevel[level_num];
+        HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d "
+                 "frame->height %d frame->width %d",
+                 skinWhitenLevel, skinCleanLevel, frame->height, frame->width);
 
-         TSMakeupData inMakeupData;
-         unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
-         unsigned char *uvBuf =
-             (unsigned char *)(frame->y_vir_addr) + frame->width *
-     frame->height;
+        TSMakeupData inMakeupData;
+        unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
+        unsigned char *uvBuf =
+            (unsigned char *)(frame->y_vir_addr) + frame->width * frame->height;
 
-         inMakeupData.frameWidth = frame->width;
-         inMakeupData.frameHeight = frame->height;
-         inMakeupData.yBuf = yBuf;
-         inMakeupData.uvBuf = uvBuf;
+        inMakeupData.frameWidth = frame->width;
+        inMakeupData.frameHeight = frame->height;
+        inMakeupData.yBuf = yBuf;
+        inMakeupData.uvBuf = uvBuf;
 
-         if (frame->width > 0 && frame->height > 0) {
-             int ret_val =
-                 ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
-                                  skinWhitenLevel, &Tsface, 0, yuvFormat);
-             if (ret_val != TS_OK) {
-                 HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
-             } else {
-                 HAL_LOGD("UCAM ts_face_beautify return OK");
-             }
-         } else {
-             HAL_LOGE("No face beauty!  If size is not zero, then "
-                      "outMakeupData.yBuf is null!");
-         }
-     } else {
-         HAL_LOGD("Not detect face!");
-     }
-     */
+        if (frame->width > 0 && frame->height > 0) {
+            int ret_val =
+                ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel,
+                                 skinWhitenLevel, &Tsface, 0, yuvFormat);
+            if (ret_val != TS_OK) {
+                HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
+            } else {
+                HAL_LOGD("UCAM ts_face_beautify return OK");
+            }
+        } else {
+            HAL_LOGE("No face beauty!  If size is not zero, then "
+                     "outMakeupData.yBuf is null!");
+        }
+    } else {
+        HAL_LOGD("Not detect face!");
+    }
+    */
 }
 
 /*===========================================================================
@@ -1033,8 +1030,8 @@ int SprdCamera3StereoPreview::ReProcessThread::reProcessFrame(
     }
     private_handle_t *private_handle =
         (struct private_handle_t *)(*frame_buffer);
-    // if (perfectskinlevel > 0)
-    // preview_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
+    //if (perfectskinlevel > 0)
+        //preview_3d_doFaceMakeup(private_handle, perfectskinlevel, face_info);
 
     return rc;
 }
@@ -2555,11 +2552,9 @@ void SprdCamera3StereoPreview::dumpImg(void *addr, int size, int w, int h,
     HAL_LOGI(" E");
 
     char name[128];
-    strcpy(name, CAMERA_DUMP_PATH);
-    char tmp_name[64];
-    snprintf(tmp_name, sizeof(tmp_name), "%d_%d__%d_%d.yuv", w, h, frameId,
-             flag);
-    strcat(name, tmp_name);
+    snprintf(name, sizeof(name), "/data/misc/media/%d_%d__%d_%d.yuv", w, h,
+             frameId, flag);
+
     FILE *file_fd = fopen(name, "w");
 
     if (file_fd == NULL) {

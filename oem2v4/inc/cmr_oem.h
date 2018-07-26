@@ -133,6 +133,7 @@ struct preview_context {
     struct img_size size;
     struct img_size video_size;
     struct img_size actual_video_size;
+    struct img_size actual_picture_size;
     struct frm_info video_cur_chn_data;
     struct img_rect rect;
     struct img_data_end data_endian;

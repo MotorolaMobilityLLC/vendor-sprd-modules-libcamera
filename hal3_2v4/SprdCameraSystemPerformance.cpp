@@ -39,7 +39,6 @@ namespace sprdcamera {
 #define CAM_VERYHIGH_STR "camveryhigh"
 
 SprdCameraSystemPerformance *gCamSysPer = NULL;
-int SprdCameraSystemPerformance::mCameraSessionActive = 0;
 Mutex SprdCameraSystemPerformance::sLock;
 // Error Check Macros
 #define CHECK_SYSTEMPERFORMACE()                                               \
@@ -86,11 +85,9 @@ void SprdCameraSystemPerformance::getSysPerformance(
     if (!gCamSysPer) {
         gCamSysPer = new SprdCameraSystemPerformance();
     }
-    mCameraSessionActive++;
     CHECK_SYSTEMPERFORMACE();
     *pgCamSysPer = gCamSysPer;
-    HAL_LOGD("gCamSysPer: %p ,mCameraSessionActive=%d", gCamSysPer,
-             mCameraSessionActive);
+    HAL_LOGD("gCamSysPer: %p", gCamSysPer);
 
     return;
 }
@@ -100,110 +97,37 @@ void SprdCameraSystemPerformance::freeSysPerformance(
 
     Mutex::Autolock l(&sLock);
 
-    if (gCamSysPer && mCameraSessionActive == 1) {
+    if (gCamSysPer) {
         delete gCamSysPer;
         gCamSysPer = NULL;
         *pgCamSysPer = NULL;
     }
-    mCameraSessionActive--;
-    HAL_LOGD("mCameraSessionActive=%d", mCameraSessionActive);
 
     return;
 }
 
 void SprdCameraSystemPerformance::setCamPreformaceScene(
-    sys_performance_camera_scene camera_scene, int camera_id) {
+    sys_performance_camera_scene camera_scene) {
 
-    if (mCameraSessionActive == 2) {
-        if (camera_id < 2) {
-            mCurSence[0] = camera_scene;
-        } else {
-            mCurSence[1] = camera_scene;
-        }
-    }
+    changeDfsPolicy(CAM_NORMAL);
     switch (camera_scene) {
-    case CAM_FLUSH_S:
+    case CAM_PERFORMANCE_LEVEL_6:
         setPowerHint(CAM_POWER_PERFORMACE_ON);
         break;
-    case CAM_FLUSH_E:
-        if (!(mCameraSessionActive == 2 &&
-              (mCurSence[0] != CAM_FLUSH_E || mCurSence[1] != CAM_FLUSH_E))) {
-            setPowerHint(CAM_POWER_NORMAL);
-        }
-        break;
-    case CAM_EXIT_S:
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
-        break;
-    case CAM_EXIT_E:
-        if (!(mCameraSessionActive == 2 &&
-              (mCurSence[0] != CAM_EXIT_E || mCurSence[1] != CAM_EXIT_E))) {
-            changeDfsPolicy(CAM_EXIT);
-            setPowerHint(CAM_POWER_NORMAL);
-        }
-        break;
-    case CAM_OPEN_S:
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
-        changeDfsPolicy(CAM_NORMAL);
-        break;
-    case CAM_OPEN_E_LEVEL_H: // DFS:veryhigh
-        changeDfsPolicy(CAM_VERYHIGH);
-        break;
-    case CAM_OPEN_E_LEVEL_N: // DFS:normal
-        changeDfsPolicy(CAM_NORMAL);
-        break;
-    case CAM_OPEN_E_LEVEL_L: // DFS:low
-        changeDfsPolicy(CAM_LOW);
-        break;
-    case CAM_PREVIEW_S_LEVEL_H: // powerhint:performance
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
-        break;
-    case CAM_PREVIEW_S_LEVEL_N: // powerhint:normal
+    case CAM_PERFORMANCE_LEVEL_5:
+    case CAM_PERFORMANCE_LEVEL_4:
         setPowerHint(CAM_POWER_NORMAL);
         break;
-    case CAM_PREVIEW_S_LEVEL_L:
+    case CAM_PERFORMANCE_LEVEL_3:
+    case CAM_PERFORMANCE_LEVEL_2:
+    case CAM_PERFORMANCE_LEVEL_1:
         setPowerHint(CAM_POWER_LOWPOWER_ON);
         break;
-    case CAM_CAPTURE_S_LEVEL_HH: // powerhint:performance  DFS:veryhigh
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
-        changeDfsPolicy(CAM_VERYHIGH);
-        break;
-    case CAM_CAPTURE_S_LEVEL_HN: // powerhint:performance  DFS:normal
-        setPowerHint(CAM_POWER_PERFORMACE_ON);
-        changeDfsPolicy(CAM_NORMAL);
-        break;
-    case CAM_CAPTURE_E_LEVEL_NH:
-    case CAM_CAPTURE_S_LEVEL_NH: // powerhint:normal  DFS:veryhigh
-        setPowerHint(CAM_POWER_NORMAL);
-        changeDfsPolicy(CAM_VERYHIGH);
-        break;
-    case CAM_CAPTURE_S_LEVEL_NN: // powerhint:normal  DFS:normal
-    case CAM_CAPTURE_E_LEVEL_NN:
-        setPowerHint(CAM_POWER_NORMAL);
-        changeDfsPolicy(CAM_NORMAL);
-        break;
-    case CAM_CAPTURE_E_LEVEL_NL: // powerhint:normal  DFS:low
-        setPowerHint(CAM_POWER_NORMAL);
-        changeDfsPolicy(CAM_LOW);
-        break;
-    case CAM_CAPTURE_E_LEVEL_LN: // powerhint:low DFS:normal
-        setPowerHint(CAM_POWER_LOWPOWER_ON);
-        changeDfsPolicy(CAM_NORMAL);
-        break;
-
-    case CAM_CAPTURE_E_LEVEL_LL: // powerhint:low  DFS:low
-        setPowerHint(CAM_POWER_LOWPOWER_ON);
-        changeDfsPolicy(CAM_LOW);
-        break;
-    case CAM_CAPTURE_E_LEVEL_LH: // powerhint:low  DFS:veryhigh
-        setPowerHint(CAM_POWER_LOWPOWER_ON);
-        changeDfsPolicy(CAM_VERYHIGH);
-        break;
-
     default:
         HAL_LOGI("camera scene not support");
     }
 
-    HAL_LOGD("x camera scene:%d,id=%d", camera_scene, camera_id);
+    HAL_LOGD("x camera scene:%d", camera_scene);
 }
 
 void SprdCameraSystemPerformance::initPowerHint() {

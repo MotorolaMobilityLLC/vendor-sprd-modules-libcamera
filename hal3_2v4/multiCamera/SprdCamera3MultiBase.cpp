@@ -43,6 +43,8 @@ namespace sprdcamera {
 #define CAMERA3MAXFACE 10
 #endif
 
+#define IS_CASHE true
+
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(true), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
@@ -86,12 +88,9 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     int result = 0;
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
-    private_handle_t *buffer;
-    uint32_t is_cache = 1;
+    private_handle_t *buffer = NULL;
 
     HAL_LOGI("E");
-    mem_size = w * h * 3 / 2;
-
     if (type == DEPTH_OUT_BUFFER) {
         mem_size = w * h + 68;
     } else if (type == DEPTH_OUT_WEIGHTMAP) {
@@ -103,23 +102,23 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     //  mem_size = (mem_size + 4095U) & (~4095U);
 
     if (!mIommuEnabled) {
-        if (is_cache) {
-            pHeapIon =
-                new MemIon("/dev/ion", mem_size, 0,
-                           (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
-        }
+#if IS_CASHE
+        pHeapIon =
+            new MemIon("/dev/ion", mem_size, 0,
+                       (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+#else
+        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                              ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+#endif
     } else {
-        if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM |
-                                      ION_FLAG_NO_CLEAR);
-        } else {
-            pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
-        }
+#if IS_CASHE
+        pHeapIon =
+            new MemIon("/dev/ion", mem_size, 0,
+                       (1 << 31) | ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+#else
+        pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                              ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+#endif
     }
 
     if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
@@ -487,16 +486,13 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
                                     int param1, int param2, int param3,
                                     const char param4[20]) {
     HAL_LOGD(" E %p %d %d %d %d", addr, type, size, param1, param2);
-    char filename[128];
-    strcpy(filename, CAMERA_DUMP_PATH);
-    char tmp_name[64];
+    char name[128];
     FILE *fp = NULL;
     switch (type) {
     case 1: {
-        snprintf(tmp_name, sizeof(tmp_name), "%dx%d_%d_%s.yuv", param1, param2,
-                 param3, param4);
-        strcat(filename, tmp_name);
-        fp = fopen(filename, "w");
+        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%s.yuv",
+                 param1, param2, param3, param4);
+        fp = fopen(name, "w");
         if (fp == NULL) {
             HAL_LOGE("open yuv file fail!\n");
             return;
@@ -505,10 +501,9 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fclose(fp);
     } break;
     case 2: {
-        snprintf(tmp_name, sizeof(tmp_name), "%dx%d_%d_%s.jpg", param1, param2,
-                 param3, param4);
-        strcat(filename, tmp_name);
-        fp = fopen(filename, "wb");
+        snprintf(name, sizeof(name), "/data/misc/cameraserver/%dx%d_%d_%s.jpg",
+                 param1, param2, param3, param4);
+        fp = fopen(name, "wb");
         if (fp == NULL) {
             HAL_LOGE("can not open file: %s \n", name);
             return;
@@ -519,10 +514,10 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
     case 3: {
         int i = 0;
         int j = 0;
-        snprintf(tmp_name, sizeof(tmp_name), "refocus_%d_params_%s.txt", size,
+        snprintf(name, sizeof(name),
+                 "/data/misc/cameraserver/refocus_%d_params_%s.txt", size,
                  param4);
-        strcat(filename, tmp_name);
-        fp = fopen(filename, "w+");
+        fp = fopen(name, "w+");
         if (fp == NULL) {
             HAL_LOGE("open txt file fail!\n");
             return;
@@ -823,7 +818,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(img_frm *src_img,
         ret = encode_exif_param.stream_real_size;
     else
         ret = UNKNOWN_ERROR;
-    property_get("vendor.cam.bokeh.dump.encode_exif", prop, "0");
+    property_get("bokeh.dump.encode_exif", prop, "0");
     if (atoi(prop) == 1) {
         unsigned char *vir_jpeg =
             (unsigned char *)(pic_enc_img->addr_vir.addr_y);
@@ -877,7 +872,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
         ret = encode_exif_param.stream_real_size;
     else
         ret = UNKNOWN_ERROR;
-    property_get("vendor.cam.bokeh.dump.encode_exif", prop, "0");
+    property_get("bokeh.dump.encode_exif", prop, "0");
     if (atoi(prop) == 1) {
         unsigned char *vir_jpeg = (unsigned char *)pic_enc_private_handle->base;
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,

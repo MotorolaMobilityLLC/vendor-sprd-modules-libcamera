@@ -779,7 +779,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mZslPopFlag;
     uint32_t mVideoSnapshotFrameNum;
     uint32_t mFlashCaptureSkipNum;
-    bool mFixedFpsEnabled;
+
     int32_t mSprdAppmodeId;
     int mTempStates;
     int mIsTempChanged;

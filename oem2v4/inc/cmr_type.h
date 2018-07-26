@@ -89,12 +89,6 @@ struct cmr_ae_param {
     struct cmr_win_area win_area;
 };
 
-struct cmr_ae_compensation_param {
-    int32_t ae_exposure_compensation;
-    int32_t ae_compensation_step;
-    uint8_t ae_state;
-};
-
 struct cmr_preview_fps_param {
     cmr_int is_recording;
     cmr_uint frame_rate;

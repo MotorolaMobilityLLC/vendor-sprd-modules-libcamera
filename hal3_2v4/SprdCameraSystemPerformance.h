@@ -79,35 +79,19 @@ typedef enum DFS_POLICY {
     CAM_VERYHIGH,
 } dfs_policy_t;
 typedef enum CAMERA_PERFORMACE_SCENE {
-    CAM_OPEN_S,
-    CAM_OPEN_E_LEVEL_H,     // DFS:veryhigh
-    CAM_OPEN_E_LEVEL_N,     // DFS:normal
-    CAM_OPEN_E_LEVEL_L,     // DFS:low
-    CAM_PREVIEW_S_LEVEL_H,  // powerhint:performance
-    CAM_PREVIEW_S_LEVEL_N,  // powerhint:normal
-    CAM_PREVIEW_S_LEVEL_L,  // powerhint:low
-    CAM_CAPTURE_S_LEVEL_HH, // powerhint:performance  DFS:veryhigh
-    CAM_CAPTURE_S_LEVEL_HN, // powerhint:performance  DFS:normal
-    CAM_CAPTURE_S_LEVEL_NH, // powerhint:normal  DFS:veryhigh
-    CAM_CAPTURE_S_LEVEL_NN, // powerhint:normal  DFS:normal
-    CAM_CAPTURE_E_LEVEL_NH, // powerhint:normal  DFS:veryhigh
-    CAM_CAPTURE_E_LEVEL_NN, // powerhint:normal  DFS:normal
-    CAM_CAPTURE_E_LEVEL_NL, // powerhint:normal  DFS:low
-    CAM_CAPTURE_E_LEVEL_LN, // powerhint:low DFS:normal
-    CAM_CAPTURE_E_LEVEL_LL, // powerhint:low  DFS:low
-    CAM_CAPTURE_E_LEVEL_LH, // powerhint:low  DFS:veryhigh
-    CAM_FLUSH_S,
-    CAM_FLUSH_E,
-    CAM_EXIT_S,
-    CAM_EXIT_E,
+    CAM_PERFORMANCE_LEVEL_1 = 1,
+    CAM_PERFORMANCE_LEVEL_2,
+    CAM_PERFORMANCE_LEVEL_3,
+    CAM_PERFORMANCE_LEVEL_4,
+    CAM_PERFORMANCE_LEVEL_5,
+    CAM_PERFORMANCE_LEVEL_6,
 } sys_performance_camera_scene;
 
 class SprdCameraSystemPerformance {
   public:
     static void getSysPerformance(SprdCameraSystemPerformance **pmCamSysPer);
     static void freeSysPerformance(SprdCameraSystemPerformance **pgCamSysPer);
-    void setCamPreformaceScene(sys_performance_camera_scene camera_scene,
-                               int camera_id);
+    void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
 
   private:
     SprdCameraSystemPerformance();
@@ -119,7 +103,6 @@ class SprdCameraSystemPerformance {
 
     int setDfsPolicy(int dfs_policy);
     int releaseDfsPolicy(int dfs_policy);
-    static int mCameraSessionActive;
     int mCameraDfsPolicyCur;
     int mCurrentPowerHint;
     bool mPowermanageInited;

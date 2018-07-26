@@ -816,7 +816,7 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
+    property_get("persist.sys.auto.detect.sensor", value, "on");
     if (!strcmp(value, "off")) {
         HAL_LOGI("turn off auto detect sensor, just for debug");
         *width = default_sensor_max_sizes[cameraId].width;
@@ -844,7 +844,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
+    property_get("persist.sys.auto.detect.sensor", value, "on");
     if (!strcmp(value, "off")) {
         HAL_LOGI("turn off auto detect sensor, just for debug");
         return 0;
@@ -1403,8 +1403,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     {
-        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -127;
-        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 127;
+        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -6;
+        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 6;
     }
     {
         // s_setting[cameraId].controlInfo.available_effects[0] =
@@ -2951,9 +2951,6 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprd3dnrEnabled = 0;
     requestInfo.update(ANDROID_SPRD_3DNR_ENABLED, &sprd3dnrEnabled, 1);
 
-    uint8_t sprdFixedFpsEnabled = 0;
-    requestInfo.update(ANDROID_SPRD_FIXED_FPS_ENABLED, &sprdFixedFpsEnabled, 1);
-
     int32_t sprdAppmodeId = 0;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
@@ -3033,7 +3030,7 @@ int SprdCamera3Setting::updateWorkParameters(
 
     uint8_t is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -3391,8 +3388,11 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].controlInfo.org_ae_exposure_compensation =
             org_ae_compensat;
         ae_compensat =
-            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-                 .data.i32[0];
+            (frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+                 .data.i32[0] +
+             s_setting[mCameraId].controlInfo.ae_compensation_range[1]) /
+            2;
+        ae_compensat = ae_compensat < 0 ? 0 : ae_compensat;
         // GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation,
         // ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
@@ -3541,7 +3541,7 @@ int SprdCamera3Setting::updateWorkParameters(
     } else {
         char prop[PROPERTY_VALUE_MAX];
         int val = 0;
-        property_get("persist.vendor.cam.hal.3d", prop, "0");
+        property_get("persist.sys.camera.hal.3d", prop, "0");
         val = atoi(prop);
         if (1 == val) {
             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = val;
@@ -3748,13 +3748,7 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
     }
-    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
-            s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
-                frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-            pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-            HAL_LOGV("sprd fixed fps enabled is %d",
-                     s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
-    }
+
     if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
         s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
             frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];

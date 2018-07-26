@@ -56,6 +56,8 @@
 #define CAMERA_POWER_OPT_FLAG 0
 #endif
 
+#define SNS_INTERPOL_ONLINE_MAX_SIZE        (2592 * 1952)
+
 static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle);
 static void *cmr_grab_thread_proc(void *data);
@@ -436,7 +438,7 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     // struct grab_streamparm   stream_parm;
     struct cmr_grab *p_grab;
     cmr_u32 mode;
-    struct sprd_img_size size, sn_max_size;
+    struct sprd_img_size size, sn_max_size, actual_pic_size;
     struct sprd_img_rect rect;
     struct sprd_img_sbs_info sbs_info;
 
@@ -474,10 +476,20 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     sn_max_size.w = config->sensor_max_size.width;
     sn_max_size.h = config->sensor_max_size.height;
 
-#if 0
-    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_MAX_SIZE, &sn_max_size);
-    if (ret) {
-        CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_MAX_SIZE failed");
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    if (p_grab->offline_mode == ZOOM_POST_PROCESS) {
+        struct camera_context *cxt = NULL;
+        struct preview_context *prev_cxt = NULL;
+        cxt=(struct camera_context *)p_grab->init_param.oem_handle;
+        prev_cxt = &cxt->prev_cxt;
+        actual_pic_size.w = prev_cxt->actual_picture_size.width;
+        actual_pic_size.h = prev_cxt->actual_picture_size.height;
+        ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_MAX_SIZE, &actual_pic_size);
+        if (ret) {
+            CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_MAX_SIZE failed");
+        }
+        CMR_LOGI("actual_pic_size: w=%d, h=%d", actual_pic_size.w,
+             actual_pic_size.h);
     }
 #endif
     sbs_info.sbs_mode = config->sbs_mode;
@@ -1063,13 +1075,22 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         ret = cnt;
 
     for (i = 0; i < (cmr_int)(op.parm.capability.count); i++) {
-        /* pike2 path0 can support yuv, but can not support scaling/trim, so mask path0 yuv */
+        /* pike2 path0 can support yuv and trim, but can not support scaling, so mask path0 yuv */
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         if (op.parm.capability.path_info[i].support_yuv && (i != 0)) {
             yuv_cnt++;
             if (p_grab->chn_status[i] == CHN_IDLE) {
                 capability->yuv_available_cnt++;
             }
         }
+#else
+        if (op.parm.capability.path_info[i].support_yuv) {
+            yuv_cnt++;
+            if (p_grab->chn_status[i] == CHN_IDLE) {
+                capability->yuv_available_cnt++;
+            }
+        }
+#endif
         if (op.parm.capability.path_info[i].support_trim) {
             trim_cnt++;
         }
@@ -1085,9 +1106,10 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         capability->capture_no_trim = 1;
     }
 
-    //if (1 == op.parm.capability.path_info[0].support_yuv) {
+
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     if (0) {
-        if (0 == op.parm.capability.path_info[0].support_trim) {
+            if (0 == op.parm.capability.path_info[0].support_trim) {
             capability->zoom_post_proc = ZOOM_POST_PROCESS;
         } else {
             capability->zoom_post_proc = ZOOM_POST_PROCESS_WITH_TRIM;
@@ -1095,9 +1117,27 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
     } else {
         capability->zoom_post_proc = ZOOM_BY_CAP;
     }
+#else
+    struct camera_context *cxt = NULL;//(struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt = NULL;//&cxt->prev_cxt;
+    cxt=(struct camera_context *)p_grab->init_param.oem_handle;
+    prev_cxt = &cxt->prev_cxt;
+    CMR_LOGD("actual_pic_size %d %d",
+        prev_cxt->actual_picture_size.width, prev_cxt->actual_picture_size.height);
+    if ((1 == op.parm.capability.path_info[0].support_yuv) &&
+        (prev_cxt->actual_picture_size.width * prev_cxt->actual_picture_size.height >
+        SNS_INTERPOL_ONLINE_MAX_SIZE)) {
+        capability->zoom_post_proc = ZOOM_POST_PROCESS;
+        p_grab->offline_mode = ZOOM_POST_PROCESS;
+    } else {
+        capability->zoom_post_proc = ZOOM_BY_CAP;
+        p_grab->offline_mode = ZOOM_BY_CAP;
+    }
+#endif
+
     capability->capture_pause = 1;
 
-    CMR_LOGV("video prev %d scale %d capture_no_trim %d capture_pause %d "
+    CMR_LOGD("video prev %d scale %d capture_no_trim %d capture_pause %d "
              "zoom_post_proc %d",
              capability->is_video_prev_diff, capability->hw_scale_available,
              capability->capture_no_trim, capability->capture_pause,

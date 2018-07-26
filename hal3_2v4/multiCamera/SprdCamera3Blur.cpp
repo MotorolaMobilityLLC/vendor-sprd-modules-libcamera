@@ -253,6 +253,7 @@ int SprdCamera3Blur::closeCameraDevice() {
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
     HAL_LOGI("E");
 
+    mFlushing = true;
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
         sprdCam = &m_pPhyCamera[i];
@@ -494,7 +495,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
+    property_get("persist.sys.cam.blur.cov.id", prop, "3");
 
     if (camera_id == MODE_BLUR_FRONT) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
@@ -574,10 +575,10 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     };
     if (blur_camera_id == MODE_BLUR_FRONT) {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
-        property_get("persist.vendor.cam.fr.blur.version", prop, "0");
+        property_get("persist.sys.cam.fr.blur.version", prop, "0");
     } else {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
-        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
     }
     camera_id = m_VirtualCamera.id;
     mCaptureThread->mVersion = atoi(prop);
@@ -592,7 +593,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     }
     CameraMetadata metadata = mStaticMetadata;
     if (atoi(prop) == 3) {
-        property_get("persist.vendor.cam.gallery.blur", prop, "1");
+        property_get("persist.sys.gallery.blur", prop, "1");
         if (atoi(prop) == 1) {
             mCaptureThread->mIsGalleryBlur = true;
             img_size =
@@ -607,7 +608,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
         }
 
     } else {
-        property_get("persist.vendor.cam.fr.blur.type", prop, "2");
+        property_get("persist.sys.cam.fr.blur.type", prop, "2");
         if (atoi(prop) == 2) {
             img_size =
                 SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
@@ -626,10 +627,10 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
 
     if (blur_camera_id == MODE_BLUR_FRONT) {
-        property_get("persist.vendor.cam.res.blur.fr", prop, "0");
+        property_get("persist.sys.cam.res.blur.fr", prop, "0");
         HAL_LOGI("blur front support cap resolution %d", atoi(prop));
     } else {
-        property_get("persist.vendor.cam.res.blur.ba", prop, "1");
+        property_get("persist.sys.cam.res.blur.ba", prop, "1");
         HAL_LOGI("blur back support cap resolution %d", atoi(prop));
     }
     addAvailableStreamSize(metadata, atoi(prop));
@@ -1345,6 +1346,43 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
 }
 
 /*===========================================================================
+ * FUNCTION   :CallSnapBackResult
+ *
+ * DESCRIPTION: CallSnapBackResult
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3Blur::CaptureThread::CallSnapBackResult(
+    camera3_buffer_status_t buffer_status) {
+    camera3_capture_result_t newResult;
+    camera3_stream_buffer_t newOutput_buffers;
+
+    memset(&newOutput_buffers, 0, sizeof(camera3_stream_buffer_t));
+    memset(&newResult, 0, sizeof(camera3_capture_result_t));
+    if (mBlur->mFlushing) {
+        buffer_status = CAMERA3_BUFFER_STATUS_ERROR;
+    }
+    newOutput_buffers.stream = mBlur->mSavedReqStreams[mCaptureStreamsNum - 1];
+    newOutput_buffers.buffer = mSavedResultBuff;
+    newOutput_buffers.status = buffer_status;
+    newOutput_buffers.acquire_fence = -1;
+    newOutput_buffers.release_fence = -1;
+
+    newResult.frame_number = mSavedCapRequest.frame_number;
+    newResult.output_buffers = &newOutput_buffers;
+    newResult.input_buffer = NULL;
+    newResult.result = NULL;
+    newResult.partial_result = 0;
+    newResult.num_output_buffers = 1;
+    HAL_LOGD("buffer_status%d frame_number:%d", buffer_status,
+             newResult.frame_number);
+
+    mCallbackOps->process_capture_result(mCallbackOps, &newResult);
+}
+
+/*===========================================================================
  * FUNCTION   :threadLoop
  *
  * DESCRIPTION: threadLoop
@@ -1356,7 +1394,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
 bool SprdCamera3Blur::CaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     blur_queue_msg_t capture_msg;
-    int mime_type = (int)SPRD_MIMETPYE_BLUR;
+    int mime_type = (int)MODE_BLUR;
     HAL_LOGV("run");
 
     while (!mCaptureMsgList.empty()) {
@@ -1432,7 +1470,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             char prop1[PROPERTY_VALUE_MAX] = {
                 0,
             };
-            property_get("persist.vendor.cam.blur1", prop1, "0");
+            property_get("persist.sys.camera.blur1", prop1, "0");
             if (1 == atoi(prop1) && !mBlur->mFlushing) {
                 unsigned char *buffer_base =
                     (unsigned char *)((struct private_handle_t *)*(
@@ -1470,7 +1508,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 char prop2[PROPERTY_VALUE_MAX] = {
                     0,
                 };
-                property_get("persist.vendor.cam.blur2", prop2, "0");
+                property_get("persist.sys.camera.blur2", prop2, "0");
                 if (1 == atoi(prop2)) {
                     unsigned char *buffer_base =
                         (unsigned char
@@ -1541,7 +1579,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 input_buffer->buffer = capture_msg.combo_buff.buffer;
             } else {
                 input_buffer->buffer = output_buffer;
-                mime_type = (int)SPRD_MIMETPYE_BLUR;
+                mime_type = (int)MODE_BLUR;
             }
             mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                          &mime_type, NULL);
@@ -1586,9 +1624,12 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
             }
             request.num_output_buffers = 1;
 
-            if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
-                                                           &request)) {
-                HAL_LOGE("failed. process capture request!");
+            if (mBlur->mFlushing) {
+                CallSnapBackResult(CAMERA3_BUFFER_STATUS_ERROR);
+            } else {
+                if (0 > mDevMain->hwi->process_capture_request(mDevMain->dev,
+                                                               &request))
+                    HAL_LOGE("failed. process capture request!");
             }
             if (NULL != mSavedCapReqsettings &&
                 mBlur->mReqState == REPROCESS_STATE) {
@@ -1739,14 +1780,14 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
         mPreviewWeightParams.roi_type = 0;
         mCaptureWeightParams.roi_type = 0;
         mCaptureWeightParams.rear_cam_en = true;
-        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
     } else {
         mVersion = 1;
         mCaptureWeightParams.version = 1;
         mPreviewWeightParams.roi_type = 1;
         mCaptureWeightParams.roi_type = 1;
         mCaptureWeightParams.rear_cam_en = false;
-        property_get("persist.vendor.cam.fr.blur.version", prop, "0");
+        property_get("persist.sys.cam.fr.blur.version", prop, "0");
     }
     if (atoi(prop) == 1 || atoi(prop) == 2 || atoi(prop) == 3) {
         mVersion = atoi(prop);
@@ -1757,17 +1798,17 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     mIsGalleryBlur = false;
     mIsBlurAlways = false;
     if (mVersion == 3) {
-        property_get("persist.vendor.cam.gallery.blur", prop, "1");
+        property_get("persist.sys.gallery.blur", prop, "1");
         if (atoi(prop) == 1) {
             mIsGalleryBlur = true;
         }
-        property_get("persist.vendor.cam.blur.always", prop, "1");
+        property_get("persist.sys.cam.blur.always", prop, "1");
         if (atoi(prop) == 1) {
             mIsBlurAlways = true;
             mCaptureWeightParams.version = 1;
         }
     } else if (mVersion == 1) {
-        property_get("persist.vendor.cam.fr.blur.type", prop, "2");
+        property_get("persist.sys.cam.fr.blur.type", prop, "2");
         if (atoi(prop) == 0 || atoi(prop) == 1 || atoi(prop) == 2) {
             mPreviewWeightParams.roi_type = atoi(prop);
             mCaptureWeightParams.roi_type = atoi(prop);
@@ -1782,7 +1823,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     HAL_LOGD("roi_type:%d, mIsGalleryBlur:%d, mIsBlurAlways:%d",
              mCaptureWeightParams.roi_type, mIsGalleryBlur, mIsBlurAlways);
 
-    property_get("persist.vendor.cam.blur.cirlscal", prop, "50");
+    property_get("persist.sys.cam.blur.cirlscal", prop, "50");
     if (atoi(prop) != 0) {
         mCircleSizeScale = atoi(prop);
     }
@@ -1835,12 +1876,12 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
         0,
     };
 
-    property_get("persist.vendor.cam.blur.conf", prop, "0");
+    property_get("persist.sys.camera.blur.conf", prop, "0");
     if (1 != atoi(prop)) {
         return false;
     }
 
-    property_get("persist.vendor.cam.blur.min", prop, "0");
+    property_get("persist.sys.camera.blur.min", prop, "0");
     if (0 != atoi(prop) && mLastMinScope != atoi(prop)) {
         mLastMinScope = atoi(prop);
         mPreviewInitParams.min_slope = (float)(mLastMinScope) / 10000;
@@ -1848,7 +1889,7 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.max", prop, "0");
+    property_get("persist.sys.camera.blur.max", prop, "0");
     if (0 != atoi(prop) && mLastMaxScope != atoi(prop)) {
         mLastMaxScope = atoi(prop);
         mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 10000;
@@ -1856,7 +1897,7 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.rati", prop, "0");
+    property_get("persist.sys.camera.blur.rati", prop, "0");
     if (0 != atoi(prop) && mLastAdjustRati != atoi(prop)) {
         mLastAdjustRati = atoi(prop);
         mPreviewInitParams.findex2gamma_adjust_ratio =
@@ -1866,98 +1907,98 @@ bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.scal", prop, "0");
+    property_get("persist.sys.camera.blur.scal", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.Scalingratio != atoi(prop)) {
         mCaptureInitParams.Scalingratio = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.win", prop, "0");
+    property_get("persist.sys.camera.blur.win", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.SmoothWinSize != atoi(prop)) {
         mCaptureInitParams.SmoothWinSize = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.filt", prop, "0");
+    property_get("persist.sys.camera.blur.filt", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.box_filter_size != atoi(prop)) {
         mCaptureInitParams.box_filter_size = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.upb", prop, "0");
+    property_get("persist.sys.camera.blur.upb", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.vcm_dac_up_bound != atoi(prop)) {
         mCaptureInitParams.vcm_dac_up_bound = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.lob", prop, "0");
+    property_get("persist.sys.camera.blur.lob", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.vcm_dac_low_bound != atoi(prop)) {
         mCaptureInitParams.vcm_dac_low_bound = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.gain", prop, "0");
+    property_get("persist.sys.camera.blur.gain", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.vcm_dac_gain != atoi(prop)) {
         mCaptureInitParams.vcm_dac_gain = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.clip", prop, "0");
+    property_get("persist.sys.camera.blur.clip", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.valid_depth_clip != atoi(prop)) {
         mCaptureInitParams.valid_depth_clip = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.meth", prop, "0");
+    property_get("persist.sys.camera.blur.meth", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.method != atoi(prop)) {
         mCaptureInitParams.method = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.row", prop, "0");
+    property_get("persist.sys.camera.blur.row", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.row_num != atoi(prop)) {
         mCaptureInitParams.row_num = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.col", prop, "0");
+    property_get("persist.sys.camera.blur.col", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.column_num != atoi(prop)) {
         mCaptureInitParams.column_num = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.rtio", prop, "0");
+    property_get("persist.sys.camera.blur.rtio", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.boundary_ratio != atoi(prop)) {
         mCaptureInitParams.boundary_ratio = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.sel", prop, "0");
+    property_get("persist.sys.camera.blur.sel", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.sel_size != atoi(prop)) {
         mCaptureInitParams.sel_size = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.dep", prop, "0");
+    property_get("persist.sys.camera.blur.dep", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.valid_depth != atoi(prop)) {
         mCaptureInitParams.valid_depth = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.slop", prop, "0");
+    property_get("persist.sys.camera.blur.slop", prop, "0");
     if (0 != atoi(prop) && mCaptureInitParams.slope != atoi(prop)) {
         mCaptureInitParams.slope = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.vupb", prop, "0");
+    property_get("persist.sys.camera.blur.vupb", prop, "0");
     if (0 != atoi(prop) &&
         mCaptureInitParams.valid_depth_up_bound != atoi(prop)) {
         mCaptureInitParams.valid_depth_up_bound = atoi(prop);
         ret = true;
     }
 
-    property_get("persist.vendor.cam.blur.vlob", prop, "0");
+    property_get("persist.sys.camera.blur.vlob", prop, "0");
     if (0 != atoi(prop) &&
         mCaptureInitParams.valid_depth_low_bound != atoi(prop)) {
         mCaptureInitParams.valid_depth_low_bound = atoi(prop);
@@ -2233,23 +2274,23 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 };
 
                 // Don't blur which face acreage less than max acreage width x%
-                property_get("persist.vendor.cam.blur.face.prop1", prop1, "50");
+                property_get("persist.sys.cam.blur.face.prop1", prop1, "50");
 
                 // The face width increase by x%
-                property_get("persist.vendor.cam.blur.face.prop2", prop2, "30");
+                property_get("persist.sys.cam.blur.face.prop2", prop2, "30");
 
                 // The face height increase by x% on top
-                property_get("persist.vendor.cam.blur.face.prop3", prop3, "70");
+                property_get("persist.sys.cam.blur.face.prop3", prop3, "70");
 
                 // The width of the body is the width of the face increased by
                 // x%
-                property_get("persist.vendor.cam.blur.face.prop4", prop4, "130");
+                property_get("persist.sys.cam.blur.face.prop4", prop4, "130");
 
                 // The upper side of the body is at x% of the face position
-                property_get("persist.vendor.cam.blur.face.prop5", prop5, "0");
+                property_get("persist.sys.cam.blur.face.prop5", prop5, "0");
 
                 // The face height increase by x% on bottom
-                property_get("persist.vendor.cam.blur.face.prop6", prop6, "20");
+                property_get("persist.sys.cam.blur.face.prop6", prop6, "20");
 
                 memset(bodyInfo, 0x00, sizeof(int32_t) * 4);
                 memset(faceInfo, 0x00, sizeof(int32_t) * 4);
@@ -3060,7 +3101,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
     char prop1[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.blur.dump", prop1, "0");
+    property_get("persist.sys.camera.blur.dump", prop1, "0");
     if (1 == atoi(prop1)) {
         dumpSaveImages(result_buff, use_size, jpeg_size);
     }
@@ -3097,6 +3138,7 @@ void SprdCamera3Blur::CaptureThread::dumpSaveImages(
 
         para_size += BLUR3_REFOCUS_COMMON_PARAM_NUM * 4 + hfir_coeff_size +
                      vfir_coeff_size + similar_coeff_size + tmp_coeff_size;
+        para_num = para_size / 4;
 #else
         para_num += BLUR3_REFOCUS_COMMON_PARAM_NUM;
         para_size = para_num * 4;
@@ -3183,6 +3225,8 @@ void SprdCamera3Blur::CaptureThread::dumpSaveImages(
 uint8_t SprdCamera3Blur::CaptureThread::getIspAfFullscanInfo() {
     int rc = 0;
     struct isp_af_fullscan_info af_fullscan_info;
+    bzero(&af_fullscan_info, sizeof(struct isp_af_fullscan_info));
+    af_fullscan_info.distance_reminder = 1;
     SprdCamera3HWI *hwiMain = mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FULLSCAN_INFO,
                                 &af_fullscan_info, &mVersion);
@@ -3204,7 +3248,7 @@ uint8_t SprdCamera3Blur::CaptureThread::getIspAfFullscanInfo() {
             0,
         };
 
-        property_get("persist.vendor.cam.blur.conf", prop, "0");
+        property_get("persist.sys.camera.blur.conf", prop, "0");
 
         if (1 != atoi(prop) && mFirstCapture) {
             mCaptureInitParams.row_num = af_fullscan_info.row_num;
@@ -3277,11 +3321,6 @@ void SprdCamera3Blur::CaptureThread::requestExit() {
 void SprdCamera3Blur::CaptureThread::waitMsgAvailable() {
     // TODO:what to do for timeout
     while (mCaptureMsgList.empty()) {
-        if (mBlur->mFlushing) {
-            Mutex::Autolock l(mBlur->mMergequeueFinishMutex);
-            mBlur->mMergequeueFinishSignal.signal();
-            HAL_LOGD("send mMergequeueFinishSignal.signal");
-        }
         {
             Mutex::Autolock l(mMergequeueMutex);
             mMergequeueSignal.waitRelative(mMergequeueMutex,
@@ -3601,6 +3640,7 @@ void SprdCamera3Blur::saveRequest(camera3_capture_request_t *request) {
     camera3_stream_t *newStream = NULL;
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
+        newStream->reserved[0] = NULL;
         if (getStreamType(newStream) == CALLBACK_STREAM) {
             request_saved_blur_t currRequest;
             HAL_LOGV("save request %d", request->frame_number);
@@ -3711,6 +3751,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                    sizeof(camera3_capture_request_t));
             memcpy(&mCaptureThread->mSavedCapReqstreambuff,
                    &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
+            req->output_buffers[i].stream->reserved[0] = NULL;
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
             HAL_LOGD("mFlushing:%d,frame_number:%d", mFlushing,
@@ -3850,6 +3891,11 @@ void SprdCamera3Blur::processCaptureResultMain(
                 1 == mCaptureThread->mIspInfo.distance_reminder) {
                 mCoverValue = 6;
             }
+            if (mCaptureThread->mIsBlurAlways &&
+                mCaptureThread->mVersion == 1 &&
+                mReqState == WAIT_FIRST_YUV_STATE) {
+                mCaptureThread->updateBlurWeightParams(metadata, 1);
+            }
         } else {
             mCaptureThread->updateBlurWeightParams(metadata, 1);
             if (2 == m_nPhyCameras && cur_frame_number > 2) {
@@ -3861,7 +3907,7 @@ void SprdCamera3Blur::processCaptureResultMain(
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
-                property_get("persist.vendor.cam.blur.prop7", prop, "1");
+                property_get("persist.sys.camera.blur.prop7", prop, "1");
                 if (mCaptureThread->mVersion == 3) {
                     mCoverValue = atoi(prop);
                 }
@@ -3905,24 +3951,8 @@ void SprdCamera3Blur::processCaptureResultMain(
                  mBlur->mReqState);
     } else if (mReqState != PREVIEW_REQUEST_STATE &&
                currStreamType == SNAPSHOT_STREAM) {
-        camera3_capture_result_t newResult = *result;
-        camera3_stream_buffer_t newOutput_buffers = *(result->output_buffers);
         HAL_LOGI("jpeg callback framenumber:%d, mReqState:%d",
                  result->frame_number, mReqState);
-
-        memcpy(mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1],
-               result->output_buffers[0].stream, sizeof(camera3_stream_t));
-        newOutput_buffers.stream =
-            mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1];
-        newOutput_buffers.buffer = result->output_buffers->buffer;
-        if (mFlushing) {
-            newOutput_buffers.status = CAMERA3_BUFFER_STATUS_ERROR;
-        }
-
-        newResult.output_buffers = &newOutput_buffers;
-        newResult.input_buffer = NULL;
-        newResult.result = NULL;
-        newResult.partial_result = 0;
 
         struct private_handle_t *output_addr =
             (struct private_handle_t *)(*result->output_buffers->buffer);
@@ -3943,8 +3973,7 @@ void SprdCamera3Blur::processCaptureResultMain(
         mCaptureThread->saveCaptureBlurParams(result->output_buffers->buffer,
                                               jpeg_size);
 #endif
-        mCaptureThread->mCallbackOps->process_capture_result(
-            mCaptureThread->mCallbackOps, &newResult);
+        mCaptureThread->CallSnapBackResult(CAMERA3_BUFFER_STATUS_OK);
         if (mCaptureThread->mVersion == 3 &&
             1 != mCaptureThread->mIspInfo.distance_reminder) {
             int af_bypass = 0;
@@ -3974,7 +4003,8 @@ void SprdCamera3Blur::processCaptureResultMain(
                         if (!mFlushing &&
                             !(mCameraId == CAM_BLUR_MAIN_ID_2 &&
                               mCaptureThread->mLastFaceNum <= 0 &&
-                              mCaptureThread->mSkipFaceNum >= 10)) {
+                              mCaptureThread->mSkipFaceNum >= 10) &&
+                            cur_frame_number > 0) {
                             mCaptureThread->blurHandle(
                                 (struct private_handle_t *)*(
                                     result->output_buffers->buffer),
@@ -4038,13 +4068,6 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
     HAL_LOGI("E flush, mCaptureMsgList.size=%zu, mSavedRequestList.size:%zu",
              mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
     mFlushing = true;
-
-    while (mReqState != PREVIEW_REQUEST_STATE) {
-        Mutex::Autolock l(mMergequeueFinishMutex);
-        mMergequeueFinishSignal.waitRelative(mMergequeueFinishMutex,
-                                             BLUR_THREAD_TIMEOUT);
-    }
-    HAL_LOGD("wait until mCaptureMsgList.empty");
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);

@@ -136,7 +136,7 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 #ifdef CAMERA_POWER_DEBUG_ENABLE
     bool cam_not_disp;
     char value[PROPERTY_VALUE_MAX];
-    property_get("vendor.cam.nodisplay", value, "false");
+    property_get("sys.camera.nodisplay", value, "false");
     cam_not_disp = !strcmp(value, "true");
 #endif
 
@@ -937,10 +937,6 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_SPRD_3DNR_ENABLED:
             HAL_LOGV("ANDROID_SPRD_3DNR_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_3DNR_ENABLED);
-            break;
-        case ANDROID_SPRD_FIXED_FPS_ENABLED:
-            HAL_LOGV("ANDROID_SPRD_FIXED_FPS_ENABLED");
-            mOEMIf->SetCameraParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
             break;
         case ANDROID_SPRD_APP_MODE_ID:
             HAL_LOGV("ANDROID_SPRD_APP_MODE_ID");

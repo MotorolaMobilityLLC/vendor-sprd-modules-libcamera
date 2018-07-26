@@ -79,17 +79,14 @@ camera3_callback_ops SprdCamera3SideBySideCamera::callback_ops_aux = {
     .notify = SprdCamera3SideBySideCamera::notifyAux};
 static int save_onlinecalbinfo(char *filename, uint8_t *input, uint32_t size) {
     char file_name[256];
-    strcpy(file_name, CAMERA_DUMP_PATH);
-    char tmp_name[64];
     FILE *fp;
     time_t timep;
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
-    sprintf(tmp_name, "%04d%02d%02d%02d%02d%02d_%s", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec,
-            filename);
-    strcat(file_name, tmp_name);
+    sprintf(file_name, "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
+            (1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
+            p->tm_min, p->tm_sec, filename);
     fp = fopen(file_name, "wb");
     if (fp) {
         fwrite(input, size, 1, fp);
@@ -102,16 +99,13 @@ static int savefile(char *filename, uint8_t *ptr, int width, int height) {
     int i;
     // static int inum = 0;
     char file_name[256];
-    strcpy(file_name, CAMERA_DUMP_PATH);
-    char tmp_name[64];
     time_t timep;
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
-    sprintf(tmp_name, "%04d%02d%02d%02d%02d%02d_%s", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec,
-            filename);
-    strcat(file_name, tmp_name);
+    sprintf(file_name, "/data/misc/cameraserver/%04d%02d%02d%02d%02d%02d_%s",
+            (1900 + p->tm_year), (1 + p->tm_mon), p->tm_mday, p->tm_hour,
+            p->tm_min, p->tm_sec, filename);
     // if(inum < 5)
     FILE *fp = fopen(file_name, "wb");
     if (fp) {
@@ -660,7 +654,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         rc = mCaptureThread->mDevAux->hwi->getTuningParam(&tuning_info);
     }
 
-    strcpy(file_name, CAMERA_DUMP_PATH);
+    strcpy(file_name, "/data/misc/cameraserver/");
     sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
             (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
     strcat(file_name, tmp_str);
@@ -700,7 +694,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             strcat(name, file_name);
             strcat(name, ".NV21");
         } else if (param == 4) {
-            strcpy(name, CAMERA_DUMP_PATH);
+            strcpy(name, "/data/misc/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                     (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min,
@@ -714,7 +708,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             strcat(name, tmp_str);
             strcat(name, "_main.NV21");
         } else if (param == 5) {
-            strcpy(name, CAMERA_DUMP_PATH);
+            strcpy(name, "/data/misc/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                     (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min,
@@ -728,13 +722,13 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
             strcat(name, tmp_str);
             strcat(name, "_sub.NV21");
         } else if (param == 6) {
-            strcpy(name, CAMERA_DUMP_PATH);
+            strcpy(name, "/data/misc/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%dx%d", width, height);
             strcat(name, tmp_str);
             strcat(name, "_left.NV21");
         } else if (param == 7) {
-            strcpy(name, CAMERA_DUMP_PATH);
+            strcpy(name, "/data/misc/cameraserver/");
             memset(tmp_str, 0, sizeof(tmp_str));
             sprintf(tmp_str, "%dx%d", width, height);
             strcat(name, tmp_str);
@@ -762,7 +756,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp);
     } break;
     case SBS_FILE_DEPTH: {
-        strcpy(name, CAMERA_DUMP_PATH);
+        strcpy(name, "/data/misc/cameraserver/");
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
@@ -804,7 +798,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         rc = mCaptureThread->mDevAux->hwi->getTuningParam(&tuning_info);
         memset(file_name, 0, sizeof(file_name));
         memset(tmp_str, 0, sizeof(tmp_str));
-        strcpy(file_name, CAMERA_DUMP_PATH);
+        strcpy(file_name, "/data/misc/cameraserver/");
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
         strcat(file_name, tmp_str);
@@ -848,7 +842,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp2);
     } break;
     case SBS_FILE_JPEG: {
-        strcpy(name, CAMERA_DUMP_PATH);
+        strcpy(name, "/data/misc/cameraserver/");
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
@@ -863,7 +857,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp);
     } break;
     case SBS_FILE_OTP: {
-        strcpy(name, CAMERA_DUMP_PATH);
+        strcpy(name, "/data/misc/cameraserver/");
         strcat(name, "original_otp.bin");
         fp = fopen(name, "wb");
         if (fp == NULL) {
@@ -874,7 +868,7 @@ void SprdCamera3SideBySideCamera::dumpFile(unsigned char *addr, int type,
         fclose(fp);
     } break;
     case SBS_FILE_ISPINFO: {
-        strcpy(name, CAMERA_DUMP_PATH);
+        strcpy(name, "/data/misc/cameraserver/");
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
                 (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
@@ -941,7 +935,7 @@ int SprdCamera3SideBySideCamera::cameraDeviceOpen(
 
         // choose real time bokeh
         char real[PROPERTY_VALUE_MAX];
-        property_get("persist.vendor.cam.sbs.realtime", real, "1");
+        property_get("persist.sys.cam.sbs.realtime", real, "1");
         if (!strcmp(real, "1")) {
             mRealtimeBokeh = 1;
         }
@@ -1012,6 +1006,7 @@ int SprdCamera3SideBySideCamera::getCameraInfo(int blur_camera_id,
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+
     addAvailableStreamSize(metadata, 1);
     mStaticMetadata = metadata.release();
 
@@ -1128,8 +1123,8 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
         goto exit;
     }
     memset(&cali_info, 0, sizeof(isp_depth_cali_info));
-    property_get("persist.vendor.cam.refocus.otp", otp, "0");
-    property_get("persist.vendor.cam.sbs.savefile", dump, "0");
+    property_get("persist.sys.camera.refocus.otp", otp, "0");
+    property_get("persist.sys.cam.sbs.savefile", dump, "0");
 
     sprd_depth_VersionInfo_Get(acVersion, 256);
     HAL_LOGD("sprd_depthmap[%s]", acVersion);
@@ -1147,10 +1142,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
                                   SBS_FILE_OTP, otp_size, 0, 0, 0, 0, 0);
         }
     } else {
-        char file_name[128];
-        strcpy(file_name, CAMERA_DUMP_PATH);
-        strcat(file_name, "otp.txt");
-        fid = fopen(file_name, "r");
+        fid = fopen("data/misc/cameraserver/otp.txt", "r");
         if (fid == NULL) {
             HAL_LOGE("file open fail");
         } else {
@@ -1216,7 +1208,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessDepthImage(
     static int index = 0;
     char prop[PROPERTY_VALUE_MAX];
     char filename[128];
-    property_get("vendor.cam.save_onlinecalbinfo", prop, "no");
+    property_get("save_onlinecalbinfo", prop, "no");
     if (!strcmp(prop, "yes") && (NULL != cali_info.buffer)) {
         sprintf(filename, "hal_save_onlineclab_%d.dump", index);
         save_onlinecalbinfo(filename, (uint8_t *)cali_info.buffer,
@@ -1270,7 +1262,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::ProcessBokehImage(
         HAL_LOGE("buffer is null");
         goto exit;
     }
-    /*fid = fopen("/data/vendor/cameraserver/bokeh_param.bin", "r");
+    /*fid = fopen("/data/misc/cameraserver/bokeh_param.bin", "r");
     if(fid == NULL) {
         HAL_LOGE("file open fail");
         goto exit;
@@ -1313,7 +1305,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::Save3dVerificationParam(
     unsigned char *sub_yuv) {
     int i = 0;
     char prop[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.sbs.savefile", prop, "0");
+    property_get("persist.sys.cam.sbs.savefile", prop, "0");
 
     unsigned char *buffer_base =
         (unsigned char *)((struct private_handle_t *)*mSavedResultBuff)->base;
@@ -1458,7 +1450,7 @@ void SprdCamera3SideBySideCamera::CaptureThread::saveCaptureBokehParams(
 bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     sidebyside_queue_msg_t capture_msg;
-    int mime_type = (int)SPRD_MIMETPYE_BLUR;
+    int mime_type = (int)MODE_BLUR;
     int ret = 0;
     uint32_t frame_number = 0;
     cmr_s64 timestamp = 0;
@@ -1614,7 +1606,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
                                       ->base);
 
             char prop[PROPERTY_VALUE_MAX];
-            property_get("persist.vendor.cam.sbs.savefile", prop, "0");
+            property_get("persist.sys.cam.sbs.savefile", prop, "0");
 
             HAL_LOGD("mFlushing:%d, stop preview and raw proc",
                      mSidebyside->mFlushing);
@@ -1745,7 +1737,7 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
 
             // FOR TEST:get 3d verification tag
             char verifi[PROPERTY_VALUE_MAX];
-            property_get("persist.vendor.cam.tool.debug", verifi, "0");
+            property_get("persist.sys.cam.tool.debug", verifi, "0");
             if (!strcmp(verifi, "1")) {
                 m3dVerificationEnable = 1;
             } else {
@@ -1876,11 +1868,11 @@ bool SprdCamera3SideBySideCamera::CaptureThread::threadLoop() {
 
             /*if (BLUR_TIPS_OK == mSidebyside->mCoveredValue ||
                 m3dVerificationEnable) {
-                mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BLUR;
+                mime_type = (1 << 8) | (int)MODE_BLUR;
             } else {
                 mime_type = 0;
             }*/
-            mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BLUR;
+            mime_type = (1 << 8) | (int)MODE_BLUR;
             mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                          &mime_type, NULL);
 
@@ -2954,7 +2946,7 @@ int SprdCamera3SideBySideCamera::thumbYuvProc(buffer_handle_t *src_buffer) {
 
     hwiMain->camera_ioctrl(CAMERA_IOCTRL_THUMB_YUV_PROC, &thumb_param, NULL);
 
-    property_get("persist.vendor.cam.sbs.dump.thumb", prop, "0");
+    property_get("persist.sys.sbs.dump.thumb", prop, "0");
     if (atoi(prop) == 1) {
         dumpData((unsigned char *)thumb_param.src_img.addr_vir.addr_y, 1,
                  thumb_param.src_img.buf_size, thumb_param.src_img.size.width,
@@ -3188,7 +3180,7 @@ void SprdCamera3SideBySideCamera::processCaptureResultMain(
             mjpegSize;
         // dump jpeg
         char prop[PROPERTY_VALUE_MAX] = {0};
-        property_get("persist.vendor.cam.sbs.savefile", prop, "0");
+        property_get("persist.sys.cam.sbs.savefile", prop, "0");
         if (!strcmp(prop, "1")) {
             unsigned char *buffer_base =
                 (unsigned char *)(((struct private_handle_t *)*(

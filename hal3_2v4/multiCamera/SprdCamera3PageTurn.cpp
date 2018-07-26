@@ -413,7 +413,7 @@ int SprdCamera3PageTurn::cameraDeviceOpen(__unused int camera_id,
     }
     hw_dev[0] = NULL;
 
-    hw->setMultiCameraMode(MODE_PAGE_TURN);
+    hw->setMultiCameraMode((multiCameraMode)camera_id);
     rc = hw->openCamera(&hw_dev[0]);
     if (rc != NO_ERROR) {
         HAL_LOGE("failed, camera id:%d", phyId);
@@ -491,7 +491,7 @@ int SprdCamera3PageTurn::setupPhysicalCameras() {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
+    property_get("persist.sys.cam.blur.cov.id", prop, "3");
     if (atoi(prop) == 0) {
         m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_BLUR_AUX_ID;
     } else {

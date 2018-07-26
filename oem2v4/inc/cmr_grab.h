@@ -64,6 +64,8 @@ struct sn_cfg {
     cmr_u32 frm_num;
     // sensor_max_size is for isp alloc memory use
     struct img_size sensor_max_size;
+    //for sensor interpolation use
+    struct img_size actual_pic_size;
 };
 
 struct grab_flash_opt {
@@ -99,6 +101,7 @@ struct cmr_grab {
     cmr_u8 mode_enable;
     cmr_u8 res;
     cmr_u32 is_sidebyside;
+    cmr_u32 offline_mode;
 };
 
 cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,

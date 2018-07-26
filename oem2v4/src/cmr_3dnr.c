@@ -327,17 +327,18 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     }
 
     ret = cam_cxt->hal_free(
-        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
-        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
-        cam_cxt->client_data);
+                        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
+                        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
+                        cam_cxt->client_data);
     if (ret) {
         CMR_LOGE("Fail to free the output buffer");
     }
 
-    ret = cam_cxt->hal_free(
-        CAMERA_SNAPSHOT_3DNR, (cmr_uint *)threednr_handle->small_buf_phy,
-        (cmr_uint *)threednr_handle->small_buf_vir,
-        threednr_handle->small_buf_fd, CAP_3DNR_NUM, cam_cxt->client_data);
+    ret = cam_cxt->hal_free(CAMERA_SNAPSHOT_3DNR,
+                            (cmr_uint *)threednr_handle->small_buf_phy,
+                            (cmr_uint *)threednr_handle->small_buf_vir,
+                            threednr_handle->small_buf_fd, CAP_3DNR_NUM,
+                            cam_cxt->client_data);
     if (ret) {
         CMR_LOGE("Fail to free the small image buffers");
     }
@@ -620,11 +621,8 @@ static cmr_int req_3dnr_save_frame(cmr_handle class_handle,
 
 static cmr_int save_yuv(char *filename, char *buffer, uint32_t width,
                         uint32_t height) {
-    char tmp_name[128];
-    strcpy(tmp_name, CAMERA_DUMP_PATH);
-    strcat(tmp_name, filename);
     FILE *fp;
-    fp = fopen(tmp_name, "wb");
+    fp = fopen(filename, "wb");
     if (fp) {
         fwrite(buffer, 1, width * height * 3 / 2, fp);
         fclose(fp);
@@ -711,15 +709,17 @@ void *thread_3dnr(void *p_data) {
 #if 1
     {
         char flag[PROPERTY_VALUE_MAX] = {'\0'};
-        property_get("vendor.cam.post_3dnr_save_scl_data", flag, "0");
+        property_get("post_3dnr_save_scl_data", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
-            sprintf(filename, "scl_in_%ldx%ld_index_%d.yuv",
+            sprintf(filename,
+                    "/data/misc/cameraserver/scl_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)src->addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
-            sprintf(filename, "scl_out_%ldx%ld_index_%d.yuv",
+            sprintf(filename,
+                    "/data/misc/cameraserver/scl_out_%ldx%ld_index_%d.yuv",
                     threednr_handle->small_width, threednr_handle->small_height,
                     cur_frm);
             save_yuv(filename, (char *)dst.addr_vir.addr_y,

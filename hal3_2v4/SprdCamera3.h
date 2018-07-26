@@ -195,7 +195,6 @@ static tags_info_t
         {"sprd3BlurSensorRotation", TYPE_INT32},
         {"sprdHdrPlusEnabled", TYPE_BYTE},
         {"sprdAppmodeId", TYPE_INT32},
-        {"sprdFixedFpsEnabled", TYPE_BYTE},
         {"sprd3dnrEnabled", TYPE_BYTE},
         {"sprdfiltertype", TYPE_BYTE},
         {"isTakePictureWithFlash", TYPE_BYTE},

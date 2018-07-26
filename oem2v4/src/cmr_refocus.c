@@ -476,6 +476,8 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
     void *refocus_out_buff_ptr = NULL;
     cmr_int face_num = 0;
     cmr_int k, min_refocus;
+    char *psPath_otpData = "data/misc/cameraserver/otp.bin";
+    char *psPath_depthData = "data/misc/cameraserver/depth.bin";
     struct refocus_init_parameter *init_param;
     struct refocus_start_parameter *start_param;
     cmr_s8 value[PROPERTY_VALUE_MAX];
@@ -504,7 +506,7 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
                  CMR_REFOCUS_LIMIT_SIZE)) {
 
                 if (init_param->otp_data.otp_ptr != NULL) {
-                    save_file("otp.bin", init_param->otp_data.otp_ptr,
+                    save_file(psPath_otpData, init_param->otp_data.otp_ptr,
                               init_param->otp_data.otp_size);
                     CMR_LOGI("[REFOCUS] init_param.otp_ptr %p, "
                              "init_param.otp_size %d",
@@ -532,7 +534,7 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
                     }
                 } else {
 #if 0
-									   char *psPath_OTP= "data/vendor/cameraserver/packet.otp";
+									   char *psPath_OTP= "data/misc/cameraserver/packet.otp";
 									   init_param->otp_data.otp_size = 0x2000;
 									   char *otp_data = malloc(init_param->otp_data.otp_size);
 									   read_file(psPath_otpData,  otp_data, init_param->otp_data.otp_size);
@@ -628,7 +630,7 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
 
             /*debug info*/
             property_get("debug.camera.save.refocus", value, "0");
-            property_get("persist.vendor.cam.save.refocus", value1, "0");
+            property_get("persist.camera.save.refocus", value1, "0");
             if (atoi(value) == 1 && altek_refocus_ret == 0) {
                 if (refocus_frame_num % 100 == 0 && refocus_frame_num != 0) {
                     refocus_save_to_file(

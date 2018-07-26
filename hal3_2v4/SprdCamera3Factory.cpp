@@ -238,6 +238,9 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
         return NO_MEMORY;
     }
 
+    if (hw->isMultiCameraMode(camera_id)) {
+        hw->setMultiCameraMode((multiCameraMode)camera_id);
+    }
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;

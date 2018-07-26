@@ -389,9 +389,6 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
     case COM_ISP_SET_RANGE_FPS:
         isp_param->range_fps = parm->range_fps;
         break;
-    case COM_ISP_SET_EV:
-        isp_param->ae_compensation_param = parm->ae_compensation_param;
-        break;
     default:
         isp_param->cmd_value = out_param;
         break;
@@ -562,10 +559,6 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         if (setting_is_rawrgb_format(cpt, parm)) {
             ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         }
-        break;
-
-    case SETTING_GENERAL_EXPOSURE_COMPENSATION:
-        type_val = parm->ae_compensation_param.ae_exposure_compensation;
         break;
 
     default:
@@ -1110,7 +1103,6 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
 
     pthread_mutex_lock(&cpt->status_lock);
     org_zoom = hal_param->zoom_value;
-    pthread_mutex_unlock(&cpt->status_lock);
 
     zoom_param = parm->zoom_param;
     if (zoom_param.mode == ZOOM_LEVEL) {
@@ -1153,12 +1145,11 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
             }
         }
         /*update zoom unit after processed or not*/
-        pthread_mutex_lock(&cpt->status_lock);
         hal_param->zoom_value = zoom_param;
-        pthread_mutex_unlock(&cpt->status_lock);
     }
 
 setting_out:
+    pthread_mutex_unlock(&cpt->status_lock);
     return ret;
 }
 
@@ -1473,7 +1464,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
 
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }

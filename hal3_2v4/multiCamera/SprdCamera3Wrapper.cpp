@@ -95,19 +95,42 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         rc = mStereoPreview->camera_device_open(module, id, hw_device);
         return rc;
 #endif
+    case MODE_BLUR: {
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        if (atoi(prop) == 7) {
 #ifdef CONFIG_SIDEBYSIDE_SUPPORT
-    case MODE_BLUR:
-    case MODE_BLUR_FRONT:
-        rc = mSidebyside->camera_device_open(module, id, hw_device);
-        return rc;
+            rc = mSidebyside->camera_device_open(module, id, hw_device);
 #else
+            rc = -EINVAL;
+#endif
+        } else {
 #ifdef CONFIG_BLUR_SUPPORT
-    case MODE_BLUR:
-    case MODE_BLUR_FRONT:
-        rc = mBlur->camera_device_open(module, id, hw_device);
+            rc = mBlur->camera_device_open(module, id, hw_device);
+#else
+            rc = -EINVAL;
+#endif
+        }
         return rc;
+    }
+    case MODE_BLUR_FRONT: {
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.sys.cam.fr.blur.version", prop, "0");
+        if (atoi(prop) == 7) {
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
+            rc = mSidebyside->camera_device_open(module, id, hw_device);
+#else
+            rc = -EINVAL;
 #endif
+        } else {
+#ifdef CONFIG_BLUR_SUPPORT
+            rc = mBlur->camera_device_open(module, id, hw_device);
+#else
+            rc = -EINVAL;
 #endif
+        }
+        return rc;
+    }
 #ifdef CONFIG_COVERED_SENSOR
     case MODE_SELF_SHOT:
         rc = mSelfShot->camera_device_open(module, id, hw_device);
@@ -153,19 +176,42 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         rc = mStereoPreview->get_camera_info(camera_id, info);
         return rc;
 #endif
+    case MODE_BLUR: {
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        if (atoi(prop) == 7) {
 #ifdef CONFIG_SIDEBYSIDE_SUPPORT
-    case MODE_BLUR:
-    case MODE_BLUR_FRONT:
-        rc = mSidebyside->get_camera_info(camera_id, info);
-        return rc;
+            rc = mSidebyside->get_camera_info(camera_id, info);
 #else
+            rc = -EINVAL;
+#endif
+        } else {
 #ifdef CONFIG_BLUR_SUPPORT
-    case MODE_BLUR:
-    case MODE_BLUR_FRONT:
-        rc = mBlur->get_camera_info(camera_id, info);
+            rc = mBlur->get_camera_info(camera_id, info);
+#else
+            rc = -EINVAL;
+#endif
+        }
         return rc;
+    }
+    case MODE_BLUR_FRONT: {
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.sys.cam.fr.blur.version", prop, "0");
+        if (atoi(prop) == 7) {
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
+            rc = mSidebyside->get_camera_info(camera_id, info);
+#else
+            rc = -EINVAL;
 #endif
+        } else {
+#ifdef CONFIG_BLUR_SUPPORT
+            rc = mBlur->get_camera_info(camera_id, info);
+#else
+            rc = -EINVAL;
 #endif
+        }
+        return rc;
+    }
 #ifdef CONFIG_COVERED_SENSOR
     case MODE_SELF_SHOT:
         rc = mSelfShot->get_camera_info(camera_id, info);

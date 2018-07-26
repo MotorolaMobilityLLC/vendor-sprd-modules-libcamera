@@ -620,7 +620,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hw->setMultiCameraMode(MODE_RANGE_FINDER);
+        hw->setMultiCameraMode((multiCameraMode)camera_id);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);
@@ -2239,11 +2239,10 @@ void SprdCamera3RangeFinder::dumpImg(void *addr, int size, int frameId,
 
     HAL_LOGI(" E");
     char name[128];
-    strcpy(name, CAMERA_DUMP_PATH);
-    char tmp_name[64];
     int count;
-    snprintf(tmp_name, sizeof(tmp_name), "%d_%d_%d.yuv", size, frameId, flag);
-    strcat(name, tmp_name);
+    snprintf(name, sizeof(name), "/data/misc/media/%d_%d_%d.yuv", size, frameId,
+             flag);
+
     FILE *file_fd = fopen(name, "w");
 
     if (file_fd == NULL) {

@@ -713,7 +713,7 @@ int SprdCamera3Capture::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hw->setMultiCameraMode(MODE_3D_CAPTURE);
+        hw->setMultiCameraMode((multiCameraMode)camera_id);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);
@@ -1205,7 +1205,7 @@ static void save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     HAL_LOGD("index %d format %d width %d heght %d", index, img_fmt, width,
              height);
 
-    strcpy(file_name, CAMERA_DUMP_PATH);
+    strcpy(file_name, "/data/misc/media/");
     sprintf(tmp_str, "%d", width);
     strcat(file_name, tmp_str);
     strcat(file_name, "X");
@@ -1228,7 +1228,7 @@ static void save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
         fwrite((void *)addr->addr_y, 1, width * height, fp);
         fclose(fp);
 
-        strcpy(file_name, CAMERA_DUMP_PATH);
+        strcpy(file_name, "/data/misc/media/");
         sprintf(tmp_str, "%d", width);
         strcat(file_name, tmp_str);
         strcat(file_name, "X");
@@ -2620,10 +2620,8 @@ void SprdCamera3Capture::dumpImg(void *addr, int size, int frameId) {
 
     HAL_LOGI(" E");
     char name[128];
-    strcpy(name, CAMERA_DUMP_PATH);
-    char tmp_name[64];
-    snprintf(tmp_name, sizeof(tmp_name), "%d_%d.yuv", size, frameId);
-    strcat(name, tmp_name);
+    snprintf(name, sizeof(name), "/data/misc/media/%d_%d.yuv", size, frameId);
+
     FILE *file_fd = fopen(name, "w");
 
     if (file_fd == NULL) {

@@ -1019,7 +1019,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
-                                    &jpeg_in_ptr->mean);
+                                    &jpeg_in_ptr->mean, NULL);
     if (ret) {
         CMR_LOGE("failed to start enc %ld", ret);
         goto exit;
@@ -1043,8 +1043,10 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
     struct snp_channel_param *chn_param_ptr = &snp_cxt->chn_param;
     struct snp_jpeg_param *jpeg_in_ptr;
+    struct img_frm jpeg_thumb_dst;
     cmr_u32 index = snp_cxt->index;
     struct jpeg_param quality_param;
+    struct jpeg_enc_cb_param out_enc_cb_param;
 
     if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
         CMR_LOGD("post proc has been cancel");
@@ -1076,9 +1078,11 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d",
              jpeg_in_ptr->mean.quality_level);
 
+    jpeg_thumb_dst = jpeg_in_ptr->dst;
+    jpeg_thumb_dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
-                                    &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
-                                    &jpeg_in_ptr->mean);
+                                    &jpeg_in_ptr->src, &jpeg_thumb_dst,
+                                    &jpeg_in_ptr->mean, &out_enc_cb_param);
     if (ret) {
         CMR_LOGE("failed to start thumb enc %ld", ret);
         goto exit;
@@ -1086,7 +1090,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     camera_take_snapshot_step(CMR_STEP_THUM_ENC_E);
 
     snp_cxt->thumb_stream_size =
-        (cmr_u32)((unsigned long)jpeg_in_ptr->dst.reserved);
+        (cmr_u32)(out_enc_cb_param.stream_size);
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 7 || atoi(value) & (1 << 7)) {
@@ -4339,18 +4343,27 @@ static cmr_int snp_filter_process(cmr_handle snp_handle, void *data) {
     struct ipm_frame_in ipm_in_param;
     struct ipm_frame_out imp_out_param;
     struct img_frm img_frame;
+    struct snp_channel_param *chn_param_ptr = &snap_cxt->chn_param;
+
     CMR_LOGD("E");
     cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
     cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
-    snp_set_status(snp_handle, IPM_WORKING);
     sem_wait(&snap_cxt->filter_sync_sm);
+    snp_set_status(snp_handle, IPM_WORKING);
 
     img_frame.fd = frame->fd;
+#if CONFIG_CAMERA_AUTO_DETECT_SENSOR
     img_frame.size.height =
         oem_cxt->snp_cxt.post_proc_setting.actual_snp_size.height;
     img_frame.size.width =
         oem_cxt->snp_cxt.post_proc_setting.actual_snp_size.width;
+#else
+    img_frame.size.height =
+        chn_param_ptr->chn_frm[frame->frame_id - frame->base].size.height,
+    img_frame.size.width =
+        chn_param_ptr->chn_frm[frame->frame_id - frame->base].size.width,
+#endif
     img_frame.addr_vir.addr_y = frame->yaddr_vir;
     img_frame.addr_vir.addr_u =
         frame->yaddr_vir + img_frame.size.height * img_frame.size.width;
@@ -4444,7 +4457,8 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     }
 
     CMR_LOGD(
-        "w %d, h %d, yaddr 0x%lx, fd 0x%x",
+        "data fd 0x%x w %d, h %d, yaddr 0x%lx, fd 0x%x",
+        chn_data_ptr->fd,
         chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
             .size.width,
         chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
@@ -4456,6 +4470,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 1 || atoi(value) == 100 || (atoi(value) & (1 << 1))) {
         struct camera_context *cam_ctx = cxt->oem_handle;
+
         camera_save_yuv_to_file(
             FORM_DUMPINDEX(SNP_CHN_OUT_DATA, cam_ctx->dump_cnt, 0),
             IMG_DATA_TYPE_YUV420,
@@ -4465,6 +4480,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
                 .size.height,
             &chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
                  .addr_vir);
+
     }
 
     if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
@@ -4848,6 +4864,7 @@ cmr_int snp_stop_proc(cmr_handle snp_handle) {
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
     CMR_LOGI("E");
+
     ret = snp_checkout_exit(snp_handle);
     snp_set_status(snp_handle, IDLE);
     CMR_LOGI("X");
