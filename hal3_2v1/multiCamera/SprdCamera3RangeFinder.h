@@ -46,6 +46,7 @@
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
 #include <cmr_sensor_info.h>
+#include "SGM_SPRD.h"
 #include "SprdCamera3MultiBase.h"
 
 namespace sprdcamera {
@@ -55,6 +56,52 @@ namespace sprdcamera {
 #endif
 
 typedef int alDE_ERR_CODE;
+
+typedef struct {
+    int outputsize;
+    depth_mode mode;
+    void *handle;
+} depth_init_param_t;
+
+typedef struct {
+    int x1_pos;
+    int y1_pos;
+    int x2_pos;
+    int y2_pos;
+} distance_tow_point_info;
+
+typedef struct {
+    void *handle;
+    int (*sprd_depth_VersionInfo_Get)(char a_acOutRetbuf[256],
+                                      unsigned int a_udInSize);
+
+    void (*sprd_depth_Set_Stopflag)(void *handle, depth_stop_flag stop_flag);
+
+    void *(*sprd_depth_Init)(depth_init_inputparam *inparam,
+                             depth_init_outputparam *outputinfo,
+                             depth_mode mode, outFormat format);
+
+    int (*sprd_depth_Run)(void *handle, void *a_pOutDisparity,
+                          void *a_pOutMaptable, void *a_pInSub_YCC420NV21,
+                          void *a_pInMain_YCC420NV21, weightmap_param *wParams);
+
+    int (*sprd_depth_Run_distance)(void *handle, void *a_pOutDisparity,
+                                   void *a_pOutMaptable,
+                                   void *a_pInSub_YCC420NV21,
+                                   void *a_pInMain_YCC420NV21,
+                                   weightmap_param *wParams,
+                                   distanceRet *distance);
+    int (*sprd_depth_OnlineCalibration)(void *handle, void *a_pOutMaptable,
+                                        void *a_pInSub_YCC420NV21,
+                                        void *a_pInMain_YCC420NV21);
+    int (*sprd_depth_rotate)(void *a_pOutDisparity, int width, int height,
+                             int angle);
+
+    int (*sprd_depth_distancemeasurement)(int *distance, void *disparity,
+                                          distance_tow_point_info *points_info);
+
+    int (*sprd_depth_Close)(void *handle);
+} depth_api_t;
 
 typedef enum {
     /* Main camera of the related cam subsystem which controls*/

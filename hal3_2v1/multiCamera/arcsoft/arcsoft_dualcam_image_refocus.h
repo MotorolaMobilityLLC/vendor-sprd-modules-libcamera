@@ -130,6 +130,10 @@ ARCDCIR_API MRESULT ARC_DCIR_Reset( // return MOK if success, otherwise fail
     MHandle hHandle // [in/out] The algorithm engine will be reset by this API
     );
 
+ARCDCIR_API MRESULT ARC_DCIR_SetDistortionCoef(MHandle hHandle,
+                                               MFloat leftDis[],
+                                               MFloat rightDis[]);
+
 #ifdef __cplusplus
 }
 #endif

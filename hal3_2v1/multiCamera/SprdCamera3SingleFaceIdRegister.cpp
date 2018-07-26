@@ -266,6 +266,7 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::closeCameraDevice() {
 
     freeLocalCapBuffer();
     mSavedRequestList.clear();
+    mNotifyListMain.clear();
     if (m_pPhyCamera) {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
@@ -465,7 +466,9 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::allocateBuffer(
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
 
-    yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+    if (!mIommuEnabled) {
+        yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+    }
 
 #if defined(CONFIG_SPRD_ANDROID_8)
     graphicBuffer = new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
@@ -478,11 +481,13 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::allocateBuffer(
     native_handle = (native_handle_t *)graphicBuffer->handle;
 
     int fd = ADP_BUFFD(native_handle);
-    ret = MemIon::Get_phy_addr_from_ion(fd, &phy_addr, &buf_size);
-    if (ret) {
-        HAL_LOGW("get phy addr fail %d", ret);
+    if (!mIommuEnabled) {
+        ret = MemIon::Get_phy_addr_from_ion(fd, &phy_addr, &buf_size);
+        if (ret) {
+            HAL_LOGW("get phy addr fail %d", ret);
+        }
+        HAL_LOGI("phy_addr=0x%lx, buf_size=%zu", phy_addr, buf_size);
     }
-    HAL_LOGI("phy_addr=0x%lx, buf_size=%zu", phy_addr, buf_size);
 
     new_mem->native_handle = native_handle;
     new_mem->graphicBuffer = graphicBuffer;
@@ -711,7 +716,9 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::initialize(
 
     CHECK_HWI_ERROR(hwiMain);
 
+    mIommuEnabled = false;
     mFlushing = false;
+    mNotifyListMain.clear();
     mRegisterPhyaddr = 0;
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
@@ -781,6 +788,7 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::configureStreams(
     }
     // for callback buffer
     freeLocalCapBuffer();
+    mIommuEnabled = false;
     for (j = 0; j < SINGLE_FACEID_REGISTER_BUFFER_SUM; j++) {
         if (0 > allocateBuffer(mPreviewWidth, mPreviewHeight, 1,
                                HAL_PIXEL_FORMAT_YCrCb_420_SP,

@@ -107,14 +107,18 @@ int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
 
 int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                                       int type) {
-
     sp<GraphicBuffer> graphicBuffer = NULL;
     native_handle_t *native_handle = NULL;
-    void *vir_addr = 0;
+    unsigned long phy_addr = 0;
+    size_t buf_size = 0;
     uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
-    if (!mIommuEnabled) {
+
+    if (mCameraMode == SPRD_DUAL_FACEID_REGISTER_ID ||
+        mCameraMode == SPRD_DUAL_FACEID_UNLOCK_ID) {
+        yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
+    } else if (!mIommuEnabled) {
         yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
     }
 
@@ -126,14 +130,24 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
         new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage);
 #endif
     native_handle = (native_handle_t *)graphicBuffer->handle;
+
+    if (mCameraMode == SPRD_DUAL_FACEID_REGISTER_ID) {
+        if (0 != MemIon::Get_phy_addr_from_ion(ADP_BUFFD(native_handle),
+                                               &phy_addr, &buf_size)) {
+            ALOGE("Get_phy_addr_from_ion error");
+            return UNKNOWN_ERROR;
+        }
+    }
+    new_mem->phy_addr = (void *)phy_addr;
     new_mem->native_handle = native_handle;
     new_mem->graphicBuffer = graphicBuffer;
     new_mem->width = w;
     new_mem->height = h;
     new_mem->type = (camera_buffer_type_t)type;
-    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d", w, h, mIommuEnabled);
+    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d,phy_addr=0x%x", w, h, mIommuEnabled,
+             new_mem->phy_addr);
 
-    return 0;
+    return NO_ERROR;
 }
 
 int SprdCamera3MultiBase::findGraphicBuf(List<new_mem_t *> &list,
@@ -185,9 +199,10 @@ void SprdCamera3MultiBase::freeOneBuffer(new_mem_t *buffer) {
         if (buffer->graphicBuffer != NULL) {
             buffer->graphicBuffer.clear();
             buffer->graphicBuffer = NULL;
+            buffer->phy_addr = NULL;
+            buffer->vir_addr = NULL;
         }
         buffer->native_handle = NULL;
-        buffer->vir_addr = NULL;
     } else {
         HAL_LOGD("Not allocated, No need to free");
     }

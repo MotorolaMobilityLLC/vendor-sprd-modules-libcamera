@@ -3378,6 +3378,8 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
 uint8_t SprdCamera3Blur::CaptureThread::getIspAfFullscanInfo() {
     int rc = 0;
     struct isp_af_fullscan_info af_fullscan_info;
+    bzero(&af_fullscan_info, sizeof(struct isp_af_fullscan_info));
+    af_fullscan_info.distance_reminder = 1;
     SprdCamera3HWI *hwiMain = mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FULLSCAN_INFO,
                                 &af_fullscan_info, &mVersion);
@@ -3663,20 +3665,20 @@ int SprdCamera3Blur::configureStreams(
                 memset(mCaptureThread->mOutWeightBuff, 0, buff_size);
                 weight_map = (void *)malloc(w * h / 4);
                 memset(weight_map, 0, w * h / 4);
+
+                m_pNearYuvBuffer = (void *)malloc(w * h * 3 / 2);
+                memset(m_pNearYuvBuffer, 0, w * h * 3 / 2);
+
+                if (mCaptureThread->mIsGalleryBlur &&
+                    (mCaptureThread->mVersion == 3)) {
+                    m_pFarYuvBuffer = (void *)malloc(w * h * 3 / 2);
+                    memset(m_pFarYuvBuffer, 0, w * h * 3 / 2);
+                }
             }
             mCaptureWidth = w;
             mCaptureHeight = h;
             mCaptureThread->mCaptureInitParams.width = w;
             mCaptureThread->mCaptureInitParams.height = h;
-
-            m_pNearYuvBuffer = (void *)malloc(w * h * 3 / 2);
-            memset(m_pNearYuvBuffer, 0, w * h * 3 / 2);
-
-            if (mCaptureThread->mIsGalleryBlur &&
-                (mCaptureThread->mVersion == 3)) {
-                m_pFarYuvBuffer = (void *)malloc(w * h * 3 / 2);
-                memset(m_pFarYuvBuffer, 0, w * h * 3 / 2);
-            }
 
             if (mCaptureThread->mFirstCapture) {
                 mCaptureThread->mCaptureWeightParams.sel_x =
@@ -4044,6 +4046,11 @@ void SprdCamera3Blur::processCaptureResultMain(
                 1 == mCaptureThread->mIspInfo.distance_reminder) {
                 mCoverValue = 6;
             }
+            if (mCaptureThread->mIsBlurAlways &&
+                mCaptureThread->mVersion == 1 &&
+                mReqState == WAIT_FIRST_YUV_STATE) {
+                mCaptureThread->updateBlurWeightParams(metadata, 1);
+            }
         } else {
             mCaptureThread->updateBlurWeightParams(metadata, 1);
             if (2 == m_nPhyCameras && cur_frame_number > 2) {
@@ -4155,7 +4162,8 @@ void SprdCamera3Blur::processCaptureResultMain(
                         if (!mFlushing &&
                             !(mCameraId == CAM_BLUR_MAIN_ID_2 &&
                               mCaptureThread->mLastFaceNum <= 0 &&
-                              mCaptureThread->mSkipFaceNum >= 10)) {
+                              mCaptureThread->mSkipFaceNum >= 10) &&
+                            cur_frame_number > 0) {
                             void *buffer_addr = NULL;
                             if (map(result->output_buffers->buffer,
                                     &buffer_addr) != NO_ERROR) {
@@ -4241,6 +4249,7 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
         }
+        mCaptureThread->join();
     }
     HAL_LOGI("X");
 

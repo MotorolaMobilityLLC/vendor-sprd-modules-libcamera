@@ -69,6 +69,9 @@
 #include "SprdCamera3SingleFaceIdRegister.h"
 #include "SprdCamera3SingleFaceIdUnlock.h"
 #endif
+#ifdef CONFIG_DUAL_FACEID_SUPPORT
+#include "SprdCamera3DualFaceId.h"
+#endif
 
 namespace sprdcamera {
 
@@ -108,6 +111,9 @@ class SprdCamera3Wrapper {
 #ifdef CONFIG_SINGLE_FACEID_SUPPORT
     SprdCamera3SingleFaceIdRegister *mSingleFaceIdRegister;
     SprdCamera3SingleFaceIdUnlock *mSingleFaceIdUnlock;
+#endif
+#ifdef CONFIG_DUAL_FACEID_SUPPORT
+    SprdCamera3DualFaceId *mDualFaceId;
 #endif
 };
 };

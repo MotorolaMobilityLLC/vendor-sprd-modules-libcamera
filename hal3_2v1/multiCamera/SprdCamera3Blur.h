@@ -53,7 +53,7 @@
 namespace sprdcamera {
 
 //#define YUV_CONVERT_TO_JPEG
-//#define ISP_SUPPORT_MICRODEPTH
+#define ISP_SUPPORT_MICRODEPTH
 
 #define BLUR_LOCAL_CAPBUFF_NUM (4)
 

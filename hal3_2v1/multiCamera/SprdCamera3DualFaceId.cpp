@@ -26,25 +26,28 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#define LOG_TAG "Cam3SingleFaceIdU"
-#include "SprdCamera3SingleFaceIdUnlock.h"
+#define LOG_TAG "Cam3DualFaceId"
+#include "SprdCamera3DualFaceId.h"
 
 using namespace android;
 namespace sprdcamera {
 
-SprdCamera3SingleFaceIdUnlock *mFaceIdUnlock = NULL;
+#define PENDINGTIME (1000000)
+#define PENDINGTIMEOUT (5000000000)
+
+SprdCamera3DualFaceId *mFaceId = NULL;
 
 // Error Check Macros
-#define CHECK_FACEIDUNLOCK()                                                   \
-    if (!mFaceIdUnlock) {                                                      \
-        HAL_LOGE("Error getting switch");                                      \
+#define CHECK_FACEID()                                                         \
+    if (!mFaceId) {                                                            \
+        HAL_LOGE("Error getting faceid");                                      \
         return;                                                                \
     }
 
 // Error Check Macros
-#define CHECK_FACEIDUNLOCK_ERROR()                                             \
-    if (!mFaceIdUnlock) {                                                      \
-        HAL_LOGE("Error getting switch");                                      \
+#define CHECK_FACEID_ERROR()                                                   \
+    if (!mFaceId) {                                                            \
+        HAL_LOGE("Error getting mFaceId");                                     \
         return -ENODEV;                                                        \
     }
 
@@ -54,29 +57,27 @@ SprdCamera3SingleFaceIdUnlock *mFaceIdUnlock = NULL;
         return -ENODEV;                                                        \
     }
 
-camera3_device_ops_t SprdCamera3SingleFaceIdUnlock::mCameraCaptureOps = {
-    .initialize = SprdCamera3SingleFaceIdUnlock::initialize,
-    .configure_streams = SprdCamera3SingleFaceIdUnlock::configure_streams,
+camera3_device_ops_t SprdCamera3DualFaceId::mCameraCaptureOps = {
+    .initialize = SprdCamera3DualFaceId::initialize,
+    .configure_streams = SprdCamera3DualFaceId::configure_streams,
     .register_stream_buffers = NULL,
     .construct_default_request_settings =
-        SprdCamera3SingleFaceIdUnlock::construct_default_request_settings,
-    .process_capture_request =
-        SprdCamera3SingleFaceIdUnlock::process_capture_request,
+        SprdCamera3DualFaceId::construct_default_request_settings,
+    .process_capture_request = SprdCamera3DualFaceId::process_capture_request,
     .get_metadata_vendor_tag_ops = NULL,
-    .dump = SprdCamera3SingleFaceIdUnlock::dump,
-    .flush = SprdCamera3SingleFaceIdUnlock::flush,
+    .dump = SprdCamera3DualFaceId::dump,
+    .flush = SprdCamera3DualFaceId::flush,
     .reserved = {0},
 };
 
-camera3_callback_ops SprdCamera3SingleFaceIdUnlock::callback_ops_main = {
+camera3_callback_ops SprdCamera3DualFaceId::callback_ops_main = {
     .process_capture_result =
-        SprdCamera3SingleFaceIdUnlock::process_capture_result_main,
-    .notify = SprdCamera3SingleFaceIdUnlock::notifyMain};
+        SprdCamera3DualFaceId::process_capture_result_main,
+    .notify = SprdCamera3DualFaceId::notifyMain};
 
-camera3_callback_ops SprdCamera3SingleFaceIdUnlock::callback_ops_aux = {
-    .process_capture_result =
-        SprdCamera3SingleFaceIdUnlock::process_capture_result_aux,
-    .notify = SprdCamera3SingleFaceIdUnlock::notifyAux};
+camera3_callback_ops SprdCamera3DualFaceId::callback_ops_aux = {
+    .process_capture_result = SprdCamera3DualFaceId::process_capture_result_aux,
+    .notify = SprdCamera3DualFaceId::notifyAux};
 
 /*===========================================================================
  * FUNCTION   : SprdCamera3FaceIdUnlock
@@ -87,23 +88,32 @@ camera3_callback_ops SprdCamera3SingleFaceIdUnlock::callback_ops_aux = {
  *
  *
  *==========================================================================*/
-SprdCamera3SingleFaceIdUnlock::SprdCamera3SingleFaceIdUnlock() {
+SprdCamera3DualFaceId::SprdCamera3DualFaceId() {
     HAL_LOGI("E");
 
     m_pPhyCamera = NULL;
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
-    m_VirtualCamera.id = CAM_MAIN_ID;
+    m_VirtualCamera.id = (uint8_t)CAM_MAIN_ID;
     mStaticMetadata = NULL;
     mPhyCameraNum = 0;
     mPreviewWidth = 0;
     mPreviewHeight = 0;
-    mUnlockPhyaddr = 0;
+    mReqTimestamp = 0;
+    mMaxPendingCount = 0;
+    mPendingRequest = 0;
     mFlushing = false;
     mSavedRequestList.clear();
-    memset(&mLocalBuffer, 0, sizeof(single_faceid_unlock_alloc_mem_t) *
-                                 SINGLE_FACEID_UNLOCK_BUFFER_SUM);
-    memset(&mSavedReqStreams, 0,
-           sizeof(camera3_stream_t *) * SINGLE_FACEID_UNLOCK_MAX_STREAMS);
+    mLocalBufferListMain.clear();
+    mLocalBufferListAux.clear();
+    mResultBufferListMain.clear();
+    mResultBufferListAux.clear();
+    memset(mLocalBufferMain, 0, sizeof(new_mem_t) * DUAL_FACEID_BUFFER_SUM);
+    memset(mLocalBufferAux, 0, sizeof(new_mem_t) * DUAL_FACEID_BUFFER_SUM);
+    memset(mMainStreams, 0, sizeof(camera3_stream_t) * DUAL_FACEID_MAX_STREAMS);
+    memset(mAuxStreams, 0,
+           sizeof(camera3_stream_t) * (DUAL_FACEID_MAX_STREAMS - 1));
+    memset(&mOtpData, 0, sizeof(OtpData));
+    memset(&mOtpLocalBuffer, 0, sizeof(new_mem_t));
 
     HAL_LOGI("X");
 }
@@ -114,8 +124,9 @@ SprdCamera3SingleFaceIdUnlock::SprdCamera3SingleFaceIdUnlock() {
  * DESCRIPTION: SprdCamera3FaceIdUnlock Desctructor
  *
  *==========================================================================*/
-SprdCamera3SingleFaceIdUnlock::~SprdCamera3SingleFaceIdUnlock() {
+SprdCamera3DualFaceId::~SprdCamera3DualFaceId() {
     HAL_LOGV("E");
+
     HAL_LOGV("X");
 }
 
@@ -130,15 +141,14 @@ SprdCamera3SingleFaceIdUnlock::~SprdCamera3SingleFaceIdUnlock() {
  *
  * RETURN    :  NONE
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::getCameraFaceId(
-    SprdCamera3SingleFaceIdUnlock **pFaceid) {
-    if (!mFaceIdUnlock) {
-        mFaceIdUnlock = new SprdCamera3SingleFaceIdUnlock();
+void SprdCamera3DualFaceId::getCameraFaceId(SprdCamera3DualFaceId **pFaceid) {
+    if (!mFaceId) {
+        mFaceId = new SprdCamera3DualFaceId();
     }
 
-    CHECK_FACEIDUNLOCK();
-    *pFaceid = mFaceIdUnlock;
-    HAL_LOGV("mFaceIdUnlock=%p", mFaceIdUnlock);
+    CHECK_FACEID();
+    *pFaceid = mFaceId;
+    HAL_LOGV("mFaceId=%p", mFaceId);
 
     return;
 }
@@ -157,18 +167,17 @@ void SprdCamera3SingleFaceIdUnlock::getCameraFaceId(
  *              ENODEV : Camera not found
  *              other: non-zero failure code
  *==========================================================================*/
-cmr_s32
-SprdCamera3SingleFaceIdUnlock::get_camera_info(__unused cmr_s32 camera_id,
-                                               struct camera_info *info) {
-    HAL_LOGV("E");
+int SprdCamera3DualFaceId::get_camera_info(__unused int camera_id,
+                                           struct camera_info *info) {
+    HAL_LOGI("E");
 
-    cmr_s32 rc = NO_ERROR;
+    int rc = NO_ERROR;
 
     if (info) {
-        rc = mFaceIdUnlock->getCameraInfo(camera_id, info);
+        rc = mFaceId->getCameraInfo(camera_id, info);
     }
 
-    HAL_LOGV("X, rc=%d", rc);
+    HAL_LOGI("X, rc=%d", rc);
 
     return rc;
 }
@@ -188,21 +197,21 @@ SprdCamera3SingleFaceIdUnlock::get_camera_info(__unused cmr_s32 camera_id,
  *              BAD_VALUE : Invalid Camera ID
  *              other: non-zero failure code
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::camera_device_open(
+int SprdCamera3DualFaceId::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
-    cmr_s32 rc = NO_ERROR;
+    int rc = NO_ERROR;
 
-    HAL_LOGV("id=%d", atoi(id));
+    HAL_LOGI("id=%d", atoi(id));
 
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
-    rc = mFaceIdUnlock->cameraDeviceOpen(atoi(id), hw_device);
+    rc = mFaceId->cameraDeviceOpen(atoi(id), hw_device);
 
-    HAL_LOGV("id=%d, rc: %d", atoi(id), rc);
+    HAL_LOGI("id=%d, rc: %d", atoi(id), rc);
 
     return rc;
 }
@@ -219,14 +228,13 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::camera_device_open(
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::close_camera_device(
-    __unused hw_device_t *hw_dev) {
+int SprdCamera3DualFaceId::close_camera_device(__unused hw_device_t *hw_dev) {
     if (NULL == hw_dev) {
         HAL_LOGE("failed.hw_dev null");
         return -1;
     }
 
-    return mFaceIdUnlock->closeCameraDevice();
+    return mFaceId->closeCameraDevice();
 }
 
 /*===========================================================================
@@ -241,11 +249,11 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::close_camera_device(
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::closeCameraDevice() {
+int SprdCamera3DualFaceId::closeCameraDevice() {
     HAL_LOGD("E");
 
-    cmr_s32 rc = NO_ERROR;
-    cmr_s32 i = 0;
+    int rc = NO_ERROR;
+    int i = 0;
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
 
     // Attempt to close all cameras regardless of unbundle results
@@ -266,7 +274,13 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::closeCameraDevice() {
 
     freeLocalCapBuffer();
     mSavedRequestList.clear();
-    mNotifyListMain.clear();
+    mLocalBufferListMain.clear();
+    mLocalBufferListAux.clear();
+    mResultBufferListMain.clear();
+    mResultBufferListAux.clear();
+    mReqTimestamp = 0;
+    mMaxPendingCount = 0;
+    mPendingRequest = 0;
     if (m_pPhyCamera) {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
@@ -286,17 +300,17 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::closeCameraDevice() {
  *
  * RETURN     :
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::initialize(
+int SprdCamera3DualFaceId::initialize(
     __unused const struct camera3_device *device,
     const camera3_callback_ops_t *callback_ops) {
-    HAL_LOGV("E");
+    HAL_LOGI("E");
 
-    cmr_s32 rc = NO_ERROR;
+    int rc = NO_ERROR;
 
-    CHECK_FACEIDUNLOCK_ERROR();
-    rc = mFaceIdUnlock->initialize(callback_ops);
+    CHECK_FACEID_ERROR();
+    rc = mFaceId->initialize(callback_ops);
 
-    HAL_LOGV("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -311,18 +325,18 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::initialize(
  * RETURN     :
  *==========================================================================*/
 const camera_metadata_t *
-SprdCamera3SingleFaceIdUnlock::construct_default_request_settings(
-    const struct camera3_device *device, cmr_s32 type) {
+SprdCamera3DualFaceId::construct_default_request_settings(
+    const struct camera3_device *device, int type) {
     HAL_LOGV("E");
 
     const camera_metadata_t *rc;
 
-    if (!mFaceIdUnlock) {
+    if (!mFaceId) {
         HAL_LOGE("Error getting capture ");
         return NULL;
     }
 
-    rc = mFaceIdUnlock->constructDefaultRequestSettings(device, type);
+    rc = mFaceId->constructDefaultRequestSettings(device, type);
 
     HAL_LOGV("X");
 
@@ -338,15 +352,15 @@ SprdCamera3SingleFaceIdUnlock::construct_default_request_settings(
  *
  * RETURN     :
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::configure_streams(
+int SprdCamera3DualFaceId::configure_streams(
     const struct camera3_device *device,
     camera3_stream_configuration_t *stream_list) {
     HAL_LOGV("E");
 
-    cmr_s32 rc = 0;
+    int rc = 0;
 
-    CHECK_FACEIDUNLOCK_ERROR();
-    rc = mFaceIdUnlock->configureStreams(device, stream_list);
+    CHECK_FACEID_ERROR();
+    rc = mFaceId->configureStreams(device, stream_list);
 
     HAL_LOGV("X");
 
@@ -362,14 +376,14 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::configure_streams(
  *
  * RETURN     :
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::process_capture_request(
+int SprdCamera3DualFaceId::process_capture_request(
     const struct camera3_device *device, camera3_capture_request_t *request) {
     HAL_LOGV("E");
 
-    cmr_s32 rc = 0;
+    int rc = 0;
 
-    CHECK_FACEIDUNLOCK_ERROR();
-    rc = mFaceIdUnlock->processCaptureRequest(device, request);
+    CHECK_FACEID_ERROR();
+    rc = mFaceId->processCaptureRequest(device, request);
 
     HAL_LOGV("X");
 
@@ -385,13 +399,13 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::process_capture_request(
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::process_capture_result_main(
+void SprdCamera3DualFaceId::process_capture_result_main(
     const struct camera3_callback_ops *ops,
     const camera3_capture_result_t *result) {
     HAL_LOGD("frame number=%d", result->frame_number);
 
-    CHECK_FACEIDUNLOCK();
-    mFaceIdUnlock->processCaptureResultMain((camera3_capture_result_t *)result);
+    CHECK_FACEID();
+    mFaceId->processCaptureResultMain((camera3_capture_result_t *)result);
 }
 
 /*===========================================================================
@@ -403,12 +417,12 @@ void SprdCamera3SingleFaceIdUnlock::process_capture_result_main(
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::notifyMain(
-    const struct camera3_callback_ops *ops, const camera3_notify_msg_t *msg) {
+void SprdCamera3DualFaceId::notifyMain(const struct camera3_callback_ops *ops,
+                                       const camera3_notify_msg_t *msg) {
     HAL_LOGI("frame number=%d", msg->message.shutter.frame_number);
 
-    CHECK_FACEIDUNLOCK();
-    mFaceIdUnlock->notifyMain(msg);
+    CHECK_FACEID();
+    mFaceId->notifyMain(msg);
 }
 
 /*===========================================================================
@@ -420,11 +434,13 @@ void SprdCamera3SingleFaceIdUnlock::notifyMain(
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::process_capture_result_aux(
+void SprdCamera3DualFaceId::process_capture_result_aux(
     const struct camera3_callback_ops *ops,
     const camera3_capture_result_t *result) {
-    // This mode do not have real aux result
-    CHECK_FACEIDUNLOCK();
+    HAL_LOGD("frame number=%d", result->frame_number);
+
+    CHECK_FACEID();
+    mFaceId->processCaptureResultAux((camera3_capture_result_t *)result);
 }
 
 /*===========================================================================
@@ -436,65 +452,10 @@ void SprdCamera3SingleFaceIdUnlock::process_capture_result_aux(
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::notifyAux(
-    const struct camera3_callback_ops *ops, const camera3_notify_msg_t *msg) {
+void SprdCamera3DualFaceId::notifyAux(const struct camera3_callback_ops *ops,
+                                      const camera3_notify_msg_t *msg) {
     // This mode do not have real aux notify
-    CHECK_FACEIDUNLOCK();
-}
-
-/*===========================================================================
- * FUNCTION   :allocateBuffer
- *
- * DESCRIPTION: deconstructor of SprdCamera3FaceIdUnlock
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::allocateBuffer(
-    cmr_s32 w, cmr_s32 h, cmr_u32 is_cache, cmr_s32 format,
-    single_faceid_unlock_alloc_mem_t *new_mem) {
-    HAL_LOGD("start");
-    cmr_s32 result = 0;
-    cmr_s32 ret = 0;
-    cmr_uint phy_addr = 0;
-    size_t buf_size = 0;
-    sp<GraphicBuffer> graphicBuffer = NULL;
-    native_handle_t *native_handle = NULL;
-    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
-                            GraphicBuffer::USAGE_SW_READ_OFTEN |
-                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
-
-    if (!mIommuEnabled) {
-        yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
-    }
-
-#if defined(CONFIG_SPRD_ANDROID_8)
-    graphicBuffer = new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
-                                      yuvTextUsage, "dualcamera");
-#else
-    graphicBuffer =
-        new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage);
-#endif
-
-    native_handle = (native_handle_t *)graphicBuffer->handle;
-
-    int fd = ADP_BUFFD(native_handle);
-    if (!mIommuEnabled) {
-        ret = MemIon::Get_phy_addr_from_ion(fd, &phy_addr, &buf_size);
-        if (ret) {
-            HAL_LOGW("get phy addr fail %d", ret);
-        }
-        HAL_LOGI("phy_addr=0x%lx, buf_size=%zu", phy_addr, buf_size);
-    }
-
-    new_mem->native_handle = native_handle;
-    new_mem->graphicBuffer = graphicBuffer;
-    new_mem->phy_addr = phy_addr;
-    new_mem->buf_size = buf_size;
-    HAL_LOGD("fd=%p", fd);
-    HAL_LOGD("end");
-    return result;
+    CHECK_FACEID();
 }
 
 /*===========================================================================
@@ -506,27 +467,15 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::allocateBuffer(
  *
  * RETURN    :  NONE
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::freeLocalCapBuffer() {
+void SprdCamera3DualFaceId::freeLocalCapBuffer() {
     HAL_LOGV("E");
 
-    size_t buffer_num = 0;
-
-    buffer_num = SINGLE_FACEID_UNLOCK_BUFFER_SUM;
-
-    mPhyAddrBufferList.clear();
-    mCreateBufferList.clear();
-
+    size_t buffer_num = DUAL_FACEID_BUFFER_SUM;
     for (size_t i = 0; i < buffer_num; i++) {
-        single_faceid_unlock_alloc_mem_t *local_buffer = &mLocalBuffer[i];
-
-        if (local_buffer->graphicBuffer != NULL) {
-            local_buffer->graphicBuffer.clear();
-            local_buffer->graphicBuffer = NULL;
-        }
-        local_buffer->native_handle = NULL;
-        local_buffer->phy_addr = 0;
-        local_buffer->buf_size = 0;
+        freeOneBuffer(&mLocalBufferMain[i]);
+        freeOneBuffer(&mLocalBufferAux[i]);
     }
+    freeOneBuffer(&mOtpLocalBuffer);
 
     HAL_LOGV("X");
 }
@@ -540,22 +489,23 @@ void SprdCamera3SingleFaceIdUnlock::freeLocalCapBuffer() {
  *   @camera_id : camera ID
  *   @hw_device : ptr to struct storing camera hardware device info
  *
- * RETURN     : cmr_s32 type of status
+ * RETURN     : int type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
-    cmr_s32 camera_id, struct hw_device_t **hw_device) {
-    HAL_LOGD("E");
+int SprdCamera3DualFaceId::cameraDeviceOpen(int camera_id,
+                                            struct hw_device_t **hw_device) {
+    HAL_LOGI("E");
 
-    cmr_s32 rc = NO_ERROR;
-    cmr_s32 i = 0;
-    cmr_u32 Phy_id = 0;
+    int rc = NO_ERROR;
+    int i = 0;
+    uint32_t Phy_id = 0;
 
-    if (MODE_SINGLE_FACEID_UNLOCK == camera_id) {
-        mPhyCameraNum = 1;
+    if ((MODE_DUAL_FACEID_REGISTER_ID == camera_id) ||
+        (MODE_DUAL_FACEID_UNLOCK_ID == camera_id)) {
+        mPhyCameraNum = 2;
     } else {
-        HAL_LOGW("unlock mode camera_id should not be %d", camera_id);
+        HAL_LOGW("face id mode camera_id should not be %d", camera_id);
     }
 
     hw_device_t *hw_dev[mPhyCameraNum];
@@ -572,6 +522,13 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
         }
         hw_dev[i] = NULL;
 
+        if (MODE_DUAL_FACEID_REGISTER_ID == camera_id) {
+            hw->setMultiCameraMode(MODE_DUAL_FACE_REGISTER);
+            mFaceMode = MODE_DUAL_FACE_REGISTER;
+        } else if (MODE_DUAL_FACEID_UNLOCK_ID == camera_id) {
+            hw->setMultiCameraMode(MODE_DUAL_FACE_UNLOCK);
+            mFaceMode = MODE_DUAL_FACE_UNLOCK;
+        }
         rc = hw->openCamera(&hw_dev[i]);
         if (NO_ERROR != rc) {
             HAL_LOGE("failed, camera id:%d", Phy_id);
@@ -591,7 +548,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -604,24 +561,18 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
  *   @camera_id : camera ID
  *   @info      : ptr to camera info struct
  *
- * RETURN     : cmr_s32 type of status
+ * RETURN     : int type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::getCameraInfo(cmr_s32 face_camera_id,
-                                                     struct camera_info *info) {
-    cmr_s32 rc = NO_ERROR;
-    cmr_s32 camera_id = 0;
-    cmr_s32 img_size = 0;
+int SprdCamera3DualFaceId::getCameraInfo(int face_camera_id,
+                                         struct camera_info *info) {
+    int rc = NO_ERROR;
+    int camera_id = 0;
 
-    HAL_LOGD("camera_id=%d", face_camera_id);
+    HAL_LOGI("camera_id=%d", face_camera_id);
 
-    if (MODE_SINGLE_FACEID_UNLOCK == face_camera_id) {
-        m_VirtualCamera.id = CAM_MAIN_ID;
-    } else {
-        HAL_LOGW("unlock mode camera_id should not be %d", camera_id);
-    }
-
+    m_VirtualCamera.id = CAM_MAIN_FACE_ID;
     camera_id = m_VirtualCamera.id;
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -648,7 +599,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::getCameraInfo(cmr_s32 face_camera_id,
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::setupPhysicalCameras() {
+int SprdCamera3DualFaceId::setupPhysicalCameras() {
     m_pPhyCamera = new sprdcamera_physical_descriptor_t[mPhyCameraNum];
     if (!m_pPhyCamera) {
         HAL_LOGE("Error allocating camera info buffer!!");
@@ -658,7 +609,8 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::setupPhysicalCameras() {
     memset(m_pPhyCamera, 0x00,
            (mPhyCameraNum * sizeof(sprdcamera_physical_descriptor_t)));
 
-    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_MAIN_ID;
+    m_pPhyCamera[CAM_TYPE_MAIN].id = (uint8_t)CAM_MAIN_FACE_ID;
+    m_pPhyCamera[CAM_TYPE_AUX].id = (uint8_t)CAM_AUX_FACE_ID;
 
     return NO_ERROR;
 }
@@ -672,12 +624,11 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::setupPhysicalCameras() {
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::dump(const struct camera3_device *device,
-                                         cmr_s32 fd) {
+void SprdCamera3DualFaceId::dump(const struct camera3_device *device, int fd) {
     HAL_LOGV("E");
-    CHECK_FACEIDUNLOCK();
+    CHECK_FACEID();
 
-    mFaceIdUnlock->_dump(device, fd);
+    mFaceId->_dump(device, fd);
 
     HAL_LOGV("X");
 }
@@ -691,14 +642,13 @@ void SprdCamera3SingleFaceIdUnlock::dump(const struct camera3_device *device,
  *
  * RETURN     :
  *==========================================================================*/
-cmr_s32
-SprdCamera3SingleFaceIdUnlock::flush(const struct camera3_device *device) {
+int SprdCamera3DualFaceId::flush(const struct camera3_device *device) {
     HAL_LOGV("E");
 
-    cmr_s32 rc = 0;
+    int rc = 0;
 
-    CHECK_FACEIDUNLOCK_ERROR();
-    rc = mFaceIdUnlock->_flush(device);
+    CHECK_FACEID_ERROR();
+    rc = mFaceId->_flush(device);
 
     HAL_LOGV("X");
 
@@ -714,20 +664,22 @@ SprdCamera3SingleFaceIdUnlock::flush(const struct camera3_device *device) {
  *
  * RETURN     :
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::initialize(
+int SprdCamera3DualFaceId::initialize(
     const camera3_callback_ops_t *callback_ops) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
-    cmr_s32 rc = NO_ERROR;
+    int rc = NO_ERROR;
+    mFlushing = false;
+    mLocalBufferListMain.clear();
+    mLocalBufferListAux.clear();
+    mResultBufferListMain.clear();
+    mResultBufferListAux.clear();
+    memset(&mOtpLocalBuffer, 0, sizeof(new_mem_t));
+
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
-
     CHECK_HWI_ERROR(hwiMain);
-
-    mIommuEnabled = false;
-    mFlushing = false;
-    mUnlockPhyaddr = 0;
-    mNotifyListMain.clear();
+    SprdCamera3MultiBase::initialize(MODE_DUAL_FACE_REGISTER, hwiMain);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (NO_ERROR != rc) {
@@ -735,11 +687,24 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::initialize(
         return rc;
     }
 
-    memset(mLocalBuffer, 0, sizeof(single_faceid_unlock_alloc_mem_t) *
-                                SINGLE_FACEID_UNLOCK_BUFFER_SUM);
+    sprdCam = m_pPhyCamera[CAM_TYPE_AUX];
+    SprdCamera3HWI *hwiAux = sprdCam.hwi;
+    CHECK_HWI_ERROR(hwiAux);
+
+    rc = hwiAux->initialize(sprdCam.dev, &callback_ops_aux);
+    if (NO_ERROR != rc) {
+        HAL_LOGE("Error main camera while initialize !! ");
+        return rc;
+    }
+
+    memset(mLocalBufferMain, 0, sizeof(new_mem_t) * DUAL_FACEID_BUFFER_SUM);
+    memset(mLocalBufferAux, 0, sizeof(new_mem_t) * DUAL_FACEID_BUFFER_SUM);
+    memset(mMainStreams, 0, sizeof(camera3_stream_t) * DUAL_FACEID_MAX_STREAMS);
+    memset(mAuxStreams, 0,
+           sizeof(camera3_stream_t) * (DUAL_FACEID_MAX_STREAMS - 1));
     mCallbackOps = callback_ops;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -753,20 +718,25 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::initialize(
  *
  * RETURN     :
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::configureStreams(
+int SprdCamera3DualFaceId::configureStreams(
     const struct camera3_device *device,
     camera3_stream_configuration_t *stream_list) {
-    HAL_LOGV("E");
+    HAL_LOGI("E");
 
-    cmr_s32 rc = 0;
-    camera3_stream_t *pUnlockStreams[SINGLE_FACEID_UNLOCK_MAX_STREAMS];
+    int rc = 0;
+    camera3_stream_t *pmainStreams[DUAL_FACEID_MAX_STREAMS];
+    camera3_stream_t *pauxStreams[DUAL_FACEID_MAX_STREAMS - 1];
+    camera3_stream_t *previewStream = NULL;
     size_t i = 0;
-    size_t j = 0;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
+    mReqTimestamp = 0;
+    mMaxPendingCount = 0;
+    mPendingRequest = 0;
 
     Mutex::Autolock l(mLock);
 
-    HAL_LOGD("FACEID_UNLOCK, num_streams=%d", stream_list->num_streams);
+    HAL_LOGD("FACEID , num_streams=%d", stream_list->num_streams);
     for (i = 0; i < stream_list->num_streams; i++) {
         HAL_LOGD("%d: stream type=%d, width=%d, height=%d, "
                  "format=%d",
@@ -775,46 +745,79 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::configureStreams(
                  stream_list->streams[i]->height,
                  stream_list->streams[i]->format);
 
-        cmr_s32 requestStreamType = getStreamType(stream_list->streams[i]);
+        int requestStreamType = getStreamType(stream_list->streams[i]);
         if (PREVIEW_STREAM == requestStreamType) {
+            previewStream = stream_list->streams[i];
             mPreviewWidth = stream_list->streams[i]->width;
             mPreviewHeight = stream_list->streams[i]->height;
-            mUnlockStreams[i] = *stream_list->streams[i];
+            mMainStreams[i] = *stream_list->streams[i];
+            mAuxStreams[i] = *stream_list->streams[i];
+            pmainStreams[i] = &mMainStreams[i];
+            pauxStreams[i] = &mAuxStreams[i];
+        } else if (SNAPSHOT_STREAM == requestStreamType) {
+            stream_list->streams[i]->max_buffers = 1;
         } else {
-            mUnlockStreams[i].stream_type = CAMERA3_STREAM_OUTPUT;
-            mUnlockStreams[i].width = mPreviewWidth;
-            mUnlockStreams[i].height = mPreviewHeight;
-            mUnlockStreams[i].format = HAL_PIXEL_FORMAT_YCbCr_420_888;
-            mUnlockStreams[i].usage = stream_list->streams[i]->usage;
-            mUnlockStreams[i].max_buffers = 1;
-            mUnlockStreams[i].data_space = stream_list->streams[i]->data_space;
-            mUnlockStreams[i].rotation = stream_list->streams[i]->rotation;
+            stream_list->streams[i]->max_buffers = 1;
         }
-
-        pUnlockStreams[i] = &mUnlockStreams[i];
     }
     // for callback buffer
+    if (mFaceMode == MODE_DUAL_FACE_REGISTER) {
+        i = 1;
+        mMainStreams[i] = *stream_list->streams[i];
+        mMainStreams[i].stream_type = CAMERA3_STREAM_OUTPUT;
+        mMainStreams[i].width = mPreviewWidth;
+        mMainStreams[i].height = mPreviewHeight;
+        mMainStreams[i].format = HAL_PIXEL_FORMAT_YCbCr_420_888;
+        mMainStreams[i].usage = stream_list->streams[i]->usage;
+        mMainStreams[i].max_buffers = 1;
+        mMainStreams[i].data_space = stream_list->streams[i]->data_space;
+        mMainStreams[i].rotation = stream_list->streams[i]->rotation;
+        pmainStreams[i] = &mMainStreams[i];
+    }
     freeLocalCapBuffer();
-    mIommuEnabled = false;
-    for (j = 0; j < SINGLE_FACEID_UNLOCK_BUFFER_SUM; j++) {
-        if (0 > allocateBuffer(mPreviewWidth, mPreviewHeight, 1,
-                               HAL_PIXEL_FORMAT_YCrCb_420_SP,
-                               &(mLocalBuffer[j]))) {
+    for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+        if (0 > allocateOne(mPreviewWidth, mPreviewHeight,
+                            &(mLocalBufferMain[i]), YUV420)) {
             HAL_LOGE("request one buf failed.");
         }
-        mPhyAddrBufferList.push_back(mLocalBuffer[j]);
-        mCreateBufferList.push_back(&(mLocalBuffer[j].native_handle));
+        mLocalBufferMain[i].type = (camera_buffer_type_t)MAIN_BUFFER;
+        mLocalBufferListMain.push_back(&mLocalBufferMain[i]);
+
+        if (0 > allocateOne(mPreviewWidth, mPreviewHeight,
+                            &(mLocalBufferAux[i]), YUV420)) {
+            HAL_LOGE("request one buf failed.");
+        }
+        mLocalBufferAux[i].type = (camera_buffer_type_t)AUX_BUFFER;
+        mLocalBufferListAux.push_back(&mLocalBufferAux[i]);
+    }
+    if (0 >
+        allocateOne(mPreviewWidth, mPreviewHeight, &mOtpLocalBuffer, YUV420)) {
+        HAL_LOGE("request one buf failed.");
+    } else {
+        void *otpAddr = NULL;
+        map(&mOtpLocalBuffer.native_handle, &otpAddr);
+        memcpy(otpAddr, mOtpData.otp_data, mOtpData.otp_size);
+        unmap(&mOtpLocalBuffer.native_handle);
     }
 
     camera3_stream_configuration mainconfig;
     mainconfig = *stream_list;
-    mainconfig.num_streams = SINGLE_FACEID_UNLOCK_MAX_STREAMS;
-    mainconfig.streams = pUnlockStreams;
+    if (mFaceMode == MODE_DUAL_FACE_REGISTER) {
+        mainconfig.num_streams = DUAL_FACEID_MAX_STREAMS;
+    } else {
+        mainconfig.num_streams = DUAL_FACEID_MAX_STREAMS - 1;
+    }
+    mainconfig.streams = pmainStreams;
 
-    for (i = 0; i < mainconfig.num_streams; i++) {
-        HAL_LOGD("stream_type=%d, width=%d, height=%d, format=%d",
-                 pUnlockStreams[i]->stream_type, pUnlockStreams[i]->width,
-                 pUnlockStreams[i]->height, pUnlockStreams[i]->format);
+    camera3_stream_configuration auxconfig;
+    auxconfig = *stream_list;
+    auxconfig.num_streams = DUAL_FACEID_MAX_STREAMS - 1;
+    auxconfig.streams = pauxStreams;
+
+    rc = hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_AUX].dev, &auxconfig);
+    if (rc < 0) {
+        HAL_LOGE("failed. configure aux streams!!");
+        return rc;
     }
 
     rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_MAIN].dev,
@@ -823,10 +826,12 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::configureStreams(
         HAL_LOGE("failed. configure main streams!!");
         return rc;
     }
-
-    for (i = 0; i < mainconfig.num_streams; i++) {
-        memcpy(stream_list->streams[i], &mUnlockStreams[i],
-               sizeof(camera3_stream_t));
+    if (previewStream != NULL) {
+        memcpy(previewStream, &mMainStreams[0], sizeof(camera3_stream_t));
+        HAL_LOGD("previewStream max buffer %d", previewStream->max_buffers);
+        previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
+    }
+    for (i = 0; i < DUAL_FACEID_MAX_STREAMS; i++) {
         HAL_LOGV(
             "atfer configure treams: stream_type=%d, "
             "width=%d, height=%d, format=%d, usage=%d, "
@@ -838,8 +843,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::configureStreams(
             stream_list->streams[i]->data_space,
             stream_list->streams[i]->rotation);
     }
-
-    HAL_LOGV("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -853,10 +857,9 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::configureStreams(
  *
  * RETURN     :
  *==========================================================================*/
-const camera_metadata_t *
-SprdCamera3SingleFaceIdUnlock::constructDefaultRequestSettings(
-    const struct camera3_device *device, cmr_s32 type) {
-    HAL_LOGV("E");
+const camera_metadata_t *SprdCamera3DualFaceId::constructDefaultRequestSettings(
+    const struct camera3_device *device, int type) {
+    HAL_LOGI("E");
 
     const camera_metadata_t *fwk_metadata = NULL;
     SprdCamera3HWI *hw = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
@@ -874,8 +877,27 @@ SprdCamera3SingleFaceIdUnlock::constructDefaultRequestSettings(
         HAL_LOGE("constructDefaultMetadata failed");
         return NULL;
     }
+    memset(&mOtpData, 0, sizeof(OtpData));
 
-    HAL_LOGV("X");
+    CameraMetadata metadata;
+    metadata = fwk_metadata;
+    mOtpData.otp_exist = false;
+    if (metadata.exists(ANDROID_SPRD_OTP_DATA)) {
+        uint8_t otpType;
+        int otpSize;
+        otpType = SprdCamera3Setting::s_setting[m_pPhyCamera[CAM_TYPE_MAIN].id]
+                      .otpInfo.otp_type;
+        otpSize = SprdCamera3Setting::s_setting[m_pPhyCamera[CAM_TYPE_MAIN].id]
+                      .otpInfo.otp_size;
+        HAL_LOGI("otpType %d, otpSize %d", otpType, otpSize);
+        mOtpData.otp_exist = true;
+        mOtpData.otp_type = otpType;
+        mOtpData.otp_size = otpSize;
+        memcpy(mOtpData.otp_data, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
+               otpSize);
+    }
+
+    HAL_LOGI("X");
 
     return fwk_metadata;
 }
@@ -889,24 +911,21 @@ SprdCamera3SingleFaceIdUnlock::constructDefaultRequestSettings(
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::saveRequest(
-    camera3_capture_request_t *request) {
+void SprdCamera3DualFaceId::saveRequest(camera3_capture_request_t *request) {
     size_t i = 0;
     camera3_stream_t *newStream = NULL;
 
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
         if (CALLBACK_STREAM == getStreamType(newStream)) {
-            single_faceid_unlock_saved_request_t prevRequest;
-            HAL_LOGD("save request num=%d", request->frame_number);
+            multi_request_saved_t prevRequest;
+            HAL_LOGV("save request num=%d", request->frame_number);
 
             Mutex::Autolock l(mRequestLock);
-
             prevRequest.frame_number = request->frame_number;
             prevRequest.buffer = request->output_buffers[i].buffer;
-            prevRequest.stream = request->output_buffers[i].stream;
+            prevRequest.preview_stream = request->output_buffers[i].stream;
             prevRequest.input_buffer = request->input_buffer;
-
             mSavedRequestList.push_back(prevRequest);
         }
     }
@@ -922,22 +941,24 @@ void SprdCamera3SingleFaceIdUnlock::saveRequest(
  *    @request:camera3 request
  * RETURN     :
  *==========================================================================*/
-cmr_s32 SprdCamera3SingleFaceIdUnlock::processCaptureRequest(
+int SprdCamera3DualFaceId::processCaptureRequest(
     const struct camera3_device *device, camera3_capture_request_t *request) {
-    HAL_LOGD("E");
-
-    cmr_s32 rc = 0;
-    cmr_u32 i = 0;
-    cmr_u32 tagCnt = 0;
-    cmr_uint get_reg_phyaddr = 0;
-    cmr_uint get_unlock_phyaddr[2] = {0, 0};
+    int rc = 0;
+    uint32_t i = 0;
+    uint32_t tagCnt = 0;
+    uint64_t get_reg_phyaddr = 0;
+    uint64_t get_unlock_phyaddr[2] = {0, 0};
     camera3_capture_request_t *req = NULL;
     camera3_capture_request_t req_main;
+    camera3_capture_request_t req_aux;
     camera3_stream_t *new_stream = NULL;
-    CameraMetadata metaSettings;
+    camera3_stream_t *preview_stream = NULL;
+    CameraMetadata metaSettingsMain, metaSettingsAux;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
 
-    metaSettings = request->settings;
+    metaSettingsMain = request->settings;
+    metaSettingsAux = request->settings;
 
     req = request;
     rc = validateCaptureRequest(req);
@@ -947,99 +968,176 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::processCaptureRequest(
     saveRequest(req);
 
     memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
-    req_main = *req;
+    memset(&req_aux, 0x00, sizeof(camera3_capture_request_t));
 
-    tagCnt = metaSettings.entryCount();
-    if (0 != tagCnt) {
-        // disable burstmode
-        cmr_u8 sprdBurstModeEnabled = 0;
-        metaSettings.update(ANDROID_SPRD_BURSTMODE_ENABLED,
-                            &sprdBurstModeEnabled, 1);
-
-        // disable zsl mode
-        cmr_u8 sprdZslEnabled = 0;
-        metaSettings.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
+    for (size_t i = 0; i < req->num_output_buffers; i++) {
+        int requestStreamType = getStreamType(req->output_buffers[i].stream);
+        if (requestStreamType == CALLBACK_STREAM) {
+            preview_stream = (req->output_buffers[i]).stream;
+        }
     }
 
+    tagCnt = metaSettingsMain.entryCount();
+    if (0 != tagCnt) {
+        if (metaSettingsMain.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
+            uint8_t sprdBurstModeEnabled = 0;
+            metaSettingsMain.update(ANDROID_SPRD_BURSTMODE_ENABLED,
+                                    &sprdBurstModeEnabled, 1);
+            metaSettingsAux.update(ANDROID_SPRD_BURSTMODE_ENABLED,
+                                   &sprdBurstModeEnabled, 1);
+        }
+        if (metaSettingsMain.exists(ANDROID_SPRD_ZSL_ENABLED)) {
+            uint8_t sprdZslEnabled = 0;
+            metaSettingsMain.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled,
+                                    1);
+            metaSettingsAux.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled,
+                                   1);
+        }
+    }
     // get phy addr from faceidservice
-    if (metaSettings.exists(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)) {
+    if (metaSettingsMain.exists(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)) {
         get_reg_phyaddr =
-            (unsigned long)
-                metaSettings.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
+            (uint64_t)
+                metaSettingsMain.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
                     .data.i64[0];
-        for (i = 0; i < SINGLE_FACEID_UNLOCK_BUFFER_SUM; i++) {
-            if (get_reg_phyaddr == mLocalBuffer[i].phy_addr) {
+        for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+            if (get_reg_phyaddr == (uint64_t)mLocalBufferMain[i].phy_addr) {
                 // get phy addr
-                HAL_LOGI("get phy addr from faceidservice");
-                mPhyAddrBufferList.push_back(mLocalBuffer[i]);
-                mCreateBufferList.push_back(&(mLocalBuffer[i].native_handle));
+                HAL_LOGD("frame:%d,main get phy addr from faceidservice,0x%x",
+                         request->frame_number, get_reg_phyaddr);
+                mLocalBufferMain[i].type = (camera_buffer_type_t)MAIN_BUFFER;
+                mLocalBufferListMain.push_back(&mLocalBufferMain[i]);
+            }
+        }
+        get_reg_phyaddr =
+            (uint64_t)
+                metaSettingsMain.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
+                    .data.i64[1];
+        for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+            if (get_reg_phyaddr == (uint64_t)mLocalBufferAux[i].phy_addr) {
+                // get phy addr
+                HAL_LOGD("frame:%d,sub get phy addr from faceidservice,0x%x",
+                         request->frame_number, get_reg_phyaddr);
+                mLocalBufferAux[i].type = (camera_buffer_type_t)AUX_BUFFER;
+                mLocalBufferListAux.push_back(&mLocalBufferAux[i]);
             }
         }
     }
+    req_main = *req;
+    req_aux = *req;
+    req_main.settings = metaSettingsMain.release();
+    req_aux.settings = metaSettingsAux.release();
 
-    List<single_faceid_unlock_alloc_mem_t>::iterator unlock_i =
-        mPhyAddrBufferList.begin();
-    if (unlock_i != mPhyAddrBufferList.end()) {
+    if (!mLocalBufferListMain.empty()) {
         camera3_stream_buffer_t out_streams_main[2];
-
+        camera3_stream_buffer_t out_streams_aux[1];
+        memset(out_streams_main, 0, sizeof(camera3_stream_buffer_t) * 2);
+        memset(out_streams_aux, 0, sizeof(camera3_stream_buffer_t) * 1);
         // construct preview buffer
         i = 0;
-        out_streams_main[i] = *req->output_buffers;
-        mSavedReqStreams[i] = req->output_buffers->stream;
-        out_streams_main[i].stream = &mUnlockStreams[i];
-
-        // create callback buffer
-        i++;
-        out_streams_main[i].stream = &mUnlockStreams[i];
-        out_streams_main[i].buffer =
-            popRequestList(mCreateBufferList); // &(unlock_i->native_handle);
-        mPhyAddrBufferList.erase(unlock_i);
-
+        out_streams_main[i] = req->output_buffers[0];
+        out_streams_main[i].stream = &mMainStreams[i];
+        if (mFaceMode == MODE_DUAL_FACE_UNLOCK) {
+            out_streams_main[i].buffer = popBufferList(
+                mLocalBufferListMain, (camera_buffer_type_t)MAIN_BUFFER);
+        }
         out_streams_main[i].status = req->output_buffers->status;
-        out_streams_main[i].acquire_fence = -1;
-        // req->output_buffers->acquire_fence;
         out_streams_main[i].release_fence = -1;
-        // req->output_buffers->release_fence;
-
-        // construct output_buffers buffer
-        req_main.num_output_buffers = SINGLE_FACEID_UNLOCK_OUTPUT_BUFFERS;
-        req_main.output_buffers = out_streams_main;
-        req_main.settings = metaSettings.release();
-
-        HAL_LOGV("num_output_buffers=%d", req_main.num_output_buffers);
-        for (i = 0; i < req_main.num_output_buffers; i++) {
-            HAL_LOGD("width=%d, height=%d, format=%d",
-                     req_main.output_buffers[i].stream->width,
-                     req_main.output_buffers[i].stream->height,
-                     req_main.output_buffers[i].stream->format);
+        // create callback buffer
+        if (mFaceMode == MODE_DUAL_FACE_REGISTER) {
+            i++;
+            out_streams_main[i].stream = &mMainStreams[i];
+            out_streams_main[i].buffer = popBufferList(
+                mLocalBufferListMain, (camera_buffer_type_t)MAIN_BUFFER);
+            if (NULL == out_streams_main[i].buffer) {
+                HAL_LOGE("failed, mLocalBufferListMain is empty");
+                goto req_fail;
+            }
+            out_streams_main[i].status = req->output_buffers->status;
+            out_streams_main[i].acquire_fence = -1;
+            out_streams_main[i].release_fence = -1;
         }
 
+        // construct main output_buffers buffer
+        req_main.num_output_buffers = i + 1;
+        req_main.output_buffers = out_streams_main;
         rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,
                                               &req_main);
         if (rc < 0) {
             HAL_LOGE("failed, idx:%d", req_main.frame_number);
+            goto req_fail;
+        }
+        i = 0;
+        out_streams_aux[i] = *req->output_buffers;
+        out_streams_aux[i].stream = &mAuxStreams[i];
+        out_streams_aux[i].status = req->output_buffers->status;
+        out_streams_aux[i].acquire_fence = -1;
+        out_streams_aux[i].release_fence = -1;
+
+        out_streams_aux[i].buffer = popBufferList(
+            mLocalBufferListAux, (camera_buffer_type_t)AUX_BUFFER);
+        if (NULL == out_streams_aux[i].buffer) {
+            HAL_LOGE("failed, mLocalBufferListAux is empty");
+            goto req_fail;
+        }
+        // construct aux output_buffers buffer
+        req_aux.num_output_buffers = 1;
+        req_aux.output_buffers = out_streams_aux;
+
+        rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,
+                                             &req_aux);
+        if (rc < 0) {
+            HAL_LOGE("failed, idx:%d", req_aux.frame_number);
+            goto req_fail;
+        }
+
+        struct timespec t1;
+        clock_gettime(CLOCK_BOOTTIME, &t1);
+        mReqTimestamp = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
+        mMaxPendingCount =
+            preview_stream->max_buffers - MAX_UNMATCHED_QUEUE_SIZE + 1;
+        {
+            Mutex::Autolock l(mPendingLock);
+            size_t pendingCount = 0;
+            mPendingRequest++;
+            HAL_LOGV("mPendingRequest=%d, mMaxPendingCount=%d", mPendingRequest,
+                     mMaxPendingCount);
+            while (mPendingRequest >= mMaxPendingCount) {
+                mRequestSignal.waitRelative(mPendingLock, PENDINGTIME);
+                if (pendingCount > (PENDINGTIMEOUT / PENDINGTIME)) {
+                    HAL_LOGD("m_PendingRequest=%d", mPendingRequest);
+                    rc = -ENODEV;
+                    break;
+                }
+                pendingCount++;
+            }
         }
     } else {
         camera3_stream_buffer_t out_streams_main[1];
-        // just construct preview buffer
+        camera3_stream_buffer_t out_streams_aux[1];
+        // just construct main preview buffer
         i = 0;
         out_streams_main[i] = *req->output_buffers;
-        mSavedReqStreams[i] = req->output_buffers->stream;
-        out_streams_main[i].stream = &mUnlockStreams[i];
+        out_streams_main[i].stream = &mMainStreams[i];
 
-        req_main.num_output_buffers = SINGLE_FACEID_UNLOCK_OUTPUT_BUFFERS - 1;
+        req_main.num_output_buffers = 1;
         req_main.output_buffers = out_streams_main;
-        req_main.settings = metaSettings.release();
+        HAL_LOGD("frame:%d only preview", request->frame_number);
 
-        HAL_LOGV("num_output_buffers=%d", req_main.num_output_buffers);
         rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,
                                               &req_main);
         if (rc < 0) {
             HAL_LOGE("failed, idx:%d", req_main.frame_number);
+            goto req_fail;
         }
     }
 
-    HAL_LOGD("D, ret=%d", rc);
+req_fail:
+    if (req_main.settings)
+        free_camera_metadata((camera_metadata_t *)req_main.settings);
+
+    if (req_aux.settings)
+        free_camera_metadata((camera_metadata_t *)req_aux.settings);
 
     return rc;
 }
@@ -1053,11 +1151,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::processCaptureRequest(
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::notifyMain(
-    const camera3_notify_msg_t *msg) {
-    Mutex::Autolock l(mNotifyLockMain);
-
-    HAL_LOGD("preview timestamp %lld", msg->message.shutter.timestamp);
+void SprdCamera3DualFaceId::notifyMain(const camera3_notify_msg_t *msg) {
     mCallbackOps->notify(mCallbackOps, msg);
 }
 
@@ -1070,68 +1164,73 @@ void SprdCamera3SingleFaceIdUnlock::notifyMain(
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::processCaptureResultMain(
+void SprdCamera3DualFaceId::processCaptureResultMain(
     camera3_capture_result_t *result) {
-    cmr_u32 cur_frame_number = result->frame_number;
-    cmr_u32 searchnotifyresult = NOTIFY_NOT_FOUND;
+    uint32_t cur_frame_number = result->frame_number;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     CameraMetadata metadata;
     metadata = result->result;
-    cmr_s32 rc = 0;
-    cmr_s32 i = 0;
-    Mutex::Autolock l(mResultLock);
-    HAL_LOGD("E");
-
+    int i = 0;
     // meta process
     if (NULL == result_buffer && NULL != result->result) {
-        if (mUnlockPhyaddr) {
-            // callback phy addr
-            HAL_LOGD("callback phy addr=0x%llx", mUnlockPhyaddr);
-            metadata.update(ANDROID_SPRD_TO_FACEIDSERVICE_PHYADDR,
-                            &mUnlockPhyaddr, 1);
-            unsigned long get_phyaddr = 0;
-            if (metadata.exists(ANDROID_SPRD_TO_FACEIDSERVICE_PHYADDR)) {
-                get_phyaddr =
-                    (unsigned long)
-                        metadata.find(ANDROID_SPRD_TO_FACEIDSERVICE_PHYADDR)
-                            .data.i64[0];
-                HAL_LOGD("check phy addr=0x%lx", get_phyaddr);
-            } else {
-                HAL_LOGD("update fail");
+        if (!mResultBufferListMain.empty() && !mResultBufferListAux.empty()) {
+            int64_t main_phyaddr;
+            int64_t aux_phyaddr;
+            List<new_mem_t *>::iterator it;
+            new_mem_t *main_mem = NULL;
+            new_mem_t *aux_mem = NULL;
+            {
+                Mutex::Autolock l(mMainLock);
+                it = mResultBufferListMain.begin();
+                main_mem = *it;
+                mResultBufferListMain.erase(it);
             }
+            main_phyaddr = (int64_t)main_mem->phy_addr;
+            {
+                Mutex::Autolock l(mAuxLock);
+                it = mResultBufferListAux.begin();
+                aux_mem = *it;
+                mResultBufferListAux.erase(it);
+            }
+            aux_phyaddr = (int64_t)aux_mem->phy_addr;
+            int64_t phyaddr[3] = {main_phyaddr, aux_phyaddr,
+                                  (int64_t)mOtpLocalBuffer.phy_addr};
+            HAL_LOGD("frame(%d):phyaddr 0x%lx,0x%lx", cur_frame_number,
+                     (uint64_t)main_phyaddr, (uint64_t)aux_phyaddr);
+            metadata.update(ANDROID_SPRD_TO_FACEIDSERVICE_PHYADDR, phyaddr, 3);
+
             camera3_capture_result_t new_result = *result;
             new_result.result = metadata.release();
             mCallbackOps->process_capture_result(mCallbackOps, &new_result);
             free_camera_metadata(
                 const_cast<camera_metadata_t *>(new_result.result));
-            mUnlockPhyaddr = 0;
         } else {
             mCallbackOps->process_capture_result(mCallbackOps, result);
         }
         return;
     }
 
-    cmr_s32 currStreamType = getStreamType(result_buffer->stream);
-    // callback process
-    if (DEFAULT_STREAM == currStreamType) {
-        HAL_LOGD("callback process");
-        int callback_fd = ADP_BUFFD(*(result_buffer->buffer));
-        for (i = 0; i < SINGLE_FACEID_UNLOCK_BUFFER_SUM; i++) {
-            int saved_fd =
-                ADP_BUFFD(*(&mFaceIdUnlock->mLocalBuffer[i].native_handle));
-            if (callback_fd == saved_fd) {
-                mUnlockPhyaddr = (cmr_s64)mLocalBuffer[i].phy_addr;
+    int currStreamType = getStreamType(result_buffer->stream);
+    int result_buf_fd = ADP_BUFFD(*result_buffer->buffer);
+    if ((DEFAULT_STREAM == currStreamType) ||
+        (mFaceMode == MODE_DUAL_FACE_UNLOCK &&
+         CALLBACK_STREAM == currStreamType)) {
+        for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+            int saved_buf_fd = ADP_BUFFD(mLocalBufferMain[i].native_handle);
+            if (result_buf_fd == saved_buf_fd) {
+                Mutex::Autolock l(mMainLock);
+                mResultBufferListMain.push_back(&mLocalBufferMain[i]);
             }
         }
-        return;
     }
-
-    // preview process
-    HAL_LOGD("preview process");
-    CallBackResult(result->frame_number, CAMERA3_BUFFER_STATUS_OK);
-
-    return;
+    if (DEFAULT_STREAM == currStreamType) {
+        HAL_LOGV("return default");
+        return;
+    } else if (CALLBACK_STREAM == currStreamType) {
+        // preview process
+        HAL_LOGV("preview process");
+        CallBackResult(result->frame_number, CAMERA3_BUFFER_STATUS_OK);
+    }
 }
 
 /*===========================================================================
@@ -1143,29 +1242,29 @@ void SprdCamera3SingleFaceIdUnlock::processCaptureResultMain(
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::CallBackResult(
-    cmr_u32 frame_number, camera3_buffer_status_t buffer_status) {
+void SprdCamera3DualFaceId::CallBackResult(
+    uint32_t frame_number, camera3_buffer_status_t buffer_status) {
     camera3_capture_result_t result;
-    List<single_faceid_unlock_saved_request_t>::iterator itor;
+    List<multi_request_saved_t>::iterator itor;
     camera3_stream_buffer_t result_buffers;
 
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
 
     {
-        Mutex::Autolock l(mFaceIdUnlock->mRequestLock);
-        itor = mFaceIdUnlock->mSavedRequestList.begin();
-        while (itor != mFaceIdUnlock->mSavedRequestList.end()) {
+        Mutex::Autolock l(mRequestLock);
+        itor = mSavedRequestList.begin();
+        while (itor != mSavedRequestList.end()) {
             if (itor->frame_number == frame_number) {
                 HAL_LOGD("erase frame_number %u", frame_number);
-                result_buffers.stream = itor->stream;
+                result_buffers.stream = itor->preview_stream;
                 result_buffers.buffer = itor->buffer;
-                mFaceIdUnlock->mSavedRequestList.erase(itor);
+                mSavedRequestList.erase(itor);
                 break;
             }
             itor++;
         }
-        if (itor == mFaceIdUnlock->mSavedRequestList.end()) {
+        if (itor == mSavedRequestList.end()) {
             HAL_LOGE("can't find frame in mSavedRequestList %u:", frame_number);
             return;
         }
@@ -1183,8 +1282,49 @@ void SprdCamera3SingleFaceIdUnlock::CallBackResult(
 
     mCallbackOps->process_capture_result(mCallbackOps, &result);
 
+    {
+        Mutex::Autolock l(mPendingLock);
+        mPendingRequest--;
+        if (mPendingRequest < mMaxPendingCount) {
+            HAL_LOGV("signal request m_PendingRequest = %d", mPendingRequest);
+            mRequestSignal.signal();
+        }
+    }
+
     HAL_LOGD("frame number=%d buffer status=%u", result.frame_number,
              buffer_status);
+}
+
+/*===========================================================================
+ * FUNCTION   :processCaptureResultAux
+ *
+ * DESCRIPTION: process Capture Result from the aux hwi
+ *
+ * PARAMETERS : capture result structure from hwi
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3DualFaceId::processCaptureResultAux(
+    camera3_capture_result_t *result) {
+    if (result->output_buffers == NULL) {
+        return;
+    }
+    uint32_t cur_frame_number = result->frame_number;
+    const camera3_stream_buffer_t *result_buffer = result->output_buffers;
+    int i = 0;
+    int currStreamType = getStreamType(result_buffer->stream);
+    int result_buf_fd = ADP_BUFFD(*result_buffer->buffer);
+    HAL_LOGD("result process frameid %d", cur_frame_number);
+    // callback process
+    if (CALLBACK_STREAM == currStreamType) {
+        for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+            int saved_buf_fd = ADP_BUFFD(mLocalBufferAux[i].native_handle);
+            if (result_buf_fd == saved_buf_fd) {
+                Mutex::Autolock l(mAuxLock);
+                mResultBufferListAux.push_back(&mLocalBufferAux[i]);
+            }
+        }
+    }
 }
 
 /*===========================================================================
@@ -1196,8 +1336,7 @@ void SprdCamera3SingleFaceIdUnlock::CallBackResult(
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3SingleFaceIdUnlock::_dump(const struct camera3_device *device,
-                                          cmr_s32 fd) {
+void SprdCamera3DualFaceId::_dump(const struct camera3_device *device, int fd) {
     HAL_LOGD(" E");
 
     HAL_LOGD("X");
@@ -1212,11 +1351,10 @@ void SprdCamera3SingleFaceIdUnlock::_dump(const struct camera3_device *device,
  *
  * RETURN     : None
  *==========================================================================*/
-cmr_s32
-SprdCamera3SingleFaceIdUnlock::_flush(const struct camera3_device *device) {
+int SprdCamera3DualFaceId::_flush(const struct camera3_device *device) {
     HAL_LOGD("E");
 
-    cmr_s32 rc = 0;
+    int rc = 0;
 
     mFlushing = true;
 
