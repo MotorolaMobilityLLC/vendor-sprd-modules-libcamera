@@ -594,33 +594,37 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
                                        cxt->camera_id, evt, data);
     }
     if (cxt->snp_cxt.channel_bits & chn_bit) {
-        if (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt) &&
-            CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) {
-            if (need_pause) {
-                camera_set_discard_frame(cxt, 1);
-            }
-            ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                            SNAPSHOT_EVT_CHANNEL_DONE, data);
-            if (need_pause) {
-                if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode ||
-                    1 != cxt->snp_cxt.total_num) {
-                    ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
-                                                   cxt->camera_id,
-                                                   PREVIEW_CHN_PAUSE, data);
-                    if (ret) {
-                        CMR_LOGE("failed to pause path %ld", ret);
+        if (CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) {
+            if (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
+                if (need_pause) {
+                    camera_set_discard_frame(cxt, 1);
+                }
+                ret =
+                    cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
+                                              SNAPSHOT_EVT_CHANNEL_DONE, data);
+                if (need_pause) {
+                    if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode ||
+                        1 != cxt->snp_cxt.total_num) {
+                        ret = cmr_preview_receive_data(
+                            cxt->prev_cxt.preview_handle, cxt->camera_id,
+                            PREVIEW_CHN_PAUSE, data);
+                        if (ret) {
+                            CMR_LOGE("failed to pause path %ld", ret);
+                        }
+                        ret = cmr_preview_receive_data(
+                            cxt->prev_cxt.preview_handle, cxt->camera_id, evt,
+                            data);
+                    } else {
+                        ret = cmr_preview_receive_data(
+                            cxt->prev_cxt.preview_handle, cxt->camera_id, evt,
+                            data);
+                        camera_post_share_path_available(oem_handle);
                     }
-                    ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
-                                                   cxt->camera_id, evt, data);
                 } else {
                     ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
                                                    cxt->camera_id, evt, data);
                     camera_post_share_path_available(oem_handle);
                 }
-            } else {
-                ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
-                                               cxt->camera_id, evt, data);
-                camera_post_share_path_available(oem_handle);
             }
         } else {
             if (cxt->snp_cxt.zsl_frame) {
@@ -5237,6 +5241,7 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
 
     sem_init(&cxt->share_path_sm, 0, 0);
     sem_init(&cxt->access_sm, 0, 1);
+    sem_init(&cxt->snap_jpeg_sm, 0, 1);
     sem_init(&cxt->snapshot_sm, 0, 1);
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
@@ -5326,6 +5331,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
 
     sem_destroy(&cxt->share_path_sm);
     sem_destroy(&cxt->access_sm);
+    sem_destroy(&cxt->snap_jpeg_sm);
     sem_destroy(&cxt->snapshot_sm);
 
     CMR_LOGI("X");
@@ -5479,7 +5485,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     }
     jpeg_cxt = &cxt->jpeg_cxt;
 
-    sem_wait(&cxt->access_sm);
+    sem_wait(&cxt->snap_jpeg_sm);
     // 1.construct param
     memset(&mean, 0, sizeof(struct cmr_op_mean));
     mean.quality_level = SUPER_FINE;
@@ -5512,7 +5518,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     }
 
 exit:
-    sem_post(&cxt->access_sm);
+    sem_post(&cxt->snap_jpeg_sm);
     CMR_LOGD("done %d", ret);
     ATRACE_END();
     return ret;
@@ -5544,7 +5550,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     jpeg_cxt = &cxt->jpeg_cxt;
     CHECK_HANDLE_VALID(jpeg_cxt);
     cxt->jpeg_cxt.enc_caller_handle = caller_handle;
-    sem_wait(&cxt->access_sm);
+    sem_wait(&cxt->snap_jpeg_sm);
 
     if (!caller_handle || !oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
@@ -5774,7 +5780,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     }
 
 exit:
-    sem_post(&cxt->access_sm);
+    sem_post(&cxt->snap_jpeg_sm);
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
     return ret;
