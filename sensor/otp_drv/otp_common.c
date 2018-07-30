@@ -145,76 +145,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
  * SENSOR_SUCCESS : decompress success
  * SENSOR_FAILURE : decompress failed
  **/
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
-                                  lsccalib_data_t *lsc_cal_data) {
-    cmr_int ret = OTP_CAMERA_SUCCESS;
-    CHECK_PTR(otp_base_info);
-    CHECK_PTR(lsc_cal_data);
 
-    cmr_u32 compress_bits_size;
-    cmr_u32 channal_cmp_bytes_size = 0;
-    cmr_u32 one_channal_decmp_size = 0;
-    cmr_u32 gain_compressed_bits = 0;
-    cmr_u32 gain_mak_bits = 0;
-    cmr_u32 random_buf_size = 0;
-    cmr_u32 *random_buf = NULL;
-    cmr_u32 *ptr_random_buf = NULL;
-    cmr_u32 cmp_uncompensate_size = 0;
-    cmr_u32 i;
-
-    cmr_u16 *lsc_rdm_src_data = NULL, *lsc_rdm_dst_data = NULL;
-
-    /* get random lsc data */
-    lsc_rdm_src_data = (cmr_u16 *)((cmr_u8 *)lsc_cal_data +
-                                   lsc_cal_data->lsc_calib_random.offset);
-
-    compress_bits_size = otp_base_info->gain_width *
-                         otp_base_info->gain_height * GAIN_COMPRESSED_14BITS;
-    channal_cmp_bytes_size = (compress_bits_size + GAIN_ORIGIN_BITS - 1) /
-                             GAIN_ORIGIN_BITS * (GAIN_ORIGIN_BITS / 8);
-
-    if (0 == channal_cmp_bytes_size) {
-        return -1;
-    }
-    cmp_uncompensate_size = otp_base_info->gain_width *
-                            otp_base_info->gain_height * gain_compressed_bits %
-                            GAIN_ORIGIN_BITS;
-
-    /*malloc random temp buffer*/
-    random_buf_size = otp_base_info->gain_width * otp_base_info->gain_height *
-                      sizeof(uint16_t) * CHANNAL_NUM;
-    lsc_rdm_dst_data = (cmr_u16 *)malloc(random_buf_size);
-    if (NULL == lsc_rdm_dst_data) {
-        ret = -1;
-        OTP_LOGE("malloc decompress buf failed!");
-        goto exit;
-    }
-
-    gain_compressed_bits = GAIN_COMPRESSED_14BITS;
-    gain_mak_bits = GAIN_MASK_14BITS;
-
-    for (i = 0; i < CHANNAL_NUM; i++) {
-        one_channal_decmp_size = sensor_otp_decompress_gain(
-            lsc_rdm_src_data, channal_cmp_bytes_size, cmp_uncompensate_size,
-            lsc_rdm_dst_data, gain_compressed_bits, gain_mak_bits);
-        if (0 == one_channal_decmp_size) {
-            ret = -1;
-            goto exit;
-        }
-        lsc_rdm_src_data += channal_cmp_bytes_size / 2;
-        lsc_rdm_dst_data += one_channal_decmp_size;
-    }
-    memcpy(lsc_rdm_src_data, lsc_rdm_dst_data, random_buf_size);
-exit:
-
-    if (NULL != lsc_rdm_dst_data) {
-        free(lsc_rdm_dst_data);
-        lsc_rdm_dst_data = NULL;
-    }
-    return ret;
-}
-#else
 cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
                                   otp_section_info_t *lsc_cal_data) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
@@ -222,7 +153,6 @@ cmr_int sensor_otp_lsc_decompress(otp_base_info_cfg_t *otp_base_info,
     CHECK_PTR(lsc_cal_data);
     return ret;
 }
-#endif
 /** sensor_otp_decompress_gain:
  *  @src: random lsc otp data.
  *  @src_bytes: the orign data size one channel.

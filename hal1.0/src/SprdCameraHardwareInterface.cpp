@@ -405,9 +405,6 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mCommonHeapReserved(NULL), mIsPerformanceTestable(false),
       mIspLscHeapReserved(NULL), mIspFirmwareReserved(NULL),
-#ifdef CONFIG_CAMERA_ISP_DIR_3
-      mHighIsoSnapshotHeapReserved(NULL),
-#endif
       mIspYUVReserved(NULL), mIspAntiFlickerHeapReserved(NULL),
       mVideoShotPushFlag(0), mZslShotPushFlag(0), mVideoHeight(0),
       mVideoWidth(0), mIsRestartPreview(0), mHalOem(NULL), mPdafRawHeapNum(0),
@@ -460,9 +457,6 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
     memset(&mRawHeapInfoBak, 0, sizeof(mRawHeapInfoBak));
     mRawHeapBakUseFlag = 0;
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    memset(mIspRawDataReserved, 0, sizeof(mIspRawDataReserved));
-#endif
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -620,19 +614,6 @@ void SprdCameraHardware::release() {
         mCommonHeapReserved = NULL;
     }
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    if (NULL != mHighIsoSnapshotHeapReserved) {
-        freeCameraMem(mHighIsoSnapshotHeapReserved);
-        mHighIsoSnapshotHeapReserved = NULL;
-    }
-
-    for (int i = 0; i < 4; i++) {
-        if (NULL != mIspRawDataReserved[i]) {
-            freeCameraMem(mIspRawDataReserved[i]);
-            mIspRawDataReserved[i] = NULL;
-        }
-    }
-#endif
     if (NULL != mIspYUVReserved) {
         freeCameraMem(mIspYUVReserved);
         mIspYUVReserved = NULL;
@@ -2682,18 +2663,6 @@ status_t SprdCameraHardware::sendCommand(int32_t cmd, int32_t arg1,
             mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
         }
         mHalOem->ops->camera_fd_start(mCameraHandle, 0);
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    } else if (AUTO_LOW_LIGHT_SET == cmd) {
-        /* lls is enabled with arg1= 1, disabled with arg1=0 */
-        mHalOem->ops->camera_lls_enable(mCameraHandle, arg1);
-    } else if (MULTI_FRAME_SHOT_START == cmd) {
-        /* lls shot mode is enabled with arg1= 1, disabled with arg1=0 */
-        mHalOem->ops->camera_set_lls_shot_mode(mCameraHandle, arg1);
-    } else if (HDR_PICTURE_MODE_CHANGE == cmd) {
-        /* vendor hdr mode is enabled with arg1 = 1, disabled with arg1=0 */
-        mHalOem->ops->camera_vendor_hdr_enable(mCameraHandle, arg1);
-/*fix me*/
-#endif
         //	} else if(CAMERA_CMD_FLIP_ON == cmd){
     } else if (SPRD_CMD_START_BURST_TAKE == cmd) {
         LOGD("sendCommand: start burst take");
@@ -3985,47 +3954,6 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type,
         *fd++ = memory->fd;
         LOGI("kaddr 0x%llx, fd =0x%x", kaddr, memory->fd);
         return 0;
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    } else if (type == CAMERA_SNAPSHOT_HIGHISO) {
-        if (mHighIsoSnapshotHeapReserved == NULL) {
-            memory = allocReservedMem(size, true);
-            if (NULL == memory) {
-                LOGI("error memory is null.");
-                goto mem_fail;
-            }
-            mHighIsoSnapshotHeapReserved = memory;
-        } else {
-            LOGI("malloc Video memory, malloced type %d,request num %d, "
-                 "request size 0x%x",
-                 type, sum, size);
-            memory = (sprd_camera_memory_t *)mHighIsoSnapshotHeapReserved;
-        }
-        *phy_addr++ = (cmr_uint)memory->phys_addr;
-        *vir_addr++ = (cmr_uint)memory->data;
-        *fd++ = memory->fd;
-        LOGI("malloc High Iso memory, malloced type %d,request num %d, request "
-             "size 0x%x, fd 0x%x",
-             type, sum, size, fd);
-    } else if (type == CAMERA_ISP_RAW_DATA) {
-        cmr_u64 *kaddr = (cmr_u64 *)vir_addr;
-        size_t ksize = 0;
-
-        for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, true);
-            if (NULL == memory) {
-                LOGI("memory is null.");
-                break;
-            }
-            mIspRawDataReserved[i] = memory;
-            *phy_addr++ = 0;
-            //			*vir_addr++ = (cmr_uint)memory->data;
-            memory->ion_heap->get_kaddr(kaddr, &ksize);
-            kaddr++;
-            *fd++ = memory->fd;
-            LOGI("mfd=%d, vir_addr=0x%0x", memory->fd, memory->data);
-        }
-        *sum_ptr = i;
-#endif
     } else if (type == CAMERA_ISP_PREVIEW_YUV) {
         if (mIspYUVReserved == NULL) {
             memory = allocCameraMem(size, true);
@@ -4355,23 +4283,6 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type,
         mIspFirmwareReserved = NULL;
     }
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    if (type == CAMERA_SNAPSHOT_HIGHISO) {
-        if (NULL != mHighIsoSnapshotHeapReserved) {
-            freeCameraMem(mHighIsoSnapshotHeapReserved);
-        }
-        mHighIsoSnapshotHeapReserved = NULL;
-    }
-
-    if (type == CAMERA_ISP_RAW_DATA) {
-        for (i = 0; i < 4; i++) {
-            if (NULL != mIspRawDataReserved[i]) {
-                freeCameraMem(mIspRawDataReserved[i]);
-                mIspRawDataReserved[i] = NULL;
-            }
-        }
-    }
-#endif
     if (type == CAMERA_ISP_PREVIEW_YUV) {
         if (NULL != mIspYUVReserved) {
             freeCameraMem(mIspYUVReserved);

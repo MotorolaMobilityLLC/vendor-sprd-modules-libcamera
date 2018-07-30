@@ -246,25 +246,6 @@ typedef struct {
  * | V your otp driver.                 |
  * |------------------------------------|
  **/
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-typedef struct {
-    module_data_t module_dat;
-    cmr_u16 iso_dat;
-    enum otp_vendor_type otp_vendor;
-    afcalib_data_t af_cali_dat;
-    aecalib_data_t ae_cali_dat;
-    awbcalib_data_t awb_cali_dat;
-    optical_center_t opt_center_dat;
-    otp_data_info_t pdaf_cali_dat;
-    /*spc:sensor pixel calibration,used by pdaf*/
-    otp_data_info_t spc_cali_dat;
-    otp_data_info_t dual_cam_cali_dat;
-    extended_data_t extend_dat;
-    lsccalib_data_t lsc_cali_dat;
-    otp_data_info_t third_cali_dat;
-    cmr_u8 data[4]; /*must be last*/
-} otp_format_data_t;
-#else
 typedef struct {
     otp_section_info_t module_dat;
     cmr_u16 iso_dat;
@@ -282,7 +263,6 @@ typedef struct {
     otp_section_info_t third_cali_dat;
     cmr_u8 data[4]; /*must be last*/
 } otp_format_data_t;
-#endif
 
 typedef struct {
     cmr_u16 reg_addr;

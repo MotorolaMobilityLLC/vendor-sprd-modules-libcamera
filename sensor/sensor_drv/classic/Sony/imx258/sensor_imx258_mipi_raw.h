@@ -25,11 +25,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-#include "parameters/sensor_imx258_raw_param_v3.c"
-#else
 #include "parameters/sensor_imx258_raw_param_main.c"
-#endif
 #include "parameters/sensor_imx258_otp_truly.h"
 
 #define SENSOR_NAME "imx258_mipi_raw"

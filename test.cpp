@@ -12,10 +12,6 @@
 #include "hal3_2v4/SprdCamera3OEMIf.h"
 #include "hal3_2v4/SprdCamera3Setting.h"
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-#include "hal3_3v0/SprdCamera3AutotestMem.h"
-#include "hal3_3v0/SprdCamera3Setting.h"
-#endif
 #include <utils/String16.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,9 +69,6 @@ static uint32_t *post_preview_buf = NULL;
 static struct fb_var_screeninfo var;
 static uint32_t frame_num = 0; /*record frame number*/
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-SprdCamera3AutotestMem *AutotestMem;
-#else
 static unsigned int mPreviewHeapNum = 0; /*allocated preview buffer number*/
 static sprd_camera_memory_t *mPreviewHeapReserved = NULL;
 static sprd_camera_memory_t *mIspLscHeapReserved = NULL;
@@ -86,7 +79,6 @@ static uint32_t mIspFirmwareReserved_cnt = 0;
 static const int kISPB4awbCount = 16;
 static sprd_camera_memory_t *mIspB4awbHeapReserved[kISPB4awbCount];
 static sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
-#endif
 static sprd_camera_memory_t
     *previewHeapArray[PREVIEW_BUFF_NUM]; /*preview heap arrary*/
 static int target_buffer_id = 0;
@@ -647,138 +639,6 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
     previewLock.unlock();
 }
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-
-static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
-                         cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum,
-                         void *private_data) {
-
-    int ret = 0;
-    ALOGD("E");
-    SprdCamera3AutotestMem *camera = (SprdCamera3AutotestMem *)private_data;
-    /*lock*/
-    previewLock.lock();
-
-    if (!private_data || !vir_addr || !fd) {
-        ALOGE("error param 0x%x 0x%lx 0x%lx", *fd, (cmr_uint)vir_addr,
-              (cmr_uint)private_data);
-        return BAD_VALUE;
-    }
-
-    if (type >= CAMERA_MEM_CB_TYPE_MAX) {
-        ALOGE("mem type error %ld", (cmr_uint)type);
-        return BAD_VALUE;
-    }
-
-    if (CAMERA_PREVIEW == type) {
-        ret = camera->Callback_PreviewFree(phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_SNAPSHOT == type) {
-        // Performance optimization:move Callback_CaptureFree to closeCamera
-        // function
-        // ret = camera->Callback_CaptureFree(phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_VIDEO == type) {
-        ret = camera->Callback_VideoFree(phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_SNAPSHOT_ZSL == type) {
-        ret = camera->Callback_ZslFree(phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_SENSOR_DATATYPE_MAP == type) {
-        ret = camera->Callback_RefocusFree(phy_addr, vir_addr, sum);
-    } else if (CAMERA_PDAF_RAW == type) {
-        ret = camera->Callback_PdafRawFree(phy_addr, vir_addr, sum);
-    } else if (CAMERA_SNAPSHOT_PATH == type) {
-        ret = camera->Callback_CapturePathFree(phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_PREVIEW_RESERVED == type ||
-               CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
-               CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
-               CAMERA_SENSOR_DATATYPE_MAP_RESERVED == type ||
-               CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
-               CAMERA_ISP_BINGING4AWB == type ||
-               CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||
-               CAMERA_ISP_PREVIEW_Y == type || CAMERA_ISP_PREVIEW_YUV == type) {
-        ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
-    }
-
-    /*unlock*/
-    previewLock.unlock();
-
-    /* disable preview flag */
-    previewvalid = 0;
-
-    ALOGD("X");
-    return ret;
-}
-
-static int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
-                           cmr_u32 *sum_ptr, cmr_uint *phy_addr,
-                           cmr_uint *vir_addr, cmr_s32 *fd,
-                           void *private_data) {
-
-    int ret = 0, i = 0;
-    uint32_t size, sum;
-    SprdCamera3AutotestMem *camera = (SprdCamera3AutotestMem *)private_data;
-
-    ALOGV("E");
-
-    /*lock*/
-    previewLock.lock();
-
-    if (!private_data || !vir_addr || !fd || !size_ptr || !sum_ptr ||
-        (0 == *size_ptr) || (0 == *sum_ptr)) {
-        ALOGE("param error 0x%x 0x%lx 0x%lx 0x%lx 0x%lx", *fd,
-              (cmr_uint)vir_addr, (cmr_uint)private_data, (cmr_uint)*size_ptr,
-              (cmr_uint)*sum_ptr);
-        /*unlock*/
-        previewLock.unlock();
-        return BAD_VALUE;
-    }
-
-    size = *size_ptr;
-    sum = *sum_ptr;
-
-    if (type >= CAMERA_MEM_CB_TYPE_MAX) {
-        ALOGE("mem type error %ld", (cmr_uint)type);
-        /*unlock*/
-        previewLock.unlock();
-        return BAD_VALUE;
-    }
-
-    if (CAMERA_PREVIEW == type) {
-        ret = camera->Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_SNAPSHOT == type) {
-        ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_VIDEO == type) {
-        ret = camera->Callback_VideoMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_SNAPSHOT_ZSL == type) {
-        ret = camera->Callback_ZslMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_SENSOR_DATATYPE_MAP == type) {
-        ret = camera->Callback_RefocusMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_PDAF_RAW == type) {
-        ret = camera->Callback_PdafRawMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_SNAPSHOT_PATH == type) {
-        ret = camera->Callback_CapturePathMalloc(size, sum, phy_addr, vir_addr,
-                                                 fd);
-    } else if (CAMERA_PREVIEW_RESERVED == type ||
-               CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
-               CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
-               CAMERA_SENSOR_DATATYPE_MAP_RESERVED == type ||
-               CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
-               CAMERA_ISP_BINGING4AWB == type ||
-               CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||
-               CAMERA_ISP_PREVIEW_Y == type || CAMERA_ISP_PREVIEW_YUV == type) {
-        ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
-                                           vir_addr, fd);
-    }
-
-    /*unlock*/
-    previewLock.unlock();
-
-    /* enable preview flag */
-    previewvalid = 1;
-
-    ALOGV("X");
-    return ret;
-}
-
-#else
 static void freeCameraMem(sprd_camera_memory_t *memory) {
     ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
 
@@ -1292,7 +1152,6 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     return ret;
 }
-#endif
 
 static void eng_tst_camera_startpreview(void) {
     cmr_int ret = 0;
@@ -1327,7 +1186,7 @@ static void eng_tst_camera_startpreview(void) {
     /*  */
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_PREVIEW_SIZE,
              (cmr_uint)&preview_size);
-#if defined(CONFIG_CAMERA_ISP_DIR_3) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_4)
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_CAF);
 #endif
     // SET_PARM(oem_handle , CAMERA_PARAM_VIDEO_SIZE     ,
@@ -1505,18 +1364,9 @@ int eng_tst_camera_init(int cameraId, int preview_window_width,
     if (ret) {
         goto exit;
     }
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-    AutotestMem = new SprdCamera3AutotestMem(camera_id, target_buffer_id,
-                                             s_mem_method, previewHeapArray);
-    ret = mHalOem->ops->camera_init(cameraId, eng_tst_camera_cb, AutotestMem, 0,
-                                    &oem_handle, (void *)Callback_Malloc,
-                                    (void *)Callback_Free);
-
-#else
     ret = mHalOem->ops->camera_init(cameraId, eng_tst_camera_cb, &client_data,
                                     0, &oem_handle, (void *)Callback_Malloc,
                                     (void *)Callback_Free);
-#endif
 
     if (ret) {
         ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);

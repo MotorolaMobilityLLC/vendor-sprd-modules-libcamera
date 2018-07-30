@@ -293,12 +293,6 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef IMX258
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
     {MODULE_TRULY, "imx258", &g_imx258_mipi_raw_info, {&dw9800_drv_entry, 0}, &imx258_drv_entry},
-#elif defined(CONFIG_CAMERA_ISP_DIR_3)
-#ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
-    {MODULE_DARLING, "imx258", &g_imx258_mipi_raw_info, {&dw9763_drv_entry, 0}, NULL},
-#else
-    {MODULE_SUNNY ,"imx258", &g_imx258_mipi_raw_info, {&lc898214_drv_entry, 0}, &imx258_truly_drv_entry},
-#endif
 #endif
 #endif
 #ifdef IMX135
