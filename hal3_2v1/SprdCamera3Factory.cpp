@@ -37,7 +37,7 @@
 
 #include "SprdCamera3Factory.h"
 #include "SprdCamera3Flash.h"
-#include "multiCamera/SprdCamera3Wrapper.h"
+#include "hal_common/multiCamera/SprdCamera3Wrapper.h"
 
 using namespace android;
 

@@ -44,7 +44,7 @@
 #include <sprd_ion.h>
 #include <ui/GraphicBufferAllocator.h>
 #include <ui/GraphicBuffer.h>
-#include "../SprdCamera3HWI.h"
+#include "hal3_2v1/SprdCamera3HWI.h"
 //#include "ts_makeup_api.h"
 #include "SprdMultiCam3Common.h"
 

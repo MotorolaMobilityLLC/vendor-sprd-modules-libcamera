@@ -41,7 +41,7 @@
 #include <hardware/camera.h>
 #include <system/camera.h>
 #include <sys/mman.h>
-#include "../SprdCamera3HWI.h"
+#include "hal3_2v1/SprdCamera3HWI.h"
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
 #include "SprdCamera3StereoVideo.h"
 #endif

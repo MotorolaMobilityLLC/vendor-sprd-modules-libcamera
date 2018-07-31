@@ -10349,6 +10349,7 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     uint32_t delayTime = 10 * 1000;   // us
     uint32_t Gyro_flag = 0;
     uint32_t Gsensor_flag = 0;
+    uint32_t mCount = 0;
     ASensorEvent buffer[8];
     ssize_t n;
 

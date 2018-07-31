@@ -50,59 +50,59 @@ LOCAL_SRC_FILES := \
     $(HAL_DIR)/SprdCamera3Stream.cpp \
     $(HAL_DIR)/SprdCamera3Flash.cpp  \
     $(HAL_DIR)/SprdCameraSystemPerformance.cpp \
-    $(HAL_DIR)/multiCamera/SprdCamera3Wrapper.cpp \
-    $(HAL_DIR)/multiCamera/SprdCamera3MultiBase.cpp \
+    hal_common/multiCamera/SprdCamera3Wrapper.cpp \
+    hal_common/multiCamera/SprdCamera3MultiBase.cpp \
     hal1.0/src/SprdCameraParameters.cpp
 
 # for multi-camera
 ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3RangeFinder.cpp
+    hal_common/multiCamera/SprdCamera3RangeFinder.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3RangeFinder.cpp
+    hal_common/multiCamera/SprdCamera3RangeFinder.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3StereoVideo.cpp
+    hal_common/multiCamera/SprdCamera3StereoVideo.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3StereoPreview.cpp
+    hal_common/multiCamera/SprdCamera3StereoPreview.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_STEREOCAPTURE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3Capture.cpp
+    hal_common/multiCamera/SprdCamera3Capture.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3Blur.cpp
+    hal_common/multiCamera/SprdCamera3Blur.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_COVERED_SENSOR_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3PageTurn.cpp  \
-    $(HAL_DIR)/multiCamera/SprdCamera3SelfShot.cpp
+    hal_common/multiCamera/SprdCamera3PageTurn.cpp  \
+    hal_common/multiCamera/SprdCamera3SelfShot.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3RealBokeh.cpp \
-    $(HAL_DIR)/multiCamera/arcsoft/altek/arcsoft_calibration_parser.cpp
+    hal_common/multiCamera/SprdCamera3RealBokeh.cpp \
+    hal_common/multiCamera/arcsoft/altek/arcsoft_calibration_parser.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3SidebySideCamera.cpp
+    hal_common/multiCamera/SprdCamera3SidebySideCamera.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_FACE_UNLOCK_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdCamera3SingleFaceIdRegister.cpp \
-    $(HAL_DIR)/multiCamera/SprdCamera3SingleFaceIdUnlock.cpp
+    hal_common/multiCamera/SprdCamera3SingleFaceIdRegister.cpp \
+    hal_common/multiCamera/SprdCamera3SingleFaceIdUnlock.cpp
 endif
 
 # TBD: just for hal3_2v1 now, will add this for all chips later
 ifeq ($(strip $(HAL_DIR)),hal3_2v1)
 LOCAL_SRC_FILES+= \
-    $(HAL_DIR)/multiCamera/SprdDualCamera3Tuning.cpp
+    hal_common/multiCamera/SprdDualCamera3Tuning.cpp
 endif
 
 endif
@@ -119,6 +119,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/jpeg \
     $(LOCAL_PATH)/common/inc \
     $(LOCAL_PATH)/hal1.0/inc \
+    $(LOCAL_PATH)/$(HAL_DIR)/inc \
     $(LOCAL_PATH)/tool/auto_test/inc \
     $(LOCAL_PATH)/tool/mtrace \
     $(TOP)/external/skia/include/images \
