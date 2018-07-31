@@ -124,6 +124,9 @@ extern SENSOR_INFO_T g_imx258_mipi_raw_info;
 #ifdef IMX351
 extern SENSOR_INFO_T g_imx351_mipi_raw_info;
 #endif
+#ifdef IMX362
+extern SENSOR_INFO_T g_imx362_mipi_raw_info;
+#endif
 
 // cista area
 #ifdef C2390
@@ -215,6 +218,7 @@ extern struct sns_af_drv_entry dw9718s_drv_entry;
 extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
 extern struct sns_af_drv_entry lc898214_drv_entry;
+extern struct sns_af_drv_entry lc898213_drv_entry;
 extern struct sns_af_drv_entry dw9763_drv_entry;
 extern struct sns_af_drv_entry dw9763a_drv_entry;
 extern struct sns_af_drv_entry vcm_zc524_drv_entry;
@@ -320,6 +324,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #endif
 #ifdef IMX351
     {MODULE_SUNNY, "imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, &dual_master_2e_otp_entry},
+#endif
+#ifdef IMX362
+    {MODULE_SUNNY ,"imx362", &g_imx362_mipi_raw_info, {&lc898213_drv_entry, 0}, NULL},
 #endif
 
 // cista area
