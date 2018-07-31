@@ -68,7 +68,7 @@ extern "C" {
 		double wTabEv[4];
 		double wTabData[4][6];	// start, mid, mid2, end, peak, dc
 
-		// BalanceRange
+		// preference
 		double ctShiftBv[4];
 
 		double null_data1[4][2];
@@ -281,33 +281,106 @@ extern "C" {
 		// just for simulation
 		cmr_s32 matrix[9];
 		cmr_u8 gamma[256];
+
+
+		// AI info
+		void* ai_info;
 	};
 
 	struct awb_calc_result {
-		struct awb_rgb_gain awb_gain[10];
+		struct awb_rgb_gain awb_gain[8];
+
+		int r_offset;
+		int g_offset;
+		int b_offset;
+
+		int reserved[9];
 
 		cmr_u8 *log_buffer;
 		cmr_u32 log_size;
 	};
 
-	enum {
-		AWB_IOCTRL_SET_LSCINFO = 1,
-		AWB_IOCTRL_GET_CTTABLE20 = 2,
-		AWB_IOCTRL_CMD_MAX,
+
+#ifdef WIN32
+	// for AI
+	enum ai_scene_type {
+		AI_SCENE_DEFAULT,
+		AI_SCENE_FOOD,
+		AI_SCENE_PORTRAIT,
+		AI_SCENE_FOLIAGE,
+		AI_SCENE_SKY,
+		AI_SCENE_NIGHT,
+		AI_SCENE_BACKLIGHT,
+		AI_SCENE_TEXT,
+		AI_SCENE_SUNRISE,
+		AI_SCENE_BUILDING,
+		AI_SCENE_LANDSCAPE,
+		AI_SCENE_SNOW,
+		AI_SCENE_FIREWORK,
+		AI_SCENE_BEACH,
+		AI_SCENE_PET,
+		AI_SCENE_FLOWER,
+		AI_SCENE_MAX
 	};
 
-	struct awb_lsc_info {
-		/*
-		   value:
-		   index of light
-		   0 dnp
-		   1 a
-		   2 tl84
-		   3 d65
-		   4 cwf
-		 */
-		cmr_u16 value[2];
-		cmr_u16 weight[2];
+	enum ai_task_0 {
+		AI_SCENE_TASK0_INDOOR,
+		AI_SCENE_TASK0_OUTDOOR,
+		AI_SCENE_TASK0_MAX
+	};
+
+	enum ai_task_1 {
+		AI_SCENE_TASK1_NIGHT,
+		AI_SCENE_TASK1_BACKLIGHT,
+		AI_SCENE_TASK1_SUNRISESET,
+		AI_SCENE_TASK1_FIREWORK,
+		AI_SCENE_TASK1_OTHERS,
+		AI_SCENE_TASK1_MAX
+	};
+
+	enum ai_task_2 {
+		AI_SCENE_TASK2_FOOD,
+		AI_SCENE_TASK2_GREENPLANT,
+		AI_SCENE_TASK2_DOCUMENT,
+		AI_SCENE_TASK2_CATDOG,
+		AI_SCENE_TASK2_FLOWER,
+		AI_SCENE_TASK2_BLUESKY,
+		AI_SCENE_TASK2_BUILDING,
+		AI_SCENE_TASK2_SNOW,
+		AI_SCENE_TASK2_OTHERS,
+		AI_SCENE_TASK2_MAX
+	};
+
+	struct ai_task0_result {
+		enum ai_task_0 id;
+		unsigned short score;
+	};
+
+	struct ai_task1_result {
+		enum ai_task_1 id;
+		unsigned short score;
+	};
+
+	struct ai_task2_result {
+		enum ai_task_2 id;
+		unsigned short score;
+	};
+
+	struct ai_scene_detect_info {
+		unsigned int frame_id;
+		enum ai_scene_type cur_scene_id;
+		struct ai_task0_result task0[AI_SCENE_TASK0_MAX];
+		struct ai_task1_result task1[AI_SCENE_TASK1_MAX];
+		struct ai_task2_result task2[AI_SCENE_TASK2_MAX];
+	};
+#endif
+
+
+
+	// for flash
+	enum {
+		AWB_IOCTRL_GET_CTTABLE20 = 2,
+		AWB_IOCTRL_CMD_MAX,
 	};
 
 	struct awb_ct_table {
@@ -315,6 +388,11 @@ extern "C" {
 		float rg[20];
 	};
 
+
+
+
+
+	// for dualcam sync
 	struct awb_stat_sync {
 		cmr_u32 r_info[1024];
 		cmr_u32 g_info[1024];
@@ -341,6 +419,7 @@ extern "C" {
 		struct awb_ctrl_rgb_otp slave_gldn_stat_info;
 		struct awb_ctrl_rgb_otp slave_rdm_stat_info;
 	};
+
 /*------------------------------------------------------------------------------*
 *				Function Prototype					*
 *-------------------------------------------------------------------------------*/
