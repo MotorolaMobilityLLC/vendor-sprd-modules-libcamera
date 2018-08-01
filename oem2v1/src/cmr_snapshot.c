@@ -29,7 +29,6 @@
 
 //#include "isp_otp.h"
 
-#define HW_SIMULATION_SLICE_WIDTH 1280
 #define SNP_MSG_QUEUE_SIZE 50
 #define SNP_INVALIDE_VALUE 0xFFFFFFFF
 #define SENSOR_DEFAULT_PIX_WIDTH 0x0a
@@ -118,6 +117,9 @@ struct snp_jpeg_param {
     struct img_frm dst;
     struct cmr_op_mean mean;
 };
+struct snp_ipm_param {
+    struct img_frm src;
+};
 
 struct snp_exif_param {
     struct img_frm big_pic_stream_src;
@@ -150,6 +152,7 @@ struct snp_channel_param {
     /*jpeg encode param*/
     cmr_u32 thumb_stream_size[CMR_CAPTURE_MEM_SUM];
     struct snp_jpeg_param jpeg_in[CMR_CAPTURE_MEM_SUM];
+    struct snp_ipm_param ipm[CMR_CAPTURE_MEM_SUM];
     struct snp_jpeg_param thumb_in[CMR_CAPTURE_MEM_SUM];
     struct snp_exif_param exif_in[CMR_CAPTURE_MEM_SUM];
     struct snp_exif_out_param exif_out[CMR_CAPTURE_MEM_SUM];
@@ -202,7 +205,7 @@ struct snp_context {
     sem_t scaler_sync_sm;
     sem_t takepic_callback_sem;
     sem_t hdr_sync_sm;
-    sem_t filter_sync_sm;
+    sem_t ipm_sync_sm;
     sem_t redisplay_sm;
     sem_t writer_exif_sm;
     struct snp_cvt_context cvt;
@@ -340,7 +343,7 @@ static cmr_int camera_start_refocus(struct camera_context *cxt,
                                     struct img_frm *src);
 static int32_t snp_img_padding(struct img_frm *src, struct img_frm *dst,
                                struct cmr_op_mean *mean);
-static cmr_int snp_filter_process(cmr_handle snp_handle, void *data);
+static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data);
 
 cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -704,7 +707,9 @@ void snp_post_proc_done(cmr_handle snp_handle) {
     }
 exit:
     CMR_LOGD("post");
-    snp_set_status(snp_handle, IDLE);
+    if (cxt->cap_cnt == 0) {
+        snp_set_status(snp_handle, IDLE);
+    }
     sem_post(&cxt->proc_done_sm);
     CMR_LOGD("done");
 }
@@ -1082,8 +1087,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     }
     camera_take_snapshot_step(CMR_STEP_THUM_ENC_E);
 
-    snp_cxt->thumb_stream_size =
-        (cmr_u32)(out_enc_cb_param.stream_size);
+    snp_cxt->thumb_stream_size = (cmr_u32)(out_enc_cb_param.stream_size);
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 7 || atoi(value) & (1 << 7)) {
@@ -1539,7 +1543,17 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
     }
 
     if (img_fmt == IMG_DATA_TYPE_RAW) {
+#ifndef CONFIG_ISP_2_5
         fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 5 / 4, fp);
+#else
+        uint32_t byte_num_tmp = 0;
+        if (width % 16 != 0)
+            byte_num_tmp =
+                (((width % 16) / 4 + ((width % 16) % 4) / 2) + 1) * 4;
+        fwrite((void *)addr->addr_y, 1,
+               (uint32_t)(((width / 16) * 16 * 5 / 4 + byte_num_tmp) * height),
+               fp);
+#endif
     } else if (img_fmt == IMG_DATA_TYPE_YUV420) {
         fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 3 / 2, fp);
     }
@@ -1555,6 +1569,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     struct snp_channel_param *chn_param_ptr = &snp_cxt->chn_param;
     struct raw_proc_param isp_in_param;
     cmr_u32 index = frm_ptr->frame_id - frm_ptr->base;
+    cmr_s32 size = 0;
 
     if (snp_cxt->ops.raw_proc == NULL) {
         CMR_LOGE("raw_proc is null");
@@ -1593,13 +1608,25 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
             raw_format = 0x04;
         }
+
+#ifndef CONFIG_ISP_2_5
+        size = mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height *
+               raw_pixel_width / 8;
+#else
+        cmr_u32 byte_num_tmp = 0;
+        cmr_u32 width = mem_ptr->cap_raw.size.width;
+        cmr_u32 height = mem_ptr->cap_raw.size.height;
+        if (width % 16 != 0)
+            byte_num_tmp =
+                (((width % 16) / 4 + ((width % 16) % 4) / 2) + 1) * 4;
+        size =
+            ((width / 16) * 16 * raw_pixel_width / 8 + byte_num_tmp) * height;
+#endif
+
         send_capture_data(
             raw_format, /* raw */
             mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-            (char *)mem_ptr->cap_raw.addr_vir.addr_y,
-            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height *
-                raw_pixel_width / 8,
-            0, 0, 0, 0);
+            (char *)mem_ptr->cap_raw.addr_vir.addr_y, size, 0, 0, 0, 0);
 
         char datetime[15] = {0};
         CMR_LOGD("save mipi raw to file");
@@ -2619,7 +2646,7 @@ void snp_local_init(cmr_handle snp_handle) {
     sem_init(&cxt->scaler_sync_sm, 0, 0);
     sem_init(&cxt->redisplay_sm, 0, 0);
     sem_init(&cxt->writer_exif_sm, 0, 0);
-    sem_init(&cxt->filter_sync_sm, 0, 1);
+    sem_init(&cxt->ipm_sync_sm, 0, 1);
 }
 
 void snp_local_deinit(cmr_handle snp_handle) {
@@ -2634,7 +2661,7 @@ void snp_local_deinit(cmr_handle snp_handle) {
     sem_destroy(&cxt->hdr_sync_sm);
     sem_destroy(&cxt->redisplay_sm);
     sem_destroy(&cxt->writer_exif_sm);
-    sem_destroy(&cxt->filter_sync_sm);
+    sem_destroy(&cxt->ipm_sync_sm);
     cxt->is_inited = 0;
 }
 
@@ -2745,6 +2772,29 @@ cmr_int snp_set_hdr_param(cmr_handle snp_handle) {
              (void *)&cxt->chn_param.chn_frm[0],
              sizeof(cxt->chn_param.hdr_src_frm));
 
+    return ret;
+}
+cmr_int snp_set_ipm_param(cmr_handle snp_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct snp_context *cxt = (struct snp_context *)snp_handle;
+    struct snapshot_param *req_param_ptr = &cxt->req_param;
+    struct snp_channel_param *chn_param_ptr = &cxt->chn_param;
+    struct snp_ipm_param *ipm_ptr = &chn_param_ptr->ipm[0];
+    cmr_uint i;
+
+    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
+        ipm_ptr->src = req_param_ptr->post_proc_setting.mem[i].target_yuv;
+        ipm_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+
+        ipm_ptr++;
+    }
+    ipm_ptr = &chn_param_ptr->ipm[0];
+    for (i = 0; i < 1 /*CMR_CAPTURE_MEM_SUM*/; i++) {
+        CMR_LOGD("src addr 0x%lx 0x%lx ", ipm_ptr->src.addr_phy.addr_y,
+                 ipm_ptr->src.addr_phy.addr_u);
+        CMR_LOGD("src size %d %d ", ipm_ptr->src.size.width,
+                 ipm_ptr->src.size.height);
+    }
     return ret;
 }
 
@@ -3545,6 +3595,22 @@ cmr_int snp_update_jpeg_enc_param(cmr_handle snp_handle,
 
     return ret;
 }
+cmr_int snp_update_ipm_param(cmr_handle snp_handle, struct img_frm chn_data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct snp_context *cxt = (struct snp_context *)snp_handle;
+    struct snapshot_param *req_param_ptr = &cxt->req_param;
+    struct snp_channel_param *chn_param_ptr = &cxt->chn_param;
+    struct snp_ipm_param *ipm_ptr = &chn_param_ptr->ipm[0];
+    cmr_uint i;
+
+    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
+        ipm_ptr->src = chn_data;
+        ipm_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+        ipm_ptr++;
+    }
+
+    return ret;
+}
 
 cmr_int snp_update_jpeg_thumb_param(cmr_handle snp_handle,
                                     struct img_frm chn_data) {
@@ -3591,6 +3657,11 @@ cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle,
             goto exit;
         }
         CMR_LOGV("dont need to update other params");
+        goto exit;
+    }
+    ret = snp_update_ipm_param(snp_handle, *img_frame);
+    if (ret) {
+        CMR_LOGE("failed to set ipm param %ld", ret);
         goto exit;
     }
 
@@ -3677,6 +3748,11 @@ cmr_int snp_set_post_proc_param(cmr_handle snp_handle,
     ret = snp_set_hdr_param(snp_handle);
     if (ret) {
         CMR_LOGE("failed to set hdr param %ld", ret);
+        goto exit;
+    }
+    ret = snp_set_ipm_param(snp_handle);
+    if (ret) {
+        CMR_LOGE("failed to set ipm param %ld", ret);
         goto exit;
     }
     snp_get_is_scaling(snp_handle, is_normal_cap);
@@ -3769,9 +3845,13 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
     if (0 == snp_get_request(snp_handle)) {
-        if (IPM_WORKING == snp_get_status(snp_handle)) {
+        cmr_s32 sm_val = 0;
+        sem_getvalue(&cxt->ipm_sync_sm, &sm_val);
+        if ((IPM_WORKING == snp_get_status(snp_handle)) || (sm_val == 0)) {
             if (cxt->req_param.filter_type || cxt->req_param.is_cnr) {
-                sem_wait(&cxt->filter_sync_sm);
+                sem_wait(&cxt->ipm_sync_sm);
+                sem_post(&cxt->ipm_sync_sm);
+                CMR_LOGD("post ipm sm");
             } else {
                 sem_post(&cxt->hdr_sync_sm);
                 CMR_LOGD("post hdr sm");
@@ -4316,44 +4396,31 @@ exit:
     return ret;
 }
 
-static cmr_int snp_filter_process(cmr_handle snp_handle, void *data) {
+static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data) {
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct frm_info *frame = (struct frm_info *)data;
     struct snp_context *snap_cxt = (struct snp_context *)snp_handle;
     struct camera_context *oem_cxt = snap_cxt->oem_handle;
-    struct ipm_context *ipm_cxt = &oem_cxt->ipm_cxt;
-    struct ipm_frame_in ipm_in_param;
-    struct ipm_frame_out imp_out_param;
-    struct img_frm img_frame;
-    CMR_LOGD("E");
-    cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
-    cmr_bzero(&imp_out_param, sizeof(imp_out_param));
+    struct snp_channel_param *chn_param_ptr = &snap_cxt->chn_param;
+    struct frm_info *chn_data_ptr = (struct frm_info *)data;
+    cmr_u32 index = chn_data_ptr->frame_id - chn_data_ptr->base;
 
+    struct img_frm *src = NULL;
+
+    sem_wait(&snap_cxt->ipm_sync_sm);
     snp_set_status(snp_handle, IPM_WORKING);
-    sem_wait(&snap_cxt->filter_sync_sm);
 
-    img_frame.fd = frame->fd;
-    img_frame.size.height =
-        oem_cxt->snp_cxt.post_proc_setting.actual_snp_size.height;
-    img_frame.size.width =
-        oem_cxt->snp_cxt.post_proc_setting.actual_snp_size.width;
-    img_frame.addr_vir.addr_y = frame->yaddr_vir;
-    img_frame.addr_vir.addr_u =
-        frame->yaddr_vir + img_frame.size.height * img_frame.size.width;
+    src = &chn_param_ptr->ipm[index].src;
 
-    ipm_cxt->frm_num++;
-    ipm_in_param.src_frame = img_frame;
-    ipm_in_param.private_data = (void *)oem_cxt;
-    imp_out_param.dst_frame = img_frame;
-    imp_out_param.private_data = (void *)(snap_cxt->req_param.filter_type);
-    ret = ipm_transfer_frame(ipm_cxt->filter_handle, &ipm_in_param,
-                             &imp_out_param);
-    cmr_snapshot_memory_flush(snp_handle, &img_frame);
+    if (snap_cxt->ops.ipm_process) {
+        snap_cxt->ops.ipm_process(oem_cxt, src);
+    } else {
+        CMR_LOGE("err ipm_process is null");
+        ret = -CMR_CAMERA_FAIL;
+    }
 
-    sem_post(&snap_cxt->filter_sync_sm);
+    sem_post(&snap_cxt->ipm_sync_sm);
     snp_set_status(snp_handle, POST_PROCESSING);
-    CMR_LOGD("X.w:%d,h:%d", img_frame.size.width, img_frame.size.height);
     return ret;
 }
 
@@ -4393,9 +4460,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
 
     snp_set_status(snp_handle, POST_PROCESSING);
 
-    if (cxt->req_param.filter_type) {
-        snp_filter_process(snp_handle, data);
-    }
+    snp_ipm_process(snp_handle, data);
     if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
         cxt->req_param.is_pipviv_mode || cxt->req_param.is_3dcalibration_mode ||
         cxt->req_param.is_yuv_callback_mode) {
@@ -5315,6 +5380,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
                 cxt, &(cxt->req_param.post_proc_setting.chn_out_frm[0]));
 #endif
         }
+
         break;
     case SNAPSHOT_EVT_RAW_PROC:
         snp_evt = SNP_EVT_RAW_PROC;

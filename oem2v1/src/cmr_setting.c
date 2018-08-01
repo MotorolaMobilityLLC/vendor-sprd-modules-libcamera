@@ -76,11 +76,15 @@ enum setting_general_type {
     SETTING_GENERAL_SENSOR_ROTATION,
     SETTING_GENERAL_AE_LOCK_UNLOCK,
     SETTING_GENERAL_AWB_LOCK_UNLOCK,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    SETTING_GENERAL_REQ_FRAME_INFO,
+#endif
     SETTING_GENERAL_AE_MODE,
     SETTING_GENERAL_EXPOSURE_TIME,
     SETTING_GENERAL_SENSITIVITY,
     SETTING_GENERAL_AF_BYPASS,
     SETTING_GENERAL_FOCUS_DISTANCE,
+    SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -130,6 +134,7 @@ struct setting_hal_common {
     cmr_uint sensitivity;
     cmr_uint af_bypass;
     cmr_uint focus_distance;
+    cmr_uint is_auto_hdr;
 };
 
 enum zoom_status { ZOOM_IDLE, ZOOM_UPDATING };
@@ -172,7 +177,9 @@ struct setting_hal_param {
     struct camera_position_type position_info;
     cmr_uint is_hdr;
     cmr_uint is_3dnr;
+    cmr_uint is_cnr;
     cmr_uint is_android_zsl;
+    cmr_uint app_mode;
     struct cmr_range_fps_param range_fps;
     cmr_uint is_update_range_fps;
     cmr_uint sprd_zsl_enabled;
@@ -192,6 +199,9 @@ struct setting_hal_param {
     cmr_uint sprd_filter_type;
     cmr_uint sprd_flash_level;
     EXIF_RATIONAL_T ExposureTime;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    cmr_uint request_frame_info;
+#endif
 };
 
 struct setting_camera_info {
@@ -407,6 +417,12 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
     case COM_ISP_SET_EV:
         isp_param->ae_compensation_param = parm->ae_compensation_param;
         break;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    case COM_ISP_SET_REQ_FRAME_INFO:
+        isp_param->req_info = parm->req_info;
+        CMR_LOGD("[PFC] frame_num %u", isp_param->req_info.frame_num);
+        break;
+#endif
     default:
         isp_param->cmd_value = out_param;
         break;
@@ -540,6 +556,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AE_LOCK_UNLOCK, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
          COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        {SETTING_GENERAL_REQ_FRAME_INFO, &hal_param->request_frame_info,
+         COM_ISP_SET_REQ_FRAME_INFO, COM_SN_TYPE_MAX},
+#endif
         {SETTING_GENERAL_AE_MODE, &hal_param->hal_common.ae_mode,
          COM_ISP_SET_AE_MODE_CONTROL, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
@@ -550,6 +570,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AF_BYPASS, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_FOCUS_DISTANCE, &hal_param->hal_common.focus_distance,
          COM_ISP_SET_AF_POS, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
+         COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX},
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -584,6 +606,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
 
     case SETTING_GENERAL_AWB_LOCK_UNLOCK:
     case SETTING_GENERAL_AE_LOCK_UNLOCK:
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    case SETTING_GENERAL_REQ_FRAME_INFO:
+        CMR_LOGD("[PFC] type %d", type);
+#endif
         if (setting_is_rawrgb_format(cpt, parm)) {
             ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         }
@@ -602,13 +628,20 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         type_val = parm->cmd_type_value;
         break;
     }
-
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     if (SETTING_GENERAL_AE_LOCK_UNLOCK == type ||
-        SETTING_GENERAL_AWB_LOCK_UNLOCK == type) {
+        SETTING_GENERAL_AWB_LOCK_UNLOCK == type ||
+        SETTING_GENERAL_REQ_FRAME_INFO == type)
+#else
+    if (SETTING_GENERAL_AE_LOCK_UNLOCK == type ||
+        SETTING_GENERAL_AWB_LOCK_UNLOCK == type)
+#endif
+    {
         goto setting_out;
     }
-
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
     if ((type_val != *item->cmd_type_value) || (cpt->force_set)) {
+#endif
         if (setting_is_active(cpt)) {
             ret = setting_before_set_ctrl(cpt, PARAM_NORMAL);
             if (ret) {
@@ -659,8 +692,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             ret = setting_after_set_ctrl(cpt, &after_cb_param);
         }
         *item->cmd_type_value = type_val;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
     }
-
+#endif
 setting_out:
     return ret;
 }
@@ -1137,11 +1171,13 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
     struct cmr_zoom_param zoom_param;
     struct cmr_zoom_param org_zoom;
     cmr_uint is_changed = 0;
-
-    pthread_mutex_lock(&cpt->status_lock);
-    org_zoom = hal_param->zoom_value;
-    pthread_mutex_unlock(&cpt->status_lock);
-
+    if (parm->zoom_param.update_sync) {
+        org_zoom = hal_param->zoom_value;
+    } else {
+        pthread_mutex_lock(&cpt->status_lock);
+        org_zoom = hal_param->zoom_value;
+        pthread_mutex_unlock(&cpt->status_lock);
+    }
     zoom_param = parm->zoom_param;
     if (zoom_param.mode == ZOOM_LEVEL) {
         if (zoom_param.zoom_level != org_zoom.zoom_level)
@@ -1183,9 +1219,13 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
             }
         }
         /*update zoom unit after processed or not*/
-        pthread_mutex_lock(&cpt->status_lock);
-        hal_param->zoom_value = zoom_param;
-        pthread_mutex_unlock(&cpt->status_lock);
+        if (parm->zoom_param.update_sync) {
+            hal_param->zoom_value = zoom_param;
+        } else {
+            pthread_mutex_lock(&cpt->status_lock);
+            hal_param->zoom_value = zoom_param;
+            pthread_mutex_unlock(&cpt->status_lock);
+        }
     }
 
 setting_out:
@@ -1196,7 +1236,6 @@ static cmr_int setting_zoom_push(struct setting_component *cpt,
                                  struct setting_cmd_parameter *parm) {
     CMR_MSG_INIT(message);
     cmr_int ret = 0;
-
     pthread_mutex_lock(&cpt->ctrl_lock);
     cpt->zoom_unit.is_changed = 1;
     cpt->zoom_unit.in_zoom = *parm;
@@ -1207,7 +1246,6 @@ static cmr_int setting_zoom_push(struct setting_component *cpt,
         cpt->zoom_unit.is_sended_msg = 1;
     }
     pthread_mutex_unlock(&cpt->ctrl_lock);
-
     return ret;
 }
 
@@ -1215,10 +1253,19 @@ static cmr_int setting_set_zoom_param(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
 
+    CMR_LOGV("parm->zoom_param.update_sync:%d,  zoom ratio:%f, prev ratio:%f, "
+             "cap ratio:%f",
+             parm->zoom_param.update_sync,
+             parm->zoom_param.zoom_info.zoom_ratio,
+             parm->zoom_param.zoom_info.prev_aspect_ratio,
+             parm->zoom_param.zoom_info.capture_aspect_ratio);
     pthread_mutex_lock(&cpt->status_lock);
-    ret = setting_zoom_push(cpt, parm);
+    if (parm->zoom_param.update_sync) {
+        ret = setting_process_zoom(cpt, parm);
+    } else {
+        ret = setting_zoom_push(cpt, parm);
+    }
     pthread_mutex_unlock(&cpt->status_lock);
-
     return ret;
 }
 
@@ -2072,6 +2119,27 @@ static cmr_int setting_set_3dnr_enable(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_appmode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->app_mode = parm->cmd_type_value;
+
+    CMR_LOGD("setting_set_appmode=%ld", hal_param->app_mode);
+    return ret;
+}
+static cmr_int setting_set_cnrmode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->is_cnr = parm->cmd_type_value;
+
+    CMR_LOGD("setting_set_cnrmode=%ld", hal_param->is_cnr);
+    return ret;
+}
+
 static cmr_int setting_set_flash_level(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2265,6 +2333,17 @@ setting_set_exif_exposure_time(struct setting_component *cpt,
 
     return ret;
 }
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+static cmr_int
+setting_set_request_frame_info(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGD("[PFC] call SETTING_GENERAL_REQ_FRAME_INFO");
+    ret = setting_set_general(cpt, SETTING_GENERAL_REQ_FRAME_INFO, parm);
+    return ret;
+}
+#endif
 
 static cmr_int setting_get_touch_info(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
@@ -2535,6 +2614,17 @@ static cmr_int setting_set_focus_distance(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
+                                    struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set auto hdr %ld", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_HDR, parm);
+
+    return ret;
+}
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -2545,7 +2635,6 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     cmr_uint invalid_word = 0;
 
     cpt->force_set = 1;
-
     memset(&invalid_word, INVALID_SETTING_BYTE, sizeof(cmr_uint));
     cmd_param = *parm;
     if (invalid_word != hal_param->hal_common.brightness) {
@@ -2646,6 +2735,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
+    if (invalid_word != hal_param->hal_common.is_auto_hdr) {
+        cmd_param.cmd_type_value = hal_param->hal_common.is_auto_hdr;
+        ret = setting_set_auto_hdr(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
     if (invalid_word != hal_param->hal_common.frame_rate) {
         setting_get_video_mode(cpt, parm);
         hal_param->hal_common.video_mode = parm->preview_fps_param.video_mode;
@@ -2655,6 +2750,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         cmd_param.preview_fps_param.video_mode =
             hal_param->hal_common.video_mode;
         ret = setting_set_video_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.scene_mode) {
+        cmd_param.cmd_type_value = hal_param->hal_common.scene_mode;
+        ret = setting_set_scene_mode(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
@@ -2708,6 +2809,25 @@ static cmr_int setting_get_3dnr(struct setting_component *cpt,
     parm->cmd_type_value = hal_param->is_3dnr;
     CMR_LOGD("get 3dnr %ld", parm->cmd_type_value);
 
+    return ret;
+}
+static cmr_int setting_get_appmode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->app_mode;
+    CMR_LOGD("get appmode %ld", parm->cmd_type_value);
+
+    return ret;
+}
+static cmr_int setting_get_cnrmode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->cmd_type_value = hal_param->is_cnr;
+
+    CMR_LOGD("get cnrmode %ld", parm->cmd_type_value);
     return ret;
 }
 
@@ -3637,7 +3757,6 @@ static cmr_int cmr_setting_parms_init() {
 
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                              setting_set_yuv_callback_enable);
-
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_REPROCESS,
                              setting_set_reprocess);
 
@@ -3646,6 +3765,9 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_REGION, setting_set_ae_region);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_HDR_PLUS_ENABLED,
                              setting_set_sprd_hdr_plus_enable);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SET_APPMODE,
+                             setting_set_appmode);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_CNR, setting_set_cnrmode);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_ENABLED,
                              setting_set_3dnr_enable);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ADJUST_FLASH_LEVEL,
@@ -3733,9 +3855,15 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_CLEAR_HDR, setting_clear_hdr);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_HDR_NORMAL_ENABLED,
                              setting_get_sprd_hdr_plus_enable);
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_REQ_FRAME_INFO,
+                             setting_set_request_frame_info);
+#endif
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
                              setting_set_exif_mime_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_3DNR, setting_get_3dnr);
+    cmr_add_cmd_fun_to_table(SETTING_GET_APPMODE, setting_get_appmode);
+    cmr_add_cmd_fun_to_table(SETTING_GET_CNRMODE, setting_get_cnrmode);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_FILTER_TYPE,
                              setting_set_sprd_filter_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,
@@ -3747,6 +3875,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AF_BYPASS, setting_set_af_bypass);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_LENS_FOCUS_DISTANCE,
                              setting_set_focus_distance);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+                             setting_set_auto_hdr);
     setting_parms_inited = 1;
     return 0;
 }

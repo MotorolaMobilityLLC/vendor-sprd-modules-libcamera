@@ -470,7 +470,7 @@ cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -484,7 +484,7 @@ cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
         CMR_LOGE("X send msg failed!");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGD("X ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -687,7 +687,7 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
     struct cmr_sns_ioctl_param ioctl_param;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -714,7 +714,7 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGD("X ret %ld", ret);
     return ret;
 }
 

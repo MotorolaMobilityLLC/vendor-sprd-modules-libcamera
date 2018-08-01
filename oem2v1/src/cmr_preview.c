@@ -4039,18 +4039,6 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         }
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.is_3dnr == 1) {
-            struct sprd_img_3dnr_param stream_info;
-            stream_info.w = 0;
-            stream_info.h = 0;
-            stream_info.is_3dnr = 0;
-            CMR_LOGD("sw_3dnr_info_cfg, %d, %d, %d", stream_info.w,
-                     stream_info.h, stream_info.is_3dnr);
-            ret =
-                handle->ops.sw_3dnr_info_cfg(handle->oem_handle, &stream_info);
-            if (ret) {
-                CMR_LOGE("sw 3dnr info cfg failed, ret %ld", ret);
-            }
-
             prev_3dnr_close(handle, camera_id);
         }
         /*stop ai scene*/
@@ -4324,7 +4312,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
     buffer->base_id = CMR_PREV_ID_BASE;
-    buffer->count = prev_cxt->prev_mem_valid_num;
+    buffer->count = 0;
     buffer->length = frame_size;
     buffer->flag = BUF_FLAG_INIT;
 
@@ -4342,7 +4330,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->prev_frm[i].fmt = prev_cxt->prev_param.preview_fmt;
         prev_cxt->prev_frm[i].size.width = prev_cxt->actual_prev_size.width;
         prev_cxt->prev_frm[i].size.height = prev_cxt->actual_prev_size.height;
-
+        buffer->count++;
         buffer->addr[i].addr_y = prev_cxt->prev_frm[i].addr_phy.addr_y;
         buffer->addr[i].addr_u = prev_cxt->prev_frm[i].addr_phy.addr_u;
         buffer->addr_vir[i].addr_y = prev_cxt->prev_frm[i].addr_vir.addr_y;
@@ -4387,7 +4375,25 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->prev_rot_frm[i].size.height =
                 prev_cxt->actual_prev_size.height;
         }
+        if (is_restart && IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
+            buffer->count = 0;
+            for (i = 0; i < PREV_ROT_FRM_ALLOC_CNT; i++) {
+                if (1 == *(&prev_cxt->prev_rot_frm_is_lock[0] + i)) {
+                    buffer->addr[buffer->count].addr_y =
+                        prev_cxt->prev_rot_frm[i].addr_phy.addr_y;
+                    buffer->addr[buffer->count].addr_u =
+                        prev_cxt->prev_rot_frm[i].addr_phy.addr_u;
+                    buffer->addr_vir[buffer->count].addr_y =
+                        prev_cxt->prev_rot_frm[i].addr_vir.addr_y;
+                    buffer->addr_vir[buffer->count].addr_u =
+                        prev_cxt->prev_rot_frm[i].addr_vir.addr_u;
+                    buffer->fd[buffer->count] = prev_cxt->prev_rot_frm[i].fd;
+                    buffer->count++;
+                }
+            }
+        }
     }
+
     CMR_LOGD("out %ld", ret);
     ATRACE_END();
     return ret;
@@ -4636,6 +4642,23 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->actual_video_size.width;
             prev_cxt->video_rot_frm[i].size.height =
                 prev_cxt->actual_video_size.height;
+        }
+        if (is_restart && IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
+            buffer->count = 0;
+            for (i = 0; i < PREV_ROT_FRM_ALLOC_CNT; i++) {
+                if (1 == *(&prev_cxt->video_rot_frm_is_lock[0] + i)) {
+                    buffer->addr[buffer->count].addr_y =
+                        prev_cxt->video_rot_frm[i].addr_phy.addr_y;
+                    buffer->addr[buffer->count].addr_u =
+                        prev_cxt->video_rot_frm[i].addr_phy.addr_u;
+                    buffer->addr_vir[buffer->count].addr_y =
+                        prev_cxt->video_rot_frm[i].addr_vir.addr_y;
+                    buffer->addr_vir[buffer->count].addr_u =
+                        prev_cxt->video_rot_frm[i].addr_vir.addr_u;
+                    buffer->fd[buffer->count] = prev_cxt->video_rot_frm[i].fd;
+                    buffer->count++;
+                }
+            }
         }
     }
     CMR_LOGD("out %ld", ret);
@@ -5562,13 +5585,11 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
             }
         }
     }
-
     frame_size = prev_cxt->cap_zsl_mem_size;
     prev_num = prev_cxt->cap_zsl_mem_num;
     if (prev_cxt->prev_param.cap_rot) {
         prev_num = prev_cxt->cap_zsl_mem_num - PREV_ROT_FRM_CNT;
     }
-
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
     buffer->base_id = CMR_CAP1_ID_BASE;
@@ -5630,6 +5651,23 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->cap_zsl_rot_frm[i].fmt = prev_cxt->cap_org_fmt;
             prev_cxt->cap_zsl_rot_frm[i].size.width = width;
             prev_cxt->cap_zsl_rot_frm[i].size.height = height;
+        }
+        if (is_restart && IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
+            buffer->count = 0;
+            for (i = 0; i < ZSL_ROT_FRM_CNT; i++) {
+                if (1 == *(&prev_cxt->cap_zsl_rot_frm_is_lock[0] + i)) {
+                    buffer->addr[buffer->count].addr_y =
+                        prev_cxt->cap_zsl_rot_frm[i].addr_phy.addr_y;
+                    buffer->addr[buffer->count].addr_u =
+                        prev_cxt->cap_zsl_rot_frm[i].addr_phy.addr_u;
+                    buffer->addr_vir[buffer->count].addr_y =
+                        prev_cxt->cap_zsl_rot_frm[i].addr_vir.addr_y;
+                    buffer->addr_vir[buffer->count].addr_u =
+                        prev_cxt->cap_zsl_rot_frm[i].addr_vir.addr_u;
+                    buffer->fd[buffer->count] = prev_cxt->cap_zsl_rot_frm[i].fd;
+                    buffer->count++;
+                }
+            }
         }
     }
 
@@ -7416,9 +7454,10 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     sensor_info = &prev_cxt->sensor_info;
     sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
-
-    cmr_bzero(prev_cxt->prev_rot_frm_is_lock,
-              PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+    if (!is_restart) {
+        cmr_bzero(prev_cxt->prev_rot_frm_is_lock,
+                  PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+    }
     prev_cxt->prev_rot_index = 0;
     prev_cxt->prev_frm_cnt = 0;
     prev_cxt->prev_preflash_skip_en = 0;
@@ -7897,9 +7936,10 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     sensor_info = &prev_cxt->sensor_info;
     sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
-
-    cmr_bzero(prev_cxt->video_rot_frm_is_lock,
-              PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+    if (!is_restart) {
+        cmr_bzero(prev_cxt->video_rot_frm_is_lock,
+                  PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+    }
     prev_cxt->video_rot_index = 0;
     prev_cxt->video_frm_cnt = 0;
     prev_cxt->prev_skip_num = sensor_info->preview_skip_num;
@@ -8298,8 +8338,9 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
                 VIDEO_SNAPSHOT_VIDEO) {
                 CMR_LOGD("enable zsl for non video snapshot mode");
                 is_capture_zsl = 1;
-                cmr_bzero(prev_cxt->cap_zsl_rot_frm_is_lock,
-                          ZSL_ROT_FRM_CNT * sizeof(cmr_uint));
+                if (!is_restart)
+                    cmr_bzero(prev_cxt->cap_zsl_rot_frm_is_lock,
+                              ZSL_ROT_FRM_CNT * sizeof(cmr_uint));
             }
         } else {
             CMR_LOGE("wrong cap param!");
