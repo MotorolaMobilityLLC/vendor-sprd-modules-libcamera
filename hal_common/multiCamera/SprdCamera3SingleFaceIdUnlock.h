@@ -124,17 +124,16 @@ class SprdCamera3SingleFaceIdUnlock : SprdCamera3MultiBase {
     cmr_s32 mPreviewWidth;
     cmr_s32 mPreviewHeight;
     cmr_s64 mUnlockPhyaddr;
-    bool mIommuEnabled;
     bool mFlushing;
     Mutex mLock;
     Mutex mNotifyLockMain;
     Mutex mRequestLock;
     Mutex mResultLock;
     List<single_faceid_unlock_saved_request_t> mSavedRequestList;
-    List<camera3_notify_msg_t> mNotifyListMain;
     List<single_faceid_unlock_alloc_mem_t> mPhyAddrBufferList;
     List<buffer_handle_t *> mCreateBufferList;
-    single_faceid_unlock_alloc_mem_t mLocalBuffer[SINGLE_FACEID_UNLOCK_BUFFER_SUM];
+    single_faceid_unlock_alloc_mem_t
+        mLocalBuffer[SINGLE_FACEID_UNLOCK_BUFFER_SUM];
     camera3_stream_t *mSavedReqStreams[SINGLE_FACEID_UNLOCK_MAX_STREAMS];
     camera3_stream_t mUnlockStreams[SINGLE_FACEID_UNLOCK_MAX_STREAMS];
 

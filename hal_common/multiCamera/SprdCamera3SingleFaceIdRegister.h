@@ -125,17 +125,16 @@ class SprdCamera3SingleFaceIdRegister : SprdCamera3MultiBase {
     cmr_s32 mPreviewWidth;
     cmr_s32 mPreviewHeight;
     cmr_s64 mRegisterPhyaddr;
-    bool mIommuEnabled;
     bool mFlushing;
     Mutex mLock;
     Mutex mNotifyLockMain;
     Mutex mRequestLock;
     Mutex mResultLock;
     List<single_faceid_register_saved_request_t> mSavedRequestList;
-    List<camera3_notify_msg_t> mNotifyListMain;
     List<single_faceid_register_alloc_mem_t> mPhyAddrBufferList;
     List<buffer_handle_t *> mCreateBufferList;
-    single_faceid_register_alloc_mem_t mLocalBuffer[SINGLE_FACEID_REGISTER_BUFFER_SUM];
+    single_faceid_register_alloc_mem_t
+        mLocalBuffer[SINGLE_FACEID_REGISTER_BUFFER_SUM];
     camera3_stream_t *mSavedReqStreams[SINGLE_FACEID_REGISTER_MAX_STREAMS];
     camera3_stream_t mRegisterStreams[SINGLE_FACEID_REGISTER_MAX_STREAMS];
 
