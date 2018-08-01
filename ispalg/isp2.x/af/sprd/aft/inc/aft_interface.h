@@ -73,7 +73,9 @@ enum aft_cmd {
 
 	AFT_CMD_GET_BASE = 0x2000,
 	AFT_CMD_GET_FV_STATS_CFG = 0X2001,
-	AFT_CMD_GET_AE_SKIP_INFO = 0X2002
+	AFT_CMD_GET_AE_SKIP_INFO = 0X2002,
+	AFT_CMD_GET_PD_WORKABLE = 0X2003,
+	AFT_CMD_GET_SAF_TRIGGERABLE = 0x2004
 };
 
 enum aft_calc_data_type {
@@ -106,9 +108,14 @@ enum aft_trigger_type {
 	AFT_TRIG_MAX
 };
 
-struct aft_tuning_block_param {
-	cmr_u8 *data;
-	cmr_u32 data_len;
+enum aft_cancel_type {
+	AFT_CANC_NONE = 0x00,
+	AFT_CANC_CB,
+	AFT_CANC_PD,
+	AFT_CANC_FD,
+	AFT_CANC_TOF,
+	AFT_CANC_FD_GONE,
+	AFT_CANC_MAX
 };
 
 struct aft_af_win_rect {
@@ -154,8 +161,8 @@ struct aft_ae_info {
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
-	cmr_u32 face_stable;
 	cmr_u32 flag4idx;
+	cmr_u32 face_stable;
 	cmr_u32 bv;
 	cmr_u32 y_sum;
 	cmr_u32 cur_scene;
@@ -261,30 +268,37 @@ struct aft_ae_skip_info {
 	cmr_u32 ae_skip_line;
 };
 
-typedef struct aft_ctrl_ops {
+struct aft_tuning_block_param {
+	cmr_u8 *data;
+	cmr_u32 data_len;
+};
+
+struct aft_ctrl_ops {
 	cmr_u8(*get_sys_time) (cmr_u64 * p_time, void *cookie);
 	cmr_u8(*binfile_is_exist) (cmr_u8 * is_exist, void *cookie);
 	cmr_u8(*is_aft_mlog) (cmr_u32 * is_mlog, void *cookie);
 	cmr_u8(*aft_log) (cmr_u32 log_level, const char *format, ...);
 	void *aft_cookie;
-} aft_ctrl_ops_t;
+};
 
-typedef void *aft_sub_handle_t;
-
-typedef struct aft_context {
-	aft_sub_handle_t aft_sub_handle;
-	cmr_u32 aft_dump_info_len;
-	cmr_u32 tuning_param_len;
+struct aft_init_in {
+	struct aft_tuning_block_param tuning;
+	struct aft_ctrl_ops aft_ops;
 	cmr_u32 is_multi_mode;
-	cmr_u32 af_mode;
-	struct aft_ae_info ae_info;
-	aft_ctrl_ops_t aft_ops;
-} aft_proc_handle_t;
+};
 
-cmr_s32 caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t * handle);
-cmr_s32 caf_trigger_deinit(aft_proc_handle_t * handle);
-cmr_s32 caf_trigger_calculation(aft_proc_handle_t * handle, struct aft_proc_calc_param *aft_calc_in, struct aft_proc_result *aft_calc_result);
-cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t * handle, enum aft_cmd cmd, void *param0, void *param1);
+struct aft_init_out {
+	void *aft_dump_ptr;
+	cmr_u32 aft_dump_len;
+	cmr_u32 tuning_param_len;
+};
+
+typedef void *aft_proc_handle_t;
+
+cmr_s32 caf_trigger_init(struct aft_init_in *init_in, struct aft_init_out *init_out, aft_proc_handle_t * handle);
+cmr_s32 caf_trigger_deinit(aft_proc_handle_t handle);
+cmr_s32 caf_trigger_calculation(aft_proc_handle_t handle, struct aft_proc_calc_param *aft_calc_in, struct aft_proc_result *aft_calc_result);
+cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t handle, enum aft_cmd cmd, void *param0, void *param1);
 
 #ifdef	 __cplusplus
 // }

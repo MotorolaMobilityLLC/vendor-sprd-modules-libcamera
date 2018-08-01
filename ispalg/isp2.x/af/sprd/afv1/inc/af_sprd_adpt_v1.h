@@ -19,11 +19,8 @@
 #include <utils/Timers.h>
 #include <cutils/properties.h>
 
-#include "AFv1_Common.h"
-#include "AFv1_Interface.h"
-// #include "AFv1_Tune.h"
-
 #include "aft_interface.h"
+#include "AFv1_Interface.h"
 
 #define AF_SYS_VERSION "-20171130-00"
 #define AF_SAVE_MLOG_STR "persist.vendor.cam.isp.af.mlog"	/*save/no */
@@ -148,13 +145,14 @@ typedef struct _af_lib_ops {
 // caf trigger
 typedef struct _caf_trigger_ops {
 	aft_proc_handle_t handle;
+	struct aft_init_out init_out;
 	struct aft_ae_skip_info ae_skip_info;
 
-	 cmr_s32(*init) (struct aft_tuning_block_param * init_param, aft_proc_handle_t * handle);
-	 cmr_s32(*deinit) (aft_proc_handle_t * handle);
+	 cmr_s32(*init) (struct aft_init_in *init_in, struct aft_init_out *init_out, aft_proc_handle_t * handle);
+	 cmr_s32(*deinit) (aft_proc_handle_t handle);
 
-	 cmr_s32(*calc) (aft_proc_handle_t * handle, struct aft_proc_calc_param * alg_calc_in, struct aft_proc_result * alg_calc_result);
-	 cmr_s32(*ioctrl) (aft_proc_handle_t * handle, enum aft_cmd cmd, void *param0, void *param1);
+	 cmr_s32(*calc) (aft_proc_handle_t handle, struct aft_proc_calc_param * alg_calc_in, struct aft_proc_result * alg_calc_result);
+	 cmr_s32(*ioctrl) (aft_proc_handle_t handle, enum aft_cmd cmd, void *param0, void *param1);
 } caf_trigger_ops_t;
 
 #define CAF_TRIGGER_LIB "libspcaftrigger.so"
@@ -300,6 +298,7 @@ typedef struct _af_ctrl {
 	AF_adpt_face_win face_trigger_area;
 
 	struct afctrl_cb_ops cb_ops;
+	struct aft_face_info fd_info_temp;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
