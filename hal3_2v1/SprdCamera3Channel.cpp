@@ -750,8 +750,13 @@ SprdCamera3MetadataChannel::SprdCamera3MetadataChannel(
 SprdCamera3MetadataChannel::~SprdCamera3MetadataChannel() {}
 
 int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata) {
-    mSetting->updateWorkParameters(metadata);
-    return 0;
+    bool isSettingChange = 0;
+    int settingChangeCount = mSetting->updateWorkParameters(metadata);
+
+    if (settingChangeCount)
+        isSettingChange = 1;
+
+    return isSettingChange;
 }
 
 int SprdCamera3MetadataChannel::channelCbRoutine(

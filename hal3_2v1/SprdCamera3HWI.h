@@ -141,6 +141,7 @@ class SprdCamera3HWI {
         meta_info_t meta_info;
         camera3_stream_buffer_t *input_buffer;
         int32_t receive_req_max;
+        bool isManual;
     } PendingRequestInfo;
 
     int timer_stop();
@@ -163,6 +164,7 @@ class SprdCamera3HWI {
     List<PendingRequestInfo> mPendingRequestsList;
     List<PendingRequestInfo> mSkipFrmRequestsBakList;
     int mPendingRequest;
+    int mManualReqMax;
     int mDeqBufNum;
     int mRecSkipNum; /*coming bigger frame number*/
     int32_t mCurrentRequestId;
@@ -183,7 +185,8 @@ class SprdCamera3HWI {
     SprdCamera3RegularChannel *mRegularChan;
     bool mFirstRegularRequest;
     // int32_t		mRegularWaitBuffNum;
-
+    bool mFirstManualRequest;
+    bool mManualRequest;
     SprdCamera3PicChannel *mPicChan;
     bool mPictureRequest;
     uint8_t mBurstCapCnt;
