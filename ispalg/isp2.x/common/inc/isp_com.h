@@ -66,6 +66,13 @@ extern "C" {
 		cmr_u32 usec;
 	};
 
+	struct isp_hist_statistic_info {
+		cmr_u32 value[256];
+		cmr_s32 frame_id;
+		cmr_u32 sec;
+		cmr_u32 usec;
+	};
+
 	struct isp_system {
 		isp_handle caller_id;
 		proc_callback callback;

@@ -59,6 +59,8 @@ extern "C" {
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 		cmr_u32 bakup_rgb_gain;
+		struct ae_param ae_sync_param;
+		cmr_s16 bv_thd;
 	};
 
 	struct ae_init_out {
@@ -78,6 +80,7 @@ extern "C" {
 		};
 		cmr_u32 *yiq_stat_img;
 		struct ae_binning_stats_info binning_stat_info;
+		struct isp_hist_statistic_info hist_stats;
 		cmr_u32 awb_gain_r;
 		cmr_u32 awb_gain_g;
 		cmr_u32 awb_gain_b;

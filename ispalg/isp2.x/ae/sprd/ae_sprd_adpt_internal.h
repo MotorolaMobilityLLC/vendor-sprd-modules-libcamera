@@ -42,6 +42,7 @@ extern "C" {
 		cmr_u32 isp_gain;
 		cmr_s32 target_offset;
 		cmr_s32 bv;
+		cmr_u32 table_idx;
 	};
 
 	struct ae_sensor_exp_data {
@@ -87,6 +88,11 @@ extern "C" {
 		cmr_u16 ae_step_idx;
 		cmr_s16 ae_change_value;
 		cmr_u8 ae_compensation_flag;
+	};
+
+	struct hdr_calc_result {
+		float ev[2];
+		cmr_s8 auto_hdr_enable;
 	};
 
 /**************************************************************************/
@@ -281,6 +287,9 @@ extern "C" {
 		cmr_s16 hdr_up;
 		cmr_s16 hdr_down;
 		cmr_s16 hdr_base_ae_idx;
+		cmr_u8 hdr_version;
+		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
+		struct hdr_calc_result hdr_calc_result;
 		/*
 		 *dual flash simulation
 		 */
@@ -305,11 +314,15 @@ extern "C" {
 #endif
 		cmr_u32 end_id;
 		/*
-		 * for binning facter = 2 
+		 * for binning facter = 2
 		 */
 		cmr_s32 binning_factor_before;
 		cmr_s32 binning_factor_after;
 		struct ae_exposure_compensation exposure_compensation;
+		struct ae_sync_para ae_sync_param;
+		cmr_u32 slw_prev_skip_num;
+
+		cmr_u32 glb_gain;
 	};
 
 #endif

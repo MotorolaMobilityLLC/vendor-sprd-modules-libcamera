@@ -65,6 +65,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/flash/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ae/sprd/hdr/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/atm/sprd/inc\
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/alc_awb/inc \
@@ -109,7 +110,7 @@ LOCAL_SHARED_LIBRARIES += libcamsensor
 
 LOCAL_SHARED_LIBRARIES += libdeflicker
 
-LOCAL_SHARED_LIBRARIES += libae libflash
+LOCAL_SHARED_LIBRARIES += libae libflash libhdr
 LOCAL_SHARED_LIBRARIES += libawb1
 LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc
 LOCAL_SHARED_LIBRARIES += libatm

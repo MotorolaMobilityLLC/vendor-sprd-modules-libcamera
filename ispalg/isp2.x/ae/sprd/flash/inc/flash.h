@@ -26,8 +26,8 @@ extern "C" {
 typedef  unsigned char uint8;
 typedef  short int16;
 typedef  unsigned short uint16;
-//typedef unsigned long uint32;
-#define uint32 unsigned int
+typedef unsigned int uint32;
+//#define uint32 unsigned int
 #else
 typedef  unsigned char uint8;
 typedef  unsigned short uint16;
@@ -36,7 +36,18 @@ typedef  unsigned int uint32;
 typedef  signed char int8;
 typedef  signed short int16;
 typedef  signed int int32;
+
+#ifndef TRUE
+#define TRUE 1
 #endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#endif
+
+
 
 typedef void* flash_handle;
 
