@@ -108,6 +108,10 @@ ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3OpticsZoom.cpp
 endif
+ifeq ($(strip $(TARGET_BOARD_3DFACE_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+    hal_common/multiCamera/SprdCamera33dFace.cpp
+endif
 endif
 
 LOCAL_SRC_FILES += \
@@ -166,6 +170,7 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/eis/inc
+
 endif
 
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)

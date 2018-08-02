@@ -73,6 +73,10 @@
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
 #include "SprdCamera3OpticsZoom.h"
 #endif
+#ifdef CONFIG_3DFACE_SUPPORT
+#include "SprdCamera33dFace.h"
+#endif
+
 namespace sprdcamera {
 
 class SprdCamera3Wrapper {
@@ -120,6 +124,9 @@ class SprdCamera3Wrapper {
     static int mPhysicalSensorNum;
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     SprdCamera3Multi *mZoom;
+#endif
+#ifdef CONFIG_3DFACE_SUPPORT
+    SprdCamera3Multi *m3dFace;
 #endif
 };
 };

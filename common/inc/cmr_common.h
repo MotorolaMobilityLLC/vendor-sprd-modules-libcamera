@@ -506,6 +506,12 @@ struct snp_thumb_yuv_param {
     struct img_frm dst_img;
 };
 
+struct rotate_param {
+    int angle;
+    struct img_frm src_img;
+    struct img_frm dst_img;
+};
+
 struct enc_exif_param {
     struct img_frm src;      // yuv
     struct img_frm pic_enc;  // yuv -> encoded
@@ -1513,6 +1519,7 @@ typedef enum {
     MODE_DUAL_FACEID_REGISTER,
     MODE_DUAL_FACEID_UNLOCK,
     MODE_TUNING,
+    MODE_3D_FACE,
     MODE_CAMERA_MAX
 } multiCameraMode;
 
@@ -1536,6 +1543,7 @@ typedef enum {
     SPRD_SINGLE_FACEID_UNLOCK_ID,
     SPRD_DUAL_FACEID_REGISTER_ID,
     SPRD_DUAL_FACEID_UNLOCK_ID,
+    SPRD_3D_FACE_ID,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
@@ -1600,6 +1608,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_IOMMU_AVAILABLE,
     CAMERA_IOCTRL_START_SCALE,
     CAMERA_IOCTRL_CB_FACE_DETECT,
+    CAMERA_IOCTRL_ROTATE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

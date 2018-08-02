@@ -374,6 +374,7 @@ typedef enum {
     CAMERA_DATA_FORMAT_YUV422 = 0,
     CAMERA_DATA_FORMAT_YUV420,
     CAMERA_DATA_FORMAT_RGB,
+    CAMERA_DATA_FORMAT_RAW = 6,
 } camera_data_format_type_t;
 
 typedef enum {

@@ -524,6 +524,8 @@ camera_get_isp_per_frame_result(cmr_handle oem_handle,
 /*to enable face detect for callback stream*/
 cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
                                          cmr_u16 is_enable);
+cmr_int camera_local_start_rotate(cmr_handle oem_handle,
+                                  struct rotate_param *rotate_param);
 
 #ifdef __cplusplus
 }

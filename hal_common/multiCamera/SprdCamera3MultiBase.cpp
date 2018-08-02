@@ -44,9 +44,9 @@ namespace sprdcamera {
 #ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
 #define MATCH_FRAME_TIME_DIFF (40)
 #else
-#define MATCH_FRAME_TIME_DIFF (60) /*30*/
+#define MATCH_FRAME_TIME_DIFF (60) //(60) /*30*/
 #endif
-
+#define MATCH_3dFACE_FRAME_TIME_DIFF (1000)
 #define LUMA_SOOMTH_COEFF (5)
 #define DARK_LIGHT_TH (3000)
 #define LOW_LIGHT_TH (1500)
@@ -63,7 +63,8 @@ namespace sprdcamera {
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(false), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
-      mBrightConut(0), mLowConut(0), mDarkConut(0), mHwi(NULL) {
+      mBrightConut(0), mLowConut(0), mDarkConut(0), mMatchTimeThreshold(MATCH_FRAME_TIME_DIFF),
+      mHwi(NULL) {
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
     mReqState = PREVIEW_REQUEST_STATE;
@@ -89,6 +90,10 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
         mHwi->camera_ioctrl(CAMERA_IOCTRL_GET_IOMMU_AVAILABLE, &mIommuEnabled,
                             NULL);
     }
+    if(mode == MODE_3D_FACE)
+        mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
+    else
+        mMatchTimeThreshold = MATCH_FRAME_TIME_DIFF;
 
     return rc;
 }
@@ -757,7 +762,7 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
         while (itor2 != list.end()) {
             int64_t diff =
                 (int64_t)result1.timestamp - (int64_t)itor2->timestamp;
-            if (ns2ms(abs((cmr_s32)diff)) < MATCH_FRAME_TIME_DIFF) {
+            if (ns2ms(abs((cmr_s32)diff)) < mMatchTimeThreshold) {
                 *result2 = *itor2;
                 list.erase(itor2);
                 HAL_LOGV("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
@@ -1150,6 +1155,55 @@ bool SprdCamera3MultiBase::NV21Rotate180(uint8_t *a_ucDstBuf,
     return true;
 }
 
+bool SprdCamera3MultiBase::Raw8Rotate(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
+                                      uint16_t a_uwSrcWidth,
+                                      uint16_t a_uwSrcHeight, uint8_t angle) {
+    if (a_ucDstBuf == NULL || a_ucSrcBuf == NULL) {
+        HAL_LOGE("addr is null");
+        return false;
+    }
+
+    int i, j, k, pos;
+    uint8_t *dst = a_ucDstBuf;
+    uint8_t *src = a_ucSrcBuf;
+    int wh = a_uwSrcWidth * a_uwSrcHeight;
+    i = j = k = pos = 0;
+    HAL_LOGD("ratate %d", angle);
+    switch (angle) {
+    case IMG_ANGLE_0:
+        memcpy(dst, src, wh);
+        break;
+    case IMG_ANGLE_90:
+        for (i = 0; i < a_uwSrcWidth; i++) {
+            pos = wh;
+            for (j = a_uwSrcHeight - 1; j >= 0; j--) {
+                pos -= a_uwSrcWidth;
+                dst[k++] = src[pos + i];
+            }
+        }
+        break;
+    case IMG_ANGLE_180:
+        for (i = 0; i < wh; i++) {
+            dst[i] = src[wh - 1 - i];
+        }
+        break;
+    case IMG_ANGLE_270:
+        for (i = 0; i < a_uwSrcWidth; i++) {
+            pos = a_uwSrcWidth - 1;
+            for (j = 0; j < a_uwSrcHeight; j++) {
+                dst[k++] = src[pos - i];
+                pos += a_uwSrcWidth;
+            }
+        }
+        break;
+    default:
+        HAL_LOGE("unsupport angle rotation");
+        return false;
+    }
+
+    return true;
+}
+
 void SprdCamera3MultiBase::setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
                                        uint32_t jpeg_size) {
     if (jpeg_base == NULL) {
@@ -1305,9 +1359,51 @@ int SprdCamera3MultiBase::hwScale(uint8_t *dst_buf, uint16_t dst_width,
     return ret;
 }
 
-#define SUPPORT_RES_NUM 6
+int SprdCamera3MultiBase::NV21Rotate(int8_t *dst_buf, uint16_t dst_fd,
+                                     int8_t *src_buf, uint16_t src_fd,
+                                     uint16_t width, uint16_t height,
+                                     uint8_t angle) {
+    int ret = NO_ERROR;
+    HAL_LOGI("in");
+    if (mHwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+    struct img_frm rotate[2];
+    struct rotate_param rotate_param;
+
+    if (angle == ROT_0) {
+        memcpy(dst_buf, src_buf, width * height * 3 / 2);
+        return NO_ERROR;
+    }
+
+    memset(&rotate[0], 0, sizeof(struct img_frm));
+    memset(&rotate[1], 0, sizeof(struct img_frm));
+
+    convertToImg_frm(NULL, src_buf, width, height, src_fd, IMG_DATA_TYPE_YUV420,
+                     &rotate[0]);
+    if (angle == ROT_90 || angle == ROT_270) {
+        convertToImg_frm(NULL, dst_buf, height, width, dst_fd,
+                         IMG_DATA_TYPE_YUV420, &rotate[1]);
+    } else {
+        convertToImg_frm(NULL, dst_buf, width, height, dst_fd,
+                         IMG_DATA_TYPE_YUV420, &rotate[1]);
+    }
+
+    memcpy(&rotate_param.src_img, &rotate[0], sizeof(struct img_frm));
+    memcpy(&rotate_param.dst_img, &rotate[1], sizeof(struct img_frm));
+    rotate_param.angle = angle;
+
+    ret = mHwi->camera_ioctrl(CAMERA_IOCTRL_ROTATE, &rotate_param, NULL);
+
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
+#define SUPPORT_RES_NUM 10
 static struct cam_stream_info cap_stream_info[][SUPPORT_RES_NUM] = {
     {{1600, 1200}, {960, 720}}, // 2M
+    {{1920, 1080}, {1440, 1080}, {960, 720}, {640, 480}},
     {{2592, 1944}, {960, 720}}, // 5M
     {{3264, 2448}, {960, 720}}, // 8M
 #if defined(CAMERA_SERNSOR_SUPPORT_4224)
@@ -1326,9 +1422,9 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
                                                   int index) {
     struct cam_stream_info *stream_info = cap_stream_info[index];
     size_t stream_cnt = SUPPORT_RES_NUM;
-    int32_t scaler_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
-                                HAL_PIXEL_FORMAT_BLOB,
-                                HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
+    int32_t scaler_formats[] = {
+        HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
+        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, HAL_PIXEL_FORMAT_RAW16};
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     int array_size = 0;
     Vector<int32_t> available_stream_configs;

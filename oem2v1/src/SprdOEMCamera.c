@@ -1138,6 +1138,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     case CAMERA_IOCTRL_CB_FACE_DETECT: {
         ret = camera_set_snp_face_detect_value(handle, *(cmr_u16 *)param);
     }
+    case CAMERA_IOCTRL_ROTATE: {
+        camera_local_start_rotate(handle, (struct rotate_param *)param);
+        break;
+    }
     default:
         break;
     }

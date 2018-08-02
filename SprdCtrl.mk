@@ -315,7 +315,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_OPTICSZOOM_SUPPORT
-max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
+#max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)
@@ -345,6 +345,11 @@ LOCAL_CFLAGS += -DCONFIG_SPRD_BOKEH_SUPPORT
 else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_BOKEH_SUPPORT
 LOCAL_CFLAGS += -DCONFIG_ARCSOFT_BOKEH_SUPPORT
+endif
+
+ifeq ($(strip $(TARGET_BOARD_3DFACE_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_3DFACE_SUPPORT
+#max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_NEED_SR_ENABLE)),true)

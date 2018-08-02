@@ -540,6 +540,11 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
             *stream_type = CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT;
             *channel_type = CAMERA_CHANNEL_TYPE_PICTURE;
             break;
+        case HAL_PIXEL_FORMAT_RAW16:
+            *stream_type = CAMERA_STREAM_TYPE_PREVIEW;
+            *channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+            mOEMIf->setCameraPreviewFormat(CAMERA_DATA_FORMAT_RAW);
+            break;
         default:
             *stream_type = CAMERA_STREAM_TYPE_DEFAULT;
             break;

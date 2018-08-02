@@ -11459,6 +11459,24 @@ cmr_int camera_local_start_scale(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_local_start_rotate(cmr_handle oem_handle,
+                                  struct rotate_param *rotate_param) {
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct cmr_op_mean mean;
+    mean.rot = rotate_param->angle;
+
+    ret = camera_start_rot(oem_handle, NULL, &(rotate_param->src_img),
+                           &(rotate_param->dst_img), &mean);
+    if (ret) {
+        CMR_LOGE("failed to start start %ld", ret);
+        ret = -CMR_CAMERA_FAIL;
+    }
+
+    return ret;
+}
+
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;

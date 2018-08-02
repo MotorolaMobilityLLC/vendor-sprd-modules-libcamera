@@ -131,6 +131,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     int hwScale(uint8_t *dst_buf, uint16_t dst_width, uint16_t dst_height,
                 uint16_t dst_fd, uint8_t *src_buf, uint16_t src_width,
                 uint16_t src_height, uint16_t src_fd);
+    int NV21Rotate(int8_t *dst_buf, uint16_t dst_fd, int8_t *src_buf,
+                   uint16_t src_fd, uint16_t width, uint16_t height,
+                   uint8_t angle);
     bool DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
                           uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                           uint32_t a_udFileSize);
@@ -143,6 +146,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     bool NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
                        uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                        uint32_t a_udFileSize);
+    bool Raw8Rotate(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf,
+                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
+                    uint8_t angle);
     int flushIonBuffer(int buffer_fd, void *v_addr, size_t size);
     uint32_t getJpegSize(uint8_t *jpegBuffer, uint32_t maxSize);
     void setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
@@ -174,6 +180,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     uint8_t mBrightConut;
     uint8_t mLowConut;
     uint8_t mDarkConut;
+    int64_t mMatchTimeThreshold;
     SprdCamera3HWI *mHwi;
 };
 }
