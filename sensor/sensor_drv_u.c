@@ -1761,17 +1761,17 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
         if (SENSOR_SUCCESS == sns_load_drv(sensor_cxt, SENSOR_MAIN)) {
             sensor_num++;
         }
-#ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
+#if FRONT_CAMERA_SENSOR_SUPPORT
         if (SENSOR_SUCCESS == sns_load_drv(sensor_cxt, SENSOR_SUB)) {
             sensor_num++;
         }
 #endif
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+#if BACK_EXT_CAMERA_SENSOR_SUPPORT
         if (SENSOR_SUCCESS == sns_load_drv(sensor_cxt, SENSOR_DEVICE2)) {
             sensor_num++;
         }
 #endif
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+#if FRONT_EXT_CAMERA_SENSOR_SUPPORT
         if (SENSOR_SUCCESS == sns_load_drv(sensor_cxt, SENSOR_DEVICE3)) {
             sensor_num++;
         }
@@ -1790,15 +1790,15 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
         SENSOR_LOGI("register sensor fail, start identify");
         if (sensor_identify(sensor_cxt, SENSOR_MAIN))
             sensor_num++;
-#ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
+#if FRONT_CAMERA_SENSOR_SUPPORT
         if (sensor_identify(sensor_cxt, SENSOR_SUB))
             sensor_num++;
 #endif
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+#if BACK_EXT_CAMERA_SENSOR_SUPPORT
         if (sensor_identify(sensor_cxt, SENSOR_DEVICE2))
             sensor_num++;
 #endif
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+#if FRONT_EXT_CAMERA_SENSOR_SUPPORT
         if (sensor_identify(sensor_cxt, SENSOR_DEVICE3))
             sensor_num++;
 #endif
