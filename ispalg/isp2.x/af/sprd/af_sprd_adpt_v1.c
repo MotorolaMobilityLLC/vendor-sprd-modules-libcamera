@@ -1370,6 +1370,7 @@ static void set_manual(af_ctrl_t * af, char *test_param)
 	ISP_LOGV("pls adb shell setprop \"vendor.cam.af_set_pos\" 0~1023 to fix lens position");
 }
 
+static void af_stop_search(af_ctrl_t * af);
 static void trigger_caf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
@@ -1378,6 +1379,11 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	char *p2;
 	char *p3;
 	property_set("vendor.cam.af_set_pos", "none");
+
+	if (AF_SEARCHING == af->focus_state) {
+		af_stop_search(af);
+	}
+	ISP_LOGI("trigger_caf");
 
 	while (*p1 != '~' && *p1 != '\0')
 		p1++;
@@ -1393,7 +1399,6 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;	//not need trigger to work when caf_start_monitor
 	af->state = STATE_CAF;
-	af->focus_state = AF_SEARCHING;
 	af->algo_mode = CAF;
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
@@ -1403,11 +1408,12 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	aft_in.defocus_param.per_steps = (atoi(p3) > 0 && atoi(p3) < 200) ? (atoi(p3)) : (0);
 
 	trigger_stop(af);
+	calc_roi(af, NULL, af->algo_mode);
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);	//test_param is in _eAF_Triger_Type,     RF_NORMAL = 0,        //noraml R/F search for AFT RF_FAST = 3,              //Fast R/F search for AFT
 	do_start_af(af);
+	af->focus_state = AF_SEARCHING;
 }
 
-static void af_stop_search(af_ctrl_t * af);
 static void trigger_saf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
@@ -1422,6 +1428,7 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	if (AF_SEARCHING == af->focus_state) {
 		af_stop_search(af);
 	}
+	ISP_LOGI("trigger_saf");
 	//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
 	//saf_start(af, NULL);  //SAF, win is NULL using default
 	//ISP_LOGV("_eAF_Triger_Type = %d", (1 == af->defocus) ? DEFOCUS : RF_NORMAL);
@@ -1430,6 +1437,7 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	aft_in.bisTrigger = AF_TRIGGER;
 	// aft_in.AF_Trigger_Type = (1 == af->defocus) ? DEFOCUS : RF_NORMAL;
 	aft_in.AF_Trigger_Type = DEFOCUS;
+	calc_roi(af, NULL, af->algo_mode);
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
@@ -1688,6 +1696,7 @@ static void *loop_for_test_mode(void *data_client)
 		if (0 != strcmp(AF_POS, "none")) {
 			af_test_lens(af, (cmr_u16) atoi(AF_POS));
 		}
+		usleep(1000*100);
 	}
 	af->test_loop_quit = 1;
 
@@ -3564,7 +3573,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 
 	system_time_trigger = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32) ((system_time_trigger - system_time0) / 1000));
-
 	if (AF_DATA_AF == inparam->data_type) {
 		switch (af->state) {
 		case STATE_NORMAL_AF:
