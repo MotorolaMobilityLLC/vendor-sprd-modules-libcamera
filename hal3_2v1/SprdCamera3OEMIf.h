@@ -201,6 +201,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int SetJpegGpsInfo(bool is_set_gps_location);
     int setCapturePara(camera_capture_mode_t stream_type,
                        uint32_t frame_number);
+    void setCameraPreviewFormat(camera_data_format_type_t format);
     int SetChannelHandle(void *regular_chan, void *picture_chan);
     int SetDimensionPreview(cam_dimension_t preview_size);
     int SetDimensionVideo(cam_dimension_t video_size);

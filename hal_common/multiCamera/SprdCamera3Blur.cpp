@@ -127,6 +127,8 @@ SprdCamera3Blur::SprdCamera3Blur() {
 SprdCamera3Blur::~SprdCamera3Blur() {
     HAL_LOGI("E");
     mCaptureThread = NULL;
+    if (mStaticMetadata)
+        free_camera_metadata(mStaticMetadata);
     HAL_LOGI("X");
 }
 
@@ -575,7 +577,10 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
+    if (mStaticMetadata)
+        free_camera_metadata(mStaticMetadata);
+
+    if (blur_camera_id == MODE_BLUR_FRONT) {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
         property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     } else {
@@ -593,7 +598,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     if (rc < 0) {
         return rc;
     }
-    CameraMetadata metadata = mStaticMetadata;
+    CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
     if (atoi(prop) == 3) {
         property_get("persist.vendor.cam.gallery.blur", prop, "1");
         if (atoi(prop) == 1) {
@@ -645,9 +650,9 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
-    HAL_LOGI("X  max_size=%d", img_size);
     info->conflicting_devices_length = 0;
 
+    HAL_LOGI("X  max_size=%d", img_size);
     return rc;
 }
 

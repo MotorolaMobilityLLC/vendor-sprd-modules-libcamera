@@ -63,6 +63,13 @@ namespace sprdcamera {
 #define MAX_BLUR_F_FUMBER (20)
 #define MIN_BLUR_F_FUMBER (1)
 
+#undef MAX_MULTI_NUM_STREAMS
+#define MAX_MULTI_NUM_STREAMS 5
+#undef MAX_MULTI_NUM_CAMERA
+#define MAX_MULTI_NUM_CAMERA 4
+#undef MAX_MULTI_NUM_BUFFER
+#define MAX_MULTI_NUM_BUFFER 8
+
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
 typedef enum {
@@ -89,6 +96,111 @@ typedef enum {
 } camera_buffer_type_t;
 
 typedef enum {
+    DEFAULT_STREAM = 1,
+    PREVIEW_STREAM,
+    VIDEO_STREAM,
+    CALLBACK_STREAM,
+    SNAPSHOT_STREAM,
+} streamType_t;
+
+typedef enum {
+    DEFAULT_STREAM_HAL_BUFFER = 1,
+    DEFAULT_STREAM_FW_BUFFER = 1 << 1,
+    PREVIEW_STREAM_HAL_BUFFER = 1 << 2,
+    PREVIEW_STREAM_FW_BUFFER = 1 << 3,
+    VIDEO_STREAM_HAL_BUFFER = 1 << 4,
+    VIDEO_STREAM_FW_BUFFER = 1 << 5,
+    CALLBACK_STREAM_HAL_BUFFER = 1 << 6,
+    CALLBACK_STREAM_FW_BUFFER = 1 << 7,
+    SNAPSHOT_STREAM_HAL_BUFFER = 1 << 8,
+    SNAPSHOT_STREAM_FW_BUFFER = 1 << 9,
+} streamTypeMask_t;
+
+typedef struct {
+    int type;
+    int width;
+    int height;
+    int format;
+    int follow_type;
+    int follow_camera_index;
+} hal_stream_info;
+
+typedef struct {
+    int number;
+    int width;
+    int height;
+    int follow_type;
+    int follow_camera_index;
+} hal_buffer_info;
+
+typedef struct {
+    int roi_stream_type;
+    int total_camera;
+    int mn_index;
+    int camera_index[MAX_MULTI_NUM_CAMERA];
+    int stream_type_mask[MAX_MULTI_NUM_CAMERA];
+} hal_req_stream_config;
+
+typedef struct {
+    int total_config_stream;
+    hal_req_stream_config hal_req_config[MAX_MULTI_NUM_STREAMS];
+} hal_req_stream_config_total;
+
+/* Struct@ sprdcamera_physical_descriptor_t
+ *
+ *  Description@ This structure specifies various attributes
+ *      physical cameras enumerated on the device
+ */
+typedef struct {
+    // Userspace Physical Camera ID
+    uint8_t id;
+    // Camera Info
+    camera_info cam_info;
+    // Reference to HWI
+    SprdCamera3HWI *hwi;
+    // Reference to camera device structure
+    camera3_device_t *dev;
+    int stream_num;
+    hal_stream_info hal_stream[MAX_MULTI_NUM_STREAMS];
+    camera3_stream_t streams[MAX_MULTI_NUM_STREAMS];
+} sprdcamera_physical_descriptor_t;
+
+typedef struct {
+    // Camera Device to be shared to Frameworks
+    camera3_device_t dev;
+    // Camera Info
+    camera_info cam_info;
+    // Logical Camera Facing
+    int32_t facing;
+    // Main Camera Id
+    uint32_t id;
+} sprd_virtual_camera_t;
+
+/*configure mulit camera*/
+
+typedef struct {
+    uint8_t id;
+    int config_stream_num;
+    hal_stream_info hal_stream[MAX_MULTI_NUM_STREAMS];
+} config_physical_descriptor;
+
+typedef struct {
+    int type;
+    Size size;
+} config_hal_stream_info;
+
+typedef struct {
+    multiCameraMode mode;
+    int virtual_camera_id;
+    int total_config_camera;
+    hal_buffer_info buffer_info[MAX_MULTI_NUM_BUFFER];
+    config_physical_descriptor multi_phy_info[MAX_MULTI_NUM_CAMERA];
+    int total_config_number;
+    hal_req_stream_config_total hal_req_config_stream[MAX_MULTI_NUM_STREAMS];
+} config_multi_camera;
+/*configure mulit camera*/
+
+typedef enum {
     CAMERA_LEFT = 0,
     CAMERA_RIGHT,
     MAX_CAMERA_PER_BUNDLE
@@ -101,14 +213,6 @@ typedef struct {
     // uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
     uint8_t otp_data[THIRD_OTP_SIZE];
 } OtpData;
-
-typedef enum {
-    DEFAULT_STREAM = 0,
-    PREVIEW_STREAM,
-    VIDEO_STREAM,
-    CALLBACK_STREAM,
-    SNAPSHOT_STREAM,
-} streamType_t;
 
 enum sensor_stream_ctrl {
     STREAM_OFF = 0,
@@ -141,6 +245,17 @@ typedef struct {
 } BokehSize;
 
 typedef struct {
+    int preview_w;
+    int preview_h;
+    int callback_w;
+    int callback_h;
+    int capture_w;
+    int capture_h;
+    int video_w;
+    int video_h;
+} stream_size_t;
+
+typedef struct {
     uint32_t frame_number;
     int32_t vcm_steps;
     uint8_t otp_data[8192];
@@ -152,34 +267,6 @@ typedef struct {
     uint32_t x_end;
     uint32_t y_end;
 } coordinate_t;
-
-/* Struct@ sprdcamera_physical_descriptor_t
- *
- *  Description@ This structure specifies various attributes
- *      physical cameras enumerated on the device
- */
-typedef struct {
-    // Userspace Physical Camera ID
-    uint8_t id;
-    // Camera Info
-    camera_info cam_info;
-    // Reference to HWI
-    SprdCamera3HWI *hwi;
-    // Reference to camera device structure
-    camera3_device_t *dev;
-    // Camera type:main camera or aux camera
-} sprdcamera_physical_descriptor_t;
-
-typedef struct {
-    // Camera Device to be shared to Frameworks
-    camera3_device_t dev;
-    // Camera Info
-    camera_info cam_info;
-    // Logical Camera Facing
-    int32_t facing;
-    // Main Camera Id
-    uint32_t id;
-} sprd_virtual_camera_t;
 
 typedef struct {
     uint32_t frame_number;
@@ -196,6 +283,9 @@ typedef struct {
     buffer_handle_t *buffer1; // main sensor
     int status1;
     buffer_handle_t *buffer2; // aux sensor
+
+    buffer_handle_t *buffer3; // aux2 sensor
+    buffer_handle_t *buffer4; // main sensor capture
     int status2;
     int vcmSteps;
 } frame_matched_info_t;
@@ -249,9 +339,9 @@ typedef struct {
 
 typedef enum {
     /* Main camera device id*/
-    CAM_MAIN_ID = 1,
+    CAM_MAIN_ID = 0,
     /* Aux camera device id*/
-    CAM_AUX_ID = 3
+    CAM_AUX_ID = 2
 } CameraID;
 
 typedef enum {
@@ -269,7 +359,10 @@ typedef enum {
     /* Main camera of the related cam subsystem which controls*/
     CAM_TYPE_MAIN = 0,
     /* Aux camera of the related cam subsystem */
-    CAM_TYPE_AUX
+    CAM_TYPE_AUX,
+    CAM_TYPE_AUX1 = CAM_TYPE_AUX,
+    CAM_TYPE_AUX2,
+    CAM_TYPE_AUX3,
 } CameraType;
 
 struct stream_info_s {
@@ -298,8 +391,15 @@ typedef enum {
 typedef struct {
     uint32_t frame_number;
     buffer_handle_t *buffer;
-    camera3_stream_t *preview_stream;
+    union {
+        camera3_stream_t *stream;
+        camera3_stream_t *callback_stream;
+        camera3_stream_t *preview_stream;
+        camera3_stream_t *snap_stream;
+        camera3_stream_t *video_stream;
+    };
     camera3_stream_buffer_t *input_buffer;
+    int metaNotifyIndex;
 } multi_request_saved_t;
 
 enum rot_angle { ROT_0 = 0, ROT_90, ROT_180, ROT_270, ROT_MAX };

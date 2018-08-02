@@ -102,7 +102,8 @@ ifeq ($(HAL_DIR), $(filter $(HAL_DIR), hal3_2v1 hal3_2v4))
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdDualCamera3Tuning.cpp
 endif
-
+LOCAL_SRC_FILES+= \
+	hal_common/multiCamera/SprdCamera3Multi.cpp
 endif
 
 LOCAL_SRC_FILES += \

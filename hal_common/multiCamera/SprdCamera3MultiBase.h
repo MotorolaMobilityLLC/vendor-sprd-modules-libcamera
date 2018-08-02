@@ -56,6 +56,7 @@ typedef enum {
     WAIT_SECOND_YUV_STATE, // wait second yuv frame
     WAIT_THIRD_YUV_STATE,  // wait third yuv frame
     REPROCESS_STATE,       // encode yuv to jpeg
+    WAIT_JPEG_STATE,
 } request_state;
 
 typedef struct cam_stream_info {
@@ -81,6 +82,8 @@ class SprdCamera3MultiBase {
     virtual buffer_handle_t *popRequestList(List<buffer_handle_t *> &list);
     virtual buffer_handle_t *popBufferList(List<new_mem_t *> &list,
                                            camera_buffer_type_t type);
+    virtual buffer_handle_t *popBufferList(List<new_mem_t *> &list, int width,
+                                           int height);
     virtual void pushBufferList(new_mem_t *localbuffer,
                                 buffer_handle_t *backbuf, int localbuffer_num,
                                 List<new_mem_t *> &list);
@@ -94,6 +97,9 @@ class SprdCamera3MultiBase {
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
+    virtual hwi_frame_buffer_info_t *
+    pushToQueue(hwi_frame_buffer_info_t new_buffer_info,
+                List<hwi_frame_buffer_info_t> *queue);
     virtual bool alignTransform(void *src, int w_old, int h_old, int w_new,
                                 int h_new, void *dest);
     virtual int convertToImg_frm(void *phy_addr, void *vir_addr, int width,

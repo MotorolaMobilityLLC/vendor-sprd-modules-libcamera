@@ -218,7 +218,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
       mIsUnpopped(false), mIsBlur2Zsl(false), mParameters(),
       mPreviewHeight_trimy(0), mPreviewWidth_trimx(0),
-      mPreviewFormat(CAMERA_DATA_FORMAT_YUV422), mPictureFormat(1),
+      mPreviewFormat(CAMERA_DATA_FORMAT_YUV420), mPictureFormat(1),
       mPreviewStartFlag(0), mIsDvPreview(0), mIsStoppingPreview(0),
       mRecordingMode(0), mIsSetCaptureMode(false), mRecordingFirstFrameTime(0),
       mUser(0), mPreviewWindow(NULL), mHalOem(NULL), mIsStoreMetaData(false),
@@ -2053,6 +2053,12 @@ bool SprdCamera3OEMIf::setCameraPreviewFormat() {
     return true;
 }
 
+void SprdCamera3OEMIf::setCameraPreviewFormat(
+    camera_data_format_type_t format) {
+    HAL_LOGD("E: mPreviewFormat=%d, format=%d", mPreviewFormat, format);
+    mPreviewFormat = format;
+}
+
 void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
                                       state_owner owner) {
     Sprd_camera_state org_state = SPRD_IDLE;
@@ -2542,11 +2548,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*get sensor otp from oem layer*/
 
         /*read refoucs mode begin*/
-        if (MODE_SINGLE_CAMERA != mMultiCameraMode &&
-            MODE_3D_CAPTURE != mMultiCameraMode &&
-            MODE_BLUR != mMultiCameraMode && MODE_BOKEH != mMultiCameraMode &&
-            MODE_DUAL_FACEID_REGISTER != mMultiCameraMode &&
-            MODE_DUAL_FACEID_UNLOCK != mMultiCameraMode) {
+        if (MODE_REFOCUS == mMultiCameraMode) {
             mSprdRefocusEnabled = true;
             CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
         }
@@ -3206,7 +3208,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
 #endif
 
-    HAL_LOGV("mSprdZslEnabled=%d", mSprdZslEnabled);
+    HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
              (cmr_uint)mSprdZslEnabled);
 
@@ -6950,7 +6952,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
 
     switch (cap_mode) {
     case CAMERA_CAPTURE_MODE_PREVIEW:
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mCaptureMode = CAMERA_NORMAL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
         mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
@@ -6958,7 +6959,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mZslPreviewMode = false;
         break;
     case CAMERA_CAPTURE_MODE_VIDEO:
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         // change it to CAMERA_ZSL_MODE when start video record
         mCaptureMode = CAMERA_NORMAL_MODE;
         mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
@@ -6968,7 +6968,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mVideoShotFlag = 0;
         break;
     case CAMERA_CAPTURE_MODE_ZSL_PREVIEW:
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mCaptureMode = CAMERA_ZSL_MODE;
         mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
@@ -6980,7 +6979,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_ONLY_MODE;
         mCaptureMode = CAMERA_NORMAL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
@@ -6989,7 +6987,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
         mCaptureMode = CAMERA_NORMAL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
@@ -7007,7 +7004,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mTakePictureMode = SNAPSHOT_ZSL_MODE;
             mCaptureMode = CAMERA_ZSL_MODE;
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
-            mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
             mRecordingMode = false;
             mPicCaptureCnt = 1;
             mZslPreviewMode = false;
@@ -7015,7 +7011,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
             mCaptureMode = CAMERA_NORMAL_MODE;
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-            mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
             mRecordingMode = false;
             if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
                 mSprdAppmodeId == CAMERA_MODE_MANUAL) {
@@ -7041,7 +7036,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_ZSL_MODE;
         mCaptureMode = CAMERA_ZSL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
@@ -7051,7 +7045,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mTakePictureMode = SNAPSHOT_ZSL_MODE;
             mCaptureMode = CAMERA_ZSL_MODE;
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
-            mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
             mRecordingMode = true;
             mPicCaptureCnt = 1;
             mZslPreviewMode = false;
@@ -7059,7 +7052,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mTakePictureMode = SNAPSHOT_VIDEO_MODE;
             mCaptureMode = CAMERA_ZSL_MODE;
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
-            mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
             mRecordingMode = true;
             mPicCaptureCnt = 1;
             mZslPreviewMode = false;
@@ -7071,7 +7063,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
         mCaptureMode = CAMERA_ISP_TUNING_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 100;
         mZslPreviewMode = false;
@@ -7080,7 +7071,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
         mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 100;
         mZslPreviewMode = false;
@@ -7089,7 +7079,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_PREVIEW_MODE;
         mCaptureMode = CAMERA_ZSL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
@@ -7098,7 +7087,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
         mCaptureMode = CAMERA_NORMAL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
@@ -7107,13 +7095,11 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_ZSL_MODE;
         mCaptureMode = CAMERA_ZSL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
         break;
     case CAMERA_CAPTURE_MODE_SPRD_ZSL_PREVIEW:
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
         mCaptureMode = CAMERA_ZSL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
         mTakePictureMode = SNAPSHOT_ZSL_MODE;

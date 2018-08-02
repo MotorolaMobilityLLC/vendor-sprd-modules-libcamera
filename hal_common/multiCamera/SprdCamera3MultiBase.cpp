@@ -475,13 +475,37 @@ SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
             break;
         }
     }
-    if (ret == NULL) {
-        HAL_LOGE("popBufferList failed!");
+    if (ret == NULL || j == list.end()) {
+        HAL_LOGV("popBufferList failed!");
         return ret;
     }
     list.erase(j);
     return ret;
 }
+
+buffer_handle_t *SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
+                                                     int width, int height) {
+    buffer_handle_t *ret = NULL;
+    if (list.empty()) {
+        HAL_LOGE("list is NULL");
+        return NULL;
+    }
+    Mutex::Autolock l(mBufferListLock);
+    List<new_mem_t *>::iterator j = list.begin();
+    for (; j != list.end(); j++) {
+        ret = &((*j)->native_handle);
+        if (ret && (*j)->width == width && (*j)->height == height) {
+            break;
+        }
+    }
+    if (ret == NULL || j == list.end()) {
+        HAL_LOGV("popBufferList failed!");
+        return ret;
+    }
+    list.erase(j);
+    return ret;
+}
+
 void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
                                           buffer_handle_t *backbuf,
                                           int localbuffer_num,
@@ -502,7 +526,7 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
         }
     }
     if (i >= localbuffer_num) {
-        HAL_LOGE("find backbuf failed");
+        HAL_LOGV("find backbuf failed");
     }
     return;
 }
@@ -587,6 +611,11 @@ int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
                 stream_type = CALLBACK_STREAM;
             } else {
                 stream_type = PREVIEW_STREAM;
+            }
+            break;
+        case HAL_PIXEL_FORMAT_RAW16:
+            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+                stream_type = DEFAULT_STREAM;
             }
             break;
         case HAL_PIXEL_FORMAT_YV12:
@@ -697,6 +726,18 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         }
         fclose(fp);
     } break;
+    case 4: {
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "_%dx%d_%d_%s.raw", param1, param2, param3, param4);
+        strcat(file_name, tmp_str);
+        fp = fopen(file_name, "wb");
+        if (fp == NULL) {
+            HAL_LOGE("can not open file: %s \n", file_name);
+            return;
+        }
+        fwrite((void *)addr, 1, size, fp);
+        fclose(fp);
+    } break;
     default:
         break;
     }
@@ -745,6 +786,21 @@ hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
 
     return pushout;
 }
+hwi_frame_buffer_info_t *
+SprdCamera3MultiBase::pushToQueue(hwi_frame_buffer_info_t new_buffer_info,
+                                  List<hwi_frame_buffer_info_t> *queue) {
+    hwi_frame_buffer_info_t *pushout = NULL;
+    if (queue->size() == MAX_UNMATCHED_QUEUE_BASE_SIZE) {
+        pushout = new hwi_frame_buffer_info_t;
+        List<hwi_frame_buffer_info_t>::iterator i = queue->begin();
+        *pushout = *i;
+        queue->erase(i);
+    }
+    queue->push_back(new_buffer_info);
+
+    return pushout;
+}
+
 bool SprdCamera3MultiBase::alignTransform(void *src, int w_old, int h_old,
                                           int w_new, int h_new, void *dest) {
     if (w_new <= w_old && h_new <= h_old) {
