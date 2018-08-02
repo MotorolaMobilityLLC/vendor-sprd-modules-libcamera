@@ -30,6 +30,14 @@ extern "C" {
 
 #define MAX_AF_WINS 32
 
+	enum {
+		AF_ALG_SINGLE = 0,
+		AF_ALG_DUAL_NORMAL,
+		AF_ALG_DUAL_SBS,
+		AF_ALG_BLUR_REAR,
+		AF_ALG_CAMERA_MAX
+	};
+
 	enum af_err_type {
 		AF_SUCCESS = 0x00,
 		AF_ERROR,
@@ -143,6 +151,8 @@ extern "C" {
 		AF_FOCUS_SAF,
 		AF_FOCUS_CAF,
 		AF_FOCUS_FAF,
+		AF_FOCUS_PDAF,
+		AF_FOCUS_TOF,
 		AF_FOCUS_MAX
 	};
 

@@ -38,6 +38,14 @@ enum afv1_err_type {
 	AFV1_ERR_MAX
 };
 
+enum _AF_Gsensor_Orientation{
+	AF_G_NONE,
+	AF_G_DEGREE0,
+	AF_G_DEGREE1,
+	AF_G_DEGREE2,
+	AF_G_DEGREE3,
+};
+
 enum _lock_block {
 	LOCK_AE = 0x01,
 	LOCK_LSC = 0x02,
@@ -250,10 +258,12 @@ typedef struct _af_ctrl {
 	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
 	struct afctrl_gsensor_info gsensor_info;
+	cmr_u32 g_orientation;
 	struct afctrl_face_info face_info;
 	isp_info_t isp_info;
 	lens_info_t lens;
 	cmr_s32 flash_on;
+	cmr_u32 win_offset;
 	roi_info_t roi;
 	roi_rgb_y_t roi_RGBY;
 	ae_info_t ae;
@@ -273,7 +283,7 @@ typedef struct _af_ctrl {
 	cmr_u32 defocus;
 	cmr_u8 bypass;
 	cmr_u32 force_trigger;
-	cmr_u32 cb_trigger;
+	cmr_u32 hal_trigger_type;
 	cmr_u32 ts_counter;
 	// non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
@@ -298,7 +308,7 @@ typedef struct _af_ctrl {
 	AF_adpt_face_win face_trigger_area;
 
 	struct afctrl_cb_ops cb_ops;
-	struct aft_face_info fd_info_temp;
+	cmr_u8 *pdaf_rdm_otp_data;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
