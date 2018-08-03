@@ -394,9 +394,9 @@ extern "C" {
 
 	// for dualcam sync
 	struct awb_stat_sync {
-		cmr_u32 r_info[1024];
-		cmr_u32 g_info[1024];
-		cmr_u32 b_info[1024];
+		cmr_u32 *r_info;
+		cmr_u32 *g_info;
+		cmr_u32 *b_info;
 		cmr_u32 width;
 		cmr_u32 height;
 	};
