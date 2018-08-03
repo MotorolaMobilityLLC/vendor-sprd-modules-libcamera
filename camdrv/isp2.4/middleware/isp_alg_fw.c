@@ -3201,7 +3201,10 @@ static cmr_int ispalg_awb_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_m
 	}
 
 	if (cxt->ops.awb_ops.ioctrl) {
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, (void *)&awb_work_mode, NULL);
+		if (in_ptr->is_restart == 1)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_START_WORK_MODE, (void *)&awb_work_mode, NULL);
+		else
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, (void *)&awb_work_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));

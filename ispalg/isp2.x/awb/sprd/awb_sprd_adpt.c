@@ -1502,7 +1502,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_SET_WORK_MODE:
 //	ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
 		rtn = _awb_set_workmode(cxt, in);
-		if (cxt->flash_info.flash_enable == 0 && cxt->last_enable != 3 && cxt->work_mode != 2) {
+		if (cxt->flash_info.flash_enable == 0 && cxt->last_enable != 3 && cxt->work_mode == 0) {
 			rtn = _awb_get_recgain(cxt, in);
 			if (AWB_CTRL_SUCCESS != rtn) {
 				ISP_LOGE("fail to _awb_get_recgain");
@@ -1514,6 +1514,13 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		}
 		if(cxt->last_enable == 3 )
 			cxt->last_enable = 0;
+		cxt->flash_info.flash_enable = 0;
+		break;
+
+	case AWB_CTRL_CMD_SET_START_WORK_MODE:
+//	ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE lock_mode = %d cxt->last_enable =%d cxt->flash_info.flash_enable =%d",cxt->lock_info.lock_mode,cxt->last_enable,cxt->flash_info.flash_enable);
+		rtn = _awb_set_workmode(cxt, in);
+		cxt->last_enable = 0;
 		cxt->flash_info.flash_enable = 0;
 		break;
 

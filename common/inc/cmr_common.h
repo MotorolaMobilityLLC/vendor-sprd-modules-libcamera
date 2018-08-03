@@ -567,6 +567,7 @@ struct video_start_param {
     struct img_size lv_size;
     struct img_size video_size;
     cmr_uint mode_4in1;
+    cmr_u32 is_restart;
 };
 
 struct memory_param {

@@ -749,6 +749,7 @@ struct isp_video_start {
 	cmr_u32 is_real_bokeh;
 	struct isp_img_frm s_yuv_depth;
 	struct isp_img_frm s_yuv_sw_out;
+	cmr_u32 is_restart;
 };
 
 struct isp_img_param {
