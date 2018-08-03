@@ -285,6 +285,7 @@ struct isp_alg_fw_context {
 	cmr_u32 raw_cap_flag;
 	struct isp_dev_rgb_gain_info rgb_gain;
 	cmr_u32 aem_stat_size;
+	cmr_u32 camera_4in1_flag;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -644,6 +645,12 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			cxt->rgb_gain.bypass, cxt->rgb_gain.global_gain,
 			cxt->rgb_gain.r_gain, cxt->rgb_gain.g_gain, cxt->rgb_gain.b_gain);
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, param0, param1);
+
+		if (cxt->camera_4in1_flag) {
+			cxt->rgb_gain.bypass = 1;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN_FOR_4IN1, (void *)&cxt->rgb_gain, NULL);
+		}
+
 		}
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
@@ -1029,7 +1036,10 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			ISP_LOGE("fail to get ALSC update flag!");
 
 		if (update_info.alsc_update_flag == 1) {
-			if (cxt->rgb_gain.bypass) {
+			BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, update_info.lsc_buffer_addr, lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
+			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+
+			if (cxt->camera_4in1_flag) {
 				rgb_lsc_gain = (cmr_u16 *)malloc(lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
 				if (NULL == rgb_lsc_gain) {
 					ret = ISP_ALLOC_ERROR;
@@ -1045,16 +1055,13 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 				}
 
 				BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, rgb_lsc_gain, lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
-				ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+				ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_CAP_PARAM, &input, NULL);
 				free(rgb_lsc_gain);
 				rgb_lsc_gain = NULL;
 
 				ISP_LOGV("lsc_apply_rgb_gain, output_gain_pattern = %d, gain_w = %d, gain_h = %d, global_gain = (%d,%f), r_gain = (%d,%f), g_gain = (%d,%f), b_gain = (%d,%f)",
 					output_gain_pattern, lsc_info->gain_w, lsc_info->gain_h, cxt->rgb_gain.global_gain, apply_global_gain,
 					cxt->rgb_gain.r_gain, apply_r_gain, cxt->rgb_gain.g_gain, apply_g_gain, cxt->rgb_gain.b_gain, apply_b_gain);
-			} else {
-				BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, update_info.lsc_buffer_addr, lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
-				ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
 			}
 		}
 	}
@@ -1120,7 +1127,7 @@ cmr_s32 ispalg_lsc_apply_rgb_gain(cmr_handle isp_alg_handle)
 	}
 
 	BLOCK_PARAM_CFG(input, param_data_alsc, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, rgb_lsc_gain, lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
-	ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+	ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_CAP_PARAM, &input, NULL);
 	free(rgb_lsc_gain);
 	rgb_lsc_gain = NULL;
 
@@ -1239,7 +1246,8 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 				ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));
 			}
 		} else {
-			if ((ISP_BLK_BLC != param_data->id) &&
+			if (cxt->camera_4in1_flag ||
+				((ISP_BLK_BLC != param_data->id) &&
 				(ISP_BLK_RGB_GAIN != param_data->id) &&
 				(ISP_BLK_RGB_DITHER != param_data->id) &&
 				(DCAM_BLK_BPC != param_data->id) &&
@@ -1247,7 +1255,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 				(ISP_BLK_AE_NEW != param_data->id) &&
 				(ISP_BLK_AWB_NEW != param_data->id) &&
 				(DCAM_BLK_RGB_AFM != param_data->id) &&
-				(ISP_BLK_2D_LSC != param_data->id)) {
+				(ISP_BLK_2D_LSC != param_data->id))) {
 				ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 			} else {
 				if (cxt->work_mode == 1)
@@ -1268,7 +1276,8 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 				ISP_TRACE_IF_FAIL(ret, ("fail to isp_dev_cfg_block"));
 			}
 		} else {
-			if ((ISP_BLK_BLC != param_data->id) &&
+			if (cxt->camera_4in1_flag ||
+				((ISP_BLK_BLC != param_data->id) &&
 				(ISP_BLK_RGB_GAIN != param_data->id) &&
 				(ISP_BLK_RGB_DITHER != param_data->id) &&
 				(DCAM_BLK_BPC != param_data->id) &&
@@ -1276,7 +1285,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 				(ISP_BLK_AE_NEW != param_data->id) &&
 				(ISP_BLK_AWB_NEW != param_data->id) &&
 				(DCAM_BLK_RGB_AFM != param_data->id) &&
-				(ISP_BLK_2D_LSC != param_data->id)) {
+				(ISP_BLK_2D_LSC != param_data->id))) {
 				ret = isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 			} else {
 				if (cxt->work_mode == 0)
@@ -1830,6 +1839,9 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, awb_output->lsc, awb_output->lsc_size);
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
+
+		/*if (cxt->camera_4in1_flag)
+			ret = ispalg_lsc_apply_rgb_gain(isp_alg_handle);*/
 
 		cxt->awb_cxt.log_alc_lsc = awb_output->log_lsc.log;
 		cxt->awb_cxt.log_alc_lsc_size = awb_output->log_lsc.size;
@@ -3543,7 +3555,8 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	for (i = 0; i < output.cap_param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
 		sub_block_info.scene_id = ISP_MODE_CAP;
-		if ((ISP_BLK_BLC != param_data->id) &&
+		if (cxt->camera_4in1_flag ||
+			((ISP_BLK_BLC != param_data->id) &&
 			(ISP_BLK_RGB_GAIN != param_data->id) &&
 			(ISP_BLK_RGB_DITHER != param_data->id) &&
 			(DCAM_BLK_BPC != param_data->id) &&
@@ -3551,7 +3564,7 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			(ISP_BLK_AE_NEW != param_data->id) &&
 			(ISP_BLK_AWB_NEW != param_data->id) &&
 			(DCAM_BLK_RGB_AFM != param_data->id) &&
-			(ISP_BLK_2D_LSC != param_data->id)) {
+			(ISP_BLK_2D_LSC != param_data->id))) {
 			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 		} else {
 			if (cxt->work_mode == 1)
@@ -3563,7 +3576,8 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	for (i = 0; i < output.prv_param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
 		sub_block_info.scene_id = ISP_MODE_PRV;
-		if ((ISP_BLK_BLC != param_data->id) &&
+		if (cxt->camera_4in1_flag ||
+			((ISP_BLK_BLC != param_data->id) &&
 			(ISP_BLK_RGB_GAIN != param_data->id) &&
 			(ISP_BLK_RGB_DITHER != param_data->id) &&
 			(DCAM_BLK_BPC != param_data->id) &&
@@ -3571,7 +3585,7 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			(ISP_BLK_AE_NEW != param_data->id) &&
 			(ISP_BLK_AWB_NEW != param_data->id) &&
 			(DCAM_BLK_RGB_AFM != param_data->id) &&
-			(ISP_BLK_2D_LSC != param_data->id)) {
+			(ISP_BLK_2D_LSC != param_data->id))) {
 			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 		} else {
 			if (cxt->work_mode == 0)
@@ -3896,6 +3910,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 
 	cxt->raw_cap_flag = 0;
+	cxt->camera_4in1_flag = in_ptr->mode_4in1;
+	ISP_LOGV("camera_4in1_flag = %d", cxt->camera_4in1_flag);
+	ret = isp_dev_4in1_flag(cxt->dev_access_handle, cxt->camera_4in1_flag);
+
 	memset(&rgb_aem_info, 0, sizeof(rgb_aem_info));
 
 	cxt->work_mode = in_ptr->work_mode;
@@ -4038,8 +4056,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = ispalg_update_alsc_result(cxt, (void *)&fwstart_info);
 	ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 
-	cxt->rgb_gain.bypass = 0;
-	if (cxt->rgb_gain.bypass)
+	if (cxt->camera_4in1_flag)
 		ret = ispalg_lsc_apply_rgb_gain(isp_alg_handle);
 
 	ret = ispalg_cfg(cxt);
@@ -4302,7 +4319,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	if (cxt->camera_id != 0)
 		cxt->rgb_gain.bypass = 1;
 
-	if (cxt->rgb_gain.bypass)
+	if (cxt->rgb_gain.bypass || cxt->camera_4in1_flag)
 		ret = ispalg_lsc_apply_rgb_gain(isp_alg_handle);
 
 	ret = ispalg_cfg(cxt);
@@ -4323,6 +4340,12 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ISP_LOGV("global_gain = %d", cxt->rgb_glb_gain);
 		cxt->rgb_gain.global_gain = cxt->rgb_glb_gain;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &cxt->rgb_gain, NULL);
+
+		if (cxt->camera_4in1_flag) {
+			cxt->rgb_gain.bypass = 1;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN_FOR_4IN1, (void *)&cxt->rgb_gain, NULL);
+		}
+
 	} else {
 		if (cxt->ops.ae_ops.ioctrl) {
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);

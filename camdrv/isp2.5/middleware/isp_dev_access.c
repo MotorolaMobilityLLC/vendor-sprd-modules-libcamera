@@ -20,12 +20,28 @@
 #define ISP_LSC_BUF_SIZE (32 * 1024)
 #define ISP_LSC_BUF_NUM 1
 
+enum {
+	SCENE_MODE_PRV = 0,
+	SCENE_MODE_CAP,
+	SCENE_MODE_MAX
+};
+
 struct isp_dev_access_context {
 	cmr_handle evt_alg_handle;
 	isp_evt_cb isp_event_cb;
 	cmr_handle isp_driver_handle;
 	struct isp_statis_mem_info statis_mem_info;
+	cmr_u32 cam_4in1_flag;
 };
+
+cmr_int isp_dev_4in1_flag(cmr_handle isp_dev_handle, cmr_u32 flag)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	cxt->cam_4in1_flag = flag;
+	ISP_LOGV("cam_4in1_flag = %d", cxt->cam_4in1_flag);
+	return ret;
+}
 
 cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr)
 {
@@ -241,7 +257,9 @@ cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, cmr_int bypass)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)&bypass, 0);
+	if (cxt->cam_4in1_flag)
+		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_CAP);
+	ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_PRV);
 
 	return ret;
 }
@@ -251,7 +269,9 @@ cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypas
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, 0);
+	if (cxt->cam_4in1_flag)
+		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_CAP);
+	ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_PRV);
 
 	return ret;
 }
@@ -270,7 +290,11 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u3
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, 0);
+
+	if (cxt->cam_4in1_flag)
+		ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, SCENE_MODE_CAP);
+	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, SCENE_MODE_PRV);
+
 	return ret;
 }
 
@@ -487,12 +511,20 @@ static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct
 	switch (stats_info->mode) {
 	case ISP_DEV_AE_STATS_MODE_SINGLE:
 		isp_u_3a_ctrl(cxt->isp_driver_handle, 1, 0);
-		isp_u_raw_aem_mode(cxt->isp_driver_handle, 0, 0);
-		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, stats_info->skip_num, 0);
+		if (cxt->cam_4in1_flag) {
+			isp_u_raw_aem_mode(cxt->isp_driver_handle, 0, SCENE_MODE_CAP);
+			isp_u_raw_aem_skip_num(cxt->isp_driver_handle, stats_info->skip_num, SCENE_MODE_CAP);
+		}
+		isp_u_raw_aem_mode(cxt->isp_driver_handle, 0, SCENE_MODE_PRV);
+		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, stats_info->skip_num, SCENE_MODE_PRV);
 		break;
 	case ISP_DEV_AE_STATS_MODE_CONTINUE:
-		isp_u_raw_aem_mode(cxt->isp_driver_handle, 1, 0);
-		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, 0, 0);
+		if (cxt->cam_4in1_flag) {
+			isp_u_raw_aem_mode(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+			isp_u_raw_aem_skip_num(cxt->isp_driver_handle, 0, SCENE_MODE_CAP);
+		}
+		isp_u_raw_aem_mode(cxt->isp_driver_handle, 1, SCENE_MODE_PRV);
+		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, 0, SCENE_MODE_PRV);
 		break;
 	default:
 		break;
@@ -523,11 +555,18 @@ static cmr_int ispdev_access_set_af_monitor(cmr_handle isp_dev_handle, struct is
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, 0);
-	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, 0);
-	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0, 0);
-	isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num, 0);
-	isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass, 0);
+	if (cxt->cam_4in1_flag) {
+		isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+		isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+		isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0, SCENE_MODE_CAP);
+		isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num, SCENE_MODE_CAP);
+		isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass, SCENE_MODE_CAP);
+	}
+	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_PRV);
+	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, SCENE_MODE_PRV);
+	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0, SCENE_MODE_PRV);
+	isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num, SCENE_MODE_PRV);
+	isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass, SCENE_MODE_PRV);
 
 	return ret;
 }
@@ -550,10 +589,16 @@ static cmr_int ispdev_access_set_aem_win(cmr_handle isp_dev_handle, struct isp_d
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, aem_win_info->offset.x, aem_win_info->offset.y, 0);
-	ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
+	if (cxt->cam_4in1_flag) {
+		ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, aem_win_info->offset.x, aem_win_info->offset.y, SCENE_MODE_CAP);
+		ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
+		ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, aem_win_info->blk_size.width, aem_win_info->blk_size.height, SCENE_MODE_CAP);
+		ISP_TRACE_IF_FAIL(ret, ("fail to aem blk"));
+	}
 
-	ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, aem_win_info->blk_size.width, aem_win_info->blk_size.height, 0);
+	ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, aem_win_info->offset.x, aem_win_info->offset.y, SCENE_MODE_PRV);
+	ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
+	ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, aem_win_info->blk_size.width, aem_win_info->blk_size.height, SCENE_MODE_PRV);
 	ISP_TRACE_IF_FAIL(ret, ("fail to aem blk"));
 
 	return ret;
@@ -579,135 +624,224 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	switch (cmd) {
-	case ISP_DEV_SET_AE_MONITOR:
-		ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, *(cmr_u32 *) in, 0);
+	case ISP_DEV_SET_AE_MONITOR: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, *(cmr_u32 *) in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, *(cmr_u32 *) in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AE_MONITOR_WIN:
+	}
+	case ISP_DEV_SET_AE_MONITOR_WIN: {
 		ret = ispdev_access_set_aem_win(cxt, in);
 		break;
-	case ISP_DEV_SET_AE_MONITOR_BYPASS:
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AE_MONITOR_BYPASS: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AE_STATISTICS_MODE:
+	}
+	case ISP_DEV_SET_AE_STATISTICS_MODE: {
 		ret = ispdev_access_ae_set_stats_mode(cxt, in);
 		break;
-	case ISP_DEV_SET_RGB_GAIN:
-		ret = ispdev_access_ae_set_rgb_gain(cxt, in, 0);
+	}
+	case ISP_DEV_SET_RGB_GAIN: {
+		ret = ispdev_access_ae_set_rgb_gain(cxt, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_GET_SYSTEM_TIME:
+	}
+	case ISP_DEV_SET_RGB_GAIN_FOR_4IN1: {
+		ret = ispdev_access_ae_set_rgb_gain(cxt, in, SCENE_MODE_CAP);
+		break;
+	}
+	case ISP_DEV_GET_SYSTEM_TIME: {
 		ret = ispdev_access_get_timestamp(cxt, out);
 		break;
-	case ISP_DEV_CFG_START:
+	}
+	case ISP_DEV_CFG_START: {
 		ret = isp_dev_cfg_start(cxt->isp_driver_handle);
 		break;
-	case ISP_DEV_SET_AFL_BLOCK:
-		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AFL_BLOCK: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AFL_NEW_BLOCK:
-		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AFL_NEW_BLOCK: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_RAW_AEM_BYPASS:
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_RAW_AEM_BYPASS: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_RAW_AFM_BYPASS:
-		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, 0);
+	}
+	case ISP_DEV_RAW_AFM_BYPASS: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_MONITOR:
+	}
+	case ISP_DEV_SET_AF_MONITOR: {
 		ret = ispdev_access_set_af_monitor(cxt, in);
 		break;
-	case ISP_DEV_SET_AF_MONITOR_WIN:
-		ret = isp_u_raw_afm_win(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AF_MONITOR_WIN: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_win(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_win(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_MONITOR_WIN_NUM:
-		ret = isp_u_raw_afm_win_num(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AF_MONITOR_WIN_NUM: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_win_num(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_win_num(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_STSTIS_BUF:
+	}
+	case ISP_DEV_SET_STSTIS_BUF: {
 		ret = isp_dev_set_statis_buf(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_CFG_PARAM:
+	}
+	case ISP_DEV_SET_PDAF_CFG_PARAM: {
 		ret = isp_u_pdaf_block(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_BYPASS:
+	}
+	case ISP_DEV_SET_PDAF_BYPASS: {
 		ret = isp_u_pdaf_bypass(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_WORK_MODE:
+	}
+	case ISP_DEV_SET_PDAF_WORK_MODE: {
 		ret = isp_u_pdaf_work_mode(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_SKIP_NUM:
+	}
+	case ISP_DEV_SET_PDAF_SKIP_NUM: {
 		ret = isp_u_pdaf_skip_num(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_ROI:
+	}
+	case ISP_DEV_SET_PDAF_ROI: {
 		ret = isp_u_pdaf_roi(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_TYPE1_CFG:
+	}
+	case ISP_DEV_SET_PDAF_TYPE1_CFG: {
 		ret = isp_u_pdaf_type1_block(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_PDAF_TYPE2_CFG:
+	}
+	case ISP_DEV_SET_PDAF_TYPE2_CFG: {
 		ret = isp_u_pdaf_type2_block(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_EBD_CFG:
+	}
+	case ISP_DEV_SET_EBD_CFG: {
 		ret = isp_u_ebd_block(cxt->isp_driver_handle);
 		break;
-	case ISP_DEV_SET_PDAF_PPI_INFO:
+	}
+	case ISP_DEV_SET_PDAF_PPI_INFO: {
 		ret = isp_u_pdaf_ppi_info(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_AFL_CFG_PARAM:
-		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AFL_CFG_PARAM: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AFL_NEW_CFG_PARAM:
-		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AFL_NEW_CFG_PARAM: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AFL_BYPASS:
-		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AFL_BYPASS: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AFL_NEW_BYPASS:
-		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AFL_NEW_BYPASS: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AE_SHIFT:
-		ret = isp_u_raw_aem_shift(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AE_SHIFT: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_shift(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_shift(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_WORK_MODE:
-		ret = isp_u_raw_afm_mode(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
+	}
+	case ISP_DEV_SET_AF_WORK_MODE: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_mode(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_mode(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_SKIP_NUM:
-		ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
+	}
+	case ISP_DEV_SET_AF_SKIP_NUM: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_POST_3DNR:
+	}
+	case ISP_DEV_POST_3DNR: {
 		ret = isp_dev_3dnr(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_POST_YNR:
+	}
+	case ISP_DEV_POST_YNR: {
 		ret = isp_dev_ynr(cxt->isp_driver_handle, in);
 		break;
-	case ISP_DEV_SET_RAW_SLICE:
+	}
+	case ISP_DEV_SET_RAW_SLICE: {
 		ret = ispdev_access_set_slice_raw(cxt, in);
 		break;
-	case ISP_DEV_UPDATE_PARAM_START:
+	}
+	case ISP_DEV_UPDATE_PARAM_START: {
 		ret = isp_dev_update_param_start(cxt->isp_driver_handle);
 		break;
-	case ISP_DEV_UPDATE_PARAM_END:
+	}
+	case ISP_DEV_UPDATE_PARAM_END: {
 		ret = isp_dev_update_param_end(cxt->isp_driver_handle);
 		break;
-	case ISP_DEV_SET_AE_BLK_NUM:
-		ret = isp_u_raw_aem_blk_num(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AE_BLK_NUM: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_blk_num(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_blk_num(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AE_RGB_THR:
-		ret = isp_u_raw_aem_rgb_thr(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AE_RGB_THR: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_rgb_thr(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_rgb_thr(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AE_SKIP_NUM_CLR:
-		ret = isp_u_raw_aem_skip_num_clr(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AE_SKIP_NUM_CLR: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_aem_skip_num_clr(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_skip_num_clr(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_CROP_EB:
-		ret = isp_u_raw_afm_crop_eb(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
+	}
+	case ISP_DEV_SET_AF_CROP_EB: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_crop_eb(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_crop_eb(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_CROP_SIZE:
-		ret = isp_u_raw_afm_crop_size(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AF_CROP_SIZE: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_crop_size(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_crop_size(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_SET_AF_DONE_TILE_NUM:
-		ret = isp_u_raw_afm_done_tile_num(cxt->isp_driver_handle, in, 0);
+	}
+	case ISP_DEV_SET_AF_DONE_TILE_NUM: {
+		if (cxt->cam_4in1_flag)
+			ret = isp_u_raw_afm_done_tile_num(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_done_tile_num(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
 		break;
-	case ISP_DEV_RESET:
+	}
+	case ISP_DEV_RESET: {
 		ret = isp_dev_reset(cxt->isp_driver_handle);
 		break;
+	}
 	default:
 		break;
 	}

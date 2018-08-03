@@ -755,6 +755,29 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 		}
 		break;
 	}
+	case ISP_PM_CMD_SET_CAP_PARAM:
+	{
+		cmr_u32 i = 0;
+		struct isp_pm_ioctl_input *ioctrl_input_ptr = (struct isp_pm_ioctl_input *)param_ptr;
+		struct isp_pm_param_data *param_data_ptr =
+			(struct isp_pm_param_data *)ioctrl_input_ptr->param_data_ptr;
+
+		if (PNULL == param_data_ptr) {
+			ISP_LOGE("fail to get valid param_data_ptr");
+			rtn = ISP_ERROR;
+			return rtn;
+		}
+
+		for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
+			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGV("fail to do isp_pm_set_block_param");
+				rtn = ISP_ERROR;
+				return rtn;
+			}
+		}
+		break;
+	}
 	case ISP_PM_CMD_SET_PARAM_SOURCE:
 	{
 		cmr_u32 *param_source = (cmr_u32 *)param_ptr;
