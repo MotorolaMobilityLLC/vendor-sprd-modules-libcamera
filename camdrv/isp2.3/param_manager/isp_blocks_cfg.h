@@ -45,7 +45,7 @@ extern "C" {
 
 #define ISP_PM_CMC_MAX_INDEX 9
 #define ISP_PM_CMC_SHIFT 18
-
+#define ISP_PM_HSV_CTRESULT_NUM 2
 enum isp_bit_reorder {
 	ISP_LSB = 0x00,
 };
@@ -502,6 +502,7 @@ struct isp_hsv_param {
 	struct isp_data_info final_map;
 	struct isp_data_info map[SENSOR_HSV_NUM];
 	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+	cmr_u32 *ct_result[ISP_PM_HSV_CTRESULT_NUM];
 };
 
 struct isp_yuv_pre_cdn_param {

@@ -728,7 +728,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
-		if (smart_id == ISP_SMART_CMC) {
+		if ((smart_id == ISP_SMART_CMC) || (smart_id == ISP_SMART_HSV)) {
 			result->size = sizeof(bv_result) * 3;
 			fix_data[0].weight[0] = bv_result.weight[0];
 			fix_data[0].weight[1] = bv_result.weight[1];
@@ -744,10 +744,23 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 			fix_data[2].weight[1] = tmp_result[1].weight[1];
 			fix_data[2].value[0] = tmp_result[1].value[0];
 			fix_data[2].value[1] = tmp_result[1].value[1];
-
+			if(smart_id == ISP_SMART_HSV)
+			ISP_LOGI("yzl add hsv fixdata0:%d,%d,%d,%d, fixdata1:%d,%d,%d,%d, fixdata2:%d,%d,%d,%d" , 
+			fix_data[0].value[0], fix_data[0].value[1],fix_data[0].weight[0],fix_data[0].weight[1],
+			fix_data[1].value[0] ,fix_data[1].value[1] ,fix_data[1].weight[0],fix_data[1].weight[1],
+			fix_data[2].value[0] ,fix_data[2].value[1],fix_data[2].weight[0],fix_data[2].weight[1]);
 			char value[PROPERTY_VALUE_MAX] = {0};
-			property_get("debug.isp.smart.cmc.index", value, "-1");
-			int index = atoi(value);
+			int index = -1;
+			if(smart_id == ISP_SMART_CMC)
+			{
+				property_get("debug.isp.smart.cmc.index", value, "-1");
+				index = atoi(value);
+			}
+			else if(smart_id == ISP_SMART_HSV)
+			{
+				property_get("debug.isp.smart.hsv.index", value, "-1");
+				index = atoi(value);
+			}
 			if ((index >=0) && (index <=8)) {
 				fix_data[1].value[0] = index;
 				fix_data[1].value[1] = index;
@@ -768,14 +781,6 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 			if (smart_id == ISP_SMART_GAMMA) {
 				char value[PROPERTY_VALUE_MAX] = {0};
 				property_get("debug.isp.smart.gamma.index", value, "-1");
-				int index = atoi(value);
-				if ((index >=0) && (index <=8)) {
-					fix_data->value[0] = index;
-					fix_data->value[1] = index;
-				}
-			} else if (smart_id == ISP_SMART_HSV) {
-				char value[PROPERTY_VALUE_MAX] = {0};
-				property_get("debug.isp.smart.hsv.index", value, "-1");
 				int index = atoi(value);
 				if ((index >=0) && (index <=8)) {
 					fix_data->value[0] = index;
