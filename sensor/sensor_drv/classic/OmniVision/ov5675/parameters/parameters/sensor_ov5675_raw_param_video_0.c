@@ -72,7 +72,7 @@ static uint8_t s_ov5675_tune_info_video_0[]=
 #if 1 /* version_id=0x00070005, mode_name=video_0, mode_id=9, size=1296x972 */
 	0x05,0x00,0x07,0x00,0x76,0x69,0x64,0x65,0x6F,0x5F,0x30,0x00,0x09,0x00,0x00,0x00,
 	0x15,0x00,0x00,0x00,0xA4,0x66,0x01,0x00,0x10,0x05,0x00,0x00,0xCC,0x03,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x02,0xBF,0xA8,0x6B,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x02,0x5D,0xDE,0x65,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x42,0x4C,0x43,0x00,0x00,0x00,0x00,0x00,0x02,0x40,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x58,0x00,0x00,0x00,0x30,0x30,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -9259,19 +9259,19 @@ static uint8_t s_ov5675_video_0_tool_ui_input[]=
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x54,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
 #endif /* END: ModeName=video_0, MainType=LNC, SubType=CT_A */
-#if 1 /* BEGIN: ModeName=video_0, MainType=LNC, SubType=CT_TL84 */
+#if 1 /* BEGIN: ModeName=video_0, MainType=LNC, SubType=CT_CWF */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x02,0x00,0x00,0x00,0x00,0x00,0x54,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
-#endif /* END: ModeName=video_0, MainType=LNC, SubType=CT_TL84 */
+#endif /* END: ModeName=video_0, MainType=LNC, SubType=CT_CWF */
 #if 1 /* BEGIN: ModeName=video_0, MainType=LNC, SubType=CT_D65 */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x54,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
 #endif /* END: ModeName=video_0, MainType=LNC, SubType=CT_D65 */
-#if 1 /* BEGIN: ModeName=video_0, MainType=LNC, SubType=CT_CWF */
+#if 1 /* BEGIN: ModeName=video_0, MainType=LNC, SubType=CT_OUTDOOR */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x54,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
-#endif /* END: ModeName=video_0, MainType=LNC, SubType=CT_CWF */
-#if 1 /* BEGIN: ModeName=video_0, MainType=NR, SubType=V21BAYER_NR */
+#endif /* END: ModeName=video_0, MainType=LNC, SubType=CT_OUTDOOR */
+#if 1 /* BEGIN: ModeName=video_0, MainType=NR, SubType=BAYER_NR */
 	0x08,0x01,0x00,0x00,0x01,0x00,0x15,0x00,0x00,0x00,0x00,0x00,0x0D,0x00,0x00,0x00,
 	0x38,0xDE,0xF8,0x57,0x60,0x43,0xB1,0x3F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x79,0xCE,0xD6,0x92,0x96,0x00,0xB1,0x3F,0x00,0x00,0x00,0x00,
@@ -9290,7 +9290,7 @@ static uint8_t s_ov5675_video_0_tool_ui_input[]=
 	0x8F,0xFD,0xB0,0x3F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,
 	0xD9,0x65,0xAE,0xC2,0x1C,0xF3,0x90,0x3F,0xF7,0x33,0x06,0xE7,0x9D,0x54,0xCD,0x3F,
 	0x01,0x00,0x00,0x00,
-#endif /* END: ModeName=video_0, MainType=NR, SubType=V21BAYER_NR */
+#endif /* END: ModeName=video_0, MainType=NR, SubType=BAYER_NR */
 #if 1 /* BEGIN: Reserve Data */
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -13970,7 +13970,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_0_OFFSET/2]),
-				LSC_2D_MAP_0,
+				LSC_2D_MAP_0,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_map_info),
@@ -13980,7 +13980,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_1_OFFSET/2]),
-				LSC_2D_MAP_1,
+				LSC_2D_MAP_1,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_map_info),
@@ -13990,7 +13990,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_2_OFFSET/2]),
-				LSC_2D_MAP_2,
+				LSC_2D_MAP_2,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_map_info),
@@ -14000,7 +14000,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_3_OFFSET/2]),
-				LSC_2D_MAP_3,
+				LSC_2D_MAP_3,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_map_info),
@@ -14010,7 +14010,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_4_OFFSET/2]),
-				LSC_2D_MAP_4,
+				LSC_2D_MAP_4,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_map_info),
@@ -14020,7 +14020,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_5_OFFSET/2]),
-				LSC_2D_MAP_5,
+				LSC_2D_MAP_5,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_map_info),
@@ -14030,7 +14030,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_6_OFFSET/2]),
-				LSC_2D_MAP_6,
+				LSC_2D_MAP_6,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_map_info),
@@ -14040,7 +14040,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_7_OFFSET/2]),
-				LSC_2D_MAP_7,
+				LSC_2D_MAP_7,//2560,
 			},
 			{
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_map_info),
@@ -14050,7 +14050,7 @@ static struct sensor_raw_fix_info s_ov5675_fix_info_video_0=
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_len),
 				(uint32_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_offset),
 				(uint16_t*)&(s_ov5675_video_0_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_8_OFFSET/2]),
-				LSC_2D_MAP_8,
+				LSC_2D_MAP_8,//2560,
 			},
 		}
 	},

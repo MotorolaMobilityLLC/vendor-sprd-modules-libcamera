@@ -161,8 +161,6 @@
 			0x00,
 			/*center_wgt*/
 			0x01,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -389,8 +387,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -619,8 +615,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -847,8 +841,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -1077,8 +1069,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -1305,8 +1295,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -1535,8 +1523,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -1763,8 +1749,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -1993,8 +1977,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -2221,8 +2203,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -2451,8 +2431,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -2679,8 +2657,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -2909,8 +2885,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -3137,8 +3111,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -3367,8 +3339,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -3595,8 +3565,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -3825,8 +3793,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -4053,8 +4019,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -4283,8 +4247,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -4511,8 +4473,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -4741,8 +4701,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -4969,8 +4927,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
@@ -5199,8 +5155,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -5428,8 +5382,6 @@
 			0x00,
 			/*center_wgt*/
 			0x00,
-			/*reserved*/
-			0x00,
 
 		},
 		/*afm_enhanced_process*/
@@ -5656,8 +5608,6 @@
 			/*denoise_mode*/
 			0x00,
 			/*center_wgt*/
-			0x00,
-			/*reserved*/
 			0x00,
 
 		},
