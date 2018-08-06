@@ -742,13 +742,13 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 		for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
 			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->prv_mode_id, ISP_SCENE_PRV);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_set_block_param");
+				ISP_LOGV("fail to do isp_pm_set_block_param");
 				rtn = ISP_ERROR;
 				return rtn;
 			}
 			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_set_block_param");
+				ISP_LOGV("fail to do isp_pm_set_block_param");
 				rtn = ISP_ERROR;
 				return rtn;
 			}
@@ -886,7 +886,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
 			all_setting_flag, pm_cxt_ptr->prv_mode_id, ISP_SCENE_PRV);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			ISP_LOGV("fail to do isp_pm_get_setting_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -898,7 +898,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
 			all_setting_flag, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			ISP_LOGV("fail to do isp_pm_get_setting_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -915,7 +915,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		rtn = isp_pm_get_single_block_param(pm_cxt_ptr, (struct isp_pm_ioctl_input *)in_ptr,
 			param_data_ptr, &param_counts, &blk_idx, pm_cxt_ptr->mode_id, ISP_SCENE_PRV);
 		if (ISP_SUCCESS != rtn || blk_idx == ISP_TUNE_BLOCK_MAX) {
-			ISP_LOGE("fail to do isp_pm_get_single_block_param");
+			ISP_LOGV("fail to do isp_pm_get_single_block_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -924,6 +924,25 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		result_ptr->param_data = &pm_cxt_ptr->temp_param_data[blk_idx];
 		result_ptr->param_num = param_counts;
 		result_ptr->param_data->mode_id = pm_cxt_ptr->mode_id;
+		break;
+	}
+	case ISP_PM_CMD_GET_CAP_SINGLE_SETTING:
+	{
+		cmr_u32 blk_idx = 0;
+
+		param_data_ptr = pm_cxt_ptr->temp_param_data;
+		rtn = isp_pm_get_single_block_param(pm_cxt_ptr, (struct isp_pm_ioctl_input *)in_ptr,
+			param_data_ptr, &param_counts, &blk_idx, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
+		if (ISP_SUCCESS != rtn || blk_idx == ISP_TUNE_BLOCK_MAX) {
+			ISP_LOGV("fail to do isp_pm_get_single_block_param");
+			rtn = ISP_ERROR;
+			return rtn;
+		}
+
+		result_ptr = (struct isp_pm_ioctl_output *)out_ptr;
+		result_ptr->param_data = &pm_cxt_ptr->temp_param_data[blk_idx];
+		result_ptr->param_num = param_counts;
+		result_ptr->param_data->mode_id = pm_cxt_ptr->cap_mode_id;
 		break;
 	}
 	case ISP_PM_CMD_GET_AE_VERSION_ID:
@@ -993,7 +1012,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		rtn = isp_pm_get_mode_block_param(pm_cxt_ptr, cmd, param_data_ptr,
 			&param_counts, block_id);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_mode_block_param");
+			ISP_LOGV("fail to do isp_pm_get_mode_block_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -1564,7 +1583,7 @@ cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *
 		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
 		rtn = isp_pm_set_param((cmr_handle)pm_cxt_ptr, cmd, input);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_set_param : cmd = 0x%x", cmd);
+			ISP_LOGV("fail to do isp_pm_set_param : cmd = 0x%x", cmd);
 			pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 			return rtn;
 		}
@@ -1573,13 +1592,13 @@ cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *
 	case ISP_PM_CMD_GET_BASE:
 	case ISP_PM_CMD_GET_THIRD_PART_BASE:
 		if (pm_cxt_ptr->param_source) {
-			ISP_LOGI("isp tool is writing param");
+			ISP_LOGV("fail to get valid param, isp tool is writing param");
 			return ISP_ERROR;
 		}
 		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
 		rtn = isp_pm_get_param((cmr_handle)pm_cxt_ptr, cmd, input, output);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_param : cmd = 0x%x", cmd);
+			ISP_LOGV("fail to do isp_pm_get_param : cmd = 0x%x", cmd);
 			pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 			return rtn;
 		}

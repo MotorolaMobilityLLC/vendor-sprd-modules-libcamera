@@ -633,6 +633,11 @@ struct dcam_rgb_aem_param {
 	struct dcam_ae_statistic_info stat;
 };
 
+struct isp_cnr2_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+
 struct isp_filter_weights
 {
 	cmr_u8 distWeight[9];
@@ -647,6 +652,7 @@ struct isp_cnr2_info {
 
 struct isp_cnr2_param {
 	struct isp_cnr2_info cur;
+	struct isp_cnr2_level_info level_info;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;

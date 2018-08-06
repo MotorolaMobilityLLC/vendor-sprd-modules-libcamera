@@ -138,6 +138,8 @@ cmr_s32 PM_CLIP(cmr_s32 x, cmr_s32 bottom, cmr_s32 top)
 		val = x;
 	}
 
+	ISP_LOGV("val = %d\n", val);
+
 	return val;
 }
 

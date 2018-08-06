@@ -370,6 +370,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_GET_CNR2_PARAM,
 	ISP_CTRL_AUTO_HDR_MODE,
+	ISP_CTRL_GET_CNR2_EN,
 	ISP_CTRL_MAX
 };
 
@@ -871,6 +872,11 @@ struct work_mode_info {
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
 	cmr_u32 cap_mode_id;
+};
+
+struct isp_sw_cnr2_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
 };
 
 struct isp_sw_filter_weights

@@ -1298,7 +1298,8 @@ struct isp_haf_tune_param {
 struct sensor_filter_weights
 {
 	cmr_u8 distWeight[9]; //distance weight for different scale
-	cmr_u8 reserved[3]; //alignment 4 byte with distWeight
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
 	cmr_u8 rangWeight[128]; //range weight for different scale
 };
 

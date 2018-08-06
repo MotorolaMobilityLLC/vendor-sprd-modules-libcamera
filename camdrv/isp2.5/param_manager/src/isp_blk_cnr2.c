@@ -49,6 +49,8 @@ cmr_u32 _pm_cnr2_convert_param(void *dst_cnr2_param, cmr_u32 strength_level, cmr
 				dst_ptr->cur.weight[i][1].rangWeight[j] = cnr2_param[strength_level].weight[i][1].rangWeight[j];
 			}
 		}
+		dst_ptr->level_info.level_enable = cnr2_param[strength_level].weight[0][0].level_enable;
+		dst_ptr->level_info.low_ct_thrd = cnr2_param[strength_level].weight[0][0].low_ct_thrd;
 	}
 
 	return rtn;
@@ -145,6 +147,12 @@ cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = &cnr2_ptr->cur;
 		param_data_ptr->data_size = sizeof(cnr2_ptr->cur);
+		*update_flag = ISP_ZERO;
+		break;
+
+	case ISP_PM_BLK_CNR2_LEVEL_INFO:
+		param_data_ptr->data_ptr = &cnr2_ptr->level_info;
+		param_data_ptr->data_size = sizeof(cnr2_ptr->level_info);
 		*update_flag = ISP_ZERO;
 		break;
 
