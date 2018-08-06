@@ -905,6 +905,7 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
+        cmr_u32 cnr2_en;
 #ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
 #endif

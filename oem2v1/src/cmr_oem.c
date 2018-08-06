@@ -303,7 +303,8 @@ static cmr_int camera_set_setting(cmr_handle oem_handle,
 static void camera_set_3dnr_flag(struct camera_context *cxt,
                                  cmr_u32 threednr_flag);
 static cmr_u32 camera_get_3dnr_flag(struct camera_context *cxt);
-static cmr_u32 camera_get_cnr_flag(struct camera_context *cxt);
+static cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle);
+static cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle);
 
 static cmr_u32 camera_get_sw_3dnr_flag(struct camera_context *cxt);
 static cmr_int camera_open_3dnr(struct camera_context *cxt,
@@ -2032,12 +2033,35 @@ cmr_u32 camera_get_3dnr_flag(struct camera_context *cxt) {
     return threednr_flag;
 }
 
-cmr_u32 camera_get_cnr_flag(struct camera_context *cxt) {
+cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
+
+    int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct common_isp_cmd_param isp_param;
+    cmr_u32 cnr_flag = 0;
+
+    cnr_flag = camera_get_cnr_flag(oem_handle);
+    if(cnr_flag){
+        cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_EN, &isp_param);
+        if(ret){
+            CMR_LOGD("isp get COM_ISP_GET_CNR2_EN  failed");
+            return false;
+        }
+        return cnr_flag && isp_param.cnr2_en;
+    }
+
+    return false;
+}
+
+
+cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle) {
 
     int ret = CMR_CAMERA_SUCCESS;
     struct setting_cmd_parameter setting_param;
-    setting_param.camera_id = cxt->camera_id;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
+    setting_param.camera_id = cxt->camera_id;
     cmr_u32 cnr_flag = 0;
 
 #ifndef CONFIG_CAMERA_CNR
@@ -2054,6 +2078,7 @@ cmr_u32 camera_get_cnr_flag(struct camera_context *cxt) {
         cnr_flag = setting_param.cmd_type_value;
         CMR_LOGD("cnr_flag is : %d", cnr_flag);
     }
+
     return cnr_flag;
 }
 
@@ -4000,7 +4025,8 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
             CMR_LOGI("get 3dnr num %d", cxt->ipm_cxt.threednr_num);
         }
     }
-    if (camera_get_cnr_flag(cxt) && !cxt->ipm_cxt.cnr_inited) {
+
+    if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited) {
         ret = camera_open_cnr(cxt, NULL, NULL);
         if (ret) {
             CMR_LOGE("failed to open cnr %ld", ret);
@@ -4116,7 +4142,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     CHECK_HANDLE_VALID(data);
     CHECK_HANDLE_VALID(ipm_cxt);
 
-    is_cnr = camera_get_cnr_flag(cxt);
+    is_cnr = camera_get_cnr_realtime_flag(oem_handle);
     is_filter = cxt->snp_cxt.filter_type;
     if (is_cnr || is_filter) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
@@ -7814,6 +7840,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_MAX;
 #endif
         break;
+   case COM_ISP_GET_CNR2_EN:
+        isp_cmd = ISP_CTRL_GET_CNR2_EN;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cnr2_en;
+        break;
+
     case COM_ISP_SET_AUTO_HDR:
         CMR_LOGI("set auto hdr %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AUTO_HDR_MODE;
@@ -8745,7 +8777,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         cxt->ipm_cxt.filter_inited = 1;
     }
 
-    cnr_typ = camera_get_cnr_flag(cxt);
+    cnr_typ = camera_get_cnr_realtime_flag(oem_handle);
     out_ptr->is_cnr = cnr_typ;
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
