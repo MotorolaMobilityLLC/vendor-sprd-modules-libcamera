@@ -128,6 +128,7 @@ struct aft_af_win_rect {
 struct aft_af_filter_data {
 	cmr_u32 type;
 	cmr_u64 *data;
+	cmr_u32 data_len;
 };
 
 struct aft_af_filter_info {
@@ -153,6 +154,7 @@ struct aft_img_blk_info {
 	cmr_u32 pix_per_blk;
 	cmr_u32 chn_num;
 	cmr_u32 *data;
+	cmr_u32 data_len;
 };
 
 struct aft_ae_info {
@@ -187,7 +189,6 @@ struct aft_phase_diff_info {
 	cmr_u32 reserved[16];
 };
 
-//[TOF_+++]
 struct aft_tof_info {
 	cmr_u32 tof_enable;
 	cmr_u32 effective_pos;
@@ -197,8 +198,6 @@ struct aft_tof_info {
 	cmr_u32 MAXdistance;
 	cmr_u32 reserved[20];
 };
-
-//[TOF_---]
 
 struct isp_face_coor {
 	cmr_u32 sx;
@@ -233,6 +232,7 @@ struct aft_caf_blk_info {
 	cmr_u8 valid_row_num;
 	struct caf_time_stamp time_stamp;
 	cmr_u32 *data;
+	cmr_u32 data_len;
 };
 
 struct aft_proc_result {
@@ -243,15 +243,17 @@ struct aft_proc_result {
 
 struct aft_proc_calc_param {
 	cmr_u32 active_data_type;
-	struct aft_afm_info afm_info;
-	struct aft_img_blk_info img_blk_info;
-	struct aft_ae_info ae_info;
-	struct aft_sensor_info sensor_info;
-	struct aft_caf_blk_info caf_blk_info;
-	struct aft_phase_diff_info pd_info;
 	struct aft_common_info comm_info;
-	struct aft_face_info fd_info;
-	struct aft_tof_info tof_info;
+	struct aft_ae_info ae_info;
+	union {
+		struct aft_afm_info afm_info;
+		struct aft_img_blk_info img_blk_info;
+		struct aft_sensor_info sensor_info;
+		struct aft_caf_blk_info caf_blk_info;
+		struct aft_phase_diff_info pd_info;
+		struct aft_face_info fd_info;
+		struct aft_tof_info tof_info;
+	};
 };
 
 struct aft_caf_stats_cfg {
