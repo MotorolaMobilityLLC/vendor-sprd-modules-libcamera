@@ -2320,7 +2320,7 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 			af_stop_search(af);
 		}
 
-		af->trig_ops.ioctrl(&af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
+		af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
 		if(AFV1_TRUE == pd_workable){
 			aft_result.is_caf_trig = AFT_TRIG_PD;
 		} else {
