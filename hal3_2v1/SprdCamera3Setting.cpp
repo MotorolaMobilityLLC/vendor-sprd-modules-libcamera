@@ -1468,8 +1468,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     {
-        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -6;
-        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 6;
+        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -127;
+        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 127;
     }
     {
         // s_setting[cameraId].controlInfo.available_effects[0] =
