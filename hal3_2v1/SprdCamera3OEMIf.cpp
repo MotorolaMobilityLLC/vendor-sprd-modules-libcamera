@@ -6795,9 +6795,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SENSOR_FRAME_DURATION: {
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
             struct cmr_range_fps_param fps_param;
+            SENSOR_INFO_Tag sensorInfoInfo;
+            mSetting->getSENSORINFOTag(&sensorInfoInfo);
 
             fps_param.is_recording = (cmr_int)mRecordingMode;
             fps_param.video_mode = (cmr_int)mRecordingMode;
+            if (sensorInfo.frame_duration == 0)
+                sensorInfo.frame_duration = sensorInfoInfo.min_frame_duration;
             fps_param.min_fps = 1000000000 / sensorInfo.frame_duration;
             if (1000000000 % sensorInfo.frame_duration >
                 sensorInfo.frame_duration / 2) {

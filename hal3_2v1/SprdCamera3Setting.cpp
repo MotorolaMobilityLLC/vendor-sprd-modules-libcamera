@@ -1419,6 +1419,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].sensor_InfoInfo.exposupre_time_range,
            camera3_default_info.common.exposure_time_range,
            sizeof(camera3_default_info.common.exposure_time_range));
+    s_setting[cameraId].sensor_InfoInfo.min_frame_duration =
+        camera3_default_info.common.frame_duration_range[0];
     s_setting[cameraId].sensor_InfoInfo.max_frame_duration =
         camera3_default_info.common.frame_duration_range[1];
     s_setting[cameraId].sensor_InfoInfo.color_filter_arrangement =
@@ -1664,8 +1666,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 #endif
     s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene = 0;
-    HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d, availableAutohdr %d ", cameraId,
-             s_setting[cameraId].sprddefInfo.sprd_available_flash_level,s_setting[cameraId].sprddefInfo.availabe_auto_hdr);
+    HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d, availableAutohdr %d ",
+             cameraId,
+             s_setting[cameraId].sprddefInfo.sprd_available_flash_level,
+             s_setting[cameraId].sprddefInfo.availabe_auto_hdr);
     s_setting[cameraId].sprddefInfo.availabe_ai_scene =
         camera3_default_info.common.availableAiScene;
     s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current =
@@ -2038,10 +2042,9 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
                       &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);
-    FILL_CAM_INFO_ARRAY(
-        s_setting[cameraId].sprddefInfo.sprd_cam_feature_list, 0,
-        CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
-        ANDROID_SPRD_CAM_FEATURE_LIST)
+    FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+                        0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
+                        ANDROID_SPRD_CAM_FEATURE_LIST)
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO

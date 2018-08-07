@@ -241,6 +241,7 @@ typedef struct {
     float physical_size[2];
     int64_t exposupre_time_range[2];
     int64_t max_frame_duration;
+    int64_t min_frame_duration;
     uint8_t color_filter_arrangement;
     int32_t pixer_array_size[2];
     int32_t active_array_size[4];
