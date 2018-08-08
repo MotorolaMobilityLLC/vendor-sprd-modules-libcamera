@@ -4031,6 +4031,10 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 			/*ev auto */
 			cxt->mod_update_list.is_mev = 0;
 			cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
+			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
+			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
+			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
 		}
 		ISP_LOGV("AE_SET_EV_OFFSET %d", cxt->cur_status.settings.ev_index);
 	}
