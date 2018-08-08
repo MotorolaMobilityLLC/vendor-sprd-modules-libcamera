@@ -153,10 +153,6 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_SHARED_LIBRARIES += libgyrostab
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_GYRO)),true)
-LOCAL_SHARED_LIBRARIES +=libgui
-endif
-
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB_VERSION_2
