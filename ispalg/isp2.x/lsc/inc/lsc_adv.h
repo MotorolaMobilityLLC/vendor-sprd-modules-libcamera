@@ -23,9 +23,6 @@
 /**---------------------------------------------------------------------------*
 **				Compiler Flag				*
 **---------------------------------------------------------------------------*/
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define max(A,B) (((A) > (B)) ? (A) : (B))
 #define min(A,B) (((A) < (B)) ? (A) : (B))
@@ -97,6 +94,8 @@ extern "C" {
 		ALSC_FW_PROC_START_END = 16,
 		ALSC_GET_UPDATE_INFO = 17,
 		ALSC_UNLOCK_UPDATE_FLAG = 18,
+		ALSC_SIMULATION_DUMP = 19,
+		ALSC_DO_SIMULATION = 20,
 	};
 
 	struct tg_alsc_debug_info {
@@ -365,15 +364,18 @@ struct LSC_Setting{
 		cmr_u32 gain_width;
 		cmr_u32 gain_height;
 		cmr_u32 gain_pattern;
+		cmr_u32 output_gain_pattern;
+		cmr_u32 change_pattern_flag;
 		cmr_u32 grid;
 		cmr_u32 dual_cam_id;
 		cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
 
-		cmr_u16 *lsc_tab_address[9];	// log the using table address
+		cmr_u16 *lsc_param_tab_copy[8];	// copy the pm table
+		cmr_u16 *lsc_tab_address[8];	// log the using table address
 		cmr_u16 *lsc_OTP_tab_copy;	// the copy of OTP table from init
 		cmr_u16 *lsc_OTP_tab_storage[8];	// the storage to save OTP tab
 		cmr_u16 *lsc_OTP_tab_storage_binning[8];	// the storage to save binning OTP tab
-		cmr_u16 *lsc_OTP_tab_storage_720p[9];	// the storage to save 720p OTP tab
+		cmr_u16 *lsc_OTP_tab_storage_720p[8];	// the storage to save 720p OTP tab
 		cmr_u16 *lsc_pm0;		// log the tab0 from pm
 		cmr_u16 *lsc_table_ptr_r;	// storage to save Rfirst table
 		cmr_u16 *tabptr[9];		// address of origianl shading table will be used to interperlation in slsc2
@@ -442,6 +444,7 @@ struct LSC_Setting{
 		//update flag
 		cmr_u32 alsc_update_flag;
 		cmr_u16 *lsc_buffer_addr;
+		cmr_s32 reserved[50];
 	};
 
 // change mode (fw_start, fw_stop)
@@ -471,6 +474,29 @@ struct LSC_Setting{
 		float io_captureFlashEnvRatio;
 		float io_captureFlash1Ratio;
 	};
+
+//simulation info
+struct alsc_simulation_info {
+	cmr_u32 raw_width;
+	cmr_u32 raw_height;
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 grid;
+	cmr_u32 flash_mode;
+	cmr_u32 ct;
+	cmr_s32 bv;
+	cmr_s32 bv_gain;
+	cmr_u32 stat_r[32*32];
+	cmr_u32 stat_g[32*32];
+	cmr_u32 stat_b[32*32];
+	cmr_u16 lsc_table[32*32*4];
+};
+
+//do simulation
+struct alsc_do_simulation {
+	void* lsc_adv_handle;
+	void* alsc_simulation_info;
+};
 
 ////////////////////////////// calculation dependent //////////////////////////////
 
@@ -503,6 +529,8 @@ struct LSC_Setting{
 		cmr_u32 gain_width;
 		cmr_u32 gain_height;
 		cmr_u32 gain_pattern;
+		cmr_u32 output_gain_pattern;
+		cmr_u32 change_pattern_flag;
 		cmr_u32 grid;
 		cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
 
@@ -544,6 +572,7 @@ struct LSC_Setting{
 
 		//add lsc buffer addr
 		cmr_u16 *lsc_buffer_addr;
+		cmr_s32 reserved[50];
 	};
 
 	struct statistic_raw_t {
@@ -561,7 +590,8 @@ struct LSC_Setting{
 		cmr_u32 ct;				// ct from AWB calc
 		cmr_s32 r_gain;			// r_gain from AWB calc
 		cmr_s32 b_gain;			// b_gain from AWB calc
-		cmr_u32 bv;				// bv from AE calc
+		cmr_s32 bv;				// bv from AE calc
+		cmr_s32 bv_gain;		// AE_gain from AE calc
 		cmr_u32 isp_mode;		// about the mode of interperlation of shading table
 		cmr_u32 isp_id;			// 0. alg0.c ,  2. alg2.c
 		cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
@@ -586,6 +616,7 @@ struct LSC_Setting{
 		float captureFlash1ofALLRatio;	//0-1,  flash1 / (flash1+flash2)
 
 		cmr_handle handle_pm;
+		cmr_s32 reserved[50];
 	};
 
 	struct lsc_adv_calc_result {
@@ -624,6 +655,7 @@ struct LSC_Setting{
 	enum lsc_transform_action {
 		LSC_BINNING = 0,
 		LSC_CROP = 1,
+		LSC_COPY = 2,
 	};
 
 	struct lsc_table_transf_info {
@@ -665,14 +697,11 @@ struct LSC_Setting{
 						cmr_u32 * otpAWBMeanGolden, cmr_u32 * otpAWBMeanRandom, cmr_u16 * otpLscTabGoldenMod,	//output: Td2
 						cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
 
-	cmr_s32 lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info);
+	cmr_s32 lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, cmr_u32 input_pattern, cmr_u32 output_pattern);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/
-#ifdef __cplusplus
-}
-#endif
-/**---------------------------------------------------------------------------*/
+
 #endif
 // End

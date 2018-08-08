@@ -812,6 +812,13 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	cmr_handle pm_handle = cxt->handle_pm;
+	cmr_s32 bv_gain = 0;
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_BV_BY_GAIN"));
+	}
+
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -864,6 +871,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		cxt->awb_cxt.cur_gain.b = awb_b_gain;
 
 		calc_param.bv = ae_in->ae_output.cur_bv;
+		calc_param.bv_gain = bv_gain;
 		calc_param.ae_stable = ae_stable;
 		calc_param.isp_mode = cxt->commn_cxt.isp_mode;
 		calc_param.isp_id = ISP_2_0;
@@ -2695,6 +2703,12 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
+	lsc_param.output_gain_pattern = lsc_param.gain_pattern;   //default setting
+	lsc_param.change_pattern_flag = 0;                        //default setting
+	//lsc_param.output_gain_pattern = LSC_GAIN_PATTERN_BGGR;      //camdrv set output lsc pattern
+	//lsc_param.change_pattern_flag = 1;                          //camdrv set pattern flag when changing lsc pattern
+	ISP_LOGV("alsc_init, gain_pattern=%d, output_gain_pattern=%d, flag=%d", lsc_param.gain_pattern, lsc_param.output_gain_pattern, lsc_param.change_pattern_flag);
+
 	lsc_param.is_master     = cxt->is_master;
 	lsc_param.is_multi_mode = cxt->is_multi_mode;
 
@@ -3201,10 +3215,7 @@ static cmr_int ispalg_awb_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_m
 	}
 
 	if (cxt->ops.awb_ops.ioctrl) {
-		if (in_ptr->is_restart == 1)
-			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_START_WORK_MODE, (void *)&awb_work_mode, NULL);
-		else
-			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, (void *)&awb_work_mode, NULL);
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, (void *)&awb_work_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do awb cfg"));

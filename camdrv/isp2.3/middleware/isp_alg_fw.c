@@ -218,7 +218,8 @@ struct ispalg_lsc_ctrl_ops {
 	cmr_s32 (*table_transform)(struct lsc_table_transf_info *src,
 				   struct lsc_table_transf_info *dst,
 				   enum lsc_transform_action action,
-				   void *action_info);
+				   void *action_info,
+				   cmr_u32 input_pattern, cmr_u32 output_pattern);
 };
 
 struct ispalg_lib_ops {
@@ -1010,15 +1011,53 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 i = 0;
-	cmr_u16 isp_gain_tmp = 0;
 	struct isp_alg_fw_context *cxt = NULL;
 	lsc_adv_handle_t lsc_adv_handle = NULL;
 	cmr_handle pm_handle = NULL;
+	cmr_s32 bv_gain = 0;
+	cmr_u32 dcam_gain_pattern = LSC_GAIN_PATTERN_GBRG;
+	cmr_u32 isp_gain_pattern = 0;
+
+	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	if (!cxt) {
+		ISP_LOGE("fail to get ispalg fw contex.");
+		return -ISP_PARAM_NULL;
+	}
+
+	switch (cxt->commn_cxt.image_pattern) {
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+		isp_gain_pattern = LSC_GAIN_PATTERN_RGGB;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+		isp_gain_pattern = LSC_GAIN_PATTERN_GRBG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_B:
+		isp_gain_pattern = LSC_GAIN_PATTERN_GBRG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+		isp_gain_pattern = LSC_GAIN_PATTERN_BGGR;
+		break;
+
+	default:
+		break;
+	}
+	ISP_LOGV("alsc_calc, dcam_gain_pattern=%d, isp_gain_pattern=%d", dcam_gain_pattern, isp_gain_pattern);
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_BV_BY_GAIN"));
+	}
+
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param[ISP_MODE_MAX];
 	struct alsc_update_info update_info = { 0, 0, NULL };
 	cmr_u32 lsc_sprd_version = 0;
+	struct lsc_table_transf_info copy_src;
+	struct lsc_table_transf_info copy_dst;
 	struct lsc_table_transf_info binning_src;
 	struct lsc_table_transf_info binning_dst;
 	struct binning_info binning;
@@ -1026,12 +1065,6 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	struct lsc_adv_calc_result calc_result = { 0 };
 	struct isp_2d_lsc_param *lsc_tab_param_ptr = NULL;
 	struct isp_lsc_info *dcam_lsc_info = NULL;
-
-	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	if (!cxt) {
-		ISP_LOGE("fail to get ispalg fw contex.");
-		return -ISP_PARAM_NULL;
-	}
 
 	lsc_adv_handle = cxt->lsc_cxt.handle;
 	lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
@@ -1046,6 +1079,8 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		return -ISP_PARAM_NULL;
 	}
 
+	memset(&copy_src, 0x0, sizeof(copy_src));
+	memset(&copy_dst, 0x0, sizeof(copy_dst));
 	memset(&binning_src, 0x0, sizeof(binning_src));
 	memset(&binning_dst, 0x0, sizeof(binning_dst));
 	memset(&binning, 0x0, sizeof(binning));
@@ -1107,6 +1142,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		cxt->awb_cxt.cur_gain.b = awb_b_gain;
 
 		calc_param.bv = ae_in->ae_output.cur_bv;
+		calc_param.bv_gain = bv_gain;
 		calc_param.ae_stable = ae_stable;
 		calc_param.isp_mode = cxt->commn_cxt.isp_mode;
 		calc_param.isp_id = ISP_2_0;
@@ -1216,7 +1252,8 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 						binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 						if (cxt->ops.lsc_ops.table_transform)
 							cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
-											 LSC_BINNING, &binning);
+											 LSC_BINNING, &binning,
+											 dcam_gain_pattern, isp_gain_pattern);
 						ISP_LOGV("Zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:%p, tab:%p",
 								binning_dst.img_width,
 								binning_dst.img_height,
@@ -1226,7 +1263,15 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 								binning_dst.pm_tab0,
 								binning_dst.tab);
 					} else {
-						memcpy(isp_lsc_info->data_ptr, update_info.lsc_buffer_addr, isp_lsc_info->len);
+						// copy lsc output and set lsc output pattern
+						copy_src.gain_width = isp_lsc_info->gain_w;
+						copy_src.gain_height = isp_lsc_info->gain_h;
+						copy_src.tab = (cmr_u16 *)update_info.lsc_buffer_addr;
+						copy_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
+						if (cxt->ops.lsc_ops.table_transform)
+							cxt->ops.lsc_ops.table_transform(&copy_src, &copy_dst,
+											 LSC_COPY, NULL,
+											 dcam_gain_pattern, isp_gain_pattern);
 					}
 				}
 				io_pm_input.param_num = ISP_MODE_MAX;
@@ -1261,7 +1306,8 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 					binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 					if (cxt->ops.lsc_ops.table_transform)
 						cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst,
-										 LSC_BINNING, &binning);
+										 LSC_BINNING, &binning,
+										 dcam_gain_pattern, isp_gain_pattern);
 					ISP_LOGV("None zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:%p, tab:%p",
 							binning_dst.img_width,
 							binning_dst.img_height,
@@ -1271,45 +1317,18 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 							binning_dst.pm_tab0,
 							binning_dst.tab);
 				} else {
-					memcpy(isp_lsc_info->data_ptr, update_info.lsc_buffer_addr, isp_lsc_info->len);
+					// copy lsc output and set lsc output pattern
+					copy_src.gain_width = isp_lsc_info->gain_w;
+					copy_src.gain_height = isp_lsc_info->gain_h;
+					copy_src.tab = (cmr_u16 *)update_info.lsc_buffer_addr;
+					copy_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
+					if (cxt->ops.lsc_ops.table_transform)
+						cxt->ops.lsc_ops.table_transform(&copy_src, &copy_dst,
+														 LSC_COPY, NULL,
+														 dcam_gain_pattern, isp_gain_pattern);
 				}
 			}
 
-			/* for isp lsc image pattern conversion */
-			switch(cxt->commn_cxt.image_pattern) {
-			case SENSOR_IMAGE_PATTERN_RAWRGB_R:
-				for (i = 0; i < isp_lsc_info->len / 8; i++) {
-					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3) = isp_gain_tmp;
-					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2) = isp_gain_tmp;
-				}
-				break;
-			case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
-				for (i = 0; i < isp_lsc_info->len / 8; i++) {
-					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2) = isp_gain_tmp;
-					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3) = isp_gain_tmp;
-				}
-				break;
-			case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
-				for (i = 0; i < isp_lsc_info->len / 8; i++) {
-					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 0) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 1) = isp_gain_tmp;
-					isp_gain_tmp = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 2) = *((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3);
-					*((cmr_u16 *)isp_lsc_info->data_ptr + i * 4 + 3) = isp_gain_tmp;
-				}
-				break;
-			default:
-				break;
-			}
 			/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 			io_pm_input.param_data_ptr = pm_param;
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
@@ -3119,6 +3138,12 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
+	//lsc_param.output_gain_pattern = lsc_param.gain_pattern;   //default setting
+	//lsc_param.change_pattern_flag = 0;                        //default setting
+	lsc_param.output_gain_pattern = LSC_GAIN_PATTERN_GBRG;      //camdrv set output lsc pattern
+	lsc_param.change_pattern_flag = 1;                          //camdrv set pattern flag when changing lsc pattern
+	ISP_LOGV("alsc_init, gain_pattern=%d, output_gain_pattern=%d, flag=%d", lsc_param.gain_pattern, lsc_param.output_gain_pattern, lsc_param.change_pattern_flag);
+
 	lsc_param.is_master     = cxt->is_master;
 	lsc_param.is_multi_mode = cxt->is_multi_mode;
 
@@ -4000,6 +4025,8 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info *fwstart_info = (struct alsc_fwstart_info *)out_ptr;
+	struct lsc_table_transf_info copy_src;
+	struct lsc_table_transf_info copy_dst;
 	struct lsc_table_transf_info binning_src;
 	struct lsc_table_transf_info binning_dst;
 	struct binning_info binning;
@@ -4009,8 +4036,33 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	cmr_s32 dst_gain_size = 0;
 	cmr_u16 *dst_gain_tmp = NULL;
 	cmr_u32 adaptive_size_info[3] = {0, 0, 0};  // cur_width, cur_height, adaptive_grid
-	cmr_u16 lsc_param_tmp = 0;
+	cmr_u32 dcam_gain_pattern = LSC_GAIN_PATTERN_GBRG;
+	cmr_u32 isp_gain_pattern = 0;
 
+	switch (cxt->commn_cxt.image_pattern) {
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+		isp_gain_pattern = LSC_GAIN_PATTERN_RGGB;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+		isp_gain_pattern = LSC_GAIN_PATTERN_GRBG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_B:
+		isp_gain_pattern = LSC_GAIN_PATTERN_GBRG;
+		break;
+
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+		isp_gain_pattern = LSC_GAIN_PATTERN_BGGR;
+		break;
+
+	default:
+		break;
+	}
+	ISP_LOGV("alsc_calc, dcam_gain_pattern=%d, isp_gain_pattern=%d", dcam_gain_pattern, isp_gain_pattern);
+
+	memset(&copy_src, 0x0, sizeof(copy_src));
+	memset(&copy_dst, 0x0, sizeof(copy_dst));
 	memset(&binning_src, 0x0, sizeof(binning_src));
 	memset(&binning_dst, 0x0, sizeof(binning_dst));
 	memset(&binning, 0x0, sizeof(binning));
@@ -4186,7 +4238,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 				binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 
 				if (cxt->ops.lsc_ops.table_transform)
-					cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst, LSC_BINNING, &binning);
+					cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst, LSC_BINNING, &binning, dcam_gain_pattern, isp_gain_pattern);
 				ISP_LOGV("Zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:[%d,%d,%d,%d], tab:[%d,%d,%d,%d]",
 						binning_dst.img_width,
 						binning_dst.img_height,
@@ -4198,7 +4250,13 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 						binning_dst.tab[0], binning_dst.tab[1],
 						binning_dst.tab[2], binning_dst.tab[3]);
 			} else {
-				memcpy(isp_lsc_info->data_ptr, dst_gain_tmp, isp_lsc_info->len);
+				// copy lsc output and set lsc output pattern
+				copy_src.gain_width = isp_lsc_info->gain_w;
+				copy_src.gain_height = isp_lsc_info->gain_h;
+				copy_src.tab = dst_gain_tmp;
+				copy_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
+				if (cxt->ops.lsc_ops.table_transform)
+					cxt->ops.lsc_ops.table_transform(&copy_src, &copy_dst, LSC_COPY, NULL, dcam_gain_pattern, isp_gain_pattern);
 			}
 		}
 		input.param_num = ISP_MODE_MAX;
@@ -4225,7 +4283,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 			binning_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
 
 			if (cxt->ops.lsc_ops.table_transform)
-				cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst, LSC_BINNING, &binning);
+				cxt->ops.lsc_ops.table_transform(&binning_src, &binning_dst, LSC_BINNING, &binning, dcam_gain_pattern, isp_gain_pattern);
 			ISP_LOGV("None zsl-binning dst: img_w:%d, img_h:%d, grid:%d, gain_w:%d, gain_h:%d, pm_tab0:[%d,%d,%d,%d], tab:[%d,%d,%d,%d]",
 					binning_dst.img_width,
 					binning_dst.img_height,
@@ -4237,48 +4295,19 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 					binning_dst.tab[0], binning_dst.tab[1],
 					binning_dst.tab[2], binning_dst.tab[3]);
 		} else {
-			memcpy(isp_lsc_info->data_ptr, dst_gain_tmp, isp_lsc_info->len);
+			// copy lsc output and set lsc output pattern
+			copy_src.gain_width = isp_lsc_info->gain_w;
+			copy_src.gain_height = isp_lsc_info->gain_h;
+			copy_src.tab = dst_gain_tmp;
+			copy_dst.tab = (cmr_u16 *)isp_lsc_info->data_ptr;
+			if (cxt->ops.lsc_ops.table_transform)
+				cxt->ops.lsc_ops.table_transform(&copy_src, &copy_dst, LSC_COPY, NULL, dcam_gain_pattern, isp_gain_pattern);
 		}
 	}
 	/* zsl: param_num = ISP_MODE_MAX, non zsl: param_num = 1 */
 	input.param_data_ptr = pm_param;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
 
-	/* dcam lsc image pattern conversion */
-	switch(cxt->commn_cxt.image_pattern) {
-	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
-		for (i = 0; i < dst_gain_size / 8; i++) {
-			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 0);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 0) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 3);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 3) = lsc_param_tmp;
-			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 1);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 1) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 2);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 2) = lsc_param_tmp;
-		}
-		break;
-	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
-		for (i = 0; i < dst_gain_size / 8; i++) {
-			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 0);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 0) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 2);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 2) = lsc_param_tmp;
-			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 1);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 1) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 3);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 3) = lsc_param_tmp;
-		}
-		break;
-	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
-		for (i = 0; i < dst_gain_size / 8; i++) {
-			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 0);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 0) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 1);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 1) = lsc_param_tmp;
-			lsc_param_tmp = *((cmr_u16 *)dst_gain_tmp + i * 4 + 2);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 2) = *((cmr_u16 *)dst_gain_tmp + i * 4 + 3);
-			*((cmr_u16 *)dst_gain_tmp + i * 4 + 3) = lsc_param_tmp;
-		}
-		break;
-	default:
-		break;
-	}
 	memset(&pm_param, 0, sizeof(pm_param));
 	BLOCK_PARAM_CFG(pm_param[0], ISP_PM_BLK_LSC_MEM_ADDR, DCAM_BLK_2D_LSC, cxt->mode_id[0], dst_gain_tmp, dst_gain_size);
 	input.param_num = 1;

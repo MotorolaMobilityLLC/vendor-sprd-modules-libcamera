@@ -159,7 +159,6 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 	sy = ny + 2;
 
 	lsc_table = (uint16_t *) malloc(4 * sx * sy * sizeof(uint16_t));
-
 	*tbl_w = sx;
 	*tbl_h = sy;
 
@@ -222,7 +221,6 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	struct sensor_otp_section_info *lsc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *oc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *module_info_ptr = NULL;
-
 	_lsc_get_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
 
 	if (NULL != lsc_param->otp_info_ptr) {
@@ -413,11 +411,14 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		ISP_LOGE("oc_otp_data = %p, oc_otp_len = %d, Parser OC otp fail", oc_otp_data, oc_otp_len);
 		goto EXIT;
 	}
-
 	return LSC_SUCCESS;
 
   EXIT:
-	lsc_param->lsc_otp_table_addr = NULL;
+	if(lsc_param->lsc_otp_table_addr != NULL)
+	{
+		free(lsc_param->lsc_otp_table_addr);
+		lsc_param->lsc_otp_table_addr = NULL;
+	}
 	lsc_param->lsc_otp_table_en = 0;
 	lsc_param->lsc_otp_oc_en = 0;
 	lsc_param->lsc_otp_oc_r_x = 0;
@@ -687,9 +688,16 @@ static void *lsc_sprd_init(void *in, void *out)
 	struct lsc_ctrl_context *cxt = NULL;
 	struct lsc_adv_init_param *init_param = (struct lsc_adv_init_param *)in;
 	void *alsc_handle = NULL;
+	cmr_s32 free_otp_flag = 1;
 	UNUSED(out);
 
 	//parser lsc otp info
+	if(init_param->lsc_otp_table_addr != NULL)
+	{
+		ISP_LOGE("initparam lsc_otp_table_addr is not NULL, please check the caller");
+		free_otp_flag = 0;
+		goto EXIT;
+	}
 	_lsc_parser_otp(init_param);
 
 	cxt = (struct lsc_ctrl_context *)malloc(sizeof(struct lsc_ctrl_context));
@@ -732,7 +740,10 @@ static void *lsc_sprd_init(void *in, void *out)
 		rtn = LSC_ALLOC_ERROR;
 		goto EXIT;
 	}
-
+	if(init_param->lsc_otp_table_addr != NULL)
+	{
+		free(init_param->lsc_otp_table_addr);
+	}
 	cxt->alsc_handle = alsc_handle;
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
@@ -741,7 +752,11 @@ static void *lsc_sprd_init(void *in, void *out)
 	return (void *)cxt;
 
   EXIT:
-
+	if((init_param->lsc_otp_table_addr != NULL) && (free_otp_flag == 1))
+	{
+		ISP_LOGW("error happend free lsc_otp_table_addr:%p" , init_param->lsc_otp_table_addr);
+		free(init_param->lsc_otp_table_addr);
+	}
 	if (NULL != cxt) {
 		rtn = _lscsprd_unload_lib(cxt);
 		free(cxt);
@@ -817,86 +832,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
 	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
 	if (update_info.can_update_dest == 1) {
-#if defined(CONFIG_ISP_2_5)
-		cmr_s32 i = 0;
-		switch (cxt->gain_pattern) {
-		case LSC_GAIN_PATTERN_RGGB:
-		{
-			for (i = 0; i < dst_gain_size / 8; i++) {
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
-			}
-			break;
-		}
-		case LSC_GAIN_PATTERN_GRBG:
-		{
-			for (i = 0; i < dst_gain_size / 8; i++) {
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
-			}
-			break;
-		}
-		case LSC_GAIN_PATTERN_GBRG:
-		{
-			for (i = 0; i < dst_gain_size / 8; i++) {
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
-			}
-			break;
-		}
-		case LSC_GAIN_PATTERN_BGGR:
-			memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
-			break;
-		default:
-			break;
-		}
-#elif defined(CONFIG_ISP_2_3)
-		cmr_s32 i = 0;
-		switch (cxt->gain_pattern) {
-		case LSC_GAIN_PATTERN_GRBG:
-		{
-			for (i = 0; i < dst_gain_size / 8; i++) {
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
-			}
-			break;
-		}
-		case LSC_GAIN_PATTERN_RGGB:
-		{
-			for (i = 0; i < dst_gain_size / 8; i++) {
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
-			}
-			break;
-		}
-		case LSC_GAIN_PATTERN_BGGR:
-		{
-			for (i = 0; i < dst_gain_size / 8; i++) {
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 0) = *((cmr_u16 *)result->dst_gain + i * 4+ 1);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 1) = *((cmr_u16 *)result->dst_gain + i * 4+ 0);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 2) = *((cmr_u16 *)result->dst_gain + i * 4+ 3);
-				*((cmr_u16 *)update_info.lsc_buffer_addr + i * 4+ 3) = *((cmr_u16 *)result->dst_gain + i * 4+ 2);
-			}
-			break;
-		}
-		default:
-			memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
-			break;
-		}
-
-#else
 		memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);
-#endif
 		rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_UNLOCK_UPDATE_FLAG, NULL, NULL);
 	}
 

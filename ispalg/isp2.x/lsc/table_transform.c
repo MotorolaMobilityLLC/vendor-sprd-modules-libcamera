@@ -150,21 +150,19 @@ static void free_set_null(void *handle)
 
 ////////////////////////////// lsc_table_transform main //////////////////////////////
 
-int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info)
+int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, unsigned int input_pattern, unsigned int output_pattern)
 {
 	int rtn = 0;
-
-	ISP_LOGV("src_info[%d,%d,%d,%d,%d]", src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height);
-	ISP_LOGV("src->pm_tab0[%d,%d,%d,%d]", src->pm_tab0[0], src->pm_tab0[1], src->pm_tab0[2], src->pm_tab0[3]);
-	ISP_LOGV("src->tab[%d,%d,%d,%d]", src->tab[0], src->tab[1], src->tab[2], src->tab[3]);
-	ISP_LOGV("dst_info[%d,%d,%d,%d,%d]", dst->img_width, dst->img_height, dst->grid, dst->gain_width, dst->gain_height);
-	ISP_LOGV("dst->pm_tab0[%d,%d,%d,%d]", dst->pm_tab0[0], dst->pm_tab0[1], dst->pm_tab0[2], dst->pm_tab0[3]);
-
-	unsigned int gain_pattern_tmp = 3;
+	int is_r = output_pattern - (output_pattern%2)*2 + 1;
+	int is_gr = output_pattern;
+	int is_gb = 3 - is_gr;
+	int is_b = 3 - is_r;
 	unsigned short *src_r = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_gr = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_gb = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_b = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+
+	/* old formula
 	unsigned short *src0_r = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src0_gr = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src0_gb = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
@@ -177,10 +175,11 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	float *dif0_gr = (float *)malloc(dst->gain_width * dst->gain_height * sizeof(float));
 	float *dif0_gb = (float *)malloc(dst->gain_width * dst->gain_height * sizeof(float));
 	float *dif0_b = (float *)malloc(dst->gain_width * dst->gain_height * sizeof(float));
+	save_tab_to_channel(src->gain_width, src->gain_height, input_pattern, src0_r, src0_gr, src0_gb, src0_b, src->pm_tab0);
+	save_tab_to_channel(dst->gain_width, dst->gain_height, input_pattern, dst0_r, dst0_gr, dst0_gb, dst0_b, dst->pm_tab0);
+	*/
 
-	save_tab_to_channel(src->gain_width, src->gain_height, gain_pattern_tmp, src_r, src_gr, src_gb, src_b, src->tab);
-	save_tab_to_channel(src->gain_width, src->gain_height, gain_pattern_tmp, src0_r, src0_gr, src0_gb, src0_b, src->pm_tab0);
-	save_tab_to_channel(dst->gain_width, dst->gain_height, gain_pattern_tmp, dst0_r, dst0_gr, dst0_gb, dst0_b, dst->pm_tab0);
+	save_tab_to_channel(src->gain_width, src->gain_height, input_pattern, src_r, src_gr, src_gb, src_b, src->tab);
 
 	// for binning
 	struct binning_info *binning = NULL;
@@ -201,6 +200,11 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	case LSC_BINNING:
 		binning = (struct binning_info *)action_info;
 		ISP_LOGV("binning_info->ratio=%f, src->grid=%d, dst->grid=%d", binning->ratio, src->grid, dst->grid);
+		ISP_LOGV("src_info[%d,%d,%d,%d,%d]", src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height);
+		ISP_LOGV("src->pm_tab0[%d,%d,%d,%d]", src->pm_tab0[0], src->pm_tab0[1], src->pm_tab0[2], src->pm_tab0[3]);
+		ISP_LOGV("src->tab[%d,%d,%d,%d]", src->tab[0], src->tab[1], src->tab[2], src->tab[3]);
+		ISP_LOGV("dst_info[%d,%d,%d,%d,%d]", dst->img_width, dst->img_height, dst->grid, dst->gain_width, dst->gain_height);
+		ISP_LOGV("dst->pm_tab0[%d,%d,%d,%d]", dst->pm_tab0[0], dst->pm_tab0[1], dst->pm_tab0[2], dst->pm_tab0[3]);
 
 		if (src->gain_width != dst->gain_width || src->gain_height != dst->gain_height || src->grid != (unsigned int)(dst->grid / binning->ratio)) {
 			memcpy(dst->tab, dst->pm_tab0, dst->gain_width * dst->gain_height * 4 * sizeof(unsigned short));
@@ -208,6 +212,7 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 			goto exit;
 		}
 
+        /* old formula
 		for (j = 0; j < dst->gain_height; j++) {
 			for (i = 0; i < dst->gain_width; i++) {
 				dif0_gb[j * dst->gain_width + i] = (float)dst0_gb[j * dst->gain_width + i] / (float)src0_gb[j * src->gain_width + i];
@@ -221,6 +226,15 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 				dst->tab[(j * dst->gain_width + i) * 4 + 3] = (unsigned short)(src->tab[(j * dst->gain_width + i) * 4 + 3] * dif0_gr[j * dst->gain_width + i]);
 			}
 		}
+		*/
+
+		for (i = 0; i < dst->gain_width * dst->gain_height ; i++) {
+			dst->tab[4*i + is_r]  = src_r[i];
+			dst->tab[4*i + is_gr] = src_gr[i];
+			dst->tab[4*i + is_gb] = src_gb[i];
+			dst->tab[4*i + is_b]  = src_b[i];
+		}
+
 		break;
 
 	case LSC_CROP:
@@ -242,6 +256,8 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 
 		start_x = crop->start_x / 2;
 		start_y = crop->start_y / 2;
+
+        /* old formula
 		for (j = 0; j < dst->gain_height; j++) {
 			for (i = 0; i < dst->gain_width; i++) {
 				crop_x = start_x + (i - 1) * dst->grid;
@@ -273,6 +289,35 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 				dst->tab[(j * dst->gain_width + i) * 4 + 3] = (unsigned short)(dst->tab[(j * dst->gain_width + i) * 4 + 3] * dif0_gr[j * dst->gain_width + i]);
 			}
 		}
+		*/
+
+		for (j = 0; j < dst->gain_height; j++) {
+			for (i = 0; i < dst->gain_width; i++) {
+				crop_x = start_x + (i - 1) * dst->grid;
+				crop_y = start_y + (j - 1) * dst->grid;
+
+				TL_i = (int)(crop_x / src->grid) + 1;
+				TL_j = (int)(crop_y / src->grid) + 1;
+				dx = (float)(crop_x - (TL_i - 1) * src->grid) / src->grid;
+				dy = (float)(TL_j * src->grid - crop_y) / src->grid;
+
+				dst->tab[(j * dst->gain_width + i) * 4 + is_r]  = (unsigned short)table_bicubic_interpolation(src_r, src->gain_width , src->gain_height, TL_i, TL_j, dx, dy);
+				dst->tab[(j * dst->gain_width + i) * 4 + is_gr] = (unsigned short)table_bicubic_interpolation(src_gr, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
+				dst->tab[(j * dst->gain_width + i) * 4 + is_gb] = (unsigned short)table_bicubic_interpolation(src_gb, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
+				dst->tab[(j * dst->gain_width + i) * 4 + is_b]  = (unsigned short)table_bicubic_interpolation(src_b, src->gain_width , src->gain_height, TL_i, TL_j, dx, dy);
+			}
+		}
+
+		break;
+
+	case LSC_COPY:
+		for (i = 0; i < src->gain_width * src->gain_height ; i++) {
+			dst->tab[4*i + is_r]  = src_r[i];
+			dst->tab[4*i + is_gr] = src_gr[i];
+			dst->tab[4*i + is_gb] = src_gb[i];
+			dst->tab[4*i + is_b]  = src_b[i];
+		}
+
 		break;
 	}
   exit:
@@ -280,6 +325,8 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	free_set_null(src_gr);
 	free_set_null(src_gb);
 	free_set_null(src_b);
+
+	/* old formula
 	free_set_null(src0_r);
 	free_set_null(src0_gr);
 	free_set_null(src0_gb);
@@ -292,6 +339,7 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	free_set_null(dif0_gr);
 	free_set_null(dif0_gb);
 	free_set_null(dif0_b);
+	*/
 
 	return rtn;
 }

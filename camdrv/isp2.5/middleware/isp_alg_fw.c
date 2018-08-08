@@ -826,6 +826,13 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	cmr_handle pm_handle = cxt->handle_pm;
+	cmr_s32 bv_gain = 0;
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_BV_BY_GAIN"));
+	}
+
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -904,6 +911,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		cxt->awb_cxt.cur_gain.b = awb_b_gain;
 
 		calc_param.bv = ae_in->ae_output.cur_bv;
+		calc_param.bv_gain = bv_gain;
 		calc_param.ae_stable = ae_stable;
 		calc_param.isp_mode = cxt->commn_cxt.isp_mode;
 		calc_param.isp_id = ISP_2_0;
@@ -2980,6 +2988,12 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	default:
 		break;
 	}
+	//lsc_param.output_gain_pattern = lsc_param.gain_pattern;   //default setting
+	//lsc_param.change_pattern_flag = 0;                        //default setting
+	lsc_param.output_gain_pattern = LSC_GAIN_PATTERN_BGGR;      //camdrv set output lsc pattern
+	lsc_param.change_pattern_flag = 1;
+	ISP_LOGV("alsc_init, gain_pattern=%d, output_gain_pattern=%d, flag=%d", lsc_param.gain_pattern, lsc_param.output_gain_pattern, lsc_param.change_pattern_flag);
+
 	lsc_param.is_master     = cxt->is_master;
 	lsc_param.is_multi_mode = cxt->is_multi_mode;
 
@@ -3571,7 +3585,6 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	cmr_s32 i =0;
 	cmr_s32 lsc_result_size = 0;
 	cmr_u16 *lsc_result_address_new = NULL;
-	cmr_u16 lsc_param_tmp[4] = {0};
 
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
@@ -3625,55 +3638,6 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_START"));
-	}
-
-	switch (cxt->commn_cxt.image_pattern) {
-	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
-	{
-		for (i = 0; i < lsc_result_size / 8; i++) {
-			lsc_param_tmp[0] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 0);
-			lsc_param_tmp[1] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 1);
-			lsc_param_tmp[2] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 2);
-			lsc_param_tmp[3] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 3);
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 0) = lsc_param_tmp[3];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 1) = lsc_param_tmp[2];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 2) = lsc_param_tmp[1];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 3) = lsc_param_tmp[0];
-		}
-		break;
-	}
-	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
-	{
-		for (i = 0; i < lsc_result_size / 8; i++) {
-			lsc_param_tmp[0] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 0);
-			lsc_param_tmp[1] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 1);
-			lsc_param_tmp[2] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 2);
-			lsc_param_tmp[3] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 3);
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 0) = lsc_param_tmp[2];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 1) = lsc_param_tmp[3];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 2) = lsc_param_tmp[0];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 3) = lsc_param_tmp[1];
-		}
-		break;
-	}
-	case SENSOR_IMAGE_PATTERN_RAWRGB_B:
-	{
-		for (i = 0; i < lsc_result_size / 8; i++) {
-			lsc_param_tmp[0] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 0);
-			lsc_param_tmp[1] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 1);
-			lsc_param_tmp[2] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 2);
-			lsc_param_tmp[3] = *((cmr_u16 *)lsc_result_address_new + i * 4+ 3);
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 0) = lsc_param_tmp[1];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 1) = lsc_param_tmp[0];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 2) = lsc_param_tmp[3];
-			*((cmr_u16 *)lsc_result_address_new + i * 4+ 3) = lsc_param_tmp[2];
-		}
-		break;
-	}
-	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
-		break;
-	default:
-		break;
 	}
 
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_MEM_ADDR, ISP_BLK_2D_LSC, lsc_result_address_new, lsc_result_size);
