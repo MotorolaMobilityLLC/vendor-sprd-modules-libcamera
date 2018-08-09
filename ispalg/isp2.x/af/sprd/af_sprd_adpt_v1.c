@@ -1955,6 +1955,9 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 	} else {
 		if (AFT_CANC_FD == result->is_cancel_caf) {
 			af_stop_search(af);
+			if (AFT_TRIG_CB == af->hal_trigger_type) {
+				notify_stop(af, 0, AF_FOCUS_CAF);// need to be pair with notify_start only for caf
+			}
 		}
 		if (AFT_CANC_FD_GONE == result->is_cancel_caf) {
 			af_stop_search(af);
