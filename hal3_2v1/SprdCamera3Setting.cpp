@@ -1243,6 +1243,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
             cameraId ? 0.0f : 2.0f;
     }
 
+    s_setting[cameraId].sensorInfo.rollingShutterSkew = 32551680L;
+
     s_setting[cameraId].lens_InfoInfo.hyperfocal_distance = 2.0f;
 
     s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
