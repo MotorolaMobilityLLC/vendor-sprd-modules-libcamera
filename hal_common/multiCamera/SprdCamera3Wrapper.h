@@ -48,9 +48,6 @@
 #ifdef CONFIG_STEREOPREVIEW_SUPPORT
 #include "SprdCamera3StereoPreview.h"
 #endif
-#ifdef CONFIG_RANGEFINDER_SUPPORT
-#include "SprdCamera3RangeFinder.h"
-#endif
 #ifdef CONFIG_STEREOCAPUTRE_SUPPORT
 #include "SprdCamera3Capture.h"
 #endif

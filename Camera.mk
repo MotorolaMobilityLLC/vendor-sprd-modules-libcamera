@@ -55,14 +55,6 @@ LOCAL_SRC_FILES := \
     hal1.0/src/SprdCameraParameters.cpp
 
 # for multi-camera
-ifeq ($(strip $(TARGET_BOARD_RANGEFINDER_SUPPORT)),true)
-LOCAL_SRC_FILES+= \
-    hal_common/multiCamera/SprdCamera3RangeFinder.cpp
-endif
-ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
-LOCAL_SRC_FILES+= \
-    hal_common/multiCamera/SprdCamera3RangeFinder.cpp
-endif
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3StereoVideo.cpp

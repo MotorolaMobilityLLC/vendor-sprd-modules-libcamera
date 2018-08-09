@@ -33,9 +33,6 @@ using namespace android;
 namespace sprdcamera {
 
 SprdCamera3Wrapper::SprdCamera3Wrapper() {
-#ifdef CONFIG_RANGEFINDER_SUPPORT
-    SprdCamera3RangeFinder::getCameraRangeFinder(&mRangeFinder);
-#endif
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
     SprdCamera3StereoVideo::getCameraMuxer(&mStereoVideo);
 #endif
