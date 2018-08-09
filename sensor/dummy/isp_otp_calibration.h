@@ -87,12 +87,6 @@ struct isp_cali_flash_info {
     struct isp_cali_lsc_info lsc;
 };
 
-int32_t isp_calibration_get_info(struct isp_data_t *golden_info,
-                                 struct isp_cali_info_t *cali_info);
-
-int32_t isp_calibration(struct isp_cali_param *param,
-                        struct isp_data_t *result);
-
 int32_t isp_parse_calibration_data(struct isp_data_t *cali_data,
                                    struct isp_data_t *lsc,
                                    struct isp_data_t *awb);

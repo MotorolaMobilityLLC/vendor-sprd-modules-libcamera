@@ -24,10 +24,7 @@
 #include "cmr_oem.h"
 #include "cmr_common.h"
 #include <time.h>
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #include "isp_otp_calibration.h"
-#endif
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
@@ -77,7 +74,6 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 /**********************************************************************************************/
 
-static uint32_t is_support_reload = 0;
 static uint32_t is_dual_capture = 0;
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
@@ -380,10 +376,6 @@ static cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data);
 #ifdef CONFIG_CAMERA_AI_SCENE
 static cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type);
 #endif
-extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info,
-                                        struct isp_cali_info_t *cali_info);
-extern int32_t isp_calibration(struct isp_cali_param *param,
-                               struct isp_data_t *result);
 static cmr_int camera_open_4in1(cmr_handle oem_handle);
 static cmr_int camera_close_4in1(cmr_handle oem_handle);
 static cmr_int camera_channel_reproc(cmr_handle oem_handle,
@@ -523,8 +515,6 @@ cmr_uint camera_set_vendor_hdr_ev(cmr_handle oem_handle) {
         ev_value = OEM_EV_LEVEL_2;
     }
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     struct sensor_exp_info sensor_info;
     ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
     if (ret) {
@@ -541,10 +531,6 @@ cmr_uint camera_set_vendor_hdr_ev(cmr_handle oem_handle) {
         ret = camera_sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV,
                                   (void *)&sn_param);
     }
-#else
-    sn_param.cmd_value = ev_value;
-    ret = camera_sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV, (void *)&sn_param);
-#endif
 
 exit:
     return ret;
@@ -3125,11 +3111,6 @@ exit:
     return ret;
 }
 
-void camera_set_reload_support(uint32_t is_support) {
-    CMR_LOGI("%d.", is_support);
-    is_support_reload = is_support;
-}
-
 void camera_calibrationconfigure_save(uint32_t start_addr, uint32_t data_size) {
     const char configfile[] = "/data/otpconfig.bin";
 
@@ -3191,476 +3172,22 @@ exit:
     return ret;
 }
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#define CMR_ISP_OTP_MAX_SIZE (100 * 1024)
-static int camera_get_reloadinfo(cmr_handle oem_handle,
-                                 struct isp_cali_param *cali_param,
-                                 struct isp_data_info *cali_result) {
-    int32_t rtn = 0;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct sensor_exp_info *sensor_info_ptr;
-    cmr_int ret = 0;
-    uint32_t otp_start_addr = 0;
-    uint32_t otp_data_len = 0;
-    SENSOR_VAL_T val;
-    struct _sensor_otp_param_tag param_ptr;
-    const char golden_file[] = "/data/golden.bin";
-    const char random_lsc_file[] = "/data/random_lsc.bin";
-    const char random_awb_file[] = "/data/random_awb.bin";
-    const char calibration_file[] = "/data/calibration_phone.bin";
-    struct stat info;
-    struct isp_data_t lsc_otp;
-    struct isp_data_t awb_otp;
-    struct isp_data_t golden;
-    struct isp_data_t target_buf;
-    struct isp_data_t sensor_otp;
-    struct isp_data_t checksum_otp;
-    struct isp_data_t fw_version;
-    struct isp_cali_info_t cali_info;
-    /*
-            FILE                           *golden_handle = NULL;
-            FILE                           *lsc_otp_handle = NULL;
-            FILE                           *awb_otp_handle = NULL;
-    */
-    FILE *calibration_handle = NULL;
-    uint32_t device_flag = 0;
-    uint32_t is_reload = 1;
-    uint32_t is_need_checksum = 0;
-    void *checksum_ptr = NULL;
-
-    if (NULL == cali_param || NULL == cali_result) {
-        CMR_LOGE("param error cali_param, cali_result, %p %p", cali_param,
-                 cali_result);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
-
-#ifndef MINICAMERA
-    if (CAMERA_ID_0 == cxt->camera_id) {
-        camera_set_reload_support(1);
-    } else {
-        camera_set_reload_support(0);
-    }
-    device_flag = 1; // handset
-#endif
-
-    if (is_support_reload) {
-        CMR_LOGI("support reload");
-
-        cmr_bzero(&lsc_otp, sizeof(lsc_otp));
-        cmr_bzero(&awb_otp, sizeof(awb_otp));
-        cmr_bzero(&golden, sizeof(golden));
-        cmr_bzero(&target_buf, sizeof(target_buf));
-        cmr_bzero(&sensor_otp, sizeof(sensor_otp));
-        cmr_bzero(&checksum_otp, sizeof(checksum_otp));
-        cmr_bzero(&fw_version, sizeof(fw_version));
-        cmr_bzero(&cali_info, sizeof(cali_info));
-        cmr_bzero(&param_ptr, sizeof(param_ptr));
-#if 1
-#if 0
-		//read FW version
-		fw_version.size = CMR_ISP_OTP_MAX_SIZE;
-		fw_version.data_ptr = malloc(fw_version.size);
-		if (NULL == fw_version.data_ptr) {
-			CMR_LOGE("malloc fw_version buffer failed");
-			goto EXIT;
-		}
-
-		cmr_bzero(&param_ptr, sizeof(param_ptr));
-		param_ptr.start_addr   = 0;
-		param_ptr.len          = fw_version.size;
-		param_ptr.buff         = fw_version.data_ptr;
-		param_ptr.type         = SENSOR_OTP_PARAM_FW_VERSION;
-		val.type               = SENSOR_VAL_TYPE_READ_OTP;
-		val.pval               = &param_ptr;
-		ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-		if (ret || 0 == param_ptr.len) {
-			CMR_LOGE("read otp data fw version failed");
-			goto EXIT;
-		}
-		CMR_LOGI(" fw version %s size %d", param_ptr.buff, param_ptr.len);
-#endif
-        // checksum
-        checksum_otp.size = CMR_ISP_OTP_MAX_SIZE;
-        checksum_otp.data_ptr = malloc(checksum_otp.size);
-        if (NULL == checksum_otp.data_ptr) {
-            CMR_LOGE("malloc checksum_otp buffer failed");
-            goto EXIT;
-        }
-
-        cmr_bzero(&param_ptr, sizeof(param_ptr));
-        param_ptr.start_addr = 0;
-        param_ptr.len = checksum_otp.size;
-        param_ptr.buff = checksum_otp.data_ptr;
-        param_ptr.type = SENSOR_OTP_PARAM_CHECKSUM;
-        val.type = SENSOR_VAL_TYPE_READ_OTP;
-        val.pval = &param_ptr;
-        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                               SENSOR_ACCESS_VAL, (cmr_uint)&val);
-        if (ret || 0 == param_ptr.len) {
-            CMR_LOGE("read otp data checksum failed %ld,%d", ret,
-                     param_ptr.len);
-            goto EXIT;
-        }
-        if (param_ptr.len != checksum_otp.size) {
-            is_need_checksum = 1;
-            checksum_otp.size = param_ptr.len;
-        }
-        CMR_LOGI(" checksum %s size %d", param_ptr.buff, param_ptr.len);
-#endif
-
-#if (CONFIG_READOTP_METHOD == 0)
-        if (stat(calibration_file, &info) == 0 && device_flag) {
-            CMR_LOGI(" %s is already exist!", calibration_file);
-
-            calibration_handle = fopen(calibration_file, "rb");
-            if (NULL == calibration_handle) {
-                CMR_LOGE("open calibration file failed");
-                goto EXIT;
-            }
-#endif
-            // get the target buffer size
-            rtn = isp_calibration_get_info(&golden, &cali_info);
-            if (0 != rtn) {
-                CMR_LOGE("isp_calibration_get_info failed");
-                goto EXIT;
-            }
-            CMR_LOGI("get calibration info: %d", cali_info.size);
-            cali_result->size = cali_info.size;
-            cali_result->data_ptr = malloc(cali_result->size);
-            if (NULL == cali_result->data_ptr) {
-                CMR_LOGE("malloc target buffer failed");
-                goto EXIT;
-            }
-#if (CONFIG_READOTP_METHOD == 0)
-            fread(cali_result->data_ptr, 1, cali_result->size,
-                  calibration_handle);
-            fclose(calibration_handle);
-
-            if (is_need_checksum) {
-                checksum_ptr = (void *)((char *)cali_result->data_ptr +
-                                        cali_result->size - checksum_otp.size);
-                if (0 == strcmp((void *)checksum_ptr,
-                                (const char *)checksum_otp.data_ptr)) {
-                    CMR_LOGI("checksum ok");
-                    is_reload = 0;
-                } else {
-                    CMR_LOGI("checksum different need to reload");
-                }
-            } else {
-                is_reload = 0;
-            }
-        }
-#else
-        is_reload = 1;
-#endif
-        if (is_reload) {
-            CMR_LOGI(" %s will creat now!", calibration_file);
-#if 0
-			//read golden data
-			golden_handle = fopen(golden_file, "rb");
-			if (NULL == golden_handle) {
-				CMR_LOGE("open golden file failed");
-				goto EXIT;
-			}
-			fseek(golden_handle,0,SEEK_END);
-			golden.size = ftell(golden_handle);
-			fseek(golden_handle,0,SEEK_SET);
-			golden.data_ptr = malloc(golden.size);
-			if (NULL == golden.data_ptr){
-				CMR_LOGE("malloc golden memory failed");
-				goto EXIT;
-			}
-			CMR_LOGI("golden file size=%d, buf=%p", golden.size, golden.data_ptr);
-			if (golden.size != fread(golden.data_ptr, 1, golden.size, golden_handle)){
-				CMR_LOGE("read golden file failed");
-				goto EXIT;
-			}
-#else
-            cmr_bzero(&param_ptr, sizeof(param_ptr));
-            val.type = SENSOR_VAL_TYPE_GET_GOLDEN_DATA;
-            val.pval = &param_ptr;
-            ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                                   SENSOR_ACCESS_VAL, (cmr_uint)&val);
-            if (ret || 0 == param_ptr.golden.size) {
-                CMR_LOGE("get golden data failed");
-                goto EXIT;
-            }
-            golden.data_ptr = param_ptr.golden.data_ptr;
-            golden.size = param_ptr.golden.size;
-#endif
-#if 0
-			//read otp lsc data
-			lsc_otp_handle = fopen(random_lsc_file, "rb");
-			if (NULL == lsc_otp_handle) {
-				CMR_LOGE("open random lsc file failed");
-				goto EXIT;
-			}
-			fseek(lsc_otp_handle,0,SEEK_END);
-			lsc_otp.size = ftell(lsc_otp_handle);
-			fseek(lsc_otp_handle,0,SEEK_SET);
-			lsc_otp.data_ptr = malloc(lsc_otp.size);
-			if (NULL == lsc_otp.data_ptr) {
-				CMR_LOGE("malloc random lsc file failed");
-				goto EXIT;
-			}
-			CMR_LOGI("random lsc file size=%d, buf=%p", lsc_otp.size, lsc_otp.data_ptr);
-			if (lsc_otp.size != fread(lsc_otp.data_ptr, 1, lsc_otp.size, lsc_otp_handle)) {
-				CMR_LOGE("read random lsc file failed");
-				goto EXIT;
-			}
-
-			//read otp awb data
-			awb_otp_handle = fopen(random_awb_file, "rb");
-			if (NULL == awb_otp_handle) {
-				CMR_LOGE("open random awb file failed");
-				goto EXIT;
-			}
-			fseek(awb_otp_handle,0,SEEK_END);
-			awb_otp.size = ftell(awb_otp_handle);
-			fseek(awb_otp_handle,0,SEEK_SET);
-			awb_otp.data_ptr = malloc(awb_otp.size);
-			if (NULL == awb_otp.data_ptr) {
-				CMR_LOGE("malloc random awb file failed");
-				goto EXIT;
-			}
-			CMR_LOGI("random awb file size=%d, buf=%p", awb_otp.size, awb_otp.data_ptr);
-			if (awb_otp.size != fread(awb_otp.data_ptr, 1, awb_otp.size, awb_otp_handle)) {
-				CMR_LOGE("read random awb file failed");
-				goto EXIT;
-			}
-#else
-            // read otp lsc data
-            lsc_otp.size = CMR_ISP_OTP_MAX_SIZE;
-            lsc_otp.data_ptr = malloc(lsc_otp.size);
-            if (NULL == lsc_otp.data_ptr) {
-                CMR_LOGE("malloc random lsc file failed");
-                goto EXIT;
-            }
-
-            // read otp awb data
-            awb_otp.size = CMR_ISP_OTP_MAX_SIZE;
-            awb_otp.data_ptr = malloc(awb_otp.size);
-            if (NULL == awb_otp.data_ptr) {
-                CMR_LOGE("malloc random awb file failed");
-                goto EXIT;
-            }
-            CMR_LOGI("random awb file size=%d, buf=%p", awb_otp.size,
-                     awb_otp.data_ptr);
-
-            /*read lsc, awb from real otp */
-            // camera_calibrationconfigure_load(&otp_start_addr, &otp_data_len);
-            otp_start_addr = 0;
-            otp_data_len = CMR_ISP_OTP_MAX_SIZE;
-            sensor_otp.data_ptr = malloc(otp_data_len);
-            if (NULL == sensor_otp.data_ptr) {
-                CMR_LOGE("malloc random lsc file failed");
-                goto EXIT;
-            }
-
-            cmr_bzero(&param_ptr, sizeof(param_ptr));
-            param_ptr.start_addr = otp_start_addr;
-            param_ptr.len = 0;
-            param_ptr.buff = sensor_otp.data_ptr;
-            param_ptr.awb.size = awb_otp.size;
-            param_ptr.awb.data_ptr = awb_otp.data_ptr;
-            param_ptr.lsc.size = lsc_otp.size;
-            param_ptr.lsc.data_ptr = lsc_otp.data_ptr;
-            param_ptr.type = SENSOR_OTP_PARAM_NORMAL;
-            val.type = SENSOR_VAL_TYPE_READ_OTP;
-            val.pval = &param_ptr;
-            CMR_PRINT_TIME;
-            ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                                   SENSOR_ACCESS_VAL, (cmr_uint)&val);
-            if (ret || 0 == param_ptr.len) {
-                CMR_LOGE("read otp data failed %ld,%d", ret, param_ptr.len);
-                goto EXIT;
-            }
-            CMR_PRINT_TIME;
-#endif
-            // get the target buffer size
-            rtn = isp_calibration_get_info(&golden, &cali_info);
-            if (0 != rtn) {
-                CMR_LOGE("isp_calibration_get_info failed");
-                goto EXIT;
-            }
-            CMR_LOGI("get calibration info: %d", cali_info.size);
-            target_buf.size = cali_info.size;
-            target_buf.data_ptr = malloc(target_buf.size);
-            if (NULL == target_buf.data_ptr) {
-                CMR_LOGE("malloc target buffer failed");
-                goto EXIT;
-            }
-
-            // get the calibration data, the real size of data will be write to
-            // cali_result.size
-            cali_param->golden = golden;
-            cali_param->awb_otp = awb_otp;
-            cali_param->lsc_otp = lsc_otp;
-            cali_param->target_buf = target_buf;
-            rtn = isp_calibration(cali_param, (struct isp_data_t *)cali_result);
-            if (0 != rtn) {
-                CMR_LOGE("isp_calibration failed rtn %d", rtn);
-                goto EXIT;
-            }
-            CMR_LOGI("calibration data: addr=%p, size = %d",
-                     cali_result->data_ptr, cali_result->size);
-
-#if (CONFIG_READOTP_METHOD == 0)
-
-            // TODO: save the calibration data
-            calibration_handle = fopen(calibration_file, "wb");
-            if (NULL == calibration_handle) {
-                CMR_LOGE("open calibration file failed");
-                goto EXIT;
-            }
-            memcpy((void *)((char *)cali_result->data_ptr + target_buf.size -
-                            checksum_otp.size),
-                   (void *)checksum_otp.data_ptr, checksum_otp.size);
-            fwrite(cali_result->data_ptr, 1, target_buf.size,
-                   calibration_handle);
-#endif
-        EXIT:
-
-#if (CONFIG_READOTP_METHOD == 0)
-
-            /*if (NULL != golden_handle) {
-                    fclose(golden_handle);
-                    golden_handle = NULL;
-            }
-            if (NULL != lsc_otp_handle) {
-                    fclose(lsc_otp_handle);
-                    lsc_otp_handle = NULL;
-            }
-            if (NULL != awb_otp_handle) {
-                    fclose(awb_otp_handle);
-                    awb_otp_handle = NULL;
-            }*/
-            if (NULL != calibration_handle) {
-                fclose(calibration_handle);
-                calibration_handle = NULL;
-            }
-#endif
-            if (NULL != checksum_otp.data_ptr) {
-                free(checksum_otp.data_ptr);
-                checksum_otp.data_ptr = NULL;
-            }
-            if (NULL != fw_version.data_ptr) {
-                free(fw_version.data_ptr);
-                fw_version.data_ptr = NULL;
-            }
-            if (NULL != lsc_otp.data_ptr) {
-                free(lsc_otp.data_ptr);
-                golden.data_ptr = NULL;
-            }
-            if (NULL != awb_otp.data_ptr) {
-                free(awb_otp.data_ptr);
-                awb_otp.data_ptr = NULL;
-            }
-            if (NULL != sensor_otp.data_ptr) {
-                free(sensor_otp.data_ptr);
-                sensor_otp.data_ptr = NULL;
-            }
-            return rtn;
-        }
-    } else {
-        CMR_LOGI("not support reload");
-    }
-
-    return rtn;
-}
-#endif
-
 int32_t camera_isp_flash_get_charge(void *handler,
                                     struct isp_flash_cfg *cfg_ptr,
                                     struct isp_flash_cell *cell) {
+
     int32_t ret = 0;
     struct camera_context *cxt = (struct camera_context *)handler;
-#if 0
-	struct sprd_flash_cfg_param   cfg;
-	struct sprd_flash_cell        real_cell;
 
-
-	if (!cxt || !cell) {
-		CMR_LOGE("err param, %p %p", cxt, cell);
-		ret = -CMR_CAMERA_INVALID_PARAM;
-		goto out;
-	}
-
-	cmr_bzero(&real_cell, sizeof(real_cell));
-	switch (cell->type) {
-	case ISP_FLASH_TYPE_PREFLASH:
-		real_cell.type = FLASH_TYPE_PREFLASH;
-		break;
-	case ISP_FLASH_TYPE_MAIN:
-		real_cell.type = FLASH_TYPE_MAIN;
-		break;
-	default:
-		CMR_LOGE("not support the type");
-		goto out;
-		break;
-	}
-	cfg.io_id = FLASH_IOID_GET_CHARGE;
-	cfg.data = &real_cell;
-	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
-	if (0 == ret) {
-		uint8_t i = 0;
-
-		for (i = 0; i < real_cell.count; ++i) {
-			cell->element[i].index = real_cell.element[i].index;
-			cell->element[i].val = real_cell.element[i].val;
-		}
-		cell->count = real_cell.count;
-		cell->def_val = real_cell.def_val;
-	}
-out:
-#endif
     return ret;
 }
 
 int32_t camera_isp_flash_get_time(void *handler, struct isp_flash_cfg *cfg_ptr,
                                   struct isp_flash_cell *cell) {
+
     int32_t ret = 0;
     struct camera_context *cxt = (struct camera_context *)handler;
-#if 0
-	struct sprd_flash_cfg_param   cfg;
-	struct sprd_flash_cell		  real_cell;
 
-
-	if (!cxt || !cell) {
-		CMR_LOGE("err param, %p %p", cxt, cell);
-		ret = -CMR_CAMERA_INVALID_PARAM;
-		goto out;
-	}
-
-	cmr_bzero(&real_cell, sizeof(real_cell));
-	switch (cell->type) {
-	case ISP_FLASH_TYPE_PREFLASH:
-		real_cell.type = FLASH_TYPE_PREFLASH;
-		break;
-	case ISP_FLASH_TYPE_MAIN:
-		real_cell.type = FLASH_TYPE_MAIN;
-		break;
-	default:
-		CMR_LOGE("not support the type");
-		goto out;
-		break;
-	}
-	cfg.io_id = FLASH_IOID_GET_TIME;
-	cfg.data = &real_cell;
-	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
-	if (0 == ret) {
-		uint8_t i = 0;
-
-		for (i = 0; i < real_cell.count; ++i) {
-			cell->element[i].index = real_cell.element[i].index;
-			cell->element[i].val = real_cell.element[i].val;
-		}
-		cell->count = real_cell.count;
-	}
-
-out:
-#endif
     return ret;
 }
 
@@ -3758,41 +3285,10 @@ out:
 
 int32_t camera_isp_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr,
                                   struct isp_flash_element *element) {
+
     int32_t ret = 0;
     struct camera_context *cxt = (struct camera_context *)handler;
-#if 0
 
-	struct sprd_flash_cfg_param   cfg;
-	uint8_t 					  real_type = 0;
-	struct sprd_flash_cell		  real_cell;
-
-
-	if (!cxt || !element) {
-		CMR_LOGE("err param, %p %p", cxt, element);
-		ret = -CMR_CAMERA_INVALID_PARAM;
-		goto out;
-	}
-
-	switch (type) {
-	case ISP_FLASH_TYPE_MAIN:
-		real_type = FLASH_TYPE_MAIN;
-		break;
-	default:
-		CMR_LOGE("not support the type");
-		goto out;
-		break;
-	}
-	cmr_bzero(&real_cell, sizeof(real_cell));
-	real_cell.type = real_type;
-	real_cell.count = 1;
-	real_cell.element[0].index = element->index;
-	real_cell.element[0].val = element->val;
-	cfg.io_id = FLASH_IOID_SET_TIME;
-	cfg.data = &real_cell;
-	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
-
-out:
-#endif
     return ret;
 }
 
@@ -3890,14 +3386,11 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     struct sensor_pdaf_info pdaf_info;
     struct grab_context *grab_cxt = NULL;
     struct cmr_grab *p_grab = NULL;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     struct isp_cali_param cali_param;
     struct isp_data_info cali_result;
 
     cmr_bzero(&cali_param, sizeof(cali_param));
     cmr_bzero(&cali_result, sizeof(cali_result));
-#endif
 
     cmr_bzero(&isp_param, sizeof(isp_param));
     cmr_bzero(&pdaf_info, sizeof(pdaf_info));
@@ -3931,33 +3424,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     }
 
     cxt->is_enter_focus = 0;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     cxt->lsc_malloc_flag = 0;
-#if defined(CONFIG_READOTP_TO_ISP)
-    ret = camera_get_reloadinfo(oem_handle, &cali_param, &cali_result);
-    if (ret) {
-        CMR_LOGE("fail to get reload info ret %ld", ret);
-        goto exit;
-    }
-    isp_param.calibration_param = cali_result;
-    val.type = SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA;
-    val.pval = &isp_param.sensor_lsc_golden_data;
-    ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                           SENSOR_ACCESS_VAL, (cmr_uint)&val);
-    if (ret) {
-        CMR_LOGE("read otp golden lsc data %ld", ret);
-        goto exit;
-    }
-#endif
-
-#else
-#ifdef CONFIG_SP7731GEA_BOARD
-    isp_param.isp_id = ISP_ID_SC8830;
-#elif defined(CONFIG_SP9630EA_BOARD)
-    isp_param.isp_id = ISP_ID_SC9630;
-#endif
-#endif
 
     sensor_info_ptr = &(sn_cxt->sensor_info);
     CHECK_HANDLE_VALID(sensor_info_ptr);
@@ -4121,13 +3588,10 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     }
 
 exit:
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     if (NULL != cali_result.data_ptr) {
         free(cali_result.data_ptr);
         cali_result.data_ptr = NULL;
     }
-#endif
     CMR_LOGD("done %ld", ret);
     ATRACE_END();
     LAUNCHLOGE(CMR_ISP_INIT_T);
@@ -4177,8 +3641,6 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
     }
     cmr_bzero(isp_cxt, sizeof(*isp_cxt));
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     if (cxt->lsc_malloc_flag == 1) {
         if (cxt->hal_free) {
             cxt->hal_free(CAMERA_ISP_LSC, &cxt->isp_lsc_phys_addr,
@@ -4187,8 +3649,6 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
         }
         cxt->lsc_malloc_flag = 0;
     }
-
-#endif
 
     CMR_LOGI("X");
 
@@ -6627,15 +6087,6 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     struct sensor_ex_info *sns_ex_info_ptr;
 
-#if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
-      defined(CONFIG_CAMERA_ISP_VERSION_V4))
-    struct isp_ae_info isp_ae_info;
-    struct sensor_ae_info *ae_info;
-    struct isp_trim_size wb_trim;
-    struct sensor_mode_info *sensor_mode_info;
-    cmr_u32 sn_mode = 0;
-#endif
-
     if (!param_ptr || !oem_handle) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
@@ -6651,31 +6102,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
 #endif
     isp_param.format = ISP_DATA_NORMAL_RAW10;
     isp_param.mode = param_ptr->video_mode;
-#if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
-      defined(CONFIG_CAMERA_ISP_VERSION_V4))
-    ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                              &sn_mode);
-    ae_info = &cxt->sn_cxt.sensor_info.video_info[sn_mode].ae_info[0];
-    isp_ae_info.gain = ae_info->gain;
-    isp_ae_info.line_time = ae_info->line_time;
-    isp_ae_info.min_fps = ae_info->min_frate;
-    isp_ae_info.max_fps = ae_info->max_frate;
-    CMR_LOGI("line time %d sn_mode %d", isp_ae_info.line_time, sn_mode);
-    isp_ioctl(NULL, ISP_CTRL_AE_INFO, (void *)&isp_ae_info);
 
-    sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
-    wb_trim.x = 0;
-    wb_trim.y = 0;
-    wb_trim.w = sensor_mode_info->trim_width;
-    wb_trim.h = sensor_mode_info->trim_height;
-    ret = isp_ioctl(NULL, ISP_CTRL_WB_TRIM, (void *)&wb_trim);
-    if (ret) {
-        CMR_LOGE("set wb trim information error.");
-    }
-#endif
-
-#if (defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                  \
-     defined(CONFIG_CAMERA_ISP_VERSION_V4))
     if (cxt->lsc_malloc_flag == 0) {
         cmr_u32 lsc_buf_size = 0;
         cmr_u32 lsc_buf_num = 0;
@@ -6709,7 +6136,6 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_param.cb_of_malloc = cxt->hal_malloc;
     isp_param.cb_of_free = cxt->hal_free;
     isp_param.buffer_client_data = cxt->client_data;
-#endif
     isp_param.oem_handle = oem_handle;
     isp_param.alloc_cb = camera_malloc;
     isp_param.free_cb = camera_free;
@@ -7896,8 +7322,6 @@ cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
     *addr = 0;
     *size = 0;
     cmr_bzero(&isp_info, sizeof(isp_info));
-#if (defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                  \
-     defined(CONFIG_CAMERA_ISP_VERSION_V4))
     if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format) {
         ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_INFO,
                         (void *)&isp_info);
@@ -7908,7 +7332,6 @@ cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
             CMR_LOGE("fail to get isp information");
         }
     }
-#endif
     CMR_LOGI("%p %d", *addr, *size);
     return ret;
 }
@@ -7942,8 +7365,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 
     switch (cmd_type) {
     case COM_ISP_SET_AE_MODE:
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
         if (cxt->is_lls_enable) {
             isp_cmd = ISP_CTRL_SET_AE_NIGHT_MODE;
         } else {
@@ -7967,9 +7388,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                 isp_cmd = ISP_CTRL_SCENE_MODE;
             }
         }
-#else
-        isp_cmd = ISP_CTRL_AE_MODE;
-#endif
 #ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_SCENECAPTURETYPE;
@@ -8374,10 +7792,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                     cxt->setting_cxt.is_auto_iso = 0;
                 }
                 if (cxt->setting_cxt.is_auto_iso == 1) {
-#if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
-      defined(CONFIG_CAMERA_ISP_VERSION_V4))
-                    isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
-#endif
                 } else {
                     isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
                 }
@@ -8416,10 +7830,6 @@ void camera_get_iso_value(cmr_handle oem_handle) {
     if (cxt->isp_cxt.is_work && (1 == cxt->setting_cxt.is_auto_iso)) {
         struct isp_context *isp_cxt = &cxt->isp_cxt;
         isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO, (void *)&isp_param);
-#if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
-      defined(CONFIG_CAMERA_ISP_VERSION_V4))
-        isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
-#endif
         CMR_LOGI("iso value is %d", isp_param);
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_ISOSPEEDRATINGS, isp_param);
@@ -10917,12 +10327,7 @@ cmr_int camera_local_pre_flash(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
-/*start preflash*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#else
-    if (CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode)
-#endif
+    /*start preflash*/
     {
         setting_param.camera_id = cxt->camera_id;
         setting_param.ctrl_flash.capture_mode.capture_mode = CAMERA_NORMAL_MODE;
@@ -11222,20 +10627,14 @@ void camera_local_start_burst_notice(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     uint32_t caf_switch = 0;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_BURST_NOTICE, &caf_switch);
-#endif
 }
 
 void camera_local_end_burst_notice(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     uint32_t caf_switch = 1;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_BURST_NOTICE, &caf_switch);
-#endif
 }
 
 cmr_int
@@ -11584,8 +10983,6 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
     }
     if (cxt->is_vendor_hdr) {
         cxt->cap_cnt = 0;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
         struct sensor_exp_info sensor_info;
         ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
         if (ret) {
@@ -11603,11 +11000,6 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
             ret = camera_sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV,
                                       (void *)&sn_param);
         }
-#else
-        sn_param.cmd_value = OEM_EV_LEVEL_1;
-        ret = camera_sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV,
-                                  (void *)&sn_param);
-#endif
     }
 exit:
     CMR_LOGI("done %ld", ret);

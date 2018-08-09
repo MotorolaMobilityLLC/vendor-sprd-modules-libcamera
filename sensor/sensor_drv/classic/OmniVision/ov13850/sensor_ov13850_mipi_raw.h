@@ -21,11 +21,7 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #include "parameters/sensor_ov13850_raw_param_main.c"
-#else
-#endif
 
 #define ov13850_I2C_ADDR_W (0x6c >> 1)
 #define ov13850_I2C_ADDR_R (0x6c >> 1)

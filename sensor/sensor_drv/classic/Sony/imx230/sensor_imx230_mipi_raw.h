@@ -58,12 +58,7 @@
 #define SENSOR_MIN_SHUTTER 4
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 
 /* please don't change it */
 #define EX_MCLK 24
@@ -571,101 +566,124 @@ static const SENSOR_REG_T imx230_1280x720_setting[] = {
     {0x3A37, 0x00}, {0x3A38, 0x02}, {0x3A39, 0x00}, {0x3A21, 0x00},
     {0x3011, 0x00}, {0x3013, 0x01}};
 
-static struct sensor_res_tab_info s_imx230_resolution_tab_raw[VENDOR_NUM] = {
-    {
-      .module_id = MODULE_SUNNY,
-      .reg_tab = {
-        {ADDR_AND_LEN_OF_ARRAY(imx230_init_setting), PNULL, 0,
-        .width = 0, .height = 0,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+static struct sensor_res_tab_info
+    s_imx230_resolution_tab_raw[VENDOR_NUM] =
+        {
+            {.module_id = MODULE_SUNNY,
+             .reg_tab =
+                 {
+                     {ADDR_AND_LEN_OF_ARRAY(imx230_init_setting), PNULL, 0,
+                      .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(imx230_1280x720_setting), PNULL, 0,
-        .width = 1280, .height = 720,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                     {ADDR_AND_LEN_OF_ARRAY(imx230_1280x720_setting), PNULL, 0,
+                      .width = 1280, .height = 720, .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting), PNULL, 0,
-        .width = 2672, .height = 2008,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                     {ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting), PNULL, 0,
+                      .width = 2672, .height = 2008, .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        /*{ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting_new), PNULL, 0,
-        .width = 2672, .height = 2008,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
+                     /*{ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting_new),
+                     PNULL, 0,
+                     .width = 2672, .height = 2008,
+                     .xclk_to_sensor = EX_MCLK, .image_format =
+                     SENSOR_IMAGE_FORMAT_RAW},*/
 
-        {ADDR_AND_LEN_OF_ARRAY(imx230_4272x2404_setting), PNULL, 0,
-        .width = 4272, .height = 2404,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                     {ADDR_AND_LEN_OF_ARRAY(imx230_4272x2404_setting), PNULL,
+                      0, .width = 4272, .height = 2404,
+                      .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(imx230_4272x3212_setting), PNULL, 0,
-        .width = 4272, .height = 3212,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                     {ADDR_AND_LEN_OF_ARRAY(imx230_4272x3212_setting), PNULL,
+                      0, .width = 4272, .height = 3212,
+                      .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        /*{ADDR_AND_LEN_OF_ARRAY(imx230_5344x4016_setting), PNULL, 0,
-        .width = 5344, .height = 4016,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
-    }}
-/*If there are multiple modules,please add here*/
+                     /*{ADDR_AND_LEN_OF_ARRAY(imx230_5344x4016_setting), PNULL,
+                     0,
+                     .width = 5344, .height = 4016,
+                     .xclk_to_sensor = EX_MCLK, .image_format =
+                     SENSOR_IMAGE_FORMAT_RAW},*/
+                 }}
+            /*If there are multiple modules,please add here*/
 };
 
-static SENSOR_TRIM_T s_imx230_resolution_trim_tab[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .trim_info = {
-       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-       { .trim_start_x = 0, .trim_start_y = 0,
-         .trim_width = 1280, .trim_height = 720,
-         .line_time = 10188,.bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
-         .frame_line = 828,
-         .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
+static SENSOR_TRIM_T
+    s_imx230_resolution_trim_tab[VENDOR_NUM] =
+        {
+            {.module_id = MODULE_SUNNY,
+             .trim_info =
+                 {
+                     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 1280,
+                      .trim_height = 720,
+                      .line_time = 10188,
+                      .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
+                      .frame_line = 828,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
 
-       { .trim_start_x = 0, .trim_start_y = 0,
-         .trim_width = 2672, .trim_height = 2008,
-         .line_time = 14343,.bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
-         .frame_line = 2320,
-         .scaler_trim = {.x = 0, .y = 0, .w = 2672, .h = 2008}},
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 2672,
+                      .trim_height = 2008,
+                      .line_time = 14343,
+                      .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
+                      .frame_line = 2320,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 2672, .h = 2008}},
 
-       { .trim_start_x = 0, .trim_start_y = 0,
-         .trim_width = 4272, .trim_height = 2404,
-         .line_time = 10739,.bps_per_lane = 1099,
-         .frame_line = 3104,
-         .scaler_trim = {.x = 0, .y = 0, .w = 4272, .h = 2404}},
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 4272,
+                      .trim_height = 2404,
+                      .line_time = 10739,
+                      .bps_per_lane = 1099,
+                      .frame_line = 3104,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 4272, .h = 2404}},
 
-       { .trim_start_x = 0, .trim_start_y = 0,
-         .trim_width = 4272, .trim_height = 3212,
-         .line_time = 10144,.bps_per_lane = 1131,
-         .frame_line = 4106,
-         .scaler_trim = {.x = 0, .y = 0, .w = 4272, .h = 3212}},
+                     {.trim_start_x = 0,
+                      .trim_start_y = 0,
+                      .trim_width = 4272,
+                      .trim_height = 3212,
+                      .line_time = 10144,
+                      .bps_per_lane = 1131,
+                      .frame_line = 4106,
+                      .scaler_trim = {.x = 0, .y = 0, .w = 4272, .h = 3212}},
 
-       /*{ .trim_start_x = 0, .trim_start_y = 0,
-         .trim_width = 5344, .trim_height = 4016,
-         .line_time = 10040,.bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
-         .frame_line = 4140,
-         .scaler_trim = {.x = 0, .y = 0, .w = 5344, .h = 4016}},*/
+                     /*{ .trim_start_x = 0, .trim_start_y = 0,
+                       .trim_width = 5344, .trim_height = 4016,
+                       .line_time = 10040,.bps_per_lane =
+                       SNAPSHOT_MIPI_PER_LANE_BPS,
+                       .frame_line = 4140,
+                       .scaler_trim = {.x = 0, .y = 0, .w = 5344, .h = 4016}},*/
 
-    }}
-    /*If there are multiple modules,please add here*/
+                 }}
+            /*If there are multiple modules,please add here*/
 };
 
 static const SENSOR_REG_T
     s_imx230_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-    /*video mode 0: ?fps */
-    {{0xffff, 0xff}},
-    /* video mode 1:?fps */
-    {{0xffff, 0xff}},
-    /* video mode 2:?fps */
-    {{0xffff, 0xff}},
-    /* video mode 3:?fps */
-    {{0xffff, 0xff}}};
+        /*video mode 0: ?fps */
+        {{0xffff, 0xff}},
+        /* video mode 1:?fps */
+        {{0xffff, 0xff}},
+        /* video mode 2:?fps */
+        {{0xffff, 0xff}},
+        /* video mode 3:?fps */
+        {{0xffff, 0xff}}};
 
 static const SENSOR_REG_T
     s_imx230_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-    /*video mode 0: ?fps */
-    {{0xffff, 0xff}},
-    /* video mode 1:?fps */
-    {{0xffff, 0xff}},
-    /* video mode 2:?fps */
-    {{0xffff, 0xff}},
-    /* video mode 3:?fps */
-    {{0xffff, 0xff}}};
+        /*video mode 0: ?fps */
+        {{0xffff, 0xff}},
+        /* video mode 1:?fps */
+        {{0xffff, 0xff}},
+        /* video mode 2:?fps */
+        {{0xffff, 0xff}},
+        /* video mode 3:?fps */
+        {{0xffff, 0xff}}};
 
 static SENSOR_VIDEO_INFO_T s_imx230_video_info[SENSOR_MODE_MAX] = {
     {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
@@ -677,70 +695,64 @@ static SENSOR_VIDEO_INFO_T s_imx230_video_info[SENSOR_MODE_MAX] = {
 
 static SENSOR_STATIC_INFO_T s_imx230_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_TRULY,
-     .static_info = {
-        .f_num = 220,
-        .focal_length = 462,
-        .max_fps = 0,
-        .max_adgain = 8 * 16,
-        .ois_supported = 0,
-        .pdaf_supported = 0,
-        .exp_valid_frame_num = 1,
-        .clamp_level = 64,
-        .adgain_valid_frame_num = 1,
-        .fov_info = {{5.985f, 4.498f}, 4.75f}}
-    }
-};
+     .static_info = {.f_num = 220,
+                     .focal_length = 462,
+                     .max_fps = 0,
+                     .max_adgain = 8 * 16,
+                     .ois_supported = 0,
+                     .pdaf_supported = 0,
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 64,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{5.985f, 4.498f}, 4.75f}}}};
 
 static SENSOR_MODE_FPS_INFO_T s_imx230_mode_fps_info[VENDOR_NUM] = {
     {.module_id = MODULE_TRULY,
-        {.is_init = 0,
-          {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-           {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-           {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-           {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-           {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-           {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-           {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-           {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-           {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
-    }
-};
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}};
 
 static struct sensor_module_info s_imx230_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_TRULY,
-     .module_info = {
-        .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-        .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
-        .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
-                               SENSOR_I2C_FREQ_400,
+                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                                            SENSOR_I2C_VAL_8BIT |
+                                            SENSOR_I2C_FREQ_400,
 
-        .avdd_val = SENSOR_AVDD_2500MV,
-        .iovdd_val = SENSOR_AVDD_1800MV,
-        .dvdd_val = SENSOR_AVDD_1200MV,
+                     .avdd_val = SENSOR_AVDD_2500MV,
+                     .iovdd_val = SENSOR_AVDD_1800MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
-        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
-        .preview_skip_num = 1,
-        .capture_skip_num = 1,
-        .flash_capture_skip_num = 6,
-        .mipi_cap_skip_num = 0,
-        .preview_deci_num = 0,
-        .video_preview_deci_num = 0,
+                     .preview_skip_num = 1,
+                     .capture_skip_num = 1,
+                     .flash_capture_skip_num = 6,
+                     .mipi_cap_skip_num = 0,
+                     .preview_deci_num = 0,
+                     .video_preview_deci_num = 0,
 
-        .sensor_interface = {
-            .type = SENSOR_INTERFACE_TYPE_CSI2,
-            .bus_width = LANE_NUM,
-            .pixel_width = RAW_BITS,
-            /*0:mipi_raw,1:normal_raw*/
-            .is_loose = 0,
-        },
+                     .sensor_interface =
+                         {
+                             .type = SENSOR_INTERFACE_TYPE_CSI2,
+                             .bus_width = LANE_NUM,
+                             .pixel_width = RAW_BITS,
+                             /*0:mipi_raw,1:normal_raw*/
+                             .is_loose = 0,
+                         },
 
-        .change_setting_skip_num = 1,
-        .horizontal_view_angle = 35,
-        .vertical_view_angle = 35
-    }}
-};
+                     .change_setting_skip_num = 1,
+                     .horizontal_view_angle = 35,
+                     .vertical_view_angle = 35}}};
 
 static struct sensor_ic_ops s_imx230_ops_tab;
 struct sensor_raw_info *s_imx230_mipi_raw_info_ptr = &s_imx230_mipi_raw_info;
@@ -749,10 +761,11 @@ SENSOR_INFO_T g_imx230_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |
                           SENSOR_HW_SIGNAL_HSYNC_P,
     .environment_mode = SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
-    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL | SENSOR_IMAGE_EFFECT_BLACKWHITE |
-                    SENSOR_IMAGE_EFFECT_RED | SENSOR_IMAGE_EFFECT_GREEN |
-                    SENSOR_IMAGE_EFFECT_BLUE | SENSOR_IMAGE_EFFECT_YELLOW |
-                    SENSOR_IMAGE_EFFECT_NEGATIVE | SENSOR_IMAGE_EFFECT_CANVAS,
+    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL |
+                    SENSOR_IMAGE_EFFECT_BLACKWHITE | SENSOR_IMAGE_EFFECT_RED |
+                    SENSOR_IMAGE_EFFECT_GREEN | SENSOR_IMAGE_EFFECT_BLUE |
+                    SENSOR_IMAGE_EFFECT_YELLOW | SENSOR_IMAGE_EFFECT_NEGATIVE |
+                    SENSOR_IMAGE_EFFECT_CANVAS,
 
     .wb_mode = 0,
     .step_count = 7,
@@ -762,12 +775,12 @@ SENSOR_INFO_T g_imx230_mipi_raw_info = {
     .power_down_level = SENSOR_LOW_LEVEL_PWDN,
 
     .identify_count = 1,
-    .identify_code = { {imx230_PID_ADDR, imx230_PID_VALUE}, 
-                       {imx230_VER_ADDR, imx230_VER_VALUE}},
+    .identify_code = {{imx230_PID_ADDR, imx230_PID_VALUE},
+                      {imx230_VER_ADDR, imx230_VER_VALUE}},
 
     .source_width_max = SNAPSHOT_WIDTH,
     .source_height_max = SNAPSHOT_HEIGHT,
-    .name = (cmr_s8 *) SENSOR_NAME,
+    .name = (cmr_s8 *)SENSOR_NAME,
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 

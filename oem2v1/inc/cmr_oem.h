@@ -305,8 +305,6 @@ struct camera_context {
     void *hal_mem_privdata;
     cmr_uint is_enter_focus;
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     /*for isp lsc buffer*/
     cmr_uint lsc_malloc_flag;
     cmr_uint isp_lsc_phys_addr;
@@ -317,7 +315,6 @@ struct camera_context {
     cmr_uint isp_b4awb_flag;
     cmr_uint b4awb_phys_addr[ISP_B4AWB_BUF_CNT];
     cmr_uint b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
-#endif
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
@@ -445,7 +442,6 @@ cmr_int camera_local_zsl_snapshot_need_pause(cmr_handle oem_handle,
 cmr_int camera_local_normal_snapshot_need_pause(cmr_handle oem_handle,
                                                 cmr_int *flag);
 void camera_calibrationconfigure_save(uint32_t start_addr, uint32_t data_size);
-void camera_set_reload_support(uint32_t is_support);
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
                                   int *size);
 

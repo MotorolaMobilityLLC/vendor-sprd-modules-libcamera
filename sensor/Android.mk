@@ -20,7 +20,6 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Wno-error=format#-Werror
 
-TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 LOCAL_C_INCLUDES := \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \

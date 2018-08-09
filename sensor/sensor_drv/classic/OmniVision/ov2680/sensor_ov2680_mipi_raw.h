@@ -22,12 +22,7 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #include "parameters/sensor_ov2680_raw_param_v3.c"
-#else
-#include "parameters/sensor_ov2680_raw_param_v2.c"
-#endif
 #ifdef CONFIG_CAMERA_RT_REFOCUS
 #include "al3200.h"
 #endif
@@ -45,9 +40,7 @@
 #define ov2680_MIN_FRAME_LEN_CAP 0x7B6
 #define ov2680_RAW_PARAM_COM 0x0000
 
-typedef struct ov2680_private_data{
-    cmr_u16 VTS;
-}PRIVATE_DATA;
+typedef struct ov2680_private_data { cmr_u16 VTS; } PRIVATE_DATA;
 
 /* STATEMENT:  Don't define global variables*/
 
@@ -115,7 +108,7 @@ static const SENSOR_REG_T ov2680_com_mipi_raw[] = {
     {0x3814, 0x31},
     {0x3815, 0x31},
     {0x3819, 0x04},
-#if 0//def CONFIG_CAMERA_IMAGE_180
+#if 0 // def CONFIG_CAMERA_IMAGE_180
     {0x3820, 0xc2},
     {0x3821, 0x00},
 #else
@@ -307,12 +300,12 @@ static const SENSOR_REG_T ov2680_1600X1200_altek_mipi_raw[] = {
     {0x3814, 0x11},
     {0x3815, 0x11},
     {0x3819, 0x04},
-#if 0//ndef CAMERA_IMAGE_180
+#if 0 // ndef CAMERA_IMAGE_180
     {0x3820, 0xc0},
     {0x3821, 0x00},
 #else
-	{0x3820, 0xc4},
-	{0x3821, 0x04},
+    {0x3820, 0xc4},
+    {0x3821, 0x04},
 #endif
     {0x4000, 0x81},
     {0x4001, 0x40},
@@ -458,7 +451,7 @@ static const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
     {0x380e, 0x0a}, {0x380f, 0x1c},
 #endif
     {0x3811, 0x08}, {0x3813, 0x08}, {0x3814, 0x11}, {0x3815, 0x11},
-#if 0 //def CONFIG_CAMERA_IMAGE_180
+#if 0 // def CONFIG_CAMERA_IMAGE_180
     {0x3820, 0xc0}, {0x3821, 0x00},
 #else
     {0x3820, 0xc4}, {0x3821, 0x04},
@@ -468,72 +461,75 @@ static const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
 };
 
 static struct sensor_res_tab_info s_ov2680_resolution_tab_raw[VENDOR_NUM] = {
-    {
-      .module_id = MODULE_SUNNY,
-      .reg_tab = {
-        {ADDR_AND_LEN_OF_ARRAY(ov2680_com_mipi_raw), PNULL, 0,
-        .width = 0, .height = 0,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+    {.module_id = MODULE_SUNNY,
+     .reg_tab =
+         {
+             {ADDR_AND_LEN_OF_ARRAY(ov2680_com_mipi_raw), PNULL, 0, .width = 0,
+              .height = 0, .xclk_to_sensor = 24,
+              .image_format = SENSOR_IMAGE_FORMAT_RAW},
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-        {ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_altek_mipi_raw), PNULL, 0,
-        .width = 1600, .height = 1200,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+             {ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_altek_mipi_raw), PNULL, 0,
+              .width = 1600, .height = 1200, .xclk_to_sensor = 24,
+              .image_format = SENSOR_IMAGE_FORMAT_RAW},
 #else
-        {ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_mipi_raw), PNULL, 0,
-        .width = 1600, .height = 1200,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}
+             {ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_mipi_raw), PNULL, 0,
+              .width = 1600, .height = 1200, .xclk_to_sensor = 24,
+              .image_format = SENSOR_IMAGE_FORMAT_RAW}
 #endif
-    }}
-/*If there are multiple modules,please add here*/
-};
-
-static SENSOR_TRIM_T s_ov2680_Resolution_Trim_Tab[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .trim_info = {
-       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-      /* {.trim_start_x = 0,.trim_start_y = 0, .trim_width = 800,.trim_height = 600,
-        .line_time = 51800,.bps_per_lane = 330, .frame_line = 644,
-        .scaler_trim = {.x = 0, .y = 0, .w = 800, .h = 600}},*/
-
-       {.trim_start_x = 0,.trim_start_y = 0, .trim_width = 1600,.trim_height = 1200,
-        .line_time = 25758,.bps_per_lane = 628, .frame_line = 1294,
-        .scaler_trim = {.x = 0, .y = 0, .w = 1600, .h = 1200}}}
-    }
+         }}
     /*If there are multiple modules,please add here*/
 };
 
+static SENSOR_TRIM_T s_ov2680_Resolution_Trim_Tab[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     .trim_info = {{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+                   /* {.trim_start_x = 0,.trim_start_y = 0, .trim_width =
+                     800,.trim_height = 600,
+                     .line_time = 51800,.bps_per_lane = 330, .frame_line = 644,
+                     .scaler_trim = {.x = 0, .y = 0, .w = 800, .h = 600}},*/
 
-static const SENSOR_REG_T
-    s_ov2680_640X480_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-    /*video mode 0: ?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 1:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 2:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 3:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+                   {.trim_start_x = 0,
+                    .trim_start_y = 0,
+                    .trim_width = 1600,
+                    .trim_height = 1200,
+                    .line_time = 25758,
+                    .bps_per_lane = 628,
+                    .frame_line = 1294,
+                    .scaler_trim = {.x = 0, .y = 0, .w = 1600, .h = 1200}}}}
+    /*If there are multiple modules,please add here*/
+};
+
+static const SENSOR_REG_T s_ov2680_640X480_video_tab[SENSOR_VIDEO_MODE_MAX][1] =
+    {
+        /*video mode 0: ?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 1:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 2:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 3:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
 };
 static const SENSOR_REG_T
     s_ov2680_1600X1200_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-    /*video mode 0: ?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 1:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 2:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
-    /* video mode 3:?fps*/
-    {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /*video mode 0: ?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 1:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 2:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+        /* video mode 3:?fps*/
+        {{.reg_addr = 0xffff, .reg_value = 0xff}},
 };
-
 
 LOCAL SENSOR_VIDEO_INFO_T s_ov2680_video_info[] = {
     {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
     //{{{30, 30, 284, 90}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0,
     // 0}},(SENSOR_REG_T**)s_ov2680_640X480_video_tab},
     {{{.min_frate = 25, .max_frate = 25, .line_time = 258, .gain = 64},
-      {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0}},
      (SENSOR_REG_T **)s_ov2680_1600X1200_video_tab},
     {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
     {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
@@ -543,86 +539,82 @@ LOCAL SENSOR_VIDEO_INFO_T s_ov2680_video_info[] = {
     {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL}};
 
 static SENSOR_STATIC_INFO_T s_ov2680_static_info[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .static_info = {
-         .f_num = 240,
-         .focal_length = 200,
-         .max_fps = 0,
-         .max_adgain = 8,
-         .ois_supported = 0,
-         .pdaf_supported = 0,
-         .exp_valid_frame_num = 1,
-         .clamp_level = 16,
-         .adgain_valid_frame_num = 1,
-         .fov_info = {{2.84f, 2.15f}, 2.15f}}
-    }
+    {.module_id = MODULE_SUNNY,
+     .static_info = {.f_num = 240,
+                     .focal_length = 200,
+                     .max_fps = 0,
+                     .max_adgain = 8,
+                     .ois_supported = 0,
+                     .pdaf_supported = 0,
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 16,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{2.84f, 2.15f}, 2.15f}}}
     /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_MODE_FPS_INFO_T s_ov2680_mode_fps_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-       {.is_init = 0,
-         {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
-    }
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
     /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_module_info s_ov2680_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {
-         .major_i2c_addr = 0x6c >> 1,
-         .minor_i2c_addr = 0x6c >> 1,
+     .module_info = {.major_i2c_addr = 0x6c >> 1,
+                     .minor_i2c_addr = 0x6c >> 1,
 
-         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_REG_8BIT |
-                                 SENSOR_I2C_FREQ_100,
+                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                                            SENSOR_I2C_REG_8BIT |
+                                            SENSOR_I2C_FREQ_100,
 
-         .avdd_val = SENSOR_AVDD_2800MV,
-         .iovdd_val = SENSOR_AVDD_1800MV,
-         .dvdd_val = SENSOR_AVDD_1500MV,
+                     .avdd_val = SENSOR_AVDD_2800MV,
+                     .iovdd_val = SENSOR_AVDD_1800MV,
+                     .dvdd_val = SENSOR_AVDD_1500MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-         .preview_skip_num = 1,
-         .capture_skip_num = 0,
-         .flash_capture_skip_num = 6,
-         .mipi_cap_skip_num = 0,
-         .preview_deci_num = 0,
-         .video_preview_deci_num = 0,
+                     .preview_skip_num = 1,
+                     .capture_skip_num = 0,
+                     .flash_capture_skip_num = 6,
+                     .mipi_cap_skip_num = 0,
+                     .preview_deci_num = 0,
+                     .video_preview_deci_num = 0,
 
-         .sensor_interface =
-         {  .type = SENSOR_INTERFACE_TYPE_CSI2,  .bus_width = 1,
-            .pixel_width = 10,                   .is_loose = 0},
+                     .sensor_interface = {.type = SENSOR_INTERFACE_TYPE_CSI2,
+                                          .bus_width = 1,
+                                          .pixel_width = 10,
+                                          .is_loose = 0},
 
-         .change_setting_skip_num = 1,
-         .horizontal_view_angle = 48,
-         .vertical_view_angle = 48
-      }
-    }
+                     .change_setting_skip_num = 1,
+                     .horizontal_view_angle = 48,
+                     .vertical_view_angle = 48}}
 
-/*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_ic_ops s_ov2680_ops_tab;
-static struct sensor_raw_info *s_ov2680_mipi_raw_info_ptr = 
-                                    &s_ov2680_mipi_raw_info;
+static struct sensor_raw_info *s_ov2680_mipi_raw_info_ptr =
+    &s_ov2680_mipi_raw_info;
 
 SENSOR_INFO_T g_ov2680_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_N | SENSOR_HW_SIGNAL_VSYNC_N |
                           SENSOR_HW_SIGNAL_HSYNC_P,
     .environment_mode = SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
-    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL | SENSOR_IMAGE_EFFECT_BLACKWHITE |
-                    SENSOR_IMAGE_EFFECT_RED | SENSOR_IMAGE_EFFECT_GREEN |
-                    SENSOR_IMAGE_EFFECT_BLUE | SENSOR_IMAGE_EFFECT_YELLOW |
-                    SENSOR_IMAGE_EFFECT_NEGATIVE | SENSOR_IMAGE_EFFECT_CANVAS,
+    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL |
+                    SENSOR_IMAGE_EFFECT_BLACKWHITE | SENSOR_IMAGE_EFFECT_RED |
+                    SENSOR_IMAGE_EFFECT_GREEN | SENSOR_IMAGE_EFFECT_BLUE |
+                    SENSOR_IMAGE_EFFECT_YELLOW | SENSOR_IMAGE_EFFECT_NEGATIVE |
+                    SENSOR_IMAGE_EFFECT_CANVAS,
 
     .wb_mode = 0,
     .step_count = 7,
@@ -632,12 +624,14 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
     .power_down_level = SENSOR_LOW_LEVEL_PWDN,
 
     .identify_count = 1,
-    .identify_code = {{.reg_addr = 0x0A,.reg_value = 0x26},
-                      {.reg_addr = 0x0B,.reg_value = 0x80,}},
+    .identify_code = {{.reg_addr = 0x0A, .reg_value = 0x26},
+                      {
+                          .reg_addr = 0x0B, .reg_value = 0x80,
+                      }},
 
     .source_width_max = 1600,
     .source_height_max = 1200,
-    .name = (cmr_s8 *) SENSOR_NAME,
+    .name = (cmr_s8 *)SENSOR_NAME,
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 
@@ -649,6 +643,5 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
     .module_info_tab_size = ARRAY_SIZE(s_ov2680_module_info_tab),
 
     .video_tab_info_ptr = s_ov2680_video_info,
-    .sensor_version_info = (cmr_s8 *)"ov2680v1"
-};
+    .sensor_version_info = (cmr_s8 *)"ov2680v1"};
 #endif

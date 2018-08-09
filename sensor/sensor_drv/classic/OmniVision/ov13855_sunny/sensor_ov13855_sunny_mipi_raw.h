@@ -50,7 +50,7 @@
 #define SNAPSHOT_WIDTH 4224  // 5344
 #define SNAPSHOT_HEIGHT 3136 // 4016
 #endif
-#define PREVIEW_WIDTH 2112   // 2672
+#define PREVIEW_WIDTH 2112 // 2672
 #define PREVIEW_HEIGHT 1568
 
 /* frame length*/
@@ -71,12 +71,7 @@
 #define SENSOR_MIN_SHUTTER 4
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 
 /* please don't change it */
 #define EX_MCLK 24
@@ -276,12 +271,11 @@ static const SENSOR_REG_T ov13855_1280x720_setting[] = {
 
 static SENSOR_STATIC_INFO_T s_ov13855_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .static_info = {
-        .f_num = 200,
-        .focal_length = 354,
-        .max_fps = 0,
-        .max_adgain = 15 * 2,
-        .ois_supported = 0,
+     .static_info = {.f_num = 200,
+                     .focal_length = 354,
+                     .max_fps = 0,
+                     .max_adgain = 15 * 2,
+                     .ois_supported = 0,
 
 #ifdef CONFIG_CAMERA_PDAF_TYPE
                      .pdaf_supported =
@@ -412,48 +406,48 @@ static SENSOR_VIDEO_INFO_T s_ov13855_video_info[SENSOR_MODE_MAX] = {
 
 static struct sensor_module_info s_ov13855_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {
-         .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
-         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
-                                SENSOR_I2C_FREQ_400,
+                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                                            SENSOR_I2C_VAL_8BIT |
+                                            SENSOR_I2C_FREQ_400,
 
-         .avdd_val = SENSOR_AVDD_2800MV,
-         .iovdd_val = SENSOR_AVDD_1800MV,
-         .dvdd_val = SENSOR_AVDD_1200MV,
+                     .avdd_val = SENSOR_AVDD_2800MV,
+                     .iovdd_val = SENSOR_AVDD_1800MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-         .preview_skip_num = 1,
-         .capture_skip_num = 1,
-         .flash_capture_skip_num = 6,
-         .mipi_cap_skip_num = 0,
-         .preview_deci_num = 0,
-         .video_preview_deci_num = 0,
+                     .preview_skip_num = 1,
+                     .capture_skip_num = 1,
+                     .flash_capture_skip_num = 6,
+                     .mipi_cap_skip_num = 0,
+                     .preview_deci_num = 0,
+                     .video_preview_deci_num = 0,
 
-         .threshold_eb = 0,
-         .threshold_mode = 0,
-         .threshold_start = 0,
-         .threshold_end = 0,
+                     .threshold_eb = 0,
+                     .threshold_mode = 0,
+                     .threshold_start = 0,
+                     .threshold_end = 0,
 
-         .sensor_interface = {
-              .type = SENSOR_INTERFACE_TYPE_CSI2,
-              .bus_width = 4,
-              .pixel_width = 10,
-              .is_loose = 0,
-          },
-         .change_setting_skip_num = 1,
-         .horizontal_view_angle = 35,
-         .vertical_view_angle = 35
-      }
-    }
+                     .sensor_interface =
+                         {
+                             .type = SENSOR_INTERFACE_TYPE_CSI2,
+                             .bus_width = 4,
+                             .pixel_width = 10,
+                             .is_loose = 0,
+                         },
+                     .change_setting_skip_num = 1,
+                     .horizontal_view_angle = 35,
+                     .vertical_view_angle = 35}}
 
-/*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_ic_ops s_ov13855_ops_tab;
-struct sensor_raw_info *s_ov13855_sunny_mipi_raw_info_ptr = &s_ov13855_mipi_raw_info;
+struct sensor_raw_info *s_ov13855_sunny_mipi_raw_info_ptr =
+    &s_ov13855_mipi_raw_info;
 
 SENSOR_INFO_T g_ov13855_sunny_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |

@@ -1,7 +1,6 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 ANDROID_MAJOR_VER := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
 

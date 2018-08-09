@@ -4,7 +4,6 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=format
 
-TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)

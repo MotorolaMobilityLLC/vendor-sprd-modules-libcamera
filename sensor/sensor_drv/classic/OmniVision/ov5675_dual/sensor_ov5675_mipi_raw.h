@@ -100,19 +100,13 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 /* please don't change it */
 #define EX_MCLK 24
 
 static struct sensor_ic_ops s_ov5675_ops_tab;
 struct sensor_raw_info *s_ov5675_dual_mipi_raw_info_ptr = PNULL;
 //    &s_ov5675_dual_mipi_raw_info;
-
 
 static const SENSOR_REG_T ov5675_init_setting[] = {
     {0x0100, 0x00},

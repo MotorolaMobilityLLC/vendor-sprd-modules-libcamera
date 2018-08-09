@@ -48,7 +48,7 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#if 0 // defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO)
+#if 0                        // defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO)
 #define SNAPSHOT_WIDTH 2328  // 5344
 #define SNAPSHOT_HEIGHT 1744 // 4016
 #else
@@ -72,12 +72,7 @@
 #define SENSOR_MIN_SHUTTER 8
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 
 /* please don't change it */
 #define EX_MCLK 24
@@ -205,16 +200,11 @@ static const SENSOR_REG_T imx351_init_setting[] = {
     {0xAC1F, 0xC0}, {0xBCF1, 0x00},
 
 #if defined(CONFIG_DUAL_MODULE)
-    {0x3F0B, 0x01},
-    {0x3041, 0x01},
-    {0x3040, 0x01},
-    {0x4B81, 0x01},
-    {0x3F39, 0x00},
-    {0x3F3A, 0x0C},
-    {0x3F3B, 0x74},
-    {0x0350, 0x00},
-    {0x423D, 0xFF},
-    {0x4BD7, 0x16},
+    {0x3F0B, 0x01}, {0x3041, 0x01},
+    {0x3040, 0x01}, {0x4B81, 0x01},
+    {0x3F39, 0x00}, {0x3F3A, 0x0C},
+    {0x3F3B, 0x74}, {0x0350, 0x00},
+    {0x423D, 0xFF}, {0x4BD7, 0x16},
     {0x3040, 0x01},
 #endif
 

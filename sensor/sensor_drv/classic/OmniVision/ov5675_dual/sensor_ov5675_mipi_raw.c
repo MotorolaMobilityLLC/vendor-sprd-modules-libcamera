@@ -591,19 +591,7 @@ static cmr_int ov5675_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 static cmr_u32 isp_to_real_gain(cmr_handle handle, uint32_t param) {
     cmr_u32 real_gain = 0;
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     real_gain = param;
-#else
-    real_gain = ((param & 0xf) + 16) * (((param >> 4) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 5) & 0x01) + 1) * (((param >> 6) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 7) & 0x01) + 1) * (((param >> 8) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 9) & 0x01) + 1) * (((param >> 10) & 0x01) + 1);
-    real_gain = real_gain * (((param >> 11) & 0x01) + 1);
-#endif
 
     return real_gain;
 }
@@ -779,9 +767,9 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
                 sns_drv_cxt->is_multi_mode);
     if (sns_drv_cxt->module_id == MODULE_SUNNY && sns_drv_cxt->is_multi_mode &&
         sns_drv_cxt->is_multi_mode != MODE_TUNING) {
-        #ifndef CONFIG_DISABLE_DUAL_CAMERA_FRAMESYNC
+#ifndef CONFIG_DISABLE_DUAL_CAMERA_FRAMESYNC
         ov5675_drv_set_frame_sync(handle, 0);
-        #endif
+#endif
         SENSOR_LOGI("set frame sync");
     }
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
@@ -825,11 +813,11 @@ static cmr_int ov5675_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     cmr_u8 vendor_id = (cmr_u8)*param;
     SENSOR_LOGI("*param %x %x", *param, vendor_id);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov5675_dual_mipi_raw_info_ptr = ov5675_dual_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+    s_ov5675_dual_mipi_raw_info_ptr =
+        ov5675_dual_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
 
     return rtn;
 }
-
 
 static cmr_int ov5675_drv_access_val(cmr_handle handle, unsigned long param) {
     cmr_int rtn = SENSOR_SUCCESS;

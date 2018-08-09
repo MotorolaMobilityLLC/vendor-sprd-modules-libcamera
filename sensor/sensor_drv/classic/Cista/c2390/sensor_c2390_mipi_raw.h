@@ -23,14 +23,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#if 0 // defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
-      // defined(CONFIG_CAMERA_ISP_VERSION_V4)
-//#include "sensor_c2390_raw_param_v3.c"
-#include "sensor_c2390_raw_param_main.c"
-
-#else
 #include "parameters/sensor_c2390_raw_param_main.c"
-#endif
 
 #define VENDOR_NUM 1
 #define SENSOR_NAME "c2390_mipi_raw"
@@ -86,12 +79,7 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 /* please don't change it */
 #define EX_MCLK 24
 

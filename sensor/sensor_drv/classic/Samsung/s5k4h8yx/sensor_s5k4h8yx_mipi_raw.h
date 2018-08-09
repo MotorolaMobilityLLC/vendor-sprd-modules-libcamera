@@ -23,11 +23,7 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-//#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
-// defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #include "parameters/sensor_s5k4h8yx_raw_param_v3.c"
-//#else
-//#endif
 #include "isp_param_file_update.h"
 
 #ifndef RAW_INFO_END_ID
@@ -40,14 +36,12 @@
 
 //#define S5K4H8YX_2_LANES
 #define S5K4H8YX_4_LANES
-#define SENSOR_NAME  "s5k4h8yx_mipi_raw"
+#define SENSOR_NAME "s5k4h8yx_mipi_raw"
 
 /**
  * Name of the sensor_raw_param as a string
  */
 #define S5K4H8YX_RAW_PARAM_AS_STR "S5K4H8YXRP"
-
-
 
 #ifdef FEATURE_OTP
 #define MODULE_ID_s5k4h8yx_ofilm 0x0007
@@ -88,19 +82,15 @@ static const struct raw_param_info_tab s_s5k4h8yx_raw_param_tab[] = {
 #endif
 
 static cmr_int s5k4h8yx_drv_write_exp_dummy(cmr_handle handle,
-                                                    cmr_u16 expsure_line,
-                                                    cmr_u16 dummy_line,
-                                                    cmr_u16 size_index);
-static cmr_int s5k4h8yx_drv_set_shutter(cmr_handle handle,
-                                                 cmr_u16 shutter);
+                                            cmr_u16 expsure_line,
+                                            cmr_u16 dummy_line,
+                                            cmr_u16 size_index);
+static cmr_int s5k4h8yx_drv_set_shutter(cmr_handle handle, cmr_u16 shutter);
 static cmr_u16 s5k4h8yx_drv_get_shutter(cmr_handle handle);
 static cmr_int s5k4h8yx_drv_set_vts(cmr_handle handle, cmr_u16 VTS);
 static cmr_u16 s5k4h8yx_drv_get_vts(cmr_handle handle);
 static cmr_int s5k4h8yx_drv_read_gain(cmr_handle handle, cmr_u32 *param);
-static cmr_int s5k4h8yx_drv_get_exif_info(cmr_handle handle,
-                                                      void** param);
-
-
+static cmr_int s5k4h8yx_drv_get_exif_info(cmr_handle handle, void **param);
 
 ////initial setting V24 F1X9
 static const SENSOR_REG_T s5k4h8yx_common_init_new[] = {
@@ -395,50 +385,61 @@ static const SENSOR_REG_T s5k4h8yx_1632x1224_4lane_setting[] = {
 };
 
 static struct sensor_res_tab_info s_s5k4h8yx_resolution_tab_raw[VENDOR_NUM] = {
-    {
-      .module_id = MODULE_SUNNY,
-      .reg_tab = {
-        {ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init_new1), PNULL, 0,
-        .width = 0, .height = 0,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+    {.module_id = MODULE_SUNNY,
+     .reg_tab = {{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init_new1), PNULL, 0,
+                  .width = 0, .height = 0, .xclk_to_sensor = 24,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_1632x1224_4lane_setting), PNULL, 0,
-        .width = 1632, .height = 1224,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                 {ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_1632x1224_4lane_setting),
+                  PNULL, 0, .width = 1632, .height = 1224, .xclk_to_sensor = 24,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_4lane_setting_new1), PNULL, 0,
-        .width = 3264, .height = 2448,
-        .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW}}
-    }
-/*If there are multiple modules,please add here*/
-};
-
-
-static SENSOR_TRIM_T s_s5k4h8yx_resolution_trim_tab[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .trim_info = {
-       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-#ifdef S5K4H8YX_2_LANES
-      /* {.trim_start_x = 0,.trim_start_y = 0,.trim_width = 1632,.trim_height = 1224,
-        .line_time = 26742,.bps_per_lane = 700, .frame_line = 1246,
-        .scaler_trim = {.x = 0, .y = 0, .w = 1632, .h = 1224}}, */
-       {.trim_start_x = 0,.trim_start_y = 0,.trim_width = 3264,.trim_height = 2448,
-        .line_time = 26742,.bps_per_lane = 700,.frame_line = 2498,
-        .scaler_trim = {.x = 0, .y = 0, .w = 3264, .h = 2448}},
-#else
-       {.trim_start_x = 0,.trim_start_y = 0,.trim_width = 1632,.trim_height = 1224,
-        .line_time = 13371,.bps_per_lane = 700, .frame_line = 2580,
-        .scaler_trim = {.x = 0, .y = 0, .w = 1632, .h = 1224}},
-
-       {.trim_start_x = 0,.trim_start_y = 0,.trim_width = 3264,.trim_height = 2448,
-        .line_time = 13371,.bps_per_lane = 700, .frame_line = 2580,
-        .scaler_trim = {.x = 0, .y = 0, .w = 3264, .h = 2448}},
-#endif
-      }}
+                 {ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_4lane_setting_new1),
+                  PNULL, 0, .width = 3264, .height = 2448, .xclk_to_sensor = 24,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
     /*If there are multiple modules,please add here*/
 };
 
+static SENSOR_TRIM_T s_s5k4h8yx_resolution_trim_tab[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     .trim_info =
+         {
+             {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+#ifdef S5K4H8YX_2_LANES
+             /* {.trim_start_x = 0,.trim_start_y = 0,.trim_width =
+               1632,.trim_height = 1224,
+               .line_time = 26742,.bps_per_lane = 700, .frame_line = 1246,
+               .scaler_trim = {.x = 0, .y = 0, .w = 1632, .h = 1224}}, */
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 3264,
+              .trim_height = 2448,
+              .line_time = 26742,
+              .bps_per_lane = 700,
+              .frame_line = 2498,
+              .scaler_trim = {.x = 0, .y = 0, .w = 3264, .h = 2448}},
+#else
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 1632,
+              .trim_height = 1224,
+              .line_time = 13371,
+              .bps_per_lane = 700,
+              .frame_line = 2580,
+              .scaler_trim = {.x = 0, .y = 0, .w = 1632, .h = 1224}},
+
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 3264,
+              .trim_height = 2448,
+              .line_time = 13371,
+              .bps_per_lane = 700,
+              .frame_line = 2580,
+              .scaler_trim = {.x = 0, .y = 0, .w = 3264, .h = 2448}},
+#endif
+         }}
+    /*If there are multiple modules,please add here*/
+};
 
 static const SENSOR_REG_T
     s_s5k4h8yx_1632x1224_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
@@ -487,77 +488,73 @@ static SENSOR_VIDEO_INFO_T s_s5k4h8yx_video_info[] = {
     {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL}};
 
 static SENSOR_STATIC_INFO_T s_s5k4h8yx_static_info[VENDOR_NUM] = {
-    {
-     .module_id = MODULE_SUNNY,
-     .static_info = {
-         .f_num = 200,
-         .focal_length = 287,
-         .max_fps = 0,
-         .max_adgain = 16 * 256,
-         .ois_supported = 0,
-         .pdaf_supported = 0,
-         .exp_valid_frame_num = 1,
-         .clamp_level = 64,
-         .adgain_valid_frame_num = 1,
-         .fov_info = {{3.656f, 2.742f}, 3.01f}}
-    }
+    {.module_id = MODULE_SUNNY,
+     .static_info = {.f_num = 200,
+                     .focal_length = 287,
+                     .max_fps = 0,
+                     .max_adgain = 16 * 256,
+                     .ois_supported = 0,
+                     .pdaf_supported = 0,
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 64,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{3.656f, 2.742f}, 3.01f}}}
     /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_MODE_FPS_INFO_T s_s5k4h8yx_mode_fps_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-       {.is_init = 0,
-         {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
-    }
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
     /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_module_info s_s5k4h8yx_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {
-         .major_i2c_addr = 0x10 ,
-         .minor_i2c_addr = 0x10 ,
+     .module_info = {.major_i2c_addr = 0x10,
+                     .minor_i2c_addr = 0x10,
 
-         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_16BIT |
-                                SENSOR_I2C_FREQ_400,
+                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                                            SENSOR_I2C_VAL_16BIT |
+                                            SENSOR_I2C_FREQ_400,
 
-         .avdd_val = SENSOR_AVDD_2800MV,
-         .iovdd_val = SENSOR_AVDD_1800MV,
-         .dvdd_val = SENSOR_AVDD_1200MV,
+                     .avdd_val = SENSOR_AVDD_2800MV,
+                     .iovdd_val = SENSOR_AVDD_1800MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
 
-         .preview_skip_num = 3,
-         .capture_skip_num = 3,
-         .flash_capture_skip_num = 6,
-         .mipi_cap_skip_num = 0,
-         .preview_deci_num = 0,
-         .video_preview_deci_num = 0,
+                     .preview_skip_num = 3,
+                     .capture_skip_num = 3,
+                     .flash_capture_skip_num = 6,
+                     .mipi_cap_skip_num = 0,
+                     .preview_deci_num = 0,
+                     .video_preview_deci_num = 0,
 
 #if defined(S5K4H8YX_2_LANES)
-         .sensor_interface = 
-         {.type = SENSOR_INTERFACE_TYPE_CSI2, .bus_width = 2,
-          .pixel_width = 10, .is_loose = 0},
+                     .sensor_interface = {.type = SENSOR_INTERFACE_TYPE_CSI2,
+                                          .bus_width = 2,
+                                          .pixel_width = 10,
+                                          .is_loose = 0},
 #elif defined(S5K4H8YX_4_LANES)
-         .sensor_interface = 
-         {.type = SENSOR_INTERFACE_TYPE_CSI2, .bus_width = 4,
-          .pixel_width = 10, .is_loose = 0},
+                     .sensor_interface = {.type = SENSOR_INTERFACE_TYPE_CSI2,
+                                          .bus_width = 4,
+                                          .pixel_width = 10,
+                                          .is_loose = 0},
 #endif
-         .change_setting_skip_num = 1,
-         .horizontal_view_angle = 48,
-         .vertical_view_angle = 48
-      }
-    }
+                     .change_setting_skip_num = 1,
+                     .horizontal_view_angle = 48,
+                     .vertical_view_angle = 48}}
 
-/*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 /*==============================================================================
@@ -565,17 +562,19 @@ static struct sensor_module_info s_s5k4h8yx_module_info_tab[VENDOR_NUM] = {
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
-static struct sensor_raw_info *s_s5k4h8yx_mipi_raw_info_ptr = &s_s5k4h8yx_mipi_raw_info;
+static struct sensor_raw_info *s_s5k4h8yx_mipi_raw_info_ptr =
+    &s_s5k4h8yx_mipi_raw_info;
 static struct sensor_ic_ops s5k4h8yx_ops_tab;
 
 SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_N | SENSOR_HW_SIGNAL_VSYNC_N |
                           SENSOR_HW_SIGNAL_HSYNC_P,
     .environment_mode = SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
-    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL | SENSOR_IMAGE_EFFECT_BLACKWHITE |
-                    SENSOR_IMAGE_EFFECT_RED | SENSOR_IMAGE_EFFECT_GREEN |
-                    SENSOR_IMAGE_EFFECT_BLUE | SENSOR_IMAGE_EFFECT_YELLOW |
-                    SENSOR_IMAGE_EFFECT_NEGATIVE | SENSOR_IMAGE_EFFECT_CANVAS,
+    .image_effect = SENSOR_IMAGE_EFFECT_NORMAL |
+                    SENSOR_IMAGE_EFFECT_BLACKWHITE | SENSOR_IMAGE_EFFECT_RED |
+                    SENSOR_IMAGE_EFFECT_GREEN | SENSOR_IMAGE_EFFECT_BLUE |
+                    SENSOR_IMAGE_EFFECT_YELLOW | SENSOR_IMAGE_EFFECT_NEGATIVE |
+                    SENSOR_IMAGE_EFFECT_CANVAS,
     .wb_mode = 0,
     .step_count = 7,
     .reset_pulse_level = SENSOR_LOW_PULSE_RESET,
@@ -583,8 +582,7 @@ SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
     .power_down_level = SENSOR_LOW_LEVEL_PWDN,
 
     .identify_count = 1,
-    .identify_code = {{0x0, 0x2},
-                      {0x1, 0x19}},
+    .identify_code = {{0x0, 0x2}, {0x1, 0x19}},
 
     .source_width_max = 3264,
     .source_height_max = 2448,
@@ -598,6 +596,6 @@ SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
     .module_info_tab = s_s5k4h8yx_module_info_tab,
     .module_info_tab_size = ARRAY_SIZE(s_s5k4h8yx_module_info_tab),
     .video_tab_info_ptr = s_s5k4h8yx_video_info,
-    .sensor_version_info = (cmr_s8 *) "s5k4h8yx_truly_v1",
+    .sensor_version_info = (cmr_s8 *)"s5k4h8yx_truly_v1",
 };
 #endif

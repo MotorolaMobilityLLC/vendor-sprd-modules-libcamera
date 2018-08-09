@@ -69,12 +69,7 @@
 #define SENSOR_MIN_SHUTTER 4
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 
 /* please don't change it */
 #define EX_MCLK 24
@@ -191,13 +186,13 @@ static const SENSOR_REG_T ov13855_2112x1568_setting[] = {
     {0x380a, 0x06},
     {0x380b, 0x20},
 #ifndef CONFIG_SENSOR_LOWPOWER_MODE
-// hts 2244  vts 1608
+    // hts 2244  vts 1608
     {0x380c, 0x08},
     {0x380d, 0xc4},
     {0x380e, 0x06},
     {0x380f, 0x48},
 #else
-// hts 1122  vts 3216
+    // hts 1122  vts 3216
     {0x380c, 0x04},
     {0x380d, 0x62},
     {0x380e, 0x0c},
@@ -672,8 +667,7 @@ static struct sensor_res_tab_info s_ov13855_resolution_tab_raw_new[VENDOR_NUM] =
                .image_format = SENSOR_IMAGE_FORMAT_RAW},
               {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting1), PNULL,
                0, .width = 4224, .height = 3136, .xclk_to_sensor = 24,
-               .image_format = SENSOR_IMAGE_FORMAT_RAW}
-	}}
+               .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
         /*If there are multiple modules,please add here*/
 };
 
@@ -775,62 +769,59 @@ static struct sensor_res_tab_info s_ov13855_resolution_tab_raw[VENDOR_NUM] = {
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
           {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting), PNULL, 0,
            .width = 4224, .height = 3136, .xclk_to_sensor = 24,
-           .image_format = SENSOR_IMAGE_FORMAT_RAW}
-	}}
+           .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
     /*If there are multiple modules,please add here*/
 };
 
-static SENSOR_TRIM_T
-    s_ov13855_resolution_trim_tab[VENDOR_NUM] =
-        {
-            {.module_id = MODULE_SUNNY,
-             .trim_info =
-                 {
-                     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-                     {.trim_start_x = 0,
-                      .trim_start_y = 0,
-                      .trim_width = 1280,
-                      .trim_height = 720,
-                      .line_time = 10380,
-                      .bps_per_lane = 540,
-                      .frame_line = 1069,
-                      .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
-                     /*{
-                      .trim_start_x = 0, .trim_start_y = 0,
-                      .trim_width = 1024,   .trim_height = 768,
-                      .line_time = 10380, .bps_per_lane = 270,
-                      .frame_line = 804,
-                      .scaler_trim = {.x = 0, .y = 0, .w = 1024, .h = 768}},*/
-                      #ifndef CONFIG_SENSOR_LOWPOWER_MODE
-                     {.trim_start_x = 0,
-                      .trim_start_y = 0,
-                      .trim_width = 2112,
-                      .trim_height = 1568,
-                      .line_time = 20770,
-                      .bps_per_lane = 540,
-                      .frame_line = 1608,
-                      .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
-                      #else
-                     {.trim_start_x = 0,
-                      .trim_start_y = 0,
-                      .trim_width = 2112,
-                      .trim_height = 1568,
-                      .line_time = 10380,
-                      .bps_per_lane = 540,
-                      .frame_line = 3216,
-                      .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
-                      #endif
-                     {.trim_start_x = 0,
-                      .trim_start_y = 0,
-                      .trim_width = 4224,
-                      .trim_height = 3136,
-                      .line_time = 10380,
-                      .bps_per_lane = 1080,
-                      .frame_line = 3214,
-                      .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
-                 }}
+static SENSOR_TRIM_T s_ov13855_resolution_trim_tab[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     .trim_info =
+         {
+             {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 1280,
+              .trim_height = 720,
+              .line_time = 10380,
+              .bps_per_lane = 540,
+              .frame_line = 1069,
+              .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
+/*{
+ .trim_start_x = 0, .trim_start_y = 0,
+ .trim_width = 1024,   .trim_height = 768,
+ .line_time = 10380, .bps_per_lane = 270,
+ .frame_line = 804,
+ .scaler_trim = {.x = 0, .y = 0, .w = 1024, .h = 768}},*/
+#ifndef CONFIG_SENSOR_LOWPOWER_MODE
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 2112,
+              .trim_height = 1568,
+              .line_time = 20770,
+              .bps_per_lane = 540,
+              .frame_line = 1608,
+              .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+#else
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 2112,
+              .trim_height = 1568,
+              .line_time = 10380,
+              .bps_per_lane = 540,
+              .frame_line = 3216,
+              .scaler_trim = {.x = 0, .y = 0, .w = 2112, .h = 1568}},
+#endif
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 4224,
+              .trim_height = 3136,
+              .line_time = 10380,
+              .bps_per_lane = 1080,
+              .frame_line = 3214,
+              .scaler_trim = {.x = 0, .y = 0, .w = 4224, .h = 3136}},
+         }}
 
-            /*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 static const SENSOR_REG_T
@@ -907,7 +898,8 @@ static struct sensor_module_info s_ov13855_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov13855_ops_tab;
-struct sensor_raw_info *s_ov13855_mipi_raw_info_ptr = PNULL;//&s_ov13855_mipi_raw_info;
+struct sensor_raw_info *s_ov13855_mipi_raw_info_ptr =
+    PNULL; //&s_ov13855_mipi_raw_info;
 
 SENSOR_INFO_T g_ov13855_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |

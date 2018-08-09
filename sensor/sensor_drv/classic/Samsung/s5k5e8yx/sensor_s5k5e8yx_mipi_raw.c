@@ -617,19 +617,7 @@ static cmr_int s5k5e8yx_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 static cmr_u32 isp_to_real_gain(cmr_u32 param) {
     cmr_u32 real_gain = 0;
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     real_gain = param;
-#else
-    real_gain = ((param & 0xf) + 16) * (((param >> 4) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 5) & 0x01) + 1) * (((param >> 6) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 7) & 0x01) + 1) * (((param >> 8) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 9) & 0x01) + 1) * (((param >> 10) & 0x01) + 1);
-    real_gain = real_gain * (((param >> 11) & 0x01) + 1);
-#endif
 
     return real_gain;
 }
@@ -816,7 +804,7 @@ static cmr_int s5k5e8yx_stream_off(cmr_handle handle, cmr_u32 param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         /*delay*/
         usleep(50 * 1000);
-        //hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0103, 0x01);
+        // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0103, 0x01);
     }
     return 0;
 }

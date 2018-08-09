@@ -45,7 +45,8 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#if defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO) && (!defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_DDR_1G))
+#if defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO) &&                         \
+    (!defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_DDR_1G))
 #define SNAPSHOT_WIDTH 1296
 #define SNAPSHOT_HEIGHT 972
 #else
@@ -105,17 +106,13 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 /* please don't change it */
 #define EX_MCLK 24
 
 static struct sensor_ic_ops s_ov5675_ops_tab;
-struct sensor_raw_info *s_ov5675_mipi_raw_info_ptr = PNULL;//&s_ov5675_mipi_raw_info;
+struct sensor_raw_info *s_ov5675_mipi_raw_info_ptr =
+    PNULL; //&s_ov5675_mipi_raw_info;
 
 static const SENSOR_REG_T ov5675_init_setting[] = {
     {0x0100, 0x00},
@@ -424,9 +421,9 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw_new[VENDOR_NUM] =
                       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-                    /* {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting1), PNULL, 0,
-                      .width = 640, .height = 480, .xclk_to_sensor = EX_MCLK,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
+                     /* {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting1), PNULL, 0,
+                       .width = 640, .height = 480, .xclk_to_sensor = EX_MCLK,
+                       .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
 
                      {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting1), PNULL, 0,
                       .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -435,8 +432,7 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw_new[VENDOR_NUM] =
                      {ADDR_AND_LEN_OF_ARRAY(ov5675_snapshot_setting1), PNULL, 0,
                       .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
                       .xclk_to_sensor = EX_MCLK,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW}
-                      }},
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW}}},
 
         /*If there are multiple modules,please add here*/
 };
@@ -494,8 +490,7 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw[VENDOR_NUM] = {
                  {ADDR_AND_LEN_OF_ARRAY(ov5675_snapshot_setting), PNULL, 0,
                   .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
                   .xclk_to_sensor = EX_MCLK,
-                  .image_format = SENSOR_IMAGE_FORMAT_RAW}
-                  }},
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW}}},
 
     /*If there are multiple modules,please add here*/
 };
@@ -505,14 +500,15 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-/*             {.trim_start_x = 0,
-              .trim_start_y = 0,
-              .trim_width = 640,
-              .trim_height = 480,
-              .line_time = 66667,
-              .bps_per_lane = 900,
-              .frame_line = 500,
-              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},*/
+             /*             {.trim_start_x = 0,
+                           .trim_start_y = 0,
+                           .trim_width = 640,
+                           .trim_height = 480,
+                           .line_time = 66667,
+                           .bps_per_lane = 900,
+                           .frame_line = 500,
+                           .scaler_trim = {.x = 0, .y = 0, .w = 640, .h =
+                480}},*/
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
               .trim_width = PREVIEW_TRIM_W,

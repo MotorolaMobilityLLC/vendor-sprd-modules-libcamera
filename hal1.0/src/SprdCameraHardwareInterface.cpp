@@ -181,11 +181,9 @@ const camera_info SprdCameraHardware::kCameraInfo[] = {
     },
 };
 
-const int camera_is_supprort [] = {
-    BACK_CAMERA_SENSOR_SUPPORT,
-    FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK_EXT_CAMERA_SENSOR_SUPPORT,
-    FRONT_EXT_CAMERA_SENSOR_SUPPORT,
+const int camera_is_supprort[] = {
+    BACK_CAMERA_SENSOR_SUPPORT, FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK_EXT_CAMERA_SENSOR_SUPPORT, FRONT_EXT_CAMERA_SENSOR_SUPPORT,
 };
 
 const camera_info SprdCameraHardware::kCameraInfo3[] = {
@@ -350,8 +348,8 @@ void SprdCameraHardware::shakeTestInit(ShakeTest *tmpShakeTest) {
     memcpy(&tmpShakeTest->diff_yuv_color, &tmp_diff_yuv_color,
            sizeof(tmp_diff_yuv_color));
     tmpShakeTest->mShakeTestColorCount = 0;
-    property_get("persist.vendor.cam.performance_camera", is_performance_camera_test,
-                 "0");
+    property_get("persist.vendor.cam.performance_camera",
+                 is_performance_camera_test, "0");
     if ((0 == strcmp("1", is_performance_camera_test)) &&
         mIsPerformanceTestable) {
         LOGI("SHAKE_TEST come in");
@@ -456,7 +454,6 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
     mPreviewHeapBakUseFlag = 0;
     memset(&mRawHeapInfoBak, 0, sizeof(mRawHeapInfoBak));
     mRawHeapBakUseFlag = 0;
-
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -3256,10 +3253,7 @@ bool SprdCameraHardware::startCameraIfNecessary() {
 #ifdef CONFIG_CAMERA_ISP
     cmr_handle isp_handle = 0;
     mHalOem->ops->camera_get_isp_handle(mCameraHandle, &isp_handle);
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     setispserver(isp_handle);
-#endif
 #endif
     cmr_int ret;
     struct sensor_view_angle view_angle;
@@ -8667,8 +8661,8 @@ void *SprdCameraHardware::pre_alloc_cap_mem_thread_proc(void *p_data) {
         return NULL;
     }
 
-    ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(
-            obj->mCameraId, &mem_size);
+    ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(obj->mCameraId,
+                                                                 &mem_size);
     if (ret) {
         HAL_LOGE("camera_get_postprocess_capture_size failed");
         obj->mIsPreAllocCapMem = 0;
@@ -8677,8 +8671,8 @@ void *SprdCameraHardware::pre_alloc_cap_mem_thread_proc(void *p_data) {
 
     obj->mSubRawHeapSize = mem_size;
     sum = 1;
-    ret = obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr,
-                                     &virt_addr, &fd);
+    ret =
+        obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr, &virt_addr, &fd);
     if (ret) {
         obj->mIsPreAllocCapMem = 0;
         HAL_LOGE("Callback_CaptureMalloc failed");

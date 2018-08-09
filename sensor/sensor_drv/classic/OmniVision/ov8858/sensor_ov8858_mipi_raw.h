@@ -87,12 +87,7 @@
 #define SENSOR_MIN_SHUTTER 4
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 
 /* please don't change it */
 #define EX_MCLK 24
@@ -360,7 +355,7 @@ static const SENSOR_REG_T ov8858_init_setting[] = {
     {0x4601, 0xcb}, //
     {0x481f, 0x32}, //
     {0x4837, 0x16}, //
-#if 0 // def CAMERA_BACK_MIPI_LANE_SWITCH
+#if 0               // def CAMERA_BACK_MIPI_LANE_SWITCH
     {0x4850, 0x32}, //----10},//
     {0x4851, 0x10}, //----32},//
 #else
@@ -685,7 +680,7 @@ static const SENSOR_REG_T ov8858_preview_setting[] = {
     {0x4601, 0xcb}, //
     {0x481f, 0x32}, //
     {0x4837, 0x16}, //
-#if 0 // def CAMERA_BACK_MIPI_LANE_SWITCH
+#if 0               // def CAMERA_BACK_MIPI_LANE_SWITCH
     {0x4850, 0x32}, //----10},//
     {0x4851, 0x10}, //----32},//
 #else
@@ -1048,7 +1043,7 @@ static const SENSOR_REG_T ov8858_snapshot_setting[] = {
     {0x4601, 0xcb}, //
     {0x481f, 0x32}, //
     {0x4837, 0x16}, //
-#if 0 // def CAMERA_BACK_MIPI_LANE_SWITCH
+#if 0               // def CAMERA_BACK_MIPI_LANE_SWITCH
     {0x4850, 0x32}, //----10},//
     {0x4851, 0x10}, //----32},//
 #else

@@ -76,8 +76,9 @@
 /* please ref your spec */
 #define FRAME_OFFSET 0
 #define SENSOR_MAX_GAIN                                                        \
-  0xa0 // max  gain ; notice: if param's max gain is changed ,please you change
-       // sensor_max_gain !
+    0xa0 // max  gain ; notice: if param's max gain is changed ,please you
+         // change
+         // sensor_max_gain !
 #define SENSOR_BASE_GAIN 0x38
 #define SENSOR_MIN_SHUTTER 1
 
@@ -95,12 +96,7 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 
 /* please don't change it */
 #define EX_MCLK 24

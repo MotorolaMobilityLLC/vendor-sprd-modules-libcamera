@@ -283,8 +283,6 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
         }
         out->dst_frame = in->dst_frame;
         out->private_data = in->private_data;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
         struct sensor_exp_info sensor_info;
         sensor_id = hdr_handle->common.ipm_cxt->init_in.sensor_id;
         get_sensor_info = hdr_handle->common.ipm_cxt->init_in.get_sensor_info;
@@ -298,10 +296,6 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
             ret =
                 sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV, (void *)&sn_param);
         }
-#else
-        sn_param.cmd_value = OEM_EV_LEVEL_2;
-        ret = sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV, (void *)&sn_param);
-#endif
         if (ret) {
             CMR_LOGE("HDR failed to set ev.");
         }
@@ -377,8 +371,6 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
 
     CMR_LOGI("HDR enable = %d", hdr_enable);
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
         isp_param1.cmd_value = (cmr_u32)hdr_enable;
         ret = isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param1);
@@ -386,10 +378,6 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
         sn_param.cmd_value = (cmr_u32)ev_level;
         ret = sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV, (void *)&sn_param);
     }
-#else
-    sn_param.cmd_value = (cmr_u32)ev_level;
-    ret = sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV, (void *)&sn_param);
-#endif
 
     if (ret) {
         CMR_LOGE("HDR failed to set ev.");

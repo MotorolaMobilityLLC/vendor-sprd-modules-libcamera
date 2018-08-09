@@ -29,15 +29,10 @@
 
 #define SENSOR_S5K5E8YX_PIKE2_PARAM
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #ifdef SENSOR_S5K5E8YX_PIKE2_PARAM
 #include "parameters_pike2/sensor_s5k5e8yx_raw_param_main.c"
 #else
 #include "parameters/sensor_s5k5e8yx_raw_param_main.c"
-#endif
-#else
-#include "parameters/sensor_s5k5e8yx_raw_param.c"
 #endif
 
 #define VENDOR_NUM 2
@@ -107,12 +102,7 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
 /* please don't change it */
 #define EX_MCLK 24
 
@@ -132,9 +122,8 @@ static const SENSOR_REG_T s5k5e8yx_init_setting[] = {
 };
 
 static const SENSOR_REG_T s5k5e8yx_preview_setting[] = {
-    {0x0103, 0x01},
-    {0x0100, 0x00}, // stream off
-    {0x3906, 0x7E}, // global setting
+    {0x0103, 0x01}, {0x0100, 0x00}, // stream off
+    {0x3906, 0x7E},                 // global setting
     {0x3C01, 0x0F}, {0x3C14, 0x00}, {0x3235, 0x08}, {0x3063, 0x2E},
     {0x307A, 0x10}, {0x307B, 0x0E}, {0x3079, 0x20}, {0x3070, 0x05},
     {0x3067, 0x06}, {0x3071, 0x62}, {0x3203, 0x43}, {0x3205, 0x43},
@@ -169,9 +158,8 @@ static const SENSOR_REG_T s5k5e8yx_preview_setting[] = {
 };
 
 static const SENSOR_REG_T s5k5e8yx_snapshot_setting[] = {
-    {0x0103, 0x01},
-    {0x0100, 0x00}, // stream off
-    {0x3906, 0x7E}, // global setting
+    {0x0103, 0x01}, {0x0100, 0x00}, // stream off
+    {0x3906, 0x7E},                 // global setting
     {0x3C01, 0x0F}, {0x3C14, 0x00}, {0x3235, 0x08}, {0x3063, 0x2E},
     {0x307A, 0x10}, {0x307B, 0x0E}, {0x3079, 0x20}, {0x3070, 0x05},
     {0x3067, 0x06}, {0x3071, 0x62}, {0x3203, 0x43}, {0x3205, 0x43},

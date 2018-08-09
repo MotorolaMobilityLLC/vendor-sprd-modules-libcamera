@@ -748,19 +748,7 @@ static cmr_int gc8024_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 static uint32_t isp_to_real_gain(cmr_uint param) {
     uint32_t real_gain = 0;
 
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     real_gain = param;
-#else
-    real_gain = ((param & 0xf) + 16) * (((param >> 4) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 5) & 0x01) + 1) * (((param >> 6) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 7) & 0x01) + 1) * (((param >> 8) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 9) & 0x01) + 1) * (((param >> 10) & 0x01) + 1);
-    real_gain = real_gain * (((param >> 11) & 0x01) + 1);
-#endif
 
     return real_gain;
 }
@@ -1048,5 +1036,4 @@ static struct sensor_ic_ops s_gc8024_ops_tab = {
             [SENSOR_IOCTL_STREAM_ON].ops = gc8024_drv_stream_on,
             [SENSOR_IOCTL_STREAM_OFF].ops = gc8024_drv_stream_off,
             [SENSOR_IOCTL_ACCESS_VAL].ops = gc8024_drv_access_val,
-    }
-};
+    }};
