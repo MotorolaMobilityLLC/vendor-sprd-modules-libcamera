@@ -3994,8 +3994,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     isp_param.free_cb = camera_free;
     camera_sensor_color_to_isp_color(&isp_param.image_pattern,
                                      sensor_info_ptr->image_pattern);
-    CMR_LOGD("image_pattern:sensor color is %d, isp color is %d",
-             sensor_info_ptr->image_pattern, isp_param.image_pattern);
 
     p_grab = (struct cmr_grab *)(grab_cxt->grab_handle);
     if (NULL != p_grab)
@@ -4033,21 +4031,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         CMR_LOGE("maybe fail to get static info: sensor name or sensor version "
                  "info is null.");
     }
-    CMR_LOGD(
-        "get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: %d",
-        isp_param.ex_info.f_num, isp_param.ex_info.focal_length,
-        isp_param.ex_info.max_fps, isp_param.ex_info.max_adgain);
-    CMR_LOGD("get static info:ois_supported: %d,pdaf_supported "
-             "%d,exp_valid_frame_num %d,clamp_level %d",
-             isp_param.ex_info.ois_supported, isp_param.ex_info.pdaf_supported,
-             isp_param.ex_info.exp_valid_frame_num,
-             isp_param.ex_info.clamp_level);
-    CMR_LOGD("get static info:adgain_valid_frame_num %d,preview_skip_num "
-             "%d,capture_skip_num %d",
-             isp_param.ex_info.adgain_valid_frame_num,
-             isp_param.ex_info.preview_skip_num,
-             isp_param.ex_info.capture_skip_num);
-    CMR_LOGD("w %d h %d", isp_param.size.w, isp_param.size.h);
 
     property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
@@ -4103,23 +4086,21 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 
     if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
         isp_param.is_master = 1;
-    CMR_LOGI("is_multi_mode %d: isp mode:%d", cxt->is_multi_mode,
-             isp_param.is_multi_mode);
 
     CMR_LOGI(
-        "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
-        "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
-        "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
-        "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
-        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
-        isp_param.is_multi_mode, isp_param.ex_info.f_num,
+        "cxt->is_multi_mode=%d ,isp_param.is_multi_mode=%d, ex_info: f_num=%d, "
+        "focal_length=%d, max_fps=%d, max_adgain=%d, ois_supported=%d, "
+        "pdaf_supported=%d, exp_valid_frame_num=%d, clamp_level=%d, "
+        "adgain_valid_frame_num=%d, prev_skip_num=%d, cap_skip_num=%d, w=%d, "
+        "h=%d, sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
+        cxt->is_multi_mode, isp_param.is_multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
         isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,
         isp_param.ex_info.clamp_level, isp_param.ex_info.adgain_valid_frame_num,
         isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
-        isp_param.size.w, isp_param.size.h, isp_param.image_pattern,
-        sensor_info_ptr->image_pattern);
+        isp_param.size.w, isp_param.size.h, sensor_info_ptr->image_pattern,
+        isp_param.image_pattern);
 
     CMR_PRINT_TIME;
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);

@@ -181,7 +181,8 @@ static cmr_int camera_preview_post_proc(cmr_handle oem_handle,
 static cmr_int camera_start_encode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
-                                   struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param);
+                                   struct cmr_op_mean *mean,
+                                   struct jpeg_enc_cb_param *enc_cb_param);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
@@ -3468,23 +3469,21 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 
     if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
         isp_param.is_master = 1;
-    CMR_LOGI("is_multi_mode %d: isp mode:%d", cxt->is_multi_mode,
-             isp_param.is_multi_mode);
 
     CMR_LOGI(
-        "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
-        "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
-        "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
-        "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
-        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
-        isp_param.is_multi_mode, isp_param.ex_info.f_num,
+        "cxt->is_multi_mode=%d, isp_param.is_multi_mode=%d, ex_info: f_num=%d, "
+        "focal_length=%d, max_fps=%d, max_adgain=%d, ois_supported=%d, "
+        "pdaf_supported=%d, exp_valid_frame_num=%d, clamp_level=%d, "
+        "adgain_valid_frame_num=%d, prev_skip_num=%d, cap_skip_num=%d, w=%d, "
+        "h=%d, sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
+        cxt->is_multi_mode, isp_param.is_multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
         isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,
         isp_param.ex_info.clamp_level, isp_param.ex_info.adgain_valid_frame_num,
         isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
-        isp_param.size.w, isp_param.size.h, isp_param.image_pattern,
-        sensor_info_ptr->image_pattern);
+        isp_param.size.w, isp_param.size.h, sensor_info_ptr->image_pattern,
+        isp_param.image_pattern);
 
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
     if (ret) {
@@ -4748,7 +4747,8 @@ exit:
 
 cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
-                            struct cmr_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param) {
+                            struct cmr_op_mean *mean,
+                            struct jpeg_enc_cb_param *enc_cb_param) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -4777,7 +4777,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     cxt->jpeg_cxt.enc_caller_handle = caller_handle;
     sem_wait(&cxt->access_sm);
 
-    if (!caller_handle || !oem_handle || !src || !dst || !mean ) {
+    if (!caller_handle || !oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -4964,7 +4964,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
                 CMR_LOGD("face_beauty done");
             }
-#endif//CONFIG_FACE_BEAUTY
+#endif // CONFIG_FACE_BEAUTY
         }
 
         CMR_LOGI("is_sync=%d, is_thumb=%d", mean->is_sync, mean->is_thumb);
@@ -6096,7 +6096,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.sensor_fps.min_fps, isp_param.size.w, isp_param.size.h,
         isp_param.lsc_phys_addr, isp_param.lsc_virt_addr, isp_param.work_mode,
         isp_param.dv_mode, isp_param.capture_mode);
-	isp_param.is_restart = param_ptr->is_restart;
+    isp_param.is_restart = param_ptr->is_restart;
 
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (ret) {
