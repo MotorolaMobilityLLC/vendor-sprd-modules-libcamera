@@ -87,6 +87,7 @@ typedef int64_t nsecs_t;
 #define NSEC_PER_33MSEC 33000000LL
 #define NSEC_PER_40MSEC 40000000LL
 #define SPRD_SHADING_FACTOR_NUM (2 * 2) //(>1*1*4,<=64*64*4)
+#define SPRD_CONTROL_MODES 3            // Control mode
 #define SPRD_MAX_TONE_CURVE_POINT 64    //>=64
 #define SPRD_FACE_BEAUTY_PARAM_NUM 9
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -173,6 +174,10 @@ typedef struct {
     uint8_t awb_mode;
     uint8_t awb_state;
     int32_t awb_regions[5];
+
+    uint8_t ae_lock_available;
+    uint8_t awb_lock_available;
+    uint8_t available_modes[SPRD_CONTROL_MODES];
 } CONTROL_Tag;
 
 typedef struct {

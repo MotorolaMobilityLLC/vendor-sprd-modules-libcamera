@@ -552,6 +552,9 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_CONTROL_AF_AVAILABLE_MODES,
     ANDROID_CONTROL_AWB_AVAILABLE_MODES,
     ANDROID_CONTROL_AE_AVAILABLE_MODES,
+    ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+    ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+    ANDROID_CONTROL_AVAILABLE_MODES,
     ANDROID_SPRD_AVAILABLE_METERING_MODE,
     ANDROID_QUIRKS_USE_PARTIAL_RESULT,
     ANDROID_LENS_FACING,
@@ -687,6 +690,12 @@ const uint8_t kavailable_capabilities[] = {
 const uint8_t kavailable_noise_reduction_modes[] = {
     ANDROID_NOISE_REDUCTION_MODE_OFF, ANDROID_NOISE_REDUCTION_MODE_FAST,
     ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY};
+
+//Control mode
+const uint8_t kavailable_control_modes[] = {
+    ANDROID_CONTROL_MODE_OFF,
+    ANDROID_CONTROL_MODE_AUTO,
+    ANDROID_CONTROL_MODE_USE_SCENE_MODE};
 /**********************Static Members**********************/
 
 const camera_info kCameraInfo[] = {
@@ -1619,6 +1628,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         kavailable_noise_reduction_modes,
         sizeof(kavailable_noise_reduction_modes));
 
+
+    //Control Mode(init static parameter)
+    memcpy(
+        s_setting[cameraId].controlInfo.available_modes,
+        kavailable_control_modes,
+        sizeof(kavailable_control_modes));
+
+    //AE lock available(init static parameter)
+    s_setting[cameraId].controlInfo.ae_lock_available = 1;
+    //AWB lock available(init static parameter)
+    s_setting[cameraId].controlInfo.awb_lock_available = 1;
+
     // sync
     s_setting[cameraId].syncInfo.max_latency =
         0; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
@@ -1949,6 +1970,13 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(ANDROID_FLASH_INFO_AVAILABLE,
                       &(s_setting[cameraId].flash_InfoInfo.available), 1);
 
+    /*AE lock available(init static Metadata)*/
+    staticInfo.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+                      &(s_setting[cameraId].controlInfo.ae_lock_available), 1);
+    /*AWB lock available(init static Metadata)*/
+    staticInfo.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+                      &(s_setting[cameraId].controlInfo.awb_lock_available), 1);
+
     /*REQUEST*/
     staticInfo.update(
         ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS,
@@ -1982,6 +2010,11 @@ int SprdCamera3Setting::initStaticMetadata(
         s_setting[cameraId].noiseInfo.reduction_available_noise_reduction_modes,
         ARRAY_SIZE(s_setting[cameraId]
                        .noiseInfo.reduction_available_noise_reduction_modes));
+
+    /*Control Mode(init static Metadata)*/
+    staticInfo.update(ANDROID_CONTROL_AVAILABLE_MODES,
+                      s_setting[cameraId].controlInfo.available_modes,
+                      ARRAY_SIZE(s_setting[cameraId].controlInfo.available_modes));
 
     /*SYNC*/
     staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
@@ -2115,11 +2148,6 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     }
     CameraMetadata requestInfo;
     CameraMetadata characteristicsInfo = mStaticInfo[mCameraId];
-
-    if (type != CAMERA3_TEMPLATE_MANUAL) {
-        uint8_t mode = ANDROID_CONTROL_MODE_AUTO;
-        requestInfo.update(ANDROID_CONTROL_MODE, &mode, 1);
-    }
 
     int32_t maxRegionsAe = 0;
     int32_t maxRegionsAwb = 0;
@@ -2364,10 +2392,110 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     }
 #endif
 
-    if (type == CAMERA3_TEMPLATE_MANUAL) {
-        uint8_t mode = ANDROID_CONTROL_MODE_OFF;
-        requestInfo.update(ANDROID_CONTROL_MODE, &mode, 1);
+    /*Control Mode(construct default Metadata)*/
+    bool control_mode_request = false;
+    bool control_mode_capabilities = false;
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
+        size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS).count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS).data.i32[i] ==
+                ANDROID_CONTROL_AVAILABLE_MODES) {
+                control_mode_capabilities = true;
+                break;
+            }
+        }
+    }
 
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+        size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] ==
+                ANDROID_CONTROL_MODE) {
+                control_mode_request = true;
+                break;
+            }
+        }
+    }
+
+    if (control_mode_capabilities && control_mode_request) {
+        if (type == CAMERA3_TEMPLATE_MANUAL) {
+            uint8_t mode = ANDROID_CONTROL_MODE_OFF;
+            requestInfo.update(ANDROID_CONTROL_MODE, &mode, 1);
+        } else {
+            uint8_t mode = ANDROID_CONTROL_MODE_AUTO;
+            requestInfo.update(ANDROID_CONTROL_MODE, &mode, 1);
+        }
+    } else {
+        HAL_LOGE("control mode must be present in request if "
+                 "available control mode are present in metadata");
+        return -1;
+    }
+    /*Control Mode(construct default Metadata)*/
+
+    /*AE lock(construct default Metadata)*/
+    bool ae_lock_request = false;
+    bool ae_lock_capabilities = false;
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
+        size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS).count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS).data.i32[i] ==
+                ANDROID_CONTROL_AE_LOCK_AVAILABLE) {
+                ae_lock_capabilities = true;
+                break;
+            }
+        }
+    }
+
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+        size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] ==
+                ANDROID_CONTROL_AE_LOCK) {
+                ae_lock_request = true;
+                break;
+            }
+        }
+    }
+
+    if (!ae_lock_capabilities || !ae_lock_request) {
+        HAL_LOGE("ae lock must be present in request if "
+                 "available ae lock are present in metadata");
+        return -1;
+    }
+    /*AE lock(construct default Metadata)*/
+
+    /*AWB lock(construct default Metadata)*/
+    bool awb_lock_request = false;
+    bool awb_lock_capabilities = false;
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
+        size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS).count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS).data.i32[i] ==
+                ANDROID_CONTROL_AWB_LOCK_AVAILABLE) {
+                awb_lock_capabilities = true;
+                break;
+            }
+        }
+    }
+
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+        size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] ==
+                ANDROID_CONTROL_AWB_LOCK) {
+                awb_lock_request = true;
+                break;
+            }
+        }
+    }
+    if (!awb_lock_capabilities || !awb_lock_request) {
+        HAL_LOGE("awb lock must be present in request if "
+                 "available awb lock are present in metadata");
+        return -1;
+    }
+    /*AWB lock(construct default Metadata)*/
+
+    if (type == CAMERA3_TEMPLATE_MANUAL) {
         uint8_t aeMode = ANDROID_CONTROL_AE_MODE_OFF;
         requestInfo.update(ANDROID_CONTROL_AE_MODE, &aeMode, 1);
 
@@ -3750,7 +3878,7 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].jpgInfo.gps_timestamp);
         pushAndroidParaTag(ANDROID_JPEG_GPS_TIMESTAMP);
     }
-
+    // AE lock
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_lock, valueU8,
@@ -3776,7 +3904,7 @@ int SprdCamera3Setting::updateWorkParameters(
                          ANDROID_CONTROL_AWB_MODE)
         HAL_LOGV("awb %d", valueU8);
     }
-
+    // AWB lock
     if (frame_settings.exists(ANDROID_CONTROL_AWB_LOCK)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AWB_LOCK).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.awb_lock, valueU8,
@@ -3834,12 +3962,11 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("brightness is %d",
                  s_setting[mCameraId].sprddefInfo.brightness);
     }
+    // control mode
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
-        s_setting[mCameraId].controlInfo.mode =
-            frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
-        // pushAndroidParaTag(ANDROID_SPRD_BRIGHTNESS);
-        HAL_LOGV("ANDROID_CONTROL_MODE is %d",
-                 s_setting[mCameraId].controlInfo.mode);
+        valueU8 = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.mode, valueU8, ANDROID_CONTROL_MODE)
+        HAL_LOGV("android contol mode %d", valueU8);
     }
     if (frame_settings.exists(ANDROID_SPRD_CONTRAST)) {
         s_setting[mCameraId].sprddefInfo.contrast =
@@ -4353,7 +4480,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.frame_count), 1);
     camMetadata.update(ANDROID_SHADING_MODE,
                        &(s_setting[mCameraId].shadingInfo.mode), 1);
-
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
     //			s_setting[mCameraId].controlInfo.af_mode,
@@ -4366,6 +4492,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.af_trigger_Id), 1);
     camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
                        &(s_setting[mCameraId].controlInfo.scene_mode), 1);
+    // control mode
     camMetadata.update(ANDROID_CONTROL_MODE,
                        &(s_setting[mCameraId].controlInfo.mode), 1);
     camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
@@ -4384,6 +4511,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
                        &(s_setting[mCameraId].resultInfo.ae_abtibanding_mode),
                        1);
+    //Update ANDROID_CONTROL_AWB_LOCK
     camMetadata.update(ANDROID_CONTROL_AWB_LOCK,
                        &(s_setting[mCameraId].resultInfo.awb_lock), 1);
     camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
@@ -4414,6 +4542,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
                        &(s_setting[mCameraId].controlInfo.ae_abtibanding_mode),
                        1);
+    //Update ANDROID_CONTROL_AWB_LOCK
     camMetadata.update(ANDROID_CONTROL_AWB_LOCK,
                        &(s_setting[mCameraId].controlInfo.awb_lock), 1);
     camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
@@ -4531,6 +4660,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].resultInfo.ae_state), 1);
+    //Update ANDROID_CONTROL_AE_LOCK
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                        &(s_setting[mCameraId].resultInfo.ae_lock), 1);
     camMetadata.update(ANDROID_CONTROL_AWB_MODE,
@@ -4545,6 +4675,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 #else
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].controlInfo.ae_state), 1);
+    //Update ANDROID_CONTROL_AE_LOCK
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                        &(s_setting[mCameraId].controlInfo.ae_lock), 1);
     camMetadata.update(ANDROID_CONTROL_AWB_MODE,
