@@ -28,12 +28,11 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_BLC, isp_u_blc_block},
 	{DCAM_BLK_NLM, isp_u_nlm_block},
 	{ISP_BLK_POSTBLC, isp_u_post_blc_block},
-	{ISP_BLK_RGB_GAIN, isp_u_rgb_gain_block},
+	//{ISP_BLK_RGB_GAIN, isp_u_rgb_gain_block},
 	{ISP_BLK_RGB_DITHER,isp_u_rgb_dither_block},
 	{ISP_BLK_NLC, isp_u_nlc_block},
 	{ISP_BLK_2D_LSC, isp_u_2d_lsc_block},
 	{ISP_BLK_1D_LSC, isp_u_1d_lsc_block},
-	{ISP_BLK_BINNING4AWB, isp_u_binning4awb_block},
 	{DCAM_BLK_BPC, isp_u_bpc_block},
 	{ISP_BLK_GRGB, isp_u_grgb_block},
 	{ISP_BLK_CFA, isp_u_cfa_block},
@@ -179,11 +178,36 @@ cmr_s32 isp_set_dispatch(cmr_handle handle)
 	struct isp_dev_dispatch_info *isp_dispatch_ptr = &isp_context_ptr->dispatch;
 
 	isp_dispatch_ptr->bayer = isp_context_ptr->data.format_pattern;
-	isp_dispatch_ptr->size.width = isp_context_ptr->data.input_size.w;
-	isp_dispatch_ptr->size.height = isp_context_ptr->data.input_size.h;
-	isp_dispatch_ptr->dispatch_height_dly_num_ch0 = 0x10;
+
+	isp_dispatch_ptr->dispatch_height_dly_num_ch0 = 0x1D;
 	isp_dispatch_ptr->dispatch_width_dly_num_ch0 = 0x3C;
-	/*isp_dispatch_ptr->pipe_dly_num = 0x8;*/
+
+	isp_dispatch_ptr->dispatch_dbg_mode_ch0 = 0;
+	isp_dispatch_ptr->dispatch_ready_width_ch0 = 0x8;
+	isp_dispatch_ptr->dispatch_nready_cfg_ch0 = 0;
+	isp_dispatch_ptr->dispatch_nready_width_ch0 = 0x4;
+
+	isp_dispatch_ptr->dispatch_width_flash_mode = 0;
+	isp_dispatch_ptr->dispatch_width_dly_num_flash = 0x280;
+	isp_dispatch_ptr->dispatch_done_cfg_mode = 0;
+	isp_dispatch_ptr->dispatch_done_line_dly_num = 0x1c;
+
+	isp_dispatch_ptr->dispatch_pipe_nfull_num = 0x64;
+	isp_dispatch_ptr->dispatch_pipe_flush_num = 0x04;
+	isp_dispatch_ptr->dispatch_pipe_hblank_num = 0x3C;
+
+	return ret;
+}
+
+cmr_s32 isp_cfg_dispatch(cmr_handle handle, struct isp_dev_dispatch_info * param_ptr)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+
+	ret = isp_u_dispatch_block(handle, (void *)param_ptr, 1);
+	ISP_RETURN_IF_FAIL(ret, ("isp_cfg_dispatch error"));
+
+	ret = isp_u_dispatch_block(handle, (void *)param_ptr, 0);
+	ISP_RETURN_IF_FAIL(ret, ("isp_cfg_dispatch error"));
 
 	return ret;
 }
@@ -329,6 +353,13 @@ cmr_s32 isp_set_fetch_param(cmr_handle handle)
 			isp_context_ptr->data.input_size.w,
 			isp_context_ptr->data.input_format);
 	}
+
+	if (ISP_SIMULATION_MODE == isp_context_ptr->data.input) {
+		fetch_param_ptr->dcam_fetch_endian = ISP_ENDIAN_BIG;
+	} else {
+		fetch_param_ptr->dcam_fetch_endian = ISP_ENDIAN_LITTLE;
+	}
+
 	ISP_LOGI("fetch format %d sbs_mode %d sbs w %d h %d\n",
 		fetch_param_ptr->color_format, sbs_info_ptr->sbs_mode,
 		sbs_info_ptr->img_size.w, sbs_info_ptr->img_size.h);
@@ -453,12 +484,6 @@ cmr_s32 isp_cfg_slice_size(cmr_handle handle, struct isp_drv_slice_param *slice_
 				      slice_ptr->size[ISP_DRV_LSC].h,
 				      0);
 	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp 1d lsc slice size"));
-
-	ret = isp_u_hist_slice_size(handle,
-				    slice_ptr->size[ISP_DRV_HISTS].w,
-				    slice_ptr->size[ISP_DRV_HISTS].h,
-				    0);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp hist slice size"));
 
 	ret = isp_u_dispatch_ch0_size(handle,
 				      slice_ptr->size[ISP_DRV_DISPATCH].w,

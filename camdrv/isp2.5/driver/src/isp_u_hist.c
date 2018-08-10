@@ -41,34 +41,3 @@ cmr_s32 isp_u_hist_block(cmr_handle handle, void *block_info)
 
 	return ret;
 }
-
-cmr_s32 isp_u_hist_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height, cmr_u32 scene_id)
-{
-	cmr_s32 ret = 0;
-	UNUSED(handle);
-	UNUSED(width);
-	UNUSED(height);
-	UNUSED(scene_id);
-#if 0				/*modify for Solve compile problem */
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_img_size size;
-
-	if (!handle) {
-		ISP_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.isp_id = file->isp_id;
-	param.scene_id = scene_id;
-	param.sub_block = ISP_BLOCK_HIST;
-	param.property = ISP_PRO_HIST_SLICE_SIZE;
-	size.width = width;
-	size.height = height;
-	param.property_param = &size;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
-	return ret;
-}

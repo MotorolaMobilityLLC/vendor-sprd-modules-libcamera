@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -31,6 +31,7 @@ cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
+	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_DISPATCH;
 	param.property = ISP_PRO_DISPATCH_BLOCK;
 	param.property_param = block_info;
@@ -43,6 +44,10 @@ cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info)
 cmr_s32 isp_u_dispatch_ch0_size(cmr_handle handle, cmr_u32 width, cmr_u32 height)
 {
 	cmr_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(width);
+	UNUSED(height);
+#if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -61,6 +66,6 @@ cmr_s32 isp_u_dispatch_ch0_size(cmr_handle handle, cmr_u32 width, cmr_u32 height
 	param.property_param = &size;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
+#endif
 	return ret;
 }

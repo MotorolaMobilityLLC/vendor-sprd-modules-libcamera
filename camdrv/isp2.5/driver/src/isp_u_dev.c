@@ -267,3 +267,25 @@ cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *
 
 	return ret;
 }
+
+cmr_s32 isp_dev_reset(isp_handle handle)
+{
+	cmr_s32 ret = 0;
+	cmr_u32 isp_id = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	isp_id = file->isp_id;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_RST, &isp_id);
+	if (ret) {
+		ISP_LOGE("fail to do reset.");
+	}
+
+	return ret;
+}

@@ -52,6 +52,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
+	cmr_u32 stats_buffer_size = 0;
 
 	statis_mem_info->oem_handle = in_ptr->oem_handle;
 	if (statis_mem_info->isp_lsc_alloc_flag == 0) {
@@ -75,15 +76,30 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		goto exit;
 	}
 
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_AEM)
+		stats_buffer_size += ISP_AEM_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFM)
+		stats_buffer_size += ISP_AFM_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFL)
+		stats_buffer_size += ISP_AFL_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_PDAF)
+		stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_EBD)
+		stats_buffer_size += ISP_EBD_STATIS_BUF_SIZE;
+
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
 		statis_mem_info->alloc_cb = in_ptr->alloc_cb;
 		statis_mem_info->free_cb = in_ptr->free_cb;
-		statis_mem_info->isp_statis_mem_size = (ISP_AEM_STATIS_BUF_SIZE +
-							ISP_AFM_STATIS_BUF_SIZE +
-							ISP_AFL_STATIS_BUF_SIZE +
-							ISP_PDAF_STATIS_BUF_SIZE +
-							ISP_BINNING_STATIS_BUF_SIZE) * 5;
+
+		statis_mem_info->isp_hist_mem_size = ISP_HIST_STATIS_BUF_SIZE * 4;
+		statis_mem_info->isp_dcam_mem_size = stats_buffer_size * 5;
+		statis_mem_info->isp_statis_mem_size =
+			statis_mem_info->isp_dcam_mem_size +
+			statis_mem_info->isp_hist_mem_size;
+
 		statis_mem_info->isp_statis_mem_num = 1;
+		statis_mem_info->statis_valid = in_ptr->statis_valid;
+
 		memset(&fds, 0x00, sizeof(fds));
 		if (statis_mem_info->alloc_cb) {
 			in_ptr->alloc_cb(CAMERA_ISP_STATIS,
@@ -132,6 +148,8 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_2d_lsc_buf.mfd = statis_mem_info->lsc_mfd;
 
 	isp_statis_buf.buf_size = statis_mem_info->isp_statis_mem_size;
+	isp_statis_buf.hist_buf_size = statis_mem_info->isp_hist_mem_size;
+	isp_statis_buf.dcam_buf_size = statis_mem_info->isp_dcam_mem_size;
 	isp_statis_buf.buf_num = statis_mem_info->isp_statis_mem_num;
 	isp_statis_buf.kaddr[0] = statis_mem_info->isp_statis_k_addr[0];
 	isp_statis_buf.kaddr[1] = statis_mem_info->isp_statis_k_addr[1];
@@ -139,6 +157,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_statis_buf.buf_flag = 0;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
 	isp_statis_buf.dev_fd = statis_mem_info->statis_buf_dev_fd;
+	isp_statis_buf.statis_valid = statis_mem_info->statis_valid;
 
 	isp_u_2d_lsc_transaddr(cxt->isp_driver_handle, &isp_2d_lsc_buf, 0);
 
@@ -205,8 +224,7 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 	ret = isp_u_store_block(cxt->isp_driver_handle, (void *)&in_ptr->store);
 	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp store"));
 
-	ret = isp_u_dispatch_block(cxt->isp_driver_handle, (void *)&in_ptr->dispatch);
-	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp dispatch"));
+	isp_cfg_dispatch(cxt->isp_driver_handle, (void *)&in_ptr->dispatch);
 
 	ret = isp_u_arbiter_block(cxt->isp_driver_handle, (void *)&in_ptr->arbiter);
 	ISP_RETURN_IF_FAIL(ret, ("fail to cfg isp arbiter"));
@@ -223,7 +241,6 @@ cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, cmr_int bypass)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)&bypass, 1);
 	ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)&bypass, 0);
 
 	return ret;
@@ -234,7 +251,6 @@ cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypas
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, 1);
 	ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, 0);
 
 	return ret;
@@ -254,7 +270,6 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u3
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, 1);
 	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, 0);
 	return ret;
 }
@@ -264,7 +279,6 @@ cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_comm_shadow_ctrl(cxt->isp_driver_handle, shadow, 1);
 	ret = isp_u_comm_shadow_ctrl(cxt->isp_driver_handle, shadow, 0);
 
 	return ret;
@@ -315,13 +329,17 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_PROC_AFL_DONE, statis_info, (void *)cxt->evt_alg_handle);
 		}
-	} else if (irq_info->irq_property == IRQ_BINNING_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_BINNING, statis_info, (void *)cxt->evt_alg_handle);
-		}
 	} else if (irq_info->irq_property == IRQ_PDAF_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
+		}
+	} else if (irq_info->irq_property == IRQ_EBD_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
+		}
+	} else if (irq_info->irq_property == IRQ_HIST_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
 		}
 	} else {
 		free((void *)statis_info);
@@ -468,17 +486,12 @@ static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct
 
 	switch (stats_info->mode) {
 	case ISP_DEV_AE_STATS_MODE_SINGLE:
-		isp_u_3a_ctrl(cxt->isp_driver_handle, 1, 1);
 		isp_u_3a_ctrl(cxt->isp_driver_handle, 1, 0);
-		isp_u_raw_aem_mode(cxt->isp_driver_handle, 0, 1);
 		isp_u_raw_aem_mode(cxt->isp_driver_handle, 0, 0);
-		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, stats_info->skip_num, 1);
 		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, stats_info->skip_num, 0);
 		break;
 	case ISP_DEV_AE_STATS_MODE_CONTINUE:
-		isp_u_raw_aem_mode(cxt->isp_driver_handle, 1, 1);
 		isp_u_raw_aem_mode(cxt->isp_driver_handle, 1, 0);
-		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, 0, 1);
 		isp_u_raw_aem_skip_num(cxt->isp_driver_handle, 0, 0);
 		break;
 	default:
@@ -488,27 +501,19 @@ static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct
 	return ret;
 }
 
-static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_coeff, cmr_u32 scene_id)
+static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, void *rgb_gain, cmr_u32 scene_id)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	cmr_u32 rgb_gain_offset = 4096;
-	struct isp_dev_rgb_gain_info gain_info;
+	struct isp_dev_rgb_gain_info *gain_info = (struct isp_dev_rgb_gain_info *)rgb_gain;
 	struct isp_u_blocks_info block_info;
 
-	memset(&gain_info, 0x00, sizeof(gain_info));
 	memset(&block_info, 0x00, sizeof(block_info));
-	gain_info.bypass = 0;
-	gain_info.global_gain = *rgb_gain_coeff;
-	gain_info.r_gain = rgb_gain_offset;
-	gain_info.g_gain = rgb_gain_offset;
-	gain_info.b_gain = rgb_gain_offset;
 
-	block_info.block_info = &gain_info;
+	block_info.block_info = (void *)gain_info;
 	block_info.scene_id = scene_id;
-	ISP_LOGV("d-gain--global_gain: %d\n", gain_info.global_gain);
 
-	isp_u_rgb_gain_block(cxt->isp_driver_handle, &block_info);
+	isp_u_rgb_gain_block(cxt->isp_driver_handle, (void *)&block_info);
 
 	return ret;
 }
@@ -518,15 +523,10 @@ static cmr_int ispdev_access_set_af_monitor(cmr_handle isp_dev_handle, struct is
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, 1);
 	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, 0);
-	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, 1);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, 0);
-	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0, 1);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0, 0);
-	isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num, 1);
 	isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num, 0);
-	isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass, 1);
 	isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass, 0);
 
 	return ret;
@@ -550,13 +550,9 @@ static cmr_int ispdev_access_set_aem_win(cmr_handle isp_dev_handle, struct isp_d
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, aem_win_info->offset.x, aem_win_info->offset.y, 1);
-	ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
 	ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, aem_win_info->offset.x, aem_win_info->offset.y, 0);
 	ISP_TRACE_IF_FAIL(ret, ("fail to aem offset"));
 
-	ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, aem_win_info->blk_size.width, aem_win_info->blk_size.height, 1);
-	ISP_TRACE_IF_FAIL(ret, ("fail to aem blk"));
 	ret = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, aem_win_info->blk_size.width, aem_win_info->blk_size.height, 0);
 	ISP_TRACE_IF_FAIL(ret, ("fail to aem blk"));
 
@@ -584,21 +580,18 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 
 	switch (cmd) {
 	case ISP_DEV_SET_AE_MONITOR:
-		ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, *(cmr_u32 *) in, 1);
 		ret = isp_u_raw_aem_skip_num(cxt->isp_driver_handle, *(cmr_u32 *) in, 0);
 		break;
 	case ISP_DEV_SET_AE_MONITOR_WIN:
 		ret = ispdev_access_set_aem_win(cxt, in);
 		break;
 	case ISP_DEV_SET_AE_MONITOR_BYPASS:
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AE_STATISTICS_MODE:
 		ret = ispdev_access_ae_set_stats_mode(cxt, in);
 		break;
 	case ISP_DEV_SET_RGB_GAIN:
-		ret = ispdev_access_ae_set_rgb_gain(cxt, in, 1);
 		ret = ispdev_access_ae_set_rgb_gain(cxt, in, 0);
 		break;
 	case ISP_DEV_GET_SYSTEM_TIME:
@@ -608,30 +601,24 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		ret = isp_dev_cfg_start(cxt->isp_driver_handle);
 		break;
 	case ISP_DEV_SET_AFL_BLOCK:
-		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AFL_NEW_BLOCK:
-		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_RAW_AEM_BYPASS:
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_RAW_AFM_BYPASS:
-		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, 1);
 		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, 0);
 		break;
 	case ISP_DEV_SET_AF_MONITOR:
 		ret = ispdev_access_set_af_monitor(cxt, in);
 		break;
 	case ISP_DEV_SET_AF_MONITOR_WIN:
-		ret = isp_u_raw_afm_win(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_afm_win(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AF_MONITOR_WIN_NUM:
-		ret = isp_u_raw_afm_win_num(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_afm_win_num(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_STSTIS_BUF:
@@ -655,35 +642,34 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	case ISP_DEV_SET_PDAF_TYPE1_CFG:
 		ret = isp_u_pdaf_type1_block(cxt->isp_driver_handle, in);
 		break;
+	case ISP_DEV_SET_PDAF_TYPE2_CFG:
+		ret = isp_u_pdaf_type2_block(cxt->isp_driver_handle, in);
+		break;
+	case ISP_DEV_SET_EBD_CFG:
+		ret = isp_u_ebd_block(cxt->isp_driver_handle);
+		break;
 	case ISP_DEV_SET_PDAF_PPI_INFO:
 		ret = isp_u_pdaf_ppi_info(cxt->isp_driver_handle, in);
 		break;
 	case ISP_DEV_SET_AFL_CFG_PARAM:
-		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_anti_flicker_block(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AFL_NEW_CFG_PARAM:
-		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_anti_flicker_new_block(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AFL_BYPASS:
-		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AFL_NEW_BYPASS:
-		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AE_SHIFT:
-		ret = isp_u_raw_aem_shift(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_aem_shift(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AF_WORK_MODE:
-		ret = isp_u_raw_afm_mode(cxt->isp_driver_handle, *(cmr_u32 *)in, 1);
 		ret = isp_u_raw_afm_mode(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
 		break;
 	case ISP_DEV_SET_AF_SKIP_NUM:
-		ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in, 1);
 		ret = isp_u_raw_afm_skip_num(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
 		break;
 	case ISP_DEV_POST_3DNR:
@@ -702,28 +688,25 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 		ret = isp_dev_update_param_end(cxt->isp_driver_handle);
 		break;
 	case ISP_DEV_SET_AE_BLK_NUM:
-		ret = isp_u_raw_aem_blk_num(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_aem_blk_num(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AE_RGB_THR:
-		ret = isp_u_raw_aem_rgb_thr(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_aem_rgb_thr(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AE_SKIP_NUM_CLR:
-		ret = isp_u_raw_aem_skip_num_clr(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_aem_skip_num_clr(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AF_CROP_EB:
-		ret = isp_u_raw_afm_crop_eb(cxt->isp_driver_handle, *(cmr_u32 *)in, 1);
 		ret = isp_u_raw_afm_crop_eb(cxt->isp_driver_handle, *(cmr_u32 *)in, 0);
 		break;
 	case ISP_DEV_SET_AF_CROP_SIZE:
-		ret = isp_u_raw_afm_crop_size(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_afm_crop_size(cxt->isp_driver_handle, in, 0);
 		break;
 	case ISP_DEV_SET_AF_DONE_TILE_NUM:
-		ret = isp_u_raw_afm_done_tile_num(cxt->isp_driver_handle, in, 1);
 		ret = isp_u_raw_afm_done_tile_num(cxt->isp_driver_handle, in, 0);
+		break;
+	case ISP_DEV_RESET:
+		ret = isp_dev_reset(cxt->isp_driver_handle);
 		break;
 	default:
 		break;

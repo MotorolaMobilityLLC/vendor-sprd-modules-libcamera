@@ -24,11 +24,16 @@ cmr_s32 isp_u_rgb_gain_block(cmr_handle handle, void *block_info)
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_u_blocks_info *block_param = (struct isp_u_blocks_info *)block_info;
+	struct isp_dev_rgb_gain_info *rgb_gain = (struct isp_dev_rgb_gain_info *)block_param->block_info;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
 		return -1;
 	}
+
+	ISP_LOGV("bypass = %d, global_gain = %d, r_gain = %d, g_gain = %d, b_gain = %d",
+		rgb_gain->bypass, rgb_gain->global_gain,
+		rgb_gain->r_gain, rgb_gain->g_gain, rgb_gain->b_gain);
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;

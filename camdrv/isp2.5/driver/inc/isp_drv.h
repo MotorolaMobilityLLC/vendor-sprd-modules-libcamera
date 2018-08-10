@@ -44,6 +44,8 @@ struct isp_statis_mem_info {
 	cmr_uint isp_statis_alloc_flag;
 	cmr_s32 statis_mfd;
 	cmr_s32 statis_buf_dev_fd;
+	cmr_u32 isp_hist_mem_size;
+	cmr_u32 isp_dcam_mem_size;
 
 	cmr_u32 isp_lsc_mem_size;
 	cmr_u32 isp_lsc_mem_num;
@@ -52,6 +54,7 @@ struct isp_statis_mem_info {
 	cmr_uint isp_lsc_alloc_flag;
 	cmr_s32 lsc_mfd;
 
+	cmr_u32 statis_valid;
 	void *buffer_client_data;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
@@ -199,6 +202,7 @@ cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *p
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param);
 cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
 cmr_s32 isp_dev_ynr(cmr_handle handle, struct isp_ynr_info *param);
+cmr_s32 isp_dev_reset(isp_handle handle);
 
 cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 * width, cmr_u32 * height);
 cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec);
@@ -295,8 +299,6 @@ cmr_s32 isp_u_nawbm_bypass(cmr_handle handle, cmr_u32 bypass);
 cmr_s32 isp_u_pre_wavelet_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_pre_wavelet_bypass(cmr_handle handle, cmr_u32 bypass);
 
-cmr_s32 isp_u_binning4awb_block(cmr_handle handle, void *block_info);
-
 cmr_s32 isp_u_pgg_block(cmr_handle handle, void *block_info);
 
 cmr_s32 isp_u_comm_start(cmr_handle handle, cmr_u32 start);
@@ -379,7 +381,6 @@ cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info, cmr_u3
 
 cmr_s32 isp_u_yuv_precdn_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_hist_v1_block(cmr_handle handle, void *block_info);
-cmr_s32 isp_u_hist_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height, cmr_u32 scene_id);
 cmr_s32 isp_u_hist2_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_cdn_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_postcdn_block(cmr_handle handle, void *block_info);
@@ -388,7 +389,7 @@ cmr_s32 isp_u_ydelay_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_iircnr_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yrandom_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_fetch_start_isp(cmr_handle handle, cmr_u32 fetch_start);
-cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_dispatch_block(cmr_handle handle, void *block_info, cmr_u32 scene_id);
 cmr_s32 isp_u_dispatch_ch0_size(cmr_handle handle, cmr_u32 width, cmr_u32 height);
 cmr_s32 isp_u_arbiter_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_comm_block(cmr_handle handle, void *block_info, cmr_u32 scene_id);
@@ -397,6 +398,7 @@ cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable, cmr_u32 scene_id);
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block);
 cmr_s32 isp_set_arbiter(cmr_handle handle);
 cmr_s32 isp_set_dispatch(cmr_handle handle);
+cmr_s32 isp_cfg_dispatch(cmr_handle handle, struct isp_dev_dispatch_info * param_ptr);
 cmr_s32 isp_get_fetch_addr(struct isp_drv_interface_param *isp_context_ptr, struct isp_dev_fetch_info *fetch_ptr);
 cmr_s32 isp_set_fetch_param(cmr_handle handle);
 cmr_s32 isp_set_store_param(cmr_handle handle);
@@ -426,4 +428,6 @@ cmr_s32 isp_u_pdaf_correction(cmr_handle handle, void *correction_param);
 cmr_s32 isp_u_3dnr_cap_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_3dnr_pre_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_pdaf_type1_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_pdaf_type2_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_ebd_block(cmr_handle handle);
 #endif

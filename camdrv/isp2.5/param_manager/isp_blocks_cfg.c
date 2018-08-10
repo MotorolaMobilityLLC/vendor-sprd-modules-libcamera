@@ -44,7 +44,6 @@ struct isp_block_operations s_rgb_gain_ops = { _pm_rgb_gain_init, _pm_rgb_gain_s
 struct isp_block_operations s_nlc_ops = { _pm_nlc_init, _pm_nlc_set_param, _pm_nlc_get_param, PNULL, PNULL };
 struct isp_block_operations s_2d_lsc_ops = { _pm_2d_lsc_init, _pm_2d_lsc_set_param, _pm_2d_lsc_get_param, _pm_common_rest, _pm_2d_lsc_deinit };
 struct isp_block_operations s_1d_lsc_ops = { _pm_1d_lsc_init, _pm_1d_lsc_set_param, _pm_1d_lsc_get_param, PNULL, PNULL };
-struct isp_block_operations s_binning4awb_ops = { _pm_binning4awb_init, _pm_binning4awb_set_param, _pm_binning4awb_get_param, PNULL, PNULL };
 struct isp_block_operations s_bpc_ops = { _pm_bpc_init, _pm_bpc_set_param, _pm_bpc_get_param, PNULL, PNULL };
 struct isp_block_operations s_grgb_ops = { _pm_grgb_init, _pm_grgb_set_param, _pm_grgb_get_param, PNULL, PNULL };
 struct isp_block_operations s_awbc_ops = { _pm_awbc_init, _pm_awbc_set_param, _pm_awbc_get_param, PNULL, PNULL };
@@ -96,7 +95,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_NLC, array_offset(struct isp_context, nlc), sizeof(struct isp_nlc_param), &s_nlc_ops},
 	{ISP_BLK_2D_LSC, array_offset(struct isp_context, lsc_2d), sizeof(struct isp_2d_lsc_param), &s_2d_lsc_ops},
 	{ISP_BLK_1D_LSC, array_offset(struct isp_context, lsc_1d), sizeof(struct isp_1d_lsc_param), &s_1d_lsc_ops},
-	{ISP_BLK_BINNING4AWB, array_offset(struct isp_context, binning4awb), sizeof(struct isp_binning4awb_param), &s_binning4awb_ops},
 	{ISP_BLK_AWBC, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awbc_ops},
 	{DCAM_BLK_BPC, array_offset(struct isp_context, bpc), sizeof(struct isp_bpc_param), &s_bpc_ops},
 	{ISP_BLK_GRGB, array_offset(struct isp_context, grgb), sizeof(struct isp_grgb_param), &s_grgb_ops},

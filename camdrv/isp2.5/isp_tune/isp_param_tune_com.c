@@ -321,7 +321,7 @@ static cmr_s32 _ispParserReadSensorReg(void *in_param_ptr, void *rtn_param_ptr)
 		data_addr[2] = reg_num;
 
 		for (i = 0x00; i < reg_num; i++) {
-			reg_data = hw_Sensor_ReadReg(current_sensor_cxt->sensor_hw_handler, reg_addr);
+			reg_data = hw_sensor_read_reg(current_sensor_cxt->sensor_hw_handler, reg_addr);
 			data_addr[3 + i * 2] = (cmr_u32) reg_addr;
 			data_addr[4 + i * 2] = (cmr_u32) reg_data;
 			reg_addr++;
@@ -347,7 +347,7 @@ static cmr_s32 _ispParserWriteSensorReg(void *in_param_ptr)
 	for (i = 0x00; i < reg_num; i++) {
 		reg_addr = (cmr_u16) in_ptr->param[2 + i * 2];
 		reg_data = (cmr_u16) in_ptr->param[3 + i * 2];
-		hw_Sensor_WriteReg(current_sensor_cxt->sensor_hw_handler, reg_addr, reg_data);
+		hw_sensor_write_reg(current_sensor_cxt->sensor_hw_handler, reg_addr, reg_data);
 	}
 
 	return rtn;

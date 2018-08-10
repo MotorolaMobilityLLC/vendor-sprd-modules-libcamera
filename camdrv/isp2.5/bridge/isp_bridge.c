@@ -28,7 +28,10 @@ struct ispbr_context {
 	struct sensor_raw_ioctrl *ioctrl_ptr[SENSOR_NUM_MAX];
 	struct match_data_param match_param;
 	struct sensor_dual_otp_info *dual_otp[SENSOR_NUM_MAX];
-	cmr_u32 aem_sync_stat[SENSOR_NUM_MAX][3 * 1024]; //add  20180405
+	void *aem_sync_stat[SENSOR_NUM_MAX];
+	cmr_u32 aem_sync_stat_size[SENSOR_NUM_MAX];
+	cmr_u32 aem_stat_blk_num[SENSOR_NUM_MAX];
+	cmr_u32 aem_stat_size[SENSOR_NUM_MAX];
 };
 
 static struct ispbr_context br_cxt;
@@ -93,14 +96,14 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		break;
 	case SET_STAT_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(&cxt->match_param.awb_stat[camera_id], in,
-			sizeof(cxt->match_param.awb_stat[camera_id]));
+		memcpy(cxt->match_param.awb_stat_data[camera_id], in,
+			cxt->aem_sync_stat_size[camera_id]);
 		sem_post(&cxt->awb_sm);
 		break;
 	case GET_STAT_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(out, &cxt->match_param.awb_stat[camera_id],
-			sizeof(cxt->match_param.awb_stat[camera_id]));
+		memcpy(out, cxt->match_param.awb_stat_data[camera_id],
+			cxt->aem_sync_stat_size[camera_id]);
 		sem_post(&cxt->awb_sm);
 		break;
 	case SET_GAIN_AWB_DATA:
@@ -159,15 +162,30 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 	case AWB_POST_SEM:
 		sem_post(&cxt->awb_wait_sm);
 		break;
-	// add 20180405
 	case SET_AEM_SYNC_STAT:
 		sem_wait(&cxt->module_sm);
-		memcpy(&cxt->aem_sync_stat[camera_id],in,3 * 1024 * sizeof(cmr_u32));
+		memcpy(cxt->aem_sync_stat[camera_id], in,
+			3 * cxt->aem_stat_blk_num[camera_id] * sizeof(cmr_u32));
 		sem_post(&cxt->module_sm);
 		break;
 	case GET_AEM_SYNC_STAT:
 		sem_wait(&cxt->module_sm);
-		memcpy(out, &cxt->aem_sync_stat[camera_id],3 * 1024 * sizeof(cmr_u32));
+		memcpy(out, cxt->aem_sync_stat[camera_id],
+			3 * cxt->aem_stat_blk_num[camera_id] * sizeof(cmr_u32));
+		sem_post(&cxt->module_sm);
+		break;
+	case SET_AEM_STAT_BLK_NUM:
+		sem_wait(&cxt->module_sm);
+		cxt->aem_stat_blk_num[camera_id] = *(cmr_u32 *)in;
+		ISP_LOGV("camera_id = %d, aem_stat_blk_num %d",
+			camera_id, cxt->aem_stat_blk_num[camera_id]);
+		sem_post(&cxt->module_sm);
+		break;
+	case SET_AEM_STAT_SIZE:
+		sem_wait(&cxt->module_sm);
+		cxt->aem_stat_size[camera_id] = *(cmr_u32 *)in;
+		ISP_LOGV("camera_id = %d, aem_stat_size %d",
+			camera_id, cxt->aem_stat_size[camera_id]);
 		sem_post(&cxt->module_sm);
 		break;
 	default:
@@ -182,6 +200,11 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
+	void *aem_sync_stat = NULL;
+	cmr_u32 aem_sync_stat_size = 0;
+	void *awb_stat_data = NULL;
+	cmr_u32 awb_stat_data_size = 0;
+	cmr_u32 i = 0;
 
 	ISP_LOGI("camera_id %d", camera_id);
 	cxt->isp_3afw_handles[camera_id] = isp_3a_handle;
@@ -195,6 +218,41 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 		sem_init(&cxt->module_sm, 0, 1);
 		sem_init(&cxt->ae_wait_sm, 0, 1);
 		sem_init(&cxt->awb_wait_sm, 0, 1);
+	}
+
+	aem_sync_stat_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
+	cxt->aem_sync_stat_size[camera_id] = aem_sync_stat_size;
+	aem_sync_stat = (void *)malloc(aem_sync_stat_size);
+	if (NULL == aem_sync_stat) {
+		ret = ISP_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc aem_sync_stat");
+		goto exit;
+	}
+	cxt->aem_sync_stat[camera_id] = aem_sync_stat;
+	ISP_LOGV("aem_sync_stat %p", cxt->aem_sync_stat[camera_id]);
+
+	awb_stat_data_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
+	cxt->match_param.awb_stat_data_size[camera_id] = awb_stat_data_size;
+	awb_stat_data = (void *)malloc(awb_stat_data_size);
+	if (NULL == awb_stat_data) {
+		ret = ISP_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc awb_stat_data");
+		goto exit;
+	}
+	cxt->match_param.awb_stat_data[camera_id] = awb_stat_data;
+	ISP_LOGV("awb_stat_data %p", cxt->match_param.awb_stat_data[camera_id]);
+
+	return ret;
+exit:
+	for (i = 0; i < SENSOR_NUM_MAX; i++) {
+		if (cxt->aem_sync_stat[i]) {
+			free(cxt->aem_sync_stat[i]);
+			cxt->aem_sync_stat[i] = NULL;
+		}
+		if (cxt->match_param.awb_stat_data[i]) {
+			free(cxt->match_param.awb_stat_data[i]);
+			cxt->match_param.awb_stat_data[i] = NULL;
+		}
 	}
 	return ret;
 }
@@ -218,6 +276,15 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 		sem_destroy(&cxt->awb_wait_sm);
 		for (i = 0; i < SENSOR_NUM_MAX; i++)
 			cxt->isp_3afw_handles[i] = NULL;
+	}
+
+	if (NULL != cxt->aem_sync_stat[camera_id]) {
+		free(cxt->aem_sync_stat[camera_id]);
+		cxt->aem_sync_stat[camera_id] = NULL;
+	}
+	if (NULL != cxt->match_param.awb_stat_data[camera_id]) {
+		free(cxt->match_param.awb_stat_data[camera_id]);
+		cxt->match_param.awb_stat_data[camera_id] = NULL;
 	}
 
 	return ret;

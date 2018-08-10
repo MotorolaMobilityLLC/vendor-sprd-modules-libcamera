@@ -101,13 +101,6 @@ struct isp_ae_grgb_statistic_info {
 	cmr_u32 b_info[1024];
 };
 
-struct isp_binning_statistic_info {
-	cmr_u32 *r_info;
-	cmr_u32 *g_info;
-	cmr_u32 *b_info;
-	struct isp_size binning_size;
-};
-
 #define ISP_NLC_POINTER_NUM 29
 #define ISP_NLC_POINTER_L_NUM 27
 
@@ -362,10 +355,6 @@ struct isp_1d_lsc_param {
 	struct sensor_1d_lsc_map map[SENSOR_LENS_NUM];
 };
 
-struct isp_binning4awb_param {
-	struct isp_dev_binning4awb_info cur;
-};
-
 struct isp_awb_param {
 	cmr_u32 ct_value;
 	struct isp_dev_awb_info cur;
@@ -374,8 +363,7 @@ struct isp_awb_param {
 };
 
 struct isp_rgb_aem_param {
-	struct isp_dev_raw_aem_info cur;
-	struct isp_awb_statistic_info stat;
+	struct isp_rgb_aem_info cur;
 };
 
 struct isp_rgb_afm_param {
@@ -695,7 +683,6 @@ struct isp_context {
 	struct isp_nlc_param nlc;
 	struct isp_2d_lsc_param lsc_2d;
 	struct isp_1d_lsc_param lsc_1d;
-	struct isp_binning4awb_param binning4awb;
 	struct isp_awb_param awb;
 	struct isp_rgb_aem_param aem;
 	struct isp_rgb_afm_param afm;
@@ -803,10 +790,6 @@ cmr_s32 _pm_2d_lsc_deinit(void *lnc_param);
 cmr_s32 _pm_1d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, void *param2);
 cmr_s32 _pm_1d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_1d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void *param1, void *param2);
-cmr_s32 _pm_binning4awb_set_param(void *binning4awb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_binning4awb_get_param(void *binning4awb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_awbc_init(void *dst_pwd, void *src_pwd, void *param1, void *param2);
 cmr_s32 _pm_awbc_set_param(void *pwd_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

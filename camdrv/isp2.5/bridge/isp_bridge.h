@@ -21,6 +21,8 @@
 
 #define SENSOR_NUM_MAX 4
 
+#define ISP_AEM_STAT_BLK_NUM (128 * 128)
+
 typedef cmr_int(*func_isp_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
 
 enum isp_br_ioctl_cmd {
@@ -46,15 +48,10 @@ enum isp_br_ioctl_cmd {
 	AE_POST_SEM,
 	AWB_WAIT_SEM,
 	AWB_POST_SEM,
-	/*aem sat*/ //20180405
 	SET_AEM_SYNC_STAT,
 	GET_AEM_SYNC_STAT,
-};
-
-struct awb_stat_data {
-	cmr_u32 r_info[1024];
-	cmr_u32 g_info[1024];
-	cmr_u32 b_info[1024];
+	SET_AEM_STAT_BLK_NUM,
+	SET_AEM_STAT_SIZE,
 };
 
 struct awb_gain_data {
@@ -102,7 +99,8 @@ struct match_data_param {
 	struct module_info module_info;
 	struct ae_match_data ae_info;
 	struct awb_match_data awb_info;
-	struct awb_stat_data awb_stat[SENSOR_NUM_MAX];
+	void *awb_stat_data[SENSOR_NUM_MAX];
+	cmr_u32 awb_stat_data_size[SENSOR_NUM_MAX];
 	struct awb_gain_data awb_gain;
 	cmr_u16 bv;
 };

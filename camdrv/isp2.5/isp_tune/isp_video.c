@@ -325,7 +325,7 @@ char raw_filename[200] = { 0 };
 
 cmr_u32 tool_fmt_pattern = INVALID_FORMAT_PATTERN;
 static FILE *raw_fp = NULL;
-static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static sem_t preview_sem_lock;
 static sem_t capture_sem_lock;
@@ -3577,8 +3577,8 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					scene_param.height = img_height;
 
 					bzero(raw_filename, sizeof(raw_filename));
-					sprintf(raw_filename + 1, CAMERA_DATA_FILE"/%dX%d_gain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
-						scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
+					sprintf(raw_filename + 1, CAMERA_DATA_FILE"/%dX%d_gain_%d_ispdgain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw",
+						scene_param.width, scene_param.height, scene_param.gain, scene_param.global_gain, scene_param.awb_gain_r,
 						scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
 					ISP_LOGV("simulation raw filename %s", raw_filename + 1);
@@ -3615,8 +3615,8 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					ISP_LOGE("fail to do isp ioctl ret %d", ret);
 				}
 				memcpy(&(scene_param.gain), &(scene_info.gain), sizeof(struct isptool_scene_param) - 8);
-				ISP_LOGV("width/height %d/%d, gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",
-					 scene_param.width, scene_param.height, scene_param.gain, scene_param.awb_gain_r,
+				ISP_LOGV("width/height %d/%d, gain 0x%x, global_gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",
+					 scene_param.width, scene_param.height, scene_param.gain, scene_param.global_gain, scene_param.awb_gain_r,
 					 scene_param.awb_gain_g, scene_param.awb_gain_b, scene_param.smart_ct, scene_param.smart_bv);
 
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);

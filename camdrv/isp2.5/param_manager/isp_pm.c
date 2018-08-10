@@ -77,7 +77,6 @@ static void isp_pm_check_param(cmr_u32 id, cmr_u32 *update_flag)
 	case ISP_BLK_PDAF_CORRECT:
 	case DCAM_BLK_NLM:
 	case ISP_BLK_RGB_DITHER:
-	case ISP_BLK_BINNING4AWB:
 	case DCAM_BLK_BPC:
 	case ISP_BLK_GRGB:
 	case ISP_BLK_CFA:
@@ -956,6 +955,12 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 	case ISP_PM_CMD_GET_INIT_DUAL_FLASH:
 		block_id = ISP_BLK_DUAL_FLASH;
 		break;
+	case ISP_PM_CMD_GET_AE_SYNC:
+		block_id = ISP_BLK_AE_SYNC;
+		break;
+	case ISP_PM_CMD_GET_4IN1_PARAM:
+		block_id = ISP_BLK_4IN1_PARAM;
+		break;
 	default:
 		break;
 	}
@@ -1099,15 +1104,16 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == input) || (PNULL == output)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, input = %p, output = %p",
-			pm_cxt_ptr, input, output);
+	if ((PNULL == pm_cxt_ptr) || (PNULL == input)) {
+		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, input = %p",
+			pm_cxt_ptr, input);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
 
 	multi_nr_flag = SENSOR_MULTI_MODE_FLAG;//SENSOR_DEFAULT_MODE_FLAG
-	output->multi_nr_flag = multi_nr_flag;
+	if (output)
+		output->multi_nr_flag = multi_nr_flag;
 
 	nr_fix_ptr = input->nr_fix_info;
 	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);

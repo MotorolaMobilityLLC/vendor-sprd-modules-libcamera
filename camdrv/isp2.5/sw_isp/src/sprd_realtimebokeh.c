@@ -27,8 +27,8 @@
 #define DEPTH_OUTPUT_WIDTH 320
 #define DEPTH_OUTPUT_HEIGHT 240
 
-#define SAVE_SWISP_PROP "vendor.cam.realbokeh.debugdump"
-#define CLOSE_REALBOKEH "vendor.cam.close.realbokeh"
+#define SAVE_SWISP_PROP "realbokeh.debugdump"
+#define CLOSE_REALBOKEH "close.realbokeh"
 #define BOKEHCALCULATE_DISANCE_OK 0
 #define BOKEHCALCULATE_DISANCE_TOOFAR 1
 #define BOKEHCALCULATE_DISANCE_TOONEAR 2
@@ -436,7 +436,7 @@ static void* misc_process(void* handle)
 			return NULL;
 		}
 
-		property_get("vendor.cam.realbokeh.dump" , value, "no");
+		property_get("realbokeh.dump" , value, "no");
 		if(strcmp(value , "yes") == 0)
 		{
 			sprintf(filename , "%dx%d_mainpreview_index%d.yuv" ,phandle->preview_width  ,
@@ -771,7 +771,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 
 	{
 		char value[128];
-		property_get("vendor.cam.realbokeh.dump" , value , "no");
+		property_get("realbokeh.dump" , value , "no");
 		if(0 == strcmp(value , "yes"))
 		{
 			char filename[256];

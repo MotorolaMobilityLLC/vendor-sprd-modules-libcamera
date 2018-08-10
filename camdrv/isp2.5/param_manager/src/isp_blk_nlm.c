@@ -98,7 +98,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 			}
 		}
 		for (i = 0; i < 3; i++) {
-			dst_ptr->cur.nlm_direction_addback_mode_bypass = nlm_param[strength_level].first_lum.dal[i].mode_bypass;
+			dst_ptr->cur.nlm_direction_addback_mode_bypass = nlm_param[strength_level].first_lum.dal[0].mode_bypass;
 			for (j = 0; j < 3; j++) {
 				dst_ptr->cur.lum_flat_addback0[i][j] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].addback0;	//for G channel
 				dst_ptr->cur.lum_flat_addback1[i][j] = nlm_param[strength_level].first_lum.nlm_lum[i].nlm_flat[j].addback1;	//for R and B channel

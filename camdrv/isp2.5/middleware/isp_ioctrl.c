@@ -564,6 +564,19 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_flash_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 flash_mode = 0;
+
+	flash_mode = *(cmr_u32 *)param_ptr;
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLASH_MODE, &flash_mode, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1461,22 +1474,26 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_adgain_exp_info *info_ptr = (struct isp_adgain_exp_info *)param_ptr;
-	float gain = 0;
+	cmr_s32 gain = 0;
 	cmr_u32 exp_time = 0;
 	cmr_int bv = 0;
+	cmr_u32 lowlight_flag = 0;
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&lowlight_flag);
 	}
 
 	if (!ret) {
 		info_ptr->adgain = (cmr_u32) gain;
 		info_ptr->exp_time = exp_time;
 		info_ptr->bv = bv;
+		info_ptr->lowlight_flag = lowlight_flag;
 	}
-	ISP_LOGV("adgain = %d, exp = %d, bv = %d", info_ptr->adgain, info_ptr->exp_time, info_ptr->bv);
+	ISP_LOGV("adgain = %d, exp = %d, bv = %d, lowlight_flag = %d",
+		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv, info_ptr->lowlight_flag);
 	return ret;
 }
 
@@ -2157,6 +2174,9 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 		return ret;
 	}
 
+	cxt->rgb_glb_gain = scene_parm->global_gain;
+	ISP_LOGV("global_gain = %d", cxt->rgb_glb_gain);
+
 	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
 	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
 	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
@@ -2341,6 +2361,40 @@ static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_auto_hdr(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AUTO_HDR, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 glb_gain = 0;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GLB_GAIN, NULL, (void *)&glb_gain);
+	*(cmr_u32 *)param_ptr = glb_gain;
+
+	ISP_LOGV("ret %ld, glb_gain %d", ret, *(cmr_u32 *)param_ptr);
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2349,6 +2403,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_ISO, ispctl_iso},
 	{ISP_CTRL_AE_TOUCH, ispctl_ae_touch},
 	{ISP_CTRL_FLASH_NOTICE, ispctl_flash_notice},
+	{ISP_CTRL_SET_FLASH_MODE, ispctl_set_flash_mode},
 	{ISP_CTRL_VIDEO_MODE, ispctl_video_mode},
 	{ISP_CTRL_SCALER_TRIM, ispctl_scaler_trim},
 	{ISP_CTRL_RANGE_FPS, ispctl_range_fps},
@@ -2416,6 +2471,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_POST_YNR, ispctl_post_ynr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
+	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
+	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
 	{ISP_CTRL_MAX, NULL}
 };
 
