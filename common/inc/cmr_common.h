@@ -378,6 +378,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AF_BYPASS,
     COM_ISP_SET_AF_POS,
     COM_ISP_GET_CNR2_PARAM,
+    COM_ISP_GET_CNR2_EN,
     COM_ISP_SET_AUTO_HDR,
     COM_ISP_SET_AI_SCENE_START,
     COM_ISP_SET_AI_SCENE_STOP,
@@ -455,10 +456,7 @@ enum blur_tips_type {
     BLUR_TIPS_DEFAULT
 };
 
-enum hdr_type {
-    HDR_TYPE_OPEN = 1,
-    HDR_TYPE_AUTO,
-    HDR_TYPE_MAX };
+enum hdr_type { HDR_TYPE_OPEN = 1, HDR_TYPE_AUTO, HDR_TYPE_MAX };
 
 enum hal_ai_scene_type {
     HAL_AI_SCENE_DEFAULT = 0,
@@ -585,6 +583,9 @@ struct isptool_scene_param {
     cmr_u32 awb_gain_b;
     cmr_u32 smart_ct;
     cmr_u32 smart_bv;
+#if defined(CONFIG_ISP_2_5)
+    cmr_u32 global_gain;
+#endif
 };
 
 struct leds_ctrl {
@@ -1792,6 +1793,9 @@ typedef struct oem_ops {
     cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,
                                            cmr_u32 camera_id,
                                            cmr_u32 *vcm_step);
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+    cmr_int (*camera_stop_multi_layer)(cmr_handle camera_handle);
+#endif
     cmr_int (*camera_set_sensor_close_flag)(cmr_handle camera_handle);
     cmr_int (*camera_set_reprocess_picture_size)(
         cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id,

@@ -2820,7 +2820,8 @@ int SprdCamera3RealBokeh::configureStreams(
             mBokehSize.capture_h = stream_list->streams[i]->height;
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
-            // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
+            // workaround jpeg cant handle 16-noalign issue, when jpeg fix
+            // this
             // issue, we will remove these code
             if (mBokehSize.capture_h == 1944 && mBokehSize.capture_w == 2592) {
                 mBokehSize.transform_w = 2592;
@@ -3658,6 +3659,18 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     }
 
     int currStreamType = getStreamType(result_buffer->stream);
+    /* Process error buffer for Main camera*/
+    if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
+        HAL_LOGD("Return local buffer:%d caused by error Buffer status",
+                 result->frame_number);
+        if (currStreamType == CALLBACK_STREAM) {
+            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
+                           mLocalBufferNumber, mLocalBufferList);
+        }
+        CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
+
+        return;
+    }
 
     if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
         if (mFlushing ||
@@ -3773,16 +3786,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             HAL_LOGE("found no corresponding notify");
             return;
         }
-        /* Process error buffer for Main camera*/
-        if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
-            HAL_LOGD("Return local buffer:%d caused by error Buffer status",
-                     result->frame_number);
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mLocalBufferNumber, mLocalBufferList);
-            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
 
-            return;
-        }
         hwi_frame_buffer_info_t matched_frame;
         hwi_frame_buffer_info_t cur_frame;
 
