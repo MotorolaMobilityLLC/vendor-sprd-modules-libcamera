@@ -60,38 +60,38 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 	switch (cmd) {
 	case SET_MATCH_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(&cxt->match_param.awb_info, in,
-			sizeof(cxt->match_param.awb_info));
+		memcpy(&cxt->match_param.awb_info[camera_id], in,
+			sizeof(cxt->match_param.awb_info[camera_id]));
 		sem_post(&cxt->awb_sm);
 		break;
 	case GET_MATCH_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(out, &cxt->match_param.awb_info,
-			sizeof(cxt->match_param.awb_info));
+		memcpy(out, &cxt->match_param.awb_info[camera_id],
+			sizeof(cxt->match_param.awb_info[camera_id]));
 		sem_post(&cxt->awb_sm);
 		break;
 	case SET_MATCH_AE_DATA:
 		sem_wait(&cxt->ae_sm);
-		memcpy(&cxt->match_param.ae_info, in,
-			sizeof(cxt->match_param.ae_info));
+		memcpy(&cxt->match_param.ae_info[camera_id], in,
+			sizeof(cxt->match_param.ae_info[camera_id]));
 		sem_post(&cxt->ae_sm);
 		break;
 	case GET_MATCH_AE_DATA:
 		sem_wait(&cxt->ae_sm);
-		memcpy(out, &cxt->match_param.ae_info,
-			sizeof(cxt->match_param.ae_info));
+		memcpy(out, &cxt->match_param.ae_info[camera_id],
+			sizeof(cxt->match_param.ae_info[camera_id]));
 		sem_post(&cxt->ae_sm);
 		break;
 	case SET_MATCH_BV_DATA:
 		sem_wait(&cxt->ae_sm);
-		memcpy(&cxt->match_param.bv, in,
-			sizeof(cxt->match_param.bv));
+		memcpy(&cxt->match_param.bv[camera_id], in,
+			sizeof(cxt->match_param.bv[camera_id]));
 		sem_post(&cxt->ae_sm);
 		break;
 	case GET_MATCH_BV_DATA:
 		sem_wait(&cxt->ae_sm);
-		memcpy(out, &cxt->match_param.bv,
-			sizeof(cxt->match_param.bv));
+		memcpy(out, &cxt->match_param.bv[camera_id],
+			sizeof(cxt->match_param.bv[camera_id]));
 		sem_post(&cxt->ae_sm);
 		break;
 	case SET_STAT_AWB_DATA:
@@ -108,14 +108,14 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		break;
 	case SET_GAIN_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(&cxt->match_param.awb_gain, in,
-			sizeof(cxt->match_param.awb_gain));
+		memcpy(&cxt->match_param.awb_gain[camera_id], in,
+			sizeof(cxt->match_param.awb_gain[camera_id]));
 		sem_post(&cxt->awb_sm);
 		break;
 	case GET_GAIN_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(out, &cxt->match_param.awb_gain,
-			sizeof(cxt->match_param.awb_gain));
+		memcpy(out, &cxt->match_param.awb_gain[camera_id],
+			sizeof(cxt->match_param.awb_gain[camera_id]));
 		sem_post(&cxt->awb_sm);
 		break;
 	case SET_MODULE_INFO:
@@ -140,6 +140,18 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		sem_wait(&cxt->module_sm);
 		memcpy(out, &cxt->match_param.module_info.module_otp_info.ae_otp[camera_id],
 			sizeof(cxt->match_param.module_info.module_otp_info.ae_otp[camera_id]));
+		sem_post(&cxt->module_sm);
+		break;
+	case SET_OTP_AWB:
+		sem_wait(&cxt->module_sm);
+		memcpy(&cxt->match_param.module_info.module_otp_info.awb_otp[camera_id], in,
+		sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[camera_id]));
+		sem_post(&cxt->module_sm);
+		break;
+	case GET_OTP_AWB:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->match_param.module_info.module_otp_info.awb_otp[camera_id],
+		sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[camera_id]));
 		sem_post(&cxt->module_sm);
 		break;
 	case SET_ALL_MODULE_AND_OTP:

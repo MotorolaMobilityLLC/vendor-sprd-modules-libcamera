@@ -68,6 +68,10 @@ struct ae_otp_param {
 	struct sensor_otp_ae_info otp_info;
 };
 
+struct awb_otp_param {
+	struct sensor_otp_awb_info awb_otp_info;
+};
+
 struct sensor_info {
 	cmr_s16 min_exp_line;
 	cmr_s16 max_again;
@@ -82,6 +86,7 @@ struct module_sensor_info {
 
 struct module_otp_info {
 	struct ae_otp_param ae_otp[SENSOR_NUM_MAX];
+	struct awb_otp_param awb_otp[SENSOR_NUM_MAX];
 };
 
 struct module_info {
@@ -97,12 +102,12 @@ struct ae_match_data {
 
 struct match_data_param {
 	struct module_info module_info;
-	struct ae_match_data ae_info;
-	struct awb_match_data awb_info;
+	struct ae_match_data ae_info[SENSOR_NUM_MAX];
+	struct awb_match_data awb_info[SENSOR_NUM_MAX];
 	void *awb_stat_data[SENSOR_NUM_MAX];
 	cmr_u32 awb_stat_data_size[SENSOR_NUM_MAX];
-	struct awb_gain_data awb_gain;
-	cmr_u16 bv;
+	struct awb_gain_data awb_gain[SENSOR_NUM_MAX];
+	cmr_u16 bv[SENSOR_NUM_MAX];
 };
 
 cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id);
