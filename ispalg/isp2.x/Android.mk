@@ -25,19 +25,15 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
 # external header file
 # ************************************************
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.1)
 ISP_DIR := ../../camdrv/isp2.1
-endif
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.2)
 ISP_DIR := ../../camdrv/isp2.2
-endif
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
 ISP_DIR := ../../camdrv/isp2.3
-endif
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 ISP_DIR := ../../camdrv/isp2.4
-endif
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
 ISP_DIR := ../../camdrv/isp2.5
 endif
 
@@ -117,7 +113,7 @@ LOCAL_SHARED_LIBRARIES += libatm
 LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
 
 LOCAL_SHARED_LIBRARIES += libspcaftrigger
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
 LOCAL_SHARED_LIBRARIES += libspafv1_le
 else
 LOCAL_SHARED_LIBRARIES += libspafv1

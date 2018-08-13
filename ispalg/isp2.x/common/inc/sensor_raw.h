@@ -140,7 +140,7 @@ enum isp_smart_id {
 	ISP_SMART_MAX
 };
 
-#ifdef CONFIG_CAMERA_ISP_DIR_2_4
+#ifdef CONFIG_ISP_2_4
 #include "sensor_raw_pike2.h"
 #elif defined CONFIG_ISP_2_5
 #include "sensor_raw_sharkl3.h"

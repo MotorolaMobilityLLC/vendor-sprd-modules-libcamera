@@ -117,13 +117,6 @@ typedef struct {
 	u16 uwClampLevel;	/*sensor's clamp level */
 } SCINFO_MODE_INFO_ISP;
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-struct sensor_version_info {
-    cmr_u32 version_id;
-    cmr_u32 srtuct_size;
-    cmr_u32 reserve;
-};
-#endif
 struct sensor_raw_resolution_info {
     cmr_u16 start_x;
     cmr_u16 start_y;
@@ -188,7 +181,7 @@ struct sensor_raw_ioctrl {
     cmr_int (*ex_set_exposure)(cmr_handle caller_handler, cmr_uint param);
     cmr_int (*read_aec_info)(cmr_handle caller_handler, void *param);
     cmr_int (*write_aec_info)(cmr_handle caller_handler, void *param);
-#if 1//(defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4))
+#if 1
     // af control and DVT test funcs valid only af_enable works
     cmr_int (*set_pos)(cmr_handle caller_handler, cmr_u32 pos);
     cmr_int (*get_otp)(cmr_handle caller_handler, uint16_t *inf,
@@ -201,149 +194,15 @@ struct sensor_raw_ioctrl {
     cmr_int (*sns_ioctl)(cmr_handle caller_handler, enum sns_cmd cmd,
                          void *param);
 };
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-/*************new***************************/
-struct sensor_fix_param_mode_info {
-    uint32_t version_id;
-    uint32_t mode_id;
-    uint32_t width;
-    uint32_t height;
-    uint32_t reserved[8];
-};
 
-struct sensor_fix_param_block_info {
-    uint32_t version;
-    uint32_t block_id;
-    uint32_t reserved[8];
-};
-
-struct sensor_mode_fix_param {
-    uint32_t *mode_info;
-    uint32_t len;
-};
-
-struct sensor_block_fix_param {
-    uint32_t *block_info;
-    uint32_t len;
-};
-
-struct ae_exp_gain_tab {
-    uint32_t *index;
-    uint32_t index_len;
-    uint32_t *exposure;
-    uint32_t exposure_len;
-    uint32_t *dummy;
-    uint32_t dummy_len;
-    uint16_t *again;
-    uint32_t again_len;
-    uint16_t *dgain;
-    uint32_t dgain_len;
-};
-
-struct ae_scene_exp_gain_tab {
-    uint32_t *scene_info;
-    uint32_t scene_info_len;
-    uint32_t *index;
-    uint32_t index_len;
-    uint32_t *exposure;
-    uint32_t exposure_len;
-    uint32_t *dummy;
-    uint32_t dummy_len;
-    uint16_t *again;
-    uint32_t again_len;
-    uint16_t *dgain;
-    uint32_t dgain_len;
-};
-
-struct ae_weight_tab {
-    uint8_t *weight_table;
-    uint32_t len;
-};
-
-struct ae_auto_iso_tab_v1 {
-    uint16_t *auto_iso_tab;
-    uint32_t len;
-};
-
-struct sensor_ae_tab {
-    struct sensor_block_fix_param block;
-    struct ae_exp_gain_tab ae_tab[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
-    struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_NUM];
-    struct ae_scene_exp_gain_tab scene_tab[AE_SCENE_NUM][AE_FLICKER_NUM];
-    struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
-};
-
-/*******************************new***************/
-struct sensor_lens_map_info {
-    uint32_t envi;
-    uint32_t ct;
-    uint32_t width;
-    uint32_t height;
-    uint32_t grid;
-};
-
-struct sensor_lens_map {
-    uint32_t *map_info;
-    uint32_t map_info_len;
-    uint16_t *lnc_addr;
-    uint32_t lnc_len;
-};
-
-struct sensor_lsc_map {
-    struct sensor_block_fix_param block;
-    struct sensor_lens_map map[9];
-};
-
-struct sensor_awb_map {
-    uint16_t *addr;
-    uint32_t len; // by bytes
-};
-
-struct sensor_awb_weight {
-    uint8_t *addr;
-    uint32_t weight_len;
-    uint16_t *size;
-    uint32_t size_param_len;
-};
-
-struct sensor_awb_map_weight_param {
-    struct sensor_block_fix_param block;
-    struct sensor_awb_map awb_map;
-    struct sensor_awb_weight awb_weight;
-};
-
-struct sensor_raw_fix_info {
-    struct sensor_mode_fix_param mode;
-    struct sensor_ae_tab ae;
-    struct sensor_lsc_map lnc;
-    struct sensor_awb_map_weight_param awb;
-};
-
-struct sensor_raw_note_info {
-    uint8_t *note;
-    uint32_t node_len;
-};
-
-struct sensor_raw_info {
-    struct sensor_version_info *version_info;
-    struct isp_mode_param_info mode_ptr[MAX_MODE_NUM];
-    struct sensor_raw_resolution_info_tab *resolution_info_ptr;
-    struct sensor_raw_ioctrl *ioctrl_ptr;
-    struct sensor_libuse_info *libuse_info;
-    struct sensor_raw_fix_info *fix_ptr[MAX_MODE_NUM];
-    struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
-};
-#endif
 struct sensor_data_info {
     void *data_ptr;
     cmr_u32 size;
     void *sub_data_ptr;
     cmr_u32 sub_size;
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     struct sensor_raw_info *sn_raw_info;
     struct isp_data_info isp_init_data[MAX_MODE_NUM];
     struct isp_data_info isp_update_data[MAX_MODE_NUM]; /*for isp_tool*/
-#endif
     cmr_u8 dualcam_cali_lib_type;
 };
 
@@ -429,59 +288,6 @@ struct sensor_otp_optCenter_info {
     struct point B;
 };
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-enum otp_vendor_type {
-    OTP_VENDOR_NONE = 0,        /*CAMERA NOT SOPPROT OTP*/
-    OTP_VENDOR_SINGLE,          /*ONE CAMERA SENSOR ONE OTP*/
-    OTP_VENDOR_SINGLE_CAM_DUAL, /*TWO CAMERA SENSOR AND ONE OTP,JUST FOR DUAL
-                                   CAMERA*/
-    OTP_VENDOR_DUAL_CAM_DUAL,   /*TWO CAMERA SENSOR AND TWO OTP,JUST FOR DUAL
-                                   CAMERA*/
-    OTP_VENDOR_MAX
-};
-
-struct sensor_single_otp_info {
-    cmr_u8 program_flag;
-    struct sensor_otp_module_info module_info;
-    struct sensor_otp_iso_awb_info iso_awb_info; /*random awb*/
-    struct sensor_otp_lsc_info lsc_info;         /*random lsc*/
-    struct sensor_otp_af_info af_info;
-    struct sensor_otp_pdaf_info pdaf_info;
-    /*spc:sesor pixel calibration,used by pdaf*/
-    struct sensor_otp_pdaf_info spc_info;
-
-    struct sensor_otp_optCenter_info optical_center_info;
-    /*awb,lsc golden data*/
-    struct sensor_otp_lsc_info lsc_golden_info;
-    struct sensor_otp_iso_awb_info awb_golden_info;
-    cmr_u16 checksum;
-};
-
-struct sensor_dual_otp_info {
-    cmr_u8 dual_flag; /*for 3ddata calibration flag*/
-    struct sensor_data_info data_3d;
-
-    struct sensor_otp_module_info master_module_info;
-    struct sensor_otp_af_info master_af_info;
-    struct sensor_otp_iso_awb_info master_iso_awb_info;
-    struct sensor_otp_lsc_info master_lsc_info;
-    struct sensor_otp_optCenter_info master_optical_center_info;
-    struct sensor_otp_ae_info master_ae_info;
-    struct sensor_otp_pdaf_info master_pdaf_info;
-
-    struct sensor_otp_lsc_info master_lsc_golden_info;
-    struct sensor_otp_iso_awb_info master_awb_golden_info;
-
-    struct sensor_otp_module_info slave_module_info;
-    struct sensor_otp_iso_awb_info slave_iso_awb_info;
-    struct sensor_otp_lsc_info slave_lsc_info;
-    struct sensor_otp_optCenter_info slave_optical_center_info;
-    struct sensor_otp_ae_info slave_ae_info;
-
-    struct sensor_otp_lsc_info slave_lsc_golden_info;
-    struct sensor_otp_iso_awb_info slave_awb_golden_info;
-};
-#else
 enum otp_vendor_type {
     OTP_VENDOR_SINGLE = 0,      /*ONE CAMERA SENSOR ONE OTP*/
     OTP_VENDOR_SINGLE_CAM_DUAL, /*TWO CAMERA SENSOR AND ONE OTP,JUST FOR DUAL
@@ -524,7 +330,6 @@ struct sensor_dual_otp_info {
     struct sensor_otp_section_info *slave_lsc_info;
     struct sensor_otp_section_info *slave_ae_info;
 };
-#endif
 struct sensor_otp_cust_info {
     struct sensor_data_info total_otp;
     enum otp_vendor_type otp_vendor;
@@ -603,7 +408,7 @@ struct sensor_pdaf_info {
     cmr_u32 data_type;
     struct sensor_pdaf_type2_info type2_info;
     cmr_u32 sns_orientation; // 0: Normal, 1:Mirror+Flip
-    cmr_u32 *sns_mode;//sensor mode for pd
+    cmr_u32 *sns_mode;       // sensor mode for pd
     struct pd_vch2_info vch2_info;
 };
 
@@ -611,10 +416,10 @@ struct sensor_4in1_info {
     cmr_u32 is_4in1_supported;
     cmr_u32 limited_4in1_width;
     cmr_u32 limited_4in1_height;
-    cmr_u32 *sns_mode;//sensor mode for 4in1
+    cmr_u32 *sns_mode; // sensor mode for 4in1
 };
 
-struct frame_4in1_info{
+struct frame_4in1_info {
     cmr_int im_addr_in;
     cmr_int im_addr_out;
 };

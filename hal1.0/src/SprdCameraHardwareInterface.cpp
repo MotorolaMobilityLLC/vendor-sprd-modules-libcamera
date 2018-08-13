@@ -5872,7 +5872,7 @@ status_t SprdCameraHardware::setCameraParameters() {
                  0); /*6 = CAMERA_ISO_MAX*/
     } else {
         if (mIsDvPreview && mParameters.getRecordingHint()) {
-#ifdef CONFIG_CAMERA_ISP_DIR_2
+#ifdef CONFIG_ISP_2
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, 5); /* dv1600 */
 #endif
         } else {

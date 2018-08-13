@@ -1,6 +1,7 @@
 #include <utils/Log.h>
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1_A)
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5)
+#if defined(CONFIG_ISP_2_1_A)
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"
 #else
@@ -8,7 +9,7 @@
 #include "hal3_2v1/SprdCamera3Setting.h"
 #endif
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_2_4)
+#if defined(CONFIG_ISP_2_4)
 #include "hal3_2v4/SprdCamera3OEMIf.h"
 #include "hal3_2v4/SprdCamera3Setting.h"
 #endif
@@ -78,8 +79,8 @@ static GRSurface *gr_draw = NULL;
 static int rot_fd = -1;
 
 /*process control*/
-static Mutex preview_lock;           /*preview lock*/
-static int preview_valid = 0;        /*preview flag*/
+static Mutex preview_lock;          /*preview lock*/
+static int preview_valid = 0;       /*preview flag*/
 static int s_mem_method = 0;        /*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
@@ -108,8 +109,7 @@ static sprd_camera_memory_t *m_isp_firmware_reserved = NULL;
 static const int k_isp_b4_awb_count = 16;
 static sprd_camera_memory_t *m_isp_b4_awb_heap_reserved[k_isp_b4_awb_count];
 static sprd_camera_memory_t *m_isp_raw_aem_heap_reserved[k_isp_b4_awb_count];
-static sprd_camera_memory_t
-    *preview_heap_array[PREVIEW_BUFF_NUM];
+static sprd_camera_memory_t *preview_heap_array[PREVIEW_BUFF_NUM];
 static int target_buffer_id;
 
 static oem_module_t *m_hal_oem;
@@ -245,13 +245,14 @@ static void stretch_colors(void *dst, int dst_width, int dst_height,
     double df_amplification_y = ((double)dst_height) / src_height;
     double stretch =
         1 / (df_amplification_y > df_amplification_x ? df_amplification_y
-                                                 : df_amplification_x);
+                                                     : df_amplification_x);
     int offset_x = (df_amplification_y > df_amplification_x
-                       ? (int)(src_width - dst_width / df_amplification_y) >> 1
-                       : 0);
-    int offset_y = (df_amplification_x > df_amplification_y
-                       ? (int)(src_height - dst_height / df_amplification_x) >> 1
-                       : 0);
+                        ? (int)(src_width - dst_width / df_amplification_y) >> 1
+                        : 0);
+    int offset_y =
+        (df_amplification_x > df_amplification_y
+             ? (int)(src_height - dst_height / df_amplification_x) >> 1
+             : 0);
     int i = 0;
     int j = 0;
     double tmp_y = 0;
@@ -720,7 +721,6 @@ static int callback_other_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
             m_isp_lsc_heap_reserved = NULL;
         }
     }
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     if (type == CAMERA_ISP_STATIS) {
         if (NULL != m_isp_statis_heap_reserved) {
             m_isp_statis_heap_reserved->ion_heap->free_kaddr();
@@ -728,7 +728,6 @@ static int callback_other_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
             m_isp_statis_heap_reserved = NULL;
         }
     }
-#endif
     if (type == CAMERA_ISP_BINGING4AWB) {
         for (i = 0; i < k_isp_b4_awb_count; i++) {
             if (NULL != m_isp_b4_awb_heap_reserved[i]) {
@@ -805,18 +804,16 @@ static cmr_int callback_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
     }
 
     if (CAMERA_MEM_CB_TYPE_MAX <= type) {
-        ALOGE("auto_test: %s,%d, mem type error %d\n", __func__, __LINE__, type);
+        ALOGE("auto_test: %s,%d, mem type error %d\n", __func__, __LINE__,
+              type);
         return -1;
     }
 
     if (CAMERA_PREVIEW == type) {
         ret = callback_preview_free(phy_addr, vir_addr, fd, sum);
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
-               type == CAMERA_ISP_FIRMWARE
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
-               || type == CAMERA_ISP_STATIS
-#endif
-               || type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
+               type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
+               type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
                type == CAMERA_ISP_ANTI_FLICKER) {
         ret = callback_other_free(type, phy_addr, vir_addr, fd, sum);
     } else {
@@ -842,8 +839,9 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     sprd_camera_memory_t *memory =
         (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
     if (NULL == memory) {
-        ALOGE("auto_test: %s,%d, failed: fatal error! memory pointer is null.\n",
-              __func__, __LINE__);
+        ALOGE(
+            "auto_test: %s,%d, failed: fatal error! memory pointer is null.\n",
+            __func__, __LINE__);
         goto getpmem_fail;
     }
     memset(memory, 0, sizeof(sprd_camera_memory_t));
@@ -885,9 +883,10 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     }
 
     if (NULL == p_heap_ion->getBase() || MAP_FAILED == p_heap_ion->getBase()) {
-        ALOGE("auto_test: error getBase is null. %s,%s,%d, failed: ion get base "
-              "err.\n",
-              __FILE__, __func__, __LINE__);
+        ALOGE(
+            "auto_test: error getBase is null. %s,%s,%d, failed: ion get base "
+            "err.\n",
+            __FILE__, __func__, __LINE__);
         goto getpmem_fail;
     }
     ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
@@ -926,7 +925,8 @@ static int callback_preview_malloc(cmr_u32 size, cmr_u32 sum,
     sprd_camera_memory_t *memory = NULL;
     cmr_uint i = 0;
 
-    ALOGI("size %d sum %d m_preview_heap_num %d", size, sum, m_preview_heap_num);
+    ALOGI("size %d sum %d m_preview_heap_num %d", size, sum,
+          m_preview_heap_num);
 
     *phy_addr = 0;
     *vir_addr = 0;
@@ -1015,7 +1015,6 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
             *vir_addr++ = (cmr_uint)m_isp_lsc_heap_reserved->data;
             *fd++ = m_isp_lsc_heap_reserved->fd;
         }
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
     } else if (type == CAMERA_ISP_STATIS) {
         cmr_u64 kaddr = 0;
         size_t ksize = 0;
@@ -1033,7 +1032,6 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         *vir_addr++ = (cmr_uint)m_isp_statis_heap_reserved->data;
         *fd++ = m_isp_statis_heap_reserved->fd;
         *fd++ = m_isp_statis_heap_reserved->dev_fd;
-#endif
     } else if (type == CAMERA_ISP_BINGING4AWB) {
         cmr_u64 *phy_addr_64 = (cmr_u64 *)phy_addr;
         cmr_u64 *vir_addr_64 = (cmr_u64 *)vir_addr;
@@ -1160,11 +1158,8 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
         ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
         ret = callback_preview_malloc(size, sum, phy_addr, vir_addr, fd);
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
-               type == CAMERA_ISP_FIRMWARE
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1) || defined(CONFIG_CAMERA_ISP_DIR_2_4)
-               || type == CAMERA_ISP_STATIS
-#endif
-               || type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
+               type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
+               type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
                type == CAMERA_ISP_ANTI_FLICKER) {
         ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
         ret = callback_other_malloc(type, size, sum, phy_addr, vir_addr, fd);
@@ -1216,14 +1211,15 @@ static void autotest_camera_startpreview(void) {
              CAMERA_DATA_FORMAT_YUV420);
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_SENSOR_ROTATION, 0);
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
-    SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_RANGE_FPS, (cmr_uint)&fps_param);
+    SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_RANGE_FPS,
+             (cmr_uint)&fps_param);
 
     /* set malloc && free callback*/
-    ret = m_hal_oem->ops->camera_set_mem_func(oem_handle, (void *)callback_malloc,
-                                            (void *)callback_free, NULL);
+    ret = m_hal_oem->ops->camera_set_mem_func(
+        oem_handle, (void *)callback_malloc, (void *)callback_free, NULL);
     if (CMR_CAMERA_SUCCESS != ret) {
-        ALOGE("auto_test: %s,%d, failed: camera set mem func error.\n", __func__,
-              __LINE__);
+        ALOGE("auto_test: %s,%d, failed: camera set mem func error.\n",
+              __func__, __LINE__);
         return;
     }
 
@@ -1350,9 +1346,9 @@ int autotest_camera_init(int camera_id, minui_backend *p_backend,
         return -1;
     }
 
-    ret = m_hal_oem->ops->camera_init(camera_id, autotest_camera_cb, &client_data,
-                                    0, &oem_handle, (void *)callback_malloc,
-                                    (void *)callback_free);
+    ret = m_hal_oem->ops->camera_init(
+        camera_id, autotest_camera_cb, &client_data, 0, &oem_handle,
+        (void *)callback_malloc, (void *)callback_free);
 
     if (ret) {
         ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);

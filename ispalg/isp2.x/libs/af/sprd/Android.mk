@@ -27,7 +27,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
 LOCAL_MODULE := libspafv1_le
 else
 LOCAL_MODULE := libspafv1

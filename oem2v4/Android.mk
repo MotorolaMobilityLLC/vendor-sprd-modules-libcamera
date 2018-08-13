@@ -6,7 +6,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=fo
 
 
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.4
 LOCAL_C_INCLUDES := \

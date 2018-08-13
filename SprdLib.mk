@@ -4,30 +4,7 @@ LOCAL_SHARED_LIBRARIES += libcamera_metadata
 LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor libcamoem
 LOCAL_STATIC_LIBRARIES += android.hardware.camera.common@1.0-helper
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.2)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.3)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.4)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.5)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
-LOCAL_SHARED_LIBRARIES += libcamcommon libcamisp
-LOCAL_CFLAGS += -DCONFIG_ISP_3
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 LOCAL_SHARED_LIBRARIES += libcamfb

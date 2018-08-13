@@ -530,7 +530,8 @@ class SprdCameraHardware : public virtual RefBase {
     /* mCommonHeapReserved for preview, video and zsl reserved buffer*/
     sprd_camera_memory_t *mCommonHeapReserved;
     sprd_camera_memory_t *mIspLscHeapReserved;
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5)
     sprd_camera_memory_t *mIspStatisHeapReserved;
 #endif
     sprd_camera_memory_t *mIspB4awbHeapReserved[kISPB4awbCount];

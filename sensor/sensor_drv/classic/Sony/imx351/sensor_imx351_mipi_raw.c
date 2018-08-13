@@ -775,7 +775,7 @@ static cmr_int imx351_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 #endif
 
-#if 1 // defined(CONFIG_CAMERA_ISP_DIR_3)
+#if 1
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
 #endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
