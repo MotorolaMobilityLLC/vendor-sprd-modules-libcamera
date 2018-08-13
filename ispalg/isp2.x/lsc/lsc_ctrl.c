@@ -197,6 +197,126 @@ void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr
 	}
 }
 
+void _scale_bilinear_short(unsigned short* src_buf, int src_width, int src_height, unsigned short* dst_buf, int dst_width, int dst_height){
+
+    int i, j, x, y;
+    float xx, yy;
+    int a, b, c, d, tmp;
+
+    for (j=0; j<dst_height; j++){
+        float sy = (float)(j * src_height) / dst_height;
+        if (sy > src_height-2) sy = (float)(src_height-2);
+        y = (short)sy;
+        yy = sy - y;
+
+        for (i=0; i<dst_width; i++){
+            float sx = (float)(i * src_width) / dst_width;
+            if (sx > src_width-2) sx = (float)(src_width-2);
+            x = (short)sx;
+            xx = sx - x;
+
+            a = src_buf[src_width * y + x];
+            b = src_buf[src_width * (y+1) + x];
+            c = src_buf[src_width * y + x+1];
+            d = src_buf[src_width * (y+1) + x+1];
+
+            tmp = (short)(a * (1-xx) * (1-yy) + b * (1-xx) * yy + c * xx * (1-yy) + d * xx * yy + 0.5f);
+
+            dst_buf[dst_width * j + i] = tmp;
+        }
+    }
+}
+
+void _table_linear_scaler(unsigned short* lsc_tab, unsigned int src_width, unsigned int src_height, unsigned int dst_width, unsigned int dst_height)
+{
+	unsigned int i,j;
+
+	//scale pre table to new gain size
+	unsigned short pre_contain_r_tab [ 32 * 32 ]={0};
+	unsigned short pre_contain_gr_tab[ 32 * 32 ]={0};
+	unsigned short pre_contain_gb_tab[ 32 * 32 ]={0};
+	unsigned short pre_contain_b_tab [ 32 * 32 ]={0};
+	unsigned short new_contain_r_tab [ 32 * 32 ]={0};
+	unsigned short new_contain_gr_tab[ 32 * 32 ]={0};
+	unsigned short new_contain_gb_tab[ 32 * 32 ]={0};
+	unsigned short new_contain_b_tab [ 32 * 32 ]={0};
+	unsigned short output_r_tab [ 32 * 32 ]={0};
+	unsigned short output_gr_tab[ 32 * 32 ]={0};
+	unsigned short output_gb_tab[ 32 * 32 ]={0};
+	unsigned short output_b_tab [ 32 * 32 ]={0};
+	unsigned short* otp_r  = lsc_tab;
+	unsigned short* otp_gr = lsc_tab + src_width * src_height;
+	unsigned short* otp_gb = lsc_tab + src_width * src_height*2;
+	unsigned short* otp_b  = lsc_tab + src_width * src_height*3;
+
+	// copy the color channels
+	memcpy(output_r_tab , otp_r , src_width * src_height * sizeof(unsigned short));
+	memcpy(output_gr_tab, otp_gr, src_width * src_height * sizeof(unsigned short));
+	memcpy(output_gb_tab, otp_gb, src_width * src_height * sizeof(unsigned short));
+	memcpy(output_b_tab , otp_b , src_width * src_height * sizeof(unsigned short));
+
+
+	// get contain from pre_tab
+	for(j=0; j<src_height-2; j++){
+		for(i=0; i<src_width-2; i++){
+			pre_contain_r_tab [ j*(src_width-2) + i ] = output_r_tab [ (j+1)*src_width + (i+1)];
+			pre_contain_gr_tab[ j*(src_width-2) + i ] = output_gr_tab[ (j+1)*src_width + (i+1)];
+			pre_contain_gb_tab[ j*(src_width-2) + i ] = output_gb_tab[ (j+1)*src_width + (i+1)];
+			pre_contain_b_tab [ j*(src_width-2) + i ] = output_b_tab [ (j+1)*src_width + (i+1)];
+		}
+	}
+
+	// scale pre_contain to new_contain
+	_scale_bilinear_short(pre_contain_r_tab , src_width-2, src_height-2, new_contain_r_tab , dst_width-2, dst_height-2);
+	_scale_bilinear_short(pre_contain_gr_tab, src_width-2, src_height-2, new_contain_gr_tab, dst_width-2, dst_height-2);
+	_scale_bilinear_short(pre_contain_gb_tab, src_width-2, src_height-2, new_contain_gb_tab, dst_width-2, dst_height-2);
+	_scale_bilinear_short(pre_contain_b_tab , src_width-2, src_height-2, new_contain_b_tab , dst_width-2, dst_height-2);
+
+	// set contain to output tab
+	for(j=0; j<dst_height-2; j++){
+		for(i=0; i<dst_width-2; i++){
+			output_r_tab [ (j+1)*dst_width + (i+1)] = new_contain_r_tab [ j*(dst_width-2) + i];
+			output_gr_tab[ (j+1)*dst_width + (i+1)] = new_contain_gr_tab[ j*(dst_width-2) + i];
+			output_gb_tab[ (j+1)*dst_width + (i+1)] = new_contain_gb_tab[ j*(dst_width-2) + i];
+			output_b_tab [ (j+1)*dst_width + (i+1)] = new_contain_b_tab [ j*(dst_width-2) + i];
+		}
+	}
+
+	// set top and bottom edge
+	for(i=1; i<dst_width-1; i++){
+		output_r_tab [ 0*dst_width + i ] = 3*output_r_tab [ 1*dst_width + i ] - 3*output_r_tab [ 2*dst_width + i ] + output_r_tab [ 3*dst_width + i ];
+		output_gr_tab[ 0*dst_width + i ] = 3*output_gr_tab[ 1*dst_width + i ] - 3*output_gr_tab[ 2*dst_width + i ] + output_gr_tab[ 3*dst_width + i ];
+		output_gb_tab[ 0*dst_width + i ] = 3*output_gb_tab[ 1*dst_width + i ] - 3*output_gb_tab[ 2*dst_width + i ] + output_gb_tab[ 3*dst_width + i ];
+		output_b_tab [ 0*dst_width + i ] = 3*output_b_tab [ 1*dst_width + i ] - 3*output_b_tab [ 2*dst_width + i ] + output_b_tab [ 3*dst_width + i ];
+		output_r_tab [ (dst_height-1)*dst_width + i ] = 3*output_r_tab [ (dst_height-2)*dst_width + i ] - 3*output_r_tab [ (dst_height-3)*dst_width + i ] + output_r_tab [ (dst_height-4)*dst_width + i ];
+		output_gr_tab[ (dst_height-1)*dst_width + i ] = 3*output_gr_tab[ (dst_height-2)*dst_width + i ] - 3*output_gr_tab[ (dst_height-3)*dst_width + i ] + output_gr_tab[ (dst_height-4)*dst_width + i ];
+		output_gb_tab[ (dst_height-1)*dst_width + i ] = 3*output_gb_tab[ (dst_height-2)*dst_width + i ] - 3*output_gb_tab[ (dst_height-3)*dst_width + i ] + output_gb_tab[ (dst_height-4)*dst_width + i ];
+		output_b_tab [ (dst_height-1)*dst_width + i ] = 3*output_b_tab [ (dst_height-2)*dst_width + i ] - 3*output_b_tab [ (dst_height-3)*dst_width + i ] + output_b_tab [ (dst_height-4)*dst_width + i ];
+	}
+
+	// set left and right edge
+	for(j=0; j<dst_height; j++){
+		output_r_tab [ j*dst_width + 0 ] = 3*output_r_tab [ j*dst_width + 1 ] - 3*output_r_tab [ j*dst_width + 2 ] + output_r_tab [ j*dst_width + 3 ];
+		output_gr_tab[ j*dst_width + 0 ] = 3*output_gr_tab[ j*dst_width + 1 ] - 3*output_gr_tab[ j*dst_width + 2 ] + output_gr_tab[ j*dst_width + 3 ];
+		output_gb_tab[ j*dst_width + 0 ] = 3*output_gb_tab[ j*dst_width + 1 ] - 3*output_gb_tab[ j*dst_width + 2 ] + output_gb_tab[ j*dst_width + 3 ];
+		output_b_tab [ j*dst_width + 0 ] = 3*output_b_tab [ j*dst_width + 1 ] - 3*output_b_tab [ j*dst_width + 2 ] + output_b_tab [ j*dst_width + 3 ];
+		output_r_tab [ j*dst_width + (dst_width-1) ] = 3*output_r_tab [ j*dst_width + (dst_width-2) ] - 3*output_r_tab [ j*dst_width + (dst_width-3) ] + output_r_tab [ j*dst_width + (dst_width-4) ];
+		output_gr_tab[ j*dst_width + (dst_width-1) ] = 3*output_gr_tab[ j*dst_width + (dst_width-2) ] - 3*output_gr_tab[ j*dst_width + (dst_width-3) ] + output_gr_tab[ j*dst_width + (dst_width-4) ];
+		output_gb_tab[ j*dst_width + (dst_width-1) ] = 3*output_gb_tab[ j*dst_width + (dst_width-2) ] - 3*output_gb_tab[ j*dst_width + (dst_width-3) ] + output_gb_tab[ j*dst_width + (dst_width-4) ];
+		output_b_tab [ j*dst_width + (dst_width-1) ] = 3*output_b_tab [ j*dst_width + (dst_width-2) ] - 3*output_b_tab [ j*dst_width + (dst_width-3) ] + output_b_tab [ j*dst_width + (dst_width-4) ];
+	}
+
+	// merge color channels to table
+	otp_r  = lsc_tab;
+	otp_gr = lsc_tab + dst_width * dst_height;
+	otp_gb = lsc_tab + dst_width * dst_height*2;
+	otp_b  = lsc_tab + dst_width * dst_height*3;
+	memcpy(otp_r , output_r_tab , dst_width * dst_height * sizeof(unsigned short));
+	memcpy(otp_gr, output_gr_tab, dst_width * dst_height * sizeof(unsigned short));
+	memcpy(otp_gb, output_gb_tab, dst_width * dst_height * sizeof(unsigned short));
+	memcpy(otp_b , output_b_tab , dst_width * dst_height * sizeof(unsigned short));
+}
+
 cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 {
 	struct sensor_otp_data_info *lsc_otp_info;
@@ -221,6 +341,11 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	struct sensor_otp_section_info *lsc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *oc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *module_info_ptr = NULL;
+
+	// case for isp2.0 of 8M and 13M
+	if((3264-100 <= full_img_width && full_img_width <= 3264+100 && 2448-100 <= full_img_height && full_img_height <= 2448+100 && lsc_param->grid == 128)
+	 ||(4224-100 <= full_img_width && full_img_width <= 4224+100 && 3136-100 <= full_img_height && full_img_height <= 3136+100 && lsc_param->grid == 128))
+		lsc_otp_grid = 96;
 	_lsc_get_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
 
 	if (NULL != lsc_param->otp_info_ptr) {
@@ -375,6 +500,17 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 					 lsc_otp_width, lsc_otp_height, lsc_otp_grid);
 			goto EXIT;
 		}
+
+		// case for isp2.0 of 8M and 13M
+		if((3264-100 <= full_img_width && full_img_width <= 3264+100 && 2448-100 <= full_img_height && full_img_height <= 2448+100 && lsc_param->grid == 128)
+		 ||(4224-100 <= full_img_width && full_img_width <= 4224+100 && 3136-100 <= full_img_height && full_img_height <= 3136+100 && lsc_param->grid == 128)){
+			_lsc_get_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, 128);
+			_table_linear_scaler(lsc_table, gain_w, gain_h, lsc_otp_width+2, lsc_otp_height+2);
+			gain_w = lsc_otp_width+2;
+			gain_h = lsc_otp_height+2;
+			lsc_otp_grid = 128;
+		}
+
 		lsc_param->lsc_otp_table_width = gain_w;
 		lsc_param->lsc_otp_table_height = gain_h;
 		lsc_param->lsc_otp_grid = lsc_otp_grid;
