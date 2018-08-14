@@ -56,6 +56,8 @@
 #define CAMERA_POWER_OPT_FLAG 0
 #endif
 
+#define SNS_INTERPOL_ONLINE_MAX_SIZE        (2592 * 1952)
+
 static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle);
 static void *cmr_grab_thread_proc(void *data);
@@ -1151,7 +1153,9 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
     if ((1 == op.parm.capability.path_info[0].support_yuv) &&
         (prev_cxt->actual_picture_size.width * prev_cxt->actual_picture_size.height >
         (p_grab->init_param.sensor_max_size.width *
-        p_grab->init_param.sensor_max_size.height))) {
+        p_grab->init_param.sensor_max_size.height)) &&
+        (prev_cxt->actual_picture_size.width * prev_cxt->actual_picture_size.height >
+        SNS_INTERPOL_ONLINE_MAX_SIZE)) {
         capability->zoom_post_proc = ZOOM_POST_PROCESS;
         p_grab->offline_mode = ZOOM_POST_PROCESS;
     } else {
