@@ -40,6 +40,10 @@ extern "C" {
 
 #define AWB_TRUE	1
 #define AWB_FALSE	0
+	typedef enum {
+		AWB_MODE_PREVIEW = 0,
+		AWB_MODE_CAPTURE,
+	}AWB_WORK_MODE;
 
 	typedef void *awb_handle_t;
 
