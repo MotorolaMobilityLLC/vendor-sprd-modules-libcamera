@@ -99,8 +99,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{DCAM_BLK_BPC, array_offset(struct isp_context, bpc), sizeof(struct isp_bpc_param), &s_bpc_ops},
 	{ISP_BLK_GRGB, array_offset(struct isp_context, grgb), sizeof(struct isp_grgb_param), &s_grgb_ops},
 	{ISP_BLK_YNR, array_offset(struct isp_context, ynr), sizeof(struct isp_ynr_param), &s_ynr_ops},
-	/*{ISP_BLK_PDAF_CORRECT, array_offset(struct isp_context, pdaf_correct), sizeof(struct isp_pdaf_correction_param), &s_pdaf_correct_ops},*/
-	/*{ISP_BLK_PDAF_EXTRACT, array_offset(struct isp_context, pdaf_extraction), sizeof(struct isp_pdaf_extraction_param), &s_pdaf_extraction_ops},*/
 	{DCAM_BLK_NLM, array_offset(struct isp_context, nlm), sizeof(struct isp_nlm_param), &s_nlm_ops},
 	{ISP_BLK_CFA, array_offset(struct isp_context, cfa), sizeof(struct isp_cfa_param), &s_cfa_ops},
 	{ISP_BLK_CMC10, array_offset(struct isp_context, cmc10), sizeof(struct isp_cmc10_param), &s_cmc10_ops},

@@ -74,7 +74,6 @@ static cmr_s32 isp_pm_check_handle(cmr_handle handle)
 static void isp_pm_check_param(cmr_u32 id, cmr_u32 *update_flag)
 {
 	switch (id) {
-	case ISP_BLK_PDAF_CORRECT:
 	case DCAM_BLK_NLM:
 	case ISP_BLK_RGB_DITHER:
 	case DCAM_BLK_BPC:
@@ -1337,8 +1336,7 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				break;
 			}
 
-			if (src_header[j].block_id == ISP_BLK_PDAF_CORRECT
-				|| src_header[j].block_id == ISP_BLK_RGB_DITHER
+			if (src_header[j].block_id == ISP_BLK_RGB_DITHER
 				|| src_header[j].block_id == DCAM_BLK_BPC
 				|| src_header[j].block_id == ISP_BLK_GRGB
 				|| src_header[j].block_id == ISP_BLK_CFA
