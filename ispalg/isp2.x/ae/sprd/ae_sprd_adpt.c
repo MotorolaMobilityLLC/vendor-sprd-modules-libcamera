@@ -1325,6 +1325,10 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1);
 		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
+		if (cxt->exposure_compensation.ae_compensation_flag && !cxt->flash_backup.table_idx)  {
+			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
+			ISP_LOGV("AE_FLASH_MAIN_BEFORE force ae's table_idx : %d", cxt->flash_backup.table_idx);
+		}
 		break;
 
 	case AE_FLASH_MAIN_AFTER:
@@ -2160,7 +2164,7 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 		}
 	}
 	cxt->cur_status.settings.force_lock_ae = enable;
-	ISP_LOGV("PAUSE COUNT IS %d, lock: %d, %d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae);
+	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae);
 	return ret;
 }
 
@@ -2175,7 +2179,7 @@ static cmr_s32 ae_set_pause(struct ae_ctrl_cxt *cxt)
 		cxt->cur_status.settings.manual_mode = -1;
 	}
 	cxt->cur_status.settings.pause_cnt++;
-	ISP_LOGV("PAUSE COUNT IS %d, lock: %d, %d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae);
+	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae);
 	return ret;
 }
 
@@ -2196,7 +2200,7 @@ static cmr_s32 ae_set_restore_cnt(struct ae_ctrl_cxt *cxt)
 		cxt->cur_status.settings.pause_cnt--;
 	}
 
-	ISP_LOGV("PAUSE COUNT IS %d, lock: %d, %d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae);
+	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae);
 	return ret;
 }
 
@@ -4068,7 +4072,7 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 
 	*out_idx = calc_idx;
 
-	ISP_LOGV("value %d, temp %f calc_idx %d", value, temp, calc_idx);
+	ISP_LOGD("value %d, temp %f calc_idx %d", value, temp, calc_idx);
 	return AE_SUCCESS;
 }
 
@@ -4078,12 +4082,12 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, cmr_u16 *id
 
 	if (param) {
 		cxt->exposure_compensation.ae_change_value = *param;
-		ISP_LOGV("ae_change_value %d", cxt->exposure_compensation.ae_change_value);
+		ISP_LOGD("ae_change_value %d", cxt->exposure_compensation.ae_change_value);
 	}
 
 	if (idx) {
 		cxt->exposure_compensation.ae_step_idx = *idx;
-		ISP_LOGV("ae_step_idx %d", cxt->exposure_compensation.ae_step_idx);
+		ISP_LOGD("ae_step_idx %d", cxt->exposure_compensation.ae_step_idx);
 	}
 
 	ae_set_compensation_calc(cxt, &change_idx);
