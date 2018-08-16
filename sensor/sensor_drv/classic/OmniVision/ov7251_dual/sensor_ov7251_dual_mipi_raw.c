@@ -195,17 +195,419 @@ static cmr_int ov7251_dual_drv_identify(cmr_handle handle, cmr_uint param) {
     return ret_value;
 }
 
+static cmr_u16 ov7251_dual_drv_read_gain(cmr_handle handle) {
+    cmr_u32 gain;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    gain = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x350a) & 0xff;
+    gain = gain << 8 |
+                (hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x350b) & 0xff);
+    sns_drv_cxt->sensor_ev_info.preview_gain = gain;
+
+    return gain;
+}
+
+/*==============================================================================
+ * Description:
+ * write gain to sensor registers
+ * please modify this function acording your spec
+ *============================================================================*/
+static void ov7251_dual_drv_write_gain(cmr_handle handle, float gain) {
+    float gain_a = gain;
+    float gain_d = 0x400; // spec p70, X1 = 15bit
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+ /*   if (SENSOR_MAX_GAIN < (cmr_u16)gain_a) {
+        gain_a = SENSOR_MAX_GAIN;
+        gain_d = gain * 0x400 / gain_a;
+        if ((cmr_u16)gain_d > 0x2 * 0x400 - 1)
+            gain_d = 0x2 * 0x400 - 1;
+    }*/
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x320a, 0x01);
+    // group 1:all other registers( gain)
+   // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x350a,
+                        ((cmr_u16)gain_a >> 8) & 0x1f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x350b, (cmr_u16)gain_a & 0xff);
+  /*  hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5100,
+                        ((cmr_u16)gain_d >> 8) & 0x7f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5101, (cmr_u16)gain_d & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5102,
+                        ((cmr_u16)gain_d >> 8) & 0x7f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5103, (cmr_u16)gain_d & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5104,
+                        ((cmr_u16)gain_d >> 8) & 0x7f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5105, (cmr_u16)gain_d & 0xff);*/
+  //  hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x11);
+  //  hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0xA1);
+}
+
+/*==============================================================================
+ * Description:
+ * read frame length from sensor registers
+ * please modify this function acording your spec
+ *============================================================================*/
+static cmr_u16 ov7251_dual_drv_read_frame_length(cmr_handle handle) {
+    cmr_u32 frame_len;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    frame_len = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380e) & 0xff;
+    frame_len = frame_len << 8 |
+                (hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380f) & 0xff);
+    sns_drv_cxt->sensor_ev_info.preview_framelength = frame_len;
+
+    return frame_len;
+}
+
+/*==============================================================================
+ * Description:
+ * write frame length to sensor registers
+ * please modify this function acording your spec
+ *============================================================================*/
+static void ov7251_dual_drv_write_frame_length(cmr_handle handle,
+                                           cmr_u32 frame_len) {
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380e,
+                        (frame_len >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380f, frame_len & 0xff);
+    sns_drv_cxt->sensor_ev_info.preview_framelength = frame_len;
+}
+
+/*==============================================================================
+ * Description:
+ * read shutter from sensor registers
+ * please modify this function acording your spec
+ *============================================================================*/
+static cmr_u32 ov7251_dual_drv_read_shutter(cmr_handle handle) {
+    cmr_u32 value = 0x00;
+    cmr_u8 shutter_l = 0x00;
+    cmr_u8 shutter_m = 0x00;
+    cmr_u8 shutter_h = 0x00;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    shutter_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3502);
+    // value=(shutter>>0x04)&0x0f;
+    shutter_m = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3501);
+    // value+=(shutter&0xff)<<0x04;
+    shutter_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3500);
+    // value+=(shutter&0x0f)<<0x0c;
+    value = ((shutter_h & 0x0f) << 12) + (shutter_m << 4) +
+            ((shutter_l >> 4) & 0x0f);
+    sns_drv_cxt->sensor_ev_info.preview_shutter = value;
+
+    return value;
+}
+
+/*==============================================================================
+ * Description:
+ * write shutter to sensor registers
+ * please pay attention to the frame length
+ * please modify this function acording your spec
+ *============================================================================*/
+static void ov7251_dual_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
+    cmr_u16 value = 0x00;
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    value = (shutter << 0x04) & 0xff;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3502, value);
+    value = (shutter >> 0x04) & 0xff;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3501, value);
+    value = (shutter >> 0x0c) & 0x0f;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3500, value);
+    sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
+}
+
+/*==============================================================================
+ * Description:
+ * write exposure to sensor registers and get current shutter
+ * please pay attention to the frame length
+ * please don't change this function if it's necessary
+ *============================================================================*/
+static cmr_int ov7251_dual_drv_write_exposure_dummy(cmr_handle handle,
+                                                cmr_u32 shutter,
+                                                cmr_u32 dummy_line,
+                                                cmr_u16 size_index) {
+    cmr_u32 dest_fr_len = 0;
+    cmr_u32 cur_fr_len = 0;
+    cmr_u32 fr_len = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    fr_len = sns_drv_cxt->frame_length_def;
+    // ov7251_group_hold_on(handle);
+
+    dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+    dest_fr_len =
+        ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;
+    sns_drv_cxt->frame_length = dest_fr_len;
+
+    cur_fr_len = ov7251_dual_drv_read_frame_length(handle);
+
+    if (shutter < SENSOR_MIN_SHUTTER)
+        shutter = SENSOR_MIN_SHUTTER;
+
+    if (dest_fr_len != cur_fr_len)
+        ov7251_dual_drv_write_frame_length(handle, dest_fr_len);
+write_sensor_shutter:
+    /* write shutter to sensor registers */
+    sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
+
+    ov7251_dual_drv_write_shutter(handle, shutter);
+
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
+        sns_drv_cxt->ops_cb.set_exif_info(
+            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+/*==============================================================================
+ * Description:
+ * get the shutter from isp
+ * please don't change this function unless it's necessary
+ *============================================================================*/
 static cmr_int ov7251_dual_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 size_index = 0x00;
+    cmr_u16 frame_interval = 0x00;
+    struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_HANDLE(ex);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    exposure_line = ex->exposure;
+    dummy_line = ex->dummy;
+    size_index = ex->size_index;
+
+    frame_interval =
+        (cmr_u16)(((exposure_line + dummy_line) *
+                   (sns_drv_cxt->trim_tab_info[size_index].line_time)) /
+                  1000000);
+    SENSOR_LOGI(
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+        size_index, exposure_line, dummy_line, frame_interval);
+    sns_drv_cxt->frame_length_def =
+        sns_drv_cxt->trim_tab_info[size_index].frame_line;
+    sns_drv_cxt->line_time_def =
+        sns_drv_cxt->trim_tab_info[size_index].line_time;
+
+    ret_value = ov7251_dual_drv_write_exposure_dummy(handle, exposure_line,
+                                                 dummy_line, size_index);
 
     return ret_value;
 }
 
+/*==============================================================================
+ * Description:
+ * get the parameter from isp to real gain
+ * you mustn't change the funcion !
+ *============================================================================*/
+static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
+    cmr_u32 real_gain = 0;
+
+    real_gain = param;
+
+    return real_gain;
+}
+
+/*==============================================================================
+ * Description:
+ * write gain value to sensor
+ * you can change this function if it's necessary
+ *============================================================================*/
 static cmr_int ov7251_dual_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
+    float real_gain = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    // real_gain = isp_to_real_gain(handle,param);
+    // SENSOR_LOGI("param = %d", param);
+    param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
+
+    real_gain = (float)1.0f * param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+
+    SENSOR_LOGI("real_gain = %f", real_gain);
+
+    sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
+    ov7251_dual_drv_write_gain(handle, real_gain);
 
     return ret_value;
 }
+
+static struct sensor_reg_tag ov7251_dual_shutter_reg[] = {
+    {0x3502, 0}, {0x3501, 0}, {0x3500, 0},
+};
+
+static struct sensor_i2c_reg_tab ov7251_dual_shutter_tab = {
+    .settings = ov7251_dual_shutter_reg, .size = ARRAY_SIZE(ov7251_dual_shutter_reg),
+};
+
+static struct sensor_reg_tag ov7251_dual_again_reg[] = {
+    {0x350a, 0x00}, {0x350b, 0x00},
+};
+
+static struct sensor_i2c_reg_tab ov7251_dual_again_tab = {
+    .settings = ov7251_dual_again_reg, .size = ARRAY_SIZE(ov7251_dual_again_reg),
+};
+
+static struct sensor_reg_tag ov7251_dual_dgain_reg[] = {
+};
+
+struct sensor_i2c_reg_tab ov7251_dual_dgain_tab = {
+    .settings = ov7251_dual_dgain_reg, .size = ARRAY_SIZE(ov7251_dual_dgain_reg),
+};
+
+static struct sensor_reg_tag ov7251_frame_length_reg[] = {
+    {0x380e, 0}, {0x380f, 0},
+};
+
+static struct sensor_i2c_reg_tab ov7251_dual_frame_length_tab = {
+    .settings = ov7251_frame_length_reg,
+    .size = ARRAY_SIZE(ov7251_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag ov7251_dual_aec_info = {
+    .slave_addr = (I2C_SLAVE_ADDR >> 1),
+    .addr_bits_type = SENSOR_I2C_REG_16BIT,
+    .data_bits_type = SENSOR_I2C_VAL_8BIT,
+    .shutter = &ov7251_dual_shutter_tab,
+    .again = &ov7251_dual_again_tab,
+    .dgain = &ov7251_dual_dgain_tab,
+    .frame_length = &ov7251_dual_frame_length_tab,
+};
+
+static cmr_u16 ov7251_dual_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
+                                         cmr_u32 dummy_line, cmr_u16 mode,
+                                         struct sensor_aec_i2c_tag *aec_info) {
+    cmr_u32 dest_fr_len = 0;
+    cmr_u32 cur_fr_len = 0;
+    cmr_u32 fr_len = 0;
+    int32_t offset = 0;
+    cmr_u16 value = 0x00;
+    float fps = 0.0;
+    float line_time = 0.0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    fr_len = sns_drv_cxt->frame_length_def;
+
+    dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+    dest_fr_len =
+        ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;
+    sns_drv_cxt->frame_length = dest_fr_len;
+
+    cur_fr_len = ov7251_dual_drv_read_frame_length(handle);
+
+    if (shutter < SENSOR_MIN_SHUTTER)
+        shutter = SENSOR_MIN_SHUTTER;
+
+    line_time = sns_drv_cxt->trim_tab_info[mode].line_time;
+    if (cur_fr_len > shutter) {
+        fps = 1000000.0 / (cur_fr_len * line_time);
+    } else {
+        fps = 1000000.0 / ((shutter + dummy_line) * line_time);
+    }
+    SENSOR_LOGI("sync fps = %f", fps);
+    aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
+    aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
+    value = (shutter << 0x04) & 0xff;
+    aec_info->shutter->settings[0].reg_value = value;
+    value = (shutter >> 0x04) & 0xff;
+    aec_info->shutter->settings[1].reg_value = value;
+    value = (shutter >> 0x0c) & 0x0f;
+    aec_info->shutter->settings[2].reg_value = value;
+    return shutter;
+}
+
+static void ov7251_dual_drv_calc_gain(float gain,
+                                  struct sensor_aec_i2c_tag *aec_info) {
+    float gain_a = gain;
+    float gain_d = 0x400;
+
+/*    if (SENSOR_MAX_GAIN < (cmr_u16)gain_a) {
+
+        gain_a = SENSOR_MAX_GAIN;
+        gain_d = gain * 0x400 / gain_a;
+        if ((cmr_u16)gain_d > 0x4 * 0x400 - 1)
+            gain_d = 0x4 * 0x400 - 1;
+    }*/
+    // group 1:all other registers( gain)
+    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x01);
+
+    aec_info->again->settings[1].reg_value = ((cmr_u16)gain_a >> 8) & 0x1f;
+    aec_info->again->settings[2].reg_value = (cmr_u16)gain_a & 0xff;
+/*
+    aec_info->dgain->settings[0].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
+    aec_info->dgain->settings[1].reg_value = (cmr_u16)gain_d & 0xff;
+    aec_info->dgain->settings[2].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
+    aec_info->dgain->settings[3].reg_value = (cmr_u16)gain_d & 0xff;
+    aec_info->dgain->settings[4].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
+    aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;*/
+}
+
+static cmr_int ov7251_dual_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+    cmr_int ret_value = SENSOR_SUCCESS;
+    struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 mode = 0x00;
+    float real_gain = 0;
+    cmr_u32 gain = 0;
+    cmr_u16 frame_interval = 0x00;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(info);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    info->aec_i2c_info_out = &ov7251_dual_aec_info;
+
+    exposure_line = info->exp.exposure;
+    dummy_line = info->exp.dummy;
+    mode = info->exp.size_index;
+
+    frame_interval = (cmr_u16)(((exposure_line + dummy_line) *
+                                (sns_drv_cxt->trim_tab_info[mode].line_time)) /
+                               1000000);
+    SENSOR_LOGI(
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+        mode, exposure_line, dummy_line, frame_interval);
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+    //        ov7251_dual_drv_get_default_frame_length(handle, mode);
+    //    s_current_default_line_time =
+    //    s_ov7251_resolution_trim_tab[mode].line_time;
+    sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
+
+    sns_drv_cxt->sensor_ev_info.preview_shutter = ov7251_dual_drv_calc_exposure(
+        handle, exposure_line, dummy_line, mode, &ov7251_dual_aec_info);
+
+    gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+    real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
+    ov7251_dual_drv_calc_gain(real_gain, &ov7251_dual_aec_info);
+    return ret_value;
+}
+
+#if defined(CONFIG_DUAL_MODULE)
+cmr_int ov7251_dual_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x00);//0: slave 2:master
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3666, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824,  0x01);//column
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825,  0x07);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826,  0x00);//row
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827,  0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x03);
+
+    return 0;
+}
+#endif
 
 static cmr_int ov7251_dual_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
@@ -261,12 +663,33 @@ snapshot_info:
     }
     return SENSOR_SUCCESS;
 }
+#if defined(CONFIG_DUAL_MODULE)
+cmr_int ov7251_dual_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x00);//2);//0: slave 2:master
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3666, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824,  0x01);//column
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825,  0x07);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826,  0x00);//row
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827,  0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x03);
+    return 0;
+}
+#endif
 
 static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
     SENSOR_LOGI("E");
+
+    ov7251_dual_drv_set_slave_FrameSync(handle, param);
+   if (1){//(sns_drv_cxt->sensor_id % 2 == 0){
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x04);
+   }
+//  SENSOR_LOGI("E %x", hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3820));
+//  SENSOR_LOGI("E %x", hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3821));
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
     /*delay*/
@@ -438,6 +861,9 @@ static struct sensor_ic_ops s_ov7251_dual_ops_tab = {
     .identify = ov7251_dual_drv_identify,
     .ex_write_exp = ov7251_dual_drv_write_exposure,
     .write_gain_value = ov7251_dual_drv_write_gain_value,
+#if 0//defined(CONFIG_DUAL_MODULE)
+     .read_aec_info = ov7251_dual_drv_read_aec_info,
+#endif
 
     .ext_ops = {
         [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov7251_dual_drv_before_snapshot,

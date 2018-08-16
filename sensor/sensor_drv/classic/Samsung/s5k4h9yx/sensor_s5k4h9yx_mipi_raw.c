@@ -613,12 +613,14 @@ static cmr_int s5k4h9yx_drv_stream_on(cmr_handle handle, cmr_uint param)
 	SENSOR_LOGI("E");
 	
 #if defined(CONFIG_DUAL_MODULE)
-	s5k4h9yx_drv_set_master_FrameSync(handle, param);
+	//s5k4h9yx_drv_set_master_FrameSync(handle, param);
 	//s5k4h9yx_drv_set_slave_FrameSync(handle, param);
 #endif   
 	/*TODO*/
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0101);
-
+   if (sns_drv_cxt->sensor_id % 2 == 0)
+         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0101);
+   else
+         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0100);
 	/*END*/
 	
 	/*delay*/

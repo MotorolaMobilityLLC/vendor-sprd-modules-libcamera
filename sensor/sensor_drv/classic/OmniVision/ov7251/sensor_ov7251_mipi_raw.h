@@ -49,6 +49,8 @@
 /* please ref your spec */
 #define FRAME_OFFSET 4
 #define SENSOR_BASE_GAIN 0x10
+#define ISP_BASE_GAIN			0x80
+#define SENSOR_MIN_SHUTTER		8
 
 /* please don't change it */
 #define EX_MCLK 24
