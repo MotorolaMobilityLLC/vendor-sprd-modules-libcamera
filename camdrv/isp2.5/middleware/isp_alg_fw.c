@@ -1641,7 +1641,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	}
 	cxt->smart_cxt.isp_smart_eb = 1;
 	time_end = ispalg_get_sys_timestamp();
-	ISP_LOGV("SYSTEM_TEST-ae:%zd ms", time_end - time_start);
+	ISP_LOGV("SYSTEM_TEST-ae:%lld ms", (long long)time_end - time_start);
 
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -1881,7 +1881,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb process"));
 	}
 	time_end = ispalg_get_sys_timestamp();
-	ISP_LOGV("SYSTEM_TEST-awb:%zd ms", time_end - time_start);
+	ISP_LOGV("SYSTEM_TEST-awb:%lld ms", (long long)time_end - time_start);
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_RESULT_INFO, (void *)awb_output, NULL);
@@ -1992,7 +1992,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		}
 	}
 	time_end = ispalg_get_sys_timestamp();
-	ISP_LOGV("SYSTEM_TEST-smart:%zd ms", time_end - time_start);
+	ISP_LOGV("SYSTEM_TEST-smart:%lld ms", (long long)time_end - time_start);
 
 	isp_cur_bv = ae_in->ae_output.cur_bv;
 	isp_cur_ct = awb_output->ct;

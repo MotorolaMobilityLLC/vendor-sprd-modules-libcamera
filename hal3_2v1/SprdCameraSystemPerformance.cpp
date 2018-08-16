@@ -105,6 +105,7 @@ void SprdCameraSystemPerformance::freeSysPerformance(
 
 void SprdCameraSystemPerformance::setCamPreformaceScene(
     sys_performance_camera_scene camera_scene) {
+
 #ifndef CONFIG_CAMERA_DFS_FIXED_MAXLEVEL
     switch (camera_scene) {
     case CAM_PERFORMANCE_LEVEL_6:
@@ -128,9 +129,6 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
     default:
         HAL_LOGI("camera scene not support");
     }
-
-    HAL_LOGD("x camera scene:%d", camera_scene);
-}
 #else
 #if (CONFIG_CAMERA_DFS_FIXED_MAXLEVEL == 3)
     changeDfsPolicy(CAM_VERYHIGH);
@@ -155,6 +153,9 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
         HAL_LOGI("camera scene not support");
     }
 #endif
+
+    HAL_LOGD("x camera scene:%d", camera_scene);
+}
 
 void SprdCameraSystemPerformance::initPowerHint() {
 
