@@ -54,6 +54,7 @@ static int ces6301_drv_create(struct af_drv_init_para *input_ptr,
     if (ret != AF_SUCCESS) {
         ret = AF_FAIL;
     } else {
+        _ces6301_drv_power_on(*sns_af_drv_handle, AF_TRUE);
         ret = _ces6301_drv_set_mode(*sns_af_drv_handle);
         if (ret != AF_SUCCESS)
             ret = AF_FAIL;
@@ -65,6 +66,7 @@ static int ces6301_drv_create(struct af_drv_init_para *input_ptr,
 static int ces6301_drv_delete(cmr_handle sns_af_drv_handle, void *param) {
     cmr_int ret = AF_SUCCESS;
     CHECK_PTR(sns_af_drv_handle);
+    _ces6301_drv_power_on(sns_af_drv_handle, AF_FALSE);
     ret = af_drv_delete(sns_af_drv_handle, param);
     return ret;
 }
@@ -139,6 +141,24 @@ struct sns_af_drv_entry ces6301_drv_entry = {
             .ioctl = ces6301_drv_ioctl,
         },
 };
+
+static int _ces6301_drv_power_on(cmr_handle sns_af_drv_handle,
+                                 uint16_t power_on) {
+    CHECK_PTR(sns_af_drv_handle);
+    struct sns_af_drv_cxt *af_drv_cxt =
+        (struct sns_af_drv_cxt *)sns_af_drv_handle;
+
+    if (AF_TRUE == power_on) {
+        hw_sensor_set_monitor_val(af_drv_cxt->hw_handle,
+                                  ces6301_drv_entry.motor_avdd_val);
+        usleep(CES6301_POWERON_DELAY * 1000);
+    } else {
+        hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+    }
+
+    SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+    return AF_SUCCESS;
+}
 
 static int _ces6301_drv_set_mode(cmr_handle sns_af_drv_handle) {
     struct sns_af_drv_cxt *af_drv_cxt =

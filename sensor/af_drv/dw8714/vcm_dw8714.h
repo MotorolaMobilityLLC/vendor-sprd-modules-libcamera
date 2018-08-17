@@ -17,11 +17,16 @@
 #define _DW8714_H_
 
 #include "sns_af_drv.h"
-#define DW8714_VCM_SLAVE_ADDR (0x18>>1)
+#define DW8714_VCM_SLAVE_ADDR (0x18 >> 1)
+#define DW8714_POWERON_DELAY 5 // ms
 
-static int dw8714_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int dw8714_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int _dw8714_drv_power_on(cmr_handle sns_af_drv_handle,
+                                uint16_t power_on);
+static int dw8714_drv_create(struct af_drv_init_para *input_ptr,
+                             cmr_handle *sns_af_drv_handle);
+static int dw8714_drv_delete(cmr_handle sns_af_drv_handle, void *param);
 static int dw8714_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
-static int dw8714_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+static int dw8714_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                            void *param);
 
 #endif

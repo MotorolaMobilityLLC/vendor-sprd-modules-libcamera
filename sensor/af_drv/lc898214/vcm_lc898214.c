@@ -37,6 +37,7 @@ static int lc898214_drv_create(struct af_drv_init_para *input_ptr,
         af_drv_cxt = (struct sns_af_drv_cxt *)*sns_af_drv_handle;
         af_drv_cxt->private = (void *)malloc(sizeof(struct lc898214_pri_data));
         cmr_bzero(af_drv_cxt->private, sizeof(struct lc898214_pri_data));
+        _lc898214_drv_power_on(*sns_af_drv_handle, AF_TRUE);
         ret = _lc898214_drv_init(*sns_af_drv_handle);
         if (ret != AF_SUCCESS)
             ret = AF_FAIL;
@@ -52,6 +53,7 @@ static int lc898214_drv_delete(cmr_handle sns_af_drv_handle, void *param) {
         free(af_drv_cxt->private);
         af_drv_cxt->private = NULL;
     }
+    _lc898214_drv_power_on(sns_af_drv_handle, AF_FALSE);
     ret = af_drv_delete(sns_af_drv_handle, param);
     return ret;
 }
@@ -115,7 +117,7 @@ static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos) {
     ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                    (uint8_t *)&cmd_val[0], cmd_len);
     CMR_LOGV("set position set_pos %d SlvCh 0x%04x 0x%04x", pos, ivalue2,
-            ret_value);
+             ret_value);
 
     uint16_t SlvCh;
     for (i = 0; i < 30; i++) {
@@ -165,6 +167,24 @@ struct sns_af_drv_entry lc898214_drv_entry = {
             .ioctl = lc898214_drv_ioctl,
         },
 };
+
+static int _lc898214_drv_power_on(cmr_handle sns_af_drv_handle,
+                                  uint16_t power_on) {
+    CHECK_PTR(sns_af_drv_handle);
+    struct sns_af_drv_cxt *af_drv_cxt =
+        (struct sns_af_drv_cxt *)sns_af_drv_handle;
+
+    if (AF_TRUE == power_on) {
+        hw_sensor_set_monitor_val(af_drv_cxt->hw_handle,
+                                  lc898214_drv_entry.motor_avdd_val);
+        usleep(LC898214_POWERON_DELAY * 1000);
+    } else {
+        hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+    }
+
+    SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+    return AF_SUCCESS;
+}
 
 static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     uint32_t ret_value = AF_SUCCESS;
@@ -222,7 +242,7 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     pri_data->Hall_Max = (int16_t)Max; //(int16_t)Max;//0x6000
     pri_data->Hall_Min = (int16_t)Min; //(int16_t)Min; //0x9000
     CMR_LOGV("DriverIC Init Max_H	%d %d %d %d! %d %d", Max_H, Max_L,
-            Min_H, Min_L, Max, Min);
+             Min_H, Min_L, Max, Min);
 
     // I2C_Write(SlaveID, 0xE0, 0x01, 0);
     cmd_val[0] = 0xE0;

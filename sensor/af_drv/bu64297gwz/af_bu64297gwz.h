@@ -21,17 +21,21 @@
 
 #define bu64297gwz_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 40
-#define WAIT_STABLE_TIME  20	//ms
+#define WAIT_STABLE_TIME 20 // ms
 /* accroding to vcm module spec */
 #define POSE_UP_HORIZONTAL 23
 #define POSE_DOWN_HORIZONTAL 30
+#define BU64297GWZ_POWERON_DELAY 1 // ms
 
+static int _bu64297gwz_drv_power_on(cmr_handle sns_af_drv_handle,
+                                    uint16_t power_on);
 static int _bu64297gwz_drv_init(cmr_handle sns_af_drv_handle);
-static int bu64297gwz_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int bu64297gwz_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int bu64297gwz_drv_create(struct af_drv_init_para *input_ptr,
+                                 cmr_handle *sns_af_drv_handle);
+static int bu64297gwz_drv_delete(cmr_handle sns_af_drv_handle, void *param);
 static int bu64297gwz_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
 static int bu64297gwz_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos);
-static int bu64297gwz_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
-
+static int bu64297gwz_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                                void *param);
 
 #endif

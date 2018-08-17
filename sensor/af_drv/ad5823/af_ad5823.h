@@ -14,18 +14,23 @@
  * limitations under the License.
  * V1.0
  */
- /*History
- *Date                  Modification                                 Reason
- *
- */
+/*History
+*Date                  Modification                                 Reason
+*
+*/
 #ifndef _ad5823_H_
 #define _ad5823_H_
 
-static int ad5823_drv_set_mode(cmr_handle sns_af_drv_handle);
-static int ad5823_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int ad5823_drv_delete(cmr_handle sns_af_drv_handle, void* param);
-static int ad5823_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
-static int ad5823_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+#define AD5823_POWERON_DELAY 1 // ms
 
+static int _ad5823_drv_power_on(cmr_handle sns_af_drv_handle,
+                                uint16_t power_on);
+static int ad5823_drv_set_mode(cmr_handle sns_af_drv_handle);
+static int ad5823_drv_create(struct af_drv_init_para *input_ptr,
+                             cmr_handle *sns_af_drv_handle);
+static int ad5823_drv_delete(cmr_handle sns_af_drv_handle, void *param);
+static int ad5823_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
+static int ad5823_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                            void *param);
 
 #endif

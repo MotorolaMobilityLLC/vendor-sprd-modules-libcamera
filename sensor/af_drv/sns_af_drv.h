@@ -29,6 +29,10 @@
 #define AF_SUCCESS          CMR_CAMERA_SUCCESS
 #define AF_FAIL             CMR_CAMERA_FAIL
 
+/*AF bool type*/
+#define AF_FALSE 0
+#define AF_TRUE 1
+
 #ifndef CHECK_PTR
 #define CHECK_PTR(expr)\
     if ((expr) == NULL) {\

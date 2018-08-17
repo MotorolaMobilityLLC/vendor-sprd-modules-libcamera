@@ -2423,11 +2423,6 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
 
     if (module->af_dev_info.af_drv_entry && !sensor_cxt->af_drv_handle) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
-        hw_sensor_set_monitor_val(
-            sensor_cxt->hw_drv_handle,
-            module->af_dev_info.af_drv_entry->motor_avdd_val);
-        SENSOR_LOGI("af power is %d",
-                    module->af_dev_info.af_drv_entry->motor_avdd_val);
         if (af_ops->create) {
             input_ptr.af_work_mode = module->af_dev_info.af_work_mode;
             input_ptr.hw_handle = sensor_cxt->hw_drv_handle;
@@ -2459,8 +2454,6 @@ static cmr_int sensor_af_deinit(cmr_handle sns_module_handle) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
         if (af_ops->delete) {
             ret = af_ops->delete (sensor_cxt->af_drv_handle, NULL);
-            hw_sensor_set_monitor_val(sensor_cxt->hw_drv_handle,
-                                      SENSOR_AVDD_CLOSED);
             sensor_cxt->af_drv_handle = NULL;
             if (SENSOR_SUCCESS != ret)
                 return SENSOR_FAIL;

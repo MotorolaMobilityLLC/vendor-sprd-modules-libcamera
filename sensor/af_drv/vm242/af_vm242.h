@@ -14,18 +14,22 @@
  * limitations under the License.
  * V1.0
  */
- /*History
- *Date                  Modification                                 Reason
- *
- */
+/*History
+*Date                  Modification                                 Reason
+*
+*/
 #ifndef _vm242_H_
 #define _vm242_H_
 
-static int vm242_drv_set_mode(cmr_handle sns_af_drv_handle);
-static int vm242_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int vm242_drv_delete(cmr_handle sns_af_drv_handle, void* param);
-static int vm242_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
-static int vm242_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+#define VM242_POWERON_DELAY 5 // ms
 
+static int _vm242_drv_power_on(cmr_handle sns_af_drv_handle, uint16_t power_on);
+static int vm242_drv_set_mode(cmr_handle sns_af_drv_handle);
+static int vm242_drv_create(struct af_drv_init_para *input_ptr,
+                            cmr_handle *sns_af_drv_handle);
+static int vm242_drv_delete(cmr_handle sns_af_drv_handle, void *param);
+static int vm242_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
+static int vm242_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                           void *param);
 
 #endif

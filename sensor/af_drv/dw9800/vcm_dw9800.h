@@ -20,19 +20,25 @@
 
 #define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
 #ifndef SENSOR_SUCCESS
-#define SENSOR_SUCCESS      0
+#define SENSOR_SUCCESS 0
 #endif
 /* accroding to vcm module spec */
-#define POSE_UP_HORIZONTAL   32
+#define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
+#define DW9800_POWERON_DELAY 5 // ms
 
+static int _dw9800_drv_power_on(cmr_handle sns_af_drv_handle,
+                                uint16_t power_on);
 static uint32_t _dw9800_set_motor_bestmode(cmr_handle sns_af_drv_handle);
 static uint32_t _dw9800_get_test_vcm_mode(cmr_handle sns_af_drv_handle);
-static uint32_t _dw9800_set_test_vcm_mode(cmr_handle sns_af_drv_handle, char* vcm_mode);
+static uint32_t _dw9800_set_test_vcm_mode(cmr_handle sns_af_drv_handle,
+                                          char *vcm_mode);
 static int _dw9800_drv_init(cmr_handle sns_af_drv_handle);
-static int dw9800_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int dw9800_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int dw9800_drv_create(struct af_drv_init_para *input_ptr,
+                             cmr_handle *sns_af_drv_handle);
+static int dw9800_drv_delete(cmr_handle sns_af_drv_handle, void *param);
 static int dw9800_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
 static int dw9800_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos);
-static int dw9800_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+static int dw9800_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                            void *param);
 #endif

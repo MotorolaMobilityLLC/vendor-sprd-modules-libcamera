@@ -21,13 +21,19 @@
 
 #define DW9714P_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 20
-#define WAIT_STABLE_TIME   10    //ms
+#define WAIT_STABLE_TIME 10     // ms
+#define DW9714P_POWERON_DELAY 1 // ms
 
-static uint32_t _dw9714p_write_dac_code(cmr_handle sns_af_drv_handle, int32_t code);
+static int _dw9714p_drv_power_on(cmr_handle sns_af_drv_handle,
+                                 uint16_t power_on);
+static uint32_t _dw9714p_write_dac_code(cmr_handle sns_af_drv_handle,
+                                        int32_t code);
 static int _dw9714p_drv_set_mode(cmr_handle sns_af_drv_handle);
-static int dw9714p_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int dw9714p_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int dw9714p_drv_create(struct af_drv_init_para *input_ptr,
+                              cmr_handle *sns_af_drv_handle);
+static int dw9714p_drv_delete(cmr_handle sns_af_drv_handle, void *param);
 static int dw9714p_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
-static int dw9714p_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+static int dw9714p_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                             void *param);
 
 #endif

@@ -22,8 +22,11 @@
 #define DW9763R_VCM_SLAVE_ADDR (0x18 >> 1)
 
 #define MOVE_CODE_STEP_MAX 40
-#define WAIT_STABLE_TIME 20 // ms
+#define WAIT_STABLE_TIME 20     // ms
+#define DW9763R_POWERON_DELAY 5 // ms
 
+static int _dw9763r_drv_power_on(cmr_handle sns_af_drv_handle,
+                                 uint16_t power_on);
 static uint32_t _dw9763r_write_dac_code(cmr_handle sns_af_drv_handle,
                                         int32_t code);
 static int _dw9763r_drv_set_mode(cmr_handle sns_af_drv_handle);

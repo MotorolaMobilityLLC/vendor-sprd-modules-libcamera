@@ -21,23 +21,25 @@
 
 #define LC898214_VCM_SLAVE_ADDR (0xE4 >> 1)
 #ifndef SENSOR_SUCCESS
-#define SENSOR_SUCCESS           0
+#define SENSOR_SUCCESS 0
 #endif
-#define POSE_UP_HORIZONTAL       32
-#define POSE_DOWN_HORIZONTAL     37
+#define POSE_UP_HORIZONTAL 32
+#define POSE_DOWN_HORIZONTAL 37
+#define LC898214_POWERON_DELAY 2 // ms
 
+static int _lc898214_drv_power_on(cmr_handle sns_af_drv_handle,
+                                  uint16_t power_on);
 static int _lc898214_drv_init(cmr_handle sns_af_drv_handle);
-static int lc898214_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
-static int lc898214_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int lc898214_drv_create(struct af_drv_init_para *input_ptr,
+                               cmr_handle *sns_af_drv_handle);
+static int lc898214_drv_delete(cmr_handle sns_af_drv_handle, void *param);
 static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos);
-static int lc898214_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+static int lc898214_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
+                              void *param);
 
-struct lc898214_pri_data 
-{
-	int16_t Hall_Max;
-	int16_t Hall_Min; 
-	int16_t HallValue;
-	int16_t rCode;
+struct lc898214_pri_data {
+    int16_t Hall_Max;
+    int16_t Hall_Min;
+    int16_t HallValue;
+    int16_t rCode;
 };
-
-

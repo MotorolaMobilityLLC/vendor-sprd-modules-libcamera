@@ -24,6 +24,7 @@ static int dw9714a_drv_create(struct af_drv_init_para *input_ptr,
     if (ret != AF_SUCCESS) {
         ret = AF_FAIL;
     } else {
+        _dw9714a_drv_power_on(*sns_af_drv_handle, AF_TRUE);
         ret = _dw9714a_drv_set_mode(*sns_af_drv_handle);
         if (ret != AF_SUCCESS)
             ret = AF_FAIL;
@@ -34,6 +35,7 @@ static int dw9714a_drv_create(struct af_drv_init_para *input_ptr,
 static int dw9714a_drv_delete(cmr_handle sns_af_drv_handle, void *param) {
     cmr_int ret = AF_SUCCESS;
     CHECK_PTR(sns_af_drv_handle);
+    _dw9714a_drv_power_on(sns_af_drv_handle, AF_FALSE);
     ret = af_drv_delete(sns_af_drv_handle, param);
     return ret;
 }
@@ -98,6 +100,24 @@ struct sns_af_drv_entry dw9714a_drv_entry = {
             .ioctl = dw9714a_drv_ioctl,
         },
 };
+
+static int _dw9714a_drv_power_on(cmr_handle sns_af_drv_handle,
+                                 uint16_t power_on) {
+    CHECK_PTR(sns_af_drv_handle);
+    struct sns_af_drv_cxt *af_drv_cxt =
+        (struct sns_af_drv_cxt *)sns_af_drv_handle;
+
+    if (AF_TRUE == power_on) {
+        hw_sensor_set_monitor_val(af_drv_cxt->hw_handle,
+                                  dw9714a_drv_entry.motor_avdd_val);
+        usleep(DW9714A_POWERON_DELAY * 1000);
+    } else {
+        hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+    }
+
+    SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+    return AF_SUCCESS;
+}
 
 static int _dw9714a_drv_set_mode(cmr_handle sns_af_drv_handle) {
     struct sns_af_drv_cxt *af_drv_cxt =

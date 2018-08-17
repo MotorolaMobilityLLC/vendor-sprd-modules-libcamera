@@ -23,7 +23,9 @@
 
 #define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
+#define ZC524_POWERON_DELAY 1 // ms
 
+static int _zc524_drv_power_on(cmr_handle sns_af_drv_handle, uint16_t power_on);
 static int _vcm_zc524_set_mode(cmr_handle sns_af_drv_handle);
 static int vcm_zc524_drv_create(struct af_drv_init_para *input_ptr,
                                 cmr_handle *sns_af_drv_handle);
