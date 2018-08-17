@@ -155,6 +155,7 @@ static int _dw9714_drv_set_mode(cmr_handle sns_af_drv_handle)
 	}
 
 	SENSOR_PRINT("mode = %d\n", mode);
+	usleep(12 * 1000);
 	switch (mode) {
 	case 1:
 		/* When you use direct mode after power on, you don't need register set. Because, DLC disable is default.*/
