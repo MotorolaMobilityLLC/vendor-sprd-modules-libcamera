@@ -1385,6 +1385,57 @@ int autotest_read_cam_buf(void **pp_image_addr, int size, int *p_out_size) {
 }
 }
 
+int flashlightSetValue(int value) {
+
+    int ret = 0;
+    char cmd[200] = " ";
+
+    sprintf(cmd, "echo 0x%02x > /sys/class/misc/sprd_flash/test", value);
+    ret = system(cmd) ? -1 : 0;
+    ALOGD("cmd = %s,ret = %d\n", cmd,ret);
+
+    return ret;
+}
+
+int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
+
+    ALOGD("autotest_flash %x-%x",buf[9], buf[10]);
+    int ret = 0;
+    if (buf[9] == 0x04) {
+        if (buf[10] == 0x01) {
+            ALOGD("autotest open flash");
+            ret = flashlightSetValue((buf[1] & 0x0f) << 4);   //open flashlight
+        } else if (buf[10] == 0x00) {
+            ALOGD("autotest close flash");
+            ret = flashlightSetValue(0x31);                   //close flashlight
+        }
+    }
+
+    /*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+    MSG_HEAD_T *p_msg_head;
+    memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
+    p_msg_head = (MSG_HEAD_T *)(rsp + 1);
+
+    p_msg_head->len = 8;
+
+    ALOGD("p_msg_head,ret=%d", ret);
+
+    if (ret < 0) {
+        rsp[sizeof(MSG_HEAD_T)] = 1;
+    } else if (ret == 0) {
+        rsp[sizeof(MSG_HEAD_T)] = 0;
+    }
+    ALOGD("rsp[1 + sizeof(MSG_HEAD_T):%d]:%d", sizeof(MSG_HEAD_T),
+          rsp[sizeof(MSG_HEAD_T)]);
+    rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
+    ALOGD("dylib test :return len:%d", p_msg_head->len + 2);
+    ALOGD("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1], rsp[2],
+          rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
+
+    return p_msg_head->len + 2;
+    /*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+}
+
 int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
 
     int ret = 0;
@@ -1421,15 +1472,9 @@ int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
         if (autotest_camera_deinit() < 0) {
             ret = -1;
         }
-        sensor_id = 0;
         break;
     case 4:
-        if (autotest_camera_deinit() < 0) {
-            ret = -1;
-        }
-        if (autotest_camera_init(buf[10], NULL, NULL) < 0) {
-            ret = -1;
-        }
+        sensor_id = buf[10];
         break;
     default:
         break;
@@ -1486,6 +1531,12 @@ extern "C" void register_this_module_ext(struct eng_callback *reg, int *num) {
     reg->type = 0x38;
     reg->subtype = 0x06;
     reg->eng_diag_func = autotest_mipicam;
+    moudles_num++;
+
+    (reg+1)->type = 0x38;
+    (reg+1)->subtype = 0x0C;
+    (reg+1)-> diag_ap_cmd = 0x04;
+    (reg+1)->eng_diag_func = autotest_flash;
     moudles_num++;
 
     *num = moudles_num;
