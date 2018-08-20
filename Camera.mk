@@ -53,6 +53,7 @@ LOCAL_SRC_FILES := \
     hal_common/multiCamera/SprdCamera3MultiBase.cpp \
     hal1.0/src/SprdCameraParameters.cpp
 
+
 # for multi-camera
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
@@ -97,7 +98,7 @@ LOCAL_SRC_FILES+= \
 endif
 
 # TBD: just for hal3_2v1 now, will add this for all chips later
-ifeq ($(strip $(HAL_DIR)),hal3_2v1)
+ifeq ($(HAL_DIR), $(filter $(HAL_DIR), hal3_2v1 hal3_2v4))
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdDualCamera3Tuning.cpp
 endif
@@ -117,6 +118,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/common/inc \
     $(LOCAL_PATH)/hal1.0/inc \
     $(LOCAL_PATH)/$(HAL_DIR)/inc \
+    $(LOCAL_PATH)/$(HAL_DIR)/ \
     $(LOCAL_PATH)/tool/auto_test/inc \
     $(LOCAL_PATH)/tool/mtrace \
     $(TOP)/external/skia/include/images \
@@ -127,6 +129,7 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/external/kernel-headers \
     $(TOP)/vendor/sprd/modules/libmemion \
     $(TOP)/frameworks/native/libs/sensor/include \
+    $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
 LOCAL_C_INCLUDES += \

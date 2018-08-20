@@ -462,7 +462,7 @@ static void* misc_process(void* handle)
 		phandle->param.swisp_inputwidth , (uint8_t*)phandle->misc_arg.s_yuv_sw_out.img_addr_vir.chn0 ,
 		&aem_addr , &aem_size);
 //	endTime("sw_isp_process cost");
-	SWISP_LOGI("----yzl add systemTime sw_isp_process cost time:%zd ms ,ret:%d\n" , (systemTime(CLOCK_MONOTONIC) - time)/1000000 , ret);
+	SWISP_LOGI("----yzl add systemTime sw_isp_process cost time:%lld ms ,ret:%d\n" , (systemTime(CLOCK_MONOTONIC) - time)/1000000 , ret);
 	if(ret != 0)
 	{
 		SWISP_LOGE("sw_isp_process failed ret:%d" , ret);
@@ -559,7 +559,7 @@ static void* misc_process(void* handle)
 	distance = DISTANCE_OK;
 //	memset(phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] , 0 , 960*720);
 //	memset((void*)phandle->depth_weight_ptr[(phandle->depth_weight_valid_index+1)%2] , 0 , 960*720);
-	SWISP_LOGI("-------micro process after Depth calculate use output index:%d , depthrun costtime:%zd ms, distance:%d , ret:%d\n" , (phandle->depth_weight_valid_index+1)%2 ,
+	SWISP_LOGI("-------micro process after Depth calculate use output index:%d , depthrun costtime:%lld ms, distance:%d , ret:%d\n" , (phandle->depth_weight_valid_index+1)%2 ,
 		   (systemTime(CLOCK_MONOTONIC)-time)/1000000 , distance , ret);
 	if(ret != 0)
 	{
@@ -633,7 +633,7 @@ static void* misc_process(void* handle)
 	}
 	set_misc_flag(phandle , 0);
 	event_callback(phandle , SOFT_BUFFER_RELEASE , &phandle->misc_arg.raw ,&phandle->misc_arg.m_yuv_pre , 0,0);
-	SWISP_LOGI("misc_process cost time:%zd ms" , (systemTime(CLOCK_MONOTONIC) - timestart)/1000000);
+	SWISP_LOGI("misc_process cost time:%lld ms" , (systemTime(CLOCK_MONOTONIC) - timestart)/1000000);
 	return NULL;
 }
 
@@ -891,7 +891,7 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_process(void* han
 				break;
 			}
 		}
-		SWISP_LOGI("bokeh use memcpy cost time:%zd ms\n" , (systemTime(CLOCK_MONOTONIC)-time)/1000000);
+		SWISP_LOGI("bokeh use memcpy cost time:%lld ms\n" , (systemTime(CLOCK_MONOTONIC)-time)/1000000);
 	}
 
 	{

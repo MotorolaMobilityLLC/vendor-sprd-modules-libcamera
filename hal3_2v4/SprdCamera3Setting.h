@@ -35,11 +35,12 @@
 #include <utils/List.h>
 #include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
-#include <camera/CameraMetadata.h>
+#include <CameraMetadata.h>
 #include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
 
+using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
 
 namespace sprdcamera {
@@ -97,7 +98,7 @@ typedef int64_t nsecs_t;
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 1
 #endif
 #define SPRD_DUAL_OTP_SIZE 228
-
+#define THIRD_OTP_SIZE 8192
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 90
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
 

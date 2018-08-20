@@ -21,6 +21,7 @@
 #include <memory.h>
 #include <string.h>
 #endif
+#include <unistd.h>
 #include "ae_tuning_type.h"
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"

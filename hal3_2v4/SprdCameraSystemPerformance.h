@@ -41,28 +41,11 @@
 #include <sys/socket.h>
 #include "SprdCamera3HALHeader.h"
 
-#define ANDROID_VERSION_O (801)
-#define ANDROID_VERSION_N (701)
+#define ANDROID_VERSION_P (901)
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
-#include <binder/BinderService.h>
-#include <binder/IInterface.h>
-#include <powermanager/IPowerManager.h>
-#include <powermanager/PowerManager.h>
-#include <hardware/power.h>
-#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
-#include <hardware/power.h>
-#include <vendor/sprd/hardware/power/2.0/IPower.h>
-#include <vendor/sprd/hardware/power/2.0/types.h>
-using ::vendor::sprd::hardware::power::V2_0::IPower;
-using ::android::hidl::base::V1_0::IBase;
-using ::vendor::sprd::hardware::power::V2_0::PowerHint;
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
+#include <power_hal_cli.h>
 #endif
-
-/*CONFIG_HAS_CAMERA_HINTS_VERSION
-* 701: 7.0 isharkl2
-* 801: 8.0 isharkl2
-*/
 
 namespace sprdcamera {
 

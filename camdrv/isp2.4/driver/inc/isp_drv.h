@@ -17,6 +17,7 @@
 #define _ISP_DRV_H_
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 #include "sprd_isp_k.h"
 #include "sprd_img.h"
 #include "cmr_types.h"

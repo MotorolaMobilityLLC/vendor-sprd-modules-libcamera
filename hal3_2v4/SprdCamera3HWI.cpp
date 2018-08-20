@@ -33,7 +33,7 @@
 
 #include <cutils/properties.h>
 #include <hardware/camera3.h>
-#include <camera/CameraMetadata.h>
+#include <CameraMetadata.h>
 #include <stdlib.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>

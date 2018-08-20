@@ -34,7 +34,7 @@
 #include <utils/List.h>
 #include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
-#include <camera/CameraMetadata.h>
+#include <CameraMetadata.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
 
