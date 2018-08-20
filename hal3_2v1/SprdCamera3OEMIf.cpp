@@ -1185,6 +1185,8 @@ int SprdCamera3OEMIf::VideoTakePicture() {
         WaitForCaptureDone();
     }
 
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
+
     LENS_Tag lensInfo;
     mSetting->getLENSTag(&lensInfo);
     if (lensInfo.focal_length) {
