@@ -192,6 +192,8 @@ cmr_uint
 camera_get_isp_perFrame_result(cmr_handle camera_handle,
                                struct isp_mw_per_frame_cxt *perFrame_res);
 #endif
+cmr_int camera_set_snp_face_detect(cmr_handle camera_handle, cmr_u16 enable);
+
 #ifdef __cplusplus
 }
 #endif

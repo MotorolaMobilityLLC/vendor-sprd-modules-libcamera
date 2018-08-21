@@ -479,6 +479,7 @@ getHalOem_fail:
     mChannelCb = NULL;
     mUserData = NULL;
     mZslStreamInfo = NULL;
+    isCallbackCapture = false;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -1262,6 +1263,7 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
 status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     status_t ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
+    unsigned int on_off;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -1277,6 +1279,13 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     }
     if (enable) {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
+        if (isCallbackCapture == true) {
+            on_off = 1;
+            camera_ioctrl(CAMERA_IOCTRL_CB_FACE_DETECT, &on_off, NULL);
+        } else {
+            on_off = 0;
+            camera_ioctrl(CAMERA_IOCTRL_CB_FACE_DETECT, &on_off, NULL);
+        }
     } else {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 0);
     }
@@ -3594,7 +3603,8 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
                      faceInfo.face[k].rect[3], faceInfo.angle[k]);
-            CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
+            if (isCallbackCapture == false)
+                CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
             /*When the half of face at the edge of the screen,the smile level
             returned by face detection library  can often more than 30.
             In order to repaier this defetion ,so when the face on the screen is

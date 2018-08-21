@@ -7129,6 +7129,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     struct img_frm *frm_ptr = NULL;
     cmr_int zoom_post_proc = 0;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -7169,6 +7170,13 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGV("timestamp=%lld, width=%d, height=%d, fd=0x%x",
                  frame_type->timestamp, frame_type->width, frame_type->height,
                  frame_type->fd);
+
+        if (prev_cxt->prev_param.is_support_fd &&
+            prev_cxt->prev_param.is_fd_on && cxt->prev_cxt.snp_fd_enable == 1) {
+            /*after image processed, timestamp and zoom ratio will be needed*/
+            frm_ptr->reserved = info;
+            prev_fd_send_data(handle, camera_id, frm_ptr);
+        }
 
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.dump.frame", value, "null");
@@ -11546,6 +11554,7 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     struct prev_context *prev_cxt = NULL;
     struct ipm_open_in in_param;
     struct ipm_open_out out_param;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -11567,21 +11576,36 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     }
 
     in_param.frame_cnt = 1;
-    if ((IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot) ||
-        (IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot)) {
-        in_param.frame_size.width = prev_cxt->actual_prev_size.height;
-        in_param.frame_size.height = prev_cxt->actual_prev_size.width;
-        in_param.frame_rect.start_x = 0;
-        in_param.frame_rect.start_y = 0;
-        in_param.frame_rect.width = in_param.frame_size.height;
-        in_param.frame_rect.height = in_param.frame_size.width;
+
+    CMR_LOGV("snp_fd_enable = %d", cxt->prev_cxt.snp_fd_enable);
+
+    if (cxt->prev_cxt.snp_fd_enable == 1) {
+        if ((IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot) ||
+            (IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot)) {
+            in_param.frame_size.width = prev_cxt->actual_pic_size.height;
+            in_param.frame_size.height = prev_cxt->actual_pic_size.width;
+        } else {
+            in_param.frame_size.width = prev_cxt->actual_pic_size.width;
+            in_param.frame_size.height = prev_cxt->actual_pic_size.height;
+        }
     } else {
-        in_param.frame_size.width = prev_cxt->actual_prev_size.width;
-        in_param.frame_size.height = prev_cxt->actual_prev_size.height;
-        in_param.frame_rect.start_x = 0;
-        in_param.frame_rect.start_y = 0;
-        in_param.frame_rect.width = in_param.frame_size.width;
-        in_param.frame_rect.height = in_param.frame_size.height;
+
+        if ((IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot) ||
+            (IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot)) {
+            in_param.frame_size.width = prev_cxt->actual_prev_size.height;
+            in_param.frame_size.height = prev_cxt->actual_prev_size.width;
+            in_param.frame_rect.start_x = 0;
+            in_param.frame_rect.start_y = 0;
+            in_param.frame_rect.width = in_param.frame_size.height;
+            in_param.frame_rect.height = in_param.frame_size.width;
+        } else {
+            in_param.frame_size.width = prev_cxt->actual_prev_size.width;
+            in_param.frame_size.height = prev_cxt->actual_prev_size.height;
+            in_param.frame_rect.start_x = 0;
+            in_param.frame_rect.start_y = 0;
+            in_param.frame_rect.width = in_param.frame_size.width;
+            in_param.frame_rect.height = in_param.frame_size.height;
+        }
     }
 
     in_param.reg_cb = prev_fd_cb;

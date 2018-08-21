@@ -234,6 +234,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isVideoCopyFromPreview();
     int getCppMaxSize(cam_dimension_t *);
     void setMimeType(int type);
+    bool isCallbackCapture;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     void setRequestFrameInfo(struct req_frame_info *info);
     void updateResultMetadata(uint32_t frame_num);

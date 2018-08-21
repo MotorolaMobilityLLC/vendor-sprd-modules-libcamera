@@ -11658,3 +11658,24 @@ cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type) {
     return hal_scene_type;
 }
 #endif
+
+cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
+                                         cmr_u16 is_enable) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    CMR_LOGI("E");
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        return ret;
+    }
+
+    cxt->prev_cxt.snp_fd_enable = is_enable;
+
+    CMR_LOGI("X");
+
+    return ret;
+}
