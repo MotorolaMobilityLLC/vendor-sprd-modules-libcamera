@@ -787,15 +787,6 @@ cmr_s32 _pm_blc_init(void *dst_blc_param, void *src_blc_param, void *param1, voi
 cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_blc_get_param(void *blc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_u32 _pm_pdaf_correct_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
-cmr_s32 _pm_pdaf_correct_init(void *dst_pdaf_correct_param, void *src_pdaf_correct_param, void *param1, void *param2);
-cmr_s32 _pm_pdaf_correct_set_param(void *pdaf_correct_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_pdaf_correct_get_param(void *pdaf_correct_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf_extraction_param, void *param1, void *param2);
-cmr_s32 _pm_pdaf_extraction_set_param(void *pdaf_extraction_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_pdaf_extraction_get_param(void *pdaf_extraction_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
 cmr_s32 _pm_postblc_init(void *dst_postblc_param, void *src_postblc_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_postblc_set_param(void *postblc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_postblc_get_param(void *postblc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);

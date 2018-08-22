@@ -39,8 +39,20 @@
 #include "tof_ctrl.h"
 #include "ai_ctrl.h"
 
+#define LIBCAM_ALG_PATH "libispalg.so"
+#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
+#define ISP_RGB_GAIN_BASE_GAIN 4096
+
+cmr_u32 isp_cur_bv;
+cmr_u32 isp_cur_ct;
 static struct soft_isp_block_param isp_block_param;
 static struct soft_isp_block_param *global_isp_block_param;
+
+enum {
+	ISP_MODE_PRV = 0,
+	ISP_MODE_CAP,
+	ISP_MODE_MAX
+};
 
 enum isp_work_status {
 	ISP_WORK_STATUS_WORKING = 0,
@@ -86,6 +98,7 @@ struct ae_info {
 	void *buffer_client_data;
 	struct ae_size win_num;
 	struct ae_ctrl_ebd_info ebd_info;
+	struct ae_size win_size;
 	cmr_u32 shift;
 	cmr_u32 flash_version;
 };
@@ -118,6 +131,7 @@ struct smart_info {
 	cmr_u8	lock_ccnr_en;
 	cmr_u8	lock_ynr_en;
 	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	void *tunning_gamma_cur;
 };
 
 struct afl_info {
@@ -331,20 +345,6 @@ struct isp_alg_fw_context {
 #define FEATRUE_ISP_FW_IOCTRL
 #include "isp_ioctrl.c"
 #undef FEATRUE_ISP_FW_IOCTRL
-
-cmr_u32 isp_cur_bv;
-cmr_u32 isp_cur_ct;
-
-#define LIBCAM_ALG_PATH "libispalg.so"
-#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
-
-#define ISP_RGB_GAIN_BASE_GAIN 4096
-
-enum {
-	ISP_MODE_PRV = 0,
-	ISP_MODE_CAP,
-	ISP_MODE_MAX
-};
 
 struct isp_awb_calc_info {
 	struct ae_calc_out ae_result;
@@ -665,6 +665,9 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 
 	cxt->ai_cxt.ae_param.blk_width = (cmr_u16)aem_win_info.blk_size.width;
 	cxt->ai_cxt.ae_param.blk_height = (cmr_u16)aem_win_info.blk_size.height;
+
+	cxt->ae_cxt.win_size.w = aem_info->win_size.w;
+	cxt->ae_cxt.win_size.h = aem_info->win_size.h;
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_WIN, &aem_win_info, NULL);
 	return ret;
@@ -1080,6 +1083,65 @@ static cmr_int ispalg_ai_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		ret = ispalg_ai_callback(cxt, *(cmr_int *)param0, param1);
 		break;
 	default:
+		break;
+	}
+
+	return ret;
+}
+
+static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle,
+	cmr_int type, void *param0, void *param1)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct smart_calc_result *smart_result = NULL;
+	struct smart_block_result *block_result = NULL;
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
+	UNUSED(param1);
+
+	switch (type) {
+	case ISP_SMART_SET_COMMON: {
+		smart_result = (struct smart_calc_result *)param0;
+		for (i = 0; i < smart_result->counts; i++) {
+			block_result = &smart_result->block_result[i];
+			if (block_result->update == 0)
+				continue;
+
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_SMART_SETTING,
+				block_result->block_id, block_result, sizeof(*block_result));
+			ISP_LOGV("set param %d, id=%x, data=%p", i, block_result->block_id, block_result);
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
+
+#ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
+			if (ISP_BLK_RGB_GAMC == block_result->block_id) {
+				pm_param.id = ISP_BLK_Y_GAMMC;
+				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
+				ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
+			}
+#endif
+		}
+		break;
+	}
+	case ISP_SMART_SET_GAMMA_CUR: {
+		/* param0 should be (struct sensor_rgbgamma_curve *) */
+		void *gamma_cur = param0;
+
+		memset(&pm_param, 0, sizeof(pm_param));
+		BLOCK_PARAM_CFG(io_pm_input, pm_param,
+			ISP_PM_BLK_GAMMA_CUR,
+			ISP_BLK_RGB_GAMC,
+			gamma_cur,
+			sizeof(struct sensor_rgbgamma_curve));
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to set gammar cur"));
+		break;
+	}
+	default:
+		ISP_LOGE("fail to set smart callback command: %d", (cmr_u32)type);
 		break;
 	}
 
@@ -2155,6 +2217,30 @@ exit:
 	return ret;
 }
 
+static cmr_int isp_prepare_atm_param(cmr_handle isp_alg_handle,
+	struct smart_proc_input *smart_proc_in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	smart_proc_in->r_info = cxt->aem_stats.r_info;
+	smart_proc_in->g_info = cxt->aem_stats.g_info;
+	smart_proc_in->b_info = cxt->aem_stats.b_info;
+	smart_proc_in->win_num_w = cxt->ae_cxt.win_num.w;
+	smart_proc_in->win_num_h = cxt->ae_cxt.win_num.h;
+	smart_proc_in->aem_shift = cxt->ae_cxt.shift;
+	smart_proc_in->win_size_w = cxt->ae_cxt.win_size.w;
+	smart_proc_in->win_size_h = cxt->ae_cxt.win_size.h;
+
+	if (smart_proc_in->r_info == NULL)
+		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
+			smart_proc_in->r_info,
+			smart_proc_in->g_info,
+			smart_proc_in->b_info);
+
+	return ret;
+}
+
 static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					 struct ae_ctrl_callback_in *ae_in,
 					 struct awb_ctrl_calc_result *awb_output)
@@ -2188,6 +2274,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			ae_in->ae_output.target_lum,
 			ae_in->flash_param.captureFlashEnvRatio,
 			ae_in->flash_param.captureFlash1ofALLRatio);
+		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 		smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
 		smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
 		smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
@@ -2205,6 +2292,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
 		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
 		smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
+		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+
 		if (cxt->ops.smart_ops.calc) {
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 			ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
@@ -3225,11 +3314,16 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 	struct smart_init_param smart_init_param;
 	struct isp_pm_ioctl_input pm_input;
 	struct isp_pm_ioctl_output pm_output;
+	struct isp_pm_ioctl_input input;
+	struct isp_pm_ioctl_output output;
+	struct isp_pm_param_data *param_data = NULL;
 	cmr_u32 i = 0;
 	cmr_u32 mode = 0;
 
 	memset(&pm_input, 0, sizeof(pm_input));
 	memset(&pm_output, 0, sizeof(pm_output));
+	memset(&input, 0, sizeof(input));
+	memset(&output, 0, sizeof(output));
 
 	cxt->smart_cxt.isp_smart_eb = 0;
 	memset(&smart_init_param, 0, sizeof(smart_init_param));
@@ -3244,6 +3338,27 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 	} else {
 		ISP_LOGE("fail to get smart init param ");
 		return ret;
+	}
+
+	smart_init_param.caller_handle = (cmr_handle)cxt;
+	smart_init_param.smart_set_cb = ispalg_smart_set_cb;
+
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ATM_PARAM, NULL, &output);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to get atm param");
+		return ret;
+	}
+	if (0 == output.param_num) {
+		ISP_LOGE("fail to check param: atm param num=%d", output.param_num);
+		return ISP_ERROR;
+	}
+	param_data = output.param_data;
+	for (i = 0; i < output.param_num; ++i) {
+		if (NULL != param_data->data_ptr) {
+			smart_init_param.atm_info = param_data->data_ptr;
+			smart_init_param.atm_size = param_data->data_size;
+		}
+		++param_data;
 	}
 
 	if (cxt->ops.smart_ops.init) {
@@ -4157,9 +4272,10 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct smart_proc_input smart_proc_in;
 	struct awb_gain_and_offset result;
-	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
 	struct isp_awbc_cfg awbc_cfg;
+	struct isp_pm_ioctl_input ioctl_output = { PNULL, 0 };
+	struct isp_pm_ioctl_input ioctl_input = { PNULL, 0 };
+	struct isp_pm_param_data ioctl_data;
 	cmr_u32 ct = 0;
 	cmr_s32 bv = 0;
 	cmr_s32 bv_gain = 0;
@@ -4198,8 +4314,19 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_WORK_MODE, (void *)&cxt->commn_cxt.isp_mode, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
 	}
+
+	memset(&ioctl_data, 0, sizeof(ioctl_data));
+	BLOCK_PARAM_CFG(ioctl_input, ioctl_data, ISP_PM_BLK_GAMMA_TAB, ISP_BLK_RGB_GAMC, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void *)&ioctl_input, (void *)&ioctl_output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get GAMMA TAB"));
+
+	if (ioctl_output.param_num > 0 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr) {
+		cxt->smart_cxt.tunning_gamma_cur = ioctl_output.param_data_ptr->data_ptr;
+	}
+
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
+		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
@@ -4208,6 +4335,8 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
+		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+
 		if (cxt->ops.smart_ops.calc)
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}
