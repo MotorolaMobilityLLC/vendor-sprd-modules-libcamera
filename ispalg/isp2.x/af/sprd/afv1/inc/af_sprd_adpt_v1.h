@@ -309,6 +309,7 @@ typedef struct _af_ctrl {
 
 	struct afctrl_cb_ops cb_ops;
 	cmr_u8 *pdaf_rdm_otp_data;
+	cmr_u32 trigger_counter;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

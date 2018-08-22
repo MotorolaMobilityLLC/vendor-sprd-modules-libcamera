@@ -1706,15 +1706,71 @@ static void *loop_for_test_mode(void *data_client)
 }
 
 // af process functions
+static cmr_u32 af_get_defocus_param(char *string, defocus_param_t * defocus, cmr_u32 *times)
+{
+	char *token = NULL;
+	cmr_u32 scan_from = 0;
+	cmr_u32 scan_to = 0;
+	cmr_u32 per_steps = 0;
+	cmr_u32 ret = 0;
+
+	token = strtok(string, ":");
+	if (token != NULL) {
+		scan_from = atoi(token);
+		token = strtok(NULL, ":");
+	}
+
+	if (token != NULL) {
+		scan_to = atoi(token);
+		token = strtok(NULL, ":");
+	}
+
+	if (token != NULL) {
+		per_steps = atoi(token);
+		token = strtok(NULL, ":");
+	}
+
+	if (token != NULL) {
+		*times = atoi(token);
+	}
+	defocus->scan_from = (scan_from > 0 && scan_from < 1023) ? scan_from : 0;
+	defocus->scan_to = (scan_to > 0 && scan_to < 1023) ? scan_to : 0;
+	defocus->per_steps = (per_steps > 0 && per_steps < 200) ? per_steps : 0;
+	ISP_LOGI("scan_from %d, scan_to %d, per_steps %d, times %d", defocus->scan_from, defocus->scan_to, defocus->per_steps, *times);
+
+	return ret;
+}
+
 static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 {
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	AF_Trigger_Data aft_in;
+	cmr_u32 times = 0;
+
 	af->algo_mode = FAF;
+	calc_roi(af, win, af->algo_mode);
+
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
-	aft_in.AF_Trigger_Type = (RF_NORMAL);
-	calc_roi(af, win, af->algo_mode);
+	property_get("persist.vendor.cam.isp.faf.defocus", value, "0");
+	if (atoi(value) == 0) {
+		aft_in.AF_Trigger_Type = RF_NORMAL;
+	} else {
+		af_get_defocus_param(value, &aft_in.defocus_param, &times);
+		if (0 == times) {
+			aft_in.AF_Trigger_Type = DEFOCUS;
+		} else {
+			if (0 == af->trigger_counter % times) {
+				af->trigger_counter = 0;
+				aft_in.AF_Trigger_Type = DEFOCUS;
+			} else {
+				aft_in.AF_Trigger_Type = RF_NORMAL;
+			}
+			ISP_LOGI("aft_in.AF_Trigger_Type %d, af->trigger_counter %d", aft_in.AF_Trigger_Type, af->trigger_counter);
+			af->trigger_counter++;
+		}
+	}
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
@@ -1819,10 +1875,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	AF_Trigger_Data aft_in;
-	char *token = NULL;
-	cmr_u32 scan_from = 0;
-	cmr_u32 scan_to = 0;
-	cmr_u32 per_steps = 0;
+	cmr_u32 times = 0;
 
 	property_get("persist.vendor.cam.caf.enable", value, "1");
 	if (atoi(value) != 1)
@@ -1840,25 +1893,19 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	if (atoi(value) == 0) {
 		aft_in.AF_Trigger_Type = (p_aft_result->is_need_rough_search) ? (RF_NORMAL) : (RF_FAST);
 	} else {
-		token = strtok(value, ":");
-		if (token != NULL) {
-			scan_from = atoi(token);
-			token = strtok(NULL, ":");
+		af_get_defocus_param(value, &aft_in.defocus_param, &times);
+		if (0 == times) {
+			aft_in.AF_Trigger_Type = DEFOCUS;
+		} else {
+			if (0 == af->trigger_counter % times) {
+				af->trigger_counter = 0;
+				aft_in.AF_Trigger_Type = DEFOCUS;
+			} else {
+				aft_in.AF_Trigger_Type = RF_NORMAL;
+			}
+			ISP_LOGI("aft_in.AF_Trigger_Type %d, af->trigger_counter %d", aft_in.AF_Trigger_Type, af->trigger_counter);
+			af->trigger_counter++;
 		}
-
-		if (token != NULL) {
-			scan_to = atoi(token);
-			token = strtok(NULL, ":");
-		}
-
-		if (token != NULL) {
-			per_steps = atoi(token);
-		}
-		ISP_LOGV("scan_from %d, scan_to %d, per_steps %d,", scan_from, scan_to, per_steps);
-		aft_in.AF_Trigger_Type = DEFOCUS;
-		aft_in.defocus_param.scan_from = (scan_from > 0 && scan_from < 1023) ? scan_from : 0;
-		aft_in.defocus_param.scan_to = (scan_to > 0 && scan_to < 1023) ? scan_to : 0;
-		aft_in.defocus_param.per_steps = (per_steps > 0 && per_steps < 200) ? per_steps : 0;
 	}
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
