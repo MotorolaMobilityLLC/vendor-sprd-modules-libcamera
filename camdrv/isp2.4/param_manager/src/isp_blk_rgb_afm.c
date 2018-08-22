@@ -38,7 +38,7 @@ cmr_u32 _pm_rgb_afm_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u
 	if (rgb_afm_param != NULL) {
 		dst_ptr->cur.mode = rgb_afm_param[strength_level].afm_mode;
 		dst_ptr->cur.skip_num = rgb_afm_param[strength_level].afm_skip_num;
-		dst_ptr->cur.skip_num_clear = rgb_afm_param[strength_level].afm_skip_num_clear;
+		dst_ptr->cur.skip_num_clear = 0;//rgb_afm_param[strength_level].afm_skip_num_clear;
 		dst_ptr->cur.overflow_protect_en = rgb_afm_param[strength_level].oflow_protect_en;
 		for (i = 0; i < 10; i++) {
 			dst_ptr->cur.coord[i].start_x = rgb_afm_param[strength_level].coord[i].start_x;
