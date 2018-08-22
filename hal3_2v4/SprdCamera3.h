@@ -209,7 +209,8 @@ static tags_info_t
         {"sprdPhyAddrFromFaceID", TYPE_INT64},
         {"sprdCamFeatureList", TYPE_BYTE},
         {"sprdAvailableAIScene", TYPE_BYTE},
-        {"sprdAIScene", TYPE_BYTE}
+        {"sprdAIScene", TYPE_BYTE},
+        {"availableSensorType", TYPE_BYTE}
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

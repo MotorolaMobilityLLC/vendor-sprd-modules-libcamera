@@ -396,6 +396,7 @@ typedef struct {
     uint8_t availabe_ai_scene;
     uint8_t sprd_ai_scene_type_current;
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
+    uint8_t availabe_sensor_type;
 } SPRD_DEF_Tag;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -695,6 +696,7 @@ class SprdCamera3Setting {
     int mFaceDetectModeSet;
     static int mLogicalSensorNum;
     static int mPhysicalSensorNum;
+    static uint8_t mSensorType[CAMERA_ID_COUNT];
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

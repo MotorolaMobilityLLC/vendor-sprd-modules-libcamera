@@ -137,11 +137,12 @@ extern "C" {
 #define SENSOR_APERT_CAPTURE_MODE 2
 
 /*sensor exposure time mode*/
-#define SENSOR_EXP_TIME_PREVIEW_MODE                  2
-#define SENSOR_EXP_TIME_CAPTURE_MODE                  2
+#define SENSOR_EXP_TIME_PREVIEW_MODE 2
+#define SENSOR_EXP_TIME_CAPTURE_MODE 2
 
-typedef struct sensor_i2c_seq_tag                      SENSOR_I2C_SEQ_T, *SENSOR_I2C_SEQ_T_PTR;
-typedef struct _sensor_otp_param_tag                  SENSOR_OTP_PARAM_T, *SENSOR_OTP_PARAM_T_PTR;
+typedef struct sensor_i2c_seq_tag SENSOR_I2C_SEQ_T, *SENSOR_I2C_SEQ_T_PTR;
+typedef struct _sensor_otp_param_tag SENSOR_OTP_PARAM_T,
+    *SENSOR_OTP_PARAM_T_PTR;
 
 typedef cmr_int (*cmr_set_flash)(cmr_u32 set_param, cmr_u32 opt,
                                  cmr_handle oem_handle);
@@ -318,8 +319,7 @@ typedef struct sensor_otp_data {
     struct otp_data_tag golden;
 } OTP_DATA_INFO_TAG;
 
-
-typedef void* SENSOR_HW_HANDLE;
+typedef void *SENSOR_HW_HANDLE;
 typedef cmr_int (*SENSOR_IOCTL_FUNC_PTR)(cmr_handle handle, cmr_uint param);
 
 typedef struct sensor_ioctl_func_tab_tag {
@@ -766,6 +766,8 @@ cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
 
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                struct sensor_flash_level *level);
+
+cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt);
 
 cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 

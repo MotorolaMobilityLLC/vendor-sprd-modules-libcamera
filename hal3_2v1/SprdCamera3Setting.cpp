@@ -42,6 +42,7 @@ using namespace android;
 namespace sprdcamera {
 
 uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0};
+uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0};
 
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -239,9 +240,6 @@ const uint8_t avail_scene_modes[] = {
     ANDROID_CONTROL_SCENE_MODE_ACTION,
     ANDROID_CONTROL_SCENE_MODE_PORTRAIT,
     ANDROID_CONTROL_SCENE_MODE_LANDSCAPE,
-#ifdef CONFIG_CAMERA_HDR_CAPTURE
-    ANDROID_CONTROL_SCENE_MODE_HDR,
-#endif
 };
 
 const uint8_t avail_antibanding_modes[] = {
@@ -588,6 +586,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_AVAILABLE_AUTO_HDR,
     ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
     ANDROID_SPRD_AVAILABLE_AI_SCENE,
+    ANDROID_SPRD_AVAILABLE_SENSORTYPE,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -951,7 +950,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
                              default_sensor_max_sizes[cameraId].height);
         goto exit;
     }
-
+    mSensorType[cameraId] = sensor_get_sensor_type(sensor_cxt);
     mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
 
     // if sensor fov info is valid, use it; else use default value
@@ -1167,6 +1166,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            sizeof(avail_effect_mode));
     memcpy(camera3_default_info.common.availSceneModes, avail_scene_modes,
            sizeof(avail_scene_modes));
+
     memcpy(camera3_default_info.common.availAntibandingModes,
            avail_antibanding_modes, sizeof(avail_antibanding_modes));
     memset(camera3_default_info.common.availableAfModes, 0, 6);
@@ -1517,7 +1517,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         // ANDROID_CONTROL_SCENE_MODE_NIGHT;
         memcpy(s_setting[cameraId].controlInfo.available_scene_modes,
                camera3_default_info.common.availSceneModes,
-               sizeof(camera3_default_info.common.availSceneModes));
+               sizeof(avail_scene_modes));
+#ifdef CONFIG_CAMERA_HDR_CAPTURE
+        uint32_t sizeSceneModes = sizeof(avail_scene_modes) / avail_scene_modes[0];
+        if (mSensorType[cameraId] != FOURINONESENSOR && mSensorType[cameraId] != YUVSENSOR) {
+            s_setting[cameraId].controlInfo.available_scene_modes[sizeSceneModes] =
+                                            ANDROID_CONTROL_SCENE_MODE_HDR;
+        }
+#endif
     }
     memcpy(s_setting[cameraId].controlInfo.ae_available_abtibanding_modes,
            camera3_default_info.common.availAntibandingModes,
@@ -1577,6 +1584,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
     }
 
+    if (mSensorType[cameraId] == YUVSENSOR) {
+        s_setting[cameraId].flash_InfoInfo.available = 0;
+    }
     if (s_setting[cameraId].flash_InfoInfo.available) {
         memcpy(s_setting[cameraId].controlInfo.ae_available_modes,
                camera3_default_info.common.availableAeModes,
@@ -1734,6 +1744,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         "cameraId:%d, availabe_ai_scene:%d,  sprd_ai_scene_type_current:%d",
         cameraId, s_setting[cameraId].sprddefInfo.availabe_ai_scene,
         s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current);
+    s_setting[cameraId].sprddefInfo.availabe_sensor_type = mSensorType[cameraId];
 
     Vector<uint8_t> available_cam_features;
 
@@ -2121,6 +2132,8 @@ int SprdCamera3Setting::initStaticMetadata(
     FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
                         0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
                         ANDROID_SPRD_CAM_FEATURE_LIST)
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_SENSORTYPE,
+                      &(s_setting[cameraId].sprddefInfo.availabe_sensor_type), 1);
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
@@ -5739,6 +5752,9 @@ int SprdCamera3Setting::androidEffectModeToDrvMode(uint8_t androidEffectMode,
 }
 
 int SprdCamera3Setting::setFLASHINFOTag(FLASH_INFO_Tag flash_InfoInfo) {
+    if (mSensorType[mCameraId] == YUVSENSOR) {
+        flash_InfoInfo.available = 0;
+    }
     s_setting[mCameraId].flash_InfoInfo = flash_InfoInfo;
     return 0;
 }

@@ -1473,7 +1473,6 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
             sensor_set_raw_infor(sensor_cxt, vendor_id);
         }
         sensor_set_export_Info(sensor_cxt);
-
         sensor_cxt->stream_on = 1;
         sensor_stream_off(sensor_cxt);
         SENSOR_LOGI("open success");
@@ -2253,6 +2252,34 @@ cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
         ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
                                             (cmr_uint)&val);
     return ret;
+}
+cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    SENSOR_VAL_T val;
+    struct sensor_4in1_info sn_4in1_info;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+
+    cmr_bzero(&sn_4in1_info, sizeof(struct sensor_4in1_info));
+    val.type = SENSOR_VAL_TYPE_GET_4IN1_INFO;
+    val.pval = &sn_4in1_info;
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops) {
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                            (cmr_uint)&val);
+        if (ret) {
+            SENSOR_LOGI("failed to get 4in1 info");
+        }
+    }
+    SENSOR_IMAGE_FORMAT sensor_format = sensor_cxt->sensor_info_ptr->image_format;
+    SENSOR_LOGI("is_4in1_supported %d, sensor_format = %d", sn_4in1_info.is_4in1_supported, sensor_format);
+    if (sn_4in1_info.is_4in1_supported) {
+        return FOURINONESENSOR; //4in1 sensor
+    } else if (sensor_format == SENSOR_IMAGE_FORMAT_YUV422) {
+        return YUVSENSOR; //yuv sensor
+    }
+    return NORMALSENSOR; //normal sensor
 }
 
 cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt) {
