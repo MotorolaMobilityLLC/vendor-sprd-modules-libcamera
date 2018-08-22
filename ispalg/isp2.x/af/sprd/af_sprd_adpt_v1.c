@@ -229,6 +229,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 	}
 
 #ifdef CONFIG_ISP_2_5
+#define PIXEL_OFFSET 100
 if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 	// crop enable
 	cmr_u32 crop_eb = 1;
@@ -257,8 +258,8 @@ if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 		win_num.y = 3;
 	}
 
-	win[9].start_x = win[9].start_x > 110 ? win[9].start_x - 110 : 10;
-	win[9].end_x = win[9].end_x + 110 > af->isp_info.width ? af->isp_info.width -10 : win[9].end_x + 110;
+	win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
+	win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width -10 : win[9].end_x + PIXEL_OFFSET;
 	win[9].start_x = (win[9].start_x>>1)<<1;
 	win[9].start_y = (win[9].start_y>>1)<<1;
 	win[9].end_x = (win[9].end_x>>1)<<1;
@@ -279,9 +280,9 @@ if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 	af->cb_ops.set_monitor_win_num(af->caller, &win_num);
 	af->cb_ops.af_monitor_done_tile_num(af->caller, &tile_num);
 	// the first roi in crop size
-	winparam.win_rect.x = 110;
+	winparam.win_rect.x = PIXEL_OFFSET;
 	winparam.win_rect.y = 4;
-	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 220)/win_num.x;
+	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 2*PIXEL_OFFSET)/win_num.x;
 	winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8)/win_num.y;
 	winparam.win_rect.w = (winparam.win_rect.w>>1)<<1;
 	winparam.win_rect.h = (winparam.win_rect.h>>1)<<1;
@@ -315,9 +316,9 @@ if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 	af->cb_ops.set_monitor_win_num(af->caller, &win_num);
 	af->cb_ops.af_monitor_done_tile_num(af->caller, &tile_num);
 	// the first roi in crop size
-	winparam.win_rect.x = 110;
+	winparam.win_rect.x = PIXEL_OFFSET;
 	winparam.win_rect.y = 4;
-	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 220)/win_num.x;
+	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 2*PIXEL_OFFSET)/win_num.x;
 	winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8)/win_num.y;
 	winparam.win_rect.w = (winparam.win_rect.w>>1)<<1;
 	winparam.win_rect.h = (winparam.win_rect.h>>1)<<1;
@@ -336,8 +337,8 @@ if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 		win[9].end_x = win[9].end_x + tmp_w;
 		af->win_offset = 0;
 	}*/
-	win[9].start_x = win[9].start_x > 110 ? win[9].start_x - 110 : 10;
-	win[9].end_x = win[9].end_x + 110 > af->isp_info.width ? af->isp_info.width -10 : win[9].end_x + 110;
+	win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
+	win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width -10 : win[9].end_x + PIXEL_OFFSET;
 	win[9].start_x = (win[9].start_x>>1)<<1;
 	win[9].start_y = (win[9].start_y>>1)<<1;
 	win[9].end_x = (win[9].end_x>>1)<<1;
@@ -360,9 +361,9 @@ if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 	af->cb_ops.set_monitor_win_num(af->caller, &win_num);
 	af->cb_ops.af_monitor_done_tile_num(af->caller, &tile_num);
 	// the first roi in crop size
-	winparam.win_rect.x = 110;
+	winparam.win_rect.x = PIXEL_OFFSET;
 	winparam.win_rect.y = 4;
-	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 220)/win_num.x;
+	winparam.win_rect.w = (win[9].end_x - win[9].start_x - 2*PIXEL_OFFSET)/win_num.x;
 	winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8)/win_num.y;
 	winparam.win_rect.w = (winparam.win_rect.w>>1)<<1;
 	winparam.win_rect.h = (winparam.win_rect.h>>1)<<1;
