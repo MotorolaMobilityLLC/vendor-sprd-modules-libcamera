@@ -60,9 +60,8 @@ cmr_s32 _pm_antiflicker_get_param(void *antiflicker_param, cmr_u32 cmd, void *rt
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	struct isp_anti_flicker_param *antiflicker_ptr = (struct isp_anti_flicker_param *)antiflicker_param;
-	cmr_u32 *update_flag = (cmr_u32 *)rtn_param1;
-
 	UNUSED(rtn_param1);
+
 	param_data_ptr->id = ISP_BLK_ANTI_FLICKER;
 	param_data_ptr->cmd = cmd;
 
@@ -70,7 +69,6 @@ cmr_s32 _pm_antiflicker_get_param(void *antiflicker_param, cmr_u32 cmd, void *rt
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = &antiflicker_ptr->cur;
 		param_data_ptr->data_size = sizeof(antiflicker_ptr->cur);
-		*update_flag = 0;
 		break;
 
 	default:

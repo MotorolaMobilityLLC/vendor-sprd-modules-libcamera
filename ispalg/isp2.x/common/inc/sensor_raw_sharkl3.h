@@ -1311,6 +1311,11 @@ struct sensor_cnr_level {
 	float rang_sigma[CNR_LEVEL][2];
 };
 
+struct sensor_ae_adapt_param {
+	cmr_u16 binning_factor; // 1x = 128
+	cmr_u16 reserved[18];
+};
+
 #if 0
 struct ae_new_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;

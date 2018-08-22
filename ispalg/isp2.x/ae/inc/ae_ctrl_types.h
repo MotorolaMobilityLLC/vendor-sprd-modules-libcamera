@@ -290,6 +290,7 @@ extern "C" {
 		struct ae_opt_info awb_otp_info;
 		cmr_u32 capture_skip_num;
 		cmr_u32 zsl_flag;
+		cmr_u16 binning_factor;
 	};
 
 	struct ae_set_iso {

@@ -81,6 +81,7 @@ struct isp_block_operations s_3d_nr_pre_ops = { _pm_3d_nr_pre_init, _pm_3d_nr_pr
 struct isp_block_operations s_3d_nr_cap_ops = { _pm_3d_nr_cap_init, _pm_3d_nr_cap_set_param, _pm_3d_nr_cap_get_param, PNULL, PNULL };
 struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, _pm_yuv_noisefilter_set_param, _pm_yuv_noisefilter_get_param, PNULL, PNULL };
 struct isp_block_operations s_cnr2_ops = { _pm_cnr2_init, _pm_cnr2_set_param, _pm_cnr2_get_param, PNULL, PNULL };
+struct isp_block_operations s_ae_adapt_param_ops = { _pm_ae_adapt_param_init, _pm_ae_adapt_set_param, _pm_ae_adapt_get_param, PNULL, PNULL };
 
 struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_FLASH_CALI, array_offset(struct isp_context, flash), sizeof(struct isp_flash_param), &s_flash_ops},
@@ -133,6 +134,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_BOKEH_MICRO_DEPTH, array_offset(struct isp_context, bokeh_micro_depth), sizeof(struct isp_bokeh_micro_depth_param), &s_bokeh_micro_depth_ops},
 	{ISP_BLK_AFT, array_offset(struct isp_context, aft), sizeof(struct isp_aft_param), &s_aft_ops},
 	{ISP_BLK_CNR2, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
+	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_param_ops},
 };
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)

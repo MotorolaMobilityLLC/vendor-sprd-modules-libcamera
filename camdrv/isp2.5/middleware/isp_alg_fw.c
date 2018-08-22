@@ -40,6 +40,12 @@
 static struct soft_isp_block_param isp_block_param;
 static struct soft_isp_block_param *global_isp_block_param;
 
+enum isp_work_status {
+	ISP_WORK_STATUS_WORKING = 0,
+	ISP_WORK_STATUS_IDLE,
+	ISP_WORK_STATUS_MAX
+};
+
 struct commn_info {
 	cmr_s32 isp_mode;
 	cmr_u32 mode_flag;
@@ -286,6 +292,7 @@ struct isp_alg_fw_context {
 	struct isp_dev_rgb_gain_info rgb_gain;
 	cmr_u32 aem_stat_size;
 	cmr_u32 camera_4in1_flag;
+	cmr_u32 isp_work_status;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -333,7 +340,6 @@ struct isp_alg_sw_init_in {
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_size	sensor_max_size;
 };
-
 
 static nsecs_t ispalg_get_sys_timestamp(void)
 {
@@ -400,6 +406,29 @@ static cmr_int ispalg_get_rgb_aem_param(cmr_handle isp_fw_handle, struct isp_rgb
 	} else {
 		param->blk_num.w = 32;
 		param->blk_num.h = 32;
+	}
+
+	return ret;
+}
+
+static cmr_int ispalg_get_ae_adapt_param(cmr_handle isp_fw_handle, cmr_u16 *param)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_fw_handle;
+	struct isp_ae_adapt_info *ae_adapt_info = NULL;
+
+	memset(&param_data, 0, sizeof(param_data));
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_AE_ADAPT_PARAM, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		ae_adapt_info = (struct isp_ae_adapt_info *)output.param_data->data_ptr;
+		*param = ae_adapt_info->binning_factor;
+	} else {
+		ISP_LOGE("fail to get ae adapt param");
 	}
 
 	return ret;
@@ -2454,6 +2483,12 @@ cmr_int ispalg_afthread_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check input param ");
 		goto exit;
 	}
+
+	if (cxt->isp_work_status == ISP_WORK_STATUS_IDLE) {
+		ISP_LOGV("isp work status idle");
+		goto exit;
+	}
+
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
@@ -2479,6 +2514,12 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check input param ");
 		goto exit;
 	}
+
+	if (cxt->isp_work_status == ISP_WORK_STATUS_IDLE) {
+		ISP_LOGV("isp work status idle");
+		goto exit;
+	}
+
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
@@ -3691,6 +3732,9 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	shift.low = ae_param.shift;
 	shift.middle = ae_param.shift;
 
+	ret = ispalg_get_ae_adapt_param(cxt, &ae_param.binning_factor);
+	ISP_LOGV("binning_factor = %d\n", ae_param.binning_factor);
+
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT_TABLE20, NULL, (void *)&ae_param.ct_table);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_CT_TABLE20"));
@@ -4731,6 +4775,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	}
 	memset(cxt, 0, sizeof(*cxt));
 
+	cxt->isp_work_status = ISP_WORK_STATUS_WORKING;
 	cxt->camera_id = input_ptr->init_param->camera_id;
 	ISP_LOGV("camera_id = %ld", cxt->camera_id);
 	sensor_raw_info_ptr =
@@ -4873,6 +4918,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		goto exit;
 	}
 
+	cxt->isp_work_status = ISP_WORK_STATUS_IDLE;
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
 
 	ret = ispalg_deinit((cmr_handle) cxt);

@@ -209,6 +209,10 @@ extern "C" {
 		cmr_u16 thr[8];
 	};
 
+	struct isp_ae_adapt_info {
+		cmr_u16 binning_factor; // 1x = 128
+	};
+
 #ifdef	 __cplusplus
 }
 #endif

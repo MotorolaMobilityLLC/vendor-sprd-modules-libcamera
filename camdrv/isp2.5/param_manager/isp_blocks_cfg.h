@@ -660,6 +660,10 @@ struct isp_cnr2_param {
 	cmr_u32 nr_mode_setting;
 };
 
+struct isp_ae_adapt_param {
+	struct isp_ae_adapt_info cur;
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -728,6 +732,7 @@ struct isp_context {
 	struct isp_2d_lsc_param dcam_2d_lsc;
 	struct dcam_rgb_aem_param dcam_aem;
 	struct isp_cnr2_param cnr2;
+	struct isp_ae_adapt_param ae_adapt;
 };
 
 /*******************************isp_block_com******************************/
@@ -996,6 +1001,10 @@ cmr_u32 _pm_cnr2_convert_param(void *dst_cnr2_param, cmr_u32 strength_level, cmr
 cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
 cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_ae_adapt_param_init(void *dst_ae_adapt_param, void *src_ae_adapt_param, void *param1, void *param2);
+cmr_s32 _pm_ae_adapt_set_param(void *ae_adapt_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ae_adapt_get_param(void *ae_adapt_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);
