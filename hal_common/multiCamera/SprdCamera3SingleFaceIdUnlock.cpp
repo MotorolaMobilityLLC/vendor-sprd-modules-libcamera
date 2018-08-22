@@ -547,7 +547,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
     cmr_s32 i = 0;
     cmr_u32 Phy_id = 0;
 
-    if (MODE_SINGLE_FACEID_UNLOCK == camera_id) {
+    if (SPRD_SINGLE_FACEID_UNLOCK_ID == camera_id) {
         mPhyCameraNum = 1;
     } else {
         HAL_LOGW("unlock mode camera_id should not be %d", camera_id);
@@ -611,7 +611,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::getCameraInfo(cmr_s32 face_camera_id,
 
     HAL_LOGD("camera_id=%d", face_camera_id);
 
-    if (MODE_SINGLE_FACEID_UNLOCK == face_camera_id) {
+    if (SPRD_SINGLE_FACEID_UNLOCK_ID == face_camera_id) {
         m_VirtualCamera.id = CAM_MAIN_ID;
     } else {
         HAL_LOGW("unlock mode camera_id should not be %d", camera_id);
