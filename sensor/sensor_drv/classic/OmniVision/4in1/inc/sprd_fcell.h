@@ -1,6 +1,7 @@
 #include "fcell.h" 
 #include <fcntl.h>//#include < stdio.h >
-#include <stdlib.h>
+//#include <stdlib.h>
+#include <malloc.h>
 #include<time.h>
 //#include<sys / time.h>
 
@@ -17,8 +18,8 @@ typedef unsigned char uint8;
 #define XTALK_OFFSET_Y    0
 #define XTALK_IMGWIDTH    4672 //4608 //5120
 #define XTALK_IMGHEIGHT   3504 //3456 // 3840
-#define XTALK_FLIP     1
-#define XTALK_MIRROR    1
+#define XTALK_FLIP     0
+#define XTALK_MIRROR    0
 #define OTPDPC_OFFSET_X    48
 #define OTPDPC_OFFSET_Y    42
 #define OTPDPC_FLIP    1

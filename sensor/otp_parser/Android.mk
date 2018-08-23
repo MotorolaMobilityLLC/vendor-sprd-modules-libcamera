@@ -38,7 +38,7 @@ endif
 LOCAL_MODULE := libcam_otp_parser
 #LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
-
-include $(call first-makefiles-under,$(LOCAL_PATH))
-
 include $(BUILD_SHARED_LIBRARY)
+
+#include $(call first-makefiles-under,$(LOCAL_PATH))
+

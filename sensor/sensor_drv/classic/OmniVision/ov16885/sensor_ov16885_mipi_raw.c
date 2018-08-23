@@ -494,7 +494,8 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
 
     otp_parser_ptr = dlsym(otp_parser_handle, "otp_parser");
     if (otp_parser_ptr == NULL) {
-        SENSOR_LOGE(
+       dlclose(otp_parser_handle);
+       SENSOR_LOGE(
             "load libcam_otp_parser.so: couldn't find symbol otp_parser");
         return SENSOR_FAIL;
     } else {

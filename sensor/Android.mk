@@ -15,6 +15,7 @@
 #
 
 LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH_BAK:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
@@ -118,8 +119,9 @@ endif
 
 include $(BUILD_SHARED_LIBRARY)
 include $(LOCAL_PATH)/otp_parser/Android.mk
+LOCAL_PATH:= $(LOCAL_PATH_BAK)
 
 include $(wildcard $(LOCAL_PATH)/*/*/*/*/Android.mk)
-
+LOCAL_PATH:= $(LOCAL_PATH_BAK)
 #include $(call all-subdir-makefiles)
-include $(call first-makefiles-under,$(LOCAL_PATH))
+#include $(call first-makefiles-under,$(LOCAL_PATH))
