@@ -1902,8 +1902,10 @@ int SprdCamera3HWI::flush() {
         }
     }
 
-    Mutex::Autolock l(mLock);
     mFlush = true;
+
+    Mutex::Autolock l(mLock);
+
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
 
     // for performance tuning: close camera
