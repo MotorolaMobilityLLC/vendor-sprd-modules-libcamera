@@ -195,12 +195,21 @@ static tags_info_t
         {"sprd3BlurSensorRotation", TYPE_INT32},
         {"sprdHdrPlusEnabled", TYPE_BYTE},
         {"sprdAppmodeId", TYPE_INT32},
+        {"sprdFixedFpsEnabled", TYPE_BYTE},
         {"sprd3dnrEnabled", TYPE_BYTE},
         {"sprdfiltertype", TYPE_BYTE},
         {"isTakePictureWithFlash", TYPE_BYTE},
         {"sprdfastthumb", TYPE_INT32},
         {"availableSprdFlashLevel", TYPE_BYTE},
-        {"adjustSprdFlashLevel", TYPE_BYTE}
+        {"adjustSprdFlashLevel", TYPE_BYTE},
+        {"sprdAutoHdrEnabled", TYPE_BYTE},
+        {"isHdrSceneForAuto", TYPE_BYTE},
+        {"sprdAvailableAutoHdr", TYPE_BYTE},
+        {"sprdPhyAddrToFaceID", TYPE_INT64},
+        {"sprdPhyAddrFromFaceID", TYPE_INT64},
+        {"sprdCamFeatureList", TYPE_BYTE},
+        {"sprdAvailableAIScene", TYPE_BYTE},
+        {"sprdAIScene", TYPE_BYTE}
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
