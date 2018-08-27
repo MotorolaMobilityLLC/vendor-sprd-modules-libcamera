@@ -567,6 +567,19 @@ void SprdCamera3OEMIf::closeCamera() {
     gyro_monitor_thread_deinit((void *)this);
 #endif
 
+    if (mUsingSW3DNR) {
+        for (int i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
+            if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
+                m3DNRPrevScaleHeapReserverd[i]->ion_heap->free_kaddr();
+                freeCameraMem(m3DNRPrevScaleHeapReserverd[i]);
+                m3DNRPrevScaleHeapReserverd[i] = NULL;
+            }
+        }
+
+        Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+        Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+    }
+
     if (isCameraInit()) {
         setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
 
