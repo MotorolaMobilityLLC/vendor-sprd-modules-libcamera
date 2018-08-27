@@ -106,7 +106,7 @@ endif
 endif
 
 LOCAL_SRC_FILES += \
-    tool/auto_test/auto_test.cpp \
+    tool/baseband_autotester_camera/bbat_camera.cpp \
     test.cpp
 
 LOCAL_C_INCLUDES := \
@@ -119,7 +119,6 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/hal1.0/inc \
     $(LOCAL_PATH)/$(HAL_DIR)/inc \
     $(LOCAL_PATH)/$(HAL_DIR)/ \
-    $(LOCAL_PATH)/tool/auto_test/inc \
     $(LOCAL_PATH)/tool/mtrace \
     $(TOP)/external/skia/include/images \
     $(TOP)/external/skia/include/core\
