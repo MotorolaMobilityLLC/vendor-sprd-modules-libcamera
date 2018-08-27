@@ -61,6 +61,7 @@ typedef enum DFS_POLICY {
     CAM_NORMAL,
     CAM_VERYHIGH,
 } dfs_policy_t;
+
 typedef enum CAMERA_PERFORMACE_SCENE {
     CAM_PERFORMANCE_LEVEL_1 = 1,
     CAM_PERFORMANCE_LEVEL_2,
@@ -89,30 +90,16 @@ class SprdCameraSystemPerformance {
     int mCameraDfsPolicyCur;
     int mCurrentPowerHint;
     bool mPowermanageInited;
-    sys_performance_camera_scene mCurSence[2]; // 1.main camera  2.sub camera.
 
-#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_O)
-    void acquirePowerHint(sp<IPower> powermanager, PowerHint id);
-    void releasePowerHint(sp<IPower> powermanager, PowerHint id);
+#if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
+    ::android::sp<::android::PowerHALManager> mPowerManager;
+    ::android::sp<::android::PowerHintScene> mSceneLowPower;
+    ::android::sp<::android::PowerHintScene> mScenePerformance;
 
-    sp<IPower> mPowerManager;
-    sp<IPower> mPowerManagerLowPower;
-    sp<IBase> mPrfmLock;
-    sp<IBase> mPrfmLockLowPower;
-#elif(CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_N)
-    void thermalEnabled(bool flag);
-
-    void enablePowerHintExt(sp<IPowerManager> powermanager,
-                            sp<IBinder> prfmlock, int powerhint_id);
-
-    void disablePowerHintExt(sp<IPowerManager> powermanager,
-                             sp<IBinder> prfmlock);
-
-    sp<IPowerManager> mPowerManager;
-    sp<IPowerManager> mPowerManagerLowPower;
-    sp<IBinder> mPrfmLock;
-    sp<IBinder> mPrfmLockLowPower;
+    void acquirePowerHint(::android::sp<::android::PowerHintScene> mScene);
+    void releasePowerHint(::android::sp<::android::PowerHintScene> mScene);
 #endif
+
     Mutex mLock;
     static Mutex sLock;
 };
