@@ -285,6 +285,9 @@ extern "C" {
 
 		// AI info
 		void* ai_info;
+
+		// XYZ info
+		void* xyz_info;
 	};
 
 	struct awb_calc_result {
@@ -375,6 +378,24 @@ extern "C" {
 	};
 #endif
 
+	// for XYZ color sensor
+	struct xyz_color_info
+	{
+		unsigned int x_data;
+		unsigned int y_data;
+		unsigned int z_data;
+		unsigned int ir_data;
+
+		unsigned int x_raw;
+		unsigned int y_raw;
+		unsigned int z_raw;
+		unsigned int ir_raw;
+
+		unsigned int again;
+		unsigned int atime;
+		unsigned int lux;
+		unsigned int cct;
+	};
 
 
 	// for flash
