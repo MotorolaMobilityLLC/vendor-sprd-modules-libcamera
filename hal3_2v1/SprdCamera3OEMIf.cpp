@@ -5935,7 +5935,8 @@ int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
     ATRACE_CALL();
     HAL_LOGV("E");
     int ret = 0;
-    ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
+    //ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
+    ret = MemIon::Sync_ion_buffer(buffer_fd);
     if (ret) {
         HAL_LOGE("Flush_ion_buffer failed, ret=%d", ret);
         goto exit;
