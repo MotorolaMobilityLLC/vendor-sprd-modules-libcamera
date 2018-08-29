@@ -52,7 +52,8 @@ extern "C" {
 		AWB_CTRL_CMD_SET_STAT_IMG_FORMAT = 0x105,
 		AWB_CTRL_CMD_SET_WORK_MODE = 0x106,
 		AWB_CTRL_CMD_SET_UPDATE_TUNING_PARAM = 0X107,
-		AWB_CTRL_CMD_SET_START_WORK_MODE = 0x108,
+		AWB_CTRL_CMD_SET_AE_STAT_WIN_NUM = 0x108,
+		AWB_CTRL_CMD_SET_START_WORK_MODE = 0x109,
 		AWB_CTRL_CMD_GET_BASE = 0x200,
 		AWB_CTRL_CMD_GET_PARAM_WIN_START = 0X201,
 		AWB_CTRL_CMD_GET_PARAM_WIN_SIZE = 0x202,
@@ -181,6 +182,8 @@ extern "C" {
 		enum awb_ctrl_stat_img_format stat_img_format;
 		struct awb_ctrl_size stat_img_size;
 		struct awb_ctrl_size stat_win_size;
+		struct awb_ctrl_size stat_img_size_ae;
+		struct isp_size src_size;
 		struct awb_ctrl_opt_info otp_info;
 		struct third_lib_info lib_param;
 		void *tuning_param;

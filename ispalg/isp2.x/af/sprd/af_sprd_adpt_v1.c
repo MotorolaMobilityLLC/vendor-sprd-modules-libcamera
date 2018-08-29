@@ -2615,7 +2615,47 @@ static void ae_calibration(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 	ISP_LOGV("(r,g,b) in block4 is (%d,%d,%d)", af->ae_cali_data.r_avg[4], af->ae_cali_data.g_avg[4], af->ae_cali_data.b_avg[4]);
 }
 
-static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
+
+
+static void scl_for_ae_stat(struct af_img_blk_info *rgb,isp_awb_statistic_hist_info_t *dst_data)
+{
+	cmr_u32 i,j,ii,jj;
+	cmr_u64 sum;
+	cmr_u32 blk_num_w = (rgb->block_w < 32) ? 32 : rgb->block_w;
+	cmr_u32 blk_num_h = (rgb->block_h < 32) ? 32 : rgb->block_h;
+	cmr_u32 ratio_h = blk_num_h/32;
+	cmr_u32 ratio_w = blk_num_w/32;
+	struct af_img_blk_statistic * src_data = (struct af_img_blk_statistic *)rgb->data;
+	cmr_u32 *r_stat = src_data->r_info;
+	cmr_u32 *g_stat = src_data->g_info;
+	cmr_u32 *b_stat = src_data->b_info;
+	cmr_u32 *dst_r = dst_data->r_info;
+	cmr_u32 *dst_g = dst_data->g_info;
+	cmr_u32 *dst_b = dst_data->b_info;
+	memset(dst_r,0,1024*sizeof(cmr_u32));
+	memset(dst_g,0,1024*sizeof(cmr_u32));
+	memset(dst_b,0,1024*sizeof(cmr_u32));
+
+	for (i = 0; i < blk_num_h; ++i) {
+		ii = (cmr_u32)(i / ratio_h);
+		for (j = 0; j < blk_num_w; ++j) {
+			jj = j / ratio_w;
+			/*for r channel */
+			sum = r_stat[i * blk_num_w + j];
+			dst_r[ii * 32 + jj] += sum/(ratio_h * ratio_w);
+
+			/*for g channel */
+			sum = g_stat[i * blk_num_w + j];
+			dst_g[ii * 32 + jj] += sum/(ratio_h * ratio_w);
+
+			/*for b channel */
+			sum = b_stat[i * blk_num_w + j];
+			dst_b[ii * 32 + jj] += sum/(ratio_h * ratio_w);
+		}
+	}
+}
+
+static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 {
 #define AE_BLOCK_W 32
 #define AE_BLOCK_H 32
@@ -2627,9 +2667,10 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 	width = af->isp_info.width;
 	height = af->isp_info.height;
 
-	memcpy(&(af->rgb_stat.r_info[0]), rgb->r_info, sizeof(af->rgb_stat.r_info));
-	memcpy(&(af->rgb_stat.g_info[0]), rgb->g_info, sizeof(af->rgb_stat.g_info));
-	memcpy(&(af->rgb_stat.b_info[0]), rgb->b_info, sizeof(af->rgb_stat.b_info));
+	//memcpy(&(af->rgb_stat.r_info[0]), rgb->r_info, sizeof(af->rgb_stat.r_info));
+	//memcpy(&(af->rgb_stat.g_info[0]), rgb->g_info, sizeof(af->rgb_stat.g_info));
+	//memcpy(&(af->rgb_stat.b_info[0]), rgb->b_info, sizeof(af->rgb_stat.b_info));
+	scl_for_ae_stat(rgb,&(af->rgb_stat));
 
 	af->roi_RGBY.num = af->roi.num;
 
@@ -2682,7 +2723,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 
 	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
 	if (0 != strcmp(af->AF_MODE, "none")) {	// test mode only
-		ae_calibration(af, rgb);
+		ae_calibration(af, (struct af_img_blk_statistic *)rgb->data);
 	}
 
 }
@@ -2691,7 +2732,7 @@ static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_ae_info *ae_info = (struct afctrl_ae_info *)param0;
-	struct af_img_blk_statistic *ae_stat_ptr = (struct af_img_blk_statistic *)ae_info->img_blk_info.data;
+	struct af_img_blk_info *ae_stat_ptr = (struct af_img_blk_info *)&(ae_info->img_blk_info);
 	cmr_s32 rtn = AFV1_SUCCESS;
 	if ((0 == af->isp_info.width) || (0 == af->isp_info.height)) {
 		return AFV1_ERROR;

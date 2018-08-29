@@ -747,7 +747,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float bmean;
 				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->monitor_cfg.blk_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
 				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
 				if ((gmean > 200 && gmean < 400) || (caliData->expTime == 0.05 * AEC_LINETIME_PRECESION && caliData->gain == 8 * 128)) {
 					caliData->stateCaliFrameCntSt = frameCount + 1;
@@ -821,7 +821,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float bmean;
 				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->monitor_cfg.blk_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+							  caliData->rBuf, caliData->gBuf, caliData->bBuf,cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
 				if (gmean > 600) {
 
 					double rat = 2;
@@ -885,7 +885,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float bmean;
 				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->monitor_cfg.blk_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
 				caliData->rFrame[caliData->testInd][frmCnt] = rmean;
 				caliData->gFrame[caliData->testInd][frmCnt] = gmean;
 				caliData->bFrame[caliData->testInd][frmCnt] = bmean;

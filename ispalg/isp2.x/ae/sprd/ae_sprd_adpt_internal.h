@@ -192,6 +192,8 @@ extern "C" {
 		cmr_s8 stable_zone_ev[16];
 		cmr_u8 cnvg_stride_ev_num;
 		cmr_s16 cnvg_stride_ev[32];
+		/* just for 4in1 featue */
+		cmr_s16 bv_thd;
 		/*
 		 * Touch ae param
 		 */
@@ -323,6 +325,11 @@ extern "C" {
 		struct ae_sync_para ae_sync_param;
 		cmr_u32 slw_prev_skip_num;
 
+		/*
+		 * add flags for stopping skip frame during main flash after
+		 **/
+		cmr_u32 has_mf;
+		cmr_u32 has_mf_cnt;
 		cmr_u32 glb_gain;
 	};
 

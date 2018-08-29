@@ -80,6 +80,12 @@ struct awb_gain_queue {
 	cmr_u32 size;
 };
 
+struct awb_ae_stat {
+	cmr_u32 r_info[16384];
+	cmr_u32 g_info[16384];
+	cmr_u32 b_info[16384];
+};
+
 struct awb_ctrl_cxt {
 	/*must be the first one */
 	cmr_u32 magic_begin;
@@ -147,7 +153,13 @@ struct awb_ctrl_cxt {
 
 	/*must be the last one */
 	cmr_u32 magic_end;
+
+	struct awb_ae_stat master_ae_stat;
+	struct awb_ae_stat slave_ae_stat; 
 };
+
+struct isp_size g_src_size[4] = {{0,0},{0,0},{0,0},{0,0}};
+struct awb_ctrl_size g_stat_img_size[4] = {{0,0},{0,0},{0,0},{0,0}};
 
 static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param);
 
@@ -549,8 +561,10 @@ static cmr_u32 _awb_get_pix_cnt(struct awb_ctrl_cxt *cxt, void *param)
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct isp_size *in_ptr = (struct isp_size *)param;
 
-	cxt->init_param.stat_win_size.w = in_ptr->w / 2 / 32 * 2;
-	cxt->init_param.stat_win_size.h = in_ptr->h / 2 / 32 * 2;
+	cxt->init_param.stat_win_size.w = in_ptr->w / 2 / cxt->init_param.stat_img_size.w * 2;
+	cxt->init_param.stat_win_size.h = in_ptr->h / 2 / cxt->init_param.stat_img_size.h * 2;
+	g_src_size[cxt->camera_id].w = in_ptr->w;
+	g_src_size[cxt->camera_id].h = in_ptr->h;
 
 	return rtn;
 }
@@ -1100,7 +1114,18 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	_awb_parser_otp_info(param);
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
+	if((param->stat_img_size_ae.w != param->stat_img_size_ae.h) || (param->stat_img_size_ae.w < 32) || (param->stat_img_size_ae.w % 32)){	
+		param->stat_img_size_ae.w = 32;
+		param->stat_img_size_ae.h = 32;
+	}
+	g_src_size[param->camera_id].w = param->src_size.w;
+	g_src_size[param->camera_id].h = param->src_size.h;
+	g_stat_img_size[param->camera_id].w = param->stat_img_size_ae.w;
+	g_stat_img_size[param->camera_id].h = param->stat_img_size_ae.h;
+
 	cxt->stat_img_size = param->stat_img_size;
+	cxt->init_param.stat_img_size.w = param->stat_img_size_ae.w;
+	cxt->init_param.stat_img_size.h = param->stat_img_size_ae.h;
 	cxt->awb_init_param.stat_w = param->stat_img_size.w;
 	cxt->awb_init_param.stat_h = param->stat_img_size.h;
 	cxt->awb_init_param.otp_random_r = param->otp_info.rdm_stat_info.r;
@@ -1292,23 +1317,30 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 			struct awb_sync_info awb_sync;
 
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_STAT_AWB_DATA, NULL, &awb_sync.stat_master_info);
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_STAT_AWB_DATA, NULL, &awb_sync.stat_slave_info);
+			awb_sync.stat_master_info.r_info = cxt->master_ae_stat.r_info;
+			awb_sync.stat_master_info.g_info = cxt->master_ae_stat.g_info;
+			awb_sync.stat_master_info.b_info = cxt->master_ae_stat.b_info;
+			awb_sync.stat_slave_info.r_info = cxt->slave_ae_stat.r_info;
+			awb_sync.stat_slave_info.g_info = cxt->slave_ae_stat.g_info;
+			awb_sync.stat_slave_info.b_info = cxt->slave_ae_stat.b_info;
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_STAT_AWB_DATA, NULL, awb_sync.stat_master_info.r_info);
+			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_STAT_AWB_DATA, NULL, awb_sync.stat_slave_info.r_info);
 
 			struct awb_ctrl_gain gain_master;
 			struct awb_ctrl_gain gain_slave;
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_GAIN_AWB_DATA, NULL, &gain_master);
 			ISP_LOGI("awb_sync master RGB gain:%d,%d,%d.\n",gain_master.r,gain_master.g,gain_master.b);
 
-			awb_sync.stat_master_info.height = 32;
-			awb_sync.stat_master_info.width = 32;
-			awb_sync.stat_slave_info.height = 32;
-			awb_sync.stat_slave_info.width = 32;
+			awb_sync.stat_master_info.height = g_stat_img_size[cxt->camera_id - 2].h;
+			awb_sync.stat_master_info.width = g_stat_img_size[cxt->camera_id - 2].w;
+			awb_sync.stat_slave_info.height = g_stat_img_size[cxt->camera_id].h;
+			awb_sync.stat_slave_info.width = g_stat_img_size[cxt->camera_id].w;
 
 			awb_sync.master_fov = 0;
 			awb_sync.slave_fov = 0;
-			awb_sync.master_pix_cnt = ((1600 / awb_sync.stat_master_info.width) * (1200 / awb_sync.stat_master_info.height)) / 4;
-			awb_sync.slave_pix_cnt = ((1600 / awb_sync.stat_slave_info.width) * (1200 / awb_sync.stat_slave_info.height)) / 4;
+			awb_sync.master_pix_cnt = ((g_src_size[cxt->camera_id - 2].w / awb_sync.stat_master_info.width) * (g_src_size[cxt->camera_id - 2].h / awb_sync.stat_master_info.height)) / 4;
+			awb_sync.slave_pix_cnt = ((g_src_size[cxt->camera_id].w / awb_sync.stat_slave_info.width) * (g_src_size[cxt->camera_id].h / awb_sync.stat_slave_info.height)) / 4;
+
 
 			cmr_u32 slave_ct;
 			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_AWB_DATA, NULL, &slave_ct );
@@ -1390,8 +1422,8 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		calc_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
 		calc_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
 		calc_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		calc_param.stat_img_w = 32;
-		calc_param.stat_img_h = 32;
+		calc_param.stat_img_w = cxt->init_param.stat_img_size.w;
+		calc_param.stat_img_h = cxt->init_param.stat_img_size.h;
 	} else {
 		calc_param.stat_img.r = param.stat_img_awb.chn_img.r;
 		calc_param.stat_img.g = param.stat_img_awb.chn_img.g;
@@ -1624,6 +1656,14 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			ISP_LOGV("AWB_CTRL_CMD_SET_WORK_MODE before _awb_set_gain_manualwb");
 			_awb_set_gain_manualwb(cxt);
 		}
+		break;
+
+	case AWB_CTRL_CMD_SET_AE_STAT_WIN_NUM:
+		cxt->init_param.stat_img_size.w = ((struct isp_size *)in)->w;
+		cxt->init_param.stat_img_size.h = ((struct isp_size *)in)->h;
+
+		g_stat_img_size[cxt->camera_id].w = cxt->init_param.stat_img_size.w;
+		g_stat_img_size[cxt->camera_id].h = cxt->init_param.stat_img_size.h;
 		break;
 
 	case AWB_CTRL_CMD_GET_GAIN:

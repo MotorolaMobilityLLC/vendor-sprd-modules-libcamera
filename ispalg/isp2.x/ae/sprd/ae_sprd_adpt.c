@@ -534,6 +534,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	write_param.dummy = write_item.dumy_line;
 	write_param.isp_gain = write_item.isp_gain;
 	write_param.sensor_gain = write_item.sensor_gain;
+
 	cxt->glb_gain = (cmr_u32) (write_item.isp_gain * 1.0 / 4096 * cxt->backup_rgb_gain + 0.5);
 
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
@@ -1109,6 +1110,21 @@ static cmr_s32 ae_get_bv_by_lum_new(struct ae_ctrl_cxt *cxt, cmr_s32 * bv)
 	return rtn;
 }
 
+static cmr_s32 ae_get_lowlight_flag_by_bv(struct ae_ctrl_cxt *cxt, cmr_u32 * is_lowlight)
+{
+        cmr_s32 rtn = AE_SUCCESS;
+
+        if (NULL == cxt || NULL == is_lowlight) {
+                ISP_LOGE("fail to get is_lowlight by bv, cxt %p is_lowlight %p", cxt, is_lowlight);
+                return AE_ERROR;
+        }
+
+        *is_lowlight = cxt->sync_cur_result.cur_bv < cxt->bv_thd ? 1:0;
+        ISP_LOGV("get is_lowlight %d", *is_lowlight);
+        return rtn;
+}
+
+
 static cmr_s32 ae_get_bv_by_lum(struct ae_ctrl_cxt *cxt, cmr_s32 * bv)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -1142,23 +1158,6 @@ static float ae_get_real_gain(cmr_u32 gain)
 	return real_gain;
 }
 
-static cmr_s32 ae_cfg_monitor_win(struct ae_ctrl_cxt *cxt)
-{
-	cmr_s32 rtn = AE_SUCCESS;
-
-	if (cxt->isp_ops.set_monitor_win) {
-		struct ae_monitor_info info;
-
-		info.win_size = cxt->monitor_cfg.blk_size;
-		info.trim = cxt->monitor_cfg.trim;
-		/*TBD remove it */
-		cxt->cur_status.monitor_shift = 0;
-		rtn = cxt->isp_ops.set_monitor_win(cxt->isp_ops.isp_handler, &info);
-	}
-
-	return rtn;
-}
-
 static cmr_s32 ae_cfg_monitor_bypass(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -1173,18 +1172,35 @@ static cmr_s32 ae_cfg_monitor_bypass(struct ae_ctrl_cxt *cxt)
 	return rtn;
 }
 
-static cmr_s32 ae_cfg_set_aem_mode(struct ae_ctrl_cxt *cxt)
+static cmr_s32 ae_cfg_monitor_block(struct ae_ctrl_cxt *cxt)
 {
-	cmr_s32 ret = AE_SUCCESS;
+	cmr_s32 rtn = AE_SUCCESS;
+	struct ae_monitor_info info;
 
+	info.win_num = cxt->monitor_cfg.blk_num;
+	info.win_size = cxt->monitor_cfg.blk_size;
+	info.trim = cxt->monitor_cfg.trim;
+	info.work_mode = cxt->monitor_cfg.mode;
+	info.skip_num = cxt->monitor_cfg.skip_num;
+	cxt->cur_status.monitor_shift = 0;
+	
 	if (cxt->isp_ops.set_statistics_mode) {
-		cxt->isp_ops.set_statistics_mode(cxt->isp_ops.isp_handler, cxt->monitor_cfg.mode, cxt->monitor_cfg.skip_num);
-	} else {
-		ISP_LOGE("fail to set aem mode");
-		ret = AE_ERROR;
+		rtn = cxt->isp_ops.set_statistics_mode(cxt->isp_ops.isp_handler, (enum ae_statistics_mode)info.work_mode, info.skip_num);
+	}
+	if (cxt->isp_ops.set_monitor_win) {
+		rtn = cxt->isp_ops.set_monitor_win(cxt->isp_ops.isp_handler, &info);
+	}
+	
+	if (cxt->isp_ops.set_blk_num){
+		rtn = cxt->isp_ops.set_blk_num(cxt->isp_ops.isp_handler, &info.win_num);
 	}
 
-	return ret;
+	if (cxt->isp_ops.set_monitor) {
+		rtn = cxt->isp_ops.set_monitor(cxt->isp_ops.isp_handler, info.skip_num);
+	}
+
+	ISP_LOGV("rtn=%d win_num(%dx%d), win_size(%dx%d) skip=%d mode=%d",rtn,info.win_num.w,info.win_num.h, info.win_size.w,info.win_size.h,info.skip_num,info.work_mode);
+	return rtn;
 }
 
 static cmr_s32 ae_set_g_stat(struct ae_ctrl_cxt *cxt, struct ae_stat_mode *stat_mode)
@@ -1201,7 +1217,7 @@ static cmr_s32 ae_set_g_stat(struct ae_ctrl_cxt *cxt, struct ae_stat_mode *stat_
 		goto EXIT;
 	}
 
-	rtn = ae_cfg_monitor_win(cxt);
+	rtn = ae_cfg_monitor_block(cxt);
   EXIT:
 	return rtn;
 }
@@ -1215,7 +1231,7 @@ static cmr_s32 ae_set_scaler_trim(struct ae_ctrl_cxt *cxt, struct ae_trim *trim)
 		if (AE_SUCCESS != rtn) {
 			goto EXIT;
 		}
-		rtn = ae_cfg_monitor_win(cxt);
+		rtn = ae_cfg_monitor_block(cxt);
 	} else {
 		ISP_LOGE("trim pointer is NULL\n");
 		rtn = AE_ERROR;
@@ -1343,33 +1359,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_MAIN_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_AFTER");
-		cxt->cur_status.settings.flicker = cxt->cur_flicker;
-		if (cxt->camera_id && cxt->fdae.pause)
-			cxt->fdae.pause = 0;
-		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
-		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
-		cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
-		cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
-		cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
-		cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
-		cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
-		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
-		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
-		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
-		cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
-		cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
-
-		memset((void *)&cxt->exp_data, 0, sizeof(cxt->exp_data));
-		cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
-		cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
-		cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
-		cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
-		cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
-
-		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
-
-		ae_set_skip_update(cxt);
-
+		cxt->has_mf = 1;
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 0);
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
@@ -1435,24 +1425,11 @@ static cmr_s32 ae_crtl_set_flash_mode (struct ae_ctrl_cxt *cxt,cmr_handle param 
 	return rtn;
 }
 
-static cmr_s32 ae_cfg_monitor_skip(struct ae_ctrl_cxt *cxt)
-{
-	cmr_s32 rtn = AE_SUCCESS;
-
-	if (cxt->isp_ops.set_monitor) {
-		rtn = cxt->isp_ops.set_monitor(cxt->isp_ops.isp_handler, cxt->monitor_cfg.skip_num);
-	}
-
-	return rtn;
-}
-
 static cmr_s32 ae_cfg_monitor(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 
-	ae_cfg_monitor_win(cxt);
-
-	ae_cfg_monitor_skip(cxt);
+	ae_cfg_monitor_block(cxt);
 
 	ae_cfg_monitor_bypass(cxt);
 
@@ -1484,7 +1461,7 @@ static cmr_s32 ae_cvt_exposure_time2line(struct ae_exp_gain_table *src[AE_FLICKE
 			dst[AE_FLICKER_50HZ]->exposure[i] = (cmr_s32) (tmp_1 + 0.5);
 			if (0 == dst[AE_FLICKER_50HZ]->exposure[i]) {
 				dst[AE_FLICKER_50HZ]->exposure[i] = 1;
-				ISP_LOGV("50HZ [%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32) (dst[AE_FLICKER_50HZ]->exposure[i] * linetime + 0.5));
+				ISP_LOGE("50HZ [%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32) (dst[AE_FLICKER_50HZ]->exposure[i] * linetime + 0.5));
 			}
 			dst[AE_FLICKER_50HZ]->again[i] = (cmr_s32) (0.5 + 1.0 * product / (dst[AE_FLICKER_50HZ]->exposure[i] * linetime));
 			if (dst[AE_FLICKER_50HZ]->again[i] < AE_BASE_GAIN) {
@@ -1500,7 +1477,7 @@ static cmr_s32 ae_cvt_exposure_time2line(struct ae_exp_gain_table *src[AE_FLICKE
 				exp_counts = (cmr_u32) (1.0 * src[AE_FLICKER_50HZ]->exposure[i] / thrd + 0.5);
 				if (exp_counts < 1) {
 					exp_counts = 1;
-					ISP_LOGV("[%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32) (exp_counts * thrd + 0.5));
+					ISP_LOGE("[%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32) (exp_counts * thrd + 0.5));
 				}
 				dst[AE_FLICKER_60HZ]->exposure[i] = (cmr_s32) (1.0 * (exp_counts * thrd) / linetime + 0.5);
 				dst[AE_FLICKER_60HZ]->again[i] = (cmr_s32) (1.0 * product / (dst[AE_FLICKER_60HZ]->exposure[i] * linetime) + 0.5);
@@ -1523,7 +1500,7 @@ static cmr_s32 ae_cvt_exposure_time2line(struct ae_exp_gain_table *src[AE_FLICKE
 				tmp_1 = (cmr_s32) (1.0 * exp_counts * thrd / linetime + 0.5);
 				if (0 == (cmr_s32) tmp_1) {
 					tmp_1 = 1;
-					ISP_LOGV("[%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32) (tmp_1 * linetime + 0.5));
+					ISP_LOGE("[%d]: exp: %d, and will be fixed to %d\n", i, src[AE_FLICKER_50HZ]->exposure[i], (cmr_u32) (tmp_1 * linetime + 0.5));
 				}
 				dst[AE_FLICKER_60HZ]->exposure[i] = (cmr_u32) (tmp_1 + 0.5);
 				dst[AE_FLICKER_60HZ]->again[i] = (cmr_u32) (1.0 * product / tmp_1 + 0.5);
@@ -1665,8 +1642,10 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	cxt->cur_status.log_level = g_isp_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
-	cxt->cur_status.win_size = cxt->monitor_cfg.blk_size;
-	cxt->cur_status.win_num = cxt->monitor_cfg.blk_num;
+	cxt->cur_status.win_size.w = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_num.w/32;
+	cxt->cur_status.win_size.h = cxt->monitor_cfg.blk_size.h * cxt->monitor_cfg.blk_num.h/32;
+	cxt->cur_status.win_num.w = 32;
+	cxt->cur_status.win_num.h = 32;
 	cxt->cur_status.awb_gain.r = 1024;
 	cxt->cur_status.awb_gain.g = 1024;
 	cxt->cur_status.awb_gain.b = 1024;
@@ -1790,9 +1769,6 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	/* control information for sensor update */
 	cxt->checksum = ae_get_checksum();
 	cxt->end_id = AE_END_ID;
-
-	/* set ae monitor work mode */
-	ae_cfg_set_aem_mode(cxt);
 
 	return AE_SUCCESS;
 }
@@ -2238,7 +2214,6 @@ static cmr_s32 ae_set_restore_skip_update_cnt(struct ae_ctrl_cxt *cxt)
 static int32_t ae_stats_data_preprocess(cmr_u32 * src_aem_stat, cmr_u16 * dst_aem_stat, struct ae_size aem_blk_size, struct ae_size aem_blk_num, cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32 *) src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32 *) src_aem_stat + stat_blocks;
@@ -2247,32 +2222,26 @@ static int32_t ae_stats_data_preprocess(cmr_u32 * src_aem_stat, cmr_u16 * dst_ae
 	cmr_u16 *dst_g = (cmr_u16 *) dst_aem_stat + stat_blocks;
 	cmr_u16 *dst_b = (cmr_u16 *) dst_aem_stat + stat_blocks * 2;
 	cmr_u16 max_value = 1023;
-	cmr_u64 sum = 0;
-	cmr_u16 avg = 0;
 	cmr_u32 i = 0;
 	cmr_u16 r = 0, g = 0, b = 0;
 
-	if (bayer_pixels < 1)
-		return AE_ERROR;
+	UNUSED(aem_blk_size);
 
 	for (i = 0; i < stat_blocks; i++) {
 /*for r channel */
-		sum = *src_r_stat++;
-		sum = sum << aem_shift;
-		avg = sum / bayer_pixels;
-		r = avg > max_value ? max_value : avg;
+		r = *src_r_stat++;
+		r = r << aem_shift;
+		r = r > max_value ? max_value : r;
 
 /*for g channel */
-		sum = *src_g_stat++;
-		sum = sum << aem_shift;
-		avg = sum / bayer_pixels;
-		g = avg > max_value ? max_value : avg;
+		g = *src_g_stat++;
+		g = g << aem_shift;
+		g = g > max_value ? max_value : g;
 
 /*for b channel */
-		sum = *src_b_stat++;
-		sum = sum << aem_shift;
-		avg = sum / bayer_pixels;
-		b = avg > max_value ? max_value : avg;
+		b = *src_b_stat++;
+		b = b << aem_shift;
+		b = b > max_value ? max_value : b;
 
 		dst_r[i] = r;
 		dst_g[i] = g;
@@ -2357,9 +2326,9 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.bGain = current_status->awb_cur_gain.b;
 	in.isFlash = 0;				/*need to check the meaning */
 	in.flickerMode = current_status->settings.flicker;
-	in.staW = cxt->monitor_cfg.blk_num.w;
-	in.staH = cxt->monitor_cfg.blk_num.h;
-	blk_num = cxt->monitor_cfg.blk_num.w * cxt->monitor_cfg.blk_num.h;
+	in.staW = cxt->cur_status.win_num.w;
+	in.staH = cxt->cur_status.win_num.h;
+	blk_num = cxt->cur_status.win_num.w * cxt->cur_status.win_num.h;
 	in.rSta = (cmr_u16 *) & cxt->aem_stat_rgb[0];
 	in.gSta = (cmr_u16 *) & cxt->aem_stat_rgb[0] + blk_num;
 	in.bSta = (cmr_u16 *) & cxt->aem_stat_rgb[0] + 2 * blk_num;
@@ -2439,12 +2408,12 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	if (cxt->aem_effect_delay == cxt->cur_param->flash_control_param.aem_effect_delay) {
 		cxt->aem_effect_delay = 0;
 
-		blk_num = cxt->monitor_cfg.blk_num.w * cxt->monitor_cfg.blk_num.h;
+		blk_num = cxt->cur_status.win_num.w * cxt->cur_status.win_num.h;
 		in = &cxt->flash_esti_input;
 		in->aeExposure = current_status->effect_expline * current_status->line_time / SENSOR_LINETIME_BASE;
 		in->aeGain = current_status->effect_gain;
-		in->staW = cxt->monitor_cfg.blk_num.w;
-		in->staH = cxt->monitor_cfg.blk_num.h;
+		in->staW = cxt->cur_status.win_num.w;
+		in->staH = cxt->cur_status.win_num.h;
 		in->isFlash = 1;		/*need to check the meaning */
 		memcpy((cmr_handle *) & in->rSta[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], sizeof(in->rSta));
 		memcpy((cmr_handle *) & in->gSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + blk_num), sizeof(in->gSta));
@@ -2487,9 +2456,9 @@ static cmr_s32 flash_high_flash_reestimation(struct ae_ctrl_cxt *cxt)
 	struct Flash_mfCalcInput *input = &cxt->flash_main_esti_input;
 	struct Flash_mfCalcOutput *output = &cxt->flash_main_esti_result;
 	memset((void *)input, 0, sizeof(struct Flash_mfCalcInput));
-	blk_num = cxt->monitor_cfg.blk_num.w * cxt->monitor_cfg.blk_num.h;
-	input->staW = cxt->monitor_cfg.blk_num.w;
-	input->staH = cxt->monitor_cfg.blk_num.h;
+	blk_num = cxt->cur_status.win_num.w * cxt->cur_status.win_num.h;
+	input->staW = cxt->cur_status.win_num.w;
+	input->staH = cxt->cur_status.win_num.h;
 	input->rGain = cxt->cur_status.awb_gain.r;
 	input->gGain = cxt->cur_status.awb_gain.g;
 	input->bGain = cxt->cur_status.awb_gain.b;
@@ -2601,14 +2570,14 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		current_status->settings.min_fps = cxt->fps_range.min;
 	}
 
-	if ((FLASH_PRE_BEFORE <= cxt->cur_status.settings.flash) && (FLASH_MAIN_AFTER_RECEIVE >= cxt->cur_status.settings.flash)) {
+	if (0 < cxt->cur_status.settings.flash) {
 		ISP_LOGV("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->settings.flash);
 		current_status->settings.flicker = cxt->cur_flicker;
 	}
 
 	if (0 != cxt->flash_ver) {
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) || (FLASH_PRE == current_status->settings.flash)) {
-			rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->monitor_cfg.blk_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift);
+			rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->monitor_cfg.blk_size, cxt->cur_status.win_size, current_status->monitor_shift);
 		}
 
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) && !cxt->send_once[0]) {
@@ -2629,7 +2598,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 				ISP_LOGE("ae_flash estimation does not work well");
 			}
 			if (FLASH_MAIN == current_status->settings.flash) {
-				rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->monitor_cfg.blk_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift);
+				rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->cur_status.win_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift);
 				flash_high_flash_reestimation(cxt);
 				ISP_LOGV("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain,
 						 cxt->flash_main_esti_result.captureBGain);
@@ -2641,6 +2610,38 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 	return rtn;
 }
+static cmr_s32 sensor_param_updating_interface(struct ae_ctrl_cxt *cxt)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+
+	cxt->cur_status.settings.flicker = cxt->cur_flicker;
+	if (cxt->camera_id && cxt->fdae.pause)
+		cxt->fdae.pause = 0;
+	cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
+	cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
+	cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
+	cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
+	cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
+	cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
+	cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
+	cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
+	cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
+	cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
+	cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
+	cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
+
+	memset((void *)&cxt->exp_data, 0, sizeof(cxt->exp_data));
+	cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+	cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
+	cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
+	cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
+	cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
+
+	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
+
+	ae_set_skip_update(cxt);
+	return rtn;
+}
 
 static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 {
@@ -2650,7 +2651,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	cmr_int cb_type;
 	cmr_s32 main_flash_counts = 0;
 	cmr_s32 main_flash_capture_counts = 0;
-	
+
 	struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
 
 	/* for flash algorithm 0 */
@@ -2706,6 +2707,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->settings.flash) {
+
 			ISP_LOGI("ae_flash0_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
@@ -2778,6 +2780,16 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
 				ISP_LOGI("ae_flash1_callback do-capture!\r\n");
+			} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
+				sensor_param_updating_interface(cxt);
+				ISP_LOGI("ae_flash1_callback update next prev-param!\r\n");
+
+				struct ae_flash_cfg cfg;
+				cfg.led_idx = 0;
+				cfg.type = AE_FLASH_TYPE_MAIN;
+				cfg.led0_enable = 0;
+				cfg.led1_enable = 0;
+				cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 			} else {
 				if (1 > cxt->send_once[4]) {
 					ISP_LOGI("ae_flash1 wait-main-flash!\r\n");
@@ -2973,8 +2985,8 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_re
 
 	result->is_skip_cur_frame = 0;
 	result->monitor_info.trim = cxt->monitor_cfg.trim;
-	result->monitor_info.win_num = cxt->monitor_cfg.blk_num;
-	result->monitor_info.win_size = cxt->monitor_cfg.blk_size;
+	result->monitor_info.win_num = cxt->cur_status.win_num;
+	result->monitor_info.win_size = cxt->cur_status.win_size;
 	result->ae_ev.ev_index = cxt->cur_status.settings.ev_index;
 	result->flash_param.captureFlashEnvRatio = cxt->flash_esti_result.captureFlashRatio;
 	result->flash_param.captureFlash1ofALLRatio = cxt->flash_esti_result.captureFlash1Ratio;
@@ -3576,6 +3588,11 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->zsl_flag = work_info->zsl_flag;
 	ISP_LOGV("zsl_flag %d", cxt->zsl_flag);
 
+	if((work_info->blk_num.w != work_info->blk_num.h) || (work_info->blk_num.w < 32) || (work_info->blk_num.w % 32)){
+		work_info->blk_num.w = 32;
+		work_info->blk_num.h = 32;
+	}
+
 	if (work_info->mode >= AE_WORK_MODE_MAX) {
 		ISP_LOGE("fail to set work mode");
 		work_info->mode = AE_WORK_MODE_COMMON;
@@ -3610,6 +3627,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	else
 		cxt->binning_factor_before = 1;
 	cxt->snr_info = work_info->resolution_info;
+	cxt->monitor_cfg.blk_num.w = work_info->blk_num.w;
+	cxt->monitor_cfg.blk_num.h = work_info->blk_num.h;
 	if (0 != work_info->resolution_info.binning_factor)
 		cxt->binning_factor_after = work_info->resolution_info.binning_factor;
 	else
@@ -3671,7 +3690,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	trim.w = work_info->resolution_info.frame_size.w;
 	trim.h = work_info->resolution_info.frame_size.h;
 	ae_update_monitor_unit(cxt, &trim);
-	ae_cfg_set_aem_mode(cxt);
 	ae_cfg_monitor(cxt);
 	/*for sharkle monitor */
 	ae_set_monitor(cxt, &trim);
@@ -3679,8 +3697,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->calc_results.monitor_info.trim = cxt->monitor_cfg.trim;
 	cxt->calc_results.monitor_info.win_num = cxt->monitor_cfg.blk_num;
 	cxt->calc_results.monitor_info.win_size = cxt->monitor_cfg.blk_size;
-	cxt->cur_status.win_size = cxt->monitor_cfg.blk_size;
-	cxt->cur_status.win_num = cxt->monitor_cfg.blk_num;
+
 	mode = AE_WORK_MODE_COMMON;	//AE block only be in common
 	cxt->cur_status.settings.iso_special_mode = 1;
 
@@ -3886,7 +3903,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		if (0 == work_info->is_snapshot) {
 			cxt->last_enable = 0;
 			cxt->cur_status.settings.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
-			cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;		
+			cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
 			cxt->cur_status.settings.is_snapshot =  work_info->is_snapshot;
 			ae_set_restore_cnt(cxt);
 		} else {
@@ -4557,6 +4574,64 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	return rtn;
 }
 
+#define BLK_NUM_W_ALG 32
+static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
+{
+	cmr_u32 i,j,ii,jj;
+	cmr_u64 r = 0, g = 0, b = 0;
+	cmr_u64 sum, avg, max_value = 0x3ff;
+	cmr_u32 blk_num_w = cxt->monitor_cfg.blk_num.w;
+	cmr_u32 blk_num_h = cxt->monitor_cfg.blk_num.h;
+	cmr_u32 bayer_pixels = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/4;
+	cmr_u32 *src_aem_stat = (cmr_u32 *) img_stat;
+	cmr_u32 *r_stat = (cmr_u32*)src_aem_stat;
+	cmr_u32 *g_stat = (cmr_u32*)src_aem_stat + 16384;
+	cmr_u32 *b_stat = (cmr_u32*)src_aem_stat + 2 * 16384;
+
+	cmr_u32 ratio_h = blk_num_h/BLK_NUM_W_ALG;
+	cmr_u32 ratio_w = blk_num_w/BLK_NUM_W_ALG;
+
+	memset(cxt->sync_aem,0,1024 * 3* sizeof(cmr_u32));
+
+	cxt->cur_status.base_size.h = cxt->monitor_cfg.blk_size.h;
+	cxt->cur_status.base_size.w = cxt->monitor_cfg.blk_size.w;
+	cxt->cur_status.base_num.w = blk_num_w;
+	cxt->cur_status.base_num.h = blk_num_h;
+	cxt->cur_status.win_num.w = 32;
+	cxt->cur_status.win_num.h = 32;
+	cxt->cur_status.win_size.w = ratio_w * cxt->monitor_cfg.blk_size.w;
+	cxt->cur_status.win_size.h = ratio_h * cxt->monitor_cfg.blk_size.h;
+
+	for (i = 0; i < blk_num_h; ++i) {
+		ii = (cmr_u32)(i / ratio_h);
+		for (j = 0; j < blk_num_w; ++j) {
+			jj = j / ratio_w;
+			/*for r channel */
+			sum = r_stat[i * blk_num_w + j];
+			avg = sum/ bayer_pixels;
+			r = avg > max_value ? max_value : avg;
+
+			/*for g channel */
+			sum = g_stat[i * blk_num_w + j];
+			avg = sum/ bayer_pixels;
+			g = avg > max_value ? max_value : avg;
+
+			/*for b channel */
+			sum = b_stat[i * blk_num_w + j];
+			avg = sum/ bayer_pixels;
+			b = avg > max_value ? max_value : avg;
+
+			cxt->sync_aem[ii * BLK_NUM_W_ALG + jj] += r/(ratio_w * ratio_h);
+			cxt->sync_aem[ii * BLK_NUM_W_ALG + jj + 1024] += g/(ratio_w * ratio_h);
+			cxt->sync_aem[ii * BLK_NUM_W_ALG + jj + 2048] += b/(ratio_w * ratio_h);
+
+			cxt->cur_status.base_img[i * blk_num_w + j] = r;
+			cxt->cur_status.base_img[i * blk_num_w + j + blk_num_w * blk_num_h] = g;
+			cxt->cur_status.base_img[i * blk_num_w + j + 2 * blk_num_w * blk_num_h] = b;
+		}
+	}
+}
+
 static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
@@ -4598,7 +4673,8 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.awb_cur_gain.g = calc_in->awb_cur_gain_g;
 	cxt->cur_status.awb_cur_gain.r = calc_in->awb_cur_gain_r;
 	cxt->cur_status.awb_mode = calc_in->awb_mode;
-	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
+	//memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
+	down_size_for_ae_stat(cxt, calc_in->stat_img);
 	cxt->cur_status.stat_img = cxt->sync_aem;
 	stat_chnl_len = calc_in->binning_stat_info.binning_size.w * calc_in->binning_stat_info.binning_size.h;
 	memcpy(&cxt->sync_binning_stats_data[0], calc_in->binning_stat_info.r_info, stat_chnl_len * sizeof(cmr_u16));
@@ -4615,7 +4691,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.effect_gain = cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
 #if CONFIG_ISP_2_3
 	/*it will be enable lately */
-	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_cfg.blk_num, cxt->exp_data.actual_data.isp_gain);
+	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->cur_status.win_num, cxt->exp_data.actual_data.isp_gain);
 #endif
 	cxt->cur_result.face_lum = current_result->face_lum;	//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
@@ -4696,6 +4772,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 {
 	cmr_s32 rtn = AE_ERROR;
 	cmr_int cb_type;
+	cmr_s32 stop_skip_en;
 	cmr_u32 stat_chnl_len = 0;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status = NULL;
@@ -4779,7 +4856,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.awb_cur_gain.g = calc_in->awb_cur_gain_g;
 	cxt->cur_status.awb_cur_gain.r = calc_in->awb_cur_gain_r;
 	cxt->cur_status.awb_mode = calc_in->awb_mode;
-	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
+	//memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
+	down_size_for_ae_stat(cxt, calc_in->stat_img);
 	cxt->cur_status.stat_img = cxt->sync_aem;
 	stat_chnl_len = calc_in->binning_stat_info.binning_size.w * calc_in->binning_stat_info.binning_size.h;
 	memcpy(&cxt->sync_binning_stats_data[0], calc_in->binning_stat_info.r_info, stat_chnl_len * sizeof(cmr_u16));
@@ -4799,14 +4877,24 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		ae_dynamic_sync = 1;
 	}
 	ISP_LOGV(" AE_sync mode:0x%x.\n",ae_dynamic_sync);
-	
+
 	if(ae_dynamic_sync == 1){
 	cmr_s32 master_sync_aem[3*1024] = {0},slave_sync_aem[3*1024]= {0};
+
+#if CONFIG_ISP_2_5
+	cmr_s32 aem_blk_num = 1024;
+	rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_AEM_STAT_BLK_NUM, &aem_blk_num, NULL);
+#endif
+
+	if(rtn)
+	{
+		ISP_LOGE("Dynamic AE_sync mode, set AEM blk num err.\n");
+	}
 	if(cxt->is_multi_mode && cxt->sensor_role)
 	{
 		for(int i = 0;i < 3*1024;i++)
 		{
-			master_sync_aem[i] = cxt->sync_aem[i] /(cxt->cur_status.win_size.h *  cxt->cur_status.win_size.w) ;
+			master_sync_aem[i] = cxt->sync_aem[i] /4 ;
 		}
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_AEM_SYNC_STAT, master_sync_aem, NULL );
 		if(rtn)
@@ -4823,7 +4911,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	{
 		for(int i = 0;i < 3*1024;i++)
 		{
-			slave_sync_aem[i] = cxt->sync_aem[i] /(cxt->cur_status.win_size.h *  cxt->cur_status.win_size.w) ;
+			slave_sync_aem[i] = cxt->sync_aem[i] /4;
 		}
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_AEM_SYNC_STAT,slave_sync_aem, NULL );
 
@@ -4944,7 +5032,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.effect_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
 #if CONFIG_ISP_2_3
 	/*it will be enable lately */
-	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->monitor_cfg.blk_num, cxt->exp_data.actual_data.isp_gain);
+	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->cur_status.win_num, cxt->exp_data.actual_data.isp_gain);
 #endif
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
@@ -5006,6 +5094,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	flash_calibration_script((cmr_handle) cxt);	/*for flash calibration */
 	ae_set_led(cxt);
 
+	memcpy(&cxt->cur_status.hist_info, &calc_in->hist_stats, sizeof(struct ae_hist_info));
+
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	if(!cxt->is_snapshot) {
 		hdr_stat.hist256 = calc_in->hist_stats.value;
@@ -5065,6 +5155,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
 	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32)((ae_time1 - ae_time0) / 1000));
+
 	if (rtn) {
 		ISP_LOGE("fail to calc ae misc");
 		rtn = AE_ERROR;
@@ -5172,6 +5263,44 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->exp_data.lib_data.gain = current_result->wts.cur_again;
 	cxt->exp_data.lib_data.dummy = current_result->wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = current_status->line_time;
+
+	if (((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash)
+	|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash))
+	&& (cxt->send_once[4] > (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 2)) {
+		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
+		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
+		cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
+		cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
+		cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
+		cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
+		cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
+		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
+		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
+		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
+		cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
+		cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
+
+		memset((void *)&cxt->exp_data, 0, sizeof(cxt->exp_data));
+		cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+		cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
+		cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
+		cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
+		cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
+		ISP_LOGI("maintain prev-param during post-mainflash");
+	}
+	if (cxt->has_mf) {
+		if (cxt->has_mf_cnt==1) {
+			cxt->has_mf = cxt->has_mf_cnt = 0;
+			cb_type = AE_CB_CONVERGED;
+			stop_skip_en = 1;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stop_skip_en);
+			ISP_LOGI("skip_num stop \r\n");
+		} else {
+			ISP_LOGI("skip_num prepare\r\n");
+			cxt->has_mf_cnt++;
+		}
+	}
+
 	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 
 #ifdef CONFIG_ISP_2_2
@@ -5358,13 +5487,14 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 	case AE_SET_TOUCH_ZONE:
 		rtn = ae_set_touch_zone(cxt, param);
 		break;
-
+	case AE_GET_LOWLIGHT_FLAG_BY_BV:
+		rtn = ae_get_lowlight_flag_by_bv(cxt, (cmr_u32 *) result);
+		break;
 	case AE_GET_GLB_GAIN:
 		if (result) {
 			*(cmr_u32 *) result = cxt->glb_gain;
 		}
 		break;
-
 	default:
 		rtn = AE_ERROR;
 		break;
@@ -5582,6 +5712,9 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	}
 
 	rtn = ae_misc_deinit(cxt->misc_handle, NULL, NULL);
+	if(cxt->cur_status.base_img)
+		free(cxt->cur_status.base_img);
+	cxt->cur_status.base_img = NULL;
 
 	if (AE_SUCCESS != rtn) {
 		ISP_LOGE("fail to deinit ae misc ");
@@ -5652,7 +5785,13 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	cxt->sensor_role = init_param->sensor_role;
 	cxt->is_multi_mode = init_param->is_multi_mode;
-
+	cxt->bv_thd = init_param->bv_thd;
+	cxt->cur_status.base_img = (cmr_u32 *)malloc(3*16384*sizeof(cmr_u32));
+	if(NULL == cxt->cur_status.base_img){
+                rtn = AE_ALLOC_ERROR;
+                ISP_LOGE("fail to malloc");
+                goto ERR_EXIT;
+	}
 	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
 
 	// parser ae otp info
@@ -5718,8 +5857,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	/* HJW_S: dual flash algorithm init */
 	flash_in.debug_level = 1;	/*it will be removed in the future, and get it from dual flash tuning parameters */
 	flash_in.tune_info = &cxt->dflash_param[0];
-	flash_in.statH = cxt->monitor_cfg.blk_num.h;
-	flash_in.statW = cxt->monitor_cfg.blk_num.w;
+	flash_in.statH = 32;
+	flash_in.statW = 32;
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
 	flash_out.version = 1;		//remove later
 	cxt->flash_ver = flash_out.version;

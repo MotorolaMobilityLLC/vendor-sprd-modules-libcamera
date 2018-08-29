@@ -280,8 +280,9 @@ extern "C" {
 		cmr_u16 is_snapshot;
 		cmr_u32 shift;
 		cmr_u32 dv_mode;
-		struct ae_size win_num;
-		struct ae_size win_size;
+		struct ae_size win_num;/*stats block number*/
+		struct ae_size win_size;/*stats block size*/
+		struct ae_rect stats_rect;/*stats data ROI*/
 		enum ae_work_mode mode;
 		struct ae_resolution_info resolution_info;
 		struct ae_measure_highflash highflash_measure;
@@ -291,6 +292,7 @@ extern "C" {
 		cmr_u32 capture_skip_num;
 		cmr_u32 zsl_flag;
 		cmr_u16 binning_factor;
+		struct ae_size blk_num;
 	};
 
 	struct ae_set_iso {
@@ -345,9 +347,13 @@ extern "C" {
 
 	struct ae_monitor_info {
 		cmr_u32 shift;
+		cmr_u32 work_mode;/*single or continue mode*/
+		cmr_u32 skip_num;/*skip num: default value is 0*/
 		struct ae_size win_size;
 		struct ae_size win_num;
 		struct ae_trim trim;
+		struct ae_rgb_l high_region_thrd;/*it will come from ae algorithm tuning parameter, not from AEM param*/
+		struct ae_rgb_l low_region_thrd;/*it will come from ae algorithm tuning parameter, not from AEM param*/
 	};
 
 	struct ae_scene_mode_info {
@@ -435,6 +441,7 @@ extern "C" {
 		 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
 		 cmr_int(*write_multi_ae) (cmr_handle handler, void *ae_info);
 		 cmr_s32(*set_stats_monitor) (cmr_handle handler, struct ae_stats_monitor_cfg * in_param);
+		 cmr_s32(*set_blk_num) (cmr_handle handler, struct ae_size *blk_num);
 	};
 
 	struct ae_stat_img_info {
@@ -480,6 +487,7 @@ extern "C" {
 		struct ae_rect rect;
 		cmr_u32 face_lum;
 		cmr_s32 pose;			/* face pose: frontal, half-profile, full-profile */
+		cmr_s32 angle;
 	};
 
 	struct ae_fd_param {

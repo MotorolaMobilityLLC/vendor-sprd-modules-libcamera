@@ -461,6 +461,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_stats_monitor_cfg *stats_cfg_ptr = NULL;
+	struct isp_dev_rgb_gain_info *rgb_gain_info = NULL;
 	struct isp_u_blocks_info aem_block_info;
 	cmr_u32 i;
 	cmr_u32 param_num = 0;
@@ -523,7 +524,12 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			else
 				aem_block_info.scene_id = ISP_MODE_PRV;
 
-			aem_block_info.rgb_gain_coeff = *(cmr_u32 *)param0;
+			rgb_gain_info = (struct isp_dev_rgb_gain_info *)param0;
+			aem_block_info.gain_info.bypass = rgb_gain_info->bypass;
+			aem_block_info.gain_info.global_gain = rgb_gain_info->global_gain;
+			aem_block_info.gain_info.r_gain = rgb_gain_info->r_gain;
+			aem_block_info.gain_info.g_gain = rgb_gain_info->g_gain;
+			aem_block_info.gain_info.b_gain = rgb_gain_info->b_gain;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
 		}
 		break;

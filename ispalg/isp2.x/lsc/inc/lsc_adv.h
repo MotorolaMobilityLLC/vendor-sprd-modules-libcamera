@@ -638,6 +638,7 @@ struct alsc_do_simulation {
 		struct third_lib_info *lib_info;
 		cmr_u16 *dst_gain;
 		cmr_u16 *lsc_buffer;
+		cmr_u32 *ae_stat;
 		cmr_u32 gain_pattern;
 	};
 

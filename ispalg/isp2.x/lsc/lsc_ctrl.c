@@ -863,6 +863,7 @@ static void *lsc_sprd_init(void *in, void *out)
 	cxt->gain_pattern = init_param->gain_pattern;
 
 	cxt->lib_info = &init_param->lib_param;
+	cxt->ae_stat = (cmr_u32 *)malloc(1024*3*sizeof(cmr_u32));
 
 	rtn = _lscsprd_load_lib(cxt);
 	if (LSC_SUCCESS != rtn) {
@@ -935,12 +936,55 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 	free(cxt->lsc_buffer);
 	cxt->lsc_buffer = NULL;
 
+	if(cxt->ae_stat)
+		free(cxt->ae_stat);
+
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
 	cxt = NULL;
 	ISP_LOGI("done rtn = %d", rtn);
 
 	return rtn;
+}
+
+static void lsc_scl_for_ae_stat(struct lsc_ctrl_context *cxt, struct lsc_adv_calc_param *param)
+{
+	cmr_u32 i,j,ii,jj;
+	cmr_u64 r = 0, g = 0, b = 0;
+	cmr_u32 blk_num_w = param->stat_size.w;
+	cmr_u32 blk_num_h = param->stat_size.h;
+	cmr_u32 *r_stat = (cmr_u32*)param->stat_img.r;
+	cmr_u32 *g_stat = (cmr_u32*)param->stat_img.gr;
+	cmr_u32 *b_stat = (cmr_u32*)param->stat_img.b;
+
+	blk_num_h = (blk_num_h < 32)? 32:blk_num_h;
+	blk_num_w = (blk_num_w < 32)? 32:blk_num_w;
+	cmr_u32 ratio_h = blk_num_h/32;
+	cmr_u32 ratio_w = blk_num_w/32;
+
+	memset(cxt->ae_stat,0,1024 * 3* sizeof(cmr_u32));
+
+	for (i = 0; i < blk_num_h; ++i) {
+		ii = (cmr_u32)(i / ratio_h);
+		for (j = 0; j < blk_num_w; ++j) {
+			jj = j / ratio_w;
+			/*for r channel */
+			r = r_stat[i * blk_num_w + j];
+			/*for g channel */
+			g = g_stat[i * blk_num_w + j];
+			/*for b channel */
+			b = b_stat[i * blk_num_w + j];
+
+			cxt->ae_stat[ii * 32 + jj] += r/(ratio_w * ratio_h);
+			cxt->ae_stat[ii * 32 + jj + 1024] += g/(ratio_w * ratio_h);
+			cxt->ae_stat[ii * 32 + jj + 2048] += b/(ratio_w * ratio_h);
+		}
+	}
+	param->stat_img.r = cxt->ae_stat;
+	param->stat_img.gr = param->stat_img.gb = &cxt->ae_stat[1024];
+	param->stat_img.b = &cxt->ae_stat[2048];
+	param->stat_size.w = 32;
+	param->stat_size.h = 32;
 }
 
 static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
@@ -958,6 +1002,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	cxt = (struct lsc_ctrl_context *)handle;
+	lsc_scl_for_ae_stat(cxt,param);
 
 	result->dst_gain = cxt->dst_gain;
 	ATRACE_BEGIN(__FUNCTION__);

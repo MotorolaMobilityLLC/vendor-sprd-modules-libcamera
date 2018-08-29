@@ -66,6 +66,20 @@ static cmr_s32 ae_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 	return 0;
 }
 
+static cmr_s32 ae_set_blk_num(cmr_handle handler, struct ae_size *blk_num)
+{
+#ifdef CONFIG_ISP_2_5
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_BLK_NUM, blk_num, NULL);
+	}
+#else
+	UNUSED(handler);
+	UNUSED(blk_num);
+#endif
+	return 0;
+}
+
 static cmr_s32 ae_set_again(cmr_handle handler, struct ae_gain *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -237,7 +251,7 @@ static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
 		final_gain = (cmr_u32) (gain * cxt_ptr->bakup_rgb_gain + 0.5);
 		ISP_LOGV("d-gain: coeff: %f-%d-%d\n", gain, cxt_ptr->bakup_rgb_gain, final_gain);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN, &final_gain, NULL);
-	}
+	}	
 
 	return rtn;
 }
@@ -526,6 +540,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_wbc_gain = ae_set_wbc_gain;
 	input_ptr->isp_ops.write_multi_ae = ae_write_multi_ae;
 	input_ptr->isp_ops.set_stats_monitor = ae_set_stats_monitor;
+	input_ptr->isp_ops.set_blk_num = ae_set_blk_num;
 
 	cxt_ptr = (struct aectrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {

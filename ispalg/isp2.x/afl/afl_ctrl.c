@@ -125,6 +125,40 @@ static cmr_s32 aflctrl_save_to_file(cmr_s32 height, cmr_s32 * addr, cmr_u32 cnt)
 	return 0;
 }
 
+static void afl_scl_for_ae_stat(cmr_u32 *dst, struct afl_proc_in *afl_in)
+{
+	cmr_u32 i,j,ii,jj;
+	cmr_u64 r = 0, g = 0, b = 0;
+	cmr_u32 blk_num_w = afl_in->ae_win_num.w;
+	cmr_u32 blk_num_h = afl_in->ae_win_num.h;
+	cmr_u32 *r_stat = (cmr_u32*)afl_in->ae_stat_ptr->r_info;
+	cmr_u32 *g_stat = (cmr_u32*)afl_in->ae_stat_ptr->g_info;
+	cmr_u32 *b_stat = (cmr_u32*)afl_in->ae_stat_ptr->b_info;
+  
+	blk_num_w = (blk_num_w < 32) ? 32:blk_num_w;
+	blk_num_h = (blk_num_w < 32) ? 32:blk_num_h;
+
+	cmr_u32 ratio_h = blk_num_h/32;
+	cmr_u32 ratio_w = blk_num_w/32;
+
+	memset(dst,0,1024 * 3* sizeof(cmr_u32));
+
+	for (i = 0; i < blk_num_h; ++i) {
+		ii = (cmr_u32)(i / ratio_h);
+		for (j = 0; j < blk_num_w; ++j) {
+			jj = j / ratio_w;
+
+			r = r_stat[i * blk_num_w + j];
+			g = g_stat[i * blk_num_w + j];
+			b = b_stat[i * blk_num_w + j];
+
+			dst[ii * 32 + jj] += r/(ratio_w * ratio_h);
+			dst[ii * 32 + jj + 1024] += g/(ratio_w * ratio_h);
+			dst[ii * 32 + jj + 2048] += b/(ratio_w * ratio_h);
+		}
+	}
+}
+
 #ifdef CONFIG_ISP_2_2
 static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc_in *in_ptr,
 			       struct afl_ctrl_proc_out *out_ptr)
@@ -272,7 +306,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_int ret = 0;
 	cmr_s32 thr[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
+	cmr_u32 *ae_stat_ptr = NULL;
 	cmr_u32 cur_flicker = 0;
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
@@ -304,7 +338,14 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	afl_stat = malloc(in_ptr->private_len);
 	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
 
-	ae_stat_ptr = in_ptr->ae_stat_ptr;
+       ae_stat_ptr = (cmr_u32 *)malloc(3*1024*sizeof(cmr_u32));
+       if (!ae_stat_ptr) {
+               ISP_LOGE("fail to malloc ae_stat_ptr!");
+               goto exit;
+       }
+       afl_scl_for_ae_stat(ae_stat_ptr,in_ptr);
+
+	//ae_stat_ptr = in_ptr->ae_stat_ptr;
 	cur_flicker = in_ptr->cur_flicker;
 	cur_exp_flag = in_ptr->cur_exp_flag;
 	ae_exp_flag = in_ptr->ae_exp_flag;
@@ -405,18 +446,19 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 								  algo_height, addr, 0, thr[0], thr[1],
 								  thr[2], thr[3], thr[4], thr[5], thr[6],
 								  thr[7], thr[8],
-								  (cmr_s32 *)ae_stat_ptr->r_info,
-								  (cmr_s32 *)ae_stat_ptr->g_info,
-								  (cmr_s32 *)ae_stat_ptr->b_info);
+                                                                  (cmr_s32 *)ae_stat_ptr,
+                                                                  (cmr_s32 *)(ae_stat_ptr + 1024),
+                                                                  (cmr_s32 *)(ae_stat_ptr + 2048));
+
 				ISP_LOGV("flag %ld %s", flag, "60Hz");
 			} else {
 				flag = antiflcker_sw_process_v2p2(algo_width,
 								  algo_height, addr, 1, thr[0], thr[1],
 								  thr[2], thr[3], thr[4], thr[5], thr[6],
 								  thr[7], thr[8],
-								  (cmr_s32 *)ae_stat_ptr->r_info,
-								  (cmr_s32 *)ae_stat_ptr->g_info,
-								  (cmr_s32 *)ae_stat_ptr->b_info);
+                                                                  (cmr_s32 *)ae_stat_ptr,
+                                                                  (cmr_s32 *)(ae_stat_ptr + 1024),
+                                                                  (cmr_s32 *)(ae_stat_ptr + 2048));
 				ISP_LOGV("flag %ld %s", flag, "50Hz");
 			}
 			if (flag)
@@ -455,6 +497,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 exit:
 	if (afl_stat)
 		free(afl_stat);
+       if(ae_stat_ptr)
+               free(ae_stat_ptr);
 
 	ISP_LOGV("done %ld", rtn);
 	return rtn;

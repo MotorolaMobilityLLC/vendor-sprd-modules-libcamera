@@ -480,10 +480,8 @@ struct sensor_awb_param {
 
 // AE monitor in RGB domain
 struct sensor_rgb_aem_param {
-	cmr_u32 aem_skip_num;
-	cmr_u32 reserved[3];
-	struct isp_pos win_start;
-	struct isp_size win_size;
+	struct isp_size blk_num;
+	cmr_u32 reserved[6];
 };
 
 // Bad Pixel Correction

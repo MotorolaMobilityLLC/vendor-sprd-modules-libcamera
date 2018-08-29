@@ -34,6 +34,11 @@ enum afl_io_ctrl_cmd {
 	AFL_SET_IMG_SIZE,
 };
 
+struct afl_ae_stat_win_num {
+       cmr_u32 w;
+       cmr_u32 h;
+};
+
 struct afl_proc_in {
 	cmr_u32 cur_flicker;
 	cmr_u32 cur_exp_flag;
@@ -48,6 +53,7 @@ struct afl_proc_in {
 #endif
 	void *private_data;
 	cmr_u32 private_len;
+	struct afl_ae_stat_win_num ae_win_num;
 #ifdef CONFIG_ISP_2_2
 	cmr_u16 thr[9];
 #endif

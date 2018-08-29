@@ -65,7 +65,7 @@ struct isp_u_blocks_info {
 		struct isp_img_size size;
 		struct isp_img_offset offset;
 		/*rgb gain block*/
-		cmr_u32 rgb_gain_coeff;
+		struct isp_dev_rgb_gain_info gain_info;
 		/*fetch block*/
 		cmr_u32 fetch_start;
 		/*lsc block*/

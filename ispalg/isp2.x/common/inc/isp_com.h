@@ -59,9 +59,9 @@ extern "C" {
 	};
 
 	struct isp_awb_statistic_info {
-		cmr_u32 r_info[1024];
-		cmr_u32 g_info[1024];
-		cmr_u32 b_info[1024];
+		cmr_u32 r_info[16384];
+		cmr_u32 g_info[16384];
+		cmr_u32 b_info[16384];
 		cmr_u32 sec;
 		cmr_u32 usec;
 	};
@@ -211,6 +211,18 @@ extern "C" {
 
 	struct isp_ae_adapt_info {
 		cmr_u16 binning_factor; // 1x = 128
+	};
+
+	struct isp_rgb_gain_info {
+		cmr_u32 bypass;
+		cmr_u32 global_gain;
+		cmr_u32 r_gain;
+		cmr_u32 g_gain;
+		cmr_u32 b_gain;
+	};
+
+	struct isp_rgb_aem_info {
+		struct isp_size blk_num;
 	};
 
 #ifdef	 __cplusplus
