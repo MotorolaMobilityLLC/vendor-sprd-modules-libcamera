@@ -1440,7 +1440,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     // ret = mPicChan->request(stream, output.buffer,
                     // frameNumber);
 
-                    if (request->num_output_buffers == 1) {
+                    if (request->num_output_buffers == 1 && sprddefInfo.sprd_zsl_enabled == false) {
                         mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW,
                                                mFrameNum);
                         ret = mRegularChan->request(stream, output.buffer,
