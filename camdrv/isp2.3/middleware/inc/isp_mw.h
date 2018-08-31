@@ -39,6 +39,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_THREAD_QUEUE_NUM                 (100)
 
 #define ISP_PROC_AFL_DONE                    (1 << 2)
+#define ISP_PROC_HIST_DONE                  (1 << 3)
 
 #define ISP_CALLBACK_EVT                     0x00040000
 

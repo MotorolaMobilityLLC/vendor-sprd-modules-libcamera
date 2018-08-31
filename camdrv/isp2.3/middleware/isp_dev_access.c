@@ -332,6 +332,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
 		}
+	} else if (irq_info->irq_property == IRQ_HIST_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
+		}
 	} else {
 		free((void *)statis_info);
 		statis_info = NULL;
