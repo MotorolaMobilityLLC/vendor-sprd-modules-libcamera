@@ -5,6 +5,26 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=format
 LOCAL_LDFLAGS += -ldl
 
+#sensor makefile config
+SENSOR_FILE_COMPILER := $(CAMERA_SENSOR_TYPE_BACK)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_FRONT)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_BACK_EXT)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_FRONT_EXT)
+
+SENSOR_FILE_COMPILER := $(shell echo $(SENSOR_FILE_COMPILER))
+#$(warning $(SENSOR_FILE_COMPILER))
+
+sensor_comma:=,
+sensor_empty:=
+sensor_space:=$(sensor_empty)
+
+split_sensor:=$(sort $(subst $(sensor_comma),$(sensor_space) ,$(shell echo $(SENSOR_FILE_COMPILER))))
+#$(warning $(split_sensor))
+
+sensor_macro:=$(shell echo $(split_sensor) | tr a-z A-Z)
+#$(warning $(sensor_macro))
+$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
+
 ifeq ($(strip $(OEM_DIR)),oem2v1)
 LOCAL_C_INCLUDES += \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \

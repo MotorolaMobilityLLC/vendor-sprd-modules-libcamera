@@ -50,26 +50,34 @@ typedef struct c3dnr_param_info
     uint16_t small_height;
     uint16_t total_frame_num;
     uint16_t gain; // ben
-    uint16_t SearchWindow_x;
-    uint16_t SearchWindow_y;
     uint16_t low_thr;
     uint16_t ratio;
-    int recur_str; // recursion stride for preview
     int *sigma_tmp;
     int *slope_tmp;
-    int (*threthold)[6];
-    int (*slope)[6];
     c3dnr_buffer_t *poutimg;
 #ifdef USE_ISP_HW
     cmr_handle isp_handle; //wxz: call the isp_ioctl need the handle.
     isp_ioctl_fun isp_ioctrl;
 #endif
     int yuv_mode; //0: nv12 1: nv21
-
-    int control_en; // 
+    int control_en; //
     int thread_num;
     int thread_num_acc;
     int preview_cpyBuf;
+    //---
+    uint16_t SearchWindow_x;
+    uint16_t SearchWindow_y;
+    int (*threthold)[6];
+    int (*slope)[6];
+    int recur_str; // recursion stride for preview
+    int match_ratio_sad;
+    int match_ratio_pro;
+    int feat_thr;
+    int luma_ratio_high;
+    int luma_ratio_low;
+    int zone_size;
+    int gain_thr[6];
+    int reserverd[16];
 }c3dnr_param_info_t;
 
 typedef struct c3dnr_pre_inparam
