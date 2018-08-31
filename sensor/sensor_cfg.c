@@ -56,6 +56,14 @@ extern SENSOR_INFO_T g_gc030at_mipi_raw_info;
 extern SENSOR_INFO_T g_gc2385_mipi_raw_info;
 #endif
 
+//hynix area
+#ifdef HI556
+extern SENSOR_INFO_T g_hi556_mipi_raw_info;
+#endif
+#ifdef HI846
+extern SENSOR_INFO_T g_hi846_mipi_raw_info;
+#endif
+
 // ov area
 #ifdef OV2680
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
@@ -346,6 +354,11 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "s5k5e8yx", &g_s5k5e8yx_mipi_raw_info, {&dw9714_drv_entry, 4}, &s5k5e8yx_jd_otp_entry},
 #endif
 
+// hynix area
+#ifdef HI846
+    {MODULE_SUNNY ,"hi846", &g_hi846_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#endif
+
     {0, "0", NULL, {NULL, 0}, NULL}};
 
 const SENSOR_MATCH_T front_sensor_infor_tab[] = {
@@ -408,6 +421,11 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #endif
 #ifdef S5K5E2YA
     {MODULE_SUNNY, "s5k5e2ya", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, NULL},
+#endif
+
+// hynix area
+#ifdef HI556
+    {MODULE_SUNNY ,"hi556", &g_hi556_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
     {0, "0", NULL, {NULL, 0}, NULL}};
