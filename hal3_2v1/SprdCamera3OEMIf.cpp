@@ -756,7 +756,10 @@ int SprdCamera3OEMIf::takePicture() {
 
         if (isPreviewing()) {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
-            if (CAMERA_ZSL_MODE != mCaptureMode && mCameraId == 0) {
+            if ((CAMERA_ZSL_MODE != mCaptureMode &&
+                 (mCameraId == 0 ||
+                  !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+                    strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))))) {
                 mHalOem->ops->camera_start_preflash(mCameraHandle);
             }
             stopPreviewInternal();
@@ -909,7 +912,9 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     HAL_LOGI("E");
 
     if (isPreviewing()) {
-        if (mCameraId == 0) {
+        if (mCameraId == 0 ||
+            !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+              strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))) {
             mHalOem->ops->camera_start_preflash(mCameraHandle);
         }
         mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId,
@@ -5648,7 +5653,10 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
-        HAL_LOGV("parm4=%p autofocus=%d, focus_status->is_in_focus: %d, focus_status->af_focus_type: %d", parm4, mIsAutoFocus, focus_status->is_in_focus, focus_status->af_focus_type);
+        HAL_LOGV("parm4=%p autofocus=%d, focus_status->is_in_focus: %d, "
+                 "focus_status->af_focus_type: %d",
+                 parm4, mIsAutoFocus, focus_status->is_in_focus,
+                 focus_status->af_focus_type);
 
         if (!mIsAutoFocus) {
             if (focus_status->is_in_focus) {
@@ -5939,7 +5947,7 @@ int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
     ATRACE_CALL();
     HAL_LOGV("E");
     int ret = 0;
-    //ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
+    // ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
     ret = MemIon::Sync_ion_buffer(buffer_fd);
     if (ret) {
         HAL_LOGE("Flush_ion_buffer failed, ret=%d", ret);
