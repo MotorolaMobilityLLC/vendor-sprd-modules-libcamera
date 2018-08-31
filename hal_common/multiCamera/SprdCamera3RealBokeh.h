@@ -185,7 +185,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 #endif
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
-    int getCameraInfo(struct camera_info *info);
+    int getCameraInfo(int id, struct camera_info *info);
     void getDepthImageSize(int inputWidth, int inputHeight, int *outWidth,
                            int *outHeight, int type);
     void freeLocalBuffer();

@@ -169,6 +169,7 @@ LOCAL_CFLAGS += -DCONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_0M3
 endif
 
 max_sensor_num := 0
+max_logical_sensor_num := 0
 ifneq ($(strip $(CAMERA_SENSOR_TYPE_BACK)),)
 LOCAL_CFLAGS += -DBACK_CAMERA_SENSOR_SUPPORT=1
 max_sensor_num := $(shell expr $(max_sensor_num) + 1)
@@ -333,6 +334,7 @@ LOCAL_CFLAGS += -DCONFIG_DUAL_FACEID_SUPPORT
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
+max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 LOCAL_CFLAGS += -DCONFIG_BOKEH_SUPPORT
 LOCAL_CFLAGS += -DCONFIG_SPRD_BOKEH_SUPPORT
 else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
@@ -775,3 +777,5 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_PER_FRAME_CONTROL)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_PER_FRAME_CONTROL
 endif
 endif
+LOCAL_CFLAGS += -DCAMERA_SENSOR_NUM=$(max_sensor_num)
+LOCAL_CFLAGS += -DCAMERA_LOGICAL_SENSOR_NUM=$(max_logical_sensor_num)

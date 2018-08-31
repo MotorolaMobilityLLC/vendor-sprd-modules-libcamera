@@ -80,6 +80,7 @@ class SprdCamera3Wrapper {
     int cameraDeviceOpen(__unused const struct hw_module_t *module,
                          const char *id, struct hw_device_t **hw_device);
     int getCameraInfo(int camera_id, struct camera_info *info);
+    static multiCameraMode getMultiCameraMode(int camera_id);
 
   private:
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
@@ -112,6 +113,8 @@ class SprdCamera3Wrapper {
 #ifdef CONFIG_DUAL_FACEID_SUPPORT
     SprdCamera3DualFaceId *mDualFaceId;
 #endif
+    static int mLogicalSensorNum;
+    static int mPhysicalSensorNum;
 };
 };
 #endif

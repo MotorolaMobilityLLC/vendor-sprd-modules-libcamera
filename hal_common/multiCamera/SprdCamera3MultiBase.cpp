@@ -1302,4 +1302,36 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
     metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
                     available_stream_configurations, array_size * 4);
 }
+
+void SprdCamera3MultiBase::setLogicIdTag(CameraMetadata &metadata,
+                                         uint8_t *physical_ids,
+                                         uint8_t physical_ids_size) {
+
+    int array_size;
+#define FILL_CAM_INFO(Array, Start, Num, Flag, Newvalue)                       \
+    for (array_size = Start; array_size < Num; array_size++) {                 \
+        if (Array[array_size] == 0) {                                          \
+            Array[array_size] = Newvalue;                                      \
+            array_size++;                                                      \
+            break;                                                             \
+        }                                                                      \
+    }                                                                          \
+    metadata.update(Flag, Array, array_size);
+
+    FILL_CAM_INFO(SprdCamera3Setting::s_setting[0]
+                      .requestInfo.available_characteristics_keys,
+                  0, 100, ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS,
+                  ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS);
+
+    FILL_CAM_INFO(
+        SprdCamera3Setting::s_setting[0].requestInfo.available_capabilites, 1,
+        5, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+        ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
+    metadata.update(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS, physical_ids,
+                    physical_ids_size);
+
+    HAL_LOGI("multicam case, fill "
+             "ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA, "
+             "and ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS");
+}
 };

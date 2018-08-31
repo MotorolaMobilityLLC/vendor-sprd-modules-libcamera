@@ -291,22 +291,15 @@ ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
 */
 bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     /*Camera ID Expose To Camera Apk On MultiCameraMode*/
-    if ((SPRD_MULTI_CAMERA_BASE_ID > cameraId) ||
+    if ((SprdCamera3Setting::mPhysicalSensorNum > cameraId) ||
         (cameraId > SPRD_MULTI_CAMERA_MAX_ID))
         return false;
 
-    if ((SPRD_3D_VIDEO_ID == cameraId) || (SPRD_RANGE_FINDER_ID == cameraId) ||
-        (SPRD_3D_CAPTURE_ID == cameraId) || (SPRD_3D_PREVIEW_ID == cameraId) ||
-        (SPRD_BLUR_ID == cameraId) || (SPRD_SELF_SHOT_ID == cameraId) ||
-        (SPRD_PAGE_TURN_ID == cameraId) || (SPRD_BLUR_FRONT_ID == cameraId) ||
-        (SPRD_SINGLE_FACEID_REGISTER_ID == cameraId) || (SPRD_SINGLE_FACEID_UNLOCK_ID == cameraId)) {
-        return true;
-    } else if (SPRD_REFOCUS_ID == cameraId ||
-               (SPRD_3D_CALIBRATION_ID == cameraId)) {
+    if (SPRD_REFOCUS_ID == cameraId || (SPRD_3D_CALIBRATION_ID == cameraId)) {
         return false;
     }
 
-    return false;
+    return true;
 }
 
 int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
@@ -316,14 +309,14 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
     if (MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
         return cameraId;
     } else if (SPRD_REFOCUS_ID == cameraId) { // Camera2 apk open  camera id is
-                                              // SPRD_REFOCUS_ID and 2 ,camera hal
-                                              // transform to open physics Camera
-                                              // id is 0 and 2
+        // SPRD_REFOCUS_ID and 2 ,camera hal
+        // transform to open physics Camera
+        // id is 0 and 2
         return 0;
     } else if (SPRD_3D_CALIBRATION_ID ==
                cameraId) { // ValidationTools apk open  camera id is
-                           // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to
-                           // open physics Camera id is 1 and 3
+        // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to
+        // open physics Camera id is 1 and 3
         property_get("persist.vendor.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
             return 0;

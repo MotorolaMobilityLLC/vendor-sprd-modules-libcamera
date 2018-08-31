@@ -151,6 +151,8 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                   buffer_handle_t *dst_private_handle,
                                   void *dst_vir_addr, SprdCamera3HWI *hwi);
     void addAvailableStreamSize(CameraMetadata &metadata, int index);
+    void setLogicIdTag(CameraMetadata &metadata, uint8_t *physical_ids,
+                       uint8_t physical_ids_size);
 
   private:
     Mutex mBufferListLock;

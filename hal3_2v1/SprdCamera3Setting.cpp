@@ -701,6 +701,7 @@ const uint8_t kavailable_shading_modes[] = {
     ANDROID_SHADING_MODE_FAST,
     ANDROID_SHADING_MODE_HIGH_QUALITY
     };
+
 // Control mode
 const uint8_t kavailable_control_modes[] = {
     ANDROID_CONTROL_MODE_OFF, ANDROID_CONTROL_MODE_AUTO,
@@ -735,6 +736,8 @@ const int64_t MSEC = USEC * 1000LL;
 const int64_t SEC = MSEC * 1000LL;
 
 sprd_setting_info_t SprdCamera3Setting::s_setting[CAMERA_ID_COUNT];
+int SprdCamera3Setting::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
+int SprdCamera3Setting::mPhysicalSensorNum = CAMERA_SENSOR_NUM;
 
 /**********************Function********************************/
 int SprdCamera3Setting::parse_int(const char *str, int *data, char delim,
@@ -1087,7 +1090,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
 
-    num = CAMERA_SENSOR_NUM;
+    num = mPhysicalSensorNum + mLogicalSensorNum;
     LOGI("getNumberOfCameras:%d", num);
 
     return num;
@@ -1649,6 +1652,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // Control Mode(init static parameter)
     memcpy(s_setting[cameraId].controlInfo.available_modes,
            kavailable_control_modes, sizeof(kavailable_control_modes));
+
+    //Control Mode(init static parameter)
+    memcpy(
+        s_setting[cameraId].controlInfo.available_modes,
+        kavailable_control_modes,
+        sizeof(kavailable_control_modes));
 
     // AE lock available(init static parameter)
     s_setting[cameraId].controlInfo.ae_lock_available = 1;

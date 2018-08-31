@@ -64,7 +64,7 @@ namespace sprdcamera {
 #define PENDINGTIMEOUT (5000000000)
 
 SprdCamera3RealBokeh *mRealBokeh = NULL;
-
+const uint8_t kavailable_physical_ids[] = {'0', '\0', '2', '\0'};
 // Error Check Macros
 #define CHECK_CAPTURE()                                                        \
     if (!mRealBokeh) {                                                         \
@@ -193,6 +193,9 @@ SprdCamera3RealBokeh::~SprdCamera3RealBokeh() {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
     }
+
+    if (mStaticMetadata)
+        free_camera_metadata(mStaticMetadata);
     HAL_LOGI("X");
 }
 
@@ -240,7 +243,7 @@ int SprdCamera3RealBokeh::get_camera_info(__unused int camera_id,
 
     HAL_LOGI("E");
     if (info) {
-        rc = mRealBokeh->getCameraInfo(info);
+        rc = mRealBokeh->getCameraInfo(camera_id, info);
     }
     HAL_LOGI("X, rc: %d", rc);
 
@@ -883,7 +886,7 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3RealBokeh::getCameraInfo(struct camera_info *info) {
+int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = 0;
     int32_t img_size = 0;
@@ -893,6 +896,9 @@ int SprdCamera3RealBokeh::getCameraInfo(struct camera_info *info) {
     };
 
     HAL_LOGI("E, camera_id = %d", camera_id);
+    if (mStaticMetadata)
+        free_camera_metadata(mStaticMetadata);
+
     m_VirtualCamera.id = CAM_BOKEH_MAIN_ID;
     camera_id = (int)m_VirtualCamera.id;
     SprdCamera3Setting::initDefaultParameters(camera_id);
@@ -901,7 +907,7 @@ int SprdCamera3RealBokeh::getCameraInfo(struct camera_info *info) {
         return rc;
     }
 
-    CameraMetadata metadata = mStaticMetadata;
+    CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
     property_get("persist.vendor.cam.api.version", prop, "0");
     version = atoi(prop);
     if (version == SPRD_API_MODE) {
@@ -926,6 +932,11 @@ int SprdCamera3RealBokeh::getCameraInfo(struct camera_info *info) {
     property_get("persist.vendor.cam.res.bokeh", prop, "1");
     HAL_LOGI("bokeh support cap resolution %d", atoi(prop));
     addAvailableStreamSize(metadata, atoi(prop));
+
+    if (SPRD_MULTI_CAMERA_BASE_ID > id) {
+        HAL_LOGI(" logical id %d", id);
+        setLogicIdTag(metadata, (uint8_t *)kavailable_physical_ids, 4);
+    }
 
     mStaticMetadata = metadata.release();
 
