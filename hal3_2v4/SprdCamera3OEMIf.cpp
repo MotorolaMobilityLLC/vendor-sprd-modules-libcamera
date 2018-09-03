@@ -1818,8 +1818,11 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
         } else {
             preview_size.width = 640;
             preview_size.height = 480;
-            mPreviewWidth = preview_size.width;
-            mPreviewHeight = preview_size.height;
+            if ((cmr_u32)mRawWidth * (cmr_u32)mRawHeight <
+                preview_size.width * preview_size.height) {
+                preview_size.width = mRawWidth;
+                preview_size.height =mRawHeight;
+            }
         }
     }
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PREVIEW_SIZE,
