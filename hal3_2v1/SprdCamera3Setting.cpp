@@ -481,7 +481,6 @@ const int32_t kavailable_test_pattern_modes[] = {
 };
 
 const uint8_t kavailable_aberration_modes[] = {
-    ANDROID_COLOR_CORRECTION_ABERRATION_MODE_OFF,
     ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST,
     ANDROID_COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY};
 
@@ -493,10 +492,8 @@ const int32_t ksensitivity_range[2] = {
     100, 1600,
 };
 
-const uint8_t kavailable_tone_map_modes[] = {
-    ANDROID_TONEMAP_MODE_CONTRAST_CURVE, ANDROID_TONEMAP_MODE_FAST,
-    ANDROID_TONEMAP_MODE_HIGH_QUALITY, ANDROID_TONEMAP_MODE_GAMMA_VALUE,
-    ANDROID_TONEMAP_MODE_PRESET_CURVE};
+const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
+                                             ANDROID_TONEMAP_MODE_HIGH_QUALITY};
 
 const float kcolor_gains[] = {
     1.69f, 1.00f, 1.00f, 2.41f,
