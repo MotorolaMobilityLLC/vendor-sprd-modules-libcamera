@@ -1071,8 +1071,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int receive_req_max = mReciveQeqMax;
     int32_t width = 0, height = 0;
     uint16_t max_sensor_width = 0, max_sensor_height = 0;
-    bool isSettingChange = 0;
-    bool isManual = 0;
     Mutex::Autolock l(mLock);
     cam_dimension_t max_cpp_size = {0, 0};
     cam_dimension_t preview_size = {0, 0};
@@ -1110,7 +1108,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
     /* end fix 30fps for blur mode**/
 
-    isSettingChange = mMetadataChannel->request(meta);
+    mMetadataChannel->request(meta);
     mMetadataChannel->getCapRequestPara(meta, &capturePara);
 
     SPRD_DEF_Tag sprddefInfo;
@@ -1195,28 +1193,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         if (mOldCapIntent != capturePara.cap_intent) {
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_ZSL_PREVIEW, mFrameNum);
             mFirstRegularRequest = true;
-        }
-        break;
-    case ANDROID_CONTROL_CAPTURE_INTENT_MANUAL:
-        isManual = 1;
-        mManualRequest = true;
-        if (mOldCapIntent != capturePara.cap_intent) {
-            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
-            mFirstManualRequest = true;
-        }
-        mManualReqMax = SprdCamera3RegularChannel::kMaxBuffers;
-        if (!mFirstManualRequest && isSettingChange) {
-            PendingRequestInfo pendingRequest;
-            Mutex::Autolock lr(mRequestLock);
-            mManualReqMax = SprdCamera3PicChannel::kMaxBuffers;
-
-            while (mPendingRequest >= mManualReqMax) {
-                ret = mRequestSignal.waitRelative(mRequestLock, kPendingTime);
-                if (ret == TIMED_OUT) {
-                    ret = -ENODEV;
-                    goto OUT;
-                }
-            }
         }
         break;
     default:
@@ -1344,10 +1320,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT,
                                            frameNumber);
                     mPictureRequest = true;
-                } else if (((capturePara.cap_intent ==
-                             ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW) ||
-                            (capturePara.cap_intent ==
-                             ANDROID_CONTROL_CAPTURE_INTENT_MANUAL)) &&
+                } else if (capturePara.cap_intent ==
+                             ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
                            channel == mPicChan) {
                     if (request->num_output_buffers == 2 &&
                         request->output_buffers[(i + 1) % 2].stream->priv ==
@@ -1405,18 +1379,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     capturePara.cap_intent ==
                         ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ||
                     capturePara.cap_intent ==
-                        ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG ||
-                    capturePara.cap_intent ==
-                        ANDROID_CONTROL_CAPTURE_INTENT_MANUAL) {
-                    if (mFirstManualRequest) {
-                        mFirstRegularRequest = true;
-                        mFirstManualRequest = false;
-                    }
-                    if (mManualRequest && isSettingChange) {
-                        mManualRequest = false;
-                        mFirstRegularRequest = true;
-                    }
-
+                        ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG) {
                     ret = mRegularChan->request(stream, output.buffer,
                                                 frameNumber);
                     if (ret) {
@@ -1478,7 +1441,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
         HAL_LOGV("receive_req_max %d", receive_req_max);
         pendingRequest.receive_req_max = receive_req_max;
-        pendingRequest.isManual = isManual;
 
         mPendingRequestsList.push_back(pendingRequest);
         mPendingRequest++;
@@ -1588,7 +1550,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             pendingCount++;
         }
     }
-OUT:
     if (ret == -ENODEV)
         flushRequest(request->frame_number);
 exit:
@@ -1615,7 +1576,6 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     SprdCamera3Stream *pre_stream = NULL;
     int receive_req_max = SprdCamera3RegularChannel::kMaxBuffers;
     int32_t width = 0, height = 0;
-    bool isManual = 0;
 
 #define GET_MIN_FRAME_DURATION(minDuration)                                    \
     SCALER_Tag scalerInfo;                                                     \
@@ -1826,7 +1786,6 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
             if (0 == i->num_buffers) {
                 receive_req_max = i->receive_req_max;
-                isManual = i->isManual;
                 i = mPendingRequestsList.erase(i);
                 mPendingRequest--;
                 break;
@@ -1855,10 +1814,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         mSetting->setSENSORTag(sensor_Info);
     }
 
-    if (isManual && (oldrequest >= mManualReqMax) &&
-        (mPendingRequest != oldrequest)) {
-        mRequestSignal.signal();
-    } else if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
+    if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
         HAL_LOGV("signal request=%d", oldrequest);
         mRequestSignal.signal();
     }
