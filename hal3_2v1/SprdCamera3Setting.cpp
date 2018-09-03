@@ -679,7 +679,7 @@ const uint8_t kavailable_capabilities[] = {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS,
 #endif
-    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
+    // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
 };
@@ -1639,7 +1639,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // sync
     s_setting[cameraId].syncInfo.max_latency =
-        0; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
+        4; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
 
     // sprd
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
