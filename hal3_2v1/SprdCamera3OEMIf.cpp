@@ -2009,12 +2009,15 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
         // 3dnr video recording on
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
-            fps_param.min_fps = 18;
             if (mUsingSW3DNR) {
-                HAL_LOGD("sw 3dnr mode, adjust max fps to 20");
                 fps_param.max_fps = 20;
-            } else
+                fps_param.min_fps = 5;
+                HAL_LOGD("sw 3dnr mode, adjust max fps to 20, min fps to 5");
+            } else {
                 fps_param.max_fps = 30;
+                fps_param.min_fps = 18;
+                HAL_LOGD("hw 3dnr mode, adjust max fps to 30, min fps to 18");
+            }
         }
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];
@@ -5650,7 +5653,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
-        HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
+        HAL_LOGV("parm4=%p autofocus=%d, focus_status->is_in_focus: %d, focus_status->af_focus_type: %d", parm4, mIsAutoFocus, focus_status->is_in_focus, focus_status->af_focus_type);
 
         if (!mIsAutoFocus) {
             if (focus_status->is_in_focus) {
