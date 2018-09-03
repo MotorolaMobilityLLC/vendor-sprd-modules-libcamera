@@ -221,9 +221,6 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	case ISP_AWB_INDEX6:
 		awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
 		break;
-	case ISP_AWB_OFF:
-		awb_id = AWB_CTRL_AWB_MODE_OFF;
-		break;
 	default:
 		awb_id = AWB_CTRL_WB_MODE_AUTO;
 		break;
@@ -625,20 +622,6 @@ static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_ISO, &set_iso, NULL);
 	ISP_LOGV("ISO=%d, ret=%ld", set_iso.mode, ret);
 
-	return ret;
-}
-
-static cmr_int ispctl_set_sensitivity(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_u32 set_sensitivity = 0;
-	if ((NULL == isp_alg_handle) || (NULL == param_ptr))
-		return ISP_PARAM_NULL;
-	set_sensitivity = *(cmr_u32 *) param_ptr;
-	if (cxt->ops.ae_ops.ioctrl)
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MANUAL_ISO, &set_sensitivity, NULL);
-	ISP_LOGV("ISP_AE: AE_SET_SENSITIVITY=%d, ret=%ld", set_sensitivity, ret);
 	return ret;
 }
 
@@ -2341,19 +2324,6 @@ static cmr_int ispctl_force_ae_quick_mode(cmr_handle isp_alg_handle, void *param
 	return ret;
 }
 
-static cmr_int ispctl_set_ae_mode(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_u32 manual_mode = 0;
-	cmr_int rtn = ISP_SUCCESS;
-	if ((NULL == isp_alg_handle) || (NULL == param_ptr))
-		return ISP_PARAM_NULL;
-	manual_mode = *(cmr_u32 *) param_ptr;
-	if (cxt->ops.ae_ops.ioctrl)
-		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MANUAL_MODE, (void *)&manual_mode, NULL);
-	return rtn;
-}
-
 static cmr_int ispctl_set_ae_exp_time(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2492,7 +2462,6 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_EXP_COMPENSATION, ispctl_ae_exp_compensation},
 	{ISP_CTRL_FLICKER, ispctl_flicker},
 	{ISP_CTRL_ISO, ispctl_iso},
-	{ISP_CTRL_SENSITIVITY, ispctl_set_sensitivity},
 	{ISP_CTRL_AE_TOUCH, ispctl_ae_touch},
 	{ISP_CTRL_FLASH_NOTICE, ispctl_flash_notice},
 	{ISP_CTRL_VIDEO_MODE, ispctl_video_mode},
@@ -2554,7 +2523,6 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_TOOL_SET_SCENE_PARAM, ispctl_tool_set_scene_param},	// for tool scene param setting
 	{ISP_CTRL_FORCE_AE_QUICK_MODE, ispctl_force_ae_quick_mode},
 	{ISP_CTRL_DENOISE_PARAM_UPDATE, ispctl_sensor_denoise_param_update},	//for tool cali
-	{ISP_CTRL_SET_AE_MODE, ispctl_set_ae_mode},
 	{ISP_CTRL_SET_AE_EXP_TIME, ispctl_set_ae_exp_time},
 	{ISP_CTRL_SET_AE_SENSITIVITY, ispctl_set_ae_sensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, ispctl_set_dcam_timestamp},
