@@ -436,6 +436,7 @@ const cam_stream_info_t stream_info[] = {
     {{5312, 3984}, 41666666L, 41666666L},
     {{5120, 3840}, 41666666L, 41666666L},
     {{4608, 3456}, 33331760L, 33331760L},
+    {{4608, 2592}, 33331760L, 33331760L},
 #if defined(CAMERA_SERNSOR_SUPPORT_4224)
     {{4224, 3136}, 33331760L, 33331760L},
 #endif
@@ -447,14 +448,19 @@ const cam_stream_info_t stream_info[] = {
     {{2592, 1944}, 33331760L, 33331760L},
     {{2560, 1920}, 33331760L, 33331760L},
     {{2560, 1440}, 33331760L, 33331760L},
+    {{2160, 1080}, 33331760L, 33331760L},
     {{2048, 1536}, 33331760L, 33331760L},
+    {{2048, 1152}, 33331760L, 33331760L},
     //{{1920, 1920}, 33331760L, 33331760L},
     {{1920, HEIGHT_2M}, 33331760L, 33331760L},
+    {{1836, 1836}, 33331760L, 33331760L},
     {{1600, 1200}, 33331760L, 33331760L},
     {{1440, 1080}, 33331760L, 33331760L},
+    {{1440, 720}, 33331760L, 33331760L},
     {{1280, 960}, 33331760L, 33331760L},
     {{1280, 720}, 33331760L, 33331760L},
     {{960, 720}, 33331760L, 33331760L},
+    {{960, 480}, 33331760L, 33331760L},
     {{864, 480}, 33331760L, 33331760L},
     {{800, 600}, 33331760L, 33331760L},
     {{720, 544}, 33331760L, 33331760L},
@@ -1339,6 +1345,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
+
+    if (CAMERA_SETTINGS_CONFIG_ARRAYSIZE <
+            (scaler_formats_count * stream_sizes_tbl_cnt)) {
+        HAL_LOGE("CAMERA_SETTINGS_CONFIG_ARRAYSIZE(%d) must >= %d!!!",
+                CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
+                scaler_formats_count * stream_sizes_tbl_cnt);
+    }
 
     cmr_u16 largest_sensor_w = 0;
     cmr_u16 largest_sensor_h = 0;
