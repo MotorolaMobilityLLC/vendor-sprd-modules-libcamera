@@ -1321,7 +1321,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                                            frameNumber);
                     mPictureRequest = true;
                 } else if (capturePara.cap_intent ==
-                             ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
+                               ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
                            channel == mPicChan) {
                     if (request->num_output_buffers == 2 &&
                         request->output_buffers[(i + 1) % 2].stream->priv ==
@@ -1403,7 +1403,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     // ret = mPicChan->request(stream, output.buffer,
                     // frameNumber);
 
-                    if (request->num_output_buffers == 1 && sprddefInfo.sprd_zsl_enabled == false) {
+                    if (request->num_output_buffers == 1 &&
+                        sprddefInfo.sprd_zsl_enabled == false &&
+                        mSetting->mFaceDetectModeSet != 0) {
                         mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW,
                                                mFrameNum);
                         ret = mRegularChan->request(stream, output.buffer,
