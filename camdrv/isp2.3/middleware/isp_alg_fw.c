@@ -431,6 +431,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_AE_UNLOCK_NOTIFY;
 		break;
 	case AE_CB_HDR_START:
+		in = data;
 		cmd = ISP_HDR_EV_EFFECT_CALLBACK;
 		break;
 	case AE_CB_LED_NOTIFY:
@@ -442,6 +443,10 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_AE_CB_FLASH_FIRED;
 		break;
 	case AE_CB_PROCESS_OUT:
+		break;
+	case AE_CB_HDR_STATUS:
+		in = data;
+		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
