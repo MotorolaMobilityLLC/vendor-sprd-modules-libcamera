@@ -5129,6 +5129,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
 
     HAL_LOGV("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
+    cam_ion_buffer_t *ionBuf = NULL;
 
     switch (cb) {
     case CAMERA_EXIT_CB_PREPARE:
@@ -5143,7 +5144,12 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
             fd = getRedisplayMem(dst_width, dst_height);
         }
         break;
-
+    case CAMERA_EVT_CB_INVALIDATE_CACHE:
+        ionBuf = (cam_ion_buffer_t *)parm4;
+        if (ionBuf)
+            invalidateCache(ionBuf->fd, ionBuf->addr_vir, ionBuf->addr_phy,
+                            ionBuf->size);
+        break;
     case CAMERA_RSP_CB_SUCCESS:
         if (mIsStoppingPreview)
             HAL_LOGW("when is stopping preview, this place will change previw "
@@ -5277,6 +5283,13 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         ion_buffer = (cam_ion_buffer_t *)parm4;
         flushIonBuffer(ion_buffer->fd, ion_buffer->addr_vir,
                        ion_buffer->addr_phy, ion_buffer->size);
+        break;
+    }
+    case CAMERA_EVT_CB_INVALIDATE_CACHE: {
+        ion_buffer = (cam_ion_buffer_t *)parm4;
+        if (ion_buffer)
+            invalidateCache(ion_buffer->fd, ion_buffer->addr_vir, ion_buffer->addr_phy,
+                            ion_buffer->size);
         break;
     }
     case CAMERA_RSP_CB_SUCCESS: {
@@ -5945,6 +5958,25 @@ int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
         goto exit;
     }
     HAL_LOGV("X");
+exit:
+    return ret;
+}
+
+int SprdCamera3OEMIf::invalidateCache(int buffer_fd, void *v_addr, void *p_addr,
+                                      size_t size) {
+    ATRACE_CALL();
+
+    HAL_LOGD("E");
+
+    int ret = 0;
+    ret = MemIon::Invalid_ion_buffer(buffer_fd);
+    if (ret) {
+        HAL_LOGE("Invalid_ion_buffer failed, ret=%d", ret);
+        goto exit;
+    }
+
+    HAL_LOGD("X");
+
 exit:
     return ret;
 }

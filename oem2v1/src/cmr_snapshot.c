@@ -1803,6 +1803,8 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     struct snp_channel_param *chn_param_ptr = &cxt->chn_param;
     struct camera_frame_type zsl_frame;
     struct img_frm rot_src, scale_src;
+    struct snp_jpeg_param *jpeg_in_ptr;
+    struct camera_context *cmr_cxt;
 
     if (!data) {
         CMR_LOGE("param error");
@@ -1874,6 +1876,9 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
         send_capture_complete_msg();
         return ret;
     }
+    jpeg_in_ptr = &chn_param_ptr->jpeg_in[0];
+    cmr_cxt = (struct camera_context *)cxt->oem_handle;
+    cmr_snapshot_invalidate_cache(cmr_cxt->snp_cxt.snapshot_handle, &jpeg_in_ptr->dst);
 
     if (cxt->ops.start_exif_encode == NULL) {
         CMR_LOGE("start_exif_encode is null");
@@ -5576,6 +5581,37 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
     }
 
     CMR_LOGD("X");
+exit:
+    return ret;
+}
+
+cmr_int cmr_snapshot_invalidate_cache(cmr_handle snapshot_handle,
+                                      struct img_frm *img) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct snp_context *cxt = (struct snp_context *)snapshot_handle;
+    cam_ion_buffer_t ion_buf;
+
+    cmr_bzero(&ion_buf, sizeof(cam_ion_buffer_t));
+    CHECK_HANDLE_VALID(snapshot_handle);
+
+    if (img == NULL) {
+        CMR_LOGE("img = %p", img);
+        goto exit;
+    }
+
+    ion_buf.fd = img->fd;
+    ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
+    ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
+    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+
+    ret = snp_send_msg_notify_thr(snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                  SNAPSHOT_EVT_CB_INVALIDATE_CACHE,
+                                  (void *)&ion_buf, sizeof(cam_ion_buffer_t));
+    if (ret) {
+        CMR_LOGE("SNAPSHOT_EVT_CB_FLUSH failed, ret = %ld", ret);
+        goto exit;
+    }
+
 exit:
     return ret;
 }

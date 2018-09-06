@@ -1267,6 +1267,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_CONVERT_EV,
     CAMERA_EVT_CB_AF_MODE,
 #endif
+    CAMERA_EVT_CB_INVALIDATE_CACHE,
     CAMERA_CB_TYPE_MAX
 };
 
