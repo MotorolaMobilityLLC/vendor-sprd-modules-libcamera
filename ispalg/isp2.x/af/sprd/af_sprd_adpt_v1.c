@@ -1778,51 +1778,6 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	notify_start(af, AF_FOCUS_FAF);
 }
 
-static cmr_u8 check_force_retrigger(af_ctrl_t * af)
-{
-	double diff_x = 0.0, diff_y = 0.0;	//, diff_area = 0.0;
-	double diff_x_ratio = 0.0, diff_y_ratio = 0.0;	//, diff_area_ratio = 0.0;
-	cmr_u8 i = 0, max_index = 0;
-	cmr_u32 area = 0, max_area = 0, sx = 0, sy = 0, ex = 0, ey = 0;
-	struct afctrl_face_info *face = &(af->face_info);
-
-	if (STATE_FAF == af->state && AF_SEARCHING == af->focus_state && (af->trigger_source_type & AF_DATA_FD)) {
-		while (i < af->face_info.face_num) {	// pick face of maximum size
-			area = (face->face_info[i].ex - face->face_info[i].sx) * (face->face_info[i].ey - face->face_info[i].sy);
-			if (max_area < area) {
-				max_index = i;
-				max_area = area;
-			}
-			i++;
-		}
-
-		sx = af->face_info.face_info[max_index].sx;
-		ex = af->face_info.face_info[max_index].ex;
-		sy = af->face_info.face_info[max_index].sy;
-		ey = af->face_info.face_info[max_index].ey;
-
-		diff_x = ABS_AB(((sx) + (ex)), ((af->face_trigger_area.sx + af->face_trigger_area.ex)));
-		diff_y = ABS_AB(((sy) + (ey)), ((af->face_trigger_area.sy + af->face_trigger_area.ey)));
-		//diff_area = diff_x * diff_y;
-
-		ISP_LOGV("check_force_retrigger [ethan]IOin dx=%f, dy=%f, sx=%d, sy=%d, ex=%d, ey=%d", diff_x, diff_y, af->face_info.face_info[max_index].sx, af->face_info.face_info[max_index].sy,
-				 af->face_info.face_info[max_index].ex, af->face_info.face_info[max_index].ey);
-		ISP_LOGV("check_force_retrigger [ethan]rec sx=%d, sy=%d, ex=%d, ey=%d", af->face_trigger_area.sx, af->face_trigger_area.sy, af->face_trigger_area.ex, af->face_trigger_area.ey);
-		diff_x_ratio = (diff_x / 2) / ((af->face_trigger_area.ex - af->face_trigger_area.sx) + 1);
-		diff_y_ratio = (diff_y / 2) / ((af->face_trigger_area.ey - af->face_trigger_area.sy) + 1);
-
-		if (diff_x_ratio > 0.35 || diff_y_ratio > 0.35) {
-			af->face_trigger_area.sx = af->face_info.face_info[max_index].sx;
-			af->face_trigger_area.ex = af->face_info.face_info[max_index].ex;
-			af->face_trigger_area.sy = af->face_info.face_info[max_index].sy;
-			af->face_trigger_area.ey = af->face_info.face_info[max_index].ey;
-
-			return AFV1_TRUE;
-		}
-	}
-	return AFV1_FALSE;
-}
-
 static cmr_s32 faf_process_frame(af_ctrl_t * af)
 {
 	cmr_u32 alg_mode;
@@ -1967,8 +1922,6 @@ static void af_stop_search(af_ctrl_t * af)
 static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm, struct aft_proc_result *result)
 {
 	struct af_trig_info win;
-	AF_Trigger_Data aft_in;
-	cmr_u32 force_stop;
 
 	if (AF_SEARCHING != af->focus_state) {
 		if (result->is_caf_trig || (AFV1_TRUE == af->force_trigger && af->ae.ae_report.is_stab)) {
@@ -2011,60 +1964,14 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 			af_stop_search(af);
 			af->state = af->pre_state;
 		}
+		if (AFT_CANC_CB == result->is_cancel_caf) {
+			af_stop_search(af);
+		}
 
-		if (AFT_CANC_CB == result->is_cancel_caf || result->is_caf_trig || AFV1_TRUE == af->force_trigger) {
-			ISP_LOGI("af retrigger, cancel af %d, trigger af %d, force trigger %d", result->is_cancel_caf, result->is_caf_trig, af->force_trigger);
-			force_stop = AFV1_FALSE;
-
-			if (AFV1_SUCCESS == af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop)) {
-				af->af_ops.calc(af->af_alg_cxt);
-				win.win_num = 0;
-				if (AFT_TRIG_FD == result->is_caf_trig) {
-					win.win_num = 1;
-					win.win_pos[0].sx = prm->fd_info.face_info[0].sx;
-					win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
-					win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
-					win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
-					af->face_trigger_area.sx = win.win_pos[0].sx;
-					af->face_trigger_area.ex = win.win_pos[0].ex;
-					af->face_trigger_area.sy = win.win_pos[0].sy;
-					af->face_trigger_area.ey = win.win_pos[0].ey;
-					ISP_LOGV("retrigger face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex, win.win_pos[0].ey);
-					af->algo_mode = FAF;
-					af->state = STATE_FAF;
-				}
-				memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-				aft_in.AFT_mode = af->algo_mode;
-				aft_in.bisTrigger = AF_TRIGGER;
-				aft_in.AF_Trigger_Type = (RE_TRIGGER);
-				aft_in.trigger_source = result->is_caf_trig;
-				calc_roi(af, &win, af->algo_mode);
-				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
-				do_start_af(af);
-				ISP_LOGV("AF retrigger start \n");
-			} else {
-			#if 0
-				if (af->face_trigger_area.face_force_stop == AFV1_TRUE && af->face_trigger_area.counter_face_force_stop <= 2) {
-
-					af->force_trigger = AFV1_FALSE;
-					af->face_trigger_area.face_force_stop = AFV1_FALSE;
-					force_stop = AFV1_TRUE;
-					af->face_trigger_area.counter_face_force_stop++;
-
-					if (AFV1_SUCCESS == af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop)) {
-						af->af_ops.calc(af->af_alg_cxt);
-					}
-				} else {
-					cmr_u32 alg_mode;
-					af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
-					ISP_LOGI("AF retrigger no support @%d \n", alg_mode);
-				}
-			#else
-				cmr_u32 alg_mode;
-				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
-				ISP_LOGI("AF retrigger no support @%d \n", alg_mode);
-			#endif
-			}
+		if (AFT_TRIG_FD == result->is_caf_trig || AFT_TRIG_CB == result->is_caf_trig) {
+			ISP_LOGI("trigger cb fd while searching x, cancel_af %d, trigger_af %d", result->is_cancel_caf, result->is_caf_trig);
+		} else if (AFT_TRIG_PD == result->is_caf_trig || AFT_TRIG_TOF == result->is_caf_trig) {
+			ISP_LOGV("trigger pd tof while searching, cancel_af %d, trigger_af %d", result->is_cancel_caf, result->is_caf_trig);
 		}
 	}
 }
@@ -3490,16 +3397,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 
-	/*
-	if (AFV1_TRUE == check_force_retrigger(af)) {
-		af->face_trigger_area.face_force_stop = AFV1_TRUE;
-		af->force_trigger = AFV1_TRUE;
-		if (inparam->data_type != AF_DATA_IMG_BLK) {
-			ISP_LOGV("check_force_retrigger 2");
-			caf_monitor_process(af);
-		}
-	}*/
-
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
@@ -3690,11 +3587,13 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			}
 			break;
 		case STATE_FAF:
-			rtn = faf_process_frame(af);
-			if (1 == rtn) {
-				af->focus_state = AF_IDLE;
-				af->state = af->pre_state;
-				trigger_start(af);
+			if (AF_SEARCHING == af->focus_state) {
+				rtn = faf_process_frame(af);
+				if (1 == rtn) {
+					af->focus_state = AF_IDLE;
+					af->state = af->pre_state;
+					trigger_start(af);
+				}
 			}
 			break;
 		case STATE_MANUAL:
