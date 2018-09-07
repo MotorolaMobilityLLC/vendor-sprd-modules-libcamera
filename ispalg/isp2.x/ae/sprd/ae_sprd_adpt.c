@@ -2594,6 +2594,26 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 				current_status->settings.table_idx = 0;
 				current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
 				current_status->settings.gain = cxt->flash_esti_result.captureGain;
+				/*
+				 * consider this situation:
+				 * 1. entry into "Ae/Af lock" mode, then turn up to the max level
+				 * 2. set the flash mode to "flash on"
+				 * 3. then take picture
+				 *
+				 * the flash lib takes over the ae param calculating and updating, which will rewrite the Param that is
+				 * setted by user with "ae/af lock" mode.
+				 * then the picture's exposure is normal which isn't the user's expectation.
+				 *
+				 * fix :
+				 * when flash lib works out the mainflash's param,we will check if we are in "ae/af lock" mode,before 
+				 * realy setting.
+				 ***/
+				if (1 == cxt->exposure_compensation.ae_compensation_flag) {
+					// cur "Ae/Af lock"
+					current_status->settings.table_idx = cxt->flash_backup.table_idx;
+
+				}
+
 			} else {
 				ISP_LOGE("ae_flash estimation does not work well");
 			}
@@ -2818,7 +2838,6 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			}
 
 		if (1 == cxt->flash_main_esti_result.isEnd) {
-			cxt->flash_esti_result.isEnd = 0;
 			if (cxt->isp_ops.set_wbc_gain) {
 				struct ae_alg_rgb_gain awb_gain;
 				awb_gain.r = cxt->flash_main_esti_result.captureRGain;
