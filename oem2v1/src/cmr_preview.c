@@ -2434,7 +2434,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         if ((prev_cxt->recovery_start_time != 0) &&
             (prev_cxt->recovery_start_time > timestamp) &&
             (prev_cxt->recovery_status == PREV_RECOVERING)) {
-            CMR_LOGD("recovery mode,skip frame");
+            CMR_LOGD("recovery mode,skip preview frame");
             return CMR_CAMERA_INVALID_PARAM;
         }
         ret = prev_preview_frame_handle(handle, camera_id, data);
@@ -2450,6 +2450,13 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
 #endif
     if (video_enable && (data->channel_id == prev_cxt->video_channel_id)) {
+        timestamp = data->sec * 1000000000LL + data->usec * 1000;
+        if (preview_enable && (prev_cxt->recovery_start_time != 0) &&
+            (prev_cxt->recovery_start_time > timestamp) &&
+            (prev_cxt->recovery_status == PREV_RECOVERING)) {
+            CMR_LOGD("recovery mode,skip video frame");
+            return CMR_CAMERA_INVALID_PARAM;
+        }
         ret = prev_video_frame_handle(handle, camera_id, data);
     }
 
