@@ -305,6 +305,9 @@ typedef struct _af_ctrl {
 	cmr_u32 pdaftuning_data_len;
 	cmr_u8 *afttuning_data;
 	cmr_u32 afttuning_data_len;
+	cmr_u8 *toftuning_data;
+	cmr_u32 toftuning_data_len;
+	tof_measure_data_t tof;
 	AF_adpt_face_win face_trigger_area;
 
 	struct afctrl_cb_ops cb_ops;

@@ -33,6 +33,8 @@
 #include "isp_match.h"
 #include <dlfcn.h>
 #include <immintrin.h>
+#include "tof_ctrl.h"
+
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
@@ -448,6 +450,22 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 		break;
 	}
 
+	return ret;
+}
+
+static cmr_int ispalg_tof_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	switch (type) {
+	case ISP_AF_SET_TOF_INFO:
+		if (cxt->ops.af_ops.ioctrl)
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_TOF_INFO, param0, param1);
+		break;
+	default:
+		break;
+	}
 	return ret;
 }
 
@@ -2803,8 +2821,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	cmr_u32 is_af_support = 1;
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
+	//struct isp_pm_param_data param_data;
+	//struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	if (NULL == cxt || NULL == cxt->ioctrl_ptr) {
@@ -2844,12 +2862,23 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 
 		//get pdaf tuning parameters
 		memset((void *)&output, 0, sizeof(output));
-		memset(&param_data, 0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-		if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
+		//memset(&param_data, 0, sizeof(param_data));
+		//BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_PDAF, NULL, &output);
+		//ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+		//if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
+		if(ISP_SUCCESS == ret && NULL != output.param_data){
 			af_input.pdaftuning_data = output.param_data[0].data_ptr;
 			af_input.pdaftuning_data_len = output.param_data[0].data_size;
+		}
+
+
+		//[TOF_tuning]get tof tuning parameters
+		memset((void *)&output, 0, sizeof(output));
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_TOF, NULL, &output);
+		if(ISP_SUCCESS == ret && NULL != output.param_data){
+			af_input.toftuning_data = output.param_data[0].data_ptr;
+			af_input.toftuning_data_len = output.param_data[0].data_size;
 		}
 	}
 
@@ -2925,6 +2954,29 @@ exit:
 
 	return ret;
 }
+
+static cmr_int ispalg_tof_init(struct isp_alg_fw_context *cxt)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_handle  tof_handle = NULL;
+	struct tof_ctrl_init_in tof_ctrl_init;
+
+	tof_ctrl_init.tof_set_cb = ispalg_tof_set_cb;
+	tof_ctrl_init.caller_handle = (cmr_handle) cxt;
+
+	if (NULL == cxt->tof_handle) {
+		if (cxt->ops.tof_ops.init) {
+			ret = cxt->ops.tof_ops.init(&tof_ctrl_init, &tof_handle);
+			if (NULL == tof_handle) {
+				ISP_LOGE("fail to do tof init");
+				return ISP_ERROR;
+			}
+		}
+		cxt->tof_handle = tof_handle;
+	}
+	return ret;
+}
+
 
 static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 {
@@ -3060,6 +3112,9 @@ static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	ret = ispalg_pdaf_init(cxt, input_ptr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do pdaf_init"));
 
+	ret = ispalg_tof_init(cxt);
+	ISP_TRACE_IF_FAIL(ret, ("fail to do tof_init"));
+
 	ret = ispalg_lsc_init(cxt);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do lsc_init"));
 
@@ -3121,6 +3176,9 @@ static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 
 	if (cxt->ops.pdaf_ops.deinit)
 		cxt->ops.pdaf_ops.deinit(&cxt->pdaf_cxt.handle);
+
+	if (cxt->ops.tof_ops.deinit)
+		cxt->ops.tof_ops.deinit(&cxt->tof_handle);
 
 	if (cxt->ops.af_ops.deinit)
 		cxt->ops.af_ops.deinit(&cxt->af_cxt.handle);
@@ -3326,6 +3384,17 @@ static cmr_int load_ispalg_library(cmr_handle adpt_handle)
 	cxt->ops.lsc_ops.ioctrl= dlsym(cxt->ispalg_lib_handle, "lsc_ctrl_ioctrl");
 	if (!cxt->ops.lsc_ops.ioctrl) {
 		ISP_LOGE("failed to dlsym lsc_ops.ioctrl");
+		goto error_dlsym;
+	}
+
+	cxt->ops.tof_ops.init = dlsym(cxt->ispalg_lib_handle, "tof_ctrl_init");
+	if (!cxt->ops.tof_ops.init) {
+		ISP_LOGE("fail to dlsym tof_ops.init");
+		goto error_dlsym;
+	}
+	cxt->ops.tof_ops.deinit = dlsym(cxt->ispalg_lib_handle, "tof_ctrl_deinit");
+	if (!cxt->ops.tof_ops.deinit) {
+		ISP_LOGE("fail to dlsym tof_ops.deinit");
 		goto error_dlsym;
 	}
 

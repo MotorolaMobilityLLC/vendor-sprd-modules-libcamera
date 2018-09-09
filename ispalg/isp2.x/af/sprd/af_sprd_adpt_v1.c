@@ -42,6 +42,10 @@ static cmr_u32 g_FrameID = 0;
 
 //IMX351 PD OTP Address
 //static cmr_u8 *pdaf_rdm_otp_data = NULL;
+//[TOF_+++]
+
+static cmr_u32 tof_FrameID = 0;
+//[TOF_---]
 
 #ifndef MAX
 #define  MAX( _x, _y ) ( ((_x) > (_y)) ? (_x) : (_y) )
@@ -1038,6 +1042,31 @@ static cmr_u8 if_af_set_clear_next_vcm_pos(void *cookie)
 
 // SharkLE Only --
 
+//[TOF_+++]
+static cmr_u8 if_get_tof_data(tof_measure_data_t *tof_result, void *cookie)
+{
+	//af_ctrl_t *af = cookie;
+	UNUSED(cookie);
+	//char value[PROPERTY_VALUE_MAX] = { '\0' };
+
+	#ifdef SHARK_L3_1
+
+		VL53L0_RangingMeasurementData_t range_datas;
+
+		vl53l0_getdata(&range_datas);
+
+		tof_result->data.RangeDMaxMilliMeter = range_datas.RangeDMaxMilliMeter;
+		tof_result->data.RangeMilliMeter = range_datas.RangeMilliMeter;
+		tof_result->data.RangeStatus = range_datas.RangeStatus;
+
+	#else
+		af_ctrl_t *af = cookie;
+		memcpy(tof_result, &(af->tof), sizeof(tof_measure_data_t));
+	#endif
+
+	return 0;
+}
+//[TOF_---]
 // trigger stuffs
 #define LOAD_SYMBOL(handle, sym, name) \
 {sym=dlsym(handle, name); if(NULL==sym) {ISP_LOGE("dlsym fail: %s", name); return -1;}}
@@ -1204,10 +1233,12 @@ static void *af_init(af_ctrl_t * af)
 	// tuning data from common_mode
 	af_tuning_block_param af_tuning_data;
 	AF_Ctrl_Ops AF_Ops;
-	struct isp_haf_tune_param *pdaf_tune_data;
+	//struct isp_haf_tune_param *pdaf_tune_data;
 	haf_tuning_param_t haf_tuning_data;
+	//struct isp_haf_tof_tune_param *tof_tune_data;
+
 	void *alg_cxt = NULL;
-	cmr_u32 i;
+	//cmr_u32 i;
 
 	AF_Ops.cookie = af;
 	AF_Ops.statistics_wait_cal_done = if_statistics_wait_cal_done;
@@ -1245,10 +1276,30 @@ static void *af_init(af_ctrl_t * af)
 	AF_Ops.set_clear_next_vcm_pos = if_af_set_clear_next_vcm_pos;
 	// SharkLE Only --
 
+	//[TOF_+++]
+	AF_Ops.get_tof_data = if_get_tof_data;
+	//[TOF_---]
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
 	af_tuning_data.data = af->aftuning_data;
 	af_tuning_data.data_len = af->aftuning_data_len;
 
+
+	memset((void *)&haf_tuning_data, 0, sizeof(haf_tuning_data));
+	if(af->pdaftuning_data != NULL){
+		haf_tuning_data.pd_data = af->pdaftuning_data;
+		haf_tuning_data.pd_data_len = af->pdaftuning_data_len;
+	}else{
+		ISP_LOGI("PDAF Tuning NULL!");
+	}
+
+	if(af->toftuning_data != NULL){
+		haf_tuning_data.tof_data = af->toftuning_data;
+		haf_tuning_data.tof_data_len = af->toftuning_data_len;
+	}else{
+		ISP_LOGI("TOF Tuning NULL!");
+	}
+
+	/*
 	pdaf_tune_data = (struct isp_haf_tune_param *)af->pdaftuning_data;
 	if (pdaf_tune_data != NULL) {
 		ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps,
@@ -1274,6 +1325,7 @@ static void *af_init(af_ctrl_t * af)
 		ISP_LOGI("PDAF Tuning NULL!");
 		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1;	//Use Default Setting
 	}
+	*/
 
 	if (0 != load_af_lib(af, AF_LIB))
 		return NULL;
@@ -1875,6 +1927,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 			notify_start(af, AF_FOCUS_PDAF);
 			break;
 		case AFT_TRIG_TOF:
+			notify_start(af, AF_FOCUS_TOF);
 			break;
 		default:
 			break;
@@ -1898,6 +1951,8 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_CAF);
 		} else if(AFT_TRIG_PD == af->hal_trigger_type){
 			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_PDAF);
+		}else if(AF_FOCUS_TOF == af->hal_trigger_type){
+			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_TOF);
 		}
 		ISP_LOGV("notify_stop.");
 		af->hal_trigger_type = AFT_TRIG_NONE;
@@ -1906,6 +1961,36 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 		return 0;
 	}
 }
+
+//[TOF_+++]
+static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
+{
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
+	AF_Trigger_Data aft_in;
+	/*char *token = NULL;
+	cmr_u32 scan_from = 0;
+	cmr_u32 scan_to = 0;
+	cmr_u32 per_steps = 0;
+	*/
+
+	property_get("persist.vendor.cam.tof.enable", value, "1");
+	if (atoi(value) != 1)
+		return;
+
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+	calc_roi(af, NULL, af->algo_mode);
+
+	aft_in.AFT_mode = TOF;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.trigger_source = p_aft_result->is_caf_trig;
+	ISP_LOGI("tof current %d mode , %d", aft_in.AFT_mode, aft_in.trigger_source);
+
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+	do_start_af(af);
+	notify_start(af, AF_FOCUS_CAF);
+	af->vcm_stable = 0;
+}
+//[TOF_---]
 
 static void af_stop_search(af_ctrl_t * af)
 {
@@ -1943,7 +2028,11 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
-			} else {
+			} else if(AFT_DATA_TOF == prm->active_data_type && af->tof.data.RangeStatus == 0){//[TOF_+++]
+
+				//ISP_LOGV("ddd flag:%d. dis:%d, maxdis:%d, status:%d ", af->tof.tof_trigger_flag, af->tof.last_distance, af->tof.last_MAXdistance, af->tof.last_status );
+				tof_start(af, result);//[TOF_---]
+		    } else {
 				caf_start(af, result);
 			}
 			af->focus_state = AF_SEARCHING;
@@ -2147,12 +2236,40 @@ static void caf_monitor_process_fd(af_ctrl_t * af)
 	caf_monitor_calc(af, prm);
 }
 
+//[TOF_+++]
+static void caf_monitor_tof(af_ctrl_t * af)
+{
+	struct aft_proc_calc_param *prm = &(af->prm_trigger);
+
+	memset(prm, 0, sizeof(struct aft_proc_calc_param));
+	prm->active_data_type = AFT_DATA_TOF;
+	//prm->tof_info.tof_enable = af->pd.pd_enable;
+	//prm->tof_info.effective_frmid = af->pd.effective_frmid;
+	prm->tof_info.status = af->tof.data.RangeStatus;
+	prm->tof_info.distance = af->tof.data.RangeMilliMeter;
+	prm->tof_info.MAXdistance = af->tof.data.RangeDMaxMilliMeter;
+
+
+
+	caf_monitor_calc(af, prm);
+
+	return;
+}
+//[TOF_---]
+
 static void caf_monitor_process(af_ctrl_t * af)
 {
 	if (af->trigger_source_type & AF_DATA_FD) {
 		af->trigger_source_type &= (~AF_DATA_FD);
 		caf_monitor_process_fd(af);
 	}
+
+	//[TOF_+++]
+	if (af->trigger_source_type & AF_DATA_TOF) {
+		af->trigger_source_type &= (~AF_DATA_TOF);
+		caf_monitor_tof(af);
+	}
+	//[TOF_---]
 
 	if (af->trigger_source_type & AF_DATA_PD) {
 		af->trigger_source_type &= (~AF_DATA_PD);
@@ -2317,6 +2434,8 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 				notify_stop(af, 0, AF_FOCUS_CAF);
 			} else if (AFT_TRIG_PD == af->hal_trigger_type) {
 				notify_stop(af, 0, AF_FOCUS_PDAF);
+			} else if (AFT_TRIG_TOF == af->hal_trigger_type) {
+				notify_stop(af, 0, AF_FOCUS_TOF);
 			}
 			break;
 		case STATE_FAF:
@@ -2861,6 +2980,47 @@ static cmr_s32 af_sprd_set_update_aux_sensor(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
+//[TOF_+++]
+static cmr_s32 af_sprd_set_tof_info(cmr_handle handle, void *param0)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
+	struct tof_result *tof_info = (struct tof_result *)param0;
+
+
+	property_get("persist.vendor.cam.tof.enable", value, "1");
+
+	if (atoi(value) != 1){
+		ISP_LOGI("TOF Disable! E %p", param0);
+		return AFV1_ERROR;
+	}
+
+	if (NULL == tof_info)
+		return AFV1_ERROR;
+
+	memset(&(af->tof.data), 0, sizeof(struct tof_result));
+
+	tof_FrameID = (tof_FrameID >= (0xfffffffe - 1)) ? (0) : (tof_FrameID + 1);
+	af->tof.effective_frmid = tof_FrameID;
+	af->tof.tof_enable = (af->tof.effective_frmid) ? 1 : 0;
+	af->trigger_source_type |= AF_DATA_TOF;
+
+	memcpy(&af->tof.data, tof_info, sizeof(struct tof_result));
+
+	/*
+	af->tof.data.RangeMilliMeter = tof_info->RangeMilliMeter;
+	af->tof.data.RangeStatus = tof_info->RangeStatus;
+	af->tof.data.RangeDMaxMilliMeter = tof_info->RangeDMaxMilliMeter;
+	*/
+
+	//ISP_LOGV("1.saf_sprd range:%d, status:%d, Dmax:%d",tof_info->RangeMilliMeter, tof_info->RangeStatus, tof_info->RangeDMaxMilliMeter);
+
+	ISP_LOGV("2.af_sprd range:%d, status:%d, Dmax:%d",af->tof.data.RangeMilliMeter, af->tof.data.RangeStatus, af->tof.data.RangeDMaxMilliMeter);
+
+	return AFV1_SUCCESS;
+}
+//[TOF_---]
+
 static cmr_s32 af_sprd_get_fullscan_info(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -2971,6 +3131,12 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		rtn = af_sprd_set_type1_pd_info(handle, param0);
 		ISP_LOGV("pdaf type1 set pd info");
 		break;
+	//[TOF_+++]
+	case AF_CMD_SET_TOF_INFO:
+		rtn = af_sprd_set_tof_info(handle, param0);
+		ISP_LOGV("tof set tof info");
+		break;
+	//[TOF_---]
 	case AF_CMD_SET_UPDATE_AUX_SENSOR:
 		rtn = af_sprd_set_update_aux_sensor(handle, param0);
 		break;
@@ -3251,6 +3417,10 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->afttuning_data = init_param->afttuning_data;
 	af->afttuning_data_len = init_param->afttuning_data_len;
 
+	//[TOF_+++]
+	af->toftuning_data = init_param->toftuning_data;
+	af->toftuning_data_len = init_param->toftuning_data_len;
+	//[TOF_---]
 	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGV
 		("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)",
@@ -3291,6 +3461,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->test_loop_quit = 1;
 	//property_set("vendor.cam.af_mode", "none");
 
+	//[TOF_+++]
+	af->tof.tof_trigger_flag = 0;
+	//[TOF_---]
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
 

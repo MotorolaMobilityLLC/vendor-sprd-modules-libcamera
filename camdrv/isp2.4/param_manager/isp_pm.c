@@ -1569,6 +1569,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		case ISP_PM_CMD_GET_INIT_DUAL_FLASH:
 			block_id = ISP_BLK_DUAL_FLASH;
 			break;
+		case ISP_PM_CMD_GET_INIT_TOF:
+			block_id = ISP_BLK_TOF_TUNE;
+			break;
 		default:
 			break;
 		}

@@ -91,6 +91,7 @@ extern "C" {
 		AF_CMD_SET_DAC_INFO = 0x1018,
 		// SharkLE Only --
 		AF_CMD_SET_TYPE1_PD_INFO = 0x1019,
+		AF_CMD_SET_TOF_INFO = 0x101A,
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
@@ -112,6 +113,7 @@ extern "C" {
 		AF_DATA_FD = (1 << 3),	// 0x8
 		AF_DATA_PD = (1 << 4),	// 0x10
 		AF_DATA_G = (1 << 5),	// 0x20
+		AF_DATA_TOF = (1 << 6),	//0x40
 		AF_DATA_MAX
 	};
 
@@ -436,6 +438,8 @@ extern "C" {
 		cmr_u32 pdaftuning_data_len;
 		cmr_u8 *afttuning_data;
 		cmr_u32 afttuning_data_len;
+		cmr_u8 *toftuning_data;//[TOF_tuning][TOF_+++]
+		cmr_u32 toftuning_data_len;//[TOF_tuning][TOF_---]
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 		struct afctrl_cb_ops cb_ops;
@@ -466,6 +470,20 @@ extern "C" {
 		cmr_s32 pdGetFrameID;
 		cmr_s32 pdDCCGain[AREA_LOOP + 1];
 		cmr_u32 pd_roi_num;
+	};
+
+	struct tof_result {
+		/*TBD get reset from */
+		cmr_u32 TimeStamp;
+		cmr_u32 MeasurementTimeUsec;
+		cmr_u16 RangeMilliMeter;
+		cmr_u16 RangeDMaxMilliMeter;
+		cmr_u32 SignalRateRtnMegaCps;
+		cmr_u32 AmbientRateRtnMegaCps;
+		cmr_u16 EffectiveSpadRtnCount;
+		cmr_u8 ZoneId;
+		cmr_u8 RangeFractionalPart;
+		cmr_u8 RangeStatus;
 	};
 
 	cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle * handle_af);

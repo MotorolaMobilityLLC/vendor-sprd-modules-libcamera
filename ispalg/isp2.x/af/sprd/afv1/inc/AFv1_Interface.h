@@ -86,7 +86,8 @@ typedef enum _eAF_MODE {
 	MAF,			//Multi zone AF
 	PDAF,			//PDAF
 	TMODE_1,		//Test mode 1
-	Wait_Trigger		//wait for AF trigger
+	Wait_Trigger,		//wait for AF trigger
+	TOF             //[TOF_---] // Time of flight
 } eAF_MODE;
 
 typedef enum _e_AF_TRIGGER {
@@ -219,6 +220,37 @@ typedef struct _AF_OTP_Data {
 	cmr_u32 reserved[10];
 } AF_OTP_Data;
 
+//[TOF_+++]
+
+typedef struct _tof_sensor_result {
+	cmr_u32 TimeStamp;
+	cmr_u32 MeasurementTimeUsec;
+	cmr_u16 RangeMilliMeter;
+	cmr_u16 RangeDMaxMilliMeter;
+	cmr_u32 SignalRateRtnMegaCps;
+	cmr_u32 AmbientRateRtnMegaCps;
+	cmr_u16 EffectiveSpadRtnCount;
+	cmr_u8 ZoneId;
+	cmr_u8 RangeFractionalPart;
+	cmr_u8 RangeStatus;
+}tof_sensor_result;
+
+
+
+typedef struct _tof_measure_data_s{
+	tof_sensor_result data;
+	cmr_u8 tof_enable;
+	cmr_u32 effective_frmid;
+	cmr_u32 last_status;
+	cmr_u32 last_distance;
+	cmr_u32 last_MAXdistance;
+	cmr_u32 tof_trigger_flag;
+	cmr_u32 reserved[20];
+
+}tof_measure_data_t;
+
+//[TOF_---]
+
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
@@ -255,6 +287,11 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_pulse_log) (cmr_u32 flag, void *cookie);
 	 cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
 	//SharkLE Only --
+
+	//[TOF_+++]
+	cmr_u8 (*get_tof_data)(tof_measure_data_t *tof_result, void *cookie);
+	//[TOF_---]
+
 } AF_Ctrl_Ops;
 
 typedef struct _af_tuning_block_param {
@@ -262,6 +299,7 @@ typedef struct _af_tuning_block_param {
 	cmr_u32 data_len;
 } af_tuning_block_param;
 
+/*
 typedef struct pdaftuning_param_s {
 	cmr_u32 min_pd_vcm_steps;
 	cmr_u32 max_pd_vcm_steps;
@@ -280,11 +318,13 @@ typedef struct pdaftuning_param_s {
 	cmr_u32 pd_conf_thr_2nd;
 	cmr_u32 reserved[52];
 } pdaftuning_param_t;
+*/
 
 typedef struct _haf_tuning_param_s {
-	// default param for outdoor/indoor/dark
-	pdaftuning_param_t PDAF_Tuning_Data[AFV1_SCENE_NUM];
-	cmr_u32 reverved[256];
+    cmr_u8 *pd_data;
+    cmr_u32 pd_data_len;
+    cmr_u8 *tof_data;
+    cmr_u32 tof_data_len;
 } haf_tuning_param_t;
 
 typedef struct defocus_param_s {

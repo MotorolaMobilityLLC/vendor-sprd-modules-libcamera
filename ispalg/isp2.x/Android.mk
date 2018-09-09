@@ -77,6 +77,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/common/inc/ \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/afl/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/smart \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/tof \
 	$(LOCAL_PATH)/$(ISP_DIR)/utility \
 	$(LOCAL_PATH)/$(ISP_DIR)/calibration/inc \
 	$(LOCAL_PATH)/../../sensor/inc

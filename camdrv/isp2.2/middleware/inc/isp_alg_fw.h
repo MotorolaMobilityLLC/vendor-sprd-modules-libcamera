@@ -206,6 +206,11 @@ struct ispalg_lsc_ctrl_ops {
 	cmr_int (*ioctrl)(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
 };
 
+struct ispalg_tof_ctrl_ops {
+	cmr_int (*init)(struct tof_ctrl_init_in *input_ptr, cmr_handle *handle);
+	cmr_int (*deinit)(cmr_handle *handle);
+};
+
 
 struct ispalg_lib_ops {
 	struct ispalg_ae_ctrl_ops ae_ops;
@@ -215,6 +220,7 @@ struct ispalg_lib_ops {
 	struct ispalg_smart_ctrl_ops smart_ops;
 	struct ispalg_pdaf_ctrl_ops pdaf_ops;
 	struct ispalg_lsc_ctrl_ops lsc_ops;
+	struct ispalg_tof_ctrl_ops tof_ops;
 };
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -248,6 +254,7 @@ struct isp_alg_fw_context {
 	cmr_handle thr_afl_handle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
+	cmr_handle tof_handle;
 	cmr_handle handle_otp;
 
 	cmr_u32 gamma_sof_cnt;
