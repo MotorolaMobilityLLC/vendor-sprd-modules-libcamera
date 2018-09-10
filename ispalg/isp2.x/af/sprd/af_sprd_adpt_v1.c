@@ -1954,7 +1954,7 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 			ISP_LOGW("cancel af while not searching AF_mode = %d", alg_mode);
 		}
 	} else {
-		if (AFT_CANC_FD == result->is_cancel_caf) {
+		if (AFT_CANC_FD == result->is_cancel_caf || AFT_CANC_CB == result->is_cancel_caf) {
 			af_stop_search(af);
 			if (AFT_TRIG_CB == af->hal_trigger_type) {
 				notify_stop(af, 0, AF_FOCUS_CAF);// need to be pair with notify_start only for caf
@@ -1963,9 +1963,6 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 		if (AFT_CANC_FD_GONE == result->is_cancel_caf) {
 			af_stop_search(af);
 			af->state = af->pre_state;
-		}
-		if (AFT_CANC_CB == result->is_cancel_caf) {
-			af_stop_search(af);
 		}
 
 		if (AFT_TRIG_FD == result->is_caf_trig || AFT_TRIG_CB == result->is_caf_trig) {
