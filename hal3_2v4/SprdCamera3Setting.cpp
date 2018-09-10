@@ -1177,7 +1177,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memset(&(s_setting[cameraId]), 0, sizeof(sprd_setting_info_t));
 
     s_setting[cameraId].supported_hardware_level =
-        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
 
     // color
     memcpy(s_setting[cameraId].colorInfo.available_aberration_modes,
