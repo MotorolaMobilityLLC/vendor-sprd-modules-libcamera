@@ -44,7 +44,7 @@
 #define SNP_EVT_CHANNEL_DONE (SNP_EVT_BASE + 30)  /*SNAPSHOT_EVT_CHANNEL_DONE*/
 #define SNP_EVT_RAW_PROC (SNP_EVT_BASE + 31)      /*SNAPSHOT_EVT_RAW_PROC*/
 #define SNP_EVT_SC_DONE (SNP_EVT_BASE + 32)       /*SNAPSHOT_EVT_SC_DONE*/
-#define SNP_EVT_HDR_DONE (SNP_EVT_BASE + 33)      /*SNAPSHOT_EVT_HDR_DONE*/
+#define SNP_EVT_REPROCESS (SNP_EVT_BASE + 33)      /*SNAPSHOT_EVT_REPROCESS*/
 #define SNP_EVT_CVT_RAW_DATA (SNP_EVT_BASE + 34)  /*SNAPSHOT_EVT_CVT_RAW_DATA*/
 #define SNP_EVT_JPEG_ENC_DONE (SNP_EVT_BASE + 35) /*SNAPSHOT_EVT_JPEG_ENC_DONE*/
 #define SNP_EVT_JPEG_DEC_DONE (SNP_EVT_BASE + 36) /*SNAPSHOT_EVT_JPEG_DEC_DONE*/
@@ -894,7 +894,7 @@ cmr_int snp_proc_cb_thread_proc(struct cmr_msg *message, void *p_data) {
         CMR_LOGE("jpeg dec error");
         cxt->err_code = CMR_CAMERA_FAIL;
         break;
-    case SNP_EVT_HDR_DONE:
+    case SNP_EVT_REPROCESS:
         sem_post(&cxt->hdr_sync_sm);
         snp_ipm_cb_handle((cmr_handle)cxt, message->data);
         break;
@@ -1446,6 +1446,7 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
     struct isp_awbc_cfg_test awbc_cfg;
     void *isp_handle = NULL;
     uint32_t pos = 0;
+    cmr_u32 glb_gain = 0;
     struct isp_adgain_exp_info adgain_exp_info;
 
     snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
@@ -1460,6 +1461,9 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
         return -1;
     }
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
+#if defined(CONFIG_ISP_2_5)
+    isp_ioctl(isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
+#endif
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
     isp_ioctl(isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
 
@@ -1483,6 +1487,12 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
     sprintf(tmp_str, "%d", gain);
     strcat(file_name, tmp_str);
     strcat(file_name, "_");
+    strcat(file_name, "ispdgain");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", glb_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+
     strcat(file_name, "shutter");
     strcat(file_name, "_");
     sprintf(tmp_str, "%d", shutter);
@@ -1525,8 +1535,6 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
     sprintf(tmp_str, "%d", isp_cur_bv);
     strcat(file_name, tmp_str);
 
-    strcat(file_name, ".mipi_raw");
-    CMR_LOGD("file name %s", file_name);
     if (IMG_DATA_TYPE_RAW == img_fmt) {
         strcat(file_name, ".mipi_raw");
         CMR_LOGD("file name %s", file_name);
@@ -5402,8 +5410,8 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
         malloc_len = sizeof(struct img_frm);
         send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
         break;
-    case SNAPSHOT_EVT_HDR_DONE:
-        snp_evt = SNP_EVT_HDR_DONE;
+    case SNAPSHOT_EVT_REPROCESS:
+        snp_evt = SNP_EVT_REPROCESS;
         malloc_len = sizeof(struct frm_info);
         send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
         break;

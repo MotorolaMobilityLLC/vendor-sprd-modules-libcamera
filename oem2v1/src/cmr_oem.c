@@ -44,7 +44,7 @@
 #define OEM_HANDLE_HDR 1
 #define OEM_HANDLE_3DNR 1
 #define OEM_HANDLE_FILTER 1
-#define FLASH_CAPTURE_SKIP_NUM_OFFSET 7
+#define FLASH_CAPTURE_SKIP_NUM_OFFSET 17
 
 #define CAMERA_PATH_SHARE 1
 #define OEM_RESTART_SUM 2
@@ -331,6 +331,7 @@ static cmr_int camera_open_filter(struct camera_context *cxt,
                                   struct ipm_open_out *out_ptr);
 static cmr_int camera_close_filter(struct camera_context *cxt);
 
+static cmr_u32 camera_get_channel_id(cmr_u32 channel_bits);
 static void camera_snapshot_channel_handle(cmr_handle oem_handle, void *param);
 static void camera_post_share_path_available(cmr_handle oem_handle);
 static void camera_set_share_path_sm_flag(cmr_handle oem_handle, cmr_uint flag);
@@ -707,6 +708,11 @@ cmr_int camera_isp_ctrl_done(struct camera_context *cxt, cmr_u32 cmd,
     if (cmd >= ISP_CTRL_MAX) {
         CMR_LOGE("[PFC] isp wrong cmd %d", cmd);
         ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    if (data == NULL) {
+        CMR_LOGV("[PFC] EXIT  %d", cmd);
         goto exit;
     }
 
@@ -1168,7 +1174,7 @@ cmr_int camera_isp_convert(struct camera_context *cxt, cmr_u32 cmd,
     cmr_int oem_cb;
     cmr_u32 scene_mode = 0;
     // cmr_uint cmd_value, param;
-    struct isp_mw_per_frame_cxt *dst = (struct isp_mw_per_frame_cxt *)data;
+    struct isp_pfc_per_frame_cxt *dst = (struct isp_pfc_per_frame_cxt *)data;
 
     ISP_LOGD("E");
     if (dst == NULL) {
@@ -1422,6 +1428,14 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                     ret = camera_isp_af_stat(data);
                     break;*/
     case ISP_AE_STAB_CALLBACK:
+        if (data) {
+            if (*(cmr_s32 *)data == 1) {
+                CMR_LOGD("stop skip frame when flash on");
+                prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
+                                                cxt->camera_id, 0, 0);
+                goto exit;
+            }
+        }
         ret =
             cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
         break;
@@ -1820,7 +1834,7 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             camera_post_share_path_available((cmr_handle)cxt);
             cxt->ipm_cxt.frm_num = 0;
             ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                            SNAPSHOT_EVT_HDR_DONE, &frame);
+                                            SNAPSHOT_EVT_REPROCESS, &frame);
         }
     } else if (1 == camera_get_3dnr_flag(cxt)) {
         frame = cxt->snp_cxt.cur_frm_info;
@@ -2252,6 +2266,16 @@ void camera_set_touch_xy(struct camera_context *cxt,
     cxt->snp_cxt.touch_xy.touchY = touch_info.touchY;
 }
 
+cmr_u32 camera_get_channel_id(cmr_u32 channel_bits) {
+    int i;
+    for (i = 0; i < GRAB_CHANNEL_MAX; i++) {
+        if (channel_bits & (1 << i))
+            return i;
+    }
+
+    return GRAB_CHANNEL_MAX + 1;
+}
+
 void camera_snapshot_channel_handle(cmr_handle oem_handle, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -2305,12 +2329,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void *param) {
         }
     }
     if (1 == is_need_resume) {
-        for (i = 0; i < GRAB_CHANNEL_MAX; i++) {
-            if (cxt->snp_cxt.channel_bits & (1 << i)) {
-                break;
-            }
-        }
-        frame.channel_id = i;
+        frame.channel_id = camera_get_channel_id(cxt->snp_cxt.channel_bits);
         ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
                                        cxt->camera_id, PREVIEW_CHN_RESUME,
                                        &frame);
@@ -3549,6 +3568,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
              cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM ||
              cxt->is_multi_mode == MODE_3D_CAPTURE ||
              cxt->is_multi_mode == MODE_3D_VIDEO ||
+             cxt->is_multi_mode == MODE_3D_CALIBRATION ||
              cxt->is_multi_mode == MODE_3D_PREVIEW ||
              cxt->is_multi_mode == MODE_TUNING)
         isp_param.is_multi_mode = ISP_DUAL_NORMAL;
@@ -3558,20 +3578,30 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
         isp_param.is_master = 1;
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    isp_param.is_pfc_supported = 1;
+#endif
+
     CMR_LOGI(
-        "cxt->is_multi_mode=%d ,isp_param.is_multi_mode=%d, ex_info: f_num=%d, "
-        "focal_length=%d, max_fps=%d, max_adgain=%d, ois_supported=%d, "
-        "pdaf_supported=%d, exp_valid_frame_num=%d, clamp_level=%d, "
-        "adgain_valid_frame_num=%d, prev_skip_num=%d, cap_skip_num=%d, w=%d, "
-        "h=%d, sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
-        cxt->is_multi_mode, isp_param.is_multi_mode, isp_param.ex_info.f_num,
+        "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
+        "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
+        "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
+        "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        "isp_param.is_pfc_supported =%d, "
+#endif
+        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, ",
+        isp_param.is_multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
         isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,
         isp_param.ex_info.clamp_level, isp_param.ex_info.adgain_valid_frame_num,
         isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
-        isp_param.size.w, isp_param.size.h, sensor_info_ptr->image_pattern,
-        isp_param.image_pattern);
+        isp_param.size.w, isp_param.size.h,
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        isp_param.is_pfc_supported,
+#endif
+        sensor_info_ptr->image_pattern, isp_param.image_pattern);
 
     CMR_PRINT_TIME;
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
@@ -6426,7 +6456,12 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     param_ptr->cap_inf_cfg.cfg.need_3dnr =
         (2 == camera_get_3dnr_flag(cxt)) ? 1 : 0;
     param_ptr->cap_inf_cfg.cfg.dual_cam =
-        (cxt->is_multi_mode == MODE_BOKEH) ? 1 : 0;
+        (cxt->is_multi_mode == MODE_BOKEH) ||
+         cxt->is_multi_mode == MODE_3D_CAPTURE ||
+         cxt->is_multi_mode == MODE_3D_VIDEO ||
+         cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+         cxt->is_multi_mode == MODE_3D_PREVIEW ||
+         cxt->is_multi_mode == MODE_TUNING ? 1 : 0;
     param_ptr->cap_inf_cfg.cfg.is_high_fps = fps_info.is_high_fps;
     param_ptr->cap_inf_cfg.cfg.high_fps_skip_num = fps_info.high_fps_skip_num;
     if (!param_ptr->is_lightly) {
@@ -7755,6 +7790,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         req_frm_info.frame_num = param_ptr->req_info.frame_num;
         req_frm_info.is_only_capture = param_ptr->req_info.is_only_capture;
+        req_frm_info.is_input_capture = param_ptr->req_info.is_input_capture;
         isp_param_ptr = (void *)&req_frm_info;
         CMR_LOGD("[PFC] call ISP_CTRL_SET_REQ_FRAME_INFO frame_num %u",
                  req_frm_info.frame_num);
@@ -8697,14 +8733,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     CMR_LOGI("chn_bits %d actual size %d %d", chn_bits,
              out_ptr->post_proc_setting.actual_snp_size.width,
              out_ptr->post_proc_setting.actual_snp_size.height);
-    out_ptr->channel_id = GRAB_CHANNEL_MAX + 1;
-    for (i = 0; i < GRAB_CHANNEL_MAX; i++) {
-        if (chn_bits & (1 << i)) {
-            out_ptr->channel_id = i;
-            break;
-        }
-    }
-
+    out_ptr->channel_id = camera_get_channel_id(chn_bits);
 exit:
     CMR_LOGI("done,total num %d enc angle %d", out_ptr->total_num,
              out_ptr->rot_angle);
@@ -9037,11 +9066,6 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
-    case CAMERA_PARAM_SPRD_REPROCESS:
-        setting_param.cmd_type_value = param;
-        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
-                                &setting_param);
-        break;
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
@@ -9117,7 +9141,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 cmr_uint
 camera_get_isp_per_frame_result(cmr_handle oem_handle,
-                                struct isp_mw_per_frame_cxt *perFrame_res) {
+                                struct isp_pfc_per_frame_cxt *perFrame_res) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
     int i = 0;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -9467,16 +9491,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 CMR_LOGE("open high flash fail");
         }
     }
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_SPRD_REPROCESS, &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to get repocess mode %ld", ret);
-        // goto exit;
-    } else {
-        cxt->is_reprocess_mode = setting_param.cmd_type_value;
-    }
-    if ((snp_param.is_video_snapshot != 1) &&
-        !((cxt->is_multi_mode == MODE_BLUR) && (cxt->is_reprocess_mode == 1))) {
+    if (snp_param.is_video_snapshot != 1) {
         ret = camera_local_start_capture(oem_handle);
         if (ret) {
             CMR_LOGE("camera_start_capture failed");
@@ -9535,86 +9550,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     camera_set_discard_frame(cxt, 0);
 
     if (CAMERA_ISP_SIMULATION_MODE == mode) {
-        struct frm_info frame;
-        char file_name[200];
-        cmr_int read_size;
-        cmr_u32 sec = 0;
-        cmr_u32 usec = 0;
-        char value[PROPERTY_VALUE_MAX];
-        struct isptool_scene_param scene_param;
-        struct isp_context *isp_cxt = &cxt->isp_cxt;
-        struct img_frm isp_cap_raw = snp_param.post_proc_setting.mem[0].cap_raw;
-
-        cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
-                                           cxt->camera_id);
-        if (raw_filename[0]) {
-// only copy the filename without the path
-#ifdef CONFIG_USE_CAMERASERVER_PROC
-            memcpy(value, raw_filename + 25, PROPERTY_VALUE_MAX);
-#else
-            memcpy(value, raw_filename + 18, PROPERTY_VALUE_MAX);
-#endif
-        } else {
-            property_get("debug.camera.isptool.raw.name", value, "none");
+        ret = cmr_isp_simulation_proc(cxt, &snp_param);
+        if (ret) {
+            CMR_LOGE("camera isp simulation mode failed");
+            goto exit;
         }
-        CMR_LOGI("parse file_name = %s", value);
-        if (CMR_CAMERA_SUCCESS ==
-            camera_parse_raw_filename(value, &scene_param)) {
-            char file_name[128];
-            strcpy(file_name, CAMERA_DUMP_PATH);
-            char tmp_name[64];
-            sprintf(tmp_name, "%s", value);
-            strcat(file_name, tmp_name);
-            //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
-
-            CMR_LOGI(
-                "w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d",
-                scene_param.width, scene_param.height, scene_param.gain,
-                scene_param.awb_gain_r, scene_param.awb_gain_g,
-                scene_param.awb_gain_b, scene_param.smart_ct,
-                scene_param.smart_bv);
-
-            ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_TOOL_SET_SCENE_PARAM,
-                            (void *)&scene_param);
-            if (ret) {
-                CMR_LOGE("failed isp ioctl %ld", ret);
-            }
-
-            if ((scene_param.width > isp_cap_raw.size.width) ||
-                (scene_param.height > isp_cap_raw.size.height)) {
-                ret = -CMR_CAMERA_INVALID_PARAM;
-                CMR_LOGE("get scene param error");
-                goto exit;
-            }
-            read_size = camera_get_data_from_file(
-                file_name, IMG_DATA_TYPE_RAW, scene_param.width,
-                scene_param.height, &isp_cap_raw.addr_vir);
-            CMR_LOGI("raw data read_size = %ld", read_size);
-        }
-
-        sem_wait(&cxt->access_sm);
-        ret = cmr_grab_get_cap_time(cxt->grab_cxt.grab_handle, &sec, &usec);
-        CMR_LOGI("cap time %d %d", sec, usec);
-        sem_post(&cxt->access_sm);
-
-        frame.channel_id = snp_param.channel_id;
-        frame.sec = sec;
-        frame.usec = usec;
-        frame.base = CMR_CAP0_ID_BASE;
-        frame.frame_id = CMR_CAP0_ID_BASE;
-        frame.fmt = IMG_DATA_TYPE_RAW;
-        frame.yaddr = isp_cap_raw.addr_phy.addr_y;
-        frame.uaddr = isp_cap_raw.addr_phy.addr_u;
-        frame.vaddr = isp_cap_raw.addr_phy.addr_v;
-        frame.yaddr_vir = isp_cap_raw.addr_vir.addr_y;
-        frame.uaddr_vir = isp_cap_raw.addr_vir.addr_u;
-        frame.vaddr_vir = isp_cap_raw.addr_vir.addr_v;
-        frame.fd = isp_cap_raw.fd;
-
-        // call cmr_snapshot_receive_data for post-processing
-        ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                        SNAPSHOT_EVT_CHANNEL_DONE,
-                                        (void *)&frame);
         camera_post_share_path_available(oem_handle);
     }
 
@@ -11286,7 +11226,8 @@ cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps) {
 
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode cap_mode,
-                                            struct frm_info *frm_data) {
+                                            cmr_uint yaddr, cmr_uint yaddr_vir,
+                                            cmr_uint fd) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -11295,7 +11236,12 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     struct snapshot_param snp_param;
     struct common_sn_cmd_param param;
     struct setting_cmd_parameter setting_param;
+    struct frm_info frame_info;
+    struct frm_info *frm_data = &frame_info;
+    cmr_uint buffer_size;
     cmr_int flash_status = FLASH_CLOSE;
+    cmr_u32 sec = 0;
+    cmr_u32 usec = 0;
     cmr_s32 sm_val = 0;
 
     if (!oem_handle) {
@@ -11311,6 +11257,32 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         sem_init(&cxt->share_path_sm, 0, 0);
         CMR_LOGI("re-initialize share_path_sm");
     }
+
+    sem_wait(&cxt->access_sm);
+    ret = cmr_grab_get_cap_time(cxt->grab_cxt.grab_handle, &sec, &usec);
+    sem_post(&cxt->access_sm);
+
+    cmr_bzero(frm_data, sizeof(struct frm_info));
+    frm_data->channel_id = camera_get_channel_id(cxt->snp_cxt.channel_bits);
+    frm_data->frame_id = CMR_CAP0_ID_BASE;
+    frm_data->frame_real_id = 0;
+    frm_data->base = CMR_CAP0_ID_BASE;
+    frm_data->height = cxt->snp_cxt.request_size.height;
+    frm_data->base = CMR_CAP0_ID_BASE;
+    frm_data->fmt = IMG_DATA_TYPE_YUV420;
+    frm_data->yaddr = yaddr;
+    frm_data->yaddr_vir = yaddr_vir;
+    frm_data->fd = fd;
+    frm_data->sec = sec;
+    frm_data->usec = usec;
+    frm_data->zoom_ratio = 1000;
+
+    buffer_size =
+        cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height;
+    frm_data->uaddr = yaddr + buffer_size;
+    frm_data->vaddr = 0;
+    frm_data->uaddr_vir = yaddr_vir + buffer_size;
+    frm_data->vaddr_vir = 0;
 
     ret = camera_get_snapshot_param(oem_handle, &snp_param);
 
@@ -11373,10 +11345,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
 
     ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
 
-    // because of only hdr plus(normal pic) need to backup the normal pic.
-    // so directly use HDR post-snapshot.
     ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                    SNAPSHOT_EVT_HDR_DONE, frm_data);
+                                    SNAPSHOT_EVT_REPROCESS, frm_data);
     camera_post_share_path_available(oem_handle);
 
 exit:

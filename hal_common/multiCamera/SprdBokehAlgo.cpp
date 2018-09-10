@@ -121,11 +121,11 @@ void SprdBokehAlgo::setBokenParam(void *param) {
     mPreviewbokehParam.depth_param.F_number = fnum;
 }
 
-int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3) {
+int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3, void *para4) {
     int rc = NO_ERROR;
     int64_t depthRun = 0;
     distanceRet distance;
-    if (!para1 || !para2 || !para3) {
+    if (!para1 || !para2 || !para3 || !para4) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
         goto exit;
@@ -135,7 +135,7 @@ int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3) {
              mPreviewbokehParam.depth_param.sel_x,
              mPreviewbokehParam.depth_param.sel_y);
     depthRun = systemTime();
-    rc = sprd_depth_Run_distance(mDepthPrevHandle, para1, NULL, para3, para2,
+    rc = sprd_depth_Run_distance(mDepthPrevHandle, para1, para4, para3, para2,
                                  &mPreviewbokehParam.depth_param, &distance);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
@@ -447,9 +447,10 @@ exit:
     return rc;
 }
 
-int SprdBokehAlgo::onLine(void *para1, void *para2, void *para3) {
+int SprdBokehAlgo::onLine(void *para1, void *para2, void *para3, void *para4) {
     int rc = NO_ERROR;
     int64_t onlineRun = 0;
+    int64_t onlineScale = 0;
     if (!para1 || !para2 || !para3) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
@@ -464,7 +465,14 @@ int SprdBokehAlgo::onLine(void *para1, void *para2, void *para3) {
         goto exit;
     }
     HAL_LOGD("onLine run cost %lld ms", ns2ms(systemTime() - onlineRun));
-
+    onlineScale = systemTime();
+    rc = sprd_depth_OnlineCalibration_postprocess(mDepthPrevHandle, para1, para4);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("sprd_depth_OnlineCalibration_postprocess failed! %d", rc);
+        rc = UNKNOWN_ERROR;
+        goto exit;
+    }
+    HAL_LOGD("sprd_depth_OnlineCalibration_postprocess run cost %lld ms", ns2ms(systemTime() - onlineScale));
 exit:
     return rc;
 }

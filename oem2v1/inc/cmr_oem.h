@@ -31,6 +31,7 @@ extern "C" {
 #include "jpeg_exif_header.h"
 #include "SprdOEMCamera.h"
 #include "cmr_snapshot.h"
+#include "cmr_isptool.h"
 #include "cmr_setting.h"
 #include "cmr_focus.h"
 #include "cmr_preview.h"
@@ -297,7 +298,6 @@ struct camera_context {
     cmr_u32 is_refocus_mode;
     cmr_u32 is_3dcalibration_mode;
     cmr_uint is_yuv_callback_mode;
-    cmr_u32 is_reprocess_mode;
 
     /*memory func*/
     camera_cb_of_malloc hal_malloc;
@@ -494,7 +494,9 @@ cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value);
 cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps);
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode mode,
-                                            struct frm_info *frm_data);
+                                            cmr_uint yaddr,
+                                            cmr_uint yaddr_vir,
+                                            cmr_uint fd);
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
@@ -518,7 +520,7 @@ cmr_int camera_local_start_scale(cmr_handle oem_handle,
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 cmr_uint
 camera_get_isp_per_frame_result(cmr_handle oem_handle,
-                                struct isp_mw_per_frame_cxt *perFrame_res);
+                                struct isp_pfc_per_frame_cxt *perFrame_res);
 #endif
 /*to enable face detect for callback stream*/
 cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,

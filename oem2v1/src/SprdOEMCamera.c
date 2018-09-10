@@ -1147,7 +1147,9 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
-                                      struct frm_info *frm_data) {
+                                      cmr_uint yaddr,
+                                      cmr_uint yaddr_vir,
+                                      cmr_uint fd) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!camera_handle) {
         CMR_LOGE("camera handle is null");
@@ -1155,7 +1157,8 @@ cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
         goto exit;
     }
     ret =
-        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode, frm_data);
+        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode,
+                yaddr, yaddr_vir, fd);
     if (ret) {
         CMR_LOGE("failed to start snapshot %ld", ret);
     }
@@ -1168,7 +1171,7 @@ exit:
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 cmr_uint
 camera_get_isp_perFrame_result(cmr_handle camera_handle,
-                               struct isp_mw_per_frame_cxt *perFrame_res) {
+                               struct isp_pfc_per_frame_cxt *perFrame_res) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
     if (!camera_handle || !perFrame_res) {
         CMR_LOGE("error 0x%lx info=0x%lx", (cmr_uint)camera_handle,
@@ -1267,7 +1270,7 @@ static oem_ops_t oem_module_ops = {
 #endif
     camera_get_rolling_shutter,
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-    camera_get_isp_perFrame_result
+    camera_get_isp_perFrame_result,
 #endif
 };
 

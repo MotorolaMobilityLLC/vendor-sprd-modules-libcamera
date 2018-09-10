@@ -183,14 +183,16 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
-                                      struct frm_info *frm_data);
+                                      cmr_uint yaddr,
+                                      cmr_uint yaddr_vir,
+                                      cmr_uint fd);
 cmr_int camera_get_rolling_shutter(cmr_handle camera_handle,
                                    cmr_s64 *rolling_shutter_skew);
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 cmr_uint
 camera_get_isp_perFrame_result(cmr_handle camera_handle,
-                               struct isp_mw_per_frame_cxt *perFrame_res);
+                               struct isp_pfc_per_frame_cxt *perFrame_res);
 #endif
 cmr_int camera_set_snp_face_detect(cmr_handle camera_handle, cmr_u16 enable);
 

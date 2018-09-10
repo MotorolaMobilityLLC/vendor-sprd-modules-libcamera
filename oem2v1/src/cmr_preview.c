@@ -7731,6 +7731,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
             video_param.sprd_zsl_flag = 0;
         }
 #endif
+        video_param.mode_4in1 =
+            (prev_cxt->prev_param.mode_4in1 == PREVIEW_4IN1_FULL)? 1 : 0;
         ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
         if (ret) {
             CMR_LOGE("isp start video failed");

@@ -26,6 +26,9 @@ extern "C" {
 #include "cmr_type.h"
 #include "sensor_raw.h"
 #include "isp_app.h"
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+#include "isp_pfc.h"
+#endif
 #include "jpeg_exif_header.h"
 #include <sprd_sensor_k.h>
 #include "sprd_img.h"
@@ -576,9 +579,7 @@ struct isptool_scene_param {
     cmr_u32 awb_gain_b;
     cmr_u32 smart_ct;
     cmr_u32 smart_bv;
-#if defined(CONFIG_ISP_2_5)
     cmr_u32 global_gain;
-#endif
 };
 
 struct leds_ctrl {
@@ -904,7 +905,7 @@ struct common_isp_cmd_param {
 #endif
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         struct req_frame_info req_info;
-        struct isp_mw_per_frame_cxt *per_frame_res;
+        struct isp_pfc_per_frame_cxt *per_frame_res;
 #endif
     };
 };
@@ -1357,7 +1358,6 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_3DCAL_ENABLE,
     CAMERA_PARAM_SPRD_BURSTMODE_ENABLED,
     CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
-    CAMERA_PARAM_SPRD_REPROCESS,
     CAMERA_PARAM_UHD_RECORDING_ENABLED,
     CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
     CAMERA_PARAM_AE_REGION,
@@ -1787,7 +1787,8 @@ typedef struct oem_ops {
 
     cmr_int (*camera_reprocess_yuv_for_jpeg)(cmr_handle camera_handle,
                                              enum takepicture_mode cap_mode,
-                                             struct frm_info *frm_data);
+                                             cmr_uint yaddr, cmr_uint yaddr_vir,
+                                             cmr_uint fd);
 
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
@@ -1814,7 +1815,7 @@ typedef struct oem_ops {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     // perFrame_res: to get per frame result metadata from ISP
     cmr_uint (*camera_get_isp_perFrame_result)(
-        cmr_handle camera_handle, struct isp_mw_per_frame_cxt *perFrame_res);
+        cmr_handle camera_handle, struct isp_pfc_per_frame_cxt *perFrame_res);
 #endif
 } oem_ops_t;
 

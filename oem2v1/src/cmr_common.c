@@ -554,6 +554,7 @@ cmr_int save_file(const char *file_name, void *data, uint32_t data_size) {
 
 // parse the filename like
 // 4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
+// /%dX%d_gain_%d_ispdgain_%d_awbgain_r_%d_g_%d_b_%d_ct_%d_bv_%d.mipi_raw
 cmr_int camera_parse_raw_filename(char *file_name,
                                   struct isptool_scene_param *scene_param) {
     char *ptr0, *ptr1, tmp_str[40], c = 'X';
@@ -581,7 +582,7 @@ cmr_int camera_parse_raw_filename(char *file_name,
     strncpy(tmp_str, ptr0 + 1, ptr1 - (ptr0 + 1));
     scene_param->height = atoi(tmp_str);
 
-    ptr0 = strstr(file_name, "_awbgain_r_");
+    ptr0 = strstr(file_name, "_ispdgain_");
     if (!ptr0) {
         CMR_LOGE("parse gain failed");
         return CMR_CAMERA_FAIL;
@@ -590,60 +591,69 @@ cmr_int camera_parse_raw_filename(char *file_name,
     strncpy(tmp_str, ptr1 + 6, ptr0 - (ptr1 + 6));
     scene_param->gain = atoi(tmp_str);
 
-    ptr1 = strstr(file_name, "_g_");
+    ptr1 = strstr(file_name, "_awbgain_r_");
     if (!ptr1) {
+        CMR_LOGE("parse ispdgain failed");
+        return CMR_CAMERA_FAIL;
+    }
+    bzero(tmp_str, sizeof(tmp_str));
+    strncpy(tmp_str, ptr0 + 10, ptr1 - (ptr0 + 10));
+    scene_param->global_gain = atoi(tmp_str);
+
+    ptr0 = strstr(file_name, "_g_");
+    if (!ptr0) {
         CMR_LOGE("parse awb_gain_r failed");
         return CMR_CAMERA_FAIL;
     }
 
     bzero(tmp_str, sizeof(tmp_str));
-    strncpy(tmp_str, ptr0 + 11, ptr1 - (ptr0 + 11));
+    strncpy(tmp_str, ptr1 + 11, ptr0 - (ptr1 + 11));
     scene_param->awb_gain_r = atoi(tmp_str);
 
-    ptr0 = strstr(file_name, "_b_");
-    if (!ptr0) {
+    ptr1 = strstr(file_name, "_b_");
+    if (!ptr1) {
         CMR_LOGE("parse awb_gain_g failed");
         return CMR_CAMERA_FAIL;
     }
 
     bzero(tmp_str, sizeof(tmp_str));
-    strncpy(tmp_str, ptr1 + 3, ptr0 - (ptr1 + 3));
+    strncpy(tmp_str, ptr0 + 3, ptr1 - (ptr0 + 3));
     scene_param->awb_gain_g = atoi(tmp_str);
 
-    ptr1 = strstr(file_name, "_ct_");
-    if (!ptr1) {
+    ptr0 = strstr(file_name, "_ct_");
+    if (!ptr0) {
         CMR_LOGE("parse awb_gain_b failed");
         return CMR_CAMERA_FAIL;
     }
 
     bzero(tmp_str, sizeof(tmp_str));
-    strncpy(tmp_str, ptr0 + 3, ptr1 - (ptr0 + 3));
+    strncpy(tmp_str, ptr1 + 3, ptr0 - (ptr1 + 3));
     scene_param->awb_gain_b = atoi(tmp_str);
 
-    ptr0 = strstr(file_name, "_bv_");
-    if (!ptr0) {
+    ptr1 = strstr(file_name, "_bv_");
+    if (!ptr1) {
         CMR_LOGE("parse smart_ct failed");
         return CMR_CAMERA_FAIL;
     }
 
     bzero(tmp_str, sizeof(tmp_str));
-    strncpy(tmp_str, ptr1 + 4, ptr0 - (ptr1 + 4));
+    strncpy(tmp_str, ptr0 + 4, ptr1 - (ptr0 + 4));
     scene_param->smart_ct = atoi(tmp_str);
 
-    ptr1 = strstr(file_name, ".mipi_raw");
-    if (!ptr1) {
+    ptr0 = strstr(file_name, ".mipi_raw");
+    if (!ptr0) {
         CMR_LOGE("parse smart_bv failed");
         return CMR_CAMERA_FAIL;
     }
     bzero(tmp_str, sizeof(tmp_str));
-    strncpy(tmp_str, ptr0 + 4, ptr1 - (ptr0 + 4));
+    strncpy(tmp_str, ptr1 + 4, ptr0 - (ptr1 + 4));
     scene_param->smart_bv = atoi(tmp_str);
 
-    CMR_LOGD("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d",
+    CMR_LOGD("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d glb %d",
              scene_param->width, scene_param->height, scene_param->gain,
              scene_param->awb_gain_r, scene_param->awb_gain_g,
              scene_param->awb_gain_b, scene_param->smart_ct,
-             scene_param->smart_bv);
+             scene_param->smart_bv,scene_param->global_gain);
 
     return ret;
 }

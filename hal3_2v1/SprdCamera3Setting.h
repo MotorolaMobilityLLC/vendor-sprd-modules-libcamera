@@ -123,7 +123,7 @@ typedef int64_t nsecs_t;
 #define CAMERA_AE_LEVEL_AUTO 17
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-#define MAX_PIPELINE_DEPTH 4
+#define MAX_PIPELINE_DEPTH 5
 #endif
 
 typedef struct {
@@ -334,6 +334,7 @@ typedef struct {
     int32_t frame_number; /*Frame number to save request frame settings in PFC
                              queue*/
     int32_t is_only_capture;
+    uint8_t is_input_capture;
 #endif
     int32_t available_characteristics_keys[100];
     int32_t available_request_keys[50];
@@ -537,7 +538,7 @@ class SprdCamera3Setting {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     int getAndroidParaTagSize();
     int getSprdParaTagSize();
-    int setResultTag(CONTROL_Tag resultInfo);
+    int setResultTag(CONTROL_Tag *resultInfo);
     int getResultTag(CONTROL_Tag *resultInfo);
     int constructDefaultResultMetadata(void *result_metadata);
 #endif

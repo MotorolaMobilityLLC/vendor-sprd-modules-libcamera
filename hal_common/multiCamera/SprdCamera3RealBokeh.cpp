@@ -755,6 +755,15 @@ int SprdCamera3RealBokeh::allocateBuff() {
             memset(mDepthBuffer.depth_out_map_table, 0,
                    mBokehSize.depth_weight_map_size);
         }
+        mDepthBuffer.prev_depth_scale_buffer =
+           (void *)malloc(mBokehSize.depth_prev_scale_size);
+        if (mDepthBuffer.prev_depth_scale_buffer == NULL) {
+            HAL_LOGE("mDepthBuffer.prev_depth_scale_buffer  malloc failed.");
+            goto mem_fail;
+        } else {
+            memset(mDepthBuffer.prev_depth_scale_buffer, 0,
+                   mBokehSize.depth_prev_scale_size);
+        }
     }
 
     HAL_LOGI("X,count=%d", count);
@@ -796,6 +805,10 @@ void SprdCamera3RealBokeh::freeLocalBuffer() {
         if (mDepthBuffer.depth_out_map_table != NULL) {
             free(mDepthBuffer.depth_out_map_table);
             mDepthBuffer.depth_out_map_table = NULL;
+        }
+        if (mDepthBuffer.prev_depth_scale_buffer != NULL) {
+            free(mDepthBuffer.prev_depth_scale_buffer);
+            mDepthBuffer.prev_depth_scale_buffer = NULL;
         }
     }
 }
@@ -1247,7 +1260,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::arcsoftBokehPreviewHandle(
     }
 
     rc = mRealBokeh->mBokehAlgo->prevDepthRun(input_buf1_addr, input_buf2_addr,
-                                              output_buf_addr);
+                                              output_buf_addr, NULL);
     if ((rc != MOK) && (rc == MERR_BAD_STATE)) {
         HAL_LOGW("there is no calibration file.");
         // if no calibration file just return left image.
@@ -1579,20 +1592,10 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
         goto fail_map_input2;
     }
 
-    rc = mRealBokeh->mBokehAlgo->prevDepthRun(
-        mRealBokeh->mDepthBuffer.prev_depth_buffer[buffer_index].buffer,
-        input_buf1_addr, input_buf2_addr);
-    if (rc != ALRNB_ERR_SUCCESS) {
-        HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
-        goto fail_map_input2;
-    }
-    mRealBokeh->setPrevDepthBufferFlag(BUFFER_PING, buffer_index);
-    mRealBokeh->setDepthStatus(DEPTH_DONE);
-
     mRealBokeh->mLastOnlieVcm = 0;
     rc = mRealBokeh->mBokehAlgo->onLine(
         mRealBokeh->mDepthBuffer.depth_out_map_table, input_buf1_addr,
-        input_buf2_addr);
+        input_buf2_addr, mRealBokeh->mDepthBuffer.prev_depth_scale_buffer);
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("Sprd algo onLine failed! %d", rc);
         mRealBokeh->mLastOnlieVcm = 0;
@@ -1600,6 +1603,16 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
     } else {
         mRealBokeh->mLastOnlieVcm = mRealBokeh->mVcmSteps;
     }
+
+    rc = mRealBokeh->mBokehAlgo->prevDepthRun(
+         mRealBokeh->mDepthBuffer.prev_depth_buffer[buffer_index].buffer,
+         input_buf1_addr, input_buf2_addr, mRealBokeh->mDepthBuffer.prev_depth_scale_buffer);
+    if (rc != ALRNB_ERR_SUCCESS) {
+        HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
+        goto fail_map_input2;
+    }
+    mRealBokeh->setPrevDepthBufferFlag(BUFFER_PING, buffer_index);
+    mRealBokeh->setDepthStatus(DEPTH_DONE);
 
     {
         char prop9[PROPERTY_VALUE_MAX] = {
@@ -2906,6 +2919,8 @@ int SprdCamera3RealBokeh::configureStreams(
             (stream_list->streams[i])->max_buffers = 1;
         }
     }
+    mBokehSize.depth_prev_scale_size =
+        mBokehSize.depth_prev_out_w * mBokehSize.depth_prev_out_h * sizeof(int);
     mBokehSize.depth_prev_size =
         mBokehSize.preview_w * mBokehSize.preview_h * 2;
     mBokehSize.depth_snap_size =

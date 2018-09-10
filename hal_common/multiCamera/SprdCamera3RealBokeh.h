@@ -115,6 +115,7 @@ typedef struct {
     PingPangBuffer prev_depth_buffer[2];
     void *snap_depth_buffer;
     void *depth_out_map_table;
+    void *prev_depth_scale_buffer;
 } DepthBuffer;
 
 class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {

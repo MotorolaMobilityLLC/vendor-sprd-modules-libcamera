@@ -1079,6 +1079,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     REQUEST_Tag requestInfo;
     struct req_frame_info info;
+    const camera3_stream_buffer_t *output_cap;
+    camera3_stream_t *stream_cap;
+    SprdCamera3Channel *channel_cap;
 #endif
     ret = validateCaptureRequest(request);
     if (ret) {
@@ -1242,13 +1245,21 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+    output_cap = &(request->output_buffers[0]);
+    stream_cap = output_cap->stream;
+    channel_cap = (SprdCamera3Channel *)stream_cap->priv;
     mSetting->getREQUESTTag(&requestInfo);
+    memset(&info, 0, sizeof(req_frame_info));
     if (mPictureRequest && request->num_output_buffers == 1) {
-        info.is_only_capture = 1;
-        HAL_LOGV("[PFC] FOR CAPTURE FRAME is_only_capture  %d",
-                 info.is_only_capture);
-    } else {
-        info.is_only_capture = 0;
+        if (request->input_buffer != NULL) {
+            info.is_input_capture = 1;
+            HAL_LOGV("[PFC] FOR CAPTURE FRAME with inputBuffer  %d",
+                     info.is_input_capture);
+        } else if (mPicChan != NULL && channel_cap == mPicChan) {
+            info.is_only_capture = 1;
+            HAL_LOGV("[PFC] FOR CAPTURE FRAME is_only_capture  %d",
+                     info.is_only_capture);
+        }
     }
     info.frame_num = mFrameNum;
     HAL_LOGD("[PFC] frame_number %d", info.frame_num);
@@ -1444,6 +1455,21 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         HAL_LOGV("receive_req_max %d", receive_req_max);
         pendingRequest.receive_req_max = receive_req_max;
 
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        if (mPictureRequest && (mMultiCameraMode == MODE_BOKEH)) {
+            if (request->input_buffer != NULL) {
+                pendingRequest.is_save_metadata = 0;
+                pendingRequest.is_restore_metadata = 1;
+            } else {
+                pendingRequest.is_save_metadata = 1;
+                pendingRequest.is_restore_metadata = 0;
+            }
+        } else {
+            pendingRequest.is_save_metadata = 0;
+            pendingRequest.is_restore_metadata = 0;
+        }
+#endif
+
         mPendingRequestsList.push_back(pendingRequest);
         mPendingRequest++;
 
@@ -1457,16 +1483,16 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 goto exit;
             }
 
-            HAL_LOGD("input->buffer = %p frameNumber = %d", input->buffer,
-                     frameNumber);
-            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT,
-                                   frameNumber);
-            mPictureRequest = true;
-            mOEMIf->setCaptureReprocessMode(true, stream->width,
-                                            stream->height);
-            ret = mRegularChan->setZSLInputBuff(input->buffer);
+            HAL_LOGD("input->buffer = %p frameNumber = %d, format = %d",
+                     input->buffer, frameNumber, stream->format);
+            if (stream->format == HAL_PIXEL_FORMAT_BLOB) {
+                mPictureRequest = true;
+                mOEMIf->setCaptureReprocessMode(true, stream->width,
+                                                stream->height);
+            }
+            ret = mRegularChan->setInputBuff(input->buffer);
             if (ret) {
-                HAL_LOGE("setZSLInputBuff failed %p (%d)", input->buffer,
+                HAL_LOGE("setInputBuff failed %p (%d)", input->buffer,
                          frameNumber);
                 goto exit;
             }
@@ -1635,6 +1661,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                         sensor_timestamp - prev_timestamp;
                 else
                     resultInfo.frame_duration = resultInfo.exposure_time;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
                 // Frame duration must be less than exposure time.
                 if (resultInfo.frame_duration < resultInfo.exposure_time) {
                     HAL_LOGE("Frame duration=%lld found to be less than "
@@ -1643,11 +1670,14 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                              resultInfo.exposure_time);
                     resultInfo.frame_duration = resultInfo.exposure_time;
                 }
+#endif
                 int64_t minFrameDuration = resultInfo.frame_duration;
                 GET_MIN_FRAME_DURATION(minFrameDuration)
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
                 // Frame duration must be less than minimum frame duration.
                 if (resultInfo.frame_duration < minFrameDuration)
                     resultInfo.frame_duration = minFrameDuration;
+#endif
                 prev_timestamp = sensor_timestamp;
                 mSetting->setResultSENSORTag(resultInfo);
                 mSetting->getREQUESTTag(&requestInfo);
@@ -1663,7 +1693,18 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
                 HAL_LOGD("[PFC] i->frame_number %d", i->frame_number);
-                mOEMIf->updateResultMetadata(i->frame_number);
+                mOEMIf->updateResultMetadata(i->frame_number,
+                                             i->is_save_metadata,
+                                             i->is_restore_metadata);
+                if (resultInfo.frame_duration < resultInfo.exposure_time) {
+                    HAL_LOGE("Frame duration=%lld found to be less than "
+                             "exposure time=%lld",
+                             resultInfo.frame_duration,
+                             resultInfo.exposure_time);
+                    resultInfo.frame_duration = resultInfo.exposure_time;
+                }
+                if (resultInfo.frame_duration < minFrameDuration)
+                    resultInfo.frame_duration = minFrameDuration;
 #endif
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
@@ -1707,6 +1748,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                         sensor_timestamp - prev_timestamp;
                 else
                     resultInfo.frame_duration = resultInfo.exposure_time;
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
                 // Frame duration must be less than exposure time.
                 if (resultInfo.frame_duration < resultInfo.exposure_time) {
                     HAL_LOGV("Frame duration=%lld found to be less than "
@@ -1715,11 +1757,14 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                              resultInfo.exposure_time);
                     resultInfo.frame_duration = resultInfo.exposure_time;
                 }
+#endif
                 int64_t minFrameDuration = resultInfo.frame_duration;
                 GET_MIN_FRAME_DURATION(minFrameDuration)
+#ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
                 // Frame duration must be less than minimum frame duration.
                 if (resultInfo.frame_duration < minFrameDuration)
                     resultInfo.frame_duration = minFrameDuration;
+#endif
                 prev_timestamp = sensor_timestamp;
                 mSetting->setResultSENSORTag(resultInfo);
                 mSetting->getREQUESTTag(&requestInfo);
@@ -1735,7 +1780,18 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
                 HAL_LOGD("[PFC] i->frame_number %d", i->frame_number);
-                mOEMIf->updateResultMetadata(i->frame_number);
+                mOEMIf->updateResultMetadata(i->frame_number,
+                                             i->is_save_metadata,
+                                             i->is_restore_metadata);
+                if (resultInfo.frame_duration < resultInfo.exposure_time) {
+                    HAL_LOGE("Frame duration=%lld found to be less than "
+                             "exposure time=%lld",
+                             resultInfo.frame_duration,
+                             resultInfo.exposure_time);
+                    resultInfo.frame_duration = resultInfo.exposure_time;
+                }
+                if (resultInfo.frame_duration < minFrameDuration)
+                    resultInfo.frame_duration = minFrameDuration;
 #endif
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;

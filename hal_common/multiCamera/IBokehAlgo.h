@@ -84,7 +84,7 @@ class IBokehAlgo {
 
     virtual void setBokenParam(void *param) = 0;
 
-    virtual int prevDepthRun(void *para1, void *para2, void *para3) = 0;
+    virtual int prevDepthRun(void *para1, void *para2, void *para3, void *para4) = 0;
 
     virtual int prevBluImage(sp<GraphicBuffer> &srcBuffer,
                              sp<GraphicBuffer> &dstBuffer, void *param) = 0;
@@ -108,7 +108,7 @@ class IBokehAlgo {
 
     virtual int capBlurImage(void *para1, void *para2, void *para3) = 0;
 
-    virtual int onLine(void *para1, void *para2, void *para3) = 0;
+    virtual int onLine(void *para1, void *para2, void *para3, void *para4) = 0;
 };
 }
 

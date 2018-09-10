@@ -216,7 +216,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushFirstVideobuff();
     int PushFirstZslbuff();
     int PushVideoSnapShotbuff(int32_t frame_number, camera_stream_type_t type);
-    int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();
     camera_status_t GetCameraStatus(camera_status_type_t state);
     int IommuIsEnabled(void);
@@ -238,7 +237,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isCallbackCapture;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     void setRequestFrameInfo(struct req_frame_info *info);
-    void updateResultMetadata(uint32_t frame_num);
+    void updateResultMetadata(uint32_t frame_num, uint32_t is_save_metadata,
+                              uint32_t is_result_metadata);
 #endif
 
   public:
@@ -467,8 +467,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int handleCbData(hal3_trans_info_t &result_info, void *userdata);
     int zslTakePicture();
     int zslTakePictureL();
-    int reprocessYuvForJpeg();
-    int reprocessYuvForJpeg(frm_info *frm_data);
+    int reprocessInputBuffer();
+    int reprocessYuvForJpeg(cmr_uint yaddr,
+            cmr_uint yaddr_vir, cmr_uint fd);
     int VideoTakePicture();
     int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);
 
@@ -850,7 +851,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
   public:
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-    struct isp_mw_per_frame_cxt mPerFrameResult;
+    struct isp_pfc_per_frame_cxt mPerFrameResult;
+    struct isp_pfc_per_frame_cxt mSaveFrameResult;
 #endif
     int64_t mLastCafDoneTime;
 };

@@ -118,14 +118,10 @@ class SprdCamera3RegularChannel : public SprdCamera3Channel {
                              camera_stream_type_t stream_type);
     int setCapturePara(camera_capture_mode_t cap_mode);
 
-    /* SprdCamera3PicChannel is for zsl preview stream, which contains a YUV
-     * stream generated
-     * by the hardware, and encoded to a JPEG stream */
-
-    int setZSLInputBuff(buffer_handle_t *buff);
-    int getZSLInputBuff(cmr_uint *addr_vir, cmr_uint *addr_phy,
+    int setInputBuff(buffer_handle_t *buff);
+    int getInputBuff(cmr_uint *addr_vir, cmr_uint *addr_phy,
                         cmr_uint *zsl_private);
-    int releaseZSLInputBuff();
+    int releaseInputBuff();
 
     static int kMaxBuffers;
 
@@ -136,7 +132,7 @@ class SprdCamera3RegularChannel : public SprdCamera3Channel {
     SprdCamera3Stream *mCamera3Stream[CHANNEL_MAX_STREAM_NUM];
     SprdCamera3Channel *mMetadataChannel;
 
-    buffer_handle_t *mZSLInputBuff;
+    buffer_handle_t *mInputBuff;
     SprdCamera3GrallocMemory *mMemory;
     hal_mem_info_t mInputBufInfo;
 };

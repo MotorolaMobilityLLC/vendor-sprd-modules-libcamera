@@ -86,7 +86,7 @@ SprdCamera3RegularChannel::SprdCamera3RegularChannel(
         mCamera3Stream[i] = NULL;
     }
     stream_num = 0;
-    mZSLInputBuff = NULL;
+    mInputBuff = NULL;
     mMemory = new SprdCamera3GrallocMemory();
     if (NULL == mMemory) {
         HAL_LOGE("no mem!");
@@ -460,18 +460,18 @@ int SprdCamera3RegularChannel::setCapturePara(camera_capture_mode_t cap_mode) {
     return NO_ERROR;
 }
 
-int SprdCamera3RegularChannel::setZSLInputBuff(buffer_handle_t *buff) {
-    mZSLInputBuff = buff;
+int SprdCamera3RegularChannel::setInputBuff(buffer_handle_t *buff) {
+    mInputBuff = buff;
 
     return NO_ERROR;
 }
 
-int SprdCamera3RegularChannel::getZSLInputBuff(cmr_uint *addr_vir,
+int SprdCamera3RegularChannel::getInputBuff(cmr_uint *addr_vir,
                                                cmr_uint *addr_phy,
                                                cmr_uint *priv_data) {
     int ret = NO_ERROR;
 
-    ret = mMemory->map(mZSLInputBuff, &mInputBufInfo);
+    ret = mMemory->map(mInputBuff, &mInputBufInfo);
     if (ret != NO_ERROR)
         return ret;
     else {
@@ -483,9 +483,9 @@ int SprdCamera3RegularChannel::getZSLInputBuff(cmr_uint *addr_vir,
     return NO_ERROR;
 }
 
-int SprdCamera3RegularChannel::releaseZSLInputBuff() {
-    mMemory->unmap(mZSLInputBuff, &mInputBufInfo);
-    mZSLInputBuff = NULL;
+int SprdCamera3RegularChannel::releaseInputBuff() {
+    mMemory->unmap(mInputBuff, &mInputBufInfo);
+    mInputBuff = NULL;
     return NO_ERROR;
 }
 

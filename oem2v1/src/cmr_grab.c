@@ -1244,15 +1244,6 @@ static cmr_s32 cmr_grab_evt_id(cmr_s32 isr_flag) {
         ret = CMR_GRAB_CANCELED_BUF;
         break;
 
-#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-    case IMG_PATH_SOF:
-        ret = CMR_GRAB_SOF_DONE;
-        break;
-
-    case IMG_TX_RESERVED:
-        ret = CMR_GRAB_TX_RESERVED;
-        break;
-#endif
     default:
         CMR_LOGI("isr_flag 0x%x", isr_flag);
         break;
@@ -1351,16 +1342,16 @@ static void *cmr_grab_thread_proc(void *data) {
             break;
         }
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-        if (IMG_PATH_SOF == op.evt) {
-            evt_id = cmr_grab_evt_id(op.evt);
+        if (CAMERA_IRQ_PATH_SOF == op.parm.frame.irq_type) {
+            evt_id = CMR_GRAB_SOF_DONE;
             frame.channel_id = op.parm.frame.channel_id;
             CMR_LOGI("frame.channel_id %d", frame.channel_id);
             if (p_grab->grab_evt_cb) {
                 (*p_grab->grab_evt_cb)(evt_id, &frame,
                                        (void *)p_grab->init_param.oem_handle);
             }
-        } else if (IMG_TX_RESERVED == op.evt) {
-            evt_id = cmr_grab_evt_id(op.evt);
+        } else if (CAMERA_IRQ_TX_RESERVED == op.parm.frame.irq_type) {
+            evt_id = CMR_GRAB_TX_RESERVED;
             CMR_LOGI("IMG_TX_RESERVED  ");
             if (p_grab->grab_evt_cb) {
                 (*p_grab->grab_evt_cb)(evt_id, &frame,

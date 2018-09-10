@@ -20,7 +20,7 @@ class ArcSoftBokehAlgo : public IBokehAlgo {
 
     void setBokenParam(void *param);
 
-    int prevDepthRun(void *para1, void *para2, void *para3);
+    int prevDepthRun(void *para1, void *para2, void *para3, void *para4);
 
     int prevBluImage(sp<GraphicBuffer> &srcBuffer, sp<GraphicBuffer> &dstBuffer,
                      void *param);
@@ -43,7 +43,7 @@ class ArcSoftBokehAlgo : public IBokehAlgo {
 
     int capBlurImage(void *para1, void *para2, void *para3);
 
-    int onLine(void *para1, void *para2, void *para3);
+    int onLine(void *para1, void *para2, void *para3i, void *para4);
 
   private:
     bool mFirstArcBokeh;

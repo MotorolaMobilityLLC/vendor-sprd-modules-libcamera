@@ -162,7 +162,7 @@ void ArcSoftBokehAlgo::setBokenParam(void *param) {
 #endif
 }
 
-int ArcSoftBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3) {
+int ArcSoftBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3, void *para4) {
     int rc = NO_ERROR;
     int64_t arcsoftprevRun = 0;
     ASVLOFFSCREEN leftImg, rightImg, dstImg;
@@ -535,7 +535,7 @@ int ArcSoftBokehAlgo::capBlurImage(void *para1, void *para2, void *para3) {
 
     return rc;
 }
-int ArcSoftBokehAlgo::onLine(void *para1, void *para2, void *para3) {
+int ArcSoftBokehAlgo::onLine(void *para1, void *para2, void *para3, void *para4) {
     int rc = NO_ERROR;
     return rc;
 }

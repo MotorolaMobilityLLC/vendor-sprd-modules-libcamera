@@ -137,6 +137,7 @@ typedef struct {
     int depth_prev_size;
     int depth_weight_map_size;
     int depth_snap_size;
+    int depth_prev_scale_size;
 } BokehSize;
 
 typedef struct {

@@ -45,7 +45,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
-    $(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
+    $(LOCAL_PATH)/../$(ISPDRV_DIR)/pfc/inc
 
 LOCAL_HEADER_LIBRARIES += liblog_headers
 LOCAL_HEADER_LIBRARIES += jni_headers
@@ -53,26 +54,27 @@ LOCAL_HEADER_LIBRARIES += jni_headers
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 LOCAL_SRC_FILES+= \
-    src/SprdOEMCamera.c \
-    src/cmr_common.c \
-    src/cmr_oem.c \
-    src/cmr_setting.c \
-    src/cmr_sensor.c \
-    src/cmr_mem.c \
-    src/cmr_scale.c \
-    src/cmr_rotate.c \
-    src/cmr_grab.c \
-    src/cmr_jpeg.c \
-    src/cmr_exif.c \
-    src/cmr_preview.c \
-    src/cmr_snapshot.c \
-    src/cmr_ipm.c \
-    src/cmr_focus.c \
-    src/cmr_img_debug.c \
-    src/cmr_filter.c \
-    src/exif_writer.c \
+	src/SprdOEMCamera.c \
+	src/cmr_common.c \
+	src/cmr_oem.c \
+	src/cmr_isptool.c \
+	src/cmr_setting.c \
+	src/cmr_sensor.c \
+	src/cmr_mem.c \
+	src/cmr_scale.c \
+	src/cmr_rotate.c \
+	src/cmr_grab.c \
+	src/cmr_jpeg.c \
+	src/cmr_exif.c \
+	src/cmr_preview.c \
+	src/cmr_snapshot.c \
+	src/cmr_ipm.c \
+	src/cmr_focus.c \
+	src/cmr_img_debug.c \
+	src/cmr_filter.c \
+	src/exif_writer.c \
     src/jpeg_stream.c \
-    src/cmr_4in1.c
+	src/cmr_4in1.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprdface/inc

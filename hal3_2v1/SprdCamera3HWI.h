@@ -141,6 +141,10 @@ class SprdCamera3HWI {
         meta_info_t meta_info;
         camera3_stream_buffer_t *input_buffer;
         int32_t receive_req_max;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+        int32_t is_save_metadata;
+        int32_t is_restore_metadata;
+#endif
     } PendingRequestInfo;
 
     int timer_stop();
