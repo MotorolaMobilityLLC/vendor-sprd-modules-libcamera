@@ -1301,7 +1301,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
 			ISP_LOGV("AE_FLASH_PRE_BEFORE force ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
-		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_BEFORE;
 		break;
 
@@ -1342,7 +1342,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
 			rtn = ae_set_force_pause(cxt, 0);
 		}
-		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_AFTER;
 		break;
 
@@ -2392,7 +2392,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		}
 	}
 #else
-	if ((cxt->flash_last_exp_line != current_status->effect_expline) || (cxt->flash_last_gain != current_status->effect_gain)) {
+if ((cxt->flash_last_exp_line != current_status->effect_expline) || (1.0 * cxt->flash_last_gain / current_status->effect_gain < 0.97) || (1.0 * cxt->flash_last_gain / current_status->effect_gain > 1.03)) {
 		ISP_LOGI("ae_flash esti: sensor param do not take effect, (%d, %d)-(%d, %d)skip\n",
 				 cxt->flash_last_exp_line, cxt->flash_last_gain, current_status->effect_expline, current_status->effect_gain);
 		goto EXIT;
@@ -2577,7 +2577,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 	if (0 != cxt->flash_ver) {
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) || (FLASH_PRE == current_status->settings.flash)) {
-			rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->monitor_cfg.blk_size, cxt->cur_status.win_size, current_status->monitor_shift);
+			rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->monitor_cfg.blk_size, cxt->cur_status.win_num, current_status->monitor_shift);
 		}
 
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) && !cxt->send_once[0]) {
@@ -2618,7 +2618,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 				ISP_LOGE("ae_flash estimation does not work well");
 			}
 			if (FLASH_MAIN == current_status->settings.flash) {
-				rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->cur_status.win_size, cxt->monitor_cfg.blk_num, current_status->monitor_shift);
+				rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift);
 				flash_high_flash_reestimation(cxt);
 				ISP_LOGV("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain,
 						 cxt->flash_main_esti_result.captureBGain);
@@ -2769,7 +2769,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;	/*flash status reset */
-			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
+			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		}
 
 		if (1 < cxt->capture_skip_num)
@@ -2796,10 +2796,22 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
 			} else if (main_flash_capture_counts == cxt->send_once[4]) {
-				cb_type = AE_CB_CONVERGED;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-				cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
-				ISP_LOGI("ae_flash1_callback do-capture!\r\n");
+				if(cxt->ebd_support) {
+					if((cxt->ebd_stable_flag) || (2 < cxt->send_once[5])) {
+						cb_type = AE_CB_CONVERGED;
+						(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+						cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
+						ISP_LOGI("ae_flash1_callback do-capture!\r\n");
+					} else {
+						cxt->send_once[4]--;
+						cxt->send_once[5]++;
+					}
+				} else {
+					cb_type = AE_CB_CONVERGED;
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
+					ISP_LOGI("ae_flash1_callback do-capture!\r\n");
+				}
 			} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
 				sensor_param_updating_interface(cxt);
 				ISP_LOGI("ae_flash1_callback update next prev-param!\r\n");
@@ -2852,7 +2864,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->settings.flash) {
 			ISP_LOGI("ae_flash1_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;	/*flash status reset */
-			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
+			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5]= 0;
 			if (0 != cxt->flash_ver) {
 				flash_finish(cxt);
 			}
@@ -3472,7 +3484,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	}
 }
 
-static struct ae_exposure_param s_bakup_exp_param[2] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
+static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
 
 static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 {
@@ -4664,6 +4676,11 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	struct ae_calc_in *calc_in = NULL;
 	struct ae_calc_results *cur_calc_result = NULL;
 	struct ae_ctrl_callback_in callback_in;
+	cmr_s32 backup_expline = 0;
+	cmr_s32 backup_gain = 0;
+	cmr_s32 backup_expgain = 0;
+	cmr_s32 effect_ebd_expgain = 0;
+	cmr_s32 stable_flag = 0;
 	UNUSED(result);
 
 	if (NULL == param) {
@@ -4708,6 +4725,28 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.effect_expline = cxt->exp_data.actual_data.exp_line;
 	cxt->cur_status.effect_dummy = cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.effect_gain = cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
+
+	backup_expline = cxt->cur_status.effect_expline;
+	backup_gain = cxt->cur_status.effect_gain;
+	backup_expgain = backup_expline*backup_gain;
+	ISP_LOGV("ebd(slow motion): ae_lib effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
+	if(cxt->ebd_support){
+		cxt->cur_status.effect_expline =  calc_in->ebd_info.exposure_valid ?calc_in->ebd_info.exposure : cxt->exp_data.actual_data.exp_line;
+#if CONFIG_ISP_2_3
+		cxt->cur_status.effect_gain = (cmr_u32)(1.0 *calc_in->ebd_info.gain + 0.5);
+#else
+		cxt->cur_status.effect_gain = (cmr_u32)(1.0 *calc_in->ebd_info.gain * calc_in->isp_dgain.global_gain/(4096.0 *cxt->ob_rgb_gain)+ 0.5);
+#endif
+	effect_ebd_expgain = cxt->cur_status.effect_expline * cxt->cur_status.effect_gain;
+	ISP_LOGV("ebd(slow motion): sensor effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
+	}
+	if(cxt->ebd_support) {
+		if((1.0 * backup_expgain / effect_ebd_expgain >= 0.97) && (1.0 * backup_expgain / effect_ebd_expgain <= 1.03))
+			cxt->ebd_stable_flag = 1;
+		else
+			cxt->ebd_stable_flag = 0;
+		ISP_LOGV("ebd(slow motion): stable_flag %d", cxt->ebd_stable_flag);
+	}
 #if CONFIG_ISP_2_3
 	/*it will be enable lately */
 	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->cur_status.win_num, cxt->exp_data.actual_data.isp_gain);
@@ -4765,6 +4804,18 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 
 /***********************************************************/
+	stable_flag = (cur_calc_result->ae_output.is_stab && cxt->ebd_stable_flag);
+	if(cxt->ebd_support) {
+		if (cxt->isp_ops.callback) {
+				cb_type = AE_CB_STAB_NOTIFY;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stable_flag);
+		}
+	} else {
+		if (cxt->isp_ops.callback) {
+				cb_type = AE_CB_STAB_NOTIFY;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
+			}
+	}
 /* send STAB notify to HAL */
 	if (cur_calc_result->ae_output.is_stab) {
 		if (cxt->isp_ops.callback) {
@@ -4802,6 +4853,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	struct ae_calc_in *calc_in = NULL;
 	struct ae_calc_results *cur_calc_result = NULL;
 	struct ae_ctrl_callback_in callback_in;
+	cmr_s32 backup_expline = 0;
+	cmr_s32 backup_gain = 0;
+	cmr_s32 backup_expgain = 0;
+	cmr_s32 effect_ebd_expgain = 0;
+	cmr_s32 stable_flag = 0;
 	UNUSED(result);
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	struct _tag_hdr_detect_t hdr_param;
@@ -5049,6 +5105,21 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.effect_expline = cxt->exp_data.actual_data.exp_line;
 	cxt->cur_status.effect_dummy = cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.effect_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
+
+	backup_expline = cxt->cur_status.effect_expline;
+	backup_gain = cxt->cur_status.effect_gain;
+	backup_expgain = backup_expline*backup_gain;
+	ISP_LOGE("ebd: ae_lib effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
+	if(cxt->ebd_support){
+		cxt->cur_status.effect_expline =  calc_in->ebd_info.exposure_valid ?calc_in->ebd_info.exposure : cxt->exp_data.actual_data.exp_line;
+#if CONFIG_ISP_2_3
+		cxt->cur_status.effect_gain = (cmr_u32)(1.0 *calc_in->ebd_info.gain + 0.5);
+#else
+		cxt->cur_status.effect_gain = (cmr_u32)(1.0 *calc_in->ebd_info.gain * calc_in->isp_dgain.global_gain/(4096.0 *cxt->ob_rgb_gain)+ 0.5);
+#endif
+	effect_ebd_expgain = cxt->cur_status.effect_expline * cxt->cur_status.effect_gain;
+	ISP_LOGE("ebd: sensor effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
+	}
 #if CONFIG_ISP_2_3
 	/*it will be enable lately */
 	ae_set_soft_gain(cxt, cxt->sync_aem, cxt->sync_aem, cxt->cur_status.win_num, cxt->exp_data.actual_data.isp_gain);
@@ -5108,6 +5179,14 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->cur_status.settings.ev_manual_status = 1;
 	} else {
 		cxt->cur_status.settings.ev_manual_status = 0;
+	}
+
+	if(cxt->ebd_support) {
+		if((1.0 * backup_expgain / effect_ebd_expgain >= 0.97) && (1.0 * backup_expgain / effect_ebd_expgain <= 1.03))
+			cxt->ebd_stable_flag = 1;
+		else
+			cxt->ebd_stable_flag = 0;
+		ISP_LOGE("ebd: stable_flag %d", cxt->ebd_stable_flag);
 	}
 	rtn = ae_pre_process(cxt);
 	flash_calibration_script((cmr_handle) cxt);	/*for flash calibration */
@@ -5283,30 +5362,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->exp_data.lib_data.dummy = current_result->wts.cur_dummy;
 	cxt->exp_data.lib_data.line_time = current_status->line_time;
 
-	if (((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash)
-	|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash))
-	&& (cxt->send_once[4] > (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 2)) {
-		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
-		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
-		cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
-		cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
-		cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
-		cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
-		cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
-		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
-		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
-		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
-		cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
-		cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
-
-		memset((void *)&cxt->exp_data, 0, sizeof(cxt->exp_data));
-		cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
-		cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
-		cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
-		cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
-		cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
-		ISP_LOGI("maintain prev-param during post-mainflash");
-	}
 	if (cxt->has_mf) {
 		if (cxt->has_mf_cnt==1) {
 			cxt->has_mf = cxt->has_mf_cnt = 0;
@@ -5332,11 +5387,18 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 	rtn = ae_touch_ae_process(cxt, current_result);
 /* send STAB notify to HAL */
-	if (cur_calc_result->ae_output.is_stab) {
+	stable_flag = (cur_calc_result->ae_output.is_stab && cxt->ebd_stable_flag);
+	if(cxt->ebd_support) {
 		if (cxt->isp_ops.callback) {
-			cb_type = AE_CB_STAB_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+				cb_type = AE_CB_STAB_NOTIFY;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stable_flag);
+				ISP_LOGE("ebd notify stable_flag %d", stable_flag);
 		}
+	} else {
+		if (cxt->isp_ops.callback) {
+				cb_type = AE_CB_STAB_NOTIFY;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
+			}
 	}
 /***********************************************************/
 /*display the AE running status*/
@@ -5804,6 +5866,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	cxt->sensor_role = init_param->sensor_role;
 	cxt->is_multi_mode = init_param->is_multi_mode;
+	cxt->ebd_support = init_param->ebd_support;
 	cxt->bv_thd = init_param->bv_thd;
 	cxt->cur_status.base_img = (cmr_u32 *)malloc(3*16384*sizeof(cmr_u32));
 	if(NULL == cxt->cur_status.base_img){

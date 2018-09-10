@@ -59,6 +59,7 @@ extern "C" {
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 		cmr_u32 bakup_rgb_gain;
+		cmr_u32 ebd_support;
 		struct ae_param ae_sync_param;
 		cmr_s16 bv_thd;
 	};
@@ -70,6 +71,28 @@ extern "C" {
 		cmr_u32 cur_dgain;
 		cmr_u32 cur_dummy;
 		cmr_u32 flash_ver;
+	};
+
+	struct ae_ctrl_ebd_info {
+		cmr_u32 frame_id;
+		cmr_u32 frame_id_valid;
+		cmr_u32 exposure;
+		cmr_u32 exposure_valid;
+		cmr_u32 again;
+		cmr_u32 again_valid;
+		cmr_u32 dgain_gr;
+		cmr_u32 dgain_r;
+		cmr_u32 dgain_b;
+		cmr_u32 dgain_gb;
+		cmr_u32 gain;
+		cmr_u32 dgain_valid;
+	};
+
+	struct ae_ctrl_isp_dgain_info {
+		cmr_u32 global_gain;
+		cmr_u32 r_gain;
+		cmr_u32 g_gain;
+		cmr_u32 b_gain;
 	};
 
 	struct ae_calc_in {
@@ -93,6 +116,8 @@ extern "C" {
 		cmr_u32 awb_cur_gain_g;
 		cmr_u32 awb_cur_gain_b;
 		cmr_u32 is_update;
+		struct ae_ctrl_ebd_info ebd_info;
+		struct ae_ctrl_isp_dgain_info isp_dgain;
 	};
 
 	struct ae_ctrl_param_out {

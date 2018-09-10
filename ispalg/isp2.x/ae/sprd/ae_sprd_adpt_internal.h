@@ -279,7 +279,7 @@ extern "C" {
 		/*
 		 * flash_callback control
 		 */
-		cmr_s8 send_once[5];
+		cmr_s8 send_once[6];
 		/*
 		 * HDR control
 		 */
@@ -331,6 +331,8 @@ extern "C" {
 		cmr_u32 has_mf;
 		cmr_u32 has_mf_cnt;
 		cmr_u32 glb_gain;
+		cmr_u32 ebd_support;
+		cmr_u32 ebd_stable_flag;
 	};
 
 #endif
