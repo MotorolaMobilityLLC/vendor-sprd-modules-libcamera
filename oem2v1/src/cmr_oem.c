@@ -374,9 +374,7 @@ static void camera_set_exif_exposure_time(cmr_handle oem_handle);
 static cmr_int camera_local_start_capture_restart(cmr_handle oem_handle);
 static cmr_int camera_ipm_process(cmr_handle oem_handle, void *data);
 static cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data);
-#ifdef CONFIG_CAMERA_AI_SCENE
 static cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type);
-#endif
 static cmr_int camera_open_4in1(cmr_handle oem_handle);
 static cmr_int camera_close_4in1(cmr_handle oem_handle);
 static cmr_int camera_channel_reproc(cmr_handle oem_handle,
@@ -1498,7 +1496,6 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
-#ifdef CONFIG_CAMERA_AI_SCENE
     case ISP_AI_SCENE_TYPE_CALLBACK:
         oem_cb = CAMERA_EVT_CB_AI_SCENE;
         CMR_LOGD("isp ai scene type:%u", *(cmr_u8 *)data);
@@ -1506,7 +1503,6 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        &hal_scene_type);
         break;
-#endif
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     case ISP_CONVERT_CALLBACK:
@@ -1620,12 +1616,10 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
             frame_param->face_info[i].brightness;
         face_area->face_info[i].angle = frame_param->face_info[i].angle;
         face_area->face_info[i].pose = frame_param->face_info[i].pose;
-#ifdef CONFIG_CAMERA_AI_SCENE
         face_area->face_info[i].yaw_angle = frame_param->face_info[i].pose;
         face_area->face_info[i].roll_angle = frame_param->face_info[i].angle;
         face_area->face_info[i].score = frame_param->face_info[i].score;
         face_area->face_info[i].id = frame_param->face_info[i].face_id;
-#endif
         CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d",
                  face_area->face_info[i].sx, face_area->face_info[i].sy,
                  face_area->face_info[i].ex, face_area->face_info[i].ey);
@@ -1699,13 +1693,11 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             face_area.frame_width = sensor_mode_info->trim_width;
             face_area.frame_height = sensor_mode_info->trim_height;
             face_area.face_num = frame_param->face_num;
-#ifdef CONFIG_CAMERA_AI_SCENE
             face_area.frame_id = frame_param->frame_num;
             face_area.timestamp = frame_param->timestamp;
             CMR_LOGV("face_area.frame_id:%u,  "
                      "face_area.timestamp:%lld ",
                      face_area.frame_id, face_area.timestamp);
-#endif
             CMR_LOGV("face_num %d, size:%dx%d, frame_param->is_update_isp:%d ",
                      face_area.face_num, face_area.frame_width,
                      face_area.frame_height, frame_param->is_update_isp);
@@ -7815,7 +7807,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_AUTO_HDR_MODE;
         isp_param = param_ptr->cmd_value;
         break;
-#ifdef CONFIG_CAMERA_AI_SCENE
     case COM_ISP_SET_AI_SCENE_START:
         isp_cmd = ISP_CTRL_AI_PROCESS_START;
         isp_param = param_ptr->cmd_value;
@@ -7834,7 +7825,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->ai_img_status;
         ptr_flag = 1;
         break;
-#endif // CONFIG_CAMERA_AI_SCENE
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     case COM_ISP_SET_REQ_FRAME_INFO:
         isp_cmd = ISP_CTRL_SET_REQ_FRAME_INFO;
@@ -8128,27 +8118,27 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         CMR_LOGD("video_slowmotion_eb = %d",
                  out_param_ptr->video_slowmotion_eb);
 
-#ifdef CONFIG_CAMERA_AI_SCENE
-        cmr_bzero(&setting_param, sizeof(setting_param));
-        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                                SETTING_GET_APPMODE, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to get app mode %ld", ret);
-            goto exit;
-        }
-        CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
-            if (!cxt->ipm_cxt.ai_scene_inited) {
-                struct ipm_open_in in_param;
-                struct ipm_open_out out_param;
-                cmr_bzero(&in_param, sizeof(struct ipm_open_in));
-                cmr_bzero(&out_param, sizeof(struct ipm_open_out));
-                camera_open_ai_scene(oem_handle, &in_param, &out_param);
-                cxt->ipm_cxt.ai_scene_inited = 1;
+        if (property_get_bool("persist.vendor.cam.ai.scence.enable", 0)) {
+            cmr_bzero(&setting_param, sizeof(setting_param));
+            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                    SETTING_GET_APPMODE, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get app mode %ld", ret);
+                goto exit;
             }
-            out_param_ptr->ai_scene_enable = 1;
+            CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+            if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
+                if (!cxt->ipm_cxt.ai_scene_inited) {
+                    struct ipm_open_in in_param;
+                    struct ipm_open_out out_param;
+                    cmr_bzero(&in_param, sizeof(struct ipm_open_in));
+                    cmr_bzero(&out_param, sizeof(struct ipm_open_out));
+                    camera_open_ai_scene(oem_handle, &in_param, &out_param);
+                    cxt->ipm_cxt.ai_scene_inited = 1;
+                }
+                out_param_ptr->ai_scene_enable = 1;
+            }
         }
-#endif
 
         CMR_LOGD("mode = %d", mode);
         if (CAMERA_ZSL_MODE == mode) {
@@ -11657,7 +11647,6 @@ exit:
     return ret;
 }
 
-#ifdef CONFIG_CAMERA_AI_SCENE
 cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type) {
     cmr_u8 hal_scene_type = HAL_AI_SCENE_MAX;
     switch (isp_scene_type) {
@@ -11716,7 +11705,6 @@ cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type) {
 
     return hal_scene_type;
 }
-#endif
 
 cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
                                          cmr_u16 is_enable) {

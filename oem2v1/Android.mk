@@ -81,9 +81,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprdface/inc
 LOCAL_SRC_FILES+= src/cmr_fd_sprd.c
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AI_SCENE)),true)
 LOCAL_SRC_FILES += src/cmr_ai_scene.c
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/eis/inc
@@ -159,10 +157,6 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfar
 LOCAL_SHARED_LIBRARIES += libsprdfd
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AI_SCENE)),true)
-	LOCAL_CFLAGS += -DCONFIG_CAMERA_AI_SCENE
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)

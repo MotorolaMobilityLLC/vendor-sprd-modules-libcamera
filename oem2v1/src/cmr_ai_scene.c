@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#ifdef CONFIG_CAMERA_AI_SCENE
 
 #define LOG_TAG "cmr_ai_scene"
 
@@ -293,4 +292,3 @@ static cmr_int ai_scene_post_proc(cmr_handle class_handle) {
     return ret;
 }
 
-#endif

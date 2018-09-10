@@ -297,12 +297,6 @@ const uint8_t availableAutoHDR = 0;
 
 const uint8_t availableSlowMotion[] = {0, 1, 4};
 
-#ifdef CONFIG_SUPPROT_AI_SCENE
-const uint8_t availableAiScene = 1;
-#else
-const uint8_t availableAiScene = 0;
-#endif
-
 enum {
     CAMERA_ISO_AUTO = 0,
     CAMERA_ISO_1600,
@@ -1276,7 +1270,8 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
     camera3_default_info.common.availableAutoHdr = availableAutoHDR;
 
-    camera3_default_info.common.availableAiScene = availableAiScene;
+    camera3_default_info.common.availableAiScene =
+        property_get_bool("persist.vendor.cam.ai.scence.enable", 0);
 
     return 0;
 }

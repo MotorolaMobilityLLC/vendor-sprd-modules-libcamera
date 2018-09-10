@@ -47,9 +47,7 @@ extern struct class_tab_t cnr_tab_info;
 #ifdef CONFIG_CAMERA_4IN1
 extern struct class_tab_t tab_info_4in1;
 #endif
-#ifdef CONFIG_CAMERA_AI_SCENE
 extern struct class_tab_t ai_scene_tab_info;
-#endif
 
 struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_NONE, NULL},
@@ -81,9 +79,7 @@ struct ipm_class_tab class_type_tab[] = {
 #ifdef CONFIG_CAMERA_4IN1
     {IPM_TYPE_4IN1, &tab_info_4in1},
 #endif
-#ifdef CONFIG_CAMERA_AI_SCENE
     {IPM_TYPE_AI_SCENE, &ai_scene_tab_info},
-#endif
 };
 
 #define CHECK_HANDLE_VALID(handle)                                             \

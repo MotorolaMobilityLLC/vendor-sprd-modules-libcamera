@@ -916,10 +916,8 @@ struct common_isp_cmd_param {
 #ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
 #endif
-#ifdef CONFIG_CAMERA_AI_SCENE
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;
-#endif
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         struct req_frame_info req_info;
         struct isp_pfc_per_frame_cxt *per_frame_res;
