@@ -845,8 +845,15 @@ struct isp_ynr_info {
 };
 
 struct isp_exp_comprnsation {
-	cmr_u16 idx;
-	cmr_s16 value;
+       cmr_u16 idx;
+       cmr_s16 value;
+};
+
+struct isp_exp_compensation{
+	cmr_s32 comp_val;
+	struct isp_range_l comp_range;
+	cmr_s32 step_numerator;
+	cmr_s32 step_denominator;
 };
 
 struct isp_ops {

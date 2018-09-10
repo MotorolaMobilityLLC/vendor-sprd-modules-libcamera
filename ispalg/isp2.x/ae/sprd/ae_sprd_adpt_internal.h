@@ -85,8 +85,9 @@ extern "C" {
 
 	struct ae_exposure_compensation {
 		cmr_u16 ae_base_idx;
-		cmr_u16 ae_step_idx;
-		cmr_s16 ae_change_value;
+		cmr_u32 step_numerator;
+		cmr_u32 step_denominator;
+		cmr_s16 comp_val;
 		cmr_u8 ae_compensation_flag;
 		float ae_ev_value;
 	};
@@ -339,6 +340,9 @@ extern "C" {
 		/* 4in1 param */
 		cmr_u32 cam_4in1_mode;
 		cmr_u32 cam_4in1_cap_flag;
+
+		/*for ev and AE/AE lock*/
+		cmr_u32 app_mode;
 	};
 
 #endif

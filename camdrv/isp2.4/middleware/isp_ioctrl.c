@@ -282,21 +282,21 @@ static cmr_int ispctl_ae_exp_compensation(cmr_handle isp_alg_handle, void *param
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_exp_comprnsation *exp_comprnsation = (struct isp_exp_comprnsation *)param_ptr;
-	cmr_u16 idx = 0;
-	cmr_s16 value = 0;
+	struct isp_exp_compensation *exp_compensation = (struct isp_exp_compensation *)param_ptr;
+	struct ae_exp_compensation exp_comp;
 
-	if (NULL == exp_comprnsation) {
+	if (NULL == exp_compensation) {
 		return ISP_PARAM_NULL;
 	}
 
-	idx = exp_comprnsation->idx;
-	value = exp_comprnsation->value;
-
-	if (cxt->ops.ae_ops.ioctrl)
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXPOSURE_COMPENSATION, &idx, &value);
-
-	ISP_LOGV("ISP_AE: AE_SET_EXP_COMPENSATION idx=%d, value=%d", idx, value);
+	exp_comp.comp_range.min = exp_compensation->comp_range.min;
+	exp_comp.comp_range.max = exp_compensation->comp_range.max;
+	exp_comp.comp_val = exp_compensation->comp_val;
+	exp_comp.step_numerator = exp_compensation->step_numerator;
+	exp_comp.step_denominator = exp_compensation->step_denominator;
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXPOSURE_COMPENSATION, &exp_comp, NULL);
+	}
 
 	return ret;
 }

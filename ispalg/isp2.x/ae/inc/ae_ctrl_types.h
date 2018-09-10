@@ -587,6 +587,14 @@ extern "C" {
 		cmr_u32 *b_info;
 		struct ae_size binning_size;
 	};
+
+	struct ae_exp_compensation{
+		cmr_s32 comp_val;
+		struct ae_range comp_range;
+		cmr_s32 step_numerator;
+		cmr_s32 step_denominator;
+	};
+	
 #ifdef __cplusplus
 }
 #endif

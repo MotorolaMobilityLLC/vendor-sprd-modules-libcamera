@@ -4125,7 +4125,8 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 	if (param) {
 		struct ae_set_ev *ev = param;
 
-		if (CAMERA_MODE_MANUAL == cxt->mod_update_list.is_mev) {
+		if (ev->level < AE_LEVEL_MAX) {
+			cxt->mod_update_list.is_mev = 1;
 			cxt->cur_status.settings.ev_index = ev->level;
 			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
@@ -4133,6 +4134,7 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
 		} else {
 			/*ev auto */
+			cxt->mod_update_list.is_mev = 0;
 			cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
 			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
@@ -4152,19 +4154,14 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 	cmr_s16 value = 0;
 	float temp = 0.0;
 
-	cxt->exposure_compensation.ae_step_idx = 64;
 	max_idx = cxt->cur_status.ae_table->max_index;
 
-	if (0 < cxt->exposure_compensation.ae_change_value) {
-		temp = 1.0 * cxt->exposure_compensation.ae_change_value / cxt->exposure_compensation.ae_step_idx;
-		temp = pow(2, temp);
-		cxt->exposure_compensation.ae_ev_value = temp;
+	temp = 1.0 * cxt->exposure_compensation.comp_val * cxt->exposure_compensation.step_numerator / cxt->exposure_compensation.step_denominator;
+	temp = pow(2, temp);
+	if (0 < cxt->exposure_compensation.comp_val) {
 		value = (cmr_s16)(log(temp) / 0.0128 + 0.5);
 		calc_idx = ((cxt->exposure_compensation.ae_base_idx + value) > max_idx) ? max_idx : (cxt->exposure_compensation.ae_base_idx + value);
-	} else if (0 > cxt->exposure_compensation.ae_change_value) {
-		temp = 1.0 * cxt->exposure_compensation.ae_change_value / cxt->exposure_compensation.ae_step_idx;
-		temp = pow(2, temp);
-		cxt->exposure_compensation.ae_ev_value = temp;
+	} else if (0 > cxt->exposure_compensation.comp_val) {
 		value = (cmr_s16)(log(temp) / (-0.0132) + 0.5);
 		calc_idx = (cxt->exposure_compensation.ae_base_idx < value) ? 0 : (cxt->exposure_compensation.ae_base_idx - value);
 	} else {
@@ -4178,23 +4175,35 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 	return AE_SUCCESS;
 }
 
-static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, cmr_u16 *idx, cmr_s16 *param)
+static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_exp_compensation *exp_comp)
 {
 	cmr_u16 change_idx = 0;
 
-	if (param) {
-		cxt->exposure_compensation.ae_change_value = *param;
-		ISP_LOGD("ae_change_value %d", cxt->exposure_compensation.ae_change_value);
+	if (exp_comp) {
+		if (1 == cxt->app_mode) {
+			struct ae_set_ev ev;
+			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
+			if (ev.level < AE_LEVEL_MAX) {
+				cxt->mod_update_list.is_mev = 1;
+				cxt->cur_status.settings.ev_index = ev.level;
+			} else {
+				/*ev auto */
+				cxt->mod_update_list.is_mev = 0;
+				cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
+			}
+			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
+			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
+			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
+		} else {
+			cxt->exposure_compensation.comp_val = exp_comp->comp_val;
+			cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
+			cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
+			ae_set_compensation_calc(cxt, &change_idx);
+			cxt->cur_status.settings.manual_mode = 1;
+			cxt->cur_status.settings.table_idx = change_idx;
+		}
 	}
-
-	if (idx) {
-		cxt->exposure_compensation.ae_step_idx = *idx;
-		ISP_LOGD("ae_step_idx %d", cxt->exposure_compensation.ae_step_idx);
-	}
-
-	ae_set_compensation_calc(cxt, &change_idx);
-	cxt->cur_status.settings.manual_mode = 1;
-	cxt->cur_status.settings.table_idx = change_idx;
 
 	return AE_SUCCESS;
 }
@@ -5208,7 +5217,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	}
 	cxt->mod_update_list.is_miso = 0;
 
-	if (CAMERA_MODE_MANUAL == cxt->mod_update_list.is_mev) {
+	if (1 == cxt->mod_update_list.is_mev) {
 		cxt->cur_status.settings.ev_manual_status = 1;
 	} else {
 		cxt->cur_status.settings.ev_manual_status = 0;
@@ -5776,7 +5785,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 
 	case AE_SET_EXPOSURE_COMPENSATION:
-		rtn = ae_set_exposure_compensation(cxt, param, result);
+		rtn = ae_set_exposure_compensation(cxt, param);
 		break;
 
 	case AE_SET_CAP_FLAG:
@@ -5794,7 +5803,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 
 	case AE_SET_APP_MODE:
-		cxt->mod_update_list.is_mev = *(cmr_u32 *) param;
+		cxt->app_mode = *(cmr_u32 *) param;
 		break;
 
 	default:
