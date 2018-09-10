@@ -68,7 +68,8 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
-	cmr_u32 stats_buffer_size = 0;
+	cmr_u32 dcam_stats_buffer_size = 0;
+	cmr_u32 isp_stats_buffer_size = 0;
 
 	statis_mem_info->oem_handle = in_ptr->oem_handle;
 	if (statis_mem_info->isp_lsc_alloc_flag == 0) {
@@ -93,25 +94,32 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	}
 
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AEM)
-		stats_buffer_size += ISP_AEM_STATIS_BUF_SIZE;
+		dcam_stats_buffer_size += ISP_AEM_STATIS_BUF_SIZE *
+			(ISP_AEM_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFM)
-		stats_buffer_size += ISP_AFM_STATIS_BUF_SIZE;
+		dcam_stats_buffer_size += ISP_AFM_STATIS_BUF_SIZE *
+			(ISP_AFM_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFL)
-		stats_buffer_size += ISP_AFL_STATIS_BUF_SIZE;
+		dcam_stats_buffer_size += ISP_AFL_STATIS_BUF_SIZE *
+			(ISP_AFL_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_PDAF)
-		stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE;
+		dcam_stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE *
+			(ISP_PDAF_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_EBD)
-		stats_buffer_size += ISP_EBD_STATIS_BUF_SIZE;
+		dcam_stats_buffer_size += ISP_EBD_STATIS_BUF_SIZE *
+			(ISP_EBD_STATIS_BUF_NUM + 1);
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_HIST)
+		isp_stats_buffer_size += ISP_HIST_STATIS_BUF_SIZE *
+			ISP_HIST_STATIS_BUF_NUM;
 
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
 		statis_mem_info->alloc_cb = in_ptr->alloc_cb;
 		statis_mem_info->free_cb = in_ptr->free_cb;
 
-		statis_mem_info->isp_hist_mem_size = ISP_HIST_STATIS_BUF_SIZE * 4;
-		statis_mem_info->isp_dcam_mem_size = stats_buffer_size * 5;
+		statis_mem_info->isp_dcam_stat_mem_size = dcam_stats_buffer_size;
 		statis_mem_info->isp_statis_mem_size =
-			statis_mem_info->isp_dcam_mem_size +
-			statis_mem_info->isp_hist_mem_size;
+			statis_mem_info->isp_dcam_stat_mem_size +
+			isp_stats_buffer_size;
 
 		statis_mem_info->isp_statis_mem_num = 1;
 		statis_mem_info->statis_valid = in_ptr->statis_valid;
@@ -164,8 +172,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_2d_lsc_buf.mfd = statis_mem_info->lsc_mfd;
 
 	isp_statis_buf.buf_size = statis_mem_info->isp_statis_mem_size;
-	isp_statis_buf.hist_buf_size = statis_mem_info->isp_hist_mem_size;
-	isp_statis_buf.dcam_buf_size = statis_mem_info->isp_dcam_mem_size;
+	isp_statis_buf.dcam_stat_buf_size = statis_mem_info->isp_dcam_stat_mem_size;
 	isp_statis_buf.buf_num = statis_mem_info->isp_statis_mem_num;
 	isp_statis_buf.kaddr[0] = statis_mem_info->isp_statis_k_addr[0];
 	isp_statis_buf.kaddr[1] = statis_mem_info->isp_statis_k_addr[1];

@@ -45,8 +45,7 @@ struct isp_statis_mem_info {
 	cmr_uint isp_statis_alloc_flag;
 	cmr_s32 statis_mfd;
 	cmr_s32 statis_buf_dev_fd;
-	cmr_u32 isp_hist_mem_size;
-	cmr_u32 isp_dcam_mem_size;
+	cmr_u32 isp_dcam_stat_mem_size;
 
 	cmr_u32 isp_lsc_mem_size;
 	cmr_u32 isp_lsc_mem_num;

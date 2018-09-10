@@ -83,6 +83,7 @@ struct ae_info {
 	cmr_int buf_property;
 	void *buffer_client_data;
 	struct ae_size win_num;
+	struct ae_ctrl_ebd_info ebd_info;
 	cmr_u32 shift;
 	cmr_u32 flash_version;
 };
@@ -1733,7 +1734,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
-
+	if (cxt->ebd_cxt.ebd_support) {
+		memcpy(&in_param.ebd_info, &cxt->ae_cxt.ebd_info, sizeof(cxt->ae_cxt.ebd_info));
+		in_param.isp_dgain.global_gain = cxt->rgb_gain.global_gain;
+		in_param.isp_dgain.r_gain = cxt->rgb_gain.r_gain;
+		in_param.isp_dgain.g_gain = cxt->rgb_gain.g_gain;
+		in_param.isp_dgain.b_gain = cxt->rgb_gain.b_gain;
+	}
 	memcpy((void *)&in_param.hist_stats, (void *)&cxt->hist_stats,
 		sizeof(struct isp_hist_statistic_info));
 	time_start = ispalg_get_sys_timestamp();
@@ -2509,6 +2516,7 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, cmr_u32 data_type, 
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
+	struct sensor_embedded_info sensor_ebd_info;
 	cmr_uint u_addr = 0;
 	UNUSED(data_type);
 
@@ -2517,11 +2525,42 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, cmr_u32 data_type, 
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
 
-	if (cxt->ebd_cxt.ebd_support){
-		isp_file_ebd_save_info(cxt->handle_file_debug, statis_info);
+	sensor_ebd_info.embedded_data = (cmr_u8 *)u_addr;
+
+	if (cxt->ioctrl_ptr->sns_ioctl) {
+		cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+					CMD_SNS_IC_GET_EBD_PARSE_DATA,
+					&sensor_ebd_info);
 	}
+	cxt->ae_cxt.ebd_info.frame_id = sensor_ebd_info.parse_data.frame_count;
+	cxt->ae_cxt.ebd_info.frame_id_valid =
+			sensor_ebd_info.frame_count_valid;
+	cxt->ae_cxt.ebd_info.exposure = sensor_ebd_info.parse_data.shutter;
+	cxt->ae_cxt.ebd_info.exposure_valid =
+			sensor_ebd_info.shutter_valid;
+	cxt->ae_cxt.ebd_info.again = sensor_ebd_info.parse_data.again;
+	cxt->ae_cxt.ebd_info.again_valid =
+			sensor_ebd_info.again_valid;
+
+	cxt->ae_cxt.ebd_info.dgain_gr = sensor_ebd_info.parse_data.dgain_gr;
+	cxt->ae_cxt.ebd_info.dgain_r = sensor_ebd_info.parse_data.dgain_r;
+	cxt->ae_cxt.ebd_info.dgain_b = sensor_ebd_info.parse_data.dgain_b;
+	cxt->ae_cxt.ebd_info.dgain_gb = sensor_ebd_info.parse_data.dgain_gb;
+	cxt->ae_cxt.ebd_info.gain = sensor_ebd_info.parse_data.gain;
+	cxt->ae_cxt.ebd_info.dgain_valid =
+			sensor_ebd_info.dgain_valid;
+	ISP_LOGV("frame id %x %d, shutter %x %d, again %x %d",
+		cxt->ae_cxt.ebd_info.frame_id,
+		cxt->ae_cxt.ebd_info.frame_id_valid,
+		cxt->ae_cxt.ebd_info.exposure,
+		cxt->ae_cxt.ebd_info.exposure_valid,
+		cxt->ae_cxt.ebd_info.again,
+		cxt->ae_cxt.ebd_info.again_valid);
 
 	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_EBD_BLOCK);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
 
 	return ret;
 }
@@ -2906,6 +2945,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 	ae_input.sensor_role = cxt->is_master;
+	ae_input.ebd_support = cxt->ebd_cxt.ebd_support;
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
@@ -4180,7 +4220,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	statis_mem_input.statis_valid =
 		ISP_STATIS_VALID_AEM |
-		ISP_STATIS_VALID_AFL;
+		ISP_STATIS_VALID_AFL |
+		ISP_STATIS_VALID_HIST;
 
 	ISP_LOGV("pdaf_support = %d, pdaf_enable = %d, is_multi_mode = %d",
 		cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable, cxt->is_multi_mode);
@@ -4208,8 +4249,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	if (cxt->ebd_cxt.ebd_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_EBD;
-
-	statis_mem_input.statis_valid |= ISP_STATIS_VALID_HIST;
 
 	cxt->statis_valid = statis_mem_input.statis_valid;
 	ISP_LOGI("statis_valid = %d", cxt->statis_valid);
