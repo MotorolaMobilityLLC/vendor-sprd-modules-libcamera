@@ -38,27 +38,42 @@ static struct threednr_tuning_param cap_default_3dnr_param = {
     {6, 12, 18, 24, 30, 36}, 11, 11, -1, 0, 12, 100, 6, 665, 410, {0}
 };
 
-#ifdef S5K5E8YX
-static struct threednr_tuning_param s5k5e8yx_prev_3dnr_param = {
-    {{0, 2, 4, 9, 9, 9}, {0, 1, 5, 9, 9, 9}, {0, 1, 5, 9, 9, 9}, {0, 1, 6, 9, 9, 9}},
-    {{255, 5, 6, 9, 9, 9}, {255, 5, 6, 9, 9, 9}, {255, 5, 6, 9, 9, 9}, {255, 4, 5, 9, 9, 9}},
-    {6, 12, 18, 24, 30, 36}, 11, 11, 3, 0, 12, 100, 5, 665, 410, {0}
+#ifdef OV8856_SHINE
+static struct threednr_tuning_param ov8856_shine_prev_3dnr_param = {
+    {{0, 2, 2, 4, 9, 9}, {0, 1, 3, 5, 9, 9}, {0, 1, 3, 5, 9, 9}, {0, 1, 4, 6, 9, 9}},
+    {{255, 5, 5, 6, 9, 9}, {255, 5, 5, 6, 9, 9}, {255, 5, 5, 6, 9, 9}, {255, 4, 5, 5, 9, 9}},
+    {12, 24, 36, 64, 80, 96}, 11, 11, 1, 0, 12, 100, 5, 588, 435, {1,3,247,3342362,6684749,10027136,13369523,16711910}
 };
-static struct threednr_tuning_param s5k5e8yx_cap_3dnr_param = {
+static struct threednr_tuning_param ov8856_shine_cap_3dnr_param = {
     {{3, 4, 6, 9, 9, 9}, {3, 5, 6, 9, 9, 9}, {3, 5, 6, 9, 9, 9}, {2, 6, 7, 9, 9, 9}},
     {{5, 6, 7, 9, 9, 9}, {5, 6, 7, 9, 9, 9}, {5, 6, 7, 9, 9, 9}, {5, 6, 6, 9, 9, 9}},
-    {6, 12, 18, 24, 30, 36}, 11, 11, -1, 0, 12, 100, 6, 665, 410, {0}
+    {12, 24, 36, 64, 80, 96}, 11, 11, -1, 0, 12, 100, 6, 588, 435, {0}
+};
+#endif
+
+#ifdef OV5675
+static struct threednr_tuning_param ov5675_prev_3dnr_param = {
+    {{0, 2, 2, 4, 9, 9}, {0, 1, 3, 5, 9, 9}, {0, 1, 3, 5, 9, 9}, {0, 1, 4, 6, 9, 9}},
+    {{255, 5, 5, 6, 9, 9}, {255, 5, 5, 6, 9, 9}, {255, 5, 5, 6, 9, 9}, {255, 4, 5, 5, 9, 9}},
+    {12, 24, 36, 64, 80, 96}, 11, 11, 1, 0, 12, 100, 5, 588, 435, {1,3,247,3342362,6684749,10027136,13369523,16711910}
+};
+static struct threednr_tuning_param ov5675_cap_3dnr_param = {
+    {{3, 4, 6, 9, 9, 9}, {3, 5, 6, 9, 9, 9}, {3, 5, 6, 9, 9, 9}, {2, 6, 7, 9, 9, 9}},
+    {{5, 6, 7, 9, 9, 9}, {5, 6, 7, 9, 9, 9}, {5, 6, 7, 9, 9, 9}, {5, 6, 6, 9, 9, 9}},
+    {12, 24, 36, 64, 80, 96}, 11, 11, -1, 0, 12, 100, 6, 588, 435, {0}
 };
 #endif
 
 const struct threednr_sns_match_tab sns_3dnr_param_tab[] = {
     {"default", &prev_default_3dnr_param, &cap_default_3dnr_param},
-#ifdef S5K5E8YX
-    {"s5k5e8yx", &s5k5e8yx_prev_3dnr_param, &s5k5e8yx_cap_3dnr_param},
+#ifdef OV8856_SHINE
+    {"ov8856_shine", &ov8856_shine_prev_3dnr_param, &ov8856_shine_cap_3dnr_param},
+#endif
+#ifdef OV5675
+    {"ov5675", &ov5675_prev_3dnr_param, &ov5675_cap_3dnr_param},
 #endif
     {"null", NULL, NULL}
 };
-
 char *sensor_get_name_list(cmr_u32 sensor_id) {
     char *sensor_name_list_ptr = NULL;
 
