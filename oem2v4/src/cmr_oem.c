@@ -323,6 +323,7 @@ static cmr_int camera_check_cap_time(cmr_handle snp_handle,
 static void camera_snapshot_started(cmr_handle oem_handle);
 static cmr_uint camera_param_to_isp(cmr_uint cmd,
                                     struct common_isp_cmd_param *parm);
+static cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm);
 static cmr_int camera_restart_rot(cmr_handle oem_handle);
 static cmr_uint camera_set_vendor_hdr_ev(cmr_handle oem_handle);
 static cmr_uint
@@ -6549,6 +6550,44 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm) {
     return out_param;
 }
 
+cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
+    cmr_int in_param = parm->ae_compensation_param.ae_exposure_compensation;
+    cmr_int out_param = in_param;
+    switch (in_param) {
+    case -6:
+        out_param = 0;
+        break;
+
+    case -4:
+        out_param = 1;
+        break;
+
+    case -2:
+        out_param = 2;
+        break;
+
+    case 0:
+        out_param = 3;
+        break;
+
+    case 2:
+        out_param = 4;
+        break;
+
+    case 4:
+        out_param = 5;
+        break;
+
+    case 6:
+        out_param = 6;
+        break;
+
+    default:
+        break;
+    }
+    return out_param;
+}
+
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
                                   int *size) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -6594,6 +6633,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_ae_fps ae_fps;
     struct isp_hdr_param hdr_param;
     struct isp_3dnr_ctrl_param param_3dnr;
+    struct isp_exp_comprnsation exp_comprnsation;
 
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
@@ -6694,12 +6734,21 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
-        isp_cmd = ISP_CTRL_EV;
-        isp_param = param_ptr->cmd_value;
+        if (param_ptr->ae_compensation_param.ae_state == 3) { // lock
+            isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
+            ptr_flag = 1;
+            exp_comprnsation.idx =
+                param_ptr->ae_compensation_param.ae_compensation_step;
+            exp_comprnsation.value =
+                param_ptr->ae_compensation_param.ae_exposure_compensation;
+            isp_param_ptr = (void *)&exp_comprnsation;
+        } else {
+            isp_cmd = ISP_CTRL_EV;
+            isp_param = camera_isp_ev_switch(param_ptr); // compatible manual
 #if defined(CONFIG_CAMERA_ISP_VERSION_V4)
-        isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
+            isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
 #endif
-        CMR_LOGD("ev %d", isp_param);
+        }
         break;
     case COM_ISP_SET_AWB_MODE:
         CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,
@@ -7813,7 +7862,8 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_EXPOSURE_COMPENSATION:
-        setting_param.cmd_type_value = param;
+        setting_param.ae_compensation_param =
+            *(struct cmr_ae_compensation_param *)param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
