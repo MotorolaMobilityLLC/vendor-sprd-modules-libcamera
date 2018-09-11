@@ -5328,7 +5328,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     struct sensor_exp_info exp_info;
 
     char prop[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.cam.dual.preview", prop, "0");
+    property_get("persist.vendor.cam.dual.preview", prop, "0");
 
     if (!param_ptr || !oem_handle) {
         CMR_LOGE("in parm error");
@@ -5630,7 +5630,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.cam.dual.preview", prop, "0");
+    property_get("persist.vendor.cam.dual.preview", prop, "0");
 
     if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
         CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
@@ -9979,8 +9979,8 @@ cmr_int cmr_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *type) {
     // Just 4 bv test tmp
     char min_bv[PROPERTY_VALUE_MAX];
     char max_bv[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.cam.minbv.test", min_bv, "500");
-    property_get("persist.sys.cam.maxbv.test", max_bv, "700");
+    property_get("persist.vendor.cam.minbv.test", min_bv, "500");
+    property_get("persist.vendor.cam.maxbv.test", max_bv, "700");
 
     cmr_u32 Min_bv;
     cmr_u32 Max_bv;

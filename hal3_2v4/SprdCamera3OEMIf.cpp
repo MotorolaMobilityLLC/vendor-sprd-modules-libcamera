@@ -7772,9 +7772,9 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size) {
     }
 
     // just for bandwidth pressure test, zsl video snapshot
-    // sudo adb shell setprop persist.sys.cam.video.zsl true
+    // sudo adb shell setprop persist.vendor.cam.video.zsl true
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.cam.video.zsl", value, "false");
+    property_get("persist.vendor.cam.video.zsl", value, "false");
     if (!strcmp(value, "true")) {
         mVideoSnapshotType = 0;
     }
