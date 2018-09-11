@@ -111,6 +111,7 @@ enum isp_alg_set_cmd {
 	ISP_AFM_MODULES_CFG,
 	ISP_AFM_TYPE2_STS,
 	ISP_AFM_TYPE1_STS,
+	ISP_AF_SET_TOF_INFO,
 };
 
 enum isp_callback_cmd {
