@@ -10448,7 +10448,8 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
 
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode cap_mode,
-                                            struct frm_info *frm_data) {
+                                            cmr_uint yaddr, cmr_uint yaddr_vir,
+                                            cmr_uint fd) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -10457,9 +10458,15 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     struct snapshot_param snp_param;
     struct common_sn_cmd_param param;
     struct setting_cmd_parameter setting_param;
+    struct frm_info frame_info;
+    struct frm_info *frm_data = &frame_info;
+    cmr_uint buffer_size;
     cmr_int flash_status = FLASH_CLOSE;
+    cmr_u32 sec = 0;
+    cmr_u32 usec = 0;
     cmr_s32 sm_val = 0;
 
+#if 0
     if (!oem_handle) {
         CMR_LOGE("error handle");
         goto exit;
@@ -10474,6 +10481,32 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         CMR_LOGI("re-initialize share_path_sm");
     }
 
+    sem_wait(&cxt->access_sm);
+    ret = cmr_grab_get_cap_time(cxt->grab_cxt.grab_handle, &sec, &usec);
+    sem_post(&cxt->access_sm);
+
+    cmr_bzero(frm_data, sizeof(struct frm_info));
+    frm_data->channel_id = camera_get_channel_id(cxt->snp_cxt.channel_bits);
+    frm_data->frame_id = CMR_CAP0_ID_BASE;
+    frm_data->frame_real_id = 0;
+    frm_data->base = CMR_CAP0_ID_BASE;
+    frm_data->height = cxt->snp_cxt.request_size.height;
+    frm_data->base = CMR_CAP0_ID_BASE;
+    frm_data->fmt = IMG_DATA_TYPE_YUV420;
+    frm_data->yaddr = yaddr;
+    frm_data->yaddr_vir = yaddr_vir;
+    frm_data->fd = fd;
+    frm_data->sec = sec;
+    frm_data->usec = usec;
+    frm_data->zoom_ratio = 1000;
+
+    buffer_size =
+        cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height;
+    frm_data->uaddr = yaddr + buffer_size;
+    frm_data->vaddr = 0;
+    frm_data->uaddr_vir = yaddr_vir + buffer_size;
+    frm_data->vaddr_vir = 0;
+
     ret = camera_get_snapshot_param(oem_handle, &snp_param);
 
     // check snp size
@@ -10483,7 +10516,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         snp_param.post_proc_setting.actual_snp_size.width == 0) {
         cmr_bzero(&setting_param, sizeof(setting_param));
         setting_param.camera_id = cxt->camera_id;
-        // CMR_LOGI("camera id: %d", setting_param.camera_id);
+        CMR_LOGI("camera id: %ld", setting_param.camera_id);
 
         /*get snapshot size*/
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -10540,6 +10573,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                     SNAPSHOT_EVT_HDR_DONE, frm_data);
     camera_post_share_path_available(oem_handle);
+#endif
 
 exit:
     CMR_LOGV("done %ld", ret);

@@ -1199,7 +1199,9 @@ exit:
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
-                                      struct frm_info *frm_data) {
+                                      cmr_uint yaddr,
+                                      cmr_uint yaddr_vir,
+                                      cmr_uint fd) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!camera_handle) {
         CMR_LOGE("camera handle is null");
@@ -1207,7 +1209,8 @@ cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
         goto exit;
     }
     ret =
-        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode, frm_data);
+        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode,
+            yaddr, yaddr_vir, fd);
     if (ret) {
         CMR_LOGE("failed to start snapshot %ld", ret);
     }
