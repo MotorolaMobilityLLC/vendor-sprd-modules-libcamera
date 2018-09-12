@@ -2059,6 +2059,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
         mCaptureWeightParams.roi_type = 1;
         mCaptureWeightParams.rear_cam_en = false;
         property_get("persist.vendor.cam.fr.blur.version", prop, "0");
+        mCaptureWeightParams.camera_angle = SprdCamera3Setting::s_setting[mBlur->mCameraId].sensorInfo.orientation;
     }
     if (atoi(prop) == 1 || atoi(prop) == 2 || atoi(prop) == 3) {
         mVersion = atoi(prop);
@@ -2351,6 +2352,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                     mRotation = 0;
                 }
             }
+            mCaptureWeightParams.mobile_angle = mRotation;
             HAL_LOGD("rotation %d", mRotation);
         }
         if (metaSettings.exists(ANDROID_CONTROL_AF_REGIONS)) {
@@ -3190,6 +3192,8 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t AdjustRati = mLastAdjustRati;
         uint32_t SelCoordX = mCaptureWeightParams.sel_x;
         uint32_t SelCoordY = mCaptureWeightParams.sel_y;
+        uint32_t CameraAngle = mCaptureWeightParams.camera_angle;
+        uint32_t MobileAngle = mCaptureWeightParams.mobile_angle;
         uint32_t scaleSmoothWidth = MainWidthData / BLUR_SMOOTH_SIZE_SCALE;
         uint32_t scaleSmoothHeight = MainHeightData / BLUR_SMOOTH_SIZE_SCALE;
         uint32_t box_filter_size = mCaptureInitParams.box_filter_size;
@@ -3217,6 +3221,8 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
                                (unsigned char *)&AdjustRati,
                                (unsigned char *)&SelCoordX,
                                (unsigned char *)&SelCoordY,
+                               (unsigned char *)&CameraAngle,
+                               (unsigned char *)&MobileAngle,
                                (unsigned char *)&scaleSmoothWidth,
                                (unsigned char *)&scaleSmoothHeight,
                                (unsigned char *)&box_filter_size,

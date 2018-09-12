@@ -65,7 +65,7 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM2_NUM (11)
 #endif
 
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (20)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (22)
 #define BLUR_MAX_NUM_STREAMS (3)
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
@@ -202,6 +202,8 @@ typedef struct {
                       // body right 180:face down body up 270:face right body
                       // left  ->
     bool rear_cam_en; // 1:rear camera capture 0:front camera capture
+    short camera_angle;//sensor angle init 270
+    short mobile_angle;//hal angle
 } capture_weight_params_t;
 
 typedef struct {
