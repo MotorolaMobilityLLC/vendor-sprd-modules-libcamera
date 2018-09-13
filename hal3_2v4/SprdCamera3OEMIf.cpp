@@ -1609,9 +1609,9 @@ bool SprdCamera3OEMIf::isNeedAfFullscan() {
         return ret;
     }
     if (mCameraId == 1) {
-        property_get("persist.sys.cam.fr.blur.version", prop, "0");
+        property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     } else {
-        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+        property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     }
     if (2 <= atoi(prop)) {
         ret = true;
@@ -8525,7 +8525,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             // CAMERA_IOCTRL_GET_AE_FPS,
             //                            &ae_fps);
             // delay_time = 1000 / ae_fps;
-            property_get("persist.sys.cam.blur3.zsl.time", prop, "200");
+            property_get("persist.vendor.cam.blur3.zsl.time", prop, "200");
             if (atoi(prop) != 0) {
                 delay_time = atoi(prop);
             }
