@@ -9634,6 +9634,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         }
     }
 
+    camera_close_4in1(oem_handle);
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to stop snp %ld", ret);

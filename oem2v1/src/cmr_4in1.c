@@ -104,7 +104,6 @@ static cmr_int open_4in1(cmr_handle ipm_handle, struct ipm_open_in *in,
         CMR_LOGE("4in1 error: create thread.");
         goto free_all;
     }
-    handle->is_inited = 1;
     *class_handle = (cmr_handle)handle;
 
     return ret;
@@ -122,7 +121,6 @@ static cmr_int close_4in1(cmr_handle class_handle) {
     CHECK_HANDLE_VALID(handle);
 
     CMR_LOGD("E");
-    handle->is_inited = 0;
     sem_wait(&handle->sem_4in1);
 
     ret = thread_destroy_4in1(handle);
@@ -165,6 +163,7 @@ static cmr_int transfer_frame_4in1(cmr_handle class_handle,
     ret = cmr_thread_msg_send(handle->thread_4in1, &message);
     if (ret) {
         CMR_LOGE("send msg failed!");
+        free(message.data);
         return CMR_CAMERA_FAIL;
     }
     return ret;
@@ -208,6 +207,12 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
     } else {
         CMR_LOGE("sensor ioctl is NULL");
     }
+    sem_post(&handle->sem_4in1);
+    if (handle->is_inited == 0) {
+        CMR_LOGD("stop snap.exit");
+        goto exit;
+    }
+    sem_wait(&handle->sem_4in1);
     if (handle->common.ipm_cxt->init_in.ops.channel_reproc && !is_raw_capture) {
         cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
         buf_cfg.count = 1;
