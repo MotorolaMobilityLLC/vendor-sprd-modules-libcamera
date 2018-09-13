@@ -261,7 +261,6 @@ struct camera_context {
     cmr_u32 inited;
     cmr_u32 camera_mode;
     cmr_uint is_discard_frm;
-    sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
     sem_t cnr_flag_sm;
     sem_t ai_scene_flag_sm;

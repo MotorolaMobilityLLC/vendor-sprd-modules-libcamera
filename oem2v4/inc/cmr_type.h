@@ -143,7 +143,7 @@ struct frm_info {
     cmr_uint uaddr_vir;
     cmr_uint vaddr_vir;
     cmr_uint zsl_private;
-    cmr_u32 fd;
+    cmr_int fd;
     cmr_s64 monoboottime;
 };
 

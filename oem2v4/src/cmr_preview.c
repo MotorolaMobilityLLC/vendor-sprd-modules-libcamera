@@ -1690,7 +1690,7 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
         goto exit;
     }
     for (i = 0; i < HDR_CAP_NUM; i++) {
-        if (in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
+        if (in->fd == (cmr_int)prev_cxt->cap_hdr_fd_path_array[i])
             break;
     }
 
@@ -1721,7 +1721,7 @@ cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
         goto exit;
     }
     for (i = 0; i < CAP_3DNR_NUM; i++) {
-        if (in->fd == (cmr_u32)prev_cxt->cap_3dnr_fd_path_array[i])
+        if (in->fd == (cmr_int)prev_cxt->cap_3dnr_fd_path_array[i])
             break;
     }
 
@@ -6576,7 +6576,7 @@ cmr_int prev_get_frm_index(struct img_frm *frame, struct frm_info *data) {
     cmr_int i;
 
     for (i = 0; i < PREV_FRM_CNT; i++) {
-        if (data->fd == (cmr_u32)(frame + i)->fd) {
+        if (data->fd == (cmr_int)(frame + i)->fd) {
             break;
         }
     }
@@ -6589,7 +6589,7 @@ cmr_int prev_zsl_get_frm_index(struct img_frm *frame, struct frm_info *data) {
     cmr_int i;
 
     for (i = 0; i < ZSL_FRM_CNT; i++) {
-        if (data->fd == (cmr_u32)(frame + i)->fd) {
+        if (data->fd == (cmr_int)(frame + i)->fd) {
             break;
         }
     }

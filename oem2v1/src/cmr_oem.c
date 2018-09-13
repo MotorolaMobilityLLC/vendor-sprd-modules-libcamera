@@ -868,7 +868,7 @@ cmr_int camera_get_post_proc_chn_out_frm_id(struct img_frm *frame,
     cmr_int i;
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-        if ((cmr_u32)frame[i].fd == data->fd)
+        if ((cmr_int)frame[i].fd == data->fd)
             break;
     }
     CMR_LOGI("frm id %ld", i);
@@ -4702,7 +4702,6 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
 
     CMR_PRINT_TIME;
 #ifdef OEM_HANDLE_HDR
-    sem_init(&cxt->hdr_sync_sm, 0, 0);
     sem_init(&cxt->hdr_flag_sm, 0, 1);
 #endif
 #ifdef OEM_HANDLE_3DNR
@@ -4790,7 +4789,6 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     }
 
 #ifdef OEM_HANDLE_HDR
-    sem_destroy(&cxt->hdr_sync_sm);
     sem_destroy(&cxt->hdr_flag_sm);
 #endif
 
@@ -9630,7 +9628,6 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
 #ifdef OEM_HANDLE_HDR
         if (0 != cxt->ipm_cxt.frm_num) {
             cxt->ipm_cxt.frm_num = 0;
-            //		sem_post(&cxt->hdr_sync_sm);
         }
 #endif
         ret = camera_close_hdr(cxt);

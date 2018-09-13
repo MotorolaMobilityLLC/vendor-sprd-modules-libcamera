@@ -204,7 +204,6 @@ struct snp_context {
     sem_t jpeg_sync_sm;
     sem_t scaler_sync_sm;
     sem_t takepic_callback_sem;
-    sem_t hdr_sync_sm;
     sem_t ipm_sync_sm;
     sem_t redisplay_sm;
     sem_t writer_exif_sm;
@@ -895,7 +894,6 @@ cmr_int snp_proc_cb_thread_proc(struct cmr_msg *message, void *p_data) {
         cxt->err_code = CMR_CAMERA_FAIL;
         break;
     case SNP_EVT_REPROCESS:
-        sem_post(&cxt->hdr_sync_sm);
         snp_ipm_cb_handle((cmr_handle)cxt, message->data);
         break;
     case SNP_EVT_3DNR_DONE:
@@ -2655,7 +2653,6 @@ void snp_local_init(cmr_handle snp_handle) {
     sem_init(&cxt->cvt.cvt_sync_sm, 0, 0);
     sem_init(&cxt->takepic_callback_sem, 0, 0);
     sem_init(&cxt->jpeg_sync_sm, 0, 0);
-    sem_init(&cxt->hdr_sync_sm, 0, 0);
     sem_init(&cxt->scaler_sync_sm, 0, 0);
     sem_init(&cxt->redisplay_sm, 0, 0);
     sem_init(&cxt->writer_exif_sm, 0, 0);
@@ -2671,7 +2668,6 @@ void snp_local_deinit(cmr_handle snp_handle) {
     sem_destroy(&cxt->takepic_callback_sem);
     sem_destroy(&cxt->jpeg_sync_sm);
     sem_destroy(&cxt->scaler_sync_sm);
-    sem_destroy(&cxt->hdr_sync_sm);
     sem_destroy(&cxt->redisplay_sm);
     sem_destroy(&cxt->writer_exif_sm);
     sem_destroy(&cxt->ipm_sync_sm);
@@ -3866,7 +3862,6 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
                 sem_post(&cxt->ipm_sync_sm);
                 CMR_LOGD("post ipm sm");
             } else {
-                sem_post(&cxt->hdr_sync_sm);
                 CMR_LOGD("post hdr sm");
             }
         }
