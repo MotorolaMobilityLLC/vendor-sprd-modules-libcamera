@@ -1,3 +1,4 @@
+#include <cutils/properties.h>
 #define LOG_TAG "cmr_isptool"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include "cmr_oem.h"
