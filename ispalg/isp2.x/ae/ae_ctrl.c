@@ -245,13 +245,24 @@ static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_u32 final_gain = 0;
+	cmr_u32 rgb_gain_offset = 4096;
+	struct isp_rgb_gain_info gain_info;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+
+	memset(&gain_info, 0x00, sizeof(gain_info));
 
 	if (cxt_ptr->ae_set_cb) {
 		final_gain = (cmr_u32) (gain * cxt_ptr->bakup_rgb_gain + 0.5);
 		ISP_LOGV("d-gain: coeff: %f-%d-%d\n", gain, cxt_ptr->bakup_rgb_gain, final_gain);
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN, &final_gain, NULL);
-	}	
+
+		gain_info.bypass = 0;
+		gain_info.global_gain = final_gain;
+		gain_info.r_gain = rgb_gain_offset;
+		gain_info.g_gain = rgb_gain_offset;
+		gain_info.b_gain = rgb_gain_offset;
+
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN, (void *)&gain_info, NULL);
+	}
 
 	return rtn;
 }
