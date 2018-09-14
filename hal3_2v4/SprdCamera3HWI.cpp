@@ -1531,8 +1531,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     {
         Mutex::Autolock lr(mRequestLock);
         size_t pendingCount = 0;
-        while (mPendingRequest >= receive_req_max) {
+        while ((mPendingRequest >= receive_req_max) || mHDRProcessFlag) {
             mRequestSignal.waitRelative(mRequestLock, kPendingTime);
+            if (mHDRProcessFlag && (mPendingRequest == 0))
+                mHDRProcessFlag = false;
             if (pendingCount > kPendingTimeOut / kPendingTime) {
                 HAL_LOGE("TimeOut pendingCount=%d", pendingCount);
                 ret = -ENODEV;
