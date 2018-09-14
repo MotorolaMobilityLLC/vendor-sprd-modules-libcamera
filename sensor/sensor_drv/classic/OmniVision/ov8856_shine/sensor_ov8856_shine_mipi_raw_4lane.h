@@ -439,7 +439,7 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
 
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-                     .preview_skip_num = 3,
+                     .preview_skip_num = 1,
                      .capture_skip_num = 0,
                      .flash_capture_skip_num = 6,
                      .mipi_cap_skip_num = 0,
