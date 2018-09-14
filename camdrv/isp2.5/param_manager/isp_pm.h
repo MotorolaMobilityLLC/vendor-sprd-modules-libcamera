@@ -44,7 +44,9 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_SET_SPECIAL_EFFECT,
 	ISP_PM_CMD_ALLOC_BUF_MEMORY,
 	ISP_PM_CMD_SET_PARAM_SOURCE,
+	ISP_PM_CMD_SET_PRV_PARAM,
 	ISP_PM_CMD_SET_CAP_PARAM,
+	ISP_PM_CMD_SET_LOWLIGHT_FLAG,
 
 	ISP_PM_CMD_GET_BASE = 0x2000,
 	ISP_PM_CMD_GET_INIT_AE,
@@ -83,6 +85,7 @@ struct isp_pm_init_input {
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
+	cmr_u32 is_4in1_sensor;
 };
 
 struct isp_pm_init_output {

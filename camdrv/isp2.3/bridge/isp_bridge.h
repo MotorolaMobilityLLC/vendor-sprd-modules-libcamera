@@ -49,6 +49,7 @@ enum isp_br_ioctl_cmd {
 	/*aem sat*/ //20180405
 	SET_AEM_SYNC_STAT,
 	GET_AEM_SYNC_STAT,
+	SET_AEM_STAT_BLK_NUM,
 
 };
 

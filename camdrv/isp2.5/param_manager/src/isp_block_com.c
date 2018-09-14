@@ -107,7 +107,7 @@ cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 *
 		ISP_LOGE("fail to find multi NR version\n");
 		offset_units = 0;
 	}
-	ISP_LOGV("offset_units = %d)",offset_units);
+	ISP_LOGV("offset_units = %d",offset_units);
 
 	quotient = offset_units / MAX_SCENEMODE_NUM;
 	remainder = offset_units % MAX_SCENEMODE_NUM;

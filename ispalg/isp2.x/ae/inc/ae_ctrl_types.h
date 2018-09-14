@@ -101,6 +101,7 @@ extern "C" {
 		AE_SET_UPDATE_AUX_SENSOR,
 		AE_SET_EXPOSURE_COMPENSATION,
 		AE_SET_AUTO_HDR,
+		AE_SET_CAP_FLAG,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -293,6 +294,7 @@ extern "C" {
 		cmr_u32 zsl_flag;
 		cmr_u16 binning_factor;
 		struct ae_size blk_num;
+		cmr_u32 cam_4in1_mode;
 	};
 
 	struct ae_set_iso {

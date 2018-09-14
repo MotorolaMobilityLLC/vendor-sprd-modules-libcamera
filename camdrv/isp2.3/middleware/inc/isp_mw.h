@@ -51,6 +51,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_SET_STATISTICS_MODE,
 	ISP_AE_SET_STATS_MONITOR,
 	ISP_AE_SET_RGB_GAIN,
+	ISP_AE_SET_RGB_GAIN_FOR_4IN1,
 	ISP_AE_SET_AE_CALLBACK,
 	ISP_AE_SET_EXPOSURE,
 	ISP_AE_EX_SET_EXPOSURE,
@@ -63,6 +64,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_RGB_GAIN,
 	ISP_AE_SET_WBC_GAIN,
 	ISP_AE_MULTI_WRITE,
+	ISP_AE_SET_BLK_NUM,
 	/*AF*/
 	ISP_AF_SET_POS,
 	ISP_AF_AE_AWB_LOCK,
@@ -319,6 +321,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_VCM_INFO,
 	ISP_CTRL_GET_FPS,
 	ISP_CTRL_GET_LEDS_CTRL,
+	ISP_CTRL_GET_GLB_GAIN,
 	ISP_CTRL_AE_EXP_COMPENSATION,
 	/* warning if you wanna send async msg
 	 * please add msg id below here
@@ -339,6 +342,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_GET_CNR2_EN,
+	ISP_CTRL_SET_CAP_FLAG,
 	ISP_CTRL_MAX
 };
 
@@ -385,6 +389,7 @@ struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
 	cmr_u32 bv;
+	cmr_u32 lowlight_flag;
 };
 
 struct isp_yimg_info {
@@ -723,6 +728,8 @@ struct isp_video_start {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
+	cmr_u32 is_4in1_sensor;
+	cmr_uint mode_4in1;
 };
 
 struct isp_img_param {
@@ -800,6 +807,8 @@ struct isp_init_param {
 	cmr_s32 dcam_fd;
 	uint32_t is_multi_mode;
 	uint32_t is_master;
+	uint32_t sensor_role;
+	uint32_t is_4in1_sensor;
 };
 
 typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,

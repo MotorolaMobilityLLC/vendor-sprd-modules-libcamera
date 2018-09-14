@@ -22,9 +22,11 @@ struct ispbr_context {
 	cmr_handle isp_3afw_handles[SENSOR_NUM_MAX];
 	sem_t ae_sm;
 	sem_t awb_sm;
+	sem_t af_sm;
 	sem_t module_sm;
 	sem_t ae_wait_sm;
 	sem_t awb_wait_sm;
+	sem_t af_wait_sm;
 	struct sensor_raw_ioctrl *ioctrl_ptr[SENSOR_NUM_MAX];
 	struct match_data_param match_param;
 	struct sensor_dual_otp_info *dual_otp[SENSOR_NUM_MAX];
@@ -96,14 +98,18 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		break;
 	case SET_STAT_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(cxt->match_param.awb_stat_data[camera_id], in,
-			cxt->aem_sync_stat_size[camera_id]);
+		if (NULL != cxt->match_param.awb_stat_data[camera_id]) {
+			memcpy(cxt->match_param.awb_stat_data[camera_id], in,
+				cxt->aem_sync_stat_size[camera_id]);
+		}
 		sem_post(&cxt->awb_sm);
 		break;
 	case GET_STAT_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		memcpy(out, cxt->match_param.awb_stat_data[camera_id],
-			cxt->aem_sync_stat_size[camera_id]);
+		if (NULL != cxt->match_param.awb_stat_data[camera_id]) {
+			memcpy(out, cxt->match_param.awb_stat_data[camera_id],
+				cxt->aem_sync_stat_size[camera_id]);
+		}
 		sem_post(&cxt->awb_sm);
 		break;
 	case SET_GAIN_AWB_DATA:
@@ -174,16 +180,26 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 	case AWB_POST_SEM:
 		sem_post(&cxt->awb_wait_sm);
 		break;
+	case AF_WAIT_SEM:
+		sem_wait(&cxt->af_wait_sm);
+		break;
+	case AF_POST_SEM:
+		sem_post(&cxt->af_wait_sm);
+		break;
 	case SET_AEM_SYNC_STAT:
 		sem_wait(&cxt->module_sm);
-		memcpy(cxt->aem_sync_stat[camera_id], in,
-			3 * cxt->aem_stat_blk_num[camera_id] * sizeof(cmr_u32));
+		if (NULL != cxt->aem_sync_stat[camera_id]) {
+			memcpy(cxt->aem_sync_stat[camera_id], in,
+				3 * cxt->aem_stat_blk_num[camera_id] * sizeof(cmr_u32));
+		}
 		sem_post(&cxt->module_sm);
 		break;
 	case GET_AEM_SYNC_STAT:
 		sem_wait(&cxt->module_sm);
-		memcpy(out, cxt->aem_sync_stat[camera_id],
-			3 * cxt->aem_stat_blk_num[camera_id] * sizeof(cmr_u32));
+		if (NULL != cxt->aem_sync_stat[camera_id]) {
+			memcpy(out, cxt->aem_sync_stat[camera_id],
+				3 * cxt->aem_stat_blk_num[camera_id] * sizeof(cmr_u32));
+		}
 		sem_post(&cxt->module_sm);
 		break;
 	case SET_AEM_STAT_BLK_NUM:
@@ -199,6 +215,41 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		ISP_LOGV("camera_id = %d, aem_stat_size %d",
 			camera_id, cxt->aem_stat_size[camera_id]);
 		sem_post(&cxt->module_sm);
+		break;
+	case SET_AF_SYNC_INFO:
+		sem_wait(&cxt->af_sm);
+		memcpy(&cxt->match_param.af_data[camera_id], in,
+			sizeof(cxt->match_param.af_data[camera_id]));
+		sem_post(&cxt->af_sm);
+		break;
+	case GET_AF_SYNC_INFO:
+		sem_wait(&cxt->af_sm);
+		memcpy(out, &cxt->match_param.af_data[0],
+			SENSOR_NUM_MAX * sizeof(struct af_sync_info));
+		sem_post(&cxt->af_sm);
+	case SET_AF_STATUS_INFO:
+		sem_wait(&cxt->af_sm);
+		memcpy(&cxt->match_param.af_info[camera_id], in,
+			sizeof(cxt->match_param.af_info[camera_id]));
+		sem_post(&cxt->af_sm);
+		break;
+	case GET_AF_STATUS_INFO:
+		sem_wait(&cxt->af_sm);
+		memcpy(out, &cxt->match_param.af_info[camera_id],
+			sizeof(cxt->match_param.af_info[camera_id]));
+		sem_post(&cxt->af_sm);
+		break;
+	case SET_AF_MANUAL_INFO:
+		sem_wait(&cxt->af_sm);
+		memcpy(&cxt->match_param.af_manual[camera_id], in,
+			sizeof(cxt->match_param.af_manual[camera_id]));
+		sem_post(&cxt->af_sm);
+		break;
+	case GET_AF_MANUAL_INFO:
+		sem_wait(&cxt->af_sm);
+		memcpy(out, &cxt->match_param.af_manual[camera_id],
+			sizeof(cxt->match_param.af_manual[camera_id]));
+		sem_post(&cxt->af_sm);
 		break;
 	default:
 		break;
@@ -227,9 +278,11 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 	if (1 == cxt->user_cnt) {
 		sem_init(&cxt->ae_sm, 0, 1);
 		sem_init(&cxt->awb_sm, 0, 1);
+		sem_init(&cxt->af_sm, 0, 1);
 		sem_init(&cxt->module_sm, 0, 1);
 		sem_init(&cxt->ae_wait_sm, 0, 1);
 		sem_init(&cxt->awb_wait_sm, 0, 1);
+		sem_init(&cxt->af_wait_sm, 0, 1);
 	}
 
 	aem_sync_stat_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
@@ -283,9 +336,11 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 	if (0 == cxt->user_cnt) {
 		sem_destroy(&cxt->ae_sm);
 		sem_destroy(&cxt->awb_sm);
+		sem_destroy(&cxt->af_sm);
 		sem_destroy(&cxt->module_sm);
 		sem_destroy(&cxt->ae_wait_sm);
 		sem_destroy(&cxt->awb_wait_sm);
+		sem_destroy(&cxt->af_wait_sm);
 		for (i = 0; i < SENSOR_NUM_MAX; i++)
 			cxt->isp_3afw_handles[i] = NULL;
 	}

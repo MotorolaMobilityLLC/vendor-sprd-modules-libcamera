@@ -270,8 +270,8 @@ cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypas
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	if (cxt->cam_4in1_flag)
-		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_CAP);
-	ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_PRV);
+		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+	ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, bypass, SCENE_MODE_PRV);
 
 	return ret;
 }
@@ -290,9 +290,17 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u3
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	cmr_u32 r_gain = 0;
+	cmr_u32 g_gain = 0;
+	cmr_u32 b_gain = 0;
 
-	if (cxt->cam_4in1_flag)
-		ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, SCENE_MODE_CAP);
+	if (cxt->cam_4in1_flag) {
+		r_gain = r * 4;
+		g_gain = g * 4;
+		b_gain = b * 4;
+		ISP_LOGV("r_gain = %d, g_gain = %d, b_gain = %d", r_gain, g_gain, b_gain);
+		ret = isp_u_awbc_gain(cxt->isp_driver_handle, r_gain, g_gain, b_gain, SCENE_MODE_CAP);
+	}
 	ret = isp_u_awbc_gain(cxt->isp_driver_handle, r, g, b, SCENE_MODE_PRV);
 
 	return ret;
@@ -560,7 +568,7 @@ static cmr_int ispdev_access_set_af_monitor(cmr_handle isp_dev_handle, struct is
 		isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
 		isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0, SCENE_MODE_CAP);
 		isp_u_raw_afm_skip_num(cxt->isp_driver_handle, afm_info->skip_num, SCENE_MODE_CAP);
-		isp_u_raw_afm_bypass(cxt->isp_driver_handle, afm_info->bypass, SCENE_MODE_CAP);
+		isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
 	}
 	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_PRV);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1, SCENE_MODE_PRV);
@@ -636,8 +644,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	}
 	case ISP_DEV_SET_AE_MONITOR_BYPASS: {
 		if (cxt->cam_4in1_flag)
-			ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
+			ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
 	}
 	case ISP_DEV_SET_AE_STATISTICS_MODE: {
@@ -674,14 +682,14 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	}
 	case ISP_DEV_RAW_AEM_BYPASS: {
 		if (cxt->cam_4in1_flag)
-			ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
-		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
+			ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+		ret = isp_u_raw_aem_bypass(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
 	}
 	case ISP_DEV_RAW_AFM_BYPASS: {
 		if (cxt->cam_4in1_flag)
-			ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, SCENE_MODE_CAP);
-		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *) in, SCENE_MODE_PRV);
+			ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+		ret = isp_u_raw_afm_bypass(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
 	}
 	case ISP_DEV_SET_AF_MONITOR: {
@@ -760,8 +768,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, v
 	}
 	case ISP_DEV_SET_AFL_NEW_BYPASS: {
 		if (cxt->cam_4in1_flag)
-			ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, SCENE_MODE_CAP);
-		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, in, SCENE_MODE_PRV);
+			ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
+		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, *(cmr_u32 *)in, SCENE_MODE_PRV);
 		break;
 	}
 	case ISP_DEV_SET_AE_SHIFT: {

@@ -51,14 +51,14 @@ cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *bypass, cmr_u32 scene_id)
+cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !bypass) {
-		ISP_LOGE("fail to get handle: handle = %p, bypass = %p.", handle, bypass);
+	if (!handle) {
+		ISP_LOGE("fail to get handle : %p.", handle);
 		return -1;
 	}
 
@@ -67,7 +67,7 @@ cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *bypass, cmr_u32 scene_id)
 	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_RAW_AEM;
 	param.property = ISP_PRO_RAW_AEM_BYPASS;
-	param.property_param = bypass;
+	param.property_param = &bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 

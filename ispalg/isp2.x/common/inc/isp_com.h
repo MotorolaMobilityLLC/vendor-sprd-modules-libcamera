@@ -199,6 +199,7 @@ extern "C" {
 		cmr_int flag;
 		cmr_int cur_flicker;
 		cmr_s8 version;
+		cmr_u32 cam_4in1_mode;
 	};
 
 	struct isp_antiflicker_param {

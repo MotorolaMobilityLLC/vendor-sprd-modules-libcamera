@@ -89,6 +89,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_SET_STATISTICS_MODE,
 	ISP_AE_SET_STATS_MONITOR,
 	ISP_AE_SET_RGB_GAIN,
+	ISP_AE_SET_RGB_GAIN_FOR_4IN1,
 	ISP_AE_SET_AE_CALLBACK,
 	ISP_AE_SET_EXPOSURE,
 	ISP_AE_EX_SET_EXPOSURE,
@@ -101,6 +102,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_RGB_GAIN,
 	ISP_AE_SET_WBC_GAIN,
 	ISP_AE_MULTI_WRITE,
+	ISP_AE_SET_BLK_NUM,
 	ISP_AE_DUAL_SYNC_WRITE_SET,
 	ISP_AE_DUAL_SYNC_READ_AEINFO,
 	ISP_AE_DUAL_SYNC_READ_AEINFO_SLV,
@@ -362,6 +364,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_VCM_INFO,
 	ISP_CTRL_GET_FPS,
 	ISP_CTRL_GET_LEDS_CTRL,
+	ISP_CTRL_GET_GLB_GAIN,
 	ISP_CTRL_AE_EXP_COMPENSATION,
 	/* warning if you wanna send async msg
 	 * please add msg id below here */
@@ -380,9 +383,10 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_GET_CNR2_EN,
+	ISP_CTRL_SET_CAP_FLAG,
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 	ISP_CTRL_SET_REQ_FRAME_INFO,	//109
-        ISP_CTRL_GET_PER_FRAME_RESULT,	//110
+	ISP_CTRL_GET_PER_FRAME_RESULT,	//110
 	ISP_CTRL_SET_VALID_FRAME,	//111
 	ISP_CTRL_AE_GET_ISO,		//112
 	ISP_CTRL_AE_GET_EXP_TIME,	//113
@@ -784,6 +788,8 @@ struct isp_video_start {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
+	cmr_u32 is_4in1_sensor;
+	cmr_uint mode_4in1;
 };
 
 struct isp_img_param {
@@ -864,6 +870,8 @@ struct isp_init_param {
 	cmr_u8 is_master;
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
+	uint32_t sensor_role;
+	uint32_t is_4in1_sensor;
 };
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL

@@ -18,6 +18,7 @@
 
 #include "isp_type.h"
 #include "cmr_sensor_info.h"
+#include "af_ctrl.h"
 
 #define SENSOR_NUM_MAX 4
 
@@ -26,7 +27,7 @@
 typedef cmr_int(*func_isp_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
 
 enum isp_br_ioctl_cmd {
-	SET_MATCH_AWB_DATA = 0,
+	SET_MATCH_AWB_DATA = 0x00,
 	GET_MATCH_AWB_DATA,
 	SET_MATCH_AE_DATA,
 	GET_MATCH_AE_DATA,
@@ -48,6 +49,8 @@ enum isp_br_ioctl_cmd {
 	AE_POST_SEM,
 	AWB_WAIT_SEM,
 	AWB_POST_SEM,
+	AF_WAIT_SEM,
+	AF_POST_SEM,
 	SET_AEM_SYNC_STAT,
 	GET_AEM_SYNC_STAT,
 	SET_AEM_STAT_BLK_NUM,
@@ -104,9 +107,12 @@ struct match_data_param {
 	struct module_info module_info;
 	struct ae_match_data ae_info[SENSOR_NUM_MAX];
 	struct awb_match_data awb_info[SENSOR_NUM_MAX];
+	struct af_status_info af_info[SENSOR_NUM_MAX];
 	void *awb_stat_data[SENSOR_NUM_MAX];
 	cmr_u32 awb_stat_data_size[SENSOR_NUM_MAX];
 	struct awb_gain_data awb_gain[SENSOR_NUM_MAX];
+	struct af_manual_info af_manual[SENSOR_NUM_MAX];
+	struct af_sync_info af_data[SENSOR_NUM_MAX];
 	cmr_u16 bv[SENSOR_NUM_MAX];
 };
 

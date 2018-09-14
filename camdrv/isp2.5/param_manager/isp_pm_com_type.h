@@ -26,7 +26,7 @@ extern "C" {
 
 #define ISP_TUNE_MODE_MAX 16
 #define ISP_TUNE_BLOCK_MAX 256
-#define ISP_SCENE_MODE_MAX 2
+#define ISP_SCENE_MODE_MAX 3
 
 enum isp_pm_blk_cmd {
 	ISP_PM_BLK_ISP_SETTING = 0x0000,

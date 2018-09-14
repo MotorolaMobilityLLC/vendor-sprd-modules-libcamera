@@ -51,6 +51,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_SET_STATISTICS_MODE,
 	ISP_AE_SET_STATS_MONITOR,
 	ISP_AE_SET_RGB_GAIN,
+	ISP_AE_SET_RGB_GAIN_FOR_4IN1,
 	ISP_AE_SET_AE_CALLBACK,
 	ISP_AE_SET_EXPOSURE,
 	ISP_AE_EX_SET_EXPOSURE,
@@ -372,6 +373,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_CNR2_PARAM,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_GET_CNR2_EN,
+	ISP_CTRL_SET_CAP_FLAG,
 	ISP_CTRL_MAX
 };
 
@@ -783,6 +785,7 @@ struct isp_video_start {
 	cmr_u32 is_real_bokeh;
 	struct isp_img_frm s_yuv_depth;
 	struct isp_img_frm s_yuv_sw_out;
+	cmr_u32 is_4in1_sensor;
 	cmr_uint mode_4in1;
 };
 
@@ -867,9 +870,13 @@ struct isp_init_param {
 	cmr_s32 dcam_fd;
 	uint32_t is_multi_mode;
 	uint32_t is_master;
+	uint32_t sensor_role;
+	uint32_t is_4in1_sensor;
 };
 
 struct work_mode_info {
+	cmr_u32 is_4in1_sensor;
+	cmr_u32 cam_4in1_mode;
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
 	cmr_u32 cap_mode_id;

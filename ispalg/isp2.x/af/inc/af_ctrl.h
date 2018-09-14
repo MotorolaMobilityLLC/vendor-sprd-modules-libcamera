@@ -205,6 +205,23 @@ extern "C" {
 		AF_MOVE_MAX
 	};
 
+	enum af_sync_cmd {
+		SET_AF_SYNC_INFO = 0x50,
+		GET_AF_SYNC_INFO,
+		GET_AF_STATUS_INFO,
+		SET_AF_STATUS_INFO,
+		GET_AF_MANUAL_INFO,
+		SET_AF_MANUAL_INFO,
+		AF_SYNC_MAX
+	};
+
+	enum af_role {
+		AF_ROLE_DEFAULT = 0x00,
+		AF_ROLE_WIDE,
+		AF_ROLE_TELE,
+		AF_ROLE_MAX
+	};
+
 	struct af_img_blk_info {
 		cmr_u32 block_w;
 		cmr_u32 block_h;
@@ -294,7 +311,8 @@ extern "C" {
 
 	struct afctrl_fwstart_info {
 		struct isp_size size;
-		cmr_u32 reserved[10];
+		cmr_u32 cam_4in1_mode;
+		cmr_u32 reserved[9];
 	};
 
 	struct afctrl_ts_info {
@@ -420,7 +438,25 @@ extern "C" {
 		cmr_u32 log_len;
 	};
 
+	struct af_status_info {
+		cmr_u32 af_mode;
+		cmr_u32 af_state;
+		cmr_u32 af_status;
+		cmr_u32 af_position;
+		cmr_u32 af_transition;
+	};
+
+	struct af_manual_info {
+		cmr_u32 cali[15];
+	};
+
+	struct af_sync_info {
+		cmr_u32 camera_id;
+		cmr_u32 sensor_role;
+	};
+
 	typedef cmr_int(*af_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+	typedef cmr_int(*af_ctrl_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
 
 	struct afctrl_init_in {
 		cmr_handle caller_handle;	// struct isp_alg_fw_context *cxt
@@ -443,6 +479,8 @@ extern "C" {
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 		struct afctrl_cb_ops cb_ops;
+		af_ctrl_br_ioctrl br_ctrl;
+		cmr_u32 sensor_role;
 	};
 
 	struct afctrl_init_out {

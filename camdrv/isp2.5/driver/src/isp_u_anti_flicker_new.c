@@ -18,14 +18,14 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info, cmr_u32 scene_id)
+cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
-	if (!handle || !block_info) {
-		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
+	if (!handle) {
+		ISP_LOGE("fail to get handle : %p.", handle);
 		return -1;
 	}
 
@@ -34,9 +34,9 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info, cmr_u
 	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER_NEW;
 	param.property = ISP_PRO_ANTI_FLICKER_NEW_BYPASS;
-	param.property_param = block_info;
+	param.property_param = &bypass;
 
-	ISP_LOGV("$$LHC:bypass %d", *(cmr_u32 *) block_info);
+	ISP_LOGV("bypass = %d", bypass);
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;

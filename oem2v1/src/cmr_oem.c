@@ -3411,10 +3411,11 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     struct cmr_grab *p_grab = NULL;
     struct isp_cali_param cali_param;
     struct isp_data_info cali_result;
+    struct sensor_4in1_info sn_4in1_info;
 
     cmr_bzero(&cali_param, sizeof(cali_param));
     cmr_bzero(&cali_result, sizeof(cali_result));
-
+    cmr_bzero(&sn_4in1_info, sizeof(sn_4in1_info));
     cmr_bzero(&isp_param, sizeof(isp_param));
     cmr_bzero(&pdaf_info, sizeof(pdaf_info));
     CMR_PRINT_TIME;
@@ -3582,6 +3583,20 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     isp_param.is_pfc_supported = 1;
 #endif
 
+#ifdef CONFIG_CAMERA_4IN1
+    val.type = SENSOR_VAL_TYPE_GET_4IN1_INFO;
+    val.pval = &sn_4in1_info;
+    ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                           SENSOR_ACCESS_VAL, (cmr_uint)&val);
+    if (ret) {
+        CMR_LOGE("get sensor 4ini1 failed %ld", ret);
+        goto exit;
+    }
+    cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
+#endif
+
+    isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
+
     CMR_LOGI(
         "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
         "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
@@ -3590,7 +3605,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         "isp_param.is_pfc_supported =%d, "
 #endif
-        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, ",
+        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, is_4in1_sensor=%d",
         isp_param.is_multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
@@ -3601,7 +3616,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         isp_param.is_pfc_supported,
 #endif
-        sensor_info_ptr->image_pattern, isp_param.image_pattern);
+        sensor_info_ptr->image_pattern, isp_param.image_pattern, isp_param.is_4in1_sensor);
 
     CMR_PRINT_TIME;
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
@@ -6302,6 +6317,10 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     CMR_LOGD("work_mode %ld, dv_mode %ld, capture_mode %d", work_mode, dv_mode,
              isp_param.capture_mode);
     CMR_LOGD("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
+#ifdef CONFIG_CAMERA_4IN1
+    isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
+    isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
+#endif
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (!ret) {
         isp_cxt->is_work = 1;
@@ -7824,6 +7843,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                  isp_param_ptr, param_ptr->per_frame_res);
         break;
 #endif
+    case COM_ISP_SET_CAP_FLAG:
+        CMR_LOGI("set cap flag %d", param_ptr->cmd_value);
+        isp_cmd = ISP_CTRL_SET_CAP_FLAG;
+        isp_param = param_ptr->cmd_value;
+        break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -11090,6 +11114,9 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
 #endif
     }
 
+    isp_param.cmd_value = 1;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
+
     ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, capture_param);
     if (ret) {
         CMR_LOGE("cmr_grab_start_capture failed");
@@ -11116,12 +11143,16 @@ exit:
 cmr_int camera_local_stop_capture(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct common_isp_cmd_param isp_param;
 
     ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
     if (ret) {
         CMR_LOGE("cmr_grab_start_capture failed");
         goto exit;
     }
+
+    isp_param.cmd_value = 0;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
 
 exit:
     return ret;

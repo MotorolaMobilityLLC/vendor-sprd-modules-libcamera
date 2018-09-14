@@ -484,22 +484,13 @@ static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct
 	return ret;
 }
 
-static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_coeff)
+static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	cmr_u32 rgb_gain_offset = 4096;
-	struct isp_dev_rgb_gain_info gain_info;
+	struct isp_dev_rgb_gain_info *gain_info = (struct isp_dev_rgb_gain_info *)rgb_gain;
 
-	gain_info.bypass = 0;
-	gain_info.global_gain = *rgb_gain_coeff;
-	gain_info.r_gain = rgb_gain_offset;
-	gain_info.g_gain = rgb_gain_offset;
-	gain_info.b_gain = rgb_gain_offset;
-
-	ISP_LOGV("d-gain--global_gain: %d\n", gain_info.global_gain);
-
-	isp_u_rgb_gain_block(cxt->isp_driver_handle, &gain_info);
+	isp_u_rgb_gain_block(cxt->isp_driver_handle, (void *)gain_info);
 
 	return ret;
 }

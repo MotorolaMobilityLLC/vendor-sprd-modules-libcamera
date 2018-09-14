@@ -402,7 +402,6 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_callback_cmd cmd = 0;
-	void *in = NULL;
 
 	if (!cxt) {
 		ret = -ISP_PARAM_NULL;
@@ -431,21 +430,17 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_AE_UNLOCK_NOTIFY;
 		break;
 	case AE_CB_HDR_START:
-		in = data;
 		cmd = ISP_HDR_EV_EFFECT_CALLBACK;
 		break;
 	case AE_CB_LED_NOTIFY:
-		in = data;
 		cmd = ISP_ONLINE_FLASH_CALLBACK;
 		break;
 	case AE_CB_FLASH_FIRED:
-		in = data;
 		cmd = ISP_AE_CB_FLASH_FIRED;
 		break;
 	case AE_CB_PROCESS_OUT:
 		break;
 	case AE_CB_HDR_STATUS:
-		in = data;
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
 	default:
@@ -454,7 +449,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	}
 
 	if (cxt->commn_cxt.callback) {
-		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, in, 0);
+		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | cmd, data, 0);
 	}
 exit:
 	return ret;

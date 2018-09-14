@@ -1477,20 +1477,20 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	cmr_s32 gain = 0;
 	cmr_u32 exp_time = 0;
 	cmr_int bv = 0;
-	cmr_u32 lowlight_flag = 0;
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&lowlight_flag);
+		if (!cxt->camera_cap_flag)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&cxt->lowlight_flag);
 	}
 
 	if (!ret) {
 		info_ptr->adgain = (cmr_u32) gain;
 		info_ptr->exp_time = exp_time;
 		info_ptr->bv = bv;
-		info_ptr->lowlight_flag = lowlight_flag;
+		info_ptr->lowlight_flag = cxt->lowlight_flag;
 	}
 	ISP_LOGV("adgain = %d, exp = %d, bv = %d, lowlight_flag = %d",
 		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv, info_ptr->lowlight_flag);
@@ -2431,6 +2431,34 @@ static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	cxt->camera_cap_flag = *(cmr_u32 *)param_ptr;
+	ISP_LOGV("camera_cap_flag = %d", cxt->camera_cap_flag);
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_CAP_FLAG, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_get_ae_stab(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_STAB, NULL, (void *)param_ptr);
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2510,6 +2538,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
 	{ISP_CTRL_GET_CNR2_EN, ispctl_get_cnr2_en},
+	{ISP_CTRL_SET_CAP_FLAG, ispctl_set_cap_flag},
+	{ISP_CTRL_GET_AE_STAB, ispctl_get_ae_stab},
 	{ISP_CTRL_MAX, NULL}
 };
 

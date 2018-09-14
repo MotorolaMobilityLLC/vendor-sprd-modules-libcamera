@@ -76,6 +76,7 @@ enum isp_br_ioctl_cmd {
 	/*aem sat*/ //20180405
 	SET_AEM_SYNC_STAT =24,
 	GET_AEM_SYNC_STAT =25,
+	SET_AEM_STAT_BLK_NUM = 26,
 
 	// TODO: turnning info
 	SET_STAT_AWB_DATA,

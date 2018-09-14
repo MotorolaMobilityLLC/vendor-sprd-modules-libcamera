@@ -561,6 +561,19 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_flash_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 flash_mode = 0;
+
+	flash_mode = *(cmr_u32 *)param_ptr;
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLASH_MODE, &flash_mode, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2318,6 +2331,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_ISO, ispctl_iso},
 	{ISP_CTRL_AE_TOUCH, ispctl_ae_touch},
 	{ISP_CTRL_FLASH_NOTICE, ispctl_flash_notice},
+	{ISP_CTRL_SET_FLASH_MODE, ispctl_set_flash_mode},
 	{ISP_CTRL_VIDEO_MODE, ispctl_video_mode},
 	{ISP_CTRL_SCALER_TRIM, ispctl_scaler_trim},
 	{ISP_CTRL_RANGE_FPS, ispctl_range_fps},

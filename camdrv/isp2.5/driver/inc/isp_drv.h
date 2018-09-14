@@ -349,7 +349,7 @@ cmr_s32 isp_u_nbpc_bypass(cmr_handle handle, cmr_u32 bypass);
 cmr_s32 isp_u_1d_lsc_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_1d_lsc_slice_size(cmr_handle handle, cmr_u32 width, cmr_u32 height, cmr_u32 scene_id);
 cmr_s32 isp_u_raw_aem_block(cmr_handle handle, void *block_info);
-cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, void *bypass, cmr_u32 scene_id);
+cmr_s32 isp_u_raw_aem_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id);
 cmr_s32 isp_u_raw_aem_mode(cmr_handle handle, cmr_u32 mode, cmr_u32 scene_id);
 cmr_s32 isp_u_raw_aem_skip_num(cmr_handle handle, cmr_u32 skip_num, cmr_u32 scene_id);
 cmr_s32 isp_u_raw_aem_shift(cmr_handle handle, void *shift, cmr_u32 scene_id);
@@ -377,7 +377,7 @@ cmr_s32 isp_u_raw_afm_done_tile_num(cmr_handle handle, void *done_tile_num, cmr_
 
 cmr_s32 isp_u_anti_flicker_block(cmr_handle handle, void *block_info, cmr_u32 scene_id);
 cmr_s32 isp_u_anti_flicker_bypass(cmr_handle handle, void *block_info, cmr_u32 scene_id);
-cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, void *block_info, cmr_u32 scene_id);
+cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id);
 cmr_s32 isp_u_anti_flicker_new_block(cmr_handle handle, void *block_info, cmr_u32 scene_id);
 
 cmr_s32 isp_u_yuv_precdn_block(cmr_handle handle, void *block_info);
