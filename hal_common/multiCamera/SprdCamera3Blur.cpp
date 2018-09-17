@@ -580,7 +580,7 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
     if (mStaticMetadata)
         free_camera_metadata(mStaticMetadata);
 
-    if (blur_camera_id == MODE_BLUR_FRONT) {
+    if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
         property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     } else {
