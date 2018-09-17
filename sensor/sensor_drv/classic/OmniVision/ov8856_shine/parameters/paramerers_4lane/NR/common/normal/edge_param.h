@@ -164,9 +164,9 @@
 		/*ee_t2_cfg*/
 		0x0050,
 		/*ee_t3_cfg*/
-		0x0064,
+		0x005A,
 		/*ee_t4_cfg*/
-		0x0084,
+		0x007A,
 
 	},
 	/*ee_rx_cfg*/
@@ -357,9 +357,9 @@
 		/*ee_t2_cfg*/
 		0x0050,
 		/*ee_t3_cfg*/
-		0x0064,
+		0x00BE,
 		/*ee_t4_cfg*/
-		0x0084,
+		0x007A,
 
 	},
 	/*ee_rx_cfg*/
@@ -1734,7 +1734,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param9.&BasePoint=1&*/
@@ -1927,7 +1927,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param10.&BasePoint=1&*/
@@ -2120,7 +2120,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param11.&BasePoint=1&*/
@@ -2313,7 +2313,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param12.&BasePoint=1&*/

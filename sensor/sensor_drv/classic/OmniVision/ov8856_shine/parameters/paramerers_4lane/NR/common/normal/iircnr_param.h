@@ -24,13 +24,13 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x0008E000,
+	0x00078000,
 	/*iircnr_ymd_v*/
-	0x0008E000,
+	0x00078000,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
-	0x00,
+	0x05,
 	/*reserved2*/
 	{
 		0x00,0x00/*0-1*/
@@ -40,11 +40,11 @@
 	/*iircnr_alpha_low_v*/
 	0x370A,
 	/*iircnr_middle_factor*/
-	0x00000000,
+	0x00004BC0,
 	/*iircnr_uv_high_thr2*/
 	0x00000780,
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -71,13 +71,13 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x0008E000,
+	0x00042AAA,
 	/*iircnr_ymd_v*/
-	0x0008E000,
+	0x00042AAA,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
-	0x00,
+	0x05,
 	/*reserved2*/
 	{
 		0x00,0x00/*0-1*/
@@ -87,7 +87,7 @@
 	/*iircnr_alpha_low_v*/
 	0x370A,
 	/*iircnr_middle_factor*/
-	0x00000000,
+	0x00004BC0,
 	/*iircnr_uv_high_thr2*/
 	0x00000780,
 	/*bypass*/
@@ -118,13 +118,13 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x0008E000,
+	0x00042AAA,
 	/*iircnr_ymd_v*/
-	0x0008E000,
+	0x00042AAA,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
-	0x00,
+	0x05,
 	/*reserved2*/
 	{
 		0x00,0x00/*0-1*/
@@ -134,7 +134,7 @@
 	/*iircnr_alpha_low_v*/
 	0x370A,
 	/*iircnr_middle_factor*/
-	0x00000000,
+	0x00004BC0,
 	/*iircnr_uv_high_thr2*/
 	0x00000780,
 	/*bypass*/
@@ -165,9 +165,9 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x00000000,
+	0x00021555,
 	/*iircnr_ymd_v*/
-	0x00000000,
+	0x00021555,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
@@ -212,9 +212,9 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x00000000,
+	0x00021555,
 	/*iircnr_ymd_v*/
-	0x00000000,
+	0x00021555,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
@@ -259,13 +259,13 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x0008E000,
+	0x00021555,
 	/*iircnr_ymd_v*/
-	0x0008E000,
+	0x00021555,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
-	0x00,
+	0x05,
 	/*reserved2*/
 	{
 		0x00,0x00/*0-1*/
@@ -275,7 +275,7 @@
 	/*iircnr_alpha_low_v*/
 	0x370A,
 	/*iircnr_middle_factor*/
-	0x00000000,
+	0x00004BC0,
 	/*iircnr_uv_high_thr2*/
 	0x00000780,
 	/*bypass*/
@@ -306,13 +306,13 @@
 	/*reserved1*/
 	0x0000,
 	/*iircnr_ymd_u*/
-	0x0008E000,
+	0x00021555,
 	/*iircnr_ymd_v*/
-	0x0008E000,
+	0x00021555,
 	/*iircnr_uv_s_th*/
 	0x04,
 	/*iircnr_slope*/
-	0x00,
+	0x05,
 	/*reserved2*/
 	{
 		0x00,0x00/*0-1*/
@@ -322,7 +322,7 @@
 	/*iircnr_alpha_low_v*/
 	0x370A,
 	/*iircnr_middle_factor*/
-	0x00000000,
+	0x00004BC0,
 	/*iircnr_uv_high_thr2*/
 	0x00000780,
 	/*bypass*/
