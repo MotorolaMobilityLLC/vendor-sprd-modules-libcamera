@@ -2657,10 +2657,10 @@ static void scl_for_ae_stat(struct af_img_blk_info *rgb,isp_awb_statistic_hist_i
 	cmr_u32 blk_num_h = (rgb->block_h < 32) ? 32 : rgb->block_h;
 	cmr_u32 ratio_h = blk_num_h/32;
 	cmr_u32 ratio_w = blk_num_w/32;
-	struct af_img_blk_statistic * src_data = (struct af_img_blk_statistic *)rgb->data;
-	cmr_u32 *r_stat = src_data->r_info;
-	cmr_u32 *g_stat = src_data->g_info;
-	cmr_u32 *b_stat = src_data->b_info;
+	cmr_u32 *src_data = (cmr_u32 *)rgb->data;
+	cmr_u32 *r_stat = (cmr_u32*)src_data;
+	cmr_u32 *g_stat = (cmr_u32*)src_data + 16384;
+	cmr_u32 *b_stat = (cmr_u32*)src_data + 2 * 16384;
 	cmr_u32 *dst_r = dst_data->r_info;
 	cmr_u32 *dst_g = dst_data->g_info;
 	cmr_u32 *dst_b = dst_data->b_info;
@@ -2674,15 +2674,15 @@ static void scl_for_ae_stat(struct af_img_blk_info *rgb,isp_awb_statistic_hist_i
 			jj = j / ratio_w;
 			/*for r channel */
 			sum = r_stat[i * blk_num_w + j];
-			dst_r[ii * 32 + jj] += sum/(ratio_h * ratio_w);
+			dst_r[ii * 32 + jj] += sum;
 
 			/*for g channel */
 			sum = g_stat[i * blk_num_w + j];
-			dst_g[ii * 32 + jj] += sum/(ratio_h * ratio_w);
+			dst_g[ii * 32 + jj] += sum;
 
 			/*for b channel */
 			sum = b_stat[i * blk_num_w + j];
-			dst_b[ii * 32 + jj] += sum/(ratio_h * ratio_w);
+			dst_b[ii * 32 + jj] += sum;
 		}
 	}
 }

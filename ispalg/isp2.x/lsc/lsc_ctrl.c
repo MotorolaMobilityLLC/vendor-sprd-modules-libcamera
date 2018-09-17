@@ -981,9 +981,9 @@ static void lsc_scl_for_ae_stat(struct lsc_ctrl_context *cxt, struct lsc_adv_cal
 			/*for b channel */
 			b = b_stat[i * blk_num_w + j];
 
-			cxt->ae_stat[ii * 32 + jj] += r/(ratio_w * ratio_h);
-			cxt->ae_stat[ii * 32 + jj + 1024] += g/(ratio_w * ratio_h);
-			cxt->ae_stat[ii * 32 + jj + 2048] += b/(ratio_w * ratio_h);
+			cxt->ae_stat[ii * 32 + jj] += r;
+			cxt->ae_stat[ii * 32 + jj + 1024] += g;
+			cxt->ae_stat[ii * 32 + jj + 2048] += b;
 		}
 	}
 	param->stat_img.r = cxt->ae_stat;

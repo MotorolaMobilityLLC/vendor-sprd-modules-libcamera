@@ -152,9 +152,9 @@ static void afl_scl_for_ae_stat(cmr_u32 *dst, struct afl_proc_in *afl_in)
 			g = g_stat[i * blk_num_w + j];
 			b = b_stat[i * blk_num_w + j];
 
-			dst[ii * 32 + jj] += r/(ratio_w * ratio_h);
-			dst[ii * 32 + jj + 1024] += g/(ratio_w * ratio_h);
-			dst[ii * 32 + jj + 2048] += b/(ratio_w * ratio_h);
+			dst[ii * 32 + jj] += r;
+			dst[ii * 32 + jj + 1024] += g;
+			dst[ii * 32 + jj + 2048] += b;
 		}
 	}
 }
