@@ -351,25 +351,29 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mReqTimestamp = 0;
     mPrevFrameNumber = 0;
     mCapFrameNumber = 0;
-    rc = mBokehAlgo->deinitAlgo();
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to deinitAlgo");
-        goto exit;
-    }
-    rc = mBokehAlgo->deinitPrevDepth();
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to deinitPrevDepth");
-        goto exit;
-    }
-    rc = mBokehAlgo->deinitCapDepth();
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to deinitCapDepth");
-        goto exit;
+    if (mBokehAlgo) {
+        rc = mBokehAlgo->deinitAlgo();
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to deinitAlgo");
+            goto exit;
+        }
+        rc = mBokehAlgo->deinitPrevDepth();
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to deinitPrevDepth");
+            goto exit;
+        }
+        rc = mBokehAlgo->deinitCapDepth();
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to deinitCapDepth");
+            goto exit;
+        }
     }
 
 exit:
-    delete mBokehAlgo;
-    mBokehAlgo = NULL;
+    if (mBokehAlgo) {
+        delete mBokehAlgo;
+        mBokehAlgo = NULL;
+    }
 
     HAL_LOGI("X, rc: %d", rc);
 
@@ -756,7 +760,7 @@ int SprdCamera3RealBokeh::allocateBuff() {
                    mBokehSize.depth_weight_map_size);
         }
         mDepthBuffer.prev_depth_scale_buffer =
-           (void *)malloc(mBokehSize.depth_prev_scale_size);
+            (void *)malloc(mBokehSize.depth_prev_scale_size);
         if (mDepthBuffer.prev_depth_scale_buffer == NULL) {
             HAL_LOGE("mDepthBuffer.prev_depth_scale_buffer  malloc failed.");
             goto mem_fail;
@@ -1605,8 +1609,9 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
     }
 
     rc = mRealBokeh->mBokehAlgo->prevDepthRun(
-         mRealBokeh->mDepthBuffer.prev_depth_buffer[buffer_index].buffer,
-         input_buf1_addr, input_buf2_addr, mRealBokeh->mDepthBuffer.prev_depth_scale_buffer);
+        mRealBokeh->mDepthBuffer.prev_depth_buffer[buffer_index].buffer,
+        input_buf1_addr, input_buf2_addr,
+        mRealBokeh->mDepthBuffer.prev_depth_scale_buffer);
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
         goto fail_map_input2;
