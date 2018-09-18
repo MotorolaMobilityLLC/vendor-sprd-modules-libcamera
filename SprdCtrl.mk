@@ -339,7 +339,7 @@ LOCAL_CFLAGS += -DCONFIG_DUAL_FACEID_SUPPORT
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
+#max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 LOCAL_CFLAGS += -DCONFIG_BOKEH_SUPPORT
 LOCAL_CFLAGS += -DCONFIG_SPRD_BOKEH_SUPPORT
 else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
