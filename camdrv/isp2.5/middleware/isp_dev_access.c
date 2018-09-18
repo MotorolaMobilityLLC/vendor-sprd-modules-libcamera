@@ -348,6 +348,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
 	statis_info->frame_id = irq_info->frame_id;
+	statis_info->zoom_ratio = irq_info->zoom_ratio;
 	statis_info->sec = irq_info->sec;
 	statis_info->usec = irq_info->usec;
 

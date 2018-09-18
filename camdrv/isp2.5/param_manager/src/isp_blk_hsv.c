@@ -59,30 +59,27 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 			return rtn;
 		}
 	}
-	for(i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++)
-	{
-		if(PNULL == dst_ptr->ct_result[i])
-		{
-			ISP_LOGV("ct result malloc size:%d" , src_ptr->map[index].size);
-			dst_ptr->ct_result[i] = (cmr_u32*) malloc(src_ptr->map[index].size);
-			if(PNULL == dst_ptr->ct_result[i])
-			{
+
+	for (i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++) {
+		if (PNULL == dst_ptr->ct_result[i]) {
+			ISP_LOGV("ct result malloc size : %d", src_ptr->map[index].size);
+			dst_ptr->ct_result[i] = (cmr_u32 *)malloc(src_ptr->map[index].size);
+			if (PNULL == dst_ptr->ct_result[i]) {
 				ISP_LOGE("fail to malloc !");
-                        	rtn = ISP_ERROR;
-				if(dst_ptr->final_map.data_ptr != PNULL)
-				{
-					ISP_LOGE("free dst final_map data ptr:%p" , dst_ptr->final_map.data_ptr);
+				rtn = ISP_ERROR;
+				if (dst_ptr->final_map.data_ptr != PNULL) {
+					ISP_LOGE("free dst final_map data ptr : %p", dst_ptr->final_map.data_ptr);
 					free(dst_ptr->final_map.data_ptr);
 				}
-				for(j = 0; j < i; j++)
-				{
-					ISP_LOGE("free dst ct result j:%d , i:%d" , j , i);
+				for (j = 0; j < i; j++) {
+					ISP_LOGE("free dst ct result : j = %d, i = %d", j, i);
 					free(dst_ptr->ct_result[j]);
 				}
-                        	return rtn;
+				return rtn;
 			}
 		}
 	}
+
 	memcpy((void *)dst_ptr->final_map.data_ptr, dst_ptr->map[index].data_ptr, dst_ptr->map[index].size);
 	buf_ptr = (cmr_u32 *) dst_ptr->final_map.data_ptr;
 	dst_ptr->final_map.size = dst_ptr->map[index].size;
@@ -132,53 +129,125 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
-                        struct isp_weight_value *weight_value = NULL;
-                        struct isp_range val_range = { 0, 0 };
-                        struct isp_weight_value hsv_value = { {0}, {0} };
+			struct isp_weight_value *weight_value = NULL;
+			struct isp_weight_value *bv_value = NULL;
+			struct isp_weight_value *ct_value[2] = {NULL, NULL};
+			struct isp_range val_range = { 0, 0 };
+			void *dst = NULL;
+			void *src_map[2] = {NULL, NULL};
+			cmr_u16 weight[2] = {0, 0};
+			cmr_u32 data_num = 0;
+			cmr_u32 i = 0;
+			cmr_u32 *dst_value = NULL;
+			cmr_u32 hsv_level = 1;
+			cmr_u32 text_coeff = 10;
+			cmr_u32 pet_coeff = 8;
 
-                        hsv_header_ptr->is_update = ISP_ZERO;
-                        val_range.min = 0;
-                        val_range.max = 255;
+			hsv_header_ptr->is_update = ISP_ZERO;
+			val_range.min = 0;
+			val_range.max = 255;
 
-                        if (0 == block_result->update) {
-                                ISP_LOGV("do not need update\n");
-                                return ISP_SUCCESS;
-                        }
+			if (0 == block_result->update) {
+				ISP_LOGV("do not need update\n");
+				return ISP_SUCCESS;
+			}
 
-                        rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
-                        if (ISP_SUCCESS != rtn) {
-                                ISP_LOGE("fail to check pm smart param !");
-                                return rtn;
-                        }
+			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to check pm smart param !");
+				return rtn;
+			}
 
-                        weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
-                        struct isp_weight_value *bv_value = &weight_value[0];
-			struct isp_weight_value *ct_value[2] = {&weight_value[1],&weight_value[2]};
-			//cmr_u32 ct_result[2][360] = {{0} , {0}};
-			void *dst = dst_hsv_ptr->final_map.data_ptr;;
-			cmr_u32 data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);;
-			cmr_s32 i;
-			void* src_map[2] = {NULL};
-			cmr_u16 weight[2] = {0};
-			for(i = 0; i < 2; i++)
-			{
+			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
+			bv_value = &weight_value[0];
+			ct_value[0] = &weight_value[1];
+			ct_value[1] = &weight_value[2];
+
+			if (block_result->ai_scene_id == ISP_PM_AI_SCENE_FOLIAGE || block_result->ai_scene_id == ISP_PM_AI_SCENE_FLOWER) {
+
+				char prop[256];
+				property_get("debug.isp.hsv.hsv_value.level", prop, "1");
+				hsv_level = atoi(prop);
+				for (i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++) {
+					ct_value[i]->value[0] = hsv_level;
+					ct_value[i]->value[1] = hsv_level;
+					ct_value[i]->weight[0] = 256;
+					ct_value[i]->weight[1] = 0;
+				}
+			} else {
+				char prop[256];
+				property_get("debug.isp.hsv.hsv_value.tune", prop, "0");
+				if (atoi(prop)) {
+					for (i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++) {
+						ct_value[i]->value[0] = 0;
+						ct_value[i]->value[1] = 0;
+						ct_value[i]->weight[0] = 256;
+						ct_value[i]->weight[1] = 0;
+					}
+				}
+			}
+
+			dst = dst_hsv_ptr->final_map.data_ptr;
+			data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);
+
+			for (i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++) {
 				src_map[0] = (void *)dst_hsv_ptr->map[ct_value[i]->value[0]].data_ptr;
 				src_map[1] = (void *)dst_hsv_ptr->map[ct_value[i]->value[1]].data_ptr;
 				weight[0] = ct_value[i]->weight[0];
 				weight[1] = ct_value[i]->weight[1];
-				weight[0] = weight[0]/(SMART_WEIGHT_UNIT/16) * (SMART_WEIGHT_UNIT/16);
+				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 				weight[1] = SMART_WEIGHT_UNIT - weight[0];
-				isp_interp_data(dst_hsv_ptr->ct_result[i] , src_map , weight , data_num , ISP_INTERP_UINT20);
+				isp_interp_data(dst_hsv_ptr->ct_result[i], src_map, weight, data_num, ISP_INTERP_UINT20);
 			}
 			src_map[0] = dst_hsv_ptr->ct_result[0];
 			src_map[1] = dst_hsv_ptr->ct_result[1];
 			weight[0] = bv_value->weight[0];
 			weight[1] = bv_value->weight[1];
-			weight[0] = weight[0]/(SMART_WEIGHT_UNIT/16) * (SMART_WEIGHT_UNIT/16);
+			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 			weight[1] = SMART_WEIGHT_UNIT - weight[0];
-			isp_interp_data(dst , src_map , weight , data_num , ISP_INTERP_UINT20);
-                        ISP_LOGV("ISP_SMART: value=(%d, %d), weight=(%d, %d) , map size:%d",
-				hsv_value.value[0], hsv_value.value[1], hsv_value.weight[0], hsv_value.weight[1] , dst_hsv_ptr->final_map.size);
+			isp_interp_data(dst, src_map, weight, data_num, ISP_INTERP_UINT20);
+
+			dst_value = (cmr_u32 *)dst;
+
+			char prop[256];
+			property_get("debug.isp.hsv.text_coeff.val", prop, "10");
+			text_coeff = atoi(prop);
+			property_get("debug.isp.hsv.pet_coeff.val", prop, "8");
+			pet_coeff = atoi(prop);
+
+			ISP_LOGV("ai_scene_id = %d", block_result->ai_scene_id);
+			switch (block_result->ai_scene_id) {
+			case ISP_PM_AI_SCENE_TEXT: {
+				for (i = 0; i < data_num; i++) {
+					cmr_u32 dst_val = *dst_value;
+					cmr_u32 dst_val_h = dst_val & 0x1FF;
+					cmr_u32 dst_val_s = (dst_val >> 9) & 0x7FF;
+					dst_val_h = dst_val_h * 1;
+					dst_val_s = dst_val_s * 10 / text_coeff;
+					dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
+					*dst_value = dst_val;
+					dst_value++;
+				}
+				break;
+			}
+			case ISP_PM_AI_SCENE_PET: {
+				for (i = 0; i < data_num; i++) {
+					cmr_u32 dst_val = *dst_value;
+					cmr_u32 dst_val_h = dst_val & 0x1FF;
+					cmr_u32 dst_val_s = (dst_val >> 9) & 0x7FF;
+					dst_val_h = dst_val_h * 1;
+					dst_val_s = dst_val_s * 10 / pet_coeff;
+					dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
+					*dst_value = dst_val;
+					dst_value++;
+				}
+				break;
+			}
+
+			default:
+				break;
+			}
+
 			hsv_header_ptr->is_update = ISP_ONE;
 
 		}
@@ -257,10 +326,8 @@ cmr_s32 _pm_hsv_deinit(void *hsv_param)
 		hsv_ptr->final_map.data_ptr = PNULL;
 		hsv_ptr->final_map.size = 0;
 	}
-	for(i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++)
-	{
-		if(hsv_ptr->ct_result[i] != PNULL)
-		{
+	for (i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++) {
+		if (hsv_ptr->ct_result[i] != PNULL) {
 			free(hsv_ptr->ct_result[i]);
 			hsv_ptr->ct_result[i] = NULL;
 		}

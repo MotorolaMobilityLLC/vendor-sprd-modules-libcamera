@@ -151,14 +151,16 @@ static cmr_s32 ispctl_smart_param_update(cmr_handle isp_alg_handle)
 	struct smart_init_param smart_init_param;
 	struct isp_pm_ioctl_input pm_input = { NULL, 0 };
 	struct isp_pm_ioctl_output pm_output = { NULL, 0 };
+	cmr_u32 mode = 0;
 
 	memset(&smart_init_param, 0, sizeof(smart_init_param));
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_SMART, &pm_input, &pm_output);
 	if ((ISP_SUCCESS == ret) && pm_output.param_data) {
 		for (i = 0; i < pm_output.param_num; ++i) {
-			smart_init_param.tuning_param[i].data.size = pm_output.param_data[i].data_size;
-			smart_init_param.tuning_param[i].data.data_ptr = pm_output.param_data[i].data_ptr;
+			mode = pm_output.param_data[i].mode_id;
+			smart_init_param.tuning_param[mode].data.size = pm_output.param_data[i].data_size;
+			smart_init_param.tuning_param[mode].data.data_ptr = pm_output.param_data[i].data_ptr;
 		}
 	} else {
 		ISP_LOGE("fail to get smart init param");
@@ -1857,24 +1859,54 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_face_area *face_area = (struct isp_face_area *)param_ptr;
+	struct ae_fd_param ae_fd_para;
+	struct ai_fd_param ai_fd_para;
+	cmr_s32 i;
+	enum ai_status ai_sta = AI_STATUS_MAX;
 
 	if (NULL != face_area) {
-		struct ae_fd_param fd_param;
-		cmr_s32 i;
-
-		fd_param.width = face_area->frame_width;
-		fd_param.height = face_area->frame_height;
-		fd_param.face_num = face_area->face_num;
-		for (i = 0; i < fd_param.face_num; ++i) {
-			fd_param.face_area[i].rect.start_x = face_area->face_info[i].sx;
-			fd_param.face_area[i].rect.start_y = face_area->face_info[i].sy;
-			fd_param.face_area[i].rect.end_x = face_area->face_info[i].ex;
-			fd_param.face_area[i].rect.end_y = face_area->face_info[i].ey;
-			fd_param.face_area[i].face_lum = face_area->face_info[i].brightness;
-			fd_param.face_area[i].pose = face_area->face_info[i].pose;
+		ae_fd_para.width = face_area->frame_width;
+		ae_fd_para.height = face_area->frame_height;
+		ae_fd_para.face_num = face_area->face_num;
+		for (i = 0; i < ae_fd_para.face_num; ++i) {
+			ae_fd_para.face_area[i].rect.start_x = face_area->face_info[i].sx;
+			ae_fd_para.face_area[i].rect.start_y = face_area->face_info[i].sy;
+			ae_fd_para.face_area[i].rect.end_x = face_area->face_info[i].ex;
+			ae_fd_para.face_area[i].rect.end_y = face_area->face_info[i].ey;
+			ae_fd_para.face_area[i].face_lum = face_area->face_info[i].brightness;
+			ae_fd_para.face_area[i].pose = face_area->face_info[i].pose;
 		}
 		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &fd_param, NULL);
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &ae_fd_para, NULL);
+
+		if (cxt->ops.ai_ops.ioctrl) {
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)(&ai_sta), NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
+		}
+		if (AI_STATUS_PROCESSING != ai_sta) {
+			ISP_LOGV("AI detection doesn't work.");
+			return ret;
+		}
+		ai_fd_para.width = face_area->frame_width;
+		ai_fd_para.height = face_area->frame_height;
+		ai_fd_para.face_num = face_area->face_num;
+		for (i = 0; i < ai_fd_para.face_num; ++i) {
+
+			ai_fd_para.face_area[i].rect.start_x = face_area->face_info[i].sx;
+			ai_fd_para.face_area[i].rect.start_y = face_area->face_info[i].sy;
+			ai_fd_para.face_area[i].rect.width = face_area->face_info[i].ex - face_area->face_info[i].sx + 1;
+			ai_fd_para.face_area[i].rect.height = face_area->face_info[i].ey - face_area->face_info[i].sy + 1;
+			ai_fd_para.face_area[i].yaw_angle = face_area->face_info[i].yaw_angle;
+			ai_fd_para.face_area[i].roll_angle = face_area->face_info[i].roll_angle;
+			ai_fd_para.face_area[i].score = face_area->face_info[i].score;
+			ai_fd_para.face_area[i].id = face_area->face_info[i].id;
+		}
+		ai_fd_para.frame_id = face_area->frame_id;
+		ai_fd_para.timestamp = face_area->timestamp;
+		ISP_LOGV("ai face info: frame_id: %d, timestamp: %llu.", ai_fd_para.frame_id, (unsigned long long)ai_fd_para.timestamp);
+
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_PARAM, &ai_fd_para, NULL);
 
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)param_ptr, NULL);
@@ -2459,6 +2491,81 @@ static cmr_int ispctl_get_ae_stab(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_ai_process_start(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_PROCESS_START, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_process_stop(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_PROCESS_STOP, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_set_img_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_IMG_PARAM, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_get_img_flag(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_IMG_FLAG, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_get_status(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2540,6 +2647,11 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR2_EN, ispctl_get_cnr2_en},
 	{ISP_CTRL_SET_CAP_FLAG, ispctl_set_cap_flag},
 	{ISP_CTRL_GET_AE_STAB, ispctl_get_ae_stab},
+	{ISP_CTRL_AI_PROCESS_START, ispctl_ai_process_start},
+	{ISP_CTRL_AI_PROCESS_STOP, ispctl_ai_process_stop},
+	{ISP_CTRL_AI_SET_IMG_PARAM, ispctl_ai_set_img_param},
+	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
+	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
 	{ISP_CTRL_MAX, NULL}
 };
 

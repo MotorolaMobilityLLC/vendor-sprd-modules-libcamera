@@ -16,12 +16,15 @@
 #define LOG_TAG "isp_blk_edge"
 #include "isp_blocks_cfg.h"
 
-cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
+cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 ai_scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
+	cmr_u32 foliage_coeff = 10;
+	cmr_u32 text_coeff = 7;
+	cmr_u32 pet_coeff = 8;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		edge_param = (struct sensor_ee_level *)(dst_ptr->param_ptr);
@@ -160,6 +163,69 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 		dst_ptr->cur.ee_neg_c[1] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c2_cfg;
 		dst_ptr->cur.ee_neg_c[2] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c3_cfg;
 	}
+
+	char prop[256];
+	property_get("debug.isp.ee.foliage_coeff.val", prop, "10");
+	foliage_coeff = atoi(prop);
+	property_get("debug.isp.ee.text_coeff.val", prop, "7");
+	text_coeff = atoi(prop);
+	property_get("debug.isp.ee.pet_coeff.val", prop, "8");
+	pet_coeff = atoi(prop);
+
+	ISP_LOGV("ai_scene_id = %d", ai_scene_id);
+
+	switch (ai_scene_id) {
+	case ISP_PM_AI_SCENE_FOLIAGE:
+	case ISP_PM_AI_SCENE_FLOWER: {
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] * 10 / foliage_coeff;
+		break;
+	}
+	case ISP_PM_AI_SCENE_TEXT: {
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] * 10 / text_coeff;
+		break;
+	}
+	case ISP_PM_AI_SCENE_PET: {
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] * 10 / pet_coeff;
+		break;
+	}
+
+	default:
+		break;
+	}
+
 	return rtn;
 }
 
@@ -179,7 +245,7 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
-	rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO, ISP_PM_AI_SCENE_DEFAULT);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm edge param !");
@@ -235,7 +301,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[4] = 0;
 
-				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
+				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag, block_result->ai_scene_id);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");

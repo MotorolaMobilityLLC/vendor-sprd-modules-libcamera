@@ -96,6 +96,10 @@ struct isp_dev_access_aem_win_info {
 	struct isp_img_size blk_size;
 };
 
+struct isp_dev_access_aem_blk_num {
+	struct img_offset blk_num;
+};
+
 typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
 
 cmr_int isp_dev_4in1_flag(cmr_handle isp_dev_handle, cmr_u32 flag);

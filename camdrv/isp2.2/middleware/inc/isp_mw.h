@@ -81,6 +81,10 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define RESET_VALUE 0xffffffff
 #endif
 
+#define ISP_AI_FD_NUM (20)
+//#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
+#define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
+
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
 	ISP_AE_SET_MONITOR,
@@ -154,6 +158,8 @@ enum isp_callback_cmd {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 	ISP_CONVERT_CALLBACK = 0x00007000,
 #endif
+	ISP_AI_SCENE_INFO_CALLBACK = 0x00008000,
+	ISP_AI_SCENE_TYPE_CALLBACK = 0x00009000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -393,6 +399,11 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AE_GET_SENSITIVITY,	//114
 	ISP_CTRL_SET_TX_RESERVED,
 #endif
+	ISP_CTRL_AI_PROCESS_START,
+	ISP_CTRL_AI_PROCESS_STOP,
+	ISP_CTRL_AI_SET_IMG_PARAM,
+	ISP_CTRL_AI_GET_IMG_FLAG,
+	ISP_CTRL_AI_GET_STATUS,
 	ISP_CTRL_MAX
 };
 
@@ -424,6 +435,26 @@ enum {
 	ISP_DUAL_NORMAL,
 	ISP_DUAL_SBS,
 	ISP_CAMERA_MAX
+};
+
+enum isp_ai_scene_type {
+	ISP_AI_SCENE_DEFAULT,
+	ISP_AI_SCENE_FOOD,
+	ISP_AI_SCENE_PORTRAIT,
+	ISP_AI_SCENE_FOLIAGE,
+	ISP_AI_SCENE_SKY,
+	ISP_AI_SCENE_NIGHT,
+	ISP_AI_SCENE_BACKLIGHT,
+	ISP_AI_SCENE_TEXT,
+	ISP_AI_SCENE_SUNRISE,
+	ISP_AI_SCENE_BUILDING,
+	ISP_AI_SCENE_LANDSCAPE,
+	ISP_AI_SCENE_SNOW,
+	ISP_AI_SCENE_FIREWORK,
+	ISP_AI_SCENE_BEACH,
+	ISP_AI_SCENE_PET,
+	ISP_AI_SCENE_FLOWER,
+	ISP_AI_SCENE_MAX
 };
 
 struct isp_flash_cfg {
@@ -592,6 +623,10 @@ struct isp_face_info {
 	cmr_u32 brightness;
 	cmr_s32 pose;
 	cmr_s32 angle;
+	cmr_s32 yaw_angle;
+	cmr_s32 roll_angle;
+	cmr_u32 score;
+	cmr_u32 id;
 };
 
 struct isp_face_area {
@@ -600,6 +635,8 @@ struct isp_face_area {
 	cmr_u16 frame_width;
 	cmr_u16 frame_height;
 	struct isp_face_info face_info[10];
+	cmr_u32 frame_id;
+	cmr_s64 timestamp;
 };
 
 struct isp_img_mfd {
@@ -923,6 +960,132 @@ struct isp_mw_per_frame_cxt {
 };
 
 #endif
+
+struct isp_ai_rect {
+	cmr_u16 start_x;
+	cmr_u16 start_y;
+	cmr_u16 width;
+	cmr_u16 height;
+};
+
+struct isp_ai_face_info {
+	struct isp_ai_rect rect; /* Face rectangle */
+	cmr_s16 yaw_angle; /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees; */
+	cmr_s16 roll_angle; /* In-plane rotation angle (Roll); In (-180, +180] degrees; */
+	cmr_u16 score; /* Confidence score; In [0, 1000] */
+	cmr_u16 id; /* Human ID Number */
+};
+
+struct isp_ai_fd_param {
+	cmr_u16 width;
+	cmr_u16 height;
+	cmr_u32 frame_id;
+	cmr_u64 timestamp;
+	struct isp_ai_face_info face_area[ISP_AI_FD_NUM];
+	cmr_u16 face_num;
+};
+
+struct isp_ai_ae_statistic_info {
+	cmr_u32 *r_info;
+	cmr_u32 *g_info;
+	cmr_u32 *b_info;
+};
+
+struct isp_ai_ae_param {
+	cmr_u32 frame_id;
+	cmr_u64 timestamp;
+	cmr_u32 sec;
+	cmr_u32 usec;
+	struct isp_ai_ae_statistic_info ae_stat;
+	struct isp_ai_rect ae_rect;
+	struct img_offset ae_offset;
+	cmr_u16 blk_width;
+	cmr_u16 blk_height;
+	cmr_u16 blk_num_hor;
+	cmr_u16 blk_num_ver;
+	cmr_u32 zoom_ratio;
+};
+
+struct isp_ai_img_buf {
+	cmr_u32 img_y;
+	cmr_u32 img_uv;
+};
+
+struct isp_ai_img_param {
+	struct isp_ai_img_buf img_buf;
+	cmr_u32 frame_id;
+	cmr_u64 timestamp;
+};
+
+enum isp_ai_status {
+	ISP_AI_STATUS_IDLE,
+	ISP_AI_STATUS_PROCESSING,
+	ISP_AI_STATUS_MAX
+};
+
+enum isp_ai_task_0 {
+	ISP_AI_SCENE_TASK0_INDOOR,
+	ISP_AI_SCENE_TASK0_OUTDOOR,
+	ISP_AI_SCENE_TASK0_MAX
+};
+
+enum isp_ai_task_1 {
+	ISP_AI_SCENE_TASK1_NIGHT,
+	ISP_AI_SCENE_TASK1_BACKLIGHT,
+	ISP_AI_SCENE_TASK1_SUNRISESET,
+	ISP_AI_SCENE_TASK1_FIREWORK,
+	ISP_AI_SCENE_TASK1_OTHERS,
+	ISP_AI_SCENE_TASK1_MAX
+};
+
+enum isp_ai_task_2 {
+	ISP_AI_SCENE_TASK2_FOOD,
+	ISP_AI_SCENE_TASK2_GREENPLANT,
+	ISP_AI_SCENE_TASK2_DOCUMENT,
+	ISP_AI_SCENE_TASK2_CATDOG,
+	ISP_AI_SCENE_TASK2_FLOWER,
+	ISP_AI_SCENE_TASK2_BLUESKY,
+	ISP_AI_SCENE_TASK2_BUILDING,
+	ISP_AI_SCENE_TASK2_SNOW,
+	ISP_AI_SCENE_TASK2_OTHERS,
+	ISP_AI_SCENE_TASK2_MAX
+};
+
+struct isp_ai_task0_result {
+	enum isp_ai_task_0 id;
+	cmr_u16 score;
+};
+
+struct isp_ai_task1_result {
+	enum isp_ai_task_1 id;
+	cmr_u16 score;
+};
+
+struct isp_ai_task2_result {
+	enum isp_ai_task_2 id;
+	cmr_u16 score;
+};
+
+struct isp_ai_scene_detect_info {
+	cmr_u32 frame_id;
+	enum isp_ai_scene_type cur_scene_id;
+	struct isp_ai_task0_result task0[ISP_AI_SCENE_TASK0_MAX];
+	struct isp_ai_task1_result task1[ISP_AI_SCENE_TASK1_MAX];
+	struct isp_ai_task2_result task2[ISP_AI_SCENE_TASK2_MAX];
+};
+
+enum isp_ai_img_flag {
+	ISP_IMAGE_DATA_NOT_REQUIRED,
+	ISP_IMAGE_DATA_REQUIRED,
+	ISP_IMAGE_DATA_MAX
+};
+
+struct isp_ai_img_status {
+	cmr_u32 frame_id;
+	cmr_s32 frame_state;
+	enum isp_ai_img_flag img_flag;
+};
+
 typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint * size_ptr, cmr_uint * sum_ptr, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * mfd, void *private_data);
 typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint * phy_addr, cmr_uint * vir_addr, cmr_s32 * fd, cmr_uint sum, void *private_data);
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);

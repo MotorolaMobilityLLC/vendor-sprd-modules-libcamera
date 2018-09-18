@@ -76,6 +76,26 @@ enum isp_slice_pos_info {
 	ISP_SLICE_LAST,
 };
 
+enum isp_pm_ai_scene_type {
+	ISP_PM_AI_SCENE_DEFAULT,
+	ISP_PM_AI_SCENE_FOOD,
+	ISP_PM_AI_SCENE_PORTRAIT,
+	ISP_PM_AI_SCENE_FOLIAGE,
+	ISP_PM_AI_SCENE_SKY,
+	ISP_PM_AI_SCENE_NIGHT,
+	ISP_PM_AI_SCENE_BACKLIGHT,
+	ISP_PM_AI_SCENE_TEXT,
+	ISP_PM_AI_SCENE_SUNRISE,
+	ISP_PM_AI_SCENE_BUILDING,
+	ISP_PM_AI_SCENE_LANDSCAPE,
+	ISP_PM_AI_SCENE_SNOW,
+	ISP_PM_AI_SCENE_FIREWORK,
+	ISP_PM_AI_SCENE_BEACH,
+	ISP_PM_AI_SCENE_PET,
+	ISP_PM_AI_SCENE_FLOWER,
+	ISP_PM_AI_SCENE_MAX
+};
+
 struct isp_slice_param {
 	enum isp_slice_pos_info pos_info;
 	cmr_u32 slice_line;
@@ -905,7 +925,7 @@ cmr_s32 _pm_hist2_init(void *dst_hist2_param, void *src_hist2_param, void *param
 cmr_s32 _pm_hist2_set_param(void *hist2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_hist2_get_param(void *hist2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
+cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 ai_scene_id);
 cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, void *param2);
 cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_edge_get_param(void *edge_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
