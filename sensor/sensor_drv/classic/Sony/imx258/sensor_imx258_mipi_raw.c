@@ -720,7 +720,7 @@ static cmr_int imx258_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0601, 0x02);
     }
 #endif
-#if defined(_SENSOR_RAW_SHARKL3_H_)
+#if 1//defined(_SENSOR_RAW_SHARKL3_H_)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
 #endif
 
