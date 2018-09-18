@@ -2228,6 +2228,9 @@ static void caf_monitor_process_fd(af_ctrl_t * af)
 		prm->fd_info.face_info[i].ex = af->face_info.face_info[i].ex;
 		prm->fd_info.face_info[i].sy = af->face_info.face_info[i].sy;
 		prm->fd_info.face_info[i].ey = af->face_info.face_info[i].ey;
+		prm->fd_info.face_info[i].yaw_angle = af->face_info.face_info[i].pose;
+		prm->fd_info.face_info[i].roll_angle = af->face_info.face_info[i].angle;
+		prm->fd_info.face_info[i].score = 0;
 		i++;
 	}
 	prm->fd_info.frame_width = af->face_info.frame_width;

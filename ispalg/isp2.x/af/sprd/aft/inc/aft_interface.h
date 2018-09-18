@@ -204,6 +204,9 @@ struct isp_face_coor {
 	cmr_u32 ex;
 	cmr_u32 sy;
 	cmr_u32 ey;
+	cmr_u32 yaw_angle;
+	cmr_u32 roll_angle;
+	cmr_u32 score;
 };
 
 struct aft_face_info {
