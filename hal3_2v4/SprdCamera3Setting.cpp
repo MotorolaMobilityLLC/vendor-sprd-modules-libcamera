@@ -114,6 +114,11 @@ typedef struct _camera3_default_info {
     camera3_config_t config[2];
 } SprdCamera3DefaultInfo;
 
+typedef struct _front_flash_type {
+    const char *type_id;
+    const char *type_name;
+} front_flash_type;
+
 static SprdCamera3DefaultInfo camera3_default_info;
 
 static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
@@ -126,6 +131,11 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
+};
+
+static front_flash_type front_flash[] = {
+    {"2", "lcd"}, {"1", "led"}, {"2", "flash"},
+    {"1", "none"},
 };
 
 #if 0
@@ -1501,11 +1511,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     if (cameraId == 0) {
         s_setting[cameraId].flash_InfoInfo.available = 1;
     } else if (cameraId == 1) {
-#ifdef CONFIG_FRONT_FLASH_SUPPORT
-        s_setting[cameraId].flash_InfoInfo.available = 1;
-#else
-        s_setting[cameraId].flash_InfoInfo.available = 0;
-#endif
+        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none"))
+            s_setting[cameraId].flash_InfoInfo.available = 0;
+        else
+            s_setting[cameraId].flash_InfoInfo.available = 1;
     }
 
     if (s_setting[cameraId].flash_InfoInfo.available) {
@@ -1642,6 +1651,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features.add(atoi(prop));
+
+    for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
+        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
+            available_cam_features.add(atoi(front_flash[i].type_id));
+            break;
+        }
+    }
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
