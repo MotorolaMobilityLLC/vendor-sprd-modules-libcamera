@@ -130,6 +130,7 @@ struct preview_context {
     cmr_u32 depthmap_channel_bits;
     cmr_u32 pdaf_channel_bits;
     cmr_uint status;
+    cmr_u16 snp_fd_enable;
     struct img_size size;
     struct img_size video_size;
     struct img_size actual_video_size;
@@ -496,6 +497,9 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 cmr_int camera_get_sg(cmr_handle oem_handle, struct sprd_img_iova *param);
 cmr_int camera_map_iommu(cmr_handle oem_handle, struct sprd_img_iova *param);
 cmr_int camera_unmap_iommu(cmr_handle oem_handle, struct sprd_img_iova *param);
+/*to enable face detect for callback stream*/
+cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
+                                         cmr_u16 is_enable);
 
 #ifdef __cplusplus
 }

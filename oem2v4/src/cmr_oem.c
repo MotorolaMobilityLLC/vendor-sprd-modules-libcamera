@@ -10606,3 +10606,23 @@ cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param) {
 
     return ret;
 }
+cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
+                                         cmr_u16 is_enable) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    CMR_LOGI("E");
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        return ret;
+    }
+
+    cxt->prev_cxt.snp_fd_enable = is_enable;
+
+    CMR_LOGI("X");
+
+    return ret;
+}

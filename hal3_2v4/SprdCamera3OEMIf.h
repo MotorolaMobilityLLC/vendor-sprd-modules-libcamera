@@ -226,6 +226,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void getDualOtpData(void **addr, int *size, int *read);
     bool isNeedAfFullscan();
     bool isVideoCopyFromPreview();
+    bool isCallbackCapture;
 
 #ifdef CONFIG_SPRD_LCD_FLASH
     bool set_lcd_brightness(int brightness);

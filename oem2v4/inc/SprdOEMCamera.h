@@ -193,6 +193,8 @@ cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
 cmr_int camera_get_tuning_param(cmr_handle camera_handle,
                                 struct tuning_param_info *tuning_info);
 
+cmr_int camera_set_snp_face_detect(cmr_handle camera_handle, cmr_u16 enable);
+
 #ifdef __cplusplus
 }
 #endif

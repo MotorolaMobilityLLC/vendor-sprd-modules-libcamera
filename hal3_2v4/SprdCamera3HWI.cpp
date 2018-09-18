@@ -1092,6 +1092,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int32_t width = 0, height = 0;
     int64_t timestamp = 0;
     Mutex::Autolock l(mLock);
+    bool mRegRequest;
 
     ret = validateCaptureRequest(request);
     if (ret) {
@@ -1148,8 +1149,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->setCapturePara(
                 CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, mFrameNum);
             mPictureRequest = true;
+            mRegRequest = true;
+        } else {
+            mRegRequest = false;
         }
-
         if (sprddefInfo.sprd_zsl_enabled == true ||
             mMultiCameraMode == MODE_BLUR) {
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT,
@@ -1341,7 +1344,24 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                         HAL_LOGD("call back stream request");
                         mOEMIf->setCallBackYuvMode(1);
                     }
-                    ret = mPicChan->request(stream, output.buffer, frameNumber);
+                    if (request->num_output_buffers == 1  &&
+                      sprddefInfo.sprd_zsl_enabled == false &&
+                      mSetting->mFaceDetectModeSet != 0) {
+                        mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW,
+                                               mFrameNum);
+                        ret = mRegularChan->request(stream, output.buffer,
+                                                    frameNumber);
+                        mOEMIf->isCallbackCapture = true;
+                        if (mRegRequest) {
+                            mFirstRegularRequest = true;
+                        } else {
+                            mFirstRegularRequest = false;
+                        }
+                        HAL_LOGD("callback stream request");
+                    } else {
+                        ret = mPicChan->request(stream, output.buffer,
+                                                frameNumber);
+                    }
                     if (ret) {
                         HAL_LOGE("mPicChan->request failed %p (%d)",
                                  output.buffer, frameNumber);

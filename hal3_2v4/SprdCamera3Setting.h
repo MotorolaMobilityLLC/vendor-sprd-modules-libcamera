@@ -590,6 +590,7 @@ class SprdCamera3Setting {
     static sprd_setting_info_t s_setting[CAMERA_ID_COUNT];
     static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];
     static uint8_t mSensorFocusEnable[CAMERA_ID_COUNT];
+    int mFaceDetectModeSet;
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

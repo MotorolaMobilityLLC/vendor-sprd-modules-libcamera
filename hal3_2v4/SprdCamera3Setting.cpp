@@ -3868,6 +3868,7 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
         s_setting[mCameraId].statisticsInfo.face_detect_mode = valueU8;
+        mFaceDetectModeSet = valueU8;
         pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
         HAL_LOGV("fd mode %d", valueU8);
     }

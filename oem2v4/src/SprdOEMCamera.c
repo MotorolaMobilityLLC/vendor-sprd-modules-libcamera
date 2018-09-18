@@ -1113,6 +1113,9 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret =  camera_unmap_iommu(handle, (struct sprd_img_iova *)param);
         break;
     }
+    case CAMERA_IOCTRL_CB_FACE_DETECT: {
+        ret = camera_set_snp_face_detect_value(handle, *(cmr_u16 *)param);
+    }
     default:
         break;
     }
