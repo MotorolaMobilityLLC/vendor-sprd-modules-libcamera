@@ -718,8 +718,8 @@ int SprdCamera3StereoVideo::setupPhysicalCameras() {
     }
     memset(m_pPhyCamera, 0x00,
            (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
-    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_MAIN_ID;
-    m_pPhyCamera[CAM_TYPE_AUX].id = CAM_AUX_ID;
+    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_STEREO_MAIN_ID;
+    m_pPhyCamera[CAM_TYPE_AUX].id = CAM_STEREO_AUX_ID;
 
     return NO_ERROR;
 }

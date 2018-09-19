@@ -92,7 +92,7 @@ SprdCamera3SingleFaceIdUnlock::SprdCamera3SingleFaceIdUnlock() {
 
     m_pPhyCamera = NULL;
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
-    m_VirtualCamera.id = CAM_MAIN_ID;
+    m_VirtualCamera.id = CAM_FACE_MAIN_ID;
     mStaticMetadata = NULL;
     mPhyCameraNum = 0;
     mPreviewWidth = 0;
@@ -612,7 +612,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::getCameraInfo(cmr_s32 face_camera_id,
     HAL_LOGD("camera_id=%d", face_camera_id);
 
     if (SPRD_SINGLE_FACEID_UNLOCK_ID == face_camera_id) {
-        m_VirtualCamera.id = CAM_MAIN_ID;
+        m_VirtualCamera.id = CAM_FACE_MAIN_ID;
     } else {
         HAL_LOGW("unlock mode camera_id should not be %d", camera_id);
     }
@@ -653,7 +653,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::setupPhysicalCameras() {
     memset(m_pPhyCamera, 0x00,
            (mPhyCameraNum * sizeof(sprdcamera_physical_descriptor_t)));
 
-    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_MAIN_ID;
+    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_FACE_MAIN_ID;
 
     return NO_ERROR;
 }

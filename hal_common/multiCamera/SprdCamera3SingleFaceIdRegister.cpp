@@ -92,7 +92,7 @@ SprdCamera3SingleFaceIdRegister::SprdCamera3SingleFaceIdRegister() {
 
     m_pPhyCamera = NULL;
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
-    m_VirtualCamera.id = CAM_MAIN_ID;
+    m_VirtualCamera.id = CAM_FACE_MAIN_ID;
     mStaticMetadata = NULL;
     mPhyCameraNum = 0;
     mPreviewWidth = 0;
@@ -607,7 +607,7 @@ SprdCamera3SingleFaceIdRegister::getCameraInfo(cmr_s32 face_camera_id,
     cmr_s32 img_size = 0;
 
     HAL_LOGD("camera_id=%d", face_camera_id);
-    m_VirtualCamera.id = CAM_MAIN_ID;
+    m_VirtualCamera.id = CAM_FACE_MAIN_ID;
 
     camera_id = m_VirtualCamera.id;
     SprdCamera3Setting::initDefaultParameters(camera_id);
@@ -645,7 +645,7 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::setupPhysicalCameras() {
     memset(m_pPhyCamera, 0x00,
            (mPhyCameraNum * sizeof(sprdcamera_physical_descriptor_t)));
 
-    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_MAIN_ID;
+    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_FACE_MAIN_ID;
 
     return NO_ERROR;
 }

@@ -339,10 +339,17 @@ typedef struct {
 
 typedef enum {
     /* Main camera device id*/
-    CAM_MAIN_ID = 0,
+    CAM_STEREO_MAIN_ID = 1,
     /* Aux camera device id*/
-    CAM_AUX_ID = 2
-} CameraID;
+    CAM_STEREO_AUX_ID = 3
+} CameraStereoID;
+
+typedef enum {
+    /* Main camera device id*/
+    CAM_FACE_MAIN_ID = 1,
+    /* Aux camera device id*/
+    CAM_FACE_AUX_ID = 3
+} CameraFaceLockID;
 
 typedef enum {
     /* Main camera device id*/

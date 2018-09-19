@@ -93,7 +93,7 @@ SprdCamera3DualFaceId::SprdCamera3DualFaceId() {
 
     m_pPhyCamera = NULL;
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
-    m_VirtualCamera.id = (uint8_t)CAM_MAIN_ID;
+    m_VirtualCamera.id = (uint8_t)CAM_FACE_MAIN_ID;
     mStaticMetadata = NULL;
     mPhyCameraNum = 0;
     mPreviewWidth = 0;

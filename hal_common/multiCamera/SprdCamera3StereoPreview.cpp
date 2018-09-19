@@ -119,7 +119,7 @@ SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
     setupPhysicalCameras();
-    m_VirtualCamera.id = CAM_MAIN_ID; // hardcode left front camera id here
+    m_VirtualCamera.id = CAM_STEREO_MAIN_ID; // hardcode left front camera id here
 
     memset(&mAuxStreams, 0, sizeof(camera3_stream_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t));
@@ -690,8 +690,8 @@ int SprdCamera3StereoPreview::setupPhysicalCameras() {
     }
     memset(m_pPhyCamera, 0x00,
            (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
-    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_MAIN_ID;
-    m_pPhyCamera[CAM_TYPE_AUX].id = CAM_AUX_ID;
+    m_pPhyCamera[CAM_TYPE_MAIN].id = CAM_STEREO_MAIN_ID;
+    m_pPhyCamera[CAM_TYPE_AUX].id = CAM_STEREO_AUX_ID;
 
     return NO_ERROR;
 }
