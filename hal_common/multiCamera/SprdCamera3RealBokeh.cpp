@@ -1593,7 +1593,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
     }
     buffer_index = mRealBokeh->getPrevDepthBuffer(BUFFER_PING);
     if (buffer_index == -1) {
-        goto fail_map_input2;
+        goto fail_map_input3;
     }
 
     mRealBokeh->mLastOnlieVcm = 0;
@@ -1603,7 +1603,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("Sprd algo onLine failed! %d", rc);
         mRealBokeh->mLastOnlieVcm = 0;
-        goto fail_map_input2;
+        goto fail_map_input3;
     } else {
         mRealBokeh->mLastOnlieVcm = mRealBokeh->mVcmSteps;
     }
@@ -1614,7 +1614,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
         mRealBokeh->mDepthBuffer.prev_depth_scale_buffer);
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
-        goto fail_map_input2;
+        goto fail_map_input3;
     }
     mRealBokeh->setPrevDepthBufferFlag(BUFFER_PING, buffer_index);
     mRealBokeh->setDepthStatus(DEPTH_DONE);
@@ -1644,7 +1644,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
                                  mRealBokeh->mPrevBlurFrameNumber, "prevMain");
         }
     }
-
+fail_map_input3:
     mRealBokeh->unmap(input_buf2);
 fail_map_input2:
     mRealBokeh->unmap(input_buf1);
