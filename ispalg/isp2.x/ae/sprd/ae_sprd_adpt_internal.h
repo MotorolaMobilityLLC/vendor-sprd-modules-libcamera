@@ -88,6 +88,7 @@ extern "C" {
 		cmr_u16 ae_step_idx;
 		cmr_s16 ae_change_value;
 		cmr_u8 ae_compensation_flag;
+		float ae_ev_value;
 	};
 
 	struct hdr_calc_result {

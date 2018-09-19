@@ -1299,7 +1299,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			rtn = ae_set_force_pause(cxt, 1);
 		if (cxt->exposure_compensation.ae_compensation_flag)  {
 			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
-			ISP_LOGV("AE_FLASH_PRE_BEFORE force ae's table_idx : %d", cxt->flash_backup.table_idx);
+			ISP_LOGV("AE_FLASH_PRE_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_BEFORE;
@@ -1318,30 +1318,36 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
-		cxt->cur_status.settings.flash = FLASH_PRE_AFTER;
-		cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
-		cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
-		cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
-		cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
-		cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
-		cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
-		cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
-		cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
-		cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
-		cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
-		cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
-		cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
-		memset((void *)&cxt->exp_data, 0, sizeof(cxt->exp_data));
-		cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
-		cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
-		cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
-		cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
-		cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
-		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
+		if (cxt->exposure_compensation.ae_compensation_flag) {
+			cxt->cur_status.settings.manual_mode = 1;
+			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
+			ISP_LOGV("AE_FLASH_PRE_BEFORE restore force ae's table_idx : %d", cxt->flash_backup.table_idx);
+		} else {
+			cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
+			cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
+			cxt->cur_result.wts.cur_again = cxt->flash_backup.gain;
+			cxt->cur_result.wts.cur_dummy = cxt->flash_backup.dummy;
+			cxt->cur_result.wts.cur_index = cxt->flash_backup.cur_index;
+			cxt->cur_result.wts.cur_bv = cxt->flash_backup.bv;
+			cxt->sync_cur_result.wts.exposure_time = cxt->cur_result.wts.exposure_time;
+			cxt->sync_cur_result.wts.cur_exp_line = cxt->cur_result.wts.cur_exp_line;
+			cxt->sync_cur_result.wts.cur_again = cxt->cur_result.wts.cur_again;
+			cxt->sync_cur_result.wts.cur_dummy = cxt->cur_result.wts.cur_dummy;
+			cxt->sync_cur_result.wts.cur_index = cxt->cur_result.wts.cur_index;
+			cxt->sync_cur_result.wts.cur_bv = cxt->cur_result.wts.cur_bv;
+			memset((void *)&cxt->exp_data, 0, sizeof(cxt->exp_data));
+			cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+			cxt->exp_data.lib_data.exp_time = cxt->sync_cur_result.wts.exposure_time;
+			cxt->exp_data.lib_data.gain = cxt->sync_cur_result.wts.cur_again;
+			cxt->exp_data.lib_data.dummy = cxt->sync_cur_result.wts.cur_dummy;
+			cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
+			rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
+		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
 			rtn = ae_set_force_pause(cxt, 0);
 		}
+
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_AFTER;
 		break;
@@ -1350,28 +1356,29 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		ISP_LOGI("ae_flash_status FLASH_MAIN_BEFORE");
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1);
-		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
+
 		if (cxt->exposure_compensation.ae_compensation_flag && !cxt->flash_backup.table_idx)  {
 			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
-			ISP_LOGV("AE_FLASH_MAIN_BEFORE force ae's table_idx : %d", cxt->flash_backup.table_idx);
+			ISP_LOGV("AE_FLASH_MAIN_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
+		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
 		break;
 
 	case AE_FLASH_MAIN_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_AFTER");
 		cxt->has_mf = 1;
-		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
-			rtn = ae_set_force_pause(cxt, 0);
-		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
-		cxt->cur_status.settings.flash = FLASH_MAIN_AFTER;
 
 		if (cxt->exposure_compensation.ae_compensation_flag) {
 			cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
-			ISP_LOGV("AE_FLASH_PRE_BEFORE restore force ae's table_idx : %d", cxt->flash_backup.table_idx);
-			ISP_LOGE("table_index %d", cxt->cur_status.settings.table_idx);
+			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
 
+		 if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
+			rtn = ae_set_force_pause(cxt, 0);
+
+		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
+		cxt->cur_status.settings.flash = FLASH_MAIN_AFTER;
 		break;
 
 	case AE_FLASH_MAIN_AE_MEASURE:
@@ -2590,28 +2597,13 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 		if ((FLASH_MAIN_BEFORE == current_status->settings.flash) || (FLASH_MAIN == current_status->settings.flash)) {
 			if (cxt->flash_esti_result.isEnd) {
-				current_status->settings.manual_mode = 0;
-				current_status->settings.table_idx = 0;
-				current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
-				current_status->settings.gain = cxt->flash_esti_result.captureGain;
-				/*
-				 * consider this situation:
-				 * 1. entry into "Ae/Af lock" mode, then turn up to the max level
-				 * 2. set the flash mode to "flash on"
-				 * 3. then take picture
-				 *
-				 * the flash lib takes over the ae param calculating and updating, which will rewrite the Param that is
-				 * setted by user with "ae/af lock" mode.
-				 * then the picture's exposure is normal which isn't the user's expectation.
-				 *
-				 * fix :
-				 * when flash lib works out the mainflash's param,we will check if we are in "ae/af lock" mode,before 
-				 * realy setting.
-				 ***/
 				if (1 == cxt->exposure_compensation.ae_compensation_flag) {
-					// cur "Ae/Af lock"
-					current_status->settings.table_idx = cxt->flash_backup.table_idx;
-
+					current_status->settings.manual_mode = 1;
+				} else {
+					current_status->settings.manual_mode = 0;
+					current_status->settings.table_idx = 0;
+					current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
+					current_status->settings.gain = cxt->flash_esti_result.captureGain;
 				}
 
 			} else {
@@ -4137,15 +4129,18 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 	if (0 < cxt->exposure_compensation.ae_change_value) {
 		temp = 1.0 * cxt->exposure_compensation.ae_change_value / cxt->exposure_compensation.ae_step_idx;
 		temp = pow(2, temp);
+		cxt->exposure_compensation.ae_ev_value = temp;
 		value = (cmr_s16)(log(temp) / 0.0128 + 0.5);
 		calc_idx = ((cxt->exposure_compensation.ae_base_idx + value) > max_idx) ? max_idx : (cxt->exposure_compensation.ae_base_idx + value);
 	} else if (0 > cxt->exposure_compensation.ae_change_value) {
 		temp = 1.0 * cxt->exposure_compensation.ae_change_value / cxt->exposure_compensation.ae_step_idx;
 		temp = pow(2, temp);
+		cxt->exposure_compensation.ae_ev_value = temp;
 		value = (cmr_s16)(log(temp) / (-0.0132) + 0.5);
 		calc_idx = (cxt->exposure_compensation.ae_base_idx < value) ? 0 : (cxt->exposure_compensation.ae_base_idx - value);
 	} else {
 		calc_idx = cxt->exposure_compensation.ae_base_idx;
+		cxt->exposure_compensation.ae_ev_value = 1;
 	}
 
 	*out_idx = calc_idx;
@@ -5644,13 +5639,13 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 	case AE_SET_FORCE_PAUSE:
 		rtn = ae_set_force_pause(cxt, 1);
 		cxt->exposure_compensation.ae_compensation_flag = 1;
-		ISP_LOGV("AE_SET_FORCE_PAUSE");
+		ISP_LOGD("AE_SET_FORCE_PAUSE");
 		break;
 
 	case AE_SET_FORCE_RESTORE:
 		rtn = ae_set_force_pause(cxt, 0);
 		cxt->exposure_compensation.ae_compensation_flag = 0;
-		ISP_LOGV("AE_SET_FORCE_RESTORE");
+		ISP_LOGD("AE_SET_FORCE_RESTORE");
 		break;
 
 	case AE_SET_FLASH_NOTICE:
