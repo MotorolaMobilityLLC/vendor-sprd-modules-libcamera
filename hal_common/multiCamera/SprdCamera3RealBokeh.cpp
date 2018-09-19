@@ -946,9 +946,9 @@ int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
 
-    property_get("persist.vendor.cam.res.bokeh", prop, "1");
-    HAL_LOGI("bokeh support cap resolution %d", atoi(prop));
-    addAvailableStreamSize(metadata, atoi(prop));
+    property_get("persist.vendor.cam.res.bokeh", prop, "RES_5M");
+    HAL_LOGI("bokeh support cap resolution %s", prop);
+    addAvailableStreamSize(metadata, prop);
 
     if (SPRD_MULTI_CAMERA_BASE_ID > id) {
         HAL_LOGI(" logical id %d", id);

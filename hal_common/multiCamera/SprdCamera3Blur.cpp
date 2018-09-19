@@ -633,15 +633,14 @@ int SprdCamera3Blur::getCameraInfo(int blur_camera_id,
         ANDROID_JPEG_MAX_SIZE,
         &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
 
-
     if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
-        property_get("persist.vendor.cam.res.blur.fr", prop, "1");
-        HAL_LOGI("blur front support cap resolution %d", atoi(prop));
+        property_get("persist.vendor.cam.res.blur.fr", prop, "RES_5M");
+        HAL_LOGI("blur front support cap resolution %s", prop);
     } else {
-        property_get("persist.vendor.cam.res.blur.ba", prop, "1");
-        HAL_LOGI("blur back support cap resolution %d", atoi(prop));
+        property_get("persist.vendor.cam.res.blur.ba", prop, "RES_5M");
+        HAL_LOGI("blur back support cap resolution %s", prop);
     }
-    addAvailableStreamSize(metadata, atoi(prop));
+    addAvailableStreamSize(metadata, prop);
 
     mStaticMetadata = metadata.release();
 
@@ -2567,7 +2566,8 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
 
                 // The width of the body is the width of the face increased by
                 // x%
-                property_get("persist.vendor.cam.blur.face.prop4", prop4, "130");
+                property_get("persist.vendor.cam.blur.face.prop4", prop4,
+                             "130");
 
                 // The upper side of the body is at x% of the face position
                 property_get("persist.vendor.cam.blur.face.prop5", prop5, "0");

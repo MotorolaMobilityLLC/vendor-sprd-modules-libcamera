@@ -63,8 +63,8 @@ namespace sprdcamera {
 SprdCamera3MultiBase::SprdCamera3MultiBase()
     : mIommuEnabled(false), mVFrameCount(0), mVLastFrameCount(0),
       mVLastFpsTime(0), mLowLumaConut(0), mconut(0), mCurScene(DARK_LIGHT),
-      mBrightConut(0), mLowConut(0), mDarkConut(0), mMatchTimeThreshold(MATCH_FRAME_TIME_DIFF),
-      mHwi(NULL) {
+      mBrightConut(0), mLowConut(0), mDarkConut(0),
+      mMatchTimeThreshold(MATCH_FRAME_TIME_DIFF), mHwi(NULL) {
     mLumaList.clear();
     mCameraMode = MODE_SINGLE_CAMERA;
     mReqState = PREVIEW_REQUEST_STATE;
@@ -90,7 +90,7 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
         mHwi->camera_ioctrl(CAMERA_IOCTRL_GET_IOMMU_AVAILABLE, &mIommuEnabled,
                             NULL);
     }
-    if(mode == MODE_3D_FACE)
+    if (mode == MODE_3D_FACE)
         mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
     else
         mMatchTimeThreshold = MATCH_FRAME_TIME_DIFF;
@@ -1400,28 +1400,58 @@ int SprdCamera3MultiBase::NV21Rotate(int8_t *dst_buf, uint16_t dst_fd,
     return ret;
 }
 
-#define SUPPORT_RES_NUM 10
-static struct cam_stream_info cap_stream_info[][SUPPORT_RES_NUM] = {
-    {{1600, 1200}, {960, 720}}, // 2M
-    {{1920, 1080}, {1440, 1080}, {960, 720}, {640, 480}},
-    {{2592, 1944}, {960, 720}}, // 5M
-    {{3264, 2448}, {960, 720}}, // 8M
-#if defined(CAMERA_SERNSOR_SUPPORT_4224)
-    {{4224, 3136}, {2592, 1944}, {960, 720}}, // 13M
-#else
-    {{4160, 3120}, {2592, 1944}, {960, 720}}, // 13M
-#endif
-#if defined(CAMERA_SERNSOR_SUPPORT_4224)
-    {{4224, 3136}, {3264, 2448}, {2592, 1944}, {960, 720}},
-#else
-    {{4160, 3120}, {3264, 2448}, {2592, 1944}, {960, 720}},
-#endif
+#define SUPPORT_RES_NUM 15
+static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
+    {RES_0_3M, {{640, 480}}},
+    {RES_2M, {{1600, 1200}, {960, 720}}},
+    {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720}}},
+    {RES_5M, {{2592, 1944}, {960, 720}}},
+    {RES_8M, {{3264, 2448}, {960, 720}}},
+    {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}}},
 };
 
+int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
+    int size = NO_ERROR;
+    if (resolution == NULL) {
+        HAL_LOGE("resolution null");
+        return size;
+    }
+    if (!strncmp(resolution, "RES_0_3M", 12))
+        size = RES_0_3M;
+    else if (!strncmp(resolution, "RES_2M", 12))
+        size = RES_2M;
+    else if (!strncmp(resolution, "RES_1080P", 12))
+        size = RES_1080P;
+    else if (!strncmp(resolution, "RES_5M", 12))
+        size = RES_5M;
+    else if (!strncmp(resolution, "RES_8M", 12))
+        size = RES_8M;
+    else if (!strncmp(resolution, "RES_13M", 12))
+        size = RES_13M;
+    else
+        HAL_LOGE("Error,not support resolution %s", resolution);
+
+    return size;
+}
+
 void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
-                                                  int index) {
-    struct cam_stream_info *stream_info = cap_stream_info[index];
-    size_t stream_cnt = SUPPORT_RES_NUM;
+                                                  const char *resolution) {
+    int i = 0;
+    int size = get_support_res_size(resolution);
+    if (!size) {
+        return;
+    }
+
+    for (i = 0; i < SUPPORT_RES_NUM; i++) {
+        if (size == custom_stream[i].size)
+            break;
+    }
+    if (i == SUPPORT_RES_NUM) {
+        HAL_LOGE("Error,can't find the right resolution");
+        return;
+    }
+    custom_res *stream_info = custom_stream[i].res;
+    size_t stream_cnt = CUSTOM_RES_NUM;
     int32_t scaler_formats[] = {
         HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
         HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, HAL_PIXEL_FORMAT_RAW16};

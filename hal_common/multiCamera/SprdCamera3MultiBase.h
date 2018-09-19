@@ -59,10 +59,27 @@ typedef enum {
     WAIT_JPEG_STATE,
 } request_state;
 
-typedef struct cam_stream_info {
+typedef struct {
     int width;
     int height;
-} cam_stream_info_t;
+} custom_res;
+
+typedef enum {
+    RES_START = 0,
+    RES_0_3M,
+    RES_2M,
+    RES_1080P,
+    RES_5M,
+    RES_8M,
+    RES_13M,
+    RES_END
+} custom_size;
+
+#define CUSTOM_RES_NUM 6
+typedef struct custom_stream_info {
+    custom_size size;
+    custom_res res[CUSTOM_RES_NUM];
+} custom_stream_info_t;
 
 class SprdCamera3MultiBase {
   public:
@@ -162,9 +179,11 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                   void *pic_vir_addr,
                                   buffer_handle_t *dst_private_handle,
                                   void *dst_vir_addr, SprdCamera3HWI *hwi);
-    void addAvailableStreamSize(CameraMetadata &metadata, int index);
+    void addAvailableStreamSize(CameraMetadata &metadata,
+                                const char *resolution);
     void setLogicIdTag(CameraMetadata &metadata, uint8_t *physical_ids,
                        uint8_t physical_ids_size);
+    int get_support_res_size(const char *resolution);
 
   private:
     Mutex mBufferListLock;

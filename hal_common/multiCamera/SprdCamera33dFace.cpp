@@ -171,9 +171,9 @@ void SprdCamera33dFace::reConfigGetCameraInfo(CameraMetadata &metadata) {
         0,
     };
 
-    property_get("persist.vendor.3dface.res", prop, "2");
-    HAL_LOGI("3dface support cap resolution %d", atoi(prop));
-    addAvailableStreamSize(metadata, atoi(prop));
+    property_get("persist.vendor.3dface.res", prop, "RES_1080P");
+    HAL_LOGI("3dface support cap resolution %s", prop);
+    addAvailableStreamSize(metadata, prop);
 }
 
 void SprdCamera33dFace::reConfigFlush() {
