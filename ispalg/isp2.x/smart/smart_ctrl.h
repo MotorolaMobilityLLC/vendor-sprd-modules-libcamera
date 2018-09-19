@@ -87,11 +87,35 @@ extern "C" {
 		struct isp_data_info data;
 	};
 
+	struct atm_bv_table{
+		cmr_u32 i4Len;
+		cmr_u32 reserved;
+		cmr_u32 i4X[8];
+		cmr_u32 i4Y[8];
+	};
+
+	struct atm_tune_param{
+		 cmr_u32 version;
+		 cmr_u32 atmenable;
+		 cmr_u32 i4LowPT;
+		 cmr_u32 i4LowPcentThd;
+		 cmr_u32 i4LowRightThd;
+		 cmr_u32 i4LowLeftThd;
+		 cmr_u32 i4HighPT;
+		 cmr_u32 i4HighPcentThd;
+		 cmr_u32 i4HighRightThd;
+		 cmr_u32 i4HighLeftThd;
+		 struct atm_bv_table strBVLut;
+		 cmr_s32 reserved[50];
+	};
+
 	struct smart_init_param {
 		cmr_handle caller_handle;
 		isp_smart_cb smart_set_cb;
 		struct smart_tuning_param tuning_param[SMART_MAX_WORK_MODE];
 		cmr_u32 camera_id;
+		void *atm_info;
+		cmr_u32 atm_size;
 	};
 
 	struct smart_calc_param {

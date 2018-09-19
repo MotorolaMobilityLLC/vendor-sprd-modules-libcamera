@@ -39,7 +39,8 @@ typedef int bool;
 
 #define DEBUG_BUF_SIZE (5 * 1024)
 #define DEBUG_FILE_NAME "/data/mlog/smart.txt"
-#define GATM_ENABLE
+
+#define GATM_ENABLE 1
 
 struct block_name_map {
 	cmr_u32 block_id;
@@ -116,6 +117,7 @@ struct smart_context {
 	cmr_u32 smart_lock_frame;
     // new debug
 	smart_debuginfo smt_dbginfo;
+	struct atm_tune_param atm_tuning_param;
 
 };
 
@@ -1025,6 +1027,24 @@ static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result 
 	}
 }
 
+static cmr_s32 smart_ctl_parse_atm_tuning_param(struct atm_tune_param *src, cmr_u32 data_size, struct atm_tune_param *dst){
+
+		cmr_s32 rtn = ISP_SUCCESS;
+
+		if (src != NULL){
+			if (src->version == 0 && data_size > 0) {
+				memcpy(dst,src,sizeof(struct atm_tune_param));
+			}
+		} else {
+			ISP_LOGE("smart_ctl_parse_atm_tuning_param error,src null");
+
+		}
+
+		return rtn;
+
+}
+
+
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -1066,8 +1086,10 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 
 #ifdef GATM_ENABLE
 	{ // ATM
-	    struct atm_init_in atm_param_in;
-	    isp_atm_init(&atm_param_in, (cmr_handle*)&cxt->handle_atm);
+		struct atm_init_in atm_param_in;
+		isp_atm_init(&atm_param_in, (cmr_handle*)&cxt->handle_atm);
+		struct atm_tune_param *atm_info = (struct atm_tune_param *)param->atm_info;
+		rtn = smart_ctl_parse_atm_tuning_param(atm_info,param->atm_size,&cxt->atm_tuning_param);
 	}
 #endif
 #if 0
@@ -1908,7 +1930,8 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 cmr_int _get_atm_curve(cmr_handle *handle,
         struct smart_proc_input *smart_proc_in,
         int i4BV, void *in_gamma, void *out_gamma,
-        smart_gamma_debuginfo *dbginfo) {
+        smart_gamma_debuginfo *dbginfo,
+        struct atm_tune_param atm_param) {
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.camera.atm.update", value, "1");
     bool bATMUpdate = strtol(value, NULL, 10);
@@ -1991,19 +2014,17 @@ cmr_int _get_atm_curve(cmr_handle *handle,
     ISP_LOGV("atm Out Gamma %p \n", out_gamma);
     {
         ATMInput.stAlgoParams.i4BV = i4BV;
-        ATMInput.stAlgoParams.i4LowPT = round(0.30 * pow(2, -4.5) * 255);
-        ATMInput.stAlgoParams.i4LowPcentThd = 2;
-        ATMInput.stAlgoParams.i4LowRightThd   = 10;
-        ATMInput.stAlgoParams.i4LowLeftThd     = 0;
-        ATMInput.stAlgoParams.i4HighPT = round(pow(2, -0.3) * 255);
-        ATMInput.stAlgoParams.i4HighPcentThd = 10;
-        ATMInput.stAlgoParams.i4HighLeftThd  = 30;
-        ATMInput.stAlgoParams.i4HighRightThd = 0;
-        ATMInput.stAlgoParams.strBVLut.i4Len = 4;
-        int X[] = { 0, 0, 512, 1024 };
-        int Y[] = { 0, 800, 1000, 1200 };
-        memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, X, sizeof(X));
-        memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, Y, sizeof(Y));
+        ATMInput.stAlgoParams.i4LowPT = atm_param.i4LowPT;
+        ATMInput.stAlgoParams.i4LowPcentThd = atm_param.i4LowPcentThd;
+        ATMInput.stAlgoParams.i4LowRightThd   = atm_param.i4HighRightThd;
+        ATMInput.stAlgoParams.i4LowLeftThd     = atm_param.i4LowLeftThd;
+        ATMInput.stAlgoParams.i4HighPT = atm_param.i4HighPT;
+        ATMInput.stAlgoParams.i4HighPcentThd = atm_param.i4HighPcentThd;
+        ATMInput.stAlgoParams.i4HighLeftThd  = atm_param.i4HighLeftThd;
+        ATMInput.stAlgoParams.i4HighRightThd = atm_param.i4HighRightThd;
+        ATMInput.stAlgoParams.strBVLut.i4Len = atm_param.strBVLut.i4Len;
+        memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, atm_param.strBVLut.i4X, sizeof(cmr_s32)*8);
+        memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, atm_param.strBVLut.i4Y, sizeof(cmr_s32)*8);
         ATMInput.pHist = hist;
         ATMInput.u4Bins = 256;
         ATMInput.uBaseGamma = uConvCurY;
@@ -2373,11 +2394,17 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 	        struct sensor_rgbgamma_curve sm_gamma_out;
 	        struct sensor_rgbgamma_curve atm_gamma_out;
 	        struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
+
+		if (cxt->atm_tuning_param.atmenable == 1) {
+			bATMEnable = 1;
+		}
+			
 	        if (bATMEnable) {
 	            _smart_gamma(in_ptr, block_result, &sm_gamma_out);
 	            ret = _get_atm_curve((cmr_handle *)cxt->handle_atm,
-	                    in_ptr, smart_calc_param->bv,
-	                    &sm_gamma_out, &atm_gamma_out, &cxt->smt_dbginfo.smt_gma);
+	                    in_ptr, smart_calc_param->bv,&sm_gamma_out, 
+	                    &atm_gamma_out, &cxt->smt_dbginfo.smt_gma,
+	                    cxt->atm_tuning_param);
 
 	            if (ret == ISP_SUCCESS)
 	                _smart_write_gamma(cxt, io_pm_output.param_data, &atm_gamma_out);
