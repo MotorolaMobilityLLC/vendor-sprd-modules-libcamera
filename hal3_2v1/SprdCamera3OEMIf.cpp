@@ -481,6 +481,7 @@ getHalOem_fail:
     mUserData = NULL;
     mZslStreamInfo = NULL;
     isCallbackCapture = false;
+    mMasterId = 0;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -1527,6 +1528,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         *(int *)param1 = IommuIsEnabled();
         return ret;
     }
+    case CAMERA_IOCTRL_SET_MASTER_ID: {
+        mMasterId = *(int8_t *)param1;
+        break;
+    }
     }
 
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
@@ -2543,7 +2548,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*get sensor otp from oem layer*/
 
         /*read refoucs mode begin*/
-        if (MODE_REFOCUS == mMultiCameraMode || MODE_3D_CALIBRATION == mMultiCameraMode) {
+        if (MODE_REFOCUS == mMultiCameraMode ||
+            MODE_3D_CALIBRATION == mMultiCameraMode) {
             mSprdRefocusEnabled = true;
             CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
         }

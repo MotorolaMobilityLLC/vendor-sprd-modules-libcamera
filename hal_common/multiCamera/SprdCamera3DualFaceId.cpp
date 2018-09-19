@@ -35,6 +35,8 @@ namespace sprdcamera {
 #define PENDINGTIME (1000000)
 #define PENDINGTIMEOUT (5000000000)
 
+#define MASTER_ID 1
+
 SprdCamera3DualFaceId *mFaceId = NULL;
 
 // Error Check Macros
@@ -529,6 +531,7 @@ int SprdCamera3DualFaceId::cameraDeviceOpen(int camera_id,
             hw->setMultiCameraMode(MODE_DUAL_FACE_UNLOCK);
             mFaceMode = MODE_DUAL_FACE_UNLOCK;
         }
+        hw->setMasterId(MASTER_ID);
         rc = hw->openCamera(&hw_dev[i]);
         if (NO_ERROR != rc) {
             HAL_LOGE("failed, camera id:%d", Phy_id);

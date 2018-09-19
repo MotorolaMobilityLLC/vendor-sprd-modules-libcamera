@@ -33,6 +33,8 @@
 using namespace android;
 namespace sprdcamera {
 
+#define MASTER_ID 1
+
 SprdDualCamera3Tuning *gTuning = NULL;
 
 // Error Check Macros
@@ -531,6 +533,7 @@ int SprdDualCamera3Tuning::cameraDeviceOpen(__unused int camera_id,
         hw_dev[i] = NULL;
 
         hw->setMultiCameraMode(MODE_TUNING);
+        hw->setMasterId(MASTER_ID);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

@@ -1110,7 +1110,13 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         break;
     }
     case CAMERA_IOCTRL_UNMAP_IOMMU_BUF: {
-        ret =  camera_unmap_iommu(handle, (struct sprd_img_iova *)param);
+        ret = camera_unmap_iommu(handle, (struct sprd_img_iova *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_SET_MASTER_ID: {
+        int8_t *master_id = (int8_t *)param;
+        CMR_LOGD("master id %d", *master_id);
+        camera_set_oem_masterid(*master_id);
         break;
     }
     case CAMERA_IOCTRL_CB_FACE_DETECT: {
@@ -1202,8 +1208,7 @@ exit:
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
-                                      cmr_uint yaddr,
-                                      cmr_uint yaddr_vir,
+                                      cmr_uint yaddr, cmr_uint yaddr_vir,
                                       cmr_uint fd) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!camera_handle) {
@@ -1211,9 +1216,8 @@ cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    ret =
-        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode,
-            yaddr, yaddr_vir, fd);
+    ret = camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode, yaddr,
+                                              yaddr_vir, fd);
     if (ret) {
         CMR_LOGE("failed to start snapshot %ld", ret);
     }
@@ -1263,7 +1267,8 @@ static oem_ops_t oem_module_ops = {
     camera_start_capture, camera_stop_capture, camera_set_largest_picture_size,
     camera_ioctrl, camera_reprocess_yuv_for_jpeg, camera_get_focus_point,
     camera_isp_sw_check_buf, camera_isp_sw_proc, camera_raw_post_proc,
-    camera_get_tuning_param,camera_set_gpu_mem_ops,};
+    camera_get_tuning_param, camera_set_gpu_mem_ops,
+};
 
 struct oem_module OEM_MODULE_INFO_SYM = {
     .tag = 0, .ops = &oem_module_ops, .dso = NULL};

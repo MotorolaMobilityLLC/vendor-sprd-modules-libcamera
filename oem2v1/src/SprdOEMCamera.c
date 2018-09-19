@@ -1137,6 +1137,13 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_CB_FACE_DETECT: {
         ret = camera_set_snp_face_detect_value(handle, *(cmr_u16 *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_SET_MASTER_ID: {
+        int8_t *master_id = (int8_t *)param;
+        CMR_LOGD("master id %d", *master_id);
+        camera_set_oem_masterid(*master_id);
+        break;
     }
     case CAMERA_IOCTRL_ROTATE: {
         camera_local_start_rotate(handle, (struct rotate_param *)param);
@@ -1151,8 +1158,7 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
-                                      cmr_uint yaddr,
-                                      cmr_uint yaddr_vir,
+                                      cmr_uint yaddr, cmr_uint yaddr_vir,
                                       cmr_uint fd) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!camera_handle) {
@@ -1160,9 +1166,8 @@ cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    ret =
-        camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode,
-                yaddr, yaddr_vir, fd);
+    ret = camera_local_reprocess_yuv_for_jpeg(camera_handle, cap_mode, yaddr,
+                                              yaddr_vir, fd);
     if (ret) {
         CMR_LOGE("failed to start snapshot %ld", ret);
     }

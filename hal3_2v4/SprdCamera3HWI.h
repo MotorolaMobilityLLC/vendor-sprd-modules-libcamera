@@ -121,6 +121,7 @@ class SprdCamera3HWI {
     SprdCamera3PicChannel *getPicChan();
     SprdCamera3OEMIf *getOEMif();
     void setMultiCameraMode(multiCameraMode Mode);
+    void setMasterId(uint8_t masterId);
     static bool isMultiCameraMode(int Mode);
     void setSprdCameraLowpower(int flag);
     int camera_ioctrl(int cmd, void *param1, void *param2);
@@ -168,6 +169,7 @@ class SprdCamera3HWI {
     camera3_device_t mCameraDevice;
     uint8_t mCameraId;
     static multiCameraMode mMultiCameraMode;
+    uint8_t mMasterId;
     SprdCamera3OEMIf *mOEMIf;
     bool mCameraOpened;
     bool mCameraInitialized;

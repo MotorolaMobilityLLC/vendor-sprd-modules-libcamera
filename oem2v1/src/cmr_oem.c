@@ -79,6 +79,7 @@ static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
 static multiCameraMode is_multi_camera_mode_oem;
+static uint8_t master_id_oem = 0;
 
 /************************************internal interface
  * ***************************************/
@@ -3572,7 +3573,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.is_multi_mode = ISP_SINGLE;
 
-    if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
+    if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -9278,6 +9279,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     }
     cmr_bzero(cxt, sizeof(*cxt));
     cxt->camera_id = camera_id;
+    cxt->master_id = master_id_oem;
     cxt->camera_cb = callback;
     cxt->client_data = client_data;
     cxt->hal_malloc = cb_of_malloc;
@@ -11173,9 +11175,15 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle) {
 exit:
     return ret;
 }
+
 void camera_set_oem_multimode(multiCameraMode camera_mode) {
     CMR_LOGD("camera_mode %d", camera_mode);
     is_multi_camera_mode_oem = camera_mode;
+}
+
+void camera_set_oem_masterid(uint8_t master_id) {
+    CMR_LOGD("master id %d", master_id);
+    master_id_oem = master_id;
 }
 
 cmr_int camera_local_get_cover(cmr_handle oem_handle, cmr_u32 *cover_value) {

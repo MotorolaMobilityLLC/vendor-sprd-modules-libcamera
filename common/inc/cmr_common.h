@@ -791,11 +791,7 @@ enum sensor_mode {
     SENSOR_MODE_MAX
 };
 
-enum sensor_type {
-    NORMALSENSOR = 0,
-    FOURINONESENSOR,
-    YUVSENSOR
-};
+enum sensor_type { NORMALSENSOR = 0, FOURINONESENSOR, YUVSENSOR };
 
 #define SENSOR_VIDEO_MODE_MAX 4
 
@@ -819,8 +815,8 @@ struct sensor_mode_info {
     cmr_u32 frame_line;
     cmr_u32 padding;
     struct img_rect scaler_trim;
-    cmr_u16 out_width;  // sensor output width after binning and trimming
-    cmr_u16 out_height; // sensor outpout width after binning and trimming
+    cmr_u16 out_width;      // sensor output width after binning and trimming
+    cmr_u16 out_height;     // sensor outpout width after binning and trimming
     cmr_u32 binning_factor; // sensor binning factor: default--average(1)
 };
 
@@ -1606,6 +1602,7 @@ typedef enum {
     CAMERA_IOCTRL_START_SCALE,
     CAMERA_IOCTRL_CB_FACE_DETECT,
     CAMERA_IOCTRL_ROTATE,
+    CAMERA_IOCTRL_SET_MASTER_ID,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

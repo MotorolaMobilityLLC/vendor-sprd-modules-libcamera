@@ -135,8 +135,8 @@ typedef struct {
     size_t size;
 } iommu_map_buf;
 
-#define BUF_MAPED           0xff
-#define BUF_UNMAP          0
+#define BUF_MAPED 0xff
+#define BUF_UNMAP 0
 
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
@@ -264,6 +264,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setIspFlashMode(uint32_t mode);
     void matchZSLQueue(ZslBufferQueue *frame);
     void setMultiCameraMode(multiCameraMode mode);
+    void setMasterId(uint8_t masterId);
 #ifdef CONFIG_CAMERA_EIS
     virtual void EisPreview_init();
     virtual void EisVideo_init();
@@ -586,6 +587,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static const int kRawFrameHeaderSize = 0x0;
     static const int kISPB4awbCount = 16;
     static multiCameraMode mMultiCameraMode;
+    uint8_t mMasterId;
     static multi_camera_zsl_match_frame *mMultiCameraMatchZsl;
     Mutex mLock; // API lock -- all public methods
     Mutex mPreviewCbLock;

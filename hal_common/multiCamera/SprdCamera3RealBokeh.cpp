@@ -63,6 +63,8 @@ namespace sprdcamera {
 #define PENDINGTIME (1000000)
 #define PENDINGTIMEOUT (5000000000)
 
+#define MASTER_ID 0
+
 SprdCamera3RealBokeh *mRealBokeh = NULL;
 const uint8_t kavailable_physical_ids[] = {'0', '\0', '2', '\0'};
 // Error Check Macros
@@ -850,6 +852,7 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
         hw_dev[i] = NULL;
 
         hw->setMultiCameraMode(MODE_BOKEH);
+        hw->setMasterId(MASTER_ID);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

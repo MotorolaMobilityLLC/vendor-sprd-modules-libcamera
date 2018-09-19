@@ -32,6 +32,9 @@
 using namespace android;
 namespace sprdcamera {
 
+#define FRONT_MASTER_ID 1
+#define BACK_MASTER_ID 0
+
 SprdCamera3Blur *mBlur = NULL;
 
 // Error Check Macros
@@ -494,6 +497,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
                                       struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
     uint32_t phyId = 0;
+    uint8_t master_id = 0;
 
     HAL_LOGI(" E");
     char prop[PROPERTY_VALUE_MAX] = {
@@ -503,6 +507,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
 
     if (camera_id == SPRD_BLUR_FRONT_ID) {
         mCameraId = CAM_BLUR_MAIN_ID_2;
+        master_id = FRONT_MASTER_ID;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID_2;
         if (atoi(prop) == 1 || atoi(prop) == 2) {
             m_nPhyCameras = 2;
@@ -511,6 +516,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
         }
     } else {
         mCameraId = CAM_BLUR_MAIN_ID;
+        master_id = BACK_MASTER_ID;
         m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
         if (atoi(prop) == 0 || atoi(prop) == 2) {
             m_nPhyCameras = 2;
@@ -532,6 +538,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
         hw_dev[i] = NULL;
 
         hw->setMultiCameraMode(MODE_BLUR);
+        hw->setMasterId(master_id);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

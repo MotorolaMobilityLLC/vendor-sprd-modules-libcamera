@@ -115,7 +115,6 @@ enum VIDEO_3DNR {
     VIDEO_ON,
 };
 
-
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM 1
 #define HAS_CAMERA_POWER_HINTS 1
 //#define CONFIG_NEED_UNMAP
@@ -217,8 +216,8 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
     memcpy(&tmpShakeTest->diff_yuv_color, &tmp_diff_yuv_color,
            sizeof(tmp_diff_yuv_color));
     tmpShakeTest->mShakeTestColorCount = 0;
-    property_get("persist.vendor.cam.performance_camera", is_performance_camera_test,
-                 "0");
+    property_get("persist.vendor.cam.performance_camera",
+                 is_performance_camera_test, "0");
     if ((0 == strcmp("1", is_performance_camera_test)) &&
         mIsPerformanceTestable) {
         HAL_LOGD("SHAKE_TEST come in");
@@ -242,26 +241,26 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mRecordingMode(0), mIsSetCaptureMode(false), mRecordingFirstFrameTime(0),
       mUser(0), mPreviewWindow(NULL), mHalOem(NULL), mIsStoreMetaData(false),
       mIsFreqChanged(false), mCameraId(cameraId), miSPreviewFirstFrame(1),
-      mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0),
-      mFlashMask(false), mReleaseFLag(false), mTimeCoeff(1),
+      mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0), mFlashMask(false),
+      mReleaseFLag(false), mTimeCoeff(1),
       mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
       mCameraDfsPolicyCur(CAM_EXIT), mIsPerformanceTestable(false),
       mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
       mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
-      mIspToolStart(false), mSubRawHeapNum(0),
-      m3dnrGraphicHeapNum(0), m3dnrGraphicPathHeapNum(0), mSubRawHeapSize(0),
-      mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
-      mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
-      mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
-      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0),
-      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
-      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
-      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
-      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
-      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
+      mIspToolStart(false), mSubRawHeapNum(0), m3dnrGraphicHeapNum(0),
+      m3dnrGraphicPathHeapNum(0), mSubRawHeapSize(0), mPathRawHeapNum(0),
+      mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0), mPreviewFrameNum(0),
+      mRecordFrameNum(0), mIsRecording(false), mPreAllocCapMemInited(0),
+      mIsPreAllocCapMemDone(0), mZSLModeMonitorMsgQueHandle(0),
+      mZSLModeMonitorInited(0), mGyroInit(0), mGyroExit(0),
+      mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
+      mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
+      mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
+      mVideoSnapshotType(0), mIommuEnabled(false), mFlashCaptureFlag(0),
+      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mSprdAppmodeId(-1),
+      mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
-      mIsCameraClearQBuf(0),mLastCafDoneTime(0)
+      mIsCameraClearQBuf(0), mLastCafDoneTime(0)
 
 {
     ATRACE_CALL();
@@ -301,15 +300,15 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
 
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
-      mIsPreAllocCapMem = 1;
+    mIsPreAllocCapMem = 1;
 #else
-      mIsPreAllocCapMem = 0;
+    mIsPreAllocCapMem = 0;
 #endif
 
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
-      mIsRotCapture = 1;
+    mIsRotCapture = 1;
 #else
-      mIsRotCapture = 0;
+    mIsRotCapture = 0;
 #endif
 
     if (mMultiCameraMatchZsl == NULL) {
@@ -491,6 +490,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslPopFlag = 0;
     mVideoSnapshotFrameNum = 0;
     isCallbackCapture = false;
+    mMasterId = 0;
 
     HAL_LOGI(":hal3: X");
 }
@@ -692,12 +692,10 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         }
 #endif
         break;
-    case CAMERA_CHANNEL_TYPE_PICTURE:
-        {
-            Mutex::Autolock l(&mLock);
-            cancelPictureInternal();
-        }
-        break;
+    case CAMERA_CHANNEL_TYPE_PICTURE: {
+        Mutex::Autolock l(&mLock);
+        cancelPictureInternal();
+    } break;
     default:
         break;
     }
@@ -1638,6 +1636,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         setMimeType(type);
         break;
     }
+    case CAMERA_IOCTRL_SET_MASTER_ID: {
+        mMasterId = *(int8_t *)param1;
+        break;
+    }
     }
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
@@ -1649,8 +1651,7 @@ bool SprdCamera3OEMIf::isNeedAfFullscan() {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    int face_num =
-            SprdCamera3Setting::s_setting[mCameraId].faceInfo.face_num;
+    int face_num = SprdCamera3Setting::s_setting[mCameraId].faceInfo.face_num;
     if (getMultiCameraMode() != MODE_BLUR || face_num > 0) {
         return ret;
     }
@@ -1867,7 +1868,7 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
             if ((cmr_u32)mRawWidth * (cmr_u32)mRawHeight <
                 preview_size.width * preview_size.height) {
                 preview_size.width = mRawWidth;
-                preview_size.height =mRawHeight;
+                preview_size.height = mRawHeight;
             }
         }
     }
@@ -1906,7 +1907,8 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
                 if (mVideoWidth != 0 &&
                     mVideoHeight !=
                         0) { // capture size must equal with video size
-                    if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
+                    if (mVideoWidth <= mCaptureWidth &&
+                        mVideoHeight <= mCaptureHeight) {
                         capture_size.width = (cmr_u32)mVideoWidth;
                         capture_size.height = (cmr_u32)mVideoHeight;
                     } else {
@@ -2709,8 +2711,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             }
             HAL_LOGD("save otp file");
 
-            save_file("data/vendor/cameraserver/dualcamera.bin", otpInfo.otp_data,
-                      SPRD_DUAL_OTP_SIZE);
+            save_file("data/vendor/cameraserver/dualcamera.bin",
+                      otpInfo.otp_data, SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 #endif
         }
@@ -3661,8 +3663,8 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
                      faceInfo.face[k].rect[3], faceInfo.angle[k]);
-	    if (isCallbackCapture == false)
-            	CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
+            if (isCallbackCapture == false)
+                CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
             /*When the half of face at the edge of the screen,the smile level
             returned by face detection library  can often more than 30.
             In order to repaier this defetion ,so when the face on the screen is
@@ -5701,7 +5703,7 @@ int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
     HAL_LOGD("E");
 
     int ret = 0;
-    //ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
+    // ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
     ret = MemIon::Sync_ion_buffer(buffer_fd);
     if (ret) {
         HAL_LOGE("Flush_ion_buffer failed, ret=%d", ret);
@@ -6240,9 +6242,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                                 ANDROID_CONTROL_AE_STATE_SEARCHING;
                             mSetting->setAeCONTROLTag(&controlInfo);
                         }
+                    }
                 }
             }
-        }
         }
         break;
 
@@ -7223,18 +7225,19 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
 
     Callback_CaptureFree(0, 0, 0, 0);
 
-    for (List<iommu_map_buf>::iterator i = m3DNRGraphicArrayIommuMapList.begin();
-        i != m3DNRGraphicArrayIommuMapList.end(); i++) {
+    for (List<iommu_map_buf>::iterator i =
+             m3DNRGraphicArrayIommuMapList.begin();
+         i != m3DNRGraphicArrayIommuMapList.end(); i++) {
         struct sprd_img_iova iommu_data;
 
         iommu_data.fd = i->fd;
         iommu_data.size = i->size;
         iommu_data.sg_table = i->sg_table;
         if (i->map_flag == BUF_MAPED) {
-            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
-            &iommu_data, NULL);
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
             i->map_flag = BUF_UNMAP;
-            HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
+            HAL_LOGE(
+                "iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
                 iommu_data.fd, iommu_data.size, iommu_data.sg_table);
         }
     }
@@ -7315,18 +7318,18 @@ cap_malloc:
                 iommu_data.fd = memory->fd;
                 ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
                 if (ret) {
-                    HAL_LOGE("iommu_workaround: m3DNRGraphicArray get sg failed, fd 0x%x",
-                        iommu_data.fd);
+                    HAL_LOGE("iommu_workaround: m3DNRGraphicArray get sg "
+                             "failed, fd 0x%x",
+                             iommu_data.fd);
                 }
-                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
-                        &iommu_data, NULL);
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF, &iommu_data, NULL);
                 iommu_buf.fd = memory->fd;
                 iommu_buf.sg_table = iommu_data.sg_table;
                 iommu_buf.size = iommu_data.size;
                 iommu_buf.map_flag = BUF_MAPED;
                 m3DNRGraphicArrayIommuMapList.push_back(iommu_buf);
                 HAL_LOGD("iommu_workaround: m3DNRGraphicArray fd 0x%x sg %p",
-                    iommu_buf.fd, iommu_buf.sg_table);
+                         iommu_buf.fd, iommu_buf.sg_table);
             }
 
             buffer = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION,
@@ -7505,18 +7508,19 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
     uint32_t i = 0;
     Callback_CapturePathFree(0, 0, 0, 0);
 
-    for (List<iommu_map_buf>::iterator i = m3DNRGraphicPathArrayIommuMapList.begin();
-        i != m3DNRGraphicPathArrayIommuMapList.end(); i++) {
+    for (List<iommu_map_buf>::iterator i =
+             m3DNRGraphicPathArrayIommuMapList.begin();
+         i != m3DNRGraphicPathArrayIommuMapList.end(); i++) {
         struct sprd_img_iova iommu_data;
 
         iommu_data.fd = i->fd;
         iommu_data.size = i->size;
         iommu_data.sg_table = i->sg_table;
         if (i->map_flag == BUF_MAPED) {
-            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
-            &iommu_data, NULL);
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
             i->map_flag = BUF_UNMAP;
-            HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
+            HAL_LOGE(
+                "iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
                 iommu_data.fd, iommu_data.size, iommu_data.sg_table);
         }
     }
@@ -7601,18 +7605,18 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
                 iommu_data.fd = memory->fd;
                 ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
                 if (ret) {
-                    HAL_LOGE("iommu_workaround: m3DNRGraphicArray get sg failed, fd 0x%x",
-                        iommu_data.fd);
+                    HAL_LOGE("iommu_workaround: m3DNRGraphicArray get sg "
+                             "failed, fd 0x%x",
+                             iommu_data.fd);
                 }
-                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
-                        &iommu_data, NULL);
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF, &iommu_data, NULL);
                 iommu_buf.fd = memory->fd;
                 iommu_buf.sg_table = iommu_data.sg_table;
                 iommu_buf.size = iommu_data.size;
                 iommu_buf.map_flag = BUF_MAPED;
                 m3DNRGraphicPathArrayIommuMapList.push_back(iommu_buf);
                 HAL_LOGD("iommu_workaround: m3DNRGraphicArray fd 0x%x sg %p",
-                    iommu_buf.fd, iommu_buf.sg_table);
+                         iommu_buf.fd, iommu_buf.sg_table);
             }
 
             buffer = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION,
@@ -8004,19 +8008,20 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
 
     if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR)) {
 
-        for (List<iommu_map_buf>::iterator i = m3DNRPrevScaleIommuMapList.begin();
-            i != m3DNRPrevScaleIommuMapList.end(); i++) {
+        for (List<iommu_map_buf>::iterator i =
+                 m3DNRPrevScaleIommuMapList.begin();
+             i != m3DNRPrevScaleIommuMapList.end(); i++) {
             struct sprd_img_iova iommu_data;
 
             iommu_data.fd = i->fd;
             iommu_data.size = i->size;
             iommu_data.sg_table = i->sg_table;
             if (i->map_flag == BUF_MAPED) {
-                camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
-                &iommu_data, NULL);
+                camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
                 i->map_flag = BUF_UNMAP;
-                HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
-                    iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+                HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size "
+                         "0x%x sg %p",
+                         iommu_data.fd, iommu_data.size, iommu_data.sg_table);
             }
         }
         m3DNRPrevScaleIommuMapList.clear();
@@ -8054,12 +8059,13 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
         if (mCommonHeapReserved == NULL) {
             /*using 0.3M sensor, preview size maybe larger than sensor size*/
-            if (mPreviewWidth * mPreviewHeight <= mLargestPictureWidth * mLargestPictureHeight)
+            if (mPreviewWidth * mPreviewHeight <=
+                mLargestPictureWidth * mLargestPictureHeight)
                 mem_size = mLargestPictureWidth *
-                (CAMERA_ALIGNED_16(mLargestPictureHeight)) * 3 / 2;
+                           (CAMERA_ALIGNED_16(mLargestPictureHeight)) * 3 / 2;
             else {
-                mem_size = mPreviewWidth *
-                (CAMERA_ALIGNED_16(mPreviewHeight)) * 3 / 2;
+                mem_size =
+                    mPreviewWidth * (CAMERA_ALIGNED_16(mPreviewHeight)) * 3 / 2;
             }
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
@@ -8337,19 +8343,19 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
                 iommu_data.fd = m3DNRPrevScaleHeapReserverd[i]->fd;
                 ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
                 if (ret) {
-                    HAL_LOGE("iommu_workaround: 3dnr prev_scale get sg failed, fd 0x%x",
-                        iommu_data.fd);
+                    HAL_LOGE("iommu_workaround: 3dnr prev_scale get sg failed, "
+                             "fd 0x%x",
+                             iommu_data.fd);
                     continue;
                 }
-                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
-                        &iommu_data, NULL);
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF, &iommu_data, NULL);
                 iommu_buf.fd = m3DNRPrevScaleHeapReserverd[i]->fd;
                 iommu_buf.sg_table = iommu_data.sg_table;
                 iommu_buf.size = iommu_data.size;
                 iommu_buf.map_flag = BUF_MAPED;
                 m3DNRPrevScaleIommuMapList.push_back(iommu_buf);
                 HAL_LOGD("iommu_workaround: 3dnr prev_scale fd 0x%x sg %p",
-                    iommu_buf.fd, iommu_buf.sg_table);
+                         iommu_buf.fd, iommu_buf.sg_table);
             }
         }
     }
@@ -8471,7 +8477,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_SNAPSHOT_3DNR_DST == type ||
                CAMERA_PREVIEW_3DNR == type || CAMERA_PREVIEW_DEPTH == type ||
                CAMERA_PREVIEW_SW_OUT == type ||
-	        CAMERA_PREVIEW_SCALE_3DNR == type) {
+               CAMERA_PREVIEW_SCALE_3DNR == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
     }
@@ -8547,8 +8553,7 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    if (mVideoWidth > 0 && mCaptureWidth > 0 &&
-        sprddefInfo.slowmotion <= 1) {
+    if (mVideoWidth > 0 && mCaptureWidth > 0 && sprddefInfo.slowmotion <= 1) {
         mVideoSnapshotType = 1;
     } else {
         mVideoSnapshotType = 0;
@@ -9285,7 +9290,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     // this is for real zsl flash capture, like sharkls/sharklt8, not
     // sharkl2-like
     // obj->skipZslFrameForFlashCapture();
-    flash_timestamp = ((struct camera_context *)(obj->mCameraHandle))->snp_high_flash_time;
+    flash_timestamp =
+        ((struct camera_context *)(obj->mCameraHandle))->snp_high_flash_time;
     while (1) {
         // for exception exit
         if (obj->mZslCaptureExitLoop == true) {
@@ -9342,13 +9348,14 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             }
         }
 
-        if (flash_timestamp != 0 && zsl_frame.timestamp <= flash_timestamp ) {
+        if (flash_timestamp != 0 && zsl_frame.timestamp <= flash_timestamp) {
             HAL_LOGD("zsl frame is not invaild sof with flashing");
             mHalOem->ops->camera_set_zsl_buffer(
-                obj->mCameraHandle, zsl_frame.y_phy_addr,
-                zsl_frame.y_vir_addr, zsl_frame.fd);
+                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
+                zsl_frame.fd);
             flash_timestamp = 0;
-            ((struct camera_context *)(obj->mCameraHandle))->snp_high_flash_time = 0;
+            ((struct camera_context *)(obj->mCameraHandle))
+                ->snp_high_flash_time = 0;
             continue;
         }
 

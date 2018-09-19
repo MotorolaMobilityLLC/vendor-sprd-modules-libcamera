@@ -34,6 +34,8 @@
 using namespace android;
 namespace sprdcamera {
 
+#define MASTER_ID 1
+
 SprdCamera3PageTurn *mPageTurn = NULL;
 
 // Error Check Macros
@@ -414,6 +416,7 @@ int SprdCamera3PageTurn::cameraDeviceOpen(__unused int camera_id,
     hw_dev[0] = NULL;
 
     hw->setMultiCameraMode(MODE_PAGE_TURN);
+    hw->setMasterId(MASTER_ID);
     rc = hw->openCamera(&hw_dev[0]);
     if (rc != NO_ERROR) {
         HAL_LOGE("failed, camera id:%d", phyId);

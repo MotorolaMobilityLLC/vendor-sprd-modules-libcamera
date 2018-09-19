@@ -294,6 +294,7 @@ struct camera_context {
     cmr_u32 isp_to_dram;
     cmr_int cap_cnt;
     multiCameraMode is_multi_mode;
+    uint8_t master_id;
     cmr_u32 is_refocus_mode;
     cmr_u32 is_3dcalibration_mode;
     cmr_uint is_yuv_callback_mode;
@@ -483,6 +484,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle);
 cmr_int camera_local_stop_capture(cmr_handle oem_handle);
 
 void camera_set_oem_multimode(multiCameraMode camera_mode);
+void camera_set_oem_masterid(uint8_t master_id);
 
 cmr_int camera_local_get_cover(cmr_handle cmr_handle, cmr_u32 *cover_value);
 cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
@@ -493,8 +495,7 @@ cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value);
 cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps);
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode mode,
-                                            cmr_uint yaddr,
-                                            cmr_uint yaddr_vir,
+                                            cmr_uint yaddr, cmr_uint yaddr_vir,
                                             cmr_uint fd);
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);

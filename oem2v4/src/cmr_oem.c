@@ -81,6 +81,7 @@ static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
 static multiCameraMode is_multi_camera_mode_oem;
+static uint8_t master_id_oem = 0;
 
 /************************************internal interface
  * ***************************************/
@@ -1671,7 +1672,7 @@ exit:
 }
 
 void camera_set_3dnr_flag(struct camera_context *cxt, cmr_u32 threednr_flag) {
-    char value[PROPERTY_VALUE_MAX]= {
+    char value[PROPERTY_VALUE_MAX] = {
         0,
     };
     CMR_LOGD("flag %d", threednr_flag);
@@ -2458,7 +2459,8 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
         grab_param.oem_handle = oem_handle;
         grab_param.sensor_id = cxt->camera_id;
         grab_param.sensor_max_size.width = sn_cxt->sensor_info.source_width_max;
-        grab_param.sensor_max_size.height = sn_cxt->sensor_info.source_height_max;
+        grab_param.sensor_max_size.height =
+            sn_cxt->sensor_info.source_height_max;
         ret = cmr_grab_init(&grab_param, &grab_handle);
         if (ret) {
             CMR_LOGE("failed to init grab %ld", ret);
@@ -3056,7 +3058,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.is_multi_mode = ISP_SINGLE;
 
-    if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
+    if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
 
     CMR_LOGI(
@@ -7330,7 +7332,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         out_param_ptr->is_3dnr = 0;
         out_param_ptr->is_sw_3dnr = 0;
     } else {
-        //out_param_ptr->is_3dnr = setting_param.cmd_type_value;
+        // out_param_ptr->is_3dnr = setting_param.cmd_type_value;
         out_param_ptr->is_3dnr = camera_get_3dnr_flag(cxt);
         if (1 == out_param_ptr->is_3dnr) {
             property_get("persist.vendor.cam.3dnr.version", value, "0");
@@ -8323,6 +8325,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     }
     cmr_bzero(cxt, sizeof(*cxt));
     cxt->camera_id = camera_id;
+    cxt->master_id = master_id_oem;
     cxt->camera_cb = callback;
     cxt->client_data = client_data;
     cxt->hal_malloc = cb_of_malloc;
@@ -10422,9 +10425,15 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle) {
 exit:
     return ret;
 }
+
 void camera_set_oem_multimode(multiCameraMode camera_mode) {
     CMR_LOGD("camera_mode %d", camera_mode);
     is_multi_camera_mode_oem = camera_mode;
+}
+
+void camera_set_oem_masterid(uint8_t master_id) {
+    CMR_LOGD("master id %d", master_id);
+    master_id_oem = master_id;
 }
 
 cmr_int camera_local_get_cover(cmr_handle oem_handle,
@@ -10467,8 +10476,7 @@ cmr_int camera_stream_ctrl(cmr_handle oem_handle, cmr_u32 on_off) {
              cxt->is_multi_mode);
     if (cxt->is_multi_mode != MODE_SBS) {
         if (cxt->camera_id != SENSOR_MAIN2)
-            CMR_LOGW(
-                "should not direct open sensors except for SENSOR_MAIN2");
+            CMR_LOGW("should not direct open sensors except for SENSOR_MAIN2");
         if (on_off == 0)
             ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                    SENSOR_STREAM_OFF, 0);

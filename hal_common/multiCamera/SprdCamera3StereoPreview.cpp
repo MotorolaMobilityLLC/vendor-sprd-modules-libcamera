@@ -33,6 +33,8 @@
 using namespace android;
 namespace sprdcamera {
 
+#define MASTER_ID 1
+
 SprdCamera3StereoPreview *mPreviewMuxer = NULL;
 
 // Error Check Macros
@@ -119,7 +121,8 @@ SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
     setupPhysicalCameras();
-    m_VirtualCamera.id = CAM_STEREO_MAIN_ID; // hardcode left front camera id here
+    m_VirtualCamera.id =
+        CAM_STEREO_MAIN_ID; // hardcode left front camera id here
 
     memset(&mAuxStreams, 0, sizeof(camera3_stream_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t));
@@ -595,6 +598,7 @@ int SprdCamera3StereoPreview::cameraDeviceOpen(__unused int camera_id,
         hw_dev[i] = NULL;
 
         hw->setMultiCameraMode(MODE_3D_PREVIEW);
+        hw->setMasterId(MASTER_ID);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

@@ -222,15 +222,16 @@ int SprdCamera3Multi::getCameraInfo(int id, struct camera_info *info) {
 
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
     uint8_t kavailable_physical_ids[2 * m_nPhyCameras];
-    for (uint32_t i = 0, j = 0 ; i < 2 * m_nPhyCameras; i++) {
+    for (uint32_t i = 0, j = 0; i < 2 * m_nPhyCameras; i++) {
         if (i % 2 == 0 && i != 0)
             kavailable_physical_ids[i] = '\0';
         else
             kavailable_physical_ids[i] = m_pPhyCamera[j++].id + '0';
-        }
-     if (SPRD_MULTI_CAMERA_BASE_ID > id) {
+    }
+    if (SPRD_MULTI_CAMERA_BASE_ID > id) {
         HAL_LOGI(" logical id %d", id);
-        setLogicIdTag(metadata, (uint8_t *)kavailable_physical_ids, 2 * m_nPhyCameras);
+        setLogicIdTag(metadata, (uint8_t *)kavailable_physical_ids,
+                      2 * m_nPhyCameras);
     }
     // config mStaticMetadata
     reConfigGetCameraInfo(metadata);
@@ -555,6 +556,7 @@ int SprdCamera3Multi::cameraDeviceOpen(__unused int camera_id,
         hw_dev[i] = NULL;
 
         hw->setMultiCameraMode(mMultiMode);
+        hw->setMasterId(m_VirtualCamera.id);
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);

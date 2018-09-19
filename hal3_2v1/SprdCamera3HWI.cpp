@@ -116,12 +116,12 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     if (mCameraId == 0) {
         if (!strcmp(value, "2"))
             mCameraId = 2;
-	else if (!strcmp(value, "4"))
+        else if (!strcmp(value, "4"))
             mCameraId = 4;
     } else if (mCameraId == 1) {
         if (!strcmp(value, "3"))
             mCameraId = 3;
-	else if (!strcmp(value, "5"))
+        else if (!strcmp(value, "5"))
             mCameraId = 5;
     }
     getLogLevel();
@@ -159,6 +159,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mReciveQeqMax = 0;
     mHDRProcessFlag = 0;
     mCurFrameTimeStamp = 0;
+    mMasterId = 0;
 
     HAL_LOGI(":hal3: X");
 }
@@ -374,6 +375,7 @@ int SprdCamera3HWI::openCamera() {
     }
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTI_CAMERAMODE, &mMultiCameraMode,
                           NULL);
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MASTER_ID, &mMasterId, NULL);
     ret = mOEMIf->openCamera();
     if (NO_ERROR != ret) {
         HAL_LOGE("camera_open failed.");
@@ -2242,6 +2244,11 @@ void SprdCamera3HWI::timer_handler(union sigval arg) {
 void SprdCamera3HWI::setMultiCameraMode(multiCameraMode Mode) {
     mMultiCameraMode = Mode;
     HAL_LOGD("mMultiCameraMode=%d ", mMultiCameraMode);
+}
+
+void SprdCamera3HWI::setMasterId(uint8_t masterId) {
+    mMasterId = masterId;
+    HAL_LOGD("mMasterId=%d ", mMasterId);
 }
 
 bool SprdCamera3HWI::isMultiCameraMode(int Mode) {
