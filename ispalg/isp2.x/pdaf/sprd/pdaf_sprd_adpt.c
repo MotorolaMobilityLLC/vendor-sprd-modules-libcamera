@@ -407,6 +407,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	#ifdef CONFIG_ISP_2_5
 	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
 	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
+	cxt->ppi_info.pd_pos_size = in_p->pd_info->pd_pos_size;
 	for (i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {
 		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
 		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
