@@ -6758,8 +6758,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_ae_fps ae_fps;
     struct isp_hdr_param hdr_param;
     struct isp_3dnr_ctrl_param param_3dnr;
-    struct isp_exp_comprnsation exp_comprnsation;
-
+    struct isp_exp_compensation ae_compensation;
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
@@ -6859,21 +6858,18 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
-        if (param_ptr->ae_compensation_param.ae_state == 3) { // lock
-            isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
-            ptr_flag = 1;
-            exp_comprnsation.idx =
-                param_ptr->ae_compensation_param.ae_compensation_step;
-            exp_comprnsation.value =
-                param_ptr->ae_compensation_param.ae_exposure_compensation;
-            isp_param_ptr = (void *)&exp_comprnsation;
-        } else {
-            isp_cmd = ISP_CTRL_EV;
-            isp_param = camera_isp_ev_switch(param_ptr); // compatible manual
-#if defined(CONFIG_CAMERA_ISP_VERSION_V4)
-            isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
-#endif
-        }
+        isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
+        ptr_flag = 1;
+        ae_compensation.comp_val = param_ptr->ae_compensation_param.ae_exposure_compensation;
+        ae_compensation.comp_range.min = param_ptr->ae_compensation_param.ae_compensation_range[0];
+        ae_compensation.comp_range.max = param_ptr->ae_compensation_param.ae_compensation_range[1];
+        ae_compensation.step_numerator = param_ptr->ae_compensation_param.ae_compensation_step_numerator;
+        ae_compensation.step_denominator = param_ptr->ae_compensation_param.ae_compensation_step_denominator;
+        isp_param_ptr = (void *)&ae_compensation;
+        CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, step_numerator=%d, step_denominator=%d",
+            ae_compensation.comp_val, ae_compensation.comp_range.min,
+            ae_compensation.comp_range.max, ae_compensation.step_numerator,
+            ae_compensation.step_denominator);
         break;
     case COM_ISP_SET_AWB_MODE:
         CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,

@@ -201,7 +201,9 @@ const int32_t kavailable_fps_ranges_back[] = {
 const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,
                                                30, 15, 30, 30, 30};
 
-const int32_t kexposureCompensationRange[2] = {-3, 3};
+const int32_t kexposureCompensationRange[2] = {-16, 16};
+const camera_metadata_rational kae_compensation_step = {1, 8};
+
 // const int32_t kavailable_processed_sizes[16] = {/*must order from bigger to
 // smaller*/
 //	2592, 1944,
@@ -1589,8 +1591,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges,
                kavailable_fps_ranges_front,
                sizeof(kavailable_fps_ranges_front));
-    s_setting[cameraId].controlInfo.ae_compensation_step.numerator = 1;
-    s_setting[cameraId].controlInfo.ae_compensation_step.denominator = 2;
+
     memcpy(s_setting[cameraId].controlInfo.available_video_stab_modes,
            camera3_default_info.common.availableVideoStabModes,
            sizeof(camera3_default_info.common.availableVideoStabModes));
@@ -1602,10 +1603,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                sizeof(kmax_regions));
     }
 
-    {
-        s_setting[cameraId].controlInfo.ae_compensation_range[0] = -127;
-        s_setting[cameraId].controlInfo.ae_compensation_range[1] = 127;
-    }
+    s_setting[cameraId].controlInfo.ae_compensation_range[0] =
+        kexposureCompensationRange[0];
+    s_setting[cameraId].controlInfo.ae_compensation_range[1] =
+        kexposureCompensationRange[1];
+    s_setting[cameraId].controlInfo.ae_compensation_step.numerator =
+        kae_compensation_step.numerator;
+    s_setting[cameraId].controlInfo.ae_compensation_step.denominator =
+        kae_compensation_step.denominator;
+
     {
         // s_setting[cameraId].controlInfo.available_effects[0] =
         // ANDROID_CONTROL_EFFECT_MODE_OFF;
@@ -3740,6 +3746,13 @@ int SprdCamera3Setting::updateWorkParameters(
     if (tagCnt == 0) {
         return rc;
     }
+    if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
+        s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
+            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
+        HAL_LOGV("sprd sprd app mode id is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
+    }
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
         valueU8 =
             frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
@@ -4162,27 +4175,9 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
-        int32_t org_ae_compensat = 0;
-        int32_t ae_compensat = 3;
-
-        org_ae_compensat =
-            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-                .data.i32[0];
-        // GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation,
-        // org_ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-        s_setting[mCameraId].controlInfo.org_ae_exposure_compensation =
-            org_ae_compensat;
-        ae_compensat =
-            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-                .data.i32[0];
-
-        // GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation,
-        // ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
-            ae_compensat;
+            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
         pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
-        HAL_LOGV("ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION %d %d",
-                 org_ae_compensat, ae_compensat);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
@@ -4232,6 +4227,7 @@ int SprdCamera3Setting::updateWorkParameters(
         pushAndroidParaTag(ANDROID_SPRD_SATURATION);
         HAL_LOGV("saturation is %d", valueU8);
     }
+
     if (frame_settings.exists(ANDROID_SPRD_ISO)) {
         s_setting[mCameraId].sprddefInfo.iso =
             frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
@@ -4551,13 +4547,6 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd fixed fps enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
     }
-    if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
-        s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
-            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
-        pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
-        HAL_LOGV("sprd sprd app mode id is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
-    }
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
         s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
             frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
@@ -4773,7 +4762,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         ARRAY_SIZE(s_setting[mCameraId].controlInfo.ae_target_fps_range));
     camMetadata.update(
         ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
-        &(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation), 1);
+        &(s_setting[mCameraId].controlInfo.ae_exposure_compensation), 1);
     camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
                        &(s_setting[mCameraId].controlInfo.ae_abtibanding_mode),
                        1);

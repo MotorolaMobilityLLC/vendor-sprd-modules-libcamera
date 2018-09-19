@@ -145,7 +145,6 @@ typedef struct {
 
     uint8_t am_available_modes[4];
     camera_metadata_rational ae_compensation_step;
-    int32_t org_ae_exposure_compensation;
     int32_t ae_exposure_compensation;
     uint8_t ae_lock;
     uint8_t ae_mode;

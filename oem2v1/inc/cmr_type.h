@@ -91,10 +91,12 @@ struct cmr_ae_param {
 };
 
 struct cmr_ae_compensation_param {
-    int32_t ae_exposure_compensation;
-    int32_t ae_compensation_step;
-    uint8_t ae_state;
+    cmr_u32 ae_compensation_range[2];
+    cmr_s32 ae_compensation_step_numerator;
+    cmr_s32 ae_compensation_step_denominator;
+    cmr_s32 ae_exposure_compensation;
 };
+
 
 struct cmr_preview_fps_param {
     cmr_int is_recording;

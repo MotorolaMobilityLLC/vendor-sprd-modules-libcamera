@@ -104,6 +104,13 @@ namespace sprdcamera {
 #define DUALCAM_ZSL_NUM (7)      /**add for 3d capture*/
 #define DUALCAM_MAX_ZSL_NUM (4)
 
+// legacy sprd isp ae compensation manual mode, just for manual mode, dont
+// change this easily
+#define LEGACY_SPRD_AE_COMPENSATION_RANGE_MIN -3
+#define LEGACY_SPRD_AE_COMPENSATION_RANGE_MAX 3
+#define LEGACY_SPRD_AE_COMPENSATION_STEP_NUMERATOR 1
+#define LEGACY_SPRD_AE_COMPENSATION_STEP_DEMINATOR 1
+
 #define SHINWHITED_NOT_DETECTFD_MAXNUM 10
 
 // 300 means 300ms
@@ -6093,12 +6100,35 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         break;
 
     case ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION:
+        SPRD_DEF_Tag sprddefInfo;
         struct cmr_ae_compensation_param ae_compensation_param;
-        ae_compensation_param.ae_exposure_compensation =
-            controlInfo.ae_exposure_compensation;
-        ae_compensation_param.ae_compensation_step =
-            controlInfo.ae_compensation_step.denominator;
-        ae_compensation_param.ae_state = controlInfo.ae_state;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        if (sprddefInfo.sprd_appmode_id == CAMERA_MODE_MANUAL) {
+            // legacy sprd isp ae compensation manual mode, just for manual mode
+            ae_compensation_param.ae_compensation_range[0] =
+                LEGACY_SPRD_AE_COMPENSATION_RANGE_MIN;
+            ae_compensation_param.ae_compensation_range[1] =
+                LEGACY_SPRD_AE_COMPENSATION_RANGE_MAX;
+            ae_compensation_param.ae_compensation_step_numerator =
+                LEGACY_SPRD_AE_COMPENSATION_STEP_NUMERATOR;
+            ae_compensation_param.ae_compensation_step_denominator =
+                LEGACY_SPRD_AE_COMPENSATION_STEP_DEMINATOR;
+            ae_compensation_param.ae_exposure_compensation =
+                controlInfo.ae_exposure_compensation;
+        } else {
+            // standard implementation following android api
+            ae_compensation_param.ae_compensation_range[0] =
+                controlInfo.ae_compensation_range[0];
+            ae_compensation_param.ae_compensation_range[1] =
+                controlInfo.ae_compensation_range[1];
+            ae_compensation_param.ae_compensation_step_numerator =
+                controlInfo.ae_compensation_step.numerator;
+            ae_compensation_param.ae_compensation_step_denominator =
+                controlInfo.ae_compensation_step.denominator;
+            ae_compensation_param.ae_exposure_compensation =
+                controlInfo.ae_exposure_compensation;
+        }
+
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
                  (cmr_uint)&ae_compensation_param);
         break;
