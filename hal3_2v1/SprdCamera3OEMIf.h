@@ -856,6 +856,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     struct isp_pfc_per_frame_cxt mSaveFrameResult;
 #endif
     int64_t mLastCafDoneTime;
+    int mAeStabFlag;
 };
 
 }; // namespace sprdcamera
