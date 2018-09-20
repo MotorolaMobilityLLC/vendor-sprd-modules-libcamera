@@ -15,6 +15,7 @@
 #
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 TUNING_PATH := $(TARGET_OUT)/lib/tuning
 LOCAL_TUNING_PATH := parameters/tuning_bin
 
@@ -48,5 +49,6 @@ LOCAL_MODULE_PATH := $(TUNING_PATH)
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/tuning
 endif
-
 include $(BUILD_PREBUILT)
+endif
+
