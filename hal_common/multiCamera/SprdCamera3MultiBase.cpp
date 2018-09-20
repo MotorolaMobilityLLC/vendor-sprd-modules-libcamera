@@ -101,7 +101,7 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
 int SprdCamera3MultiBase::flushIonBuffer(int buffer_fd, void *v_addr,
                                          size_t size) {
     int ret = 0;
-    ret = MemIon::Flush_ion_buffer(buffer_fd, v_addr, NULL, size);
+    ret = MemIon::Sync_ion_buffer(buffer_fd);
     if (ret) {
         HAL_LOGW("abnormal ret=%d", ret);
         HAL_LOGW("fd=%d,vaddr=%p", buffer_fd, v_addr);
