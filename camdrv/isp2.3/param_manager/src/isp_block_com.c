@@ -142,20 +142,6 @@ cmr_s32 PM_CLIP(cmr_s32 x, cmr_s32 bottom, cmr_s32 top)
 	return val;
 }
 
-cmr_s32 _is_print_log()
-{
-	char value[PROPERTY_VALUE_MAX] = { 0 };
-	cmr_u32 is_print = 0;
-
-	property_get("debug.camera.isp.pm", value, "0");
-
-	if (!strcmp(value, "1")) {
-		is_print = 1;
-	}
-
-	return is_print;
-}
-
 cmr_s32 _pm_check_smart_param(struct smart_block_result * block_result, struct isp_range * range, cmr_u32 comp_num, cmr_u32 type)
 {
 	cmr_u32 i = 0;
