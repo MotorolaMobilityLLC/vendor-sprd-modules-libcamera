@@ -1380,7 +1380,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
 
-		 if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
+		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 0);
 
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
@@ -4811,6 +4811,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 
 /***********************************************************/
+/* send STAB notify to HAL */
 	stable_flag = (cur_calc_result->ae_output.is_stab && cxt->ebd_stable_flag);
 	if(cxt->ebd_support) {
 		if (cxt->isp_ops.callback) {
@@ -4822,13 +4823,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 				cb_type = AE_CB_STAB_NOTIFY;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
 			}
-	}
-/* send STAB notify to HAL */
-	if (cur_calc_result->ae_output.is_stab) {
-		if (cxt->isp_ops.callback) {
-			cb_type = AE_CB_STAB_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-		}
 	}
 
 	if (1 == cxt->debug_enable) {
