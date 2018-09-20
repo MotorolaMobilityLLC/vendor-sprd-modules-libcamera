@@ -317,6 +317,19 @@ void _table_linear_scaler(unsigned short* lsc_tab, unsigned int src_width, unsig
 	memcpy(otp_b , output_b_tab , dst_width * dst_height * sizeof(unsigned short));
 }
 
+static cmr_s32 _lsc_calculate_otplen_chn(cmr_u32 full_width , cmr_u32 full_height , cmr_u32 lsc_grid)
+{
+	cmr_u32 half_width, half_height , lsc_otp_width , lsc_otp_height;
+	cmr_s32 otp_len_chn;
+	half_width = full_width / 2;
+	half_height = full_height / 2;
+	lsc_otp_width = ((half_width % lsc_grid) > 0) ? (half_width / lsc_grid + 2) : (half_width / lsc_grid + 1);
+	lsc_otp_height = ((half_height % lsc_grid) > 0) ? (half_height / lsc_grid + 2) : (half_height / lsc_grid + 1);
+	otp_len_chn = ((lsc_otp_width * lsc_otp_height) * 14 % 8) ? (((lsc_otp_width * lsc_otp_height) * 14 / 8)+1) : ((lsc_otp_width * lsc_otp_height) * 14 / 8);
+	otp_len_chn = (otp_len_chn % 2) ? (otp_len_chn + 1) : (otp_len_chn);
+	return otp_len_chn;
+}
+
 cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 {
 	struct sensor_otp_data_info *lsc_otp_info;
@@ -430,27 +443,20 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				resolution = (full_img_width * full_img_height + 500000) / 1000000;
 				switch (resolution) {
 				case 16:
-					lsc_otp_len_chn = 526;
-					break;
 				case 13:
-					lsc_otp_len_chn = 726;
-					break;
 				case 12:
-					lsc_otp_len_chn = 656;
-					break;
 				case 8:
-					lsc_otp_len_chn = 442;
-					break;
 				case 5:
-					lsc_otp_len_chn = 656;
-					break;
+				case 4:
 				case 2:
-					lsc_otp_len_chn = 270;
+					lsc_otp_len_chn = _lsc_calculate_otplen_chn(full_img_width, full_img_height,lsc_otp_grid);
 					break;
 				default:
+					ISP_LOGW("not support resolution now , may be add later");
 					lsc_otp_len_chn = 0;
 					break;
 				}
+				ISP_LOGV("resolution:%d , lsc otp len chn is:%d" , resolution , lsc_otp_len_chn);
 				lsc_otp_chn_gain_num = lsc_otp_len_chn * 8 / compressed_lens_bits;
 
 				oc_otp_data = otp_data_ptr + 1;
