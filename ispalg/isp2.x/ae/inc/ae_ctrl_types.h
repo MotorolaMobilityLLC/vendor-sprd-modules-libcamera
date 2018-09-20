@@ -444,6 +444,7 @@ extern "C" {
 		 cmr_int(*write_multi_ae) (cmr_handle handler, void *ae_info);
 		 cmr_s32(*set_stats_monitor) (cmr_handle handler, struct ae_stats_monitor_cfg * in_param);
 		 cmr_s32(*set_blk_num) (cmr_handle handler, struct ae_size *blk_num);
+		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);
 	};
 
 	struct ae_stat_img_info {

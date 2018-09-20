@@ -566,6 +566,12 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	exp_data->actual_data.sensor_gain = actual_item.sensor_gain;
 	exp_data->actual_data.isp_gain = actual_item.isp_gain;
 
+	if (write_item.isp_gain && cxt->cam_4in1_mode && !cxt->cam_4in1_cap_flag) {
+		double rgb_coeff = write_item.isp_gain * 1.0 / 4096 * 4;
+		if (cxt->isp_ops.set_rgb_gain_4in1) {
+			cxt->isp_ops.set_rgb_gain_4in1(cxt->isp_ops.isp_handler, rgb_coeff);
+		}
+	}
 	return ret;
 }
 
@@ -3697,6 +3703,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->monitor_cfg.skip_num = 0;
 	cxt->monitor_cfg.bypass = 0;
 	cxt->high_fps_info.is_high_fps = work_info->sensor_fps.is_high_fps;
+	cxt->cam_4in1_mode = work_info->cam_4in1_mode;
 
 	if (work_info->sensor_fps.is_high_fps) {
 		ae_skip_num = work_info->sensor_fps.high_fps_skip_num - 1;
@@ -5735,6 +5742,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_EXPOSURE_COMPENSATION:
 		rtn = ae_set_exposure_compensation(cxt, param, result);
+		break;
+
+	case AE_SET_CAP_FLAG:
+		cxt->cam_4in1_cap_flag = *(cmr_u32 *)param;
 		break;
 
 	case AE_SET_AUTO_HDR:

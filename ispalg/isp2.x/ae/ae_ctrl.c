@@ -241,7 +241,7 @@ static cmr_s32 ae_flash_ctrl_enable(cmr_handle handler, struct ae_flash_cfg *cfg
 	return ret;
 }
 
-static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
+static cmr_s32 __ae_set_rgb_gain(cmr_handle handler, double gain, cmr_u32 is_4in1)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_u32 final_gain = 0;
@@ -261,10 +261,23 @@ static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
 		gain_info.g_gain = rgb_gain_offset;
 		gain_info.b_gain = rgb_gain_offset;
 
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN, (void *)&gain_info, NULL);
+		if(!is_4in1)
+			cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN, (void *)&gain_info, NULL);
+		else
+			cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN_FOR_4IN1, (void *)&gain_info, NULL);
 	}
 
 	return rtn;
+}
+
+static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
+{
+	return __ae_set_rgb_gain(handler, gain, 0);
+}
+
+static cmr_s32 ae_set_rgb_gain_4in1(cmr_handle handler, double gain)
+{
+	return __ae_set_rgb_gain(handler, gain, 1);
 }
 
 static cmr_s32 ae_set_wbc_gain(cmr_handle handler, struct ae_alg_rgb_gain *awb_gain)
@@ -552,6 +565,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.write_multi_ae = ae_write_multi_ae;
 	input_ptr->isp_ops.set_stats_monitor = ae_set_stats_monitor;
 	input_ptr->isp_ops.set_blk_num = ae_set_blk_num;
+	input_ptr->isp_ops.set_rgb_gain_4in1 = ae_set_rgb_gain_4in1;
 
 	cxt_ptr = (struct aectrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
