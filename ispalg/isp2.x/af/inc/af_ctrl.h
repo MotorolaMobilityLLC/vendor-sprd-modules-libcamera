@@ -35,6 +35,8 @@ extern "C" {
 		AF_ALG_DUAL_NORMAL,
 		AF_ALG_DUAL_SBS,
 		AF_ALG_BLUR_REAR,
+		AF_ALG_BOKEH,
+		AF_ALG_WIDETELE,
 		AF_ALG_CAMERA_MAX
 	};
 
@@ -443,7 +445,6 @@ extern "C" {
 		cmr_u32 af_state;
 		cmr_u32 af_status;
 		cmr_u32 af_position;
-		cmr_u32 af_transition;
 	};
 
 	struct af_manual_info {

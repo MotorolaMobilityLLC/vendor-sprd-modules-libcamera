@@ -1387,7 +1387,8 @@ static cmr_s32 trigger_set_mode(af_ctrl_t * af, enum aft_mode mode)
 
 static cmr_s32 trigger_start(af_ctrl_t * af)
 {
-	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_CAF_RESET, NULL, NULL);
+	if(!(AF_ALG_WIDETELE == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role))
+		af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_CAF_RESET, NULL, NULL);
 	return 0;
 }
 
@@ -2001,7 +2002,7 @@ static void af_stop_search(af_ctrl_t * af)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	//modifiy for force stop to SAF/Flow control
 	af->af_ops.calc(af->af_alg_cxt);
 
-	af->focus_state = AF_IDLE;
+	af->focus_state = AF_STOPPED;
 }
 
 static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm, struct aft_proc_result *result)
@@ -2540,6 +2541,11 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	do_start_af(af);
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 		trigger_start(af);		// for hdr capture no af mode update at whole procedure
+	}
+
+	ISP_LOGV("af->is_multi_mode = %d, af->sensor_role %d", af->is_multi_mode, af->sensor_role);
+	if (AF_ALG_WIDETELE == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
+		trigger_stop(af);
 	}
 
 	return AFV1_SUCCESS;
@@ -3424,6 +3430,12 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->toftuning_data = init_param->toftuning_data;
 	af->toftuning_data_len = init_param->toftuning_data_len;
 	//[TOF_---]
+
+	af->camera_id = init_param->camera_id;
+	af->sensor_role = init_param->sensor_role;
+	af->bridge_ctrl = init_param->br_ctrl;
+
+	ISP_LOGI("cameraid %d, sensor_role %d",af->camera_id, af->sensor_role);
 	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
 	ISP_LOGV
 		("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)",
@@ -3534,6 +3546,17 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	cmr_s32 rtn = AFV1_SUCCESS;
 	cmr_u8 i = 0;
 	UNUSED(out);
+	struct af_status_info status_info;
+	struct af_status_info status_wide;
+	struct af_status_info status_tele;
+	struct aft_proc_result sync_result;
+	cmr_u32 pd_workable = 0;
+
+	memset(&status_info, 0, sizeof(struct af_status_info));
+	memset(&status_wide, 0, sizeof(struct af_status_info));
+	memset(&status_tele, 0, sizeof(struct af_status_info));
+	memset(&sync_result, 0, sizeof(struct aft_proc_result));
+
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle");
@@ -3569,6 +3592,41 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time0 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
+	if (af->bridge_ctrl != NULL && AF_ALG_WIDETELE == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
+		af->bridge_ctrl(af->camera_id, GET_AF_STATUS_INFO, NULL, &status_tele);
+		af->bridge_ctrl(0, GET_AF_STATUS_INFO, NULL, &status_wide);
+		ISP_LOGV("cameraid %d, mode%d, state%d, status%d, pos%d",af->camera_id, status_wide.af_mode, status_wide.af_state, status_wide.af_status, status_wide.af_position);
+
+		if (AF_SEARCHING == status_wide.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
+			switch (status_wide.af_state) {
+			case STATE_NORMAL_AF:
+				break;
+			case STATE_CAF:
+			case STATE_RECORD_CAF:
+			case STATE_FAF:
+				af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
+				if(AFV1_TRUE == pd_workable){
+					sync_result.is_caf_trig = AFT_TRIG_PD;
+				} else {
+					sync_result.is_caf_trig = AFT_TRIG_CB;
+				}
+				sync_result.is_cancel_caf = AFT_CANC_NONE;
+				sync_result.is_need_rough_search = 0;
+				caf_start(af, &sync_result);
+				af->focus_state = AF_SEARCHING;
+				break;
+			default:
+				break;
+			}
+			return rtn;
+		} else if (AF_SEARCHING == status_wide.af_status && AF_SEARCHING == af->focus_state) {
+		} else if (AF_STOPPED == status_wide.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
+		} else if (AF_STOPPED == status_wide.af_status && AF_SEARCHING == af->focus_state) {
+			af_stop_search(af);
+			return rtn;
+		}
+	}
+	ISP_LOGV("cameraid %d, state = %s, focus_state = %s, data_type %d", af->camera_id, STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
@@ -3783,6 +3841,13 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time1 - system_time0) / 1000));
 
+	if (af->bridge_ctrl != NULL) {
+		status_info.af_mode = af->request_mode;
+		status_info.af_state= af->state;
+		status_info.af_status = af->focus_state;
+		status_info.af_position = af->lens.pos;
+		af->bridge_ctrl(af->camera_id, SET_AF_STATUS_INFO, &status_info, NULL);
+	}
 	return rtn;
 }
 
