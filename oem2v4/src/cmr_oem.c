@@ -2898,7 +2898,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         CMR_LOGE("fail to get static info");
     }
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         isp_param.ex_info.pdaf_supported = 0;
     }
@@ -4257,7 +4257,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         goto exit;
     }
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7062,7 +7062,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
     out_param_ptr->memory_setting.free_mem = camera_free;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
     }
@@ -7224,7 +7224,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     else if (1 == out_param_ptr->preview_eb)
         out_param_ptr->pdaf_eb = 0;
 
-    property_get("persist.sys.camera.pdaf.off", value, "0");
+    property_get("persist.vendor.cam.pdaf.off", value, "0");
     if (atoi(value)) {
         out_param_ptr->pdaf_eb = 0;
     }

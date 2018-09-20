@@ -630,7 +630,7 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
 
             /*debug info*/
             property_get("debug.camera.save.refocus", value, "0");
-            property_get("persist.camera.save.refocus", value1, "0");
+            property_get("persist.vendor.cam.save.refocus", value1, "0");
             if (atoi(value) == 1 && altek_refocus_ret == 0) {
                 if (refocus_frame_num % 100 == 0 && refocus_frame_num != 0) {
                     refocus_save_to_file(
