@@ -656,30 +656,22 @@ const uint8_t kavailable_shading_modes[] = {
 const camera_info kCameraInfo[] = {
     {CAMERA_FACING_BACK, 90, /*orientation*/
      0, 0, 100, 0, 0},
-#ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
+
     {CAMERA_FACING_FRONT, 270, /*orientation*/
      0, 0, 100, 0, 0},
-#else
-    {-1, -1, /*orientation*/
-     0, 0, 0, 0, 0},
-#endif
 
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
     {CAMERA_FACING_BACK, 90, /*orientation*/
      0, 0, 0, 0, 0},
-#else
-    {-1, -1, /*orientation*/
-     0, 0, 0, 0, 0},
-#endif
 
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
     {CAMERA_FACING_FRONT, 270, /*orientation*/
      0, 0, 0, 0, 0},
-#else
-    {-1, -1, /*orientation*/
-     0, 0, 0, 0, 0},
-#endif
+};
 
+const int camera_is_supprort [] = {
+    BACK_CAMERA_SENSOR_SUPPORT,
+    FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK_EXT_CAMERA_SENSOR_SUPPORT,
+    FRONT_EXT_CAMERA_SENSOR_SUPPORT,
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
@@ -1017,11 +1009,12 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
 
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
+    int i;
+    int id = -1;
+
     if (cameraInfo) {
-        int id = -1;
-        for (int i = 0; i < (int)(sizeof(kCameraInfo) / sizeof(kCameraInfo[0]));
-             i++) {
-            if (kCameraInfo[i].orientation != -1)
+        for (i = 0; i < (int)ARRAY_SIZE(kCameraInfo); i++) {
+            if (camera_is_supprort[i])
                 id++;
             if (id == cameraId) {
                 cameraInfo->facing = kCameraInfo[i].facing;
@@ -1036,14 +1029,8 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
-    int i, j = 0;
 
-    j = ARRAY_SIZE(kCameraInfo);
-    for (i = 0; i < j; i++) {
-        if (kCameraInfo[i].orientation != -1)
-            num++;
-    }
-
+    num = CAMERA_SENSOR_NUM;
     LOGI("getNumberOfCameras:%d", num);
 
     return num;
@@ -4141,12 +4128,12 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         if (mCameraId == 0) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
-#ifdef CONFIG_FRONT_FLASH_SUPPORT
-            s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
-#else
-            s_setting[mCameraId].flashInfo.state =
-                ANDROID_FLASH_STATE_UNAVAILABLE;
-#endif
+            if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none"))
+                s_setting[mCameraId].flashInfo.state =
+                    ANDROID_FLASH_STATE_UNAVAILABLE;
+            else
+                s_setting[mCameraId].flashInfo.state =
+                    ANDROID_FLASH_STATE_READY;
         } else {
             s_setting[mCameraId].flashInfo.state =
                 ANDROID_FLASH_STATE_UNAVAILABLE;

@@ -731,7 +731,10 @@ int SprdCamera3OEMIf::takePicture() {
 
         if (isPreviewing()) {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
-            if (CAMERA_ZSL_MODE != mCaptureMode && mCameraId == 0) {
+            if ((CAMERA_ZSL_MODE != mCaptureMode &&
+                 (mCameraId == 0 ||
+                  !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+                    strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))))) {
                 mHalOem->ops->camera_start_preflash(mCameraHandle);
             }
             stopPreviewInternal();
@@ -861,7 +864,9 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 
     if (isPreviewing()) {
-        if (mCameraId == 0) {
+        if (mCameraId == 0 ||
+            !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+              strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))) {
             mHalOem->ops->camera_start_preflash(mCameraHandle);
         }
         mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId,

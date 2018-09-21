@@ -4797,7 +4797,8 @@ cmr_int camera_preview_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
     struct setting_cmd_parameter setting_param;
     cmr_int flash_status;
 
-    if (1 == camera_id)
+    if (1 == camera_id && (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+                           strcmp(FRONT_CAMERA_FLASH_TYPE, "flash")))
         goto exit;
 
     setting_param.camera_id = camera_id;
@@ -4892,7 +4893,9 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
 
     snp_cxt = &cxt->snp_cxt;
 
-    if (0 == camera_id) {
+    if (0 == camera_id ||
+        !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+          strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))) {
         setting_param.camera_id = camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_GET_HW_FLASH_STATUS, &setting_param);
@@ -4957,7 +4960,8 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
         goto exit;
     }
 
-    if (camera_id == 1)
+    if (camera_id == 1 && (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+                           strcmp(FRONT_CAMERA_FLASH_TYPE, "flash")))
         goto exit;
 
     snp_cxt = &cxt->snp_cxt;
@@ -8416,7 +8420,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         if (ret)
             CMR_LOGE("fail to set 3dnr ev");
     } else {
-        if (cxt->camera_id == 0) {
+        if (cxt->camera_id == 0 ||
+            !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
+              strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))) {
             ret = camera_capture_highflash(oem_handle, cxt->camera_id);
             if (ret)
                 CMR_LOGE("open high flash fail");
@@ -9405,6 +9411,7 @@ cmr_int camera_local_pre_flash(cmr_handle oem_handle) {
     /*start preflash*/
     setting_param.camera_id = cxt->camera_id;
     setting_param.ctrl_flash.capture_mode.capture_mode = CAMERA_NORMAL_MODE;
+    setting_param.ctrl_flash.flash_type = FLASH_CLOSE;
     ret = cmr_pre_flash_notice_flash(cxt->setting_cxt.setting_handle);
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_SET_PRE_LOWFLASH, &setting_param);
