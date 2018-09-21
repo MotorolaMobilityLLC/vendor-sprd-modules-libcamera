@@ -1354,7 +1354,6 @@ static cmr_int camera_isp_ctrl_flash(cmr_handle setting_handle, void *data) {
         flash_type = FLASH_CLOSE;
         break;
     }
-
 ctrl_flash:
     setting_param.ctrl_flash.flash_type = flash_type;
     ret = cmr_setting_ioctl(setting_handle, CAMERA_PARAM_ISP_FLASH,
@@ -10328,6 +10327,7 @@ cmr_int camera_local_pre_flash(cmr_handle oem_handle) {
     {
         setting_param.camera_id = cxt->camera_id;
         setting_param.ctrl_flash.capture_mode.capture_mode = CAMERA_NORMAL_MODE;
+        setting_param.ctrl_flash.flash_type = FLASH_CLOSE;
         ret = cmr_pre_flash_notice_flash(cxt->setting_cxt.setting_handle);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_SET_PRE_LOWFLASH, &setting_param);
