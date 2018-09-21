@@ -2778,6 +2778,17 @@ exit:
 }
 #endif
 
+static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 app_mode = *(cmr_u32 *) param_ptr;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
+	return ret;
+}
+
 static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, _ispSnapshotNoticeIOCtrl},
 	{ISP_CTRL_AE_MEASURE_LUM, _ispAeMeasureLumIOCtrl},
@@ -2862,6 +2873,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_PER_FRAME_RESULT, _ispGetPerFrameResult},
 	{ISP_CTRL_SET_TX_RESERVED, _ispSetTxReserved},
 #endif
+	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_MAX, NULL}
 };
 

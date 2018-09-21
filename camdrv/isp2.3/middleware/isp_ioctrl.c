@@ -2483,6 +2483,17 @@ static cmr_int ispctl_auto_hdr(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 app_mode = *(cmr_u32 *) param_ptr;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, ispctl_snapshot_notice},
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
@@ -2561,6 +2572,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},	//for 3dnr module
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
+	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_MAX, NULL}
 };
 

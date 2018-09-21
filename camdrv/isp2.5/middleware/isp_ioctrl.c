@@ -2566,6 +2566,17 @@ static cmr_int ispctl_ai_get_status(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 app_mode = *(cmr_u32 *) param_ptr;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2652,6 +2663,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AI_SET_IMG_PARAM, ispctl_ai_set_img_param},
 	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
 	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
+	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_MAX, NULL}
 };
 
