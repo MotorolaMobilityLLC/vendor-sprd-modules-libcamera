@@ -125,6 +125,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
                                  cmr_u32 channel_id);
 cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg);
+cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
+                             struct sprd_img_3dnr_param *threednr);
 cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num);
 cmr_int cmr_grab_cap_stop(cmr_handle grab_handle);
 cmr_int cmr_grab_cap_resume(cmr_handle grab_handle, cmr_u32 channel_id,

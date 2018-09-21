@@ -59,8 +59,6 @@ typedef struct {
 
 #define MIN_MULTI_CAMERA_FAKE_ID 5
 #define MAX_MULTI_CAMERA_FAKE_ID 50
-#define BUF_MAPED           0xff
-#define BUF_UNMAP         0
 
 typedef struct {
     buffer_handle_t *buffer;

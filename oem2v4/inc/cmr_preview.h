@@ -32,6 +32,11 @@ struct pd_raw_open {
     int dummy;
 };
 
+#define CMR_3DNR_4_3_SMALL_WIDTH 640
+#define CMR_3DNR_4_3_SMALL_HEIGHT 480
+#define CMR_3DNR_16_9_SMALL_WIDTH 640
+#define CMR_3DNR_16_9_SMALL_HEIGHT 360
+
 enum preview_func_type {
     PREVIEW_FUNC_START_PREVIEW = 0,
     PREVIEW_FUNC_STOP_PREVIEW,
@@ -140,6 +145,10 @@ struct preview_md_ops {
     cmr_int (* start_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
                            struct img_frm *src, struct img_frm *dst,
                            struct cmr_op_mean *mean);
+    cmr_int (*sw_3dnr_info_cfg)(cmr_handle oem_handle,
+                                struct sprd_img_3dnr_param *threednr_info);
+    cmr_int (*get_tuning_info)(cmr_handle oem_handle,
+                               struct isp_adgain_exp_info *adgain_exp_info_ptr);
 };
 
 struct preview_init_param {
@@ -169,6 +178,7 @@ struct preview_param {
     cmr_u32 is_dv;
     cmr_u32 is_hdr;
     cmr_u32 is_3dnr;
+    cmr_u32 is_sw_3dnr;
     cmr_u32 frame_ctrl;  // 0:stop,1:continue
     cmr_u32 frame_count; // 0xffffffff for zsl
     cmr_u32 isp_width_limit;
@@ -298,6 +308,11 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
                                struct frm_info *in, cmr_uint *vir_addr_y);
 cmr_int cmr_preview_get_3dnr_buf(cmr_handle handle, cmr_u32 camera_id,
                                struct frm_info *in, cmr_uint *vir_addr_y);
+cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
+                                       struct frm_info *in,
+                                       cmr_uint *vir_addr_y,
+                                       cmr_u32 is_for_path,
+                                       void **thrednr_handle);
 cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 
 #ifdef __cplusplus

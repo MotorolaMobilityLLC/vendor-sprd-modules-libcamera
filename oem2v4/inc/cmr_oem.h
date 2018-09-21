@@ -150,6 +150,7 @@ struct snapshot_context {
     cmr_u32 is_hdr;
     cmr_u32 filter_type;
     cmr_u32 is_3dnr;
+    cmr_u32 is_sw_3dnr;
     cmr_u32 total_num;
     cmr_u32 snp_mode;
     cmr_u32 is_cfg_rot_cap;
@@ -290,6 +291,7 @@ struct camera_context {
     /*memory func*/
     camera_cb_of_malloc hal_malloc;
     camera_cb_of_free hal_free;
+    camera_cb_of_gpu_malloc hal_gpu_malloc;
     void *hal_mem_privdata;
 
     /*for isp lsc buffer*/
@@ -329,6 +331,15 @@ struct camera_context {
     nsecs_t snp_high_flash_time;
 };
 
+struct prev_threednr_info {
+    struct img_frm frm_preview;
+    struct img_frm frm_smallpreview;
+    struct img_frm frm_video;
+    struct camera_frame_type framtype;
+    unsigned long camera_id;
+    void *caller_handle;
+    struct frm_info data;
+};
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
                          void *client_data, cmr_uint is_autotest,
                          cmr_handle *oem_handle, void *cb_of_malloc,
@@ -497,6 +508,8 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 cmr_int camera_get_sg(cmr_handle oem_handle, struct sprd_img_iova *param);
 cmr_int camera_map_iommu(cmr_handle oem_handle, struct sprd_img_iova *param);
 cmr_int camera_unmap_iommu(cmr_handle oem_handle, struct sprd_img_iova *param);
+cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
+                                     void *cb_of_free);
 /*to enable face detect for callback stream*/
 cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
                                          cmr_u16 is_enable);

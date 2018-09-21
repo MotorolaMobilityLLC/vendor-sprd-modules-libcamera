@@ -37,11 +37,16 @@
 #ifdef SPRD_PERFORMANCE
 #include <androidfw/SprdIlog.h>
 #endif
+#include "../../external/drivers/gpu/gralloc_public.h"
 #include <gralloc_priv.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
 #include "SprdCamera3Flash.h"
 #include <dlfcn.h>
+#include <linux/ion.h>
+#include <ui/GraphicBuffer.h>
+#include <cutils/ashmem.h>
+#include "gralloc_buffer_priv.h"
 
 extern "C" {
 #include "isp_video.h"
@@ -226,6 +231,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
+      mUsingSW3DNR(false), mVideoProcessedWithPreview(false),
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
       mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
@@ -242,7 +248,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mCameraDfsPolicyCur(CAM_EXIT), mIsPerformanceTestable(false),
       mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
       mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
-      mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
+      mIspToolStart(false), mSubRawHeapNum(0),
+      m3dnrGraphicHeapNum(0), m3dnrGraphicPathHeapNum(0), mSubRawHeapSize(0),
       mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
       mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
@@ -320,6 +327,20 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mPdafRawHeapArray, 0, sizeof(mPdafRawHeapArray));
     memset(mRefocusHeapArray, 0, sizeof(mRefocusHeapArray));
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
+    memset(m3DNRGraphicArray, 0, sizeof(m3DNRGraphicArray));
+    memset(m3DNRGraphicPathArray, 0, sizeof(m3DNRGraphicPathArray));
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("persist.vendor.cam.3dnr.version", prop, "0");
+    if (1 == atoi(prop))
+        mUsingSW3DNR = true;
+
+    if (mUsingSW3DNR) {
+        for (int i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
+            m3DNRPrevScaleHeapReserverd[i] = NULL;
+        }
+    }
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -2016,6 +2037,16 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         if (!strcmp(value, "false") && !needFixedFPS) {
             fps_param.min_fps = 15;
         }
+
+        if (!needFixedFPS &&
+            controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+            fps_param.min_fps = CONFIG_MIN_CAMRECORDER_FPS;
+#ifdef CONFIG_MAX_CAMRECORDER_FPS
+            fps_param.max_fps = CONFIG_MAX_CAMRECORDER_FPS;
+#else
+            fps_param.max_fps = 30;
+#endif
+        }
 #endif
 
         // when 3D video recording with face beautify, fix frame rate at 25fps.
@@ -2023,9 +2054,14 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
             fps_param.min_fps = fps_param.max_fps = 20;
         }
 
-        // 3dnr video
+        // 3dnr video recording on
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
-            fps_param.min_fps = 18;
+            fps_param.min_fps = 5;
+            if (mUsingSW3DNR) {
+                HAL_LOGD("sw 3dnr mode, adjust max fps to 20");
+                fps_param.max_fps = 20;
+            } else
+                fps_param.max_fps = 30;
         }
 
         // to set recording fps by setprop
@@ -2569,7 +2605,11 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         } else {
             setCameraState(SPRD_IDLE);
         }
-
+#if defined(CONFIG_ISP_2_4)
+        if (mUsingSW3DNR)
+            mHalOem->ops->camera_set_gpu_mem_ops(
+                mCameraHandle, (void *)Callback_GPUMalloc, NULL);
+#endif
         mHalOem->ops->camera_get_zsl_capability(mCameraHandle, &is_support_zsl,
                                                 &max_width, &max_height);
 
@@ -2600,7 +2640,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         if (mSprdRefocusEnabled == true && mCameraId == 0) {
 #ifdef CAMERA_READ_OTP_FROM_FILE
             char *psPath_OtpData =
-                "data/misc/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
+                "data/vendor/cameraserver/ov13855_mipi_raw_parsed_otp.bin";
             char *dual_otp_data = (char *)malloc(SPRD_DUAL_OTP_SIZE);
             OTP_Tag otpInfo = {0};
             mSetting->getOTPTag(&otpInfo);
@@ -2636,7 +2676,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d",
                          mCameraId, dual_otp_data, otpInfo.dual_otp_flag);
             }
-            save_file("data/misc/cameraserver/dualcamera.bin", dual_otp_data,
+            save_file("data/vendor/cameraserver/dualcamera.bin", dual_otp_data,
                       SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 
@@ -2669,7 +2709,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             }
             HAL_LOGD("save otp file");
 
-            save_file("data/misc/cameraserver/dualcamera.bin", otpInfo.otp_data,
+            save_file("data/vendor/cameraserver/dualcamera.bin", otpInfo.otp_data,
                       SPRD_DUAL_OTP_SIZE);
             mSetting->setOTPTag(&otpInfo);
 #endif
@@ -3022,6 +3062,19 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
     }
     mPrevSwOutHeapReserved = NULL;
 
+    if (mUsingSW3DNR) {
+        for (i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
+            if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
+                m3DNRPrevScaleHeapReserverd[i]->ion_heap->free_kaddr();
+                freeCameraMem(m3DNRPrevScaleHeapReserverd[i]);
+                m3DNRPrevScaleHeapReserverd[i] = NULL;
+            }
+        }
+
+        Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+        Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+    }
+
     HAL_LOGI(":hal3: X");
 }
 
@@ -3083,6 +3136,13 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
     }
 
     Callback_CapturePathFree(0, 0, 0, 0);
+
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+    if ((mUsingSW3DNR) && (sprddefInfo.sprd_3dnr_enabled)) {
+        Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+        Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+    }
 }
 
 int SprdCamera3OEMIf::chooseDefaultThumbnailSize(uint32_t *thumbWidth,
@@ -3176,8 +3236,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
-    mVideo3dnrFlag = VIDEO_OFF;
-    camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag, NULL);
+    mVideoProcessedWithPreview = false;
+    unsigned int on_off = VIDEO_OFF;
+    camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
@@ -3185,9 +3246,19 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
-            mVideoCopyFromPreviewFlag = true;
-            mVideo3dnrFlag = VIDEO_ON;
-            camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag, NULL);
+            // 0 for 3dnr sw process , 1 for 3dnr hw process.
+            if (grab_capability.support_3dnr_mode == 1) {
+                mVideoProcessedWithPreview = false;
+                mVideoCopyFromPreviewFlag = false;
+            } else {
+                if (mUsingSW3DNR)
+                    mVideoProcessedWithPreview = true;
+                else
+                    mVideoCopyFromPreviewFlag = true;
+
+                on_off = VIDEO_ON;
+                camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
+            }
         }
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
@@ -4176,7 +4247,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
 #endif
 
-            if (mVideoCopyFromPreviewFlag) {
+            if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
                 if (rec_stream) {
                     ret = rec_stream->getQBufAddrForNum(
                         frame_num, &videobuf_vir, &videobuf_phy, &fd0);
@@ -4194,7 +4265,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 if (frame_num > mRecordFrameNum)
                     calculateTimestampForSlowmotion(buffer_timestamp);
 
-                if (mVideoCopyFromPreviewFlag) {
+                if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
                     ret = rec_stream->getQBufAddrForNum(
                         frame_num, &videobuf_vir, &videobuf_phy, &fd0);
                     if (ret || videobuf_vir == 0) {
@@ -4209,8 +4280,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                         frame_num, videobuf_phy, videobuf_vir);
                     HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
                              frame_num, prebuf_phy, prebuf_vir);
-                    memcpy((void *)videobuf_vir, (void *)prebuf_vir,
-                           mPreviewWidth * mPreviewHeight * 3 / 2);
+                    if (mVideoCopyFromPreviewFlag) {
+                        memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+                               mPreviewWidth * mPreviewHeight * 3 / 2);
+                    }
                     flushIonBuffer(fd0, (void *)videobuf_vir, 0,
                                    mPreviewWidth * mPreviewHeight * 3 / 2);
                     channel->channelCbRoutine(frame_num,
@@ -7140,6 +7213,578 @@ mem_fail:
     return -1;
 }
 
+int SprdCamera3OEMIf::Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr,
+                                                 cmr_uint *vir_addr,
+                                                 cmr_s32 *fd, cmr_u32 sum) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
+    uint32_t i = 0;
+
+    Callback_CaptureFree(0, 0, 0, 0);
+
+    for (List<iommu_map_buf>::iterator i = m3DNRGraphicArrayIommuMapList.begin();
+        i != m3DNRGraphicArrayIommuMapList.end(); i++) {
+        struct sprd_img_iova iommu_data;
+
+        iommu_data.fd = i->fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+            &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    m3DNRGraphicArrayIommuMapList.clear();
+
+    for (i = 0; i < m3dnrGraphicHeapNum; i++) {
+        if (m3DNRGraphicArray[i].bufferhandle != NULL) {
+            m3DNRGraphicArray[i].bufferhandle.clear();
+            m3DNRGraphicArray[i].bufferhandle = NULL;
+        }
+        if (m3DNRGraphicArray[i].private_handle != NULL) {
+            struct private_handle_t *pHandle =
+                (private_handle_t *)m3DNRGraphicArray[i].private_handle;
+            if (pHandle->attr_base != MAP_FAILED) {
+                LOGW("Warning shared attribute region mapped at free. "
+                     "Unmapping");
+                munmap(pHandle->attr_base, PAGE_SIZE);
+                pHandle->attr_base = MAP_FAILED;
+            }
+            close(pHandle->share_attr_fd);
+            pHandle->share_attr_fd = -1;
+            delete pHandle;
+            m3DNRGraphicArray[i].private_handle = NULL;
+        }
+    }
+    m3dnrGraphicHeapNum = 0;
+#else
+#endif
+    return 0;
+}
+
+int SprdCamera3OEMIf::Callback_Sw3DNRCaptureMalloc(
+    cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,
+    cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
+    sprd_camera_memory_t *memory = NULL;
+    cmr_int i = 0;
+
+    HAL_LOGD("size %d sum %d mSubRawHeapNum %d", size, sum, mSubRawHeapNum);
+    *phy_addr = 0;
+    *vir_addr = 0;
+    *fd = 0;
+    private_handle_t *buffer = NULL;
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+cap_malloc:
+    mCapBufLock.lock();
+
+    if (mSubRawHeapNum >= MAX_SUB_RAWHEAP_NUM) {
+        HAL_LOGE("error mSubRawHeapNum %d", mSubRawHeapNum);
+        return BAD_VALUE;
+    }
+
+    if ((mSubRawHeapNum + sum) >= MAX_SUB_RAWHEAP_NUM) {
+        HAL_LOGE("malloc is too more %d %d", mSubRawHeapNum, sum);
+        return BAD_VALUE;
+    }
+
+    if (0 == mSubRawHeapNum) {
+        for (i = 0; i < (cmr_int)sum; i++) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null.");
+                goto mem_fail;
+            }
+
+            mSubRawHeapArray[mSubRawHeapNum] = memory;
+            mSubRawHeapNum++;
+            *phy_addr++ = (cmr_uint)memory->phys_addr;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+            {
+                int ret;
+                struct sprd_img_iova iommu_data;
+                iommu_map_buf iommu_buf;
+                iommu_data.fd = memory->fd;
+                ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
+                if (ret) {
+                    HAL_LOGE("iommu_workaround: m3DNRGraphicArray get sg failed, fd 0x%x",
+                        iommu_data.fd);
+                }
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
+                        &iommu_data, NULL);
+                iommu_buf.fd = memory->fd;
+                iommu_buf.sg_table = iommu_data.sg_table;
+                iommu_buf.size = iommu_data.size;
+                iommu_buf.map_flag = BUF_MAPED;
+                m3DNRGraphicArrayIommuMapList.push_back(iommu_buf);
+                HAL_LOGD("iommu_workaround: m3DNRGraphicArray fd 0x%x sg %p",
+                    iommu_buf.fd, iommu_buf.sg_table);
+            }
+
+            buffer = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION,
+                                          0x130, size, (void *)memory->data, 0);
+
+            if (NULL == buffer) {
+                HAL_LOGE("mem alloc 3dnr graphic buffer failed");
+                goto mem_fail;
+            }
+            if (buffer->share_attr_fd < 0) {
+                buffer->share_attr_fd = ashmem_create_region(
+                    "camera_gralloc_shared_attr", PAGE_SIZE);
+                if (buffer->share_attr_fd < 0) {
+                    ALOGE(
+                        "Failed to allocate page for shared attribute region");
+                    goto mem_fail;
+                }
+            }
+            buffer->attr_base = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
+                                     MAP_SHARED, buffer->share_attr_fd, 0);
+            if (buffer->attr_base != MAP_FAILED) {
+                attr_region *region = (attr_region *)buffer->attr_base;
+                memset(buffer->attr_base, 0xff, PAGE_SIZE);
+                munmap(buffer->attr_base, PAGE_SIZE);
+                buffer->attr_base = MAP_FAILED;
+            } else {
+                ALOGE("Failed to mmap shared attribute region");
+                m3DNRGraphicArray[m3dnrGraphicHeapNum].bufferhandle = NULL;
+                m3DNRGraphicArray[m3dnrGraphicHeapNum].private_handle = buffer;
+                m3dnrGraphicHeapNum++;
+                goto mem_fail;
+            }
+
+            buffer->share_fd = memory->fd;
+            buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+            buffer->byte_stride = width;
+            buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+            buffer->width = width;
+            buffer->height = height;
+            buffer->stride = width;
+            buffer->internalWidth = width;
+            buffer->internalHeight = height;
+
+#if defined(CONFIG_SPRD_ANDROID_8)
+            sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+                buffer, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, width,
+                height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, width);
+            *handle = pbuffer.get();
+            HAL_LOGD("add alloc graphic buffer in CaptureMalloc index:%d , "
+                     "buffer:%p",
+                     i, *handle);
+#else
+            sp<GraphicBuffer> pbuffer =
+                new GraphicBuffer(width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP,
+                                  yuvTextUsage, width, buffer, 0);
+            *handle = pbuffer.get();
+#endif
+            handle++;
+            m3DNRGraphicArray[m3dnrGraphicHeapNum].bufferhandle = pbuffer;
+            m3DNRGraphicArray[m3dnrGraphicHeapNum].private_handle = buffer;
+            m3dnrGraphicHeapNum++;
+        }
+
+        mSubRawHeapSize = size;
+    } else if (0 == m3dnrGraphicHeapNum) {
+        if ((mSubRawHeapNum >= sum) && (mSubRawHeapSize >= size)) {
+            HAL_LOGD("3DNR Graphic buffer is null, use pre-alloc cap mem");
+            for (i = 0; i < (cmr_int)sum; i++) {
+                *phy_addr++ = (cmr_uint)mSubRawHeapArray[i]->phys_addr;
+                *vir_addr++ = (cmr_uint)mSubRawHeapArray[i]->data;
+                *fd++ = mSubRawHeapArray[i]->fd;
+                buffer = new private_handle_t(
+                    private_handle_t::PRIV_FLAGS_USES_ION, 0x130, size,
+                    (void *)mSubRawHeapArray[i]->data, 0);
+
+                if (NULL == buffer) {
+                    HAL_LOGE("mem alloc 3dnr graphic buffer failed");
+                    goto mem_fail;
+                }
+                if (buffer->share_attr_fd < 0) {
+                    buffer->share_attr_fd = ashmem_create_region(
+                        "camera_gralloc_shared_attr", PAGE_SIZE);
+                    if (buffer->share_attr_fd < 0) {
+                        ALOGE("Failed to allocate page for shared attribute "
+                              "region");
+                        goto mem_fail;
+                    }
+                }
+                buffer->attr_base =
+                    mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+                         buffer->share_attr_fd, 0);
+                if (buffer->attr_base != MAP_FAILED) {
+                    attr_region *region = (attr_region *)buffer->attr_base;
+                    memset(buffer->attr_base, 0xff, PAGE_SIZE);
+                    munmap(buffer->attr_base, PAGE_SIZE);
+                    buffer->attr_base = MAP_FAILED;
+                } else {
+                    ALOGE("Failed to mmap shared attribute region");
+                    m3DNRGraphicArray[m3dnrGraphicHeapNum].bufferhandle = NULL;
+                    m3DNRGraphicArray[m3dnrGraphicHeapNum].private_handle =
+                        buffer;
+                    m3dnrGraphicHeapNum++;
+                    goto mem_fail;
+                }
+
+                buffer->share_fd = mSubRawHeapArray[i]->fd;
+                buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+                buffer->byte_stride = width;
+                buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+                buffer->width = width;
+                buffer->height = height;
+                buffer->stride = width;
+                buffer->internalWidth = width;
+                buffer->internalHeight = height;
+
+#if defined(CONFIG_SPRD_ANDROID_8)
+                sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+                    buffer, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE,
+                    width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
+                    yuvTextUsage, width);
+                *handle = pbuffer.get();
+                HAL_LOGD(
+                    "add alloc graphic buffer in CaptureMalloc index:%ld , "
+                    "buffer:%p",
+                    i, *handle);
+#else
+                sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+                    width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage,
+                    width, buffer, 0);
+                *handle = pbuffer.get();
+#endif
+                handle++;
+                m3DNRGraphicArray[m3dnrGraphicHeapNum].bufferhandle = pbuffer;
+                m3DNRGraphicArray[m3dnrGraphicHeapNum].private_handle = buffer;
+                m3dnrGraphicHeapNum++;
+            }
+            mSubRawHeapSize = size;
+        } else {
+            mCapBufLock.unlock();
+            Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+            goto cap_malloc;
+        }
+    } else {
+        if ((mSubRawHeapNum >= sum) && (mSubRawHeapSize >= size)) {
+            HAL_LOGD("use pre-alloc cap mem");
+            for (i = 0; i < (cmr_int)sum; i++) {
+                *phy_addr++ = (cmr_uint)mSubRawHeapArray[i]->phys_addr;
+                *vir_addr++ = (cmr_uint)mSubRawHeapArray[i]->data;
+                *fd++ = mSubRawHeapArray[i]->fd;
+                *handle = m3DNRGraphicArray[i].bufferhandle.get();
+                handle++;
+            }
+        } else {
+            mCapBufLock.unlock();
+            Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+            goto cap_malloc;
+        }
+    }
+
+    mCapBufIsAvail = 1;
+    mCapBufLock.unlock();
+#else
+#endif
+    return 0;
+
+mem_fail:
+    mCapBufLock.unlock();
+    Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+    return -1;
+}
+
+int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
+                                                     cmr_uint *vir_addr,
+                                                     cmr_s32 *fd, cmr_u32 sum) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
+    uint32_t i = 0;
+    Callback_CapturePathFree(0, 0, 0, 0);
+
+    for (List<iommu_map_buf>::iterator i = m3DNRGraphicPathArrayIommuMapList.begin();
+        i != m3DNRGraphicPathArrayIommuMapList.end(); i++) {
+        struct sprd_img_iova iommu_data;
+
+        iommu_data.fd = i->fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+            &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    m3DNRGraphicPathArrayIommuMapList.clear();
+
+    for (i = 0; i < m3dnrGraphicPathHeapNum; i++) {
+        if (m3DNRGraphicPathArray[i].bufferhandle != NULL) {
+            m3DNRGraphicPathArray[i].bufferhandle.clear();
+            m3DNRGraphicPathArray[i].bufferhandle = NULL;
+        }
+        if (m3DNRGraphicPathArray[i].private_handle != NULL) {
+            struct private_handle_t *pHandle =
+                (private_handle_t *)m3DNRGraphicPathArray[i].private_handle;
+            if (pHandle->attr_base != MAP_FAILED) {
+                LOGW("Warning shared attribute region mapped at free. "
+                     "Unmapping");
+                munmap(pHandle->attr_base, PAGE_SIZE);
+                pHandle->attr_base = MAP_FAILED;
+            }
+            close(pHandle->share_attr_fd);
+            pHandle->share_attr_fd = -1;
+            delete pHandle;
+            m3DNRGraphicPathArray[i].private_handle = NULL;
+        }
+    }
+    m3dnrGraphicPathHeapNum = 0;
+#else
+#endif
+    return 0;
+}
+
+int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
+    cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,
+    cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height) {
+#ifdef CAMERA_3DNR_CAPTURE_GPU
+    sprd_camera_memory_t *memory = NULL;
+    cmr_int i = 0;
+    private_handle_t *buffer = NULL;
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+    LOGI("Callback_Sw3DNRCapturePathMalloc: size %d sum %d mPathRawHeapNum %d"
+         "mPathRawHeapSize %d wxh:%dx%d",
+         size, sum, mPathRawHeapNum, mPathRawHeapSize, width, height);
+
+    *phy_addr = 0;
+    *vir_addr = 0;
+    *fd = 0;
+
+    if (mPathRawHeapNum >= MAX_SUB_RAWHEAP_NUM) {
+        LOGE("Callback_CapturePathMalloc: error mPathRawHeapNum %d",
+             mPathRawHeapNum);
+        return -1;
+    }
+    if ((mPathRawHeapNum + sum) >= MAX_SUB_RAWHEAP_NUM) {
+        LOGE("Callback_CapturePathMalloc: malloc is too more %d %d",
+             mPathRawHeapNum, sum);
+        return -1;
+    }
+    if (0 == mPathRawHeapNum) {
+        mPathRawHeapSize = size;
+        for (i = 0; i < (cmr_int)sum; i++) {
+            memory = allocCameraMem(size, 1, true);
+
+            if (NULL == memory) {
+                LOGE("Callback_CapturePathMalloc: error memory is null.");
+                goto mem_fail;
+            }
+
+            mPathRawHeapArray[mPathRawHeapNum] = memory;
+            mPathRawHeapNum++;
+
+            *phy_addr++ = (cmr_uint)memory->phys_addr;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+
+            {
+                int ret;
+                struct sprd_img_iova iommu_data;
+                iommu_map_buf iommu_buf;
+                iommu_data.fd = memory->fd;
+                ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
+                if (ret) {
+                    HAL_LOGE("iommu_workaround: m3DNRGraphicArray get sg failed, fd 0x%x",
+                        iommu_data.fd);
+                }
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
+                        &iommu_data, NULL);
+                iommu_buf.fd = memory->fd;
+                iommu_buf.sg_table = iommu_data.sg_table;
+                iommu_buf.size = iommu_data.size;
+                iommu_buf.map_flag = BUF_MAPED;
+                m3DNRGraphicPathArrayIommuMapList.push_back(iommu_buf);
+                HAL_LOGD("iommu_workaround: m3DNRGraphicArray fd 0x%x sg %p",
+                    iommu_buf.fd, iommu_buf.sg_table);
+            }
+
+            buffer = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION,
+                                          0x130, size, (void *)memory->data, 0);
+            if (NULL == buffer) {
+                HAL_LOGE("mem alloc 3dnr graphic buffer failed");
+                goto mem_fail;
+            }
+            if (buffer->share_attr_fd < 0) {
+                buffer->share_attr_fd = ashmem_create_region(
+                    "camera_gralloc_shared_attr", PAGE_SIZE);
+                if (buffer->share_attr_fd < 0) {
+                    ALOGE(
+                        "Failed to allocate page for shared attribute region");
+                    goto mem_fail;
+                }
+            }
+
+            buffer->attr_base = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
+                                     MAP_SHARED, buffer->share_attr_fd, 0);
+            if (buffer->attr_base != MAP_FAILED) {
+                attr_region *region = (attr_region *)buffer->attr_base;
+                memset(buffer->attr_base, 0xff, PAGE_SIZE);
+                munmap(buffer->attr_base, PAGE_SIZE);
+                buffer->attr_base = MAP_FAILED;
+            } else {
+                ALOGE("Failed to mmap shared attribute region");
+                m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum].bufferhandle =
+                    NULL;
+                m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum].private_handle =
+                    buffer;
+                m3dnrGraphicPathHeapNum++;
+                goto mem_fail;
+            }
+
+            buffer->share_fd = memory->fd;
+            buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+            buffer->byte_stride = width;
+            buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+            buffer->width = width;
+            buffer->height = height;
+            buffer->stride = width;
+            buffer->internalWidth = width;
+            buffer->internalHeight = height;
+
+#if defined(CONFIG_SPRD_ANDROID_8)
+            sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+                buffer, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, width,
+                height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, width);
+            *handle = pbuffer.get();
+            HAL_LOGD("add alloc graphic buffer in CapturePathMalloc "
+                     "index:%d , buffer:%p",
+                     i, *handle);
+#else
+            sp<GraphicBuffer> pbuffer =
+                new GraphicBuffer(width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP,
+                                  yuvTextUsage, width, buffer, 0);
+            *handle = pbuffer.get();
+#endif
+            handle++;
+            m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum].bufferhandle =
+                pbuffer;
+            m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum].private_handle =
+                buffer;
+            m3dnrGraphicPathHeapNum++;
+        }
+    } else if (0 == m3dnrGraphicPathHeapNum) {
+        if ((mPathRawHeapNum >= sum) && (mPathRawHeapSize >= size)) {
+            HAL_LOGD("3DNR Graphic path is null, use pre-alloc path array");
+            mPathRawHeapSize = size;
+            for (i = 0; i < (cmr_int)sum; i++) {
+                *phy_addr++ = (cmr_uint)mPathRawHeapArray[i]->phys_addr;
+                *vir_addr++ = (cmr_uint)mPathRawHeapArray[i]->data;
+                *fd++ = mPathRawHeapArray[i]->fd;
+
+                buffer = new private_handle_t(
+                    private_handle_t::PRIV_FLAGS_USES_ION, 0x130, size,
+                    (void *)mPathRawHeapArray[i]->data, 0);
+                if (NULL == buffer) {
+                    HAL_LOGE("mem alloc 3dnr graphic buffer failed");
+                    goto mem_fail;
+                }
+                if (buffer->share_attr_fd < 0) {
+                    buffer->share_attr_fd = ashmem_create_region(
+                        "camera_gralloc_shared_attr", PAGE_SIZE);
+                    if (buffer->share_attr_fd < 0) {
+                        ALOGE("Failed to allocate page for shared attribute "
+                              "region");
+                        goto mem_fail;
+                    }
+                }
+
+                buffer->attr_base =
+                    mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+                         buffer->share_attr_fd, 0);
+                if (buffer->attr_base != MAP_FAILED) {
+                    attr_region *region = (attr_region *)buffer->attr_base;
+                    memset(buffer->attr_base, 0xff, PAGE_SIZE);
+                    munmap(buffer->attr_base, PAGE_SIZE);
+                    buffer->attr_base = MAP_FAILED;
+                } else {
+                    ALOGE("Failed to mmap shared attribute region");
+                    m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum]
+                        .bufferhandle = NULL;
+                    m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum]
+                        .private_handle = buffer;
+                    m3dnrGraphicPathHeapNum++;
+                    goto mem_fail;
+                }
+
+                buffer->share_fd = mPathRawHeapArray[i]->fd;
+                buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+                buffer->byte_stride = width;
+                buffer->internal_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+                buffer->width = width;
+                buffer->height = height;
+                buffer->stride = width;
+                buffer->internalWidth = width;
+                buffer->internalHeight = height;
+
+#if defined(CONFIG_SPRD_ANDROID_8)
+                sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+                    buffer, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE,
+                    width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
+                    yuvTextUsage, width);
+                *handle = pbuffer.get();
+                HAL_LOGD("2 add alloc graphic buffer in CapturePathMalloc "
+                         "index:%ld , buffer:%p",
+                         i, *handle);
+#else
+                sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+                    width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage,
+                    width, buffer, 0);
+                *handle = pbuffer.get();
+#endif
+                handle++;
+                m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum].bufferhandle =
+                    pbuffer;
+                m3DNRGraphicPathArray[m3dnrGraphicPathHeapNum].private_handle =
+                    buffer;
+                m3dnrGraphicPathHeapNum++;
+            }
+        } else {
+            LOGE("failed to alloc graphic buffer, malloced num %d,request num "
+                 "%d, "
+                 "size 0x%x, request size 0x%x",
+                 mPathRawHeapNum, sum, mPathRawHeapSize, size);
+            goto mem_fail;
+        }
+    } else {
+        if ((mPathRawHeapNum >= sum) && (mPathRawHeapSize >= size)) {
+            LOGI("Callback_CapturePathMalloc :test");
+            for (i = 0; i < (cmr_int)sum; i++) {
+                *phy_addr++ = (cmr_uint)mPathRawHeapArray[i]->phys_addr;
+                *vir_addr++ = (cmr_uint)mPathRawHeapArray[i]->data;
+                *fd++ = mPathRawHeapArray[i]->fd;
+                *handle = m3DNRGraphicPathArray[i].bufferhandle.get();
+            }
+        } else {
+            LOGE("failed to malloc memory, malloced num %d,request num %d, "
+                 "size 0x%x, request size 0x%x",
+                 mPathRawHeapNum, sum, mPathRawHeapSize, size);
+            goto mem_fail;
+        }
+    }
+#else
+#endif
+    return 0;
+
+mem_fail:
+    Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+    return -1;
+}
+
 int SprdCamera3OEMIf::Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum,
                                                  cmr_uint *phy_addr,
                                                  cmr_uint *vir_addr,
@@ -7355,6 +8000,32 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         mPrevSwOutHeapReserved = NULL;
     }
 
+    if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR)) {
+
+        for (List<iommu_map_buf>::iterator i = m3DNRPrevScaleIommuMapList.begin();
+            i != m3DNRPrevScaleIommuMapList.end(); i++) {
+            struct sprd_img_iova iommu_data;
+
+            iommu_data.fd = i->fd;
+            iommu_data.size = i->size;
+            iommu_data.sg_table = i->sg_table;
+            if (i->map_flag == BUF_MAPED) {
+                camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF,
+                &iommu_data, NULL);
+                i->map_flag = BUF_UNMAP;
+                HAL_LOGE("iommu_workaround: unmap 3dnr prev_scale 0x%x size 0x%x sg %p",
+                    iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+            }
+        }
+        m3DNRPrevScaleIommuMapList.clear();
+
+        for (i = 0; i < sum; i++) {
+            if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
+                freeCameraMem(m3DNRPrevScaleHeapReserverd[i]);
+            }
+            m3DNRPrevScaleHeapReserverd[i] = NULL;
+        }
+    }
     return 0;
 }
 
@@ -7644,6 +8315,41 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         *phy_addr++ = (cmr_uint)mPrevSwOutHeapReserved->phys_addr;
         *vir_addr++ = (cmr_uint)mPrevSwOutHeapReserved->data;
         *fd++ = mPrevSwOutHeapReserved->fd;
+    } else if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR)) {
+        for (i = 0; i < sum; i++) {
+            if (m3DNRPrevScaleHeapReserverd[i] == NULL) {
+                memory = allocCameraMem(size, 1, true);
+                if (NULL == memory) {
+                    HAL_LOGE("error memory is null,malloced type %d", type);
+                    goto mem_fail;
+                }
+                m3DNRPrevScaleHeapReserverd[i] = memory;
+            }
+            *phy_addr++ = (cmr_uint)m3DNRPrevScaleHeapReserverd[i]->phys_addr;
+            *vir_addr++ = (cmr_uint)m3DNRPrevScaleHeapReserverd[i]->data;
+            *fd++ = m3DNRPrevScaleHeapReserverd[i]->fd;
+
+            {
+                struct sprd_img_iova iommu_data;
+                iommu_map_buf iommu_buf;
+                iommu_data.fd = m3DNRPrevScaleHeapReserverd[i]->fd;
+                ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
+                if (ret) {
+                    HAL_LOGE("iommu_workaround: 3dnr prev_scale get sg failed, fd 0x%x",
+                        iommu_data.fd);
+                    continue;
+                }
+                camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF,
+                        &iommu_data, NULL);
+                iommu_buf.fd = m3DNRPrevScaleHeapReserverd[i]->fd;
+                iommu_buf.sg_table = iommu_data.sg_table;
+                iommu_buf.size = iommu_data.size;
+                iommu_buf.map_flag = BUF_MAPED;
+                m3DNRPrevScaleIommuMapList.push_back(iommu_buf);
+                HAL_LOGD("iommu_workaround: 3dnr prev_scale fd 0x%x sg %p",
+                    iommu_buf.fd, iommu_buf.sg_table);
+            }
+        }
     }
 
     return 0;
@@ -7688,6 +8394,11 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
         ret = camera->Callback_PdafRawFree(phy_addr, vir_addr, sum);
     } else if (CAMERA_SNAPSHOT_PATH == type) {
         ret = camera->Callback_CapturePathFree(phy_addr, vir_addr, fd, sum);
+    } else if (CAMERA_SNAPSHOT_SW3DNR == type) {
+        ret = camera->Callback_Sw3DNRCaptureFree(phy_addr, vir_addr, fd, sum);
+    } else if (CAMERA_SNAPSHOT_SW3DNR_PATH == type) {
+        ret =
+            camera->Callback_Sw3DNRCapturePathFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_PREVIEW_RESERVED == type ||
                CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
                CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
@@ -7698,7 +8409,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_SNAPSHOT_3DNR_DST == type ||
                CAMERA_PREVIEW_3DNR == type || CAMERA_PREVIEW_DEPTH == type ||
-               CAMERA_PREVIEW_SW_OUT == type) {
+               CAMERA_PREVIEW_SW_OUT == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
     }
 
@@ -7756,9 +8468,49 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_SNAPSHOT_3DNR_DST == type ||
                CAMERA_PREVIEW_3DNR == type || CAMERA_PREVIEW_DEPTH == type ||
-               CAMERA_PREVIEW_SW_OUT == type) {
+               CAMERA_PREVIEW_SW_OUT == type ||
+	        CAMERA_PREVIEW_SCALE_3DNR == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
+    }
+
+    HAL_LOGV("X");
+    return ret;
+}
+
+int SprdCamera3OEMIf::Callback_GPUMalloc(enum camera_mem_cb_type type,
+                                         cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
+                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                         cmr_s32 *fd, void **handle,
+                                         cmr_uint *width, cmr_uint *height,
+                                         void *private_data) {
+    SprdCamera3OEMIf *camera = (SprdCamera3OEMIf *)private_data;
+    int ret = 0, i = 0;
+    uint32_t size, sum;
+    SprdCamera3RegularChannel *channel = NULL;
+    HAL_LOGV("E");
+
+    if (!private_data || !vir_addr || !fd || !size_ptr || !sum_ptr ||
+        (0 == *size_ptr) || (0 == *sum_ptr)) {
+        HAL_LOGE("param error 0x%lx 0x%lx 0x%lx 0x%lx", (cmr_uint)handle,
+                 (cmr_uint)private_data, (cmr_uint)size_ptr, (cmr_uint)sum_ptr);
+        return BAD_VALUE;
+    }
+
+    size = *size_ptr;
+    sum = *sum_ptr;
+
+    if (type >= CAMERA_MEM_CB_TYPE_MAX) {
+        HAL_LOGE("mem type error %ld", (cmr_uint)type);
+        return BAD_VALUE;
+    }
+
+    if (CAMERA_SNAPSHOT_SW3DNR == type) {
+        ret = camera->Callback_Sw3DNRCaptureMalloc(
+            size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
+    } else if (CAMERA_SNAPSHOT_SW3DNR_PATH == type) {
+        ret = camera->Callback_Sw3DNRCapturePathMalloc(
+            size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
     }
 
     HAL_LOGV("X");

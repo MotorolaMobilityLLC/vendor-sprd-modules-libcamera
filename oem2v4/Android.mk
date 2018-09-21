@@ -4,7 +4,25 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=format
 
+#sensor makefile config
+SENSOR_FILE_COMPILER := $(CAMERA_SENSOR_TYPE_BACK)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_FRONT)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_BACK_EXT)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_FRONT_EXT)
 
+SENSOR_FILE_COMPILER := $(shell echo $(SENSOR_FILE_COMPILER))
+#$(warning $(SENSOR_FILE_COMPILER))
+
+sensor_comma:=,
+sensor_empty:=
+sensor_space:=$(sensor_empty)
+
+split_sensor:=$(sort $(subst $(sensor_comma),$(sensor_space) ,$(shell echo $(SENSOR_FILE_COMPILER))))
+#$(warning $(split_sensor))
+
+sensor_macro:=$(shell echo $(split_sensor) | tr a-z A-Z)
+#$(warning $(sensor_macro))
+$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 ISPALG_DIR = ispalg/isp2.x
@@ -27,6 +45,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
+	$(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
 
 LOCAL_HEADER_LIBRARIES += jni_headers
@@ -50,6 +69,7 @@ LOCAL_SRC_FILES+= \
 	src/cmr_ipm.c \
 	src/cmr_focus.c \
 	src/exif_writer.c \
+	../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c \
 	src/jpeg_stream.c \
 	src/cmr_filter.c
 
@@ -83,9 +103,15 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/inc
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp7731e)
+	LOCAL_SRC_FILES+= src/cmr_3dnr_sw.c
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
+	LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
+else
 	LOCAL_SRC_FILES+= src/cmr_3dnr.c
+	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
 	LOCAL_SHARED_LIBRARIES += libsprd3dnr
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
@@ -110,6 +136,7 @@ LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
 LOCAL_SHARED_LIBRARIES += liblog
+LOCAL_SHARED_LIBRARIES += libyuv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb

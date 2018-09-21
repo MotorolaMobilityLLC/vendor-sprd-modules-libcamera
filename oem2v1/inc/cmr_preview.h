@@ -32,6 +32,11 @@ struct pd_raw_open {
     int dummy;
 };
 
+#define CMR_3DNR_4_3_SMALL_WIDTH 1280
+#define CMR_3DNR_4_3_SMALL_HEIGHT 960
+#define CMR_3DNR_16_9_SMALL_WIDTH 1280
+#define CMR_3DNR_16_9_SMALL_HEIGHT 720
+
 enum preview_func_type {
     PREVIEW_FUNC_START_PREVIEW = 0,
     PREVIEW_FUNC_STOP_PREVIEW,

@@ -126,11 +126,6 @@ extern "C" {
 #define CAMERA_HEIGHT(h) ((h) & ~(8 - 1))
 #define CMR_ADDR_ALIGNED(x) ((((x) + 256 - 1) >> 8) << 8)
 
-#define CMR_3DNR_4_3_SMALL_WIDTH 1280
-#define CMR_3DNR_4_3_SMALL_HEIGHT 960
-#define CMR_3DNR_16_9_SMALL_WIDTH 1280
-#define CMR_3DNR_16_9_SMALL_HEIGHT 720
-
 #define CMR_JPEG_SZIE(w, h) (cmr_u32)((w) * (h)*3 / 2)
 #define CMR_EVT_MASK_BITS                                                      \
     (cmr_u32)(CMR_EVT_GRAB_BASE | CMR_EVT_CVT_BASE | CMR_EVT_ISP_BASE |        \
@@ -1822,7 +1817,7 @@ typedef struct oem_ops {
     cmr_int (*camera_get_tuning_param)(cmr_handle camera_handle,
                                        struct tuning_param_info *tuning_info);
 #endif
-#if defined(CONFIG_ISP_2_3)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4)
     cmr_int (*camera_set_gpu_mem_ops)(cmr_handle camera_handle,
                                       void *cb_of_malloc, void *cb_of_free);
 #endif

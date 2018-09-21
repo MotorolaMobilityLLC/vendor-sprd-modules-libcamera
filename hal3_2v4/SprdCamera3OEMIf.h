@@ -61,6 +61,7 @@ extern "C" {
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
+#include <ui/GraphicBuffer.h>
 
 using namespace android;
 
@@ -101,6 +102,11 @@ typedef struct sprd_camera_memory {
     bool busy_flag;
 } sprd_camera_memory_t;
 
+typedef struct sprd_3dnr_memory {
+    sp<GraphicBuffer> bufferhandle;
+    void *private_handle;
+} sprd_3dnr_memory_t;
+
 struct ZslBufferQueue {
     camera_frame_type frame;
     sprd_camera_memory_t *heap_array;
@@ -121,6 +127,16 @@ typedef struct {
     uint32_t heapSize;
     uint32_t heapNum;
 } camera_oem_buff_info_t;
+
+typedef struct {
+    int fd;
+    int map_flag;
+    void *sg_table;
+    size_t size;
+} iommu_map_buf;
+
+#define BUF_MAPED           0xff
+#define BUF_UNMAP          0
 
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
@@ -270,6 +286,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
+    // sw 3dnr solution used
+    bool mUsingSW3DNR;               // only for blacksesame 3dnr (sw solution)
+    bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
     cmr_uint mVideo3dnrFlag;
 
   private:
@@ -485,6 +504,18 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                    cmr_s32 *fd);
     int Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                  cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                   cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRCaptureMalloc(cmr_u32 size, cmr_u32 sum,
+                                     cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                     cmr_s32 *fd, void **handle, cmr_uint width,
+                                     cmr_uint height);
+    int Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                       cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRCapturePathMalloc(cmr_u32 size, cmr_u32 sum,
+                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                         cmr_s32 *fd, void **handle,
+                                         cmr_uint width, cmr_uint height);
     int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
     int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
@@ -497,6 +528,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd,
                                void *private_data);
+    static int Callback_GPUMalloc(enum camera_mem_cb_type type,
+                                  cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
+                                  cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                  cmr_s32 *fd, void **handle, cmr_uint *width,
+                                  cmr_uint *height, void *private_data);
 
     // zsl start
     int getZSLQueueFrameNum();
@@ -567,6 +603,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_3dnr_memory_t m3DNRGraphicArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_3dnr_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
+    List<iommu_map_buf> m3DNRGraphicArrayIommuMapList;
+    List<iommu_map_buf> m3DNRGraphicPathArrayIommuMapList;
 
     sprd_camera_memory_t *mReDisplayHeap;
     // TODO: put the picture dimensions in the CameraParameters object;
@@ -651,6 +691,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mRefocusHeapNum;
     uint32_t mPdafRawHeapNum;
     uint32_t mSubRawHeapNum;
+    uint32_t m3dnrGraphicHeapNum;
+    uint32_t m3dnrGraphicPathHeapNum;
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;
@@ -690,6 +732,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mIspAntiFlickerHeapReserved;
     sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
     sprd_camera_memory_t *m3DNRPrevHeapReserverd[PRE_3DNR_NUM];
+    sprd_camera_memory_t *m3DNRPrevScaleHeapReserverd[PRE_SW_3DNR_RESERVE_NUM];
+    List<iommu_map_buf> m3DNRPrevScaleIommuMapList;
     sprd_camera_memory_t *m3DNRHeapReserverd;
     sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
 
@@ -791,6 +835,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_SPRD_LCD_FLASH
     int mResetBrightness;
 #endif
+    // grab capability
+    struct cmr_path_capability grab_capability;
     int64_t mLastCafDoneTime;
 };
 

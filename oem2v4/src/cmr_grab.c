@@ -784,6 +784,28 @@ exit:
     return ret;
 }
 
+cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
+                             struct sprd_img_3dnr_param *threednr_info) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    if (NULL == threednr_info)
+        return -1;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    //ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR, threednr_info);
+    CMR_RTN_IF_ERR(ret);
+    CMR_LOGI("SPRD_IMG_IO_SET_3DNR = %ld", ret);
+exit:
+    CMR_LOGI("ret = %ld", ret);
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -1294,7 +1316,7 @@ static void *cmr_grab_thread_proc(void *data) {
 
                 frame.channel_id = op.parm.frame.channel_id;
 
-                CMR_LOGE("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
+                CMR_LOGD("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
                          "sec %u usec %u fd 0x%x, yaddr_vir 0x%x",
                          p_grab->init_param.sensor_id, op.parm.frame.channel_id,
                          op.parm.frame.index, evt_id, op.parm.frame.sec,
