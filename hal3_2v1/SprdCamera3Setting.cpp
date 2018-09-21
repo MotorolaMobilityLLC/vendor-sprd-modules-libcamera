@@ -1868,6 +1868,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         }
     }
 
+    property_get("persist.vendor.cam.wt.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
