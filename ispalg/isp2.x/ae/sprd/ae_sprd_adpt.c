@@ -4179,6 +4179,18 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, cmr_u16 *id
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_scene_info(struct ae_ctrl_cxt *cxt,  void *param)
+{
+	if (param) {
+		struct ai_scene_detect_info *scene_info = (struct ai_scene_detect_info *) param;
+
+		memcpy(&cxt->cur_status.detect_scene, scene_info, sizeof(struct ai_scene_detect_info));
+		ISP_LOGV("done");
+	}
+
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_set_auto_hdr(struct ae_ctrl_cxt *cxt,  void *param)
 {
 	if (param) {
@@ -5740,6 +5752,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_CAP_FLAG:
 		cxt->cam_4in1_cap_flag = *(cmr_u32 *)param;
+		break;
+
+	case AE_SET_SCENE_INFO:
+		rtn = ae_set_scene_info(cxt, param);
 		break;
 
 	case AE_SET_AUTO_HDR:
