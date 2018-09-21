@@ -103,6 +103,7 @@ extern "C" {
 		AE_SET_AUTO_HDR,
 		AE_SET_CAP_FLAG,
 		AE_SET_SCENE_INFO,
+		AE_SET_APP_MODE,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

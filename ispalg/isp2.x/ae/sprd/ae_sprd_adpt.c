@@ -5764,6 +5764,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 #endif
 		break;
 
+	case AE_SET_APP_MODE:
+		cxt->app_mode = *(cmr_u32 *) param;
+		break;
+
 	default:
 		rtn = AE_ERROR;
 		break;

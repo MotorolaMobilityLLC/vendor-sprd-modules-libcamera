@@ -338,6 +338,8 @@ extern "C" {
 		/* 4in1 param */
 		cmr_u32 cam_4in1_mode;
 		cmr_u32 cam_4in1_cap_flag;
+          
+		cmr_u32 app_mode;
 	};
 
 #endif
