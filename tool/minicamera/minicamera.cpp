@@ -30,6 +30,7 @@ using namespace android;
 #define MINICAMERA_HEIGHT_MAX 3488
 #define PREVIEW_BUFF_NUM 8
 #define MINICAMERA_PARAM_NUM 4
+#define DUMP_COUNT 10
 
 #define SET_PARM(h, x, y, z)                                                   \
     do {                                                                       \
@@ -220,7 +221,7 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
 
     memset((void *)&addr_vir, 0, sizeof(addr_vir));
 
-    if (!frame) {
+    if (frame == NULL) {
         CMR_LOGI("parm4 error: null");
         return;
     }
@@ -252,28 +253,28 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
 
     addr_vir.addr_y = frame->y_vir_addr;
     addr_vir.addr_u = frame->y_vir_addr + frame->width * frame->height;
-    if (minicamera_dump_cnt < 10) {
+    if (minicamera_dump_cnt < DUMP_COUNT) {
         camera_save_yuv_to_file(minicamera_dump_cnt, IMG_DATA_TYPE_YUV420,
                                 frame->width, frame->height, &addr_vir);
         minicamera_dump_cnt++;
     }
 
-    if (oem_dev != NULL && oem_dev->ops != NULL) {
-        oem_dev->ops->camera_set_preview_buffer(
-            oem_handle, (cmr_uint)previewHeapArray[frame->buf_id]->phys_addr,
-            (cmr_uint)previewHeapArray[frame->buf_id]->data,
-            (cmr_s32)previewHeapArray[frame->buf_id]->fd);
-    } else {
+    if (oem_dev == NULL || oem_dev->ops == NULL) {
         CMR_LOGE("oem_dev is null");
         return;
     }
+
+    oem_dev->ops->camera_set_preview_buffer(
+        oem_handle, (cmr_uint)previewHeapArray[frame->buf_id]->phys_addr,
+        (cmr_uint)previewHeapArray[frame->buf_id]->data,
+        (cmr_s32)previewHeapArray[frame->buf_id]->fd);
 
     pthread_mutex_unlock(&previewlock);
 }
 
 static void free_camera_mem(sprd_camera_memory_t *memory) {
 
-    if (!memory)
+    if (memory == NULL)
         return;
 
     if (memory->ion_heap) {
@@ -651,8 +652,8 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
     CMR_LOGI("type=%d", type);
 
     pthread_mutex_lock(&previewlock);
-    if (!phy_addr || !vir_addr || !size_ptr || !sum_ptr || (0 == *size_ptr) ||
-        (0 == *sum_ptr)) {
+    if (phy_addr == NULL || vir_addr == NULL || size_ptr == NULL ||
+        sum_ptr == NULL || (0 == *size_ptr) || (0 == *sum_ptr)) {
         CMR_LOGE("alloc error 0x%lx 0x%lx 0x%lx", (cmr_uint)phy_addr,
                  (cmr_uint)vir_addr, (cmr_uint)size_ptr);
         pthread_mutex_unlock(&previewlock);
@@ -683,7 +684,7 @@ static cmr_int callback_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                              void *private_data) {
     cmr_int ret = 0;
 
-    if (!private_data || !vir_addr || !fd) {
+    if (private_data == NULL || vir_addr == NULL || fd == NULL) {
         CMR_LOGE("error param 0x%lx 0x%lx %p 0x%lx", (cmr_uint)phy_addr,
                  (cmr_uint)vir_addr, fd, (cmr_uint)private_data);
         return -1;
@@ -714,12 +715,13 @@ static int iommu_is_enabled(struct minicamera_context *cxt) {
     int ret;
     int iommuIsEnabled = 0;
 
-    if (!cxt) {
+    if (cxt == NULL) {
         CMR_LOGE("failed: input cxt is null");
         return 0;
     }
 
-    if (!cxt->oem_handle || !cxt->oem_dev || !cxt->oem_dev->ops) {
+    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL ||
+        cxt->oem_dev->ops == NULL) {
         CMR_LOGE("failed: input param is null");
         return 0;
     }
@@ -741,7 +743,7 @@ static int minicamera_init(struct minicamera_context *cxt) {
 
     memset((void *)&client_data, 0, sizeof(client_data));
 
-    if (!cxt) {
+    if (cxt == NULL) {
         CMR_LOGE("failed: input cxt is null");
         return -1;
     }
@@ -766,12 +768,13 @@ static int minicamera_startpreview(struct minicamera_context *cxt) {
     struct cmr_zoom_param zoom_param;
     struct cmr_range_fps_param fps_param;
 
-    if (!cxt) {
+    if (cxt == NULL) {
         CMR_LOGE("failed: input cxt is null");
         goto exit;
     }
 
-    if (!cxt->oem_handle || !cxt->oem_dev || !cxt->oem_dev->ops) {
+    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL ||
+        cxt->oem_dev->ops == NULL) {
         CMR_LOGE("failed: input param is null");
         goto exit;
     }
@@ -805,19 +808,42 @@ static int minicamera_startpreview(struct minicamera_context *cxt) {
 
     ret = cxt->oem_dev->ops->camera_set_mem_func(
         cxt->oem_handle, (void *)callback_malloc, (void *)callback_free, NULL);
-    if (CMR_CAMERA_SUCCESS != ret) {
+    if (ret) {
         CMR_LOGE("camera_set_mem_func failed");
         goto exit;
     }
 
     ret = cxt->oem_dev->ops->camera_start_preview(cxt->oem_handle,
                                                   CAMERA_NORMAL_MODE);
-    if (CMR_CAMERA_SUCCESS != ret) {
+    if (ret) {
         CMR_LOGE("camera_start_preview failed");
         goto exit;
     }
 
     return ret;
+
+exit:
+    return -1;
+}
+
+static int minicamera_stoppreview(struct minicamera_context *cxt) {
+
+    if (cxt == NULL) {
+        CMR_LOGE("failed: input cxt is null");
+        goto exit;
+    }
+
+    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL ||
+        cxt->oem_dev->ops == NULL) {
+        CMR_LOGE("failed: input param is null");
+        goto exit;
+    }
+
+    cxt->oem_dev->ops->camera_stop_preview(cxt->oem_handle);
+    cxt->oem_dev->ops->camera_deinit(cxt->oem_handle);
+
+    return 0;
+
 exit:
     return -1;
 }
@@ -854,8 +880,21 @@ int main(int argc, char **argv) {
     }
 
     CMR_LOGI("into finish loop!");
-    while (1)
+
+    while (1) {
+
         sleep(1);
+
+        if (minicamera_dump_cnt >= DUMP_COUNT) {
+
+            ret = minicamera_stoppreview(&cxt);
+            if (ret) {
+                CMR_LOGE("minicamera_stoppreview failed");
+                goto exit;
+            }
+            break;
+        }
+    }
 
     return ret;
 

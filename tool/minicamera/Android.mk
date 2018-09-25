@@ -26,6 +26,7 @@ LOCAL_SHARED_LIBRARIES := libcutils liblog libcamoem libcamcommon libmemion
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
+LOCAL_32_BIT_ONLY := true
 LOCAL_SRC_FILES := minicamera.cpp
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := minicamera
