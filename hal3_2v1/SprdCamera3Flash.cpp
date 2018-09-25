@@ -281,6 +281,43 @@ int32_t SprdCamera3Flash::reserveFlashForCameraForKK(const int cameraId) {
 
 }
 
+int32_t SprdCamera3Flash::releaseDisplayFlipFile(const int cameraId) {
+    int32_t retVal = 0;
+    int32_t bytes = 0;
+    char buffer[16];
+    const char *const flipFile =
+        "/sys/class/display/dispc0/disable_flip";
+    ssize_t wr_ret;
+
+    LOGV("%s : cameraId = %d", __func__, cameraId);
+
+    if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
+        LOGE("%s: Invalid camera id: %d", __func__, cameraId);
+        return -EINVAL;
+    }
+
+    LOGV("open display disable_flip interface");
+    int fd = open(flipFile, O_WRONLY);
+    /* open sysfs file parition */
+    if (-1 == fd) {
+        LOGE("Failed to open: display disable_flip interface, %s", flipFile);
+        return -EINVAL;
+    }
+
+    bytes = snprintf(buffer, sizeof(buffer), "%x\n", 0);
+    wr_ret = write(fd, buffer, bytes);
+
+    if (-1 == wr_ret) {
+        LOGE("WRITE FAILED \n");
+        retVal = -EINVAL;
+    }
+
+    close(fd);
+    LOGV("Close file");
+
+    return retVal;
+}
+
 int32_t SprdCamera3Flash::setTorchMode(const char *cameraIdStr, bool on) {
     int retVal = 0;
     if (_instance)
@@ -300,8 +337,11 @@ int32_t SprdCamera3Flash::reserveFlash(const int cameraId) {
 }
 int32_t SprdCamera3Flash::releaseFlash(const int cameraId) {
     int retVal = 0;
-    if (_instance)
+    if (_instance) {
         retVal = _instance->releaseFlashFromCamera(cameraId);
+        _instance->releaseDisplayFlipFile(cameraId);
+    }
+
     return retVal;
 }
 
