@@ -7799,6 +7799,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param = param_ptr->cmd_value;
         CMR_LOGD("af_pos %d", param_ptr->cmd_value);
         break;
+    case COM_ISP_SET_SPRD_APP_MODE:
+        isp_cmd = ISP_CTRL_SET_APP_MODE;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("set app mode id = %d", param_ptr->cmd_value);
+        break;
     case COM_ISP_GET_CNR2_PARAM:
 #ifdef CONFIG_CAMERA_CNR
         isp_cmd = ISP_CTRL_GET_CNR2_PARAM;

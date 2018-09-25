@@ -85,6 +85,7 @@ enum setting_general_type {
     SETTING_GENERAL_AF_BYPASS,
     SETTING_GENERAL_FOCUS_DISTANCE,
     SETTING_GENERAL_AUTO_HDR,
+    SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -135,6 +136,7 @@ struct setting_hal_common {
     cmr_uint af_bypass;
     cmr_uint focus_distance;
     cmr_uint is_auto_hdr;
+    cmr_uint sprd_appmode_id;
 };
 
 enum zoom_status { ZOOM_IDLE, ZOOM_UPDATING };
@@ -572,6 +574,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AF_POS, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
          COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
+         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -2127,8 +2131,8 @@ static cmr_int setting_set_appmode(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     hal_param->app_mode = parm->cmd_type_value;
-
     CMR_LOGD("setting_set_appmode=%ld", hal_param->app_mode);
+    ret = setting_set_general(cpt, SETTING_GENERAL_SPRD_APP_MODE, parm);
     return ret;
 }
 static cmr_int setting_set_cnrmode(struct setting_component *cpt,
@@ -2718,6 +2722,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     if (invalid_word != hal_param->hal_common.is_auto_hdr) {
         cmd_param.cmd_type_value = hal_param->hal_common.is_auto_hdr;
         ret = setting_set_auto_hdr(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.sprd_appmode_id) {
+        cmd_param.cmd_type_value = hal_param->hal_common.sprd_appmode_id;
+        ret = setting_set_appmode(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 

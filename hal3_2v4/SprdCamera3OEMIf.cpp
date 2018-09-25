@@ -6461,6 +6461,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
+                sprddefInfo.sprd_appmode_id);
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;

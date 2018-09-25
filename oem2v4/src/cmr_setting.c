@@ -76,6 +76,7 @@ enum setting_general_type {
     SETTING_GENERAL_SENSOR_ROTATION,
     SETTING_GENERAL_AE_LOCK_UNLOCK,
     SETTING_GENERAL_AWB_LOCK_UNLOCK,
+    SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -120,6 +121,7 @@ struct setting_hal_common {
     cmr_uint video_mode;
     cmr_uint frame_rate;
     cmr_uint auto_exposure_mode;
+    cmr_uint sprd_appmode_id;
 };
 
 enum zoom_status { ZOOM_IDLE, ZOOM_UPDATING };
@@ -525,6 +527,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AE_LOCK_UNLOCK, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
          COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
+         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -2321,6 +2325,17 @@ setting_get_sprd_filter_type(struct setting_component *cpt,
     CMR_LOGD("get sprd_filter_type = %ld", hal_param->sprd_filter_type);
     return ret;
 }
+
+static cmr_int setting_set_appmode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("setting_set_appmode=%ld", hal_param->hal_common.sprd_appmode_id);
+    ret = setting_set_general(cpt, SETTING_GENERAL_SPRD_APP_MODE, parm);
+    return ret;
+}
+
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -2399,6 +2414,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     if (invalid_word != hal_param->hal_common.scene_mode) {
         cmd_param.cmd_type_value = hal_param->hal_common.scene_mode;
         ret = setting_set_scene_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.sprd_appmode_id) {
+        cmd_param.cmd_type_value = hal_param->hal_common.sprd_appmode_id;
+        ret = setting_set_appmode(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
@@ -3452,6 +3473,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_sprd_filter_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,
                              setting_get_sprd_filter_type);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SET_APPMODE,
+                             setting_set_appmode);
     setting_parms_inited = 1;
     return 0;
 }

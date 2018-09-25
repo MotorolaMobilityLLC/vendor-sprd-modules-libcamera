@@ -7062,6 +7062,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->leds_ctrl;
         break;
 
+    case COM_ISP_SET_SPRD_APP_MODE:
+        isp_cmd = ISP_CTRL_SET_APP_MODE;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("set app mode id = %d", param_ptr->cmd_value);
+        break;
+
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -8254,6 +8260,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
+        break;
+    case CAMERA_PARAM_SPRD_SET_APPMODE:
+        setting_param.cmd_type_value = param;
+        CMR_LOGD("sprd app mode id = %d", setting_param.cmd_type_value);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                            &setting_param);
         break;
     default:
         CMR_LOGI("don't support %d", id);
