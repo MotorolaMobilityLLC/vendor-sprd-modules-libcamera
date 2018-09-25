@@ -3213,6 +3213,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
     HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
 
+    if (!mSprdZslEnabled)
+        SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);
+
     if (!initPreview()) {
         HAL_LOGE("initPreview failed.  Not starting preview.");
         deinitPreview();
