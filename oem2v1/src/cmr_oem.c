@@ -664,9 +664,8 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
                          ret);
             }
         } else {
-            ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
-                                             SENSOR_SUB2,
-                                             AL3200_CMD_BYPASS_MODE);
+            ret = cmr_sensor_set_bypass_mode(
+                cxt->sn_cxt.sensor_handle, SENSOR_SUB2, AL3200_CMD_BYPASS_MODE);
             if (ret) {
                 CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id,
                          ret);
@@ -1447,13 +1446,13 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     case ISP_AE_STAB_NOTIFY:
         CMR_LOGE("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
-        if(data != NULL){
-           ae_stab_flag = *(cmr_int*)data;
-           cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                          &ae_stab_flag);
-        }else
-           cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                          NULL);
+        if (data != NULL) {
+            ae_stab_flag = *(cmr_int *)data;
+            cxt->camera_cb(oem_cb, cxt->client_data,
+                           CAMERA_FUNC_AE_STATE_CALLBACK, &ae_stab_flag);
+        } else
+            cxt->camera_cb(oem_cb, cxt->client_data,
+                           CAMERA_FUNC_AE_STATE_CALLBACK, NULL);
         break;
     case ISP_AE_LOCK_NOTIFY:
         CMR_LOGI("ISP_AE_LOCK_NOTIFY");
@@ -1931,7 +1930,7 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
     CMR_LOGI("camera_cb %ld %ld", oem_cb_type, oem_func);
     // TBD: remove camera_frame_type and cam_ion_buffer_t, only data and size
     if (param) {
-        if (oem_cb_type == CAMERA_EVT_CB_FLUSH  ||
+        if (oem_cb_type == CAMERA_EVT_CB_FLUSH ||
             oem_cb_type == CAMERA_EVT_CB_INVALIDATE_CACHE) {
             message.data = malloc(sizeof(cam_ion_buffer_t));
             if (!message.data) {
@@ -2047,7 +2046,7 @@ cmr_u32 camera_get_cnr_flag(struct camera_context *cxt) {
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.sys.cam.cnr.mode", value, "0");
+    property_get("persist.vendor.cam.cnr.mode", value, "0");
     if (atoi(value)) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_GET_CNRMODE, &setting_param);
@@ -3602,7 +3601,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         "isp_param.is_pfc_supported =%d, "
 #endif
-        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, is_4in1_sensor=%d",
+        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
+        "is_4in1_sensor=%d",
         isp_param.is_multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
@@ -3613,7 +3613,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         isp_param.is_pfc_supported,
 #endif
-        sensor_info_ptr->image_pattern, isp_param.image_pattern, isp_param.is_4in1_sensor);
+        sensor_info_ptr->image_pattern, isp_param.image_pattern,
+        isp_param.is_4in1_sensor);
 
     CMR_PRINT_TIME;
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
@@ -6301,10 +6302,13 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
             }
         }
         sensor_info_ptr = &cxt->sn_cxt.sensor_info;
-        if(NULL != sns_ex_info_ptr->sns_binning_factor&&sns_ex_info_ptr->sns_binning_factor[sn_mode] !=0)
-            sensor_info_ptr->mode_info[sn_mode].binning_factor = sns_ex_info_ptr->sns_binning_factor[sn_mode];
+        if (NULL != sns_ex_info_ptr->sns_binning_factor &&
+            sns_ex_info_ptr->sns_binning_factor[sn_mode] != 0)
+            sensor_info_ptr->mode_info[sn_mode].binning_factor =
+                sns_ex_info_ptr->sns_binning_factor[sn_mode];
         else
-            sensor_info_ptr->mode_info[sn_mode].binning_factor = 1;//sns_ex_info_ptr->sns_binning_factor[sn_mode];
+            sensor_info_ptr->mode_info[sn_mode].binning_factor =
+                1; // sns_ex_info_ptr->sns_binning_factor[sn_mode];
         isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
         isp_param.capture_skip_num = sns_ex_info_ptr->capture_skip_num;
         CMR_LOGD("isp_param:max_gain:%d skip_num:%d",
@@ -6500,11 +6504,13 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     }
     param_ptr->cap_inf_cfg.cfg.dual_cam =
         (cxt->is_multi_mode == MODE_BOKEH) ||
-         cxt->is_multi_mode == MODE_3D_CAPTURE ||
-         cxt->is_multi_mode == MODE_3D_VIDEO ||
-         cxt->is_multi_mode == MODE_3D_CALIBRATION ||
-         cxt->is_multi_mode == MODE_3D_PREVIEW ||
-         cxt->is_multi_mode == MODE_TUNING ? 1 : 0;
+                cxt->is_multi_mode == MODE_3D_CAPTURE ||
+                cxt->is_multi_mode == MODE_3D_VIDEO ||
+                cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+                cxt->is_multi_mode == MODE_3D_PREVIEW ||
+                cxt->is_multi_mode == MODE_TUNING
+            ? 1
+            : 0;
     param_ptr->cap_inf_cfg.cfg.is_high_fps = fps_info.is_high_fps;
     param_ptr->cap_inf_cfg.cfg.high_fps_skip_num = fps_info.high_fps_skip_num;
     if (!param_ptr->is_lightly) {
@@ -8121,7 +8127,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         if (property_get_bool("persist.vendor.cam.ai.scence.enable", 0)) {
             cmr_bzero(&setting_param, sizeof(setting_param));
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                    SETTING_GET_APPMODE, &setting_param);
+                                    SETTING_GET_APPMODE, &setting_param);
             if (ret) {
                 CMR_LOGE("failed to get app mode %ld", ret);
                 goto exit;
@@ -11118,7 +11124,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     }
 
     isp_param.cmd_value = 1;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
+    ret =
+        camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
 
     ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, capture_param);
     if (ret) {
@@ -11155,7 +11162,8 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle) {
     }
 
     isp_param.cmd_value = 0;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
+    ret =
+        camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
 
 exit:
     return ret;

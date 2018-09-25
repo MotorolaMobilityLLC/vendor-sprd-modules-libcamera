@@ -639,7 +639,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             ret = reprocessInputBuffer();
             mNeededTimestamp = 0;
         } else if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
-                mTakePictureMode == SNAPSHOT_ONLY_MODE) {
+                   mTakePictureMode == SNAPSHOT_ONLY_MODE) {
             if (mHDRPlusFillState) {
                 HAL_LOGI("mHDRPlusFillState = true ");
                 ret = reprocessYuvForJpeg(mHDRPlusBackupFrm_info.yaddr,
@@ -1001,8 +1001,7 @@ int SprdCamera3OEMIf::reprocessInputBuffer() {
     return ret;
 }
 
-int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr,
-                                          cmr_uint yaddr_vir,
+int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
                                           cmr_uint fd) {
     ATRACE_CALL();
 
@@ -1080,8 +1079,8 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr,
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 
-    ret = mHalOem->ops->camera_reprocess_yuv_for_jpeg(mCameraHandle,
-            mCaptureMode, yaddr, yaddr_vir, fd);
+    ret = mHalOem->ops->camera_reprocess_yuv_for_jpeg(
+        mCameraHandle, mCaptureMode, yaddr, yaddr_vir, fd);
 
     if (CMR_CAMERA_SUCCESS != ret) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -5276,8 +5275,8 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_INVALIDATE_CACHE: {
         ion_buffer = (cam_ion_buffer_t *)parm4;
         if (ion_buffer)
-            invalidateCache(ion_buffer->fd, ion_buffer->addr_vir, ion_buffer->addr_phy,
-                            ion_buffer->size);
+            invalidateCache(ion_buffer->fd, ion_buffer->addr_vir,
+                            ion_buffer->addr_phy, ion_buffer->size);
         break;
     }
     case CAMERA_RSP_CB_SUCCESS: {
@@ -5720,8 +5719,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAwbCONTROLTag(&controlInfo);
         }
-        if(parm4 != NULL)
-        mAeStabFlag = *(int*)parm4;
+        if (parm4 != NULL)
+            mAeStabFlag = *(int *)parm4;
         HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
 #endif
@@ -6815,7 +6814,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             (0 == mMultiCameraMode) &&
             (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
             (false == mRecordingMode)) {
-            property_get("persist.sys.cam.cnr.mode", value, "0");
+            property_get("persist.vendor.cam.cnr.mode", value, "0");
             if (atoi(value)) {
                 mCNRMode = 1;
             }
@@ -9605,12 +9604,12 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
-        if(mAeStabFlag != 1){
-           mHalOem->ops->camera_set_zsl_buffer(
-           obj->mCameraHandle, zsl_frame.y_phy_addr,
-           zsl_frame.y_vir_addr, zsl_frame.fd);
-           HAL_LOGE("wait for ae stab frame");
-           continue;
+        if (mAeStabFlag != 1) {
+            mHalOem->ops->camera_set_zsl_buffer(
+                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
+                zsl_frame.fd);
+            HAL_LOGE("wait for ae stab frame");
+            continue;
         }
 
         if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
