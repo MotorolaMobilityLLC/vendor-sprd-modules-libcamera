@@ -22,7 +22,6 @@
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
@@ -34,6 +33,7 @@
 #include "sensor_ov16885_raw_param_prv_1.c"
 #include "sensor_ov16885_raw_param_cap_0.c"
 #include "sensor_ov16885_raw_param_cap_1.c"
+#include "sensor_ov16885_raw_param_cap_2.c"
 #include "sensor_ov16885_raw_param_video_0.c"
 #include "sensor_ov16885_raw_param_video_1.c"
 #include "sensor_ov16885_raw_param_video_2.c"
@@ -46,7 +46,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.0501 */
+/* IspToolVersion=D1.18.1601 */
 
 
 /* Capture Sizes:
@@ -162,7 +162,7 @@ static struct sensor_raw_info s_ov16885_mipi_raw_info=
 		{NULL, 0},
 		{s_ov16885_tune_info_cap_0, sizeof(s_ov16885_tune_info_cap_0)},
 		{s_ov16885_tune_info_cap_1, sizeof(s_ov16885_tune_info_cap_1)},
-		{NULL, 0},
+		{s_ov16885_tune_info_cap_2, sizeof(s_ov16885_tune_info_cap_2)},
 		{NULL, 0},
 		{s_ov16885_tune_info_video_0, sizeof(s_ov16885_tune_info_video_0)},
 		{s_ov16885_tune_info_video_1, sizeof(s_ov16885_tune_info_video_1)},
@@ -180,7 +180,7 @@ static struct sensor_raw_info s_ov16885_mipi_raw_info=
 		NULL,
 		&s_ov16885_fix_info_cap_0,
 		&s_ov16885_fix_info_cap_1,
-		NULL,
+		&s_ov16885_fix_info_cap_2,
 		NULL,
 		&s_ov16885_fix_info_video_0,
 		&s_ov16885_fix_info_video_1,
@@ -195,7 +195,7 @@ static struct sensor_raw_info s_ov16885_mipi_raw_info=
 		{NULL, 0},
 		{s_ov16885_cap_0_tool_ui_input, sizeof(s_ov16885_cap_0_tool_ui_input)},
 		{s_ov16885_cap_1_tool_ui_input, sizeof(s_ov16885_cap_1_tool_ui_input)},
-		{NULL, 0},
+		{s_ov16885_cap_2_tool_ui_input, sizeof(s_ov16885_cap_2_tool_ui_input)},
 		{NULL, 0},
 		{s_ov16885_video_0_tool_ui_input, sizeof(s_ov16885_video_0_tool_ui_input)},
 		{s_ov16885_video_1_tool_ui_input, sizeof(s_ov16885_video_1_tool_ui_input)},
