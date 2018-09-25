@@ -97,4 +97,4 @@ class SprdCamera3Stream {
 
 }; // namespace sprdcamera
 
-#endif /* __QCAMERA3_STREAM_H__ */
+#endif

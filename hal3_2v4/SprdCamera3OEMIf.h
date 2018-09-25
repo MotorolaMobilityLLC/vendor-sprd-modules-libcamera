@@ -537,10 +537,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char *tmpbuf);
 
-    /* These constants reflect the number of buffers that libqcamera requires
-    for preview and raw, and need to be updated when libqcamera
-    changes.
-    */
     static const int kPreviewBufferCount = 24;
     static const int kPreviewRotBufferCount = 24;
     static const int kVideoBufferCount = 24;

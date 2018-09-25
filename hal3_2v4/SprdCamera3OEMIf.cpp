@@ -539,11 +539,6 @@ void SprdCamera3OEMIf::closeCamera() {
 #endif
 
     if (isCameraInit()) {
-        // When libqcamera detects an error, it calls camera_cb from the
-        // call to camera_stop, which would cause a deadlock if we
-        // held the mStateLock.  For this reason, we have an intermediate
-        // state SPRD_INTERNAL_STOPPING, which we use to check to see if the
-        // camera_cb was called inline.
         setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
 
         HAL_LOGI(":hal3: stopping camera");

@@ -213,4 +213,4 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
 
 }; // namespace sprdcamera
 
-#endif /* __QCAMERA_CHANNEL_H__ */
+#endif

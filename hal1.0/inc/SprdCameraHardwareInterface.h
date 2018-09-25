@@ -442,10 +442,6 @@ class SprdCameraHardware : public virtual RefBase {
     void prepareForPostProcess(void);
     void exitFromPostProcess(void);
 
-    /* These constants reflect the number of buffers that libqcamera requires
-    for preview and raw, and need to be updated when libqcamera
-    changes.
-    */
     static const int kPreviewBufferCount = 8;
     static const int kPreviewRotBufferCount = 8;
     static const int kRawBufferCount = 1;

@@ -576,11 +576,6 @@ void SprdCameraHardware::release() {
     }
 
     if (isCameraInit()) {
-        // When libqcamera detects an error, it calls camera_cb from the
-        // call to camera_stop, which would cause a deadlock if we
-        // held the mStateLock.  For this reason, we have an intermediate
-        // state SPRD_INTERNAL_STOPPING, which we use to check to see if the
-        // camera_cb was called inline.
         setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
 
         LOGI("stopping camera.");
@@ -2385,8 +2380,6 @@ SprdCameraHardware::setParametersInternal(const SprdCameraParameters &params) {
     LOGI("setParametersInternal param set OK.");
     mParamLock.unlock();
 
-    /*libqcamera only supports certain size/aspect ratios*/
-    /*find closest match that doesn't exceed app's request*/
     int width = 0, height = 0;
     int rawWidth = 0, rawHeight = 0;
     mParameters.getPreviewSize(&width, &height);
@@ -4925,11 +4918,6 @@ bool SprdCameraHardware::initPreview() {
 
     setCameraPreviewMode(isRecordingMode());
 
-    // Tell libqcamera what the preview and raw dimensions are.  We
-    // call this method even if the preview dimensions have not changed,
-    // because the picture ones may have.
-    // NOTE: if this errors out, mCameraState != SPRD_IDLE, which will be
-    // checked by the caller of this method.
     if (!setCameraDimensions()) {
         LOGE("initPreview: setCameraDimensions failed");
         return false;
@@ -5668,14 +5656,6 @@ status_t SprdCameraHardware::setCameraParameters() {
         LOGI("setCameraParameters: invaid state, preview is stoping");
         return UNKNOWN_ERROR;
     }
-
-    // Because libqcamera is broken, for the camera_set_parm() calls
-    // SprdCameraHardware camera_cb() is called synchronously,
-    // so we cannot wait on a state change.  Also, we have to unlock
-    // the mStateLock, because camera_cb() acquires it.
-
-    //	if (true != startCameraIfNecessary())
-    //		return UNKNOWN_ERROR;
 
     int min, max;
     mParameters.getPreviewFpsRange(&min, &max);

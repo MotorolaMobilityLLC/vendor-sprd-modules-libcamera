@@ -146,25 +146,6 @@ typedef enum {
     CAM_FORMAT_YUV_RAW_8BIT_UYVY,
     CAM_FORMAT_YUV_RAW_8BIT_VYUY,
 
-    /* QCOM RAW formats where data is packed into 64bit word.
-    * 8BPP: 1 64-bit word contains 8 pixels p0 - p7, where p0 is
-    *       stored at LSB.
-    * 10BPP: 1 64-bit word contains 6 pixels p0 - p5, where most
-    *       significant 4 bits are set to 0. P0 is stored at LSB.
-    * 12BPP: 1 64-bit word contains 5 pixels p0 - p4, where most
-    *       significant 4 bits are set to 0. P0 is stored at LSB. */
-    CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GBRG,
-    CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GRBG,
-    CAM_FORMAT_BAYER_QCOM_RAW_8BPP_RGGB,
-    CAM_FORMAT_BAYER_QCOM_RAW_8BPP_BGGR,
-    CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG,
-    CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GRBG,
-    CAM_FORMAT_BAYER_QCOM_RAW_10BPP_RGGB,
-    CAM_FORMAT_BAYER_QCOM_RAW_10BPP_BGGR,
-    CAM_FORMAT_BAYER_QCOM_RAW_12BPP_GBRG,
-    CAM_FORMAT_BAYER_QCOM_RAW_12BPP_GRBG,
-    CAM_FORMAT_BAYER_QCOM_RAW_12BPP_RGGB,
-    CAM_FORMAT_BAYER_QCOM_RAW_12BPP_BGGR,
     /* MIPI RAW formats based on MIPI CSI-2 specifiction.
     * 8BPP: Each pixel occupies one bytes, starting at LSB.
     *       Output with of image has no restrictons.
@@ -184,24 +165,6 @@ typedef enum {
     CAM_FORMAT_BAYER_MIPI_RAW_12BPP_GRBG,
     CAM_FORMAT_BAYER_MIPI_RAW_12BPP_RGGB,
     CAM_FORMAT_BAYER_MIPI_RAW_12BPP_BGGR,
-    /* Ideal raw formats where image data has gone through black
-    * correction, lens rolloff, demux/channel gain, bad pixel
-    * correction, and ABF.
-    * Ideal raw formats could output any of QCOM_RAW and MIPI_RAW
-    * formats, plus plain8 8bbp, plain16 800, plain16 10bpp, and
-    * plain 16 12bpp */
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_8BPP_GBRG,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_8BPP_GRBG,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_8BPP_RGGB,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_8BPP_BGGR,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_GBRG,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_GRBG,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_RGGB,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_BGGR,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP_GBRG,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP_GRBG,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP_RGGB,
-    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP_BGGR,
     CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_8BPP_GBRG,
     CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_8BPP_GRBG,
     CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_8BPP_RGGB,

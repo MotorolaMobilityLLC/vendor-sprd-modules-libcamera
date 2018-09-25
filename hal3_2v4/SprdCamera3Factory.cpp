@@ -70,7 +70,6 @@ SprdCamera3Factory::SprdCamera3Factory() {
 /*===========================================================================
  * FUNCTION   : ~SprdCamera3Factory
  *
- * DESCRIPTION: deconstructor of QCamera2Factory
  *
  * PARAMETERS : none
  *

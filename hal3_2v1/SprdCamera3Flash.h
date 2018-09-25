@@ -79,6 +79,6 @@ class SprdCamera3Flash {
     static SprdCamera3Flash *_instance;
 };
 
-}; // namespace qcamera
+};
 
 #endif /* __SPRDCAMERA_FLASH_H__ */
