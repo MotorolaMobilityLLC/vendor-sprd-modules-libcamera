@@ -670,8 +670,8 @@ const camera_info kCameraInfo[] = {
 const int camera_is_supprort [] = {
     BACK_CAMERA_SENSOR_SUPPORT,
     FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK_EXT_CAMERA_SENSOR_SUPPORT,
-    FRONT_EXT_CAMERA_SENSOR_SUPPORT,
+    BACK2_CAMERA_SENSOR_SUPPORT,
+    FRONT2_CAMERA_SENSOR_SUPPORT,
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
