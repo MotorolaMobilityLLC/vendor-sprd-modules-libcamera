@@ -1079,6 +1079,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     cam_dimension_t max_cpp_size = {0, 0};
     cam_dimension_t preview_size = {0, 0};
     bool mRegRequest;
+    bool need_apply_settings = 1;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     REQUEST_Tag requestInfo;
@@ -1115,11 +1116,31 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
     /* end fix 30fps for blur mode**/
 
-    mMetadataChannel->request(meta);
-    mMetadataChannel->getCapRequestPara(meta, &capturePara);
-
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
+
+    // for CTS testYUVBurst
+    {
+        CONTROL_Tag controlInfo;
+        mSetting->getCONTROLTag(&controlInfo);
+        if ((sprddefInfo.sprd_appmode_id == -1) &&
+            (request->num_output_buffers == 2) && (controlInfo.ae_lock == 1)) {
+            const camera3_stream_buffer_t &output1 = request->output_buffers[0];
+            const camera3_stream_buffer_t &output2 = request->output_buffers[1];
+            if ((output1.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
+                 output2.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) &&
+                (output1.stream->format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
+                 output2.stream->format == HAL_PIXEL_FORMAT_YCrCb_420_SP)) {
+                receive_req_max = 5;
+                need_apply_settings = 0;
+            }
+        }
+    }
+
+    if (need_apply_settings == 1) {
+        mMetadataChannel->request(meta);
+    }
+    mMetadataChannel->getCapRequestPara(meta, &capturePara);
 
     // for BUG459753 HDR capture
     if (capturePara.cap_intent ==

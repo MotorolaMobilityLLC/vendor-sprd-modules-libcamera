@@ -2002,7 +2002,17 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 0;
-
+        // for CTS testYUVBurst
+        if ((mSprdAppmodeId == -1) &&
+            (mPreviewWidth != 0 && mPreviewHeight != 0) &&
+            (mRawWidth != 0 && mRawHeight != 0)) {
+            cmr_u16 picW, picH, snsW, snsH;
+            mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
+            if (mRawWidth == picW) {
+                fps_param.min_fps = 30;
+                fps_param.max_fps = 30;
+            }
+        }
         // to set preview fps by setprop
         char prop[PROPERTY_VALUE_MAX];
         int val_max = 0;

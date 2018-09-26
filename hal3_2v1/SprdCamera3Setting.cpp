@@ -75,7 +75,7 @@ typedef struct {
     int64_t raw_min_duration[1];
     int32_t supported_preview_formats[4];
     int64_t processed_min_durations[1];
-    int32_t available_fps_ranges[16];
+    int32_t available_fps_ranges[18];
     camera_metadata_rational exposureCompensationStep;
     int32_t exposureCompensationRange[2];
     int32_t available_processed_sizes[16];
@@ -134,11 +134,10 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
 };
 
-static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0,0,0};
+static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
-    {"2", "lcd"}, {"1", "led"}, {"2", "flash"},
-    {"1", "none"},
+    {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
 };
 
 #if 0
@@ -197,8 +196,8 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,
-                                              24, 24, 24, 5,  30, 30, 30};
+const int32_t kavailable_fps_ranges_back[] = {
+    5, 10, 10, 10, 5, 15, 15, 15, 5, 20, 5, 24, 24, 24, 5, 30, 30, 30};
 const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,
                                                30, 15, 30, 30, 30};
 
@@ -475,7 +474,6 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #else
     {1600, 1200},
 #endif
-
 
 };
 
@@ -758,11 +756,9 @@ const uint8_t kavailable_lens_shading_map_modes[] = {
     ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF,
     ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_ON};
 
-const uint8_t kavailable_shading_modes[] = {
-    ANDROID_SHADING_MODE_OFF,
-    ANDROID_SHADING_MODE_FAST,
-    ANDROID_SHADING_MODE_HIGH_QUALITY
-    };
+const uint8_t kavailable_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
+                                            ANDROID_SHADING_MODE_FAST,
+                                            ANDROID_SHADING_MODE_HIGH_QUALITY};
 
 // Control mode
 const uint8_t kavailable_control_modes[] = {
@@ -790,13 +786,10 @@ const camera_info kCameraInfo[] = {
      0, 0, 0, 0, 0},
 };
 
-const int camera_is_supprort [] = {
-    BACK_CAMERA_SENSOR_SUPPORT,
-    FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK2_CAMERA_SENSOR_SUPPORT,
-    FRONT2_CAMERA_SENSOR_SUPPORT,
-    BACK3_CAMERA_SENSOR_SUPPORT,
-    FRONT3_CAMERA_SENSOR_SUPPORT,
+const int camera_is_supprort[] = {
+    BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
+    BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
@@ -1405,10 +1398,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
 
     if (CAMERA_SETTINGS_CONFIG_ARRAYSIZE <
-            (scaler_formats_count * stream_sizes_tbl_cnt)) {
+        (scaler_formats_count * stream_sizes_tbl_cnt)) {
         HAL_LOGE("CAMERA_SETTINGS_CONFIG_ARRAYSIZE(%d) must >= %d!!!",
-                CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
-                scaler_formats_count * stream_sizes_tbl_cnt);
+                 CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
+                 scaler_formats_count * stream_sizes_tbl_cnt);
     }
 
     cmr_u16 largest_sensor_w = 0;
@@ -1466,7 +1459,34 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
-                available_min_durations.add(stream_info[i].stream_min_duration);
+#if defined(CONFIG_CAMERA_OFFLINE) && defined(CONFIG_ISP_2_3)
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+                    if (stream_info[i].stream_sizes_tbl.width ==
+                            largest_picture_size[cameraId].width &&
+                        stream_info[i].stream_sizes_tbl.width == 4160) {
+                        HAL_LOGD("YUV 4160*3120 output in ~100ms in sharkle "
+                                 "offline so change min frame duration");
+                        available_min_durations.add(100000000L);
+                    } else if (stream_info[i].stream_sizes_tbl.width ==
+                                   largest_picture_size[cameraId].width &&
+                               stream_info[i].stream_sizes_tbl.width == 3264) {
+                        HAL_LOGD("YUV 3264*2448 output in ~66ms in sharkle "
+                                 "offline so change min frame duration");
+                        available_min_durations.add(66666670L);
+                    } else if (stream_info[i].stream_sizes_tbl.width ==
+                                   largest_picture_size[cameraId].width &&
+                               stream_info[i].stream_sizes_tbl.width == 2592) {
+                        HAL_LOGD("YUV 2592*1944 output in ~66ms in sharkle "
+                                 "offline so change min frame duration");
+                        available_min_durations.add(66666670L);
+                    } else {
+                        available_min_durations.add(
+                            stream_info[i].stream_min_duration);
+                    }
+                } else
+#endif
+                    available_min_durations.add(
+                        stream_info[i].stream_min_duration);
             }
         }
     }
@@ -1600,10 +1620,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                camera3_default_info.common.availSceneModes,
                sizeof(avail_scene_modes));
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
-        uint32_t sizeSceneModes = sizeof(avail_scene_modes) / avail_scene_modes[0];
-        if (mSensorType[cameraId] != FOURINONESENSOR && mSensorType[cameraId] != YUVSENSOR) {
-            s_setting[cameraId].controlInfo.available_scene_modes[sizeSceneModes] =
-                                            ANDROID_CONTROL_SCENE_MODE_HDR;
+        uint32_t sizeSceneModes =
+            sizeof(avail_scene_modes) / avail_scene_modes[0];
+        if (mSensorType[cameraId] != FOURINONESENSOR &&
+            mSensorType[cameraId] != YUVSENSOR) {
+            s_setting[cameraId]
+                .controlInfo.available_scene_modes[sizeSceneModes] =
+                ANDROID_CONTROL_SCENE_MODE_HDR;
         }
 #endif
     }
@@ -1730,26 +1753,20 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         kavailable_noise_reduction_modes,
         sizeof(kavailable_noise_reduction_modes));
 
-
     // Shading Mode(init static parameter)
 
-    memcpy(
-        s_setting[cameraId].shadingInfo.available_lens_shading_map_modes,
-        kavailable_lens_shading_map_modes,
-        sizeof(kavailable_lens_shading_map_modes));
-    memcpy(
-        s_setting[cameraId].shadingInfo.available_shading_modes,
-        kavailable_shading_modes,
-        sizeof(kavailable_shading_modes));
+    memcpy(s_setting[cameraId].shadingInfo.available_lens_shading_map_modes,
+           kavailable_lens_shading_map_modes,
+           sizeof(kavailable_lens_shading_map_modes));
+    memcpy(s_setting[cameraId].shadingInfo.available_shading_modes,
+           kavailable_shading_modes, sizeof(kavailable_shading_modes));
     // Control Mode(init static parameter)
     memcpy(s_setting[cameraId].controlInfo.available_modes,
            kavailable_control_modes, sizeof(kavailable_control_modes));
 
-    //Control Mode(init static parameter)
-    memcpy(
-        s_setting[cameraId].controlInfo.available_modes,
-        kavailable_control_modes,
-        sizeof(kavailable_control_modes));
+    // Control Mode(init static parameter)
+    memcpy(s_setting[cameraId].controlInfo.available_modes,
+           kavailable_control_modes, sizeof(kavailable_control_modes));
 
     // AE lock available(init static parameter)
     s_setting[cameraId].controlInfo.ae_lock_available = 1;
@@ -1826,7 +1843,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         "cameraId:%d, availabe_ai_scene:%d,  sprd_ai_scene_type_current:%d",
         cameraId, s_setting[cameraId].sprddefInfo.availabe_ai_scene,
         s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current);
-    s_setting[cameraId].sprddefInfo.availabe_sensor_type = mSensorType[cameraId];
+    s_setting[cameraId].sprddefInfo.availabe_sensor_type =
+        mSensorType[cameraId];
 
     Vector<uint8_t> available_cam_features;
 
@@ -2037,7 +2055,7 @@ int SprdCamera3Setting::initStaticMetadata(
                     ARRAY_SIZE(s_setting[cameraId].controlInfo.ae_available_fps_ranges)
        );*/
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.ae_available_fps_ranges, 2,
-                  16, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                  18, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &(s_setting[cameraId].controlInfo.ae_compensation_step),
                       1);
@@ -2225,7 +2243,8 @@ int SprdCamera3Setting::initStaticMetadata(
                         0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
                         ANDROID_SPRD_CAM_FEATURE_LIST)
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SENSORTYPE,
-                      &(s_setting[cameraId].sprddefInfo.availabe_sensor_type), 1);
+                      &(s_setting[cameraId].sprddefInfo.availabe_sensor_type),
+                      1);
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
@@ -3290,7 +3309,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         }
 
         { // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE] for still
-          // capture
+            // capture
             bool support_cap_raw = false;
             if (characteristicsInfo.exists(
                     ANDROID_REQUEST_AVAILABLE_CAPABILITIES)) {
