@@ -1263,8 +1263,8 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(img_frm *src_img,
         ret = encode_exif_param.stream_real_size;
     else
         ret = UNKNOWN_ERROR;
-    property_get("vendor.cam.bokeh.dump.encode_exif", prop, "0");
-    if (atoi(prop) == 1) {
+    property_get("persist.vendor.cam.encode_dump", prop, "0");
+    if (!strcmp(prop, "encode_exif")) {
         unsigned char *vir_jpeg =
             (unsigned char *)(pic_enc_img->addr_vir.addr_y);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
@@ -1321,8 +1321,8 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
         ret = encode_exif_param.stream_real_size;
     else
         ret = UNKNOWN_ERROR;
-    property_get("vendor.cam.bokeh.dump.encode_exif", prop, "0");
-    if (atoi(prop) == 1) {
+    property_get("persist.vendor.cam.encode_dump", prop, "0");
+    if (!strcmp(prop, "encode_exif")) {
         unsigned char *vir_jpeg = (unsigned char *)(pic_vir_addr);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
                  src_img.size.width, src_img.size.height, 0, "jpegEncode");

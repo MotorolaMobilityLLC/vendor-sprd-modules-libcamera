@@ -875,7 +875,7 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.api.version", prop, "0");
+    property_get("persist.vendor.cam.bokeh.api.version", prop, "0");
     mApiVersion = atoi(prop);
     HAL_LOGD("api version %d", mApiVersion);
     if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
@@ -1281,11 +1281,11 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::arcsoftBokehPreviewHandle(
     mRealBokeh->flushIonBuffer(ADP_BUFFD(*output_buf), output_buf_addr,
                                ADP_BUFSIZE(*output_buf));
     {
-        char prop9[PROPERTY_VALUE_MAX] = {
+        char prop[PROPERTY_VALUE_MAX] = {
             0,
         };
-        property_get("persist.vendor.cam.savyuv", prop9, "0");
-        if (1 == atoi(prop9)) {
+        property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+        if (!strcmp(prop, "arcpreyuv")) {
             mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                  ADP_BUFSIZE(*output_buf),
                                  mRealBokeh->mBokehSize.preview_w,
@@ -1386,11 +1386,11 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
         mRealBokeh->mBokehAlgo->prevBluImage(srcBuffer, dstBuffer,
                                              (void *)depth_buffer);
         {
-            char prop8[PROPERTY_VALUE_MAX] = {
+            char prop[PROPERTY_VALUE_MAX] = {
                 0,
             };
-            property_get("persist.vendor.cam.bokeh8", prop8, "0");
-            if (1 == atoi(prop8)) {
+            property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+            if (!strcmp(prop, "sprdpreyuv")) {
                 mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                      ADP_BUFSIZE(*output_buf),
                                      mRealBokeh->mBokehSize.preview_w,
@@ -1623,11 +1623,11 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
     mRealBokeh->setDepthStatus(DEPTH_DONE);
 
     {
-        char prop9[PROPERTY_VALUE_MAX] = {
+        char prop[PROPERTY_VALUE_MAX] = {
             0,
         };
-        property_get("persist.vendor.cam.savyuv", prop9, "0");
-        if (1 == atoi(prop9)) {
+        property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+        if (!strcmp(prop, "predepth")) {
             mRealBokeh->dumpData((unsigned char *)mRealBokeh->mDepthBuffer
                                      .prev_depth_buffer[buffer_index]
                                      .buffer,
@@ -2294,8 +2294,8 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
     HAL_LOGD("depth run cost %lld ms", ns2ms(systemTime() - depthRun));
 exit : { // dump yuv data
 
-    property_get("persist.vendor.cam.bokeh.data", prop, "0");
-    if (1 == atoi(prop)) {
+    property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+    if (!strcmp(prop, "capdepth")) {
         // input_buf1 or left image
         mRealBokeh->dumpData(
             (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
@@ -2387,12 +2387,12 @@ int SprdCamera3RealBokeh::BokehCaptureThread::arcSoftBokehCaptureHandle(
     }
 
 exit : {
-    char prop6[PROPERTY_VALUE_MAX] = {
+    char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
 
-    property_get("persist.vendor.cam.bokeh.data", prop6, "0");
-    if (1 == atoi(prop6)) {
+    property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+    if (!strcmp(prop, "arccapyuv")) {
         // input_buf1 or left image
         mRealBokeh->dumpData(
             (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
@@ -2447,11 +2447,11 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdBokehCaptureHandle(
         input_buf1_addr, mRealBokeh->mDepthBuffer.snap_depth_buffer,
         output_buf_addr);
     {
-        char prop5[PROPERTY_VALUE_MAX] = {
+        char prop[PROPERTY_VALUE_MAX] = {
             0,
         };
-        property_get("persist.vendor.cam.bokeh.data", prop5, "0");
-        if (1 == atoi(prop5)) {
+        property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+        if (!strcmp(prop, "sprdcapyuv")) {
             mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                  ADP_BUFSIZE(*output_buf),
                                  mRealBokeh->mBokehSize.capture_w,
@@ -3546,8 +3546,8 @@ int SprdCamera3RealBokeh::thumbYuvProc(buffer_handle_t *src_buffer) {
 
     hwiMain->camera_ioctrl(CAMERA_IOCTRL_THUMB_YUV_PROC, &thumb_param, NULL);
 
-    property_get("persist.vendor.cam.bokeh.dump.thumb", prop, "0");
-    if (atoi(prop) == 1) {
+    property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+    if (!strcmp(prop, "thumb")) {
         dumpData((unsigned char *)src_img.addr_vir.addr_y, 1, src_img.buf_size,
                  src_img.rect.width, src_img.size.height, 5, "input");
         dumpData((unsigned char *)dst_img.addr_vir.addr_y, 1, dst_img.buf_size,
@@ -3567,11 +3567,11 @@ fail_map_src:
 
 void SprdCamera3RealBokeh::dumpCaptureBokeh(unsigned char *result_buffer_addr,
                                             uint32_t jpeg_size) {
-    char prop1[PROPERTY_VALUE_MAX] = {
+    char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.bokeh1", prop1, "0");
-    if (1 == atoi(prop1)) {
+    property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+    if (!strcmp(prop, "capture")) {
         uint32_t para_size = 0;
         uint32_t depth_size = 0;
         int common_num = 0;

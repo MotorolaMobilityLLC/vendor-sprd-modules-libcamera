@@ -514,7 +514,7 @@ static cmr_int _ov13855_altek_compatible_convert(cmr_handle otp_drv_handle,
         (struct sensor_otp_section_info *)&format_data->pdaf_cali_dat;
 
     /*dual camera*/
-    property_get("persist.vendor.cam.api.version", value, "0");
+    property_get("persist.vendor.cam.bokeh.api.version", value, "0");
     convert_data->dual_otp.dual_flag = 1;
     if (atoi(value) == 0) {
         convert_data->dual_otp.data_3d.data_ptr =

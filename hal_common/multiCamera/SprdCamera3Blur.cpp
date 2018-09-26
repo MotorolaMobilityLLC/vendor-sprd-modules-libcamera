@@ -1813,9 +1813,9 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
 
     switch (type) {
     case DUMP_BLUR_COMBO:
-        property_get("persist.vendor.cam.blur1", prop, "0");
+        property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if (1 == atoi(prop) && !mBlur->mFlushing && combo_buff != NULL) {
+        if (!strcmp(prop, "combo") && !mBlur->mFlushing && combo_buff != NULL) {
             buffer_base = (unsigned char *)combo_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
                                                 mBlur->mCaptureHeight * 3 / 2,
@@ -1825,9 +1825,9 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
         break;
 
     case DUMP_BLUR_OUTPUT:
-        property_get("persist.vendor.cam.blur2", prop, "0");
+        property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if (1 == atoi(prop) && combo_buff != NULL && output_buff != NULL) {
+        if (!strcmp(prop, "output") && combo_buff != NULL && output_buff != NULL) {
             buffer_base = (unsigned char *)output_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
                                                 mBlur->mCaptureHeight * 3 / 2,
@@ -1844,7 +1844,7 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
 
     case DUMP_BLUR_RESULT: {
         property_get("persist.vendor.cam.blur.dump", prop, "0");
-        if (1 != atoi(prop) || result_buff == NULL)
+        if (strcmp(prop, "result") || result_buff == NULL)
             return;
 
         uint32_t para_num = 0;
