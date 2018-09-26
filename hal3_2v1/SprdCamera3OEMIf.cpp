@@ -5396,7 +5396,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         mHalOem->ops->camera_get_sensor_result_exif_info(mCameraHandle,
                                                          &exif_pic_info);
         frame = (struct camera_frame_type *)parm4;
-        if (frame && frame->sensor_info.exposure_time_denominator == 0) {
+        if (frame) {
             frame->sensor_info.exposure_time_denominator =
                 exif_pic_info.ExposureTime.denominator;
             frame->sensor_info.exposure_time_numerator =
