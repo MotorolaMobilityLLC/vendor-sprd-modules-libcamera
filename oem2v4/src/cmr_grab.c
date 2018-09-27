@@ -376,7 +376,10 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
     sensor_if.if_type = sn_if->if_type;
     sensor_if.res[0] = IF_OPEN;
     sensor_if.img_fmt = sn_if->img_fmt;
-    sensor_if.img_ptn = sn_if->img_ptn;
+    if (sn_if->img_ptn == SENSOR_IMAGE_PATTERN_RAWRGB_MONO)
+        sensor_if.img_ptn = SENSOR_IMAGE_PATTERN_RAWRGB_B;
+    else
+        sensor_if.img_ptn = sn_if->img_ptn;
     sensor_if.frm_deci = sn_if->frm_deci;
     if (0 == sn_if->if_type) {
         /* CCIR interface */
