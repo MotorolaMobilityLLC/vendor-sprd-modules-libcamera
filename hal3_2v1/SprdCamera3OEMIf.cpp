@@ -9604,7 +9604,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
-        if (mAeStabFlag != 1) {
+        if (mMultiCameraMode != MODE_BOKEH && mAeStabFlag != 1) {
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
                 zsl_frame.fd);
