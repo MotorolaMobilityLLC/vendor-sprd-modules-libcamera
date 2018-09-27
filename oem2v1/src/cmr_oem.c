@@ -10776,6 +10776,10 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
         in_sn_ex_info->sensor_version_info;
     out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
     out_isp_sn_ex_info->pos_dis.hori2down = in_sn_ex_info->pos_dis.hori2down;
+    out_isp_sn_ex_info->color_support = in_sn_ex_info->cct_supported;
+    out_isp_sn_ex_info->fov_info.physical_size[0] = in_sn_ex_info->fov_info.physical_size[0];
+    out_isp_sn_ex_info->fov_info.physical_size[1] = in_sn_ex_info->fov_info.physical_size[1];
+    out_isp_sn_ex_info->fov_info.focal_lengths = in_sn_ex_info->fov_info.focal_lengths;
 
     return CMR_CAMERA_SUCCESS;
 }

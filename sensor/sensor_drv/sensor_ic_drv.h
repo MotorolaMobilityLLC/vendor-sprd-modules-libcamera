@@ -134,6 +134,7 @@ typedef enum {
     SENSOR_VAL_TYPE_GET_EBDLINE_INFO,
     SENSOR_VAL_TYPE_PARSE_EBD_DATA,
     SENSOR_VAL_TYPE_SET_SPC_DATA,
+    SENSOR_VAL_TYPE_GET_CCT_DATA,
     SENSOR_VAL_TYPE_4IN1_INIT,
     SENSOR_VAL_TYPE_4IN1_PROC,
     SENSOR_VAL_TYPE_4IN1_DEINIT,
@@ -248,6 +249,9 @@ struct sensor_static_info {
 
     /* Whether support ois,1:support,0:none*/
     cmr_u32 ois_supported;
+
+    /* Whether support cct,1:support,0:none*/
+    cmr_u32 cct_supported;
 
     /* Whether support pdaf,1:support,0:none*/
     cmr_u32 pdaf_supported;

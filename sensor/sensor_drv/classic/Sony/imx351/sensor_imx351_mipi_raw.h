@@ -31,6 +31,10 @@
 #include "parameters_sharkle/sensor_imx351_raw_param_main.c"
 #endif
 
+#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
+#include "../../../../ams/tcs3430/tcs_3430_drv.h"
+#endif
+
 //#include "parameters/sensor_imx351_otp_truly.h"
 
 #define SENSOR_NAME "imx351_mipi_raw"
@@ -1041,6 +1045,9 @@ static SENSOR_STATIC_INFO_T s_imx351_static_info[VENDOR_NUM] = {
                      .max_fps = 0,
                      .max_adgain = 16 * 16,
                      .ois_supported = 0,
+#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
+                     .cct_supported = 1,
+#endif
                      .pdaf_supported = SENSOR_PDAF_TYPE1_ENABLE,
                      .embedded_line_enable = 1,
                      .exp_valid_frame_num = 1,
