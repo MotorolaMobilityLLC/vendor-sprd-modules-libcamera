@@ -5002,12 +5002,16 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
-
 	if (ret) {
 		ISP_LOGE("fail to init library and ops");
 	}
-	ret = ispalg_init(cxt, &isp_alg_input);
 
+	ret = isp_br_init(cxt->camera_id, cxt);
+	if (ret) {
+		ISP_LOGE("fail to init isp bridge");
+	}
+
+	ret = ispalg_init(cxt, &isp_alg_input);
 	if (ret) {
 		goto exit;
 	}
@@ -5025,7 +5029,6 @@ exit:
 	} else {
 		*isp_alg_handle = (cmr_handle)cxt;
 		isp_dev_access_evt_reg(cxt->dev_access_handle, ispalg_dev_evt_msg, (cmr_handle) cxt);
-		isp_br_init(cxt->camera_id, cxt);
 	}
 
 	ISP_LOGI("done %ld", ret);
