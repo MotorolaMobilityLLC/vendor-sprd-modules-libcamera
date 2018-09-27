@@ -155,7 +155,7 @@ struct awb_ctrl_cxt {
 
 	/*must be the last one */
 	cmr_u32 magic_end;
-
+	cmr_u32 color_support;
 	struct awb_ae_stat master_ae_stat;
 	struct awb_ae_stat slave_ae_stat;
 	struct ai_scene_detect_info ai_scene_info;
@@ -1141,11 +1141,11 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->magic_end = AWB_CTRL_MAGIC_END;
 	cxt->flash_update_awb = 1;
 	cxt->flash_pre_state = 0;
-
+	cxt->color_support = param->color_support;
 	cxt->sensor_role = param->sensor_role;
 	cxt->is_multi_mode = param->is_multi_mode;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
-	ISP_LOGI("is_multi_mode=%d\n", param->is_multi_mode);
+	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
 
 	// paser awb otp info
 	_awb_parser_otp_info(param);
@@ -1334,6 +1334,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
 	struct awb_ctrl_calc_param param;
 	struct awb_ctrl_calc_result result;
+	struct xyz_color_info xyz_color_info;
 	UNUSED(out);
 
 	if (NULL == in) {
@@ -1474,7 +1475,27 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 
 	calc_param.bv = param.bv;
 	calc_param.iso = param.ae_info.iso;
-
+	//color sensor info
+	calc_param.xyz_info = NULL;
+	if(cxt->color_support == 1)
+	{
+		xyz_color_info.x_data = param.xyz_info.x_data;
+		xyz_color_info.y_data = param.xyz_info.y_data;
+		xyz_color_info.z_data = param.xyz_info.z_data;
+		xyz_color_info.ir_data = param.xyz_info.ir_data;
+		xyz_color_info.x_raw = param.xyz_info.x_raw;
+		xyz_color_info.y_raw = param.xyz_info.y_raw;
+		xyz_color_info.z_raw = param.xyz_info.z_raw;
+		xyz_color_info.ir_raw = param.xyz_info.ir_raw;
+		xyz_color_info.atime = 0;
+		xyz_color_info.again = 0;
+		xyz_color_info.lux = param.xyz_info.lux_data;
+		xyz_color_info.cct = param.xyz_info.cct_data;
+		calc_param.xyz_info = &xyz_color_info;
+		ISP_LOGV("color support , x:%d,y:%d,z:%d,ir:%d, xraw:%d,yraw:%d,zraw:%d,irraw:%d",
+				xyz_color_info.x_data,xyz_color_info.y_data,xyz_color_info.z_data,xyz_color_info.ir_data,
+				xyz_color_info.x_raw,xyz_color_info.y_raw,xyz_color_info.z_raw,xyz_color_info.ir_raw);
+	}
 	calc_param.ai_info = &cxt->ai_scene_info;
 	memcpy(calc_param.matrix, param.matrix, 9 * sizeof(cmr_s32));
 	memcpy(calc_param.gamma, param.gamma, 256);

@@ -200,7 +200,7 @@ extern "C" {
 		cmr_u8 sensor_role;
 		cmr_u32 is_multi_mode;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
-
+		cmr_u32 color_support;
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 	};
@@ -233,6 +233,21 @@ extern "C" {
 		cmr_s32 ev_table[16];
 	};
 
+	struct awb_ctrl_xyz_color_info {
+		cmr_u32 x_data;
+		cmr_u32 y_data;
+		cmr_u32 z_data;
+		cmr_u32 ir_data;
+		cmr_u32 x_raw;
+		cmr_u32 y_raw;
+		cmr_u32 z_raw;
+		cmr_u32 ir_raw;
+		cmr_u32 gain_data;
+		cmr_u32 atime_data;
+		cmr_u32 lux_data;
+		cmr_u32 cct_data;
+	};
+
 	struct awb_ctrl_calc_param {
 		cmr_u32 quick_mode;
 		cmr_s32 bv;
@@ -244,7 +259,7 @@ extern "C" {
 
 		struct awb_ctrl_ae_info ae_info;
 		cmr_u32 scalar_factor;
-
+		struct awb_ctrl_xyz_color_info xyz_info;
 		// just for simulation
 		cmr_s32 matrix[9];
 		cmr_u8 gamma[256];
