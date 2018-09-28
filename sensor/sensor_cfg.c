@@ -161,6 +161,9 @@ extern SENSOR_INFO_T g_sp2509v_mipi_raw_info;
 #ifdef SP8407
 extern SENSOR_INFO_T g_sp8407_mipi_raw_info;
 #endif
+#ifdef SP2509ZZ
+extern SENSOR_INFO_T g_sp2509zz_mipi_raw_info;
+#endif
 
 // samsung area
 #ifdef S5K3L8XXM3
@@ -186,6 +189,12 @@ extern SENSOR_INFO_T g_s5k5e8yx_mipi_raw_info;
 #endif
 #ifdef S5K4H9YX
 extern SENSOR_INFO_T g_s5k4h9yx_mipi_raw_info;
+#endif
+#ifdef S5K4H7
+extern SENSOR_INFO_T g_s5k4h7_mipi_raw_info;
+#endif
+#ifdef S5K3L6
+extern SENSOR_INFO_T g_s5k3l6_mipi_raw_info;
 #endif
 
 extern otp_drv_entry_t imx258_drv_entry;
@@ -373,6 +382,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef S5K4H9YX
     {MODULE_SUNNY, "s5k4h9yx", &g_s5k4h9yx_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+#ifdef S5K3L6
+    {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, &s5k5e8yx_jd_otp_entry},
+#endif
 
 // hynix area
 #ifdef HI846
@@ -445,7 +457,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef S5K5E2YA
     {MODULE_SUNNY, "s5k5e2ya", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
-
+#ifdef S5K4H7
+    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, NULL},
+#endif
 // hynix area
 #ifdef HI556
     {MODULE_SUNNY ,"hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -490,6 +504,9 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #endif
 #ifdef SP2509R
     {MODULE_SUNNY, "sp2509r", &g_sp2509r_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef SP2509ZZ
+    {MODULE_SUNNY, "sp2509zz", &g_sp2509zz_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
