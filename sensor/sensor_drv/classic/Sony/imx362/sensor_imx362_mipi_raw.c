@@ -144,7 +144,7 @@ static void imx362_drv_write_gain(cmr_handle handle, float gain) {
                         (sensor_again >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0205, sensor_again & 0xFF);
 
-    temp_gain = gain / 16;
+    temp_gain = gain / 8;
     if (temp_gain > 16.0)
         temp_gain = 16.0;
     else if (temp_gain < 1.0)
