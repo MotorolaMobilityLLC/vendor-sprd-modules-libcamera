@@ -48,7 +48,7 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#if 0                        // defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO)
+#if defined(CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO)
 #define SNAPSHOT_WIDTH 2328  // 5344
 #define SNAPSHOT_HEIGHT 1744 // 4016
 #else
@@ -1088,9 +1088,12 @@ static struct sensor_res_tab_info s_imx351_resolution_tab_raw[VENDOR_NUM] = {
           {ADDR_AND_LEN_OF_ARRAY(imx351_2328x1744_setting), PNULL, 0,
            .width = 2328, .height = 1744, .xclk_to_sensor = EX_MCLK,
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
+#ifndef CONFIG_CAMERA_SIZE_LIMIT_FOR_ANDROIDGO
           {ADDR_AND_LEN_OF_ARRAY(imx351_4656x3496_setting), PNULL, 0,
            .width = 4656, .height = 3492, .xclk_to_sensor = EX_MCLK,
-           .image_format = SENSOR_IMAGE_FORMAT_RAW}}},
+           .image_format = SENSOR_IMAGE_FORMAT_RAW}
+#endif
+         }},
 };
 
 static SENSOR_TRIM_T s_imx351_resolution_trim_tab[VENDOR_NUM] = {
