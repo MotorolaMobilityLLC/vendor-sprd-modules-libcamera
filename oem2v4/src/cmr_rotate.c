@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "cmr_rotate"
-
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "cmr_type.h"
@@ -74,7 +74,8 @@ cmr_int cmr_rot_open(cmr_handle *rot_handle) {
 
     fd = open(rot_dev_name, O_RDWR, 0);
     if (fd < 0) {
-        CMR_LOGE("Fail to open rotation device.");
+        CMR_LOGE("Fail to open rotation device. (%d) (%s)",errno,strerror(errno));
+        ret = -CMR_CAMERA_NO_SUPPORT;
         goto rot_free;
     }
 

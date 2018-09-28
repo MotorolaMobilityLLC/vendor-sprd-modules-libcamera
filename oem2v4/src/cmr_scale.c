@@ -16,6 +16,7 @@
 
 #define LOG_TAG "cmr_scale"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
+#include <errno.h>
 
 #include <cutils/trace.h>
 #include <fcntl.h>
@@ -24,6 +25,7 @@
 #include "cmr_msg.h"
 #include "cmr_cvt.h"
 #include "sprd_scale_k.h"
+
 
 #define CMR_EVT_SCALE_INIT (CMR_EVT_OEM_BASE + 16)
 #define CMR_EVT_SCALE_START (CMR_EVT_OEM_BASE + 17)
@@ -424,7 +426,8 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
 	};
 
     if (0 == time_out) {
-        CMR_LOGE("scale error: open device");
+        CMR_LOGE("scale error: open device (%d) (%s)",errno,strerror(errno));
+        ret = -CMR_CAMERA_NO_SUPPORT;
         goto free_file;
     }
 
