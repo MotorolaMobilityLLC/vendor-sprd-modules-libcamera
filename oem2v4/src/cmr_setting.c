@@ -1110,8 +1110,13 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
     struct cmr_zoom_param org_zoom;
     cmr_uint is_changed = 0;
 
-    pthread_mutex_lock(&cpt->status_lock);
-    org_zoom = hal_param->zoom_value;
+    if (parm->zoom_param.update_sync) {
+        org_zoom = hal_param->zoom_value;
+    } else {
+        pthread_mutex_lock(&cpt->status_lock);
+        org_zoom = hal_param->zoom_value;
+        pthread_mutex_unlock(&cpt->status_lock);
+    }
 
     zoom_param = parm->zoom_param;
     if (zoom_param.mode == ZOOM_LEVEL) {
@@ -1154,11 +1159,16 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
             }
         }
         /*update zoom unit after processed or not*/
+        if (parm->zoom_param.update_sync) {
         hal_param->zoom_value = zoom_param;
+        } else {
+            pthread_mutex_lock(&cpt->status_lock);
+            hal_param->zoom_value = zoom_param;
+            pthread_mutex_unlock(&cpt->status_lock);
+        }
     }
 
 setting_out:
-    pthread_mutex_unlock(&cpt->status_lock);
     return ret;
 }
 
@@ -1185,8 +1195,19 @@ static cmr_int setting_set_zoom_param(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
 
+    CMR_LOGV("parm->zoom_param.update_sync:%d, zoom ratio:%f, prev ratio:%f,"
+                      "cap ratio:%f",
+             parm->zoom_param.update_sync,
+             parm->zoom_param.zoom_info.zoom_ratio,
+             parm->zoom_param.zoom_info.prev_aspect_ratio,
+             parm->zoom_param.zoom_info.capture_aspect_ratio);
+
     pthread_mutex_lock(&cpt->status_lock);
+    if (parm->zoom_param.update_sync) {
+        ret = setting_process_zoom(cpt, parm);
+    } else {
     ret = setting_zoom_push(cpt, parm);
+    }
     pthread_mutex_unlock(&cpt->status_lock);
 
     return ret;

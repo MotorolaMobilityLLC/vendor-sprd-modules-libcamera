@@ -189,7 +189,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int start(camera_channel_type_t channel_type, uint32_t frame_number);
     int stop(camera_channel_type_t channel_type, uint32_t frame_number);
     int releasePreviewFrame(int i);
-    int setCameraConvertCropRegion(void);
+    int setCameraConvertCropRegion(bool update_sync = false);
     int CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sensorHeight,
                                 struct img_rect *cropRegion);
     inline bool isCameraInit();
@@ -291,6 +291,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mUsingSW3DNR;               // only for blacksesame 3dnr (sw solution)
     bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
     cmr_uint mVideo3dnrFlag;
+    uint32_t mRedisplayFum;
 
   private:
     inline void print_time();

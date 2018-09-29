@@ -230,7 +230,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
-      mUsingSW3DNR(false), mVideoProcessedWithPreview(false),
+      mUsingSW3DNR(false), mVideoProcessedWithPreview(false), mRedisplayFum(0),
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
       mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
@@ -820,9 +820,23 @@ int SprdCamera3OEMIf::takePicture() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
-    HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
+    HAL_LOGD("mSprdZslEnabled=%d, mCaptureMode:%d", mSprdZslEnabled,mCaptureMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
              (cmr_uint)mSprdZslEnabled);
+
+    if (mSprdAppmodeId < 0 && (mCaptureMode == CAMERA_NORMAL_MODE) &&
+        (mRawWidth != 0 && mRawHeight != 0) &&
+        (mCaptureWidth != 0 && mCaptureHeight != 0)) {
+        float capture_ratio = mCaptureWidth * 1.0 / mCaptureHeight;
+        float raw_ratio = mRawWidth * 1.0 / mRawHeight;
+        if (capture_ratio != raw_ratio) {
+            HAL_LOGD("raw and capture size ratio is not "
+                     "match, set capture ratio");
+            mSetCapRatioFlag = true;
+            setCameraConvertCropRegion(true);
+            mSetCapRatioFlag = false;
+        }
+    }
 
     setCameraPreviewFormat();
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
@@ -3337,6 +3351,20 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_MODE,
              (uint32_t)mCaptureMode);
 
+    // if raw szie ratio is not match capture size ratio, need
+    // set crop again for it might be set by takePicture.
+    if (mSprdAppmodeId < 0 && (mRawWidth != 0 && mRawHeight != 0) &&
+        (mCaptureWidth != 0 && mCaptureHeight != 0)) {
+        float capture_ratio = mCaptureWidth * 1.0 / mCaptureHeight;
+        float raw_ratio = mRawWidth * 1.0 / mRawHeight;
+        if (capture_ratio != raw_ratio) {
+            HAL_LOGD("raw and capture size ratio is not "
+                     "match, set raw ratio again");
+            mSetCapRatioFlag = false;
+            setCameraConvertCropRegion(true);
+        }
+    }
+
     HAL_LOGD("mCaptureMode=%d", mCaptureMode);
     ret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
     if (ret != CMR_CAMERA_SUCCESS) {
@@ -4210,6 +4238,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             mIsCameraClearQBuf = 0;
             goto bypass_pre;
         }
+        if (mRedisplayFum && mRedisplayFum == frame_num) {
+            HAL_LOGD("redisplay frame,skip");
+            goto bypass_pre;
+        }
         ATRACE_BEGIN("preview_frame");
 
         HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%lld", frame->fd,
@@ -4597,9 +4629,11 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
                 SprdCamera3RegularChannel *regularChannel =
                     reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
                 if (regularChannel) {
+                    if (mRedisplayFum && frame_num != mRedisplayFum) {
                     regularChannel->channelClearInvalidQBuff(
                         mPictureFrameNum, timestamp,
                         CAMERA_STREAM_TYPE_PREVIEW);
+                    }
                     regularChannel->channelClearInvalidQBuff(
                         mPictureFrameNum, timestamp,
                         CAMERA_STREAM_TYPE_CALLBACK);
@@ -5795,7 +5829,7 @@ void SprdCamera3OEMIf::setCamPreformaceScene(
     }
 }
 
-int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
+int SprdCamera3OEMIf::setCameraConvertCropRegion(bool update_sync) {
     float zoomWidth, zoomHeight, zoomRatio = 1.0f;
     float prevAspectRatio, capAspectRatio, videoAspectRatio;
     float sensorAspectRatio, outputAspectRatio;
@@ -5814,9 +5848,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     cropRegion.start_y = scaleInfo.crop_region[1];
     cropRegion.width = scaleInfo.crop_region[2];
     cropRegion.height = scaleInfo.crop_region[3];
-    HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d",
+    HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d, update_sync:%d",
              cropRegion.start_x, cropRegion.start_y, cropRegion.width,
-             cropRegion.height);
+             cropRegion.height, update_sync);
 
     mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
 
@@ -5873,6 +5907,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO)
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
 
+    mZoomInfo.update_sync = update_sync ? 1 : 0;
     mZoomInfo.mode = ZOOM_INFO;
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = prevAspectRatio;
