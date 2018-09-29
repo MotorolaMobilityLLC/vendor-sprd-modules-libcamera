@@ -38,6 +38,7 @@ namespace sprdcamera {
 #define CAM_VERYHIGH_STR "camveryhigh"
 
 SprdCameraSystemPerformance *gCamSysPer = NULL;
+int SprdCameraSystemPerformance::mCameraSessionActive = 0;
 Mutex SprdCameraSystemPerformance::sLock;
 // Error Check Macros
 #define CHECK_SYSTEMPERFORMACE()                                               \
@@ -83,8 +84,10 @@ void SprdCameraSystemPerformance::getSysPerformance(
         gCamSysPer = new SprdCameraSystemPerformance();
     }
     CHECK_SYSTEMPERFORMACE();
+
     *pgCamSysPer = gCamSysPer;
-    HAL_LOGD("gCamSysPer: %p", gCamSysPer);
+    mCameraSessionActive++;
+    HAL_LOGD("gCamSysPer: %p, mCameraSessionActive = %d", gCamSysPer, mCameraSessionActive);
 
     return;
 }
@@ -94,11 +97,14 @@ void SprdCameraSystemPerformance::freeSysPerformance(
 
     Mutex::Autolock l(&sLock);
 
-    if (gCamSysPer) {
+    if (gCamSysPer && mCameraSessionActive == 1) {
         delete gCamSysPer;
         gCamSysPer = NULL;
         *pgCamSysPer = NULL;
     }
+
+    mCameraSessionActive--;
+    HAL_LOGD("mCameraSessionActive = %d", mCameraSessionActive);
 
     return;
 }

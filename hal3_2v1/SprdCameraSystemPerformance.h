@@ -87,6 +87,7 @@ class SprdCameraSystemPerformance {
 
     int setDfsPolicy(int dfs_policy);
     int releaseDfsPolicy(int dfs_policy);
+    static int mCameraSessionActive;
     int mCameraDfsPolicyCur;
     int mCurrentPowerHint;
     bool mPowermanageInited;
