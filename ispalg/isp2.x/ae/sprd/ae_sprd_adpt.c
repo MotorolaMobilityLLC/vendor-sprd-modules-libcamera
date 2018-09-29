@@ -4103,8 +4103,7 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 	if (param) {
 		struct ae_set_ev *ev = param;
 
-		if (ev->level < AE_LEVEL_MAX) {
-			cxt->mod_update_list.is_mev = 1;
+		if (CAMERA_MODE_MANUAL == cxt->mod_update_list.is_mev) {
 			cxt->cur_status.settings.ev_index = ev->level;
 			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
@@ -4112,7 +4111,6 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
 		} else {
 			/*ev auto */
-			cxt->mod_update_list.is_mev = 0;
 			cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
 			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
@@ -5188,7 +5186,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	}
 	cxt->mod_update_list.is_miso = 0;
 
-	if (1 == cxt->mod_update_list.is_mev) {
+	if (CAMERA_MODE_MANUAL == cxt->mod_update_list.is_mev) {
 		cxt->cur_status.settings.ev_manual_status = 1;
 	} else {
 		cxt->cur_status.settings.ev_manual_status = 0;
@@ -5765,7 +5763,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 
 	case AE_SET_APP_MODE:
-		cxt->app_mode = *(cmr_u32 *) param;
+		cxt->mod_update_list.is_mev = *(cmr_u32 *) param;
 		break;
 
 	default:
