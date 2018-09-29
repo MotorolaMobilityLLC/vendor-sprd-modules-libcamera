@@ -23,7 +23,10 @@
 #ifndef SENSOR_SUCCESS
 #define SENSOR_SUCCESS 0
 #endif
+#define LC898213_POWERON_DELAY 110 // ms
 
+static int _lc898213_drv_power_on(cmr_handle sns_af_drv_handle,
+                                uint16_t power_on);
 static int _lc898213_drv_init(cmr_handle sns_af_drv_handle);
 static int lc898213_drv_create(struct af_drv_init_para *input_ptr,
                                cmr_handle *sns_af_drv_handle);
