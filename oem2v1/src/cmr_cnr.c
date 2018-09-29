@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <cutils/properties.h>
 #ifdef CONFIG_CAMERA_CNR
 
 #define LOG_TAG "cmr_sprd_cnr"
