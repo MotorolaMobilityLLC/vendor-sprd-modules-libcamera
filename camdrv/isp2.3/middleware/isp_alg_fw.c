@@ -124,6 +124,8 @@ struct af_info_t {
 	cmr_u32 sw_bypass;
 	cmr_u8 *log_af;
 	cmr_u32 log_af_size;
+	struct af_sync_info af_sync_data;
+	cmr_u32 af_supported;
 };
 
 struct aft_info_t {
@@ -2894,40 +2896,13 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 	ae_input.ebd_support = cxt->commn_cxt.ebd_support;
 
-	switch (cxt->is_multi_mode) {
-	case ISP_SINGLE: {
-		ae_input.is_multi_mode = ISP_ALG_SINGLE;
-		break;
-	}
-	case ISP_DUAL_NORMAL: {
-		ae_input.is_multi_mode = ISP_ALG_DUAL_C_C;
-		break;
-	}
-	case ISP_DUAL_SBS: {
-		ae_input.is_multi_mode = ISP_ALG_DUAL_SBS;
-		break;
-	}
-	case ISP_BOKEH: {
-		ae_input.is_multi_mode = ISP_ALG_DUAL_C_C;
-		if (cxt->is_mono_sensor) {
-			ae_input.is_multi_mode = ISP_ALG_DUAL_C_M;
-		}
-		break;
-	}
-	case ISP_WIDETELE: {
-		ae_input.is_multi_mode = ISP_ALG_DUAL_W_T;
-		break;
-	}
-	default:
-		ae_input.is_multi_mode = ISP_ALG_SINGLE;
-		break;
-	}
-	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
-		cxt->is_master, ae_input.is_multi_mode);
+	ae_input.is_multi_mode = cxt->is_multi_mode;
+	ae_input.is_master = cxt->is_master;
+	ISP_LOGI("is_master=%d, is_multi_mode=%d",
+		cxt->is_master, cxt->is_multi_mode);
 
 	if (cxt->is_multi_mode) {
 		ae_input.otp_info_ptr = cxt->otp_data;
-		ae_input.is_master = cxt->is_master;
 	}
 
 	ae_input.ptr_isp_br_ioctrl = isp_br_ioctrl;
@@ -2983,13 +2958,19 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.lib_param = cxt->lib_use_info->awb_lib_info;
 	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
 
-	param.otp_info_ptr = cxt->otp_data;
+	param.is_multi_mode = cxt->is_multi_mode;
 	param.is_master = cxt->is_master;
+	ISP_LOGI("is_master=%d, is_multi_mode=%d",
+		cxt->is_master, cxt->is_multi_mode);
+
+	param.otp_info_ptr = cxt->otp_data;
+	param.ptr_isp_br_ioctrl = isp_br_ioctrl;
 
 	if (cxt->ops.awb_ops.init) {
 		ret = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
 	}
+
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -3127,8 +3108,13 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
-	af_input.otp_info_ptr = cxt->otp_data;
+	af_input.is_multi_mode = cxt->is_multi_mode;
 	af_input.is_master = cxt->is_master;
+	ISP_LOGI("is_master=%d, is_multi_mode=%d",
+		cxt->is_master, cxt->is_multi_mode);
+
+	af_input.otp_info_ptr = cxt->otp_data;
+	af_input.br_ctrl = isp_br_ioctrl;
 
 	if (cxt->ops.af_ops.init) {
 		ret = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
@@ -3246,8 +3232,12 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 
 	//_alsc_set_param(&lsc_param);   // for LSC2.X neet to reopen
 
-	lsc_param.otp_info_ptr = cxt->otp_data;
+	lsc_param.is_multi_mode = cxt->is_multi_mode;
 	lsc_param.is_master = cxt->is_master;
+	ISP_LOGI("is_master=%d, is_multi_mode=%d",
+		cxt->is_master, cxt->is_multi_mode);
+
+	lsc_param.otp_info_ptr = cxt->otp_data;
 
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
@@ -3286,6 +3276,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 		break;
 
 	default:
+		ISP_LOGI("image_pattern %d", cxt->commn_cxt.image_pattern);
 		break;
 	}
 	//lsc_param.output_gain_pattern = lsc_param.gain_pattern;   //default setting
@@ -3293,9 +3284,6 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.output_gain_pattern = LSC_GAIN_PATTERN_GBRG;      //camdrv set output lsc pattern
 	lsc_param.change_pattern_flag = 1;                          //camdrv set pattern flag when changing lsc pattern
 	ISP_LOGV("alsc_init, gain_pattern=%d, output_gain_pattern=%d, flag=%d", lsc_param.gain_pattern, lsc_param.output_gain_pattern, lsc_param.change_pattern_flag);
-
-	lsc_param.is_master     = cxt->is_master;
-	lsc_param.is_multi_mode = cxt->is_multi_mode;
 
 	lsc_table = lsc_param.lsc_otp_table_addr;
 	if (NULL == cxt->lsc_cxt.handle) {
@@ -5013,8 +5001,13 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
+	cxt->af_cxt.af_supported = input_ptr->init_param->ex_info.af_supported;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	cxt->commn_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
+
+	ISP_LOGV("af_supported = %d, pdaf_support = %d, ebd_support = %d",
+		cxt->af_cxt.af_supported, cxt->pdaf_cxt.pdaf_support, cxt->commn_cxt.ebd_support);
+
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
@@ -5022,7 +5015,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 		ISP_LOGE("fail to init library and ops");
 	}
 
-	ret = isp_br_init(cxt->camera_id, cxt);
+	ret = isp_br_init(cxt->camera_id, cxt, cxt->is_master);
 	if (ret) {
 		ISP_LOGE("fail to init isp bridge");
 	}
