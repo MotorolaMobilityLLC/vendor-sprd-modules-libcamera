@@ -58,13 +58,23 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 
 #define CLIP(in, bottom, top) {if(in<bottom) in=bottom; if(in>top) in=top;}
 	typedef cmr_int(*io_fun) (cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ());
-
-	enum {
+	enum sensor_role_type {
+		CAM_SENSOR_MASTER = 0,
+		CAM_SENSOR_SLAVE0,
+		CAM_SENSOR_SLAVE1,
+		CAM_SENSOR_MAX,
+	};
+	enum isp_multi_mode {
 		ISP_ALG_SINGLE = 0,
-		ISP_ALG_DUAL_NORMAL,
+		ISP_ALG_DUAL_C_C,
 		ISP_ALG_DUAL_SBS,
+		ISP_ALG_BLUR_REAR,
+		ISP_ALG_DUAL_W_T,
+		ISP_ALG_DUAL_C_M,
 		ISP_ALG_CAMERA_MAX
 	};
+
+
 
 	struct isp_awb_statistic_info {
 		cmr_u32 r_info[16384];

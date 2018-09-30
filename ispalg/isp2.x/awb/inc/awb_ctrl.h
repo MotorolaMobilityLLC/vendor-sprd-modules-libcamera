@@ -193,7 +193,7 @@ extern "C" {
 		cmr_u32 param_size;
 		cmr_u32 camera_id;
 		void *priv_handle;
-
+		struct drv_fov_info fov_info;
 		/*
 		 * for dual camera sync
 		 */

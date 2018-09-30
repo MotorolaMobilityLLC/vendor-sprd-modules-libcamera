@@ -24,12 +24,13 @@
 #include "isp_adpt.h"
 #include "dlfcn.h"
 #include <cutils/properties.h>
-
+#include <math.h>
 #include "isp_awb_queue.h"
 #include "isp_debug.h"
 
 #include <utils/Timers.h>
 
+#define PI     3.14159
 #define AWB_CTRL_MAGIC_BEGIN		0xe5a55e5a
 #define AWB_CTRL_MAGIC_END		0x5e5ae5a5
 #define AWB_CTRL_RESOLUTION_NUM 	8
@@ -150,7 +151,7 @@ struct awb_ctrl_cxt {
 	cmr_u8 sensor_role;
 	cmr_u32 is_multi_mode;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
-
+	enum sensor_role_type sensor_role_type;
 	struct awb_ctrl_calc_result awb_result;
 
 	/*must be the last one */
@@ -1142,11 +1143,26 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->flash_update_awb = 1;
 	cxt->flash_pre_state = 0;
 	cxt->color_support = param->color_support;
-	cxt->sensor_role = param->sensor_role;
+	cxt->sensor_role = param->is_master;
 	cxt->is_multi_mode = param->is_multi_mode;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
 	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
-
+	if(cxt->sensor_role == 1)
+	{
+		cxt->sensor_role_type = CAM_SENSOR_MASTER;
+		#if 0
+		if(NULL != cxt->ptr_isp_br_ioctrl)
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , SET_FOV_DATA , &param->fov_info , NULL);
+		#endif
+	}
+	else
+	{
+		cxt->sensor_role_type = CAM_SENSOR_SLAVE0;
+		#if 0
+		if(NULL != cxt->ptr_isp_br_ioctrl)
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0 , SET_FOV_DATA , &param->fov_info , NULL);
+		#endif
+	}
 	// paser awb otp info
 	_awb_parser_otp_info(param);
 	pthread_mutex_init(&cxt->status_lock, NULL);
@@ -1231,7 +1247,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 
 #ifndef CONFIG_ISP_2_2
 	if (cxt->ptr_isp_br_ioctrl != NULL) {
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_OTP_AWB, &otp_info, NULL);
+		rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_OTP_AWB, &otp_info, NULL);
 	}
 #endif
 	_awb_read_gain(&s_save_awb_param[0], sizeof(s_save_awb_param) / sizeof(struct awb_save_gain));
@@ -1319,7 +1335,15 @@ cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *in, void *out)
 	ISP_LOGE("fail to deinit awb");
 	return rtn;
 }
-
+#if 0
+static void calculate_fov(void* input , float* fov)
+{
+	struct drv_fov_info *fovinfo = (struct drv_fov_info*)input;
+	*fov =  (2* atan(fovinfo->physical_size[0]/(2* fovinfo->focal_lengths))) * 180 / PI;
+	ISP_LOGV("fov info physical_size0 is:%f , focal_lengths:%f" , fovinfo->physical_size[0] , fovinfo->focal_lengths);
+	return;
+}
+#endif
 /* awb_sprd_ctrl_calculation--
 *@ handle: instance
 *@ param: input param
@@ -1351,44 +1375,56 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		return AWB_CTRL_ERROR;
 	}
 #ifndef CONFIG_ISP_2_2
-	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL)) {
+	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_C_C)) {
 		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 			struct awb_sync_info awb_sync;
-
+			#if 0
+			struct drv_fov_info fov_info;
+			#endif
 			awb_sync.stat_master_info.r_info = cxt->master_ae_stat.r_info;
 			awb_sync.stat_master_info.g_info = cxt->master_ae_stat.g_info;
 			awb_sync.stat_master_info.b_info = cxt->master_ae_stat.b_info;
 			awb_sync.stat_slave_info.r_info = cxt->slave_ae_stat.r_info;
 			awb_sync.stat_slave_info.g_info = cxt->slave_ae_stat.g_info;
 			awb_sync.stat_slave_info.b_info = cxt->slave_ae_stat.b_info;
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_STAT_AWB_DATA, NULL, awb_sync.stat_master_info.r_info);
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_STAT_AWB_DATA, NULL, awb_sync.stat_slave_info.r_info);
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_STAT_AWB_DATA, NULL, awb_sync.stat_master_info.r_info);
+			cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, GET_STAT_AWB_DATA, NULL, awb_sync.stat_slave_info.r_info);
 
 			struct awb_ctrl_gain gain_master;
 			struct awb_ctrl_gain gain_slave;
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_GAIN_AWB_DATA, NULL, &gain_master);
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_GAIN_AWB_DATA, NULL, &gain_master);
 			ISP_LOGI("awb_sync master RGB gain:%d,%d,%d.\n",gain_master.r,gain_master.g,gain_master.b);
 
 			awb_sync.stat_master_info.height = g_stat_img_size[cxt->camera_id - 2].h;
 			awb_sync.stat_master_info.width = g_stat_img_size[cxt->camera_id - 2].w;
 			awb_sync.stat_slave_info.height = g_stat_img_size[cxt->camera_id].h;
 			awb_sync.stat_slave_info.width = g_stat_img_size[cxt->camera_id].w;
+			#if 0
+			//get fov data
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_FOV_DATA , NULL, &fov_info);
+			calculate_fov(&fov_info , &awb_sync.master_fov);
+			cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , GET_FOV_DATA , NULL, &fov_info);
+			calculate_fov(&fov_info , &awb_sync.slave_fov);
+			#else
+			awb_sync.master_fov = 0.0;
+			awb_sync.slave_fov = 0.0;
+			#endif
+			ISP_LOGV("master fov:%f cameraid:%d , slave fov:%f cameraid:%d" , awb_sync.master_fov , cxt->camera_id - 1,
+						awb_sync.slave_fov , cxt->camera_id);
 
-			awb_sync.master_fov = 0;
-			awb_sync.slave_fov = 0;
 			awb_sync.master_pix_cnt = ((g_src_size[cxt->camera_id - 2].w / awb_sync.stat_master_info.width) * (g_src_size[cxt->camera_id - 2].h / awb_sync.stat_master_info.height)) / 4;
 			awb_sync.slave_pix_cnt = ((g_src_size[cxt->camera_id].w / awb_sync.stat_slave_info.width) * (g_src_size[cxt->camera_id].h / awb_sync.stat_slave_info.height)) / 4;
 
 
 			cmr_u32 slave_ct;
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_MATCH_AWB_DATA, NULL, &slave_ct );
+			cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, GET_MATCH_AWB_DATA, NULL, &slave_ct );
 			ISP_LOGV("awb_sync slave_ct:%d.\n",slave_ct);
 
 			struct sensor_otp_awb_info master_otp_info;
 			struct sensor_otp_awb_info slave_otp_info;
 
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id - 2, GET_OTP_AWB, NULL, &master_otp_info);
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_OTP_AWB, NULL, &slave_otp_info);
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_OTP_AWB, NULL, &master_otp_info);
+			cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, GET_OTP_AWB, NULL, &slave_otp_info);
 
 			awb_sync.master_gldn_stat_info.r = master_otp_info.otp_golden_r;
 			awb_sync.master_gldn_stat_info.g = master_otp_info.otp_golden_g;
@@ -1406,7 +1442,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 
 			int ret = cxt->lib_ops.awb_sync_gain(&awb_sync, gain_master.r, gain_master.g, gain_master.b, &gain_slave.r, &gain_slave.g, &gain_slave.b);
 
-			cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &gain_slave, NULL);
+			cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_GAIN_AWB_DATA, &gain_slave, NULL);
 
 			result.gain.r = gain_slave.r;
 			result.gain.g = gain_slave.g;
@@ -1659,12 +1695,12 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result.ct = cxt->output_ct;
 
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
-		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
+		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_GAIN_AWB_DATA, &result.gain, NULL);
 	}
 
-	if ((cxt->is_multi_mode == ISP_ALG_DUAL_NORMAL) && (cxt->ptr_isp_br_ioctrl != NULL)) {
-		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_GAIN_AWB_DATA, &result.gain, NULL);
-		cxt->ptr_isp_br_ioctrl(cxt->camera_id, SET_MATCH_AWB_DATA, &result.ct , NULL);
+	if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C) && (cxt->ptr_isp_br_ioctrl != NULL)) {
+		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_GAIN_AWB_DATA, &result.gain, NULL);
+		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_MATCH_AWB_DATA, &result.ct , NULL);
 	}
 
 	pthread_mutex_lock(&cxt->status_lock);
