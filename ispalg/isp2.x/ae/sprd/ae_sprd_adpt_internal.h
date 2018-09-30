@@ -305,7 +305,7 @@ extern "C" {
 		/*
 		 * for dual camera sync
 		 */
-		cmr_u8 sensor_role;
+		cmr_u8 is_master;
 		cmr_u32 is_multi_mode;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
 
