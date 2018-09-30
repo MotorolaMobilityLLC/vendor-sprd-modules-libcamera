@@ -1028,7 +1028,7 @@ ov5675_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
     property_get("debug.camera.setting", value, "0");
-    if (atoi(value) == 1) {
+    if (atoi(value) == 0) {
         sensor_ic_set_match_resolution_info(
             sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW_NEW), RES_TAB_RAW_NEW);
         sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB_NEW),

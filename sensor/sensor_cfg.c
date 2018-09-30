@@ -110,6 +110,9 @@ extern SENSOR_INFO_T g_ov7251_mipi_raw_info;
 #ifdef OV7251_DUAL
 extern SENSOR_INFO_T g_ov7251_dual_mipi_raw_info;
 #endif
+#ifdef OV12A10
+extern SENSOR_INFO_T g_ov12a10_mipi_raw_info;
+#endif
 
 // imx 258
 #ifdef IMX135
@@ -236,6 +239,7 @@ extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
 extern struct sns_af_drv_entry dw9714a_drv_entry;
 extern struct sns_af_drv_entry dw9714p_drv_entry;
+extern struct sns_af_drv_entry dw9714v_drv_entry;
 extern struct sns_af_drv_entry dw9718s_drv_entry;
 extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
@@ -333,6 +337,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #endif
 #ifdef OV16885
     {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
+#ifdef OV12A10
+    {MODULE_SUNNY, "ov12a10", &g_ov12a10_mipi_raw_info, {&dw9714v_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 
 // imx area
