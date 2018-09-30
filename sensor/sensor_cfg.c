@@ -127,6 +127,9 @@ extern SENSOR_INFO_T g_imx351_mipi_raw_info;
 #ifdef IMX362
 extern SENSOR_INFO_T g_imx362_mipi_raw_info;
 #endif
+#ifdef IMX386
+extern SENSOR_INFO_T g_imx386_mipi_raw_info;
+#endif
 
 // cista area
 #ifdef C2390
@@ -196,6 +199,15 @@ extern SENSOR_INFO_T g_s5k4h7_mipi_raw_info;
 #ifdef S5K3L6
 extern SENSOR_INFO_T g_s5k3l6_mipi_raw_info;
 #endif
+#ifdef S5K3P9SX04
+extern SENSOR_INFO_T g_s5k3p9sx04_mipi_raw_info;
+#endif
+#ifdef S5K5E9YU05
+extern SENSOR_INFO_T g_s5k5e9yu05_mipi_raw_info;
+#endif
+#ifdef S5K3M3SM24
+extern SENSOR_INFO_T g_s5k3m3sm24_mipi_raw_info;
+#endif
 
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
@@ -236,6 +248,7 @@ extern struct sns_af_drv_entry ad5823_drv_entry;
 extern struct sns_af_drv_entry vm242_drv_entry;
 extern struct sns_af_drv_entry dw9763r_drv_entry;
 extern struct sns_af_drv_entry ces6301_drv_entry;
+extern struct sns_af_drv_entry vcm_zc533_drv_entry;
 
 /**
  * NOTE: the interface can only be used by sensor ic.
@@ -330,13 +343,16 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "imx135", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef IMX230
-    {MODULE_SUNNY ,"imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef IMX351
-    {MODULE_SUNNY ,"imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+    {MODULE_SUNNY, "imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
 #endif
 #ifdef IMX362
-    {MODULE_SUNNY ,"imx362", &g_imx362_mipi_raw_info, {&lc898213_drv_entry, 0}, NULL},
+    {MODULE_SUNNY, "imx362", &g_imx362_mipi_raw_info, {&lc898213_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef IMX386
+    {MODULE_SUNNY, "imx386", &g_imx386_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 
 // cista area
@@ -371,24 +387,26 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #endif
 #endif
 #ifdef S5K3L8XXM3
-    {MODULE_SUNNY ,"s5k3l8xxm3", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "s5k3l8xxm3", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef S5K3P8SM
-    {MODULE_SUNNY ,"s5k3p8sm", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, {&s5k3p8sm_truly_drv_entry, 0, 0, 0}},
+    {MODULE_SUNNY, "s5k3p8sm", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, {&s5k3p8sm_truly_drv_entry, 0, 0, 0}},
 #endif
 #ifdef S5K5E8YX
-    {MODULE_SUNNY ,"s5k5e8yx", &g_s5k5e8yx_mipi_raw_info, {&dw9714_drv_entry, 4}, {&s5k5e8yx_jd_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+    {MODULE_SUNNY, "s5k5e8yx", &g_s5k5e8yx_mipi_raw_info, {&dw9714_drv_entry, 4}, {&s5k5e8yx_jd_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef S5K4H9YX
     {MODULE_SUNNY, "s5k4h9yx", &g_s5k4h9yx_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef S5K3L6
-    {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, &s5k5e8yx_jd_otp_entry},
+    {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, {&s5k5e8yx_jd_otp_entry, 0, 0, 0}},
 #endif
-
+#ifdef S5K3P9SX04
+    {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
 // hynix area
 #ifdef HI846
-    {MODULE_SUNNY ,"hi846", &g_hi846_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
@@ -458,11 +476,11 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "s5k5e2ya", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef S5K4H7
-    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 // hynix area
 #ifdef HI556
-    {MODULE_SUNNY ,"hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
@@ -506,7 +524,15 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
     {MODULE_SUNNY, "sp2509r", &g_sp2509r_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef SP2509ZZ
-    {MODULE_SUNNY, "sp2509zz", &g_sp2509zz_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_SUNNY, "sp2509zz", &g_sp2509zz_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
+// samsung area
+#ifdef S5K3M3SM24
+    {MODULE_SUNNY, "s5k3m3sm24", &g_s5k3m3sm24_mipi_raw_info, {&dw9714a_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef S5K5E9YU05
+    {MODULE_SUNNY, "s5k5e9yu05", &g_s5k5e9yu05_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
@@ -528,20 +554,20 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #ifdef OV7251
-        {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV7251_DUAL
-        {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 #ifdef OV7251
-            {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV7251_DUAL
-            {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
