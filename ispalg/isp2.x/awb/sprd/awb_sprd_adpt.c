@@ -540,9 +540,9 @@ static cmr_u32 _awb_get_gain_and_offset(struct awb_ctrl_cxt *cxt, void *param)
 	if (param) {
 		struct awb_gain_and_offset *awb_result = (struct awb_gain_and_offset *)param;
 
-		awb_result->gain.r = cxt->cur_gain.r;
-		awb_result->gain.g = cxt->cur_gain.g;
-		awb_result->gain.b = cxt->cur_gain.b;
+		awb_result->gain.r = cxt->output_gain.r;
+		awb_result->gain.g = cxt->output_gain.g;
+		awb_result->gain.b = cxt->output_gain.b;
 		awb_result->offset.r_offset = cxt->cur_offset.r_offset;
 		awb_result->offset.g_offset = cxt->cur_offset.g_offset;
 		awb_result->offset.b_offset = cxt->cur_offset.b_offset;
@@ -1516,16 +1516,13 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result.log_awb.log = calc_result.log_buffer;
 	result.log_awb.size = calc_result.log_size;
 	result.update_gain = cxt->flash_update_awb;
-	result.offset.r_offset = calc_result.r_offset;
-	result.offset.g_offset = calc_result.g_offset;
-	result.offset.b_offset = calc_result.b_offset;
 
 	cxt->cur_gain.r = result.gain.r;
 	cxt->cur_gain.g = result.gain.g;
 	cxt->cur_gain.b = result.gain.b;
-	cxt->cur_offset.r_offset = result.offset.r_offset;
-	cxt->cur_offset.g_offset = result.offset.g_offset;
-	cxt->cur_offset.b_offset = result.offset.b_offset;
+	cxt->cur_offset.r_offset = calc_result.r_offset;
+	cxt->cur_offset.g_offset = calc_result.g_offset;
+	cxt->cur_offset.b_offset = calc_result.b_offset;
 	cxt->cur_ct = result.ct;
 	cxt->log = calc_result.log_buffer;
 	cxt->size = calc_result.log_size;
@@ -1552,6 +1549,10 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	if (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode) {
 		cmr_u32 mawb_id = cxt->wb_mode;
 		if (AWB_CTRL_WB_MODE_AUTO != cxt->wb_mode) {
+			//set gain offset to zero
+			cxt->cur_offset.r_offset = 0;
+			cxt->cur_offset.g_offset = 0;
+			cxt->cur_offset.b_offset = 0;
 			if (mawb_id == AWB_CTRL_AWB_MODE_OFF) {
 				cxt->output_gain.r = 1024;
 				cxt->output_gain.g = 1024;
@@ -1652,6 +1653,9 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result.gain.r = cxt->output_gain.r;
 	result.gain.g = cxt->output_gain.g;
 	result.gain.b = cxt->output_gain.b;
+	result.offset.r_offset = cxt->cur_offset.r_offset;
+	result.offset.g_offset = cxt->cur_offset.g_offset;
+	result.offset.b_offset = cxt->cur_offset.b_offset;
 	result.ct = cxt->output_ct;
 
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
