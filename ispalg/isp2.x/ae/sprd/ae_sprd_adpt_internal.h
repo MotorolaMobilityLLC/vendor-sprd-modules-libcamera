@@ -334,6 +334,7 @@ extern "C" {
 		cmr_u32 glb_gain;
 		cmr_u32 ebd_support;
 		cmr_u32 ebd_stable_flag;
+		cmr_u32 ebd_flash_stable_flag;
 
 		/* 4in1 param */
 		cmr_u32 cam_4in1_mode;

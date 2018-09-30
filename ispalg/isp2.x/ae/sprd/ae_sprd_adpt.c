@@ -2737,6 +2737,8 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_BEFORE == current_status->settings.flash) {
 			cxt->send_once[0]++;
 			ISP_LOGI("ae_flash1_status shake_1");
+			if (cxt->ebd_support)
+				cxt->ebd_flash_stable_flag = 1;
 			if (cxt->cur_param->flash_control_param.pre_open_count == cxt->send_once[0]) {
 				ISP_LOGI("ae_flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_PREFLASH);
@@ -2863,6 +2865,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGI("ae_flash1_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5]= 0;
+			cxt->ebd_flash_stable_flag = 0;
 			if (0 != cxt->flash_ver) {
 				flash_finish(cxt);
 			}
@@ -5400,15 +5403,24 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 /* send STAB notify to HAL */
 	stable_flag = (cur_calc_result->ae_output.is_stab && cxt->ebd_stable_flag);
 	if(cxt->ebd_support) {
-		if (cxt->isp_ops.callback) {
+		if (cxt->ebd_flash_stable_flag) {
+			if (cxt->isp_ops.callback) {
+				cb_type = AE_CB_STAB_NOTIFY;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cxt->ebd_flash_stable_flag);
+				ISP_LOGI("ebd flash notify stable_flag %d", cxt->ebd_flash_stable_flag);
+			}
+		} else {
+			if (cxt->isp_ops.callback) {
 				cb_type = AE_CB_STAB_NOTIFY;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stable_flag);
-				ISP_LOGE("ebd notify stable_flag %d", stable_flag);
+				ISP_LOGI("ebd notify stable_flag %d", stable_flag);
+			}
 		}
 	} else {
 		if (cxt->isp_ops.callback) {
 				cb_type = AE_CB_STAB_NOTIFY;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
+				ISP_LOGI("normal notify stable_flag %d", stable_flag);
 			}
 	}
 /***********************************************************/
