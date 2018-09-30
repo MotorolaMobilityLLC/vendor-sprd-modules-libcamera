@@ -122,6 +122,9 @@ static cmr_int close_4in1(cmr_handle class_handle) {
 
     CMR_LOGD("E");
     sem_wait(&handle->sem_4in1);
+    if (handle->is_inited) {
+        handle->is_inited = 0;
+    }
 
     ret = thread_destroy_4in1(handle);
     if (ret) {
@@ -149,9 +152,14 @@ static cmr_int transfer_frame_4in1(cmr_handle class_handle,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    if (!handle->is_inited) {
+        CMR_LOGD("is_inited is 0,exit");
+        return 0;
+    }
+
     CMR_LOGD("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
     message.msg_type = CMR_EVT_4IN1_START;
-    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    message.sync_flag = CMR_MSG_SYNC_NONE;
     message.data = (void *)malloc(sizeof(struct ipm_frame_in));
     if (!message.data) {
         CMR_LOGE("No mem!");
@@ -225,6 +233,15 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
         ret = handle->common.ipm_cxt->init_in.ops.channel_reproc(oem_handle,
                                                                  &buf_cfg);
     }
+    if (is_raw_capture){
+        struct ipm_frame_out out;
+        out.dst_frame = in->src_frame;
+        out.private_data = handle->frame_in.private_data;
+        out.is_plus = 0;
+        if (handle->reg_cb) {
+            (handle->reg_cb)(IPM_TYPE_4IN1, &out);
+        }
+    }
     sem_post(&handle->sem_4in1);
 
 exit:
@@ -296,12 +313,8 @@ static cmr_int thread_destroy_4in1(struct class_4in1 *class_handle) {
 
     CMR_LOGD("E");
 
-    if (class_handle->is_inited) {
-        ret = cmr_thread_destroy(class_handle->thread_4in1);
-        class_handle->thread_4in1 = 0;
-
-        class_handle->is_inited = 0;
-    }
+    ret = cmr_thread_destroy(class_handle->thread_4in1);
+    class_handle->thread_4in1 = 0;
 
     CMR_LOGD("X");
     return ret;

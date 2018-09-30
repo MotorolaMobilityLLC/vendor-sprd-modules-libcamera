@@ -1843,6 +1843,14 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                         SNAPSHOT_EVT_3DNR_DONE, &frame);
         sem_post(&cxt->threednr_proc_sm);
+    }else if(1 == cxt->sn_cxt.info_4in1.is_4in1_supported){
+        frame = cxt->snp_cxt.cur_frm_info;
+        cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle,
+                                  &cb_param->dst_frame);
+        camera_post_share_path_available((cmr_handle)cxt);
+        cxt->ipm_cxt.frm_num = 0;
+        ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
+                                        SNAPSHOT_EVT_CHANNEL_DONE, &frame);
     }
 
     if (ret) {
@@ -11645,6 +11653,7 @@ cmr_int camera_4in1_handle(cmr_int evt, void *data, void *privdata) {
     src_param.addr_phy.addr_u = frame->uaddr;
     src_param.addr_phy.addr_v = frame->vaddr;
     ipm_in_param.src_frame = src_param;
+    ipm_in_param.private_data = privdata;
     cxt->snp_cxt.cur_frm_info = *frame;
 
     ret =
