@@ -5575,6 +5575,10 @@ cmr_int camera_start_rot(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    if (IMG_ANGLE_0 == mean->rot) {
+        CMR_LOGV("in parm angle 0, no need rotate");
+        goto exit;
+    }
     camera_take_snapshot_step(CMR_STEP_ROT_S);
     do {
         rot_param.angle = mean->rot;
@@ -10216,10 +10220,13 @@ cmr_int camera_local_redisplay_data(
         rot_param.src_img = src_img;
         rot_param.dst_img = dst_img;
         src_img.rect = rect;
+        if (IMG_ANGLE_0 == angle) {
+            CMR_LOGV("No need rotate");
+            goto exit;
+        }
         ret = cmr_rot(&rot_param);
         if (ret) {
             CMR_LOGI("failed to rotate %ld", ret);
-            goto exit;
         }
     }
 exit:
