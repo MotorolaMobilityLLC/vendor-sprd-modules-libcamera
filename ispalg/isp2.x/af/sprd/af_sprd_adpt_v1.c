@@ -1387,7 +1387,7 @@ static cmr_s32 trigger_set_mode(af_ctrl_t * af, enum aft_mode mode)
 
 static cmr_s32 trigger_start(af_ctrl_t * af)
 {
-	if(!(AF_ALG_WIDETELE == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role))
+	if(!(AF_ALG_DUAL_W_T == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role))
 		af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_CAF_RESET, NULL, NULL);
 	return 0;
 }
@@ -2544,7 +2544,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	}
 
 	ISP_LOGV("af->is_multi_mode = %d, af->sensor_role %d", af->is_multi_mode, af->sensor_role);
-	if (AF_ALG_WIDETELE == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
+	if (AF_ALG_DUAL_W_T == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
 		trigger_stop(af);
 	}
 
@@ -3432,11 +3432,17 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	//[TOF_---]
 
 	af->camera_id = init_param->camera_id;
-	af->sensor_role = init_param->sensor_role;
 	af->bridge_ctrl = init_param->br_ctrl;
+	if (AF_ALG_DUAL_W_T == af->is_multi_mode) {
+		if (1 == init_param->is_master) {
+			af->sensor_role = AF_ROLE_WIDE;
+		} else {
+			af->sensor_role = AF_ROLE_TELE;
+		}
+	}
 
-	ISP_LOGI("cameraid %d, sensor_role %d",af->camera_id, af->sensor_role);
-	ISP_LOGI("width = %d, height = %d, win_num = %d, is_multi_mode %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num, af->is_multi_mode);
+	ISP_LOGI("is_multi_mode %d, cameraid %d, sensor_role %d", af->is_multi_mode, af->camera_id, af->sensor_role);
+	ISP_LOGI("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
 	ISP_LOGV
 		("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)",
 		 af->otp_info.rdm_data.infinite_cali, af->otp_info.rdm_data.macro_cali, af->otp_info.gldn_data.infinite_cali, af->otp_info.gldn_data.macro_cali);
@@ -3592,9 +3598,9 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time0 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
-	if (af->bridge_ctrl != NULL && AF_ALG_WIDETELE == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
-		af->bridge_ctrl(af->camera_id, GET_AF_STATUS_INFO, NULL, &status_tele);
-		af->bridge_ctrl(0, GET_AF_STATUS_INFO, NULL, &status_wide);
+	if (af->bridge_ctrl != NULL && AF_ALG_DUAL_W_T == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
+		af->bridge_ctrl(AF_ROLE_WIDE, GET_AF_STATUS_INFO, NULL, &status_wide);
+		af->bridge_ctrl(AF_ROLE_TELE, GET_AF_STATUS_INFO, NULL, &status_tele);
 		ISP_LOGV("cameraid %d, mode%d, state%d, status%d, pos%d",af->camera_id, status_wide.af_mode, status_wide.af_state, status_wide.af_status, status_wide.af_position);
 
 		if (AF_SEARCHING == status_wide.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
@@ -3841,12 +3847,12 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time1 - system_time0) / 1000));
 
-	if (af->bridge_ctrl != NULL) {
+	if (af->bridge_ctrl != NULL && AF_ALG_DUAL_W_T == af->is_multi_mode) {
 		status_info.af_mode = af->request_mode;
 		status_info.af_state= af->state;
 		status_info.af_status = af->focus_state;
 		status_info.af_position = af->lens.pos;
-		af->bridge_ctrl(af->camera_id, SET_AF_STATUS_INFO, &status_info, NULL);
+		af->bridge_ctrl(af->sensor_role, SET_AF_STATUS_INFO, &status_info, NULL);
 	}
 	return rtn;
 }

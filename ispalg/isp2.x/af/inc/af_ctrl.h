@@ -30,13 +30,13 @@ extern "C" {
 
 #define MAX_AF_WINS 32
 
-	enum {
+	enum af_multi_mode {
 		AF_ALG_SINGLE = 0,
-		AF_ALG_DUAL_NORMAL,
+		AF_ALG_DUAL_C_C,
 		AF_ALG_DUAL_SBS,
 		AF_ALG_BLUR_REAR,
-		AF_ALG_BOKEH,
-		AF_ALG_WIDETELE,
+		AF_ALG_DUAL_W_T,
+		AF_ALG_DUAL_C_M,
 		AF_ALG_CAMERA_MAX
 	};
 
@@ -219,7 +219,6 @@ extern "C" {
 	};
 
 	enum af_role {
-		AF_ROLE_DEFAULT = 0x00,
 		AF_ROLE_WIDE,
 		AF_ROLE_TELE,
 		AF_ROLE_MAX
@@ -458,7 +457,7 @@ extern "C" {
 	};
 
 	typedef cmr_int(*af_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
-	typedef cmr_int(*af_ctrl_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
+	typedef cmr_int(*af_ctrl_br_ioctrl) (cmr_u32 af_roler, cmr_int cmd, void *in, void *out);
 
 	struct afctrl_init_in {
 		cmr_handle caller_handle;	// struct isp_alg_fw_context *cxt
