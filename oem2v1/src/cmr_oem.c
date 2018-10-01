@@ -2041,10 +2041,10 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
     cmr_u32 cnr_flag = 0;
 
     cnr_flag = camera_get_cnr_flag(oem_handle);
-    if(cnr_flag){
+    if (cnr_flag) {
         cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_EN, &isp_param);
-        if(ret){
+        if (ret) {
             CMR_LOGD("isp get COM_ISP_GET_CNR2_EN  failed");
             return false;
         }
@@ -2053,7 +2053,6 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
 
     return false;
 }
-
 
 cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle) {
 
@@ -3593,7 +3592,9 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
              cxt->is_multi_mode == MODE_3D_VIDEO ||
              cxt->is_multi_mode == MODE_3D_CALIBRATION ||
              cxt->is_multi_mode == MODE_3D_PREVIEW ||
-             cxt->is_multi_mode == MODE_TUNING)
+             cxt->is_multi_mode == MODE_TUNING ||
+             cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
+             cxt->is_multi_mode == MODE_DUAL_FACEID_REGISTER)
         isp_param.is_multi_mode = ISP_DUAL_NORMAL;
     else
         isp_param.is_multi_mode = ISP_SINGLE;
@@ -7840,7 +7841,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_MAX;
 #endif
         break;
-   case COM_ISP_GET_CNR2_EN:
+    case COM_ISP_GET_CNR2_EN:
         isp_cmd = ISP_CTRL_GET_CNR2_EN;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cnr2_en;

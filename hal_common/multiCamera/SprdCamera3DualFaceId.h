@@ -53,7 +53,7 @@ namespace sprdcamera {
 #define DUAL_FACEID_MAX_STREAMS 2
 #define DUAL_FACEID_BUFFER_SUM 4
 
-typedef enum { CAM_MAIN_FACE_ID = 1, CAM_AUX_FACE_ID = 3 } FaceId;
+typedef enum { CAM_MAIN_FACE_ID = 0, CAM_AUX_FACE_ID = 2 } FaceId;
 typedef enum { MAIN_BUFFER, AUX_BUFFER } buffer_type_t;
 
 class SprdCamera3DualFaceId : SprdCamera3MultiBase {

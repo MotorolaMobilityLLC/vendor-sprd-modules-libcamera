@@ -96,6 +96,10 @@ LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3SingleFaceIdRegister.cpp \
     hal_common/multiCamera/SprdCamera3SingleFaceIdUnlock.cpp
 endif
+ifeq ($(strip $(TARGET_BOARD_DUAL_FACE_UNLOCK_SUPPORT,true)
+LOCAL_SRC_FILES+= \
+    hal_common/multiCamera/SprdCamera3DualFaceId.cpp
+endif
 
 # TBD: just for hal3_2v1 now, will add this for all chips later
 ifeq ($(HAL_DIR), $(filter $(HAL_DIR), hal3_2v1 hal3_2v4))

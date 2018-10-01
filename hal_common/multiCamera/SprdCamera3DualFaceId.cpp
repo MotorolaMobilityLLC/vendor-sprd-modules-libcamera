@@ -35,7 +35,7 @@ namespace sprdcamera {
 #define PENDINGTIME (1000000)
 #define PENDINGTIMEOUT (5000000000)
 
-#define MASTER_ID 1
+#define MASTER_ID 0
 
 SprdCamera3DualFaceId *mFaceId = NULL;
 
@@ -503,8 +503,8 @@ int SprdCamera3DualFaceId::cameraDeviceOpen(int camera_id,
     int i = 0;
     uint32_t Phy_id = 0;
 
-    if ((MODE_DUAL_FACEID_REGISTER_ID == camera_id) ||
-        (MODE_DUAL_FACEID_UNLOCK_ID == camera_id)) {
+    if ((SPRD_DUAL_FACEID_REGISTER_ID == camera_id) ||
+        (SPRD_DUAL_FACEID_UNLOCK_ID == camera_id)) {
         mPhyCameraNum = 2;
     } else {
         HAL_LOGW("face id mode camera_id should not be %d", camera_id);
@@ -524,12 +524,12 @@ int SprdCamera3DualFaceId::cameraDeviceOpen(int camera_id,
         }
         hw_dev[i] = NULL;
 
-        if (MODE_DUAL_FACEID_REGISTER_ID == camera_id) {
-            hw->setMultiCameraMode(MODE_DUAL_FACE_REGISTER);
-            mFaceMode = MODE_DUAL_FACE_REGISTER;
-        } else if (MODE_DUAL_FACEID_UNLOCK_ID == camera_id) {
-            hw->setMultiCameraMode(MODE_DUAL_FACE_UNLOCK);
-            mFaceMode = MODE_DUAL_FACE_UNLOCK;
+        if (SPRD_DUAL_FACEID_REGISTER_ID == camera_id) {
+            hw->setMultiCameraMode(MODE_DUAL_FACEID_REGISTER);
+            mFaceMode = MODE_DUAL_FACEID_REGISTER;
+        } else if (SPRD_DUAL_FACEID_UNLOCK_ID == camera_id) {
+            hw->setMultiCameraMode(MODE_DUAL_FACEID_UNLOCK);
+            mFaceMode = MODE_DUAL_FACEID_UNLOCK;
         }
         hw->setMasterId(MASTER_ID);
         rc = hw->openCamera(&hw_dev[i]);
@@ -682,7 +682,7 @@ int SprdCamera3DualFaceId::initialize(
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
     CHECK_HWI_ERROR(hwiMain);
-    SprdCamera3MultiBase::initialize(MODE_DUAL_FACE_REGISTER, hwiMain);
+    SprdCamera3MultiBase::initialize(MODE_DUAL_FACEID_REGISTER, hwiMain);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (NO_ERROR != rc) {
@@ -764,7 +764,7 @@ int SprdCamera3DualFaceId::configureStreams(
         }
     }
     // for callback buffer
-    if (mFaceMode == MODE_DUAL_FACE_REGISTER) {
+    if (mFaceMode == MODE_DUAL_FACEID_REGISTER) {
         i = 1;
         mMainStreams[i] = *stream_list->streams[i];
         mMainStreams[i].stream_type = CAMERA3_STREAM_OUTPUT;
@@ -805,7 +805,7 @@ int SprdCamera3DualFaceId::configureStreams(
 
     camera3_stream_configuration mainconfig;
     mainconfig = *stream_list;
-    if (mFaceMode == MODE_DUAL_FACE_REGISTER) {
+    if (mFaceMode == MODE_DUAL_FACEID_REGISTER) {
         mainconfig.num_streams = DUAL_FACEID_MAX_STREAMS;
     } else {
         mainconfig.num_streams = DUAL_FACEID_MAX_STREAMS - 1;
@@ -1040,14 +1040,14 @@ int SprdCamera3DualFaceId::processCaptureRequest(
         i = 0;
         out_streams_main[i] = req->output_buffers[0];
         out_streams_main[i].stream = &mMainStreams[i];
-        if (mFaceMode == MODE_DUAL_FACE_UNLOCK) {
+        if (mFaceMode == MODE_DUAL_FACEID_UNLOCK) {
             out_streams_main[i].buffer = popBufferList(
                 mLocalBufferListMain, (camera_buffer_type_t)MAIN_BUFFER);
         }
         out_streams_main[i].status = req->output_buffers->status;
         out_streams_main[i].release_fence = -1;
         // create callback buffer
-        if (mFaceMode == MODE_DUAL_FACE_REGISTER) {
+        if (mFaceMode == MODE_DUAL_FACEID_REGISTER) {
             i++;
             out_streams_main[i].stream = &mMainStreams[i];
             out_streams_main[i].buffer = popBufferList(
@@ -1216,7 +1216,7 @@ void SprdCamera3DualFaceId::processCaptureResultMain(
     int currStreamType = getStreamType(result_buffer->stream);
     int result_buf_fd = ADP_BUFFD(*result_buffer->buffer);
     if ((DEFAULT_STREAM == currStreamType) ||
-        (mFaceMode == MODE_DUAL_FACE_UNLOCK &&
+        (mFaceMode == MODE_DUAL_FACEID_UNLOCK &&
          CALLBACK_STREAM == currStreamType)) {
         for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
             int saved_buf_fd = ADP_BUFFD(mLocalBufferMain[i].native_handle);

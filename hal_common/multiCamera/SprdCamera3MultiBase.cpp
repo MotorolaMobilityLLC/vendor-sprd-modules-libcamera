@@ -120,8 +120,8 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
 
-    if (mCameraMode == SPRD_DUAL_FACEID_REGISTER_ID ||
-        mCameraMode == SPRD_DUAL_FACEID_UNLOCK_ID) {
+    if (mCameraMode == MODE_DUAL_FACEID_REGISTER ||
+        mCameraMode == MODE_DUAL_FACEID_UNLOCK) {
         yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
     } else if (!mIommuEnabled) {
         yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
@@ -136,7 +136,8 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
 #endif
     native_handle = (native_handle_t *)graphicBuffer->handle;
 
-    if (mCameraMode == SPRD_DUAL_FACEID_REGISTER_ID) {
+    if (mCameraMode == MODE_DUAL_FACEID_REGISTER ||
+        mCameraMode == MODE_DUAL_FACEID_UNLOCK) {
         if (0 != MemIon::Get_phy_addr_from_ion(ADP_BUFFD(native_handle),
                                                &phy_addr, &buf_size)) {
             ALOGE("Get_phy_addr_from_ion error");
