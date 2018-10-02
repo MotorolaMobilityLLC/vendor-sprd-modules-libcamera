@@ -3181,6 +3181,12 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
+
+    }
+
+    if((sprddefInfo.sprd_3dnr_enabled == 1)&&(mUsingSW3DNR)){
+        mCaptureMode = CAMERA_NORMAL_MODE;
+        HAL_LOGD("SW 3DNR, using NORMAL_MODE");
     }
 #ifdef CONFIG_CAMERA_CAPTURE_NOZSL
     mSprdZslEnabled = false;
