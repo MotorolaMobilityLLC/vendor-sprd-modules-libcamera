@@ -431,8 +431,8 @@ extern "C" {
 	struct awb_sync_info {
 		struct awb_stat_sync stat_master_info;
 		struct awb_stat_sync stat_slave_info;
-		cmr_u32 master_fov;
-		cmr_u32 slave_fov;
+		float master_fov;
+		float slave_fov;
 		cmr_u32 master_pix_cnt;
 		cmr_u32 slave_pix_cnt;
 		struct awb_ctrl_rgb_otp master_gldn_stat_info;
