@@ -1520,7 +1520,7 @@ typedef enum {
 // hal and app interface
 typedef enum {
     SPRD_MULTI_CAMERA_BASE_ID = 16,
-    SPRD_3D_VIDEO_ID,
+    SPRD_3D_FACE_ID,
     SPRD_RANGE_FINDER_ID,
     SPRD_3D_CAPTURE_ID,
     SPRD_3D_CALIBRATION_ID = 20,
@@ -1537,7 +1537,7 @@ typedef enum {
     SPRD_SINGLE_FACEID_UNLOCK_ID,
     SPRD_DUAL_FACEID_REGISTER_ID,
     SPRD_DUAL_FACEID_UNLOCK_ID,
-    SPRD_3D_FACE_ID,
+    SPRD_3D_VIDEO_ID,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
