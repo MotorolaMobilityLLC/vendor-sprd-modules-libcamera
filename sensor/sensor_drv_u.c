@@ -1173,8 +1173,13 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
      * file*/
     sensor_load_idx_inf_file(sensor_cxt);
     if (sensor_cxt->sensor_identified) {
+        do {
+            if (sensor_is_support[i] &&
+                SENSOR_SUCCESS == sns_load_drv(sensor_cxt, i))
+                sensor_num++;
 
-        sns_load_drv(sensor_cxt, sensor_id);
+            i++;
+        } while (i < (int)ARRAY_SIZE(sensor_is_support));
 
         SENSOR_LOGI("sensor_id %d is identify, register OK", sensor_id);
         /*first open sensor*/
@@ -1190,7 +1195,6 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     } else {
         /* scan the devices in cfg list and find out the correct sensor driver
          */
-        sensor_num = 0;
         SENSOR_LOGI("register sensor fail, start identify");
         do {
             if (sensor_is_support[i] &&
@@ -1199,8 +1203,6 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
 
             i++;
         } while (i < (int)ARRAY_SIZE(sensor_is_support));
-
-        SENSOR_LOGI("total camera number %d", sensor_num);
 
         ret_val = sensor_open(sensor_cxt, sensor_id);
     }
@@ -2313,49 +2315,41 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
 #include <cutils/properties.h>
 
 static void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
-    char sensor_info[80] = {0};
+    char sensor_info[128] = {0};
+    char buffer[32] = {0};
     const char *const sensorInterface0 =
         "/sys/devices/virtual/misc/sprd_sensor/camera_sensor_name";
     ssize_t wr_ret;
     int fd;
     char value[PROPERTY_VALUE_MAX];
+    int i = 0;
+    cmr_u64 sensor_size = 0;
 
     property_get("persist.vendor.cam.sensor.id", value, "0");
     if (!strcmp(value, "trigger_srid")) {
-        SENSOR_LOGI("srid E\n");
-        if (sensor_cxt->sensor_list_ptr[SENSOR_MAIN] != NULL &&
-            sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info !=
-                NULL &&
-            strlen((const char *)sensor_cxt->sensor_list_ptr[SENSOR_MAIN]
-                       ->sensor_version_info) > 1)
-            sprintf(
-                sensor_info, "%s ",
-                sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info);
-        if (sensor_cxt->sensor_list_ptr[SENSOR_SUB] != NULL &&
-            sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info !=
-                NULL &&
-            strlen((const char *)sensor_cxt->sensor_list_ptr[SENSOR_SUB]
-                       ->sensor_version_info) > 1)
-            sprintf(
-                sensor_info, "%s %s ", sensor_info,
-                sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info);
-        if (sensor_cxt->sensor_list_ptr[SENSOR_MAIN2] != NULL &&
-            sensor_cxt->sensor_list_ptr[SENSOR_MAIN2]->sensor_version_info !=
-                NULL &&
-            strlen((const char *)sensor_cxt->sensor_list_ptr[SENSOR_MAIN2]
-                       ->sensor_version_info) > 1)
-            sprintf(
-                sensor_info, "%s %s ", sensor_info,
-                sensor_cxt->sensor_list_ptr[SENSOR_MAIN2]->sensor_version_info);
-        if (sensor_cxt->sensor_list_ptr[SENSOR_SUB2] != NULL &&
-            sensor_cxt->sensor_list_ptr[SENSOR_SUB2]->sensor_version_info !=
-                NULL &&
-            strlen((const char *)sensor_cxt->sensor_list_ptr[SENSOR_SUB2]
-                       ->sensor_version_info) > 1)
-            sprintf(
-                sensor_info, "%s %s ", sensor_info,
-                sensor_cxt->sensor_list_ptr[SENSOR_SUB2]->sensor_version_info);
-        SENSOR_LOGI("WRITE srid %s \n", sensor_info);
+        SENSOR_LOGV("E");
+        for (i = 0; i < SENSOR_ID_MAX; i++) {
+            if (sensor_cxt->sensor_list_ptr[i] != NULL &&
+                sensor_cxt->sensor_list_ptr[i]->sensor_version_info != NULL &&
+                strlen((const char *)sensor_cxt->sensor_list_ptr[i]
+                           ->sensor_version_info) > 1) {
+
+                sensor_size = sensor_cxt->sensor_list_ptr[i]->source_width_max *
+                              sensor_cxt->sensor_list_ptr[i]->source_height_max;
+
+                if (sensor_size >= 1000000) {
+                    sprintf(buffer, "%s %ldM \n",
+                            sensor_cxt->sensor_list_ptr[i]->sensor_version_info,
+                            sensor_size / 1000000);
+                } else {
+                    sprintf(buffer, "%s 0.%ldM \n",
+                            sensor_cxt->sensor_list_ptr[i]->sensor_version_info,
+                            sensor_size / 100000);
+                }
+                strcat(sensor_info, buffer);
+            }
+        }
+        SENSOR_LOGV("sensor_id info %s \n", sensor_info);
 
         fd = open(sensorInterface0, O_WRONLY | O_TRUNC);
         if (-1 == fd) {
@@ -2364,7 +2358,7 @@ static void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
         }
         wr_ret = write(fd, sensor_info, strlen(sensor_info));
         if (-1 == wr_ret) {
-            SENSOR_LOGE("WRITE FAILED \n");
+            SENSOR_LOGE("write sensor_info failed \n");
             close(fd);
             goto exit;
         }
@@ -2966,7 +2960,6 @@ static cmr_int sensor_ic_get_cct_data(cmr_handle handle, void *param) {
                                             (cmr_uint)&val);
     return ret;
 }
-
 
 cmr_int sensor_ic_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
