@@ -7,7 +7,7 @@
 /*multiCameraMode*/
 MODE_3D_FACE,
     /*configure virtual camera real id .*/
-    1,
+    0,
     /*How many camera to open,support max value is 4*/
     3,
     /*ion buffer info configure. set hal layer allocate memory number,width and
@@ -71,7 +71,7 @@ MODE_3D_FACE,
 
         /*camera device 0 physical info*/
         {
-            1, // camera real id
+            0, // camera real id
             1, // config_stream_num
             /*stream info*/
             {
@@ -85,7 +85,7 @@ MODE_3D_FACE,
         },
         /*camera device 1 physical info*/
         {
-            3, // camera real id
+            2, // camera real id
             1, // config_stream_num
             /*stream info*/
             {
@@ -100,7 +100,7 @@ MODE_3D_FACE,
         },
         /*camera device 2 physical info*/
         {
-            4, // camera id
+            3, // camera id
             1, // config_stream_num
             /*stream info*/
             {
@@ -249,7 +249,7 @@ MODE_3D_FACE,
                 // stream 1
                 {
                     CALLBACK_STREAM,
-                    2,
+                    3,
                     0,
                     {0, 1, 2, 0},
                     {
