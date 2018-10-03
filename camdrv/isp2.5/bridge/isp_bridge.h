@@ -18,31 +18,46 @@
 
 #include "isp_type.h"
 #include "cmr_sensor_info.h"
+#include "isp_com.h"
 #include "af_ctrl.h"
 
 #define SENSOR_NUM_MAX 4
 
 #define ISP_AEM_STAT_BLK_NUM (128 * 128)
 
-typedef cmr_int(*func_isp_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
+typedef cmr_int(*func_isp_br_ioctrl) (cmr_u32 sensor_role, cmr_int cmd, void *in, void *out);
 
 enum isp_br_ioctl_cmd {
-	SET_MATCH_AWB_DATA = 0x00,
-	GET_MATCH_AWB_DATA,
-	SET_MATCH_AE_DATA,
+	// AE
+	SET_MATCH_AE_DATA = 0x00,
 	GET_MATCH_AE_DATA,
+	SET_AEM_SYNC_STAT,
+	GET_AEM_SYNC_STAT,
+	SET_AEM_STAT_BLK_NUM,
 	SET_MATCH_BV_DATA,
 	GET_MATCH_BV_DATA,
+
+	// AWB
+	SET_MATCH_AWB_DATA,
+	GET_MATCH_AWB_DATA,
 	SET_STAT_AWB_DATA,
 	GET_STAT_AWB_DATA,
 	SET_GAIN_AWB_DATA,
 	GET_GAIN_AWB_DATA,
-	SET_MODULE_INFO,
-	GET_MODULE_INFO,
+	SET_FOV_DATA,
+	GET_FOV_DATA,
+
+	// OTP
 	SET_OTP_AE,
 	GET_OTP_AE,
 	SET_OTP_AWB,
 	GET_OTP_AWB,
+
+	SET_MODULE_INFO,
+	GET_MODULE_INFO,
+
+	GET_SLAVE_CAMERA_ID,
+
 	SET_ALL_MODULE_AND_OTP,
 	GET_ALL_MODULE_AND_OTP,
 	AE_WAIT_SEM,
@@ -51,10 +66,6 @@ enum isp_br_ioctl_cmd {
 	AWB_POST_SEM,
 	AF_WAIT_SEM,
 	AF_POST_SEM,
-	SET_AEM_SYNC_STAT,
-	GET_AEM_SYNC_STAT,
-	SET_AEM_STAT_BLK_NUM,
-	SET_AEM_STAT_SIZE,
 };
 
 struct awb_gain_data {
@@ -103,23 +114,26 @@ struct ae_match_data {
 	struct sensor_ex_exposure exp;
 };
 
+struct fov_data {
+	float physical_size[2];
+	float focal_lengths;
+};
+
 struct match_data_param {
 	struct module_info module_info;
 	struct ae_match_data ae_info[SENSOR_NUM_MAX];
 	struct awb_match_data awb_info[SENSOR_NUM_MAX];
-	struct af_status_info af_info[SENSOR_NUM_MAX];
-	void *awb_stat_data[SENSOR_NUM_MAX];
-	cmr_u32 awb_stat_data_size[SENSOR_NUM_MAX];
 	struct awb_gain_data awb_gain[SENSOR_NUM_MAX];
+	struct fov_data fov_info[SENSOR_NUM_MAX];
+	struct af_status_info af_info[SENSOR_NUM_MAX];
 	struct af_manual_info af_manual[SENSOR_NUM_MAX];
-	struct af_sync_info af_data[SENSOR_NUM_MAX];
 	cmr_u16 bv[SENSOR_NUM_MAX];
 };
 
-cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id);
-cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle);
+cmr_handle isp_br_get_slv_3a_handle(cmr_u32 camera_id);
+cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_master);
 cmr_int isp_br_deinit(cmr_u32 camera_id);
-cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
+cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out);
 cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dual_otp);
 cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dual_otp);
 #endif

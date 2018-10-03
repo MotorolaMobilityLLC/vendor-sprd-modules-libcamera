@@ -2883,7 +2883,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		break;
 
 	case ISP_DUAL_NORMAL:
-		af_input.is_multi_mode = ISP_ALG_DUAL_NORMAL;
+		af_input.is_multi_mode = ISP_ALG_DUAL_C_C;
 		break;
 
 	case ISP_DUAL_SBS:

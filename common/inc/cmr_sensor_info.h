@@ -45,6 +45,7 @@ enum sns_cmd {
     CMD_SNS_IC_DEFAULT = CMD_SNS_IC_START, /*include 256 sub IC cmd*/
     CMD_SNS_IC_WRITE_MULTI_AE,
     CMD_SNS_IC_GET_EBD_PARSE_DATA,
+    CMD_SNS_IC_GET_CCT_DATA,
 
     CMD_SNS_AF_SET_BEST_MODE = CMD_SNS_AF_START, /*include 256 sub AF cmd*/
     CMD_SNS_AF_GET_TEST_MODE,
@@ -162,6 +163,7 @@ struct sensor_ex_info {
     cmr_s8 *sensor_version_info;
     struct af_pose_dis pos_dis;
     cmr_u32 *sns_binning_factor;
+    cmr_u32 cct_supported;
 };
 
 struct sensor_raw_resolution_info_tab {
