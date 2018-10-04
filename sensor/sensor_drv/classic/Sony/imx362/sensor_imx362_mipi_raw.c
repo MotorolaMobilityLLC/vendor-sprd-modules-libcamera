@@ -798,7 +798,7 @@ static cmr_int imx362_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
 
 #if 1 // defined(CONFIG_CAMERA_ISP_DIR_3)
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x00);
 #endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
