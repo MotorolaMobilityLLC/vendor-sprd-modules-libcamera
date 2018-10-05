@@ -288,6 +288,7 @@ struct isp_alg_fw_context {
 	struct isp_mw_per_frame_cxt perCxt_req[MAX_PIPE_LINE_DEPTH];				/*perFrame request queue*/
         struct isp_mw_per_frame_cxt perCxt_res[MAX_PIPE_LINE_DEPTH + MAX_ISP_3A_OFFSET];	/*perFrame result queue.*/
 #endif
+	cmr_u32 is_mono_sensor;
 };
 
 struct isp_alg_fw_init_in {

@@ -340,6 +340,7 @@ struct isp_alg_fw_context {
 	cmr_u32 isp_work_status;
 	cmr_u32 rgb_gain_bypass;
 	struct drv_fov_info fov_info;
+	cmr_u32 is_mono_sensor;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -3201,7 +3202,35 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 	ae_input.ebd_support = cxt->ebd_cxt.ebd_support;
 
-	ae_input.is_multi_mode = cxt->is_multi_mode;
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE: {
+		ae_input.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+	case ISP_DUAL_NORMAL: {
+		ae_input.is_multi_mode = ISP_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_DUAL_SBS: {
+		ae_input.is_multi_mode = ISP_ALG_DUAL_SBS;
+		break;
+	}
+	case ISP_BOKEH: {
+		ae_input.is_multi_mode = ISP_ALG_DUAL_C_C;
+		if (cxt->is_mono_sensor) {
+			ae_input.is_multi_mode = ISP_ALG_DUAL_C_M;
+		}
+		break;
+	}
+	case ISP_WIDETELE: {
+		ae_input.is_multi_mode = ISP_ALG_DUAL_W_T;
+		break;
+	}
+	default:
+		ae_input.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+
 	ae_input.is_master = cxt->is_master;
 	ISP_LOGI("is_master=%d, is_multi_mode=%d",
 		cxt->is_master, cxt->is_multi_mode);
@@ -3263,7 +3292,35 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.lib_param = cxt->lib_use_info->awb_lib_info;
 	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
 
-	param.is_multi_mode = cxt->is_multi_mode;
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE: {
+		param.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+	case ISP_DUAL_NORMAL: {
+		param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_DUAL_SBS: {
+		param.is_multi_mode = ISP_ALG_DUAL_SBS;
+		break;
+	}
+	case ISP_BOKEH: {
+		param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		if (cxt->is_mono_sensor) {
+			param.is_multi_mode = ISP_ALG_DUAL_C_M;
+		}
+		break;
+	}
+	case ISP_WIDETELE: {
+		param.is_multi_mode = ISP_ALG_DUAL_W_T;
+		break;
+	}
+	default:
+		param.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+
 	param.is_master = cxt->is_master;
 	ISP_LOGI("is_master=%d, is_multi_mode=%d",
 		cxt->is_master, cxt->is_multi_mode);
@@ -3438,6 +3495,39 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 			af_input.toftuning_data = output.param_data[0].data_ptr;
 			af_input.toftuning_data_len = output.param_data[0].data_size;
 		}
+	}
+
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE: {
+		af_input.is_multi_mode = AF_ALG_SINGLE;
+		break;
+	}
+	case ISP_DUAL_NORMAL: {
+		af_input.is_multi_mode = AF_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_DUAL_SBS: {
+		af_input.is_multi_mode = AF_ALG_DUAL_SBS;
+		break;
+	}
+	case ISP_BLUR_REAR: {
+		af_input.is_multi_mode = AF_ALG_BLUR_REAR;
+		break;
+	}
+	case ISP_BOKEH: {
+		af_input.is_multi_mode = AF_ALG_DUAL_C_C;
+		if (cxt->is_mono_sensor) {
+			af_input.is_multi_mode = AF_ALG_DUAL_C_M;
+		}
+		break;
+	}
+	case ISP_WIDETELE: {
+		af_input.is_multi_mode = AF_ALG_DUAL_W_T;
+		break;
+	}
+	default:
+		af_input.is_multi_mode = AF_ALG_SINGLE;
+		break;
 	}
 
 	af_input.is_multi_mode = cxt->is_multi_mode;
@@ -3787,6 +3877,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	cxt->commn_cxt.image_pattern = sensor_raw_info_ptr->resolution_info_ptr->image_pattern;
 	if (cxt->commn_cxt.image_pattern == SENSOR_IMAGE_PATTERN_RAWRGB_MONO) {
 		cxt->commn_cxt.image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B;
+		cxt->is_mono_sensor = 1;
 	}
 	memcpy(cxt->commn_cxt.input_size_trim,
 		sensor_raw_info_ptr->resolution_info_ptr->tab,
@@ -5381,7 +5472,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
 
-	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
+	cxt->is_multi_mode = input_ptr->init_param->multi_mode;
 	cxt->is_master = input_ptr->init_param->is_master;
 
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;

@@ -283,6 +283,7 @@ struct isp_alg_fw_context {
 	cmr_u32 is_multi_mode;
 	struct isp_statis_info afl_stat_info;
 	cmr_handle handle_file_debug;
+	cmr_u32 is_mono_sensor;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -2894,24 +2895,35 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.ebd_support = cxt->commn_cxt.ebd_support;
 
 	switch (cxt->is_multi_mode) {
-	case ISP_SINGLE:
+	case ISP_SINGLE: {
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
 		break;
-
-	case ISP_DUAL_NORMAL:
+	}
+	case ISP_DUAL_NORMAL: {
 		ae_input.is_multi_mode = ISP_ALG_DUAL_C_C;
 		break;
-
-	case ISP_DUAL_SBS:
+	}
+	case ISP_DUAL_SBS: {
 		ae_input.is_multi_mode = ISP_ALG_DUAL_SBS;
 		break;
-
+	}
+	case ISP_BOKEH: {
+		ae_input.is_multi_mode = ISP_ALG_DUAL_C_C;
+		if (cxt->is_mono_sensor) {
+			ae_input.is_multi_mode = ISP_ALG_DUAL_C_M;
+		}
+		break;
+	}
+	case ISP_WIDETELE: {
+		ae_input.is_multi_mode = ISP_ALG_DUAL_W_T;
+		break;
+	}
 	default:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
 		break;
 	}
 	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
-		cxt->is_master, cxt->is_multi_mode);
+		cxt->is_master, ae_input.is_multi_mode);
 
 	if (cxt->is_multi_mode) {
 		ae_input.otp_info_ptr = cxt->otp_data;
@@ -3547,9 +3559,13 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	/* init sensor param */
 	cxt->ioctrl_ptr = sensor_raw_info_ptr->ioctrl_ptr;
 	cxt->commn_cxt.image_pattern = sensor_raw_info_ptr->resolution_info_ptr->image_pattern;
+	if (cxt->commn_cxt.image_pattern == SENSOR_IMAGE_PATTERN_RAWRGB_MONO) {
+		cxt->commn_cxt.image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B;
+		cxt->is_mono_sensor = 1;
+	}
 	memcpy(cxt->commn_cxt.input_size_trim,
-	       sensor_raw_info_ptr->resolution_info_ptr->tab,
-	       ISP_INPUT_SIZE_NUM_MAX * sizeof(struct sensor_raw_resolution_info));
+		sensor_raw_info_ptr->resolution_info_ptr->tab,
+		ISP_INPUT_SIZE_NUM_MAX * sizeof(struct sensor_raw_resolution_info));
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &input_ptr->size);
 
 	return ret;
@@ -4991,8 +5007,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
 
+	cxt->is_multi_mode = input_ptr->init_param->multi_mode;
 	cxt->is_master = input_ptr->init_param->is_master;
-	cxt->is_multi_mode = input_ptr->init_param->is_multi_mode;
 
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;

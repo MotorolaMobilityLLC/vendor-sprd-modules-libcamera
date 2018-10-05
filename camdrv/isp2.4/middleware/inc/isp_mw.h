@@ -384,6 +384,9 @@ enum {
 	ISP_SINGLE = 0,
 	ISP_DUAL_NORMAL,
 	ISP_DUAL_SBS,
+	ISP_BLUR_REAR,
+	ISP_BOKEH,
+	ISP_WIDETELE,
 	ISP_CAMERA_MAX
 };
 
@@ -647,6 +650,8 @@ struct isp_sensor_ex_info {
 	cmr_s8 *sensor_version_info;
 	struct af_pose_dis pos_dis;
 	cmr_u32 af_supported;
+	cmr_u32 color_support;
+	struct drv_fov_info fov_info;
 };
 
 struct isp_video_limit {
@@ -866,9 +871,8 @@ struct isp_init_param {
 
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
-	uint32_t is_multi_mode;
+	uint32_t multi_mode;
 	uint32_t is_master;
-	uint32_t sensor_role;
 	uint32_t is_4in1_sensor;
 };
 

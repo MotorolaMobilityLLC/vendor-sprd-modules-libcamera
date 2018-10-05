@@ -3047,27 +3047,27 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     }
 
     if (cxt->is_multi_mode == MODE_SBS)
-        isp_param.is_multi_mode = ISP_DUAL_SBS;
+        isp_param.multi_mode = ISP_DUAL_SBS;
     else if (cxt->is_multi_mode == MODE_BOKEH ||
              cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM ||
              cxt->is_multi_mode == MODE_3D_CAPTURE ||
              cxt->is_multi_mode == MODE_3D_VIDEO ||
              cxt->is_multi_mode == MODE_3D_PREVIEW ||
              cxt->is_multi_mode == MODE_TUNING)
-        isp_param.is_multi_mode = ISP_DUAL_NORMAL;
+        isp_param.multi_mode = ISP_DUAL_NORMAL;
     else
-        isp_param.is_multi_mode = ISP_SINGLE;
+        isp_param.multi_mode = ISP_SINGLE;
 
     if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
 
     CMR_LOGI(
-        "cxt->is_multi_mode=%d, isp_param.is_multi_mode=%d, ex_info: f_num=%d, "
+        "cxt->is_multi_mode=%d, isp_param.multi_mode=%d, ex_info: f_num=%d, "
         "focal_length=%d, max_fps=%d, max_adgain=%d, ois_supported=%d, "
         "pdaf_supported=%d, exp_valid_frame_num=%d, clamp_level=%d, "
         "adgain_valid_frame_num=%d, prev_skip_num=%d, cap_skip_num=%d, w=%d, "
         "h=%d, sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d",
-        cxt->is_multi_mode, isp_param.is_multi_mode, isp_param.ex_info.f_num,
+        cxt->is_multi_mode, isp_param.multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
         isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,

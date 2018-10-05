@@ -3584,24 +3584,32 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.ex_info.af_supported = 0;
 
-    if (cxt->is_multi_mode == MODE_SBS)
-        isp_param.is_multi_mode = ISP_DUAL_SBS;
-    else if (cxt->is_multi_mode == MODE_BOKEH ||
-             cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM ||
-             cxt->is_multi_mode == MODE_3D_CAPTURE ||
+    property_get("persist.sys.cam.ba.blur.version", value, "0");
+
+    if (cxt->is_multi_mode == MODE_SBS) {
+        isp_param.multi_mode = ISP_DUAL_SBS;
+    } else if (cxt->is_multi_mode == MODE_3D_CAPTURE ||
              cxt->is_multi_mode == MODE_3D_VIDEO ||
              cxt->is_multi_mode == MODE_3D_CALIBRATION ||
              cxt->is_multi_mode == MODE_3D_PREVIEW ||
              cxt->is_multi_mode == MODE_TUNING ||
              cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
-             cxt->is_multi_mode == MODE_DUAL_FACEID_REGISTER)
-        isp_param.is_multi_mode = ISP_DUAL_NORMAL;
-    else
-        isp_param.is_multi_mode = ISP_SINGLE;
+             cxt->is_multi_mode == MODE_DUAL_FACEID_REGISTER) {
+        isp_param.multi_mode = ISP_DUAL_NORMAL;
+    } else if (cxt->is_multi_mode == MODE_BLUR && atoi(value) == 3) {
+        isp_param.multi_mode = ISP_BLUR_REAR;
+    } else if (cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {
+        isp_param.multi_mode = ISP_WIDETELE;
+    } else if (cxt->is_multi_mode == MODE_BOKEH ) {
+        isp_param.multi_mode = ISP_BOKEH;
+    } else {
+        isp_param.multi_mode = ISP_SINGLE;
+    }
 
     if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
-
+    CMR_LOGI("multi_mode = %d, isp mode %d",
+        cxt->is_multi_mode, isp_param.multi_mode);
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     isp_param.is_pfc_supported = 1;
 #endif
@@ -3621,7 +3629,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
 
     CMR_LOGI(
-        "is_multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
+        "multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
         "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
         "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
         "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
@@ -3630,7 +3638,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 #endif
         "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
         "is_4in1_sensor=%d",
-        isp_param.is_multi_mode, isp_param.ex_info.f_num,
+        isp_param.multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
         isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,

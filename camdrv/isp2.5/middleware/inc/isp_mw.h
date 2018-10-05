@@ -415,9 +415,8 @@ enum {
 	ISP_DUAL_NORMAL,
 	ISP_DUAL_SBS,
 	ISP_BLUR_REAR,
-	ISP_DUAL_C_C,
-	ISP_DUAL_W_T,
-	ISP_DUAL_C_M,
+	ISP_BOKEH,
+	ISP_WIDETELE,
 	ISP_CAMERA_MAX
 };
 
@@ -912,7 +911,7 @@ struct isp_init_param {
 
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
-	uint32_t is_multi_mode;
+	uint32_t multi_mode;
 	uint32_t is_master;
 	uint32_t is_4in1_sensor;
 };
