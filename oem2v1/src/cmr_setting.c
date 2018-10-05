@@ -575,8 +575,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
          COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
-         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}
-    };
+         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -2881,6 +2880,10 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
             is_need = 0;
     }
 
+    if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+        is_need = 0;
+    }
+
     return is_need;
 }
 
@@ -2913,6 +2916,10 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
     cmr_int ret = 0;
 
     if (!setting_is_rawrgb_format(cpt, parm)) {
+        return ret;
+    }
+
+    if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
         return ret;
     }
 
@@ -3579,6 +3586,10 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
                 setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);
 
+                if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+                    hal_param->flash_param.flash_opened = 0;
+                    goto exit;
+                }
                 setting_set_flashdevice(cpt, parm, (uint32_t)FLASH_OPEN);
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
@@ -3600,6 +3611,8 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
             hal_param->flash_param.flash_opened = 0;
         }
     }
+
+exit:
     return ret;
 }
 

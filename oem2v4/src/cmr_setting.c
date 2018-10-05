@@ -528,8 +528,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
          COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
-         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}
-    };
+         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -581,7 +580,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         goto setting_out;
     }
 
-    if ((type_val != *item->cmd_type_value) || (cpt->force_set) || parm->ae_compensation_param.ae_state == 3) {
+    if ((type_val != *item->cmd_type_value) || (cpt->force_set) ||
+        parm->ae_compensation_param.ae_state == 3) {
         if (setting_is_active(cpt)) {
             ret = setting_before_set_ctrl(cpt, PARAM_NORMAL);
             if (ret) {
@@ -1160,7 +1160,7 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
         }
         /*update zoom unit after processed or not*/
         if (parm->zoom_param.update_sync) {
-        hal_param->zoom_value = zoom_param;
+            hal_param->zoom_value = zoom_param;
         } else {
             pthread_mutex_lock(&cpt->status_lock);
             hal_param->zoom_value = zoom_param;
@@ -1196,7 +1196,7 @@ static cmr_int setting_set_zoom_param(struct setting_component *cpt,
     cmr_int ret = 0;
 
     CMR_LOGV("parm->zoom_param.update_sync:%d, zoom ratio:%f, prev ratio:%f,"
-                      "cap ratio:%f",
+             "cap ratio:%f",
              parm->zoom_param.update_sync,
              parm->zoom_param.zoom_info.zoom_ratio,
              parm->zoom_param.zoom_info.prev_aspect_ratio,
@@ -1206,7 +1206,7 @@ static cmr_int setting_set_zoom_param(struct setting_component *cpt,
     if (parm->zoom_param.update_sync) {
         ret = setting_process_zoom(cpt, parm);
     } else {
-    ret = setting_zoom_push(cpt, parm);
+        ret = setting_zoom_push(cpt, parm);
     }
     pthread_mutex_unlock(&cpt->status_lock);
 
@@ -2569,6 +2569,10 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
             is_need = 0;
     }
 
+    if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+        is_need = 0;
+    }
+
     return is_need;
 }
 
@@ -2601,6 +2605,10 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
     cmr_int ret = 0;
 
     if (!setting_is_rawrgb_format(cpt, parm)) {
+        return ret;
+    }
+
+    if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
         return ret;
     }
 
@@ -3240,6 +3248,10 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
                 setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);
 
+                if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+                    hal_param->flash_param.flash_opened = 0;
+                    goto exit;
+                }
                 setting_set_flashdevice(cpt, parm, (uint32_t)FLASH_OPEN);
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
@@ -3260,6 +3272,8 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
             hal_param->flash_param.flash_opened = 0;
         }
     }
+
+exit:
     return ret;
 }
 
