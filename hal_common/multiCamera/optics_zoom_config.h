@@ -98,7 +98,7 @@ MODE_SOFY_OPTICAL_ZOOM,
         },
         /*camera device 1 physical info*/
         {
-            2, // camera real id
+            1, // camera real id
             2, // config_stream_num
             /*stream info*/
             {
