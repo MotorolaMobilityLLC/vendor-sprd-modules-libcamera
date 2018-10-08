@@ -2561,6 +2561,7 @@ static cmr_s32 ae_set_flash_charge(struct ae_ctrl_cxt *cxt, enum ae_flash_type f
 static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
+	cmr_u32 Bavoid_rewrite_prev_param = 0;
 	struct ae_alg_calc_param *current_status = &cxt->cur_status;
 
 	ISP_LOGV("ae_video_fps_thr_high: %d, ae_video_fps_thr_low: %d\n", cxt->cur_param->ae_video_fps.ae_video_fps_thr_high, cxt->cur_param->ae_video_fps.ae_video_fps_thr_low);
@@ -2610,6 +2611,24 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 					current_status->settings.table_idx = 0;
 					current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
 					current_status->settings.gain = cxt->flash_esti_result.captureGain;
+					/*
+					 * during mainflash period, we should do updating param earlily.
+					 * [T0] ae_flash1_callback: do-capture
+					 *		we need update preview scene's ae param to sensor,which takes 2 frames'time.
+					 * [T0+2] hal need do capture in the T0~T0+2
+					 * [hainan.ren]
+					 */
+					if (((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash)
+	|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash))
+	&& (cxt->send_once[4] > (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 2)) {
+						Bavoid_rewrite_prev_param=1;
+					}
+					if (Bavoid_rewrite_prev_param==0) {
+						current_status->settings.manual_mode = 0;
+						current_status->settings.table_idx = 0;
+						current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
+						current_status->settings.gain = cxt->flash_esti_result.captureGain;
+					}
 				}
 
 			} else {
@@ -5377,7 +5396,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->exp_data.lib_data.line_time = current_status->line_time;
 
 	if (cxt->has_mf) {
-		if (cxt->has_mf_cnt==1) {
+		if (cxt->has_mf_cnt==3) {
 			cxt->has_mf = cxt->has_mf_cnt = 0;
 			cb_type = AE_CB_CONVERGED;
 			stop_skip_en = 1;
