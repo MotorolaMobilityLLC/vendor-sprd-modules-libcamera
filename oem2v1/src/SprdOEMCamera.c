@@ -1004,7 +1004,7 @@ cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width,
     strcat(str_buf, ".jpg");
 
     CMR_LOGD("file name %s", str_buf);
-    fp = fopen(str_buf, "ab+");
+    fp = fopen(str_buf, "wb");
     if (NULL == fp) {
         printf("open %s failed\n", str_buf);
         goto exit;
