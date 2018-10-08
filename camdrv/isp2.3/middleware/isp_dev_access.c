@@ -465,10 +465,14 @@ static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, struct i
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_u_blocks_info ae_block_info;
 
-	block_ptr->block_info = &block_ptr->gain_info;
+	memset(&ae_block_info, 0x0, sizeof(ae_block_info));
+	ae_block_info.scene_id = block_ptr->scene_id;
 
-	isp_u_rgb_gain_block(cxt->isp_driver_handle, (void *)block_ptr);
+	ae_block_info.block_info = &block_ptr->gain_info;
+
+	isp_u_rgb_gain_block(cxt->isp_driver_handle, (void *)&ae_block_info);
 
 	return ret;
 }
