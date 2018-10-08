@@ -9625,13 +9625,15 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
-        if (mMultiCameraMode != MODE_BOKEH && mAeStabFlag != 1) {
+        // Workaround, skip mAeStabFlag cecking first,
+        // Need verify for all capture scenario
+        /*if (mMultiCameraMode != MODE_BOKEH && mAeStabFlag != 1) {
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
                 zsl_frame.fd);
             HAL_LOGE("wait for ae stab frame");
             continue;
-        }
+        }*/
 
         if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
             char prop[PROPERTY_VALUE_MAX];
