@@ -45,6 +45,7 @@
 #define OEM_HANDLE_HDR 1
 #define OEM_HANDLE_3DNR 1
 #define OEM_HANDLE_FILTER 1
+#define FLASH_CAPTURE_SKIP_NUM_OFFSET 17
 
 #define CAMERA_PATH_SHARE 1
 #define OEM_RESTART_SUM 2
@@ -2205,6 +2206,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     cmr_uint has_preflashed = 0;
     cmr_u32 flash_capture_skip_num = 0;
     struct sensor_exp_info exp_info_ptr;
+    cmr_u32 offset = 0;
 
     CMR_LOGD("E");
 
@@ -2232,7 +2234,13 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     if (ret) {
         CMR_LOGE("camera_get_sensor_info failed");
     }
-    flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num;
+
+    if (cxt->snp_cxt.snp_mode == CAMERA_ZSL_MODE ||
+        cxt->snp_cxt.snp_mode == CAMERA_NORMAL_MODE) {
+        offset = FLASH_CAPTURE_SKIP_NUM_OFFSET;
+    }
+
+    flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num + offset;
     CMR_LOGI("flash_capture_skip_num = %d", flash_capture_skip_num);
 
     cmr_bzero(&setting_param, sizeof(setting_param));

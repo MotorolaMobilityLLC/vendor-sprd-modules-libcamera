@@ -604,7 +604,7 @@ void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
     if (step >= CMR_LAUNCH_MAX_T)
         CMR_LOGE("error %d", step);
 
-    property_get("persist.hal.camera.launch.time", value, "false");
+    property_get("persist.vendor.cam.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
         return;
     }
@@ -653,7 +653,7 @@ void LAUNCHLOGE(enum CAMERA_LAUNCH_STEP step) {
     if (step >= CMR_LAUNCH_MAX_T)
         CMR_LOGE("error %d", step);
 
-    property_get("persist.hal.camera.launch.time", value, "false");
+    property_get("persist.vendor.cam.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
         return;
     }
