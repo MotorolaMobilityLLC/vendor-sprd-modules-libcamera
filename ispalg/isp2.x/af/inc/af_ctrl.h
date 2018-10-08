@@ -482,6 +482,7 @@ extern "C" {
 		struct afctrl_cb_ops cb_ops;
 		af_ctrl_br_ioctrl br_ctrl;
 		cmr_u32 sensor_role;
+		cmr_u32 is_mono_sensor;
 	};
 
 	struct afctrl_init_out {

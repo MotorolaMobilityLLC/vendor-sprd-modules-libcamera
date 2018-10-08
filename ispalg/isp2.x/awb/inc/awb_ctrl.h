@@ -203,6 +203,7 @@ extern "C" {
 		cmr_u32 color_support;
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
+		cmr_u32 is_mono_sensor;
 	};
 
 	struct awb_ctrl_init_result {

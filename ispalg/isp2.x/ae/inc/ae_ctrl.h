@@ -62,6 +62,7 @@ extern "C" {
 		cmr_u32 ebd_support;
 		struct ae_param ae_sync_param;
 		cmr_s16 bv_thd;
+		cmr_u32 is_mono_sensor;
 	};
 
 	struct ae_init_out {
