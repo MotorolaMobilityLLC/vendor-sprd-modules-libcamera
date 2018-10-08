@@ -5777,6 +5777,9 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
+        if(sprddefInfo.sprd_3dnr_enabled){
+            sprddefInfo.is_takepicture_with_flash = 0;
+        }
         mSetting->setSPRDDEFTag(sprddefInfo);
         HAL_LOGI("is_takepicture_with_flash = %d",
                  sprddefInfo.is_takepicture_with_flash);
