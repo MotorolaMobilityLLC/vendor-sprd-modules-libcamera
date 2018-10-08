@@ -1459,7 +1459,7 @@ static int camera_save_raw_or_yuv_to_file(cmr_handle snp_handle, char *name,
         return -1;
     }
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
-#if defined(CONFIG_ISP_2_5)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_3)
     isp_ioctl(isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
 #endif
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
