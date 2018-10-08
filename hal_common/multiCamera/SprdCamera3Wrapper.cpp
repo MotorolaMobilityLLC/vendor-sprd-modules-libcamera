@@ -151,7 +151,7 @@ multiCameraMode SprdCamera3Wrapper::getMultiCameraMode(int camera_id) {
             property_get("persist.vendor.cam.ba.blur.version", prop, "0");
             if (6 == atoi(prop)) {
                 mode = MODE_BOKEH;
-            } else if (3 == atoi(prop)) {
+            } else if (3 == atoi(prop) || 1 == atoi(prop)) {
                 mode = MODE_BLUR;
             }
         }

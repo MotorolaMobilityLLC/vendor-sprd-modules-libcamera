@@ -2059,6 +2059,17 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
         mCaptureWeightParams.roi_type = 0;
         mCaptureWeightParams.rear_cam_en = true;
         property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+        if (atoi(prop) == 1) {
+            mVersion = 1;
+            mCaptureWeightParams.version = 1;
+            mPreviewWeightParams.roi_type = 1;
+            mCaptureWeightParams.roi_type = 1;
+            mCaptureWeightParams.rear_cam_en = false;
+            property_get("persist.vendor.cam.fr.blur.version", prop, "1");
+            mCaptureWeightParams.camera_angle =
+                SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                    .sensorInfo.orientation;
+        }
     } else {
         mVersion = 1;
         mCaptureWeightParams.version = 1;
@@ -2066,7 +2077,9 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
         mCaptureWeightParams.roi_type = 1;
         mCaptureWeightParams.rear_cam_en = false;
         property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-        mCaptureWeightParams.camera_angle = SprdCamera3Setting::s_setting[mBlur->mCameraId].sensorInfo.orientation;
+        mCaptureWeightParams.camera_angle =
+            SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                .sensorInfo.orientation;
     }
     if (atoi(prop) == 1 || atoi(prop) == 2 || atoi(prop) == 3) {
         mVersion = atoi(prop);

@@ -1861,7 +1861,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (atoi(prop) == 1)
+        available_cam_features.add(3);
+    else
+        available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
