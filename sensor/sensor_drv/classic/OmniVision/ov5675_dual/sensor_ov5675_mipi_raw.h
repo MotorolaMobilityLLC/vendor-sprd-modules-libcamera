@@ -100,7 +100,12 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
+#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
+    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
+#else
+#define ISP_BASE_GAIN 0x10
+#endif
 /* please don't change it */
 #define EX_MCLK 24
 
@@ -408,6 +413,51 @@ static const SENSOR_REG_T ov5675_snapshot_setting1[] = {
     //{0x0100, 0x01},
 };
 
+static SENSOR_REG_T ov5675_shutter_reg[] = {
+    {0x3502, 0x00}, {0x3501, 0x00}, {0x3500, 0x00},
+};
+
+static struct sensor_i2c_reg_tab ov5675_shutter_tab = {
+    .settings = ov5675_shutter_reg, .size = ARRAY_SIZE(ov5675_shutter_reg),
+};
+
+static SENSOR_REG_T ov5675_again_reg[] = {
+    {0x3208, 0x00}, {0x3508, 0x00}, {0x3509, 0x00},
+    {0x3208, 0x10}, {0x3208, 0xa0},
+
+};
+
+static struct sensor_i2c_reg_tab ov5675_again_tab = {
+    .settings = ov5675_again_reg, .size = ARRAY_SIZE(ov5675_again_reg),
+};
+
+static SENSOR_REG_T ov5675_dgain_reg[] = {
+
+};
+
+static struct sensor_i2c_reg_tab ov5675_dgain_tab = {
+    .settings = ov5675_dgain_reg, .size = ARRAY_SIZE(ov5675_dgain_reg),
+};
+
+static SENSOR_REG_T ov5675_frame_length_reg[] = {
+    {0x380e, 0x00}, {0x380f, 0x00},
+};
+
+static struct sensor_i2c_reg_tab ov5675_frame_length_tab = {
+    .settings = ov5675_frame_length_reg,
+    .size = ARRAY_SIZE(ov5675_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag ov5675_aec_info = {
+    .slave_addr = (I2C_SLAVE_ADDR >> 1),
+    .addr_bits_type = SENSOR_I2C_REG_16BIT,
+    .data_bits_type = SENSOR_I2C_VAL_8BIT,
+    .shutter = &ov5675_shutter_tab,
+    .again = &ov5675_again_tab,
+    .dgain = &ov5675_dgain_tab,
+    .frame_length = &ov5675_frame_length_tab,
+};
+
 static struct sensor_res_tab_info s_ov5675_resolution_tab_raw_new[VENDOR_NUM] =
     {
         {.module_id = MODULE_SUNNY,
@@ -415,9 +465,9 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw_new[VENDOR_NUM] =
                       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-                     {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting1), PNULL, 0,
+                     /*{ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting1), PNULL, 0,
                       .width = 640, .height = 480, .xclk_to_sensor = EX_MCLK,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
 
                      {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting1), PNULL, 0,
                       .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -437,14 +487,14 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab_new[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-             {.trim_start_x = 0,
+             /*{.trim_start_x = 0,
               .trim_start_y = 0,
               .trim_width = 640,
               .trim_height = 480,
               .line_time = 66667,
               .bps_per_lane = 906,
               .frame_line = 500,
-              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},
+              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},*/
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
               .trim_width = PREVIEW_TRIM_W,
@@ -474,9 +524,9 @@ static struct sensor_res_tab_info s_ov5675_resolution_tab_raw[VENDOR_NUM] = {
                   .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
                   .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-                 {ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting), PNULL, 0,
+                 /*{ADDR_AND_LEN_OF_ARRAY(ov5675_VGA_setting), PNULL, 0,
                   .width = 640, .height = 480, .xclk_to_sensor = EX_MCLK,
-                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
 
                  {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting), PNULL, 0,
                   .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -496,14 +546,14 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-             {.trim_start_x = 0,
+             /*{.trim_start_x = 0,
               .trim_start_y = 0,
               .trim_width = 640,
               .trim_height = 480,
               .line_time = 66667,
               .bps_per_lane = 900,
               .frame_line = 500,
-              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},
+              .scaler_trim = {.x = 0, .y = 0, .w = 640, .h = 480}},*/
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
               .trim_width = PREVIEW_TRIM_W,

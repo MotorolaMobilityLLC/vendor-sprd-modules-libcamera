@@ -33,6 +33,28 @@
 
 /*==============================================================================
  * Description:
+ * write register value to sensor
+ * please modify this function acording your spec
+ *============================================================================*/
+
+static void ov5675_drv_write_reg2sensor(cmr_handle handle,
+                                        struct sensor_i2c_reg_tab *reg_info) {
+    SENSOR_IC_CHECK_PTR_VOID(reg_info);
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_int i = 0;
+
+    for (i = 0; i < reg_info->size; i++) {
+
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle,
+                            reg_info->settings[i].reg_addr,
+                            reg_info->settings[i].reg_value);
+    }
+}
+
+/*==============================================================================
+ * Description:
  * set video mode
  *============================================================================*/
 static cmr_int ov5675_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
@@ -245,24 +267,42 @@ static void ov5675_drv_group_hold_off(cmr_handle handle) {
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov5675_drv_write_gain(cmr_handle handle, cmr_uint gain) {
+static void ov5675_drv_write_gain(cmr_handle handle, cmr_uint gain,
+                                  struct sensor_aec_i2c_tag *aec_info) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    if (SENSOR_MAX_GAIN < gain)
-        gain = SENSOR_MAX_GAIN;
-    cmr_u16 value = 0;
+    float gain_a = gain;
+    float gain_d = 0x400; // spec p70, X1 = 15bit
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x00);
+    if (SENSOR_MAX_GAIN < (cmr_u16)gain_a) {
+        gain_a = SENSOR_MAX_GAIN;
 
-    value = (gain >> 8) & 0x1f;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3508, value);
+        gain_d = (float)1.0f * gain * 0x400 / gain_a;
+        if ((cmr_u16)gain_d > (0x4 * 0x400 - 1))
+            gain_d = 0x4 * 0x400 - 1;
+    }
 
-    value = gain & 0xff;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3509, value);
+    SENSOR_LOGI("(cmr_u16)gain_a = %f ,(cmr_u16)gain_d = %f", gain_a, gain_d);
+    if (aec_info->again->size) {
+        /*TODO*/
+        aec_info->again->settings[1].reg_value = ((cmr_u16)gain_a >> 8) & 0x1f;
+        aec_info->again->settings[2].reg_value = (cmr_u16)gain_a & 0xff;
+        /*END*/
+    }
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x10);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0xa0);
+    if (aec_info->dgain->size) {
+        /*TODO*/
+        aec_info->dgain->settings[0].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+        aec_info->dgain->settings[1].reg_value = (cmr_u16)gain_d & 0xff;
+        aec_info->dgain->settings[2].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+        aec_info->dgain->settings[3].reg_value = (cmr_u16)gain_d & 0xff;
+        aec_info->dgain->settings[4].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+        aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;
+        aec_info->dgain->settings[6].reg_value = ((uint16_t)gain_d >> 8) & 0x0f;
+        aec_info->dgain->settings[7].reg_value = (cmr_u16)gain_d & 0xff;
+        /*END*/
+    }
 }
 
 /*==============================================================================
@@ -270,14 +310,18 @@ static void ov5675_drv_write_gain(cmr_handle handle, cmr_uint gain) {
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_u16 ov5675_drv_read_frame_length(cmr_handle handle) {
+static cmr_u16
+ov5675_drv_read_frame_length(cmr_handle handle,
+                             struct sensor_aec_i2c_tag *aec_info) {
     cmr_u16 frame_len_h = 0;
     cmr_u16 frame_len_l = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    frame_len_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380E) & 0xff;
-    frame_len_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380F) & 0xff;
+    frame_len_h =
+        hw_sensor_read_reg(sns_drv_cxt->hw_handle,aec_info->frame_length->settings[0].reg_addr)&0xff;
+    frame_len_l =
+        hw_sensor_read_reg(sns_drv_cxt->hw_handle,aec_info->frame_length->settings[1].reg_addr)&0xff;
 
     return ((frame_len_h << 8) | frame_len_l);
 }
@@ -287,14 +331,18 @@ static cmr_u16 ov5675_drv_read_frame_length(cmr_handle handle) {
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov5675_drv_write_frame_length(cmr_handle handle,
-                                          cmr_u32 frame_len) {
+static void ov5675_drv_write_frame_length(cmr_handle handle, cmr_u32 frame_len,
+                                          struct sensor_aec_i2c_tag *aec_info) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380E,
-                        (frame_len >> 8) & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380F, frame_len & 0xff);
+    if (aec_info->frame_length->size) {
+        /*TODO*/
+
+        aec_info->frame_length->settings[0].reg_value = (frame_len >> 8) & 0xff;
+        aec_info->frame_length->settings[1].reg_value = frame_len & 0xff;
+        /*END*/
+    }
 }
 
 /*==============================================================================
@@ -303,20 +351,20 @@ static void ov5675_drv_write_frame_length(cmr_handle handle,
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void ov5675_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
+static void ov5675_drv_write_shutter(cmr_handle handle, cmr_u32 shutter,
+                                     struct sensor_aec_i2c_tag *aec_info) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    cmr_u16 value = 0x00;
-    cmr_u16 ov_shutter = (shutter >> 1);
-    value = (ov_shutter << 0x04) & 0xff;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3502, value);
+    shutter = shutter >> 1;
+    if (aec_info->shutter->size) {
+        /*TODO*/
+        aec_info->shutter->settings[0].reg_value = (shutter << 0x04) & 0xff;
+        aec_info->shutter->settings[1].reg_value = (shutter >> 0x04) & 0xff;
+        aec_info->shutter->settings[2].reg_value = (shutter >> 0x0c) & 0x0f;
 
-    value = (ov_shutter >> 0x04) & 0xff;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3501, value);
-
-    value = (ov_shutter >> 0x0c) & 0x0f;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3500, value);
+        /*END*/
+    }
 }
 
 /*==============================================================================
@@ -325,8 +373,10 @@ static void ov5675_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static uint16_t ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
-                                           uint32_t dummy_line) {
+static uint16_t
+ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
+                           uint32_t dummy_line,
+                           struct sensor_aec_i2c_tag *aec_info) {
     uint32_t dest_fr_len = 0;
     uint32_t cur_fr_len = 0;
     uint32_t fr_len = 0;
@@ -342,16 +392,16 @@ static uint16_t ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
                       ? (shutter + dummy_line + FRAME_OFFSET)
                       : fr_len;
 
-    cur_fr_len = ov5675_drv_read_frame_length(handle);
+    cur_fr_len = ov5675_drv_read_frame_length(handle, aec_info);
 
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
 
     if (dest_fr_len != cur_fr_len)
-        ov5675_drv_write_frame_length(handle, dest_fr_len);
+        ov5675_drv_write_frame_length(handle, dest_fr_len, aec_info);
 write_sensor_shutter:
     /* write shutter to sensor registers */
-    ov5675_drv_write_shutter(handle, shutter);
+    ov5675_drv_write_shutter(handle, shutter, aec_info);
 
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
@@ -392,6 +442,7 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
+        usleep(5 * 1000);
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
         hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_2800MV);
@@ -399,6 +450,7 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
 #else
         hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 #endif
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_ON;
     } else {
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
         hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -411,6 +463,7 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         usleep(1 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_OFF;
     }
     SENSOR_LOGI("(1:on, 0:off): %d", power_on);
     return SENSOR_SUCCESS;
@@ -525,9 +578,15 @@ static cmr_int ov5675_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
-    cap_shutter = ov5675_drv_update_exposure(handle, cap_shutter, 0);
+    cap_shutter =
+        ov5675_drv_update_exposure(handle, cap_shutter, 0, &ov5675_aec_info);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.frame_length);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.shutter);
+
     cap_gain = gain;
-    ov5675_drv_write_gain(handle, cap_gain);
+    ov5675_drv_write_gain(handle, cap_gain, &ov5675_aec_info);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.again);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.dgain);
     SENSOR_LOGI("preview_shutter = %d, preview_gain = %f",
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
@@ -577,8 +636,10 @@ static cmr_int ov5675_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
     // ov5675_get_default_frame_length(handle, mode);
 
-    sns_drv_cxt->sensor_ev_info.preview_shutter =
-        ov5675_drv_update_exposure(handle, exposure_line, dummy_line);
+    sns_drv_cxt->sensor_ev_info.preview_shutter = ov5675_drv_update_exposure(
+        handle, exposure_line, dummy_line, &ov5675_aec_info);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.frame_length);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.shutter);
 
     return ret_value;
 }
@@ -591,7 +652,19 @@ static cmr_int ov5675_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 static cmr_u32 isp_to_real_gain(cmr_handle handle, uint32_t param) {
     cmr_u32 real_gain = 0;
 
+#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
+    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     real_gain = param;
+#else
+    real_gain = ((param & 0xf) + 16) * (((param >> 4) & 0x01) + 1);
+    real_gain =
+        real_gain * (((param >> 5) & 0x01) + 1) * (((param >> 6) & 0x01) + 1);
+    real_gain =
+        real_gain * (((param >> 7) & 0x01) + 1) * (((param >> 8) & 0x01) + 1);
+    real_gain =
+        real_gain * (((param >> 9) & 0x01) + 1) * (((param >> 10) & 0x01) + 1);
+    real_gain = real_gain * (((param >> 11) & 0x01) + 1);
+#endif
 
     return real_gain;
 }
@@ -609,12 +682,15 @@ static cmr_int ov5675_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     real_gain = isp_to_real_gain(handle, param);
 
+    real_gain = real_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : real_gain;
     real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
     SENSOR_LOGI("real_gain = %f", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
-    ov5675_drv_write_gain(handle, real_gain);
+    ov5675_drv_write_gain(handle, real_gain, &ov5675_aec_info);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.again);
+    ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.dgain);
 
     return ret_value;
 }
@@ -640,14 +716,26 @@ static void ov5675_drv_increase_hdr_exposure(cmr_handle handle,
         shutter_multiply = 1;
 
     if (shutter_multiply >= ev_multiplier) {
-        ov5675_drv_update_exposure(
-            handle, hdr_info->capture_shutter * ev_multiplier, 0);
-        ov5675_drv_write_gain(handle, hdr_info->capture_gain);
+        ov5675_drv_update_exposure(handle,
+                                   hdr_info->capture_shutter * ev_multiplier, 0,
+                                   &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.frame_length);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.shutter);
+
+        ov5675_drv_write_gain(handle, hdr_info->capture_gain, &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.again);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.dgain);
     } else {
         gain = hdr_info->capture_gain * ev_multiplier / shutter_multiply;
-        ov5675_drv_update_exposure(
-            handle, hdr_info->capture_shutter * shutter_multiply, 0);
-        ov5675_drv_write_gain(handle, gain);
+        ov5675_drv_update_exposure(handle,
+                                   hdr_info->capture_shutter * shutter_multiply,
+                                   0, &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.frame_length);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.shutter);
+
+        ov5675_drv_write_gain(handle, gain, &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.again);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.dgain);
     }
 }
 
@@ -669,13 +757,25 @@ static void ov5675_drv_decrease_hdr_exposure(cmr_handle handle,
     gain_multiply = hdr_info->capture_gain / SENSOR_BASE_GAIN;
 
     if (gain_multiply >= ev_divisor) {
-        ov5675_drv_update_exposure(handle, hdr_info->capture_shutter, 0);
-        ov5675_drv_write_gain(handle, hdr_info->capture_gain / ev_divisor);
+        ov5675_drv_update_exposure(handle, hdr_info->capture_shutter, 0,
+                                   &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.frame_length);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.shutter);
 
+        ov5675_drv_write_gain(handle, hdr_info->capture_gain / ev_divisor,
+                              &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.again);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.dgain);
     } else {
         shutter = hdr_info->capture_shutter * gain_multiply / ev_divisor;
-        ov5675_drv_update_exposure(handle, shutter, 0);
-        ov5675_drv_write_gain(handle, hdr_info->capture_gain / gain_multiply);
+        ov5675_drv_update_exposure(handle, shutter, 0, &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.frame_length);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.shutter);
+
+        ov5675_drv_write_gain(handle, hdr_info->capture_gain / gain_multiply,
+                              &ov5675_aec_info);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.again);
+        ov5675_drv_write_reg2sensor(handle, ov5675_aec_info.dgain);
     }
 }
 
@@ -736,6 +836,62 @@ static cmr_int ov5675_drv_ext_func(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
+/*==============================================================================
+ * Description:
+ * read ae control info
+ * please don't change this function unless it's necessary
+ *============================================================================*/
+static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+    cmr_int ret_value = SENSOR_SUCCESS;
+    struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+    cmr_u16 exposure_line = 0x00;
+    cmr_u16 dummy_line = 0x00;
+    cmr_u16 mode = 0x00;
+    cmr_u16 frame_interval = 0x00;
+    // cmr_u32 real_gain = 0;
+    cmr_u32 sensor_gain = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(info);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    SENSOR_LOGI("E");
+
+    info->aec_i2c_info_out = &ov5675_aec_info;
+    exposure_line = info->exp.exposure;
+    dummy_line = info->exp.dummy;
+    mode = info->exp.size_index;
+
+    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+                exposure_line, dummy_line);
+
+    sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
+    frame_interval = (uint16_t)(
+        ((exposure_line + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
+    SENSOR_LOGI("exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+                exposure_line, dummy_line, frame_interval);
+
+    sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+
+     sns_drv_cxt->sensor_ev_info.preview_shutter =
+        ov5675_drv_update_exposure(handle, exposure_line, dummy_line,
+        &ov5675_aec_info);
+
+    sensor_gain = isp_to_real_gain(handle, info->gain);
+    sensor_gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+    sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+
+    SENSOR_LOGI("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)info->gain,
+                sensor_gain);
+
+    sns_drv_cxt->sensor_ev_info.preview_gain = sensor_gain;
+    ov5675_drv_write_gain(handle, sensor_gain, &ov5675_aec_info);
+
+    // ov5675_drv_write_gain_value(handle, info->gain);
+
+    SENSOR_LOGI("ov5675_drv_read_aec_info!!!!!");
+    return ret_value;
+}
+
 static cmr_int ov5675_drv_set_frame_sync(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -762,17 +918,21 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
+        return 0;
+    }
 
     SENSOR_LOGI("E:module_id=%d is_mulit_mode = %d", sns_drv_cxt->module_id,
                 sns_drv_cxt->is_multi_mode);
-    if (sns_drv_cxt->module_id == MODULE_SUNNY && sns_drv_cxt->is_multi_mode &&
-        sns_drv_cxt->is_multi_mode != MODE_TUNING) {
-#ifndef CONFIG_DISABLE_DUAL_CAMERA_FRAMESYNC
+    if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode &&
+        sns_drv_cxt->is_multi_mode != MODE_TUNING){
+        #ifndef CONFIG_DISABLE_DUAL_CAMERA_FRAMESYNC
         ov5675_drv_set_frame_sync(handle, 0);
-#endif
+        #endif
         SENSOR_LOGI("set frame sync");
     }
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_ON;
 
     return 0;
 }
@@ -785,25 +945,30 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
 static cmr_int ov5675_drv_stream_off(cmr_handle handle, cmr_uint param) {
 
     UNUSED(param);
-    unsigned char value;
-    unsigned int sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("E:");
 
-    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
-    if (value != 0x00) {
+    /*
+     After sream off, it should sleep at least 1 frame time to avoid the
+     sensor is stream on quickly, otherwise the MIPI receiver will go to
+     error status and dcam timeout.
+    */
+    cmr_u16 delay_ms = (sns_drv_cxt->sensor_ev_info.preview_shutter *
+            sns_drv_cxt->line_time_def / 1000000);
+
+    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
+
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-        if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 50 * 1000;
-            usleep(sleep_time);
-        }
-    } else {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+
+        SENSOR_LOGI("stream_off delay_ms %d", delay_ms);
+
+        usleep((delay_ms + 10) * 1000);
+        sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_OFF;
     }
 
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X:sleep_time=%dus", sleep_time);
+    SENSOR_LOGI("X:");
     return 0;
 }
 
@@ -880,6 +1045,8 @@ ov5675_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
+
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
     property_get("debug.camera.setting", value, "0");
@@ -910,6 +1077,7 @@ static cmr_int ov5675_drv_handle_delete(cmr_handle handle, void *param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
 
     ret = sensor_ic_drv_delete(handle, param);
     return ret;
@@ -941,6 +1109,10 @@ static struct sensor_ic_ops s_ov5675_ops_tab = {
     .identify = ov5675_drv_identify,
     .ex_write_exp = ov5675_drv_write_exposure,
     .write_gain_value = ov5675_drv_write_gain_value,
+
+#if defined(CONFIG_DUAL_MODULE)
+    .read_aec_info = ov5675_drv_read_aec_info,
+#endif
 
     .ext_ops = {
             [SENSOR_IOCTL_EXT_FUNC].ops = ov5675_drv_ext_func,
