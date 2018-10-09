@@ -697,8 +697,8 @@ int SprdCamera3HWI::configureStreams(
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
-        camera_stream_type_t stream_type;
-        camera_channel_type_t channel_type;
+        camera_stream_type_t stream_type = CAMERA_STREAM_TYPE_DEFAULT;
+        camera_channel_type_t channel_type = CAMERA_CHANNEL_TYPE_DEFAULT;
         cam_dimension_t channel_size;
         bool chan_created = false;
 
