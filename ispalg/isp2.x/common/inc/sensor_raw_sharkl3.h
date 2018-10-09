@@ -1311,7 +1311,7 @@ struct sensor_cnr_level {
 
 struct sensor_ae_adapt_param {
 	cmr_u16 binning_factor; // 1x = 128
-	cmr_u16 reserved[18];
+	cmr_u16 reserved[19];
 };
 
 #if 0

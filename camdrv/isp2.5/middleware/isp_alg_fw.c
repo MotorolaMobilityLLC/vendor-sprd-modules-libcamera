@@ -2005,10 +2005,12 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 
 	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
-	if (cxt->ioctrl_ptr->sns_ioctl) {
-		cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
-					CMD_SNS_IC_GET_CCT_DATA,
-					&out_ptr->xyz_info);
+	if (cxt->awb_cxt.color_support) {
+		if (cxt->ioctrl_ptr->sns_ioctl) {
+			cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+						CMD_SNS_IC_GET_CCT_DATA,
+						&out_ptr->xyz_info);
+		}
 	}
 
 	memset(&pm_param, 0, sizeof(pm_param));
