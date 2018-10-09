@@ -108,8 +108,12 @@
 
 /* please don't change it */
 #define EX_MCLK				24
-#define IMAGE_HV_MIRROR
 
+#ifdef SENSOR_OV8856_TELE
+#define IMAGE_NORMAL_MIRROR
+#else
+#define IMAGE_HV_MIRROR
+#endif
 //#define IMAGE_V_MIRROR //IMAGE_NORMAL_MIRROR; IMAGE_H_MIRROR; IMAGE_V_MIRROR; IMAGE_HV_MIRROR
 
 /*==============================================================================
@@ -723,7 +727,11 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 0,
-        .fov_info = {{3.656f, 2.472f}, 4.222f}}
+#ifdef SENSOR_OV8856_TELE
+        .fov_info = {{3.656f, 2.742f}, 4.457f}}
+#else
+        .fov_info = {{3.656f, 2.742f}, 4.222f}}
+#endif
     }
     /*If there are multiple modules,please add here*/
 };
@@ -750,7 +758,7 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .module_info = {
          .major_i2c_addr = 0x20 >> 1,
-         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+         .minor_i2c_addr = 0x6c >> 1,
 
          .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
                                 SENSOR_I2C_FREQ_400,

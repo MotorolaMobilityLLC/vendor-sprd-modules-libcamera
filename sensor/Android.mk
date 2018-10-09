@@ -97,6 +97,10 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
 endif
 
+ifeq ($(strip $(TARGET_BOARD_SENSOR_OV8856_TELE)),true)
+LOCAL_CFLAGS += -DSENSOR_OV8856_TELE
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 include $(LOCAL_PATH)/otp_parser/Android.mk
 

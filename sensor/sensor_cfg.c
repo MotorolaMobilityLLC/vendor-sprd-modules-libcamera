@@ -440,7 +440,11 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV8856_SHINE
+#ifdef SENSOR_OV8856_TELE
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
+#else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA2, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
 #endif
 #ifdef OV8858
     {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&ov8858_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
