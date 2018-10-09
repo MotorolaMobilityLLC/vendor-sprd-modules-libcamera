@@ -150,6 +150,7 @@ struct awb_ctrl_cxt {
 	 */
 	cmr_u8 sensor_role;
 	cmr_u32 is_multi_mode;
+	cmr_u32 is_mono_sensor;
 	func_isp_br_ioctrl ptr_isp_br_ioctrl;
 	enum sensor_role_type sensor_role_type;
 	struct awb_ctrl_calc_result awb_result;
@@ -1145,6 +1146,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->color_support = param->color_support;
 	cxt->sensor_role = param->is_master;
 	cxt->is_multi_mode = param->is_multi_mode;
+	cxt->is_mono_sensor = param->is_mono_sensor;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
 	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
 	if(cxt->sensor_role == 1)
@@ -1376,7 +1378,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 #ifndef CONFIG_ISP_2_2
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_C_C)) {
-		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL)) {
+		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL) && (cxt->is_mono_sensor == 0)) {
 			struct awb_sync_info awb_sync;
 			#if 0
 			struct drv_fov_info fov_info;
