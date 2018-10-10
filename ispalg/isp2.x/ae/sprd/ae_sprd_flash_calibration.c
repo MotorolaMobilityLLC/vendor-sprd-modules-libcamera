@@ -266,35 +266,25 @@ static int _aem_stat_preprocess2(cmr_u32 * src_aem_stat, float *dst_r, float *ds
 	//cmr_u16 *dst_g = (float*)dst_aem_stat + stat_blocks;
 	//cmr_u16 *dst_b = (float*)dst_aem_stat + stat_blocks * 2;
 	double max_value = 1023;
-	double sum = 0;
 	double avg = 0;
 	cmr_u32 i = 0;
 	double r = 0, g = 0, b = 0;
 
-	double mul_shift = 1;
-	for (i = 0; i < aem_shift; i++)
-		mul_shift = mul_shift * 2;
-
+	UNUSED(aem_shift);
 	if (bayer_pixels < 1)
 		return AE_ERROR;
 
 	for (i = 0; i < stat_blocks; i++) {
 /*for r channel */
-		sum = *src_r_stat++;
-		sum = sum * mul_shift;
-		avg = sum / bayer_pixels;
+		avg = *src_r_stat++;
 		r = avg > max_value ? max_value : avg;
 
 /*for g channel */
-		sum = *src_g_stat++;
-		sum = sum * mul_shift;
-		avg = sum / bayer_pixels;
+		avg = *src_g_stat++;
 		g = avg > max_value ? max_value : avg;
 
 /*for b channel */
-		sum = *src_b_stat++;
-		sum = sum * mul_shift;
-		avg = sum / bayer_pixels;
+		avg = *src_b_stat++;
 		b = avg > max_value ? max_value : avg;
 
 		dst_r[i] = r;
