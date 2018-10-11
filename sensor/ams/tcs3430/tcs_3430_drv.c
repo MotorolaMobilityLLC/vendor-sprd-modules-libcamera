@@ -3,7 +3,7 @@
 
 static int read_tcs3430(const char* filename)
 {
-	int data = -1;
+	int data = 0;
 	FILE*  fd = fopen(filename, "r");
 	if (fd != NULL)
 	{
@@ -96,8 +96,8 @@ int tcs3430_read_data(void *param){
 	tcs3430_data->ir_data = tcs3430_data->ir_raw;
 	tcs3430_data->gain_data = read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_gain");
 	tcs3430_data->atime_data = read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_atime");
-	tcs3430_data->lux_data = -1;
-	tcs3430_data->cct_data = -1;
+	tcs3430_data->lux_data = 0;
+	tcs3430_data->cct_data = 0;
 
 	calc_lux_cct(tcs3430_data);
 	SENSOR_LOGI("ams tcs3430 raw x:%d, y:%d, z:%d, ir:%d, x_data:%d, y_data:%d, z_data %d\n",
