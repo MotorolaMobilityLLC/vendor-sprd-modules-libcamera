@@ -788,7 +788,7 @@ const camera_info kCameraInfo[] = {
      0, 0, 0, 0, 0},
 };
 
-const int camera_is_supprort[] = {
+int camera_is_supprort[] = {
     BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
     BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
     BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
@@ -804,7 +804,7 @@ const int64_t SEC = MSEC * 1000LL;
 
 sprd_setting_info_t SprdCamera3Setting::s_setting[CAMERA_ID_COUNT];
 int SprdCamera3Setting::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
-int SprdCamera3Setting::mPhysicalSensorNum = CAMERA_SENSOR_NUM;
+int SprdCamera3Setting::mPhysicalSensorNum = 0;
 
 /**********************Function********************************/
 int SprdCamera3Setting::parse_int(const char *str, int *data, char delim,
@@ -1157,6 +1157,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
 
+    initIdentifyDynamicSensorNum();
     num = mPhysicalSensorNum + mLogicalSensorNum;
     LOGI("getNumberOfCameras:%d", num);
 
@@ -1306,6 +1307,43 @@ int SprdCamera3Setting::initDefaultParameters(int32_t cameraId) {
 
     return ret;
 }
+
+int SprdCamera3Setting::initIdentifyDynamicSensorNum() {
+    struct sensor_drv_context *sensor_cxt = NULL;
+    int ret = 0;
+    int i = 0;
+    HAL_LOGI("E");
+
+    sensor_cxt =
+        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
+    if (NULL == sensor_cxt) {
+        HAL_LOGE("sensor_cxt is NULL");
+        return -1;
+    }
+    for (i = 0; i < (int)ARRAY_SIZE(camera_is_supprort); i++) {
+        if (!camera_is_supprort[i])
+            continue;
+        memset(sensor_cxt, 0, (sizeof(struct sensor_drv_context)));
+        ret = sensor_open_common(sensor_cxt, i, 0);
+
+        if (ret)
+            camera_is_supprort[i] = 0;
+        else
+            mPhysicalSensorNum++;
+
+        sensor_close_common(sensor_cxt, i);
+    }
+    if (sensor_cxt != NULL)
+        free(sensor_cxt);
+    sensor_cxt = NULL;
+
+    mPhysicalSensorNum = MIN(mPhysicalSensorNum, CAMERA_SENSOR_NUM);
+    HAL_LOGI("mPhysicalSensorNum=%d",mPhysicalSensorNum);
+
+    HAL_LOGI("X");
+
+    return mPhysicalSensorNum;
+};
 
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
@@ -4179,7 +4217,8 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
-            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
+            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+                .data.i32[0];
         pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
     }
 
