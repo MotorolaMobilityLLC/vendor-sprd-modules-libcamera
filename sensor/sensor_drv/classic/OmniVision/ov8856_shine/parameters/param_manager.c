@@ -3,7 +3,7 @@
 struct sensor_raw_info *ov8856_drv_init_raw_info(int sensor_id, int vendor_id, int flash_ic_type, int producer_id) {
     cmr_int rtn = SENSOR_SUCCESS;
 #ifdef _SENSOR_RAW_PIKE2_H_
-#include "paramerers_4lane/sensor_ov8856_raw_param_main.c"
+#include "parameter_pike2/sensor_ov8856_raw_param_main.c"
 return &s_ov8856_mipi_raw_info;
 #elif defined _SENSOR_RAW_SHARKL3_H_
 	// front matser

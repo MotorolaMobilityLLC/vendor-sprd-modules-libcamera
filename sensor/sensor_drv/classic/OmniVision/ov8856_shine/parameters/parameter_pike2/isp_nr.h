@@ -15,79 +15,75 @@ static struct sensor_nr_scene_map_param s_ov8856_nr_scene_map_param = {{
 }};
 #endif
 
-#ifdef _NR_PDAF_CORRECTION_PARAM_
-#include "NR/common/normal/pdaf_correction_param.h"
-#endif
-
-#ifdef _NR_BAYER_NR_PARAM_
-#include "NR/common/normal/bayer_nr_param.h"
-#endif
-
-#ifdef _NR_VST_PARAM_
-#include "NR/common/normal/vst_param.h"
-#endif
-
-#ifdef _NR_IVST_PARAM_
-#include "NR/common/normal/ivst_param.h"
-#endif
-
-#ifdef _NR_RGB_DITHER_PARAM_
-#include "NR/common/normal/rgb_dither_param.h"
+#ifdef _NR_BDN_PARAM_
+#include "NR/common/normal/bdn_param.h"
 #endif
 
 #ifdef _NR_BPC_PARAM_
 #include "NR/common/normal/bpc_param.h"
 #endif
 
+#ifdef _NR_CCE_UV_PARAM_
+#include "NR/common/normal/cce_uv_param.h"
+#endif
+
+#ifdef _NR_CFAE_PARAM_
+#include "NR/common/normal/cfae_param.h"
+#endif
+
+#ifdef _NR_EDGE_PARAM_
+#include "NR/common/normal/edge_param.h"
+#endif
+
 #ifdef _NR_GRGB_PARAM_
 #include "NR/common/normal/grgb_param.h"
-#endif
-
-#ifdef _NR_CFAI_PARAM_
-#include "NR/common/normal/cfai_param.h"
-#endif
-
-#ifdef _NR_CCE_UVDIV_PARAM_
-#include "NR/common/normal/cce_uvdiv_param.h"
-#endif
-
-#ifdef _NR_YNR_PARAM_
-#include "NR/common/normal/ynr_param.h"
-#endif
-
-#ifdef _NR_EE_PARAM_
-#include "NR/common/normal/ee_param.h"
-#endif
-
-#ifdef _NR_PRE_3DNR_PARAM_
-#include "NR/common/normal/pre_3dnr_param.h"
-#endif
-
-#ifdef _NR_CAP_3DNR_PARAM_
-#include "NR/common/normal/cap_3dnr_param.h"
-#endif
-
-#ifdef _NR_YUV_NOISEFILTER_PARAM_
-#include "NR/common/normal/yuv_noisefilter_param.h"
-#endif
-
-#ifdef _NR_RGB_AFM_PARAM_
-#include "NR/common/normal/rgb_afm_param.h"
 #endif
 
 #ifdef _NR_IIRCNR_PARAM_
 #include "NR/common/normal/iircnr_param.h"
 #endif
 
+#ifdef _NR_IIR_YRANDOM_PARAM_
+#include "NR/common/normal/iir_yrandom_param.h"
+#endif
+
+#ifdef _NR_NLM_PARAM_
+#include "NR/common/normal/nlm_param.h"
+#endif
+
+#ifdef _NR_PRFY_PARAM_
+#include "NR/common/normal/prfy_param.h"
+#endif
+
+#ifdef _NR_RGB_PRECDN_PARAM_
+#include "NR/common/normal/rgb_precdn_param.h"
+#endif
+
+#ifdef _NR_YUV_CDN_PARAM_
+#include "NR/common/normal/yuv_cdn_param.h"
+#endif
+
+#ifdef _NR_YUV_POSTCDN_PARAM_
+#include "NR/common/normal/yuv_postcdn_param.h"
+#endif
+
 #ifdef _NR_YUV_PRECDN_PARAM_
 #include "NR/common/normal/yuv_precdn_param.h"
 #endif
 
-#ifdef _NR_UV_CDN_PARAM_
-#include "NR/common/normal/uv_cdn_param.h"
+#ifdef _NR_IVST_PARAM_
+#include "NR/common/normal/ivst_param.h"
 #endif
 
-#ifdef _NR_UV_POSTCDN_PARAM_
-#include "NR/common/normal/uv_postcdn_param.h"
+#ifdef _NR_VST_PARAM_
+#include "NR/common/normal/vst_param.h"
+#endif
+
+#ifdef _NR_FLAT_OFFSET_PARAM_
+#include "NR/common/normal/flat_offset_param.h"
+#endif
+
+#ifdef _NR_RGB_AFM_PARAM_
+#include "NR/common/normal/rgb_afm_param.h"
 #endif
 
