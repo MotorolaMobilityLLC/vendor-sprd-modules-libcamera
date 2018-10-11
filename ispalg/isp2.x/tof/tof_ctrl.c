@@ -32,7 +32,8 @@ cmr_int vl53l0_init()
 	int XtalkInt = 0;
 	int XtalkEnable = 0;
 
-	fp_xtak = fopen("/productinfo/vl53l0_xtak_calibration.file","rb");
+	//fp_xtak = fopen("/productinfo/vl53l0_xtak_calibration.file","rb");
+	fp_xtak = fopen("/mnt/vendor/vl53l0_xtak_calibration.file","rb");
 	if(NULL!=fp_xtak){
 		fscanf(fp_xtak, "%d\n", &XtalkInt);
 		fscanf(fp_xtak, "%d\n", &XtalkEnable);
@@ -48,7 +49,8 @@ cmr_int vl53l0_init()
 	int SpadCount = 0;
 	int IsApertureSpads = 0;
 
-	fp_offset = fopen("/productinfo/vl53l0_offset_calibration.file", "rb");
+	//fp_offset = fopen("/productinfo/vl53l0_offset_calibration.file", "rb");
+	fp_offset = fopen("/mnt/vendor/vl53l0_offset_calibration.file", "rb");
 	if(NULL!=fp_offset){
 		fscanf(fp_offset, "%d\n", &offset);
 		fscanf(fp_offset, "%d\n", &VhvSettings);
