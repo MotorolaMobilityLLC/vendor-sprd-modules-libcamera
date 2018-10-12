@@ -36,6 +36,7 @@ static void calc_lux_cct(struct tcs_data *tcs3430_data) {
     double tmp = atime * again;
 
     if (0 == tmp) {
+        SENSOR_LOGE("ams tcs3430 tmp value error\n");
         goto error;
     }
     double x_norm = 100.008 * 16 * x_cal / tmp;
@@ -58,6 +59,7 @@ static void calc_lux_cct(struct tcs_data *tcs3430_data) {
                      ML[2][3] * ir1_norm + ML[2][4];
 
     if (0 == y_norm) {
+        SENSOR_LOGE("ams tcs3430 y_norm value error\n");
         goto error;
     }
     double ir_ratio = ir1_norm / y_norm;
@@ -105,7 +107,7 @@ int tcs3430_read_data(void *param) {
     } else {
         calc_lux_cct(tcs3430_data);
     }
-    SENSOR_LOGI("ams tcs3430 x_data:%d, y_data:%d, z_data:%d, ir_data:%d, "
+    SENSOR_LOGD("ams tcs3430 x_data:%d, y_data:%d, z_data:%d, ir_data:%d, "
                 "x_raw:%d, y_raw:%d, z_raw:%d, ir_raw:%d\n",
                 tcs3430_data->x_data, tcs3430_data->y_data,
                 tcs3430_data->z_data, tcs3430_data->ir_data,
