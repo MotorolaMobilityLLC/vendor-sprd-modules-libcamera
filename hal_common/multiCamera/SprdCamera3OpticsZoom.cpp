@@ -207,8 +207,8 @@ SprdCamera3OpticsZoom::reConfigResultMeta(camera_metadata_t *meta) {
     } else {
         face_num = 0;
     }
-    HAL_LOGD("w_Ratio=%f,h_ratio=%f", w_Ratio, h_ratio);
-    HAL_LOGD("face_num=%d,camMetadata=%p", face_num, camMetadata);
+    HAL_LOGV("w_Ratio=%f,h_ratio=%f", w_Ratio, h_ratio);
+    HAL_LOGV("face_num=%d,camMetadata=%p", face_num, camMetadata);
     if (face_num) {
         for (int i = 0; i < face_num; i++) {
             faceRectangles[i * 4 + 0] =
@@ -229,7 +229,7 @@ SprdCamera3OpticsZoom::reConfigResultMeta(camera_metadata_t *meta) {
                 faceRectangles[i * 4 + 2] = faceRectangles[i * 4 + 2] * w_Ratio;
                 faceRectangles[i * 4 + 3] = faceRectangles[i * 4 + 3] * h_ratio;
             }
-            HAL_LOGD("the %d st face, faceRectangles     =  %d, %d, %d, %d ", i,
+            HAL_LOGV("the %d st face, faceRectangles     =  %d, %d, %d, %d ", i,
                      faceRectangles[i * 4], faceRectangles[i * 4 + 1],
                      faceRectangles[i * 4 + 2], faceRectangles[i * 4 + 3]);
         }
@@ -278,7 +278,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
     if (adbzoom >= 1 && adbzoom <= 4) {
         if (adbzoom != zoomRatio) {
             zoomRatio = adbzoom;
-            HAL_LOGD("reset zoom to %f %f", adbzoom, zoomRatio);
+            HAL_LOGV("reset zoom to %f %f", adbzoom, zoomRatio);
         }
     } else if (WideSettings->exists(ANDROID_SCALER_CROP_REGION)) {
         cropRegion.start_x =
@@ -290,7 +290,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
         cropRegion.height =
             WideSettings->find(ANDROID_SCALER_CROP_REGION).data.i32[3];
 
-        HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d",
+        HAL_LOGV("crop start_x=%d start_y=%d width=%d height=%d",
                  cropRegion.start_x, cropRegion.start_y, cropRegion.width,
                  cropRegion.height);
 
@@ -333,7 +333,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
     float h_ratio =
         static_cast<float>(mWideMaxHeight) / static_cast<float>(mTeleMaxHeight);
 
-    HAL_LOGD(" zoomRatio=%f,w_ratio=%f,h_ratio=%f", zoomRatio, w_ratio,
+    HAL_LOGV(" zoomRatio=%f,w_ratio=%f,h_ratio=%f", zoomRatio, w_ratio,
              h_ratio);
     if (zoomRatio >= zoomThreshold) { // tele
         float inputRatio = zoomRatio / zoomThreshold;
@@ -347,7 +347,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
         TeleSettings->update(ANDROID_SCALER_CROP_REGION, crop_Region,
                              ARRAY_SIZE(crop_Region));
 
-        HAL_LOGD(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
+        HAL_LOGV(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
                  crop_Region[2], crop_Region[3]);
         crop_Region[0] = 0;
         crop_Region[1] = 0;
@@ -356,7 +356,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
         WideSettings->update(ANDROID_SCALER_CROP_REGION, crop_Region,
                              ARRAY_SIZE(crop_Region));
 
-        HAL_LOGD(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
+        HAL_LOGV(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
                  crop_Region[2], crop_Region[3]);
     } else if (zoomRatio < zoomThreshold) { // wide
         crop_Region[0] = 0;
@@ -364,7 +364,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
         crop_Region[2] = mTeleMaxWidth;
         crop_Region[3] = mTeleMaxHeight;
 
-        HAL_LOGD(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
+        HAL_LOGV(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
                  crop_Region[2], crop_Region[3]);
         TeleSettings->update(ANDROID_SCALER_CROP_REGION, crop_Region,
                              ARRAY_SIZE(crop_Region));
@@ -375,7 +375,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
         WideSettings->update(ANDROID_SCALER_CROP_REGION, crop_Region,
                              ARRAY_SIZE(crop_Region));
 
-        HAL_LOGD(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
+        HAL_LOGV(" crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
                  crop_Region[2], crop_Region[3]);
     }
 
@@ -400,11 +400,11 @@ void SprdCamera3OpticsZoom::coordinateTra(int inputWidth, int inputHeight,
     float outputHalfHeight = (float)outputHeight / 2;
     float WidthRatio = (float)outputWidth / inputWidth;
     float HeightRatio = (float)outputHeight / inputHeight;
-    HAL_LOGD(
+    HAL_LOGV(
         " input_W= %d,input_H=%d,Oput_W=%d,Oput_H=%d,W_Ratio=%f,H_Ratio=%f",
         inputWidth, inputHeight, outputWidth, outputHeight, WidthRatio,
         HeightRatio);
-    HAL_LOGD(" area =%ld,%ld,%ld,%ld", area[0], area[1], area[2], area[3]);
+    HAL_LOGV(" area =%ld,%ld,%ld,%ld", area[0], area[1], area[2], area[3]);
     if ((area[0] + area[1] + area[2] + area[3]) != 0) {
         for (i = 0; i < 4; i++) {
             if (i % 2 == 0) {
@@ -426,7 +426,7 @@ void SprdCamera3OpticsZoom::coordinateTra(int inputWidth, int inputHeight,
                 }
             }
         }
-        HAL_LOGD(" Zoom 1x area =%ld,%ld,%ld,%ld", area[0], area[1], area[2],
+        HAL_LOGV(" Zoom 1x area =%ld,%ld,%ld,%ld", area[0], area[1], area[2],
                  area[3]);
         for (i = 0; i < 4; i++) {
             if (i % 2 == 0) {
@@ -436,7 +436,7 @@ void SprdCamera3OpticsZoom::coordinateTra(int inputWidth, int inputHeight,
                 area[i] = area[i] * HeightRatio;
             }
         }
-        HAL_LOGD("Magnifying size area =%ld,%ld,%ld,%ld", area[0], area[1],
+        HAL_LOGV("Magnifying size area =%ld,%ld,%ld,%ld", area[0], area[1],
                  area[2], area[3]);
         for (i = 0; i < 4; i++) {
             if (i % 2 == 0) {
@@ -459,7 +459,7 @@ void SprdCamera3OpticsZoom::coordinateTra(int inputWidth, int inputHeight,
             }
         }
     }
-    HAL_LOGD(" all area equal zero  =%ld,%ld,%ld,%ld", area[0], area[1],
+    HAL_LOGV(" all area equal zero  =%ld,%ld,%ld,%ld", area[0], area[1],
              area[2], area[3]);
 }
 /*===========================================================================
@@ -596,6 +596,6 @@ void SprdCamera3OpticsZoom::reReqConfig(camera3_capture_request_t *request,
             }
         }
     }
-    HAL_LOGD("switchRequest = %d", mReqConfigNum);
+    HAL_LOGV("switchRequest = %d", mReqConfigNum);
 }
 }

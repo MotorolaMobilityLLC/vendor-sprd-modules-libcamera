@@ -3188,10 +3188,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
-
     }
 
-    if((sprddefInfo.sprd_3dnr_enabled == 1)&&(mUsingSW3DNR)){
+    if ((sprddefInfo.sprd_3dnr_enabled == 1) && (mUsingSW3DNR)) {
         mCaptureMode = CAMERA_NORMAL_MODE;
         HAL_LOGD("SW 3DNR, using NORMAL_MODE");
     }
@@ -4007,7 +4006,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 } else {
                     buffer_timestamp_fps =
                         mPrvBufferTimestamp + fps_range_offset;
-                    HAL_LOGD("fix buffer_timestamp_fps is %lld",
+                    HAL_LOGV("fix buffer_timestamp_fps is %lld",
                              buffer_timestamp_fps);
                 }
             }
@@ -5784,7 +5783,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
-        if(sprddefInfo.sprd_3dnr_enabled){
+        if (sprddefInfo.sprd_3dnr_enabled) {
             sprddefInfo.is_takepicture_with_flash = 0;
         }
         mSetting->setSPRDDEFTag(sprddefInfo);

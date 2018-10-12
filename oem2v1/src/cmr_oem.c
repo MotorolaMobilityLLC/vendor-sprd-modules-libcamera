@@ -1446,7 +1446,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         camera_isp_ctrl_flash(cxt->setting_cxt.setting_handle, data);
         break;
     case ISP_AE_STAB_NOTIFY:
-        CMR_LOGE("ISP_AE_STAB_NOTIFY");
+        CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
         if (data != NULL) {
             ae_stab_flag = *(cmr_int *)data;
@@ -3589,18 +3589,18 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     if (cxt->is_multi_mode == MODE_SBS) {
         isp_param.multi_mode = ISP_DUAL_SBS;
     } else if (cxt->is_multi_mode == MODE_3D_CAPTURE ||
-             cxt->is_multi_mode == MODE_3D_VIDEO ||
-             cxt->is_multi_mode == MODE_3D_CALIBRATION ||
-             cxt->is_multi_mode == MODE_3D_PREVIEW ||
-             cxt->is_multi_mode == MODE_TUNING ||
-             cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
-             cxt->is_multi_mode == MODE_DUAL_FACEID_REGISTER) {
+               cxt->is_multi_mode == MODE_3D_VIDEO ||
+               cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+               cxt->is_multi_mode == MODE_3D_PREVIEW ||
+               cxt->is_multi_mode == MODE_TUNING ||
+               cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
+               cxt->is_multi_mode == MODE_DUAL_FACEID_REGISTER) {
         isp_param.multi_mode = ISP_DUAL_NORMAL;
     } else if (cxt->is_multi_mode == MODE_BLUR && atoi(value) == 3) {
         isp_param.multi_mode = ISP_BLUR_REAR;
     } else if (cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {
         isp_param.multi_mode = ISP_WIDETELE;
-    } else if (cxt->is_multi_mode == MODE_BOKEH ) {
+    } else if (cxt->is_multi_mode == MODE_BOKEH) {
         isp_param.multi_mode = ISP_BOKEH;
     } else {
         isp_param.multi_mode = ISP_SINGLE;
@@ -3608,8 +3608,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 
     if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
-    CMR_LOGI("multi_mode = %d, isp mode %d",
-        cxt->is_multi_mode, isp_param.multi_mode);
+    CMR_LOGI("multi_mode = %d, isp mode %d", cxt->is_multi_mode,
+             isp_param.multi_mode);
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     isp_param.is_pfc_supported = 1;
 #endif
@@ -7592,16 +7592,22 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_EV:
         isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
         ptr_flag = 1;
-        ae_compensation.comp_val = param_ptr->ae_compensation_param.ae_exposure_compensation;
-        ae_compensation.comp_range.min = param_ptr->ae_compensation_param.ae_compensation_range[0];
-        ae_compensation.comp_range.max = param_ptr->ae_compensation_param.ae_compensation_range[1];
-        ae_compensation.step_numerator = param_ptr->ae_compensation_param.ae_compensation_step_numerator;
-        ae_compensation.step_denominator = param_ptr->ae_compensation_param.ae_compensation_step_denominator;
+        ae_compensation.comp_val =
+            param_ptr->ae_compensation_param.ae_exposure_compensation;
+        ae_compensation.comp_range.min =
+            param_ptr->ae_compensation_param.ae_compensation_range[0];
+        ae_compensation.comp_range.max =
+            param_ptr->ae_compensation_param.ae_compensation_range[1];
+        ae_compensation.step_numerator =
+            param_ptr->ae_compensation_param.ae_compensation_step_numerator;
+        ae_compensation.step_denominator =
+            param_ptr->ae_compensation_param.ae_compensation_step_denominator;
         isp_param_ptr = (void *)&ae_compensation;
-        CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, step_numerator=%d, step_denominator=%d",
-            ae_compensation.comp_val, ae_compensation.comp_range.min,
-            ae_compensation.comp_range.max, ae_compensation.step_numerator,
-            ae_compensation.step_denominator);
+        CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, "
+                 "step_numerator=%d, step_denominator=%d",
+                 ae_compensation.comp_val, ae_compensation.comp_range.min,
+                 ae_compensation.comp_range.max, ae_compensation.step_numerator,
+                 ae_compensation.step_denominator);
         break;
 
     case COM_ISP_SET_AWB_MODE:
@@ -10784,9 +10790,12 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
     out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
     out_isp_sn_ex_info->pos_dis.hori2down = in_sn_ex_info->pos_dis.hori2down;
     out_isp_sn_ex_info->color_support = in_sn_ex_info->cct_supported;
-    out_isp_sn_ex_info->fov_info.physical_size[0] = in_sn_ex_info->fov_info.physical_size[0];
-    out_isp_sn_ex_info->fov_info.physical_size[1] = in_sn_ex_info->fov_info.physical_size[1];
-    out_isp_sn_ex_info->fov_info.focal_lengths = in_sn_ex_info->fov_info.focal_lengths;
+    out_isp_sn_ex_info->fov_info.physical_size[0] =
+        in_sn_ex_info->fov_info.physical_size[0];
+    out_isp_sn_ex_info->fov_info.physical_size[1] =
+        in_sn_ex_info->fov_info.physical_size[1];
+    out_isp_sn_ex_info->fov_info.focal_lengths =
+        in_sn_ex_info->fov_info.focal_lengths;
 
     return CMR_CAMERA_SUCCESS;
 }

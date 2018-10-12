@@ -450,7 +450,7 @@ int SprdCamera3Multi::configureStreams(
         int stream_type = main_camera->hal_stream[i].type;
         if (stream_type == PREVIEW_STREAM && (previewStream != NULL)) {
             memcpy(previewStream, newStream, sizeof(camera3_stream_t));
-            HAL_LOGD("previewStream  max buffers %d",
+            HAL_LOGV("previewStream  max buffers %d",
                      previewStream->max_buffers);
             previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
         } else if (stream_type == SNAPSHOT_STREAM && (snapStream != NULL)) {
@@ -467,7 +467,6 @@ int SprdCamera3Multi::configureStreams(
         }
     }
 
-    HAL_LOGI("x rc%d.", rc);
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         int requestStreamType = getStreamType(stream_list->streams[i]);
         HAL_LOGI("main configurestreams, streamtype:%d, format:%d, width:%d, "
@@ -478,13 +477,13 @@ int SprdCamera3Multi::configureStreams(
                  stream_list->streams[i]->height, stream_list->streams[i]->priv,
                  requestStreamType);
     }
-
     rc = allocateBuff();
     if (rc == -1) {
         HAL_LOGE("allocateBuff failed. rc%d.", rc);
     }
     reConfigStream();
 
+    HAL_LOGI("x rc%d.", rc);
     return rc;
 }
 
@@ -540,11 +539,9 @@ int SprdCamera3Multi::cameraDeviceOpen(__unused int camera_id,
     int rc = NO_ERROR;
     uint8_t phyId = 0;
 
-    HAL_LOGI(" E");
+    HAL_LOGV(" E");
 
     hw_device_t *hw_dev[m_nPhyCameras];
-    HAL_LOGI("m_nPhyCameras %d, %p ", m_nPhyCameras, &m_nPhyCameras);
-
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
         phyId = m_pPhyCamera[i].id;
@@ -853,13 +850,13 @@ void SprdCamera3Multi::saveRequest(
         currRequest.metaNotifyIndex = index;
         if (getStreamType(newStream) == CALLBACK_STREAM) { // preview
             currRequest.preview_stream = request->output_buffers[i].stream;
-            HAL_LOGD("save prev request:id %d,to list ", request->frame_number);
+            HAL_LOGV("save prev request:id %d,to list ", request->frame_number);
             mSavedPrevRequestList.push_back(currRequest);
             memcpy(&fw_buffer[PREVIEW_STREAM], &request->output_buffers[i],
                    sizeof(camera3_stream_buffer_t));
         } else if (getStreamType(newStream) == DEFAULT_STREAM) { // callback
             currRequest.callback_stream = request->output_buffers[i].stream;
-            HAL_LOGD("save callck request:id %d,to list ",
+            HAL_LOGV("save callck request:id %d,to list ",
                      request->frame_number);
             mSavedCallbackRequestList.push_back(currRequest);
             memcpy(&fw_buffer[CALLBACK_STREAM], &request->output_buffers[i],
@@ -875,7 +872,7 @@ void SprdCamera3Multi::saveRequest(
             mSavedCapReqsettings = clone_camera_metadata(request->settings);
         } else if (getStreamType(newStream) == VIDEO_STREAM) { // video
             currRequest.callback_stream = request->output_buffers[i].stream;
-            HAL_LOGD("save video request:id %d,to list ",
+            HAL_LOGV("save video request:id %d,to list ",
                      request->frame_number);
             mSavedCallbackRequestList.push_back(currRequest);
             memcpy(&fw_buffer[VIDEO_STREAM], &request->output_buffers[i],
@@ -910,7 +907,7 @@ int SprdCamera3Multi::createOutputBufferStream(
         }
         stream_num++;
         stream_type = 0x1 << (i - 1);
-        HAL_LOGD("curOutputBuffer %p  ,type=%d", curOutputBuffer, i - 1);
+        HAL_LOGV("curOutputBuffer %p  ,type=%d", curOutputBuffer, i - 1);
         curOutputBuffer->release_fence = -1;
         curOutputBuffer->acquire_fence = -1;
         curOutputBuffer->status = CAMERA3_BUFFER_STATUS_OK;
@@ -1011,7 +1008,7 @@ int SprdCamera3Multi::createOutputBufferStream(
         curOutputBuffer++;
     }
     *buffer_num = stream_num;
-    HAL_LOGI("buffer_num %d", *buffer_num);
+    HAL_LOGV("buffer_num %d", *buffer_num);
     return ret;
 }
 
@@ -1251,7 +1248,7 @@ int SprdCamera3Multi::processCaptureRequest(
             req_stream_mak[camera_index] |=
                 req_stream_config->stream_type_mask[j];
             total_stream_mask |= req_stream_config->stream_type_mask[j];
-            HAL_LOGD("camera %d ,req_stream_config->stream_type_mask:%d", j,
+            HAL_LOGV("camera %d ,req_stream_config->stream_type_mask:%d", j,
                      req_stream_config->stream_type_mask[j]);
         }
         if (stream_type == SNAPSHOT_STREAM &&
@@ -1270,7 +1267,7 @@ int SprdCamera3Multi::processCaptureRequest(
 
     // 3.  save request;
     saveRequest(request, fw_buffer, cameraMNIndex);
-    HAL_LOGD("frame:id=%lld,capture id=%lld,cameraMNIndex=%d,sendF=%lld",
+    HAL_LOGV("frame:id=%lld,capture id=%lld,cameraMNIndex=%d,sendF=%lld",
              mCurFrameNum, mCapFrameNum, cameraMNIndex, mSendFrameNum);
 
     // 5. wait untill switch finish
@@ -1278,16 +1275,16 @@ int SprdCamera3Multi::processCaptureRequest(
         mSendFrameNum < request->frame_number - 1 &&
         request->frame_number > 0) {
         mWaitFrameNum = request->frame_number - 1;
-        HAL_LOGD("change cameraMNIndex %d to %d,mWaitFrameNum=%lld",
+        HAL_LOGV("change cameraMNIndex %d to %d,mWaitFrameNum=%lld",
                  mMetaNotifyIndex, cameraMNIndex, mWaitFrameNum);
         Mutex::Autolock l(mWaitFrameLock);
         mWaitFrameSignal.waitRelative(mWaitFrameLock, WAIT_FRAME_TIMEOUT);
-        HAL_LOGD("wait succeed.");
+        HAL_LOGV("wait succeed.");
     } else if (request->frame_number == 1 && mIsSyncFirstFrame) {
-        HAL_LOGD("wait first frame sync.start.");
+        HAL_LOGV("wait first frame sync.start.");
         Mutex::Autolock l(mWaitFrameLock);
         mWaitFrameSignal.waitRelative(mWaitFrameLock, 500e6);
-        HAL_LOGD("wait first frame sync. succeed.");
+        HAL_LOGV("wait first frame sync. succeed.");
     }
     mMetaNotifyIndex = cameraMNIndex;
 
@@ -1323,7 +1320,7 @@ int SprdCamera3Multi::processCaptureRequest(
             HAL_LOGI("check num_output_buffers is 0");
             continue;
         }
-        HAL_LOGD("process request camera[%d] ,buffer_num %d,frame=%u", i,
+        HAL_LOGV("process request camera[%d] ,buffer_num %d,frame=%u", i,
                  buffer_num, tempReq->frame_number);
         memcpy(tempReq, request, sizeof(camera3_capture_request_t));
         tempReq->num_output_buffers = buffer_num;
@@ -1403,7 +1400,7 @@ void SprdCamera3Multi::process_capture_result_aux3(
  *==========================================================================*/
 void SprdCamera3Multi::notifyMain(const struct camera3_callback_ops *ops,
                                   const camera3_notify_msg_t *msg) {
-    HAL_LOGD("idx:%u", msg->message.shutter.frame_number);
+    HAL_LOGV("idx:%u", msg->message.shutter.frame_number);
     CHECK_BASE();
     mMultiBase->notifyMain(msg);
 }
@@ -1419,7 +1416,7 @@ void SprdCamera3Multi::notifyMain(const struct camera3_callback_ops *ops,
  *==========================================================================*/
 void SprdCamera3Multi::notify_Aux1(const struct camera3_callback_ops *ops,
                                    const camera3_notify_msg_t *msg) {
-    HAL_LOGD("idx:%u", msg->message.shutter.frame_number);
+    HAL_LOGV("idx:%u", msg->message.shutter.frame_number);
     CHECK_BASE();
     mMultiBase->notifyAux1(msg);
 }
@@ -1468,7 +1465,7 @@ void SprdCamera3Multi::notifyAux1(const camera3_notify_msg_t *msg) {
  *==========================================================================*/
 void SprdCamera3Multi::notify_Aux2(const struct camera3_callback_ops *ops,
                                    const camera3_notify_msg_t *msg) {
-    HAL_LOGD("idx:%d", msg->message.shutter.frame_number);
+    HAL_LOGV("idx:%d", msg->message.shutter.frame_number);
     CHECK_BASE();
     mMultiBase->notifyAux2(msg);
 }
@@ -1516,7 +1513,7 @@ void SprdCamera3Multi::notifyAux2(const camera3_notify_msg_t *msg) {
  *==========================================================================*/
 void SprdCamera3Multi::notify_Aux3(const struct camera3_callback_ops *ops,
                                    const camera3_notify_msg_t *msg) {
-    HAL_LOGD("idx:%d", msg->message.shutter.frame_number);
+    HAL_LOGV("idx:%d", msg->message.shutter.frame_number);
     CHECK_BASE();
     mMultiBase->notifyAux3(msg);
 }
@@ -1602,12 +1599,12 @@ void SprdCamera3Multi::processCaptureResultMain(
     meta_save_t metadata_t;
     int index = 0;
 
-    HAL_LOGD("E,id=%u", cur_frame_number);
+    HAL_LOGV("E,id=%u", cur_frame_number);
 
     if (result_buffer == NULL) {
         // meta process
         metadata = result->result;
-        HAL_LOGD("send  meta, framenumber:%u", cur_frame_number);
+        HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);
         metadata_t.frame_number = cur_frame_number;
         metadata_t.metadata = clone_camera_metadata(result->result);
         Mutex::Autolock l(mMetatLock);
@@ -1639,13 +1636,13 @@ void SprdCamera3Multi::processCaptureResultAux1(
     uint32_t cur_frame_number = result->frame_number;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
     CameraMetadata metadata;
-    HAL_LOGD("E,id=%u", cur_frame_number);
+    HAL_LOGV("E,id=%u", cur_frame_number);
     int index = 0;
     if (result_buffer == NULL) {
         meta_save_t metadata_t;
         // meta process
         metadata = result->result;
-        HAL_LOGD("send  meta, framenumber:%u", cur_frame_number);
+        HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);
         metadata_t.frame_number = cur_frame_number;
         metadata_t.metadata = clone_camera_metadata(result->result);
         Mutex::Autolock l(mMetatLock);
@@ -1657,7 +1654,7 @@ void SprdCamera3Multi::processCaptureResultAux1(
     }
 
     int currStreamType = getStreamType(result_buffer->stream);
-    HAL_LOGD("return buffer=%p", result_buffer->buffer);
+    HAL_LOGV("return buffer=%p", result_buffer->buffer);
 
     pushBufferList(mLocalBuffer, result_buffer->buffer, mLocalBufferNumber,
                    mLocalBufferList);
@@ -1681,13 +1678,13 @@ void SprdCamera3Multi::processCaptureResultAux2(
     uint32_t cur_frame_number = result->frame_number;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
     CameraMetadata metadata;
-    HAL_LOGD("E,id=%u", cur_frame_number);
+    HAL_LOGV("E,id=%u", cur_frame_number);
     int index = 0;
     if (result_buffer == NULL) {
         meta_save_t metadata_t;
         // meta process
         metadata = result->result;
-        HAL_LOGD("send  meta, framenumber:%u", cur_frame_number);
+        HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);
         metadata_t.frame_number = cur_frame_number;
         metadata_t.metadata = clone_camera_metadata(result->result);
         Mutex::Autolock l(mMetatLock);
@@ -1699,7 +1696,7 @@ void SprdCamera3Multi::processCaptureResultAux2(
     }
 
     int currStreamType = getStreamType(result_buffer->stream);
-    HAL_LOGD("return buffer=%p", result_buffer->buffer);
+    HAL_LOGV("return buffer=%p", result_buffer->buffer);
 
     pushBufferList(mLocalBuffer, result_buffer->buffer, mLocalBufferNumber,
                    mLocalBufferList);
@@ -1720,14 +1717,14 @@ void SprdCamera3Multi::processCaptureResultAux3(
     const camera3_capture_result_t *result) {
     uint32_t cur_frame_number = result->frame_number;
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
-    HAL_LOGD("E,id=%u", cur_frame_number);
+    HAL_LOGV("E,id=%u", cur_frame_number);
     CameraMetadata metadata;
     int index = 0;
     if (result_buffer == NULL) {
         meta_save_t metadata_t;
         // meta process
         metadata = result->result;
-        HAL_LOGD("send  meta, framenumber:%u", cur_frame_number);
+        HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);
         metadata_t.frame_number = cur_frame_number;
         metadata_t.metadata = clone_camera_metadata(result->result);
         Mutex::Autolock l(mMetatLock);
@@ -1739,7 +1736,7 @@ void SprdCamera3Multi::processCaptureResultAux3(
     }
 
     int currStreamType = getStreamType(result_buffer->stream);
-    HAL_LOGD("return buffer=%p", result_buffer->buffer);
+    HAL_LOGV("return buffer=%p", result_buffer->buffer);
 
     pushBufferList(mLocalBuffer, result_buffer->buffer, mLocalBufferNumber,
                    mLocalBufferList);
@@ -1855,7 +1852,7 @@ void SprdCamera3Multi::CallBackMetadata() {
             result.output_buffers = NULL;
             result.input_buffer = NULL;
             result.partial_result = 1;
-            HAL_LOGD("send meta id=%d, %p", result.frame_number, result.result);
+            HAL_LOGV("send meta id=%d, %p", result.frame_number, result.result);
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             free_camera_metadata(
                 const_cast<camera_metadata_t *>(result.result));
@@ -1906,7 +1903,7 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
         itor = mSavedRequestList->begin();
         while (itor != mSavedRequestList->end()) {
             if (itor->frame_number == frame_number) {
-                HAL_LOGD("erase frame_number %u", frame_number);
+                HAL_LOGV("erase frame_number %u", frame_number);
                 if (camera_index != itor->metaNotifyIndex) {
                     return;
                 }
@@ -1918,7 +1915,7 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
             itor++;
         }
         if (itor == mSavedRequestList->end()) {
-            HAL_LOGD("can't find frame:%u", frame_number);
+            HAL_LOGV("can't find frame:%u", frame_number);
             return;
         }
     } else {
@@ -1926,7 +1923,7 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
         result_buffers.buffer = mSavedSnapRequest.buffer;
     }
 
-    HAL_LOGD("send frame %u:,status.%d", frame_number, buffer_status);
+    HAL_LOGV("send frame %u:,status.%d", frame_number, buffer_status);
     CallBackMetadata();
 
     result_buffers.status = buffer_status;
@@ -2067,7 +2064,7 @@ camera3_stream_t *SprdCamera3Multi::findStream(
     if (!ret_stream) {
         HAL_LOGE("failed.find stream");
     }
-    HAL_LOGI("width %d height %d", ret_stream->width, ret_stream->height);
+    HAL_LOGV("width %d height %d", ret_stream->width, ret_stream->height);
     return ret_stream;
 }
 /*===========================================================================
@@ -2091,7 +2088,7 @@ SprdCamera3Multi::findHalReq(int type,
         hal_req_stream_config *cur_req_config =
             (hal_req_stream_config *)&(total_config->hal_req_config[i]);
 
-        HAL_LOGI("type %d , cur_req_config->roi_stream_type %d", type,
+        HAL_LOGV("type %d , cur_req_config->roi_stream_type %d", type,
                  cur_req_config->roi_stream_type);
 
         if (cur_req_config->roi_stream_type == type) {
@@ -2141,7 +2138,7 @@ int SprdCamera3Multi::findMNIndex(uint32_t frame_number) {
             index = -1;
         }
     }
-    HAL_LOGD("MNIndex = %d", index);
+    HAL_LOGV("MNIndex = %d", index);
 
     return index;
 }
