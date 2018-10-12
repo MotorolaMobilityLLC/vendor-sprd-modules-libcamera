@@ -1183,8 +1183,8 @@ static void imx351_drv_calc_gain(double gain,
      }
     sensor_again = (cmr_u16)(1024.0 - 1024.0 / temp_gain);
 
-    aec_info->again->settings[0].reg_value = (sensor_again >> 8) & 0xFF;
-    aec_info->again->settings[1].reg_value = sensor_again & 0xFF;
+    aec_info->again->settings[1].reg_value = (sensor_again >> 8) & 0xFF;
+    aec_info->again->settings[2].reg_value = sensor_again & 0xFF;
 
     temp_gain = gain / 16;
     if (temp_gain > 16.0)
