@@ -99,6 +99,19 @@ int tcs3430_read_data(void *param){
 	tcs3430_data->lux_data = 0;
 	tcs3430_data->cct_data = 0;
 
+    if( 0 == tcs3430_data->x_raw || 0 == tcs3430_data->y_raw || 0 == tcs3430_data->z_raw || 0 == tcs3430_data->ir_raw)
+    {
+        tcs3430_data->x_raw = 0;
+        tcs3430_data->y_raw = 0;
+        tcs3430_data->z_raw = 0;
+        tcs3430_data->ir_raw = 0;
+        tcs3430_data->x_data = 0;
+        tcs3430_data->y_data = 0;
+        tcs3430_data->z_data = 0;
+        tcs3430_data->ir_data = 0;
+        return 0;
+    }
+
 	calc_lux_cct(tcs3430_data);
 	SENSOR_LOGI("ams tcs3430 raw x:%d, y:%d, z:%d, ir:%d, x_data:%d, y_data:%d, z_data %d\n",
 		tcs3430_data->x_raw, tcs3430_data->y_raw, tcs3430_data->z_raw,
