@@ -498,6 +498,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoSnapshotFrameNum = 0;
     isCallbackCapture = false;
     mMasterId = 0;
+    clearPrevStream = false;
 
     HAL_LOGI(":hal3: X");
 }
@@ -827,7 +828,8 @@ int SprdCamera3OEMIf::takePicture() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
-    HAL_LOGD("mSprdZslEnabled=%d, mCaptureMode:%d", mSprdZslEnabled,mCaptureMode);
+    HAL_LOGD("mSprdZslEnabled=%d, mCaptureMode:%d", mSprdZslEnabled,
+             mCaptureMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
              (cmr_uint)mSprdZslEnabled);
 
@@ -4249,6 +4251,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
         if (mRedisplayFum && mRedisplayFum == frame_num) {
             HAL_LOGD("redisplay frame,skip");
+            channel->channelClearAllQBuff(buffer_timestamp,
+                                          CAMERA_STREAM_TYPE_PREVIEW);
             goto bypass_pre;
         }
         ATRACE_BEGIN("preview_frame");
@@ -4638,14 +4642,17 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
                 SprdCamera3RegularChannel *regularChannel =
                     reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
                 if (regularChannel) {
-                    if (mRedisplayFum && frame_num != mRedisplayFum) {
-                    regularChannel->channelClearInvalidQBuff(
-                        mPictureFrameNum, timestamp,
-                        CAMERA_STREAM_TYPE_PREVIEW);
-                    }
                     regularChannel->channelClearInvalidQBuff(
                         mPictureFrameNum, timestamp,
                         CAMERA_STREAM_TYPE_CALLBACK);
+                    if (!(mRedisplayFum && frame_num != mRedisplayFum) &&
+                        clearPrevStream) {
+                        clearPrevStream = false;
+                        return true;
+                    }
+                    regularChannel->channelClearInvalidQBuff(
+                        mPictureFrameNum, timestamp,
+                        CAMERA_STREAM_TYPE_PREVIEW);
                 }
             }
         }
@@ -6531,7 +6538,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
-                sprddefInfo.sprd_appmode_id);
+                 sprddefInfo.sprd_appmode_id);
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;

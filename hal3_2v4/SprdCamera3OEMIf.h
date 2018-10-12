@@ -292,6 +292,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
     cmr_uint mVideo3dnrFlag;
     uint32_t mRedisplayFum;
+    bool clearPrevStream;
 
   private:
     inline void print_time();

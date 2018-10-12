@@ -1226,6 +1226,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             output2.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
             sprddefInfo.sprd_zsl_enabled == false) {
             mOEMIf->mRedisplayFum = request->frame_number;
+            mOEMIf->clearPrevStream = true;
         }
     }
     // fix BUG760944, reset crop ratio when request have both jpeg stream and
