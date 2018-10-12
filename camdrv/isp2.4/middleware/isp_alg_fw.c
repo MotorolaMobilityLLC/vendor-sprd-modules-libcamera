@@ -2733,9 +2733,37 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 		lsc_param.tune_param_ptr = get_pm_output.param_data->data_ptr;
 	}
 
-	lsc_param.otp_info_ptr = cxt->otp_data;
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE: {
+		lsc_param.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+	case ISP_DUAL_NORMAL: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_DUAL_SBS: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_SBS;
+		break;
+	}
+	case ISP_BOKEH: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_WIDETELE: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_W_T;
+		break;
+	}
+	default:
+		lsc_param.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+
 	lsc_param.is_master = cxt->is_master;
-	lsc_param.is_multi_mode = cxt->is_multi_mode;
+	ISP_LOGI("is_master=%d, is_multi_mode=%d",
+		lsc_param.is_master, lsc_param.is_multi_mode);
+
+	lsc_param.otp_info_ptr = cxt->otp_data;
 
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;

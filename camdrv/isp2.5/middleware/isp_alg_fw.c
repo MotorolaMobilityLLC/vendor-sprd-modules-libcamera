@@ -341,6 +341,7 @@ struct isp_alg_fw_context {
 	cmr_u32 rgb_gain_bypass;
 	struct drv_fov_info fov_info;
 	cmr_u32 is_mono_sensor;
+	cmr_u32 sn_mode;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -711,20 +712,24 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	struct isp_alg_fw_context *cxt_slv = NULL;
 	struct sensor_multi_ae_info *ae_info = NULL;
 	cmr_u32 slv_camera_id = 0;
+	cmr_u32 slv_sensor_mode = 0;
 
 	switch (type) {
 	case ISP_AE_MULTI_WRITE:
 		ISP_LOGV("ISP_AE_MULTI_WRITE");
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_SENSOR_MODE, NULL, &slv_sensor_mode);
 		ae_info = (struct sensor_multi_ae_info *)param0;
 		ae_info[0].handle = cxt->ioctrl_ptr->caller_handler;
 		ae_info[0].camera_id = cxt->camera_id;
-		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
+		ae_info[0].exp.size_index = cxt->sn_mode;
 		if (ae_info[0].count == 2) {
 			isp_3a_handle_slv = isp_br_get_slv_3a_handle(slv_camera_id);
 			cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
 			if (cxt_slv != NULL) {
 				ae_info[1].handle = cxt_slv->ioctrl_ptr->caller_handler;
 				ae_info[1].camera_id = slv_camera_id;
+				ae_info[1].exp.size_index = slv_sensor_mode;
 			} else {
 				ISP_LOGE("fail to get slave sensor handle , it is not ready");
 				return ret;
@@ -3637,10 +3642,35 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 		lsc_param.tune_param_ptr = get_pm_output.param_data->data_ptr;
 	}
 
-	lsc_param.is_multi_mode = cxt->is_multi_mode;
+	switch (cxt->is_multi_mode) {
+	case ISP_SINGLE: {
+		lsc_param.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+	case ISP_DUAL_NORMAL: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_DUAL_SBS: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_SBS;
+		break;
+	}
+	case ISP_BOKEH: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		break;
+	}
+	case ISP_WIDETELE: {
+		lsc_param.is_multi_mode = ISP_ALG_DUAL_W_T;
+		break;
+	}
+	default:
+		lsc_param.is_multi_mode = ISP_ALG_SINGLE;
+		break;
+	}
+
 	lsc_param.is_master = cxt->is_master;
 	ISP_LOGI("is_master=%d, is_multi_mode=%d",
-		cxt->is_master, cxt->is_multi_mode);
+		lsc_param.is_master, lsc_param.is_multi_mode);
 
 	lsc_param.otp_info_ptr = cxt->otp_data;
 
@@ -4595,9 +4625,14 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
 
-	sn_mode = in_ptr->resolution_info.size_index;
 	pdaf_info = cxt->pdaf_info;
-	ISP_LOGV("sn_mode = %d", sn_mode);
+
+	sn_mode = in_ptr->resolution_info.size_index;
+	cxt->sn_mode = sn_mode;
+	ISP_LOGV("is_master = %d, sn_mode = %d", cxt->is_master, sn_mode);
+	if (!cxt->is_master) {
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_SENSOR_MODE, &sn_mode, NULL);
+	}
 
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
 	statis_mem_input.alloc_cb = in_ptr->alloc_cb;
@@ -4803,12 +4838,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
 
-	if(cxt->is_master && in_ptr->is_real_bokeh)
-	{
+	if (cxt->is_master && in_ptr->is_real_bokeh) {
 		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
 		slv_cxt = isp_br_get_slv_3a_handle(slv_camera_id);
-		if (slv_cxt)
-		{
+		if (slv_cxt) {
 			slv_cxt->commn_cxt.mode_flag = ISP_MODE_ID_PRV_0;
 			slv_cxt->commn_cxt.isp_mode = ISP_MODE_ID_PRV_0;
 			slv_isp_work_mode = ISP_MODE_ID_PRV_0;
@@ -4854,8 +4887,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
 
-	if(cxt->is_master)
-	{
+	if (cxt->is_master) {
 		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
 		slv_cxt = isp_br_get_slv_3a_handle(slv_camera_id);
 		if (slv_cxt && slv_cxt->is_real_bokeh)
@@ -5147,8 +5179,7 @@ cmr_int isp_alg_sw_isp_buf_check(cmr_handle isp_alg_handle, void *param_ptr)
 	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
 	slv_cxt= isp_br_get_slv_3a_handle(slv_camera_id);
-	if (!slv_cxt)
-	{
+	if (!slv_cxt) {
 		ISP_LOGE("fail to check slave isp handle!");
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
@@ -5157,12 +5188,11 @@ cmr_int isp_alg_sw_isp_buf_check(cmr_handle isp_alg_handle, void *param_ptr)
 		(void *)slv_cxt->sw_isp_reserved_frm.raw.img_addr_vir.chn0,
 		(void *)slv_cxt->sw_isp_reserved_frm.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0);
 	if (param_ptr == (void *)slv_cxt->sw_isp_reserved_frm.raw.img_addr_vir.chn0 ||
-		param_ptr == (void *)slv_cxt->sw_isp_reserved_frm.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0)
-	{
+		param_ptr == (void *)slv_cxt->sw_isp_reserved_frm.m_yuv_pre.cpu_frminfo.img_addr_vir.chn0) {
 		ret = 1;
-	}
-	else
+	} else {
 		ret = 0;
+	}
 exit:
 	return ret;
 }
@@ -5182,8 +5212,7 @@ cmr_int isp_alg_get_bokeh_status(cmr_handle isp_alg_handle)
 	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
 	slv_cxt= isp_br_get_slv_3a_handle(slv_camera_id);
-	if (!slv_cxt)
-	{
+	if (!slv_cxt) {
 		ISP_LOGE("fail to check slave isp handle!");
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
@@ -5213,8 +5242,7 @@ cmr_int isp_alg_sw_proc(cmr_handle isp_alg_handle, void *param_ptr)
 	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
 	slv_cxt= isp_br_get_slv_3a_handle(slv_camera_id);
-	if (!slv_cxt)
-	{
+	if (!slv_cxt) {
 		ISP_LOGE("fail to check slave isp handle!");
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
