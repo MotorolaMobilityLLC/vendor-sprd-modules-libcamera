@@ -45,7 +45,6 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
-	$(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
 
 LOCAL_HEADER_LIBRARIES += jni_headers
@@ -69,7 +68,6 @@ LOCAL_SRC_FILES+= \
 	src/cmr_ipm.c \
 	src/cmr_focus.c \
 	src/exif_writer.c \
-	../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c \
 	src/jpeg_stream.c \
 	src/cmr_filter.c
 
@@ -124,6 +122,12 @@ else
 LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF
 endif
 
+ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0 P 9),)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc
+LOCAL_SRC_FILES += ../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c
+LOCAL_SHARED_LIBRARIES += libyuv
+endif
+
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
@@ -136,7 +140,6 @@ LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
 LOCAL_SHARED_LIBRARIES += liblog
-LOCAL_SHARED_LIBRARIES += libyuv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
        LOCAL_SHARED_LIBRARIES += libcamfb

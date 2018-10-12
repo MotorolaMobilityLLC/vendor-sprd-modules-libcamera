@@ -1408,46 +1408,47 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data) {
     struct cmr_op_mean mean;
     char value[PROPERTY_VALUE_MAX];
 
-	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
-		CMR_LOGI("post proc has been cancel");
-		return CMR_CAMERA_NORNAL_EXIT;
-	}
+    if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
+        CMR_LOGI("post proc has been cancel");
+        return CMR_CAMERA_NORNAL_EXIT;
+    }
 
-	if (snp_cxt->ops.start_scale) {
-		src = chn_param_ptr->convert_thumb[index].src_img;
-		dst = chn_param_ptr->convert_thumb[index].dst_img;
-		mean.slice_height = chn_param_ptr->convert_thumb[index].slice_height;
-		mean.is_sync = 1;
-		src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
-		dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
-		camera_take_snapshot_step(CMR_STEP_CVT_THUMB_S);
-		if ((src.size.width != dst.size.width) || (src.size.height != dst.size.height)) {
-			if (snp_cxt->req_param.is_video_snapshot || snp_cxt->req_param.is_zsl_snapshot) {
-				ret = snp_img_scaling_down(&src, &dst, &mean);
-				            // for cache coherency
-				cmr_snapshot_memory_flush(snp_cxt, &dst);
-			} else {
-			ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst, &mean);
-			}
-		} else {
-			CMR_LOGI("don't need to scale");
-		}
-		camera_take_snapshot_step(CMR_STEP_CVT_THUMB_E);
-	    property_get("debug.camera.save.snpfile", value, "0");
-	    if (atoi(value) == 6 || (atoi(value) & (1 << 6))) {
-	        struct camera_context *cam_ctx = snp_cxt->oem_handle;
-	        camera_save_yuv_to_file(
-	            FORM_DUMPINDEX(SNP_THUMB_DATA, cam_ctx->dump_cnt, 0),
-	            IMG_DATA_TYPE_YUV420, dst.size.width, dst.size.height,
-	            &dst.addr_vir);
-	    }
-	} else {
-		CMR_LOGE("err start_scale is null");
-		ret = -CMR_CAMERA_FAIL;
-	}
-	//snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_CONVERT_THUMB_DONE, (void*)ret, sizeof(cmr_int));
-	CMR_LOGI("done %ld", ret);
-	return ret;
+    if (snp_cxt->ops.start_scale) {
+        src = chn_param_ptr->convert_thumb[index].src_img;
+        dst = chn_param_ptr->convert_thumb[index].dst_img;
+        mean.slice_height = chn_param_ptr->convert_thumb[index].slice_height;
+        mean.is_sync = 1;
+        src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+        dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+        camera_take_snapshot_step(CMR_STEP_CVT_THUMB_S);
+        if ((src.size.width != dst.size.width) || (src.size.height != dst.size.height)) {
+            if (snp_cxt->req_param.is_video_snapshot || snp_cxt->req_param.is_zsl_snapshot) {
+                ret = snp_img_scaling_down(&src, &dst, &mean);
+                // for cache coherency
+                cmr_snapshot_memory_flush(snp_cxt, &dst);
+            } else {
+            ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle,
+                                                        &src, &dst, &mean);
+            }
+        } else {
+        CMR_LOGI("don't need to scale");
+        }
+        camera_take_snapshot_step(CMR_STEP_CVT_THUMB_E);
+        property_get("debug.camera.save.snpfile", value, "0");
+        if (atoi(value) == 6 || (atoi(value) & (1 << 6))) {
+            struct camera_context *cam_ctx = snp_cxt->oem_handle;
+            camera_save_yuv_to_file(FORM_DUMPINDEX(SNP_THUMB_DATA,
+                                                    cam_ctx->dump_cnt, 0), IMG_DATA_TYPE_YUV420,
+                                                    dst.size.width, dst.size.height, &dst.addr_vir);
+        }
+    } else {
+    CMR_LOGE("err start_scale is null");
+    ret = -CMR_CAMERA_FAIL;
+    }
+    //snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
+    //SNAPSHOT_EVT_CONVERT_THUMB_DONE, (void*)ret, sizeof(cmr_int));
+    CMR_LOGI("done %ld", ret);
+    return ret;
 }
 
 static int camera_get_system_time(char *datetime) {

@@ -7772,6 +7772,16 @@ exit:
     return ret;
 }
 
+cmr_int camera_local_set_thumb_size(cmr_handle oem_handle,
+                                  struct img_size thum_size) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct preview_context *prv_cxt = &cxt->prev_cxt;
+
+    cmr_preview_set_thumb_size(prv_cxt->preview_handle, cxt->camera_id, thum_size);
+
+    return 0;
+}
+
 cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
                                   struct snapshot_param *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -8542,6 +8552,18 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         }
     } else {
         camera_get_iso_value(oem_handle);
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_THUMB_SIZE,
+                            &setting_param);
+        if (ret) {
+        CMR_LOGE("failed to get thumb size %ld", ret);
+        goto exit;
+        }
+        //third party APP do video snapshot may update the thumb_size
+        ret = camera_local_set_thumb_size(cxt, setting_param.size_param);
+        if (ret) {
+        CMR_LOGE("failed to update thumb size");
+        }
     }
 
     cmr_bzero(&snp_param, sizeof(struct snapshot_param));
