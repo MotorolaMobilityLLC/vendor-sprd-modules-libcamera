@@ -180,7 +180,7 @@ static void ov8856_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         fps = 1000000000.0 / ((shutter + dummy_line) *
                               sns_drv_cxt->trim_tab_info[mode].line_time);
     }
-    SENSOR_LOGI("fps = %f", fps);
+    SENSOR_LOGV("fps = %f", fps);
 
     frame_interval = (uint16_t)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
@@ -210,7 +210,7 @@ static void ov8856_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_LOGI("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)isp_gain,
+    SENSOR_LOGV("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)isp_gain,
                 sensor_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = sensor_gain;
@@ -616,7 +616,7 @@ static cmr_int ov8856_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E");
+    SENSOR_LOGV("E");
 
     info->aec_i2c_info_out = &ov8856_aec_info;
     exposure_line = info->exp.exposure;
@@ -656,6 +656,7 @@ unsigned long ov8856s_SetSlave_FrameSync(cmr_handle handle,
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x20);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x07);
+    SENSOR_LOGI("X");
 
     return 0;
 }
@@ -682,8 +683,10 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 #if defined(CONFIG_DUAL_MODULE)
+#ifndef SENSOR_OV8856_TELE
     if (sns_drv_cxt->sensor_id == 2)
         ov8856s_SetSlave_FrameSync(handle, param);
+#endif
 #endif
 
 #if 0 // defined(CONFIG_DUAL_MODULE)

@@ -355,12 +355,12 @@ static cmr_int imx351_drv_init_fps_info(cmr_handle handle) {
                     static_info->max_fps = fps_info->sensor_mode_fps[i].max_fps;
                 }
             }
-            SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
+            SENSOR_LOGV("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
                         tempfps, trim_info[i].frame_line,
                         trim_info[i].line_time);
-            SENSOR_LOGI("mode %d,max_fps: %d ", i,
+            SENSOR_LOGV("mode %d,max_fps: %d ", i,
                         fps_info->sensor_mode_fps[i].max_fps);
-            SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
+            SENSOR_LOGV("is_high_fps: %d,highfps_skip_num %d",
                         fps_info->sensor_mode_fps[i].is_high_fps,
                         fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
@@ -575,7 +575,7 @@ static cmr_int imx351_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     real_gain = (double)param/ ISP_BASE_GAIN * 1.0;
 
-    SENSOR_LOGI("real_gain = %f", real_gain);
+    SENSOR_LOGV("real_gain = %f", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     imx351_drv_write_gain(handle, real_gain);
@@ -805,7 +805,7 @@ static cmr_int imx351_drv_stream_off(cmr_handle handle, cmr_uint param) {
     unsigned int sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    SENSOR_LOGI("E");
+    SENSOR_LOGV("E");
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value != 0x00) {
@@ -896,10 +896,10 @@ static cmr_int imx351_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     fps_info->is_high_fps = fps_data->sensor_mode_fps[sensor_mode].is_high_fps;
     fps_info->high_fps_skip_num =
         fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
-    SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
-    SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
-    SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
-    SENSOR_LOGI("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+    SENSOR_LOGV("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
+    SENSOR_LOGV("min_fps: %d", fps_info->min_fps);
+    SENSOR_LOGV("is_high_fps: %d", fps_info->is_high_fps);
+    SENSOR_LOGV("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
     return rtn;
 }
@@ -1058,7 +1058,7 @@ static cmr_int imx351_drv_parse_ebd_data(cmr_handle handle,
     parse_data->dgain_b =  *(embedded_data+64+64/4) << 8 |*(embedded_data+66+66/4);
     parse_data->dgain_gb =  *(embedded_data+68+68/4) << 8 | *(embedded_data+70+70/4);
     parse_data->gain =  (double)(1024.0/(1024.0-parse_data->again))*(double)(parse_data->dgain_r/256.0)*ISP_BASE_GAIN;
-    SENSOR_LOGI("X frame_count %x shutter: %d again %x %x %x %x %x %d", parse_data->frame_count,
+    SENSOR_LOGV("X frame_count %x shutter: %d again %x %x %x %x %x %d", parse_data->frame_count,
         parse_data->shutter, parse_data->again,parse_data->dgain_gr,parse_data->dgain_r,
         parse_data->dgain_b,parse_data->dgain_gb,parse_data->gain);
 
@@ -1070,7 +1070,7 @@ static cmr_int imx351_drv_parse_ebd_data(cmr_handle handle,
 static cmr_int imx351_drv_get_cct_data(cmr_handle handle, cmr_u8 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     cmr_u8 *cct_data = (cmr_u8 *)param;
-    SENSOR_LOGI("*param 0x%x 0x%x", *param, *cct_data);
+    SENSOR_LOGV("*param 0x%x 0x%x", *param, *cct_data);
 
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     tcs3430_read_data(cct_data);
@@ -1087,7 +1087,7 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("ptr:%p,type:0x%x", param_ptr, param_ptr->type);
+    SENSOR_LOGV("ptr:%p,type:0x%x", param_ptr, param_ptr->type);
 
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
@@ -1175,8 +1175,8 @@ static void imx351_drv_calc_gain(double gain,
     temp_gain = gain;
     if (temp_gain < 1.0)
         temp_gain = 1.0;
-    else if (temp_gain > 8.0)
-        temp_gain = 8.0;
+    else if (temp_gain > 16.0)
+        temp_gain = 16.0;
     else{
         temp_gain = 1.0;
         sensor_dgain = gain *256;
