@@ -8,7 +8,11 @@ return &s_ov8856_mipi_raw_info;
 #elif defined _SENSOR_RAW_SHARKL3_H_
 	// front matser
 	if(1==sensor_id){
+#ifdef SENSOR_OV8856_TELE
+		#include "parameters_sharkl3_Tele/sensor_ov8856_front_raw_param_main.c"
+#else
 		#include "parameters_sharkl3_front/sensor_ov8856_front_raw_param_main.c"
+#endif		
 		return &s_ov8856_front_mipi_raw_info;
 	}
 	// back slave
