@@ -4996,7 +4996,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	ISP_LOGV("AE_sync  is_multi_mode=%d, is_master=%d",cxt->is_multi_mode,cxt->is_master);
 
 	static int ae_dynamic_sync = 0;
-	if((cxt->is_multi_mode == 1) && (cxt->is_master == 1) && (cxt->ae_sync_param.mode == 1))
+	if((cxt->is_multi_mode) && (cxt->is_master == 1) && (cxt->ae_sync_param.mode == 1))
 	{
 		ae_dynamic_sync = 1;
 	}
@@ -6039,7 +6039,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 #ifndef CONFIG_ISP_2_2
 	//get ae_sync_param
-	if((init_param->is_master == 1) && (init_param->is_multi_mode == 1)) {//dual camera && master sensor
+	if((init_param->is_master == 1) && (init_param->is_multi_mode)) {//dual camera && master sensor
 	memcpy(&cxt->ae_sync_param, init_param->ae_sync_param.param, init_param->ae_sync_param.size);
 	ISP_LOGI(" magic num:0x%x,size:%d.\n",cxt->ae_sync_param.magic_first_num,init_param->ae_sync_param.size);
 	}
