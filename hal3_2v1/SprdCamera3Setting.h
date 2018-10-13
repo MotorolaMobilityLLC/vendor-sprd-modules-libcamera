@@ -492,7 +492,7 @@ class SprdCamera3Setting {
   public:
     SprdCamera3Setting(int cameraId);
     virtual ~SprdCamera3Setting();
-    static int initIdentifyDynamicSensorNum();
+
     static int getSensorStaticInfo(int32_t cameraId);
     static int getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                     cmr_u16 *height);

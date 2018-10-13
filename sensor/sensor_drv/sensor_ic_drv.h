@@ -683,6 +683,26 @@ struct sensor_ic_drv_cxt {
         void *priv_handle;
     } privata_data;
 };
+/*
+sensor drv optimize
+==================================
+*/
+
+struct sensor_resolution_size_section {
+    cmr_u16 width;
+    cmr_u16 height;
+    cmr_u32 current_fps;
+};
+
+typedef struct sensor_info_for_hal {
+    SENSOR_IMAGE_FORMAT image_format;
+    cmr_u8 focus_eb;
+    struct module_fov_info fov_info;
+    cmr_u16 source_width_max;
+    cmr_u16 source_height_max;
+    cmr_u8 sensor_type;
+    struct sensor_resolution_size_section resolution[SENSOR_MODE_MAX];
+} SENSOR_INFO_FOR_HAL,sensor_info_for_hal_t;
 
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
                              cmr_handle *sns_ic_drv_handle);

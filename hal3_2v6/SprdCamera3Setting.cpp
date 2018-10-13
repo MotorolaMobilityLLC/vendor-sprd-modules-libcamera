@@ -663,6 +663,12 @@ const camera_info kCameraInfo[] = {
 
 };
 
+unsigned char camera_is_supprort[] = {
+    BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
+    BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
+};
+
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];
 
@@ -858,7 +864,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
 }
 
 int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
-    struct sensor_drv_context *sensor_cxt = NULL;
+    sensor_info_for_hal_t *camera_info_ptr = NULL;
     int ret = 0;
 
     // just for camera developer debug
@@ -878,56 +884,46 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     HAL_LOGI("E");
 
-    sensor_cxt =
-        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
-    if (NULL == sensor_cxt) {
-        HAL_LOGE("sensor_cxt is NULL");
-        return -1;
-    }
+    camera_info_ptr = sensor_get_info_for_hal(cameraId);
 
-    ret = sensor_open_common(sensor_cxt, cameraId, 0);
-    if (ret) {
+    if (camera_info_ptr == NULL) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
         goto exit;
     }
 
-    mSensorType[cameraId] = sensor_get_sensor_type(sensor_cxt);
-    mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
+    mSensorType[cameraId] = camera_info_ptr->sensor_type;
+    mSensorFocusEnable[cameraId] = camera_info_ptr->focus_eb;
 
     // if sensor fov info is valid, use it; else use default value
-    if (sensor_cxt->fov_info.physical_size[0] > 0 &&
-        sensor_cxt->fov_info.physical_size[1] > 0 &&
-        sensor_cxt->fov_info.focal_lengths > 0) {
-        memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info,
-               sizeof(sensor_cxt->fov_info));
+    if (camera_info_ptr->fov_info.physical_size[0] > 0 &&
+        camera_info_ptr->fov_info.physical_size[1] > 0 &&
+        camera_info_ptr->fov_info.focal_lengths > 0) {
+        memcpy(&sensor_fov[cameraId], &camera_info_ptr->fov_info,
+               sizeof(camera_info_ptr->fov_info));
     }
 
-    if (sensor_cxt->sensor_list_ptr[cameraId]->source_width_max == 1920 &&
-        sensor_cxt->sensor_list_ptr[cameraId]->source_height_max == 1080) {
+    if (camera_info_ptr->source_width_max == 1920 &&
+        camera_info_ptr->source_height_max == 1080) {
         setLargestSensorSize(cameraId, 1920, 1088);
     } else {
-        setLargestSensorSize(
-            cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
-            sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
+        setLargestSensorSize(cameraId, camera_info_ptr->source_width_max,
+                             camera_info_ptr->source_height_max);
     }
 
-    HAL_LOGI("camId=%d, sensor_max_width=%d, sensor_max_height=%d", cameraId,
-             sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
-             sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
+    HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
+             cameraId, camera_info_ptr->source_height_max,
+             camera_info_ptr->source_width_max);
 
-    HAL_LOGI("sensor name: %s, focusEnable=%d, fov physical size (%f, %f), "
-             "focal_lengths=%f",
-             sensor_cxt->sensor_info_ptr->name, mSensorFocusEnable[cameraId],
+    HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, "
+             "%f), focal_lengths %f",
+             mSensorFocusEnable[cameraId],
              sensor_fov[cameraId].physical_size[0],
              sensor_fov[cameraId].physical_size[1],
              sensor_fov[cameraId].focal_lengths);
 
 exit:
     alreadyGetSensorStaticInfo[cameraId] = 1;
-    sensor_close_common(sensor_cxt, cameraId);
-    if (sensor_cxt != NULL)
-        free(sensor_cxt);
-    sensor_cxt = NULL;
+
 
     HAL_LOGI("X");
     return 0;
@@ -1044,13 +1040,8 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 
 int SprdCamera3Setting::getNumberOfCameras() {
     int numberOfCameras = 0;
-    int i, physicalCameraNum;
 
-    physicalCameraNum = sizeof(kCameraInfo) / sizeof(kCameraInfo[0]);
-    for (i = 0; i < physicalCameraNum; i++) {
-        if (kCameraInfo[i].orientation != -1)
-            numberOfCameras++;
-    }
+    numberOfCameras = sensor_get_number(camera_is_supprort);
 
     // will add logical camera num here later
 

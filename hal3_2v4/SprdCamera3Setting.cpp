@@ -668,11 +668,10 @@ const camera_info kCameraInfo[] = {
      0, 0, 0, 0, 0},
 };
 
-const int camera_is_supprort [] = {
-    BACK_CAMERA_SENSOR_SUPPORT,
-    FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK2_CAMERA_SENSOR_SUPPORT,
-    FRONT2_CAMERA_SENSOR_SUPPORT,
+unsigned char camera_is_supprort[] = {
+    BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
+    BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
+    BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
@@ -868,8 +867,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
 }
 
 int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
-    struct sensor_drv_context *sensor_cxt =
-        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
+    sensor_info_for_hal_t *camera_info_ptr = NULL;
     int ret = 0;
 
     // just for camera developer debug
@@ -882,48 +880,43 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     HAL_LOGI("E");
 
-    ret = sensor_open_common(sensor_cxt, cameraId, 0);
-    if (ret) {
+    camera_info_ptr = sensor_get_info_for_hal(cameraId);
+
+    if (camera_info_ptr == NULL) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
         goto exit;
     }
 
-    mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
+    mSensorFocusEnable[cameraId] = camera_info_ptr->focus_eb;
 
     // if sensor fov info is valid, use it; else use default value
-    if (sensor_cxt->fov_info.physical_size[0] > 0 &&
-        sensor_cxt->fov_info.physical_size[1] > 0 &&
-        sensor_cxt->fov_info.focal_lengths > 0) {
-        memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info,
-               sizeof(sensor_cxt->fov_info));
+    if (camera_info_ptr->fov_info.physical_size[0] > 0 &&
+        camera_info_ptr->fov_info.physical_size[1] > 0 &&
+        camera_info_ptr->fov_info.focal_lengths > 0) {
+        memcpy(&sensor_fov[cameraId], &camera_info_ptr->fov_info,
+               sizeof(camera_info_ptr->fov_info));
     }
 
-    if (sensor_cxt->sensor_list_ptr[cameraId]->source_width_max == 1920 &&
-        sensor_cxt->sensor_list_ptr[cameraId]->source_height_max == 1080) {
+    if (camera_info_ptr->source_width_max == 1920 &&
+        camera_info_ptr->source_height_max == 1080) {
         setLargestSensorSize(cameraId, 1920, 1088);
     } else {
-        setLargestSensorSize(
-            cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
-            sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
+        setLargestSensorSize(cameraId, camera_info_ptr->source_width_max,
+                             camera_info_ptr->source_height_max);
     }
 
-    HAL_LOGI("camId=%d, sensor_max_height=%d, sensor_max_width=%d", cameraId,
-             sensor_cxt->sensor_list_ptr[cameraId]->source_height_max,
-             sensor_cxt->sensor_list_ptr[cameraId]->source_width_max);
+    HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
+             cameraId, camera_info_ptr->source_height_max,
+             camera_info_ptr->source_width_max);
 
-    HAL_LOGI("sensor name: %s, focusEnable=%d, fov physical size (%f, %f), "
-             "focal_lengths=%f",
-             sensor_cxt->sensor_info_ptr->name, mSensorFocusEnable[cameraId],
+    HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, "
+             "%f), focal_lengths %f",
+             mSensorFocusEnable[cameraId],
              sensor_fov[cameraId].physical_size[0],
              sensor_fov[cameraId].physical_size[1],
              sensor_fov[cameraId].focal_lengths);
 
 exit:
-    sensor_close_common(sensor_cxt, cameraId);
-
-    if (sensor_cxt != NULL)
-        free(sensor_cxt);
-    sensor_cxt = NULL;
 
     HAL_LOGI("X");
     return 0;
@@ -1031,7 +1024,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
 
-    num = CAMERA_SENSOR_NUM;
+    num = sensor_get_number(camera_is_supprort);
     LOGI("getNumberOfCameras:%d", num);
 
     return num;

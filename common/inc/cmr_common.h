@@ -819,7 +819,7 @@ enum sensor_mode {
     SENSOR_MODE_MAX
 };
 
-enum sensor_type { NORMALSENSOR = 0, FOURINONESENSOR, YUVSENSOR };
+enum sensor_type { RAWSENSOR = 0, FOURINONESENSOR, YUVSENSOR };
 
 #define SENSOR_VIDEO_MODE_MAX 4
 

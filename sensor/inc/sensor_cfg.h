@@ -40,4 +40,5 @@ SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id);
 char *sensor_get_name_list(cmr_u32 sensor_id);
 SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx);
 cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr);
+SENSOR_INFO_FOR_HAL *sensor_get_camera_info_reg_tab(cmr_u32 sensor_id);
 #endif

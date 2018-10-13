@@ -586,6 +586,8 @@ const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
+SENSOR_INFO_FOR_HAL camera_info_global_reg_tab[SENSOR_ID_MAX];
+
 SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
     SENSOR_MATCH_T *sensor_reg_tab_ptr = NULL;
 
@@ -607,6 +609,7 @@ SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
         break;
     case SENSOR_SUB3:
         sensor_reg_tab_ptr = (SENSOR_MATCH_T *)front_sensor3_infor_tab;
+        break;
     }
 
     return (SENSOR_MATCH_T *)sensor_reg_tab_ptr;
@@ -629,11 +632,11 @@ char *sensor_get_name_list(cmr_u32 sensor_id) {
         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT2;
         break;
     case SENSOR_MAIN3:
-         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK3;
-         break;
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_BACK3;
+        break;
     case SENSOR_SUB3:
-         sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT3;
-         break;
+        sensor_name_list_ptr = (char *)CAMERA_SENSOR_TYPE_FRONT3;
+        break;
 
     }
 
@@ -668,4 +671,15 @@ cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr) {
         }
     }
     return SENSOR_FAIL;
+}
+
+SENSOR_INFO_FOR_HAL *sensor_get_camera_info_reg_tab(cmr_u32 sensor_id) {
+    SENSOR_INFO_FOR_HAL *camera_info_tab_ptr = camera_info_global_reg_tab;
+
+    if (camera_info_tab_ptr == NULL)
+        return NULL;
+
+    camera_info_tab_ptr += sensor_id;
+
+    return camera_info_tab_ptr;
 }

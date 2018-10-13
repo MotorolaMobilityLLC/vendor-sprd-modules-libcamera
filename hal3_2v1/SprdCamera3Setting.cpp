@@ -787,7 +787,7 @@ const camera_info kCameraInfo[] = {
      0, 0, 0, 0, 0},
 };
 
-int camera_is_supprort[] = {
+unsigned char camera_is_supprort[] = {
     BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
     BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
     BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
@@ -802,7 +802,7 @@ const int64_t MSEC = USEC * 1000LL;
 const int64_t SEC = MSEC * 1000LL;
 
 sprd_setting_info_t SprdCamera3Setting::s_setting[CAMERA_ID_COUNT];
-int SprdCamera3Setting::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
+int SprdCamera3Setting::mLogicalSensorNum = 0;
 int SprdCamera3Setting::mPhysicalSensorNum = 0;
 
 /**********************Function********************************/
@@ -983,7 +983,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
 }
 
 int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
-    struct sensor_drv_context *sensor_cxt = NULL;
+    sensor_info_for_hal_t *camera_info_ptr = NULL;
     int ret = 0;
 
     // just for camera developer debug
@@ -1003,52 +1003,42 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     HAL_LOGI("E");
 
-    sensor_cxt =
-        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
-    if (NULL == sensor_cxt) {
-        HAL_LOGE("sensor_cxt is NULL");
-        return -1;
-    }
+    camera_info_ptr = sensor_get_info_for_hal(cameraId);
 
-    ret = sensor_open_common(sensor_cxt, cameraId, 0);
-    if (ret) {
+    if (camera_info_ptr == NULL) {
         HAL_LOGE("open camera (%d) failed", cameraId);
         setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
                              default_sensor_max_sizes[cameraId].height);
         goto exit;
     }
-    mSensorType[cameraId] = sensor_get_sensor_type(sensor_cxt);
-    mSensorFocusEnable[cameraId] = sensor_cxt->sensor_info_ptr->focus_eb;
+
+    mSensorType[cameraId] = camera_info_ptr->sensor_type;
+    mSensorFocusEnable[cameraId] = camera_info_ptr->focus_eb;
 
     // if sensor fov info is valid, use it; else use default value
-    if (sensor_cxt->fov_info.physical_size[0] > 0 &&
-        sensor_cxt->fov_info.physical_size[1] > 0 &&
-        sensor_cxt->fov_info.focal_lengths > 0) {
-        memcpy(&sensor_fov[cameraId], &sensor_cxt->fov_info,
-               sizeof(sensor_cxt->fov_info));
+    if (camera_info_ptr->fov_info.physical_size[0] > 0 &&
+        camera_info_ptr->fov_info.physical_size[1] > 0 &&
+        camera_info_ptr->fov_info.focal_lengths > 0) {
+        memcpy(&sensor_fov[cameraId], &camera_info_ptr->fov_info,
+               sizeof(camera_info_ptr->fov_info));
     }
 
-    setLargestSensorSize(
-        cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
-        sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
+    setLargestSensorSize(cameraId, camera_info_ptr->source_width_max,
+                         camera_info_ptr->source_height_max);
 
     HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
-             cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_height_max,
-             sensor_cxt->sensor_list_ptr[cameraId]->source_width_max);
+             cameraId, camera_info_ptr->source_height_max,
+             camera_info_ptr->source_width_max);
 
-    HAL_LOGI("sensor name: %s, sensorFocusEnable = %d, fov physical size (%f, "
+    HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, "
              "%f), focal_lengths %f",
-             sensor_cxt->sensor_info_ptr->name, mSensorFocusEnable[cameraId],
+             mSensorFocusEnable[cameraId],
              sensor_fov[cameraId].physical_size[0],
              sensor_fov[cameraId].physical_size[1],
              sensor_fov[cameraId].focal_lengths);
 
 exit:
     alreadyGetSensorStaticInfo[cameraId] = 1;
-    sensor_close_common(sensor_cxt, cameraId);
-    if (sensor_cxt != NULL)
-        free(sensor_cxt);
-    sensor_cxt = NULL;
 
     HAL_LOGI("X");
     return 0;
@@ -1154,8 +1144,15 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
 
-    initIdentifyDynamicSensorNum();
-    num = mPhysicalSensorNum + mLogicalSensorNum;
+    if (mPhysicalSensorNum == 0) {
+        mPhysicalSensorNum = sensor_get_number(camera_is_supprort);
+    }
+    num = mPhysicalSensorNum;
+
+#ifdef LOGICAL_CAMERA_FOR_BOKEH
+    num++;
+#endif
+
     LOGI("getNumberOfCameras:%d", num);
 
     return num;
@@ -1304,44 +1301,6 @@ int SprdCamera3Setting::initDefaultParameters(int32_t cameraId) {
 
     return ret;
 }
-
-int SprdCamera3Setting::initIdentifyDynamicSensorNum() {
-    struct sensor_drv_context *sensor_cxt = NULL;
-    int ret = 0;
-    int i = 0;
-    HAL_LOGI("E");
-
-    sensor_cxt =
-        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
-    if (NULL == sensor_cxt) {
-        HAL_LOGE("sensor_cxt is NULL");
-        return -1;
-    }
-    for (i = 0; i < (int)ARRAY_SIZE(camera_is_supprort); i++) {
-        if (!camera_is_supprort[i])
-            continue;
-        memset(sensor_cxt, 0, (sizeof(struct sensor_drv_context)));
-        ret = sensor_open_common(sensor_cxt, i, 0);
-
-        if (ret) {
-            camera_is_supprort[i] = 0;
-        } else {
-            mPhysicalSensorNum++;
-        }
-
-        sensor_close_common(sensor_cxt, i);
-    }
-    if (sensor_cxt != NULL)
-        free(sensor_cxt);
-    sensor_cxt = NULL;
-
-    mPhysicalSensorNum = MIN(mPhysicalSensorNum, CAMERA_SENSOR_NUM);
-    HAL_LOGI("mPhysicalSensorNum=%d", mPhysicalSensorNum);
-
-    HAL_LOGI("X");
-
-    return mPhysicalSensorNum;
-};
 
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;

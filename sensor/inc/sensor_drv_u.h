@@ -709,8 +709,6 @@ struct sensor_drv_context {
     cmr_u32 flash_mode;
     cmr_u32 padding;
     cmr_uint is_autotest;
-    cmr_int is_main_sensor;
-    cmr_int is_main2_sensor;
     cmr_int is_register_sensor;
     EXIF_SPEC_PIC_TAKING_COND_T default_exif;
     struct sns_thread_cxt ctrl_thread_cxt;
@@ -719,6 +717,7 @@ struct sensor_drv_context {
     cmr_uint lnc_addr_bakup[8][4];
     cmr_u32 bypass_mode;
     struct drv_fov_info fov_info;
+    cmr_int sensor_img_type;
 
     cmr_handle sensor_hw_handler;
     void *module_list[SENSOR_ID_MAX];
@@ -762,13 +761,8 @@ cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param);
 cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
                                SENSOR_EXP_INFO_T **sensor_exp_info_pptr);
 
-cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
-                                struct sensor_flash_level *level);
-
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                struct sensor_flash_level *level);
-
-cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt);
 
 cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 
@@ -778,6 +772,10 @@ cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
+
+cmr_int sensor_get_number(unsigned char *camera_support);
+
+SENSOR_INFO_FOR_HAL *sensor_get_info_for_hal(cmr_u32 sensor_id);
 
 // utest refer
 #ifdef __cplusplus
