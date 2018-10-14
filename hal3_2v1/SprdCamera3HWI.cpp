@@ -516,10 +516,8 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
                                          camera_channel_type_t *channel_type) {
 
     if (new_stream->stream_type == CAMERA3_STREAM_OUTPUT) {
-        if (new_stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
-            new_stream->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-
         switch (new_stream->format) {
+        case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
             if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                 *stream_type = CAMERA_STREAM_TYPE_VIDEO;
@@ -1129,8 +1127,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             const camera3_stream_buffer_t &output2 = request->output_buffers[1];
             if ((output1.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
                  output2.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) &&
-                (output1.stream->format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
-                 output2.stream->format == HAL_PIXEL_FORMAT_YCrCb_420_SP)) {
+                (output1.stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                 output2.stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)) {
                 receive_req_max = 5;
                 need_apply_settings = 0;
             }
