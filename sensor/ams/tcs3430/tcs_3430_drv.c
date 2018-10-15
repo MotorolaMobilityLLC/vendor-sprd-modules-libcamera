@@ -107,7 +107,7 @@ int tcs3430_read_data(void *param) {
     } else {
         calc_lux_cct(tcs3430_data);
     }
-    SENSOR_LOGD("ams tcs3430 x_data:%d, y_data:%d, z_data:%d, ir_data:%d, "
+    SENSOR_LOGV("ams tcs3430 x_data:%d, y_data:%d, z_data:%d, ir_data:%d, "
                 "x_raw:%d, y_raw:%d, z_raw:%d, ir_raw:%d\n",
                 tcs3430_data->x_data, tcs3430_data->y_data,
                 tcs3430_data->z_data, tcs3430_data->ir_data,
