@@ -22,21 +22,13 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
                                        cxt->camera_id);
     if (raw_filename[0]) {
 // only copy the filename without the path
-#ifdef CONFIG_USE_CAMERASERVER_PROC
-        memcpy(value, raw_filename + 25, PROPERTY_VALUE_MAX);
-#else
-        memcpy(value, raw_filename + 18, PROPERTY_VALUE_MAX);
-#endif
+        memcpy(value, raw_filename + strlen(CAMERA_DUMP_PATH) + 1, PROPERTY_VALUE_MAX);
     } else {
         property_get("debug.camera.isptool.raw.name", value, "none");
     }
     CMR_LOGI("parse file_name = %s", value);
     if (CMR_CAMERA_SUCCESS == camera_parse_raw_filename(value, &scene_param)) {
-#ifdef CONFIG_USE_CAMERASERVER_PROC
-        sprintf(file_name, "/data/misc/cameraserver/%s", value);
-#else
-        sprintf(file_name, "/data/misc/media/%s", value);
-#endif
+        sprintf(file_name, "%s%s", CAMERA_DUMP_PATH, value);
         //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
         CMR_LOGI("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d glb %d",
