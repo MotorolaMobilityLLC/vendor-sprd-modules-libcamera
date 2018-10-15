@@ -21,6 +21,7 @@
 #include "cmr_log.h"
 #include "isp_type.h"
 #include "isp_drv.h"
+#include "cmr_prop.h"
 
 struct af_debug_info_t {
 	FILE *dac_fp;
@@ -189,7 +190,7 @@ cmr_int isp_file_debug_init(cmr_handle *handle)
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 
 	*handle = NULL;
-	property_get("persist.sys.camera.ispfp.debug", value, "0");
+	property_get(PROP_ISP_FILE_DEBUG, value, "0");
 	if (1 != atoi(value)) {
 		goto exit;
 	}

@@ -58,4 +58,16 @@
  */
 #define PROP_ISP_FILE_DEBUG        "persist.vendor.camera.ispfp.debug"
 
+/*
+ * 0:Default value,not read otp
+ * 1:Open the refocus.otp read otp from file
+ */
+#define PROP_ISP_REFOCUS_OTP        "persist.vendor.camera.refocus.otp"
+
+/*
+ * 0:Default value,not save isp param
+ * 1:save isp param
+ */
+#define PROP_ISP_SAVE_PARAM        "persist.vendor.save.isp.param"
+
 #endif
