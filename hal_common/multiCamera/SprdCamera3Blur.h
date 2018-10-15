@@ -202,8 +202,8 @@ typedef struct {
                       // body right 180:face down body up 270:face right body
                       // left  ->
     bool rear_cam_en; // 1:rear camera capture 0:front camera capture
-    short camera_angle;//sensor angle init 270
-    short mobile_angle;//hal angle
+    short camera_angle; // sensor angle init 270
+    short mobile_angle; // hal angle
 } capture_weight_params_t;
 
 typedef struct {
@@ -368,7 +368,6 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         int initBlur20Params();
         int initBlurInitParams();
         void initBlurWeightParams();
-        bool isBlurInitParamsChanged();
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
         void saveCaptureBlurParams(buffer_handle_t *result_buff,
                                    uint32_t jpeg_size);

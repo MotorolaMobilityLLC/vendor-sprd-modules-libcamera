@@ -1082,7 +1082,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(buffer_handle_t *input1,
 
     {
         Mutex::Autolock l(mMergequeueMutex);
-        if (isBlurInitParamsChanged() || mFirstPreview) {
+        if (mFirstPreview) {
             mFirstPreview = false;
             if (mBlurApi[0]->mHandle != NULL) {
                 int64_t deinitStart = systemTime();
@@ -1109,7 +1109,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(buffer_handle_t *input1,
                 HAL_LOGE("preview iSmoothInit Err:%d", ret);
             }
         }
-        if (isBlurInitParamsChanged() || mFirstCapture) {
+        if (mFirstCapture) {
             mFirstCapture = false;
             if (mBlurApi2->mHandle != NULL) {
                 int64_t deinitStart = systemTime();
@@ -1827,7 +1827,8 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
     case DUMP_BLUR_OUTPUT:
         property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if (!strcmp(prop, "output") && combo_buff != NULL && output_buff != NULL) {
+        if (!strcmp(prop, "output") && combo_buff != NULL &&
+            output_buff != NULL) {
             buffer_base = (unsigned char *)output_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
                                                 mBlur->mCaptureHeight * 3 / 2,
@@ -2094,11 +2095,8 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
         if (atoi(prop) == 1) {
             mIsGalleryBlur = true;
         }
-        property_get("persist.vendor.cam.blur.always", prop, "1");
-        if (atoi(prop) == 1) {
-            mIsBlurAlways = true;
-            mCaptureWeightParams.version = 1;
-        }
+        mIsBlurAlways = true;
+        mCaptureWeightParams.version = 1;
     } else if (mVersion == 1) {
         property_get("persist.vendor.cam.fr.blur.type", prop, "2");
         if (atoi(prop) == 0 || atoi(prop) == 1 || atoi(prop) == 2) {
@@ -2115,10 +2113,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     HAL_LOGD("roi_type:%d, mIsGalleryBlur:%d, mIsBlurAlways:%d",
              mCaptureWeightParams.roi_type, mIsGalleryBlur, mIsBlurAlways);
 
-    property_get("persist.vendor.cam.blur.cirlscal", prop, "50");
-    if (atoi(prop) != 0) {
-        mCircleSizeScale = atoi(prop);
-    }
+    mCircleSizeScale = 50;
     mLastFaceNum = 0;
     mSkipFaceNum = 0;
     mRotation = 0;
@@ -2150,165 +2145,6 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
 
     // capture weight params
     mCapture2WeightParams.f_number = 1;
-}
-
-/*===========================================================================
- * FUNCTION   :isBlurInitParamsChanged
- *
- * DESCRIPTION: user change  blur init params by adb shell setprop
- *
- * PARAMETERS :
- *
- *
- * RETURN     : ret
- *==========================================================================*/
-bool SprdCamera3Blur::CaptureThread::isBlurInitParamsChanged() {
-    bool ret = false;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-
-    property_get("persist.vendor.cam.blur.conf", prop, "0");
-    if (1 != atoi(prop)) {
-        return false;
-    }
-
-    property_get("persist.vendor.cam.blur.min", prop, "0");
-    if (0 != atoi(prop) && mLastMinScope != atoi(prop)) {
-        mLastMinScope = atoi(prop);
-        mPreviewInitParams.min_slope = (float)(mLastMinScope) / 10000;
-        mCaptureInitParams.min_slope = (float)(mLastMinScope) / 10000;
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.max", prop, "0");
-    if (0 != atoi(prop) && mLastMaxScope != atoi(prop)) {
-        mLastMaxScope = atoi(prop);
-        mPreviewInitParams.max_slope = (float)(mLastMaxScope) / 10000;
-        mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.rati", prop, "0");
-    if (0 != atoi(prop) && mLastAdjustRati != atoi(prop)) {
-        mLastAdjustRati = atoi(prop);
-        mPreviewInitParams.findex2gamma_adjust_ratio =
-            (float)(mLastAdjustRati) / 10000;
-        mCaptureInitParams.findex2gamma_adjust_ratio =
-            (float)(mLastAdjustRati) / 10000;
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.scal", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.Scalingratio != atoi(prop)) {
-        mCaptureInitParams.Scalingratio = atoi(prop);
-
-        if (mOutWeightBuff != NULL)
-            free(mOutWeightBuff);
-
-        int buff_size =
-            (mCaptureInitParams.width / mCaptureInitParams.Scalingratio) *
-            (mCaptureInitParams.height / mCaptureInitParams.Scalingratio) *
-            sizeof(unsigned short);
-        mOutWeightBuff = (unsigned short *)malloc(buff_size);
-        memset(mOutWeightBuff, 0, buff_size);
-
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.win", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.SmoothWinSize != atoi(prop)) {
-        mCaptureInitParams.SmoothWinSize = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.filt", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.box_filter_size != atoi(prop)) {
-        mCaptureInitParams.box_filter_size = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.upb", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.vcm_dac_up_bound != atoi(prop)) {
-        mCaptureInitParams.vcm_dac_up_bound = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.lob", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.vcm_dac_low_bound != atoi(prop)) {
-        mCaptureInitParams.vcm_dac_low_bound = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.gain", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.vcm_dac_gain != atoi(prop)) {
-        mCaptureInitParams.vcm_dac_gain = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.clip", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.valid_depth_clip != atoi(prop)) {
-        mCaptureInitParams.valid_depth_clip = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.meth", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.method != atoi(prop)) {
-        mCaptureInitParams.method = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.row", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.row_num != atoi(prop)) {
-        mCaptureInitParams.row_num = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.col", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.column_num != atoi(prop)) {
-        mCaptureInitParams.column_num = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.rtio", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.boundary_ratio != atoi(prop)) {
-        mCaptureInitParams.boundary_ratio = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.sel", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.sel_size != atoi(prop)) {
-        mCaptureInitParams.sel_size = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.dep", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.valid_depth != atoi(prop)) {
-        mCaptureInitParams.valid_depth = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.slop", prop, "0");
-    if (0 != atoi(prop) && mCaptureInitParams.slope != atoi(prop)) {
-        mCaptureInitParams.slope = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.vupb", prop, "0");
-    if (0 != atoi(prop) &&
-        mCaptureInitParams.valid_depth_up_bound != atoi(prop)) {
-        mCaptureInitParams.valid_depth_up_bound = atoi(prop);
-        ret = true;
-    }
-
-    property_get("persist.vendor.cam.blur.vlob", prop, "0");
-    if (0 != atoi(prop) &&
-        mCaptureInitParams.valid_depth_low_bound != atoi(prop)) {
-        mCaptureInitParams.valid_depth_low_bound = atoi(prop);
-        ret = true;
-    }
-
-    return ret;
 }
 
 /*===========================================================================
@@ -2558,44 +2394,19 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 int32_t bodyInfo[4];
                 int32_t faceInfo[4];
                 bool touchInBody = false;
-                char prop1[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-                char prop2[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-                char prop3[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-                char prop4[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-                char prop5[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-                char prop6[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-
                 // Don't blur which face acreage less than max acreage width x%
-                property_get("persist.vendor.cam.blur.face.prop1", prop1, "50");
-
+                int32_t max_width = 50;
                 // The face width increase by x%
-                property_get("persist.vendor.cam.blur.face.prop2", prop2, "30");
-
+                int32_t width_increase = 30;
                 // The face height increase by x% on top
-                property_get("persist.vendor.cam.blur.face.prop3", prop3, "70");
-
+                int32_t height_increase = 70;
                 // The width of the body is the width of the face increased by
                 // x%
-                property_get("persist.vendor.cam.blur.face.prop4", prop4,
-                             "130");
-
+                int32_t body_increase = 130;
                 // The upper side of the body is at x% of the face position
-                property_get("persist.vendor.cam.blur.face.prop5", prop5, "0");
-
+                int32_t upper_position = 0;
                 // The face height increase by x% on bottom
-                property_get("persist.vendor.cam.blur.face.prop6", prop6, "20");
+                int32_t bottom_increase = 20;
 
                 memset(bodyInfo, 0x00, sizeof(int32_t) * 4);
                 memset(faceInfo, 0x00, sizeof(int32_t) * 4);
@@ -2673,7 +2484,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         }
                         mCaptureWeightParams.total_roi = face_num;
                     }
-                    if ((faceInfo[2] - faceInfo[0]) < max * atoi(prop1) / 100) {
+                    if ((faceInfo[2] - faceInfo[0]) < max * max_width / 100) {
                         if (mPreviewWeightParams.valid_roi == face_num * 2) {
                             mUpdatePreviewWeightParams = true;
                         }
@@ -2685,40 +2496,40 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         int w = faceInfo[2] - faceInfo[0];
                         int h = faceInfo[3] - faceInfo[1];
 
-                        faceInfo[0] -= w * atoi(prop2) / 200;
+                        faceInfo[0] -= w * width_increase / 200;
                         if (faceInfo[0] < 0) {
                             faceInfo[0] = 0;
                         }
 
-                        faceInfo[2] += w * atoi(prop2) / 200;
+                        faceInfo[2] += w * width_increase / 200;
                         if (faceInfo[2] > origW) {
                             faceInfo[2] = origW;
                         }
 
-                        faceInfo[1] -= h * atoi(prop3) / 100;
+                        faceInfo[1] -= h * height_increase / 100;
                         if (faceInfo[1] < 0) {
                             faceInfo[1] = 0;
                         }
 
-                        faceInfo[3] += h * atoi(prop6) / 100;
+                        faceInfo[3] += h * bottom_increase / 100;
                         if (faceInfo[3] > origH) {
                             faceInfo[3] = origH;
                         }
 
                         bodyInfo[0] =
                             faceInfo[0] -
-                            (faceInfo[2] - faceInfo[0]) * atoi(prop4) / 200;
+                            (faceInfo[2] - faceInfo[0]) * body_increase / 200;
                         if (bodyInfo[0] < 0) {
                             bodyInfo[0] = 0;
                         }
 
                         bodyInfo[1] =
                             faceInfo[3] -
-                            (faceInfo[3] - faceInfo[1]) * atoi(prop5) / 100;
+                            (faceInfo[3] - faceInfo[1]) * upper_position / 100;
 
                         bodyInfo[2] =
                             faceInfo[2] +
-                            (faceInfo[2] - faceInfo[0]) * atoi(prop4) / 200;
+                            (faceInfo[2] - faceInfo[0]) * body_increase / 200;
                         if (bodyInfo[2] > origW) {
                             bodyInfo[2] = origW;
                         }
@@ -2728,29 +2539,29 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         int w = faceInfo[2] - faceInfo[0];
                         int h = faceInfo[3] - faceInfo[1];
 
-                        faceInfo[0] -= w * atoi(prop2) / 200;
+                        faceInfo[0] -= w * width_increase / 200;
                         if (faceInfo[0] < 0) {
                             faceInfo[0] = 0;
                         }
 
-                        faceInfo[2] += w * atoi(prop2) / 200;
+                        faceInfo[2] += w * width_increase / 200;
                         if (faceInfo[2] > origW) {
                             faceInfo[2] = origW;
                         }
 
-                        faceInfo[3] += h * atoi(prop3) / 100;
+                        faceInfo[3] += h * height_increase / 100;
                         if (faceInfo[3] > origH) {
                             faceInfo[3] = origH;
                         }
 
-                        faceInfo[1] -= h * atoi(prop6) / 100;
+                        faceInfo[1] -= h * bottom_increase / 100;
                         if (faceInfo[1] < 0) {
                             faceInfo[1] = 0;
                         }
 
                         bodyInfo[0] =
                             faceInfo[0] -
-                            (faceInfo[2] - faceInfo[0]) * atoi(prop4) / 200;
+                            (faceInfo[2] - faceInfo[0]) * body_increase / 200;
                         if (bodyInfo[0] < 0) {
                             bodyInfo[0] = 0;
                         }
@@ -2759,45 +2570,45 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
 
                         bodyInfo[2] =
                             faceInfo[2] +
-                            (faceInfo[2] - faceInfo[0]) * atoi(prop4) / 200;
+                            (faceInfo[2] - faceInfo[0]) * body_increase / 200;
                         if (bodyInfo[2] > origW) {
                             bodyInfo[2] = origW;
                         }
 
                         bodyInfo[3] =
                             faceInfo[1] +
-                            (faceInfo[3] - faceInfo[1]) * atoi(prop5) / 100;
+                            (faceInfo[3] - faceInfo[1]) * upper_position / 100;
                     } else if (mRotation == 180) {
                         int w = faceInfo[3] - faceInfo[1];
                         int h = faceInfo[2] - faceInfo[0];
 
-                        faceInfo[1] -= w * atoi(prop2) / 200;
+                        faceInfo[1] -= w * width_increase / 200;
                         if (faceInfo[1] < 0) {
                             faceInfo[1] = 0;
                         }
 
-                        faceInfo[3] += w * atoi(prop2) / 200;
+                        faceInfo[3] += w * width_increase / 200;
                         if (faceInfo[3] > origH) {
                             faceInfo[3] = origH;
                         }
 
-                        faceInfo[0] -= h * atoi(prop3) / 100;
+                        faceInfo[0] -= h * height_increase / 100;
                         if (faceInfo[0] < 0) {
                             faceInfo[0] = 0;
                         }
 
-                        faceInfo[2] += h * atoi(prop6) / 100;
+                        faceInfo[2] += h * bottom_increase / 100;
                         if (faceInfo[2] > origW) {
                             faceInfo[2] = origW;
                         }
 
                         bodyInfo[0] =
                             faceInfo[2] -
-                            (faceInfo[2] - faceInfo[0]) * atoi(prop5) / 100;
+                            (faceInfo[2] - faceInfo[0]) * upper_position / 100;
 
                         bodyInfo[1] =
                             faceInfo[1] -
-                            (faceInfo[3] - faceInfo[1]) * atoi(prop4) / 200;
+                            (faceInfo[3] - faceInfo[1]) * body_increase / 200;
                         if (bodyInfo[1] < 0) {
                             bodyInfo[1] = 0;
                         }
@@ -2806,7 +2617,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
 
                         bodyInfo[3] =
                             faceInfo[3] +
-                            (faceInfo[3] - faceInfo[1]) * atoi(prop4) / 200;
+                            (faceInfo[3] - faceInfo[1]) * body_increase / 200;
                         if (bodyInfo[3] > origH) {
                             bodyInfo[3] = origH;
                         }
@@ -2814,22 +2625,22 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         int w = faceInfo[3] - faceInfo[1];
                         int h = faceInfo[2] - faceInfo[0];
 
-                        faceInfo[1] -= w * atoi(prop2) / 200;
+                        faceInfo[1] -= w * width_increase / 200;
                         if (faceInfo[1] < 0) {
                             faceInfo[1] = 0;
                         }
 
-                        faceInfo[3] += w * atoi(prop2) / 200;
+                        faceInfo[3] += w * width_increase / 200;
                         if (faceInfo[3] > origH) {
                             faceInfo[3] = origH;
                         }
 
-                        faceInfo[2] += h * atoi(prop3) / 100;
+                        faceInfo[2] += h * height_increase / 100;
                         if (faceInfo[2] > origW) {
                             faceInfo[2] = origW;
                         }
 
-                        faceInfo[0] -= h * atoi(prop6) / 100;
+                        faceInfo[0] -= h * bottom_increase / 100;
                         if (faceInfo[0] < 0) {
                             faceInfo[0] = 0;
                         }
@@ -2838,18 +2649,18 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
 
                         bodyInfo[1] =
                             faceInfo[1] -
-                            (faceInfo[3] - faceInfo[1]) * atoi(prop4) / 200;
+                            (faceInfo[3] - faceInfo[1]) * body_increase / 200;
                         if (bodyInfo[1] < 0) {
                             bodyInfo[1] = 0;
                         }
 
                         bodyInfo[2] =
                             faceInfo[0] +
-                            (faceInfo[2] - faceInfo[0]) * atoi(prop5) / 100;
+                            (faceInfo[2] - faceInfo[0]) * upper_position / 100;
 
                         bodyInfo[3] =
                             faceInfo[3] +
-                            (faceInfo[3] - faceInfo[1]) * atoi(prop4) / 200;
+                            (faceInfo[3] - faceInfo[1]) * body_increase / 200;
                         if (bodyInfo[3] > origH) {
                             bodyInfo[3] = origH;
                         }
@@ -4093,7 +3904,7 @@ void SprdCamera3Blur::processCaptureResultMain(
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
-                property_get("persist.vendor.cam.blur.prop7", prop, "1");
+                property_get("persist.vendor.cam.blur.cov.val", prop, "1");
                 if (mCaptureThread->mVersion == 3) {
                     mCoverValue = atoi(prop);
                 }
