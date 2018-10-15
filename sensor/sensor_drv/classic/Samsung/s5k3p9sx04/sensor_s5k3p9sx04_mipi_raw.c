@@ -80,12 +80,10 @@ static cmr_int s5k3p9sx04_drv_identify(cmr_handle handle, cmr_int param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("xiuyue:identify E");
+    SENSOR_LOGI("identify E");
 
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, s5k3p9sx04_PID_ADDR);
-    SENSOR_LOGI("xiuyue: read_i2c s5k3p9sx04_PID_ADDR finished");
     ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, s5k3p9sx04_VER_ADDR);
-    SENSOR_LOGI("xiuyue: read_i2c s5k3p9sx04_VER_ADDR finished");
 
     if (s5k3p9sx04_PID_VALUE == pid_value) {
         SENSOR_LOGI("PID = %x, VER = %x", pid_value, ver_value);

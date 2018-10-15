@@ -402,7 +402,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef S5K3P9SX04
-    {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 // hynix area
 #ifdef HI846
@@ -441,7 +441,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
 #else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA2, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
@@ -539,7 +539,7 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
     {MODULE_SUNNY, "s5k3m3sm24", &g_s5k3m3sm24_mipi_raw_info, {&dw9714a_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef S5K5E9YU05
-    {MODULE_SUNNY, "s5k5e9yu05", &g_s5k5e9yu05_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "s5k5e9yu05", &g_s5k5e9yu05_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
