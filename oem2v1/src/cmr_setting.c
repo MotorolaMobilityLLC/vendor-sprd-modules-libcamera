@@ -120,7 +120,6 @@ struct setting_hal_common {
     cmr_uint brightness;
     cmr_uint contrast;
     cmr_uint effect;
-    cmr_uint exposure_compensation;
     cmr_uint wb_mode;
     cmr_uint saturation;
     cmr_uint sharpness;
@@ -137,6 +136,7 @@ struct setting_hal_common {
     cmr_uint focus_distance;
     cmr_uint is_auto_hdr;
     cmr_uint sprd_appmode_id;
+    struct cmr_ae_compensation_param ae_compensation_param;
 };
 
 enum zoom_status { ZOOM_IDLE, ZOOM_UPDATING };
@@ -542,8 +542,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_ISO, &hal_param->hal_common.iso, COM_ISP_SET_ISO,
          COM_SN_SET_ISO},
         {SETTING_GENERAL_EXPOSURE_COMPENSATION,
-         &hal_param->hal_common.exposure_compensation, COM_ISP_SET_EV,
-         COM_SN_SET_EXPOSURE_COMPENSATION},
+         (cmr_uint *)&hal_param->hal_common.ae_compensation_param
+             .ae_exposure_compensation,
+         COM_ISP_SET_EV, COM_SN_SET_EXPOSURE_COMPENSATION},
         {SETTING_GENERAL_PREVIEW_FPS, &hal_param->hal_common.frame_rate,
          COM_ISP_SET_VIDEO_MODE, COM_SN_SET_VIDEO_MODE},
         {SETTING_GENERAL_PREVIEW_LLS_FPS, &hal_param->hal_common.frame_rate,
@@ -619,7 +620,11 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
 
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
-        type_val = parm->ae_compensation_param.ae_exposure_compensation;
+        if (setting_is_rawrgb_format(cpt, parm)) {
+            ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        }
+        hal_param->hal_common.ae_compensation_param =
+            parm->ae_compensation_param;
         break;
 
     case SETTING_GENERAL_EXPOSURE_TIME:
@@ -637,7 +642,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         SETTING_GENERAL_REQ_FRAME_INFO == type)
 #else
     if (SETTING_GENERAL_AE_LOCK_UNLOCK == type ||
-        SETTING_GENERAL_AWB_LOCK_UNLOCK == type)
+        SETTING_GENERAL_AWB_LOCK_UNLOCK == type ||
+        SETTING_GENERAL_EXPOSURE_COMPENSATION == type)
 #endif
     {
         goto setting_out;
@@ -2644,8 +2650,11 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
-    if (invalid_word != hal_param->hal_common.exposure_compensation) {
-        cmd_param.cmd_type_value = hal_param->hal_common.exposure_compensation;
+    if (invalid_word !=
+        (cmr_uint)hal_param->hal_common.ae_compensation_param
+            .ae_exposure_compensation) {
+        cmd_param.ae_compensation_param =
+            hal_param->hal_common.ae_compensation_param;
         ret = setting_set_exposure_compensation(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
@@ -2659,12 +2668,6 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     if (invalid_word != hal_param->hal_common.antibanding_mode) {
         cmd_param.cmd_type_value = hal_param->hal_common.antibanding_mode;
         ret = setting_set_antibanding(cpt, &cmd_param);
-        CMR_RTN_IF_ERR(ret);
-    }
-
-    if (invalid_word != hal_param->hal_common.exposure_compensation) {
-        cmd_param.cmd_type_value = hal_param->hal_common.exposure_compensation;
-        ret = setting_set_exposure_compensation(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
