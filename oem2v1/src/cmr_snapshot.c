@@ -207,6 +207,7 @@ struct snp_context {
     sem_t ipm_sync_sm;
     sem_t redisplay_sm;
     sem_t writer_exif_sm;
+    sem_t pre_start_encode_sync_sm;
     struct snp_cvt_context cvt;
 };
 /********************************* internal data type
@@ -1016,9 +1017,11 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
         snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
     }
     camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
+    sem_wait(&snp_cxt->pre_start_encode_sync_sm);
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
                                     &jpeg_in_ptr->mean, NULL);
+    sem_post(&snp_cxt->pre_start_encode_sync_sm);
     if (ret) {
         CMR_LOGE("failed to start enc %ld", ret);
         goto exit;
@@ -2657,6 +2660,7 @@ void snp_local_init(cmr_handle snp_handle) {
     sem_init(&cxt->redisplay_sm, 0, 0);
     sem_init(&cxt->writer_exif_sm, 0, 0);
     sem_init(&cxt->ipm_sync_sm, 0, 1);
+    sem_init(&cxt->pre_start_encode_sync_sm, 0, 1);
 }
 
 void snp_local_deinit(cmr_handle snp_handle) {
@@ -2671,6 +2675,7 @@ void snp_local_deinit(cmr_handle snp_handle) {
     sem_destroy(&cxt->redisplay_sm);
     sem_destroy(&cxt->writer_exif_sm);
     sem_destroy(&cxt->ipm_sync_sm);
+    sem_destroy(&cxt->pre_start_encode_sync_sm);
     cxt->is_inited = 0;
 }
 
@@ -3864,6 +3869,10 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
             } else {
                 CMR_LOGD("post hdr sm");
             }
+        }
+        if (POST_PROCESSING == snp_get_status(snp_handle)) {
+            sem_wait(&cxt->pre_start_encode_sync_sm);
+            sem_post(&cxt->pre_start_encode_sync_sm);
         }
         if (CODEC_WORKING == snp_get_status(snp_handle)) {
             if (cxt->ops.stop_codec) {
