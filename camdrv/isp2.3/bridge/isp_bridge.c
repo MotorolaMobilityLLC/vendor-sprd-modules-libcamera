@@ -29,6 +29,7 @@ struct ispbr_context {
 	cmr_u32 awb_stat_data_size;
 	cmr_u32 aem_stat_blk_num[SENSOR_NUM_MAX];
 	cmr_u32 slave_camera_id;
+	cmr_u32 slave_sensor_mode;
 	sem_t module_sm;
 	sem_t ae_sm;
 	sem_t awb_sm;
@@ -246,6 +247,20 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_wait(&cxt->module_sm);
 		memcpy(out, &cxt->slave_camera_id,
 			sizeof(cxt->slave_camera_id));
+		sem_post(&cxt->module_sm);
+		break;
+
+	case SET_SLAVE_SENSOR_MODE:
+		sem_wait(&cxt->module_sm);
+		memcpy(&cxt->slave_sensor_mode, in,
+			sizeof(cxt->slave_sensor_mode));
+		sem_post(&cxt->module_sm);
+		break;
+
+	case GET_SLAVE_SENSOR_MODE:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->slave_sensor_mode,
+			sizeof(cxt->slave_sensor_mode));
 		sem_post(&cxt->module_sm);
 		break;
 

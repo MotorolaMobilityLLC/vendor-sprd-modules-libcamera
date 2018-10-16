@@ -287,6 +287,7 @@ struct isp_alg_fw_context {
 	struct isp_statis_info afl_stat_info;
 	cmr_handle handle_file_debug;
 	cmr_u32 is_mono_sensor;
+	cmr_u32 sn_mode;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -475,11 +476,15 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_alg_fw_context *cxt_slv = NULL;
 	struct ae_stats_monitor_cfg *stats_cfg_ptr = NULL;
 	struct isp_dev_rgb_gain_info *rgb_gain_info = NULL;
 	struct isp_u_blocks_info aem_block_info;
+	struct sensor_multi_ae_info *ae_info = NULL;
 	cmr_u32 i;
 	cmr_u32 param_num = 0;
+	cmr_u32 slv_camera_id = 0;
+	cmr_u32 slv_sensor_mode = 0;
 
 	if (cxt->zsl_flag)
 		param_num = ISP_MODE_MAX;
@@ -488,6 +493,30 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 
 	memset(&aem_block_info, 0x0, sizeof(aem_block_info));
 	switch (type) {
+	case ISP_AE_MULTI_WRITE:
+		ISP_LOGV("ISP_AE_MULTI_WRITE");
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_SENSOR_MODE, NULL, &slv_sensor_mode);
+		ae_info = (struct sensor_multi_ae_info *)param0;
+		ae_info[0].handle = cxt->ioctrl_ptr->caller_handler;
+		ae_info[0].camera_id = cxt->camera_id;
+		ae_info[0].exp.size_index = cxt->sn_mode;
+		if (ae_info[0].count == 2) {
+			cxt_slv = (struct isp_alg_fw_context *)
+				isp_br_get_slv_3a_handle(slv_camera_id);
+			if (cxt_slv != NULL) {
+				ae_info[1].handle = cxt_slv->ioctrl_ptr->caller_handler;
+				ae_info[1].camera_id = slv_camera_id;
+				ae_info[1].exp.size_index = slv_sensor_mode;
+			} else {
+				ISP_LOGE("fail to get slave sensor handle , it is not ready");
+				return ret;
+			}
+		}
+		if (cxt->ioctrl_ptr->sns_ioctl)
+			ret = cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+				CMD_SNS_IC_WRITE_MULTI_AE, ae_info);
+		break;
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		break;
@@ -4621,6 +4650,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	cmr_u32 mode_num = 0;
 	cmr_u32 i = 0;
 	cmr_s32 mode = 0, dv_mode = 0;
+	cmr_u32 sn_mode = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_statis_mem_info statis_mem_input;
@@ -4651,6 +4681,13 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	cxt->commn_cxt.src.h = in_ptr->size.h;
 	cxt->dcam_size.w = in_ptr->dcam_size.w;
 	cxt->dcam_size.h = in_ptr->dcam_size.h;
+
+	sn_mode = in_ptr->resolution_info.size_index;
+	cxt->sn_mode = sn_mode;
+	ISP_LOGV("is_master = %d, sn_mode = %d", cxt->is_master, sn_mode);
+	if (!cxt->is_master) {
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_SENSOR_MODE, &sn_mode, NULL);
+	}
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,

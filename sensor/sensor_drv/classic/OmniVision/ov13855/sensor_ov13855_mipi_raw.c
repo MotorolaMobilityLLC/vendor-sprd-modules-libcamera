@@ -1030,6 +1030,10 @@ static struct sensor_ic_ops s_ov13855_ops_tab = {
     .ex_write_exp = ov13855_drv_write_exposure,
     .write_gain_value = ov13855_drv_write_gain_value,
 
+#if defined(CONFIG_DUAL_MODULE)
+    .read_aec_info = ov13855_drv_read_aec_info,
+#endif
+
     .ext_ops = {
             [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov13855_drv_before_snapshot,
             [SENSOR_IOCTL_STREAM_ON].ops = ov13855_drv_stream_on,
