@@ -138,6 +138,7 @@ extern "C" {
 		float ctShiftPgRatio[10];
 		cmr_s16 ctShiftNeutral[10];
 		cmr_s16 ctShiftDown[10];
+		cmr_s32 bFrontCameraFaceOpt;
 	};
 
 	struct awb_tuning_param {
