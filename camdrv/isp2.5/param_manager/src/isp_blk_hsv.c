@@ -139,7 +139,7 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			cmr_u32 data_num = 0;
 			cmr_u32 i = 0;
 			cmr_u32 *dst_value = NULL;
-			cmr_u32 hsv_level = 1;
+			cmr_u32 hsv_level = 8;
 			cmr_u32 text_coeff = 10;
 			cmr_u32 pet_coeff = 8;
 
@@ -163,10 +163,11 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			ct_value[0] = &weight_value[1];
 			ct_value[1] = &weight_value[2];
 
-			if (block_result->ai_scene_id == ISP_PM_AI_SCENE_FOLIAGE || block_result->ai_scene_id == ISP_PM_AI_SCENE_FLOWER) {
+			if (block_result->ai_scene_id == ISP_PM_AI_SCENE_FOLIAGE ||
+				block_result->ai_scene_id == ISP_PM_AI_SCENE_SKY) {
 
 				char prop[256];
-				property_get("debug.isp.hsv.hsv_value.level", prop, "1");
+				property_get("debug.isp.hsv.hsv_value.level", prop, "8");
 				hsv_level = atoi(prop);
 				for (i = 0; i < ISP_PM_HSV_CTRESULT_NUM; i++) {
 					ct_value[i]->value[0] = hsv_level;

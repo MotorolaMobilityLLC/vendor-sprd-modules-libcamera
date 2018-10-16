@@ -25,6 +25,9 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 	cmr_u32 foliage_coeff = 10;
 	cmr_u32 text_coeff = 7;
 	cmr_u32 pet_coeff = 8;
+	cmr_u32 max_ee_neg = 0x100;
+	cmr_u32 i = 0;
+	cmr_u32 ee_param_log_en = 0;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		edge_param = (struct sensor_ee_level *)(dst_ptr->param_ptr);
@@ -172,6 +175,9 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 	property_get("debug.isp.ee.pet_coeff.val", prop, "8");
 	pet_coeff = atoi(prop);
 
+	property_get("debug.isp.ee.param.log.en", prop, "0");
+	ee_param_log_en = atoi(prop);
+
 	ISP_LOGV("ai_scene_id = %d", ai_scene_id);
 
 	switch (ai_scene_id) {
@@ -186,9 +192,16 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / foliage_coeff;
 		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / foliage_coeff;
 		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / foliage_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGI("i = %d, ee_pos_r = 0x%x, ee_pos_c = 0x%x, ee_neg_r = 0x%x, ee_neg_c = 0x%x", i,
+					dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
 		break;
 	}
 	case ISP_PM_AI_SCENE_TEXT: {
@@ -201,9 +214,16 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / text_coeff;
 		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / text_coeff;
 		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / text_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGI("i = %d, ee_pos_r = 0x%x, ee_pos_c = 0x%x, ee_neg_r = 0x%x, ee_neg_c = 0x%x", i,
+					dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
 		break;
 	}
 	case ISP_PM_AI_SCENE_PET: {
@@ -216,9 +236,16 @@ cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_level, cmr
 		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / pet_coeff;
 		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / pet_coeff;
 		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / pet_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGI("i = %d, ee_pos_r = 0x%x, ee_pos_c = 0x%x, ee_neg_r = 0x%x, ee_neg_c = 0x%x", i,
+					dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
 		break;
 	}
 
