@@ -29,6 +29,11 @@ HAL_DIR := hal3_2v1
 OEM_DIR := oem2v1
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.5
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
+HAL_DIR := hal3_2v1
+OEM_DIR := oem2v1
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.6
 endif
 
 # TBD: will remove hal1.0/src/SprdCameraParameters.cpp for hal3
@@ -178,6 +183,9 @@ LOCAL_C_INCLUDES += \
 endif
 
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
+ifeq ($(strip $(TARGET_GPU_PLATFORM)),soft)
+LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)/soft/include
+endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 LOCAL_HEADER_LIBRARIES += media_plugin_headers

@@ -1,6 +1,6 @@
 #include <utils/Log.h>
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
-    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5)
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 #if defined(CONFIG_ISP_2_1_A)
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"
