@@ -72,7 +72,7 @@ static uint8_t s_ov13855_tune_info_video_3[]=
 #if 1 /* version_id=0x00070005, mode_name=video_3, mode_id=12, size=1056x784 */
 	0x05,0x00,0x07,0x00,0x76,0x69,0x64,0x65,0x6F,0x5F,0x33,0x00,0x0C,0x00,0x00,0x00,
 	0x03,0x00,0x00,0x00,0xA0,0x30,0x00,0x00,0x20,0x04,0x00,0x00,0x10,0x03,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x47,0x56,0xFD,0x65,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x94,0x43,0xE4,0x6B,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x42,0x4C,0x43,0x00,0x00,0x00,0x00,0x00,0x02,0x40,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x58,0x00,0x00,0x00,0x30,0x30,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -857,7 +857,6 @@ static uint8_t s_ov13855_tune_info_video_3[]=
 #if 1 /* mode_name=video_3, block_name=BIN, version_id=0, param_id=0 */
 	0x03,0x00,0x02,0x00,
 #endif /* BIN END */
-
 };
 
 
@@ -4544,22 +4543,22 @@ static uint8_t s_ov13855_video_3_tool_ui_input[]=
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x53,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
 #endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_CWF */
-#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_USER1 */
+#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_OTP */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x53,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
-#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_USER1 */
-#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_LOWLIGHT */
+#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_OTP */
+#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_RESERVE1 */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x06,0x00,0x00,0x00,0x00,0x00,0x53,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
-#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_LOWLIGHT */
-#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_FLASH */
+#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_RESERVE1 */
+#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_H */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x05,0x00,0x00,0x00,0x00,0x00,0x53,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
-#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_FLASH */
-#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_OUTDOOR */
+#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_H */
+#if 1 /* BEGIN: ModeName=video_3, MainType=LNC, SubType=CT_RESERVE2 */
 	0x0C,0x00,0x00,0x00,0x08,0x00,0x07,0x00,0x00,0x00,0x00,0x00,0x53,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x10,0x00,0x00,0x00,
-#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_OUTDOOR */
+#endif /* END: ModeName=video_3, MainType=LNC, SubType=CT_RESERVE2 */
 #if 1 /* BEGIN: ModeName=video_3, MainType=AE_SCENE_TABLE, SubType=AE0_SCENE1 */
 	0x18,0x00,0x00,0x00,0x06,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x3C,0x28,0x00,0x00,
 	0x04,0x00,0x00,0x00,0x00,0x00,0xA0,0x42,0x00,0x00,0x20,0x41,0x00,0x00,0x40,0x41,
@@ -4638,7 +4637,7 @@ static uint8_t s_ov13855_video_3_tool_ui_input[]=
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 #endif /* END: ModeName=video_3, MainType=AE_SCENE_TABLE, SubType=AE1_SCENE4_60Hz */
-#if 1 /* BEGIN: ModeName=video_3, MainType=NR, SubType=BAYER_NR */
+#if 1 /* BEGIN: ModeName=video_3, MainType=NR, SubType=V21BAYER_NR */
 	0x34,0x02,0x00,0x00,0x01,0x00,0x15,0x00,0x00,0x00,0x00,0x00,0x1C,0x00,0x00,0x00,
 	0xFD,0xFE,0xBD,0xBA,0xD1,0x1B,0xA6,0x3F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x92,0x94,0x46,0xFF,0x3B,0xF2,0xA6,0x3F,0x00,0x00,0x00,0x00,
@@ -4675,7 +4674,7 @@ static uint8_t s_ov13855_video_3_tool_ui_input[]=
 	0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x0A,0xF5,0xF4,0x11,0xF8,0xC3,0xA7,0x3F,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x85,0xD1,0xAC,0x6C,
 	0x1F,0xF2,0xA6,0x3F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,
-#endif /* END: ModeName=video_3, MainType=NR, SubType=BAYER_NR */
+#endif /* END: ModeName=video_3, MainType=NR, SubType=V21BAYER_NR */
 #if 1 /* BEGIN: Reserve Data */
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -9267,7 +9266,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[0].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_0_OFFSET/2]),
-				LSC_2D_MAP_0,//2560,
+				LSC_2D_MAP_0,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_map_info),
@@ -9277,7 +9276,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[1].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_1_OFFSET/2]),
-				LSC_2D_MAP_1,//2560,
+				LSC_2D_MAP_1,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_map_info),
@@ -9287,7 +9286,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[2].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_2_OFFSET/2]),
-				LSC_2D_MAP_2,//2560,
+				LSC_2D_MAP_2,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_map_info),
@@ -9297,7 +9296,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[3].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_3_OFFSET/2]),
-				LSC_2D_MAP_3,//2560,
+				LSC_2D_MAP_3,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_map_info),
@@ -9307,7 +9306,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[4].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_4_OFFSET/2]),
-				LSC_2D_MAP_4,//2560,
+				LSC_2D_MAP_4,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_map_info),
@@ -9317,7 +9316,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[5].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_5_OFFSET/2]),
-				LSC_2D_MAP_5,//2560,
+				LSC_2D_MAP_5,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_map_info),
@@ -9327,7 +9326,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[6].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_6_OFFSET/2]),
-				LSC_2D_MAP_6,//2560,
+				LSC_2D_MAP_6,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_map_info),
@@ -9337,7 +9336,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[7].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_7_OFFSET/2]),
-				LSC_2D_MAP_7,//2560,
+				LSC_2D_MAP_7,
 			},
 			{
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_map_info),
@@ -9347,7 +9346,7 @@ static struct sensor_raw_fix_info s_ov13855_fix_info_video_3=
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_len),
 				(uint32_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_info[8].lsc_2d_offset),
 				(uint16_t*)&(s_ov13855_video_3_lsc_2d_table_param.lsc_2d_map[LSC_2D_MAP_8_OFFSET/2]),
-				LSC_2D_MAP_8,//2560,
+				LSC_2D_MAP_8,
 			},
 		}
 	},
