@@ -429,13 +429,6 @@ CFG_INFO:
     }
     sns_drv_cxt->exp_time = sns_drv_cxt->exp_time * cap_linetime / 1000;
 
-#if 0
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
-    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
-    s_exposure_time = s_capture_shutter * cap_linetime / 1000;
-#endif
     return SENSOR_SUCCESS;
 }
 

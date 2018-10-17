@@ -775,28 +775,9 @@ cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
                          void *param);
 
-cmr_int hw_Sensor_GetMode(cmr_handle handle, cmr_u32 *mode);
-#define Sensor_GetMode(mode) hw_Sensor_GetMode(handle, mode)
-
-cmr_int hw_Sensor_SetMode_WaitDone(cmr_handle handle);
-#define Sensor_SetMode_WaitDone(void) hw_Sensor_SetMode_WaitDone(handle)
-
-cmr_int hw_Sensor_SetSensorExifInfo(cmr_handle handle, SENSOR_EXIF_CTRL_E cmd,
-                                    cmr_u32 param);
-#define Sensor_SetSensorExifInfo(cmd, param)                                   \
-    hw_Sensor_SetSensorExifInfo(handle, cmd, param)
-
-EXIF_SPEC_PIC_TAKING_COND_T *hw_Sensor_GetSensorExifInfo(cmr_handle handle);
-#define Sensor_GetSensorExifInfo(void) hw_Sensor_GetSensorExifInfo(handle)
-
-cmr_int hw_Sensor_SetMode(cmr_handle handle, cmr_u32 mode);
-#define Sensor_SetMode(mode) hw_Sensor_SetMode(handle, mode)
-
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
-cmr_int hw_Sensor_SetFlash(SENSOR_HW_HANDLE handle, uint32_t is_open);
-#define Sensor_SetFlash(is_open) hw_Sensor_SetFlash(handle, is_open)
 
 // utest refer
 #ifdef __cplusplus
