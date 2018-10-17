@@ -1136,22 +1136,20 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
 
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
-    int i;
-    int id = -1;
+    int ret = NO_ERROR;
 
     if (cameraInfo) {
-        for (i = 0; i < (int)ARRAY_SIZE(kCameraInfo); i++) {
-            if (camera_is_supprort[i])
-                id++;
-            if (id == cameraId) {
-                cameraInfo->facing = kCameraInfo[i].facing;
-                cameraInfo->orientation = kCameraInfo[i].orientation;
-                cameraInfo->resource_cost = kCameraInfo[i].resource_cost;
-                break;
-            }
+        if (camera_is_supprort[cameraId]) {
+            cameraInfo->facing = kCameraInfo[cameraId].facing;
+            cameraInfo->orientation = kCameraInfo[cameraId].orientation;
+            cameraInfo->resource_cost = kCameraInfo[cameraId].resource_cost;
+            return ret;
+        } else {
+            HAL_LOGE("Unsupport camera %d", cameraId);
+            return -1;
         }
     }
-    return 0;
+    return -1;
 }
 
 int SprdCamera3Setting::getNumberOfCameras() {
@@ -1326,10 +1324,11 @@ int SprdCamera3Setting::initIdentifyDynamicSensorNum() {
         memset(sensor_cxt, 0, (sizeof(struct sensor_drv_context)));
         ret = sensor_open_common(sensor_cxt, i, 0);
 
-        if (ret)
+        if (ret) {
             camera_is_supprort[i] = 0;
-        else
+        } else {
             mPhysicalSensorNum++;
+        }
 
         sensor_close_common(sensor_cxt, i);
     }

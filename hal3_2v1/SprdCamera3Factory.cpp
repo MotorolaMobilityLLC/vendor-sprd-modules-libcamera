@@ -145,8 +145,8 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     Mutex::Autolock l(mLock);
 
     HAL_LOGV("E, camera_id = %d", camera_id);
-    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
-        (camera_id < 0)) {
+    if (!mNumOfCameras || (camera_id >= mNumOfCameras && 2 < camera_id) ||
+        !info || (camera_id < 0)) {
         return -ENODEV;
     }
 
@@ -159,7 +159,10 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
         return rc;
     }
 
-    SprdCamera3Setting::getCameraInfo(camera_id, info);
+    rc = SprdCamera3Setting::getCameraInfo(camera_id, info);
+    if (rc < 0) {
+        return rc;
+    }
 
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
@@ -169,6 +172,7 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     HAL_LOGV("X");
     return rc;
 }
+
 /*====================================================================
 *FUNCTION     :setTorchMode
 *DESCRIPTION  :Attempt to turn on or off the torch of the flash unint.
@@ -292,7 +296,7 @@ ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
 */
 bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     /*Camera ID Expose To Camera Apk On MultiCameraMode*/
-    if ((SprdCamera3Setting::mPhysicalSensorNum > cameraId) ||
+    if ((SprdCamera3Setting::mPhysicalSensorNum > cameraId) || (2 > cameraId) ||
         (cameraId > SPRD_MULTI_CAMERA_MAX_ID))
         return false;
 
