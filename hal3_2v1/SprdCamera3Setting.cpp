@@ -1898,11 +1898,19 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));
+    uint32_t dualPropSupport = 0;
+    if (mSensorType[cameraId] != FOURINONESENSOR && mSensorType[cameraId] != YUVSENSOR) {
+        dualPropSupport = 1;
+    }
+
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    if (atoi(prop) == 1)
+    if (!dualPropSupport) {
+        available_cam_features.add(0);
+    } else if (atoi(prop) == 1) {
         available_cam_features.add(3);
-    else
+    } else {
         available_cam_features.add(atoi(prop));
+    }
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
@@ -1916,7 +1924,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     property_get("persist.vendor.cam.wt.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (!dualPropSupport) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
