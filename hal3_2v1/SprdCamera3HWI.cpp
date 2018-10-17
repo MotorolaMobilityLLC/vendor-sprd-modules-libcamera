@@ -1140,6 +1140,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     if (need_apply_settings == 1) {
         mMetadataChannel->request(meta);
     }
+    mSetting->getSPRDDEFTag(&sprddefInfo);
     mMetadataChannel->getCapRequestPara(meta, &capturePara);
 
     // for BUG459753 HDR capture
