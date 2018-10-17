@@ -1304,9 +1304,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->flash_backup.bv = cxt->cur_result.cur_bv;
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1);
-		ISP_LOGV("cxt->app_has_set_compensation_val: %d", cxt->app_has_set_compensation_val);
 		if (cxt->exposure_compensation.ae_compensation_flag)  {
-			if(cxt->app_has_set_compensation_val==0){
+			if(0==cxt->cur_status.settings.table_idx){
 				struct ae_exp_compensation exp_comp;
 				exp_comp.comp_val=0;
 				exp_comp.comp_range.min=-16;
@@ -1335,7 +1334,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
-		ISP_LOGV("cxt->app_has_set_compensation_val: %d", cxt->app_has_set_compensation_val);
 		if (cxt->exposure_compensation.ae_compensation_flag) {
 			cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
@@ -1376,7 +1374,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			rtn = ae_set_force_pause(cxt, 1);
 
 		if (cxt->exposure_compensation.ae_compensation_flag && !cxt->flash_backup.table_idx)  {
-			if(cxt->app_has_set_compensation_val==0){
+			if(0==cxt->cur_status.settings.table_idx){
 				struct ae_exp_compensation exp_comp;
 				exp_comp.comp_val=0;
 				exp_comp.comp_range.min=-16;
@@ -1397,7 +1395,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->has_mf = 1;
 
 		if (cxt->exposure_compensation.ae_compensation_flag) {
-			cxt->app_has_set_compensation_val=0;//reset
 			cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
 			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d", cxt->flash_backup.table_idx);
@@ -5818,8 +5815,6 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 
 	case AE_SET_EXPOSURE_COMPENSATION:
-		ISP_LOGV("AE_SET_EXPOSURE_COMPENSATION,the origin val:%d",cxt->app_has_set_compensation_val);
-		cxt->app_has_set_compensation_val = 1;
 		rtn = ae_set_exposure_compensation(cxt, param);
 		break;
 

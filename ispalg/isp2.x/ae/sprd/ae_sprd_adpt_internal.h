@@ -343,8 +343,6 @@ extern "C" {
 
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
-		/* add flags for "AE/AF lock" while with preflashing's table_index saving and restoring */
-		cmr_u32 app_has_set_compensation_val;
 	};
 
 #endif
