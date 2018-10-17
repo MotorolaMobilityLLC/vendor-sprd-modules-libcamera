@@ -3019,6 +3019,11 @@ static cmr_int ispalg_tof_init(struct isp_alg_fw_context *cxt)
 	cmr_handle  tof_handle = NULL;
 	struct tof_ctrl_init_in tof_ctrl_init;
 
+	if (!cxt->af_cxt.tof_support) {
+		ISP_LOGI("tof don't support !");
+		return ret;
+	}
+
 	tof_ctrl_init.tof_set_cb = ispalg_tof_set_cb;
 	tof_ctrl_init.caller_handle = (cmr_handle) cxt;
 
@@ -3560,6 +3565,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->is_multi_mode = input_ptr->init_param->multi_mode;
 	cxt->is_master = input_ptr->init_param->is_master;
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
+	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL

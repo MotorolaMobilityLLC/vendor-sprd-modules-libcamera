@@ -125,6 +125,7 @@ struct af_info {
 	cmr_handle handle;
 	cmr_u8 *log_af;
 	cmr_u32 log_af_size;
+	cmr_u32 tof_support;
 };
 
 struct pdaf_info {

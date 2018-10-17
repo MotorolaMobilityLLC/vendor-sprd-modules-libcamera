@@ -129,6 +129,7 @@ struct af_info {
 	cmr_u32 sw_bypass;
 	cmr_u8 *log_af;
 	cmr_u32 log_af_size;
+	cmr_u32 tof_support;
 };
 
 struct aft_info {
@@ -3025,6 +3026,11 @@ static cmr_int ispalg_tof_init(struct isp_alg_fw_context *cxt)
 	cmr_handle  tof_handle = NULL;
 	struct tof_ctrl_init_in tof_ctrl_init;
 
+	if (!cxt->af_cxt.tof_support) {
+		ISP_LOGI("tof don't support !");
+		return ret;
+	}
+
 	tof_ctrl_init.tof_set_cb = ispalg_tof_set_cb;
 	tof_ctrl_init.caller_handle = (cmr_handle) cxt;
 
@@ -4503,6 +4509,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->is_master = input_ptr->init_param->is_master;
 
 	isp_alg_input.pdaf_info = input_ptr->init_param->pdaf_info;
+	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	isp_alg_input.sensor_max_size = input_ptr->init_param->sensor_max_size;
 
 	binning_info = (cmr_u32 *) malloc(max_binning_num * 3 * sizeof(cmr_u32));

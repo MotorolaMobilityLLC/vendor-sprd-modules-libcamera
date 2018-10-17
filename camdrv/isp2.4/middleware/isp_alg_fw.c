@@ -129,6 +129,7 @@ struct af_info {
 	cmr_u32 sw_bypass;
 	cmr_u8 *log_af;
 	cmr_u32 log_af_size;
+	cmr_u32 tof_support;
 };
 
 struct aft_info {
@@ -2868,6 +2869,11 @@ static cmr_int ispalg_tof_init(struct isp_alg_fw_context *cxt)
 	cmr_handle  tof_handle = NULL;
 	struct tof_ctrl_init_in tof_ctrl_init;
 
+	if (!cxt->af_cxt.tof_support) {
+		ISP_LOGI("tof don't support !");
+		return ret;
+	}
+
 	tof_ctrl_init.tof_set_cb = ispalg_tof_set_cb;
 	tof_ctrl_init.caller_handle = (cmr_handle) cxt;
 
@@ -4289,6 +4295,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->binning_stats.binning_size.w = binnng_w / 2;
 	cxt->binning_stats.binning_size.h = binnng_h / 2;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
+	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
     /*0:afl_old mode, 1:afl_new mode*/
 	cxt->afl_cxt.version = 1;
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
