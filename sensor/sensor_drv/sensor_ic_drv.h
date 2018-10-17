@@ -253,6 +253,9 @@ struct sensor_static_info {
     /* Whether support cct,1:support,0:none*/
     cmr_u32 cct_supported;
 
+    /* Whether support cct,1:support,0:none*/
+    cmr_u32 tof_supported;
+
     /* Whether support pdaf,1:support,0:none*/
     cmr_u32 pdaf_supported;
 

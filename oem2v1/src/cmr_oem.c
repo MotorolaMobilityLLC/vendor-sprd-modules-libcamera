@@ -10792,6 +10792,7 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
     out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
     out_isp_sn_ex_info->pos_dis.hori2down = in_sn_ex_info->pos_dis.hori2down;
     out_isp_sn_ex_info->color_support = in_sn_ex_info->cct_supported;
+    out_isp_sn_ex_info->tof_support = in_sn_ex_info->tof_supported;
     out_isp_sn_ex_info->fov_info.physical_size[0] =
         in_sn_ex_info->fov_info.physical_size[0];
     out_isp_sn_ex_info->fov_info.physical_size[1] =

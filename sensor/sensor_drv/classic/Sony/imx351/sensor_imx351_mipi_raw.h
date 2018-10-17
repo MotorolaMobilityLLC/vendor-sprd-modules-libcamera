@@ -1047,6 +1047,13 @@ static SENSOR_STATIC_INFO_T s_imx351_static_info[VENDOR_NUM] = {
                      .ois_supported = 0,
 #ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
                      .cct_supported = 1,
+#else
+                     .cct_supported = 0,
+#endif
+#ifdef TARGET_CAMERA_SENSOR_TOF_VL53L0
+                     .tof_supported = 1,
+#else
+                     .tof_supported = 0,
 #endif
                      .pdaf_supported = SENSOR_PDAF_TYPE1_ENABLE,
                      .embedded_line_enable = 1,

@@ -864,9 +864,8 @@ static cmr_int imx351_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
     ex_info->embedded_line_enable = static_info->embedded_line_enable;
-#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
     ex_info->cct_supported = static_info->cct_supported;
-#endif
+    ex_info->tof_supported = static_info->tof_supported;
     memcpy(&ex_info->fov_info, &static_info->fov_info,
            sizeof(static_info->fov_info));
 
