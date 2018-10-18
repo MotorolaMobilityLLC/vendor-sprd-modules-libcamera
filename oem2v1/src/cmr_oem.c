@@ -2048,6 +2048,7 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
             CMR_LOGD("isp get COM_ISP_GET_CNR2_EN  failed");
             return false;
         }
+        CMR_LOGD("isp cnr enable %d", isp_param.cnr2_en);
         return cnr_flag && isp_param.cnr2_en;
     }
 
@@ -2057,16 +2058,17 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
 cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle) {
 
     int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 cnr_flag = 0;
     struct setting_cmd_parameter setting_param;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
+
+    cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
-    cmr_u32 cnr_flag = 0;
 
 #ifndef CONFIG_CAMERA_CNR
     return ret;
 #endif
-    cmr_bzero(&setting_param, sizeof(setting_param));
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -2075,7 +2077,7 @@ cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_GET_CNRMODE, &setting_param);
         cnr_flag = setting_param.cmd_type_value;
-        CMR_LOGD("cnr_flag is : %d", cnr_flag);
+        CMR_LOGV("cnr_flag is : %d", cnr_flag);
     }
 
     return cnr_flag;
