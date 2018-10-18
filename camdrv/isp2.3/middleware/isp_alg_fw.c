@@ -2889,6 +2889,25 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	}
 
 	memset(&output, 0, sizeof(output));
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_SYNC, NULL, &output);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to get ae sync param");
+		return ret;
+	}
+	if (0 == output.param_num) {
+		ISP_LOGE("fail to check param: ae sync param num=%d", output.param_num);
+		return ISP_ERROR;
+	}
+	param_data = output.param_data;
+	for (i = 0; i < output.param_num; ++i) {
+		if (NULL != param_data->data_ptr) {
+			ae_input.ae_sync_param.param = param_data->data_ptr;
+			ae_input.ae_sync_param.size = param_data->data_size;
+		}
+		++param_data;
+	}
+
+	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to get ae init param");

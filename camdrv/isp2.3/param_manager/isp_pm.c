@@ -1972,6 +1972,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		case ISP_PM_CMD_GET_INIT_DUAL_FLASH:
 			blk_id = ISP_BLK_DUAL_FLASH;
 			break;
+		case ISP_PM_CMD_GET_AE_SYNC:
+			blk_id = ISP_BLK_AE_SYNC;
+			break;
 		case ISP_PM_CMD_GET_INIT_PDAF:
 			blk_id = ISP_BLK_PDAF_TUNE;
 			break;

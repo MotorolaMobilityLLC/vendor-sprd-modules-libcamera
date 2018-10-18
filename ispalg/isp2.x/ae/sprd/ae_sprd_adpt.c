@@ -5025,10 +5025,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	if(ae_dynamic_sync == 1){
 	cmr_s32 master_sync_aem[3*1024] = {0},slave_sync_aem[3*1024]= {0};
 
-#if CONFIG_ISP_2_5
 	cmr_s32 aem_blk_num = 1024;
 	rtn = cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, SET_AEM_STAT_BLK_NUM, &aem_blk_num, NULL);
-#endif
 
 	if(rtn)
 	{
