@@ -100,12 +100,8 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define ISP_BASE_GAIN 0x80
-#else
-#define ISP_BASE_GAIN 0x10
-#endif
+
 /* please don't change it */
 #define EX_MCLK 24
 
