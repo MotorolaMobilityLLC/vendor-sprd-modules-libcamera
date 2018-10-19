@@ -4227,6 +4227,9 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			(DCAM_BLK_RGB_AFM != param_data->id) &&
 			(ISP_BLK_2D_LSC != param_data->id))) {
 			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+			if (cxt->camera_4in1_flag && ISP_BLK_2D_LSC == param_data->id) {
+				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+			}
 		} else {
 			if (cxt->work_mode == 1) {
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
@@ -4252,6 +4255,9 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 			(DCAM_BLK_RGB_AFM != param_data->id) &&
 			(ISP_BLK_2D_LSC != param_data->id))) {
 			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+			if (cxt->camera_4in1_flag && ISP_BLK_2D_LSC == param_data->id) {
+				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+			}
 		} else {
 			if (cxt->work_mode == 0) {
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
