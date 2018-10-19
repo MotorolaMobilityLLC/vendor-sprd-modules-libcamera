@@ -799,7 +799,10 @@ int SprdCamera3DualFaceId::configureStreams(
     } else {
         void *otpAddr = NULL;
         map(&mOtpLocalBuffer.native_handle, &otpAddr);
-        memcpy(otpAddr, mOtpData.otp_data, mOtpData.otp_size);
+        int otp_size = mOtpData.otp_size;
+        memcpy(otpAddr, (void *)&otp_size, sizeof(int));
+        memcpy((void *)((char *)otpAddr + sizeof(int)), mOtpData.otp_data,
+               mOtpData.otp_size);
         unmap(&mOtpLocalBuffer.native_handle);
     }
 
