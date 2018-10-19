@@ -1815,7 +1815,7 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
     case DUMP_BLUR_COMBO:
         property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if (!strcmp(prop, "combo") && !mBlur->mFlushing && combo_buff != NULL) {
+        if ((!strcmp(prop, "combo") || !strcmp(prop, "all")) && !mBlur->mFlushing && combo_buff != NULL) {
             buffer_base = (unsigned char *)combo_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
                                                 mBlur->mCaptureHeight * 3 / 2,
@@ -1827,7 +1827,7 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
     case DUMP_BLUR_OUTPUT:
         property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if (!strcmp(prop, "output") && combo_buff != NULL &&
+        if ((!strcmp(prop, "output") || !strcmp(prop, "all")) && combo_buff != NULL &&
             output_buff != NULL) {
             buffer_base = (unsigned char *)output_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
@@ -1845,7 +1845,7 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
 
     case DUMP_BLUR_RESULT: {
         property_get("persist.vendor.cam.blur.dump", prop, "0");
-        if (strcmp(prop, "result") || result_buff == NULL)
+        if (strcmp(prop, "result") || strcmp(prop, "all") || result_buff == NULL)
             return;
 
         uint32_t para_num = 0;

@@ -1285,7 +1285,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::arcsoftBokehPreviewHandle(
             0,
         };
         property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-        if (!strcmp(prop, "arcpreyuv")) {
+        if (!strcmp(prop, "arcpreyuv") || !strcmp(prop, "all")) {
             mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                  ADP_BUFSIZE(*output_buf),
                                  mRealBokeh->mBokehSize.preview_w,
@@ -1389,8 +1389,9 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
             char prop[PROPERTY_VALUE_MAX] = {
                 0,
             };
+
             property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-            if (!strcmp(prop, "sprdpreyuv")) {
+            if (!strcmp(prop, "sprdpreyuv") || !strcmp(prop, "all")) {
                 mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                      ADP_BUFSIZE(*output_buf),
                                      mRealBokeh->mBokehSize.preview_w,
@@ -1626,8 +1627,9 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
         char prop[PROPERTY_VALUE_MAX] = {
             0,
         };
+
         property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-        if (!strcmp(prop, "predepth")) {
+        if (!strcmp(prop, "predepth") || !strcmp(prop, "all")) {
             mRealBokeh->dumpData((unsigned char *)mRealBokeh->mDepthBuffer
                                      .prev_depth_buffer[buffer_index]
                                      .buffer,
@@ -2294,7 +2296,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
 exit : { // dump yuv data
 
     property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-    if (!strcmp(prop, "capdepth")) {
+    if (!strcmp(prop, "capdepth") || !strcmp(prop, "all")) {
         // input_buf1 or left image
         mRealBokeh->dumpData(
             (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
@@ -2391,7 +2393,7 @@ exit : {
     };
 
     property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-    if (!strcmp(prop, "arccapyuv")) {
+    if (!strcmp(prop, "arccapyuv") || !strcmp(prop, "all")) {
         // input_buf1 or left image
         mRealBokeh->dumpData(
             (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
@@ -2450,7 +2452,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdBokehCaptureHandle(
             0,
         };
         property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-        if (!strcmp(prop, "sprdcapyuv")) {
+        if (!strcmp(prop, "sprdcapyuv") || !strcmp(prop, "all")) {
             mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                  ADP_BUFSIZE(*output_buf),
                                  mRealBokeh->mBokehSize.capture_w,
@@ -3546,7 +3548,7 @@ int SprdCamera3RealBokeh::thumbYuvProc(buffer_handle_t *src_buffer) {
     hwiMain->camera_ioctrl(CAMERA_IOCTRL_THUMB_YUV_PROC, &thumb_param, NULL);
 
     property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-    if (!strcmp(prop, "thumb")) {
+    if (!strcmp(prop, "thumb") || !strcmp(prop, "all")) {
         dumpData((unsigned char *)src_img.addr_vir.addr_y, 1, src_img.buf_size,
                  src_img.rect.width, src_img.size.height, 5, "input");
         dumpData((unsigned char *)dst_img.addr_vir.addr_y, 1, dst_img.buf_size,
@@ -3570,7 +3572,7 @@ void SprdCamera3RealBokeh::dumpCaptureBokeh(unsigned char *result_buffer_addr,
         0,
     };
     property_get("persist.vendor.cam.bokeh.dump", prop, "0");
-    if (!strcmp(prop, "capture")) {
+    if (!strcmp(prop, "capture") || !strcmp(prop, "all")) {
         uint32_t para_size = 0;
         uint32_t depth_size = 0;
         int common_num = 0;
