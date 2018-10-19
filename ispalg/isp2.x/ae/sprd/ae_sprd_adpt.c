@@ -2858,7 +2858,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
 					ISP_LOGI("ae_flash1_callback do-capture!\r\n");
 				}
-			} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
+			} else if (main_flash_capture_counts + 3 == cxt->send_once[4]) {
 				sensor_param_updating_interface(cxt);
 				ISP_LOGI("ae_flash1_callback update next prev-param!\r\n");
 
@@ -4934,12 +4934,9 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	struct _tag_hdr_detect_t hdr_param;
 	struct _tag_hdr_stat_t hdr_stat;
-	struct _tag_hdr_version_t hdr_version;
 	float ev_result[2] = {0,0};
 	cmr_s8 auto_hdr_enable = 0;
 
-	sprd_hdr_version(&hdr_version);
-	ISP_LOGV("HDR_version :%s", hdr_version.built_rev);
 #endif
 
 	if (NULL == param) {
@@ -5934,6 +5931,11 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	struct Flash_initInput flash_in;
 	struct Flash_initOut flash_out;
 
+#ifdef CONFIG_SUPPROT_AUTO_HDR
+	struct _tag_hdr_version_t hdr_version;
+	sprd_hdr_version(&hdr_version);
+	ISP_LOGV("HDR_version :%s", hdr_version.built_rev);
+#endif
 	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
 
 	if (NULL == cxt) {
