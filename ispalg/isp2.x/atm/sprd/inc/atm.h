@@ -73,7 +73,7 @@ struct atm_calc_param
     uint32_t u4Bins;
     uint8_t *uBaseGamma;
     uint8_t *uModGamma;
-    bool bHistB4Gamma;
+    uint8_t bHistB4Gamma;
 };
 
 struct atm_calc_result

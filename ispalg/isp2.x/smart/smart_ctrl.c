@@ -1775,7 +1775,7 @@ void _get_8bitX_Y(int i4Bits, int i4InputLen, short *inputX, short *inputY, unsi
                     int X = (i<<(i4Bits-8));
                     if (X2 <= X1) {
                         i4outputY[i] = Y1;
-                        ISP_LOGI("X2/X1 %d/%d\n", X2, X1);
+                        ISP_LOGV("X2/X1 %d/%d\n", X2, X1);
                     } else
                         i4outputY[i] = max(min(Y1 + (X-X1)*(Y2-Y1)/(X2-X1), 255),0);
                 }
@@ -1967,7 +1967,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
             u2CurY[2][i] = gamma_info->points_b[i].y;
             u2CurX[2][i] = gamma_info->points_b[i].x;
             if (i == 0||i == 64 || i == 128 || i == 255)
-                ISP_LOGI("%d x/y %d/%d\n", i, u2CurX[0][i], u2CurY[0][i]);
+                ISP_LOGV("%d x/y %d/%d\n", i, u2CurX[0][i], u2CurY[0][i]);
         }
     }
     ret = isp_histAEM(smart_proc_in->r_info,

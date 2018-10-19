@@ -4,6 +4,12 @@
 extern "C"  {
 #endif
 
+#ifndef WIN32
+#include <stdbool.h>
+#endif
+#include "atm.h"
+#include "cmr_types.h"
+
 struct atm_init_in {
     uint8_t  uOrigGamma[256];
 };
