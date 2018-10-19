@@ -3586,7 +3586,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.ex_info.af_supported = 0;
 
-    property_get("persist.sys.cam.ba.blur.version", value, "0");
+    property_get("persist.vendor.cam.ba.blur.version", value, "0");
 
     if (cxt->is_multi_mode == MODE_SBS) {
         isp_param.multi_mode = ISP_DUAL_SBS;
