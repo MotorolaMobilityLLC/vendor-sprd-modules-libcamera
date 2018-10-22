@@ -54,7 +54,6 @@ namespace sprdcamera {
 #define DEPTH_SNAP_OUTPUT_WIDTH (800)  //(324)
 #define DEPTH_SNAP_OUTPUT_HEIGHT (600) //(243)
 
-#define DEPTH_DATA_SIZE (68)
 
 /* refocus api error code */
 #define ALRNB_ERR_SUCCESS 0x00
@@ -933,8 +932,7 @@ int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
     if (version == SPRD_API_MODE) {
         img_size =
             SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
-            (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT +
-             DEPTH_DATA_SIZE) +
+            (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
             (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) + sizeof(camera3_jpeg_blob_t) +
             1024;
     } else if (version == ARCSOFT_API_MODE) {
@@ -2935,8 +2933,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mBokehSize.depth_prev_size =
         mBokehSize.preview_w * mBokehSize.preview_h * 2;
     mBokehSize.depth_snap_size =
-        mBokehSize.depth_snap_out_w * mBokehSize.depth_snap_out_h +
-        DEPTH_DATA_SIZE;
+        mBokehSize.depth_snap_out_w * mBokehSize.depth_snap_out_h * 2;
     mBokehSize.depth_weight_map_size =
         mBokehSize.depth_snap_out_w * mBokehSize.depth_snap_out_h * sizeof(int);
     rc = allocateBuff();
@@ -3583,8 +3580,7 @@ void SprdCamera3RealBokeh::dumpCaptureBokeh(unsigned char *result_buffer_addr,
         if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
             para_size = BOKEH_REFOCUS_COMMON_PARAM_NUM * 4;
             depth_size =
-                mBokehSize.depth_snap_out_w * mBokehSize.depth_snap_out_h +
-                DEPTH_DATA_SIZE;
+                mBokehSize.depth_snap_out_w * mBokehSize.depth_snap_out_h * 2;
             common_num = BOKEH_REFOCUS_COMMON_PARAM_NUM;
             depth_width = mBokehSize.depth_snap_out_w;
             depth_height = mBokehSize.depth_snap_out_h;
