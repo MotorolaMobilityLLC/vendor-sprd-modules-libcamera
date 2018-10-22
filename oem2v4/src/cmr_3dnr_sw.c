@@ -545,11 +545,12 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     // threednr_cancel();
     CMR_LOGI("OK to threednr_cancel");
 
+    sem_wait(&threednr_handle->sem_3dnr);
     ret = threednr_deinit();
     if (ret) {
         CMR_LOGE("3dnr failed to threednr_deinit");
     }
-    sem_wait(&threednr_handle->sem_3dnr);
+
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
     sem_post(&threednr_handle->sem_3dnr);
