@@ -87,7 +87,7 @@ typedef enum _eAF_MODE {
 	PDAF,			//PDAF
 	TMODE_1,		//Test mode 1
 	Wait_Trigger,		//wait for AF trigger
-	TOF             //[TOF_---] // Time of flight
+	TOF			//[TOF_---] // Time of flight
 } eAF_MODE;
 
 typedef enum _e_AF_TRIGGER {
@@ -220,24 +220,20 @@ typedef struct _AF_OTP_Data {
 	cmr_u32 reserved[10];
 } AF_OTP_Data;
 
-//[TOF_+++]
-
 typedef struct _tof_sensor_result {
 	cmr_u32 TimeStamp;
 	cmr_u32 MeasurementTimeUsec;
 	cmr_u16 RangeMilliMeter;
 	cmr_u16 RangeDMaxMilliMeter;
-	cmr_u32 SignalRateRtnMegaCps;
-	cmr_u32 AmbientRateRtnMegaCps;
-	cmr_u16 EffectiveSpadRtnCount;
+	cmr_u32 SignalRateRtnMegaCps;	//which is effectively a measure of target reflectance
+	cmr_u32 AmbientRateRtnMegaCps;	//which is effectively a measure of the ambient light
+	cmr_u16 EffectiveSpadRtnCount;	//(SPAD)Single photon avalanche diode
 	cmr_u8 ZoneId;
 	cmr_u8 RangeFractionalPart;
 	cmr_u8 RangeStatus;
-}tof_sensor_result;
+} tof_sensor_result;
 
-
-
-typedef struct _tof_measure_data_s{
+typedef struct _tof_measure_data_s {
 	tof_sensor_result data;
 	cmr_u8 tof_enable;
 	cmr_u32 effective_frmid;
@@ -247,9 +243,7 @@ typedef struct _tof_measure_data_s{
 	cmr_u32 tof_trigger_flag;
 	cmr_u32 reserved[20];
 
-}tof_measure_data_t;
-
-//[TOF_---]
+} tof_measure_data_t;
 
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
@@ -289,7 +283,7 @@ typedef struct _AF_Ctrl_Ops {
 	//SharkLE Only --
 
 	//[TOF_+++]
-	cmr_u8 (*get_tof_data)(tof_measure_data_t *tof_result, void *cookie);
+	 cmr_u8(*get_tof_data) (tof_measure_data_t * tof_result, void *cookie);
 	//[TOF_---]
 
 } AF_Ctrl_Ops;
@@ -299,32 +293,11 @@ typedef struct _af_tuning_block_param {
 	cmr_u32 data_len;
 } af_tuning_block_param;
 
-/*
-typedef struct pdaftuning_param_s {
-	cmr_u32 min_pd_vcm_steps;
-	cmr_u32 max_pd_vcm_steps;
-	cmr_u32 coc_range;
-	cmr_u32 far_tolerance;
-	cmr_u32 near_tolerance;
-	cmr_u32 err_limit;
-	cmr_u32 pd_converge_thr;
-	cmr_u32 pd_converge_thr_2nd;
-	cmr_u32 pd_focus_times_thr;
-	cmr_u32 pd_thread_sync_frm;
-	cmr_u32 pd_thread_sync_frm_init;
-	cmr_u32 min_process_frm;
-	cmr_u32 max_process_frm;
-	cmr_u32 pd_conf_thr;
-	cmr_u32 pd_conf_thr_2nd;
-	cmr_u32 reserved[52];
-} pdaftuning_param_t;
-*/
-
 typedef struct _haf_tuning_param_s {
-    cmr_u8 *pd_data;
-    cmr_u32 pd_data_len;
-    cmr_u8 *tof_data;
-    cmr_u32 tof_data_len;
+	cmr_u8 *pd_data;
+	cmr_u32 pd_data_len;
+	cmr_u8 *tof_data;
+	cmr_u32 tof_data_len;
 } haf_tuning_param_t;
 
 typedef struct defocus_param_s {
