@@ -14,14 +14,13 @@
  * limitations under the License.
  * V1.0
  */
- /*History
- *Date                  Modification                                 Reason
- *
- */
+/*History
+*Date                  Modification                                 Reason
+*
+*/
 
 #ifndef _SENSOR_S5K4H7_MIPI_RAW_H_
 #define _SENSOR_S5K4H7_MIPI_RAW_H_
-
 
 #include <utils/Log.h>
 #include "sensor.h"
@@ -31,70 +30,76 @@
 
 #include "parameters/sensor_s5k4h7_raw_param_main.c"
 
-//#define FEATURE_OTP
+#define FEATURE_OTP
+
+#ifdef FEATURE_OTP
+#include "sensor_s5k4h7_qtech_otp.h"
+static struct otp_info_t *s_s5k4h7_otp_info_ptr = &s_s5k4h7_qtech_otp_info;
+#endif
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME			"s5k4h7_mipi_raw"
-#define I2C_SLAVE_ADDR 			0x20 		/* 8bit slave address*/
+#define SENSOR_NAME "s5k4h7_mipi_raw"
+#define I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
 
-#define S5K4H7_PID_ADDR			  0x0000
-#define S5K4H7_PID_VALUE		  0x48
-#define S5K4H7_VER_ADDR			  0x0001
-#define S5K4H7_VER_VALUE		  0x7B
+#define S5K4H7_PID_ADDR 0x0000
+#define S5K4H7_PID_VALUE 0x48
+#define S5K4H7_VER_ADDR 0x0001
+#define S5K4H7_VER_VALUE 0x7B
 
 /* sensor parameters begin */
 
 /* effective sensor output image size */
-#define VIDEO_WIDTH				1280
-#define VIDEO_HEIGHT			720
-#define PREVIEW_WIDTH			1632
-#define PREVIEW_HEIGHT			1224
-#define SNAPSHOT_WIDTH			3264 
-#define SNAPSHOT_HEIGHT			2448
+#define VIDEO_WIDTH 1280
+#define VIDEO_HEIGHT 720
+#define PREVIEW_WIDTH 1632
+#define PREVIEW_HEIGHT 1224
+#define SNAPSHOT_WIDTH 3264
+#define SNAPSHOT_HEIGHT 2448
 
 /*Raw Trim parameters*/
-#define VIDEO_TRIM_X			0
-#define VIDEO_TRIM_Y			0
-#define VIDEO_TRIM_W			VIDEO_WIDTH
-#define VIDEO_TRIM_H			VIDEO_HEIGHT
-#define PREVIEW_TRIM_X			0
-#define PREVIEW_TRIM_Y			0
-#define PREVIEW_TRIM_W			PREVIEW_WIDTH
-#define PREVIEW_TRIM_H			PREVIEW_HEIGHT
-#define SNAPSHOT_TRIM_X			0
-#define SNAPSHOT_TRIM_Y			0
-#define SNAPSHOT_TRIM_W			SNAPSHOT_WIDTH
-#define SNAPSHOT_TRIM_H			SNAPSHOT_HEIGHT
+#define VIDEO_TRIM_X 0
+#define VIDEO_TRIM_Y 0
+#define VIDEO_TRIM_W VIDEO_WIDTH
+#define VIDEO_TRIM_H VIDEO_HEIGHT
+#define PREVIEW_TRIM_X 0
+#define PREVIEW_TRIM_Y 0
+#define PREVIEW_TRIM_W PREVIEW_WIDTH
+#define PREVIEW_TRIM_H PREVIEW_HEIGHT
+#define SNAPSHOT_TRIM_X 0
+#define SNAPSHOT_TRIM_Y 0
+#define SNAPSHOT_TRIM_W SNAPSHOT_WIDTH
+#define SNAPSHOT_TRIM_H SNAPSHOT_HEIGHT
 
 /*Mipi output*/
-#define LANE_NUM			4
-#define RAW_BITS			10
+#define LANE_NUM 4
+#define RAW_BITS 10
 
-#define VIDEO_MIPI_PER_LANE_BPS	  	  700  /* 2*Mipi clk */
-#define PREVIEW_MIPI_PER_LANE_BPS	  700  /* 2*Mipi clk */
-#define SNAPSHOT_MIPI_PER_LANE_BPS	  700  /* 2*Mipi clk */
+#define VIDEO_MIPI_PER_LANE_BPS 700    /* 2*Mipi clk */
+#define PREVIEW_MIPI_PER_LANE_BPS 700  /* 2*Mipi clk */
+#define SNAPSHOT_MIPI_PER_LANE_BPS 700 /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
-#define PREVIEW_LINE_TIME		  13143
-#define SNAPSHOT_LINE_TIME		  13143
+#define VIDEO_LINE_TIME 13171
+#define PREVIEW_LINE_TIME 13171
+#define SNAPSHOT_LINE_TIME 13171
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH			2530
-#define PREVIEW_FRAME_LENGTH		2530
-#define SNAPSHOT_FRAME_LENGTH		1264
+#define VIDEO_FRAME_LENGTH 2530
+#define PREVIEW_FRAME_LENGTH 2530
+#define SNAPSHOT_FRAME_LENGTH 2530
 
 /* please ref your spec */
-#define FRAME_OFFSET			8
-#define SENSOR_MAX_GAIN			0x0200
-#define SENSOR_BASE_GAIN		0x0020
-#define SENSOR_MIN_SHUTTER		2
+#define FRAME_OFFSET 8
+#define SENSOR_MAX_GAIN 0x0200
+#define SENSOR_BASE_GAIN 0x0020
+#define SENSOR_MIN_SHUTTER 6
 
 /* please ref your spec
  * 1 : average binning
  * 2 : sum-average binning
  * 4 : sum binning
  */
-#define BINNING_FACTOR			1
+#define BINNING_FACTOR 1
 
 /* please ref spec
  * 1: sensor auto caculate
@@ -103,10 +108,10 @@
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
-#define ISP_BASE_GAIN			0x80
+#define ISP_BASE_GAIN 0x80
 
 /* please don't change it */
-#define EX_MCLK				24
+#define EX_MCLK 24
 
 /*==============================================================================
  * Description:
@@ -114,320 +119,222 @@
  *============================================================================*/
 
 static const SENSOR_REG_T s5k4h7_init_setting[] = {
-	//Sensor Information////////////////////////////
-	//Sensor	  : s5k4h7                            
-	//Date		  : 2018-01-11                      
-	//Customer        : SPRD_validation                                            
-	//MCLK	          : 24MHz                   
-	//MIPI            : 4 Lane                                   
-	//Pixel order 	  : Gr 1st            
-	//BLC offset	  : 64code                       
-	//Firmware Ver.   : v1.0                         
-	////////////////////////////////////////////////
-	{0x0100, 0x00},
-	{0x0B05, 0x01},
-	{0x3074, 0x06},
-	{0x3075, 0x2F},
-	{0x308A, 0x20},
-	{0x308B, 0x08},
-	{0x308C, 0x0B},
-	{0x3081, 0x07},
-	{0x307B, 0x85},
-	{0x307A, 0x0A},
-	{0x3079, 0x0A},
-	{0x306E, 0x71},
-	{0x306F, 0x28},
-	{0x301F, 0x20},
-	{0x306B, 0x9A},
-	{0x3091, 0x1F},
-	{0x30C4, 0x06},
-	{0x3200, 0x09},
-	{0x306A, 0x79},
-	{0x30B0, 0xFF},
-	{0x306D, 0x08},
-	{0x3080, 0x00},
-	{0x3929, 0x3F},
-	{0x3084, 0x16},
-	{0x3070, 0x0F},
-	{0x3B45, 0x01},
-	{0x30C2, 0x05},
-	{0x3069, 0x87},
-	{0x3924, 0x7F},
-	{0x3925, 0xFD},
-	{0x3950, 0xB4},//addd csi
-	{0x3C08, 0xFF},
-	{0x3C09, 0xFF},
-	{0x3C31, 0xFF},
-	{0x3C32, 0xFF},
-	{0x0A02, 0x14},
+    // Sensor Information////////////////////////////
+    // Sensor      : s5k4h7
+    // Date          : 2018-01-11
+    // Customer        : SPRD_validation
+    // MCLK              : 24MHz
+    // MIPI            : 4 Lane
+    // Pixel order       : Gr 1st
+    // BLC offset      : 64code
+    // Firmware Ver.   : v1.0
+    ////////////////////////////////////////////////
+    {0x0100, 0x00}, {0x0B05, 0x01}, {0x3074, 0x06}, {0x3075, 0x2F},
+    {0x308A, 0x20}, {0x308B, 0x08}, {0x308C, 0x0B}, {0x3081, 0x07},
+    {0x307B, 0x85}, {0x307A, 0x0A}, {0x3079, 0x0A}, {0x306E, 0x71},
+    {0x306F, 0x28}, {0x301F, 0x20}, {0x306B, 0x9A}, {0x3091, 0x1F},
+    {0x30C4, 0x06}, {0x3200, 0x09}, {0x306A, 0x79}, {0x30B0, 0xFF},
+    {0x306D, 0x08}, {0x3080, 0x00}, {0x3929, 0x3F}, {0x3084, 0x16},
+    {0x3070, 0x0F}, {0x3950, 0xB4}, // addd csi
+    {0x3B45, 0x01}, {0x30C2, 0x05}, {0x3069, 0x87}, {0x3924, 0x7F},
+    {0x3925, 0xFD}, {0x3C08, 0xFF}, {0x3C09, 0xFF}, {0x3C31, 0xFF},
+    {0x3C32, 0xFF}, {0x0A02, 0x14},
 
-#ifdef FEATURE_OTP //enable lsc otp
-	//{0x021c, 0x0003},//otp LSC_en
+#ifdef FEATURE_OTP // enable lsc otp
+//{0x021c, 0x0003},//otp LSC_en
 #else
-	//{0x021c, 0x0001},//otp LSC_disable
+//{0x021c, 0x0001},//otp LSC_disable
 #endif
 };
 
 static const SENSOR_REG_T s5k4h7_preview_setting[] = {
-	//Sensor Information////////////////////////////
-	//Sensor	  : s5k4h7
-	//Date		  : 2018-01-11                        
-	//Customer        : SPRD_validation
-	//Image size	  : 1632x1224
-	//MCLK/PCLK	  : 24MHz /280Mhz
-	//MIPI speed(Mbps): 700Mbps x 4Lane
-	//Frame Length	  : 2530
-	//Line Length 	  : 3688
-	//line Time       :13171 
-	//Max Fps 	  : 30.01fps
-	//Pixel order 	  : Green 1st (=GR)
-	//X/Y-flip        : X-flip??
-	//BLC offset	    : 64code   
-	//Firmware Ver.   : v1.0
-	////////////////////////////////////////////////
-	{0x0100, 0x00},
-	{0x0136, 0x18},
-	{0x0137, 0x00},
-	{0x0305, 0x06},
-	{0x0306, 0x00},
-	{0x0307, 0x8C},
-	{0x030D, 0x06},
-	{0x030E, 0x00},
-	{0x030F, 0xAF},
-	{0x3C1F, 0x00},
-	{0x3C17, 0x00},
-	{0x3C1C, 0x05},
-	{0x3C1D, 0x15},
-	{0x0301, 0x04},
-	{0x0820, 0x02},
-	{0x0821, 0xBC},
-	{0x0822, 0x00},
-	{0x0823, 0x00},
-	{0x0112, 0x0A},
-	{0x0113, 0x0A},
-	{0x0114, 0x03},
-	{0x3906, 0x00},
-	{0x0344, 0x00},
-	{0x0345, 0x08},
-	{0x0346, 0x00},
-	{0x0347, 0x08},
-	{0x0348, 0x0C},
-	{0x0349, 0xC7},
-	{0x034A, 0x09},
-	{0x034B, 0x97},
-	{0x034C, 0x06},
-	{0x034D, 0x60},
-	{0x034E, 0x04},
-	{0x034F, 0xC8},
-	{0x0900, 0x01},
-	{0x0901, 0x22},
-	{0x0381, 0x01},
-	{0x0383, 0x01},
-	{0x0385, 0x01},
-	{0x0387, 0x03},
-	
-#ifdef FLIP		         
-	{0x0101, 0x03},
+    // Sensor Information////////////////////////////
+    // Sensor      : s5k4h7
+    // Date          : 2018-01-11
+    // Customer        : SPRD_validation
+    // Image size      : 1632x1224
+    // MCLK/PCLK      : 24MHz /280Mhz
+    // MIPI speed(Mbps): 700Mbps x 4Lane
+    // Frame Length      : 2530
+    // Line Length       : 3688
+    // line Time       :13171
+    // Max Fps       : 30.01fps
+    // Pixel order       : Green 1st (=GR)
+    // X/Y-flip        : X-flip??
+    // BLC offset        : 64code
+    // Firmware Ver.   : v1.0
+    ////////////////////////////////////////////////
+    {0x0100, 0x00}, {0x0136, 0x18}, {0x0137, 0x00}, {0x0305, 0x06},
+    {0x0306, 0x00}, {0x0307, 0x8C}, {0x030D, 0x06}, {0x030E, 0x00},
+    {0x030F, 0xAF}, {0x3C1F, 0x00}, {0x3C17, 0x00}, {0x3C1C, 0x05},
+    {0x3C1D, 0x15}, {0x0301, 0x04}, {0x0820, 0x02}, {0x0821, 0xBC},
+    {0x0822, 0x00}, {0x0823, 0x00}, {0x0112, 0x0A}, {0x0113, 0x0A},
+    {0x0114, 0x03}, {0x3906, 0x00}, {0x0344, 0x00}, {0x0345, 0x08},
+    {0x0346, 0x00}, {0x0347, 0x08}, {0x0348, 0x0C}, {0x0349, 0xC7},
+    {0x034A, 0x09}, {0x034B, 0x97}, {0x034C, 0x06}, {0x034D, 0x60},
+    {0x034E, 0x04}, {0x034F, 0xC8}, {0x0900, 0x01}, {0x0901, 0x22},
+    {0x0381, 0x01}, {0x0383, 0x01}, {0x0385, 0x01}, {0x0387, 0x03},
+#ifdef FLIP
+    {0x0101, 0x03},
 #else
-	{0x0101, 0x00},
+    {0x0101, 0x00},
 #endif
-	{0x0340, 0x04},
-	{0x0341, 0xf0},
-	{0x0342, 0x0E},
-	{0x0343, 0x68},
-	{0x0200, 0x0D},
-	{0x0201, 0xD8},
-	{0x0202, 0x00},
-	{0x0203, 0x02},
-	{0x3400, 0x01},
+    {0x0340, 0x09}, {0x0341, 0xE2}, {0x0342, 0x0E}, {0x0343, 0x68},
+    {0x0200, 0x0D}, {0x0201, 0xD8}, {0x0202, 0x02}, {0x0203, 0x08},
+    {0x3400, 0x01},
 };
 
 static const SENSOR_REG_T s5k4h7_snapshot_setting[] = {
-	//Sensor Information////////////////////////////
-	//Sensor	  : s5k4h7                            
-	//Date		  :  2018-01-11                           
-	//Customer        : SPRD_validation                      
-	//Image size	  : 3264x2448                     
-	//MCLK/PCLK	  : 24MHz /280Mhz                   
-	//MIPI speed(Mbps): 700Mbps x 4Lane             
-	//Frame Length	  : 2530                        
-	//Line Length 	  : 3688
-	//line Time       :13171                         
-	//Max Fps 	  : 30.00fps                                              
-	//Pixel order 	  : Green 1st (=GR)             
-	//X/Y-flip        : X-flip??  
-	//BLC offset	    : 64code                       
-	//Firmware Ver.   : v1.0                        
-	////////////////////////////////////////////////
-	{0x0100, 0x00},
-	{0x0136, 0x18},
-	{0x0137, 0x00},
-	{0x0305, 0x06},
-	{0x0306, 0x00},
-	{0x0307, 0x8C},
-	{0x030D, 0x06},
-	{0x030E, 0x00},
-	{0x030F, 0xAF},
-	{0x3C1F, 0x00},
-	{0x3C17, 0x00},
-	{0x3C1C, 0x05},
-	{0x3C1D, 0x15},
-	{0x0301, 0x04},
-	{0x0820, 0x02},
-	{0x0821, 0xBC},
-	{0x0822, 0x00},
-	{0x0823, 0x00},
-	{0x0112, 0x0A},
-	{0x0113, 0x0A},
-	{0x0114, 0x03},
-	{0x3906, 0x04},
-	{0x0344, 0x00},
-	{0x0345, 0x08},
-	{0x0346, 0x00},
-	{0x0347, 0x08},
-	{0x0348, 0x0C},
-	{0x0349, 0xC7},
-	{0x034A, 0x09},
-	{0x034B, 0x97},
-	{0x034C, 0x0C},
-	{0x034D, 0xC0},
-	{0x034E, 0x09},
-	{0x034F, 0x90},
-	{0x0900, 0x00},
-	{0x0901, 0x00},
-	{0x0381, 0x01},
-	{0x0383, 0x01},
-	{0x0385, 0x01},
-	{0x0387, 0x01},
-	
-#ifdef FLIP		         
-	{0x0101, 0x03},
+    // Sensor Information////////////////////////////
+    // Sensor      : s5k4h7
+    // Date          :  2018-01-11
+    // Customer        : SPRD_validation
+    // Image size      : 3264x2448
+    // MCLK/PCLK      : 24MHz /280Mhz
+    // MIPI speed(Mbps): 700Mbps x 4Lane
+    // Frame Length      : 2530
+    // Line Length       : 3688
+    // line Time       :13171
+    // Max Fps       : 30.00fps
+    // Pixel order       : Green 1st (=GR)
+    // X/Y-flip        : X-flip??
+    // BLC offset        : 64code
+    // Firmware Ver.   : v1.0
+    ////////////////////////////////////////////////
+    {0x0100, 0x00}, {0x0136, 0x18}, {0x0137, 0x00}, {0x0305, 0x06},
+    {0x0306, 0x00}, {0x0307, 0x8C}, {0x030D, 0x06}, {0x030E, 0x00},
+    {0x030F, 0xAF}, {0x3C1F, 0x00}, {0x3C17, 0x00}, {0x3C1C, 0x05},
+    {0x3C1D, 0x15}, {0x0301, 0x04}, {0x0820, 0x02}, {0x0821, 0xBC},
+    {0x0822, 0x00}, {0x0823, 0x00}, {0x0112, 0x0A}, {0x0113, 0x0A},
+    {0x0114, 0x03}, {0x3906, 0x04}, {0x0344, 0x00}, {0x0345, 0x08},
+    {0x0346, 0x00}, {0x0347, 0x08}, {0x0348, 0x0C}, {0x0349, 0xC7},
+    {0x034A, 0x09}, {0x034B, 0x97}, {0x034C, 0x0C}, {0x034D, 0xC0},
+    {0x034E, 0x09}, {0x034F, 0x90}, {0x0900, 0x00}, {0x0901, 0x00},
+    {0x0381, 0x01}, {0x0383, 0x01}, {0x0385, 0x01}, {0x0387, 0x01},
+#ifdef FLIP
+    {0x0101, 0x03},
 #else
-	{0x0101, 0x00},
+    {0x0101, 0x00},
 #endif
-	{0x0340, 0x09},
-	{0x0341, 0xE2},
-	{0x0342, 0x0E},
-	{0x0343, 0x68},
-	{0x0200, 0x0D},
-	{0x0201, 0xD8},
-	{0x0202, 0x00},
-	{0x0203, 0x02},
-	{0x3400, 0x01},
+    {0x0340, 0x09}, {0x0341, 0xE2}, {0x0342, 0x0E}, {0x0343, 0x68},
+    {0x0200, 0x0D}, {0x0201, 0xD8}, {0x0202, 0x02}, {0x0203, 0x08},
+    {0x3400, 0x01},
 };
 
 static const SENSOR_REG_T s5k4h7_video_setting[] = {
-	//Sensor Information////////////////////////////
-	//Sensor	  : s5k4h7
-	//Date		  : 2017-04-06                       
-	//Customer        : SPRD_validation
-	//Image size	  : 1280x720
-	//MCLK/PCLK	  : 24MHz /288Mhz
-	//MIPI speed(Mbps): 360Mbps x 4Lane
-	//Frame Length	  :  842
-	//Line Length 	  : 3800
-	//line Time       :13194 
-	//Max Fps 	  : 90.00fps
-	//Pixel order 	  : Green 1st (=GB)
-	//X/Y-flip        : X-flip
-	//BLC offset	    : 64code   
-	//Firmware Ver.   : v1.0
-	////////////////////////////////////////////////
-	
-	
+    // Sensor Information////////////////////////////
+    // Sensor      : s5k4h7
+    // Date          : 2017-04-06
+    // Customer        : SPRD_validation
+    // Image size      : 1280x720
+    // MCLK/PCLK      : 24MHz /288Mhz
+    // MIPI speed(Mbps): 360Mbps x 4Lane
+    // Frame Length      :  842
+    // Line Length       : 3800
+    // line Time       :13194
+    // Max Fps       : 90.00fps
+    // Pixel order       : Green 1st (=GB)
+    // X/Y-flip        : X-flip
+    // BLC offset        : 64code
+    // Firmware Ver.   : v1.0
+    ////////////////////////////////////////////////
+
 };
 
-
-
-
 static struct sensor_res_tab_info s_s5k4h7_resolution_tab_raw[VENDOR_NUM] = {
-	{
-      .module_id = MODULE_SUNNY,
-      .reg_tab = {
-        {ADDR_AND_LEN_OF_ARRAY(s5k4h7_init_setting), PNULL, 0,
-        .width = 0, .height = 0,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-/*
-		{ADDR_AND_LEN_OF_ARRAY(s5k4h7_video_setting), PNULL, 0,
-        .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-*/		
-        {ADDR_AND_LEN_OF_ARRAY(s5k4h7_preview_setting), PNULL, 0,
-        .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+    {.module_id = MODULE_SUNNY,
+     .reg_tab = {{ADDR_AND_LEN_OF_ARRAY(s5k4h7_init_setting), PNULL, 0,
+                  .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                 /*
+                         {ADDR_AND_LEN_OF_ARRAY(s5k4h7_video_setting), PNULL, 0,
+                         .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
+                         .xclk_to_sensor = EX_MCLK, .image_format =
+                    SENSOR_IMAGE_FORMAT_RAW},
+                 */
+                 {ADDR_AND_LEN_OF_ARRAY(s5k4h7_preview_setting), PNULL, 0,
+                  .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
+                  .xclk_to_sensor = EX_MCLK,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-        {ADDR_AND_LEN_OF_ARRAY(s5k4h7_snapshot_setting), PNULL, 0,
-        .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}
-		}
-	}
+                 {ADDR_AND_LEN_OF_ARRAY(s5k4h7_snapshot_setting), PNULL, 0,
+                  .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
+                  .xclk_to_sensor = EX_MCLK,
+                  .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
 
-	/*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_TRIM_T s_s5k4h7_resolution_trim_tab[VENDOR_NUM] = {
-{
-     .module_id = MODULE_SUNNY,
-     .trim_info = {
-       {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-/*	   
-	   {.trim_start_x = VIDEO_TRIM_X, .trim_start_y = VIDEO_TRIM_Y,
-        .trim_width = VIDEO_TRIM_W,   .trim_height = VIDEO_TRIM_H,
-        .line_time = VIDEO_LINE_TIME, .bps_per_lane = VIDEO_MIPI_PER_LANE_BPS,
-        .frame_line = VIDEO_FRAME_LENGTH,
-        .scaler_trim = {.x = VIDEO_TRIM_X, .y = VIDEO_TRIM_Y, .w = VIDEO_TRIM_W, .h = VIDEO_TRIM_H}},
-*/	   
-	   {.trim_start_x = PREVIEW_TRIM_X, .trim_start_y = PREVIEW_TRIM_Y,
-        .trim_width = PREVIEW_TRIM_W,   .trim_height = PREVIEW_TRIM_H,
-        .line_time = PREVIEW_LINE_TIME, .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
-        .frame_line = PREVIEW_FRAME_LENGTH,
-        .scaler_trim = {.x = PREVIEW_TRIM_X, .y = PREVIEW_TRIM_Y, .w = PREVIEW_TRIM_W, .h = PREVIEW_TRIM_H}},
-      
-	   {
-        .trim_start_x = SNAPSHOT_TRIM_X, .trim_start_y = SNAPSHOT_TRIM_Y,
-        .trim_width = SNAPSHOT_TRIM_W,   .trim_height = SNAPSHOT_TRIM_H,
-        .line_time = SNAPSHOT_LINE_TIME, .bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
-        .frame_line = SNAPSHOT_FRAME_LENGTH,
-        .scaler_trim = {.x = SNAPSHOT_TRIM_X, .y = SNAPSHOT_TRIM_Y, .w = SNAPSHOT_TRIM_W, .h = SNAPSHOT_TRIM_H}},
-		}
-	}
+    {.module_id = MODULE_SUNNY,
+     .trim_info =
+         {
+             {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+             /*
+                    {.trim_start_x = VIDEO_TRIM_X, .trim_start_y = VIDEO_TRIM_Y,
+                     .trim_width = VIDEO_TRIM_W,   .trim_height = VIDEO_TRIM_H,
+                     .line_time = VIDEO_LINE_TIME, .bps_per_lane =
+                VIDEO_MIPI_PER_LANE_BPS,
+                     .frame_line = VIDEO_FRAME_LENGTH,
+                     .scaler_trim = {.x = VIDEO_TRIM_X, .y = VIDEO_TRIM_Y, .w =
+                VIDEO_TRIM_W, .h = VIDEO_TRIM_H}},
+             */
+
+             {.trim_start_x = PREVIEW_TRIM_X,
+              .trim_start_y = PREVIEW_TRIM_Y,
+              .trim_width = PREVIEW_TRIM_W,
+              .trim_height = PREVIEW_TRIM_H,
+              .line_time = PREVIEW_LINE_TIME,
+              .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
+              .frame_line = PREVIEW_FRAME_LENGTH,
+              .scaler_trim = {.x = PREVIEW_TRIM_X,
+                              .y = PREVIEW_TRIM_Y,
+                              .w = PREVIEW_TRIM_W,
+                              .h = PREVIEW_TRIM_H}},
+
+             {.trim_start_x = SNAPSHOT_TRIM_X,
+              .trim_start_y = SNAPSHOT_TRIM_Y,
+              .trim_width = SNAPSHOT_TRIM_W,
+              .trim_height = SNAPSHOT_TRIM_H,
+              .line_time = SNAPSHOT_LINE_TIME,
+              .bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
+              .frame_line = SNAPSHOT_FRAME_LENGTH,
+              .scaler_trim = {.x = SNAPSHOT_TRIM_X,
+                              .y = SNAPSHOT_TRIM_Y,
+                              .w = SNAPSHOT_TRIM_W,
+                              .h = SNAPSHOT_TRIM_H}},
+         }}
 
     /*If there are multiple modules,please add here*/
 
 };
 
 static SENSOR_REG_T s5k4h7_shutter_reg[] = {
-    {0x0202, 0x00}, 
-    {0x0203, 0x10}, 
+    {0x0202, 0x00}, {0x0203, 0x10},
 };
 
 static struct sensor_i2c_reg_tab s5k4h7_shutter_tab = {
-    .settings = s5k4h7_shutter_reg, 
-	.size = ARRAY_SIZE(s5k4h7_shutter_reg),
+    .settings = s5k4h7_shutter_reg, .size = ARRAY_SIZE(s5k4h7_shutter_reg),
 };
 
 static SENSOR_REG_T s5k4h7_again_reg[] = {
-	{0x0204, 0x00}, 
-	{0x0205, 0x20}, 
+    {0x0204, 0x00}, {0x0205, 0x20},
 };
 
 static struct sensor_i2c_reg_tab s5k4h7_again_tab = {
-    .settings = s5k4h7_again_reg, 
-	.size = ARRAY_SIZE(s5k4h7_again_reg),
+    .settings = s5k4h7_again_reg, .size = ARRAY_SIZE(s5k4h7_again_reg),
 };
 
 static SENSOR_REG_T s5k4h7_dgain_reg[] = {
-   
+
 };
 
 static struct sensor_i2c_reg_tab s5k4h7_dgain_tab = {
-    .settings = s5k4h7_dgain_reg, 
-	.size = ARRAY_SIZE(s5k4h7_dgain_reg),
+    .settings = s5k4h7_dgain_reg, .size = ARRAY_SIZE(s5k4h7_dgain_reg),
 };
 
 static SENSOR_REG_T s5k4h7_frame_length_reg[] = {
-	{0x0340, 0x06},
-	{0x0341, 0xe2},
+    {0x0340, 0x06}, {0x0341, 0xe2},
 };
 
 static struct sensor_i2c_reg_tab s5k4h7_frame_length_tab = {
@@ -460,88 +367,81 @@ static const cmr_u16 s5k4h7_pd_col[] = {
 
 static SENSOR_STATIC_INFO_T s_s5k4h7_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .static_info = {
-        .f_num = 200,
-        .focal_length = 354,
-        .max_fps = 30,
-        .max_adgain = 8,
-        .ois_supported = 0,
-		#ifdef CONFIG_CAMERA_PDAF_TYPE
+     .static_info = {.f_num = 200,
+                     .focal_length = 354,
+                     .max_fps = 30,
+                     .max_adgain = 8,
+                     .ois_supported = 0,
+#if 0 // def CONFIG_CAMERA_PDAF_TYPE
         .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
-		#else 
-		.pdaf_supported = 0,
-	    #endif
-        .exp_valid_frame_num = 1,
-        .clamp_level = 64,
-        .adgain_valid_frame_num = 1,
-        .fov_info = {{4.614f, 3.444f}, 4.222f}}
-    }
+#else
+                     .pdaf_supported = 0,
+#endif
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 64,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
     /*If there are multiple modules,please add here*/
 };
-
 
 static SENSOR_MODE_FPS_INFO_T s_s5k4h7_mode_fps_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-       {.is_init = 0,
-         {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-         {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-         {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}
-    }
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
     /*If there are multiple modules,please add here*/
 };
 
-
 static struct sensor_module_info s_s5k4h7_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {
-         .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-         .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
-         .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
-                                SENSOR_I2C_FREQ_400,
+                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                                            SENSOR_I2C_VAL_8BIT |
+                                            SENSOR_I2C_FREQ_400,
 
-         .avdd_val = SENSOR_AVDD_2800MV,
-         .iovdd_val = SENSOR_AVDD_1800MV,
-         .dvdd_val = SENSOR_AVDD_1200MV,
+                     .avdd_val = SENSOR_AVDD_2800MV,
+                     .iovdd_val = SENSOR_AVDD_1800MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
 
-         .preview_skip_num = 1,
-         .capture_skip_num = 1,
-         .flash_capture_skip_num = 6,
-         .mipi_cap_skip_num = 0,
-         .preview_deci_num = 0,
-         .video_preview_deci_num = 0,
+                     .preview_skip_num = 1,
+                     .capture_skip_num = 1,
+                     .flash_capture_skip_num = 6,
+                     .mipi_cap_skip_num = 0,
+                     .preview_deci_num = 0,
+                     .video_preview_deci_num = 0,
 
-         .threshold_eb = 0,
-         .threshold_mode = 0,
-         .threshold_start = 0,
-         .threshold_end = 0,
+                     .threshold_eb = 0,
+                     .threshold_mode = 0,
+                     .threshold_start = 0,
+                     .threshold_end = 0,
 
-         .sensor_interface = {
-              .type = SENSOR_INTERFACE_TYPE_CSI2,
-              .bus_width = LANE_NUM,
-              .pixel_width = RAW_BITS,
-              .is_loose = 0,
-          },
-         .change_setting_skip_num = 1,
-         .horizontal_view_angle = 65,
-         .vertical_view_angle = 60
-      }
-    }
+                     .sensor_interface =
+                         {
+                             .type = SENSOR_INTERFACE_TYPE_CSI2,
+                             .bus_width = LANE_NUM,
+                             .pixel_width = RAW_BITS,
+                             .is_loose = 0,
+                         },
+                     .change_setting_skip_num = 1,
+                     .horizontal_view_angle = 65,
+                     .vertical_view_angle = 60}}
 
-/*If there are multiple modules,please add here*/
+    /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_ic_ops s_s5k4h7_ops_tab;
 struct sensor_raw_info *s_s5k4h7_mipi_raw_info_ptr = &s_s5k4h7_mipi_raw_info;
-
 
 /*==============================================================================
  * Description:
@@ -564,9 +464,10 @@ SENSOR_INFO_T g_s5k4h7_mipi_raw_info = {
     .reset_pulse_width = 50,
     .power_down_level = SENSOR_LOW_LEVEL_PWDN,
     .identify_count = 1,
-    .identify_code =
-        {{ .reg_addr = S5K4H7_PID_ADDR, .reg_value = S5K4H7_PID_VALUE},
-         { .reg_addr = S5K4H7_VER_ADDR, .reg_value = S5K4H7_VER_VALUE}},
+    .identify_code = {{.reg_addr = S5K4H7_PID_ADDR,
+                       .reg_value = S5K4H7_PID_VALUE},
+                      {.reg_addr = S5K4H7_VER_ADDR,
+                       .reg_value = S5K4H7_VER_VALUE}},
 
     .source_width_max = SNAPSHOT_WIDTH,
     .source_height_max = SNAPSHOT_HEIGHT,

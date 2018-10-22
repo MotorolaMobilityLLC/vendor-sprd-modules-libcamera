@@ -31,8 +31,11 @@
 /* Begin Include */
 #include "sensor_s5k4h7_raw_param_common.c"
 #include "sensor_s5k4h7_raw_param_prv_0.c"
+#include "sensor_s5k4h7_raw_param_prv_1.c"
 #include "sensor_s5k4h7_raw_param_cap_0.c"
+#include "sensor_s5k4h7_raw_param_cap_1.c"
 #include "sensor_s5k4h7_raw_param_video_0.c"
+#include "sensor_s5k4h7_raw_param_video_1.c"
 
 /* End Include */
 
@@ -46,7 +49,7 @@
 
 
 /* Capture Sizes:
-	3264x2448
+	3264x2448,1632x1224
 */
 
 
@@ -153,15 +156,15 @@ static struct sensor_raw_info s_s5k4h7_mipi_raw_info=
 	{
 		{s_s5k4h7_tune_info_common, sizeof(s_s5k4h7_tune_info_common)},
 		{s_s5k4h7_tune_info_prv_0, sizeof(s_s5k4h7_tune_info_prv_0)},
-		{NULL, 0},
+		{s_s5k4h7_tune_info_prv_1, sizeof(s_s5k4h7_tune_info_prv_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_s5k4h7_tune_info_cap_0, sizeof(s_s5k4h7_tune_info_cap_0)},
-		{NULL, 0},
+		{s_s5k4h7_tune_info_cap_1, sizeof(s_s5k4h7_tune_info_cap_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_s5k4h7_tune_info_video_0, sizeof(s_s5k4h7_tune_info_video_0)},
-		{NULL, 0},
+		{s_s5k4h7_tune_info_video_1, sizeof(s_s5k4h7_tune_info_video_1)},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -171,30 +174,30 @@ static struct sensor_raw_info s_s5k4h7_mipi_raw_info=
 	{
 		&s_s5k4h7_fix_info_common,
 		&s_s5k4h7_fix_info_prv_0,
-		NULL,
+		&s_s5k4h7_fix_info_prv_1,
 		NULL,
 		NULL,
 		&s_s5k4h7_fix_info_cap_0,
-		NULL,
+		&s_s5k4h7_fix_info_cap_1,
 		NULL,
 		NULL,
 		&s_s5k4h7_fix_info_video_0,
-		NULL,
+		&s_s5k4h7_fix_info_video_1,
 		NULL,
 		NULL,
 	},
 	{
 		{s_s5k4h7_common_tool_ui_input, sizeof(s_s5k4h7_common_tool_ui_input)},
 		{s_s5k4h7_prv_0_tool_ui_input, sizeof(s_s5k4h7_prv_0_tool_ui_input)},
-		{NULL, 0},
+		{s_s5k4h7_prv_1_tool_ui_input, sizeof(s_s5k4h7_prv_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_s5k4h7_cap_0_tool_ui_input, sizeof(s_s5k4h7_cap_0_tool_ui_input)},
-		{NULL, 0},
+		{s_s5k4h7_cap_1_tool_ui_input, sizeof(s_s5k4h7_cap_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_s5k4h7_video_0_tool_ui_input, sizeof(s_s5k4h7_video_0_tool_ui_input)},
-		{NULL, 0},
+		{s_s5k4h7_video_1_tool_ui_input, sizeof(s_s5k4h7_video_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 	},
