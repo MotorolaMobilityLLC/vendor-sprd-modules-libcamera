@@ -1935,6 +1935,7 @@ static cmr_int ispctl_af_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_face_area *face_area = (struct isp_face_area *)param_ptr;
+	struct afctrl_face_info af_fd_para;
 
 	if (NULL != face_area) {
 		struct ae_fd_param fd_param;
@@ -1951,8 +1952,23 @@ static cmr_int ispctl_af_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 			fd_param.face_area[i].face_lum = face_area->face_info[i].brightness;
 			fd_param.face_area[i].pose = face_area->face_info[i].pose;
 		}
+
+		af_fd_para.type = face_area->type;
+		af_fd_para.face_num = face_area->face_num;
+		af_fd_para.frame_width = face_area->frame_width;
+		af_fd_para.frame_height = face_area->frame_height;
+		for (i = 0; i < af_fd_para.face_num; ++i) {
+
+			af_fd_para.face_info[i].sx = face_area->face_info[i].sx;
+			af_fd_para.face_info[i].sy = face_area->face_info[i].sy;
+			af_fd_para.face_info[i].ex = face_area->face_info[i].ex;
+			af_fd_para.face_info[i].ey = face_area->face_info[i].ey;
+			af_fd_para.face_info[i].brightness = face_area->face_info[i].brightness;
+			af_fd_para.face_info[i].pose = face_area->face_info[i].pose;
+			af_fd_para.face_info[i].angle = face_area->face_info[i].angle;
+		}
 		if (cxt->ops.af_ops.ioctrl)
-			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)param_ptr, NULL);
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)&af_fd_para, NULL);
 	}
 
 	return ret;
