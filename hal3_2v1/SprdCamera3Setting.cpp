@@ -1338,7 +1338,7 @@ int SprdCamera3Setting::initIdentifyDynamicSensorNum() {
     sensor_cxt = NULL;
 
     mPhysicalSensorNum = MIN(mPhysicalSensorNum, CAMERA_SENSOR_NUM);
-    HAL_LOGI("mPhysicalSensorNum=%d",mPhysicalSensorNum);
+    HAL_LOGI("mPhysicalSensorNum=%d", mPhysicalSensorNum);
 
     HAL_LOGI("X");
 
@@ -1899,7 +1899,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));
     uint32_t dualPropSupport = 0;
-    if (mSensorType[cameraId] != FOURINONESENSOR && mSensorType[cameraId] != YUVSENSOR) {
+    if (mSensorType[cameraId] != FOURINONESENSOR &&
+        mSensorType[cameraId] != YUVSENSOR) {
         dualPropSupport = 1;
     }
 
@@ -4260,6 +4261,14 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("brightness is %d",
                  s_setting[mCameraId].sprddefInfo.brightness);
     }
+    if (frame_settings.exists(ANDROID_SPRD_AI_SCENE_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.ai_scene_enabled =
+            frame_settings.find(ANDROID_SPRD_AI_SCENE_ENABLED).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_AI_SCENE_ENABLED);
+        HAL_LOGV("availabe_ai_scene %d",
+                 s_setting[mCameraId].sprddefInfo.ai_scene_enabled);
+    }
+
     // control mode
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];

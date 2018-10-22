@@ -86,6 +86,7 @@ enum setting_general_type {
     SETTING_GENERAL_FOCUS_DISTANCE,
     SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_SPRD_APP_MODE,
+    SETTING_GENERAL_AI_SCENE_ENABLED,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -136,6 +137,7 @@ struct setting_hal_common {
     cmr_uint focus_distance;
     cmr_uint is_auto_hdr;
     cmr_uint sprd_appmode_id;
+    cmr_uint ai_scene;
     struct cmr_ae_compensation_param ae_compensation_param;
 };
 
@@ -576,7 +578,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
          COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
-         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AI_SCENE_ENABLED, &hal_param->hal_common.ai_scene,
+         COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -626,6 +630,16 @@ static cmr_int setting_set_general(struct setting_component *cpt,
     case SETTING_GENERAL_EXPOSURE_TIME:
         *item->cmd_type_value = 0;
         type_val = parm->cmd_type_value;
+        break;
+
+    case SETTING_GENERAL_AI_SCENE_ENABLED:
+        if (parm->cmd_type_value) {
+            item->isp_cmd = COM_ISP_SET_AI_SCENE_START;
+            ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        } else {
+            item->isp_cmd = COM_ISP_SET_AI_SCENE_STOP;
+            ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        }
         break;
 
     default:
@@ -978,6 +992,15 @@ static cmr_int setting_set_brightness(struct setting_component *cpt,
     cmr_int ret = 0;
 
     ret = setting_set_general(cpt, SETTING_GENERAL_BRIGHTNESS, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_ai_scence(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AI_SCENE_ENABLED, parm);
 
     return ret;
 }
@@ -3689,6 +3712,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_encode_angle);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_CONTRAST, setting_set_contrast);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_BRIGHTNESS, setting_set_brightness);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AI_SCENE_ENABLED,
+                             setting_set_ai_scence);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SHARPNESS, setting_set_sharpness);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_WB, setting_set_wb);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EFFECT, setting_set_effect);

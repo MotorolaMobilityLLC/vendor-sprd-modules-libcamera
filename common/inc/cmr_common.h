@@ -383,6 +383,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_REQ_FRAME_INFO,
     COM_ISP_GET_PER_FRAME_RESULT,
 #endif
+    COM_ISP_SET_AI_SCENE_ENABLED,
     COM_ISP_TYPE_MAX
 };
 
@@ -1389,6 +1390,7 @@ enum camera_param_type {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     CAMERA_PARAM_REQ_FRAME_INFO,
 #endif
+    CAMERA_PARAM_AI_SCENE_ENABLED,
     CAMERA_PARAM_TYPE_MAX
 
 };

@@ -6546,6 +6546,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (uint32_t)sprddefInfo.brightness);
     } break;
 
+    case ANDROID_SPRD_AI_SCENE_ENABLED: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD(" sprddefInfo.ai_scene_enabled: %d",
+                 sprddefInfo.ai_scene_enabled);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AI_SCENE_ENABLED,
+                 (uint32_t)sprddefInfo.ai_scene_enabled);
+    } break;
+
     case ANDROID_SPRD_CONTRAST: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);

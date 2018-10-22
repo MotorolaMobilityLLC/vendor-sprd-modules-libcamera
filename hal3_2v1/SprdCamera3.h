@@ -211,6 +211,7 @@ static tags_info_t
         {"sprdAvailableAIScene", TYPE_BYTE},
         {"sprdAIScene", TYPE_BYTE},
         {"availableSensorType", TYPE_BYTE},
+        {"sprdAISceneEnabled", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

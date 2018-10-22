@@ -353,6 +353,7 @@ typedef struct {
     uint8_t burst_cap_cnt;
     uint8_t capture_mode;
     uint8_t brightness;
+    uint8_t ai_scene_enabled;
     uint8_t contrast;
     uint8_t saturation;
     uint8_t slowmotion;

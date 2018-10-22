@@ -467,8 +467,8 @@ int SprdCamera3RegularChannel::setInputBuff(buffer_handle_t *buff) {
 }
 
 int SprdCamera3RegularChannel::getInputBuff(cmr_uint *addr_vir,
-                                               cmr_uint *addr_phy,
-                                               cmr_uint *priv_data) {
+                                            cmr_uint *addr_phy,
+                                            cmr_uint *priv_data) {
     int ret = NO_ERROR;
 
     ret = mMemory->map(mInputBuff, &mInputBufInfo);
@@ -897,6 +897,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_SPRD_BRIGHTNESS:
             HAL_LOGV("ANDROID_SPRD_BRIGHTNESS");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_BRIGHTNESS);
+            break;
+        case ANDROID_SPRD_AI_SCENE_ENABLED:
+            HAL_LOGV("ANDROID_SPRD_AI_SCENE_ENABLED");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_AI_SCENE_ENABLED);
             break;
         case ANDROID_SPRD_CONTRAST:
             HAL_LOGV("contrast");
