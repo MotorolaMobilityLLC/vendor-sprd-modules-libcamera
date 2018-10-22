@@ -557,19 +557,7 @@ static cmr_int imx362_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
     cmr_u32 real_gain = 0;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
-    defined(CONFIG_CAMERA_ISP_VERSION_V4)
     real_gain = param;
-#else
-    real_gain = ((param & 0xf) + 16) * (((param >> 4) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 5) & 0x01) + 1) * (((param >> 6) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 7) & 0x01) + 1) * (((param >> 8) & 0x01) + 1);
-    real_gain =
-        real_gain * (((param >> 9) & 0x01) + 1) * (((param >> 10) & 0x01) + 1);
-    real_gain = real_gain * (((param >> 11) & 0x01) + 1);
-#endif
 
     return real_gain;
 }
