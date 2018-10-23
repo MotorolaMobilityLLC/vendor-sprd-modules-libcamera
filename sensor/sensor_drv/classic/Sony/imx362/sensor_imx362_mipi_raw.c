@@ -1023,7 +1023,7 @@ static cmr_int imx362_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = imx362_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-    case SENSOR_VAL_TYPE_SET_SPC_DATA:
+    case SENSOR_VAL_TYPE_SET_OTP_DATA:
         //   rtn = imx362_drv_set_spc_data(handle, param_ptr->pval);
         break;
     default:

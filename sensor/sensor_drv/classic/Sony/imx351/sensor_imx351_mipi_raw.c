@@ -1101,7 +1101,7 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = imx351_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-     case SENSOR_VAL_TYPE_SET_SPC_DATA:
+     case SENSOR_VAL_TYPE_SET_OTP_DATA:
          rtn = imx351_drv_set_spc_data(handle, param_ptr->pval);
          break;
     case SENSOR_VAL_TYPE_GET_EBDLINE_INFO:

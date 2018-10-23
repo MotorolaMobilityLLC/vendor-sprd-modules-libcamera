@@ -129,7 +129,7 @@ extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
                                               SENSOR_ID_E sensor_id);
 cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
                              cmr_u8 vendor_id);
-cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt);
+cmr_int sensor_set_otp_data(struct sensor_drv_context *sensor_cxt);
 
 void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt) {
     SENSOR_ID_E sensor_id = 0;
@@ -1365,7 +1365,7 @@ static cmr_int sensor_open(struct sensor_drv_context *sensor_cxt,
                 /*if property debug.dualcamera.write.otp is false do nothing*/
                 sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
                 sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
-                sensor_set_spc_data(sensor_cxt);
+                sensor_set_otp_data(sensor_cxt);
 #if 1 // def CONFIG_ISP_TUNING_PARAM_UPDATE
                 sensor_otp_ops_t *otp_ops = PNULL;
                 otp_ops = &module->otp_drv_info.otp_drv_entry->otp_ops;
@@ -2192,7 +2192,7 @@ cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
     return NORMALSENSOR; // normal sensor
 }
 
-cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt) {
+cmr_int sensor_set_otp_data(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     SENSOR_VAL_T val;
@@ -2200,7 +2200,7 @@ cmr_int sensor_set_spc_data(struct sensor_drv_context *sensor_cxt) {
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)sensor_cxt->otp_drv_handle;
 
     cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
-    val.type = SENSOR_VAL_TYPE_SET_SPC_DATA;
+    val.type = SENSOR_VAL_TYPE_SET_OTP_DATA;
     val.pval = otp_cxt->otp_raw_data.buffer;
 
     SENSOR_LOGI("otp_raw_data:%p", val.pval);

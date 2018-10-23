@@ -437,7 +437,7 @@ void *handlelib;
 uint16 *pOutImage; // for mipi_raw to raw16
 #define OTPDPC_MIRROR 0
 #define OTPDPC_FLIP 0
-static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u32 *param) {
+static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     //      #include "fcell.h"
     cmr_int rtn = SENSOR_SUCCESS;
 //    ov4c_init();//unsigned short *xtalk_data, unsigned short *otp_data, int
@@ -460,18 +460,21 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u32 *param) {
    init.xtalk = pFcellXtalk;//xtalk_data;//pFcellXtalk;//TODO
 #else
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    // cmr_u8 *param_ptr = (cmr_u8 *)param;
-    cmr_u8 param_ptr[0x160f + 600] = {0x00, 0x00};
-    hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa0 >> 1, param_ptr,
-                       0x160f + 600 << 16 | SENSOR_I2C_REG_16BIT);
+    cmr_u8 *param_ptr = (cmr_u8 *)param;
+    //cmr_u8 param_ptr[0x160f + 600] = {0x00, 0x00};
+    //SENSOR_LOGI("otp_raw_data: %p %p", param_ptr, param);
+    //hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa0 >> 1, param_ptr,
+    //                   0x160f + 600 << 16 | SENSOR_I2C_REG_16BIT);
     //    for(int i = 0; i <600; i++)
     //            param_ptr[i] = hw_sensor_read_reg(sns_drv_cxt->hw_handle,
     //            0x160f+i);
     //    SENSOR_LOGI("xtalk: pid_value = %x, ver_value = %x",
     //    param_ptr[0x160f], param_ptr[0x160f+1]);
-    init.otpdpc =
-        param_ptr + 0x0b14; // pFCellOtpdpc;//otp_data;//pFCellOtpdpc;//TODO
-    init.xtalk = param_ptr + 0x8ba; // xtalk_data;//pFcellXtalk;//TODO
+
+    init.xtalk = param_ptr + 0x8ba; // xtalk_data;//pFcellXtalk;
+    init.otpdpc = param_ptr + 0x0b14; // pFCellOtpdpc;//pFCellOtpdpc;
+    init.xtalk_len = 600;
+    init.otpdpc_len = 952;
 #endif
     init.ofst_xtalk[0] = XTALK_OFFSET_X;
     init.ofst_xtalk[1] = XTALK_OFFSET_Y;
@@ -645,7 +648,7 @@ static cmr_int ov16885_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_4IN1_INFO:
         ret = ov16885_drv_get_4in1_info(handle, param_ptr->pval);
         break;
-    case SENSOR_VAL_TYPE_4IN1_INIT:
+    case SENSOR_VAL_TYPE_SET_OTP_DATA:
         ret = ov16885_drv_ov4c_init(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_4IN1_PROC:
@@ -688,10 +691,6 @@ static cmr_int ov16885_drv_identify(cmr_handle handle, cmr_uint param) {
         if (ov16885_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is ov16885 sensor");
             ret_value = SENSOR_SUCCESS;
-#if 1
-            ov16885_drv_ov4c_init(sns_drv_cxt, &param);
-#endif
-
         } else {
             SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x",
                         pid_value, ver_value);
