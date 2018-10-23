@@ -15,9 +15,6 @@ static struct sensor_nr_scene_map_param s_ov5675_dual_nr_scene_map_param = {{
 }};
 #endif
 
-#ifdef _NR_IIRCNR_YRANDOM_PARAM_
-#endif
-
 #ifdef _NR_BAYER_NR_PARAM_
 #include "NR/common/normal/bayer_nr_param.h"
 #endif
@@ -88,5 +85,9 @@ static struct sensor_nr_scene_map_param s_ov5675_dual_nr_scene_map_param = {{
 
 #ifdef _NR_UV_POSTCDN_PARAM_
 #include "NR/common/normal/uv_postcdn_param.h"
+#endif
+
+#ifdef _NR_CNR_PARAM_
+#include "NR/common/normal/cnr_param.h"
 #endif
 
