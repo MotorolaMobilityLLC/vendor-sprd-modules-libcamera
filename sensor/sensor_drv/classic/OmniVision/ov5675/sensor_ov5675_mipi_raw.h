@@ -275,7 +275,7 @@ static const SENSOR_REG_T ov5675_preview_setting[] = {
     {0x3821, 0x41}, // hsync_en_o, mirror off, dig_bin on
     {0x450b, 0x20}, // need to set when flip
 #else
-    {0x3820, 0x90}, // vsyn48_blc on, vflip off
+    {0x3820, 0x93}, // vsyn48_blc on, vflip off
     {0x3821, 0x47}, // hsync_en_o, mirror on, dig_bin on
 #endif
     {0x3821, 0x01}, {0x4008, 0x00}, {0x4009, 0x07}, {0x4041, 0x03}};
