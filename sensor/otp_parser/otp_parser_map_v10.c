@@ -68,15 +68,15 @@ static cmr_uint _otp_parser_get_start_offset_v10(void * raw_data,  cmr_int camer
         CMR_LOGV("lsc data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].lsc_info.data_offset, camera_otp_info[camera_id].lsc_info.data_size);
 
         //pdaf_sprd
-        camera_otp_info[camera_id].pdaf_sprd_info.data_offset = (buffer[0x00000023] << 8) | buffer[0x00000022];
-        camera_otp_info[camera_id].pdaf_sprd_info.data_size = (buffer[0x0000003D] << 8) |buffer[0x0000003C];
-        CMR_LOGV("pdaf_sprd data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf_sprd_info.data_offset, camera_otp_info[camera_id].pdaf_sprd_info.data_size);
+        camera_otp_info[camera_id].pdaf1_info.data_offset = (buffer[0x00000023] << 8) | buffer[0x00000022];
+        camera_otp_info[camera_id].pdaf1_info.data_size = (buffer[0x0000003D] << 8) |buffer[0x0000003C];
+        CMR_LOGV("pdaf_sprd data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf1_info.data_offset, camera_otp_info[camera_id].pdaf1_info.data_size);
 
         //pdaf spc from sensor vendor
-        camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_offset = (buffer[0x00000025] << 8) | buffer[0x00000024];
-        camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_size = (buffer[0x0000003F] << 8) |buffer[0x0000003E];
-        CMR_LOGV("pdaf spc from sensor vendor data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_offset,
-            camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_size);
+        camera_otp_info[camera_id].pdaf2_info.data_offset = (buffer[0x00000025] << 8) | buffer[0x00000024];
+        camera_otp_info[camera_id].pdaf2_info.data_size = (buffer[0x0000003F] << 8) |buffer[0x0000003E];
+        CMR_LOGV("pdaf spc from sensor vendor data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf2_info.data_offset,
+            camera_otp_info[camera_id].pdaf2_info.data_size);
 
         //ae
         camera_otp_info[camera_id].ae_info.data_offset = (buffer[0x00000027] << 8) | buffer[0x00000026];
@@ -87,6 +87,16 @@ static cmr_uint _otp_parser_get_start_offset_v10(void * raw_data,  cmr_int camer
         camera_otp_info[camera_id].dualcam_info.data_offset = (buffer[0x00000029] << 8) | buffer[0x00000028];
         camera_otp_info[camera_id].dualcam_info.data_size = (buffer[0x00000042] << 8) |buffer[0x00000041];
         CMR_LOGV("dualcam data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].dualcam_info.data_offset, camera_otp_info[camera_id].dualcam_info.data_size);
+
+        //cross talk for 4in1
+        camera_otp_info[camera_id].cross_talk_info.data_offset = (buffer[0x0000002B] << 8) | buffer[0x0000002A];
+        camera_otp_info[camera_id].cross_talk_info.data_size = (buffer[0x00000044] << 8) |buffer[0x00000043];
+        CMR_LOGV("cross talk for 4in1 data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].cross_talk_info.data_offset, camera_otp_info[camera_id].cross_talk_info.data_size);
+
+        //dpc for 4in1
+        camera_otp_info[camera_id].dpc_info.data_offset = (buffer[0x0000002D] << 8) | buffer[0x0000002C];
+        camera_otp_info[camera_id].dpc_info.data_size = (buffer[0x00000046] << 8) |buffer[0x00000045];
+        CMR_LOGV("dpc for 4in1 data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].dpc_info.data_offset, camera_otp_info[camera_id].dpc_info.data_size);
 
     }else if(2==camera_id || 3==camera_id){
         // for slave camera
@@ -107,15 +117,15 @@ static cmr_uint _otp_parser_get_start_offset_v10(void * raw_data,  cmr_int camer
         CMR_LOGV("lsc data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].lsc_info.data_offset, camera_otp_info[camera_id].lsc_info.data_size);
 
         //pdaf_sprd
-        camera_otp_info[camera_id].pdaf_sprd_info.data_offset = 0;
-        camera_otp_info[camera_id].pdaf_sprd_info.data_size = 0;
-        CMR_LOGV("pdaf_sprd data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf_sprd_info.data_offset, camera_otp_info[camera_id].pdaf_sprd_info.data_size);
+        camera_otp_info[camera_id].pdaf1_info.data_offset = 0;
+        camera_otp_info[camera_id].pdaf1_info.data_size = 0;
+        CMR_LOGV("pdaf_sprd data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf1_info.data_offset, camera_otp_info[camera_id].pdaf1_info.data_size);
 
         //pdaf spc from sensor vendor
-        camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_offset = 0;
-        camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_size = 0;
-        CMR_LOGV("pdaf spc from sensor vendor data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_offset,
-            camera_otp_info[camera_id].pdaf_sensor_vendor_info.data_size);
+        camera_otp_info[camera_id].pdaf2_info.data_offset = 0;
+        camera_otp_info[camera_id].pdaf2_info.data_size = 0;
+        CMR_LOGV("pdaf spc from sensor vendor data_offset=0x%x, data_size=%u", camera_otp_info[camera_id].pdaf2_info.data_offset,
+            camera_otp_info[camera_id].pdaf2_info.data_size);
 
         //ae
         camera_otp_info[camera_id].ae_info.data_offset = (buffer[0x00000035] << 8) | buffer[0x00000034];
@@ -129,6 +139,58 @@ static cmr_uint _otp_parser_get_start_offset_v10(void * raw_data,  cmr_int camer
     }
 
     camera_otp_info[camera_id].has_parsered = 1;
+
+    return rtn;
+}
+
+static cmr_int _otp_parser_section_with_version_v10(void * raw_data, cmr_uint start_offset, cmr_uint data_size, void *result)
+{
+    cmr_int rtn = OTP_PARSER_SUCCESS;
+    struct otp_parser_section_with_version * section_data = (struct otp_parser_section_with_version *)result;
+    cmr_u8 *section_buf = NULL;
+
+    if(0==start_offset || 0==data_size){
+        CMR_LOGE("no data!");
+        rtn = OTP_PARSER_CMD_ERR;
+        return rtn;
+    }
+
+    rtn = _otp_parser_checksum(raw_data, start_offset, data_size, start_offset + data_size);
+    if(OTP_PARSER_SUCCESS!=rtn){
+        CMR_LOGE("checksum error!");
+        return rtn;
+    }
+
+    section_buf = (cmr_u8 *)raw_data + start_offset;
+
+    section_data->version = section_buf[0];
+    section_data->data_size = data_size - 1;
+    section_data->data_addr = &section_buf[1];
+    CMR_LOGV("section version=%u, data_addr=%p, data_size=%u", section_data->version, section_data->data_addr, section_data->data_size);
+
+    return rtn;
+}
+
+static cmr_int _otp_parser_section_without_version_v10(void * raw_data, cmr_uint start_offset, cmr_uint data_size, void *result)
+{
+    cmr_int rtn = OTP_PARSER_SUCCESS;
+    struct otp_parser_section_without_version * section_data = (struct otp_parser_section_without_version *)result;
+
+    if(0==start_offset || 0==data_size){
+        CMR_LOGE("no data!");
+        rtn = OTP_PARSER_CMD_ERR;
+        return rtn;
+    }
+
+    rtn = _otp_parser_checksum(raw_data, start_offset, data_size, start_offset + data_size);
+    if(OTP_PARSER_SUCCESS!=rtn){
+        CMR_LOGE("checksum error!");
+        return rtn;
+    }
+
+    section_data->data_size = data_size;
+    section_data->data_addr = (cmr_u8 *)raw_data + start_offset;
+    CMR_LOGV("section without version, data_addr=%p, data_size=%u", section_data->data_addr, section_data->data_size);
 
     return rtn;
 }
@@ -252,14 +314,14 @@ static cmr_int _otp_parser_lsc_v10(void * raw_data, cmr_uint start_offset, cmr_u
     return rtn;
 }
 
-static cmr_int _otp_parser_pdaf_sprd_v10(void * raw_data, cmr_uint start_offset, cmr_uint data_size, void *result)
+static cmr_int _otp_parser_pdaf1_v10(void * raw_data, cmr_uint start_offset, cmr_uint data_size, void *result)
 {
     cmr_int rtn = OTP_PARSER_SUCCESS;
-    struct otp_parser_pdaf_for_sprd_3rd * pdaf_data = (struct otp_parser_pdaf_for_sprd_3rd *)result;
-    cmr_u32 pdaf_start_offset = start_offset;
-    cmr_u32 pdaf_end_offset = start_offset + data_size;
-    cmr_u32 pdaf_data_size = data_size;
-    cmr_u8 *pdaf_buf = NULL;
+    struct otp_parser_pdaf1_data * pdaf1_data = (struct otp_parser_pdaf1_data *)result;
+    cmr_u32 pdaf1_start_offset = start_offset;
+    cmr_u32 pdaf1_end_offset = start_offset + data_size;
+    cmr_u32 pdaf1_data_size = data_size;
+    cmr_u8 *pdaf1_buf = NULL;
 
     if(0==start_offset || 0==data_size){
         CMR_LOGE("there is no pdaf sprd data!");
@@ -267,30 +329,30 @@ static cmr_int _otp_parser_pdaf_sprd_v10(void * raw_data, cmr_uint start_offset,
         return rtn;
     }
 
-    rtn = _otp_parser_checksum(raw_data, pdaf_start_offset, pdaf_data_size, pdaf_end_offset);
+    rtn = _otp_parser_checksum(raw_data, pdaf1_start_offset, pdaf1_data_size, pdaf1_end_offset);
     if(OTP_PARSER_SUCCESS!=rtn){
         CMR_LOGE("pdaf checksum value is error!");
         return rtn;
     }
 
-    pdaf_buf = (cmr_u8 *)raw_data + pdaf_start_offset;
+    pdaf1_buf = (cmr_u8 *)raw_data + pdaf1_start_offset;
 
-    pdaf_data->version = pdaf_buf[0];
-    pdaf_data->pdaf_data_size = pdaf_data_size;
-    pdaf_data->pdaf_data_addr = &pdaf_buf[1];
-    CMR_LOGV("pdaf sprd version=%u, data_addr=%p, data_size=%u", pdaf_data->version, pdaf_data->pdaf_data_addr, pdaf_data->pdaf_data_size);
+    pdaf1_data->version = pdaf1_buf[0];
+    pdaf1_data->pdaf1_data_size = pdaf1_data_size - 1;
+    pdaf1_data->pdaf1_data_addr = &pdaf1_buf[1];
+    CMR_LOGV("pdaf sprd version=%u, data_addr=%p, data_size=%u", pdaf1_data->version, pdaf1_data->pdaf1_data_addr, pdaf1_data->pdaf1_data_size);
 
     return rtn;
 }
 
-static cmr_int _otp_parser_pdaf_spc_vendor_v10(void * raw_data, cmr_uint start_offset, cmr_uint data_size, void *result)
+static cmr_int _otp_parser_pdaf2_v10(void * raw_data, cmr_uint start_offset, cmr_uint data_size, void *result)
 {
     cmr_int rtn = OTP_PARSER_SUCCESS;
-    struct otp_parser_pdaf_for_sprd_3rd * pdaf_data = (struct otp_parser_pdaf_for_sprd_3rd *)result;
-    cmr_u32 pdaf_start_offset = start_offset;
-    cmr_u32 pdaf_end_offset = start_offset + data_size;
-    cmr_u32 pdaf_data_size = data_size ;
-    cmr_u8 *pdaf_buf = NULL;
+    struct otp_parser_pdaf2_data * pdaf2_data = (struct otp_parser_pdaf2_data *)result;
+    cmr_u32 pdaf2_start_offset = start_offset;
+    cmr_u32 pdaf2_end_offset = start_offset + data_size;
+    cmr_u32 pdaf2_data_size = data_size ;
+    cmr_u8 *pdaf2_buf = NULL;
 
     if(0==start_offset || 0==data_size){
         CMR_LOGE("there is no pdaf spc vendor data!");
@@ -298,18 +360,17 @@ static cmr_int _otp_parser_pdaf_spc_vendor_v10(void * raw_data, cmr_uint start_o
         return rtn;
     }
 
-    rtn = _otp_parser_checksum(raw_data, pdaf_start_offset, pdaf_data_size, pdaf_end_offset);
+    rtn = _otp_parser_checksum(raw_data, pdaf2_start_offset, pdaf2_data_size, pdaf2_end_offset);
     if(OTP_PARSER_SUCCESS!=rtn){
         CMR_LOGE("pdaf spc vendor checksum value is error!");
         return rtn;
     }
 
-    pdaf_buf = (cmr_u8 *)raw_data + pdaf_start_offset;
+    pdaf2_buf = (cmr_u8 *)raw_data + pdaf2_start_offset;
 
-    pdaf_data->version = pdaf_buf[0];
-    pdaf_data->pdaf_data_size = pdaf_data_size;
-    pdaf_data->pdaf_data_addr = &pdaf_buf[1];
-    CMR_LOGV("pdaf spc vendor version=%u, data_addr=%p, data_size=%u", pdaf_data->version, pdaf_data->pdaf_data_addr, pdaf_data->pdaf_data_size);
+    pdaf2_data->pdaf2_data_size = pdaf2_data_size;
+    pdaf2_data->pdaf2_data_addr = &pdaf2_buf[0];
+    CMR_LOGV("pdaf spc vendor data_addr=%p, data_size=%u", pdaf2_data->pdaf2_data_addr, pdaf2_data->pdaf2_data_size);
 
     return rtn;
 }
@@ -410,10 +471,10 @@ cmr_int otp_parser_map_v10(void * raw_data, enum otp_parser_cmd cmd, cmr_int cam
             data_size = camera_otp_info[camera_id].lsc_info.data_size;
             rtn = _otp_parser_lsc_v10(raw_data, start_offset, data_size, result);
             break;
-    case OTP_PARSER_PDAF_SPRD:
-            start_offset = camera_otp_info[camera_id].pdaf_sprd_info.data_offset;
-            data_size = camera_otp_info[camera_id].pdaf_sprd_info.data_size;
-            rtn = _otp_parser_pdaf_sprd_v10(raw_data, start_offset, data_size, result);
+    case OTP_PARSER_PDAF1:
+            start_offset = camera_otp_info[camera_id].pdaf1_info.data_offset;
+            data_size = camera_otp_info[camera_id].pdaf1_info.data_size;
+            rtn = _otp_parser_pdaf1_v10(raw_data, start_offset, data_size, result);
             break;
     case OTP_PARSER_AE:
             start_offset = camera_otp_info[camera_id].ae_info.data_offset;
@@ -424,6 +485,16 @@ cmr_int otp_parser_map_v10(void * raw_data, enum otp_parser_cmd cmd, cmr_int cam
             start_offset = camera_otp_info[camera_id].dualcam_info.data_offset;
             data_size = camera_otp_info[camera_id].dualcam_info.data_size;
             rtn = _otp_parser_dualcamera_v10(raw_data, start_offset, data_size, result);
+            break;
+    case OTP_PARSER_CROSS_TALK:
+            start_offset = camera_otp_info[camera_id].cross_talk_info.data_offset;
+            data_size = camera_otp_info[camera_id].cross_talk_info.data_size;
+            rtn = _otp_parser_section_with_version_v10(raw_data, start_offset, data_size, result);
+            break;
+    case OTP_PARSER_DPC:
+            start_offset = camera_otp_info[camera_id].dpc_info.data_offset;
+            data_size = camera_otp_info[camera_id].dpc_info.data_size;
+            rtn = _otp_parser_section_with_version_v10(raw_data, start_offset, data_size, result);
             break;
     default:
             CMR_LOGV("input cmd is error!");

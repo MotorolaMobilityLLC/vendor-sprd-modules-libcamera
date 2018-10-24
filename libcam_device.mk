@@ -52,6 +52,7 @@ ALTEK_FW := TBM_G2v1DDR.bin
 
 SPRD_LIB := libcamoem
 SPRD_LIB += libispalg
+SPRD_LIB += libcam_otp_parser
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 PRODUCT_PACKAGES += $(ALTEK_LIB)
 PRODUCT_PACKAGES += $(ALTEK_FW)

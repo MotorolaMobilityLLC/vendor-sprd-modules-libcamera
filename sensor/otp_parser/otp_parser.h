@@ -7,10 +7,10 @@
 #include <utils/Log.h>
 
 enum otp_eeprom_num {
-    OTP_EEPROM_NONE = 0,        /*CAMERA NOT SOPPROT OTP*/
-    OTP_EEPROM_SINGLE,          /*ONE CAMERA SENSOR ONE OTP*/
+    OTP_EEPROM_SINGLE = 0,      /*ONE CAMERA SENSOR ONE OTP*/
     OTP_EEPROM_SINGLE_CAM_DUAL, /*TWO CAMERA SENSOR AND ONE OTP,JUST FOR DUAL CAMERA*/
     OTP_EEPROM_DUAL_CAM_DUAL,   /*TWO CAMERA SENSOR AND TWO OTP,JUST FOR DUAL CAMERA*/
+    OTP_EEPROM_NONE,            /*CAMERA NOT SOPPROT OTP*/
     OTP_EEPROM_MAX
 };
 
@@ -24,10 +24,12 @@ struct otp_parser_camera_info {
     struct otp_parser_section_info  af_info;
     struct otp_parser_section_info  awb_info;
     struct otp_parser_section_info  lsc_info;
-    struct otp_parser_section_info  pdaf_sprd_info;
-    struct otp_parser_section_info  pdaf_sensor_vendor_info;
+    struct otp_parser_section_info  pdaf1_info;
+    struct otp_parser_section_info  pdaf2_info;
     struct otp_parser_section_info  dualcam_info;
     struct otp_parser_section_info  ae_info;
+    struct otp_parser_section_info  cross_talk_info;
+    struct otp_parser_section_info  dpc_info;
 };
 
 enum otp_parser_return_value {
@@ -41,6 +43,17 @@ enum otp_parser_return_value {
 
 struct otp_parser_map_version{
     cmr_u16 version;
+};
+
+struct otp_parser_section_with_version{
+    cmr_u8 version;
+    cmr_u8 *data_addr;
+    cmr_u32 data_size;
+};
+
+struct otp_parser_section_without_version{
+    cmr_u8 *data_addr;
+    cmr_u32 data_size;
 };
 
 struct otp_parser_af_data{
@@ -79,16 +92,15 @@ struct otp_parser_lsc_data{
     cmr_u32 lsc_table_size;
 };
 
-struct otp_parser_pdaf_for_sprd_3rd{
+struct otp_parser_pdaf1_data{
     cmr_u8 version;
-    cmr_u8 *pdaf_data_addr;
-    cmr_u32 pdaf_data_size;
+    cmr_u8 *pdaf1_data_addr;
+    cmr_u32 pdaf1_data_size;
 };
 
-struct otp_parser_pdaf_spc_from_sensor_vendor{
-    cmr_u8 version;
-    cmr_u8 *pdaf_spc_vendor_data_addr;
-    cmr_u32 pdaf_spc_vendor_data_size;
+struct otp_parser_pdaf2_data{
+    cmr_u8 *pdaf2_data_addr;
+    cmr_u32 pdaf2_data_size;
 };
 
 struct otp_parser_ae_data{
@@ -107,26 +119,14 @@ struct otp_parser_dualcam_for_sprd_3rd{
     cmr_u32 data_3d_data_size;
 };
 
-struct otp_parser_cross_talk_data{
-    cmr_u8 version;
-    cmr_u8 *cross_talk_data;
-    cmr_u32 cross_talk_size;
-};
-
-struct otp_parser_dpc_data{
-    cmr_u8 version;
-    cmr_u8 *level_Cali_Table_1;
-    cmr_u32 level_Cali_Table_1_size;
-};
-
 enum otp_parser_cmd{
     OTP_PARSER_MAP_VERSION,
     OTP_PARSER_AE,
     OTP_PARSER_AF,
     OTP_PARSER_AWB,
     OTP_PARSER_LSC,
-    OTP_PARSER_PDAF_SPRD,
-    OTP_PARSER_PDAF_SPC_SENSOR_VENDOR,
+    OTP_PARSER_PDAF1,
+    OTP_PARSER_PDAF2,
     OTP_PARSER_DUAL_CAMERA,
     OTP_PARSER_CROSS_TALK,
     OTP_PARSER_DPC,
