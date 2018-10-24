@@ -2205,6 +2205,8 @@ static cmr_s32 ae_set_pause(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 ret = AE_SUCCESS;
 
+	if(!(cxt->is_snapshot))
+		cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
 	cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 	if (0 == cxt->cur_status.settings.pause_cnt) {
 		cxt->cur_status.settings.exp_line = 0;
