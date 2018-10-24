@@ -2172,8 +2172,15 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 	cmr_s32 ret = AE_SUCCESS;
 
 	if (enable) {
-		if(!(cxt->is_snapshot))
+		if(!(cxt->is_snapshot)) {
+			if(cxt->sync_cur_result.wts.cur_index==0) {
+				cxt->sync_cur_result.wts.cur_index=280;
+				ISP_LOGD("wts.cur_index is Zero");
+			}
 			cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
+			ISP_LOGD("cxt->is_snapshot:%d, cxt->exposure_compensation.ae_base_idx:%d, cxt->sync_cur_result.wts.cur_index:%d",cxt->is_snapshot, cxt->exposure_compensation.ae_base_idx, cxt->sync_cur_result.wts.cur_index);
+		}
+
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		if (0 == cxt->cur_status.settings.pause_cnt) {
 			cxt->cur_status.settings.exp_line = 0;
