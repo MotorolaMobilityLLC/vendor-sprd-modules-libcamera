@@ -620,11 +620,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
 
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
-        if (setting_is_rawrgb_format(cpt, parm)) {
-            ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
-        }
-        hal_param->hal_common.ae_compensation_param =
-            parm->ae_compensation_param;
+        type_val = parm->ae_compensation_param.ae_exposure_compensation;
         break;
 
     case SETTING_GENERAL_EXPOSURE_TIME:
@@ -642,8 +638,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         SETTING_GENERAL_REQ_FRAME_INFO == type)
 #else
     if (SETTING_GENERAL_AE_LOCK_UNLOCK == type ||
-        SETTING_GENERAL_AWB_LOCK_UNLOCK == type ||
-        SETTING_GENERAL_EXPOSURE_COMPENSATION == type)
+        SETTING_GENERAL_AWB_LOCK_UNLOCK == type)
 #endif
     {
         goto setting_out;
@@ -701,6 +696,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             ret = setting_after_set_ctrl(cpt, &after_cb_param);
         }
         *item->cmd_type_value = type_val;
+        if (type == SETTING_GENERAL_EXPOSURE_COMPENSATION) {
+            hal_param->hal_common.ae_compensation_param =
+                parm->ae_compensation_param;
+        }
 #ifndef CONFIG_CAMERA_PER_FRAME_CONTROL
     }
 #endif
