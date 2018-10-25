@@ -15,6 +15,7 @@ LOCAL_C_INCLUDES += \
        $(LOCAL_PATH)/../../$(HAL_DIR) \
        $(LOCAL_PATH)/../../arithmetic/facebeauty/inc \
        $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+       $(LOCAL_PATH)/../../kernel_module/interface \
        $(TOP)/vendor/sprd/external/kernel-headers \
        $(TOP)/vendor/sprd/modules/libmemion \
        $(TOP)/kernel/include/video \

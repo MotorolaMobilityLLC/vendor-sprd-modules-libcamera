@@ -1,0 +1,39 @@
+ifeq ($(KDIR),)
+$(error No KDIR found for platform $(TARGET_PLATFORM))
+endif
+
+# target source files
+sprd_camera-objs :=
+
+# target source files for isp2.6
+ifeq ($(MODULAR_KERNEL_TAG),isp2.6)
+SRC := $(shell find $(REL_PATH)/isp2.6 -name "*.c")
+LOCAL_SRC := $(SRC:$(REL_PATH)/%=%)
+
+sprd_camera-objs += $(LOCAL_SRC:%.c=%.o)
+
+# TODO: refine these includes
+ccflags-y += -I$(REL_PATH)/../sensor/
+ccflags-y += -I$(REL_PATH)/isp2.6/inc/
+
+# TODO: temp for HAPS
+ccflags-y += -DTEST_ON_HAPS
+endif
+
+# target
+obj-m += sprd_camera.o
+
+# target includes
+ccflags-y += -I$(REL_PATH)/../common
+ccflags-y += -I$(REL_PATH)/../interface
+ccflags-y += -I$(srctree)/drivers/staging/android/ion
+
+modules:
+	$(MAKE) ARCH=$(ARCH) -C $(KDIR) M=$(CURDIR) $@
+
+clean:
+	$(MAKE) ARCH=$(ARCH) -C $(KDIR) M=$(CURDIR) $@
+
+kernelrelease:
+	$(MAKE) ARCH=$(ARCH) -C $(KDIR) $@
+

@@ -20,9 +20,9 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Wno-error=format#-Werror
 
-
 LOCAL_C_INCLUDES := \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+    $(LOCAL_PATH)/../kernel_module/interface \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
     $(LOCAL_PATH)/../vsp/inc \
