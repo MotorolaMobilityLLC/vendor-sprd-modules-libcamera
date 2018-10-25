@@ -1359,6 +1359,18 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
 			rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 		}
+		if(0==cxt->cur_status.settings.table_idx){
+			/* trigging the `LockAe/af`'s operation will firstly cause process pre-flash-flow before really setting the ae_compensation_flag. so
+			 * this code prevents the table_idx's value 0.  */
+			struct ae_exp_compensation exp_comp;
+			exp_comp.comp_val=0;
+			exp_comp.comp_range.min=-16;
+			exp_comp.comp_range.max=16;
+			exp_comp.step_numerator=1;
+			exp_comp.step_denominator=8;
+			ae_set_exposure_compensation(cxt,&exp_comp);
+			ISP_LOGI("PRE AFTER table_idx is Zero,fix to %d", cxt->cur_status.settings.table_idx);
+		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
 			rtn = ae_set_force_pause(cxt, 0);
