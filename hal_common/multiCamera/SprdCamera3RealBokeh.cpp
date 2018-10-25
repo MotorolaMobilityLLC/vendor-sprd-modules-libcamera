@@ -1392,11 +1392,13 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
 
             property_get("persist.vendor.cam.bokeh.dump", prop, "0");
             if (!strcmp(prop, "sprdpreyuv") || !strcmp(prop, "all")) {
+                rc = mRealBokeh->map(output_buf, &output_buf_addr);
                 mRealBokeh->dumpData((unsigned char *)output_buf_addr, 1,
                                      ADP_BUFSIZE(*output_buf),
                                      mRealBokeh->mBokehSize.preview_w,
                                      mRealBokeh->mBokehSize.preview_h,
                                      mRealBokeh->mPrevBlurFrameNumber, "bokeh");
+                mRealBokeh->unmap(output_buf);
             }
         }
         mRealBokeh->setPrevDepthBufferFlag(BUFFER_PANG, buffer_index);
