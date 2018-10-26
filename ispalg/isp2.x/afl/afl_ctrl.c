@@ -351,7 +351,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	ae_exp_flag = in_ptr->ae_exp_flag;
 	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
 
-#ifdef CONFIG_ISP_2_5
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 	cmr_s32 afl_stat_tmp[2] = { 0 };
 	for (i = 0; i < (480 * cxt->frame_num); i += 2) {
 		afl_stat_tmp[0] = (*(cmr_s32 *)(addr + i)) & 0x3ffff;
@@ -652,7 +652,7 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	cxt->start_col = 0;
 	cxt->end_col = cxt->width;
 
-#ifdef CONFIG_ISP_2_5
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 	afl_info_v3.bayer2y_chanel = 0;
 	afl_info_v3.bayer2y_mode = 2;
 #endif

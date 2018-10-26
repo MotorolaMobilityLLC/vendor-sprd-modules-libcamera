@@ -68,7 +68,7 @@ static cmr_s32 ae_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 
 static cmr_s32 ae_set_blk_num(cmr_handle handler, struct ae_size *blk_num)
 {
-#ifdef CONFIG_ISP_2_5
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_BLK_NUM, blk_num, NULL);

@@ -80,7 +80,7 @@ static const char *focus_state_str[] = {
 
 static char AFlog_buffer[2048] = { 0 };
 
-#ifndef CONFIG_ISP_2_5
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6)
 static struct af_iir_nr_info_u af_iir_nr[3] = {
 	{							// weak
 	 .iir_nr_en = 1,
@@ -191,14 +191,14 @@ static void afm_disable(af_ctrl_t * af)
 
 static void afm_setup(af_ctrl_t * af)
 {
-#ifndef CONFIG_ISP_2_5
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6)
 	struct af_enhanced_module_info_u afm_enhanced_module;
 #endif
 	cmr_u32 mode = 1;
 
 	af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 	af->cb_ops.af_monitor_mode(af->caller, (void *)&mode);
-#ifndef CONFIG_ISP_2_5
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6)
 	af->cb_ops.af_monitor_iir_nr_cfg(af->caller, (void *)&(af_iir_nr[af->afm_tuning.iir_level]));
 
 	memcpy(&(afm_enhanced_module), &af_enhanced_module, sizeof(struct af_enhanced_module_info_u));
@@ -232,7 +232,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		win[i].end_y = 2;
 	}
 
-#ifdef CONFIG_ISP_2_5
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 #define PIXEL_OFFSET 100
 if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 	// crop enable
@@ -3404,7 +3404,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->isp_info.width = init_param->src.w;
 	af->isp_info.height = init_param->src.h;
 
-#ifdef CONFIG_ISP_2_5 // sharkl3 arch with many rois
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+	// sharkl3 & later arch with many rois
 	af->isp_info.win_num = 10; // keep invariant as original
 #else
 	af->isp_info.win_num = afm_get_win_num(init_param);
@@ -3638,7 +3639,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	case AF_DATA_AF:
 		af_fv_val = (cmr_u32 *) (inparam->data);
 
-#ifdef CONFIG_ISP_2_5
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 #define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
 #define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
 		if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face FV mapping
