@@ -5714,6 +5714,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
+    cmr_u32 ae_stab = 0;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     CONTROL_Tag resultInfo;
     mSetting->getResultTag(&resultInfo);
@@ -5726,9 +5727,15 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
 
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
+        if (parm4 != NULL)
+            ae_stab = *((cmr_u32 *)parm4);
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
         if (resultInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
-            resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            if (ae_stab) {
+                resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            } else {
+                resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+            }
         }
         if (resultInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
             resultInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
@@ -5740,15 +5747,17 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             resultInfo.ae_state, resultInfo.awb_state);
 #else
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            if (ae_stab) {
+                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            } else {
+                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+            }
             mSetting->setAeCONTROLTag(&controlInfo);
         }
         if (controlInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAwbCONTROLTag(&controlInfo);
         }
-        if (parm4 != NULL)
-            mAeStabFlag = *(int *)parm4;
         HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
 #endif
@@ -9663,16 +9672,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
-        // Workaround, skip mAeStabFlag cecking first,
-        // Need verify for all capture scenario
-        /*if (mMultiCameraMode != MODE_BOKEH && mAeStabFlag != 1) {
-            mHalOem->ops->camera_set_zsl_buffer(
-                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
-                zsl_frame.fd);
-            HAL_LOGE("wait for ae stab frame");
-            continue;
-        }*/
-
         if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
             char prop[PROPERTY_VALUE_MAX];
             uint32_t ae_fps = 30;
@@ -9737,7 +9736,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         break;
     }
 
-    mAeStabFlag = 0;
 exit:
     obj->mZslShotPushFlag = 0;
     obj->mFlashCaptureFlag = 0;
