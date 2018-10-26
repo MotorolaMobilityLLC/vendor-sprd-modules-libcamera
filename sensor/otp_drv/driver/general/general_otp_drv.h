@@ -5,7 +5,7 @@
  *  compat single camera, dual camera
  *  compat master camera, slave camera
  *  compat rear camera, front camera
-
+ *
  *  three cameras need to revise
  *---------------------------------------------------------------*
  *  compat otp maps below

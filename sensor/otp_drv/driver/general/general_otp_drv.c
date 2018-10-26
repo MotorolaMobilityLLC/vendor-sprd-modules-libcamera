@@ -1,3 +1,25 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * V1.0
+ * History
+ *    Date                    Modification                   Reason
+ * 2018-09-27                   Original
+ *
+ */
+
 #include "general_otp_drv.h"
 /*==================================================
 *                Internal Functions
@@ -18,23 +40,31 @@ static cmr_int _general_otp_section_checksum(cmr_u8 *buffer, cmr_uint offset,
         sum += buffer[i];
     }
 
-    if (otp_version == OTP_0_1) {
-        checksum_cal = (sum % 255 + 1);
+    if (sum == 0) {
+        ret = OTP_CAMERA_FAIL;
+        OTP_LOGD("exception: all data is 0!");
+    } else if (sum == 0xff * size) {
+        ret = OTP_CAMERA_FAIL;
+        OTP_LOGD("exception: all data is 0xff!");
     } else {
-        checksum_cal = (sum % 256);
-    }
-    if (checksum_cal == buffer[checksum_offset]) {
-        ret = OTP_CAMERA_SUCCESS;
-        OTP_LOGD("passed: otp_version = %s, checksum_addr = 0x%lx, "
-                 "checksum_value = %d, sum = %d",
-                 otp_ver[otp_version], checksum_offset, buffer[checksum_offset],
-                 sum);
-    } else {
-        ret = CMR_CAMERA_FAIL;
-        OTP_LOGD("failed: otp_version = %s, checksum_addr = 0x%lx, "
-                 "checksum_value = %d, sum = %d, checksum_calulate = %d",
-                 otp_ver[otp_version], checksum_offset, buffer[checksum_offset],
-                 sum, checksum_cal);
+        if (otp_version == OTP_0_1) {
+            checksum_cal = (sum % 255 + 1);
+        } else {
+            checksum_cal = (sum % 256);
+        }
+        if (checksum_cal == buffer[checksum_offset]) {
+            ret = OTP_CAMERA_SUCCESS;
+            OTP_LOGD("passed: otp_version = %s, checksum_addr = 0x%lx, "
+                     "checksum_value = %d, sum = %d",
+                     otp_ver[otp_version], checksum_offset,
+                     buffer[checksum_offset], sum);
+        } else {
+            ret = CMR_CAMERA_FAIL;
+            OTP_LOGD("failed: otp_version = %s, checksum_addr = 0x%lx, "
+                     "checksum_value = %d, sum = %d, checksum_calulate = %d",
+                     otp_ver[otp_version], checksum_offset,
+                     buffer[checksum_offset], sum, checksum_cal);
+        }
     }
 
     OTP_LOGV("X");
@@ -52,19 +82,21 @@ static cmr_int _general_otp_get_lsc_channel_size(cmr_u16 width, cmr_u16 height,
     cmr_u32 lsc_height = 0;
     cmr_u32 lsc_channel_size = 0;
 
-    /*                common resolution grid and lsc_channel_size
-    resolution       example            width  height  grid
-    lsc_channel_size_14bits
-        2M      ov2680                  1600    1200    64             270
-        5M      ov5675,s5k5e8yx         2592    1944    64             656
-        8M      ov8858,ov8856,sp8407    3264    2448    96             442
-       12M      imx386                  4032    3016    96             656
-       13M      ov13855                 4224    3136    96             726
-       13M      imx258                  4208    3120    96             726
-       16M      imx351                  4656    3492   128             526
-       16M      s5k3p9sx04              4640    3488   128             526
-        4M      ov16885(4in1)           2336    1752    64             526
-   */
+    /*             common resolution grid and lsc_channel_size
+    |----------|----------------------|------|------|----|----------------|
+    |resolution|       example        |width |height|grid|lsc_channel_size|
+    |          |                      |      |      |    |    (14bits)    |
+    |----------|----------------------|------|------|----|----------------|
+    |    2M    | ov2680               | 1600 | 1200 | 64 |      270       |
+    |    5M    | ov5675,s5k5e8yx      | 2592 | 1944 | 64 |      656       |
+    |    8M    | ov8858,ov8856,sp8407 | 3264 | 2448 | 96 |      442       |
+    |   12M    | imx386               | 4032 | 3016 | 96 |      656       |
+    |   13M    | ov13855              | 4224 | 3136 | 96 |      726       |
+    |   13M    | imx258               | 4208 | 3120 | 96 |      726       |
+    |   16M    | imx351               | 4656 | 3492 |128 |      526       |
+    |   16M    | s5k3p9sx04           | 4640 | 3488 |128 |      526       |
+    |    4M    | ov16885(4in1)        | 2336 | 1752 | 64 |      526       |
+    |----------|----------------------|------|------|----|----------------|*/
     if (grid == 0) {
         OTP_LOGE("lsc grid is 0!");
         return 0;
