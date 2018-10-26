@@ -22,6 +22,7 @@
 #define LOG_TAG "ov16885"
 
 #include "sensor_ov16885_mipi_raw.h"
+#include "otp_parser.h"
 
 /*==============================================================================
  * Description:
@@ -405,7 +406,7 @@ static cmr_int ov16885_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_is_right = (cmr_u16 *)ov16885_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)ov16885_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)ov16885_pd_col;
-    //	pdaf_info->vendor_type = SENSOR_VENDOR_XXX;
+    // pdaf_info->vendor_type = SENSOR_VENDOR_XXX;
     pdaf_info->sns_orientation = 1; /*1: mirror+flip; 0: normal*/
 
     return rtn;
@@ -438,10 +439,10 @@ uint16 *pOutImage; // for mipi_raw to raw16
 #define OTPDPC_MIRROR 0
 #define OTPDPC_FLIP 0
 static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
-    //      #include "fcell.h"
+    // #include "fcell.h"
     cmr_int rtn = SENSOR_SUCCESS;
-//    ov4c_init();//unsigned short *xtalk_data, unsigned short *otp_data, int
-//    otpdpc_len)
+// ov4c_init();
+// unsigned short *xtalk_data, unsigned short *otp_data, int otpdpc_len;
 #if 1
     int ret = E_OV_FCD_OK;
     int imgsize = IMG_WIDTH * IMG_HEIGHT * 2;
@@ -452,29 +453,59 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     // Step 1: Init Fcell Library
     init.xtalk_len = XTALK_LEN;
     const char *fcellXtalkFile = XTALK_DATA;
+    struct otp_parser_section_with_version xtalk_data;
+    struct otp_parser_section_with_version dpc_data;
+    void *otp_parser_handle;
 #if 0
    char pFcellXtalk[XTALK_LEN];
-  FILE *fp1 = fopen(fcellXtalkFile, "rb");
+   FILE *fp1 = fopen(fcellXtalkFile, "rb");
    fread(pFcellXtalk, XTALK_LEN, 1, fp1);
    fclose(fp1);
    init.xtalk = pFcellXtalk;//xtalk_data;//pFcellXtalk;//TODO
 #else
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u8 *param_ptr = (cmr_u8 *)param;
-    //cmr_u8 param_ptr[0x160f + 600] = {0x00, 0x00};
-    //SENSOR_LOGI("otp_raw_data: %p %p", param_ptr, param);
-    //hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa0 >> 1, param_ptr,
-    //                   0x160f + 600 << 16 | SENSOR_I2C_REG_16BIT);
-    //    for(int i = 0; i <600; i++)
-    //            param_ptr[i] = hw_sensor_read_reg(sns_drv_cxt->hw_handle,
-    //            0x160f+i);
-    //    SENSOR_LOGI("xtalk: pid_value = %x, ver_value = %x",
-    //    param_ptr[0x160f], param_ptr[0x160f+1]);
+    // cmr_u8 param_ptr[0x1000] = {0x00};
+    // hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa0 >> 1, param_ptr,
+    //                    0x1000 << 16 | SENSOR_I2C_REG_16BIT);
+    // for (int i = 0; i < 600; i++)
+    //     param_ptr[i] = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x160f+i);
+    // SENSOR_LOGI("xtalk: pid_value = %x, ver_value = %x",
+    //             param_ptr[0x160f], param_ptr[0x160f+1]);
 
-    init.xtalk = param_ptr + 0x8ba; // xtalk_data;//pFcellXtalk;
-    init.otpdpc = param_ptr + 0x0b14; // pFCellOtpdpc;//pFCellOtpdpc;
-    init.xtalk_len = 600;
-    init.otpdpc_len = 952;
+    cmr_int (*otp_parser_ptr)(
+        void *raw_data, enum otp_parser_cmd cmd, cmr_uint eeprom_num,
+        cmr_int camera_id, cmr_int raw_height, cmr_int raw_width, void *result);
+
+    otp_parser_handle = dlopen("libcam_otp_parser.so", RTLD_NOW);
+    if (otp_parser_handle == NULL) {
+        char const *err_str = dlerror();
+        SENSOR_LOGE("%s", err_str ? err_str : "unknown");
+    } else {
+        SENSOR_LOGV("dlopen libcam_otp_parser.so success");
+    }
+
+    otp_parser_ptr = dlsym(otp_parser_handle, "otp_parser");
+    if (otp_parser_ptr == NULL) {
+        SENSOR_LOGE(
+            "load libcam_otp_parser.so: couldn't find symbol otp_parser");
+        return SENSOR_FAIL;
+    } else {
+        SENSOR_LOGV("link libcam_otp_parser.so symbol success");
+    }
+    otp_parser_ptr(param_ptr, OTP_PARSER_CROSS_TALK, OTP_EEPROM_SINGLE,
+                   sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &xtalk_data);
+    otp_parser_ptr(param_ptr, OTP_PARSER_DPC, OTP_EEPROM_SINGLE,
+                   sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &dpc_data);
+
+    init.xtalk = xtalk_data.data_addr;
+    init.otpdpc = dpc_data.data_addr;
+    init.xtalk_len = xtalk_data.data_size;
+    init.otpdpc_len = dpc_data.data_size;
+    SENSOR_LOGD("xtalk(%p, %d), dpc(%p, %d)", init.xtalk, init.xtalk_len,
+                init.otpdpc, init.otpdpc_len);
+
+    dlclose(otp_parser_handle);
 #endif
     init.ofst_xtalk[0] = XTALK_OFFSET_X;
     init.ofst_xtalk[1] = XTALK_OFFSET_Y;
@@ -516,7 +547,7 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     handlelib = dlopen("libsprd_fcell.so", RTLD_NOW);
     if (handlelib == NULL) {
         char const *err_str = dlerror();
-        SENSOR_LOGE("dlopen error %s", err_str ? err_str : "unknown");
+        SENSOR_LOGE("%s", err_str ? err_str : "unknown");
     }
 
     /* Get the address of the struct hal_module_info. */
@@ -525,10 +556,10 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
                                             // *);
     func_init init_ov4c = (int *)dlsym(handlelib, sym);
     if (init_ov4c == NULL) {
-        SENSOR_LOGI("load: couldn't find symbol %s", sym);
+        SENSOR_LOGE("load libsprd_fcell.so: couldn't find symbol %s", sym);
         return SENSOR_FAIL;
     } else {
-        SENSOR_LOGI("link symbol success");
+        SENSOR_LOGI("link libsprd_fcell.so symbol success");
     }
     init_ov4c(init); //(unsigned char *)param, (unsigned char *)param);
     return rtn;

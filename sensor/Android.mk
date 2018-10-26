@@ -29,7 +29,8 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../tool/mtrace \
     $(LOCAL_PATH)/dummy \
     $(LOCAL_PATH)/../$(OEM_DIR)/inc \
-    $(LOCAL_PATH)/inc
+    $(LOCAL_PATH)/inc \
+    $(LOCAL_PATH)/otp_parser
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
