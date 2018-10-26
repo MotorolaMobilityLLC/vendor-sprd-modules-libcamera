@@ -257,10 +257,10 @@
 		0x02,
 		/*w_shift*/
 		{
-			0x02,0x02,0x02/*0-2*/
+			0x01,0x01,0x01/*0-2*/
 		},
 		/*cnt_th*/
-		0x02,
+		0x01,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -276,9 +276,9 @@
 		/*simple_bpc_bypass*/
 		0x00,
 		/*simple_bpc_thr*/
-		0x0C,
+		0x0A,
 		/*simple_bpc_lum_thr*/
-		0x00C8,
+		0x0096,
 
 	},
 	/*lut_w*/
