@@ -6860,16 +6860,22 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_EV:
         isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
         ptr_flag = 1;
-        ae_compensation.comp_val = param_ptr->ae_compensation_param.ae_exposure_compensation;
-        ae_compensation.comp_range.min = param_ptr->ae_compensation_param.ae_compensation_range[0];
-        ae_compensation.comp_range.max = param_ptr->ae_compensation_param.ae_compensation_range[1];
-        ae_compensation.step_numerator = param_ptr->ae_compensation_param.ae_compensation_step_numerator;
-        ae_compensation.step_denominator = param_ptr->ae_compensation_param.ae_compensation_step_denominator;
+        ae_compensation.comp_val =
+            param_ptr->ae_compensation_param.ae_exposure_compensation;
+        ae_compensation.comp_range.min =
+            param_ptr->ae_compensation_param.ae_compensation_range[0];
+        ae_compensation.comp_range.max =
+            param_ptr->ae_compensation_param.ae_compensation_range[1];
+        ae_compensation.step_numerator =
+            param_ptr->ae_compensation_param.ae_compensation_step_numerator;
+        ae_compensation.step_denominator =
+            param_ptr->ae_compensation_param.ae_compensation_step_denominator;
         isp_param_ptr = (void *)&ae_compensation;
-        CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, step_numerator=%d, step_denominator=%d",
-            ae_compensation.comp_val, ae_compensation.comp_range.min,
-            ae_compensation.comp_range.max, ae_compensation.step_numerator,
-            ae_compensation.step_denominator);
+        CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, "
+                 "step_numerator=%d, step_denominator=%d",
+                 ae_compensation.comp_val, ae_compensation.comp_range.min,
+                 ae_compensation.comp_range.max, ae_compensation.step_numerator,
+                 ae_compensation.step_denominator);
         break;
     case COM_ISP_SET_AWB_MODE:
         CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,
@@ -7187,6 +7193,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     cmr_u8 haf_enable = 0;
     cmr_u32 is_raw_capture = 0;
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     cmr_bzero((void *)out_param_ptr, sizeof(*out_param_ptr));
 
@@ -8271,7 +8278,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         setting_param.cmd_type_value = param;
         CMR_LOGD("sprd app mode id = %d", setting_param.cmd_type_value);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
-                            &setting_param);
+                                &setting_param);
         break;
     default:
         CMR_LOGI("don't support %d", id);

@@ -8102,6 +8102,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     SENSOR_VAL_T val;
 
     cmr_bzero(&sn_4in1_info, sizeof(struct sensor_4in1_info));
+    cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     cmr_bzero((void *)out_param_ptr, sizeof(*out_param_ptr));
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
@@ -8189,7 +8190,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
                  out_param_ptr->video_slowmotion_eb);
 
         if (property_get_bool("persist.vendor.cam.ai.scence.enable", 0)) {
-            cmr_bzero(&setting_param, sizeof(setting_param));
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_APPMODE, &setting_param);
             if (ret) {
