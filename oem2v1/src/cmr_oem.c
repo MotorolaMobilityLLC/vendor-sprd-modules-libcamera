@@ -1060,9 +1060,6 @@ void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata) {
     case CMR_GRAB_TX_DONE:
         if (frame->is_4in1_frame) {
             camera_4in1_handle(evt, data, privdata);
-            if (frame->fmt != IMG_DATA_TYPE_RAW) {
-                break;
-            }
         }
 #if defined OEM_HANDLE_HDR || defined OEM_HANDLE_3DNR
         camera_grab_handle(evt, data, privdata);
