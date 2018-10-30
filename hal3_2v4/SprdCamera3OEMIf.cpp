@@ -1903,7 +1903,8 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
         } else {
             preview_size.width = 640;
             preview_size.height = 480;
-            if ((cmr_u32)mRawWidth * (cmr_u32)mRawHeight <
+            if ((mRawWidth != 0 && mRawHeight != 0) &&
+                (cmr_u32)mRawWidth * (cmr_u32)mRawHeight <
                 preview_size.width * preview_size.height) {
                 preview_size.width = mRawWidth;
                 preview_size.height = mRawHeight;
