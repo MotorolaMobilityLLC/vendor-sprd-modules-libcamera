@@ -171,7 +171,7 @@ static void imx351_drv_write_gain(cmr_handle handle, double gain) {
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
-    SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
+    SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, sensor_dgain);
 
     // imx351_group_hold_off(handle);
 }

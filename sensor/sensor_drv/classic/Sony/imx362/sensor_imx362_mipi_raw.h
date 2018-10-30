@@ -38,7 +38,7 @@
 
 #define BINNING_FACTOR 2
 #define imx362_PID_ADDR 0x0016
-#define imx362_PID_VALUE 0x02
+#define imx362_PID_VALUE 0x03
 #define imx362_VER_ADDR 0x0017
 #define imx362_VER_VALUE 0x62
 
@@ -568,7 +568,7 @@ static SENSOR_STATIC_INFO_T s_imx362_static_info[VENDOR_NUM] = {
                      .focal_length = 352,
                      .max_fps = 0,
                      .max_adgain = 16 * 16,
-                     .ois_supported = 0,
+                     .ois_supported = 1,
                      .pdaf_supported = 4,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,

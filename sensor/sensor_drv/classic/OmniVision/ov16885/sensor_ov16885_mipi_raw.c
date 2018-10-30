@@ -513,7 +513,7 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u32 *param) {
     handlelib = dlopen("libsprd_fcell.so", RTLD_NOW);
     if (handlelib == NULL) {
         char const *err_str = dlerror();
-        SENSOR_LOGE("dlopen error%s", err_str ? err_str : "unknown");
+        SENSOR_LOGE("dlopen error %s", err_str ? err_str : "unknown");
     }
 
     /* Get the address of the struct hal_module_info. */

@@ -388,7 +388,7 @@ static cmr_int imx362_drv_identify(cmr_handle handle, cmr_uint param) {
     test1 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0000);
     test2 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0001);
     SENSOR_LOGI("Identify: test1 = %x, test2 = %x", test1, test2);
-    if (imx362_PID_VALUE == pid_value) {
+    if (imx362_PID_VALUE == pid_value || 0x2 == pid_value) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, imx362_VER_ADDR);
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
         if (imx362_VER_VALUE == ver_value) {
