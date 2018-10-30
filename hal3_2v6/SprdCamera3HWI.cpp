@@ -1122,7 +1122,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mStreamConfiguration.yuvcallback.status == CONFIGURED &&
             mStreamConfiguration.snapshot.status == CONFIGURED) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
-                mOEMIf->setStreamOnWithZsl();
+                //when sensor_rotation is 1 for volte, volte dont need capture
+                if (sprddefInfo.sensor_rotation == 0)
+                    mOEMIf->setStreamOnWithZsl();
                 mFirstRegularRequest = 1;
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
                 if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
@@ -1163,6 +1165,37 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 if (request->num_output_buffers >= 2) {
                     mOEMIf->setFrameSyncFlag(request->frame_number);
                 }
+            }
+            break;
+        }
+
+        if (mStreamConfiguration.num_streams == 2 &&
+            mStreamConfiguration.preview.status == CONFIGURED &&
+            mStreamConfiguration.yuvcallback.status == CONFIGURED &&
+            mMultiCameraMode == MODE_3D_CALIBRATION) {
+            if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
+                mOEMIf->setStreamOnWithZsl();
+
+                HAL_LOGD("call back stream request");
+                mOEMIf->setCallBackYuvMode(1);
+                if (streamType[0] == CAMERA_STREAM_TYPE_CALLBACK ||
+                    streamType[1] == CAMERA_STREAM_TYPE_CALLBACK) {
+                    mPictureRequest = 1;
+                    mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                           mFrameNum);
+                    break;
+                }
+
+                mFirstRegularRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
+                break;
+            }
+
+            if (streamType[0] == CAMERA_STREAM_TYPE_CALLBACK ||
+                streamType[1] == CAMERA_STREAM_TYPE_CALLBACK) {
+                mPictureRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                       mFrameNum);
             }
             break;
         }

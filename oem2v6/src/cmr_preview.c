@@ -391,18 +391,22 @@ struct prev_context {
 
     // for channel1
     channel1_t channel1;
+    struct img_size channel1_actual_pic_size;
     cmr_uint channel1_work_mode;
 
     // for channel2
     channel2_t channel2;
+    struct img_size channel2_actual_pic_size;
     cmr_uint channel2_work_mode;
 
     // for channel3
     channel3_t channel3;
+    struct img_size channel3_actual_pic_size;
     cmr_uint channel3_work_mode;
 
     // for channel4
     channel4_t channel4;
+    struct img_size channel4_actual_pic_size;
     cmr_uint channel4_work_mode;
 
     /*capture*/
@@ -625,8 +629,7 @@ static cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                  cmr_u32 is_restart);
 
 static cmr_int prev_alloc_4in1_buf(struct prev_handle *handle,
-                                   cmr_u32 camera_id, cmr_u32 is_restart,
-                                   cmr_u32 is_cap_zsl);
+                                   cmr_u32 camera_id, cmr_u32 is_restart);
 
 static cmr_int prev_free_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                   cmr_u32 is_restart);
@@ -5262,7 +5265,7 @@ cmr_int prev_free_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
 }
 
 cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
-                            cmr_u32 is_restart, cmr_u32 is_cap_zsl) {
+                            cmr_u32 is_restart) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -5284,7 +5287,7 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    CMR_LOGD("is_restart %d,is_cap_zsl=%d", is_restart, is_cap_zsl);
+    CMR_LOGD("is_restart %d", is_restart);
 
     cmr_bzero(prev_cxt->cap_4in1_phys_addr_array,
               (CAP_4IN1_NUM) * sizeof(cmr_uint));
@@ -5303,11 +5306,7 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("4in1 width %d height %d", width, height);
 
     /*init  memory info*/
-    if (is_cap_zsl) {
-        prev_cxt->cap_4in1_mem_num = CAP_4IN1_NUM;
-    } else {
-        prev_cxt->cap_4in1_mem_num = 1;
-    }
+    prev_cxt->cap_4in1_mem_num = CAP_4IN1_NUM;
 
     prev_cxt->cap_4in1_mem_size = (width * height * 5) / 4;
     /*alloc  buffer*/
@@ -5370,6 +5369,10 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     struct img_size *org_pic_size = NULL;
     struct img_size *act_pic_size = NULL;
     struct img_size *alg_pic_size = NULL;
+    struct img_size *channel1_act_pic_size = NULL;
+    struct img_size *channel2_act_pic_size = NULL;
+    struct img_size *channel3_act_pic_size = NULL;
+    struct img_size *channel4_act_pic_size = NULL;
     struct sensor_exp_info *sensor_info = NULL;
     cmr_u32 prev_rot = 0;
     cmr_u32 cap_rot = 0;
@@ -5391,9 +5394,17 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     act_video_size = &handle->prev_cxt[camera_id].actual_video_size;
     channel0_size = &handle->prev_cxt[camera_id].prev_param.channel0_size;
     channel1_size = &handle->prev_cxt[camera_id].prev_param.channel1_size;
+    channel1_act_pic_size =
+        &handle->prev_cxt[camera_id].channel1_actual_pic_size;
     channel2_size = &handle->prev_cxt[camera_id].prev_param.channel2_size;
+    channel2_act_pic_size =
+        &handle->prev_cxt[camera_id].channel2_actual_pic_size;
     channel3_size = &handle->prev_cxt[camera_id].prev_param.channel3_size;
+    channel3_act_pic_size =
+        &handle->prev_cxt[camera_id].channel3_actual_pic_size;
     channel4_size = &handle->prev_cxt[camera_id].prev_param.channel4_size;
+    channel4_act_pic_size =
+        &handle->prev_cxt[camera_id].channel4_actual_pic_size;
     org_pic_size = &handle->prev_cxt[camera_id].prev_param.picture_size;
     alg_pic_size = &handle->prev_cxt[camera_id].aligned_pic_size;
     act_pic_size = &handle->prev_cxt[camera_id].actual_pic_size;
@@ -5432,6 +5443,14 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         act_video_size->height = video_size->width;
         act_pic_size->width = alg_pic_size->height;
         act_pic_size->height = alg_pic_size->width;
+        channel1_act_pic_size->width = channel1_size->height;
+        channel1_act_pic_size->height = channel1_size->width;
+        channel2_act_pic_size->width = channel2_size->height;
+        channel2_act_pic_size->height = channel2_size->width;
+        channel3_act_pic_size->width = channel3_size->height;
+        channel3_act_pic_size->height = channel3_size->width;
+        channel4_act_pic_size->width = channel4_size->height;
+        channel4_act_pic_size->height = channel4_size->width;
     } else {
         act_prev_size->width = prev_size->width;
         act_prev_size->height = prev_size->height;
@@ -5439,6 +5458,14 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         act_video_size->height = video_size->height;
         act_pic_size->width = alg_pic_size->width;
         act_pic_size->height = alg_pic_size->height;
+        channel1_act_pic_size->width = channel1_size->width;
+        channel1_act_pic_size->height = channel1_size->height;
+        channel2_act_pic_size->width = channel2_size->width;
+        channel2_act_pic_size->height = channel2_size->height;
+        channel3_act_pic_size->width = channel3_size->width;
+        channel3_act_pic_size->height = channel3_size->height;
+        channel4_act_pic_size->width = channel4_size->width;
+        channel4_act_pic_size->height = channel4_size->height;
     }
 
     CMR_LOGD(
@@ -8137,8 +8164,8 @@ cmr_int channel1_configure(struct prev_handle *handle, cmr_u32 camera_id,
     sensor_mode_info = &sensor_info->mode_info[prev_cxt->channel1_work_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
-    prev_cxt->channel1.size.width = prev_cxt->prev_param.channel1_size.width;
-    prev_cxt->channel1.size.height = prev_cxt->prev_param.channel1_size.height;
+    prev_cxt->channel1.size.width = prev_cxt->channel1_actual_pic_size.width;
+    prev_cxt->channel1.size.height = prev_cxt->channel1_actual_pic_size.height;
     prev_cxt->channel1.frm_cnt = 0;
     prev_cxt->channel1.skip_num = sensor_info->preview_skip_num; // TBD
     prev_cxt->channel1.skip_mode = IMG_SKIP_SW_KER;
@@ -8974,8 +9001,8 @@ cmr_int channel2_configure(struct prev_handle *handle, cmr_u32 camera_id,
     sensor_mode_info = &sensor_info->mode_info[prev_cxt->channel2_work_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
-    prev_cxt->channel2.size.width = prev_cxt->prev_param.channel2_size.width;
-    prev_cxt->channel2.size.height = prev_cxt->prev_param.channel2_size.height;
+    prev_cxt->channel2.size.width = prev_cxt->channel2_actual_pic_size.width;
+    prev_cxt->channel2.size.height = prev_cxt->channel2_actual_pic_size.height;
     prev_cxt->channel2.frm_cnt = 0;
     prev_cxt->channel2.skip_num = sensor_info->preview_skip_num; // TBD
     prev_cxt->channel2.skip_mode = IMG_SKIP_SW_KER;
@@ -9811,8 +9838,8 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     sensor_mode_info = &sensor_info->mode_info[prev_cxt->channel3_work_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
-    prev_cxt->channel3.size.width = prev_cxt->prev_param.channel3_size.width;
-    prev_cxt->channel3.size.height = prev_cxt->prev_param.channel3_size.height;
+    prev_cxt->channel3.size.width = prev_cxt->channel3_actual_pic_size.width;
+    prev_cxt->channel3.size.height = prev_cxt->channel3_actual_pic_size.height;
     prev_cxt->channel3.frm_cnt = 0;
     prev_cxt->channel3.skip_num = sensor_info->preview_skip_num; // TBD
     prev_cxt->channel3.skip_mode = IMG_SKIP_SW_KER;
@@ -10648,8 +10675,8 @@ cmr_int channel4_configure(struct prev_handle *handle, cmr_u32 camera_id,
     sensor_mode_info = &sensor_info->mode_info[prev_cxt->channel4_work_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
-    prev_cxt->channel4.size.width = prev_cxt->prev_param.channel4_size.width;
-    prev_cxt->channel4.size.height = prev_cxt->prev_param.channel4_size.height;
+    prev_cxt->channel4.size.width = prev_cxt->channel4_actual_pic_size.width;
+    prev_cxt->channel4.size.height = prev_cxt->channel4_actual_pic_size.height;
     prev_cxt->channel4.frm_cnt = 0;
     prev_cxt->channel4.skip_num = sensor_info->preview_skip_num; // TBD
     prev_cxt->channel4.skip_mode = IMG_SKIP_SW_KER;
@@ -11262,7 +11289,6 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct video_start_param video_param;
     struct img_data_end endian;
     struct cmr_path_capability capability;
-    cmr_u32 is_capture_zsl = 0;
     struct buffer_cfg buf_cfg;
     cmr_u32 i;
 
@@ -11349,8 +11375,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
     if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1) {
-        ret =
-            prev_alloc_4in1_buf(handle, camera_id, is_restart, is_capture_zsl);
+        ret = prev_alloc_4in1_buf(handle, camera_id, is_restart);
         if (ret) {
             CMR_LOGE("alloc 4in1 buf failed");
             ret = CMR_CAMERA_FAIL;
@@ -11549,7 +11574,6 @@ static cmr_int prev_update_cap_param(struct prev_handle *handle,
     struct channel_start_param chn_param;
     struct img_data_end endian;
     struct cmr_path_capability capability;
-    cmr_u32 is_capture_zsl = 0;
     struct buffer_cfg buf_cfg;
 
     /*for new video snapshot or zsl snapshot, update cap mem info via encode
