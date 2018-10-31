@@ -192,9 +192,6 @@ cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
 
 cmr_s32 camera_isp_sw_check_buf(cmr_handle camera_handle, cmr_uint *param_ptr);
 
-cmr_int camera_isp_sw_proc(cmr_handle camera_handle,
-                           struct soft_isp_frm_param *param_ptr);
-
 cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
                              struct img_frm *yuv_buff,
                              struct img_sbs_info *sbs_info);

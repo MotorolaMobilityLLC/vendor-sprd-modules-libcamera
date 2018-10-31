@@ -94,7 +94,6 @@ class SprdCamera3HWI {
     void GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y);
     cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
     void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
-    void ispSwProc(struct soft_isp_frm_param *param_ptr);
     void stopPreview();
     void startPreview();
     SprdCamera3RegularChannel *getRegularChan();

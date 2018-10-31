@@ -1303,21 +1303,6 @@ cmr_s32 SprdCamera3OEMIf::ispSwCheckBuf(cmr_uint *param_ptr) {
     return 0;
 }
 
-void SprdCamera3OEMIf::ispSwProc(struct soft_isp_frm_param *param_ptr) {
-    HAL_LOGD("E");
-
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return;
-    }
-    /*
-        if (0 != mHalOem->ops->camera_isp_sw_proc(mCameraHandle, param_ptr)) {
-            HAL_LOGE("Fail to process isp sw.");
-        }
-    */
-    HAL_LOGD("X");
-}
-
 void SprdCamera3OEMIf::stopPreview() {
     HAL_LOGD("switch stop preview");
     stopPreviewInternal();

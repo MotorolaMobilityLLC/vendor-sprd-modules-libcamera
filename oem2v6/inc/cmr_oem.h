@@ -397,8 +397,6 @@ cmr_int camera_local_get_focus_point(cmr_handle oem_handle, cmr_s32 *point_x,
                                      cmr_s32 *point_y);
 cmr_s32 camera_local_isp_sw_check_buf(cmr_handle oem_handle,
                                       cmr_uint *param_ptr);
-cmr_int camera_local_isp_sw_proc(cmr_handle oem_handle,
-                                 struct soft_isp_frm_param *param_ptr);
 cmr_int camera_local_raw_proc(cmr_handle oem_handle,
                               struct raw_proc_param *param_ptr);
 cmr_int camera_local_get_prev_rect(cmr_handle oem_handle,

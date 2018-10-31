@@ -9464,31 +9464,6 @@ cmr_s32 camera_local_isp_sw_check_buf(cmr_handle oem_handle,
     return is_using;
 }
 
-cmr_int camera_local_isp_sw_proc(cmr_handle oem_handle,
-                                 struct soft_isp_frm_param *param_ptr) {
-
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct isp_context *isp_cxt = &cxt->isp_cxt;
-    CMR_LOGD("E");
-
-    if (!param_ptr->af_status) {
-        param_ptr->af_status = cxt->is_focus;
-    }
-    if (0 != cxt->focus_rect.x || 0 != cxt->focus_rect.y) {
-        param_ptr->weightparam.sel_x = cxt->focus_rect.x * 960 / 1600;
-        param_ptr->weightparam.sel_y = cxt->focus_rect.y * 960 / 1600;
-    }
-    CMR_LOGD("af status %d, f_rect x %d, y %d", param_ptr->af_status,
-             param_ptr->weightparam.sel_x, param_ptr->weightparam.sel_y);
-// sharkl2 TBD remove these code
-// ret = isp_sw_proc(isp_cxt->isp_handle, param_ptr);
-
-exit:
-    CMR_LOGD("X");
-    return ret;
-}
-
 cmr_int camera_local_raw_proc(cmr_handle oem_handle,
                               struct raw_proc_param *param_ptr) {
     ATRACE_BEGIN(__FUNCTION__);

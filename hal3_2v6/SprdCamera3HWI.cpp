@@ -1609,10 +1609,6 @@ void SprdCamera3HWI::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
     return;
 }
 
-void SprdCamera3HWI::ispSwProc(struct soft_isp_frm_param *param_ptr) {
-    mOEMIf->ispSwProc(param_ptr);
-}
-
 void SprdCamera3HWI::stopPreview() { mOEMIf->stopPreview(); }
 
 void SprdCamera3HWI::startPreview() { mOEMIf->startPreview(); }
