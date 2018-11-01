@@ -7563,6 +7563,14 @@ cap_malloc:
         if ((mSubRawHeapNum >= sum) && (mSubRawHeapSize >= size)) {
             HAL_LOGD("use pre-alloc cap mem");
             for (i = 0; i < (cmr_int)sum; i++) {
+                struct private_handle_t *pHandle = (private_handle_t *)m3DNRGraphicArray[i].private_handle;
+                if (width != (cmr_uint)pHandle->width ||
+                    height != (cmr_uint)pHandle->height) {
+                    HAL_LOGD("width/height not match, re-alloc cap mem");
+                    mCapBufLock.unlock();
+                    Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
+                    goto cap_malloc;
+                }
                 *phy_addr++ = (cmr_uint)mSubRawHeapArray[i]->phys_addr;
                 *vir_addr++ = (cmr_uint)mSubRawHeapArray[i]->data;
                 *fd++ = mSubRawHeapArray[i]->fd;
