@@ -125,6 +125,25 @@ exit:
 	return ret;
 }
 
+extern cmr_int isp_create_mem_thread(void);
+extern cmr_s32 isp_mem_free(void);
+
+cmr_int isp_mem_init(void)
+{
+	cmr_int rtn = 0;
+
+	rtn = isp_create_mem_thread();
+	return rtn;
+}
+
+cmr_int isp_mem_deinit(void)
+{
+	cmr_int rtn = 0;
+
+	rtn = isp_mem_free();
+	return rtn;
+}
+
 cmr_int isp_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;

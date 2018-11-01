@@ -4153,6 +4153,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     return ret;
 }
 
+
 cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -4183,6 +4184,7 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto exit;
     }
 
+	isp_mem_init();
     ret = camera_sensor_init(oem_handle, is_autotest);
     if (ret) {
         CMR_LOGE("failed to init sensor %ld", ret);
@@ -4222,6 +4224,7 @@ grab_deinit:
     }
 
 sensor_deinit:
+    isp_mem_deinit();
     ret_deinit = camera_sensor_deinit(oem_handle);
     if (ret_deinit) {
         CMR_LOGE("failed to camera_sensor_deinit %ld", ret_deinit);
