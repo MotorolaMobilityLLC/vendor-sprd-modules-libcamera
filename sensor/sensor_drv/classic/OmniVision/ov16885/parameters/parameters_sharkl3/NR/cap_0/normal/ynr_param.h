@@ -10,9 +10,9 @@
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
-		0x094E,
+		0x0920,
 		/*imgcety*/
-		0x06D4,
+		0x06D8,
 		/*dist_interval*/
 		0x000003FA,
 
@@ -156,9 +156,9 @@
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
-		0x094E,
+		0x0920,
 		/*imgcety*/
-		0x06D4,
+		0x06D8,
 		/*dist_interval*/
 		0x000003FA,
 
@@ -302,9 +302,9 @@
 		/*radius*/
 		0x06D2,
 		/*imgcetx*/
-		0x0918,
+		0x0920,
 		/*imgcety*/
-		0x06D2,
+		0x06D8,
 		/*dist_interval*/
 		0x00000123,
 
@@ -448,9 +448,9 @@
 		/*radius*/
 		0x06D2,
 		/*imgcetx*/
-		0x0918,
+		0x0920,
 		/*imgcety*/
-		0x06D2,
+		0x06D8,
 		/*dist_interval*/
 		0x00000123,
 
@@ -594,9 +594,9 @@
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
-		0x094E,
+		0x0920,
 		/*imgcety*/
-		0x06D4,
+		0x06D8,
 		/*dist_interval*/
 		0x000003FA,
 
@@ -740,9 +740,9 @@
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
-		0x094E,
+		0x0920,
 		/*imgcety*/
-		0x06D4,
+		0x06D8,
 		/*dist_interval*/
 		0x000003FA,
 
@@ -886,9 +886,9 @@
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
-		0x094E,
+		0x0920,
 		/*imgcety*/
-		0x06D4,
+		0x06D8,
 		/*dist_interval*/
 		0x000003FA,
 
