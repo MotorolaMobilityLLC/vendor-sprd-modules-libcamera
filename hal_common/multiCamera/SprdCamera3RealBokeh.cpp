@@ -1465,6 +1465,7 @@ void SprdCamera3RealBokeh::PreviewMuxerThread::waitMsgAvailable() {
             (ns2ms(now_time_stamp - mRealBokeh->mReqTimestamp) >
              CLEAR_PRE_FRAME_UNMATCH_TIMEOUT)) {
             HAL_LOGV("clear unmatch frame for force kill app");
+            Mutex::Autolock l(mRealBokeh->mUnmatchedQueueLock);
             mRealBokeh->clearFrameNeverMatched(mRealBokeh->mPrevFrameNumber + 1,
                                                mRealBokeh->mPrevFrameNumber +
                                                    1);

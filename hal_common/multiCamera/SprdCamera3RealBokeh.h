@@ -166,8 +166,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     Mutex mNotifyLockMain;
     List<camera3_notify_msg_t> mNotifyListAux;
     Mutex mNotifyLockAux;
-    // This queue stores unmatched buffer for each hwi, accessed with lock
-    Mutex mUnmatchedQueueLock;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
     bool mIsCapturing;
@@ -297,6 +295,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     List<multi_request_saved_t> mSavedRequestList;
     Mutex mMetatLock;
     Mutex mDepthBufferLock;
+    Mutex mUnmatchedQueueLock;
     List<meta_save_t> mMetadataList;
     camera3_stream_t *mSavedCapStreams;
     uint32_t mCapFrameNumber;
