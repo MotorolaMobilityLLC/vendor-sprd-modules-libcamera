@@ -101,7 +101,31 @@ enum ISP_BLK_ID {
 	ISP_BLK_AE_SYNC = 0x5007,
 	ISP_BLK_4IN1_PARAM = 0x5008,
 	ISP_BLK_AE_ADAPT_PARAM = 0x5009,
+	//sharkl5
+	//DCAM Block
+	DCAM_BLK_RGB_DITHER = 0x5051,
+	DCAM_BLK_PPE = 0x5052,
+	DCAM_BLK_HIST = 0x5053,
+	DCAM_BLK_BPC_V1 = 0x5054,
+	DCAM_BLK_RGB_AFM_V1 = 0x5055,
 
+	//ISP Block
+	ISP_BLK_GRGB_V1 = 0x5056,
+	ISP_BLK_NLM_V1 = 0x5057,
+	ISP_BLK_IMBALANCE = 0x5058,
+	ISP_BLK_CFA_V1 = 0x5059,
+	ISP_BLK_UVDIV_V1 = 0x505A,
+	ISP_BLK_3DNR = 0x505B,
+	ISP_BLK_LTM = 0x505C,
+	ISP_BLK_YUV_PRECDN_V1 = 0x505D,
+	ISP_BLK_UV_CDN_V1 = 0x505E,
+	ISP_BLK_UV_POSTCDN_V1 = 0x505F,
+	ISP_BLK_YNR_V1 = 0x5060,
+	ISP_BLK_EE_V1 = 0x5061,
+	ISP_BLK_IIRCNR_IIR_V1 = 0x5062,
+	ISP_BLK_YUV_NOISEFILTER_V1 = 0x5063,
+	ISP_BLK_CNR2_V1 = 0x5064,
+	ISP_BLK_BCHS = 0x5065,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };
@@ -139,7 +163,9 @@ enum isp_smart_id {
 	ISP_SMART_BDN = 28,
 	ISP_SMART_PRFY = 29,		// UV_PREFILTER
 	ISP_SMART_CNR2 = 30,
-
+	ISP_SMART_IMBALANCE = 31,
+	ISP_SMART_LTM = 32,
+	ISP_SMART_3DNR = 33,
 	ISP_SMART_MAX
 };
 
@@ -147,6 +173,8 @@ enum isp_smart_id {
 #include "sensor_raw_pike2.h"
 #elif defined CONFIG_ISP_2_5
 #include "sensor_raw_sharkl3.h"
+#elif defined CONFIG_ISP_2_6
+#include "sensor_raw_sharkl5.h"
 #else
 #include "sensor_raw_isp2.1.h"
 #endif
