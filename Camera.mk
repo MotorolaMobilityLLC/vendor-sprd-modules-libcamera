@@ -30,8 +30,8 @@ OEM_DIR := oem2v1
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.5
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
-HAL_DIR := hal3_2v1
-OEM_DIR := oem2v1
+HAL_DIR := hal3_2v6
+OEM_DIR := oem2v6
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.6
 endif
@@ -139,6 +139,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/$(HAL_DIR)/inc \
     $(LOCAL_PATH)/$(HAL_DIR)/ \
     $(LOCAL_PATH)/tool/mtrace \
+    $(LOCAL_PATH)/kernel_module/interface \
     $(TOP)/external/skia/include/images \
     $(TOP)/external/skia/include/core\
     $(TOP)/external/jhead \
