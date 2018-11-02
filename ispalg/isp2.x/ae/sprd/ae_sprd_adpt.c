@@ -3998,6 +3998,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 
+	cxt->is_snapshot = work_info->is_snapshot;
 	/*it is normal capture, not in flash mode */
 	if ((1 == cxt->last_enable)
 		&& ((FLASH_NONE == cxt->cur_status.settings.flash)
@@ -4018,7 +4019,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}
 	}
 
-	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->is_first = 1;
 	ISP_LOGI("AE_VIDEO_START cam-id %d BV %d lt %d W %d H %d , exp: %d, gain:%d flash: %d CAP %d, enable: %d",
 			 cxt->camera_id, cxt->cur_result.cur_bv, cxt->cur_status.line_time, cxt->snr_info.frame_size.w,
