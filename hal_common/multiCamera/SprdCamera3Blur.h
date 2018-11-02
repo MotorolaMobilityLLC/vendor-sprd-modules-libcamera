@@ -124,10 +124,7 @@ typedef struct {
     buffer_combination_blur_t combo_buff;
 } blur_queue_msg_t;
 
-typedef enum {
-    BLUR_CAP_NOAI = 0,
-    BLUR_CAP_AI
-} BLUR_CAPTURE_VERSION;
+typedef enum { BLUR_CAP_NOAI = 0, BLUR_CAP_AI } BLUR_CAPTURE_VERSION;
 
 typedef struct {
     int width;                       // image width
@@ -394,8 +391,13 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         void dumpBlurIMG(dump_type type,
                          dump_blur_t *dump_buffs[DUMP_BLUR_TYPE_MAX]);
         uint8_t getIspAfFullscanInfo();
-        int blurHandle(buffer_handle_t *input1, void *input1_addr, void *input2,
-                       buffer_handle_t *output, void *output_addr);
+        int prevBlurHandle(buffer_handle_t *input1, void *input1_addr,
+                           void *input2, buffer_handle_t *output,
+                           void *output_addr);
+        int capBlurHandle(buffer_handle_t *input1, void *input1_addr,
+                          void *input2, buffer_handle_t *output,
+                          void *output_addr);
+
         void CallSnapBackResult(camera3_buffer_status_t buffer_status);
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
@@ -421,6 +423,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mUpdatePreviewWeightParams;
         uint8_t mLastFaceNum;
         uint8_t mSkipFaceNum;
+        int mGaussEnable; // when back blur only have blur 1.0 and 1.2
         unsigned short mWinPeakPos[BLUR_AF_WINDOW_NUM];
         preview_init_params_t mPreviewInitParams;
         preview_weight_params_t mPreviewWeightParams;
