@@ -1815,7 +1815,8 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
     case DUMP_BLUR_COMBO:
         property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if ((!strcmp(prop, "combo") || !strcmp(prop, "all")) && !mBlur->mFlushing && combo_buff != NULL) {
+        if ((!strcmp(prop, "combo") || !strcmp(prop, "all")) &&
+            !mBlur->mFlushing && combo_buff != NULL) {
             buffer_base = (unsigned char *)combo_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
                                                 mBlur->mCaptureHeight * 3 / 2,
@@ -1827,8 +1828,8 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
     case DUMP_BLUR_OUTPUT:
         property_get("persist.vendor.cam.blur.dump", prop, "0");
 
-        if ((!strcmp(prop, "output") || !strcmp(prop, "all")) && combo_buff != NULL &&
-            output_buff != NULL) {
+        if ((!strcmp(prop, "output") || !strcmp(prop, "all")) &&
+            combo_buff != NULL && output_buff != NULL) {
             buffer_base = (unsigned char *)output_buff->buffer_addr;
             mBlur->dumpData(buffer_base, 1, mBlur->mCaptureWidth *
                                                 mBlur->mCaptureHeight * 3 / 2,
@@ -1845,7 +1846,8 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
 
     case DUMP_BLUR_RESULT: {
         property_get("persist.vendor.cam.blur.dump", prop, "0");
-        if (strcmp(prop, "result") || strcmp(prop, "all") || result_buff == NULL)
+        if (strcmp(prop, "result") || strcmp(prop, "all") ||
+            result_buff == NULL)
             return;
 
         uint32_t para_num = 0;
@@ -3882,6 +3884,11 @@ void SprdCamera3Blur::processCaptureResultMain(
                 return;
             }
         }
+        if (mReqState == PREVIEW_REQUEST_STATE) {
+            int32_t sprd3BlurCapVersion = BLUR_CAP_NOAI;
+            metadata.update(ANDROID_SPRD_BLUR_CAPVERSION, &sprd3BlurCapVersion,
+                            4);
+        }
 
         if (mReqState != PREVIEW_REQUEST_STATE) {
             if (mCaptureThread->mVersion == 3 &&
@@ -3892,6 +3899,16 @@ void SprdCamera3Blur::processCaptureResultMain(
                 mCaptureThread->mVersion == 1 &&
                 mReqState == WAIT_FIRST_YUV_STATE) {
                 mCaptureThread->updateBlurWeightParams(metadata, 1);
+            }
+            if (mCaptureThread->mCaptureWeightParams.roi_type == 2 &&
+                mCaptureThread->mCaptureWeightParams.valid_roi > 0) {
+                int32_t sprd3BlurCapVersion = BLUR_CAP_AI;
+                metadata.update(ANDROID_SPRD_BLUR_CAPVERSION,
+                                &sprd3BlurCapVersion, 4);
+            } else {
+                int32_t sprd3BlurCapVersion = BLUR_CAP_NOAI;
+                metadata.update(ANDROID_SPRD_BLUR_CAPVERSION,
+                                &sprd3BlurCapVersion, 4);
             }
         } else {
             mCaptureThread->updateBlurWeightParams(metadata, 1);

@@ -124,6 +124,11 @@ typedef struct {
     buffer_combination_blur_t combo_buff;
 } blur_queue_msg_t;
 
+typedef enum {
+    BLUR_CAP_NOAI = 0,
+    BLUR_CAP_AI
+} BLUR_CAPTURE_VERSION;
+
 typedef struct {
     int width;                       // image width
     int height;                      // image height
@@ -198,10 +203,10 @@ typedef struct {
     int x1[BLUR_MAX_ROI], y1[BLUR_MAX_ROI]; // left-top point of roi
     int x2[BLUR_MAX_ROI], y2[BLUR_MAX_ROI]; // right-bottom point of roi
     int flag[BLUR_MAX_ROI];                 // 0:face 1:body
-    int rotate_angle; // counter clock-wise. 0:face up body down 90:face left
-                      // body right 180:face down body up 270:face right body
-                      // left  ->
-    bool rear_cam_en; // 1:rear camera capture 0:front camera capture
+    int rotate_angle;   // counter clock-wise. 0:face up body down 90:face left
+                        // body right 180:face down body up 270:face right body
+                        // left  ->
+    bool rear_cam_en;   // 1:rear camera capture 0:front camera capture
     short camera_angle; // sensor angle init 270
     short mobile_angle; // hal angle
 } capture_weight_params_t;
