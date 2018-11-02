@@ -54,7 +54,6 @@ namespace sprdcamera {
 #define DEPTH_SNAP_OUTPUT_WIDTH (800)  //(324)
 #define DEPTH_SNAP_OUTPUT_HEIGHT (600) //(243)
 
-
 /* refocus api error code */
 #define ALRNB_ERR_SUCCESS 0x00
 
@@ -323,7 +322,7 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     HAL_LOGI("E");
     if (!mFlushing) {
         mFlushing = true;
-        bokehThreadExit();
+        preClose();
     }
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = m_nPhyCameras; i > 0; i--) {
@@ -341,14 +340,6 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
         sprdCam->dev = NULL;
     }
 
-    freeLocalBuffer();
-    mSavedRequestList.clear();
-    mLocalBufferList.clear();
-    mMetadataList.clear();
-    mUnmatchedFrameListMain.clear();
-    mUnmatchedFrameListAux.clear();
-    mNotifyListMain.clear();
-    mNotifyListAux.clear();
     mReqTimestamp = 0;
     mPrevFrameNumber = 0;
     mCapFrameNumber = 0;
@@ -4204,7 +4195,7 @@ void SprdCamera3RealBokeh::_dump(const struct camera3_device *device, int fd) {
 }
 
 /*===========================================================================
- * FUNCTION   :bokehThreadExit
+ * FUNCTION   :preClose
  *
  * DESCRIPTION: preview and capture thread exit
  *
@@ -4212,7 +4203,7 @@ void SprdCamera3RealBokeh::_dump(const struct camera3_device *device, int fd) {
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3RealBokeh::bokehThreadExit(void) {
+void SprdCamera3RealBokeh::preClose(void) {
 
     HAL_LOGI("E");
     if (mCaptureThread != NULL) {
@@ -4236,6 +4227,15 @@ void SprdCamera3RealBokeh::bokehThreadExit(void) {
     mDepthMuxerThread->join();
     mPreviewMuxerThread->join();
 
+    freeLocalBuffer();
+    mSavedRequestList.clear();
+    mLocalBufferList.clear();
+    mMetadataList.clear();
+    mUnmatchedFrameListMain.clear();
+    mUnmatchedFrameListAux.clear();
+    mNotifyListMain.clear();
+    mNotifyListAux.clear();
+
     HAL_LOGI("X");
 }
 
@@ -4258,7 +4258,7 @@ int SprdCamera3RealBokeh::_flush(const struct camera3_device *device) {
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
 
-    bokehThreadExit();
+    preClose();
 
     HAL_LOGI("X");
     return rc;

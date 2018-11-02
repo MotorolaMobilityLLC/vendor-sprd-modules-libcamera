@@ -351,7 +351,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int closeCameraDevice();
     void clearFrameNeverMatched(uint32_t main_frame_number,
                                 uint32_t sub_frame_number);
-    void bokehThreadExit();
+    void preClose();
 #ifdef YUV_CONVERT_TO_JPEG
     cmr_uint yuvToJpeg(struct private_handle_t *input_handle);
 #endif
