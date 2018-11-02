@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #define _ISP_PARAM_FILE_UPDATE_H_
 
 #include <sys/types.h>
-#include "sensor_drv_u.h"
+//#include "sensor_drv_u.h"
 #include "sensor_raw.h"
 #include "isp_blocks_cfg.h"
 
@@ -27,10 +27,11 @@ extern "C" {
 
 
 cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr);
+#if 0
 #ifndef WIN32
 cmr_u32 isp_raw_para_update_from_file(SENSOR_INFO_T * sensor_info_ptr, SENSOR_ID_E sensor_id);
 #endif
-
+#endif
 
 #ifdef   __cplusplus
 }

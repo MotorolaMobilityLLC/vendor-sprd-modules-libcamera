@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -644,6 +644,7 @@ struct isp_sensor_ex_info {
 	cmr_s8 *sensor_version_info;
 	struct af_pose_dis pos_dis;
 	cmr_u32 af_supported;
+	cmr_u32 tof_support;
 	cmr_u32 color_support;
 	struct drv_fov_info fov_info;
 };

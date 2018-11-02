@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,17 @@
 extern "C" {
 #endif
 
+
 #define ISP_TUNE_MODE_MAX 16
 #define ISP_TUNE_BLOCK_MAX 256
-#define ISP_SCENE_MODE_MAX 2
+#define ISP_TUNE_MODE_INVALID 0xff
+#define ISP_PM_MAGIC_FLAG        0xFFEE5511
+
+enum {
+	ISP_SCENE_PRV = 0,
+	ISP_SCENE_CAP,
+	ISP_SCENE_MAX
+};
 
 enum isp_pm_blk_cmd {
 	ISP_PM_BLK_ISP_SETTING = 0x0000,
@@ -67,6 +75,9 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_HIST_RATIO,
 	ISP_PM_BLK_HIST_MODE,
 	ISP_PM_BLK_HIST_RANGE,
+
+	ISP_PM_BLK_AEM_BASE = 0x0680,
+	ISP_PM_BLK_AEM_WIN,
 
 	ISP_PM_BLK_AWBC_BASE = 0x0700,
 	ISP_PM_BLK_AWBC_BYPASS,
@@ -179,12 +190,6 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_YUV_NOISEFILTER_BASE = 0x2100,
 	ISP_PM_BLK_YUV_NOISEFILTER_BYPASS,
 	ISP_PM_BLK_YUV_NOISEFILTER_STRENGTH_LEVEL,
-
-	ISP_PM_BLK_FLASH_BASE = 0x2200,
-	ISP_PM_BLK_FLASH,
-	ISP_PM_BLK_FLASH_RATION_LUM,
-	ISP_PM_BLK_FLASH_RATION_RGB,
-	ISP_PM_BLK_DUAL_FLASH,
 };
 
 struct isp_pm_param_data {
@@ -217,11 +222,6 @@ struct isp_pm_mode_param {
 	cmr_u32 fps;
 	struct isp_pm_block_header header[ISP_TUNE_BLOCK_MAX];
 	cmr_u32 data_area[0];
-};
-
-struct isp_pm_memory_init_param {
-	struct isp_data_info buffer;
-	struct isp_buffer_size_info size_info;
 };
 
 struct isp_pm_nr_header_param {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ static cmr_int set_rgb_gain(cmr_handle isp_dev_handle,
 	block_info.block_info = &gain_info;
 	block_info.scene_id = scene_id;
 	ISP_LOGV("global_gain : %d\n", gain_info.global_gain);
+	if (gain_info.global_gain == 0) {
+		ISP_LOGE("gtang error rgb gain %d\n", gain_info.global_gain);
+		gain_info.global_gain = 4369;
+	}
 
 	dcam_u_rgb_gain_block(cxt->isp_driver_handle, &block_info);
 

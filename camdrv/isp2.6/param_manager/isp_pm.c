@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,27 +25,24 @@
 #include "isp_mw.h"
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"
+#include "isp_param_file_update.h"
 #include "cmr_types.h"
 
-#define ISP_PM_MAGIC_FLAG        0xFFEE5511
-
-enum {
-	ISP_SCENE_PRV = 0,
-	ISP_SCENE_CAP,
-	ISP_SCENE_MAX
-};
 
 struct isp_pm_context {
 	cmr_u32 magic_flag;
 	cmr_u32 param_source;
 	pthread_mutex_t pm_mutex;
+	cmr_u32 is_4in1_sensor;
+	cmr_u32 cam_4in1_mode;
+	cmr_u32 lowlight_flag;
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
 	cmr_u32 cap_mode_id;
-	struct isp_context cxt_array[ISP_TUNE_MODE_MAX];
-	struct isp_pm_mode_param *active_mode[ISP_SCENE_MODE_MAX];
-	struct isp_pm_param_data *temp_param_data_ptr[2];
-	struct isp_pm_param_data temp_param_data[ISP_TUNE_BLOCK_MAX];
+	struct isp_context *cxt_array[ISP_SCENE_MAX];
+	struct isp_pm_mode_param *active_mode[ISP_SCENE_MAX];
+	struct isp_pm_param_data *getting_data_ptr[ISP_SCENE_MAX];
+	struct isp_pm_param_data single_block_data[ISP_TUNE_BLOCK_MAX];
 	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];
 	struct isp_pm_mode_param *merged_mode_array[ISP_TUNE_MODE_MAX];
 };
@@ -55,13 +52,13 @@ static cmr_s32 isp_pm_check_handle(cmr_handle handle)
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
-	if (PNULL == pm_cxt_ptr) {
+	if (pm_cxt_ptr == PNULL) {
 		ISP_LOGE("fail to get valid pm_cxt_ptr");
 		rtn = ISP_ERROR;
 		return rtn;
 	}
 
-	if (ISP_PM_MAGIC_FLAG != pm_cxt_ptr->magic_flag) {
+	if (pm_cxt_ptr->magic_flag != ISP_PM_MAGIC_FLAG) {
 		ISP_LOGE("fail to get valid param : magic_flag = 0x%x", pm_cxt_ptr->magic_flag);
 		rtn = ISP_ERROR;
 		return rtn;
@@ -70,13 +67,11 @@ static cmr_s32 isp_pm_check_handle(cmr_handle handle)
 	return rtn;
 }
 
-static void isp_pm_check_param(cmr_u32 id, cmr_u32 *update_flag)
+static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 {
 	switch (id) {
-	case ISP_BLK_PDAF_CORRECT:
 	case DCAM_BLK_NLM:
 	case ISP_BLK_RGB_DITHER:
-	case ISP_BLK_BINNING4AWB:
 	case DCAM_BLK_BPC:
 	case ISP_BLK_GRGB:
 	case ISP_BLK_CFA:
@@ -91,13 +86,12 @@ static void isp_pm_check_param(cmr_u32 id, cmr_u32 *update_flag)
 	case ISP_BLK_UV_POSTCDN:
 	case ISP_BLK_IIRCNR_IIR:
 	case ISP_BLK_YUV_NOISEFILTER:
-	{
-		*update_flag = ISP_PARAM_FROM_TOOL;
-		break;
-	}
+	case ISP_BLK_CNR2:
+		return 1;
 	default:
 		break;
 	}
+	return 0;
 }
 
 static struct isp_pm_block_header *isp_pm_get_block_header
@@ -107,39 +101,27 @@ static struct isp_pm_block_header *isp_pm_get_block_header
 	struct isp_pm_block_header *header_ptr = PNULL;
 	struct isp_pm_block_header *blk_header = PNULL;
 
-	if (PNULL == pm_mode_param_ptr) {
-		ISP_LOGE("fail to get valid pm_mode_param_ptr");
-		return PNULL;
-	}
-
-	blk_header = (struct isp_pm_block_header *)pm_mode_param_ptr->header;
+	blk_header = pm_mode_param_ptr->header;
 	blk_num = pm_mode_param_ptr->block_num;
 	*index = ISP_TUNE_BLOCK_MAX;
 
-	if (PNULL != blk_header) {
-		for (i = 0; i < blk_num; i++) {
-			if (id == blk_header[i].block_id) {
-				break;
-			}
-		}
-
-		if (i < blk_num) {
+	for (i = 0; i < blk_num; i++) {
+		if (id == blk_header[i].block_id) {
 			header_ptr = (struct isp_pm_block_header *)&blk_header[i];
 			*index = i;
+			return header_ptr;
 		}
-	} else {
-		ISP_LOGE("fail to get valid param : blk_header = %p", blk_header);
 	}
 
 	return header_ptr;
 }
 
-static cmr_s32 isp_pm_context_init(cmr_handle handle,
-	cmr_u32 mode_id, cmr_u32 scene_id)
+static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	cmr_u32 id = 0, offset = 0, blk_num = 0;
+	cmr_u32 update_flag = 0;
 	void *blk_ptr = PNULL;
 	void *param_data_ptr = PNULL;
 	intptr_t isp_cxt_start_addr = 0;
@@ -149,85 +131,51 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle,
 	struct isp_pm_block_header *blk_header_array = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
-	cmr_u32 update_flag = 0;
-
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
-	if (PNULL == pm_cxt_ptr) {
-		ISP_LOGE("fail to get valid pm_cxt_ptr");
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
-	if (PNULL == pm_cxt_ptr->merged_mode_array[mode_id]) {
-		ISP_LOGE("fail to get mode %d param", mode_id);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
-	isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[scene_id];
-	mode_param_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[mode_id];
-
-	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr)) {
-		blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
-		blk_num = mode_param_ptr->block_num;
-		if (PNULL != blk_header_array) {
-			for (i = 0; i < blk_num; i++) {
-				id = blk_header_array[i].block_id;
-				blk_cfg_ptr = isp_pm_get_block_cfg(id);
-				blk_header_ptr = &blk_header_array[i];
-				if (pm_cxt_ptr->param_source) {
-					isp_pm_check_param(id, &update_flag);
-					if (0 != update_flag) {
-						update_flag = 0;
-						continue;
-					}
-				}
-				if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-					if (blk_cfg_ptr->ops) {
-						ops = blk_cfg_ptr->ops;
-						if (ops->init) {
-							if (blk_header_ptr->size > 0) {
-								isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
-								offset = blk_cfg_ptr->offset;
-								blk_ptr = (void *)(isp_cxt_start_addr + offset);
-								param_data_ptr = (void *)blk_header_ptr->absolute_addr;
-								if ((PNULL != blk_ptr) && (PNULL != param_data_ptr)) {
-									ops->init(blk_ptr, param_data_ptr, blk_header_ptr,
-										&mode_param_ptr->resolution);
-								} else {
-									ISP_LOGE("fail to get valid param : i = %d, blk_name = %s",
-										i, blk_header_ptr->name);
-									ISP_LOGE("fail to get valid param : blk_ptr = %p, param_data_ptr = %p, resolution = %p",
-										blk_ptr, param_data_ptr, &mode_param_ptr->resolution);
-									rtn = ISP_ERROR;
-									return rtn;
-								}
-							}
-						}
-					}
+	isp_cxt_ptr = pm_cxt_ptr->cxt_array[scene_id];
+	mode_param_ptr = pm_cxt_ptr->active_mode[scene_id];
+	blk_header_array = mode_param_ptr->header;
+	blk_num = mode_param_ptr->block_num;
+	for (i = 0; i < blk_num; i++) {
+		id = blk_header_array[i].block_id;
+		blk_cfg_ptr = isp_pm_get_block_cfg(id);
+		blk_header_ptr = &blk_header_array[i];
+		if (pm_cxt_ptr->param_source == ISP_PARAM_FROM_TOOL) {
+			/* skip some blocks from tool update parameters */
+			update_flag = !isp_pm_check_skip_blk(id);
+			if (update_flag == 0) {
+				ISP_LOGW("skip block 0x%x from tool update.", id);
+				continue;
+			}
+		}
+		if (blk_cfg_ptr != PNULL && blk_cfg_ptr->ops) {
+			ops = blk_cfg_ptr->ops;
+			if (ops->init && blk_header_ptr->size > 0) {
+				isp_cxt_start_addr = (intptr_t) isp_cxt_ptr;
+				offset = blk_cfg_ptr->offset;
+				blk_ptr = (void *)(isp_cxt_start_addr + offset);
+				param_data_ptr = (void *)blk_header_ptr->absolute_addr;
+				if (param_data_ptr == PNULL) {
+					ISP_LOGE("fail to get valid param,  i:%d, block_id:0x%x, blk_addr:%p, param:%p",
+						 i, id, blk_ptr, param_data_ptr);
+					rtn = ISP_ERROR;
+					return rtn;
 				} else {
-					ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p",
-						i, id, blk_cfg_ptr, blk_header_ptr);
+					ops->init(blk_ptr, param_data_ptr, blk_header_ptr, &mode_param_ptr->resolution);
 				}
 			}
 		} else {
-			ISP_LOGE("fail to get valid param : blk_header_array = %p", blk_header_array);
-			rtn = ISP_ERROR;
-			return rtn;
+			ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p",
+				i, id, blk_cfg_ptr, blk_header_ptr);
 		}
-	} else {
-		ISP_LOGE("fail to get valid param : isp_cxt_ptr = %p, mode_param_ptr = %p",
-			isp_cxt_ptr, mode_param_ptr);
-		rtn = ISP_ERROR;
-		return rtn;
 	}
 
 	return rtn;
 }
 
 static cmr_s32 isp_pm_context_update(cmr_handle handle,
-	struct isp_pm_mode_param *org_mode_param, cmr_u32 mode_id, cmr_u32 scene_id)
+	struct isp_pm_mode_param *org_mode_param, cmr_u32 scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0;
@@ -241,82 +189,51 @@ static cmr_s32 isp_pm_context_update(cmr_handle handle,
 	struct isp_pm_block_header *blk_header_array = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
-
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
-	if (PNULL == pm_cxt_ptr) {
-		ISP_LOGE("fail to get valid pm_cxt_ptr");
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
-	if (PNULL == pm_cxt_ptr->merged_mode_array[mode_id]) {
-		ISP_LOGE("fail to get mode %d param", mode_id);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
-	isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[scene_id];
-	mode_param_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[mode_id];
-
-	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr)) {
-		blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
-		blk_num = mode_param_ptr->block_num;
-		if (PNULL != blk_header_array) {
-			for (i = 0; i < blk_num; i++) {
-				id = blk_header_array[i].block_id;
-				blk_cfg_ptr = isp_pm_get_block_cfg(id);
-				blk_header_ptr = &blk_header_array[i];
-				if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-					if (blk_cfg_ptr->ops) {
-						ops = blk_cfg_ptr->ops;
-						if (ops->init) {
-							if (blk_header_ptr->size > 0) {
-								isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
-								offset = blk_cfg_ptr->offset;
-								blk_ptr = (void *)(isp_cxt_start_addr + offset);
-								param_data_ptr = (void *)blk_header_ptr->absolute_addr;
-								if ((PNULL != blk_ptr) && (PNULL != param_data_ptr)) {
-									for (j = 0; j < org_mode_param->block_num; j++) {
-										if (org_mode_param->header[j].block_id == blk_header_ptr->block_id) {
-											break;
-										}
-									}
-									if (j < org_mode_param->block_num) {
-										if (blk_header_ptr->source_flag != org_mode_param->header[j].source_flag) {
-											ops->init(blk_ptr, param_data_ptr, blk_header_ptr,
-												&mode_param_ptr->resolution);
-										}
-									} else {
-										ops->init(blk_ptr, param_data_ptr, blk_header_ptr,
-											&mode_param_ptr->resolution);
-									}
-								} else {
-									ISP_LOGE("fail to get valid param : i = %d, blk_name = %s",
-										i, blk_header_ptr->name);
-									ISP_LOGE("fail to get valid param : blk_ptr = %p, param_data_ptr = %p, resolution = %p",
-										blk_ptr, param_data_ptr, &mode_param_ptr->resolution);
-									rtn = ISP_ERROR;
-									return rtn;
-								}
-							}
+	isp_cxt_ptr = pm_cxt_ptr->cxt_array[scene_id];
+	mode_param_ptr = pm_cxt_ptr->active_mode[scene_id];
+	blk_header_array = mode_param_ptr->header;
+	blk_num = mode_param_ptr->block_num;
+	for (i = 0; i < blk_num; i++) {
+		id = blk_header_array[i].block_id;
+		blk_cfg_ptr = isp_pm_get_block_cfg(id);
+		blk_header_ptr = &blk_header_array[i];
+		if ((PNULL != blk_cfg_ptr) && blk_cfg_ptr->ops) {
+			ops = blk_cfg_ptr->ops;
+			if (ops->init && blk_header_ptr->size > 0) {
+				isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
+				offset = blk_cfg_ptr->offset;
+				blk_ptr = (void *)(isp_cxt_start_addr + offset);
+				param_data_ptr = (void *)blk_header_ptr->absolute_addr;
+				if ((PNULL != param_data_ptr)) {
+					for (j = 0; j < org_mode_param->block_num; j++) {
+						if (org_mode_param->header[j].block_id == blk_header_ptr->block_id) {
+							break;
 						}
 					}
+					if (j < org_mode_param->block_num) {
+						if (blk_header_ptr->source_flag != org_mode_param->header[j].source_flag) {
+							ops->init(blk_ptr, param_data_ptr, blk_header_ptr,
+								&mode_param_ptr->resolution);
+						}
+					} else {
+						ops->init(blk_ptr, param_data_ptr, blk_header_ptr,
+							&mode_param_ptr->resolution);
+					}
 				} else {
-					ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p",
-						i, id, blk_cfg_ptr, blk_header_ptr);
+					ISP_LOGE("fail to get valid param : i = %d, blk_name = %s",
+						i, blk_header_ptr->name);
+					ISP_LOGE("fail to get valid param : blk_ptr = %p, param_data_ptr = %p, resolution = %p",
+						blk_ptr, param_data_ptr, &mode_param_ptr->resolution);
+					rtn = ISP_ERROR;
+					return rtn;
 				}
 			}
 		} else {
-			ISP_LOGE("fail to get valid param : blk_header_array = %p", blk_header_array);
-			rtn = ISP_ERROR;
-			return rtn;
+			ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p",
+				i, id, blk_cfg_ptr, blk_header_ptr);
 		}
-	} else {
-		ISP_LOGE("fail to get valid param : isp_cxt_ptr = %p, mode_param_ptr = %p",
-			isp_cxt_ptr, mode_param_ptr);
-		rtn = ISP_ERROR;
-		return rtn;
 	}
 
 	return rtn;
@@ -331,13 +248,12 @@ static cmr_s32 isp_pm_change_mode(cmr_handle handle,
 	struct isp_pm_mode_param *next_mode_param = PNULL;
 
 	org_mode_param = pm_cxt_ptr->active_mode[scene_id];
-	next_mode_param = (struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[mode_id];
+	next_mode_param = pm_cxt_ptr->merged_mode_array[mode_id];
 	pm_cxt_ptr->active_mode[scene_id] = next_mode_param;
+	pm_cxt_ptr->cxt_array[scene_id]->mode_id = mode_id;
 
-	pm_cxt_ptr->cxt_array[scene_id].mode_id =
-		pm_cxt_ptr->merged_mode_array[mode_id]->mode_id;
-
-	isp_pm_context_update(handle, org_mode_param, mode_id, scene_id);
+	ISP_LOGD("from %d to %d for scene %d\n", org_mode_param->mode_id, mode_id, scene_id);
+	isp_pm_context_update(handle, org_mode_param, scene_id);
 
 	return rtn;
 }
@@ -354,71 +270,58 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 	struct isp_pm_block_header *blk_header_array = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
-
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
-	if (PNULL == pm_cxt_ptr) {
-		ISP_LOGE("fail to get valid pm_cxt_ptr");
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
-	for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
-		if (PNULL == pm_cxt_ptr->merged_mode_array[j]) {
+	for (j = 0; j < ISP_SCENE_MAX; j++) {
+		isp_cxt_ptr = pm_cxt_ptr->cxt_array[j];
+		mode_param_ptr = pm_cxt_ptr->active_mode[j];
+		if (isp_cxt_ptr == PNULL)
 			continue;
-		}
-		isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[j];
-		mode_param_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[j];
 
-		if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr)) {
-			blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
-			blk_num = mode_param_ptr->block_num;
-			if (PNULL != blk_header_array) {
-				for (i = 0; i < blk_num; i++) {
-					id = blk_header_array[i].block_id;
-					blk_cfg_ptr = isp_pm_get_block_cfg(id);
-					if (PNULL != blk_cfg_ptr) {
-						if (blk_cfg_ptr->ops) {
-							ops = blk_cfg_ptr->ops;
-							if (ops->deinit) {
-								isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
-								offset = blk_cfg_ptr->offset;
-								blk_ptr = (void *)(isp_cxt_start_addr + offset);
-								if (PNULL != blk_ptr) {
-									ops->deinit(blk_ptr);
-								} else {
-									ISP_LOGE("fail to get valid param : i = %d, blk_name = %s, blk_ptr = %p",
-										i, blk_header_array[i].name, blk_ptr);
-									rtn = ISP_ERROR;
-									return rtn;
-								}
-							}
-						}
-					} else {
-						ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p", i, id, blk_cfg_ptr);
-					}
+		blk_header_array = mode_param_ptr->header;
+		blk_num = mode_param_ptr->block_num;
+		for (i = 0; i < blk_num; i++) {
+			id = blk_header_array[i].block_id;
+			blk_cfg_ptr = isp_pm_get_block_cfg(id);
+			if (PNULL != blk_cfg_ptr && blk_cfg_ptr->ops) {
+				ops = blk_cfg_ptr->ops;
+				if (ops->deinit) {
+					isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
+					offset = blk_cfg_ptr->offset;
+					blk_ptr = (void *)(isp_cxt_start_addr + offset);
+					ops->deinit(blk_ptr);
 				}
 			} else {
-				ISP_LOGE("fail to get valid param : blk_header_array = %p", blk_header_array);
-				rtn = ISP_ERROR;
-				return rtn;
+				ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p", i, id, blk_cfg_ptr);
 			}
-		} else {
-			ISP_LOGE("fail to get valid param : isp_cxt_ptr = %p, mode_param_ptr = %p",
-				isp_cxt_ptr, mode_param_ptr);
-			rtn = ISP_ERROR;
-			return rtn;
 		}
 	}
 
 	return rtn;
 }
 
+static cmr_s32 check_block_skip(struct isp_pm_context *pm_cxt_ptr,
+		cmr_u32 scene_id, cmr_u32 blk_id)
+{
+	struct isp_context *isp_cxt_prv = PNULL;
+
+	if (scene_id == ISP_SCENE_PRV)
+		return 0;
+
+	isp_cxt_prv = pm_cxt_ptr->cxt_array[ISP_SCENE_PRV];
+	if (isp_cxt_prv && isp_cxt_prv->is_validate) {
+		if (IS_DCAM_BLOCK(blk_id))
+			return 1;
+	}
+	return 0;
+}
+
 static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr,
-	struct isp_pm_param_data *param_data_ptr, cmr_u32 mode_id, cmr_u32 scene_id)
+	struct isp_pm_param_data *param_data_ptr, cmr_u32 scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 cmd = 0, id = 0, offset = 0;
+	cmr_u32 share_skip;
 	cmr_s32 index = 0;
 	void *blk_ptr = PNULL;
 	intptr_t isp_cxt_start_addr = 0;
@@ -428,45 +331,32 @@ static cmr_s32 isp_pm_set_block_param(struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == param_data_ptr)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, param_data_ptr = %p", pm_cxt_ptr, param_data_ptr);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
+	isp_cxt_ptr = pm_cxt_ptr->cxt_array[scene_id];
+	mode_param_ptr = pm_cxt_ptr->active_mode[scene_id];
 
-	isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[scene_id];
-	mode_param_ptr =
-		(struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[mode_id];
-
-	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr)) {
+	if (isp_cxt_ptr && isp_cxt_ptr->is_validate && mode_param_ptr) {
 		cmd = param_data_ptr->cmd;
 		id = param_data_ptr->id;
+		share_skip = check_block_skip(pm_cxt_ptr, scene_id, id);
+		if (share_skip)
+			return rtn;
+
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = isp_pm_get_block_header(mode_param_ptr, id, &index);
-
-		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-			if (blk_cfg_ptr->ops) {
-				ops = blk_cfg_ptr->ops;
-				if (ops->set) {
-					isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
-					offset = blk_cfg_ptr->offset;
-					blk_ptr = (void *)(isp_cxt_start_addr + offset);
-					if (PNULL != blk_ptr) {
-						ops->set(blk_ptr, cmd, param_data_ptr->data_ptr, blk_header_ptr);
-					} else {
-						ISP_LOGE("fail to get valid param : blk_name = %s, blk_ptr = %p", blk_header_ptr->name, blk_ptr);
-						rtn = ISP_ERROR;
-						return rtn;
-					}
-				}
+		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr) && blk_cfg_ptr->ops) {
+			ops = blk_cfg_ptr->ops;
+			if (ops->set) {
+				isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
+				offset = blk_cfg_ptr->offset;
+				blk_ptr = (void *)(isp_cxt_start_addr + offset);
+				ops->set(blk_ptr, cmd, param_data_ptr->data_ptr, blk_header_ptr);
 			}
 		} else {
 			ISP_LOGV("id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p", id, blk_cfg_ptr, blk_header_ptr);
 		}
 	} else {
-		ISP_LOGE("fail to get valid param : isp_cxt_ptr = %p, mode_param_ptr = %p",
+		ISP_LOGV("no valid param: isp_cxt_ptr = %p, mode_param_ptr = %p",
 			isp_cxt_ptr, mode_param_ptr);
-		rtn = ISP_ERROR;
 		return rtn;
 	}
 
@@ -483,48 +373,30 @@ static cmr_s32 isp_pm_get_mode_block_param(struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_block_header *blk_header_array = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == param_data_ptr)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, param_data_ptr = %p", pm_cxt_ptr, param_data_ptr);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
 	for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
-		mode_param_ptr =
-			(struct isp_pm_mode_param *)pm_cxt_ptr->tune_mode_array[j];
-		if (PNULL != mode_param_ptr) {
-			blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
-			blk_num = mode_param_ptr->block_num;
-			if (PNULL != blk_header_array) {
-				for (i = 0; i < blk_num; i++) {
-					id = blk_header_array[i].block_id;
-					if (block_id == id) {
-						break;
-					}
-				}
+		mode_param_ptr = pm_cxt_ptr->tune_mode_array[j];
+		if (mode_param_ptr == PNULL)
+			continue;
 
-				if (i < blk_num) {
-					param_data_ptr->data_ptr = blk_header_array[i].absolute_addr;
-					param_data_ptr->data_size = blk_header_array[i].size;
-					param_data_ptr->user_data[0] = blk_header_array[i].bypass;
-				} else {
-					param_data_ptr->data_ptr = PNULL;
-					param_data_ptr->data_size = 0;
-				}
-			} else {
-				param_data_ptr->data_ptr = PNULL;
-				param_data_ptr->data_size = 0;
+		blk_header_array = mode_param_ptr->header;
+		blk_num = mode_param_ptr->block_num;
+		for (i = 0; i < blk_num; i++) {
+			id = blk_header_array[i].block_id;
+			if (block_id == id) {
+				break;
 			}
-		} else {
-			param_data_ptr->data_ptr = PNULL;
-			param_data_ptr->data_size = 0;
 		}
 
-		param_data_ptr->cmd = cmd;
-		param_data_ptr->mode_id = j;
-		param_data_ptr->id = (j << 16) | block_id;
-		param_data_ptr++;
-		counts++;
+		if (i < blk_num) {
+			param_data_ptr->data_ptr = blk_header_array[i].absolute_addr;
+			param_data_ptr->data_size = blk_header_array[i].size;
+			param_data_ptr->user_data[0] = blk_header_array[i].bypass;
+			param_data_ptr->cmd = cmd;
+			param_data_ptr->mode_id = j;
+			param_data_ptr->id = (j << 16) | block_id;
+			param_data_ptr++;
+			counts++;
+		}
 	}
 	*param_counts = counts;
 
@@ -533,7 +405,7 @@ static cmr_s32 isp_pm_get_mode_block_param(struct isp_pm_context *pm_cxt_ptr,
 
 static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_ioctl_input *blk_info_in, struct isp_pm_param_data *pm_param_data_ptr,
-	cmr_u32 *param_counts, cmr_u32 *rtn_idx, cmr_u32 mode_id, cmr_u32 scene_id)
+	cmr_u32 *param_counts, cmr_u32 *rtn_idx, cmr_u32 scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 index = 0;
@@ -548,13 +420,6 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == blk_info_in) || (PNULL == pm_param_data_ptr)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, blk_info_in = %p, pm_param_data_ptr = %p",
-			pm_cxt_ptr, blk_info_in, pm_param_data_ptr);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
-
 	//just support get only one block info
 	if (blk_info_in->param_num > 1) {
 		ISP_LOGE("fail to get valid param : param_num = %d", blk_info_in->param_num);
@@ -562,33 +427,24 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_context *pm_cxt_ptr,
 		return rtn;
 	}
 
-	isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[scene_id];
-	mode_param_ptr =
-		(struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[mode_id];
+	isp_cxt_ptr = pm_cxt_ptr->cxt_array[scene_id];
+	mode_param_ptr = pm_cxt_ptr->active_mode[scene_id];
 
-	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr)) {
+	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr) && isp_cxt_ptr->is_validate) {
 		block_param_data_ptr = blk_info_in->param_data_ptr;
 		cmd = block_param_data_ptr->cmd;
 		id = block_param_data_ptr->id;
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = isp_pm_get_block_header(mode_param_ptr, id, &index);
 
-		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-			if (blk_cfg_ptr->ops) {
-				ops = blk_cfg_ptr->ops;
-				if (ops->get) {
-					isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
-					offset = blk_cfg_ptr->offset;
-					blk_ptr = (void *)(isp_cxt_start_addr + offset);
-					if (PNULL != blk_ptr) {
-						ops->get(blk_ptr, cmd, &pm_param_data_ptr[index], &blk_header_ptr->is_update);
-						counts++;
-					} else {
-						ISP_LOGE("fail to get valid param : blk_name = %s, blk_ptr = %p", blk_header_ptr->name, blk_ptr);
-						rtn = ISP_ERROR;
-						return rtn;
-					}
-				}
+		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr) && blk_cfg_ptr->ops) {
+			ops = blk_cfg_ptr->ops;
+			if (ops->get) {
+				isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
+				offset = blk_cfg_ptr->offset;
+				blk_ptr = (void *)(isp_cxt_start_addr + offset);
+				ops->get(blk_ptr, cmd, &pm_param_data_ptr[index], &blk_header_ptr->is_update);
+				counts++;
 			}
 		} else {
 			ISP_LOGV("id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p",
@@ -606,9 +462,10 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_context *pm_cxt_ptr,
 	return rtn;
 }
 
-static cmr_s32 isp_pm_get_setting_param(struct isp_pm_context *pm_cxt_ptr,
+static cmr_s32 isp_pm_get_setting_param(
+	struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_param_data *param_data_ptr, cmr_u32 *param_counts,
-	cmr_u32 all_setting_flag, cmr_u32 mode_id, cmr_u32 scene_id)
+	cmr_u32 all_setting_flag, cmr_u32 scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, counts = 0;
@@ -623,62 +480,36 @@ static cmr_s32 isp_pm_get_setting_param(struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == param_data_ptr)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, param_data_ptr = %p", pm_cxt_ptr, param_data_ptr);
-		rtn = ISP_ERROR;
-		return rtn;
-	}
+	isp_cxt_ptr = pm_cxt_ptr->cxt_array[scene_id];
+	mode_param_ptr = pm_cxt_ptr->active_mode[scene_id];
+	blk_header_array = mode_param_ptr->header;
+	blk_num = mode_param_ptr->block_num;
 
-	isp_cxt_ptr = (struct isp_context *)&pm_cxt_ptr->cxt_array[scene_id];
-	mode_param_ptr =
-		(struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[mode_id];
-
-	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr)) {
-		blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
-		blk_num = mode_param_ptr->block_num;
-		if (PNULL != blk_header_array) {
-			for (i = 0; i < blk_num; i++) {
-				id = blk_header_array[i].block_id;
-				blk_cfg_ptr = isp_pm_get_block_cfg(id);
-				blk_header_ptr = &blk_header_array[i];
-				if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
-					is_update = 0;
-					if ((ISP_ZERO != all_setting_flag) || (ISP_ZERO != blk_header_ptr->is_update)) {
-						is_update = 1;
-					}
-					if (is_update) {
-						if (blk_cfg_ptr->ops) {
-							ops = blk_cfg_ptr->ops;
-							if (ops->get) {
-								isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
-								offset = blk_cfg_ptr->offset;
-								blk_ptr = (void *)(isp_cxt_start_addr + offset);
-								if (PNULL != blk_ptr) {
-									ops->get(blk_ptr, ISP_PM_BLK_ISP_SETTING,
-										param_data_ptr, &blk_header_ptr->is_update);
-								} else {
-									ISP_LOGE("fail to get valid param : i = %d, blk_name = %s, blk_ptr = %p",
-										i, blk_header_ptr->name, blk_ptr);
-									rtn = ISP_ERROR;
-									return rtn;
-								}
-							}
-						}
-						if (param_data_ptr)
-							param_data_ptr++;
-						counts++;
-					}
-				} else {
-					ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, blk_header_ptr = %p",
-						i, id, blk_cfg_ptr, blk_header_ptr);
+	if ((PNULL != isp_cxt_ptr) && (PNULL != mode_param_ptr) && isp_cxt_ptr->is_validate) {
+		for (i = 0; i < blk_num; i++) {
+			id = blk_header_array[i].block_id;
+			blk_cfg_ptr = isp_pm_get_block_cfg(id);
+			blk_header_ptr = &blk_header_array[i];
+			is_update = 0;
+			if ((ISP_ZERO != all_setting_flag) || (ISP_ZERO != blk_header_ptr->is_update))
+				is_update = 1;
+			if (is_update && blk_cfg_ptr && blk_cfg_ptr->ops) {
+				ops = blk_cfg_ptr->ops;
+				if (ops->get) {
+					isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
+					offset = blk_cfg_ptr->offset;
+					blk_ptr = (void *)(isp_cxt_start_addr + offset);
+					ops->get(blk_ptr, ISP_PM_BLK_ISP_SETTING,
+							param_data_ptr, &blk_header_ptr->is_update);
+					param_data_ptr++;
+					counts++;
 				}
+			} else {
+				ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, update %d",
+					i, id, blk_cfg_ptr, is_update);
 			}
-			*param_counts = counts;
-		} else {
-			ISP_LOGE("fail to get valid param : blk_header_array = %p", blk_header_array);
-			rtn = ISP_ERROR;
-			return rtn;
 		}
+		*param_counts = counts;
 	} else {
 		ISP_LOGE("fail to get valid param : isp_cxt_ptr = %p, mode_param_ptr = %p",
 			isp_cxt_ptr, mode_param_ptr);
@@ -703,29 +534,55 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 	switch (cmd) {
 	case ISP_PM_CMD_SET_MODE:
 	{
-		struct work_mode_info *mode_info = (struct work_mode_info *)param_ptr;
+		struct pm_workmode_info *mode_info = (struct pm_workmode_info *)param_ptr;
+		struct isp_context *isp_cxt_ptr = PNULL;
 
+		pm_cxt_ptr->is_4in1_sensor = mode_info->is_4in1_sensor;
+		pm_cxt_ptr->cam_4in1_mode = mode_info->cam_4in1_mode;
 		pm_cxt_ptr->mode_id = mode_info->mode_id;
-		if (pm_cxt_ptr->prv_mode_id != mode_info->prv_mode_id) {
-			pm_cxt_ptr->prv_mode_id = mode_info->prv_mode_id;
-			rtn = isp_pm_change_mode(handle, pm_cxt_ptr->prv_mode_id, ISP_SCENE_PRV);
+
+		isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_PRV];
+		if (mode_info->prv_mode_id != ISP_TUNE_MODE_INVALID) {
+			isp_cxt_ptr->is_validate = 1;
+			if (pm_cxt_ptr->prv_mode_id != mode_info->prv_mode_id) {
+				pm_cxt_ptr->prv_mode_id = mode_info->prv_mode_id;
+				rtn = isp_pm_change_mode(handle, pm_cxt_ptr->prv_mode_id, ISP_SCENE_PRV);
+			}
+		} else {
+			isp_cxt_ptr->is_validate = 0;
+			ISP_LOGI("invalid param mode0\n");
 		}
-		if (pm_cxt_ptr->cap_mode_id != mode_info->cap_mode_id) {
-			pm_cxt_ptr->cap_mode_id = mode_info->cap_mode_id;
-			rtn = isp_pm_change_mode(handle, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
+
+		isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_CAP];
+		if (mode_info->cap_mode_id != ISP_TUNE_MODE_INVALID) {
+			isp_cxt_ptr->is_validate = 1;
+			if (pm_cxt_ptr->cap_mode_id != mode_info->cap_mode_id) {
+				pm_cxt_ptr->cap_mode_id = mode_info->cap_mode_id;
+				rtn = isp_pm_change_mode(handle, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
+			}
+		} else {
+			isp_cxt_ptr->is_validate = 0;
+			ISP_LOGI("invalid param mode1\n");
 		}
+
+		ISP_LOGV("is_4in1_sensor = %d, cam_4in1_mode = %d",
+			pm_cxt_ptr->is_4in1_sensor, pm_cxt_ptr->cam_4in1_mode);
 
 		ISP_LOGV("mode_id = %d, prv_mode_id = %d, cap_mode_id = %d",
-			pm_cxt_ptr->mode_id, pm_cxt_ptr->prv_mode_id, pm_cxt_ptr->cap_mode_id);
+			pm_cxt_ptr->mode_id, mode_info->prv_mode_id, mode_info->cap_mode_id);
 
+		break;
+	}
+	case ISP_PM_CMD_SET_LOWLIGHT_FLAG:
+	{
+		pm_cxt_ptr->lowlight_flag = *(cmr_u32 *)param_ptr;
+		ISP_LOGV("lowlight_flag = %d", pm_cxt_ptr->lowlight_flag);
 		break;
 	}
 	case ISP_PM_CMD_SET_AWB:
 	case ISP_PM_CMD_SET_AE:
 	case ISP_PM_CMD_SET_AF:
-	case ISP_PM_CMD_SET_SMART:
 	case ISP_PM_CMD_SET_OTHERS:
-	case ISP_PM_CMD_SET_SCENE_MODE:
 	case ISP_PM_CMD_SET_SPECIAL_EFFECT:
 	{
 		cmr_u32 i = 0;
@@ -740,15 +597,44 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 		}
 
 		for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
-			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->prv_mode_id, ISP_SCENE_PRV);
+			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, ISP_SCENE_PRV);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_set_block_param");
+				ISP_LOGV("fail to do isp_pm_set_block_param for prev");
 				rtn = ISP_ERROR;
 				return rtn;
 			}
-			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
+			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, ISP_SCENE_CAP);
 			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to do isp_pm_set_block_param");
+				ISP_LOGV("fail to do isp_pm_set_block_param for capture");
+				rtn = ISP_ERROR;
+				return rtn;
+			}
+		}
+		break;
+	}
+	case ISP_PM_CMD_SET_SMART:
+	{
+		cmr_u32 i = 0;
+		//struct isp_context *isp_cxt_prev = PNULL;
+		struct isp_context *isp_cxt_cap = PNULL;
+		struct isp_pm_ioctl_input *ioctrl_input_ptr = (struct isp_pm_ioctl_input *)param_ptr;
+		struct isp_pm_param_data *param_data_ptr =
+			(struct isp_pm_param_data *)ioctrl_input_ptr->param_data_ptr;
+
+		if (PNULL == param_data_ptr) {
+			ISP_LOGE("fail to get valid param_data_ptr");
+			rtn = ISP_ERROR;
+			return rtn;
+		}
+
+		isp_cxt_cap = pm_cxt_ptr->cxt_array[ISP_SCENE_CAP];
+		for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
+			if (isp_cxt_cap->is_validate && (param_data_ptr->mode_id == isp_cxt_cap->mode_id))
+				rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, ISP_SCENE_CAP);
+			else
+				rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, ISP_SCENE_PRV);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGV("fail to do isp_pm_set_block_param");
 				rtn = ISP_ERROR;
 				return rtn;
 			}
@@ -771,15 +657,12 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i = 0, j = 0;
-	cmr_u32 block_id = 0, blk_num = 0;
+	cmr_u32 i = 0;
+	cmr_u32 block_id = 0;
 	cmr_u32 param_counts = 0;
 	struct isp_pm_param_data *param_data_ptr = PNULL;
-	struct isp_pm_block_header *blk_header_array = PNULL;
-	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 	struct isp_video_start *param_ptr = PNULL;
 	struct isp_pm_ioctl_output *result_ptr = PNULL;
-
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
 	if ((PNULL == pm_cxt_ptr) || (PNULL == out_ptr)) {
@@ -788,9 +671,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		return rtn;
 	}
 
-	switch (cmd) {
-	case ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION:
-	{
+	if (cmd == ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION) {
 		param_ptr = (struct isp_video_start *)in_ptr;
 		*((cmr_s32 *)out_ptr) = ISP_MODE_ID_PRV_0;
 		for (i = ISP_MODE_ID_PRV_0; i <= ISP_MODE_ID_PRV_3; i++) {
@@ -801,10 +682,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				}
 			}
 		}
-		break;
-	}
-	case ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION:
-	{
+	} else if (cmd == ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION) {
 		param_ptr = (struct isp_video_start *)in_ptr;
 		*((cmr_s32 *)out_ptr) = ISP_MODE_ID_CAP_0;
 		for (i = ISP_MODE_ID_CAP_0; i <= ISP_MODE_ID_CAP_3; i++) {
@@ -815,10 +693,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				}
 			}
 		}
-		break;
-	}
-	case ISP_PM_CMD_GET_DV_MODEID_BY_FPS:
-	{
+	} else if (cmd == ISP_PM_CMD_GET_DV_MODEID_BY_FPS) {
 		*((cmr_s32 *)out_ptr) = ISP_MODE_ID_VIDEO_0;
 		for (i = ISP_MODE_ID_VIDEO_0; i <= ISP_MODE_ID_VIDEO_3; i++) {
 			if (PNULL != pm_cxt_ptr->merged_mode_array[i]) {
@@ -828,10 +703,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				}
 			}
 		}
-		break;
-	}
-	case ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION:
-	{
+	} else if (cmd == ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION) {
 		param_ptr = (struct isp_video_start *)in_ptr;
 		if (param_ptr->dv_mode) {
 			*((cmr_s32 *)out_ptr) = ISP_MODE_ID_VIDEO_0;
@@ -844,11 +716,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				}
 			}
 		}
-		break;
-	}
-	case ISP_PM_CMD_GET_ISP_SETTING:
-	case ISP_PM_CMD_GET_ISP_ALL_SETTING:
-	{
+	} else if (cmd == ISP_PM_CMD_GET_ISP_SETTING || cmd == ISP_PM_CMD_GET_ISP_ALL_SETTING) {
 		cmr_u32 all_setting_flag = 0;
 		struct isp_pm_ioctl_output_param *result_param_ptr = PNULL;
 		result_param_ptr = (struct isp_pm_ioctl_output_param *)out_ptr;
@@ -859,119 +727,112 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			all_setting_flag = 1;
 		}
 
-		param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[0];
-		rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
-			all_setting_flag, pm_cxt_ptr->prv_mode_id, ISP_SCENE_PRV);
+		param_data_ptr = pm_cxt_ptr->getting_data_ptr[0];
+		rtn = isp_pm_get_setting_param(pm_cxt_ptr,
+				param_data_ptr, &param_counts,
+				all_setting_flag, ISP_SCENE_PRV);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			ISP_LOGV("fail to do isp_pm_get_setting_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
-		result_param_ptr->prv_param_data = pm_cxt_ptr->temp_param_data_ptr[0];
+		result_param_ptr->prv_param_data = pm_cxt_ptr->getting_data_ptr[0];
 		result_param_ptr->prv_param_num = param_counts;
 		result_param_ptr->prv_param_data->mode_id = pm_cxt_ptr->prv_mode_id;
 
-		param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[1];
-		rtn = isp_pm_get_setting_param(pm_cxt_ptr, param_data_ptr, &param_counts,
-			all_setting_flag, pm_cxt_ptr->cap_mode_id, ISP_SCENE_CAP);
+		param_data_ptr = pm_cxt_ptr->getting_data_ptr[1];
+		rtn = isp_pm_get_setting_param(pm_cxt_ptr,
+				param_data_ptr, &param_counts,
+				all_setting_flag, ISP_SCENE_CAP);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			ISP_LOGV("fail to do isp_pm_get_setting_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
-		result_param_ptr->cap_param_data = pm_cxt_ptr->temp_param_data_ptr[1];
+
+		result_param_ptr->cap_param_data = pm_cxt_ptr->getting_data_ptr[1];
 		result_param_ptr->cap_param_num = param_counts;
 		result_param_ptr->cap_param_data->mode_id = pm_cxt_ptr->cap_mode_id;
-		break;
-	}
-	case ISP_PM_CMD_GET_SINGLE_SETTING:
-	{
+	} else if (cmd ==  ISP_PM_CMD_GET_SINGLE_SETTING) {
 		cmr_u32 blk_idx = 0;
 
-		param_data_ptr = pm_cxt_ptr->temp_param_data;
-		rtn = isp_pm_get_single_block_param(pm_cxt_ptr, (struct isp_pm_ioctl_input *)in_ptr,
-			param_data_ptr, &param_counts, &blk_idx, pm_cxt_ptr->mode_id, ISP_SCENE_PRV);
+		if (in_ptr == NULL) {
+			ISP_LOGE("null input ptr.\n");
+			return ISP_ERROR;
+		}
+
+		param_data_ptr = pm_cxt_ptr->single_block_data;
+		rtn = isp_pm_get_single_block_param(pm_cxt_ptr,
+				(struct isp_pm_ioctl_input *)in_ptr, param_data_ptr,
+				&param_counts, &blk_idx, ISP_SCENE_PRV);
 		if (ISP_SUCCESS != rtn || blk_idx == ISP_TUNE_BLOCK_MAX) {
-			ISP_LOGE("fail to do isp_pm_get_single_block_param");
+			ISP_LOGV("fail to do isp_pm_get_single_block_param");
 			rtn = ISP_ERROR;
 			return rtn;
 		}
 
 		result_ptr = (struct isp_pm_ioctl_output *)out_ptr;
-		result_ptr->param_data = &pm_cxt_ptr->temp_param_data[blk_idx];
+		result_ptr->param_data = &pm_cxt_ptr->single_block_data[blk_idx];
 		result_ptr->param_num = param_counts;
 		result_ptr->param_data->mode_id = pm_cxt_ptr->mode_id;
-		break;
-	}
-	case ISP_PM_CMD_GET_AE_VERSION_ID:
-	{
-		cmr_s32 *version_id = (cmr_s32 *)out_ptr;
 
-		for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
-			mode_param_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[j];
-			if (PNULL != mode_param_ptr) {
-				blk_header_array = (struct isp_pm_block_header *)mode_param_ptr->header;
-				blk_num = mode_param_ptr->block_num;
-				for (i = 0; i < blk_num; i++) {
-					if (ISP_BLK_AE_NEW == blk_header_array[i].block_id) {
-						*version_id = blk_header_array[i].version_id;
-					}
-					if (-1 != *version_id) {
-						break;
-					}
-				}
-			} else {
-				continue;
-			}
-			if (-1 != *version_id) {
-				break;
-			}
-		}
-		break;
-	}
-	case ISP_PM_CMD_GET_INIT_AE:
-		block_id = ISP_BLK_AE_NEW;
-		break;
-	case ISP_PM_CMD_GET_INIT_ALSC:
-		block_id = ISP_BLK_ALSC;
-		break;
-	case ISP_PM_CMD_GET_INIT_AWB:
-		block_id = ISP_BLK_AWB_NEW;
-		break;
-	case ISP_PM_CMD_GET_INIT_AF:
-	case ISP_PM_CMD_GET_INIT_AF_NEW:
-		block_id = ISP_BLK_AF_NEW;
-		break;
-	case ISP_PM_CMD_GET_INIT_SMART:
-		block_id = ISP_BLK_SMART;
-		break;
-	case ISP_PM_CMD_GET_INIT_AFT:
-		block_id = ISP_BLK_AFT;
-		break;
-	case ISP_PM_CMD_GET_THIRD_PART_INIT_SFT_AF:
-		block_id = ISP_BLK_SFT_AF;
-		break;
-	case ISP_PM_CMD_GET_INIT_DUAL_FLASH:
-		block_id = ISP_BLK_DUAL_FLASH;
-		break;
-	default:
-		break;
-	}
-
-	if (block_id != 0) {
-
-		param_data_ptr = pm_cxt_ptr->temp_param_data_ptr[0];
-		rtn = isp_pm_get_mode_block_param(pm_cxt_ptr, cmd, param_data_ptr,
-			&param_counts, block_id);
-		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_mode_block_param");
-			rtn = ISP_ERROR;
-			return rtn;
+	} else {
+		switch (cmd) {
+		case ISP_PM_CMD_GET_INIT_AE:
+			block_id = ISP_BLK_AE_NEW;
+			break;
+		case ISP_PM_CMD_GET_INIT_ALSC:
+			block_id = ISP_BLK_ALSC;
+			break;
+		case ISP_PM_CMD_GET_INIT_AWB:
+			block_id = ISP_BLK_AWB_NEW;
+			break;
+		case ISP_PM_CMD_GET_INIT_AF:
+		case ISP_PM_CMD_GET_INIT_AF_NEW:
+			block_id = ISP_BLK_AF_NEW;
+			break;
+		case ISP_PM_CMD_GET_INIT_SMART:
+			block_id = ISP_BLK_SMART;
+			break;
+		case ISP_PM_CMD_GET_INIT_AFT:
+			block_id = ISP_BLK_AFT;
+			break;
+		case ISP_PM_CMD_GET_INIT_DUAL_FLASH:
+			block_id = ISP_BLK_DUAL_FLASH;
+			break;
+		case ISP_PM_CMD_GET_AE_SYNC:
+			block_id = ISP_BLK_AE_SYNC;
+			break;
+		case ISP_PM_CMD_GET_4IN1_PARAM:
+			block_id = ISP_BLK_4IN1_PARAM;
+			break;
+		case ISP_PM_CMD_GET_INIT_PDAF:
+			block_id = ISP_BLK_PDAF_TUNE;
+			break;
+		case ISP_PM_CMD_GET_INIT_TOF:
+			block_id = ISP_BLK_TOF_TUNE;
+			break;
+		case ISP_PM_CMD_GET_ATM_PARAM:
+			block_id = ISP_BLK_ATM_TUNE;
+			break;
+		default:
+			break;
 		}
 
-		result_ptr = (struct isp_pm_ioctl_output *)out_ptr;
-		result_ptr->param_data = pm_cxt_ptr->temp_param_data_ptr[0];
-		result_ptr->param_num = param_counts;
+		if (block_id != 0) {
+			param_data_ptr = pm_cxt_ptr->getting_data_ptr[0];
+			rtn = isp_pm_get_mode_block_param(pm_cxt_ptr, cmd, param_data_ptr,
+				&param_counts, block_id);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGV("fail to do isp_pm_get_mode_block_param");
+				rtn = ISP_ERROR;
+				return rtn;
+			}
+
+			result_ptr = (struct isp_pm_ioctl_output *)out_ptr;
+			result_ptr->param_data = pm_cxt_ptr->getting_data_ptr[0];
+			result_ptr->param_num = param_counts;
+		}
 	}
 
 	return rtn;
@@ -1011,8 +872,8 @@ static cmr_s32 isp_pm_mode_common_to_other
 			}
 		}
 		if (j == other_block_num) {
-			memcpy((cmr_u8 *)&mode_other_list_out->header[temp_block_num],
-				(cmr_u8 *)&mode_common_in->header[i], sizeof(struct isp_pm_block_header));
+			memcpy((void *)&mode_other_list_out->header[temp_block_num],
+				(void *)&mode_common_in->header[i], sizeof(struct isp_pm_block_header));
 			mode_other_list_out->header[temp_block_num].source_flag = mode_common_in->mode_id;
 			mode_other_list_out->header[temp_block_num].mode_id = mode_other_list_out->mode_id;
 			temp_block_num++;
@@ -1024,17 +885,11 @@ static cmr_s32 isp_pm_mode_common_to_other
 	return rtn;
 }
 
-static cmr_s32 isp_pm_param_list_deinit(cmr_handle handle)
+static cmr_s32 isp_pm_mode_list_deinit(cmr_handle handle)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
-
-	if (PNULL == pm_cxt_ptr) {
-		ISP_LOGE("fail to get valid pm_cxt_ptr");
-		rtn = ISP_ERROR;
-		return rtn;
-	}
 
 	for (i = 0; i < ISP_TUNE_MODE_MAX; i++) {
 		if (pm_cxt_ptr->tune_mode_array[i]) {
@@ -1047,14 +902,14 @@ static cmr_s32 isp_pm_param_list_deinit(cmr_handle handle)
 		}
 	}
 
-	if (PNULL != pm_cxt_ptr->temp_param_data_ptr[0]) {
-		free(pm_cxt_ptr->temp_param_data_ptr[0]);
-		pm_cxt_ptr->temp_param_data_ptr[0] = PNULL;
+	if (PNULL != pm_cxt_ptr->getting_data_ptr[0]) {
+		free(pm_cxt_ptr->getting_data_ptr[0]);
+		pm_cxt_ptr->getting_data_ptr[0] = PNULL;
 	}
 
-	if (PNULL != pm_cxt_ptr->temp_param_data_ptr[1]) {
-		free(pm_cxt_ptr->temp_param_data_ptr[1]);
-		pm_cxt_ptr->temp_param_data_ptr[1] = PNULL;
+	if (PNULL != pm_cxt_ptr->getting_data_ptr[1]) {
+		free(pm_cxt_ptr->getting_data_ptr[1]);
+		pm_cxt_ptr->getting_data_ptr[1] = PNULL;
 	}
 
 	ISP_LOGV("isp_pm_param_list_deinit : done");
@@ -1062,7 +917,7 @@ static cmr_s32 isp_pm_param_list_deinit(cmr_handle handle)
 	return rtn;
 }
 
-static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
+static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	struct isp_pm_init_input *input, struct isp_pm_init_output *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -1097,15 +952,19 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == input) || (PNULL == output)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, input = %p, output = %p",
-			pm_cxt_ptr, input, output);
+	if ((PNULL == pm_cxt_ptr) || (PNULL == input)) {
+		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, input = %p",
+			pm_cxt_ptr, input);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
 
 	multi_nr_flag = SENSOR_MULTI_MODE_FLAG;//SENSOR_DEFAULT_MODE_FLAG
-	output->multi_nr_flag = multi_nr_flag;
+	if (output)
+		output->multi_nr_flag = multi_nr_flag;
+
+	pm_cxt_ptr->is_4in1_sensor = input->is_4in1_sensor;
+	ISP_LOGV("is_4in1_sensor = %d", pm_cxt_ptr->is_4in1_sensor);
 
 	nr_fix_ptr = input->nr_fix_info;
 	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
@@ -1318,12 +1177,19 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				nr_set_size = sizeof(struct sensor_yuv_noisefilter_level);
 				break;
 			}
+			case ISP_BLK_CNR2:
+			{
+				/* todo: update CNR block
+				isp_blk_nr_type = ISP_BLK_CNR2_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr2);
+				nr_set_size = sizeof(struct sensor_cnr_level); */
+				break;
+			}
 			default:
 				break;
 			}
 
-			if (src_header[j].block_id == ISP_BLK_PDAF_CORRECT
-				|| src_header[j].block_id == ISP_BLK_RGB_DITHER
+			if (src_header[j].block_id == ISP_BLK_RGB_DITHER
 				|| src_header[j].block_id == DCAM_BLK_BPC
 				|| src_header[j].block_id == ISP_BLK_GRGB
 				|| src_header[j].block_id == ISP_BLK_CFA
@@ -1337,7 +1203,8 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 				|| src_header[j].block_id == ISP_BLK_UV_CDN
 				|| src_header[j].block_id == ISP_BLK_UV_POSTCDN
 				|| src_header[j].block_id == ISP_BLK_IIRCNR_IIR
-				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER) {
+				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER
+				|| src_header[j].block_id == ISP_BLK_CNR2) {
 
 				dst_blk_data = (struct isp_pm_nr_simple_header_param *)dst_data_ptr;
 				memset((void *)dst_blk_data, 0x00, sizeof(struct isp_pm_nr_simple_header_param));
@@ -1384,24 +1251,20 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 	}
 
 	for (i = ISP_MODE_ID_COMMON; i < ISP_TUNE_MODE_MAX; i++) {
-		if (PNULL == (cmr_u8 *)pm_cxt_ptr->tune_mode_array[i]) {
+		if (pm_cxt_ptr->tune_mode_array[i] == PNULL)
 			continue;
-		}
-		memcpy((cmr_u8 *)pm_cxt_ptr->merged_mode_array[i],
-			(cmr_u8 *)pm_cxt_ptr->tune_mode_array[i], sizeof(struct isp_pm_mode_param));
 
-		if (0 == pm_cxt_ptr->param_source) {
-			memset((void *)&pm_cxt_ptr->cxt_array[i], 0x00, sizeof(pm_cxt_ptr->cxt_array[i]));
-		}
-
+		memcpy((void *)pm_cxt_ptr->merged_mode_array[i],
+			(void *)pm_cxt_ptr->tune_mode_array[i], sizeof(struct isp_pm_mode_param));
 	}
 
 	for (i = ISP_MODE_ID_PRV_0; i < ISP_TUNE_MODE_MAX; i++) {
-		if (PNULL == pm_cxt_ptr->merged_mode_array[i]) {
+		if (pm_cxt_ptr->merged_mode_array[i] == PNULL)
 			continue;
-		}
-		rtn = isp_pm_mode_common_to_other(pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_COMMON],
-			pm_cxt_ptr->merged_mode_array[i]);
+
+		rtn = isp_pm_mode_common_to_other(
+				pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_COMMON],
+				pm_cxt_ptr->merged_mode_array[i]);
 		if (ISP_SUCCESS != rtn) {
 			ISP_LOGE("fail to do isp_pm_mode_common_to_other");
 			rtn = ISP_ERROR;
@@ -1410,57 +1273,109 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 	}
 
 	size = max_num * ISP_TUNE_MODE_MAX * sizeof(struct isp_pm_param_data);
+	ISP_LOGD("temp data size: %d\n", size);
 
-	pm_cxt_ptr->temp_param_data_ptr[0] = (struct isp_pm_param_data *)malloc(size);
-	if (PNULL == pm_cxt_ptr->temp_param_data_ptr[0]) {
-		ISP_LOGE("fail to malloc temp_param_data_ptr[0]");
+	pm_cxt_ptr->getting_data_ptr[0] = (struct isp_pm_param_data *)malloc(size);
+	if (PNULL == pm_cxt_ptr->getting_data_ptr[0]) {
+		ISP_LOGE("fail to malloc getting_data_ptr[0]");
 		rtn = ISP_ERROR;
 		goto init_param_list_error_exit;
 	}
-	memset((void *)pm_cxt_ptr->temp_param_data_ptr[0], 0x00, size);
+	memset((void *)pm_cxt_ptr->getting_data_ptr[0], 0x00, size);
 
-	pm_cxt_ptr->temp_param_data_ptr[1] = (struct isp_pm_param_data *)malloc(size);
-	if (PNULL == pm_cxt_ptr->temp_param_data_ptr[1]) {
-		ISP_LOGE("fail to malloc temp_param_data_ptr[1]");
+	pm_cxt_ptr->getting_data_ptr[1] = (struct isp_pm_param_data *)malloc(size);
+	if (PNULL == pm_cxt_ptr->getting_data_ptr[1]) {
+		ISP_LOGE("fail to malloc getting_data_ptr[1]");
 		rtn = ISP_ERROR;
 		goto init_param_list_error_exit;
 	}
-	memset((void *)pm_cxt_ptr->temp_param_data_ptr[1], 0x00, size);
-
-	pm_cxt_ptr->active_mode[ISP_SCENE_PRV] =
-		(struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_PRV_0];
-	pm_cxt_ptr->active_mode[ISP_SCENE_CAP] =
-		(struct isp_pm_mode_param *)pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_CAP_0];
-
-	pm_cxt_ptr->cxt_array[ISP_SCENE_PRV].mode_id =
-		pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_PRV_0]->mode_id;
-	pm_cxt_ptr->cxt_array[ISP_SCENE_CAP].mode_id =
-		pm_cxt_ptr->merged_mode_array[ISP_MODE_ID_CAP_0]->mode_id;
-
-	rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, ISP_MODE_ID_PRV_0, ISP_SCENE_PRV);
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to do isp_pm_context_init");
-		rtn = ISP_ERROR;
-		goto init_pm_context_error_exit;
-	}
-	rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, ISP_MODE_ID_CAP_0, ISP_SCENE_CAP);
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to do isp_pm_context_init");
-		rtn = ISP_ERROR;
-		goto init_pm_context_error_exit;
-	}
+	memset((void *)pm_cxt_ptr->getting_data_ptr[1], 0x00, size);
 
 	ISP_LOGV("isp_pm_param_list_init : done");
 
 	return rtn;
 
-init_pm_context_error_exit:
-	isp_pm_context_deinit((cmr_handle)pm_cxt_ptr);
-
 init_param_list_error_exit:
 
-	isp_pm_param_list_deinit((cmr_handle)pm_cxt_ptr);
+	isp_pm_mode_list_deinit((cmr_handle)pm_cxt_ptr);
 
+	return rtn;
+}
+
+static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
+	struct isp_pm_init_input *input, struct isp_pm_init_output *output)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i;
+	struct isp_context *isp_cxt_ptr = PNULL;
+	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
+
+	rtn = isp_pm_mode_list_init(handle, input, output);
+	if (rtn)
+		return rtn;
+
+	/* init or update prev context */
+	if (pm_cxt_ptr->param_source != ISP_PARAM_FROM_TOOL) {
+		for (i = ISP_MODE_ID_PRV_0; i <= ISP_MODE_ID_PRV_3; i++) {
+			if (pm_cxt_ptr->merged_mode_array[i] == PNULL)
+				continue;
+			pm_cxt_ptr->active_mode[ISP_SCENE_PRV] = pm_cxt_ptr->merged_mode_array[i];
+			pm_cxt_ptr->cxt_array[ISP_SCENE_PRV] = malloc(sizeof(struct isp_context));
+			if (pm_cxt_ptr->cxt_array[ISP_SCENE_PRV] == PNULL) {
+				ISP_LOGE("fail to alloc cxt_array for pre\n");
+				rtn = ISP_ERROR;
+				goto init_error;
+			}
+			isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_PRV];
+			memset(isp_cxt_ptr, 0, sizeof(struct isp_context));
+			isp_cxt_ptr->is_validate = 1;
+			isp_cxt_ptr->mode_id = pm_cxt_ptr->active_mode[ISP_SCENE_PRV]->mode_id;
+			break;
+		}
+	} else {
+		isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_PRV];
+	}
+
+	if (isp_cxt_ptr && isp_cxt_ptr->is_validate) {
+		rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, ISP_SCENE_PRV);
+		if (rtn)
+			goto init_error;
+	}
+
+	/* init or update capture context */
+	if (pm_cxt_ptr->param_source != ISP_PARAM_FROM_TOOL) {
+		for (i = ISP_MODE_ID_CAP_0; i <= ISP_MODE_ID_CAP_3; i++) {
+			if (pm_cxt_ptr->merged_mode_array[i] == PNULL)
+				continue;
+			pm_cxt_ptr->active_mode[ISP_SCENE_CAP] = pm_cxt_ptr->merged_mode_array[i];
+			pm_cxt_ptr->cxt_array[ISP_SCENE_CAP] = malloc(sizeof(struct isp_context));
+			if (pm_cxt_ptr->cxt_array[ISP_SCENE_CAP] == PNULL) {
+				ISP_LOGE("fail to alloc cxt_array for pre\n");
+				rtn = ISP_ERROR;
+				goto init_error;
+			}
+			isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_CAP];
+			memset(isp_cxt_ptr, 0, sizeof(struct isp_context));
+			isp_cxt_ptr->is_validate = 1;
+			isp_cxt_ptr->mode_id = pm_cxt_ptr->active_mode[ISP_SCENE_CAP]->mode_id;
+			break;
+		}
+	} else {
+		isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_CAP];
+	}
+
+	if (isp_cxt_ptr && isp_cxt_ptr->is_validate) {
+		rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, ISP_SCENE_CAP);
+		if (rtn)
+			goto init_error;
+	}
+
+	ISP_LOGD("done.\n");
+
+	return ISP_SUCCESS;
+
+init_error:
+	ISP_LOGE("failed\n");
 	return rtn;
 }
 
@@ -1474,6 +1389,8 @@ cmr_handle isp_pm_init(struct isp_pm_init_input *input, struct isp_pm_init_outpu
 		goto init_error_exit;
 	}
 
+	rtn = isp_pm_raw_para_update_from_file(input->sensor_raw_info_ptr);
+
 	pm_cxt_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
 	if (PNULL == pm_cxt_ptr) {
 		ISP_LOGE("fail to malloc pm_cxt_ptr");
@@ -1482,28 +1399,23 @@ cmr_handle isp_pm_init(struct isp_pm_init_input *input, struct isp_pm_init_outpu
 	memset((void *)pm_cxt_ptr, 0x00, sizeof(struct isp_pm_context));
 
 	pm_cxt_ptr->magic_flag = ISP_PM_MAGIC_FLAG;
-
 	pthread_mutex_init(&pm_cxt_ptr->pm_mutex, NULL);
 
-	rtn = isp_pm_check_handle((cmr_handle)pm_cxt_ptr);
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to do isp_pm_check_handle");
-		goto init_error_exit;
-	}
-
-	rtn = isp_pm_param_list_init((cmr_handle)pm_cxt_ptr, input, output);
+	pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
+	rtn = isp_pm_param_init_and_update((cmr_handle)pm_cxt_ptr, input, output);
+	pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to isp_pm_param_list_init");
 		goto init_error_exit;
 	}
 
-	ISP_LOGI("isp_pm_init : done");
-
+	ISP_LOGI("done\n");
 	return (cmr_handle)pm_cxt_ptr;
 
 init_error_exit:
-
 	if (PNULL != pm_cxt_ptr) {
+		isp_pm_context_deinit((cmr_handle)pm_cxt_ptr);
+		isp_pm_mode_list_deinit((cmr_handle)pm_cxt_ptr);
 		pthread_mutex_destroy(&pm_cxt_ptr->pm_mutex);
 		free(pm_cxt_ptr);
 		pm_cxt_ptr = PNULL;
@@ -1526,26 +1438,16 @@ cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *
 	case ISP_PM_CMD_SET_BASE:
 		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
 		rtn = isp_pm_set_param((cmr_handle)pm_cxt_ptr, cmd, input);
-		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_set_param : cmd = 0x%x", cmd);
-			pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
-			return rtn;
-		}
 		pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 		break;
 	case ISP_PM_CMD_GET_BASE:
 	case ISP_PM_CMD_GET_THIRD_PART_BASE:
-		if (pm_cxt_ptr->param_source) {
+		if (pm_cxt_ptr->param_source == ISP_PARAM_FROM_TOOL) {
 			ISP_LOGI("isp tool is writing param");
 			return ISP_ERROR;
 		}
 		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
 		rtn = isp_pm_get_param((cmr_handle)pm_cxt_ptr, cmd, input, output);
-		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_param : cmd = 0x%x", cmd);
-			pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
-			return rtn;
-		}
 		pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 		break;
 	default:
@@ -1573,13 +1475,12 @@ cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void 
 	}
 
 	if (ISP_PM_CMD_UPDATE_ALL_PARAMS == cmd) {
-		rtn = isp_pm_param_list_init((cmr_handle)pm_cxt_ptr, input, output);
-		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_param_list_init");
-			return rtn;
-		}
+		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
+		rtn = isp_pm_param_init_and_update((cmr_handle)pm_cxt_ptr, input, output);
+		pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 	}
 
+	ISP_LOGI("done\n");
 	return rtn;
 }
 
@@ -1595,15 +1496,12 @@ cmr_s32 isp_pm_deinit(cmr_handle handle)
 		return rtn;
 	}
 
-	if (PNULL != pm_cxt_ptr) {
-		pthread_mutex_destroy(&pm_cxt_ptr->pm_mutex);
-		isp_pm_context_deinit((cmr_handle)pm_cxt_ptr);
-		isp_pm_param_list_deinit((cmr_handle)pm_cxt_ptr);
-		free(pm_cxt_ptr);
-		pm_cxt_ptr = PNULL;
-	}
+	pthread_mutex_destroy(&pm_cxt_ptr->pm_mutex);
+	isp_pm_context_deinit((cmr_handle)pm_cxt_ptr);
+	isp_pm_mode_list_deinit((cmr_handle)pm_cxt_ptr);
+	free(pm_cxt_ptr);
+	pm_cxt_ptr = PNULL;
 
-	ISP_LOGI("isp_pm_deinit : done");
-
+	ISP_LOGI("done\n");
 	return rtn;
 }

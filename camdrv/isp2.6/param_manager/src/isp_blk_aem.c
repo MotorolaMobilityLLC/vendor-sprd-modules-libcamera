@@ -60,6 +60,11 @@ cmr_s32 _pm_rgb_aem_get_param(void *rgb_aem_param, cmr_u32 cmd, void *rtn_param0
 		*update_flag = 0;
 		break;
 
+	case ISP_PM_BLK_AEM_WIN:
+		param_data_ptr->data_ptr = &rgb_aem_ptr->win_num;
+		param_data_ptr->data_size = sizeof(rgb_aem_ptr->win_num);
+		break;
+
 	default:
 		break;
 	}

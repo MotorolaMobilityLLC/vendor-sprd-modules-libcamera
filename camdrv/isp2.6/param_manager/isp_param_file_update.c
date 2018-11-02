@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #define SCENE_INFO_NUM 10
 #define ISP_PARAM_VERSION_V25 0x0007
 
-char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
+char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
 	"bayer_nr",
 	"vst",
 	"ivst",
@@ -47,9 +47,10 @@ char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"ee",
 	"iircnr",
 	"yuv_noisefilter",
+	"cnr",
 };
 
-char nr_mode_name[MAX_MODE_NUM][8] = {
+char nr_mode_name[MAX_MODE_NUM][12] = {
 	"common",
 	"prv_0",
 	"prv_1",
@@ -66,7 +67,7 @@ char nr_mode_name[MAX_MODE_NUM][8] = {
 	"main",
 };
 
-char nr_scene_name[MAX_SCENEMODE_NUM][16] = {
+char nr_scene_name[MAX_SCENEMODE_NUM][12] = {
 	"normal",
 	"night",
 	"sport",
@@ -394,8 +395,8 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 	cmr_s32 i, j;
 	char *ae_tab_info[5] = { NULL };
 	char *ae_scene_info[6] = { NULL };
-	char ae_auto_iso_info[50];
-	char ae_weight_info[50];
+	char ae_auto_iso_info[64];
+	char ae_weight_info[64];
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
 	if (NULL == line_buf) {
@@ -405,7 +406,7 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 	}
 
 	for (i = 0; i < 5; i++) {
-		ae_tab_info[i] = (char *)malloc(50 * sizeof(char));
+		ae_tab_info[i] = (char *)malloc(64 * sizeof(char));
 		if (NULL == ae_tab_info[i]) {
 			ISP_LOGE("fail to malloc mem!");
 			rtn = 0x01;
@@ -414,7 +415,7 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 	}
 
 	for (i = 0; i < 6; i++) {
-		ae_scene_info[i] = (char *)malloc(50 * sizeof(char));
+		ae_scene_info[i] = (char *)malloc(64 * sizeof(char));
 		if (NULL == ae_scene_info[i]) {
 			ISP_LOGE("fail to malloc mem!");
 			rtn = 0x01;
@@ -1084,7 +1085,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	cmr_u8 *nr_param_ptr = PNULL;
 	cmr_u32 size_of_per_unit = 0;
 	FILE *fp = NULL;
-	char filename[80];
+	char filename[256];
 
 	if (PNULL == sensor_raw_ptr) {
 		ISP_LOGE("fail to get valid param : sensor_raw_ptr = %p", sensor_raw_ptr);
@@ -1110,6 +1111,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	nr_set_size[ISP_BLK_POSTCDN_T] = sizeof(struct sensor_uv_postcdn_level);
 	nr_set_size[ISP_BLK_IIRCNR_T] = sizeof(struct sensor_iircnr_level);
 	nr_set_size[ISP_BLK_YUV_NOISEFILTER_T] = sizeof(struct sensor_yuv_noisefilter_level);
+	//nr_set_size[ISP_BLK_CNR2_T] = sizeof(struct sensor_cnr_level);
 
 	nr_map_ptr = sensor_raw_ptr->nr_fix.nr_scene_ptr;
 	multi_nr_scene_map_ptr = (cmr_u32 *)&(nr_map_ptr->nr_scene_map[0]);
@@ -1196,7 +1198,7 @@ cmr_s32 update_param_v25(struct sensor_raw_info * sensor_raw_ptr, const char *se
 	}
 
 	for (i = 0; i < 14; i++) {
-		filename[i] = (char *)malloc(128 * sizeof(char));
+		filename[i] = (char *)malloc(256 * sizeof(char));
 		if (NULL == filename[i]) {
 			ISP_LOGE("fail to malloc mem!");
 			rtn = 0x01;
@@ -1366,8 +1368,8 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 
 	cmr_s32 version = 0;
 	char *filename = NULL;
-	char filename0[80];
-	char filename1[80];
+	char filename0[256];
+	char filename1[256];
 	sensor_name = (char *)&sensor_raw_info_ptr->version_info->sensor_ver_name.sensor_name;
 
 	sprintf(filename0, "%ssensor_%s_raw_param.c", CAMERA_DUMP_PATH, sensor_name);
@@ -1401,7 +1403,7 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 	}
 	return rtn;
 }
-
+#if 0
 #ifndef WIN32
 cmr_u32 isp_raw_para_update_from_file(SENSOR_INFO_T * sensor_info_ptr, SENSOR_ID_E sensor_id)
 {
@@ -1412,4 +1414,5 @@ cmr_u32 isp_raw_para_update_from_file(SENSOR_INFO_T * sensor_info_ptr, SENSOR_ID
 
 	return rtn;
 }
+#endif
 #endif

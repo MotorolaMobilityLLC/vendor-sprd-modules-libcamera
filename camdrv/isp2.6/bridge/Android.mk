@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function -Werror
 
 # ************************************************
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(LOCAL_PATH)/../../../kernel_module/interface \
 	$(LOCAL_PATH)/../../../common/inc
 
 # ************************************************
@@ -58,6 +59,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
+LOCAL_CFLAGS += -DTEST_ON_HAPS
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))

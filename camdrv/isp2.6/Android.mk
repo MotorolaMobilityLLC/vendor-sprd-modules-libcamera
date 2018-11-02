@@ -29,7 +29,7 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../kernel_module/interface \
 	$(LOCAL_PATH)/../../common/inc \
-	$(LOCAL_PATH)/../../oem2v1/inc \
+	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
@@ -58,15 +58,13 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/isp_tune \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
-	$(LOCAL_PATH)/bridge \
-	$(LOCAL_PATH)/param_parse
+	$(LOCAL_PATH)/bridge
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 LOCAL_SRC_FILES := $(call all-c-files-under, driver) \
 	$(call all-c-files-under, isp_tune) \
-	$(call all-c-files-under, middleware) \
-	$(call all-c-files-under, param_parse)
+	$(call all-c-files-under, middleware)
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
@@ -83,6 +81,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
+LOCAL_CFLAGS += -DTEST_ON_HAPS
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))
