@@ -1440,29 +1440,6 @@ static void cmr_sns_check_fmove(struct cmr_sensor_handle *sensor_handle,
     cmr_u32 gain_val = 0;
     SENSOR_EXT_FUN_PARAM_T af_param;
 
-#if defined(CONFIG_CAMERA_CAF)
-    if (SENSOR_IMAGE_FORMAT_RAW !=
-        sensor_handle->sensor_cxt[camera_id].sensor_info_ptr->image_format) {
-        /* check whether need focus move */
-        memset(&af_param, 0, sizeof(af_param));
-        af_param.cmd = SENSOR_EXT_FOCUS_START;
-        af_param.param = SENSOR_EXT_FOCUS_CHECK_AF_GAIN;
-        ret = cmr_sns_ioctl(&sensor_handle->sensor_cxt[camera_id], SENSOR_FOCUS,
-                            (cmr_uint)&af_param);
-        CMR_LOGV("come here af_param.zone_cnt=%d", af_param.zone_cnt);
-        if (af_param.zone_cnt) {
-            CMR_LOGV("need focus move~~~");
-            pthread_mutex_lock(&sensor_handle->fmove_thread_cxt.cb_mutex);
-            if (sensor_handle->sensor_event_cb) {
-                (*sensor_handle->sensor_event_cb)(
-                    SENSOR_FOCUS_MOVE, (void *)100,
-                    sensor_handle->oem_handle); // 100 nothing ,only use to run
-                                                // param check
-            }
-            pthread_mutex_unlock(&sensor_handle->fmove_thread_cxt.cb_mutex);
-        }
-    }
-#endif
 }
 
 static cmr_int cmr_sns_fmove_proc(void *p_data) {
@@ -1507,18 +1484,6 @@ cmr_sns_create_fmove_thread(struct cmr_sensor_handle *sensor_handle) {
 
     CMR_LOGI("E is_inited thread %p",
              (void *)sensor_handle->fmove_thread_cxt.thread_handle);
-#if defined(CONFIG_CAMERA_CAF)
-    if (!sensor_handle->fmove_thread_cxt.thread_handle) {
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-        ret = pthread_create(&sensor_handle->fmove_thread_cxt.thread_handle,
-                             &attr, (void *(*)(void *))cmr_sns_fmove_proc,
-                             (void *)sensor_handle);
-        pthread_setname_np(sensor_handle->fmove_thread_cxt.thread_handle,
-                           "sns_fmove");
-        pthread_attr_destroy(&attr);
-    }
-#endif
     CMR_LOGI("X ret %ld", ret);
     return ret;
 }

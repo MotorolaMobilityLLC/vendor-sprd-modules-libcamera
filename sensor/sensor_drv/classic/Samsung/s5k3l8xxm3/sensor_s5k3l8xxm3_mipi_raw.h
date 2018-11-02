@@ -28,7 +28,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-//#define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 
 #include "parameters/sensor_s5k3l8xxm3_raw_param_v3.c"
 
