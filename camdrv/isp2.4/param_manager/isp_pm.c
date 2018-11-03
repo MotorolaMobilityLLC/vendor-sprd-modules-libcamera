@@ -26,6 +26,7 @@
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
+#include <utils/AndroidThreads.h>
 
 #define ISP_PM_BUF_NUM     10
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
@@ -162,19 +163,20 @@ cmr_s32 isp_mem_alloc(void)
 	ISP_LOGI("E");
 	if (isp_mem_ptr) {
 		ISP_LOGI("isp_mem_ptr not null");
-		return 0;
+		goto exit;
 	}
 
 	isp_mem_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
 	if (PNULL == isp_mem_ptr) {
 		ISP_LOGE("fail to malloc");
-		return -1;
+		goto exit;
 	}
 	ISP_LOGI("the isp_pm_context: %p, size %d", isp_mem_ptr, sizeof(struct isp_pm_context));
 
 	memset((void *)isp_mem_ptr, 0x00, sizeof(struct isp_pm_context));
-	sem_post(&sem_mem);
 
+exit:
+	sem_post(&sem_mem);
 	ISP_LOGI("X");
 
 	return 0;
@@ -204,7 +206,7 @@ cmr_int isp_create_mem_thread(void)
     pthread_attr_t attr;
     pthread_t handle;
 
-    sem_init(&sem_mem, 0, 1);
+    sem_init(&sem_mem, 0, 0);
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     rtn = pthread_create(&handle, &attr, thread_isp_proc, (void *)NULL);
@@ -213,9 +215,12 @@ cmr_int isp_create_mem_thread(void)
         return rtn;
     }
 
+    pid_t tid = pthread_gettid_np(handle);
+    androidSetThreadPriority(tid, -10);
+
     pthread_attr_destroy(&attr);
 
-    CMR_LOGI("done %ld", rtn);
+    CMR_LOGI("done tid %d, ret %ld",tid, rtn);
     return rtn;
 }
 
@@ -238,11 +243,11 @@ static cmr_handle isp_pm_context_create(void)
 	if (isp_mem_ptr == PNULL) {
 		ISP_LOGE("isp_mem_ptr is null fail, please check");
 		cxt_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
-		memset((void *)cxt_ptr, 0x00, sizeof(struct isp_pm_context));
 		if (PNULL == cxt_ptr) {
 			ISP_LOGE("fail to malloc");
 			return cxt_ptr;
 		}
+		memset((void *)cxt_ptr, 0x00, sizeof(struct isp_pm_context));
 	} else {
 		cxt_ptr = isp_mem_ptr;
 	}
