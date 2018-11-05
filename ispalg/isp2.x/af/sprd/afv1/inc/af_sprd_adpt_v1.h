@@ -242,6 +242,13 @@ struct af_iir_nr_info_u {
 	cmr_s16 iir_c10;
 };
 
+typedef struct _mlog_AFtime {
+	nsecs_t time_total;
+	nsecs_t system_time0_1;
+	nsecs_t system_time1_1;
+	char *AF_type;
+} mlog_AFtime;
+
 typedef struct _af_ctrl {
 	void *af_alg_cxt;			// AF_Data fv;
 	cmr_u32 af_dump_info_len;
@@ -317,6 +324,7 @@ typedef struct _af_ctrl {
 	cmr_u32 camera_id;
 	cmr_u32 sensor_role;
 	af_ctrl_br_ioctrl bridge_ctrl;
+	mlog_AFtime AFtime;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

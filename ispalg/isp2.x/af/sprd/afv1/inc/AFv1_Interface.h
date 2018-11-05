@@ -87,7 +87,8 @@ typedef enum _eAF_MODE {
 	PDAF,			//PDAF
 	TMODE_1,		//Test mode 1
 	Wait_Trigger,		//wait for AF trigger
-	TOF			//[TOF_---] // Time of flight
+	TOF,		//[TOF_---] // Time of flight
+	None,			//nothing to do
 } eAF_MODE;
 
 typedef enum _e_AF_TRIGGER {
@@ -271,7 +272,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*get_vcm_param) (cmr_u32 * param, void *cookie);
 	 cmr_u8(*af_log) (const char *format, ...);
 	 cmr_u8(*af_start_notify) (eAF_MODE AF_mode, void *cookie);
-	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, void *cookie);
+	 cmr_u8(*af_end_notify) (eAF_MODE AF_mode, cmr_u8 result, void *cookie);
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);

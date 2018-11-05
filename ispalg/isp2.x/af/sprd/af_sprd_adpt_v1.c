@@ -40,6 +40,21 @@ static double IMX351_phase_difference[IMX351_PD_AREA_NUMBER];
 static cmr_u32 IMX351_confidence_value[IMX351_PD_AREA_NUMBER];
 static cmr_u32 g_FrameID = 0;
 
+//#define Enable_mlog_AFtime
+
+#ifdef Enable_mlog_AFtime
+
+static char *focus_type_str[] = {
+		"SAF",
+		"CAF",
+		"FAF",
+		"PDAF",
+		"TOF",
+};
+
+#define FOCUS_TYPE_STR(state)    focus_type_str[state]
+
+#endif
 //IMX351 PD OTP Address
 //static cmr_u8 *pdaf_rdm_otp_data = NULL;
 //[TOF_+++]
@@ -498,6 +513,8 @@ static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 	struct af_result_param af_result;
 	af_result.focus_type = focus_type;
 	af->cb_ops.start_notice(af->caller, &af_result);
+
+
 }
 
 static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
@@ -508,6 +525,13 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
 	ISP_LOGV(". %s ", (win_num) ? "Suc" : "Fail");
 
 	af->cb_ops.end_notice(af->caller, &af_result);
+
+	#ifdef Enable_mlog_AFtime
+
+	af->AFtime.system_time1_1 = systemTime(CLOCK_MONOTONIC);
+	af->AFtime.time_total = ((af->AFtime.system_time1_1 - af->AFtime.system_time0_1) / 1000000);
+
+	#endif
 }
 
 // i/f to AF model
@@ -860,11 +884,41 @@ static cmr_u8 if_af_log(const char *format, ...)
 static cmr_u8 if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-	roi_info_t *r = &af->roi;
+
+	cmr_u8 notify_type = 0;
+	switch(AF_mode){
+		case SAF: notify_type = AF_FOCUS_SAF; break;
+		case CAF: notify_type = AF_FOCUS_CAF; break;
+		case FAF: notify_type = AF_FOCUS_FAF; break;
+		case PDAF: notify_type = AF_FOCUS_PDAF; break;
+		case TOF: notify_type = AF_FOCUS_TOF; break;
+
+		default: notify_type = AF_FOCUS_CAF; break;
+	}
+
+	ISP_LOGI("notify_start: mode[%d], type[%d]!!", AF_mode, notify_type);
+
+	if(AF_mode!=SAF){
+		notify_start(af, notify_type);
+	}
+
+#ifdef Enable_mlog_AFtime
+	af->AFtime.time_total = 0;
+	af->AFtime.system_time0_1 = systemTime(CLOCK_MONOTONIC);
+	if(AF_mode!=SAF){
+		af->AFtime.AF_type=FOCUS_TYPE_STR(notify_type);
+	}
+	else{
+		af->AFtime.AF_type=FOCUS_TYPE_STR(AF_FOCUS_SAF);
+	}
+#endif
+
+	/*roi_info_t *r = &af->roi;
 	cmr_u32 i;
 	UNUSED(AF_mode);
 
 	AF_Roi af_roi;
+
 	for (i = 0; i < r->num; ++i) {
 		af_roi.index = i;
 		af_roi.start_x = r->win[i].start_x;
@@ -873,14 +927,35 @@ static cmr_u8 if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 		af_roi.end_y = r->win[i].end_y;
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Record_Wins, &af_roi);
 	}
+	*/
 
 	return 0;
 }
 
-static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, void *cookie)
+static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, cmr_u8 AF_Result, void *cookie)
 {
+
+	/*
 	UNUSED(AF_mode);
 	UNUSED(cookie);
+	*/
+	af_ctrl_t *af = cookie;
+	cmr_u8 notify_type = 0;
+
+	switch(AF_mode){
+		case SAF: notify_type = AF_FOCUS_SAF; break;
+		case CAF: notify_type = AF_FOCUS_CAF; break;
+		case FAF: notify_type = AF_FOCUS_FAF; break;
+		case PDAF: notify_type = AF_FOCUS_PDAF; break;
+		case TOF: notify_type = AF_FOCUS_TOF; break;
+
+		default: notify_type = AF_FOCUS_CAF; break;
+	}
+
+	ISP_LOGI("notify_stop: mode[%d], type[%d], result[%d]!!!", AF_mode, notify_type, AF_Result);
+
+	notify_stop(af, (HAVE_PEAK == AF_Result ? 1 : 0), notify_type);
+
 	return 0;
 }
 
@@ -1828,7 +1903,7 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
-	notify_start(af, AF_FOCUS_FAF);
+	//notify_start(af, AF_FOCUS_FAF);
 }
 
 static cmr_s32 faf_process_frame(af_ctrl_t * af)
@@ -1841,7 +1916,7 @@ static cmr_s32 faf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == alg_mode) {
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
 
-		notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_FAF);
+		//notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_FAF);
 		ISP_LOGI("notify_stop, result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
 		return 1;
 	} else {
@@ -1861,6 +1936,7 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
+
 }
 
 static cmr_s32 saf_process_frame(af_ctrl_t * af)
@@ -1872,7 +1948,7 @@ static cmr_s32 saf_process_frame(af_ctrl_t * af)
 	if (Wait_Trigger == alg_mode) {
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
 
-		notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_SAF);
+		//notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_SAF);
 		ISP_LOGI("notify_stop, result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
 		return 1;
 	} else {
@@ -1919,6 +1995,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 
+	/*
 	af->hal_trigger_type = p_aft_result->is_caf_trig;
 	switch(af->hal_trigger_type){
 		case AFT_TRIG_CB:
@@ -1933,6 +2010,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 		default:
 			break;
 	}
+	*/
 
 	af->vcm_stable = 0;
 }
@@ -1948,6 +2026,7 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
 		ISP_LOGI("result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
 
+		/*
 		if (AFT_TRIG_CB == af->hal_trigger_type) {
 			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_CAF);
 		} else if(AFT_TRIG_PD == af->hal_trigger_type){
@@ -1955,7 +2034,9 @@ static cmr_s32 caf_process_frame(af_ctrl_t * af)
 		}else if(AF_FOCUS_TOF == af->hal_trigger_type){
 			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_TOF);
 		}
+
 		ISP_LOGV("notify_stop.");
+		*/
 		af->hal_trigger_type = AFT_TRIG_NONE;
 		return 1;
 	} else {
@@ -1988,7 +2069,7 @@ static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
-	notify_start(af, AF_FOCUS_CAF);
+	//notify_start(af, AF_FOCUS_CAF);
 	af->vcm_stable = 0;
 }
 //[TOF_---]
@@ -2046,9 +2127,13 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 	} else {
 		if (AFT_CANC_FD == result->is_cancel_caf || AFT_CANC_CB == result->is_cancel_caf) {
 			af_stop_search(af);
+
+			/*
 			if (AFT_TRIG_CB == af->hal_trigger_type) {
 				notify_stop(af, 0, AF_FOCUS_CAF);// need to be pair with notify_start only for caf
 			}
+			*/
+
 		}
 		if (AFT_CANC_FD_GONE == result->is_cancel_caf) {
 			af_stop_search(af);
@@ -2070,6 +2155,8 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
+
+	//res.is_caf_trig; //trigger mode
 
 	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state)) {
 		caf_monitor_trigger(af, prm, &res);
@@ -2253,8 +2340,6 @@ static void caf_monitor_tof(af_ctrl_t * af)
 	prm->tof_info.distance = af->tof.data.RangeMilliMeter;
 	prm->tof_info.MAXdistance = af->tof.data.RangeDMaxMilliMeter;
 
-
-
 	caf_monitor_calc(af, prm);
 
 	return;
@@ -2430,6 +2515,7 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 		//wait saf/caf done, caf : for camera enter, switch to manual; saf : normal non zsl
 		af_stop_search(af);
 
+		/*
 		switch(af->state){
 		case STATE_CAF:
 		case STATE_RECORD_CAF:
@@ -2451,6 +2537,7 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 		default:
 			break;
 		}
+		*/
 		af->hal_trigger_type = AFT_TRIG_NONE;
 	}
 
@@ -3847,6 +3934,26 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	ATRACE_END();
 	system_time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time1 - system_time0) / 1000));
+
+	#ifdef Enable_mlog_AFtime
+
+		char value[PROPERTY_VALUE_MAX] = { '\0' };
+		property_get("persist.vendor.cam.AFTIME.enable", value, "0");
+
+		if(atoi(value) == 1){
+
+				FILE *pf = NULL;
+				const char saveLogFile[50] = "/data/mlog/aftime.txt";
+				pf = fopen(saveLogFile, "wb");
+				if (NULL != pf){
+
+					fprintf(pf, "\n\n\n");
+					fprintf(pf, "TYPE:%s\n\n",af->AFtime.AF_type);
+					fprintf(pf, "FOCUS TIME:%ld ms\n",(unsigned long)af->AFtime.time_total);
+					fclose(pf);
+			}
+		}
+	#endif
 
 	if (af->bridge_ctrl != NULL && AF_ALG_DUAL_W_T == af->is_multi_mode) {
 		status_info.af_mode = af->request_mode;
