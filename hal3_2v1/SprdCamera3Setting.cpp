@@ -1899,7 +1899,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
     uint32_t dualPropSupport = 0;
     if (mSensorType[cameraId] != FOURINONESENSOR &&
-        mSensorType[cameraId] != YUVSENSOR) {
+        mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
         dualPropSupport = 1;
     }
 
