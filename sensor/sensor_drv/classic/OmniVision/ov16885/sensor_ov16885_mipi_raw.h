@@ -5588,8 +5588,8 @@ static SENSOR_MODE_FPS_INFO_T s_ov16885_mode_fps_info[VENDOR_NUM] = {
 
 static struct sensor_module_info s_ov16885_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info = {.major_i2c_addr = 0x20 >> 1,
+                     .minor_i2c_addr = 0x6c >> 1,
 
                      .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
                                             SENSOR_I2C_VAL_8BIT |

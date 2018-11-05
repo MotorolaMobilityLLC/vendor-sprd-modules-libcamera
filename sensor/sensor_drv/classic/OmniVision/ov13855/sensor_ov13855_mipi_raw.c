@@ -61,8 +61,8 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
     if (SENSOR_MAX_GAIN < (cmr_u16)gain_a) {
         gain_a = SENSOR_MAX_GAIN;
         gain_d = gain * 0x400 / gain_a;
-        if ((cmr_u16)gain_d > 0x2 * 0x400 - 1)
-            gain_d = 0x2 * 0x400 - 1;
+        if ((cmr_u16)gain_d > 0x4 * 0x400 - 1)
+            gain_d = 0x4 * 0x400 - 1;
     }
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x320a, 0x01);
     // group 1:all other registers( gain)
@@ -843,6 +843,7 @@ cmr_int ov13855_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3832, 0x80);
+    SENSOR_LOGI("E");
     return 0;
 }
 #endif

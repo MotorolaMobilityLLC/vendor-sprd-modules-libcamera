@@ -148,7 +148,7 @@ static const SENSOR_REG_T ov8856_init_setting[] = {
     {0x3500, 0x00},
     {0x3501, 0x4c},
     {0x3502, 0xe0},
-    {0x3503, 0x08},
+    {0x3503, 0x78},
     {0x3505, 0x83},
     {0x3508, 0x01},
     {0x3509, 0x80},
@@ -769,8 +769,8 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
 
          .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
-         .preview_skip_num = 0,
-         .capture_skip_num = 0,
+         .preview_skip_num = 1,
+         .capture_skip_num = 1,
          .flash_capture_skip_num = 6,
          .mipi_cap_skip_num = 0,
          .preview_deci_num = 0,
