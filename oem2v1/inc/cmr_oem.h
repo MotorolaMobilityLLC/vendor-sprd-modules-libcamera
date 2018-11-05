@@ -570,6 +570,9 @@ cmr_int camera_local_image_sw_algorithm_processing(
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     cam_img_format_t format);
 cmr_int cmr_get_reboke_data(cmr_handle oem_handle, struct af_relbokeh_oem_data *golden_distance);
+cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
+                                      struct tuning_param_info *tuning_info);
+
 #ifdef __cplusplus
 }
 #endif

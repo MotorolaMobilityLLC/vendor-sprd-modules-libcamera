@@ -71,6 +71,10 @@ ifeq ($(strip $(TARGET_BOARD_SENSOR_OV4C)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor_drv/classic/OmniVision/4in1/inc
 endif
 
+ifeq ($(strip $(TARGET_BOARD_SENSOR_SS4C)),true)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor_drv/classic/Samsung/4in1/inc
+endif
+
 LOCAL_SRC_FILES += \
     sensor_drv/sensor_ic_drv.c
 

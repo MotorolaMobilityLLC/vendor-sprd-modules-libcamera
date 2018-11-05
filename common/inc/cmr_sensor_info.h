@@ -468,9 +468,19 @@ struct sensor_4in1_info {
     cmr_u32 *sns_mode; // sensor mode for 4in1
 };
 
+struct ispawb_gain {
+    cmr_u32 r_gain;
+    cmr_u32 g_gain;
+    cmr_u32 b_gain;
+    cmr_u32 r_offset;
+    cmr_u32 g_offset;
+    cmr_u32 b_offset;
+};
+
 struct frame_4in1_info {
     cmr_int im_addr_in;
     cmr_int im_addr_out;
+    struct ispawb_gain awb_gain;
 };
 
 struct threshold_3dnr {

@@ -225,6 +225,9 @@ extern SENSOR_INFO_T g_s5k5e9yu05_mipi_raw_info;
 #ifdef S5K3M3SM24
 extern SENSOR_INFO_T g_s5k3m3sm24_mipi_raw_info;
 #endif
+#ifdef S5KS3P92
+extern SENSOR_INFO_T g_s5ks3p92_mipi_raw_info;
+#endif
 
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
@@ -444,6 +447,10 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef S5K3P9SX04
     {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
+#ifdef S5KS3P92
+    {MODULE_SUNNY, "s5ks3p92", &g_s5ks3p92_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
 // hynix area
 #ifdef HI846
     {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
