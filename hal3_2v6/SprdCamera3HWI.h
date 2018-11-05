@@ -106,7 +106,6 @@ class SprdCamera3HWI {
     int camera_ioctrl(int cmd, void *param1, void *param2);
     int setSensorStream(uint32_t on_off);
     int setCameraClearQBuff();
-    int getTuningParam(struct tuning_param_info *tuning_info);
     void getDualOtpData(void **addr, int *size, int *read);
     void getOnlineBuffer(void *cali_info);
     void getIspDebugInfo(void **addr, int *size);

@@ -228,7 +228,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setSprdCameraLowpower(int flag);
     int setSensorStream(uint32_t on_off);
     int setCameraClearQBuff();
-    int getTuningParam(struct tuning_param_info *tuning_info);
     void getIspDebugInfo(void **addr, int *size);
     int autoFocusToFaceFocus();
     void getDualOtpData(void **addr, int *size, int *read);

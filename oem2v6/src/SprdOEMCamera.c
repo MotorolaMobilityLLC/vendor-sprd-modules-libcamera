@@ -1134,47 +1134,20 @@ cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
                                cmr_s32 *point_y) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    ret = camera_local_get_focus_point(camera_handle, point_x, point_y);
-
     return ret;
 }
 
 cmr_s32 camera_isp_sw_check_buf(cmr_handle camera_handle, cmr_uint *param_ptr) {
-    return camera_local_isp_sw_check_buf(camera_handle, param_ptr);
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    return ret;
 }
 
 cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
                              struct img_frm *yuv_buff,
                              struct img_sbs_info *sbs_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (!camera_handle || !raw_buff || !yuv_buff || !sbs_info) {
-        CMR_LOGE("error %p raw_buff=%p, yuv_buff=%p", camera_handle, raw_buff,
-                 yuv_buff);
-        ret = -1;
-        goto exit;
-    }
-    struct raw_proc_param param_ptr;
-    cmr_bzero(&param_ptr, sizeof(struct raw_proc_param));
-    param_ptr.src_frame = *raw_buff;
-    param_ptr.dst_frame = *yuv_buff;
-    param_ptr.sbs_info = *sbs_info;
-    param_ptr.slice_num = 1;
-    param_ptr.src_avail_height = param_ptr.src_frame.size.height;
-    param_ptr.src_slice_height = param_ptr.src_frame.size.height;
-    param_ptr.dst_slice_height = param_ptr.dst_frame.size.height;
-    if (param_ptr.sbs_info.sbs_mode == SPRD_SBS_MODE_OFF) {
-        param_ptr.src_frame.fmt = ISP_DATA_CSI2_RAW10;
-    } else {
-        param_ptr.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
-    }
-    param_ptr.dst_frame.fmt = ISP_DATA_YUV420_2FRAME;
 
-    ret = camera_local_raw_proc(camera_handle, &param_ptr);
-    if (ret) {
-        CMR_LOGE("failed to camera_raw_post_proc %ld", ret);
-    }
-
-exit:
     return ret;
 }
 
@@ -1182,19 +1155,6 @@ cmr_int camera_get_tuning_param(cmr_handle camera_handle,
                                 struct tuning_param_info *tuning_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    if (!camera_handle) {
-        CMR_LOGE("camera handle is null");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-
-    ret = camera_local_get_tuning_param(camera_handle, tuning_info);
-    if (ret) {
-        CMR_LOGE("failed to get tuning param %ld", ret);
-        goto exit;
-    }
-
-exit:
     return ret;
 }
 

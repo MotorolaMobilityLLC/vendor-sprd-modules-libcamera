@@ -393,12 +393,6 @@ cmr_int camera_local_redisplay_data(
     cmr_s32 input_fd, cmr_uint input_addr_y, cmr_uint input_addr_uv,
     cmr_uint input_vir_addr, cmr_uint input_width, cmr_uint input_height);
 
-cmr_int camera_local_get_focus_point(cmr_handle oem_handle, cmr_s32 *point_x,
-                                     cmr_s32 *point_y);
-cmr_s32 camera_local_isp_sw_check_buf(cmr_handle oem_handle,
-                                      cmr_uint *param_ptr);
-cmr_int camera_local_raw_proc(cmr_handle oem_handle,
-                              struct raw_proc_param *param_ptr);
 cmr_int camera_local_get_prev_rect(cmr_handle oem_handle,
                                    struct img_rect *param_ptr);
 
@@ -528,8 +522,6 @@ cmr_int cmr_get_microdepth_param(cmr_handle oem_handle, void *param);
 cmr_int cmr_set_microdepth_debug_info(cmr_handle oem_handle, void *param);
 cmr_int camera_local_get_sensor_format(cmr_handle cmr_handle,
                                        cmr_u32 *sensor_format);
-cmr_int camera_local_get_tuning_param(cmr_handle cmr_handle,
-                                      struct tuning_param_info *tuning_info);
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param);

@@ -1943,14 +1943,6 @@ int SprdCamera3HWI::setCameraClearQBuff() {
     return ret;
 }
 
-int SprdCamera3HWI::getTuningParam(struct tuning_param_info *tuning_info) {
-    int ret = 0;
-
-    ret = mOEMIf->getTuningParam(tuning_info);
-
-    return ret;
-}
-
 void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
     void *otp_data = NULL;
     int otp_size = 0;

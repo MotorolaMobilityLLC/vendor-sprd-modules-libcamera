@@ -1374,19 +1374,6 @@ void SprdCamera3OEMIf::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
     return;
 }
 
-int SprdCamera3OEMIf::getTuningParam(struct tuning_param_info *tuning_info) {
-    int ret = 0;
-
-    HAL_LOGD("E");
-    /*
-        if (0 !=
-            mHalOem->ops->camera_get_tuning_param(mCameraHandle, tuning_info)) {
-            HAL_LOGE("Fail to get tuning param.");
-        }
-    */
-    return ret;
-}
-
 void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     struct sensor_otp_cust_info otp_info;
 
