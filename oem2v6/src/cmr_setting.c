@@ -1976,6 +1976,9 @@ static enum img_data_type get_image_format_from_param(cmr_uint param) {
     case 5:
         fmt = IMG_DATA_TYPE_YV12;
         break;
+    case 6:
+        fmt = IMG_DATA_TYPE_RAW;
+        break;
     default:
         break;
     }

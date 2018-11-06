@@ -3669,7 +3669,8 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
     /*init preview memory info*/
     buffer_size = width * height;
     if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.preview_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.preview_fmt) {
+        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.preview_fmt ||
+        IMG_DATA_TYPE_RAW == prev_cxt->prev_param.preview_fmt) {
         prev_cxt->prev_mem_size = (width * height * 3) >> 1;
     } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.preview_fmt) {
         prev_cxt->prev_mem_size = (width * height) << 1;
@@ -3685,8 +3686,6 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 height;
         }
         prev_cxt->prev_param.preview_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->prev_param.preview_fmt) {
-        prev_cxt->prev_mem_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %ld", prev_cxt->prev_param.preview_fmt);
         return CMR_CAMERA_INVALID_PARAM;
@@ -6456,7 +6455,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         chn_param.cap_inf_cfg.cfg.slowmotion = 1;
     }
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (sensor_mode_info->image_format == IMG_DATA_TYPE_RAW &&
+        chn_param.cap_inf_cfg.cfg.dst_img_fmt != IMG_DATA_TYPE_RAW) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
 

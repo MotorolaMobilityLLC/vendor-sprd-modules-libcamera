@@ -1691,7 +1691,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
         previewSize.height = 576;
     }
     // for cts testAllOutputYUVResolutions
-    if(mIsJpegWithBigSizePreview == 1) {
+    if (mIsJpegWithBigSizePreview == 1) {
         previewSize.width = 720;
         previewSize.height = 576;
     }
@@ -7532,6 +7532,8 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
             format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
             format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
             mPreviewFormat = IMG_DATA_TYPE_YUV420;
+        } else if (format == HAL_PIXEL_FORMAT_RAW16) {
+            mPreviewFormat = CAMERA_DATA_FORMAT_RAW;
         }
         if (isYuvSensor) {
             mPreviewFormat = IMG_DATA_TYPE_YUV422;
@@ -8407,6 +8409,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
                 dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
             }
+            HAL_LOGD("3dnr fd=0x%x", zsl_frame.fd);
             mHalOem->ops->image_sw_algorithm_processing(
                 obj->mCameraHandle, &src_sw_algorithm_buf,
                 &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
@@ -8436,6 +8439,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
                 dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
             }
+            HAL_LOGD("hdr fd=0x%x", zsl_frame.fd);
             mHalOem->ops->image_sw_algorithm_processing(
                 obj->mCameraHandle, &src_sw_algorithm_buf,
                 &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
@@ -8467,7 +8471,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 continue;
             }
 
-            HAL_LOGD("mode blur fd=0x%x", zsl_frame.fd);
+            HAL_LOGD("blur fd=0x%x", zsl_frame.fd);
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
                 zsl_frame.fd);
@@ -8475,7 +8479,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         if (mMultiCameraMode == MODE_BOKEH) {
-            HAL_LOGD("mode_bokeh fd=0x%x", zsl_frame.fd);
+            HAL_LOGD("bokeh fd=0x%x", zsl_frame.fd);
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
                 zsl_frame.fd);

@@ -709,6 +709,11 @@ int SprdCamera3HWI::configureStreams(
                 channel_type = CAMERA_CHANNEL_TYPE_PICTURE;
                 break;
 
+            case HAL_PIXEL_FORMAT_RAW16:
+                stream_type = CAMERA_STREAM_TYPE_PREVIEW;
+                channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                break;
+
             default:
                 stream_type = CAMERA_STREAM_TYPE_DEFAULT;
                 break;

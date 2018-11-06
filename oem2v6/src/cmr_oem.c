@@ -5065,7 +5065,7 @@ cmr_int camera_start_rot(cmr_handle oem_handle, cmr_handle caller_handle,
     struct cmr_rot_param rot_param;
     cmr_uint restart_cnt = 0;
 
-    if (!caller_handle || !oem_handle || !src || !dst || !mean) {
+    if (!oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;

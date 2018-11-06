@@ -261,20 +261,20 @@ static const int64_t kBurstCapWaitTime =
     3000000000LL; /*be shorter than framework(4s)*/
 
 typedef enum {
-    CAMERA_STREAM_TYPE_DEFAULT, /* default stream type */
-    CAMERA_STREAM_TYPE_PREVIEW,  /* preview */
-    CAMERA_STREAM_TYPE_VIDEO,    /* video */
-    CAMERA_STREAM_TYPE_CALLBACK, /* callback */
-    CAMERA_STREAM_TYPE_ZSL_PREVIEW, /* zsl preview */
-    CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, /* non zsl / zsl / video snapshot*/
+    CAMERA_STREAM_TYPE_DEFAULT,
+    CAMERA_STREAM_TYPE_PREVIEW,
+    CAMERA_STREAM_TYPE_VIDEO,
+    CAMERA_STREAM_TYPE_CALLBACK,
+    CAMERA_STREAM_TYPE_ZSL_PREVIEW,
+    CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT,
     CAMERA_STREAM_TYPE_MAX,
 } camera_stream_type_t;
 
 typedef enum {
-    CAMERA_CHANNEL_TYPE_DEFAULT,      /* default */
-    CAMERA_CHANNEL_TYPE_REGULAR,      /* regular channel */
-    CAMERA_CHANNEL_TYPE_PICTURE,      /* picture channel*/
-    CAMERA_CHANNEL_TYPE_YUV_CALLBACK, /*YUV888 callback*/
+    CAMERA_CHANNEL_TYPE_DEFAULT,
+    CAMERA_CHANNEL_TYPE_REGULAR,
+    CAMERA_CHANNEL_TYPE_PICTURE,
+    CAMERA_CHANNEL_TYPE_YUV_CALLBACK,
     CAMERA_CHANNEL_TYPE_MAX,
 } camera_channel_type_t;
 
@@ -318,6 +318,7 @@ typedef enum {
     CAMERA_DATA_FORMAT_YUV422 = 0,
     CAMERA_DATA_FORMAT_YUV420,
     CAMERA_DATA_FORMAT_RGB,
+    CAMERA_DATA_FORMAT_RAW = 6,
 } camera_data_format_type_t;
 
 typedef enum {
