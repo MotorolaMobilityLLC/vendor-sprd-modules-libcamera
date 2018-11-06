@@ -1393,21 +1393,35 @@ int flashlightSetValue(int value) {
     return ret;
 }
 
+/*
+    7E 49 00 00 00 0A 00 38 0C 08 01 7E    // White light on
+    7E 49 00 00 00 0A 00 38 0C 04 01 7E    // Back cold light on
+    7E 00 00 00 00 0A 00 38 0C 04 02 7E    // Color temperature light on
+      buf[10] express turn off the light
+
+    you can use that cmd to control light after adb shell enter
+    echo 0x72 > /sys/class/misc/sprd_flash/test  // White light on
+    echo 0x20 > /sys/class/misc/sprd_flash/test  // Color temperature light on
+    echo 0x00 > /sys/class/misc/sprd_flash/test  // Turn off the light
+*/
 int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
 
-    ALOGD("autotest_flash %x-%x",buf[9], buf[10]);
+    ALOGD("autotest_flash 0x%02x", buf[10]);
     int ret = 0;
-    if (buf[9] == 0x04) {
-        if (buf[10] == 0x01) {
-            ALOGD("autotest open flash");
-            ret = flashlightSetValue((buf[1] & 0x0f) << 4);   //open flashlight
-        } else if (buf[10] == 0x00) {
-            ALOGD("autotest close flash");
-            ret = flashlightSetValue(0x31);                   //close flashlight
-        }
+    if (buf[10] == 0x01) {
+        ALOGD("autotest open back flash");
+        ret = flashlightSetValue(0x72);   // Back cold light on
+    } else if (buf[10] == 0x02) {
+        ALOGD("autotest open temple flash");
+        ret = flashlightSetValue(0x20);   // Color temperature light on
+    } else if (buf[10] == 0x00) {
+        ALOGD("autotest close flash");
+        ret = flashlightSetValue(0x00);   // Turn off the light
+    } else {
+        ALOGE("autotest undefined cmd");
     }
 
-    /*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+/*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
     MSG_HEAD_T *p_msg_head;
     memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
     p_msg_head = (MSG_HEAD_T *)(rsp + 1);
@@ -1429,7 +1443,47 @@ int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
           rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
 
     return p_msg_head->len + 2;
-    /*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+/*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+}
+
+int autotest_front_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
+
+    ALOGD("autotest_front_flash 0x%02x", buf[10]);
+    int ret = 0;
+
+    if (buf[10] == 0x01) {
+        ALOGD("autotest open front flash");
+        ret = flashlightSetValue(0x72);   // Front cold light on
+    } else if (buf[10] == 0x00) {
+        ALOGD("autotest close front flash");
+        ret = flashlightSetValue(0x00);   // Turn off the light
+    } else {
+        ALOGE("autotest undefined cmd");
+    }
+
+/*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+    MSG_HEAD_T *p_msg_head;
+    memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
+    p_msg_head = (MSG_HEAD_T *)(rsp + 1);
+
+    p_msg_head->len = 8;
+
+    ALOGD("p_msg_head,ret=%d", ret);
+
+    if (ret < 0) {
+        rsp[sizeof(MSG_HEAD_T)] = 1;
+    } else if (ret == 0) {
+        rsp[sizeof(MSG_HEAD_T)] = 0;
+    }
+    ALOGD("rsp[1 + sizeof(MSG_HEAD_T):%d]:%d", sizeof(MSG_HEAD_T),
+          rsp[sizeof(MSG_HEAD_T)]);
+    rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
+    ALOGD("dylib test :return len:%d", p_msg_head->len + 2);
+    ALOGD("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1], rsp[2],
+          rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
+
+    return p_msg_head->len + 2;
+/*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
 }
 
 int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
@@ -1533,6 +1587,11 @@ extern "C" void register_this_module_ext(struct eng_callback *reg, int *num) {
     (reg+1)->subtype = 0x0C;
     (reg+1)-> diag_ap_cmd = 0x04;
     (reg+1)->eng_diag_func = autotest_flash;
+
+    (reg+2)->type = 0x38;
+    (reg+2)->subtype = 0x0C;
+    (reg+2)-> diag_ap_cmd = 0x08;
+    (reg+2)->eng_diag_func = autotest_front_flash;
     moudles_num++;
 
     *num = moudles_num;
