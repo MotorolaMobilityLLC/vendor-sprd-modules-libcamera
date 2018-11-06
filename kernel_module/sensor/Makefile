@@ -17,8 +17,11 @@ sprd_sensor-objs += $(SRC:%.c=%.o)
 ccflags-y += -I$(REL_PATH)/csi2/csi_sprd/receiver_r2p1/
 ccflags-y += -I$(REL_PATH)/../core/isp2.6/inc/
 
-# TODO: temp for HAPS
+# HAPS only
+ifeq ($(TEST_ON_HAPS),true)
 ccflags-y += -DTEST_ON_HAPS
+endif
+
 endif
 
 # target

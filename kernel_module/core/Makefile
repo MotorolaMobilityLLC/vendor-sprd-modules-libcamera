@@ -16,8 +16,11 @@ sprd_camera-objs += $(LOCAL_SRC:%.c=%.o)
 ccflags-y += -I$(REL_PATH)/../sensor/
 ccflags-y += -I$(REL_PATH)/isp2.6/inc/
 
-# TODO: temp for HAPS
+# HAPS only
+ifeq ($(TEST_ON_HAPS),true)
 ccflags-y += -DTEST_ON_HAPS
+endif
+
 endif
 
 # target
