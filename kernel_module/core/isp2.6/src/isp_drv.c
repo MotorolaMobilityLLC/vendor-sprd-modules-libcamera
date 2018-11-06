@@ -41,10 +41,6 @@
 #define CLK_CPPLL                      468000000
 
 
-struct isp_clk_tag {
-	char *clock;
-	char *clk_name;
-};
 
 
 static uint32_t  s_isp_irq_no[ISP_LOGICAL_COUNT];
@@ -56,14 +52,6 @@ static unsigned long irq_base[4] = {
 	ISP_C0_INT_BASE,
 	ISP_P1_INT_BASE,
 	ISP_C1_INT_BASE
-};
-
-static const struct isp_clk_tag isp_clk_tab[ISP_CLK_NUM] = {
-	{"128", "isp_clk_128m"},
-	{"256", "isp_clk_256m"},
-	{"307", "isp_clk_307m2"},
-	{"384", "isp_clk_384m"},
-	{"max", "isp_clk_max"},
 };
 
 static int isp_reg_trace(struct sprd_cam_hw_info *hw, void *arg)
@@ -317,36 +305,74 @@ static int isp_enable_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
 	int ret = 0;
 
-#ifdef TEST_ON_HAPS
-	pr_info("skip on haps.\n");
-#else
-	pr_info("todo here.\n");
+	pr_debug(",E\n");
+	if (!hw) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+#ifndef TEST_ON_HAPS
+	ret = clk_set_parent(hw->clk, hw->clk_parent);
+	if (ret) {
+		pr_err("set parent fail, ret = %d\n", ret);
+		clk_set_parent(hw->clk, hw->clk_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->clk);
+	if (ret) {
+		pr_err("enable isp clk fail, ret = %d\n", ret);
+		clk_set_parent(hw->clk, hw->clk_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->core_eb);
+	if (ret) {
+		pr_err("set isp eb fail, ret = %d\n", ret);
+		clk_disable_unprepare(hw->clk);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->axi_eb);
+	if (ret) {
+		pr_err("set isp axi eb fail, ret = %d\n", ret);
+		clk_disable_unprepare(hw->clk);
+		clk_disable_unprepare(hw->core_eb);
+		return ret;
+	}
 #endif
-	/* todo: enable isp clock here */
+
 	return ret;
 }
 
 static int isp_disable_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
-	/* todo: disable isp clock here */
-#ifdef TEST_ON_HAPS
-	pr_info("skip on haps.\n");
-#else
-	pr_info("todo here.\n");
+	int ret = 0;
+
+	pr_debug(",E\n");
+	if (!hw) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+#ifndef TEST_ON_HAPS
+	clk_set_parent(hw->clk, hw->clk_default);
+	clk_disable_unprepare(hw->clk);
+	clk_disable_unprepare(hw->axi_eb);
+	clk_disable_unprepare(hw->core_eb);
 #endif
-	return 0;
+
+	return ret;
 }
 
 static int isp_update_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
 	int ret = 0;
 
-	/* todo: update isp clock here */
-#ifdef TEST_ON_HAPS
-	pr_info("skip on haps.\n");
-#else
-	pr_info("todo here.\n");
+	pr_debug(",E\n");
+	if (!hw) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+#ifndef TEST_ON_HAPS
+	pr_warn("Not support and no use, now\n");
 #endif
+
 	return ret;
 }
 
@@ -410,10 +436,29 @@ int sprd_isp_parse_dt(struct device_node *dn,
 		}
 		*isp_count = count;
 
-#ifdef TEST_ON_HAPS
-		pr_info("skip parse clock tree on haps.\n");
-#else
-		pr_info("todo here parse clock tree\n");
+#ifndef TEST_ON_HAPS
+		/* read clk from dts */
+		isp_hw->core_eb = of_clk_get_by_name(isp_node, "isp_eb");
+		if (IS_ERR(isp_hw->core_eb)) {
+			pr_err("read dts isp eb fail\n");
+			return -EFAULT;
+		}
+		isp_hw->axi_eb = of_clk_get_by_name(isp_node, "isp_axi_eb");
+		if (IS_ERR(isp_hw->core_eb)) {
+			pr_err("read dts isp axi eb fail\n");
+			return -EFAULT;
+		}
+		isp_hw->clk = of_clk_get_by_name(isp_node, "isp_clk");
+		if (IS_ERR(isp_hw->core_eb)) {
+			pr_err("read dts isp clk fail\n");
+			return -EFAULT;
+		}
+		isp_hw->clk_parent = of_clk_get_by_name(isp_node, "isp_clk_parent");
+		if (IS_ERR(isp_hw->core_eb)) {
+			pr_err("read dts isp clk parent fail\n");
+			return -EFAULT;
+		}
+		isp_hw->clk_default = isp_hw->clk_parent;
 #endif
 
 		isp_hw->cam_ahb_gpr = syscon_regmap_lookup_by_phandle(isp_node,

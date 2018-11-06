@@ -32,9 +32,6 @@ struct sprd_cam_hw_info {
 	struct clk *clk;
 	struct clk *clk_parent;
 	struct clk *clk_default;
-	struct clk *bpc_clk;
-	struct clk *bpc_clk_parent;
-	struct clk *bpc_clk_default;
 	struct clk *core_eb;
 	struct clk *axi_eb;
 	struct clk *mm_eb;

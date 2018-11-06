@@ -74,12 +74,6 @@ static int ltm_calc_binning_factor(ltm_param_t *histo)
 	int binning_factor = 0;
 	int pow_factor = 0;
 
-	/*
-	 * ceil()     :返回等于或者大于指定表达式的最小整�
-	 * pow(x, y)  :返回以x为底的y次方�
-	 *
-	 */
-
 	frame_size = histo->frame_width * histo->frame_height;
 	/*
 	 * min_tile_num = (uint8)ceil ((float)(frame_width*frame_height)/TILE_MAX_SIZE);
@@ -243,7 +237,6 @@ static void ltm_rgb_map_dump_data_rtl(ltm_param_t *param_map,
 	uint16_t tile_width  = param_map->tile_width;
 	uint16_t tile_height = param_map->tile_height;
 
-	// 计算x/y方向需要多少个曲线
 	tile_index_xs = (img_start_x + tile_width/2 - cropLeft)/tile_width - 1;
 	if(tile_index_xs < 0) tile_index_xs = 0;
 	tile_index_xe = (img_end_x + tile_width/2 - cropLeft)/tile_width;
@@ -256,7 +249,6 @@ static void ltm_rgb_map_dump_data_rtl(ltm_param_t *param_map,
 	if(tile_index_ye > tile_num_y-1) tile_index_ye = tile_num_y-1;
 	tile_y_num_out = tile_index_ye - tile_index_ys + 1;
 
-	// 图像起始点相对于所在tile起始点的坐标偏移
 	tile_1st_xs = (img_start_x-cropLeft)/tile_width;
 	if(tile_1st_xs < 0) tile_1st_xs = 0;
 	if(tile_1st_xs > tile_num_x-1) tile_1st_xs = tile_num_x-1;
@@ -276,7 +268,6 @@ static void ltm_rgb_map_dump_data_rtl(ltm_param_t *param_map,
 	pr_debug("tile_1st_xs[%d], cropLeft[%d], tile_width[%d], img_start_x[%d], tile1_start_x[%d], img_tile1_xs_offset[%d]\n",
 		tile_1st_xs, cropLeft, tile_width, img_start_x, tile1_start_x, img_tile1_xs_offset);
 
-	// 计算竖直方向图像左右是否需要多取一个tile
 	tile0_start_x = tile_index_xs * tile_width + cropLeft;
 	tile0_start_y = tile_index_ys * tile_height + cropUp;
 

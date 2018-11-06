@@ -33,80 +33,76 @@
 #define pr_fmt(fmt) "DCAM_DRV: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
-/* TODO: refine clk */
-#if 0
-#define DCAM_CLK_NUM 4
-
-static DEFINE_MUTEX(clk_domain_mutex);
-static int clk_domain_user;
-
-struct dcam_if_clk_tag {
-	char *clock;
-	char *clk_name;
-};
-static const struct dcam_if_clk_tag dcam_if_clk_tab[DCAM_CLK_NUM] = {
-	{"128", "dcam_clk_128m"},
-	{"256", "dcam_clk_256m"},
-	{"307", "dcam_clk_307m2"},
-	{"384", "dcam_clk_384m"},
-};
-
 static int dcam_enable_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
 	int ret = 0;
 
-	/* dcam_if share same clk domain */
-	mutex_lock(&clk_domain_mutex);
-	clk_domain_user++;
-	if (clk_domain_user > 1) {
-		mutex_unlock(&clk_domain_mutex);
-		return 0;
+	pr_debug(", E\n");
+#ifndef TEST_ON_HAPS
+	if (!hw) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+	ret = clk_set_parent(hw->clk, hw->clk_parent);
+	if (ret) {
+		pr_err("dcam%d, set clk parent fail\n", hw->idx);
+		clk_set_parent(hw->clk, hw->clk_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->clk);
+	if (ret) {
+		pr_err("dcam%d, clk enable fail\n", hw->idx);
+		clk_set_parent(hw->clk, hw->clk_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->core_eb);
+	if (ret) {
+		pr_err("dcam%d, set eb fail\n", hw->idx);
+		clk_disable_unprepare(hw->clk);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->axi_eb);
+	if (ret) {
+		pr_err("dcam%d, set dcam axi clk fail\n", hw->idx);
+		clk_disable_unprepare(hw->clk);
+		clk_disable_unprepare(hw->core_eb);
 	}
 
-#ifdef TEST_ON_HAPS
-	pr_info("skip on haps.\n");
-#else
-	pr_info("todo here.\n");
-#endif
-
-	clk_domain_user--;
-	mutex_unlock(&clk_domain_mutex);
+#endif /* TEST_ON_HAPS */
 
 	return ret;
 }
 
 static int dcam_disable_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
-	mutex_lock(&clk_domain_mutex);
-	clk_domain_user--;
-	if (clk_domain_user > 0)
-		goto exit;
+	int ret = 0;
 
-#ifdef TEST_ON_HAPS
-	pr_info("skip on haps.\n");
-#else
-	pr_info("todo here.\n");
-#endif
+	pr_debug(", E\n");
+#ifndef TEST_ON_HAPS
+	if (!hw) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+	clk_set_parent(hw->clk, hw->clk_default);
+	clk_disable_unprepare(hw->clk);
+	clk_disable_unprepare(hw->axi_eb);
+	clk_disable_unprepare(hw->core_eb);
+#endif /* TEST_ON_HAPS */
 
-exit:
-	pr_info("done.\n");
-	mutex_unlock(&clk_domain_mutex);
-	return 0;
+	return ret;
 }
 
 static int dcam_update_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
 	int ret = 0;
 
-	/* todo: update dcam clock here */
-#ifdef TEST_ON_HAPS
-	pr_info("skip on haps.\n");
-#else
-	pr_info("todo here.\n");
-#endif
+	pr_debug(", E\n");
+#ifndef TEST_ON_HAPS
+	pr_warn("Not support and no use, now\n");
+#endif /* TEST_ON_HAPS */
+
 	return ret;
 }
-#endif
 
 /*
  * Initialize dcam_if hardware, power/clk/int should be prepared after this call
@@ -123,7 +119,8 @@ static int dcam_hw_init(struct sprd_cam_hw_info *hw, void *arg)
 
 	ret = sprd_cam_pw_on();
 	ret = sprd_cam_domain_eb();
-	/* TODO: prepare clk */
+	/* prepare clk */
+	dcam_enable_clk(hw, arg);
 	ret = dcam_irq_request(&hw->pdev->dev, hw->irq_no, arg);
 
 	return ret;
@@ -144,7 +141,8 @@ static int dcam_hw_deinit(struct sprd_cam_hw_info *hw, void *arg)
 	}
 
 	dcam_irq_free(&hw->pdev->dev, arg);
-	/* TODO: unprepare clk and other resource */
+	/* unprepare clk and other resource */
+	dcam_disable_clk(hw, arg);
 	ret = sprd_cam_domain_disable();
 	ret = sprd_cam_pw_off();
 
@@ -159,6 +157,9 @@ static int dcam_hw_deinit(struct sprd_cam_hw_info *hw, void *arg)
 static struct sprd_cam_hw_ops s_dcam_ops = {
 	.init = dcam_hw_init,
 	.deinit = dcam_hw_deinit,
+	.enable_clk = dcam_enable_clk,
+	.disable_clk = dcam_disable_clk,
+	.update_clk = dcam_update_clk,
 };
 
 /*
@@ -268,6 +269,30 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 			reg_res.name, hw->phy_base, hw->reg_base,
 			irq_res.name, hw->irq_no);
 		dcam_hw[i] = hw;
+#ifndef TEST_ON_HAPS
+		/* read dcam clk */
+		hw->core_eb = of_clk_get_by_name(dn, "dcam_eb");
+		if (IS_ERR(hw->core_eb)) {
+			pr_err("read clk fail, dcam_eb\n");
+			goto err_iounmap;
+		}
+		hw->axi_eb = of_clk_get_by_name(dn, "dcam_axi_eb");
+		if (IS_ERR(hw->axi_eb)) {
+			pr_err("read clk fail, dcam_axi_eb\n");
+			goto err_iounmap;
+		}
+		hw->clk = of_clk_get_by_name(dn, "dcam_clk");
+		if (IS_ERR(hw->clk)) {
+			pr_err("read clk fail, dcam_clk\n");
+			goto err_iounmap;
+		}
+		hw->clk_parent = of_clk_get_by_name(dn, "dcam_clk_parent");
+		if (IS_ERR(hw->clk_parent)) {
+			pr_err("read clk fail, dcam_clk_parent\n");
+			goto err_iounmap;
+		}
+		hw->clk_default = hw->clk_parent;
+#endif /* TEST_ON_HAPS */
 	}
 
 	if (of_address_to_resource(dn, i, &reg_res)) {
