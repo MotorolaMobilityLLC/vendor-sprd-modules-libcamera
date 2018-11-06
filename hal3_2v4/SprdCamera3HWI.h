@@ -160,6 +160,7 @@ class SprdCamera3HWI {
         meta_info_t meta_info;
         camera3_stream_buffer_t *input_buffer;
         int32_t receive_req_max;
+        uint32_t pipeline_depth;
     } PendingRequestInfo;
 
     int timer_stop();

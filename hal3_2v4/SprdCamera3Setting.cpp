@@ -1569,7 +1569,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].requestInfo.available_capabilites,
            kavailable_capabilities, sizeof(kavailable_capabilities));
     s_setting[cameraId].requestInfo.partial_result_count = 1;
-    s_setting[cameraId].requestInfo.pipeline_max_depth = 4;
+    s_setting[cameraId].requestInfo.pipeline_max_depth = 8;
 
     // noise
     memcpy(
@@ -1587,8 +1587,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         sizeof(kavailable_shading_modes));
 
     // sync
-    s_setting[cameraId].syncInfo.max_latency =
-        4; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
+    s_setting[cameraId].syncInfo.max_latency = 4; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
 
     // sprd
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
@@ -4154,7 +4153,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].metaInfo.flash_mode), 1);
     camMetadata.update(ANDROID_EDGE_MODE, &(s_setting[mCameraId].edgeInfo.mode),
                        1);
-    s_setting[mCameraId].requestInfo.pipeline_depth = 2;
     camMetadata.update(ANDROID_REQUEST_PIPELINE_DEPTH,
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
