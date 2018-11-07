@@ -52,7 +52,6 @@ LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
 LOCAL_SHARED_LIBRARIES:= \
      liblog \
      libcutils \
-     libmpbase \
 
 LOCAL_STATIC_LIBRARIES := \
      libsprdfacebeauty
