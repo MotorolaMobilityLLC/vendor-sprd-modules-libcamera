@@ -4223,9 +4223,33 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_compensation_calc_2(struct ae_ctrl_cxt *cxt, cmr_s16 *out_offset)
+{
+	float temp = 0.0;
+	cmr_s16 target_offset = 0;
+
+	temp = 1.0 * cxt->exposure_compensation.comp_val * cxt->exposure_compensation.step_numerator / cxt->exposure_compensation.step_denominator;
+	ISP_LOGD("jhin1 comp_val %d step_numerator %d step_denominator %d \n",cxt->exposure_compensation.comp_val,cxt->exposure_compensation.step_numerator,cxt->exposure_compensation.step_denominator);
+	temp = pow(2, temp);
+	ISP_LOGD("jhin1 temp%f\n",temp);
+	if (0 < cxt->exposure_compensation.comp_val) {
+		target_offset = cxt->exposure_compensation.ae_base_target * temp;
+	} else if (0 > cxt->exposure_compensation.comp_val) { 
+		target_offset = cxt->exposure_compensation.ae_base_target * (temp -1);
+	} else {
+		target_offset = 0;
+	}
+
+	*out_offset = target_offset;
+
+	ISP_LOGD("jhin1 value %d, temp %f ", target_offset, temp);
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_exp_compensation *exp_comp)
 {
 	cmr_u16 change_idx = 0;
+	cmr_s16 change_offset = 0;
 
 	if (exp_comp) {
 		if (1 == cxt->app_mode) {
@@ -4245,14 +4269,25 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
 			ISP_LOGV("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
 		} else {
-			cxt->exposure_compensation.comp_val = exp_comp->comp_val;
-			cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
-			cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
-			ae_set_compensation_calc(cxt, &change_idx);
-			cxt->cur_status.settings.manual_mode = 1;
-			cxt->cur_status.settings.table_idx = change_idx;
-			ISP_LOGV("exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d",exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
-			ISP_LOGV("change_idx:%d",change_idx);
+			if (cxt->cur_status.settings.force_lock_ae == 1) {
+				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
+				cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
+				cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
+				ae_set_compensation_calc(cxt, &change_idx);
+				cxt->cur_status.settings.manual_mode = 1;
+				cxt->cur_status.settings.table_idx = change_idx;
+				ISP_LOGD("jhin exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d",exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
+				ISP_LOGD("jhin change_idx:%d",change_idx);
+			} else {
+				if (cxt->exposure_compensation.comp_val == 0){
+					cxt->exposure_compensation.ae_base_target = cxt->cur_param->target_lum;
+				}
+				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
+				cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
+				cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
+				ae_set_compensation_calc_2(cxt, &change_offset);
+				cxt->cur_status.target_lum = cxt->exposure_compensation.ae_base_target + change_offset;
+			}
 		}
 	}
 
