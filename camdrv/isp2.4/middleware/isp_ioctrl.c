@@ -2369,6 +2369,23 @@ static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 glb_gain = 0;
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GLB_GAIN, NULL, (void *)&glb_gain);
+	*(cmr_u32 *)param_ptr = glb_gain;
+	ISP_LOGV("ret %ld, glb_gain %d", ret, *(cmr_u32 *)param_ptr);
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2445,6 +2462,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_POST_YNR, ispctl_post_ynr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
+	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
 	{ISP_CTRL_MAX, NULL}
 };
 
