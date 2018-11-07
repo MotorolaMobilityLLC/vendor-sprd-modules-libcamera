@@ -11796,7 +11796,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1)
+    if (prev_cxt->prev_param.mode_4in1)
         chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
 
     ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id,

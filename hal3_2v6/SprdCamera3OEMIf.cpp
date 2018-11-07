@@ -2664,7 +2664,13 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     if (isPreviewing()) {
-        stopPreviewInternal();
+        HAL_LOGD("Preview already in progress, mRestartFlag=%d",
+                 mRestartFlag);
+        if (mRestartFlag == false) {
+            return NO_ERROR;
+        } else {
+            stopPreviewInternal();
+        }
     }
 
     mRestartFlag = false;

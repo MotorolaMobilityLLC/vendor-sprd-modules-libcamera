@@ -212,6 +212,7 @@ static tags_info_t
         {"sprdAIScene", TYPE_BYTE},
         {"availableSensorType", TYPE_BYTE},
         {"sprdAISceneEnabled", TYPE_BYTE},
+        {"sprd3BlurCapVersion", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
