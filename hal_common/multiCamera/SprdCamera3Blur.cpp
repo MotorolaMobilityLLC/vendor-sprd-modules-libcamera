@@ -57,6 +57,10 @@ SprdCamera3Blur *mBlur = NULL;
         return -ENODEV;                                                        \
     }
 
+#ifndef ABS
+#define ABS(x) (((x) > 0) ? (x) : -(x))
+#endif
+
 camera3_device_ops_t SprdCamera3Blur::mCameraCaptureOps = {
     .initialize = SprdCamera3Blur::initialize,
     .configure_streams = SprdCamera3Blur::configure_streams,
@@ -2106,6 +2110,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
     mIsGalleryBlur = false;
     mIsBlurAlways = false;
     mGaussEnable = 0;
+    mUpdataxy = 0;
     if (mVersion == 3) {
         property_get("persist.vendor.cam.gallery.blur", prop, "1");
         if (atoi(prop) == 1) {
@@ -2139,7 +2144,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
 
     mCircleSizeScale = 50;
     mLastFaceNum = 0;
-    mSkipFaceNum = 0;
+    mSkipFaceNum = 10;
     mRotation = 0;
     mLastTouchX = 0;
     mLastTouchY = 0;
@@ -2343,6 +2348,7 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 mPreviewInitParams.height * mCircleSizeScale / 100 / 2;
             mUpdatePreviewWeightParams = true;
             mPreviewWeightParams.valid_roi = 0;
+            mUpdataxy = 0;
             memset(mPreviewWeightParams.x1, 0x00, sizeof(int) * BLUR_MAX_ROI);
             memset(mPreviewWeightParams.y1, 0x00, sizeof(int) * BLUR_MAX_ROI);
             memset(mPreviewWeightParams.x2, 0x00, sizeof(int) * BLUR_MAX_ROI);
@@ -2757,12 +2763,20 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 if (mCaptureWeightParams.roi_type == 2) {
                     mCaptureWeightParams.valid_roi = face_num - k;
                 }
+
                 if (mUpdataTouch == true) {
                     mPreviewWeightParams.sel_x =
                         mLastTouchX * mPreviewInitParams.width / origW;
                     mPreviewWeightParams.sel_y =
                         mLastTouchY * mPreviewInitParams.height / origH;
                     mUpdataTouch = false;
+                    mUpdataxy = 1;
+                }
+                if (!mUpdataxy) {
+                    mPreviewWeightParams.sel_x =
+                        ABS(mFaceInfo[2] + mFaceInfo[0]) / 2;
+                    mPreviewWeightParams.sel_y =
+                        ABS(mFaceInfo[3] + mFaceInfo[1]) / 2;
                 }
             }
         } else {
@@ -3506,10 +3520,12 @@ int SprdCamera3Blur::configureStreams(
             mCaptureThread->mPreviewInitParams.height =
                 stream_list->streams[i]->height;
             if (mCaptureThread->mFirstPreview) {
+
                 mCaptureThread->mPreviewWeightParams.sel_x =
                     mCaptureThread->mPreviewInitParams.width / 2;
                 mCaptureThread->mPreviewWeightParams.sel_y =
                     mCaptureThread->mPreviewInitParams.height / 2;
+
                 mCaptureThread->mPreviewWeightParams.circle_size =
                     mCaptureThread->mPreviewInitParams.height *
                     mCaptureThread->mCircleSizeScale / 100 / 2;
@@ -4057,9 +4073,10 @@ void SprdCamera3Blur::processCaptureResultMain(
                             CAMERA3_BUFFER_STATUS_ERROR &&
                         mCoverValue == 1) {
                         if (!mFlushing &&
-                            !(mCameraId == CAM_BLUR_MAIN_ID_2 &&
-                              mCaptureThread->mLastFaceNum <= 0 &&
-                              mCaptureThread->mSkipFaceNum >= 10) &&
+                            ((mCameraId == CAM_BLUR_MAIN_ID) ||
+                             (mCaptureThread->mLastFaceNum > 0) ||
+                             (mCaptureThread->mLastFaceNum <= 0 &&
+                              mCaptureThread->mSkipFaceNum < 10)) &&
                             cur_frame_number > 0) {
                             void *buffer_addr = NULL;
                             if (map(result->output_buffers->buffer,
@@ -4131,7 +4148,6 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
     HAL_LOGI("E flush, mCaptureMsgList.size=%zu, mSavedRequestList.size:%zu",
              mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
     mFlushing = true;
-
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
     if (2 == m_nPhyCameras) {

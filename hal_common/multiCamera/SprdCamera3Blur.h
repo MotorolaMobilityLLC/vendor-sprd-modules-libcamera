@@ -417,6 +417,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         int mLastMaxScope;
         int mLastAdjustRati;
         int mCircleSizeScale;
+        int mUpdataxy;
         bool mFirstCapture;
         bool mFirstPreview;
         bool mUpdateCaptureWeightParams;
