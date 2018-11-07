@@ -1885,35 +1885,40 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 		}
 		if (AI_STATUS_PROCESSING != ai_sta) {
 			ISP_LOGV("AI detection doesn't work.");
-			return ret;
+		} else {
+			ai_fd_para.width = face_area->frame_width;
+			ai_fd_para.height = face_area->frame_height;
+			ai_fd_para.face_num = face_area->face_num;
+			for (i = 0; i < ai_fd_para.face_num; ++i) {
+				ai_fd_para.face_area[i].rect.start_x =
+					face_area->face_info[i].sx;
+				ai_fd_para.face_area[i].rect.start_y =
+					face_area->face_info[i].sy;
+				ai_fd_para.face_area[i].rect.width =
+					face_area->face_info[i].ex - face_area->face_info[i].sx + 1;
+				ai_fd_para.face_area[i].rect.height =
+					face_area->face_info[i].ey - face_area->face_info[i].sy + 1;
+				ai_fd_para.face_area[i].yaw_angle =
+					face_area->face_info[i].yaw_angle;
+				ai_fd_para.face_area[i].roll_angle =
+					face_area->face_info[i].roll_angle;
+				ai_fd_para.face_area[i].score =
+					face_area->face_info[i].score;
+				ai_fd_para.face_area[i].id =
+					face_area->face_info[i].id;
+			}
+			ai_fd_para.frame_id = face_area->frame_id;
+			ai_fd_para.timestamp = face_area->timestamp;
+			ISP_LOGV("ai face info: frame_id: %d, timestamp: %llu.",
+				 ai_fd_para.frame_id, (unsigned long long)ai_fd_para.timestamp);
+			if (cxt->ops.ai_ops.ioctrl)
+				ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_PARAM, &ai_fd_para, NULL);
 		}
-		ai_fd_para.width = face_area->frame_width;
-		ai_fd_para.height = face_area->frame_height;
-		ai_fd_para.face_num = face_area->face_num;
-		for (i = 0; i < ai_fd_para.face_num; ++i) {
-
-			ai_fd_para.face_area[i].rect.start_x = face_area->face_info[i].sx;
-			ai_fd_para.face_area[i].rect.start_y = face_area->face_info[i].sy;
-			ai_fd_para.face_area[i].rect.width = face_area->face_info[i].ex - face_area->face_info[i].sx + 1;
-			ai_fd_para.face_area[i].rect.height = face_area->face_info[i].ey - face_area->face_info[i].sy + 1;
-			ai_fd_para.face_area[i].yaw_angle = face_area->face_info[i].yaw_angle;
-			ai_fd_para.face_area[i].roll_angle = face_area->face_info[i].roll_angle;
-			ai_fd_para.face_area[i].score = face_area->face_info[i].score;
-			ai_fd_para.face_area[i].id = face_area->face_info[i].id;
-		}
-		ai_fd_para.frame_id = face_area->frame_id;
-		ai_fd_para.timestamp = face_area->timestamp;
-		ISP_LOGV("ai face info: frame_id: %d, timestamp: %llu.", ai_fd_para.frame_id, (unsigned long long)ai_fd_para.timestamp);
-
-		if (cxt->ops.ai_ops.ioctrl)
-			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_PARAM, &ai_fd_para, NULL);
-
 		af_fd_para.type = face_area->type;
 		af_fd_para.face_num = face_area->face_num;
 		af_fd_para.frame_width = face_area->frame_width;
 		af_fd_para.frame_height = face_area->frame_height;
 		for (i = 0; i < af_fd_para.face_num; ++i) {
-
 			af_fd_para.face_info[i].sx = face_area->face_info[i].sx;
 			af_fd_para.face_info[i].sy = face_area->face_info[i].sy;
 			af_fd_para.face_info[i].ex = face_area->face_info[i].ex;
