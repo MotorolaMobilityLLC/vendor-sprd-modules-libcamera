@@ -1,0 +1,25 @@
+input_size_w 640
+input_size_h 480
+input_rect_x 0
+input_rect_y 0
+input_rect_w 320
+input_rect_h 240
+input_format 2
+intput_endian_y 0
+input_endian_uv 0
+sc_trim_x 0
+sc_trim_y 0
+sc_trim_w 0
+sc_trim_h 0
+output_size_w 1280
+output_size_h 960
+out_format 2
+output_endian_y 0
+output_endian_uv 0
+scale_mode 2
+scale_deci_hor 0
+scale_	deci_ver 0
+bp_trim_x 20
+bp_trim_y 20
+bp_trim_w 240
+bp_trim_h 120
