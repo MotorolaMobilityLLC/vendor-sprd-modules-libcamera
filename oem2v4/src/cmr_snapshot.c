@@ -1492,6 +1492,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     struct isp_awbc_cfg_test awbc_cfg;
     void *isp_handle = ispvideo_GetIspHandle();
     uint32_t pos = 0;
+    cmr_u32 glb_gain = 0;
     struct isp_adgain_exp_info adgain_exp_info;
 
     snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
@@ -1501,6 +1502,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     bv = adgain_exp_info.bv;
 
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
+    isp_ioctl(isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
     isp_ioctl(isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
 
@@ -1524,6 +1526,12 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     sprintf(tmp_str, "%d", gain);
     strcat(file_name, tmp_str);
     strcat(file_name, "_");
+    strcat(file_name, "ispdgain");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", glb_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+
     strcat(file_name, "shutter");
     strcat(file_name, "_");
     sprintf(tmp_str, "%d", shutter);
