@@ -5023,6 +5023,8 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     mean.is_sync = 1;
     src.data_end.y_endian = 0;
     src.data_end.uv_endian = 2;
+    // for cache coherency
+    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &src);
     // 2.call jpeg interface
     ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &src, &pic_enc,
                           (struct jpg_op_mean *)&mean, &enc_cb_param);
