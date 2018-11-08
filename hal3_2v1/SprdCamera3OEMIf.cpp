@@ -1985,8 +1985,8 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
             if (mUsingSW3DNR) {
                 fps_param.max_fps = 20;
-                fps_param.min_fps = 5;
-                HAL_LOGD("sw 3dnr mode, adjust max fps to 20, min fps to 5");
+                fps_param.min_fps = 10;
+                HAL_LOGD("sw 3dnr mode, adjust max fps to 20, min fps to 10");
             } else {
                 fps_param.max_fps = 30;
                 fps_param.min_fps = 18;
