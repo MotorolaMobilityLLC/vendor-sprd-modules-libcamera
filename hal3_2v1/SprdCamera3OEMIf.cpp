@@ -7078,7 +7078,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
             mRecordingMode = false;
             if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
-                mSprdAppmodeId == CAMERA_MODE_MANUAL) {
+                mSprdAppmodeId == CAMERA_MODE_MANUAL || mSprdAppmodeId == -1) {
                 mPicCaptureCnt = 1;
             } else {
                 mPicCaptureCnt = 100;
@@ -7954,7 +7954,8 @@ cap_malloc:
         if ((mSubRawHeapNum >= sum) && (mSubRawHeapSize >= size)) {
             HAL_LOGD("use pre-alloc cap mem");
             for (i = 0; i < (cmr_int)sum; i++) {
-                struct private_handle_t *pHandle = (private_handle_t *)m3DNRGraphicArray[i].private_handle;
+                struct private_handle_t *pHandle =
+                    (private_handle_t *)m3DNRGraphicArray[i].private_handle;
                 if (width != (cmr_uint)pHandle->width ||
                     height != (cmr_uint)pHandle->height) {
                     HAL_LOGD("width/height not match, re-alloc cap mem");
