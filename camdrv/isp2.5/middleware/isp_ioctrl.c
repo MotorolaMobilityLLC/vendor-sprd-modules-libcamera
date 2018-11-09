@@ -2218,6 +2218,30 @@ static cmr_int ispctl_dump_reg(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_prepare_atm_param(cmr_handle isp_alg_handle,
+	struct smart_proc_input *smart_proc_in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	smart_proc_in->r_info = cxt->aem_stats.r_info;
+	smart_proc_in->g_info = cxt->aem_stats.g_info;
+	smart_proc_in->b_info = cxt->aem_stats.b_info;
+	smart_proc_in->win_num_w = cxt->ae_cxt.win_num.w;
+	smart_proc_in->win_num_h = cxt->ae_cxt.win_num.h;
+	smart_proc_in->aem_shift = cxt->ae_cxt.shift;
+	smart_proc_in->win_size_w = cxt->ae_cxt.win_size.w;
+	smart_proc_in->win_size_h = cxt->ae_cxt.win_size.h;
+
+	if (smart_proc_in->r_info == NULL)
+		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
+			smart_proc_in->r_info,
+			smart_proc_in->g_info,
+			smart_proc_in->b_info);
+
+	return ret;
+}
+
 static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2264,13 +2288,14 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 
 	cxt->rgb_glb_gain = scene_parm->global_gain;
 	ISP_LOGV("global_gain = %d", cxt->rgb_glb_gain);
-
+	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
 	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
 	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
 	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 	smart_proc_in.handle_pm = cxt->handle_pm;
 	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+	ispctl_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 	if (cxt->ops.smart_ops.calc)
 		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 	if (ISP_SUCCESS != ret) {

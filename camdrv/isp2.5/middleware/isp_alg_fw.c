@@ -2227,30 +2227,6 @@ exit:
 	return ret;
 }
 
-static cmr_int isp_prepare_atm_param(cmr_handle isp_alg_handle,
-	struct smart_proc_input *smart_proc_in)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
-	smart_proc_in->r_info = cxt->aem_stats.r_info;
-	smart_proc_in->g_info = cxt->aem_stats.g_info;
-	smart_proc_in->b_info = cxt->aem_stats.b_info;
-	smart_proc_in->win_num_w = cxt->ae_cxt.win_num.w;
-	smart_proc_in->win_num_h = cxt->ae_cxt.win_num.h;
-	smart_proc_in->aem_shift = cxt->ae_cxt.shift;
-	smart_proc_in->win_size_w = cxt->ae_cxt.win_size.w;
-	smart_proc_in->win_size_h = cxt->ae_cxt.win_size.h;
-
-	if (smart_proc_in->r_info == NULL)
-		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
-			smart_proc_in->r_info,
-			smart_proc_in->g_info,
-			smart_proc_in->b_info);
-
-	return ret;
-}
-
 static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					 struct ae_ctrl_callback_in *ae_in,
 					 struct awb_ctrl_calc_result *awb_output)
@@ -2302,7 +2278,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
 		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
 		smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
-		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+		ispctl_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 
 		if (cxt->ops.smart_ops.calc) {
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
@@ -4466,7 +4442,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
-		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+		ispctl_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 
 		if (cxt->ops.smart_ops.calc)
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
