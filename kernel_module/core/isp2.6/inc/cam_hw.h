@@ -1,4 +1,4 @@
-/*
+			/*
  * Copyright (C) 2017-2018 Spreadtrum Communications Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -34,7 +34,9 @@ struct sprd_cam_hw_info {
 	struct clk *clk_default;
 	struct clk *core_eb;
 	struct clk *axi_eb;
-	struct clk *mm_eb;
+	struct clk *axi_clk;
+	struct clk *clk_axi_parent;
+	struct clk *clk_axi_default;
 
 	uint32_t arqos_high;
 	uint32_t arqos_low;

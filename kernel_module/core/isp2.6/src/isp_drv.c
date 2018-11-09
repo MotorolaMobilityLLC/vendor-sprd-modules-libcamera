@@ -443,26 +443,26 @@ int sprd_isp_parse_dt(struct device_node *dn,
 #ifndef TEST_ON_HAPS
 		/* read clk from dts */
 		isp_hw->core_eb = of_clk_get_by_name(isp_node, "isp_eb");
-		if (IS_ERR(isp_hw->core_eb)) {
+		if (IS_ERR_OR_NULL(isp_hw->core_eb)) {
 			pr_err("read dts isp eb fail\n");
 			return -EFAULT;
 		}
 		isp_hw->axi_eb = of_clk_get_by_name(isp_node, "isp_axi_eb");
-		if (IS_ERR(isp_hw->core_eb)) {
+		if (IS_ERR_OR_NULL(isp_hw->core_eb)) {
 			pr_err("read dts isp axi eb fail\n");
 			return -EFAULT;
 		}
 		isp_hw->clk = of_clk_get_by_name(isp_node, "isp_clk");
-		if (IS_ERR(isp_hw->core_eb)) {
+		if (IS_ERR_OR_NULL(isp_hw->core_eb)) {
 			pr_err("read dts isp clk fail\n");
 			return -EFAULT;
 		}
 		isp_hw->clk_parent = of_clk_get_by_name(isp_node, "isp_clk_parent");
-		if (IS_ERR(isp_hw->core_eb)) {
+		if (IS_ERR_OR_NULL(isp_hw->core_eb)) {
 			pr_err("read dts isp clk parent fail\n");
 			return -EFAULT;
 		}
-		isp_hw->clk_default = isp_hw->clk_parent;
+		isp_hw->clk_default = clk_get_parent(isp_hw->clk);
 #endif
 
 		/* qos dt parse */

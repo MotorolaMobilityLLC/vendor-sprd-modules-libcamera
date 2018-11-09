@@ -28,10 +28,10 @@
 
 #include <sprd_isp_r8p1.h>
 #include "sprd_img.h"
+#include <video/sprd_mmsys_pw_domain.h>
 #include <sprd_mm.h>
 
 
-#include "cam_pw_domain.h"
 #include "cam_hw.h"
 #include "cam_types.h"
 #include "cam_queue.h"

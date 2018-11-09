@@ -26,13 +26,12 @@
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
+#include <video/sprd_mmsys_pw_domain.h>
 
 #include "csi_api.h"
 #include "compat_sensor_drv.h"
 #include "sprd_sensor_core.h"
 #include "sprd_sensor_drv.h"
-/*#include "power/sensor_power.h"*/
-#include "cam_pw_domain.h"
 
 #ifdef pr_fmt
 #undef pr_fmt

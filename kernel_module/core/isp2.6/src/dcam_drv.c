@@ -20,8 +20,8 @@
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
 #include <linux/regmap.h>
+#include <video/sprd_mmsys_pw_domain.h>
 #include "cam_hw.h"
-#include "cam_pw_domain.h"
 #include "dcam_int.h"
 #include "dcam_interface.h"
 #include "dcam_reg.h"
@@ -55,6 +55,18 @@ static int dcam_enable_clk(struct sprd_cam_hw_info *hw, void *arg)
 		clk_set_parent(hw->clk, hw->clk_default);
 		return ret;
 	}
+	ret = clk_set_parent(hw->axi_clk, hw->clk_axi_parent);
+	if (ret) {
+		pr_err("dcam%d, set axi clk parent fail\n", hw->idx);
+		clk_set_parent(hw->axi_clk, hw->clk_axi_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(hw->axi_clk);
+	if (ret) {
+		pr_err("dcam%d, axi_clk enable fail\n", hw->idx);
+		clk_set_parent(hw->axi_clk, hw->clk_axi_default);
+		return ret;
+	}
 	ret = clk_prepare_enable(hw->core_eb);
 	if (ret) {
 		pr_err("dcam%d, set eb fail\n", hw->idx);
@@ -84,7 +96,9 @@ static int dcam_disable_clk(struct sprd_cam_hw_info *hw, void *arg)
 		return -EINVAL;
 	}
 	clk_set_parent(hw->clk, hw->clk_default);
+	clk_set_parent(hw->axi_clk, hw->clk_axi_default);
 	clk_disable_unprepare(hw->clk);
+	clk_disable_unprepare(hw->axi_clk);
 	clk_disable_unprepare(hw->axi_eb);
 	clk_disable_unprepare(hw->core_eb);
 #endif /* TEST_ON_HAPS */
@@ -307,26 +321,37 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 #ifndef TEST_ON_HAPS
 		/* read dcam clk */
 		hw->core_eb = of_clk_get_by_name(dn, "dcam_eb");
-		if (IS_ERR(hw->core_eb)) {
+		if (IS_ERR_OR_NULL(hw->core_eb)) {
 			pr_err("read clk fail, dcam_eb\n");
 			goto err_iounmap;
 		}
 		hw->axi_eb = of_clk_get_by_name(dn, "dcam_axi_eb");
-		if (IS_ERR(hw->axi_eb)) {
+		if (IS_ERR_OR_NULL(hw->axi_eb)) {
 			pr_err("read clk fail, dcam_axi_eb\n");
 			goto err_iounmap;
 		}
 		hw->clk = of_clk_get_by_name(dn, "dcam_clk");
-		if (IS_ERR(hw->clk)) {
+		if (IS_ERR_OR_NULL(hw->clk)) {
 			pr_err("read clk fail, dcam_clk\n");
 			goto err_iounmap;
 		}
 		hw->clk_parent = of_clk_get_by_name(dn, "dcam_clk_parent");
-		if (IS_ERR(hw->clk_parent)) {
+		if (IS_ERR_OR_NULL(hw->clk_parent)) {
 			pr_err("read clk fail, dcam_clk_parent\n");
 			goto err_iounmap;
 		}
-		hw->clk_default = hw->clk_parent;
+		hw->clk_default = clk_get_parent(hw->clk);
+		hw->axi_clk = of_clk_get_by_name(dn, "dcam_axi_clk");
+		if (IS_ERR_OR_NULL(hw->clk)) {
+			pr_err("read clk fail, axi_clk\n");
+			goto err_iounmap;
+		}
+		hw->clk_axi_parent = of_clk_get_by_name(dn, "dcam_axi_clk_parent");
+		if (IS_ERR_OR_NULL(hw->clk_parent)) {
+			pr_err("read clk fail, dcam_clk_parent\n");
+			goto err_iounmap;
+		}
+		hw->clk_axi_default = clk_get_parent(hw->axi_clk);
 #endif /* TEST_ON_HAPS */
 
 		dcam_hw[i] = hw;

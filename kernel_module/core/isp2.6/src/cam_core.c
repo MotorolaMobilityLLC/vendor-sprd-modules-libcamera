@@ -34,7 +34,6 @@
 #include "sprd_img.h"
 
 
-#include "cam_pw_domain.h"
 #include "cam_types.h"
 #include "cam_buf.h"
 #include "cam_queue.h"
@@ -4751,12 +4750,6 @@ static int sprd_img_probe(struct platform_device *pdev)
 	spin_lock_init(&group->module_lock);
 
 	pr_info("sprd img probe pdev name %s\n", pdev->name);
-	ret = sprd_cam_pw_domain_init(pdev);
-	if (ret) {
-		pr_err("fail to init pw domain\n");
-		goto probe_pw_fail;
-	}
-
 	pr_info("sprd dcam dev name %s\n", pdev->dev.init_name);
 	ret = dcam_if_parse_dt(pdev, &group->dcam[0], &group->dcam_count);
 	if (ret) {
