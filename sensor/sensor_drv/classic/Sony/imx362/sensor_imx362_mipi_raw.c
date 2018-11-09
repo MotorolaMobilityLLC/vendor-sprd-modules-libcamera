@@ -912,7 +912,7 @@ static const struct pd_pos_info _imx362_pd_pos_l[] = {
 static const struct pd_pos_info _imx362_pd_pos_r[] = {
     {1, 8}, {17, 8}, {10, 21}, {26, 21},
 };
-static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 1};
+static const cmr_u32 pd_sns_mode[] = {0, 1, 1, 1};
 
 static cmr_int imx362_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
