@@ -33,7 +33,7 @@
 using namespace android;
 namespace sprdcamera {
 
-#define MASTER_ID 1
+#define MASTER_ID 0
 
 SprdDualCamera3Tuning *gTuning = NULL;
 
@@ -809,7 +809,6 @@ int SprdDualCamera3Tuning::configureStreams(
         snapStream->width = mCaptureWidth;
         snapStream->height = mCaptureHeight;
     }
-    HAL_LOGE("mLocalBufferList size=%d", mLocalBufferList.size());
     HAL_LOGI("x rc:%d.", rc);
     for (i = 0; i < stream_list->num_streams; i++) {
         HAL_LOGD(
@@ -953,7 +952,6 @@ int SprdDualCamera3Tuning::processCaptureRequest(
     }
 
     saveRequest(request);
-    HAL_LOGE("mLocalBufferList size=%d", mLocalBufferList.size());
 
     req_main = *req;
     req_aux = *req;
@@ -1015,7 +1013,6 @@ int SprdDualCamera3Tuning::processCaptureRequest(
     req_aux.num_output_buffers = aux_buffer_index;
     req_main.output_buffers = out_streams_main;
     req_aux.output_buffers = out_streams_aux;
-    HAL_LOGE("start main, idx:%d", req_main.frame_number);
 
     rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_TMAIN].dev,
                                           &req_main);
@@ -1024,7 +1021,6 @@ int SprdDualCamera3Tuning::processCaptureRequest(
         goto req_fail;
     }
 
-    HAL_LOGE("start aux, idx:%d", req_main.frame_number);
     rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_TAUX].dev,
                                          &req_aux);
     if (rc < 0) {
