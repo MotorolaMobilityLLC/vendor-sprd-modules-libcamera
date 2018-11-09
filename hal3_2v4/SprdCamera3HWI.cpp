@@ -1894,24 +1894,6 @@ int SprdCamera3HWI::flush() {
     mFlush = true;
     Mutex::Autolock l(mLock);
 
-    for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
-         i != mIommuBufMapList.end(); i++) {
-        struct private_handle_t *private_handle = NULL;
-        struct sprd_img_iova iommu_data;
-        private_handle = (struct private_handle_t *)(*i->buffer);
-
-        iommu_data.fd = i->fd; // private_handle->share_fd;
-        iommu_data.size = i->size;
-        iommu_data.sg_table = i->sg_table;
-        if (i->map_flag == BUF_MAPED) {
-            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
-            i->map_flag = BUF_UNMAP;
-            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
-                     iommu_data.fd, iommu_data.size, iommu_data.sg_table);
-        }
-    }
-    mIommuBufMapList.clear();
-
     // for performance tuning: close camera
     mOEMIf->setSensorCloseFlag();
 
@@ -1933,6 +1915,24 @@ int SprdCamera3HWI::flush() {
         mPicChan->channelClearAllQBuff(timestamp,
                                        CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
     }
+
+    for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
+         i != mIommuBufMapList.end(); i++) {
+        struct private_handle_t *private_handle = NULL;
+        struct sprd_img_iova iommu_data;
+        private_handle = (struct private_handle_t *)(*i->buffer);
+
+        iommu_data.fd = i->fd; // private_handle->share_fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                     iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    mIommuBufMapList.clear();
 
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
     mFlush = false;
