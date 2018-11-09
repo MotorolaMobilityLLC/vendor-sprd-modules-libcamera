@@ -30,7 +30,8 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		bpc_param = (struct sensor_bpc_level *)((cmr_u8 *) dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_bpc_level));
+		bpc_param = (struct sensor_bpc_level *)((cmr_u8 *) dst_ptr->param_ptr + \
+			total_offset_units * dst_ptr->level_num * sizeof(struct sensor_bpc_level));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
@@ -61,7 +62,7 @@ cmr_u32 _pm_bpc_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 m
 			dst_ptr->cur.bpc_shift[i] = bpc_param[strength_level].bpc_thr.shift[i];
 		}
 		dst_ptr->cur.bpc_edgeratio_hv = bpc_param[strength_level].bpc_rules.hv_ratio;
-		dst_ptr->cur.bpc_edgeratio_rd = bpc_param[strength_level].bpc_rules.rd_ration;
+		dst_ptr->cur.bpc_edgeratio_rd = bpc_param[strength_level].bpc_rules.rd_ratio;
 		dst_ptr->cur.bpc_highoffset = bpc_param[strength_level].bpc_rules.highoffset;
 		dst_ptr->cur.bpc_lowoffset = bpc_param[strength_level].bpc_rules.lowoffset;
 		dst_ptr->cur.bpc_highcoeff = bpc_param[strength_level].bpc_rules.highcoeff;

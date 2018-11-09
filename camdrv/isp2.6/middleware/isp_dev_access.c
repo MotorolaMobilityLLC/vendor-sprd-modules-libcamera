@@ -25,6 +25,10 @@ struct isp_dev_access_context {
 	cmr_handle evt_alg_handle;
 	isp_evt_cb isp_event_cb;
 	cmr_handle isp_driver_handle;
+
+	/* todo: delete later, force 3a static setting legal */
+	cmr_u32 sn_width;
+	cmr_u32 sn_height;
 };
 
 static cmr_int set_rgb_gain(cmr_handle isp_dev_handle,
@@ -389,8 +393,8 @@ static cmr_int set_dcam_bayerhist(cmr_handle isp_dev_handle)
 
 	memset(&bayerHist_info, 0, sizeof(bayerHist_info));
 	bayerHist_info.hist_bypass = 0;
-	bayerHist_info.bayer_hist_endx = 4224;
-	bayerHist_info.bayer_hist_endy = 3136;
+	bayerHist_info.bayer_hist_endx = cxt->sn_width;
+	bayerHist_info.bayer_hist_endy = cxt->sn_height;
 	bayerHist_info.hist_mode_sel = 1;
 	bayerHist_info.hist_mul_enable = 1;
 	bayerHist_info.hist_initial_clear = 1;
@@ -409,6 +413,12 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	switch (cmd) {
 	case ISP_DEV_RESET:
 		ret = isp_dev_reset(cxt->isp_driver_handle);
+
+		/* todo: delete later. for 3A statis debug*/
+		if (param0 != NULL && param1 != NULL) {
+			cxt->sn_width = *(cmr_u32 *)param0;
+			cxt->sn_height = *(cmr_u32 *)param1;
+		}
 		break;
 	/* aem */
 	case ISP_DEV_SET_AE_SKIP_NUM:
@@ -459,8 +469,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 
 		/* todo: delete later. force win size to legal range. */
 		ISP_LOGD("afm win_start: (%d %d)  win_size (%d %d)\n", win.x, win.y, win.w, win.h);
-		win.w =  ((4224 - 4) / 6) & ~(0xf);
-		win.h =  ((3136 - 4) / 3) & ~(0xf);
+		win.w =  ((cxt->sn_width - win.x) / 6) & ~(0xf);
+		win.h =  ((cxt->sn_height - win.y) / 3) & ~(0xf);
 		ISP_LOGD("afm win_start: (%d %d)  win_size (%d %d)\n", win.x, win.y, win.w, win.h);
 
 		ret = dcam_u_afm_win(cxt->isp_driver_handle, &win);
@@ -493,8 +503,8 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		ISP_LOGD("afm crop_size: (%d %d %d %d)\n", crop.x, crop.y, crop.w, crop.h);
 		crop.x = 0;
 		crop.y = 0;
-		crop.w = 4224;
-		crop.h = 3136;
+		crop.w = cxt->sn_width;
+		crop.h = cxt->sn_height;
 		ISP_LOGD("afm crop_size: (%d %d %d %d)\n", crop.x, crop.y, crop.w, crop.h);
 
 		ret = dcam_u_afm_crop_size(cxt->isp_driver_handle, &crop);

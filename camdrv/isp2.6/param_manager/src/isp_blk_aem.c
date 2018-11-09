@@ -24,8 +24,8 @@ cmr_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void *param1, voi
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-	dst_ptr->win_num.w = src_ptr->win_size.w;
-	dst_ptr->win_num.h = src_ptr->win_size.h;
+	dst_ptr->win_num.w = src_ptr->blk_num.w;
+	dst_ptr->win_num.h = src_ptr->blk_num.h;
 
 	header_ptr->is_update = ISP_ONE;
 

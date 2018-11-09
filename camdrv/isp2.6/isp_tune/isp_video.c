@@ -669,6 +669,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
 	}
 	switch (data_head->sub_type) {
+	/* todo: update PPI
 	case V21PPI:
 		{
 			static cmr_u32 ppi_ptr_offset;
@@ -681,7 +682,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				ppi_ptr_offset = 0;
 			nr_tool_flags[8] = 1;
 			break;
-		}
+		}*/
 	case V21BAYER_NR:
 		{
 			static cmr_u32 bayer_nr_ptr_offset;
@@ -799,6 +800,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[12] = 1;
 			break;
 		}
+	/* todo: update 3DNR
 	case V21PRE3DNR:
 		{
 			static cmr_u32 dnr_pre_ptr_offset;
@@ -825,6 +827,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[0] = 1;
 			break;
 		}
+	*/
 	case V21EDGE:
 		{
 			static cmr_u32 edge_ptr_offset;
@@ -1035,6 +1038,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			}
 			break;
 		}
+	/* todo: update PPI
 	case V21PPI:
 		{
 			data_head_ptr->sub_type = V21PPI;
@@ -1042,7 +1046,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.pdaf_correction_level_ptr + offset_units * src_size;
 			break;
-		}
+		}*/
 	case V21BAYER_NR:
 		{
 			data_head_ptr->sub_type = V21BAYER_NR;
@@ -1115,6 +1119,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
 			break;
 		}
+	/* todo : update 3DNR
 	case V21PRE3DNR:
 		{
 			data_head_ptr->sub_type = V21PRE3DNR;
@@ -1130,7 +1135,7 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
 			break;
-		}
+		} */
 	case V21EDGE:
 		{
 			data_head_ptr->sub_type = V21EDGE;

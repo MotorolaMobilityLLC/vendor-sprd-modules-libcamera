@@ -3671,10 +3671,13 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		ret = ISP_PARAM_ERROR;
 		return ret;
 	}
+
+	/* todo: delete later.  temp for 3A statistic debug */
 	aem_frames = 0;
 	afm_frames = 0;
 	afl_frames = 0;
 	hist_frames = 0;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &in_ptr->size.w, &in_ptr->size.h);
 
 	cxt->work_mode = in_ptr->work_mode;
 	cxt->zsl_flag = in_ptr->zsl_flag;
@@ -3831,7 +3834,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
 			af_start_info.size = in_ptr->size;
-			ISP_LOGD("gtang : trigger AF video start.\n");
+			ISP_LOGD("trigger AF video start.  size %d %d\n", af_start_info.size.w, af_start_info.size.h);
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
 					AF_CMD_SET_ISP_START_INFO,
 					(void *)&af_start_info, NULL);

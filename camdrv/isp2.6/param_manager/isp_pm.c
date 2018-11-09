@@ -1114,6 +1114,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				nr_set_size = sizeof(struct sensor_cce_uvdiv_level);
 				break;
 			}
+			/* todo: update 3DNR
 			case DCAM_BLK_3DNR_PRE:
 			{
 				isp_blk_nr_type = ISP_BLK_3DNR_PRE_T;
@@ -1127,7 +1128,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d_cap);
 				nr_set_size = sizeof(struct sensor_3dnr_level);
 				break;
-			}
+			}*/
 			case ISP_BLK_YUV_PRECDN:
 			{
 				isp_blk_nr_type = ISP_BLK_YUV_PRECDN_T;

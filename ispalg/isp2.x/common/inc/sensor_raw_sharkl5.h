@@ -283,10 +283,6 @@ struct sensor_pdaf_af_win {
 	cmr_u16 af_win_ex0;
 	cmr_u16 af_win_ey0;
 };
-struct isp_pos {
-	cmr_s32 x;
-	cmr_s32 y;
-};
 
 struct sensor_pdaf_pattern_map {
 	cmr_u32 is_right;
@@ -1187,13 +1183,6 @@ struct sensor_bchs_level{
 	struct sensor_saturation_param saturation;
 };
 
-struct isp_pos_rect {
-	cmr_s32 start_x;
-	cmr_s32 start_y;
-	cmr_u32 end_x;
-	cmr_u32 end_y;
-};
-
 //Hist
 struct sensor_hists_param {
 	cmr_u16 hist_skip_num;
@@ -1351,15 +1340,18 @@ struct sensor_ee_level {
 struct sensor_ltm_tile_num_minus1{
 	cmr_u16 tile_num_x;
 	cmr_u16 tile_num_y;
-}
+};
+
 struct sensor_ltm_tile_size{
 	cmr_u16 tile_width;
 	cmr_u16 tile_height;
-}
+};
+
 struct sensor_ltm_clip_limit{
 	cmr_u16 limt;
 	cmr_u16 limt_min;
-}
+};
+
 struct sensor_ltm_stat{
 	struct sensor_ltm_tile_num_minus1 tile_num;
 	struct sensor_ltm_tile_size tile_size;
@@ -1371,17 +1363,18 @@ struct sensor_ltm_stat{
 	cmr_u8 region_est_en;
 	cmr_u8 binning_en;
 	cmr_u16 bypass;
-}
+};
+
 //sensor_ltm_map
 struct sensor_ltm_map{
 	cmr_u16 ltm_map_video_mode;
 	cmr_u16 bypass;
-}
+};
 
 struct sensor_ltm_level{
 	struct sensor_ltm_stat ltm_stat;
 	struct sensor_ltm_map ltm_map;
-}
+};
 
 //4A, smart, AFT
 struct isp_pdaf_tune_param {
