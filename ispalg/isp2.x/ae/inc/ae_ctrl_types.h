@@ -104,13 +104,13 @@ extern "C" {
 		AE_SET_CAP_FLAG,
 		AE_SET_SCENE_INFO,
 		AE_SET_APP_MODE,
+		AE_SET_TOUCH_ZONE,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
 		 * please add msg id below here
 		 */
 		AE_DIRECT_MSG_BEGIN,
-		AE_SET_TOUCH_ZONE,
 		AE_GET_LUM,
 		AE_GET_INDEX,
 		AE_GET_EXP_GAIN,

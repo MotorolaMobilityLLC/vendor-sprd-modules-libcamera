@@ -202,10 +202,9 @@ struct ae1_face {
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
-	cmr_u32 end_y;                          /*4 x 4bytes */
-	cmr_s32 pose;                           /* face pose: frontal, half-profile, full-profile */
- };
-
+	cmr_u32 end_y;				/*4 x 4bytes */
+	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
+};
 
 struct ae1_face_info {
 	cmr_u16 face_num;

@@ -4156,6 +4156,7 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_result.wts.stable = 0;
 			cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;
 			cxt->cur_status.settings.touch_scrn_status = 1;
+			cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
 
 			if (cxt->cur_status.to_ae_state == 2)
 				rtn = ae_set_restore_cnt(cxt);
@@ -5697,9 +5698,6 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		rtn = ae_get_led_ctrl(cxt, result);
 		break;
 
-	case AE_SET_TOUCH_ZONE:
-		rtn = ae_set_touch_zone(cxt, param);
-		break;
 	case AE_GET_LOWLIGHT_FLAG_BY_BV:
 		rtn = ae_get_lowlight_flag_by_bv(cxt, (cmr_u32 *) result);
 		break;
@@ -5885,6 +5883,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_APP_MODE:
 		cxt->app_mode = *(cmr_u32 *) param;
+		break;
+
+	case AE_SET_TOUCH_ZONE:
+		rtn = ae_set_touch_zone(cxt, param);
 		break;
 
 	default:
