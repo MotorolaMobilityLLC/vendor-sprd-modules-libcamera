@@ -2944,10 +2944,6 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
         return ret;
     }
 
-    if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
-        return ret;
-    }
-
     cmr_bzero(&isp_param, sizeof(isp_param));
     isp_param.camera_id = parm->camera_id;
     switch (flash_mode) {
@@ -3153,7 +3149,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         }
 
         /*disable*/
-        if (setting_is_need_flash(cpt, parm)) {
+        if (setting_is_need_flash(cpt, parm) || FLASH_NEED_QUIT == cpt->flash_need_quit) {
             /*open flash*/
             if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
                 setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
