@@ -2977,6 +2977,11 @@ static cmr_s32 af_sprd_set_type1_pd_info(cmr_handle handle, void *param0)
 	cmr_s32 raw=0;
 	cmr_u8 *pIMX351Buf = (cmr_u8 *) param0;
 
+	if (NULL == af->pdaf_rdm_otp_data) {
+		ISP_LOGE("af_sprd_set_type1_pd_info otp error! %p", af->pdaf_rdm_otp_data);
+		return AFV1_ERROR;
+	}
+
 	ISP_LOGV("af_sprd_set_type1_pd_info E %p %p", param0, pIMX351Buf);
 
 	for(i=10;i<970;i+=5){
@@ -3419,7 +3424,7 @@ cmr_s32 pd_otp_info_parser(af_ctrl_t * af, struct afctrl_init_in * in_p)
 	if (NULL != pdaf_otp_info_ptr && NULL != module_info_ptr) {
 		module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if (NULL != module_info) {
+		if (NULL != pdaf_otp_info_ptr->rdm_info.data_addr && NULL != module_info) {
 			if ((module_info[4] == 0 && module_info[5] == 1)
 				|| (module_info[4] == 0 && module_info[5] == 2)
 				|| (module_info[4] == 0 && module_info[5] == 3)
@@ -3445,6 +3450,7 @@ cmr_s32 pd_otp_info_parser(af_ctrl_t * af, struct afctrl_init_in * in_p)
 		}
 
 	} else {
+		af->pdaf_rdm_otp_data = NULL;
 		ISP_LOGE("type1 pdaf otp_info_ptr = %p, module_info_ptr = %p. Parser fail !", pdaf_otp_info_ptr, module_info_ptr);
 	}
 
