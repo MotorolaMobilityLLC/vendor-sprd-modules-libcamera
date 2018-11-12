@@ -1468,7 +1468,7 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_adgain_exp_info *info_ptr = (struct isp_adgain_exp_info *)param_ptr;
-	float gain = 0;
+	cmr_s32 gain = 0;
 	cmr_u32 exp_time = 0;
 	cmr_int bv = 0;
 
