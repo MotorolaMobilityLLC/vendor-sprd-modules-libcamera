@@ -1316,6 +1316,33 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+                    if (stream_info[i].stream_sizes_tbl.width ==
+                            largest_picture_size[cameraId].width &&
+                        ((stream_info[i].stream_sizes_tbl.width == 4160) ||
+                         (stream_info[i].stream_sizes_tbl.width == 4608))) {
+                        HAL_LOGD("YUV %d*%d output in ~100ms"
+                                 "offline so change min frame duration",
+                                 stream_info[i].stream_sizes_tbl.width,
+                                 stream_info[i].stream_sizes_tbl.height);
+                        available_min_durations.add(100000000L);
+                    } else if (stream_info[i].stream_sizes_tbl.width ==
+                                   largest_picture_size[cameraId].width &&
+                               stream_info[i].stream_sizes_tbl.width == 3264) {
+                        HAL_LOGD("YUV 3264*2448 output in ~66ms"
+                                 "offline so change min frame duration");
+                        available_min_durations.add(66666670L);
+                    } else if (stream_info[i].stream_sizes_tbl.width ==
+                                   largest_picture_size[cameraId].width &&
+                               stream_info[i].stream_sizes_tbl.width == 2592) {
+                        HAL_LOGD("YUV 2592*1944 output in ~66ms"
+                                 "offline so change min frame duration");
+                        available_min_durations.add(66666670L);
+                    } else {
+                        available_min_durations.add(
+                            stream_info[i].stream_min_duration);
+                    }
+                } else
                 available_min_durations.add(stream_info[i].stream_min_duration);
             }
         }
