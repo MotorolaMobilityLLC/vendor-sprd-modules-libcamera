@@ -1127,9 +1127,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             const camera3_stream_buffer_t &output2 = request->output_buffers[1];
             if ((output1.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
                  output2.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) &&
-                (output1.stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
-                 output2.stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)) {
-                receive_req_max = 5;
+                (output1.stream->format ==
+                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                 output2.stream->format ==
+                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)) {
                 need_apply_settings = 0;
             }
         }
@@ -1325,6 +1326,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         pendingRequest.request_id = capturePara.cap_request_id;
         pendingRequest.bNotified = 0;
         pendingRequest.input_buffer = request->input_buffer;
+        pendingRequest.pipeline_depth = 0;
         for (size_t i = 0; i < request->num_output_buffers; i++) {
             const camera3_stream_buffer_t &output = request->output_buffers[i];
             camera3_stream_t *stream = output.stream;
@@ -1721,6 +1723,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
                 requestInfo.frame_count = i->frame_number;
+                requestInfo.pipeline_depth =
+                    (i->pipeline_depth == 0)
+                        ? 1
+                        : i->pipeline_depth; // in case of 0, Burst do not fire
+                                             // in testYUVBurst so use 1 as min
                 mSetting->setREQUESTTag(&requestInfo);
                 metaInfo.flash_mode = i->meta_info.flash_mode;
                 memcpy(metaInfo.ae_regions, i->meta_info.ae_regions,
@@ -1808,6 +1815,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
                 requestInfo.frame_count = i->frame_number;
+                requestInfo.pipeline_depth =
+                    (i->pipeline_depth == 0)
+                        ? 1
+                        : i->pipeline_depth; // in case of 0, Burst do not fire
+                                             // in testYUVBurst so use 1 as min
                 mSetting->setREQUESTTag(&requestInfo);
                 metaInfo.flash_mode = i->meta_info.flash_mode;
                 memcpy(metaInfo.ae_regions, i->meta_info.ae_regions,
@@ -1908,6 +1920,12 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     if (sensor_Info.sensor_timestamp) {
         sensor_Info.sensor_timestamp = 0;
         mSetting->setSENSORTag(sensor_Info);
+    }
+
+    for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+         i != mPendingRequestsList.end();) {
+        i->pipeline_depth++;
+        i++;
     }
 
     if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {

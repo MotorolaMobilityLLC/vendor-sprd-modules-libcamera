@@ -198,9 +198,8 @@ const int32_t ksupported_preview_formats[4] = {
 
 const int32_t kavailable_fps_ranges_back[] = {
     5, 10, 10, 10, 5, 15, 15, 15, 5, 20, 5, 24, 24, 24, 5, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,
-                                               30, 15, 30, 30, 30};
-
+const int32_t kavailable_fps_ranges_front[] = {5,  10, 10, 10, 5,  15, 15,
+                                               15, 5,  30, 15, 30, 30, 30};
 const int32_t kexposureCompensationRange[2] = {-16, 16};
 const camera_metadata_rational kae_compensation_step = {1, 8};
 
@@ -1498,13 +1497,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
-#if defined(CONFIG_CAMERA_OFFLINE) && defined(CONFIG_ISP_2_3)
+#if defined(CONFIG_CAMERA_OFFLINE)
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
                     if (stream_info[i].stream_sizes_tbl.width ==
                             largest_picture_size[cameraId].width &&
-                        stream_info[i].stream_sizes_tbl.width == 4160) {
-                        HAL_LOGD("YUV 4160*3120 output in ~100ms in sharkle "
-                                 "offline so change min frame duration");
+                        ((stream_info[i].stream_sizes_tbl.width == 4160) ||
+                         (stream_info[i].stream_sizes_tbl.width == 4608))) {
+                        HAL_LOGD("YUV %d*%d output in ~100ms"
+                                 "offline so change min frame duration",
+                                 stream_info[i].stream_sizes_tbl.width,
+                                 stream_info[i].stream_sizes_tbl.height);
                         available_min_durations.add(100000000L);
                     } else if (stream_info[i].stream_sizes_tbl.width ==
                                    largest_picture_size[cameraId].width &&
@@ -1788,7 +1790,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].requestInfo.available_capabilites,
            kavailable_capabilities, sizeof(kavailable_capabilities));
     s_setting[cameraId].requestInfo.partial_result_count = 1;
-    s_setting[cameraId].requestInfo.pipeline_max_depth = 4;
+    s_setting[cameraId].requestInfo.pipeline_max_depth = 8;
 
     // noise
     memcpy(
@@ -4930,7 +4932,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].flashInfo.state), 1);
     camMetadata.update(ANDROID_FLASH_MODE,
                        &(s_setting[mCameraId].metaInfo.flash_mode), 1);
-    s_setting[mCameraId].requestInfo.pipeline_depth = 2;
     camMetadata.update(ANDROID_REQUEST_PIPELINE_DEPTH,
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
