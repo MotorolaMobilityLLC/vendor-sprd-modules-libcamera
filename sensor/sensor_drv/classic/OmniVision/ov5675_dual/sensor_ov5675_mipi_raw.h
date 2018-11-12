@@ -29,7 +29,7 @@
 
 #define VENDOR_NUM 2
 
-//#define CAMERA_IMAGE_180
+#define CAMERA_IMAGE_180
 
 #define SENSOR_NAME "ov5675_mipi_raw"
 #if defined(CONFIG_DUAL_CAMERA)
