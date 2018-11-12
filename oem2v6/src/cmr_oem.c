@@ -475,34 +475,77 @@ cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
     return ret;
 }
 
-cmr_int camera_front_lcd_flash_activie(cmr_u32 flash_index) {
-    if (flash_index == 1 && !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
+cmr_int camera_front_lcd_flash_activie(cmr_u32 face_type) {
+    if (face_type == 1 && !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
         return 1;
 
     return 0;
 }
 
-cmr_int camera_front_lcd_flash_cfg(struct camera_context *cxt, cmr_u8 type) {
-    cmr_int flash_type = -1;
+cmr_int camera_front_lcd_enhance_module_init(cmr_handle oem_handle) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    const hw_module_t *module;
 
-    CMR_LOGI("%d", type);
-
-    switch (type) {
-    case FLASH_TYPE_PREFLASH:
-        flash_type = 0;
-        break;
-    case FLASH_TYPE_MAIN:
-        flash_type = 1;
-        break;
-    default:
-        CMR_LOGE("not support the type");
-        break;
+    if (!camera_front_lcd_flash_activie(cxt->face_type)) {
+        CMR_LOGI("flash is not lcd type");
+        return -1;
     }
 
-    cxt->lcd_flash_highlight = flash_type;
-    CMR_LOGI("lcd_flash_highlight:%d", cxt->lcd_flash_highlight);
+    if (hw_get_module(ENHANCE_HARDWARE_MODULE_ID, &module)) {
+        CMR_LOGE("load enhance.so failed");
+        return -1;
+    }
 
-    return flash_type;
+    if (module->methods->open(module, "flash",
+                              (struct hw_device_t **)&(cxt->enhance))) {
+        CMR_LOGE("open enhance.so failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+cmr_int camera_front_lcd_enhance_module_deinit(cmr_handle oem_handle) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!camera_front_lcd_flash_activie(cxt->face_type)) {
+        CMR_LOGI("flash is not lcd type");
+        return -1;
+    }
+
+    if (cxt->enhance) {
+        cxt->enhance->common.close((struct hw_device_t *)cxt->enhance);
+    }
+
+    return 0;
+}
+
+cmr_int camera_front_lcd_set_color_temperature(struct camera_context *cxt) {
+
+    if (cxt->enhance == NULL) {
+        CMR_LOGE("enhance object invalid");
+        return -1;
+    }
+
+    if (cxt->enhance->set_value(cxt->color_temp))
+        CMR_LOGE("set temperature %ld failed\n", cxt->color_temp);
+
+    return 0;
+}
+
+cmr_int camera_front_lcd_flash_cfg(struct camera_context *cxt,
+                                   struct sprd_flash_cfg_param *cfg) {
+
+    cxt->lcd_flash_highlight = cfg->real_cell.type;
+    cxt->backlight_brightness = cfg->real_cell.element[0].brightness;
+    cxt->color_temp = cfg->real_cell.element[0].color_temp;
+    cxt->bg_color = cfg->real_cell.element[0].bg_color;
+
+    CMR_LOGI("lcd_flash_highlight:%d,brightness %d,color_temp %d,bg_color 0x%x",
+             cxt->lcd_flash_highlight, cxt->backlight_brightness,
+             cxt->color_temp, cxt->bg_color);
+
+    return 0;
 }
 
 cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
@@ -515,24 +558,47 @@ cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
 
     switch (flash_mode) {
     case FLASH_OPEN:
-        camera_write_sysfs_file(bg_color, 0xffffff);
+        cxt->color_temp = cxt->color_temp ? cxt->color_temp : 0;
+        camera_front_lcd_set_color_temperature(cxt);
 
-        camera_read_sysfs_file(brightness, &(cxt->backlight_brightness));
-        CMR_LOGI("backlight_brightness:%d", cxt->backlight_brightness);
+        cxt->bg_color = cxt->bg_color ? cxt->bg_color : 0xffffff;
+        camera_write_sysfs_file(bg_color, cxt->bg_color);
 
-        camera_write_sysfs_file(brightness, 0xff);
+        camera_read_sysfs_file(brightness, &(cxt->backup_brightness));
+        CMR_LOGI("backup_brightness:%d", cxt->backup_brightness);
+
+        cxt->backlight_brightness =
+            cxt->backlight_brightness ? cxt->backlight_brightness : 0xff;
+        camera_write_sysfs_file(brightness, cxt->backlight_brightness);
 
         break;
-    // case FLASH_CLOSE:
+    case FLASH_HIGH_LIGHT:
+        CMR_LOGI("flash highlight");
+
+        // cxt->color_temp = cxt->color_temp ? cxt->color_temp : 0;
+        camera_front_lcd_set_color_temperature(cxt);
+
+        // cxt->bg_color = cxt->bg_color ? cxt->bg_color : 0xffffff;
+        camera_write_sysfs_file(bg_color, cxt->bg_color);
+
+        // cxt->backlight_brightness =
+        //    cxt->backlight_brightness ? cxt->backlight_brightness : 0xff;
+        camera_write_sysfs_file(brightness, cxt->backlight_brightness);
+
+        break;
     case FLASH_CLOSE_AFTER_OPEN:
 
         camera_read_sysfs_file(disable_flip, &flip);
         CMR_LOGI("disable_flip %d", flip);
 
         if (cxt->lcd_flash_highlight && flip) {
-            camera_write_sysfs_file(brightness, cxt->backlight_brightness);
+            camera_write_sysfs_file(brightness, cxt->backup_brightness);
             camera_write_sysfs_file(refresh, 0x01);
+            cxt->color_temp = 0;
+            camera_front_lcd_set_color_temperature(cxt);
 
+            cxt->bg_color = 0;
+            cxt->backlight_brightness = 0;
             cxt->lcd_flash_highlight = 0;
         }
         break;
@@ -1235,7 +1301,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
         if (data != NULL) {
-            //data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            // data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
             ae_info = *(cmr_u32 *)data;
             cxt->camera_cb(oem_cb, cxt->client_data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, &ae_info);
@@ -1301,7 +1367,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGD("ISP_HIST_REPORT_CALLBACK");
         oem_cb = CAMERA_EVT_CB_HIST_REPORT;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                      data);
+                       data);
         break;
     default:
         break;
@@ -2992,10 +3058,14 @@ int32_t camera_isp_flash_set_charge(void *handler,
     cfg.real_cell.element[0].val = element->val;
     cfg.io_id = FLASH_IOID_SET_CHARGE;
     cfg.flash_idx = cxt->face_type % 2;
+    cfg.real_cell.element[0].brightness = element->brightness;
+    cfg.real_cell.element[0].color_temp = element->color_temp;
+    cfg.real_cell.element[0].bg_color = element->bg_color;
+
     CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type,
              element->index);
     if (camera_front_lcd_flash_activie(cfg.flash_idx))
-        ret = camera_front_lcd_flash_cfg(cxt, real_type);
+        ret = camera_front_lcd_flash_cfg(cxt, &cfg);
     else
         ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 out:
@@ -4608,6 +4678,7 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto res_deinit;
     }
     ret = camera_res_init_done(oem_handle);
+    camera_front_lcd_enhance_module_init(oem_handle);
     goto exit;
 
 res_deinit:
@@ -4658,6 +4729,7 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
+    camera_front_lcd_enhance_module_deinit(oem_handle);
     camera_isp_deinit_notice(oem_handle);
     camera_isp_deinit(oem_handle);
     camera_res_deinit(oem_handle);

@@ -2767,11 +2767,18 @@ if ((cxt->flash_last_exp_line != current_status->effect_expline) || (1.0 * cxt->
 		ISP_LOGD("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 
 		if (1 == out.isEnd) {
-			ISP_LOGD("ae_flash esti: isEnd:%d, cap(%d, %d), led(%d, %d), rgb(%d, %d, %d)\n",
-					 out.isEnd, current_status->settings.exp_line, out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2, out.captureRGain, out.captureGGain, out.captureBGain);
+		{
+			char prop[128] = {0};
+			property_get("persist.vendor.cam.isp.ae.flash_level", prop, "0");
+			if (atoi(prop) != 0) {
+				out.captureFlahLevel1 = atoi(prop);
+			}
+		}
+		ISP_LOGI("ae_flash esti: isEnd:%d, cap(%d, %d), led(%d, %d), rgb(%d, %d, %d)\n",
+		out.isEnd, current_status->settings.exp_line, out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2, out.captureRGain, out.captureGGain, out.captureBGain);
 
-			/*save the flash estimation results */
-			cxt->flash_esti_result = out;
+		/*save the flash estimation results */
+		cxt->flash_esti_result = out;
 		}
 
 		cxt->flash_last_exp_line = current_status->settings.exp_line;

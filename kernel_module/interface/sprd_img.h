@@ -641,6 +641,9 @@ struct sprd_img_sbs_info {
 struct sprd_flash_element {
 	uint16_t index;
 	uint16_t val;
+	uint16_t brightness;
+	uint16_t color_temp;
+	uint32_t bg_color;
 };
 
 struct sprd_flash_cell {

@@ -626,6 +626,9 @@ struct isp_depth_cali_info {
 struct isp_flash_element {
 	cmr_u16 index;
 	cmr_u16 val;
+	cmr_u16 brightness;
+	cmr_u16 color_temp;
+	cmr_u32 bg_color;
 };
 
 struct isp_flash_cell {

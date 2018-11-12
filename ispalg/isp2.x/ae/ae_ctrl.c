@@ -217,15 +217,135 @@ static cmr_s32 ae_flash_get_time(cmr_handle handler, struct ae_flash_cfg *cfg_pt
 
 	return ret;
 }
+//////////////////////////////////////////////////////////////////////////////
+//just for lcd flash feature development
+#define LCD_FLASH_DEV_EB 1
 
+#if LCD_FLASH_DEV_EB
+#include <cutils/properties.h>
+#include <string.h>
+#endif
+
+struct lcd_ct_rgb_info {
+	cmr_u32 ct;
+	cmr_u8 r;
+	cmr_u8 g;
+	cmr_u8 b;
+	cmr_u8 reserved;
+};
+
+struct lcd_ct_rgb_cfg {
+	struct lcd_ct_rgb_info ct_rgb_info[32];
+	cmr_u32 num;
+};
+
+struct lcd_ct_rgb_cfg s_lcd_ct_rgb_cfg_0 = {
+	{
+		{1500, 255, 111, 0, 0},
+		{2000, 255, 141, 11, 0},
+		{2500, 255, 166, 69, 0},
+		{3000, 255, 185, 105, 0},
+		{3500, 255, 201, 135, 0},
+		{4000, 255, 213, 161, 0},
+		{4500, 255, 223, 184, 0}, 
+		{5000, 255, 231, 204, 0},
+		{5500, 255, 238, 222, 0},
+		{6000, 255, 244, 237, 0},
+		{6500, 255, 249, 251, 0},
+		{7000, 247, 245, 255, 0},
+		{7500, 238, 239, 255, 0}, 
+		{8000, 229, 233, 255, 0},
+		{8500, 223, 229, 255, 0},
+		{9000, 217, 225, 255, 0},
+	},
+	16
+};
+struct lcd_ct_rgb_cfg s_lcd_ct_rgb_cfg_1 = {
+	{
+		{1500, 255, 111, 0, 0},//0
+		{2000, 255, 141, 11, 0},// 1
+		{2500, 255, 166, 69, 0},// 2
+		{3000, 255, 185, 105, 0},// 3
+		{3500, 255, 201, 135, 0},// 4
+		{4000, 255, 213, 161, 0},// 5
+		{4500, 255, 223, 184, 0},// 6
+		{5000, 255, 231, 204, 0},// 7
+		{5500, 255, 238, 222, 0},// 8
+		{6000, 255, 244, 237, 0},// 9
+		{6500, 255, 249, 251, 0},// 10
+		{7000, 247, 245, 255, 0},// 11
+		{7500, 238, 239, 255, 0},// 12
+		{8000, 229, 233, 255, 0},// 13
+		{8500, 223, 229, 255, 0},// 14
+		{9000, 217, 225, 255, 0},// 15
+	},
+	16
+};
+
+//////////////////////////////////////////////////////////////////////////////
 static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
 	cmr_s32 ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 
 	if (cxt_ptr->ae_set_cb) {
+		struct ae_flash_element flash_element;
+#if LCD_FLASH_DEV_EB
+		cmr_u32 index = 0;
+		cmr_u32 index2 = 0;
+		cmr_u32 bg_color = 0;
+		cmr_u32 max_index = 0;
+		struct lcd_ct_rgb_cfg *ct_rgb_cfg_ptr = NULL;
+		if (1 == cfg_ptr->led_idx) {
+			ct_rgb_cfg_ptr = &s_lcd_ct_rgb_cfg_0;
+			max_index = s_lcd_ct_rgb_cfg_0.num -1;
+		} else if (2 == cfg_ptr->led_idx) {
+			ct_rgb_cfg_ptr = &s_lcd_ct_rgb_cfg_1;
+			max_index = s_lcd_ct_rgb_cfg_1.num -1;
+		}
+
+		index = element_ptr->index;
+		if (element_ptr->index > max_index) {
+			index = max_index;
+			ISP_LOGW("the index = %d is incorrect, limited to %d\n", element_ptr->index, max_index);
+		} else {
+			index = element_ptr->index;
+		}
+		index2 = index;
+		{
+			char prop[128] = {0};
+			property_get("persist.vendor.cam.isp.ae.lcdflash_idx", prop, "");
+			if (prop[0] != '\0') {
+				index2 = atoi(prop);
+			}
+			ISP_LOGD("led; %d, idx: %d, max: %d\n", cfg_ptr->led_idx, index2, max_index);
+			bg_color = (ct_rgb_cfg_ptr->ct_rgb_info[index2].r<<16)
+						|(ct_rgb_cfg_ptr->ct_rgb_info[index2].g<<8)
+						|(ct_rgb_cfg_ptr->ct_rgb_info[index2].b);
+
+			ISP_LOGD("%s, index: (%d, %d), ct: %d (%d, %d, %d)\n", prop, index, index2,
+						ct_rgb_cfg_ptr->ct_rgb_info[index2].ct,
+						ct_rgb_cfg_ptr->ct_rgb_info[index2].r,
+						ct_rgb_cfg_ptr->ct_rgb_info[index2].g,
+						ct_rgb_cfg_ptr->ct_rgb_info[index2].b);
+			index = index2;
+		}
+		flash_element.index = index;
+		flash_element.val = element_ptr->val;
+		//flash_element.brightness = element_ptr->brightness;
+		flash_element.brightness = 255;
+		flash_element.color_temp= ct_rgb_cfg_ptr->ct_rgb_info[index].ct;
+		flash_element.bg_color = bg_color;
+#else
+		flash_element.val = element_ptr->val;
+		flash_element.index = element_ptr->index;
+		flash_element.brightness = element_ptr->brightness;
+		flash_element.bg_color = element_ptr->bg_color;
+		flash_element.color_temp= element_ptr->color_temp;
+#endif
 		ISP_LOGV("led_idx=%d, led_type=%d, level=%d", cfg_ptr->led_idx, cfg_ptr->type, element_ptr->index);
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, cfg_ptr, element_ptr);
+		ISP_LOGD("index: %d, bright: %d, ct: %d, bg_color:0x%x\n", index, flash_element.brightness, flash_element.color_temp, flash_element.bg_color);
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, cfg_ptr, &flash_element);
 	}
 
 	return ret;

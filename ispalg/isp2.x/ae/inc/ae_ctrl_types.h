@@ -395,6 +395,9 @@ extern "C" {
 	struct ae_flash_element {
 		cmr_u16 index;
 		cmr_u16 val;
+		cmr_u16 brightness;
+		cmr_u16 color_temp;
+		cmr_u32 bg_color;
 	};
 
 	struct ae_flash_cell {
