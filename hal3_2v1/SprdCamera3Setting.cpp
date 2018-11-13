@@ -216,7 +216,7 @@ const camera_metadata_rational kae_compensation_step = {1, 8};
 //};
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {
-    0, 0, 256, 144, 320, 240, 432, 288
+    0, 0, 256, 144, 288, 144, 320, 240, 432, 288
 #ifdef CAMERA_SERNSOR_SUPPORT_4224
     ,
     528, 392
