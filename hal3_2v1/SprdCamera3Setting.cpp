@@ -1471,12 +1471,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
 
                 /* keep largest */
-                if (stream_info[i].stream_sizes_tbl.width >=
-                        largest_picture_size[cameraId].width &&
-                    stream_info[i].stream_sizes_tbl.height >=
-                        largest_picture_size[cameraId].height)
+                if (stream_info[i].stream_sizes_tbl.width *
+                        stream_info[i].stream_sizes_tbl.height >
+                    largest_picture_size[cameraId].width *
+                        largest_picture_size[cameraId].height) {
                     largest_picture_size[cameraId] =
                         stream_info[i].stream_sizes_tbl;
+                }
             }
         }
     }
