@@ -56,7 +56,7 @@
 #define CAMERA_POWER_OPT_FLAG 0
 #endif
 
-#define SNS_INTERPOL_ONLINE_MAX_SIZE        (2592 * 1952)
+#define SNS_INTERPOL_ONLINE_MAX_SIZE (2592 * 1952)
 
 static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle);
@@ -106,16 +106,15 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         fprintf(stderr, "Cannot open '%s': %d, %s\n", CMR_GRAB_DEV_NAME, errno,
                 strerror(errno));
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
     CMR_LOGI("dcam_fd=0x%x", p_grab->fd);
 
-    sem_init(&p_grab->close_sem, 0, 0);
     ret = pthread_mutex_init(&p_grab->cb_mutex, NULL);
     if (ret) {
         CMR_LOGE("Failed to init mutex : %d", errno);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     ret = pthread_mutex_init(&p_grab->dcam_mutex, NULL);
@@ -123,7 +122,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         CMR_LOGE("Failed to init dcam mutex : %d", errno);
         pthread_mutex_destroy(&p_grab->cb_mutex);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     ret = pthread_mutex_init(&p_grab->status_mutex, NULL);
@@ -132,7 +131,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         pthread_mutex_destroy(&p_grab->cb_mutex);
         pthread_mutex_destroy(&p_grab->dcam_mutex);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
@@ -148,7 +147,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
             pthread_mutex_destroy(&p_grab->dcam_mutex);
             pthread_mutex_destroy(&p_grab->status_mutex);
             cmr_grap_free_grab(p_grab);
-            exit(EXIT_FAILURE);
+            goto exit;
         }
     }
 
@@ -159,10 +158,15 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
                  res.sensor_id);
 #if 0
         ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_DCAM_RES, &res);
-        CMR_RTN_IF_ERR(ret);
-        if (0 == res.flag) {
+        if (ret || (0 == res.flag)) {
             CMR_LOGE("get dcam res failed!");
             pthread_mutex_unlock(&p_grab->dcam_mutex);
+            for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
+                pthread_mutex_destroy(&p_grab->path_mutex[channel_id]);
+            }
+            pthread_mutex_destroy(&p_grab->cb_mutex);
+            pthread_mutex_destroy(&p_grab->dcam_mutex);
+            pthread_mutex_destroy(&p_grab->status_mutex);
             cmr_grap_free_grab(p_grab);
             return -1;
         }
@@ -172,6 +176,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     }
     pthread_mutex_unlock(&p_grab->dcam_mutex);
 
+    sem_init(&p_grab->close_sem, 0, 0);
     ret = cmr_grab_create_thread((cmr_handle)p_grab);
     if (0 != ret) {
         for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
@@ -180,8 +185,9 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         pthread_mutex_destroy(&p_grab->cb_mutex);
         pthread_mutex_destroy(&p_grab->dcam_mutex);
         pthread_mutex_destroy(&p_grab->status_mutex);
+        sem_destroy(&p_grab->close_sem);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
     // pthread_debug_setname(p_grab->thread_handle, "grab%d",
     // p_grab->init_param.sensor_id);
@@ -483,16 +489,17 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     if (p_grab->offline_mode == ZOOM_POST_PROCESS) {
         struct camera_context *cxt = NULL;
         struct preview_context *prev_cxt = NULL;
-        cxt=(struct camera_context *)p_grab->init_param.oem_handle;
+        cxt = (struct camera_context *)p_grab->init_param.oem_handle;
         prev_cxt = &cxt->prev_cxt;
         actual_pic_size.w = prev_cxt->actual_picture_size.width;
         actual_pic_size.h = prev_cxt->actual_picture_size.height;
-        ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_MAX_SIZE, &actual_pic_size);
+        ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_MAX_SIZE,
+                    &actual_pic_size);
         if (ret) {
             CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_MAX_SIZE failed");
         }
         CMR_LOGI("actual_pic_size: w=%d, h=%d", actual_pic_size.w,
-             actual_pic_size.h);
+                 actual_pic_size.h);
     }
 #endif
     sbs_info.sbs_mode = config->sbs_mode;
@@ -799,7 +806,7 @@ cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
-    //ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR, threednr_info);
+    // ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR, threednr_info);
     CMR_RTN_IF_ERR(ret);
     CMR_LOGI("SPRD_IMG_IO_SET_3DNR = %ld", ret);
 exit:
@@ -1100,7 +1107,8 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         ret = cnt;
 
     for (i = 0; i < (cmr_int)(op.parm.capability.count); i++) {
-        /* pike2 path0 can support yuv and trim, but can not support scaling, so mask path0 yuv */
+/* pike2 path0 can support yuv and trim, but can not support scaling, so mask
+ * path0 yuv */
 #ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         if (op.parm.capability.path_info[i].support_yuv && (i != 0)) {
             yuv_cnt++;
@@ -1131,10 +1139,9 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         capability->capture_no_trim = 1;
     }
 
-
 #ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     if (0) {
-            if (0 == op.parm.capability.path_info[0].support_trim) {
+        if (0 == op.parm.capability.path_info[0].support_trim) {
             capability->zoom_post_proc = ZOOM_POST_PROCESS;
         } else {
             capability->zoom_post_proc = ZOOM_POST_PROCESS_WITH_TRIM;
@@ -1143,19 +1150,23 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
         capability->zoom_post_proc = ZOOM_BY_CAP;
     }
 #else
-    struct camera_context *cxt = NULL;//(struct camera_context *)oem_handle;
-    struct preview_context *prev_cxt = NULL;//&cxt->prev_cxt;
-    cxt=(struct camera_context *)p_grab->init_param.oem_handle;
+    struct camera_context *cxt = NULL; //(struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt = NULL; //&cxt->prev_cxt;
+    cxt = (struct camera_context *)p_grab->init_param.oem_handle;
     prev_cxt = &cxt->prev_cxt;
     CMR_LOGD("actual_pic_size %dx%d sn_max_size %dx%d",
-        prev_cxt->actual_picture_size.width, prev_cxt->actual_picture_size.height,
-        p_grab->init_param.sensor_max_size.width, p_grab->init_param.sensor_max_size.height);
+             prev_cxt->actual_picture_size.width,
+             prev_cxt->actual_picture_size.height,
+             p_grab->init_param.sensor_max_size.width,
+             p_grab->init_param.sensor_max_size.height);
     if ((1 == op.parm.capability.path_info[0].support_yuv) &&
-        (prev_cxt->actual_picture_size.width * prev_cxt->actual_picture_size.height >
-        (p_grab->init_param.sensor_max_size.width *
-        p_grab->init_param.sensor_max_size.height)) &&
-        (prev_cxt->actual_picture_size.width * prev_cxt->actual_picture_size.height >
-        SNS_INTERPOL_ONLINE_MAX_SIZE)) {
+        (prev_cxt->actual_picture_size.width *
+             prev_cxt->actual_picture_size.height >
+         (p_grab->init_param.sensor_max_size.width *
+          p_grab->init_param.sensor_max_size.height)) &&
+        (prev_cxt->actual_picture_size.width *
+             prev_cxt->actual_picture_size.height >
+         SNS_INTERPOL_ONLINE_MAX_SIZE)) {
         capability->zoom_post_proc = ZOOM_POST_PROCESS;
         p_grab->offline_mode = ZOOM_POST_PROCESS;
     } else {
@@ -1249,7 +1260,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle) {
     op.cmd = SPRD_IMG_STOP_DCAM;
     op.sensor_id = p_grab->init_param.sensor_id;
     cnt = write(p_grab->fd, &op, sizeof(struct sprd_img_write_op));
-	CMR_LOGE("cnt 0x%lx size 0x%x", cnt, sizeof(struct sprd_img_write_op));
+    CMR_LOGE("cnt 0x%lx size 0x%x", cnt, sizeof(struct sprd_img_write_op));
     if (cnt > 0) {
         CMR_LOGI("write OK");
         sem_wait(&p_grab->close_sem);
@@ -1312,7 +1323,8 @@ static void *cmr_grab_thread_proc(void *data) {
             continue;
         } else {
             // normal irq
-            if (op.evt == IMG_TX_ERR  || op.evt == IMG_TIMEOUT ||op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
+            if (op.evt == IMG_TX_ERR || op.evt == IMG_TIMEOUT ||
+                op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
                 evt_id = cmr_grab_evt_id(op.evt);
                 if (CMR_GRAB_MAX == evt_id) {
                     continue;
@@ -1398,7 +1410,7 @@ static void *cmr_grab_thread_proc(void *data) {
                         evt_id, &irq_info, (void *)cxt->isp_cxt.isp_handle);
                 }
                 pthread_mutex_unlock(&p_grab->cb_mutex);
-             }/* else if (op.parm.frame.irq_type == CAMERA_IRQ_3DNR_DONE) {
+            } /* else if (op.parm.frame.irq_type == CAMERA_IRQ_3DNR_DONE) {
                 pthread_mutex_lock(&p_grab->cb_mutex);
                 if (p_grab->grab_3dnr_evt_cb) {
                     (*p_grab->grab_3dnr_evt_cb)(
@@ -1647,14 +1659,15 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
 }
 
 cmr_int cmr_grab_get_sg(cmr_handle grab_handle,
-                           struct sprd_img_iova *iommu_map_data) {
+                        struct sprd_img_iova *iommu_map_data) {
     cmr_int ret = 0;
     struct cmr_grab *p_grab;
 
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
-    CMR_LOGD("get sg: fd 0x%x size 0x%x", iommu_map_data->fd, iommu_map_data->size);
+    CMR_LOGD("get sg: fd 0x%x size 0x%x", iommu_map_data->fd,
+             iommu_map_data->size);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_SG, iommu_map_data);
     if (ret) {
         CMR_LOGE("error");
@@ -1670,7 +1683,8 @@ cmr_int cmr_grab_map_iommu(cmr_handle grab_handle,
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
-    CMR_LOGD("map: fd 0x%x size 0x%x", iommu_map_data->fd, iommu_map_data->size);
+    CMR_LOGD("map: fd 0x%x size 0x%x", iommu_map_data->fd,
+             iommu_map_data->size);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_MAP_IOVA, iommu_map_data);
     if (ret) {
         CMR_LOGE("error");
@@ -1679,18 +1693,18 @@ cmr_int cmr_grab_map_iommu(cmr_handle grab_handle,
 }
 
 cmr_int cmr_grab_unmap_iommu(cmr_handle grab_handle,
-                           struct sprd_img_iova *iommu_map_data) {
+                             struct sprd_img_iova *iommu_map_data) {
     cmr_int ret = 0;
     struct cmr_grab *p_grab;
 
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
-    CMR_LOGD("unmap: fd 0x%x size 0x%x", iommu_map_data->fd, iommu_map_data->size);
+    CMR_LOGD("unmap: fd 0x%x size 0x%x", iommu_map_data->fd,
+             iommu_map_data->size);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_UNMAP_IOVA, iommu_map_data);
     if (ret) {
         CMR_LOGE("error");
     }
     return ret;
 }
-

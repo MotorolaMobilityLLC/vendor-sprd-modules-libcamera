@@ -101,16 +101,15 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     if (-1 == p_grab->fd) {
         CMR_LOGE("Failed to open dcam device.errno : %d", errno);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
     CMR_LOGI("dcam_fd=0x%x", p_grab->fd);
 
-    sem_init(&p_grab->close_sem, 0, 0);
     ret = pthread_mutex_init(&p_grab->cb_mutex, NULL);
     if (ret) {
         CMR_LOGE("Failed to init mutex : %d", errno);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     ret = pthread_mutex_init(&p_grab->dcam_mutex, NULL);
@@ -118,7 +117,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         CMR_LOGE("Failed to init dcam mutex : %d", errno);
         pthread_mutex_destroy(&p_grab->cb_mutex);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     ret = pthread_mutex_init(&p_grab->status_mutex, NULL);
@@ -127,7 +126,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         pthread_mutex_destroy(&p_grab->cb_mutex);
         pthread_mutex_destroy(&p_grab->dcam_mutex);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
@@ -143,7 +142,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
             pthread_mutex_destroy(&p_grab->dcam_mutex);
             pthread_mutex_destroy(&p_grab->status_mutex);
             cmr_grap_free_grab(p_grab);
-            exit(EXIT_FAILURE);
+            goto exit;
         }
     }
 
@@ -153,10 +152,15 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         CMR_LOGI("get dcam res w %d h %d sn id %d", res.width, res.height,
                  res.sensor_id);
         ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_DCAM_RES, &res);
-        CMR_RTN_IF_ERR(ret);
-        if (0 == res.flag) {
+        if (ret || (0 == res.flag)) {
             CMR_LOGE("get dcam res failed!");
             pthread_mutex_unlock(&p_grab->dcam_mutex);
+            for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
+                pthread_mutex_destroy(&p_grab->path_mutex[channel_id]);
+            }
+            pthread_mutex_destroy(&p_grab->cb_mutex);
+            pthread_mutex_destroy(&p_grab->dcam_mutex);
+            pthread_mutex_destroy(&p_grab->status_mutex);
             cmr_grap_free_grab(p_grab);
             return -1;
         }
@@ -165,6 +169,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     }
     pthread_mutex_unlock(&p_grab->dcam_mutex);
 
+    sem_init(&p_grab->close_sem, 0, 0);
     ret = cmr_grab_create_thread((cmr_handle)p_grab);
     if (ret) {
         for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
@@ -173,8 +178,9 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         pthread_mutex_destroy(&p_grab->cb_mutex);
         pthread_mutex_destroy(&p_grab->dcam_mutex);
         pthread_mutex_destroy(&p_grab->status_mutex);
+        sem_destroy(&p_grab->close_sem);
         cmr_grap_free_grab(p_grab);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     // pthread_debug_setname(p_grab->thread_handle, "grab%d",
