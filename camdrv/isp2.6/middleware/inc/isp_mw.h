@@ -838,6 +838,18 @@ struct isp_init_param {
 	uint32_t is_4in1_sensor;
 };
 
+struct isp_sw_filter_weights
+{
+	cmr_u8 distWeight[9];
+	cmr_u8 rangWeight[128];
+};
+
+struct isp_sw_cnr2_info {
+	cmr_u8 filter_en[4];
+	cmr_u8 rangTh[4][2];
+	struct isp_sw_filter_weights weight[4][2];
+};
+
 struct img_offset {
 	uint32_t x;
 	uint32_t y;
