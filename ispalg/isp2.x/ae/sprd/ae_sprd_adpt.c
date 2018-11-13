@@ -4274,11 +4274,15 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
 				cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
 				cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
-				ae_set_compensation_calc(cxt, &change_idx);
-				cxt->cur_status.settings.manual_mode = 1;
-				cxt->cur_status.settings.table_idx = change_idx;
-				ISP_LOGD("jhin exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d",exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
-				ISP_LOGD("jhin change_idx:%d",change_idx);
+				if (0 ==exp_comp->comp_val) {
+					cxt->cur_status.settings.manual_mode = 2;
+				} else {
+					ae_set_compensation_calc(cxt, &change_idx);
+					cxt->cur_status.settings.manual_mode = 1;
+					cxt->cur_status.settings.table_idx = change_idx;
+				}
+				//ISP_LOGD("jhin exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d",exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
+				//ISP_LOGD("jhin change_idx:%d",change_idx);
 			} else {
 				if (cxt->exposure_compensation.comp_val == 0){
 					cxt->exposure_compensation.ae_base_target = cxt->cur_param->target_lum;
