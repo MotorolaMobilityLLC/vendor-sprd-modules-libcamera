@@ -62,7 +62,7 @@ int cmr_dma_copy_deinit(void) {
     sem_destroy(&dma_copy_sem);
 
     if (-1 == close(dma_copy_fd)) {
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     dma_copy_fd = -1;

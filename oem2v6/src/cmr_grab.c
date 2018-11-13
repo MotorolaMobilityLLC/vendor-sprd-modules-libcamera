@@ -215,7 +215,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
     ret = cmr_grab_kill_thread(grab_handle);
     if (ret) {
         CMR_LOGE("Failed to kill the thread. errno : %d", errno);
-        exit(EXIT_FAILURE);
+        goto exit;
     }
 
     /* then close fd */
@@ -240,7 +240,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
         pthread_mutex_unlock(&p_grab->dcam_mutex);
         if (-1 == close(p_grab->fd)) {
             fprintf(stderr, "error %d, %s\n", errno, strerror(errno));
-            exit(EXIT_FAILURE);
+            goto exit;
         }
         p_grab->fd = -1;
         CMR_LOGI("p_grab->fd closed");
