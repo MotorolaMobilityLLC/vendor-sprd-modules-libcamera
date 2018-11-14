@@ -159,25 +159,24 @@ int dcam_k_afl_bypass(struct dcam_dev_param *param)
 {
 	int ret = 0;
 	uint32_t idx = param->idx;
-	uint32_t mode, bypass = 0;
+	uint32_t mode;
 
 	if (param == NULL)
 		return -1;
 	if (!(param->afl.update & _UPDATE_BYPASS))
 		return 0;
 	param->afl.update &= (~(_UPDATE_BYPASS));
-	bypass = param->afl.bypass;
 	if (s_dbg_bypass[idx] & (1 << _E_AFL))
-		bypass = 1;
+		param->afl.bypass = 1;
 
 	mode = (DCAM_REG_RD(idx, ISP_AFL_FRM_CTRL0) >> 2) & 1;
-	pr_info("afl bypass %d, mode %d\n", bypass, mode);
+	pr_info("afl bypass %d, mode %d\n", param->afl.bypass, mode);
 
-	DCAM_REG_MWR(idx, ISP_AFL_FRM_CTRL0, BIT_0, bypass);
+	DCAM_REG_MWR(idx, ISP_AFL_FRM_CTRL0, BIT_0, param->afl.bypass);
 	/* bayer2y, bypass should be same as afl bypass. */
-	DCAM_REG_MWR(idx, ISP_AFL_PARAM0, BIT_1, bypass << 1);
+	DCAM_REG_MWR(idx, ISP_AFL_PARAM0, BIT_1, param->afl.bypass << 1);
 
-	if (bypass == 0) {
+	if (param->afl.bypass == 0) {
 		/* It is better to set afl_skip_num_clr
 		 * when module is re-enable.
 		 */

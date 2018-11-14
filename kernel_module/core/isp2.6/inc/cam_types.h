@@ -17,6 +17,13 @@
 #include <linux/workqueue.h>
 #include <video/sprd_img.h>
 
+#ifndef MAX
+#define MAX(a, b) ((a > b) ? a : b)
+#endif
+#ifndef MIN
+#define MIN(a, b) ((a < b) ? a : b)
+#endif
+
 #define CAM_BUF_ALIGN_SIZE		4
 
 enum camera_cap_type {

@@ -49,10 +49,6 @@
  * */
 #define MAX_TILE 64
 
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-
-
 /*
  * Input:
  *	frame size: x, y

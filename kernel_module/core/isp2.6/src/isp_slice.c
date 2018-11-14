@@ -28,13 +28,6 @@
 #define pr_fmt(fmt) "ISP_SLICE: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
-#ifndef MAX
-#define MAX(a, b) ((a > b) ? a : b)
-#endif
-#ifndef MIN
-#define MIN(a, b) ((a < b) ? a : b)
-#endif
-
 
 #define ISP_SLICE_ALIGN_SIZE           2
 #define ISP_ALIGNED(size)              ((size) & ~(ISP_SLICE_ALIGN_SIZE - 1))

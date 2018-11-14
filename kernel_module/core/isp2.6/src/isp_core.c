@@ -1102,6 +1102,67 @@ static int isp_ltm_process_frame(struct isp_pipe_context *pctx,
 	return 0;
 }
 
+static int isp_update_offline_param(
+	struct isp_pipe_context *pctx,
+	struct isp_offline_param *in_param)
+{
+	int ret = 0;
+	int i;
+	struct isp_offline_param *cur, *prev;
+	struct img_size *src_new = NULL;
+	struct img_trim path_trim;
+	struct isp_path_desc *path;
+	struct isp_ctx_size_desc cfg;
+	uint32_t update[ISP_SPATH_NUM] =
+		{ISP_PATH0_TRIM, ISP_PATH1_TRIM, ISP_PATH2_TRIM};
+
+	if (in_param->valid & ISP_SRC_SIZE) {
+		memcpy(&pctx->original, &in_param->src_info,
+			sizeof(pctx->original));
+		cfg.src = in_param->src_info.dst_size;
+		cfg.crop.start_x = 0;
+		cfg.crop.start_y = 0;
+		cfg.crop.size_x = cfg.src.w;
+		cfg.crop.size_y = cfg.src.h;
+		ret = isp_cfg_ctx_size(pctx, &cfg);
+		pr_info("isp ctx %d update size: %d %d\n",
+			pctx->ctx_id, cfg.src.w, cfg.src.h);
+		src_new = &cfg.src;
+	}
+
+	/* update all path scaler trim0  */
+	for (i = 0; i < ISP_SPATH_NUM; i++) {
+		path = &pctx->isp_path[i];
+		if (atomic_read(&path->user_cnt) < 1)
+			continue;
+
+		if (in_param->valid & update[i]) {
+			path_trim = in_param->trim_path[i];
+		} else if (src_new) {
+			path_trim.start_x = path_trim.start_y = 0;
+			path_trim.size_x = src_new->w;
+			path_trim.size_y = src_new->h;
+		} else {
+			continue;
+		}
+		ret = isp_cfg_path_size(path, &path_trim);
+		pr_info("update isp path%d trim %d %d %d %d\n",
+			i, path_trim.start_x, path_trim.start_y,
+			path_trim.size_x, path_trim.size_y);
+	}
+	pctx->updated = 1;
+
+	cur = (struct isp_offline_param *)in_param;
+	do {
+		prev = (struct isp_offline_param *)cur->prev;
+		kfree(cur);
+		pr_info("free %p\n", cur);
+		cur = prev;
+	} while (cur);
+
+	return ret;
+}
+
 static int isp_offline_start_frame(void *ctx)
 {
 	int ret = 0;
@@ -1114,7 +1175,6 @@ static int isp_offline_start_frame(void *ctx)
 	struct isp_cfg_ctx_desc *cfg_desc;
 	struct isp_fmcu_ctx_desc *fmcu;
 	struct isp_offline_param *in_param;
-//	struct dcam_frame_synchronizer *fsync = NULL;
 
 	pr_debug("enter.\n");
 
@@ -1171,33 +1231,9 @@ static int isp_offline_start_frame(void *ctx)
 	mutex_lock(&pctx->param_mutex);
 
 	in_param = (struct isp_offline_param *)pframe->param_data;
-	if (in_param && (in_param->valid & ISP_PARAM_SIZE)) {
-		struct isp_ctx_size_desc cfg;
-
-		pr_info("isp ctx %d update size.\n", pctx->ctx_id);
-
-		memcpy(&pctx->original, &in_param->src_info,
-			sizeof(pctx->original));
-		cfg.src = in_param->src_info.dst_size;
-		cfg.crop.start_x = 0;
-		cfg.crop.start_y = 0;
-		cfg.crop.size_x = cfg.src.w;
-		cfg.crop.size_y = cfg.src.h;
-		ret = isp_cfg_ctx_size(pctx, &cfg);
-
-		/* update all path size/scaler  */
-		for (i = 0; i < ISP_SPATH_NUM; i++) {
-			path = &pctx->isp_path[i];
-			if (atomic_read(&path->user_cnt) < 1)
-				continue;
-			ret = isp_cfg_path_size(path, &cfg.crop);
-		}
-		pctx->updated = 1;
-	}
-
 	if (in_param) {
+		isp_update_offline_param(pctx, in_param);
 		pframe->param_data = NULL;
-		kfree(in_param);
 	}
 
 	/*update NR param for crop/scaling image */
@@ -1289,9 +1325,6 @@ static int isp_offline_start_frame(void *ctx)
 	isp_3dnr_process_frame(pctx, pframe);
 	isp_ltm_process_frame_previous(pctx, pframe);
 	isp_ltm_process_frame(pctx, pframe);
-
-	//dcam_if_release_sync(pframe->sync_data, pframe);
-	//pr_info("dcam_if_release_sync %d\n", fsync->index);
 
 	if (fmcu) {
 		ret = wait_for_completion_interruptible_timeout(

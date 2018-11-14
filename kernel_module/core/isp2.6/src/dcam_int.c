@@ -464,7 +464,7 @@ void dcam_dump_int_tracker(uint32_t idx)
 		return;
 
 	for (i = 0; i < DCAM_IRQ_NUMBER; i++) {
-		pr_debug("DCAM%u i=%d, int=%llu\n", idx, i,
+		pr_info("DCAM%u i=%d, int=%llu\n", idx, i,
 			 dcam_int_tracker[idx][i]);
 	}
 }
@@ -500,7 +500,7 @@ static const int _DCAM0_SEQUENCE[] = {
 	DCAM_FULL_PATH_TX_DONE,/* for full path */
 	DCAM_AEM_TX_DONE,/* for aem statis */
 	DCAM_HIST_TX_DONE,/* for hist statis */
-	DCAM_AFM_INTREQ0,/* for afm statis, not sure 0 or 1 */
+	/* for afm statis, not sure 0 or 1 */
 	DCAM_AFM_INTREQ1,/* TODO: which afm interrupt to use */
 	DCAM_AFL_TX_DONE,/* for afl statis */
 	DCAM_PDAF_PATH_TX_DONE,/* for pdaf data */
@@ -519,7 +519,7 @@ static const int _DCAM1_SEQUENCE[] = {
 	DCAM_FULL_PATH_TX_DONE,/* for full path */
 	DCAM_AEM_TX_DONE,/* for aem statis */
 	DCAM_HIST_TX_DONE,/* for hist statis */
-	DCAM_AFM_INTREQ0,/* for afm statis, not sure 0 or 1 */
+	/* for afm statis, not sure 0 or 1 */
 	DCAM_AFM_INTREQ1,/* TODO: which afm interrupt to use */
 	DCAM_AFL_TX_DONE,/* for afl statis */
 	DCAM_PDAF_PATH_TX_DONE,/* for pdaf data */

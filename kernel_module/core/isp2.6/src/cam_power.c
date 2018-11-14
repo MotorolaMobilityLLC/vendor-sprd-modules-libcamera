@@ -114,11 +114,11 @@ int sprd_cam_pw_domain_init(struct platform_device *pdev)
 		devm_clk_get(&pdev->dev, "clk_cphy_cfg_gate_eb");
 	if (IS_ERR(cam_pw->cam_clk_cphy_cfg_gate_eb))
 		return PTR_ERR(cam_pw->cam_clk_cphy_cfg_gate_eb);
-
+/*
 	cam_pw->cam_ckg_eb = devm_clk_get(&pdev->dev, "clk_gate_eb");
 	if (IS_ERR(cam_pw->cam_ckg_eb))
 		return PTR_ERR(cam_pw->cam_ckg_eb);
-
+*/
 	cam_pw->cam_mm_eb = devm_clk_get(&pdev->dev, "clk_mm_eb");
 	if (IS_ERR(cam_pw->cam_mm_eb))
 		return PTR_ERR(cam_pw->cam_mm_eb);
@@ -364,6 +364,7 @@ int sprd_cam_domain_eb(void)
 
 	return 0;
 #else /* normal */
+#if 0
 	unsigned int rst_bit = 0;
 
 	pr_debug("clk users count:%d\n", atomic_read(&cam_pw->users_clk));
@@ -396,7 +397,7 @@ int sprd_cam_domain_eb(void)
 			rst_bit);
 	}
 	mutex_unlock(&cam_pw->client_lock);
-
+#endif
 	return 0;
 #endif
 }
@@ -419,7 +420,7 @@ int sprd_cam_domain_disable(void)
 				cam_pw->cam_ahb_clk_default);
 		clk_disable_unprepare(cam_pw->cam_ahb_clk);
 
-		clk_disable_unprepare(cam_pw->cam_ckg_eb);
+		//clk_disable_unprepare(cam_pw->cam_ckg_eb);
 
 		clk_disable_unprepare(cam_pw->cam_clk_cphy_cfg_gate_eb);
 

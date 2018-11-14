@@ -45,7 +45,6 @@ int dcam_k_afm_block(struct dcam_dev_param *param)
 	int i = 0;
 	uint32_t val = 0;
 	struct dcam_dev_afm_info *p; /* af_param; */
-	uint32_t bypass;
 
 	if (param == NULL)
 		return -1;
@@ -55,10 +54,9 @@ int dcam_k_afm_block(struct dcam_dev_param *param)
 	param->afm.update &= (~(_UPDATE_INFO));
 
 	p = &(param->afm.af_param);
-	bypass = p->bypass;
 	if (s_dbg_bypass[idx] & (1 << _E_AFM))
-		bypass = 1;
-	val = (bypass & 0x1) |
+		p->bypass = 1;
+	val = (p->bypass & 0x1) |
 		((p->afm_mode_sel & 0x1) << 2) |
 		((p->afm_mul_enable & 0x1) << 3) |
 		((p->afm_skip_num & 0x7) << 4);

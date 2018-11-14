@@ -75,6 +75,7 @@ struct statis_path_buf_info s_statis_path_info_all[] = {
 uint32_t s_dbg_bypass[DCAM_ID_MAX];
 static atomic_t s_dcam_opened[DCAM_ID_MAX];
 static atomic_t s_dcam_axi_opened;
+static atomic_t s_dcam_working;
 #ifdef DCAM_DEBUG
 static struct dentry *s_p_dentry;
 struct bypass_tag {
@@ -1869,11 +1870,15 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	dev->frame_index = 0;
 
-	/* always set first buffer for these statis blocks */
-	atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 1);
-	atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 1);
-	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 1);
-	atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 1);
+	/* enable statistic paths  */
+	if (dev->blk_dcam_pm->aem.bypass == 0)
+		atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 1);
+	if (dev->blk_dcam_pm->afm.bypass == 0)
+		atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 1);
+	if (dev->blk_dcam_pm->afl.bypass == 0)
+		atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 1);
+	if (dev->blk_dcam_pm->hist.bayerHist_info.hist_bypass == 0)
+		atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 1);
 
 	if (dev->is_pdaf)
 		atomic_set(&dev->path[DCAM_PATH_PDAF].user_cnt, 1);
@@ -1906,13 +1911,15 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	/* TODO: wtf?? */
 	/* atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 0); */
-	atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 0);
+	/* atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 0); */
 	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);
 	/* atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 0); */
 
 	dcam_reset_int_tracker(dev->idx);
 	dcam_start(dev);
 
+	if (dev->idx < 2)
+		atomic_inc(&s_dcam_working);
 	atomic_set(&dev->state, STATE_RUNNING);
 	pr_info("start dcam pipe dev[%d]!\n", dev->idx);
 	return ret;
@@ -1943,6 +1950,8 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 
 	dcam_dump_int_tracker(dev->idx);
 
+	if (dev->idx < 2)
+		atomic_dec(&s_dcam_working);
 	atomic_set(&dev->state, STATE_IDLE);
 
 	dcam_k_param = &dev->blk_dcam_pm->lsc.blk_handle;
@@ -1992,27 +2001,24 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 		return -EFAULT;
 	}
 
+	memset(&dev->path[0], 0, sizeof(dev->path));
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
 		path->path_id = i;
 		atomic_set(&path->user_cnt, 0);
 		atomic_set(&path->set_frm_cnt, 0);
 		spin_lock_init(&path->size_lock);
-	}
 
-	if (path->path_id == DCAM_PATH_BIN) {
-		path->rds_coeff_size = RDS_COEF_TABLE_SIZE;
-		path->rds_coeff_buf = kzalloc(path->rds_coeff_size,
-			GFP_KERNEL);
-		if (path->rds_coeff_buf == NULL) {
-			path->rds_coeff_size = 0;
-			pr_err("alloc rds coeff buffer failed.\n");
-			ret = -ENOMEM;
-			goto exit;
+		if (path->path_id == DCAM_PATH_BIN) {
+			path->rds_coeff_size = RDS_COEF_TABLE_SIZE;
+			path->rds_coeff_buf = kzalloc(path->rds_coeff_size, GFP_KERNEL);
+			if (path->rds_coeff_buf == NULL) {
+				path->rds_coeff_size = 0;
+				pr_err("alloc rds coeff buffer failed.\n");
+				ret = -ENOMEM;
+				goto exit;
+			}
 		}
-	} else {
-		path->rds_coeff_buf = NULL;
-		path->rds_coeff_size = 0;
 	}
 
 	dev->blk_dcam_pm =
@@ -2269,6 +2275,11 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width)
 		3648, 4672,
 		3648, 4672,
 	};
+	if (atomic_read(&s_dcam_working) > 0) {
+		pr_warn("dcam 0/1 already in working\n");
+		return 0;
+	}
+
 	switch (idx) {
 	case 0:
 		for (i = 3; i >= 0; i--) {
@@ -2276,13 +2287,15 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width)
 				break;
 		}
 		DCAM_AXIM_WR(DCAM_LBUF_SHARE_MODE, i);
+		pr_info("alloc dcam linebuf %d %d\n", tb_w[i*2], tb_w[i*2 + 1]);
 		break;
 	case 1:
-		for (i = i; i < 3; i++) {
+		for (i = 0; i < 3; i++) {
 			if (width <= tb_w[i * 2 + 1])
 				break;
 		}
 		DCAM_AXIM_WR(DCAM_LBUF_SHARE_MODE, i);
+		pr_info("alloc dcam linebuf %d %d\n", tb_w[i*2], tb_w[i*2 + 1]);
 		break;
 	default:
 		pr_info("dcam %d no this setting\n", idx);

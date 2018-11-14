@@ -68,7 +68,10 @@ enum isp_ltm_mode {
 };
 
 enum isp_offline_param_valid {
-	ISP_PARAM_SIZE = (1 << 0),
+	ISP_SRC_SIZE = (1 << 0),
+	ISP_PATH0_TRIM = (1 << 1),
+	ISP_PATH1_TRIM = (1 << 2),
+	ISP_PATH2_TRIM = (1 << 3),
 };
 
 
@@ -94,6 +97,8 @@ struct isp_path_base_desc {
 struct isp_offline_param {
 	uint32_t valid;
 	struct img_scaler_info src_info;
+	struct img_trim trim_path[ISP_SPATH_NUM];
+	void *prev;
 };
 
 struct isp_pipe_ops {
