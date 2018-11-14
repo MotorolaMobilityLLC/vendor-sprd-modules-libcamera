@@ -32918,6 +32918,12 @@ static struct sensor_yuv_noisefilter_level s_ov8856_yuv_noisefilter_param[] = {
 #undef _NR_YUV_NOISEFILTER_PARAM_
 };
 
+static struct sensor_cnr_level s_ov8856_cnr_param[] = {
+#define _NR_CNR_PARAM_
+#include "isp_nr.h"
+#undef _NR_CNR_PARAM_
+};
+
 static struct sensor_nlm_imbalance_level s_ov8856_imbalance_param[] = {
 #define _NR_IMBALANCE_PARAM_
 #include "isp_nr.h"

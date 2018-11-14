@@ -12,7 +12,7 @@ return &s_ov8856_mipi_raw_info;
 		#include "parameters_sharkl3_Tele/sensor_ov8856_front_raw_param_main.c"
 #else
 		#include "parameters_sharkl3_front/sensor_ov8856_front_raw_param_main.c"
-#endif		
+#endif
 		return &s_ov8856_front_mipi_raw_info;
 	}
 	// back slave
@@ -20,6 +20,9 @@ return &s_ov8856_mipi_raw_info;
 		#include "parameters_sharkl3_back/sensor_ov8856_back_raw_param_main.c"
 		return &s_ov8856_back_mipi_raw_info;
 	}
+#elif defined(_SENSOR_RAW_SHARKL5_H_)
+#include "parameters_sharkl5_front/sensor_ov8856_raw_param_main.c"
+return &s_ov8856_mipi_raw_info;
 #else
 #include "parameters_sharkle/sensor_ov8856_raw_param_main.c"
 return &s_ov8856_mipi_raw_info;
