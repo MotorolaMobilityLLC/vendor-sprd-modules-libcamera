@@ -394,6 +394,148 @@ if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face roi settings
 	af->cb_ops.set_monitor_win(af->caller, &winparam);
 }
 
+static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
+{
+	cmr_u32 *af_fv_val = NULL;
+	cmr_u8 i = 0;
+	af_fv_val = (cmr_u32 *) in;
+
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
+#define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
+		if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face FV mapping
+			if(AF_G_DEGREE0 == af->g_orientation || AF_G_DEGREE2 == af->g_orientation){//6x4
+				if(AF_G_DEGREE0 == af->g_orientation){
+					for (i = 0; i < 6; i++) {//3
+						af->af_fv_val.af_fv0[i] = (cmr_u64)af_fv_val[FV0_INDEX(i/3*4+i%3+af->win_offset)];
+						af->af_fv_val.af_fv1[i] = (cmr_u64)af_fv_val[FV1_INDEX(i/3*4+i%3+af->win_offset)];
+					}
+					if(0 == af->win_offset){
+						af->af_fv_val.af_fv0[7] = (cmr_u64)af_fv_val[FV0_INDEX(9)];
+						af->af_fv_val.af_fv1[7] = (cmr_u64)af_fv_val[FV1_INDEX(9)];
+						af->af_fv_val.af_fv0[6] = (cmr_u64)af_fv_val[FV0_INDEX(20)] + af_fv_val[FV0_INDEX(21)];
+						af->af_fv_val.af_fv1[6] = (cmr_u64)af_fv_val[FV1_INDEX(20)] + af_fv_val[FV1_INDEX(21)];
+						af->af_fv_val.af_fv0[8] = (cmr_u64)af_fv_val[FV0_INDEX(22)] + af_fv_val[FV0_INDEX(21)];
+						af->af_fv_val.af_fv1[8] = (cmr_u64)af_fv_val[FV1_INDEX(22)] + af_fv_val[FV1_INDEX(21)];
+					}else{
+						af->af_fv_val.af_fv0[7] = (cmr_u64)af_fv_val[FV0_INDEX(10)];
+						af->af_fv_val.af_fv1[7] = (cmr_u64)af_fv_val[FV1_INDEX(10)];
+						af->af_fv_val.af_fv0[6] = (cmr_u64)af_fv_val[FV0_INDEX(21)] + af_fv_val[FV0_INDEX(22)];
+						af->af_fv_val.af_fv1[6] = (cmr_u64)af_fv_val[FV1_INDEX(21)] + af_fv_val[FV1_INDEX(22)];
+						af->af_fv_val.af_fv0[8] = (cmr_u64)af_fv_val[FV0_INDEX(23)] + af_fv_val[FV0_INDEX(22)];
+						af->af_fv_val.af_fv1[8] = (cmr_u64)af_fv_val[FV1_INDEX(23)] + af_fv_val[FV1_INDEX(22)];
+					}
+				}else if(AF_G_DEGREE2 == af->g_orientation){
+					for (i = 0; i < 6; i++) {//3
+						af->af_fv_val.af_fv0[i+3] = (cmr_u64)af_fv_val[FV0_INDEX(i/3*4+i%3+16+af->win_offset)];
+						af->af_fv_val.af_fv1[i+3] = (cmr_u64)af_fv_val[FV1_INDEX(i/3*4+i%3+16+af->win_offset)];
+					}
+					if(0 == af->win_offset){
+						af->af_fv_val.af_fv0[1] = (cmr_u64)af_fv_val[FV0_INDEX(13)];
+						af->af_fv_val.af_fv1[1] = (cmr_u64)af_fv_val[FV1_INDEX(13)];
+						af->af_fv_val.af_fv0[0] = (cmr_u64)af_fv_val[FV0_INDEX(0)] + af_fv_val[FV0_INDEX(1)];
+						af->af_fv_val.af_fv1[0] = (cmr_u64)af_fv_val[FV1_INDEX(0)] + af_fv_val[FV1_INDEX(1)];
+						af->af_fv_val.af_fv0[2] = (cmr_u64)af_fv_val[FV0_INDEX(2)] + af_fv_val[FV0_INDEX(1)];
+						af->af_fv_val.af_fv1[2] = (cmr_u64)af_fv_val[FV1_INDEX(2)] + af_fv_val[FV1_INDEX(1)];
+					}else{
+						af->af_fv_val.af_fv0[1] = (cmr_u64)af_fv_val[FV0_INDEX(14)];
+						af->af_fv_val.af_fv1[1] = (cmr_u64)af_fv_val[FV1_INDEX(14)];
+						af->af_fv_val.af_fv0[0] = (cmr_u64)af_fv_val[FV0_INDEX(1)] + af_fv_val[FV0_INDEX(2)];
+						af->af_fv_val.af_fv1[0] = (cmr_u64)af_fv_val[FV1_INDEX(1)] + af_fv_val[FV1_INDEX(2)];
+						af->af_fv_val.af_fv0[2] = (cmr_u64)af_fv_val[FV0_INDEX(3)] + af_fv_val[FV0_INDEX(2)];
+						af->af_fv_val.af_fv1[2] = (cmr_u64)af_fv_val[FV1_INDEX(3)] + af_fv_val[FV1_INDEX(2)];
+					}
+				}
+			}else{//3//3x6
+				if(AF_G_DEGREE1 == af->g_orientation){
+					for (i = 0; i < 6; i++) {//3
+						af->af_fv_val.af_fv0[i/2*3+i%2] = (cmr_u64)af_fv_val[FV0_INDEX(i/2*6+i%2)];
+						af->af_fv_val.af_fv1[i/2*3+i%2] = (cmr_u64)af_fv_val[FV1_INDEX(i/2*6+i%2)];
+					}
+					af->af_fv_val.af_fv0[5] = (cmr_u64)af_fv_val[FV0_INDEX(8)];
+					af->af_fv_val.af_fv1[5] = (cmr_u64)af_fv_val[FV1_INDEX(8)];
+					af->af_fv_val.af_fv0[2] = (cmr_u64)af_fv_val[FV0_INDEX(5)] + af_fv_val[FV0_INDEX(11)];
+					af->af_fv_val.af_fv1[2] = (cmr_u64)af_fv_val[FV1_INDEX(5)] + af_fv_val[FV1_INDEX(11)];
+					af->af_fv_val.af_fv0[8] = (cmr_u64)af_fv_val[FV0_INDEX(17)] + af_fv_val[FV0_INDEX(11)];
+					af->af_fv_val.af_fv1[8] = (cmr_u64)af_fv_val[FV1_INDEX(17)] + af_fv_val[FV1_INDEX(11)];
+				}else if(AF_G_DEGREE3 == af->g_orientation){
+					for (i = 0; i < 6; i++) {//3
+						af->af_fv_val.af_fv0[i/2*3+i%2+1] = (cmr_u64)af_fv_val[FV0_INDEX(i/2*6+i%2+4)];
+						af->af_fv_val.af_fv1[i/2*3+i%2+1] = (cmr_u64)af_fv_val[FV1_INDEX(i/2*6+i%2+4)];
+					}
+					af->af_fv_val.af_fv0[3] = (cmr_u64)af_fv_val[FV0_INDEX(9)];
+					af->af_fv_val.af_fv1[3] = (cmr_u64)af_fv_val[FV1_INDEX(9)];
+					af->af_fv_val.af_fv0[0] = (cmr_u64)af_fv_val[FV0_INDEX(0)] + af_fv_val[FV0_INDEX(6)];
+					af->af_fv_val.af_fv1[0] = (cmr_u64)af_fv_val[FV1_INDEX(0)] + af_fv_val[FV1_INDEX(6)];
+					af->af_fv_val.af_fv0[6] = (cmr_u64)af_fv_val[FV0_INDEX(12)] + af_fv_val[FV0_INDEX(6)];
+					af->af_fv_val.af_fv1[6] = (cmr_u64)af_fv_val[FV1_INDEX(12)] + af_fv_val[FV1_INDEX(6)];
+				}
+			}
+		}else if(STATE_FULLSCAN == af->state) {
+			af->af_fv_val.af_fv0[9] = 0;
+			af->af_fv_val.af_fv1[9] = 0;
+			for (i = 0; i < 3; i++) {//3//3x3 map to 12x6
+				af->af_fv_val.af_fv0[i] = (cmr_u64)af_fv_val[FV0_INDEX(12+2*i)] + af_fv_val[FV0_INDEX(13+2*i)] +
+											af_fv_val[FV0_INDEX(18+2*i)] + af_fv_val[FV0_INDEX(19+2*i)];
+				af->af_fv_val.af_fv1[i] = (cmr_u64)af_fv_val[FV1_INDEX(12+2*i)] + af_fv_val[FV1_INDEX(13+2*i)] +
+											af_fv_val[FV1_INDEX(18+2*i)] + af_fv_val[FV1_INDEX(19+2*i)];
+				af->af_fv_val.af_fv0[i] = af->af_fv_val.af_fv0[i]<<1;
+				af->af_fv_val.af_fv1[i] = af->af_fv_val.af_fv1[i]<<1;
+				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i];
+				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i];
+
+				af->af_fv_val.af_fv0[i+3] = (cmr_u64)af_fv_val[FV0_INDEX(30+2*i)] + af_fv_val[FV0_INDEX(31+2*i)] +
+											af_fv_val[FV0_INDEX(36+2*i)] + af_fv_val[FV0_INDEX(37+2*i)];
+				af->af_fv_val.af_fv1[i+3] = (cmr_u64)af_fv_val[FV1_INDEX(30+2*i)] + af_fv_val[FV1_INDEX(31+2*i)] +
+											af_fv_val[FV1_INDEX(36+2*i)] + af_fv_val[FV1_INDEX(37+2*i)];
+				af->af_fv_val.af_fv0[i+3] = af->af_fv_val.af_fv0[i+3]<<1;
+				af->af_fv_val.af_fv1[i+3] = af->af_fv_val.af_fv1[i+3]<<1;
+				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i+3];
+				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i+3];
+
+				af->af_fv_val.af_fv0[i+6] = (cmr_u64)af_fv_val[FV0_INDEX(48+2*i)] + af_fv_val[FV0_INDEX(49+2*i)] +
+											af_fv_val[FV0_INDEX(54+2*i)] + af_fv_val[FV0_INDEX(55+2*i)];
+				af->af_fv_val.af_fv1[i+6] = (cmr_u64)af_fv_val[FV1_INDEX(48+2*i)] + af_fv_val[FV1_INDEX(49+2*i)] +
+											af_fv_val[FV1_INDEX(54+2*i)] + af_fv_val[FV1_INDEX(55+2*i)];
+				af->af_fv_val.af_fv0[i+6] = af->af_fv_val.af_fv0[i+6]<<1;
+				af->af_fv_val.af_fv1[i+6] = af->af_fv_val.af_fv1[i+6]<<1;
+				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i+6];
+				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i+6];
+			}
+		} else {
+			af->af_fv_val.af_fv0[9] = 0;
+			af->af_fv_val.af_fv1[9] = 0;
+			for (i = 0; i < 9; i++) {
+				cmr_u8 j = i << 1;// 3x3 map to 3x6
+				af->af_fv_val.af_fv0[i] = af_fv_val[FV0_INDEX(j)] + af_fv_val[FV0_INDEX(j+1)];
+				af->af_fv_val.af_fv1[i] = af_fv_val[FV1_INDEX(j)] + af_fv_val[FV1_INDEX(j+1)];
+				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i];
+				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i];
+			}
+		}
+#endif
+
+#ifdef CONFIG_ISP_2_4
+		for (i = 0; i < 10; i++) {
+			cmr_u64 high = af_fv_val[95 + i / 2];
+			high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
+			af->af_fv_val.af_fv0[i] = af_fv_val[61 + i * 3] + high;	// spsmd g channels
+
+			high = af_fv_val[95 + i / 2];
+			high = (i & 0x01) ? ((high & 0x0F000000) << 12) : ((high & 0x00000F00) << 24);
+			af->af_fv_val.af_fv1[i] = af_fv_val[31 + i * 3] + high;	// soble9x9 g channels
+		}
+#endif
+
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3)// ISP2.1/2.2/2.3 share same AFM filter,
+		for (i = 0; i < 10; i++) {
+			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
+			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
+		}
+#endif
+	return 0;
+}
+
 static cmr_s32 afm_get_fv(af_ctrl_t * af, cmr_u64 * fv, cmr_u32 filter_mask, cmr_s32 roi_num)
 {
 	cmr_s32 i = 0;
@@ -513,8 +655,6 @@ static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 	struct af_result_param af_result;
 	af_result.focus_type = focus_type;
 	af->cb_ops.start_notice(af->caller, &af_result);
-
-
 }
 
 static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
@@ -961,10 +1101,8 @@ static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, cmr_u8 AF_Result, void *cookie)
 
 static cmr_u8 if_clear_fd_stop_counter(cmr_u32 * FD_count, void *cookie)
 {
-	af_ctrl_t *af = cookie;
-
-	*FD_count = af->face_trigger_area.counter_face_force_stop;
-	af->face_trigger_area.counter_face_force_stop = 0;
+	UNUSED(FD_count);
+	UNUSED(cookie);
 
 	return 0;
 }
@@ -1305,15 +1443,10 @@ static cmr_s32 unload_af_lib(af_ctrl_t * af)
 /* initialization */
 static void *af_init(af_ctrl_t * af)
 {
-	// tuning data from common_mode
 	af_tuning_block_param af_tuning_data;
 	AF_Ctrl_Ops AF_Ops;
-	//struct isp_haf_tune_param *pdaf_tune_data;
 	haf_tuning_param_t haf_tuning_data;
-	//struct isp_haf_tof_tune_param *tof_tune_data;
-
 	void *alg_cxt = NULL;
-	//cmr_u32 i;
 
 	AF_Ops.cookie = af;
 	AF_Ops.statistics_wait_cal_done = if_statistics_wait_cal_done;
@@ -1373,34 +1506,6 @@ static void *af_init(af_ctrl_t * af)
 	}else{
 		ISP_LOGI("TOF Tuning NULL!");
 	}
-
-	/*
-	pdaf_tune_data = (struct isp_haf_tune_param *)af->pdaftuning_data;
-	if (pdaf_tune_data != NULL) {
-		ISP_LOGI("PDAF Tuning 0[%d] 1[%d] 14[%d] ", pdaf_tune_data->isp_pdaf_tune_data[0].min_pd_vcm_steps, pdaf_tune_data->isp_pdaf_tune_data[0].max_pd_vcm_steps,
-				 pdaf_tune_data->isp_pdaf_tune_data[0].pd_conf_thr_2nd);
-		for (i = 0; i < 3; i++) {
-			haf_tuning_data.PDAF_Tuning_Data[i].min_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].min_pd_vcm_steps;
-			haf_tuning_data.PDAF_Tuning_Data[i].max_pd_vcm_steps = pdaf_tune_data->isp_pdaf_tune_data[i].max_pd_vcm_steps;
-			haf_tuning_data.PDAF_Tuning_Data[i].coc_range = pdaf_tune_data->isp_pdaf_tune_data[i].coc_range;
-			haf_tuning_data.PDAF_Tuning_Data[i].far_tolerance = pdaf_tune_data->isp_pdaf_tune_data[i].far_tolerance;
-			haf_tuning_data.PDAF_Tuning_Data[i].near_tolerance = pdaf_tune_data->isp_pdaf_tune_data[i].near_tolerance;
-			haf_tuning_data.PDAF_Tuning_Data[i].err_limit = pdaf_tune_data->isp_pdaf_tune_data[i].err_limit;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_converge_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_converge_thr;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_converge_thr_2nd = pdaf_tune_data->isp_pdaf_tune_data[i].pd_converge_thr_2nd;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_focus_times_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_focus_times_thr;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_thread_sync_frm = pdaf_tune_data->isp_pdaf_tune_data[i].pd_thread_sync_frm;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_thread_sync_frm_init = pdaf_tune_data->isp_pdaf_tune_data[i].pd_thread_sync_frm_init;
-			haf_tuning_data.PDAF_Tuning_Data[i].min_process_frm = pdaf_tune_data->isp_pdaf_tune_data[i].min_process_frm;
-			haf_tuning_data.PDAF_Tuning_Data[i].max_process_frm = pdaf_tune_data->isp_pdaf_tune_data[i].max_process_frm;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_conf_thr = pdaf_tune_data->isp_pdaf_tune_data[i].pd_conf_thr;
-			haf_tuning_data.PDAF_Tuning_Data[i].pd_conf_thr_2nd = pdaf_tune_data->isp_pdaf_tune_data[i].pd_conf_thr_2nd;
-		}
-	} else {
-		ISP_LOGI("PDAF Tuning NULL!");
-		haf_tuning_data.PDAF_Tuning_Data[0].min_pd_vcm_steps = 1;	//Use Default Setting
-	}
-	*/
 
 	if (0 != load_af_lib(af, AF_LIB))
 		return NULL;
@@ -1870,6 +1975,20 @@ static cmr_u32 af_get_defocus_param(char *string, defocus_param_t * defocus, cmr
 	return ret;
 }
 
+static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
+{
+	AF_Trigger_Data aft_in;
+	af->algo_mode = SAF;
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (1 == af->defocus) ? (DEFOCUS) : (RF_NORMAL);
+	calc_roi(af, win, af->algo_mode);
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+	do_start_af(af);
+	af->vcm_stable = 0;
+}
+
 static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
@@ -1904,56 +2023,6 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	do_start_af(af);
 	af->vcm_stable = 0;
 	//notify_start(af, AF_FOCUS_FAF);
-}
-
-static cmr_s32 faf_process_frame(af_ctrl_t * af)
-{
-	cmr_u32 alg_mode;
-	AF_Result af_result;
-
-	af->af_ops.calc(af->af_alg_cxt);
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
-	if (Wait_Trigger == alg_mode) {
-		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
-
-		//notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_FAF);
-		ISP_LOGI("notify_stop, result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
-{
-	AF_Trigger_Data aft_in;
-	af->algo_mode = SAF;
-	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-	aft_in.AFT_mode = af->algo_mode;
-	aft_in.bisTrigger = AF_TRIGGER;
-	aft_in.AF_Trigger_Type = (1 == af->defocus) ? (DEFOCUS) : (RF_NORMAL);
-	calc_roi(af, win, af->algo_mode);
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
-	do_start_af(af);
-	af->vcm_stable = 0;
-
-}
-
-static cmr_s32 saf_process_frame(af_ctrl_t * af)
-{
-	cmr_u32 alg_mode;
-	AF_Result af_result;
-	af->af_ops.calc(af->af_alg_cxt);
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
-	if (Wait_Trigger == alg_mode) {
-		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
-
-		//notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_SAF);
-		ISP_LOGI("notify_stop, result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
-		return 1;
-	} else {
-		return 0;
-	}
 }
 
 static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
@@ -1994,54 +2063,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	}
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
-
-	/*
-	af->hal_trigger_type = p_aft_result->is_caf_trig;
-	switch(af->hal_trigger_type){
-		case AFT_TRIG_CB:
-			notify_start(af, AF_FOCUS_CAF);
-			break;
-		case AFT_TRIG_PD:
-			notify_start(af, AF_FOCUS_PDAF);
-			break;
-		case AFT_TRIG_TOF:
-			notify_start(af, AF_FOCUS_TOF);
-			break;
-		default:
-			break;
-	}
-	*/
-
 	af->vcm_stable = 0;
-}
-
-static cmr_s32 caf_process_frame(af_ctrl_t * af)
-{
-	cmr_u32 alg_mode;
-	AF_Result af_result;
-
-	af->af_ops.calc(af->af_alg_cxt);
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
-	if (Wait_Trigger == alg_mode) {
-		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
-		ISP_LOGI("result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
-
-		/*
-		if (AFT_TRIG_CB == af->hal_trigger_type) {
-			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_CAF);
-		} else if(AFT_TRIG_PD == af->hal_trigger_type){
-			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_PDAF);
-		}else if(AF_FOCUS_TOF == af->hal_trigger_type){
-			notify_stop(af, HAVE_PEAK == af_result.AF_Result ? 1 : 0, AF_FOCUS_TOF);
-		}
-
-		ISP_LOGV("notify_stop.");
-		*/
-		af->hal_trigger_type = AFT_TRIG_NONE;
-		return 1;
-	} else {
-		return 0;
-	}
 }
 
 //[TOF_+++]
@@ -2049,11 +2071,6 @@ static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	AF_Trigger_Data aft_in;
-	/*char *token = NULL;
-	cmr_u32 scan_from = 0;
-	cmr_u32 scan_to = 0;
-	cmr_u32 per_steps = 0;
-	*/
 
 	property_get("persist.vendor.cam.tof.enable", value, "1");
 	if (atoi(value) != 1)
@@ -2074,6 +2091,25 @@ static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 }
 //[TOF_---]
 
+static void af_process_frame(af_ctrl_t * af)
+{
+	cmr_u32 alg_mode;
+	AF_Result af_result;
+
+	af->af_ops.calc(af->af_alg_cxt);
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
+	if (Wait_Trigger == alg_mode) {
+		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Result, &af_result);
+		ISP_LOGI("result = %d mode = %d ", af_result.AF_Result, af_result.af_mode);
+		af->focus_state = AF_IDLE;
+		trigger_start(af);
+		if (STATE_FAF == af->state) {
+			ISP_LOGI("pre_state %s", STATE_STRING(af->pre_state));
+			af->state = af->pre_state;
+		}
+	}
+}
+
 static void af_stop_search(af_ctrl_t * af)
 {
 	cmr_u32 force_stop;
@@ -2084,6 +2120,10 @@ static void af_stop_search(af_ctrl_t * af)
 	af->af_ops.calc(af->af_alg_cxt);
 
 	af->focus_state = AF_STOPPED;
+	if (STATE_FAF == af->state) {
+		ISP_LOGI("pre_state %s", STATE_STRING(af->pre_state));
+		af->state = af->pre_state;
+	}
 }
 
 static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm, struct aft_proc_result *result)
@@ -2091,11 +2131,8 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 	struct af_trig_info win;
 
 	if (AF_SEARCHING != af->focus_state) {
-		if (result->is_caf_trig || (AFV1_TRUE == af->force_trigger && af->ae.ae_report.is_stab)) {
-			ISP_LOGI("lib trigger af %d, force trigger %d", result->is_caf_trig, af->force_trigger);
-			if (AFV1_TRUE == af->force_trigger) {
-				trigger_start(af);
-			}
+		if (result->is_caf_trig) {
+			ISP_LOGI("lib trigger af %d", result->is_caf_trig);
 			if (AFT_TRIG_FD == result->is_caf_trig) {
 				win.win_num = 1;
 				win.win_pos[0].sx = prm->fd_info.face_info[0].sx;
@@ -2103,22 +2140,16 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
 				win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
 				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex, win.win_pos[0].ey);
-				af->face_trigger_area.sx = win.win_pos[0].sx;
-				af->face_trigger_area.ex = win.win_pos[0].ex;
-				af->face_trigger_area.sy = win.win_pos[0].sy;
-				af->face_trigger_area.ey = win.win_pos[0].ey;
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
-			} else if(AFT_DATA_TOF == prm->active_data_type && af->tof.data.RangeStatus == 0){//[TOF_+++]
-
+			} else if(AFT_TRIG_TOF == result->is_caf_trig && af->tof.data.RangeStatus == 0){//[TOF_+++]
 				//ISP_LOGV("ddd flag:%d. dis:%d, maxdis:%d, status:%d ", af->tof.tof_trigger_flag, af->tof.last_distance, af->tof.last_MAXdistance, af->tof.last_status );
 				tof_start(af, result);//[TOF_---]
 		    } else {
 				caf_start(af, result);
 			}
 			af->focus_state = AF_SEARCHING;
-			af->force_trigger = (AFV1_FALSE);
 		} else if (result->is_cancel_caf) {
 			cmr_u32 alg_mode;
 			af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Get_Alg_Mode, &alg_mode);
@@ -2127,17 +2158,9 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 	} else {
 		if (AFT_CANC_FD == result->is_cancel_caf || AFT_CANC_CB == result->is_cancel_caf) {
 			af_stop_search(af);
-
-			/*
-			if (AFT_TRIG_CB == af->hal_trigger_type) {
-				notify_stop(af, 0, AF_FOCUS_CAF);// need to be pair with notify_start only for caf
-			}
-			*/
-
 		}
 		if (AFT_CANC_FD_GONE == result->is_cancel_caf) {
 			af_stop_search(af);
-			af->state = af->pre_state;
 		}
 
 		if (AFT_TRIG_FD == result->is_caf_trig || AFT_TRIG_CB == result->is_caf_trig) {
@@ -2156,14 +2179,12 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
-	//res.is_caf_trig; //trigger mode
-
 	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state)) {
 		caf_monitor_trigger(af, prm, &res);
 	}
 }
 
-static void caf_monitor_process_af(af_ctrl_t * af)
+static void caf_monitor_af(af_ctrl_t * af)
 {
 	cmr_u64 fv[10];
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
@@ -2217,7 +2238,7 @@ static void calc_histogram(af_ctrl_t * af, isp_awb_statistic_hist_info_t * stat)
 	}
 }
 
-static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_awb_statistic_hist_info_t * stat)
+static void caf_monitor_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_awb_statistic_hist_info_t * stat)
 {
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
 	ISP_LOGV("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
@@ -2248,7 +2269,7 @@ static void caf_monitor_process_ae(af_ctrl_t * af, const struct af_ae_calc_out *
 	caf_monitor_calc(af, prm);
 }
 
-static void caf_monitor_process_sensor(af_ctrl_t * af, struct afctrl_sensor_info_t *in)
+static void caf_monitor_sensor(af_ctrl_t * af, struct afctrl_sensor_info_t *in)
 {
 	struct afctrl_sensor_info_t *aux_sensor_info = (struct afctrl_sensor_info_t *)in;
 	uint32_t sensor_type = aux_sensor_info->type;
@@ -2276,7 +2297,7 @@ static void caf_monitor_process_sensor(af_ctrl_t * af, struct afctrl_sensor_info
 	caf_monitor_calc(af, prm);
 }
 
-static void caf_monitor_process_phase_diff(af_ctrl_t * af)
+static void caf_monitor_phase_diff(af_ctrl_t * af)
 {
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
 
@@ -2298,7 +2319,7 @@ static void caf_monitor_process_phase_diff(af_ctrl_t * af)
 	return;
 }
 
-static void caf_monitor_process_fd(af_ctrl_t * af)
+static void caf_monitor_fd(af_ctrl_t * af)
 {
 
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
@@ -2350,7 +2371,7 @@ static void caf_monitor_process(af_ctrl_t * af)
 {
 	if (af->trigger_source_type & AF_DATA_FD) {
 		af->trigger_source_type &= (~AF_DATA_FD);
-		caf_monitor_process_fd(af);
+		caf_monitor_fd(af);
 	}
 
 	//[TOF_+++]
@@ -2362,17 +2383,17 @@ static void caf_monitor_process(af_ctrl_t * af)
 
 	if (af->trigger_source_type & AF_DATA_PD) {
 		af->trigger_source_type &= (~AF_DATA_PD);
-		caf_monitor_process_phase_diff(af);
+		caf_monitor_phase_diff(af);
 	}
 
 	if (af->trigger_source_type & AF_DATA_AF) {
 		af->trigger_source_type &= (~AF_DATA_AF);
-		caf_monitor_process_af(af);
+		caf_monitor_af(af);
 	}
 
 	if (af->trigger_source_type & AF_DATA_AE) {
 		af->trigger_source_type &= (~AF_DATA_AE);
-		caf_monitor_process_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
+		caf_monitor_ae(af, &(af->ae.ae_report), &(af->rgb_stat));
 	}
 
 	if (af->trigger_source_type & AF_DATA_G) {
@@ -2382,7 +2403,7 @@ static void caf_monitor_process(af_ctrl_t * af)
 		aux_sensor_info.gsensor_info.vertical_down = af->gsensor_info.vertical_down;
 		aux_sensor_info.gsensor_info.horizontal = af->gsensor_info.horizontal;
 		aux_sensor_info.gsensor_info.timestamp = af->gsensor_info.timestamp;
-		caf_monitor_process_sensor(af, &aux_sensor_info);
+		caf_monitor_sensor(af, &aux_sensor_info);
 		af->trigger_source_type &= (~AF_DATA_G);
 	}
 
@@ -2415,7 +2436,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 			af->request_mode = af_mode;
 			af->state = STATE_FULLSCAN;
 		} else {
-			af->force_trigger = (AFV1_FALSE);
 			af->request_mode = af_mode;
 			af->state = STATE_NORMAL_AF;
 		}
@@ -2470,7 +2490,6 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	}
 
 	if (STATE_FULLSCAN == af->state) {
-		af->hal_trigger_type = AFT_TRIG_CB;
 		af->algo_mode = CAF;
 		memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 		aft_in.AFT_mode = af->algo_mode;
@@ -2514,31 +2533,6 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 		ISP_LOGW("serious problem, current af is not done, af state %s", STATE_STRING(af->state));
 		//wait saf/caf done, caf : for camera enter, switch to manual; saf : normal non zsl
 		af_stop_search(af);
-
-		/*
-		switch(af->state){
-		case STATE_CAF:
-		case STATE_RECORD_CAF:
-		case STATE_FULLSCAN:
-			if (AFT_TRIG_CB == af->hal_trigger_type) {
-				notify_stop(af, 0, AF_FOCUS_CAF);
-			} else if (AFT_TRIG_PD == af->hal_trigger_type) {
-				notify_stop(af, 0, AF_FOCUS_PDAF);
-			} else if (AFT_TRIG_TOF == af->hal_trigger_type) {
-				notify_stop(af, 0, AF_FOCUS_TOF);
-			}
-			break;
-		case STATE_FAF:
-			notify_stop(af, 0, AF_FOCUS_FAF);
-			break;
-		case STATE_NORMAL_AF:
-			notify_stop(af, 0, AF_FOCUS_SAF);
-			break;
-		default:
-			break;
-		}
-		*/
-		af->hal_trigger_type = AFT_TRIG_NONE;
 	}
 
 	return rtn;
@@ -3258,6 +3252,8 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		rtn = af_sprd_set_dac_info(handle, param0);
 		break;
 		// SharkLE Only --
+	case AF_CMD_SET_SCENE_INFO:
+		break;
 	default:
 		ISP_LOGW("set cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -3557,10 +3553,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	af->pre_state = af->state = STATE_CAF;
 	af->focus_state = AF_IDLE;
-	af->force_trigger = AFV1_FALSE;
-	af->hal_trigger_type = AFT_TRIG_NONE;
 
-	af->ae_lock_num = 1;
+	af->ae_lock_num = 0;
 	af->awb_lock_num = 0;
 	af->lsc_lock_num = 0;
 	af->nlm_lock_num = 0;
@@ -3641,10 +3635,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
-	cmr_u32 *af_fv_val = NULL;
 	cmr_u32 afm_skip_num = 0;
 	cmr_s32 rtn = AFV1_SUCCESS;
-	cmr_u8 i = 0;
 	UNUSED(out);
 	struct af_status_info status_info;
 	struct af_status_info status_wide;
@@ -3730,142 +3722,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
-		af_fv_val = (cmr_u32 *) (inparam->data);
-
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
-#define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
-#define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
-		if(STATE_FAF == af->state && AF_G_NONE != af->g_orientation){//face FV mapping
-			if(AF_G_DEGREE0 == af->g_orientation || AF_G_DEGREE2 == af->g_orientation){//6x4
-				if(AF_G_DEGREE0 == af->g_orientation){
-					for (i = 0; i < 6; i++) {//3
-						af->af_fv_val.af_fv0[i] = (cmr_u64)af_fv_val[FV0_INDEX(i/3*4+i%3+af->win_offset)];
-						af->af_fv_val.af_fv1[i] = (cmr_u64)af_fv_val[FV1_INDEX(i/3*4+i%3+af->win_offset)];
-					}
-					if(0 == af->win_offset){
-						af->af_fv_val.af_fv0[7] = (cmr_u64)af_fv_val[FV0_INDEX(9)];
-						af->af_fv_val.af_fv1[7] = (cmr_u64)af_fv_val[FV1_INDEX(9)];
-						af->af_fv_val.af_fv0[6] = (cmr_u64)af_fv_val[FV0_INDEX(20)] + af_fv_val[FV0_INDEX(21)];
-						af->af_fv_val.af_fv1[6] = (cmr_u64)af_fv_val[FV1_INDEX(20)] + af_fv_val[FV1_INDEX(21)];
-						af->af_fv_val.af_fv0[8] = (cmr_u64)af_fv_val[FV0_INDEX(22)] + af_fv_val[FV0_INDEX(21)];
-						af->af_fv_val.af_fv1[8] = (cmr_u64)af_fv_val[FV1_INDEX(22)] + af_fv_val[FV1_INDEX(21)];
-					}else{
-						af->af_fv_val.af_fv0[7] = (cmr_u64)af_fv_val[FV0_INDEX(10)];
-						af->af_fv_val.af_fv1[7] = (cmr_u64)af_fv_val[FV1_INDEX(10)];
-						af->af_fv_val.af_fv0[6] = (cmr_u64)af_fv_val[FV0_INDEX(21)] + af_fv_val[FV0_INDEX(22)];
-						af->af_fv_val.af_fv1[6] = (cmr_u64)af_fv_val[FV1_INDEX(21)] + af_fv_val[FV1_INDEX(22)];
-						af->af_fv_val.af_fv0[8] = (cmr_u64)af_fv_val[FV0_INDEX(23)] + af_fv_val[FV0_INDEX(22)];
-						af->af_fv_val.af_fv1[8] = (cmr_u64)af_fv_val[FV1_INDEX(23)] + af_fv_val[FV1_INDEX(22)];
-					}
-				}else if(AF_G_DEGREE2 == af->g_orientation){
-					for (i = 0; i < 6; i++) {//3
-						af->af_fv_val.af_fv0[i+3] = (cmr_u64)af_fv_val[FV0_INDEX(i/3*4+i%3+16+af->win_offset)];
-						af->af_fv_val.af_fv1[i+3] = (cmr_u64)af_fv_val[FV1_INDEX(i/3*4+i%3+16+af->win_offset)];
-					}
-					if(0 == af->win_offset){
-						af->af_fv_val.af_fv0[1] = (cmr_u64)af_fv_val[FV0_INDEX(13)];
-						af->af_fv_val.af_fv1[1] = (cmr_u64)af_fv_val[FV1_INDEX(13)];
-						af->af_fv_val.af_fv0[0] = (cmr_u64)af_fv_val[FV0_INDEX(0)] + af_fv_val[FV0_INDEX(1)];
-						af->af_fv_val.af_fv1[0] = (cmr_u64)af_fv_val[FV1_INDEX(0)] + af_fv_val[FV1_INDEX(1)];
-						af->af_fv_val.af_fv0[2] = (cmr_u64)af_fv_val[FV0_INDEX(2)] + af_fv_val[FV0_INDEX(1)];
-						af->af_fv_val.af_fv1[2] = (cmr_u64)af_fv_val[FV1_INDEX(2)] + af_fv_val[FV1_INDEX(1)];
-					}else{
-						af->af_fv_val.af_fv0[1] = (cmr_u64)af_fv_val[FV0_INDEX(14)];
-						af->af_fv_val.af_fv1[1] = (cmr_u64)af_fv_val[FV1_INDEX(14)];
-						af->af_fv_val.af_fv0[0] = (cmr_u64)af_fv_val[FV0_INDEX(1)] + af_fv_val[FV0_INDEX(2)];
-						af->af_fv_val.af_fv1[0] = (cmr_u64)af_fv_val[FV1_INDEX(1)] + af_fv_val[FV1_INDEX(2)];
-						af->af_fv_val.af_fv0[2] = (cmr_u64)af_fv_val[FV0_INDEX(3)] + af_fv_val[FV0_INDEX(2)];
-						af->af_fv_val.af_fv1[2] = (cmr_u64)af_fv_val[FV1_INDEX(3)] + af_fv_val[FV1_INDEX(2)];
-					}
-				}
-			}else{//3//3x6
-				if(AF_G_DEGREE1 == af->g_orientation){
-					for (i = 0; i < 6; i++) {//3
-						af->af_fv_val.af_fv0[i/2*3+i%2] = (cmr_u64)af_fv_val[FV0_INDEX(i/2*6+i%2)];
-						af->af_fv_val.af_fv1[i/2*3+i%2] = (cmr_u64)af_fv_val[FV1_INDEX(i/2*6+i%2)];
-					}
-					af->af_fv_val.af_fv0[5] = (cmr_u64)af_fv_val[FV0_INDEX(8)];
-					af->af_fv_val.af_fv1[5] = (cmr_u64)af_fv_val[FV1_INDEX(8)];
-					af->af_fv_val.af_fv0[2] = (cmr_u64)af_fv_val[FV0_INDEX(5)] + af_fv_val[FV0_INDEX(11)];
-					af->af_fv_val.af_fv1[2] = (cmr_u64)af_fv_val[FV1_INDEX(5)] + af_fv_val[FV1_INDEX(11)];
-					af->af_fv_val.af_fv0[8] = (cmr_u64)af_fv_val[FV0_INDEX(17)] + af_fv_val[FV0_INDEX(11)];
-					af->af_fv_val.af_fv1[8] = (cmr_u64)af_fv_val[FV1_INDEX(17)] + af_fv_val[FV1_INDEX(11)];
-				}else if(AF_G_DEGREE3 == af->g_orientation){
-					for (i = 0; i < 6; i++) {//3
-						af->af_fv_val.af_fv0[i/2*3+i%2+1] = (cmr_u64)af_fv_val[FV0_INDEX(i/2*6+i%2+4)];
-						af->af_fv_val.af_fv1[i/2*3+i%2+1] = (cmr_u64)af_fv_val[FV1_INDEX(i/2*6+i%2+4)];
-					}
-					af->af_fv_val.af_fv0[3] = (cmr_u64)af_fv_val[FV0_INDEX(9)];
-					af->af_fv_val.af_fv1[3] = (cmr_u64)af_fv_val[FV1_INDEX(9)];
-					af->af_fv_val.af_fv0[0] = (cmr_u64)af_fv_val[FV0_INDEX(0)] + af_fv_val[FV0_INDEX(6)];
-					af->af_fv_val.af_fv1[0] = (cmr_u64)af_fv_val[FV1_INDEX(0)] + af_fv_val[FV1_INDEX(6)];
-					af->af_fv_val.af_fv0[6] = (cmr_u64)af_fv_val[FV0_INDEX(12)] + af_fv_val[FV0_INDEX(6)];
-					af->af_fv_val.af_fv1[6] = (cmr_u64)af_fv_val[FV1_INDEX(12)] + af_fv_val[FV1_INDEX(6)];
-				}
-			}
-		}else if(STATE_FULLSCAN == af->state) {
-			af->af_fv_val.af_fv0[9] = 0;
-			af->af_fv_val.af_fv1[9] = 0;
-			for (i = 0; i < 3; i++) {//3//3x3 map to 12x6
-				af->af_fv_val.af_fv0[i] = (cmr_u64)af_fv_val[FV0_INDEX(12+2*i)] + af_fv_val[FV0_INDEX(13+2*i)] +
-											af_fv_val[FV0_INDEX(18+2*i)] + af_fv_val[FV0_INDEX(19+2*i)];
-				af->af_fv_val.af_fv1[i] = (cmr_u64)af_fv_val[FV1_INDEX(12+2*i)] + af_fv_val[FV1_INDEX(13+2*i)] +
-											af_fv_val[FV1_INDEX(18+2*i)] + af_fv_val[FV1_INDEX(19+2*i)];
-				af->af_fv_val.af_fv0[i] = af->af_fv_val.af_fv0[i]<<1;
-				af->af_fv_val.af_fv1[i] = af->af_fv_val.af_fv1[i]<<1;
-				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i];
-				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i];
-
-				af->af_fv_val.af_fv0[i+3] = (cmr_u64)af_fv_val[FV0_INDEX(30+2*i)] + af_fv_val[FV0_INDEX(31+2*i)] +
-											af_fv_val[FV0_INDEX(36+2*i)] + af_fv_val[FV0_INDEX(37+2*i)];
-				af->af_fv_val.af_fv1[i+3] = (cmr_u64)af_fv_val[FV1_INDEX(30+2*i)] + af_fv_val[FV1_INDEX(31+2*i)] +
-											af_fv_val[FV1_INDEX(36+2*i)] + af_fv_val[FV1_INDEX(37+2*i)];
-				af->af_fv_val.af_fv0[i+3] = af->af_fv_val.af_fv0[i+3]<<1;
-				af->af_fv_val.af_fv1[i+3] = af->af_fv_val.af_fv1[i+3]<<1;
-				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i+3];
-				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i+3];
-
-				af->af_fv_val.af_fv0[i+6] = (cmr_u64)af_fv_val[FV0_INDEX(48+2*i)] + af_fv_val[FV0_INDEX(49+2*i)] +
-											af_fv_val[FV0_INDEX(54+2*i)] + af_fv_val[FV0_INDEX(55+2*i)];
-				af->af_fv_val.af_fv1[i+6] = (cmr_u64)af_fv_val[FV1_INDEX(48+2*i)] + af_fv_val[FV1_INDEX(49+2*i)] +
-											af_fv_val[FV1_INDEX(54+2*i)] + af_fv_val[FV1_INDEX(55+2*i)];
-				af->af_fv_val.af_fv0[i+6] = af->af_fv_val.af_fv0[i+6]<<1;
-				af->af_fv_val.af_fv1[i+6] = af->af_fv_val.af_fv1[i+6]<<1;
-				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i+6];
-				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i+6];
-			}
-		} else {
-			af->af_fv_val.af_fv0[9] = 0;
-			af->af_fv_val.af_fv1[9] = 0;
-			for (i = 0; i < 9; i++) {
-				cmr_u8 j = i << 1;// 3x3 map to 3x6
-				af->af_fv_val.af_fv0[i] = af_fv_val[FV0_INDEX(j)] + af_fv_val[FV0_INDEX(j+1)];
-				af->af_fv_val.af_fv1[i] = af_fv_val[FV1_INDEX(j)] + af_fv_val[FV1_INDEX(j+1)];
-				af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i];
-				af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i];
-			}
-		}
-#endif
-
-#ifdef CONFIG_ISP_2_4
-		for (i = 0; i < 10; i++) {
-			cmr_u64 high = af_fv_val[95 + i / 2];
-			high = (i & 0x01) ? ((high & 0x00FF0000) << 16) : ((high & 0x000000FF) << 32);
-			af->af_fv_val.af_fv0[i] = af_fv_val[61 + i * 3] + high;	// spsmd g channels
-
-			high = af_fv_val[95 + i / 2];
-			high = (i & 0x01) ? ((high & 0x0F000000) << 12) : ((high & 0x00000F00) << 24);
-			af->af_fv_val.af_fv1[i] = af_fv_val[31 + i * 3] + high;	// soble9x9 g channels
-		}
-#endif
-
-#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3)// ISP2.1/2.2/2.3 share same AFM filter,
-		for (i = 0; i < 10; i++) {
-			af->af_fv_val.af_fv0[i] = ((((cmr_u64) af_fv_val[20 + i]) & 0x00000fff) << 32) | (((cmr_u64) af_fv_val[i]));
-			af->af_fv_val.af_fv1[i] = (((((cmr_u64) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) | ((cmr_u64) af_fv_val[10 + i]);
-		}
-#endif
-
+		afm_set_fv(af, inparam->data);
 		if (inparam->sensor_fps.is_high_fps) {
 			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
 			if (afm_skip_num != af->afm_skip_num) {
@@ -3896,35 +3753,18 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	if (AF_DATA_AF == inparam->data_type) {
 		switch (af->state) {
 		case STATE_NORMAL_AF:
+		case STATE_FAF:
 			if (AF_SEARCHING == af->focus_state) {
-				rtn = saf_process_frame(af);
-				if (1 == rtn) {
-					af->focus_state = AF_IDLE;
-					trigger_start(af);
-				}
+				af_process_frame(af);
 			}
 			break;
 		case STATE_FULLSCAN:
 		case STATE_CAF:
 		case STATE_RECORD_CAF:
 			if (AF_SEARCHING == af->focus_state) {
-				rtn = caf_process_frame(af);
-				if (1 == rtn) {
-					af->focus_state = AF_IDLE;
-					trigger_start(af);
-				}
+				af_process_frame(af);
 			} else {
 				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Pre_Trigger_Data, NULL);
-			}
-			break;
-		case STATE_FAF:
-			if (AF_SEARCHING == af->focus_state) {
-				rtn = faf_process_frame(af);
-				if (1 == rtn) {
-					af->focus_state = AF_IDLE;
-					af->state = af->pre_state;
-					trigger_start(af);
-				}
 			}
 			break;
 		case STATE_MANUAL:

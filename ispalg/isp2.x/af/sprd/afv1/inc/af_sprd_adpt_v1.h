@@ -205,15 +205,6 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 dummy[3];			// 4 bytes align
 } afm_tuning_sharkl2;
 
-typedef struct _AF_adpt_face_win {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-	cmr_u32 face_force_stop;
-	cmr_u32 counter_face_force_stop;
-} AF_adpt_face_win;
-
 struct af_enhanced_module_info_u {
 	cmr_u8 chl_sel;
 	cmr_u8 nr_mode;
@@ -290,8 +281,6 @@ typedef struct _af_ctrl {
 	cmr_u32 vcm_stable;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
-	cmr_u32 force_trigger;
-	cmr_u32 hal_trigger_type;
 	cmr_u32 ts_counter;
 	// non-zsl,easy for motor moving and capturing
 	cmr_u8 test_loop_quit;
@@ -316,7 +305,6 @@ typedef struct _af_ctrl {
 	cmr_u8 *toftuning_data;
 	cmr_u32 toftuning_data_len;
 	tof_measure_data_t tof;
-	AF_adpt_face_win face_trigger_area;
 
 	struct afctrl_cb_ops cb_ops;
 	cmr_u8 *pdaf_rdm_otp_data;
