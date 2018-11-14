@@ -434,7 +434,8 @@ const cam_stream_info_t stream_info[] = {
     {{320, 240}, 33331760L, 33331760L},
     {{288, 352}, 33331760L, 33331760L},
     {{240, 320}, 33331760L, 33331760L},
-    {{176, 144}, 33331760L, 33331760L}};
+    {{176, 144}, 33331760L, 33331760L}
+};
 
 const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.6, 2.8, 3.0};
 
@@ -663,11 +664,14 @@ const camera_info kCameraInfo[] = {
 
 };
 
+// TBD: not used for now, will remove it later
 unsigned char camera_is_supprort[] = {
     BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
     BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
     BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
 };
+
+int SprdCamera3Setting::mPhysicalSensorNum = 0;
 
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];
@@ -924,7 +928,6 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 exit:
     alreadyGetSensorStaticInfo[cameraId] = 1;
 
-
     HAL_LOGI("X");
     return 0;
 }
@@ -1008,24 +1011,21 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
     return ret;
 }
 
+// just for physical camera, multi-camera fill the info in multi-camera layer
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
-    int physicalCameraNum;
-
     if (cameraInfo == NULL) {
         HAL_LOGE("cameraInfo is NULL");
         return -1;
     }
 
-    physicalCameraNum = sizeof(kCameraInfo) / sizeof(kCameraInfo[0]);
-    HAL_LOGI("physicalCameraNum=%d, cameraId=%d", physicalCameraNum, cameraId);
+    HAL_LOGI("cameraId=%d", cameraId);
 
-    if (cameraId >= physicalCameraNum) {
-        HAL_LOGE("failed");
-        return -1;
-    }
+    // TBD: for spreadtrum internal development use
+    // add struct light camera info and three back camera phone info
 
-    if (kCameraInfo[cameraId].orientation == -1) {
+    if (cameraId >= mPhysicalSensorNum ||
+        kCameraInfo[cameraId].orientation == -1) {
         HAL_LOGE("failed");
         return -1;
     }
@@ -1041,7 +1041,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int numberOfCameras = 0;
 
-    numberOfCameras = sensor_get_number(camera_is_supprort);
+    numberOfCameras = getPhysicalNumberOfCameras();
 
     // will add logical camera num here later
 
@@ -1051,18 +1051,13 @@ int SprdCamera3Setting::getNumberOfCameras() {
 }
 
 int SprdCamera3Setting::getPhysicalNumberOfCameras() {
-    int numberOfPhysicalCameras = 0;
-    int i, physicalCameraNum;
-
-    physicalCameraNum = sizeof(kCameraInfo) / sizeof(kCameraInfo[0]);
-    for (i = 0; i < physicalCameraNum; i++) {
-        if (kCameraInfo[i].orientation != -1)
-            numberOfPhysicalCameras++;
+    if (mPhysicalSensorNum == 0) {
+        mPhysicalSensorNum = sensor_get_number(camera_is_supprort);
     }
 
-    HAL_LOGI("numberOfPhysicalCameras=%d", numberOfPhysicalCameras);
+    HAL_LOGV("mPhysicalSensorNum=%d", mPhysicalSensorNum);
 
-    return numberOfPhysicalCameras;
+    return mPhysicalSensorNum;
 }
 
 int SprdCamera3Setting::getLogicalNumberOfCameras() {
@@ -1488,10 +1483,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                camera3_default_info.common.availSceneModes,
                sizeof(avail_scene_modes));
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
-        uint32_t sizeSceneModes = sizeof(avail_scene_modes) / avail_scene_modes[0];
-        if (mSensorType[cameraId] != FOURINONESENSOR && mSensorType[cameraId] != YUVSENSOR) {
-            s_setting[cameraId].controlInfo.available_scene_modes[sizeSceneModes] =
-                                            ANDROID_CONTROL_SCENE_MODE_HDR;
+        uint32_t sizeSceneModes =
+            sizeof(avail_scene_modes) / avail_scene_modes[0];
+        if (mSensorType[cameraId] != FOURINONESENSOR &&
+            mSensorType[cameraId] != YUVSENSOR) {
+            s_setting[cameraId]
+                .controlInfo.available_scene_modes[sizeSceneModes] =
+                ANDROID_CONTROL_SCENE_MODE_HDR;
         }
 #endif
     }
@@ -1664,7 +1662,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         "cameraId:%d, availabe_ai_scene:%d,  sprd_ai_scene_type_current:%d",
         cameraId, s_setting[cameraId].sprddefInfo.availabe_ai_scene,
         s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current);
-    s_setting[cameraId].sprddefInfo.availabe_sensor_type = mSensorType[cameraId];
+    s_setting[cameraId].sprddefInfo.availabe_sensor_type =
+        mSensorType[cameraId];
 
     // for sprd camera features
     Vector<uint8_t> available_cam_features;
@@ -2055,7 +2054,8 @@ int SprdCamera3Setting::initStaticMetadata(
                         0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
                         ANDROID_SPRD_CAM_FEATURE_LIST)
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SENSORTYPE,
-                      &(s_setting[cameraId].sprddefInfo.availabe_sensor_type), 1);
+                      &(s_setting[cameraId].sprddefInfo.availabe_sensor_type),
+                      1);
 
     staticInfo.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
