@@ -277,7 +277,6 @@ struct isp_pipe_context {
 	struct cam_offline_thread_info thread;
 	struct completion shadow_com;
 	struct completion fmcu_com;
-	struct completion ltm_com;
 
 	struct isp_3dnr_ctx_desc nr3_ctx;
 	struct isp_ltm_ctx_desc ltm_ctx;
@@ -294,6 +293,7 @@ struct isp_pipe_dev {
 	struct mutex path_mutex; /* lock ctx/path resource management */
 	enum isp_work_mode wmode;
 	void *cfg_handle;
+	struct isp_ltm_share_ctx_desc *ltm_handle;
 	struct isp_pipe_context ctx[ISP_CONTEXT_NUM];
 	struct sprd_cam_hw_info *isp_hw;
 };

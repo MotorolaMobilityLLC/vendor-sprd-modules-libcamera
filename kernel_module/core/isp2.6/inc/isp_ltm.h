@@ -104,34 +104,6 @@ typedef struct isp_ltm_hist_param
 	uint32_t cropCols;
 } ltm_param_t;
 
-typedef struct isp_ltm_map_param
-{
-	/* input, from ltm hists
-	 * uint32_t tile_num_x;
-	 * uint32_t tile_num_y;
-	 * uint32_t tile_width_stat;
-	 * uint32_t tile_height_stat;
-	 * uint32_t frame_width_stat;
-	 * uint32_t frame_height_stat;
-	 */
-
-	/* input & output, frame size */
-	uint32_t frame_width;
-	uint32_t frame_height;
-
-	/* output
-	 * uint32_t cropUp;
-	 * uint32_t cropDown;
-	 * uint32_t cropLeft;
-	 * uint32_t cropRight;
-	 * uint32_t cropCols;
-	 * uint32_t cropRows;
-	 */
-
-	uint32_t tile_width;
-	uint32_t tile_height;
-	uint32_t tile_size_map;
-} ltm_map_param_t;
 
 typedef struct isp_ltm_rtl_param
 {
@@ -155,13 +127,6 @@ typedef struct isp_ltm_rtl_param
  * LTM register, copy from SPEC.
  *
  */
-enum ltm_func_type {
-	LTM_FUNC_PRE,
-	LTM_FUNC_VID,
-	LTM_FUNC_CAP,
-	LTM_FUNC_MAX
-};
-
 struct isp_ltm_hists {
 	/* ISP_LTM_PARAMETERS 0x0010 */
 	uint32_t bypass;
@@ -229,13 +194,12 @@ struct isp_ltm_ctx_desc {
 	uint32_t bypass;
 	uint32_t type;
 	uint32_t isp_pipe_ctx_id;
-	uint32_t wait_completion;
 
 	/*
 	 * preview and capture frame has UNIFY and UNIQ frame ID
 	 * match frame of preview and capture
 	 */
-	uint32_t frame_idx;
+	uint32_t fid;
 	/*
 	 * Origion frame size
 	 */
@@ -255,8 +219,71 @@ struct isp_ltm_ctx_desc {
 
 
 /*
+ * Share data between context pre / cap
+ */
+struct isp_ltm_share_ctx_ops;
+struct isp_ltm_share_ctx_param {
+	/*
+	 * status:
+	 *	1: running
+	 *	0: stop
+	 */
+	uint32_t pre_ctx_status;
+	uint32_t cap_ctx_status;
+
+	uint32_t pre_cid;
+	uint32_t cap_cid;
+
+	atomic_t pre_fid;
+	atomic_t cap_fid;
+
+	uint32_t pre_update;
+	uint32_t cap_update;
+
+	uint32_t pre_frame_h;
+	uint32_t pre_frame_w;
+	uint32_t cap_frame_h;
+	uint32_t cap_frame_w;
+
+	uint32_t tile_num_x_minus;
+	uint32_t tile_num_y_minus;
+	uint32_t tile_width;
+	uint32_t tile_height;
+
+	/* uint32_t wait_completion; */
+	atomic_t wait_completion;
+	struct completion share_comp;
+
+	struct mutex share_mutex;
+};
+
+struct isp_ltm_share_ctx_desc {
+	struct isp_ltm_share_ctx_param *param;
+	struct isp_ltm_share_ctx_ops *ops;
+};
+
+struct isp_ltm_share_ctx_ops {
+	int (*init)(void);
+	int (*deinit)(struct isp_ltm_share_ctx_desc *share_ctx);
+	int (*set_status)(int status, int context_idx, int type);
+	int (*get_status)(int type);
+	int (*set_update)(int update, int type);
+	int (*get_update)(int type);
+	int (*set_frmidx)(int frame_idx);
+	int (*get_frmidx)(void);
+	int (*set_completion)(int frame_idx);
+	int (*get_completion)(void);
+	int (*complete_completion)(void);
+	int (*set_config)(struct isp_ltm_ctx_desc *ctx);
+	int (*get_config)(struct isp_ltm_ctx_desc *ctx);
+};
+
+/*
  * EXPORT function interface
  */
+struct isp_ltm_share_ctx_desc *isp_get_ltm_share_ctx_desc(void);
+int isp_put_ltm_share_ctx_desc(struct isp_ltm_share_ctx_desc *param);
+
 int isp_ltm_gen_frame_config(struct isp_ltm_ctx_desc *ctx);
 int isp_ltm_gen_map_slice_config(struct isp_ltm_ctx_desc *ctx,
 			struct isp_ltm_rtl_param  *prtl,

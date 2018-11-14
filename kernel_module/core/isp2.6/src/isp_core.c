@@ -982,7 +982,11 @@ static int isp_ltm_process_frame_previous(struct isp_pipe_context *pctx,
 		return -EINVAL;
 	}
 
-	if (pctx->mode_ltm == MODE_LTM_OFF)
+	/*
+	 * Only preview path care of frame size changed
+	 * Because capture path, USING hist from preview path
+	 */
+	if (pctx->mode_ltm != MODE_LTM_PRE)
 		return 0;
 
 	/*  Check Zoom or not */
@@ -991,7 +995,7 @@ static int isp_ltm_process_frame_previous(struct isp_pipe_context *pctx,
 		pr_info("frame size changed, bypass ltm map\n");
 
 		/* 1. hists from preview path always on
-		 * 2. map will be off both on preview and capture case
+		 * 2. map will be off one time in preview case
 		 */
 		pctx->ltm_ctx.map.bypass = 1;
 	} else {
@@ -1006,100 +1010,38 @@ static int isp_ltm_process_frame(struct isp_pipe_context *pctx,
 {
 	int ret = 0;
 
-	struct isp_pipe_dev *dev = pctx->dev;
-
 	/* pre & cap */
 	pctx->ltm_ctx.type = pctx->mode_ltm;
-	pctx->ltm_ctx.frame_idx	   = pframe->fid;
+	pctx->ltm_ctx.fid	   = pframe->fid;
 	pctx->ltm_ctx.frame_width  = pctx->input_trim.size_x;
 	pctx->ltm_ctx.frame_height = pctx->input_trim.size_y;
 	pctx->ltm_ctx.isp_pipe_ctx_id = pctx->ctx_id;
 
-	/* Only cap */
-	/* if ltm capture mode, try to find param in preview mode */
-	if (pctx->mode_ltm == MODE_LTM_CONTINUE) {
-		int idx = 0;
-		struct isp_pipe_context *prectx;
-
-		for (idx = 0; idx < ISP_CONTEXT_NUM; idx++) {
-			if (dev->ctx[idx].mode_ltm == MODE_LTM_CONTINUE_OUT) {
-				prectx = &dev->ctx[idx];
-				break;
-			}
-		}
-
-		if (idx == ISP_CONTEXT_NUM) {
-			pr_err("Can't find ltm preview context, disable ltm capture!\n");
-			pctx->mode_ltm = MODE_LTM_OFF;
-			pctx->ltm_ctx.type = MODE_LTM_OFF;
-			/* TODO */
-		} else {
-			if (prectx->ctx_id != prectx->ltm_ctx.isp_pipe_ctx_id) {
-				pr_err("ERROR Happen, How to do\n");
-				pctx->mode_ltm = MODE_LTM_OFF;
-				pctx->ltm_ctx.type = MODE_LTM_OFF;
-				/* TODO */
-			}
-
-			/* logic for waiting for ltm histo done.
-			 * CONDITION: preview idx >= capture idx
-			 */
-			while (pctx->ltm_ctx.frame_idx >
-				prectx->ltm_ctx.frame_idx) {
-
-				pr_info("LTM capture fid [%d] > previre fid [%d]\n",
-					pctx->ltm_ctx.frame_idx,
-					prectx->ltm_ctx.frame_idx);
-
-				prectx->ltm_ctx.wait_completion = pframe->fid;
-
-				ret = wait_for_completion_interruptible_timeout(
-							&prectx->ltm_com,
-							ISP_CONTEXT_TIMEOUT);
-				if (ret <= 0) {
-					pr_err("Wait completion error, disable ltm [%d]\n", ret);
-					pctx->mode_ltm = MODE_LTM_OFF;
-					pctx->ltm_ctx.type = MODE_LTM_OFF;
-				}
-			}
-
-			/* Sync ltm tile config from pre to cap */
-			pctx->ltm_ctx.frame_height_stat =
-					prectx->ltm_ctx.frame_height_stat;
-			pctx->ltm_ctx.frame_width_stat  =
-					prectx->ltm_ctx.frame_width_stat;
-
-			pctx->ltm_ctx.hists.tile_num_x_minus =
-					prectx->ltm_ctx.hists.tile_num_x_minus;
-			pctx->ltm_ctx.hists.tile_num_y_minus =
-					prectx->ltm_ctx.hists.tile_num_y_minus;
-			pctx->ltm_ctx.hists.tile_width	=
-					prectx->ltm_ctx.hists.tile_width;
-			pctx->ltm_ctx.hists.tile_height	=
-					prectx->ltm_ctx.hists.tile_height;
-
-			pr_info("frame_height_stat[%d], frame_width_stat[%d],\
-				tile_num_x_minus[%d], tile_num_y_minus[%d],\
-				tile_width[%d], tile_height[%d]\n",
-				pctx->ltm_ctx.frame_height_stat,
-				pctx->ltm_ctx.frame_width_stat,
-				pctx->ltm_ctx.hists.tile_num_x_minus,
-				pctx->ltm_ctx.hists.tile_num_y_minus,
-				pctx->ltm_ctx.hists.tile_width,
-				pctx->ltm_ctx.hists.tile_height);
-		}
-		pr_info("type[%d], frame_idx[%d], frame_width[%d], frame_height[%d], isp_pipe_ctx_id[%d]\n",
-			pctx->ltm_ctx.type,
-			pctx->ltm_ctx.frame_idx,
-			pctx->ltm_ctx.frame_width,
-			pctx->ltm_ctx.frame_height,
-			pctx->ltm_ctx.isp_pipe_ctx_id);
-	}
-
 	/* pre & cap */
-	isp_ltm_gen_frame_config(&pctx->ltm_ctx);
+	ret = isp_ltm_gen_frame_config(&pctx->ltm_ctx);
+	if (ret == -1) {
+		pctx->mode_ltm = MODE_LTM_OFF;
+		pr_err("LTM cfg frame err, DISABLE\n");
+	}
+#if 0
+	pr_info("type[%d], fid[%d], frame_width[%d], frame_height[%d], isp_pipe_ctx_id[%d]\n",
+		pctx->ltm_ctx.type,
+		pctx->ltm_ctx.fid,
+		pctx->ltm_ctx.frame_width,
+		pctx->ltm_ctx.frame_height,
+		pctx->ltm_ctx.isp_pipe_ctx_id);
 
-	return 0;
+	pr_info("frame_height_stat[%d], frame_width_stat[%d],\
+		tile_num_x_minus[%d], tile_num_y_minus[%d],\
+		tile_width[%d], tile_height[%d]\n",
+		pctx->ltm_ctx.frame_height_stat,
+		pctx->ltm_ctx.frame_width_stat,
+		pctx->ltm_ctx.hists.tile_num_x_minus,
+		pctx->ltm_ctx.hists.tile_num_y_minus,
+		pctx->ltm_ctx.hists.tile_width,
+		pctx->ltm_ctx.hists.tile_height);
+#endif
+	return ret;
 }
 
 static int isp_update_offline_param(
@@ -1600,6 +1542,8 @@ static int isp_context_init(struct isp_pipe_dev *dev)
 	}
 	dev->cfg_handle = cfg_desc;
 
+	dev->ltm_handle = isp_get_ltm_share_ctx_desc();
+
 	pr_info("done!\n");
 	return 0;
 
@@ -1646,6 +1590,9 @@ static int isp_context_deinit(struct isp_pipe_dev *dev)
 		put_isp_cfg_ctx_desc(cfg_desc);
 	}
 	dev->cfg_handle = NULL;
+
+	isp_put_ltm_share_ctx_desc(dev->ltm_handle);
+	dev->ltm_handle = NULL;
 
 	pr_info("done.\n");
 	return ret;
@@ -1809,7 +1756,6 @@ new_ctx:
 	mutex_init(&pctx->param_mutex);
 	init_completion(&pctx->shadow_com);
 	init_completion(&pctx->fmcu_com);
-	init_completion(&pctx->ltm_com);
 	/* complete for first frame/slice config */
 	complete(&pctx->shadow_com);
 	complete(&pctx->fmcu_com);
@@ -1932,11 +1878,14 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 		camera_queue_clear(&pctx->ltm_avail_queue);
 		camera_queue_clear(&pctx->ltm_wr_queue);
 #else
-		if (pctx->mode_ltm == MODE_LTM_CONTINUE_OUT)
+		dev->ltm_handle->ops->set_status(0, ctx_id, pctx->mode_ltm);
+		if (pctx->mode_ltm == MODE_LTM_PRE) {
+			dev->ltm_handle->ops->complete_completion();
 			for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
 				if (pctx->ltm_buf[i])
 					isp_unmap_frame(pctx->ltm_buf[i]);
 			}
+		}
 #endif /* USING_LTM_Q */
 
 		for (i = 0; i < 2; i++) {
@@ -2199,7 +2148,7 @@ static int sprd_isp_cfg_path(void *isp_handle,
 
 	case ISP_PATH_CFG_LTM_BUF:
 		pframe = (struct camera_frame *)param;
-		if (pctx->mode_ltm == MODE_LTM_CONTINUE_OUT) {
+		if (pctx->mode_ltm == MODE_LTM_PRE) {
 			ret = cambuf_iommu_map(
 				 &pframe->buf, CAM_IOMMUDEV_ISP);
 			if (ret) {

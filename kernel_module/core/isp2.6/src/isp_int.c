@@ -329,7 +329,7 @@ static void isp_3dnr_all_done(enum isp_context_id idx, void *isp_handle)
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
-	pr_info("3dnr all done. cxt_id:%d\n", idx);
+	pr_debug("3dnr all done. cxt_id:%d\n", idx);
 
 }
 
@@ -341,7 +341,7 @@ static void isp_3dnr_shadow_done(enum isp_context_id idx, void *isp_handle)
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
-	pr_info("3dnr shadow done. cxt_id:%d\n", idx);
+	pr_debug("3dnr shadow done. cxt_id:%d\n", idx);
 
 }
 
@@ -349,20 +349,22 @@ static void isp_ltm_hists_done(enum isp_context_id idx, void *isp_handle)
 {
 	struct isp_pipe_context *pctx;
 	struct isp_pipe_dev *dev;
+	int completion = 0;
 
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
-	pr_info("ltm hists done. cxt_id:%d, %d, fid:[%d]\n",
-		idx, pctx->ltm_ctx.isp_pipe_ctx_id,
-		pctx->ltm_ctx.frame_idx);
 
-	if (pctx->ltm_ctx.wait_completion &&
-	   (pctx->ltm_ctx.frame_idx >= pctx->ltm_ctx.wait_completion))
+	dev->ltm_handle->ops->set_frmidx(pctx->ltm_ctx.fid);
+	completion = dev->ltm_handle->ops->get_completion();
+	pr_debug("ltm hists done. cxt_id:%d, %d, fid:[%d], completion[%d]\n",
+		idx, pctx->ltm_ctx.isp_pipe_ctx_id,
+		pctx->ltm_ctx.fid, completion);
+
+	if (completion && (pctx->ltm_ctx.fid >= completion))
 	{
-		pr_info("complete pctx->ltm_com fid [%d]\n",
-			pctx->ltm_ctx.frame_idx);
-		pctx->ltm_ctx.wait_completion = 0;
-		complete(&pctx->ltm_com);
+		completion = dev->ltm_handle->ops->complete_completion();
+		pr_info("complete completion fid [%d], completion[%d]\n",
+			pctx->ltm_ctx.fid, completion);
 	}
 }
 

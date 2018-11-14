@@ -1663,7 +1663,7 @@ int isp_cfg_slice_ltm_info(
 		slc_ltm_map->mem_addr = map->mem_init_addr +
 					prtl->tile_index_xs * 128 * 2;
 
-		pr_info("ltm slice info: tile_num_x[%d], tile_num_y[%d], tile_right_flag[%d]\
+		pr_debug("ltm slice info: tile_num_x[%d], tile_num_y[%d], tile_right_flag[%d]\
 			tile_left_flag[%d], tile_start_x[%d], tile_start_y[%d], mem_addr[0x%x]\n",
 			slc_ltm_map->tile_num_x, slc_ltm_map->tile_num_y,
 			slc_ltm_map->tile_right_flag, slc_ltm_map->tile_left_flag,

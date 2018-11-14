@@ -36,7 +36,7 @@ static struct isp_dev_ltm_info g_ltm_info_pre = {
 	.ltm_stat.text_proportion  = 19,
 	.ltm_stat.tile_num_auto    = 0,
 
-	.ltm_map.bypass = 1,
+	.ltm_map.bypass = 0,
 	.ltm_map.ltm_map_video_mode = 1,
 };
 

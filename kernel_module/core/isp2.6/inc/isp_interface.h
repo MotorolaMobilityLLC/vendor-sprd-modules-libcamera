@@ -61,9 +61,8 @@ enum isp_3dnr_mode {
 
 enum isp_ltm_mode {
 	MODE_LTM_OFF,
-	MODE_LTM_SINGLE,
-	MODE_LTM_CONTINUE,
-	MODE_LTM_CONTINUE_OUT,
+	MODE_LTM_PRE,
+	MODE_LTM_CAP,
 	MODE_LTM_MAX
 };
 

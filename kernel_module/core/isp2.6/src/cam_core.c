@@ -891,7 +891,7 @@ static int cal_channel_size(struct camera_module *module)
 	}
 
 	if (ch_cap->enable && ch_prev->enable &&
-		(ch_cap->mode_ltm == MODE_LTM_SINGLE)) {
+		(ch_cap->mode_ltm == MODE_LTM_PRE)) {
 		crop_c = &ch_cap->ch_uinfo.src_crop;
 		is_same_fov = 1;
 		pr_info("src crop cap %d %d %d %d\n", crop_c->x, crop_c->y,
@@ -1407,11 +1407,11 @@ static int init_cam_channel(
 		}
 		if (module->cam_uinfo.is_ltm) {
 			if (channel->ch_id == CAM_CH_CAP) {
-				channel->mode_ltm = MODE_LTM_CONTINUE;
-				ctx_desc.mode_ltm = MODE_LTM_CONTINUE;
+				channel->mode_ltm = MODE_LTM_CAP;
+				ctx_desc.mode_ltm = MODE_LTM_CAP;
 			} else if (channel->ch_id == CAM_CH_PRE) {
-				channel->mode_ltm = MODE_LTM_CONTINUE_OUT;
-				ctx_desc.mode_ltm = MODE_LTM_CONTINUE_OUT;
+				channel->mode_ltm = MODE_LTM_PRE;
+				ctx_desc.mode_ltm = MODE_LTM_PRE;
 			}
 		}
 		ret = isp_ops->cfg_path(module->isp_dev_handle,
@@ -1850,7 +1850,7 @@ static int img_ioctl_set_function_mode(
 	uparam = (struct sprd_img_function_mode __user *)arg;
 	ret |= get_user(module->cam_uinfo.is_4in1, &uparam->need_4in1);
 	ret |= get_user(module->cam_uinfo.is_3dnr, &uparam->need_3dnr);
-	module->cam_uinfo.is_ltm = 0;
+	module->cam_uinfo.is_ltm = 1;
 
 	pr_info("4in1:[%d], 3dnr[%d], ltm[%d]\n",
 		module->cam_uinfo.is_4in1,
