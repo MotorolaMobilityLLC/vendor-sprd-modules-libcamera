@@ -479,9 +479,10 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_alg_fw_context *cxt_slv = NULL;
 	struct ae_stats_monitor_cfg *stats_cfg_ptr = NULL;
-	struct isp_dev_rgb_gain_info *rgb_gain_info = NULL;
 	struct isp_u_blocks_info aem_block_info;
 	struct sensor_multi_ae_info *ae_info = NULL;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
 	cmr_u32 i;
 	cmr_u32 param_num = 0;
 	cmr_u32 slv_camera_id = 0;
@@ -560,22 +561,15 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN:
-		/* LE doen't support D gain now, will dele later */
 		for (i = 0; i < param_num; i++) {
-			memset(&aem_block_info, 0x0, sizeof(aem_block_info));
-			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
-					cxt->mode_id[i] <= ISP_MODE_ID_CAP_3)
-				aem_block_info.scene_id = ISP_MODE_CAP;
-			else
-				aem_block_info.scene_id = ISP_MODE_PRV;
-
-			rgb_gain_info = (struct isp_dev_rgb_gain_info *)param0;
-			aem_block_info.gain_info.bypass = rgb_gain_info->bypass;
-			aem_block_info.gain_info.global_gain = rgb_gain_info->global_gain;
-			aem_block_info.gain_info.r_gain = rgb_gain_info->r_gain;
-			aem_block_info.gain_info.g_gain = rgb_gain_info->g_gain;
-			aem_block_info.gain_info.b_gain = rgb_gain_info->b_gain;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &aem_block_info, param1);
+			memset(&param_data, 0, sizeof(param_data));
+			BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_GBL_GAIN_RGB,
+			ISP_BLK_RGB_GAIN,
+			cxt->mode_id[i],
+			(void *)param0, sizeof(struct isp_dev_rgb_gain_info));
+			input.param_num = 1;
+			input.param_data_ptr = &param_data;
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
 		}
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:

@@ -39,6 +39,7 @@ cmr_s32 _pm_rgb_gain_set_param(void *gbl_gain_param, cmr_u32 cmd, void *param_pt
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_gain_param *rgb_gain_ptr = (struct isp_rgb_gain_param *)gbl_gain_param;
 	struct isp_pm_block_header *rgb_gain_header_ptr = (struct isp_pm_block_header *)param_ptr1;
+	struct isp_dev_rgb_gain_info *rgb_gain_info = (struct isp_dev_rgb_gain_info *)param_ptr0;
 
 	rgb_gain_header_ptr->is_update = ISP_ONE;
 
@@ -49,6 +50,14 @@ cmr_s32 _pm_rgb_gain_set_param(void *gbl_gain_param, cmr_u32 cmd, void *param_pt
 
 	case ISP_PM_BLK_GBL_GAIN:
 		rgb_gain_ptr->cur.global_gain = *((cmr_u32 *) param_ptr0);
+		break;
+
+	case ISP_PM_BLK_GBL_GAIN_RGB:
+		rgb_gain_ptr->cur.bypass = rgb_gain_info->bypass;
+		rgb_gain_ptr->cur.global_gain = rgb_gain_info->global_gain;
+		rgb_gain_ptr->cur.r_gain = rgb_gain_info->r_gain;
+		rgb_gain_ptr->cur.g_gain = rgb_gain_info->g_gain;
+		rgb_gain_ptr->cur.b_gain = rgb_gain_info->b_gain;
 		break;
 
 	default:
