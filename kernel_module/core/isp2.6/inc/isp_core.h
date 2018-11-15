@@ -274,7 +274,7 @@ struct isp_pipe_context {
 	struct camera_frame *ltm_buf[ISP_LTM_BUF_NUM];
 	struct camera_queue ltm_avail_queue;
 	struct camera_queue ltm_wr_queue;
-	struct cam_offline_thread_info thread;
+	struct cam_thread_info thread;
 	struct completion shadow_com;
 	struct completion fmcu_com;
 

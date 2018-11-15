@@ -120,11 +120,12 @@ struct cam_mem_dbg_info {
 	atomic_t empty_frm_cnt;
 };
 
-struct cam_offline_thread_info {
+struct cam_thread_info {
 	atomic_t thread_stop;
 	void *ctx_handle;
 	int (*proc_func)(void *param);
 	struct completion thread_com;
+	struct completion thread_stop_com;
 	struct task_struct *thread_task;
 };
 

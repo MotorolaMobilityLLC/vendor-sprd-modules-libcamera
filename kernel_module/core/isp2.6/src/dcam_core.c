@@ -1212,14 +1212,14 @@ map_err:
 static int dcam_offline_thread_loop(void *arg)
 {
 	struct dcam_pipe_dev *dev = NULL;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 
 	if (!arg) {
 		pr_err("fail to get valid input ptr\n");
 		return -1;
 	}
 
-	thrd = (struct cam_offline_thread_info *)arg;
+	thrd = (struct cam_thread_info *)arg;
 	dev = (struct dcam_pipe_dev *)thrd->ctx_handle;
 
 	while (1) {
@@ -1253,9 +1253,9 @@ static int dcam_offline_thread_loop(void *arg)
 static int dcam_stop_offline_thread(void *param)
 {
 	int cnt = 0;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 
-	thrd = (struct cam_offline_thread_info *)param;
+	thrd = (struct cam_thread_info *)param;
 
 	if (thrd->thread_task) {
 		atomic_set(&thrd->thread_stop, 1);
@@ -1276,7 +1276,7 @@ static int dcam_stop_offline_thread(void *param)
 static int dcam_create_offline_thread(void *param)
 {
 	struct dcam_pipe_dev *dev;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 	char thread_name[32] = { 0 };
 
 	dev = (struct dcam_pipe_dev *)param;

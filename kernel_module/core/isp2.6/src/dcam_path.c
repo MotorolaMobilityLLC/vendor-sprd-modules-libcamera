@@ -217,8 +217,13 @@ int dcam_cfg_path_size(void *dcam_handle,
 		 */
 		spin_lock(&path->size_lock);
 		if (path->size_update) {
-			spin_unlock(&path->size_lock);
-			return -EFAULT;
+			if(atomic_read(&dev->state) != STATE_RUNNING)
+				pr_info("Overwrite dcam path size before dcam start if any\n");
+			else {
+				spin_unlock(&path->size_lock);
+				pr_info("Previous path updating pending\n");
+				return -EFAULT;
+			}
 		}
 
 		path->in_size = ch_desc->input_size;

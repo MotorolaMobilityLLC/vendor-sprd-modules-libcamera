@@ -59,6 +59,9 @@
 
 #define IMG_DEVICE_NAME			"sprd_image"
 #define CAMERA_TIMEOUT			5000
+#define ZOOM_THREAD_TIMEOUT		3000
+#define CAP_THREAD_TIMEOUT		3000
+
 
 #define  CAM_COUNT  CAM_ID_MAX
 /* TODO: extend this for slow motion dev */
@@ -66,6 +69,7 @@
 #define  CAM_FRAME_Q_LEN   16
 #define  CAM_IRQ_Q_LEN        16
 #define  CAM_STATIS_Q_LEN   16
+#define  CAM_ZOOM_COEFF_Q_LEN   48
 
 /* TODO: tuning ratio limit for power/image quality */
 #define MAX_RDS_RATIO 3
@@ -186,6 +190,7 @@ struct channel_context {
 
 	/* dcam/isp shared frame buffer for full path */
 	struct camera_queue share_buf_queue;
+	struct camera_queue zoom_coeff_queue; /* channel specific coef queue */
 };
 
 struct camera_module {
@@ -206,6 +211,7 @@ struct camera_module {
 	uint32_t dcam_idx;
 	uint32_t aux_dcam_id;
 
+	uint32_t is_smooth_zoom;
 	uint32_t zoom_solution; /* for dynamic zoom type swicth. */
 	struct camera_uinfo cam_uinfo;
 
@@ -217,8 +223,8 @@ struct camera_module {
 	struct camera_queue irq_queue; /* IRQ message queue for user*/
 	struct camera_queue statis_queue; /* statis data queue or user*/
 
-	struct cam_offline_thread_info cap_thrd;
-	struct cam_offline_thread_info zoom_thrd;
+	struct cam_thread_info cap_thrd;
+	struct cam_thread_info zoom_thrd;
 
 	struct timer_list cam_timer;
 	struct workqueue_struct *workqueue;
@@ -1115,12 +1121,14 @@ static int config_channel_size(
 			 * (zoom ratio changes in short gap)
 			 * wait here and retry(how long?)
 			 */
-			pr_err("update dcam path size ret %d,", ret);
-			pr_err("is_zoom:%d,loop:%d\n",
-				is_zoom, loop_count);
+			pr_err("update dcam path %d size failed, zoom %d, lp %d\n",
+				channel->dcam_path_id, is_zoom, loop_count);
 			msleep(20);
 		}
 	} while (--loop_count);
+
+	if (ret && ch_desc.priv_size_data)
+		kfree(ch_desc.priv_size_data);
 
 	/* isp path for prev/video will update from input frame. */
 	if (channel->ch_id == CAM_CH_PRE) {
@@ -1159,6 +1167,67 @@ cfg_path:
 	return ret;
 }
 
+static int zoom_proc(void *param)
+{
+	int ret = 0;
+	int update_pv = 0, update_c = 0;
+	int update_always = 0;
+	struct camera_module *module;
+	struct channel_context *ch_prev, *ch_vid, *ch_cap;
+	struct camera_frame *pre_zoom_coeff = NULL;
+	struct camera_frame *vid_zoom_coeff = NULL;
+	struct camera_frame *cap_zoom_coeff = NULL;
+	struct sprd_img_rect *crop;
+
+	module = (struct camera_module *)param;
+	ch_prev = &module->channel[CAM_CH_PRE];
+	ch_cap = &module->channel[CAM_CH_CAP];
+	ch_vid = &module->channel[CAM_CH_VID];
+
+	/* Get node from the preview/video/cap coef queue if exist */
+	if (ch_prev->enable)
+		pre_zoom_coeff = camera_dequeue(&ch_prev->zoom_coeff_queue);
+	if (pre_zoom_coeff) {
+		crop = (struct sprd_img_rect *)pre_zoom_coeff->priv_data;
+		ch_prev->ch_uinfo.src_crop = *crop;
+		kfree(crop);
+		put_empty_frame(pre_zoom_coeff);
+		update_pv |= 1;
+	}
+
+	if (ch_vid->enable)
+		vid_zoom_coeff = camera_dequeue(&ch_vid->zoom_coeff_queue);
+	if (vid_zoom_coeff) {
+		crop = (struct sprd_img_rect *)vid_zoom_coeff->priv_data;
+		ch_vid->ch_uinfo.src_crop = *crop;
+		kfree(crop);
+		put_empty_frame(vid_zoom_coeff);
+		update_pv |= 1;
+	}
+
+	if (ch_cap->enable)
+		cap_zoom_coeff = camera_dequeue(&ch_cap->zoom_coeff_queue);
+	if (cap_zoom_coeff) {
+		crop = (struct sprd_img_rect *)cap_zoom_coeff->priv_data;
+		ch_cap->ch_uinfo.src_crop = *crop;
+		kfree(crop);
+		put_empty_frame(cap_zoom_coeff);
+		update_c |= 1;
+	}
+
+	if (update_pv || update_c) {
+		if (ch_cap->enable && (ch_cap->mode_ltm == MODE_LTM_SINGLE))
+			update_always = 1;
+
+		ret = cal_channel_size(module);
+		if (ch_cap->enable && (update_c || update_always))
+			config_channel_size(module, ch_cap);
+		if (ch_prev->enable && (update_pv || update_always))
+			config_channel_size(module, ch_prev);
+		return 1;
+	}
+	return 0;
+}
 
 static int init_4in1_aux(struct camera_module *module,
 			struct channel_context *channel)
@@ -1516,18 +1585,53 @@ static int sprd_stop_timer(struct timer_list *cam_timer)
 	return 0;
 }
 
-static int capture_thread_loop(void *arg)
+static int zoom_thread_loop(void *arg)
 {
 	int idx;
 	struct camera_module *module;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 
 	if (!arg) {
 		pr_err("fail to get valid input ptr\n");
 		return -1;
 	}
 
-	thrd = (struct cam_offline_thread_info *)arg;
+	thrd = (struct cam_thread_info *)arg;
+	module = (struct camera_module *)thrd->ctx_handle;
+	idx = module->idx;
+
+	while (1) {
+		if (wait_for_completion_interruptible(
+			&thrd->thread_com) == 0) {
+			if (atomic_cmpxchg(
+					&thrd->thread_stop, 1, 0) == 1) {
+				pr_info("cam%d zoom thread stop.\n", idx);
+				break;
+			}
+			pr_debug("zoom thread com done.\n");
+			while(thrd->proc_func(module)) {};
+		} else {
+			pr_debug("zoom thread exit!");
+			break;
+		}
+	}
+	pr_info("cam%d zoom thread stopped.\n", idx);
+	complete(&thrd->thread_stop_com);
+	return 0;
+}
+
+static int capture_thread_loop(void *arg)
+{
+	int idx;
+	struct camera_module *module;
+	struct cam_thread_info *thrd;
+
+	if (!arg) {
+		pr_err("fail to get valid input ptr\n");
+		return -1;
+	}
+
+	thrd = (struct cam_thread_info *)arg;
 	module = (struct camera_module *)thrd->ctx_handle;
 	idx = module->idx;
 
@@ -1548,6 +1652,7 @@ static int capture_thread_loop(void *arg)
 			break;
 		}
 	}
+	complete(&thrd->thread_stop_com);
 	pr_info("cam%d capture thread stopped.\n", idx);
 	return 0;
 }
@@ -1557,7 +1662,8 @@ static int camera_module_init(struct camera_module *module)
 	int ret = 0;
 	int ch;
 	struct channel_context *channel;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
+	struct cam_thread_info *zoom_thrd;
 	char thread_name[32] = { 0 };
 
 	pr_info("sprd_img: camera dev %d init start!\n", module->idx);
@@ -1591,6 +1697,23 @@ static int camera_module_init(struct camera_module *module)
 		return -EFAULT;
 	}
 
+	/* create zoom thread */
+	zoom_thrd = &module->zoom_thrd;
+	zoom_thrd->ctx_handle = module;
+	zoom_thrd->proc_func = zoom_proc;
+	atomic_set(&zoom_thrd->thread_stop, 0);
+	init_completion(&zoom_thrd->thread_com);
+
+	sprintf(thread_name, "cam%d_zoom", module->idx);
+	zoom_thrd->thread_task = kthread_run(
+				zoom_thread_loop,
+				zoom_thrd, thread_name);
+	if (IS_ERR_OR_NULL(zoom_thrd->thread_task)) {
+		pr_err("fail to start zoom thread for cam%d\n",
+				module->idx);
+		return -EFAULT;
+	}
+
 	sprd_init_timer(&module->cam_timer, (unsigned long)module);
 	module->attach_sensor_id = SPRD_SENSOR_ID_MAX + 1;
 
@@ -1603,21 +1726,34 @@ static int camera_module_init(struct camera_module *module)
 static int camera_module_deinit(struct camera_module *module)
 {
 	int cnt = 0;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
+	struct cam_thread_info *zoom_thrd;
+	unsigned long timeleft = 0;
 
 	/* stop capture thread */
-	thrd = (struct cam_offline_thread_info *)&module->cap_thrd;
+	thrd = (struct cam_thread_info *)&module->cap_thrd;
 	if (thrd->thread_task) {
 		atomic_set(&thrd->thread_stop, 1);
 		complete(&thrd->thread_com);
-		while (cnt < 1000) {
-			cnt++;
-			if (atomic_read(&thrd->thread_stop) == 0)
-				break;
-			udelay(1000);
-		}
+		timeleft = wait_for_completion_timeout(&thrd->thread_stop_com,
+				msecs_to_jiffies(CAP_THREAD_TIMEOUT));
+		if (timeleft == 0)
+			pr_err("capture thread stop error\n");
 		thrd->thread_task = NULL;
 		pr_info("capture thread stopped. wait %d ms\n", cnt);
+	}
+
+	/* stop zoom thread */
+	zoom_thrd = (struct cam_thread_info *)&module->zoom_thrd;
+	if (zoom_thrd->thread_task) {
+		atomic_set(&zoom_thrd->thread_stop, 1);
+		complete(&zoom_thrd->thread_com);
+		timeleft = wait_for_completion_timeout(&zoom_thrd->thread_stop_com,
+				msecs_to_jiffies(ZOOM_THREAD_TIMEOUT));
+		if (timeleft == 0)
+			pr_err("zoom thread stop error\n");
+		zoom_thrd->thread_task = NULL;
+		pr_info("zoom thread stopped.\n");
 	}
 
 	return 0;
@@ -2216,36 +2352,106 @@ static int img_ioctl_pdaf_control(
 	return 0;
 }
 
-static int img_ioctl_set_crop(
+static int img_ioctl_set_zoom_mode(
 			struct camera_module *module,
 			unsigned long arg)
 {
 	int ret = 0;
+
+	ret = copy_from_user(&module->is_smooth_zoom,
+			     (void __user *)arg,
+			     sizeof(uint32_t));
+
+	pr_info("is_smooth_zoom %d\n", module->is_smooth_zoom);
+	if (unlikely(ret)) {
+		pr_err("fail to copy from user, ret %d\n", ret);
+		ret = -EFAULT;
+		goto exit;
+	}
+
+exit:
+	return ret;
+}
+
+static int img_ioctl_set_crop(
+			struct camera_module *module,
+			unsigned long arg)
+{
+	int ret = 0, zoom = 0;
 	uint32_t channel_id;
-	struct camera_uchannel *dst;
+	struct channel_context *ch;
+	struct sprd_img_rect *crop;
+	struct camera_frame *first = NULL;
+	struct camera_frame *zoom_param = NULL;
 	struct sprd_img_parm __user *uparam;
+
+	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
+		(atomic_read(&module->state) != CAM_RUNNING)) {
+		pr_err("error module state: %d\n", atomic_read(&module->state));
+		return -EFAULT;
+	}
 
 	uparam = (struct sprd_img_parm __user *)arg;
 
 	ret = get_user(channel_id, &uparam->channel_id);
-	pr_info("ch %d\n", channel_id);
-	if (ret  == 0 && channel_id < CAM_CH_MAX) {
-		dst = &module->channel[channel_id].ch_uinfo;
-		ret = copy_from_user(
-				&dst->src_crop,
-				(void __user *)&uparam->crop_rect,
-				sizeof(struct sprd_img_rect));
-
-		pr_info("crop %d %d %d %d.\n",
-				dst->src_crop.x, dst->src_crop.y,
-				dst->src_crop.w, dst->src_crop.h);
-		if (unlikely(ret)) {
-			pr_err("fail to copy from user, ret %d\n", ret);
-			goto exit;
-		}
+	ch = &module->channel[channel_id];
+	if (ret || (channel_id >= CAM_CH_MAX) || !ch->enable) {
+		pr_err("error set crop, ret %d, ch %d\n", ret, channel_id);
+		ret = -EINVAL;
+		goto exit;
 	}
 
+	/* CAM_RUNNING: for zoom update
+	 * only crop rect size can be re-configured during zoom
+	 * and it is forbidden during capture.
+	 */
+	if (atomic_read(&module->state) == CAM_RUNNING) {
+		if (module->cap_status == CAM_CAPTURE_START) {
+			pr_err("zoom is not allowed during capture\n");
+			goto exit;
+		}
+		zoom_param = get_empty_frame();
+		crop = kzalloc(sizeof(struct sprd_img_rect), GFP_KERNEL);
+		if (crop == NULL) {
+			put_empty_frame(zoom_param);
+			ret = -ENOMEM;
+			goto exit;
+		}
+		zoom_param->priv_data = (void *)crop;
+		zoom = 1;
+	} else {
+		crop = &ch->ch_uinfo.src_crop;
+	}
+
+	ret = copy_from_user(crop,
+			(void __user *)&uparam->crop_rect,
+			sizeof(struct sprd_img_rect));
+	pr_info("set ch%d crop %d %d %d %d.\n", channel_id,
+			crop->x, crop->y, crop->w, crop->h);
+	if (unlikely(ret)) {
+		pr_err("fail to copy from user, ret %d\n", ret);
+		goto exit;
+	}
+
+	if (zoom) {
+		if (camera_enqueue(&ch->zoom_coeff_queue, zoom_param)) {
+			/* if zoom queue overflow, discard first one node in queue*/
+			pr_warn("ch %d zoom q overflow\n", channel_id);
+			first = camera_dequeue(&ch->zoom_coeff_queue);
+			if (first) {
+				kfree(first->priv_data);
+				put_empty_frame(first);
+			}
+			camera_enqueue(&ch->zoom_coeff_queue, zoom_param);
+		}
+		zoom_param = NULL;
+		complete(&module->zoom_thrd.thread_com);
+	}
 exit:
+	if (zoom_param) {
+		kfree(zoom_param->priv_data);
+		put_empty_frame(zoom_param);
+	}
 	return ret;
 }
 
@@ -2312,33 +2518,16 @@ static int img_ioctl_check_fmt(
 	channel_id = img_format.channel_id;
 	channel = &module->channel[channel_id];
 
-	/* to do: check & set channel format / param */
-	/* if stream on , may update channel size for zoom */
-	pr_info("chk_fmt ch %d\n", channel_id);
-
 	if (atomic_read(&module->state) == CAM_CFG_CH) {
+		/* to do: check & set channel format / param before stream on */
+		pr_info("chk_fmt ch %d\n", channel_id);
+
 		ret = init_cam_channel(module, channel);
 		if (ret) {
 			/* todo: error handling. */
 			pr_err("fail to init channel %d\n", channel->ch_id);
 			goto exit;
 		}
-	} else if (((channel->ch_id == CAM_CH_PRE) ||
-		(channel->ch_id == CAM_CH_CAP)) &&
-		(module->cap_status != CAM_CAPTURE_START)) {
-		/* for zoom update
-		 * zoom is forbidden during capture.
-		 * todo: if 4in1 CAP, should not update full path size.
-		 * we should update aux_dcam => aux_dcam_path id size.
-		 * to keep output sensor raw pic size stable for HAL
-		 */
-		ret = cal_channel_size(module);
-		if (module->channel[CAM_CH_PRE].enable)
-			ret = config_channel_size(module,
-				&module->channel[CAM_CH_PRE]);
-		if (module->channel[CAM_CH_CAP].enable)
-			ret = config_channel_size(module,
-				&module->channel[CAM_CH_CAP]);
 	}
 
 	img_format.need_binning = 0;
@@ -2699,7 +2888,14 @@ static int img_ioctl_stream_on(
 
 	for (i = 0;  i < CAM_CH_MAX; i++) {
 		ch = &module->channel[i];
-		if (ch->enable && ch->alloc_start) {
+		if (!ch->enable)
+			continue;
+
+		camera_queue_init(&ch->zoom_coeff_queue,
+			(module->is_smooth_zoom ? CAM_ZOOM_COEFF_Q_LEN : 1),
+			0, camera_put_empty_frame);
+
+		if (ch->alloc_start) {
 			if (atomic_read(&ch->err_status) != 0) {
 				pr_err("ch %d error happens.", ch->ch_id);
 				ret = -EFAULT;
@@ -2870,8 +3066,11 @@ static int img_ioctl_stream_off(
 
 	for (i = 0;  i < CAM_CH_MAX; i++) {
 		ch = &module->channel[i];
-		if (ch->enable && ((ch->ch_id == CAM_CH_PRE) ||
-			(ch->ch_id == CAM_CH_CAP))) {
+		if (!ch->enable)
+			continue;
+		camera_queue_clear(&ch->zoom_coeff_queue);
+
+		if ((ch->ch_id == CAM_CH_PRE) || (ch->ch_id == CAM_CH_CAP)) {
 			if (isp_ctx_id[i] != -1)
 				isp_ops->put_context(module->isp_dev_handle,
 					isp_ctx_id[i]);
@@ -3881,7 +4080,7 @@ static struct cam_ioctl_cmd ioctl_cmds_table[66] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_CROP)]		= {SPRD_IMG_IO_SET_CROP,	img_ioctl_set_crop},
 	[_IOC_NR(SPRD_IMG_IO_SET_FLASH)]	= {SPRD_IMG_IO_SET_FLASH,	img_ioctl_set_flash},
 	[_IOC_NR(SPRD_IMG_IO_SET_OUTPUT_SIZE)]	= {SPRD_IMG_IO_SET_OUTPUT_SIZE,	img_ioctl_set_output_size},
-	[_IOC_NR(SPRD_IMG_IO_SET_ZOOM_MODE)]	= {SPRD_IMG_IO_SET_ZOOM_MODE,	NULL},
+	[_IOC_NR(SPRD_IMG_IO_SET_ZOOM_MODE)]	= {SPRD_IMG_IO_SET_ZOOM_MODE,	img_ioctl_set_zoom_mode},
 	[_IOC_NR(SPRD_IMG_IO_SET_SENSOR_IF)]	= {SPRD_IMG_IO_SET_SENSOR_IF,	img_ioctl_set_sensor_if},
 	[_IOC_NR(SPRD_IMG_IO_SET_FRAME_ADDR)]	= {SPRD_IMG_IO_SET_FRAME_ADDR,	img_ioctl_set_frame_addr},
 	[_IOC_NR(SPRD_IMG_IO_PATH_FRM_DECI)]	= {SPRD_IMG_IO_PATH_FRM_DECI,	NULL},

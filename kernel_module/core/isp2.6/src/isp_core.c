@@ -1398,14 +1398,14 @@ static int isp_offline_thread_loop(void *arg)
 {
 	struct isp_pipe_dev *dev = NULL;
 	struct isp_pipe_context *pctx;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 
 	if (!arg) {
 		pr_err("fail to get valid input ptr\n");
 		return -1;
 	}
 
-	thrd = (struct cam_offline_thread_info *)arg;
+	thrd = (struct cam_thread_info *)arg;
 	pctx = (struct isp_pipe_context *)thrd->ctx_handle;
 	dev = pctx->dev;
 
@@ -1440,9 +1440,9 @@ static int isp_offline_thread_loop(void *arg)
 static int isp_stop_offline_thread(void *param)
 {
 	int cnt = 0;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 
-	thrd = (struct cam_offline_thread_info *)param;
+	thrd = (struct cam_thread_info *)param;
 
 	if (thrd->thread_task) {
 		atomic_set(&thrd->thread_stop, 1);
@@ -1464,7 +1464,7 @@ static int isp_stop_offline_thread(void *param)
 static int isp_create_offline_thread(void *param)
 {
 	struct isp_pipe_context *pctx;
-	struct cam_offline_thread_info *thrd;
+	struct cam_thread_info *thrd;
 	char thread_name[32] = { 0 };
 
 	pctx = (struct isp_pipe_context *)param;
