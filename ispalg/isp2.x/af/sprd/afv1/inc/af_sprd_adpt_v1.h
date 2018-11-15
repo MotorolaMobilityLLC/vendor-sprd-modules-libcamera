@@ -24,8 +24,8 @@
 
 #define AF_SYS_VERSION "-20171130-00"
 #define AF_SAVE_MLOG_STR "persist.vendor.cam.isp.af.mlog"	/*save/no */
-#define AF_WAIT_CAF_SEC 3		//1s == (1000 * 1000 * 1000)ns
-#define AF_WAIT_CAF_NSEC 0		//this macro should be less than 1000 * 1000 * 1000
+#define AF_WAIT_CAF_SEC 3	//1s == (1000 * 1000 * 1000)ns
+#define AF_WAIT_CAF_NSEC 0	//this macro should be less than 1000 * 1000 * 1000
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -38,7 +38,7 @@ enum afv1_err_type {
 	AFV1_ERR_MAX
 };
 
-enum _AF_Gsensor_Orientation{
+enum _AF_Gsensor_Orientation {
 	AF_G_NONE,
 	AF_G_DEGREE0,
 	AF_G_DEGREE1,
@@ -55,7 +55,7 @@ enum _lock_block {
 
 enum af_state {
 	STATE_MANUAL = 0,
-	STATE_NORMAL_AF,			// single af or touch af
+	STATE_NORMAL_AF,	// single af or touch af
 	STATE_CAF,
 	STATE_RECORD_CAF,
 	STATE_FAF,
@@ -80,7 +80,7 @@ typedef struct _isp_info {
 	cmr_u32 win_num;
 } isp_info_t;
 
-#define MAX_ROI_NUM     32		// arbitrary, more than hardware wins
+#define MAX_ROI_NUM     32	// arbitrary, more than hardware wins
 
 typedef struct _roi_rgb_y {
 	cmr_s32 num;
@@ -157,7 +157,7 @@ typedef struct _caf_trigger_ops {
 	struct aft_init_out init_out;
 	struct aft_ae_skip_info ae_skip_info;
 
-	 cmr_s32(*init) (struct aft_init_in *init_in, struct aft_init_out *init_out, aft_proc_handle_t * handle);
+	 cmr_s32(*init) (struct aft_init_in * init_in, struct aft_init_out * init_out, aft_proc_handle_t * handle);
 	 cmr_s32(*deinit) (aft_proc_handle_t handle);
 
 	 cmr_s32(*calc) (aft_proc_handle_t handle, struct aft_proc_calc_param * alg_calc_in, struct aft_proc_result * alg_calc_result);
@@ -178,12 +178,12 @@ typedef struct _ae_cali {
 struct af_fullscan_info {
 	/* Register Parameters */
 	/* These params will depend on the AF setting */
-	cmr_u8 row_num;				/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
-	cmr_u8 column_num;			/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
-	cmr_u32 *win_peak_pos;		/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
+	cmr_u8 row_num;		/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
+	cmr_u8 column_num;	/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
+	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
 	cmr_u16 vcm_dac_up_bound;
 	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;		/* (Unit : Percentage) *//* depend on the AF Scanning */
+	cmr_u16 boundary_ratio;	/* (Unit : Percentage) *//* depend on the AF Scanning */
 	cmr_u32 af_peak_pos;
 	cmr_u32 near_peak_pos;
 	cmr_u32 far_peak_pos;
@@ -192,8 +192,8 @@ struct af_fullscan_info {
 };
 
 typedef struct _af_fv_info {
-	cmr_u64 af_fv0[10];			// [10]:10 ROI, sum of FV0
-	cmr_u64 af_fv1[10];			// [10]:10 ROI, sum of FV1
+	cmr_u64 af_fv0[10];	// [10]:10 ROI, sum of FV0
+	cmr_u64 af_fv1[10];	// [10]:10 ROI, sum of FV1
 } af_fv;
 
 typedef struct _afm_tuning_param_sharkl2 {
@@ -202,7 +202,7 @@ typedef struct _afm_tuning_param_sharkl2 {
 	cmr_u8 cw_mode;
 	cmr_u8 fv0_e;
 	cmr_u8 fv1_e;
-	cmr_u8 dummy[3];			// 4 bytes align
+	cmr_u8 dummy[3];	// 4 bytes align
 } afm_tuning_sharkl2;
 
 struct af_enhanced_module_info_u {
@@ -241,12 +241,12 @@ typedef struct _mlog_AFtime {
 } mlog_AFtime;
 
 typedef struct _af_ctrl {
-	void *af_alg_cxt;			// AF_Data fv;
+	void *af_alg_cxt;	// AF_Data fv;
 	cmr_u32 af_dump_info_len;
-	cmr_u32 state;				// enum af_state state;
-	cmr_u32 pre_state;			// enum af_state pre_state;
-	cmr_u32 focus_state;		// enum caf_state caf_state;
-	cmr_u32 algo_mode;			// eAF_MODE algo_mode;
+	cmr_u32 state;		// enum af_state state;
+	cmr_u32 pre_state;	// enum af_state pre_state;
+	cmr_u32 focus_state;	// enum caf_state caf_state;
+	cmr_u32 algo_mode;	// eAF_MODE algo_mode;
 	cmr_u32 takePicture_timeout;
 	cmr_u32 request_mode;
 	cmr_u64 vcm_timestamp;

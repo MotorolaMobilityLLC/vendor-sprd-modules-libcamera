@@ -48,8 +48,8 @@ extern "C" {
 
 	enum scene {
 		OUT_SCENE = 0,
-		INDOOR_SCENE,			// INDOOR_SCENE,
-		DARK_SCENE,				// DARK_SCENE,
+		INDOOR_SCENE,	// INDOOR_SCENE,
+		DARK_SCENE,	// DARK_SCENE,
 		SCENE_NUM,
 	};
 
@@ -304,7 +304,7 @@ extern "C" {
 	};
 
 	struct afctrl_face_info {
-		cmr_u16 type;			// focus or ae,
+		cmr_u16 type;	// focus or ae,
 		cmr_u16 face_num;
 		cmr_u16 frame_width;
 		cmr_u16 frame_height;
@@ -422,10 +422,10 @@ extern "C" {
 		cmr_s32(*af_monitor_mode) (void *handle, cmr_u32 * afm_mode);
 		cmr_s32(*af_monitor_iir_nr_cfg) (void *handle, void *af_iir_nr);
 		cmr_s32(*af_monitor_module_cfg) (void *handle, void *af_enhanced_module);
-		cmr_s32(*af_monitor_crop_eb) (void *handle, cmr_u32 *crop_eb);
+		cmr_s32(*af_monitor_crop_eb) (void *handle, cmr_u32 * crop_eb);
 		cmr_s32(*af_monitor_crop_size) (void *handle, void *crop_size);
-		cmr_s32(*af_monitor_done_tile_num) (void *handle, struct af_monitor_tile_num *done_tile_num);
-		cmr_s32(*set_monitor_win_num) (void *handle, struct af_monitor_win_num *win_num);
+		cmr_s32(*af_monitor_done_tile_num) (void *handle, struct af_monitor_tile_num * done_tile_num);
+		cmr_s32(*set_monitor_win_num) (void *handle, struct af_monitor_win_num * win_num);
 		cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
 		// SharkLE Only ++
 		cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
@@ -465,7 +465,7 @@ extern "C" {
 		cmr_u32 camera_id;
 		struct third_lib_info lib_param;
 		struct isp_size src;
-		cmr_handle caller;		// struct afctrl_cxt *cxt_ptr
+		cmr_handle caller;	// struct afctrl_cxt *cxt_ptr
 		struct afctrl_otp_info otp_info;
 		cmr_u32 is_multi_mode;
 		cmr_u32 is_supoprt;
@@ -475,8 +475,8 @@ extern "C" {
 		cmr_u32 pdaftuning_data_len;
 		cmr_u8 *afttuning_data;
 		cmr_u32 afttuning_data_len;
-		cmr_u8 *toftuning_data;//[TOF_tuning][TOF_+++]
-		cmr_u32 toftuning_data_len;//[TOF_tuning][TOF_---]
+		cmr_u8 *toftuning_data;	//[TOF_tuning][TOF_+++]
+		cmr_u32 toftuning_data_len;	//[TOF_tuning][TOF_---]
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 		struct afctrl_cb_ops cb_ops;

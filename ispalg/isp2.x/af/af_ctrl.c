@@ -313,7 +313,7 @@ static cmr_s32 af_monitor_module_cfg(void *handle_af, void *af_enhanced_module)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_monitor_crop_eb(void *handle_af, cmr_u32 *crop_eb)
+static cmr_s32 af_monitor_crop_eb(void *handle_af, cmr_u32 * crop_eb)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
@@ -442,7 +442,7 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 	} else {
 		ISP_LOGI("ioctrl fun is NULL");
 	}
-  exit:
+exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -466,7 +466,7 @@ static cmr_int afctrl_deinit_adpt(struct afctrl_cxt *cxt_ptr)
 	}
 
 	ISP_LOGI(" af_deinit is OK!");
-  exit:
+exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -489,7 +489,7 @@ static cmr_int afctrl_evtctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, v
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 
-  exit:
+exit:
 	ISP_LOGV("cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 }
@@ -514,7 +514,9 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AFCTRL_EVT_EXIT:
 		break;
 	case AFCTRL_EVT_IOCTRL:
-		rtn = afctrl_evtctrl(cxt_ptr, ((struct af_ctrl_msg_ctrl *)message->data)->cmd, ((struct af_ctrl_msg_ctrl *)message->data)->in, ((struct af_ctrl_msg_ctrl *)message->data)->out);
+		rtn =
+		    afctrl_evtctrl(cxt_ptr, ((struct af_ctrl_msg_ctrl *)message->data)->cmd, ((struct af_ctrl_msg_ctrl *)message->data)->in,
+				   ((struct af_ctrl_msg_ctrl *)message->data)->out);
 		break;
 	case AFCTRL_EVT_PROCESS:
 		rtn = afctrl_process(cxt_ptr, (struct afctrl_calc_in *)message->data, (struct af_result_param *)&cxt_ptr->proc_out);
@@ -524,7 +526,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		break;
 	}
 
-  exit:
+exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -544,7 +546,7 @@ static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 		ISP_LOGE("fail to set afctrl name");
 		rtn = CMR_MSG_SUCCESS;
 	}
-  exit:
+exit:
 	ISP_LOGI("af_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
@@ -567,7 +569,7 @@ static cmr_int afctrl_destroy_thread(struct afctrl_cxt *cxt_ptr)
 			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
-  exit:
+exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -592,7 +594,7 @@ static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}
-  exit:
+exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -615,7 +617,7 @@ static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct afctrl_init_i
 	}
 
 	rtn = afctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
-  exit:
+exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -688,13 +690,13 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	ISP_LOGI(" done %ld", rtn);
 	return rtn;
 
-  error_adpt_init:
+error_adpt_init:
 	rtn = afctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to destroy afctrl thr %ld", rtn);
 	}
 
-  exit:
+exit:
 	if (cxt_ptr) {
 		free((void *)cxt_ptr);
 		cxt_ptr = NULL;
@@ -729,7 +731,7 @@ cmr_int af_ctrl_deinit(cmr_handle * handle_af)
 		goto exit;
 	}
 
-  exit:
+exit:
 	if (cxt_ptr) {
 		free((void *)cxt_ptr);
 		*handle_af = NULL;
@@ -774,7 +776,7 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 		*result = cxt_ptr->proc_out;
 	}
 
-  exit:
+exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -798,7 +800,7 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 
-  exit:
+exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
