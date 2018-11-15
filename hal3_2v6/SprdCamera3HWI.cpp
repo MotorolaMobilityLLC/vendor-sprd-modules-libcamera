@@ -1210,6 +1210,23 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         break;
 
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
+        if (mStreamConfiguration.num_streams == 1 &&
+            mStreamConfiguration.snapshot.status == CONFIGURED) {
+            if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
+                mOEMIf->setStreamOnWithZsl();
+                mFirstRegularRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
+                if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+                    mPictureRequest = 1;
+                    mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                           mFrameNum);
+                }
+                break;
+            }
+            mPictureRequest = 1;
+            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE, mFrameNum);
+            break;
+        }
         mPictureRequest = 1;
         mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE, mFrameNum);
         break;

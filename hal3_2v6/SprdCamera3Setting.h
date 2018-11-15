@@ -68,7 +68,7 @@ namespace sprdcamera {
 #define UNUSED(x) (void) x
 #endif
 
-#define CAMERA_ID_COUNT 4
+#define CAMERA_ID_COUNT 6
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 

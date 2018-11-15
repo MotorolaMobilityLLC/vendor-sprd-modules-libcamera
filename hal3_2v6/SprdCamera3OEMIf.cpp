@@ -1832,30 +1832,17 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
 
     fps_param.is_recording = isRecordMode;
     if (isRecordMode) {
-        fps_param.min_fps = controlInfo.ae_target_fps_range[1];
+        fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 1;
 
+// reduce video recording power for spreadtrum app, if sprd app change this, we
+// will remove these code
 #ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
-        bool needFixedFPS = false;
-        if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE || mFixedFpsEnabled) {
-            needFixedFPS = true;
-        }
-        property_get("volte.incall.camera.enable", value, "false");
-        if (!strcmp(value, "false") && !needFixedFPS) {
+        if (mSprdAppmodeId == CAMERA_MODE_AUTO_VIDEO) {
             fps_param.min_fps = 15;
         }
 #endif
-
-        // when 3D video recording with face beautify, fix frame rate at 25fps.
-        if (mSprdCameraLowpower) {
-            fps_param.min_fps = fps_param.max_fps = 20;
-        }
-
-        // 3dnr video
-        if (sprddefInfo.sprd_3dnr_enabled == 1) {
-            fps_param.min_fps = 18;
-        }
 
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];
@@ -1868,7 +1855,6 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             fps_param.min_fps = val_min > 5 ? val_min : 5;
             fps_param.max_fps = val_max;
         }
-
     } else {
         fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
@@ -1900,6 +1886,7 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
     HAL_LOGD("min_fps=%ld, max_fps=%ld, video_mode=%ld", fps_param.min_fps,
              fps_param.max_fps, fps_param.video_mode);
 
+// TBD: check these code
 #if 1 // for cts
     mIsUpdateRangeFps = true;
     mUpdateRangeFpsCount++;
