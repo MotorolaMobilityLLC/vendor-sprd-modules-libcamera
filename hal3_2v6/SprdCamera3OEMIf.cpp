@@ -1174,7 +1174,14 @@ status_t SprdCamera3OEMIf::autoFocus() {
                      CAMERA_FOCUS_MODE_AUTO);
         }
     }
-    controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
+    if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
+    } else if (controlInfo.af_mode ==
+               ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+    } else {
+        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
+    }
     mSetting->setAfCONTROLTag(&controlInfo);
     if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
         HAL_LOGE("auto foucs fail.");
@@ -1219,8 +1226,17 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
         if (!(controlInfo.af_state ==
                   ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED &&
               (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START ||
-               controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_IDLE)))
-            controlInfo.af_state = ANDROID_CONTROL_AF_STATE_INACTIVE;
+               controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_IDLE))) {
+            if (controlInfo.af_mode ==
+                    ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+                controlInfo.af_mode ==
+                    ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+                controlInfo.af_state =
+                    ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED;
+            } else {
+                controlInfo.af_state = ANDROID_CONTROL_AF_STATE_INACTIVE;
+            }
+        }
         /*auto focus resume to caf*/
         if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE &&
             mCameraId == 0 && mIsAutoFocus) {
@@ -2664,8 +2680,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     if (isPreviewing()) {
-        HAL_LOGD("Preview already in progress, mRestartFlag=%d",
-                 mRestartFlag);
+        HAL_LOGD("Preview already in progress, mRestartFlag=%d", mRestartFlag);
         if (mRestartFlag == false) {
             return NO_ERROR;
         } else {
