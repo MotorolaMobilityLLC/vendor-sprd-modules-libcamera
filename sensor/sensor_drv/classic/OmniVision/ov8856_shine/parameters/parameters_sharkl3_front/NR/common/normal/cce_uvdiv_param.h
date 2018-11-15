@@ -374,17 +374,17 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x3E,
+		0x40,
 		/*ratio_1*/
-		0x3E,
+		0x40,
 		/*ratio*/
-		0x3E,
+		0x40,
 		/*ratio_uv_min*/
-		0x3C,
+		0x40,
 		/*ratio_y_min0*/
-		0x3C,
+		0x40,
 		/*ratio_y_min1*/
-		0x3C,
+		0x40,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -474,17 +474,17 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x3C,
+		0x40,
 		/*ratio_1*/
-		0x3C,
+		0x40,
 		/*ratio*/
-		0x3C,
+		0x40,
 		/*ratio_uv_min*/
-		0x3C,
+		0x40,
 		/*ratio_y_min0*/
-		0x3C,
+		0x40,
 		/*ratio_y_min1*/
-		0x3C,
+		0x40,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
