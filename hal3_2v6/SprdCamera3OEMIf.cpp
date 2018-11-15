@@ -649,6 +649,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
+        SprdCamera3Flash::releaseFlash(mCameraId);
         stopPreviewInternal();
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {

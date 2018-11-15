@@ -3149,7 +3149,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         }
 
         /*disable*/
-        if (setting_is_need_flash(cpt, parm) || FLASH_NEED_QUIT == cpt->flash_need_quit) {
+        if (setting_is_need_flash(cpt, parm) ||
+            FLASH_NEED_QUIT == cpt->flash_need_quit) {
             /*open flash*/
             if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
                 setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
