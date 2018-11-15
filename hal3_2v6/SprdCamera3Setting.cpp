@@ -506,6 +506,8 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_STATISTICS_INFO_SHARPNESS_MAP_SIZE,
     ANDROID_STATISTICS_INFO_MAX_SHARPNESS_MAP_VALUE,
     ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
+    ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+    ANDROID_SHADING_AVAILABLE_MODES,
     ANDROID_SCALER_AVAILABLE_RAW_MIN_DURATIONS,
     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
     ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
@@ -624,6 +626,7 @@ const int32_t kavailable_result_keys[] = {
     ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION, ANDROID_CONTROL_AE_LOCK,
     ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AF_MODE, ANDROID_CONTROL_AF_STATE,
     ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_MODE,
+    ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, ANDROID_SHADING_MODE,
     ANDROID_FLASH_MODE, ANDROID_JPEG_GPS_COORDINATES,
     ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
     ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
@@ -648,6 +651,16 @@ const uint8_t kavailable_capabilities[] = {
 const uint8_t kavailable_noise_reduction_modes[] = {
     ANDROID_NOISE_REDUCTION_MODE_OFF, ANDROID_NOISE_REDUCTION_MODE_FAST,
     ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY};
+
+// Shading mode
+const uint8_t kavailable_lens_shading_map_modes[] = {
+    ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF,
+    ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_ON};
+
+const uint8_t kavailable_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
+                                            ANDROID_SHADING_MODE_FAST,
+                                            ANDROID_SHADING_MODE_HIGH_QUALITY};
+
 /**********************Static Members**********************/
 
 const camera_info kCameraInfo[] = {
@@ -1601,6 +1614,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         kavailable_noise_reduction_modes,
         sizeof(kavailable_noise_reduction_modes));
 
+    // Shading Mode(init static parameter)
+    memcpy(s_setting[cameraId].shadingInfo.available_lens_shading_map_modes,
+           kavailable_lens_shading_map_modes,
+           sizeof(kavailable_lens_shading_map_modes));
+    memcpy(s_setting[cameraId].shadingInfo.available_shading_modes,
+           kavailable_shading_modes, sizeof(kavailable_shading_modes));
+
     // sync
     s_setting[cameraId].syncInfo.max_latency =
         4; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
@@ -1984,6 +2004,17 @@ int SprdCamera3Setting::initStaticMetadata(
         s_setting[cameraId].noiseInfo.reduction_available_noise_reduction_modes,
         ARRAY_SIZE(s_setting[cameraId]
                        .noiseInfo.reduction_available_noise_reduction_modes));
+
+    /*Shading Mode(init static Metadata)*/
+    staticInfo.update(
+        ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+        s_setting[cameraId].shadingInfo.available_lens_shading_map_modes,
+        ARRAY_SIZE(
+            s_setting[cameraId].shadingInfo.available_lens_shading_map_modes));
+    staticInfo.update(
+        ANDROID_SHADING_AVAILABLE_MODES,
+        s_setting[cameraId].shadingInfo.available_shading_modes,
+        ARRAY_SIZE(s_setting[cameraId].shadingInfo.available_shading_modes));
 
     /*SYNC*/
     staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
@@ -2637,45 +2668,86 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t scene_mode = ANDROID_CONTROL_SCENE_MODE_DISABLED;
     requestInfo.update(ANDROID_CONTROL_SCENE_MODE, &scene_mode, 1);
 
-    {
-        bool support_cap_raw = false;
-        if (characteristicsInfo.exists(
-                ANDROID_REQUEST_AVAILABLE_CAPABILITIES)) {
-            size_t count =
-                characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES)
-                    .count;
-            for (i = 0; i < count; i++) {
-                if (characteristicsInfo
-                        .find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES)
-                        .data.u8[i] ==
-                    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW) {
-                    support_cap_raw = true;
-                    break;
-                }
-            }
-        }
-        if (characteristicsInfo.exists(
-                ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
-            size_t count =
-                characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
-                    .count;
-            for (i = 0; i < count; i++) {
-                if (characteristicsInfo
-                        .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
-                        .data.i32[i] ==
-                    ANDROID_STATISTICS_LENS_SHADING_MAP_MODE) {
-                    if (support_cap_raw == false) {
-                        uint8_t lenShadingMapMode =
-                            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
-                        requestInfo.update(
-                            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
-                            &lenShadingMapMode, 1);
-                    }
-                    break;
-                }
+    /*Shading Mode(construct default Metadata)*/
+    bool lens_shading_map_mode_request = false;
+    bool lens_shading_map_mode_capabilities = false;
+
+    if (characteristicsInfo.exists(
+            ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
+        size_t count = characteristicsInfo
+                           .find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)
+                           .count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo
+                    .find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)
+                    .data.i32[i] ==
+                ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES) {
+                lens_shading_map_mode_capabilities = true;
+                break;
             }
         }
     }
+
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+        size_t count =
+            characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+                .count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+                    .data.i32[i] == ANDROID_STATISTICS_LENS_SHADING_MAP_MODE) {
+                lens_shading_map_mode_request = true;
+                break;
+            }
+        }
+    }
+
+    if (lens_shading_map_mode_capabilities && lens_shading_map_mode_request) {
+        uint8_t lenShadingMapMode =
+            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
+        requestInfo.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
+                           &lenShadingMapMode, 1);
+    } else {
+        HAL_LOGE("lens shading map must be present in request if "
+                 "available lens shading map are present in metadata");
+        return -1;
+    }
+
+    bool shading_mode_request = false;
+    bool shading_mode_capabilities = false;
+    if (characteristicsInfo.exists(
+            ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
+        size_t count = characteristicsInfo
+                           .find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)
+                           .count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo
+                    .find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)
+                    .data.i32[i] == ANDROID_SHADING_AVAILABLE_MODES) {
+                shading_mode_capabilities = true;
+                break;
+            }
+        }
+    }
+
+    if (characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+        size_t count =
+            characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+                .count;
+        for (i = 0; i < count; i++) {
+            if (characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+                    .data.i32[i] == ANDROID_SHADING_MODE) {
+                shading_mode_request = true;
+                break;
+            }
+        }
+    }
+
+    if (!shading_mode_capabilities || !shading_mode_request) {
+        HAL_LOGE("shading mode must be present in request if "
+                 "available shading mode are present in metadata");
+        return -1;
+    }
+    /*Shading Mode(construct default Metadata)*/
 
     if (type == CAMERA3_TEMPLATE_STILL_CAPTURE) {
         if (characteristicsInfo.exists(
@@ -2965,7 +3037,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
             }
         }
 
-        {
+        { // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE] for still
+          // capture
             bool support_cap_raw = false;
             if (characteristicsInfo.exists(
                     ANDROID_REQUEST_AVAILABLE_CAPABILITIES)) {
@@ -2999,6 +3072,16 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                                 ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
                                 &lenShadingMapMode, 1);
                         }
+                        break;
+                    }
+                }
+                for (i = 0; i < count; i++) {
+                    if (characteristicsInfo
+                            .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+                            .data.i32[i] == ANDROID_SHADING_MODE) {
+                        uint8_t shadingMode = ANDROID_SHADING_MODE_HIGH_QUALITY;
+                        requestInfo.update(ANDROID_SHADING_MODE, &shadingMode,
+                                           1);
                         break;
                     }
                 }
@@ -3046,10 +3129,27 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                                .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
                                .data.i32[i] ==
                            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE) {
+                    // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE]
+                    // for not still capture
                     uint8_t shadingMapMode =
                         ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
                     requestInfo.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
                                        &shadingMapMode, 1);
+                } else if (characteristicsInfo
+                               .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+                               .data.i32[i] == ANDROID_SHADING_MODE) {
+                    // Shading Mode  [ANDROID_SHADING_MODE] for not still
+                    // capture
+                    if (type == CAMERA3_TEMPLATE_PREVIEW ||
+                        type == CAMERA3_TEMPLATE_VIDEO_RECORD) {
+                        uint8_t shadingMode = ANDROID_SHADING_MODE_FAST;
+                        requestInfo.update(ANDROID_SHADING_MODE, &shadingMode,
+                                           1);
+                    } else {
+                        uint8_t shadingMode = ANDROID_SHADING_MODE_OFF;
+                        requestInfo.update(ANDROID_SHADING_MODE, &shadingMode,
+                                           1);
+                    }
                 } else if (characteristicsInfo
                                .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
                                .data.i32[i] ==
@@ -3286,7 +3386,16 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("android noise reduction mode %d", valueU8);
     }
 
-    // lens shading
+    // statistics lens shading map mode
+    if (frame_settings.exists(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE)
+                      .data.u8[0];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].statisticsInfo.lens_shading_map_mode, valueU8,
+            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE)
+        HAL_LOGV("android statistics lens shading map mode  %d", valueU8);
+    }
+    // shading mode
     if (frame_settings.exists(ANDROID_SHADING_MODE)) {
         valueU8 = frame_settings.find(ANDROID_SHADING_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].shadingInfo.mode, valueU8,
@@ -4043,6 +4152,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.id), 1);
     camMetadata.update(ANDROID_REQUEST_FRAME_COUNT,
                        &(s_setting[mCameraId].requestInfo.frame_count), 1);
+    // shading mode
     camMetadata.update(ANDROID_SHADING_MODE,
                        &(s_setting[mCameraId].shadingInfo.mode), 1);
 
@@ -4235,6 +4345,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         &(s_setting[mCameraId].statisticsInfo.hot_pixel_map_mode), 1);
     camMetadata.update(ANDROID_STATISTICS_SCENE_FLICKER,
                        &(s_setting[mCameraId].statisticsInfo.scene_flicker), 1);
+    // statistics lens shading map mode
     camMetadata.update(
         ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
         &(s_setting[mCameraId].statisticsInfo.lens_shading_map_mode), 1);

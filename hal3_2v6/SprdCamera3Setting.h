@@ -89,6 +89,8 @@ typedef int64_t nsecs_t;
 #define MAX_FPS_RANGE_FRONT_CAM 30
 #define MIDDLE_FPS_RANGE 20
 #define SPRD_SHADING_FACTOR_NUM (2 * 2) //(>1*1*4,<=64*64*4)
+#define SPRD_NUM_SHADING_MODES 3        // Shading mode
+#define SPRD_NUM_LENS_SHADING_MODES 2   // Shading mode
 #define SPRD_MAX_TONE_CURVE_POINT 64    //>=64
 #define SPRD_FACE_BEAUTY_PARAM_NUM 9
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -237,6 +239,8 @@ typedef struct {
     uint8_t mode;
     uint8_t factor_count;
     float gain_factor[SPRD_SHADING_FACTOR_NUM];
+    uint8_t available_lens_shading_map_modes[SPRD_NUM_LENS_SHADING_MODES];
+    uint8_t available_shading_modes[SPRD_NUM_SHADING_MODES];
 } SHADING_Tag;
 
 typedef struct {
