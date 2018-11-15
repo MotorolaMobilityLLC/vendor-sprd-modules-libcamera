@@ -41,7 +41,7 @@ class ArcSoftBokehAlgo : public IBokehAlgo {
 
     int capDepthRun(void *para1, void *para2, void *para3, void *para4);
 
-    int capBlurImage(void *para1, void *para2, void *para3);
+    int capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH);
 
     int onLine(void *para1, void *para2, void *para3i, void *para4);
 

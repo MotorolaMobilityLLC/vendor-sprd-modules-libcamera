@@ -106,7 +106,7 @@ class IBokehAlgo {
     virtual int capDepthRun(void *para1, void *para2, void *para3,
                             void *para4) = 0;
 
-    virtual int capBlurImage(void *para1, void *para2, void *para3) = 0;
+    virtual int capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH) = 0;
 
     virtual int onLine(void *para1, void *para2, void *para3, void *para4) = 0;
 };

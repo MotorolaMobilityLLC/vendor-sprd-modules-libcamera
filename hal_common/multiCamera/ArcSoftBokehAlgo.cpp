@@ -472,7 +472,7 @@ exit:
     return rc;
 }
 
-int ArcSoftBokehAlgo::capBlurImage(void *para1, void *para2, void *para3) {
+int ArcSoftBokehAlgo::capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH) {
     int rc = NO_ERROR;
     int64_t bokehRun = 0;
     ASVLOFFSCREEN leftImg;

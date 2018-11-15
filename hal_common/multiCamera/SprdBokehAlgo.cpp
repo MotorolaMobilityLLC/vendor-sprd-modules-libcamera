@@ -410,7 +410,7 @@ exit:
     return rc;
 }
 
-int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3) {
+int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH) {
     int rc = NO_ERROR;
     int64_t bokehReFocusTime = 0;
     char acVersion[256] = {
@@ -426,7 +426,7 @@ int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3) {
     HAL_LOGD("Bokeh Api Version [%s]", acVersion);
 
     bokehReFocusTime = systemTime();
-    rc = sprd_bokeh_ReFocusPreProcess(mBokehCapHandle, para1, para2);
+    rc = sprd_bokeh_ReFocusPreProcess(mBokehCapHandle, para1, para2, depthW, depthH);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_bokeh_ReFocusPreProcess failed!");
         goto exit;

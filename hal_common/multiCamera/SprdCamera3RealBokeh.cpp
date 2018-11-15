@@ -2370,7 +2370,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::arcSoftBokehCaptureHandle(
 
     if (!mAbokehGallery) {
         rc = mRealBokeh->mBokehAlgo->capBlurImage(
-            (void *)input_buf1_addr, (void *)output_buf_addr, NULL);
+            (void *)input_buf1_addr, (void *)output_buf_addr, NULL, DEPTH_SNAP_OUTPUT_WIDTH, DEPTH_SNAP_OUTPUT_HEIGHT);
         if (rc != NO_ERROR) {
             rc = UNKNOWN_ERROR;
             goto exit;
@@ -2438,7 +2438,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdBokehCaptureHandle(
 
     mRealBokeh->mBokehAlgo->capBlurImage(
         input_buf1_addr, mRealBokeh->mDepthBuffer.snap_depth_buffer,
-        output_buf_addr);
+        output_buf_addr, DEPTH_SNAP_OUTPUT_WIDTH, DEPTH_SNAP_OUTPUT_HEIGHT);
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
