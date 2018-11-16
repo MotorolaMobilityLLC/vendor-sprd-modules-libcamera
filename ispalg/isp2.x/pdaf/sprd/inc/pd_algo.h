@@ -11,7 +11,7 @@
 #include <string.h>
 #include <isp_type.h>
 
-#define PD_VERSION "PDAF_Algo_Ver: v1.16"
+#define PD_VERSION "PDAF_Algo_Ver: v1.18"
 #define PD_PIXEL_NUM (24576)
 #define PD_AREA_NUMBER (4)
 #define PD_PIXEL_ALIGN_X (16)
@@ -50,7 +50,7 @@ extern "C" {
 		void *OTPBuffer;
 		cmr_s32 dOVSpeedup;
 		//0: Normal, 1:Mirror+Flip
-		int dSensorSetting;
+		cmr_s32 dSensorSetting;
 	} PD_GlobalSetting;
 
 	typedef void (*PDCALLBACK) (unsigned char *);
@@ -58,6 +58,7 @@ extern "C" {
 	cmr_s32 PD_Init(PD_GlobalSetting * a_pdGSetting);
 	cmr_s32 PD_Do(cmr_u8 * raw, cmr_u8 * y, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
 	cmr_s32 PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
+	cmr_s32 PD_DoPoint2(void *a_pInPhaseBuf, cmr_s32 x_point, cmr_s32 y_point, cmr_s32 area_w, cmr_s32 area_h);
 	cmr_s32 PD_SetCurVCM(cmr_s32 CurVCM);
 	cmr_s32 PD_GetResult(cmr_s32 * a_pdConf, double *a_pdPhaseDiff, cmr_s32 * a_pdFrameID, cmr_s32 * a_pdDCCGain, cmr_s32 a_dArea);
 	cmr_s32 PD_Uninit();
