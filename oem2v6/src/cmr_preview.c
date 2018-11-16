@@ -3056,6 +3056,13 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             }
         }
 
+        /*post proc*/
+        CMR_LOGD("post proc");
+        ret = handle->ops.capture_post_proc(handle->oem_handle, camera_id);
+        if (ret) {
+            CMR_LOGE("post proc failed");
+        }
+
         /*stop channel*/
         ret = handle->ops.channel_stop(handle->oem_handle, channel_bit);
         if (ret) {
@@ -3076,13 +3083,6 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             if (ret) {
                 CMR_LOGE("Failed to stop ISP video mode, %ld", ret);
             }
-        }
-
-        /*post proc*/
-        CMR_LOGD("post proc");
-        ret = handle->ops.capture_post_proc(handle->oem_handle, camera_id);
-        if (ret) {
-            CMR_LOGE("post proc failed");
         }
     }
 
