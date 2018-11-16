@@ -3955,7 +3955,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
         } else if (mRecordingMode == true) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-        } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ) {
+        } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         } else {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
@@ -5020,7 +5020,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
     } else if (mRecordingMode == true) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-    } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ) {
+    } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     } else {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
@@ -7017,8 +7017,12 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
     char value2[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     HAL_LOGD("cap_mode = %d", cap_mode);
+    FLASH_Tag flashInfo;
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
+    mSetting->getFLASHTag(&flashInfo);
+    uint8_t flash_mode;
+    flash_mode = flashInfo.mode;
 
     switch (cap_mode) {
     case CAMERA_CAPTURE_MODE_PREVIEW:
@@ -7083,7 +7087,8 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
             mRecordingMode = false;
             if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
-                mSprdAppmodeId == CAMERA_MODE_MANUAL || mSprdAppmodeId == -1) {
+                mSprdAppmodeId == CAMERA_MODE_MANUAL ||
+                (mSprdAppmodeId == -1 && flash_mode != 0)) {
                 mPicCaptureCnt = 1;
             } else {
                 mPicCaptureCnt = 100;
