@@ -139,6 +139,27 @@ extern "C" {
 		cmr_s16 ctShiftNeutral[10];
 		cmr_s16 ctShiftDown[10];
 		cmr_s32 bFrontCameraFaceOpt;
+
+		//boundary2
+		cmr_s16 lm2En;
+		cmr_s16 lm2Mode;
+		cmr_s16 lm2BvNum;
+		float lm2Bv[5];
+		cmr_s16 lm2NodeNum[5];
+		cmr_s16 lm2Ct[5][10];
+
+		float lm2PgrUp[5][10];
+		float lm2PgrDn[5][10];
+		float lm2PgrUpTrans[5][10];
+		float lm2PgrDnTrans[5][10];
+
+		cmr_s16 lm2CtRt[5];
+		cmr_s16 lm2CtLt[5];
+		cmr_s16 lm2CtRtTrans[5];
+		cmr_s16 lm2CtLtTrans[5];
+
+		cmr_s16 lm2DefaultCt[5];
+		float lm2DefaultPgr[5];
 	};
 
 	struct awb_tuning_param {
