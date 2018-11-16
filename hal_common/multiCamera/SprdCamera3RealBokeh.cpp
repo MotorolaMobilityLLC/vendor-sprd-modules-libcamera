@@ -2987,7 +2987,7 @@ int SprdCamera3RealBokeh::configureStreams(
     }
 
     if (mOtpData.otp_exist) {
-        property_get("persist.sys.cam.pbokeh.enable", prop, "1");
+        property_get("persist.vendor.cam.pbokeh.enable", prop, "1");
         mIsSupportPBokeh = atoi(prop);
         HAL_LOGD("mIsSupportPBokeh prop %d", mIsSupportPBokeh);
     } else {
