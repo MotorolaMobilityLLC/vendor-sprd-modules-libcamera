@@ -586,7 +586,7 @@ int SprdCamera3RealBokeh::getPrevDepthBuffer(BUFFER_FLAG need_flag) {
         HAL_LOGI("buffer flag err");
         break;
     }
-    HAL_LOGI("get buffer index=%d,flag=%d", ret, need_flag);
+    HAL_LOGV("get buffer index=%d,flag=%d", ret, need_flag);
 
     return ret;
 }
@@ -1320,7 +1320,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
     void *input_buf1_addr = NULL;
     int buffer_index = 0;
     Mutex::Autolock l(mLock);
-    HAL_LOGI("E");
+    HAL_LOGV("E");
 
     if (output_buf == NULL || input_buf1 == NULL) {
         HAL_LOGE("buffer is NULL!");
@@ -1410,7 +1410,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
         mRealBokeh->unmap(input_buf1);
         mRealBokeh->unmap(output_buf);
     }
-    HAL_LOGI("X");
+    HAL_LOGV("X");
 
     return rc;
 }
@@ -4361,7 +4361,7 @@ void SprdCamera3RealBokeh::setDepthTrigger(int vcm) {
     } else {
         setDepthStatus(DEPTH_INVALID);
     }
-    HAL_LOGD("mDepthStatus %d,trigger=%d,vcm=%d,%d", mDepthStatus,
+    HAL_LOGV("mDepthStatus %d,trigger=%d,vcm=%d,%d", mDepthStatus,
              mDepthTrigger, mVcmSteps, vcm);
 
     mVcmSteps = vcm;
