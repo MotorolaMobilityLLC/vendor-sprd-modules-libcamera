@@ -5966,7 +5966,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mCaptureMode = CAMERA_ISP_TUNING_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
         mRecordingMode = false;
-        mPicCaptureCnt = 100;
+        mPicCaptureCnt = 1;
         mZslPreviewMode = false;
         break;
     case CAMERA_CAPTURE_MODE_ISP_SIMULATION_TOOL:
