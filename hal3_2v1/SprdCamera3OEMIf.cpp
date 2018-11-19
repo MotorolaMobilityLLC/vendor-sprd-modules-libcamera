@@ -2022,7 +2022,9 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
             (mRawWidth != 0 && mRawHeight != 0)) {
             cmr_u16 picW, picH, snsW, snsH;
             mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
-            if (mRawWidth == picW) {
+            if (mRawWidth == picW &&
+                mRawWidth >=
+                    ISP_PATH2_MAX_CAPABILITY) { // in case path3 is used
                 fps_param.min_fps = 30;
                 fps_param.max_fps = 30;
             }

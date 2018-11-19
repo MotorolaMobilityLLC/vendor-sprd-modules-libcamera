@@ -120,6 +120,13 @@ extern "C" {
 #define FORM_DUMPINDEX(flag, dumpindex, ext)                                   \
     (((dumpindex) << 24) + ((flag) << 8) + (ext))
 
+#if defined(CONFIG_ISP_2_3)
+#define ISP_PATH2_MAX_CAPABILITY 2592
+#elif defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                    \
+    defined(CONFIG_ISP_2_5)
+#define ISP_PATH2_MAX_CAPABILITY 2304
+#endif
+
 #define CAMERA_SAFE_SCALE_DOWN(w) (cmr_u32)((w)*11 / 10)
 #define CAMERA_START(w) ((w) & ~(2 - 1))
 #if defined(CONFIG_ISP_2_4)

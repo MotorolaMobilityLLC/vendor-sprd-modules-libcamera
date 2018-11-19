@@ -30,9 +30,6 @@
 #define LOG_TAG "Cam3HWI"
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
-#ifdef CONFIG_CAMERA_OFFLINE
-#define ISP_PATH2_MAX_CAPABILITY 2592
-#endif
 #include <cutils/properties.h>
 #include <hardware/camera3.h>
 #include <CameraMetadata.h>
