@@ -10737,10 +10737,13 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
         obj->mGyroMsgQueHandle = 0;
 
 #ifdef CONFIG_CAMERA_EIS
-        while (!obj->mGyroPreviewInfo.empty())
-            obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
-        while (!obj->mGyroVideoInfo.empty())
-            obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+        {
+            Mutex::Autolock l(&obj->mEisPreviewLock);
+            while (!obj->mGyroPreviewInfo.empty())
+                obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
+            while (!obj->mGyroVideoInfo.empty())
+                obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+        }
 #endif
     }
     HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
