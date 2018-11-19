@@ -8701,7 +8701,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                                            cxt->camera_id);
         if (raw_filename[0]) {
             // only copy the filename without the path
-            memcpy(value, raw_filename + 25, PROPERTY_VALUE_MAX);
+            memcpy(value, raw_filename + strlen(CAMERA_DUMP_PATH) + 1, PROPERTY_VALUE_MAX);
         } else {
             property_get("debug.camera.isptool.raw.name", value, "none");
         }
