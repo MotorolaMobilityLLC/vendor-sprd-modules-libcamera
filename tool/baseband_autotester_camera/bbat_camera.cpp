@@ -1410,13 +1410,13 @@ int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
     int ret = 0;
     if (buf[10] == 0x01) {
         ALOGD("autotest open back flash");
-        ret = flashlightSetValue(0x72);   // Back cold light on
+        ret = flashlightSetValue(0x10);   // Back cold light on
     } else if (buf[10] == 0x02) {
         ALOGD("autotest open temple flash");
         ret = flashlightSetValue(0x20);   // Color temperature light on
     } else if (buf[10] == 0x00) {
         ALOGD("autotest close flash");
-        ret = flashlightSetValue(0x00);   // Turn off the light
+        ret = flashlightSetValue(0x31);   // Turn off the light
     } else {
         ALOGE("autotest undefined cmd");
     }
