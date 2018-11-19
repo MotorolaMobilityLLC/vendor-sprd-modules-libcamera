@@ -732,8 +732,10 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 	}
 	case ISP_PM_CMD_SET_LOWLIGHT_FLAG:
 	{
-		pm_cxt_ptr->lowlight_flag = *(cmr_u32 *)param_ptr;
-		pm_cxt_ptr->lowlight_flag = 0; //for 4in1 test param
+		if (pm_cxt_ptr->is_4in1_sensor)
+			pm_cxt_ptr->lowlight_flag = *(cmr_u32 *)param_ptr;
+		else
+			pm_cxt_ptr->lowlight_flag = 0;
 		ISP_LOGV("lowlight_flag = %d", pm_cxt_ptr->lowlight_flag);
 		break;
 	}
