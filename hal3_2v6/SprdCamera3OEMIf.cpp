@@ -3161,6 +3161,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
         } else if (mRecordingMode == true) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+        } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         } else {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
         }
@@ -4225,6 +4227,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
     } else if (mRecordingMode == true) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+    } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     } else {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
     }
