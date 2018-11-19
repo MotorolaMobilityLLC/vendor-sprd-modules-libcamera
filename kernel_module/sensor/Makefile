@@ -6,7 +6,7 @@ endif
 sprd_sensor-objs := sprd_sensor_core.o sprd_sensor_drv.o
 
 # target source files for isp2.6
-ifeq ($(MODULAR_KERNEL_TAG),isp2.6)
+ifeq ($(CSI_VER),r2p1)
 SRC := compat_sensor_drv.c
 SRC += csi2/csi_sprd/receiver_r2p1/csi_api.c
 SRC += csi2/csi_sprd/receiver_r2p1/csi_driver.c

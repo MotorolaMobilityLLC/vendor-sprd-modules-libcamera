@@ -6,7 +6,7 @@ endif
 sprd_camera-objs :=
 
 # target source files for isp2.6
-ifeq ($(MODULAR_KERNEL_TAG),isp2.6)
+ifeq ($(ISP_VER),isp2.6)
 SRC := $(shell find $(REL_PATH)/isp2.6 -name "*.c")
 LOCAL_SRC := $(SRC:$(REL_PATH)/%=%)
 
