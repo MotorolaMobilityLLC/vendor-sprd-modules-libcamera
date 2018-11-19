@@ -1573,9 +1573,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range,
            ksensitivity_range, sizeof(ksensitivity_range));
     // for feature ar
+#ifdef CONFIG_CAMERA_EIS
     s_setting[cameraId].sensor_InfoInfo.timestamp_source =
         ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
-
+#else
+    s_setting[cameraId].sensor_InfoInfo.timestamp_source =
+        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
+#endif
     // default color correction gains and matrix update.
     memcpy(s_setting[cameraId].colorInfo.gains, kcolor_gains,
            sizeof(kcolor_gains));

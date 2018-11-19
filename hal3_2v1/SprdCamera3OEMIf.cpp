@@ -3920,6 +3920,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
     Mutex::Autolock cbLock(&mPreviewCbLock);
     int ret = NO_ERROR;
+    int64_t preserve_buffer_timestamp;
 
     HAL_LOGV("E");
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
@@ -4038,6 +4039,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #else
     int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
+    preserve_buffer_timestamp = buffer_timestamp;
     int64_t rollingShutterSkew = 0;
     ret = mHalOem->ops->camera_get_rolling_shutter(mCameraHandle,
                                                    &rollingShutterSkew);
@@ -4111,6 +4113,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
     HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p", pre_stream,
              rec_stream, callback_stream);
+#ifndef CONFIG_CAMERA_EIS
+    if (rec_stream) {
+        buffer_timestamp = preserve_buffer_timestamp;
+    }
+#endif
 
 #ifdef CONFIG_FACE_BEAUTY
     if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
