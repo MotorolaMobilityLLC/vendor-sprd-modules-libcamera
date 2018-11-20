@@ -475,8 +475,6 @@ static cmr_int ispalg_get_ae_adapt_param(cmr_handle isp_fw_handle, cmr_u16 *para
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		ae_adapt_info = (struct isp_ae_adapt_info *)output.param_data->data_ptr;
 		*param = ae_adapt_info->binning_factor;
-	} else {
-		ISP_LOGE("fail to get ae adapt param");
 	}
 
 	return ret;
@@ -4791,8 +4789,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		}
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &size, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to get_awb_pix_cnt"));
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_4IN1_MODE, &in_ptr->mode_4in1, NULL);
-		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_in1_mode"));
 	}
 
 	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
