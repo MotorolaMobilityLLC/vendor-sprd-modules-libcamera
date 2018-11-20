@@ -49,6 +49,8 @@
 #define G_SENSOR_Q_TOTAL (3)
 #define MULTI_STATIC_TOTAL (9)
 #define AFV1_SCENE_NUM 3
+#define SPAF_MAX_ROI_NUM 5
+#define SPAF_MAX_WIN_NUM 90
 
 typedef enum _eAF_FILTER_TYPE {
 	T_SOBEL9 = 0,
@@ -87,7 +89,7 @@ typedef enum _eAF_MODE {
 	PDAF,			//PDAF
 	TMODE_1,		//Test mode 1
 	Wait_Trigger,		//wait for AF trigger
-	TOF,		//[TOF_---] // Time of flight
+	TOF,			//[TOF_---] // Time of flight
 	None,			//nothing to do
 } eAF_MODE;
 
@@ -125,8 +127,8 @@ typedef enum _AF_IOCTRL_CMD {
 	AF_IOCTRL_TRIGGER = 0,
 	AF_IOCTRL_STOP,
 	AF_IOCTRL_Get_Result,
-	AF_IOCTRL_Record_Wins,
-	AF_IOCTRL_Set_Hw_Wins,
+	AF_IOCTRL_SET_ROI,
+	AF_IOCTRL_RECORD_HW_WINS,
 	AF_IOCTRL_Record_Vcm_Pos,
 	AF_IOCTRL_Get_Alg_Mode,
 	AF_IOCTRL_Get_Bokeh_Result,
@@ -144,18 +146,43 @@ typedef struct _AF_Result {
 	cmr_u32 af_mode;
 } AF_Result;
 
-typedef struct _AF_Roi {
-	cmr_u32 index;
-	cmr_u32 start_x;
-	cmr_u32 start_y;
-	cmr_u32 end_x;
-	cmr_u32 end_y;
-} AF_Roi;
+struct spaf_saf_roi {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+};
 
-typedef struct _AF_HW_Wins {
-	void *win_settings;
+struct spaf_faf_roi {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+	cmr_u32 yaw_angle;
+	cmr_u32 roll_angle;
+	cmr_u32 score;
+};
+
+typedef struct spaf_roi_s {
 	cmr_u32 af_mode;
-} AF_HW_Wins;
+	cmr_u32 win_num;
+	union {
+		struct spaf_saf_roi saf_roi[SPAF_MAX_ROI_NUM];
+		struct spaf_faf_roi face_roi[SPAF_MAX_ROI_NUM];
+	};
+} spaf_roi_t;
+
+struct spaf_coordnicate {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+};
+
+typedef struct spaf_win_s {
+	cmr_u32 win_num;
+	struct spaf_coordnicate win[SPAF_MAX_WIN_NUM];
+} spaf_win_t;
 
 typedef struct _AF_Timestamp {
 	cmr_u32 type;

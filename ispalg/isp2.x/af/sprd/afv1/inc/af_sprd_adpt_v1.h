@@ -80,7 +80,8 @@ typedef struct _isp_info {
 	cmr_u32 win_num;
 } isp_info_t;
 
-#define MAX_ROI_NUM     32	// arbitrary, more than hardware wins
+#define MAX_ROI_NUM     32	// hardware wins, arbitrary
+#define ADPT_MAX_ROI_NUM     5	// focus area set by touch or face
 
 typedef struct _roi_rgb_y {
 	cmr_s32 num;
@@ -114,6 +115,32 @@ typedef struct _isp_awb_statistic_hist_info {
 	cmr_u32 b_hist[256];
 	cmr_u32 y_hist[256];
 } isp_awb_statistic_hist_info_t;
+
+struct af_adpt_saf_roi {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+};
+
+struct af_adpt_faf_roi {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+	cmr_u32 yaw_angle;
+	cmr_u32 roll_angle;
+	cmr_u32 score;
+};
+
+struct af_adpt_roi_info {
+	cmr_u32 af_mode;
+	cmr_u32 win_num;
+	union {
+		struct af_adpt_saf_roi touch[ADPT_MAX_ROI_NUM];
+		struct af_adpt_faf_roi face[ADPT_MAX_ROI_NUM];
+	};
+};
 
 typedef struct _win_coord {
 	cmr_u32 start_x;

@@ -613,31 +613,15 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 	}
 }
 
-static void calc_roi(af_ctrl_t * af, const struct af_trig_info *win, eAF_MODE alg_mode)
+static void af_set_default_roi(af_ctrl_t * af, cmr_u32 alg_mode)
 {
-	cmr_u32 i;
-	AF_HW_Wins hw_wins;
+	spaf_roi_t af_roi;
 
-	if (NULL == win) {
-		ISP_LOGV("win is NULL, use default roi");
-	} else {
-		ISP_LOGV("valid_win = %d, mode = %d", win->win_num, win->mode);
-		AF_Roi af_roi;
-		for (i = 0; i < win->win_num; ++i) {
-			af_roi.index = i;
-			af_roi.start_x = win->win_pos[i].sx;
-			af_roi.start_y = win->win_pos[i].sy;
-			af_roi.end_x = win->win_pos[i].ex;
-			af_roi.end_y = win->win_pos[i].ey;
-			af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Record_Wins, &af_roi);
-			ISP_LOGV("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i, win->win_pos[i].sx, win->win_pos[i].sy, win->win_pos[i].ex, win->win_pos[i].ey);
-		}
-		if (0 == win->win_num)
-			win = NULL;
-	}
-	hw_wins.win_settings = (void *)win;
-	hw_wins.af_mode = alg_mode;
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Hw_Wins, &hw_wins);
+	ISP_LOGI("current af->algo_mode %d", af->algo_mode);
+	memset(&af_roi, 0, sizeof(spaf_roi_t));
+	af_roi.af_mode = alg_mode;
+	af_roi.win_num = 0;
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 }
 
 static cmr_s32 compare_timestamp(af_ctrl_t * af)
@@ -1064,22 +1048,6 @@ static cmr_u8 if_af_start_notify(eAF_MODE AF_mode, void *cookie)
 		af->AFtime.AF_type = FOCUS_TYPE_STR(AF_FOCUS_SAF);
 	}
 #endif
-
-	roi_info_t *r = &af->roi;
-	cmr_u32 i;
-	UNUSED(AF_mode);
-
-	AF_Roi af_roi;
-
-	for (i = 0; i < r->num; ++i) {
-		af_roi.index = i;
-		af_roi.start_x = r->win[i].start_x;
-		af_roi.start_y = r->win[i].start_y;
-		af_roi.end_x = r->win[i].end_x;
-		af_roi.end_y = r->win[i].end_y;
-		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Record_Wins, &af_roi);
-	}
-
 	return 0;
 }
 
@@ -1118,6 +1086,19 @@ static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, cmr_u8 AF_Result, void *cookie)
 	ISP_LOGI("notify_stop: mode[%d], type[%d], result[%d]!!!", AF_mode, notify_type, AF_Result);
 
 	notify_stop(af, (HAVE_PEAK == AF_Result ? 1 : 0), notify_type);
+
+	// debug only
+	roi_info_t *r = &af->roi;
+	cmr_u32 i;
+	spaf_win_t afm_wins;
+	afm_wins.win_num = r->num;
+	for (i = 0; i < afm_wins.win_num; ++i) {
+		afm_wins.win[i].sx = r->win[i].start_x;
+		afm_wins.win[i].sy = r->win[i].start_y;
+		afm_wins.win[i].ex = r->win[i].end_x;
+		afm_wins.win[i].ey = r->win[i].end_y;
+	}
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_RECORD_HW_WINS, &afm_wins);
 
 	return 0;
 }
@@ -1665,7 +1646,7 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	aft_in.defocus_param.per_steps = (atoi(p3) > 0 && atoi(p3) < 200) ? (atoi(p3)) : (0);
 
 	trigger_stop(af);
-	calc_roi(af, NULL, af->algo_mode);
+	af_set_default_roi(af, af->algo_mode);
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);	//test_param is in _eAF_Triger_Type,     RF_NORMAL = 0,        //noraml R/F search for AFT RF_FAST = 3,              //Fast R/F search for AFT
 	do_start_af(af);
 	af->focus_state = AF_SEARCHING;
@@ -1694,7 +1675,7 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 	aft_in.bisTrigger = AF_TRIGGER;
 	// aft_in.AF_Trigger_Type = (1 == af->defocus) ? DEFOCUS : RF_NORMAL;
 	aft_in.AF_Trigger_Type = DEFOCUS;
-	calc_roi(af, NULL, af->algo_mode);
+	af_set_default_roi(af, af->algo_mode);
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
@@ -2000,26 +1981,69 @@ static cmr_u32 af_get_defocus_param(char *string, defocus_param_t * defocus, cmr
 
 static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 {
+	spaf_roi_t af_roi;
 	AF_Trigger_Data aft_in;
+	cmr_u32 i;
+
 	af->algo_mode = SAF;
+	memset(&af_roi, 0, sizeof(spaf_roi_t));
+	af_roi.af_mode = af->algo_mode;
+	if (NULL == win || 0 == win->win_num) {
+		af_roi.win_num = 0;
+		ISP_LOGI("win is NULL or win_num 0");
+	} else {
+		af_roi.win_num = win->win_num;
+		if (af_roi.win_num > SPAF_MAX_ROI_NUM) {
+			af_roi.win_num = SPAF_MAX_ROI_NUM;
+		}
+		for (i = 0; i < af_roi.win_num; ++i) {
+			af_roi.saf_roi[i].sx = win->win_pos[i].sx;
+			af_roi.saf_roi[i].sy = win->win_pos[i].sy;
+			af_roi.saf_roi[i].ex = win->win_pos[i].ex;
+			af_roi.saf_roi[i].ey = win->win_pos[i].ey;
+		}
+	}
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
+
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.AF_Trigger_Type = (1 == af->defocus) ? (DEFOCUS) : (RF_NORMAL);
-	calc_roi(af, win, af->algo_mode);
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
 }
 
-static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
+static void faf_start(af_ctrl_t * af, struct af_adpt_roi_info *win)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	AF_Trigger_Data aft_in;
 	cmr_u32 times = 0;
+	spaf_roi_t af_roi;
+	cmr_u32 i;
 
 	af->algo_mode = FAF;
-	calc_roi(af, win, af->algo_mode);
+	memset(&af_roi, 0, sizeof(spaf_roi_t));
+	af_roi.af_mode = af->algo_mode;
+	if (NULL == win || 0 == win->win_num) {
+		af_roi.win_num = 0;
+		ISP_LOGI("win is NULL or win_num 0");
+	} else {
+		af_roi.win_num = win->win_num;
+		if (af_roi.win_num > SPAF_MAX_ROI_NUM) {
+			af_roi.win_num = SPAF_MAX_ROI_NUM;
+		}
+		for (i = 0; i < af_roi.win_num; ++i) {
+			af_roi.face_roi[i].sx = win->face[i].sx;
+			af_roi.face_roi[i].sy = win->face[i].sy;
+			af_roi.face_roi[i].ex = win->face[i].ex;
+			af_roi.face_roi[i].ey = win->face[i].ey;
+			af_roi.face_roi[i].yaw_angle = win->face[i].yaw_angle;
+			af_roi.face_roi[i].roll_angle = win->face[i].roll_angle;
+			af_roi.face_roi[i].score = win->face[i].score;
+		}
+	}
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
@@ -2045,7 +2069,6 @@ static void faf_start(af_ctrl_t * af, struct af_trig_info *win)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
 	do_start_af(af);
 	af->vcm_stable = 0;
-	//notify_start(af, AF_FOCUS_FAF);
 }
 
 static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
@@ -2058,11 +2081,10 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	if (atoi(value) != 1)
 		return;
 
-	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
-	ISP_LOGI("current af->algo_mode %d", af->algo_mode);
-	calc_roi(af, NULL, af->algo_mode);
+	af_set_default_roi(af, af->algo_mode);
 
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.trigger_source = p_aft_result->is_caf_trig;
@@ -2099,9 +2121,8 @@ static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	if (atoi(value) != 1)
 		return;
 
+	af_set_default_roi(af, af->algo_mode);
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-	calc_roi(af, NULL, af->algo_mode);
-
 	aft_in.AFT_mode = TOF;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.trigger_source = p_aft_result->is_caf_trig;
@@ -2152,18 +2173,22 @@ static void af_stop_search(af_ctrl_t * af)
 
 static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm, struct aft_proc_result *result)
 {
-	struct af_trig_info win;
+	struct af_adpt_roi_info win;
 
 	if (AF_SEARCHING != af->focus_state) {
 		if (result->is_caf_trig) {
 			ISP_LOGI("lib trigger af %d", result->is_caf_trig);
 			if (AFT_TRIG_FD == result->is_caf_trig) {
 				win.win_num = 1;
-				win.win_pos[0].sx = prm->fd_info.face_info[0].sx;
-				win.win_pos[0].ex = prm->fd_info.face_info[0].ex;
-				win.win_pos[0].sy = prm->fd_info.face_info[0].sy;
-				win.win_pos[0].ey = prm->fd_info.face_info[0].ey;
-				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d", win.win_num, win.win_pos[0].sx, win.win_pos[0].sy, win.win_pos[0].ex, win.win_pos[0].ey);
+				win.face[0].sx = prm->fd_info.face_info[0].sx;
+				win.face[0].sy = prm->fd_info.face_info[0].sy;
+				win.face[0].ex = prm->fd_info.face_info[0].ex;
+				win.face[0].ey = prm->fd_info.face_info[0].ey;
+				win.face[0].yaw_angle = prm->fd_info.face_info[0].yaw_angle;
+				win.face[0].roll_angle = prm->fd_info.face_info[0].roll_angle;
+				win.face[0].score = prm->fd_info.face_info[0].score;
+				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d, roll_angle %d", win.win_num, win.face[0].sx, win.face[0].sy, win.face[0].ex, win.face[0].ey,
+					 win.face[0].roll_angle);
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
@@ -2474,7 +2499,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		}
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
-		calc_roi(af, NULL, af->algo_mode);
+		af_set_default_roi(af, af->algo_mode);
 		do_start_af(af);
 		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
 		trigger_set_mode(af, mode);
@@ -2641,7 +2666,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
 		return AFV1_SUCCESS;
 	}
-	calc_roi(af, NULL, af->algo_mode);
+	af_set_default_roi(af, af->algo_mode);
 	do_start_af(af);
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 		trigger_start(af);	// for hdr capture no af mode update at whole procedure
