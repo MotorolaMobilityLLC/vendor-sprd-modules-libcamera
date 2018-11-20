@@ -2630,7 +2630,7 @@ static cmr_int sensor_ic_parse_ebd_data(cmr_handle handle, void *param) {
     val.type = SENSOR_VAL_TYPE_PARSE_EBD_DATA;
     val.pval = param;
 
-    SENSOR_LOGI("ebd ptr %p\n", param);
+    SENSOR_LOGV("ebd ptr %p\n", param);
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     if (sns_ops)
         ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
@@ -2648,7 +2648,7 @@ static cmr_int sensor_ic_get_cct_data(cmr_handle handle, void *param) {
     val.type = SENSOR_VAL_TYPE_GET_CCT_DATA;
     val.pval = param;
 
-    SENSOR_LOGI("cct ptr %p\n", param);
+    SENSOR_LOGV("cct ptr %p\n", param);
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     if (sns_ops)
         ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
@@ -2702,7 +2702,7 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
     SENSOR_MATCH_T *module = PNULL;
     SENSOR_DRV_CHECK_ZERO(handle);
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
-    SENSOR_LOGI("E:cmd:0x%x", cmd);
+    SENSOR_LOGV("E:cmd:0x%x", cmd);
     module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
     SENSOR_DRV_CHECK_PTR(module);
 
@@ -2743,7 +2743,7 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
         break;
     };
 
-    SENSOR_LOGI("X:");
+    SENSOR_LOGV("X:");
     return ret;
 }
 

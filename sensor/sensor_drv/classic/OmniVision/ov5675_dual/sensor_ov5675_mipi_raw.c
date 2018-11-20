@@ -218,10 +218,10 @@ static cmr_int ov5675_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     fps_info->high_fps_skip_num =
         fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
 
-    SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
-    SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
-    SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
-    SENSOR_LOGI("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+    SENSOR_LOGV("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
+    SENSOR_LOGV("min_fps: %d", fps_info->min_fps);
+    SENSOR_LOGV("is_high_fps: %d", fps_info->is_high_fps);
+    SENSOR_LOGV("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
     return rtn;
 }
@@ -832,14 +832,14 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E");
+    SENSOR_LOGV("E");
 
     info->aec_i2c_info_out = &ov5675_aec_info;
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
 
-    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+    SENSOR_LOGV("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                 exposure_line, dummy_line);
 
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
@@ -858,7 +858,7 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     sensor_gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_LOGI("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)info->gain,
+    SENSOR_LOGV("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)info->gain,
                 sensor_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = sensor_gain;
@@ -866,7 +866,7 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
 
     // ov5675_drv_write_gain_value(handle, info->gain);
 
-    SENSOR_LOGI("ov5675_drv_read_aec_info!!!!!");
+    SENSOR_LOGV("ov5675_drv_read_aec_info!!!!!");
     return ret_value;
 }
 
@@ -970,7 +970,7 @@ static cmr_int ov5675_drv_access_val(cmr_handle handle, unsigned long param) {
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E: param_ptr = %p,type=%x", param_ptr, param_ptr->type);
+    SENSOR_LOGV("E: param_ptr = %p,type=%x", param_ptr, param_ptr->type);
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_SHUTTER:
         *((cmr_u32 *)param_ptr->pval) =

@@ -1022,7 +1022,7 @@ static cmr_int imx351_drv_get_ebdline_info(cmr_handle handle,
     embedded_info->vc_info.vch_data_type = 0x12;
     embedded_info->vc_info.vch_mode = 0x01;
     embedded_info->sns_mode = ebd_sns_mode;
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
 
     return rtn;
 }

@@ -390,10 +390,10 @@ static cmr_int ov8856_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     fps_info->is_high_fps = fps_data->sensor_mode_fps[sensor_mode].is_high_fps;
     fps_info->high_fps_skip_num =
         fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
-    SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
-    SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
-    SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
-    SENSOR_LOGI("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+    SENSOR_LOGV("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
+    SENSOR_LOGV("min_fps: %d", fps_info->min_fps);
+    SENSOR_LOGV("is_high_fps: %d", fps_info->is_high_fps);
+    SENSOR_LOGV("high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
     return rtn;
 }
@@ -423,7 +423,7 @@ static cmr_int ov8856_drv_access_val(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("sensor ov8856: param_ptr->type=%x", param_ptr->type);
+    SENSOR_LOGV("sensor ov8856: param_ptr->type=%x", param_ptr->type);
 
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
