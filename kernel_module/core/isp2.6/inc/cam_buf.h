@@ -38,6 +38,7 @@ enum {
 enum cam_iommudev_type {
 	CAM_IOMMUDEV_ISP,
 	CAM_IOMMUDEV_DCAM,
+	CAM_IOMMUDEV_FD,
 	CAM_IOMMUDEV_MAX,
 };
 

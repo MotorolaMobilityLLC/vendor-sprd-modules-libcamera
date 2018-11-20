@@ -56,6 +56,7 @@ int cambuf_reg_iommudev(struct device *dev,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(cambuf_reg_iommudev);
 
 int cambuf_unreg_iommudev(enum cam_iommudev_type type)
 {
@@ -67,6 +68,7 @@ int cambuf_unreg_iommudev(enum cam_iommudev_type type)
 	}
 	return 0;
 }
+EXPORT_SYMBOL(cambuf_unreg_iommudev);
 
 int get_iommu_status(enum cam_iommudev_type type)
 {
@@ -188,6 +190,7 @@ failed:
 	}
 	return ret;
 }
+EXPORT_SYMBOL(cambuf_get_ionbuf);
 
 int cambuf_put_ionbuf(struct camera_buf *buf_info)
 {
@@ -217,7 +220,7 @@ int cambuf_put_ionbuf(struct camera_buf *buf_info)
 	}
 	return ret;
 }
-
+EXPORT_SYMBOL(cambuf_put_ionbuf);
 
 int cambuf_iommu_map(
 			struct camera_buf *buf_info,
@@ -306,7 +309,7 @@ failed:
 
 	return ret;
 }
-
+EXPORT_SYMBOL(cambuf_iommu_map);
 
 int cambuf_iommu_unmap(
 		struct camera_buf *buf_info)
@@ -358,6 +361,7 @@ int cambuf_iommu_unmap(
 	pr_debug("unmap done.\n");
 	return 0;
 }
+EXPORT_SYMBOL(cambuf_iommu_unmap);
 
 int cambuf_kmap(struct camera_buf *buf_info)
 {
