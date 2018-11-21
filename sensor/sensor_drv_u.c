@@ -57,6 +57,7 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
                               char *sensor_info);
 static cmr_int
 sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt);
+static cmr_int sensor_get_fov_info(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_drv_index_info_file_init(cmr_u8 *sensor_index);
 static cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt);
 
@@ -673,10 +674,11 @@ LOCAL cmr_int sensor_load_idx_inf_file(struct sensor_drv_context *sensor_cxt) {
         }
     } else {
         len = fread(sensor_idx, 1, SENSOR_PARAM_NUM, fp);
-        SENSOR_LOGV("rd sns idx file, len %d, 8Bytes:%x,%x,%x,%x;%x,%x,%x,%x ",
-                    len, sensor_idx[0], sensor_idx[1], sensor_idx[2],
-                    sensor_idx[3], sensor_idx[4], sensor_idx[5], sensor_idx[6],
-                    sensor_idx[7]);
+        SENSOR_LOGV(
+            "rd sns idx file, len %d, 10Bytes:%x,%x,%x,%x;%x,%x,%x,%x,%x,%x ",
+            len, sensor_idx[0], sensor_idx[1], sensor_idx[2], sensor_idx[3],
+            sensor_idx[4], sensor_idx[5], sensor_idx[6], sensor_idx[7],
+            sensor_idx[8], sensor_idx[9]);
     }
     if (NULL != fp)
         fclose(fp);
@@ -2084,35 +2086,6 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
                 sensor_cxt->sensor_info_ptr->name,
                 sensor_cxt->sensor_info_ptr->focus_eb);
 
-    {
-        SENSOR_VAL_T val;
-        struct sensor_ic_ops *sns_ops = PNULL;
-        cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
-        struct sensor_ex_info sn_ex_info_slv;
-        memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
-
-        val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-        val.pval = &sn_ex_info_slv;
-
-        sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-        if (sns_ops) {
-            ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
-                                                (cmr_uint)&val);
-            if (ret) {
-                SENSOR_LOGI("get sensor ex info failed");
-            }
-            SENSOR_LOGI(
-                "sensor %s fov physical size (%f, %f), focal_lengths %f",
-                module->sn_name, sn_ex_info_slv.fov_info.physical_size[0],
-                sn_ex_info_slv.fov_info.physical_size[1],
-                sn_ex_info_slv.fov_info.focal_lengths);
-            memcpy(&sensor_cxt->fov_info, &sn_ex_info_slv.fov_info,
-                   sizeof(sn_ex_info_slv.fov_info));
-        } else {
-            SENSOR_LOGI("sns_ops null");
-        }
-    }
-
     if (module->af_dev_info.af_drv_entry && !sensor_cxt->af_drv_handle) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
         if (af_ops->create) {
@@ -2755,6 +2728,37 @@ static cmr_int
 sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
 
     sensor_cxt->sensor_img_type = sensor_get_sensor_type(sensor_cxt);
+    sensor_get_fov_info(sensor_cxt);
+
+    return 0;
+}
+
+static cmr_int sensor_get_fov_info(struct sensor_drv_context *sensor_cxt) {
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_VAL_T val;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    struct sensor_ex_info sn_ex_info_slv;
+    memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
+
+    val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+    val.pval = &sn_ex_info_slv;
+
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops) {
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                            (cmr_uint)&val);
+        if (!ret) {
+            memcpy(&sensor_cxt->fov_info, &sn_ex_info_slv.fov_info,
+                   sizeof(sn_ex_info_slv.fov_info));
+        } else {
+            SENSOR_LOGE("get sensor ex info failed");
+            return -1;
+        }
+    } else {
+        SENSOR_LOGE("sns_ops null");
+        return -1;
+    }
 
     return 0;
 }
