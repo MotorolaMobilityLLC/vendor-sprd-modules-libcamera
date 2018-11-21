@@ -19,33 +19,33 @@
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include "SprdCamera3OEMIf.h"
+#include "cmr_common.h"
+#include <cutils/properties.h>
+#include <fcntl.h>
+#include <math.h>
+#include <media/hardware/MetadataBufferType.h>
+#include <sprd_ion.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
 #include <utils/Trace.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <time.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <cutils/properties.h>
-#include <sprd_ion.h>
-#include <media/hardware/MetadataBufferType.h>
-#include <math.h>
-#include "cmr_common.h"
 #ifdef SPRD_PERFORMANCE
 #include <androidfw/SprdIlog.h>
 #endif
 #include "../../external/drivers/gpu/gralloc_public.h"
-#include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
 #include "SprdCamera3Flash.h"
+#include "SprdCamera3HALHeader.h"
+#include <cutils/ashmem.h>
 #include <dlfcn.h>
 #include <linux/ion.h>
 #include <ui/GraphicBuffer.h>
-#include <cutils/ashmem.h>
 #ifdef CAMERA_3DNR_CAPTURE_GPU
 #include "gralloc_buffer_priv.h"
 #include <gralloc_priv.h>
@@ -915,6 +915,8 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     int rc = 0;
     HAL_LOGI("E");
 
+    SPRD_DEF_Tag sprdInfo;
+    mSetting->getSPRDDEFTag(&sprdInfo);
     setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
     if (isPreviewing()) {
         if (mCameraId == 0 ||
@@ -946,9 +948,13 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
-             MODE_SINGLE_CAMERA);
-
+    if (sprdInfo.sprd_ai_scene_type_current) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 SPRD_MIMETPYE_AI);
+    } else {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 MODE_SINGLE_CAMERA);
+    }
     if (SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
         if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan()) {
             tmp1 = systemTime();

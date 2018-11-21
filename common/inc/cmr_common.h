@@ -20,19 +20,19 @@
 extern "C" {
 #endif
 
+#include "cmr_type.h"
+#include "isp_app.h"
+#include "sensor_raw.h"
 #include <sys/types.h>
 #include <utils/Log.h>
 #include <utils/Timers.h>
-#include "cmr_type.h"
-#include "sensor_raw.h"
-#include "isp_app.h"
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 #include "isp_pfc.h"
 #endif
-#include "jpeg_exif_header.h"
-#include <sprd_sensor_k.h>
-#include "sprd_img.h"
 #include "cmr_log.h"
+#include "jpeg_exif_header.h"
+#include "sprd_img.h"
+#include <sprd_sensor_k.h>
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
 #ifdef CONFIG_USE_CAMERASERVER_PROC
@@ -1580,7 +1580,8 @@ typedef enum {
 typedef enum {
     SPRD_MIMETPYE_NONE = 0,
     SPRD_MIMETPYE_BLUR = 12,
-    SPRD_MIMETPYE_BOKEH = 16
+    SPRD_MIMETPYE_BOKEH = 16,
+    SPRD_MIMETPYE_AI = 36
 } multiCameraMimetype;
 
 struct img_sbs_info {
