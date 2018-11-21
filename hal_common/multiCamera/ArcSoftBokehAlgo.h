@@ -12,7 +12,7 @@ class ArcSoftBokehAlgo : public IBokehAlgo {
   public:
     ArcSoftBokehAlgo();
     ~ArcSoftBokehAlgo();
-    int initParam(BokehSize *size, OtpData *data);
+    int initParam(BokehSize *size, OtpData *data, bool galleryBokeh);
 
     void getVersionInfo();
 

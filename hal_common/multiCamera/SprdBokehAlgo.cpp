@@ -23,7 +23,7 @@ SprdBokehAlgo::~SprdBokehAlgo() {
     mReadOtp = false;
 }
 
-int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data) {
+int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data, bool galleryBokeh) {
     int rc = NO_ERROR;
 
     if (!size || !data) {
@@ -58,21 +58,21 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data) {
     mPreviewbokehParam.depth_param.F_number =
         mPreviewbokehParam.weight_params.F_number;
     mPreviewbokehParam.depth_param.DisparityImage = NULL;
+    if(!galleryBokeh){
+        // capture bokeh params
+        mCapbokehParam.sel_x = mSize.capture_w / 2;
+        mCapbokehParam.sel_y = mSize.capture_h / 2;
+        mCapbokehParam.bokeh_level = 255;
+        mCapbokehParam.config_param = NULL;
+        mCapbokehParam.param_state = false;
 
-    // capture bokeh params
-    mCapbokehParam.sel_x = mSize.capture_w / 2;
-    mCapbokehParam.sel_y = mSize.capture_h / 2;
-    mCapbokehParam.bokeh_level = 255;
-    mCapbokehParam.config_param = NULL;
-    mCapbokehParam.param_state = false;
-
-    rc = sprd_bokeh_Init(&mBokehCapHandle, mSize.capture_w, mSize.capture_h,
+        rc = sprd_bokeh_Init(&mBokehCapHandle, mSize.capture_w, mSize.capture_h,
                          mCapbokehParam.config_param);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("sprd_bokeh_Init failed!");
-        goto exit;
+        if (rc != NO_ERROR) {
+            HAL_LOGE("sprd_bokeh_Init failed!");
+            goto exit;
+        }
     }
-
     if (mReadOtp == false) {
         loadDebugOtp();
         data->otp_exist = mCalData.otp_exist;

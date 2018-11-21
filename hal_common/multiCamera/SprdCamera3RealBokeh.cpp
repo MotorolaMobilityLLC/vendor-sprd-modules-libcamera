@@ -344,10 +344,12 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mPrevFrameNumber = 0;
     mCapFrameNumber = 0;
     if (mBokehAlgo) {
-        rc = mBokehAlgo->deinitAlgo();
-        if (rc != NO_ERROR) {
-            HAL_LOGE("fail to deinitAlgo");
-            goto exit;
+        if(!mCaptureThread->mAbokehGallery){
+            rc = mBokehAlgo->deinitAlgo();
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to deinitAlgo");
+                goto exit;
+            }
         }
         rc = mBokehAlgo->deinitPrevDepth();
         if (rc != NO_ERROR) {
@@ -2980,7 +2982,7 @@ int SprdCamera3RealBokeh::configureStreams(
 
     mbokehParm.sel_x = mBokehSize.preview_w / 2;
     mbokehParm.sel_y = mBokehSize.preview_h / 2;
-    rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData);
+    rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData,mCaptureThread->mAbokehGallery);
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initParam");
         return rc;

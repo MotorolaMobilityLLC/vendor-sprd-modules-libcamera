@@ -76,7 +76,7 @@ class IBokehAlgo {
   public:
     IBokehAlgo(){};
     virtual ~IBokehAlgo(){};
-    virtual int initParam(BokehSize *size, OtpData *data) = 0;
+    virtual int initParam(BokehSize *size, OtpData *data, bool galleryBokeh) = 0;
 
     virtual void getVersionInfo() = 0;
 

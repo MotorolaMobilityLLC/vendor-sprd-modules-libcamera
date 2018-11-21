@@ -10,7 +10,7 @@ class SprdBokehAlgo : public IBokehAlgo {
   public:
     SprdBokehAlgo();
     ~SprdBokehAlgo();
-    int initParam(BokehSize *size, OtpData *data);
+    int initParam(BokehSize *size, OtpData *data, bool galleryBokeh);
 
     void getVersionInfo();
 

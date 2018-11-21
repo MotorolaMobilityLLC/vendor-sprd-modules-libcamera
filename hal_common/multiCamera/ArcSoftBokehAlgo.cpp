@@ -33,7 +33,7 @@ ArcSoftBokehAlgo::~ArcSoftBokehAlgo() {
     mDepthMap = NULL;
 }
 
-int ArcSoftBokehAlgo::initParam(BokehSize *size, OtpData *data) {
+int ArcSoftBokehAlgo::initParam(BokehSize *size, OtpData *data, bool galleryBokeh) {
     int rc = NO_ERROR;
     const MPBASE_Version *version = NULL;
     int CAM_BOKEH_MAIN_ID = 0;
