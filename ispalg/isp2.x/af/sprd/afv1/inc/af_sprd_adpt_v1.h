@@ -46,6 +46,14 @@ enum _AF_Gsensor_Orientation {
 	AF_G_DEGREE3,
 };
 
+enum _e_Fcae_Orientation {
+	FACE_NONE,
+	FACE_UP,
+	FACE_RIGHT,
+	FACE_DOWN,
+	FACE_LEFT,
+} e_Fcae_Orientation;
+
 enum _lock_block {
 	LOCK_AE = 0x01,
 	LOCK_LSC = 0x02,
@@ -285,6 +293,8 @@ typedef struct _af_ctrl {
 	af_fv af_fv_val;
 	struct afctrl_gsensor_info gsensor_info;
 	cmr_u32 g_orientation;
+	cmr_u32 f_orientation;
+	cmr_s32 roll_angle;
 	struct afctrl_face_info face_info;
 	isp_info_t isp_info;
 	lens_info_t lens;

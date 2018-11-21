@@ -249,19 +249,20 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 #define PIXEL_OFFSET 100
-	if (STATE_FAF == af->state && AF_G_NONE != af->g_orientation) {	//face roi settings
+	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face roi settings
 		// crop enable
 		cmr_u32 crop_eb = 1;
 		struct af_monitor_tile_num tile_num;
 		struct af_monitor_win_num win_num;
 		cmr_u32 tmp_w = (win[8].end_x - win[0].start_x) / 3;	//af->isp_info.width;
 
+		ISP_LOGI("roll_angle %d", af->roll_angle);
 		// win num depends on gsensor
 		win[9].start_x = win[0].start_x;
 		win[9].start_y = win[0].start_y;
 		win[9].end_x = win[8].end_x;
 		win[9].end_y = win[8].end_y;
-		if (AF_G_DEGREE0 == af->g_orientation || AF_G_DEGREE2 == af->g_orientation) {
+		if (FACE_UP == af->f_orientation || FACE_DOWN == af->f_orientation) {
 			win_num.x = 4;
 			win_num.y = 6;
 			af->win_offset = 0;
@@ -403,10 +404,11 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 #define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
 #define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
-	if (STATE_FAF == af->state && AF_G_NONE != af->g_orientation) {	//face FV mapping
-		if (AF_G_DEGREE0 == af->g_orientation || AF_G_DEGREE2 == af->g_orientation) {	//6x4
-			if (AF_G_DEGREE0 == af->g_orientation) {
-				for (i = 0; i < 6; i++) {	//3//
+	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face FV mapping
+		ISP_LOGI("roll_angle %d", af->roll_angle);
+		if (FACE_UP == af->f_orientation || FACE_DOWN == af->f_orientation) {	//6x4
+			if (FACE_UP == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
 					af->af_fv_val.af_fv0[i] = (cmr_u64) af_fv_val[FV0_INDEX(i / 3 * 4 + i % 3 + af->win_offset)];
 					af->af_fv_val.af_fv1[i] = (cmr_u64) af_fv_val[FV1_INDEX(i / 3 * 4 + i % 3 + af->win_offset)];
 				}
@@ -425,8 +427,8 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(23)] + af_fv_val[FV0_INDEX(22)];
 					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(23)] + af_fv_val[FV1_INDEX(22)];
 				}
-			} else if (AF_G_DEGREE2 == af->g_orientation) {
-				for (i = 0; i < 6; i++) {	//3//
+			} else if (FACE_DOWN == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
 					af->af_fv_val.af_fv0[i + 3] = (cmr_u64) af_fv_val[FV0_INDEX(i / 3 * 4 + i % 3 + 16 + af->win_offset)];
 					af->af_fv_val.af_fv1[i + 3] = (cmr_u64) af_fv_val[FV1_INDEX(i / 3 * 4 + i % 3 + 16 + af->win_offset)];
 				}
@@ -446,9 +448,9 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(3)] + af_fv_val[FV1_INDEX(2)];
 				}
 			}
-		} else {	//3//3x6
-			if (AF_G_DEGREE1 == af->g_orientation) {
-				for (i = 0; i < 6; i++) {	//3//
+		} else if (FACE_RIGHT == af->f_orientation || FACE_LEFT == af->f_orientation) {	//3//3x6
+			if (FACE_LEFT == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
 					af->af_fv_val.af_fv0[i / 2 * 3 + i % 2] = (cmr_u64) af_fv_val[FV0_INDEX(i / 2 * 6 + i % 2)];
 					af->af_fv_val.af_fv1[i / 2 * 3 + i % 2] = (cmr_u64) af_fv_val[FV1_INDEX(i / 2 * 6 + i % 2)];
 				}
@@ -458,8 +460,8 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(5)] + af_fv_val[FV1_INDEX(11)];
 				af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(17)] + af_fv_val[FV0_INDEX(11)];
 				af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(17)] + af_fv_val[FV1_INDEX(11)];
-			} else if (AF_G_DEGREE3 == af->g_orientation) {
-				for (i = 0; i < 6; i++) {	//3//
+			} else if (FACE_RIGHT == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
 					af->af_fv_val.af_fv0[i / 2 * 3 + i % 2 + 1] = (cmr_u64) af_fv_val[FV0_INDEX(i / 2 * 6 + i % 2 + 4)];
 					af->af_fv_val.af_fv1[i / 2 * 3 + i % 2 + 1] = (cmr_u64) af_fv_val[FV1_INDEX(i / 2 * 6 + i % 2 + 4)];
 				}
@@ -2189,6 +2191,21 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				win.face[0].score = prm->fd_info.face_info[0].score;
 				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d, roll_angle %d", win.win_num, win.face[0].sx, win.face[0].sy, win.face[0].ex, win.face[0].ey,
 					 win.face[0].roll_angle);
+				af->roll_angle = win.face[0].roll_angle;
+				if (af->roll_angle >= -180 && af->roll_angle <= 180) {
+					if (af->roll_angle >= -45 && af->roll_angle <= 45) {
+						af->f_orientation = FACE_UP;
+					} else if ((af->roll_angle >= -180 && af->roll_angle <= -135) || (af->roll_angle >= 135 && af->roll_angle <= 180)) {
+						af->f_orientation = FACE_DOWN;
+					} else if (af->roll_angle > -135 && af->roll_angle < -45) {
+						af->f_orientation = FACE_LEFT;
+					} else if (af->roll_angle > 45 && af->roll_angle < 135) {
+						af->f_orientation = FACE_RIGHT;
+					}
+				} else {
+					af->f_orientation = FACE_NONE;
+				}
+				ISP_LOGI("af->f_orientation=%d", af->f_orientation);
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
@@ -2919,9 +2936,14 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_face_info *face = (struct afctrl_face_info *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	cmr_u8 i = 0;
 	if (NULL != face && 0 != face->face_num) {
 		memcpy(&af->face_info, face, sizeof(struct afctrl_face_info));
 		af->trigger_source_type |= AF_DATA_FD;
+	}
+	for (i = 0; i < face->face_num; i++) {
+		ISP_LOGV("idx=%d,sx=%d, sy=%d,ex=%d,ey=%d,roll_angle=%d", i, face->face_info[i].sx, face->face_info[i].sy, face->face_info[i].ex, face->face_info[i].ey,
+			 face->face_info[i].angle);
 	}
 	return rtn;
 }
