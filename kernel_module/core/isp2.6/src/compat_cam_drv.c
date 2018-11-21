@@ -17,7 +17,7 @@
 
 #include <sprd_mm.h>
 #include <sprd_isp_r8p1.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 
 #include "compat_cam_drv.h"
 

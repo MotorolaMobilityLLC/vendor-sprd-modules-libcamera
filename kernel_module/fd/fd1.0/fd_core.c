@@ -29,7 +29,7 @@
 #include <linux/sprd_ion.h>
 
 #include <sprd_mm.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 #include <sprd_fd.h>
 
 #include "cam_types.h"

@@ -16,7 +16,7 @@
 #include <linux/kernel.h>
 #include <sprd_mm.h>
 #include <sprd_isp_r8p1.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 
 #include "cam_types.h"
 #include "cam_queue.h"

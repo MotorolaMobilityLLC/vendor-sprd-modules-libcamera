@@ -46,9 +46,12 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../../jpeg \
 	$(LOCAL_PATH)/../../vsp/inc \
-	$(LOCAL_PATH)/../../kernel_module/interface \
 	$(LOCAL_PATH)/../../tool/mtrace
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../../kernel_module/interface
+endif
 # ************************************************
 # internal header file
 # ************************************************

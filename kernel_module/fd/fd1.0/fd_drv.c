@@ -31,7 +31,7 @@
 #include <linux/sprd_ion.h>
 #include <linux/mfd/syscon.h>
 #include <linux/regmap.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 #include <video/sprd_mmsys_pw_domain.h>
 #include <sprd_mm.h>
 #include <sprd_fd.h>

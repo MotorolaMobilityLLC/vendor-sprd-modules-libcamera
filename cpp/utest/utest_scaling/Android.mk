@@ -14,8 +14,12 @@ LOCAL_C_INCLUDES:= \
 	$(TOP)/vendor/sprd/modules/libcamera/$(ISPDRV_DIR)/middleware/inc \
 	$(TOP)/vendor/sprd/modules/libcamera/$(ISPDRV_DIR)/driver/inc \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-	$(LOCAL_PATH)/../../../kernel_module/interface \
 	$(TOP)/vendor/sprd/modules/libcamera/common/inc \
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+		$(LOCAL_PATH)/../../../kernel_module/interface
+endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 LOCAL_SHARED_LIBRARIES := libcppdrv libmemion liblog libEGL libbinder libutils

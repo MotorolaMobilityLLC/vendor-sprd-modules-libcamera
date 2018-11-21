@@ -28,7 +28,6 @@ $(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
 ifeq ($(strip $(OEM_DIR)),oem2v1)
 LOCAL_C_INCLUDES += \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-    $(LOCAL_PATH)/../kernel_module/interface \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/isp_calibration/inc \
     $(LOCAL_PATH)/../common/inc \

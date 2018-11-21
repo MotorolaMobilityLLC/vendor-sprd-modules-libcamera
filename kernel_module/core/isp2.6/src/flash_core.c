@@ -16,7 +16,7 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <sprd_mm.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 
 #include "cam_types.h"
 #include "flash_interface.h"

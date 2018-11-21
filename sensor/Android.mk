@@ -22,7 +22,6 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Wno-error=format#-We
 
 LOCAL_C_INCLUDES := \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-    $(LOCAL_PATH)/../kernel_module/interface \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
     $(LOCAL_PATH)/../vsp/inc \
@@ -31,6 +30,11 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../$(OEM_DIR)/inc \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/otp_parser
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+	   $(LOCAL_PATH)/../kernel_module/interface
+endif
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \

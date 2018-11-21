@@ -8,7 +8,6 @@ LOCAL_LDFLAGS += -ldl
 ifeq ($(strip $(OEM_DIR)),oem2v6)
 LOCAL_C_INCLUDES += \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-    $(LOCAL_PATH)/../kernel_module/interface \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
@@ -20,6 +19,11 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/af_drv \
     $(LOCAL_PATH)/../sensor/otp_drv \
     $(LOCAL_PATH)/../arithmetic/inc
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/../kernel_module/interface
+endif
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \

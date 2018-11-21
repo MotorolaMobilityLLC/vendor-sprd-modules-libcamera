@@ -15,7 +15,7 @@
 #define _CAM_TYPES_H_
 
 #include <linux/workqueue.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a > b) ? a : b)

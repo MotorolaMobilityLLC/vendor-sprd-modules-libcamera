@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_CPP_USER_DRIVER)),true)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_CPP_USER_DRIVER)),true)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-ifeq ($(strip $(TARGET_BOARD_CPP_VER)),lite_r5p0)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_CPP_MODULAR_KERNEL)),lite_r5p0)
 LOCAL_CFLAGS += -DCPP_LITE_R5P0
 endif
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
@@ -29,12 +29,16 @@ LOCAL_CFLAGS += -DTEST_ON_HAPS
 # ************************************************
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-	$(LOCAL_PATH)/../kernel_module/interface \
 	$(LOCAL_PATH)/../common/inc \
 	$(LOCAL_PATH)/../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
 	$(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+		$(LOCAL_PATH)/../kernel_module/interface
+endif
 # ************************************************
 # internal header file
 # ************************************************

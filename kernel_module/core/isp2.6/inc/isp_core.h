@@ -17,7 +17,7 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 #include <linux/sprd_ion.h>
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 
 #include "cam_types.h"
 #include "cam_queue.h"

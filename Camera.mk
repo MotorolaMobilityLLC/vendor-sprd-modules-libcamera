@@ -139,7 +139,6 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/$(HAL_DIR)/inc \
     $(LOCAL_PATH)/$(HAL_DIR)/ \
     $(LOCAL_PATH)/tool/mtrace \
-    $(LOCAL_PATH)/kernel_module/interface \
     $(TOP)/external/skia/include/images \
     $(TOP)/external/skia/include/core\
     $(TOP)/external/jhead \
@@ -153,6 +152,11 @@ LOCAL_C_INCLUDES := \
     $(TOP)/frameworks/native/libs/sensor/include \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
     $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/kernel_module/interface
+endif
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \

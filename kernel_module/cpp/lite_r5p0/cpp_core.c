@@ -30,7 +30,7 @@
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 #include "sprd_cpp.h"
-#include <video/sprd_img.h>
+#include "sprd_img.h"
 #include "sprd_mm.h"
 #include <uapi/video/sprd_vsp_pw_domain.h>
 

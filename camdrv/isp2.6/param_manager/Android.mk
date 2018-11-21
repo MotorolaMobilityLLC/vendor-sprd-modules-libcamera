@@ -26,9 +26,12 @@ LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 # ************************************************
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-	$(LOCAL_PATH)/../../../kernel_module/interface/ \
 	$(LOCAL_PATH)/../../../common/inc
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../../../kernel_module/interface
+endif
 # ************************************************
 # internal header file
 # ************************************************
