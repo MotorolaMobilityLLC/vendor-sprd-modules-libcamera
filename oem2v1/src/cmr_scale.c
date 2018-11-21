@@ -258,6 +258,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
             &cfg_params->frame_params;
 
         cpp_cap.src_size = frame_params->input_size;
+        cpp_cap.rect_size = frame_params->input_rect;
         cpp_cap.src_format = frame_params->input_format;
         cpp_cap.dst_size = frame_params->output_size;
         cpp_cap.dst_format = frame_params->output_format;
