@@ -46,7 +46,6 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
         } else {
             faceBeauty->fb_mode = 0;
         }
-        faceBeauty->noFaceFrmCnt = 0;
     }
 }
 
