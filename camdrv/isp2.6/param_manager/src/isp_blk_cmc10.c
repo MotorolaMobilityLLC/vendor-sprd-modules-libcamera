@@ -112,26 +112,16 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param,
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 update = 0;
 
-			if (NULL == block_result) {
-				return ISP_ERROR;
-			}
-
-			if (0 == block_result->update) {
-				return rtn;
+			if (!block_result->update || cmc10_header_ptr->bypass) {
+				ISP_LOGV("do not need update\n");
+				return ISP_SUCCESS;
 			}
 
 			if (ISP_SMART_CMC == block_result->smart_id) {
-
 				struct isp_weight_value *weight_value = NULL;
 
 				val_range.min = 0;
 				val_range.max = ISP_CMC_NUM - 1;
-
-				if (0 == block_result->update) {
-					ISP_LOGV("do not need update\n");
-					return ISP_SUCCESS;
-				}
-
 				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to check pm smart param !");
@@ -205,12 +195,6 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param,
 
 				val_range.min = 1;
 				val_range.max = 255;
-
-				if (0 == block_result->update) {
-					ISP_LOGV("do not need update\n");
-					return ISP_SUCCESS;
-				}
-
 				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to check pm smart param !");
@@ -224,14 +208,14 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param,
 				_pm_cmc10_adjust(cmc10_ptr, is_reduce);
 				cmc10_header_ptr->is_update = ISP_ONE;
 			}
+			ISP_LOGV("ISP_SMART: cmd = %d, is_update =%d, reduce_percent=%d",
+				cmd, cmc10_header_ptr->is_update, cmc10_ptr->reduce_percent);
 		}
 		break;
 
 	default:
 		break;
 	}
-
-	ISP_LOGV("ISP_SMART: cmd = %d, is_update =%d, reduce_percent=%d", cmd, cmc10_header_ptr->is_update, cmc10_ptr->reduce_percent);
 
 	return rtn;
 }

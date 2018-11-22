@@ -534,10 +534,9 @@ struct sensor_ynr_blf_str{
 	cmr_u8 range_index;
 	cmr_u8 range_s[4];
 	cmr_u8 dist_weight[3];
-	cmr_u32 wv_blf_enable;
+	cmr_u32 ynr_blf_enable;
 };
 struct sensor_ynr_wv_str {
-	cmr_u32 wv_nr_enable;
 	cmr_u8 wv_thresh1;
 	cmr_u8 wv_thresh2_n;
 	cmr_u8 wv_ratio1;
@@ -550,6 +549,7 @@ struct sensor_ynr_wv_str {
 	cmr_u16 soft_offsetd;
 };
 struct sensor_ynr_den_str {
+	cmr_u32 wv_nr_enable;
 	struct sensor_ynr_wv_str low;
 	struct sensor_ynr_wv_str mid;
 	struct sensor_ynr_wv_str high;
@@ -1160,7 +1160,8 @@ struct sensor_contrast_param {
 
 //Hue Adjustment
 struct sensor_hue_param {
-	cmr_u16 hue_theta[16];
+	cmr_u16 hue_sin[16];
+	cmr_u16 hue_cos[16];
 	cmr_u32 cur_index;
 	cmr_u32 bypass;
 };
@@ -1898,10 +1899,10 @@ struct sensor_nr_set_group_param {
 	cmr_u32 rgb_afm_len;
 	cmr_u8 *uvdiv;
 	cmr_u32 uvdiv_len;
-	cmr_u8 *nr3d_pre;
-	cmr_u32 nr3d_pre_len;
-	cmr_u8 *nr3d_cap;
-	cmr_u32 nr3d_cap_len;
+	cmr_u8 *nr3d;
+	cmr_u32 nr3d_len;
+	cmr_u8 *ppe;
+	cmr_u32 ppe_len;
 	cmr_u8 *yuv_precdn;
 	cmr_u32 yuv_precdn_len;
 	cmr_u8 *cdn;
@@ -1918,7 +1919,12 @@ struct sensor_nr_set_group_param {
 	cmr_u32 yuv_noisefilter_len;
 	cmr_u8 *cnr2;
 	cmr_u32 cnr2_len;
+	cmr_u8 *imblance;
+	cmr_u32 imblance_len;
+	cmr_u8 *ltm;
+	cmr_u32 ltm_len;
 };
+
 struct sensor_nr_param {
 	struct sensor_nr_set_group_param nr_set_group;
 };
@@ -1973,6 +1979,7 @@ struct sensor_raw_info {
 	struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
 	struct sensor_nr_fix_info nr_fix;
 };
+
 struct denoise_param_update {
 	struct sensor_bpc_level *bpc_level_ptr;
 	struct sensor_grgb_level *grgb_level_ptr;
@@ -1987,11 +1994,14 @@ struct denoise_param_update {
 	struct sensor_iircnr_level *iircnr_level_ptr;
 	struct sensor_cce_uvdiv_level *cce_uvdiv_level_ptr;
 	struct sensor_3dnr_level *dnr_level_ptr;
+	struct sensor_ppe_level *ppe_level_ptr;
 	struct sensor_rgb_afm_level *rgb_afm_level_ptr;
 	struct sensor_rgb_dither_level *rgb_dither_level_ptr;
 	struct sensor_ynr_level *ynr_level_ptr;
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_level_ptr;
 	struct sensor_cnr_level *cnr2_level_ptr;
+	struct sensor_nlm_imbalance_level *imbalance_level_ptr;
+	struct sensor_ltm_level *ltm_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;

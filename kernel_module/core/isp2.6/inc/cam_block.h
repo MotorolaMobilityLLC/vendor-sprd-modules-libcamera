@@ -92,6 +92,7 @@ int isp_k_cfg_grgb(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_hist2(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_hsv(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_iircnr(struct isp_io_param *param, uint32_t idx);
+int isp_k_cfg_ltm(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_post_cdn(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_pre_cdn(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_pstrz(struct isp_io_param *param, uint32_t idx);

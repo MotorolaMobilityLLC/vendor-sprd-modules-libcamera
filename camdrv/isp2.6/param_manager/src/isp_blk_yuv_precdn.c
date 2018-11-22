@@ -85,8 +85,8 @@ cmr_s32 _pm_yuv_precdn_init(
 	dst_ptr->param_ptr = src_ptr->param_ptr;
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
-
-	rtn = _pm_yuv_precdn_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	if (!header_ptr->bypass)
+		rtn = _pm_yuv_precdn_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to  convert pm yuv precdn param!");
@@ -119,14 +119,12 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 cur_level = 0;
 
-			val_range.min = 0;
-			val_range.max = 255;
-
-			if (0 == block_result->update) {
+			if (!block_result->update || header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
-
+			val_range.min = 0;
+			val_range.max = 255;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
@@ -135,10 +133,10 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 
 			cur_level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (cur_level != dst_ptr->cur_level || nr_tool_flag[16] || block_result->mode_flag_changed) {
+			if (cur_level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_YUV_PRECDN_T] || block_result->mode_flag_changed) {
 				dst_ptr->cur_level = cur_level;
 				header_ptr->is_update = ISP_ONE;
-				nr_tool_flag[16] = 0;
+				nr_tool_flag[ISP_BLK_YUV_PRECDN_T] = 0;
 
 				rtn = _pm_yuv_precdn_convert_param(dst_ptr,
 						dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
@@ -148,13 +146,13 @@ cmr_s32 _pm_yuv_precdn_set_param(void *pre_cdn_param, cmr_u32 cmd, void *param_p
 					return rtn;
 				}
 			}
+			ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, precdn_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 		}
 		break;
 
 	default:
 		break;
 	}
-	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, precdn_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }
@@ -167,7 +165,7 @@ cmr_s32 _pm_yuv_precdn_get_param(
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_YUV_PRECDN;
+	param_data_ptr->id = ISP_BLK_YUV_PRECDN_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

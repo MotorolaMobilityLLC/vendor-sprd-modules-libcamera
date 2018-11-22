@@ -127,6 +127,7 @@ enum dcam_block {
 	ISP_BLOCK_HIST2,
 	ISP_BLOCK_HSV,
 	ISP_BLOCK_IIRCNR,
+	ISP_BLOCK_LTM,
 	ISP_BLOCK_NLM,
 	ISP_BLOCK_POST_CDN,
 	ISP_BLOCK_PRE_CDN,
@@ -292,6 +293,7 @@ enum isp_3dnr_property {
 };
 
 enum isp_ltm_property {
+	ISP_PRO_LTM_BLOCK,
 	ISP_PRO_LTM_PRE_PARAM,
 	ISP_PRO_LTM_CAP_PARAM,
 };
@@ -850,7 +852,8 @@ struct isp_dev_hsv_info_v2 {
 	uint32_t  bypass;
 	struct isp_dev_hsv_curve_info curve_info;
 	uint32_t size;
-	void __user *hsv_table;
+	/* uint64_t for 32bits/64bits userspace/kernel compatable*/
+	uint64_t hsv_table_addr;
 };
 
 struct isp_dev_iircnr_info {
@@ -887,7 +890,6 @@ struct isp_dev_iircnr_info {
 	uint32_t css_lum_thr;
 	uint32_t uv_diff_thr;
 };
-
 
 struct isp_dev_nlm_imblance {
 	uint32_t nlm_imblance_en;
@@ -981,8 +983,9 @@ struct isp_dev_nlm_info_v2 {
 
 	uint32_t vst_len;
 	uint32_t ivst_len;
-	void __user *vst_table;
-	void __user *ivst_table;
+	/* uint64_t for 32bits/64bits userspace/kernel compatable*/
+	uint64_t vst_table_addr;
+	uint64_t ivst_table_addr;
 };
 
 struct cdn_thruv {
@@ -1256,6 +1259,48 @@ struct isp_dev_noise_filter_info {
 	uint32_t cv_r[3];
 	struct edge_pn_config  noise_clip;
 };
+
+struct isp_ltm_tile_num_minus1 {
+	uint32_t tile_num_x;
+	uint32_t tile_num_y;
+};
+
+struct isp_ltm_tile_size {
+	uint32_t tile_width;
+	uint32_t tile_height;
+};
+
+struct isp_ltm_clip_limit {
+	uint32_t limit;
+	uint32_t limit_min;
+};
+
+struct isp_dev_ltm_stat_info {
+	uint32_t bypass; /* bypass */
+
+	struct isp_ltm_tile_num_minus1 tile_num;
+	struct isp_ltm_tile_size tile_size;
+	struct isp_ltm_clip_limit tile_clip;
+
+	uint32_t strength;
+	uint32_t tile_num_auto;
+
+	uint32_t text_point_thres; /* text_point_thres */
+	uint32_t text_proportion; /* texture_proportion */
+	uint32_t region_est_en; /* region_est_en */
+	uint32_t binning_en;
+};
+
+struct isp_dev_ltm_map_info {
+	uint32_t bypass; /* ltm map bypass */
+	uint32_t ltm_map_video_mode;
+};
+
+struct isp_dev_ltm_info {
+	struct isp_dev_ltm_stat_info ltm_stat;
+	struct isp_dev_ltm_map_info ltm_map;
+};
+
 
 /*********************************************/
 struct isp_rrgb {

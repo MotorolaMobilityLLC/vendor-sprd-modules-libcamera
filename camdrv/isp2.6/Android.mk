@@ -29,7 +29,7 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../kernel_module/interface \
 	$(LOCAL_PATH)/../../common/inc \
-	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
+	$(LOCAL_PATH)/../../oem2v6/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \

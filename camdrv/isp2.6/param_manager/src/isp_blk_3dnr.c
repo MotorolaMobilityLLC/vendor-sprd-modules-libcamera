@@ -36,7 +36,7 @@ cmr_u32 _pm_3dnr_convert_param(
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
-	/* TBD */
+	/* todo: update 3dnr param from tuning struct */
 	if (nr_3d_param != NULL) {
 #if 0
 		cmr_s32 i = 0;
@@ -213,10 +213,10 @@ cmr_s32 _pm_3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, voi
 
 			level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (level != dst_ptr->cur_level || nr_tool_flag[0] || block_result->mode_flag_changed) {
+			if (level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_3DNR_T] || block_result->mode_flag_changed) {
 				dst_ptr->cur_level = level;
 				header_ptr->is_update = ISP_ONE;
-				nr_tool_flag[0] = 0;
+				nr_tool_flag[ISP_BLK_3DNR_T] = 0;
 
 				rtn = _pm_3dnr_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
 				if (ISP_SUCCESS != rtn) {
@@ -242,8 +242,7 @@ cmr_s32 _pm_3dnr_get_param(void *nr_3d_param, cmr_u32 cmd, void *rtn_param0, voi
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	/* TBD */
-	param_data_ptr->id = ISP_BLK_3DNR_CAP;
+	param_data_ptr->id = ISP_BLK_3DNR;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

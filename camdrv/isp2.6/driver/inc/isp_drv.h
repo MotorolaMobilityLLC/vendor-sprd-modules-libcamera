@@ -123,6 +123,7 @@ cmr_s32 dcam_u_awbc_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id);
 cmr_s32 dcam_u_awbc_gain(cmr_handle handle, void *block_info);
 
 cmr_s32 dcam_u_bpc_block(cmr_handle handle, void *block_info);
+cmr_s32 dcam_u_bpc_ppe(cmr_handle handle, void *block_info);
 
 cmr_s32 isp_u_bchs_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_cce_matrix_block(cmr_handle handle, void *block_info);
@@ -135,6 +136,7 @@ cmr_s32 isp_u_hist2_block(void *handle, void *block_info);
 cmr_s32 isp_u_hsv_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_iircnr_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yrandom_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_ltm_block(void *handle, void *block_info);
 cmr_s32 isp_u_nlm_block(void *handle, void *block_info);
 cmr_s32 isp_u_yuv_precdn_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_postcdn_block(cmr_handle handle, void *block_info);
@@ -143,4 +145,5 @@ cmr_s32 isp_u_posterize_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_uvd_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_ygamma_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_ynr_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_noisefilter_block(cmr_handle handle, void *block_info);
 #endif

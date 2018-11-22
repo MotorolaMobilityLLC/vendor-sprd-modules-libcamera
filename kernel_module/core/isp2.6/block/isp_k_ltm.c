@@ -191,3 +191,20 @@ int isp_k_ltm_block(struct isp_io_param *param, uint32_t idx)
 //	isp_ltm_config_hists(idx, &hists);
 	return ret;
 }
+
+int isp_k_cfg_ltm(struct isp_io_param *param, uint32_t idx)
+{
+	int ret = 0;
+
+	switch (param->property) {
+	case ISP_PRO_IIRCNR_BLOCK:
+		ret = isp_k_ltm_block(param, idx);
+		break;
+	default:
+		pr_err("fail to support cmd id = %d\n",
+			param->property);
+		break;
+	}
+
+	return ret;
+}

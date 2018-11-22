@@ -115,8 +115,7 @@ typedef enum {
 	V21CFA,
 	V21RGB_AFM,
 	V21UVDIV,
-	V21PRE3DNR,
-	V21CAP3DNR,
+	V213DNR,
 	V21EDGE,
 	V21PRECDN,
 	V21Y_NR,
@@ -124,6 +123,9 @@ typedef enum {
 	V21POSTCDN,
 	V21IIRCNR,
 	V21NOISEFILTER,
+	V21CNR2,
+	V21LTM,
+	V21IMBLANCE,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -669,20 +671,9 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
 	}
 	switch (data_head->sub_type) {
-	/* todo: update PPI
 	case V21PPI:
-		{
-			static cmr_u32 ppi_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
-			memcpy(((cmr_u8 *) (nr_update_param.pdaf_correction_level_ptr)) + nr_offset_addr + ppi_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ppi_ptr_offset += data_actual_len;
-			else
-				ppi_ptr_offset = 0;
-			nr_tool_flags[8] = 1;
-			break;
-		}*/
+		/* todo: update ppi info here  */
+		break;
 	case V21BAYER_NR:
 		{
 			static cmr_u32 bayer_nr_ptr_offset;
@@ -693,7 +684,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				bayer_nr_ptr_offset += data_actual_len;
 			else
 				bayer_nr_ptr_offset = 0;
-			nr_tool_flags[7] = 1;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
 			break;
 		}
 	case V21VST:
@@ -706,7 +697,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				vst_ptr_offset += data_actual_len;
 			else
 				vst_ptr_offset = 0;
-			nr_tool_flags[7] = 1;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
 			break;
 		}
 	case V21IVST:
@@ -719,7 +710,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				ivst_ptr_offset += data_actual_len;
 			else
 				ivst_ptr_offset = 0;
-			nr_tool_flags[7] = 1;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
 			break;
 		}
 	case V21DITHER:
@@ -732,7 +723,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				rgb_dither_ptr_offset += data_actual_len;
 			else
 				rgb_dither_ptr_offset = 0;
-			nr_tool_flags[10] = 1;
+			nr_tool_flags[ISP_BLK_RGB_DITHER_T] = 1;
 			break;
 		}
 	case V21BPC:
@@ -745,7 +736,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				bpc_ptr_offset += data_actual_len;
 			else
 				bpc_ptr_offset = 0;
-			nr_tool_flags[2] = 1;
+			nr_tool_flags[ISP_BLK_BPC_T] = 1;
 			break;
 		}
 	case V21GRGB:
@@ -758,7 +749,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				grgb_ptr_offset += data_actual_len;
 			else
 				grgb_ptr_offset = 0;
-			nr_tool_flags[5] = 1;
+			nr_tool_flags[ISP_BLK_GRGB_T] = 1;
 			break;
 		}
 	case V21CFA:
@@ -771,7 +762,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				cfae_ptr_offset += data_actual_len;
 			else
 				cfae_ptr_offset = 0;
-			nr_tool_flags[3] = 1;
+			nr_tool_flags[ISP_BLK_CFA_T] = 1;
 			break;
 		}
 	case V21RGB_AFM:
@@ -784,7 +775,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				rgb_afm_ptr_offset += data_actual_len;
 			else
 				rgb_afm_ptr_offset = 0;
-			nr_tool_flags[9] = 1;
+			nr_tool_flags[ISP_BLK_RGB_AFM_T] = 1;
 			break;
 		}
 	case V21UVDIV:
@@ -797,37 +788,22 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				uvdiv_ptr_offset += data_actual_len;
 			else
 				uvdiv_ptr_offset = 0;
-			nr_tool_flags[12] = 1;
+			nr_tool_flags[ISP_BLK_UVDIV_T] = 1;
 			break;
 		}
-	/* todo: update 3DNR
-	case V21PRE3DNR:
+	case V213DNR:
 		{
 			static cmr_u32 dnr_pre_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
-			memcpy(((cmr_u8 *) (nr_update_param.dnr_pre_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				dnr_pre_ptr_offset += data_actual_len;
 			else
 				dnr_pre_ptr_offset = 0;
-			nr_tool_flags[1] = 1;
+			nr_tool_flags[ISP_BLK_3DNR_T] = 1;
 			break;
 		}
-	case V21CAP3DNR:
-		{
-			static cmr_u32 dnr_cap_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
-			memcpy(((cmr_u8 *) (nr_update_param.dnr_cap_level_ptr)) + nr_offset_addr + dnr_cap_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				dnr_cap_ptr_offset += data_actual_len;
-			else
-				dnr_cap_ptr_offset = 0;
-			nr_tool_flags[0] = 1;
-			break;
-		}
-	*/
 	case V21EDGE:
 		{
 			static cmr_u32 edge_ptr_offset;
@@ -838,7 +814,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				edge_ptr_offset += data_actual_len;
 			else
 				edge_ptr_offset = 0;
-			nr_tool_flags[4] = 1;
+			nr_tool_flags[ISP_BLK_EDGE_T] = 1;
 			break;
 		}
 	case V21PRECDN:
@@ -851,7 +827,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				precdn_ptr_offset += data_actual_len;
 			else
 				precdn_ptr_offset = 0;
-			nr_tool_flags[16] = 1;
+			nr_tool_flags[ISP_BLK_YUV_PRECDN_T] = 1;
 			break;
 		}
 	case V21Y_NR:
@@ -864,7 +840,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				ynr_ptr_offset += data_actual_len;
 			else
 				ynr_ptr_offset = 0;
-			nr_tool_flags[14] = 1;
+			nr_tool_flags[ISP_BLK_YNR_T] = 1;
 			break;
 		}
 	case V21CDN:
@@ -877,7 +853,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				cdn_ptr_offset += data_actual_len;
 			else
 				cdn_ptr_offset = 0;
-			nr_tool_flags[11] = 1;
+			nr_tool_flags[ISP_BLK_CDN_T] = 1;
 			break;
 		}
 	case V21POSTCDN:
@@ -890,7 +866,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				postcdn_ptr_offset += data_actual_len;
 			else
 				postcdn_ptr_offset = 0;
-			nr_tool_flags[13] = 1;
+			nr_tool_flags[ISP_BLK_POSTCDN_T] = 1;
 			break;
 		}
 	case V21IIRCNR:
@@ -903,7 +879,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				ynr_ptr_offset += data_actual_len;
 			else
 				ynr_ptr_offset = 0;
-			nr_tool_flags[6] = 1;
+			nr_tool_flags[ISP_BLK_IIRCNR_T] = 1;
 			break;
 		}
 	case V21NOISEFILTER:
@@ -916,7 +892,46 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				yuv_noisefilter_ptr_offset += data_actual_len;
 			else
 				yuv_noisefilter_ptr_offset = 0;
-			nr_tool_flags[15] = 1;
+			nr_tool_flags[ISP_BLK_YUV_NOISEFILTER_T] = 1;
+			break;
+		}
+	case V21CNR2:
+		{
+			static cmr_u32 cnr2_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cnr2_level_ptr)) + nr_offset_addr + cnr2_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cnr2_ptr_offset += data_actual_len;
+			else
+				cnr2_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
+			break;
+		}
+	case V21LTM:
+		{
+			static cmr_u32 ltm_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ltm_level_ptr)) + nr_offset_addr + ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ltm_ptr_offset += data_actual_len;
+			else
+				ltm_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_LTM_T] = 1;
+			break;
+		}
+	case V21IMBLANCE:
+		{
+			static cmr_u32 imblance_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.imbalance_level_ptr)) + nr_offset_addr + imblance_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				imblance_ptr_offset += data_actual_len;
+			else
+				imblance_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_IMBALANCEE_T] = 1;
 			break;
 		}
 	default:
@@ -1038,15 +1053,9 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			}
 			break;
 		}
-	/* todo: update PPI
 	case V21PPI:
-		{
-			data_head_ptr->sub_type = V21PPI;
-			src_size = sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.pdaf_correction_level_ptr + offset_units * src_size;
-			break;
-		}*/
+		/* todo: read ppi info here  */
+		break;
 	case V21BAYER_NR:
 		{
 			data_head_ptr->sub_type = V21BAYER_NR;
@@ -1119,23 +1128,14 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
 			break;
 		}
-	/* todo : update 3DNR
-	case V21PRE3DNR:
+	case V213DNR:
 		{
-			data_head_ptr->sub_type = V21PRE3DNR;
-			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
+			data_head_ptr->sub_type = V213DNR;
+			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_pre_level_ptr + offset_units * src_size;
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_level_ptr + offset_units * src_size;
 			break;
 		}
-	case V21CAP3DNR:
-		{
-			data_head_ptr->sub_type = V21CAP3DNR;
-			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
-			break;
-		} */
 	case V21EDGE:
 		{
 			data_head_ptr->sub_type = V21EDGE;
@@ -1190,6 +1190,30 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CNR2:
+		{
+			data_head_ptr->sub_type = V21CNR2;
+			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21LTM:
+		{
+			data_head_ptr->sub_type = V21LTM;
+			src_size = sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ltm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21IMBLANCE:
+		{
+			data_head_ptr->sub_type = V21IMBLANCE;
+			src_size = sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
 			break;
 		}
 	default:

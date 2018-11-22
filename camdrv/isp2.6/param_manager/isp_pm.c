@@ -70,23 +70,22 @@ static cmr_s32 isp_pm_check_handle(cmr_handle handle)
 static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 {
 	switch (id) {
-	case DCAM_BLK_NLM:
-	case ISP_BLK_RGB_DITHER:
-	case DCAM_BLK_BPC:
-	case ISP_BLK_GRGB:
-	case ISP_BLK_CFA:
-	case DCAM_BLK_RGB_AFM:
-	case ISP_BLK_UVDIV:
-	case DCAM_BLK_3DNR_PRE:
-	case DCAM_BLK_3DNR_CAP:
-	case ISP_BLK_YUV_PRECDN:
-	case ISP_BLK_YNR:
-	case ISP_BLK_EDGE:
-	case ISP_BLK_UV_CDN:
-	case ISP_BLK_UV_POSTCDN:
-	case ISP_BLK_IIRCNR_IIR:
-	case ISP_BLK_YUV_NOISEFILTER:
-	case ISP_BLK_CNR2:
+	case ISP_BLK_NLM_V1:
+	case DCAM_BLK_RGB_DITHER:
+	case DCAM_BLK_BPC_V1:
+	case ISP_BLK_GRGB_V1:
+	case ISP_BLK_CFA_V1:
+	case DCAM_BLK_RGB_AFM_V1:
+	case ISP_BLK_UVDIV_V1:
+	case ISP_BLK_3DNR:
+	case ISP_BLK_YUV_PRECDN_V1:
+	case ISP_BLK_YNR_V1:
+	case ISP_BLK_EE_V1:
+	case ISP_BLK_UV_CDN_V1:
+	case ISP_BLK_UV_POSTCDN_V1:
+	case ISP_BLK_IIRCNR_IIR_V1:
+	case ISP_BLK_YUV_NOISEFILTER_V1:
+	case ISP_BLK_CNR2_V1:
 		return 1;
 	default:
 		break;
@@ -797,17 +796,20 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		case ISP_PM_CMD_GET_INIT_AFT:
 			block_id = ISP_BLK_AFT;
 			break;
+		case ISP_PM_CMD_GET_INIT_PDAF:
+			block_id = ISP_BLK_PDAF_TUNE;
+			break;
 		case ISP_PM_CMD_GET_INIT_DUAL_FLASH:
 			block_id = ISP_BLK_DUAL_FLASH;
 			break;
 		case ISP_PM_CMD_GET_AE_SYNC:
 			block_id = ISP_BLK_AE_SYNC;
 			break;
+		case ISP_PM_CMD_GET_AE_ADAPT_PARAM:
+			block_id = ISP_BLK_AE_ADAPT_PARAM;
+			break;
 		case ISP_PM_CMD_GET_4IN1_PARAM:
 			block_id = ISP_BLK_4IN1_PARAM;
-			break;
-		case ISP_PM_CMD_GET_INIT_PDAF:
-			block_id = ISP_BLK_PDAF_TUNE;
 			break;
 		case ISP_PM_CMD_GET_INIT_TOF:
 			block_id = ISP_BLK_TOF_TUNE;
@@ -1032,7 +1034,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 
 			switch (src_header[j].block_id) {
-			case ISP_BLK_2D_LSC:
+			case DCAM_BLK_2D_LSC:
 			{
 				extend_offset += add_lnc_len;
 				dst_header[j].size = src_header[j].size + add_lnc_len;
@@ -1055,7 +1057,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			{
 				break;
 			}
-			case DCAM_BLK_NLM:
+			case ISP_BLK_NLM_V1:
 			{
 				dst_nlm_data = (struct isp_pm_nr_header_param *)dst_data_ptr;
 				memset((void *)dst_nlm_data, 0x00, sizeof(struct isp_pm_nr_header_param));
@@ -1072,140 +1074,154 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				dst_header[j].size = 3 * sizeof(struct isp_pm_nr_simple_header_param);
 				break;
 			}
-			case ISP_BLK_RGB_DITHER:
+			case DCAM_BLK_RGB_DITHER:
 			{
 				isp_blk_nr_type = ISP_BLK_RGB_DITHER_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_dither);
 				nr_set_size = sizeof(struct sensor_rgb_dither_level);
 				break;
 			}
-			case DCAM_BLK_BPC:
+			case DCAM_BLK_BPC_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_BPC_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.bpc);
 				nr_set_size = sizeof(struct sensor_bpc_level);
 				break;
 			}
-			case ISP_BLK_GRGB:
+			case DCAM_BLK_PPE:
+			{
+				isp_blk_nr_type = ISP_BLK_PPE_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ppe);
+				nr_set_size = sizeof(struct sensor_ppe_level);
+				break;
+			}
+			case ISP_BLK_GRGB_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_GRGB_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.grgb);
 				nr_set_size = sizeof(struct sensor_grgb_level);
 				break;
 			}
-			case ISP_BLK_CFA:
+			case ISP_BLK_CFA_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_CFA_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cfa);
 				nr_set_size = sizeof(struct sensor_cfa_param_level);
 				break;
 			}
-			case DCAM_BLK_RGB_AFM:
+			case DCAM_BLK_RGB_AFM_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_RGB_AFM_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_afm);
 				nr_set_size = sizeof(struct sensor_rgb_afm_level);
 				break;
 			}
-			case ISP_BLK_UVDIV:
+			case ISP_BLK_UVDIV_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_UVDIV_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.uvdiv);
 				nr_set_size = sizeof(struct sensor_cce_uvdiv_level);
 				break;
 			}
-			/* todo: update 3DNR
-			case DCAM_BLK_3DNR_PRE:
+			case ISP_BLK_3DNR:
 			{
-				isp_blk_nr_type = ISP_BLK_3DNR_PRE_T;
-				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d_pre);
+				isp_blk_nr_type = ISP_BLK_3DNR_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d);
 				nr_set_size = sizeof(struct sensor_3dnr_level);
 				break;
 			}
-			case DCAM_BLK_3DNR_CAP:
-			{
-				isp_blk_nr_type = ISP_BLK_3DNR_CAP_T;
-				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d_cap);
-				nr_set_size = sizeof(struct sensor_3dnr_level);
-				break;
-			}*/
-			case ISP_BLK_YUV_PRECDN:
+			case ISP_BLK_YUV_PRECDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YUV_PRECDN_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.yuv_precdn);
 				nr_set_size = sizeof(struct sensor_yuv_precdn_level);
 				break;
 			}
-			case ISP_BLK_YNR:
+			case ISP_BLK_YNR_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YNR_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ynr);
 				nr_set_size = sizeof(struct sensor_ynr_level);
 				break;
 			}
-			case ISP_BLK_EDGE:
+			case ISP_BLK_EE_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_EDGE_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.edge);
 				nr_set_size = sizeof(struct sensor_ee_level);
 				break;
 			}
-			case ISP_BLK_UV_CDN:
+			case ISP_BLK_UV_CDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_CDN_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cdn);
 				nr_set_size = sizeof(struct sensor_uv_cdn_level);
 				break;
 			}
-			case ISP_BLK_UV_POSTCDN:
+			case ISP_BLK_UV_POSTCDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_POSTCDN_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.postcdn);
 				nr_set_size = sizeof(struct sensor_uv_postcdn_level);
 				break;
 			}
-			case ISP_BLK_IIRCNR_IIR:
+			case ISP_BLK_IIRCNR_IIR_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_IIRCNR_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.iircnr);
 				nr_set_size = sizeof(struct sensor_iircnr_level);
 				break;
 			}
-			case ISP_BLK_YUV_NOISEFILTER:
+			case ISP_BLK_YUV_NOISEFILTER_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YUV_NOISEFILTER_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.yuv_noisefilter);
 				nr_set_size = sizeof(struct sensor_yuv_noisefilter_level);
 				break;
 			}
-			case ISP_BLK_CNR2:
+			case ISP_BLK_CNR2_V1:
 			{
-				/* todo: update CNR block
 				isp_blk_nr_type = ISP_BLK_CNR2_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr2);
-				nr_set_size = sizeof(struct sensor_cnr_level); */
+				nr_set_size = sizeof(struct sensor_cnr_level);
+				break;
+			}
+			case ISP_BLK_IMBALANCE:
+			{
+				isp_blk_nr_type = ISP_BLK_IMBALANCEE_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.imblance);
+				nr_set_size = sizeof(struct sensor_nlm_imbalance_level);
+				break;
+			}
+			case ISP_BLK_LTM:
+			{
+				isp_blk_nr_type = ISP_BLK_LTM_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ltm);
+				nr_set_size = sizeof(struct sensor_ltm_level);
 				break;
 			}
 			default:
 				break;
 			}
 
-			if (src_header[j].block_id == ISP_BLK_RGB_DITHER
-				|| src_header[j].block_id == DCAM_BLK_BPC
-				|| src_header[j].block_id == ISP_BLK_GRGB
-				|| src_header[j].block_id == ISP_BLK_CFA
-				|| src_header[j].block_id == DCAM_BLK_RGB_AFM
-				|| src_header[j].block_id == ISP_BLK_UVDIV
-				|| src_header[j].block_id == DCAM_BLK_3DNR_PRE
-				|| src_header[j].block_id == DCAM_BLK_3DNR_CAP
-				|| src_header[j].block_id == ISP_BLK_YUV_PRECDN
-				|| src_header[j].block_id == ISP_BLK_YNR
-				|| src_header[j].block_id == ISP_BLK_EDGE
-				|| src_header[j].block_id == ISP_BLK_UV_CDN
-				|| src_header[j].block_id == ISP_BLK_UV_POSTCDN
-				|| src_header[j].block_id == ISP_BLK_IIRCNR_IIR
-				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER
-				|| src_header[j].block_id == ISP_BLK_CNR2) {
+			if (src_header[j].block_id == DCAM_BLK_RGB_DITHER
+				|| src_header[j].block_id == DCAM_BLK_BPC_V1
+				|| src_header[j].block_id == DCAM_BLK_PPE
+				|| src_header[j].block_id == DCAM_BLK_RGB_AFM_V1
+				|| src_header[j].block_id == ISP_BLK_GRGB_V1
+				|| src_header[j].block_id == ISP_BLK_CFA_V1
+				|| src_header[j].block_id == ISP_BLK_UVDIV_V1
+				|| src_header[j].block_id == ISP_BLK_3DNR
+				|| src_header[j].block_id == ISP_BLK_YUV_PRECDN_V1
+				|| src_header[j].block_id == ISP_BLK_YNR_V1
+				|| src_header[j].block_id == ISP_BLK_EE_V1
+				|| src_header[j].block_id == ISP_BLK_UV_CDN_V1
+				|| src_header[j].block_id == ISP_BLK_UV_POSTCDN_V1
+				|| src_header[j].block_id == ISP_BLK_IIRCNR_IIR_V1
+				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER_V1
+				|| src_header[j].block_id == ISP_BLK_IMBALANCE
+				|| src_header[j].block_id == ISP_BLK_LTM
+				|| src_header[j].block_id == ISP_BLK_CNR2_V1) {
 
 				dst_blk_data = (struct isp_pm_nr_simple_header_param *)dst_data_ptr;
 				memset((void *)dst_blk_data, 0x00, sizeof(struct isp_pm_nr_simple_header_param));

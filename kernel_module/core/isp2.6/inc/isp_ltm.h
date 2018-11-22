@@ -22,52 +22,6 @@ extern "C" {
 #include "dcam_interface.h"
 #include "isp_interface.h"
 
-/*
- * tuning struct, will be move to isp_r8p1.h
- */
-struct isp_ltm_tile_num_minus1 {
-	uint32_t tile_num_x;
-	uint32_t tile_num_y;
-};
-
-struct isp_ltm_tile_size {
-	uint32_t tile_width;
-	uint32_t tile_height;
-};
-
-struct isp_ltm_clip_limit {
-	uint32_t limit;
-	uint32_t limit_min;
-};
-
-struct isp_dev_ltm_stat_info {
-	uint32_t bypass; /* bypass */
-
-	struct isp_ltm_tile_num_minus1 tile_num;
-	struct isp_ltm_tile_size tile_size;
-	struct isp_ltm_clip_limit tile_clip;
-
-	uint32_t strength;
-	uint32_t tile_num_auto;
-
-	uint32_t text_point_thres; /* text_point_thres */
-	uint32_t text_proportion; /* texture_proportion */
-	uint32_t region_est_en; /* region_est_en */
-	uint32_t binning_en;
-};
-
-struct isp_dev_ltm_map_info {
-	uint32_t bypass; /* ltm map bypass */
-	uint32_t ltm_map_video_mode;
-};
-
-struct isp_dev_ltm_info {
-	struct isp_dev_ltm_stat_info ltm_stat;
-	struct isp_dev_ltm_map_info ltm_map;
-};
-/*
- * tuning struct end
- */
 
 typedef struct isp_ltm_hist_param
 {

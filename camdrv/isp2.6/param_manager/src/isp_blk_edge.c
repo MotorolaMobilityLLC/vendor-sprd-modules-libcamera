@@ -22,6 +22,7 @@ static cmr_u32 _pm_edge_convert_param(
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
+	cmr_u32 i, j;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
 
@@ -39,8 +40,7 @@ static cmr_u32 _pm_edge_convert_param(
 
 	if (edge_param != NULL) {
 		dst_ptr->cur.bypass = edge_param[strength_level].bypass;
-		/* todo: update new edge param. */
-#if 0
+
 		dst_ptr->cur.flat_smooth_mode = edge_param[strength_level].flat_smooth_mode;
 		dst_ptr->cur.edge_smooth_mode = edge_param[strength_level].edge_smooth_mode;
 		dst_ptr->cur.mode = edge_param[strength_level].ee_mode;
@@ -62,7 +62,7 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_corner_th.n = edge_param[strength_level].ee_corner.ee_corner_th.negative;
 		dst_ptr->cur.ee_corner_cor = edge_param[strength_level].ee_corner.ee_corner_cor;
 
-		dst_ptr->cur.ipd_bypass = edge_param[strength_level].ee_ipd.ipd_bypass;
+		dst_ptr->cur.ipd_enable= !edge_param[strength_level].ee_ipd.ipd_bypass;
 		dst_ptr->cur.ipd_mask_mode = edge_param[strength_level].ee_ipd.ipd_mask_mode;
 		dst_ptr->cur.ipd_less_thr.p = edge_param[strength_level].ee_ipd.ipd_less_thr.positive;
 		dst_ptr->cur.ipd_less_thr.n = edge_param[strength_level].ee_ipd.ipd_less_thr.negative;
@@ -163,7 +163,34 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_neg_c[0] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c1_cfg;
 		dst_ptr->cur.ee_neg_c[1] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c2_cfg;
 		dst_ptr->cur.ee_neg_c[2] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c3_cfg;
-#endif
+
+		/* (from sharkl5) newly added bellow */
+		dst_ptr->cur.ee_new_pyramid_en = edge_param[strength_level].ee_offset_layer.ee_new_pyramid_en;
+		dst_ptr->cur.ee_old_gradient_en = edge_param[strength_level].ee_offset_layer.ee_old_gradient_en;
+		dst_ptr->cur.ee_ratio_old_gradient = edge_param[strength_level].ee_offset_layer.ee_ratio_old_gradient;
+		dst_ptr->cur.ee_ratio_new_pyramid = edge_param[strength_level].ee_offset_layer.ee_ratio_new_pyramid;
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 4; j++) {
+				dst_ptr->cur.ee_offset_thr_layer_curve_pos[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].thr_layer_cv_pos[j];
+				dst_ptr->cur.ee_offset_thr_layer_curve_neg[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].thr_layer_cv_neg[j];
+			}
+			for (j = 0; j < 3; j++) {
+				dst_ptr->cur.ee_offset_ratio_layer_curve_pos[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_cv_pos[j];
+				dst_ptr->cur.ee_offset_clip_layer_curve_pos[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].clip_layer_cv_pos[j];
+				dst_ptr->cur.ee_offset_ratio_layer_curve_neg[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_cv_neg[j];
+				dst_ptr->cur.ee_offset_clip_layer_curve_neg[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].clip_layer_cv_neg[j];
+				dst_ptr->cur.ee_offset_ratio_layer_lum_curve[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_lum_cv[j];
+				dst_ptr->cur.ee_offset_ratio_layer_freq_curve[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_freq_cv[j];
+			}
+		}
 	}
 	return rtn;
 }
@@ -183,8 +210,8 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	dst_ptr->level_num = src_ptr->level_number;
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
-
-	rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	if (!header_ptr->bypass)
+		rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm edge param !");
@@ -219,14 +246,12 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 level = 0;
 
-			val_range.min = 0;
-			val_range.max = 255;
-
-			if (0 == block_result->update) {
+			if (!block_result->update || header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
-
+			val_range.min = 0;
+			val_range.max = 255;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
@@ -235,10 +260,10 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 
 			level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (level != dst_ptr->cur_level || nr_tool_flag[4] || block_result->mode_flag_changed) {
+			if (level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_EDGE_T] || block_result->mode_flag_changed) {
 				dst_ptr->cur_level = level;
 				header_ptr->is_update = ISP_ONE;
-				nr_tool_flag[4] = 0;
+				nr_tool_flag[ISP_BLK_EDGE_T] = 0;
 
 				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
@@ -247,15 +272,14 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 					return rtn;
 				}
 			}
+			ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ee_level=%d",
+				cmd, header_ptr->is_update, dst_ptr->cur_level);
 		}
 		break;
 
 	default:
 		break;
 	}
-
-	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ee_level=%d",
-				cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }
@@ -268,7 +292,7 @@ cmr_s32 _pm_edge_get_param(void *edge_param,
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_EDGE;
+	param_data_ptr->id = ISP_BLK_EE_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

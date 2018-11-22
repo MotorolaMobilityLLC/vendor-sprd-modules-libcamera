@@ -150,14 +150,12 @@ cmr_s32 _pm_frgb_gamc_set_param(
 			struct isp_range val_range = { 0, 0 };
 			cmr_s32 i;
 
-			val_range.min = 0;
-			val_range.max = SENSOR_GAMMA_NUM - 1;
-
-			if (0 == block_result->update) {
+			if (!block_result->update || gamc_header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
-
+			val_range.min = 0;
+			val_range.max = SENSOR_GAMMA_NUM - 1;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
@@ -237,14 +235,14 @@ cmr_s32 _pm_frgb_gamc_set_param(
 					}
 				}
 			}
+			ISP_LOGV("cmd=%d, update=%d, value=(%d, %d), weight=(%d, %d)\n", cmd, gamc_header_ptr->is_update,
+				gamc_ptr->cur_idx.x0, gamc_ptr->cur_idx.x1, gamc_ptr->cur_idx.weight0, gamc_ptr->cur_idx.weight1);
 		}
 		break;
 
 	default:
 		break;
 	}
-	ISP_LOGV("cmd=%d, update=%d, value=(%d, %d), weight=(%d, %d)\n", cmd, gamc_header_ptr->is_update,
-		 gamc_ptr->cur_idx.x0, gamc_ptr->cur_idx.x1, gamc_ptr->cur_idx.weight0, gamc_ptr->cur_idx.weight1);
 
 	return rtn;
 }

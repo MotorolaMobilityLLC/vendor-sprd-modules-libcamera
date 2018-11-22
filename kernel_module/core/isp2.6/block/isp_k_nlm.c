@@ -35,29 +35,38 @@ static int load_vst_ivst_buf(
 	uint32_t buf_len;
 	uint32_t buf_sel;
 	unsigned long reg_addr;
+	unsigned long utab_addr;
+	void __user *vst_table;
+	void __user *ivst_table;
 
 	buf_sel = 0;
 	ISP_REG_MWR(idx, ISP_VST_PARA, BIT_1, buf_sel << 1);
 	ISP_REG_MWR(idx, ISP_IVST_PARA, BIT_1, buf_sel << 1);
 
-	if (nlm_info->vst_bypass == 0) {
+	if (nlm_info->vst_bypass == 0 && nlm_info->vst_table_addr) {
 		buf_len = ISP_VST_IVST_NUM * 4;
 		if (nlm_info->vst_len < (ISP_VST_IVST_NUM * 4))
 			buf_len = nlm_info->vst_len;
 
+		utab_addr = (unsigned long)nlm_info->vst_table_addr;
+		pr_debug("vst table addr 0x%lx\n", utab_addr);
+
+		vst_table = (void __user *)utab_addr;
 		reg_addr = ISP_BASE_ADDR(idx) + ISP_VST_BUF0_ADDR;
-		ret = copy_from_user((void *)reg_addr,
-				nlm_info->vst_table, buf_len);
+		ret = copy_from_user((void *)reg_addr, vst_table, buf_len);
 	}
 
-	if (nlm_info->ivst_bypass == 0) {
+	if (nlm_info->ivst_bypass == 0 && nlm_info->ivst_table_addr) {
 		buf_len = ISP_VST_IVST_NUM * 4;
 		if (nlm_info->ivst_len < (ISP_VST_IVST_NUM * 4))
 			buf_len = nlm_info->ivst_len;
 
+		utab_addr = (unsigned long)nlm_info->ivst_table_addr;
+		pr_debug("ivst table addr 0x%lx\n", utab_addr);
+
+		ivst_table = (void __user *)utab_addr;
 		reg_addr = ISP_BASE_ADDR(idx) + ISP_IVST_BUF0_ADDR;
-		ret = copy_from_user((void *)reg_addr,
-				nlm_info->ivst_table, buf_len);
+		ret = copy_from_user((void *)reg_addr, ivst_table, buf_len);
 	}
 
 	return ret;
@@ -185,8 +194,6 @@ static int isp_k_nlm_block(struct isp_io_param *param,
 		pclip = p->nlm_first_lum_direction_addback_noise_clip[i];
 		pratio = p->nlm_radial_1D_radius_threshold_filter_ratio[i];
 		for (j = 0; j < 4; j++) {
-
-
 			val = (p->nlm_radial_1D_protect_gain_min[i][j] &
 				0x1FFF) | ((p->nlm_radial_1D_coef2[i][j] &
 				0x3FFF) << 16);

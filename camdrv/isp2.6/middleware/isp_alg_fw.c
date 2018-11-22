@@ -894,7 +894,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_GET_LSCTAB,
-			ISP_BLK_2D_LSC, NULL, 0);
+			DCAM_BLK_2D_LSC, NULL, 0);
 	ret = isp_pm_ioctl(pm_handle,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&io_pm_input, (void *)&io_pm_output);
@@ -910,7 +910,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_INFO,
-			ISP_BLK_2D_LSC, PNULL, 0);
+			DCAM_BLK_2D_LSC, PNULL, 0);
 	ret = isp_pm_ioctl(pm_handle,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&io_pm_input, (void *)&io_pm_output);
@@ -1024,7 +1024,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 			BLOCK_PARAM_CFG(io_pm_input, pm_param,
 				ISP_PM_BLK_LSC_MEM_ADDR,
-				ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
+				DCAM_BLK_2D_LSC, update_info.lsc_buffer_addr,
 				lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		}
@@ -1595,7 +1595,7 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 
 		BLOCK_PARAM_CFG(pm_input, pm_data,
 				ISP_PM_BLK_LSC_MEM_ADDR,
-				ISP_BLK_2D_LSC, awb_output->lsc,
+				DCAM_BLK_2D_LSC, awb_output->lsc,
 				awb_output->lsc_size);
 		ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_SET_OTHERS, &pm_input, &pm_output);
@@ -2895,8 +2895,6 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
 	struct af_log_info aft_param = {NULL, 0};
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	/* todo: delete comment later. temp force enable af module.  */
@@ -2934,10 +2932,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 
 		//get pdaf tuning parameters
 		memset((void *)&output, 0, sizeof(output));
-		memset(&param_data, 0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_PDAF_TUNE, NULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
-		if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data){
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_PDAF, NULL, &output);
+		if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data) {
 			af_input.pdaftuning_data = output.param_data[0].data_ptr;
 			af_input.pdaftuning_data_len = output.param_data[0].data_size;
 		}
@@ -3434,6 +3430,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_work_param ae_param;
 	enum ae_work_mode ae_mode = 0;
+	struct isp_pm_ioctl_output output = { NULL, 0 };
 
 	memset(&ae_param, 0, sizeof(ae_param));
 
@@ -3489,6 +3486,15 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.win_size.h = ((ae_param.resolution_info.frame_size.h / ae_param.win_num.h) / 2) * 2;
 	ae_param.shift = 0; /* no shift in AEM block of sharkl5/roc1*/
 	cxt->ae_cxt.shift = ae_param.shift;
+
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_ADAPT_PARAM, NULL, &output);
+	if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data) {
+		struct isp_ae_adapt_info *data;
+
+		data = output.param_data[0].data_ptr;
+		ae_param.binning_factor = data->binning_factor;
+		ISP_LOGD("binning_factor = %d\n", ae_param.binning_factor);
+	}
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
@@ -3641,7 +3647,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 
 	BLOCK_PARAM_CFG(input, pm_param,
 			ISP_PM_BLK_LSC_MEM_ADDR,
-			ISP_BLK_2D_LSC,
+			DCAM_BLK_2D_LSC,
 			lsc_result_address_new, lsc_result_size);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_SET_OTHERS,

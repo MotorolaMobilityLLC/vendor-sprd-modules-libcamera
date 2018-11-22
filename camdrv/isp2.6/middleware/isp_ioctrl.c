@@ -594,7 +594,7 @@ static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_BRIGHT, ISP_BLK_BRIGHT, &cfg, sizeof(cfg));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_BRIGHT, ISP_BLK_BCHS, &cfg, sizeof(cfg));
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
@@ -612,7 +612,7 @@ static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CONTRAST, ISP_BLK_CONTRAST, &cfg, sizeof(cfg));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CONTRAST, ISP_BLK_BCHS, &cfg, sizeof(cfg));
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
@@ -630,7 +630,7 @@ static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SATURATION, ISP_BLK_SATURATION, &cfg, sizeof(cfg));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SATURATION, ISP_BLK_BCHS, &cfg, sizeof(cfg));
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
@@ -648,7 +648,7 @@ static cmr_int ispctl_sharpness(cmr_handle isp_alg_handle, void *param_ptr)
 
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_EDGE_STRENGTH, ISP_BLK_EDGE, &cfg, sizeof(cfg));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_EDGE_STRENGTH, ISP_BLK_EE_V1, &cfg, sizeof(cfg));
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
@@ -1943,57 +1943,61 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
 
 		switch (header->block_id) {
-		case DCAM_BLK_BPC:
+		case DCAM_BLK_BPC_V1:
 			update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;
 			break;
-		case ISP_BLK_GRGB:
+		case ISP_BLK_GRGB_V1:
 			update_param->grgb_level_ptr = (struct sensor_grgb_level *)fix_data_ptr->nr.nr_set_group.grgb;
 			break;
-		case DCAM_BLK_NLM:
+		case ISP_BLK_NLM_V1:
 			update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;
 			update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;
 			update_param->ivst_level_ptr = (struct sensor_ivst_level *)fix_data_ptr->nr.nr_set_group.ivst;
 			break;
-		case ISP_BLK_RGB_DITHER:
+		case DCAM_BLK_RGB_DITHER:
 			update_param->rgb_dither_level_ptr = (struct sensor_rgb_dither_level *)fix_data_ptr->nr.nr_set_group.rgb_dither;
 			break;
-		case ISP_BLK_CFA:
+		case ISP_BLK_CFA_V1:
 			update_param->cfae_level_ptr = (struct sensor_cfai_level *)fix_data_ptr->nr.nr_set_group.cfa;
 			break;
-		case DCAM_BLK_RGB_AFM:
+		case DCAM_BLK_RGB_AFM_V1:
 			update_param->rgb_afm_level_ptr = (struct sensor_rgb_afm_level *)fix_data_ptr->nr.nr_set_group.rgb_afm;
 			break;
-		case ISP_BLK_UVDIV:
+		case ISP_BLK_UVDIV_V1:
 			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.uvdiv;
 			break;
-		/* todo: update 3DNR 
-		case DCAM_BLK_3DNR_PRE:
-			update_param->dnr_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_pre;
+		case ISP_BLK_3DNR:
+			update_param->dnr_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d;
 			break;
-		*/
-		case ISP_BLK_EDGE:
+		case ISP_BLK_EE_V1:
 			update_param->ee_level_ptr = (struct sensor_ee_level *)fix_data_ptr->nr.nr_set_group.edge;
 			break;
-		case ISP_BLK_YUV_PRECDN:
+		case ISP_BLK_YUV_PRECDN_V1:
 			update_param->yuv_precdn_level_ptr = (struct sensor_yuv_precdn_level *)fix_data_ptr->nr.nr_set_group.yuv_precdn;
 			break;
-		case ISP_BLK_YNR:
+		case ISP_BLK_YNR_V1:
 			update_param->ynr_level_ptr = (struct sensor_ynr_level *)fix_data_ptr->nr.nr_set_group.ynr;
 			break;
-		case ISP_BLK_UV_CDN:
+		case ISP_BLK_UV_CDN_V1:
 			update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)fix_data_ptr->nr.nr_set_group.cdn;
 			break;
-		case ISP_BLK_UV_POSTCDN:
+		case ISP_BLK_UV_POSTCDN_V1:
 			update_param->uv_postcdn_level_ptr = (struct sensor_uv_postcdn_level *)fix_data_ptr->nr.nr_set_group.postcdn;
 			break;
-		case ISP_BLK_IIRCNR_IIR:
+		case ISP_BLK_IIRCNR_IIR_V1:
 			update_param->iircnr_level_ptr = (struct sensor_iircnr_level *)fix_data_ptr->nr.nr_set_group.iircnr;
 			break;
-		case ISP_BLK_YUV_NOISEFILTER:
+		case ISP_BLK_YUV_NOISEFILTER_V1:
 			update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
 			break;
-		case ISP_BLK_CNR2:
-			//update_param->cnr2_level_ptr = (struct sensor_cnr_level *)fix_data_ptr->nr.nr_set_group.cnr2;
+		case ISP_BLK_IMBALANCE:
+			update_param->imbalance_level_ptr = (struct sensor_nlm_imbalance_level *)fix_data_ptr->nr.nr_set_group.imblance;
+			break;
+		case ISP_BLK_LTM:
+			update_param->ltm_level_ptr = (struct sensor_ltm_level *)fix_data_ptr->nr.nr_set_group.ltm;
+			break;
+		case ISP_BLK_CNR2_V1:
+			update_param->cnr2_level_ptr = (struct sensor_cnr_level *)fix_data_ptr->nr.nr_set_group.cnr2;
 			break;
 		default:
 			break;

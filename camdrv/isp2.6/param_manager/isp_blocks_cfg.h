@@ -132,6 +132,15 @@ struct isp_bpc_param {
 	cmr_u32 nr_mode_setting;
 };
 
+struct isp_ppe_param {
+	struct dcam_bpc_ppi_info cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_rgb_afm_param {
 	struct dcam_dev_afm_info cur;
 	cmr_u32 cur_level;
@@ -152,8 +161,12 @@ struct isp_nr3d_param {
 };
 
 struct isp_ltm_param {
-	/* TBD */
+	struct isp_dev_ltm_info cur;
 	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_bright_cfg {
@@ -168,9 +181,38 @@ struct isp_saturation_cfg {
 	cmr_u32 factor;
 };
 
+
+struct isp_bright_param {
+	cmr_u32 cur_index;
+	cmr_u8 bright_tab[16];
+	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
+};
+
+struct isp_contrast_param {
+	cmr_u32 cur_index;
+	cmr_u8 tab[16];
+	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
+};
+
+struct isp_hue_param {
+	cmr_u32 cur_idx;
+	cmr_s16 tab_sin[16];
+	cmr_s16 tab_cos[16];
+};
+
+struct isp_chrom_saturation_param {
+	cmr_u32 cur_u_idx;
+	cmr_u32 cur_v_idx;
+	cmr_u8 tab[2][SENSOR_LEVEL_NUM];
+	cmr_u8 scene_mode_tab[2][MAX_SCENEMODE_NUM];
+};
+
 struct isp_bchs_param {
 	struct isp_dev_bchs_info cur;
-	/* TBD */
+	struct isp_bright_param brigntness;
+	struct isp_contrast_param contrast;
+	struct isp_hue_param hue;
+	struct isp_chrom_saturation_param saturation;
 };
 
 struct isp_cce_param {
@@ -241,7 +283,10 @@ struct isp_hist2_param {
 struct isp_hsv_param {
 	struct isp_dev_hsv_info_v2 cur;
 	struct isp_sample_point_info cur_idx;
-	/* TBD */
+	struct isp_data_info final_map;
+	struct isp_data_info map[SENSOR_HSV_NUM];
+	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+	cmr_u32 *ct_result[2];
 };
 
 struct isp_iircnr_iir_param {
@@ -268,12 +313,19 @@ struct isp_nlm_param {
 	cmr_uint *ivst_ptr;
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
-	/* TDB */
+};
+
+struct isp_imblance_param {
+	struct isp_dev_nlm_imblance cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
 };
 
 struct isp_posterize_param {
 	struct isp_dev_posterize_info_v2 cur;
-	/* TBD */
 };
 
 struct isp_yuv_precdn_param {
@@ -303,19 +355,17 @@ struct isp_uv_postcdn_param {
 	cmr_u32 nr_mode_setting;
 };
 
-struct isp_cce_uvdiv_param {
+struct isp_uvdiv_param {
 	struct isp_dev_uvd_info_v2 cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
-	/* TBD */
 };
 
 struct isp_ynr_param {
 	struct isp_dev_ynr_info_v2 cur;
-	/* TBD */
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -341,11 +391,36 @@ struct isp_yuv_ygamma_param {
 	struct sensor_gamma_curve specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
 
+struct isp_cnr2_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+
+struct isp_filter_weights
+{
+	cmr_u8 distWeight[9];
+	cmr_u8 rangWeight[128];
+};
+
+struct isp_cnr2_info {
+	cmr_u8 filter_en[CNR_LEVEL];
+	cmr_u8 rangTh[CNR_LEVEL][2];
+	struct isp_filter_weights weight[CNR_LEVEL][2];
+};
+
+struct isp_cnr2_param {
+	struct isp_cnr2_info cur;
+	struct isp_cnr2_level_info level_info;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
-
-	struct isp_smart_param smart;
 
 	/* 3A owner: */
 	struct isp_rgb_aem_param aem;
@@ -353,18 +428,18 @@ struct isp_context {
 	struct isp_awb_param awb;
 	struct isp_bayerhist_param bayerhist;
 
-	/* related tuning blocks */
+	/* dcam related tuning blocks */
 	struct isp_blc_param blc;
 	struct isp_rgb_gain_param rgb_gain;
 	struct isp_rgb_dither_param rgb_dither;
 	struct isp_2d_lsc_param lsc_2d;
 	struct isp_bpc_param bpc;
+	struct isp_ppe_param ppe;
 	/* dcam blocks end. */
 
 	/* isp blocks below */
 	struct isp_nr3d_param nr3d;
 	struct isp_bchs_param bchs;
-	struct isp_ltm_param ltm;
 	struct isp_cce_param cce;
 	struct isp_cfa_param cfa;
 	struct isp_cmc10_param cmc10;
@@ -375,15 +450,20 @@ struct isp_context {
 	struct isp_hsv_param hsv;
 	struct isp_iircnr_iir_param iircnr;
 	struct isp_iircnr_yrandom_param yrandom;
+	struct isp_ltm_param ltm;
 	struct isp_nlm_param nlm;
+	struct isp_imblance_param imblance;
 	struct isp_posterize_param posterize;
 	struct isp_yuv_precdn_param pre_cdn;
 	struct isp_uv_cdn_param cdn;
 	struct isp_uv_postcdn_param post_cdn;
-	struct isp_cce_uvdiv_param uvd;
+	struct isp_uvdiv_param uvd;
 	struct isp_ynr_param ynr;
 	struct isp_dev_noise_filter_param noisefilter;
 	struct isp_yuv_ygamma_param ygamma;
+
+	/* soft algo block */
+	struct isp_cnr2_param cnr2;
 };
 
 /*******************************isp_block_com******************************/
@@ -439,6 +519,10 @@ cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, voi
 cmr_s32 _pm_bpc_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_bpc_get_param(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+cmr_s32 _pm_ppe_init(void *dst_ppe_param, void *src_ppe_param, void *param1, void *param2);
+cmr_s32 _pm_ppe_set_param(void *ppe_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ppe_get_param(void *ppe_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
 cmr_s32 _pm_rgb_afm_init(void *dst_afm_param, void *src_afm_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_rgb_afm_set_param(void *afm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_rgb_afm_get_param(void *afm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -447,6 +531,10 @@ cmr_s32 _pm_rgb_afm_get_param(void *afm_param, cmr_u32 cmd, void *rtn_param0, vo
 
 
 /* ISP blocks start..... */
+
+cmr_s32 _pm_bchs_init(void *dst_bchs_param, void *src_bchs_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_bchs_get_param(void *bchs_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_3dnr_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -479,12 +567,12 @@ cmr_s32 _pm_grgb_get_param(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void
 cmr_s32 _pm_hist2_init(void *dst_hist2_param, void *src_hist2_param, void *param1, void *param2);
 cmr_s32 _pm_hist2_set_param(void *hist2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_hist2_get_param(void *hist2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-/*
+
 cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, void *param2);
 cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_hsv_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_hsv_deinit(void *hsv_param);
-*/
+
 cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_iircnr_iir_get_param(void *iircnr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -492,11 +580,19 @@ cmr_s32 _pm_iircnr_iir_get_param(void *iircnr_param, cmr_u32 cmd, void *rtn_para
 cmr_s32 _pm_iircnr_yrandom_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_iircnr_yrandom_set_param(void *iircnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_iircnr_yrandom_get_param(void *iircnr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-/*
+
+cmr_s32 _pm_ltm_init(void *dst_ltm_param, void *src_ltm_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_ltm_set_param(void *ltm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ltm_get_param(void *ltm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
 cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_nlm_deinit(void *nlm_param);
+
+cmr_s32 _pm_imblance_init(void *dst_imblance_param, void *src_imblance_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_imblance_set_param(void *imblance_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_imblance_get_param(void *imblance_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_posterize_set_param(void *pstrz_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -509,7 +605,7 @@ cmr_s32 _pm_yuv_ygamma_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0
 cmr_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_ynr_set_param(void *ynr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_ynr_get_param(void *ynr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-*/
+
 cmr_s32 _pm_yuv_precdn_init(void *dst_precdn_param, void *src_precdn_param, void *param1, void *param2);
 cmr_s32 _pm_yuv_precdn_set_param(void *precdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_yuv_precdn_get_param(void *precdn_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -521,21 +617,22 @@ cmr_s32 _pm_uv_cdn_get_param(void *cdn_param, cmr_u32 cmd, void *rtn_param0, voi
 cmr_s32 _pm_uv_postcdn_init(void *dst_postcdn_param, void *src_postcdn_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_uv_postcdn_set_param(void *postcdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_uv_postcdn_get_param(void *postcdn_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-/*
-cmr_s32 _pm_yuv_noisefilter_init(void *dst_ynr_param, void *src_ynr_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_yuv_noisefilter_set_param(void *ynr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_yuv_noisefilter_get_param(void *ynr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_yuv_noisefilter_init(void *dst_yuv_noisefilter_param, void *src_yuv_noisefilter_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_yuv_noisefilter_get_param(void *yuv_noisefilter_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_uv_div_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-*/
+
 /* ISP blocks end..... */
 
-cmr_s32 _pm_smart_init(void *dst_smart_param, void *src_smart_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_smart_set_param(void *smart_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_smart_get_param(void *smart_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+/* soft algo blocks */
+cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
+cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 
 struct isp_block_operations {

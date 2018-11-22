@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "dcam_u_bpc"
+#define LOG_TAG "isp_u_ltm"
+
 #include "isp_drv.h"
 
-cmr_s32 dcam_u_bpc_block(cmr_handle handle, void *block_info)
+cmr_s32 isp_u_ltm_block(cmr_handle handle, void *block_info)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
@@ -31,31 +32,8 @@ cmr_s32 dcam_u_bpc_block(cmr_handle handle, void *block_info)
 
 	file = (struct isp_file *)(handle);
 	param.scene_id = block_param->scene_id;
-	param.sub_block = DCAM_BLOCK_BPC;
-	param.property = DCAM_PRO_BPC_BLOCK;
-	param.property_param = block_param->block_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 dcam_u_bpc_ppe(cmr_handle handle, void *block_info)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-	struct isp_u_blocks_info *block_param = (struct isp_u_blocks_info *)block_info;
-
-	if (!handle || !block_info) {
-		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.scene_id = block_param->scene_id;
-	param.sub_block = DCAM_BLOCK_BPC;
-	param.property = DCAM_PRO_BPC_PPE_PARAM;
+	param.sub_block = ISP_BLOCK_LTM;
+	param.property = ISP_PRO_LTM_BLOCK;
 	param.property_param = block_param->block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
