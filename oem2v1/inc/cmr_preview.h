@@ -176,7 +176,6 @@ struct preview_param {
     cmr_uint prev_rot;
     cmr_uint is_fd_on;
     cmr_uint is_support_fd;
-    cmr_uint ai_scene_enable;
     struct img_size preview_size;
     struct img_size video_size;
     /*snapshot param*/
