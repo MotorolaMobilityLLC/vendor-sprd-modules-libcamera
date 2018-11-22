@@ -10,6 +10,7 @@ ifeq ($(CSI_VER),r2p1)
 SRC := compat_sensor_drv.c
 SRC += csi2/csi_sprd/receiver_r2p1/csi_api.c
 SRC += csi2/csi_sprd/receiver_r2p1/csi_driver.c
+SRC += csi2/csi_sprd/receiver_r2p1/dphy_drv.c
 
 sprd_sensor-objs += $(SRC:%.c=%.o)
 

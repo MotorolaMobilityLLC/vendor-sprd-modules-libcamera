@@ -19,13 +19,10 @@
 
 #define CSI_MAX_COUNT				3
 
-
-#define CSI_BASE(idx) (s_csi_regbase[idx])
-
 enum csi_phy_t {
-	PHY_2P2 = 0,
-	PHY_4LANE,
+	PHY_4LANE = 0,
 	PHY_2LANE,
+	PHY_2P2,
 	PHY_2P2_M,
 	PHY_2P2_S,
 	PHY_MAX,
@@ -36,6 +33,28 @@ enum csi_controller_t {
 	CSI_RX1,
 	CSI_RX2,
 	CSI_RX_MAX,
+};
+
+struct bayer_value {
+	unsigned int r;
+	unsigned int g;
+	unsigned int b;
+};
+
+struct csi_ipg_info {
+	unsigned int bayer_mode;
+	unsigned int frame_blank_size;
+	unsigned int line_blank_size;
+	unsigned int image_height;
+	unsigned int image_width;
+	unsigned int block_size;
+	unsigned int color_bar_mode;
+	unsigned int ipg_mode;
+	unsigned int ipg_en;
+	unsigned int hsync_en;
+	struct bayer_value block0;
+	struct bayer_value block1;
+	struct bayer_value block2;
 };
 
 /* csi_register_t just for sharkl2 */
@@ -71,23 +90,24 @@ enum csi_registers_t {
 };
 
 int csi_reg_base_save(struct csi_dt_node_info *dt_info, int32_t idx);
-void csi_phy_power_down(struct csi_dt_node_info *csi_info,
-			unsigned int sensor_id, int is_eb);
-void csi_controller_enable(struct csi_dt_node_info *dt_info, int32_t idx);
-void dphy_init(struct csi_phy_info *phy, int32_t idx);
+void csi_controller_enable(struct csi_dt_node_info *dt_info, int32_t phyid);
 void csi_set_on_lanes(uint8_t lanes, int32_t idx);
 void csi_reset_shut_down(uint8_t shutdown, int32_t idx);
 void csi_shut_down_phy(uint8_t shutdown, int32_t idx);
+void csi_start(int sensor_id);
 void csi_close(int32_t idx);
 void csi_reset_controller(int32_t idx);
 void csi_reset_phy(int32_t idx);
 void csi_event_enable(int32_t idx);
-int csi_ahb_reset(struct csi_phy_info *phy,
-		  unsigned int csi_id);
+int csi_ahb_reset(struct csi_dt_node_info *csi,
+			unsigned int csi_id);
 void csi_ipg_mode_cfg(uint32_t idx, int enable, int dt, int w, int h);
 
-#define CSI_REG_WR(idx, reg, val)  (REG_WR(CSI_BASE(idx)+reg, val))
-#define CSI_REG_RD(idx, reg)  (REG_RD(CSI_BASE(idx)+reg))
+extern unsigned long s_csi_regbase[];
+
+#define CSI_BASE(idx)    (s_csi_regbase[idx])
+#define CSI_REG_WR(idx, reg, val)  (REG_WR(CSI_BASE(idx) + reg, val))
+#define CSI_REG_RD(idx, reg)  (REG_RD(CSI_BASE(idx) + reg))
 #define CSI_REG_MWR(idx, reg, msk, val)  CSI_REG_WR(idx, reg, \
 	((val) & (msk)) | (CSI_REG_RD(idx, reg) & (~(msk))))
 #define IPG_REG_MWR(reg, msk, val)  REG_WR(reg, \

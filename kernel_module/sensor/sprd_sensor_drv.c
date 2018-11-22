@@ -136,30 +136,19 @@ static int sprd_sensor_free_gpio(struct device *dev,
 }
 
 
-static uint32_t parse_dcam_id(struct device *dev,
+static uint32_t parse_dcam_id(struct device_node *dn,
 			      struct sprd_sensor_dev_info_tag *sensor_info)
 {
-	const char *out_string;
+	int dcam_id = -1;
 
 	sensor_info->attch_dcam_id = -1;
-	if (of_property_read_string(dev->of_node, "host", &out_string)) {
+	if (of_property_read_u32(dn, "sprd,dcam-id", &dcam_id)) {
 		pr_err("Get dcam id error\n");
 		return -1;
 	}
-
-	if (strcmp(out_string, "dcam0") == 0) {
-		sensor_info->attch_dcam_id = 0;
-		pr_info("parsing attached dcam id %d\n",
-			sensor_info->attch_dcam_id);
-		return 0;
-	} else if (strcmp(out_string, "dcam1") == 0) {
-		sensor_info->attch_dcam_id = 1;
-		pr_info("parsing attached dcam id %d\n",
-			sensor_info->attch_dcam_id);
-		return 0;
-	}
-
-	return -1;
+	pr_info("dcam id is %d\n", dcam_id);
+	sensor_info->attch_dcam_id = dcam_id;
+	return 0;
 }
 
 static int sprd_sensor_parse_dt(struct device *dev,
@@ -177,36 +166,14 @@ static int sprd_sensor_parse_dt(struct device *dev,
 		return -EINVAL;
 	}
 
-	if (parse_dcam_id(dev, sensor_info)) {
-		pr_err("%s :dcam id parsing error\n", __func__);
-		return -EINVAL;
-	}
-
 	return 0;
-}
-
-static struct device_node *get_mipi_phy(struct device_node *dn)
-{
-	struct device_node *node = NULL;
-	struct device_node *mipi_phy_node = NULL;
-
-	node = of_graph_get_next_endpoint(dn, NULL);
-	if (!node) {
-		pr_err("%s :error getting csi end point\n", __func__);
-		return NULL;
-	}
-	mipi_phy_node = of_graph_get_remote_port_parent(node);
-	if (!mipi_phy_node)
-		pr_err("%s :error getting mipi_phy_node\n", __func__);
-
-	return mipi_phy_node;
 }
 
 static struct device_node *get_csi_port_node(struct device_node *dn)
 {
 	struct device_node *csi_node = NULL;
 
-	csi_node = of_parse_phandle(dn, "sprd,csi", 0);
+	csi_node = of_parse_phandle(dn, "csi", 0);
 	if (!csi_node)
 		pr_err("%s :error getting csi_node\n", __func__);
 
@@ -217,7 +184,6 @@ static int sprd_sensor_config(struct device *dev,
 				struct sprd_sensor_dev_info_tag *sensor_info)
 {
 	struct device_node *csi_ep_node = NULL;
-	struct device_node *mipi_phy_node = NULL;
 	unsigned int phy_id = 0;
 	int ret = 0;
 
@@ -229,22 +195,25 @@ static int sprd_sensor_config(struct device *dev,
 
 	sensor_info->dev_node = dev->of_node;
 
-	mipi_phy_node = get_mipi_phy(dev->of_node);
-	if (!mipi_phy_node) {
-		pr_err("%s: get mipi phy error\n", __func__);
+	phy_id = csi_api_mipi_phy_cfg_init(sensor_info->dev_node,
+					   sensor_info->sensor_id);
+	if (phy_id >= 5){
+		pr_err("sprd,phyid is invalid\n");
 		return -1;
 	}
 
-	phy_id = csi_api_mipi_phy_cfg_init(mipi_phy_node,
-					   sensor_info->sensor_id);
-
-	csi_ep_node = get_csi_port_node(mipi_phy_node);
+	csi_ep_node = get_csi_port_node(sensor_info->dev_node);
 	if (csi_ep_node) {
 		pr_info("%lu\n", (unsigned long)csi_ep_node);
 		csi_api_dt_node_init(dev, csi_ep_node, sensor_info->sensor_id,
 				     phy_id);
 	} else
 		pr_err("%s; csi sensor connection error\n", __func__);
+
+	if (parse_dcam_id(csi_ep_node, sensor_info)) {
+		pr_err("%s :dcam id parsing error\n", __func__);
+		return -EINVAL;
+	}
 
 exit:
 	return ret;
