@@ -185,6 +185,10 @@ static void isp_path_store_done(
 		pr_err("path %p not in use.\n", path);
 		return;
 	}
+	if (path->bind_type == ISP_PATH_SLAVE) {
+		pr_debug("slave path %d\n", path->spath_id);
+		return;
+	}
 
 	pframe = camera_dequeue(&path->result_queue);
 	if (!pframe) {

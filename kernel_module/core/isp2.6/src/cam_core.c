@@ -135,6 +135,11 @@ struct camera_uchannel {
 	struct sprd_img_rect src_crop;
 	struct sprd_img_size dst_size;
 
+	/* for binding small picture */
+	uint32_t slave_img_en;
+	uint32_t slave_img_fmt;
+	struct sprd_img_size slave_img_size;
+
 	struct dcam_regular_desc regular_desc;
 };
 
@@ -167,6 +172,7 @@ struct channel_context {
 	/* isp_path_id combined from ctx_id | path_id.*/
 	/* isp_path_id = (ctx_id << ISP_PATH_BITS) | path_id */
 	int32_t isp_path_id;
+	int32_t slave_isp_path_id;
 	int32_t reserved_buf_fd;
 
 	struct camera_uchannel ch_uinfo;
@@ -183,7 +189,7 @@ struct channel_context {
 	struct completion alloc_com;
 	struct sprd_cam_work alloc_buf_work;
 
-	uint32_t mode_3dnr;
+	uint32_t type_3dnr;
 	uint32_t mode_ltm;
 	struct camera_frame *nr3_bufs[ISP_NR3_BUF_NUM];
 	struct camera_frame *ltm_bufs[ISP_LTM_BUF_NUM];
@@ -408,7 +414,7 @@ static void alloc_buffers(struct work_struct *work)
 		} while (1);
 	}
 
-	if (channel->mode_3dnr != MODE_3DNR_OFF) {
+	if (channel->type_3dnr == CAM_3DNR_HW) {
 		/* YUV420 for 3DNR ref*/
 		size = ((width + 1) & (~1)) * height * 3 / 2;
 		size = ALIGN(size, CAM_BUF_ALIGN_SIZE);
@@ -1216,7 +1222,7 @@ static int zoom_proc(void *param)
 	}
 
 	if (update_pv || update_c) {
-		if (ch_cap->enable && (ch_cap->mode_ltm == MODE_LTM_SINGLE))
+		if (ch_cap->enable && (ch_cap->mode_ltm == MODE_LTM_CAP))
 			update_always = 1;
 
 		ret = cal_channel_size(module);
@@ -1331,10 +1337,12 @@ static int init_cam_channel(
 {
 	int ret = 0;
 	int isp_ctx_id = 0, isp_path_id = 0, dcam_path_id = 0;
+	int slave_path_id = 0;
 	int new_isp_ctx, new_isp_path, new_dcam_path;
 	struct channel_context *channel_prev = NULL;
 	struct channel_context *channel_cap = NULL;
 	struct camera_uchannel *ch_uinfo;
+	struct isp_path_base_desc path_desc;
 	struct img_size max_size;
 
 	/* for test. */
@@ -1467,10 +1475,10 @@ static int init_cam_channel(
 		ctx_desc.mode_3dnr = MODE_3DNR_OFF;
 		if (module->cam_uinfo.is_3dnr) {
 			if (channel->ch_id == CAM_CH_CAP) {
-				channel->mode_3dnr = MODE_3DNR_CAP;
-				ctx_desc.mode_3dnr = MODE_3DNR_CAP;
+				channel->type_3dnr = CAM_3DNR_SW;
+				ctx_desc.mode_3dnr = MODE_3DNR_OFF;
 			} else if (channel->ch_id == CAM_CH_PRE) {
-				channel->mode_3dnr = MODE_3DNR_PRE;
+				channel->type_3dnr = CAM_3DNR_HW;
 				ctx_desc.mode_3dnr = MODE_3DNR_PRE;
 			}
 		}
@@ -1488,8 +1496,6 @@ static int init_cam_channel(
 	}
 
 	if (new_isp_path) {
-		struct isp_path_base_desc path_desc;
-
 		ret = isp_ops->get_path(
 				module->isp_dev_handle, isp_ctx_id, isp_path_id);
 		if (ret < 0) {
@@ -1503,7 +1509,12 @@ static int init_cam_channel(
 			(int32_t)((isp_ctx_id << ISP_CTXID_OFFSET) | isp_path_id);
 		pr_info("get isp path : 0x%x\n", channel->isp_path_id);
 
-		/* todo: cfg param to user setting. */
+		memset(&path_desc, 0, sizeof(path_desc));
+		if (channel->ch_uinfo.slave_img_en) {
+			slave_path_id = ISP_SPATH_VID;
+			path_desc.slave_type = ISP_PATH_MASTER;
+			path_desc.slave_path_id = slave_path_id;
+		}
 		path_desc.out_fmt = ch_uinfo->dst_fmt;
 		path_desc.endian.y_endian = ENDIAN_LITTLE;
 		path_desc.endian.uv_endian = ENDIAN_LITTLE;
@@ -1512,6 +1523,31 @@ static int init_cam_channel(
 		ret = isp_ops->cfg_path(module->isp_dev_handle,
 					ISP_PATH_CFG_PATH_BASE,
 					isp_ctx_id, isp_path_id, &path_desc);
+	}
+
+	if (new_isp_path && channel->ch_uinfo.slave_img_en) {
+		ret = isp_ops->get_path(module->isp_dev_handle,
+				isp_ctx_id, slave_path_id);
+		if (ret < 0) {
+			pr_err("fail to get isp path %d from context %d\n",
+				slave_path_id, isp_ctx_id);
+			isp_ops->put_path(
+				module->isp_dev_handle, isp_ctx_id, isp_path_id);
+			if (new_isp_ctx)
+				isp_ops->put_context(module->isp_dev_handle, isp_ctx_id);
+			goto exit;
+		}
+		channel->slave_isp_path_id =
+			(int32_t)((isp_ctx_id << ISP_CTXID_OFFSET) | slave_path_id);
+		path_desc.slave_type = ISP_PATH_SLAVE;
+		path_desc.out_fmt = ch_uinfo->slave_img_fmt;
+		path_desc.endian.y_endian = ENDIAN_LITTLE;
+		path_desc.endian.uv_endian = ENDIAN_LITTLE;
+		path_desc.output_size.w = ch_uinfo->slave_img_size.w;
+		path_desc.output_size.h = ch_uinfo->slave_img_size.h;
+		ret = isp_ops->cfg_path(module->isp_dev_handle,
+					ISP_PATH_CFG_PATH_BASE,
+					isp_ctx_id, slave_path_id, &path_desc);
 	}
 
 	/* 4in1 setting */
@@ -2215,6 +2251,7 @@ static int img_ioctl_set_output_size(
 	module->last_channel_id = channel->ch_id;
 	channel->dcam_path_id = -1;
 	channel->isp_path_id = -1;
+	channel->slave_isp_path_id = -1;
 
 	dst = &channel->ch_uinfo;
 	ret |= get_user(dst->sn_fmt, &uparam->sn_fmt);
@@ -2224,6 +2261,13 @@ static int img_ioctl_set_output_size(
 			&uparam->crop_rect, sizeof(struct sprd_img_rect));
 	ret |= copy_from_user(&dst->dst_size,
 			&uparam->dst_size, sizeof(struct sprd_img_size));
+#if 0
+	/* todo: update sprd_img.h */
+	ret |= get_user(dst->slave_img_en, &uparam->aux_img.enable);
+	ret |= get_user(dst->slave_img_fmt, &uparam->aux_img.pixel_fmt);
+	ret |= copy_from_user(&dst->slave_img_size,
+			&uparam->aux_img.dst_size, sizeof(struct sprd_img_size));
+#endif
 	pr_info("fmt %x %x. slw %d crop %d %d %d %d.  dst size %d %d\n",
 		dst->sn_fmt, dst->dst_fmt, dst->slowmotion,
 		dst->src_crop.x, dst->src_crop.y,
@@ -3061,6 +3105,11 @@ static int img_ioctl_stream_off(
 			isp_ops->put_path(module->isp_dev_handle,
 					isp_ctx_id[i],
 					ch->isp_path_id & ISP_PATHID_MASK);
+		}
+		if (ch->slave_isp_path_id >= 0) {
+			isp_ops->put_path(module->isp_dev_handle,
+					isp_ctx_id[i],
+					ch->slave_isp_path_id & ISP_PATHID_MASK);
 		}
 	}
 

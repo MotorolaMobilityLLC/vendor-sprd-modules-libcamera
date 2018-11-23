@@ -653,6 +653,9 @@ int isp_cfg_path_base(struct isp_path_desc *path, void *param)
 	path->frm_deci = 0;
 	path->out_fmt = cfg_in->out_fmt;
 	path->data_endian = cfg_in->endian;
+	path->bind_type = cfg_in->slave_type;
+	if (path->bind_type == ISP_PATH_MASTER)
+		path->slave_path_id = cfg_in->slave_path_id;
 
 	/* dst size should be configured once
 	 * and only once.
@@ -729,6 +732,7 @@ int isp_cfg_path_size(struct isp_path_desc *path, void *param)
 	switch (store->color_fmt) {
 	case ISP_STORE_UYVY:
 		store->pitch.pitch_ch0 = store->size.w * 2;
+		store->total_size = store->size.w * store->size.h * 2;
 		break;
 
 	case ISP_STORE_YUV422_2FRAME:
@@ -737,6 +741,7 @@ int isp_cfg_path_size(struct isp_path_desc *path, void *param)
 	case ISP_STORE_YVU420_2FRAME:
 		store->pitch.pitch_ch0 = store->size.w;
 		store->pitch.pitch_ch1 = store->size.w;
+		store->total_size = store->size.w * store->size.h * 2;
 		break;
 
 	case ISP_STORE_YUV422_3FRAME:
@@ -744,6 +749,7 @@ int isp_cfg_path_size(struct isp_path_desc *path, void *param)
 		store->pitch.pitch_ch0 = store->size.w;
 		store->pitch.pitch_ch1 = store->size.w / 2;
 		store->pitch.pitch_ch2 = store->size.w / 2;
+		store->total_size = store->size.w * store->size.h * 3 / 2;
 		break;
 	default:
 		pr_err("unsupported store fmt: %d\n", store->color_fmt);

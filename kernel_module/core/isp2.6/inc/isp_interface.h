@@ -66,6 +66,12 @@ enum isp_ltm_mode {
 	MODE_LTM_MAX
 };
 
+enum isp_path_binding_type {
+	ISP_PATH_ALONE = 0,
+	ISP_PATH_MASTER,
+	ISP_PATH_SLAVE,
+};
+
 enum isp_offline_param_valid {
 	ISP_SRC_SIZE = (1 << 0),
 	ISP_PATH0_TRIM = (1 << 1),
@@ -89,6 +95,8 @@ struct isp_ctx_size_desc {
 
 struct isp_path_base_desc {
 	uint32_t out_fmt;
+	uint32_t slave_type;
+	uint32_t slave_path_id;
 	struct img_endian endian;
 	struct img_size output_size;
 };

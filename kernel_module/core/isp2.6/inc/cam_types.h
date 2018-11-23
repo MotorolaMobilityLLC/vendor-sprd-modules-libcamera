@@ -56,6 +56,12 @@ enum cam_ch_id {
 	CAM_CH_MAX,
 };
 
+enum cam_3dnr_type {
+	CAM_3DNR_OFF = 0,
+	CAM_3DNR_HW,
+	CAM_3DNR_SW,
+};
+
 enum cam_data_endian {
 	ENDIAN_LITTLE = 0,
 	ENDIAN_BIG,

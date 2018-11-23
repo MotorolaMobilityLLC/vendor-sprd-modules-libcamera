@@ -182,6 +182,7 @@ struct isp_store_info {
 	uint32_t store_res;
 	uint32_t rd_ctrl;
 	uint32_t shadow_clr_sel;
+	uint32_t total_size;
 	enum isp_store_format color_fmt; /* output color format */
 	struct img_size size;
 	struct img_addr addr;
@@ -216,6 +217,8 @@ struct isp_path_desc {
 	uint32_t uv_sync_v;
 	uint32_t frm_deci;
 	uint32_t out_fmt; /* forcc */
+	uint32_t bind_type;
+	uint32_t slave_path_id;
 	struct isp_pipe_context *attach_ctx;
 
 	struct isp_regular_info regular_info;

@@ -1113,7 +1113,7 @@ static int isp_offline_start_frame(void *ctx)
 	struct camera_frame *pframe = NULL;
 	struct camera_frame *out_frame = NULL;
 	struct isp_pipe_context *pctx;
-	struct isp_path_desc *path;
+	struct isp_path_desc *path, *slave_path;
 	struct isp_cfg_ctx_desc *cfg_desc;
 	struct isp_fmcu_ctx_desc *fmcu;
 	struct isp_offline_param *in_param;
@@ -1181,12 +1181,11 @@ static int isp_offline_start_frame(void *ctx)
 	/*update NR param for crop/scaling image */
 	isp_adapt_blkparam(pctx);
 
-	if (pctx->updated)
-		ret = isp_slice_ctx_init(pctx);
-
 	/* the context/path maybe init/updated after dev start. */
-	if (pctx->updated)
+	if (pctx->updated) {
+		ret = isp_slice_ctx_init(pctx);
 		isp_set_ctx_common(pctx);
+	}
 
 	/* config fetch address */
 	isp_path_set_fetch_frm(pctx, pframe, &pctx->fetch.addr);
@@ -1202,6 +1201,11 @@ static int isp_offline_start_frame(void *ctx)
 
 		if (pctx->updated)
 			ret = isp_set_path(path);
+
+		/* slave path output buffer binding to master buffer*/
+		if (path->bind_type == ISP_PATH_SLAVE)
+			continue;
+
 		if ((pctx->mode_3dnr == MODE_3DNR_CAP) &&
 		    (pctx->nr3_ctx.blending_cnt % 5 != 4)) {
 			out_frame = camera_dequeue(&path->reserved_buf_queue);
@@ -1227,6 +1231,14 @@ static int isp_offline_start_frame(void *ctx)
 				(uint32_t)out_frame->buf.addr_k[0]);
 		isp_path_set_store_frm(path, out_frame);
 
+		if (path->bind_type == ISP_PATH_MASTER) {
+			struct camera_frame temp;
+			/* fixed buffer offset here. HAL should use same offset calculation method */
+			temp.buf.iova[0] = out_frame->buf.iova[0] + path->store.total_size;
+			temp.buf.iova[1] = temp.buf.iova[2] = 0;
+			slave_path = &pctx->isp_path[path->slave_path_id];
+			isp_path_set_store_frm(slave_path, &temp);
+		}
 		/*
 		 * context proc_queue frame number
 		 * should be equal to path result queue.
@@ -2040,6 +2052,7 @@ static int sprd_isp_cfg_path(void *isp_handle,
 	struct isp_pipe_context *pctx;
 	struct isp_pipe_dev *dev;
 	struct isp_path_desc *path = NULL;
+	struct isp_path_desc *slave_path;
 	struct camera_frame *pframe;
 
 	if (!isp_handle || !param) {
@@ -2200,6 +2213,10 @@ static int sprd_isp_cfg_path(void *isp_handle,
 	case ISP_PATH_CFG_PATH_SIZE:
 		mutex_lock(&pctx->param_mutex);
 		ret = isp_cfg_path_size(path, param);
+		if (path->bind_type == ISP_PATH_MASTER) {
+			slave_path = &pctx->isp_path[path->slave_path_id];
+			ret = isp_cfg_path_size(slave_path, param);
+		}
 		pctx->updated = 1;
 		mutex_unlock(&pctx->param_mutex);
 		break;
