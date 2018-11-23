@@ -1335,9 +1335,10 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
 		if (cxt->exposure_compensation.ae_compensation_flag) {
-			cxt->cur_status.settings.manual_mode = 1;
+			if (cxt->cur_status.settings.manual_mode !=2)
+				cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
-			ISP_LOGV("AE_FLASH_PRE_BEFORE restore force ae's table_idx : %d", cxt->flash_backup.table_idx);
+			ISP_LOGV("AE_FLASH_PRE_BEFORE restore force ae's table_idx : %d, cur manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
 		} else {
 			cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
 			cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
@@ -1384,7 +1385,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		ISP_LOGI("ae_flash_status FLASH_MAIN_BEFORE");
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1);
-
 		if (cxt->exposure_compensation.ae_compensation_flag && !cxt->flash_backup.table_idx)  {
 			if(0==cxt->cur_status.settings.table_idx){
 				struct ae_exp_compensation exp_comp;
@@ -1399,6 +1399,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
 			ISP_LOGV("AE_FLASH_MAIN_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
+		ISP_LOGI("AE_FLASH_MAIN_BEFORE table_idx is %d, manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
 		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
 		break;
 
@@ -1407,9 +1408,10 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->has_mf = 1;
 
 		if (cxt->exposure_compensation.ae_compensation_flag) {
-			cxt->cur_status.settings.manual_mode = 1;
+			if (cxt->cur_status.settings.manual_mode !=2)
+				cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
-			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d", cxt->flash_backup.table_idx);
+			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d, cur manual_mode:%d", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
 		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
@@ -2653,7 +2655,8 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		if ((FLASH_MAIN_BEFORE == current_status->settings.flash) || (FLASH_MAIN == current_status->settings.flash)) {
 			if (cxt->flash_esti_result.isEnd) {
 				if (1 == cxt->exposure_compensation.ae_compensation_flag) {
-					current_status->settings.manual_mode = 1;
+					if(current_status->settings.manual_mode !=2)
+						current_status->settings.manual_mode = 1;
 				} else {
 					current_status->settings.manual_mode = 0;
 					current_status->settings.table_idx = 0;
@@ -4281,8 +4284,8 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 					cxt->cur_status.settings.manual_mode = 1;
 					cxt->cur_status.settings.table_idx = change_idx;
 				}
-				//ISP_LOGD("jhin exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d",exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
-				//ISP_LOGD("jhin change_idx:%d",change_idx);
+				ISP_LOGD("jhin manual_mode:%d, exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d", cxt->cur_status.settings.manual_mode, exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
+				ISP_LOGD("jhin change_idx:%d",change_idx);
 			} else {
 				if (cxt->exposure_compensation.comp_val == 0){
 					cxt->exposure_compensation.ae_base_target = cxt->cur_param->target_lum;
@@ -5374,7 +5377,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	ATRACE_BEGIN(__FUNCTION__);
 	cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 	if (0 == cxt->skip_update_param_flag) {
-		ISP_LOGV("table_index %d ", cxt->cur_status.settings.table_idx);
+		ISP_LOGV("table_index %d,manual_mode:%d ", cxt->cur_status.settings.table_idx,cxt->cur_status.settings.manual_mode);
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 	}
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
