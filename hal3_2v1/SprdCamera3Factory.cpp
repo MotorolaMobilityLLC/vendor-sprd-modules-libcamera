@@ -229,7 +229,7 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
                                          struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
-    if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) >= mNumOfCameras)
+    if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) > mNumOfCameras)
         return -ENODEV;
 
     SprdCamera3HWI *hw =
