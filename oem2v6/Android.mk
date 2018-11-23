@@ -84,7 +84,7 @@ LOCAL_SRC_FILES += src/cmr_uvdenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9832e)
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),ums510)
 LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
 LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2

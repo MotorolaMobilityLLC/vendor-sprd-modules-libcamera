@@ -1120,7 +1120,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mStreamConfiguration.yuvcallback.status == CONFIGURED &&
             mStreamConfiguration.snapshot.status == CONFIGURED) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
-                //when sensor_rotation is 1 for volte, volte dont need capture
+                // when sensor_rotation is 1 for volte, volte dont need capture
                 if (sprddefInfo.sensor_rotation == 0)
                     mOEMIf->setStreamOnWithZsl();
                 mFirstRegularRequest = 1;

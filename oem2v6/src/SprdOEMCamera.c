@@ -687,6 +687,7 @@ cmr_int camera_start_preflash(cmr_handle camera_handle) {
     if (ret) {
         CMR_LOGE("failed to cancel snapshot %ld", ret);
     }
+
 exit:
     CMR_LOGI("done");
     return ret;
@@ -724,6 +725,7 @@ cmr_int camera_set_preview_buffer(cmr_handle camera_handle,
     if (ret) {
         CMR_LOGE("failed %ld", ret);
     }
+
 exit:
     CMR_LOGV("done %ld", ret);
     return ret;
@@ -741,10 +743,12 @@ cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
     if (ret) {
         CMR_LOGE("failed %ld", ret);
     }
+
 exit:
     CMR_LOGI("done %ld", ret);
     return ret;
 }
+
 cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
                               cmr_uint src_vir_addr, cmr_s32 fd) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -758,6 +762,7 @@ cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
     if (ret) {
         CMR_LOGE("failed %ld", ret);
     }
+
 exit:
     CMR_LOGV("done %ld", ret);
     return ret;
@@ -788,6 +793,7 @@ exit:
     CMR_LOGV("done %ld", ret);
     return ret;
 }
+
 cmr_int camera_set_zsl_snapshot_buffer(cmr_handle camera_handle,
                                        cmr_uint src_phy_addr,
                                        cmr_uint src_vir_addr, cmr_s32 fd) {
@@ -1179,6 +1185,29 @@ exit:
     return ret;
 }
 
+cmr_int image_sw_algorithm_processing(
+    cmr_handle camera_handle, struct image_sw_algorithm_buf *sw_algorithm_buf,
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+    enum img_data_type format) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!camera_handle) {
+        CMR_LOGE("Invalid param error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ret = camera_local_image_sw_algorithm_processing(
+        camera_handle, sw_algorithm_buf, sw_algorithm_type, format);
+    if (ret) {
+        CMR_LOGE("failed %ld", ret);
+    }
+
+exit:
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1207,7 +1236,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
     camera_set_reprocess_picture_size, camera_start_capture,
     camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg,
+    camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,

@@ -489,6 +489,13 @@ typedef enum {
     CAMERA_STREAM_TYPE_MAX,
 } sprd_cam_stream_type_t;
 
+typedef enum {
+    SPRD_CAM_IMAGE_SW_ALGORITHM_NONE,
+    SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
+    SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
+    SPRD_CAM_IMAGE_SW_ALGORITHM_MAX
+} sprd_cam_image_sw_algorithm_type_t;
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;
@@ -1306,6 +1313,7 @@ enum camera_cb_type {
 #endif
     CAMERA_EVT_CB_INVALIDATE_CACHE,
     CAMERA_EVT_CB_RAW_FRAME,
+    CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1505,6 +1513,16 @@ struct camera_frame_type {
     cmr_u32 vcm_step;
     cmr_int isMatchFlag;
 };
+
+struct image_sw_algorithm_buf {
+    cmr_u32 format;
+    cmr_u32 width;
+    cmr_u32 height;
+    cmr_uint y_vir_addr;
+    cmr_u32 fd;
+    void *reserved;
+};
+
 /*
 struct camera_cap_frm_info {
         cmr_uint                 y_virt_addr;
@@ -1839,6 +1857,11 @@ typedef struct oem_ops {
                                              enum takepicture_mode cap_mode,
                                              cmr_uint yaddr, cmr_uint yaddr_vir,
                                              cmr_uint fd);
+    cmr_int (*image_sw_algorithm_processing)(
+        cmr_handle camera_handle,
+        struct image_sw_algorithm_buf *sw_algorithm_buf,
+        sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+        enum img_data_type format);
 
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,

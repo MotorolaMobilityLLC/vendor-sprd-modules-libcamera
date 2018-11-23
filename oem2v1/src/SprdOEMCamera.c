@@ -1182,6 +1182,14 @@ exit:
     return ret;
 }
 
+cmr_int image_sw_algorithm_processing(
+    cmr_handle camera_handle, struct image_sw_algorithm_buf *sw_algorithm_buf,
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type, enum img_data_type format) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    return ret;
+}
+
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 cmr_uint
 camera_get_isp_perFrame_result(cmr_handle camera_handle,
@@ -1275,7 +1283,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
     camera_set_reprocess_picture_size, camera_start_capture,
     camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg,
+    camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,

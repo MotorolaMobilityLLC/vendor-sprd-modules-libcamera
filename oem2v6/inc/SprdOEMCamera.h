@@ -198,6 +198,10 @@ cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
 
 cmr_int camera_get_tuning_param(cmr_handle camera_handle,
                                 struct tuning_param_info *tuning_info);
+cmr_int image_sw_algorithm_processing(
+    cmr_handle camera_handle, struct image_sw_algorithm_buf *sw_algorithm_buf,
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+    enum img_data_type format);
 
 #ifdef __cplusplus
 }

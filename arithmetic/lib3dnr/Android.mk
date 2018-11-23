@@ -14,7 +14,7 @@
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 LOCAL_PATH:= $(call my-dir)
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9832e sp7731e),)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9832e sp7731e ums510),)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := blacksesame/mv_lib/lib
 endif
@@ -71,7 +71,8 @@ LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/sprd/inc \
          $(LOCAL_PATH)/../../common/inc \
          $(LOCAL_PATH)/../libgralloc_mali \
-         $(TOP)/system/core/include/cutils/
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

@@ -161,7 +161,8 @@ int SprdCamera3RegularChannel::channelCbRoutine(
     mCamera3Stream[index]->getStreamInfo(&stream);
     ret = mCamera3Stream[index]->buffDoneDQ(frame_number, &buffer);
     if (ret != NO_ERROR) {
-        HAL_LOGE("dq error, stream_type = %d", stream_type);
+        HAL_LOGE("dq error, stream_type = %d , index = %d , fram_number = %d",
+                 stream_type, index, frame_number);
         return BAD_VALUE;
     }
 

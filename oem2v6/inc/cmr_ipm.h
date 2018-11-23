@@ -36,6 +36,7 @@ struct ipm_frame_in {
     cmr_uint frame_cnt;
     cmr_handle caller_handle;
     void *private_data;
+    cmr_u32 adgain;
     float ev[HDR_CAP_NUM];
 };
 
@@ -82,6 +83,7 @@ struct ipm_open_in {
     cmr_uint frame_cnt;
     struct img_otp_data otp_data;
     cmr_u32 adgain_valid_frame_num;
+    cmr_u32 adgain;
 };
 
 struct ipm_version {
