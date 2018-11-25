@@ -53,9 +53,9 @@ LOCAL_SRC_FILES := \
     $(HAL_DIR)/SprdCamera3Setting.cpp \
     $(HAL_DIR)/SprdCamera3Stream.cpp \
     $(HAL_DIR)/SprdCamera3Flash.cpp  \
-    $(HAL_DIR)/SprdCameraSystemPerformance.cpp \
     hal_common/multiCamera/SprdCamera3Wrapper.cpp \
     hal_common/multiCamera/SprdCamera3MultiBase.cpp \
+    hal_common/camera_power_perf/SprdCameraPowerPerformance.cpp \
     hal1.0/src/SprdCameraParameters.cpp
 
 

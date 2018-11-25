@@ -26,8 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#define LOG_TAG "Cam3SysPer"
-#include "SprdCameraSystemPerformance.h"
+#define LOG_TAG "Cam3PowerPerf"
+#include "SprdCameraPowerPerformance.h"
 
 using namespace android;
 

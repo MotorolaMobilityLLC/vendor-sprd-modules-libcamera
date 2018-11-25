@@ -44,7 +44,7 @@ extern "C" {
 #include "SprdCamera3Setting.h"
 #include "SprdCamera3Stream.h"
 #include "SprdCamera3Channel.h"
-#include "SprdCameraSystemPerformance.h"
+#include "hal_common/camera_power_perf/SprdCameraPowerPerformance.h"
 #include <hardware/power.h>
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
