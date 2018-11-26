@@ -482,7 +482,7 @@ int  cambuf_alloc(struct camera_buf *buf_info,
 		ION_HEAP_ID_MASK_SYSTEM :
 		ION_HEAP_ID_MASK_MM;
 
-	buf_info->dmabuf_p[0] = sprd_ion_alloc(size, heap_type, 0);
+	buf_info->dmabuf_p[0] = ion_new_alloc(size, heap_type, 0);
 	if (IS_ERR_OR_NULL(buf_info->dmabuf_p[0])) {
 		pr_err("failed to alloc ion buf size = 0x%x\n", (int)size);
 		ret = -ENOMEM;
@@ -510,7 +510,7 @@ int  cambuf_alloc(struct camera_buf *buf_info,
 	return 0;
 
 failed:
-	sprd_ion_free(buf_info->dmabuf_p[0]);
+	ion_free(buf_info->dmabuf_p[0]);
 	buf_info->dmabuf_p[0] = NULL;
 	buf_info->ionbuf[0] = NULL;
 	buf_info->size[0] = 0;
@@ -541,7 +541,7 @@ int cambuf_free(struct camera_buf *buf_info)
 	dmabuf = buf_info->dmabuf_p[0];
 	pr_info("dmabuf[%p]\n", dmabuf);
 	if (dmabuf){
-		sprd_ion_free(dmabuf);
+		ion_free(dmabuf);
 		buf_info->dmabuf_p[0] = NULL;
 		buf_info->mfd[0] = 0;
 		buf_info->size[0] = 0;

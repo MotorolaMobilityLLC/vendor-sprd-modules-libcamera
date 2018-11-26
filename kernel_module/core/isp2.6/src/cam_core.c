@@ -341,6 +341,8 @@ static void camera_put_empty_frame(void *param)
 	}
 
 	frame = (struct camera_frame *)param;
+	if (frame->priv_data)
+		kfree(frame->priv_data);
 	cambuf_put_ionbuf(&frame->buf);
 	ret = put_empty_frame(frame);
 }
@@ -535,6 +537,7 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 	}
 
 	pframe = (struct camera_frame *)param;
+	pframe->priv_data = NULL;
 	channel = &module->channel[pframe->channel_id];
 
 	if ((pframe->fid & 0x3F) == 0)
@@ -635,6 +638,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 	}
 
 	pframe = (struct camera_frame *)param;
+	pframe->priv_data = NULL;
 	channel = &module->channel[pframe->channel_id];
 
 	pr_debug("module %p, cam%d ch %d.  cb cmd %d, frame %p\n",
@@ -3132,6 +3136,18 @@ static int img_ioctl_stream_off(
 						ret);
 				pr_info("alloc buffer done.\n");
 				ch->alloc_start = 0;
+			}
+			if (ch->isp_updata) {
+				struct isp_offline_param *cur, *prev;
+
+				cur = (struct isp_offline_param *)ch->isp_updata;
+				ch->isp_updata = NULL;
+				while (cur) {
+					prev = (struct isp_offline_param *)cur->prev;
+					kfree(cur);
+					pr_info("free %p\n", cur);
+					cur = prev;
+				}
 			}
 			camera_queue_clear(&ch->share_buf_queue);
 

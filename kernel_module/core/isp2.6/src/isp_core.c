@@ -555,6 +555,19 @@ int sprd_isp_debugfs_init(void)
 }
 /* debug fs end */
 
+static void free_offline_pararm(void *param)
+{
+	struct isp_offline_param *cur, *prev;
+
+	cur = (struct isp_offline_param *)param;
+	while (cur) {
+		prev = (struct isp_offline_param *)cur->prev;
+		kfree(cur);
+		pr_info("free %p\n", cur);
+		cur = prev;
+	}
+}
+
 void isp_unmap_frame(void *param)
 {
 	struct camera_frame *frame;
@@ -610,11 +623,8 @@ void isp_ret_src_frame(void *param)
 	pctx = (struct isp_pipe_context *)frame->priv_data;
 	pr_debug("frame %p, ch_id %d, buf_fd %d\n",
 		frame, frame->channel_id, frame->buf.mfd[0]);
-	if (frame->param_data) {
-		kfree(frame->param_data);
-		frame->param_data = NULL;
-	}
-
+	free_offline_pararm(frame->param_data);
+	frame->param_data = NULL;
 	cambuf_iommu_unmap(&frame->buf);
 	pctx->isp_cb_func(
 		ISP_CB_RET_SRC_BUF,
@@ -1050,7 +1060,6 @@ static int isp_update_offline_param(
 {
 	int ret = 0;
 	int i;
-	struct isp_offline_param *cur, *prev;
 	struct img_size *src_new = NULL;
 	struct img_trim path_trim;
 	struct isp_path_desc *path;
@@ -1093,15 +1102,6 @@ static int isp_update_offline_param(
 			path_trim.size_x, path_trim.size_y);
 	}
 	pctx->updated = 1;
-
-	cur = (struct isp_offline_param *)in_param;
-	do {
-		prev = (struct isp_offline_param *)cur->prev;
-		kfree(cur);
-		pr_info("free %p\n", cur);
-		cur = prev;
-	} while (cur);
-
 	return ret;
 }
 
@@ -1175,6 +1175,7 @@ static int isp_offline_start_frame(void *ctx)
 	in_param = (struct isp_offline_param *)pframe->param_data;
 	if (in_param) {
 		isp_update_offline_param(pctx, in_param);
+		free_offline_pararm(in_param);
 		pframe->param_data = NULL;
 	}
 
@@ -1400,6 +1401,8 @@ deq_output:
 inq_overflow:
 	cambuf_iommu_unmap(&pframe->buf);
 map_err:
+	free_offline_pararm(pframe->param_data);
+	pframe->param_data = NULL;
 	/* return buffer to cam channel shared buffer queue. */
 	pctx->isp_cb_func(ISP_CB_RET_SRC_BUF, pframe, pctx->cb_priv_data);
 	return ret;

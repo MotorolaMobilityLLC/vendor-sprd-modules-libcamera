@@ -481,8 +481,8 @@ static int isp_cfg_config_block(
 		return -EINVAL;
 	}
 
-	// FLUSH_DCACHE(work_buf_vaddr, ISP_REG_SIZE);
-	sprd_ion_flush_dcache_area_wrapper(work_buf_vaddr, ISP_REG_SIZE);
+	/* FLUSH_DCACHE(work_buf_vaddr, ISP_REG_SIZE); */
+	/* sprd_ion_flush_dcache_area_wrapper(work_buf_vaddr, ISP_REG_SIZE); */
 
 	pr_debug("shadow: 0x%p, work: 0x%p, hw_addr: 0x%lx\n",
 			shadow_buf_vaddr, work_buf_vaddr, hw_addr);

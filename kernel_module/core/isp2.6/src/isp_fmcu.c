@@ -96,9 +96,9 @@ static int isp_fmcu_start(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	}
 #endif
 
-	// FLUSH_DCACHE(fmcu_ctx->cmd_buf, fmcu_ctx->cmdq_pos * sizeof(uint32_t));
-	sprd_ion_flush_dcache_area_wrapper(fmcu_ctx->cmd_buf,
-			fmcu_ctx->cmdq_pos * sizeof(uint32_t));
+	/* FLUSH_DCACHE(fmcu_ctx->cmd_buf, fmcu_ctx->cmdq_pos * sizeof(uint32_t));*/
+	/*sprd_ion_flush_dcache_area_wrapper(fmcu_ctx->cmd_buf,
+			fmcu_ctx->cmdq_pos * sizeof(uint32_t));*/
 
 	ISP_HREG_WR(base + ISP_FMCU_DDR_ADDR, fmcu_ctx->hw_addr);
 	ISP_HREG_MWR(base + ISP_FMCU_CTRL, 0xFFFF0000, cmd_num << 16);
