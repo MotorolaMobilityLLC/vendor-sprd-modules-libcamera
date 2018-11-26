@@ -1327,6 +1327,20 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                         mOldCapIntent =
                             ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
                     }
+                } else if (capturePara.cap_intent ==
+                               ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
+                           sprddefInfo.sprd_zsl_enabled == false) {
+                    if (channel == mRegularChan &&
+                        request->num_output_buffers == 1) {
+                        mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW,
+                                               frameNumber);
+                        mFirstRegularRequest = true;
+                    } else {
+                        mOEMIf->setCapturePara(
+                            CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT,
+                            frameNumber);
+                        mPictureRequest = true;
+                    }
                 }
             } else {
                 if (capturePara.cap_intent ==
