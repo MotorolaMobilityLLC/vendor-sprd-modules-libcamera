@@ -96,6 +96,7 @@ typedef enum _eAF_MODE {
 typedef enum _e_AF_TRIGGER {
 	NO_TRIGGER = 0,
 	AF_TRIGGER,
+	RE_TRIGGER,
 } e_AF_TRIGGER;
 
 typedef enum _eAF_Triger_Type {
@@ -107,7 +108,7 @@ typedef enum _eAF_Triger_Type {
 	F_FAST,			//Fast Fine search for AFT
 	DEFOCUS,
 	BOKEH,
-	RE_TRIGGER,
+	//RE_TRIGGER,   //no use
 } eAF_Triger_Type;
 
 enum {

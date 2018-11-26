@@ -1115,16 +1115,21 @@ static cmr_u8 if_clear_fd_stop_counter(cmr_u32 * FD_count, void *cookie)
 
 static cmr_u8 if_face_detection_get_data(IO_Face_area_t * FD, void *cookie)
 {
-	af_ctrl_t *af = cookie;
-	cmr_u8 i = 0;
 
-	while (i < af->face_info.face_num) {
-		FD[i].sx = af->face_info.face_info[i].sx;
-		FD[i].sy = af->face_info.face_info[i].sy;
-		FD[i].ex = af->face_info.face_info[i].ex;
-		FD[i].ey = af->face_info.face_info[i].ey;
-		i++;
-	}
+	UNUSED(FD);
+	UNUSED(cookie);
+
+	/*
+	   af_ctrl_t *af = cookie;
+	   cmr_u8 i = 0;
+	   while (i < af->face_info.face_num) {
+	   FD[i].sx = af->face_info.face_info[i].sx;
+	   FD[i].sy = af->face_info.face_info[i].sy;
+	   FD[i].ex = af->face_info.face_info[i].ex;
+	   FD[i].ey = af->face_info.face_info[i].ey;
+	   i++;
+	   }
+	 */
 
 	return 0;
 }
@@ -2114,7 +2119,7 @@ static void caf_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 }
 
 //[TOF_+++]
-static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
+static void tof_start(af_ctrl_t * af, e_AF_TRIGGER type, struct aft_proc_result *p_aft_result)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	AF_Trigger_Data aft_in;
@@ -2123,20 +2128,60 @@ static void tof_start(af_ctrl_t * af, struct aft_proc_result *p_aft_result)
 	if (atoi(value) != 1)
 		return;
 
-	af_set_default_roi(af, af->algo_mode);
+	af->algo_mode = TOF;
+
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
-	aft_in.AFT_mode = TOF;
-	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.bisTrigger = type;
+	//AF_Trigger_Type;
+	aft_in.AFT_mode = af->algo_mode;
+	//re_trigger;
 	aft_in.trigger_source = p_aft_result->is_caf_trig;
 	ISP_LOGI("tof current %d mode , %d", aft_in.AFT_mode, aft_in.trigger_source);
 
-	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
-	do_start_af(af);
-	//notify_start(af, AF_FOCUS_CAF);
+	if (aft_in.bisTrigger == AF_TRIGGER) {
+		af_set_default_roi(af, af->algo_mode);
+
+		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+		do_start_af(af);
+	} else {
+		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+	}
+
 	af->vcm_stable = 0;
 }
 
 //[TOF_---]
+
+static void pd_start(af_ctrl_t * af, e_AF_TRIGGER type, struct aft_proc_result *p_aft_result)
+{
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
+	AF_Trigger_Data aft_in;
+
+	property_get("persist.vendor.cam.pd.enable", value, "1");
+	if (atoi(value) != 1)
+		return;
+
+	af->algo_mode = PDAF;
+
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+	aft_in.bisTrigger = type;
+	//AF_Trigger_Type;
+	aft_in.AFT_mode = af->algo_mode;
+	//re_trigger;
+	aft_in.trigger_source = p_aft_result->is_caf_trig;
+	ISP_LOGI("tof current %d mode , %d", aft_in.AFT_mode, aft_in.trigger_source);
+
+	if (aft_in.bisTrigger == AF_TRIGGER) {
+		af_set_default_roi(af, af->algo_mode);
+
+		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+		do_start_af(af);
+	} else {
+		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+	}
+
+	af->vcm_stable = 0;
+}
 
 static void af_process_frame(af_ctrl_t * af)
 {
@@ -2211,7 +2256,9 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				faf_start(af, &win);
 			} else if (AFT_TRIG_TOF == result->is_caf_trig && af->tof.data.RangeStatus == 0) {	//[TOF_+++]
 				//ISP_LOGV("ddd flag:%d. dis:%d, maxdis:%d, status:%d ", af->tof.tof_trigger_flag, af->tof.last_distance, af->tof.last_MAXdistance, af->tof.last_status );
-				tof_start(af, result);	//[TOF_---]
+				tof_start(af, AF_TRIGGER, result);	//[TOF_---]
+			} else if (AFT_TRIG_PD == result->is_caf_trig) {
+				pd_start(af, AF_TRIGGER, result);
 			} else {
 				caf_start(af, result);
 			}
@@ -2233,6 +2280,12 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 			ISP_LOGI("trigger cb fd while searching x, cancel_af %d, trigger_af %d", result->is_cancel_caf, result->is_caf_trig);
 		} else if (AFT_TRIG_PD == result->is_caf_trig || AFT_TRIG_TOF == result->is_caf_trig) {
 			ISP_LOGV("trigger pd tof while searching, cancel_af %d, trigger_af %d", result->is_cancel_caf, result->is_caf_trig);
+		}
+
+		if (AFT_TRIG_TOF == result->is_caf_trig) {
+			tof_start(af, RE_TRIGGER, result);
+		} else if (AFT_TRIG_PD == result->is_caf_trig) {
+			pd_start(af, RE_TRIGGER, result);
 		}
 	}
 }
@@ -2440,10 +2493,12 @@ static void caf_monitor_process(af_ctrl_t * af)
 		caf_monitor_fd(af);
 	}
 	//[TOF_+++]
-	if (af->trigger_source_type & AF_DATA_TOF) {
-		af->trigger_source_type &= (~AF_DATA_TOF);
-		caf_monitor_tof(af);
-	}
+	/* move to af_sprd_set_tof_info()
+	   if (af->trigger_source_type & AF_DATA_TOF) {
+	   af->trigger_source_type &= (~AF_DATA_TOF);
+	   caf_monitor_tof(af);
+	   }
+	 */
 	//[TOF_---]
 
 	if (af->trigger_source_type & AF_DATA_PD) {
@@ -3164,9 +3219,11 @@ static cmr_s32 af_sprd_set_tof_info(cmr_handle handle, void *param0)
 	tof_FrameID = (tof_FrameID >= (0xfffffffe - 1)) ? (0) : (tof_FrameID + 1);
 	af->tof.effective_frmid = tof_FrameID;
 	af->tof.tof_enable = (af->tof.effective_frmid) ? 1 : 0;
-	af->trigger_source_type |= AF_DATA_TOF;
+	//af->trigger_source_type |= AF_DATA_TOF;
 
 	memcpy(&af->tof.data, tof_info, sizeof(struct tof_result));
+
+	caf_monitor_tof(af);
 
 	/*
 	   af->tof.data.RangeMilliMeter = tof_info->RangeMilliMeter;
