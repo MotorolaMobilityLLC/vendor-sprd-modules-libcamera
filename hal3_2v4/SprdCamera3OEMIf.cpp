@@ -10076,44 +10076,214 @@ int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data) {
     return ret;
 }
 
-void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
+int SprdCamera3OEMIf::gyro_get_data(
+    void *p_data, ASensorEvent *buffer, int n,
+    struct cmr_af_aux_sensor_info *sensor_info) {
     int ret = 0;
-    ssize_t n;
-    ASensorEvent buffer[8];
-    uint32_t GyroRate = 10 * 1000; //  us
-    uint32_t default_max_fps = 30;
-    uint32_t max_fps = default_max_fps;
-    uint32_t GsensorRate = 50 * 1000; // us
-
-    int events;
-    int32_t result = 0;
-    uint32_t Timeout = 100; // ms
-    uint32_t Gyro_flag = 0;
-    uint32_t Gsensor_flag = 0;
-
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-    HAL_LOGD("E");
-
     if (!obj) {
         HAL_LOGE("obj null  error");
-        // sem_post(&obj->mGyro_sem);
+        ret = -1;
+        return ret;
+    }
+    for (int i = 0; i < n; i++) {
+        memset((void *)sensor_info, 0, sizeof(*sensor_info));
+        switch (buffer[i].type) {
+        case Sensor::TYPE_GYROSCOPE: {
+#ifdef CONFIG_CAMERA_EIS
+            // push gyro data for eis preview & video queue
+            SPRD_DEF_Tag sprddefInfo;
+            obj->mSetting->getSPRDDEFTag(&sprddefInfo);
+            if (obj->mRecordingMode && sprddefInfo.sprd_eis_enabled) {
+                struct timespec t1;
+                clock_gettime(CLOCK_BOOTTIME, &t1);
+                nsecs_t time1 = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
+                HAL_LOGV("mGyroCamera CLOCK_BOOTTIME =%" PRId64, time1);
+                obj->mGyrodata[obj->mGyroNum].t = buffer[i].timestamp;
+                obj->mGyrodata[obj->mGyroNum].w[0] = buffer[i].data[0];
+                obj->mGyrodata[obj->mGyroNum].w[1] = buffer[i].data[1];
+                obj->mGyrodata[obj->mGyroNum].w[2] = buffer[i].data[2];
+                obj->mGyromaxtimestamp =
+                    obj->mGyrodata[obj->mGyroNum].t / 1000000000;
+                obj->pushEISPreviewQueue(&obj->mGyrodata[obj->mGyroNum]);
+                obj->mReadGyroPreviewCond.signal();
+                if (obj->mIsRecording) {
+                    obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
+                    obj->mReadGyroVideoCond.signal();
+                }
+                if (++obj->mGyroNum >= obj->kGyrocount)
+                    obj->mGyroNum = 0;
+                HAL_LOGV("gyro timestamp %" PRId64 ", x: %f, y: %f, z: %f",
+                         buffer[i].timestamp, buffer[i].data[0],
+                         buffer[i].data[1], buffer[i].data[2]);
+            }
+#endif
+
+            sensor_info->type = CAMERA_AF_GYROSCOPE;
+            sensor_info->gyro_info.timestamp = buffer[i].timestamp;
+            sensor_info->gyro_info.x = buffer[i].data[0];
+            sensor_info->gyro_info.y = buffer[i].data[1];
+            sensor_info->gyro_info.z = buffer[i].data[2];
+            if (NULL != obj->mCameraHandle &&
+                SPRD_IDLE == obj->mCameraState.capture_state &&
+                NULL != obj->mHalOem) {
+                obj->mHalOem->ops->camera_set_sensor_info_to_af(
+                    obj->mCameraHandle, sensor_info);
+            }
+            break;
+        }
+
+        case Sensor::TYPE_ACCELEROMETER: {
+            sensor_info->type = CAMERA_AF_ACCELEROMETER;
+            sensor_info->gsensor_info.timestamp = buffer[i].timestamp;
+            sensor_info->gsensor_info.vertical_up = buffer[i].data[0];
+            sensor_info->gsensor_info.vertical_down = buffer[i].data[1];
+            sensor_info->gsensor_info.horizontal = buffer[i].data[2];
+            HAL_LOGV("gsensor timestamp %" PRId64 ", x: %f, y: %f, z: %f",
+                     buffer[i].timestamp, buffer[i].data[0], buffer[i].data[1],
+                     buffer[i].data[2]);
+            if (NULL != obj->mCameraHandle && NULL != obj->mHalOem) {
+                obj->mHalOem->ops->camera_set_sensor_info_to_af(
+                    obj->mCameraHandle, sensor_info);
+            }
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+    return ret;
+}
+
+
+#ifdef CONFIG_SPRD_ANDROID_8
+void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
+    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+    ASensorManager *mSensorManager;
+    int mNumSensors;
+    ASensorList mSensorList;
+    uint32_t GyroRate = 10 * 1000;    // us
+    uint32_t GsensorRate = 50 * 1000; // us
+    uint32_t delayTime = 10 * 1000;   // us
+    uint32_t Gyro_flag = 0;
+    uint32_t Gsensor_flag = 0;
+    uint32_t mCount = 0;
+    ASensorEvent buffer[8];
+    ssize_t n;
+
+    HAL_LOGD("E");
+    if (!obj) {
+        HAL_LOGE("obj null  error");
         return NULL;
     }
-
-    if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
-        NULL == obj->mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
+    mSensorManager = ASensorManager_getInstanceForPackage("");
+    if (mSensorManager == NULL) {
+        HAL_LOGE("can not get ISensorManager service");
         sem_post(&obj->mGyro_sem);
         obj->mGyroExit = 1;
         return NULL;
+
     }
 
-    obj->mGyroNum = 0;
-    obj->mGyromaxtimestamp = 0;
-#ifdef CONFIG_CAMERA_EIS
-    memset(obj->mGyrodata, 0, sizeof(obj->mGyrodata));
-#endif
+    mNumSensors = ASensorManager_getSensorList(mSensorManager, &mSensorList);
+    const ASensor *accelerometerSensor = ASensorManager_getDefaultSensor(
+        mSensorManager, ASENSOR_TYPE_ACCELEROMETER);
+    const ASensor *gyroSensor =
+        ASensorManager_getDefaultSensor(mSensorManager, ASENSOR_TYPE_GYROSCOPE);
+    ALooper *mLooper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
+    ASensorEventQueue *sensorEventQueue =
+        ASensorManager_createEventQueue(mSensorManager, mLooper, 0, NULL, NULL);
 
+    if (accelerometerSensor != NULL) {
+        if (ASensorEventQueue_registerSensor(
+                sensorEventQueue, accelerometerSensor, GsensorRate, 0) < 0) {
+            HAL_LOGE("Unable to register sensorUnable to register sensor "
+                     "%d with "
+                     "rate %d and report latency %d" PRId64 "",
+                     ASENSOR_TYPE_ACCELEROMETER, GsensorRate, 0);
+            goto exit;
+        } else {
+            HAL_LOGI("acc enable");
+            Gsensor_flag = 1;
+        }
+    }
+
+    struct cmr_af_aux_sensor_info sensor_info;
+    SPRD_DEF_Tag sprddefInfo;
+    while (true == obj->mGyroInit) {
+        obj->mSetting->getSPRDDEFTag(&sprddefInfo);
+        if (!sprddefInfo.sprd_eis_enabled && gyroSensor != NULL) {
+            if (Gyro_flag) {
+                HAL_LOGI("gyro disable");
+                ASensorEventQueue_disableSensor(sensorEventQueue, gyroSensor);
+                Gyro_flag = 0;
+                obj->mGyromaxtimestamp = 0;
+            }
+        }
+
+        if (gyroSensor != NULL && sprddefInfo.sprd_eis_enabled && !Gyro_flag &&
+            (mCount < 10)) {
+            if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
+                                                 GyroRate, 0) < 0) {
+                mCount++;
+                HAL_LOGE("Unable to register sensorUnable to register sensor "
+                         "%d with "
+                         "rate %d and report latency %d" PRId64 ",mCount = %d",
+                         ASENSOR_TYPE_GYROSCOPE, GyroRate, 0, mCount);
+            } else {
+                HAL_LOGI("gyro enable");
+                if (mCount != 0)
+                    mCount = 0;
+                Gyro_flag = 1;
+            }
+        }
+
+        if ((n = ASensorEventQueue_getEvents(sensorEventQueue, buffer, 8)) >
+            0) {
+            gyro_get_data(p_data, buffer, n, &sensor_info);
+        }
+        usleep(delayTime);
+    }
+
+    if (Gsensor_flag) {
+        HAL_LOGI("close camera,sensor disable");
+        ASensorEventQueue_disableSensor(sensorEventQueue, accelerometerSensor);
+        Gsensor_flag = 0;
+    }
+    if (Gyro_flag) {
+        HAL_LOGI("close camera, gyro disable");
+        ASensorEventQueue_disableSensor(sensorEventQueue, gyroSensor);
+        Gyro_flag = 0;
+    }
+
+exit:
+    ASensorManager_destroyEventQueue(mSensorManager, sensorEventQueue);
+    sem_post(&obj->mGyro_sem);
+    obj->mGyroExit = 1;
+    HAL_LOGD("X");
+    return NULL;
+}
+
+#else
+void *SprdCamera3OEMIf::gyro_SensorManager_process(void *p_data) {
+    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+    uint32_t ret = 0;
+    int32_t result = 0;
+    int events;
+    uint32_t GyroRate = 10 * 1000;    //  us
+    uint32_t GsensorRate = 50 * 1000; // us
+    uint32_t Gyro_flag = 0;
+    uint32_t Gsensor_flag = 0;
+    uint32_t Timeout = 100; // ms
+    ASensorEvent buffer[8];
+    ssize_t n;
+
+    HAL_LOGE("E");
+    if (!obj) {
+        HAL_LOGE("obj null  error");
+        return NULL;
+    }
     SensorManager &mgr(
         SensorManager::getInstanceForPackage(String16("EIS intergrate")));
 
@@ -10140,15 +10310,6 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
             Gyro_flag = 1;
     } else
         HAL_LOGW("this device not support gyro");
-
-    /*if (NULL != obj->mCameraHandle) {
-        obj->mHalOem->ops->camera_get_sensor_max_fps(obj->mCameraHandle,
-                                                     obj->mCameraId, &max_fps);
-        if (0 == max_fps) {
-            max_fps = default_max_fps;
-        }
-        eventRate = 1000 * 1000 / max_fps; // fps->rate:ms
-    }*/
     if (gsensor != NULL) {
         ret = q->enableSensor(gsensor, GsensorRate);
         if (ret) {
@@ -10177,9 +10338,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
         goto exit;
     }
     loop->addFd(fd, fd, ALOOPER_EVENT_INPUT, NULL, NULL);
-
     struct cmr_af_aux_sensor_info sensor_info;
-    HAL_LOGD("loop for pull gyro and gsensor data");
     while (true == obj->mGyroInit) {
         result = loop->pollOnce(Timeout, NULL, &events, NULL);
         if ((result == ALOOPER_POLL_ERROR) || (events & ALOOPER_EVENT_HANGUP)) {
@@ -10209,94 +10368,47 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
             goto exit;
         }
         if ((result == fd) && (n = q->read(buffer, 8)) > 0) {
-            for (int i = 0; i < n; i++) {
-                memset((void *)&sensor_info, 0, sizeof(sensor_info));
-                switch (buffer[i].type) {
-                case Sensor::TYPE_GYROSCOPE: {
-#ifdef CONFIG_CAMERA_EIS
-                    // push gyro data for eis preview & video queue
-                    SPRD_DEF_Tag sprddefInfo;
-                    obj->mSetting->getSPRDDEFTag(&sprddefInfo);
-                    if (obj->mRecordingMode && sprddefInfo.sprd_eis_enabled) {
-                        struct timespec t1;
-                        clock_gettime(CLOCK_BOOTTIME, &t1);
-                        nsecs_t time1 = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
-                        HAL_LOGV("mGyroCamera CLOCK_BOOTTIME =%" PRId64, time1);
-                        obj->mGyrodata[obj->mGyroNum].t = buffer[i].timestamp;
-                        obj->mGyrodata[obj->mGyroNum].w[0] = buffer[i].data[0];
-                        obj->mGyrodata[obj->mGyroNum].w[1] = buffer[i].data[1];
-                        obj->mGyrodata[obj->mGyroNum].w[2] = buffer[i].data[2];
-                        obj->mGyromaxtimestamp =
-                            obj->mGyrodata[obj->mGyroNum].t / 1000000000;
-                        obj->pushEISPreviewQueue(
-                            &obj->mGyrodata[obj->mGyroNum]);
-                        obj->mReadGyroPreviewCond.signal();
-                        obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
-                        obj->mReadGyroVideoCond.signal();
-                        if (++obj->mGyroNum >= obj->kGyrocount)
-                            obj->mGyroNum = 0;
-                        HAL_LOGV("gyro timestamp %" PRId64
-                                 ", x: %f, y: %f, z: %f",
-                                 buffer[i].timestamp, buffer[i].data[0],
-                                 buffer[i].data[1], buffer[i].data[2]);
-                    }
-#endif
-
-                    sensor_info.type = CAMERA_AF_GYROSCOPE;
-                    sensor_info.gyro_info.timestamp = buffer[i].timestamp;
-                    sensor_info.gyro_info.x = buffer[i].data[0];
-                    sensor_info.gyro_info.y = buffer[i].data[1];
-                    sensor_info.gyro_info.z = buffer[i].data[2];
-                    if (NULL != obj->mCameraHandle &&
-                        SPRD_IDLE == obj->mCameraState.capture_state &&
-                        NULL != obj->mHalOem) {
-                        obj->mHalOem->ops->camera_set_sensor_info_to_af(
-                            obj->mCameraHandle, &sensor_info);
-                    }
-                    break;
-                }
-
-                case Sensor::TYPE_ACCELEROMETER: {
-                    sensor_info.type = CAMERA_AF_ACCELEROMETER;
-                    sensor_info.gsensor_info.timestamp = buffer[i].timestamp;
-                    sensor_info.gsensor_info.vertical_up = buffer[i].data[0];
-                    sensor_info.gsensor_info.vertical_down = buffer[i].data[1];
-                    sensor_info.gsensor_info.horizontal = buffer[i].data[2];
-                    HAL_LOGV("gsensor timestamp %" PRId64
-                             ", x: %f, y: %f, z: %f",
-                             buffer[i].timestamp, buffer[i].data[0],
-                             buffer[i].data[1], buffer[i].data[2]);
-                    if (NULL != obj->mCameraHandle && NULL != obj->mHalOem) {
-                        obj->mHalOem->ops->camera_set_sensor_info_to_af(
-                            obj->mCameraHandle, &sensor_info);
-                    }
-                    break;
-                }
-
-                default:
-                    break;
-                }
-            }
+            gyro_get_data(p_data, buffer, n, &sensor_info);
         }
     }
 
-    if (Gsensor_flag) {
-        q->disableSensor(gsensor);
-        Gsensor_flag = 0;
-    }
-    if (Gyro_flag) {
-        q->disableSensor(gyroscope);
-        Gyro_flag = 0;
-    }
 exit:
     sem_post(&obj->mGyro_sem);
     obj->mGyroExit = 1;
-    // mgr.sensorManagerDied();
-    HAL_LOGD("X");
-
+    HAL_LOGE("X");
     return NULL;
 }
+#endif
 
+void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
+    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+
+    HAL_LOGD("E");
+    if (!obj) {
+        HAL_LOGE("obj null  error");
+        return NULL;
+    }
+
+    if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
+        NULL == obj->mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        sem_post(&obj->mGyro_sem);
+        obj->mGyroExit = 1;
+        return NULL;
+    }
+    obj->mGyroNum = 0;
+    obj->mGyromaxtimestamp = 0;
+#ifdef CONFIG_CAMERA_EIS
+    memset(obj->mGyrodata, 0, sizeof(obj->mGyrodata));
+#endif
+#ifdef CONFIG_SPRD_ANDROID_8
+    gyro_ASensorManager_process(p_data);
+#else
+    gyro_SensorManager_process(p_data);
+#endif
+    HAL_LOGD("X");
+    return NULL;
+}
 int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
     int ret = NO_ERROR;
     void *dummy;
@@ -10336,10 +10448,13 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
         obj->mGyroMsgQueHandle = 0;
 
 #ifdef CONFIG_CAMERA_EIS
-        while (!obj->mGyroPreviewInfo.empty())
-            obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
-        while (!obj->mGyroVideoInfo.empty())
-            obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+        {
+            Mutex::Autolock l(&obj->mEisPreviewLock);
+            while (!obj->mGyroPreviewInfo.empty())
+                obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
+            while (!obj->mGyroVideoInfo.empty())
+                obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+        }
 #endif
     }
     HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
