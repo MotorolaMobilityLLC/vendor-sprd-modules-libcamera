@@ -4922,6 +4922,10 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto res_deinit;
     }
     ret = camera_res_init_done(oem_handle);
+    if (ret) {
+        CMR_LOGE("failed to init res %ld", ret);
+        goto res_deinit;
+    }
     goto exit;
 
 res_deinit:
