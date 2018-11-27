@@ -1360,7 +1360,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->exp_data.lib_data.line_time = cxt->cur_status.line_time;
 			rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 		}
-		if(0==cxt->cur_status.settings.table_idx){
+		if((0==cxt->cur_status.settings.table_idx)&&(0 == cxt->app_mode)){ // app_mode is for 'ev' controling, which isn't for flash flow. flash won't change anything which ev convers.
 			/* trigging the `LockAe/af`'s operation will firstly cause process pre-flash-flow before really setting the ae_compensation_flag. so
 			 * this code prevents the table_idx's value 0.  */
 			struct ae_exp_compensation exp_comp;
