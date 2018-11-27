@@ -2066,7 +2066,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
     fps_param.is_recording = isRecordMode;
     if (isRecordMode) {
-        fps_param.min_fps = controlInfo.ae_target_fps_range[1];
+        fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 1;
 
