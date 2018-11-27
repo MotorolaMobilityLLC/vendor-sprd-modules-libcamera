@@ -413,6 +413,9 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         uint8_t mCaptureStreamsNum;
         BlurAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
         BlurAPI2_t *mBlurApi2;
+        int mMaxFrame;
+        int mFaceInfoX;
+        int mFaceInfoY;
         int mLastMinScope;
         int mLastMaxScope;
         int mLastAdjustRati;

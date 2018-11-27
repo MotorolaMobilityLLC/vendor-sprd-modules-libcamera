@@ -61,6 +61,16 @@ SprdCamera3Blur *mBlur = NULL;
 #define ABS(x) (((x) > 0) ? (x) : -(x))
 #endif
 
+#ifndef FACE_INFO_SCALE
+#define FACE_SCREEN_EFFECT_FACTOR 5
+#define FACE_EFFECT_FACTOR 5
+#define FACE_INFO_SCALE(initwidth, initheight, x1, y1, x2, y2)                 \
+    initwidth *initheight * FACE_SCREEN_EFFECT_FACTOR/                                                    \
+        (ABS(x2 - x1) * ABS(x2 - x1) + ABS(y2 - y1) * ABS(y2 - y1)) * FACE_EFFECT_FACTOR
+#endif
+
+#define MAX_FRAME 75
+
 camera3_device_ops_t SprdCamera3Blur::mCameraCaptureOps = {
     .initialize = SprdCamera3Blur::initialize,
     .configure_streams = SprdCamera3Blur::configure_streams,
@@ -2052,6 +2062,7 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mCaptureInitParams.findex2gamma_adjust_ratio =
         (float)(mLastAdjustRati) / 10000;
+    mMaxFrame = MAX_FRAME;
 
     return initBlur20Params();
 }
@@ -2771,6 +2782,25 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         mLastTouchY * mPreviewInitParams.height / origH;
                     mUpdataTouch = false;
                     mUpdataxy = 1;
+                    mMaxFrame = MAX_FRAME;
+                }
+                if (mUpdataxy != 0) {
+                    if (mMaxFrame == MAX_FRAME) {
+                        mFaceInfoX = mFaceInfo[0];
+                        mFaceInfoY = mFaceInfo[1];
+                    }
+                    if (mMaxFrame <= 0) {
+                        int x = FACE_INFO_SCALE(mPreviewInitParams.width,
+                                                mPreviewInitParams.height,
+                                                mFaceInfo[0], mFaceInfo[1],
+                                                mFaceInfo[2], mFaceInfo[3]);
+                        if (ABS(mFaceInfoX - mFaceInfo[0]) * x >
+                                mPreviewInitParams.width / 2 ||
+                            ABS(mFaceInfoY - mFaceInfo[1]) * x >
+                                mPreviewInitParams.height / 2)
+                            mUpdataxy = 0;
+                    }
+                    mMaxFrame--;
                 }
                 if (!mUpdataxy) {
                     mPreviewWeightParams.sel_x =
