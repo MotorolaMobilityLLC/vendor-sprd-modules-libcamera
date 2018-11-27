@@ -6043,6 +6043,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	rtn = ae_set_ae_param(cxt, init_param, &work_param, AE_PARAM_INIT);
 
+        cxt->target_lum_zone_bak = cxt->cur_status.target_lum_zone;
+
 	s_q_param.exp_valid_num = cxt->exp_skip_num + 1 + AE_UPDAET_BASE_OFFSET;
 	s_q_param.sensor_gain_valid_num = cxt->gain_skip_num + 1 + AE_UPDAET_BASE_OFFSET;
 	s_q_param.isp_gain_valid_num = 1 + AE_UPDAET_BASE_OFFSET;
