@@ -233,8 +233,13 @@ static cmr_int ov12a10_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(5 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        // hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
+
     } else {
+
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         usleep(1 * 1000);
