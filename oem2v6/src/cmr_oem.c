@@ -1489,6 +1489,9 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                         SNAPSHOT_EVT_POSTPROC_START, &frame);
     } else if (1 == camera_get_3dnr_flag(cxt)) {
+        camera_snapshot_cb_to_hal((cmr_handle)cb_param->private_data,
+                                  SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
+                                  SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
         frame.channel_id = cxt->snp_cxt.channel_id;
         ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                         SNAPSHOT_EVT_POSTPROC_START, &frame);
@@ -3414,7 +3417,6 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
     }
 
     if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited) {
-
         ret = camera_open_cnr(cxt, NULL, NULL);
         if (ret) {
             CMR_LOGE("failed to open cnr %ld", ret);
