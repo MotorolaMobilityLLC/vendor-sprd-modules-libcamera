@@ -91,6 +91,7 @@ extern "C" {
 		cmr_u8 ae_compensation_flag;
 		float ae_ev_value;
 		cmr_u16 ae_base_target;
+		cmr_u32 touch_ev_flag;
 	};
 
 	struct hdr_calc_result {

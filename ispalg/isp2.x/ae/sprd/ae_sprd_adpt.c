@@ -4277,9 +4277,10 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
 				cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
 				cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
-				if (0 ==exp_comp->comp_val) {
+				if (0 ==exp_comp->comp_val && 0 == cxt->exposure_compensation.touch_ev_flag) {
 					cxt->cur_status.settings.manual_mode = 2;
 				} else {
+					cxt->exposure_compensation.touch_ev_flag = 1;//keep index (fps) on first touch ev
 					ae_set_compensation_calc(cxt, &change_idx);
 					cxt->cur_status.settings.manual_mode = 1;
 					cxt->cur_status.settings.table_idx = change_idx;
@@ -6109,6 +6110,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	/*jhin add flash mode*/
 	cxt->cur_status.flash_mode = 0;
+	/*jhin add touch ev to reset */
+	cxt->exposure_compensation.touch_ev_flag = 0;
 
 	cxt->bypass = init_param->has_force_bypass;
 	if (init_param->has_force_bypass) {
