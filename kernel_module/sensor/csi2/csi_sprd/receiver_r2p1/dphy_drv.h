@@ -56,6 +56,7 @@ struct dphy_info {
 };
 
 //#define REG_MM_AHB_MIPI_CSI_SEL_CTRL           0x0030
+#define REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_MIPI_PHY_BIST_TEST               0x0014
 #define REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_CSI_4L_BIST_TEST                 0x00b4
 #define REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_REG_SEL_CFG_0                  0x008c
 #define REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_2P2L_CTRL_DB               0x0078
@@ -79,9 +80,13 @@ struct dphy_info {
 #define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_CSI_2P2L_TESTCLR_S_SEL 0x40000
 #define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_DSI_TESTCLR_DB 0x1
 
+#define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_FORCE_CSI_PHY_SHUTDOWNZ                               0x4000000
+#define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_FORCE_CSI_S_PHY_SHUTDOWNZ                             0x1000000
+#define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_FORCE_CSI_PHY_SHUTDOWNZ                               0x4000000
+
 void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb);
 int dphy_csi_path_cfg(struct csi_dt_node_info *dt_info);
-void dphy_init_state(unsigned int phyid, int csi_id);
+void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id);
 int phy_parse_dt(int phyid, struct device *dev);
 
 #endif

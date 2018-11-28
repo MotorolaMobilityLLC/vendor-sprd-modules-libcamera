@@ -52,8 +52,8 @@ static char *phy_name[] = {
 	"mipi-csi-phy0", /* 4Lane */
 	"mipi-csi-phy1", /* 2p2l */
 	"mipi-csi-phy2", /* 2lane */
-	"mipi-csi-phy1_m", /*2p2l_m*/
-	"mipi-csi-phy1_s", /*2p2l_s*/
+	"mipi-csi-phy1-m", /*2p2l_m*/
+	"mipi-csi-phy1-s", /*2p2l_s*/
 };
 
 static struct dphy_info *g_phy_info[4];
@@ -467,14 +467,37 @@ err:
 
 void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
 {
+	unsigned int shutdownz = 0;
+	unsigned int reg = 0;
 	struct dphy_info *phy = get_phy_info(phyid);
 
 	if (!phy) {
 		pr_err("fail to get valid phy ptr\n");
 		return;
 	}
-	//return;
+
 	pr_info("phyid: %d, csi_id:%d, is_eb:%d\n", phyid, csiId, is_eb);
+
+	switch (csiId) {
+	case CSI_RX0:
+		shutdownz =
+		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_FORCE_CSI_PHY_SHUTDOWNZ;
+		reg = REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_CSI_4L_BIST_TEST;
+		break;
+	case CSI_RX1:
+		shutdownz =
+		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_FORCE_CSI_S_PHY_SHUTDOWNZ;
+		reg = REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_CSI_4L_BIST_TEST;
+		break;
+	case CSI_RX2:
+		shutdownz =
+		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_FORCE_CSI_PHY_SHUTDOWNZ;
+		reg = REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_MIPI_PHY_BIST_TEST;
+		break;
+	default:
+		pr_err("fail to get valid csi_rx id\n");
+	}
+
 	switch (phy->phy_id) {
 	case PHY_4LANE:
 	case PHY_2LANE:
@@ -509,6 +532,9 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
 		regmap_update_bits(phy->anlg_phy, phy->ps_pd_s,
 				phy->ps_pd_l_msk, phy->ps_pd_l_msk);
 		udelay(100);
+		/* set phy force shutdown */
+		regmap_update_bits(phy->anlg_phy, reg,
+				shutdownz, shutdownz);
 	} else { /* power on */
 		/* According to the time sequence of CSI-DPHY INIT,
 		 * need pull down POWER, DPHY-reset and CSI-2 controller reset
@@ -535,6 +561,10 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
 		regmap_update_bits(phy->anlg_phy, phy->iso_sw_en,
 				phy->iso_sw_en_msk, ~(phy->iso_sw_en_msk));
 
+		/* set phy force shutdown */
+		regmap_update_bits(phy->anlg_phy, reg,
+				shutdownz, shutdownz);
+
 		/* According to the time sequence of CSI-DPHY INIT,
 		 * need pull up POWER, DPHY-reset and CSI-2 controller reset
 		 */
@@ -548,6 +578,7 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
 			|| phy->phy_id == PHY_2LANE){
 			CSI_REG_MWR(csiId, PHY_TEST_CRTL0, PHY_TESTCLR, 0);
 		}
+
 		csi_shut_down_phy(0, csiId);
 		csi_reset_shut_down(0, csiId);
 	}
@@ -594,7 +625,7 @@ int dphy_csi_path_cfg(struct csi_dt_node_info *dt_info)
 		dt_info->phy_id, dt_info->controller_id, cphy_sel_val);
 	regmap_update_bits(dt_info->syscon.mm_ahb,
 		dt_info->syscon.dphy_sel, dt_info->syscon.dphy_msk,
-		cphy_sel_val << (dt_info->controller_id*6));
+		cphy_sel_val);
 
 	return 0;
 }
@@ -663,7 +694,7 @@ static void phy_write(int idx, int addr, int data)
 	udelay(1);
 }
 
-void dphy_init_state(unsigned int phyid, int csi_id)
+void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id)
 {
 	struct dphy_info *phy = get_phy_info(phyid);
 	if (!phy) {
@@ -674,10 +705,14 @@ void dphy_init_state(unsigned int phyid, int csi_id)
 	if (phy->phy_id == PHY_4LANE || phy->phy_id == PHY_2LANE)
 		dphy_cfg_clr(phy->phy_id);
 
-	regmap_update_bits(phy->cam_ahb, REG_MM_AHB_MIPI_CSI_SEL_CTRL,
-		0x7 << (csi_id*6), 0x0 << (csi_id*6));
+	if (phy->phy_id == PHY_2P2
+		|| phy->phy_id == PHY_2P2_M
+		|| phy->phy_id == PHY_2P2_S) {
+		regmap_update_bits(phy->cam_ahb, REG_MM_AHB_MIPI_CSI_SEL_CTRL,
+			0x7 << (csi_id*6), 0x0 << (csi_id*6));
 
-	/* To init 2p2l_s on SharkL5 */
-	phy_write(csi_id, 0x4d, 0x10);
-	phy_write(csi_id, 0x5d, 0x11);
+		/* To init 2p2l_s on SharkL5 */
+		phy_write(sensor_id, 0x4d, 0x10);
+		phy_write(sensor_id, 0x5d, 0x11);
+	}
 }

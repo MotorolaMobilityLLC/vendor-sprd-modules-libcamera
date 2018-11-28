@@ -47,33 +47,39 @@ static struct csi_dt_node_info *csi_get_dt_node_data(int sensor_id)
 	return s_csi_dt_info_p[sensor_id];
 }
 
-static int csi_mipi_clk_enable(int sensor_id)
+static int csi_mipi_clk_enable(int sensor_id, int is_pattern)
 {
 	struct csi_dt_node_info *dt_info = NULL;
-	void __iomem *reg_base = NULL;
-	unsigned long reg = 0;
+	int ret = 0;
 
 	dt_info = csi_get_dt_node_data(sensor_id);
 
-	/* enable ckg clock */
+	/* enable ckg gate */
 	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.ckg_eb,
 		dt_info->syscon.ckg_eb_msk, dt_info->syscon.ckg_eb_msk);
 
-	/* enable csi clock */
+	/* enable csi gate */
 	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.csi_eb,
 		dt_info->syscon.csi_eb_msk, dt_info->syscon.csi_eb_msk);
 
-	if (CSI_PATTERN_ENABLE) {
-		reg = 0x6210004c + (dt_info->controller_id*0x4);
-		reg_base = ioremap_nocache(reg, 0x04);
-		if (reg_base == NULL) {
-			pr_err("enable ipg clock failed\n");
-			return -1;
-		}
-		/* set clock from soc */
-		REG_MWR(reg_base, BIT_16, ~BIT_16);
-		iounmap(reg_base);
-		reg_base = NULL;
+	/* enable ckg clock */
+	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.cphy_ckg_eb,
+		dt_info->syscon.cphy_ckg_eb_msk, dt_info->syscon.cphy_ckg_eb_msk);
+
+	/* enable cfg gate 0x327d013c */
+	regmap_update_bits(dt_info->syscon.aon_apb, dt_info->syscon.cphy_cfg_en,
+		dt_info->syscon.cphy_cfg_en_msk, dt_info->syscon.cphy_cfg_en_msk);
+
+	/* set csi clk from pad */
+	ret = clk_prepare_enable(dt_info->csi_src_eb);
+	if (ret) {
+		pr_err("fail to mipi\n");
+		return ret;
+	}
+
+	/* if pattern enable, clk from soc */
+	if (is_pattern) {
+		clk_disable_unprepare(dt_info->csi_src_eb);
 	}
 
 	return 0;
@@ -85,13 +91,26 @@ static void csi_mipi_clk_disable(int sensor_id)
 
 	dt_info = csi_get_dt_node_data(sensor_id);
 
+	clk_disable_unprepare(dt_info->csi_src_eb);
+
+	/* enable cfg gate */
+	regmap_update_bits(dt_info->syscon.aon_apb, dt_info->syscon.cphy_cfg_en,
+		dt_info->syscon.cphy_ckg_eb_msk, ~(dt_info->syscon.cphy_cfg_en_msk));
+
 	/* enable ckg clock */
-	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.ckg_eb,
-		dt_info->syscon.ckg_eb_msk, ~(dt_info->syscon.ckg_eb_msk));
+	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.cphy_ckg_eb,
+		dt_info->syscon.cphy_ckg_eb_msk, ~(dt_info->syscon.cphy_ckg_eb_msk));
 
 	/* enable csi clock */
 	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.csi_eb,
 		dt_info->syscon.csi_eb_msk, ~(dt_info->syscon.csi_eb_msk));
+
+	/* enable ckg clock */
+	regmap_update_bits(dt_info->syscon.mm_ahb, dt_info->syscon.ckg_eb,
+		dt_info->syscon.ckg_eb_msk, ~(dt_info->syscon.ckg_eb_msk));
+
+
+
 }
 
 int csi_api_mipi_phy_cfg_init(struct device_node *phy_node, int sensor_id)
@@ -200,6 +219,27 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 		goto err;
 	}
 
+	csi_info->syscon.aon_apb = syscon_regmap_lookup_by_name(dn, "cphy_cfg_en");
+	if (IS_ERR_OR_NULL(csi_info->syscon.aon_apb)) {
+		pr_err("get aon apb syscon failed\n");
+		return -EINVAL;
+	}
+
+	ret = syscon_get_args_by_name(dn, "cphy_cfg_en", 2, args);
+	if (ret == 2) {
+		csi_info->syscon.cphy_cfg_en = args[0];
+		csi_info->syscon.cphy_cfg_en_msk = args[1];
+	} else {
+		pr_err("get csi cphy ckg failed\n");
+		goto err;
+	}
+
+	csi_info->csi_src_eb = of_clk_get_by_name(dn, "mipi_csi_src");
+	if (IS_ERR_OR_NULL(csi_info->csi_src_eb)) {
+		pr_err("get mipi_csi_src failed\n");
+		goto err;
+	}
+
 	ret = phy_parse_dt(phy_id, dev);
 	if (ret != 0) {
 		pr_err("parse phy dts efailed\n");
@@ -228,7 +268,7 @@ static int dphy_init(unsigned int bps_per_lane,
 	dt_info = csi_get_dt_node_data(sensor_id);
 	csi_phy_power_down(phy_id, sensor_id, 0);
 	/* csi_controller_enable(dt_info, phy_id); */
-	dphy_init_state(phy_id, dt_info->controller_id);
+	dphy_init_state(phy_id, dt_info->controller_id, sensor_id);
 	ret = dphy_csi_path_cfg(dt_info);
 
 	return ret;
@@ -240,7 +280,7 @@ int csi_api_mipi_phy_cfg(void)
 	return ret;
 }
 
-int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id)
+int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id, int is_pattern)
 {
 	int ret = 0;
 	struct csi_dt_node_info *dt_info = csi_get_dt_node_data(sensor_id);
@@ -256,7 +296,7 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id)
 	if (unlikely(ret))
 		goto EXIT;
 
-	ret = csi_mipi_clk_enable(sensor_id);
+	ret = csi_mipi_clk_enable(sensor_id, is_pattern);
 	if (unlikely(ret < 0))
 		goto EXIT;
 
@@ -268,7 +308,7 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id)
 
 	csi_start(sensor_id);
 	csi_set_on_lanes(lane_num, sensor_id);
-	if (CSI_PATTERN_ENABLE)
+	if (is_pattern)
 		csi_ipg_mode_cfg(sensor_id, 1, 0, 4224, 3136);
 
 	pr_info("exit success\n");

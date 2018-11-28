@@ -20,6 +20,7 @@
 
 struct glb_syscon {
 	struct regmap *mm_ahb;
+	struct regmap *aon_apb; //0x327d013c
 	u32 dphy_sel;
 	u32 dphy_msk;
 	u32 csi_eb;
@@ -30,6 +31,8 @@ struct glb_syscon {
 	u32 ckg_eb_msk;
 	u32 cphy_ckg_eb;
 	u32 cphy_ckg_eb_msk;
+	u32 cphy_cfg_en;
+	u32 cphy_cfg_en_msk;
 };
 struct csi_dt_node_info {
 	unsigned int controller_id;
@@ -48,7 +51,8 @@ int csi_api_mipi_phy_cfg(void);
 int csi_api_mipi_phy_cfg_init(struct device_node *phy_node, int sensor_id);
 int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 				int csi_id, unsigned int phy_id);
-int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id);
+int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id,
+	int is_pattern);
 int csi_api_close(uint32_t phy_id, int csi_id);
 int csi_api_switch(int sensor_id);
 #endif

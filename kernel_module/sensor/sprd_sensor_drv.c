@@ -109,12 +109,17 @@ static int sprd_sensor_parse_gpio_dt(struct device *dev,
 	for (i = 0; i < SPRD_SENSOR_GPIO_TAG_MAX; i++) {
 		sensor_info->gpio_tab[i] = of_get_named_gpio(dev->of_node,
 						sprd_sensor_gpio_names[i], 0);
-		if (gpio_is_valid(sensor_info->gpio_tab[i]))
-			devm_gpio_request(dev, sensor_info->gpio_tab[i],
+		if (gpio_is_valid(sensor_info->gpio_tab[i])) {
+			ret = devm_gpio_request(dev, sensor_info->gpio_tab[i],
 						sprd_sensor_gpio_names[i]);
+		} else {
+			pr_err("invalid gpio: i=%d, gpio=%d, name=%s\n",
+			       i, sensor_info->gpio_tab[i],
+			       sprd_sensor_gpio_names[i]);
+		}
 	}
 
-	return ret;
+	return 0;
 }
 
 static int sprd_sensor_free_gpio(struct device *dev,
@@ -154,7 +159,6 @@ static uint32_t parse_dcam_id(struct device_node *dn,
 static int sprd_sensor_parse_dt(struct device *dev,
 				struct sprd_sensor_dev_info_tag *sensor_info)
 {
-	return 0;
 
 	if (sprd_sensor_parse_clk_dt(dev, sensor_info)) {
 		pr_err("%s :clock parsing error\n", __func__);
@@ -583,6 +587,11 @@ int sprd_sensor_set_mclk(unsigned int *saved_clk, unsigned int set_mclk,
 
 	if (set_mclk == 0) {
 		if (p_dev->mclk_freq) {
+			if (p_dev->sensor_eb)
+				clk_disable_unprepare(p_dev->sensor_eb);
+			else if (p_dev->ccir_eb)
+				clk_disable_unprepare(p_dev->ccir_eb);
+
 			if (p_dev->sensor_clk) {
 				clk_set_parent(p_dev->sensor_clk,
 					       p_dev->sensor_clk_default);
@@ -590,10 +599,6 @@ int sprd_sensor_set_mclk(unsigned int *saved_clk, unsigned int set_mclk,
 					     p_dev->sensor_clk_default_rate);
 				clk_disable_unprepare(p_dev->sensor_clk);
 			}
-			if (p_dev->sensor_eb)
-				clk_disable_unprepare(p_dev->sensor_eb);
-			else if (p_dev->ccir_eb)
-				clk_disable_unprepare(p_dev->ccir_eb);
 		}
 	} else if (p_dev->mclk_freq != set_mclk) {
 		if (set_mclk > SPRD_SENSOR_MAX_MCLK)
@@ -617,10 +622,10 @@ int sprd_sensor_set_mclk(unsigned int *saved_clk, unsigned int set_mclk,
 			pr_debug("set_mclk %d sensor_id %d\n",
 				set_mclk, sensor_id);
 
-			clk_prepare_enable(p_dev->sensor_eb);
 			clk_set_parent(p_dev->sensor_clk, clk_parent);
 			clk_set_rate(p_dev->sensor_clk,
 				     (set_mclk * SPRD_SENSOR_MCLK_VALUE));
+			clk_prepare_enable(p_dev->sensor_eb);
 		} else if (p_dev->ccir_eb && p_dev->sensor_clk) {
 			clk_prepare_enable(p_dev->ccir_eb);
 		}
@@ -639,7 +644,7 @@ void sprd_sensor_sync_lock(int sensor_id)
 
 	p_dev = sprd_sensor_get_dev_context(sensor_id);
 	if (!p_dev)
-		;//pr_err("%s, error\n", __func__);
+		pr_err("%s, error\n", __func__);
 	else
 		mutex_lock(&p_dev->sync_lock);
 }
@@ -650,7 +655,7 @@ void sprd_sensor_sync_unlock(int sensor_id)
 
 	p_dev = sprd_sensor_get_dev_context(sensor_id);
 	if (!p_dev)
-		;//pr_err("%s, error\n", __func__);
+		pr_err("%s, error\n", __func__);
 	else
 		mutex_unlock(&p_dev->sync_lock);
 }
@@ -823,9 +828,7 @@ int sprd_sensor_read_reg(int sensor_id, struct sensor_reg_bits_tag *pReg)
 		msg_r[1].flags = I2C_M_RD;
 		msg_r[1].buf = buf_r;
 		msg_r[1].len = r_cmd_num;
-		// skip for csi pattern
-		cnt = SPRD_SENSOR_I2C_READ_SUCCESS_CNT;
-		//cnt = i2c_transfer(p_dev->i2c_info->adapter, msg_r, 2);
+		cnt = i2c_transfer(p_dev->i2c_info->adapter, msg_r, 2);
 		if (cnt != SPRD_SENSOR_I2C_READ_SUCCESS_CNT) {
 			pr_err("%s fail, ret %d, addr 0x%x, reg_addr 0x%x\n",
 			__func__, ret, p_dev->i2c_info->addr, reg_addr);
@@ -898,9 +901,7 @@ int sprd_sensor_write_reg(int sensor_id, struct sensor_reg_bits_tag *pReg)
 			msg_w.flags = 0;
 			msg_w.buf = cmd;
 			msg_w.len = index;
-			// skip for csi pattern
-			cnt = SPRD_SENSOR_I2C_WRITE_SUCCESS_CNT;
-			//cnt = i2c_transfer(p_dev->i2c_info->adapter, &msg_w, 1);
+			cnt = i2c_transfer(p_dev->i2c_info->adapter, &msg_w, 1);
 			if (cnt != SPRD_SENSOR_I2C_WRITE_SUCCESS_CNT) {
 				pr_err("%s fail to:\n"
 					"i2cAddr=%x,\n"
@@ -1121,9 +1122,7 @@ int sprd_sensor_burst_write_init(struct sensor_reg_tag *p_reg_table,
 			msg_w.flags = 0;
 			msg_w.buf = p_reg_val_tmp;
 			msg_w.len = (uint32_t) (wr_num_once);
-			// skip for csi pattern
-			cnt = SPRD_SENSOR_I2C_WRITE_SUCCESS_CNT;
-			//cnt = i2c_transfer(i2c_client->adapter, &msg_w, 1);
+			cnt = i2c_transfer(i2c_client->adapter, &msg_w, 1);
 			if (cnt != SPRD_SENSOR_I2C_WRITE_SUCCESS_CNT) {
 				pr_err("SENSOR: s err, val\n"
 					"{0x%x 0x%x}\n"
@@ -1191,9 +1190,7 @@ int sprd_sensor_write_i2c(struct sensor_i2c_tag *i2c_tab,
 		ret = -1;
 		goto exit;
 	}
-	// skip for csi pattern
-	i2c_cnt = SPRD_SENSOR_I2C_READ_SUCCESS_CNT;
-	//i2c_cnt = i2c_transfer(i2c_client->adapter, &msg_w, 1);
+	i2c_cnt = i2c_transfer(i2c_client->adapter, &msg_w, 1);
 	if (i2c_cnt != SPRD_SENSOR_I2C_WRITE_SUCCESS_CNT) {
 		pr_err("SENSOR: w reg fail, i2c_cnt: %d, addr: 0x%x\n",
 		i2c_cnt, msg_w.addr);
@@ -1357,9 +1354,7 @@ int sprd_sensor_read_i2c(struct sensor_i2c_tag *i2c_tab,
 			ret = -1;
 			goto exit;
 		}
-		// skip for csi pattern
-		i2c_cnt = SPRD_SENSOR_I2C_READ_SUCCESS_CNT;
-		//i2c_cnt = i2c_transfer(i2c_client->adapter, msg_r, 2);
+		i2c_cnt = i2c_transfer(i2c_client->adapter, msg_r, 2);
 		if (i2c_cnt != SPRD_SENSOR_I2C_READ_SUCCESS_CNT) {
 			pr_err("SENSOR:read reg fail, ret %d, addr 0x%x\n",
 				ret, i2c_client->addr);
@@ -1403,3 +1398,4 @@ int sprd_sensor_find_dcam_id(int sensor_id)
 
 	return -1;
 }
+EXPORT_SYMBOL(sprd_sensor_find_dcam_id);

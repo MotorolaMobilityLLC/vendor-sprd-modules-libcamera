@@ -40,13 +40,15 @@
 #define pr_fmt(fmt) "SENSOR_CORE: %d: %s line=%d: " fmt, \
 	current->pid, __func__, __LINE__
 
+static int csi_pattern = 0;
+
 static int sprd_sensor_mipi_if_open(struct sprd_sensor_file_tag *p_file,
 				    struct sensor_if_cfg_tag *if_cfg)
 {
 	int ret = 0;
 
 	ret = csi_api_open(if_cfg->bps_per_lane, if_cfg->phy_id,
-			   if_cfg->lane_num, p_file->sensor_id);
+			   if_cfg->lane_num, p_file->sensor_id, csi_pattern);
 	if (ret) {
 		pr_err("fail to open csi %d\n", ret);
 		return ret;
@@ -151,8 +153,6 @@ static int sprd_sensor_io_set_cammot(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	unsigned int vdd_val;
 
-	return 0;
-
 	ret = copy_from_user(&vdd_val, (unsigned int *)arg,
 			     sizeof(unsigned int));
 	if (ret == 0) {
@@ -174,8 +174,6 @@ static int sprd_sensor_io_set_avdd(struct sprd_sensor_file_tag *p_file,
 {
 	int ret = 0;
 	unsigned int vdd_val;
-
-	return 0;
 
 	ret = copy_from_user(&vdd_val, (unsigned int *)arg,
 			     sizeof(unsigned int));
@@ -200,8 +198,6 @@ static int sprd_sensor_io_set_dvdd(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	unsigned int vdd_val;
 
-	return 0;
-
 	ret = copy_from_user(&vdd_val, (unsigned int *)arg,
 			     sizeof(unsigned int));
 	if (ret == 0) {
@@ -223,8 +219,6 @@ static int sprd_sensor_io_set_iovdd(struct sprd_sensor_file_tag *p_file,
 {
 	int ret = 0;
 	unsigned int vdd_val;
-
-	return 0;
 
 	ret = copy_from_user(&vdd_val, (unsigned int *)arg,
 			     sizeof(unsigned int));
@@ -248,8 +242,6 @@ static int sprd_sensor_io_set_mclk(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	unsigned int mclk;
 
-	return 0;
-
 	ret = copy_from_user(&mclk, (unsigned int *)arg, sizeof(unsigned int));
 	if (ret == 0)
 		ret = sprd_sensor_set_mclk(&p_file->sensor_mclk, mclk,
@@ -263,8 +255,6 @@ static int sprd_sensor_io_set_reset(struct sprd_sensor_file_tag *p_file,
 {
 	int ret = 0;
 	unsigned int rst_val[2];
-
-	return 0;
 
 	ret = copy_from_user(rst_val, (unsigned int *)arg,
 			     2 * sizeof(unsigned int));
@@ -281,8 +271,6 @@ static int sprd_sensor_io_set_reset_level(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	unsigned int level;
 
-	return 0;
-
 	ret = copy_from_user(&level, (unsigned int *)arg,
 			     sizeof(unsigned int));
 	if (ret == 0)
@@ -297,8 +285,6 @@ static int sprd_sensor_io_set_mipi_switch(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	unsigned int level;
 
-	return 0;
-
 	ret = copy_from_user(&level, (unsigned int *)arg, sizeof(unsigned int));
 	if (ret == 0)
 		ret = sprd_sensor_set_mipi_level(p_file->sensor_id, level);
@@ -312,10 +298,15 @@ static int sprd_sensor_io_set_i2c_addr(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	unsigned short i2c_addr;
 
-	return 0;
-
 	ret = copy_from_user(&i2c_addr, (unsigned short *)arg,
 			     sizeof(unsigned short));
+	/* this addr means using csi pattern */
+	if (i2c_addr == 0xff) {
+		pr_info("enable csi testpattern mode!\n");
+		csi_pattern = 1;
+		return ret;
+	}
+
 	if (ret == 0)
 		ret = sprd_sensor_set_i2c_addr(p_file->sensor_id, i2c_addr);
 
@@ -327,8 +318,6 @@ static int sprd_sensor_io_set_i2c_clk(struct sprd_sensor_file_tag *p_file,
 {
 	int ret = 0;
 	unsigned int clock;
-
-	return 0;
 
 	ret = copy_from_user(&clock, (unsigned int *)arg, sizeof(unsigned int));
 	if (ret == 0)
@@ -343,7 +332,8 @@ static int sprd_sensor_io_read_i2c(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	struct sensor_reg_bits_tag reg;
 
-	return 0;
+	if (csi_pattern)
+		return 0;
 
 	ret = copy_from_user(&reg, (struct sensor_reg_bits_tag *)arg,
 			     sizeof(reg));
@@ -361,7 +351,8 @@ static int sprd_sensor_io_write_i2c(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	struct sensor_reg_bits_tag reg;
 
-	return 0;
+	if (csi_pattern)
+		return 0;
 
 	ret = copy_from_user(&reg, (struct sensor_reg_bits_tag *)arg,
 			     sizeof(reg));
@@ -377,7 +368,8 @@ static int sprd_sensor_io_write_i2c_regs(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	struct sensor_reg_tab_tag regTab;
 
-	return 0;
+	if (csi_pattern)
+		return 0;
 
 	ret = copy_from_user(&regTab, (struct sensor_reg_tab_tag *)arg,
 			     sizeof(regTab));
@@ -439,6 +431,9 @@ static int sprd_sensor_io_grc_write_i2c(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	struct sensor_i2c_tag i2c_tab;
 
+	if (csi_pattern)
+		return 0;
+
 	ret = copy_from_user(&i2c_tab, (struct sensor_i2c_tag *)arg,
 			     sizeof(i2c_tab));
 	if (ret == 0)
@@ -453,6 +448,9 @@ static int sprd_sensor_io_grc_read_i2c(struct sprd_sensor_file_tag *p_file,
 	int ret = 0;
 	struct sensor_i2c_tag i2c_tab;
 
+	if (csi_pattern)
+		return 0;
+
 	ret = copy_from_user(&i2c_tab, (struct sensor_i2c_tag *)arg,
 			     sizeof(i2c_tab));
 	if (ret == 0)
@@ -466,6 +464,9 @@ static int sprd_sensor_io_muti_write_i2c(struct sprd_sensor_file_tag *p_file,
 {
 	int ret = 0;
 	struct sensor_muti_aec_i2c_tag aec_i2c_tab;
+
+	if (csi_pattern)
+		return 0;
 
 	ret = copy_from_user(&aec_i2c_tab, (void __user *)arg,
 			     sizeof(aec_i2c_tab));
@@ -483,21 +484,19 @@ static int sprd_sensor_io_power_cfg(struct sprd_sensor_file_tag *p_file,
 
 	ret = copy_from_user(&pwr_cfg, (struct sensor_power_info_tag *)arg,
 			     sizeof(struct sensor_power_info_tag));
-#if 0
 	if (ret == 0) {
 		if (pwr_cfg.is_on) {
-			ret = sensor_power_on((uint32_t *)p_file,
+			/*ret = sensor_power_on((uint32_t *)p_file,
 					      pwr_cfg.op_sensor_id,
 					      &pwr_cfg.dev0,
-					      &pwr_cfg.dev1, &pwr_cfg.dev2);
+					      &pwr_cfg.dev1, &pwr_cfg.dev2);*/
 		} else {
-			ret = sensor_power_off((uint32_t *)p_file,
+			/*ret = sensor_power_off((uint32_t *)p_file,
 					       pwr_cfg.op_sensor_id,
 					       &pwr_cfg.dev0,
-					       &pwr_cfg.dev1, &pwr_cfg.dev2);
+					       &pwr_cfg.dev1, &pwr_cfg.dev2);*/
 		}
 	}
-#endif
 
 	return ret;
 }
