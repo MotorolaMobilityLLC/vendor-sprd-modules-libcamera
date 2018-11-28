@@ -3614,6 +3614,10 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->need_isp = 0;
     prev_cxt->need_binning = 0;
 
+    prev_cxt->prev_mem_valid_num = 0;
+    prev_cxt->video_mem_valid_num = 0;
+    prev_cxt->cap_zsl_mem_valid_num = 0;
+
     pthread_mutex_lock(&handle->thread_cxt.prev_mutex);
     prev_cxt->prev_preflash_skip_en = 0;
     prev_cxt->restart_skip_cnt = 0;

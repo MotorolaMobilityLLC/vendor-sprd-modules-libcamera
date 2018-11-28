@@ -170,15 +170,21 @@ static int ispVideoStartPreview(uint32_t param1, uint32_t param2) {
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3RegularChannel *regularChannel = dev->getRegularChan();
 
+    HAL_LOGI("START PREVIEW");
+
     if (regularChannel != NULL) {
         regularChannel->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW);
         rtn = regularChannel->start(dev->mFrameNum);
     }
+
     return rtn;
 }
 
 static int ispVideoStopPreview(uint32_t param1, uint32_t param2) {
     int rtn = 0x00;
+
+    HAL_LOGI("STOP PREVIEW");
+
     SprdCamera3HWI *dev =
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3RegularChannel *regularChannel = dev->getRegularChan();
@@ -186,6 +192,7 @@ static int ispVideoStopPreview(uint32_t param1, uint32_t param2) {
     if (regularChannel != NULL) {
         rtn = regularChannel->stop(dev->mFrameNum);
     }
+
     return rtn;
 }
 
@@ -194,6 +201,8 @@ static int ispVideoTakePicture(uint32_t param1, uint32_t param2) {
     SprdCamera3HWI *dev =
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3PicChannel *picChannel = dev->getPicChan();
+
+    HAL_LOGI("TAKE PICTURE");
 
     if (NULL != picChannel) {
         // param1 = 1 for simulation case
@@ -215,6 +224,8 @@ static int ispVideoSetParam(uint32_t width, uint32_t height) {
     SprdCamera3PicChannel *picChannel = dev->getPicChan();
     SprdCamera3OEMIf *oemIf = dev->getOEMif();
     cam_dimension_t capture_size;
+
+    HAL_LOGI("SET PARAM");
 
     if (NULL != picChannel) {
         // picChannel->setCaptureSize(width,height);
@@ -1046,6 +1057,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int32_t streamType[4] = {0, 0, 0, 0};
     uint8_t captureIntent = 0;
     int32_t captureRequestId = 0;
+    uint32_t frameNumber = request->frame_number;
 
     Mutex::Autolock l(mLock);
 
@@ -1334,11 +1346,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
 
     {
-        uint32_t frameNumber = request->frame_number;
+        Mutex::Autolock lr(mRequestLock);
         FLASH_Tag flashInfo;
         CONTROL_Tag controlInfo;
         PendingRequestInfo pendingRequest;
-        Mutex::Autolock lr(mRequestLock);
 
         mSetting->getFLASHTag(&flashInfo);
         mSetting->getCONTROLTag(&controlInfo);
@@ -1357,21 +1368,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         for (i = 0; i < request->num_output_buffers; i++) {
             const camera3_stream_buffer_t &output = request->output_buffers[i];
             camera3_stream_t *stream = output.stream;
+            RequestedBufferInfo requestedBuf;
             SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
-
             if (channel == NULL) {
                 HAL_LOGE("invalid channel pointer for stream");
                 continue;
             }
-
-            ret = channel->request(stream, output.buffer, frameNumber);
-            if (ret) {
-                HAL_LOGE("channel->request failed %p (%d)", output.buffer,
-                         frameNumber);
-                continue;
-            }
-
-            RequestedBufferInfo requestedBuf;
             requestedBuf.stream = output.stream;
             requestedBuf.buffer = output.buffer;
             pendingRequest.buffers.push_back(requestedBuf);
@@ -1380,32 +1382,51 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         pendingRequest.receive_req_max = receive_req_max;
         mPendingRequestsList.push_back(pendingRequest);
         mPendingRequest++;
+    }
 
-        if (request->input_buffer != NULL) {
-            const camera3_stream_buffer_t *input = request->input_buffer;
-            camera3_stream_t *stream = input->stream;
-            SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
+    for (i = 0; i < request->num_output_buffers; i++) {
+        const camera3_stream_buffer_t &output = request->output_buffers[i];
+        camera3_stream_t *stream = output.stream;
+        SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
 
-            if (channel == NULL) {
-                HAL_LOGE("invalid channel pointer for stream");
-                goto exit;
-            }
+        if (channel == NULL) {
+            HAL_LOGE("invalid channel pointer for stream");
+            continue;
+        }
 
-            HAL_LOGD("input->buffer = %p frameNumber = %d, format = %d",
-                     input->buffer, frameNumber, stream->format);
-            if (stream->format == HAL_PIXEL_FORMAT_BLOB) {
-                mPictureRequest = true;
-                mOEMIf->setCaptureReprocessMode(true, stream->width,
-                                                stream->height);
-            }
-            ret = mRegularChan->setInputBuff(input->buffer);
-            if (ret) {
-                HAL_LOGE("setInputBuff failed %p (%d)", input->buffer,
-                         frameNumber);
-                goto exit;
-            }
+        ret = channel->request(stream, output.buffer, frameNumber);
+        if (ret) {
+            HAL_LOGE("channel->request failed %p (%d)", output.buffer,
+                     frameNumber);
+            continue;
         }
     }
+
+    if (request->input_buffer != NULL) {
+        const camera3_stream_buffer_t *input = request->input_buffer;
+        camera3_stream_t *stream = input->stream;
+        SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
+
+        if (channel == NULL) {
+            HAL_LOGE("invalid channel pointer for stream");
+            goto exit;
+        }
+
+        HAL_LOGD("input->buffer = %p frameNumber = %d, format = %d",
+                 input->buffer, frameNumber, stream->format);
+        if (stream->format == HAL_PIXEL_FORMAT_BLOB) {
+            mPictureRequest = true;
+            mOEMIf->setCaptureReprocessMode(true, stream->width,
+                                            stream->height);
+        }
+        ret = mRegularChan->setInputBuff(input->buffer);
+        if (ret) {
+            HAL_LOGE("setInputBuff failed %p (%d)", input->buffer,
+                     frameNumber);
+            goto exit;
+        }
+    }
+
 
     if (mPictureRequest == 1) {
         ret = mPicChan->start(mFrameNum);
@@ -1443,8 +1464,6 @@ exit:
 
 void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     ATRACE_CALL();
-
-    Mutex::Autolock l(mRequestLock);
 
     uint32_t frame_number = result_info->frame_number;
     buffer_handle_t *buffer = result_info->buffer;
@@ -1595,6 +1614,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                      mPendingRequest);
 
             if (0 == i->num_buffers) {
+                Mutex::Autolock l(mRequestLock);
                 receive_req_max = i->receive_req_max;
                 i = mPendingRequestsList.erase(i);
                 mPendingRequest--;

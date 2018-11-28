@@ -76,13 +76,14 @@ namespace sprdcamera {
     do {                                                                       \
         s_use_time = (s_end_timestamp - s_start_timestamp) / 1000000;          \
     } while (0)
-#define ZSL_FRAME_TIMEOUT 1000000000 /*1000ms*/
-#define SET_PARAM_TIMEOUT 2000000000 /*2000ms*/
-#define CAP_TIMEOUT 5000000000       /*5000ms*/
-#define PREV_TIMEOUT 5000000000      /*5000ms*/
-#define CAP_START_TIMEOUT 5000000000 /* 5000ms*/
-#define PREV_STOP_TIMEOUT 3000000000 /* 3000ms*/
-#define CANCEL_AF_TIMEOUT 500000000  /*1000ms*/
+#define ZSL_FRAME_TIMEOUT 1000000000     /*1000ms*/
+#define SET_PARAM_TIMEOUT 2000000000     /*2000ms*/
+#define CAP_TIMEOUT 5000000000           /*5000ms*/
+#define PREV_TIMEOUT 5000000000          /*5000ms*/
+#define CAP_START_TIMEOUT 5000000000     /* 5000ms*/
+#define PREV_STOP_TIMEOUT 3000000000     /* 3000ms*/
+#define CANCEL_AF_TIMEOUT 500000000      /*1000ms*/
+#define PIPELINE_START_TIMEOUT 500000000 /*5s*/
 
 #define SET_PARAMS_TIMEOUT 250 /*250 means 250*10ms*/
 #define ON_OFF_ACT_TIMEOUT 50  /*50 means 50*10ms*/
@@ -2152,6 +2153,29 @@ bool SprdCamera3OEMIf::WaitForCameraStop() {
     return SPRD_INIT == mCameraState.camera_state;
 }
 
+int SprdCamera3OEMIf::waitForPipelineStart() {
+    ATRACE_CALL();
+    int ret = 0;
+
+    HAL_LOGD("E");
+    Mutex::Autolock l(mPipelineStartLock);
+
+    while (mCameraState.preview_state != SPRD_PREVIEW_IN_PROGRESS &&
+           mCameraState.preview_state != SPRD_INTERNAL_PREVIEW_REQUESTED &&
+           mCameraState.preview_state != SPRD_ERROR) {
+        HAL_LOGD("waiting for pipeline start");
+        if (mPipelineStartSignal.waitRelative(mPipelineStartLock,
+                                              PIPELINE_START_TIMEOUT)) {
+            HAL_LOGE("timeout");
+            ret = -1;
+            break;
+        }
+    }
+
+    HAL_LOGD("X");
+    return ret;
+}
+
 bool SprdCamera3OEMIf::WaitForPreviewStart() {
     ATRACE_CALL();
 
@@ -2740,8 +2764,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
-    setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
-
     HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
              (cmr_uint)mSprdZslEnabled);
@@ -2774,6 +2796,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     if (mIspToolStart) {
         mIspToolStart = false;
     }
+
+    setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
+    mPipelineStartSignal.signal();
 
     /*
     qFirstBuffer(CAMERA_STREAM_TYPE_PREVIEW);
@@ -4063,6 +4088,11 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
+    if (mIsIspToolMode == 1) {
+        HAL_LOGI("isp tool dont go this way");
+        goto exit;
+    }
+
     hasPreviewBuf = isJpegWithPreview();
     hasYuvCallbackBuf = isJpegWithYuvCallback();
 
@@ -4096,6 +4126,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     uint32_t heap_size;
     SprdCamera3PicChannel *picChannel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+    SprdCamera3RegularChannel *regularChannel =
+        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     uint32_t frame_num = 0;
     char value[PROPERTY_VALUE_MAX];
     char debug_value[PROPERTY_VALUE_MAX];
@@ -4146,6 +4178,15 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     if (ret || pic_addr_vir == 0x0) {
         HAL_LOGW("getQBuffFirstVir failed, ret=%d, pic_addr_vir=%ld", ret,
                  pic_addr_vir);
+        if (mIsIspToolMode == 1 && regularChannel) {
+            int64_t timestamp1 = systemTime();
+            regularChannel->channelClearAllQBuff(timestamp1,
+                                                 CAMERA_STREAM_TYPE_PREVIEW);
+            regularChannel->channelClearAllQBuff(timestamp1,
+                                                 CAMERA_STREAM_TYPE_VIDEO);
+            regularChannel->channelClearAllQBuff(timestamp1,
+                                                 CAMERA_STREAM_TYPE_CALLBACK);
+        }
         goto exit;
     }
 
@@ -5112,8 +5153,9 @@ int SprdCamera3OEMIf::openCamera() {
     }
 
     property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
-    if (!strcmp(value, "true") || is_raw_capture) {
+    if (!strcmp(value, "true")) {
         mIsIspToolMode = 1;
+        HAL_LOGI("mIsIspToolMode=%d", mIsIspToolMode);
     }
 
 exit:
@@ -7520,6 +7562,16 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
 
     switch (stream_type) {
     case CAMERA_STREAM_TYPE_PREVIEW:
+        if (getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
+            getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+            // set buffers to driver after params
+            ret = waitForPipelineStart();
+            if (ret) {
+                HAL_LOGE("waitForPipelineStart failed");
+                goto exit;
+            }
+        }
+
         channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel == NULL) {
             ret = -1;
@@ -7543,6 +7595,16 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         break;
 
     case CAMERA_STREAM_TYPE_VIDEO:
+        if (getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
+            getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+            // set buffers to driver after params
+            ret = waitForPipelineStart();
+            if (ret) {
+                HAL_LOGE("waitForPipelineStart failed");
+                goto exit;
+            }
+        }
+
         channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel == NULL) {
             ret = -1;
@@ -7566,6 +7628,16 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         break;
 
     case CAMERA_STREAM_TYPE_CALLBACK:
+        if (getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
+            getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+            // set buffers to driver after params
+            ret = waitForPipelineStart();
+            if (ret) {
+                HAL_LOGE("waitForPipelineStart failed");
+                goto exit;
+            }
+        }
+
         channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel == NULL) {
             ret = -1;

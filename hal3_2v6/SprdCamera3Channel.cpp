@@ -281,15 +281,13 @@ int SprdCamera3RegularChannel::channelClearAllQBuff(
     buffer_handle_t *buffer;
     int buff_num;
     mCamera3Stream[index]->getQBufListNum(&buff_num);
-
+    mCamera3Stream[index]->getStreamInfo(&stream);
     for (int i = 0; i < buff_num; i++) {
-        mCamera3Stream[index]->getStreamInfo(&stream);
         ret = mCamera3Stream[index]->buffFirstDoneDQ(&frame_number, &buffer);
         if (ret != NO_ERROR) {
             HAL_LOGD("dq, bufId = %d", i);
             continue;
         }
-
         result_info.is_urgent = false;
         result_info.buffer = buffer;
         result_info.frame_number = frame_number;

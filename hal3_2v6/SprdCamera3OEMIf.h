@@ -379,6 +379,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     inline bool isPreviewStart();
     inline bool isCapturing();
     bool WaitForPreviewStart();
+    int waitForPipelineStart();
     bool WaitForCaptureDone();
     bool WaitForCameraStop();
     bool WaitForCaptureJpegState();
@@ -798,6 +799,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFrameSyncNum;
     Mutex mFrameSyncLock;
     Condition mFrameSyncSignal;
+
+    Mutex mPipelineStartLock;
+    Condition mPipelineStartSignal;
 
     uint32_t mFaceDetectStartedFlag;
 };
