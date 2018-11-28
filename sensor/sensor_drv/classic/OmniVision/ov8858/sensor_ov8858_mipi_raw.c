@@ -386,14 +386,6 @@ static cmr_int ov8858_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     SENSOR_LOGI("*param %x %x", *param, vendor_id);
 
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    if (vendor_id == MODULE_DARLING) {
-        SENSOR_LOGI("*param %x", vendor_id);
-        char value1[PROPERTY_VALUE_MAX];
-        property_get("persist.vendor.cam.sbs.mode", value1, "0");
-        if (!strcmp(value1, "slave"))
-            return rtn;
-        s_ov8858_mipi_raw_info_ptr = &s_ov8858_darling_mipi_raw_info;
-    }
 
     return rtn;
 }
@@ -430,7 +422,6 @@ static cmr_int ov8858_drv_access_val(cmr_handle handle, cmr_uint param) {
 
     return ret;
 }
-LOCAL SENSOR_REG_T ov2680_1600X1200_mipi_raw2[97];
 
 /*==============================================================================
  * Description:
@@ -453,24 +444,7 @@ static cmr_int ov8858_drv_identify(cmr_handle handle, cmr_uint param) {
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
         if (ov8858_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is ov8858 sensor");
-//            ov8858_drv_init_fps_info(handle);
-#ifdef SBS_MODE_SENSOR
-            SENSOR_REG_T *ov8858_preview_setting4 =
-                (SENSOR_REG_T *)ov8858_get_sbs_init();
-            SENSOR_REG_T *ov2680_1600X1200_mipi_raw4 =
-                (SENSOR_REG_T *)ov2680_get_sbs_init();
-            memcpy(ov8858_preview_setting2, ov8858_preview_setting4,
-                   sizeof(ov8858_preview_setting2));
-            memcpy(ov2680_1600X1200_mipi_raw2, ov2680_1600X1200_mipi_raw4,
-                   sizeof(ov2680_1600X1200_mipi_raw2));
-            char value1[PROPERTY_VALUE_MAX];
-            property_get("persist.vendor.cam.sbs.mode", value1, "0");
-            if (!strcmp(value1, "slave")) {
-#include "../ov2680_sbs/parameters/sensor_ov2680_raw_param_main.c"
-                s_ov8858_mipi_raw_info_ptr = &s_ov2680_mipi_raw_info;
-            } else
-                s_ov8858_mipi_raw_info_ptr = &s_ov8858_mipi_raw_info;
-#endif
+            // ov8858_drv_init_fps_info(handle);
             ret_value = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
@@ -766,7 +740,7 @@ static cmr_int ov8858_drv_read_aec_info(cmr_handle handle, void *param) {
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         mode, exposure_line, dummy_line, frame_interval);
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
-    //        ov8858_drv_get_default_frame_length(handle, mode);
+    //    ov8858_drv_get_default_frame_length(handle, mode);
     //    s_current_default_line_time =
     //    s_ov8858_resolution_trim_tab[mode].line_time;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
@@ -786,167 +760,6 @@ cmr_int ov8858_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
     return 0;
 }
 
-#define ov2680_I2C_ADDR_W (0x20 >> 1)
-static unsigned long _ov2680_set_init(cmr_handle handle) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    uint16_t i;
-    SENSOR_REG_T *sensor_reg_ptr = (SENSOR_REG_T *)ov2680_1600X1200_mipi_raw2;
-    SENSOR_LOGI("E");
-
-    for (i = 0; i < sizeof(ov2680_1600X1200_mipi_raw2) /
-                        sizeof(ov2680_1600X1200_mipi_raw2[0]);
-         i++) {
-        hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, ov2680_I2C_ADDR_W,
-                                sensor_reg_ptr[i].reg_addr,
-                                sensor_reg_ptr[i].reg_value, BITS_ADDR16_REG8);
-        //  hw_sensor_write_reg(sns_drv_cxt->hw_handle,sensor_reg_ptr[i].reg_addr,
-        //  sensor_reg_ptr[i].reg_value);
-        //	SENSOR_LOGI("E reg i %d 0x%02x 0x%02x",
-        //i,sensor_reg_ptr[i].reg_addr, (sensor_reg_ptr[i].reg_value));
-    }
-
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-static unsigned long _ov2680_get_init(cmr_handle handle) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    uint16_t i;
-    SENSOR_REG_T *sensor_reg_ptr = (SENSOR_REG_T *)ov2680_1600X1200_mipi_raw2;
-    usleep(1 * 1000);
-    SENSOR_LOGI("E");
-
-    for (i = 0; i < sizeof(ov2680_1600X1200_mipi_raw2) /
-                        sizeof(ov2680_1600X1200_mipi_raw2[0]);
-         i++) {
-        //	 sensor_grc_write_i2c(ov2680_I2C_ADDR_W,sensor_reg_ptr[i].reg_addr,
-        //				sensor_reg_ptr[i].reg_value,BITS_ADDR16_REG8);
-        //   SENSOR_LOGI("E reg i %d 0x%02x 0x%02x",
-        //   i,sensor_reg_ptr[i].reg_addr,
-        //   sensor_grc_read_i2c(ov2680_I2C_ADDR_W,sensor_reg_ptr[i].reg_addr,BITS_ADDR16_REG8));
-        SENSOR_LOGI("E reg i %d 0x%02x 0x%02x", i, sensor_reg_ptr[i].reg_addr,
-                    hw_sensor_grc_read_i2c(
-                        sns_drv_cxt->hw_handle, ov2680_I2C_ADDR_W,
-                        sensor_reg_ptr[i].reg_addr, BITS_ADDR16_REG8));
-    }
-
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-
-LOCAL unsigned long _ov2680_StreamOn(cmr_handle handle, unsigned long param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    SENSOR_LOGI("SENSOR_ov2680: StreamOff");
-#ifdef SBS_SENSOR_FRONT
-    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, ov2680_I2C_ADDR_W, 0x3820,
-                            0xc4, BITS_ADDR16_REG8);
-    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, ov2680_I2C_ADDR_W, 0x3821,
-                            0x04, BITS_ADDR16_REG8);
-#endif
-    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, ov2680_I2C_ADDR_W, 0x0100,
-                            0x01, BITS_ADDR16_REG8);
-    //    hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x0100, 0x01);
-
-    //  usleep(100 * 1000);
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-LOCAL unsigned long _ov2680_StreamOff(cmr_handle handle, unsigned long param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    SENSOR_LOGI("SENSOR_ov2680: StreamOff");
-    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, ov2680_I2C_ADDR_W, 0x0100,
-                            0x00, BITS_ADDR16_REG8);
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle,0x0100, 0x00);
-
-    usleep(10 * 1000);
-
-    return 0;
-}
-
-static uint32_t _init_ov2680(cmr_handle handle, uint32_t param) {
-#if 0
-	Sensor_SetGpioLevel(40,0);
-	Sensor_SetGpioLevel(41,0);
-	usleep(10);
-	Sensor_SetGpioLevel(40,1);
-	Sensor_SetGpioLevel(41,1);
-#endif
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    _ov2680_set_init(handle);
-    //	_ov2680_get_init(handle);
-
-    return 0;
-}
-static uint32_t _deinit_ov2680(cmr_handle handle, uint32_t param) {
-#if 0
-	Sensor_SetGpioLevel(40,0);
-	Sensor_SetGpioLevel(41,0);
-	usleep(10);
-#endif
-    return 0;
-}
-
-unsigned long _ov8858_SetVIV_SideBySide(cmr_handle handle,
-                                        unsigned long param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3a11, 0xa0); ////
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x01); // ; 00
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x7a); // ; 62
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x09); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0xac); // ;b2
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4600, 0x01); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4601, 0x8b); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0xf1); // sl 100
-    SENSOR_LOGI("E sleep");
-    usleep(100 * 1000);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0xf0);
-
-    return 0;
-}
-unsigned long _ov8858_SetVIV_MasterOnly(cmr_handle handle,
-                                        unsigned long param) {
-
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3a11, 0x00); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3a12, 0x00); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4600, 0x00); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4601, 0x9a); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0xf1); // sl 100
-    usleep(100 * 1000);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0xf0); //
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-unsigned long _ov8858_SetVIV_SlaveOnly(cmr_handle handle, unsigned long param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3a11, 0xc0); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3a12, 0x00); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4600, 0x00); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4601, 0x9a); //
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0xf1); // sl 100
-    usleep(100 * 1000);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0xf0); //
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-struct sbs_control_info {
-    struct sensor_drv_context sensor_cxt_slave;
-    cmr_u8 sbs_mode;
-};
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -955,16 +768,6 @@ struct sbs_control_info {
 static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    struct sbs_control_info *ptr_sbs_ctl_info =
-        malloc(sizeof(struct sbs_control_info));
-    if (NULL == ptr_sbs_ctl_info) {
-        return -1;
-    }
-    memset(ptr_sbs_ctl_info, 0, sizeof(struct sbs_control_info));
-    sns_drv_cxt->privata_data.priv_handle = ptr_sbs_ctl_info;
-    struct sensor_drv_context *sensor_cxt2 =
-        &(ptr_sbs_ctl_info->sensor_cxt_slave);
 
 #if 1
     char value0[PROPERTY_VALUE_MAX];
@@ -982,7 +785,7 @@ static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
         // struct sensor_ex_exposure ex = {0x00};
         cmr_u32 exposure =
             atoi(value1) * 1000 / (sns_drv_cxt->trim_tab_info[1].line_time);
-        // ex->size_index =1;
+        // ex->size_index = 1;
         cmr_u32 dummy = exposure > 1244 ? exposure - 1244 : 0;
         // dummy = exposure > sns_drv_cxt->trim_tab_info[1].frame_line
         // ?exposure- sns_drv_cxt->trim_tab_info[1].frame_line :0;
@@ -992,53 +795,15 @@ static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
         ov8858_drv_write_gain(handle, atoi(value1));
     }
 #endif
-#ifdef SBS_SENSOR_FRONT
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x06);
-    cmr_u8 reg = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3821);
-    reg = reg & 0xf9;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, reg);
-#endif
     SENSOR_LOGI("E");
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5000, 0x06);
 
-    // ov8858_drv_set_master_FrameSync(handle,param);
+    // ov8858_drv_set_master_FrameSync(handle, param);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
-#ifdef SBS_MODE_SENSOR
-    property_get("persist.vendor.cam.sbs.mode", value1, "0");
 
-    if (param == 7 || !strcmp(value1, "sbs")) {
-#ifdef SBS_SENSOR_FRONT
-        sensor_open_common(sensor_cxt2, 3, 0);
-#else
-        sensor_open_common(sensor_cxt2, 2, 0);
-#endif
-        sensor_stream_on(sensor_cxt2);
-        _ov8858_SetVIV_SideBySide(handle, param);
-        ptr_sbs_ctl_info->sbs_mode = 7;
-    } else if (param == 5 || !strcmp(value1, "master")) {
-        _ov8858_SetVIV_MasterOnly(handle, param);
-        ptr_sbs_ctl_info->sbs_mode = 5;
-    } else if (param == 6 || !strcmp(value1, "slave")) {
-//	 struct sensor_drv_context *sensor_cxt2 = (struct sensor_drv_context
-//*)malloc(sizeof(struct sensor_drv_context));
-#ifdef SBS_SENSOR_FRONT
-        sensor_open_common(sensor_cxt2, 3, 0);
-#else
-        sensor_open_common(sensor_cxt2, 2, 0);
-#endif
-        sensor_stream_on(sensor_cxt2);
-        ptr_sbs_ctl_info->sbs_mode = 6;
-        _ov8858_SetVIV_SlaveOnly(handle, param);
-    } else if (param == 4 || !strcmp(value1, "dual")) {
-        //_ov2680_StreamOff(handle,param);
-        _ov2680_StreamOn(handle, param);
-        _ov8858_SetVIV_SideBySide(handle, param);
-        ptr_sbs_ctl_info->sbs_mode = 4;
-    }
+    /*delay*/
+    usleep(10 * 1000);
 
-/*delay*/
-//  usleep(10 * 1000);
-#endif
     return 0;
 }
 
@@ -1055,12 +820,6 @@ static cmr_int ov8858_drv_stream_off(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI(" priv_handle %p", sns_drv_cxt->privata_data.priv_handle);
 
-    struct sbs_control_info *ptr_sbs_ctl_info =
-        (struct sbs_control_info *)(sns_drv_cxt->privata_data.priv_handle);
-    if (NULL == ptr_sbs_ctl_info) {
-        return 0;
-    }
-
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value != 0x00) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
@@ -1071,33 +830,6 @@ static cmr_int ov8858_drv_stream_off(cmr_handle handle, cmr_uint param) {
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
-#ifdef SBS_MODE_SENSOR
-    char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.sbs.mode", value1, "0");
-
-    if (param == 4 || 4 == ptr_sbs_ctl_info->sbs_mode ||
-        !strcmp(value1, "dual")) {
-        _ov2680_StreamOff(handle, param);
-        _init_ov2680(handle, param);
-        ptr_sbs_ctl_info->sbs_mode = 0;
-    } else if (param == 6 || 6 == ptr_sbs_ctl_info->sbs_mode ||
-               !strcmp(value1, "slave")) {
-#ifdef SBS_SENSOR_FRONT
-        sensor_close_common(&(ptr_sbs_ctl_info->sensor_cxt_slave), 3);
-#else
-        sensor_close_common(&(ptr_sbs_ctl_info->sensor_cxt_slave), 2);
-#endif
-        ptr_sbs_ctl_info->sbs_mode = 0;
-    } else if (param == 7 || 7 == ptr_sbs_ctl_info->sbs_mode ||
-               !strcmp(value1, "sbs")) {
-#ifdef SBS_SENSOR_FRONT
-        sensor_close_common(&(ptr_sbs_ctl_info->sensor_cxt_slave), 3);
-#else
-        sensor_close_common(&(ptr_sbs_ctl_info->sensor_cxt_slave), 2);
-#endif
-        ptr_sbs_ctl_info->sbs_mode = 0;
-    }
-#endif
     free(sns_drv_cxt->privata_data.priv_handle);
     sns_drv_cxt->privata_data.priv_handle = NULL;
 

@@ -20,7 +20,7 @@
 */
 
 #define LOG_TAG "ov8856_shine"
-#if defined(CONFIG_ISP_2_5)||defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 #define MIPI_NUM_2LANE
 #else
 #define MIPI_NUM_4LANE

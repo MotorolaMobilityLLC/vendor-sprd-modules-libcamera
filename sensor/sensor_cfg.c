@@ -71,9 +71,6 @@ extern SENSOR_INFO_T g_hi846_mipi_raw_info;
 #ifdef OV2680
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
 #endif
-#ifdef OV2680_SBS
-extern SENSOR_INFO_T g_ov2680_sbs_mipi_raw_info;
-#endif
 #ifdef OV5675
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
 #endif
@@ -314,13 +311,17 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // ov area
 #ifdef OV8856_SHINE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&ov8856_shine_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#ifdef OV8856_DUAL_MASTER_DW9714_OTP_1EEPROM
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+#else
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
 #endif
 #ifdef OV8856
     {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&ov8856_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV8858
-    {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&ov8858_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+    {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV13855
 #if defined(CONFIG_DUAL_MODULE)
@@ -504,10 +505,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 // ov area
 #ifdef OV2680
-    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef OV2680_SBS
-    {MODULE_SUNNY, "ov2680_sbs", &g_ov2680_sbs_mipi_raw_info, {NULL, 0}, {&ov2680_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV5675_DUAL
 #ifdef _SENSOR_RAW_SHARKL5_H_
@@ -559,9 +557,6 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 
 const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 // ov area
-#ifdef OV2680_SBS
-    {MODULE_SUNNY, "ov2680_sbs", &g_ov2680_sbs_mipi_raw_info, {NULL, 0}, {&ov2680_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
-#endif
 #ifdef OV7251
     {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif

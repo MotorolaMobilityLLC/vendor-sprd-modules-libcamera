@@ -23,24 +23,10 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#ifdef SBS_MODE_SENSOR
-#include "sensor_sbs.h"
-#endif
-
-#ifdef SBS_SENSOR_FRONT
-#include "parameters_front_cmk/sensor_ov8858_raw_param_main.c"
-#include "parameters_front_darling/sensor_ov8858_darling_raw_param_main.c"
-#else
-#include "parameters_back_cmk/sensor_ov8858_raw_param_main.c"
-#include "parameters_back_darling/sensor_ov8858_darling_raw_param_main.c"
-#endif
+#include "parameters/sensor_ov8858_raw_param_main.c"
 
 #define SENSOR_NAME "ov8858_mipi_raw"
-#if 0                       // defined(CONFIG_DUAL_MODULE)
-#define I2C_SLAVE_ADDR 0x20 /* 16bit slave address*/
-#else
 #define I2C_SLAVE_ADDR 0x6c /* 16bit slave address*/
-#endif
 
 #define VENDOR_NUM 1
 #define BINNING_FACTOR 1
@@ -51,10 +37,10 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#define SNAPSHOT_WIDTH 3264  // 4224  // 5344
-#define SNAPSHOT_HEIGHT 2448 // 3136 // 4016
-#define PREVIEW_WIDTH 1632   // 2112   // 2672
-#define PREVIEW_HEIGHT 1224  // 1568
+#define SNAPSHOT_WIDTH 3264
+#define SNAPSHOT_HEIGHT 2448
+#define PREVIEW_WIDTH 1632
+#define PREVIEW_HEIGHT 1224
 /*Raw Trim parameters*/
 #define SNAPSHOT_TRIM_X 0
 #define SNAPSHOT_TRIM_Y 0
@@ -66,10 +52,9 @@
 #define PREVIEW_TRIM_H 1224
 
 /* frame length*/
-
-#define SNAPSHOT_FRAME_LENGTH 2474 // 3214
-#define PREVIEW_FRAME_LENGTH 2474  // 3216
-/*line time unit: 0.001us*/
+#define SNAPSHOT_FRAME_LENGTH 2474
+#define PREVIEW_FRAME_LENGTH 2474
+/*line time unit: ns*/
 #define SNAPSHOT_LINE_TIME 13474
 #define PREVIEW_LINE_TIME 13474
 
@@ -77,11 +62,11 @@
 #define LANE_NUM 4
 #define RAW_BITS 10
 
-#define SNAPSHOT_MIPI_PER_LANE_BPS 720 // 1080
-#define PREVIEW_MIPI_PER_LANE_BPS 720  // 540
+#define SNAPSHOT_MIPI_PER_LANE_BPS 720
+#define PREVIEW_MIPI_PER_LANE_BPS 720
 
 /* please ref your spec */
-#define FRAME_OFFSET 4 // 8 // 16 // 32
+#define FRAME_OFFSET 4
 #define SENSOR_MAX_GAIN 0x7ff
 #define SENSOR_BASE_GAIN 0x80
 #define SENSOR_MIN_SHUTTER 4
@@ -91,7 +76,7 @@
 
 /* please don't change it */
 #define EX_MCLK 24
-#define IMAGE_NORMAL_MIRROR
+//#define CAMERA_IMAGE_180
 
 /*==============================================================================
  * Description:
@@ -101,7 +86,6 @@
 // static uint32_t s_current_default_frame_length;
 // struct sensor_ev_info_t s_sensor_ev_info;
 
-static const SENSOR_REG_T ov8858_init_setting2[] = {};
 static const SENSOR_REG_T ov8858_init_setting[] = {
     {0x0103, 0x01}, {0x0100, 0x00}, //
     {0x0302, 0x1e},                 //
@@ -424,7 +408,6 @@ static const SENSOR_REG_T ov8858_init_setting[] = {
     {0x3007, 0x80}, //
     {0x400a, 0x01}, //
 };
-static SENSOR_REG_T ov8858_preview_setting2[334];
 
 static const SENSOR_REG_T ov8858_preview_setting[] = {
     {0x0103, 0x01},
@@ -1540,43 +1523,23 @@ static struct sensor_res_tab_info
             {.module_id = MODULE_SUNNY,
              .reg_tab =
                  {
-                     {ADDR_AND_LEN_OF_ARRAY(ov8858_init_setting2), PNULL, 0,
+                     {ADDR_AND_LEN_OF_ARRAY(ov8858_init_setting), PNULL, 0,
                       .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
+/*
                      {ADDR_AND_LEN_OF_ARRAY(ov8858_1280x720_setting), PNULL, 0,
                       .width = 1280, .height = 720, .xclk_to_sensor = 24,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
-#ifdef SBS_MODE_SENSOR
-                     {ADDR_AND_LEN_OF_ARRAY(ov8858_preview_setting2), PNULL, 0,
-                      .width = 1600, .height = 1200, .xclk_to_sensor = 24,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
-#endif
+*/
                      {ADDR_AND_LEN_OF_ARRAY(ov8858_preview_setting), PNULL, 0,
                       .width = PREVIEW_WIDTH,
                       .height = PREVIEW_HEIGHT, .xclk_to_sensor = 24,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
-#ifdef SBS_MODE_SENSOR
-                     {ADDR_AND_LEN_OF_ARRAY(ov8858_preview_setting2), PNULL,
-                      0, .width = 3200, .height = 1200, .xclk_to_sensor = 24,
-                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
-#endif
+
                      {ADDR_AND_LEN_OF_ARRAY(ov8858_snapshot_setting), PNULL,
                       0, .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
                       .xclk_to_sensor = 24,
                       .image_format = SENSOR_IMAGE_FORMAT_RAW},
-#if 0
-    {ADDR_AND_LEN_OF_ARRAY(ov8858_init_setting), 0, 0, EX_MCLK,
-     SENSOR_IMAGE_FORMAT_RAW},
-//    {ADDR_AND_LEN_OF_ARRAY(ov8858_preview_setting2), 1600,
-//     1200, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-/*    {ADDR_AND_LEN_OF_ARRAY(ov8858_preview_setting), PREVIEW_WIDTH,
-     PREVIEW_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},*/
-    {ADDR_AND_LEN_OF_ARRAY(ov8858_preview_setting2), 3200,
-     1200, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-   /* {ADDR_AND_LEN_OF_ARRAY(ov8858_snapshot_setting), SNAPSHOT_WIDTH,
-     SNAPSHOT_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},*/
-#endif
                  }}
 
             /*If there are multiple modules,please add here*/
@@ -1587,43 +1550,39 @@ static SENSOR_TRIM_T s_ov8858_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-             {0, 0, 1280, 720, 13617, 720, 816, {0, 0, 1280, 720}},
-#ifdef SBS_MODE_SENSOR
-             {0,
-              0,
-              1600,
-              1200,
-              53590,
-              1440,
-              1244,
-              {0, 0, 1600, 1200}}, // 25757.6ns
-#endif
-             {PREVIEW_TRIM_X,
-              PREVIEW_TRIM_Y,
-              PREVIEW_TRIM_W,
-              PREVIEW_TRIM_H,
-              PREVIEW_LINE_TIME,
-              PREVIEW_MIPI_PER_LANE_BPS,
-              PREVIEW_FRAME_LENGTH,
-              {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},
-#ifdef SBS_MODE_SENSOR
-             {0,
-              0,
-              3200,
-              1200,
-              53590,
-              1440,
-              1244,
-              {0, 0, 1600, 1200}}, // 25757.6ns
-#endif
-             {SNAPSHOT_TRIM_X,
-              SNAPSHOT_TRIM_Y,
-              SNAPSHOT_TRIM_W,
-              SNAPSHOT_TRIM_H,
-              SNAPSHOT_LINE_TIME,
-              SNAPSHOT_MIPI_PER_LANE_BPS,
-              SNAPSHOT_FRAME_LENGTH,
-              {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},
+/*
+             {.trim_start_x = 0,
+              .trim_start_y = 0,
+              .trim_width = 1280,
+              .trim_height = 720,
+              .line_time = 13617,
+              .bps_per_lane = 720,
+              .frame_line = 816,
+              .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
+*/
+             {.trim_start_x = PREVIEW_TRIM_X,
+              .trim_start_y = PREVIEW_TRIM_Y,
+              .trim_width = PREVIEW_TRIM_W,
+              .trim_height = PREVIEW_TRIM_H,
+              .line_time = PREVIEW_LINE_TIME,
+              .bps_per_lane = PREVIEW_MIPI_PER_LANE_BPS,
+              .frame_line = PREVIEW_FRAME_LENGTH,
+              .scaler_trim = {.x = PREVIEW_TRIM_X,
+                              .y = PREVIEW_TRIM_Y,
+                              .w = PREVIEW_TRIM_W,
+                              .h = PREVIEW_TRIM_H}},
+
+             {.trim_start_x = SNAPSHOT_TRIM_X,
+              .trim_start_y = SNAPSHOT_TRIM_Y,
+              .trim_width = SNAPSHOT_TRIM_W,
+              .trim_height = SNAPSHOT_TRIM_H,
+              .line_time = SNAPSHOT_LINE_TIME,
+              .bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
+              .frame_line = SNAPSHOT_FRAME_LENGTH,
+              .scaler_trim = {.x = SNAPSHOT_TRIM_X,
+                              .y = SNAPSHOT_TRIM_Y,
+                              .w = SNAPSHOT_TRIM_W,
+                              .h = SNAPSHOT_TRIM_H}},
          }}
 
     /*If there are multiple modules,please add here*/
@@ -1664,7 +1623,7 @@ static SENSOR_VIDEO_INFO_T s_ov8858_video_info[SENSOR_MODE_MAX] = {
 static struct sensor_module_info s_ov8858_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = 0x20 >> 1,
 
                      .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
                                             SENSOR_I2C_VAL_8BIT |
@@ -1691,8 +1650,8 @@ static struct sensor_module_info s_ov8858_module_info_tab[VENDOR_NUM] = {
                      .sensor_interface =
                          {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
-                             .bus_width = 4,
-                             .pixel_width = 10,
+                             .bus_width = LANE_NUM,
+                             .pixel_width = RAW_BITS,
                              .is_loose = 0,
                          },
                      .change_setting_skip_num = 1,
