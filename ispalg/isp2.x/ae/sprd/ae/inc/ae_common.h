@@ -152,6 +152,13 @@ enum ae_ai_scene_type {
  	AE_AI_SCENE_MAX
  };
 
+enum ae_sensor_role_type {
+	AE_SENSOR_MASTER = 0,
+	AE_SENSOR_SLAVE0,
+	AE_SENSOR_SLAVE1,
+	AE_SENSOR_MAX,
+};
+
 typedef cmr_handle ae_handle_t;
 
 struct ae_ct_table {
@@ -202,9 +209,10 @@ struct ae1_face {
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
-	cmr_u32 end_y;				/*4 x 4bytes */
-	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
-};
+	cmr_u32 end_y;                          /*4 x 4bytes */
+	cmr_s32 pose;                           /* face pose: frontal, half-profile, full-profile */
+ };
+
 
 struct ae1_face_info {
 	cmr_u16 face_num;
@@ -503,6 +511,7 @@ struct ae_settings {
 };
 
 struct ae_alg_calc_param {
+	cmr_u32 cam_id;
 	struct ae_size frame_size;
 	struct ae_size win_size;
 	struct ae_size win_num;

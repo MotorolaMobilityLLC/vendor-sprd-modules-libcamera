@@ -5372,6 +5372,13 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	pthread_mutex_unlock(&cxt->data_sync_lock);
 
 /***********************************************************/
+	if(cxt->is_master == 0)
+		current_status->cam_id = AE_SENSOR_SLAVE0;
+	else if(cxt->is_master == 1)
+		current_status->cam_id = AE_SENSOR_MASTER;
+	else
+		ISP_LOGE("Error !can't not found camera id!");
+	
 	current_status->ae_start_delay = 0;
 	misc_calc_in.sync_settings = current_status;
 	misc_calc_out.ae_output = &cxt->cur_result;
