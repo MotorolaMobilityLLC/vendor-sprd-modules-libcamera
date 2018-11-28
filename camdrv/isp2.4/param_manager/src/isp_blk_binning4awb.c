@@ -21,15 +21,42 @@ cmr_s32 _pm_binning4awb_init(void *dst_binning4awb, void *src_binning4awb, void 
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
+	unsigned int i = 0;
 	struct isp_binning4awb_param *dst_ptr = (struct isp_binning4awb_param *)dst_binning4awb;
 	struct isp_bin_param *src_ptr = (struct isp_bin_param *)src_binning4awb;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
-	UNUSED(param2);
+	struct isp_size *img_size_ptr = (struct isp_size *)param2;
 
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
 	dst_ptr->cur.bypass = header_ptr->bypass;
-	dst_ptr->cur.hx = src_ptr->hx;
-	dst_ptr->cur.vx = src_ptr->vx;
+	ISP_LOGV("sensor size: 0x%x 0x%x", img_size_ptr->w, img_size_ptr->h);
+	if ((img_size_ptr->w >> src_ptr->vx) * (img_size_ptr->h >> src_ptr->hx) <= 320 * 240) {
+		dst_ptr->cur.hx = src_ptr->hx;
+		dst_ptr->cur.vx = src_ptr->vx;
+	} else {
+		if ((img_size_ptr->h >> src_ptr->hx) > 240) {
+			for (i = src_ptr->hx + 1; i < 5; i ++)
+			{
+				if ((img_size_ptr->h >> i) <= 240)
+					break;
+			}
+			dst_ptr->cur.hx = i;
+		} else
+			dst_ptr->cur.hx = src_ptr->hx;
+
+		if ((img_size_ptr->w >> src_ptr->vx) > 320) {
+			for (i = src_ptr->vx + 1; i < 5; i ++)
+			{
+				if ((img_size_ptr->w >> i) <= 320)
+					break;
+			}
+			dst_ptr->cur.vx = i;
+		} else
+			dst_ptr->cur.vx = src_ptr->vx;
+		ISP_LOGI("adjust the binning scale ratio, old: %d %d, new: %d %d",
+		src_ptr->hx, src_ptr->vx,
+		dst_ptr->cur.hx, dst_ptr->cur.vx);
+	}
 	dst_ptr->cur.endian = ISP_ENDIAN_BIG;
 	header_ptr->is_update = ISP_ONE;
 
