@@ -502,6 +502,7 @@ void SprdCamera3OEMIf::closeCamera() {
     Mutex::Autolock l(&mLock);
 
     mZslCaptureExitLoop = true;
+    sem_post(&((SprdCamera3OEMIf *)this)->mZslQueueSemDone);
     // Either preview was ongoing, or we are in the middle or taking a
     // picture.  It's the caller's responsibility to make sure the camera
     // is in the idle or init state before destroying this object.
@@ -3616,6 +3617,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
                      frame->type);
             pushZslFrame(frame);
+            sem_post(&((SprdCamera3OEMIf *)this)->mZslQueueSemDone);
 
             if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
                 struct camera_frame_type zsl_frame;
@@ -8305,6 +8307,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     // obj->skipZslFrameForFlashCapture();
 
     while (1) {
+        sem_wait(&obj->mZslQueueSemDone);
+
         // for exception exit
         if (obj->mZslCaptureExitLoop == true) {
             HAL_LOGD("zsl loop exit done.");
@@ -8312,11 +8316,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         zsl_frame = obj->popZslFrame();
-        if (zsl_frame.y_vir_addr == 0) {
-            HAL_LOGD("wait for zsl frame");
-            usleep(20 * 1000);
-            continue;
-        }
 
         // for 3dnr sw 2.0
         if (sprddefInfo.sprd_3dnr_enabled) {
@@ -8522,6 +8521,7 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_init(void *p_data) {
             return ret;
         }
         obj->mZSLModeMonitorInited = 1;
+        sem_init(&obj->mZslQueueSemDone, 0, 0);
 
         message.msg_type = CMR_EVT_ZSL_MON_INIT;
         message.sync_flag = CMR_MSG_SYNC_RECEIVED;
@@ -8552,6 +8552,7 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_deinit(void *p_data) {
         ret = cmr_thread_destroy((cmr_handle)obj->mZSLModeMonitorMsgQueHandle);
         obj->mZSLModeMonitorMsgQueHandle = 0;
         obj->mZSLModeMonitorInited = 0;
+        sem_destroy(&obj->mZslQueueSemDone);
     }
     return ret;
 }

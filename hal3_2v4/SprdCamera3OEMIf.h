@@ -785,6 +785,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mPreAllocCapMemInited;
     uint32_t mIsPreAllocCapMemDone;
     sem_t mPreAllocCapMemSemDone;
+    sem_t mZslQueueSemDone;
 
     /*ZSL Monitor Thread*/
     pthread_t mZSLModeMonitorMsgQueHandle;
