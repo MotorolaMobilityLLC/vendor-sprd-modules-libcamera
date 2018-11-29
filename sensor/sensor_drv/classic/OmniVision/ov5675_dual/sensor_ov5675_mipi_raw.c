@@ -881,8 +881,8 @@ static cmr_int ov5675_drv_set_frame_sync(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x70);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0xbb);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x17);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x58);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x0f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x90);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3822, 0x64);
     return 0;
 }
