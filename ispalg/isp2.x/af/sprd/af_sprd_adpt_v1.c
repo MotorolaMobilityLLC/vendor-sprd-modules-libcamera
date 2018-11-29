@@ -89,6 +89,7 @@ static const char *state_string[] = {
 static const char *focus_state_str[] = {
 	"af idle",
 	"af searching",
+	"af stop",
 };
 
 #define FOCUS_STATE_STR(state)    focus_state_str[state]
@@ -2452,8 +2453,8 @@ static void caf_monitor_fd(af_ctrl_t * af)
 	i = 0;
 	while (i < prm->fd_info.face_num) {
 		prm->fd_info.face_info[i].sx = af->face_info.face_info[i].sx;
-		prm->fd_info.face_info[i].ex = af->face_info.face_info[i].ex;
 		prm->fd_info.face_info[i].sy = af->face_info.face_info[i].sy;
+		prm->fd_info.face_info[i].ex = af->face_info.face_info[i].ex;
 		prm->fd_info.face_info[i].ey = af->face_info.face_info[i].ey;
 		prm->fd_info.face_info[i].yaw_angle = af->face_info.face_info[i].pose;
 		prm->fd_info.face_info[i].roll_angle = af->face_info.face_info[i].angle;
