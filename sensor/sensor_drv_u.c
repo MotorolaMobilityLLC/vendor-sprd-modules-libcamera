@@ -2989,6 +2989,7 @@ static cmr_int sensor_drv_ic_identify(struct sensor_drv_context *sensor_cxt,
             hw_drv_cfg.i2c_bus_config = mod_cfg_info->reg_addr_value_bits;
             hw_sensor_drv_cfg(sensor_cxt->hw_drv_handle, &hw_drv_cfg);
             sensor_i2c_init(sensor_cxt, sensor_id);
+            SENSOR_LOGI("i2c_addr:0x%x", sensor_cxt->i2c_addr);
             hw_sensor_i2c_set_addr(sensor_cxt->hw_drv_handle,
                                    sensor_cxt->i2c_addr);
             hw_sensor_i2c_set_clk(sensor_cxt->hw_drv_handle);
