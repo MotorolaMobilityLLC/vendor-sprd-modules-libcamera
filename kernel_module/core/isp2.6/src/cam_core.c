@@ -1726,6 +1726,7 @@ static int camera_module_init(struct camera_module *module)
 	thrd->proc_func = NULL;
 	atomic_set(&thrd->thread_stop, 0);
 	init_completion(&thrd->thread_com);
+	init_completion(&thrd->thread_stop_com);
 
 	sprintf(thread_name, "cam%d_capture", module->idx);
 	thrd->thread_task = kthread_run(
@@ -1743,6 +1744,7 @@ static int camera_module_init(struct camera_module *module)
 	zoom_thrd->proc_func = zoom_proc;
 	atomic_set(&zoom_thrd->thread_stop, 0);
 	init_completion(&zoom_thrd->thread_com);
+	init_completion(&zoom_thrd->thread_stop_com);
 
 	sprintf(thread_name, "cam%d_zoom", module->idx);
 	zoom_thrd->thread_task = kthread_run(
