@@ -27,6 +27,7 @@
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
 #include <utils/AndroidThreads.h>
+#include <utils/Timers.h>
 
 #define ISP_PM_BUF_NUM     10
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
@@ -186,10 +187,10 @@ cmr_s32 isp_mem_free(void)
 {
 	ISP_LOGI("free mem %p", isp_mem_ptr);
 	if (isp_mem_ptr) {
+		usleep(5000);
 		free(isp_mem_ptr);
 		isp_mem_ptr = NULL;
 	}
-
 	return 0;
 }
 

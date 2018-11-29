@@ -4188,6 +4188,7 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     ret = camera_sensor_init(oem_handle, is_autotest);
     if (ret) {
         CMR_LOGE("failed to init sensor %ld", ret);
+        isp_mem_deinit();
         goto exit;
     }
 
