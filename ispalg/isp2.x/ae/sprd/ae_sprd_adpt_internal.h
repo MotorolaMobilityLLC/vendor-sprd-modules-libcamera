@@ -345,6 +345,7 @@ extern "C" {
 
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
+		cmr_u32 last_table_index; /* for non-zsl, there is a 'ae_set_video_start' between pf and mf.which we need keep the previous table index */
 	};
 
 #endif

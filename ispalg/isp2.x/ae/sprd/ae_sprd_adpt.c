@@ -1338,7 +1338,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			if (cxt->cur_status.settings.manual_mode !=2)
 				cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
-			ISP_LOGV("AE_FLASH_PRE_BEFORE restore force ae's table_idx : %d, cur manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
+			ISP_LOGV("AE_FLASH_PRE_AFTER restore force ae's table_idx : %d, cur manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
 		} else {
 			cxt->cur_result.wts.exposure_time = cxt->flash_backup.exp_time;
 			cxt->cur_result.wts.cur_exp_line = cxt->flash_backup.exp_line;
@@ -1370,7 +1370,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			exp_comp.step_numerator=1;
 			exp_comp.step_denominator=8;
 			ae_set_exposure_compensation(cxt,&exp_comp);
-			ISP_LOGI("PRE AFTER table_idx is Zero,fix to %d", cxt->cur_status.settings.table_idx);
+			ISP_LOGV("PRE AFTER table_idx is Zero,fix to %d", cxt->cur_status.settings.table_idx);
+			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
 		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
@@ -1385,7 +1386,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		ISP_LOGI("ae_flash_status FLASH_MAIN_BEFORE");
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1);
-		if (cxt->exposure_compensation.ae_compensation_flag && !cxt->flash_backup.table_idx)  {
+		if (cxt->exposure_compensation.ae_compensation_flag )  {
 			if(0==cxt->cur_status.settings.table_idx){
 				struct ae_exp_compensation exp_comp;
 				exp_comp.comp_val=0;
@@ -1399,7 +1400,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
 			ISP_LOGV("AE_FLASH_MAIN_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
-		ISP_LOGI("AE_FLASH_MAIN_BEFORE table_idx is %d, manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
+		ISP_LOGV("AE_FLASH_MAIN_BEFORE table_idx is %d, manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
 		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
 		break;
 
@@ -1408,11 +1409,23 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->has_mf = 1;
 
 		if (cxt->exposure_compensation.ae_compensation_flag) {
-			if (cxt->cur_status.settings.manual_mode !=2)
+			if (cxt->cur_status.settings.manual_mode !=2){
 				cxt->cur_status.settings.manual_mode = 1;
-			cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
-			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d, cur manual_mode:%d", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
+				cxt->cur_status.settings.table_idx = cxt->flash_backup.table_idx;
+				ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d, cur manual_mode:%d", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
+			}else{ // manual_mode 2 means table idx needs reseting.
+				struct ae_exp_compensation exp_comp;
+				exp_comp.comp_val=0;
+				exp_comp.comp_range.min=-16;
+				exp_comp.comp_range.max=16;
+				exp_comp.step_numerator=1;
+				exp_comp.step_denominator=8;
+				ae_set_exposure_compensation(cxt,&exp_comp);
+				ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d, cur manual_mode:%d", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
+			}
+
 		}
+
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 0);
@@ -2244,6 +2257,8 @@ static cmr_s32 ae_set_restore_cnt(struct ae_ctrl_cxt *cxt)
 			cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 			cxt->cur_status.settings.pause_cnt = 0;
 			cxt->cur_status.settings.manual_mode = 0;
+			ISP_LOGV("table_idx:%d->0",cxt->cur_status.settings.table_idx);
+			cxt->cur_status.settings.table_idx = 0;
 		}
 	} else {
 		cxt->cur_status.settings.pause_cnt--;
@@ -2415,7 +2430,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	rtn = flash_pfStart(cxt->flash_alg_handle, &in, &out);
 	out.nextExposure *= SENSOR_LINETIME_BASE;	//Andy.lin temp code!!!
 	current_status->settings.manual_mode = 0;
-	current_status->settings.table_idx = 0;
+	current_status->settings.table_idx = 0;	
 	current_status->settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
 	current_status->settings.gain = out.nextGain;
 	cxt->pre_flash_level1 = out.preflahLevel1;
@@ -2655,8 +2670,20 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		if ((FLASH_MAIN_BEFORE == current_status->settings.flash) || (FLASH_MAIN == current_status->settings.flash)) {
 			if (cxt->flash_esti_result.isEnd) {
 				if (1 == cxt->exposure_compensation.ae_compensation_flag) {
-					if(current_status->settings.manual_mode !=2)
+					if(current_status->settings.manual_mode !=2){
+						ISP_LOGV("manual_mode:%d,table_idx:%d",current_status->settings.manual_mode,cxt->cur_status.settings.table_idx);
 						current_status->settings.manual_mode = 1;
+						if(0==cxt->cur_status.settings.table_idx){
+							struct ae_exp_compensation exp_comp;
+							exp_comp.comp_val=0;
+							exp_comp.comp_range.min=-16;
+							exp_comp.comp_range.max=16;
+							exp_comp.step_numerator=1;
+							exp_comp.step_denominator=8;
+							ae_set_exposure_compensation(cxt,&exp_comp);
+						}
+
+					}
 				} else {
 					current_status->settings.manual_mode = 0;
 					current_status->settings.table_idx = 0;
@@ -2680,6 +2707,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 						current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
 						current_status->settings.gain = cxt->flash_esti_result.captureGain;
 					}
+					ISP_LOGV("table_idx:%d",cxt->cur_status.settings.table_idx);
 				}
 
 			} else {
@@ -4015,10 +4043,15 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		} else {
 			ae_set_pause(cxt);
 			cxt->cur_status.settings.manual_mode = 0;
-			cxt->cur_status.settings.table_idx = 0;
+			if(cxt->last_table_index){
+				cxt->cur_status.settings.table_idx = cxt->last_table_index;
+			}else{
+				cxt->cur_status.settings.table_idx = 0;
+			}
 			cxt->cur_status.settings.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
 			cxt->cur_status.settings.gain = cxt->sync_cur_result.wts.cur_again;
 			cxt->cur_status.settings.is_snapshot =  work_info->is_snapshot;
+			ISP_LOGV("table_idx:%d",cxt->cur_status.settings.table_idx);
 		}
 	}
 
@@ -4284,6 +4317,9 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 					ae_set_compensation_calc(cxt, &change_idx);
 					cxt->cur_status.settings.manual_mode = 1;
 					cxt->cur_status.settings.table_idx = change_idx;
+					if(cxt->cur_status.settings.table_idx!=cxt->last_table_index){
+						cxt->last_table_index = cxt->cur_status.settings.table_idx;
+					}
 				}
 				ISP_LOGD("jhin manual_mode:%d, exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d", cxt->cur_status.settings.manual_mode, exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
 				ISP_LOGD("jhin change_idx:%d",change_idx);
@@ -6119,7 +6155,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_status.flash_mode = 0;
 	/*jhin add touch ev to reset */
 	cxt->exposure_compensation.touch_ev_flag = 0;
-
+	cxt->last_table_index = 0;
 	cxt->bypass = init_param->has_force_bypass;
 	if (init_param->has_force_bypass) {
 		cxt->cur_param->touch_info.enable = 0;
