@@ -3933,6 +3933,10 @@ void SprdCamera3Blur::processCaptureResultMain(
                          result->frame_number);
                 return;
             } else {
+                if (mCaptureThread->mIsBlurAlways &&
+                    mCaptureThread->mVersion == 1) {
+                    mCaptureThread->updateBlurWeightParams(metadata, 1);
+                }
                 mCaptureThread->mCallbackOps->process_capture_result(
                     mCaptureThread->mCallbackOps, result);
                 return;
