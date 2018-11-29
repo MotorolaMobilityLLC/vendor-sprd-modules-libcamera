@@ -1690,7 +1690,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     if (cameraId == 0) {
         s_setting[cameraId].flash_InfoInfo.available = 1;
     } else if (cameraId == 1) {
-        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none"))
+        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
+            !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
             s_setting[cameraId].flash_InfoInfo.available = 0;
         else
             s_setting[cameraId].flash_InfoInfo.available = 1;
