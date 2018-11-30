@@ -923,7 +923,7 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
     if (!strcmp(value, "off")) {
         HAL_LOGI("just for camera developer debug use");
         *width = default_sensor_max_sizes[cameraId].width;
@@ -950,7 +950,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
     if (!strcmp(value, "off")) {
         HAL_LOGI("turn off auto detect sensor, just for debug");
         setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
@@ -1117,6 +1117,15 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 
 int SprdCamera3Setting::getNumberOfCameras() {
     int numberOfCameras = 0;
+
+    // just for camera developer debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("turn off auto detect sensor, just for debug");
+        numberOfCameras = 3;
+        return numberOfCameras;
+    }
 
     numberOfCameras = getPhysicalNumberOfCameras();
 
