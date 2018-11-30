@@ -2858,6 +2858,7 @@ void ispalg_dev_evt_msg(cmr_int evt, void *data, void *privdata)
 		ISP_LOGE("fail to send a message, evt is %ld, ret: %ld, cxt: %p, af_handle: %p, handle: %p",
 			evt, ret, cxt, cxt->thr_afhandle, cxt->thr_handle);
 		free(message.data);
+		message.data = NULL;
 	}
 }
 

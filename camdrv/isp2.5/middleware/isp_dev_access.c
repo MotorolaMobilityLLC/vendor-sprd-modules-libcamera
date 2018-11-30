@@ -112,6 +112,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		isp_stats_buffer_size += ISP_HIST_STATIS_BUF_SIZE *
 			ISP_HIST_STATIS_BUF_NUM;
 
+	statis_mem_info->statis_valid = in_ptr->statis_valid;
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
 		statis_mem_info->alloc_cb = in_ptr->alloc_cb;
 		statis_mem_info->free_cb = in_ptr->free_cb;
@@ -122,7 +123,6 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 			isp_stats_buffer_size;
 
 		statis_mem_info->isp_statis_mem_num = 1;
-		statis_mem_info->statis_valid = in_ptr->statis_valid;
 
 		memset(&fds, 0x00, sizeof(fds));
 		if (statis_mem_info->alloc_cb) {
