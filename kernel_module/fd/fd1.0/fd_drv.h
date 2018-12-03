@@ -46,6 +46,8 @@ struct fd_drv {
 	int irq_no;
 	unsigned long io_base;
 	unsigned long io_dvfs_base;
+	uint32_t awqos;
+	uint32_t arqos;
 	enum sprd_fd_state state;
 	struct clk *fd_clk;
 	struct platform_device *pdev;

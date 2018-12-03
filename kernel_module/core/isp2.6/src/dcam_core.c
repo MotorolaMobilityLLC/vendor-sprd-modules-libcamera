@@ -385,8 +385,11 @@ static void dcam_init_default(struct dcam_pipe_dev *dev)
 		/* the end, enable AXI writing */
 		DCAM_AXIM_MWR(AXIM_CTRL, BIT_24 | BIT_23, (0x0 << 23));
 
-		reg_val = (0x0 << 20) | (0xA << 12) | (0x8 << 8) |
-				(0xD << 4) | 0xA;
+		reg_val = (0x0 << 20) |
+			((dev->hw->arqos_low & 0xF) << 12) |
+			(0x8 << 8) |
+			((dev->hw->awqos_high & 0xF) << 4) |
+			(dev->hw->awqos_low & 0xF);
 		DCAM_AXIM_MWR(AXIM_CTRL,
 				DCAM_AXIM_AQOS_MASK, reg_val);
 	}

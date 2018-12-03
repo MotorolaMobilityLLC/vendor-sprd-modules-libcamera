@@ -185,6 +185,7 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 {
 	struct sprd_cam_hw_info *hw = NULL;
 	struct device_node *dn = NULL;
+	struct device_node *qos_node = NULL;
 	struct regmap *ahb_map = NULL;
 	void __iomem *reg_base = NULL;
 	struct resource reg_res = {0}, irq_res = {0};
@@ -268,7 +269,41 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 		pr_info("DCAM%d reg: %s 0x%lx %lx, irq: %s %u\n", i,
 			reg_res.name, hw->phy_base, hw->reg_base,
 			irq_res.name, hw->irq_no);
-		dcam_hw[i] = hw;
+
+		/* qos dt parse */
+		qos_node = of_parse_phandle(dn, "dcam_qos", 0);
+		if (qos_node) {
+			uint8_t val;
+
+			if (of_property_read_u8(qos_node, "awqos-high", &val)) {
+				pr_warn("isp awqos-high reading fail.\n");
+				val = 0xD;
+			}
+			hw->awqos_high = (uint32_t)val;
+
+			if (of_property_read_u8(qos_node, "awqos-low", &val)) {
+				pr_warn("isp awqos-low reading fail.\n");
+				val = 0xA;
+			}
+			hw->awqos_low = (uint32_t)val;
+
+			if (of_property_read_u8(qos_node, "arqos", &val)) {
+				pr_warn("isp arqos-high reading fail.\n");
+				val = 0xA;
+			}
+			hw->arqos_high = val;
+			hw->arqos_low = val;
+
+			pr_info("get dcam qos node. r: %d %d w: %d %d\n",
+				hw->arqos_high, hw->arqos_low,
+				hw->awqos_high, hw->awqos_low);
+		} else {
+			hw->awqos_high = 0xD;
+			hw->awqos_low = 0xA;
+			hw->arqos_high = 0xA;
+			hw->arqos_low = 0xA;
+		}
+
 #ifndef TEST_ON_HAPS
 		/* read dcam clk */
 		hw->core_eb = of_clk_get_by_name(dn, "dcam_eb");
@@ -293,6 +328,8 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 		}
 		hw->clk_default = hw->clk_parent;
 #endif /* TEST_ON_HAPS */
+
+		dcam_hw[i] = hw;
 	}
 
 	if (of_address_to_resource(dn, i, &reg_res)) {

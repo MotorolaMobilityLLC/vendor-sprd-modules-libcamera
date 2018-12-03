@@ -148,7 +148,7 @@ static int sprd_fd_config_syscon(struct fd_drv *handle,
 static int sprd_fd_parse_dt(struct fd_drv *handle,
 	struct device_node *dn)
 {
-
+	struct device_node *qos_node;
 	void __iomem *io_base = NULL;
 	struct resource res = {0};
 	struct platform_device *dev = NULL;
@@ -210,6 +210,26 @@ static int sprd_fd_parse_dt(struct fd_drv *handle,
 		return -EFAULT;
 	}
 
+	qos_node = of_parse_phandle(dn, "fd_qos", 0);
+	if (qos_node) {
+		uint8_t val;
+
+		if (of_property_read_u8(qos_node, "arqos", &val)) {
+			pr_warn("fd arqos reading fail.\n");
+			val = 1;
+		}
+		handle->arqos = (uint32_t)val;
+		if (of_property_read_u8(qos_node, "awqos", &val)) {
+			pr_warn("fd awqos reading fail.\n");
+			val = 1;
+		}
+		handle->awqos = (uint32_t)val;
+		pr_info("get fd qos node. r: %d w: %d\n",
+				handle->arqos, handle->awqos);
+	} else {
+		handle->arqos = 1;
+		handle->awqos = 1;
+	}
 	return 0;
 }
 
@@ -350,7 +370,11 @@ int sprd_fd_drv_open(void *drv_handle)
 			FD_REG_DVFS_DFS_FREQ_UPDATE_BYPASS,
 			FD_MASK_DVFS_DFS_FREQ_UPDATE, 1);
 
-
+		/* set qos parsed from dts */
+		FD_REG_MWR(hw_handle->io_base, FD_MOD_CFG,
+			FD_MASK_MOD_CFG_ARQOS | FD_MASK_MOD_CFG_AWQOS,
+			((hw_handle->arqos & 0xf) << 20) |
+			((hw_handle->awqos & 0xf) << 16));
 	}
 	init_completion(&hw_handle->fd_wait_com);
 	sprd_fd_irq_enable(hw_handle);
@@ -478,6 +502,11 @@ static int fd_write_mod_cfg(struct fd_drv *hw_handle,
 			unsigned int val)
 {
 	unsigned int mask = 0;
+
+	/* todo: qos should be set by user, should be parsed from dts */
+	val &= ~(FD_MASK_MOD_CFG_ARQOS | FD_MASK_MOD_CFG_AWQOS);
+	val |= ((hw_handle->arqos & 0xf) << 20);
+	val |= ((hw_handle->awqos & 0xf) << 16);
 
 	mask = FD_MASK_MOD_CFG_ARQOS | FD_MASK_MOD_CFG_AWQOS |
 		FD_MASK_MOD_CFG_OUT_END | FD_MASK_MOD_CFG_IN_END |

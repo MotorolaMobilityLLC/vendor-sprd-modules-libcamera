@@ -165,7 +165,7 @@ static int isp_irq_enable(struct sprd_cam_hw_info *hw, void *arg)
 }
 
 
-static void set_common(void)
+static void set_common(struct sprd_cam_hw_info *hw)
 {
 	uint32_t wqos_val = 0;
 	uint32_t rqos_val = 0;
@@ -173,9 +173,12 @@ static void set_common(void)
 	/* to be refined. */
 	ISP_HREG_MWR(ISP_AXI_ITI2AXIM_CTRL, 0xFF00, (1 << 8));
 
-	wqos_val = (0x1 << 13) | (0x0 << 12) |
-			(0x4 << 8) | (0x6 << 4) | 0x6;
-	rqos_val = (0x0 << 8) | (0x6 << 4) | 0x6;
+	wqos_val = (0x1 << 13) | (0x0 << 12) | (0x4 << 8) |
+			((hw->awqos_high & 0xF) << 4) |
+			(hw->awqos_low &0xF);
+	rqos_val = (0x0 << 8) |
+			((hw->arqos_high & 0xF) << 4) |
+			(hw->arqos_low &0xF);
 	ISP_HREG_MWR(ISP_AXI_ARBITER_WQOS,
 					0x37FF,
 					wqos_val);
@@ -234,7 +237,7 @@ static int isp_start(struct sprd_cam_hw_info *hw, void *arg)
 	ISP_HREG_MWR(ISP_WORK_CTRL, BIT_1, (work_ctrl.work_start << 1));
 	ISP_HREG_MWR(ISP_WORK_CTRL, BIT_2, (work_ctrl.work_en_sw << 2));
 #endif
-	set_common();
+	set_common(hw);
 	return ret;
 }
 
@@ -402,6 +405,7 @@ int sprd_isp_parse_dt(struct device_node *dn,
 	uint32_t count = 0;
 	void __iomem *reg_base;
 	struct device_node *isp_node = NULL;
+	struct device_node *qos_node = NULL;
 	struct resource res = {0};
 	struct sprd_cam_hw_info *isp_hw = &s_isp_hw_dev;
 
@@ -460,6 +464,41 @@ int sprd_isp_parse_dt(struct device_node *dn,
 		}
 		isp_hw->clk_default = isp_hw->clk_parent;
 #endif
+
+		/* qos dt parse */
+		qos_node = of_parse_phandle(isp_node, "isp_qos", 0);
+		if (qos_node) {
+			uint8_t val;
+
+			if (of_property_read_u8(qos_node, "awqos-high", &val)) {
+				pr_warn("isp awqos-high reading fail.\n");
+				val = 7;
+			}
+			isp_hw->awqos_high = (uint32_t)val;
+			if (of_property_read_u8(qos_node, "awqos-low", &val)) {
+				pr_warn("isp awqos-low reading fail.\n");
+				val = 6;
+			}
+			isp_hw->awqos_low = (uint32_t)val;
+			if (of_property_read_u8(qos_node, "arqos-high", &val)) {
+				pr_warn("isp arqos-high reading fail.\n");
+				val = 7;
+			}
+			isp_hw->arqos_high = (uint32_t)val;
+			if (of_property_read_u8(qos_node, "arqos-low", &val)) {
+				pr_warn("isp arqos-low reading fail.\n");
+				val = 6;
+			}
+			isp_hw->arqos_low = (uint32_t)val;
+			pr_info("get isp qos node. r: %d %d w: %d %d\n",
+				isp_hw->arqos_high, isp_hw->arqos_low,
+				isp_hw->awqos_high, isp_hw->awqos_low);
+		} else {
+			isp_hw->awqos_high = 7;
+			isp_hw->awqos_low = 6;
+			isp_hw->arqos_high = 7;
+			isp_hw->arqos_low = 6;
+		}
 
 		isp_hw->cam_ahb_gpr = syscon_regmap_lookup_by_phandle(isp_node,
 			"sprd,cam-ahb-syscon");

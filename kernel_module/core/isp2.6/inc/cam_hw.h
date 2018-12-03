@@ -36,6 +36,11 @@ struct sprd_cam_hw_info {
 	struct clk *axi_eb;
 	struct clk *mm_eb;
 
+	uint32_t arqos_high;
+	uint32_t arqos_low;
+	uint32_t awqos_high;
+	uint32_t awqos_low;
+
 	unsigned long  phy_base;
 	unsigned long  reg_base;
 	struct sprd_cam_hw_ops *ops;
