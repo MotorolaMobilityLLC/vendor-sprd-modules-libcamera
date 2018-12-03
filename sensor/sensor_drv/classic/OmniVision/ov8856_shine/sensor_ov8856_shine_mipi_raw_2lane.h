@@ -730,7 +730,7 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
 #ifdef SENSOR_OV8856_TELE
         .fov_info = {{3.656f, 2.742f}, 4.457f}}
 #else
-        .fov_info = {{3.656f, 2.742f}, 4.222f}}
+        .fov_info = {{3.656f, 2.742f}, 2.560f}}
 #endif
     }
     /*If there are multiple modules,please add here*/
