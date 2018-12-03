@@ -3853,8 +3853,9 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                     HAL_LOGD("discard frame_number %u", cur_frame_number);
                     pushBufferList(mLocalBuffer, discard_frame->buffer,
                                    mLocalBufferNumber, mLocalBufferList);
-                    CallBackResult(discard_frame->frame_number,
-                                   CAMERA3_BUFFER_STATUS_ERROR);
+                    if (cur_frame.frame_number > 5)
+                        CallBackResult(discard_frame->frame_number,
+                                       CAMERA3_BUFFER_STATUS_ERROR);
                     delete discard_frame;
                 }
             }
