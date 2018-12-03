@@ -746,38 +746,6 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
         goto exit;
     }
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-/*temp define, will del it when al3200 be merged into code*/
-#define AL3200_CMD_DEPTH_MAP_MODE 2
-#define AL3200_CMD_BYPASS_MODE 3
-    /*temp define, end*/
-
-    if (cxt->camera_id == SENSOR_MAIN) {
-        CMR_LOGI("open 2 camera");
-        if (cxt->is_refocus_mode == 1) {
-            ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
-                                             SENSOR_MAIN2,
-                                             AL3200_CMD_DEPTH_MAP_MODE);
-            if (ret) {
-                CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id,
-                         ret);
-            }
-        } else {
-            ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
-                                             SENSOR_MAIN2,
-                                             AL3200_CMD_BYPASS_MODE);
-            if (ret) {
-                CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id,
-                         ret);
-            }
-        }
-        ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, SENSOR_MAIN2,
-                                     on_off);
-        if (ret) {
-            CMR_LOGE("err to set stream %ld", ret);
-        }
-    }
-#endif
     ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                  on_off);
     if (ret) {
@@ -2314,16 +2282,7 @@ cmr_int camera_sensor_init(cmr_handle oem_handle, cmr_uint is_autotest) {
         CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
         goto sensor_exit;
     }
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-    if (cxt->camera_id == SENSOR_MAIN) {
-        camera_id_bits = 1 << SENSOR_MAIN2;
-        ret = cmr_sensor_open(sensor_handle, camera_id_bits);
-        if (ret) {
-            CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
-            goto sensor_exit;
-        }
-    }
-#endif
+
     cmr_sensor_event_reg(sensor_handle, cxt->camera_id, camera_sensor_evt_cb);
     cxt->sn_cxt.sensor_handle = sensor_handle;
 
@@ -2364,15 +2323,6 @@ cmr_int camera_sensor_deinit(cmr_handle oem_handle) {
     }
     sensor_handle = sn_cxt->sensor_handle;
     cmr_sensor_close(sensor_handle, (1 << cxt->camera_id));
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-    if (cxt->camera_id == SENSOR_MAIN) {
-        ret = cmr_sensor_close(sensor_handle, 1 << SENSOR_MAIN2);
-        if (ret) {
-            CMR_LOGE("close %d sensor failed %ld", cxt->camera_id, ret);
-            goto exit;
-        }
-    }
-#endif
     cmr_sensor_deinit_static_info(cxt);
     cmr_sensor_deinit(sensor_handle);
     cmr_bzero(sn_cxt, sizeof(*sn_cxt));

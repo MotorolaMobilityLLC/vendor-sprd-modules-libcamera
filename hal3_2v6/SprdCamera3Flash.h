@@ -30,7 +30,7 @@
 #ifndef __SPRDCAMERA_FLASH_H__
 #define __SPRDCAMERA_FLASH_H__
 
-#define SPRD_CAMERA_MAX_NUM_SENSORS 3
+#define SPRD_CAMERA_MAX_NUM_SENSORS 6
 
 #include <hardware/camera_common.h>
 

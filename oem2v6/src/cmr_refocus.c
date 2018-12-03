@@ -109,13 +109,7 @@ int32_t refocus_frame_num = 0;
 int32_t no_callback = 1;
 
 static struct refoucs_ops altek_refoucs_ops = {
-
-#if defined(CONFIG_CAMERA_RT_REFOCUS)
-    alRnBRT_VersionInfo_Get, alRnBRT_Init,
-    (altek_refocus_function)alRnBRT_ReFocus, alRnBRT_Close
-#else
     NULL, NULL, NULL
-#endif
 };
 
 static struct class_ops refocus_ops_tab_info = {

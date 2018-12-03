@@ -42,8 +42,8 @@ using namespace android;
 
 namespace sprdcamera {
 
-uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0};
-uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0};
+uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
+uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
 
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -124,8 +124,8 @@ typedef struct _front_flash_type {
 static SprdCamera3DefaultInfo camera3_default_info;
 
 static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
-static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592, 2592};
-static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944, 1944};
+static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592, 2592, 2592, 2592};
+static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944, 1944, 1944, 1944};
 
 // if cant get valid sensor fov info, use the default value
 static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
@@ -133,9 +133,11 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
+    {{3.50f, 2.625f}, 3.75f},
+    {{3.50f, 2.625f}, 3.75f},
 };
 
-static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0};
+static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
     {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
@@ -1630,12 +1632,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].quirksInfo.use_parital_result = 1;
 
     // lens
-    if (cameraId == 0)
+    memset(&cameraInfo, 0, sizeof(cameraInfo));
+    getCameraInfo(cameraId, &cameraInfo);
+    if (cameraInfo.facing == CAMERA_FACING_BACK) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_BACK;
-    else if (cameraId == 1 || cameraId == 3)
+    } else if (cameraInfo.facing == CAMERA_FACING_FRONT) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_FRONT;
-    else
-        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_BACK;
+    } else if (cameraInfo.facing == CAMERA_FACING_EXTERNAL) {
+        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_EXTERNAL;
+    }
 
     // lens shading
     s_setting[cameraId].shadingInfo.factor_count = SPRD_SHADING_FACTOR_NUM;
@@ -1753,11 +1758,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
     s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-    s_setting[cameraId].sprddefInfo.is_support_refocus = 1;
-#else
     s_setting[cameraId].sprddefInfo.is_support_refocus = 0;
-#endif
 
     // max preview size supported for hardware limitation
     s_setting[cameraId].sprddefInfo.max_preview_size[0] =

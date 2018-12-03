@@ -49,7 +49,7 @@ class SprdCamera3HeapMemory;
 class SprdCamera3OEMIf;
 class SprdCamera3Setting;
 
-#define MIN_MULTI_CAMERA_FAKE_ID 5
+#define MIN_MULTI_CAMERA_FAKE_ID 6
 #define MAX_MULTI_CAMERA_FAKE_ID 50
 
 class SprdCamera3HWI {

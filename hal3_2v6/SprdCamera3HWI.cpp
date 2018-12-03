@@ -100,9 +100,13 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     if (mCameraId == 0) {
         if (!strcmp(value, "2"))
             mCameraId = 2;
+       else if (!strcmp(value, "4"))
+            mCameraId = 4;
     } else if (mCameraId == 1) {
         if (!strcmp(value, "3"))
             mCameraId = 3;
+      else if (!strcmp(value, "5"))
+            mCameraId = 5;
     }
 
     getLogLevel();

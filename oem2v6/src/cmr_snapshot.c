@@ -918,17 +918,6 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     }
 #endif
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-    struct camera_context *cxt = (struct camera_context *)snp_cxt->oem_handle;
-    if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
-        ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
-        if (ret != CMR_CAMERA_SUCCESS) {
-            CMR_LOGE("camera_start_refocus fail");
-            goto exit;
-        }
-    }
-#endif
-
     if ((!snp_cxt->req_param.is_video_snapshot) &&
         (!snp_cxt->req_param.is_zsl_snapshot) &&
         (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
