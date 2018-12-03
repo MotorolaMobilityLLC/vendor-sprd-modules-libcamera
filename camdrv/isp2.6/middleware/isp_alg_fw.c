@@ -891,6 +891,8 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 
+	ISP_LOGD("enter\n");
+
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_GET_LSCTAB,
@@ -3032,6 +3034,8 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_input io_pm_input = { PNULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { PNULL, 0 };
 
+	return ret;
+
 	memset(&lsc_param, 0, sizeof(struct lsc_adv_init_param));
 	memset(&io_pm_input, 0, sizeof(struct isp_pm_ioctl_input));
 	memset(&io_pm_output, 0, sizeof(struct isp_pm_ioctl_output));
@@ -3848,7 +3852,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		}
 	}
 
-	if (cxt->ops.lsc_ops.ioctrl) {
+	if (0 && cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
@@ -3877,7 +3881,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_ISP_STOP_INFO"));
 	}
 
-	if (cxt->ops.lsc_ops.ioctrl) {
+	if (0 && cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
@@ -3971,7 +3975,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ret = ispalg_update_alsc_result(cxt, (void *)&fwprocstart_info);
 		ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 	}
-
+	if (0) {
 	ret = ispalg_alsc_get_info(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do get lsc info"));
 	lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
@@ -3988,7 +3992,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);
-
+	}
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
 
@@ -4011,7 +4015,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ISP_RETURN_IF_FAIL(ret, ("fail to set rgb gain"));
 	}
 
-	if (cxt->ops.lsc_ops.ioctrl)
+	if (0 && cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START_END, (void *)&fwprocstart_info, NULL);
 
 	/* RAW_PROC_POST, kernel will set all buffers and trigger raw image processing*/

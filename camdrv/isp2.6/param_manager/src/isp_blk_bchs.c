@@ -23,6 +23,7 @@ cmr_s32 _pm_bchs_init(void *dst_bchs_param, void *src_bchs_param, void *param1, 
 	struct isp_bchs_param *dst_ptr = (struct isp_bchs_param *)dst_bchs_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
+	return 0;
 
 	memcpy((void *)dst_ptr->brigntness.bright_tab,
 		(void *)src_ptr->brightness.factor, sizeof(dst_ptr->brigntness.bright_tab));
