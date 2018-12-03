@@ -65,11 +65,12 @@ SprdCamera3Blur *mBlur = NULL;
 #define FACE_SCREEN_EFFECT_FACTOR 5
 #define FACE_EFFECT_FACTOR 5
 #define FACE_INFO_SCALE(initwidth, initheight, x1, y1, x2, y2)                 \
-    initwidth *initheight * FACE_SCREEN_EFFECT_FACTOR/                                                    \
-        (ABS(x2 - x1) * ABS(x2 - x1) + ABS(y2 - y1) * ABS(y2 - y1)) * FACE_EFFECT_FACTOR
+    initwidth *initheight *FACE_SCREEN_EFFECT_FACTOR /                         \
+        ((ABS(x2 - x1) * ABS(x2 - x1) + ABS(y2 - y1) * ABS(y2 - y1)) *         \
+         FACE_EFFECT_FACTOR)
 #endif
 
-#define MAX_FRAME 75
+#define MAX_UPDATE_TIME 3000
 
 camera3_device_ops_t SprdCamera3Blur::mCameraCaptureOps = {
     .initialize = SprdCamera3Blur::initialize,
@@ -720,8 +721,9 @@ int SprdCamera3Blur::setupPhysicalCameras() {
 SprdCamera3Blur::CaptureThread::CaptureThread()
     : mCallbackOps(NULL), mDevMain(NULL), mSavedResultBuff(NULL),
       mSavedCapReqsettings(NULL), mCaptureStreamsNum(0), mBlurApi2(NULL),
-      mLastMinScope(0), mLastMaxScope(0), mLastAdjustRati(0),
-      mCircleSizeScale(0), mFirstCapture(false), mFirstPreview(false),
+      mFirstUpdateFrame(0), mLastMinScope(0), mLastMaxScope(0),
+      mLastAdjustRati(0), mCircleSizeScale(0), mUpdataxy(0), mstartUpdate(0),
+      mFirstCapture(false), mFirstPreview(false),
       mUpdateCaptureWeightParams(false), mUpdatePreviewWeightParams(false),
       mLastFaceNum(0), mSkipFaceNum(0), mRotation(0), mLastTouchX(0),
       mLastTouchY(0), mBlurBody(true), mUpdataTouch(false), mVersion(0),
@@ -832,7 +834,7 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
         mBlurApi[i] = (BlurAPI_t *)malloc(sizeof(BlurAPI_t));
         if (mBlurApi[i] == NULL) {
             HAL_LOGE("mBlurApi malloc failed.");
-            return -1;
+            goto mem_fail;
         }
         memset(mBlurApi[i], 0, sizeof(BlurAPI_t));
         HAL_LOGD("i = %d", i);
@@ -941,7 +943,7 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
     mBlurApi2 = (BlurAPI2_t *)malloc(sizeof(BlurAPI2_t));
     if (mBlurApi2 == NULL) {
         HAL_LOGE("mBlurApi2 malloc failed.");
-        return -1;
+        goto mem_fail;
     }
     memset(mBlurApi2, 0, sizeof(BlurAPI2_t));
     mBlurApi2->handle = dlopen(BLUR_LIB_BOKEH_CAPTURE2, RTLD_LAZY);
@@ -1013,6 +1015,13 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
     HAL_LOGI("load blur Api succuss.");
 
     return 0;
+
+mem_fail:
+    for (i = 0; i < BLUR_LIB_BOKEH_NUM; i++)
+        if (mBlurApi[i] != NULL)
+            free(mBlurApi[i]);
+
+    return -1;
 }
 
 /*===========================================================================
@@ -2006,7 +2015,7 @@ int SprdCamera3Blur::CaptureThread::initBlur20Params() {
     mCaptureInitParams.cali_dac_seq = (unsigned short *)malloc(
         sizeof(unsigned short) * mCaptureInitParams.cali_seq_len);
     if (mCaptureInitParams.cali_dac_seq == NULL) {
-        return -1;
+        goto mem_fail;
     }
 
     if (SprdCamera3Setting::s_setting[mBlur->mCameraId]
@@ -2022,6 +2031,10 @@ int SprdCamera3Blur::CaptureThread::initBlur20Params() {
                sizeof(unsigned short) * mCaptureInitParams.cali_seq_len);
     }
     return 0;
+mem_fail:
+    if (mCaptureInitParams.cali_dist_seq != NULL)
+        free(mCaptureInitParams.cali_dist_seq);
+    return -1;
 }
 
 /*===========================================================================
@@ -2038,6 +2051,8 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mFirstCapture = true;
     mFirstPreview = true;
     mUpdateCaptureWeightParams = true;
+    mFirstUpdateFrame = 1;
+    mstartUpdate = 0;
 
     // preview 720P v1.0 v1.1
     mLastMinScope = 10;      // min_slope*10000
@@ -2062,7 +2077,6 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mCaptureInitParams.findex2gamma_adjust_ratio =
         (float)(mLastAdjustRati) / 10000;
-    mMaxFrame = MAX_FRAME;
 
     return initBlur20Params();
 }
@@ -2782,14 +2796,16 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         mLastTouchY * mPreviewInitParams.height / origH;
                     mUpdataTouch = false;
                     mUpdataxy = 1;
-                    mMaxFrame = MAX_FRAME;
+                    mFirstUpdateFrame = 1;
                 }
                 if (mUpdataxy != 0) {
-                    if (mMaxFrame == MAX_FRAME) {
+                    if (mFirstUpdateFrame == 1) {
+                        mstartUpdate = systemTime();
                         mFaceInfoX = mFaceInfo[0];
                         mFaceInfoY = mFaceInfo[1];
+                        mFirstUpdateFrame = 0;
                     }
-                    if (mMaxFrame <= 0) {
+                    if (ns2ms(systemTime() - mstartUpdate) >= MAX_UPDATE_TIME) {
                         int x = FACE_INFO_SCALE(mPreviewInitParams.width,
                                                 mPreviewInitParams.height,
                                                 mFaceInfo[0], mFaceInfo[1],
@@ -2800,7 +2816,6 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                                 mPreviewInitParams.height / 2)
                             mUpdataxy = 0;
                     }
-                    mMaxFrame--;
                 }
                 if (!mUpdataxy) {
                     mPreviewWeightParams.sel_x =
@@ -3908,7 +3923,6 @@ req_fail:
         free((void *)req_main.output_buffers);
         req_main.output_buffers = NULL;
     }
-
     return rc;
 }
 

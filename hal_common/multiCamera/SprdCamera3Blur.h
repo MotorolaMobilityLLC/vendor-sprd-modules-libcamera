@@ -413,7 +413,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         uint8_t mCaptureStreamsNum;
         BlurAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
         BlurAPI2_t *mBlurApi2;
-        int mMaxFrame;
+        int mFirstUpdateFrame;
         int mFaceInfoX;
         int mFaceInfoY;
         int mLastMinScope;
@@ -421,6 +421,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         int mLastAdjustRati;
         int mCircleSizeScale;
         int mUpdataxy;
+        int64_t mstartUpdate;
         bool mFirstCapture;
         bool mFirstPreview;
         bool mUpdateCaptureWeightParams;
