@@ -1109,6 +1109,13 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_get_grab_capability(handle,
                                          (struct cmr_path_capability *)param);
         break;
+    case CAMERA_IOCTRL_START_SCALE:
+        camera_local_start_scale(handle, (struct img_frm **)param);
+        break;
+    case CAMERA_IOCTRL_ROTATE: {
+        camera_local_start_rotate(handle, (struct rotate_param *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_MASTER_ID: {
         int8_t *master_id = (int8_t *)param;
         CMR_LOGD("master id %d", *master_id);

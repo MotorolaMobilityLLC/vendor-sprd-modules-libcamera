@@ -451,6 +451,8 @@ int SprdCamera3HWI::resetVariablesToDefault() {
     memset(&mStreamConfiguration, 0, sizeof(cam3_stream_configuration_t));
 
     mFrameNum = 0;
+    mFirstRegularRequest = 0;
+    mPictureRequest = 0;
 
     mOEMIf->initialize();
 
@@ -520,7 +522,12 @@ int32_t SprdCamera3HWI::getStreamType(camera3_stream_t *stream) {
             break;
 
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            streamType = CAMERA_STREAM_TYPE_CALLBACK;
+            if (mStreamConfiguration.preview.status == CONFIGURED &&
+                mStreamConfiguration.yuvcallback.status == UNCONFIGURED) {
+                streamType = CAMERA_STREAM_TYPE_PREVIEW;
+            } else {
+                streamType = CAMERA_STREAM_TYPE_CALLBACK;
+            }
             break;
 
         case HAL_PIXEL_FORMAT_BLOB:
@@ -571,6 +578,7 @@ int SprdCamera3HWI::configureStreams(
     Mutex::Autolock l(mLock);
 
     int ret = NO_ERROR;
+    size_t i;
     cam_dimension_t preview_size = {0, 0}, video_size = {0, 0};
     cam_dimension_t callback_size = {0, 0}, capture_size = {0, 0};
     int previewFormat = 0, videoFormat = 0;
@@ -581,6 +589,8 @@ int SprdCamera3HWI::configureStreams(
     memset(&sprddefInfo, 0x00, sizeof(SPRD_DEF_Tag));
     // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
     uint32_t alreadyHasPreviewStream = 0;
+    // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
+    uint32_t hasImplementationDefinedOutputStream = 0;
 
     ret = checkStreamList(streamList);
     if (ret) {
@@ -638,14 +648,25 @@ int SprdCamera3HWI::configureStreams(
 
     resetVariablesToDefault();
 
+    // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
+    for (i = 0; i < streamList->num_streams; i++) {
+        if (streamList->streams[i]->stream_type == CAMERA3_STREAM_OUTPUT) {
+            if (streamList->streams[i]->format ==
+                    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                streamList->streams[i]->format ==
+                    HAL_PIXEL_FORMAT_YCrCb_420_SP) {
+                hasImplementationDefinedOutputStream = 1;
+            }
+        }
+    }
+
     mStreamConfiguration.num_streams = streamList->num_streams;
 
     /* Allocate channel objects for the requested streams */
-    for (size_t i = 0; i < streamList->num_streams; i++) {
+    for (i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
         // eis use this variable, but some chip dont support eis
         newStream->reserved[0] = NULL;
-
         camera_stream_type_t stream_type = CAMERA_STREAM_TYPE_DEFAULT;
         camera_channel_type_t channel_type = CAMERA_CHANNEL_TYPE_DEFAULT;
 
@@ -669,17 +690,25 @@ int SprdCamera3HWI::configureStreams(
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
                 }
                 break;
+
             case HAL_PIXEL_FORMAT_YV12:
             case HAL_PIXEL_FORMAT_YCbCr_420_888:
-                if (newStream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+                if (hasImplementationDefinedOutputStream == 0) {
+                    stream_type = CAMERA_STREAM_TYPE_PREVIEW;
+                    channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                    // for two HAL_PIXEL_FORMAT_YCBCR_420_888 steam
+                    hasImplementationDefinedOutputStream = 1;
+                } else {
                     stream_type = CAMERA_STREAM_TYPE_CALLBACK;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
                 }
                 break;
+
             case HAL_PIXEL_FORMAT_BLOB:
                 stream_type = CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT;
                 channel_type = CAMERA_CHANNEL_TYPE_PICTURE;
                 break;
+
             default:
                 stream_type = CAMERA_STREAM_TYPE_DEFAULT;
                 break;
@@ -695,9 +724,10 @@ int SprdCamera3HWI::configureStreams(
             newStream->usage |= GRALLOC_USAGE_VIDEO_BUFFER;
         }
 
-        HAL_LOGD(":hal3: stream %d: stream_type=%d, chn_type=%d, w=%d, h=%d", i,
-                 stream_type, channel_type, newStream->width,
-                 newStream->height);
+        HAL_LOGD(":hal3: stream %d: stream_type=%d, chn_type=%d, w=%d, h=%d, "
+                 "format=%d",
+                 i, stream_type, channel_type, newStream->width,
+                 newStream->height, newStream->format);
 
         switch (channel_type) {
         case CAMERA_CHANNEL_TYPE_REGULAR: {
@@ -716,7 +746,6 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.preview.height = newStream->height;
                 mStreamConfiguration.preview.format = newStream->format;
                 mStreamConfiguration.preview.type = CAMERA_STREAM_TYPE_PREVIEW;
-
             } else if (stream_type == CAMERA_STREAM_TYPE_VIDEO) {
                 video_size.width = newStream->width;
                 video_size.height = newStream->height;
@@ -759,6 +788,7 @@ int SprdCamera3HWI::configureStreams(
             newStream->priv = mRegularChan;
             break;
         }
+
         case CAMERA_CHANNEL_TYPE_PICTURE: {
             ret = mPicChan->addStream(stream_type, newStream);
             if (ret) {
@@ -783,9 +813,11 @@ int SprdCamera3HWI::configureStreams(
             mPictureRequest = false;
             break;
         }
+
         case CAMERA_CHANNEL_TYPE_YUV_CALLBACK: {
             break;
         }
+
         default:
             HAL_LOGE("channel type is invalid channel");
             break;
@@ -834,6 +866,11 @@ int SprdCamera3HWI::configureStreams(
     //} else if (capture_size.height == 360 && capture_size.width == 640) {
     //    capture_size.height = 368;
     //}
+
+    if (mStreamConfiguration.preview.width >= 2592 &&
+        mStreamConfiguration.snapshot.width >= 2592) {
+        mOEMIf->setJpegWithBigSizePreviewFlag();
+    }
 
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
@@ -1093,31 +1130,19 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     // for cts:
     // testMandatoryOutputCombinations, testSingleCapture
-    if (request->num_output_buffers == 1 &&
-        mStreamConfiguration.num_streams == 1 &&
+    if (mStreamConfiguration.num_streams == 1 &&
         mStreamConfiguration.snapshot.status == CONFIGURED) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
-    } else if (request->num_output_buffers == 1 &&
-               mStreamConfiguration.num_streams == 1 &&
+    } else if (mStreamConfiguration.num_streams == 1 &&
+               mStreamConfiguration.preview.status == CONFIGURED) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+    } else if (mStreamConfiguration.num_streams == 1 &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-    } else if (request->num_output_buffers == 2 &&
-               mStreamConfiguration.num_streams == 2 &&
+    } else if (mStreamConfiguration.num_streams == 2 &&
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-    } else if (request->num_output_buffers == 2 &&
-               mStreamConfiguration.num_streams == 2 &&
-               mStreamConfiguration.preview.status == CONFIGURED &&
-               mStreamConfiguration.snapshot.status == CONFIGURED &&
-               sprddefInfo.sprd_zsl_enabled == 0) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
-    } else if (request->num_output_buffers == 2 &&
-               mStreamConfiguration.num_streams == 2 &&
-               mStreamConfiguration.yuvcallback.status == CONFIGURED &&
-               mStreamConfiguration.snapshot.status == CONFIGURED &&
-               sprddefInfo.sprd_zsl_enabled == 0) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
     } else if (mStreamConfiguration.num_streams == 3 &&
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED &&
@@ -1133,8 +1158,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mStreamConfiguration.snapshot.status == CONFIGURED) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
                 // when sensor_rotation is 1 for volte, volte dont need capture
-                if (sprddefInfo.sensor_rotation == 0)
+                if (sprddefInfo.sensor_rotation == 0) {
                     mOEMIf->setStreamOnWithZsl();
+                }
                 mFirstRegularRequest = 1;
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
                 if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
@@ -1181,6 +1207,55 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
         if (mStreamConfiguration.num_streams == 2 &&
             mStreamConfiguration.preview.status == CONFIGURED &&
+            mStreamConfiguration.snapshot.status == CONFIGURED) {
+            // raw capture need non-zsl for now
+            if (mOEMIf->isRawCapture()) {
+                if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ||
+                    mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW) {
+                    mFirstRegularRequest = 1;
+                    mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW,
+                                           mFrameNum);
+                }
+                break;
+            }
+
+            if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
+                // when sensor_rotation is 1 for volte, volte dont need capture
+                if (sprddefInfo.sensor_rotation == 0) {
+                    mOEMIf->setStreamOnWithZsl();
+                }
+                mFirstRegularRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
+                if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                    streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                    streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+                    mPictureRequest = 1;
+                    mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                           mFrameNum);
+                    if (request->num_output_buffers >= 2 &&
+                        mOEMIf->getJpegWithBigSizePreviewFlag() == 0) {
+                        mOEMIf->setFrameSyncFlag(request->frame_number);
+                    }
+                }
+                break;
+            }
+
+            if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+                mPictureRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                       mFrameNum);
+                if (request->num_output_buffers >= 2 &&
+                    mOEMIf->getJpegWithBigSizePreviewFlag() == 0) {
+                    mOEMIf->setFrameSyncFlag(request->frame_number);
+                }
+            }
+            break;
+        }
+
+        if (mStreamConfiguration.num_streams == 2 &&
+            mStreamConfiguration.preview.status == CONFIGURED &&
             mStreamConfiguration.yuvcallback.status == CONFIGURED &&
             mMultiCameraMode == MODE_3D_CALIBRATION) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
@@ -1210,37 +1285,69 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             break;
         }
 
-        if (mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW) {
-            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
-            if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
-                sprddefInfo.sprd_zsl_enabled == 1) {
-                mFirstRegularRequest = 0;
-            } else {
-                mFirstRegularRequest = 1;
+        if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
+            if (mStreamConfiguration.snapshot.status == CONFIGURED) {
+                mOEMIf->setStreamOnWithZsl();
             }
+            mFirstRegularRequest = 1;
+            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
+            if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+                mPictureRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                       mFrameNum);
+            }
+            break;
+        }
+
+        if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+            mPictureRequest = 1;
+            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                   mFrameNum);
         }
         break;
 
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
-        if (mStreamConfiguration.num_streams == 1 &&
-            mStreamConfiguration.snapshot.status == CONFIGURED) {
-            if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
-                mOEMIf->setStreamOnWithZsl();
-                mFirstRegularRequest = 1;
-                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
-                if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
-                    mPictureRequest = 1;
-                    mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
-                                           mFrameNum);
-                }
-                break;
-            }
+        // raw capture need non-zsl for now
+        if (mOEMIf->isRawCapture()) {
             mPictureRequest = 1;
-            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE, mFrameNum);
+            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                   mFrameNum);
             break;
         }
-        mPictureRequest = 1;
-        mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE, mFrameNum);
+
+        if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
+            if (mStreamConfiguration.snapshot.status == CONFIGURED) {
+                mOEMIf->setStreamOnWithZsl();
+            }
+            mFirstRegularRequest = 1;
+            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
+            if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+                mPictureRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                       mFrameNum);
+                if (request->num_output_buffers >= 2) {
+                    mOEMIf->setFrameSyncFlag(request->frame_number);
+                }
+            }
+            break;
+        }
+
+        if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+            mPictureRequest = 1;
+            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                   mFrameNum);
+            if (request->num_output_buffers >= 2) {
+                mOEMIf->setFrameSyncFlag(request->frame_number);
+            }
+        }
         break;
 
     case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD:
@@ -1421,12 +1528,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
         ret = mRegularChan->setInputBuff(input->buffer);
         if (ret) {
-            HAL_LOGE("setInputBuff failed %p (%d)", input->buffer,
-                     frameNumber);
+            HAL_LOGE("setInputBuff failed %p (%d)", input->buffer, frameNumber);
             goto exit;
         }
     }
-
 
     if (mPictureRequest == 1) {
         ret = mPicChan->start(mFrameNum);

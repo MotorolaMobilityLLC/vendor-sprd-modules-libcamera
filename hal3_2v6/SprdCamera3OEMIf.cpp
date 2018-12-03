@@ -248,8 +248,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
       mFixedFpsEnabled(0), mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP),
       mIsTempChanged(0), mFlagOffLineZslStart(0), mZslSnapshotTime(0),
-      mIsIspToolMode(0), mIsCameraClearQBuf(0), mLastCafDoneTime(0),
-      mFaceDetectStartedFlag(0)
+      mIsIspToolMode(0), mIsRawCapture(0), mIsCameraClearQBuf(0),
+      mLastCafDoneTime(0), mFaceDetectStartedFlag(0),
+      mIsJpegWithBigSizePreview(0)
 
 {
     ATRACE_CALL();
@@ -1684,6 +1685,11 @@ int SprdCamera3OEMIf::setPreviewParams() {
         previewSize.height = (cmr_u32)mPreviewHeight;
     } else {
         // TBD: may be this is no use, will remove it
+        previewSize.width = 720;
+        previewSize.height = 576;
+    }
+    // for cts testAllOutputYUVResolutions
+    if(mIsJpegWithBigSizePreview == 1) {
         previewSize.width = 720;
         previewSize.height = 576;
     }
@@ -3714,15 +3720,44 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
     } else {
         // hardware scale
         if (0) {
-            ret = mHalOem->ops->camera_get_redisplay_data(
-                mCameraHandle, ion_fd, addr_phy, addr_vir, mPreviewWidth,
-                mPreviewHeight, frame->fd, frame->y_phy_addr,
-                frame->uv_phy_addr, frame->y_vir_addr, frame->width,
-                frame->height);
-            if (ret) {
-                HAL_LOGE("camera_get_data_redisplay failed");
-                goto exit;
-            }
+            struct img_frm src, dst;
+            struct img_frm *pScale[2];
+
+            src.addr_phy.addr_y = (cmr_uint)frame->y_phy_addr;
+            src.addr_phy.addr_u =
+                src.addr_phy.addr_y + frame->width * frame->height;
+            src.addr_vir.addr_y = (cmr_uint)frame->y_vir_addr;
+            src.addr_vir.addr_u =
+                src.addr_vir.addr_y + frame->width * frame->height;
+            src.buf_size = frame->width * frame->height * 3 >> 1;
+            src.fd = frame->fd;
+            src.fmt = IMG_DATA_TYPE_YUV420;
+            src.rect.start_x = 0;
+            src.rect.start_y = 0;
+            src.rect.width = frame->width;
+            src.rect.height = frame->height;
+            src.size.width = frame->width;
+            src.size.height = frame->height;
+
+            dst.addr_phy.addr_y = (cmr_uint)addr_phy;
+            dst.addr_phy.addr_u =
+                dst.addr_phy.addr_y + mPreviewWidth * mPreviewHeight;
+            dst.addr_vir.addr_y = (cmr_uint)addr_vir;
+            dst.addr_vir.addr_u =
+                dst.addr_vir.addr_y + mPreviewWidth * mPreviewHeight;
+            dst.buf_size = mPreviewWidth * mPreviewHeight * 3 >> 1;
+            dst.fd = ion_fd;
+            dst.fmt = IMG_DATA_TYPE_YUV420;
+            dst.rect.start_x = 0;
+            dst.rect.start_y = 0;
+            dst.rect.width = mPreviewWidth;
+            dst.rect.height = mPreviewHeight;
+            dst.size.width = mPreviewWidth;
+            dst.size.height = mPreviewHeight;
+            pScale[0] = &dst;
+            pScale[1] = &src;
+            mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                        CAMERA_IOCTRL_START_SCALE, pScale);
         } else {
             // software scale
             src_y = (uint8_t *)frame->y_vir_addr;
@@ -3899,7 +3934,7 @@ int SprdCamera3OEMIf::nv21Scale(const uint8_t *src_y, const uint8_t *src_vu,
                             i420_src_v, src_width / 2, src_width, src_height,
                             i420_dst, dst_width, i420_dst_u, dst_width / 2,
                             i420_dst_v, dst_width / 2, dst_width, dst_height,
-                            libyuv::kFilterBox);
+                            libyuv::kFilterBilinear);
     if (ret) {
         HAL_LOGE("libyuv::I420Scale failed");
         goto exit;
@@ -4142,10 +4177,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     mSetting->setSENSORTag(sensorInfo);
     timestamp = sensorInfo.timestamp;
 
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
-    }
     property_get("persist.vendor.cam.debug.mode", debug_value, "non-debug");
 
     if (picChannel == NULL || encInfo->outPtr == NULL) {
@@ -4212,7 +4243,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
         // dump jpeg file
         if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
-            (!strcmp(debug_value, "debug")) || is_raw_capture) {
+            (!strcmp(debug_value, "debug")) || mIsRawCapture == 1) {
             mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir,
                                          encInfo->size + ispInfoSize,
                                          mCaptureWidth, mCaptureHeight);
@@ -5135,7 +5166,8 @@ int SprdCamera3OEMIf::openCamera() {
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
+        mIsRawCapture = 1;
+        HAL_LOGI("mIsRawCapture=%d", mIsRawCapture);
     }
 
     property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
@@ -5372,7 +5404,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     int ret = 0;
     CONTROL_Tag controlInfo;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 
     HAL_LOGV("set camera para, tag is %ld", cameraParaTag);
 
@@ -5946,7 +5977,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
             mCaptureMode = CAMERA_NORMAL_MODE;
             mPicCaptureCnt = 1;
-            if (!strcmp(value, "raw")) {
+            if (mIsRawCapture == 1) {
                 HAL_LOGD("enter isp tuning mode");
                 mCaptureMode = CAMERA_ISP_TUNING_MODE;
             } else if (!strcmp(value, "sim")) {
@@ -7491,7 +7522,8 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         mPreviewWidth = size.width;
         mPreviewHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
-            format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
+            format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+            format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
             mPreviewFormat = IMG_DATA_TYPE_YUV420;
         }
         if (isYuvSensor) {
@@ -7526,7 +7558,8 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         mCallbackWidth = size.width;
         mCallbackHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
-            format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
+            format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+            format == HAL_PIXEL_FORMAT_YCrCb_420_SP) {
             mCallbackFormat = IMG_DATA_TYPE_YUV420;
         }
         if (isYuvSensor) {
@@ -7543,8 +7576,7 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
             mPictureFormat = IMG_DATA_TYPE_YUV422;
         }
 
-        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-        if (!strcmp(value, "raw")) {
+        if (mIsRawCapture == 1) {
             mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle,
                                                          mode_info);
             for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
@@ -7590,7 +7622,8 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
 
     switch (stream_type) {
     case CAMERA_STREAM_TYPE_PREVIEW:
-        if (getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
+        if (mIsIspToolMode == 1 &&
+            getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
             getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
             // set buffers to driver after params
             ret = waitForPipelineStart();
@@ -7598,6 +7631,11 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
                 HAL_LOGE("waitForPipelineStart failed");
                 goto exit;
             }
+        }
+
+        if (mIsJpegWithBigSizePreview == 1) {
+            HAL_LOGD("mIsJpegWithBigSizePreview=%d", mIsJpegWithBigSizePreview);
+            goto exit;
         }
 
         channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -7623,16 +7661,6 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         break;
 
     case CAMERA_STREAM_TYPE_VIDEO:
-        if (getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
-            getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
-            // set buffers to driver after params
-            ret = waitForPipelineStart();
-            if (ret) {
-                HAL_LOGE("waitForPipelineStart failed");
-                goto exit;
-            }
-        }
-
         channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel == NULL) {
             ret = -1;
@@ -7656,7 +7684,8 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         break;
 
     case CAMERA_STREAM_TYPE_CALLBACK:
-        if (getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
+        if (mIsIspToolMode == 1 &&
+            getPreviewState() != SPRD_INTERNAL_PREVIEW_REQUESTED &&
             getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
             // set buffers to driver after params
             ret = waitForPipelineStart();
@@ -8439,6 +8468,10 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
+        if (mIsJpegWithBigSizePreview == 1) {
+            returnPreviewFrame(&zsl_frame);
+        }
+
         HAL_LOGD("fd=0x%x", zsl_frame.fd);
         mHalOem->ops->camera_set_zsl_snapshot_buffer(
             obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
@@ -8763,6 +8796,8 @@ void SprdCamera3OEMIf::setSensorCloseFlag() {
 
 bool SprdCamera3OEMIf::isIspToolMode() { return mIsIspToolMode; }
 
+bool SprdCamera3OEMIf::isRawCapture() { return mIsRawCapture; }
+
 void SprdCamera3OEMIf::ispToolModeInit() {
     cmr_handle isp_handle = 0;
     mHalOem->ops->camera_get_isp_handle(mCameraHandle, &isp_handle);
@@ -8781,6 +8816,15 @@ int32_t SprdCamera3OEMIf::setFrameSyncFlag(uint32_t frameNum) {
     mFrameSyncNum = frameNum;
     HAL_LOGD("mFrameSyncNum=%d", mFrameSyncNum);
     return 0;
+}
+
+int32_t SprdCamera3OEMIf::setJpegWithBigSizePreviewFlag() {
+    mIsJpegWithBigSizePreview = 1;
+    return 0;
+}
+
+int32_t SprdCamera3OEMIf::getJpegWithBigSizePreviewFlag() {
+    return mIsJpegWithBigSizePreview;
 }
 
 #ifdef CONFIG_CAMERA_EIS

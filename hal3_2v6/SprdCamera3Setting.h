@@ -107,8 +107,8 @@ typedef int64_t nsecs_t;
 
 #define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE 2
 
-#define MAX_PREVIEW_SIZE_WIDTH 2592
-#define MAX_PREVIEW_SIZE_HEIGHT 1944
+#define MAX_PREVIEW_SIZE_WIDTH 1920
+#define MAX_PREVIEW_SIZE_HEIGHT 1080
 
 typedef struct {
     uint8_t correction_mode;

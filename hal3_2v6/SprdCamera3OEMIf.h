@@ -211,10 +211,13 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
     bool isIspToolMode();
+    bool isRawCapture();
     void ispToolModeInit();
     int32_t setStreamOnWithZsl();
     int32_t getStreamOnWithZsl();
     int32_t setFrameSyncFlag(uint32_t frameNum);
+    int32_t setJpegWithBigSizePreviewFlag();
+    int32_t getJpegWithBigSizePreviewFlag();
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
     uint64_t getZslBufferTimestamp();
 
@@ -785,6 +788,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
+    bool mIsRawCapture;
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
@@ -808,6 +812,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     Condition mPipelineStartSignal;
 
     uint32_t mFaceDetectStartedFlag;
+
+    bool mIsJpegWithBigSizePreview;
 };
 
 }; // namespace sprdcamera

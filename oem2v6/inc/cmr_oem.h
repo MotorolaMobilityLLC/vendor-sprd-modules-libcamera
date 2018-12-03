@@ -535,6 +535,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     enum img_data_type format);
+cmr_int camera_local_start_scale(cmr_handle oem_handle,
+                                 struct img_frm **scale_param);
+cmr_int camera_local_start_rotate(cmr_handle oem_handle,
+                                  struct rotate_param *rotate_param);
 
 #ifdef __cplusplus
 }

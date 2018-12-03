@@ -195,10 +195,10 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,
-                                              24, 24, 24, 5,  30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,
-                                               30, 15, 30, 30, 30};
+const int32_t kavailable_fps_ranges_back[] = {10, 10, 5,  15, 15, 15, 5,  20,
+                                              5,  24, 24, 24, 5,  30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {10, 10, 5,  15, 15, 15,
+                                               5,  30, 15, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-16, 16};
 const camera_metadata_rational kae_compensation_step = {1, 8};
@@ -1149,10 +1149,10 @@ int SprdCamera3Setting::getPhysicalNumberOfCameras() {
     }
 
     physicalNum = sensor_get_number(camera_is_supprort);
-// if one board support all kinds of camera feature, for 3 back camera,
-// 3 camera struct light, dual-camera, and so on, we will do some bindings
-// mPhysicalSensorNum = physicalNum;
-// goto exit;
+    // if one board support all kinds of camera feature, for 3 back camera,
+    // 3 camera struct light, dual-camera, and so on, we will do some bindings
+    // mPhysicalSensorNum = physicalNum;
+    // goto exit;
 
 #ifdef CONFIG_BACK_CAMERA
     mPhysicalSensorNum++;

@@ -10881,6 +10881,52 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_local_start_scale(cmr_handle oem_handle,
+                                 struct img_frm **scale_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct img_frm *dst = NULL;
+    struct img_frm *src = NULL;
+
+    CMR_LOGI("E");
+    if (!scale_param) {
+        CMR_LOGI("invalid param,return");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    dst = scale_param[0];
+    src = scale_param[1];
+    if (!src || !dst) {
+        CMR_LOGI("invalid param,return");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
+                          (cmr_evt_cb)NULL, NULL);
+    if (ret) {
+        CMR_LOGE("scale failed.");
+    }
+
+    CMR_LOGI("X ret=%d", ret);
+    return ret;
+}
+
+cmr_int camera_local_start_rotate(cmr_handle oem_handle,
+                                  struct rotate_param *rotate_param) {
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct cmr_op_mean mean;
+    mean.rot = rotate_param->angle;
+
+    ret = camera_start_rot(oem_handle, NULL, &(rotate_param->src_img),
+                           &(rotate_param->dst_img), &mean);
+    if (ret) {
+        CMR_LOGE("failed to start start %ld", ret);
+        ret = -CMR_CAMERA_FAIL;
+    }
+
+    return ret;
+}
+
 cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
