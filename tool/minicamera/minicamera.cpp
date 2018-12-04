@@ -78,6 +78,7 @@ static sprd_camera_memory *previewHeapArray[PREVIEW_BUFF_NUM];
 enum minicamera_camera_id {
     MINICAMERA_CAMERA_BACK = 0,
     MINICAMERA_CAMERA_FRONT,
+    MINICAMERA_CAMERA_BACK_EXT,
     MINICAMERA_CAMERA_ID_MAX
 };
 
