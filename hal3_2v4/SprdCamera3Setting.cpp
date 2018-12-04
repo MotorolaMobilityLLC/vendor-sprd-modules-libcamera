@@ -3114,7 +3114,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprd3dnrEnabled = 0;
     requestInfo.update(ANDROID_SPRD_3DNR_ENABLED, &sprd3dnrEnabled, 1);
 
-    int32_t sprdAppmodeId = 0;
+    int32_t sprdAppmodeId = -1;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
     uint8_t sprdFilterType = 0;

@@ -8409,16 +8409,16 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct preview_context *prev_cxt = &cxt->prev_cxt;
     struct setting_cmd_parameter setting_param;
 
+    cxt->setting_cxt.is_active = 1;
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_SET_ENVIRONMENT, &setting_param);
+
     ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
     if (ret) {
         CMR_LOGE("failed to set prev param %ld", ret);
         goto exit;
     }
-
-    cxt->setting_cxt.is_active = 1;
-    setting_param.camera_id = cxt->camera_id;
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_SET_ENVIRONMENT, &setting_param);
 
     ret = cmr_preview_start(prev_cxt->preview_handle, cxt->camera_id);
     if (ret) {
