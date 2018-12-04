@@ -173,8 +173,11 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/sprdface/inc \
     $(LOCAL_PATH)/arithmetic/depth/inc \
     $(LOCAL_PATH)/arithmetic/bokeh/inc \
-    $(LOCAL_PATH)/arithmetic/depth_bokeh/inc
+    $(LOCAL_PATH)/arithmetic/depth_bokeh/inc\
+    $(LOCAL_PATH)/arithmetic/sprd_yuvprocess/inc\
 
+LOCAL_SRC_FILES += \
+      arithmetic/sprd_yuvprocess/src/hal_yuvprocess.c
 # for bbat
 LOCAL_C_INCLUDES += \
    $(TOP)/vendor/sprd/proprietories-source/engmode \

@@ -1360,6 +1360,33 @@ int SprdCamera3MultiBase::hwScale(uint8_t *dst_buf, uint16_t dst_width,
     return ret;
 }
 
+int SprdCamera3MultiBase::swScale(uint8_t *dst_buf, uint16_t dst_width,
+                                  uint16_t dst_height, uint16_t dst_fd,
+                                  uint8_t *src_buf, uint16_t src_width,
+                                  uint16_t src_height, uint16_t src_fd) {
+    int ret = NO_ERROR;
+    HAL_LOGI("in");
+    if (mHwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+    struct img_frm scale[2];
+    struct img_frm *pScale[2];
+    memset(&scale[0], 0, sizeof(struct img_frm));
+    memset(&scale[1], 0, sizeof(struct img_frm));
+    pScale[0] = &scale[0];
+    pScale[1] = &scale[1];
+
+    convertToImg_frm(NULL, dst_buf, dst_width, dst_height, dst_fd,
+                     IMG_DATA_TYPE_YUV420, pScale[0]);
+    convertToImg_frm(NULL, src_buf, src_width, src_height, src_fd,
+                     IMG_DATA_TYPE_YUV420, pScale[1]);
+    ret = yuv_scale_nv21_hal(pScale[1], pScale[0]);
+
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
 int SprdCamera3MultiBase::NV21Rotate(int8_t *dst_buf, uint16_t dst_fd,
                                      int8_t *src_buf, uint16_t src_fd,
                                      uint16_t width, uint16_t height,

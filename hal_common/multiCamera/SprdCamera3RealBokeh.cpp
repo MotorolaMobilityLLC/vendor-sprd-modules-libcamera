@@ -2253,14 +2253,14 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
         HAL_LOGE("fail to map input buffer2");
         goto fail_map_scale;
     }
-    property_get("persist.vendor.cam.bokeh.scale", prop, "0");
+    property_get("persist.vendor.cam.bokeh.scale", prop, "sw");
     if (!strcmp(prop, "sw")) {
-        mRealBokeh->ScaleNV21(
+        mRealBokeh->swScale(
             (uint8_t *)scaled_buffer_addr,
             mRealBokeh->mBokehSize.depth_snap_main_w,
-            mRealBokeh->mBokehSize.depth_snap_main_h,
+            mRealBokeh->mBokehSize.depth_snap_main_h,ADP_BUFFD(*scaled_buffer),
             (uint8_t *)input_buf1_addr, mRealBokeh->mBokehSize.capture_w,
-            mRealBokeh->mBokehSize.capture_h, ADP_BUFSIZE(*input_buf1));
+            mRealBokeh->mBokehSize.capture_h, ADP_BUFFD(*input_buf1));
     } else {
         mRealBokeh->hwScale(
             (uint8_t *)scaled_buffer_addr,
