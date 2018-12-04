@@ -4496,8 +4496,19 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // ANDROID_CONTROL_AWB_STATE_INACTIVE;
     camMetadata.update(ANDROID_CONTROL_AWB_STATE,
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
-    camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
-                       s_setting[mCameraId].jpgInfo.thumbnail_size, 2);
+    if ((s_setting[mCameraId].jpgInfo.orientation == 90 ||
+         s_setting[mCameraId].jpgInfo.orientation == 270)) {
+        int32_t rotated_thumbnail_size[2];
+        rotated_thumbnail_size[0] =
+            s_setting[mCameraId].jpgInfo.thumbnail_size[1];
+        rotated_thumbnail_size[1] =
+            s_setting[mCameraId].jpgInfo.thumbnail_size[0];
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE, rotated_thumbnail_size,
+                           2);
+    } else {
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
+                           s_setting[mCameraId].jpgInfo.thumbnail_size, 2);
+    }
     camMetadata.update(ANDROID_JPEG_ORIENTATION,
                        &(s_setting[mCameraId].jpgInfo.orientation), 1);
     camMetadata.update(ANDROID_JPEG_QUALITY,
