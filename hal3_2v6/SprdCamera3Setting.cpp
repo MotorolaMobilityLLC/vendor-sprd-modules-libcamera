@@ -1118,15 +1118,6 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int numberOfCameras = 0;
 
-    // just for camera developer debug
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
-    if (!strcmp(value, "off")) {
-        HAL_LOGI("turn off auto detect sensor, just for debug");
-        numberOfCameras = 3;
-        return numberOfCameras;
-    }
-
     numberOfCameras = getPhysicalNumberOfCameras();
 
     // will add logical camera num here later
@@ -1137,6 +1128,15 @@ int SprdCamera3Setting::getNumberOfCameras() {
 }
 
 int SprdCamera3Setting::getPhysicalNumberOfCameras() {
+    // just for camera developer debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("turn off auto detect sensor, just for debug");
+        mPhysicalSensorNum = 2;
+        return mPhysicalSensorNum;
+    }
+
     if (mPhysicalSensorNum == 0) {
         mPhysicalSensorNum = sensor_get_number(camera_is_supprort);
     }
