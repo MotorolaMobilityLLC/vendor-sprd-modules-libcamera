@@ -4909,7 +4909,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         if (mCameraId == 0) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
-            if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none"))
+            if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
+		!strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
                 s_setting[mCameraId].flashInfo.state =
                     ANDROID_FLASH_STATE_UNAVAILABLE;
             else
