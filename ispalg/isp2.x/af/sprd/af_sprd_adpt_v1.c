@@ -3094,8 +3094,8 @@ static cmr_s32 af_sprd_set_type1_pd_info(cmr_handle handle, void *param0)
 	cmr_s32 raw = 0;
 	cmr_u8 *pIMX351Buf = (cmr_u8 *) param0;
 
-	if (NULL == af->pdaf_rdm_otp_data) {
-		ISP_LOGE("af_sprd_set_type1_pd_info otp error! %p", af->pdaf_rdm_otp_data);
+	if (NULL == af->pdaf_rdm_otp_data || NULL == param0) {
+		ISP_LOGE("typ1pd input error! otp%p param%p", af->pdaf_rdm_otp_data, param0);
 		return AFV1_ERROR;
 	}
 
