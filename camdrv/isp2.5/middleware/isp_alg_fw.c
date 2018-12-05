@@ -4637,7 +4637,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ISP_LOGV("set_pos = %p", cxt->ioctrl_ptr->set_pos);
 	if (NULL != cxt->ioctrl_ptr->set_pos) {
-		statis_mem_input.statis_valid |= ISP_STATIS_VALID_AFM;
+		if (!in_ptr->zsl_flag && cxt->work_mode)
+			ISP_LOGI("afm don't supprort !");
+		else
+			statis_mem_input.statis_valid |= ISP_STATIS_VALID_AFM;
 	}
 
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support &&
