@@ -1,0 +1,5 @@
+on post-fs
+    insmod /vendor/lib/modules/sprd_flash_drv.ko
+
+on boot
+    insmod /vendor/lib/modules/flash_ic_sc2703.ko
