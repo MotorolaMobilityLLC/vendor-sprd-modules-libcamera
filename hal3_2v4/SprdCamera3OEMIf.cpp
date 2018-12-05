@@ -1906,7 +1906,7 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
             preview_size.height = 480;
             if ((mRawWidth != 0 && mRawHeight != 0) &&
                 (cmr_u32)mRawWidth * (cmr_u32)mRawHeight <
-                preview_size.width * preview_size.height) {
+                    preview_size.width * preview_size.height) {
                 preview_size.width = mRawWidth;
                 preview_size.height = mRawHeight;
             }
@@ -5565,9 +5565,9 @@ handle_encode_exit:
 void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
+    struct cmr_focus_status *focus_status;
     int64_t timeStamp = 0;
     timeStamp = systemTime();
-
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
     HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
@@ -5611,16 +5611,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     } break;
 
     case CAMERA_EVT_CB_FOCUS_MOVE:
+        focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("camera cb: autofocus focus moving  %p autofocus=%d", parm4,
                  mIsAutoFocus);
         if (!mIsAutoFocus) {
-            if (parm4) {
+            if (focus_status->is_in_focus) {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
             } else {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
                 mLastCafDoneTime = systemTime();
             }
-            mSetting->setAfCONTROLTag(&controlInfo);
+            if (focus_status->af_focus_type == CAM_AF_FOCUS_CAF)
+                mSetting->setAfCONTROLTag(&controlInfo);
         }
         break;
 
@@ -7565,7 +7567,8 @@ cap_malloc:
         if ((mSubRawHeapNum >= sum) && (mSubRawHeapSize >= size)) {
             HAL_LOGD("use pre-alloc cap mem");
             for (i = 0; i < (cmr_int)sum; i++) {
-                struct private_handle_t *pHandle = (private_handle_t *)m3DNRGraphicArray[i].private_handle;
+                struct private_handle_t *pHandle =
+                    (private_handle_t *)m3DNRGraphicArray[i].private_handle;
                 if (width != (cmr_uint)pHandle->width ||
                     height != (cmr_uint)pHandle->height) {
                     HAL_LOGD("width/height not match, re-alloc cap mem");

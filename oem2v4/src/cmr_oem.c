@@ -1246,6 +1246,7 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)privdata;
     cmr_int oem_cb;
+    struct cmr_focus_status *focus_status;
 
     if (!privdata) {
         CMR_LOGE("err, handle for callback");
@@ -1268,8 +1269,9 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
         break;
     case AF_CB_FOCUS_MOVE:
         oem_cb = CAMERA_EVT_CB_FOCUS_MOVE;
-        cxt->is_focus = param;
-        if (param) {
+        focus_status = (struct cmr_focus_status *)param;
+        cxt->is_focus = focus_status->is_in_focus;
+        if (cxt->is_focus) {
             cxt->focus_rect.x = 0;
             cxt->focus_rect.y = 0;
         }
@@ -4152,7 +4154,6 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     ATRACE_END();
     return ret;
 }
-
 
 cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -7774,11 +7775,12 @@ exit:
 }
 
 cmr_int camera_local_set_thumb_size(cmr_handle oem_handle,
-                                  struct img_size thum_size) {
+                                    struct img_size thum_size) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct preview_context *prv_cxt = &cxt->prev_cxt;
 
-    cmr_preview_set_thumb_size(prv_cxt->preview_handle, cxt->camera_id, thum_size);
+    cmr_preview_set_thumb_size(prv_cxt->preview_handle, cxt->camera_id,
+                               thum_size);
 
     return 0;
 }
@@ -8554,16 +8556,16 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     } else {
         camera_get_iso_value(oem_handle);
         setting_param.camera_id = cxt->camera_id;
-        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_THUMB_SIZE,
-                            &setting_param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_GET_THUMB_SIZE, &setting_param);
         if (ret) {
-        CMR_LOGE("failed to get thumb size %ld", ret);
-        goto exit;
+            CMR_LOGE("failed to get thumb size %ld", ret);
+            goto exit;
         }
-        //third party APP do video snapshot may update the thumb_size
+        // third party APP do video snapshot may update the thumb_size
         ret = camera_local_set_thumb_size(cxt, setting_param.size_param);
         if (ret) {
-        CMR_LOGE("failed to update thumb size");
+            CMR_LOGE("failed to update thumb size");
         }
     }
 
@@ -8702,7 +8704,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                                            cxt->camera_id);
         if (raw_filename[0]) {
             // only copy the filename without the path
-            memcpy(value, raw_filename + strlen(CAMERA_DUMP_PATH) + 1, PROPERTY_VALUE_MAX);
+            memcpy(value, raw_filename + strlen(CAMERA_DUMP_PATH) + 1,
+                   PROPERTY_VALUE_MAX);
         } else {
             property_get("debug.camera.isptool.raw.name", value, "none");
         }

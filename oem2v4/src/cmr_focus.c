@@ -106,8 +106,8 @@ static cmr_int af_mode_to_isp(cmr_u32 af_mode, cmr_u32 *isp_af_mode);
 static cmr_int af_check_area(cmr_handle af_handle,
                              struct img_rect *sensor_rect_ptr,
                              struct img_rect *rect_ptr, cmr_u32 rect_num);
-static cmr_int caf_move_start_handle(cmr_handle af_handle);
-static cmr_int caf_move_stop_handle(cmr_handle af_handle);
+static cmr_int caf_move_start_handle(cmr_handle af_handle, void *param);
+static cmr_int caf_move_stop_handle(cmr_handle af_handle, void *param);
 static cmr_int focus_rect_parse(cmr_handle af_handle,
                                 SENSOR_EXT_FUN_PARAM_T_PTR p_focus_rect);
 static cmr_int focus_rect_param_to_isp(SENSOR_EXT_FUN_PARAM_T focus_rect,
@@ -376,6 +376,7 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
     struct af_context *af_cxt = (struct af_context *)data;
     cmr_handle af_handle = (cmr_handle)af_cxt;
     cmr_u32 camera_id = CAMERA_ID_MAX;
+    struct cmr_focus_status focus_status;
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -471,13 +472,17 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
             /*YUV sensor caf process, app need move and move done status*/
             CMR_LOGV("CMR_SENSOR_FOCUS_MOVE");
 
-            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, 1, af_cxt->oem_handle);
+            focus_status.af_focus_type = CAM_AF_FOCUS_CAF;
+            focus_status.is_in_focus = 1;
+            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, (cmr_uint)&focus_status,
+                           af_cxt->oem_handle);
 
             af_set_focusmove_flag(af_handle, 0);
             ret = af_start_lightly(af_handle, camera_id);
             af_set_focusmove_flag(af_handle, 1);
-
-            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, 0, af_cxt->oem_handle);
+            focus_status.is_in_focus = 0;
+            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, (cmr_uint)&focus_status,
+                           af_cxt->oem_handle);
         }
         break;
 
@@ -493,7 +498,8 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
              (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode))) {
             CMR_LOGD("CMR_EVT_CAF_MOVE_START");
 
-            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, 1, af_cxt->oem_handle);
+            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, (cmr_uint)message->data,
+                           af_cxt->oem_handle);
         }
         break;
 
@@ -509,7 +515,8 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
              (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode))) {
             CMR_LOGD("CMR_EVT_CAF_MOVE_STOP");
 
-            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, 0, af_cxt->oem_handle);
+            af_cxt->evt_cb(AF_CB_FOCUS_MOVE, (cmr_uint)message->data,
+                           af_cxt->oem_handle);
         }
         break;
 
@@ -558,12 +565,16 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
             }
         } else if (is_caf_mode) {
             struct isp_af_notice *isp_af = (struct isp_af_notice *)data;
+            struct cmr_focus_status focus_status;
 
             pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
+            focus_status.af_focus_type = isp_af->focus_type;
             if (ISP_FOCUS_MOVE_START == isp_af->mode) {
-                ret = caf_move_start_handle(af_handle);
+                focus_status.is_in_focus = 1;
+                ret = caf_move_start_handle(af_handle, &focus_status);
             } else if (ISP_FOCUS_MOVE_END == isp_af->mode) {
-                ret = caf_move_stop_handle(af_handle);
+                focus_status.is_in_focus = 0;
+                ret = caf_move_stop_handle(af_handle, &focus_status);
             }
         }
         break;
@@ -644,32 +655,51 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id,
     return ret;
 }
 
-cmr_int caf_move_start_handle(cmr_handle af_handle) {
+cmr_int caf_move_start_handle(cmr_handle af_handle, void *param) {
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     CMR_MSG_INIT(message);
     struct af_context *af_cxt = (struct af_context *)af_handle;
+    struct cmr_focus_status *focus_status = NULL;
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    if (param) {
+        focus_status =
+            (struct cmr_focus_status *)malloc(sizeof(struct cmr_focus_status));
+        if (!focus_status) {
+            CMR_LOGE("malloc failed");
+            ret = -1;
+            goto exit;
+        }
+        cmr_copy(focus_status, param, sizeof(struct cmr_focus_status));
+    }
     CMR_LOGD("caf start move");
 
+    message.data = (void *)focus_status;
     message.msg_type = CMR_EVT_CAF_MOVE_START;
     message.sync_flag = CMR_MSG_SYNC_NONE;
+    message.alloc_flag = 1;
     ret = cmr_thread_msg_send(af_cxt->thread_handle, &message);
     if (ret) {
         CMR_LOGE("Failed to send one msg to camera main thread");
+        if (focus_status) {
+            free(focus_status);
+            focus_status = NULL;
+        }
     }
 
+exit:
     return ret;
 }
 
-cmr_int caf_move_stop_handle(cmr_handle af_handle) {
+cmr_int caf_move_stop_handle(cmr_handle af_handle, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct af_context *af_cxt = (struct af_context *)af_handle;
+    struct cmr_focus_status *focus_status = NULL;
     CMR_MSG_INIT(message);
 
     CMR_LOGD("E");
@@ -678,14 +708,30 @@ cmr_int caf_move_stop_handle(cmr_handle af_handle) {
         CMR_LOGE("handle param invalid");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
+    if (param) {
+        focus_status =
+            (struct cmr_focus_status *)malloc(sizeof(struct cmr_focus_status));
+        if (!focus_status) {
+            CMR_LOGE("malloc failed");
+            ret = -1;
+            goto exit;
+        }
+        cmr_copy(focus_status, param, sizeof(struct cmr_focus_status));
+    }
+    CMR_LOGD("caf start stop");
+    message.data = (void *)focus_status;
     message.msg_type = CMR_EVT_CAF_MOVE_STOP;
     message.sync_flag = CMR_MSG_SYNC_NONE;
+    message.alloc_flag = 1;
     ret = cmr_thread_msg_send(af_cxt->thread_handle, &message);
     if (ret) {
         CMR_LOGE("Faied to send one msg to camera main thread");
+        if (focus_status) {
+            free(focus_status);
+            focus_status = NULL;
+        }
     }
-
+exit:
     return ret;
 }
 
