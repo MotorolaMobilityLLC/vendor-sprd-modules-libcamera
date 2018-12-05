@@ -2743,6 +2743,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
                     setting_isp_wait_notice(cpt);
                     CMR_LOGD("high flash Open flash");
+
                     setting_set_flashdevice(cpt, parm, ctrl_flash_status);
                     setting_isp_flash_notify(cpt, parm,
                                              ISP_FLASH_MAIN_LIGHTING);
@@ -3626,6 +3627,22 @@ cmr_int cmr_af_cancel_notice_flash(cmr_handle setting_handle) {
 
     sem_post(&cpt->isp_sem); // fastly quit af process when flash on,--for safty
                              // quit post two times
+    sem_post(&cpt->isp_sem);
+
+    return ret;
+}
+
+
+cmr_int cmr_preview_cancel_notice_flash (cmr_handle setting_handle) {
+    cmr_int ret = 0;
+    struct setting_component *cpt = (struct setting_component *)setting_handle;
+    CMR_LOGD("cmr_preview_cancel_notice_flash");
+
+    pthread_mutex_lock(&cpt->isp_mutex);
+    cpt->flash_need_quit = FLASH_NEED_QUIT;
+    pthread_mutex_unlock(&cpt->isp_mutex);
+
+    sem_post(&cpt->isp_sem);
     sem_post(&cpt->isp_sem);
 
     return ret;

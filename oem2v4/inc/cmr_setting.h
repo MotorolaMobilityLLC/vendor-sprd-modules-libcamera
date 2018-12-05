@@ -167,6 +167,7 @@ cmr_int cmr_setting_deinit_notice(cmr_handle setting_handle);
 cmr_int cmr_setting_quick_ae_notice_done(cmr_handle setting_handle, void *data);
 cmr_int cmr_af_start_notice_flash(cmr_handle setting_handle);
 cmr_int cmr_af_cancel_notice_flash(cmr_handle setting_handle);
+cmr_int cmr_preview_cancel_notice_flash (cmr_handle setting_handle);
 cmr_int cmr_pre_flash_notice_flash(cmr_handle setting_handle);
 cmr_int camera_get_flashled_flag(cmr_int param);
 #ifdef __cplusplus

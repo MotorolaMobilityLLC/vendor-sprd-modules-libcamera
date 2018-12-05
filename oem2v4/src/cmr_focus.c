@@ -1147,6 +1147,11 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
     }
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
     CMR_LOGD("set autofocus quit");
+
+
+    sem_post(&af_cxt->isp_af_sem);
+    CMR_LOGD("post isp sem");
+
     if (IMG_DATA_TYPE_RAW == sensor_info.image_format) {
         struct isp_af_win isp_af_param;
 

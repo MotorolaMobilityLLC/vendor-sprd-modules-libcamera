@@ -8471,6 +8471,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     if (ret) {
         CMR_LOGE("failed to stop prev %ld", ret);
     }
+    prev_ret = cmr_preview_cancel_notice_flash(cxt->setting_cxt.setting_handle);
     ret = prev_ret | snp_ret;
     cxt->setting_cxt.is_active = 0;
     cxt->prev_cxt.video_size.width = 0;
