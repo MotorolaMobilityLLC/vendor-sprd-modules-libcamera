@@ -1019,7 +1019,7 @@ int SprdCamera3OEMIf::reprocessInputBuffer() {
 int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
                                           cmr_uint fd) {
     ATRACE_CALL();
-
+    Mutex::Autolock cbLock(&mCaptureCbLock);
     uint32_t ret = UNKNOWN_ERROR;
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
@@ -4903,7 +4903,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     ATRACE_CALL();
 
     print_time();
-    Mutex::Autolock cbLock(&mCaptureCbLock);
+    //Mutex::Autolock cbLock(&mCaptureCbLock);
     struct camera_jpeg_param *encInfo = &frame->jpeg_param;
     int64_t temp = 0, temp1 = 0;
     ;
@@ -5587,6 +5587,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
         }
 
         if ((SPRD_WAITING_JPEG == getCaptureState())) {
+            Mutex::Autolock cbLock(&mCaptureCbLock);
             Sprd_camera_state tmpCapState = SPRD_WAITING_JPEG;
 
             if (checkPreviewStateForCapture()) {
@@ -5610,6 +5611,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
                 transitionState(tmpCapState, SPRD_ERROR, STATE_CAPTURE);
             }
         } else if (mTakePictureMode != SNAPSHOT_NO_ZSL_MODE) {
+            Mutex::Autolock cbLock(&mCaptureCbLock);
             receiveJpegPicture((struct camera_frame_type *)parm4);
             mZSLTakePicture = false;
         }
