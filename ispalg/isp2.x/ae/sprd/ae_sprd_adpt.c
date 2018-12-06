@@ -5666,6 +5666,12 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		rtn = ae_get_gain(cxt, result);
 		break;
 
+	case AE_GET_STAB:
+		if (result) {
+			*(cmr_u32 *) result = cxt->cur_result.wts.stable;
+		}
+		break;
+
 	case AE_GET_FLASH_ENV_RATIO:
 		rtn = ae_get_flash_env_ratio(cxt, result);
 		break;
