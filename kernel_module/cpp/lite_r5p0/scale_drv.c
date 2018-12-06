@@ -96,11 +96,11 @@ int sprd_scaledrv_slice_param_check(
 	struct scale_drv_private *p)
 {
 	/* pitch check */
-	pr_err("srcpitch%d,rect%d%d%d%d,infmt%d,inend%d%d,scdespi%d\n",
+	pr_err("srcpitch%d,rect%d,%d,%d,%d,infmt%d,inend%d,%d,scdespi%d\n",
 	p->src_pitch, p->src_rect.x, p->src_rect.y,
 	p->src_rect.w, p->src_rect.h, p->input_fmt,
 	p->input_endian, p->input_uv_endian, p->sc_des_pitch);
-	pr_err("scdesrect%d%d%d%d,bpp%d,rec%d%d%d%d,hor%dver%d,ofmt%d\n",
+	pr_err("scdesrect%d,%d,%d,%d,bpp%d,rec%d,%d,%d,%d,hor%dver%d,ofmt%d\n",
 	p->sc_des_rect.x, p->sc_des_rect.y, p->sc_des_rect.w,
 	p->sc_des_rect.h, p->bp_des_pitch, p->bp_des_rect.x,
 	p->bp_des_rect.y, p->bp_des_rect.w, p->bp_des_rect.h,
@@ -133,8 +133,10 @@ int sprd_scaledrv_slice_param_check(
 	if (OSIDE(p->src_rect.w, SCALE_FRAME_WIDTH_MIN,
 		SCALE_FRAME_WIDTH_MAX) ||
 		OSIDE(p->src_rect.h, SCALE_FRAME_HEIGHT_MIN,
-		SCALE_FRAME_HEIGHT_MAX))
+		SCALE_FRAME_HEIGHT_MAX)) {
+		pr_err("input rect.wh check failed\n");
 		return -1;
+	}
 	if (p->src_rect.w % (2 << p->hor_deci) != 0) {
 		pr_err("fail to get valid src_rect.w %d\n",
 			p->src_rect.w);
@@ -152,124 +154,178 @@ int sprd_scaledrv_slice_param_check(
 			p->src_rect.h);
 		return -1;
 	}
-	if (MOD2(p->src_rect.x) != 0)
+	if (MOD2(p->src_rect.x) != 0) {
+		pr_err("src_rect.x not align failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->src_rect.y) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->src_rect.y, 1) != 0))
+		MOD(p->src_rect.y, 1) != 0)) {
+		pr_err("src_rect.y align failed\n");
 		return -1;
+	}
 
 	/* output rect */
 	if ((MOD2(p->sc_des_rect.w) != 0) ||
 		OSIDE(p->sc_des_rect.w, SCALE_WIDTH_MIN,
 		SCALE_SLICE_OUT_WIDTH_MAX) ||
 		OSIDE(p->sc_des_rect.h, SCALE_HEIGHT_MIN,
-		SCALE_FRAME_WIDTH_MAX))
+		SCALE_FRAME_WIDTH_MAX)) {
+		pr_err("sc_des_rect.w out size failed\n");
 		return -1;
+	}
 	if (((p->sc_output_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_des_rect.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->sc_des_rect.h, 1) != 0))
+		MOD(p->sc_des_rect.h, 1) != 0)) {
+		pr_err("sc_des_rect.h align failed\n");
 		return -1;
+	}
 
-	if (MOD2(p->sc_des_rect.x) != 0)
+	if (MOD2(p->sc_des_rect.x) != 0) {
+		pr_err("sc_des_rect align failed\n");
 		return -1;
+	}
 	if (((p->sc_output_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_des_rect.y) != 0) ||
 		((p->sc_output_fmt == SCALE_YUV422) &&
-		MOD(p->sc_des_rect.y, 1) != 0))
+		MOD(p->sc_des_rect.y, 1) != 0)) {
+		pr_err("sc_des_rect.y align failed\n");
 		return -1;
+	}
 	if (MOD2(p->bp_des_rect.w) != 0 ||
 		OSIDE(p->bp_des_rect.w, BP_TRIM_SIZE_MIN,
 		SCALE_FRAME_HEIGHT_MAX) ||
 		OSIDE(p->bp_des_rect.h, BP_TRIM_SIZE_MIN,
-		SCALE_FRAME_HEIGHT_MAX))
+		SCALE_FRAME_HEIGHT_MAX)) {
+		pr_err("bp_des_rect.wh outsize failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->bp_des_rect.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_des_rect.h, 1) != 0))
+		MOD(p->bp_des_rect.h, 1) != 0)) {
+		pr_err("bp_des_rect.h align failed\n");
 		return -1;
+	}
 	if (MOD2(p->bp_des_rect.x) != 0 ||
 		OSIDE(p->bp_des_rect.x, 0,
 		SCALE_FRAME_HEIGHT_MAX) ||
 		OSIDE(p->bp_des_rect.y, 0,
-		SCALE_FRAME_HEIGHT_MAX))
+		SCALE_FRAME_HEIGHT_MAX)) {
+		pr_err("bp_des_rect.xy outsize failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->bp_des_rect.y) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_des_rect.y, 1) != 0))
+		MOD(p->bp_des_rect.y, 1) != 0)) {
+		pr_err("bp_des_rect.y align failed\n");
 		return -1;
+	}
 	/* in trim */
 	if (MOD2(p->sc_intrim_rect.w) != 0 ||
 		p->sc_intrim_rect.w < SCALE_WIDTH_MIN ||
-		p->sc_intrim_rect.h < SCALE_HEIGHT_MIN)
+		p->sc_intrim_rect.h < SCALE_HEIGHT_MIN) {
+		pr_err("sc_intrim_rect.wh outsize failed\n");
 		return -1;
+	}
 	if (CMP((p->src_rect.w >> p->hor_deci), p->sc_intrim_rect.w,
 		p->sc_intrim_rect.x) ||
 		CMP((p->src_rect.h >> p->ver_deci), p->sc_intrim_rect.h,
-		p->sc_intrim_rect.y))
+		p->sc_intrim_rect.y)) {
+		pr_err("sc_intrim_rect.wh outsize with deci failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_intrim_rect.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->sc_intrim_rect.h, 1) != 0))
+		MOD(p->sc_intrim_rect.h, 1) != 0)) {
+		pr_err("sc_intrim_rect.h align failed\n");
 		return -1;
-	if (MOD2(p->sc_intrim_rect.x) != 0)
+	}
+	if (MOD2(p->sc_intrim_rect.x) != 0) {
+		pr_err("sc_intrim_rect.x align failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_intrim_rect.y) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->sc_intrim_rect.y, 1) != 0))
+		MOD(p->sc_intrim_rect.y, 1) != 0)) {
+		pr_err("sc_intrim_rect.y align failed\n");
 		return -1;
+	}
 	/* slice in */
-	if (MOD2(p->sc_slice_in_size.w) != 0)
+	if (MOD2(p->sc_slice_in_size.w) != 0) {
+		pr_err("sc_slice_in_size.w align failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_slice_in_size.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->sc_slice_in_size.h, 1) != 0))
+		MOD(p->sc_slice_in_size.h, 1) != 0)) {
+		pr_err("sc_slice_in_size.h align failed\n");
 		return -1;
+	}
 	/* slice out */
-	if (MOD2(p->sc_slice_out_size.w) != 0)
+	if (MOD2(p->sc_slice_out_size.w) != 0) {
+		pr_err("sc_slice_out_size.w align failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_slice_out_size.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->sc_slice_out_size.h, 1) != 0))
+		MOD(p->sc_slice_out_size.h, 1) != 0)) {
+		pr_err("sc_slice_out_size.h align failed\n");
 		return -1;
+	}
 	/* sc out trim */
-	if (MOD2(p->sc_outtrim_rect.w) != 0)
+	if (MOD2(p->sc_outtrim_rect.w) != 0) {
+		pr_err("sc_outtrim_rect.w align failed\n");
 		return -1;
+	}
 	if (((p->sc_output_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_outtrim_rect.h) != 0) ||
 		((p->sc_output_fmt == SCALE_YUV422) &&
-		MOD(p->sc_outtrim_rect.h, 1) != 0))
+		MOD(p->sc_outtrim_rect.h, 1) != 0)) {
+		pr_err("sc_outtrim_rect.h align failed\n");
 		return -1;
-	if (MOD2(p->sc_intrim_rect.x) != 0)
+	}
+	if (MOD2(p->sc_intrim_rect.x) != 0) {
+		pr_err("sc_intrim_rect.x align failed\n");
 		return -1;
+	}
 	if (((p->sc_output_fmt == SCALE_YUV420) &&
 		MOD2(p->sc_outtrim_rect.y) != 0) ||
 		((p->sc_output_fmt == SCALE_YUV422) &&
-		MOD(p->sc_outtrim_rect.y, 1) != 0))
+		MOD(p->sc_outtrim_rect.y, 1) != 0)) {
+		pr_err("sc_outtrim_rect.y align failed\n");
 		return -1;
+	}
 	/* bp trim */
-	if (MOD2(p->bp_trim_rect.w) != 0)
+	if (MOD2(p->bp_trim_rect.w) != 0) {
+		pr_err("bp_trim_rect.w align failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->bp_trim_rect.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_trim_rect.h, 1) != 0))
+		MOD(p->bp_trim_rect.h, 1) != 0)) {
+		pr_err("bp_trim_rect.h align failed\n");
 		return -1;
-	if (MOD2(p->bp_trim_rect.x) != 0)
+	}
+	if (MOD2(p->bp_trim_rect.x) != 0) {
+		pr_err("bp_trim_rect.x align failed\n");
 		return -1;
+	}
 	if (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->bp_trim_rect.y) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_trim_rect.y, 1) != 0))
+		MOD(p->bp_trim_rect.y, 1) != 0)) {
+		pr_err("bp_trim_rect.y align failed\n");
 		return -1;
+	}
 
 	return 0;
 }
@@ -297,7 +353,7 @@ static void scale_scaledrv_coeff_set(struct scale_drv_private *p,
 
 	drv_scaler_coef = &sc_cfg->slice_param.output.scaler_path_coef;
 
-	pr_err("scale_scaledrv_coeff_set entry\n");
+	pr_debug("%s entry\n", __func__);
 	 reg_luma_h_coeff	+= PATH0_LUMA_H_COEFF_BASE_ADDR;
 	 reg_chrima_h_coeff += PATH0_CHROMA_H_COEFF_BASE_ADDR;
 	 reg_v_coeff		+= PATH0_V_COEFF_BASE_ADDR;

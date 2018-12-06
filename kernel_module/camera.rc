@@ -1,3 +1,4 @@
 on early-init
     insmod /vendor/lib/modules/sprd_sensor.ko
     insmod /vendor/lib/modules/sprd_camera.ko
+	insmod /vendor/lib/modules/sprd_cpp.ko

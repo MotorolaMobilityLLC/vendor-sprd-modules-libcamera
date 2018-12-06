@@ -32,7 +32,7 @@
 #include "sprd_cpp.h"
 #include "sprd_img.h"
 #include "sprd_mm.h"
-#include <uapi/video/sprd_vsp_pw_domain.h>
+#include <uapi/video/sprd_mmsys_pw_domain.h>
 
 #include "cpp_common.h"
 #include "cpp_reg.h"
@@ -112,16 +112,8 @@ struct cpp_device {
 	struct clk *cpp_clk_default;
 	struct clk *cpp_eb;
 
-	struct clk *cpp_emc_clk;
-	struct clk *cpp_emc_clk_parent;
-	struct clk *cpp_emc_clk_default;
-
-	struct clk *clk_mm_vsp_eb;
-
-	struct regmap *cam_ahb_gpr;
 	struct regmap *mm_ahb_gpr;
-	struct regmap *pmu_apb_gpr;
-	struct regmap *aon_apb_gpr;
+	uint32_t awrqos;
 };
 
 typedef void (*cpp_isr) (struct cpp_device *dev);
@@ -230,6 +222,16 @@ static const cpp_isr cpp_isr_list[CPP_IRQ_NUMBER] = {
 	sprd_cppcore_dma_done,
 };
 
+#ifndef HACKCODE_TEST
+static void sprd_cppcore_qos_set(
+		uint32_t qos)
+{
+	CPP_REG_MWR(CPP_AXIM_CHN_SET,
+			CPP_AXIM_CHN_SET_QOS_MASK,
+			qos);
+}
+#endif
+
 static void sprd_cppcore_module_reset(
 	struct cpp_device *dev)
 {
@@ -237,7 +239,7 @@ static void sprd_cppcore_module_reset(
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	regmap_update_bits(dev->mm_ahb_gpr, MM_AHB_RESET,
 			CPP_PATH_RESET_MASK,
 			(unsigned int)CPP_PATH_RESET_MASK);
@@ -265,7 +267,7 @@ static void sprd_cppcore_scale_reset(
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	regmap_update_bits(dev->mm_ahb_gpr, (unsigned int)MM_AHB_RESET,
 			(unsigned int)CPP_PATH0_AHB_RESET_BIT,
 			(unsigned int)CPP_PATH0_AHB_RESET_BIT);
@@ -291,7 +293,7 @@ static void sprd_cppcore_rot_reset(struct cpp_device *dev)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	regmap_update_bits(dev->mm_ahb_gpr, MM_AHB_RESET,
 			CPP_PATH1_AHB_RESET_BIT,
 			(unsigned int)CPP_PATH1_AHB_RESET_BIT);
@@ -318,7 +320,7 @@ static void sprd_cppcore_dma_reset(
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	regmap_update_bits(dev->mm_ahb_gpr, MM_AHB_RESET,
 			CPP_DMA_AHB_RESET_BIT,
 			(unsigned int)CPP_DMA_AHB_RESET_BIT);
@@ -388,9 +390,9 @@ static irqreturn_t sprd_cppcore_isr_root(int irq, void *priv)
 		return -EINVAL;
 	}
 	dev = (struct cpp_device *)priv;
-	pr_err("sprd_cppcore_isr_root enter =====\n");
+	pr_debug("%s enter =====\n", __func__);
 	status = CPP_REG_RD(CPP_INT_STS);
-	pr_err("sprd_cppcore_isr_root status %d\n", status);
+	pr_err("%s status %d\n", __func__, status);
 #ifndef HAPS_TEST
 	mmu_irq_line = status & CPP_MMU_IRQ_LINE_MASK;
 	if (unlikely(mmu_irq_line != 0)) {
@@ -400,10 +402,10 @@ static irqreturn_t sprd_cppcore_isr_root(int irq, void *priv)
 	}
 #endif
 	path_irq_line = status & CPP_IRQ_LINE_MASK;
-	pr_err("sprd_cppcore_isr_root path_irq_line %d\n", path_irq_line);
+	pr_err("%s path_irq_line %d\n", __func__,  path_irq_line);
 	if (unlikely(path_irq_line == 0))
 		return IRQ_NONE;
-	pr_err("sprd_cppcore_isr_root int clr status %d\n", status);
+	pr_err("%s int clr status %d\n", __func__,  status);
 	CPP_REG_WR(CPP_INT_CLR, status);
 
 	spin_lock_irqsave(&dev->slock, flag);
@@ -498,42 +500,18 @@ static int sprd_cppcore_module_enable(struct cpp_device *dev)
 	}
 
 	mutex_lock(&dev->lock);
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	{
-		ret = clk_prepare_enable(dev->clk_mm_vsp_eb);
-		if (ret) {
-			pr_err("fail to enable clk mm vsp eb\n");
-			goto fail;
-		}
-
-		ret = clk_set_parent(dev->cpp_emc_clk,
-			dev->cpp_emc_clk_parent);
-		if (ret) {
-			pr_err("fail to set cpp emc clk\n");
-			clk_disable_unprepare(dev->clk_mm_vsp_eb);
-			goto fail;
-		}
-
-		ret = clk_prepare_enable(dev->cpp_emc_clk);
-		if (ret) {
-			pr_err("fail to enable cpp emc clk\n");
-			clk_disable_unprepare(dev->clk_mm_vsp_eb);
-			goto fail;
-		}
-
 		ret = clk_prepare_enable(dev->cpp_eb);
 		if (ret) {
 			pr_err("fail to enable cpp eb\n");
-			clk_disable_unprepare(dev->clk_mm_vsp_eb);
 			goto fail;
 		}
-
 		ret = clk_set_parent(dev->cpp_clk,
 			dev->cpp_clk_parent);
 		if (ret) {
-			pr_err("fail to set cpp clk\n");
+			pr_err("fail to set cpp clk parent\n");
 			clk_disable_unprepare(dev->cpp_eb);
-			clk_disable_unprepare(dev->clk_mm_vsp_eb);
 			goto fail;
 		}
 
@@ -541,12 +519,10 @@ static int sprd_cppcore_module_enable(struct cpp_device *dev)
 		if (ret) {
 			pr_err("fail to enable cpp clk\n");
 			clk_disable_unprepare(dev->cpp_eb);
-			clk_disable_unprepare(dev->clk_mm_vsp_eb);
 			goto fail;
 		}
-
 		sprd_cppcore_module_reset(dev);
-
+		sprd_cppcore_qos_set(dev->awrqos);
 		CPP_REG_AWR(CPP_MMU_EN, (0xfffffffe));
 		CPP_REG_OWR(MMU_PPN_RANGE1, (0xfff));
 		CPP_REG_OWR(MMU_PPN_RANGE2, (0xfff));
@@ -615,8 +591,9 @@ udelay(2);
 
 	return ret;
 
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 fail:
+	pr_err("sprd_cppcore_module_enable failed !!!!\n");
 	mutex_unlock(&dev->lock);
 #endif
 
@@ -631,13 +608,12 @@ static void sprd_cppcore_module_disable(struct cpp_device *dev)
 	}
 
 	mutex_lock(&dev->lock);
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	clk_set_parent(dev->cpp_clk, dev->cpp_clk_default);
 	clk_disable_unprepare(dev->cpp_clk);
 	clk_disable_unprepare(dev->cpp_eb);
-	clk_set_parent(dev->cpp_emc_clk, dev->cpp_emc_clk_default);
-	clk_disable_unprepare(dev->cpp_emc_clk);
-	clk_disable_unprepare(dev->clk_mm_vsp_eb);
+	sprd_cam_domain_disable();
+	sprd_cam_pw_off();
 #endif
 	mutex_unlock(&dev->lock);
 }
@@ -673,7 +649,7 @@ static void sprd_cppcore_rot_isr(void *priv)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("sprd_cppcore_rot_isr\n");
+	pr_err("%s\n", __func__);
 	complete(&rotif->done_com);
 }
 
@@ -685,7 +661,7 @@ static void sprd_cppcore_scale_isr(void *priv)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("sprd_cppcore_scale_isr\n");
+	pr_err("%s\n", __func__);
 	complete(&scif->done_com);
 }
 
@@ -697,7 +673,7 @@ static void sprd_cppcore_dma_isr(void *priv)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("sprd_cppcore_dma_isr\n");
+	pr_err("%s\n", __func__);
 	complete(&dmaif->done_com);
 }
 
@@ -1001,7 +977,8 @@ static int ioctl_start_scale(struct cpp_device *dev,
 			ret = -EBUSY;
 			goto start_scal_exit;
 		}
-		pr_err("slice done i:%d\n", i);
+		pr_err("slice count %d, done i:%d\n",
+				sc_parm->slice_param.output.slice_count, i);
 		i++;
 	} while (--sc_parm->slice_param.output.slice_count);
 	sprd_scale_drv_stop(&scif->drv_priv);
@@ -1197,11 +1174,17 @@ static int sprd_cppcore_open(struct inode *node, struct file *file)
 		return 0;
 	}
 
+	ret = sprd_cam_pw_on();
+	if (ret) {
+		pr_err("%s fail to power on cpp\n", __func__);
+		goto exit;
+	}
+	sprd_cam_domain_eb();
 	ret = sprd_cppcore_module_enable(dev);
 	if (ret) {
 		ret = -EFAULT;
 		pr_err("fail to enable cpp module\n");
-		return ret;
+		goto en_exit;
 	}
 
 	rotif = vzalloc(sizeof(*rotif));
@@ -1282,6 +1265,13 @@ vzalloc_exit:
 	}
 	sprd_cppcore_module_disable(dev);
 
+en_exit:
+	sprd_cam_domain_disable();
+	ret = sprd_cam_pw_off();
+	if (ret) {
+		pr_err("%s: failed to camera power off\n", __func__);
+		return ret;
+	}
 exit:
 	if (atomic_dec_return(&dev->users) != 0)
 		pr_info("others is using cpp device\n");
@@ -1349,11 +1339,9 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 	unsigned int irq = 0;
 	struct cpp_device *dev = NULL;
 	void __iomem *reg_base = NULL;
-#ifndef HAPS_TEST
-	struct regmap *cam_ahb_gpr = NULL;
+#ifndef HACKCODE_TEST
 	struct regmap *mm_ahb_gpr = NULL;
-	struct regmap *pmu_apb_gpr = NULL;
-	struct regmap *aon_apb_gpr = NULL;
+	struct device_node *qos_node = NULL;
 #endif
 
 	if (!pdev) {
@@ -1384,7 +1372,7 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 
 	pr_info("sprd cpp probe pdev name %s\n", pdev->name);
 
-#ifndef HAPS_TEST
+#ifndef HACKCODE_TEST
 	dev->cpp_eb = devm_clk_get(&pdev->dev, "cpp_eb");
 	if (IS_ERR_OR_NULL(dev->cpp_eb)) {
 		ret =  PTR_ERR(dev->cpp_eb);
@@ -1409,41 +1397,14 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 		goto misc_fail;
 	}
 
-	cam_ahb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,cam-ahb-syscon");
-	if (IS_ERR_OR_NULL(cam_ahb_gpr)) {
-		ret = PTR_ERR(cam_ahb_gpr);
-		pr_err("fail to get cam_ahb_gpr %d\n", ret);
-		goto misc_fail;
-	}
-	dev->cam_ahb_gpr = cam_ahb_gpr;
-
 	mm_ahb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,mm-ahb-syscon");
+			"sprd,cam-ahb-syscon");
 	if (IS_ERR_OR_NULL(mm_ahb_gpr)) {
 		pr_err("fail to get mm_ahb_gpr\n");
 		ret = PTR_ERR(mm_ahb_gpr);
 		goto misc_fail;
 	}
 	dev->mm_ahb_gpr = mm_ahb_gpr;
-
-	pmu_apb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,pmu-apb-syscon");
-	if (IS_ERR_OR_NULL(pmu_apb_gpr)) {
-		pr_err("fail to get pmu_ahb_gpr\n");
-		ret = PTR_ERR(pmu_apb_gpr);
-		goto misc_fail;
-	}
-	dev->pmu_apb_gpr = pmu_apb_gpr;
-
-	aon_apb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,aon-apb-syscon");
-	if (IS_ERR_OR_NULL(aon_apb_gpr)) {
-		pr_err("fail to get aon_apb_gpr\n");
-		ret = PTR_ERR(aon_apb_gpr);
-		goto misc_fail;
-	}
-	dev->aon_apb_gpr = aon_apb_gpr;
 
 	reg_base = of_iomap(pdev->dev.of_node, 0);
 	if (IS_ERR_OR_NULL(reg_base)) {
@@ -1452,13 +1413,26 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 		goto misc_fail;
 	}
 	dev->io_base = reg_base;
-
+	g_cpp_base = (unsigned long)reg_base;
 	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
 	if (irq <= 0) {
 		pr_err("fail to get dcam irq %d\n", irq);
 		goto misc_fail;
 	}
 	dev->irq = irq;
+
+	qos_node = of_parse_phandle(pdev->dev.of_node, "cpp_qos", 0);
+	if (qos_node) {
+		uint8_t val;
+
+		if (of_property_read_u8(qos_node, "awrqos", &val)) {
+			pr_err("fail to get cpp qos.\n");
+			val = 0x1;
+		}
+	dev->awrqos = (uint32_t)val;
+	} else {
+		dev->awrqos = 0x1;
+	}
 #else
 	reg_base = of_iomap(pdev->dev.of_node, 0);
 	if (IS_ERR_OR_NULL(reg_base)) {

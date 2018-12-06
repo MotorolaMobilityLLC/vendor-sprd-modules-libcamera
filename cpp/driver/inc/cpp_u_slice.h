@@ -27,6 +27,7 @@
 #define MOD2(x)	(x % 2)
 #define OSIDE(x, a, b) ((x < a) || (x > b))
 #define CMP(x, a, b) (x < (a + b))
+#define ALIGN_UP(size, align) ((size + (align - 1)) & (~(align - 1)))
 
 	int cpp_u_input_param_check(
 			struct sprd_cpp_scale_cfg_parm *cfg_parm);
@@ -35,3 +36,4 @@
 			slice_drv_param_t *slice_parm);
 
 #endif
+

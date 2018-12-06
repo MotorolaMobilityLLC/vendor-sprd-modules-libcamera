@@ -138,12 +138,12 @@ static cpp_memory_t *allocMem(
 		goto getpmem_fail;
 	}
     	pHeapIon->get_phy_addr_from_ion(&paddr, &mem_size);
-	
+
 	if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
 		ERR("failed to alloc ion pmem buffer2.\n");
 		goto getpmem_fail;
 	}
-	
+
 	memory->ion_heap = pHeapIon;
 	memory->fd = pHeapIon->getHeapID();
 	memory->dev_fd = pHeapIon->getIonDeviceFd();
@@ -341,12 +341,12 @@ static int utest_scal_param_set(struct utest_scal_cxt *scal_cxt_ptr) {
 	fclose(fp);
 	return 0;
 }
-#endif 
+#endif
 
 static int
 utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
     /* alloc input y buffer */
-    scal_cxt_ptr->input_y_mem = 
+	scal_cxt_ptr->input_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.input_size.w *
 		scal_cxt_ptr->scal_cfg.input_size.h, 1, false);
     INFO("LIKE:src y phy addr :0x%lx, virtual addr:%p\n",
@@ -354,10 +354,10 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->input_y_mem->data);
     memset(scal_cxt_ptr->input_y_mem->data, 0x80,
            scal_cxt_ptr->input_y_mem->phys_size);
-    scal_cxt_ptr->scal_cfg.input_addr.y = 
+	scal_cxt_ptr->scal_cfg.input_addr.y =
 		scal_cxt_ptr->input_y_mem->phys_addr;
     /* alloc input uv buffer */
-    scal_cxt_ptr->input_uv_mem = 
+	scal_cxt_ptr->input_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.input_size.w *
 		scal_cxt_ptr->scal_cfg.input_size.h, 1, false);
     INFO("LIKE:src uv phy addr :0x%lx, virtual addr:%p\n",
@@ -365,12 +365,12 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->input_uv_mem->data);
     memset(scal_cxt_ptr->input_uv_mem->data, 0x80,
            scal_cxt_ptr->input_uv_mem->phys_size);
-    scal_cxt_ptr->scal_cfg.input_addr.u = 
+	scal_cxt_ptr->scal_cfg.input_addr.u =
 		scal_cxt_ptr->input_uv_mem->phys_addr;
-     scal_cxt_ptr->scal_cfg.input_addr.v = 
+	scal_cxt_ptr->scal_cfg.input_addr.v =
 		scal_cxt_ptr->input_uv_mem->phys_addr;
     /* alloc sc outout y buffer */
-    scal_cxt_ptr->output_sc_y_mem = 
+	scal_cxt_ptr->output_sc_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
 		scal_cxt_ptr->scal_cfg.output_size.h, 1, false);
     INFO("LIKE:sc out y phy addr :0x%lx, virtual addr:%p\n",
@@ -378,10 +378,10 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->output_sc_y_mem->data);
     memset(scal_cxt_ptr->output_sc_y_mem->data, 0x80,
            scal_cxt_ptr->output_sc_y_mem->phys_size);
-    scal_cxt_ptr->scal_cfg.output_addr.y = 
+	scal_cxt_ptr->scal_cfg.output_addr.y =
 		scal_cxt_ptr->output_sc_y_mem->phys_addr;
     /* alloc sc outout uv buffer */
-    scal_cxt_ptr->output_sc_uv_mem = 
+	scal_cxt_ptr->output_sc_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
 		scal_cxt_ptr->scal_cfg.output_size.h, 1, false);
     INFO("LIKE:sc out uv phy addr :0x%lx, virtual addr:%p\n",
@@ -389,13 +389,13 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->output_sc_uv_mem->data);
     memset(scal_cxt_ptr->output_sc_uv_mem->data, 0x80,
            scal_cxt_ptr->output_sc_uv_mem->phys_size);
-    scal_cxt_ptr->scal_cfg.output_addr.u = 
+	scal_cxt_ptr->scal_cfg.output_addr.u =
 		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
-    scal_cxt_ptr->scal_cfg.output_addr.v = 
+	scal_cxt_ptr->scal_cfg.output_addr.v =
 		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
 if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     /* alloc bp outout y buffer */
-    scal_cxt_ptr->output_bp_y_mem = 
+	scal_cxt_ptr->output_bp_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.bp_trim.w *
 		scal_cxt_ptr->scal_cfg.bp_trim.h, 1, false);
     INFO("LIKE:bp out y phy addr :0x%lx, virtual addr:%p\n",
@@ -403,10 +403,10 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
          scal_cxt_ptr->output_bp_y_mem->data);
     memset(scal_cxt_ptr->output_bp_y_mem->data, 0x80,
            scal_cxt_ptr->output_bp_y_mem->phys_size);
-    scal_cxt_ptr->scal_cfg.bp_output_addr.y = 
+	scal_cxt_ptr->scal_cfg.bp_output_addr.y =
 		scal_cxt_ptr->output_bp_y_mem->phys_addr;
     /* alloc bp outout uv buffer */
-    scal_cxt_ptr->output_bp_uv_mem = 
+	scal_cxt_ptr->output_bp_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.bp_trim.w *
 		scal_cxt_ptr->scal_cfg.bp_trim.h, 1, false);
     INFO("LIKE:bp out uv phy addr :0x%lx, virtual addr:%p\n",
@@ -414,9 +414,9 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
          scal_cxt_ptr->output_bp_uv_mem->data);
     memset(scal_cxt_ptr->output_bp_uv_mem->data, 0x80,
            scal_cxt_ptr->output_bp_uv_mem->phys_size);
-    scal_cxt_ptr->scal_cfg.bp_output_addr.u = 
+	scal_cxt_ptr->scal_cfg.bp_output_addr.u =
 		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
-    scal_cxt_ptr->scal_cfg.bp_output_addr.v = 
+	scal_cxt_ptr->scal_cfg.bp_output_addr.v =
 		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
 }else {
     scal_cxt_ptr->scal_cfg.bp_output_addr.y = 0;
@@ -447,7 +447,7 @@ utest_scal_set_src_data(struct utest_scal_cxt *scal_cxt_ptr) {
     INFO("utest scaling read src image start\n");
 
     /* get input_y src */ //0 YUV4202P 2YUV4222P
-    if (scal_cxt_ptr->scal_cfg.input_format == 2) 
+	if (scal_cxt_ptr->scal_cfg.input_format == 2)
         fp = fopen(utest_scal_src_y_422_file, "r");
     else if (scal_cxt_ptr->scal_cfg.input_format == 0)
         fp = fopen(utest_scal_src_y_420_file, "r");
@@ -499,9 +499,9 @@ static int utest_scal_set_des_data(
     FILE *fp = 0;
     char sc_file_name[128] = "utest_scaling_output_temp.raw";
     char bp_file_name[128] = "utest_scaling_output_temp.raw";
-	
+
 //scale path des data save
-    sprintf(sc_file_name, utest_scal_sc_dst_y_file, 
+	sprintf(sc_file_name, utest_scal_sc_dst_y_file,
 		scal_cxt_ptr->scal_cfg.output_size.w,
 		scal_cxt_ptr->scal_cfg.output_size.h,
 		scal_cxt_ptr->scal_cfg.input_format,
@@ -544,8 +544,9 @@ static int utest_scal_set_des_data(
         return -1;
     }
 
+if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
 // bp path des data save
-    sprintf(bp_file_name, utest_scal_bp_dst_y_file, 
+	sprintf(bp_file_name, utest_scal_bp_dst_y_file,
 		scal_cxt_ptr->scal_cfg.bp_trim.w,
 		scal_cxt_ptr->scal_cfg.bp_trim.h,
 		scal_cxt_ptr->scal_cfg.input_format,
@@ -587,6 +588,7 @@ static int utest_scal_set_des_data(
         ERR("utest_scaling_save_raw_data: failed to open save_file_uv.\n");
         return -1;
     }
+}
     return 0;
 }
 

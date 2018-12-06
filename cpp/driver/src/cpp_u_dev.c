@@ -15,7 +15,7 @@
  */
 
  #define LOG_TAG "cpp_u_dev"
-
+#include <stdio.h>
 #include "cpp_u_dev.h"
 #include "sprd_cpp.h"
 #include "slice_drv.h"
@@ -24,6 +24,7 @@
 #include <time.h>
 
 static char cpp_dev_name[50] = "/dev/sprd_cpp";
+#define ERR(x...) fprintf(stderr, x)
 
 cmr_int cpp_rot_open(cmr_handle *handle)
 {

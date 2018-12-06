@@ -39,21 +39,21 @@ int cpp_u_input_param_check(
 		return ret;
 	}
 
-	CMR_LOGI("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
+	CMR_LOGE("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 			cfg_parm->input_rect.w, cfg_parm->input_rect.h,
 			cfg_parm->output_size.w, cfg_parm->output_size.h);
-	CMR_LOGI("schor %d  scver %d,input fmt %d,inputyendian %d\n",
+	CMR_LOGE("schor %d  scver %d,input fmt %d,inputyendian %d\n",
 			cfg_parm->scale_deci.hor, cfg_parm->scale_deci.ver,
 			cfg_parm->input_format,
 			cfg_parm->input_endian.y_endian);
-	CMR_LOGI("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
+	CMR_LOGE("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
 			cfg_parm->output_format,
 			cfg_parm->output_endian.y_endian,
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
-	CMR_LOGI("bptrim x%d y%d w%d h%d\n",
+	CMR_LOGE("bptrim x%d y%d w%d h%d\n",
 			cfg_parm->bp_trim.x, cfg_parm->bp_trim.y,
 			cfg_parm->bp_trim.w, cfg_parm->bp_trim.h);
 
@@ -197,25 +197,26 @@ int cpp_u_input_param_check(
 
 	if (cfg_parm->input_format == SCALE_YUV420) {
 		if ((MOD2(cfg_parm->bp_trim.y) != 0) ||
-				(MOD2(cfg_parm->bp_trim.h) != 0))
+				(MOD2(cfg_parm->bp_trim.h) != 0)) {
 			CMR_LOGI("failed bp trim align size2\n");
 		return ret;
+		}
 	}
-	CMR_LOGI("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
+	CMR_LOGE("2in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 			cfg_parm->input_rect.w, cfg_parm->input_rect.h,
 			cfg_parm->output_size.w, cfg_parm->output_size.h);
-	CMR_LOGI("schor %d  scver %d,input fmt %d,inputyendian %d\n",
+	CMR_LOGE("2schor %d  scver %d,input fmt %d,inputyendian %d\n",
 			cfg_parm->scale_deci.hor, cfg_parm->scale_deci.ver,
 			cfg_parm->input_format,
 			cfg_parm->input_endian.y_endian);
-	CMR_LOGI("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
+	CMR_LOGE("2scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
 			cfg_parm->output_format,
 			cfg_parm->output_endian.y_endian,
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
-	CMR_LOGI("check finished bptrim x%d y%d w%d h%d\n",
+	CMR_LOGE("2check finished bptrim x%d y%d w%d h%d\n",
 			cfg_parm->bp_trim.x, cfg_parm->bp_trim.y,
 			cfg_parm->bp_trim.w, cfg_parm->bp_trim.h);
 	return CMR_CAMERA_SUCCESS;
@@ -227,6 +228,8 @@ void convert_param_to_calc(
 struct sprd_cpp_scale_cfg_parm *cfg_parm,
 slice_drv_param_t *slice_parm)
 {
+    int slice_count = 0;
+    
 	slice_parm->crop_en = 1;
 	slice_parm->scaler_path_param.scaler_en = 1;
 	slice_parm->scaler_path_param.trim_eb = 1;
@@ -246,12 +249,13 @@ slice_drv_param_t *slice_parm)
 		slice_parm->slice_w = 0;
 	else {
 		slice_parm->bypass_path_param.enable = 0;
-		slice_parm->slice_w = cfg_parm->input_rect.w /
-		(cfg_parm->output_size.w /
+                slice_count = ALIGN_UP((cfg_parm->output_size.w /
 		SCALE_SLICE_OUT_WIDTH_MAX + (cfg_parm->output_size.w %
-		SCALE_SLICE_OUT_WIDTH_MAX ? 1 : 0));
+		SCALE_SLICE_OUT_WIDTH_MAX ? 1 : 0)), 2);
+		slice_parm->slice_w = cfg_parm->input_rect.w /
+                slice_count;
 	}
-
+        CMR_LOGE("slice_w %d\n", slice_parm->slice_w);
 	if (cfg_parm->scale_deci.hor > 0) {
 		slice_parm->bypass_path_param.enable = 0;
 		slice_parm->deci_param.deci_x_en = 1;
