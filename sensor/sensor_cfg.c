@@ -449,6 +449,8 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+#elif defined(_SENSOR_RAW_SHARKL5_H_)
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA2, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
@@ -508,7 +510,11 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
     {MODULE_SUNNY, "ov2680_sbs", &g_ov2680_sbs_mipi_raw_info, {NULL, 0}, {&ov2680_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV5675_DUAL
+#ifdef _SENSOR_RAW_SHARKL5_H_
+    {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
+#else
     {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+#endif
 #endif
 #ifdef OV8856_SHINE
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},

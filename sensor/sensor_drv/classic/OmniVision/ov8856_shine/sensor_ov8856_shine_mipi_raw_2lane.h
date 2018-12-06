@@ -30,6 +30,9 @@
 #include "sensor_raw.h"
 #include "isp_com.h"
 
+#ifdef _SENSOR_RAW_SHARKL5_H_
+#include "sensor_ov8856_shine_otp.h"
+#endif
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
@@ -109,7 +112,7 @@
 /* please don't change it */
 #define EX_MCLK				24
 
-#ifdef SENSOR_OV8856_TELE
+#if defined(SENSOR_OV8856_TELE)||defined(_SENSOR_RAW_SHARKL5_H_)
 #define IMAGE_NORMAL_MIRROR
 #else
 #define IMAGE_HV_MIRROR
@@ -674,6 +677,10 @@ static SENSOR_REG_T ov8856_again_reg[] = {
         {0x3508, 0x00},
         {0x3509, 0x00},
 
+#if defined(_SENSOR_RAW_SHARKL5_H_)
+        {0x3208, 0x11},
+        {0x3208, 0xA1},
+#endif
 };
 
 static struct sensor_i2c_reg_tab ov8856_again_tab = {
@@ -684,9 +691,10 @@ static struct sensor_i2c_reg_tab ov8856_again_tab = {
 static SENSOR_REG_T ov8856_dgain_reg[] = {
         {0x5019, 0x00}, {0x501a, 0x00}, {0x501b, 0x00}, {0x501c, 0x00},
         {0x501d, 0x00}, {0x501e, 0x00}, {0x501f, 0x00}, {0x5020, 0x00},
+#if !defined(_SENSOR_RAW_SHARKL5_H_)
         {0x3208, 0x11},
         {0x3208, 0xA1},
-
+#endif
 };
 
 static struct sensor_i2c_reg_tab ov8856_dgain_tab = {
@@ -721,7 +729,11 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
         .f_num = 220,
         .focal_length = 242,
         .max_fps = 30,
+#if defined(_SENSOR_RAW_SHARKL5_H_)
+        .max_adgain = 16,
+#else
         .max_adgain = 16 * 2,
+#endif
         .ois_supported = 0,
 		.pdaf_supported = 0,
         .exp_valid_frame_num = 1,

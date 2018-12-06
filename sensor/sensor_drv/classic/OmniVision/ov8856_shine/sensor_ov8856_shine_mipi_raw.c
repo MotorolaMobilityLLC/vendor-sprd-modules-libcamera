@@ -20,7 +20,7 @@
 */
 
 #define LOG_TAG "ov8856_shine"
-#ifdef CONFIG_ISP_2_5
+#if defined(CONFIG_ISP_2_5)||defined(CONFIG_ISP_2_6)
 #define MIPI_NUM_2LANE
 #else
 #define MIPI_NUM_4LANE
@@ -253,15 +253,15 @@ static cmr_int ov8856_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         usleep(5 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         usleep(500);
-
+#if defined(_SENSOR_RAW_SHARKL5_H_)
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
-
+#endif
         sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_ON;
     } else {
         SENSOR_LOGI("off.");
-
+#if defined(_SENSOR_RAW_SHARKL5_H_)
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
-
+#endif
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
@@ -445,6 +445,11 @@ static cmr_int ov8856_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_SET_RAW_INFOR:
         ov8856_drv_set_raw_info(handle, param_ptr->pval);
         break;
+#if defined(_SENSOR_RAW_SHARKL5_H_)
+    case SENSOR_VAL_TYPE_READ_OTP:
+        ov8856_read_otp(handle, param_ptr);
+        break;
+#endif
     default:
         break;
     }
@@ -546,7 +551,9 @@ static cmr_int ov8856_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->sensor_ev_info.preview_gain = cap_gain;
     ov8856_drv_write_gain(handle, &ov8856_aec_info, cap_gain);
     ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.again);
+#if !defined(_SENSOR_RAW_SHARKL5_H_)
     ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.dgain);
+#endif
 
 snapshot_info:
     if (sns_drv_cxt->ops_cb.set_exif_info) {
@@ -600,8 +607,9 @@ static cmr_int ov8856_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     ov8856_drv_calc_gain(handle, param, &ov8856_aec_info);
     ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.again);
+#if !defined(_SENSOR_RAW_SHARKL5_H_)
     ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.dgain);
-
+#endif
     return ret_value;
 }
 
