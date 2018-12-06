@@ -76,7 +76,7 @@ static int isp_slice_ctx_init(struct isp_pipe_context *pctx);
 
 
 /* debug fs starts */
-#define DBG_REGISTER
+//#define DBG_REGISTER
 uint32_t s_isp_bypass[ISP_CONTEXT_NUM];
 #ifdef DBG_REGISTER
 static uint32_t common_reg[ISP_CONTEXT_MAX][512];

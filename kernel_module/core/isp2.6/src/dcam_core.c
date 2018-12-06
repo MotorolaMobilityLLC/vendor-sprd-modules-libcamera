@@ -1780,7 +1780,7 @@ struct cfg_entry {
 /* because parameters from user may be illegal when bringup*/
 static struct cfg_entry cfg_func_tab[DCAM_BLOCK_TOTAL] = {
 /*[DCAM_BLOCK_BLC - DCAM_BLOCK_BASE]     = {DCAM_BLOCK_BLC,              dcam_k_cfg_blc}, */
-/*[DCAM_BLOCK_RGBG - DCAM_BLOCK_BASE]    = {DCAM_BLOCK_RGBG,             dcam_k_cfg_rgb_gain},*/
+[DCAM_BLOCK_RGBG - DCAM_BLOCK_BASE]    = {DCAM_BLOCK_RGBG,             dcam_k_cfg_rgb_gain},
 /*[DCAM_BLOCK_RGBG_DITHER - DCAM_BLOCK_BASE] = {DCAM_BLOCK_RGBG_DITHER,  dcam_k_cfg_rgb_dither},*/
 /*[DCAM_BLOCK_PDAF - DCAM_BLOCK_BASE]    = {DCAM_BLOCK_PDAF,             dcam_k_cfg_pdaf},*/
 /*[DCAM_BLOCK_LSC - DCAM_BLOCK_BASE]     = {DCAM_BLOCK_LSC,              dcam_k_cfg_lsc},*/
@@ -1949,7 +1949,7 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 	pr_info("stop dcam %d.\n", dev->idx);
 
 	dcam_stop(dev);
-	/* dcam_reset(dev); */
+	dcam_reset(dev);
 
 	dcam_dump_int_tracker(dev->idx);
 

@@ -2028,7 +2028,7 @@ static int img_ioctl_set_function_mode(
 	uparam = (struct sprd_img_function_mode __user *)arg;
 	ret |= get_user(module->cam_uinfo.is_4in1, &uparam->need_4in1);
 	ret |= get_user(module->cam_uinfo.is_3dnr, &uparam->need_3dnr);
-	module->cam_uinfo.is_ltm = 1;
+	module->cam_uinfo.is_ltm = 0;
 
 	pr_info("4in1:[%d], 3dnr[%d], ltm[%d]\n",
 		module->cam_uinfo.is_4in1,
@@ -4336,12 +4336,9 @@ rewait:
 			read_op.parm.frame.index = pframe->fid;
 			read_op.parm.frame.real_index = pframe->fid;
 			/* timestamp at CAP_SOF */
-			read_op.parm.frame.sec = pframe->sensor_time.tv_sec;
-			read_op.parm.frame.usec = pframe->sensor_time.tv_usec;
-			/* mark this for k414 compile
-			 * read_op.parm.frame.monoboottime =
-			 * pframe->boot_time.tv64;
-			 */
+			read_op.parm.frame.sec = pframe->time.tv_sec;
+			read_op.parm.frame.usec = pframe->time.tv_usec;
+			read_op.parm.frame.monoboottime = pframe->boot_time;
 			read_op.parm.frame.yaddr_vir = (
 				uint32_t)pframe->buf.addr_vir[0];
 			read_op.parm.frame.uaddr_vir = (
