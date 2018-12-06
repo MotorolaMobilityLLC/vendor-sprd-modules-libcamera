@@ -30,6 +30,8 @@ using namespace android;
 #define MINICAMERA_HEIGHT_MAX 3488
 #define PREVIEW_BUFF_NUM 8
 #define MINICAMERA_PARAM_NUM 4
+#define MINICAMERA_MIN_FPS  5
+#define MINICAMERA_MAX_FPS  30
 #define DUMP_COUNT 10
 
 #define SET_PARM(h, x, y, z)                                                   \
@@ -92,6 +94,7 @@ struct minicamera_context {
     unsigned int camera_id;
     unsigned int width;
     unsigned int height;
+    unsigned int fps;
     struct client_t client_data;
 };
 
@@ -101,8 +104,9 @@ static void usage(void) {
     fprintf(
         stderr,
         "usage:\n"
-        "minicamera -cameraid camera_id -w preview_width -h preview_height\n"
-        "for example: minicamera -cameraid 1 -w 1280 -h 720\n");
+        "minicamera -cameraid camera_id -w preview_width -h preview_height [-fps framerate]\n"
+        "for example: minicamera -cameraid 1 -w 1280 -h 720 -fps 10\n"
+        "or minicamera -cameraid 1 -w 1280 -h 720");
 }
 
 static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
@@ -137,6 +141,11 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
             if (cxt->height > MINICAMERA_HEIGHT_MAX || (cxt->height % 2)) {
                 CMR_LOGE("get right height failed");
                 goto exit;
+            }
+        } else if (strcmp(argv[i], "-fps") == 0 && (i < argc - 1)) {
+            cxt->fps = atoi(argv[++i]);
+            if (cxt->fps > MINICAMERA_MAX_FPS || (0 < cxt->fps < MINICAMERA_MIN_FPS)) {
+                cxt->fps = 10;
             }
         } else {
             usage();
@@ -787,8 +796,13 @@ static int minicamera_startpreview(struct minicamera_context *cxt) {
     zoom_param.zoom_info.prev_aspect_ratio = (float)cxt->width / cxt->height;
 
     fps_param.is_recording = 0;
-    fps_param.min_fps = 5;
-    fps_param.max_fps = 30;
+    if (cxt->fps > 0) {
+        fps_param.min_fps = cxt->fps;
+        fps_param.max_fps = cxt->fps;
+    } else {
+        fps_param.min_fps = MINICAMERA_MIN_FPS;
+        fps_param.max_fps = MINICAMERA_MAX_FPS;
+    }
     fps_param.video_mode = 0;
 
     cxt->oem_dev->ops->camera_fast_ctrl(cxt->oem_handle, CAMERA_FAST_MODE_FD,
