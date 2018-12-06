@@ -311,20 +311,21 @@ extern "C" {
 		struct afctrl_face_area face_info[10];
 	};
 
+	struct afctrl_fps_info {
+		cmr_u32 is_high_fps;
+		cmr_u32 high_fps_skip_num;
+	};
+
 	struct afctrl_fwstart_info {
 		struct isp_size size;
 		cmr_u32 cam_4in1_mode;
+		struct afctrl_fps_info sensor_fps;
 		cmr_u32 reserved[9];
 	};
 
 	struct afctrl_ts_info {
 		cmr_u64 timestamp;
 		cmr_u32 capture;
-	};
-
-	struct afctrl_fps_info {
-		cmr_u32 is_high_fps;
-		cmr_u32 high_fps_skip_num;
 	};
 
 	struct af_motor_pos {
@@ -493,7 +494,6 @@ extern "C" {
 	struct afctrl_calc_in {
 		cmr_u32 data_type;
 		void *data;
-		struct afctrl_fps_info sensor_fps;
 	};
 
 	struct afctrl_calc_out {

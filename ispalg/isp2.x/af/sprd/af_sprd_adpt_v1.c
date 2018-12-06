@@ -2727,6 +2727,7 @@ static void ae_calc_win_size(af_ctrl_t * af, struct afctrl_fwstart_info *param)
 static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
+	cmr_u32 afm_skip_num = 0;
 	struct afctrl_fwstart_info *in_ptr = (struct afctrl_fwstart_info *)param0;
 
 	ae_calc_win_size(af, in_ptr);
@@ -2739,6 +2740,16 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
 		return AFV1_SUCCESS;
 	}
+	if (in_ptr->sensor_fps.is_high_fps) {
+		afm_skip_num = in_ptr->sensor_fps.high_fps_skip_num - 1;
+		if (afm_skip_num != af->afm_skip_num) {
+			af->afm_skip_num = afm_skip_num;
+		}
+	} else {
+		af->afm_skip_num = 0;
+	}
+	ISP_LOGI("afm_skip_num %d", af->afm_skip_num);
+
 	af_set_default_roi(af, af->algo_mode);
 	do_start_af(af);
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
@@ -3765,7 +3776,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
-	cmr_u32 afm_skip_num = 0;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	UNUSED(out);
 	struct af_status_info status_info;
@@ -3853,16 +3863,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		afm_set_fv(af, inparam->data);
-		if (inparam->sensor_fps.is_high_fps) {
-			afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
-			if (afm_skip_num != af->afm_skip_num) {
-				af->afm_skip_num = afm_skip_num;
-				ISP_LOGV("af.skip_num %d", af->afm_skip_num);
-				af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
-			}
-		} else {
-			af->afm_skip_num = 0;
-		}
 		af->trigger_source_type |= AF_DATA_AF;
 		break;
 
