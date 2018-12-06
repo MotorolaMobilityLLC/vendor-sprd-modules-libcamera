@@ -15,8 +15,9 @@
  */
 
 #define LOG_TAG "cmr_sprd_filter"
-#include "cmr_filter.h"
+
 #include "cmr_common.h"
+#include "cmr_filter.h"
 #include "imagefilter_interface.h"
 
 static cmr_int sprd_filter_create_engine(cmr_handle *handle, cmr_uint type,

@@ -32,6 +32,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/inc \
 	$(LOCAL_PATH)/isp_calibration/inc \
 	$(LOCAL_PATH)/../common/inc \
+	$(LOCAL_PATH)/../oemcommon/inc \
 	$(LOCAL_PATH)/../jpeg \
 	$(LOCAL_PATH)/../vsp/inc \
 	$(LOCAL_PATH)/../tool/mtrace \
@@ -39,7 +40,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../sensor/dummy \
 	$(LOCAL_PATH)/../sensor/af_drv \
 	$(LOCAL_PATH)/../sensor/otp_drv \
-	$(LOCAL_PATH)/../sensor/inc
+	$(LOCAL_PATH)/../sensor/inc \
+	$(LOCAL_PATH)/../arithmetic/inc
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -51,29 +53,33 @@ LOCAL_HEADER_LIBRARIES += jni_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
-LOCAL_SRC_FILES += \
+LOCAL_SRC_FILES+= \
+        ../oemcommon/src/cmr_img_debug.c \
+        ../oemcommon/src/exif_writer.c \
+        ../oemcommon/src/jpeg_stream.c \
+        ../oemcommon/src/cmr_jpeg.c \
+        ../oemcommon/src/cmr_exif.c \
+        ../oemcommon/src/cmr_sensor.c \
+        ../oemcommon/src/cmr_ipm.c \
+        ../oemcommon/src/cmr_filter.c
+
+LOCAL_SRC_FILES+= \
 	src/SprdOEMCamera.c \
 	src/cmr_common.c \
 	src/cmr_oem.c \
 	src/cmr_setting.c \
-	src/cmr_sensor.c \
 	src/cmr_mem.c \
 	src/cmr_scale.c \
 	src/cmr_rotate.c \
 	src/cmr_grab.c \
-	src/cmr_jpeg.c \
-	src/cmr_exif.c \
 	src/cmr_preview.c \
 	src/cmr_snapshot.c \
-	src/cmr_ipm.c \
-	src/cmr_focus.c \
-	src/exif_writer.c \
-	src/jpeg_stream.c \
-	src/cmr_filter.c
+	src/cmr_focus.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprdface/inc
-	LOCAL_SRC_FILES += src/cmr_fd_sprd.c
+	LOCAL_C_INCLUDES += \
+		$(LOCAL_PATH)/../arithmetic/sprdface/inc
+	LOCAL_SRC_FILES += ../oemcommon/src/cmr_fd_sprd.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
@@ -82,20 +88,20 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
 	LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc/ydenoise_paten
-	LOCAL_SRC_FILES += src/cmr_ydenoise.c
+	LOCAL_SRC_FILES += ../oemcommon/src/cmr_ydenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-	LOCAL_SRC_FILES += src/cmr_hdr.c
+	LOCAL_SRC_FILES += ../oemcommon/src/cmr_hdr.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-	LOCAL_SRC_FILES += src/cmr_uvdenoise.c
+	LOCAL_SRC_FILES += ../oemcommon/src/cmr_uvdenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor/al3200
-	LOCAL_SRC_FILES += src/cmr_refocus.c
+	LOCAL_SRC_FILES += ../oemcommon/src/cmr_refocus.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
@@ -114,7 +120,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)
 	LOCAL_CFLAGS += -DCONFIG_CAMERA_FILTER
 	LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0
 	LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_filter/inc
-	LOCAL_SRC_FILES += src/sprd_filter.c
+	LOCAL_SRC_FILES += ../oemcommon/src/sprd_filter.c
 	LOCAL_SHARED_LIBRARIES += libSprdImageFilter
 else
 	LOCAL_CFLAGS += -DCONFIG_FILTER_VERSION=0xFF

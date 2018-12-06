@@ -7559,6 +7559,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         in_param.reg_cb = camera_ipm_cb;
         in_param.adgain_valid_frame_num =
             cxt->sn_cxt.cur_sns_ex_info.adgain_valid_frame_num;
+        in_param.is_plus = 0;
 
         ret = camera_open_hdr(cxt, &in_param, &out_param);
         if (ret) {

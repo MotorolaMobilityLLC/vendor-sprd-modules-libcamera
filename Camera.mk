@@ -165,7 +165,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
 
 LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/$(OEM_DIR)/inc
+    $(LOCAL_PATH)/$(OEM_DIR)/inc \
+    $(LOCAL_PATH)/oemcommon/inc
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/inc \

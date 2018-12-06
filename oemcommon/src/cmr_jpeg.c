@@ -36,13 +36,13 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
     *jpeg_handle = 0;
 
     jcxt = (struct jpeg_lib_cxt *)malloc(sizeof(struct jpeg_lib_cxt));
-    if(!jcxt) {
+    if (!jcxt) {
         CMR_LOGE("No mem!\n");
         return CMR_CAMERA_NO_MEM;
     }
     codec_handle = (struct jpeg_codec_caller_handle *)malloc(
         sizeof(struct jpeg_codec_caller_handle));
-    if(!codec_handle) {
+    if (!codec_handle) {
         free(jcxt);
         jcxt = NULL;
         CMR_LOGE("No mem!\n");
@@ -142,7 +142,8 @@ pass:
 }
 
 cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
-                        struct img_frm *dst, struct jpg_op_mean *mean, struct jpeg_enc_cb_param *enc_cb_param) {
+                        struct img_frm *dst, struct jpg_op_mean *mean,
+                        struct jpeg_enc_cb_param *enc_cb_param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct jpeg_codec_caller_handle *codec_handle = NULL;
     struct jpeg_lib_cxt *jcxt = NULL;

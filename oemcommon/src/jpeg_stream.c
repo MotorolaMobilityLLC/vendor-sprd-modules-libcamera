@@ -33,69 +33,68 @@
 #if 0
 /*****************************************************************************
 **	Name : 			Jpeg_ReadStream
-**	Description:	read jpeg strean, be called by Jpeg_GetC when stream left in buffer 
+**	Description:	read jpeg strean, be called by Jpeg_GetC when stream
+*left in buffer
 **					is 0
-**	Author:			Shan.he		
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**	Author:			Shan.he
+**  Parameters:
+**                  context_ptr:        context pointer
 **	Note:
-*****************************************************************************/		 							   
-LOCAL void Jpeg_ReadStream(JPEG_READ_STREAM_CONTEXT_T *context_ptr)
-{
-	//IMG_ASSERT_CHECK
-	//SCI_PASSERT(context_ptr->stream_left_size < 1, ("[Jpeg_ReadStream] stream_left_size = %d !", 
-	//												context_ptr->stream_left_size));
-	if (context_ptr->stream_left_size >= 1)
-	{
-		JPEG_PRINT(("[Jpeg_ReadStream] warning ! stream_left_size = %d !", context_ptr->stream_left_size));
-	}
-		
-	if (NULL != context_ptr->read_file_func && NULL != context_ptr->stream_buf) //jpeg stream in file, read them into the temp buffer  	
-	{
-		uint32 actual_read_size 	= 0;
+*****************************************************************************/
+LOCAL void Jpeg_ReadStream(JPEG_READ_STREAM_CONTEXT_T *context_ptr) {
+    // IMG_ASSERT_CHECK
+    // SCI_PASSERT(context_ptr->stream_left_size < 1, ("[Jpeg_ReadStream]
+    // stream_left_size = %d !",
+    //												context_ptr->stream_left_size));
+    if (context_ptr->stream_left_size >= 1) {
+        JPEG_PRINT(("[Jpeg_ReadStream] warning ! stream_left_size = %d !",
+                    context_ptr->stream_left_size));
+    }
 
-		(context_ptr->read_file_func)(context_ptr->stream_buf, context_ptr->read_file_size, 
-									context_ptr->stream_buf_size, &actual_read_size);
+    if (NULL != context_ptr->read_file_func &&
+        NULL != context_ptr->stream_buf) // jpeg stream in file, read them into
+                                         // the temp buffer
+    {
+        uint32 actual_read_size = 0;
+
+        (context_ptr->read_file_func)(
+            context_ptr->stream_buf, context_ptr->read_file_size,
+            context_ptr->stream_buf_size, &actual_read_size);
         context_ptr->read_file_size += actual_read_size;
 
-		if (actual_read_size > 0)
-		{
-			context_ptr->stream_ptr = context_ptr->stream_buf;
-			context_ptr->stream_left_size = actual_read_size;
-		}
-		else
-		{
-			context_ptr->stream_ptr = NULL;
-			context_ptr->stream_left_size = 0;
-			JPEG_PRINT(("[Jpeg_ReadStream] stream in file, no more bytes"));
-		}
+        if (actual_read_size > 0) {
+            context_ptr->stream_ptr = context_ptr->stream_buf;
+            context_ptr->stream_left_size = actual_read_size;
+        } else {
+            context_ptr->stream_ptr = NULL;
+            context_ptr->stream_left_size = 0;
+            JPEG_PRINT(("[Jpeg_ReadStream] stream in file, no more bytes"));
+        }
 
-		JPEG_PRINT_LOW(("[Jpeg_ReadStream] stream in file, actual read size = %d, stream_ptr = 0x%x, stream_left_size = %d, read_file_size = %d", 
-						actual_read_size, context_ptr->stream_ptr, context_ptr->stream_left_size, context_ptr->read_file_size));
-	}
-	else if (NULL != context_ptr->stream_buf)//jpeg stream in buffer
-	{
-		if (NULL == context_ptr->stream_ptr)
-		{
-			context_ptr->stream_ptr = context_ptr->stream_buf;
-			context_ptr->stream_left_size = context_ptr->stream_buf_size;
-		}
-		else
-		{
-			context_ptr->stream_ptr = NULL;
-			context_ptr->stream_left_size = 0;
-			JPEG_PRINT(("[Jpeg_ReadStream] stream in buffer, no more bytes"));
-		}
+        JPEG_PRINT_LOW(
+            ("[Jpeg_ReadStream] stream in file, actual read size = %d, "
+             "stream_ptr = 0x%x, stream_left_size = %d, read_file_size = %d",
+             actual_read_size, context_ptr->stream_ptr,
+             context_ptr->stream_left_size, context_ptr->read_file_size));
+    } else if (NULL != context_ptr->stream_buf) // jpeg stream in buffer
+    {
+        if (NULL == context_ptr->stream_ptr) {
+            context_ptr->stream_ptr = context_ptr->stream_buf;
+            context_ptr->stream_left_size = context_ptr->stream_buf_size;
+        } else {
+            context_ptr->stream_ptr = NULL;
+            context_ptr->stream_left_size = 0;
+            JPEG_PRINT(("[Jpeg_ReadStream] stream in buffer, no more bytes"));
+        }
 
-		JPEG_PRINT(("[Jpeg_ReadStream] stream in buffer, stream_ptr = 0x%x, stream_left_size = %d", 
-					context_ptr->stream_ptr, context_ptr->stream_left_size));		
-	}
-	else
-	{
-		context_ptr->stream_ptr = NULL;
-		context_ptr->stream_left_size = 0;
-		JPEG_PRINT(("[Jpeg_ReadStream] no source found !"));
-	}
+        JPEG_PRINT(("[Jpeg_ReadStream] stream in buffer, stream_ptr = 0x%x, "
+                    "stream_left_size = %d",
+                    context_ptr->stream_ptr, context_ptr->stream_left_size));
+    } else {
+        context_ptr->stream_ptr = NULL;
+        context_ptr->stream_left_size = 0;
+        JPEG_PRINT(("[Jpeg_ReadStream] no source found !"));
+    }
 }
 #endif
 
@@ -220,98 +219,91 @@ PUBLIC void Jpeg_SetStreamPos(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
 
 #if 0
 //////////////////////////////////////////////////////////////////////////
-//used in jpeg decode
+// used in jpeg decode
 /*****************************************************************************
 **	Name : 			Jpeg_GetC
-**	Description:	Get a byte of jpeg stream and move the stream current 
+**	Description:	Get a byte of jpeg stream and move the stream current
 **                  position one byte forward
-**	Author:			Shan,he	   
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**	Author:			Shan,he
+**  Parameters:
+**                  context_ptr:        context pointer
 **                  output_ptr:         pointer of output data, ouput parameter
 **	Note:
 *****************************************************************************/
-PUBLIC BOOLEAN Jpeg_GetC(JPEG_READ_STREAM_CONTEXT_T *context_ptr, uint8 *output_ptr)
-{
-	uint8 c = 0;
-	
-	if (context_ptr->stream_left_size < 1)
-	{
-		Jpeg_ReadStream(context_ptr);
-	}
+PUBLIC BOOLEAN Jpeg_GetC(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
+                         uint8 *output_ptr) {
+    uint8 c = 0;
 
-	if (PNULL != context_ptr->stream_ptr && context_ptr->stream_left_size > 0)
-	{
-		c = *context_ptr->stream_ptr++;
-		context_ptr->stream_left_size--;
-	}
-	else
-	{
-		JPEG_PRINT(("[Jpeg_GetC] no more bytes !"));
-		return FALSE;
-	}
+    if (context_ptr->stream_left_size < 1) {
+        Jpeg_ReadStream(context_ptr);
+    }
 
-	*output_ptr = c;
+    if (PNULL != context_ptr->stream_ptr && context_ptr->stream_left_size > 0) {
+        c = *context_ptr->stream_ptr++;
+        context_ptr->stream_left_size--;
+    } else {
+        JPEG_PRINT(("[Jpeg_GetC] no more bytes !"));
+        return FALSE;
+    }
 
-	return TRUE;
+    *output_ptr = c;
+
+    return TRUE;
 }
-
 
 /*****************************************************************************
 **	Name : 			Jpeg_GetWBigEndian
 **	Description:	get an uint16 type data in big-endian mode and move the
 **                  current position of jpeg stream 2 bytes forward
 **	Author:			Shan.He
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**  Parameters:
+**                  context_ptr:        context pointer
 **                  output_ptr:         pointer of output data, ouput parameter
 **	Note:
 *****************************************************************************/
-PUBLIC BOOLEAN Jpeg_GetWBigEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr, uint16 *output_ptr)
-{
-	uint16	w = 0;
-	uint8	c0 = 0;
-	uint8	c1 = 0;
+PUBLIC BOOLEAN Jpeg_GetWBigEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
+                                  uint16 *output_ptr) {
+    uint16 w = 0;
+    uint8 c0 = 0;
+    uint8 c1 = 0;
 
-	if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1))
-	{
-		JPEG_PRINT(("[Jpegd_GetW] no more bytes !"));
-		return FALSE;
-	}
+    if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1)) {
+        JPEG_PRINT(("[Jpegd_GetW] no more bytes !"));
+        return FALSE;
+    }
 
-	w = ((c0 << 8) & 0xFF00) | (c1);
-	*output_ptr = w;	
+    w = ((c0 << 8) & 0xFF00) | (c1);
+    *output_ptr = w;
 
-	return TRUE;
+    return TRUE;
 }
 
 /*****************************************************************************
 **	Name : 			Jpeg_GetWBigEndian
-**	Description:	get an uint16 type data in little-endian mode and move the
+**	Description:	get an uint16 type data in little-endian mode and
+*move the
 **                  current position of jpeg stream 2 bytes forward
 **	Author:			Shan.He
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**  Parameters:
+**                  context_ptr:        context pointer
 **                  output_ptr:         pointer of output data, ouput parameter
 **	Note:
 *****************************************************************************/
-PUBLIC BOOLEAN Jpeg_GetWLittleEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr, 
-                                     uint16 *output_ptr)
-{
-	uint16	w = 0;
-	uint8	c0 = 0;
-	uint8	c1 = 0;
+PUBLIC BOOLEAN Jpeg_GetWLittleEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
+                                     uint16 *output_ptr) {
+    uint16 w = 0;
+    uint8 c0 = 0;
+    uint8 c1 = 0;
 
-	if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1))
-	{
-		JPEG_PRINT(("[Jpegd_GetW] no more bytes !"));
-		return FALSE;
-	}
+    if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1)) {
+        JPEG_PRINT(("[Jpegd_GetW] no more bytes !"));
+        return FALSE;
+    }
 
-	w = ((c1 << 8) & 0xFF00) | (c0);
-	*output_ptr = w;	
+    w = ((c1 << 8) & 0xFF00) | (c0);
+    *output_ptr = w;
 
-	return TRUE;
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -319,111 +311,104 @@ PUBLIC BOOLEAN Jpeg_GetWLittleEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
 **	Description:	get an uint32 type data in big-endian mode and move the
 **                  current position of jpeg stream 4 bytes forward
 **	Author:			Shan.He
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**  Parameters:
+**                  context_ptr:        context pointer
 **                  output_ptr:         pointer of output data, ouput parameter
 **	Note:
 *****************************************************************************/
-PUBLIC BOOLEAN Jpeg_GetLBigEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr, 
-                                       uint32 *output_ptr)
-{
-	uint32	l = 0;
-	uint8	c0 = 0;
-	uint8	c1 = 0;
-    uint8   c2 = 0;
-    uint8   c3 = 0;
+PUBLIC BOOLEAN Jpeg_GetLBigEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
+                                  uint32 *output_ptr) {
+    uint32 l = 0;
+    uint8 c0 = 0;
+    uint8 c1 = 0;
+    uint8 c2 = 0;
+    uint8 c3 = 0;
 
-	if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1)
-        || !Jpeg_GetC(context_ptr, &c2) || !Jpeg_GetC(context_ptr, &c3))
-	{
-		JPEG_PRINT(("[Jpegd_GetUINT32] no more bytes !"));
-		return FALSE;
-	}
+    if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1) ||
+        !Jpeg_GetC(context_ptr, &c2) || !Jpeg_GetC(context_ptr, &c3)) {
+        JPEG_PRINT(("[Jpegd_GetUINT32] no more bytes !"));
+        return FALSE;
+    }
 
-	l = ((c0 << 24) & 0xFF000000) | ((c1 << 16) & 0xFF0000) 
-        | ((c2 << 8) & 0xFF00) | c3;
-	*output_ptr = l;	
+    l = ((c0 << 24) & 0xFF000000) | ((c1 << 16) & 0xFF0000) |
+        ((c2 << 8) & 0xFF00) | c3;
+    *output_ptr = l;
 
-	return TRUE;
+    return TRUE;
 }
-
 
 /*****************************************************************************
 **	Name : 			Jpeg_GetWBigEndian
-**	Description:	get an uint32 type data in little-endian mode and move the
+**	Description:	get an uint32 type data in little-endian mode and
+*move the
 **                  current position of jpeg stream 4 bytes forward
 **	Author:			Shan.He
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**  Parameters:
+**                  context_ptr:        context pointer
 **                  output_ptr:         pointer of output data, ouput parameter
 **	Note:
 *****************************************************************************/
-PUBLIC BOOLEAN Jpeg_GetLLittleEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr, 
-                                          uint32 *output_ptr)
-{
-	uint32	l = 0;
-	uint8	c0 = 0;
-	uint8	c1 = 0;
-    uint8   c2 = 0;
-    uint8   c3 = 0;
+PUBLIC BOOLEAN Jpeg_GetLLittleEndian(JPEG_READ_STREAM_CONTEXT_T *context_ptr,
+                                     uint32 *output_ptr) {
+    uint32 l = 0;
+    uint8 c0 = 0;
+    uint8 c1 = 0;
+    uint8 c2 = 0;
+    uint8 c3 = 0;
 
-	if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1)
-        || !Jpeg_GetC(context_ptr, &c2) || !Jpeg_GetC(context_ptr, &c3))
-	{
-		JPEG_PRINT(("[Jpegd_GetUINT32] no more bytes !"));
-		return FALSE;
-	}
+    if (!Jpeg_GetC(context_ptr, &c0) || !Jpeg_GetC(context_ptr, &c1) ||
+        !Jpeg_GetC(context_ptr, &c2) || !Jpeg_GetC(context_ptr, &c3)) {
+        JPEG_PRINT(("[Jpegd_GetUINT32] no more bytes !"));
+        return FALSE;
+    }
 
-	l = ((c3 << 24) & 0xFF000000) | ((c2 << 16) & 0xFF0000) 
-        | ((c1 << 8) & 0xFF00) | c0;
-	*output_ptr = l;	
+    l = ((c3 << 24) & 0xFF000000) | ((c2 << 16) & 0xFF0000) |
+        ((c1 << 8) & 0xFF00) | c0;
+    *output_ptr = l;
 
-	return TRUE;
+    return TRUE;
 }
 
 /*****************************************************************************
 **	Name : 			Jpeg_Skip
 **	Description:	Skip some bytes and reset the current position of stream
 **	Author:			Shan.he
-**  Parameters:     
-**                  context_ptr:        context pointer	    
+**  Parameters:
+**                  context_ptr:        context pointer
 **                  len:                skip length
 **	Note:
 *****************************************************************************/
-PUBLIC BOOLEAN Jpeg_Skip(JPEG_READ_STREAM_CONTEXT_T *context_ptr, uint32 len)
-{
-	BOOLEAN ret = FALSE;
+PUBLIC BOOLEAN Jpeg_Skip(JPEG_READ_STREAM_CONTEXT_T *context_ptr, uint32 len) {
+    BOOLEAN ret = FALSE;
 
-	JPEG_PRINT_LOW(("[Jpeg_Skip], skip len = %d, stream_ptr = 0x%x, left_size = %d", 
-						len, context_ptr->stream_ptr, context_ptr->stream_left_size));
+    JPEG_PRINT_LOW(
+        ("[Jpeg_Skip], skip len = %d, stream_ptr = 0x%x, left_size = %d", len,
+         context_ptr->stream_ptr, context_ptr->stream_left_size));
 
-	if (context_ptr->stream_left_size < 1)
-	{
-		Jpeg_ReadStream(context_ptr);
-	}
-	
-	while (NULL != context_ptr->stream_ptr)
-	{
-		if (context_ptr->stream_left_size >= len)
-		{
-			context_ptr->stream_left_size -= len;	
-			context_ptr->stream_ptr += len;
-			ret = TRUE;
+    if (context_ptr->stream_left_size < 1) {
+        Jpeg_ReadStream(context_ptr);
+    }
 
-			JPEG_PRINT_LOW(("[Jpeg_Skip], skip success, len = %d, stream_ptr = 0x%x, left_size = %d", 
-						len, context_ptr->stream_ptr, context_ptr->stream_left_size));			
-			break;
-		}
-		else
-		{
-			len -= context_ptr->stream_left_size;
-			context_ptr->stream_left_size = 0;
-			context_ptr->stream_ptr += context_ptr->stream_left_size;
-			Jpeg_ReadStream(context_ptr);			
-		}
-	}
+    while (NULL != context_ptr->stream_ptr) {
+        if (context_ptr->stream_left_size >= len) {
+            context_ptr->stream_left_size -= len;
+            context_ptr->stream_ptr += len;
+            ret = TRUE;
 
-	return ret;
+            JPEG_PRINT_LOW(("[Jpeg_Skip], skip success, len = %d, stream_ptr = "
+                            "0x%x, left_size = %d",
+                            len, context_ptr->stream_ptr,
+                            context_ptr->stream_left_size));
+            break;
+        } else {
+            len -= context_ptr->stream_left_size;
+            context_ptr->stream_left_size = 0;
+            context_ptr->stream_ptr += context_ptr->stream_left_size;
+            Jpeg_ReadStream(context_ptr);
+        }
+    }
+
+    return ret;
 }
 #endif
 
