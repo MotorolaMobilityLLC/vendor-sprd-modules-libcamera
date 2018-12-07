@@ -621,8 +621,18 @@ static cmr_int hdr_thread_proc(struct cmr_msg *message, void *private_data) {
                  class_handle->dst_addr.addr_y, class_handle->width,
                  class_handle->height);
         CMR_LOGI("HDR thread proc start ");
-        //  modify "-1 , +1 , 0" to "-1 , 0 , +1" , need modify index "0-1-2" to
-        //  "0-2-1"
+//  modify "-1 , +1 , 0" to "-1 , 0 , +1" , need modify index "0-1-2" to
+//  "0-2-1"
+#if 0
+    char value[PROPERTY_VALUE_MAX];
+    property_get("debug.camera.dump.hdr.frame", value, "0");
+    if (!strcmp(value, "1")) {
+        ret = hdr_save_yuv(class_handle, class_handle->width, class_handle->height);
+        if (ret != 0) {
+            CMR_LOGE("hdr save yuv failed!");
+        }
+    }
+#endif
         cmr_u8 *p = class_handle->alloc_addr[1];
         class_handle->alloc_addr[1] = class_handle->alloc_addr[2];
         class_handle->alloc_addr[2] = p;

@@ -2689,8 +2689,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else {
         mSprd3dnrEnabled = 0;
     }
-    mZslNum = 2;
-    mZslMaxFrameNum = 1;
+    mZslNum = 3;
+    mZslMaxFrameNum = 3;
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
     mVideo3dnrFlag = VIDEO_OFF;
@@ -8346,6 +8346,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
 
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
     bzero(&src_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
@@ -8405,6 +8407,35 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
             sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 5) {
+                goto exit;
+            }
+            continue;
+        }
+
+        // for zsl hdr
+        if (controlInfo.scene_mode == 18) {
+            src_sw_algorithm_buf.height = zsl_frame.height;
+            src_sw_algorithm_buf.width = zsl_frame.width;
+            src_sw_algorithm_buf.fd = zsl_frame.fd;
+            src_sw_algorithm_buf.format = zsl_frame.format;
+            src_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+            src_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
+
+            if (sw_algorithm_buf_cnt == 0) {
+                dst_sw_algorithm_buf.height = zsl_frame.height;
+                dst_sw_algorithm_buf.width = zsl_frame.width;
+                dst_sw_algorithm_buf.fd = zsl_frame.fd;
+                dst_sw_algorithm_buf.format = zsl_frame.format;
+                dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+                dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
+            }
+            mHalOem->ops->image_sw_algorithm_processing(
+                obj->mCameraHandle, &src_sw_algorithm_buf,
+                &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
+                IMG_DATA_TYPE_YVU420);
+
+            sw_algorithm_buf_cnt++;
+            if (sw_algorithm_buf_cnt >= 3) {
                 goto exit;
             }
             continue;

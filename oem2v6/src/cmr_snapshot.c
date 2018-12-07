@@ -1725,10 +1725,12 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
         } else {
             CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
             zsl_frame.fd = chn_param_ptr->jpeg_in[0].src.fd;
-            snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE,
-                                    SNAPSHOT_CB_EVT_RETURN_ZSL_BUF,
-                                    (void *)&zsl_frame,
-                                    sizeof(struct camera_frame_type));
+            if (cxt->req_param.is_3dnr != 1 || cxt->req_param.is_hdr != 1) {
+                snp_send_msg_notify_thr(
+                    snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE,
+                    SNAPSHOT_CB_EVT_RETURN_ZSL_BUF, (void *)&zsl_frame,
+                    sizeof(struct camera_frame_type));
+            }
         }
     }
 

@@ -725,7 +725,7 @@ cmr_int camera_is_need_change_fmt(cmr_handle oem_handle,
     cmr_uint is_snp_frm = 0;
 
     is_snp_frm = (data_ptr->channel_id == snp_cxt->channel_id);
-    if (is_snp_frm && ((1 == camera_get_hdr_flag(cxt)))) {
+    if (is_snp_frm) {
         if (IMG_DATA_TYPE_JPEG == data_ptr->fmt ||
             IMG_DATA_TYPE_RAW == data_ptr->fmt) {
             is_change_fmt = 1;
@@ -815,82 +815,7 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
     }
 
     receiver_handle = cxt->grab_cxt.caller_handle[frame->channel_id];
-    if ((TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) &&
-        ((1 == camera_get_hdr_flag(cxt)))) {
-        struct img_frm out_param;
-        struct ipm_frame_in ipm_in_param;
-        struct ipm_frame_out imp_out_param;
-        cmr_uint vir_addr_y = 0;
-        cmr_bzero(&out_param, sizeof(out_param));
-        cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
-        cmr_bzero(&imp_out_param, sizeof(imp_out_param));
-
-        /* for bug 396318, will be removed later */
-        // camera_set_discard_frame((cmr_handle)cxt, 1);
-        ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
-                                       cxt->camera_id, evt, data);
-        if (ret) {
-            CMR_LOGE("failed to send a frame to preview %ld", ret);
-        }
-        if (camera_is_need_change_fmt((cmr_handle)cxt, frame)) {
-            ret = cmr_snapshot_format_convert((cmr_handle)cxt, data,
-                                              &out_param); // sync
-            if (ret) {
-                CMR_LOGE("failed to format convert %ld", ret);
-                goto exit;
-            }
-        } else {
-            frm_id = camera_get_post_proc_chn_out_frm_id(
-                cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
-            /*if frm_id biger than 0,you should search hdr buffer in
-              hdr buffer list. You can't use (frame->yaddr) on 64bit system*/
-            if (frm_id >= CMR_CAPTURE_MEM_SUM) {
-                if (1 == camera_get_hdr_flag(cxt))
-                    ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
-                                                  cxt->camera_id, frame,
-                                                  &vir_addr_y);
-
-                out_param.size =
-                    cxt->snp_cxt.post_proc_setting.chn_out_frm[0].size;
-                out_param.fd = frame->fd;
-                out_param.addr_vir.addr_y = vir_addr_y;
-                out_param.addr_phy.addr_y = frame->yaddr;
-                out_param.addr_phy.addr_u = frame->uaddr;
-                out_param.addr_phy.addr_v = frame->vaddr;
-                out_param.fmt = frame->fmt;
-                if (ret) {
-                    CMR_LOGE("failed to get hdr buffer %ld", ret);
-                    goto exit;
-                }
-            } else {
-                /*if frm_id is 0,use default chn_out_frm.
-                  This is also dest img buffer         */
-                out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-            }
-        }
-
-        ipm_in_param.dst_frame = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-        cxt->snp_cxt.cur_frm_info = *frame;
-        ipm_cxt->frm_num++;
-        ipm_in_param.src_frame = out_param;
-        ipm_in_param.private_data = (void *)privdata;
-        if (cxt->ipm_cxt.hdr_version.major != 1) {
-            memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
-                   ((HDR_CAP_NUM)-1) * sizeof(float));
-        }
-        imp_out_param.dst_frame = out_param;
-        imp_out_param.private_data = privdata;
-        if (1 == camera_get_hdr_flag(cxt)) {
-            ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
-                                     &imp_out_param);
-        }
-        if (ret) {
-            CMR_LOGE("failed to transfer frame to ipm %ld", ret);
-            goto exit;
-        }
-    } else {
-        camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
-    }
+    camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 exit:
     ATRACE_END();
     return;
@@ -1485,9 +1410,15 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     cxt->ipm_cxt.frm_num = 0;
 
     frame = cxt->snp_cxt.cur_frm_info;
+
+    frame.channel_id = cxt->snp_cxt.channel_id;
     if (1 == camera_get_hdr_flag(cxt)) {
-        ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                        SNAPSHOT_EVT_POSTPROC_START, &frame);
+        camera_snapshot_cb_to_hal((cmr_handle)cb_param->private_data,
+                                  SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
+                                  SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
+        camera_local_set_zsl_snapshot_buffer(
+            cxt, cb_param->dst_frame.addr_phy.addr_y,
+            cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);
     } else if (1 == camera_get_3dnr_flag(cxt)) {
         camera_snapshot_cb_to_hal((cmr_handle)cb_param->private_data,
                                   SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
@@ -3397,23 +3328,6 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
     in_param.frame_rect.start_y = 0;
     in_param.reg_cb = camera_ipm_cb;
 
-    if (1 == camera_get_hdr_flag(cxt)) {
-        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
-        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
-        in_param.frame_rect.width = in_param.frame_size.width;
-        in_param.frame_rect.height = in_param.frame_size.height;
-        in_param.adgain_valid_frame_num =
-            cxt->sn_cxt.cur_sns_ex_info.adgain_valid_frame_num;
-        ret = camera_open_hdr(cxt, &in_param, &out_param);
-        if (ret) {
-            CMR_LOGE("failed to open hdr %ld", ret);
-            return ret;
-        }
-        cxt->ipm_cxt.hdr_num = out_param.total_frame_number;
-        cxt->ipm_cxt.hdr_version.major = out_param.version.major;
-        CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
-    }
-
     if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited) {
         ret = camera_open_cnr(cxt, NULL, NULL);
         if (ret) {
@@ -3438,6 +3352,23 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
     in_param.frame_rect.start_x = 0;
     in_param.frame_rect.start_y = 0;
     in_param.reg_cb = camera_ipm_cb;
+
+    if (1 == camera_get_hdr_flag(cxt)) {
+        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        in_param.frame_rect.width = in_param.frame_size.width;
+        in_param.frame_rect.height = in_param.frame_size.height;
+        in_param.adgain_valid_frame_num =
+            cxt->sn_cxt.cur_sns_ex_info.adgain_valid_frame_num;
+        ret = camera_open_hdr(cxt, &in_param, &out_param);
+        if (ret) {
+            CMR_LOGE("failed to open hdr %ld", ret);
+            return ret;
+        }
+        cxt->ipm_cxt.hdr_num = out_param.total_frame_number;
+        cxt->ipm_cxt.hdr_version.major = out_param.version.major;
+        CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
+    }
 
     if (1 != cxt->is_3dnr_video && camera_get_3dnr_flag(cxt) == 1) {
         struct isp_adgain_exp_info adgain_exp_info;
@@ -11149,21 +11080,31 @@ cmr_int camera_local_image_sw_algorithm_processing(
     struct ipm_context *ipm_cxt = &cxt->ipm_cxt;
 
     ipm_in_param.private_data = (void *)cxt;
-    ipm_in_param.src_frame.size.height = src_sw_algorithm_buf->height;
     ipm_in_param.src_frame.size.width = src_sw_algorithm_buf->width;
+    ipm_in_param.src_frame.size.height = src_sw_algorithm_buf->height;
     ipm_in_param.src_frame.fd = src_sw_algorithm_buf->fd;
     ipm_in_param.src_frame.fmt = src_sw_algorithm_buf->format;
-    ipm_in_param.src_frame.buf_size =
-        (src_sw_algorithm_buf->height) * (src_sw_algorithm_buf->width) * 3 / 2;
+    ipm_in_param.src_frame.buf_size = ipm_in_param.src_frame.size.width *
+                                      ipm_in_param.src_frame.size.height * 3 /
+                                      2;
     ipm_in_param.src_frame.addr_vir.addr_y = src_sw_algorithm_buf->y_vir_addr;
+    ipm_in_param.src_frame.addr_vir.addr_u =
+        src_sw_algorithm_buf->y_vir_addr +
+        ipm_in_param.src_frame.size.width * ipm_in_param.src_frame.size.height;
     ipm_in_param.src_frame.addr_phy.addr_y = src_sw_algorithm_buf->y_phy_addr;
     imp_out_param.private_data = src_sw_algorithm_buf->reserved;
 
-    ipm_in_param.dst_frame.size.height = dst_sw_algorithm_buf->height;
     ipm_in_param.dst_frame.size.width = dst_sw_algorithm_buf->width;
+    ipm_in_param.dst_frame.size.height = dst_sw_algorithm_buf->height;
     ipm_in_param.dst_frame.fd = dst_sw_algorithm_buf->fd;
     ipm_in_param.dst_frame.fmt = dst_sw_algorithm_buf->format;
+    ipm_in_param.dst_frame.buf_size = ipm_in_param.dst_frame.size.width *
+                                      ipm_in_param.dst_frame.size.height * 3 /
+                                      2;
     ipm_in_param.dst_frame.addr_vir.addr_y = dst_sw_algorithm_buf->y_vir_addr;
+    ipm_in_param.dst_frame.addr_vir.addr_u =
+        dst_sw_algorithm_buf->y_vir_addr +
+        ipm_in_param.dst_frame.size.width * ipm_in_param.dst_frame.size.height;
     ipm_in_param.dst_frame.addr_phy.addr_y = dst_sw_algorithm_buf->y_phy_addr;
 
     if (!oem_handle) {
@@ -11172,11 +11113,12 @@ cmr_int camera_local_image_sw_algorithm_processing(
         goto exit;
     }
 
-    ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
-                             &imp_out_param);
-    if (ret) {
-        CMR_LOGE("failed to set zsl buffer %ld", ret);
-        goto exit;
+    if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR) {
+        ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
+                                 &imp_out_param);
+    } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_HDR) {
+        ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
+                                 &imp_out_param);
     }
 
 exit:
