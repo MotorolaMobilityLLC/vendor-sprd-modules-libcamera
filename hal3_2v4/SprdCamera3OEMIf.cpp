@@ -6253,11 +6253,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t AfMode = 0;
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
         if (!mIsAutoFocus) {
-            if (mRecordingMode &&
-                CAMERA_FOCUS_MODE_CAF ==
-                    AfMode) { /*dv mode but recording not start*/
-                AfMode = CAMERA_FOCUS_MODE_CAF_VIDEO;
-            }
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, AfMode);
         }
     } break;
