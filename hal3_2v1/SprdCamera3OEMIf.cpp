@@ -9714,9 +9714,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 delay_time = atoi(prop);
             }
             HAL_LOGV("delay_time=%d,ae_fps=%d", delay_time, ae_fps);
-            if (mZslSnapshotTime > zsl_frame.timestamp ||
-                ((mZslSnapshotTime < zsl_frame.timestamp) &&
-                 (((zsl_frame.timestamp - mZslSnapshotTime) / 1000000) <
+            if (mZslSnapshotTime > zsl_frame.monoboottime ||
+                ((mZslSnapshotTime < zsl_frame.monoboottime) &&
+                 (((zsl_frame.monoboottime - mZslSnapshotTime) / 1000000) <
                   delay_time))) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame.y_phy_addr,
@@ -9731,14 +9731,14 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             break;
         }
 
-        if (mZslSnapshotTime > zsl_frame.timestamp &&
+        if (mZslSnapshotTime > zsl_frame.monoboottime &&
             (getMultiCameraMode() != MODE_BOKEH)) {
-            diff_ms = (mZslSnapshotTime - zsl_frame.timestamp) / 1000000;
-            HAL_LOGV("diff_ms=%lld", diff_ms);
+            diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
+            HAL_LOGI("diff_ms=%lld", diff_ms);
             // make single capture frame time > mZslSnapshotTime
             if (sprddefInfo.capture_mode == 1 ||
                 diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
-                HAL_LOGD("not the right frame, skip it");
+                HAL_LOGI("not the right frame, skip it");
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame.y_phy_addr,
                     zsl_frame.y_vir_addr, zsl_frame.fd);
