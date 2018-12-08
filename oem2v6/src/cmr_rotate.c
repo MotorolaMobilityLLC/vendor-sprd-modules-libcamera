@@ -21,8 +21,7 @@
 #include "cmr_type.h"
 #include "cmr_cvt.h"
 #include "sprd_cpp.h"
-
-static char rot_dev_name[50] = "/dev/sprd_cpp";
+#include "cpp_u_dev.h"
 
 struct rot_file {
     cmr_int fd;
@@ -57,43 +56,7 @@ static unsigned int cmr_rot_fmt_cvt(cmr_u32 cmr_fmt) {
 }
 
 cmr_int cmr_rot_open(cmr_handle *rot_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct rot_file *file = NULL;
-    cmr_int fd = -1;
-    cmr_u32 val = 1;
-
-    file = malloc(sizeof(struct rot_file));
-    if (!file) {
-        ret = -CMR_CAMERA_FAIL;
-        goto open_out;
-    }
-
-    fd = open(rot_dev_name, O_RDWR, 0);
-    if (fd < 0) {
-        CMR_LOGE("Fail to open rotation device.");
-        goto rot_free;
-    }
-
-    ret = ioctl(fd, SPRD_CPP_IO_OPEN_ROT, &val);
-    if (ret)
-        goto rot_free;
-
-    file->fd = fd;
-
-    *rot_handle = (cmr_handle)file;
-    goto open_out;
-
-rot_free:
-    if (fd >= 0) {
-        close(fd);
-        fd = -1;
-    }
-    if (file)
-        free(file);
-    file = NULL;
-open_out:
-
-    return ret;
+    return cpp_rot_open(rot_handle);
 }
 
 cmr_int cmr_rot(struct cmr_rot_param *rot_param) {
@@ -102,8 +65,11 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param) {
     enum img_angle angle;
     struct img_frm *src_img;
     struct img_frm *dst_img;
+    struct cpp_rot_param cpp_rot_params;
     cmr_int fd;
     struct rot_file *file = NULL;
+
+    cpp_rot_params.host_fd = -1;
 
     if (!rot_param) {
         CMR_LOGE("Invalid Param!");
@@ -111,19 +77,7 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param) {
         goto rot_exit;
     }
 
-    file = (struct rot_file *)rot_param->handle;
-    if (!file) {
-        CMR_LOGE("Invalid Param rot_file !");
-        ret = -CMR_CAMERA_FAIL;
-        goto rot_exit;
-    }
-
-    fd = file->fd;
-    if (fd < 0) {
-        CMR_LOGE("Invalid Param handle!");
-        ret = -CMR_CAMERA_FAIL;
-        goto rot_exit;
-    }
+    cpp_rot_params.handle = rot_param->handle;
 
     angle = rot_param->angle;
     src_img = &rot_param->src_img;
@@ -171,12 +125,9 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param) {
     rot_cfg.src_endian = src_img->data_end.uv_endian;
     rot_cfg.dst_endian = dst_img->data_end.uv_endian;
 
-    ret = ioctl(fd, SPRD_CPP_IO_START_ROT, &rot_cfg);
-    if (ret) {
-        CMR_LOGE("cmr_rot camera_cpp_io_rotation fail. ret = %d", ret);
-        ret = -CMR_CAMERA_FAIL;
-        goto rot_exit;
-    }
+    cpp_rot_params.rot_cfg_param = &rot_cfg;
+
+    ret = cpp_rot_start(&cpp_rot_params);
 
 rot_exit:
     CMR_LOGI("X ret=%ld", ret);
@@ -184,28 +135,5 @@ rot_exit:
 }
 
 cmr_int cmr_rot_close(cmr_handle rot_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct rot_file *file = (struct rot_file *)(rot_handle);
-
-    CMR_LOGI("Start to close rotation device.");
-
-    if (!file)
-        goto out;
-
-    if (-1 == file->fd) {
-        CMR_LOGE("Invalid fd");
-        ret = -CMR_CAMERA_FAIL;
-        goto close_free;
-    }
-
-    /*    if (ret)
-            ret = -CMR_CAMERA_FAIL;*/
-    close(file->fd);
-
-close_free:
-    free(file);
-out:
-
-    CMR_LOGI("ret=%ld", ret);
-    return ret;
+    return cpp_rot_close(rot_handle);
 }

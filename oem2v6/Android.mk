@@ -18,7 +18,10 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/dummy \
     $(LOCAL_PATH)/../sensor/af_drv \
     $(LOCAL_PATH)/../sensor/otp_drv \
-    $(LOCAL_PATH)/../arithmetic/inc
+    $(LOCAL_PATH)/../arithmetic/inc \
+    $(LOCAL_PATH)/../cpp/driver/inc \
+    $(LOCAL_PATH)/../cpp/algo/inc
+
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
 LOCAL_C_INCLUDES += \
@@ -122,6 +125,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
 LOCAL_SHARED_LIBRARIES += libcamdrv
 LOCAL_SHARED_LIBRARIES += liblog
+LOCAL_SHARED_LIBRARIES += libcppdrv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 LOCAL_SHARED_LIBRARIES += libcamfb
