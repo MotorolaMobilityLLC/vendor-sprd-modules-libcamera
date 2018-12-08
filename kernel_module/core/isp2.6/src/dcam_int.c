@@ -217,6 +217,7 @@ static void dcam_sensor_eof(void *param)
 	struct camera_frame *pframe;
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
 
+	return;
 	pr_debug("DCAM%d sn_eof\n", dev->idx);
 
 	pframe = get_empty_frame();
@@ -628,7 +629,7 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 	}
 
 	if (unlikely(status))
-		pr_warn("DCAM%u unhandled int 0x%x\n", dev->idx, status);
+		pr_debug("DCAM%u unhandled int 0x%x\n", dev->idx, status);
 
 	return IRQ_HANDLED;
 }

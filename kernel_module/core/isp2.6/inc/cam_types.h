@@ -47,10 +47,10 @@ enum camera_cap_status {
 };
 
 enum cam_ch_id {
-	CAM_CH_PRE = 0,
+	CAM_CH_RAW = 0,
+	CAM_CH_PRE,
 	CAM_CH_CAP,
 	CAM_CH_VID,
-	CAM_CH_RAW,
 	CAM_CH_PRE_THM,
 	CAM_CH_CAP_THM,
 	CAM_CH_MAX,
