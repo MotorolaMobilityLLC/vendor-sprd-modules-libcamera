@@ -7017,11 +7017,12 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             }
             mIspStatisHeapReserved = memory;
         }
-        rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
-        if (rtn) {
-            HAL_LOGE("get kaddr error");
-            goto mem_fail;
-        }
+        // shark5 dont need kernel software r/w the buffer
+        //rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+        //if (rtn) {
+        //    HAL_LOGE("get kaddr error");
+        //    goto mem_fail;
+        //}
         *phy_addr++ = kaddr;
         *phy_addr = kaddr >> 32;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
