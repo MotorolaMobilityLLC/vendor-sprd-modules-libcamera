@@ -728,8 +728,13 @@ const uint8_t kavailable_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
 /**********************Static Members**********************/
 
 const camera_info kCameraInfo[] = {
+#ifdef CONFIG_BACK_CAMERA
     {CAMERA_FACING_BACK, 90, 0, 0, 100, 0, 0},
+#endif
+
+#ifdef CONFIG_FRONT_CAMERA
     {CAMERA_FACING_FRONT, 270, 0, 0, 100, 0, 0},
+#endif
 
 #ifdef CONFIG_BACK_SECONDARY_CAMERA
     {CAMERA_FACING_BACK, 90, 0, 0, 0, 0, 0},
@@ -923,7 +928,7 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
     if (!strcmp(value, "off")) {
         HAL_LOGI("just for camera developer debug use");
         *width = default_sensor_max_sizes[cameraId].width;
@@ -950,7 +955,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
     if (!strcmp(value, "off")) {
         HAL_LOGI("turn off auto detect sensor, just for debug");
         setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
@@ -1128,21 +1133,46 @@ int SprdCamera3Setting::getNumberOfCameras() {
 }
 
 int SprdCamera3Setting::getPhysicalNumberOfCameras() {
+    int physicalNum = 0;
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "off");
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
     if (!strcmp(value, "off")) {
         HAL_LOGI("turn off auto detect sensor, just for debug");
         mPhysicalSensorNum = 2;
-        return mPhysicalSensorNum;
+        goto exit;
     }
 
-    if (mPhysicalSensorNum == 0) {
-        mPhysicalSensorNum = sensor_get_number(camera_is_supprort);
+    if (mPhysicalSensorNum > 0) {
+        HAL_LOGV("mPhysicalSensorNum=%d", mPhysicalSensorNum);
+        goto exit;
     }
+
+    physicalNum = sensor_get_number(camera_is_supprort);
+    // if one board support all kinds of camera feature, for 3 back camera,
+    // 3 camera struct light, dual-camera, and so on, we will do some bindings
+    // mPhysicalSensorNum = physicalNum;
+    // goto exit;
+
+#ifdef CONFIG_BACK_CAMERA
+    mPhysicalSensorNum++;
+#endif
+
+#ifdef CONFIG_FRONT_CAMERA
+    mPhysicalSensorNum++;
+#endif
+
+#ifdef CONFIG_BACK_SECONDARY_CAMERA
+    mPhysicalSensorNum++;
+#endif
+
+#ifdef CONFIG_FRONT_SECONDARY_CAMERA
+    mPhysicalSensorNum++;
+#endif
 
     HAL_LOGV("mPhysicalSensorNum=%d", mPhysicalSensorNum);
 
+exit:
     return mPhysicalSensorNum;
 }
 

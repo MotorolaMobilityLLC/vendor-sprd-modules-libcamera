@@ -211,6 +211,7 @@ endif
 max_sensor_num := 0
 max_logical_sensor_num := 0
 ifneq ($(strip $(CAMERA_SENSOR_TYPE_BACK)),)
+LOCAL_CFLAGS += -DCONFIG_BACK_CAMERA
 LOCAL_CFLAGS += -DBACK_CAMERA_SENSOR_SUPPORT=1
 max_sensor_num := $(shell expr $(max_sensor_num) + 1)
 else
@@ -218,6 +219,7 @@ LOCAL_CFLAGS += -DBACK_CAMERA_SENSOR_SUPPORT=0
 endif
 
 ifneq ($(strip $(CAMERA_SENSOR_TYPE_FRONT)),)
+LOCAL_CFLAGS += -DCONFIG_FRONT_CAMERA
 LOCAL_CFLAGS += -DFRONT_CAMERA_SENSOR_SUPPORT=1
 max_sensor_num := $(shell expr $(max_sensor_num) + 1)
 else
