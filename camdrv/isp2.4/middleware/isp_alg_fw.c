@@ -1812,8 +1812,6 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				af_temp[i] = (cmr_u32)*((cmr_uint *) u_addr + i);
 			}
 			calc_param.data_type = AF_DATA_AF;
-			calc_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
-			calc_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
 			calc_param.data = (void *)(af_temp);
 			if (cxt->ops.af_ops.process && !cxt->af_cxt.sw_bypass) {
 				ret = cxt->ops.af_ops.process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
@@ -3712,6 +3710,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_RETURN_IF_FAIL(ret, ("fail to do video isp start"));
 
 	memset(&af_start_info, 0, sizeof(struct afctrl_fwstart_info));
+	af_start_info.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
+	af_start_info.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
 			af_start_info.size = in_ptr->size;
