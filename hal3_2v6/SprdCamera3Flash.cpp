@@ -46,6 +46,10 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 
 #define STRING_LENGTH 15
 
+#define TORCH_CURRENT_LEVEL_SET(LEVEL) ((LEVEL << 8) | 0x0017)
+#define TORCH_DIR_SET(DIRECTION) ((DIRECTION & 0x0001) << 15)
+#define TORCH_OPEN_SET(OPEN) (3 - OPEN)
+
 volatile uint32_t gCamHal3LogLevel = 1;
 
 namespace sprdcamera {
@@ -129,12 +133,14 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
 #endif
     if (mode) {
         bytes = snprintf(buffer, sizeof(buffer), "0x%x",
-                         (default_light_level << 8) | 0x0016 |
-                             ((camera_id & 0x0001) << 15));
+                         TORCH_CURRENT_LEVEL_SET(default_light_level) |
+                             TORCH_DIR_SET(camera_id));
         wr_ret = write(fd, buffer, bytes);
     }
+
     bytes = snprintf(buffer, sizeof(buffer), "0x%x",
-                     (0x11 ^ mode) | ((camera_id & 0x0001) << 15));
+                     TORCH_OPEN_SET(mode) | TORCH_DIR_SET(camera_id));
+
     wr_ret = write(fd, buffer, bytes);
 
     if (-1 == wr_ret) {
