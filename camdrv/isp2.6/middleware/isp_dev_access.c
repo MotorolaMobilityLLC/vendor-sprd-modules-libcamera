@@ -50,7 +50,7 @@ static cmr_int set_rgb_gain(cmr_handle isp_dev_handle,
 	block_info.scene_id = scene_id;
 	ISP_LOGV("global_gain : %d\n", gain_info.global_gain);
 	if (gain_info.global_gain == 0) {
-		ISP_LOGE("gtang error rgb gain %d\n", gain_info.global_gain);
+		ISP_LOGE("illegal rgb gain %d\n", gain_info.global_gain);
 		gain_info.global_gain = 4369;
 	}
 
@@ -119,8 +119,7 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 		stats_buffer_size += STATIS_HIST_BUF_NUM * STATIS_HIST_BUF_SIZE;
 		stats_buffer_size += STATIS_3DNR_BUF_NUM * STATIS_3DNR_BUF_SIZE;
 		in_ptr->statis_mem_num = 1;
-		/* todo: will delete (+6M size).  6M size memory for 3A statis debug. */
-		in_ptr->statis_mem_size = stats_buffer_size + 6 * 1024 * 1024;
+		in_ptr->statis_mem_size = stats_buffer_size;
 		ret = in_ptr->alloc_cb(CAMERA_ISP_STATIS,
 				in_ptr->oem_handle,
 				&in_ptr->statis_mem_size,
@@ -466,13 +465,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		win.y = win_from->y;
 		win.w = win_from->w;
 		win.h = win_from->h;
-
-		/* todo: delete later. force win size to legal range. */
 		ISP_LOGD("afm win_start: (%d %d)  win_size (%d %d)\n", win.x, win.y, win.w, win.h);
-		win.w =  ((cxt->sn_width - win.x) / 6) & ~(0xf);
-		win.h =  ((cxt->sn_height - win.y) / 3) & ~(0xf);
-		ISP_LOGD("afm win_start: (%d %d)  win_size (%d %d)\n", win.x, win.y, win.w, win.h);
-
 		ret = dcam_u_afm_win(cxt->isp_driver_handle, &win);
 		break;
 	}
@@ -498,15 +491,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		crop.y = crop_from->y;
 		crop.w = crop_from->w;
 		crop.h = crop_from->h;
-
-		/* todo: delete later. force crop size to image size. Now af algo pass illegal win/crop size. */
 		ISP_LOGD("afm crop_size: (%d %d %d %d)\n", crop.x, crop.y, crop.w, crop.h);
-		crop.x = 0;
-		crop.y = 0;
-		crop.w = cxt->sn_width;
-		crop.h = cxt->sn_height;
-		ISP_LOGD("afm crop_size: (%d %d %d %d)\n", crop.x, crop.y, crop.w, crop.h);
-
 		ret = dcam_u_afm_crop_size(cxt->isp_driver_handle, &crop);
 		break;
 	}
@@ -525,7 +510,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		ret = dcam_u_afl_new_block(cxt->isp_driver_handle, param0);
 		break;
 	case ISP_DEV_SET_AFL_NEW_BYPASS:
-		ISP_LOGD("gtang : afl bypass %d\n", *(cmr_u32 *)param0);
+		ISP_LOGV("afl bypass %d\n", *(cmr_u32 *)param0);
 		ret = dcam_u_afl_new_bypass(cxt->isp_driver_handle, *(cmr_u32 *)param0);
 		break;
 

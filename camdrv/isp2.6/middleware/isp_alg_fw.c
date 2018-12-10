@@ -1060,7 +1060,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_PRE;
 			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-			ISP_LOGD("cfg block %x for prev.\n", param_data->id);
+			ISP_LOGV("cfg block %x for prev.\n", param_data->id);
 			param_data++;
 		}
 	}
@@ -1072,7 +1072,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			sub_block_info.scene_id = PM_SCENE_CAP;
 			if ((cxt->work_mode == 1) || !IS_DCAM_BLOCK(param_data->id)) {
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-				ISP_LOGD("cfg block %x for cap.\n", param_data->id);
+				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
 			}
 			param_data++;
 		}
@@ -1102,12 +1102,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 
 	return ret;
 }
-
-/* todo: delete later. for 3A statis data checking. */
-static int aem_frames;
-static int afl_frames;
-static int afm_frames;
-static int hist_frames;
 
 static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
@@ -1175,30 +1169,10 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
 		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
 	}
-
-	/* todo: delete later. for 3A statis data checking. */
-	aem_frames++;
-	if ((aem_frames & 0xf) == 0) {
-		cmr_u32 *ptr = (cmr_u32 *)(cxt->mem_info.statis_u_addr + 6 * 1024 * 1024);
-
-		ISP_LOGE("statis base: %p, cur aem %p, offset %d\n",
-			(void *)cxt->mem_info.statis_u_addr, ptr,
-			(cmr_u32)(statis_info->uaddr - cxt->mem_info.statis_u_addr));
-
-		ptr[0] = cnt_g_ue;
-		ptr[1] = cnt_g_oe;
-		ptr[2] = cnt_b_ue;
-		ptr[3] = cnt_b_oe;
-		ptr[4] = cnt_r_ue;
-		ptr[5] = cnt_r_oe;
-		ptr += 8;
-
-		memcpy(ptr, ae_stat_ptr->r_info, blk_num * sizeof(cmr_u32));
-		ptr += blk_num;
-		memcpy(ptr, ae_stat_ptr->g_info, blk_num * sizeof(cmr_u32));
-		ptr += blk_num;
-		memcpy(ptr, ae_stat_ptr->b_info, blk_num * sizeof(cmr_u32));
-	}
+	ISP_LOGD("sum[0]: r 0x%x, g 0x%x, b 0x%x\n",
+		ae_stat_ptr->r_info[0], ae_stat_ptr->g_info[0], ae_stat_ptr->b_info[0]);
+	ISP_LOGD("cnt: r 0x%x, 0x%x,  g 0x%x, 0x%x, b 0x%x, 0x%x\n",
+		cnt_r_ue, cnt_r_oe, cnt_g_ue, cnt_g_oe, cnt_b_ue, cnt_b_oe);
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 	if (ret) {
@@ -1290,20 +1264,10 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 	hist_stats->value[j++] = (cmr_u32)(val0 & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)((val0 >> 24) & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)(((val1 & 0xff) << 16) | ((val0 >> 48) & 0xffff));
-
-	/* todo: delete later. for 3A statis data checking. */
-	hist_frames++;
-	if ((hist_frames & 0xf) == 0) {
-		cmr_u32 *ptr = (cmr_u32 *)(cxt->mem_info.statis_u_addr + 7 * 1024 * 1024);
-
-		ISP_LOGD("frame %d dump bayerhist. \n", hist_frames);
-		memcpy(ptr, (void *)cxt->bayer_hist_stats[0].value, 256 * sizeof(cmr_u32));
-		ptr += 256;
-		memcpy(ptr, (void *)cxt->bayer_hist_stats[1].value, 256 * sizeof(cmr_u32));
-		ptr += 256;
-		memcpy(ptr, (void *)cxt->bayer_hist_stats[2].value, 256 * sizeof(cmr_u32));
-		ptr += 256;
-	}
+	ISP_LOGD("data: r %d %d, g %d %d, b %d %d\n",
+		cxt->bayer_hist_stats[0].value[0], cxt->bayer_hist_stats[0].value[1],
+		cxt->bayer_hist_stats[1].value[0], cxt->bayer_hist_stats[1].value[1],
+		cxt->bayer_hist_stats[2].value[0], cxt->bayer_hist_stats[2].value[1]);
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 	if (ret) {
@@ -1885,15 +1849,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	/* todo: update to new structure. */
 	cxt->afl_cxt.ae_stats = cxt->aem_stats_data;
 
-	/* todo: delete later. for 3A statis data checking. */
-	afl_frames++;
-	if ((afl_frames & 0xf) == 0) {
-		cmr_u32 *ptr = (cmr_u32 *)(cxt->mem_info.statis_u_addr + 9 * 1024 * 1024);
-
-		ISP_LOGD("frame %d dump afl statis. \n", afl_frames);
-		memcpy(ptr, (void *)statis_info->uaddr, STATIS_AFL_BUF_SIZE);
-	}
-
 	if (cxt->afl_cxt.sw_bypass) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 		if (ret) {
@@ -2006,14 +1961,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				af_temp[i][2] = *ptr++;
 				ptr++;
 			}
-
-			/* todo: delete later. for 3A statis data checking. */
-			afm_frames++;
-			if ((afm_frames & 0xf) == 0) {
-				cmr_u32 *ptr = (cmr_u32 *)(cxt->mem_info.statis_u_addr + 8 * 1024 * 1024);
-				ISP_LOGD("frame %d dump afm statis. \n", afm_frames);
-				memcpy(ptr, (void *)&af_temp[0][0], sizeof(af_temp));
-			}
+			ISP_LOGD("data: %x %x %x\n", af_temp[0][0], af_temp[0][1], af_temp[0][2]);
 
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
@@ -2899,11 +2847,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	struct af_log_info aft_param = {NULL, 0};
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
-	/* todo: delete comment later. temp force enable af module.  */
-#if 0
 	if (NULL == cxt->ioctrl_ptr || NULL == cxt->ioctrl_ptr->set_pos)
 		is_af_support = 0;
-#endif
 
 	memset((void *)&af_input, 0, sizeof(af_input));
 
@@ -3034,8 +2979,6 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_input io_pm_input = { PNULL, 0 };
 	struct isp_pm_ioctl_output io_pm_output = { PNULL, 0 };
 
-	return ret;
-
 	memset(&lsc_param, 0, sizeof(struct lsc_adv_init_param));
 	memset(&io_pm_input, 0, sizeof(struct isp_pm_ioctl_input));
 	memset(&io_pm_output, 0, sizeof(struct isp_pm_ioctl_output));
@@ -3119,6 +3062,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 {
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+	cmr_u32 val;
 
 	/* todo: delete one by one later. temp bypass all sw algo for statis data debug. */
 	cxt->ae_cxt.sw_bypass = 1;
@@ -3129,37 +3073,48 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	cxt->afl_cxt.sw_bypass = 1;
 	cxt->smart_cxt.sw_bypass = 1;
 
-	property_get(PROP_ISP_AE_BYPASS, value, "0");
-	if (1 == atoi(value)) {
-		cxt->ae_cxt.sw_bypass = 1;
-		ISP_LOGI("ae sw bypass");
-	}
-	property_get(PROP_ISP_AF_BYPASS, value, "0");
-	if (1 == atoi(value)) {
-		cxt->af_cxt.sw_bypass = 1;
-		ISP_LOGI("af sw bypass");
-	}
-	property_get(PROP_ISP_AWB_BYPASS, value, "0");
-	if (1 == atoi(value)) {
-		cxt->awb_cxt.sw_bypass = 1;
-		ISP_LOGI("awb sw bypass");
-	}
-	property_get(PROP_ISP_LSC_BYPASS, value, "0");
-	if (1 == atoi(value)) {
-		cxt->lsc_cxt.sw_bypass = 1;
-		ISP_LOGI("lsc sw bypass");
-	}
-	property_get(PROP_ISP_PDAF_BYPASS, value, "0");
-	if (1 == atoi(value)) {
-		cxt->pdaf_cxt.sw_bypass = 1;
-		ISP_LOGI("pdaf sw bypass");
-	}
-	property_get(PROP_ISP_AFL_BYPASS, value, "0");
-	if (1 == atoi(value)) {
-		cxt->afl_cxt.sw_bypass = 1;
-		ISP_LOGI("afl sw bypass");
-	}
+	property_get(PROP_ISP_AE_BYPASS, value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->ae_cxt.sw_bypass = val;
 
+	property_get(PROP_ISP_AF_BYPASS, value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->af_cxt.sw_bypass = val;
+
+	property_get(PROP_ISP_AWB_BYPASS, value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->awb_cxt.sw_bypass = val;
+
+	property_get(PROP_ISP_LSC_BYPASS, value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->lsc_cxt.sw_bypass = val;
+
+	property_get(PROP_ISP_PDAF_BYPASS, value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->pdaf_cxt.sw_bypass = val;
+
+	property_get(PROP_ISP_AFL_BYPASS, value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->afl_cxt.sw_bypass = val;
+
+	property_get("persist.vendor.camera.bypass.smart", value, "1");
+	val = atoi(value);
+	if (val < 2)
+		cxt->smart_cxt.sw_bypass = val;
+
+	ISP_LOGI("ae sw bypass: %d\n", cxt->ae_cxt.sw_bypass);
+	ISP_LOGI("af sw bypass: %d\n", cxt->af_cxt.sw_bypass);
+	ISP_LOGI("awb sw bypass: %d\n", cxt->awb_cxt.sw_bypass);
+	ISP_LOGI("lsc sw bypass: %d\n", cxt->lsc_cxt.sw_bypass);
+	ISP_LOGI("afl sw bypass: %d\n", cxt->afl_cxt.sw_bypass);
+	ISP_LOGI("pdaf sw bypass: %d\n", cxt->pdaf_cxt.sw_bypass);
+	ISP_LOGI("smart sw bypass: %d\n", cxt->smart_cxt.sw_bypass);
 	return ISP_SUCCESS;
 }
 
@@ -3507,7 +3462,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
-		ISP_LOGD("gtang: trigger ae start.");
+		ISP_LOGD("trigger ae start.");
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_START"));
 	}
@@ -3682,11 +3637,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		return ret;
 	}
 
-	/* todo: delete later.  temp for 3A statistic debug */
-	aem_frames = 0;
-	afm_frames = 0;
-	afl_frames = 0;
-	hist_frames = 0;
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &in_ptr->size.w, &in_ptr->size.h);
 
 	cxt->work_mode = in_ptr->work_mode;
@@ -3851,8 +3801,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			ISP_TRACE_IF_FAIL(ret, ("fail to set af_start_info"));
 		}
 	}
-
-	if (0 && cxt->ops.lsc_ops.ioctrl) {
+	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
@@ -3880,8 +3829,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_ISP_STOP_INFO"));
 	}
-
-	if (0 && cxt->ops.lsc_ops.ioctrl) {
+	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
@@ -3975,7 +3923,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ret = ispalg_update_alsc_result(cxt, (void *)&fwprocstart_info);
 		ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 	}
-	if (0) {
+
 	ret = ispalg_alsc_get_info(cxt);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do get lsc info"));
 	lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
@@ -3992,7 +3940,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);
-	}
+
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
 
@@ -4014,8 +3962,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set rgb gain"));
 	}
-
-	if (0 && cxt->ops.lsc_ops.ioctrl)
+	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START_END, (void *)&fwprocstart_info, NULL);
 
 	/* RAW_PROC_POST, kernel will set all buffers and trigger raw image processing*/

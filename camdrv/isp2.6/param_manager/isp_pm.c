@@ -132,10 +132,12 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 scene_id)
 	struct isp_context *isp_cxt_ptr = PNULL;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
+	ISP_LOGV("enter.\n");
 	isp_cxt_ptr = pm_cxt_ptr->cxt_array[scene_id];
 	mode_param_ptr = pm_cxt_ptr->active_mode[scene_id];
 	blk_header_array = mode_param_ptr->header;
 	blk_num = mode_param_ptr->block_num;
+	ISP_LOGD("%p %p  num %d\n", isp_cxt_ptr,mode_param_ptr, blk_num);
 	for (i = 0; i < blk_num; i++) {
 		id = blk_header_array[i].block_id;
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
@@ -148,6 +150,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 scene_id)
 				continue;
 			}
 		}
+		ISP_LOGV("i %d, blk 0x%04x, cfgptr %p\n", i, id, blk_cfg_ptr);
 		if (blk_cfg_ptr != PNULL && blk_cfg_ptr->ops) {
 			ops = blk_cfg_ptr->ops;
 			if (ops->init && blk_header_ptr->size > 0) {
@@ -503,15 +506,12 @@ static cmr_s32 isp_pm_get_setting_param(
 					param_data_ptr++;
 					counts++;
 				}
-			} else {
-				ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p, update %d",
-					i, id, blk_cfg_ptr, is_update);
 			}
 		}
 		*param_counts = counts;
 	} else {
-		ISP_LOGE("fail to get valid param : isp_cxt_ptr = %p, mode_param_ptr = %p",
-			isp_cxt_ptr, mode_param_ptr);
+		ISP_LOGW("no valid param : %d, isp_cxt_ptr = %p, mode_param_ptr = %p",
+			isp_cxt_ptr->is_validate, isp_cxt_ptr, mode_param_ptr);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
@@ -974,6 +974,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	nr_default_level_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_default_level_ptr);
 
 	for (i = 0; i < ISP_TUNE_MODE_MAX; i++) {
+		cmr_u32 mode_data_size;
 		extend_offset = 0;
 
 		src_mod_ptr = (struct isp_mode_param *)input->tuning_data[i].data_ptr;
@@ -985,6 +986,13 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 		size = data_area_size + sizeof(struct isp_pm_mode_param);
 
 		fix_data_ptr = input->fix_data[i];
+
+		mode_data_size = input->tuning_data[i].size;
+		ISP_LOGD("size hdr %d, data_size %d,  size hdr1 %d, size1 %d\n", (cmr_u32)sizeof(struct isp_mode_param),
+			data_area_size, (cmr_u32)sizeof(struct isp_pm_mode_param), size);
+		ISP_LOGD("mode %d, ptr %p, size %d, blknum %d, fixptr %p\n", src_mod_ptr->mode_id,
+			src_mod_ptr, mode_data_size, src_mod_ptr->block_num, fix_data_ptr);
+
 		add_ae_len = fix_data_ptr->ae.ae_param.ae_len;
 		add_lnc_len = fix_data_ptr->lnc.lnc_param.lnc_len;
 		add_awb_len = fix_data_ptr->awb.awb_param.awb_len;
@@ -1029,7 +1037,15 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 
 			dst_header[j].absolute_addr = (void *)dst_data_ptr;
 			dst_header[j].mode_id = i;
+			ISP_LOGV("j %d, blk 0x%04x, size %d, offset 0x%x, ptr0 %p, pt1 %p, real_off %ld\n", j,
+				dst_header[j].block_id, dst_header[j].size, src_header[j].offset, src_data_ptr,
+				dst_data_ptr, (cmr_uint)src_data_ptr - (cmr_uint)src_mod_ptr);
 
+			/* todo: temp solution for LSC  */
+			if (src_header[j].block_id == ISP_BLK_2D_LSC) {
+				src_header[j].block_id = DCAM_BLK_2D_LSC;
+				dst_header[j].block_id = DCAM_BLK_2D_LSC;
+			}
 			memcpy((void *)dst_data_ptr, (void *)src_data_ptr, src_header[j].size);
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 
@@ -1336,6 +1352,7 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 		for (i = ISP_MODE_ID_PRV_0; i <= ISP_MODE_ID_PRV_3; i++) {
 			if (pm_cxt_ptr->merged_mode_array[i] == PNULL)
 				continue;
+			ISP_LOGD("i = %d, mode %d\n", i, pm_cxt_ptr->merged_mode_array[i]->mode_id);
 			pm_cxt_ptr->active_mode[ISP_SCENE_PRV] = pm_cxt_ptr->merged_mode_array[i];
 			pm_cxt_ptr->cxt_array[ISP_SCENE_PRV] = malloc(sizeof(struct isp_context));
 			if (pm_cxt_ptr->cxt_array[ISP_SCENE_PRV] == PNULL) {
@@ -1347,10 +1364,12 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 			memset(isp_cxt_ptr, 0, sizeof(struct isp_context));
 			isp_cxt_ptr->is_validate = 1;
 			isp_cxt_ptr->mode_id = pm_cxt_ptr->active_mode[ISP_SCENE_PRV]->mode_id;
+			ISP_LOGD("pm context %p\n", isp_cxt_ptr);
 			break;
 		}
 	} else {
 		isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_PRV];
+		ISP_LOGE("error: should not be here %p\n", isp_cxt_ptr);
 	}
 
 	if (isp_cxt_ptr && isp_cxt_ptr->is_validate) {
@@ -1364,6 +1383,8 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 		for (i = ISP_MODE_ID_CAP_0; i <= ISP_MODE_ID_CAP_3; i++) {
 			if (pm_cxt_ptr->merged_mode_array[i] == PNULL)
 				continue;
+			ISP_LOGD("i = %d, mode %d\n", i, pm_cxt_ptr->merged_mode_array[i]->mode_id);
+
 			pm_cxt_ptr->active_mode[ISP_SCENE_CAP] = pm_cxt_ptr->merged_mode_array[i];
 			pm_cxt_ptr->cxt_array[ISP_SCENE_CAP] = malloc(sizeof(struct isp_context));
 			if (pm_cxt_ptr->cxt_array[ISP_SCENE_CAP] == PNULL) {
@@ -1375,10 +1396,12 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 			memset(isp_cxt_ptr, 0, sizeof(struct isp_context));
 			isp_cxt_ptr->is_validate = 1;
 			isp_cxt_ptr->mode_id = pm_cxt_ptr->active_mode[ISP_SCENE_CAP]->mode_id;
+			ISP_LOGD("cap pm context %p\n", isp_cxt_ptr);
 			break;
 		}
 	} else {
 		isp_cxt_ptr = pm_cxt_ptr->cxt_array[ISP_SCENE_CAP];
+		ISP_LOGE("error: should not be here %p\n", isp_cxt_ptr);
 	}
 
 	if (isp_cxt_ptr && isp_cxt_ptr->is_validate) {
