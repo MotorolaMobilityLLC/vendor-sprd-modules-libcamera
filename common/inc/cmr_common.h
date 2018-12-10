@@ -1667,6 +1667,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_MASTER_ID,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
+void camera_get_picture_size(multiCameraMode mode, int *width, int *height);
 
 typedef void (*camera_cb_of_type)(enum camera_cb_type cb,
                                   const void *client_data,

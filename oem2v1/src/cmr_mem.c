@@ -637,7 +637,9 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     tmp2 = cap_size->width * cap_size->height * 3 / 2;
     tmp3 = sn_size->width * sn_size->height * 3 / 2;
     max_size = tmp1 > tmp2 ? tmp1 : tmp2;
-    max_size = max_size > tmp3 ? max_size : tmp3;
+    if (is_multi_camera_mode_mem != MODE_BOKEH) {
+        max_size = max_size > tmp3 ? max_size : tmp3;
+    }
     max_size = (max_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
     cap_mem->target_yuv.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y;

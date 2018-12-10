@@ -6056,8 +6056,15 @@ int SprdCamera3OEMIf::openCamera() {
         mLargestPictureWidth = snsW;
         mLargestPictureHeight = snsH;
     }
-    mHalOem->ops->camera_set_largest_picture_size(
-        mCameraId, mLargestPictureWidth, mLargestPictureHeight);
+    if ((MODE_BOKEH == mMultiCameraMode && mCameraId < 2)) {
+        int width = 2592;
+        int height = 1944;
+        camera_get_picture_size(mMultiCameraMode, &width, &height);
+        mHalOem->ops->camera_set_largest_picture_size(mCameraId, width, height);
+    } else {
+        mHalOem->ops->camera_set_largest_picture_size(
+            mCameraId, mLargestPictureWidth, mLargestPictureHeight);
+    }
 
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;

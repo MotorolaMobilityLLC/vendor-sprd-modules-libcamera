@@ -286,8 +286,9 @@ cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     return 0;
 }
 
-cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
-                                cmr_u32 height, struct img_addr *addr, char* scene_type) {
+cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt,
+                                      cmr_u32 width, cmr_u32 height,
+                                      struct img_addr *addr, char *scene_type) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     char file_name[0x40];
     char tmp_str[20];
@@ -299,7 +300,7 @@ cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 wi
     cmr_bzero(file_name, 0x40);
     strcpy(file_name, CAMERA_DUMP_PATH);
 
-    sprintf(tmp_str,"%s_",scene_type);
+    sprintf(tmp_str, "%s_", scene_type);
     strcat(file_name, tmp_str);
     sprintf(tmp_str, "%08x_", index);
     strcat(file_name, tmp_str);
@@ -323,7 +324,7 @@ cmr_int camera_save_yuv_to_file_scene(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 wi
 
         bzero(file_name, 40);
         strcpy(file_name, CAMERA_DUMP_PATH);
-        sprintf(tmp_str,"%s_",scene_type);
+        sprintf(tmp_str, "%s_", scene_type);
         strcat(file_name, tmp_str);
         sprintf(tmp_str, "%08x_", index);
         strcat(file_name, tmp_str);
@@ -649,11 +650,12 @@ cmr_int camera_parse_raw_filename(char *file_name,
     strncpy(tmp_str, ptr1 + 4, ptr0 - (ptr1 + 4));
     scene_param->smart_bv = atoi(tmp_str);
 
-    CMR_LOGD("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d glb %d",
-             scene_param->width, scene_param->height, scene_param->gain,
-             scene_param->awb_gain_r, scene_param->awb_gain_g,
-             scene_param->awb_gain_b, scene_param->smart_ct,
-             scene_param->smart_bv,scene_param->global_gain);
+    CMR_LOGD(
+        "w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d glb %d",
+        scene_param->width, scene_param->height, scene_param->gain,
+        scene_param->awb_gain_r, scene_param->awb_gain_g,
+        scene_param->awb_gain_b, scene_param->smart_ct, scene_param->smart_bv,
+        scene_param->global_gain);
 
     return ret;
 }
@@ -825,4 +827,35 @@ cmr_int camera_get_snap_postproc_time() {
                            cap_stp[CMR_STEP_CAP_E].timestamp) /
                           1000000);
     return postproc_time;
+}
+
+void camera_get_picture_size(multiCameraMode mode, int *width, int *height) {
+    if ((MODE_BOKEH == mode)) {
+        char value[PROPERTY_VALUE_MAX];
+        *width = 2592;
+        *height = 1944;
+        property_get("persist.vendor.cam.res.bokeh", value, "RES_5M");
+        if (!strncmp(value, "RES_0_3M", 12)) {
+            *width = 640;
+            *height = 480;
+        } else if (!strncmp(value, "RES_2M", 12)) {
+            *width = 1600;
+            *height = 1200;
+        } else if (!strncmp(value, "RES_1080P", 12)) {
+            *width = 1920;
+            *height = 1080;
+        } else if (!strncmp(value, "RES_5M", 12)) {
+            *width = 2592;
+            *height = 1944;
+        } else if (!strncmp(value, "RES_8M", 12)) {
+            *width = 3264;
+            *height = 2440;
+        } else if (!strncmp(value, "RES_13M", 12)) {
+            *width = 4160;
+            *height = 3120;
+        }
+    } else {
+        *width = 2592;
+        *height = 1944;
+    }
 }
