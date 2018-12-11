@@ -376,6 +376,107 @@ static cmr_int ov12a10_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+/*block size 16x16 normal pos(x,y) mirror(16-x,y) flip(x,16-y)
+ * mirror&&flip(16-x, 16-y)*/
+
+#if 0//defined(CONFIG_DUAL_MODULE)
+// static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
+// static int  flip_disable_factor = -1; //enable: -1  diable: 1
+
+static const cmr_u16 ov12a10_pd_is_right[] = {0, 1, 1, 0};
+static const cmr_u16 ov12a10_pd_row[] = {2, 6, 10, 14}; //{14, 10, 6, 2};//y
+
+static const cmr_u16 ov12a10_pd_col[] = {10, 10, 2, 2}; //{2, 2, 10, 10};//x
+static const struct pd_pos_info _ov12a10_pd_pos_r[] = {
+    {10, 6}, {2, 10},
+};
+
+static const struct pd_pos_info _ov12a10_pd_pos_l[] = {
+    {10, 2}, {2, 14},
+};
+
+#else
+// static int  mirror_diasble_factor = 1; //enable: -1  diable: 1
+// static int  flip_disable_factor = 1; //enable:-1  diable: 1
+
+static const cmr_u16 ov12a10_pd_is_right[] = {1, 0, 0, 1};
+
+static const cmr_u16 ov12a10_pd_row[] = {2, 6, 10, 14};
+
+static const cmr_u16 ov12a10_pd_col[] = {14, 14, 6, 6};
+static const struct pd_pos_info _ov12a10_pd_pos_l[] = {
+    {14, 6}, {6, 10},
+};
+
+static const struct pd_pos_info _ov12a10_pd_pos_r[] = {
+    {14, 2}, {6, 14},
+};
+#endif
+static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
+#define PDAF_BLOCK_SIZE_W 16
+#define PDAF_BLOCK_SIZE_H 16
+
+static cmr_int ov12a10_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    cmr_u16 i = 0;
+    cmr_u16 pd_pos_row_size = 0;
+    cmr_u16 pd_pos_col_size = 0;
+    cmr_u16 pd_pos_is_right_size = 0;
+    SENSOR_IC_CHECK_PTR(param);
+
+    pdaf_info = (struct sensor_pdaf_info *)param;
+    pd_pos_is_right_size = NUMBER_OF_ARRAY(ov12a10_pd_is_right);
+    pd_pos_row_size = NUMBER_OF_ARRAY(ov12a10_pd_row);
+    pd_pos_col_size = NUMBER_OF_ARRAY(ov12a10_pd_col);
+    if ((pd_pos_row_size != pd_pos_col_size) ||
+        (pd_pos_row_size != pd_pos_is_right_size) ||
+        (pd_pos_is_right_size != pd_pos_col_size)) {
+        SENSOR_LOGE("pd_pos_row size and pd_pos_is_right size are not match");
+        return -1;
+    }
+
+    pdaf_info->pd_offset_x = 0;
+    pdaf_info->pd_offset_y = 0;
+    pdaf_info->pd_end_x = SNAPSHOT_TRIM_W;
+    pdaf_info->pd_end_y = SNAPSHOT_TRIM_H;
+    pdaf_info->pd_block_w = 1;
+    pdaf_info->pd_block_h = 1;
+    pdaf_info->pd_block_num_x = SNAPSHOT_TRIM_W / PDAF_BLOCK_SIZE_W;
+    pdaf_info->pd_block_num_y = SNAPSHOT_TRIM_H / PDAF_BLOCK_SIZE_H;
+    pdaf_info->pd_is_right = (cmr_u16 *)ov12a10_pd_is_right;
+    pdaf_info->pd_pos_row = (cmr_u16 *)ov12a10_pd_row;
+    pdaf_info->pd_pos_col = (cmr_u16 *)ov12a10_pd_col;
+
+    cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_ov12a10_pd_pos_r);
+    cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_ov12a10_pd_pos_l);
+
+    if (pd_pos_r_size != pd_pos_l_size) {
+        SENSOR_LOGE("pd_pos_r size not match pd_pos_l");
+        return -1;
+    }
+    pdaf_info->pd_pitch_x = PDAF_BLOCK_SIZE_W;
+    pdaf_info->pd_pitch_y = PDAF_BLOCK_SIZE_H;
+    pdaf_info->pd_density_x = PDAF_BLOCK_SIZE_W;
+    pdaf_info->pd_density_y = PDAF_BLOCK_SIZE_H/2;
+    pdaf_info->pd_block_num_x = SNAPSHOT_TRIM_W / PDAF_BLOCK_SIZE_W;
+    pdaf_info->pd_block_num_y = SNAPSHOT_TRIM_H / PDAF_BLOCK_SIZE_H;
+    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov12a10_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov12a10_pd_pos_l;
+    pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
+
+#if 0//def CONFIG_DUAL_MODULE
+    pdaf_info->sns_orientation = 1; /*mirror+flip*/
+#else
+    pdaf_info->sns_orientation = 0; /*Normal*/
+#endif
+    pdaf_info->sns_mode = pd_sns_mode;
+
+    return rtn;
+}
+
+
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -397,6 +498,9 @@ static cmr_int ov12a10_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         ret = ov12a10_drv_get_fps_info(handle, param_ptr->pval);
+        break;
+     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
+        ret = ov12a10_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         ret = sns_drv_cxt->is_sensor_close = 1;
@@ -597,7 +701,13 @@ static cmr_int ov12a10_drv_set_master_FrameSync(cmr_handle handle,
 
     /*TODO*/
 
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3818, 0x02);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3819, 0x10);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381a, 0x1a);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381b, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3832, 0x18);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3833, 0x10);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x61);
 
     /*END*/
 
@@ -615,7 +725,7 @@ static cmr_int ov12a10_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
-#if 0 // defined(CONFIG_DUAL_MODULE)
+#if defined(CONFIG_DUAL_MODULE)
 	ov12a10_drv_set_master_FrameSync(handle, param);
 	//ov12a10_drv_set_slave_FrameSync(handle, param);
 #endif
