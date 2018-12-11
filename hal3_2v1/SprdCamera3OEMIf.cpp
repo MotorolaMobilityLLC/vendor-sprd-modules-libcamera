@@ -5754,7 +5754,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             if (ae_stab) {
                 resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
             } else {
-                resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+                resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED;
             }
         }
         if (resultInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
@@ -5770,7 +5770,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             if (ae_stab) {
                 controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
             } else {
-                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED;
             }
             mSetting->setAeCONTROLTag(&controlInfo);
         }
