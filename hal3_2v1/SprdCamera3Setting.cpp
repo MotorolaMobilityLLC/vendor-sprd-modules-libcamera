@@ -196,10 +196,17 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
+#if defined(CONFIG_ISP_2_5)
 const int32_t kavailable_fps_ranges_back[] = {
     5, 5, 5, 10, 10, 10, 5, 15, 15, 15, 5, 20, 5, 24, 24, 24, 5, 30, 30, 30};
 const int32_t kavailable_fps_ranges_front[] = {5,  5,  5, 10, 10, 10, 5,  15,
                                                15, 15, 5, 30, 15, 30, 30, 30};
+#else
+const int32_t kavailable_fps_ranges_back[] = {
+    5, 10, 10, 10, 5, 15, 15, 15, 5, 20, 5, 24, 24, 24, 5, 30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {5, 10, 10, 10, 5,  15,
+                                               15, 15, 5, 30, 15, 30, 30, 30};
+#endif
 const int32_t kexposureCompensationRange[2] = {-16, 16};
 const camera_metadata_rational kae_compensation_step = {1, 8};
 
