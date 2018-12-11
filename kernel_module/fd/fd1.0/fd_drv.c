@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
@@ -45,7 +47,7 @@
 
 #define FD_IRQ_MASK ((FD_MASK_INT_ERR) | (FD_MASK_INT_RAW))
 #define FD_AXI_STOP_TIMEOUT			2000
-
+#define FD_INT_TIMEOUT			2000
 static struct sprd_fd_dvfs fd_dvfs_map[SPRD_FD_DVFS_INDEX_MAX] = {
 	[SPRD_FD_DVFS_INDEX0] = {FD_REG_DVFS_INDEX0_MAP,
 				    SPRD_FD_CLK_FREQ_76_8M, 0, 0},
@@ -185,6 +187,28 @@ static int sprd_fd_parse_dt(struct fd_drv *handle,
 	pr_info("skip parse clock tree on haps.\n");
 #else
 	pr_info("todo here parse clock tree\n");
+	handle->fd_eb = of_clk_get_by_name(dn, "fd_eb");
+	if (IS_ERR_OR_NULL(handle->fd_eb)) {
+		pr_err("read dts fd eb fail\n");
+		return -EFAULT;
+	}
+	handle->clk = of_clk_get_by_name(dn, "fd_clk");
+	if (IS_ERR_OR_NULL(handle->clk)) {
+		pr_err("read dts fd clk fail\n");
+		return -EFAULT;
+	}
+	handle->clk_parent = of_clk_get_by_name(dn, "fd_clk_parent");
+	if (IS_ERR_OR_NULL(handle->clk_parent)) {
+		pr_err("read dts fd clk parent fail\n");
+		return -EFAULT;
+	}
+	handle->axi_eb = of_clk_get_by_name(dn, "fd_axi_eb");
+	if (IS_ERR_OR_NULL(handle->axi_eb)) {
+		pr_err("read dts fd axi eb fail\n");
+		return -EFAULT;
+	}
+
+	handle->clk_default = clk_get_parent(handle->clk);
 #endif
 
 	if (of_address_to_resource(dn, 0, &res)) {
@@ -266,9 +290,13 @@ static int fd_unmap_buf(struct fd_drv *hw_handle)
 	int ret = 0;
 
 	for (i = 0; i <  FD_BUF_INDEX_MAX; i++) {
-		ret = cambuf_iommu_unmap(&hw_handle->fd_buf_info[i].buf_info);
-		if (ret)
-			pr_err("FD_DRV unmap err %d index\n", i);
+		if(hw_handle->fd_buf_info[i].mfd != 0) {
+			ret = cambuf_iommu_unmap(&hw_handle->fd_buf_info[i].buf_info);
+			if (ret)
+				pr_err("FD_DRV unmap err %d index\n", i);
+                  	cambuf_put_ionbuf(&hw_handle->fd_buf_info[i].buf_info);
+			hw_handle->fd_buf_info[i].mfd = 0;
+		}
 	}
 	return ret;
 }
@@ -315,6 +343,64 @@ static irqreturn_t fd_isr_root(int irq, void *priv)
 	return IRQ_HANDLED;
 }
 
+static int fd_disable_clk(struct fd_drv *handle)
+{
+	int ret = 0;
+
+	pr_debug(",fd disable clk enter\n");
+	if (!handle) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+#ifndef TEST_ON_HAPS
+	clk_set_parent(handle->clk, handle->clk_default);
+	clk_disable_unprepare(handle->clk);
+	clk_disable_unprepare(handle->axi_eb);
+	clk_disable_unprepare(handle->fd_eb);
+#endif
+
+	return ret;
+}
+
+static int fd_clk_enable(struct fd_drv *handle)
+{
+	int ret = 0;
+
+	pr_debug(",fd_clk enable enter\n");
+	if (!handle) {
+		pr_err("param erro\n");
+		return -EINVAL;
+	}
+#ifndef TEST_ON_HAPS
+	ret = clk_set_parent(handle->clk, handle->clk_parent);
+	if (ret) {
+		pr_err("set fd parent fail, ret = %d\n", ret);
+		clk_set_parent(handle->clk, handle->clk_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(handle->clk);
+	if (ret) {
+		pr_err("enable fd clk fail, ret = %d\n", ret);
+		clk_set_parent(handle->clk, handle->clk_default);
+		return ret;
+	}
+	ret = clk_prepare_enable(handle->fd_eb);
+	if (ret) {
+		pr_err("set fd eb fail, ret = %d\n", ret);
+		clk_disable_unprepare(handle->clk);
+		return ret;
+	}
+	ret = clk_prepare_enable(handle->axi_eb);
+	if (ret) {
+		pr_err("set fd axi eb fail, ret = %d\n", ret);
+		clk_disable_unprepare(handle->clk);
+		clk_disable_unprepare(handle->fd_eb);
+		return ret;
+	}
+#endif
+
+	return ret;
+}
 int sprd_fd_drv_open(void *drv_handle)
 {
 	struct fd_drv *hw_handle = NULL;
@@ -336,12 +422,7 @@ int sprd_fd_drv_open(void *drv_handle)
 			return ret;
 		}
 		ret = sprd_cam_domain_eb();
-#ifdef TEST_ON_HAPS
-		/*disable for HAPS*/
-#else
-		/*code for clock enable as per dts entry*/
-#endif
-
+		fd_clk_enable(hw_handle);
 		fd_regmap_on(hw_handle, FD_SYSCON_ENABLE);
 		fd_regmap_on(hw_handle, FD_SYSCON_DVFS_ENABLE);
 
@@ -394,23 +475,14 @@ int sprd_fd_drv_close(void *drv_handle)
 	devm_free_irq(&hw_handle->pdev->dev, hw_handle->irq_no,
 			(void *)hw_handle);
 	if (atomic_dec_return(&hw_handle->pw_users) == 0) {
-		ret = sprd_cam_pw_off();
-		if (ret != 0) {
-			pr_err("FD_ERR: sprd cam_sys power off failed\n");
-			return ret;
-		}
-		sprd_cam_domain_disable();
-#if 0
-		/*code for clock disable*/
+		
 
-#endif
+		sprd_fd_irq_disable(hw_handle);
 		/*wait if fd is busy*/
-
 		ret = sprd_fd_drv_reset(hw_handle);
 		if (ret)
 			pr_err("FD_ERR: close reset failed\n");
 
-		sprd_fd_irq_disable(hw_handle);
 
 		/*TODO sync with dvfs implementation*/
 		FD_REG_MWR(hw_handle->io_dvfs_base,
@@ -424,6 +496,15 @@ int sprd_fd_drv_close(void *drv_handle)
 			FD_MASK_DVFS_DFS_FREQ_UPDATE, 0);
 		fd_regmap_off(hw_handle, FD_SYSCON_ENABLE);
 		fd_regmap_off(hw_handle, FD_SYSCON_DVFS_ENABLE);
+		
+		fd_disable_clk(hw_handle);
+		
+		sprd_cam_domain_disable();
+		ret = sprd_cam_pw_off();
+		if (ret != 0) {
+			pr_err("FD_ERR: sprd cam_sys power off failed\n");
+			return ret;
+		}
 	}
 	if (hw_handle->state == SPRD_FD_STATE_IDLE)
 		hw_handle->state = SPRD_FD_STATE_CLOSED;
@@ -663,11 +744,16 @@ static void  fd_reg_dump(struct fd_drv *handle)
 static int fd_post_write_proc(struct fd_drv *hw_handle, unsigned int reg_param)
 {
 	int ret = 0;
+	int left_time = 0;
 
 	switch (reg_param) {
 	case SPRD_FD_REG_PARAM_RUN:
-		ret = wait_for_completion_interruptible(
-				&hw_handle->fd_wait_com);
+		left_time = wait_for_completion_timeout(
+				&hw_handle->fd_wait_com, msecs_to_jiffies(FD_INT_TIMEOUT));
+		if(left_time == 0){
+			ret = -EBUSY;
+			pr_err("FD INT timeout reached\n");
+		}
 		fd_reg_dump(hw_handle);
 		break;
 	default:

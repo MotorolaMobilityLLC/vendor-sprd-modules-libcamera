@@ -49,7 +49,11 @@ struct fd_drv {
 	uint32_t awqos;
 	uint32_t arqos;
 	enum sprd_fd_state state;
-	struct clk *fd_clk;
+	struct clk *fd_eb;
+	struct clk *clk;
+	struct clk *clk_parent;
+	struct clk *axi_eb;
+	struct clk *clk_default;
 	struct platform_device *pdev;
 	struct regmap *cam_ahb_gpr;
 	struct regmap *cam_dvfs_gpr;
