@@ -2493,15 +2493,17 @@ static int img_ioctl_pdaf_control(
 			unsigned long arg)
 {
 	struct sprd_pdaf_control tmp;
+	struct sprd_img_parm param;
 	int ret;
 
-	ret = copy_from_user(&tmp, (void __user *)arg,
-		sizeof(struct sprd_pdaf_control));
+	ret = copy_from_user(&param, (void __user *)arg,
+		sizeof(struct sprd_img_parm));
 	if (unlikely(ret)) {
 		pr_err("fail to copy pdaf param from user, ret %d\n", ret);
 		return -EFAULT;
 	}
 
+	tmp = param.pdaf_ctrl;
 	pr_info("mode %d, type %d, vc %d, dt 0x%x, isp %d\n",
 		tmp.mode, tmp.phase_data_type, tmp.image_vc,
 		tmp.image_dt, tmp.isp_tool_mode);
