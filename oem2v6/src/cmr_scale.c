@@ -247,9 +247,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
             frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
             frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
             frame.fd = (cmr_s32)frame_params->output_addr.mfd[0];
-	    CMR_LOGI("outpur_size.width:%d", frame.size.width);
-	    CMR_LOGI("outpur_size.height:%d", frame.size.height);
-            CMR_LOGI("addr_y:%d, addr_u:%d, addr_v:%d", frame.addr_phy.addr_y, frame.addr_phy.addr_u, frame.addr_phy.addr_v);
+            CMR_LOGV("outpur_size.width:%d, height: %d", frame.size.width, frame.size.height);
             CMR_LOGI("scale frame.fd 0x%x", frame.fd);
 
             (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
@@ -329,7 +327,7 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
     cmr_int fd = -1;
     cmr_int time_out = 3;
     struct scale_file *file = NULL;
-    //struct sc_file *sca_file = NULL;
+    // struct sc_file *sca_file = NULL;
     cmr_handle handle = NULL;
     cmr_u32 val;
 
@@ -345,7 +343,7 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
         goto free_file;
     }
 
-    //sca_file = (struct sc_file *)(handle);
+    // sca_file = (struct sc_file *)(handle);
 
     file->handle = handle;
 
@@ -371,6 +369,32 @@ free_file:
 exit:
 
     return ret;
+}
+
+cmr_int get_deci_param(int input_value, int output_value) {
+    if (input_value == 0 || output_value == 0) {
+        CMR_LOGE("invalid value!");
+        return 0;
+    }
+
+    int deci_value = 0;
+    if (output_value >= input_value) {
+        deci_value = 0;
+    } else {
+        double ratio = input_value / output_value;
+        if (ratio <= 4) {
+            deci_value = 0; // driver value:1
+        } else if (ratio <= 8) {
+            deci_value = 1; // driver value: 1/2
+        } else if (ratio <= 16) {
+            deci_value = 2; // driver value: 1/4
+        } else { // max value is 32
+            deci_value = 3; // driver value: 1/8
+        }
+    }
+    CMR_LOGI("input_value:%d, output_value: %d, deci_value: %d", input_value,
+             output_value, deci_value);
+    return deci_value;
 }
 
 cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
@@ -436,6 +460,11 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->output_addr.mfd[1] = dst_img->fd;
     frame_params->output_addr.mfd[2] = 0;
 
+    frame_params->scale_deci.hor =
+        get_deci_param(frame_params->input_size.w, frame_params->output_size.w);
+    frame_params->scale_deci.ver =
+        get_deci_param(frame_params->input_size.h, frame_params->output_size.h);
+
     CMR_LOGD("input size: %d x %d, input rect:x=%d, y=%d, w=%d, h=%d, input "
              "format: %d, input_addr: y=%d, u=%d, v=%d, input_addr_vir:"
              " y=%d, u=%d, v =%d, input_endian: y_endian=%d, uv_endian=%d, "
@@ -443,11 +472,11 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
              "output_format:%d",
              frame_params->input_size.w, frame_params->input_size.h,
              frame_params->input_rect.x, frame_params->input_rect.y,
-             frame_params->input_rect.w,
-             frame_params->input_rect.h, frame_params->input_format,
-             frame_params->input_addr.y, frame_params->input_addr.u,
-             frame_params->input_addr.v, frame_params->input_addr_vir.y,
-             frame_params->input_addr_vir.u, frame_params->input_addr_vir.v,
+             frame_params->input_rect.w, frame_params->input_rect.h,
+             frame_params->input_format, frame_params->input_addr.y,
+             frame_params->input_addr.u, frame_params->input_addr.v,
+             frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
+             frame_params->input_addr_vir.v,
              frame_params->input_endian.y_endian,
              frame_params->input_endian.uv_endian, frame_params->sc_trim.x,
              frame_params->sc_trim.y, frame_params->sc_trim.w,
@@ -539,30 +568,30 @@ exit:
 cmr_int cmr_scale_capability(cmr_handle scale_handle, cmr_u32 *width,
                              cmr_u32 *sc_factor) {
     int ret = CMR_CAMERA_SUCCESS;
-   /* cmr_u32 rd_word[2] = {0, 0};
+    /* cmr_u32 rd_word[2] = {0, 0};
 
-    struct scale_file *file = (struct scale_file *)(scale_handle);
+     struct scale_file *file = (struct scale_file *)(scale_handle);
 
-    if (!file) {
-        CMR_LOGE("scale error: file hand is null");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
+     if (!file) {
+         CMR_LOGE("scale error: file hand is null");
+         return CMR_CAMERA_INVALID_PARAM;
+     }
 
-    if (NULL == file->handle) {
-        CMR_LOGE("Fail to open scaler device.");
-        return CMR_CAMERA_FAIL;
-    }
+     if (NULL == file->handle) {
+         CMR_LOGE("Fail to open scaler device.");
+         return CMR_CAMERA_FAIL;
+     }
 
-    if (NULL == width || NULL == sc_factor) {
-        CMR_LOGE("scale error: param={%p, %p)", width, sc_factor);
-        return CMR_CAMERA_INVALID_PARAM;
-    }
+     if (NULL == width || NULL == sc_factor) {
+         CMR_LOGE("scale error: param={%p, %p)", width, sc_factor);
+         return CMR_CAMERA_INVALID_PARAM;
+     }
 
-    ret = read(file->handle, rd_word, 2 * sizeof(uint32_t));
-    *width = rd_word[0];
-    *sc_factor = rd_word[1];
+     ret = read(file->handle, rd_word, 2 * sizeof(uint32_t));
+     *width = rd_word[0];
+     *sc_factor = rd_word[1];
 
-    CMR_LOGI("scale width=%d, sc_factor=%d", *width, *sc_factor);*/
+     CMR_LOGI("scale width=%d, sc_factor=%d", *width, *sc_factor);*/
 
     return ret;
 }
