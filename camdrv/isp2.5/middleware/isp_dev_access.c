@@ -102,15 +102,17 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFL)
 		dcam_stats_buffer_size += ISP_AFL_STATIS_BUF_SIZE *
 			(ISP_AFL_STATIS_BUF_NUM + 1);
-	if (in_ptr->statis_valid & ISP_STATIS_VALID_PDAF)
-		dcam_stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE *
-			(ISP_PDAF_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_EBD)
 		dcam_stats_buffer_size += ISP_EBD_STATIS_BUF_SIZE *
 			(ISP_EBD_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_HIST)
 		isp_stats_buffer_size += ISP_HIST_STATIS_BUF_SIZE *
 			ISP_HIST_STATIS_BUF_NUM;
+
+	/* pdaf allocates memory using supports function */
+	if (in_ptr->pdaf_support)
+		dcam_stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE *
+			(ISP_PDAF_STATIS_BUF_NUM + 1);
 
 	statis_mem_info->statis_valid = in_ptr->statis_valid;
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {

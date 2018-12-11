@@ -55,6 +55,7 @@ struct isp_statis_mem_info {
 	cmr_s32 lsc_mfd;
 
 	cmr_u32 statis_valid;
+	cmr_u32 pdaf_support;
 	void *buffer_client_data;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;

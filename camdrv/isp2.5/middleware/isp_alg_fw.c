@@ -4658,6 +4658,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		if (pdaf_info->sns_mode && pdaf_info->sns_mode[sn_mode])
 			statis_mem_input.statis_valid |= ISP_STATIS_VALID_PDAF;
 	}
+	statis_mem_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
 
 	if (cxt->ebd_cxt.ebd_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_EBD;
@@ -5495,7 +5496,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->af_cxt.af_supported = input_ptr->init_param->ex_info.af_supported;
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
-	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
+	cxt->ebd_cxt.ebd_support = 0;//input_ptr->init_param->ex_info.ebd_supported;
 	cxt->awb_cxt.color_support = input_ptr->init_param->ex_info.color_support;
 	ISP_LOGV("af_supported = %d, pdaf_support = %d, ebd_support = %d, color_support = %d",
 		cxt->af_cxt.af_supported, cxt->pdaf_cxt.pdaf_support, cxt->ebd_cxt.ebd_support, cxt->awb_cxt.color_support);
