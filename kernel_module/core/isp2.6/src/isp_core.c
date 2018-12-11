@@ -845,7 +845,7 @@ static int isp_adapt_blkparam(struct isp_pipe_context *pctx)
 	crop_end_x = src_trim->start_x + src_trim->size_x - 1;
 	crop_end_y = src_trim->start_y + src_trim->size_y - 1;
 
-	pr_info("crop %d %d %d %d, size(%d %d) => (%d %d)\n",
+	pr_debug("crop %d %d %d %d, size(%d %d) => (%d %d)\n",
 		crop_start_x, crop_start_y, crop_end_x, crop_end_y,
 		old_width, old_height, new_width, new_height);
 
@@ -897,6 +897,13 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 
 	fsync = (struct dcam_frame_synchronizer *)pframe->sync_data;
 
+	if (fsync) {
+		pr_debug("id %u, valid %d, x %u, y %u, w %u, h %u\n",
+			 fsync->index, fsync->nr3_me.valid,
+			 fsync->nr3_me.mv_x, fsync->nr3_me.mv_y,
+			 fsync->nr3_me.src_width, fsync->nr3_me.src_height);
+	}
+
 	nr3_ctx = &pctx->nr3_ctx;
 
 	nr3_ctx->width  = pctx->input_trim.size_x;
@@ -910,7 +917,7 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 	case MODE_3DNR_PRE:
 		nr3_ctx->type = NR3_FUNC_PRE;
 
-		if (fsync->nr3_me.valid) {
+		if (fsync && fsync->nr3_me.valid) {
 			nr3_ctx->mv.mv_x = fsync->nr3_me.mv_x;
 			nr3_ctx->mv.mv_y = fsync->nr3_me.mv_y;
 			nr3_ctx->mvinfo = &fsync->nr3_me;
@@ -942,7 +949,7 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 	case MODE_3DNR_CAP:
 		nr3_ctx->type = NR3_FUNC_CAP;
 
-		if (fsync->nr3_me.valid) {
+		if (fsync && fsync->nr3_me.valid) {
 			nr3_ctx->mv.mv_x = fsync->nr3_me.mv_x;
 			nr3_ctx->mv.mv_y = fsync->nr3_me.mv_y;
 		} else {
@@ -980,6 +987,8 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 		pr_debug("isp_offline_start_frame default\n");
 		break;
 	}
+
+	dcam_if_release_sync(fsync, pframe);
 
 	return 0;
 }
@@ -1227,9 +1236,9 @@ static int isp_offline_start_frame(void *ctx)
 		}
 
 		/* config store buffer */
-		pr_info("isp output buf, iova 0x%x, phy: 0x%x\n",
-				(uint32_t)out_frame->buf.iova[0],
-				(uint32_t)out_frame->buf.addr_k[0]);
+		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",
+			 (uint32_t)out_frame->buf.iova[0],
+			 (uint32_t)out_frame->buf.addr_k[0]);
 		isp_path_set_store_frm(path, out_frame);
 
 		if (path->bind_type == ISP_PATH_MASTER) {

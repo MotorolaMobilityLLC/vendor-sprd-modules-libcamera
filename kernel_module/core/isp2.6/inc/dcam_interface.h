@@ -187,14 +187,14 @@ struct nr3_me_data {
 };
 
 /*
- * Use dcam_frame_synchronizer to synchronize frames from different paths.
+ * Use dcam_frame_synchronizer to synchronize frames between different paths.
  * Normally we set WADDR for all paths in CAP_SOF interrupt, which is the best
  * opportunity that we bind buffers together and set frame number for them.
  * Modules such as 3DNR or LTM need to know the precise relationship between
  * bin/full buffer and statis buffer.
  * Some data which can be read directly from register is also included in this
  * object.
- * After data in image or statis buffer consumed, downstream modules must call
+ * After data in image or statis buffer consumed, consumer modules must call
  * dcam_if_release_sync() to notify dcam_if.
  *
  * @index:             frame index tracked by dcam_if
@@ -220,7 +220,7 @@ int dcam_if_set_sync_enable(void *handle, int path_id, int enable);
  * can be recycled for next use.
  */
 int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
-				struct camera_frame *frame);
+			 struct camera_frame *frame);
 /*
  * Test if frame data is valid for path_id. Data will be valid only after
  * TX_DONE interrupt.

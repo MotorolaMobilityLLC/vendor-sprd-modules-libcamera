@@ -62,7 +62,6 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 	struct dcam_path_desc *path = NULL;
 	struct camera_frame *frame = NULL;
 	struct dcam_frame_synchronizer *sync = NULL;
-	uint64_t sync_index = 0;
 
 	if (unlikely(!dev || !is_path_id(path_id)))
 		return NULL;
@@ -91,14 +90,14 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 
 	if (frame->sync_data) {
 		sync = (struct dcam_frame_synchronizer *)frame->sync_data;
-		sync_index = sync->index;
 		sync->valid |= BIT(path_id);
+		pr_debug("DCAM%u %s sync ready, id %u, sync 0x%p\n", dev->idx,
+			to_path_name(path_id), sync->index, sync);
 	}
 
 	/* frame->fid = path->frm_cnt; */
-	pr_info("DCAM%u %s: TX DONE, sync_id %llu, fid %u, sync 0x%p\n",
-		dev->idx, to_path_name(path_id), sync_index,
-		frame->fid, frame->sync_data);
+	pr_debug("DCAM%u %s: TX DONE, fid %u, sync 0x%p\n",
+		 dev->idx, to_path_name(path_id), frame->fid, frame->sync_data);
 
 	return frame;
 }
@@ -111,7 +110,6 @@ static void dcam_dispatch_frame(struct dcam_pipe_dev *dev,
 				struct camera_frame *frame,
 				enum dcam_cb_type type)
 {
-	struct dcam_frame_synchronizer *sync = NULL;
 	struct timespec cur_ts;
 
 	if (unlikely(!dev || !frame || !is_path_id(path_id)))
@@ -129,14 +127,6 @@ static void dcam_dispatch_frame(struct dcam_pipe_dev *dev,
 		cambuf_iommu_unmap(&frame->buf);
 
 	dev->dcam_cb_func(type, frame, dev->cb_priv_data);
-
-	/* TODO: release this in downstream module */
-	sync = (struct dcam_frame_synchronizer *)frame->sync_data;
-
-	pr_debug("DCAM%u path %d: sync=%p, valid=%d\n",
-		 dev->idx, path_id, sync, sync ? sync->nr3_me.valid : -1);
-
-	dcam_if_release_sync(sync, frame);
 }
 
 static void dcam_cap_sof(void *param)
@@ -214,10 +204,11 @@ static void dcam_preview_sof(void *param)
 /* for Flash */
 static void dcam_sensor_eof(void *param)
 {
+	/* TODO open this after flash ready */
+#if 0
 	struct camera_frame *pframe;
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
 
-	return;
 	pr_debug("DCAM%d sn_eof\n", dev->idx);
 
 	pframe = get_empty_frame();
@@ -227,6 +218,7 @@ static void dcam_sensor_eof(void *param)
 		pframe->irq_property = IRQ_DCAM_SN_EOF;
 		dev->dcam_cb_func(DCAM_CB_IRQ_EVENT, pframe, dev->cb_priv_data);
 	}
+#endif
 }
 
 /*
@@ -429,10 +421,16 @@ static void dcam_nr3_done(void *param)
 			sync->nr3_me.project_mode = (p >> 4) & 0x1;
 			/* currently ping-pong is disabled, mv will always be stored in ping */
 			sync->nr3_me.mv_x = (out0 >> 8) & 0xff;
-			sync->nr3_me.mv_y = out1 & 0xff;
+			sync->nr3_me.mv_y = out0 & 0xff;
 			sync->nr3_me.src_width = dev->cap_info.cap_size.size_x;
 			sync->nr3_me.src_height = dev->cap_info.cap_size.size_y;
 			sync->nr3_me.valid = 1;
+
+			/*
+			 * Since 3DNR AXI buffer is not used, we can release it
+			 * here. This will not affect motion vector in @sync.
+			 */
+			dcam_if_release_sync(sync, frame);
 		}
 
 		dcam_dispatch_frame(dev, DCAM_PATH_3DNR, frame,
@@ -628,8 +626,11 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 		}
 	}
 
+	/* TODO ignore DCAM_AFM_INTREQ0 now */
+	status &= ~BIT(DCAM_AFM_INTREQ0);
+
 	if (unlikely(status))
-		pr_debug("DCAM%u unhandled int 0x%x\n", dev->idx, status);
+		pr_warn("DCAM%u unhandled int 0x%x\n", dev->idx, status);
 
 	return IRQ_HANDLED;
 }

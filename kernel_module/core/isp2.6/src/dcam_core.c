@@ -1307,7 +1307,7 @@ static int dcam_create_offline_thread(void *param)
  */
 static inline void
 _init_sync_helper_locked(struct dcam_pipe_dev *dev,
-				struct dcam_sync_helper *helper)
+			 struct dcam_sync_helper *helper)
 {
 	memset(&helper->sync, 0, sizeof(struct dcam_frame_synchronizer));
 	helper->enabled = 0;
@@ -1373,7 +1373,7 @@ int dcam_if_set_sync_enable(void *handle, int path_id, int enable)
 	}
 	dev = (struct dcam_pipe_dev *)handle;
 
-	if (unlikely(path_id < 0 || path_id >= DCAM_PATH_MAX)) {
+	if (unlikely(!is_path_id(path_id))) {
 		pr_err("invalid param path_id: %d\n", path_id);
 		return -EINVAL;
 	}
@@ -1399,8 +1399,9 @@ int dcam_if_set_sync_enable(void *handle, int path_id, int enable)
 /*
  * Helper function to put dcam_sync_helper.
  */
-static inline void _put_sync_helper_locked(struct dcam_pipe_dev *dev,
-						struct dcam_sync_helper *helper)
+static inline void
+_put_sync_helper_locked(struct dcam_pipe_dev *dev,
+			struct dcam_sync_helper *helper)
 {
 	_init_sync_helper_locked(dev, helper);
 	list_add_tail(&helper->list, &dev->helper_list);
@@ -1411,12 +1412,13 @@ static inline void _put_sync_helper_locked(struct dcam_pipe_dev *dev,
  * can be recycled for next use.
  */
 int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
-				struct camera_frame *frame)
+			struct camera_frame *frame)
 {
 	struct dcam_sync_helper *helper = NULL;
 	struct dcam_pipe_dev *dev = NULL;
 	unsigned long flags = 0;
 	int ret = 0, path_id = 0;
+	bool ignore = false;
 
 	if (unlikely(!sync)) {
 		pr_err("invalid param sync\n");
@@ -1428,7 +1430,7 @@ int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
 			break;
 	}
 
-	if (unlikely(path_id < 0 || path_id >= DCAM_PATH_MAX)) {
+	if (unlikely(!is_path_id(path_id))) {
 		pr_err("invalid param path_id: %d\n", path_id);
 		return -EINVAL;
 	}
@@ -1437,9 +1439,12 @@ int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
 	helper = container_of(sync, struct dcam_sync_helper, sync);
 	dev = helper->dev;
 
+	pr_debug("DCAM%u %s release sync, id %u, data 0x%p\n",
+		dev->idx, to_path_name(path_id), sync->index, sync);
+
 	spin_lock_irqsave(&dev->helper_lock, flags);
 	if (unlikely(!helper->enabled)) {
-		pr_warn("ignore not enabled sync helper\n");
+		ignore = true;
 		goto exit;
 	}
 	helper->enabled &= ~BIT(path_id);
@@ -1448,6 +1453,9 @@ int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
 
 exit:
 	spin_unlock_irqrestore(&dev->helper_lock, flags);
+
+	if (ignore)
+		pr_warn("ignore not enabled sync helper\n");
 
 	return ret;
 }
@@ -1459,6 +1467,7 @@ struct dcam_sync_helper *dcam_get_sync_helper(struct dcam_pipe_dev *dev)
 {
 	struct dcam_sync_helper *helper = NULL;
 	unsigned long flags = 0;
+	bool running_low = false;
 
 	if (unlikely(!dev)) {
 		pr_err("invalid param dev\n");
@@ -1467,16 +1476,19 @@ struct dcam_sync_helper *dcam_get_sync_helper(struct dcam_pipe_dev *dev)
 
 	spin_lock_irqsave(&dev->helper_lock, flags);
 	if (unlikely(list_empty(&dev->helper_list))) {
-		pr_err("helper is running low...\n");
+		running_low = true;
 		goto exit;
 	}
 
 	helper = list_first_entry(&dev->helper_list,
-					struct dcam_sync_helper, list);
+				  struct dcam_sync_helper, list);
 	list_del(&helper->list);
 
 exit:
 	spin_unlock_irqrestore(&dev->helper_lock, flags);
+
+	if (running_low)
+		pr_err("helper is running low...\n");
 
 	return helper;
 }
@@ -1888,9 +1900,7 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	ret = dcam_set_mipi_cap(dev, &dev->cap_info);
 
-#ifdef NR3_DEV
 	atomic_set(&dev->path[DCAM_PATH_3DNR].user_cnt, 1);
-#endif
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
@@ -2057,10 +2067,10 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 
 	atomic_set(&dev->state, STATE_IDLE);
 
-	/* TODO: request sync in cam_core.c */
-	dev->helper_enabled |= BIT(DCAM_PATH_FULL);
-	dev->helper_enabled |= BIT(DCAM_PATH_BIN);
-	dev->helper_enabled |= BIT(DCAM_PATH_3DNR);
+	/* enable frame sync for 3DNR by default */
+	dcam_if_set_sync_enable(dev, DCAM_PATH_FULL, 1);
+	dcam_if_set_sync_enable(dev, DCAM_PATH_BIN, 1);
+	dcam_if_set_sync_enable(dev, DCAM_PATH_3DNR, 1);
 
 	/* for debugfs */
 	atomic_inc(&s_dcam_opened[dev->idx]);

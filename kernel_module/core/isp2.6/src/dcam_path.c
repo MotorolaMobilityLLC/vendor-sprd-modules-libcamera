@@ -458,13 +458,20 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 		/*vch3 path en */
 		DCAM_REG_MWR(idx, DCAM_CFG, BIT_5, (1 << 5));
 		break;
-#ifdef NR3_DEV
 	case DCAM_PATH_3DNR:
-		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x118);
-		DCAM_REG_WR(idx, NR3_FAST_ME_ROI_PARAM0, 0);
-		DCAM_REG_WR(idx, NR3_FAST_ME_ROI_PARAM1, ((4224 << 16) | 3136));
+		/*
+		 * TODO
+		 * should update this according to tuning param
+		 * leave 50 line to let NR3 DONE earlier than BIN PATH DONE
+		 */
+		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x010);
+		DCAM_REG_WR(idx, NR3_FAST_ME_ROI_PARAM0,
+			    (dev->cap_info.cap_size.start_x << 16)
+			    | dev->cap_info.cap_size.start_y);
+		DCAM_REG_WR(idx, NR3_FAST_ME_ROI_PARAM1,
+			    (dev->cap_info.cap_size.size_x << 16)
+			    | (dev->cap_info.cap_size.size_y - 50));
 		break;
-#endif
 	default:
 		break;
 	}
@@ -796,7 +803,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	}
 
 	/* bind frame sync data if it is not reserved buffer */
-	if (!frame->is_reserved && helper) {
+	if (!frame->is_reserved && is_sync_enabled(dev, path_id) && helper) {
 		helper->enabled |= BIT(path_id);
 		helper->sync.frames[path_id] = frame;
 		frame->sync_data = &helper->sync;

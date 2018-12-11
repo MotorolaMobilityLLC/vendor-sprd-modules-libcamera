@@ -35,9 +35,6 @@
 // TODO: how many helpers there should be?
 #define DCAM_SYNC_HELPER_COUNT 10
 
-/* enable 3dnr here for debug */
-//#define NR3_DEV
-
 struct dcam_pipe_dev;
 
 
@@ -219,6 +216,10 @@ struct dcam_pipe_dev {
 	struct cam_thread_info thread;
 };
 
+/*
+ * Test if frame sync is enabled for path @path_id.
+ */
+#define is_sync_enabled(dev, path_id) (dev->helper_enabled & BIT(path_id))
 /*
  * Get an empty dcam_sync_helper. Returns NULL if no empty helper remains.
  */

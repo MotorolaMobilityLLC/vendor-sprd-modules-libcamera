@@ -715,6 +715,11 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 
 			if ((module->cap_status != CAM_CAPTURE_START) &&
 				(module->cap_status != CAM_CAPTURE_RAWPROC)) {
+				/*
+				 * Release sync if we don't deliver this @pframe
+				 * to ISP.
+				 */
+				dcam_if_release_sync(pframe->sync_data, pframe);
 				ret = dcam_ops->cfg_path(
 						module->dcam_dev_handle,
 						DCAM_PATH_CFG_OUTPUT_BUF,
