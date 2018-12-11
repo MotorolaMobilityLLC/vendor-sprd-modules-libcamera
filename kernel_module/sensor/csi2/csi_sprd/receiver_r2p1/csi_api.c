@@ -247,7 +247,7 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 	}
 
 	csi_reg_base_save(csi_info, sensor_id);
-	csi_phy_power_down(phy_id, sensor_id, 1);
+	csi_phy_power_down(phy_id, csi_info->controller_id, sensor_id, 1);
 	s_csi_dt_info_p[sensor_id] = csi_info;
 	pr_info("csi dt info:sensor_id :%d, phy_id:%d, csi_id:%d, csi_info:0x%p\n",
 		sensor_id, csi_info->phy_id, csi_info->controller_id,
@@ -266,7 +266,7 @@ static int dphy_init(unsigned int bps_per_lane,
 	struct csi_dt_node_info *dt_info = NULL;
 
 	dt_info = csi_get_dt_node_data(sensor_id);
-	csi_phy_power_down(phy_id, sensor_id, 0);
+	csi_phy_power_down(phy_id, dt_info->controller_id, sensor_id, 0);
 	/* csi_controller_enable(dt_info, phy_id); */
 	dphy_init_state(phy_id, dt_info->controller_id, sensor_id);
 	ret = dphy_csi_path_cfg(dt_info);
@@ -301,7 +301,7 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id, int 
 		goto EXIT;
 
 	udelay(1);
-
+	phy_id = dt_info->phy_id;
 	ret = dphy_init(bps_per_lane, phy_id, sensor_id);
 	if (unlikely(ret))
 		goto EXIT;
@@ -334,7 +334,7 @@ int csi_api_close(uint32_t phy_id, int sensor_id)
 	if (CSI_PATTERN_ENABLE)
 		csi_ipg_mode_cfg(sensor_id, 0, 0, 4224, 3136);
 	csi_close(sensor_id);
-	csi_phy_power_down(phy_id, sensor_id, 1);
+	csi_phy_power_down(phy_id, dt_info->controller_id, sensor_id, 1);
 	csi_mipi_clk_disable(sensor_id);
 	pr_info("csi api close ret: %d\n", ret);
 

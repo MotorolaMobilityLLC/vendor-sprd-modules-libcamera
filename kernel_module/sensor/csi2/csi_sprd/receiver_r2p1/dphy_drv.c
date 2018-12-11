@@ -465,7 +465,7 @@ err:
 	return -1;
 }
 
-void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
+void csi_phy_power_down(unsigned int phyid, int csiId, int sensor_id, int is_eb)
 {
 	unsigned int shutdownz = 0;
 	unsigned int reg = 0;
@@ -539,8 +539,8 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
 		/* According to the time sequence of CSI-DPHY INIT,
 		 * need pull down POWER, DPHY-reset and CSI-2 controller reset
 		 */
-		csi_shut_down_phy(1, csiId);
-		csi_reset_shut_down(1, csiId);
+		csi_shut_down_phy(1, sensor_id);
+		csi_reset_shut_down(1, sensor_id);
 
 		if (phy->phy_id == PHY_2P2
 			|| phy->phy_id == PHY_2P2_M
@@ -573,14 +573,14 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb)
 			|| phy->phy_id == PHY_2P2_M
 			|| phy->phy_id == PHY_2P2_S) {
 			csi_dphy_2p2_testclr_clear(phy);
-			csi_dphy_2p2_reset(phy, csiId);
+			csi_dphy_2p2_reset(phy, sensor_id);
 		} else if (phy->phy_id == PHY_4LANE
 			|| phy->phy_id == PHY_2LANE){
 			CSI_REG_MWR(csiId, PHY_TEST_CRTL0, PHY_TESTCLR, 0);
 		}
 
-		csi_shut_down_phy(0, csiId);
-		csi_reset_shut_down(0, csiId);
+		csi_shut_down_phy(0, sensor_id);
+		csi_reset_shut_down(0, sensor_id);
 	}
 }
 
@@ -703,7 +703,7 @@ void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id)
 	}
 
 	if (phy->phy_id == PHY_4LANE || phy->phy_id == PHY_2LANE)
-		dphy_cfg_clr(phy->phy_id);
+		dphy_cfg_clr(sensor_id);
 
 	if (phy->phy_id == PHY_2P2
 		|| phy->phy_id == PHY_2P2_M

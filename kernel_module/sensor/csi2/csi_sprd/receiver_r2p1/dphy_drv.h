@@ -84,7 +84,7 @@ struct dphy_info {
 #define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_4LANE_FORCE_CSI_S_PHY_SHUTDOWNZ                             0x1000000
 #define MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_FORCE_CSI_PHY_SHUTDOWNZ                               0x4000000
 
-void csi_phy_power_down(unsigned int phyid, int csiId, int is_eb);
+void csi_phy_power_down(unsigned int phyid, int csiId, int sensor_id, int is_eb);
 int dphy_csi_path_cfg(struct csi_dt_node_info *dt_info);
 void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id);
 int phy_parse_dt(int phyid, struct device *dev);
