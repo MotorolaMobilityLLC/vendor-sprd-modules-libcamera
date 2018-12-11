@@ -58,8 +58,7 @@
 
 #define IMG_DEVICE_NAME			"sprd_image"
 #define CAMERA_TIMEOUT			5000
-#define ZOOM_THREAD_TIMEOUT		3000
-#define CAP_THREAD_TIMEOUT		3000
+#define THREAD_STOP_TIMEOUT		3000
 
 
 #define  CAM_COUNT  CAM_ID_MAX
@@ -218,6 +217,7 @@ struct camera_module {
 
 	uint32_t is_smooth_zoom;
 	uint32_t zoom_solution; /* for dynamic zoom type swicth. */
+	uint32_t rds_limit; /* raw downsizer limit */
 	struct camera_uinfo cam_uinfo;
 
 	uint32_t last_channel_id;
@@ -230,6 +230,14 @@ struct camera_module {
 
 	struct cam_thread_info cap_thrd;
 	struct cam_thread_info zoom_thrd;
+
+	/*  dump raw  for debug*/
+	struct cam_thread_info dump_thrd;
+	struct camera_queue dump_queue;
+	struct completion dump_com;
+	struct timespec cur_dump_ts;
+	uint32_t dump_count;
+	uint32_t in_dump;
 
 	struct timer_list cam_timer;
 	struct workqueue_struct *workqueue;
@@ -251,8 +259,6 @@ struct camera_group {
 	struct miscdevice *md;
 	struct platform_device *pdev;
 	struct camera_queue empty_frm_q;
-
-	struct cam_mem_dbg_info mem_dbg;
 };
 
 struct cam_ioctl_cmd {
@@ -262,9 +268,6 @@ struct cam_ioctl_cmd {
 };
 
 
-/* mem debug info/ops starts */
-
-struct cam_mem_dbg_info *g_mem_dbg;
 struct camera_queue *g_empty_frm_q;
 
 static struct isp_pipe_ops *isp_ops;
@@ -276,40 +279,6 @@ static int img_ioctl_stream_off(
 			unsigned long arg);
 static int raw_proc_done(struct camera_module *module);
 
-int mdbg_init(void)
-{
-	if (!g_mem_dbg)
-		return -1;
-
-	atomic_set(&g_mem_dbg->ion_alloc_cnt, 0);
-	atomic_set(&g_mem_dbg->ion_kmap_cnt, 0);
-	atomic_set(&g_mem_dbg->ion_dma_cnt, 0);
-	atomic_set(&g_mem_dbg->iommu_map_cnt, 0);
-	atomic_set(&g_mem_dbg->empty_frm_cnt, 0);
-	pr_info("reset to 0\n");
-	return 0;
-}
-
-int mdbg_check(void)
-{
-	int val[5];
-
-	if (!g_mem_dbg) {
-		pr_err("NULL g_mem_dbg\n");
-		return -1;
-	}
-
-	val[0] = atomic_read(&g_mem_dbg->ion_alloc_cnt);
-	val[1] = atomic_read(&g_mem_dbg->ion_kmap_cnt);
-	val[2] = atomic_read(&g_mem_dbg->ion_dma_cnt);
-	val[3] = atomic_read(&g_mem_dbg->iommu_map_cnt);
-	val[4] = atomic_read(&g_mem_dbg->empty_frm_cnt);
-	pr_info("mdbg info: %d, %d, %d, %d, %d\n",
-			val[0], val[1], val[2], val[3], val[4]);
-	return 0;
-}
-/* mem debug info/ops ends */
-/*****************************************************/
 
 
 static void put_k_frame(void *param)
@@ -323,9 +292,12 @@ static void put_k_frame(void *param)
 	}
 
 	frame = (struct camera_frame *)param;
-	cambuf_kunmap(&frame->buf);
-	cambuf_free(&frame->buf);
-
+	if (frame->buf.type == CAM_BUF_USER)
+		cambuf_put_ionbuf(&frame->buf);
+	else {
+		cambuf_kunmap(&frame->buf);
+		cambuf_free(&frame->buf);
+	}
 	ret = put_empty_frame(frame);
 }
 
@@ -380,6 +352,9 @@ static void alloc_buffers(struct work_struct *work)
 			channel->ch_id, (int)size, width, height);
 
 	total = 5;
+	if (module->dump_thrd.thread_task)
+		total += 3;
+
 	if (channel->ch_uinfo.slowmotion)
 		total = CAM_SHARED_BUF_NUM;
 	for (i = 0, count = 0; i < total; i++) {
@@ -564,6 +539,15 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 			/* return offline buffer to dcam available queue. */
 			pr_debug("isp reset dcam path out %d\n",
 				channel->dcam_path_id);
+
+			if (module->dump_thrd.thread_task && module->in_dump) {
+				ret = camera_enqueue(&module->dump_queue, pframe);
+				if (ret == 0) {
+					complete(&module->dump_com);
+					return 0;
+				}
+			}
+
 			if (module->cam_uinfo.is_4in1 &&
 				channel->aux_dcam_path_id == DCAM_PATH_BIN)
 				/* 4in1, buf set to dcam1 bin path */
@@ -957,7 +941,7 @@ static int cal_channel_size(struct camera_module *module)
 				ratio_v_h = (1 << RATIO_SHIFT) * crop_v->h / dst_v.h;
 				ratio_min = MIN(ratio_min, MIN(ratio_v_w, ratio_v_h));
 			}
-			ratio_min = MIN(ratio_min, (MAX_RDS_RATIO << RATIO_SHIFT));
+			ratio_min = MIN(ratio_min, ((module->rds_limit << RATIO_SHIFT) / 10));
 			ratio_min = MAX(ratio_min, (1 << RATIO_SHIFT));
 			pr_info("ratio_p %d %d, ratio_v %d %d ratio_min %d\n",
 				ratio_p_w, ratio_p_h, ratio_v_w, ratio_v_h, ratio_min);
@@ -1013,7 +997,7 @@ static int cal_channel_size(struct camera_module *module)
 				ratio_v_h = (1 << RATIO_SHIFT) * max.h / dst_v.h;
 				ratio_min = MIN(ratio_min, MIN(ratio_v_w, ratio_v_h));
 			}
-			ratio_min = MIN(ratio_min, (MAX_RDS_RATIO << RATIO_SHIFT));
+			ratio_min = MIN(ratio_min, ((module->rds_limit << RATIO_SHIFT) / 10));
 			ratio_min = MAX(ratio_min, (1 << RATIO_SHIFT));
 		}
 
@@ -1197,7 +1181,8 @@ static int zoom_proc(void *param)
 	ch_prev = &module->channel[CAM_CH_PRE];
 	ch_cap = &module->channel[CAM_CH_CAP];
 	ch_vid = &module->channel[CAM_CH_VID];
-
+next:
+	pre_zoom_coeff = vid_zoom_coeff = cap_zoom_coeff =NULL;
 	/* Get node from the preview/video/cap coef queue if exist */
 	if (ch_prev->enable)
 		pre_zoom_coeff = camera_dequeue(&ch_prev->zoom_coeff_queue);
@@ -1238,8 +1223,145 @@ static int zoom_proc(void *param)
 			config_channel_size(module, ch_cap);
 		if (ch_prev->enable && (update_pv || update_always))
 			config_channel_size(module, ch_prev);
-		return 1;
+		goto next;
 	}
+	return 0;
+}
+
+static int capture_proc(void *param)
+{
+	struct camera_module *module;
+
+	module = (struct camera_module *)param;
+	if (module->cap_status == CAM_CAPTURE_RAWPROC)
+		raw_proc_done(module);
+	/* todo: else for normal capture handling. */
+	return 0;
+}
+
+
+#define CAMERA_DUMP_PATH "/data/vendor/cameraserver/"
+/* todo: selinux permission issue. */
+/* will create thread in user to read raw buffer*/
+#if 0
+static void write_image_to_file(uint8_t *buffer,
+	ssize_t size, const char *file)
+{
+	ssize_t result = 0, total = 0;
+	struct file *wfp;
+
+	wfp = filp_open(file, O_CREAT|O_RDWR, 0666);
+	if (IS_ERR_OR_NULL(wfp)) {
+		pr_err("fail to open file %s\n", file);
+		return;
+	}
+	pr_info("write image buf=%p, size=%d\n", buffer, (uint32_t)size);
+	do {
+		result = kernel_write(wfp, buffer, size, 0);
+		pr_info("write result: %d, size: %d\n",
+				(uint32_t)result,  (uint32_t)size);
+		if (result > 0) {
+			size -= result;
+			buffer += result;
+		}
+		total += result;
+	} while ((result > 0) && (size > 0));
+	filp_close(wfp, NULL);
+	pr_info("write image done, total=%d \n", (uint32_t)total);
+}
+#endif
+
+static int dump_one_frame  (struct camera_module *module,
+	struct camera_frame *pframe)
+{
+	ssize_t size = 0;
+	struct channel_context *channel;
+	enum cam_ch_id ch_id;
+	uint8_t file_name[256] = { '\0' };
+	uint8_t tmp_str[20] = { '\0' };
+
+	ch_id = pframe->channel_id;
+	channel = &module->channel[ch_id];
+	strcat(file_name, CAMERA_DUMP_PATH);
+	if (ch_id == CAM_CH_PRE)
+		strcat(file_name,"prevraw_");
+	else
+		strcat(file_name,"capraw_");
+
+	sprintf(tmp_str, "%d.", (uint32_t)module->cur_dump_ts.tv_sec);
+	strcat(file_name, tmp_str);
+	sprintf(tmp_str, "%06d", (uint32_t)(module->cur_dump_ts.tv_nsec / NSEC_PER_USEC));
+	strcat(file_name, tmp_str);
+
+	sprintf(tmp_str, "_w%d", pframe->width);
+	strcat(file_name, tmp_str);
+       sprintf(tmp_str, "_h%d", pframe->height);
+	strcat(file_name, tmp_str);
+
+	sprintf(tmp_str, "_No%d", pframe->fid);
+	strcat(file_name,tmp_str);
+	strcat(file_name,".mipi_raw");
+
+	size = ((pframe->width * 10 / 8 + 3) & (~3)) * pframe->height;
+	/*write_image_to_file((char*)pframe->buf.addr_k[0],size, file_name);*/
+
+	pr_info("dump for ch %d, size %d, kaddr %p, file %s\n", ch_id,
+		(int)size, (void *)pframe->buf.addr_k[0], file_name);
+
+	/* return it to dcam output queue */
+	dcam_ops->cfg_path(module->dcam_dev_handle,
+			DCAM_PATH_CFG_OUTPUT_BUF,
+			channel->dcam_path_id, pframe);
+	return 0;
+}
+
+static int dumpraw_proc(void *param)
+{
+	uint32_t idx, cnt = 0;
+	struct camera_module *module;
+	struct camera_frame *pframe = NULL;
+	struct cam_dbg_dump *dbg = &g_dbg_dump;
+
+	pr_info("enter. %p\n", param);
+	module = (struct camera_module *)param;
+	idx = module->dcam_idx;
+	if (idx > 1 || !module->dcam_dev_handle)
+		return 0;
+
+	mutex_lock(&dbg->dump_lock);
+	dbg->dump_ongoing |= (1 << idx);
+	module->dump_count = dbg->dump_count;
+	init_completion(&module->dump_com);
+	mutex_unlock(&dbg->dump_lock);
+
+	pr_info("start dump count: %d\n", module->dump_count);
+	while (module->dump_count) {
+		module->in_dump = 1;
+		ktime_get_ts(&module->cur_dump_ts);
+		if (wait_for_completion_interruptible(
+			&module->dump_com) == 0) {
+			if ((atomic_read(&module->state) != CAM_RUNNING) ||
+				(module->dump_count == 0))
+				break;
+			pframe = camera_dequeue(&module->dump_queue);
+			if (!pframe)
+				break;
+			dump_one_frame(module, pframe);
+			cnt++;
+		} else {
+			pr_debug("dump raw proc exit.");
+			break;
+		}
+		module->dump_count--;
+	}
+	module->dump_count = 0;
+	module->in_dump = 0;
+	pr_info("end dump, real cnt %d\n", cnt);
+
+	mutex_lock(&dbg->dump_lock);
+	dbg->dump_count = 0;
+	dbg->dump_ongoing &= ~(1 << idx);
+	mutex_unlock(&dbg->dump_lock);
 	return 0;
 }
 
@@ -1353,8 +1475,8 @@ static int init_cam_channel(
 	struct isp_path_base_desc path_desc;
 	struct img_size max_size;
 
-	/* for test. */
-	module->zoom_solution = 1;
+	/* for debug. */
+	module->zoom_solution = g_dbg_zoom_mode;
 	pr_info("zoom_solution %d\n", module->zoom_solution);
 
 	ch_uinfo = &channel->ch_uinfo;
@@ -1370,7 +1492,15 @@ static int init_cam_channel(
 		new_isp_ctx = 1;
 		new_isp_path = 1;
 		new_dcam_path = 1;
-		max_size.w = ch_uinfo->dst_size.w;
+
+		module->rds_limit = g_dbg_rds_limit;
+		if (module->zoom_solution == 0) {
+			max_size.w = ch_uinfo->src_size.w / 2;
+		} else {
+			max_size.w = (ch_uinfo->src_size.w * 10 + 30) / module->rds_limit;
+			if (max_size.w < ch_uinfo->dst_size.w)
+				max_size.w = ch_uinfo->dst_size.w;
+		}
 		break;
 
 	case CAM_CH_VID:
@@ -1631,7 +1761,7 @@ static int sprd_stop_timer(struct timer_list *cam_timer)
 	return 0;
 }
 
-static int zoom_thread_loop(void *arg)
+static int camera_thread_loop(void *arg)
 {
 	int idx;
 	struct camera_module *module;
@@ -1645,62 +1775,57 @@ static int zoom_thread_loop(void *arg)
 	thrd = (struct cam_thread_info *)arg;
 	module = (struct camera_module *)thrd->ctx_handle;
 	idx = module->idx;
-
+	pr_info("%s loop starts\n", thrd->thread_name);
 	while (1) {
 		if (wait_for_completion_interruptible(
 			&thrd->thread_com) == 0) {
-			if (atomic_cmpxchg(
-					&thrd->thread_stop, 1, 0) == 1) {
-				pr_info("cam%d zoom thread stop.\n", idx);
+			if (atomic_cmpxchg(&thrd->thread_stop, 1, 0) == 1) {
+				pr_info("thread %s should stop.\n", thrd->thread_name);
 				break;
 			}
-			pr_debug("zoom thread com done.\n");
-			while(thrd->proc_func(module)) {};
+			pr_info("thread %s trigger\n", thrd->thread_name);
+			thrd->proc_func(module);
 		} else {
-			pr_debug("zoom thread exit!");
+			pr_debug("thread %s exit!", thrd->thread_name);
 			break;
 		}
 	}
-	pr_info("cam%d zoom thread stopped.\n", idx);
 	complete(&thrd->thread_stop_com);
+	pr_info("%s thread stopped.\n", thrd->thread_name);
 	return 0;
 }
 
-static int capture_thread_loop(void *arg)
+static int camera_create_thread(struct camera_module *module,
+	struct cam_thread_info *thrd, void *func)
 {
-	int idx;
-	struct camera_module *module;
-	struct cam_thread_info *thrd;
-
-	if (!arg) {
-		pr_err("fail to get valid input ptr\n");
-		return -1;
+	thrd->ctx_handle = module;
+	thrd->proc_func = func;
+	atomic_set(&thrd->thread_stop, 0);
+	init_completion(&thrd->thread_com);
+	init_completion(&thrd->thread_stop_com);
+	thrd->thread_task = kthread_run(camera_thread_loop,
+				thrd, thrd->thread_name);
+	if (IS_ERR_OR_NULL(thrd->thread_task)) {
+		pr_err("fail to start thread %s\n", thrd->thread_name);
+		thrd->thread_task = NULL;
+		return -EFAULT;
 	}
-
-	thrd = (struct cam_thread_info *)arg;
-	module = (struct camera_module *)thrd->ctx_handle;
-	idx = module->idx;
-
-	while (1) {
-		if (wait_for_completion_interruptible(
-			&thrd->thread_com) == 0) {
-			if (atomic_cmpxchg(
-					&thrd->thread_stop, 1, 0) == 1) {
-				pr_info("cam%d capture thread stop.\n", idx);
-				break;
-			}
-			pr_debug("capture thread com done.\n");
-			if (module->cap_status == CAM_CAPTURE_RAWPROC)
-				raw_proc_done(module);
-			/* todo: else for normal capture handling. */
-		} else {
-			pr_debug("capture thread exit!");
-			break;
-		}
-	}
-	complete(&thrd->thread_stop_com);
-	pr_info("cam%d capture thread stopped.\n", idx);
 	return 0;
+}
+
+static void camera_stop_thread(struct cam_thread_info *thrd)
+{
+	unsigned long timeleft = 0;
+
+	if (thrd->thread_task) {
+		atomic_set(&thrd->thread_stop, 1);
+		complete(&thrd->thread_com);
+		timeleft = wait_for_completion_timeout(&thrd->thread_stop_com,
+				msecs_to_jiffies(THREAD_STOP_TIMEOUT));
+		if (timeleft == 0)
+			pr_err("%s thread stop timeout\n", thrd->thread_name);
+		thrd->thread_task = NULL;
+	}
 }
 
 static int camera_module_init(struct camera_module *module)
@@ -1709,8 +1834,6 @@ static int camera_module_init(struct camera_module *module)
 	int ch;
 	struct channel_context *channel;
 	struct cam_thread_info *thrd;
-	struct cam_thread_info *zoom_thrd;
-	char thread_name[32] = { 0 };
 
 	pr_info("sprd_img: camera dev %d init start!\n", module->idx);
 
@@ -1728,38 +1851,25 @@ static int camera_module_init(struct camera_module *module)
 
 	/* create capture thread */
 	thrd = &module->cap_thrd;
-	thrd->ctx_handle = module;
-	thrd->proc_func = NULL;
-	atomic_set(&thrd->thread_stop, 0);
-	init_completion(&thrd->thread_com);
-	init_completion(&thrd->thread_stop_com);
-
-	sprintf(thread_name, "cam%d_capture", module->idx);
-	thrd->thread_task = kthread_run(
-				capture_thread_loop,
-				thrd, thread_name);
-	if (IS_ERR_OR_NULL(thrd->thread_task)) {
-		pr_err("fail to start capture thread for cam%d\n",
-				module->idx);
-		return -EFAULT;
-	}
+	sprintf(thrd->thread_name, "cam%d_capture", module->idx);
+	ret = camera_create_thread(module, thrd, capture_proc);
+	if (ret)
+		goto exit;
 
 	/* create zoom thread */
-	zoom_thrd = &module->zoom_thrd;
-	zoom_thrd->ctx_handle = module;
-	zoom_thrd->proc_func = zoom_proc;
-	atomic_set(&zoom_thrd->thread_stop, 0);
-	init_completion(&zoom_thrd->thread_com);
-	init_completion(&zoom_thrd->thread_stop_com);
+	thrd = &module->zoom_thrd;
+	sprintf(thrd->thread_name, "cam%d_zoom", module->idx);
+	ret = camera_create_thread(module, thrd, zoom_proc);
+	if (ret)
+		goto exit;
 
-	sprintf(thread_name, "cam%d_zoom", module->idx);
-	zoom_thrd->thread_task = kthread_run(
-				zoom_thread_loop,
-				zoom_thrd, thread_name);
-	if (IS_ERR_OR_NULL(zoom_thrd->thread_task)) {
-		pr_err("fail to start zoom thread for cam%d\n",
-				module->idx);
-		return -EFAULT;
+	if (g_dbg_dump.dump_en) {
+		/* create dump thread */
+		thrd = &module->dump_thrd;
+		sprintf(thrd->thread_name, "cam%d_dumpraw", module->idx);
+		ret = camera_create_thread(module, thrd, dumpraw_proc);
+		if (ret)
+			goto exit;
 	}
 
 	sprd_init_timer(&module->cam_timer, (unsigned long)module);
@@ -1767,43 +1877,18 @@ static int camera_module_init(struct camera_module *module)
 
 	pr_info("module[%d] init OK %p!\n", module->idx, module);
 	return 0;
-
+exit:
+	camera_stop_thread(&module->cap_thrd);
+	camera_stop_thread(&module->zoom_thrd);
+	camera_stop_thread(&module->dump_thrd);
 	return ret;
 }
 
 static int camera_module_deinit(struct camera_module *module)
 {
-	int cnt = 0;
-	struct cam_thread_info *thrd;
-	struct cam_thread_info *zoom_thrd;
-	unsigned long timeleft = 0;
-
-	/* stop capture thread */
-	thrd = (struct cam_thread_info *)&module->cap_thrd;
-	if (thrd->thread_task) {
-		atomic_set(&thrd->thread_stop, 1);
-		complete(&thrd->thread_com);
-		timeleft = wait_for_completion_timeout(&thrd->thread_stop_com,
-				msecs_to_jiffies(CAP_THREAD_TIMEOUT));
-		if (timeleft == 0)
-			pr_err("capture thread stop error\n");
-		thrd->thread_task = NULL;
-		pr_info("capture thread stopped. wait %d ms\n", cnt);
-	}
-
-	/* stop zoom thread */
-	zoom_thrd = (struct cam_thread_info *)&module->zoom_thrd;
-	if (zoom_thrd->thread_task) {
-		atomic_set(&zoom_thrd->thread_stop, 1);
-		complete(&zoom_thrd->thread_com);
-		timeleft = wait_for_completion_timeout(&zoom_thrd->thread_stop_com,
-				msecs_to_jiffies(ZOOM_THREAD_TIMEOUT));
-		if (timeleft == 0)
-			pr_err("zoom thread stop error\n");
-		zoom_thrd->thread_task = NULL;
-		pr_info("zoom thread stopped.\n");
-	}
-
+	camera_stop_thread(&module->cap_thrd);
+	camera_stop_thread(&module->zoom_thrd);
+	camera_stop_thread(&module->dump_thrd);
 	return 0;
 }
 
@@ -2466,13 +2551,12 @@ static int img_ioctl_set_crop(
 			pr_err("zoom is not allowed during capture\n");
 			goto exit;
 		}
-		zoom_param = get_empty_frame();
 		crop = kzalloc(sizeof(struct sprd_img_rect), GFP_KERNEL);
 		if (crop == NULL) {
-			put_empty_frame(zoom_param);
 			ret = -ENOMEM;
 			goto exit;
 		}
+		zoom_param = get_empty_frame();
 		zoom_param->priv_data = (void *)crop;
 		zoom = 1;
 	} else {
@@ -3049,6 +3133,18 @@ static int img_ioctl_stream_on(
 	atomic_set(&module->timeout_flag, 1);
 	ret = sprd_start_timer(&module->cam_timer, CAMERA_TIMEOUT);
 
+	if (module->dump_thrd.thread_task) {
+		camera_queue_init(&module->dump_queue, 10, 0, put_k_frame);
+		init_completion(&module->dump_com);
+		mutex_lock(&g_dbg_dump.dump_lock);
+		i = module->dcam_idx;
+		if (i < 2) {
+			g_dbg_dump.dump_start[i] = &module->dump_thrd.thread_com;
+			g_dbg_dump.dump_count = 0;
+		}
+		mutex_unlock(&g_dbg_dump.dump_lock);
+	}
+
 	pr_info("stream on done.\n");
 	return 0;
 
@@ -3086,6 +3182,19 @@ static int img_ioctl_stream_off(
 	pr_info("cam %d stream off. state: %d\n",
 		module->idx, atomic_read(&module->state));
 	atomic_set(&module->state, CAM_STREAM_OFF);
+
+	/* stop raw dump */
+	if (module->dump_thrd.thread_task) {
+		if (module->in_dump)
+			complete(&module->dump_com);
+		mutex_lock(&g_dbg_dump.dump_lock);
+		i = module->dcam_idx;
+		if (i < 2) {
+			g_dbg_dump.dump_start[i] = NULL;
+			g_dbg_dump.dump_count = 0;
+		}
+		mutex_unlock(&g_dbg_dump.dump_lock);
+	}
 
 	if (running) {
 		ret = dcam_ops->stop(module->dcam_dev_handle);
@@ -3180,6 +3289,8 @@ static int img_ioctl_stream_off(
 		camera_queue_clear(&module->frm_queue);
 		camera_queue_clear(&module->irq_queue);
 		camera_queue_clear(&module->statis_queue);
+		if (module->dump_thrd.thread_task)
+			camera_queue_clear(&module->dump_queue);
 	}
 
 	atomic_set(&module->state, CAM_IDLE);
@@ -3196,7 +3307,7 @@ static int img_ioctl_start_capture(
 			unsigned long arg)
 {
 	int ret = 0;
-		struct sprd_img_capture_param param;
+	struct sprd_img_capture_param param;
 
 	ret = copy_from_user(&param, (void __user *)arg,
 			sizeof(struct sprd_img_capture_param));
@@ -3214,6 +3325,21 @@ static int img_ioctl_start_capture(
 	if (param.type != DCAM_CAPTURE_STOP)
 		module->cap_status = CAM_CAPTURE_START;
 
+	/* alway trigger dump for capture */
+	if (module->dump_thrd.thread_task) {
+		uint32_t idx = module->dcam_idx;
+		struct cam_dbg_dump *dbg = &g_dbg_dump;
+
+		if (idx < 2 && module->dcam_dev_handle) {
+			mutex_lock(&dbg->dump_lock);
+			if (dbg->dump_ongoing & (1 << idx)) {
+				complete(&module->dump_thrd.thread_com);
+				module->dump_count = 99;
+			}
+			mutex_unlock(&dbg->dump_lock);
+		}
+	}
+
 	pr_info("cam %d start capture.\n", module->idx);
 	return ret;
 }
@@ -3225,6 +3351,13 @@ static int img_ioctl_stop_capture(
 {
 	module->cap_status = CAM_CAPTURE_STOP;
 	pr_info("cam %d stop capture.\n", module->idx);
+
+	/* stop dump for capture */
+	if (module->dump_thrd.thread_task && module->in_dump) {
+		module->dump_count = 0;
+		complete(&module->dump_com);
+	}
+
 	return 0;
 }
 
@@ -3789,9 +3922,6 @@ static int test_dcam(struct camera_module *module,
 		user_frame->channel_id = channel->ch_id;
 		user_frame->buf.type = CAM_BUF_USER;
 		user_frame->buf.mfd[0] = test_info->inbuf_fd;
-		user_frame->buf.addr_k[0] = test_info->inbuf_kaddr[1];
-		user_frame->buf.addr_k[0] <<= 32;
-		user_frame->buf.addr_k[0] |= test_info->inbuf_kaddr[0];
 		cambuf_get_ionbuf(&user_frame->buf);
 		pr_info("src buf kaddr %p.\n",
 				(void *)user_frame->buf.addr_k[0]);
@@ -3801,8 +3931,9 @@ static int test_dcam(struct camera_module *module,
 	}
 
 	pr_info("copy source image.\n");
-	memcpy((void *)pframe->buf.addr_k[0],
-			(void *)user_frame->buf.addr_k[0], size);
+	/* todo: user should alloc new buffer for output */
+	/* memcpy((void *)pframe->buf.addr_k[0],
+			(void *)user_frame->buf.addr_k[0], size); */
 
 	ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 				DCAM_PATH_CFG_OUTPUT_BUF,
@@ -4345,25 +4476,15 @@ rewait:
 			read_op.parm.frame.sec = pframe->time.tv_sec;
 			read_op.parm.frame.usec = pframe->time.tv_usec;
 			read_op.parm.frame.monoboottime = pframe->boot_time;
-			read_op.parm.frame.yaddr_vir = (
-				uint32_t)pframe->buf.addr_vir[0];
-			read_op.parm.frame.uaddr_vir = (
-				uint32_t)pframe->buf.addr_vir[1];
-			read_op.parm.frame.vaddr_vir = (
-				uint32_t)pframe->buf.addr_vir[2];
+			read_op.parm.frame.yaddr_vir = (uint32_t)pframe->buf.addr_vir[0];
+			read_op.parm.frame.uaddr_vir = (uint32_t)pframe->buf.addr_vir[1];
+			read_op.parm.frame.vaddr_vir = (uint32_t)pframe->buf.addr_vir[2];
 			read_op.parm.frame.mfd = pframe->buf.mfd[0];
 			/* for statis buffer address below. */
-			read_op.parm.frame.phy_addr = (
-				uint32_t)pframe->buf.iova[0];
-			read_op.parm.frame.addr_offset = (
-				uint32_t)pframe->buf.addr_vir[0];
+			read_op.parm.frame.phy_addr = (uint32_t)pframe->buf.iova[0];
+			read_op.parm.frame.addr_offset = (uint32_t)pframe->buf.addr_vir[0];
 			read_op.parm.frame.vir_addr =
-					(uint32_t)(
-						pframe->buf.addr_vir[0] >> 32);
-			read_op.parm.frame.kaddr[0] = (
-				uint32_t)pframe->buf.addr_k[0];
-			read_op.parm.frame.kaddr[1] =
-					(uint32_t)(pframe->buf.addr_k[0] >> 32);
+				(uint32_t)((uint64_t)pframe->buf.addr_vir[0] >> 32);
 		} else {
 			pr_err("error event %d\n", pframe->evt);
 			read_op.evt = pframe->evt;
@@ -4574,9 +4695,7 @@ static int sprd_img_open(struct inode *node, struct file *file)
 				CAM_EMP_Q_LEN_MAX, 0,
 				free_empty_frame);
 
-		g_mem_dbg = &grp->mem_dbg;
-		pr_info("init %p, %p\n", g_empty_frm_q, g_mem_dbg);
-		mdbg_init();
+		pr_info("init %p\n", g_empty_frm_q);
 	}
 
 	module->idx = idx;
@@ -4688,7 +4807,7 @@ static int sprd_img_release(struct inode *node, struct file *file)
 		cambuf_unreg_iommudev(CAM_IOMMUDEV_DCAM);
 		cambuf_unreg_iommudev(CAM_IOMMUDEV_ISP);
 
-		pr_info("release %p, %p\n", g_empty_frm_q, g_mem_dbg);
+		pr_info("release %p\n", g_empty_frm_q);
 
 		/* g_leak_debug_cnt should be 0 after clr, or else memory leak.
 		 */
@@ -4696,7 +4815,6 @@ static int sprd_img_release(struct inode *node, struct file *file)
 		g_empty_frm_q = NULL;
 
 		ret = mdbg_check();
-		g_mem_dbg = NULL;
 
 		dcam_ops = NULL;
 		isp_ops = NULL;

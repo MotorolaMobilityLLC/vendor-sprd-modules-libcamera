@@ -26,6 +26,55 @@
 
 #define CAM_BUF_ALIGN_SIZE		4
 
+
+/*************** for global debug starts********************/
+
+/* for iommu
+ * 0: auto - dts configured
+ * 1: iommu off and reserved memory
+ * 2: iommu on and reserved memory
+ * 3: iommu on and system memory
+ */
+enum cam_iommu_mode {
+	IOMMU_AUTO = 0,
+	IOMMU_OFF,
+	IOMMU_ON_RESERVED,
+	IOMMU_ON,
+};
+extern int g_dbg_iommu_mode;
+extern int g_dbg_set_iommu_mode;
+
+
+/* for zoom debug during bringup */
+extern uint32_t g_dbg_zoom_mode;
+extern uint32_t g_dbg_rds_limit;
+
+
+/* for memory leak debug */
+struct cam_mem_dbg_info {
+	atomic_t ion_alloc_cnt;
+	atomic_t ion_kmap_cnt;
+	atomic_t ion_dma_cnt;
+	atomic_t iommu_map_cnt[6];
+	atomic_t empty_frm_cnt;
+};
+extern struct cam_mem_dbg_info *g_mem_dbg;
+
+
+/* for raw picture dump */
+struct cam_dbg_dump {
+	uint32_t dump_en;
+	uint32_t dump_count;
+	uint32_t dump_ongoing;
+	struct mutex dump_lock;
+	struct completion *dump_start[3];
+};
+extern struct cam_dbg_dump g_dbg_dump;
+
+/*************** for global debug ends ********************/
+
+
+
 enum camera_cap_type {
 	CAM_CAP_NORMAL = 0,
 	CAM_CAP_RAW_FULL,
@@ -118,18 +167,12 @@ struct img_scaler_info {
 	struct img_size dst_size;
 };
 
-struct cam_mem_dbg_info {
-	atomic_t ion_alloc_cnt;
-	atomic_t ion_kmap_cnt;
-	atomic_t ion_dma_cnt;
-	atomic_t iommu_map_cnt;
-	atomic_t empty_frm_cnt;
-};
 
 struct cam_thread_info {
 	atomic_t thread_stop;
 	void *ctx_handle;
 	int (*proc_func)(void *param);
+	uint8_t thread_name[32];
 	struct completion thread_com;
 	struct completion thread_stop_com;
 	struct task_struct *thread_task;
@@ -159,7 +202,6 @@ enum dcam_cb_type {
 
 };
 
-extern struct cam_mem_dbg_info *g_mem_dbg;
 extern struct camera_queue *g_empty_frm_q;
 
 typedef int(*isp_dev_callback)(enum isp_cb_type type, void *param,

@@ -84,4 +84,6 @@ int cambuf_kunmap(struct camera_buf *buf_info);
 int  cambuf_alloc(struct camera_buf *buf_info,
 		size_t size, size_t align, int iommu_enable);
 int cambuf_free(struct camera_buf *buf_info);
+
+int mdbg_check(void);
 #endif /* _CAM_BUF_H_ */

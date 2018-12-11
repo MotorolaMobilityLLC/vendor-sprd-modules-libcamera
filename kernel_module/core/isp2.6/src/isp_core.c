@@ -57,10 +57,7 @@
 
 
 uint32_t line_buffer_len;
-static uint32_t set_line_buffer_len;
-static int s_work_mode = ISP_CFG_MODE;
 unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
-
 
 static DEFINE_MUTEX(isp_pipe_dev_mutex);
 static struct isp_pipe_dev *s_isp_dev;
@@ -75,12 +72,18 @@ static int sprd_isp_put_path(
 static int isp_slice_ctx_init(struct isp_pipe_context *pctx);
 
 
-/* debug fs starts */
-//#define DBG_REGISTER
-uint32_t s_isp_bypass[ISP_CONTEXT_NUM];
-#ifdef DBG_REGISTER
-static uint32_t common_reg[ISP_CONTEXT_MAX][512];
+/* isp debug fs starts */
+#define DBG_REGISTER
+#define WORK_MODE_SLEN  2
+#define LBUF_LEN_SLEN  8
+
+static struct dentry *debugfs_base;
+static uint32_t s_dbg_linebuf_len = ISP_LINE_BUFFER_W;
+static int s_dbg_work_mode = ISP_CFG_MODE;
+uint32_t s_isp_bypass[ISP_CONTEXT_NUM] = { 0, 0, 0, 0 };
 static uint32_t debug_ctx_id[4] = {0, 1, 2, 3};
+int g_dbg_iommu_mode = IOMMU_AUTO;
+int g_dbg_set_iommu_mode = IOMMU_AUTO;;
 
 struct bypass_isptag {
 	char *p; /* abbreviation */
@@ -138,109 +141,7 @@ static const struct bypass_isptag tb_bypass[] = {
 
 };
 
-static int read_common_reg(uint32_t  ctx_id)
-{
-	uint32_t  *ptr = &common_reg[ctx_id][0];
-	unsigned long addr;
-	unsigned long int_base[4] = {
-		ISP_P0_INT_BASE,
-		ISP_C0_INT_BASE,
-		ISP_P1_INT_BASE,
-		ISP_C1_INT_BASE,
-	};
-
-	pr_info("ctx_id %d,  ptr %p\n", ctx_id, ptr);
-
-	for (addr = int_base[ctx_id]; addr <= (int_base[ctx_id] +
-		ISP_INT_ALL_DONE_SRC_CTRL); addr += 4)
-
-		*ptr++ = ISP_HREG_RD(addr);
-
-	for (addr = ISP_COMMON_VERSION; addr <= ISP_BLOCK_MODE; addr += 4)
-		*ptr++ = ISP_HREG_RD(addr);
-
-	for (addr = ISP_CFG_STATUS0; addr <= ISP_CFG_STATUS4; addr += 4)
-		*ptr++ = ISP_HREG_RD(addr);
-
-	for (addr = ISP_ARBITER_WR_STATUS; addr <= ISP_ARBITER_CHK_SUM0;
-		addr += 4)
-		*ptr++ = ISP_HREG_RD(addr);
-
-	for (addr = ISP_AXI_WR_MASTER_STATUS; addr <= ISP_AXI_PARAM3; addr += 4)
-		*ptr++ = ISP_HREG_RD(addr);
-
-	for (addr = ISP_CFG0_BUF; addr <= ISP_CFG0_BUF + 220; addr += 4)
-		*ptr++ = ISP_HREG_RD(addr);
-
-	for (addr = ISP_CFG1_BUF; addr <= ISP_CFG1_BUF + 220; addr += 4)
-		*ptr++ = ISP_HREG_RD(addr);
-
-	addr = (unsigned long)ptr - (unsigned long)&common_reg[ctx_id][0];
-	pr_info("read total num %d\n", (uint32_t)addr/4);
-
-	return 0;
-}
-
-
-static int common_reg_show(struct seq_file *s, void *unused)
-{
-	uint32_t *ptr = (uint32_t *)s->private;
-	uint32_t addr;
-
-	pr_info("ptr %p\n",  ptr);
-
-	seq_puts(s, "---------dump regsigters of ISP----------------\n");
-
-	seq_puts(s, "=== INTERRUPT ====\n");
-	for (addr = ISP_INT_STATUS; addr <= ISP_INT_ALL_DONE_SRC_CTRL;
-		addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "===common====\n");
-	for (addr = ISP_COMMON_VERSION; addr <= ISP_BLOCK_MODE; addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "=== CFG MODULE ====\n");
-	for (addr = ISP_CFG_STATUS0; addr <= ISP_CFG_STATUS4; addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "=== ARBITER ====\n");
-	for (addr = ISP_ARBITER_WR_STATUS; addr <= ISP_ARBITER_CHK_SUM0;
-		addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "=== AXI ====\n");
-	for (addr = ISP_AXI_WR_MASTER_STATUS; addr <= ISP_AXI_PARAM3;
-		addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "=== CFG0 BUF ====\n");
-	for (addr = ISP_CFG0_BUF; addr <= ISP_CFG0_BUF + 220; addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "=== CFG1 BUF ====\n");
-	for (addr = ISP_CFG1_BUF; addr <= ISP_CFG1_BUF + 220; addr += 4)
-		seq_printf(s, "%04x:  %08x\n", addr,  *ptr++);
-
-	seq_puts(s, "----------------------------------------------------\n");
-
-
-	return 0;
-}
-
-static int common_reg_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, common_reg_show, inode->i_private);
-}
-
-static const struct file_operations common_reg_ops = {
-	.owner =	THIS_MODULE,
-	.open = common_reg_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
-
+#ifdef DBG_REGISTER
 static int reg_buf_show(struct seq_file *s, void *unused)
 {
 	debug_show_ctx_reg_buf((void *)s);
@@ -259,6 +160,7 @@ static const struct file_operations reg_buf_ops = {
 	.llseek = seq_lseek,
 	.release = single_release,
 };
+#endif
 
 static int bypass_read(struct seq_file *s, void *unused)
 {
@@ -374,7 +276,6 @@ static ssize_t bypass_write(struct file *filp,
 
 static int bypass_open(struct inode *inode, struct file *file)
 {
-	memset(s_isp_bypass, 0x00, sizeof(s_isp_bypass));
 	return single_open(file, bypass_read, inode->i_private);
 }
 
@@ -384,18 +285,11 @@ static const struct file_operations isp_bypass_ops = {
 	.read = seq_read,
 	.write = bypass_write,
 };
-#else
-static int read_common_reg(uint32_t  ctx_id)
-{
-	return 0;
-}
-#endif
 
 
-#define WORK_MODE_SLEN  2
-#define LBUF_LEN_SLEN  8
-
-static struct dentry *debugfs_base;
+static uint8_t work_mode_string[2][16] = {
+	"ISP_CFG_MODE", "ISP_AP_MODE"
+};
 
 static ssize_t work_mode_show(
 		struct file *filp, char __user *buffer,
@@ -403,7 +297,8 @@ static ssize_t work_mode_show(
 {
 	char buf[16];
 
-	snprintf(buf, sizeof(buf), "%d\n", s_work_mode);
+	snprintf(buf, sizeof(buf), "%d(%s)\n", s_dbg_work_mode,
+		work_mode_string[s_dbg_work_mode&1]);
 
 	return simple_read_from_buffer(
 			buffer, count, ppos,
@@ -431,9 +326,9 @@ static ssize_t work_mode_write(
 	msg[WORK_MODE_SLEN-1] = '\0';
 	val = simple_strtol(msg, &last, 0);
 	if (val == 0)
-		s_work_mode = ISP_CFG_MODE;
+		s_dbg_work_mode = ISP_CFG_MODE;
 	else if (val == 1)
-		s_work_mode = ISP_AP_MODE;
+		s_dbg_work_mode = ISP_AP_MODE;
 	else
 		pr_err("error: invalid work mode: %d", val);
 
@@ -447,13 +342,81 @@ static const struct file_operations work_mode_ops = {
 	.write = work_mode_write,
 };
 
+
+static uint8_t iommu_mode_string[4][32] = {
+	"IOMMU_AUTO",
+	"IOMMU_OFF",
+	"IOMMU_ON_RESERVED",
+	"IOMMU_ON"
+};
+static ssize_t iommu_mode_show(
+		struct file *filp, char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	char buf[64];
+
+	snprintf(buf, sizeof(buf), "cur: %d(%s), next: %d(%s)\n",
+		g_dbg_iommu_mode,
+		iommu_mode_string[g_dbg_iommu_mode&3],
+		g_dbg_set_iommu_mode,
+		iommu_mode_string[g_dbg_set_iommu_mode&3]);
+
+	return simple_read_from_buffer(
+			buffer, count, ppos,
+			buf, strlen(buf));
+}
+
+static ssize_t iommu_mode_write(
+		struct file *filp, const char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	int ret = 0;
+	char msg[8];
+	char *last;
+	int val;
+
+	if (count > WORK_MODE_SLEN)
+		return -EINVAL;
+
+	ret = copy_from_user(msg, (void __user *)buffer, count);
+	if (ret) {
+		pr_err("fail to copy_from_user\n");
+		return -EFAULT;
+	}
+
+	msg[WORK_MODE_SLEN-1] = '\0';
+	val = simple_strtol(msg, &last, 0);
+	if (val == 0)
+		g_dbg_set_iommu_mode = IOMMU_AUTO;
+	else if (val == 1)
+		g_dbg_set_iommu_mode = IOMMU_OFF;
+	else if (val == 2)
+		g_dbg_set_iommu_mode = IOMMU_ON_RESERVED;
+	else if (val == 3)
+		g_dbg_set_iommu_mode = IOMMU_ON;
+	else
+		pr_err("error: invalid work mode: %d", val);
+
+	pr_info("set_iommu_mode : %d(%s)\n",
+		g_dbg_set_iommu_mode,
+		iommu_mode_string[g_dbg_set_iommu_mode&3]);
+	return count;
+}
+
+static const struct file_operations iommu_mode_ops = {
+	.owner =	THIS_MODULE,
+	.open = simple_open,
+	.read = iommu_mode_show,
+	.write = iommu_mode_write,
+};
+
 static ssize_t lbuf_len_show(
 			struct file *filp, char __user *buffer,
 			size_t count, loff_t *ppos)
 {
 	char buf[16];
 
-	snprintf(buf, sizeof(buf), "%d\n", set_line_buffer_len);
+	snprintf(buf, sizeof(buf), "%d\n", s_dbg_linebuf_len);
 
 	return simple_read_from_buffer(
 			buffer, count, ppos,
@@ -479,7 +442,7 @@ static ssize_t lbuf_len_write(struct file *filp,
 
 	msg[LBUF_LEN_SLEN - 1] = '\0';
 	val = simple_strtol(msg, NULL, 0);
-	set_line_buffer_len = val;
+	s_dbg_linebuf_len = val;
 	pr_info("set line buf len %d.  %s\n", val, msg);
 
 	return count;
@@ -507,24 +470,15 @@ int sprd_isp_debugfs_init(void)
 			debugfs_base, NULL, &work_mode_ops))
 		return -ENOMEM;
 
+	if (!debugfs_create_file("iommu_mode", 0644,
+			debugfs_base, NULL, &iommu_mode_ops))
+		return -ENOMEM;
+
 	if (!debugfs_create_file("line_buf_len", 0644,
 			debugfs_base, NULL, &lbuf_len_ops))
 		return -ENOMEM;
 
 #ifdef DBG_REGISTER
-	if (!debugfs_create_file("pre0", 0444,
-			debugfs_base, &common_reg[0][0], &common_reg_ops))
-		return -ENOMEM;
-	if (!debugfs_create_file("cap0", 0444,
-			debugfs_base, &common_reg[1][0], &common_reg_ops))
-		return -ENOMEM;
-	if (!debugfs_create_file("pre1", 0444,
-			debugfs_base, &common_reg[2][0], &common_reg_ops))
-		return -ENOMEM;
-	if (!debugfs_create_file("cap1", 0444,
-			debugfs_base, &common_reg[3][0], &common_reg_ops))
-		return -ENOMEM;
-
 	if (!debugfs_create_file("pre0_buf", 0444,
 			debugfs_base, &debug_ctx_id[0], &reg_buf_ops))
 		return -ENOMEM;
@@ -537,23 +491,32 @@ int sprd_isp_debugfs_init(void)
 	if (!debugfs_create_file("cap1_buf", 0444,
 			debugfs_base, &debug_ctx_id[3], &reg_buf_ops))
 		return -ENOMEM;
+#endif
+
 	if (!debugfs_create_file("pre0_bypass", 0660,
-			debugfs_base, &debug_ctx_id[3], &isp_bypass_ops))
+			debugfs_base, &debug_ctx_id[0], &isp_bypass_ops))
 		return -ENOMEM;
 	if (!debugfs_create_file("cap0_bypass", 0660,
-			debugfs_base, &debug_ctx_id[3], &isp_bypass_ops))
+			debugfs_base, &debug_ctx_id[1], &isp_bypass_ops))
 		return -ENOMEM;
 	if (!debugfs_create_file("pre1_bypass", 0660,
-			debugfs_base, &debug_ctx_id[3], &isp_bypass_ops))
+			debugfs_base, &debug_ctx_id[2], &isp_bypass_ops))
 		return -ENOMEM;
 	if (!debugfs_create_file("cap1_bypass", 0660,
 			debugfs_base, &debug_ctx_id[3], &isp_bypass_ops))
 		return -ENOMEM;
-#endif
 
 	return 0;
 }
-/* debug fs end */
+
+int sprd_isp_debugfs_deinit(void)
+{
+	if (debugfs_base)
+		debugfs_remove_recursive(debugfs_base);
+	debugfs_base = NULL;
+	return 0;
+}
+/* isp debug fs end */
 
 static void free_offline_pararm(void *param)
 {
@@ -1187,6 +1150,8 @@ static int isp_offline_start_frame(void *ctx)
 		free_offline_pararm(in_param);
 		pframe->param_data = NULL;
 	}
+	pframe->width = pctx->input_size.w;
+	pframe->height = pctx->input_size.h;
 
 	/*update NR param for crop/scaling image */
 	isp_adapt_blkparam(pctx);
@@ -1374,7 +1339,6 @@ static int isp_offline_start_frame(void *ctx)
 			ret = cfg_desc->ops->hw_start(
 					cfg_desc, pctx->ctx_id);
 		}
-		read_common_reg(pctx->ctx_id);
 	} else {
 		if (kick_fmcu) {
 			pr_info("fmcu start.");
@@ -2384,16 +2348,16 @@ static int sprd_isp_dev_open(void *isp_handle, void *param)
 		pr_info("isp dev init start.\n");
 
 		/* line_buffer_len for debug */
-		if (set_line_buffer_len > 0 &&
-			set_line_buffer_len < ISP_LINE_BUFFER_W)
-			line_buffer_len = set_line_buffer_len;
+		if (s_dbg_linebuf_len > 0 &&
+			s_dbg_linebuf_len <= ISP_LINE_BUFFER_W)
+			line_buffer_len = s_dbg_linebuf_len;
 		else
 			line_buffer_len = ISP_LINE_BUFFER_W;
 
 		pr_info("work mode: %d,  line_buf_len: %d\n",
-			s_work_mode, line_buffer_len);
+			s_dbg_work_mode, line_buffer_len);
 
-		dev->wmode = s_work_mode;
+		dev->wmode = s_dbg_work_mode;
 		dev->isp_hw = param;
 		mutex_init(&dev->path_mutex);
 

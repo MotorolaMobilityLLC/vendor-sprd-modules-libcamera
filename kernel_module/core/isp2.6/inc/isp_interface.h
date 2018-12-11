@@ -133,6 +133,7 @@ void *get_isp_pipe_dev(void);
 int put_isp_pipe_dev(void *isp_handle);
 
 int sprd_isp_debugfs_init(void);
+int sprd_isp_debugfs_deinit(void);
 
 int sprd_isp_parse_dt(struct device_node *dn,
 		struct sprd_cam_hw_info **isp_hw,

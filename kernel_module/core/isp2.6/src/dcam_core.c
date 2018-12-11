@@ -69,13 +69,19 @@ struct statis_path_buf_info s_statis_path_info_all[] = {
 	{DCAM_PATH_HIST,    STATIS_HIST_BUF_SIZE,  STATIS_HIST_BUF_NUM},
 	{DCAM_PATH_3DNR,    STATIS_3DNR_BUF_SIZE,  STATIS_3DNR_BUF_NUM},
 };
+static atomic_t s_dcam_working;
+
 
 /* dcam debugfs start */
 #define DCAM_DEBUG
-uint32_t s_dbg_bypass[DCAM_ID_MAX];
+uint32_t s_dbg_bypass[DCAM_ID_MAX] = { 0, 0, 0 };
 static atomic_t s_dcam_opened[DCAM_ID_MAX];
 static atomic_t s_dcam_axi_opened;
-static atomic_t s_dcam_working;
+uint32_t g_dbg_zoom_mode = 1;
+uint32_t g_dbg_rds_limit = 30;
+
+struct cam_dbg_dump g_dbg_dump;
+
 #ifdef DCAM_DEBUG
 static struct dentry *s_p_dentry;
 struct bypass_tag {
@@ -209,7 +215,6 @@ static int bypass_read(struct seq_file *s, void *unused)
 
 static int bypass_open(struct inode *inode, struct file *file)
 {
-	memset(s_dbg_bypass, 0x00, sizeof(s_dbg_bypass));
 	return single_open(file, bypass_read, inode->i_private);
 }
 static const struct file_operations bypass_ops = {
@@ -272,6 +277,212 @@ static const struct file_operations dcam_reg_ops = {
 	.release = single_release,
 };
 
+static char zoom_mode_strings[2][8] =
+{ "binning", "rds" };
+
+static ssize_t zoom_mode_show(
+		struct file *filp, char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	char buf[16];
+
+	snprintf(buf, sizeof(buf), "%d(%s)\n", g_dbg_zoom_mode,
+		zoom_mode_strings[g_dbg_zoom_mode&1]);
+
+	return simple_read_from_buffer(
+			buffer, count, ppos,
+			buf, strlen(buf));
+}
+
+static ssize_t zoom_mode_write(
+		struct file *filp, const char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	int ret = 0;
+	char msg[8];
+	char *last;
+	int val;
+
+	if (count > 2)
+		return -EINVAL;
+
+	ret = copy_from_user(msg, (void __user *)buffer, count);
+	if (ret) {
+		pr_err("fail to copy_from_user\n");
+		return -EFAULT;
+	}
+
+	msg[1] = '\0';
+	val = simple_strtol(msg, &last, 0);
+	if (val == 0)
+		g_dbg_zoom_mode = 0;
+	else if (val == 1)
+		g_dbg_zoom_mode = 1;
+	else
+		pr_err("error: invalid zoom mode: %d", val);
+
+	pr_info("set zoom mode %d(%s)\n", g_dbg_zoom_mode,
+		zoom_mode_strings[g_dbg_zoom_mode&1]);
+	return count;
+}
+
+static const struct file_operations zoom_mode_ops = {
+	.owner =	THIS_MODULE,
+	.open = simple_open,
+	.read = zoom_mode_show,
+	.write = zoom_mode_write,
+};
+
+static ssize_t rds_limit_show(
+		struct file *filp, char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	char buf[16];
+
+	snprintf(buf, sizeof(buf), "%d\n", g_dbg_rds_limit);
+
+	return simple_read_from_buffer(
+			buffer, count, ppos,
+			buf, strlen(buf));
+}
+
+static ssize_t rds_limit_write(
+		struct file *filp, const char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	int ret = 0;
+	char msg[8];
+	char *last;
+	int val;
+
+	if (count > 3)
+		return -EINVAL;
+
+	ret = copy_from_user(msg, (void __user *)buffer, count);
+	if (ret) {
+		pr_err("fail to copy_from_user\n");
+		return -EFAULT;
+	}
+
+	msg[2] = '\0';
+	val = simple_strtol(msg, &last, 0);
+	if (val > 10 && val <= 40)
+		g_dbg_rds_limit = val;
+	else
+		pr_err("error: invalid rds limit: %d", val);
+
+	pr_info("set rds limit %d\n", g_dbg_rds_limit);
+	return count;
+}
+
+static const struct file_operations rds_limit_ops = {
+	.owner =	THIS_MODULE,
+	.open = simple_open,
+	.read = rds_limit_show,
+	.write = rds_limit_write,
+};
+
+static ssize_t dump_raw_show(
+		struct file *filp, char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	char buf[16];
+
+	snprintf(buf, sizeof(buf), "%d\n", g_dbg_dump.dump_en);
+
+	return simple_read_from_buffer(
+			buffer, count, ppos,
+			buf, strlen(buf));
+}
+
+static ssize_t dump_raw_write(
+		struct file *filp, const char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	int ret = 0;
+	char msg[8];
+	char *last;
+	int val;
+
+	if (count > 2)
+		return -EINVAL;
+
+	ret = copy_from_user(msg, (void __user *)buffer, count);
+	if (ret) {
+		pr_err("fail to copy_from_user\n");
+		return -EFAULT;
+	}
+
+	msg[1] = '\0';
+	val = simple_strtol(msg, &last, 0);
+	if (val == 0)
+		g_dbg_dump.dump_en = 0;
+	else if (val == 1)
+		g_dbg_dump.dump_en = 1;
+	else
+		pr_err("error: invalid dump_raw_en %d", val);
+
+	pr_info("set dump_raw_en %d\n", g_dbg_dump.dump_en);
+	return count;
+}
+
+static const struct file_operations dump_raw_ops = {
+	.owner =	THIS_MODULE,
+	.open = simple_open,
+	.read = dump_raw_show,
+	.write = dump_raw_write,
+};
+
+static ssize_t dump_count_write(
+		struct file *filp, const char __user *buffer,
+		size_t count, loff_t *ppos)
+{
+	int ret = 0;
+	char msg[8];
+	char *last;
+	int val;
+	struct cam_dbg_dump *dbg = &g_dbg_dump;
+
+	if ((dbg->dump_en == 0) || count > 3)
+		return -EINVAL;
+
+	ret = copy_from_user(msg, (void __user *)buffer, count);
+	if (ret) {
+		pr_err("fail to copy_from_user\n");
+		return -EFAULT;
+	}
+
+	msg[3] = '\0';
+	val = simple_strtol(msg, &last, 0);
+
+	/* for preview dcam raw dump frame count. */
+	/* dump thread will be trigged when this value is set. */
+	/* valid value: 1 ~ 99 */
+	/* if dump thread is ongoing, new setting will not be accepted. */
+	/* capture raw dump will be triggered when catpure starts. */
+	mutex_lock(&dbg->dump_lock);
+	dbg->dump_count = 0;
+	if (val >= 200 || val == 0) {
+		pr_err("unsupported dump_raw_count %d\n", val);
+	} else if (dbg->dump_ongoing == 0) {
+		dbg->dump_count = val;
+		if (dbg->dump_start[0])
+			complete(dbg->dump_start[0]);
+		if (dbg->dump_start[1])
+			complete(dbg->dump_start[1]);
+		pr_info("set dump_raw_count %d\n", dbg->dump_count);
+	}
+	mutex_unlock(&dbg->dump_lock);
+
+	return count;
+}
+
+static const struct file_operations dump_count_ops = {
+	.owner =	THIS_MODULE,
+	.open = simple_open,
+	.write = dump_count_write,
+};
+
 /* /sys/kernel/debug/sprd_dcam/
  * dcam0_reg, dcam1_reg, dcam2_reg, dcam_axi_reg
  * dcam0/1/2_reg,dcam_axi_reg: cat .....(no echo > )
@@ -309,6 +520,21 @@ int sprd_dcam_debugfs_init(void)
 	if (!debugfs_create_file("reg_fetch", 0440,
 		pd, &tb_dcam_id[3], &dcam_reg_ops))
 		ret |= BIT(6);
+	if (!debugfs_create_file("zoom_mode", 0664,
+		pd, NULL, &zoom_mode_ops))
+		ret |= BIT(7);
+	if (!debugfs_create_file("zoom_rds_limit", 0664,
+		pd, NULL, &rds_limit_ops))
+		ret |= BIT(8);
+
+	if (!debugfs_create_file("dump_raw_en", 0664,
+		pd, NULL, &dump_raw_ops))
+		ret |= BIT(9);
+	if (!debugfs_create_file("dump_count", 0664,
+		pd, NULL, &dump_count_ops))
+		ret |= BIT(10);
+	mutex_init(&g_dbg_dump.dump_lock);
+
 	if (ret)
 		ret = -ENOMEM;
 	pr_info("dcam debugfs init ok\n");
@@ -321,7 +547,7 @@ int sprd_dcam_debugfs_deinit(void)
 	if (s_p_dentry)
 		debugfs_remove_recursive(s_p_dentry);
 	s_p_dentry = NULL;
-
+	mutex_destroy(&g_dbg_dump.dump_lock);
 	return 0;
 }
 #else
