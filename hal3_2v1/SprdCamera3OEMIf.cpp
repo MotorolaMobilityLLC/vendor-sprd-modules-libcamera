@@ -9758,8 +9758,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
             HAL_LOGI("diff_ms=%lld", diff_ms);
             // make single capture frame time > mZslSnapshotTime
-            if (sprddefInfo.capture_mode == 1 ||
-                diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
+            if (diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
                 HAL_LOGI("not the right frame, skip it");
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame.y_phy_addr,
