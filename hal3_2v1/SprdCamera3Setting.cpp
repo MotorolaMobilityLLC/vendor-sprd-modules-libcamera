@@ -1487,6 +1487,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                                  stream_info[i].stream_sizes_tbl.width,
                                  stream_info[i].stream_sizes_tbl.height);
                         available_min_durations.add(100000000L);
+                    } else if (stream_info[i].stream_sizes_tbl.width ==
+                                   largest_picture_size[cameraId].width &&
+                               ((stream_info[i].stream_sizes_tbl.width ==
+                                 2048))) {
+                        HAL_LOGD("YUV %d*%d output in ~60ms in sharkl3"
+                                 "offline so change min frame duration",
+                                 stream_info[i].stream_sizes_tbl.width,
+                                 stream_info[i].stream_sizes_tbl.height);
+                        available_min_durations.add(66666670L);
                     } else {
                         available_min_durations.add(
                             stream_info[i].stream_min_duration);
@@ -4917,7 +4926,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
             if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
-		!strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
+                !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
                 s_setting[mCameraId].flashInfo.state =
                     ANDROID_FLASH_STATE_UNAVAILABLE;
             else
