@@ -181,8 +181,8 @@ struct nr3_me_data {
 	uint32_t valid:1;
 	uint32_t sub_me_bypass:1;
 	uint32_t project_mode:1;
-	uint32_t mv_x:8;
-	uint32_t mv_y:8;
+	s8 mv_x;
+	s8 mv_y;
 	uint32_t src_width;
 	uint32_t src_height;
 };

@@ -861,7 +861,7 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 	fsync = (struct dcam_frame_synchronizer *)pframe->sync_data;
 
 	if (fsync) {
-		pr_debug("id %u, valid %d, x %u, y %u, w %u, h %u\n",
+		pr_debug("id %u, valid %d, x %d, y %d, w %u, h %u\n",
 			 fsync->index, fsync->nr3_me.valid,
 			 fsync->nr3_me.mv_x, fsync->nr3_me.mv_y,
 			 fsync->nr3_me.src_width, fsync->nr3_me.src_height);
