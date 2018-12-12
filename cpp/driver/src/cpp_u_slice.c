@@ -71,10 +71,15 @@ int cpp_u_input_param_check(
 			(cfg_parm->sc_trim.h == 0)) {
 		cfg_parm->sc_trim.w = cfg_parm->input_rect.w >>
 			cfg_parm->scale_deci.hor;
+		cfg_parm->sc_trim.w = ALIGN_DOWN(cfg_parm->sc_trim.w, 2);
 		cfg_parm->sc_trim.h = cfg_parm->input_rect.h >>
 			cfg_parm->scale_deci.ver;
+		cfg_parm->sc_trim.h = ALIGN_DOWN(cfg_parm->sc_trim.h, 2);
 		cfg_parm->sc_trim.x = 0;
 		cfg_parm->sc_trim.y = 0;
+	CMR_LOGE("sctrim x%d y%d w%d h%d\n",
+			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
+			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
 	}
 
 	if (cfg_parm->input_size.w > SCALE_FRAME_WIDTH_MAX ||
