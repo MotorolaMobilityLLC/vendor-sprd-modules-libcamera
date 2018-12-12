@@ -23,6 +23,7 @@
 #include "cam_types.h"
 #include "cam_queue.h"
 #include "cam_buf.h"
+#include "cam_block.h"
 
 #include "dcam_interface.h"
 #include "dcam_reg.h"
@@ -122,6 +123,8 @@ int dcam_cfg_path_base(void *dcam_handle,
 		/* TODO: should unbind slow motion code to some path */
 		dev->enable_slowmotion = ch_desc->enable_slowmotion;
 		dev->slowmotion_count = ch_desc->slowmotion_count;
+		/* TODO: should unbind 3dnr code to some path */
+		dev->is_3dnr = ch_desc->enable_3dnr;
 		break;
 
 	case DCAM_PATH_VCH2:
@@ -460,17 +463,13 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 		break;
 	case DCAM_PATH_3DNR:
 		/*
-		 * TODO
-		 * should update this according to tuning param
-		 * leave 50 line to let NR3 DONE earlier than BIN PATH DONE
+		 * TODO remove this later after pm ready
+		 * set default value for 3DNR
 		 */
 		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x010);
-		DCAM_REG_WR(idx, NR3_FAST_ME_ROI_PARAM0,
-			    (dev->cap_info.cap_size.start_x << 16)
-			    | dev->cap_info.cap_size.start_y);
-		DCAM_REG_WR(idx, NR3_FAST_ME_ROI_PARAM1,
-			    (dev->cap_info.cap_size.size_x << 16)
-			    | (dev->cap_info.cap_size.size_y - 50));
+		dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x,
+				    dev->cap_info.cap_size.size_y,
+				    1/* project_mode=1 */, idx);
 		break;
 	default:
 		break;

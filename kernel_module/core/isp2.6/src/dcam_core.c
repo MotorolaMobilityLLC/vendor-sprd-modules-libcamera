@@ -2048,6 +2048,7 @@ static int sprd_dcam_cfg_param(void *dcam_handle, void *param)
 	dev = (struct dcam_pipe_dev *)dcam_handle;
 	pm = dev->blk_dcam_pm;
 	pm->idx = dev->idx;
+	pm->dev = dev;
 	io_param = (struct isp_io_param *)param;
 
 	i = io_param->sub_block - DCAM_BLOCK_BASE;
@@ -2123,10 +2124,10 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	if (dev->is_pdaf)
 		atomic_set(&dev->path[DCAM_PATH_PDAF].user_cnt, 1);
+	if (dev->is_3dnr)
+		atomic_set(&dev->path[DCAM_PATH_3DNR].user_cnt, 1);
 
 	ret = dcam_set_mipi_cap(dev, &dev->cap_info);
-
-	atomic_set(&dev->path[DCAM_PATH_3DNR].user_cnt, 1);
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];

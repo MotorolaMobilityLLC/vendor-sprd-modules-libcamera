@@ -113,6 +113,7 @@ struct dcam_cap_cfg {
 struct dcam_path_cfg_param {
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
+	uint32_t enable_3dnr;
 	uint32_t is_raw;
 	uint32_t is_loose;
 	uint32_t frm_deci;

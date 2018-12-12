@@ -36,6 +36,8 @@ int dcam_k_cfg_awbc(struct isp_io_param *param, struct dcam_dev_param *p);
 int dcam_k_cfg_bpc(struct isp_io_param *param, struct dcam_dev_param *p);
 int dcam_k_cfg_3dnr_me(struct isp_io_param *param, struct dcam_dev_param *p);
 int dcam_k_cfg_afm(struct isp_io_param *param, struct dcam_dev_param *p);
+void dcam_k_3dnr_set_roi(uint32_t image_width, uint32_t image_height,
+			 uint32_t project_mode, uint32_t idx);
 
 /* dcam offline param set interface */
 int dcam_k_blc_block(struct dcam_dev_param *param);

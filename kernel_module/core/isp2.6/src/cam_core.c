@@ -1585,6 +1585,7 @@ static int init_cam_channel(
 		ch_desc.enable_slowmotion = ch_uinfo->slowmotion;
 		ch_desc.slowmotion_count = 4;
 		ch_desc.endian.y_endian = ENDIAN_LITTLE;
+		ch_desc.enable_3dnr = module->cam_uinfo.is_3dnr;
 		if (channel->ch_id == CAM_CH_RAW)
 			ch_desc.is_raw = 1;
 		if ((channel->ch_id == CAM_CH_CAP) && module->cam_uinfo.is_4in1)

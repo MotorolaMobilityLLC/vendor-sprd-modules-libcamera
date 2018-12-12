@@ -101,6 +101,7 @@ struct dcam_dev_afm_param {
 struct dcam_dev_param {
 	struct mutex param_lock;
 	uint32_t idx; /* dcam dev idx */
+	void *dev;/* dcam_pipe_dev */
 
 	struct dcam_dev_lsc_param lsc;
 	struct dcam_dev_blc_param blc;
