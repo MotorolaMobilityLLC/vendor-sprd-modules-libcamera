@@ -862,6 +862,10 @@ int SprdCamera3OEMIf::takePicture() {
         }
     }
 
+    HAL_LOGD("mVideoSnapshotType=%d", mVideoSnapshotType);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,(cmr_uint)mVideoSnapshotType);
+
+
     setCameraPreviewFormat();
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (CMR_CAMERA_SUCCESS !=
