@@ -247,7 +247,8 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
             frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
             frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
             frame.fd = (cmr_s32)frame_params->output_addr.mfd[0];
-            CMR_LOGV("outpur_size.width:%d, height: %d", frame.size.width, frame.size.height);
+            CMR_LOGV("outpur_size.width:%d, height: %d", frame.size.width,
+                     frame.size.height);
             CMR_LOGI("scale frame.fd 0x%x", frame.fd);
 
             (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
@@ -340,6 +341,7 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
 
     if (cpp_scale_open(&handle) != 0) {
         CMR_LOGE("failed to open scal drv.\n");
+        ret = CMR_CAMERA_FAIL;
         goto free_file;
     }
 
@@ -350,6 +352,7 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
     ret = cmr_scale_create_thread(file);
     if (ret) {
         CMR_LOGE("scale error: create thread");
+        ret = CMR_CAMERA_FAIL;
         goto free_cb;
     }
     sem_init(&file->sync_sem, 0, 0);
@@ -381,14 +384,15 @@ cmr_int get_deci_param(int input_value, int output_value) {
     if (output_value >= input_value) {
         deci_value = 0;
     } else {
-        double ratio = input_value / output_value;
+        double ratio = (double)input_value / (double)output_value;
+        CMR_LOGD("ratio value:%f", ratio);
         if (ratio <= 4) {
             deci_value = 0; // driver value:1
         } else if (ratio <= 8) {
             deci_value = 1; // driver value: 1/2
         } else if (ratio <= 16) {
             deci_value = 2; // driver value: 1/4
-        } else { // max value is 32
+        } else {            // max value is 32
             deci_value = 3; // driver value: 1/8
         }
     }
@@ -465,23 +469,23 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->scale_deci.ver =
         get_deci_param(frame_params->input_size.h, frame_params->output_size.h);
 
-    CMR_LOGD("input size: %d x %d, input rect:x=%d, y=%d, w=%d, h=%d, input "
-             "format: %d, input_addr: y=%d, u=%d, v=%d, input_addr_vir:"
-             " y=%d, u=%d, v =%d, input_endian: y_endian=%d, uv_endian=%d, "
-             "Sc_trim: x=%d, y=%d, w=%d, h=%d, output_size: w=%d, h=%d, "
-             "output_format:%d",
-             frame_params->input_size.w, frame_params->input_size.h,
-             frame_params->input_rect.x, frame_params->input_rect.y,
-             frame_params->input_rect.w, frame_params->input_rect.h,
-             frame_params->input_format, frame_params->input_addr.y,
-             frame_params->input_addr.u, frame_params->input_addr.v,
-             frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
-             frame_params->input_addr_vir.v,
-             frame_params->input_endian.y_endian,
-             frame_params->input_endian.uv_endian, frame_params->sc_trim.x,
-             frame_params->sc_trim.y, frame_params->sc_trim.w,
-             frame_params->sc_trim.h, frame_params->output_size.w,
-             frame_params->output_size.h, frame_params->output_format);
+    CMR_LOGD(
+        "input size: %d x %d, input rect:x=%d, y=%d, w=%d, h=%d, input "
+        "format: %d, input_addr: y=%d, u=%d, v=%d, input_addr_vir:"
+        " y=%d, u=%d, v =%d, input_endian: y_endian=%d, uv_endian=%d, "
+        "Sc_trim: x=%d, y=%d, w=%d, h=%d, output_size: w=%d, h=%d, "
+        "output_format:%d, input mfd:%d",
+        frame_params->input_size.w, frame_params->input_size.h,
+        frame_params->input_rect.x, frame_params->input_rect.y,
+        frame_params->input_rect.w, frame_params->input_rect.h,
+        frame_params->input_format, frame_params->input_addr.y,
+        frame_params->input_addr.u, frame_params->input_addr.v,
+        frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
+        frame_params->input_addr_vir.v, frame_params->input_endian.y_endian,
+        frame_params->input_endian.uv_endian, frame_params->sc_trim.x,
+        frame_params->sc_trim.y, frame_params->sc_trim.w,
+        frame_params->sc_trim.h, frame_params->output_size.w,
+        frame_params->output_size.h, frame_params->output_format, src_img->fd);
     memcpy((void *)&frame_params->output_endian, (void *)&dst_img->data_end,
            sizeof(struct sprd_cpp_scale_endian_sel));
 
