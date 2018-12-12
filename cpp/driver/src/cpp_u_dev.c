@@ -22,9 +22,13 @@
 #include "cpp_u_slice.h"
 #include <string.h>
 #include <time.h>
+#include <cutils/properties.h>
 
 static char cpp_dev_name[50] = "/dev/sprd_cpp";
+#define CPP_DUMP_PATH "/data/like/pic/"
 #define ERR(x...) fprintf(stderr, x)
+
+static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param);
 
 cmr_int cpp_rot_open(cmr_handle *handle)
 {
@@ -258,8 +262,146 @@ cmr_int cpp_scale_start(struct cpp_scale_param *scale_param)
 		CMR_LOGE("scale done error\n");
 		goto sc_exit;
 	}
+        cpp_save_cpp_to_file(scale_param);
 
 sc_exit:
 	CMR_LOGI("scale X ret=%ld\n", ret);
 	return ret;
+}
+
+static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
+{
+    
+    cmr_int ret = CMR_CAMERA_FAIL;
+    char value[PROPERTY_VALUE_MAX];
+    struct sprd_cpp_scale_cfg_parm *scale_cfg_param = NULL;
+    char file_name[0x40];
+    char tmp_str[10];
+    FILE *fp = NULL;
+
+        scale_cfg_param = scale_param->scale_cfg_param;
+            
+        property_get("debug.cpp.dump.frame", value, "null");
+        CMR_LOGD("value %s format %d width %d height %d, addr 0x%x 0x%x",
+            value,
+             scale_cfg_param->input_format,
+             scale_cfg_param->input_size.w,
+             scale_cfg_param->input_size.h,
+             scale_cfg_param->input_addr.y,
+             scale_cfg_param->input_addr.u);
+            
+        if (!strcmp(value, "src")) {
+            //Y
+
+                if (IMG_DATA_TYPE_YUV420 == scale_cfg_param->input_format ||
+                    IMG_DATA_TYPE_YUV422 == scale_cfg_param->input_format||
+                    IMG_DATA_TYPE_YVU420 == scale_cfg_param->input_format) {
+                    cmr_bzero(file_name, 0x40);
+                    strcpy(file_name, CPP_DUMP_PATH);
+                    sprintf(tmp_str, "%s_", value);
+                    strcat(file_name, tmp_str);
+                    sprintf(tmp_str, "%d", scale_cfg_param->input_size.w);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "X");
+                    sprintf(tmp_str, "%d", scale_cfg_param->input_size.h);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "_y");
+                    strcat(file_name, ".raw");
+                    CMR_LOGD("file name %s", file_name);
+                    fp = fopen(file_name, "wb");
+                    if (NULL == fp) {
+                        CMR_LOGD("can not open file: %s \n", file_name);
+                        return ret;
+                    }
+                    fwrite((void *)(long)scale_cfg_param->input_addr_vir.y, 1,
+                        scale_cfg_param->input_size.w * scale_cfg_param->input_size.h, fp);
+                    fclose(fp);
+            //UV
+                    bzero(file_name, 40);
+                    strcpy(file_name, CPP_DUMP_PATH);
+                     sprintf(tmp_str, "%s_", value);
+                    strcat(file_name, tmp_str);
+                    sprintf(tmp_str, "%d", scale_cfg_param->input_size.w);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "X");
+                    sprintf(tmp_str, "%d", scale_cfg_param->input_size.h);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "_uv");
+                    strcat(file_name, ".raw");
+                    CMR_LOGD("file name %s", file_name);
+                    fp = fopen(file_name, "wb");
+                    if (NULL == fp) {
+                        CMR_LOGD("can not open file: %s \n", file_name);
+                        return ret;
+                    }
+
+                    if (IMG_DATA_TYPE_YUV420 == scale_cfg_param->input_format ||
+                        IMG_DATA_TYPE_YVU420 == scale_cfg_param->input_format ) {
+                        fwrite((void *)(long)scale_cfg_param->input_addr_vir.u, 1,
+                            scale_cfg_param->input_size.w * scale_cfg_param->input_size.h / 2, fp);
+                    } else {
+                        fwrite((void *)(long)scale_cfg_param->input_addr_vir.u, 1,
+                            scale_cfg_param->input_size.w * scale_cfg_param->input_size.h, fp);
+                    }
+                    fclose(fp);
+                } 
+            }else if (!strcmp(value, "dst")) {
+                        //Y
+
+                if (IMG_DATA_TYPE_YUV420 == scale_cfg_param->output_format ||
+                    IMG_DATA_TYPE_YUV422 == scale_cfg_param->output_format||
+                    IMG_DATA_TYPE_YVU420 == scale_cfg_param->output_format) {
+                    cmr_bzero(file_name, 0x40);
+                    strcpy(file_name, CPP_DUMP_PATH);
+                    sprintf(tmp_str, "%s_", value);
+                    strcat(file_name, tmp_str);
+                    sprintf(tmp_str, "%d", scale_cfg_param->output_size.w);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "X");
+                    sprintf(tmp_str, "%d", scale_cfg_param->output_size.h);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "_y");
+                    strcat(file_name, ".raw");
+                    CMR_LOGD("file name %s", file_name);
+                    fp = fopen(file_name, "wb");
+                    if (NULL == fp) {
+                        CMR_LOGD("can not open file: %s \n", file_name);
+                        return ret;
+                    }
+                    fwrite((void *)(long)scale_cfg_param->output_addr_vir.y, 1,
+                        scale_cfg_param->output_size.w * scale_cfg_param->output_size.h, fp);
+                    fclose(fp);
+            //UV
+                    bzero(file_name, 40);
+                    strcpy(file_name, CPP_DUMP_PATH);
+                     sprintf(tmp_str, "%s_", value);
+                    strcat(file_name, tmp_str);
+                    sprintf(tmp_str, "%d", scale_cfg_param->output_size.w);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "X");
+                    sprintf(tmp_str, "%d", scale_cfg_param->output_size.h);
+                    strcat(file_name, tmp_str);
+                    strcat(file_name, "_uv");
+                    strcat(file_name, ".raw");
+                    CMR_LOGD("file name %s", file_name);
+                    fp = fopen(file_name, "wb");
+                    if (NULL == fp) {
+                        CMR_LOGD("can not open file: %s \n", file_name);
+                        return ret;
+                    }
+
+                    if (IMG_DATA_TYPE_YUV420 == scale_cfg_param->output_format ||
+                        IMG_DATA_TYPE_YVU420 == scale_cfg_param->output_format ) {
+                        fwrite((void *)(long)scale_cfg_param->output_addr_vir.u, 1,
+                            scale_cfg_param->output_size.w * scale_cfg_param->output_size.h / 2, fp);
+                    } else {
+                        fwrite((void *)(long)scale_cfg_param->output_addr_vir.u, 1,
+                            scale_cfg_param->output_size.w * scale_cfg_param->output_size.h, fp);
+                    }
+                    fclose(fp);
+                } 
+                } else {
+                    CMR_LOGD("need not dump cpp frame \n");
+                }
+                return 0;
 }

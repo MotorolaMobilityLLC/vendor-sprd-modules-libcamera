@@ -25,7 +25,6 @@
 #include <linux/types.h>
 #include "sprd_mm.h"
 
-#define HAPS_TEST 1
 
 struct cpp_iommu_info {
 	struct device *dev;

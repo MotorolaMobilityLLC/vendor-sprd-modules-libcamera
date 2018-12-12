@@ -39,6 +39,15 @@ int cpp_u_input_param_check(
 		return ret;
 	}
 
+	CMR_LOGE("input_addr %d, %d, %d input_addr_vir %d, %d,%d\n",
+			cfg_parm->input_addr.y, cfg_parm->input_addr.u,
+			cfg_parm->input_addr.v, cfg_parm->input_addr_vir.y,
+			cfg_parm->input_addr_vir.u, cfg_parm->input_addr_vir.v);
+    	CMR_LOGE("output_addr %d, %d, %d output_addr_vir %d, %d,%d\n",
+			cfg_parm->output_addr.y, cfg_parm->output_addr.u,
+			cfg_parm->output_addr.v, cfg_parm->output_addr_vir.y,
+			cfg_parm->output_addr_vir.u, cfg_parm->output_addr_vir.v);
+    
 	CMR_LOGE("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,

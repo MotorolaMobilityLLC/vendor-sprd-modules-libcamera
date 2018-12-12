@@ -194,33 +194,34 @@ int sprd_scaledrv_slice_param_check(
 		pr_err("sc_des_rect.y align failed\n");
 		return -1;
 	}
-	if (MOD2(p->bp_des_rect.w) != 0 ||
+	if ((p->bp_en == 1) && (MOD2(p->bp_des_rect.w) != 0 ||
 		OSIDE(p->bp_des_rect.w, BP_TRIM_SIZE_MIN,
 		SCALE_FRAME_HEIGHT_MAX) ||
 		OSIDE(p->bp_des_rect.h, BP_TRIM_SIZE_MIN,
-		SCALE_FRAME_HEIGHT_MAX)) {
+		SCALE_FRAME_HEIGHT_MAX))) {
 		pr_err("bp_des_rect.wh outsize failed\n");
 		return -1;
 	}
-	if (((p->input_fmt == SCALE_YUV420) &&
-		MOD2(p->bp_des_rect.h) != 0) ||
-		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_des_rect.h, 1) != 0)) {
+	if ((p->bp_en == 1) &&
+			(((p->input_fmt == SCALE_YUV420) &&
+			  MOD2(p->bp_des_rect.h) != 0) ||
+			 ((p->input_fmt == SCALE_YUV422) &&
+			  MOD(p->bp_des_rect.h, 1) != 0))) {
 		pr_err("bp_des_rect.h align failed\n");
 		return -1;
 	}
-	if (MOD2(p->bp_des_rect.x) != 0 ||
-		OSIDE(p->bp_des_rect.x, 0,
-		SCALE_FRAME_HEIGHT_MAX) ||
-		OSIDE(p->bp_des_rect.y, 0,
-		SCALE_FRAME_HEIGHT_MAX)) {
+	if ((p->bp_en == 1) && (MOD2(p->bp_des_rect.x) != 0 ||
+				OSIDE(p->bp_des_rect.x, 0,
+					SCALE_FRAME_HEIGHT_MAX) ||
+				OSIDE(p->bp_des_rect.y, 0,
+					SCALE_FRAME_HEIGHT_MAX))) {
 		pr_err("bp_des_rect.xy outsize failed\n");
 		return -1;
 	}
-	if (((p->input_fmt == SCALE_YUV420) &&
-		MOD2(p->bp_des_rect.y) != 0) ||
-		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_des_rect.y, 1) != 0)) {
+	if ((p->bp_en == 1) && (((p->input_fmt == SCALE_YUV420) &&
+					MOD2(p->bp_des_rect.y) != 0) ||
+				((p->input_fmt == SCALE_YUV422) &&
+				 MOD(p->bp_des_rect.y, 1) != 0))) {
 		pr_err("bp_des_rect.y align failed\n");
 		return -1;
 	}
@@ -304,25 +305,25 @@ int sprd_scaledrv_slice_param_check(
 		return -1;
 	}
 	/* bp trim */
-	if (MOD2(p->bp_trim_rect.w) != 0) {
+	if ((p->bp_en == 1) && (MOD2(p->bp_trim_rect.w) != 0)) {
 		pr_err("bp_trim_rect.w align failed\n");
 		return -1;
 	}
-	if (((p->input_fmt == SCALE_YUV420) &&
+	if ((p->bp_en == 1) && (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->bp_trim_rect.h) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_trim_rect.h, 1) != 0)) {
+		MOD(p->bp_trim_rect.h, 1) != 0))) {
 		pr_err("bp_trim_rect.h align failed\n");
 		return -1;
 	}
-	if (MOD2(p->bp_trim_rect.x) != 0) {
+	if ((p->bp_en == 1) && (MOD2(p->bp_trim_rect.x) != 0)) {
 		pr_err("bp_trim_rect.x align failed\n");
 		return -1;
 	}
-	if (((p->input_fmt == SCALE_YUV420) &&
+	if ((p->bp_en == 1) && (((p->input_fmt == SCALE_YUV420) &&
 		MOD2(p->bp_trim_rect.y) != 0) ||
 		((p->input_fmt == SCALE_YUV422) &&
-		MOD(p->bp_trim_rect.y, 1) != 0)) {
+		MOD(p->bp_trim_rect.y, 1) != 0))) {
 		pr_err("bp_trim_rect.y align failed\n");
 		return -1;
 	}
@@ -791,18 +792,23 @@ static int sprd_scaledrv_addr_set(
 	if (cfg_parm->input_addr.mfd[0] == 0 ||
 		cfg_parm->input_addr.mfd[1] == 0 ||
 		cfg_parm->output_addr.mfd[0] == 0 ||
-		cfg_parm->output_addr.mfd[1] == 0 ||
-		cfg_parm->bp_output_addr.mfd[0] == 0 ||
-		cfg_parm->bp_output_addr.mfd[1] == 0) {
+		cfg_parm->output_addr.mfd[1] == 0) {
 		pr_err("fail to get valid in or out mfd\n");
+		return -1;
+	}
+	if ((p->bp_en == 1) &&
+			(cfg_parm->bp_output_addr.mfd[0] == 0 ||
+			 cfg_parm->bp_output_addr.mfd[1] == 0)) {
+		pr_err("fail to get valid bp mfd\n");
 		return -1;
 	}
 	memcpy(p->iommu_src.mfd, cfg_parm->input_addr.mfd,
 		sizeof(cfg_parm->input_addr.mfd));
 	memcpy(p->iommu_dst.mfd, cfg_parm->output_addr.mfd,
 		sizeof(cfg_parm->output_addr.mfd));
-	memcpy(p->iommu_dst_bp.mfd, cfg_parm->bp_output_addr.mfd,
-		sizeof(cfg_parm->bp_output_addr.mfd));
+	if (p->bp_en == 1)
+		memcpy(p->iommu_dst_bp.mfd, cfg_parm->bp_output_addr.mfd,
+				sizeof(cfg_parm->bp_output_addr.mfd));
 
 	ret = sprd_cpp_core_get_sg_table(&p->iommu_src);
 	if (ret) {
@@ -834,22 +840,25 @@ static int sprd_scaledrv_addr_set(
 		return ret;
 	}
 
-	ret = sprd_cpp_core_get_sg_table(&p->iommu_dst_bp);
-	if (ret) {
-		pr_err("fail to get cpp dst sg table\n");
-		sprd_cpp_core_free_addr(&p->iommu_src);
-		sprd_cpp_core_free_addr(&p->iommu_dst);
-		return ret;
-	}
-	p->iommu_dst_bp.offset[0] = cfg_parm->bp_output_addr.y;
-	p->iommu_dst_bp.offset[1] = cfg_parm->bp_output_addr.u;
-	p->iommu_dst_bp.offset[2] = cfg_parm->bp_output_addr.v;
-	ret = sprd_cpp_core_get_addr(&p->iommu_dst_bp);
-	if (ret) {
-		pr_err("fail to get cpp dst addr\n");
-		sprd_cpp_core_free_addr(&p->iommu_src);
-		sprd_cpp_core_free_addr(&p->iommu_dst);
-		return ret;
+	if (p->bp_en == 1) {
+		ret = sprd_cpp_core_get_sg_table(&p->iommu_dst_bp);
+		if (ret) {
+			pr_err("fail to get cpp dst sg table\n");
+			sprd_cpp_core_free_addr(&p->iommu_src);
+			sprd_cpp_core_free_addr(&p->iommu_dst);
+			return ret;
+		}
+
+		p->iommu_dst_bp.offset[0] = cfg_parm->bp_output_addr.y;
+		p->iommu_dst_bp.offset[1] = cfg_parm->bp_output_addr.u;
+		p->iommu_dst_bp.offset[2] = cfg_parm->bp_output_addr.v;
+		ret = sprd_cpp_core_get_addr(&p->iommu_dst_bp);
+		if (ret) {
+			pr_err("fail to get cpp dst addr\n");
+			sprd_cpp_core_free_addr(&p->iommu_src);
+			sprd_cpp_core_free_addr(&p->iommu_dst);
+			return ret;
+		}
 	}
 
 	CPP_REG_WR(CPP_PATH0_SRC_ADDR_Y,
@@ -1100,7 +1109,8 @@ void sprd_scale_drv_stop(struct scale_drv_private *p)
 #ifndef HAPS_TEST
 	sprd_cpp_core_free_addr(&p->iommu_src);
 	sprd_cpp_core_free_addr(&p->iommu_dst);
-	sprd_cpp_core_free_addr(&p->iommu_dst_bp);
+	if (p->bp_en == 1)
+		sprd_cpp_core_free_addr(&p->iommu_dst_bp);
 #endif
 }
 

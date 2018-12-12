@@ -356,6 +356,8 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
            scal_cxt_ptr->input_y_mem->phys_size);
 	scal_cxt_ptr->scal_cfg.input_addr.y =
 		scal_cxt_ptr->input_y_mem->phys_addr;
+	scal_cxt_ptr->scal_cfg.input_addr_vir.y =
+		(unsigned int)scal_cxt_ptr->input_y_mem->data;
     /* alloc input uv buffer */
 	scal_cxt_ptr->input_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.input_size.w *
@@ -369,6 +371,8 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
 		scal_cxt_ptr->input_uv_mem->phys_addr;
 	scal_cxt_ptr->scal_cfg.input_addr.v =
 		scal_cxt_ptr->input_uv_mem->phys_addr;
+	scal_cxt_ptr->scal_cfg.input_addr_vir.u =
+		(unsigned int)scal_cxt_ptr->input_uv_mem->data;
     /* alloc sc outout y buffer */
 	scal_cxt_ptr->output_sc_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
@@ -380,6 +384,8 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
            scal_cxt_ptr->output_sc_y_mem->phys_size);
 	scal_cxt_ptr->scal_cfg.output_addr.y =
 		scal_cxt_ptr->output_sc_y_mem->phys_addr;
+	scal_cxt_ptr->scal_cfg.output_addr_vir.y =
+		(unsigned int)scal_cxt_ptr->output_sc_y_mem->data;	
     /* alloc sc outout uv buffer */
 	scal_cxt_ptr->output_sc_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
@@ -393,6 +399,8 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
 		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
 	scal_cxt_ptr->scal_cfg.output_addr.v =
 		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
+	scal_cxt_ptr->scal_cfg.output_addr_vir.u =
+		(unsigned int)scal_cxt_ptr->output_sc_uv_mem->data;	
 if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     /* alloc bp outout y buffer */
 	scal_cxt_ptr->output_bp_y_mem =
@@ -405,6 +413,8 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
            scal_cxt_ptr->output_bp_y_mem->phys_size);
 	scal_cxt_ptr->scal_cfg.bp_output_addr.y =
 		scal_cxt_ptr->output_bp_y_mem->phys_addr;
+	scal_cxt_ptr->scal_cfg.bp_output_addr_vir.y =
+		(unsigned int)scal_cxt_ptr->output_bp_y_mem->data;
     /* alloc bp outout uv buffer */
 	scal_cxt_ptr->output_bp_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.bp_trim.w *
@@ -418,6 +428,8 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
 		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
 	scal_cxt_ptr->scal_cfg.bp_output_addr.v =
 		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
+	scal_cxt_ptr->scal_cfg.bp_output_addr_vir.u =
+		(unsigned int)scal_cxt_ptr->output_bp_uv_mem->data;
 }else {
     scal_cxt_ptr->scal_cfg.bp_output_addr.y = 0;
     scal_cxt_ptr->scal_cfg.bp_output_addr.u = 0;

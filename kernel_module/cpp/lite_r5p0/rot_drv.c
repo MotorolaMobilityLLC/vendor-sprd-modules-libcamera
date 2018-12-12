@@ -25,7 +25,6 @@
 
 #define ROT_ADDR_ALIGN 0x07
 
-#define HAPS_TEST 1
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -148,7 +147,10 @@ int sprd_rot_drv_y_parm_set(struct sprd_cpp_rot_cfg_parm *parm,
 {
 	int ret = 0;
 
-	if (!parm || !p) {
+	if (!parm || !p || parm->src_addr.mfd[0] == 0 ||
+			parm->src_addr.mfd[1] == 0 ||
+			parm->dst_addr.mfd[0] == 0 ||
+			parm->dst_addr.mfd[1] == 0) {
 		pr_err("fail to get valid input ptr\n");
 		return -EINVAL;
 	}
@@ -287,9 +289,7 @@ void sprd_rot_drv_start(struct rot_drv_private *p)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("sprd_rot_drv_start S\n");
 	sprd_rotdrv_dev_stop(p);
-	pr_err("sprd_rot_drv_start S1\n");
 	sprd_rotdrv_dev_enable(p);
 	pr_err("src_addr 0x%x, dsr_addr 0x%x\n", p->rot_src_addr,
 			p->rot_dst_addr);
