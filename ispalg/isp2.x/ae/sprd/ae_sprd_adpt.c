@@ -2084,6 +2084,8 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			rtn = AE_ERROR;
 			goto SET_SCENE_MOD_EXIT;
 		}
+		if(1 == cxt->app_mode)
+			prv_status->settings.ev_index = cxt->manual_level;
 		target_lum = ae_calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
 		cur_status->target_lum_zone = cur_param->stable_zone_ev[cur_param->ev_table.default_level];
@@ -3586,8 +3588,9 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 }
 
 static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
+static struct ae_exposure_param_switch s_ae_manual[4] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
 
-static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
+static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch * ae_manual_param)
 {
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
@@ -3601,6 +3604,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 			}
 
 			fwrite((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
 			fclose(pf);
 			pf = NULL;
 		}
@@ -3612,6 +3616,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 			}
 
 			fwrite((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
 			fclose(pf);
 			pf = NULL;
 		}
@@ -3619,7 +3624,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 
 }
 
-static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
+static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch * ae_manual_param)
 {
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
@@ -3630,6 +3635,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
 			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
 			fclose(pf);
 			pf = NULL;
 
@@ -3642,6 +3648,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num)
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
 			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
 			fclose(pf);
 			pf = NULL;
 
@@ -3690,7 +3697,10 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
 		cxt->mode_switch[cxt->app_mode].exp_time = cxt->last_exp_param.exp_time;
 		cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
-		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param));
+		if(1 == cxt->app_mode)
+			s_ae_manual[cxt->camera_id] = cxt->mode_switch[cxt->app_mode];
+
+		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
 		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
 		if ((1 == cxt->is_snapshot) && ((FLASH_NONE == cxt->cur_status.settings.flash) || FLASH_MAIN_BEFORE <= cxt->cur_status.settings.flash)) {
@@ -3917,15 +3927,24 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
 			src_exp.dummy = cxt->mode_switch[cxt->app_mode].dummy;
 		}
-		else if(0 != cxt->mode_switch[0].gain){
-			src_exp.target_offset = cxt->mode_switch[0].target_offset;
-			src_exp.exp_line = cxt->mode_switch[0].exp_line;
-			src_exp.gain = cxt->mode_switch[0].gain;
-			src_exp.exp_time = cxt->mode_switch[0].exp_time;
-			src_exp.dummy = cxt->mode_switch[0].dummy;
+		else{
+			if((1 == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
+				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
+				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
+				src_exp.gain = s_ae_manual[cxt->camera_id].gain;
+				src_exp.exp_time = s_ae_manual[cxt->camera_id].exp_time;
+				src_exp.dummy = s_ae_manual[cxt->camera_id].dummy;
+			}
+			else if(0 != cxt->mode_switch[0].gain){
+				src_exp.target_offset = cxt->mode_switch[0].target_offset;
+				src_exp.exp_line = cxt->mode_switch[0].exp_line;
+				src_exp.gain = cxt->mode_switch[0].gain;
+				src_exp.exp_time = cxt->mode_switch[0].exp_time;
+				src_exp.dummy = cxt->mode_switch[0].dummy;
+			}
 		}
 	} else {
-		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param));
+		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param),&s_ae_manual[0]);
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
@@ -5339,6 +5358,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	 */
 	if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
 		cxt->prv_status = cxt->cur_status;
+		if(1 == cxt->app_mode)
+			cxt->manual_level = cxt->prv_status.settings.ev_index;
 		if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
 			cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
 		}
