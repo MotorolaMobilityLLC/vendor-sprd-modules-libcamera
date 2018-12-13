@@ -57,9 +57,12 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
                               char *sensor_info);
 static cmr_int
 sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt);
-static cmr_int sensor_get_fov_info(struct sensor_drv_context *sensor_cxt);
+static cmr_int
+sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt);
+static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_drv_index_info_file_init(cmr_u8 *sensor_index);
-static cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt);
+static cmr_int
+sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt);
 
 static cmr_int sensor_drv_ic_identify(struct sensor_drv_context *sensor_cxt,
                                       cmr_u32 sensor_id, cmr_u32 identify_off);
@@ -1879,7 +1882,8 @@ cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
     return ret;
 }
 
-static cmr_int sensor_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
+static cmr_int
+sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_int sensor_type = 0;
     SENSOR_VAL_T val;
@@ -2727,13 +2731,36 @@ sensor_drv_u optimize
 static cmr_int
 sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
 
-    sensor_cxt->sensor_img_type = sensor_get_sensor_type(sensor_cxt);
-    sensor_get_fov_info(sensor_cxt);
+    sensor_cxt->sensor_img_type = sensor_drv_get_sensor_type(sensor_cxt);
+    sensor_drv_get_fov_info(sensor_cxt);
+    sensor_drv_get_module_otp_data(sensor_cxt);
 
     return 0;
 }
 
-static cmr_int sensor_get_fov_info(struct sensor_drv_context *sensor_cxt) {
+static cmr_int
+sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
+    SENSOR_MATCH_T *module = NULL;
+
+    sensor_otp_module_init(sensor_cxt);
+    module = sensor_cxt->current_module;
+    if ((SENSOR_IMAGE_FORMAT_RAW ==
+         sensor_cxt->sensor_info_ptr->image_format) &&
+        module) {
+        if (module->otp_drv_info.otp_drv_entry) {
+            sensor_otp_process(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
+        } else {
+            SENSOR_LOGI("otp_drv_entry not configured:mod:%p,otp_drv:%p",
+                        module,
+                        module ? module->otp_drv_info.otp_drv_entry : NULL);
+        }
+    }
+    sensor_otp_module_deinit(sensor_cxt);
+
+    return 0;
+}
+
+static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T val;
     struct sensor_ic_ops *sns_ops = PNULL;
