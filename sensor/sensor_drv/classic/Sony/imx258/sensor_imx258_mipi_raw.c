@@ -432,6 +432,12 @@ static cmr_int imx258_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("capture_mode = %d,preview_mode=%d\n", capture_mode,
                 preview_mode);
 
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
+
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
         cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
@@ -441,11 +447,6 @@ static cmr_int imx258_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
-    if (sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-
-    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
     cap_shutter = imx258_drv_update_exposure(handle, cap_shutter, 0);

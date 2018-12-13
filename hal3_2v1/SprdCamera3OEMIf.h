@@ -339,15 +339,14 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static void camera_cb(camera_cb_type cb, const void *client_data,
                           camera_func_type func, void *parm4);
     void receiveRawPicture(struct camera_frame_type *frame);
+    void returnYuvCallbackFrame(struct camera_frame_type *frame);
+    void returnPreviewFrame(struct camera_frame_type *frame);
     void receiveJpegPicture(struct camera_frame_type *frame);
     void receivePreviewFrame(struct camera_frame_type *frame);
     void receivePreviewFDFrame(struct camera_frame_type *frame);
     void receiveCameraExitError(void);
     void receiveTakePictureError(void);
     void receiveJpegPictureError(void);
-    bool receiveCallbackPicture(uint32_t width, uint32_t height, cmr_s32 fd,
-                                cmr_uint phy_addr, char *virtual_addr,
-                                struct camera_frame_type *frame);
     void HandleStopCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartPreview(enum camera_cb_type cb, void *parm4);
@@ -444,9 +443,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool setCameraCaptureDimensions();
     void setCameraPreviewMode(bool isRecordMode);
     bool setCameraPreviewFormat();
-    bool displayOneFrameForCapture(uint32_t width, uint32_t height, int fd,
-                                   cmr_uint phy_addr, char *virtual_addr,
-                                   struct camera_frame_type *frame);
     bool iSDisplayCaptureFrame();
     bool iSCallbackCaptureFrame();
     bool iSZslMode();

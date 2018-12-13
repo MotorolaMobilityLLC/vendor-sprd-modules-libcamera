@@ -523,6 +523,11 @@ static cmr_int ov8856_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
 
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
+
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
         cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
@@ -531,11 +536,6 @@ static cmr_int ov8856_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
-
-    if (sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
     cap_gain = prv_gain;

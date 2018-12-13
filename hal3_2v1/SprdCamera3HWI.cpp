@@ -1073,6 +1073,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     Mutex::Autolock l(mLock);
     cam_dimension_t max_cpp_size = {0, 0};
     cam_dimension_t preview_size = {0, 0};
+    cam_dimension_t picture_size = {0, 0};
     bool mRegRequest;
     bool need_apply_settings = 1;
 
@@ -1152,6 +1153,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mOEMIf->checkIfNeedToStopOffLineZsl();
     mSetting->getLargestSensorSize(mCameraId, &max_sensor_width,
                                    &max_sensor_height);
+    mSetting->getPictureSize(&picture_size);
     mOEMIf->getCppMaxSize(&max_cpp_size);
     switch (capturePara.cap_intent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
@@ -1310,6 +1312,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         CONTROL_Tag controlInfo;
         PendingRequestInfo pendingRequest;
         int32_t buf_num = 0, buf_num1 = 0;
+        uint32_t pic_en = 0, cb_en = 0, reg_en = 0, isPicLargeStream = 1;
 
         mSetting->getFLASHTag(&flashInfo);
         mSetting->getCONTROLTag(&controlInfo);
@@ -1324,6 +1327,27 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         pendingRequest.bNotified = 0;
         pendingRequest.input_buffer = request->input_buffer;
         pendingRequest.pipeline_depth = 0;
+
+        for (size_t i = 0; i < request->num_output_buffers; i++) {
+            const camera3_stream_buffer_t &output = request->output_buffers[i];
+            camera3_stream_t *stream = output.stream;
+            SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
+
+            if (channel == NULL) {
+                HAL_LOGE("invalid channel pointer for stream");
+                continue;
+            } else if (channel == mPicChan) {
+                pic_en = 1;
+            } else if (channel == mCallbackChan) {
+                cb_en = 1;
+            } else if (channel == mRegularChan) {
+                reg_en = 1;
+            }
+            if (picture_size.width < (int)stream->width &&
+                picture_size.height < (int)stream->height)
+                isPicLargeStream = 0;
+        }
+
         for (size_t i = 0; i < request->num_output_buffers; i++) {
             const camera3_stream_buffer_t &output = request->output_buffers[i];
             camera3_stream_t *stream = output.stream;
@@ -1357,26 +1381,28 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 } else if (capturePara.cap_intent ==
                                ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
                            channel == mPicChan) {
-                    if (request->num_output_buffers == 2 &&
-                        request->output_buffers[(i + 1) % 2].stream->priv ==
-                            mCallbackChan &&
-                        (((max_cpp_size.width > max_sensor_width) &&
-                          (max_cpp_size.height > max_sensor_height)) ||
-                         (stream->width >= request->output_buffers[(i + 1) % 2]
-                                               .stream->width &&
-                          stream->height >= request->output_buffers[(i + 1) % 2]
-                                                .stream->height))) {
-                        mOEMIf->setCapturePara(
-                            CAMERA_CAPTURE_MODE_CALLBACK_SNAPSHOT, frameNumber);
-                        mFirstRegularRequest = false;
-                        receive_req_max = SprdCamera3PicChannel::kMaxBuffers;
-                    } else if (request->num_output_buffers >= 2) {
-                        mOEMIf->setCapturePara(
-                            CAMERA_CAPTURE_MODE_PREVIEW_SNAPSHOT, frameNumber);
-                        if (mOEMIf->GetCameraStatus(CAMERA_STATUS_PREVIEW) ==
-                            CAMERA_PREVIEW_IDLE)
-                            mFirstRegularRequest = true;
-                        receive_req_max = SprdCamera3PicChannel::kMaxBuffers;
+                    if (request->num_output_buffers >= 2) {
+                        if (((max_cpp_size.width > max_sensor_width) &&
+                             (max_cpp_size.height > max_sensor_height)) ||
+                            isPicLargeStream) {
+                            mOEMIf->setCapturePara(
+                                CAMERA_CAPTURE_MODE_CALLBACK_SNAPSHOT,
+                                frameNumber);
+                            mFirstRegularRequest = false;
+                            mPictureRequest = true;
+                            receive_req_max =
+                                SprdCamera3PicChannel::kMaxBuffers;
+                        } else {
+                            mOEMIf->setCapturePara(
+                                CAMERA_CAPTURE_MODE_PREVIEW_SNAPSHOT,
+                                frameNumber);
+                            if (mOEMIf->GetCameraStatus(
+                                    CAMERA_STATUS_PREVIEW) ==
+                                CAMERA_PREVIEW_IDLE)
+                                mFirstRegularRequest = true;
+                            receive_req_max =
+                                SprdCamera3PicChannel::kMaxBuffers;
+                        }
                     } else {
                         mOEMIf->setCapturePara(
                             CAMERA_CAPTURE_MODE_ONLY_SNAPSHOT, frameNumber);
@@ -1403,16 +1429,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             } else {
                 if (capturePara.cap_intent ==
                         ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW &&
-                    request->num_output_buffers == 2 &&
-                    request->output_buffers[(i + 1) % 2].stream->priv ==
-                        mPicChan &&
+                    request->num_output_buffers >= 2 && pic_en == 1 &&
                     (((max_cpp_size.width > max_sensor_width) &&
                       (max_cpp_size.height > max_sensor_height)) ||
-                     (stream->width <=
-                          request->output_buffers[(i + 1) % 2].stream->width &&
-                      stream->height <= request->output_buffers[(i + 1) % 2]
-                                            .stream->height))) {
-
+                     isPicLargeStream)) {
                     ret = mPicChan->request(stream, output.buffer, frameNumber);
                     if (ret) {
                         HAL_LOGE("mPicChan->request failed %p (%d)",

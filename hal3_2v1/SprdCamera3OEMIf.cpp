@@ -4511,63 +4511,6 @@ void SprdCamera3OEMIf::FreeReDisplayMem() {
     }
 }
 
-bool SprdCamera3OEMIf::displayOneFrameForCapture(
-    uint32_t width, uint32_t height, int fd, cmr_uint phy_addr,
-    char *virtual_addr, struct camera_frame_type *frame) {
-    ATRACE_CALL();
-
-    HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = %p", width,
-             height, phy_addr, virtual_addr);
-
-    Mutex::Autolock cbLock(&mPreviewCbLock);
-    int64_t timestamp = frame->monoboottime;
-    SprdCamera3RegularChannel *regular_channel =
-        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-    SprdCamera3PicChannel *pic_channel =
-        reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
-    SprdCamera3Stream *pre_stream = NULL, *pic_stream = NULL;
-    int32_t ret = 0;
-    cmr_uint addr_vir = 0, addr_phy = 0;
-    cmr_s32 ion_fd = 0;
-    uint32_t frame_num = 0;
-    if (regular_channel) {
-        regular_channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
-        pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT,
-                               &pic_stream);
-        if (pre_stream) {
-            if (pic_stream) {
-                ret = pic_stream->getQBuffFirstNum(&frame_num);
-                if (ret != NO_ERROR) {
-                    pre_stream->getQBuffFirstVir(&addr_vir);
-                    pre_stream->getQBuffFirstFd(&ion_fd);
-                } else
-                    ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
-                                                        &addr_phy, &ion_fd);
-            } else {
-                frame_num = mPictureFrameNum;
-                ret = pre_stream->getQBufAddrForNum(frame_num, &addr_vir,
-                                                    &addr_phy, &ion_fd);
-            }
-            HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d, ret = %d", addr_vir,
-                     frame_num, ret);
-            if (ret == NO_ERROR) {
-                if (addr_vir != 0 && virtual_addr != NULL && ion_fd != 0) {
-                    memcpy((char *)addr_vir, (char *)virtual_addr,
-                           (width * height * 3) / 2);
-                    flushIonBuffer(ion_fd, (void *)addr_vir, NULL,
-                                   width * height * 3 / 2);
-                }
-                regular_channel->channelCbRoutine(frame_num, timestamp,
-                                                  CAMERA_STREAM_TYPE_PREVIEW);
-            }
-        }
-    }
-
-    HAL_LOGD("X");
-
-    return true;
-}
-
 bool SprdCamera3OEMIf::iSCallbackCaptureFrame() {
     SprdCamera3PicChannel *pic_channel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
@@ -4583,68 +4526,6 @@ bool SprdCamera3OEMIf::iSCallbackCaptureFrame() {
     }
 
     return ret == NO_ERROR;
-}
-
-bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height,
-                                              cmr_s32 fd, cmr_uint phy_addr,
-                                              char *virtual_addr,
-                                              struct camera_frame_type *frame) {
-    ATRACE_CALL();
-
-    HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = %p", width,
-             height, phy_addr, virtual_addr);
-
-    Mutex::Autolock cbLock(&mPreviewCbLock);
-    int64_t timestamp = frame->monoboottime;
-    SprdCamera3PicChannel *pic_channel =
-        reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
-    SprdCamera3Stream *stream = NULL;
-    int32_t ret = 0;
-    cmr_uint addr_vir = 0;
-    uint32_t frame_num = 0;
-
-    if (pic_channel) {
-        pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_CALLBACK, &stream);
-        if (stream) {
-            ret = stream->getQBuffFirstVir(&addr_vir);
-            stream->getQBuffFirstNum(&frame_num);
-            HAL_LOGD("pic_callback_addr_vir = 0x%lx, frame_num = %d", addr_vir,
-                     frame_num);
-            if (ret == NO_ERROR) {
-                if (addr_vir != (cmr_uint)NULL && virtual_addr != NULL)
-                    memcpy((char *)addr_vir, (char *)virtual_addr,
-                           (width * height * 3) / 2);
-
-                pic_channel->channelCbRoutine(
-                    frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
-                HAL_LOGD("channelCbRoutine pic_callback_addr_vir = 0x%lx, "
-                         "frame_num = %d",
-                         addr_vir, frame_num);
-
-                if (frame_num > mPictureFrameNum)
-                    mPictureFrameNum = frame_num;
-            }
-            if ((mTakePictureMode == SNAPSHOT_NO_ZSL_MODE) ||
-                (mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
-                SprdCamera3RegularChannel *regularChannel =
-                    reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-                if (regularChannel) {
-                    if (mRedisplayFum && frame_num != mRedisplayFum) {
-                        regularChannel->channelClearInvalidQBuff(
-                            mPictureFrameNum, timestamp,
-                            CAMERA_STREAM_TYPE_PREVIEW);
-                    }
-                    regularChannel->channelClearInvalidQBuff(
-                        mPictureFrameNum, timestamp,
-                        CAMERA_STREAM_TYPE_CALLBACK);
-                }
-            }
-        }
-    }
-
-    HAL_LOGD("X");
-
-    return true;
 }
 
 void SprdCamera3OEMIf::yuvNv12ConvertToYv12(struct camera_frame_type *frame,
@@ -4779,11 +4660,6 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
 
     bool display_flag, callback_flag;
     int ret;
-    int dst_fd = 0;
-    cmr_uint dst_paddr = 0;
-    uint32_t dst_width = 0;
-    uint32_t dst_height = 0;
-    cmr_uint dst_vaddr = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -4816,70 +4692,209 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     callback_flag = iSCallbackCaptureFrame();
 
     if (callback_flag) {
-        dst_paddr = 0;
-        dst_width = mRawWidth;
-        dst_height = mRawHeight;
+        returnYuvCallbackFrame(frame);
+    }
+    if (display_flag) {
+        returnPreviewFrame(frame);
+    }
+exit:
+    HAL_LOGD("X");
+}
 
-        if (dst_width == frame->width && dst_height == frame->height) {
-            receiveCallbackPicture(frame->width, frame->height, frame->fd,
-                                   frame->y_phy_addr, (char *)frame->y_vir_addr,
-                                   frame);
-        } else {
-            dst_fd = getRedisplayMem(dst_width, dst_height);
-            if (0 == dst_fd) {
+void SprdCamera3OEMIf::returnYuvCallbackFrame(struct camera_frame_type *frame) {
+    ATRACE_CALL();
+    int ret = 0;
+    int dst_fd = 0, rdisp_fd = 0;
+    cmr_uint dst_paddr = 0, rdisp_paddr = 0;
+    cmr_uint dst_vaddr = 0, rdisp_vaddr = 0;
+    uint32_t dst_width = mRawWidth;
+    uint32_t dst_height = mRawHeight;
+    int64_t timestamp = frame->monoboottime;
+    uint32_t frame_num = 0;
+    SprdCamera3PicChannel *pic_channel =
+        reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+    SprdCamera3RegularChannel *regular_channel =
+        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    SprdCamera3Stream *callback_stream = NULL;
+
+    if (regular_channel == NULL || pic_channel == NULL) {
+        HAL_LOGE("regular_channel or pic_channel is null");
+        return;
+    }
+
+    pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_CALLBACK,
+                           &callback_stream);
+    if (callback_stream == NULL) {
+        HAL_LOGE("callback_stream is null");
+        return;
+    }
+
+    callback_stream->getQBuffFirstNum(&frame_num);
+    callback_stream->getQBuffFirstVir(&dst_vaddr);
+    callback_stream->getQBuffFirstFd(&dst_fd);
+
+    if (dst_vaddr == 0 || dst_fd == 0) {
+        HAL_LOGW("dst_vaddr=%ld, dst_fd=%d", dst_vaddr, dst_fd);
+        goto exit;
+    }
+
+    if (dst_width == frame->width && dst_height == frame->height) {
+        memcpy((char *)dst_vaddr, (char *)frame->y_vir_addr,
+               (dst_width * dst_height * 3) / 2);
+        flushIonBuffer(dst_fd, (void *)dst_vaddr, NULL,
+                       dst_width * dst_height * 3 / 2);
+        pic_channel->channelCbRoutine(frame_num, timestamp,
+                                      CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+    } else {
+        if (mIsRotCapture) {
+            rdisp_fd = getRedisplayMem(mRawWidth, mRawHeight);
+            if (0 == rdisp_fd) {
                 HAL_LOGE("get redisplay memory failed");
                 goto exit;
             }
-            dst_vaddr = (cmr_uint)mReDisplayHeap->data;
-
-            ret = mHalOem->ops->camera_get_redisplay_data(
-                mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width,
-                dst_height, frame->fd, frame->y_phy_addr, frame->uv_phy_addr,
-                frame->y_vir_addr, frame->width, frame->height);
-            if (ret) {
-                HAL_LOGE("camera_get_data_redisplay failed");
-                SprdCamera3PicChannel *pic_channel =
-                    reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
-                if (pic_channel) {
-                    int64_t timestamp = 0;
-                    timestamp = systemTime();
-                    pic_channel->channelClearAllQBuff(
-                        timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
-                }
-                FreeReDisplayMem();
-                goto exit;
+            rdisp_vaddr = (cmr_uint)mReDisplayHeap->data;
+        } else {
+            rdisp_fd = dst_fd;
+            rdisp_vaddr = dst_vaddr;
+        }
+        ret = mHalOem->ops->camera_get_redisplay_data(
+            mCameraHandle, rdisp_fd, rdisp_paddr, rdisp_vaddr, dst_width,
+            dst_height, frame->fd, frame->y_phy_addr, frame->uv_phy_addr,
+            frame->y_vir_addr, frame->width, frame->height);
+        if (ret) {
+            HAL_LOGE("camera_get_data_redisplay failed");
+            if (pic_channel) {
+                timestamp = systemTime();
+                pic_channel->channelClearAllQBuff(
+                    timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
             }
+            if (mIsRotCapture) {
+                FreeReDisplayMem();
+            }
+            goto exit;
+        }
 
-            receiveCallbackPicture(dst_width, dst_height, dst_fd, dst_paddr,
-                                   (char *)mReDisplayHeap->data, frame);
+        if (mIsRotCapture) {
+            if (dst_vaddr != (cmr_uint)NULL && rdisp_vaddr != (cmr_uint)NULL)
+                memcpy((char *)dst_vaddr, (char *)rdisp_vaddr,
+                       (dst_width * dst_height * 3) / 2);
+        }
+
+        pic_channel->channelCbRoutine(frame_num, timestamp,
+                                      CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+        HAL_LOGD("channelCbRoutine pic_callback_addr_vir = 0x%lx, "
+                 "frame_num = %d",
+                 dst_vaddr, frame_num);
+
+        if (mIsRotCapture) {
             FreeReDisplayMem();
         }
     }
+    if (frame_num > mPictureFrameNum)
+        mPictureFrameNum = frame_num;
 
-    if (display_flag) {
-        dst_width = mPreviewWidth;
-        dst_height = mPreviewHeight;
-        dst_fd = getRedisplayMem(dst_width, dst_height);
-        if (0 == dst_fd) {
+    if ((mTakePictureMode == SNAPSHOT_NO_ZSL_MODE) ||
+        (mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
+        if (regular_channel) {
+            if (mRedisplayFum && frame_num != mRedisplayFum) {
+                regular_channel->channelClearInvalidQBuff(
+                    mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+            }
+            regular_channel->channelClearInvalidQBuff(
+                mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+        }
+    }
+
+exit:
+    HAL_LOGD("X");
+}
+
+void SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
+    ATRACE_CALL();
+    int ret = 0;
+    int dst_fd = 0, rdisp_fd = 0;
+    cmr_uint dst_paddr = 0, rdisp_paddr = 0;
+    cmr_uint dst_vaddr = 0, rdisp_vaddr = 0;
+    uint32_t dst_width = mPreviewWidth;
+    uint32_t dst_height = mPreviewHeight;
+    uint32_t frame_num = 0;
+    int64_t timestamp = frame->monoboottime;
+    SprdCamera3RegularChannel *regular_channel =
+        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    SprdCamera3PicChannel *pic_channel =
+        reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+    SprdCamera3Stream *pre_stream = NULL, *pic_stream = NULL;
+    ;
+
+    if (regular_channel == NULL || pic_channel == NULL) {
+        HAL_LOGE("regular_channel or pic_channel is null");
+        return;
+    }
+
+    regular_channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
+    if (pre_stream == NULL) {
+        HAL_LOGE("preview_stream is null");
+        return;
+    }
+
+    if (mIsRotCapture) {
+        rdisp_fd = getRedisplayMem(dst_width, dst_height);
+        if (0 == rdisp_fd) {
             HAL_LOGE("get redisplay memory failed");
             goto exit;
         }
-        dst_vaddr = (cmr_uint)mReDisplayHeap->data;
-        ret = mHalOem->ops->camera_get_redisplay_data(
-            mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
-            frame->fd, frame->y_phy_addr, frame->uv_phy_addr, frame->y_vir_addr,
-            frame->width, frame->height);
-        if (ret) {
-            HAL_LOGE("camera_get_data_redisplay failed");
-            FreeReDisplayMem();
+        rdisp_vaddr = (cmr_uint)mReDisplayHeap->data;
+    } else {
+        pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT,
+                               &pic_stream);
+        if (pic_stream) {
+            ret = pic_stream->getQBuffFirstNum(&frame_num);
+            if (ret != NO_ERROR) {
+                pre_stream->getQBuffFirstVir(&dst_vaddr);
+                pre_stream->getQBuffFirstFd(&dst_fd);
+            } else {
+                ret = pre_stream->getQBufAddrForNum(frame_num, &dst_vaddr,
+                                                    &dst_paddr, &dst_fd);
+            }
+        } else {
+            frame_num = mPictureFrameNum;
+            ret = pre_stream->getQBufAddrForNum(frame_num, &dst_vaddr,
+                                                &dst_paddr, &dst_fd);
+        }
+        HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d, ret = %d", dst_vaddr,
+                 frame_num, ret);
+        if (ret != NO_ERROR) {
             goto exit;
         }
-
-        displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr,
-                                  (char *)mReDisplayHeap->data, frame);
+        rdisp_fd = dst_fd;
+        rdisp_vaddr = dst_vaddr;
+    }
+    ret = mHalOem->ops->camera_get_redisplay_data(
+        mCameraHandle, rdisp_fd, rdisp_paddr, rdisp_vaddr, dst_width,
+        dst_height, frame->fd, frame->y_phy_addr, frame->uv_phy_addr,
+        frame->y_vir_addr, frame->width, frame->height);
+    if (ret) {
+        HAL_LOGE("camera_get_data_redisplay failed");
+        if (mIsRotCapture) {
+            FreeReDisplayMem();
+        }
+        goto exit;
+    }
+    HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d, ret = %d", dst_vaddr,
+             frame_num, ret);
+    if (mIsRotCapture) {
+        if (dst_vaddr != 0 && rdisp_vaddr != 0 && dst_fd != 0) {
+            memcpy((char *)dst_vaddr, (char *)rdisp_vaddr,
+                   (dst_width * dst_height * 3) / 2);
+            flushIonBuffer(dst_fd, (void *)dst_vaddr, NULL,
+                           dst_width * dst_height * 3 / 2);
+        }
+    }
+    regular_channel->channelCbRoutine(frame_num, timestamp,
+                                      CAMERA_STREAM_TYPE_PREVIEW);
+    if (mIsRotCapture) {
         FreeReDisplayMem();
     }
-
 exit:
     HAL_LOGD("X");
 }

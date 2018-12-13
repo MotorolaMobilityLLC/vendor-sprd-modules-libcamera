@@ -593,6 +593,11 @@ static cmr_int gc2145_drv_before_snapshot(cmr_handle handle, cmr_u32 param) {
 
     SENSOR_LOGI("mode: 0x%08x", param);
 
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
+
     if (preview_mode == capture_mode) {
         SENSOR_LOGI("prv mode equal to capmode");
         goto CFG_INFO;
@@ -600,11 +605,6 @@ static cmr_int gc2145_drv_before_snapshot(cmr_handle handle, cmr_u32 param) {
 
     preview_exposure = gc2145_drv_get_shutter(handle);
     preview_maxline = gc2145_drv_get_vts(handle) + prv_frame_line;
-
-    if (sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     capture_maxline = gc2145_drv_get_vts(handle) + cap_frame_line;
 

@@ -301,15 +301,15 @@ static cmr_int s5k3p9sx04_drv_before_snapshot(cmr_handle handle,
 
     SENSOR_LOGI("mode: 0x%08lx,capture_mode:%d", param, capture_mode);
 
-    if (preview_mode == capture_mode) {
-        SENSOR_LOGI("prv mode equal to capmode");
-        goto CFG_INFO;
-    }
-
     if (sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
     if (sns_drv_cxt->ops_cb.set_mode_wait_done)
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
+
+    if (preview_mode == capture_mode) {
+        SENSOR_LOGI("prv mode equal to capmode");
+        goto CFG_INFO;
+    }
 
     preview_exposure = sns_drv_cxt->sensor_ev_info.preview_shutter;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
