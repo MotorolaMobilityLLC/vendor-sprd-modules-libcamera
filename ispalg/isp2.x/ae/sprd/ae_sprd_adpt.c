@@ -3681,18 +3681,22 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			else
 				cxt->last_exp_param.bv = 1;
 		}
+
 		cxt->last_enable = 1;
 		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
+		cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
+		cxt->mode_switch[cxt->app_mode].dummy = cxt->last_exp_param.dummy;
+		cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
+		cxt->mode_switch[cxt->app_mode].exp_time = cxt->last_exp_param.exp_time;
+		cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
 		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param));
-		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv,
-				 cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
+		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
 		if ((1 == cxt->is_snapshot) && ((FLASH_NONE == cxt->cur_status.settings.flash) || FLASH_MAIN_BEFORE <= cxt->cur_status.settings.flash)) {
 			ae_set_restore_cnt(cxt);
 		}
-		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv,
-				 cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
+		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	}
 }
 
@@ -3805,6 +3809,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->monitor_cfg.bypass = 0;
 	cxt->high_fps_info.is_high_fps = work_info->sensor_fps.is_high_fps;
 	cxt->cam_4in1_mode = work_info->cam_4in1_mode;
+	cxt->mode_switch[cxt->app_mode].switch_change = 1;
 
 	if (work_info->sensor_fps.is_high_fps) {
 		ae_skip_num = work_info->sensor_fps.high_fps_skip_num - 1;
@@ -3904,7 +3909,21 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.dummy = cxt->last_exp_param.dummy;
 		}
 		src_exp.cur_index = cxt->last_index;
-		src_exp.target_offset = cxt->last_exp_param.target_offset;
+
+		if(0 != cxt->mode_switch[cxt->app_mode].gain){
+			src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
+			src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
+			src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
+			src_exp.exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
+			src_exp.dummy = cxt->mode_switch[cxt->app_mode].dummy;
+		}
+		else if(0 != cxt->mode_switch[0].gain){
+			src_exp.target_offset = cxt->mode_switch[0].target_offset;
+			src_exp.exp_line = cxt->mode_switch[0].exp_line;
+			src_exp.gain = cxt->mode_switch[0].gain;
+			src_exp.exp_time = cxt->mode_switch[0].exp_time;
+			src_exp.dummy = cxt->mode_switch[0].dummy;
+		}
 	} else {
 		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param));
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
@@ -4268,7 +4287,7 @@ static cmr_s32 ae_set_compensation_calc_2(struct ae_ctrl_cxt *cxt, cmr_s16 *out_
 	temp = 1.0 * cxt->exposure_compensation.comp_val * cxt->exposure_compensation.step_numerator / cxt->exposure_compensation.step_denominator;
 	ISP_LOGD("jhin1 comp_val %d step_numerator %d step_denominator %d \n",cxt->exposure_compensation.comp_val,cxt->exposure_compensation.step_numerator,cxt->exposure_compensation.step_denominator);
 	temp = pow(2, temp);
-	ISP_LOGD("jhin1 temp%f\n",temp);
+	ISP_LOGV("jhin1 temp%f\n",temp);
 	if (0 < cxt->exposure_compensation.comp_val) {
 		target_offset = cxt->exposure_compensation.ae_base_target * temp;
 	} else if (0 > cxt->exposure_compensation.comp_val) { 
@@ -4304,7 +4323,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
-			ISP_LOGV("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
+			ISP_LOGD("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
 		} else {
 			if (cxt->cur_status.settings.force_lock_ae == 1) {
 				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
@@ -4321,8 +4340,8 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 						cxt->last_table_index = cxt->cur_status.settings.table_idx;
 					}
 				}
-				ISP_LOGD("jhin manual_mode:%d, exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d", cxt->cur_status.settings.manual_mode, exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
-				ISP_LOGD("jhin change_idx:%d",change_idx);
+				ISP_LOGV("jhin manual_mode:%d, exp_comp->comp_val:%d,exp_comp->step_numerator:%d,exp_comp->step_denominator:%d", cxt->cur_status.settings.manual_mode, exp_comp->comp_val,exp_comp->step_numerator,exp_comp->step_denominator);
+				ISP_LOGV("jhin change_idx:%d",change_idx);
 			} else {
 				if (cxt->exposure_compensation.comp_val == 0){
 					cxt->exposure_compensation.ae_base_target = cxt->cur_param->target_lum;

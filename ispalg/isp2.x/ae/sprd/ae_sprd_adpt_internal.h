@@ -45,6 +45,15 @@ extern "C" {
 		cmr_u32 table_idx;
 	};
 
+	struct ae_exposure_param_switch {
+		cmr_u32 target_offset;
+		cmr_u32 exp_line;
+		cmr_u32 exp_time;
+		cmr_s32 dummy;
+		cmr_u32 gain;
+		cmr_u32 switch_change;
+	};
+
 	struct ae_sensor_exp_data {
 		struct ae_exposure_param lib_data;	/*AE lib output data */
 		struct ae_exposure_param actual_data;	/*the actual effect data */
@@ -345,6 +354,7 @@ extern "C" {
 
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
+		struct ae_exposure_param_switch mode_switch[32];
 		cmr_u32 last_table_index; /* for non-zsl, there is a 'ae_set_video_start' between pf and mf.which we need keep the previous table index */
 	};
 
