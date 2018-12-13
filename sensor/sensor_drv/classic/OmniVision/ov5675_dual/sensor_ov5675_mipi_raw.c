@@ -311,19 +311,29 @@ static void ov5675_drv_write_gain(cmr_handle handle, cmr_uint gain,
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_u16
-ov5675_drv_read_frame_length(cmr_handle handle,
+ov5675_drv_get_cur_frm_len(cmr_handle handle,
                              struct sensor_aec_i2c_tag *aec_info) {
     cmr_u16 frame_len_h = 0;
     cmr_u16 frame_len_l = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+/*
     frame_len_h =
         hw_sensor_read_reg(sns_drv_cxt->hw_handle,aec_info->frame_length->settings[0].reg_addr)&0xff;
     frame_len_l =
         hw_sensor_read_reg(sns_drv_cxt->hw_handle,aec_info->frame_length->settings[1].reg_addr)&0xff;
+*/
+    if (aec_info->frame_length->size) {
+        frame_len_h = (aec_info->frame_length->settings[0].reg_value) & 0xff;
+        frame_len_l = (aec_info->frame_length->settings[1].reg_value) & 0xff;
+        return ((frame_len_h << 8) | frame_len_l);
+    }
+    else {
+        // default frame length.
+        return (cmr_u16)(sns_drv_cxt->frame_length_def & 0xffff);
+    }
 
-    return ((frame_len_h << 8) | frame_len_l);
 }
 
 /*==============================================================================
@@ -331,17 +341,15 @@ ov5675_drv_read_frame_length(cmr_handle handle,
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov5675_drv_write_frame_length(cmr_handle handle, cmr_u32 frame_len,
+static void ov5675_drv_set_cur_frm_len(cmr_handle handle, cmr_u32 frame_len,
                                           struct sensor_aec_i2c_tag *aec_info) {
-    SENSOR_IC_CHECK_HANDLE_VOID(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+//    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+//    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    SENSOR_IC_CHECK_HANDLE_VOID(aec_info);
 
     if (aec_info->frame_length->size) {
-        /*TODO*/
-
         aec_info->frame_length->settings[0].reg_value = (frame_len >> 8) & 0xff;
         aec_info->frame_length->settings[1].reg_value = frame_len & 0xff;
-        /*END*/
     }
 }
 
@@ -383,22 +391,23 @@ ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    // ov5675_group_hold_on(handle);
-    fr_len = sns_drv_cxt->frame_length_def;
-    if (1 == SUPPORT_AUTO_FRAME_LENGTH)
-        goto write_sensor_shutter;
-
-    dest_fr_len = ((shutter + dummy_line + FRAME_OFFSET) > fr_len)
-                      ? (shutter + dummy_line + FRAME_OFFSET)
-                      : fr_len;
-
-    cur_fr_len = ov5675_drv_read_frame_length(handle, aec_info);
-
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
 
-    if (dest_fr_len != cur_fr_len)
-        ov5675_drv_write_frame_length(handle, dest_fr_len, aec_info);
+    // ov5675_group_hold_on(handle);
+#if SUPPORT_AUTO_FRAME_LENGTH
+    goto write_sensor_shutter;
+#endif
+
+    cur_fr_len = ov5675_drv_get_cur_frm_len(handle, aec_info);
+    dest_fr_len = ((shutter + dummy_line + FRAME_OFFSET) > cur_fr_len)
+                      ? (shutter + dummy_line + FRAME_OFFSET)
+                      : cur_fr_len;
+    ov5675_drv_set_cur_frm_len(handle, dest_fr_len, aec_info);
+
+    SENSOR_LOGI("shutter=%d, dummy_line=%d,dest_fr_len=%d,cur_fr_len=%d",
+        shutter,dummy_line,dest_fr_len,cur_fr_len);
+
 write_sensor_shutter:
     /* write shutter to sensor registers */
     ov5675_drv_write_shutter(handle, shutter, aec_info);
@@ -625,7 +634,6 @@ static cmr_int ov5675_drv_write_exposure(cmr_handle handle, cmr_uint param) {
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
-    // ov5675_get_default_frame_length(handle, mode);
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = ov5675_drv_update_exposure(
         handle, exposure_line, dummy_line, &ov5675_aec_info);
@@ -850,7 +858,7 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
-     sns_drv_cxt->sensor_ev_info.preview_shutter =
+    sns_drv_cxt->sensor_ev_info.preview_shutter =
         ov5675_drv_update_exposure(handle, exposure_line, dummy_line,
         &ov5675_aec_info);
 
@@ -909,6 +917,7 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
         #endif
         SENSOR_LOGI("set frame sync");
     }
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_ON;
 
@@ -1022,6 +1031,7 @@ ov5675_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+    ov5675_drv_set_cur_frm_len(sns_drv_cxt, sns_drv_cxt->frame_length_def,&ov5675_aec_info);
 
     sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
 
