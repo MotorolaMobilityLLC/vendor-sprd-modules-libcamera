@@ -379,6 +379,34 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 	return ret;
 }
 
+static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_fw_handle;
+	struct isp_rgb_gain_info *inptr;
+	struct dcam_dev_rgb_gain_info gain_info;
+	struct isp_u_blocks_info block_info;
+
+	if (!param) {
+		ISP_LOGE("fail to get gain info.\n");
+		return ISP_ERROR;
+	}
+	inptr = (struct isp_rgb_gain_info *)param;
+	gain_info.bypass = inptr->bypass;
+	gain_info.global_gain = inptr->global_gain;
+	gain_info.r_gain = inptr->r_gain;
+	gain_info.g_gain = inptr->g_gain;
+	gain_info.b_gain = inptr->b_gain;
+	block_info.block_info = &gain_info;
+	block_info.scene_id = PM_SCENE_PRE;
+
+	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
+		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &gain_info, NULL);
+
+	return ret;
+}
+
 static cmr_int isp_prepare_atm_param(cmr_handle isp_alg_handle,
 	struct smart_proc_input *smart_proc_in)
 {
@@ -481,29 +509,17 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct dcam_dev_aem_win aem_win;
 
-	if (1) {
-		ISP_LOGE("win %d %d %d %d %d %d\n",
+	ISP_LOGD("win %d %d %d %d %d %d\n",
 			aem_info->trim.x, aem_info->trim.y,
 			aem_info->win_size.w, aem_info->win_size.h,
 			aem_info->win_num.w, aem_info->win_num.h);
-
-		/*aem_info->win_num shoud be set in alg module...... */
-		aem_info->win_num.w = cxt->ae_cxt.win_num.w;
-		aem_info->win_num.h = cxt->ae_cxt.win_num.h;
-
-		ISP_LOGE("win %d %d %d %d %d %d\n",
-			aem_info->trim.x, aem_info->trim.y,
-			aem_info->win_size.w, aem_info->win_size.h,
-			aem_info->win_num.w, aem_info->win_num.h);
-	}
 
 	cxt->ae_cxt.win_num.w = aem_info->win_num.w;
 	cxt->ae_cxt.win_num.h = aem_info->win_num.h;
 	cxt->ae_cxt.win_size.w = aem_info->win_size.w;
 	cxt->ae_cxt.win_size.h = aem_info->win_size.h;
-
 	aem_win.offset_x = aem_info->trim.x;
-	aem_win.offset_x = aem_info->trim.y;
+	aem_win.offset_y = aem_info->trim.y;
 	aem_win.blk_width = aem_info->win_size.w;
 	aem_win.blk_height = aem_info->win_size.h;
 	aem_win.blk_num_x = aem_info->win_num.w;
@@ -578,7 +594,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_SYSTEM_TIME, param0, param1);
 		break;
 	case ISP_AE_SET_RGB_GAIN:
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, param0, param1);
+		ret = ispalg_set_rgb_gain(cxt, param0);
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
 		ret = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0, param1);
@@ -3062,16 +3078,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	cmr_u32 val;
 
-	/* todo: delete one by one later. temp bypass all sw algo for statis data debug. */
-	cxt->ae_cxt.sw_bypass = 1;
-	cxt->af_cxt.sw_bypass = 1;
-	cxt->awb_cxt.sw_bypass = 1;
-	cxt->lsc_cxt.sw_bypass = 1;
-	cxt->pdaf_cxt.sw_bypass = 1;
-	cxt->afl_cxt.sw_bypass = 1;
-	cxt->smart_cxt.sw_bypass = 1;
-
-	property_get(PROP_ISP_AE_BYPASS, value, "1");
+	property_get(PROP_ISP_AE_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->ae_cxt.sw_bypass = val;
@@ -3081,7 +3088,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->af_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_AWB_BYPASS, value, "1");
+	property_get(PROP_ISP_AWB_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->awb_cxt.sw_bypass = val;

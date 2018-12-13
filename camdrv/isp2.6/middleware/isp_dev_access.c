@@ -31,34 +31,6 @@ struct isp_dev_access_context {
 	cmr_u32 sn_height;
 };
 
-static cmr_int set_rgb_gain(cmr_handle isp_dev_handle,
-		cmr_u32 *rgb_gain_coeff, cmr_u32 scene_id)
-{
-	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 rgb_gain_offset = 4096;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct dcam_dev_rgb_gain_info gain_info;
-	struct isp_u_blocks_info block_info;
-
-	gain_info.bypass = 0;
-	gain_info.global_gain = *rgb_gain_coeff;
-	gain_info.r_gain = rgb_gain_offset;
-	gain_info.g_gain = rgb_gain_offset;
-	gain_info.b_gain = rgb_gain_offset;
-
-	block_info.block_info = &gain_info;
-	block_info.scene_id = scene_id;
-	ISP_LOGV("global_gain : %d\n", gain_info.global_gain);
-	if (gain_info.global_gain == 0) {
-		ISP_LOGE("illegal rgb gain %d\n", gain_info.global_gain);
-		gain_info.global_gain = 4369;
-	}
-
-	dcam_u_rgb_gain_block(cxt->isp_driver_handle, &block_info);
-
-	return ret;
-}
-
 cmr_int isp_dev_start(cmr_handle isp_dev_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -518,7 +490,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		ret = isp_dev_get_ktime(cxt->isp_driver_handle, param0, param1);
 		break;
 	case ISP_DEV_SET_RGB_GAIN:
-		ret = set_rgb_gain(cxt, param0, 0);
+		ret = dcam_u_rgb_gain_block(cxt->isp_driver_handle, param0);
 		break;
 	case ISP_DEV_SET_STSTIS_BUF:
 		ret = set_statis_buf(cxt->isp_driver_handle, param0);
