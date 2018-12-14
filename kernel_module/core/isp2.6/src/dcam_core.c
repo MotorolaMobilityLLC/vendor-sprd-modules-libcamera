@@ -1547,6 +1547,7 @@ static inline int dcam_init_sync_helper(struct dcam_pipe_dev *dev)
 	INIT_LIST_HEAD(&dev->helper_list);
 
 	spin_lock_irqsave(&dev->helper_lock, flags);
+	list_empty(&dev->helper_list);
 	for (i = 0; i < DCAM_SYNC_HELPER_COUNT; i++) {
 		_init_sync_helper_locked(dev, &dev->helpers[i]);
 		list_add_tail(&dev->helpers[i].list, &dev->helper_list);
@@ -1555,31 +1556,6 @@ static inline int dcam_init_sync_helper(struct dcam_pipe_dev *dev)
 
 	return 0;
 }
-
-#if 0
-/*
- * De-initialize frame synchronizer helper.
- */
-static inline void dcam_deinit_sync_helper(struct dcam_pipe_dev *dev)
-{
-	struct dcam_sync_helper *helper = NULL;
-	unsigned long flags = 0;
-
-	if (unlikely(!dev)) {
-		pr_err("invalid param dev\n");
-		return;
-	}
-
-	spin_lock_irqsave(&dev->helper_lock, flags);
-	list_for_each_entry(helper, &dev->helper_list, list) {
-		if (unlikely(helper->enabled)) {
-			pr_warn("releasing sync helper with path enabled: %u\n",
-				helper->enabled);
-		}
-		list_del_init(&helper->list);
-	}
-}
-#endif
 
 /*
  * Enables/Disables frame sync for path_id. Should be called before streaming.
@@ -2106,6 +2082,13 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	pr_info("DCAM%u start: %p\n", dev->idx, dev);
 
+	ret = dcam_init_sync_helper(dev);
+	if (ret < 0) {
+		pr_err("DCAM%u fail to init sync helper, ret: %d\n",
+			dev->idx, ret);
+		return ret;
+	}
+
 	dev->frame_index = 0;
 
 	/* enable statistic paths  */
@@ -2125,18 +2108,25 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	ret = dcam_set_mipi_cap(dev, &dev->cap_info);
 
+	helper = dcam_get_sync_helper(dev);
+
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
 		if (atomic_read(&path->user_cnt) < 1)
 			continue;
-		if (!helper)
-			helper = dcam_get_sync_helper(dev);
 		ret = dcam_path_set_store_frm(dev, path, helper);
 		/* If output frame set failed, the path will not be started. */
 		if (ret == 0) {
 			atomic_set(&path->set_frm_cnt, 1);
 			dcam_start_path(dev, path);
 		}
+	}
+
+	if (helper) {
+		if (helper->enabled)
+			helper->sync.index = dev->frame_index;
+		else
+			dcam_put_sync_helper(dev, helper);
 	}
 
 	/* since 'set store frame' operation above does not check return state,
@@ -2222,13 +2212,6 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 		pr_err("DCAM%u already initialized, state=%d\n",
 			dev->idx, ret);
 		return -EINVAL;
-	}
-
-	ret = dcam_init_sync_helper(dev);
-	if (ret < 0) {
-		pr_err("DCAM%u fail to init sync helper, ret: %d\n",
-			dev->idx, ret);
-		return ret;
 	}
 
 	hw = dev->hw;

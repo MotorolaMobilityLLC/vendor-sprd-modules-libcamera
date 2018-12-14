@@ -138,10 +138,8 @@ static void dcam_cap_sof(void *param)
 	struct dcam_path_desc *path;
 	struct dcam_sync_helper *helper = NULL;
 
-	pr_debug("DCAM%u cap_sof\n", dev->idx);
-
 	dev->frame_index++;
-	pr_debug("hw frame=%d, frame number to set: %llu\n",
+	pr_debug("DCAM%u cnt=%d, fid: %llu\n", dev->idx,
 		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
 		 dev->frame_index);
 
@@ -151,6 +149,8 @@ static void dcam_cap_sof(void *param)
 		dcam_path_set_slowmotion_frame(dev);
 		return;
 	}
+
+	helper = dcam_get_sync_helper(dev);
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
@@ -164,13 +164,10 @@ static void dcam_cap_sof(void *param)
 		path->frm_deci_cnt++;
 		if (path->frm_deci_cnt >= path->frm_deci) {
 			path->frm_deci_cnt = 0;
-			if (!helper)
-				helper = dcam_get_sync_helper(dev);
 			dcam_path_set_store_frm(dev, path, helper);
 		}
 	}
 
-	/* TODO: refine code to reduce spinlock use */
 	if (helper) {
 		if (helper->enabled)
 			helper->sync.index = dev->frame_index;
