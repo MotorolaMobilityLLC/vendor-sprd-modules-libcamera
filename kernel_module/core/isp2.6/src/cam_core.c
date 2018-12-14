@@ -67,7 +67,7 @@
 #define  CAM_FRAME_Q_LEN   16
 #define  CAM_IRQ_Q_LEN        16
 #define  CAM_STATIS_Q_LEN   16
-#define  CAM_ZOOM_COEFF_Q_LEN   48
+#define  CAM_ZOOM_COEFF_Q_LEN   10
 
 /* TODO: tuning ratio limit for power/image quality */
 #define MAX_RDS_RATIO 3
@@ -1012,14 +1012,21 @@ static int cal_channel_size(struct camera_module *module)
 	}
 
 	if (ch_cap->enable) {
-		ch_cap->trim_dcam = trim_c;
 		ch_cap->swap_size.w = ch_cap->ch_uinfo.src_size.w;
 		ch_cap->swap_size.h = ch_cap->ch_uinfo.src_size.h;
-		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
-			(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
+/*		temp disable trim on isp fetch for capture
+ *		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
+ *		(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
+ */
+		ch_cap->trim_isp = trim_c;
+		trim_c.start_x = 0;
+		trim_c.start_y = 0;
+		trim_c.size_x = ch_cap->ch_uinfo.src_size.w;
+		trim_c.size_y = ch_cap->ch_uinfo.src_size.h;
+		ch_cap->trim_dcam = trim_c;
 		pr_info("trim isp, cap %d %d %d %d\n",
-			ch_cap->trim_isp.start_x, ch_cap->trim_isp.start_y,
-			ch_cap->trim_isp.size_x, ch_cap->trim_isp.size_y);
+				ch_cap->trim_isp.start_x, ch_cap->trim_isp.start_y,
+				ch_cap->trim_isp.size_x, ch_cap->trim_isp.size_y);
 	}
 	pr_info("done.\n");
 	return 0;
@@ -1047,6 +1054,7 @@ static int config_channel_size(
 		loop_count = 1;
 	}
 
+	ch_uinfo = &channel->ch_uinfo;
 	/* DCAM full path not updating for zoom. */
 	if (is_zoom && channel->ch_id == CAM_CH_CAP)
 		goto cfg_isp;
@@ -1066,7 +1074,6 @@ static int config_channel_size(
 	}
 
 	memset(&ch_desc, 0, sizeof(ch_desc));
-	ch_uinfo = &channel->ch_uinfo;
 	ch_desc.input_size.w = ch_uinfo->src_size.w;
 	ch_desc.input_size.h = ch_uinfo->src_size.h;
 	if (channel->ch_id == CAM_CH_CAP) {
@@ -1122,6 +1129,8 @@ static int config_channel_size(
 			pr_err("update dcam path %d size failed, zoom %d, lp %d\n",
 				channel->dcam_path_id, is_zoom, loop_count);
 			msleep(20);
+		} else {
+			break;
 		}
 	} while (--loop_count);
 
@@ -1183,6 +1192,7 @@ static int zoom_proc(void *param)
 	ch_vid = &module->channel[CAM_CH_VID];
 next:
 	pre_zoom_coeff = vid_zoom_coeff = cap_zoom_coeff =NULL;
+	update_pv = update_c = update_always = 0;
 	/* Get node from the preview/video/cap coef queue if exist */
 	if (ch_prev->enable)
 		pre_zoom_coeff = camera_dequeue(&ch_prev->zoom_coeff_queue);
@@ -3032,6 +3042,8 @@ static int img_ioctl_stream_on(
 		if (!ch->enable)
 			continue;
 
+		/* temp for smooth zoom */
+		module->is_smooth_zoom = 1;
 		camera_queue_init(&ch->zoom_coeff_queue,
 			(module->is_smooth_zoom ? CAM_ZOOM_COEFF_Q_LEN : 1),
 			0, camera_put_empty_frame);
