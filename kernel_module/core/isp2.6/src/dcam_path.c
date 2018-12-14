@@ -867,13 +867,13 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	if (lock)
 		spin_unlock_irqrestore(&path->size_lock, flags);
 
-	/* PDAF type3, when need write vch2_base_waddr */
+	/* PDAF type3, when need write addr to DCAM_PPE_RIGHT_WADDR */
 	if ((path->path_id == DCAM_PATH_PDAF) && dev->is_pdaf &&
 		dev->pdaf_type == 3) {
-		reg_addr = dcam_store_addr[DCAM_PATH_VCH2];
+		reg_addr = DCAM_PPE_RIGHT_WADDR;
 		/* PDAF type3, half buffer for right PD, TBD */
 		DCAM_REG_WR(idx, reg_addr, frame->buf.iova[0] +
-			frame->buf.size[0] / 2);
+			STATIS_PDAF_BUF_SIZE / 2);
 	}
 	pr_debug("done. reg %08x,  addr %08x\n",
 			(uint32_t)reg_addr, (uint32_t)frame->buf.iova[0]);

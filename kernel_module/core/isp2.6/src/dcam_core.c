@@ -872,10 +872,14 @@ static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
 	uint32_t idx = dev->idx;
 
 	/* TODO: */
-	dev->is_pdaf = 0;
+	dev->is_pdaf = 1;
 	/* TODO, pdaf type1,2,3,dual pd mode 0,1,2,3 */
-	dev->pdaf_type = p->phase_data_type;
-
+	dev->pdaf_type = p->mode;
+	if (p->mode > 3 || p->image_vc > 3 || p->image_dt > 0x3F) {
+		pr_warn("pdaf param error, set mode=0 to disable pdaf\n");
+		p->mode = 0;
+		dev->is_pdaf = 0;
+	}
 	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		((p->image_vc & 0x3) << 16) |
 		((p->image_dt & 0x3F) << 8) |
