@@ -1461,6 +1461,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         setMimeType(type);
         break;
     }
+    case CAMERA_IOCTRL_GET_IOMMU_AVAILABLE: {
+        *(int *)param1 = IommuIsEnabled();
+        break;
+    }
     case CAMERA_IOCTRL_SET_MASTER_ID: {
         mMasterId = *(int8_t *)param1;
         break;
