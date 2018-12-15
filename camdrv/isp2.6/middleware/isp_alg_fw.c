@@ -92,14 +92,6 @@ struct commn_info {
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 };
 
-struct isp_aem_stats_data {
-		cmr_u32 *r_info;
-		cmr_u32 *g_info;
-		cmr_u32 *b_info;
-		cmr_u32 sec;
-		cmr_u32 usec;
-};
-
 struct ae_info {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
@@ -165,7 +157,6 @@ struct afl_info {
 	cmr_uint mfd;
 	cmr_int buf_property;
 	void *buffer_client_data;
-	struct isp_aem_stats_data ae_stats;
 };
 
 struct af_info {
@@ -205,7 +196,6 @@ struct lsc_info {
 	cmr_u32 isp_smart_lsc_lock;
 	cmr_u8 *log_lsc;
 	cmr_u32 log_lsc_size;
-	struct isp_awb_statistic_info ae_out_stats;
 };
 
 
@@ -285,7 +275,7 @@ struct isp_alg_sw_init_in {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
-	struct isp_aem_stats_data aem_stats_data;
+	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
@@ -398,11 +388,41 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	gain_info.g_gain = inptr->g_gain;
 	gain_info.b_gain = inptr->b_gain;
 	block_info.block_info = &gain_info;
+	/* todo: also set capture gain if 4in1 */
 	block_info.scene_id = PM_SCENE_PRE;
 
 	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &gain_info, NULL);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
+
+	return ret;
+}
+
+static cmr_int ispalg_get_aem_param(cmr_handle isp_fw_handle, struct isp_rgb_aem_info *param)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_pm_param_data param_data;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_fw_handle;
+	struct isp_size *aem_win;
+
+	memset(&param_data, 0, sizeof(param_data));
+
+	/* supported AE win num: 32x32, 64x64, 128x128 */
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_WIN, ISP_BLK_RGB_AEM, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		aem_win = (struct isp_size *)output.param_data->data_ptr;
+		param->blk_num.w = (aem_win->w < 32) ? 32 : aem_win->w;
+		param->blk_num.h = (aem_win->h < 32) ? 32 : aem_win->h;
+		ISP_LOGD("get blk_num %d %d, set to %d %d\n",
+			aem_win->w, aem_win->h, param->blk_num.w, param->blk_num.h);
+	} else {
+		param->blk_num.w = 32;
+		param->blk_num.h = 32;
+		ISP_LOGV("set default blk_num 32x32\n");
+	}
 
 	return ret;
 }
@@ -623,6 +643,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		gain.gr = awb_gain->g;
 		gain.gb = awb_gain->g;
 		gain.b = awb_gain->b;
+		/* todo: also set capture gain if 4in1 */
 		cfg.scene_id = PM_SCENE_PRE;
 		cfg.block_info = &gain;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
@@ -888,6 +909,7 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 		break;
 
 	case ISP_SMART_SET_GAMMA_CUR:
+		/* todo: callback from auto gamma */
 		break;
 
 	default:
@@ -979,7 +1001,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	}
 
 	if (lsc_ver.LSC_SPD_VERSION >= 2) {
-
+		/* todo: move to fw_start */
 		ret = ispalg_alsc_get_info(cxt);
 		ISP_RETURN_IF_FAIL(ret, ("fail to do get lsc info"));
 		lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
@@ -1087,6 +1109,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
 			if ((cxt->work_mode == 1) || !IS_DCAM_BLOCK(param_data->id)) {
+				/* todo: refine for 4in1 sensor */
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
 			}
@@ -1126,7 +1149,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 i = 0;
 	cmr_u32 blk_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_aem_stats_data *ae_stat_ptr = NULL;
+	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 
 	cmr_u64 *uaddr;
@@ -1703,19 +1726,15 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		}
 
 		if (!cxt->lsc_cxt.sw_bypass) {
-			memcpy(cxt->lsc_cxt.ae_out_stats.r_info, cxt->aem_stats_data.r_info, 1024 * sizeof(cmr_u32));
-			memcpy(cxt->lsc_cxt.ae_out_stats.g_info, cxt->aem_stats_data.g_info, 1024 * sizeof(cmr_u32));
-			memcpy(cxt->lsc_cxt.ae_out_stats.b_info, cxt->aem_stats_data.b_info, 1024 * sizeof(cmr_u32));
-
 			stat_img_size.w = ae_in->monitor_info.win_num.w;
 			stat_img_size.h = ae_in->monitor_info.win_num.h;
 			win_size.w = ae_in->monitor_info.win_num.w;
 			win_size.h = ae_in->monitor_info.win_num.h;
 
 			ret = ispalg_alsc_calc(isp_alg_handle,
-					       cxt->lsc_cxt.ae_out_stats.r_info,
-					       cxt->lsc_cxt.ae_out_stats.g_info,
-					       cxt->lsc_cxt.ae_out_stats.b_info,
+					       cxt->aem_stats_data.r_info,
+					       cxt->aem_stats_data.g_info,
+					       cxt->aem_stats_data.b_info,
 					       &stat_img_size, &win_size,
 					       cxt->commn_cxt.src.w, cxt->commn_cxt.src.h,
 					       awb_output->ct, awb_output->gain.r, awb_output->gain.b,
@@ -1726,15 +1745,13 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-smart:%d ms", (cmr_u32)(time_end - time_start));
 
-
 	ae_info = &cxt->ae_info;
 	awb_info = &cxt->awb_info;
 
 	if (0 == ae_info->is_update) {
 		memset((void *)ae_info, 0, sizeof(struct afctrl_ae_info));
-		/* todo: will update block num according to real aem win block. */
-		ae_info->img_blk_info.block_w = 32;
-		ae_info->img_blk_info.block_h = 32;
+		ae_info->img_blk_info.block_w = cxt->ae_cxt.win_num.w;
+		ae_info->img_blk_info.block_h = cxt->ae_cxt.win_num.h;
 		ae_info->img_blk_info.chn_num = 3;
 		ae_info->img_blk_info.pix_per_blk = 1;
 		ae_info->img_blk_info.data = (cmr_u32 *) &cxt->aem_stats_data;
@@ -1862,9 +1879,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	memset(&afl_input, 0, sizeof(afl_input));
 	memset(&afl_output, 0, sizeof(afl_output));
 
-	/* todo: update to new structure. */
-	cxt->afl_cxt.ae_stats = cxt->aem_stats_data;
-
 	if (cxt->afl_cxt.sw_bypass) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 		if (ret) {
@@ -1917,8 +1931,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		afl_input.pm_param_num = 0;
 	}
 
-	/* todo: update afl input for new structure */
-	afl_input.ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->afl_cxt.ae_stats;
+	afl_input.ae_stat_ptr = &cxt->aem_stats_data;
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
@@ -2594,6 +2607,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	cmr_u32 i = 0;
 	cmr_u32 dflash_num = 0;
 	struct ae_init_in ae_input;
+	struct isp_rgb_aem_info aem_info;
 	struct isp_pm_ioctl_output output;
 	struct isp_pm_param_data *param_data = NULL;
 	struct ae_init_out result;
@@ -2666,9 +2680,10 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.caller_handle = (cmr_handle) cxt;
 	ae_input.ae_set_cb = ispalg_ae_set_cb;
 
-	/* change AE win num here: 32x32, 64x64, 128x128..... */
-	cxt->ae_cxt.win_num.w = 32;
-	cxt->ae_cxt.win_num.h = 32;
+	ret = ispalg_get_aem_param(cxt, &aem_info);
+	cxt->ae_cxt.win_num.w = aem_info.blk_num.w;
+	cxt->ae_cxt.win_num.h = aem_info.blk_num.h;
+
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
 	ae_input.sensor_role = cxt->is_master;
@@ -3630,6 +3645,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cmr_u32 sn_mode = 0;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	struct isp_size orig_size;
+	struct isp_rgb_aem_info aem_info;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
@@ -3663,6 +3679,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->mem_info.oem_handle = in_ptr->oem_handle;
 	cxt->mem_info.lsc_mfd = in_ptr->lsc_mfd;
 	cxt->mem_info.lsc_u_addr = in_ptr->lsc_virt_addr;
+
+	ret = ispalg_get_aem_param(cxt, &aem_info);
+	cxt->ae_cxt.win_num.w = aem_info.blk_num.w;
+	cxt->ae_cxt.win_num.h = aem_info.blk_num.h;
 
 	/* malloc statis/lsc and other buffers and mapping buffers to dev. */
 	ret = isp_dev_prepare_buf(cxt->dev_access_handle, &cxt->mem_info);
@@ -4073,20 +4093,6 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	//cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
 	ISP_LOGV("camera_id = %ld, master %d\n", cxt->camera_id, cxt->is_master);
 
-	/*alloc ae stats memory */
-	cxt->aem_stats_data.r_info = malloc(128 * 128 * 3 * sizeof(cmr_u32));
-	if (cxt->aem_stats_data.r_info == NULL) {
-		ISP_LOGE("fail to malloc aem stats buf.\n");
-		ret = ISP_ALLOC_ERROR;
-		goto err_mem;
-	}
-	cxt->aem_stats_data.g_info = cxt->aem_stats_data.r_info + 128 * 128;
-	cxt->aem_stats_data.b_info = cxt->aem_stats_data.g_info + 128 * 128;
-	ISP_LOGD("AEM statis rbuf %p, g %p, b %p\n",
-		cxt->aem_stats_data.r_info,
-		cxt->aem_stats_data.g_info,
-		cxt->aem_stats_data.b_info);
-
 	cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));
 	if (!cxt->pdaf_info) {
 		ISP_LOGE("fail to malloc pdaf_info buf");
@@ -4151,8 +4157,6 @@ err_mem:
 	}
 	if (cxt->pdaf_info)
 		free((void *)cxt->pdaf_info);
-	if (cxt->aem_stats_data.r_info)
-		free((void *)cxt->aem_stats_data.r_info);
 	free((void *)cxt);
 	ISP_LOGE("done: %ld", ret);
 	return ret;
@@ -4180,7 +4184,6 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	isp_dev_free_buf(cxt->dev_access_handle, &cxt->mem_info);
 
 	free((void *)cxt->pdaf_info);
-	free((void *)cxt->aem_stats_data.r_info);
 	free((void *)cxt);
 
 	ISP_LOGI("done %d", ret);
