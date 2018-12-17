@@ -882,10 +882,37 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     return ret_value;
 }
 
+static cmr_int ov5675_drv_check_cur_frm_len(cmr_handle handle) {
+    cmr_u16 cur_frame_len_h = 0;
+    cmr_u16 cur_frame_len_l = 0;
+    uint32_t cur_fr_len = 0;
+    uint32_t aec_fr_len = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    aec_fr_len = ov5675_drv_get_cur_frm_len(handle, &ov5675_aec_info);
+
+    cur_frame_len_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380e)&0xff;
+    cur_frame_len_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x380f)&0xff;
+    cur_fr_len = (cur_frame_len_h << 8) | cur_frame_len_l;
+
+   if (aec_fr_len != cur_fr_len) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380e,
+                            (aec_fr_len >> 8) & 0xff);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x380f, aec_fr_len & 0xff);
+        SENSOR_LOGI("aec_fr_len[%d] diff from cur_fr_len[%d]", aec_fr_len,
+                    cur_fr_len);
+    }
+
+    return  0;
+}
+
 static cmr_int ov5675_drv_set_frame_sync(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    ov5675_drv_check_cur_frm_len(handle);
 
     /* setting from ov5675 */
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3663, 0x20);
@@ -893,8 +920,8 @@ static cmr_int ov5675_drv_set_frame_sync(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x70);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0xbb);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x0f);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x90);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x17);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x5c);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3822, 0x64);
     return 0;
 }
