@@ -372,13 +372,20 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
     FILE *pf = NULL;
     uint32_t file_len = 0;
+    char tmp_name[128];
 
-    if (NULL == data_buf)
-        return 0;
+    if (data_buf == NULL) {
+        CMR_LOGE("data_buf is null");
+        goto exit;
+    }
 
-    pf = fopen(file_name, "rb");
-    if (NULL == pf)
-        return 0;
+    strcpy(tmp_name, CAMERA_DUMP_PATH);
+    strcat(tmp_name, file_name);
+    pf = fopen(tmp_name, "rb");
+    if (pf == NULL) {
+        CMR_LOGE("open file failed");
+        goto exit;
+    }
 
     fseek(pf, 0, SEEK_END);
     file_len = ftell(pf);
@@ -386,25 +393,34 @@ cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
 
     if (buf_size >= file_len && file_len > 0)
         file_len = fread(data_buf, 1, file_len, pf);
-    else
-        file_len = 0;
 
     fclose(pf);
 
     return file_len;
+
+exit:
+    return 0;
 }
 
 cmr_int save_file(const char *file_name, void *data, uint32_t data_size) {
-    FILE *pf = fopen(file_name, "wb");
     uint32_t write_bytes = 0;
+    char tmp_name[128];
 
-    if (NULL == pf)
-        return 0;
+    strcpy(tmp_name, CAMERA_DUMP_PATH);
+    strcat(tmp_name, file_name);
+    FILE *pf = fopen(tmp_name, "wb");
+    if (pf == NULL) {
+        CMR_LOGE("open file failed");
+        goto exit;
+    }
 
     write_bytes = fwrite(data, 1, data_size, pf);
     fclose(pf);
 
     return write_bytes;
+
+exit:
+    return 0;
 }
 
 // parse the filename like
