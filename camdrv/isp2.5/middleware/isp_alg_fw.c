@@ -2713,6 +2713,7 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, cmr_u32 data_type, 
 	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
 
+	memset((void *)&sensor_ebd_info, 0x00, sizeof(sensor_ebd_info));
 	sensor_ebd_info.embedded_data = (cmr_u8 *)u_addr;
 
 	if (cxt->ioctrl_ptr->sns_ioctl) {
@@ -5475,7 +5476,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	ret = ispalg_pm_init(cxt, input_ptr->init_param);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to do ispalg_pm_init");
-		return ret;
+		goto exit;
 	}
 
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
