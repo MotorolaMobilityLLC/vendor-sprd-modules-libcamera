@@ -1149,10 +1149,10 @@ int SprdCamera3Setting::getPhysicalNumberOfCameras() {
     }
 
     physicalNum = sensor_get_number(camera_is_supprort);
-    // if one board support all kinds of camera feature, for 3 back camera,
-    // 3 camera struct light, dual-camera, and so on, we will do some bindings
-    // mPhysicalSensorNum = physicalNum;
-    // goto exit;
+// if one board support all kinds of camera feature, for 3 back camera,
+// 3 camera struct light, dual-camera, and so on, we will do some bindings
+// mPhysicalSensorNum = physicalNum;
+// goto exit;
 
 #ifdef CONFIG_BACK_CAMERA
     mPhysicalSensorNum++;
@@ -1334,7 +1334,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memset(&(s_setting[cameraId]), 0, sizeof(sprd_setting_info_t));
 
     s_setting[cameraId].supported_hardware_level =
-        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY;
+        ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
 
     // color
     memcpy(s_setting[cameraId].colorInfo.available_aberration_modes,
@@ -3142,7 +3142,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         }
 
         { // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE] for still
-          // capture
+            // capture
             bool support_cap_raw = false;
             if (characteristicsInfo.exists(
                     ANDROID_REQUEST_AVAILABLE_CAPABILITIES)) {
