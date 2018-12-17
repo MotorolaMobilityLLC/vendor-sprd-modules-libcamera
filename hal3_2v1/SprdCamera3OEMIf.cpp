@@ -10043,7 +10043,10 @@ void SprdCamera3OEMIf::EisPreview_init() {
              mPreviewParam.dst_h);
 
     // clear preview  gyro
-    mGyroPreviewInfo.clear();
+    {
+        Mutex::Autolock l(&mEisPreviewLock);
+        mGyroPreviewInfo.clear();
+    }
 }
 
 void SprdCamera3OEMIf::EisVideo_init() {
@@ -10100,7 +10103,11 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
                  frame_in.timestamp, mGyromaxtimestamp);
         video_stab_write_frame(mPreviewInst, &frame_in);
         do {
-            gyro_num = mGyroPreviewInfo.size();
+
+            {
+                Mutex::Autolock l(&mEisPreviewLock);
+                gyro_num = mGyroPreviewInfo.size();
+            }
             if (gyro_num) {
                 gyro = (vsGyro *)malloc(gyro_num * sizeof(vsGyro));
                 if (NULL == gyro) {
@@ -10211,7 +10218,6 @@ void SprdCamera3OEMIf::pushEISPreviewQueue(vsGyro *mGyrodata) {
 
 void SprdCamera3OEMIf::popEISPreviewQueue(vsGyro *gyro, int gyro_num) {
     Mutex::Autolock l(&mEisPreviewLock);
-
     int i;
     vsGyro *GyroInfo = NULL;
     for (i = 0; i < gyro_num; i++) {
