@@ -532,7 +532,7 @@ static cmr_int sensor_get_match_info(struct sensor_drv_context *sensor_cxt,
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     register_info = &sensor_cxt->sensor_register_info;
 
-    if (sensor_id >= SENSOR_ATV) {
+    if (sensor_id >= SENSOR_ID_MAX) {
         SENSOR_LOGI("invalid id=%d", sensor_id);
         return SENSOR_FAIL;
     }
@@ -3043,7 +3043,7 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
 
     SENSOR_LOGI("search all sensor in the register tab for current sensor_id");
 
-    if (sensor_id >= SENSOR_ATV) {
+    if (sensor_id >= SENSOR_ID_MAX) {
         SENSOR_LOGI("invalid id=%d", sensor_id);
         return SENSOR_FAIL;
     }
