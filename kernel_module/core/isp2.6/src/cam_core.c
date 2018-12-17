@@ -344,7 +344,7 @@ static void alloc_buffers(struct work_struct *work)
 	width = channel->swap_size.w;
 	height = channel->swap_size.h;
 	if (channel->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY)
-		size = ((width * 10 / 8 + 3) & (~3)) * height;
+		size = cal_sprd_raw_pitch(width) * height;
 	else
 		size = width * height * 3;
 	size = ALIGN(size, CAM_BUF_ALIGN_SIZE);
@@ -1012,18 +1012,11 @@ static int cal_channel_size(struct camera_module *module)
 	}
 
 	if (ch_cap->enable) {
+		ch_cap->trim_dcam = trim_c;
 		ch_cap->swap_size.w = ch_cap->ch_uinfo.src_size.w;
 		ch_cap->swap_size.h = ch_cap->ch_uinfo.src_size.h;
-/*		temp disable trim on isp fetch for capture
- *		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
- *		(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
- */
-		ch_cap->trim_isp = trim_c;
-		trim_c.start_x = 0;
-		trim_c.start_y = 0;
-		trim_c.size_x = ch_cap->ch_uinfo.src_size.w;
-		trim_c.size_y = ch_cap->ch_uinfo.src_size.h;
-		ch_cap->trim_dcam = trim_c;
+		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
+			(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
 		pr_info("trim isp, cap %d %d %d %d\n",
 				ch_cap->trim_isp.start_x, ch_cap->trim_isp.start_y,
 				ch_cap->trim_isp.size_x, ch_cap->trim_isp.size_y);
@@ -1312,7 +1305,7 @@ static int dump_one_frame  (struct camera_module *module,
 	strcat(file_name,tmp_str);
 	strcat(file_name,".mipi_raw");
 
-	size = ((pframe->width * 10 / 8 + 3) & (~3)) * pframe->height;
+	size = cal_sprd_raw_pitch(pframe->width) * pframe->height;
 	/*write_image_to_file((char*)pframe->buf.addr_k[0],size, file_name);*/
 
 	pr_info("dump for ch %d, size %d, kaddr %p, file %s\n", ch_id,
@@ -1507,7 +1500,7 @@ static int init_cam_channel(
 		if (module->zoom_solution == 0) {
 			max_size.w = ch_uinfo->src_size.w / 2;
 		} else {
-			max_size.w = (ch_uinfo->src_size.w * 10 + 30) / module->rds_limit;
+			max_size.w = (ch_uinfo->src_size.w * 10 + 40) / module->rds_limit;
 			if (max_size.w < ch_uinfo->dst_size.w)
 				max_size.w = ch_uinfo->dst_size.w;
 		}
@@ -2579,6 +2572,7 @@ static int img_ioctl_set_crop(
 			sizeof(struct sprd_img_rect));
 	pr_info("set ch%d crop %d %d %d %d.\n", channel_id,
 			crop->x, crop->y, crop->w, crop->h);
+
 	if (unlikely(ret)) {
 		pr_err("fail to copy from user, ret %d\n", ret);
 		goto exit;
@@ -3592,7 +3586,7 @@ static int raw_proc_post(
 		height = proc_info->src_size.height;
 		/* todo: accurate buffer size for formats other than mipi-raw*/
 		if (proc_info->src_format == IMG_PIX_FMT_GREY)
-			size = (((width * 10 / 8) + 3) & ~3) * height;
+			size = cal_sprd_raw_pitch(width) * height;
 		else
 			size = width * height * 3;
 		size = ALIGN(size, CAM_BUF_ALIGN_SIZE);
@@ -3914,8 +3908,8 @@ static int test_dcam(struct camera_module *module,
 		pframe->fid = 0;
 		pframe->width = ch_desc.input_size.w;
 		pframe->height = ch_desc.input_size.h;
-		size = ch_desc.input_size.w + 4;
-		size *= ch_desc.input_size.h * 10 / 8; /* csi-raw10 */
+		size = cal_sprd_raw_pitch(ch_desc.input_size.w);
+		size *= ch_desc.input_size.h;
 		ret = cambuf_alloc(
 				&pframe->buf, size,
 				0, iommu_enable);
@@ -4191,8 +4185,8 @@ static int test_isp(struct camera_module *module,
 			pframe_out_1->channel_id = channel_1->ch_id;
 			pframe_out_1->is_reserved = 0;
 			pframe_out_1->fid = 0;
-			size = (test_info->input_size.width + 3) & ~3; /* raw10 4 aligned */
-			size *= test_info->input_size.height * 10 / 8;
+			size = cal_sprd_raw_pitch(test_info->input_size.width);
+			size *= test_info->input_size.height;
 			ret = cambuf_alloc(
 					&pframe_out_1->buf, size,
 					0, iommu_enable);

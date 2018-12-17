@@ -101,7 +101,8 @@ struct isp_pipe_context;
 
 struct isp_fetch_info {
 	enum isp_fetch_format fetch_fmt;
-	struct img_size size;
+	struct img_size src;/* source buffer size */
+	struct img_trim in_trim;/* support fetch trim */
 	struct img_addr addr;
 	struct img_addr trim_off;
 	struct img_pitch pitch;

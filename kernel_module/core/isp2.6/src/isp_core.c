@@ -627,7 +627,7 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	struct isp_fetch_info *fetch = &pctx->fetch;
 
 	pr_info("enter %s: fmt:%d, w:%d, h:%d\n", __func__, fetch->fetch_fmt,
-			fetch->size.w, fetch->size.h);
+			fetch->in_trim.size_x, fetch->in_trim.size_y);
 
 	en_3dnr = 0;/* (pctx->mode_3dnr == MODE_3DNR_OFF) ? 0 : 1; */
 	ISP_REG_MWR(idx, ISP_COMMON_SPACE_SEL,
@@ -663,7 +663,7 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	ISP_REG_MWR(idx, ISP_FETCH_PARAM,
 			(0xF << 4), fetch->fetch_fmt << 4);
 	ISP_REG_WR(idx, ISP_FETCH_MEM_SLICE_SIZE,
-			fetch->size.w | (fetch->size.h << 16));
+			fetch->in_trim.size_x | (fetch->in_trim.size_y << 16));
 
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_Y_PITCH, fetch->pitch.pitch_ch0);
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_U_PITCH, fetch->pitch.pitch_ch1);
@@ -676,7 +676,7 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	ISP_REG_WR(idx, ISP_DISPATCH_LINE_DLY1,  0x280001C);
 	ISP_REG_WR(idx, ISP_DISPATCH_PIPE_BUF_CTRL_CH0,  0x64043C);
 	ISP_REG_WR(idx, ISP_DISPATCH_CH0_SIZE,
-		pctx->fetch.size.w | (pctx->fetch.size.h << 16));
+		fetch->in_trim.size_x | (fetch->in_trim.size_y << 16));
 	ISP_REG_WR(idx, ISP_DISPATCH_CH0_BAYER, pctx->dispatch_bayer_mode);
 
 	/*CFA*/

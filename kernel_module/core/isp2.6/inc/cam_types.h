@@ -221,4 +221,11 @@ struct sprd_cam_work {
 	ktime_t boot_time;
 	struct work_struct work;
 };
+
+static inline uint32_t cal_sprd_raw_pitch(uint32_t w)
+{
+	uint32_t mod16_len[16] =
+		{ 0, 8, 8, 8, 8, 12, 12, 12, 12, 16, 16, 16, 16, 20, 20, 20 };
+	return ((w >> 4) * 20 + (mod16_len[w & 0xf]));
+}
 #endif /* _CAM_TYPES_H_ */

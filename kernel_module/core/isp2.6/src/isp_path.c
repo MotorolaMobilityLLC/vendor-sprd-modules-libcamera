@@ -538,8 +538,8 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 	pctx->input_size = cfg_in->src;
 	pctx->input_trim = cfg_in->crop;
 	intrim = &pctx->input_trim;
-	fetch->size.w = intrim->size_x;
-	fetch->size.h = intrim->size_y;
+	fetch->src = pctx->input_size;
+	fetch->in_trim = pctx->input_trim;
 	fetch->fetch_fmt = get_fetch_format(pctx->in_fmt);
 	pr_info("ctx%d fetch fmt: %d  in %d %d, crop %d %d %d %d\n",
 		pctx->ctx_id, fetch->fetch_fmt, src->w, src->h,
@@ -600,14 +600,12 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 		uint32_t mipi_byte_info = 0;
 		uint32_t mipi_word_info = 0;
 		uint32_t start_col = intrim->start_x;
+		uint32_t start_row = intrim->start_y;
 		uint32_t end_col =  intrim->start_x + intrim->size_x - 1;
 		uint32_t mipi_word_num_start[16] = {
 			0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5};
 		uint32_t mipi_word_num_end[16] = {
 			0, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5};
-		uint32_t mod16_pixel = pctx->input_size.w & 0xF;
-		uint32_t mod16_bytes = (mod16_pixel + 3) / 4 * 5;
-		uint32_t mod16_words = (mod16_bytes + 3) / 4;
 
 		mipi_byte_info = start_col & 0xF;
 		mipi_word_info =
@@ -617,13 +615,14 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 			- mipi_word_num_start[(start_col + 1) & 0xF] + 1;
 		fetch->mipi_byte_rel_pos = mipi_byte_info;
 		fetch->mipi_word_num = mipi_word_info;
-		fetch->pitch.pitch_ch0 =
-			pctx->input_size.w / 16 * 20 + mod16_words * 4;
-		trim_offset[0] = intrim->start_y *
-			fetch->pitch.pitch_ch0 / 2 + intrim->start_x / 16 * 20;
-		pr_info("fetch %d, %d, %d,  pitch:  %d\n",
-				mod16_pixel, mod16_bytes, mod16_words,
-				fetch->pitch.pitch_ch0);
+		fetch->pitch.pitch_ch0 = cal_sprd_raw_pitch(pctx->input_size.w);
+		/* same as slice starts */
+		trim_offset[0] = start_row * fetch->pitch.pitch_ch0
+					+ (start_col >> 2) * 5
+					+ (start_col & 0x3);
+		pr_info("fetch pitch %d, offset %ld, rel_pos %d, wordn %d\n",
+			fetch->pitch.pitch_ch0, trim_offset[0],
+			mipi_byte_info, mipi_word_info);
 		break;
 	}
 	default:
@@ -1298,15 +1297,20 @@ int isp_path_set_fetch_frm(
 	yuv_addr[2] = frame->buf.iova[2];
 
 	if ((planes > 1) && yuv_addr[1] == 0) {
-		offset_u = fetch->pitch.pitch_ch0 * fetch->size.h;
+		offset_u = fetch->pitch.pitch_ch0 * fetch->src.h;
 		yuv_addr[1] = yuv_addr[0] + offset_u;
 	}
 
 	if ((planes > 2) && yuv_addr[2] == 0) {
 		/* ISP_FETCH_YUV422_3FRAME */
-		offset_v = fetch->pitch.pitch_ch1 * fetch->size.h;
+		offset_v = fetch->pitch.pitch_ch1 * fetch->src.h;
 		yuv_addr[2] = yuv_addr[1] + offset_v;
 	}
+
+	/* set the start address of source frame */
+	fetch_addr->addr_ch0 = yuv_addr[0];
+	fetch_addr->addr_ch1 = yuv_addr[1];
+	fetch_addr->addr_ch2 = yuv_addr[2];
 
 	yuv_addr[0] += fetch->trim_off.addr_ch0;
 	yuv_addr[1] += fetch->trim_off.addr_ch1;
@@ -1316,10 +1320,6 @@ int isp_path_set_fetch_frm(
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_Y_ADDR, yuv_addr[0]);
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_U_ADDR, yuv_addr[1]);
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_V_ADDR, yuv_addr[2]);
-
-	fetch_addr->addr_ch0 = yuv_addr[0];
-	fetch_addr->addr_ch1 = yuv_addr[1];
-	fetch_addr->addr_ch2 = yuv_addr[2];
 
 	pr_debug("done %x %x %x\n", fetch_addr->addr_ch0,
 		fetch_addr->addr_ch1,

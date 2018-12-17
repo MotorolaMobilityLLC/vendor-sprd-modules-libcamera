@@ -70,31 +70,52 @@ static int get_slice_size_info(
 {
 	int rtn = 0;
 	uint32_t j;
-	uint32_t slice_num, slice_w;
+	uint32_t slice_num, slice_w, slice_w_out;
 	uint32_t slice_max_w, max_w;
 	struct img_size *input = &in_ptr->frame_in_size;
 	struct img_size *output;
 
+	/* based input */
 	max_w = input->w;
+	slice_num = 1;
 	slice_max_w = line_buffer_len - SLICE_OVERLAP_W_MAX;
+	if (max_w <= line_buffer_len) {
+		slice_w = input->w;
+	} else {
+		do {
+			slice_num++;
+			slice_w = (max_w + slice_num - 1) / slice_num;
+		} while (slice_w >= slice_max_w);
+	}
+	pr_info("input_w %d, slice_num %d, slice_w %d\n",
+		max_w, slice_num, slice_w);
 
+	/* based output */
+	max_w = 0;
+	slice_num = 1;
+	slice_max_w = line_buffer_len;
 	for (j = 0; j < ISP_SPATH_NUM; j++) {
 		output = in_ptr->frame_out_size[j];
 		if (output && (output->w > max_w))
 			max_w = output->w;
 	}
+	if (max_w > 0){
+		if (max_w <= line_buffer_len) {
+			slice_w_out = max_w;
+		} else {
+			do {
+				slice_num++;
+				slice_w_out = (max_w + slice_num - 1) / slice_num;
+			} while (slice_w_out >= slice_max_w);
+		}
+		/* set to equivalent input size, because slice size based on input. */
+		slice_w_out = (input->w + slice_num - 1) / slice_num;
+	} else
+		slice_w_out = slice_w;
+	pr_info("max output w %d, slice_num %d, out limited slice_w %d\n",
+		max_w, slice_num, slice_w_out);
 
-	if (max_w <= line_buffer_len) {
-		slice_w = input->w;
-	} else {
-		slice_num = 2;
-		do {
-			slice_w = (max_w + slice_num - 1) / slice_num;
-			slice_num++;
-		} while (slice_w >= slice_max_w);
-	}
-
-	*w = slice_w;
+	*w = (slice_w < slice_w_out) ?  slice_w : slice_w_out;
 	*h = input->h / SLICE_H_NUM_MAX;
 
 	*w = ISP_ALIGNED(*w);
@@ -135,6 +156,9 @@ static int cfg_slice_base_info(
 	uint32_t img_height, img_width;
 	uint32_t slice_height = 0, slice_width = 0;
 	uint32_t slice_total_row, slice_total_col, slice_num;
+	uint32_t fetch_start_x, fetch_start_y;
+	uint32_t fetch_end_x, fetch_end_y;
+	struct isp_fetch_info *frame_fetch= in_ptr->frame_fetch;
 
 	struct isp_slice_desc *cur_slc;
 
@@ -144,6 +168,10 @@ static int cfg_slice_base_info(
 
 	img_height = in_ptr->frame_in_size.h;
 	img_width = in_ptr->frame_in_size.w;
+	fetch_start_x = frame_fetch->in_trim.start_x;
+	fetch_start_y = frame_fetch->in_trim.start_y;
+	fetch_end_x = frame_fetch->in_trim.start_x + frame_fetch->in_trim.size_x - 1;
+	fetch_end_y = frame_fetch->in_trim.start_y + frame_fetch->in_trim.size_y - 1;
 	slice_total_row = (img_height + slice_height - 1) / slice_height;
 	slice_total_col = (img_width + slice_width - 1) / slice_width;
 	slice_num = slice_total_col * slice_total_row;
@@ -154,10 +182,12 @@ static int cfg_slice_base_info(
 	slc_ctx->slice_width = slice_width;
 	slc_ctx->img_height = img_height;
 	slc_ctx->img_width = img_width;
-
 	pr_info("img w %d, h %d, slice w %d, h %d, slice num %d\n",
-			img_width, img_height,
-			slice_width, slice_height, slice_num);
+		img_width, img_height,
+		slice_width, slice_height, slice_num);
+	pr_info("src %d %d, fetch crop %d %d %d %d\n",
+		frame_fetch->src.w, frame_fetch->src.h,
+		fetch_start_x, fetch_start_y, fetch_end_x, fetch_end_y);
 
 	for (i = 0; i < SLICE_NUM_MAX; i++)
 		pr_debug("slice %d valid %d\n", i, slc_ctx->slices[i].valid);
@@ -194,6 +224,7 @@ static int cfg_slice_base_info(
 							slc_ctx->overlap_right;
 			else
 				end_col = img_width - 1;
+
 			cur_slc->slice_pos_orig.start_col = start_col;
 			cur_slc->slice_pos_orig.start_row = start_row;
 			cur_slc->slice_pos_orig.end_col = end_col;
@@ -208,6 +239,11 @@ static int cfg_slice_base_info(
 			cur_slc->slice_pos.end_row =
 				end_row + cur_slc->slice_overlap.overlap_down;
 
+			cur_slc->slice_pos_fetch.start_col = cur_slc->slice_pos.start_col + fetch_start_x;
+			cur_slc->slice_pos_fetch.start_row = cur_slc->slice_pos.start_row + fetch_start_y;
+			cur_slc->slice_pos_fetch.end_col = cur_slc->slice_pos.end_col + fetch_start_x;
+			cur_slc->slice_pos_fetch.end_row = cur_slc->slice_pos.end_row + fetch_start_y;
+
 			pr_debug("slice %d %d pos_orig [%d %d %d %d]\n", i, j,
 					cur_slc->slice_pos_orig.start_col,
 					cur_slc->slice_pos_orig.end_col,
@@ -218,6 +254,11 @@ static int cfg_slice_base_info(
 					cur_slc->slice_pos.end_col,
 					cur_slc->slice_pos.start_row,
 					cur_slc->slice_pos.end_row);
+			pr_debug("slice %d %d pos_fetch [%d %d %d %d]\n", i, j,
+					cur_slc->slice_pos_fetch.start_col,
+					cur_slc->slice_pos_fetch.end_col,
+					cur_slc->slice_pos_fetch.start_row,
+					cur_slc->slice_pos_fetch.end_row);
 			pr_debug("slice %d %d ovl [%d %d %d %d]\n", i, j,
 					cur_slc->slice_overlap.overlap_up,
 					cur_slc->slice_overlap.overlap_down,
@@ -1024,10 +1065,10 @@ int isp_cfg_slice_fetch_info(
 			continue;
 		slc_fetch = &cur_slc->slice_fetch;
 
-		start_col = cur_slc->slice_pos.start_col;
-		start_row = cur_slc->slice_pos.start_row;
-		end_col = cur_slc->slice_pos.end_col;
-		end_row = cur_slc->slice_pos.end_row;
+		start_col = cur_slc->slice_pos_fetch.start_col;
+		start_row = cur_slc->slice_pos_fetch.start_row;
+		end_col = cur_slc->slice_pos_fetch.end_col;
+		end_row = cur_slc->slice_pos_fetch.end_row;
 
 		pitch = &frm_fetch->pitch;
 
@@ -1065,11 +1106,14 @@ int isp_cfg_slice_fetch_info(
 				-(((start_col + 1) >> 4) * 5 +
 				mipi_word_num_start[(start_col + 1)
 				& 0x0f]) + 1);
+			pr_debug("(%d %d %d %d), pitch %d, offset %d, mipi %d %d\n",
+				start_row, start_col, end_row, end_col,
+				pitch->pitch_ch0, ch_offset[0],
+				slc_fetch->mipi_byte_rel_pos, slc_fetch->mipi_word_num);
 			break;
 
 		default:
-			ch_offset[0] = start_row * pitch->pitch_ch0 + start_col
-				*2;
+			ch_offset[0] = start_row * pitch->pitch_ch0 + start_col * 2;
 			break;
 		}
 
@@ -1081,6 +1125,8 @@ int isp_cfg_slice_fetch_info(
 			ch_offset[2];
 		slc_fetch->size.h = end_row - start_row + 1;
 		slc_fetch->size.w = end_col - start_col + 1;
+		pr_debug("slice fetch size %d, %d\n",
+			slc_fetch->size.w, slc_fetch->size.h);
 	}
 
 	return 0;
