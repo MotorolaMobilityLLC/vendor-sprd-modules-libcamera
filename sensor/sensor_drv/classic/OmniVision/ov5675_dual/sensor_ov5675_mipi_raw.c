@@ -387,7 +387,7 @@ ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
                            struct sensor_aec_i2c_tag *aec_info) {
     uint32_t dest_fr_len = 0;
     uint32_t cur_fr_len = 0;
-    uint32_t fr_len = 0;
+    uint32_t min_fr_len = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -399,11 +399,15 @@ ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
     goto write_sensor_shutter;
 #endif
 
+#ifndef MAX
+    #define MAX(a,b) (a) > (b) ? (a) : (b)
+#endif
+    // the default min frame length, i.e.max framerate.
+    min_fr_len = sns_drv_cxt->frame_length_def;
+    dest_fr_len = MAX((shutter + dummy_line + FRAME_OFFSET),min_fr_len);
     cur_fr_len = ov5675_drv_get_cur_frm_len(handle, aec_info);
-    dest_fr_len = ((shutter + dummy_line + FRAME_OFFSET) > cur_fr_len)
-                      ? (shutter + dummy_line + FRAME_OFFSET)
-                      : cur_fr_len;
-    ov5675_drv_set_cur_frm_len(handle, dest_fr_len, aec_info);
+    if(cur_fr_len != dest_fr_len)
+        ov5675_drv_set_cur_frm_len(handle, dest_fr_len, aec_info);
 
     SENSOR_LOGI("shutter=%d, dummy_line=%d,dest_fr_len=%d,cur_fr_len=%d",
         shutter,dummy_line,dest_fr_len,cur_fr_len);
