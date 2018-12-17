@@ -204,7 +204,6 @@ static void isp_path_store_done(
 		pctx->ctx_id, path->spath_id,
 		pframe,  pctx->cb_priv_data);
 
-	path->frm_cnt++;
 	if (unlikely(pframe->is_reserved)) {
 		camera_enqueue(&path->reserved_buf_queue, pframe);
 	} else {
@@ -218,6 +217,7 @@ static void isp_path_store_done(
 		pctx->isp_cb_func(ISP_CB_RET_DST_BUF,
 					pframe, pctx->cb_priv_data);
 	}
+	path->frm_cnt++;
 }
 
 static void isp_pre_store_done(enum isp_context_id idx, void *isp_handle)
