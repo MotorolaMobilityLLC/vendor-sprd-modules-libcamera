@@ -35,6 +35,8 @@ int dcam_stop_path(void *dcam_handle, struct dcam_path_desc *path);
 
 int dcam_path_set_slowmotion_frame(struct dcam_pipe_dev *dev);
 int dcam_path_init_slowmotion_frame(struct dcam_pipe_dev *dev);
+int dcam_path_set_skip_num(struct dcam_pipe_dev *dev,
+			   int path_id, uint32_t skip_num);
 
 /* / TODO: refine this*/
 int dcam_path_set_store_frm(

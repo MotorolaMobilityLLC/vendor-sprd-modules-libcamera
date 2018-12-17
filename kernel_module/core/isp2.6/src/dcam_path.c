@@ -635,7 +635,7 @@ int dcam_path_set_slowmotion_frame(struct dcam_pipe_dev *dev)
 	/* set store address */
 	i = dev->frame_index % dev->slowmotion_count;
 	DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_bin][i - 1],
-			frame->buf.iova[0]);
+		    frame->buf.iova[0]);
 
 	/* save this frame */
 	if (camera_enqueue(&path->result_queue, frame) < 0) {
@@ -654,7 +654,6 @@ int dcam_path_init_slowmotion_frame(struct dcam_pipe_dev *dev)
 {
 	struct camera_frame *frame = NULL, *frame2 = NULL;
 	struct dcam_path_desc *path = NULL;
-	struct dcam_sync_helper *helper = NULL;
 	struct timespec cur_ts;
 	const int _bin = 0, _aem = 1, _hist = 2;
 	int i = 1;
@@ -683,10 +682,10 @@ int dcam_path_init_slowmotion_frame(struct dcam_pipe_dev *dev)
 			/* since we only have reserved buffer... */
 			while (i < dev->slowmotion_count) {
 				DCAM_REG_WR(dev->idx,
-						s_slowmotion_waddr[_bin][i - 1],
-						frame->buf.iova[0]);
+					    s_slowmotion_waddr[_bin][i - 1],
+					    frame->buf.iova[0]);
 				if (camera_enqueue(&path->result_queue,
-					frame) < 0) {
+						   frame) < 0) {
 					pr_err("DCAM%u bin path result queue full\n",
 						dev->idx);
 					return -EINVAL;
@@ -702,16 +701,9 @@ int dcam_path_init_slowmotion_frame(struct dcam_pipe_dev *dev)
 		frame->sensor_time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
 		frame->fid = i;
 
-		helper = dcam_get_sync_helper(dev);
-		if (helper) {
-			helper->enabled |= BIT(DCAM_PATH_BIN);
-			helper->sync.frames[DCAM_PATH_BIN] = frame;
-			frame->sync_data = &helper->sync;
-		}
-
 		/* set store address */
 		DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_bin][i - 1],
-				frame->buf.iova[0]);
+			    frame->buf.iova[0]);
 		if (camera_enqueue(&path->result_queue, frame) < 0) {
 			pr_err("DCAM%u bin path result queue full\n", dev->idx);
 			return -EINVAL;
@@ -741,11 +733,45 @@ int dcam_path_init_slowmotion_frame(struct dcam_pipe_dev *dev)
 	i = 1;
 	while (i < dev->slowmotion_count) {
 		DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_aem][i - 1],
-				frame->buf.iova[0]);
+			    frame->buf.iova[0]);
 		DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_hist][i - 1],
-				frame2->buf.iova[0]);
+			    frame2->buf.iova[0]);
 		i++;
 	}
+
+	return 0;
+}
+
+/*
+ * Set skip num for path @path_id so that we can update address accordingly in
+ * CAP SOF interrupt.
+ *
+ * For slow motion mode.
+ * On previous project, there's no slow motion support for AEM on DCAM. Instead,
+ * we use @skip_num to generate AEM TX DONE every @skip_num frame. If @skip_num
+ * is set by algorithm, we should configure AEM output address accordingly in
+ * CAP SOF every @skip_num frame.
+ */
+int dcam_path_set_skip_num(struct dcam_pipe_dev *dev,
+			   int path_id, uint32_t skip_num)
+{
+	struct dcam_path_desc *path = NULL;
+
+	if (unlikely(!dev || !is_path_id(path_id)))
+		return -EINVAL;
+
+	if (atomic_read(&dev->state) == STATE_RUNNING) {
+		pr_warn("DCAM%u %s set skip_num while running is forbidden\n",
+			dev->idx, to_path_name(path_id));
+		return -EINVAL;
+	}
+
+	path = &dev->path[path_id];
+	path->frm_deci = skip_num;
+	path->frm_deci_cnt = 0;
+
+	pr_info("DCAM%u %s set skip_num %u\n",
+		dev->idx, to_path_name(path_id), skip_num);
 
 	return 0;
 }
@@ -781,7 +807,8 @@ int dcam_path_set_store_frm(void *dcam_handle,
 				&path->reserved_buf_queue);
 
 	if (frame == NULL) {
-		pr_err("fail to get available output buffer.\n");
+		pr_err("DCAM%u %s buffer unavailable\n",
+		       idx, to_path_name(path_id));
 		ret = -EINVAL;
 		goto no_buf;
 	}
@@ -795,8 +822,8 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	/* frame->fid = path->frm_cnt; */
 	ret = camera_enqueue(&path->result_queue, frame);
 	if (ret) {
-		pr_err("dcam%d path %d output queue overflow.\n",
-				idx, path_id);
+		pr_err("DCAM%u %s output queue overflow.\n",
+		       idx, to_path_name(path_id));
 		ret = -EINVAL;
 		goto overflow;
 	}
@@ -853,8 +880,8 @@ int dcam_path_set_store_frm(void *dcam_handle,
 
 	atomic_inc(&path->set_frm_cnt);
 	pr_debug("DCAM%u %s set frame: index=%u, count=%d\n",
-		dev->idx, to_path_name(path_id), frame->fid,
-		atomic_read(&path->set_frm_cnt));
+		 dev->idx, to_path_name(path_id), frame->fid,
+		 atomic_read(&path->set_frm_cnt));
 
 	return 0;
 

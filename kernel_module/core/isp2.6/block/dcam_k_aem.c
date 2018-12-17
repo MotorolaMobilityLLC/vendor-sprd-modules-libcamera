@@ -17,6 +17,7 @@
 
 #include "dcam_reg.h"
 #include "dcam_interface.h"
+#include "dcam_path.h"
 #include "cam_types.h"
 #include "cam_block.h"
 
@@ -131,6 +132,8 @@ int dcam_k_aem_skip_num(struct dcam_dev_param *param)
 
 	/* It is better to set aem_skip_num_clr when new skip_num is set. */
 	DCAM_REG_MWR(idx, DCAM_AEM_FRM_CTRL1, BIT_1, 1 << 1);
+
+	dcam_path_set_skip_num(param->dev, DCAM_PATH_AEM, param->aem.skip_num);
 
 	return ret;
 }

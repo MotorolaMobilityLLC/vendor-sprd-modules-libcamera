@@ -161,8 +161,8 @@ static void dcam_cap_sof(void *param)
 		if (path->frm_cnt <= path->frm_skip)
 			continue;
 
-		path->frm_deci_cnt++;
-		if (path->frm_deci_cnt >= path->frm_deci) {
+		/* @frm_deci is the frame index of output frame */
+		if (path->frm_deci_cnt++ >= path->frm_deci) {
 			path->frm_deci_cnt = 0;
 			dcam_path_set_store_frm(dev, path, helper);
 		}
