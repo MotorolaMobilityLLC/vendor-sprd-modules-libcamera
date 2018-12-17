@@ -1258,14 +1258,13 @@ static int capture_proc(void *param)
 }
 
 
-#define CAMERA_DUMP_PATH "/data/vendor/cameraserver/"
-/* todo: selinux permission issue. */
+#define CAMERA_DUMP_PATH "/data/ylog/"
 /* will create thread in user to read raw buffer*/
-#if 0
+#define BYTE_PER_ONCE 4096
 static void write_image_to_file(uint8_t *buffer,
 	ssize_t size, const char *file)
 {
-	ssize_t result = 0, total = 0;
+	ssize_t result = 0, total = 0, writ = 0;
 	struct file *wfp;
 
 	wfp = filp_open(file, O_CREAT|O_RDWR, 0666);
@@ -1273,11 +1272,13 @@ static void write_image_to_file(uint8_t *buffer,
 		pr_err("fail to open file %s\n", file);
 		return;
 	}
-	pr_info("write image buf=%p, size=%d\n", buffer, (uint32_t)size);
+	pr_debug("write image buf=%p, size=%d\n", buffer, (uint32_t)size);
 	do {
-		result = kernel_write(wfp, buffer, size, 0);
-		pr_info("write result: %d, size: %d\n",
-				(uint32_t)result,  (uint32_t)size);
+		writ = (BYTE_PER_ONCE < size) ? BYTE_PER_ONCE : size;
+		result = kernel_write(wfp, buffer, writ, &wfp->f_pos);
+		pr_debug("write result: %d, size: %d, pos: %d\n",
+		(uint32_t)result,  (uint32_t)size, (uint32_t)wfp->f_pos);
+
 		if (result > 0) {
 			size -= result;
 			buffer += result;
@@ -1285,9 +1286,8 @@ static void write_image_to_file(uint8_t *buffer,
 		total += result;
 	} while ((result > 0) && (size > 0));
 	filp_close(wfp, NULL);
-	pr_info("write image done, total=%d \n", (uint32_t)total);
+	pr_debug("write image done, total=%d \n", (uint32_t)total);
 }
-#endif
 
 static int dump_one_frame  (struct camera_module *module,
 	struct camera_frame *pframe)
@@ -1313,7 +1313,7 @@ static int dump_one_frame  (struct camera_module *module,
 
 	sprintf(tmp_str, "_w%d", pframe->width);
 	strcat(file_name, tmp_str);
-       sprintf(tmp_str, "_h%d", pframe->height);
+	sprintf(tmp_str, "_h%d", pframe->height);
 	strcat(file_name, tmp_str);
 
 	sprintf(tmp_str, "_No%d", pframe->fid);
@@ -1321,9 +1321,9 @@ static int dump_one_frame  (struct camera_module *module,
 	strcat(file_name,".mipi_raw");
 
 	size = cal_sprd_raw_pitch(pframe->width) * pframe->height;
-	/*write_image_to_file((char*)pframe->buf.addr_k[0],size, file_name);*/
+	write_image_to_file((char*)pframe->buf.addr_k[0],size, file_name);
 
-	pr_info("dump for ch %d, size %d, kaddr %p, file %s\n", ch_id,
+	pr_debug("dump for ch %d, size %d, kaddr %p, file %s\n", ch_id,
 		(int)size, (void *)pframe->buf.addr_k[0], file_name);
 
 	/* return it to dcam output queue */
