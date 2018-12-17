@@ -1841,14 +1841,6 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 1;
 
-// reduce video recording power for spreadtrum app, if sprd app change this, we
-// will remove these code
-#ifdef CONFIG_CAMRECORDER_DYNAMIC_FPS
-        if (mSprdAppmodeId == CAMERA_MODE_AUTO_VIDEO) {
-            fps_param.min_fps = 15;
-        }
-#endif
-
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];
         int val_max = 0;
@@ -1885,6 +1877,7 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             fps_param.max_fps = val_max;
         }
     }
+
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
