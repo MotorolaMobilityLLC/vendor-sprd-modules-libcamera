@@ -403,8 +403,17 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 	af_fv_val = (cmr_u32 *) in;
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+
+#if defined(CONFIG_ISP_2_5)
 #define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
 #define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
+#endif
+
+#if defined(CONFIG_ISP_2_6)
+#define FV0_INDEX(block) ((block) << 2)
+#define FV1_INDEX(block) (((block) << 2) + 1)
+#endif
+
 	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face FV mapping
 		ISP_LOGI("roll_angle %d", af->roll_angle);
 		if (FACE_UP == af->f_orientation || FACE_DOWN == af->f_orientation) {	//6x4
