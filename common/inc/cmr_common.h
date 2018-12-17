@@ -129,7 +129,7 @@ extern "C" {
 
 #define CAMERA_SAFE_SCALE_DOWN(w) (cmr_u32)((w)*11 / 10)
 #define CAMERA_START(w) ((w) & ~(2 - 1))
-#if defined(CONFIG_ISP_2_4)
+#if defined(CONFIG_ISP_2_4) || defined(CONFIG_ISP_2_6)
 #define CAMERA_WIDTH(w) ((w) & ~(4 - 1))
 #define CAMERA_HEIGHT(h) ((h) & ~(4 - 1))
 #else
