@@ -3098,7 +3098,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->ae_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_AF_BYPASS, value, "1");
+	property_get(PROP_ISP_AF_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->af_cxt.sw_bypass = val;
@@ -4011,7 +4011,6 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	enum isp_ctrl_cmd cmd = io_cmd & 0x7fffffff;
 	isp_io_fun io_ctrl = NULL;
 
-	return 0;
 	cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
 	io_ctrl = isp_ioctl_get_fun(cmd);
 	if (NULL != io_ctrl) {
