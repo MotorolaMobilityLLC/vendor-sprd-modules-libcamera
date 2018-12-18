@@ -85,6 +85,9 @@ static const char *s_smart_block_name[] = {
 	"bdn",
 	"prfy",
 	"cnr2",
+	"imbalance",
+	"ltm",
+	"3dnr",
 
 	"unkown"
 };
@@ -1570,7 +1573,7 @@ cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb)
 
 	smart_param = &cur_param->param;
 
-	if (ISP_SMART_MAX < smart_param->block_num) {
+	if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
 		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
@@ -1624,7 +1627,7 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 
 	smart_param = &cur_param->param;
 
-	if (ISP_SMART_MAX < smart_param->block_num) {
+	if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
 		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
@@ -1674,7 +1677,7 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 
 	smart_param = &cur_param->param;
 
-	if (ISP_SMART_MAX < smart_param->block_num) {
+	if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
 		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
@@ -1743,7 +1746,7 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 
 	smart_param = &cur_param->param;
 
-	if (ISP_SMART_MAX < smart_param->block_num) {
+	if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
 		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
 		return ISP_SUCCESS;
 	}
