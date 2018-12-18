@@ -54,22 +54,17 @@ static const uint32_t isp_irq_process[] = {
 
 static int irq_done[4][32];
 
-
-static void isp_all_done(enum isp_context_id idx, void *isp_handle)
+static void isp_frame_done(enum isp_context_id idx, struct isp_pipe_dev *dev)
 {
 	int i;
 	struct isp_pipe_context *pctx;
-	struct isp_pipe_dev *dev;
 	struct camera_frame *pframe;
 	struct isp_path_desc *path;
 	struct timespec cur_ts;
 	ktime_t boot_time;
 
-	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
-
-	/* pop bufferq in dispatch_done & strore_done */
-	return;
+	complete(&pctx->frm_done);
 
 	boot_time = ktime_get_boottime();
 	ktime_get_ts(&cur_ts);
@@ -83,38 +78,52 @@ static void isp_all_done(enum isp_context_id idx, void *isp_handle)
 		pctx->isp_cb_func(ISP_CB_RET_SRC_BUF, pframe,
 			pctx->cb_priv_data);
 	} else {
+		/* should not be here */
 		pr_err("fail to get src frame.\n");
 	}
 
+	/* get output buffers for all path */
 	for (i = 0; i < ISP_SPATH_NUM; i++) {
 		path = &pctx->isp_path[i];
-		if (atomic_read(&path->user_cnt) <= 0)
+		if (atomic_read(&path->user_cnt) <= 0) {
+			pr_debug("path %p not enable\n", path);
 			continue;
+		}
+		if (path->bind_type == ISP_PATH_SLAVE) {
+			pr_debug("slave path %d\n", path->spath_id);
+			continue;
+		}
 
 		pframe = camera_dequeue(&path->result_queue);
 		if (!pframe) {
 			pr_err("error: no frame from queue. cxt:%d, path:%d\n",
-						pctx->ctx_id, i);
+						pctx->ctx_id, path->spath_id);
 			continue;
 		}
-		pr_debug("ctx %d path %d, ret out buf: %p,  priv %p\n",
-			pctx->ctx_id, path->spath_id,
-			pframe,  pctx->cb_priv_data);
+		atomic_dec(&path->store_cnt);
+		pframe->boot_time = boot_time;
+		pframe->time.tv_sec = cur_ts.tv_sec;
+		pframe->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
 
-		path->frm_cnt++;
+		pr_debug("ctx %d path %d, fid %d, storen %d\n",
+			pctx->ctx_id, path->spath_id, pframe->fid,
+			atomic_read(&path->store_cnt));
+		pr_debug("time_sensor %03d.%6d, time_isp %03d.%06d\n",
+			(uint32_t)pframe->sensor_time.tv_sec,
+			(uint32_t)pframe->sensor_time.tv_usec,
+			(uint32_t)pframe->time.tv_sec,
+			(uint32_t)pframe->time.tv_usec);
+
 		if (unlikely(pframe->is_reserved)) {
 			camera_enqueue(&path->reserved_buf_queue, pframe);
 		} else {
-			pframe->time.tv_sec = cur_ts.tv_sec;
-			pframe->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
-			pframe->boot_time = boot_time;
-			pframe->fid = path->base_frm_id + path->frm_cnt;
 			cambuf_iommu_unmap(&pframe->buf);
 			pctx->isp_cb_func(ISP_CB_RET_DST_BUF,
 						pframe, pctx->cb_priv_data);
 		}
+		path->frm_cnt++;
 	}
-	pr_debug("all don. cxt_id:%d\n", idx);
+	pr_debug("cxt_id:%d done.\n", idx);
 }
 
 
@@ -127,202 +136,66 @@ static int isp_err_pre_proc(enum isp_context_id idx, void *isp_handle)
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
+	/* todo: isp error handling */
 	/*pctx->isp_cb_func(ISP_CB_DEV_ERR, dev, pctx->cb_priv_data);*/
 	return 0;
 }
 
-static void isp_shadow_done(enum isp_context_id idx, void *isp_handle)
+static void isp_all_done(enum isp_context_id idx, void *isp_handle)
 {
 	struct isp_pipe_dev *dev = NULL;
 	struct isp_pipe_context *pctx;
 
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
+	if (pctx->fmcu_handle) {
+		pr_info("fmcu started. skip all done.\n ");
+		return;
+	}
+	pr_debug("cxt_id:%d done.\n", idx);
+	isp_frame_done(idx, dev);
+}
 
-	complete(&pctx->shadow_com);
+static void isp_shadow_done(enum isp_context_id idx, void *isp_handle)
+{
 	pr_debug("cxt_id:%d shadow done.\n", idx);
 }
 
-
 static void isp_dispatch_done(enum isp_context_id idx, void *isp_handle)
 {
-	struct isp_pipe_dev *dev = NULL;
-	struct isp_pipe_context *pctx;
-	struct camera_frame *pframe;
-
-	dev = (struct isp_pipe_dev *)isp_handle;
-	pctx = &dev->ctx[idx];
-
-	if (pctx->fmcu_handle) {
-		pr_err("fmcu started. skip dispatch done.\n ");
-		return;
-	}
-	/* return buffer to cam channel shared buffer queue. */
-	pframe = camera_dequeue(&pctx->proc_queue);
-	if (pframe) {
-		cambuf_iommu_unmap(&pframe->buf);
-		pr_debug("ctx %d, ret src buf: %p,  priv %p\n",
-				pctx->ctx_id, pframe,  pctx->cb_priv_data);
-		pctx->isp_cb_func(ISP_CB_RET_SRC_BUF, pframe,
-			pctx->cb_priv_data);
-	} else {
-		pr_err("fail to get src frame.\n");
-	}
-
-	pr_debug("cxt_id:%d dispatch done.\n", pctx->ctx_id);
-}
-
-
-static void isp_path_store_done(
-		struct isp_pipe_dev *dev,
-		struct isp_pipe_context *pctx,
-		struct isp_path_desc *path)
-{
-	struct camera_frame *pframe;
-	struct timespec cur_ts;
-
-	if (atomic_read(&path->user_cnt) <= 0) {
-		pr_err("path %p not in use.\n", path);
-		return;
-	}
-	if (path->bind_type == ISP_PATH_SLAVE) {
-		pr_debug("slave path %d\n", path->spath_id);
-		return;
-	}
-
-	pframe = camera_dequeue(&path->result_queue);
-	if (!pframe) {
-		pr_err("error: no frame from queue. cxt:%d, path:%d\n",
-					pctx->ctx_id, path->spath_id);
-		return;
-	}
-	atomic_dec(&path->store_cnt);
-	pr_debug("path %d store_cnt %d\n",
-			path->spath_id, atomic_read(&path->store_cnt));
-
-	pr_debug("ctx %d path %d, ret out buf: %p,  priv %p\n",
-		pctx->ctx_id, path->spath_id,
-		pframe,  pctx->cb_priv_data);
-
-	if (unlikely(pframe->is_reserved)) {
-		camera_enqueue(&path->reserved_buf_queue, pframe);
-	} else {
-		ktime_get_ts(&cur_ts);
-		pframe->boot_time = ktime_get_boottime();
-		pframe->time.tv_sec = cur_ts.tv_sec;
-		pframe->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
-
-		pframe->fid = path->base_frm_id + path->frm_cnt;
-		cambuf_iommu_unmap(&pframe->buf);
-		pctx->isp_cb_func(ISP_CB_RET_DST_BUF,
-					pframe, pctx->cb_priv_data);
-	}
-	path->frm_cnt++;
+	pr_debug("cxt_id:%d done.\n", idx);
 }
 
 static void isp_pre_store_done(enum isp_context_id idx, void *isp_handle)
 {
-	struct isp_pipe_dev *dev = NULL;
-	struct isp_pipe_context *pctx;
-	struct isp_path_desc *path;
-
-	dev = (struct isp_pipe_dev *)isp_handle;
-	pctx = &dev->ctx[idx];
-
-	if (pctx->fmcu_handle) {
-		pr_err("fmcu started. skip pre done.\n ");
-		return;
-	}
-
-	path = &pctx->isp_path[ISP_SPATH_CP];
-	isp_path_store_done(dev, pctx, path);
-
-	pr_debug("cxt_id:%d done.\n", pctx->ctx_id);
+	pr_debug("cxt_id:%d done.\n", idx);
 }
-
 
 static void isp_vid_store_done(enum isp_context_id idx, void *isp_handle)
 {
-	struct isp_pipe_dev *dev = NULL;
-	struct isp_pipe_context *pctx;
-	struct isp_path_desc *path;
-
-	dev = (struct isp_pipe_dev *)isp_handle;
-	pctx = &dev->ctx[idx];
-
-	if (pctx->fmcu_handle) {
-		pr_err("fmcu started. skip vid done.\n ");
-		return;
-	}
-
-	path = &pctx->isp_path[ISP_SPATH_VID];
-	isp_path_store_done(dev, pctx, path);
-
-	pr_debug("cxt_id:%d done.\n", pctx->ctx_id);
+	pr_debug("cxt_id:%d done.\n", idx);
 }
 
 static void isp_thumb_store_done(enum isp_context_id idx, void *isp_handle)
 {
-	struct isp_pipe_dev *dev = NULL;
-	struct isp_pipe_context *pctx;
-	struct isp_path_desc *path;
-
-	dev = (struct isp_pipe_dev *)isp_handle;
-	pctx = &dev->ctx[idx];
-
-	if (pctx->fmcu_handle) {
-		pr_err("fmcu started. skip vid done.\n ");
-		return;
-	}
-
-	path = &pctx->isp_path[ISP_SPATH_FD];
-	isp_path_store_done(dev, pctx, path);
-
-	pr_info("cxt_id:%d thumbnail path done.\n", pctx->ctx_id);
+	pr_debug("cxt_id:%d done.\n", idx);
 }
 
 static void isp_fmcu_store_done(enum isp_context_id idx, void *isp_handle)
 {
-	int i;
 	struct isp_pipe_dev *dev = NULL;
 	struct isp_pipe_context *pctx;
-	struct isp_path_desc *path;
-	struct camera_frame *pframe;
 
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
-	complete(&pctx->fmcu_com);
-
-	/* return buffer to cam channel shared buffer queue. */
-	pframe = camera_dequeue(&pctx->proc_queue);
-	cambuf_iommu_unmap(&pframe->buf);
-
-	pr_debug("ctx %d, ret src buf: %p,  priv %p\n",
-			pctx->ctx_id, pframe,  pctx->cb_priv_data);
-
-	pctx->isp_cb_func(ISP_CB_RET_SRC_BUF, pframe, pctx->cb_priv_data);
-
-	for (i = 0; i < ISP_SPATH_NUM; i++) {
-		path = &pctx->isp_path[i];
-		if (atomic_read(&path->user_cnt) <= 0)
-			continue;
-		isp_path_store_done(dev, pctx, path);
-	}
-
-	pr_debug("fmuc done cxt_id:%d\n", idx);
+	pr_info("fmcu done cxt_id:%d\n", idx);
+	isp_frame_done(idx, dev);
 }
-
 
 static void isp_fmcu_load_done(enum isp_context_id idx, void *isp_handle)
 {
-	struct isp_pipe_dev *dev = NULL;
-	struct isp_pipe_context *pctx;
-
-	dev = (struct isp_pipe_dev *)isp_handle;
-	pctx = &dev->ctx[idx];
-
-	pr_debug("fmuc load done cxt_id:%d\n", idx);
+	pr_debug("cxt_id:%d done.\n", idx);
 }
 
 static void isp_3dnr_all_done(enum isp_context_id idx, void *isp_handle)

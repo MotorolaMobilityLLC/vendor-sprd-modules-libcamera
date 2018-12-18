@@ -1081,6 +1081,7 @@ static int isp_offline_start_frame(void *ctx)
 {
 	int ret = 0;
 	int i, loop, kick_fmcu = 0;
+	uint32_t frame_id;
 	struct isp_pipe_dev *dev = NULL;
 	struct camera_frame *pframe = NULL;
 	struct camera_frame *out_frame = NULL;
@@ -1109,8 +1110,9 @@ static int isp_offline_start_frame(void *ctx)
 		return 0;
 	}
 
-	pr_info("frame %p, ctx %d  ch_id %d.  buf_fd %d\n", pframe,
-		pctx->ctx_id, pframe->channel_id, pframe->buf.mfd[0]);
+	if ((pframe->fid & 0xf) == 0)
+		pr_info("frame %d, ctx %d  ch_id %d.  buf_fd %d\n",
+			pframe->fid, pctx->ctx_id, pframe->channel_id, pframe->buf.mfd[0]);
 
 	ret = cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_ISP);
 	if (ret) {
@@ -1119,16 +1121,14 @@ static int isp_offline_start_frame(void *ctx)
 		goto map_err;
 	}
 
+	frame_id = pframe->fid;
 	loop = 0;
 	do {
 		ret = camera_enqueue(&pctx->proc_queue, pframe);
 		if (ret == 0)
 			break;
-		pr_info("wait for proc queue. loop %d\n", loop);
-
-		/* wait for previous frame proccessed done.
-		 * msleep(1);
-		 */
+		printk_ratelimited(KERN_INFO "wait for proc queue. loop %d\n", loop);
+		/* wait for previous frame proccessed done.*/
 		mdelay(1);
 	} while (loop++ < 500);
 
@@ -1199,6 +1199,8 @@ static int isp_offline_start_frame(void *ctx)
 			ret = 0;
 			goto unlock;
 		}
+		out_frame->fid = frame_id;
+		out_frame->sensor_time = pframe->sensor_time;
 
 		/* config store buffer */
 		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",
@@ -1225,11 +1227,8 @@ static int isp_offline_start_frame(void *ctx)
 			ret = camera_enqueue(&path->result_queue, out_frame);
 			if (ret == 0)
 				break;
-			pr_info("wait for output queue. loop %d\n", loop);
-
-			/* wait for previous frame output queue done
-			 * msleep(1);
-			 */
+			printk_ratelimited(KERN_INFO "wait for output queue. loop %d\n", loop);
+			/* wait for previous frame output queue done */
 			mdelay(1);
 		} while (loop++ < 500);
 
@@ -1255,22 +1254,21 @@ static int isp_offline_start_frame(void *ctx)
 	isp_ltm_process_frame_previous(pctx, pframe);
 	isp_ltm_process_frame(pctx, pframe);
 
-	if (fmcu) {
-		ret = wait_for_completion_interruptible_timeout(
-						&pctx->fmcu_com,
-						ISP_CONTEXT_TIMEOUT);
-		if (ret == ERESTARTSYS) {
-			pr_err("interrupt when isp cfg wait\n");
-			ret = -EFAULT;
-			goto unlock;
-		} else if (ret == 0) {
-			pr_err("error: isp context %d timeout.\n",
-					pctx->ctx_id);
-			ret = -EFAULT;
-			goto unlock;
-		}
-		fmcu->ops->ctx_reset(fmcu);
+	ret = wait_for_completion_interruptible_timeout(
+					&pctx->frm_done,
+					ISP_CONTEXT_TIMEOUT);
+	if (ret == ERESTARTSYS) {
+		pr_err("interrupt when isp wait\n");
+		ret = -EFAULT;
+		goto unlock;
+	} else if (ret == 0) {
+		pr_err("error: isp context %d timeout.\n", pctx->ctx_id);
+		ret = -EFAULT;
+		goto unlock;
 	}
+
+	if (fmcu)
+		fmcu->ops->ctx_reset(fmcu);
 
 	if (pctx->slice_ctx) {
 		struct slice_cfg_input slc_cfg;
@@ -1314,20 +1312,6 @@ static int isp_offline_start_frame(void *ctx)
 	/* start to prepare/kickoff cfg buffer. */
 	if (likely(dev->wmode == ISP_CFG_MODE)) {
 		pr_debug("cfg enter.");
-		ret = wait_for_completion_interruptible_timeout(
-						&pctx->shadow_com,
-						ISP_CONTEXT_TIMEOUT);
-		if (ret == ERESTARTSYS) {
-			pr_err("interrupt when isp cfg wait\n");
-			ret = -EFAULT;
-			goto deq_output;
-		} else if (ret == 0) {
-			pr_err("error: isp context %d timeout.\n",
-					pctx->ctx_id);
-			ret = -EFAULT;
-			goto deq_output;
-		}
-		pr_debug("cfg start.");
 		ret = cfg_desc->ops->hw_cfg(
 				cfg_desc, pctx->ctx_id, kick_fmcu);
 
@@ -1335,7 +1319,7 @@ static int isp_offline_start_frame(void *ctx)
 			pr_info("fmcu start.");
 			ret = fmcu->ops->hw_start(fmcu);
 		} else {
-			pr_debug("cfg start.");
+			pr_debug("cfg start. fid %d\n", frame_id);
 			ret = cfg_desc->ops->hw_start(
 					cfg_desc, pctx->ctx_id);
 		}
@@ -1354,7 +1338,6 @@ static int isp_offline_start_frame(void *ctx)
 
 unlock:
 	mutex_unlock(&pctx->param_mutex);
-deq_output:
 	for (i = i - 1; i >= 0; i--) {
 		path = &pctx->isp_path[i];
 		if (atomic_read(&path->user_cnt) < 1)
@@ -1742,11 +1725,9 @@ new_ctx:
 	}
 
 	mutex_init(&pctx->param_mutex);
-	init_completion(&pctx->shadow_com);
-	init_completion(&pctx->fmcu_com);
-	/* complete for first frame/slice config */
-	complete(&pctx->shadow_com);
-	complete(&pctx->fmcu_com);
+	init_completion(&pctx->frm_done);
+	/* complete for first frame config */
+	complete(&pctx->frm_done);
 	pctx->isp_k_param.nlm_info.bypass = 1;
 	pctx->isp_k_param.ynr_info.bypass = 1;
 

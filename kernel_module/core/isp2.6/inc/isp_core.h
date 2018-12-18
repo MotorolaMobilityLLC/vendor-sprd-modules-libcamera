@@ -28,7 +28,7 @@
 
 #define ISP_LINE_BUFFER_W		2560
 
-#define ISP_IN_Q_LEN			1
+#define ISP_IN_Q_LEN			4
 #define ISP_PROC_Q_LEN			2
 #define ISP_RESULT_Q_LEN		2
 #define ISP_OUT_BUF_Q_LEN		16
@@ -279,8 +279,7 @@ struct isp_pipe_context {
 	struct camera_queue ltm_avail_queue;
 	struct camera_queue ltm_wr_queue;
 	struct cam_thread_info thread;
-	struct completion shadow_com;
-	struct completion fmcu_com;
+	struct completion frm_done;
 
 	struct isp_3dnr_ctx_desc nr3_ctx;
 	struct isp_ltm_ctx_desc ltm_ctx;
