@@ -626,6 +626,8 @@ static int isp_ltm_gen_histo_config(struct isp_ltm_ctx_desc *ctx,
 	pr_debug("idx[%d], roi_start_x[%d], roi_start_y[%d], addr[0x%lx]\n",
 		ctx->fid, hists->roi_start_x,
 		hists->roi_start_y, hists->addr);
+	pr_debug("region_est_en[%d], text_point_thres[%d], texture_proportion[%d]\n",
+		 hists->region_est_en, hists->text_point_thres, hists->texture_proportion);
 
 	return ret;
 }

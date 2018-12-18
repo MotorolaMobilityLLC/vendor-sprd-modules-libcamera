@@ -761,6 +761,13 @@ void isp_set_ctx_default(struct isp_pipe_context *pctx)
 	ISP_REG_MWR(idx, ISP_YNR_CONTRL0, BIT_0|BIT_1, 0x3);
 	ISP_REG_MWR(idx, ISP_HIST_PARAM, BIT_0, 1);
 	ISP_REG_MWR(idx, ISP_HIST_CFG_READY, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_HIST2_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_HIST2_CFG_RDY, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_CFAE_NEW_CFG0, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_EE_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_GRGB_CTRL, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_YUV_NF_CTRL, BIT_0, 1);
+
 	ISP_REG_MWR(idx, ISP_LTM_HIST_PARAM, BIT_0, 1);
 	ISP_REG_MWR(idx, ISP_LTM_MAP_PARAM0, BIT_0, 1);
 	ISP_REG_MWR(idx, ISP_CDN_PARAM, BIT_0, 1);
@@ -770,7 +777,6 @@ void isp_set_ctx_default(struct isp_pipe_context *pctx)
 	ISP_REG_MWR(idx, ISP_YGAMMA_PARAM, BIT_0, 1);
 	ISP_REG_MWR(idx, ISP_IIRCNR_PARAM, BIT_0, 1);
 	ISP_REG_MWR(idx, ISP_YRANDOM_PARAM1, BIT_0, 1);
-
 
 	/* 3DNR bypass */
 	ISP_REG_MWR(idx, ISP_3DNR_MEM_CTRL_PARAM0, BIT_0, 1);
@@ -2202,19 +2208,20 @@ static struct isp_cfg_entry cfg_func_tab[ISP_BLOCK_TOTAL - ISP_BLOCK_BASE] = {
 [ISP_BLOCK_CCE - ISP_BLOCK_BASE]	= {ISP_BLOCK_CCE, isp_k_cfg_cce},
 [ISP_BLOCK_CDN - ISP_BLOCK_BASE]	= {ISP_BLOCK_CDN, isp_k_cfg_cdn},
 [ISP_BLOCK_CFA - ISP_BLOCK_BASE]	= {ISP_BLOCK_CFA, isp_k_cfg_cfa},
+
 [ISP_BLOCK_CMC - ISP_BLOCK_BASE]	= {ISP_BLOCK_CMC, isp_k_cfg_cmc10},
 [ISP_BLOCK_EDGE - ISP_BLOCK_BASE]	= {ISP_BLOCK_EDGE, isp_k_cfg_edge},
-[ISP_BLOCK_GAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_GAMMA, isp_k_cfg_gamma},
+/*[ISP_BLOCK_GAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_GAMMA, isp_k_cfg_gamma},*/
 [ISP_BLOCK_GRGB - ISP_BLOCK_BASE]	= {ISP_BLOCK_GRGB, isp_k_cfg_grgb},
 [ISP_BLOCK_HIST2 - ISP_BLOCK_BASE]	= {ISP_BLOCK_HIST2, isp_k_cfg_hist2},
 [ISP_BLOCK_HSV - ISP_BLOCK_BASE]	= {ISP_BLOCK_HSV, isp_k_cfg_hsv},
 [ISP_BLOCK_IIRCNR - ISP_BLOCK_BASE]	= {ISP_BLOCK_IIRCNR, isp_k_cfg_iircnr},
-[ISP_BLOCK_LTM - ISP_BLOCK_BASE]  = {ISP_BLOCK_LTM, isp_k_cfg_ltm},
+[ISP_BLOCK_LTM - ISP_BLOCK_BASE]	= {ISP_BLOCK_LTM, isp_k_cfg_ltm},
 [ISP_BLOCK_POST_CDN - ISP_BLOCK_BASE]	= {ISP_BLOCK_POST_CDN, isp_k_cfg_post_cdn},
 [ISP_BLOCK_PRE_CDN - ISP_BLOCK_BASE]	= {ISP_BLOCK_PRE_CDN, isp_k_cfg_pre_cdn},
-[ISP_BLOCK_PSTRZ - ISP_BLOCK_BASE]	= {ISP_BLOCK_PSTRZ, isp_k_cfg_pstrz},
+/*[ISP_BLOCK_PSTRZ - ISP_BLOCK_BASE]	= {ISP_BLOCK_PSTRZ, isp_k_cfg_pstrz},*/
 [ISP_BLOCK_UVD - ISP_BLOCK_BASE]	= {ISP_BLOCK_UVD, isp_k_cfg_uvd},
-[ISP_BLOCK_YGAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_YGAMMA, isp_k_cfg_ygamma},
+/*[ISP_BLOCK_YGAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_YGAMMA, isp_k_cfg_ygamma},*/
 [ISP_BLOCK_YRANDOM - ISP_BLOCK_BASE]	= {ISP_BLOCK_YRANDOM, isp_k_cfg_yrandom},
 [ISP_BLOCK_NOISEFILTER - ISP_BLOCK_BASE] = {ISP_BLOCK_NOISEFILTER, isp_k_cfg_yuv_noisefilter},
 };
@@ -2249,7 +2256,6 @@ static int sprd_isp_cfg_blkparam(
 	/* todo: enable block config one by one */
 	/* because parameters from user may be illegal when bringup*/
 	/* temp disable during bringup */
-	return 0;
 
 	if (io_param->sub_block == ISP_BLOCK_NLM)
 		ret = isp_k_cfg_nlm(param, &pctx->isp_k_param, ctx_id);
