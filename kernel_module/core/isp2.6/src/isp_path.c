@@ -47,6 +47,7 @@
 #define ISP_PATH_DECI_FAC_MAX       4
 #define ISP_SC_COEFF_UP_MAX         4
 #define ISP_SC_COEFF_DOWN_MAX       4
+#define ISP_DIV_ALIGN(a, b)	((a / b) & ~(ISP_PIXEL_ALIGN_WIDTH - 1))
 
 unsigned long coff_buf_addr[2][3][4] = {
 	{
@@ -178,11 +179,11 @@ static int calc_scaler_param(struct img_trim *in_trim,
 
 	pr_debug("in_trim_size_x:%d, in_trim_size_y:%d, out_size_w:%d,out_size_h:%d\n",
 		in_trim->size_x, in_trim->size_y, out_size->w, out_size->h);
-
+	/* check input crop limit with max scale up output size(2 bit aligned) */
 	if (in_trim->size_x > (out_size->w * d_max * (1 << f_max)) ||
 		in_trim->size_y > (out_size->h * d_max * (1 << f_max)) ||
-		in_trim->size_x * u_max < out_size->w ||
-		in_trim->size_y * u_max < out_size->h) {
+		in_trim->size_x < ISP_DIV_ALIGN(out_size->w, u_max) ||
+		in_trim->size_y < ISP_DIV_ALIGN(out_size->h, u_max)) {
 		pr_err("in_trim %d %d. out _size %d %d, fmax %d, u_max %d\n",
 				in_trim->size_x, in_trim->size_y,
 				out_size->w, out_size->h, f_max, d_max);
