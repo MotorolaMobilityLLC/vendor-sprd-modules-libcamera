@@ -33,7 +33,7 @@
 
 
 // TODO: how many helpers there should be?
-#define DCAM_SYNC_HELPER_COUNT 10
+#define DCAM_SYNC_HELPER_COUNT 20
 
 struct dcam_pipe_dev;
 

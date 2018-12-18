@@ -355,6 +355,12 @@ static void alloc_buffers(struct work_struct *work)
 	if (module->dump_thrd.thread_task)
 		total += 3;
 
+	/* TODO: slow motion workaround */
+	if (module->cam_uinfo.sn_rect.w == 1280
+	    && module->cam_uinfo.sn_rect.h == 720) {
+		total += 5;
+	}
+
 	if (channel->ch_uinfo.slowmotion)
 		total = CAM_SHARED_BUF_NUM;
 	for (i = 0, count = 0; i < total; i++) {
@@ -679,7 +685,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			ret = isp_ops->proc_frame(module->isp_dev_handle, pframe,
 					channel->isp_path_id >> ISP_CTXID_OFFSET);
 			if (ret) {
-				pr_debug("warning: isp proc frame failed.\n");
+				pr_warn_ratelimited("warning: isp proc frame failed.\n");
 				/* ISP in_queue maybe overflow.
 				 * If current frame taking (param_data ) for size updating
 				 * we should hold it here and set it in next frame for ISP
@@ -694,6 +700,10 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 						DCAM_PATH_CFG_OUTPUT_BUF,
 						channel->dcam_path_id, pframe);
+				/* release sync if ISP don't need it */
+				if (pframe->sync_data)
+					dcam_if_release_sync(pframe->sync_data,
+							     pframe);
 			}
 		} else if (channel->ch_id == CAM_CH_CAP) {
 
@@ -703,7 +713,9 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				 * Release sync if we don't deliver this @pframe
 				 * to ISP.
 				 */
-				dcam_if_release_sync(pframe->sync_data, pframe);
+				if (pframe->sync_data)
+					dcam_if_release_sync(pframe->sync_data,
+							     pframe);
 				ret = dcam_ops->cfg_path(
 						module->dcam_dev_handle,
 						DCAM_PATH_CFG_OUTPUT_BUF,
