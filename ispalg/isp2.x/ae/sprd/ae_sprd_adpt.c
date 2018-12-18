@@ -2912,7 +2912,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
 					ISP_LOGI("ae_flash1_callback do-capture!\r\n");
 				}
-			} else if (main_flash_capture_counts + 3 == cxt->send_once[4]) {
+			} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
 				sensor_param_updating_interface(cxt);
 				ISP_LOGI("ae_flash1_callback update next prev-param!\r\n");
 
@@ -6191,8 +6191,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 		cxt->cur_param->flash_control_param.aem_effect_delay = 2;
 	if (0 == cxt->cur_param->flash_control_param.pre_open_count)
 		cxt->cur_param->flash_control_param.pre_open_count = 3;
-	//if (0 == cxt->cur_param->flash_control_param.main_set_count)
-	//	cxt->cur_param->flash_control_param.main_set_count = 1;/*the mini value of main set count can be 0 */
+	if (0 == cxt->cur_param->flash_control_param.main_set_count)
+		cxt->cur_param->flash_control_param.main_set_count = 1;/*the mini value of main set count can be 0 */
 	if (0 == cxt->cur_param->flash_control_param.main_capture_count)
 		cxt->cur_param->flash_control_param.main_capture_count = 5;
 	if (0 == cxt->cur_param->flash_control_param.main_flash_notify_delay)
