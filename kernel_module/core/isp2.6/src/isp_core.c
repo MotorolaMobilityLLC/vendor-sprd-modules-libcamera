@@ -951,7 +951,8 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 		break;
 	}
 
-	dcam_if_release_sync(fsync, pframe);
+	if (fsync)
+		dcam_if_release_sync(fsync, pframe);
 
 	return 0;
 }

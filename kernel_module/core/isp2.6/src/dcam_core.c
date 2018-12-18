@@ -1614,7 +1614,7 @@ _put_sync_helper_locked(struct dcam_pipe_dev *dev,
  * can be recycled for next use.
  */
 int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
-			struct camera_frame *frame)
+			 struct camera_frame *frame)
 {
 	struct dcam_sync_helper *helper = NULL;
 	struct dcam_pipe_dev *dev = NULL;
@@ -1622,10 +1622,13 @@ int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
 	int ret = 0, path_id = 0;
 	bool ignore = false;
 
-	if (unlikely(!sync)) {
-		pr_err("invalid param sync\n");
+	if (unlikely(!sync || !frame)) {
+		pr_err("invalid param\n");
 		return -EINVAL;
 	}
+
+	helper = container_of(sync, struct dcam_sync_helper, sync);
+	dev = helper->dev;
 
 	for (path_id = 0; path_id < DCAM_PATH_MAX; path_id++) {
 		if (frame == sync->frames[path_id])
@@ -1633,13 +1636,14 @@ int dcam_if_release_sync(struct dcam_frame_synchronizer *sync,
 	}
 
 	if (unlikely(!is_path_id(path_id))) {
-		pr_err("invalid param path_id: %d\n", path_id);
+		pr_err("DCAM%u can't find path id, fid %u, sync %u\n",
+		       dev->idx, frame->fid, sync->index);
 		return -EINVAL;
 	}
 
+	/* unbind each other */
+	frame->sync_data = NULL;
 	sync->frames[path_id] = NULL;
-	helper = container_of(sync, struct dcam_sync_helper, sync);
-	dev = helper->dev;
 
 	pr_debug("DCAM%u %s release sync, id %u, data 0x%p\n",
 		dev->idx, to_path_name(path_id), sync->index, sync);
@@ -1684,13 +1688,14 @@ struct dcam_sync_helper *dcam_get_sync_helper(struct dcam_pipe_dev *dev)
 
 	helper = list_first_entry(&dev->helper_list,
 				  struct dcam_sync_helper, list);
-	list_del(&helper->list);
+	list_del_init(&helper->list);
 
 exit:
 	spin_unlock_irqrestore(&dev->helper_lock, flags);
 
 	if (running_low)
-		pr_err("helper is running low...\n");
+		pr_warn_ratelimited("DCAM%u helper is running low...\n",
+				    dev->idx);
 
 	return helper;
 }

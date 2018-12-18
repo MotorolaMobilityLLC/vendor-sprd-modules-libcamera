@@ -803,8 +803,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 
 	frame = camera_dequeue(&path->out_buf_queue);
 	if (frame == NULL)
-		frame = camera_dequeue(
-				&path->reserved_buf_queue);
+		frame = camera_dequeue(&path->reserved_buf_queue);
 
 	if (frame == NULL) {
 		pr_err("DCAM%u %s buffer unavailable\n",
@@ -828,6 +827,11 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		goto overflow;
 	}
 
+	/*
+	 * Clear sync data first to make sure @sync_data is either valid or
+	 * NULL.
+	 */
+	frame->sync_data = NULL;
 	/* bind frame sync data if it is not reserved buffer */
 	if (!frame->is_reserved && is_sync_enabled(dev, path_id) && helper) {
 		helper->enabled |= BIT(path_id);

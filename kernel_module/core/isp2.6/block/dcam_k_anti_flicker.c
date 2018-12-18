@@ -96,7 +96,7 @@ int dcam_k_afl_block(struct dcam_dev_param *param)
 		return 0;
 	param->afl.update &= (~(_UPDATE_INFO));
 	p = &(param->afl.afl_info);
-	pr_info("cfg afl bypass %d, mode %d %d %d\n",
+	pr_debug("cfg afl bypass %d, mode %d %d %d\n",
 		p->bypass, p->mode,
 		p->bayer2y_chanel, p->bayer2y_mode);
 	if (s_dbg_bypass[idx] & (1 << _E_AFL)) /* debug bypass */
@@ -170,7 +170,7 @@ int dcam_k_afl_bypass(struct dcam_dev_param *param)
 		param->afl.bypass = 1;
 
 	mode = (DCAM_REG_RD(idx, ISP_AFL_FRM_CTRL0) >> 2) & 1;
-	pr_info("afl bypass %d, mode %d\n", param->afl.bypass, mode);
+	pr_debug("afl bypass %d, mode %d\n", param->afl.bypass, mode);
 
 	DCAM_REG_MWR(idx, ISP_AFL_FRM_CTRL0, BIT_0, param->afl.bypass);
 	/* bayer2y, bypass should be same as afl bypass. */
