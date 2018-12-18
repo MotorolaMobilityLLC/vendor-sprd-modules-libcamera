@@ -505,7 +505,31 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	case ISP_DEV_RAW_PROC:
 		ret = isp_dev_raw_proc(cxt->isp_driver_handle, param0);
 		break;
-
+	/* pdaf */
+	case ISP_DEV_SET_PDAF_CFG_PARAM:
+		ret = dcam_u_pdaf_block(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_PPI_INFO:
+		ret = dcam_u_pdaf_ppi_info(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_BYPASS:
+		ret = dcam_u_pdaf_bypass(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_WORK_MODE:
+		ret = dcam_u_pdaf_work_mode(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_ROI:
+		ret = dcam_u_pdaf_roi(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_SKIP_NUM:
+		ret = dcam_u_pdaf_skip_num(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_TYPE1_CFG:
+		ret = dcam_u_pdaf_type1_block(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF_TYPE2_CFG:
+		ret = dcam_u_pdaf_type2_block(cxt->isp_driver_handle, param0);
+		break;
 	default:
 		break;
 	}
