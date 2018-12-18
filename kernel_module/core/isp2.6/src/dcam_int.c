@@ -201,8 +201,6 @@ static void dcam_preview_sof(void *param)
 /* for Flash */
 static void dcam_sensor_eof(void *param)
 {
-	/* TODO open this after flash ready */
-#if 0
 	struct camera_frame *pframe;
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
 
@@ -215,7 +213,6 @@ static void dcam_sensor_eof(void *param)
 		pframe->irq_property = IRQ_DCAM_SN_EOF;
 		dev->dcam_cb_func(DCAM_CB_IRQ_EVENT, pframe, dev->cb_priv_data);
 	}
-#endif
 }
 
 /*

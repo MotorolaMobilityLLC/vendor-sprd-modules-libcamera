@@ -1891,6 +1891,8 @@ static int camera_module_init(struct camera_module *module)
 			goto exit;
 	}
 
+	module->flash_core_handle = get_cam_flash_handle(module->idx);
+
 	sprd_init_timer(&module->cam_timer, (unsigned long)module);
 	module->attach_sensor_id = SPRD_SENSOR_ID_MAX + 1;
 
@@ -1905,6 +1907,7 @@ exit:
 
 static int camera_module_deinit(struct camera_module *module)
 {
+	put_cam_flash_handle(module->flash_core_handle);
 	camera_stop_thread(&module->cap_thrd);
 	camera_stop_thread(&module->zoom_thrd);
 	camera_stop_thread(&module->dump_thrd);

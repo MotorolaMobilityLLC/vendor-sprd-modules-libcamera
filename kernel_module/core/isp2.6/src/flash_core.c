@@ -21,7 +21,7 @@
 #include "cam_types.h"
 #include "flash_interface.h"
 
-/*#include "flash_drv.h"*/
+#include "flash_drv.h"
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -36,7 +36,7 @@ static int sprd_cam_flash_ctrl(uint32_t dcam_idx,
 {
 	int ret;
 
-	ret = 0; /* sprd_flash_ctrl(set_flash);//for k414 compile */
+	ret = sprd_flash_ctrl(set_flash);
 	pr_info("%d set flash\n", dcam_idx);
 	return ret;
 }
@@ -62,7 +62,7 @@ static int sprd_cam_flash_cfg(void *flash_handle, void *cfg_parm)
 		goto exit;
 	}
 
-	ret = 0; /* sprd_flash_cfg((struct sprd_flash_cfg_param *) cfg_parm); */
+	ret = sprd_flash_cfg((struct sprd_flash_cfg_param *) cfg_parm);
 	if (ret)
 		pr_err("fail to sprd_flash_cfg\n");
 
@@ -118,9 +118,8 @@ static int sprd_cam_flash_get_info(void *flash_handle, void *arg)
 
 	flash_ctx = (struct cam_flash_task_info *)flash_handle;
 
-	/* sprd_flash_get_info(flash_ctx->set_flash.flash_index,
-	 * SPRD_FLASH_LED_ALL, (struct sprd_flash_capacity *)arg);
-	 */
+	sprd_flash_get_info(flash_ctx->set_flash.flash_index,
+		SPRD_FLASH_LED_ALL, (struct sprd_flash_capacity *)arg);
 
 	return 0;
 }

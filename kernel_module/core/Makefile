@@ -15,6 +15,7 @@ sprd_camera-objs += $(LOCAL_SRC:%.c=%.o)
 # TODO: refine these includes
 ccflags-y += -I$(REL_PATH)/../sensor/
 ccflags-y += -I$(REL_PATH)/isp2.6/inc/
+ccflags-y += -I$(REL_PATH)/../flash/flash_drv/
 
 # HAPS only
 ifeq ($(TEST_ON_HAPS),true)
