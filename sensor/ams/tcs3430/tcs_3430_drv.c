@@ -1,5 +1,16 @@
 #include "tcs_3430_drv.h"
 
+static struct tcs_calib_data tcs3430_calib_data = {
+    .x_raw_golden = 0,
+    .y_raw_golden = 0,
+    .z_raw_golden = 0,
+    .ir_raw_golden = 0,
+    .x_raw_unit = 0,
+    .y_raw_unit = 0,
+    .z_raw_unit = 0,
+    .ir_raw_unit = 0,
+};
+
 static int read_tcs3430(const char *filename) {
     int data = -1;
     FILE *fd = fopen(filename, "r");
@@ -11,22 +22,60 @@ static int read_tcs3430(const char *filename) {
 }
 
 static void calc_lux_cct(struct tcs_data *tcs3430_data) {
-    double kr = 1.0;
-    double ky = 1.0;
-    double kz = 1.0;
-    double kir1 = 1.0;
-
-    double kH11 = +1.40836; double kH12 = +0.57942; double kH13 = -0.16628; double kH14 = -0.04627;
-    double kH21 = +0.42070; double kH22 = +1.56692; double kH23 = +0.17842; double kH24 = -0.06553;
-    double kH31 = -2.19037; double kH32 = +2.80822; double kH33 = +3.93525; double kH34 = -0.12764;
-
-    double kL11 = +1.46390; double kL12 = +0.55112; double kL13 = -0.12560; double kL14 = -0.18618;
-    double kL21 = -0.19919; double kL22 = +2.30077; double kL23 = +0.43753; double kL24 = -0.73700;
-    double kL31 = -0.07548; double kL32 = -0.05515; double kL33 = +5.91481; double kL34 = -0.21559;
-
     double IR_boundary = 1.0;
 
-    double x_cal = tcs3430_data->x_raw * kr;
+    if (0 == tcs3430_calib_data.x_raw_golden) {
+        FILE *fd =
+            fopen("/mnt/vendor/productinfo/tcs3430_calibration.txt", "rb");
+        if (NULL == fd) {
+            tcs3430_calib_data.x_raw_golden = 100;
+            tcs3430_calib_data.y_raw_golden = 100;
+            tcs3430_calib_data.z_raw_golden = 100;
+            tcs3430_calib_data.ir_raw_golden = 100;
+            tcs3430_calib_data.x_raw_unit = 100;
+            tcs3430_calib_data.y_raw_unit = 100;
+            tcs3430_calib_data.z_raw_unit = 100;
+            tcs3430_calib_data.ir_raw_unit = 100;
+            SENSOR_LOGE("ams tcs3430 calib file not exit, set calib data to default");
+        } else {
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.x_raw_golden);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.y_raw_golden);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.z_raw_golden);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.ir_raw_golden);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.x_raw_unit);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.y_raw_unit);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.z_raw_unit);
+            fscanf(fd, "%hd\n", &tcs3430_calib_data.ir_raw_unit);
+            fclose(fd);
+            SENSOR_LOGI("ams tcs3430 calibration Golden x:%d, y:%d, z:%d, ir:%d, Uint x:%d, y:%d, z:%d, ir:%d\n",
+                tcs3430_calib_data.x_raw_golden, tcs3430_calib_data.y_raw_golden,
+                tcs3430_calib_data.z_raw_golden, tcs3430_calib_data.ir_raw_golden,
+                tcs3430_calib_data.x_raw_unit, tcs3430_calib_data.y_raw_unit,
+                tcs3430_calib_data.z_raw_unit, tcs3430_calib_data.ir_raw_unit);
+
+            if (tcs3430_calib_data.x_raw_golden < 100 || tcs3430_calib_data.y_raw_golden < 100 ||
+                tcs3430_calib_data.z_raw_golden < 100 || tcs3430_calib_data.ir_raw_golden <= 0 ||
+                tcs3430_calib_data.x_raw_unit < 100 || tcs3430_calib_data.y_raw_unit < 100 ||
+                tcs3430_calib_data.z_raw_unit < 100 || tcs3430_calib_data.ir_raw_unit <= 0) {
+                tcs3430_calib_data.x_raw_golden = 100;
+                tcs3430_calib_data.y_raw_golden = 100;
+                tcs3430_calib_data.z_raw_golden = 100;
+                tcs3430_calib_data.ir_raw_golden = 100;
+                tcs3430_calib_data.x_raw_unit = 100;
+                tcs3430_calib_data.y_raw_unit = 100;
+                tcs3430_calib_data.z_raw_unit = 100;
+                tcs3430_calib_data.ir_raw_unit = 100;
+                SENSOR_LOGE("ams tcs3430 calib data error, set to default");
+            }
+        }
+    }
+
+    double kx = (double)tcs3430_calib_data.x_raw_golden / (double)tcs3430_calib_data.x_raw_unit;
+    double ky = (double)tcs3430_calib_data.y_raw_golden / (double)tcs3430_calib_data.y_raw_unit;
+    double kz = (double)tcs3430_calib_data.z_raw_golden / (double)tcs3430_calib_data.z_raw_unit;
+    double kir1 = (double)tcs3430_calib_data.ir_raw_golden / (double)tcs3430_calib_data.ir_raw_unit;
+
+    double x_cal = tcs3430_data->x_raw * kx;
     double y_cal = tcs3430_data->y_raw * ky;
     double z_cal = tcs3430_data->z_raw * kz;
     double ir1_cal = tcs3430_data->ir_raw * kir1;
@@ -82,7 +131,6 @@ static void calc_lux_cct(struct tcs_data *tcs3430_data) {
 error:
     memset(tcs3430_data, 0, sizeof(struct tcs_data));
     return;
-
 }
 
 int tcs3430_read_data(void *param) {

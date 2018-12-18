@@ -32,6 +32,17 @@ struct tcs_data {
     cmr_u32 cct_data;
 };
 
+struct tcs_calib_data {
+    cmr_u16 x_raw_golden;
+    cmr_u16 y_raw_golden;
+    cmr_u16 z_raw_golden;
+    cmr_u16 ir_raw_golden;
+    cmr_u16 x_raw_unit;
+    cmr_u16 y_raw_unit;
+    cmr_u16 z_raw_unit;
+    cmr_u16 ir_raw_unit;
+};
+
 int tcs3430_read_data(void *param);
 
 #endif
