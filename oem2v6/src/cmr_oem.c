@@ -5910,6 +5910,8 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     struct sensor_exp_info sensor_info;
     struct sensor_mode_info *sensor_mode_info, *tmp;
     struct sn_cfg sensor_cfg;
+    cmr_u32 sn_mode = 0;
+    SENSOR_MODE_FPS_T fps_info;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -5942,6 +5944,18 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     ret = cmr_sensor_get_info(sn_cxt->sensor_handle, camera_id, &sensor_info);
     if (ret) {
         CMR_LOGE("failed to get sensor info %ld", ret);
+        goto exit;
+    }
+
+    ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                              &sn_mode);
+    if (ret)
+        goto exit;
+
+    ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                  sn_mode, &fps_info);
+    if (ret) {
+        CMR_LOGE("get sensor fps info failed %ld", ret);
         goto exit;
     }
 
@@ -6014,6 +6028,9 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     } else {
         param_ptr->cap_inf_cfg.cfg.dual_cam = 0;
     }
+
+    param_ptr->cap_inf_cfg.cfg.is_high_fps = fps_info.is_high_fps;
+    param_ptr->cap_inf_cfg.cfg.high_fps_skip_num = fps_info.high_fps_skip_num;
 
     if (!param_ptr->is_lightly) {
         ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,

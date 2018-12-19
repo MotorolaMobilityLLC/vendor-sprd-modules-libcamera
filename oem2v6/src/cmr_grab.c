@@ -623,9 +623,11 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
-    CMR_LOGI("frm_num %d dst width %d dst height %d,slowmotion %d.",
+    CMR_LOGI("frm_num %d dst width %d dst height %d,slowmotion %d, "
+             "is_high_fps:%d, high_fps_skip_num:%d",
              config->frm_num, config->cfg.dst_img_size.width,
-             config->cfg.dst_img_size.height, config->cfg.slowmotion);
+             config->cfg.dst_img_size.height, config->cfg.slowmotion,
+             config->cfg.is_high_fps, config->cfg.high_fps_skip_num);
 
     CMR_LOGI("src_img_fmt %d dst_img_fmt %d 4in1 %d.", config->cfg.src_img_fmt,
              config->cfg.dst_img_fmt, config->cfg.need_4in1);
@@ -642,6 +644,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.regular_desc = config->cfg.regular_desc;
     parm.rt_refocus = config->cfg.pdaf_ctrl.mode;
     parm.slowmotion = config->cfg.slowmotion;
+    parm.is_high_fps = config->cfg.is_high_fps;
+    parm.high_fps_skip_num = config->cfg.high_fps_skip_num;
 
     parm.crop_rect.x = config->cfg.src_img_rect.start_x;
     parm.crop_rect.y = config->cfg.src_img_rect.start_y;
