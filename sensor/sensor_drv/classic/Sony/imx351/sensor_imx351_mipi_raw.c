@@ -1094,6 +1094,17 @@ static cmr_int imx351_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     return rtn;
 }
 
+static cmr_int imx351_drv_get_3dnr_threshold(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct threshold_3dnr *tdnr_thr = (struct threshold_3dnr *)param;
+    tdnr_thr->threshold_3dnr_down = 410;
+    tdnr_thr->threshold_3dnr_up = 510;
+    SENSOR_LOGV("*param 0x%x 0x%x", *param, tdnr_thr->threshold_3dnr_down);
+
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    return rtn;
+}
 
 static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -1126,6 +1137,9 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
          break;
     case SENSOR_VAL_TYPE_GET_EBDLINE_INFO:
         rtn = imx351_drv_get_ebdline_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_GET_3DNR_THRESHOLD:
+        rtn = imx351_drv_get_3dnr_threshold(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_PARSE_EBD_DATA:
         rtn = imx351_drv_parse_ebd_data(handle, param_ptr->pval);

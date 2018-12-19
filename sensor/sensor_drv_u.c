@@ -2580,6 +2580,24 @@ static cmr_int sensor_ic_get_cct_data(cmr_handle handle, void *param) {
     return ret;
 }
 
+static cmr_int sensor_ic_get_3dnr_threshold(cmr_handle handle, void *param) {
+    cmr_int ret = SENSOR_SUCCESS;
+    cmr_handle sensor_handle;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
+    SENSOR_VAL_T val;
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    val.type = SENSOR_VAL_TYPE_GET_3DNR_THRESHOLD;
+    val.pval = param;
+
+    SENSOR_LOGV("3dnr threshold ptr %p\n", param);
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops)
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                            (cmr_uint)&val);
+    return ret;
+}
+
 cmr_int sensor_ic_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
@@ -2595,6 +2613,9 @@ cmr_int sensor_ic_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
         break;
     case CMD_SNS_IC_GET_CCT_DATA:
         ret = sensor_ic_get_cct_data(handle, param);
+        break;
+    case CMD_SNS_IC_GET_3DNR_THRESHOLD:
+        ret = sensor_ic_get_3dnr_threshold(handle, param);
         break;
     default:
         break;

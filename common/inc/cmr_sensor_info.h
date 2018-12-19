@@ -46,6 +46,7 @@ enum sns_cmd {
     CMD_SNS_IC_WRITE_MULTI_AE,
     CMD_SNS_IC_GET_EBD_PARSE_DATA,
     CMD_SNS_IC_GET_CCT_DATA,
+    CMD_SNS_IC_GET_3DNR_THRESHOLD,
 
     CMD_SNS_AF_SET_BEST_MODE = CMD_SNS_AF_START, /*include 256 sub AF cmd*/
     CMD_SNS_AF_GET_TEST_MODE,
@@ -469,6 +470,11 @@ struct sensor_4in1_info {
 struct frame_4in1_info {
     cmr_int im_addr_in;
     cmr_int im_addr_out;
+};
+
+struct threshold_3dnr {
+    cmr_uint threshold_3dnr_down;
+    cmr_uint threshold_3dnr_up;
 };
 
 struct sensor_ex_exposure {
