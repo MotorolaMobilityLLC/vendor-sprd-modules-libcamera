@@ -51,7 +51,7 @@ extern "C" {
 		cmr_u32 exp_time;
 		cmr_s32 dummy;
 		cmr_u32 gain;
-		cmr_u32 switch_change;
+		cmr_u32 table_idx;
 	};
 
 	struct ae_sensor_exp_data {

@@ -2084,7 +2084,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			rtn = AE_ERROR;
 			goto SET_SCENE_MOD_EXIT;
 		}
-		if(1 == cxt->app_mode)
+		if(CAMERA_MODE_MANUAL == cxt->app_mode)
 			prv_status->settings.ev_index = cxt->manual_level;
 		target_lum = ae_calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
@@ -3692,12 +3692,16 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_enable = 1;
 		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
-		cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
-		cxt->mode_switch[cxt->app_mode].dummy = cxt->last_exp_param.dummy;
-		cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
-		cxt->mode_switch[cxt->app_mode].exp_time = cxt->last_exp_param.exp_time;
-		cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
-		if(1 == cxt->app_mode)
+
+		if((cxt->app_mode < 32)&&(cxt->app_mode > 0)){
+			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
+			cxt->mode_switch[cxt->app_mode].dummy = cxt->last_exp_param.dummy;
+			cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
+			cxt->mode_switch[cxt->app_mode].exp_time = cxt->last_exp_param.exp_time;
+			cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
+			cxt->mode_switch[cxt->app_mode].table_idx = cxt->last_exp_param.cur_index;
+		}
+		if(CAMERA_MODE_MANUAL == cxt->app_mode)
 			s_ae_manual[cxt->camera_id] = cxt->mode_switch[cxt->app_mode];
 
 		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
@@ -3819,7 +3823,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->monitor_cfg.bypass = 0;
 	cxt->high_fps_info.is_high_fps = work_info->sensor_fps.is_high_fps;
 	cxt->cam_4in1_mode = work_info->cam_4in1_mode;
-	cxt->mode_switch[cxt->app_mode].switch_change = 1;
 
 	if (work_info->sensor_fps.is_high_fps) {
 		ae_skip_num = work_info->sensor_fps.high_fps_skip_num - 1;
@@ -3919,28 +3922,31 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.dummy = cxt->last_exp_param.dummy;
 		}
 		src_exp.cur_index = cxt->last_index;
-
-		if(0 != cxt->mode_switch[cxt->app_mode].gain){
-			src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
-			src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
-			src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
-			src_exp.exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
-			src_exp.dummy = cxt->mode_switch[cxt->app_mode].dummy;
-		}
-		else{
-			if((1 == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
-				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
-				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
-				src_exp.gain = s_ae_manual[cxt->camera_id].gain;
-				src_exp.exp_time = s_ae_manual[cxt->camera_id].exp_time;
-				src_exp.dummy = s_ae_manual[cxt->camera_id].dummy;
-			}
-			else if(0 != cxt->mode_switch[0].gain){
-				src_exp.target_offset = cxt->mode_switch[0].target_offset;
-				src_exp.exp_line = cxt->mode_switch[0].exp_line;
-				src_exp.gain = cxt->mode_switch[0].gain;
-				src_exp.exp_time = cxt->mode_switch[0].exp_time;
-				src_exp.dummy = cxt->mode_switch[0].dummy;
+		if((cxt->app_mode < 32)&&(cxt->app_mode > 0)){
+			if(0 != cxt->mode_switch[cxt->app_mode].gain){
+				src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
+				src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
+				src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
+				src_exp.exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
+				src_exp.dummy = cxt->mode_switch[cxt->app_mode].dummy;
+				src_exp.cur_index = cxt->mode_switch[cxt->app_mode].table_idx;
+			}else{
+				if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
+					src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
+					src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
+					src_exp.gain = s_ae_manual[cxt->camera_id].gain;
+					src_exp.exp_time = s_ae_manual[cxt->camera_id].exp_time;
+					src_exp.dummy = s_ae_manual[cxt->camera_id].dummy;
+					src_exp.cur_index = s_ae_manual[cxt->app_mode].table_idx;
+				}
+				else if(0 != cxt->mode_switch[0].gain){
+					src_exp.target_offset = cxt->mode_switch[0].target_offset;
+					src_exp.exp_line = cxt->mode_switch[0].exp_line;
+					src_exp.gain = cxt->mode_switch[0].gain;
+					src_exp.exp_time = cxt->mode_switch[0].exp_time;
+					src_exp.dummy = cxt->mode_switch[0].dummy;
+					src_exp.cur_index = cxt->mode_switch[0].table_idx;
+				}
 			}
 		}
 	} else {
@@ -5358,7 +5364,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	 */
 	if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
 		cxt->prv_status = cxt->cur_status;
-		if(1 == cxt->app_mode)
+		if(CAMERA_MODE_MANUAL == cxt->app_mode)
 			cxt->manual_level = cxt->prv_status.settings.ev_index;
 		if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
 			cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
@@ -5980,6 +5986,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_APP_MODE:
 		cxt->app_mode = *(cmr_u32 *) param;
+		ISP_LOGD("app_mode=%d", cxt->app_mode);
 		break;
 
 	case AE_SET_TOUCH_ZONE:
