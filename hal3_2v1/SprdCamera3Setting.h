@@ -393,6 +393,7 @@ typedef struct {
     uint8_t availabe_ai_scene;
     uint8_t sprd_ai_scene_type_current;
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
+    uint8_t sprd_cam_feature_list_size;
     uint8_t availabe_sensor_type;
 } SPRD_DEF_Tag;
 

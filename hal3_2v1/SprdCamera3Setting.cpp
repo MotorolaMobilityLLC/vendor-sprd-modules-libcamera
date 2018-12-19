@@ -204,8 +204,8 @@ const int32_t kavailable_fps_ranges_front[] = {5,  5,  5, 10, 10, 10, 5,  15,
 #else
 const int32_t kavailable_fps_ranges_back[] = {
     5, 10, 10, 10, 5, 15, 15, 15, 5, 20, 5, 24, 24, 24, 5, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5, 10, 10, 10, 5,  15,
-                                               15, 15, 5, 30, 15, 30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {5,  10, 10, 10, 5,  15, 15,
+                                               15, 5,  30, 15, 30, 30, 30};
 #endif
 const int32_t kexposureCompensationRange[2] = {-16, 16};
 const camera_metadata_rational kae_compensation_step = {1, 8};
@@ -1940,11 +1940,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(atoi(prop));
     }
 
-    ALOGV("available_cam_features=%d", available_cam_features.size());
-
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
+    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
+        available_cam_features.size();
+
+    ALOGI("available_cam_features=%d",
+          s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
     return ret;
 }
@@ -2311,9 +2314,14 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
                       &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);
-    FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
-                        0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
-                        ANDROID_SPRD_CAM_FEATURE_LIST)
+    //    FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+    //                        0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
+    //                        ANDROID_SPRD_CAM_FEATURE_LIST)
+    staticInfo.update(
+        ANDROID_SPRD_CAM_FEATURE_LIST,
+        s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+        s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
+
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SENSORTYPE,
                       &(s_setting[cameraId].sprddefInfo.availabe_sensor_type),
                       1);
