@@ -155,6 +155,8 @@ extern "C" {
 		cmr_u8 lock_postcdn;
 		cmr_u8 lock_ccnr;
 		cmr_u8 lock_ynr;
+		cmr_u8 lock_ltm;
+		cmr_u8 lock_imbalance;
 	};
 
 	struct smart_calc_result {
@@ -181,6 +183,8 @@ extern "C" {
 		cmr_u32 ccnr[3];
 		cmr_u32 iir_yrandom[3];
 		cmr_u32 noisefilter[3];
+		cmr_u32 ltm[3];
+		cmr_u32 imbalance[3];
 	};
 
 	typedef struct {

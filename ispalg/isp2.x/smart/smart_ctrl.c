@@ -1207,6 +1207,12 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->smt_dbginfo.nr_param.noisefilter[0] = 0;
 	cxt->smt_dbginfo.nr_param.noisefilter[1] = 26;
 	cxt->smt_dbginfo.nr_param.noisefilter[2] = 0;
+	cxt->smt_dbginfo.nr_param.ltm[0] = 0;
+	cxt->smt_dbginfo.nr_param.ltm[1] = 3;
+	cxt->smt_dbginfo.nr_param.ltm[2] = 0;
+	cxt->smt_dbginfo.nr_param.imbalance[0] = 0;
+	cxt->smt_dbginfo.nr_param.imbalance[1] = 5;
+	cxt->smt_dbginfo.nr_param.imbalance[2] = 0;
 #endif	
 	
 	cxt->magic_flag = ISP_SMART_MAGIC_FLAG;
@@ -1833,6 +1839,14 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 			    cxt->smt_dbginfo.nr_param.noisefilter[0] = 1;
 			    cxt->smt_dbginfo.nr_param.noisefilter[2] = blk->component[0].fix_data[0];
 			    break;
+			case ISP_SMART_LTM:
+			    cxt->smt_dbginfo.nr_param.ltm[0] = 1;
+			    cxt->smt_dbginfo.nr_param.ltm[2] = blk->component[0].fix_data[0];
+			    break;
+			case ISP_SMART_IMBALANCE:
+			    cxt->smt_dbginfo.nr_param.imbalance[0] = 1;
+			    cxt->smt_dbginfo.nr_param.imbalance[2] = blk->component[0].fix_data[0];
+			    break;
 			default:
 			    break;
 #endif
@@ -2090,7 +2104,9 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 				ISP_SMART_3DNR_CAP == smart_param->block[i].smart_id ||
 				ISP_SMART_YNR == smart_param->block[i].smart_id ||
 				ISP_SMART_UVCDN == smart_param->block[i].smart_id ||
-				ISP_SMART_YUV_NOISEFILTER == smart_param->block[i].smart_id) {
+				ISP_SMART_YUV_NOISEFILTER == smart_param->block[i].smart_id||
+				ISP_SMART_LTM == smart_param->block[i].smart_id ||
+				ISP_SMART_IMBALANCE == smart_param->block[i].smart_id) {
 				if (is_diseb){
 					smart_param->block[i].enable = 0;
 					} else {
@@ -2386,6 +2402,20 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 		for (i = 0; i < smart_calc_result.counts; i++) {
 			if (ISP_SMART_YNR== smart_calc_result.block_result[i].smart_id) {
 				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+	if(in_ptr->lock_ltm == 1) {
+		for (i = 0; i < smart_calc_result.counts; i++) {
+                        if (ISP_SMART_LTM== smart_calc_result.block_result[i].smart_id) {
+                                smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+	if(in_ptr->lock_imbalance == 1) {
+                for (i = 0; i < smart_calc_result.counts; i++) {
+                        if (ISP_SMART_IMBALANCE== smart_calc_result.block_result[i].smart_id) {
+                                smart_calc_result.block_result[i].update = 0;
 			}
 		}
 	}
