@@ -123,6 +123,7 @@ typedef struct _front_flash_type {
 static SprdCamera3DefaultInfo camera3_default_info;
 
 static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
+static int64_t largest_yuv_min_duration[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
 
@@ -750,11 +751,9 @@ const uint8_t kavailable_capabilities[] = {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS,
 #endif
-// ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
-// ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
-#ifndef CONFIG_ISP_2_5
+    // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
+    // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
-#endif
 };
 
 const uint8_t kavailable_noise_reduction_modes[] = {
@@ -1424,6 +1423,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     /* Add input/output stream configurations for each scaler formats*/
     Vector<int32_t> available_stream_configs;
+    /* android.scaler.availableMinFrameDurations */
+    Vector<int64_t> available_min_durations;
+    /*available stall durations*/
+    Vector<int64_t> available_stall_durations;
+
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
             if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
@@ -1438,114 +1442,73 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
 
-                /* keep largest */
-                if (stream_info[i].stream_sizes_tbl.width *
-                        stream_info[i].stream_sizes_tbl.height >
-                    largest_picture_size[cameraId].width *
-                        largest_picture_size[cameraId].height) {
-                    largest_picture_size[cameraId] =
-                        stream_info[i].stream_sizes_tbl;
-                }
-            }
-        }
-    }
-    memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations,
-           &(available_stream_configs[0]),
-           available_stream_configs.size() * sizeof(int32_t));
-
-    /* android.scaler.availableMinFrameDurations */
-    Vector<int64_t> available_min_durations;
-    for (size_t j = 0; j < scaler_formats_count; j++) {
-        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
-                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
-                (stream_info[i].stream_sizes_tbl.width == 480 &&
-                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
 #if defined(CONFIG_ISP_2_5)
+                int64_t stream_min_duration;
+                int32_t stream_size = stream_info[i].stream_sizes_tbl.width *
+                                      stream_info[i].stream_sizes_tbl.height;
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-                    if (stream_info[i].stream_sizes_tbl.width ==
-                            largest_picture_size[cameraId].width &&
-                        (stream_info[i].stream_sizes_tbl.width == 4608)) {
+                    if (stream_size > 8000000) {
                         HAL_LOGD("YUV %d*%d output in ~200ms in sharkl3"
                                  "offline so change min frame duration",
                                  stream_info[i].stream_sizes_tbl.width,
                                  stream_info[i].stream_sizes_tbl.height);
-                        available_min_durations.add(200000000L);
-                    } else if (stream_info[i].stream_sizes_tbl.width ==
-                                   largest_picture_size[cameraId].width &&
-                               ((stream_info[i].stream_sizes_tbl.width ==
-                                 3264) ||
+                        stream_min_duration = 200000000L;
+                    } else if ((stream_info[i].stream_sizes_tbl.width >
+                                ISP_PATH2_MAX_CAPABILITY) ||
+                               /* in case max YUV for sub camera on  path2,
+                                  capability is reduced*/
+                               (cameraId == 2 &&
                                 (stream_info[i].stream_sizes_tbl.width ==
-                                 2592))) {
+                                 largest_sensor_w))) {
                         HAL_LOGD("YUV %d*%d output in ~100ms in sharkl3"
                                  "offline so change min frame duration",
                                  stream_info[i].stream_sizes_tbl.width,
                                  stream_info[i].stream_sizes_tbl.height);
-                        available_min_durations.add(100000000L);
-                    } else if (stream_info[i].stream_sizes_tbl.width ==
-                                   largest_picture_size[cameraId].width &&
-                               ((stream_info[i].stream_sizes_tbl.width ==
-                                 2048))) {
-                        HAL_LOGD("YUV %d*%d output in ~60ms in sharkl3"
+                        stream_min_duration = 100000000L;
+                    } else {
+                        stream_min_duration =
+                            stream_info[i].stream_min_duration;
+                    }
+                    available_min_durations.add(stream_min_duration);
+                } else
+#elif defined(CONFIG_ISP_2_3)
+                int64_t stream_min_duration;
+                int32_t stream_size = stream_info[i].stream_sizes_tbl.width *
+                                      stream_info[i].stream_sizes_tbl.height;
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+                    if (stream_size > 8000000) {
+                        HAL_LOGD("YUV %d*%d output in ~100ms in sharkle"
                                  "offline so change min frame duration",
                                  stream_info[i].stream_sizes_tbl.width,
                                  stream_info[i].stream_sizes_tbl.height);
-                        available_min_durations.add(66666670L);
-                    } else {
-                        available_min_durations.add(
-                            stream_info[i].stream_min_duration);
-                    }
-                } else
-#elif defined(CONFIG_ISP_2_3)
-                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-                    if (stream_info[i].stream_sizes_tbl.width ==
-                            largest_picture_size[cameraId].width &&
-                        (stream_info[i].stream_sizes_tbl.width == 4160)) {
-                        HAL_LOGD(
-                            "YUV %d*%d output in ~100ms in sharkle"
-                            "offline so change min frame duration in sharkle",
-                            stream_info[i].stream_sizes_tbl.width,
-                            stream_info[i].stream_sizes_tbl.height);
-                        available_min_durations.add(100000000L);
-                    } else if (stream_info[i].stream_sizes_tbl.width ==
-                                   largest_picture_size[cameraId].width &&
-                               ((stream_info[i].stream_sizes_tbl.width ==
-                                 3264) ||
+                        stream_min_duration = 100000000L;
+                    } else if ((stream_info[i].stream_sizes_tbl.width >
+                                ISP_PATH2_MAX_CAPABILITY) ||
+                               /* in case max YUV for sub camera on  path2,
+                                  capability is reduced*/
+                               (cameraId == 2 &&
                                 (stream_info[i].stream_sizes_tbl.width ==
-                                 2592))) {
+                                 largest_sensor_w))) {
                         HAL_LOGD("YUV %d*%d output in ~66ms in sharkle"
                                  "offline so change min frame duration",
                                  stream_info[i].stream_sizes_tbl.width,
                                  stream_info[i].stream_sizes_tbl.height);
-                        available_min_durations.add(66666670L);
+                        stream_min_duration = 66666670L;
                     } else {
-                        available_min_durations.add(
-                            stream_info[i].stream_min_duration);
+                        stream_min_duration =
+                            stream_info[i].stream_min_duration;
                     }
+                    available_min_durations.add(stream_min_duration);
                 } else
 #endif
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
-            }
-        }
-    }
-    memcpy(s_setting[cameraId].scalerInfo.min_frame_durations,
-           &(available_min_durations[0]),
-           available_min_durations.size() * sizeof(int64_t));
 
-    /*available stall durations*/
-    Vector<int64_t> available_stall_durations;
-    for (size_t j = 0; j < scaler_formats_count; j++) {
-        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
-                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
-                (stream_info[i].stream_sizes_tbl.width == 480 &&
-                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] ==
                     (HAL_PIXEL_FORMAT_BLOB ||
                      HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
@@ -1565,9 +1528,28 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                         stream_info[i].stream_sizes_tbl.height);
                     available_stall_durations.add(0);
                 }
+                /* keep largest */
+                if (stream_info[i].stream_sizes_tbl.width *
+                        stream_info[i].stream_sizes_tbl.height >
+                    largest_picture_size[cameraId].width *
+                        largest_picture_size[cameraId].height) {
+                    largest_picture_size[cameraId] =
+                        stream_info[i].stream_sizes_tbl;
+                    if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888)
+                        largest_yuv_min_duration[cameraId] =
+                            stream_min_duration;
+                }
             }
         }
     }
+    memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations,
+           &(available_stream_configs[0]),
+           available_stream_configs.size() * sizeof(int32_t));
+
+    memcpy(s_setting[cameraId].scalerInfo.min_frame_durations,
+           &(available_min_durations[0]),
+           available_min_durations.size() * sizeof(int64_t));
+
     memcpy(s_setting[cameraId].scalerInfo.stall_durations,
            &(available_stall_durations[0]),
            available_stall_durations.size() * sizeof(int64_t));
@@ -1790,8 +1772,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
-    memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-           kavailable_capabilities, sizeof(kavailable_capabilities));
+
+    /* Disable BURST_CAPTURE capability, if device does not support atleast
+       10fps burst for MAX YUV size: CTS testStaticBurstCharachterstics */
+    if (largest_yuv_min_duration[cameraId] >= 100000000L) {
+        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+               kavailable_capabilities,
+               sizeof(kavailable_capabilities) - sizeof(uint8_t));
+    } else {
+        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+               kavailable_capabilities, sizeof(kavailable_capabilities));
+    }
     s_setting[cameraId].requestInfo.partial_result_count = 1;
     s_setting[cameraId].requestInfo.pipeline_max_depth = 8;
 
@@ -3383,8 +3374,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
             }
         }
 
-        { // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE] for still
-            // capture
+        { // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE] for still capture
             bool support_cap_raw = false;
             if (characteristicsInfo.exists(
                     ANDROID_REQUEST_AVAILABLE_CAPABILITIES)) {
@@ -3476,7 +3466,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                                .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
                                .data.i32[i] ==
                            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE) {
-                    // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE]
+                    // Shading Mode [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE]
                     // for not still capture
                     uint8_t shadingMapMode =
                         ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
@@ -4646,45 +4636,45 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable);
     }
 
-    HAL_LOGD(
-        "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
-        "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
-        "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
-        "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
-        "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
-        "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled is %d",
-        isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
-        s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
-        s_setting[mCameraId].flashInfo.mode,
-        s_setting[mCameraId].controlInfo.ae_lock,
-        s_setting[mCameraId].controlInfo.scene_mode,
-        s_setting[mCameraId].sprddefInfo.capture_mode,
-        s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
-        s_setting[mCameraId].sprddefInfo.iso,
-        s_setting[mCameraId].jpgInfo.orientation_original,
-        s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
-        s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
-        s_setting[mCameraId].scalerInfo.crop_region[0],
-        s_setting[mCameraId].scalerInfo.crop_region[1],
-        s_setting[mCameraId].scalerInfo.crop_region[2],
-        s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
-        s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
-        s_setting[mCameraId].controlInfo.ae_regions[0],
-        s_setting[mCameraId].controlInfo.ae_regions[1],
-        s_setting[mCameraId].controlInfo.ae_regions[2],
-        s_setting[mCameraId].controlInfo.ae_regions[3],
-        s_setting[mCameraId].controlInfo.ae_regions[4],
-        s_setting[mCameraId].controlInfo.af_trigger,
-        s_setting[mCameraId].controlInfo.af_mode,
-        s_setting[mCameraId].controlInfo.af_state,
-        s_setting[mCameraId].controlInfo.af_regions[0],
-        s_setting[mCameraId].controlInfo.af_regions[1],
-        s_setting[mCameraId].controlInfo.af_regions[2],
-        s_setting[mCameraId].controlInfo.af_regions[3],
-        s_setting[mCameraId].controlInfo.af_regions[4],
-        s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
-        s_setting[mCameraId].sprddefInfo.sprd_filter_type,
-        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
+    HAL_LOGD("isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
+             "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
+             "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
+             "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
+             "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
+             "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled "
+             "is %d",
+             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
+             s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
+             s_setting[mCameraId].flashInfo.mode,
+             s_setting[mCameraId].controlInfo.ae_lock,
+             s_setting[mCameraId].controlInfo.scene_mode,
+             s_setting[mCameraId].sprddefInfo.capture_mode,
+             s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
+             s_setting[mCameraId].sprddefInfo.iso,
+             s_setting[mCameraId].jpgInfo.orientation_original,
+             s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
+             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
+             s_setting[mCameraId].scalerInfo.crop_region[0],
+             s_setting[mCameraId].scalerInfo.crop_region[1],
+             s_setting[mCameraId].scalerInfo.crop_region[2],
+             s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
+             s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
+             s_setting[mCameraId].controlInfo.ae_regions[0],
+             s_setting[mCameraId].controlInfo.ae_regions[1],
+             s_setting[mCameraId].controlInfo.ae_regions[2],
+             s_setting[mCameraId].controlInfo.ae_regions[3],
+             s_setting[mCameraId].controlInfo.ae_regions[4],
+             s_setting[mCameraId].controlInfo.af_trigger,
+             s_setting[mCameraId].controlInfo.af_mode,
+             s_setting[mCameraId].controlInfo.af_state,
+             s_setting[mCameraId].controlInfo.af_regions[0],
+             s_setting[mCameraId].controlInfo.af_regions[1],
+             s_setting[mCameraId].controlInfo.af_regions[2],
+             s_setting[mCameraId].controlInfo.af_regions[3],
+             s_setting[mCameraId].controlInfo.af_regions[4],
+             s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
+             s_setting[mCameraId].sprddefInfo.sprd_filter_type,
+             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
 
 #undef GET_VALUE_IF_DIF
     return rc;
