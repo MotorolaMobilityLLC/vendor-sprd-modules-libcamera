@@ -3948,6 +3948,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 					src_exp.cur_index = cxt->mode_switch[0].table_idx;
 				}
 			}
+			if (work_info->is_snapshot && (cxt->cur_status.line_time != cxt->last_exp_param.line_time)){
+				src_exp.exp_line = (cmr_u32) (1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.line_time + 0.5);
+				if (cxt->min_exp_line > src_exp.exp_line)
+					src_exp.exp_line = cxt->min_exp_line;
+				src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
+			}
 		}
 	} else {
 		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param),&s_ae_manual[0]);
