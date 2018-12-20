@@ -345,20 +345,6 @@ void cmr_grab_post_ynr_evt_reg(cmr_handle grab_handle,
     return;
 }
 
-void cmr_grab_3dnr_evt_reg(cmr_handle grab_handle,
-                           cmr_evt_cb grab_3dnr_event_cb) {
-    struct cmr_grab *p_grab;
-
-    p_grab = (struct cmr_grab *)grab_handle;
-    if (!p_grab)
-        return;
-
-    pthread_mutex_lock(&p_grab->cb_mutex);
-    p_grab->grab_3dnr_evt_cb = grab_3dnr_event_cb;
-    pthread_mutex_unlock(&p_grab->cb_mutex);
-    return;
-}
-
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -1389,13 +1375,6 @@ static void *cmr_grab_thread_proc(void *data) {
                 if (p_grab->isp_irq_proc_evt_cb && p_grab->isp_cb_enable) {
                     (p_grab->isp_irq_proc_evt_cb)(
                         evt_id, &irq_info, (void *)cxt->isp_cxt.isp_handle);
-                }
-                pthread_mutex_unlock(&p_grab->cb_mutex);
-            } else if (op.parm.frame.irq_type == CAMERA_IRQ_3DNR_DONE) {
-                pthread_mutex_lock(&p_grab->cb_mutex);
-                if (p_grab->grab_3dnr_evt_cb) {
-                    (*p_grab->grab_3dnr_evt_cb)(
-                        evt_id, &frame, (void *)p_grab->init_param.oem_handle);
                 }
                 pthread_mutex_unlock(&p_grab->cb_mutex);
             } else if (op.parm.frame.irq_type == CAMERA_IRQ_POST_YNR_DONE) {

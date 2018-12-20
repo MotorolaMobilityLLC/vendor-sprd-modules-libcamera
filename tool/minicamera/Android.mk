@@ -1,6 +1,38 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.1)
+HAL_DIR := hal3_2v1
+OEM_DIR := oem2v1
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.1
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.2)
+HAL_DIR := hal3_2v1
+OEM_DIR := oem2v1
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.2
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
+HAL_DIR := hal3_2v1
+OEM_DIR := oem2v1
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.3
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
+HAL_DIR := hal3_2v4
+OEM_DIR := oem2v4
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.4
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
+HAL_DIR := hal3_2v1
+OEM_DIR := oem2v1
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.5
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
+HAL_DIR := hal3_2v6
+OEM_DIR := oem2v6
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.6
+endif
+
 LOCAL_C_INCLUDES := \
        $(LOCAL_PATH)/../../$(ISPDRV_DIR)/isp_tune \
        $(LOCAL_PATH)/../../$(ISPALG_DIR)/common/inc \

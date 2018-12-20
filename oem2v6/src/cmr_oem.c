@@ -1495,7 +1495,6 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         frame.channel_id = cxt->snp_cxt.channel_id;
         ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                         SNAPSHOT_EVT_POSTPROC_START, &frame);
-        sem_post(&cxt->threednr_proc_sm);
     } else if (1 == cxt->sn_cxt.info_4in1.is_4in1_supported) {
         cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle,
                                   &cb_param->dst_frame);
@@ -7934,6 +7933,9 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         if (camera_get_hdr_flag(cxt)) {
             out_param_ptr->frame_count = cxt->ipm_cxt.hdr_num;
             out_param_ptr->frame_ctrl = FRAME_HDR_PROC;
+        } else if (1 == camera_get_3dnr_flag(cxt)) {
+            out_param_ptr->frame_count = cxt->ipm_cxt.threednr_num;
+            out_param_ptr->frame_ctrl = FRAME_3DNR_PROC;
         } else if (out_param_ptr->video_snapshot_type == 1) {
             out_param_ptr->frame_ctrl = FRAME_CONTINUE;
         }
@@ -10492,6 +10494,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
 
     if (1 == camera_get_hdr_flag(cxt)) {
         capture_param.type = DCAM_CAPTURE_START_HDR;
+    } else if (1 == camera_get_3dnr_flag(cxt)) {
+        capture_param.type = DCAM_CAPTURE_START_3DNR;
     } else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
 #ifdef CONFIG_CAMERA_4IN1
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
