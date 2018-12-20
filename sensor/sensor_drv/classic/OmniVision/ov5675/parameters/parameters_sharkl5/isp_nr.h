@@ -1,15 +1,15 @@
 #ifdef _NR_MAP_PARAM_
-static struct sensor_nr_level_map_param s_ov5675_dual_nr_level_number_map_param = {{
+static struct sensor_nr_level_map_param s_ov5675_nr_level_number_map_param = {{
 	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,
 	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25
 }};
 
-static struct sensor_nr_level_map_param s_ov5675_dual_default_nr_level_map_param = {{
+static struct sensor_nr_level_map_param s_ov5675_default_nr_level_map_param = {{
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 }};
 
-static struct sensor_nr_scene_map_param s_ov5675_dual_nr_scene_map_param = {{
+static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
 	0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
 	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 }};
@@ -55,12 +55,12 @@ static struct sensor_nr_scene_map_param s_ov5675_dual_nr_scene_map_param = {{
 #include "NR/common/normal/ee_param.h"
 #endif
 
-#ifdef _NR_PRE_3DNR_PARAM_
-#include "NR/common/normal/pre_3dnr_param.h"
+#ifdef _NR_3DNR_PARAM_
+#include "NR/common/normal/3dnr_param.h"
 #endif
 
-#ifdef _NR_CAP_3DNR_PARAM_
-#include "NR/common/normal/cap_3dnr_param.h"
+#ifdef _NR_PPE_PARAM_
+#include "NR/common/normal/ppe_param.h"
 #endif
 
 #ifdef _NR_YUV_NOISEFILTER_PARAM_
@@ -89,5 +89,13 @@ static struct sensor_nr_scene_map_param s_ov5675_dual_nr_scene_map_param = {{
 
 #ifdef _NR_CNR_PARAM_
 #include "NR/common/normal/cnr_param.h"
+#endif
+
+#ifdef _NR_IMBALANCE_PARAM_
+#include "NR/common/normal/imbalance_param.h"
+#endif
+
+#ifdef _NR_LTM_PARAM_
+#include "NR/common/normal/ltm_param.h"
 #endif
 
