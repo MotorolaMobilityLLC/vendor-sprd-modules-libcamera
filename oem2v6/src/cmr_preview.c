@@ -6556,6 +6556,9 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
+    if (prev_cxt->prev_param.video_slowmotion_eb) {
+        chn_param.cap_inf_cfg.cfg.slowmotion = 1;
+    }
 
     if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
