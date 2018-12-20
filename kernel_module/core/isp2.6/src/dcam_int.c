@@ -95,7 +95,6 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 			to_path_name(path_id), sync->index, sync);
 	}
 
-	/* frame->fid = path->frm_cnt; */
 	pr_debug("DCAM%u %s: TX DONE, fid %u, sync 0x%p\n",
 		 dev->idx, to_path_name(path_id), frame->fid, frame->sync_data);
 
@@ -129,11 +128,28 @@ static void dcam_dispatch_frame(struct dcam_pipe_dev *dev,
 	dev->dcam_cb_func(type, frame, dev->cb_priv_data);
 }
 
+static void dcam_dispatch_sof_event(struct dcam_pipe_dev *dev)
+{
+	struct camera_frame *frame = NULL;
+	struct timespec cur_ts;
+
+	frame = get_empty_frame();
+	if (frame) {
+		ktime_get_ts(&cur_ts);
+		frame->boot_time = ktime_get_boottime();
+		frame->time.tv_sec = cur_ts.tv_sec;
+		frame->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
+		frame->evt = IMG_TX_DONE;
+		frame->irq_type = CAMERA_IRQ_DONE;
+		frame->irq_property = IRQ_DCAM_SOF;
+		frame->fid = dev->frame_index;
+		dev->dcam_cb_func(DCAM_CB_IRQ_EVENT, frame, dev->cb_priv_data);
+	}
+}
+
 static void dcam_cap_sof(void *param)
 {
 	int i;
-	struct timespec cur_ts;
-	struct camera_frame *pframe;
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
 	struct dcam_path_desc *path;
 	struct dcam_sync_helper *helper = NULL;
@@ -142,13 +158,6 @@ static void dcam_cap_sof(void *param)
 	pr_debug("DCAM%u cnt=%d, fid: %llu\n", dev->idx,
 		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
 		 dev->frame_index);
-
-	/* when in slow motion, only 0, 4, 8, 12, ..., frame will output */
-	if (dev->enable_slowmotion &&
-	    dev->frame_index % dev->slowmotion_count) {
-		dcam_path_set_slowmotion_frame(dev);
-		return;
-	}
 
 	helper = dcam_get_sync_helper(dev);
 
@@ -178,24 +187,34 @@ static void dcam_cap_sof(void *param)
 	/* TODO: do not copy if no register is modified */
 	dcam_auto_copy(dev->idx);
 
-	pframe = get_empty_frame();
-	if (pframe) {
-		ktime_get_ts(&cur_ts);
-		pframe->boot_time = ktime_get_boottime();
-		pframe->time.tv_sec = cur_ts.tv_sec;
-		pframe->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
-		pframe->evt = IMG_TX_DONE;
-		pframe->irq_type = CAMERA_IRQ_DONE;
-		pframe->irq_property = IRQ_DCAM_SOF;
-		pframe->fid = dev->frame_index;
-		dev->dcam_cb_func(DCAM_CB_IRQ_EVENT,
-					pframe, dev->cb_priv_data);
-	}
+	dcam_dispatch_sof_event(dev);
 }
 
-/* TODO: */
+/* for slow motion mode */
 static void dcam_preview_sof(void *param)
 {
+	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
+	struct dcam_path_desc *path = NULL;
+	int i = 0;
+
+	dev->frame_index += dev->slowmotion_count;
+	pr_debug("DCAM%u cnt=%d, fid: %llu\n", dev->idx,
+		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
+		 dev->frame_index);
+
+	for (i = 0; i < DCAM_PATH_MAX; i++) {
+		path = &dev->path[i];
+		if (atomic_read(&path->user_cnt) < 1)
+			continue;
+
+		/* frame deci is deprecated in slow motion */
+		dcam_path_set_store_frm(dev, path, NULL);
+	}
+
+	/* TODO: do not copy if no register is modified */
+	dcam_auto_copy(dev->idx);
+
+	dcam_dispatch_sof_event(dev);
 }
 
 /* for Flash */
@@ -487,6 +506,7 @@ static const dcam_isr_type _DCAM_ISRS[] = {
  */
 static const int _DCAM0_SEQUENCE[] = {
 	DCAM_CAP_SOF,/* must */
+	DCAM_PREVIEW_SOF,
 	DCAM_SENSOR_EOF,/* TODO: why for flash */
 	DCAM_NR3_TX_DONE,/* for 3dnr, before data path */
 	DCAM_PREV_PATH_TX_DONE,/* for bin path */

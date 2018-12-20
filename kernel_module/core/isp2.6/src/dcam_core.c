@@ -718,7 +718,12 @@ static int dcam_start(struct dcam_pipe_dev *dev)
 	dcam_force_copy(dev);
 
 	DCAM_REG_WR(idx, DCAM_INT_CLR, 0xFFFFFFFF);
-	DCAM_REG_WR(idx, DCAM_INT_EN, DCAMINT_IRQ_LINE_MASK);
+
+	/* use DCAM_PREVIEW_SOF and ignore DCAM_SENSOR_EOF in slow motion */
+	if (dev->enable_slowmotion)
+		DCAM_REG_WR(idx, DCAM_INT_EN, DCAMINT_IRQ_LINE_EN_SLM);
+	else
+		DCAM_REG_WR(idx, DCAM_INT_EN, DCAMINT_IRQ_LINE_EN_NORMAL);
 
 	/* enable internal logic access sram */
 	DCAM_REG_MWR(idx, DCAM_APB_SRAM_CTRL, BIT_0, 1);
@@ -826,6 +831,9 @@ static int dcam_set_mipi_cap(struct dcam_pipe_dev *dev,
 	DCAM_REG_MWR(idx, DCAM_MIPI_CAP_CFG, BIT_5 | BIT_4, reg_val << 4);
 
 	/* frame deci */
+	if (dev->enable_slowmotion)
+		/* TODO set low frame rate in slow motion before ISP FMCU ready */
+		cap_info->frm_deci = 3;
 	DCAM_REG_MWR(idx, DCAM_MIPI_CAP_CFG, BIT_7 | BIT_6,
 			cap_info->frm_deci << 6);
 
@@ -1592,8 +1600,8 @@ int dcam_if_set_sync_enable(void *handle, int path_id, int enable)
 	else
 		dev->helper_enabled &= ~BIT(path_id);
 
-	pr_info("%s DCAM%u frame sync for path %d\n",
-		enable ? "enable" : "disable", dev->idx, path_id);
+	pr_info("DCAM%u %s %s frame sync\n", dev->idx,
+		to_path_name(path_id), enable ? "enable" : "disable");
 
 	return 0;
 }
@@ -2098,8 +2106,6 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		return ret;
 	}
 
-	dev->frame_index = 0;
-
 	/* enable statistic paths  */
 	if (dev->blk_dcam_pm->aem.bypass == 0)
 		atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 1);
@@ -2115,20 +2121,41 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 	if (dev->is_3dnr)
 		atomic_set(&dev->path[DCAM_PATH_3DNR].user_cnt, 1);
 
+	dev->frame_index = 0;
+
+	dev->helper_enabled = 0;
+	if (!dev->enable_slowmotion) {
+		/* enable frame sync for 3DNR in normal mode */
+		dcam_if_set_sync_enable(dev, DCAM_PATH_FULL, 1);
+		dcam_if_set_sync_enable(dev, DCAM_PATH_BIN, 1);
+		dcam_if_set_sync_enable(dev, DCAM_PATH_3DNR, 1);
+	}
+
 	ret = dcam_set_mipi_cap(dev, &dev->cap_info);
+	if (ret < 0) {
+		pr_err("DCAM%u fail to set mipi cap\n", dev->idx);
+		return ret;
+	}
 
-	helper = dcam_get_sync_helper(dev);
+	if (!dev->enable_slowmotion)
+		helper = dcam_get_sync_helper(dev);
 
-	for (i  = 0; i < DCAM_PATH_MAX; i++) {
+	for (i = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
+		atomic_set(&path->set_frm_cnt, 0);
+
 		if (atomic_read(&path->user_cnt) < 1)
 			continue;
+
 		ret = dcam_path_set_store_frm(dev, path, helper);
-		/* If output frame set failed, the path will not be started. */
-		if (ret == 0) {
-			atomic_set(&path->set_frm_cnt, 1);
-			dcam_start_path(dev, path);
+		if (ret < 0) {
+			pr_err("DCAM%u %s fail to set frame, ret %d\n",
+			       dev->idx, to_path_name(path->path_id), ret);
+			return ret;
 		}
+
+		if (atomic_read(&path->set_frm_cnt) > 0)
+			dcam_start_path(dev, path);
 	}
 
 	if (helper) {
@@ -2138,17 +2165,8 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 			dcam_put_sync_helper(dev, helper);
 	}
 
-	/* since 'set store frame' operation above does not check return state,
-	 * we don't check that neither
-	 */
-	if (dev->enable_slowmotion)
-		dcam_path_init_slowmotion_frame(dev);
-
-	/* TODO: wtf?? */
-	/* atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 0); */
-	/* atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 0); */
+	/* TODO: change AFL trigger */
 	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);
-	/* atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 0); */
 
 	dcam_reset_int_tracker(dev->idx);
 	dcam_start(dev);
@@ -2281,11 +2299,6 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 				0, dcam_ret_src_frame);
 
 	atomic_set(&dev->state, STATE_IDLE);
-
-	/* enable frame sync for 3DNR by default */
-	dcam_if_set_sync_enable(dev, DCAM_PATH_FULL, 1);
-	dcam_if_set_sync_enable(dev, DCAM_PATH_BIN, 1);
-	dcam_if_set_sync_enable(dev, DCAM_PATH_3DNR, 1);
 
 	/* for debugfs */
 	atomic_inc(&s_dcam_opened[dev->idx]);
@@ -2426,7 +2439,6 @@ void *dcam_if_get_dev(uint32_t idx, struct sprd_cam_hw_info *hw)
 
 	/* frame sync helper */
 	spin_lock_init(&dev->helper_lock);
-	dev->helper_enabled = 0;
 
 	atomic_set(&dev->state, STATE_INIT);
 

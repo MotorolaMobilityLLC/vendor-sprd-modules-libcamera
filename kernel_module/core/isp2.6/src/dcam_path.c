@@ -65,7 +65,7 @@ const char *to_path_name(enum dcam_path_id path_id) {
 }
 
 
-unsigned long dcam_store_addr[DCAM_PATH_MAX] = {
+static const unsigned long dcam_store_addr[DCAM_PATH_MAX] = {
 	DCAM_FULL_BASE_WADDR,
 	DCAM_BIN_BASE_WADDR0,
 	DCAM_PDAF_BASE_WADDR,
@@ -78,7 +78,7 @@ unsigned long dcam_store_addr[DCAM_PATH_MAX] = {
 	ISP_NR3_WADDR,
 	ISP_BPC_OUT_ADDR,
 };
-unsigned long dcam2_store_addr[DCAM_PATH_MAX] = {
+static const unsigned long dcam2_store_addr[DCAM_PATH_MAX] = {
 	DCAM2_PATH0_BASE_WADDR,
 	DCAM2_PATH1_BASE_WADDR,
 	/* below:not cover usefull register */
@@ -92,11 +92,31 @@ unsigned long dcam2_store_addr[DCAM_PATH_MAX] = {
 	ISP_NR3_WADDR,
 	ISP_BPC_OUT_ADDR,
 };
+static const unsigned long slowmotion_store_addr[3][4] = {
+	{
+		DCAM_BIN_BASE_WADDR0,
+		DCAM_BIN_BASE_WADDR1,
+		DCAM_BIN_BASE_WADDR2,
+		DCAM_BIN_BASE_WADDR3
+	},
+	{
+		DCAM_AEM_BASE_WADDR,
+		DCAM_AEM_BASE_WADDR1,
+		DCAM_AEM_BASE_WADDR2,
+		DCAM_AEM_BASE_WADDR3
+	},
+	{
+		DCAM_HIST_BASE_WADDR,
+		DCAM_HIST_BASE_WADDR1,
+		DCAM_HIST_BASE_WADDR2,
+		DCAM_HIST_BASE_WADDR3
+	}
+};
+
 
 
 int dcam_cfg_path_base(void *dcam_handle,
-				struct dcam_path_desc *path,
-				void *param)
+		       struct dcam_path_desc *path, void *param)
 {
 	int ret = 0;
 	uint32_t idx;
@@ -120,10 +140,13 @@ int dcam_cfg_path_base(void *dcam_handle,
 
 		path->is_loose = ch_desc->is_loose;
 		path->endian = ch_desc->endian;
-		/* TODO: should unbind slow motion code to some path */
+		/*
+		 * TODO:
+		 * Better not binding dcam_if feature to BIN path, which is a
+		 * architecture defect and not going to be fixed now.
+		 */
 		dev->enable_slowmotion = ch_desc->enable_slowmotion;
 		dev->slowmotion_count = ch_desc->slowmotion_count;
-		/* TODO: should unbind 3dnr code to some path */
 		dev->is_3dnr = ch_desc->enable_3dnr;
 		break;
 
@@ -587,161 +610,6 @@ void dcam_start_fetch(void)
 	DCAM_AXIM_WR(IMG_FETCH_START, 1);
 }
 
-static const unsigned long s_slowmotion_waddr[3][3] = {
-	{
-		DCAM_BIN_BASE_WADDR1,
-		DCAM_BIN_BASE_WADDR2,
-		DCAM_BIN_BASE_WADDR3
-	},
-	{
-		DCAM_AEM_BASE_WADDR1,
-		DCAM_AEM_BASE_WADDR2,
-		DCAM_AEM_BASE_WADDR3
-	},
-	{
-		DCAM_HIST_BASE_WADDR1,
-		DCAM_HIST_BASE_WADDR2,
-		DCAM_HIST_BASE_WADDR3
-	}
-};
-
-int dcam_path_set_slowmotion_frame(struct dcam_pipe_dev *dev)
-{
-	struct dcam_path_desc *path = NULL;
-	struct camera_frame *frame = NULL;
-	struct timespec cur_ts;
-	const int _bin = 0;
-	int i = 0;
-
-	path = &dev->path[DCAM_PATH_BIN];
-	/* retrieve a frame */
-	frame = camera_dequeue(&path->out_buf_queue);
-	if (!frame) {
-		frame = camera_dequeue(&path->reserved_buf_queue);
-		pr_warn("DCAM%u bin path use reserved buffer\n", dev->idx);
-		if (!frame) {
-			pr_err("DCAM%u bin path no reserved memory\n",
-				dev->idx);
-			return -ENOMEM;
-		}
-	}
-
-	/* set timestamp */
-	ktime_get_ts(&cur_ts);
-	frame->sensor_time.tv_sec = cur_ts.tv_sec;
-	frame->sensor_time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
-	frame->fid = dev->frame_index;
-
-	/* set store address */
-	i = dev->frame_index % dev->slowmotion_count;
-	DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_bin][i - 1],
-		    frame->buf.iova[0]);
-
-	/* save this frame */
-	if (camera_enqueue(&path->result_queue, frame) < 0) {
-		pr_err("DCAM%u bin path result queue full\n", dev->idx);
-		return -EINVAL;
-	}
-	atomic_inc(&path->set_frm_cnt);
-
-	pr_info("DCAM%u bin path set frame: index=%u, count=%d\n",
-		dev->idx, frame->fid, atomic_read(&path->set_frm_cnt));
-
-	return 0;
-}
-
-int dcam_path_init_slowmotion_frame(struct dcam_pipe_dev *dev)
-{
-	struct camera_frame *frame = NULL, *frame2 = NULL;
-	struct dcam_path_desc *path = NULL;
-	struct timespec cur_ts;
-	const int _bin = 0, _aem = 1, _hist = 2;
-	int i = 1;
-
-	if (unlikely(dev->slowmotion_count < 2)) {
-		pr_warn("DCAM%u: not slow motion %u\n", dev->idx,
-			dev->slowmotion_count);
-		return -EINVAL;
-	}
-
-	/* bin path runs at full speed */
-	path = &dev->path[DCAM_PATH_BIN];
-	while (i < dev->slowmotion_count) {
-		frame = camera_dequeue(&path->out_buf_queue);
-		if (!frame) {
-			pr_warn("DCAM%u bin path use reserved buffer\n",
-				dev->idx);
-
-			frame = camera_dequeue(&path->reserved_buf_queue);
-			if (!frame) {
-				pr_err("DCAM%u bin path doesn't even own a reserved buffer\n",
-					dev->idx);
-				return -ENOMEM;
-			}
-
-			/* since we only have reserved buffer... */
-			while (i < dev->slowmotion_count) {
-				DCAM_REG_WR(dev->idx,
-					    s_slowmotion_waddr[_bin][i - 1],
-					    frame->buf.iova[0]);
-				if (camera_enqueue(&path->result_queue,
-						   frame) < 0) {
-					pr_err("DCAM%u bin path result queue full\n",
-						dev->idx);
-					return -EINVAL;
-				}
-				atomic_inc(&path->set_frm_cnt);
-			}
-
-			break;
-		}
-
-		ktime_get_ts(&cur_ts);
-		frame->sensor_time.tv_sec = cur_ts.tv_sec;
-		frame->sensor_time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
-		frame->fid = i;
-
-		/* set store address */
-		DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_bin][i - 1],
-			    frame->buf.iova[0]);
-		if (camera_enqueue(&path->result_queue, frame) < 0) {
-			pr_err("DCAM%u bin path result queue full\n", dev->idx);
-			return -EINVAL;
-		}
-		atomic_inc(&path->set_frm_cnt);
-
-		i++;
-	}
-
-	dev->frame_index = dev->slowmotion_count;
-
-	/* aem and hist path runs at normal speed tho */
-	path = &dev->path[DCAM_PATH_AEM];
-	frame = camera_dequeue(&path->reserved_buf_queue);
-	if (!frame) {
-		pr_err("DCAM%u aem path no reserved buffer\n", dev->idx);
-		return -ENOMEM;
-	}
-
-	path = &dev->path[DCAM_PATH_HIST];
-	frame2 = camera_dequeue(&path->reserved_buf_queue);
-	if (!frame) {
-		pr_err("DCAM%u hist path no reserved buffer\n", dev->idx);
-		return -ENOMEM;
-	}
-
-	i = 1;
-	while (i < dev->slowmotion_count) {
-		DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_aem][i - 1],
-			    frame->buf.iova[0]);
-		DCAM_REG_WR(dev->idx, s_slowmotion_waddr[_hist][i - 1],
-			    frame2->buf.iova[0]);
-		i++;
-	}
-
-	return 0;
-}
-
 /*
  * Set skip num for path @path_id so that we can update address accordingly in
  * CAP SOF interrupt.
@@ -776,30 +644,14 @@ int dcam_path_set_skip_num(struct dcam_pipe_dev *dev,
 	return 0;
 }
 
-int dcam_path_set_store_frm(void *dcam_handle,
-			    struct dcam_path_desc *path,
-			    struct dcam_sync_helper *helper)
+static inline struct camera_frame *
+dcam_path_cycle_frame(struct dcam_pipe_dev *dev, struct dcam_path_desc *path)
 {
-	int ret = 0;
-	uint32_t idx;
-	uint32_t path_id;
-	uint32_t lock = 0;
-	unsigned long flags = 0;
-	struct dcam_pipe_dev *dev = NULL;
-	struct camera_frame *frame;
-	unsigned long reg_addr;
+	struct camera_frame *frame = NULL;
 	struct timespec cur_ts;
 
-	pr_debug("enter. path %d\n", path->path_id);
-
-	if (!path || !dcam_handle) {
-		pr_err("error input ptr.\n");
-		return -EFAULT;
-	}
-
-	dev = (struct dcam_pipe_dev *)dcam_handle;
-	idx = dev->idx;
-	path_id = path->path_id;
+	if (unlikely(!dev || !path))
+		return ERR_PTR(-EINVAL);
 
 	frame = camera_dequeue(&path->out_buf_queue);
 	if (frame == NULL)
@@ -807,39 +659,89 @@ int dcam_path_set_store_frm(void *dcam_handle,
 
 	if (frame == NULL) {
 		pr_err("DCAM%u %s buffer unavailable\n",
-		       idx, to_path_name(path_id));
-		ret = -EINVAL;
-		goto no_buf;
+		       dev->idx, to_path_name(path->path_id));
+		return ERR_PTR(-ENOMEM);
 	}
 
-	/* TODO: consider using same time between paths here */
+	if (camera_enqueue(&path->result_queue, frame) < 0) {
+		if (frame->is_reserved)
+			camera_enqueue(&path->reserved_buf_queue, frame);
+		else
+			camera_enqueue(&path->out_buf_queue, frame);
+
+		pr_err("DCAM%u %s output queue overflow\n",
+		       dev->idx, to_path_name(path->path_id));
+		return ERR_PTR(-EPERM);
+	}
+
+	/* TODO: consider using same time for all paths here */
 	ktime_get_ts(&cur_ts);
 	frame->sensor_time.tv_sec = cur_ts.tv_sec;
 	frame->sensor_time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
-
 	frame->fid = dev->frame_index;
-	/* frame->fid = path->frm_cnt; */
-	ret = camera_enqueue(&path->result_queue, frame);
-	if (ret) {
-		pr_err("DCAM%u %s output queue overflow.\n",
-		       idx, to_path_name(path_id));
-		ret = -EINVAL;
-		goto overflow;
-	}
-
-	/*
-	 * Clear sync data first to make sure @sync_data is either valid or
-	 * NULL.
-	 */
 	frame->sync_data = NULL;
+
+	return frame;
+}
+
+int dcam_path_set_store_frm(void *dcam_handle,
+			    struct dcam_path_desc *path,
+			    struct dcam_sync_helper *helper)
+{
+	struct dcam_pipe_dev *dev = NULL;
+	struct camera_frame *frame = NULL;
+	uint32_t idx = 0, path_id = 0;
+	unsigned long flags = 0, addr = 0;
+	const int _bin = 0, _aem = 1, _hist = 2;
+	int i = 0;;
+
+	if (unlikely(!dcam_handle || !path))
+		return -EINVAL;
+
+	dev = (struct dcam_pipe_dev *)dcam_handle;
+	idx = dev->idx;
+	path_id = path->path_id;
+
+	pr_debug("DCAM%u %s enter\n", idx, to_path_name(path_id));
+
+	frame = dcam_path_cycle_frame(dev, path);
+	if (IS_ERR(frame))
+		return PTR_ERR(frame);
+
+	/* assign last buffer for AEM and HIST in slow motion */
+	i = dev->slowmotion_count - 1;
+
+	if (idx == 2) {
+		/* dcam2 path0 ~ full path */
+		addr = dcam2_store_addr[path_id];
+	} else if (dev->enable_slowmotion && path_id == DCAM_PATH_AEM) {
+		/* slow motion AEM */
+		addr = slowmotion_store_addr[_aem][i];
+	} else if (dev->enable_slowmotion && path_id == DCAM_PATH_HIST) {
+		/* slow motion HIST */
+		addr = slowmotion_store_addr[_hist][i];
+	} else {
+		/* normal scene */
+		addr = dcam_store_addr[path_id];
+	}
+	DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+	atomic_inc(&path->set_frm_cnt);
+
+	pr_debug("DCAM%u %s set frame: fid %u, count %d\n",
+		 idx, to_path_name(path_id), frame->fid,
+		 atomic_read(&path->set_frm_cnt));
+
+	pr_debug("DCAM%u %s reg %08x, addr %08x\n", idx, to_path_name(path_id),
+		 (uint32_t)addr, (uint32_t)frame->buf.iova[0]);
+
 	/* bind frame sync data if it is not reserved buffer */
-	if (!frame->is_reserved && is_sync_enabled(dev, path_id) && helper) {
+	if (helper && !frame->is_reserved && is_sync_enabled(dev, path_id)) {
 		helper->enabled |= BIT(path_id);
 		helper->sync.frames[path_id] = frame;
 		frame->sync_data = &helper->sync;
 	}
 
-	if ((path_id ==  DCAM_PATH_FULL) || (path_id ==  DCAM_PATH_BIN)) {
+	if ((path_id == DCAM_PATH_FULL) || (path_id == DCAM_PATH_BIN)) {
 		/* use trylock here to avoid waiting if cfg_path_size
 		 * is already lock
 		 * because this function maybe called from irq handling.
@@ -851,6 +753,16 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		 */
 		if (spin_trylock_irqsave(&path->size_lock, flags)) {
 			if (path->size_update) {
+				dcam_update_path_size(dev, path);
+				frame->param_data = path->priv_size_data;
+				path->size_update = 0;
+				path->priv_size_data = NULL;
+			}
+			spin_unlock_irqrestore(&path->size_lock, flags);
+		}
+#if 0
+		if (spin_trylock_irqsave(&path->size_lock, flags)) {
+			if (path->size_update) {
 				lock = 1;
 				dcam_update_path_size(dev, path);
 				frame->param_data = path->priv_size_data;
@@ -860,41 +772,69 @@ int dcam_path_set_store_frm(void *dcam_handle,
 				spin_unlock_irqrestore(&path->size_lock, flags);
 			}
 		}
+#endif
 	}
 
-	if (idx == 2) /* dcam2 path0 ~ full path */
-		reg_addr = dcam2_store_addr[path->path_id];
-	else
-		reg_addr = dcam_store_addr[path->path_id];
-	DCAM_REG_WR(idx, reg_addr, frame->buf.iova[0]);
-
-	if (lock)
-		spin_unlock_irqrestore(&path->size_lock, flags);
-
-	/* PDAF type3, when need write addr to DCAM_PPE_RIGHT_WADDR */
-	if ((path->path_id == DCAM_PATH_PDAF) && dev->is_pdaf &&
-		dev->pdaf_type == 3) {
-		reg_addr = DCAM_PPE_RIGHT_WADDR;
-		/* PDAF type3, half buffer for right PD, TBD */
-		DCAM_REG_WR(idx, reg_addr, frame->buf.iova[0] +
-			STATIS_PDAF_BUF_SIZE / 2);
+	if (dev->is_pdaf && dev->pdaf_type == 3 && path_id == DCAM_PATH_PDAF) {
+		/*
+		 * PDAF type3, when need write addr to DCAM_PPE_RIGHT_WADDR
+		 * PDAF type3, half buffer for right PD, TBD
+		 */
+		DCAM_REG_WR(idx, DCAM_PPE_RIGHT_WADDR,
+			    frame->buf.iova[0] + STATIS_PDAF_BUF_SIZE / 2);
 	}
-	pr_debug("done. reg %08x,  addr %08x\n",
-			(uint32_t)reg_addr, (uint32_t)frame->buf.iova[0]);
 
-	atomic_inc(&path->set_frm_cnt);
-	pr_debug("DCAM%u %s set frame: index=%u, count=%d\n",
-		 dev->idx, to_path_name(path_id), frame->fid,
-		 atomic_read(&path->set_frm_cnt));
+	if (dev->enable_slowmotion && !dev->frame_index &&
+	    (path_id == DCAM_PATH_AEM || path_id == DCAM_PATH_HIST)) {
+		/* configure reserved buffer for AEM and hist */
+		frame = camera_dequeue(&path->reserved_buf_queue);
+		if (!frame) {
+			pr_err("DCAM%u %s buffer unavailable\n",
+			       idx, to_path_name(path_id));
+			return -ENOMEM;
+		}
+
+		i = 0;
+		while (i < dev->slowmotion_count - 1) {
+			if (path_id == DCAM_PATH_AEM)
+				addr = slowmotion_store_addr[_aem][i];
+			else
+				addr = slowmotion_store_addr[_hist][i];
+			DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+			i++;
+		}
+
+		/* put it back */
+		camera_enqueue(&path->reserved_buf_queue, frame);
+	} else if (dev->enable_slowmotion && path_id == DCAM_PATH_BIN) {
+		i = 1;
+		while (i < dev->slowmotion_count) {
+			frame = dcam_path_cycle_frame(dev, path);
+			/* in init phase, return failure if error happens */
+			if (IS_ERR(frame) && !dev->frame_index)
+				return PTR_ERR(frame);
+
+			/* in normal running, just stop configure */
+			if (IS_ERR(frame))
+				break;
+
+			addr = slowmotion_store_addr[_bin][i];
+			DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+			atomic_inc(&path->set_frm_cnt);
+
+			frame->fid = dev->frame_index + i;
+
+			pr_debug("DCAM%u BIN set frame: fid %u, count %d\n",
+				 idx, frame->fid,
+				 atomic_read(&path->set_frm_cnt));
+			i++;
+		}
+
+		if (unlikely(i != dev->slowmotion_count))
+			pr_warn("DCAM%u BIN %d frame missed\n",
+				idx, dev->slowmotion_count - i);
+	}
 
 	return 0;
-
-overflow:
-	if (frame->is_reserved)
-		camera_enqueue(&path->reserved_buf_queue, frame);
-	else
-		camera_enqueue(&path->out_buf_queue, frame);
-no_buf:
-	return ret;
 }
 

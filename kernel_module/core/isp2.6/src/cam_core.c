@@ -128,7 +128,11 @@ struct camera_group;
 struct camera_uchannel {
 	uint32_t sn_fmt;
 	uint32_t dst_fmt;
-	uint32_t slowmotion;
+
+	uint32_t deci_factor;/* for ISP output path */
+	uint32_t is_high_fps;/* for DCAM slow motion feature */
+	uint32_t high_fps_skip_num;/* for DCAM slow motion feature */
+
 	struct sprd_img_size src_size;
 	struct sprd_img_rect src_crop;
 	struct sprd_img_size dst_size;
@@ -355,14 +359,10 @@ static void alloc_buffers(struct work_struct *work)
 	if (module->dump_thrd.thread_task)
 		total += 3;
 
-	/* TODO: slow motion workaround */
-	if (module->cam_uinfo.sn_rect.w == 1280
-	    && module->cam_uinfo.sn_rect.h == 720) {
-		total += 5;
-	}
-
-	if (channel->ch_uinfo.slowmotion)
+	/* extend buffer queue for slow motion */
+	if (channel->ch_uinfo.is_high_fps)
 		total = CAM_SHARED_BUF_NUM;
+
 	for (i = 0, count = 0; i < total; i++) {
 		do {
 			pframe = get_empty_frame();
@@ -1611,9 +1611,14 @@ static int init_cam_channel(
 		memset(&ch_desc, 0, sizeof(ch_desc));
 		ch_desc.is_loose =
 			module->cam_uinfo.sensor_if.if_spec.mipi.is_loose;
-		/* set slow motion count to 4 */
-		ch_desc.enable_slowmotion = ch_uinfo->slowmotion;
-		ch_desc.slowmotion_count = 4;
+		/*
+		 * Configure slow motion for BIN path. HAL must set @is_high_fps
+		 * and @high_fps_skip_num for both preview channel and video
+		 * channel so BIN path can enable slow motion feature correctly.
+		 */
+		ch_desc.enable_slowmotion = ch_uinfo->is_high_fps;
+		ch_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
+
 		ch_desc.endian.y_endian = ENDIAN_LITTLE;
 		ch_desc.enable_3dnr = module->cam_uinfo.is_3dnr;
 		if (channel->ch_id == CAM_CH_RAW)
@@ -2388,7 +2393,8 @@ static int img_ioctl_set_output_size(
 	dst = &channel->ch_uinfo;
 	ret |= get_user(dst->sn_fmt, &uparam->sn_fmt);
 	ret |= get_user(dst->dst_fmt, &uparam->pixel_fmt);
-	ret |= get_user(dst->slowmotion, &uparam->slowmotion);
+	ret |= get_user(dst->is_high_fps, &uparam->is_high_fps);
+	ret |= get_user(dst->high_fps_skip_num, &uparam->high_fps_skip_num);
 	ret |= copy_from_user(&dst->src_crop,
 			&uparam->crop_rect, sizeof(struct sprd_img_rect));
 	ret |= copy_from_user(&dst->dst_size,
@@ -2400,8 +2406,9 @@ static int img_ioctl_set_output_size(
 	ret |= copy_from_user(&dst->slave_img_size,
 			&uparam->aux_img.dst_size, sizeof(struct sprd_img_size));
 #endif
-	pr_info("fmt %x %x. slw %d crop %d %d %d %d.  dst size %d %d\n",
-		dst->sn_fmt, dst->dst_fmt, dst->slowmotion,
+	pr_info("fmt %x %x. high fps %u %u. crop %d %d %d %d. dst size %d %d\n",
+		dst->sn_fmt, dst->dst_fmt,
+		dst->is_high_fps, dst->high_fps_skip_num,
 		dst->src_crop.x, dst->src_crop.y,
 		dst->src_crop.w, dst->src_crop.h,
 		dst->dst_size.w, dst->dst_size.h);
@@ -2803,6 +2810,72 @@ static int img_ioctl_set_frame_addr(
 			break;
 		}
 	}
+
+	return ret;
+}
+
+/*
+ * SPRD_IMG_IO_PATH_FRM_DECI
+ *
+ * Set frame deci factor for each channel, which controls the number of dropped
+ * frames in ISP output path. It's typically used in slow motion scene. There're
+ * two situations in slow motion: preview and recording. HAL will set related
+ * parameters according to the table below:
+ *
+ * ===================================================================================
+ * |     scene     |  channel  |  is_high_fps  |  high_fps_skip_num  |  deci_factor  |
+ * |---------------|-----------|---------------|---------------------|---------------|
+ * |    normal     |  preview  |       0       |          0          |       0       |
+ * |    preview    |           |               |                     |               |
+ * |---------------|-----------|---------------|---------------------|---------------|
+ * |  slow motion  |  preview  |       1       |          4          |       3       |
+ * |    preview    |           |               |                     |               |
+ * |---------------|-----------|---------------|---------------------|---------------|
+ * |               |  preview  |       1       |          4          |       3       |
+ * |  slow motion  |           |               |                     |               |
+ * |   recording   |-----------|---------------|---------------------|---------------|
+ * |               |   video   |       1       |          4          |       0       |
+ * |               |           |               |                     |               |
+ * ===================================================================================
+ *
+ * Here, is_high_fps means sensor is running at a high frame rate, thus DCAM
+ * slow motion function should be enabled. And deci_factor controls how many
+ * frames will be dropped by ISP path before DONE interrupt generated. The
+ * high_fps_skip_num is responsible for keeping SOF interrupt running at 30
+ * frame rate.
+ */
+static int img_ioctl_set_frm_deci(struct camera_module *module,
+				  unsigned long arg)
+{
+	struct sprd_img_parm __user *uparam = NULL;
+	struct channel_context *ch = NULL;
+	uint32_t deci_factor = 0, channel_id = 0;
+	int ret = 0;
+
+	if (unlikely(!module))
+		return -EINVAL;
+
+	if ((atomic_read(&module->state) != CAM_CFG_CH)) {
+		pr_err("error: only for state CFG_CH\n");
+		return -EPERM;
+	}
+
+	uparam = (struct sprd_img_parm __user *)arg;
+	ret |= get_user(channel_id, &uparam->channel_id);
+	ret |= get_user(deci_factor, &uparam->deci);
+	if (ret) {
+		pr_err("fail to get from user. ret %d\n", ret);
+		return -EFAULT;
+	}
+
+	if ((channel_id >= CAM_CH_MAX) ||
+	    (module->channel[channel_id].enable == 0)) {
+		pr_err("error: invalid channel id %d\n", channel_id);
+		return -EPERM;
+	}
+
+	ch = &module->channel[channel_id];
+	ch->ch_uinfo.deci_factor = deci_factor;
 
 	return ret;
 }
@@ -4359,7 +4432,7 @@ static struct cam_ioctl_cmd ioctl_cmds_table[66] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_ZOOM_MODE)]	= {SPRD_IMG_IO_SET_ZOOM_MODE,	img_ioctl_set_zoom_mode},
 	[_IOC_NR(SPRD_IMG_IO_SET_SENSOR_IF)]	= {SPRD_IMG_IO_SET_SENSOR_IF,	img_ioctl_set_sensor_if},
 	[_IOC_NR(SPRD_IMG_IO_SET_FRAME_ADDR)]	= {SPRD_IMG_IO_SET_FRAME_ADDR,	img_ioctl_set_frame_addr},
-	[_IOC_NR(SPRD_IMG_IO_PATH_FRM_DECI)]	= {SPRD_IMG_IO_PATH_FRM_DECI,	NULL},
+	[_IOC_NR(SPRD_IMG_IO_PATH_FRM_DECI)]	= {SPRD_IMG_IO_PATH_FRM_DECI,	img_ioctl_set_frm_deci},
 /*	[_IOC_NR(SPRD_IMG_IO_PATH_PAUSE)]	= {SPRD_IMG_IO_PATH_PAUSE,	NULL},*/
 	[_IOC_NR(SPRD_IMG_IO_PATH_RESUME)]	= {SPRD_IMG_IO_PATH_RESUME,	NULL},
 	[_IOC_NR(SPRD_IMG_IO_STREAM_ON)]	= {SPRD_IMG_IO_STREAM_ON,	img_ioctl_stream_on},

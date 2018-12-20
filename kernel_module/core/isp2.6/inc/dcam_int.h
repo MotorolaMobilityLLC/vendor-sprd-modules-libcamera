@@ -148,11 +148,23 @@ enum {
 
 /*
  * all currently useful bits on irq line
- * TODO: dynamically set this mask
  */
 #define DCAMINT_IRQ_LINE_MASK \
 	(DCAMINT_ALL_ERROR | DCAMINT_ALL_TX_DONE |\
-	 BIT(DCAM_CAP_SOF) | BIT(DCAM_SENSOR_EOF))
+	 BIT(DCAM_CAP_SOF) |\
+	 BIT(DCAM_SENSOR_EOF) |\
+	 BIT(DCAM_PREVIEW_SOF))
+
+/* enabled interrupt source in normal scene */
+#define DCAMINT_IRQ_LINE_EN_NORMAL \
+	(DCAMINT_ALL_ERROR | DCAMINT_ALL_TX_DONE |\
+	 BIT(DCAM_CAP_SOF) |\
+	 BIT(DCAM_SENSOR_EOF))
+
+/* enabled interrupt source in slow motion scene */
+#define DCAMINT_IRQ_LINE_EN_SLM \
+	(DCAMINT_ALL_ERROR | DCAMINT_ALL_TX_DONE |\
+	 BIT(DCAM_PREVIEW_SOF))
 
 int dcam_irq_request(struct device *pdev, int irq, void *param);
 void dcam_irq_free(struct device *pdev, void *param);

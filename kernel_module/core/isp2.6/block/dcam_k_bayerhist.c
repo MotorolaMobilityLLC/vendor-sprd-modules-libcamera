@@ -17,6 +17,7 @@
 
 #include "dcam_reg.h"
 #include "dcam_interface.h"
+#include "dcam_core.h"
 #include "cam_types.h"
 #include "cam_block.h"
 
@@ -33,6 +34,7 @@ enum {
 
 int dcam_k_bayerhist_block(struct dcam_dev_param *param)
 {
+	struct dcam_pipe_dev *dev;
 	int ret = 0;
 	uint32_t idx = param->idx;
 	struct dcam_dev_hist_info *p;
@@ -51,6 +53,17 @@ int dcam_k_bayerhist_block(struct dcam_dev_param *param)
 	DCAM_REG_MWR(idx, DCAM_HIST_FRM_CTRL0, BIT_0, p->hist_bypass);
 	if (p->hist_bypass)
 		return 0;
+
+	/*
+	 * use hardware slow motion feature
+	 * TODO: handle skip_num not equal to slowmotion_count - 1
+	 */
+	dev = param->dev;
+	if (p->hist_skip_num > 0 && dev->enable_slowmotion) {
+		pr_info("DCAM%u HIST ignore skip_num %u, slowmotion_count %u\n",
+			dev->idx, p->hist_skip_num, dev->slowmotion_count);
+		p->hist_skip_num = 0;
+	}
 
 	DCAM_REG_MWR(idx, DCAM_HIST_FRM_CTRL0, 0xfc,
 			((p->hist_skip_num & 0xf) << 4) |

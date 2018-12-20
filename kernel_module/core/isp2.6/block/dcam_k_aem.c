@@ -17,6 +17,7 @@
 
 #include "dcam_reg.h"
 #include "dcam_interface.h"
+#include "dcam_core.h"
 #include "dcam_path.h"
 #include "cam_types.h"
 #include "cam_block.h"
@@ -116,6 +117,7 @@ int dcam_k_aem_win(struct dcam_dev_param *param)
 
 int dcam_k_aem_skip_num(struct dcam_dev_param *param)
 {
+	struct dcam_pipe_dev *dev;
 	int ret = 0;
 	uint32_t idx = param->idx;
 	uint32_t val = 0;
@@ -126,6 +128,17 @@ int dcam_k_aem_skip_num(struct dcam_dev_param *param)
 	if (!(param->aem.update & _UPDATE_SKIP))
 		return 0;
 	param->aem.update &= (~(_UPDATE_SKIP));
+
+	/*
+	 * use hardware slow motion feature
+	 * TODO: handle skip_num not equal to slowmotion_count - 1
+	 */
+	dev = param->dev;
+	if (dev->enable_slowmotion) {
+		pr_info("DCAM%u AEM ignore skip_num %u, slowmotion_count %u\n",
+			dev->idx, param->aem.skip_num, dev->slowmotion_count);
+		return 0;
+	}
 
 	val = (param->aem.skip_num & 0xF) << 4;
 	DCAM_REG_MWR(idx, DCAM_AEM_FRM_CTRL0, 0xF0, val);
