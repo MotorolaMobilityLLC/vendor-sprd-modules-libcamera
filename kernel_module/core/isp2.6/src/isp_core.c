@@ -2211,7 +2211,7 @@ static struct isp_cfg_entry cfg_func_tab[ISP_BLOCK_TOTAL - ISP_BLOCK_BASE] = {
 
 [ISP_BLOCK_CMC - ISP_BLOCK_BASE]	= {ISP_BLOCK_CMC, isp_k_cfg_cmc10},
 [ISP_BLOCK_EDGE - ISP_BLOCK_BASE]	= {ISP_BLOCK_EDGE, isp_k_cfg_edge},
-/*[ISP_BLOCK_GAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_GAMMA, isp_k_cfg_gamma},*/
+[ISP_BLOCK_GAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_GAMMA, isp_k_cfg_gamma},
 [ISP_BLOCK_GRGB - ISP_BLOCK_BASE]	= {ISP_BLOCK_GRGB, isp_k_cfg_grgb},
 [ISP_BLOCK_HIST2 - ISP_BLOCK_BASE]	= {ISP_BLOCK_HIST2, isp_k_cfg_hist2},
 [ISP_BLOCK_HSV - ISP_BLOCK_BASE]	= {ISP_BLOCK_HSV, isp_k_cfg_hsv},
@@ -2221,7 +2221,7 @@ static struct isp_cfg_entry cfg_func_tab[ISP_BLOCK_TOTAL - ISP_BLOCK_BASE] = {
 [ISP_BLOCK_PRE_CDN - ISP_BLOCK_BASE]	= {ISP_BLOCK_PRE_CDN, isp_k_cfg_pre_cdn},
 /*[ISP_BLOCK_PSTRZ - ISP_BLOCK_BASE]	= {ISP_BLOCK_PSTRZ, isp_k_cfg_pstrz},*/
 [ISP_BLOCK_UVD - ISP_BLOCK_BASE]	= {ISP_BLOCK_UVD, isp_k_cfg_uvd},
-/*[ISP_BLOCK_YGAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_YGAMMA, isp_k_cfg_ygamma},*/
+[ISP_BLOCK_YGAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_YGAMMA, isp_k_cfg_ygamma},
 [ISP_BLOCK_YRANDOM - ISP_BLOCK_BASE]	= {ISP_BLOCK_YRANDOM, isp_k_cfg_yrandom},
 [ISP_BLOCK_NOISEFILTER - ISP_BLOCK_BASE] = {ISP_BLOCK_NOISEFILTER, isp_k_cfg_yuv_noisefilter},
 };
@@ -2252,10 +2252,6 @@ static int sprd_isp_cfg_blkparam(
 		pr_err("isp ctx %d not enable.\n", ctx_id);
 		return -EINVAL;
 	}
-
-	/* todo: enable block config one by one */
-	/* because parameters from user may be illegal when bringup*/
-	/* temp disable during bringup */
 
 	if (io_param->sub_block == ISP_BLOCK_NLM)
 		ret = isp_k_cfg_nlm(param, &pctx->isp_k_param, ctx_id);
