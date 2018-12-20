@@ -464,7 +464,7 @@ static cmr_int ov12a10_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov12a10_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov12a10_pd_pos_l;
-    pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
+    pdaf_info->vendor_type = SENSOR_VENDOR_OV12A10;
 
 #if 0//def CONFIG_DUAL_MODULE
     pdaf_info->sns_orientation = 1; /*mirror+flip*/

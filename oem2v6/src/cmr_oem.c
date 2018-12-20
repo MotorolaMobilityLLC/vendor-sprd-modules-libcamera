@@ -6007,7 +6007,13 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
                  cxt->prev_cxt.rect.start_y, cxt->prev_cxt.rect.width,
                  cxt->prev_cxt.rect.height);
     }
-
+#ifdef CONFIG_CAMERA_DCAM_PDAF
+    if (sensor_info.source_width_max == sensor_mode_info->width) {
+        param_ptr->cap_inf_cfg.cfg.pdaf_ctrl.mode =
+            sn_cxt->cur_sns_ex_info.pdaf_supported;
+    } else
+        param_ptr->cap_inf_cfg.cfg.pdaf_ctrl.mode = 0;
+#endif
     param_ptr->cap_inf_cfg.sensor_id = camera_id;
 
     if (camera_get_3dnr_flag(cxt) == 1) {

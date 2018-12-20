@@ -628,7 +628,11 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.need_isp_tool = config->cfg.need_isp_tool;
     parm.need_isp = config->cfg.need_isp;
     parm.regular_desc = config->cfg.regular_desc;
+#ifdef CONFIG_CAMERA_DCAM_PDAF
+    parm.rt_refocus = 0;
+#else
     parm.rt_refocus = config->cfg.pdaf_ctrl.mode;
+#endif
     parm.slowmotion = config->cfg.slowmotion;
     parm.is_high_fps = config->cfg.is_high_fps;
     parm.high_fps_skip_num = config->cfg.high_fps_skip_num;
