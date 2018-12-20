@@ -1655,7 +1655,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-
+    uint32_t dualPropSupport = 0;
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
@@ -1672,11 +1672,21 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         }
     }
 
-    ALOGV("available_cam_features=%d", available_cam_features.size());
+    property_get("persist.vendor.cam.wt.enable", prop, "0");
+    if (!dualPropSupport) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
+    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
+        available_cam_features.size();
+
+    HAL_LOGI("available_cam_features = %d",
+          s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
     return ret;
 }
@@ -2026,9 +2036,13 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
                       &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);
-    FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
-                        0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
-                        ANDROID_SPRD_CAM_FEATURE_LIST)
+    //FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+    //                  0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
+    //                  ANDROID_SPRD_CAM_FEATURE_LIST)
+    staticInfo.update(
+        ANDROID_SPRD_CAM_FEATURE_LIST,
+        s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+        s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
