@@ -2836,6 +2836,7 @@ void SprdCamera3RealBokeh::saveRequest(camera3_capture_request_t *request) {
  *==========================================================================*/
 int SprdCamera3RealBokeh::processCaptureRequest(
     const struct camera3_device *device, camera3_capture_request_t *request) {
+    Mutex::Autolock l(mFlushLock);
     int rc = 0;
     uint32_t i = 0;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
@@ -3948,6 +3949,7 @@ void SprdCamera3RealBokeh::preClose(void) {
 int SprdCamera3RealBokeh::_flush(const struct camera3_device *device) {
     int rc = 0;
     HAL_LOGI("E");
+    Mutex::Autolock l(mFlushLock);
     mFlushing = true;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
