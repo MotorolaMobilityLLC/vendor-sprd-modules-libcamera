@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _SPRD_PDAF_ADPT_H
 #define _SPRD_PDAF_ADPT_H
 
@@ -28,17 +29,34 @@
 #define BEGIN_Y_1 32
 #define BEGIN_X_2 24
 #define BEGIN_Y_2 24
+#define BEGIN_X_3 24
+#define BEGIN_Y_3 24
+#define BEGIN_X_4 24
+#define BEGIN_Y_4 24
+#define BEGIN_X_5 0
+#define BEGIN_Y_5 0
 #define ROI_X_0 1048
 #define ROI_Y_0 792
 #define ROI_X_1 1088
 #define ROI_Y_1 800
 #define ROI_X_2 1048
 #define ROI_Y_2 792
+#define ROI_X_3 1048
+#define ROI_Y_3 792
+#define ROI_X_4 1048
+#define ROI_Y_4 792
+#define ROI_X_5 1024
+#define ROI_Y_5 768
+
 #define ROI_Width 2048
 #define ROI_Height 1536
-#define SENSOR_ID_0 0
-#define SENSOR_ID_1 1
-#define SENSOR_ID_2 2
+#define SENSOR_ID_0 0 //IMX258 Type3
+#define SENSOR_ID_1 1 //OV13855
+#define SENSOR_ID_2 2 //3L8
+#define SENSOR_ID_3 3 //IMX258 Type2
+#define SENSOR_ID_4 4 //IMX362 Dual PD
+#define SENSOR_ID_5 5 //OV12A10
+
 #define SENSOR_ID_2_BLOCK_W 64
 #define SENSOR_ID_2_BLOCK_H 64
 #define PD_REG_OUT_SIZE	352
