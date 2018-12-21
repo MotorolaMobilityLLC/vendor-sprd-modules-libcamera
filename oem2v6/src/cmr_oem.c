@@ -3002,6 +3002,12 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     } else {
         isp_param.multi_mode = ISP_SINGLE;
     }
+
+    if(cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK||
+        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK){
+        isp_param.is_faceId_unlock = 1;
+    }
+
     // need modify,initialized by app,Similar to multi_mode
     if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
@@ -3027,7 +3033,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
         "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
         "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
-        "is_4in1_sensor=%d",
+        "is_4in1_sensor=%d, is_faceId_unlock=%d",
         isp_param.multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
@@ -3035,7 +3041,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.ex_info.clamp_level, isp_param.ex_info.adgain_valid_frame_num,
         isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
         isp_param.size.w, isp_param.size.h, isp_param.image_pattern,
-        sensor_info_ptr->image_pattern, isp_param.is_4in1_sensor);
+        sensor_info_ptr->image_pattern, isp_param.is_4in1_sensor,
+        isp_param.is_faceId_unlock);
 
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
     if (ret) {

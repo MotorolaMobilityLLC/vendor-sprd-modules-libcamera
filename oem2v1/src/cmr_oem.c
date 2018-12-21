@@ -3615,6 +3615,11 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.multi_mode = ISP_SINGLE;
     }
 
+    if(cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK||
+        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK){
+        isp_param.is_faceId_unlock = 1;
+    }
+
     if (cxt->camera_id == cxt->master_id)
         isp_param.is_master = 1;
     CMR_LOGI("multi_mode = %d, isp mode %d", cxt->is_multi_mode,
@@ -3646,7 +3651,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         "isp_param.is_pfc_supported =%d, "
 #endif
         "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
-        "is_4in1_sensor=%d",
+        "is_4in1_sensor=%d, is_faceId_unlock=%d",
         isp_param.multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
@@ -3658,7 +3663,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.is_pfc_supported,
 #endif
         sensor_info_ptr->image_pattern, isp_param.image_pattern,
-        isp_param.is_4in1_sensor);
+        isp_param.is_4in1_sensor, isp_param.is_faceId_unlock);
 
     CMR_PRINT_TIME;
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
