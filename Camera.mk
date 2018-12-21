@@ -111,7 +111,7 @@ LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3Multi.cpp
 ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
-    hal_common/multiCamera/SprdCamera3OpticsZoom.cpp
+    hal_common/multiCamera/SprdCamera3OpticsZoomV1.cpp
 endif
 ifeq ($(strip $(TARGET_BOARD_3DFACE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
@@ -178,6 +178,9 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/sprd_yuvprocess/inc\
     $(LOCAL_PATH)/arithmetic/sprd_scale/inc\
     $(LOCAL_PATH)/arithmetic/sprd_warp/inc
+
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/arithmetic/OpticsZoom/inc
 
 LOCAL_SRC_FILES += \
       arithmetic/sprd_yuvprocess/src/hal_yuvprocess.c

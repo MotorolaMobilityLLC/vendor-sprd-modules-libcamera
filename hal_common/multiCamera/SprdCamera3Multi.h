@@ -115,7 +115,7 @@ class SprdCamera3Multi : public SprdCamera3MultiBase {
 
     // provide interface for inherited class
     virtual config_multi_camera *load_config_file(void);
-    virtual void reConfigGetCameraInfo(CameraMetadata& metadata );
+    virtual void reConfigGetCameraInfo(CameraMetadata &metadata);
     virtual void reReqConfig(camera3_capture_request_t *request,
                              CameraMetadata *meta) = 0;
     virtual void reConfigStream();
@@ -152,6 +152,7 @@ class SprdCamera3Multi : public SprdCamera3MultiBase {
     int findMNIndex(uint32_t frame_number);
     int reprocessReq(buffer_handle_t *input_buffers);
     void sendWaitFrameSingle();
+    bool isFWBuffer(buffer_handle_t *MatchBuffer);
 
   public:
     multiCameraMode mMultiMode;
@@ -167,6 +168,9 @@ class SprdCamera3Multi : public SprdCamera3MultiBase {
     Mutex mMultiLock;
     Mutex mMetatLock;
     Mutex mWaitFrameLock;
+    Mutex mDefaultStreamLock;
+    Mutex mNotifyLockMain;
+    Mutex mNotifyLockAux;
     int64_t mWaitFrameNum;
     int64_t mSendFrameNum;
     Condition mWaitFrameSignal;
@@ -196,6 +200,7 @@ class SprdCamera3Multi : public SprdCamera3MultiBase {
     int mReqConfigNum;
     // select metadata and notify owner
     int mMetaNotifyIndex;
+    bool mIsCapturing;
 };
 };
 

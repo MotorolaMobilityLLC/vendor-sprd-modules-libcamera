@@ -29,7 +29,9 @@
 #define LOG_TAG "Cam3Multi"
 //#define LOG_NDEBUG 0
 #include "SprdCamera3Multi.h"
-
+#if (MINICAMERA != 1)
+#include <ui/Fence.h>
+#endif
 using namespace android;
 namespace sprdcamera {
 SprdCamera3Multi *mMultiBase = NULL;
@@ -99,6 +101,7 @@ camera3_callback_ops SprdCamera3Multi::callback_ops_multi[] = {
 };
 SprdCamera3Multi::SprdCamera3Multi() {
     m_nPhyCameras = 2;
+    mIsCapturing = false;
     bzero(&m_VirtualCamera, sizeof(sprd_virtual_camera_t));
     mMultiMode = MODE_SINGLE_CAMERA;
     mStaticMetadata = NULL;
@@ -881,7 +884,7 @@ void SprdCamera3Multi::saveRequest(
                    sizeof(camera3_stream_buffer_t));
             memcpy(&mSavedSnapRequest, &currRequest,
                    sizeof(multi_request_saved_t));
-            mSavedCapReqsettings = clone_camera_metadata(request->settings);
+            // mSavedCapReqsettings = clone_camera_metadata(request->settings);
         } else if (getStreamType(newStream) == VIDEO_STREAM) { // video
             currRequest.callback_stream = request->output_buffers[i].stream;
             HAL_LOGV("save video request:id %d,to list ",
@@ -904,7 +907,8 @@ void SprdCamera3Multi::saveRequest(
 int SprdCamera3Multi::createOutputBufferStream(
     camera3_stream_buffer_t *outputBuffer, int req_stream_mask,
     const sprdcamera_physical_descriptor_t *camera_phy_info,
-    camera3_stream_buffer_t fw_buffer[MAX_MULTI_NUM_STREAMS + 1], int *buffer_num) {
+    camera3_stream_buffer_t fw_buffer[MAX_MULTI_NUM_STREAMS + 1],
+    int *buffer_num) {
     int ret = 0;
     int stream_type = 0;
     int i = 0;
@@ -1066,20 +1070,19 @@ int SprdCamera3Multi::reprocessReq(buffer_handle_t *input_buffers) {
         ret = UNKNOWN_ERROR;
         goto exit;
     }
-
     snap_stream = findStream(
         SNAPSHOT_STREAM, (sprdcamera_physical_descriptor_t *)&m_pPhyCamera[0]);
     capture_w = snap_stream->width;
     capture_h = snap_stream->height;
-    HAL_LOGI("capture frame num %d, size %dx%d", mCapFrameNum, capture_w,
-             capture_h);
+    HAL_LOGI("capture frame num %lld, size w=%d x h=%d", mCapFrameNum,
+             capture_w, capture_h);
 
-    input_buffer.stream = mSavedSnapRequest.snap_stream;
+    input_buffer.stream = snap_stream;
     input_buffer.status = CAMERA3_BUFFER_STATUS_OK;
     input_buffer.acquire_fence = -1;
     input_buffer.release_fence = -1;
 
-    output_buffer.stream = mSavedSnapRequest.snap_stream;
+    output_buffer.stream = snap_stream;
     output_buffer.status = CAMERA3_BUFFER_STATUS_OK;
     output_buffer.acquire_fence = -1;
     output_buffer.release_fence = -1;
@@ -1272,8 +1275,6 @@ int SprdCamera3Multi::processCaptureRequest(
 
             HAL_LOGD("jpeg ->start,id=%lld", mCurFrameNum);
             mRequstState = WAIT_JPEG_STATE;
-        } else {
-            mRequstState = PREVIEW_REQUEST_STATE;
         }
     }
 
@@ -1299,7 +1300,21 @@ int SprdCamera3Multi::processCaptureRequest(
         HAL_LOGV("wait first frame sync. succeed.");
     }
     mMetaNotifyIndex = cameraMNIndex;
+#ifndef MINICAMERA
+    int ret;
+    for (size_t i = 0; i < request->num_output_buffers; i++) {
+        const camera3_stream_buffer_t &output = request->output_buffers[i];
+        sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
+        ret = acquireFence->wait(Fence::TIMEOUT_NEVER);
+        if (ret) {
+            HAL_LOGE("fence wait failed %d", ret);
+            goto req_fail;
+        }
+
+        acquireFence = NULL;
+    }
+#endif
     // 4. DO request.
     for (int i = 0; i < m_nPhyCameras; i++) {
         SprdCamera3HWI *hwi = m_pPhyCamera[i].hwi;
@@ -1338,7 +1353,20 @@ int SprdCamera3Multi::processCaptureRequest(
         tempReq->num_output_buffers = buffer_num;
         tempReq->settings = metaSettings[i].release();
         tempReq->output_buffers = tempOutBuffer;
-
+        if (getStreamType(tempOutBuffer->stream) == DEFAULT_STREAM && i == 0) {
+            HAL_LOGD("save main camera meta setting");
+            mSavedCapReqsettings = clone_camera_metadata(tempReq->settings);
+        }
+        if (mIsCapturing) {
+            if (mRequstState == WAIT_FIRST_YUV_STATE) {
+                struct timespec t1;
+                clock_gettime(CLOCK_BOOTTIME, &t1);
+                uint64_t currentmainTimestamp =
+                    (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
+                hwi->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
+                                   &currentmainTimestamp, NULL);
+            }
+        }
         rc = hwi->process_capture_request(m_pPhyCamera[i].dev, tempReq);
         if (rc < 0) {
             HAL_LOGE("failed to process_capture_request, idx:%d,index=%d",
@@ -1798,7 +1826,6 @@ void SprdCamera3Multi::_dump(const struct camera3_device *device, int fd) {
  *==========================================================================*/
 int SprdCamera3Multi::flush(const struct camera3_device *device) {
     int rc = 0;
-
     HAL_LOGV(" E");
     CHECK_BASE_ERROR();
     mMultiBase->mFlushing = true;
@@ -1825,8 +1852,6 @@ int SprdCamera3Multi::_flush(const struct camera3_device *device) {
 
     int rc = 0;
 
-    reConfigFlush();
-
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
         sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[i];
         SprdCamera3HWI *hwi = sprdCam.hwi;
@@ -1836,6 +1861,7 @@ int SprdCamera3Multi::_flush(const struct camera3_device *device) {
             return -1;
         }
     }
+    reConfigFlush();
 
     HAL_LOGI("X");
     return NO_ERROR;
@@ -1900,7 +1926,6 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
     camera3_stream_buffer_t result_buffers;
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
-
     List<multi_request_saved_t> *mSavedRequestList = NULL;
     if (stream_type == CALLBACK_STREAM) {
         mSavedRequestList = &mSavedPrevRequestList;
@@ -1915,7 +1940,6 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
         itor = mSavedRequestList->begin();
         while (itor != mSavedRequestList->end()) {
             if (itor->frame_number == frame_number) {
-                HAL_LOGV("erase frame_number %u", frame_number);
                 if (camera_index != itor->metaNotifyIndex) {
                     return;
                 }
@@ -1935,7 +1959,9 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
         result_buffers.buffer = mSavedSnapRequest.buffer;
     }
 
-    HAL_LOGV("send frame %u:,status.%d", frame_number, buffer_status);
+    HAL_LOGV(
+        "send frame %u:,status.%d, result_buffers.buffer %p, camera_index %d",
+        frame_number, buffer_status, &result_buffers.buffer, camera_index);
     CallBackMetadata();
 
     result_buffers.status = buffer_status;
@@ -2188,5 +2214,31 @@ SprdCamera3Multi::reConfigResultMeta(camera_metadata_t *meta) {
 config_multi_camera *SprdCamera3Multi::load_config_file(void) {
     HAL_LOGD("load_config_file ");
     return &multi_camera_physical_config;
+}
+/*===========================================================================
+ * FUNCTION   :isFWBuffer
+ *
+ * DESCRIPTION:  verify FW Buffer
+ *
+ * PARAMETERS :
+ *
+ * RETURN	  :
+ *==========================================================================*/
+bool SprdCamera3Multi::isFWBuffer(buffer_handle_t *MatchBuffer) {
+    Mutex::Autolock l(mRequestLock);
+    List<multi_request_saved_t>::iterator itor;
+    if (mSavedPrevRequestList.empty()) {
+        HAL_LOGE("mSavedPrevRequestList is empty ");
+        return false;
+    } else {
+        itor = mSavedPrevRequestList.begin();
+        while (itor != mSavedPrevRequestList.end()) {
+            if (MatchBuffer == (itor->buffer)) {
+                return true;
+            }
+            itor++;
+        }
+        return false;
+    }
 }
 };

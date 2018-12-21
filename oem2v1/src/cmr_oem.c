@@ -6823,7 +6823,8 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
                 cxt->is_multi_mode == MODE_3D_VIDEO ||
                 cxt->is_multi_mode == MODE_3D_CALIBRATION ||
                 cxt->is_multi_mode == MODE_3D_PREVIEW ||
-                cxt->is_multi_mode == MODE_TUNING
+                cxt->is_multi_mode == MODE_TUNING ||
+                cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM
             ? 1
             : 0;
     param_ptr->cap_inf_cfg.cfg.is_high_fps = fps_info.is_high_fps;
@@ -11586,7 +11587,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     else if ((1 == camera_get_3dnr_flag(cxt)) ||
              (2 == camera_get_3dnr_flag(cxt)))
         capture_param.type = DCAM_CAPTURE_START_3DNR;
-    else if (cxt->is_multi_mode == MODE_BOKEH) {
+    else if (cxt->is_multi_mode == MODE_BOKEH ||
+             cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {
         if (cxt->is_yuv_callback_mode) {
             capture_param.type = DCAM_CAPTURE_START_WITH_TIMESTAMP;
             capture_param.timestamp = snp_cxt->cap_need_time_stamp;

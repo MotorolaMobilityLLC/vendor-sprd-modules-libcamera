@@ -1484,7 +1484,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     if ((mMultiCameraMode == MODE_BLUR ||
                          mMultiCameraMode == MODE_3D_CAPTURE ||
                          mMultiCameraMode == MODE_3D_CALIBRATION ||
-                         mMultiCameraMode == MODE_BOKEH) &&
+                         mMultiCameraMode == MODE_BOKEH ||
+                         mMultiCameraMode == MODE_SOFY_OPTICAL_ZOOM) &&
                         stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
                         HAL_LOGD("call back stream request");
                         mOEMIf->setCallBackYuvMode(1);
@@ -1535,7 +1536,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         pendingRequest.receive_req_max = receive_req_max;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-        if (mPictureRequest && (mMultiCameraMode == MODE_BOKEH)) {
+        if (mPictureRequest && (mMultiCameraMode == MODE_BOKEH ||
+                                mMultiCameraMode == MODE_SOFY_OPTICAL_ZOOM)) {
             if (request->input_buffer != NULL) {
                 pendingRequest.is_save_metadata = 0;
                 pendingRequest.is_restore_metadata = 1;

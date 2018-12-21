@@ -37,7 +37,6 @@ typedef struct {
     cmr_u8 camera_id;
     multiCameraMode camera_mode;
 } muti_camera_mode_map_t;
-
 const multiCameraMode available_mutiCamera_mode[MODE_CAMERA_MAX] = {
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
     MODE_3D_VIDEO,
@@ -103,7 +102,8 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
     SprdCamera3DualFaceId::getCameraFaceId(&mDualFaceId);
 #endif
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
-    SprdCamera3OpticsZoom::getCamera3dZoom(&mZoom);
+    SprdCamera3OpticsZoomV1::getCamera3dZoomV1(&mZoomV1);
+// SprdCamera3OpticsZoom::getCamera3dZoom(&mZoom);
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT
     SprdCamera33dFace::getCamera3dFace(&m3dFace);
@@ -162,9 +162,7 @@ multiCameraMode SprdCamera3Wrapper::getMultiCameraMode(int camera_id) {
 int SprdCamera3Wrapper::cameraDeviceOpen(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
-
     int rc = NO_ERROR;
-
     HAL_LOGI("id= %d", atoi(id));
     switch (getMultiCameraMode(atoi(id))) {
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
@@ -226,7 +224,8 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 #endif
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     case MODE_SOFY_OPTICAL_ZOOM:
-        rc = mZoom->camera_device_open(module, id, hw_device, mZoom);
+        rc = mZoomV1->camera_device_open(module, id, hw_device, mZoomV1);
+        // rc = mZoom->camera_device_open(module, id, hw_device, mZoom);
         break;
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT
@@ -245,7 +244,6 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
                                       struct camera_info *info) {
     int rc = NO_ERROR;
-
     HAL_LOGI("id= %d", camera_id);
     switch (getMultiCameraMode(camera_id)) {
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
@@ -308,7 +306,8 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #endif
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     case MODE_SOFY_OPTICAL_ZOOM:
-        rc = mZoom->get_camera_info(camera_id, info, mZoom);
+        rc = mZoomV1->get_camera_info(camera_id, info, mZoomV1);
+        // rc = mZoom->get_camera_info(camera_id, info, mZoom);
         break;
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT

@@ -1066,7 +1066,8 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
     }
 
     if (getMultiCameraMode() == MODE_BOKEH ||
-        getMultiCameraMode() == MODE_BLUR) {
+        getMultiCameraMode() == MODE_BLUR ||
+        getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                  mSprdYuvCallBack);
     }
@@ -1514,7 +1515,8 @@ void SprdCamera3OEMIf::setCallBackYuvMode(bool mode) {
         }
 
         if (getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_BOKEH) {
+            getMultiCameraMode() == MODE_BOKEH ||
+            getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM) {
             SET_PARM(mHalOem, mCameraHandle,
                      CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
             HAL_LOGD("yuv call back mode");
@@ -2632,7 +2634,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
 
         /*read refoucs otp begin*/
         if ((MODE_BOKEH == mMultiCameraMode || mSprdRefocusEnabled == true ||
-             MODE_DUAL_FACEID_UNLOCK == mMultiCameraMode) &&
+             MODE_DUAL_FACEID_UNLOCK == mMultiCameraMode ||
+             mMultiCameraMode == MODE_SOFY_OPTICAL_ZOOM) &&
             mCameraId < 2) {
             OTP_Tag otpInfo;
             memset(&otpInfo, 0, sizeof(OTP_Tag));
@@ -3266,7 +3269,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                mRawWidth != 0) {
         mSprdZslEnabled = true;
     } else if (getMultiCameraMode() == MODE_BLUR ||
-               getMultiCameraMode() == MODE_BOKEH) {
+               getMultiCameraMode() == MODE_BOKEH ||
+               getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM) {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
@@ -3757,7 +3761,7 @@ void SprdCamera3OEMIf::receivePreviewATFrame(struct camera_frame_type *frame) {
     HAL_LOGD("frame coordinate x=%d y=%d, status=%d", frame->at_cb_info.objectX,
              frame->at_cb_info.objectY, frame->at_cb_info.status);
 
-    //Do coordinate transition
+    // Do coordinate transition
     zoomWidth = autotrackingInfo.w_ratio;
     zoomHeight = autotrackingInfo.h_ratio;
     if (0 != zoomWidth && 0 != zoomHeight) {
@@ -4112,6 +4116,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         if (getMultiCameraMode() == MODE_BLUR ||
             getMultiCameraMode() == MODE_BOKEH ||
+            getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM ||
             mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
             mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
@@ -4210,7 +4215,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
 
     VCM_Tag sprdvcmInfo;
-    if ((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH) &&
+    if ((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH ||
+         getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM) &&
         mCameraId == 0) {
         mSetting->getVCMTag(&sprdvcmInfo);
         uint32_t vcm_step = 0;
@@ -5223,6 +5229,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
     if (getMultiCameraMode() == MODE_BLUR ||
         getMultiCameraMode() == MODE_BOKEH ||
+        getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM ||
         mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
     } else if (mRecordingMode == true) {
@@ -5684,7 +5691,8 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_RETURN_ZSL_BUF: {
         if (isPreviewing() && iSZslMode() &&
             (mSprd3dCalibrationEnabled || mSprdYuvCallBack ||
-             mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH)) {
+             mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH ||
+             mMultiCameraMode == MODE_SOFY_OPTICAL_ZOOM)) {
             cmr_u32 buf_id = 0;
             struct camera_frame_type *zsl_frame = NULL;
             zsl_frame = (struct camera_frame_type *)parm4;
@@ -6115,8 +6123,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     } break;
     case CAMERA_EVT_CB_HIST_REPORT: {
         int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};
-        memcpy(hist_report, (int32_t *)parm4, sizeof(cmr_u32) * 
-CAMERA_ISP_HIST_ITEMS);
+        memcpy(hist_report, (int32_t *)parm4,
+               sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
         mSetting->setHISTOGRAMTag(hist_report);
 
         // control log print
@@ -6124,7 +6132,8 @@ CAMERA_ISP_HIST_ITEMS);
         property_get("persist.vendor.cam.histogram.log.enable", prop, "0");
         if (atoi(prop)) {
             for (int i = 0; i < CAMERA_ISP_HIST_ITEMS; i++) {
-                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d", hist_report[i]);
+                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d",
+                         hist_report[i]);
             }
         }
     } break;
@@ -7152,7 +7161,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         HAL_LOGD("sprd_zsl_enabled=%d", sprddefInfo.sprd_zsl_enabled);
         if (sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false &&
             mSprdRefocusEnabled == false && getMultiCameraMode() != MODE_BLUR &&
-            getMultiCameraMode() != MODE_BOKEH) {
+            getMultiCameraMode() != MODE_BOKEH &&
+            getMultiCameraMode() != MODE_SOFY_OPTICAL_ZOOM) {
             mSprdZslEnabled = false;
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
         }
@@ -7383,7 +7393,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.device_orietation);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_DEVICE_ORIENTATION,
                  sprddefInfo.device_orietation);
-        } break;
+    } break;
     case ANDROID_SPRD_AUTOCHASING_REGION: {
         AUTO_TRACKING_Tag autotrackingInfo;
         struct auto_tracking_info info;
@@ -7409,7 +7419,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t flashMode;
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode, &flashMode);
+        mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode,
+                                             &flashMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
     } break;
     default:
@@ -10673,7 +10684,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         if (mZslSnapshotTime > zsl_frame.monoboottime &&
-            (getMultiCameraMode() != MODE_BOKEH)) {
+            (getMultiCameraMode() != MODE_BOKEH &&
+             getMultiCameraMode() != MODE_SOFY_OPTICAL_ZOOM)) {
             diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
             HAL_LOGI("diff_ms=%lld", diff_ms);
             // make single capture frame time > mZslSnapshotTime
@@ -10690,6 +10702,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
             zsl_frame.timestamp < obj->mLastCafDoneTime &&
             (getMultiCameraMode() != MODE_BOKEH) &&
+            getMultiCameraMode() != MODE_SOFY_OPTICAL_ZOOM &&
             !sprddefInfo.sprd_3dnr_enabled) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
