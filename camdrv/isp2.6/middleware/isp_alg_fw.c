@@ -3886,8 +3886,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		return ret;
 	}
 
-	ISP_LOGV("isp proc start\n");
-
+	ISP_LOGD("isp proc start\n");
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
@@ -3897,13 +3896,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->mem_info.free_cb = in_ptr->free_cb;
 	cxt->mem_info.oem_handle = in_ptr->oem_handle;
-	/* malloc statis/lsc and other buffers and mapping buffers to dev. */
-	ret = isp_dev_prepare_buf(cxt->dev_access_handle, &cxt->mem_info);
-	ISP_RETURN_IF_FAIL(ret, ("fail to prepare buf"));
 
 	memset(&raw_proc_in, 0, sizeof(raw_proc_in));
-	raw_proc_in.src_format = in_ptr->src_frame.img_fmt;
-	raw_proc_in.src_pattern =  in_ptr->src_frame.format_pattern;
+	raw_proc_in.src_format = IMG_PIX_FMT_GREY;
+	raw_proc_in.src_pattern =  cxt->commn_cxt.image_pattern;
 	raw_proc_in.src_size.width = in_ptr->src_frame.img_size.w;
 	raw_proc_in.src_size.height = in_ptr->src_frame.img_size.h;
 	raw_proc_in.dst_format = in_ptr->dst_frame.img_fmt;
@@ -3926,6 +3922,11 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	raw_proc_in.cmd = RAW_PROC_PRE;
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RAW_PROC, &raw_proc_in, NULL);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_dev_raw_proc"));
+
+	/* malloc statis/lsc and other buffers and mapping buffers to dev. */
+	ret = isp_dev_prepare_buf(cxt->dev_access_handle, &cxt->mem_info);
+	ISP_RETURN_IF_FAIL(ret, ("fail to prepare buf"));
+
 
 	param.size.w = cxt->commn_cxt.src.w;
 	param.size.h = cxt->commn_cxt.src.h;

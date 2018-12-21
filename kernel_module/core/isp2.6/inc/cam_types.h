@@ -93,6 +93,7 @@ enum camera_cap_status {
 	CAM_CAPTURE_STOP = 0,
 	CAM_CAPTURE_START,
 	CAM_CAPTURE_RAWPROC,
+	CAM_CAPTURE_RAWPROC_DONE,
 };
 
 enum cam_ch_id {

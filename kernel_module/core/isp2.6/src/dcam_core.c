@@ -1217,6 +1217,7 @@ static int deinit_statis_bufferq(struct dcam_pipe_dev *dev)
 	for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
 		path_id = s_statis_path_info_all[i].path_id;
 		path = &dev->path[path_id];
+		atomic_set(&path->user_cnt, 0);
 		camera_queue_clear(&path->out_buf_queue);
 		camera_queue_clear(&path->result_queue);
 		camera_queue_clear(&path->reserved_buf_queue);
@@ -1403,6 +1404,12 @@ static int dcam_offline_start_frame(void *param)
 		ret = -EINVAL;
 		goto inq_overflow;
 	}
+
+	/* todo: enable statis path from user config */
+	atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 1);
+	atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 1);
+	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 1);
+	atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 1);
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
@@ -2202,6 +2209,7 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 	dcam_reset(dev);
 
 	dcam_dump_int_tracker(dev->idx);
+	dcam_reset_int_tracker(dev->idx);
 
 	if (dev->idx < 2)
 		atomic_dec(&s_dcam_working);

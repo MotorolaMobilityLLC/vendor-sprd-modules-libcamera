@@ -259,12 +259,16 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 {
 	struct sprd_irq_info *irq_info = (struct sprd_irq_info *)param_ptr;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_raw_proc_info raw_proc_in;
 
 	if (irq_info->irq_property == IRQ_DCAM_SOF) {
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb) (ISP_EVT_SOF, NULL, (void *)cxt->evt_alg_handle);
 		}
-	} else if (irq_info->irq_property == IRQ_RAW_PROC_DONE) {
+	} else if ((irq_info->irq_property == IRQ_RAW_PROC_DONE) ||
+			(irq_info->irq_property == IRQ_RAW_PROC_TIMEOUT)){
+		raw_proc_in.cmd = RAW_PROC_DONE;
+		isp_dev_raw_proc(cxt->isp_driver_handle, &raw_proc_in);
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb) (ISP_EVT_TX, NULL, (void *)cxt->evt_alg_handle);
 		}

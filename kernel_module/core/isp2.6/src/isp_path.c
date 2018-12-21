@@ -279,7 +279,8 @@ static int calc_scaler_coeff(
 int cfg_path_scaler(struct isp_path_desc *path)
 {
 	int ret = 0;
-	uint32_t scale2yuv420 = 0;
+	uint32_t is_yuv422, scale2yuv420 = 0;
+	struct isp_scaler_info *scaler = &path->scaler;
 
 	ret = calc_scaler_param(&path->in_trim, &path->dst,
 						&path->scaler, &path->deci);
@@ -288,27 +289,20 @@ int cfg_path_scaler(struct isp_path_desc *path)
 		return ret;
 	}
 
-	if ((path->scaler.scaler_factor_in == path->scaler.scaler_factor_out) &&
-		(path->scaler.scaler_ver_factor_in ==
-		path->scaler.scaler_ver_factor_out) &&
-		((path->out_fmt == IMG_PIX_FMT_YUV422P) ||
-		(path->out_fmt == IMG_PIX_FMT_UYVY)))  {
+	is_yuv422 = 0;
+	if (path->store.color_fmt <= ISP_STORE_YUV422_3FRAME)
+		is_yuv422 = 1;
 
-		path->scaler.scaler_bypass = 1;
+	if ((scaler->scaler_ver_factor_in == scaler->scaler_ver_factor_out)
+		&& (scaler->scaler_factor_in == scaler->scaler_factor_out)
+		&& is_yuv422) {
+		scaler->scaler_bypass = 1;
 	} else {
-		path->scaler.scaler_bypass = 0;
-		if ((path->out_fmt == IMG_PIX_FMT_NV12) ||
-			(path->out_fmt == IMG_PIX_FMT_NV21) ||
-			(path->out_fmt == IMG_PIX_FMT_YUV420))
-			scale2yuv420 = 1;
-		ret = calc_scaler_coeff(&path->scaler, scale2yuv420);
+		scaler->scaler_bypass = 0;
+		scale2yuv420 = is_yuv422 ? 0 : 1;
+		ret = calc_scaler_coeff(scaler, scale2yuv420);
 	}
-
-	if ((path->out_fmt == IMG_PIX_FMT_YUV422P) ||
-			(path->out_fmt == IMG_PIX_FMT_UYVY))
-		path->scaler.odata_mode = 0x00;
-	else
-		path->scaler.odata_mode = 0x01;
+	scaler->odata_mode = is_yuv422 ? 0x00 : 0x01;
 
 	return ret;
 }
@@ -356,7 +350,8 @@ int cfg_path_thumbscaler(struct isp_path_desc *path)
 {
 	int ret = 0;
 	uint32_t deci_w, deci_h, trim_w, trim_h;
-	uint32_t offset, shift;
+	uint32_t offset, shift, is_yuv422;
+
 	struct img_size src, dst;
 	struct isp_thumbscaler_info *scalerInfo;
 
@@ -389,14 +384,12 @@ int cfg_path_thumbscaler(struct isp_path_desc *path)
 	scalerInfo->y_factor_in.h = trim_h / deci_h;
 	scalerInfo->y_factor_out = path->dst;
 
-	/* uv factor & deci, input: yuv422 */
-	if ((path->store.color_fmt == ISP_STORE_YUV420_2FRAME) ||
-		(path->store.color_fmt == ISP_STORE_YVU420_2FRAME) ||
-		(path->store.color_fmt == ISP_STORE_YUV420_3FRAME))
-		shift = 1;
-	else
-		shift = 0;
+	is_yuv422 = 0;
+	if (path->store.color_fmt <= ISP_STORE_YUV422_3FRAME)
+		is_yuv422 = 1;
 
+	/* uv factor & deci, input: yuv422(isp pipeline format) */
+	shift = is_yuv422 ? 0 : 1;
 	scalerInfo->uv_deci.deci_x = deci_w;
 	scalerInfo->uv_deci.deci_y = deci_h;
 	if (deci_w > 1)
@@ -444,11 +437,7 @@ int cfg_path_thumbscaler(struct isp_path_desc *path)
 	scalerInfo->uv_src_after_deci = scalerInfo->uv_factor_in;
 	scalerInfo->uv_dst_after_scaler = scalerInfo->uv_factor_out;
 
-	if ((path->out_fmt == IMG_PIX_FMT_YUV422P) ||
-			(path->out_fmt == IMG_PIX_FMT_UYVY))
-		scalerInfo->odata_mode = 0x00;
-	else
-		scalerInfo->odata_mode = 0x01;
+	scalerInfo->odata_mode = is_yuv422 ? 0x00 : 0x01;
 
 	pr_info("deciY %d %d, Yfactor (%d %d) => (%d %d) ytrim (%d %d %d %d)\n",
 		scalerInfo->y_deci.deci_x, scalerInfo->y_deci.deci_y,

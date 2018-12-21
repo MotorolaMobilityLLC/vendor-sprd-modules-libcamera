@@ -78,6 +78,7 @@ enum afm_mode {
 enum isp_irq_done_id {
 	IRQ_DCAM_SOF,
 	IRQ_RAW_PROC_DONE,
+	IRQ_RAW_PROC_TIMEOUT,
 	IRQ_DCAM_SN_EOF,
 	IRQ_MAX_DONE,
 };
@@ -1377,6 +1378,7 @@ struct isp_statis_buf_input {
 enum raw_proc_cmd {
 	RAW_PROC_PRE,
 	RAW_PROC_POST,
+	RAW_PROC_DONE,
 };
 
 struct isp_raw_proc_info {
