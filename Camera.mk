@@ -85,11 +85,6 @@ ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3RealBokeh.cpp \
     hal_common/multiCamera/SprdBokehAlgo.cpp
-else ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SRC_FILES+= \
-    hal_common/multiCamera/SprdCamera3RealBokeh.cpp \
-    hal_common/multiCamera/ArcSoftBokehAlgo.cpp \
-    hal_common/multiCamera/arcsoft/altek/arcsoft_calibration_parser.cpp
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)

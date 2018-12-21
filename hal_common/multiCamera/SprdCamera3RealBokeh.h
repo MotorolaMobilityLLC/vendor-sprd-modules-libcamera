@@ -51,7 +51,6 @@
 
 #include "IBokehAlgo.h"
 #include "SprdBokehAlgo.h"
-#include "ArcSoftBokehAlgo.h"
 
 namespace sprdcamera {
 #define BOKEH_YUV_DATA_TRANSFORM
@@ -82,7 +81,7 @@ typedef enum {
 
 typedef enum { CAM_TYPE_BOKEH_MAIN = 0, CAM_TYPE_DEPTH } BokehCameraDeviceType;
 typedef enum { PREVIEW_MODE = 0, CAPTURE_MODE } CameraMode;
-typedef enum { SPRD_API_MODE = 0, ARCSOFT_API_MODE } ApiMode;
+typedef enum { SPRD_API_MODE = 0 } ApiMode;
 typedef enum { DEPTH_DONING = 0, DEPTH_DONE, DEPTH_INVALID } DepthStatus;
 typedef enum { TRIGGER_FLASE = 0, TRIGGER_FNUM, TRIGGER_AF } DepthTrigger;
 typedef enum { BUFFER_PING = 0, BUFFER_PANG } BUFFER_FLAG;
@@ -213,10 +212,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         int sprdDepthCaptureHandle(buffer_handle_t *input_buf1,
                                    void *input_buf1_addr,
                                    buffer_handle_t *input_buf2);
-        int arcSoftBokehCaptureHandle(buffer_handle_t *output_bufer,
-                                      buffer_handle_t *input_buf1,
-                                      void *input_buf1_addr,
-                                      buffer_handle_t *input_buf2);
         // This queue stores matched buffer as frame_matched_info_t
         List<capture_queue_msg_t_bokeh> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -248,9 +243,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         virtual void requestExit();
         int sprdBokehPreviewHandle(buffer_handle_t *output_buf,
                                    buffer_handle_t *input_buf1);
-        int arcsoftBokehPreviewHandle(buffer_handle_t *output_bufer,
-                                      buffer_handle_t *input_buf1,
-                                      buffer_handle_t *input_buf2);
         bool sprdDepthHandle(muxer_queue_msg_t *muxer_msg);
 
         List<muxer_queue_msg_t> mPreviewMuxerMsgList;
@@ -354,9 +346,6 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void preClose();
 #ifdef YUV_CONVERT_TO_JPEG
     cmr_uint yuvToJpeg(struct private_handle_t *input_handle);
-#endif
-#ifdef CONFIG_ALTEK_ZTE_CALI
-    int createArcSoftCalibrationData(unsigned char *pBuffer, int nBufSize);
 #endif
     void setDepthStatus(DepthStatus status);
     void setDepthTrigger(int vcm);

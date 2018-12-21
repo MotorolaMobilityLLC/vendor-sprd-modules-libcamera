@@ -15,18 +15,6 @@
 #include <sprd_ion.h>
 #include "SprdMultiCam3Common.h"
 
-#include "./arcsoft/AISFCommonDef.h"
-#include "./arcsoft/AISFReferenceInter.h"
-#include "./arcsoft/arcsoft_dualcam_common_refocus.h"
-#include "./arcsoft/amcomdef.h"
-#include "./arcsoft/ammem.h"
-#include "./arcsoft/asvloffscreen.h"
-#include "./arcsoft/merror.h"
-#include "./arcsoft/arcsoft_dualcam_video_refocus.h"
-#include "./arcsoft/arcsoft_dualcam_image_refocus.h"
-#include "./arcsoft/altek/arcsoft_calibration_parser.h"
-#include "./arcsoft/arcsoft_configurable_param.h"
-
 #include "SGM_SPRD.h"
 #include "sprdbokeh.h"
 #include "iBokeh.h"
@@ -57,18 +45,9 @@ typedef struct {
     weightmap_param depth_param;
 } bokeh_prev_params_t;
 
-typedef struct {
-    ARC_DCVR_PARAM prev;
-    ARC_DCIR_REFOCUS_PARAM cap;
-    ARC_DCIR_PARAM dcr;
-    MInt32 size;
-    MVoid *map;
-} ARC_BOKEH_PARAM;
-
 typedef struct { bokeh_cap_params_t cap; } SPRD_BOKEH_PARAM;
 
 typedef union {
-    ARC_BOKEH_PARAM arc;
     SPRD_BOKEH_PARAM sprd;
 } BOKEH_PARAM;
 

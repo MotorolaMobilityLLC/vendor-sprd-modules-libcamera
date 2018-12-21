@@ -70,6 +70,8 @@ namespace sprdcamera {
 #undef MAX_MULTI_NUM_BUFFER
 #define MAX_MULTI_NUM_BUFFER 8
 
+typedef signed int MInt32;
+typedef unsigned int MUInt32;
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
 typedef enum {
@@ -78,6 +80,13 @@ typedef enum {
     /* There are no valid result in both of list */
     QUEUE_INVALID
 } twoQuqueStatus;
+
+typedef struct __tag_rect {
+    MInt32 left;
+    MInt32 top;
+    MInt32 right;
+    MInt32 bottom;
+} MRECT, *PMRECT;
 
 typedef enum { MATCH_FAILED = 0, MATCH_SUCCESS } matchResult;
 

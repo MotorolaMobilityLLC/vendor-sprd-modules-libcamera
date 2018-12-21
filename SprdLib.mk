@@ -60,11 +60,6 @@ LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth
 #LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
 
-ifeq ($(strip $(TARGET_BOARD_ARCSOFT_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libarcsoft_dualcam_refocus
-LOCAL_SHARED_LIBRARIES += libalParseOTP
-endif
-
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
 else ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)

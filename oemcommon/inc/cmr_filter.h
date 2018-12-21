@@ -35,7 +35,7 @@ struct class_filter {
     cmr_uint filter_type;
     struct filter_ops *filter_ops;
     sem_t sem;
-    int vendor; // 0:sprd, 1:arcsoft;
+    int vendor;
 };
 
 struct filter_pic_data {
