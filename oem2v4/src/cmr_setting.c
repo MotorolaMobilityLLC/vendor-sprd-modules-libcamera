@@ -3578,10 +3578,10 @@ setting_out:
     return ret;
 }
 
-cmr_int cmr_setting_deinit_notice(cmr_handle setting_handle) {
+cmr_int cmr_setting_cancel_notice_flash(cmr_handle setting_handle) {
     cmr_int ret = 0;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGD("cmr_setting_deinit_notice");
+    CMR_LOGD("cmr_setting_cancel_notice_flash");
 
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_NEED_QUIT;
@@ -3600,50 +3600,6 @@ cmr_int cmr_pre_flash_notice_flash(cmr_handle setting_handle) {
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_OPEN;
     pthread_mutex_unlock(&cpt->isp_mutex);
-
-    return ret;
-}
-
-cmr_int cmr_af_start_notice_flash(cmr_handle setting_handle) {
-    cmr_int ret = 0;
-    struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGD("cmr_af_start_notice_flash");
-
-    pthread_mutex_lock(&cpt->isp_mutex);
-    cpt->flash_need_quit = FLASH_OPEN;
-    pthread_mutex_unlock(&cpt->isp_mutex);
-
-    return ret;
-}
-
-cmr_int cmr_af_cancel_notice_flash(cmr_handle setting_handle) {
-    cmr_int ret = 0;
-    struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGD("cmr_af_cancel_notice_flash");
-
-    pthread_mutex_lock(&cpt->isp_mutex);
-    cpt->flash_need_quit = FLASH_NEED_QUIT;
-    pthread_mutex_unlock(&cpt->isp_mutex);
-
-    sem_post(&cpt->isp_sem); // fastly quit af process when flash on,--for safty
-                             // quit post two times
-    sem_post(&cpt->isp_sem);
-
-    return ret;
-}
-
-
-cmr_int cmr_preview_cancel_notice_flash (cmr_handle setting_handle) {
-    cmr_int ret = 0;
-    struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGD("cmr_preview_cancel_notice_flash");
-
-    pthread_mutex_lock(&cpt->isp_mutex);
-    cpt->flash_need_quit = FLASH_NEED_QUIT;
-    pthread_mutex_unlock(&cpt->isp_mutex);
-
-    sem_post(&cpt->isp_sem);
-    sem_post(&cpt->isp_sem);
 
     return ret;
 }

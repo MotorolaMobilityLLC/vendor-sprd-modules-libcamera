@@ -3695,7 +3695,7 @@ cmr_int camera_isp_deinit_notice(cmr_handle oem_handle) {
     CMR_LOGI("E");
     LAUNCHLOGS(CMR_ISP_DEINIT_T);
 
-    ret = cmr_setting_deinit_notice(cxt->setting_cxt.setting_handle);
+    ret = cmr_setting_cancel_notice_flash(cxt->setting_cxt.setting_handle);
     ret = cmr_focus_deinit_notice(cxt->focus_cxt.focus_handle);
     ret = cmr_grab_deinit_notice(cxt->grab_cxt.grab_handle);
 
@@ -10360,7 +10360,7 @@ cmr_int camera_local_start_focus(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_af_start_notice_flash(cxt->setting_cxt.setting_handle);
+    ret = cmr_pre_flash_notice_flash(cxt->setting_cxt.setting_handle);
     ret = cmr_af_start_notice_focus(cxt->focus_cxt.focus_handle);
     ret = cmr_focus_start(cxt->focus_cxt.focus_handle, cxt->camera_id);
 
@@ -10372,7 +10372,7 @@ cmr_int camera_local_cancel_focus(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_af_cancel_notice_flash(cxt->setting_cxt.setting_handle);
+    ret = cmr_setting_cancel_notice_flash(cxt->setting_cxt.setting_handle);
     ret = cmr_af_cancel_notice_focus(cxt->focus_cxt.focus_handle);
     ret = cmr_focus_stop(cxt->focus_cxt.focus_handle, cxt->camera_id, 1);
 
