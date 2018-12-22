@@ -641,6 +641,7 @@ struct ae_alg_calc_result {
 	cmr_u32 face_stable;
 	cmr_u32 face_trigger;
 	cmr_u32 *reserved;			/*resurve for future */
+	cmr_u32 privated_data;
 };
 
 struct otp_ae_info {

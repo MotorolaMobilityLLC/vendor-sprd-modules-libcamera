@@ -565,6 +565,7 @@ extern "C" {
 		cmr_s64 monoboottime;
 		struct ae_ctrl_alc_log log_ae;
 		cmr_u32 fps;
+		cmr_u32 reserved;
 	};
 
 	struct ae_flash_param {

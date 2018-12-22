@@ -776,7 +776,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case ISP_AE_SET_RGB_GAIN: {
-		struct isp_dev_rgb_gain_info *rgbgain = (struct isp_dev_rgb_gain_info *)param0;
+		struct isp_rgb_gain_info *rgbgain = (struct isp_rgb_gain_info *)param0;
 		cxt->rgb_gain.bypass = cxt->rgb_gain_bypass;
 		if (cxt->camera_id != 0 && cxt->raw_cap_flag == 1)
 			cxt->rgb_gain.bypass = 1;
@@ -784,9 +784,9 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		cxt->rgb_gain.r_gain = rgbgain->r_gain;
 		cxt->rgb_gain.g_gain = rgbgain->g_gain;
 		cxt->rgb_gain.b_gain = rgbgain->b_gain;
-		ISP_LOGV("rgbgain_bypass = %d, global_gain = %d, r_gain = %d, g_gain = %d, b_gain = %d",
+		ISP_LOGV("rgbgain_bypass = %d, global_gain = %d, r_gain = %d, g_gain = %d, b_gain = %d, rev: %d\n",
 			cxt->rgb_gain.bypass, cxt->rgb_gain.global_gain,
-			cxt->rgb_gain.r_gain, cxt->rgb_gain.g_gain, cxt->rgb_gain.b_gain);
+			cxt->rgb_gain.r_gain, cxt->rgb_gain.g_gain, cxt->rgb_gain.b_gain, cxt->rgb_gain.reserv);
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, (void *)&cxt->rgb_gain, NULL);
 		}
 		break;
@@ -2440,6 +2440,11 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
 		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;
 		ae_ctrl_calc_result.flash_param.captureFlash1ofALLRatio = ae_result.flash_param.captureFlash1ofALLRatio;
+		if (1 == ae_ctrl_calc_result.ae_output.reserved) {
+			cxt->rgb_gain.reserv = 1;
+		} else {
+			cxt->rgb_gain.reserv = 0;
+		}
 	}
 
 	ret = ispalg_start_awb_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
