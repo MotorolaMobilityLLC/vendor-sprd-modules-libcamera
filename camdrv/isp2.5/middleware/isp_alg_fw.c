@@ -344,6 +344,7 @@ struct isp_alg_fw_context {
 	struct drv_fov_info fov_info;
 	cmr_u32 is_mono_sensor;
 	cmr_u32 sn_mode;
+	cmr_u32 lowlight_flag_4in1;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -1492,6 +1493,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 sec = 0;
 	cmr_u32 usec = 0;
 	cmr_u32 i = 0;
+	cmr_u32 light_change_4in1 = 0;
 
 	memset((void *)&input, 0x00, sizeof(struct isp_pm_ioctl_input_param));
 	memset((void *)&output, 0x00, sizeof(struct isp_pm_ioctl_output_param));
@@ -1499,7 +1501,14 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+	if (cxt->lowlight_flag_4in1 != cxt->lowlight_flag ){
+		light_change_4in1 = 1;
+		cxt->lowlight_flag_4in1 = cxt->lowlight_flag;
+	}
+	if (cxt->is_4in1_sensor && light_change_4in1)
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
+	else
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_UPDATE_PARAM_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to update param start"));
@@ -2266,7 +2275,10 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.cal_para.ct = awb_output->ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.handle_pm = cxt->handle_pm;
-		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+		if (cxt->lowlight_flag && cxt->is_4in1_sensor)
+			smart_proc_in.mode_flag = ISP_MODE_ID_CAP_1;
+		else
+			smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 		smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
