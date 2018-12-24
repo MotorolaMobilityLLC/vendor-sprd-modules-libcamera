@@ -724,6 +724,11 @@ struct img_frm_cap {
     cmr_u32 chn_skip_num;
     cmr_u32 is_high_fps;
     cmr_u32 high_fps_skip_num;
+
+    // slave img
+    struct img_size dst_slave_img_size;
+    cmr_u32 slave_img_fmt;
+    cmr_u32 enable_slave_img;
 };
 
 struct buffer_cfg {
@@ -1526,6 +1531,7 @@ struct image_sw_algorithm_buf {
     cmr_u32 width;
     cmr_u32 height;
     cmr_uint y_vir_addr;
+    cmr_uint y_phy_addr;
     cmr_u32 fd;
     void *reserved;
 };
@@ -1865,12 +1871,11 @@ typedef struct oem_ops {
                                              enum takepicture_mode cap_mode,
                                              cmr_uint yaddr, cmr_uint yaddr_vir,
                                              cmr_uint fd);
-    cmr_int (*image_sw_algorithm_processing)(
-        cmr_handle camera_handle,
-        struct image_sw_algorithm_buf *sw_algorithm_buf,
-        sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
-        enum img_data_type format);
-
+    cmr_int (*image_sw_algorithm_processing)(cmr_handle camera_handle,
+                                struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+                                struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
+                                sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+                                enum img_data_type format);
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
                                       cmr_s32 *point_x, cmr_s32 *point_y);

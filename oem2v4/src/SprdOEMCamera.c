@@ -1233,7 +1233,8 @@ exit:
 }
 
 cmr_int image_sw_algorithm_processing(
-    cmr_handle camera_handle, struct image_sw_algorithm_buf *sw_algorithm_buf,
+    cmr_handle camera_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type, enum img_data_type format) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 

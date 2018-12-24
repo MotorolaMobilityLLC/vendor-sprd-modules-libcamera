@@ -1492,9 +1492,9 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         camera_snapshot_cb_to_hal((cmr_handle)cb_param->private_data,
                                   SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
                                   SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
-        frame.channel_id = cxt->snp_cxt.channel_id;
-        ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                        SNAPSHOT_EVT_POSTPROC_START, &frame);
+        camera_local_set_zsl_snapshot_buffer(
+            cxt, cb_param->dst_frame.addr_phy.addr_y,
+            cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);
     } else if (1 == cxt->sn_cxt.info_4in1.is_4in1_supported) {
         cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle,
                                   &cb_param->dst_frame);
@@ -11093,7 +11093,8 @@ cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data) {
 }
 
 cmr_int camera_local_image_sw_algorithm_processing(
-    cmr_handle oem_handle, struct image_sw_algorithm_buf *sw_algorithm_buf,
+    cmr_handle oem_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     enum img_data_type format) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -11104,13 +11105,22 @@ cmr_int camera_local_image_sw_algorithm_processing(
     struct ipm_context *ipm_cxt = &cxt->ipm_cxt;
 
     ipm_in_param.private_data = (void *)cxt;
-    ipm_in_param.src_frame.size.height = sw_algorithm_buf->height;
-    ipm_in_param.src_frame.size.width = sw_algorithm_buf->width;
-    ipm_in_param.src_frame.fd = sw_algorithm_buf->fd;
-    ipm_in_param.src_frame.fmt = sw_algorithm_buf->format;
-    ipm_in_param.src_frame.addr_vir.addr_y = sw_algorithm_buf->y_vir_addr;
-    ipm_in_param.dst_frame = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-    imp_out_param.private_data = sw_algorithm_buf->reserved;
+    ipm_in_param.src_frame.size.height = src_sw_algorithm_buf->height;
+    ipm_in_param.src_frame.size.width = src_sw_algorithm_buf->width;
+    ipm_in_param.src_frame.fd = src_sw_algorithm_buf->fd;
+    ipm_in_param.src_frame.fmt = src_sw_algorithm_buf->format;
+    ipm_in_param.src_frame.buf_size =
+        (src_sw_algorithm_buf->height) * (src_sw_algorithm_buf->width) * 3 / 2;
+    ipm_in_param.src_frame.addr_vir.addr_y = src_sw_algorithm_buf->y_vir_addr;
+    ipm_in_param.src_frame.addr_phy.addr_y = src_sw_algorithm_buf->y_phy_addr;
+    imp_out_param.private_data = src_sw_algorithm_buf->reserved;
+
+    ipm_in_param.dst_frame.size.height = dst_sw_algorithm_buf->height;
+    ipm_in_param.dst_frame.size.width = dst_sw_algorithm_buf->width;
+    ipm_in_param.dst_frame.fd = dst_sw_algorithm_buf->fd;
+    ipm_in_param.dst_frame.fmt = dst_sw_algorithm_buf->format;
+    ipm_in_param.dst_frame.addr_vir.addr_y = dst_sw_algorithm_buf->y_vir_addr;
+    ipm_in_param.dst_frame.addr_phy.addr_y = dst_sw_algorithm_buf->y_phy_addr;
 
     if (!oem_handle) {
         CMR_LOGE("in parm error");

@@ -47,6 +47,7 @@
 #include <linux/ion.h>
 #include <ui/GraphicBuffer.h>
 #include <cutils/ashmem.h>
+#include <ui/GraphicBufferMapper.h>
 
 #include "libyuv/convert.h"
 #include "libyuv/convert_from.h"
@@ -296,6 +297,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mChannel2Heap, 0, sizeof(mChannel2Heap));
     memset(mChannel3Heap, 0, sizeof(mChannel3Heap));
     memset(mRawHeapArray, 0, sizeof(mRawHeapArray));
+    memset(mZslGraphicsHandle, 0, sizeof(mZslGraphicsHandle));
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -564,6 +566,7 @@ void SprdCamera3OEMIf::initialize() {
     mCallbackHeight = 0;
     mStreamOnWithZsl = 0;
     mSprdZslEnabled = 0;
+    mSprd3dnrEnabled = 0;
     mFrameSyncFlag = 0;
     mFrameSyncNum = 0;
     mVideoSnapshotType = 0;
@@ -2697,6 +2700,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         }
     }
 
+    if (sprddefInfo.sprd_3dnr_enabled == 1) {
+        mSprd3dnrEnabled = 1;
+    } else {
+        mSprd3dnrEnabled = 0;
+    }
     mZslNum = 2;
     mZslMaxFrameNum = 1;
     mRestartFlag = false;
@@ -2711,7 +2719,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
-        if (sprddefInfo.sprd_3dnr_enabled == 1) {
+        if (mSprd3dnrEnabled) {
             // 1 for 3dnr hw process.
             if (grab_capability.support_3dnr_mode == 1) {
                 mVideoCopyFromPreviewFlag = false;
@@ -2774,10 +2782,13 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
     }
 
-    if (sprddefInfo.sprd_3dnr_enabled == 1 && mRecordingMode == false) {
+    if (mSprd3dnrEnabled == 1 && mRecordingMode == false) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
     }
+
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
+             mSprd3dnrEnabled);
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_MODE,
              (uint32_t)mCaptureMode);
@@ -4849,7 +4860,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
-        if (sprddefInfo.sprd_3dnr_enabled) {
+        if (mSprd3dnrEnabled) {
             sprddefInfo.is_takepicture_with_flash = 0;
         }
         mSetting->setSPRDDEFTag(sprddefInfo);
@@ -5397,7 +5408,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_SCENE_MODE: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        if (1 == sprddefInfo.sprd_3dnr_enabled) {
+        if (1 == mSprd3dnrEnabled) {
             controlInfo.scene_mode = ANDROID_CONTROL_SCENE_MODE_NIGHT;
         }
 
@@ -5858,12 +5869,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break; /**add for 3d calibration get max sensor size end*/
     case ANDROID_SPRD_3DNR_ENABLED: /*add for 3dnr*/
     {
-        SPRD_DEF_Tag sprddefInfo;
-        mSetting->getSPRDDEFTag(&sprddefInfo);
-        HAL_LOGD("sprddefInfo.sprd_3dnr_enabled=%d ",
-                 sprddefInfo.sprd_3dnr_enabled);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
-                 sprddefInfo.sprd_3dnr_enabled);
+        //    SPRD_DEF_Tag sprddefInfo;
+        //    mSetting->getSPRDDEFTag(&sprddefInfo);
+        //     HAL_LOGD("sprddefInfo.sprd_3dnr_enabled=%d ",
+        //              sprddefInfo.sprd_3dnr_enabled);
+        //    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
+        //             sprddefInfo.sprd_3dnr_enabled);
     } break;
     case ANDROID_SPRD_FIXED_FPS_ENABLED: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6209,12 +6220,116 @@ mem_fail:
     return BAD_VALUE;
 }
 
+int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
+                                          cmr_uint *vir_addr, cmr_s32 *fd,
+                                          cmr_u32 sum) {
+    cmr_u32 i;
+    SPRD_DEF_Tag sprddefInfo;
+    int ret = 0;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+
+    HAL_LOGD("mZslHeapNum %d sum %d", mZslHeapNum, sum);
+    for (i = 0; i < mZslHeapNum; i++) {
+        ret = mapper.unlock(
+            (const native_handle_t *)mZslGraphicsHandle[i].native_handle);
+        if (ret != NO_ERROR) {
+            ALOGE("mapper.unlock fail %p", mZslGraphicsHandle[i].native_handle);
+        }
+        if (mZslGraphicsHandle[i].graphicBuffer != NULL) {
+            mZslGraphicsHandle[i].graphicBuffer.clear();
+            mZslGraphicsHandle[i].graphicBuffer = NULL;
+        }
+        HAL_LOGD("graphicBuffer_handle 0x%lx",
+                 mZslGraphicsHandle[i].graphicBuffer_handle);
+        mZslGraphicsHandle[i].graphicBuffer_handle = NULL;
+        if (NULL != mZslHeapArray[i]) {
+            freeCameraMem(mZslHeapArray[i]);
+        }
+        mZslHeapArray[i] = NULL;
+    }
+    mZslHeapNum = 0;
+    releaseZSLQueue();
+    return 0;
+}
+
+int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd) {
+    sp<GraphicBuffer> graphicBuffer = NULL;
+    sprd_camera_memory_t *memory = NULL;
+    cmr_int i = 0;
+    int ret = 0;
+    void *vaddr = NULL;
+    native_handle_t *nativeHandle = NULL;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+    yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
+    int usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+
+    Rect bounds((mCaptureWidth + 1280), (mCaptureHeight + 960));
+    HAL_LOGD("size %d sum %d mZslHeapNum %d", size, sum, mZslHeapNum);
+
+    for (i = 0; i < (cmr_int)mZslNum; i++) {
+        if (mZslHeapArray[i] == NULL) {
+            sprd_camera_memory_t *memory =
+                (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
+            if (NULL == memory) {
+                HAL_LOGE("fatal error! memory pointer is null.");
+                goto mem_fail;
+            }
+            memset(memory, 0, sizeof(sprd_camera_memory_t));
+            mZslHeapArray[i] = memory;
+            mZslHeapNum++;
+        }
+
+        graphicBuffer = new GraphicBuffer(
+            (mCaptureWidth + 1280), (mCaptureHeight + 960),
+            HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, "sw_3dnr");
+
+        nativeHandle = (native_handle_t *)graphicBuffer->handle;
+
+        mZslHeapArray[i]->fd = ADP_BUFFD(nativeHandle);
+        mZslHeapArray[i]->phys_addr = 0;
+        mZslHeapArray[i]->phys_size = size;
+        ret = mapper.lock((const native_handle_t *)nativeHandle, usage, bounds,
+                          &vaddr);
+        if (ret) {
+            HAL_LOGE("mapper.lock failed, ret=%d", ret);
+            goto mem_fail;
+        }
+        mZslHeapArray[i]->data = (void *)vaddr;
+        mZslGraphicsHandle[i].graphicBuffer = graphicBuffer;
+        mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
+        mZslGraphicsHandle[i].native_handle = nativeHandle;
+        HAL_LOGD("graphicBuffer_handle 0x%lx",
+                 mZslGraphicsHandle[i].graphicBuffer_handle);
+
+        ADP_FAKESETBUFATTR_CAMERAONLY(nativeHandle, size, mCaptureWidth,
+                                      mCaptureHeight);
+        *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
+        *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
+        *fd++ = mZslHeapArray[i]->fd;
+    }
+    return 0;
+
+mem_fail:
+    freeCameraMemForGpu(0, 0, 0, 0);
+    return BAD_VALUE;
+}
+
 int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                        cmr_s32 *fd, cmr_u32 sum) {
     cmr_u32 i;
     Mutex::Autolock l(&mPrevBufLock);
     Mutex::Autolock zsllock(&mZslBufLock);
+    SPRD_DEF_Tag sprddefInfo;
 
+    if (mSprd3dnrEnabled) {
+        freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
+        return 0;
+    }
     HAL_LOGD("mZslHeapNum %d sum %d", mZslHeapNum, sum);
     for (i = 0; i < mZslHeapNum; i++) {
         if (NULL != mZslHeapArray[i]) {
@@ -6234,7 +6349,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
                                          cmr_s32 *fd) {
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
-
+    int ret;
     SPRD_DEF_Tag sprddefInfo;
     int BufferCount = kZslBufferCount;
 
@@ -6248,6 +6363,11 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *phy_addr = 0;
     *vir_addr = 0;
     *fd = 0;
+
+    if (mSprd3dnrEnabled) {
+        ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
+        return ret;
+    }
 
     if (mZslHeapNum >= (kZslBufferCount + kZslRotBufferCount + 1)) {
         HAL_LOGE("error mPreviewHeapNum %d", mZslHeapNum);
@@ -6276,6 +6396,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
             *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
             *fd++ = mZslHeapArray[i]->fd;
         }
+
         return 0;
     }
 
@@ -7015,8 +7136,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             mIspStatisHeapReserved = memory;
         }
         // shark5 dont need kernel software r/w the buffer
-        //rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
-        //if (rtn) {
+        // rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+        // if (rtn) {
         //    HAL_LOGE("get kaddr error");
         //    goto mem_fail;
         //}
@@ -8271,10 +8392,12 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     struct camera_frame_type zsl_frame;
-    struct image_sw_algorithm_buf sw_algorithm_buf;
+    struct image_sw_algorithm_buf src_sw_algorithm_buf;
+    struct image_sw_algorithm_buf dst_sw_algorithm_buf;
     uint32_t cnt = 0;
     int64_t diff_ms = 0;
     uint32_t sw_algorithm_buf_cnt = 0;
+    cmr_u32 buf_id = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
         obj->mZslShotPushFlag == 0) {
@@ -8287,7 +8410,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
-    bzero(&sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&src_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&dst_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
 
     if (mFrameSyncFlag == 1) {
         HAL_LOGD("wait for frame sync");
@@ -8316,15 +8440,30 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         // for 3dnr sw 2.0
-        if (sprddefInfo.sprd_3dnr_enabled) {
-            sw_algorithm_buf.height = zsl_frame.height;
-            sw_algorithm_buf.width = zsl_frame.width;
-            sw_algorithm_buf.fd = zsl_frame.fd;
-            sw_algorithm_buf.format = zsl_frame.format;
-            sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+        if (mSprd3dnrEnabled) {
+            buf_id = getZslBufferIDForFd(zsl_frame.fd);
+            src_sw_algorithm_buf.reserved =
+                (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
+            src_sw_algorithm_buf.height = zsl_frame.height;
+            src_sw_algorithm_buf.width = zsl_frame.width;
+            src_sw_algorithm_buf.fd = zsl_frame.fd;
+            src_sw_algorithm_buf.format = zsl_frame.format;
+            src_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+            src_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
+
+            // dst_sw_algorithm_buf use first intput frame for now
+            if (sw_algorithm_buf_cnt == 0) {
+                dst_sw_algorithm_buf.height = zsl_frame.height;
+                dst_sw_algorithm_buf.width = zsl_frame.width;
+                dst_sw_algorithm_buf.fd = zsl_frame.fd;
+                dst_sw_algorithm_buf.format = zsl_frame.format;
+                dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+                dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
+            }
             mHalOem->ops->image_sw_algorithm_processing(
-                obj->mCameraHandle, &sw_algorithm_buf,
-                SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR, IMG_DATA_TYPE_YVU420);
+                obj->mCameraHandle, &src_sw_algorithm_buf,
+                &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
+                IMG_DATA_TYPE_YVU420);
 
             sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 5) {

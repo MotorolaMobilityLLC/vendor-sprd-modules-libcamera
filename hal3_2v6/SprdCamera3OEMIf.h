@@ -48,13 +48,7 @@ extern "C" {
 #include <hardware/power.h>
 #ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
-#ifdef CONFIG_SPRD_ANDROID_8
 #include <sensor/Sensor.h>
-#else
-#include <gui/Sensor.h>
-#include <gui/SensorManager.h>
-#include <gui/SensorEventQueue.h>
-#endif
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
 #include <utils/Looper.h>
@@ -113,6 +107,12 @@ typedef struct sprd_camera_memory {
     void *data;
     bool busy_flag;
 } sprd_camera_memory_t;
+
+typedef struct sprd_3dnr_memory {
+    const native_handle_t *native_handle;
+    sp<GraphicBuffer> graphicBuffer;
+    void *graphicBuffer_handle;
+} sprd_3dnr_memory_t;
 
 struct ZslBufferQueue {
     camera_frame_type frame;
@@ -426,6 +426,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
                              cmr_s32 *fd, cmr_u32 sum);
     int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd);
+    int freeCameraMemForGpu(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
+                            cmr_u32 sum);
+    int allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
+                             cmr_uint *vir_addr, cmr_s32 *fd);
     int Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
                          cmr_u32 sum);
     int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
@@ -476,6 +480,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     List<ZslBufferQueue> mZSLQueue;
     bool mSprdZslEnabled;
+    bool mSprd3dnrEnabled;
     uint32_t mZslChannelStatus;
     int32_t mZslShotPushFlag;
     // we want to keep mZslMaxFrameNum buffers in mZSLQueue, for snapshot use
@@ -649,6 +654,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
         *mVideoHeapArray[kVideoBufferCount + kVideoRotBufferCount + 1];
     sprd_camera_memory_t
         *mZslHeapArray[kZslBufferCount + kZslRotBufferCount + 1];
+    sprd_3dnr_memory_t
+        mZslGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mChannel1Heap[kChannel1BufCnt + 1];
     sprd_camera_memory_t *mChannel2Heap[kChannel2BufCnt + 1];
     sprd_camera_memory_t *mChannel3Heap[kChannel3BufCnt + 1];

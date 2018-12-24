@@ -531,7 +531,8 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 cmr_int camera_get_grab_capability(cmr_handle oem_handle,
                                    struct cmr_path_capability *capability);
 cmr_int camera_local_image_sw_algorithm_processing(
-    cmr_handle oem_handle, struct image_sw_algorithm_buf *sw_algorithm_buf,
+    cmr_handle oem_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     enum img_data_type format);
 

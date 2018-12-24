@@ -11242,6 +11242,19 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
+
+    if (prev_cxt->prev_param.is_3dnr == 1) {
+        chn_param.cap_inf_cfg.cfg.enable_slave_img = 1;
+        chn_param.cap_inf_cfg.cfg.dst_slave_img_size.height = 960;
+        chn_param.cap_inf_cfg.cfg.dst_slave_img_size.width = 1280;
+        chn_param.cap_inf_cfg.cfg.slave_img_fmt = prev_cxt->cap_org_fmt;
+        CMR_LOGD("dst_slave_img_size.height %d dst_slave_img_size.width %d "
+                 "slave_img_fmt %d",
+                 chn_param.cap_inf_cfg.cfg.dst_slave_img_size.height,
+                 chn_param.cap_inf_cfg.cfg.dst_slave_img_size.width,
+                 chn_param.cap_inf_cfg.cfg.slave_img_fmt);
+    }
+
     if (capability.yuv_available_cnt && !chn_param.is_lightly &&
         prev_cxt->prev_param.video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
         /*config channel*/
