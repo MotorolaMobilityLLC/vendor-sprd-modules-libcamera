@@ -31,7 +31,8 @@
 #define ISP_IN_Q_LEN			4
 #define ISP_PROC_Q_LEN			2
 #define ISP_RESULT_Q_LEN		2
-#define ISP_OUT_BUF_Q_LEN		16
+/* enlarge this for frame skip in slow motion mode */
+#define ISP_OUT_BUF_Q_LEN		32
 #define ISP_RESERVE_BUF_Q_LEN		3
 
 

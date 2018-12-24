@@ -831,9 +831,6 @@ static int dcam_set_mipi_cap(struct dcam_pipe_dev *dev,
 	DCAM_REG_MWR(idx, DCAM_MIPI_CAP_CFG, BIT_5 | BIT_4, reg_val << 4);
 
 	/* frame deci */
-	if (dev->enable_slowmotion)
-		/* TODO set low frame rate in slow motion before ISP FMCU ready */
-		cap_info->frm_deci = 3;
 	DCAM_REG_MWR(idx, DCAM_MIPI_CAP_CFG, BIT_7 | BIT_6,
 			cap_info->frm_deci << 6);
 
