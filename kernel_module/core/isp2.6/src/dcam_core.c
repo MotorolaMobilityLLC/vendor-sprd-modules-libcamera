@@ -2212,6 +2212,12 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 		atomic_dec(&s_dcam_working);
 	atomic_set(&dev->state, STATE_IDLE);
 
+	dev->blk_dcam_pm->aem.bypass = 1;
+	dev->blk_dcam_pm->afm.bypass = 1;
+	dev->blk_dcam_pm->afl.bypass = 1;
+	dev->blk_dcam_pm->hist.bayerHist_info.hist_bypass = 1;
+	dev->is_pdaf = dev->is_3dnr = dev->is_4in1 = 0;
+
 	dcam_k_param = &dev->blk_dcam_pm->lsc.blk_handle;
 	if (dcam_k_param) {
 		cambuf_iommu_unmap(&dcam_k_param->lsc_buf);
@@ -2281,6 +2287,10 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 	}
 	pr_info("alloc buf for all dcam pm success, %p, len %d\n",
 			dev->blk_dcam_pm, (int)sizeof(struct dcam_dev_param));
+	dev->blk_dcam_pm->aem.bypass = 1;
+	dev->blk_dcam_pm->afm.bypass = 1;
+	dev->blk_dcam_pm->afl.bypass = 1;
+	dev->blk_dcam_pm->hist.bayerHist_info.hist_bypass = 1;
 
 	ret = hw->ops->init(hw, dev);
 	if (ret) {

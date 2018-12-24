@@ -3434,7 +3434,15 @@ static int img_ioctl_stream_off(
 				}
 			}
 		}
-		ch->enable = 0;
+	}
+
+	for (i = 0; i < CAM_CH_MAX; i++) {
+		ch = &module->channel[i];
+		memset(ch, 0, sizeof(struct channel_context));
+		ch->ch_id = i;
+		ch->dcam_path_id = -1;
+		ch->isp_path_id = -1;
+		init_completion(&ch->alloc_com);
 	}
 
 	if (running) {
@@ -3484,9 +3492,10 @@ static int img_ioctl_start_capture(
 
 		if (idx < 2 && module->dcam_dev_handle) {
 			mutex_lock(&dbg->dump_lock);
-			if (dbg->dump_ongoing & (1 << idx)) {
+			if (!(dbg->dump_ongoing & (1 << idx))){
 				complete(&module->dump_thrd.thread_com);
-				module->dump_count = 99;
+				dbg->dump_count = 99;
+				pr_debug("trigger sdump capture raw\n");
 			}
 			mutex_unlock(&dbg->dump_lock);
 		}
