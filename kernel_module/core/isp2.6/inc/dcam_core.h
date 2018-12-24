@@ -179,7 +179,7 @@ struct dcam_pipe_dev {
 	uint32_t irq;
 	atomic_t state;// TODO: use mutex to protect
 
-	uint64_t frame_index;
+	uint32_t frame_index;
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
 	uint32_t helper_enabled;

@@ -51,8 +51,45 @@ static const uint32_t isp_irq_process[] = {
 	ISP_INT_FMCU_STORE_DONE,
 };
 
+//#define ISP_INT_RECORD 1
+#ifdef ISP_INT_RECORD
+#define INT_RCD_SIZE 0x10000
+static uint32_t isp_int_recorder[ISP_CONTEXT_NUM][32][INT_RCD_SIZE];
+static uint32_t int_index[ISP_CONTEXT_NUM][32];
+#endif
 
-static int irq_done[4][32];
+static uint32_t irq_done[ISP_CONTEXT_NUM][32];
+
+static inline void record_isp_int(enum isp_context_id c_id, uint32_t irq_line)
+{
+	uint32_t k;
+
+	for (k = 0; k < 32; k++) {
+		if (irq_line & (1 << k))
+			irq_done[c_id][k]++;
+	}
+
+#ifdef ISP_INT_RECORD
+	{
+		uint32_t cnt, time, int_no;
+		struct timespec cur_ts;
+
+		ktime_get_ts(&cur_ts);
+		time = (uint32_t)(cur_ts.tv_sec & 0xffff);
+		time <<= 16;
+		time |= (uint32_t)((cur_ts.tv_nsec / (NSEC_PER_USEC *100)) & 0xffff);
+		for (int_no = 0; int_no < 32; int_no++) {
+			if (irq_line & BIT(int_no)) {
+				cnt = int_index[c_id][int_no];
+				isp_int_recorder[c_id][int_no][cnt] = time;
+				cnt++;
+				int_index[c_id][int_no] = (cnt & (INT_RCD_SIZE - 1));
+			}
+		}
+	}
+#endif
+}
+
 
 static void isp_frame_done(enum isp_context_id idx, struct isp_pipe_dev *dev)
 {
@@ -331,10 +368,8 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 		pr_debug("cid: %d,  irq_line: %08x\n", c_id,  irq_line);
 		if (unlikely(irq_line == 0))
 			continue;
-		for (k = 0; k < 32; k++) {
-			if (irq_line & (1 << k))
-				irq_done[c_id][k]++;
-		}
+
+		record_isp_int(c_id, irq_line);
 
 		/*clear the interrupt*/
 		ISP_HREG_WR(irq_offset + ISP_INT_CLR0, irq_line);
@@ -411,7 +446,15 @@ int isp_irq_request(struct device *p_dev,
 
 int reset_isp_irq_cnt(int ctx_id)
 {
-	memset(irq_done[ctx_id], 0, sizeof(irq_done[ctx_id]));
+	if (ctx_id < ISP_CONTEXT_NUM)
+		memset(irq_done[ctx_id], 0, sizeof(irq_done[ctx_id]));
+
+#ifdef ISP_INT_RECORD
+	if (ctx_id < ISP_CONTEXT_NUM) {
+		memset(isp_int_recorder[ctx_id][0], 0, sizeof(isp_int_recorder) / ISP_CONTEXT_NUM);
+		memset(int_index[ctx_id], 0, sizeof(int_index) / ISP_CONTEXT_NUM);
+	}
+#endif
 	return 0;
 }
 
@@ -422,6 +465,28 @@ int trace_isp_irq_cnt(int ctx_id)
 	for (i = 0; i < 32; i++)
 		pr_debug("done %d %d :   %d\n", ctx_id, i, irq_done[ctx_id][i]);
 
+#ifdef ISP_INT_RECORD
+	{
+		uint32_t cnt, j;
+		int idx = ctx_id;
+		for (cnt = 0; cnt < (uint32_t)irq_done[idx][ISP_INT_SHADOW_DONE]; cnt+=4) {
+			j = (cnt & (INT_RCD_SIZE - 1)); //rolling
+			pr_info("isp%u j=%d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d\n",
+			idx, j, (uint32_t)isp_int_recorder[idx][ISP_INT_ISP_ALL_DONE][j] >> 16,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_ISP_ALL_DONE][j] & 0xffff,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_SHADOW_DONE][j] >> 16,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_SHADOW_DONE][j] & 0xffff,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_DISPATCH_DONE][j] >> 16,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_DISPATCH_DONE][j] & 0xffff,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_STORE_DONE_PRE][j] >> 16,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_STORE_DONE_PRE][j] & 0xffff,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_STORE_DONE_VID][j] >> 16,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_STORE_DONE_VID][j] & 0xffff,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_FMCU_CONFIG_DONE][j] >> 16,
+			 (uint32_t)isp_int_recorder[idx][ISP_INT_FMCU_CONFIG_DONE][j] & 0xffff);
+		}
+	}
+#endif
 	return 0;
 }
 

@@ -39,7 +39,48 @@
 	fmt, current->pid, __LINE__, __func__
 
 
+/*
+ * track interrupt count for debug use
+ */
+//#define DCAM_INT_RECORD 1
+#ifdef DCAM_INT_RECORD
+#define INT_RCD_SIZE 0x10000
+static uint32_t dcam_int_recorder[DCAM_ID_MAX][DCAM_IRQ_NUMBER][INT_RCD_SIZE];
+static uint32_t int_index[DCAM_ID_MAX][DCAM_IRQ_NUMBER];
+#endif
 
+static uint32_t dcam_int_tracker[DCAM_ID_MAX][DCAM_IRQ_NUMBER];
+
+
+static inline void record_dcam_int(uint32_t idx, uint32_t status)
+{
+	uint32_t i;
+
+	for (i = 0; i < DCAM_IRQ_NUMBER; i++) {
+		if (status & BIT(i))
+			dcam_int_tracker[idx][i]++;
+	}
+
+#ifdef DCAM_INT_RECORD
+	{
+		uint32_t cnt, time, int_no;
+		struct timespec cur_ts;
+
+		ktime_get_ts(&cur_ts);
+		time = (uint32_t)(cur_ts.tv_sec & 0xffff);
+		time <<= 16;
+		time |= (uint32_t)((cur_ts.tv_nsec / (NSEC_PER_USEC *100)) & 0xffff);
+		for (int_no = 0; int_no < DCAM_IRQ_NUMBER; int_no++) {
+			if (status & BIT(int_no)) {
+				cnt = int_index[idx][int_no];
+				dcam_int_recorder[idx][int_no][cnt] = time;
+				cnt++;
+				int_index[idx][int_no] = (cnt & (INT_RCD_SIZE - 1));
+			}
+		}
+	}
+#endif
+}
 
 
 static void dcam_auto_copy(enum dcam_id idx)
@@ -155,7 +196,7 @@ static void dcam_cap_sof(void *param)
 	struct dcam_sync_helper *helper = NULL;
 
 	dev->frame_index++;
-	pr_debug("DCAM%u cnt=%d, fid: %llu\n", dev->idx,
+	pr_debug("DCAM%u cnt=%d, fid: %u\n", dev->idx,
 		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
 		 dev->frame_index);
 
@@ -198,7 +239,7 @@ static void dcam_preview_sof(void *param)
 	int i = 0;
 
 	dev->frame_index += dev->slowmotion_count;
-	pr_debug("DCAM%u cnt=%d, fid: %llu\n", dev->idx,
+	pr_debug("DCAM%u cnt=%d, fid: %u\n", dev->idx,
 		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
 		 dev->frame_index);
 
@@ -451,10 +492,6 @@ static void dcam_nr3_done(void *param)
 	}
 }
 
-/*
- * track interrupt count for debug use
- */
-static uint64_t dcam_int_tracker[DCAM_ID_MAX][DCAM_IRQ_NUMBER];
 
 /*
  * reset tracker
@@ -463,6 +500,13 @@ void dcam_reset_int_tracker(uint32_t idx)
 {
 	if (is_dcam_id(idx))
 		memset(dcam_int_tracker[idx], 0, sizeof(dcam_int_tracker[idx]));
+
+#ifdef DCAM_INT_RECORD
+	if (is_dcam_id(idx)) {
+		memset(dcam_int_recorder[idx][0], 0, sizeof(dcam_int_recorder) / 3);
+		memset(int_index[idx], 0, sizeof(int_index) / 3);
+	}
+#endif
 }
 
 /*
@@ -476,9 +520,31 @@ void dcam_dump_int_tracker(uint32_t idx)
 		return;
 
 	for (i = 0; i < DCAM_IRQ_NUMBER; i++) {
-		pr_info("DCAM%u i=%d, int=%llu\n", idx, i,
+		pr_info("DCAM%u i=%d, int=%u\n", idx, i,
 			 dcam_int_tracker[idx][i]);
 	}
+
+#ifdef DCAM_INT_RECORD
+	{
+		uint32_t cnt, j;
+		for (cnt = 0; cnt < (uint32_t)dcam_int_tracker[idx][DCAM_SENSOR_EOF]; cnt+=4) {
+			j = (cnt & (INT_RCD_SIZE - 1)); //rolling
+			pr_info("DCAM%u j=%d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d\n",
+			idx, j, (uint32_t)dcam_int_recorder[idx][DCAM_SENSOR_EOF][j] >> 16,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_SENSOR_EOF][j] & 0xffff,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_CAP_SOF][j] >> 16,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_CAP_SOF][j] & 0xffff,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_FULL_PATH_TX_DONE][j] >> 16,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_FULL_PATH_TX_DONE][j] & 0xffff,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_PREV_PATH_TX_DONE][j] >> 16,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_PREV_PATH_TX_DONE][j] & 0xffff,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_AEM_TX_DONE][j] >> 16,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_AEM_TX_DONE][j] & 0xffff,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_AFM_INTREQ1][j] >> 16,
+			 (uint32_t)dcam_int_recorder[idx][DCAM_AFM_INTREQ1][j] & 0xffff);
+		}
+	}
+#endif
 }
 
 /*
@@ -615,10 +681,7 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 
 	DCAM_REG_WR(dev->idx, DCAM_INT_CLR, status);
 
-	for (i = 0; i < DCAM_IRQ_NUMBER; i++) {
-		if (status & BIT(i))
-			dcam_int_tracker[dev->idx][i]++;
-	}
+	record_dcam_int(dev->idx, status);
 
 	if (unlikely(DCAMINT_ALL_ERROR & status))
 		return dcam_error_handler(dev, status);
