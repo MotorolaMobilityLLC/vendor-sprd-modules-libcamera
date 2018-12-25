@@ -2079,6 +2079,14 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 			if (cxt->ops.pdaf_ops.process)
 				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 		}
+	}else if (SENSOR_DUAL_PDAF_ENABLE == cxt->pdaf_cxt.pdaf_support) {
+		if (cxt->ops.pdaf_ops.ioctrl)
+			cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
+		ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
+		if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
+			if (cxt->ops.pdaf_ops.process)
+				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+		}
 	}
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
@@ -3775,6 +3783,18 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 				vch2_info.vch2_data_type, vch2_info.vch2_mode);
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
 				ISP_DEV_SET_PDAF_TYPE2_CFG, &vch2_info, 0);
+	}
+	if (pdaf_info && in_ptr->pdaf_enable
+		&& SENSOR_DUAL_PDAF_ENABLE == cxt->pdaf_cxt.pdaf_support  ) {
+		vch2_info.bypass = pdaf_info->vch2_info.bypass;
+		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
+		vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
+		vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
+		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
+				vch2_info.bypass, vch2_info.vch2_vc,
+				vch2_info.vch2_data_type, vch2_info.vch2_mode);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+				ISP_DEV_SET_DUAL_PDAF_CFG, &vch2_info, 0);
 	}
 
 	if (cxt->ebd_cxt.ebd_support) {

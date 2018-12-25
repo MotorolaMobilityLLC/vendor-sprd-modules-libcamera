@@ -127,6 +127,28 @@ static int isp_k_pdaf_type2_block(struct isp_io_param *param, enum dcam_id idx)
 	return ret;
 }
 
+static int isp_k_dual_pdaf_block(struct isp_io_param *param, enum dcam_id idx)
+{
+	int ret = 0;
+	struct dev_dcam_vc2_control vch2_info;
+
+	memset(&vch2_info, 0x00, sizeof(vch2_info));
+	ret = copy_from_user((void *)&vch2_info,
+		param->property_param, sizeof(vch2_info));
+	if (ret != 0) {
+		pr_err("fail to copy from user, ret = %d\n", ret);
+		return -1;
+	}
+
+	DCAM_REG_MWR(idx, DCAM_CFG, BIT_3, BIT_3);
+	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
+		(vch2_info.vch2_vc & 0x03) << 16
+		|(vch2_info.vch2_data_type & 0x3f) << 8
+		|(vch2_info.vch2_mode & 0x03));
+
+	return ret;
+}
+
 static int isp_k_pdaf_block(struct isp_io_param *param, enum dcam_id idx)
 {
 	int ret = 0;
@@ -323,6 +345,9 @@ int dcam_k_cfg_pdaf(struct isp_io_param *param, struct dcam_dev_param *p)
 		break;
 	case DCAM_PRO_PDAF_TYPE2_BLOCK:
 		ret = isp_k_pdaf_type2_block(param, idx);
+		break;
+	case DCAM_PRO_DUAL_PDAF_BLOCK:
+		ret = isp_k_dual_pdaf_block(param, idx);
 		break;
 	default:
 		pr_err("fail to support cmd id = %d\n",
