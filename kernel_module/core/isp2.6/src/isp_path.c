@@ -726,14 +726,23 @@ int isp_cfg_path_size(struct isp_path_desc *path, void *param)
 
 	case ISP_STORE_YUV422_2FRAME:
 	case ISP_STORE_YVU422_2FRAME:
+		store->pitch.pitch_ch0 = store->size.w;
+		store->pitch.pitch_ch1 = store->size.w;
+		store->total_size = store->size.w * store->size.h * 2;
+
 	case ISP_STORE_YUV420_2FRAME:
 	case ISP_STORE_YVU420_2FRAME:
 		store->pitch.pitch_ch0 = store->size.w;
 		store->pitch.pitch_ch1 = store->size.w;
-		store->total_size = store->size.w * store->size.h * 2;
+		store->total_size = store->size.w * store->size.h * 3 / 2;
 		break;
 
 	case ISP_STORE_YUV422_3FRAME:
+		store->pitch.pitch_ch0 = store->size.w;
+		store->pitch.pitch_ch1 = store->size.w / 2;
+		store->pitch.pitch_ch2 = store->size.w / 2;
+		store->total_size = store->size.w * store->size.h * 2;
+
 	case ISP_STORE_YUV420_3FRAME:
 		store->pitch.pitch_ch0 = store->size.w;
 		store->pitch.pitch_ch1 = store->size.w / 2;

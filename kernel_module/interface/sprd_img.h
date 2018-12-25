@@ -256,6 +256,13 @@ struct sprd_img_size {
 	uint32_t h;
 };
 
+struct sprd_img_binding {
+	/* for binding small picture */
+	uint32_t enable;
+	uint32_t pixel_fmt;
+	struct sprd_img_size dst_size;
+};
+
 struct sprd_img_rect {
 	uint32_t x;
 	uint32_t y;
@@ -423,6 +430,7 @@ struct sprd_img_parm {
 	struct sprd_ebd_control   ebd_ctrl;
 	uint32_t                  is_high_fps;
 	uint32_t                  high_fps_skip_num;
+	struct sprd_img_binding	  aux_img;
 	uint32_t                  reserved[4];
 };
 

@@ -2409,18 +2409,18 @@ static int img_ioctl_set_output_size(
 			&uparam->crop_rect, sizeof(struct sprd_img_rect));
 	ret |= copy_from_user(&dst->dst_size,
 			&uparam->dst_size, sizeof(struct sprd_img_size));
-#if 0
-	/* todo: update sprd_img.h */
 	ret |= get_user(dst->slave_img_en, &uparam->aux_img.enable);
 	ret |= get_user(dst->slave_img_fmt, &uparam->aux_img.pixel_fmt);
 	ret |= copy_from_user(&dst->slave_img_size,
 			&uparam->aux_img.dst_size, sizeof(struct sprd_img_size));
-#endif
-	pr_info("high fps %u %u. crop %d %d %d %d. dst size %d %d\n",
+
+	pr_info("high fps %u %u. crop %d %d %d %d. dst size %d %d. aux %d %d %d %d\n",
 		dst->is_high_fps, dst->high_fps_skip_num,
 		dst->src_crop.x, dst->src_crop.y,
 		dst->src_crop.w, dst->src_crop.h,
-		dst->dst_size.w, dst->dst_size.h);
+		dst->dst_size.w, dst->dst_size.h,
+		dst->slave_img_en, dst->slave_img_fmt,
+		dst->slave_img_size.w, dst->slave_img_size.h);
 
 exit:
 	return ret;
