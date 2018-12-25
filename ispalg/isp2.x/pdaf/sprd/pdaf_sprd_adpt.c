@@ -505,7 +505,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->pd_gobal_setting.dBeginX = BEGIN_X_0;
 		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_0;
 	}
-	cxt->ppi_info.pd_pos_size = in_p->pd_info->pd_pos_size;
 	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x) / (8 << cxt->ppi_info.block_size.width);
 	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y) / (8 << cxt->ppi_info.block_size.height);
 	cmr_u32 phasepixel_total_num = block_num_x * block_num_y * in_p->pd_info->pd_pos_size;
