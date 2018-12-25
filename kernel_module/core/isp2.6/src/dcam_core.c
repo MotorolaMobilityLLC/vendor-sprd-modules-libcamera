@@ -53,6 +53,7 @@
 #define pr_fmt(fmt) "DCAM_CORE: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
+#define DCAMX_STOP_TIMEOUT 2000
 #define DCAM_AXI_STOP_TIMEOUT 2000
 #define DCAM_AXIM_AQOS_MASK (0x30FFFF)
 
@@ -70,13 +71,13 @@ struct statis_path_buf_info s_statis_path_info_all[] = {
 	{DCAM_PATH_3DNR,    STATIS_3DNR_BUF_SIZE,  STATIS_3DNR_BUF_NUM},
 };
 static atomic_t s_dcam_working;
+static atomic_t s_dcam_axi_opened;
 
 
 /* dcam debugfs start */
 #define DCAM_DEBUG
 uint32_t s_dbg_bypass[DCAM_ID_MAX] = { 0, 0, 0 };
 static atomic_t s_dcam_opened[DCAM_ID_MAX];
-static atomic_t s_dcam_axi_opened;
 uint32_t g_dbg_zoom_mode = 1;
 uint32_t g_dbg_rds_limit = 30;
 
@@ -595,30 +596,12 @@ static void dcam_force_copy(struct dcam_pipe_dev *dev)
 static void dcam_init_default(struct dcam_pipe_dev *dev)
 {
 	uint32_t idx, bypass, eb;
-	uint32_t reg_val;
 
 	if (unlikely(!dev)) {
 		pr_warn("invalid param dev\n");
 		return;
 	}
 	idx = dev->idx;
-
-	if (1) {
-		/* todo: AXIM shared by all dcam, should be init once only...*/
-		pr_info("set AXIM.\n");
-		dcam_aximreg_set_default_value();
-
-		/* the end, enable AXI writing */
-		DCAM_AXIM_MWR(AXIM_CTRL, BIT_24 | BIT_23, (0x0 << 23));
-
-		reg_val = (0x0 << 20) |
-			((dev->hw->arqos_low & 0xF) << 12) |
-			(0x8 << 8) |
-			((dev->hw->awqos_high & 0xF) << 4) |
-			(dev->hw->awqos_low & 0xF);
-		DCAM_AXIM_MWR(AXIM_CTRL,
-				DCAM_AXIM_AQOS_MASK, reg_val);
-	}
 
 	/* init registers(sram regs) to default value */
 	dcam_reg_set_default_value(idx);
@@ -661,50 +644,86 @@ static int dcam_reset(struct dcam_pipe_dev *dev)
 		BIT_MM_AHB_DCAM1_SOFT_RST,
 		BIT_MM_AHB_DCAM2_SOFT_RST
 	};
+	uint32_t sts_bit[DCAM_ID_MAX] = {
+		BIT(12), BIT(13), BIT(14)
+	};
 
 	pr_info("DCAM%d: reset.\n", idx);
 
-	/* firstly, stop AXI writing.
-	 *  todo: should consider other dcamX work status here.
-	 */
-	DCAM_AXIM_MWR(AXIM_CTRL, BIT_24 | BIT_23, (0x3 << 23));
-
-	/* then wait for AHB busy cleared */
+	/* then wait for AXIM cleared */
 	while (++time_out < DCAM_AXI_STOP_TIMEOUT) {
-		if (0 == (DCAM_AXIM_RD(AXIM_DBG_STS) & 0x0F))
+		if (0 == (DCAM_AXIM_RD(AXIM_DBG_STS) & sts_bit[idx]))
 			break;
+		udelay(1000);
 	}
 
 	if (time_out >= DCAM_AXI_STOP_TIMEOUT) {
 		pr_info("DCAM%d: reset timeout, axim status 0x%x\n", idx,
 			DCAM_AXIM_RD(AXIM_DBG_STS));
+	} else {
+		flag = reset_bit[idx];
+		regmap_update_bits(hw->cam_ahb_gpr,
+			REG_MM_AHB_AHB_RST, flag, flag);
+		udelay(10);
+		regmap_update_bits(hw->cam_ahb_gpr,
+			REG_MM_AHB_AHB_RST, flag, ~flag);
 	}
-
-	pr_info("hw %p, cam_ahb_gpr %p\n",
-			hw, hw->cam_ahb_gpr);
-
-	flag = reset_bit[idx];
-	/* todo: reset DCAMx here from mm sys */
-	regmap_update_bits(hw->cam_ahb_gpr, REG_MM_AHB_AHB_RST, flag, flag);
-	udelay(1);
-	pr_info("hw %p, cam_ahb_gpr %p\n",
-			hw, hw->cam_ahb_gpr);
-
-	regmap_update_bits(hw->cam_ahb_gpr,
-		REG_MM_AHB_AHB_RST, flag, ~flag);
-	pr_info("hw %p, cam_ahb_gpr %p\n",
-			hw, hw->cam_ahb_gpr);
 
 	DCAM_REG_MWR(idx, DCAM_INT_CLR,
 		DCAMINT_IRQ_LINE_MASK, DCAMINT_IRQ_LINE_MASK);
 	DCAM_REG_MWR(idx, DCAM_INT_EN,
 		DCAMINT_IRQ_LINE_MASK, DCAMINT_IRQ_LINE_MASK);
 
-	pr_info("set default regs.\n");
 	dcam_init_default(dev);
-
 	pr_info("DCAM%d: reset end\n", idx);
+
 	return ret;
+}
+
+
+static void dcam_init_axim(struct sprd_cam_hw_info *hw)
+{
+	uint32_t reg_val;
+	uint32_t time_out = 0;
+
+	/* firstly, stop AXI writing. */
+	DCAM_AXIM_MWR(AXIM_CTRL, BIT_24 | BIT_23, (0x3 << 23));
+
+	/* then wait for AHB busy cleared */
+	while (++time_out < DCAM_AXI_STOP_TIMEOUT) {
+		if (0 == (DCAM_AXIM_RD(AXIM_DBG_STS) & 0x1F00F))
+			break;
+		udelay(1000);
+	}
+
+	if (time_out >= DCAM_AXI_STOP_TIMEOUT) {
+		pr_info("dcam axim timeout status 0x%x\n",
+			DCAM_AXIM_RD(AXIM_DBG_STS));
+	} else {
+		/* reset dcam all (0/1/2/bus) */
+		regmap_update_bits(hw->cam_ahb_gpr,
+			REG_MM_AHB_AHB_RST,
+			BIT_MM_AHB_DCAM_ALL_SOFT_RST,
+			BIT_MM_AHB_DCAM_ALL_SOFT_RST);
+		udelay(10);
+		regmap_update_bits(hw->cam_ahb_gpr,
+			REG_MM_AHB_AHB_RST,
+			BIT_MM_AHB_DCAM_ALL_SOFT_RST, 0);
+	}
+
+	/* AXIM shared by all dcam, should be init once only...*/
+	dcam_aximreg_set_default_value();
+
+	reg_val = (0x0 << 20) |
+		((hw->arqos_low & 0xF) << 12) |
+		(0x8 << 8) |
+		((hw->awqos_high & 0xF) << 4) |
+		(hw->awqos_low & 0xF);
+	DCAM_AXIM_MWR(AXIM_CTRL,
+			DCAM_AXIM_AQOS_MASK, reg_val);
+
+	/* the end, enable AXI writing */
+	DCAM_AXIM_MWR(AXIM_CTRL, BIT_24 | BIT_23, (0x0 << 23));
 }
 
 /*
@@ -737,19 +756,19 @@ static int dcam_start(struct dcam_pipe_dev *dev)
 static int dcam_stop(struct dcam_pipe_dev *dev)
 {
 	int ret = 0;
-	int time_out = 3000;
+	int time_out = DCAMX_STOP_TIMEOUT;
 	uint32_t idx = dev->idx;
 
 	/* reset  cap_en*/
 	DCAM_REG_MWR(idx, DCAM_CFG, BIT_0, 0);
-	DCAM_REG_WR(idx, DCAM_PATH_STOP, 0xFF);
+	DCAM_REG_WR(idx, DCAM_PATH_STOP, 0x2DFF);
 
 	DCAM_REG_WR(idx, DCAM_INT_EN, 0);
 	DCAM_REG_WR(idx, DCAM_INT_CLR, 0xFFFFFFFF);
 
 	/* wait for AHB path busy cleared */
 	while (time_out) {
-		ret = DCAM_REG_RD(idx, DCAM_PATH_BUSY) & 0xFFF;
+		ret = DCAM_REG_RD(idx, DCAM_PATH_BUSY) & 0x2FFF;
 		if (!ret)
 			break;
 		udelay(1000);
@@ -757,9 +776,9 @@ static int dcam_stop(struct dcam_pipe_dev *dev)
 	}
 
 	if (time_out == 0)
-		pr_err("DCAM%d: stop timeout for 3s\n", idx);
+		pr_err("DCAM%d: stop timeout for 2s\n", idx);
 
-	pr_info("dcam stop\n");
+	pr_info("dcam%d stop\n", idx);
 	return ret;
 }
 
@@ -2299,6 +2318,8 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 		goto exit;
 	}
 
+	if (atomic_inc_return(&s_dcam_axi_opened) == 1)
+		dcam_init_axim(dev->hw);
 	ret = dcam_reset(dev);
 	if (ret)
 		goto reset_fail;
@@ -2317,15 +2338,19 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 
 	/* for debugfs */
 	atomic_inc(&s_dcam_opened[dev->idx]);
-	atomic_inc(&s_dcam_axi_opened);
 
 	pr_info("open dcam pipe dev[%d]!\n", dev->idx);
 
 	return 0;
 
 reset_fail:
+	atomic_dec(&s_dcam_axi_opened);
 	ret = hw->ops->deinit(hw, dev);
 exit:
+	if (dev->blk_dcam_pm) {
+		kfree(dev->blk_dcam_pm);
+		dev->blk_dcam_pm = NULL;
+	}
 	if (dev->path[DCAM_PATH_BIN].rds_coeff_buf) {
 		kfree(dev->path[DCAM_PATH_BIN].rds_coeff_buf);
 		dev->path[DCAM_PATH_BIN].rds_coeff_buf = NULL;

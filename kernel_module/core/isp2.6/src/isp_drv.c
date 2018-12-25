@@ -170,9 +170,6 @@ static void set_common(struct sprd_cam_hw_info *hw)
 	uint32_t wqos_val = 0;
 	uint32_t rqos_val = 0;
 
-	/* to be refined. */
-	ISP_HREG_MWR(ISP_AXI_ITI2AXIM_CTRL, 0xFF00, (1 << 8));
-
 	wqos_val = (0x1 << 13) | (0x0 << 12) | (0x4 << 8) |
 			((hw->awqos_high & 0xF) << 4) |
 			(hw->awqos_low &0xF);
@@ -196,6 +193,8 @@ static void set_common(struct sprd_cam_hw_info *hw)
 	ISP_HREG_MWR(ISP_ARBITER_ENDIAN0, BIT_0, 0);
 	ISP_HREG_WR(ISP_ARBITER_CHK_SUM_CLR, 0xF10);
 	ISP_HREG_WR(ISP_ARBITER_CHK_SUM0, 0x0);
+	/* enable axim transfering */
+	ISP_HREG_MWR(ISP_AXI_ITI2AXIM_CTRL, BIT_26, 0);
 
 	/* to be defined. */
 	ISP_HREG_MWR(
@@ -271,28 +270,31 @@ static int isp_reset(struct sprd_cam_hw_info *hw, void *arg)
 	uint32_t time_out = 0;
 	uint32_t flag = 0;
 
-	pr_info("ISP%d: reset:\n", hw->idx);
+	pr_info("ISP%d: reset\n", hw->idx);
+
+	/* firstly stop axim transfering */
+	ISP_HREG_MWR(ISP_AXI_ITI2AXIM_CTRL, BIT(26), BIT(26));
 
 	/* then wait for AHB busy cleared */
 	while (++time_out < ISP_AXI_STOP_TIMEOUT) {
-		if (1 == ((ISP_HREG_RD(ISP_INT_STATUS) & BIT_3) >> 3))
+		/* bit3: 1 - axi idle;  0 - axi busy */
+		if  (ISP_HREG_RD(ISP_INT_STATUS) & BIT_3)
 			break;
+		udelay(1000);
 	}
+
 	if (time_out >= ISP_AXI_STOP_TIMEOUT) {
 		pr_info("ISP reset timeout %d\n", time_out);
-		return -EFAULT;
+	} else {
+		flag = BIT_MM_AHB_ISP_SOFT_RST | BIT_MM_AHB_ISP_AHB_SOFT_RST;
+		regmap_update_bits(hw->cam_ahb_gpr,
+			REG_MM_AHB_AHB_RST, flag, flag);
+		udelay(10);
+		regmap_update_bits(hw->cam_ahb_gpr,
+			REG_MM_AHB_AHB_RST, flag, ~flag);
 	}
 
-	pr_info("bypass reset process in haps\n");
-
-	flag = BIT_MM_AHB_ISP_SOFT_RST | BIT_MM_AHB_ISP_AHB_SOFT_RST;
-	/* todo: reset ISP here from mm sys */
-	regmap_update_bits(hw->cam_ahb_gpr,
-		REG_MM_AHB_AHB_RST, flag, flag);
-	udelay(1);
-	regmap_update_bits(hw->cam_ahb_gpr,
-		REG_MM_AHB_AHB_RST, flag, ~flag);
-
+	/* enable axim transfering */
 	ISP_HREG_MWR(ISP_AXI_ITI2AXIM_CTRL, BIT_26, 0);
 
 	for (cid = 0; cid < 4; cid++) {
@@ -300,10 +302,10 @@ static int isp_reset(struct sprd_cam_hw_info *hw, void *arg)
 		isp_irq_disable(hw, &cid);
 	}
 
-	pr_info("ISP rest end\n");
-
+	pr_info("ISP%d: reset end\n", hw->idx);
 	return rtn;
 }
+
 static int isp_enable_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
 	int ret = 0;
