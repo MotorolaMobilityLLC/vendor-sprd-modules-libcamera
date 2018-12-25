@@ -62,7 +62,7 @@ static void write_pd_table(struct pdaf_ppi_info *pdaf_info, enum dcam_id idx)
 		break;
 	}
 
-	for (i = 0; i < pdaf_info->pd_pos_size * 2; i++) {
+	for (i = 0; i < pd_num; i++) {
 		col = pdaf_info->pattern_pixel_col[i];
 		row = pdaf_info->pattern_pixel_row[i];
 		is_right = pdaf_info->pattern_pixel_is_right[i] & 0x01;
@@ -77,7 +77,7 @@ static void write_pd_table(struct pdaf_ppi_info *pdaf_info, enum dcam_id idx)
 
 	DCAM_REG_MWR(idx, ISP_PPI_PARAM, 0x007f0000, pd_num << 16);
 
-	for (i = 0; i < pdaf_info->pd_pos_size; i++)
+	for (i = 0; i < pd_num/2; i++)
 		DCAM_REG_MWR(idx, ISP_PPI_PATTERN01 + (i * 4), 0x1fff1fff, pdafinfo[i]);
 }
 
