@@ -376,7 +376,8 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	cxt->pdaf_support = in->pdaf_support;
 	ISP_LOGI("cxt->pdaf_support = %d", cxt->pdaf_support);
 	//cxt->init_in_param = *in;
-	if (SENSOR_PDAF_TYPE3_ENABLE != cxt->pdaf_support) {
+	if (SENSOR_PDAF_TYPE3_ENABLE != cxt->pdaf_support
+		&& SENSOR_DUAL_PDAF_ENABLE != cxt->pdaf_support) {
 		ISP_LOGI("this module isnot support pdaf type3");
 		ret = ISP_SUCCESS;
 		goto sucess_exit;
