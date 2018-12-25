@@ -850,7 +850,7 @@ static cmr_u32 ae_calc_target_lum(cmr_u32 cur_target_lum, enum ae_level level, s
 	if (level >= ev_table->diff_num)
 		level = ev_table->diff_num - 1;
 
-	ISP_LOGV("cur target lum=%d, ev diff=%d, level=%d", cur_target_lum, ev_table->lum_diff[level], level);
+	ISP_LOGD("cur target lum=%d, ev diff=%d, level=%d", cur_target_lum, ev_table->lum_diff[level], level);
 
 	target_lum = (cmr_s32) cur_target_lum + ev_table->lum_diff[level];
 	target_lum = (target_lum < 0) ? 0 : target_lum;
@@ -3693,7 +3693,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
-		if((cxt->app_mode < 32)&&(cxt->app_mode > 0)){
+		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
 			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
 			cxt->mode_switch[cxt->app_mode].dummy = cxt->last_exp_param.dummy;
 			cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
@@ -3922,7 +3922,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.dummy = cxt->last_exp_param.dummy;
 		}
 		src_exp.cur_index = cxt->last_index;
-		if((cxt->app_mode < 32)&&(cxt->app_mode > 0)){
+		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
 			if(0 != cxt->mode_switch[cxt->app_mode].gain){
 				src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
 				src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
