@@ -270,7 +270,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     }
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
-    property_set("lowpower.display.30fps", "true");
+    property_set("vendor.cam.lowpower.display.30fps", "true");
 #endif
 
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
@@ -472,9 +472,9 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 #if defined(LOWPOWER_DISPLAY_30FPS)
     char value[PROPERTY_VALUE_MAX];
-    property_get("lowpower.display.30fps", value, "false");
+    property_get("vendor.cam.lowpower.display.30fps", value, "false");
     if (!strcmp(value, "true")) {
-        property_set("lowpower.display.30fps", "false");
+        property_set("vendor.cam.lowpower.display.30fps", "false");
         HAL_LOGI("camera low power mode exit");
     }
 #endif

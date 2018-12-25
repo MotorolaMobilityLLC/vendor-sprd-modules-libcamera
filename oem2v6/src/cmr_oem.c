@@ -2991,7 +2991,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.ex_info.af_supported = 0;
     }
 
-    property_get("persist.sys.cam.ba.blur.version", value, "0");
+    property_get("persist.vendor.cam.ba.blur.version", value, "0");
 
     if (cxt->is_multi_mode == MODE_3D_CAPTURE ||
         cxt->is_multi_mode == MODE_3D_VIDEO ||

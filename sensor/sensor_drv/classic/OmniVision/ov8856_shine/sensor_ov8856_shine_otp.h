@@ -180,7 +180,7 @@ static uint32_t ov8856_read_otp_info(cmr_handle handle, void *param_ptr) {
     char value[255];
 
     property_get("debug.camera.save.otp.raw.data", value, "0");
-    FILE *fd = fopen("/data/misc/cameraserver/ov8856.otp.dump.bin", "wb+");
+    FILE *fd = fopen("/data/vendor/cameraserver/ov8856.otp.dump.bin", "wb+");
     for (i = 0x7010; i <= 0x720a; i++) {
         if (atoi(value) == 1) {
             cmr_u8 low_val = hw_sensor_read_reg(sns_drv_cxt->hw_handle, i);
