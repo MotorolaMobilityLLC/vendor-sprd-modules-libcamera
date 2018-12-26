@@ -3706,7 +3706,12 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		}
 
 		cxt->last_enable = 1;
-		cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
+		if(cxt->cur_status.settings.manual_mode==1){
+			cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
+		}else{
+			cxt->last_exp_param.target_offset = cxt->sync_cur_result.target_lum - cxt->sync_cur_result.target_lum_ori;
+		}
+
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
 		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
