@@ -22,6 +22,9 @@
 #define REGION_CFG_NUM AE_CFG_NUM
 #define FLAT_CFG_NUM AE_CFG_NUM
 #define FACE_CFG_NUM AE_CFG_NUM
+#define ABL_CFG_NUM AE_CFG_NUM
+#define PCP_CFG_NUM AE_CFG_NUM
+#define HM_CFG_NUM AE_CFG_NUM
 
 struct ae_param_tmp_001 {
 	cmr_u32 version;
@@ -161,6 +164,142 @@ struct ae_video_set_fps_param {
 	cmr_s32 ae_video_fps_thr_high;
 };
 
+#define ISP_BAYER_CHNL_NUM 4
+#define ISP_HIST_BIN_MX 1024
+#define BV_STEP_NUM 3
+
+struct hist_meter_range_type{
+	cmr_u32 num;
+	struct ae_range range[AE_PIECEWISE_MAX_NUM];
+};
+
+struct bv_evd_ranges_type {
+	cmr_u32 num;
+	cmr_s32 bv[AE_PIECEWISE_MAX_NUM];
+	cmr_s32 evd[AE_PIECEWISE_MAX_NUM];
+	cmr_s32 bright_ref[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
+	cmr_s32 dark_ref[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
+	cmr_s32 tar_adj_ratio_min[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
+	cmr_s32 tar_adj_ratio_max[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
+};
+
+struct hist_metering_tuning_param{
+	cmr_u32 enable;
+	cmr_u32 debug_lv;
+	cmr_u32 speed;
+	struct ae_ranges_type bv_range; /*zone define*/
+	struct hist_meter_range_type bright_ref;
+	struct hist_meter_range_type dark_ref;
+	struct ae_alg_rgb_gain bright_percent[BV_STEP_NUM];
+	struct ae_alg_rgb_gain dark_percent[BV_STEP_NUM];
+	struct ae_alg_rgb_gain final_bright_percent;
+	struct ae_alg_rgb_gain bright_percent4ev;
+	struct ae_alg_rgb_gain dark_percent4ev;
+	struct hist_meter_range_type tar_adj_ratio;
+	struct ae_alg_rgb_gain bright_threshold;
+	struct ae_alg_rgb_gain dark_threshold;
+	struct ae_alg_aoe aoe_param;
+	cmr_u16 lux_value;
+	cmr_s16 bv_value;
+	cmr_u16 bright_offset_weight;
+	cmr_u16 dark_offset_weight;
+	cmr_u16 bright_target_weight;
+	cmr_u16 dark_target_weight;
+	struct bv_evd_ranges_type bv_evd_range;
+};
+
+struct target_weight{
+	cmr_u16 ratio4base;
+	cmr_u16 ratio4hm;
+	cmr_u32 reserved;/*1 * 4bytes*/
+};/*3 * 4bytes*/
+
+struct hm_ratio_cfg{
+	cmr_u32 evd_low;
+	cmr_u32 evd_high;
+	cmr_u16 ratio0;
+	cmr_u16 ratio1;
+	cmr_u32 reserved;/*1 * 4bytes*/
+};/*4 * 4bytes*/
+
+struct hm_basic_cfg {
+	struct ae_piecewise_func bv_ratio_cfg;/*17*4bytes*/
+	struct ae_piecewise_func evd_ratio_cfg[HM_CFG_NUM];/*8 * 17*4bytes*/
+	struct ae_piecewise_func br_pcnt_cfg;/*bright region pcent config*//*17*4bytes*/
+};/*170*4bytes*/
+
+struct hm_aoe_cfg {
+	cmr_u16 strength;
+	cmr_u16 oe_thrd;
+	cmr_u32 oeratio_lowbnd;
+	cmr_u32 oeratio_highbnd;
+	struct ae_piecewise_func bv_ratio_cfg;/*17*4bytes*/
+};/*20*4bytes*/
+
+struct hm_coe_cfg {
+	cmr_u32 tar;/*1 * 4bytes*/
+	cmr_u32 tar4center;/*1 * 4bytes*/
+	cmr_u32 pcent;/*1 * 4bytes*/
+	cmr_u32 pcent4center;/*1 * 4bytes*/
+	cmr_u32 weight4coe;
+	struct ae_piecewise_func bg_y_ratio;/*17*4bytes*/
+	struct ae_piecewise_func evd_ratio;/*17*4bytes*/
+};/*39*4bytes*/
+
+struct ae_hm_tuning_param {
+	/*hist metering basic*/
+	cmr_u16 magic;
+	cmr_u8 enable;/*bit0:hm basic alg; bit1:aoe alg; bit2: coe alg*/
+	cmr_u8 reserved;/*1 * 4bytes*/
+	cmr_u32 weight;/*histogram algorithm weight*//*1 * 4bytes*/
+	cmr_u32 evd_dr_pcent;/*the dark regio define for EVD*/
+	cmr_u32 evd_br_pcent;/*the bright regio define for EVD*/
+	cmr_u16 highdy_tag_thd;/*target to high dynamic */
+	cmr_u16 flat_tag_thd;/*target to fllat */
+	struct hm_basic_cfg basic_cfg;/*170*4bytes*/
+	/*anti_overexposure*/
+	struct hm_aoe_cfg aoe_cfg;/*20*4bytes*/
+	/*central overexposure*/	
+	struct hm_coe_cfg coe_cfg;	/*39*4bytes*/
+	struct target_weight ratio;/*2*4bytes*/
+	struct hm_ratio_cfg flat4ratio; /*4*4bytes*/
+};/*240 * 4bytes*/
+
+struct ns_basic_cfg {
+	cmr_u16 base_pcnet;/*night normal percent*/
+	cmr_u16 reserved;/*1 * 4bytes*/
+	struct ae_piecewise_func thrd;/*night normal scene*//*17*4bytes*/
+};/*18 * 4bytes*/
+
+struct ns_bt_cfg {
+	cmr_u16 bt_tone_pcent;/*bright tone percent*/
+	cmr_u16 flat_bt_pcent;/*bright tone percent for night flat*/
+	cmr_u16 flat_dk_pcent;/*dark tone percent for night flat*/
+	cmr_u16 reserved;/*2 * 4bytes*/
+	struct ae_piecewise_func bt_thrd;/*bright tone*//*17*4bytes*/	
+	struct ae_piecewise_func sky_prob;/*17*4bytes*/
+};/*36 * 4 bytes*/
+
+struct ns_dk_cfg {
+	cmr_u16 dark_pcent;/*dark percent for night dark tone*/
+	cmr_u16 dark_thrd;/*dark thrd for night tone*/
+	cmr_u16  dark_thrd_max;/*the max value of dark thrd for night tone**/
+	cmr_u16 reserved;// 2 * 4bytes
+};/*2 * 4 bytes*/
+
+struct ae_nsm_tuning_param {
+	cmr_u8 magic[3];
+	cmr_u8 enable;/*1*4bytes*/
+	cmr_u16 flat_thrd;/*night flat thrd*/
+	cmr_u16 cdf_pcent;/*1*4bytes*/
+	struct ae_piecewise_func flat_prob;/*17*4bytes*/
+	struct ae_piecewise_func bv_prob;/*17*4bytes*/
+	struct ae_piecewise_func cdf_prob;/*17*4bytes*/
+	struct ns_basic_cfg basic_cfg;/*18 * 4bytes*/
+	struct ns_bt_cfg bt_cfg;/*36 * 4 bytes*/
+	struct ns_dk_cfg dk_cfg;/*2 * 4 bytes*/
+};/*109 * 4bytes*/
+
 struct ae_monitor_tuning_param {
 	cmr_s32 ae_monitor_win_num_w;
 	cmr_s32 ae_monitor_win_num_h;
@@ -175,10 +314,52 @@ struct ai_cfg {
 	cmr_s16 y_lum;         /*1 * 2bytes*/
 };
 
-struct ae_ai_tuning_param {
+struct ai_tuning_param {
 	cmr_u8 enable;		/*1 * 1bytes*/
 	cmr_u8 reserved;		/*1 * 1bytes*/
 	struct ai_cfg cfg_ai;	/*1 * 2bytes*/
+};
+
+struct ae_ai_tuning_param {
+	struct ai_tuning_param backlight_param;
+	struct ai_tuning_param sky_param;
+	struct ai_tuning_param foliage_param;
+	struct ai_tuning_param night_param;
+	struct ai_tuning_param outdoor_param;
+	struct ai_tuning_param indoor_param;
+};
+	
+typedef struct {
+	cmr_u16 lv;
+	cmr_u16 evd_thrd[2];
+	cmr_u16 strength_lv;
+	cmr_u16 strength_evd[2];
+} abl_cfg;	
+
+struct abl_tuning_param {
+	cmr_u8 enable;
+	cmr_u8 num;
+	cmr_u16 centerhighbnd;
+	cmr_u32 targetstrength;
+	abl_cfg cfg_info[ABL_CFG_NUM];
+	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
+	cmr_u32 abl_weight;
+	cmr_u32 tar_lum;
+	cmr_u32 tar_lum_ev_diff;
+};
+
+typedef struct {
+	cmr_s16 offset[2];
+} pcp_cfg;
+
+struct pcp_tuning_param {
+	cmr_u8 enable;
+	cmr_u8 num;
+	cmr_u16 red_lum_tar;
+	cmr_u16 green_lum_tar;
+	cmr_u16 blue_lum_tar;
+	pcp_cfg cfg_info[PCP_CFG_NUM];
+	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
 };
 
 struct ae_tuning_param {		//total bytes must be 263480
@@ -234,14 +415,12 @@ struct ae_tuning_param {		//total bytes must be 263480
 	struct ae_flash_control_param flash_control_param;
 	struct ae_video_set_fps_param ae_video_fps;
 	struct ae_monitor_tuning_param monitor_param;
-	struct ae_ai_tuning_param backlight_param; /*1 * 4bytes */
-	struct ae_ai_tuning_param sky_param; /*1 * 4bytes */
-	struct ae_ai_tuning_param foliage_param; /*1 * 4bytes */
-	struct ae_ai_tuning_param night_param; /*1 * 4bytes */
-	struct ae_ai_tuning_param outdoor_param; /*1 * 4bytes */
-	struct ae_ai_tuning_param indoor_param; /*1 * 4bytes */
-	cmr_u32 ai_effect_enable;
-	cmr_u32 reserved[2004];
+	struct ae_ai_tuning_param ai_param;
+	struct abl_tuning_param abl_param;   /*45 * 4bytes*/
+	struct pcp_tuning_param pcp_param; /*27 * 4bytes*/
+	struct ae_hm_tuning_param hm_param;
+	struct ae_nsm_tuning_param ns_param;
+	cmr_u32 reserved[1787];
 };
 
 #endif

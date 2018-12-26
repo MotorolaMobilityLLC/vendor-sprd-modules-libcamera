@@ -357,6 +357,9 @@ extern "C" {
 		cmr_u32 manual_level;
 		struct ae_exposure_param_switch mode_switch[32];
 		cmr_u32 last_table_index; /* for non-zsl, there is a 'ae_set_video_start' between pf and mf.which we need keep the previous table index */
+		
+		/*for debug*/
+		cmr_u32 history_param[1024];
 	};
 
 #endif

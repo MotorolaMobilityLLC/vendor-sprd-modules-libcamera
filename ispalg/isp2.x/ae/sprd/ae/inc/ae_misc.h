@@ -23,6 +23,19 @@
 extern "C" {
 #endif
 
+	enum aec_io_ctrl_cmd {
+		AEC_SET_BASE = 0x00,
+		AEC_SET_Q_ARRAY,	
+		AEC_SET_PRV_PARAM,
+		AEC_SET_CMD_MAX,
+		AEC_GET_BASE,
+		AEC_GET_Q_ARRAY,
+		AEC_GET_PRV_PARAM,
+		AEC_GET_AE_TABLE,
+		AEC_GET_CMD_MAX,	
+		AEC_IO_CTRL_MAX
+	};
+
 	struct ae_misc_init_in {
 		cmr_u32 alg_id;
 		cmr_u32 flash_version;
@@ -58,10 +71,12 @@ extern "C" {
 
 	cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
 	cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
+	cmr_s32 ae_misc_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 	cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
 	cmr_s32 ae_misc_sync_calculation(cmr_handle handle,struct ae_misc_sync_param * in_param, struct ae_misc_sync_in * master_param, struct ae_misc_sync_out * slave_param);
 
 #ifdef __cplusplus
 }
 #endif
+
 #endif

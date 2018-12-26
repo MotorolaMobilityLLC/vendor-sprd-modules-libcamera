@@ -1755,12 +1755,14 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->cur_status.adv[2] = (cmr_handle) & cxt->cur_param->mulaes_param;
 	cxt->cur_status.adv[3] = (cmr_handle) & cxt->cur_param->touch_info;
 	cxt->cur_status.adv[4] = (cmr_handle) & cxt->cur_param->face_param;
-	cxt->cur_status.adv[6] = (cmr_handle) & cxt->cur_param->backlight_param;
-	cxt->cur_status.adv[7] = (cmr_handle) & cxt->cur_param->sky_param;
-	cxt->cur_status.adv[8] = (cmr_handle) & cxt->cur_param->foliage_param;
-	cxt->cur_status.adv[9] = (cmr_handle) & cxt->cur_param->night_param;
-	cxt->cur_status.adv[10] = (cmr_handle) & cxt->cur_param->outdoor_param;
-	cxt->cur_status.adv[11] = (cmr_handle) & cxt->cur_param->indoor_param;
+	cxt->cur_status.adv[6] = (cmr_handle) & cxt->cur_param->ai_param.backlight_param;
+	cxt->cur_status.adv[7] = (cmr_handle) & cxt->cur_param->ai_param.sky_param;
+	cxt->cur_status.adv[8] = (cmr_handle) & cxt->cur_param->ai_param.foliage_param;
+	cxt->cur_status.adv[9] = (cmr_handle) & cxt->cur_param->ai_param.night_param;
+	cxt->cur_status.adv[10] = (cmr_handle) & cxt->cur_param->ai_param.outdoor_param;
+	cxt->cur_status.adv[11] = (cmr_handle) & cxt->cur_param->ai_param.indoor_param;
+	cxt->cur_status.adv[12] = (cmr_handle) & cxt->cur_param->abl_param;
+	cxt->cur_status.adv[13] = (cmr_handle) & cxt->cur_param->pcp_param;
 	/* caliberation for bv match with lv */
 	cxt->cur_status.lv_cali_bv = cxt->cur_param->lv_cali.bv_value;
 	{
@@ -3029,20 +3031,32 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_debug_info_packet_in debug_info_in;
 	struct ae_debug_info_packet_out debug_info_out;
+
 	char *alg_id_ptr = NULL;
 	struct tg_ae_ctrl_alc_log *debug_info_result = (struct tg_ae_ctrl_alc_log *)result;
 
 	if (result) {
 		memset((cmr_handle) & debug_info_in, 0, sizeof(struct ae_debug_info_packet_in));
 		memset((cmr_handle) & debug_info_out, 0, sizeof(struct ae_debug_info_packet_out));
+
 		alg_id_ptr = ae_debug_info_get_lib_version();
+		debug_info_in.alg_id = cxt->cur_status.alg_id;
 		debug_info_in.aem_stats = (cmr_handle) cxt->sync_aem;
+		debug_info_in.base_aem_stats = (cmr_handle) cxt->cur_status.base_img;
 		debug_info_in.alg_status = (cmr_handle) & cxt->sync_cur_status;
 		debug_info_in.alg_results = (cmr_handle) & cxt->sync_cur_result;
+		rtn = ae_misc_ioctrl(cxt->misc_handle, AEC_GET_Q_ARRAY, cxt->history_param, NULL);
+		rtn = ae_misc_ioctrl(cxt->misc_handle, AEC_GET_PRV_PARAM, cxt->history_param, NULL);
+		rtn = ae_misc_ioctrl(cxt->misc_handle, AEC_GET_AE_TABLE, cxt->history_param, NULL);
+		debug_info_in.history_param = (cmr_handle) & cxt->history_param[0];
 		debug_info_in.packet_buf = (cmr_handle) & cxt->debug_info_buf[0];
-		memcpy((cmr_handle) & debug_info_in.id[0], alg_id_ptr, sizeof(debug_info_in.id));
+		memcpy((cmr_handle) & debug_info_in.alg_version[0], alg_id_ptr, sizeof(debug_info_in.alg_version));
+		memcpy((cmr_handle) & debug_info_in.flash_version[0], &cxt->flash_ver, sizeof(debug_info_in.flash_version));
 
-		rtn = ae_debug_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
+		if(debug_info_in.alg_id == 3)
+			rtn = ae_simulation_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
+		else
+			rtn = ae_debug_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
 		/*add flash debug information */
 		memcpy((cmr_handle) & cxt->debug_info_buf[debug_info_out.size], (cmr_handle) & cxt->flash_debug_buf[0], cxt->flash_buf_len);
 

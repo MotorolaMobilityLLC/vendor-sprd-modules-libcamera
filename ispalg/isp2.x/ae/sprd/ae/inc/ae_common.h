@@ -25,7 +25,8 @@
 #include "cmr_types.h"
 #endif
 
-#define AEC_LINETIME_PRECESION 1000000000.0
+#define AEC_LINETIME_PRECESION 1000000000.0 /*ns*/
+
 #define AE_EXP_GAIN_TABLE_SIZE 512
 #define AE_WEIGHT_TABLE_SIZE	1024
 #define AE_ISO_NUM	6
@@ -47,6 +48,11 @@
 #define AE_FD_NUM 20
 #define AE_BASE_GAIN 128
 #define AE_BASE_TABLE_SIZE 16384
+#define NGT_BV 600
+#define IDR_BV 900
+#define ODR_BV 1500
+#define INDOOR_THD 700
+#define OUTDOOR_THD 1300
 enum ae_environ_mod {
 	ae_environ_night,
 	ae_environ_lowlux,
@@ -94,6 +100,9 @@ enum ae_iso_mode {
 	AE_ISO_400,
 	AE_ISO_800,
 	AE_ISO_1600,
+	AE_ISO_3200,
+	AE_ISO_6400,
+	AE_ISO_12800,
 	AE_ISO_MAX
 };
 
@@ -103,6 +112,7 @@ enum ae_scene_mode {
 	AE_SCENE_SPORT,
 	AE_SCENE_PORTRAIT,
 	AE_SCENE_LANDSPACE,
+	AE_SCENE_FACEID_UNLOCK,
 	AE_SCENE_PANORAMA,
 	AE_SCENE_MOD_MAX
 };
@@ -153,10 +163,11 @@ enum ae_ai_scene_type {
  };
 
 enum ae_sensor_role_type {
-	AE_SENSOR_MASTER = 0,
-	AE_SENSOR_SLAVE0,
-	AE_SENSOR_SLAVE1,
-	AE_SENSOR_MAX,
+	AE_SENSOR_SINGLE = 0,
+	AE_SENSOR_MASTER = 1,
+	AE_SENSOR_SLAVE0 = 2,
+	AE_SENSOR_SLAVE1 = 3,
+	AE_SENSOR_MAX
 };
 
 typedef cmr_handle ae_handle_t;
@@ -186,6 +197,11 @@ struct ae_range {
 	cmr_s32 max;
 };
 
+struct ae_ranges_type {
+	cmr_u32 num;
+	struct ae_range range[AE_PIECEWISE_MAX_NUM];
+};
+
 struct ae_size {
 	cmr_u32 w;
 	cmr_u32 h;
@@ -209,10 +225,11 @@ struct ae1_face {
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
-	cmr_u32 end_y;                          /*4 x 4bytes */
-	cmr_s32 pose;                           /* face pose: frontal, half-profile, full-profile */
- };
-
+	cmr_u32 end_y;				/*4 x 4bytes */
+	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
+	cmr_u32 face_lum;
+	cmr_s32 angle;
+};
 
 struct ae1_face_info {
 	cmr_u16 face_num;
@@ -286,7 +303,7 @@ struct ae_flash_tuning {
 };
 
 struct ae_stat_req {
-	cmr_u32 mode;				//0:normal, 1:G(center area)
+	cmr_u32 mode;			//0:normal, 1:G(center area)
 	cmr_u32 G_width;			//100:G mode(100x100)
 };
 
@@ -393,7 +410,13 @@ struct ae_alg_rgb_gain {
 	cmr_u32 b;
 };
 
-struct ae_stats_gyro_info {
+struct ae_alg_aoe {
+	cmr_u32 OE_str;
+	cmr_u32 lowend;
+	cmr_u32 highend;
+};
+
+struct ae_stats_gyro_info{
 	/* Gyro data in float */
 	cmr_u32 validate;
 	cmr_s64 timestamp;
@@ -474,6 +497,30 @@ struct ae_hist_info {
 	cmr_u32 usec;
 };
 
+struct ae_buffer_param {
+	cmr_u32 ae_target_smooth[5];
+	cmr_s32 ae_target_offset_smooth[5];
+	cmr_u32 ae_lum_array[3];
+	cmr_s32 ae_bv_list[5];
+	cmr_u32 ae_lv_array[3];
+	cmr_u32 ae_motion_array[5];
+};
+
+struct ae_exp_param {
+	cmr_u32 frm_id;
+	cmr_s32 index;
+	cmr_u32 predict_lum;
+	cmr_u32 exp_time;
+	cmr_u32 exp_line;
+	cmr_s32 dummy_line;
+	cmr_u32 gain;
+	cmr_s32 trend;
+};
+
+struct ae_ev_convert {
+	float ev_change;
+};
+
 struct ae_settings {
 	cmr_u16 ver;
 	cmr_u8 force_lock_ae;
@@ -542,10 +589,11 @@ struct ae_alg_calc_param {
 	cmr_u32 *g;
 	cmr_u32 *b;
 	cmr_s8 ae_initial;
-	cmr_s8 alg_id;
+	cmr_u32 alg_id;
 	cmr_s32 effect_expline;
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
+	cmr_s32 effect_idx;
 	cmr_u8 led_state;			//0:off, 1:on
 	cmr_u8 flash_fired;		//just notify APP in flash auto
 	cmr_s32 flash_mode;		//0:off, 1:force, 3:auto
@@ -566,7 +614,7 @@ struct ae_alg_calc_param {
 	//for face AE
 	struct ae1_fd_param ae1_finfo;
 //adv_alg module init
-	cmr_handle adv[12];
+	cmr_handle adv[14];
 	/*
 	   0:region
 	   1: flat
@@ -580,12 +628,18 @@ struct ae_alg_calc_param {
 	   9: lowlight
 	   10: outdoor
 	   11: indoor
+	   12: abl
+	   13: pcp
 	 */
 	struct ae_settings settings;
 	cmr_u32 awb_mode;
 	struct ae_alg_rgb_gain awb_cur_gain;
 	struct ai_scene_detect detect_scene;
 	struct ae_hist_info hist_info;
+	struct ae_ev_convert ev_convert;
+	cmr_u32 simulate_close_fd_trigger;
+	cmr_u32 simulate_close_tc_trigger;
+	cmr_u32 debug_info_size;
 };
 
 struct ae1_senseor_out {
@@ -603,7 +657,8 @@ struct ae1_senseor_out {
 
 struct ae_alg_calc_result {
 	cmr_u32 version;			/*version No. for this structure */
-	cmr_s16 cur_lum;			/*the average of image:0 ~255 */
+	cmr_s16 cur_lum;			/*the lum of image:0 ~255 */
+	cmr_s16 cur_lum_avg;		/*the lum without weight of image:0 ~255*/
 	cmr_s16 target_lum;			/*the ae target lum: 0 ~255 */
 	cmr_s16 target_zone;		/*ae target lum stable zone: 0~255 */
 	cmr_s16 target_lum_ori;		/*the ae target lum(original): 0 ~255 */
@@ -633,6 +688,11 @@ struct ae_alg_calc_result {
 	void *pindoor;
 	void *poutdoor;
 	void *psnow;
+	void *pai;
+	void *pabl;
+	void *ppcp;
+	void *phm;
+	void *pns;
 	void *ptc;					/*Bethany add touch info to debug info */
 	void *pface_ae;
 	struct ae1_senseor_out wts;
@@ -642,6 +702,7 @@ struct ae_alg_calc_result {
 	cmr_u32 face_trigger;
 	cmr_u32 *reserved;			/*resurve for future */
 	cmr_u32 privated_data;
+	
 };
 
 struct otp_ae_info {
