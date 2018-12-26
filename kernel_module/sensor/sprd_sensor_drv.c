@@ -1155,7 +1155,7 @@ exit:
 int sprd_sensor_write_i2c(struct sensor_i2c_tag *i2c_tab,
 				int sensor_id)
 {
-	uint8_t cmd[4] = { 0 };
+	uint8_t cmd[64] = { 0 };
 	struct i2c_msg msg_w;
 	uint32_t cnt = i2c_tab->i2c_count;
 	int ret = -1;

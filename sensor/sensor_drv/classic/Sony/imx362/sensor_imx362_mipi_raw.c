@@ -967,7 +967,7 @@ static cmr_int imx362_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx362_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx362_pd_pos_l;
-    pdaf_info->vendor_type = SENSOR_VENDOR_IMX258_TYPE2; // 351;
+    pdaf_info->vendor_type = SENSOR_VENDOR_IMX362_DUAL_PD; // 351;
     pdaf_info->type2_info.data_type = 0x2b;
     pdaf_info->type2_info.data_format = DATA_BYTE2;
     if (DATA_BYTE2 == pdaf_info->type2_info.data_format) {
