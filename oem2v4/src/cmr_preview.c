@@ -2507,7 +2507,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     /* skip num frames for pre-flash, because the frame is black*/
-    if (prev_cxt->prev_preflash_skip_en &&
+    if (!prev_cxt->prev_param.is_sw_3dnr && prev_cxt->prev_preflash_skip_en &&
         IMG_SKIP_SW_KER == prev_cxt->skip_mode) {
         if (prev_cxt->prev_frm_cnt <= prev_cxt->prev_skip_num) {
             CMR_LOGD("ignore this frame, preview cnt %ld, total skip num %ld, "
