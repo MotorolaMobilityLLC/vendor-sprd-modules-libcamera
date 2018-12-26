@@ -1285,6 +1285,9 @@ cmr_int _get_atm_curve(cmr_handle *handle,
             u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
     struct atm_calc_param ATMInput;
     struct atm_calc_result ATMOutput;
+    memset(&ATMInput, 0, sizeof(struct atm_calc_param));
+    memset(&ATMOutput, 0, sizeof(struct atm_calc_result));
+
     bool bAEMBinning = (smart_proc_in->win_size_w == 1 && smart_proc_in->win_size_h == 1);
     if (in_gamma == NULL || out_gamma == NULL)
         return ISP_ERROR;
