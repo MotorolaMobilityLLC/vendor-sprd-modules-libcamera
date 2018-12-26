@@ -830,7 +830,7 @@ cmr_int camera_get_snap_postproc_time() {
 }
 
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height) {
-    if ((MODE_BOKEH == mode)) {
+    if ((MODE_BOKEH == mode) || (MODE_TUNING == mode)) {
         char value[PROPERTY_VALUE_MAX];
         *width = 2592;
         *height = 1944;

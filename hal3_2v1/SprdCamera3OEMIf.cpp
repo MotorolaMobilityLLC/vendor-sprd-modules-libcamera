@@ -4903,7 +4903,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     ATRACE_CALL();
 
     print_time();
-    //Mutex::Autolock cbLock(&mCaptureCbLock);
+    // Mutex::Autolock cbLock(&mCaptureCbLock);
     struct camera_jpeg_param *encInfo = &frame->jpeg_param;
     int64_t temp = 0, temp1 = 0;
     ;
@@ -6079,7 +6079,9 @@ int SprdCamera3OEMIf::openCamera() {
         mLargestPictureWidth = snsW;
         mLargestPictureHeight = snsH;
     }
-    if ((MODE_BOKEH == mMultiCameraMode && mCameraId < 2)) {
+    if ((MODE_BOKEH == mMultiCameraMode && mCameraId < 2) ||
+        (MODE_TUNING == mMultiCameraMode && mCameraId == 2 &&
+         mLargestPictureWidth < 2592)) {
         int width = 2592;
         int height = 1944;
         camera_get_picture_size(mMultiCameraMode, &width, &height);
@@ -7135,10 +7137,10 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             }
             mZslPreviewMode = false;
             if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
-                HAL_LOGE("enter isp tuning mode ");
+                HAL_LOGI("enter isp tuning mode ");
                 mCaptureMode = CAMERA_ISP_TUNING_MODE;
             } else if (!strcmp(value, "sim")) {
-                HAL_LOGE("enter isp simulation mode ");
+                HAL_LOGI("enter isp simulation mode ");
                 mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
             }
             if (sprddefInfo.sprd_hdr_plus_enable) {
