@@ -63,7 +63,7 @@
 
 #define  CAM_COUNT  CAM_ID_MAX
 /* TODO: extend this for slow motion dev */
-#define  CAM_SHARED_BUF_NUM  10
+#define  CAM_SHARED_BUF_NUM  16
 #define  CAM_FRAME_Q_LEN   16
 #define  CAM_IRQ_Q_LEN        16
 #define  CAM_STATIS_Q_LEN   16
@@ -271,7 +271,6 @@ struct cam_ioctl_cmd {
 	int (*cmd_proc)(struct camera_module *module,
 			unsigned long arg);
 };
-
 
 struct camera_queue *g_empty_frm_q;
 
@@ -1504,7 +1503,7 @@ static int init_cam_channel(
 	struct channel_context *channel_cap = NULL;
 	struct camera_uchannel *ch_uinfo;
 	struct isp_path_base_desc path_desc;
-	struct img_size max_size;
+	struct isp_init_param init_param;
 
 	/* for debug. */
 	module->zoom_solution = g_dbg_zoom_mode;
@@ -1526,11 +1525,11 @@ static int init_cam_channel(
 
 		module->rds_limit = g_dbg_rds_limit;
 		if (module->zoom_solution == 0) {
-			max_size.w = ch_uinfo->src_size.w / 2;
+			init_param.max_size.w = ch_uinfo->src_size.w / 2;
 		} else {
-			max_size.w = (ch_uinfo->src_size.w * 10 + 40) / module->rds_limit;
-			if (max_size.w < ch_uinfo->dst_size.w)
-				max_size.w = ch_uinfo->dst_size.w;
+			init_param.max_size.w = (ch_uinfo->src_size.w * 10 + 40) / module->rds_limit;
+			if (init_param.max_size.w < ch_uinfo->dst_size.w)
+				init_param.max_size.w = ch_uinfo->dst_size.w;
 		}
 		break;
 
@@ -1555,7 +1554,7 @@ static int init_cam_channel(
 		new_isp_ctx = 1;
 		new_isp_path = 1;
 		new_dcam_path = 1;
-		max_size.w = MAX(ch_uinfo->src_size.w, ch_uinfo->dst_size.w);
+		init_param.max_size.w = MAX(ch_uinfo->src_size.w, ch_uinfo->dst_size.w);
 		break;
 
 	case CAM_CH_PRE_THM:
@@ -1633,11 +1632,11 @@ static int init_cam_channel(
 
 	if (new_isp_ctx) {
 		struct isp_ctx_base_desc ctx_desc;
-
-		ret = isp_ops->get_context(module->isp_dev_handle, &max_size);
+		init_param.is_high_fps = ch_uinfo->is_high_fps;
+		ret = isp_ops->get_context(module->isp_dev_handle, &init_param);
 		if (ret < 0) {
 			pr_err("fail to get isp context for size %d %d.\n",
-					max_size.w, max_size.h);
+					init_param.max_size.w, init_param.max_size.h);
 			goto exit;
 		}
 		isp_ctx_id = ret;
@@ -1650,6 +1649,9 @@ static int init_cam_channel(
 		ctx_desc.fetch_fbd = 0;
 		ctx_desc.mode_ltm = MODE_LTM_OFF;
 		ctx_desc.mode_3dnr = MODE_3DNR_OFF;
+		ctx_desc.enable_slowmotion = ch_uinfo->is_high_fps;
+		ctx_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
+		ctx_desc.slw_state = CAM_SLOWMOTION_OFF;
 		if (module->cam_uinfo.is_3dnr) {
 			if (channel->ch_id == CAM_CH_CAP) {
 				channel->type_3dnr = CAM_3DNR_SW;

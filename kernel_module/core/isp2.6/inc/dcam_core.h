@@ -22,12 +22,12 @@
 #include "dcam_interface.h"
 
 #define DCAM_IN_Q_LEN  1
-#define DCAM_PROC_Q_LEN  2
+#define DCAM_PROC_Q_LEN  12
 
 /* TODO: extend these for slow motion dev */
-#define DCAM_RESULT_Q_LEN 10
+#define DCAM_RESULT_Q_LEN 12
 #define DCAM_OUT_BUF_Q_LEN 16
-#define DCAM_RESERVE_BUF_Q_LEN 6
+#define DCAM_RESERVE_BUF_Q_LEN 12
 
 #define DCAM_INTERNAL_RES_BUF_SIZE  0x40000
 

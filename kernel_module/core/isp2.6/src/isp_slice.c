@@ -2313,3 +2313,88 @@ int isp_set_slices_fmcu_cmds(
 	return 0;
 }
 
+int isp_set_slw_fmcu_cmds(void *fmcu_handle, struct isp_pipe_context *pctx)
+{
+	int i;
+	unsigned long base, sbase;
+	uint32_t ctx_idx;
+	uint32_t reg_off, addr = 0, cmd = 0;
+	struct isp_fmcu_ctx_desc *fmcu;
+	struct isp_path_desc *path;
+	struct img_addr *fetch_addr, *store_addr;
+
+	uint32_t shadow_done_cmd[ISP_CONTEXT_NUM] = {
+		PRE0_SHADOW_DONE, CAP0_SHADOW_DONE,
+		PRE1_SHADOW_DONE, CAP1_SHADOW_DONE,
+	};
+	uint32_t all_done_cmd[ISP_CONTEXT_NUM] = {
+		PRE0_ALL_DONE, CAP0_ALL_DONE,
+		PRE1_ALL_DONE, CAP1_ALL_DONE,
+	};
+
+	if (!fmcu_handle) {
+		pr_err("error: null input ptr.\n");
+		return -EFAULT;
+	}
+
+	fmcu = (struct isp_fmcu_ctx_desc *)fmcu_handle;
+	base = (fmcu->fid == 0) ? ISP_FMCU0_BASE : ISP_FMCU1_BASE;
+	fetch_addr = &pctx->fetch.addr;
+	ctx_idx = pctx->ctx_id;
+
+	set_fmcu_cfg(fmcu, ctx_idx);
+
+	addr = ISP_GET_REG(ISP_FETCH_SLICE_Y_ADDR);
+	cmd = fetch_addr->addr_ch0;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FETCH_SLICE_U_ADDR);
+	cmd = fetch_addr->addr_ch1;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FETCH_SLICE_V_ADDR);
+	cmd = fetch_addr->addr_ch2;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+
+	for (i = 0; i < ISP_SPATH_NUM; i++) {
+		path = &pctx->isp_path[i];
+
+		if (atomic_read(&path->user_cnt) < 1)
+			continue;
+
+		store_addr = &path->store.addr;
+		sbase = store_base[i];
+
+		addr = ISP_GET_REG(ISP_STORE_SLICE_Y_ADDR) + sbase;
+		cmd = store_addr->addr_ch0;
+		FMCU_PUSH(fmcu, addr, cmd);
+
+		addr = ISP_GET_REG(+ ISP_STORE_SLICE_U_ADDR) + sbase;
+		cmd = store_addr->addr_ch1;
+		FMCU_PUSH(fmcu, addr, cmd);
+
+		addr = ISP_GET_REG(ISP_STORE_SLICE_V_ADDR) + sbase;
+		cmd = store_addr->addr_ch2;
+		FMCU_PUSH(fmcu, addr, cmd);
+
+		addr = ISP_GET_REG(ISP_STORE_SHADOW_CLR) + sbase;
+		cmd = 1;
+		FMCU_PUSH(fmcu, addr, cmd);
+	}
+
+	reg_off = ISP_CFG_CAP_FMCU_RDY;
+	addr = ISP_GET_REG(reg_off);
+	cmd = 1;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(base + ISP_FMCU_CMD);
+	cmd = shadow_done_cmd[ctx_idx];
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(base + ISP_FMCU_CMD);
+	cmd = all_done_cmd[ctx_idx];
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	return 0;
+}

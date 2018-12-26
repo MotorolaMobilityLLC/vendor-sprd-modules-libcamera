@@ -28,12 +28,11 @@
 
 #define ISP_LINE_BUFFER_W		2560
 
-#define ISP_IN_Q_LEN			4
-#define ISP_PROC_Q_LEN			2
-#define ISP_RESULT_Q_LEN		2
-/* enlarge this for frame skip in slow motion mode */
+#define ISP_IN_Q_LEN			12
+#define ISP_PROC_Q_LEN			12
+#define ISP_RESULT_Q_LEN		12
 #define ISP_OUT_BUF_Q_LEN		32
-#define ISP_RESERVE_BUF_Q_LEN		3
+#define ISP_RESERVE_BUF_Q_LEN		12
 
 
 #define ODATA_YUV420			1
@@ -95,7 +94,6 @@ enum isp_path_wk_status {
 	PATH_STATUS_READY,
 	PATH_STATUS_RUNNING,
 };
-
 
 struct isp_pipe_dev;
 struct isp_pipe_context;
@@ -253,6 +251,9 @@ struct isp_pipe_context {
 	uint32_t updated;
 	uint32_t mode_3dnr;
 	uint32_t mode_ltm;
+	uint32_t slw_state;
+	uint32_t enable_slowmotion;
+	uint32_t slowmotion_count;
 	uint32_t dispatch_color;
 	uint32_t dispatch_bayer_mode; /* RAWRGB_GR, RAWRGB_Gb, RAWRGB_R... */
 	uint32_t fetch_path_sel; /* fbd or normal */

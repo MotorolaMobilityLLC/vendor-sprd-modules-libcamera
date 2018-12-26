@@ -96,6 +96,7 @@ enum isp_irq_id {
 	(1 << ISP_INT_LTMHISTS_DONE) | \
 	(1 << ISP_INT_FMCU_LOAD_DONE) | \
 	(1 << ISP_INT_FMCU_CMD_X) | \
+	(1 << ISP_INT_FMCU_SHADOW_DONE) | \
 	(1 << ISP_INT_FMCU_STORE_DONE) | \
 	(1 << ISP_INT_HIST_CAL_DONE))
 

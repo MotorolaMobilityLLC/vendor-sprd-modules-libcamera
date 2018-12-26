@@ -62,7 +62,6 @@ unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
 static DEFINE_MUTEX(isp_pipe_dev_mutex);
 static struct isp_pipe_dev *s_isp_dev;
 
-
 static int sprd_isp_put_context(
 	void *isp_handle, int ctx_id);
 
@@ -1084,6 +1083,83 @@ static int isp_update_offline_param(
 	return ret;
 }
 
+static int set_fmcu_slw_queue(struct isp_pipe_context *pctx)
+{
+	int ret = 0, i;
+	uint32_t frame_id;
+	struct isp_path_desc *path;
+	struct camera_frame *pframe = NULL;
+	struct camera_frame *out_frame = NULL;
+	struct isp_fmcu_ctx_desc *fmcu;
+
+	if (!(pctx->enable_slowmotion))
+		return ret;
+
+	fmcu = (struct isp_fmcu_ctx_desc *)pctx->fmcu_handle;
+
+	pframe = camera_dequeue(&pctx->in_queue);
+	if (pframe == NULL) {
+		pr_err("no frame from input queue. cxt:%d\n", pctx->ctx_id);
+		return -EINVAL;
+	}
+
+	ret = cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_ISP);
+	if (ret) {
+		pr_err("fail to map buf to ISP iommu. cxt %d\n", pctx->ctx_id);
+		ret = -EINVAL;
+	}
+
+	ret = camera_enqueue(&pctx->proc_queue, pframe);
+	if (ret) {
+		pr_err("error: input frame queue tmeout.\n");
+		ret = -EINVAL;
+	}
+
+	pframe->width = pctx->input_size.w;
+	pframe->height = pctx->input_size.h;
+	frame_id = pframe->fid;
+	isp_path_set_fetch_frm(pctx, pframe, &pctx->fetch.addr);
+
+	for (i = 0; i < ISP_SPATH_NUM; i++) {
+		path = &pctx->isp_path[i];
+		if (atomic_read(&path->user_cnt) < 1)
+			continue;
+
+		if (i == ISP_SPATH_VID)
+			out_frame = camera_dequeue(&path->out_buf_queue);
+		if (out_frame == NULL)
+			out_frame = camera_dequeue(&path->reserved_buf_queue);
+
+		if (out_frame == NULL) {
+			pr_debug("fail to get available output buffer.\n");
+			return -EINVAL;
+		}
+		out_frame->fid = frame_id;
+		out_frame->sensor_time = pframe->sensor_time;
+
+		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",
+				(uint32_t)out_frame->buf.iova[0],
+				(uint32_t)out_frame->buf.addr_k[0]);
+		isp_path_set_store_frm(path, out_frame);
+		ret = camera_enqueue(&path->result_queue, out_frame);
+		if (ret) {
+			if (out_frame->is_reserved)
+				camera_enqueue(&path->reserved_buf_queue,
+						out_frame);
+			else
+				camera_enqueue(&path->out_buf_queue,
+						out_frame);
+			return -EINVAL;
+		}
+		atomic_inc(&path->store_cnt);
+	}
+
+	ret = isp_set_slw_fmcu_cmds((void *)fmcu, pctx);
+
+	pr_debug("fmcu slw queue done!");
+	return ret;
+}
+
 static int isp_offline_start_frame(void *ctx)
 {
 	int ret = 0;
@@ -1110,10 +1186,12 @@ static int isp_offline_start_frame(void *ctx)
 	cfg_desc = (struct isp_cfg_ctx_desc *)dev->cfg_handle;
 	fmcu = (struct isp_fmcu_ctx_desc *)pctx->fmcu_handle;
 
+	if (pctx->slw_state == CAM_SLOWMOTION_ON)
+		fmcu->cur_buf_id = !(fmcu->cur_buf_id);
+
 	pframe = camera_dequeue(&pctx->in_queue);
 	if (pframe == NULL) {
-		pr_warn("no frame from input queue. cxt:%d\n",
-				pctx->ctx_id);
+		pr_debug("no frame from input queue. cxt:%d\n", pctx->ctx_id);
 		return 0;
 	}
 
@@ -1316,6 +1394,13 @@ static int isp_offline_start_frame(void *ctx)
 	pctx->updated = 0;
 	mutex_unlock(&pctx->param_mutex);
 
+	if (pctx->enable_slowmotion)
+		for (i = 0; i < pctx->slowmotion_count - 1; i++) {
+			ret = set_fmcu_slw_queue(pctx);
+			if (ret)
+				pr_err("unable to set fmcu slw queue\n");
+		}
+
 	/* start to prepare/kickoff cfg buffer. */
 	if (likely(dev->wmode == ISP_CFG_MODE)) {
 		pr_debug("cfg enter.");
@@ -1324,7 +1409,15 @@ static int isp_offline_start_frame(void *ctx)
 
 		if (kick_fmcu) {
 			pr_info("fmcu start.");
+			if (pctx->slw_state == CAM_SLOWMOTION_ON) {
+				ret = fmcu->ops->cmd_ready(fmcu);
+				return ret;
+			}
+
 			ret = fmcu->ops->hw_start(fmcu);
+
+			if (!ret && pctx->enable_slowmotion)
+				pctx->slw_state = CAM_SLOWMOTION_ON;
 		} else {
 			pr_debug("cfg start. fid %d\n", frame_id);
 			ret = cfg_desc->ops->hw_start(
@@ -1634,6 +1727,7 @@ static int sprd_isp_proc_frame(void *isp_handle,
 {
 	int ret = 0;
 	struct camera_frame *pframe;
+	static int slw_frm_cnt = 0;
 	struct isp_pipe_context *pctx;
 	struct isp_pipe_dev *dev;
 
@@ -1654,8 +1748,12 @@ static int sprd_isp_proc_frame(void *isp_handle,
 	pr_debug("frame %p, ctx %d  path %d, ch_id %d.  buf_fd %d\n", pframe,
 		ctx_id, ctx_id, pframe->channel_id, pframe->buf.mfd[0]);
 	ret = camera_enqueue(&pctx->in_queue, pframe);
-	if (ret == 0)
+	if (ret == 0) {
+		if(pctx->enable_slowmotion && ++slw_frm_cnt < pctx->slowmotion_count)
+			return ret;
 		complete(&pctx->thread.thread_com);
+		slw_frm_cnt = 0;
+	}
 
 	return ret;
 }
@@ -1677,6 +1775,7 @@ static int sprd_isp_get_context(void *isp_handle, void *param)
 	struct isp_cfg_ctx_desc *cfg_desc;
 	struct isp_fmcu_ctx_desc *fmcu = NULL;
 	struct sprd_cam_hw_info *hw;
+	struct isp_init_param *init_param;
 	struct img_size *max_size;
 
 	if (!isp_handle || !param) {
@@ -1686,7 +1785,8 @@ static int sprd_isp_get_context(void *isp_handle, void *param)
 	pr_debug("start.\n");
 
 	dev = (struct isp_pipe_dev *)isp_handle;
-	max_size = (struct img_size *)param;
+	init_param = (struct isp_init_param *)param;
+	max_size = &init_param->max_size;
 
 	mutex_lock(&dev->path_mutex);
 
@@ -1745,7 +1845,7 @@ new_ctx:
 		goto thrd_err;
 	}
 
-	if (max_size->w > line_buffer_len) {
+	if (init_param->is_high_fps || max_size->w > line_buffer_len) {
 		fmcu = get_isp_fmcu_ctx_desc();
 		pr_info("ctx get fmcu %p\n", fmcu);
 		if (fmcu == NULL) {

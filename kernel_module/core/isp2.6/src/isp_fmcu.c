@@ -29,9 +29,8 @@
 	fmt, current->pid, __LINE__, __func__
 
 
-static int isp_fmcu_push_cmd(
-			struct isp_fmcu_ctx_desc *fmcu_ctx,
-			uint32_t addr, uint32_t cmd)
+static int isp_fmcu_push_cmd(struct isp_fmcu_ctx_desc *fmcu_ctx,
+				uint32_t addr, uint32_t cmd)
 {
 	int ret = 0;
 	uint32_t *ptr;
@@ -40,19 +39,74 @@ static int isp_fmcu_push_cmd(
 		pr_err("null fmcu_ctx pointer\n");
 		return -EFAULT;
 	}
-	if (fmcu_ctx->cmdq_pos > (fmcu_ctx->cmdq_size / sizeof(uint32_t))) {
+	if (fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id]
+	> (fmcu_ctx->cmdq_size / sizeof(uint32_t))) {
 		pr_err("error: fmcu%d cmdq overflow.\n", fmcu_ctx->fid);
 		return -EFAULT;
 	}
 
-	ptr = fmcu_ctx->cmd_buf + fmcu_ctx->cmdq_pos;
+	ptr = fmcu_ctx->cmd_buf[fmcu_ctx->cur_buf_id]
+				+ fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id];
 	*ptr++ = cmd;
 	*ptr++ = addr;
-	fmcu_ctx->cmdq_pos += 2;
+	fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] += 2;
 
 	return ret;
 }
 
+static int isp_fmcu_cmd_ready(struct isp_fmcu_ctx_desc *fmcu_ctx)
+{
+	int ret = 0;
+	int cmd_num;
+	unsigned long base;
+
+	if (!fmcu_ctx) {
+		pr_err("null fmcu_ctx pointer\n");
+		return -EFAULT;
+	}
+	pr_debug("set fmcu cmd ready%d\n", fmcu_ctx->fid);
+
+	if (fmcu_ctx->fid == 0)
+		base =  ISP_FMCU0_BASE;
+	else
+		base =  ISP_FMCU1_BASE;
+
+	if (fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id]
+	> (fmcu_ctx->cmdq_size / sizeof(uint32_t))) {
+		pr_err("error: fmcu%d cmdq overflow.\n", fmcu_ctx->fid);
+		return -EFAULT;
+	}
+	cmd_num = (int) fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] / 2;
+
+#if 0
+	{
+		unsigned int i = 0;
+		unsigned long addr =
+			(unsigned long)fmcu_ctx->cmd_buf[fmcu_ctx->cur_buf_id];
+		pr_info("fmcu %d  cmd num %d\n",
+				(int)fmcu_ctx->fid,  cmd_num);
+
+		for (i = 0; i <= cmd_num; i += 2) {
+			pr_info("a:0x%08x c: 0x%08x | a:0x%08x c: 0x%08x\n",
+				*(uint32_t *)(addr + 4),
+				*(uint32_t *)(addr),
+				*(uint32_t *)(addr + 12),
+				*(uint32_t *)(addr + 8));
+			addr += 16;
+		}
+	}
+#endif
+	ISP_HREG_WR(base + ISP_FMCU_DDR_ADDR,
+				fmcu_ctx->hw_addr[fmcu_ctx->cur_buf_id]);
+	ISP_HREG_MWR(base + ISP_FMCU_CTRL, 0xFFFF0000, cmd_num << 16);
+	ISP_HREG_WR(base + ISP_FMCU_CMD_READY, 1);
+
+	pr_info("fmcu%d start done, cmdq len %d\n",
+		fmcu_ctx->fid,
+		(uint32_t)fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] * 4);
+
+	return ret;
+}
 
 static int isp_fmcu_start(struct isp_fmcu_ctx_desc *fmcu_ctx)
 {
@@ -71,17 +125,18 @@ static int isp_fmcu_start(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	else
 		base =  ISP_FMCU1_BASE;
 
-	if (fmcu_ctx->cmdq_pos > (fmcu_ctx->cmdq_size / sizeof(uint32_t))) {
+	if (fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id]
+	> (fmcu_ctx->cmdq_size / sizeof(uint32_t))) {
 		pr_err("error: fmcu%d cmdq overflow.\n", fmcu_ctx->fid);
 		return -EFAULT;
 	}
-	cmd_num = (int) fmcu_ctx->cmdq_pos / 2;
+	cmd_num = (int) fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] / 2;
 
 #if 0
 	{
 		unsigned int i = 0;
-		unsigned long addr = (unsigned long)fmcu_ctx->cmd_buf;
-
+		unsigned long addr =
+			(unsigned long)fmcu_ctx->cmd_buf[fmcu_ctx->cur_buf_id];
 		pr_info("fmcu %d  cmd num %d\n",
 				(int)fmcu_ctx->fid,  cmd_num);
 
@@ -96,16 +151,21 @@ static int isp_fmcu_start(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	}
 #endif
 
-	/* FLUSH_DCACHE(fmcu_ctx->cmd_buf, fmcu_ctx->cmdq_pos * sizeof(uint32_t));*/
-	/*sprd_ion_flush_dcache_area_wrapper(fmcu_ctx->cmd_buf,
-			fmcu_ctx->cmdq_pos * sizeof(uint32_t));*/
+/*
+ * FLUSH_DCACHE(fmcu_ctx->cmd_buf[fmcu_ctx->cur_buf_id],
+ * fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] * sizeof(uint32_t));
+ * sprd_ion_flush_dcache_area_wrapper(fmcu_ctx->cmd_buf[fmcu_ctx->cur_buf_id],
+ * fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] * sizeof(uint32_t));
+ */
 
-	ISP_HREG_WR(base + ISP_FMCU_DDR_ADDR, fmcu_ctx->hw_addr);
+	ISP_HREG_WR(base + ISP_FMCU_DDR_ADDR,
+			fmcu_ctx->hw_addr[fmcu_ctx->cur_buf_id]);
 	ISP_HREG_MWR(base + ISP_FMCU_CTRL, 0xFFFF0000, cmd_num << 16);
 	ISP_HREG_WR(base + ISP_FMCU_START, 1);
 
 	pr_info("fmcu%d start done, cmdq len %d\n",
-		fmcu_ctx->fid, (uint32_t)fmcu_ctx->cmdq_pos * 4);
+		fmcu_ctx->fid,
+		(uint32_t)fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] * 4);
 
 	return ret;
 }
@@ -122,8 +182,8 @@ static int isp_fmcu_ctx_reset(struct isp_fmcu_ctx_desc *fmcu_ctx)
 
 	pr_debug("Enter\n");
 
-	fmcu_ctx->cmdq_pos = 0;
-	memset(fmcu_ctx->cmd_buf, 0, fmcu_ctx->cmdq_size);
+	fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] = 0;
+	memset(fmcu_ctx->cmd_buf[fmcu_ctx->cur_buf_id], 0, fmcu_ctx->cmdq_size);
 
 	pr_debug("Done\n");
 	return ret;
@@ -132,8 +192,8 @@ static int isp_fmcu_ctx_reset(struct isp_fmcu_ctx_desc *fmcu_ctx)
 static int isp_fmcu_ctx_init(struct isp_fmcu_ctx_desc *fmcu_ctx)
 {
 	int ret = 0;
+	int i;
 	int iommu_enable = 0;
-	unsigned long hw_addr = 0;
 	struct camera_buf *ion_buf = NULL;
 
 	if (!fmcu_ctx) {
@@ -142,55 +202,72 @@ static int isp_fmcu_ctx_init(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	}
 	pr_debug("Enter\n");
 
-	fmcu_ctx->cmdq_pos = 0;
+
 	fmcu_ctx->cmdq_size = ISP_FMCU_CMDQ_SIZE;
 	fmcu_ctx->lock = __SPIN_LOCK_UNLOCKED(&fmcu_ctx->lock);
 
 	/*alloc cmd queue buffer*/
-	ion_buf = &fmcu_ctx->ion_pool;
-	memset(ion_buf, 0, sizeof(fmcu_ctx->ion_pool));
-	sprintf(ion_buf->name, "isp_fmcu_ctx");
+	for (i = 0; i < MAX_BUF; i++) {
+		ion_buf = &fmcu_ctx->ion_pool[i];
+		memset(ion_buf, 0, sizeof(fmcu_ctx->ion_pool[i]));
+		sprintf(ion_buf->name, "isp_fmcu_ctx%d", i);
 
-	if (get_iommu_status(CAM_IOMMUDEV_ISP) == 0) {
-		pr_info("isp iommu enable\n");
-		iommu_enable = 1;
-	} else {
-		pr_info("isp iommu disable\n");
-		iommu_enable = 0;
-	}
-	ret = cambuf_alloc(ion_buf,
+		if (get_iommu_status(CAM_IOMMUDEV_ISP) == 0) {
+			pr_info("isp iommu enable\n");
+			iommu_enable = 1;
+		} else {
+			pr_info("isp iommu disable\n");
+			iommu_enable = 0;
+		}
+		ret = cambuf_alloc(ion_buf,
 				fmcu_ctx->cmdq_size, 0, iommu_enable);
-	if (ret) {
-		pr_err("fail to get fmcu buffer\n");
-		ret = -EFAULT;
-		goto err_alloc_fmcu;
-	}
+		if (ret) {
+			pr_err("fail to get fmcu buffer\n");
+			ret = -EFAULT;
+			goto err_alloc_fmcu;
+		}
 
-	ret = cambuf_kmap(ion_buf);
-	if (ret) {
-		pr_err("fail to kmap fmcu buffer\n");
-		ret = -EFAULT;
-		goto err_kmap_fmcu;
+		ret = cambuf_kmap(ion_buf);
+		if (ret) {
+			pr_err("fail to kmap fmcu buffer\n");
+			ret = -EFAULT;
+			goto err_kmap_fmcu;
+		}
+		ret = cambuf_iommu_map(ion_buf, CAM_IOMMUDEV_ISP);
+		if (ret) {
+			pr_err("fail to map fmcu buffer\n");
+			ret = -EFAULT;
+			goto err_hwmap_fmcu;
+		}
+		fmcu_ctx->cmd_buf[i] = (uint32_t *)ion_buf->addr_k[0];
+		fmcu_ctx->hw_addr[i] = ion_buf->iova[0];
+		fmcu_ctx->cmdq_pos[i] = 0;
+		pr_info("fmcu cmd buf hw_addr:0x%lx, sw_addr:%p, size:0x%x\n",
+			fmcu_ctx->hw_addr[i],
+			fmcu_ctx->cmd_buf[i],
+			(int)ion_buf->size[0]);
 	}
-	ret = cambuf_iommu_map(ion_buf, CAM_IOMMUDEV_ISP);
-	if (ret) {
-		pr_err("fail to map fmcu buffer\n");
-		ret = -EFAULT;
-		goto err_hwmap_fmcu;
-	}
-	fmcu_ctx->cmd_buf = (uint32_t *)ion_buf->addr_k[0];
-	fmcu_ctx->hw_addr = ion_buf->iova[0];
-
-	pr_info("fmcu cmd buf hw_addr:0x%lx, sw_addr:%p, size:0x%x\n",
-			hw_addr, fmcu_ctx->cmd_buf, (int)ion_buf->size[0]);
 
 	return 0;
 
 err_hwmap_fmcu:
-	cambuf_kunmap(ion_buf);
+	for (i = 0; i < MAX_BUF; i++) {
+		ion_buf = &fmcu_ctx->ion_pool[i];
+		if (ion_buf)
+			cambuf_iommu_unmap(ion_buf);
+	}
 err_kmap_fmcu:
-	cambuf_free(ion_buf);
+	for (i = 0; i < MAX_BUF; i++) {
+		ion_buf = &fmcu_ctx->ion_pool[i];
+		if (ion_buf)
+			cambuf_kunmap(ion_buf);
+	}
 err_alloc_fmcu:
+	for (i = 0; i < MAX_BUF; i++) {
+		ion_buf = &fmcu_ctx->ion_pool[i];
+		if (ion_buf)
+			cambuf_free(ion_buf);
+	}
 	pr_err("fmcu%d init failed.\n", fmcu_ctx->fid);
 	return ret;
 }
@@ -198,6 +275,7 @@ err_alloc_fmcu:
 static int isp_fmcu_ctx_deinit(struct isp_fmcu_ctx_desc *fmcu_ctx)
 {
 	int ret = 0;
+	int i;
 	struct camera_buf *ion_buf = NULL;
 
 	if (!fmcu_ctx) {
@@ -206,10 +284,12 @@ static int isp_fmcu_ctx_deinit(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	}
 
 	pr_debug("Enter\n");
-	ion_buf = &fmcu_ctx->ion_pool;
-	cambuf_iommu_unmap(ion_buf);
-	cambuf_kunmap(ion_buf);
-	cambuf_free(ion_buf);
+	for (i = 0; i < MAX_BUF; i++) {
+		ion_buf = &fmcu_ctx->ion_pool[i];
+		cambuf_iommu_unmap(ion_buf);
+		cambuf_kunmap(ion_buf);
+		cambuf_free(ion_buf);
+	}
 
 	pr_debug("Done\n");
 	return ret;
@@ -222,16 +302,19 @@ struct isp_fmcu_ops fmcu_ops = {
 	.ctx_reset = isp_fmcu_ctx_reset,
 	.push_cmdq = isp_fmcu_push_cmd,
 	.hw_start = isp_fmcu_start,
+	.cmd_ready = isp_fmcu_cmd_ready,
 };
 
-static struct isp_fmcu_ctx_desc s_fmcu_desc[2] = {
+static struct isp_fmcu_ctx_desc s_fmcu_desc[ISP_FMCU_NUM] = {
 	{
 		.fid = ISP_FMCU_0,
 		.ops = &fmcu_ops,
+		.cur_buf_id = PING,
 	},
 	{
 		.fid = ISP_FMCU_1,
 		.ops = &fmcu_ops,
+		.cur_buf_id = PING,
 	},
 };
 

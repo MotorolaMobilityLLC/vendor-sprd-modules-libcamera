@@ -254,4 +254,8 @@ int isp_set_slices_fmcu_cmds(
 		uint32_t ctx_idx,
 		uint32_t wmode);
 
+int isp_set_slw_fmcu_cmds(
+		void *fmcu_handle,
+		struct isp_pipe_context *pctx);
+
 #endif

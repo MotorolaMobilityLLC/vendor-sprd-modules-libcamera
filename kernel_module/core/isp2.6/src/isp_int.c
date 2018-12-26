@@ -48,6 +48,7 @@ static const uint32_t isp_irq_process[] = {
 	ISP_INT_STORE_DONE_THUMBNAIL,
 	ISP_INT_LTMHISTS_DONE,
 	ISP_INT_FMCU_LOAD_DONE,
+	ISP_INT_FMCU_SHADOW_DONE,
 	ISP_INT_FMCU_STORE_DONE,
 };
 
@@ -101,7 +102,9 @@ static void isp_frame_done(enum isp_context_id idx, struct isp_pipe_dev *dev)
 	ktime_t boot_time;
 
 	pctx = &dev->ctx[idx];
-	complete(&pctx->frm_done);
+
+	if (pctx->enable_slowmotion == 0)
+		complete(&pctx->frm_done);
 
 	boot_time = ktime_get_boottime();
 	ktime_get_ts(&cur_ts);
@@ -222,12 +225,32 @@ static void isp_fmcu_store_done(enum isp_context_id idx, void *isp_handle)
 {
 	struct isp_pipe_dev *dev = NULL;
 	struct isp_pipe_context *pctx;
+	int i;
 
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
 	pr_info("fmcu done cxt_id:%d\n", idx);
 	isp_frame_done(idx, dev);
+
+	if (pctx->enable_slowmotion == 1) {
+		for (i = 0;i < pctx->slowmotion_count - 1;i++)
+			isp_frame_done(idx, dev);
+	}
+}
+
+static void isp_fmcu_shadow_done(enum isp_context_id idx, void *isp_handle)
+{
+	struct isp_pipe_dev *dev = NULL;
+	struct isp_pipe_context *pctx;
+
+	dev = (struct isp_pipe_dev *)isp_handle;
+	pctx = &dev->ctx[idx];
+
+	if (pctx->enable_slowmotion == 1)
+		complete(&pctx->frm_done);
+
+	pr_debug("cxt_id:%d done.\n", idx);
 }
 
 static void isp_fmcu_load_done(enum isp_context_id idx, void *isp_handle)
@@ -293,6 +316,7 @@ static isp_isr isp_isr_handler[32] = {
 	[ISP_INT_STORE_DONE_THUMBNAIL] = isp_thumb_store_done,
 	[ISP_INT_LTMHISTS_DONE]  = isp_ltm_hists_done,
 	[ISP_INT_FMCU_LOAD_DONE] = isp_fmcu_load_done,
+	[ISP_INT_FMCU_SHADOW_DONE] = isp_fmcu_shadow_done,
 	[ISP_INT_FMCU_STORE_DONE] = isp_fmcu_store_done,
 };
 

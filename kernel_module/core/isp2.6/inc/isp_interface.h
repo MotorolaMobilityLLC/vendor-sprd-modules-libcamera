@@ -79,6 +79,10 @@ enum isp_offline_param_valid {
 	ISP_PATH2_TRIM = (1 << 3),
 };
 
+struct isp_init_param {
+	struct img_size max_size;
+	uint32_t is_high_fps;
+};
 
 struct isp_ctx_base_desc {
 	uint32_t mode_3dnr;
@@ -86,6 +90,9 @@ struct isp_ctx_base_desc {
 	uint32_t in_fmt;
 	uint32_t bayer_pattern;
 	uint32_t fetch_fbd;
+	uint32_t enable_slowmotion;
+	uint32_t slowmotion_count;
+	uint32_t slw_state;
 };
 
 struct isp_ctx_size_desc {

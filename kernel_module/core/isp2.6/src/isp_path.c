@@ -477,6 +477,9 @@ int isp_cfg_ctx_base(struct isp_pipe_context *pctx, void *param)
 	}
 
 	cfg_in = (struct isp_ctx_base_desc *)param;
+	pctx->enable_slowmotion = cfg_in->enable_slowmotion;
+	pctx->slowmotion_count = cfg_in->slowmotion_count;
+	pctx->slw_state = cfg_in->slw_state;
 	pctx->mode_3dnr = cfg_in->mode_3dnr;
 	pctx->mode_ltm = cfg_in->mode_ltm;
 	pctx->in_fmt = cfg_in->in_fmt;

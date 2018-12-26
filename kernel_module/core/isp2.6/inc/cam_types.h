@@ -112,6 +112,11 @@ enum cam_3dnr_type {
 	CAM_3DNR_SW,
 };
 
+enum cam_slw_state {
+	CAM_SLOWMOTION_OFF = 0,
+	CAM_SLOWMOTION_ON,
+};
+
 enum cam_data_endian {
 	ENDIAN_LITTLE = 0,
 	ENDIAN_BIG,

@@ -29,6 +29,12 @@ enum fcmu_id {
 	ISP_FMCU_NUM
 };
 
+enum fmcu_buf_id {
+	PING,
+	PANG,
+	MAX_BUF
+};
+
 enum isp_fmcu_cmd {
 	PRE0_SHADOW_DONE = 0x10,
 	PRE0_ALL_DONE,
@@ -49,11 +55,12 @@ enum isp_fmcu_cmd {
 struct isp_fmcu_ops;
 struct isp_fmcu_ctx_desc {
 	enum fcmu_id fid;
-	struct camera_buf ion_pool;
-	uint32_t *cmd_buf;
-	unsigned long hw_addr;
+	enum fmcu_buf_id cur_buf_id;
+	struct camera_buf ion_pool[MAX_BUF];
+	uint32_t *cmd_buf[MAX_BUF];
+	unsigned long hw_addr[MAX_BUF];
 	size_t cmdq_size;
-	size_t cmdq_pos;
+	size_t cmdq_pos[MAX_BUF];
 	spinlock_t lock;
 	atomic_t  user_cnt;
 	struct list_head list;
@@ -67,6 +74,7 @@ struct isp_fmcu_ops {
 	int (*push_cmdq)(struct isp_fmcu_ctx_desc *fmcu_ctx,
 					uint32_t addr, uint32_t cmd);
 	int (*hw_start)(struct isp_fmcu_ctx_desc *fmcu_ctx);
+	int (*cmd_ready)(struct isp_fmcu_ctx_desc *fmcu_ctx);
 };
 
 
