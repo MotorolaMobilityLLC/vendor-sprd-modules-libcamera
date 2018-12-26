@@ -173,7 +173,7 @@ static uint32_t s5k4h7_qtech_test_awb(void *param_ptr) {
     uint32_t flag = 1;
     struct otp_info_t *otp_info = (struct otp_info_t *)param_ptr;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.otp.awb", value, "on");
+    property_get("persist.vendor.cam.otp.awb", value, "on");
 
     if (!strcmp(value, "on")) {
         SENSOR_PRINT("apply awb otp normally!");
@@ -205,7 +205,7 @@ static uint32_t s5k4h7_qtech_test_awb(void *param_ptr) {
 static uint32_t s5k4h7_qtech_test_lsc(void) {
     uint32_t flag = 1;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.otp.lsc", value, "on");
+    property_get("persist.vendor.cam.otp.lsc", value, "on");
 
     if (!strcmp(value, "on")) {
         SENSOR_PRINT("apply lsc otp normally!");

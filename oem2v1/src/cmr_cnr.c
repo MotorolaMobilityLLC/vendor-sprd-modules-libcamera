@@ -77,9 +77,9 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cnr_handle->cnr_ver.middle = 0;
     cnr_handle->cnr_ver.minor = 1;
 
-    property_get("sys.cam.cnr.threadnum", value, "4");
+    property_get("vendor.cam.cnr.threadnum", value, "4");
     threadSet.threadNum = atoi(value);
-    property_get("sys.cam.cnr.corebundle", value, "0");
+    property_get("vendor.cam.cnr.corebundle", value, "0");
     threadSet.coreBundle = atoi(value);
 
     cnr_handle->handle = cnr_init(&cnr_handle->cnr_ver, threadSet);

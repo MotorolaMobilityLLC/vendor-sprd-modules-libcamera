@@ -721,12 +721,12 @@ void *thread_3dnr(void *p_data) {
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);
             sprintf(filename,
-                    "/data/misc/cameraserver/scl_in_%ldx%ld_index_%d.yuv",
+                    "/data/vendor/cameraserver/scl_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->width, threednr_handle->height, cur_frm);
             save_yuv(filename, (char *)src->addr_vir.addr_y,
                      threednr_handle->width, threednr_handle->height);
             sprintf(filename,
-                    "/data/misc/cameraserver/scl_out_%ldx%ld_index_%d.yuv",
+                    "/data/vendor/cameraserver/scl_out_%ldx%ld_index_%d.yuv",
                     threednr_handle->small_width, threednr_handle->small_height,
                     cur_frm);
             save_yuv(filename, (char *)dst.addr_vir.addr_y,

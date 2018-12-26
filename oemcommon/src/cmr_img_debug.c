@@ -105,7 +105,7 @@ cmr_int cmr_img_debug(void *param1, void *param2) {
         }
         case 1 << 1: {
             CMR_LOGD("bit 1 is set");
-            property_get("debug.sys.cam.roi.set", value, "");
+            property_get("vendor.cam.roi.set", value, "");
             if (*value != '\0') {
                 unsigned int x1 = 1;
                 unsigned int x1_base = 1;

@@ -2466,20 +2466,20 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         if (otp_cxt->sensor_id == 0) {
             /* including rear dual_master and single */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/misc/cameraserver/", "rear_master");
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/", "rear_master");
         } else if (otp_cxt->sensor_id == 2) {
             /* including rear dual_slave */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/misc/cameraserver/", "rear_slave");
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/", "rear_slave");
         } else if (otp_cxt->sensor_id == 1) {
             /* including front dual_master and single */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/misc/cameraserver/",
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
                      "front_master");
         } else if (otp_cxt->sensor_id == 3) {
             /* including front dual_slave */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/misc/cameraserver/", "front_slave");
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/", "front_slave");
         }
 
         OTP_LOGD("otp_data_read_path:%s", otp_read_bin_path);

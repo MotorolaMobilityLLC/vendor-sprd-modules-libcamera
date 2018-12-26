@@ -574,8 +574,8 @@ static cmr_int ov16885_drv_ov4c_process(cmr_handle handle, cmr_u32 *param) {
     //    gettimeofday(&start, NULL);
     //    char *stdout;
     //    fprintf(stdout, "fcellprocess begin\n");
-    const char *fcellImgFile = "/data/misc/cameraserver/input.mipi_raw";
-    const char *outImgFile = "/data/misc/cameraserver/output1.raw";
+    const char *fcellImgFile = "/data/vendor/cameraserver/input.mipi_raw";
+    const char *outImgFile = "/data/vendor/cameraserver/output1.raw";
     uint16 *pFcellImage = (uint16 *)frame_4in1->im_addr_in;
 //  uint16 *pOutImage;
 //    pFcellImage = (uint16 *)malloc(imgsize*1.25/2);
@@ -613,7 +613,7 @@ static cmr_int ov16885_drv_ov4c_process(cmr_handle handle, cmr_u32 *param) {
         fclose(fp0);
     }
 #if 1
-    fp0 = fopen("/data/misc/cameraserver/input-new.mipi_raw", "wb");
+    fp0 = fopen("/data/vendor/cameraserver/input-new.mipi_raw", "wb");
     if (fp0) {
         fwrite(pFcellImage, 1,imgsize * 5 /8, fp0);
         fclose(fp0);

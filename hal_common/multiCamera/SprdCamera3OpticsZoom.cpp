@@ -273,7 +273,7 @@ float SprdCamera3OpticsZoom::setZoomInfo(CameraMetadata *WideSettings,
     };
     double adbzoom = 5;
 
-    property_get("sys.camera.opticalzoom", value, "0");
+    property_get("vendor.cam.opticalzoom", value, "0");
     adbzoom = atof(value);
     if (adbzoom >= 1 && adbzoom <= 4) {
         if (adbzoom != zoomRatio) {
@@ -487,7 +487,7 @@ void SprdCamera3OpticsZoom::reReqConfig(camera3_capture_request_t *request,
         static_cast<float>(mWideMaxWidth) / static_cast<float>(mTeleMaxWidth);
     float h_ratio =
         static_cast<float>(mWideMaxHeight) / static_cast<float>(mTeleMaxHeight);
-    property_get("sys.camera.opticalzoomth", value, "-1");
+    property_get("vendor.cam.opticalzoomth", value, "-1");
     if (atof(value) != -1) {
         mZoomValueTh = atof(value);
     }

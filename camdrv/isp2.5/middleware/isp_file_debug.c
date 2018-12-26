@@ -52,7 +52,7 @@ static FILE *ispfile_open_file(char* name, cmr_s32 open_cnt)
 	FILE *fp = NULL;
 	char file_name[100] = { 0 };
 
-	sprintf(file_name, "/data/misc/cameraserver/%s_%d.txt", name, open_cnt);
+	sprintf(file_name, "/data/vendor/cameraserver/%s_%d.txt", name, open_cnt);
 
 	fp = fopen(file_name, "w+");
 	if (NULL ==fp)
