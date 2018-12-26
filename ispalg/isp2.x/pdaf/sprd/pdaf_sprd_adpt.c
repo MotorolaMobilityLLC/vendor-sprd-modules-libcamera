@@ -692,8 +692,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			char file_name_r[MLOG_FILE_NAME_SIZE] = {0};
 			char file_name_l[MLOG_FILE_NAME_SIZE] = {0};
 			FILE *fp = NULL;
-			sprintf(file_name_l, "/data/misc/cameraserver/pdaf_l_%d.txt", 1);
-			sprintf(file_name_r, "/data/misc/cameraserver/pdaf_r_%d.txt", 1);
+			sprintf(file_name_l, CAMERA_DATA_FILE"/pdaf_l_%d.txt", 1);
+			sprintf(file_name_r, CAMERA_DATA_FILE"/pdaf_r_%d.txt", 1);
 
 			fp = fopen(file_name_l, "wb");
 			fwrite((void*)pInPhaseBuf_left, 1, 0x8100, fp);
@@ -785,10 +785,10 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 				char file_name_r_ROI[200] = {0};
 
 				FILE *fp = NULL;
-				sprintf(file_name_l, "/data/misc/cameraserver/Type2BufferL_%d.raw", PD_FRAME_ID);
-				sprintf(file_name_r, "/data/misc/cameraserver/Type2BufferR_%d.raw", PD_FRAME_ID);
-				sprintf(file_name_l_ROI, "/data/misc/cameraserver/Type2BufferL_ROI_%d.raw", PD_FRAME_ID);
-				sprintf(file_name_r_ROI, "/data/misc/cameraserver/Type2BufferR_ROI_%d.raw", PD_FRAME_ID);
+				sprintf(file_name_l, CAMERA_DATA_FILE"/Type2BufferL_%d.raw", PD_FRAME_ID);
+				sprintf(file_name_r, CAMERA_DATA_FILE"/Type2BufferR_%d.raw", PD_FRAME_ID);
+				sprintf(file_name_l_ROI, CAMERA_DATA_FILE"/Type2BufferL_ROI_%d.raw", PD_FRAME_ID);
+				sprintf(file_name_r_ROI, CAMERA_DATA_FILE"/Type2BufferR_ROI_%d.raw", PD_FRAME_ID);
 
 				fp = fopen(file_name_l, "wb");
 				fwrite((void*)pBufLeft_Type2, 1, 99840, fp); //49920*2 bytes
@@ -843,7 +843,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 				char file_name_dual[200] = {0};
 
 				FILE *fpp = NULL;
-				sprintf(file_name_dual, "/data/misc/cameraserver/DualPDBuf_%d.raw", PD_FRAME_ID);
+				sprintf(file_name_dual, CAMERA_DATA_FILE"/DualPDBuf_%d.raw", PD_FRAME_ID);
 
 				fpp = fopen(file_name_dual, "wb");
 				fwrite((void*)pInPhaseBuf_Dual_PD, 1, PDAF_FULL_NUM_IMX362_SIZE, fpp); //4032*756*5/4 bytes
