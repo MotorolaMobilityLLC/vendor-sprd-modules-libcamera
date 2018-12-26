@@ -330,6 +330,7 @@ struct camera_context {
     struct isp_pos focus_rect;
     cmr_uint cmr_set_env;
     cmr_u8 mode_4in1;
+    struct img_rect trim_reset_info;
 };
 
 struct prev_threednr_info {
@@ -528,6 +529,8 @@ cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
                                          cmr_u16 is_enable);
 cmr_int camera_local_start_rotate(cmr_handle oem_handle,
                                   struct rotate_param *rotate_param);
+cmr_int camera_set_trim_info(cmr_handle oem_handle,
+                             struct img_rect *rotate_param);
 
 #ifdef __cplusplus
 }

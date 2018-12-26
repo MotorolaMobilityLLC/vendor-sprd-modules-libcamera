@@ -44,9 +44,10 @@ namespace sprdcamera {
 #ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
 #define MATCH_FRAME_TIME_DIFF (40)
 #else
-#define MATCH_FRAME_TIME_DIFF (20) //(60) /*30*/
+#define MATCH_FRAME_TIME_DIFF (60) //(60) /*30*/
 #endif
 #define MATCH_3dFACE_FRAME_TIME_DIFF (1000)
+#define MATCH_FACEUNLOCK_FRAME_TIME_DIFF (20)
 #define LUMA_SOOMTH_COEFF (5)
 #define DARK_LIGHT_TH (3000)
 #define LOW_LIGHT_TH (1500)
@@ -92,6 +93,8 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
     }
     if (mode == MODE_3D_FACE)
         mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
+    else if (mode == MODE_DUAL_FACEID_UNLOCK)
+        mMatchTimeThreshold = MATCH_FACEUNLOCK_FRAME_TIME_DIFF;
     else
         mMatchTimeThreshold = MATCH_FRAME_TIME_DIFF;
 
@@ -1435,6 +1438,7 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720}}},
     {RES_5M, {{2592, 1944}, {960, 720}}},
     {RES_8M, {{3264, 2448}, {960, 720}}},
+    {RES_12M, {{4000, 3000}, {960, 720}}},
     {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}}},
 };
 
@@ -1454,6 +1458,8 @@ int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
         size = RES_5M;
     else if (!strncmp(resolution, "RES_8M", 12))
         size = RES_8M;
+    else if (!strncmp(resolution, "RES_12M", 12))
+        size = RES_12M;
     else if (!strncmp(resolution, "RES_13M", 12))
         size = RES_13M;
     else

@@ -9244,6 +9244,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 sc_factor = 0, sc_capability = 0, sc_threshold = 0;
     cmr_int zoom_post_proc = 0;
     struct img_size trim_sz;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle || !cap_size || !img_cap) {
         CMR_LOGE("invalid param, 0x%p, 0x%p, 0x%p", handle, cap_size, img_cap);
@@ -9370,13 +9371,14 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*handle zoom process mode*/
     if (ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) {
-        img_cap->src_img_rect.start_x = sn_mode_info->trim_start_x;
-        img_cap->src_img_rect.start_y = sn_mode_info->trim_start_y;
+        if (cxt->is_multi_mode != MODE_TUNING) {
+            img_cap->src_img_rect.start_x = sn_mode_info->trim_start_x;
+            img_cap->src_img_rect.start_y = sn_mode_info->trim_start_y;
+        }
         img_cap->src_img_rect.width = sn_mode_info->trim_width;
         img_cap->src_img_rect.height = sn_mode_info->trim_height;
         img_cap->dst_img_size.width = sn_mode_info->trim_width;
         img_cap->dst_img_size.height = sn_mode_info->trim_height;
-
         if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt ||
             ZOOM_POST_PROCESS == zoom_post_proc) {
             sn_trim_rect->start_x = img_cap->src_img_rect.start_x;
@@ -9414,8 +9416,6 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
 
         tmp_width = (cmr_u32)(sc_factor * img_cap->src_img_rect.width);
         tmp_height = (cmr_u32)(sc_factor * img_cap->src_img_rect.height);
-        CMR_LOGD("%d, %d, %d, %d, %d", tmp_width, img_cap->src_img_rect.width,
-                 cap_size->width, cap_size->height, sc_threshold);
         if (ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
             /*if the out size is smaller than the in size, try to use scaler on
              * the fly*/
@@ -9454,7 +9454,6 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     }
     CMR_LOGD("cap_orig_size %d %d", prev_cxt->cap_org_size.width,
              prev_cxt->cap_org_size.height);
-
 exit:
     CMR_LOGD("X");
     ATRACE_END();

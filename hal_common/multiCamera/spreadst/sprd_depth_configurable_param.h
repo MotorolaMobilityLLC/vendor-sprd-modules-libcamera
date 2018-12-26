@@ -29,21 +29,27 @@
 
 #ifndef _SPRD_DEPTH_CONFIGURABLE_PARA_H_
 #define _SPRD_DEPTH_CONFIGURABLE_PARA_H_
+#include <cmr_type.h>
 
 struct sprd_depth_configurable_para {
     unsigned char SensorDirection; // sensor摆放位置: 0--> Horizontal 1 -->
                                    // Vertical，与模组相关
-    unsigned char DepthScaleMin; // Min Value when we Scale Depth Result
-    unsigned char DepthScaleMax; // Max Value when we Scale Depth Result
+    unsigned char DepthScaleMin;   // Min Value when we Scale Depth Result
+    unsigned char DepthScaleMax;   // Max Value when we Scale Depth Result
     unsigned char
         CalibInfiniteZeroPt; // The Calibration Zero Point is Infinite or Not
-    int SearhRange;      //搜索范围
-    int MinDExtendRatio; // Min Disparity Search Value Adjust Ratio
+    int SearhRange;          //搜索范围
+    int MinDExtendRatio;     // Min Disparity Search Value Adjust Ratio
     /* 以下四个参数用于设定测距范围和阈值*/
     int inDistance;
     int inRatio;
     int outDistance;
     int outRatio;
+    img_rect trim_info;
+};
+
+static struct img_rect bokeh_trim_info = {
+    .start_x = 0, .start_y = 0, .width = 0, .height = 0,
 };
 
 static struct sprd_depth_configurable_para sprd_depth_config_para = {
@@ -58,4 +64,5 @@ static struct sprd_depth_configurable_para sprd_depth_config_para = {
     .outDistance = 700,
     .outRatio = 60,
 };
+
 #endif

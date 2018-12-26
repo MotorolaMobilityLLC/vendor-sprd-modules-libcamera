@@ -71,6 +71,7 @@ typedef enum {
     RES_1080P,
     RES_5M,
     RES_8M,
+    RES_12M,
     RES_13M,
     RES_END
 } custom_size;

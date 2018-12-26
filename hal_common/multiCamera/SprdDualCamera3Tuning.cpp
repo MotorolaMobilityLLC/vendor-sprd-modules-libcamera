@@ -132,6 +132,9 @@ SprdDualCamera3Tuning::~SprdDualCamera3Tuning() {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
     }
+
+    if (mStaticMetadata)
+        free_camera_metadata(mStaticMetadata);
     HAL_LOGI("X");
 }
 
@@ -541,7 +544,28 @@ int SprdDualCamera3Tuning::cameraDeviceOpen(__unused int camera_id,
             closeCameraDevice();
             return rc;
         }
-
+#ifdef CONFIG_BOKEH_CROP
+        if (phyId == CAM_TMAIN_ID) {
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
+            property_get("persist.vendor.cam.bokeh.crop.enable", prop, "0");
+            if (atoi(prop)) {
+                property_get("persist.vendor.cam.bokeh.crop.start_x", prop,
+                             "0");
+                bokeh_trim_info.start_x = atoi(prop);
+                property_get("persist.vendor.cam.bokeh.crop.start_y", prop,
+                             "0");
+                bokeh_trim_info.start_y = atoi(prop);
+                property_get("persist.vendor.cam.bokeh.crop.width", prop, "0");
+                bokeh_trim_info.width = atoi(prop);
+                property_get("persist.vendor.cam.bokeh.crop.height", prop, "0");
+                bokeh_trim_info.height = atoi(prop);
+            }
+            hw->camera_ioctrl(CAMERA_IOCTRL_SET_TRIM_INFO, &bokeh_trim_info,
+                              NULL);
+        }
+#endif
         HAL_LOGD("open id=%d success", phyId);
         m_pPhyCamera[i].dev = reinterpret_cast<camera3_device_t *>(hw_dev[i]);
         m_pPhyCamera[i].hwi = hw;
@@ -579,6 +603,9 @@ int SprdDualCamera3Tuning::getCameraInfo(struct camera_info *info) {
     };
 
     HAL_LOGI("E, camera_id = %d", camera_id);
+    if (mStaticMetadata)
+        free_camera_metadata(mStaticMetadata);
+
     m_VirtualCamera.id = CAM_TMAIN_ID;
     camera_id = (int)m_VirtualCamera.id;
     SprdCamera3Setting::initDefaultParameters(camera_id);
@@ -586,8 +613,14 @@ int SprdDualCamera3Tuning::getCameraInfo(struct camera_info *info) {
     if (rc < 0) {
         return rc;
     }
+    CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
+
+    property_get("persist.vendor.cam.res.dual.tuning", prop, "RES_5M");
+    HAL_LOGI("tuning support cap resolution %s", prop);
+    addAvailableStreamSize(metadata, prop);
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
+    mStaticMetadata = metadata.release();
 
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;

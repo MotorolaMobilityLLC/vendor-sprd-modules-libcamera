@@ -655,9 +655,6 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
              config->frm_num, config->cfg.dst_img_size.width,
              config->cfg.dst_img_size.height, config->cfg.slowmotion);
 
-    CMR_LOGI("src_img_fmt %d dst_img_fmt %d.4in1 %d", config->cfg.src_img_fmt,
-             config->cfg.dst_img_fmt, config->cfg.need_4in1);
-
     parm.dst_size.w = config->cfg.dst_img_size.width;
     parm.dst_size.h = config->cfg.dst_img_size.height;
     pxl_fmt = cmr_grab_get_4cc(config->cfg.dst_img_fmt);
@@ -687,6 +684,10 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.reserved[3] = config->hdr_cap;
     parm.scene_mode = config->cfg.sence_mode;
 
+    CMR_LOGI("src_img_fmt %d dst_img_fmt %d.4in1 %d, crop=%d,%d,%d,%d",
+             config->cfg.src_img_fmt, config->cfg.dst_img_fmt,
+             config->cfg.need_4in1, parm.crop_rect.x, parm.crop_rect.y,
+             parm.crop_rect.w, parm.crop_rect.h);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_OUTPUT_SIZE, &parm);
     CMR_RTN_IF_ERR(ret);
 

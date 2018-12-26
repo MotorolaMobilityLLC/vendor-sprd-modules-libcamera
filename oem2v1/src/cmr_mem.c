@@ -427,9 +427,12 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     mem_res = *io_mem_res;
     mem_end = *io_mem_end;
+    if (is_multi_camera_mode_mem != MODE_TUNING) {
 
-    raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
-
+        raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    } else {
+        raw_size = sn_trim->width * sn_trim->height * RAWRGB_BIT_WIDTH / 8;
+    }
     tmp1 = image_size->width * image_size->height * 3 / 2;
     tmp2 = cap_size->width * cap_size->height * 3 / 2;
     tmp3 = sn_size->width * sn_size->height * 3 / 2;
@@ -470,8 +473,13 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->cap_raw.fd = cap_mem->cap_yuv.fd;
     cap_mem->cap_raw.buf_size = raw_size;
-    cap_mem->cap_raw.size.width = sn_size->width;
-    cap_mem->cap_raw.size.height = sn_size->height;
+    if (is_multi_camera_mode_mem != MODE_TUNING) {
+        cap_mem->cap_raw.size.width = sn_size->width;
+        cap_mem->cap_raw.size.height = sn_size->height;
+    } else {
+        cap_mem->cap_raw.size.width = sn_trim->width;
+        cap_mem->cap_raw.size.height = sn_trim->height;
+    }
     cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
     cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;

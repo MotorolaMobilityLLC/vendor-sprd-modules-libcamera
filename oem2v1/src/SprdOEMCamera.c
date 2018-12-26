@@ -1154,6 +1154,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         camera_local_start_rotate(handle, (struct rotate_param *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_TRIM_INFO: {
+        ret = camera_set_trim_info(handle, (struct img_rect *)param);
+        break;
+    }
     default:
         break;
     }
@@ -1183,9 +1187,11 @@ exit:
 }
 
 cmr_int image_sw_algorithm_processing(
-    cmr_handle camera_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
-     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
-    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type, enum img_data_type format) {
+    cmr_handle camera_handle,
+    struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+    enum img_data_type format) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     return ret;

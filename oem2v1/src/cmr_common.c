@@ -856,6 +856,9 @@ void camera_get_picture_size(multiCameraMode mode, int *width, int *height) {
         } else if (!strncmp(value, "RES_8M", 12)) {
             *width = 3264;
             *height = 2440;
+        } else if (!strncmp(value, "RES_12M", 12)) {
+            *width = 4000;
+            *height = 3000;
         } else if (!strncmp(value, "RES_13M", 12)) {
             *width = 4160;
             *height = 3120;

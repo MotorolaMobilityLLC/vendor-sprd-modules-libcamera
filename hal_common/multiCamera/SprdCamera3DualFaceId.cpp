@@ -691,7 +691,7 @@ int SprdCamera3DualFaceId::initialize(
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
     CHECK_HWI_ERROR(hwiMain);
-    SprdCamera3MultiBase::initialize(MODE_DUAL_FACEID_REGISTER, hwiMain);
+    SprdCamera3MultiBase::initialize(MODE_DUAL_FACEID_UNLOCK, hwiMain);
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (NO_ERROR != rc) {

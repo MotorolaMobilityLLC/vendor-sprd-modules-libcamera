@@ -6200,6 +6200,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     memset(&isp_param, 0x00, sizeof(isp_param));
     isp_param.size.w = param_ptr->size.width;
     isp_param.size.h = param_ptr->size.height;
+
+    CMR_LOGI("isp_param.size.w=%d,isp_param.size.h=%d", isp_param.size.w,
+             isp_param.size.h);
 #ifdef CONFIG_CAMERA_OFFLINE
     isp_param.dcam_size.w = param_ptr->dcam_size.width;
     isp_param.dcam_size.h = param_ptr->dcam_size.height;
@@ -11575,6 +11578,26 @@ cmr_int camera_local_start_rotate(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_trim_info(cmr_handle oem_handle,
+                             struct img_rect *trim_info) {
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (!cxt || !trim_info) {
+        CMR_LOGE("failed to set trim");
+        return -CMR_CAMERA_FAIL;
+    }
+    cxt->trim_reset_info.start_x = trim_info->start_x;
+    cxt->trim_reset_info.start_y = trim_info->start_y;
+    cxt->trim_reset_info.width = trim_info->width;
+    cxt->trim_reset_info.height = trim_info->height;
+
+    CMR_LOGI("x. reset trim info:%d,%d,%d,%d,ret=%d",
+             cxt->trim_reset_info.start_x, cxt->trim_reset_info.start_y,
+             cxt->trim_reset_info.width, cxt->trim_reset_info.height, ret);
+
+    return ret;
+}
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;

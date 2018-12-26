@@ -48,6 +48,10 @@
 #include <ui/GraphicBufferAllocator.h>
 #include "SprdCamera3MultiBase.h"
 
+#ifdef CONFIG_BOKEH_CROP
+#include "./spreadst/sprd_depth_configurable_param.h"
+#endif
+
 namespace sprdcamera {
 
 #define LOCAL_TPREVIEW_NUM (8)

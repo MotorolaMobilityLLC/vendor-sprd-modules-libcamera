@@ -330,6 +330,7 @@ struct camera_context {
     cmr_uint swisp_out_virt_addr;
     cmr_s32 swisp_out_mfd;
     nsecs_t snp_high_flash_time;
+    struct img_rect trim_reset_info;
 };
 
 struct prev_threednr_info {

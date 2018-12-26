@@ -365,6 +365,7 @@ struct camera_context {
     cmr_s64 hdr_capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
+    struct img_rect trim_reset_info;
 };
 
 struct prev_ai_scene_info {

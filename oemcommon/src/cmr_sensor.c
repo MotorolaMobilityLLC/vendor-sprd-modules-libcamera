@@ -25,6 +25,8 @@
 #include "sensor_cfg.h"
 #include "cmr_msg.h"
 #include "cmr_sensor.h"
+#include "cmr_oem.h"
+
 #include "ylog.h"
 
 /**---------------------------------------------------------------------------*
@@ -136,7 +138,8 @@ static cmr_int cmr_sns_copy_info(struct sensor_exp_info *out_sensor_info,
                                  SENSOR_EXP_INFO_T *in_sensor_info);
 cmr_int cmr_sns_get_ioctl_cmd(SENSOR_IOCTL_CMD_E *sns_cmd,
                               enum sensor_cmd in_cmd);
-
+static cmr_int cmr_reset_trim_info(cmr_handle sensor_handle,
+                                   struct sensor_exp_info *sensor_info);
 /**---------------------------------------------------------------------------*
  **                         External Functions                                *
  **---------------------------------------------------------------------------*/
@@ -444,8 +447,9 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id,
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
     CHECK_HANDLE_VALID(handle);
+    CMR_LOGD("E");
     SENSOR_EXP_INFO_T *cur_sensor_info = NULL;
-    CMR_LOGV("E");
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     ret = sensor_get_info_common(&(handle->sensor_cxt[sensor_id]),
                                  &cur_sensor_info);
@@ -457,11 +461,55 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id,
     CHECK_HANDLE_VALID(sensor_info);
 
     cmr_sns_copy_info(sensor_info, cur_sensor_info);
-    CMR_LOGV("X");
+    cmr_reset_trim_info(sensor_handle, sensor_info);
 
     return ret;
 }
 
+static cmr_int cmr_reset_trim_info(cmr_handle sensor_handle,
+                                   struct sensor_exp_info *sensor_info) {
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct cmr_sensor_handle *handle =
+        (struct cmr_sensor_handle *)sensor_handle;
+    CHECK_HANDLE_VALID(handle);
+
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+
+    if (!((cxt->is_multi_mode == MODE_BOKEH) ||
+          (cxt->is_multi_mode == MODE_TUNING)) ||
+        !cxt->trim_reset_info.width || !cxt->trim_reset_info.height) {
+        return ret;
+    }
+    for (int i = 0; i < SENSOR_MODE_MAX; i++) {
+        if (sensor_info->mode_info[i].width >
+            (cxt->trim_reset_info.width - cxt->trim_reset_info.start_x)) {
+
+            sensor_info->mode_info[i].trim_start_x =
+                cxt->trim_reset_info.start_x;
+            sensor_info->mode_info[i].trim_start_y =
+                cxt->trim_reset_info.start_y;
+            sensor_info->mode_info[i].trim_width = cxt->trim_reset_info.width;
+            sensor_info->mode_info[i].trim_height = cxt->trim_reset_info.height;
+
+            // sensor_info->mode_info[i].scaler_trim.start_x =
+            // cxt->trim_reset_info.start_x;
+            //    sensor_info->mode_info[i].scaler_trim.start_y =
+            // cxt->trim_reset_info.start_y;
+            sensor_info->mode_info[i].scaler_trim.width =
+                cxt->trim_reset_info.width;
+            sensor_info->mode_info[i].scaler_trim.height =
+                cxt->trim_reset_info.height;
+            CMR_LOGV("reset:%d,%d,%d,%d",
+                     sensor_info->mode_info[i].trim_start_x,
+                     sensor_info->mode_info[i].trim_start_y,
+                     sensor_info->mode_info[i].trim_width,
+                     sensor_info->mode_info[i].trim_height);
+        }
+    }
+
+    return ret;
+}
 cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
                             cmr_uint mode) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -1284,7 +1332,7 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     }
 
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-    //func_ptr = sns_ops->ext_ops[sns_cmd].ops;
+    // func_ptr = sns_ops->ext_ops[sns_cmd].ops;
     if (!module->otp_drv_info.otp_drv_entry) {
         ret =
             cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr, &read_flag);
@@ -1439,7 +1487,6 @@ static void cmr_sns_check_fmove(struct cmr_sensor_handle *sensor_handle,
     cmr_u32 ret = CMR_CAMERA_SUCCESS;
     cmr_u32 gain_val = 0;
     SENSOR_EXT_FUN_PARAM_T af_param;
-
 }
 
 static cmr_int cmr_sns_fmove_proc(void *p_data) {
