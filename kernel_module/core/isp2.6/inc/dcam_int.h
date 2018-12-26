@@ -161,7 +161,16 @@ enum {
 	 BIT(DCAM_CAP_SOF) |\
 	 BIT(DCAM_SENSOR_EOF))
 
-/* enabled interrupt source in slow motion scene */
+/*
+ * enabled interrupt source in slow motion scene
+ *
+ * Note: this one is deprecated as we have a design defect in current DCAM IP.
+ * The address written into slow motion register in DCAM_PREVIEW_SOF cannot be
+ * applied by hardware because DCAM will only shadow registers at the first one
+ * of four frames in slow motion mode. In order to make DCAM_PREVIEW_SOF work,
+ * software has to set auto copy at the last DCAM_CAP_SOF of four frames. So we
+ * just use DCAM_CAP_SOF to do all the work.
+ */
 #define DCAMINT_IRQ_LINE_EN_SLM \
 	(DCAMINT_ALL_ERROR | DCAMINT_ALL_TX_DONE |\
 	 BIT(DCAM_PREVIEW_SOF))

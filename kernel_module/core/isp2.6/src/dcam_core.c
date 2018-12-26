@@ -738,11 +738,8 @@ static int dcam_start(struct dcam_pipe_dev *dev)
 
 	DCAM_REG_WR(idx, DCAM_INT_CLR, 0xFFFFFFFF);
 
-	/* use DCAM_PREVIEW_SOF and ignore DCAM_SENSOR_EOF in slow motion */
-	if (dev->enable_slowmotion)
-		DCAM_REG_WR(idx, DCAM_INT_EN, DCAMINT_IRQ_LINE_EN_SLM);
-	else
-		DCAM_REG_WR(idx, DCAM_INT_EN, DCAMINT_IRQ_LINE_EN_NORMAL);
+	/* see DCAM_PREVIEW_SOF in dcam_int.h for details */
+	DCAM_REG_WR(idx, DCAM_INT_EN, DCAMINT_IRQ_LINE_EN_NORMAL);
 
 	/* enable internal logic access sram */
 	DCAM_REG_MWR(idx, DCAM_APB_SRAM_CTRL, BIT_0, 1);
@@ -2187,6 +2184,10 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		else
 			dcam_put_sync_helper(dev, helper);
 	}
+
+	/* set frame_index to index of last frame in init phase */
+	if (dev->enable_slowmotion)
+		dev->frame_index = dev->slowmotion_count - 1;
 
 	/* TODO: change AFL trigger */
 	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);

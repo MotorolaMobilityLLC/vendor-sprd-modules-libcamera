@@ -200,13 +200,28 @@ static void dcam_cap_sof(void *param)
 		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
 		 dev->frame_index);
 
-	helper = dcam_get_sync_helper(dev);
+	if (dev->enable_slowmotion) {
+		uint32_t n = dev->frame_index % dev->slowmotion_count;
+
+		/* auto copy at last frame of a group of slow motion frames */
+		if (n == dev->slowmotion_count - 1)
+			dcam_auto_copy(dev->idx);
+
+		/* set buffer at first frame of a group of slow motion frames */
+		if (n)
+			return;
+	}
+
+	/* don't need frame sync in slow motion */
+	if (!dev->enable_slowmotion)
+		helper = dcam_get_sync_helper(dev);
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
 		if (atomic_read(&path->user_cnt) < 1)
 			continue;
 
+		/* TODO: frm_deci and frm_skip in slow motion */
 		path->frm_cnt++;
 		if (path->frm_cnt <= path->frm_skip)
 			continue;

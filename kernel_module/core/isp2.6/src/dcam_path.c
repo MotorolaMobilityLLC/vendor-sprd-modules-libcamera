@@ -650,9 +650,6 @@ dcam_path_cycle_frame(struct dcam_pipe_dev *dev, struct dcam_path_desc *path)
 	struct camera_frame *frame = NULL;
 	struct timespec cur_ts;
 
-	if (unlikely(!dev || !path))
-		return ERR_PTR(-EINVAL);
-
 	frame = camera_dequeue(&path->out_buf_queue);
 	if (frame == NULL)
 		frame = camera_dequeue(&path->reserved_buf_queue);
@@ -801,8 +798,12 @@ int dcam_path_set_store_frm(void *dcam_handle,
 			else
 				addr = slowmotion_store_addr[_hist][i];
 			DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+
+			pr_debug("DCAM%u %s set reserved frame\n", dev->idx,
+				 to_path_name(path_id));
 			i++;
 		}
+
 
 		/* put it back */
 		camera_enqueue(&path->reserved_buf_queue, frame);
