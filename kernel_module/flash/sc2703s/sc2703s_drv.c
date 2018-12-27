@@ -36,6 +36,7 @@ struct flash_driver_data {
 	struct regmap *reg_map;
 	spinlock_t slock;
 	int gpio_tab[SPRD_FLASH_NUM_MAX][FLASH_GPIO_MAX];
+	u32 torch_led_index;
 	void *priv;
 	struct device *dev;
 	struct usb_charger *usb_charger;
@@ -197,6 +198,7 @@ static int sprd_flash_sc2703s_open_torch(void *drvd, uint8_t idx)
 	if (!drv_data)
 		return -EFAULT;
 
+	idx = drv_data->torch_led_index;
 	sc2703_torch_mode_ac_charge_switch(drvd, 1);
 	sc2703_flash_set_mode(drvd, LED_TORCH);
 	sc2703_flash_led_enable(drvd, idx, 1);
@@ -211,6 +213,7 @@ static int sprd_flash_sc2703s_close_torch(void *drvd, uint8_t idx)
 	if (!drv_data)
 		return -EFAULT;
 
+	idx = drv_data->torch_led_index;
 	sc2703_flash_led_enable(drvd, idx, 0);
 	sc2703_torch_mode_ac_charge_switch(drvd, 0);
 
@@ -303,6 +306,7 @@ static int sprd_flash_sc2703s_cfg_value_torch(void *drvd, uint8_t idx,
 	if (!drv_data)
 		return -EFAULT;
 
+	idx = drv_data->torch_led_index;
 	regmap_write(drv_data->reg_map,
 			SC2703_FLASH_FD_CONFIG5 + idx/2 * 2, element->index);
 
@@ -374,6 +378,12 @@ static int sprd_flash_sc2703s_probe(struct i2c_client *i2c,
 			"Failed to allocate register map: %d\n", ret);
 		return ret;
 	}
+
+	ret = of_property_read_u32(drv_data->dev->of_node,
+				"torch-led-idx", &drv_data->torch_led_index);
+	if (ret)
+		drv_data->torch_led_index = SPRD_FLASH_LED0;
+
 	i2c_set_clientdata(i2c, drv_data);
 #if 0
 	for (j = 0; j < FLASH_GPIO_MAX; j++) {

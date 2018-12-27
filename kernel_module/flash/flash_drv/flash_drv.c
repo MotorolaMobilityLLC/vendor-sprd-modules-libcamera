@@ -409,18 +409,18 @@ static ssize_t flash_sysfs_test(struct device *dev,
 
 	switch (cmd) {
 	case 0:
+		flash_open_preflash(flash_dev, flash_idx, led_idx);
+		break;
+	case 1:
+		flash_close_preflash(flash_dev, flash_idx, led_idx);
+		break;
+	case 2:
 		flash_dev->flashlight_status[0] = 1;
 		flash_open_torch(flash_dev, flash_idx, led_idx);
 		break;
-	case 1:
+	case 3:
 		flash_dev->flashlight_status[0] = 0;
 		flash_close_torch(flash_dev, flash_idx, led_idx);
-		break;
-	case 2:
-		flash_open_preflash(flash_dev, flash_idx, led_idx);
-		break;
-	case 3:
-		flash_close_preflash(flash_dev, flash_idx, led_idx);
 		break;
 	case 4:
 		flash_open_highlight(flash_dev, flash_idx, led_idx);
@@ -429,11 +429,11 @@ static ssize_t flash_sysfs_test(struct device *dev,
 		flash_close_highlight(flash_dev, flash_idx, led_idx);
 		break;
 	case 6:
-		flash_cfg_value_torch(flash_dev, flash_idx, led_idx, &element);
-		break;
-	case 7:
 		flash_cfg_value_preflash(flash_dev, flash_idx,
 					 led_idx, &element);
+		break;
+	case 7:
+		flash_cfg_value_torch(flash_dev, flash_idx, led_idx, &element);
 		break;
 	case 8:
 		flash_cfg_value_highlight(flash_dev, flash_idx,
