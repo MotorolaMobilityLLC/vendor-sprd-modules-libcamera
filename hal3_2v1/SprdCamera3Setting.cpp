@@ -976,7 +976,7 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
     *width = sensor_max_width[cameraId];
     *height = sensor_max_height[cameraId];
 
-    HAL_LOGV("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
+    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
              *height);
     return 0;
 }
@@ -985,7 +985,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
                                               cmr_u16 *height) {
     *width = largest_picture_size[cameraId].width;
     *height = largest_picture_size[cameraId].height;
-    HAL_LOGV("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
+    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
              *height);
     return 0;
 }

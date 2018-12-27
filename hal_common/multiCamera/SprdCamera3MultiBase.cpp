@@ -44,7 +44,7 @@ namespace sprdcamera {
 #ifdef CONFIG_CAMERA_SHARKLE_BRINGUP
 #define MATCH_FRAME_TIME_DIFF (40)
 #else
-#define MATCH_FRAME_TIME_DIFF (60) //(60) /*30*/
+#define MATCH_FRAME_TIME_DIFF (20) //(60) /*30*/
 #endif
 #define MATCH_3dFACE_FRAME_TIME_DIFF (1000)
 #define LUMA_SOOMTH_COEFF (5)
