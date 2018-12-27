@@ -3121,7 +3121,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->lsc_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_PDAF_BYPASS, value, "1");
+	property_get(PROP_ISP_PDAF_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->pdaf_cxt.sw_bypass = val;
