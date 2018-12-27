@@ -549,7 +549,12 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
             }
             mIspStatisHeapReserved = memory;
         }
+#if defined(CONFIG_ISP_2_6)
+        // sharkl5 dont have get_kaddr interface
+        //m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
+#else
         mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+#endif
         *phy_addr++ = kaddr;
         *phy_addr = kaddr >> 32;
         *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
