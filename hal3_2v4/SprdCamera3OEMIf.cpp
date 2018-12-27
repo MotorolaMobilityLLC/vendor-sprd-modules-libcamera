@@ -2079,7 +2079,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
         if (mSprdAppmodeId == CAMERA_MODE_TIMELAPSE) {
             needFixedFPS = true;
         }
-        property_get("volte.incall.camera.enable", value, "false");
+        property_get("vendor.cam.volte.incall.enable", value, "false");
         if (!strcmp(value, "false") && !needFixedFPS) {
             fps_param.min_fps = 15;
         }
@@ -3323,7 +3323,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     }
 
-    property_get("volte.incall.camera.enable", value, "false");
+    property_get("vendor.cam.volte.incall.enable", value, "false");
     if (!strcmp(value, "true")) {
         mSprdZslEnabled = false;
         CMR_LOGI("volte incall, don't need to configure zsl ");

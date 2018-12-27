@@ -92,7 +92,7 @@ int update_param_v1(struct sensor_raw_info *sensor_raw_info_ptr,
     unsigned char mode_info[16][80];
     int i;
 
-    sprintf(filename, "/data/misc/media/sensor_%s_raw_param_v3.c", sensor_name);
+    sprintf(filename, "/data/vendor/cameraserver/sensor_%s_raw_param_v3.c", sensor_name);
 
     sprintf(mode_name_prefix, "static uint8_t s_%s_tune_info_", sensor_name);
 
@@ -1062,33 +1062,33 @@ int update_param_v2(struct sensor_raw_info *sensor_raw_ptr,
             goto exit;
         }
     }
-    sprintf(filename[0], "/data/misc/media/sensor_%s_raw_param_common.c",
+    sprintf(filename[0], "/data/vendor/cameraserver/sensor_%s_raw_param_common.c",
             sensor_name);
-    sprintf(filename[1], "/data/misc/media/sensor_%s_raw_param_prv_0.c",
+    sprintf(filename[1], "/data/vendor/cameraserver/sensor_%s_raw_param_prv_0.c",
             sensor_name);
-    sprintf(filename[2], "/data/misc/media/sensor_%s_raw_param_prv_1.c",
+    sprintf(filename[2], "/data/vendor/cameraserver/sensor_%s_raw_param_prv_1.c",
             sensor_name);
-    sprintf(filename[3], "/data/misc/media/sensor_%s_raw_param_prv_2.c",
+    sprintf(filename[3], "/data/vendor/cameraserver/sensor_%s_raw_param_prv_2.c",
             sensor_name);
-    sprintf(filename[4], "/data/misc/media/sensor_%s_raw_param_prv_3.c",
+    sprintf(filename[4], "/data/vendor/cameraserver/sensor_%s_raw_param_prv_3.c",
             sensor_name);
-    sprintf(filename[5], "/data/misc/media/sensor_%s_raw_param_cap_0.c",
+    sprintf(filename[5], "/data/vendor/cameraserver/sensor_%s_raw_param_cap_0.c",
             sensor_name);
-    sprintf(filename[6], "/data/misc/media/sensor_%s_raw_param_cap_1.c",
+    sprintf(filename[6], "/data/vendor/cameraserver/sensor_%s_raw_param_cap_1.c",
             sensor_name);
-    sprintf(filename[7], "/data/misc/media/sensor_%s_raw_param_cap_2.c",
+    sprintf(filename[7], "/data/vendor/cameraserver/sensor_%s_raw_param_cap_2.c",
             sensor_name);
-    sprintf(filename[8], "/data/misc/media/sensor_%s_raw_param_cap_3.c",
+    sprintf(filename[8], "/data/vendor/cameraserver/sensor_%s_raw_param_cap_3.c",
             sensor_name);
-    sprintf(filename[9], "/data/misc/media/sensor_%s_raw_param_video_0.c",
+    sprintf(filename[9], "/data/vendor/cameraserver/sensor_%s_raw_param_video_0.c",
             sensor_name);
-    sprintf(filename[10], "/data/misc/media/sensor_%s_raw_param_video_1.c",
+    sprintf(filename[10], "/data/vendor/cameraserver/sensor_%s_raw_param_video_1.c",
             sensor_name);
-    sprintf(filename[11], "/data/misc/media/sensor_%s_raw_param_video_2.c",
+    sprintf(filename[11], "/data/vendor/cameraserver/sensor_%s_raw_param_video_2.c",
             sensor_name);
-    sprintf(filename[12], "/data/misc/media/sensor_%s_raw_param_video_3.c",
+    sprintf(filename[12], "/data/vendor/cameraserver/sensor_%s_raw_param_video_3.c",
             sensor_name);
-    sprintf(filename[13], "/data/misc/media/sensor_%s_raw_param_main.c",
+    sprintf(filename[13], "/data/vendor/cameraserver/sensor_%s_raw_param_main.c",
             sensor_name);
 
     sprintf(tune_info, "static uint8_t s_%s_tune_info", sensor_name);
@@ -1189,10 +1189,10 @@ uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
     unsigned char filename1[80];
     unsigned char filename2[80];
 
-    sprintf(filename0, "/data/misc/media/sensor_%s_raw_param.c", sensor_name);
-    sprintf(filename1, "/data/misc/media/sensor_%s_raw_param_v3.c",
+    sprintf(filename0, "/data/vendor/cameraserver/sensor_%s_raw_param.c", sensor_name);
+    sprintf(filename1, "/data/vendor/cameraserver/sensor_%s_raw_param_v3.c",
             sensor_name);
-    sprintf(filename2, "/data/misc/media/sensor_%s_raw_param_common.c",
+    sprintf(filename2, "/data/vendor/cameraserver/sensor_%s_raw_param_common.c",
             sensor_name);
 
     if (-1 != access(filename0, 0)) {

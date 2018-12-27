@@ -68,7 +68,7 @@ static int ov8856_otp_read_data(SENSOR_HW_HANDLE handle)
 		single_otp->program_flag = ov8856_i2c_read_otp(0);
 		SENSOR_LOGI("program_flag = %d", single_otp->program_flag);
 #if 0
-		FILE *fd=fopen("/data/misc/media/ov8856-otp.dump.bin","wb+");
+		FILE *fd=fopen("/data/vendor/cameraserver/ov8856-otp.dump.bin","wb+");
 		for (i = 0; i < 463; i++) {
 			low_val = ov8856_i2c_read_otp(i);
 			fwrite((char *)&low_val,1,1,fd);
@@ -129,7 +129,7 @@ static int ov8856_otp_read_data(SENSOR_HW_HANDLE handle)
 
 		SENSOR_LOGI("checksum = 0x%x single_otp->checksum = 0x%x %x %x %x %x", checksum, single_otp->checksum,high_val,low_val,otp_version,otp_length);
 #if 0
-		FILE *fd=fopen("/data/misc/media/dual-otp.dump.bin","wb+");
+		FILE *fd=fopen("/data/vendor/cameraserver/dual-otp.dump.bin","wb+");
 		for (i = 0; i < otp_length; i++) {
 			low_val = ov8856_i2c_read_otp(0x0000 + i);
 			fwrite((char *)&low_val,1,1,fd);

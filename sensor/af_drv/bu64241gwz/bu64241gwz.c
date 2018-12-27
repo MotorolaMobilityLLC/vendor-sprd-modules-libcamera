@@ -43,7 +43,7 @@ static uint32_t _BU64241GWZ_get_test_vcm_mode(cmr_handle sns_af_drv_handle) {
     uint8_t cmd_val[2];
 
     FILE *fp = NULL;
-    fp = fopen("/data/misc/media/cur_vcm_info.txt", "wb");
+    fp = fopen("/data/vendor/cameraserver/cur_vcm_info.txt", "wb");
 
     // read
     cmd_val[0] = 0xcc;

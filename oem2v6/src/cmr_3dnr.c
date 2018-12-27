@@ -716,7 +716,7 @@ void *thread_3dnr(void *p_data) {
 #if 1
     {
         char flag[PROPERTY_VALUE_MAX] = {'\0'};
-        property_get("post_3dnr_save_scl_data", flag, "0");
+        property_get("vendor.cam.post_3dnr_save_scl_data", flag, "0");
         if (!strcmp(flag, "1")) { // save input image.
             CMR_LOGI("save pic: %d, threednr_handle->g_num: %d.", cur_frm,
                      threednr_handle->g_num);

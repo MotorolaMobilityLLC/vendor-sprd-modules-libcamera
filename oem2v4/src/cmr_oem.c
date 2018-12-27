@@ -6361,7 +6361,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                                 SENSOR_EXIF_CTRL_FLASH, 1);
         }
         char value1[PROPERTY_VALUE_MAX];
-        property_get("persist.camera.flash.torch.cfg", value1, "06");
+        property_get("persist.vendor.cam.flash.torch.cfg", value1, "06");
 
         /*cfg torch value*/
         if (param_ptr->cmd_value == FLASH_TORCH) {

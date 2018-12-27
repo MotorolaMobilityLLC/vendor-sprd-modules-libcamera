@@ -716,7 +716,7 @@ int SprdCamera3HWI::configureStreams(
 #endif
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("volte.incall.camera.enable", value, "false");
+        property_get("vendor.cam.volte.incall.enable", value, "false");
         if (!strcmp(value, "true") &&
             stream_type == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
             channel_type == CAMERA_CHANNEL_TYPE_PICTURE) {

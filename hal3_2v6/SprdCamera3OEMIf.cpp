@@ -2748,7 +2748,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     }
 
-    property_get("volte.incall.camera.enable", value, "false");
+    property_get("vendor.cam.volte.incall.enable", value, "false");
     if (!strcmp(value, "true")) {
         mSprdZslEnabled = false;
         CMR_LOGI("volte incall, don't need to configure zsl ");

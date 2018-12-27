@@ -542,7 +542,7 @@ void SprdBokehAlgo::loadDebugOtp() {
         mCalData.otp_exist = true;
         HAL_LOGD("dualotp read_bytes=%d ", read_byte);
 
-        property_get("persist.dump.calibration.data", prop, "0");
+        property_get("persist.vendor.cam.dump.calibration.data", prop, "0");
         if (atoi(prop) == 1) {
             for (int i = 0; i < mCalData.otp_size; i++)
                 HAL_LOGD("calibraion data [%d] = %d", i, mCalData.otp_data[i]);
