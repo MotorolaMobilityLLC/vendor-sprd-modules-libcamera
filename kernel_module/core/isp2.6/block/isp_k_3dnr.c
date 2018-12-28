@@ -94,10 +94,6 @@ static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 
 	if (s_isp_bypass[idx] & (1 << _EISP_NR3))
 		mem_ctrl->bypass = 1;
-	ISP_REG_MWR(idx,
-		    ISP_3DNR_MEM_CTRL_PARAM0,
-		    BIT_0,
-		    mem_ctrl->bypass);
 
 	val = ((mem_ctrl->nr3_done_mode & 0x1) << 1)	|
 	      ((mem_ctrl->nr3_ft_path_sel & 0x1) << 2)  |
@@ -107,7 +103,8 @@ static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 	      ((mem_ctrl->roi_mode & 0x1) << 14)	|
 	      ((mem_ctrl->retain_num & 0x7F) << 16)	|
 	      ((mem_ctrl->ref_pic_flag & 0x1) << 23)	|
-	      ((mem_ctrl->ft_max_len_sel & 0x1) << 28);
+	      ((mem_ctrl->ft_max_len_sel & 0x1) << 28)	|
+	       (mem_ctrl->bypass & 0x1);
 	ISP_REG_WR(idx, ISP_3DNR_MEM_CTRL_PARAM0, val);
 
 	val = ((mem_ctrl->last_line_mode & 0x1) << 1)	|
@@ -514,7 +511,7 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 #endif /* _NR3_DATA_TO_YUV_ */
 
 	/*config variational blending*/
-	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, 0);
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, ctx->bypass & 0x1);
 	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_1, 0 << 1);
 	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_2, 1 << 2);
 
@@ -535,6 +532,10 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 			| ((g_frame_param[blend_cnt][1] & 0xFF) << 16)
 			| ((g_frame_param[blend_cnt][0] & 0xFF) << 24);
 	}
+
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_1, blend_ptr->fusion_mode << 1);
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_2, blend_ptr->filter_switch << 2);
+
 	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG1, val);
 
 	blend_ptr->r1_circle = (unsigned int)(7 * mem_ctrl->img_width / 20);

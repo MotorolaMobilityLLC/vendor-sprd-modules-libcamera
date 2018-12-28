@@ -232,8 +232,8 @@ static ssize_t bypass_write(struct file *filp,
 		bypass_all = 1;
 	} else { /* check special: ltm, nr3 */
 		if (strcmp(name, "ltm") == 0) {
-			ISP_HREG_MWR(ISP_LTM_HIST_PARAM, BIT_0, val);
-			ISP_HREG_MWR(ISP_LTM_MAP_PARAM0, BIT_0, val);
+			ISP_REG_MWR(idx, ISP_LTM_HIST_PARAM, BIT_0, val);
+			ISP_REG_MWR(idx, ISP_LTM_MAP_PARAM0, BIT_0, val);
 			s_isp_bypass[idx] &= (~(1 << _EISP_LTM));
 			if (val)
 				s_isp_bypass[idx] |= (1 << _EISP_LTM);
@@ -243,11 +243,11 @@ static ssize_t bypass_write(struct file *filp,
 			s_isp_bypass[idx] &= (~(1 << _EISP_NR3));
 			if (val)
 				s_isp_bypass[idx] |= (1 << _EISP_NR3);
-			ISP_HREG_MWR(ISP_3DNR_MEM_CTRL_PARAM0, BIT_0, val);
-			ISP_HREG_MWR(ISP_3DNR_BLEND_CONTROL0, BIT_0, val);
-			ISP_HREG_MWR(ISP_3DNR_STORE_PARAM, BIT_0, val);
-			ISP_HREG_MWR(ISP_3DNR_MEM_CTRL_PRE_PARAM0, BIT_0, val);
-			ISP_HREG_MWR(ISP_FBC_3DNR_STORE_PARAM, BIT_0, val);
+			ISP_REG_MWR(idx, ISP_3DNR_MEM_CTRL_PARAM0, BIT_0, val);
+			ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, val);
+			ISP_REG_MWR(idx, ISP_3DNR_STORE_PARAM, BIT_0, val);
+			ISP_REG_MWR(idx, ISP_3DNR_MEM_CTRL_PRE_PARAM0, BIT_0, val);
+			/* ISP_HREG_MWR(ISP_FBC_3DNR_STORE_PARAM, BIT_0, val); */
 			return count;
 		}
 	}
@@ -858,7 +858,6 @@ static int isp_3dnr_process_frame_previous(struct isp_pipe_context *pctx,
 static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 				  struct camera_frame *pframe)
 {
-	int loop = 0;
 	struct isp_3dnr_ctx_desc *nr3_ctx;
 
 	struct dcam_frame_synchronizer *fsync = NULL;
@@ -898,11 +897,6 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 			nr3_ctx->mvinfo = NULL;
 		}
 
-		for (loop = 0; loop < ISP_NR3_BUF_NUM; loop++) {
-			nr3_ctx->buf_info[loop] =
-				&pctx->nr3_buf[loop]->buf;
-		}
-
 		isp_3dnr_gen_config(nr3_ctx);
 		isp_3dnr_config_param(nr3_ctx,
 				      pctx->ctx_id,
@@ -924,11 +918,6 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 			pr_err("full path mv not ready, set default 0\n");
 			nr3_ctx->mv.mv_x = 0;
 			nr3_ctx->mv.mv_y = 0;
-		}
-
-		for (loop = 0; loop < ISP_NR3_BUF_NUM; loop++) {
-			nr3_ctx->buf_info[loop] =
-				&pctx->nr3_buf[loop]->buf;
 		}
 
 		isp_3dnr_gen_config(nr3_ctx);
@@ -1964,9 +1953,11 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 		}
 #endif /* USING_LTM_Q */
 
-		for (i = 0; i < 2; i++) {
-			if (pctx->nr3_buf[i])
+		for (i = 0; i < ISP_NR3_BUF_NUM; i++) {
+			if (pctx->nr3_buf[i]) {
 				isp_unmap_frame(pctx->nr3_buf[i]);
+				pctx->nr3_buf[i] = NULL;
+			}
 		}
 
 		/* clear path queue. */
@@ -2213,7 +2204,16 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		for (i = 0; i < ISP_NR3_BUF_NUM; i++) {
 			if (pctx->nr3_buf[i] == NULL) {
 				pctx->nr3_buf[i] = pframe;
+				pctx->nr3_ctx.buf_info[i] =
+					&pctx->nr3_buf[i]->buf;
+				pr_debug("3DNR CFGB[%d][0x%p][0x%p] = 0x%lx, 0x%lx\n",
+					 i, pframe, pctx->nr3_buf[i],
+					 pctx->nr3_ctx.buf_info[i]->iova[0],
+					 pctx->nr3_buf[i]->buf.iova[0]);
 				break;
+			} else {
+				pr_debug("3DNR CFGB[%d][0x%p][0x%p] failed\n",
+				       i, pframe, pctx->nr3_buf[i]);
 			}
 		}
 		if (i == 2) {
