@@ -48,6 +48,10 @@
 #define FD_IRQ_MASK ((FD_MASK_INT_ERR) | (FD_MASK_INT_RAW))
 #define FD_AXI_STOP_TIMEOUT			2000
 #define FD_INT_TIMEOUT			2000
+
+#define FD_DVFS_ENABLED 0
+
+#if FD_DVFS_ENABLED
 static struct sprd_fd_dvfs fd_dvfs_map[SPRD_FD_DVFS_INDEX_MAX] = {
 	[SPRD_FD_DVFS_INDEX0] = {FD_REG_DVFS_INDEX0_MAP,
 				    SPRD_FD_CLK_FREQ_76_8M, 0, 0},
@@ -66,7 +70,7 @@ static struct sprd_fd_dvfs fd_dvfs_map[SPRD_FD_DVFS_INDEX_MAX] = {
 	[SPRD_FD_DVFS_INDEX7] = {FD_REG_DVFS_INDEX7_MAP,
 				    SPRD_FD_CLK_FREQ_384M, 6, 2},
 };
-
+#endif
 static void fd_regmap_on(struct fd_drv *handle,
 			unsigned int index)
 {
@@ -82,6 +86,8 @@ static void fd_regmap_off(struct fd_drv *handle,
 		handle->syscon[index].reg, handle->syscon[index].mask,
 		~handle->syscon[index].mask);
 }
+
+#if FD_DVFS_ENABLED
 
 static void fd_dvfs_map_cfg(struct fd_drv *drv_handle)
 {
@@ -109,7 +115,12 @@ static void fd_dvfs_map_cfg(struct fd_drv *drv_handle)
 	}
 
 }
-
+#else
+static void fd_dvfs_map_cfg(struct fd_drv *drv_handle)
+{
+	pr_debug("FD_DRV, %s disabled DVFS\n", __func__);
+}
+#endif
 char *fd_syscons[FD_SYSCON_MAX] = {
 	"fd_eb",
 	"fd_rst",
@@ -156,9 +167,11 @@ static int sprd_fd_parse_dt(struct fd_drv *handle,
 	struct platform_device *dev = NULL;
 
 	/*TODO sync with DVFS implementation */
+#if FD_DVFS_ENABLED
 	void __iomem *io_dvfs_base = NULL;
 	unsigned long dvfs_start = 0x62600000;
 	unsigned long dvfs_size = 0x10000;
+#endif
 	int ret = 0;
 
 	pr_info("start fd dts parse\n");
@@ -179,14 +192,13 @@ static int sprd_fd_parse_dt(struct fd_drv *handle,
 	handle->cam_dvfs_gpr = syscon_regmap_lookup_by_phandle(dn,
 		"sprd,cam-ahb-syscon");
 #endif
-	pr_info("dev: %s, node: %s, full name: %s, cam_ahb_gpr: %p\n",
-		dev->name, dn->name, dn->full_name,  handle->cam_ahb_gpr);
+	pr_info("dev: %s, node: %s, full name: %s\n",
+		dev->name, dn->name, dn->full_name);
 
 
 #ifdef TEST_ON_HAPS
 	pr_info("skip parse clock tree on haps.\n");
 #else
-	pr_info("todo here parse clock tree\n");
 	handle->fd_eb = of_clk_get_by_name(dn, "fd_eb");
 	if (IS_ERR_OR_NULL(handle->fd_eb)) {
 		pr_err("read dts fd eb fail\n");
@@ -223,12 +235,16 @@ static int sprd_fd_parse_dt(struct fd_drv *handle,
 	}
 	handle->io_base = (unsigned long)io_base;
 	handle->irq_no = irq_of_parse_and_map(dn, 0);
-
-	/*TODO temp implementation for DVFS*/
-	io_dvfs_base = ioremap(dvfs_start, dvfs_size);
-	handle->io_dvfs_base = (unsigned long)io_dvfs_base;
 	pr_info("fd_drv iobase 0x%lx  irq_no %d\n",
 		handle->io_base, handle->irq_no);
+	/*TODO temp implementation for DVFS*/
+
+#if FD_DVFS_ENABLED
+	io_dvfs_base = ioremap(dvfs_start, dvfs_size);
+	handle->io_dvfs_base = (unsigned long)io_dvfs_base;
+	pr_info("fd_drv iodvfs base 0x%lx\n",
+		handle->io_dvfs_base);
+#endif
 	if (handle->irq_no <= 0) {
 		pr_err("fail to get fd irq\n");
 		return -EFAULT;
@@ -424,8 +440,9 @@ int sprd_fd_drv_open(void *drv_handle)
 		ret = sprd_cam_domain_eb();
 		fd_clk_enable(hw_handle);
 		fd_regmap_on(hw_handle, FD_SYSCON_ENABLE);
+#if FD_DVFS_ENABLED
 		fd_regmap_on(hw_handle, FD_SYSCON_DVFS_ENABLE);
-
+#endif
 		ret = sprd_fd_drv_reset(hw_handle);
 		if (ret) {
 			pr_err("FD_DRV err, drv open reset failed ret %d",
@@ -441,6 +458,7 @@ int sprd_fd_drv_open(void *drv_handle)
 #endif
 
 		/*TODO sync with dvfs implementation*/
+#if FD_DVFS_ENABLED
 		FD_REG_MWR(hw_handle->io_dvfs_base,
 			FD_REG_DVFS_DFS_EN_CTRL,
 			FD_MASK_DVFS_DFS_EN, 1);
@@ -450,7 +468,7 @@ int sprd_fd_drv_open(void *drv_handle)
 		FD_REG_MWR(hw_handle->io_dvfs_base,
 			FD_REG_DVFS_DFS_FREQ_UPDATE_BYPASS,
 			FD_MASK_DVFS_DFS_FREQ_UPDATE, 1);
-
+#endif
 		/* set qos parsed from dts */
 		FD_REG_MWR(hw_handle->io_base, FD_MOD_CFG,
 			FD_MASK_MOD_CFG_ARQOS | FD_MASK_MOD_CFG_AWQOS,
@@ -475,7 +493,6 @@ int sprd_fd_drv_close(void *drv_handle)
 	devm_free_irq(&hw_handle->pdev->dev, hw_handle->irq_no,
 			(void *)hw_handle);
 	if (atomic_dec_return(&hw_handle->pw_users) == 0) {
-		
 
 		sprd_fd_irq_disable(hw_handle);
 		/*wait if fd is busy*/
@@ -485,6 +502,7 @@ int sprd_fd_drv_close(void *drv_handle)
 
 
 		/*TODO sync with dvfs implementation*/
+#if FD_DVFS_ENABLED
 		FD_REG_MWR(hw_handle->io_dvfs_base,
 			FD_REG_DVFS_DFS_EN_CTRL,
 			FD_MASK_DVFS_DFS_EN, 0);
@@ -494,11 +512,10 @@ int sprd_fd_drv_close(void *drv_handle)
 		FD_REG_MWR(hw_handle->io_dvfs_base,
 			FD_REG_DVFS_DFS_FREQ_UPDATE_BYPASS,
 			FD_MASK_DVFS_DFS_FREQ_UPDATE, 0);
-		fd_regmap_off(hw_handle, FD_SYSCON_ENABLE);
 		fd_regmap_off(hw_handle, FD_SYSCON_DVFS_ENABLE);
-		
+#endif
+		fd_regmap_off(hw_handle, FD_SYSCON_ENABLE);
 		fd_disable_clk(hw_handle);
-		
 		sprd_cam_domain_disable();
 		ret = sprd_cam_pw_off();
 		if (ret != 0) {
@@ -763,6 +780,12 @@ static int fd_post_write_proc(struct fd_drv *hw_handle, unsigned int reg_param)
 	return ret;
 }
 
+#if FD_DVFS_ENABLED
+/* We skip the dvfs clk setting just
+ * before writing to the hardware.
+ * We do this here as we cannnot control the
+ * IOCTL calling in user space
+*/
 int fd_drv_dvfs_idle_clk_cfg(void *handle,
 	unsigned int index)
 {
@@ -775,10 +798,10 @@ int fd_drv_dvfs_idle_clk_cfg(void *handle,
 		return -EINVAL;
 	}
 	/*TODO sync with dvfs implemenatation*/
+
 	FD_REG_MWR(drv_handle->io_dvfs_base,
 		FD_REG_DVFS_IDLE_INDEX_CFG,
 		FD_MASK_DVFS_INDEX_IDLE, index);
-
 	return 0;
 }
 
@@ -794,13 +817,28 @@ int fd_drv_dvfs_work_clk_cfg(void *handle,
 	}
 
 	drv_handle  = (struct fd_drv *)handle;
-	/*TODO sync with dvfs implementation*/
 	FD_REG_MWR(drv_handle->io_dvfs_base,
 		FD_REG_DVFS_WORK_INDEX_CFG,
 		FD_MASK_DVFS_INDEX_WORK, index);
-
 	return 0;
 }
+
+#else
+
+int fd_drv_dvfs_idle_clk_cfg(void *handle,
+	unsigned int index)
+{
+	pr_warn("FD_DRV, %s WARN: disabled DVFS\n", __func__);
+	return 0;
+}
+
+int fd_drv_dvfs_work_clk_cfg(void *handle,
+	unsigned int index)
+{
+	pr_warn("FD_DRV, %s WARN: disabled DVFS\n", __func__);
+	return 0;
+}
+#endif
 
 int fd_drv_reg_write_handler(void *handle,
 	struct sprd_fd_cfg_param  *cfg_param)

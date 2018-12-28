@@ -55,7 +55,6 @@ struct fd_drv {
 	struct clk *axi_eb;
 	struct clk *clk_default;
 	struct platform_device *pdev;
-	struct regmap *cam_ahb_gpr;
 	struct regmap *cam_dvfs_gpr;
 	struct fd_syscon_info syscon[FD_SYSCON_MAX];
 	struct completion fd_wait_com;
