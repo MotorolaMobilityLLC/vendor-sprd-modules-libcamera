@@ -2791,7 +2791,7 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
     flash_opt.led0_enable = cfg_ptr->led0_enable;
     flash_opt.led1_enable = cfg_ptr->led1_enable;
     flash_opt.flash_mode = real_type;
-    flash_opt.flash_index = cxt->camera_id%2;
+    flash_opt.flash_index = cxt->camera_id % 2;
     ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
     return ret;
@@ -6187,6 +6187,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         is_zsl_enable = setting_param.cmd_type_value;
 
         cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
         ret =
             cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                               SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
@@ -6544,7 +6545,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         }
 
         flash_opt.flash_mode = param_ptr->cmd_value;
-        flash_opt.flash_index = cxt->camera_id%2;
+        flash_opt.flash_index = cxt->camera_id % 2;
         CMR_LOGV("led0_enable=%d, led1_enable=%d", flash_opt.led0_enable,
                  flash_opt.led1_enable);
         cmr_grab_flash_cb(grab_handle, &flash_opt);
