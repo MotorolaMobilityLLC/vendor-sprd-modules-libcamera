@@ -30,7 +30,7 @@ static int isp_k_gamma_block(
 {
 	int ret = 0;
 	uint32_t i, buf_sel = 0;
-	uint32_t buf_addr;
+	uint32_t buf_addr, val;
 	struct isp_dev_gamma_info gamma_data;
 	struct isp_dev_gamma_info *gamma_info = NULL;
 
@@ -53,16 +53,25 @@ static int isp_k_gamma_block(
 	ISP_REG_MWR(idx, ISP_GAMMA_PARAM, BIT_1, buf_sel << 1);
 
 	buf_addr = ISP_FGAMMA_R_BUF0;
-	for (i = 0; i < ISP_FRGB_GAMMA_PT_NUM; i++)
-		ISP_REG_WR(idx, buf_addr + i * 4, gamma_info->gain_r[i]);
+	for (i = 0; i < ISP_FRGB_GAMMA_PT_NUM - 1; i++) {
+		val = gamma_info->gain_r[i];
+		val = ((val << 8) | gamma_info->gain_r[i + 1]);
+		ISP_REG_WR(idx, buf_addr + i * 4, val);
+	}
 
 	buf_addr = ISP_FGAMMA_G_BUF0;
-	for (i = 0; i < ISP_FRGB_GAMMA_PT_NUM; i++)
-		ISP_REG_WR(idx, buf_addr + i * 4, gamma_info->gain_g[i]);
+	for (i = 0; i < ISP_FRGB_GAMMA_PT_NUM - 1; i++) {
+		val = gamma_info->gain_g[i];
+		val = ((val << 8) | gamma_info->gain_g[i + 1]);
+		ISP_REG_WR(idx, buf_addr + i * 4, val);
+	}
 
 	buf_addr = ISP_FGAMMA_B_BUF0;
-	for (i = 0; i < ISP_FRGB_GAMMA_PT_NUM; i++)
-		ISP_REG_WR(idx, buf_addr + i * 4, gamma_info->gain_b[i]);
+	for (i = 0; i < ISP_FRGB_GAMMA_PT_NUM - 1; i++) {
+		val = gamma_info->gain_b[i];
+		val = ((val << 8) | gamma_info->gain_b[i + 1]);
+		ISP_REG_WR(idx, buf_addr + i * 4, val);
+	}
 
 	return ret;
 }
