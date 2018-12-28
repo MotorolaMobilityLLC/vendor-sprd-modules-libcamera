@@ -566,28 +566,72 @@ int sprd_dcam_debugfs_deinit(void)
 /* dcam debugfs end */
 
 /*
- * Do force copy to make all parameters active before capture enabled.
+ * Do force copy to before capture enabled.
+ * id: refer to enum dcam_ctrl_id in dcam_core.h
+ * bit0 - cap, bit1 - coef, bit2 - rds coef, bit3 - full, ...
  */
-static void dcam_force_copy(struct dcam_pipe_dev *dev)
+void dcam_force_copy(struct dcam_pipe_dev *dev, uint32_t id)
 {
-	const uint32_t mask01 = BIT_0 | BIT_4 | BIT_6 | BIT_8
-		| BIT_10 | BIT_12 | BIT_14 | BIT_16;
-	const uint32_t mask2 = BIT_0;
-	uint32_t mask = 0, idx;
+	const uint32_t bitmap[] = {
+		BIT_0, BIT_4, BIT_6, BIT_8, BIT_10, BIT_12, BIT_14, BIT_16
+	};
+	const uint32_t bitmap2 = BIT_4;
+	uint32_t mask = 0, j;
+	unsigned long flags = 0;
 
 	if (unlikely(!dev)) {
 		pr_warn("invalid param dev\n");
 		return;
 	}
-	idx = dev->idx;
 
-	mask = (idx == DCAM_ID_2) ? mask2 : mask01;
+	if (dev->idx < 2) {
+		for (j = 0; j < 8; j++) {
+			if (id & (1 << j))
+				mask |= bitmap[j];
+		}
+	} else if (id && DCAM_CTRL_CAP) {
+		mask = bitmap2;
+	}
+	pr_debug("DCAM%u: force copy 0x%0x, id 0x%x\n", dev->idx, mask, id);
+	if (mask == 0)
+		return;
 
-	pr_debug("DCAM%u: force copy 0x%0x\n", idx, mask);
-
-	/* force copy all */
-	DCAM_REG_MWR(idx, DCAM_CONTROL, mask, mask);
+	spin_lock_irqsave(&dev->glb_reg_lock, flags);
+	DCAM_REG_MWR(dev->idx, DCAM_CONTROL, mask, mask);
+	spin_unlock_irqrestore(&dev->glb_reg_lock, flags);
 }
+
+void dcam_auto_copy(struct dcam_pipe_dev *dev, uint32_t id)
+{
+	const uint32_t bitmap[] = {
+		BIT_1, BIT_5, BIT_7, BIT_9, BIT_11, BIT_13, BIT_15, BIT_17
+	};
+	const uint32_t bitmap2 = BIT_5;
+	uint32_t mask = 0, j;
+	unsigned long flags = 0;
+
+	if (unlikely(!dev)) {
+		pr_warn("invalid param dev\n");
+		return;
+	}
+	if (dev->idx < 2) {
+		for (j = 0; j < 8; j++) {
+			if (id & (1 << j))
+				mask |= bitmap[j];
+		}
+	} else if (id && DCAM_CTRL_CAP) {
+		mask = bitmap2;
+	}
+
+	pr_debug("DCAM%u: auto copy 0x%0x, id 0x%x\n", dev->idx, mask, id);
+	if (mask == 0)
+		return;
+
+	spin_lock_irqsave(&dev->glb_reg_lock, flags);
+	DCAM_REG_MWR(dev->idx, DCAM_CONTROL, mask, mask);
+	spin_unlock_irqrestore(&dev->glb_reg_lock, flags);
+}
+
 
 /* TODO: check this */
 /*
@@ -605,6 +649,10 @@ static void dcam_init_default(struct dcam_pipe_dev *dev)
 
 	/* init registers(sram regs) to default value */
 	dcam_reg_set_default_value(idx);
+
+
+	/* disable internal logic access sram */
+	DCAM_REG_MWR(idx, DCAM_APB_SRAM_CTRL, BIT_0, 0);
 
 	DCAM_REG_WR(idx, DCAM_CFG, 0); /* disable all path */
 	DCAM_REG_WR(idx, DCAM_IMAGE_CONTROL, 0x2b << 8 | 0x01);
@@ -733,8 +781,6 @@ static int dcam_start(struct dcam_pipe_dev *dev)
 {
 	int ret = 0;
 	uint32_t idx = dev->idx;
-
-	dcam_force_copy(dev);
 
 	DCAM_REG_WR(idx, DCAM_INT_CLR, 0xFFFFFFFF);
 
@@ -873,6 +919,8 @@ static int dcam_set_mipi_cap(struct dcam_pipe_dev *dev,
 				(!!cap_info->is_4in1) << 13);
 	DCAM_REG_MWR(idx, DCAM_MIPI_CAP_CFG, BIT_12,
 			(!cap_info->is_4in1) << 12);
+
+	dcam_force_copy(dev, DCAM_CTRL_CAP);
 
 	pr_info("cap size : %d %d %d %d\n",
 		cap_info->cap_size.start_x, cap_info->cap_size.start_y,
@@ -1126,21 +1174,20 @@ static void init_reserved_statis_bufferq(struct dcam_pipe_dev *dev)
 
 	for (i = 0; i < (int)ARRAY_SIZE(s_statis_path_info_all); i++) {
 		path_id = s_statis_path_info_all[i].path_id;
+		/* pdaf needs large buffer, no reserved for it */
+		if (path_id == DCAM_PATH_PDAF)
+			continue;
 		path = &dev->path[path_id];
-
 		j  = 0;
 		while (j < DCAM_RESERVE_BUF_Q_LEN) {
 			newfrm = get_empty_frame();
 			if (newfrm) {
 				newfrm->is_reserved = 1;
-				memcpy(&newfrm->buf, ion_buf,
-					sizeof(struct camera_buf));
-				camera_enqueue(&path->reserved_buf_queue,
-					newfrm);
+				memcpy(&newfrm->buf, ion_buf, sizeof(struct camera_buf));
+				camera_enqueue(&path->reserved_buf_queue, newfrm);
 				j++;
 			}
-			pr_debug("path%d reserved buffer %d\n", path->path_id,
-				j);
+			pr_debug("path%d reserved buffer %d\n", path->path_id, j);
 		}
 	}
 
@@ -1386,6 +1433,7 @@ static int dcam_offline_start_frame(void *param)
 	pr_debug("enter.\n");
 
 	dev = (struct dcam_pipe_dev *)param;
+	dev->offline = 1;
 	fetch = &dev->fetch;
 
 	pframe = camera_dequeue(&dev->in_queue);
@@ -1437,6 +1485,9 @@ static int dcam_offline_start_frame(void *param)
 			atomic_inc(&path->set_frm_cnt);
 			dcam_start_path(dev, path);
 		}
+		dcam_force_copy(dev, path_ctrl_id[path->path_id]);
+		if (path->path_id == DCAM_PATH_BIN)
+			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
 
 	/* todo - need to cfg fetch param from input or frame. */
@@ -1451,9 +1502,7 @@ static int dcam_offline_start_frame(void *param)
 	fetch->trim.size_y = pframe->height;
 	fetch->addr.addr_ch0 = (uint32_t)pframe->buf.iova[0];
 
-	dev->offline = 1;
 	ret = dcam_set_fetch(dev, fetch);
-	dcam_force_copy(dev);
 	udelay(1000); /* I'm not sure need delay */
 	atomic_set(&dev->state, STATE_RUNNING);
 	dcam_start_fetch();
@@ -2112,6 +2161,7 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 	}
 
 	dev = (struct dcam_pipe_dev *)dcam_handle;
+	dev->offline = 0;
 
 	ret = atomic_read(&dev->state);
 	if (unlikely(ret != STATE_IDLE)) {
@@ -2178,6 +2228,10 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 		if (atomic_read(&path->set_frm_cnt) > 0)
 			dcam_start_path(dev, path);
+
+		dcam_force_copy(dev, path_ctrl_id[path->path_id]);
+		if (path->path_id == DCAM_PATH_BIN)
+			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
 
 	if (helper) {
@@ -2338,6 +2392,7 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 				0, dcam_ret_src_frame);
 
 	atomic_set(&dev->state, STATE_IDLE);
+	spin_lock_init(&dev->glb_reg_lock);
 
 	/* for debugfs */
 	atomic_inc(&s_dcam_opened[dev->idx]);

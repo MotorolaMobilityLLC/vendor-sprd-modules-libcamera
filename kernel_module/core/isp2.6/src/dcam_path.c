@@ -113,7 +113,19 @@ static const unsigned long slowmotion_store_addr[3][4] = {
 	}
 };
 
-
+uint32_t path_ctrl_id[] = {
+	DCAM_CTRL_FULL,
+	DCAM_CTRL_BIN,
+	DCAM_CTRL_PDAF,
+	DCAM_CTRL_VCH2,
+	DCAM_CTRL_VCH3,
+	DCAM_CTRL_COEF,
+	DCAM_CTRL_COEF,
+	DCAM_CTRL_COEF,
+	DCAM_CTRL_COEF,
+	DCAM_CTRL_COEF,
+	DCAM_CTRL_COEF,
+};
 
 int dcam_cfg_path_base(void *dcam_handle,
 		       struct dcam_path_desc *path, void *param)
@@ -687,10 +699,10 @@ int dcam_path_set_store_frm(void *dcam_handle,
 {
 	struct dcam_pipe_dev *dev = NULL;
 	struct camera_frame *frame = NULL;
-	uint32_t idx = 0, path_id = 0;
+	uint32_t idx = 0, path_id = 0, cpy_ctrl_id;
 	unsigned long flags = 0, addr = 0;
 	const int _bin = 0, _aem = 1, _hist = 2;
-	int i = 0;;
+	int i = 0;
 
 	if (unlikely(!dcam_handle || !path))
 		return -EINVAL;
@@ -698,6 +710,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	dev = (struct dcam_pipe_dev *)dcam_handle;
 	idx = dev->idx;
 	path_id = path->path_id;
+	cpy_ctrl_id = path_ctrl_id[path_id];
 
 	pr_debug("DCAM%u %s enter\n", idx, to_path_name(path_id));
 
@@ -754,6 +767,8 @@ int dcam_path_set_store_frm(void *dcam_handle,
 				frame->param_data = path->priv_size_data;
 				path->size_update = 0;
 				path->priv_size_data = NULL;
+				if (path_id == DCAM_PATH_BIN)
+					cpy_ctrl_id |= DCAM_CTRL_RDS;
 			}
 			spin_unlock_irqrestore(&path->size_lock, flags);
 		}
@@ -836,6 +851,9 @@ int dcam_path_set_store_frm(void *dcam_handle,
 				idx, dev->slowmotion_count - i);
 	}
 
+	if ((atomic_read(&dev->state) == STATE_RUNNING)
+		&& (dev->offline == 0))
+		dcam_auto_copy(dev, cpy_ctrl_id);
+
 	return 0;
 }
-

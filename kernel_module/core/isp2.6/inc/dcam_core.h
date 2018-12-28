@@ -46,6 +46,21 @@ enum dcam_scaler_type {
 	DCAM_SCALER_MAX,
 };
 
+/*
+ *DCAM_CONTROL register bit map id
+ * for force_cpy/auto_cpy control
+ */
+enum dcam_ctrl_id {
+	DCAM_CTRL_CAP = (1 << 0),
+	DCAM_CTRL_COEF = (1 << 1),
+	DCAM_CTRL_RDS = (1 << 2),
+	DCAM_CTRL_FULL = (1 << 3),
+	DCAM_CTRL_BIN = (1 << 4),
+	DCAM_CTRL_PDAF = (1 << 5),
+	DCAM_CTRL_VCH2 = (1 << 6),
+	DCAM_CTRL_VCH3 = (1 << 7),
+
+};
 
 struct statis_path_buf_info {
 	enum dcam_path_id path_id;
@@ -178,6 +193,7 @@ struct dcam_pipe_dev {
 	uint32_t idx;
 	uint32_t irq;
 	atomic_t state;// TODO: use mutex to protect
+	spinlock_t glb_reg_lock;
 
 	uint32_t frame_index;
 	uint32_t enable_slowmotion;
@@ -233,5 +249,8 @@ struct dcam_sync_helper *dcam_get_sync_helper(struct dcam_pipe_dev *dev);
  */
 void dcam_put_sync_helper(struct dcam_pipe_dev *dev,
 			  struct dcam_sync_helper *helper);
+
+void dcam_force_copy(struct dcam_pipe_dev *dev, uint32_t id);
+void dcam_auto_copy(struct dcam_pipe_dev *dev, uint32_t id);
 
 #endif

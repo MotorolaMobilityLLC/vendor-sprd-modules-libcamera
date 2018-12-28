@@ -19,6 +19,8 @@
 #define DCAM_PATH_WMAX			5000
 #define DCAM_PATH_HMAX			4000
 
+extern uint32_t path_ctrl_id[];
+
 const char *to_path_name(enum dcam_path_id path_id);
 
 int dcam_cfg_path_base(void *dcam_handle,

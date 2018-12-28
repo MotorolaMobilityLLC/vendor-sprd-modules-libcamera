@@ -82,18 +82,6 @@ static inline void record_dcam_int(uint32_t idx, uint32_t status)
 #endif
 }
 
-
-static void dcam_auto_copy(enum dcam_id idx)
-{
-	uint32_t mask = BIT_1 | BIT_5 | BIT_7 | BIT_9 |
-					BIT_11 | BIT_13 | BIT_15 | BIT_17;
-
-	pr_debug("DCAM%d: auto copy 0x%0x:\n", idx, mask);
-
-	/* auto copy all*/
-	DCAM_REG_MWR(idx, DCAM_CONTROL, mask, mask);
-}
-
 /*
  * Dequeue a frame from result queue.
  */
@@ -203,10 +191,6 @@ static void dcam_cap_sof(void *param)
 	if (dev->enable_slowmotion) {
 		uint32_t n = dev->frame_index % dev->slowmotion_count;
 
-		/* auto copy at last frame of a group of slow motion frames */
-		if (n == dev->slowmotion_count - 1)
-			dcam_auto_copy(dev->idx);
-
 		/* set buffer at first frame of a group of slow motion frames */
 		if (n)
 			return;
@@ -240,9 +224,6 @@ static void dcam_cap_sof(void *param)
 			dcam_put_sync_helper(dev, helper);
 	}
 
-	/* TODO: do not copy if no register is modified */
-	dcam_auto_copy(dev->idx);
-
 	dcam_dispatch_sof_event(dev);
 }
 
@@ -266,9 +247,6 @@ static void dcam_preview_sof(void *param)
 		/* frame deci is deprecated in slow motion */
 		dcam_path_set_store_frm(dev, path, NULL);
 	}
-
-	/* TODO: do not copy if no register is modified */
-	dcam_auto_copy(dev->idx);
 
 	dcam_dispatch_sof_event(dev);
 }
