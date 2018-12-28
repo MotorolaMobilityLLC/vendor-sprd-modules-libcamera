@@ -904,15 +904,24 @@ static cmr_int ov5675_drv_check_cur_frm_len(cmr_handle handle) {
                     cur_fr_len);
     }
 
-    return  0;
+    return aec_fr_len;
 }
 
 static cmr_int ov5675_drv_set_frame_sync(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
+    cmr_u16 r_rst_timer_h = 0;
+    cmr_u16 r_rst_timer_l = 0;
+    cmr_u16 cur_frame_len_l = 0;
+    uint32_t cur_fr_len = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    ov5675_drv_check_cur_frm_len(handle);
+    /* 0x3826/0x3827(row reset timing): slave adjust to row number when Fsync comes.
+        calc method: 2*VTS -16. If needed, can be fine-tuned */
+
+    cur_fr_len = ov5675_drv_check_cur_frm_len(handle);
+    r_rst_timer_h = ((2 * cur_fr_len - 16) >> 8) & 0xFF;
+    r_rst_timer_l = (2 * cur_fr_len - 16) & 0xFF;
 
     /* setting from ov5675 */
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3663, 0x20);
@@ -920,8 +929,8 @@ static cmr_int ov5675_drv_set_frame_sync(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x70);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0xbb);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x17);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x5c);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, r_rst_timer_h);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, r_rst_timer_l);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3822, 0x64);
     return 0;
 }

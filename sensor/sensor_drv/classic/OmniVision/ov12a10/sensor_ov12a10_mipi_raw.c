@@ -699,17 +699,16 @@ static cmr_int ov12a10_drv_set_master_FrameSync(cmr_handle handle,
 
     SENSOR_LOGI("E");
 
-    /*TODO*/
+    /* 0x381a/0x381b (row timing) : Time to send Fsync.
+        calc method: 2*VTS -16. If needed, can be fine-tuned. Current settings are based on 20fps*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3818, 0x02);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3819, 0x10);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381a, 0x1a);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381b, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381a, 0x27);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381b, 0x6a);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3832, 0x18);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3833, 0x10);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x61);
-
-    /*END*/
 
     return SENSOR_SUCCESS;
 }
