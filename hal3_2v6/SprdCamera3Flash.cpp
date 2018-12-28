@@ -256,8 +256,10 @@ int32_t SprdCamera3Flash::releaseDisplayFlipFile(const int cameraId) {
     int32_t retVal = 0;
     int32_t bytes = 0;
     char buffer[16];
-    const char *const flipFile = "/sys/class/display/dispc0/disable_flip";
+    const char *flipFile = "/sys/class/display/dispc0/disable_flip";
+    const char *refresh = "/sys/class/display/dispc0/refresh";
     ssize_t wr_ret;
+    int fd;
 
     LOGV("%s : cameraId = %d", __func__, cameraId);
 
@@ -266,24 +268,44 @@ int32_t SprdCamera3Flash::releaseDisplayFlipFile(const int cameraId) {
         return -EINVAL;
     }
 
-    LOGV("open display disable_flip interface");
-    int fd = open(flipFile, O_WRONLY);
+    LOGV("open disable_flip file");
+    fd = open(flipFile, O_RDONLY);
     /* open sysfs file parition */
     if (-1 == fd) {
-        LOGE("Failed to open: display disable_flip interface, %s", flipFile);
+        LOGE("Failed to open: disable_flip file, %s", flipFile);
         return -EINVAL;
     }
 
-    bytes = snprintf(buffer, sizeof(buffer), "%x\n", 0);
-    wr_ret = write(fd, buffer, bytes);
-
-    if (-1 == wr_ret) {
-        LOGE("WRITE FAILED \n");
-        retVal = -EINVAL;
+    if (read(fd, buffer, sizeof(buffer)) <= 0) {
+        LOGE("read disable_flip file failed\n");
+        close(fd);
+        return -EINVAL;
     }
 
     close(fd);
-    LOGV("Close file");
+    LOGV("close disable_flip file");
+
+    if (atoi(buffer) == 1) {
+        LOGV("open refresh file");
+
+        fd = open(refresh, O_WRONLY);
+
+        if (-1 == fd) {
+            LOGE("Failed to open: refresh file, %s", refresh);
+            return -EINVAL;
+        }
+
+        bytes = snprintf(buffer, sizeof(buffer), "0x%x", 0x01);
+        wr_ret = write(fd, buffer, bytes);
+
+        if (-1 == wr_ret) {
+            LOGE("write refresh file failed\n");
+            retVal = -EINVAL;
+        }
+
+        close(fd);
+        LOGV("close refresh file");
+    }
 
     return retVal;
 }

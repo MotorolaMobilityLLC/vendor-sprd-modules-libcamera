@@ -411,6 +411,127 @@ cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
     return ret;
 }
 
+cmr_int camera_write_sysfs_file(const char *filename, cmr_u32 value) {
+    int32_t bytes = 0;
+    char buffer[16];
+    int ret = 0;
+    int fd;
+    CMR_LOGI("E");
+
+    fd = open(filename, O_WRONLY);
+
+    if (-1 == fd) {
+        CMR_LOGE("Failed to open: sysfs_file %s", filename);
+        return -EINVAL;
+    }
+
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x", value);
+    if (write(fd, buffer, bytes) != bytes) {
+        CMR_LOGE("write failed\n");
+        ret = -EINVAL;
+    }
+
+    close(fd);
+    CMR_LOGI("X");
+
+    return ret;
+}
+
+cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
+    int32_t bytes = 0;
+    int ret = 0;
+    int fd;
+    char buffer[4] = {0};
+
+    CMR_LOGI("E");
+
+    fd = open(filename, O_RDONLY);
+
+    if (-1 == fd) {
+        CMR_LOGE("Failed to open: sysfs_file %s", filename);
+        return -EINVAL;
+    }
+
+    if (read(fd, buffer, sizeof(buffer)) <= 0) {
+        CMR_LOGE("read failed\n");
+        ret = -EINVAL;
+    }
+    CMR_LOGI("buffer %s", buffer);
+
+    close(fd);
+    *value = atoi(buffer);
+
+    CMR_LOGI("X");
+
+    return ret;
+}
+
+cmr_int camera_front_lcd_flash_activie(cmr_u32 flash_index) {
+    if (flash_index == 1 && !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
+        return 1;
+
+    return 0;
+}
+
+cmr_int camera_front_lcd_flash_cfg(struct camera_context *cxt, cmr_u8 type) {
+    cmr_int flash_type = -1;
+
+    CMR_LOGI("%d", type);
+
+    switch (type) {
+    case FLASH_TYPE_PREFLASH:
+        flash_type = 0;
+        break;
+    case FLASH_TYPE_MAIN:
+        flash_type = 1;
+        break;
+    default:
+        CMR_LOGE("not support the type");
+        break;
+    }
+
+    cxt->lcd_flash_highlight = flash_type;
+    CMR_LOGI("lcd_flash_highlight:%d", cxt->lcd_flash_highlight);
+
+    return flash_type;
+}
+
+cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
+                                        cmr_u32 flash_mode) {
+    const char *bg_color = "/sys/class/display/dispc0/bg_color";
+    const char *brightness = "/sys/class/backlight/sprd_backlight/brightness";
+    const char *refresh = "/sys/class/display/dispc0/refresh";
+    const char *disable_flip = "/sys/class/display/dispc0/disable_flip";
+    cmr_u8 flip = 0;
+
+    switch (flash_mode) {
+    case FLASH_OPEN:
+        camera_write_sysfs_file(bg_color, 0xffffff);
+
+        camera_read_sysfs_file(brightness, &(cxt->backlight_brightness));
+        CMR_LOGI("backlight_brightness:%d", cxt->backlight_brightness);
+
+        camera_write_sysfs_file(brightness, 0xff);
+
+        break;
+    // case FLASH_CLOSE:
+    case FLASH_CLOSE_AFTER_OPEN:
+
+        camera_read_sysfs_file(disable_flip, &flip);
+        CMR_LOGI("disable_flip %d", flip);
+
+        if (cxt->lcd_flash_highlight && flip) {
+            camera_write_sysfs_file(brightness, cxt->backlight_brightness);
+            camera_write_sysfs_file(refresh, 0x01);
+
+            cxt->lcd_flash_highlight = 0;
+        }
+        break;
+    }
+
+    return 0;
+}
+
 void camera_snapshot_started(cmr_handle oem_handle) {
     camera_snapshot_cb_to_hal(oem_handle, SNAPSHOT_CB_EVT_PREPARE,
                               SNAPSHOT_FUNC_TAKE_PICTURE, 0);
@@ -2674,7 +2795,10 @@ int32_t camera_isp_flash_set_charge(void *handler,
     cfg.flash_idx = cxt->camera_id;
     CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type,
              element->index);
-    ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
+    if (camera_front_lcd_flash_activie(cfg.flash_idx))
+        ret = camera_front_lcd_flash_cfg(cxt, real_type);
+    else
+        ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 out:
     return ret;
 }
@@ -2723,7 +2847,11 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
     flash_opt.led1_enable = cfg_ptr->led1_enable;
     flash_opt.flash_mode = real_type;
     flash_opt.flash_index = cxt->camera_id % 2;
-    ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
+
+    if (camera_front_lcd_flash_activie(flash_opt.flash_index))
+        ret = camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
+    else
+        ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
     return ret;
 }
@@ -6462,7 +6590,8 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             cfg.real_cell.element[0].val = 0;
             cfg.io_id = FLASH_IOID_SET_CHARGE;
             cfg.flash_idx = cxt->camera_id;
-            ret = cmr_grab_cfg_flash(grab_handle, &cfg);
+            if (!camera_front_lcd_flash_activie(cfg.flash_idx))
+                ret = cmr_grab_cfg_flash(grab_handle, &cfg);
         }
 
         if ((param_ptr->cmd_value == FLASH_OPEN ||
@@ -6479,7 +6608,10 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         flash_opt.flash_index = cxt->camera_id % 2;
         CMR_LOGV("led0_enable=%d, led1_enable=%d", flash_opt.led0_enable,
                  flash_opt.led1_enable);
-        cmr_grab_flash_cb(grab_handle, &flash_opt);
+        if (camera_front_lcd_flash_activie(flash_opt.flash_index))
+            camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
+        else
+            cmr_grab_flash_cb(grab_handle, &flash_opt);
     } break;
     case SETTING_IO_GET_PREVIEW_MODE:
         param_ptr->cmd_value = cxt->prev_cxt.preview_sn_mode;
