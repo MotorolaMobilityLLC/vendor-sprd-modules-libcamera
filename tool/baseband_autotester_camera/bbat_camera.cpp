@@ -1,6 +1,8 @@
+#define LOG_TAG "bbat_camera"
 #include <utils/Log.h>
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
-    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_6)
 #if defined(CONFIG_ISP_2_1_A)
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"
@@ -39,12 +41,11 @@ using namespace sprdcamera;
 #define PREVIEW_BUFF_NUM 8
 #define SPRD_MAX_PREVIEW_BUF PREVIEW_BUFF_NUM
 
-
 static Mutex preview_lock;
 static int preview_valid = 0;
 static int s_mem_method = 0;
 static unsigned char camera_id = 0;
-static uint32_t frame_num = 0; /*record frame number*/
+static uint32_t frame_num = 0;              /*record frame number*/
 static unsigned int m_preview_heap_num = 0; /*allocated preview buffer number*/
 static sprd_camera_memory_t *m_preview_heap_reserved = NULL;
 static sprd_camera_memory_t *m_isp_lsc_heap_reserved = NULL;
@@ -55,7 +56,7 @@ static const int k_isp_b4_awb_count = 16;
 static sprd_camera_memory_t *m_isp_b4_awb_heap_reserved[k_isp_b4_awb_count];
 static sprd_camera_memory_t *m_isp_raw_aem_heap_reserved[k_isp_b4_awb_count];
 static sprd_camera_memory_t *preview_heap_array[PREVIEW_BUFF_NUM];
-static int target_buffer_id;
+static int target_buffer_id = 0;
 
 static oem_module_t *m_hal_oem;
 
@@ -72,8 +73,7 @@ int autotest_iommu_is_enabled(void) {
     int iommu_is_enabled = 0;
 
     if (NULL == oem_handle || NULL == m_hal_oem || NULL == m_hal_oem->ops) {
-        ALOGE("auto_test: %s,%d, oem is null or oem ops is null.\n", __func__,
-              __LINE__);
+        ALOGE("%s,%d, oem is null or oem ops is null.", __func__, __LINE__);
         return 0;
     }
 
@@ -90,7 +90,7 @@ int autotest_iommu_is_enabled(void) {
 static unsigned int get_preview_buffer_id_for_fd(cmr_s32 fd) {
     unsigned int i = 0;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGV("%s,%d E", __func__, __LINE__);
 
     for (i = 0; i < PREVIEW_BUFF_NUM; i++) {
         if (!preview_heap_array[i])
@@ -107,14 +107,14 @@ static unsigned int get_preview_buffer_id_for_fd(cmr_s32 fd) {
 }
 
 void autotest_camera_close(void) {
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
     return;
 }
 
 int autotest_flashlight_ctrl(uint32_t flash_status) {
     int ret = 0;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     return ret;
 }
@@ -123,51 +123,49 @@ void autotest_camera_cb(enum camera_cb_type cb, const void *client_data,
                         enum camera_func_type func, void *parm4) {
     struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!frame) {
-        ALOGI("auto_test: %s,%d, camera call back parm4 error: NULL, do "
-              "nothing\n",
-              __func__, __LINE__);
+        ALOGV("%s,%d, callback with no frame", __func__, __LINE__);
         return;
     }
 
     if (CAMERA_FUNC_START_PREVIEW != func) {
-        ALOGI("auto_test: %s,%d, camera func type error: %d, do nothing\n",
-              __func__, __LINE__, func);
+        ALOGV("%s,%d, camera func type error: %d, do nothing", __func__,
+              __LINE__, func);
         return;
     }
 
     if (CAMERA_EVT_CB_FRAME != cb) {
-        ALOGI("auto_test: %s,%d, camera cb type error: %d, do nothing\n",
-              __func__, __LINE__, cb);
+        ALOGV("%s,%d, camera cb type error: %d, do nothing", __func__, __LINE__,
+              cb);
         return;
     }
 
     /*get frame buffer id*/
-    frame->buf_id = get_preview_buffer_id_for_fd(frame->fd);
-    if (0xFFFFFFFF == frame->buf_id) {
-        ALOGI("auto_test: buffer id is invalid, do nothing\n");
-        return;
-    }
+    target_buffer_id = get_preview_buffer_id_for_fd(frame->fd);
+    ALOGD("%s, target_buffer_id: %d", __func__, target_buffer_id);
+    /* if (0xFFFFFFFF == target_buffer_id) {
+         ALOGW("buffer id is invalid, do nothing");
+         return;
+     }*/
 
     /*preview enable or disable?*/
     if (!preview_valid) {
-        ALOGI("auto_test: %s,%d, preview disabled, do nothing\n", __func__,
-              __LINE__);
+        ALOGI("%s,%d, preview disabled, do nothing", __func__, __LINE__);
         return;
     }
 
     m_hal_oem->ops->camera_set_preview_buffer(
-        oem_handle, (cmr_uint)preview_heap_array[frame->buf_id]->phys_addr,
-        (cmr_uint)preview_heap_array[frame->buf_id]->data,
-        (cmr_s32)preview_heap_array[frame->buf_id]->fd);
+        oem_handle, (cmr_uint)preview_heap_array[target_buffer_id]->phys_addr,
+        (cmr_uint)preview_heap_array[target_buffer_id]->data,
+        (cmr_s32)preview_heap_array[target_buffer_id]->fd);
 
     frame_num++;
 }
 
 static void free_camera_mem(sprd_camera_memory_t *memory) {
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!memory)
         return;
@@ -183,7 +181,7 @@ static void free_camera_mem(sprd_camera_memory_t *memory) {
 static int callback_other_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum) {
     int i;
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (type == CAMERA_PREVIEW_RESERVED) {
         if (NULL != m_preview_heap_reserved) {
@@ -245,7 +243,7 @@ static int callback_preview_free(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                  cmr_s32 *fd, cmr_u32 sum) {
     cmr_u32 i;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     /*lock*/
     preview_lock.lock();
@@ -271,18 +269,16 @@ static cmr_int callback_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                              void *private_data) {
     cmr_int ret = 0;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!private_data || !vir_addr || !fd) {
-        ALOGE("auto_test: %s,%d, error param 0x%lx 0x%lx 0x%lx\n", __func__,
-              __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr,
-              (cmr_uint)private_data);
+        ALOGE("%s,%d, error param 0x%lx 0x%lx 0x%lx", __func__, __LINE__,
+              (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)private_data);
         return -1;
     }
 
     if (CAMERA_MEM_CB_TYPE_MAX <= type) {
-        ALOGE("auto_test: %s,%d, mem type error %d\n", __func__, __LINE__,
-              type);
+        ALOGE("%s,%d, mem type error %d", __func__, __LINE__, type);
         return -1;
     }
 
@@ -294,8 +290,8 @@ static cmr_int callback_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                type == CAMERA_ISP_ANTI_FLICKER) {
         ret = callback_other_free(type, phy_addr, vir_addr, fd, sum);
     } else {
-        ALOGE("auto_test: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__,
-              __func__, __LINE__, type);
+        ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
+              __LINE__, type);
     }
 
     /* disable preview flag */
@@ -310,15 +306,14 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     size_t mem_size = 0;
     MemIon *p_heap_ion = NULL;
 
-    ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+    ALOGI("%s,%s,%d E", __FILE__, __func__, __LINE__);
     ALOGI("buf_size %d, num_bufs %d", buf_size, num_bufs);
 
     sprd_camera_memory_t *memory =
         (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
     if (NULL == memory) {
-        ALOGE(
-            "auto_test: %s,%d, failed: fatal error! memory pointer is null.\n",
-            __func__, __LINE__);
+        ALOGE("%s,%d, failed: fatal error! memory pointer is null.", __func__,
+              __LINE__);
         goto getpmem_fail;
     }
     memset(memory, 0, sizeof(sprd_camera_memory_t));
@@ -328,12 +323,12 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     // to make it page size aligned
     mem_size = (mem_size + 4095U) & (~4095U);
     if (mem_size == 0) {
-        ALOGE("auto_test: %s,%d, failed: mem size err.\n", __func__, __LINE__);
+        ALOGE("%s,%d, failed: mem size err.", __func__, __LINE__);
         goto getpmem_fail;
     }
 
     if (0 == s_mem_method) {
-        ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         if (is_cache) {
             p_heap_ion = new MemIon("/dev/ion", mem_size, 0,
                                     (1 << 31) | ION_HEAP_ID_MASK_MM);
@@ -342,7 +337,7 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
                                     ION_HEAP_ID_MASK_MM);
         }
     } else {
-        ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         if (is_cache) {
             p_heap_ion = new MemIon("/dev/ion", mem_size, 0,
                                     (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
@@ -353,20 +348,19 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     }
 
     if (p_heap_ion == NULL || p_heap_ion->getHeapID() < 0) {
-        ALOGE("auto_test: %s,%s,%d, failed: p_heap_ion is null or getHeapID "
-              "failed.\n",
+        ALOGE("%s,%s,%d, failed: p_heap_ion is null or getHeapID "
+              "failed.",
               __FILE__, __func__, __LINE__);
         goto getpmem_fail;
     }
 
     if (NULL == p_heap_ion->getBase() || MAP_FAILED == p_heap_ion->getBase()) {
-        ALOGE(
-            "auto_test: error getBase is null. %s,%s,%d, failed: ion get base "
-            "err.\n",
-            __FILE__, __func__, __LINE__);
+        ALOGE("error getBase is null. %s,%s,%d, failed: ion get base "
+              "err.",
+              __FILE__, __func__, __LINE__);
         goto getpmem_fail;
     }
-    ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+    ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
 
     memory->ion_heap = p_heap_ion;
     memory->fd = p_heap_ion->getHeapID();
@@ -402,6 +396,7 @@ static int callback_preview_malloc(cmr_u32 size, cmr_u32 sum,
     sprd_camera_memory_t *memory = NULL;
     cmr_uint i = 0;
 
+    ALOGI("%s,%d E", __func__, __LINE__);
     ALOGI("size %d sum %d m_preview_heap_num %d", size, sum,
           m_preview_heap_num);
 
@@ -409,16 +404,12 @@ static int callback_preview_malloc(cmr_u32 size, cmr_u32 sum,
     *vir_addr = 0;
     *fd = 0;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
-
     for (i = 0; i < PREVIEW_BUFF_NUM; i++) {
         memory = alloc_camera_mem(size, 1, true);
         if (!memory) {
-            ALOGE("auto_test: %s,%d, failed: alloc camera mem err.\n", __func__,
-                  __LINE__);
+            ALOGE("%s,%d, failed: alloc camera mem err.", __func__, __LINE__);
             goto mem_fail;
         }
-
         preview_heap_array[i] = memory;
         m_preview_heap_num++;
 
@@ -440,20 +431,20 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
     sprd_camera_memory_t *memory = NULL;
     cmr_u32 i;
 
+    ALOGI("%s,%s,%d E", __FILE__, __func__, __LINE__);
     ALOGD("size %d sum %d m_preview_heap_num %d, type %d", size, sum,
           m_preview_heap_num, type);
     *phy_addr = 0;
     *vir_addr = 0;
     *fd = 0;
-    ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
 
     if (type == CAMERA_PREVIEW_RESERVED) {
         if (NULL == m_preview_heap_reserved) {
-            ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = alloc_camera_mem(size, 1, true);
             if (NULL == memory) {
-                ALOGE("auto_test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 LOGE("error memory is null.");
                 goto mem_fail;
             }
@@ -462,7 +453,7 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
             *vir_addr++ = (cmr_uint)memory->data;
             *fd++ = memory->fd;
         } else {
-            ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             ALOGI("malloc Common memory for preview, video, and zsl, malloced "
                   "type %d,request num %d, request size 0x%x",
                   type, sum, size);
@@ -472,11 +463,11 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         }
     } else if (type == CAMERA_ISP_LSC) {
         if (m_isp_lsc_heap_reserved == NULL) {
-            ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = alloc_camera_mem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("auto_test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 ALOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
             }
@@ -505,8 +496,8 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         }
 
 #if defined(CONFIG_ISP_2_6)
-        // sharkl5 dont have get_kaddr interface
-        //m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
+// sharkl5 dont have get_kaddr interface
+// m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
 #else
         m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
 #endif
@@ -522,11 +513,11 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         size_t ksize = 0;
 
         for (i = 0; i < sum; i++) {
-            ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = alloc_camera_mem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("auto_test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 goto mem_fail;
             }
             m_isp_b4_awb_heap_reserved[i] = memory;
@@ -543,10 +534,10 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         cmr_u64 *vir_addr_64 = (cmr_u64 *)vir_addr;
         size_t ksize = 0;
         for (i = 0; i < sum; i++) {
-            ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = alloc_camera_mem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("auto_test: error memory is null,malloced type %d", type);
+                ALOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
             }
             m_isp_raw_aem_heap_reserved[i] = memory;
@@ -557,11 +548,11 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         }
     } else if (type == CAMERA_ISP_ANTI_FLICKER) {
         if (m_isp_afl_heap_reserved == NULL) {
-            ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = alloc_camera_mem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("auto_test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 goto mem_fail;
             }
             m_isp_afl_heap_reserved = memory;
@@ -582,8 +573,8 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         if (m_isp_firmware_reserved == NULL) {
             memory = alloc_camera_mem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("auto_test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 goto mem_fail;
             }
             m_isp_firmware_reserved = memory;
@@ -598,8 +589,8 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
         *fd++ = memory->fd;
         *fd++ = memory->dev_fd;
     } else {
-        ALOGE("auto_test: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__,
-              __func__, __LINE__, type);
+        ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
+              __LINE__, type);
     }
 
     return 0;
@@ -617,17 +608,15 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
     cmr_u32 size;
     cmr_u32 sum;
 
-    ALOGI("auto_test: %s,%s,%d type %d IN\n", __FILE__, __func__, __LINE__,
-          type);
+    ALOGI("%s,%s,%d type %d E", __FILE__, __func__, __LINE__, type);
 
     /*lock*/
     preview_lock.lock();
 
     if (!phy_addr || !vir_addr || !size_ptr || !sum_ptr || (0 == *size_ptr) ||
         (0 == *sum_ptr)) {
-        ALOGE("auto_test: %s,%d, alloc param error 0x%lx 0x%lx 0x%lx\n",
-              __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr,
-              (cmr_uint)size_ptr);
+        ALOGE("%s,%d, alloc param error 0x%lx 0x%lx 0x%lx", __func__, __LINE__,
+              (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)size_ptr);
         /*unlock*/
         preview_lock.unlock();
         return -1;
@@ -638,17 +627,17 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     if (CAMERA_PREVIEW == type) {
         /* preview buffer */
-        ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         ret = callback_preview_malloc(size, sum, phy_addr, vir_addr, fd);
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
                type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
                type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
                type == CAMERA_ISP_ANTI_FLICKER) {
-        ALOGI("auto_test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         ret = callback_other_malloc(type, size, sum, phy_addr, vir_addr, fd);
     } else {
-        ALOGE("auto_test: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__,
-              __func__, __LINE__, type);
+        ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
+              __LINE__, type);
     }
 
     /* enable preview flag */
@@ -670,7 +659,7 @@ static void autotest_camera_startpreview(void) {
     if (!oem_handle || NULL == m_hal_oem || NULL == m_hal_oem->ops)
         return;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     preview_size.width = PREVIEW_WIDTH;
     preview_size.height = PREVIEW_HIGHT;
@@ -701,16 +690,14 @@ static void autotest_camera_startpreview(void) {
     ret = m_hal_oem->ops->camera_set_mem_func(
         oem_handle, (void *)callback_malloc, (void *)callback_free, NULL);
     if (CMR_CAMERA_SUCCESS != ret) {
-        ALOGE("auto_test: %s,%d, failed: camera set mem func error.\n",
-              __func__, __LINE__);
+        ALOGE("%s,%d, failed: camera set mem func error.", __func__, __LINE__);
         return;
     }
 
     /*start preview*/
     ret = m_hal_oem->ops->camera_start_preview(oem_handle, CAMERA_NORMAL_MODE);
     if (CMR_CAMERA_SUCCESS != ret) {
-        ALOGE("auto_test: %s,%d, failed: camera start preview error.\n",
-              __func__, __LINE__);
+        ALOGE("%s,%d, failed: camera start preview error.", __func__, __LINE__);
         return;
     }
 }
@@ -718,10 +705,10 @@ static void autotest_camera_startpreview(void) {
 static int autotest_camera_stoppreview(void) {
     int ret;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!oem_handle || NULL == m_hal_oem || NULL == m_hal_oem->ops) {
-        ALOGI("auto_test: oem is null or oem ops is null, do nothing\n");
+        ALOGI("oem is null or oem ops is null, do nothing");
         return -1;
     }
 
@@ -734,7 +721,7 @@ extern "C" {
 int autotest_camera_deinit() {
     cmr_int ret;
 
-    ALOGI("auto_test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     ret = autotest_camera_stoppreview();
 
@@ -795,9 +782,11 @@ loaderror:
 int autotest_camera_init(int camera_id) {
     int ret = 0;
 
-    ALOGI("auto_test:%s,%d IN, camera_id %d\n", __func__, __LINE__, camera_id);
+    ALOGI("%s,%d E, camera_id %d", __func__, __LINE__, camera_id);
 
-    if (autotest_load_hal_lib()) {
+    ret = autotest_load_hal_lib();
+    if (ret) {
+        ALOGE("autotest_load_hal_lib error");
         return -1;
     }
 
@@ -809,8 +798,8 @@ int autotest_camera_init(int camera_id) {
         goto exit;
     }
     s_mem_method = autotest_iommu_is_enabled();
-    ALOGI("auto_test: %s,%s,%d， s_mem_method %d IN\n", __FILE__, __func__,
-          __LINE__, s_mem_method);
+    ALOGI("%s,%s,%d， s_mem_method %d", __FILE__, __func__, __LINE__,
+          s_mem_method);
 
     autotest_camera_startpreview();
 
@@ -819,10 +808,12 @@ exit:
 }
 
 int autotest_read_cam_buf(void **pp_image_addr, int size, int *p_out_size) {
-    ALOGI("auto_test E:");
+    ALOGI("%s,%d E, target_buffer_id: %d", __func__, __LINE__,
+          target_buffer_id);
     cmr_uint vir_addr;
 
     if (!preview_heap_array[target_buffer_id]) {
+        ALOGE("preview_heap_array error");
         return -1;
     }
     vir_addr = (cmr_uint)preview_heap_array[target_buffer_id]
@@ -830,7 +821,7 @@ int autotest_read_cam_buf(void **pp_image_addr, int size, int *p_out_size) {
     *p_out_size = preview_heap_array[target_buffer_id]->phys_size; // image size
     memcpy((void *)*pp_image_addr, (void *)vir_addr, size);
 
-    ALOGI("auto_test X:");
+    ALOGI("%s,%d X", __func__, __LINE__);
     return 1;
 }
 }
@@ -842,7 +833,7 @@ int flashlightSetValue(int value) {
 
     sprintf(cmd, "echo 0x%02x > /sys/class/misc/sprd_flash/test", value);
     ret = system(cmd) ? -1 : 0;
-    ALOGD("cmd = %s,ret = %d\n", cmd,ret);
+    ALOGD("cmd = %s,ret = %d", cmd, ret);
 
     return ret;
 }
@@ -863,19 +854,19 @@ int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
     ALOGD("autotest_flash 0x%02x", buf[10]);
     int ret = 0;
     if (buf[10] == 0x01) {
-        ALOGD("autotest open back flash");
-        ret = flashlightSetValue(0x10);   // Back cold light on
+        ALOGD("open back flash");
+        ret = flashlightSetValue(0x10); // Back cold light on
     } else if (buf[10] == 0x02) {
-        ALOGD("autotest open temple flash");
-        ret = flashlightSetValue(0x20);   // Color temperature light on
+        ALOGD("open temple flash");
+        ret = flashlightSetValue(0x20); // Color temperature light on
     } else if (buf[10] == 0x00) {
-        ALOGD("autotest close flash");
-        ret = flashlightSetValue(0x31);   // Turn off the light
+        ALOGD("close flash");
+        ret = flashlightSetValue(0x31); // Turn off the light
     } else {
-        ALOGE("autotest undefined cmd");
+        ALOGE("undefined cmd");
     }
 
-/*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+    /*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
     MSG_HEAD_T *p_msg_head;
     memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
     p_msg_head = (MSG_HEAD_T *)(rsp + 1);
@@ -893,29 +884,29 @@ int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
           rsp[sizeof(MSG_HEAD_T)]);
     rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
     ALOGD("dylib test :return len:%d", p_msg_head->len + 2);
-    ALOGD("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1], rsp[2],
-          rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
+    ALOGD("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1],
+          rsp[2], rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
 
     return p_msg_head->len + 2;
-/*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+    /*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
 }
 
 int autotest_front_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
 
-    ALOGD("autotest_front_flash 0x%02x", buf[10]);
+    ALOGD("front_flash 0x%02x", buf[10]);
     int ret = 0;
 
     if (buf[10] == 0x01) {
-        ALOGD("autotest open front flash");
-        ret = flashlightSetValue(0x72);   // Front cold light on
+        ALOGD("open front flash");
+        ret = flashlightSetValue(0x72); // Front cold light on
     } else if (buf[10] == 0x00) {
-        ALOGD("autotest close front flash");
-        ret = flashlightSetValue(0x00);   // Turn off the light
+        ALOGD("close front flash");
+        ret = flashlightSetValue(0x00); // Turn off the light
     } else {
-        ALOGE("autotest undefined cmd");
+        ALOGE("undefined cmd");
     }
 
-/*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+    /*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
     MSG_HEAD_T *p_msg_head;
     memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
     p_msg_head = (MSG_HEAD_T *)(rsp + 1);
@@ -933,16 +924,17 @@ int autotest_front_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
           rsp[sizeof(MSG_HEAD_T)]);
     rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
     ALOGD("dylib test :return len:%d", p_msg_head->len + 2);
-    ALOGD("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1], rsp[2],
-          rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
+    ALOGD("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1],
+          rsp[2], rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
 
     return p_msg_head->len + 2;
-/*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+    /*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
 }
 
 int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
 
     int ret = 0;
+    int fun_ret = 0;
 #if 1
     int rec_image_size = 0;
 #define CAM_IDX 1
@@ -954,15 +946,22 @@ int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
     switch (buf[9]) {
     case 1:
         autotest_load_hal_lib();
-        if (autotest_camera_init(sensor_id) < 0) {
+        fun_ret = autotest_camera_init(sensor_id);
+        if (fun_ret < 0) {
             ret = -1;
         }
         break;
     case 2:
-        if (autotest_read_cam_buf((void **)&p_buf, SBUFFER_SIZE,
-                                  &rec_image_size) < 0) {
+        ALOGI("%s,%d, rsp_size: %d", __func__, __LINE__, rsp_size);
+        fun_ret = autotest_read_cam_buf((void **)&p_buf, SBUFFER_SIZE,
+                                        &rec_image_size);
+        if (fun_ret < 0) {
+            ALOGI("%s,%d, rec_image_size: %d", __func__, __LINE__,
+                  rec_image_size);
             ret = -1;
         } else {
+            ALOGI("%s,%d, rec_image_size: %d", __func__, __LINE__,
+                  rec_image_size);
             if (rec_image_size > rsp_size - 1) {
                 memcpy(rsp, p_buf, 768);
                 ret = 768; // rsp_size-1;
@@ -973,7 +972,8 @@ int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
         }
         break;
     case 3:
-        if (autotest_camera_deinit() < 0) {
+        fun_ret = autotest_camera_deinit();
+        if (fun_ret < 0) {
             ret = -1;
         }
         break;
@@ -1037,15 +1037,15 @@ extern "C" void register_this_module_ext(struct eng_callback *reg, int *num) {
     reg->eng_diag_func = autotest_mipicam;
     moudles_num++;
 
-    (reg+1)->type = 0x38;
-    (reg+1)->subtype = 0x0C;
-    (reg+1)-> diag_ap_cmd = 0x04;
-    (reg+1)->eng_diag_func = autotest_flash;
+    (reg + 1)->type = 0x38;
+    (reg + 1)->subtype = 0x0C;
+    (reg + 1)->diag_ap_cmd = 0x04;
+    (reg + 1)->eng_diag_func = autotest_flash;
 
-    (reg+2)->type = 0x38;
-    (reg+2)->subtype = 0x0C;
-    (reg+2)-> diag_ap_cmd = 0x08;
-    (reg+2)->eng_diag_func = autotest_front_flash;
+    (reg + 2)->type = 0x38;
+    (reg + 2)->subtype = 0x0C;
+    (reg + 2)->diag_ap_cmd = 0x08;
+    (reg + 2)->eng_diag_func = autotest_front_flash;
     moudles_num++;
 
     *num = moudles_num;

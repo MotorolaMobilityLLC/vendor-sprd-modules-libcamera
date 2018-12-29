@@ -1,6 +1,8 @@
+#define LOG_TAG "Native_MMI_Test"
 #include <utils/Log.h>
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
-    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+    defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_6)
 #if defined(CONFIG_ISP_2_1_A)
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"
@@ -82,7 +84,7 @@ static sprd_camera_memory_t *mIspB4awbHeapReserved[kISPB4awbCount];
 static sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
 static sprd_camera_memory_t
     *previewHeapArray[PREVIEW_BUFF_NUM]; /*preview heap arrary*/
-static int target_buffer_id = 0;
+static uint32_t target_buffer_id = 0;
 
 static oem_module_t *mHalOem = NULL;
 void (*factorytest_callback)(int preview_width, int preview_height,
@@ -294,8 +296,8 @@ static void StretchColors(void *pDest, int nDestWidth, int nDestHeight,
         unsigned int *pSrcPos = (unsigned int *)pSrc;
         unsigned int *pDestPos = (unsigned int *)pDest;
         int linesize;
-        ALOGI("Native MMI Test: nDestWidth = %d, nDestHeight = %d, nSrcWidth = "
-              "%d, nSrcHeight = %d, offsetX = %d, offsetY= %d \n",
+        ALOGI("nDestWidth = %d, nDestHeight = %d, nSrcWidth = "
+              "%d, nSrcHeight = %d, offsetX = %d, offsetY= %d",
               nDestWidth, nDestHeight, nSrcWidth, nSrcHeight, offsetX, offsetY);
 
         for (i = 0; i < nDestHeight; i++) {
@@ -396,15 +398,14 @@ static void eng_dcamtest_switchTB(uint8_t *buffer, uint16_t width,
     uint8_t *src = NULL;
     uint8_t *tmpBuf = NULL;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     /*  */
     linesize = width * (pixel / 8);
 
     tmpBuf = (uint8_t *)malloc(linesize);
     if (!tmpBuf) {
-        ALOGE("Native MMI Test: %s,%d Fail to alloc temp buffer\n", __func__,
-              __LINE__);
+        ALOGE("%s,%d Fail to alloc temp buffer", __func__, __LINE__);
         return;
     }
 
@@ -461,15 +462,13 @@ static int eng_test_rotation(uint32_t agree, uint32_t width, uint32_t height,
     /* open rotation device  */
     rot_fd = open(ROT_DEV, O_RDWR, 0);
     if (-1 == rot_fd) {
-        ALOGE("Native MMI Test: %s,%d Fail to open rotation device\n", __func__,
-              __LINE__);
+        ALOGE("%s,%d Fail to open rotation device", __func__, __LINE__);
         return -1;
     }
 
     /* call ioctl */
     if (-1 == ioctl(rot_fd, SPRD_CPP_IO_START_ROT, &rot_params)) {
-        ALOGE("Native MMI Test: %s,%d Fail to SC8800G_ROTATION_DONE\n",
-              __func__, __LINE__);
+        ALOGE("%s,%d Fail to SC8800G_ROTATION_DONE", __func__, __LINE__);
         return -1;
     }
 
@@ -479,7 +478,7 @@ static int eng_test_rotation(uint32_t agree, uint32_t width, uint32_t height,
 static unsigned int getPreviewBufferIDForFd(cmr_s32 fd) {
     unsigned int i = 0;
 
-    ALOGI("Native MMI Test: %s,%d  %d IN\n", __func__, __LINE__, fd);
+    ALOGI("%s,%d  %d E", __func__, __LINE__, fd);
 
     for (i = 0; i < PREVIEW_BUFF_NUM; i++) {
         if (!previewHeapArray[i])
@@ -491,7 +490,7 @@ static unsigned int getPreviewBufferIDForFd(cmr_s32 fd) {
         if (previewHeapArray[i]->fd == fd)
             return i;
     }
-    ALOGE("%s: buffer id not found!\n", __func__);
+    ALOGE("%s: buffer id not found!", __func__);
     return 0xFFFFFFFF;
 }
 
@@ -499,7 +498,7 @@ static void eng_test_fb_update(const camera_frame_type *frame) {
     int crtc = 0;
     unsigned int buffer_id;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!frame)
         return;
@@ -507,14 +506,13 @@ static void eng_test_fb_update(const camera_frame_type *frame) {
     buffer_id = getPreviewBufferIDForFd(frame->fd);
 
     if (!previewHeapArray[buffer_id]) {
-        ALOGI("Native MMI Test: %s,%d preview heap array empty, do nothing\n",
-              __func__, __LINE__);
+        ALOGI("%s,%d preview heap array empty, do nothing", __func__, __LINE__);
         return;
     }
 
     /*  */
     if (NULL == mHalOem || NULL == mHalOem->ops) {
-        ALOGI("Native MMI Test: oem is null or oem ops is null, do nothing\n");
+        ALOGI("oem is null or oem ops is null, do nothing");
         return;
     }
 
@@ -527,7 +525,7 @@ static void eng_test_fb_update(const camera_frame_type *frame) {
 int eng_test_flashlight_ctrl(uint32_t flash_status) {
     int ret = 0;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     return ret;
 }
@@ -574,23 +572,23 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
     struct timeval startTime, endTime;
     float Timeuse;
 
-    ALOGI("enter %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!frame) {
-        ALOGI("%s,%d, camera call back parm4 error: NULL, do nothing\n",
-              __func__, __LINE__);
+        ALOGV("%s,%d, camera call back parm4 error: null, do nothing", __func__,
+              __LINE__);
         return;
     }
 
     if (CAMERA_FUNC_START_PREVIEW != func) {
-        ALOGI("%s,%d, camera func type error: %d, do nothing\n", __func__,
+        ALOGV("%s,%d, camera func type error: %d, do nothing", __func__,
               __LINE__, func);
         return;
     }
 
     if (CAMERA_EVT_CB_FRAME != cb) {
-        ALOGI("%s,%d, camera cb type error: %d, do nothing\n", __func__,
-              __LINE__, cb);
+        ALOGV("%s,%d, camera cb type error: %d, do nothing", __func__, __LINE__,
+              cb);
         return;
     }
 
@@ -599,7 +597,7 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
 
     /*empty preview arry, do nothing*/
     if (!previewHeapArray[frame->buf_id]) {
-        ALOGI("%s,%d, preview heap array empty, do nothine\n", __func__,
+        ALOGI("%s,%d, preview heap array empty, do nothine", __func__,
               __LINE__);
         previewLock.unlock();
         return;
@@ -610,7 +608,7 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
 
     /*preview enable or disable?*/
     if (!previewvalid) {
-        ALOGI("%s,%d, preview disabled, do nothing\n", __func__, __LINE__);
+        ALOGI("%s,%d, preview disabled, do nothing", __func__, __LINE__);
         previewLock.unlock();
         return;
     }
@@ -641,7 +639,7 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
 }
 
 static void freeCameraMem(sprd_camera_memory_t *memory) {
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!memory)
         return;
@@ -661,7 +659,7 @@ static void freeCameraMem(sprd_camera_memory_t *memory) {
 static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                               cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum) {
     int i;
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (type == CAMERA_PREVIEW_RESERVED) {
         if (NULL != mPreviewHeapReserved) {
@@ -722,7 +720,7 @@ static int Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                 cmr_s32 *fd, cmr_u32 sum) {
     cmr_u32 i;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     /*lock*/
     previewLock.lock();
@@ -749,19 +747,18 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                              void *private_data) {
     cmr_int ret = 0;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     /*  */
     if (!private_data || !vir_addr || !fd) {
-        ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx %p 0x%lx\n",
-              __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, fd,
+        ALOGE("%s,%d, error param 0x%lx 0x%lx %p 0x%lx", __func__, __LINE__,
+              (cmr_uint)phy_addr, (cmr_uint)vir_addr, fd,
               (cmr_uint)private_data);
         return -1;
     }
 
     if (CAMERA_MEM_CB_TYPE_MAX <= type) {
-        ALOGE("Native MMI Test: %s,%d, mem type error %d\n", __func__, __LINE__,
-              type);
+        ALOGE("%s,%d, mem type error %d", __func__, __LINE__, type);
         return -1;
     }
 
@@ -773,8 +770,8 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                type == CAMERA_ISP_ANTI_FLICKER) {
         ret = Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
     } else {
-        ALOGE("Native MMI Test: %s,%s,%d, type ignore: %d, do nothing.\n",
-              __FILE__, __func__, __LINE__, type);
+        ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
+              __LINE__, type);
     }
 
     /* disable preview flag */
@@ -791,14 +788,14 @@ static sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
     unsigned long paddr = 0;
     MemIon *pHeapIon = NULL;
 
-    ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+    ALOGI("%s,%s,%d E", __FILE__, __func__, __LINE__);
     ALOGI("buf_size %d, num_bufs %d", buf_size, num_bufs);
 
     sprd_camera_memory_t *memory =
         (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
     if (NULL == memory) {
-        ALOGE("Native MMI Test: %s,%d, failed: fatal error! memory pointer is "
-              "null.\n",
+        ALOGE("%s,%d, failed: fatal error! memory pointer is "
+              "null.",
               __func__, __LINE__);
         goto getpmem_fail;
     }
@@ -809,13 +806,12 @@ static sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
     // to make it page size aligned
     mem_size = (mem_size + 4095U) & (~4095U);
     if (mem_size == 0) {
-        ALOGE("Native MMI Test: %s,%d, failed: mem size err.\n", __func__,
-              __LINE__);
+        ALOGE("%s,%d, failed: mem size err.", __func__, __LINE__);
         goto getpmem_fail;
     }
 
     if (0 == s_mem_method) {
-        ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         if (is_cache) {
             pHeapIon = new MemIon("/dev/ion", mem_size, 0,
                                   (1 << 31) | ION_HEAP_ID_MASK_MM);
@@ -824,7 +820,7 @@ static sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
                                   ION_HEAP_ID_MASK_MM);
         }
     } else {
-        ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         if (is_cache) {
             pHeapIon = new MemIon("/dev/ion", mem_size, 0,
                                   (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
@@ -835,19 +831,18 @@ static sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
     }
 
     if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
-        ALOGE("Native MMI Test: %s,%s,%d, failed: pHeapIon is null or "
-              "getHeapID failed.\n",
+        ALOGE("%s,%s,%d, failed: pHeapIon is null or "
+              "getHeapID failed.",
               __FILE__, __func__, __LINE__);
         goto getpmem_fail;
     }
 
     if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
-        ALOGE("Native MMI Test: error getBase is null. %s,%s,%d, failed: ion "
-              "get base err.\n",
+        ALOGE("error getBase is null. %s,%s,%d, failed: ion get base err.",
               __FILE__, __func__, __LINE__);
         goto getpmem_fail;
     }
-    ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+    ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
 
     memory->ion_heap = pHeapIon;
     memory->fd = pHeapIon->getHeapID();
@@ -889,13 +884,12 @@ static int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
     *vir_addr = 0;
     *fd = 0;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     for (i = 0; i < PREVIEW_BUFF_NUM; i++) {
         memory = allocCameraMem(size, 1, true);
         if (!memory) {
-            ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n",
-                  __func__, __LINE__);
+            ALOGE("%s,%d, failed: alloc camera mem err.", __func__, __LINE__);
             goto mem_fail;
         }
 
@@ -927,16 +921,15 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
     *phy_addr = 0;
     *vir_addr = 0;
     *fd = 0;
-    ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+    ALOGI("%s,%s,%d E", __FILE__, __func__, __LINE__);
 
     if (type == CAMERA_PREVIEW_RESERVED) {
         if (NULL == mPreviewHeapReserved) {
-            ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__,
-                  __LINE__);
+            ALOGI("%s,%s,%d E", __FILE__, __func__, __LINE__);
             memory = allocCameraMem(size, 1, true);
             if (NULL == memory) {
-                ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 LOGE("error memory is null.");
                 goto mem_fail;
             }
@@ -945,8 +938,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
             *vir_addr++ = (cmr_uint)memory->data;
             *fd++ = memory->fd;
         } else {
-            ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__,
-                  __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             ALOGI("malloc Common memory for preview, video, and zsl, malloced "
                   "type %d,request num %d, request size 0x%x",
                   type, sum, size);
@@ -956,11 +948,10 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         }
     } else if (type == CAMERA_ISP_LSC) {
         if (mIspLscHeapReserved == NULL) {
-            ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__,
-                  __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n",
+                ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.",
                       __func__, __LINE__);
                 ALOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -990,8 +981,8 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
             mIspStatisHeapReserved = memory;
         }
 #if defined(CONFIG_ISP_2_6)
-        // sharkl5 dont have get_kaddr interface
-        //m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
+// sharkl5 dont have get_kaddr interface
+// m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
 #else
         mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
 #endif
@@ -1007,12 +998,11 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         size_t ksize = 0;
 
         for (i = 0; i < sum; i++) {
-            ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__,
-                  __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 goto mem_fail;
             }
             mIspB4awbHeapReserved[i] = memory;
@@ -1029,12 +1019,10 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         cmr_u64 *vir_addr_64 = (cmr_u64 *)vir_addr;
         size_t ksize = 0;
         for (i = 0; i < sum; i++) {
-            ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__,
-                  __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("Native MMI Test: error memory is null,malloced type %d",
-                      type);
+                ALOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
             }
             mIspRawAemHeapReserved[i] = memory;
@@ -1045,12 +1033,11 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         }
     } else if (type == CAMERA_ISP_ANTI_FLICKER) {
         if (mIspAFLHeapReserved == NULL) {
-            ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__,
-                  __LINE__);
+            ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
             memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 goto mem_fail;
             }
             mIspAFLHeapReserved = memory;
@@ -1072,8 +1059,8 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         if (++mIspFirmwareReserved_cnt == 1) {
             memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
-                ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n",
-                      __func__, __LINE__);
+                ALOGE("%s,%d, failed: alloc camera mem err.", __func__,
+                      __LINE__);
                 goto mem_fail;
             }
             mIspFirmwareReserved = memory;
@@ -1088,8 +1075,8 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         *fd++ = memory->fd;
         *fd++ = memory->dev_fd;
     } else {
-        ALOGE("Native MMI Test: %s,%s,%d, type ignore: %d, do nothing.\n",
-              __FILE__, __func__, __LINE__, type);
+        ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
+              __LINE__, type);
     }
 
     return 0;
@@ -1106,17 +1093,15 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
     cmr_u32 size;
     cmr_u32 sum;
 
-    ALOGI("Native MMI Test: %s,%s,%d, type %d IN\n", __FILE__, __func__,
-          __LINE__, type);
+    ALOGI("%s,%s,%d, type %d E", __FILE__, __func__, __LINE__, type);
 
     /*lock*/
     previewLock.lock();
 
     if (!phy_addr || !vir_addr || !size_ptr || !sum_ptr || (0 == *size_ptr) ||
         (0 == *sum_ptr)) {
-        ALOGE("Native MMI Test: %s,%d, alloc param error 0x%lx 0x%lx 0x%lx\n",
-              __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr,
-              (cmr_uint)size_ptr);
+        ALOGE("%s,%d, alloc param error 0x%lx 0x%lx 0x%lx", __func__, __LINE__,
+              (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)size_ptr);
         /*unlock*/
         previewLock.unlock();
         return -1;
@@ -1127,17 +1112,17 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     if (CAMERA_PREVIEW == type) {
         /* preview buffer */
-        ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         ret = Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
                type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
                type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
                type == CAMERA_ISP_ANTI_FLICKER) {
-        ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__, __func__, __LINE__);
+        ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         ret = Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
     } else {
-        ALOGE("Native MMI Test: %s,%s,%d, type ignore: %d, do nothing.\n",
-              __FILE__, __func__, __LINE__, type);
+        ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
+              __LINE__, type);
     }
 
     /* enable preview flag */
@@ -1159,7 +1144,7 @@ static void eng_tst_camera_startpreview(void) {
     if (!oem_handle || NULL == mHalOem || NULL == mHalOem->ops)
         return;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     /*  */
     preview_size.width = g_preview_width;
@@ -1201,16 +1186,14 @@ static void eng_tst_camera_startpreview(void) {
     ret = mHalOem->ops->camera_set_mem_func(oem_handle, (void *)Callback_Malloc,
                                             (void *)Callback_Free, NULL);
     if (CMR_CAMERA_SUCCESS != ret) {
-        ALOGE("Native MMI Test: %s,%d, failed: camera set mem func error.\n",
-              __func__, __LINE__);
+        ALOGE("%s,%d, failed: camera set mem func error.", __func__, __LINE__);
         return;
     }
 
     /*start preview*/
     ret = mHalOem->ops->camera_start_preview(oem_handle, CAMERA_NORMAL_MODE);
     if (CMR_CAMERA_SUCCESS != ret) {
-        ALOGE("Native MMI Test: %s,%d, failed: camera start preview error.\n",
-              __func__, __LINE__);
+        ALOGE("%s,%d, failed: camera start preview error.", __func__, __LINE__);
         return;
     }
 }
@@ -1218,10 +1201,10 @@ static void eng_tst_camera_startpreview(void) {
 static int eng_tst_camera_stoppreview(void) {
     int ret;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     if (!oem_handle || NULL == mHalOem || NULL == mHalOem->ops) {
-        ALOGI("Native MMI Test: oem is null or oem ops is null, do nothing\n");
+        ALOGI("oem is null or oem ops is null, do nothing");
         return -1;
     }
 
@@ -1232,13 +1215,13 @@ static int eng_tst_camera_stoppreview(void) {
 
 extern "C" {
 void eng_test_camera_close(void) {
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
     return;
 }
 int eng_tst_camera_deinit() {
     cmr_int ret;
 
-    ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
+    ALOGI("%s,%d E", __func__, __LINE__);
 
     ret = eng_tst_camera_stoppreview();
 
@@ -1257,17 +1240,15 @@ int eng_tst_camera_deinit() {
     strcpy(af_tuning_path, CAMERA_DUMP_PATH);
     strcat(af_tuning_path, "af_tuning_default.bin");
     if (remove(af_tuning_path) != 0) {
-        ALOGE(
-            "Native MMI Test: %s,%d, failed: to delete af_tuning_path file \n",
-            __func__, __LINE__);
+        ALOGE("%s,%d, failed: to delete af_tuning_path file", __func__,
+              __LINE__);
     }
     static char sensor_para_path[128];
     strcpy(sensor_para_path, CAMERA_DUMP_PATH);
     strcat(sensor_para_path, "sensor.file");
     if (remove(sensor_para_path) != 0) {
-        ALOGE("Native MMI Test: %s,%d, failed: to delete sensor_para_path file "
-              "\n",
-              __func__, __LINE__);
+        ALOGE("%s,%d, failed: to delete sensor_para_path file", __func__,
+              __LINE__);
     }
     if (post_preview_buf) {
         free(post_preview_buf);
@@ -1365,16 +1346,16 @@ int eng_tst_camera_init(int cameraId, int preview_window_width,
                                     (void *)Callback_Free);
 
     if (ret) {
-        ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);
+        ALOGE("camera_init failed, ret=%d", ret);
         goto exit;
     }
     s_mem_method = IommuIsEnabled();
-    ALOGI("Native MMI Test: %s,%s,%d, s_mem_method %d IN\n", __FILE__, __func__,
-          __LINE__, s_mem_method);
+    ALOGI("%s,%s,%d, s_mem_method %d", __FILE__, __func__, __LINE__,
+          s_mem_method);
 
     eng_tst_camera_startpreview();
 
-    ALOGI("Native MMI Test: %s Exit", __func__);
+    ALOGI("%s X", __func__);
 
 exit:
     return ret;
@@ -1385,12 +1366,12 @@ int eng_tst_covered_camera_init(int cameraId) {
     int ret = 0, multi_camera_mode = MODE_BLUR;
     int sensor_stream_on = 1;
 
-    ALOGI("Native MMI Test: eng_tst_covered_camera_init E");
+    ALOGI("eng_tst_covered_camera_init E");
 
     ret = mHalOem->ops->camera_ioctrl(
         oem_handle, CAMERA_IOCTRL_SET_MULTI_CAMERAMODE, &multi_camera_mode);
     if (ret) {
-        ALOGE("Native MMI Test: SET_MULTI_CAMERAMODE failed, ret=%d", ret);
+        ALOGE("SET_MULTI_CAMERAMODE failed, ret=%d", ret);
         goto exit;
     }
 
@@ -1398,7 +1379,7 @@ int eng_tst_covered_camera_init(int cameraId) {
                                     0, &oem_handle, (void *)Callback_Malloc,
                                     (void *)Callback_Free);
     if (ret) {
-        ALOGE("Native MMI Test: camera_init failed, ret=%d", ret);
+        ALOGE("camera_init failed, ret=%d", ret);
         goto exit;
     }
 
@@ -1406,11 +1387,11 @@ int eng_tst_covered_camera_init(int cameraId) {
                                       CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
                                       &sensor_stream_on);
     if (ret) {
-        ALOGE("Native MMI Test: SENSOR_STREAM_CTRL failed, ret=%d", ret);
+        ALOGE("SENSOR_STREAM_CTRL failed, ret=%d", ret);
         goto exit;
     }
 
-    ALOGI("Native MMI Test: eng_tst_covered_camera_init X");
+    ALOGI("eng_tst_covered_camera_init X");
 
 exit:
     return ret;
@@ -1422,11 +1403,11 @@ int eng_tst_covered_camera_get_lum(void) {
     ret = mHalOem->ops->camera_ioctrl(oem_handle, CAMERA_IOCTRL_GET_SENSOR_LUMA,
                                       (void *)&lum_value);
     if (ret) {
-        ALOGE("Native MMI Test: eng_tst_camera_get_lum, ret=%d", ret);
+        ALOGE("eng_tst_camera_get_lum, ret=%d", ret);
         ret = -1;
         goto exit;
     }
-    ALOGI("Native MMI Test: eng_tst_camera_get_lum lum_value = %d", lum_value);
+    ALOGI("eng_tst_camera_get_lum lum_value = %d", lum_value);
 
     return lum_value;
 
