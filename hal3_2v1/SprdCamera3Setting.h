@@ -715,10 +715,20 @@ class SprdCamera3Setting {
     static void parseStringfloat(const char *sizesStr, float *fdStr);
 
     static int setDefaultParaInfo(int32_t cameraId);
-    static bool getLcdSize(uint32_t *width, uint32_t *height);
+    //
+    static int initStaticParametersforSensorInfo(int32_t cameraId);
+    static int initStaticParametersforLensInfo(int32_t cameraId);
+    static int initStaticParametersforScalerInfo(int32_t cameraId);
+    //
+    static int initStaticMetadataforSensorInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    static int initStaticMetadataforLensInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    static int initStaticMetadataforScalerInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    //
     static int initStaticParameters(int32_t cameraId);
     static int initStaticMetadata(int32_t cameraId,
                                   camera_metadata_t **static_metadata);
+
+    static bool getLcdSize(uint32_t *width, uint32_t *height);
     static void convertToRegions(int32_t *rect, int32_t *region, int weight);
     static int checkROIValid(int32_t *roi_area, int32_t *crop_area);
     void coordinate_struct_convert(int *rect_arr, int arr_size);
