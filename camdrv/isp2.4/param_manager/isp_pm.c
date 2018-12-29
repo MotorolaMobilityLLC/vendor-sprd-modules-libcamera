@@ -26,7 +26,6 @@
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
-#include <utils/AndroidThreads.h>
 #include <utils/Timers.h>
 
 #define ISP_PM_BUF_NUM     10
@@ -216,12 +215,9 @@ cmr_int isp_create_mem_thread(void)
         return rtn;
     }
 
-    pid_t tid = pthread_gettid_np(handle);
-    androidSetThreadPriority(tid, -10);
-
     pthread_attr_destroy(&attr);
 
-    CMR_LOGI("done tid %d, ret %ld",tid, rtn);
+    CMR_LOGI("done.");
     return rtn;
 }
 
