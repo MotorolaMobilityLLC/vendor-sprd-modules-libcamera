@@ -2000,6 +2000,14 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				ISP_TRACE_IF_FAIL(ret, ("fail to af process"));
 			}
 
+			/* send data to pd adpt layer */
+			struct pdaf_ctrl_param_in pdaf_in;
+			pdaf_in.af_addr = (void *)(af_temp);
+			pdaf_in.af_addr_len = sizeof(af_temp);
+			if (cxt->ops.pdaf_ops.process && !cxt->pdaf_cxt.sw_bypass) {
+				ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_AFMFV, (void *)&pdaf_in, NULL);
+			}
+
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 			if (ret) {
 				ISP_LOGE("fail to set statis buf");

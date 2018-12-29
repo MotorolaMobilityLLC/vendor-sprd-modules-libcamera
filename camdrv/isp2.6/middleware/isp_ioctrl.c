@@ -1241,6 +1241,9 @@ static cmr_int ispctl_af(cmr_handle isp_alg_handle, void *param_ptr)
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_START, (void *)&trig_info, NULL);
 
+	if (cxt->ops.pdaf_ops.ioctrl)
+		ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_COOR, (void *)&trig_info.win_pos[0], NULL);
+
 	return ret;
 }
 
@@ -1576,6 +1579,11 @@ static cmr_int ispctl_af_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_MODE, (void *)&set_mode, NULL);
+
+	if (cxt->ops.pdaf_ops.ioctrl) {
+		cmr_u32 pdaf_mode = set_mode == AF_MODE_NORMAL ? ACTIVE : PASSIVE;
+		ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_MODE, (void *)&pdaf_mode, NULL);
+	}
 
 	return ret;
 }
