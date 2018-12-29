@@ -4925,7 +4925,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cmr_s32 backup_gain = 0;
 	cmr_s32 backup_expgain = 0;
 	cmr_s32 effect_ebd_expgain = 0;
-	cmr_s32 stable_flag = 0;
 	UNUSED(result);
 
 	if (NULL == param) {
@@ -5050,18 +5049,12 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 
 /***********************************************************/
 /* send STAB notify to HAL */
-	stable_flag = (cur_calc_result->ae_output.is_stab && cxt->ebd_stable_flag);
-	if(cxt->ebd_support) {
-		if (cxt->isp_ops.callback) {
-				cb_type = AE_CB_STAB_NOTIFY;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stable_flag);
-		}
-	} else {
-		if (cxt->isp_ops.callback) {
-				cb_type = AE_CB_STAB_NOTIFY;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
-			}
+
+	if (cxt->isp_ops.callback) {
+		cb_type = AE_CB_STAB_NOTIFY;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
 	}
+
 
 	if (1 == cxt->debug_enable) {
 		ae_save_to_mlog_file(cxt, &misc_calc_out);
@@ -5096,7 +5089,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cmr_s32 backup_gain = 0;
 	cmr_s32 backup_expgain = 0;
 	cmr_s32 effect_ebd_expgain = 0;
-	cmr_s32 stable_flag = 0;
 	UNUSED(result);
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	struct _tag_hdr_detect_t hdr_param;
@@ -5191,7 +5183,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 	if(ae_dynamic_sync == 1){
 	cmr_s32 master_sync_aem[3*1024] = {0},slave_sync_aem[3*1024]= {0};
-
 	cmr_s32 aem_blk_num = 1024;
 	rtn = cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, SET_AEM_STAT_BLK_NUM, &aem_blk_num, NULL);
 
@@ -5476,12 +5467,16 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	pthread_mutex_unlock(&cxt->data_sync_lock);
 
 /***********************************************************/
-	if(cxt->is_master == 0)
-		current_status->cam_id = AE_SENSOR_SLAVE0;
-	else if(cxt->is_master == 1)
-		current_status->cam_id = AE_SENSOR_MASTER;
-	else
-		ISP_LOGE("Error !can't not found camera id!");
+	if(cxt->is_multi_mode) {
+		if(cxt->is_master == 0)
+			current_status->cam_id = AE_SENSOR_SLAVE0;
+		else if(cxt->is_master == 1)
+			current_status->cam_id = AE_SENSOR_MASTER;
+		else
+			ISP_LOGE("Error !can't not found camera id!");
+	} else
+		current_status->cam_id = AE_SENSOR_SINGLE;
+		
 	
 	current_status->ae_start_delay = 0;
 	misc_calc_in.sync_settings = current_status;
@@ -5630,28 +5625,12 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 	rtn = ae_touch_ae_process(cxt, current_result);
 /* send STAB notify to HAL */
-	stable_flag = (cur_calc_result->ae_output.is_stab && cxt->ebd_stable_flag);
-	if(cxt->ebd_support) {
-		if (cxt->ebd_flash_stable_flag) {
-			if (cxt->isp_ops.callback) {
-				cb_type = AE_CB_STAB_NOTIFY;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cxt->ebd_flash_stable_flag);
-				ISP_LOGI("ebd flash notify stable_flag %d", cxt->ebd_flash_stable_flag);
-			}
-		} else {
-			if (cxt->isp_ops.callback) {
-				cb_type = AE_CB_STAB_NOTIFY;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stable_flag);
-				ISP_LOGI("ebd notify stable_flag %d", stable_flag);
-			}
-		}
-	} else {
-		if (cxt->isp_ops.callback) {
-				cb_type = AE_CB_STAB_NOTIFY;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
-				ISP_LOGI("normal notify stable_flag %d", stable_flag);
-			}
+
+	if (cxt->isp_ops.callback) {
+		cb_type = AE_CB_STAB_NOTIFY;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
 	}
+
 /***********************************************************/
 /*display the AE running status*/
 	if (1 == cxt->debug_enable) {
