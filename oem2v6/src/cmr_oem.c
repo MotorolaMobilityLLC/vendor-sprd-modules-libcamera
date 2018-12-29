@@ -7939,9 +7939,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         if (camera_get_hdr_flag(cxt)) {
             out_param_ptr->frame_count = cxt->ipm_cxt.hdr_num;
             out_param_ptr->frame_ctrl = FRAME_HDR_PROC;
-        } else if (1 == camera_get_3dnr_flag(cxt)) {
-            out_param_ptr->frame_count = cxt->ipm_cxt.threednr_num;
-            out_param_ptr->frame_ctrl = FRAME_3DNR_PROC;
         } else if (out_param_ptr->video_snapshot_type == 1) {
             out_param_ptr->frame_ctrl = FRAME_CONTINUE;
         }

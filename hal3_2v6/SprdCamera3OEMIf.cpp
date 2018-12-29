@@ -367,8 +367,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mIspB4awbHeapReserved, 0, sizeof(mIspB4awbHeapReserved));
     memset(mIspRawAemHeapReserved, 0, sizeof(mIspRawAemHeapReserved));
     memset(mIspPreviewYReserved, 0, sizeof(mIspPreviewYReserved));
-    memset(m3DNRPrevHeapReserverd, 0, sizeof(m3DNRPrevHeapReserverd));
-    memset(m3DNRScaleHeapReserverd, 0, sizeof(m3DNRScaleHeapReserverd));
     memset(m4in1HeapArray, 0, sizeof(m4in1HeapArray));
 
     mJpegRotaSet = false;
@@ -400,7 +398,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mIspYUVReserved = NULL;
     mPdafRawHeapReserved = NULL;
     mIspAntiFlickerHeapReserved = NULL;
-    m3DNRHeapReserverd = NULL;
     mAISceneScaleHeapReserverd = NULL;
     mPrevDepthHeapReserved = NULL;
     mPrevSwOutHeapReserved = NULL;
@@ -2521,25 +2518,6 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
     if (NULL != mPdafRawHeapReserved) {
         freeCameraMem(mPdafRawHeapReserved);
         mPdafRawHeapReserved = NULL;
-    }
-
-    if (NULL != m3DNRHeapReserverd) {
-        freeCameraMem(m3DNRHeapReserverd);
-        m3DNRHeapReserverd = NULL;
-    }
-    for (i = 0; i < CAP_3DNR_NUM; i++) {
-        if (NULL != m3DNRScaleHeapReserverd[i]) {
-            m3DNRScaleHeapReserverd[i]->ion_heap->free_kaddr();
-            freeCameraMem(m3DNRScaleHeapReserverd[i]);
-            m3DNRScaleHeapReserverd[i] = NULL;
-        }
-    }
-    for (i = 0; i < PRE_3DNR_NUM; i++) {
-        if (NULL != m3DNRPrevHeapReserverd[i]) {
-            m3DNRPrevHeapReserverd[i]->ion_heap->free_kaddr();
-            freeCameraMem(m3DNRPrevHeapReserverd[i]);
-            m3DNRPrevHeapReserverd[i] = NULL;
-        }
     }
 
     if (NULL != mPrevDepthHeapReserved) {
@@ -6915,31 +6893,6 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         mIspYUVReserved = NULL;
     }
 
-    if (type == CAMERA_SNAPSHOT_3DNR_DST) {
-        if (NULL != m3DNRHeapReserverd) {
-            freeCameraMem(m3DNRHeapReserverd);
-        }
-        m3DNRHeapReserverd = NULL;
-    }
-
-    if (type == CAMERA_SNAPSHOT_3DNR) {
-        for (i = 0; i < sum; i++) {
-            if (NULL != m3DNRScaleHeapReserverd[i]) {
-                freeCameraMem(m3DNRScaleHeapReserverd[i]);
-            }
-            m3DNRScaleHeapReserverd[i] = NULL;
-        }
-    }
-
-    if (type == CAMERA_PREVIEW_3DNR) {
-        for (i = 0; i < sum; i++) {
-            if (NULL != m3DNRPrevHeapReserverd[i]) {
-                freeCameraMem(m3DNRPrevHeapReserverd[i]);
-            }
-            m3DNRPrevHeapReserverd[i] = NULL;
-        }
-    }
-
     if (type == CAMERA_PREVIEW_DEPTH) {
         if (NULL != mPrevDepthHeapReserved) {
             freeCameraMem(mPrevDepthHeapReserved);
@@ -7228,46 +7181,6 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         *phy_addr++ = 0;
         *vir_addr++ = (cmr_uint)mIspYUVReserved->data;
         *fd++ = mIspYUVReserved->fd;
-    } else if (type == CAMERA_SNAPSHOT_3DNR) {
-        for (i = 0; i < sum; i++) {
-            if (m3DNRScaleHeapReserverd[i] == NULL) {
-                memory = allocCameraMem(size, 1, true);
-                if (NULL == memory) {
-                    HAL_LOGE("error memory is null,malloced type %d", type);
-                    goto mem_fail;
-                }
-                m3DNRScaleHeapReserverd[i] = memory;
-            }
-            *phy_addr++ = (cmr_uint)m3DNRScaleHeapReserverd[i]->phys_addr;
-            *vir_addr++ = (cmr_uint)m3DNRScaleHeapReserverd[i]->data;
-            *fd++ = m3DNRScaleHeapReserverd[i]->fd;
-        }
-    } else if (type == CAMERA_SNAPSHOT_3DNR_DST) {
-        if (m3DNRHeapReserverd == NULL) {
-            memory = allocCameraMem(size, 1, true);
-            if (NULL == memory) {
-                HAL_LOGE("memory is null.");
-                goto mem_fail;
-            }
-            m3DNRHeapReserverd = memory;
-        }
-        *phy_addr++ = (cmr_uint)m3DNRHeapReserverd->phys_addr;
-        *vir_addr++ = (cmr_uint)m3DNRHeapReserverd->data;
-        *fd++ = m3DNRHeapReserverd->fd;
-    } else if (type == CAMERA_PREVIEW_3DNR) {
-        for (i = 0; i < sum; i++) {
-            if (m3DNRPrevHeapReserverd[i] == NULL) {
-                memory = allocCameraMem(size, 1, true);
-                if (NULL == memory) {
-                    HAL_LOGE("error memory is null,malloced type %d", type);
-                    goto mem_fail;
-                }
-                m3DNRPrevHeapReserverd[i] = memory;
-            }
-            *phy_addr++ = (cmr_uint)m3DNRPrevHeapReserverd[i]->phys_addr;
-            *vir_addr++ = (cmr_uint)m3DNRPrevHeapReserverd[i]->data;
-            *fd++ = m3DNRPrevHeapReserverd[i]->fd;
-        }
     } else if (type == CAMERA_PREVIEW_DEPTH) {
         HAL_LOGD("REAL TIME DEPTH");
         if (mPrevDepthHeapReserved == NULL) {
@@ -7447,9 +7360,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
                CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
                CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
-               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
-               CAMERA_SNAPSHOT_3DNR_DST == type ||
-               CAMERA_PREVIEW_3DNR == type || CAMERA_PREVIEW_DEPTH == type ||
+               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_PREVIEW_DEPTH == type ||
                CAMERA_PREVIEW_SW_OUT == type || CAMERA_4IN1_PROC == type ||
                CAMERA_CHANNEL_0_RESERVED == type ||
                CAMERA_CHANNEL_1_RESERVED == type ||
@@ -7519,9 +7430,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
                CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
                CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
-               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
-               CAMERA_SNAPSHOT_3DNR_DST == type ||
-               CAMERA_PREVIEW_3DNR == type || CAMERA_PREVIEW_DEPTH == type ||
+               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_PREVIEW_DEPTH == type ||
                CAMERA_PREVIEW_SW_OUT == type || CAMERA_4IN1_PROC == type ||
                CAMERA_CHANNEL_0_RESERVED == type ||
                CAMERA_CHANNEL_1_RESERVED == type ||
