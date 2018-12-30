@@ -2120,14 +2120,14 @@ static int img_ioctl_cfg_param(
 	}
 
 	if ((param.sub_block & DCAM_ISP_BLOCK_MASK) == DCAM_BLOCK_BASE) {
-		if (param.scene_id == PM_SCENE_PRE)
-			ret = dcam_ops->cfg_blk_param(
-				module->dcam_dev_handle, &param);
-		else if ((param.scene_id == PM_SCENE_CAP) &&
-				module->cam_uinfo.is_4in1)
+		if (unlikely((param.scene_id == PM_SCENE_CAP) &&
+				module->cam_uinfo.is_4in1))
 			/* 4in1 capture should cfg offline dcam */
 			ret = dcam_ops->cfg_blk_param(
 				module->aux_dcam_dev, &param);
+		else
+			ret = dcam_ops->cfg_blk_param(
+				module->dcam_dev_handle, &param);
 	} else {
 		if (param.scene_id == PM_SCENE_PRE)
 			channel = &module->channel[CAM_CH_PRE];

@@ -1077,6 +1077,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 i = 0;
+	cmr_u32 scene_id;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input_param input;
 	struct isp_pm_ioctl_output_param output;
@@ -1092,16 +1093,18 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	else
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 
+	/* work_mode: 1 - capture only, 0 - auto/preview */
+	scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
 	param_data = output.prv_param_data;
 	for (i = 0; i < output.prv_param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
-		sub_block_info.scene_id = PM_SCENE_PRE;
+		sub_block_info.scene_id = scene_id;
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
 		param_data++;
 	}
 
-	if (cxt->zsl_flag)  {
+	if ((cxt->work_mode == 0) && cxt->zsl_flag)  {
 		param_data = output.cap_param_data;
 		for (i = 0; i < output.cap_param_num; i++) {
 			sub_block_info.block_info = param_data->data_ptr;
@@ -3114,7 +3117,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->awb_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_LSC_BYPASS, value, "0");
+	property_get(PROP_ISP_LSC_BYPASS, value, "1");
 	val = atoi(value);
 	if (val < 2)
 		cxt->lsc_cxt.sw_bypass = val;

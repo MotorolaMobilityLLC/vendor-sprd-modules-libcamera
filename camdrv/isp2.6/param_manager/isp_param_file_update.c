@@ -26,7 +26,7 @@
 
 #define LNC_MAP_NUM 9
 #define SCENE_INFO_NUM 10
-#define ISP_PARAM_VERSION_V25 0x0007
+#define ISP_PARAM_VERSION_V26 0x0008
 
 char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
 	"bayer_nr",
@@ -1166,7 +1166,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	return rtn;
 }
 
-cmr_s32 update_param_v25(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
+cmr_s32 update_param_v26(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_s32 i = 0;
@@ -1211,6 +1211,7 @@ cmr_s32 update_param_v25(struct sensor_raw_info * sensor_raw_ptr, const char *se
 	sprintf(nr_scene_map, "static struct sensor_nr_scene_map_param s_%s_nr_scene_map_param", sensor_name);
 	sprintf(lsc_2d_map_flag1, "#undef LSC_2D_MAP_0");
 	sprintf(lsc_2d_map_flag2, "#undef LSC_2D_MAP_0_OFFSET");
+	ISP_LOGD("parse nr file %s\n", filename[0]);
 
 	nr_level_number_ptr = sensor_raw_ptr->nr_fix.nr_level_number_ptr;
 	nr_default_level_ptr = sensor_raw_ptr->nr_fix.nr_default_level_ptr;
@@ -1393,8 +1394,8 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 		ISP_LOGI("the param file is %s, version = %d", filename, version);
 	}
 
-	if (ISP_PARAM_VERSION_V25 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
-		rtn = update_param_v25(sensor_raw_info_ptr, sensor_name);
+	if (ISP_PARAM_VERSION_V26 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
+		rtn = update_param_v26(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
 			ISP_LOGE("fail to update param!");
 			return rtn;
