@@ -192,6 +192,12 @@ static void dcam_cap_sof(void *param)
 	if (dev->enable_slowmotion) {
 		uint32_t n = dev->frame_index % dev->slowmotion_count;
 
+		/* auto copy at last frame of a group of slow motion frames */
+		if (n == dev->slowmotion_count - 1) {
+			/* This register write is time critical,do not modify */
+			DCAM_REG_MWR(dev->idx, DCAM_CONTROL, 0x800, 0x800);
+		}
+
 		/* set buffer at first frame of a group of slow motion frames */
 		if (n)
 			return;

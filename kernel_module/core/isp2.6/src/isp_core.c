@@ -667,7 +667,7 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_Y_PITCH, fetch->pitch.pitch_ch0);
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_U_PITCH, fetch->pitch.pitch_ch1);
 	ISP_REG_WR(idx, ISP_FETCH_SLICE_V_PITCH, fetch->pitch.pitch_ch2);
-	ISP_REG_WR(idx, ISP_FETCH_LINE_DLY_CTRL, 0x200);
+	ISP_REG_WR(idx, ISP_FETCH_LINE_DLY_CTRL, 0x0);
 	ISP_REG_WR(idx, ISP_FETCH_MIPI_INFO,
 		fetch->mipi_word_num | (fetch->mipi_byte_rel_pos << 16));
 
