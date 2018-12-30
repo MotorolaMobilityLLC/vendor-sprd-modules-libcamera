@@ -1489,6 +1489,7 @@ static int dcam_offline_start_frame(void *param)
 		if (path->path_id == DCAM_PATH_BIN)
 			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
+	dcam_init_lsc(dev);
 
 	/* todo - need to cfg fetch param from input or frame. */
 	fetch->is_loose = 0;
@@ -2019,7 +2020,6 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 	int ret = 0;
 	struct dcam_pipe_dev *dev = NULL;
 	struct dcam_mipi_info *cap;
-	struct dcam_k_block *dcam_k_param;
 
 	if (!dcam_handle) {
 		pr_err("fail to get valid input ptr\n");
@@ -2043,8 +2043,11 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		break;
 	case DCAM_IOCTL_CFG_START:
 		/* sign of isp mw starting to config block param. */
-		dcam_k_param = &dev->blk_dcam_pm->lsc.blk_handle;
-		dcam_k_param->lsc_init = 1;
+		ret = cambuf_iommu_map(
+				&dev->blk_dcam_pm->lsc.buf,
+				CAM_IOMMUDEV_DCAM);
+		if (ret)
+			dev->blk_dcam_pm->lsc.buf.iova[0] = 0L;
 		break;
 	case DCAM_IOCTL_INIT_STATIS_Q:
 		ret = init_statis_bufferq(dev);
@@ -2233,6 +2236,7 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		if (path->path_id == DCAM_PATH_BIN)
 			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
+	dcam_init_lsc(dev);
 
 	if (helper) {
 		if (helper->enabled)
@@ -2262,7 +2266,6 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 {
 	int ret = 0;
 	struct dcam_pipe_dev *dev = NULL;
-	struct dcam_k_block *dcam_k_param;
 
 	if (!dcam_handle) {
 		pr_err("fail to get valid input ptr\n");
@@ -2288,17 +2291,12 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 		atomic_dec(&s_dcam_working);
 	atomic_set(&dev->state, STATE_IDLE);
 
+	cambuf_iommu_unmap(&dev->blk_dcam_pm->lsc.buf);
 	dev->blk_dcam_pm->aem.bypass = 1;
 	dev->blk_dcam_pm->afm.bypass = 1;
 	dev->blk_dcam_pm->afl.bypass = 1;
 	dev->blk_dcam_pm->hist.bayerHist_info.hist_bypass = 1;
 	dev->is_pdaf = dev->is_3dnr = dev->is_4in1 = 0;
-
-	dcam_k_param = &dev->blk_dcam_pm->lsc.blk_handle;
-	if (dcam_k_param) {
-		cambuf_iommu_unmap(&dcam_k_param->lsc_buf);
-		cambuf_put_ionbuf(&dcam_k_param->lsc_buf);
-	}
 
 	pr_info("stop dcam pipe dev[%d]!\n", dev->idx);
 	return ret;
@@ -2310,7 +2308,7 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 static int sprd_dcam_dev_open(void *dcam_handle)
 {
 	int ret = 0;
-	int i;
+	int i, iommu_enable = 0;
 	struct dcam_pipe_dev *dev = NULL;
 	struct dcam_path_desc *path;
 	struct sprd_cam_hw_info *hw;
@@ -2367,6 +2365,17 @@ static int sprd_dcam_dev_open(void *dcam_handle)
 	dev->blk_dcam_pm->afm.bypass = 1;
 	dev->blk_dcam_pm->afl.bypass = 1;
 	dev->blk_dcam_pm->hist.bayerHist_info.hist_bypass = 1;
+	spin_lock_init(&dev->blk_dcam_pm->lsc.lock);
+
+	if (get_iommu_status(CAM_IOMMUDEV_DCAM) == 0)
+		iommu_enable = 1;
+	ret = cambuf_alloc(&dev->blk_dcam_pm->lsc.buf,
+			DCAM_LSC_BUF_SIZE, 0, iommu_enable);
+	ret |= cambuf_kmap(&dev->blk_dcam_pm->lsc.buf);
+	if (ret) {
+		ret = -ENOMEM;
+		goto exit;
+	}
 
 	ret = hw->ops->init(hw, dev);
 	if (ret) {
@@ -2406,6 +2415,8 @@ reset_fail:
 	ret = hw->ops->deinit(hw, dev);
 exit:
 	if (dev->blk_dcam_pm) {
+		cambuf_kunmap(&dev->blk_dcam_pm->lsc.buf);
+		cambuf_free(&dev->blk_dcam_pm->lsc.buf);
 		kfree(dev->blk_dcam_pm);
 		dev->blk_dcam_pm = NULL;
 	}
@@ -2427,7 +2438,6 @@ int sprd_dcam_dev_close(void *dcam_handle)
 	int ret = 0;
 	struct dcam_pipe_dev *dev = NULL;
 	struct sprd_cam_hw_info *hw;
-	struct dcam_k_block *dcam_k_param;
 
 	if (!dcam_handle) {
 		pr_err("fail to get valid input ptr\n");
@@ -2445,13 +2455,9 @@ int sprd_dcam_dev_close(void *dcam_handle)
 	camera_queue_clear(&dev->in_queue);
 	camera_queue_clear(&dev->proc_queue);
 
-	dcam_k_param = &dev->blk_dcam_pm->lsc.blk_handle;
-	if (dcam_k_param->lsc_weight_tab) {
-		vfree(dcam_k_param->lsc_weight_tab);
-		dcam_k_param->lsc_weight_tab = NULL;
-		dcam_k_param->weight_tab_size = 0;
-	}
 	if (dev->blk_dcam_pm) {
+		cambuf_kunmap(&dev->blk_dcam_pm->lsc.buf);
+		cambuf_free(&dev->blk_dcam_pm->lsc.buf);
 		kfree(dev->blk_dcam_pm);
 		dev->blk_dcam_pm = NULL;
 	}

@@ -18,9 +18,6 @@
 #include "isp_dev_access.h"
 #include "af_ctrl.h"
 
-#define ISP_LSC_BUF_SIZE (16 * 1024)
-#define ISP_LSC_BUF_NUM 1
-
 struct isp_dev_access_context {
 	cmr_handle evt_alg_handle;
 	isp_evt_cb isp_event_cb;
@@ -57,30 +54,9 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 	cmr_int ret = ISP_SUCCESS;
 	cmr_s32 fds[2] = { 0, 0 };
 	cmr_uint kaddr[2] = { 0, 0 };
-	cmr_uint lsc_phys_addr;
 	cmr_u32 stats_buffer_size = 0;
 	struct isp_statis_buf_input statis_buf;
-	struct dcam_dev_lsc_buf lsc_buf;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	if ((in_ptr->lsc_mfd <= 0) && (in_ptr->lsc_alloc_flag == 0)) {
-		in_ptr->lsc_mem_num = ISP_LSC_BUF_NUM;
-		in_ptr->lsc_mem_size = ISP_LSC_BUF_SIZE;
-		ret = in_ptr->alloc_cb(CAMERA_ISP_LSC,
-				in_ptr->oem_handle,
-				&in_ptr->lsc_mem_size,
-				&in_ptr->lsc_mem_num,
-				&lsc_phys_addr,
-				&in_ptr->lsc_u_addr,
-				&in_ptr->lsc_mfd);
-		if (ret) {
-			ISP_LOGE("fail to alloc lsc buffer. ret %ld\n", ret);
-			return ISP_ALLOC_ERROR;
-		}
-		ISP_LOGD("alloc lsc buffer, size %d, mfd %d\n",
-				in_ptr->lsc_mem_size, in_ptr->lsc_mfd);
-		in_ptr->lsc_alloc_flag = 1;
-	}
 
 	if (in_ptr->statis_mfd <= 0 && in_ptr->statis_alloc_flag == 0) {
 		stats_buffer_size += STATIS_AEM_BUF_NUM * STATIS_AEM_BUF_SIZE;
@@ -113,14 +89,6 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 				(unsigned long long)in_ptr->statis_k_addr);
 	}
 
-	lsc_buf.mfd = in_ptr->lsc_mfd;
-	ret = dcam_u_lsc_transaddr(cxt->isp_driver_handle, &lsc_buf);
-	if (ret) {
-		ISP_LOGE("lsc tranns addr failed.\n");
-		return ISP_ERROR;
-	}
-	in_ptr->lsc_hw_addr = lsc_buf.haddr;
-
 	/* Initialize statis buffer setting for driver. */
 	statis_buf.type = STATIS_INIT;
 	statis_buf.u.init_data.mfd = in_ptr->statis_mfd;
@@ -136,18 +104,6 @@ cmr_int isp_dev_free_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	UNUSED(isp_dev_handle);
-
-	if (in_ptr->lsc_alloc_flag) {
-		in_ptr->free_cb(CAMERA_ISP_LSC,
-				in_ptr->oem_handle,
-				NULL,
-				&in_ptr->lsc_u_addr,
-				&in_ptr->lsc_mfd,
-				in_ptr->lsc_mem_size);
-		in_ptr->lsc_alloc_flag = 0;
-		in_ptr->lsc_mfd = 0;
-		in_ptr->lsc_mem_size = 0;
-	}
 
 	if (in_ptr->statis_alloc_flag) {
 		in_ptr->free_cb(CAMERA_ISP_STATIS,

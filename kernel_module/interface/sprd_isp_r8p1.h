@@ -154,7 +154,6 @@ enum dcam_gain_property {
 
 enum dcam_lsc_property {
 	DCAM_PRO_LSC_BLOCK,
-	DCAM_PRO_LSC_TRANSADDR,
 };
 
 enum dcam_bayerhist_property {
@@ -383,6 +382,7 @@ struct dcam_dev_rgb_dither_info {
 
 struct dcam_dev_lsc_info {
 	uint32_t bypass;
+	uint32_t update_all;
 	uint32_t grid_width;
 	uint32_t grid_x_num;
 	uint32_t grid_y_num;
@@ -391,11 +391,6 @@ struct dcam_dev_lsc_info {
 	uint32_t weight_num;
 	void __user * grid_tab;
 	void __user * weight_tab;
-};
-
-struct dcam_dev_lsc_buf {
-	int32_t mfd;
-	uint32_t haddr;
 };
 
 struct dcam_dev_hist_info {

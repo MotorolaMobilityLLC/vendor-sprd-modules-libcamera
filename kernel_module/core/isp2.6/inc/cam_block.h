@@ -22,6 +22,8 @@ struct isp_k_block {
 	struct isp_dev_ynr_info_v2 ynr_info;
 };
 
+int dcam_init_lsc(void *param);
+int dcam_update_lsc(void *param);
 int dcam_k_cfg_blc(struct isp_io_param *param,	struct dcam_dev_param *p);
 int dcam_k_cfg_rgb_gain(struct isp_io_param *param, struct dcam_dev_param *p);
 int dcam_k_cfg_rgb_dither(struct isp_io_param *param,

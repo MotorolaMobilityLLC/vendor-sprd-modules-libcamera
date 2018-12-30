@@ -1092,23 +1092,21 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	else
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 
-	if (cxt->work_mode == 0) {
-		param_data = output.prv_param_data;
-		for (i = 0; i < output.prv_param_num; i++) {
-			sub_block_info.block_info = param_data->data_ptr;
-			sub_block_info.scene_id = PM_SCENE_PRE;
-			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-			ISP_LOGV("cfg block %x for prev.\n", param_data->id);
-			param_data++;
-		}
+	param_data = output.prv_param_data;
+	for (i = 0; i < output.prv_param_num; i++) {
+		sub_block_info.block_info = param_data->data_ptr;
+		sub_block_info.scene_id = PM_SCENE_PRE;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
+		param_data++;
 	}
 
-	if ((cxt->work_mode == 1) || cxt->zsl_flag)  {
+	if (cxt->zsl_flag)  {
 		param_data = output.cap_param_data;
 		for (i = 0; i < output.cap_param_num; i++) {
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
-			if ((cxt->work_mode == 1) || !IS_DCAM_BLOCK(param_data->id)) {
+			if (!IS_DCAM_BLOCK(param_data->id)) {
 				/* todo: refine for 4in1 sensor */
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
@@ -3116,7 +3114,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->awb_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_LSC_BYPASS, value, "1");
+	property_get(PROP_ISP_LSC_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->lsc_cxt.sw_bypass = val;
@@ -3685,8 +3683,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->mem_info.free_cb = in_ptr->free_cb;
 	cxt->mem_info.oem_handle = in_ptr->oem_handle;
-	cxt->mem_info.lsc_mfd = in_ptr->lsc_mfd;
-	cxt->mem_info.lsc_u_addr = in_ptr->lsc_virt_addr;
 
 	ret = ispalg_get_aem_param(cxt, &aem_info);
 	cxt->ae_cxt.win_num.w = aem_info.blk_num.w;
@@ -3723,6 +3719,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		mode = ISP_MODE_ID_PRV_0;
 		break;
 	}
+	ISP_LOGD("work_mode %d, pm mode %d %d %d\n", cxt->work_mode, mode, prv_mode, cap_mode);
 
 	cxt->commn_cxt.isp_mode = mode;
 	cxt->commn_cxt.mode_flag = mode;

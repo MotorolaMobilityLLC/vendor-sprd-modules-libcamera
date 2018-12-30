@@ -17,9 +17,6 @@
 #define LOG_TAG "dcam_u_lsc"
 
 #include "isp_drv.h"
-#include "math.h"
-
-#define ISP_LSC_BUF_SIZE                             (32 * 1024)
 
 cmr_s32 dcam_u_lsc_block(cmr_handle handle, void *block_info)
 {
@@ -46,29 +43,6 @@ cmr_s32 dcam_u_lsc_block(cmr_handle handle, void *block_info)
 	param.sub_block = DCAM_BLOCK_LSC;
 	param.property = DCAM_PRO_LSC_BLOCK;
 	param.property_param = lens_info;
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-
-	return ret;
-}
-
-cmr_s32 dcam_u_lsc_transaddr(cmr_handle handle, void *lsc_buf)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_io_param param;
-
-	if (!handle || !lsc_buf) {
-		ISP_LOGE("fail to get handle.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-	param.scene_id = 0;
-	param.sub_block = DCAM_BLOCK_LSC;
-	param.property = DCAM_PRO_LSC_TRANSADDR;
-	param.property_param = lsc_buf;
-
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;

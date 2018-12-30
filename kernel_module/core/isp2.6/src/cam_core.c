@@ -2525,18 +2525,23 @@ static int img_ioctl_pdaf_control(
 			struct camera_module *module,
 			unsigned long arg)
 {
-	struct sprd_pdaf_control tmp;
-	struct sprd_img_parm param;
 	int ret;
+	uint32_t channel_id;
+	struct sprd_pdaf_control tmp;
+	struct sprd_img_parm __user *uparam;
 
-	ret = copy_from_user(&param, (void __user *)arg,
-		sizeof(struct sprd_img_parm));
+	uparam = (struct sprd_img_parm __user *)arg;
+	ret = get_user(channel_id, &uparam->channel_id);
+	if (ret || (channel_id == CAM_CH_RAW))
+		return 0;
+
+	ret = copy_from_user(&tmp, &uparam->pdaf_ctrl,
+			sizeof(struct sprd_pdaf_control));
 	if (unlikely(ret)) {
 		pr_err("fail to copy pdaf param from user, ret %d\n", ret);
 		return -EFAULT;
 	}
 
-	tmp = param.pdaf_ctrl;
 	pr_info("mode %d, type %d, vc %d, dt 0x%x, isp %d\n",
 		tmp.mode, tmp.phase_data_type, tmp.image_vc,
 		tmp.image_dt, tmp.isp_tool_mode);
@@ -2544,7 +2549,6 @@ static int img_ioctl_pdaf_control(
 	/* config pdaf */
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_CFG_PDAF, &tmp);
-
 	return 0;
 }
 

@@ -30,6 +30,7 @@
 #define DCAM_RESERVE_BUF_Q_LEN 12
 
 #define DCAM_INTERNAL_RES_BUF_SIZE  0x40000
+#define DCAM_LSC_BUF_SIZE 0x3000
 
 
 // TODO: how many helpers there should be?

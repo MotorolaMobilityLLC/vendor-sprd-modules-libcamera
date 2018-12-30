@@ -23,6 +23,7 @@
 #include "cam_types.h"
 #include "cam_queue.h"
 #include "cam_buf.h"
+#include "cam_block.h"
 
 #include "dcam_interface.h"
 #include "dcam_reg.h"
@@ -225,6 +226,7 @@ static void dcam_cap_sof(void *param)
 	}
 
 	dcam_dispatch_sof_event(dev);
+	dcam_update_lsc(dev);
 }
 
 /* for slow motion mode */

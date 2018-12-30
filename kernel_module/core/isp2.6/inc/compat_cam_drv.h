@@ -19,6 +19,7 @@
 
 struct compat_dcam_dev_lsc_info {
 	uint32_t bypass;
+	uint32_t update_all;
 	uint32_t grid_width;
 	uint32_t grid_x_num;
 	uint32_t grid_y_num;

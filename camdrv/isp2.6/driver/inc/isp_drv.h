@@ -60,13 +60,6 @@ struct isp_mem_info {
 	cmr_uint statis_phys_addr;
 	cmr_uint statis_u_addr;
 
-	cmr_u32 lsc_alloc_flag;
-	cmr_u32 lsc_mem_size;
-	cmr_u32 lsc_mem_num;
-	cmr_s32 lsc_mfd;
-	cmr_uint lsc_u_addr;
-	cmr_u32 lsc_hw_addr;
-
 	void *buffer_client_data;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
@@ -117,7 +110,6 @@ cmr_s32 dcam_u_rgb_gain_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_rgb_dither_block(cmr_handle handle, void *block_info);
 
 cmr_s32 dcam_u_lsc_block(cmr_handle handle, void *block_info);
-cmr_s32 dcam_u_lsc_transaddr(cmr_handle handle, void *lsc_buf);
 
 cmr_s32 dcam_u_awbc_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_awbc_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id);

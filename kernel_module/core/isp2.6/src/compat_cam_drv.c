@@ -84,6 +84,9 @@ static int compat_get_lsc_block(
 	err |= get_user(tmp, &data32->bypass);
 	err |= put_user(tmp, &data->bypass);
 
+	err |= get_user(tmp, &data32->update_all);
+	err |= put_user(tmp, &data->update_all);
+
 	err |= get_user(tmp, &data32->grid_width);
 	err |= put_user(tmp, &data->grid_width);
 
@@ -111,12 +114,25 @@ static int compat_get_lsc_block(
 	return err;
 }
 
+static int compat_put_lsc_block(
+		struct compat_dcam_dev_lsc_info __user *data32,
+		struct dcam_dev_lsc_info __user *data)
+{
+	int err = 0;
+	uint32_t tmp = 0;
+
+	err |= put_user(tmp, &data32->update_all);
+
+	return err;
+}
 
 long compat_sprd_img_ioctl(struct file *file,
 	unsigned int cmd, unsigned long param)
 {
 	long ret = 0L;
 	void __user *data32 = compat_ptr(param);
+	struct compat_dcam_dev_lsc_info __user *lsc32;
+	struct dcam_dev_lsc_info __user *lsc;
 
 	if (!file->f_op || !file->f_op->unlocked_ioctl)
 		return -ENOTTY;
@@ -141,12 +157,10 @@ long compat_sprd_img_ioctl(struct file *file,
 		pr_debug("cfg param, block %d\n", sub_block);
 		if (sub_block == DCAM_BLOCK_LSC &&
 			property == DCAM_PRO_LSC_BLOCK) {
-			struct compat_dcam_dev_lsc_info __user *lsc32;
-			struct dcam_dev_lsc_info __user *lsc;
-
 			get_user(lsc32, &data->property_param);
 			lsc = compat_alloc_user_space(
-					sizeof(struct dcam_dev_lsc_info));
+					sizeof(struct dcam_dev_lsc_info) +
+					sizeof(struct isp_io_param));
 			compat_get_lsc_block(lsc32, lsc);
 			put_user((void *)lsc, &data->property_param);
 		}
@@ -154,6 +168,10 @@ long compat_sprd_img_ioctl(struct file *file,
 		file->f_op->unlocked_ioctl(file,
 					SPRD_ISP_IO_CFG_PARAM,
 					(unsigned long)data);
+		if (sub_block == DCAM_BLOCK_LSC &&
+			property == DCAM_PRO_LSC_BLOCK) {
+			compat_put_lsc_block(lsc32, lsc);
+		}
 		compat_put_isp_io_param(data32, data);
 		break;
 	}

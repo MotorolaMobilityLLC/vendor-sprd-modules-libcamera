@@ -17,20 +17,14 @@
 
 #define DCAM_ONLINE_MODE		(1)
 
-
-struct dcam_k_block {
-	uint32_t lsc_init;
-	unsigned long lsc_gridtab_haddr;
-	void *lsc_weight_tab;
-	uint32_t weight_tab_size;
-	struct camera_buf lsc_buf;
-};
-
 struct dcam_dev_lsc_param {
 	uint32_t update;
+	uint32_t load_trigger;
+	uint32_t weight_tab_size;
+	void *weight_tab;
+	spinlock_t lock;
+	struct camera_buf buf;
 	struct dcam_dev_lsc_info lens_info;
-	struct dcam_dev_lsc_buf buf_info;
-	struct dcam_k_block blk_handle;
 };
 
 struct dcam_dev_blc_param {
