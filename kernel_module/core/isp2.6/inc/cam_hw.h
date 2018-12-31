@@ -21,6 +21,12 @@
 
 struct sprd_cam_hw_ops;
 
+enum sprd_cam_prj_id {
+	SHARKL5,
+	ROC1,
+	PROJECT_MAX
+};
+
 struct sprd_cam_hw_info {
 	uint32_t idx;
 	uint32_t irq_no;
@@ -42,6 +48,10 @@ struct sprd_cam_hw_info {
 	uint32_t arqos_low;
 	uint32_t awqos_high;
 	uint32_t awqos_low;
+
+	enum sprd_cam_prj_id prj_id;
+	uint32_t path_max_height;
+	uint32_t path_max_width;
 
 	unsigned long  phy_base;
 	unsigned long  reg_base;

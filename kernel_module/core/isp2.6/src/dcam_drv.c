@@ -23,6 +23,7 @@
 #include <video/sprd_mmsys_pw_domain.h>
 #include "cam_hw.h"
 #include "dcam_int.h"
+#include "dcam_path.h"
 #include "dcam_interface.h"
 #include "dcam_reg.h"
 
@@ -203,7 +204,8 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 	struct regmap *ahb_map = NULL;
 	void __iomem *reg_base = NULL;
 	struct resource reg_res = {0}, irq_res = {0};
-	uint32_t count = 0;
+	uint32_t count = 0, prj_id = 0;
+	uint32_t dcam_max_w = 0, dcam_max_h = 0;
 	int i = 0, irq = 0;
 
 	pr_info("start dcam dts parse\n");
@@ -233,6 +235,18 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 		return -EINVAL;
 	}
 
+	if (of_property_read_u32(dn, "sprd,project-id", &prj_id)) {
+		pr_info("fail to parse the property of sprd,projectj-id\n");
+	}
+
+	dcam_max_w = DCAM_PATH_WMAX;
+	dcam_max_h = DCAM_PATH_HMAX;
+
+	if (prj_id == ROC1) {
+		dcam_max_w = DCAM_PATH_WMAX_ROC1;
+		dcam_max_h = DCAM_PATH_HMAX_ROC1;
+	}
+
 	if (count > DCAM_ID_MAX) {
 		pr_err("unsupported dcam count: %u\n", count);
 		return -EINVAL;
@@ -241,11 +255,18 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 	pr_info("dev: %s, full name: %s, cam_ahb_gpr: %p, count: %u\n",
 		pdev->name, dn->full_name, ahb_map, count);
 
+	pr_info("DCAM dcam_max_w = %u dcam_max_h = %u\n",dcam_max_w, dcam_max_h);
+
 	for (i = 0; i < count; i++) {
 		hw = &s_dcam_hw[i];
 
 		/* DCAM index */
 		hw->idx = i;
+
+		/* Assign project ID, DCAM Max Height & Width Info */
+		hw->prj_id =(enum sprd_cam_prj_id) prj_id;
+		hw->path_max_width = dcam_max_w;
+		hw->path_max_height = dcam_max_h;
 
 		/* bounded kernel device node */
 		hw->pdev = pdev;

@@ -185,12 +185,22 @@ int dcam_cfg_path_size(void *dcam_handle,
 	struct img_size crop_size, dst_size;
 	struct dcam_pipe_dev *dev = NULL;
 	struct dcam_path_cfg_param *ch_desc;
+	struct sprd_cam_hw_info *hw = NULL;
+	uint32_t dcam_max_w = 0, dcam_max_h = 0;
 
 	if (!dcam_handle || !path || !param) {
 		pr_err("error input ptr.\n");
 		return -EFAULT;
 	}
 	dev = (struct dcam_pipe_dev *)dcam_handle;
+	hw = dev->hw;
+	if (!hw) {
+		pr_err("hw ptr is NULL.\n");
+		return -EFAULT;
+	}
+	dcam_max_w = hw->path_max_width;
+	dcam_max_h = hw->path_max_height;
+
 	ch_desc = (struct dcam_path_cfg_param *)param;
 	idx = dev->idx;
 
@@ -206,8 +216,8 @@ int dcam_cfg_path_size(void *dcam_handle,
 
 		invalid = 0;
 		invalid |= ((path->in_size.w == 0) || (path->in_size.h == 0));
-		invalid |= (path->in_size.w > DCAM_PATH_WMAX);
-		invalid |= (path->in_size.h > DCAM_PATH_WMAX);
+		invalid |= (path->in_size.w > dcam_max_w);
+		invalid |= (path->in_size.h > dcam_max_h);
 		invalid |= ((path->in_trim.start_x +
 				path->in_trim.size_x) > path->in_size.w);
 		invalid |= ((path->in_trim.start_y +
@@ -270,8 +280,8 @@ int dcam_cfg_path_size(void *dcam_handle,
 
 		invalid = 0;
 		invalid |= ((path->in_size.w == 0) || (path->in_size.h == 0));
-		invalid |= (path->in_size.w > DCAM_PATH_WMAX);
-		invalid |= (path->in_size.h > DCAM_PATH_WMAX);
+		invalid |= (path->in_size.w > dcam_max_w);
+		invalid |= (path->in_size.h > dcam_max_h);
 
 		/* trim should not be out range of source */
 		invalid |= ((path->in_trim.start_x +
