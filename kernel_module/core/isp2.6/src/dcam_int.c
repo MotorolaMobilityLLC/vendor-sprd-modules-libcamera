@@ -194,8 +194,9 @@ static void dcam_cap_sof(void *param)
 
 		/* auto copy at last frame of a group of slow motion frames */
 		if (n == dev->slowmotion_count - 1) {
-			/* This register write is time critical,do not modify */
-			DCAM_REG_MWR(dev->idx, DCAM_CONTROL, 0x800, 0x800);
+			/* This register write is time critical,do not modify
+			 * fresh bin_auto_copy coef_auto_copy */
+			DCAM_REG_MWR(dev->idx, DCAM_CONTROL, 0x820, 0x820);
 		}
 
 		/* set buffer at first frame of a group of slow motion frames */
