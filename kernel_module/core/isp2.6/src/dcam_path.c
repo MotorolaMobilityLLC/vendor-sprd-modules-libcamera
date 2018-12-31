@@ -736,6 +736,9 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	}
 	DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
 	atomic_inc(&path->set_frm_cnt);
+	if (path_id == DCAM_PATH_AFL)
+		DCAM_REG_WR(idx, ISP_AFL_REGION_WADDR,
+			frame->buf.iova[0] + STATIS_AFL_GBUF_SIZE);
 
 	pr_debug("DCAM%u %s set frame: fid %u, count %d\n",
 		 idx, to_path_name(path_id), frame->fid,

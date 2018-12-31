@@ -61,7 +61,7 @@ int dcam_k_afm_block(struct dcam_dev_param *param)
 		((p->afm_mode_sel & 0x1) << 2) |
 		((p->afm_mul_enable & 0x1) << 3) |
 		((p->afm_skip_num & 0x7) << 4);
-	DCAM_REG_WR(idx, ISP_AFM_FRM_CTRL, val);
+	DCAM_REG_MWR(idx, ISP_AFM_FRM_CTRL, 0x7C, val);
 	/* TODO bad to set same register in different locations */
 	dcam_path_set_skip_num(param->dev, DCAM_PATH_AFM,
 			       param->afm.af_param.afm_skip_num);
