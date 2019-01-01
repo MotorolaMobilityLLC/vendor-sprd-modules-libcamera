@@ -857,6 +857,20 @@ static inline void get_largest_crop(
 	}
 }
 
+/* align dcam output w to 16 for debug convenience */
+static void align_w16(struct img_size *in, struct img_size *out, uint32_t *ratio)
+{
+	struct img_size align;
+
+	align.w = (out->w + 15) & (~0xF);
+	if (align.w <= in->w) {
+		*ratio = (1 << RATIO_SHIFT) * in->w / align.w;
+		align.h = fix_scale(in->h, *ratio);
+		align.h = (align.h + 1) & ~1;
+		*out = align;
+	}
+}
+
 static int cal_channel_size(struct camera_module *module)
 {
 	uint32_t ratio_min, is_same_fov = 0;
@@ -870,7 +884,7 @@ static int cal_channel_size(struct camera_module *module)
 	struct sprd_img_rect *crop_p, *crop_v, *crop_c;
 	struct sprd_img_rect crop_dst;
 	struct img_trim trim_pv, trim_c;
-	struct img_size dst_p, dst_v, dcam_out, max;
+	struct img_size dst_p, dst_v, dcam_out, max, temp;
 
 	ch_prev = &module->channel[CAM_CH_PRE];
 	ch_cap = &module->channel[CAM_CH_CAP];
@@ -957,6 +971,9 @@ static int cal_channel_size(struct camera_module *module)
 		dcam_out.w = (dcam_out.w + 1) & ~1;
 		dcam_out.h = fix_scale(trim_pv.size_y, ratio_min);
 		dcam_out.h = (dcam_out.h + 1) & ~1;
+		temp.w = trim_pv.size_x;
+		temp.h = trim_pv.size_y;
+		align_w16(&temp, &dcam_out, &ratio_min);
 
 		pr_info("dst_p %d %d, dst_v %d %d, dcam_out %d %d\n",
 			dst_p.w, dst_p.h, dst_v.w, dst_v.h, dcam_out.w, dcam_out.h);
@@ -1013,6 +1030,9 @@ static int cal_channel_size(struct camera_module *module)
 		max.w = (max.w + 1) & ~1;
 		max.h = fix_scale(max.h, ratio_min);
 		max.h = (max.h + 1) & ~1;
+		temp.w = module->cam_uinfo.sn_rect.w;
+		temp.h = module->cam_uinfo.sn_rect.h;
+		align_w16(&temp, &max, &ratio_min);
 
 		ch_prev->swap_size = max;
 		pr_info("prev path swap size %d %d\n",
