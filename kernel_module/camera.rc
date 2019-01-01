@@ -2,4 +2,12 @@ on early-init
     insmod /vendor/lib/modules/sprd_sensor.ko
     insmod /vendor/lib/modules/sprd_flash_drv.ko
     insmod /vendor/lib/modules/sprd_camera.ko
-	insmod /vendor/lib/modules/sprd_cpp.ko
+    insmod /vendor/lib/modules/sprd_cpp.ko
+    trigger sprd-flash-ko
+
+on factorytest
+    insmod /vendor/lib/modules/sprd_sensor.ko
+    insmod /vendor/lib/modules/sprd_flash_drv.ko
+    insmod /vendor/lib/modules/sprd_camera.ko
+    insmod /vendor/lib/modules/sprd_cpp.ko
+    trigger sprd-flash-ko
