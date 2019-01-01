@@ -130,7 +130,9 @@ enum VIDEO_3DNR {
 
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM 1
 #define HAS_CAMERA_POWER_HINTS 1
-//#define CONFIG_NEED_UNMAP
+
+// for set slowmotion fps
+#define SLOWMOTION_120FPS 120
 
 /*ZSL Thread*/
 #define ZSLMode_MONITOR_QUEUE_SIZE 50
@@ -1882,6 +1884,11 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             fps_param.min_fps = val_min > 5 ? val_min : 5;
             fps_param.max_fps = val_max;
         }
+    }
+
+    if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
+        fps_param.min_fps = SLOWMOTION_120FPS;
+        fps_param.max_fps = SLOWMOTION_120FPS;
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
