@@ -350,7 +350,7 @@ int SprdCamera3HWI::closeCamera() {
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     SprdCamera3PicChannel *picChannel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPicChan);
-    int64_t timestamp = systemTime();
+    int64_t timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
 
@@ -1043,7 +1043,7 @@ void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
     if (mPicChan)
         mPicChan->stop(mFrameNum);
 
-    timestamp = systemTime();
+    timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
     if (regularChannel) {
         regularChannel->channelClearAllQBuff(timestamp,
                                              CAMERA_STREAM_TYPE_PREVIEW);
@@ -1430,7 +1430,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     if (invaildRequest) {
         mFirstRegularRequest = 0;
         mPictureRequest = 0;
-        timestamp = systemTime();
+        timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
         cam_result_data_info_t result_info;
 
         for (i = 0; i < request->num_output_buffers; i++) {
@@ -1818,7 +1818,7 @@ int SprdCamera3HWI::flush() {
     ATRACE_CALL();
 
     int ret = NO_ERROR;
-    int64_t timestamp = systemTime();
+    int64_t timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     mFlush = true;

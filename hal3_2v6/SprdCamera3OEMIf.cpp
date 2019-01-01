@@ -244,15 +244,13 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0),
       mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
-      mGyroNum(0), mSprdEisEnabled(false), mIsUpdateRangeFps(false),
-      mPrvBufferTimestamp(0), mUpdateRangeFpsCount(0), mPrvMinFps(0),
-      mPrvMaxFps(0), mVideoSnapshotType(0), mIommuEnabled(false),
-      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-      mFixedFpsEnabled(0), mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP),
-      mIsTempChanged(0), mFlagOffLineZslStart(0), mZslSnapshotTime(0),
-      mIsIspToolMode(0), mIsRawCapture(0), mIsCameraClearQBuf(0),
-      mLastCafDoneTime(0), mFaceDetectStartedFlag(0),
-      mIsJpegWithBigSizePreview(0)
+      mGyroNum(0), mSprdEisEnabled(false), mVideoSnapshotType(0),
+      mIommuEnabled(false), mFlashCaptureFlag(0),
+      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
+      mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
+      mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
+      mIsRawCapture(0), mIsCameraClearQBuf(0), mLastCafDoneTime(0),
+      mFaceDetectStartedFlag(0), mIsJpegWithBigSizePreview(0)
 
 {
     ATRACE_CALL();
@@ -1223,9 +1221,6 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
 
     WaitForFocusCancelDone();
     {
-        int64_t timeStamp = 0;
-        timeStamp = systemTime();
-
         CONTROL_Tag controlInfo;
         mSetting->getCONTROLTag(&controlInfo);
         if (!(controlInfo.af_state ==
@@ -1896,19 +1891,6 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
 
     HAL_LOGD("min_fps=%ld, max_fps=%ld, video_mode=%ld", fps_param.min_fps,
              fps_param.max_fps, fps_param.video_mode);
-
-// TBD: check these code
-#if 1 // for cts
-    mIsUpdateRangeFps = true;
-    mUpdateRangeFpsCount++;
-    if (mUpdateRangeFpsCount == UPDATE_RANGE_FPS_COUNT) {
-        if ((mPrvMinFps == fps_param.min_fps) &&
-            (mPrvMaxFps == fps_param.max_fps))
-            mUpdateRangeFpsCount = 0;
-    }
-    mPrvMinFps = fps_param.min_fps;
-    mPrvMaxFps = fps_param.max_fps;
-#endif
 }
 
 void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
@@ -2822,7 +2804,6 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
-    mUpdateRangeFpsCount = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -3202,73 +3183,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    if (mIsIspToolMode) {
-        if (PREVIEW_FRAME == frame->type) {
-            send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
-                          (char *)frame->y_vir_addr,
-                          frame->width * frame->height * 3 / 2);
-        }
+    if (mIsIspToolMode && frame->type == PREVIEW_FRAME) {
+        send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
+                      (char *)frame->y_vir_addr,
+                      frame->width * frame->height * 3 / 2);
     }
 
-#if 1 // for cts
-    int64_t buffer_timestamp_fps = 0;
-
-    if ((!mRecordingMode) && (mUpdateRangeFpsCount >= UPDATE_RANGE_FPS_COUNT)) {
-        struct cmr_range_fps_param fps_param;
-        CONTROL_Tag controlInfo;
-        mSetting->getCONTROLTag(&controlInfo);
-
-        fps_param.min_fps = controlInfo.ae_target_fps_range[0];
-        fps_param.max_fps = controlInfo.ae_target_fps_range[1];
-
-        int64_t fps_range_up = 0;
-        int64_t fps_range_low = 0;
-        int64_t fps_range_offset = 0;
-        int64_t timestamp = 0;
-
-        fps_range_offset = 1000000000 / fps_param.max_fps;
-        fps_range_low =
-            (int64_t)((1000000000.0 / fps_param.max_fps) * (1 - 0.015));
-        fps_range_up =
-            (int64_t)((1000000000.0 / fps_param.min_fps) * (1 + 0.015));
-
-        if (mPrvBufferTimestamp == 0) {
-            buffer_timestamp_fps = frame->timestamp;
-        } else {
-            if (mIsUpdateRangeFps) {
-                buffer_timestamp_fps = frame->timestamp;
-                mIsUpdateRangeFps = false;
-            } else {
-                timestamp = frame->timestamp - mPrvBufferTimestamp;
-                HAL_LOGD("timestamp is %" PRId64, timestamp);
-                if ((timestamp > fps_range_low) && (timestamp < fps_range_up)) {
-                    buffer_timestamp_fps = frame->timestamp;
-                } else {
-                    buffer_timestamp_fps =
-                        mPrvBufferTimestamp + fps_range_offset;
-                    HAL_LOGV("fix buffer_timestamp_fps is %" PRId64,
-                             buffer_timestamp_fps);
-                }
-            }
-        }
-        mPrvBufferTimestamp = buffer_timestamp_fps;
-    } else {
-        buffer_timestamp_fps = frame->timestamp;
-    }
-#endif
-
-#ifdef CONFIG_CAMERA_EIS
-    vsOutFrame frame_out;
-    frame_out.frame_data = NULL;
-    int64_t buffer_timestamp;
-    if (sprddefInfo.sprd_eis_enabled) {
-        buffer_timestamp = buffer_timestamp_fps - frame->ae_time / 2;
-    } else {
-        buffer_timestamp = buffer_timestamp_fps;
-    }
-#else
-    int64_t buffer_timestamp = buffer_timestamp_fps;
-#endif
+    int64_t buffer_timestamp = frame->monoboottime;
 
     if (0 == buffer_timestamp)
         HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
@@ -3428,6 +3349,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             calculateTimestampForSlowmotion(buffer_timestamp);
 
 #ifdef CONFIG_CAMERA_EIS
+            vsOutFrame frame_out;
+            frame_out.frame_data = NULL;
             HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
             if (sprddefInfo.sprd_eis_enabled) {
                 frame_out = EisVideoFrameStab(frame, frame_num);
@@ -3689,7 +3612,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
     uint32_t frame_num = 0;
     uint8_t *src_y, *src_vu, *dst_y, *dst_vu;
     int src_width, src_height, dst_width, dst_height;
-    int64_t timestamp = systemTime();
+    int64_t timestamp = frame->monoboottime;
 
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -3832,7 +3755,7 @@ bool SprdCamera3OEMIf::returnYuvCallbackFrame(struct camera_frame_type *frame) {
     uint32_t frame_num = 0;
     uint8_t *src_y, *src_vu, *dst_y, *dst_vu;
     int src_width, src_height, dst_width, dst_height;
-    int64_t timestamp = systemTime();
+    int64_t timestamp = frame->monoboottime;
 
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -4180,9 +4103,9 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                                    frame->sensor_info.exposure_time_numerator /
                                    frame->sensor_info.exposure_time_denominator;
     }
-    sensorInfo.timestamp = frame->timestamp;
+    sensorInfo.timestamp = frame->monoboottime;
     mSetting->setSENSORTag(sensorInfo);
-    timestamp = sensorInfo.timestamp;
+    timestamp = frame->monoboottime;
 
     property_get("persist.vendor.cam.debug.mode", debug_value, "non-debug");
 
@@ -4203,7 +4126,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         HAL_LOGW("getQBuffFirstVir failed, ret=%d, pic_addr_vir=%ld", ret,
                  pic_addr_vir);
         if (mIsIspToolMode == 1 && regularChannel) {
-            int64_t timestamp1 = systemTime();
+            int64_t timestamp1 = systemTime(SYSTEM_TIME_BOOTTIME);
             regularChannel->channelClearAllQBuff(timestamp1,
                                                  CAMERA_STREAM_TYPE_PREVIEW);
             regularChannel->channelClearAllQBuff(timestamp1,
@@ -4762,8 +4685,6 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
     struct cmr_focus_status *focus_status;
-    int64_t timeStamp = 0;
-    timeStamp = systemTime();
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
@@ -4815,7 +4736,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
             } else {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
-                mLastCafDoneTime = systemTime();
+                mLastCafDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
             }
 
             if (focus_status->af_focus_type == CAM_AF_FOCUS_CAF)
@@ -8461,9 +8382,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 delay_time = atoi(prop);
             }
             HAL_LOGV("delay_time=%d,ae_fps=%d", delay_time, ae_fps);
-            if (mZslSnapshotTime > zsl_frame.timestamp ||
-                ((mZslSnapshotTime < zsl_frame.timestamp) &&
-                 (((zsl_frame.timestamp - mZslSnapshotTime) / 1000000) <
+            if (mZslSnapshotTime > zsl_frame.monoboottime ||
+                ((mZslSnapshotTime < zsl_frame.monoboottime) &&
+                 (((zsl_frame.monoboottime - mZslSnapshotTime) / 1000000) <
                   delay_time))) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame.y_phy_addr,
@@ -8486,8 +8407,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             break;
         }
 
-        if (mZslSnapshotTime > zsl_frame.timestamp) {
-            diff_ms = (mZslSnapshotTime - zsl_frame.timestamp) / 1000000;
+        if (mZslSnapshotTime > zsl_frame.monoboottime) {
+            diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
             HAL_LOGV("diff_ms=%" PRId64, diff_ms);
             // make single capture frame time > mZslSnapshotTime
             if (sprddefInfo.capture_mode == 1 ||
@@ -8502,7 +8423,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         // single capture wait the caf focused frame
         if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
-            zsl_frame.timestamp < obj->mLastCafDoneTime) {
+            zsl_frame.monoboottime < obj->mLastCafDoneTime) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
@@ -8547,7 +8468,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         deinitCapture(mIsPreAllocCapMem);
     }
 
-    mZslSnapshotTime = systemTime();
+    mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
 
     if (isCapturing()) {
         WaitForCaptureDone();

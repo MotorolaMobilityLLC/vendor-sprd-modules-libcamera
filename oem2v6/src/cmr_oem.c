@@ -61,6 +61,8 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 #define SBS_CMD_MASTER_ONLY_MODE 5
 #define SBS_CMD_SLAVE_ONELY_MODE 6
 
+#define HDR_SKIP_FRAME_NUM 2
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -1489,6 +1491,23 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;
             prev_frame->lls_info = camera_get_ae_lum_value(oem_handle);
+        }
+
+        // skip preview frames for hdr effect
+        if (camera_get_hdr_flag(cxt) == 1 && cxt->hdr_skip_frame_enable == 1 &&
+            cb_type == PREVIEW_EVT_CB_FRAME) {
+            struct camera_frame_type *prev_frame =
+                (struct camera_frame_type *)param;
+
+            if (prev_frame->type == PREVIEW_FRAME) {
+                if (prev_frame->monoboottime > cxt->hdr_capture_timestamp) {
+                    prev_frame->type = PREVIEW_CANCELED_FRAME;
+                    cxt->hdr_skip_frame_cnt++;
+                }
+            }
+            if (cxt->hdr_skip_frame_cnt == HDR_SKIP_FRAME_NUM) {
+                cxt->hdr_skip_frame_enable = 0;
+            }
         }
 
         memcpy(message.data, param, sizeof(struct camera_frame_type));
@@ -9058,8 +9077,12 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     if (1 == camera_get_hdr_flag(cxt)) {
         ret = camera_hdr_set_ev(oem_handle);
-        if (ret)
+        if (ret) {
             CMR_LOGE("fail to set hdr ev");
+        }
+        cxt->hdr_capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+        cxt->hdr_skip_frame_enable = 1;
+        cxt->hdr_skip_frame_cnt = 0;
     } else if (1 == camera_get_3dnr_flag(cxt)) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
         ret = camera_3dnr_set_ev(oem_handle, 1);

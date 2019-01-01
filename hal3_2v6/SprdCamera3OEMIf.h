@@ -767,11 +767,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     vsInst mVideoInst;
 #endif
     bool mSprdEisEnabled;
-    bool mIsUpdateRangeFps;
-    int64_t mPrvBufferTimestamp;
-    int mUpdateRangeFpsCount;
-    cmr_uint mPrvMinFps;
-    cmr_uint mPrvMaxFps;
     // 0 - not use, default value is 0; 1 - use video buffer to jpeg enc;
     int32_t mVideoSnapshotType;
 

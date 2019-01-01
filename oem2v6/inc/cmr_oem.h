@@ -360,6 +360,10 @@ struct camera_context {
     cmr_uint swisp_out_phys_addr;
     cmr_uint swisp_out_virt_addr;
     cmr_s32 swisp_out_mfd;
+
+    cmr_s64 hdr_capture_timestamp;
+    cmr_u32 hdr_skip_frame_enable;
+    cmr_u32 hdr_skip_frame_cnt;
 };
 
 struct prev_ai_scene_info {

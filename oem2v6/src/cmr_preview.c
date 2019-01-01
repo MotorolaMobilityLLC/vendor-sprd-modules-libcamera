@@ -13830,6 +13830,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     if (info != NULL) {
         frame_type.frame_num = info->frame_num;
         frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.monoboottime = info->monoboottime;
     }
     frame_type.is_update_isp = cb_param->is_plus;
     frame_type.width = cb_param->dst_frame.size.width;
