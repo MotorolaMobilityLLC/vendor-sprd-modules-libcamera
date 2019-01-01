@@ -8420,7 +8420,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         // for zsl hdr
-        if (controlInfo.scene_mode == 18) {
+        if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
             src_sw_algorithm_buf.height = zsl_frame.height;
             src_sw_algorithm_buf.width = zsl_frame.width;
             src_sw_algorithm_buf.fd = zsl_frame.fd;
