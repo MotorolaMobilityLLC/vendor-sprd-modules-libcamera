@@ -278,8 +278,7 @@ static const struct file_operations dcam_reg_ops = {
 	.release = single_release,
 };
 
-static char zoom_mode_strings[2][8] =
-{ "binning", "rds" };
+static char zoom_mode_strings[2][8] = {"binning", "rds"};
 
 static ssize_t zoom_mode_show(
 		struct file *filp, char __user *buffer,
@@ -965,7 +964,7 @@ static int dcam_cfg_ebd(struct dcam_pipe_dev *dev, void *param)
 	struct sprd_ebd_control *p = (struct sprd_ebd_control *)param;
 	uint32_t idx = dev->idx;
 
-	pr_info("mode:0x%x, vc:0x%x, dt:0x%x\n",p->mode,
+	pr_info("mode:0x%x, vc:0x%x, dt:0x%x\n", p->mode,
 			p->image_vc, p->image_dt);
 	dev->is_ebd = 1;
 	DCAM_REG_WR(idx, DCAM_VC2_CONTROL,
@@ -1533,7 +1532,7 @@ static int dcam_offline_start_frame(void *param)
 	ret = dcam_set_fetch(dev, fetch);
 	dcam_force_copy(dev, DCAM_CTRL_CAP);
 
-	udelay(1000); /* I'm not sure need delay */
+	udelay(10);
 	atomic_set(&dev->state, STATE_RUNNING);
 
 	if(dev->dcamsec_eb){
@@ -1862,16 +1861,11 @@ static int sprd_dcam_get_path(
 	}
 
 	camera_queue_init(&path->result_queue, DCAM_RESULT_Q_LEN,
-						0, dcam_ret_out_frame);
-	if (dev->is_4in1 && path->path_id == DCAM_PATH_FULL)
-		/* 4in1, this buf from hal, release like reserve buf */
-		camera_queue_init(&path->out_buf_queue, DCAM_OUT_BUF_Q_LEN,
-					0, dcam_destroy_reserved_buf);
-	else
-		camera_queue_init(&path->out_buf_queue, DCAM_OUT_BUF_Q_LEN,
+					0, dcam_ret_out_frame);
+	camera_queue_init(&path->out_buf_queue, DCAM_OUT_BUF_Q_LEN,
 					0, dcam_ret_out_frame);
 	camera_queue_init(&path->reserved_buf_queue, DCAM_RESERVE_BUF_Q_LEN,
-						0, dcam_destroy_reserved_buf);
+					0, dcam_destroy_reserved_buf);
 
 	return 0;
 }
@@ -2031,11 +2025,12 @@ static int sprd_dcam_proc_frame(
 	dev = (struct dcam_pipe_dev *)dcam_handle;
 
 	pr_debug("dcam%d offline proc frame!\n", dev->idx);
+	/* if enable, 4in1 capture once more then dcam1 can't run
 	if (atomic_read(&dev->state) == STATE_RUNNING) {
 		pr_err("DCAM%u started for online\n", dev->idx);
 		return -EFAULT;
 	}
-
+	*/
 	pframe = (struct camera_frame *)param;
 	pframe->priv_data = dev;
 	ret = camera_enqueue(&dev->in_queue, pframe);
