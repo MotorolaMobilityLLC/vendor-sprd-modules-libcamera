@@ -362,7 +362,7 @@ struct pcp_tuning_param {
 	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
 };
 
-struct ae_tuning_param {		//total bytes must be 263480
+struct ae_tuning_param {		//total bytes must be 312696
 	cmr_u32 version;
 	cmr_u32 verify;
 	cmr_u32 alg_id;
@@ -416,11 +416,11 @@ struct ae_tuning_param {		//total bytes must be 263480
 	struct ae_video_set_fps_param ae_video_fps;
 	struct ae_monitor_tuning_param monitor_param;
 	struct ae_ai_tuning_param ai_param;
-	struct abl_tuning_param abl_param;   /*45 * 4bytes*/
+	struct abl_tuning_param abl_param;   /*46 * 4bytes*/
 	struct pcp_tuning_param pcp_param; /*27 * 4bytes*/
-	struct ae_hm_tuning_param hm_param;
-	struct ae_nsm_tuning_param ns_param;
-	cmr_u32 reserved[1787];
+	struct ae_hm_tuning_param hm_param; /*240 * 4bytes*/
+	struct ae_nsm_tuning_param ns_param; /*109 * 4bytes*/
+	cmr_u32 reserved[1583];
 };
 
 #endif
