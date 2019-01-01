@@ -86,6 +86,7 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_IIRCNR_IIR_V1:
 	case ISP_BLK_YUV_NOISEFILTER_V1:
 	case ISP_BLK_CNR2_V1:
+	case ISP_BLK_SW3DNR:
 		return 1;
 	default:
 		break;
@@ -1146,6 +1147,13 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				nr_set_size = sizeof(struct sensor_3dnr_level);
 				break;
 			}
+			case ISP_BLK_SW3DNR:
+			{
+				isp_blk_nr_type = ISP_BLK_SW3DNR_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.sw_3dnr);
+				nr_set_size = sizeof(struct sensor_sw3dnr_level);
+				break;
+			}
 			case ISP_BLK_YUV_PRECDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YUV_PRECDN_T;
@@ -1228,6 +1236,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				|| src_header[j].block_id == ISP_BLK_CFA_V1
 				|| src_header[j].block_id == ISP_BLK_UVDIV_V1
 				|| src_header[j].block_id == ISP_BLK_3DNR
+				|| src_header[j].block_id == ISP_BLK_SW3DNR
 				|| src_header[j].block_id == ISP_BLK_YUV_PRECDN_V1
 				|| src_header[j].block_id == ISP_BLK_YNR_V1
 				|| src_header[j].block_id == ISP_BLK_EE_V1

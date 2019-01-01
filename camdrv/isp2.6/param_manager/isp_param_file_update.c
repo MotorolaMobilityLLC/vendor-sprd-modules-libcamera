@@ -38,8 +38,8 @@ char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
 	"cfai",
 	"rgb_afm",
 	"cce_uvdiv",
-	"pre_3dnr",
-	"cap_3dnr",
+	"3dnr",
+	"ppe",
 	"yuv_precdn",
 	"uv_cdn",
 	"uv_postcdn",
@@ -47,7 +47,10 @@ char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
 	"ee",
 	"iircnr",
 	"yuv_noisefilter",
-	"cnr",
+	"cnr2",
+	"ltm",
+	"imbalance",
+	"sw3dnr",
 };
 
 char nr_mode_name[MAX_MODE_NUM][12] = {
@@ -1103,14 +1106,18 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	nr_set_size[ISP_BLK_RGB_AFM_T] = sizeof(struct sensor_rgb_afm_level);
 	nr_set_size[ISP_BLK_UVDIV_T] = sizeof(struct sensor_cce_uvdiv_level);
 	nr_set_size[ISP_BLK_3DNR_T] = sizeof(struct sensor_3dnr_level);
+	nr_set_size[ISP_BLK_PPE_T] = sizeof(struct sensor_ppe_level);
 	nr_set_size[ISP_BLK_YUV_PRECDN_T] = sizeof(struct sensor_yuv_precdn_level);
-	nr_set_size[ISP_BLK_YNR_T] = sizeof(struct sensor_ynr_level);
-	nr_set_size[ISP_BLK_EDGE_T] = sizeof(struct sensor_ee_level);
 	nr_set_size[ISP_BLK_CDN_T] = sizeof(struct sensor_uv_cdn_level);
 	nr_set_size[ISP_BLK_POSTCDN_T] = sizeof(struct sensor_uv_postcdn_level);
+	nr_set_size[ISP_BLK_YNR_T] = sizeof(struct sensor_ynr_level);
+	nr_set_size[ISP_BLK_EDGE_T] = sizeof(struct sensor_ee_level);
 	nr_set_size[ISP_BLK_IIRCNR_T] = sizeof(struct sensor_iircnr_level);
 	nr_set_size[ISP_BLK_YUV_NOISEFILTER_T] = sizeof(struct sensor_yuv_noisefilter_level);
-	//nr_set_size[ISP_BLK_CNR2_T] = sizeof(struct sensor_cnr_level);
+	nr_set_size[ISP_BLK_CNR2_T] = sizeof(struct sensor_cnr_level);
+	nr_set_size[ISP_BLK_LTM_T] = sizeof(struct sensor_ltm_level);
+	nr_set_size[ISP_BLK_IMBALANCEE_T] = sizeof(struct sensor_nlm_imbalance_level);
+	nr_set_size[ISP_BLK_SW3DNR_T] = sizeof(struct sensor_sw3dnr_level);
 
 	nr_map_ptr = sensor_raw_ptr->nr_fix.nr_scene_ptr;
 	multi_nr_scene_map_ptr = (cmr_u32 *)&(nr_map_ptr->nr_scene_map[0]);

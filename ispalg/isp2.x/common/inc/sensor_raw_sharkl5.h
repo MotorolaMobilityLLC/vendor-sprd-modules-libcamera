@@ -657,9 +657,9 @@ struct sensor_3dnr_ctrl{
 // dcam 3dnr ctrl
 struct sensor_3dnr_fast_me {
 	cmr_u8 bypass;
+	cmr_u8 sub_me_bypass;
 	cmr_u8 project_mode;
 	cmr_u8 channel_sel;
-	cmr_u8 reserved;
 };
 
 struct sensor_3dnr_level {
@@ -1696,6 +1696,23 @@ struct alsc_alg0_turn_param {
 	float threshold_grad;
 };
 
+/* sw 3DNR tuning param */
+struct sensor_sw3dnr_level {
+        cmr_s32 threshold[4][6];
+        cmr_s32 slope[4][6];
+        cmr_s32 gain_thr[6];
+        cmr_u16 searchWindow_x;
+        cmr_u16 searchWindow_y;
+        cmr_s32 recur_str;
+        cmr_s32 match_ratio_sad;
+        cmr_s32 match_ratio_pro;
+        cmr_s32 feat_thr;
+        cmr_s32 zone_size;
+        cmr_s32 luma_ratio_high;
+        cmr_s32 luma_ratio_low;
+        cmr_s32 reserverd[16];
+};
+
 enum {
 	ISP_BLK_NLM_T = 0x00,
 	ISP_BLK_VST_T,
@@ -1718,6 +1735,7 @@ enum {
 	ISP_BLK_CNR2_T,
 	ISP_BLK_LTM_T,
 	ISP_BLK_IMBALANCEE_T,
+	ISP_BLK_SW3DNR_T,
 	ISP_BLK_TYPE_MAX
 };
 
@@ -1923,6 +1941,8 @@ struct sensor_nr_set_group_param {
 	cmr_u32 imblance_len;
 	cmr_u8 *ltm;
 	cmr_u32 ltm_len;
+	cmr_u8 *sw_3dnr;
+	cmr_u32 sw_3dnr_len;
 };
 
 struct sensor_nr_param {
@@ -2002,6 +2022,7 @@ struct denoise_param_update {
 	struct sensor_cnr_level *cnr2_level_ptr;
 	struct sensor_nlm_imbalance_level *imbalance_level_ptr;
 	struct sensor_ltm_level *ltm_level_ptr;
+	struct sensor_sw3dnr_level *sw3dnr_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;

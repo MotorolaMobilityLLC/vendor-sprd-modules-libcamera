@@ -63,6 +63,7 @@ struct isp_block_operations s_uv_postcdn_ops = { _pm_uv_postcdn_init, _pm_uv_pos
 struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, _pm_yuv_noisefilter_set_param, _pm_yuv_noisefilter_get_param, PNULL, PNULL };
 
 struct isp_block_operations s_cnr2_ops = { _pm_cnr2_init, _pm_cnr2_set_param, _pm_cnr2_get_param, PNULL, PNULL };
+struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
 
 struct isp_block_cfg s_blk_cfgs[] = {
 	/* dcam blocks */
@@ -103,6 +104,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 
 	/* soft algo blocks */
 	{ISP_BLK_CNR2_V1, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
+	{ISP_BLK_SW3DNR, array_offset(struct isp_context, sw3dnr), sizeof(struct isp_sw3dnr_param), &s_sw3dnr_ops},
 };
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)

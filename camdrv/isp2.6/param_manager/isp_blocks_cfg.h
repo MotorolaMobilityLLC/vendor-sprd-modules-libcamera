@@ -160,6 +160,15 @@ struct isp_nr3d_param {
 	cmr_u32 nr_mode_setting;
 };
 
+struct isp_sw3dnr_param {
+	void *cur_data;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_ltm_param {
 	struct isp_dev_ltm_info cur;
 	cmr_u32 cur_level;
@@ -439,6 +448,7 @@ struct isp_context {
 
 	/* isp blocks below */
 	struct isp_nr3d_param nr3d;
+	struct isp_sw3dnr_param sw3dnr;
 	struct isp_bchs_param bchs;
 	struct isp_cce_param cce;
 	struct isp_cfa_param cfa;
@@ -633,6 +643,10 @@ cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, 
 cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
 cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_sw3dnr_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_sw3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_sw3dnr_get_param(void *nr_3d_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 
 struct isp_block_operations {
