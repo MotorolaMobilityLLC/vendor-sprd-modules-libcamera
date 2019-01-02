@@ -885,6 +885,7 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     int rc = 0;
     HAL_LOGI("E");
 
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (isPreviewing()) {
         if (mCameraId == 0 ||
             !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
@@ -931,7 +932,6 @@ int SprdCamera3OEMIf::zslTakePictureL() {
         }
     }
 
-    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
