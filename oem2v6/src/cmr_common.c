@@ -221,7 +221,7 @@ cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     sprintf(tmp_str, "%d", height);
     strcat(file_name, tmp_str);
 
-    if (IMG_DATA_TYPE_YUV420 == img_fmt || IMG_DATA_TYPE_YUV422 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt || CAM_IMG_FMT_YUV422P == img_fmt) {
         strcat(file_name, "_y_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -260,7 +260,7 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     strcat(file_name, "X");
     sprintf(tmp_str, "%d", height);
     strcat(file_name, tmp_str);
-    if (IMG_DATA_TYPE_YUV420 == img_fmt || IMG_DATA_TYPE_YUV422 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt || CAM_IMG_FMT_YUV422P == img_fmt || IMG_DATA_TYPE_YUV420 == img_fmt) {
 
         strcat(file_name, "_y");
         strcat(file_name, ".raw");
@@ -291,13 +291,13 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             return 0;
         }
 
-        if (IMG_DATA_TYPE_YUV420 == img_fmt) {
+        if (CAM_IMG_FMT_YUV420_NV21 == img_fmt || IMG_DATA_TYPE_YUV420 == img_fmt) {
             fwrite((void *)addr->addr_u, 1, width * height / 2, fp);
         } else {
             fwrite((void *)addr->addr_u, 1, width * height, fp);
         }
         fclose(fp);
-    } else if (IMG_DATA_TYPE_RAW == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, "_mipi.raw");
         ISP_LOGI("file name %s\n", file_name);
         width = (width * 5 / 4);
@@ -312,7 +312,7 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
         fwrite((void *)addr->addr_y, 1, (uint32_t)((width * 5 / 4) * height),
                fp);
         fclose(fp);
-    } else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW == img_fmt) {
         strcat(file_name, "_mipi2.raw");
         ISP_LOGI("file name %s", file_name);
         width = (width * 4 / 3 + 7) & (~7);
@@ -332,16 +332,16 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 }
 
 // tag used for description, for example, preview, video, snapshot and so on
-cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
-                   cmr_u32 index, struct img_addr *vir_addr,
-                   cmr_u32 image_size) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    char file_name[0x80];
-    char tmp_str[40];
-    char datetime[15];
-    FILE *fp = NULL;
+ cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
+                    cmr_u32 index, struct img_addr *vir_addr,
+                    cmr_u32 image_size) {
+     cmr_int ret = CMR_CAMERA_SUCCESS;
+     char file_name[0x80];
+     char tmp_str[40];
+     char datetime[15];
+     FILE *fp = NULL;
 
-    CMR_LOGD("%s: format %d width %d height %d", tag, img_fmt, width, height);
+     CMR_LOGD("%s: format %d width %d height %d", tag, img_fmt, width, height);
 
     time_t timep;
     struct tm *p;
@@ -366,7 +366,7 @@ cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
     sprintf(tmp_str, "_%08x", index);
     strcat(file_name, tmp_str);
 
-    if (IMG_DATA_TYPE_YUV420 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
         strcat(file_name, ".yuv");
         CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
@@ -376,7 +376,7 @@ cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
         }
         fwrite((void *)vir_addr->addr_y, 1, width * height * 3 / 2, fp);
         fclose(fp);
-    } else if (IMG_DATA_TYPE_RAW == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, ".mipi_raw");
         CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
@@ -387,7 +387,7 @@ cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
         fwrite((void *)vir_addr->addr_y, 1, (uint32_t)width * height * 5 / 4,
                fp);
         fclose(fp);
-    } else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW == img_fmt) {
         strcat(file_name, "_mipi2.raw");
         CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
@@ -398,7 +398,7 @@ cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
         fwrite((void *)vir_addr->addr_y, 1, (uint32_t)width * height * 5 / 4,
                fp);
         fclose(fp);
-    } else if (IMG_DATA_TYPE_JPEG == img_fmt) {
+    } else if (CAM_IMG_FMT_JPEG == img_fmt) {
         strcat(file_name, ".jpg");
         CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
@@ -618,11 +618,11 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
 
     CMR_LOGD("file_name:%s format %d width %d heght %d", file_name, img_fmt,
              width, height);
-    if (IMG_DATA_TYPE_YUV420 == img_fmt || IMG_DATA_TYPE_YUV422 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt || CAM_IMG_FMT_YUV422P == img_fmt) {
         return 0;
-    } else if (IMG_DATA_TYPE_JPEG == img_fmt) {
+    } else if (CAM_IMG_FMT_JPEG == img_fmt) {
         return 0;
-    } else if (IMG_DATA_TYPE_RAW == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         fp = fopen(file_name, "rb");
         if (NULL == fp) {
             CMR_LOGD("can not open file: %s \n", file_name);

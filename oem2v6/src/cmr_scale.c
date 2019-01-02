@@ -60,21 +60,13 @@ static unsigned int cmr_scale_fmt_cvt(cmr_u32 cmt_fmt) {
     unsigned int sc_fmt = SCALE_FTM_MAX;
 
     switch (cmt_fmt) {
-    case IMG_DATA_TYPE_YUV422:
+    case CAM_IMG_FMT_YUV422P:
         sc_fmt = SCALE_YUV422;
         break;
 
-    case IMG_DATA_TYPE_YUV420:
-    case IMG_DATA_TYPE_YVU420:
+    case CAM_IMG_FMT_YUV420_NV21:
+    case CAM_IMG_FMT_YUV420_NV12:
         sc_fmt = SCALE_YUV420;
-        break;
-
-    case IMG_DATA_TYPE_RGB565:
-        sc_fmt = SCALE_RGB565;
-        break;
-
-    case IMG_DATA_TYPE_RGB888:
-        sc_fmt = SCALE_RGB888;
         break;
 
     default:

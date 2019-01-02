@@ -330,7 +330,7 @@ int camera_arrange_capture_buf(
         get_jpeg_size(image_size->width, image_size->height, thum_size->width,
                       thum_size->height);
 
-    if (IMG_DATA_TYPE_RAW == orig_fmt && is_4in1_mode > 0) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == orig_fmt && is_4in1_mode > 0) {
         ret = arrange_4in1_raw_buf(cap_2_frm, sn_size, sn_trim, image_size,
                                    orig_fmt, cap_size, thum_size, cap_mem,
                                    need_rot, &mem_res, &mem_end, &channel_size);
@@ -338,7 +338,7 @@ int camera_arrange_capture_buf(
             CMR_LOGE("raw fmt arrange failed!");
             return -1;
         }
-    } else if (IMG_DATA_TYPE_RAW == orig_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == orig_fmt) {
         ret = arrange_raw_buf(cap_2_frm, sn_size, sn_trim, image_size, orig_fmt,
                               cap_size, thum_size, cap_mem, need_rot, &mem_res,
                               &mem_end, &channel_size);
@@ -346,7 +346,7 @@ int camera_arrange_capture_buf(
             CMR_LOGE("raw fmt arrange failed!");
             return -1;
         }
-    } else if (IMG_DATA_TYPE_JPEG == orig_fmt) {
+    } else if (CAM_IMG_FMT_JPEG == orig_fmt) {
         ret = arrange_jpeg_buf(cap_2_frm, sn_size, sn_trim, image_size,
                                orig_fmt, cap_size, thum_size, cap_mem, need_rot,
                                &mem_res, &mem_end, &channel_size);
@@ -494,7 +494,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
                     uint32_t need_rot, uint32_t *io_mem_res,
                     uint32_t *io_mem_end, uint32_t *io_channel_size) {
     UNUSED(thum_size);
-    if (IMG_DATA_TYPE_RAW != orig_fmt || NULL == io_mem_res ||
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW != orig_fmt || NULL == io_mem_res ||
         NULL == io_mem_end || NULL == io_channel_size) {
         return -1;
     }
@@ -531,7 +531,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         image_size->width * image_size->height * 3 / 2;
     cap_mem->target_yuv.size.width = image_size->width;
     cap_mem->target_yuv.size.height = image_size->height;
-    cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->target_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->cap_yuv.addr_phy.addr_y =
         cap_2_frm->mem_frm.addr_phy.addr_y + max_size;
@@ -545,7 +545,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_yuv.buf_size = cap_size->width * cap_size->height * 3 / 2;
     cap_mem->cap_yuv.size.width = cap_size->width;
     cap_mem->cap_yuv.size.height = cap_size->height;
-    cap_mem->cap_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->cap_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->cap_raw.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->cap_raw.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
@@ -553,7 +553,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw.buf_size = raw_size;
     cap_mem->cap_raw.size.width = sn_size->width;
     cap_mem->cap_raw.size.height = sn_size->height;
-    cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
+    cap_mem->cap_raw.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
 
     cap_mem->cap_raw2.addr_phy.addr_y =
         cap_2_frm->mem_frm.addr_phy.addr_y + max_size + max_size;
@@ -563,7 +563,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw2.buf_size = raw2_size;
     cap_mem->cap_raw2.size.width = sn_size->width;
     cap_mem->cap_raw2.size.height = sn_size->height;
-    cap_mem->cap_raw2.fmt = IMG_DATA_TYPE_RAW2;
+    cap_mem->cap_raw2.fmt = CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW;
 
     cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
@@ -590,7 +590,7 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
                          uint32_t *io_mem_res, uint32_t *io_mem_end,
                          uint32_t *io_channel_size) {
     UNUSED(thum_size);
-    if (IMG_DATA_TYPE_RAW != orig_fmt || NULL == io_mem_res ||
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW != orig_fmt || NULL == io_mem_res ||
         NULL == io_mem_end || NULL == io_channel_size) {
         return -1;
     }
@@ -634,7 +634,7 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
         image_size->width * image_size->height * 3 / 2;
     cap_mem->target_yuv.size.width = image_size->width;
     cap_mem->target_yuv.size.height = image_size->height;
-    cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->target_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->cap_yuv.addr_phy.addr_y =
         cap_2_frm->mem_frm.addr_phy.addr_y + max_size;
@@ -648,7 +648,7 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
     cap_mem->cap_yuv.buf_size = cap_size->width * cap_size->height * 3 / 2;
     cap_mem->cap_yuv.size.width = cap_size->width;
     cap_mem->cap_yuv.size.height = cap_size->height;
-    cap_mem->cap_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->cap_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->cap_raw.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->cap_raw.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
@@ -657,7 +657,7 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
         raw_size_4K_align + small_w * small_h * RAWRGB_BIT_WIDTH / 8;
     cap_mem->cap_raw.size.width = sn_size->width;
     cap_mem->cap_raw.size.height = sn_size->height;
-    cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
+    cap_mem->cap_raw.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
 
     CMR_LOGD("cap_raw.buf_size= 0x%x, small_w =%d, small_h =%d",
              cap_mem->cap_raw.buf_size, small_w, small_h);
@@ -670,7 +670,7 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
     cap_mem->cap_raw2.buf_size = raw2_size;
     cap_mem->cap_raw2.size.width = sn_size->width;
     cap_mem->cap_raw2.size.height = sn_size->height;
-    cap_mem->cap_raw2.fmt = IMG_DATA_TYPE_RAW2;
+    cap_mem->cap_raw2.fmt = CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW;
 
     cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
@@ -708,7 +708,7 @@ int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     struct cmr_cap_mem *cap_mem = capture_mem; /*&capture_mem[0];*/
     struct img_size align16_image_size, align16_cap_size;
 
-    if (IMG_DATA_TYPE_JPEG != orig_fmt || NULL == io_mem_res ||
+    if (CAM_IMG_FMT_JPEG != orig_fmt || NULL == io_mem_res ||
         NULL == io_mem_end || NULL == io_channel_size) {
         return -1;
     }
@@ -795,12 +795,12 @@ int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_yuv.buf_size = channel_size * 3 / 2;
     cap_mem->cap_yuv.size.width = align16_cap_size.width;
     cap_mem->cap_yuv.size.height = align16_cap_size.height;
-    cap_mem->cap_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->cap_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->target_yuv.buf_size = channel_size * 3 / 2;
     cap_mem->target_yuv.size.width = align16_image_size.width;
     cap_mem->target_yuv.size.height = align16_image_size.height;
-    cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->target_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     /* update io param */
     *io_mem_res = mem_res;
@@ -820,7 +820,7 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     UNUSED(sn_trim);
     UNUSED(thum_size);
 
-    if (IMG_DATA_TYPE_JPEG == orig_fmt || IMG_DATA_TYPE_RAW == orig_fmt ||
+    if (CAM_IMG_FMT_JPEG == orig_fmt || CAM_IMG_FMT_BAYER_MIPI_RAW == orig_fmt ||
         NULL == io_mem_res || NULL == io_mem_end || NULL == io_channel_size) {
         return -1;
     }
@@ -852,7 +852,7 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         image_size->width * image_size->height * 3 / 2;
     cap_mem->target_yuv.size.width = image_size->width;
     cap_mem->target_yuv.size.height = image_size->height;
-    cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->target_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->cap_yuv.addr_phy.addr_y =
         cap_mem->target_yuv.addr_phy.addr_y + max_size;
@@ -866,7 +866,7 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_yuv.buf_size = cap_size->width * cap_size->height * 3 / 2;
     cap_mem->cap_yuv.size.width = cap_size->width;
     cap_mem->cap_yuv.size.height = cap_size->height;
-    cap_mem->cap_yuv.fmt = IMG_DATA_TYPE_YUV420;
+    cap_mem->cap_yuv.fmt = CAM_IMG_FMT_YUV420_NV21;
 
     cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
@@ -1009,7 +1009,7 @@ int arrange_rot_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         cap_mem->cap_yuv_rot.size.height = cap_size->width;
         cap_mem->cap_yuv_rot.buf_size =
             cap_size->width * cap_size->width * 3 / 2;
-        cap_mem->cap_yuv_rot.fmt = IMG_DATA_TYPE_YUV420;
+        cap_mem->cap_yuv_rot.fmt = CAM_IMG_FMT_YUV420_NV21;
 
         cap_mem->target_yuv.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
         cap_mem->target_yuv.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
@@ -1045,7 +1045,7 @@ int arrange_rot_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
             cap_mem->cap_yuv_rot.size.height = cap_size->width;
             cap_mem->cap_yuv_rot.buf_size =
                 cap_size->height * cap_size->width * 3 / 2;
-            cap_mem->cap_yuv_rot.fmt = IMG_DATA_TYPE_YUV420;
+            cap_mem->cap_yuv_rot.fmt = CAM_IMG_FMT_YUV420_NV21;
         } else {
             cap_mem->cap_yuv_rot.addr_phy.addr_y =
                 cap_mem->cap_yuv.addr_phy.addr_y;
@@ -1063,7 +1063,7 @@ int arrange_rot_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
             cap_mem->cap_yuv_rot.size.height = cap_size->width;
             cap_mem->cap_yuv_rot.buf_size =
                 cap_size->height * cap_size->width * 3 / 2;
-            cap_mem->cap_yuv_rot.fmt = IMG_DATA_TYPE_YUV420;
+            cap_mem->cap_yuv_rot.fmt = CAM_IMG_FMT_YUV420_NV21;
         }
 
         /* mem reuse when rot */

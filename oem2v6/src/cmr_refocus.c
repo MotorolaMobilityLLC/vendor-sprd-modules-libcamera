@@ -628,22 +628,22 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
             if (atoi(value) == 1 && altek_refocus_ret == 0) {
                 if (refocus_frame_num % 100 == 0 && refocus_frame_num != 0) {
                     refocus_save_to_file(
-                        refocus_frame_num, IMG_DATA_TYPE_RAW,
+                        refocus_frame_num, CAM_IMG_FMT_BAYER_MIPI_RAW,
                         start_param->depth_map_with,
                         start_param->depth_map_height, start_param->touch_x,
                         start_param->touch_y, start_param->depth_map_data);
                     refocus_save_to_file(
-                        refocus_frame_num, IMG_DATA_TYPE_YUV420, dBokehImgW,
+                        refocus_frame_num, CAM_IMG_FMT_YUV420_NV21, dBokehImgW,
                         dBokehImgH, start_param->touch_x, start_param->touch_y,
                         pucInputBufferNV21);
                     refocus_output_save_to_file(
-                        refocus_frame_num, IMG_DATA_TYPE_YUV420, dBokehImgW,
+                        refocus_frame_num, CAM_IMG_FMT_YUV420_NV21, dBokehImgW,
                         dBokehImgH, start_param->touch_x, start_param->touch_y,
                         pucOutYCCNV21);
                 }
             } else if (atoi(value) == 1 && altek_refocus_ret != 0) {
                 CMR_LOGE("refocus function fail,0x%x", altek_refocus_ret);
-                refocus_save_to_file(refocus_frame_num, IMG_DATA_TYPE_RAW,
+                refocus_save_to_file(refocus_frame_num, CAM_IMG_FMT_BAYER_MIPI_RAW,
                                      start_param->depth_map_with,
                                      start_param->depth_map_height,
                                      start_param->touch_x, start_param->touch_y,
@@ -731,7 +731,7 @@ int32_t refocus_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     strcat(file_name, tmp_str);
     CMR_LOGI("file name %s", file_name);
 
-    if (IMG_DATA_TYPE_YUV420 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -743,7 +743,7 @@ int32_t refocus_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             return 0;
         }
         write_bytes = fwrite(addr, 1, width * height * 3 / 2, fp);
-    } else if (IMG_DATA_TYPE_RAW == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -790,7 +790,7 @@ int32_t refocus_output_save_to_file(cmr_u32 index, cmr_u32 img_fmt,
     strcat(file_name, tmp_str);
     CMR_LOGI("file name %s", file_name);
 
-    if (IMG_DATA_TYPE_YUV420 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -803,7 +803,7 @@ int32_t refocus_output_save_to_file(cmr_u32 index, cmr_u32 img_fmt,
             return 0;
         }
         write_bytes = fwrite(addr, 1, width * height * 3 / 2, fp);
-    } else if (IMG_DATA_TYPE_RAW == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);

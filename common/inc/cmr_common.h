@@ -265,6 +265,7 @@ enum sensor_data_type {
     SENSOR_DATATYPE_MAX
 };
 
+// deprecated after sharkl5, please use cam_img_format_t
 enum img_data_type {
     IMG_DATA_TYPE_YUV422 = 0,
     IMG_DATA_TYPE_YUV420,
@@ -280,6 +281,35 @@ enum img_data_type {
     IMG_DATA_TYPE_YV12,
     IMG_DATA_TYPE_MAX
 };
+
+typedef enum {
+    CAM_IMG_FMT_NONE = 0,
+
+    // planar yuv formats
+    CAM_IMG_FMT_YUV420_NV21 = 0x10,
+    CAM_IMG_FMT_YUV420_NV12,
+    CAM_IMG_FMT_YUV420_YV12,
+    CAM_IMG_FMT_YUV420_I420,
+    CAM_IMG_FMT_Y8,
+
+    // planar yuv422p
+    CAM_IMG_FMT_YUV422P,
+
+    // packed yuv formats
+    CAM_IMG_FMT_YUYV = 0x20,
+    CAM_IMG_FMT_YVYU,
+    CAM_IMG_FMT_UYVY,
+    CAM_IMG_FMT_VYUY,
+
+    // raw
+    CAM_IMG_FMT_BAYER_MIPI_RAW = 0x30,
+    CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW,
+
+    // jpeg
+    CAM_IMG_FMT_JPEG = 0x40,
+
+    CAM_IMG_FMT_MAX
+} cam_img_format_t;
 
 /*0: 3 plane;  1: 2 plane uvuv;  2: 2 plane vuvu*/
 enum img_data_endian {
@@ -1974,7 +2004,7 @@ typedef struct oem_ops {
         struct image_sw_algorithm_buf *src_sw_algorithm_buf,
         struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
         sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
-        enum img_data_type format);
+        cam_img_format_t format);
     int (*dump_image_with_isp_info)(cmr_handle camera_handle, uint32_t img_fmt,
                                     uint32_t width, uint32_t height,
                                     uint32_t dump_size, struct img_addr *addr);

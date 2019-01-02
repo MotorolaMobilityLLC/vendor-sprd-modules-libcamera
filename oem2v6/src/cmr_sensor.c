@@ -420,9 +420,22 @@ cmr_int cmr_sns_copy_info(struct sensor_exp_info *out_sensor_info,
     out_sensor_info->sn_interface.is_loose =
         in_sensor_info->sensor_interface.is_loose;
 
+    if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_YUV422){
+        out_sensor_info->image_format = CAM_IMG_FMT_YUV422P;
+    } else if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_RAW){
+        out_sensor_info->image_format = CAM_IMG_FMT_BAYER_MIPI_RAW;
+    }
     for (i = 0; i < SENSOR_MODE_MAX; i++) {
         cmr_sns_copy_mode_info(&out_sensor_info->mode_info[i],
                                &in_sensor_info->sensor_mode_info[i]);
+        if (out_sensor_info->mode_info[i].image_format ==
+            SENSOR_IMAGE_FORMAT_YUV422){
+            out_sensor_info->mode_info[i].image_format = CAM_IMG_FMT_YUV422P;
+        } else if (out_sensor_info->mode_info[i].image_format ==
+                 SENSOR_IMAGE_FORMAT_RAW){
+            out_sensor_info->mode_info[i].image_format =
+                CAM_IMG_FMT_BAYER_MIPI_RAW;
+        }
         cmr_sns_copy_video_info(&out_sensor_info->video_info[i],
                                 &in_sensor_info->sensor_video_info[i]);
     }
@@ -977,7 +990,7 @@ cmr_int cmr_sns_open(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits) {
                 CMR_LOGD(
                     "sensor format =%d",
                     handle->sensor_cxt[cameraId].sensor_info_ptr->image_format);
-                if (SENSOR_IMAGE_FORMAT_RAW !=
+                if (CAM_IMG_FMT_BAYER_MIPI_RAW !=
                     handle->sensor_cxt[cameraId]
                         .sensor_info_ptr->image_format) {
                     ret = cmr_sns_create_fmove_thread(handle);

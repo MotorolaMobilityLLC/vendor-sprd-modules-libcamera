@@ -643,7 +643,7 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
     if (atoi(value) == 5 || atoi(value) & (1 << 5)) {
         struct camera_context *cam_ctx = cxt->oem_handle;
         ret =
-            dump_image("snp_jpeg_enc_cb_handle", IMG_DATA_TYPE_JPEG,
+            dump_image("snp_jpeg_enc_cb_handle", CAM_IMG_FMT_JPEG,
                        cxt->req_param.post_proc_setting.actual_snp_size.width,
                        cxt->req_param.post_proc_setting.actual_snp_size.height,
                        cam_ctx->dump_cnt, &mem_ptr->target_jpeg.addr_vir,
@@ -809,7 +809,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 4 || atoi(value) == 100 || (atoi(value) & (1 << 4))) {
         struct camera_context *cam_ctx = snp_cxt->oem_handle;
-        dump_image("snp_start_encode", IMG_DATA_TYPE_YUV420,
+        dump_image("snp_start_encode", CAM_IMG_FMT_YUV420_NV21,
                    jpeg_in_ptr->src.size.width, jpeg_in_ptr->src.size.height,
                    FORM_DUMPINDEX(SNP_ENCODE_SRC_DATA, cam_ctx->dump_cnt, 0),
                    &jpeg_in_ptr->src.addr_vir,
@@ -919,7 +919,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 7 || atoi(value) & (1 << 7)) {
         struct camera_context *cam_ctx = snp_cxt->oem_handle;
-        dump_image("snp_start_encode_thumb", IMG_DATA_TYPE_JPEG,
+        dump_image("snp_start_encode_thumb", CAM_IMG_FMT_JPEG,
                    jpeg_in_ptr->src.size.width, jpeg_in_ptr->src.size.height,
                    FORM_DUMPINDEX(SNP_THUMB_STREAM, cam_ctx->dump_cnt, 0),
                    &jpeg_in_ptr->dst.addr_vir, snp_cxt->thumb_stream_size);
@@ -954,7 +954,7 @@ cmr_int snp_start_decode_sync(cmr_handle snp_handle, void *data) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 1 || atoi(value) & (1 << 1)) {
         struct camera_context *cam_ctx = snp_cxt->oem_handle;
-        dump_image("snp_start_decode_sync", IMG_DATA_TYPE_JPEG,
+        dump_image("snp_start_decode_sync", CAM_IMG_FMT_JPEG,
                    chn_param_ptr->chn_frm[frm_ptr->frame_id - frm_ptr->base]
                        .size.width,
                    chn_param_ptr->chn_frm[frm_ptr->frame_id - frm_ptr->base]
@@ -1045,7 +1045,7 @@ cmr_int snp_start_rot(cmr_handle snp_handle, void *data) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 2 || (atoi(value) & (1 << 2))) {
         struct camera_context *cam_ctx = snp_cxt->oem_handle;
-        dump_image("snp_start_rot", IMG_DATA_TYPE_YUV420, dst.size.width,
+        dump_image("snp_start_rot", CAM_IMG_FMT_YUV420_NV21, dst.size.width,
                    dst.size.height,
                    FORM_DUMPINDEX(SNP_ROT_DATA, cam_ctx->dump_cnt, 0),
                    &dst.addr_vir, dst.size.width * dst.size.height * 3 / 2);
@@ -1212,7 +1212,7 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 6 || (atoi(value) & (1 << 6))) {
         struct camera_context *cam_ctx = snp_cxt->oem_handle;
-        dump_image("snp_start_convet_thumb", IMG_DATA_TYPE_YUV420,
+        dump_image("snp_start_convet_thumb", CAM_IMG_FMT_YUV420_NV21,
                    dst.size.width, dst.size.height,
                    FORM_DUMPINDEX(SNP_THUMB_DATA, cam_ctx->dump_cnt, 0),
                    &dst.addr_vir, dst.size.width * dst.size.height * 3 / 2);
@@ -1308,7 +1308,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
 
     CMR_LOGD("dump mipi raw");
     snp_cxt->ops.dump_image_with_3a_info(
-        snp_cxt->oem_handle, IMG_DATA_TYPE_RAW, mem_ptr->cap_raw.size.width,
+        snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, mem_ptr->cap_raw.size.width,
         mem_ptr->cap_raw.size.height,
         mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
         &mem_ptr->cap_raw.addr_vir);
@@ -1316,7 +1316,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     if (frm_ptr->is_4in1_frame) {
         CMR_LOGD("dump 4in1 mipi raw");
         snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, IMG_DATA_TYPE_RAW, cap_raw_small.size.width,
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, cap_raw_small.size.width,
             cap_raw_small.size.height,
             cap_raw_small.size.width * cap_raw_small.size.height * 5 / 4,
             &cap_raw_small.addr_vir);
@@ -1331,7 +1331,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         }
         CMR_LOGD("dump 4in1 mipi raw after remosaic");
         snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, IMG_DATA_TYPE_RAW, mem_ptr->cap_raw.size.width,
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, mem_ptr->cap_raw.size.width,
             mem_ptr->cap_raw.size.height,
             mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
             &mem_ptr->cap_raw.addr_vir);
@@ -1438,10 +1438,10 @@ cmr_int snp_start_cvt(cmr_handle snp_handle, void *data) {
     struct frm_info *frm_ptr = (struct frm_info *)data;
 
     cxt->cur_frame_info = *frm_ptr;
-    if (IMG_DATA_TYPE_JPEG == frm_ptr->fmt) {
+    if (CAM_IMG_FMT_JPEG == frm_ptr->fmt) {
         ret = snp_start_decode_sync(snp_handle, data);
         snp_cvt_done(snp_handle);
-    } else if (IMG_DATA_TYPE_RAW == frm_ptr->fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == frm_ptr->fmt) {
         ret = snp_start_isp_proc(snp_handle, data);
         // for raw capture brinup, skip isp postprocess
         // snp_cvt_done(snp_handle);
@@ -1659,7 +1659,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
         property_get("debug.camera.save.snpfile", value, "0");
         if (atoi(value) == 8 || atoi(value) == 100 || atoi(value) & (1 << 8)) {
             jpeg_addr.addr_y = enc_out_param.output_buf_virt_addr;
-            dump_image("snp_write_exif", IMG_DATA_TYPE_JPEG,
+            dump_image("snp_write_exif", CAM_IMG_FMT_JPEG,
                        cxt->req_param.post_proc_setting.actual_snp_size.width,
                        cxt->req_param.post_proc_setting.actual_snp_size.height,
                        FORM_DUMPINDEX(SNP_JPEG_STREAM, cam_ctx->dump_cnt, 0),
@@ -2415,8 +2415,8 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle) {
     if (CMR_CAMERA_SUCCESS == ret) {
         chn_out_frm_ptr = &channel_param_ptr->post_proc_setting.chn_out_frm[0];
         CMR_LOGD("data format %d", chn_out_frm_ptr->fmt);
-        if (IMG_DATA_TYPE_JPEG != chn_out_frm_ptr->fmt) {
-            if (IMG_DATA_TYPE_RAW != chn_out_frm_ptr->fmt) {
+        if (CAM_IMG_FMT_JPEG != chn_out_frm_ptr->fmt) {
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW != chn_out_frm_ptr->fmt) {
                 cmr_copy((void *)&cxt->chn_param.chn_frm[0],
                          (void *)chn_out_frm_ptr,
                          CMR_CAPTURE_MEM_SUM * sizeof(struct img_frm));
@@ -2425,7 +2425,7 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle) {
                     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
                         cxt->chn_param.chn_frm[i] =
                             cxt->chn_param.isp_proc_in[i].dst_frame;
-                        cxt->chn_param.chn_frm[i].fmt = IMG_DATA_TYPE_YUV420;
+                        cxt->chn_param.chn_frm[i].fmt = CAM_IMG_FMT_YUV420_NV21;
                     }
                 } else {
                     cmr_copy((void *)&cxt->chn_param.chn_frm[0],
@@ -2502,8 +2502,8 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle) {
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
         chn_param_ptr->scale[i].slice_height = rect[i].height;
-        chn_param_ptr->scale[i].src_img.fmt = IMG_DATA_TYPE_YUV420;
-        chn_param_ptr->scale[i].dst_img.fmt = IMG_DATA_TYPE_YUV420;
+        chn_param_ptr->scale[i].src_img.fmt = CAM_IMG_FMT_YUV420_NV21;
+        chn_param_ptr->scale[i].dst_img.fmt = CAM_IMG_FMT_YUV420_NV21;
         chn_param_ptr->scale[i].src_img.data_end =
             req_param_ptr->post_proc_setting.data_endian;
         chn_param_ptr->scale[i].dst_img.data_end =
@@ -2608,8 +2608,8 @@ cmr_int snp_set_convert_thumb_param(cmr_handle snp_handle) {
             req_param_ptr->post_proc_setting.data_endian;
         thumb_ptr->dst_img.data_end =
             req_param_ptr->post_proc_setting.data_endian;
-        thumb_ptr->src_img.fmt = IMG_DATA_TYPE_YUV420;
-        thumb_ptr->dst_img.fmt = IMG_DATA_TYPE_YUV420;
+        thumb_ptr->src_img.fmt = CAM_IMG_FMT_YUV420_NV21;
+        thumb_ptr->dst_img.fmt = CAM_IMG_FMT_YUV420_NV21;
         thumb_ptr++;
     }
     thumb_ptr = &cxt->chn_param.convert_thumb[0];
@@ -2657,7 +2657,7 @@ cmr_int snp_set_rot_param(cmr_handle snp_handle) {
     }
     chn_param_ptr->is_rot = 1;
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-        if (IMG_DATA_TYPE_JPEG !=
+        if (CAM_IMG_FMT_JPEG !=
             req_param_ptr->post_proc_setting.chn_out_frm[i].fmt) {
             rot_ptr->src_img = chn_param_ptr->chn_frm[i];
         } else {
@@ -2920,7 +2920,7 @@ cmr_int snp_set_jpeg_dec_param(cmr_handle snp_handle) {
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
         dec_in_ptr->dst.size =
             req_param_ptr->post_proc_setting.chn_out_frm[i].size;
-        dec_in_ptr->dst.fmt = IMG_DATA_TYPE_YUV420;
+        dec_in_ptr->dst.fmt = CAM_IMG_FMT_YUV420_NV21;
         dec_in_ptr->dst.data_end = cxt->req_param.post_proc_setting.data_endian;
         dec_in_ptr->mean.slice_mode = JPEG_YUV_SLICE_ONE_BUF;
         dec_in_ptr->mean.slice_num = 1;
@@ -3230,7 +3230,7 @@ cmr_int snp_update_convert_thumb_param(cmr_handle snp_handle,
         thumb_ptr->src_img.rect.height = thumb_ptr->src_img.size.height;
         thumb_ptr->src_img.data_end =
             req_param_ptr->post_proc_setting.data_endian;
-        thumb_ptr->src_img.fmt = IMG_DATA_TYPE_YUV420;
+        thumb_ptr->src_img.fmt = CAM_IMG_FMT_YUV420_NV21;
         thumb_ptr++;
     }
 
@@ -3811,7 +3811,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 3 || (atoi(value) & (1 << 3))) {
         struct camera_context *cam_ctx = cxt->oem_handle;
-        dump_image("camera_set_frame_type", IMG_DATA_TYPE_YUV420,
+        dump_image("camera_set_frame_type", CAM_IMG_FMT_YUV420_NV21,
                    frame_type->width, frame_type->height,
                    FORM_DUMPINDEX(SNP_REDISPLAY_DATA, cam_ctx->dump_cnt, 0),
                    &mem_ptr->target_yuv.addr_vir,
@@ -3975,7 +3975,7 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
         imgadd.addr_y = data->yaddr_vir;
         imgadd.addr_u = data->uaddr_vir;
         imgadd.addr_v = data->vaddr_vir;
-        dump_image("snp_yuv_callback_take_picture_done", IMG_DATA_TYPE_YUV420,
+        dump_image("snp_yuv_callback_take_picture_done", CAM_IMG_FMT_YUV420_NV21,
                    frame_type.width, frame_type.height, 8881, &imgadd,
                    frame_type.width * frame_type.height * 3 / 2);
     }
@@ -4196,7 +4196,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
             chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
                 .size.height;
         dump_image(
-            "snp_post_proc_for_yuv", IMG_DATA_TYPE_YUV420, image_width,
+            "snp_post_proc_for_yuv", CAM_IMG_FMT_YUV420_NV21, image_width,
             image_height, SNP_CHN_OUT_DATA,
             &chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
                  .addr_vir,
@@ -4283,7 +4283,7 @@ cmr_int snp_post_proc_for_jpeg(cmr_handle snp_handle, void *data) {
     if (ret) {
         return ret;
     }
-    chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;
+    chn_data_ptr->fmt = CAM_IMG_FMT_YUV420_NV21;
     ret = snp_post_proc_for_yuv(snp_handle, data);
     return ret;
 }
@@ -4380,18 +4380,18 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
         width = mem_ptr->cap_raw2.size.width;
         height = mem_ptr->cap_raw2.size.height;
         snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, IMG_DATA_TYPE_RAW2, width, height,
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW, width, height,
             width * height * 5 / 4, &mem_ptr->cap_raw2.addr_vir);
 
         CMR_LOGD("dump yuv");
         width = mem_ptr->target_yuv.size.width;
         height = mem_ptr->target_yuv.size.height;
         snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, IMG_DATA_TYPE_YUV420, width, height,
+            snp_cxt->oem_handle, CAM_IMG_FMT_YUV420_NV21, width, height,
             width * height * 3 / 2, &mem_ptr->target_yuv.addr_vir);
     }
 
-    chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;
+    chn_data_ptr->fmt = CAM_IMG_FMT_YUV420_NV21;
     ret = snp_post_proc_for_yuv(snp_handle, data);
     CMR_LOGD("done %ld", ret);
     return ret;
@@ -4430,7 +4430,7 @@ cmr_int snp_post_proc_for_raw(cmr_handle snp_handle, void *data) {
             ret = cxt->err_code;
             break;
         }
-        chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;
+        chn_data_ptr->fmt = CAM_IMG_FMT_YUV420_NV21;
         ret = snp_post_proc_for_yuv(snp_handle, data);
     } break;
     }
@@ -4546,15 +4546,15 @@ cmr_int snp_post_proc(cmr_handle snp_handle, void *data) {
         return ret;
     } else {
         switch (fmt) {
-        case IMG_DATA_TYPE_JPEG:
+        case CAM_IMG_FMT_JPEG:
             ret = snp_post_proc_for_jpeg(snp_handle, data);
             break;
-        case IMG_DATA_TYPE_YUV420:
-        case IMG_DATA_TYPE_YVU420:
-        case IMG_DATA_TYPE_YUV422:
+        case CAM_IMG_FMT_YUV420_NV21:
+        case CAM_IMG_FMT_YUV420_NV12:
+        case CAM_IMG_FMT_YUV422P:
             ret = snp_post_proc_for_yuv(snp_handle, data);
             break;
-        case IMG_DATA_TYPE_RAW:
+        case CAM_IMG_FMT_BAYER_MIPI_RAW:
 
             ret = snp_post_proc_for_raw(snp_handle, data);
 
@@ -4611,8 +4611,8 @@ cmr_int cmr_snapshot_thumb_yuv_proc(cmr_handle snp_handle,
     src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
     src.rect.start_x = 0;
     src.rect.start_y = 0;
-    src.fmt = IMG_DATA_TYPE_YUV420;
-    dst.fmt = IMG_DATA_TYPE_YUV420;
+    src.fmt = CAM_IMG_FMT_YUV420_NV21;
+    dst.fmt = CAM_IMG_FMT_YUV420_NV21;
     dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
     src.data_end.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
     dst.data_end.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;

@@ -55,12 +55,6 @@ typedef struct sprd_camera_memory {
     bool busy_flag;
 } sprd_camera_memory_t;
 
-typedef enum {
-    CAMERA_DATA_FORMAT_YUV422 = 0,
-    CAMERA_DATA_FORMAT_YUV420,
-    CAMERA_DATA_FORMAT_RGB,
-} camera_data_format_type_t;
-
 static unsigned int dump_total_count = 10;
 static unsigned int minicamera_dump_cnt = 0;
 static pthread_mutex_t previewlock;
@@ -832,7 +826,7 @@ static int minicamera_startpreview(struct minicamera_context *cxt) {
              (cmr_uint)&preview_size);
 
     SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_PREVIEW_FORMAT,
-             CAMERA_DATA_FORMAT_YUV420);
+             IMG_DATA_TYPE_YUV420);
     SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_SENSOR_ROTATION, 0);
     SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_ZOOM,
              (cmr_uint)&zoom_param);

@@ -619,7 +619,7 @@ cmr_uint camera_set_vendor_hdr_ev(cmr_handle oem_handle) {
         goto exit;
     }
 
-    if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         isp_param.cmd_value = ev_value;
         ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param);
     } else {
@@ -826,8 +826,8 @@ cmr_int camera_is_need_change_fmt(cmr_handle oem_handle,
 
     is_snp_frm = (data_ptr->channel_id == snp_cxt->channel_id);
     if (is_snp_frm) {
-        if (IMG_DATA_TYPE_JPEG == data_ptr->fmt ||
-            IMG_DATA_TYPE_RAW == data_ptr->fmt) {
+        if (CAM_IMG_FMT_JPEG == data_ptr->fmt ||
+            CAM_IMG_FMT_BAYER_MIPI_RAW == data_ptr->fmt) {
             is_change_fmt = 1;
         }
     }
@@ -944,7 +944,7 @@ void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata) {
 
     switch (evt) {
     case CMR_GRAB_TX_DONE:
-        if (frame->is_4in1_frame && frame->fmt != IMG_DATA_TYPE_RAW) {
+        if (frame->is_4in1_frame && frame->fmt != CAM_IMG_FMT_BAYER_MIPI_RAW) {
             camera_4in1_handle(evt, data, privdata);
         }
 #if defined OEM_HANDLE_HDR
@@ -1515,7 +1515,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                          face_area.face_info[i].ex, face_area.face_info[i].ey);
             }
             /* SS requires to disable FD when HDR is on */
-            if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format &&
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == cxt->sn_cxt.sensor_info.image_format &&
                 (!cxt->is_vendor_hdr) && frame_param->is_update_isp) {
                 isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_FACE_AREA,
                           (void *)&face_area);
@@ -2161,7 +2161,7 @@ cmr_int camera_after_set(cmr_handle oem_handle,
 
     if (PREVIEWING == cmr_preview_get_status(cxt->prev_cxt.preview_handle,
                                              cxt->camera_id) &&
-        (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format)) {
+        (CAM_IMG_FMT_BAYER_MIPI_RAW == cxt->sn_cxt.sensor_info.image_format)) {
         skip_num = 0;
     } else {
         skip_num = param->skip_number;
@@ -2495,7 +2495,7 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
         cmr_grab_evt_reg(grab_handle, camera_grab_evt_cb);
         cmr_grab_stream_cb(grab_handle, camera_sensor_streamctrl);
         /*only raw sensor should init isp*/
-        if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == sn_cxt->sensor_info.image_format) {
             cmr_grab_isp_statis_evt_reg(grab_handle, isp_statis_evt_cb);
             cmr_grab_isp_irq_proc_evt_reg(grab_handle, isp_irq_proc_evt_cb);
         }
@@ -2574,7 +2574,7 @@ cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param) {
         goto exit;
     }
 
-    if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         isp_param.cmd_value = param;
         ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param);
     } else {
@@ -3071,7 +3071,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     CMR_LOGV("sensor_info.name=%s, version=%s", sn_cxt->sensor_info.name,
              sn_cxt->sensor_info.sensor_version_info);
 
-    if (IMG_DATA_TYPE_RAW != sn_cxt->sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW != sn_cxt->sensor_info.image_format) {
         CMR_LOGD("no need to init isp %d ", sn_cxt->sensor_info.image_format);
         goto exit;
     }
@@ -3137,7 +3137,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info, sns_ex_info_ptr);
     }
 
-    if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sn_cxt->sensor_info.image_format) {
         isp_param.ex_info.preview_skip_num = 0;
         isp_param.ex_info.capture_skip_num = 0;
     }
@@ -5734,7 +5734,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         property_get("debug.camera.save.snpfile", value, "0");
         if (atoi(value) == 1 || atoi(value) == 100 ||
             (atoi(value) & (1 << 1))) {
-            dump_image("camera_raw_proc", IMG_DATA_TYPE_RAW,
+            dump_image("camera_raw_proc", CAM_IMG_FMT_BAYER_MIPI_RAW,
                        param_ptr->src_frame.size.width,
                        param_ptr->src_frame.size.height,
                        FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
@@ -5752,7 +5752,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         property_get("debug.camera.save.snpfile", value, "0");
         if (atoi(value) == 1 || atoi(value) == 100 ||
             (atoi(value) & (1 << 1))) {
-            dump_image("camera_raw_proc", IMG_DATA_TYPE_YUV420,
+            dump_image("camera_raw_proc", CAM_IMG_FMT_YUV420_NV21,
                        param_ptr->dst_frame.size.width,
                        param_ptr->dst_frame.size.height, 0x6000,
                        &param_ptr->dst_frame.addr_vir,
@@ -6615,6 +6615,7 @@ cmr_int camera_get_sensor_info(cmr_handle oem_handle, cmr_uint sensor_id,
         CMR_LOGE("failed to get sensor info %ld", ret);
         goto exit;
     }
+
 exit:
     return ret;
 }
@@ -7124,7 +7125,7 @@ cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
     *size = 0;
     cmr_bzero(&isp_info, sizeof(isp_info));
 
-    if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == cxt->sn_cxt.sensor_info.image_format) {
         ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_INFO,
                         (void *)&isp_info);
         if (!ret) {
@@ -9715,7 +9716,7 @@ cmr_int camera_local_redisplay_data(
     src_img.fd = input_fd;
     src_img.addr_phy.addr_y = input_addr_y;
     src_img.addr_phy.addr_u = input_addr_uv;
-    src_img.fmt = IMG_DATA_TYPE_YUV420;
+    src_img.fmt = CAM_IMG_FMT_YUV420_NV21;
     cmr_grab_get_dcam_endian(&cxt->snp_cxt.data_endian, &src_img.data_end);
 
     dst_img.size.width = output_width;
@@ -9724,7 +9725,7 @@ cmr_int camera_local_redisplay_data(
     dst_img.addr_phy.addr_y = output_addr;
     dst_img.addr_phy.addr_u =
         dst_img.addr_phy.addr_y + output_width * output_height;
-    dst_img.fmt = IMG_DATA_TYPE_YUV420;
+    dst_img.fmt = CAM_IMG_FMT_YUV420_NV21;
     cmr_grab_get_dcam_endian(&cxt->snp_cxt.data_endian, &dst_img.data_end);
 
 #ifdef CAMERA_BRINGUP
@@ -10907,7 +10908,7 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
             goto exit;
         }
 
-        if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
             isp_param.cmd_value = OEM_EV_LEVEL_1;
             ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_HDR,
                                    (void *)&isp_param);
@@ -10934,7 +10935,7 @@ cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable) {
         goto exit;
     }
 
-    if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         isp_param.cmd_value = enable;
         ret =
             camera_isp_ioctl(oem_handle, COM_ISP_SET_3DNR, (void *)&isp_param);
@@ -11295,7 +11296,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     frm_data->base = CMR_CAP0_ID_BASE;
     frm_data->height = cxt->snp_cxt.request_size.height;
     frm_data->base = CMR_CAP0_ID_BASE;
-    frm_data->fmt = IMG_DATA_TYPE_YUV420;
+    frm_data->fmt = CAM_IMG_FMT_YUV420_NV21;
     frm_data->yaddr = yaddr;
     frm_data->yaddr_vir = yaddr_vir;
     frm_data->fd = fd;
@@ -11653,7 +11654,7 @@ cmr_int camera_local_image_sw_algorithm_processing(
     cmr_handle oem_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
-    enum img_data_type format) {
+    cam_img_format_t format) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct sensor_exp_info exp_info;
@@ -11839,16 +11840,16 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     sprintf(tmp_str, "%d", isp_cur_bv);
     strcat(file_name, tmp_str);
 
-    if (img_fmt == IMG_DATA_TYPE_RAW) {
+    if (img_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
         strcat(file_name, ".mipi_raw");
         size = width * height * 5 / 4;
-    } else if (img_fmt == IMG_DATA_TYPE_RAW2) {
+    } else if (img_fmt == CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW) {
         strcat(file_name, "_dcam.mipi_raw");
         size = width * height * 5 / 4;
-    } else if (img_fmt == IMG_DATA_TYPE_YUV420) {
+    } else if (img_fmt == CAM_IMG_FMT_YUV420_NV21) {
         strcat(file_name, ".yuv");
         size = width * height * 3 / 2;
-    } else if (img_fmt == IMG_DATA_TYPE_JPEG) {
+    } else if (img_fmt == CAM_IMG_FMT_JPEG) {
         strcat(file_name, ".jpg");
         size = dump_size;
     }

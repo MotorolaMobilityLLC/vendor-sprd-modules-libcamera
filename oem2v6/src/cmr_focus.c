@@ -854,7 +854,7 @@ cmr_int af_set_mode(cmr_handle af_handle, cmr_u32 came_id, cmr_u32 af_mode) {
         goto exit;
     }
 
-    if (IMG_DATA_TYPE_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         af_mode_to_isp(af_mode, &isp_af_mode);
         isp_cmd.cmd_value = isp_af_mode;
 
@@ -940,7 +940,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     af_cxt->af_busy = 1;
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-    if (IMG_DATA_TYPE_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         uint32_t flash = 0;
 
         isp_af_param.mode = af_param.param;
@@ -1057,7 +1057,7 @@ cmr_int af_start_lightly(cmr_handle af_handle, cmr_u32 camera_id) {
 
     cmr_bzero(&af_param, sizeof(af_param));
 
-    if (IMG_DATA_TYPE_RAW != sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW != sensor_info.image_format) {
         af_param.cmd = SENSOR_EXT_FOCUS_START;
         af_param.param = SENSOR_EXT_FOCUS_TRIG;
         af_param.zone_cnt = 0;
@@ -1114,7 +1114,7 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
     }
 
     CMR_LOGD("set autofocus quit");
-    if (IMG_DATA_TYPE_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         struct isp_af_win isp_af_param;
 
         cmr_bzero(&isp_af_param, sizeof(struct isp_af_win));
@@ -1605,7 +1605,7 @@ void af_try_stop(cmr_handle af_handle, cmr_u32 camera_id) {
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    if (IMG_DATA_TYPE_RAW != sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW != sensor_info.image_format) {
         goto exit;
     }
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);

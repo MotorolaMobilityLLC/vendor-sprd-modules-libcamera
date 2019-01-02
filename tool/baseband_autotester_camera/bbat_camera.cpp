@@ -653,7 +653,7 @@ void autotest_camera_startpreview(void) {
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_PREVIEW_SIZE,
              (cmr_uint)&preview_size);
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_PREVIEW_FORMAT,
-             CAMERA_DATA_FORMAT_YUV420);
+             IMG_DATA_TYPE_YUV420);
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_SENSOR_ROTATION, 0);
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
     SET_PARM(m_hal_oem, oem_handle, CAMERA_PARAM_RANGE_FPS,

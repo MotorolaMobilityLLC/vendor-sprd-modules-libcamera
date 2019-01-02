@@ -51,7 +51,7 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
             goto exit;
         }
         read_size = camera_get_data_from_file(
-            file_name, IMG_DATA_TYPE_RAW, scene_param.width, scene_param.height,
+            file_name, CAM_IMG_FMT_BAYER_MIPI_RAW, scene_param.width, scene_param.height,
             &isp_cap_raw.addr_vir);
         CMR_LOGI("raw data read_size = %ld", read_size);
     }
@@ -66,7 +66,7 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
     frame.usec = usec;
     frame.base = CMR_CAP0_ID_BASE;
     frame.frame_id = CMR_CAP0_ID_BASE;
-    frame.fmt = IMG_DATA_TYPE_RAW;
+    frame.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
     frame.yaddr = isp_cap_raw.addr_phy.addr_y;
     frame.uaddr = isp_cap_raw.addr_phy.addr_u;
     frame.vaddr = isp_cap_raw.addr_phy.addr_v;

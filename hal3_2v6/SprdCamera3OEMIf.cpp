@@ -375,11 +375,14 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
-      mIsUnpopped(false), mIsBlur2Zsl(false),
-      mPreviewFormat(CAMERA_DATA_FORMAT_YUV422), mPictureFormat(1),
-      mPreviewStartFlag(0), mIsDvPreview(0), mIsStoppingPreview(0),
-      mRecordingMode(0), mIsSetCaptureMode(false), mRecordingFirstFrameTime(0),
-      mUser(0), mPreviewWindow(NULL), mHalOem(NULL), mIsStoreMetaData(false),
+      mIsUnpopped(false), mIsBlur2Zsl(false), mPreviewFormat(CAM_IMG_FMT_NONE),
+      mVideoFormat(CAM_IMG_FMT_YUV420_NV21),
+      mCallbackFormat(CAM_IMG_FMT_YUV420_NV21),
+      mPictureFormat(CAM_IMG_FMT_YUV420_NV21),
+      mRawFormat(CAM_IMG_FMT_BAYER_MIPI_RAW), mPreviewStartFlag(0),
+      mIsDvPreview(0), mIsStoppingPreview(0), mRecordingMode(0),
+      mIsSetCaptureMode(false), mRecordingFirstFrameTime(0), mUser(0),
+      mPreviewWindow(NULL), mHalOem(NULL), mIsStoreMetaData(false),
       mIsFreqChanged(false), mCameraId(cameraId), miSPreviewFirstFrame(1),
       mCaptureMode(CAMERA_NORMAL_MODE), mCaptureRawMode(0), mFlashMask(false),
       mReleaseFLag(false), mTimeCoeff(1), mIsPerformanceTestable(false),
@@ -1875,6 +1878,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
     if (getMultiCameraMode() == MODE_3D_CALIBRATION) {
         captureSize.width = mCallbackWidth;
         captureSize.height = mCallbackHeight;
+        mPictureFormat = mCallbackFormat;
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE,
@@ -4019,7 +4023,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
                 src.addr_vir.addr_y + frame->width * frame->height;
             src.buf_size = frame->width * frame->height * 3 >> 1;
             src.fd = frame->fd;
-            src.fmt = IMG_DATA_TYPE_YUV420;
+            src.fmt = CAM_IMG_FMT_YUV420_NV21;
             src.rect.start_x = 0;
             src.rect.start_y = 0;
             src.rect.width = frame->width;
@@ -4035,7 +4039,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
                 dst.addr_vir.addr_y + mPreviewWidth * mPreviewHeight;
             dst.buf_size = mPreviewWidth * mPreviewHeight * 3 >> 1;
             dst.fd = ion_fd;
-            dst.fmt = IMG_DATA_TYPE_YUV420;
+            dst.fmt = CAM_IMG_FMT_YUV420_NV21;
             dst.rect.start_x = 0;
             dst.rect.start_y = 0;
             dst.rect.width = mPreviewWidth;
@@ -4295,7 +4299,7 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     sprintf(tmp_str, "%d", height);
     strcat(file_name, tmp_str);
 
-    if (IMG_DATA_TYPE_YUV420 == img_fmt || IMG_DATA_TYPE_YUV422 == img_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt || CAM_IMG_FMT_YUV422P == img_fmt) {
         strcat(file_name, "_y_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -4328,13 +4332,13 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             return 0;
         }
 
-        if (IMG_DATA_TYPE_YUV420 == img_fmt) {
+        if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
             fwrite((void *)addr->addr_u, 1, width * height / 2, fp);
         } else {
             fwrite((void *)addr->addr_u, 1, width * height, fp);
         }
         fclose(fp);
-    } else if (IMG_DATA_TYPE_JPEG == img_fmt) {
+    } else if (CAM_IMG_FMT_JPEG == img_fmt) {
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -4349,7 +4353,7 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 
         fwrite((void *)addr->addr_y, 1, width * height * 2, fp);
         fclose(fp);
-    } else if (IMG_DATA_TYPE_RAW == img_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
@@ -4535,8 +4539,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             struct img_addr vir_addr;
             vir_addr.addr_y = pic_addr_vir;
             mHalOem->ops->dump_image_with_isp_info(
-                mCameraHandle, IMG_DATA_TYPE_JPEG, mCaptureWidth,
-                mCaptureHeight, encInfo->size + ispInfoSize, &vir_addr);
+                mCameraHandle, CAM_IMG_FMT_JPEG, mCaptureWidth, mCaptureHeight,
+                encInfo->size + ispInfoSize, &vir_addr);
         }
     }
 
@@ -6394,7 +6398,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         mTakePictureMode = SNAPSHOT_PREVIEW_MODE;
         mCaptureMode = CAMERA_ZSL_MODE;
         mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-        mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
+        mPreviewFormat = CAM_IMG_FMT_YUV420_NV21;
         mRecordingMode = false;
         mPicCaptureCnt = 1;
         mZslPreviewMode = false;
@@ -7902,7 +7906,7 @@ int SprdCamera3OEMIf::SetChannelHandle(void *regular_chan, void *picture_chan) {
 
 int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
                                        int stream_tpye) {
-    uint32_t imageFormat = IMG_DATA_TYPE_RAW;
+    uint32_t imageFormat = CAM_IMG_FMT_BAYER_MIPI_RAW;
     int isYuvSensor = 0, i;
     SPRD_DEF_Tag sprddefInfo;
     char value[PROPERTY_VALUE_MAX];
@@ -7918,7 +7922,7 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
 
     mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_SENSOR_FORMAT,
                                 &imageFormat);
-    if (imageFormat == IMG_DATA_TYPE_YUV422) {
+    if (imageFormat == CAM_IMG_FMT_YUV422P) {
         isYuvSensor = 1;
     }
 
@@ -7929,12 +7933,12 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
             format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
             format == HAL_PIXEL_FORMAT_YCBCR_420_888) {
-            mPreviewFormat = IMG_DATA_TYPE_YUV420;
+            mPreviewFormat = CAM_IMG_FMT_YUV420_NV21;
         } else if (format == HAL_PIXEL_FORMAT_RAW16) {
-            mPreviewFormat = CAMERA_DATA_FORMAT_RAW;
+            mPreviewFormat = CAM_IMG_FMT_BAYER_MIPI_RAW;
         }
         if (isYuvSensor) {
-            mPreviewFormat = IMG_DATA_TYPE_YUV422;
+            mPreviewFormat = CAM_IMG_FMT_YUV422P;
         }
         break;
     case CAMERA_STREAM_TYPE_VIDEO:
@@ -7942,10 +7946,10 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         mVideoHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
             format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
-            mVideoFormat = IMG_DATA_TYPE_YUV420;
+            mVideoFormat = CAM_IMG_FMT_YUV420_NV21;
         }
         if (isYuvSensor) {
-            mVideoFormat = IMG_DATA_TYPE_YUV422;
+            mVideoFormat = CAM_IMG_FMT_YUV422P;
         }
 
         if (mVideoWidth > 0 && mVideoWidth >= mCaptureWidth &&
@@ -7967,20 +7971,20 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         if (format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
             format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
             format == HAL_PIXEL_FORMAT_YCrCb_420_SP) {
-            mCallbackFormat = IMG_DATA_TYPE_YUV420;
+            mCallbackFormat = CAM_IMG_FMT_YUV420_NV21;
         }
         if (isYuvSensor) {
-            mCallbackFormat = IMG_DATA_TYPE_YUV422;
+            mCallbackFormat = CAM_IMG_FMT_YUV422P;
         }
         break;
     case CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT:
         mCaptureWidth = size.width;
         mCaptureHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_BLOB) {
-            mPictureFormat = IMG_DATA_TYPE_YUV420;
+            mPictureFormat = CAM_IMG_FMT_YUV420_NV21;
         }
         if (isYuvSensor) {
-            mPictureFormat = IMG_DATA_TYPE_YUV422;
+            mPictureFormat = CAM_IMG_FMT_YUV422P;
         }
 
         if (mIsRawCapture == 1) {
@@ -8806,7 +8810,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             mHalOem->ops->image_sw_algorithm_processing(
                 obj->mCameraHandle, &src_sw_algorithm_buf,
                 &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
-                IMG_DATA_TYPE_YVU420);
+                CAM_IMG_FMT_YUV420_NV21);
 
             sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 5) {
@@ -8873,7 +8877,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             mHalOem->ops->image_sw_algorithm_processing(
                 obj->mCameraHandle, &src_sw_algorithm_buf,
                 &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
-                IMG_DATA_TYPE_YVU420);
+                CAM_IMG_FMT_YUV420_NV21);
 
             if (sw_algorithm_buf_cnt >= 3) {
                 ret =

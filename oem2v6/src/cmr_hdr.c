@@ -343,7 +343,7 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
         get_sensor_info = hdr_handle->common.ipm_cxt->init_in.get_sensor_info;
         get_sensor_info(oem_handle, sensor_id, &sensor_info);
 
-        if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
             isp_param1.cmd_value = hdr_enable;
             ret = isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param1);
         } else {
@@ -426,7 +426,7 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
 
     CMR_LOGD("HDR enable = %d", hdr_enable);
 
-    if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         isp_param1.cmd_value = (cmr_u32)hdr_enable;
         ret = isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param1);
     } else {

@@ -292,7 +292,8 @@ static cmr_int setting_is_rawrgb_format(struct setting_component *cpt,
         get_local_param(cpt, parm->camera_id);
 
     setting_get_sensor_static_info(cpt, parm, &local_param->sensor_static_info);
-    if (IMG_DATA_TYPE_RAW == local_param->sensor_static_info.image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+        local_param->sensor_static_info.image_format) {
         is_raw = 1;
     }
 
@@ -1942,40 +1943,17 @@ setting_get_video_snapshot_type(struct setting_component *cpt,
     return ret;
 }
 
-static enum img_data_type get_image_format_from_param(cmr_uint param) {
-    enum img_data_type fmt = IMG_DATA_TYPE_YUV420;
-
-    switch (param) {
-    case 0:
-        fmt = IMG_DATA_TYPE_YUV422;
-        break;
-    case 1:
-        fmt = IMG_DATA_TYPE_YUV420;
-        break;
-    case 3:
-        fmt = IMG_DATA_TYPE_YUV420_3PLANE;
-        break;
-    case 4:
-        fmt = IMG_DATA_TYPE_YVU420;
-        break;
-    case 5:
-        fmt = IMG_DATA_TYPE_YV12;
-        break;
-    case 6:
-        fmt = IMG_DATA_TYPE_RAW;
-        break;
-    default:
-        break;
-    }
-    return fmt;
-}
 static cmr_int setting_set_preview_format(struct setting_component *cpt,
                                           struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-    hal_param->preview_format =
-        get_image_format_from_param(parm->cmd_type_value);
+    // deprecated after sharkl5,minicamera,test,bbat need translating format at
+    // present
+    if (parm->cmd_type_value == IMG_DATA_TYPE_YUV420) {
+        hal_param->preview_format = CAM_IMG_FMT_YUV420_NV21;
+    } else {
+        hal_param->preview_format = parm->cmd_type_value;
+    }
     CMR_LOGD("format=%ld", hal_param->preview_format);
     return ret;
 }
@@ -2200,10 +2178,7 @@ static cmr_int setting_set_capture_format(struct setting_component *cpt,
                                           struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-    hal_param->capture_format =
-        get_image_format_from_param(parm->cmd_type_value);
-
+    hal_param->capture_format = parm->cmd_type_value;
     CMR_LOGD("format=%ld", hal_param->capture_format);
     return ret;
 }
@@ -2855,7 +2830,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 setting_isp_wait_notice(cpt);
                 goto EXIT;
             }
-            if (IMG_DATA_TYPE_RAW == image_format) {
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 CMR_LOGD("pre flash open");
                 hal_param->flash_param.has_preflashed = 1;
                 cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
@@ -2899,7 +2874,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         case SETTING_FLASH_WAIT_TO_CLOSE:
             ctrl_flash_status = FLASH_CLOSE_AFTER_OPEN;
             exif_flash = 0;
-            if (IMG_DATA_TYPE_RAW == image_format) {
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 /*disable*/
                 if (FLASH_CLOSE != flash_hw_status) {
                     if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
@@ -2935,7 +2910,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         case SETTING_FLASH_MAIN_LIGHTING: // high flash
             ctrl_flash_status = FLASH_HIGH_LIGHT;
             exif_flash = 1;
-            if (IMG_DATA_TYPE_RAW == image_format) {
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 CMR_LOGD("high flash Set Ae setting");
 
                 cmr_setting_clear_sem(cpt);
@@ -3423,7 +3398,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
         if (setting_is_need_flash(cpt, parm)) {
             CMR_LOGD("preflash low open");
             hal_param->flash_param.has_preflashed = 1;
-            if (IMG_DATA_TYPE_RAW == image_format) {
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
                 setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);
@@ -3447,7 +3422,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                                     (uint32_t)FLASH_CLOSE_AFTER_OPEN);
             hal_param->flash_param.flash_status = SETTING_FLASH_PRE_AFTER;
 
-            if (IMG_DATA_TYPE_RAW == image_format) {
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
             }
             CMR_LOGD("preflash low close");
@@ -3474,7 +3449,7 @@ setting_set_highflash_ae_measure(struct setting_component *cpt,
 
     if (setting_is_need_flash(cpt, parm)) {
         /*open flash*/
-        if (IMG_DATA_TYPE_RAW == image_format) {
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
             struct sensor_raw_info *raw_info_ptr = NULL;
             struct sensor_libuse_info *libuse_info = NULL;
             cmr_int product_id = 0;

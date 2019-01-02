@@ -175,7 +175,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.dump.filter.frame", value, "null");
     if (!strcmp(value, "true")) {
-        dump_image("filter_transfer_frame", IMG_DATA_TYPE_YUV420, width, height,
+        dump_image("filter_transfer_frame", CAM_IMG_FMT_YUV420_NV21, width, height,
                    0, addr, width * height * 3 / 2);
     }
     CMR_LOGD("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);

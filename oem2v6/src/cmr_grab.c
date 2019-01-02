@@ -1431,35 +1431,27 @@ static cmr_u32 cmr_grab_get_4cc(cmr_u32 img_type) {
     cmr_u32 ret_4cc;
 
     switch (img_type) {
-    case IMG_DATA_TYPE_YUV422:
+    case CAM_IMG_FMT_YUV422P:
         ret_4cc = IMG_PIX_FMT_YUV422P;
         break;
 
-    case IMG_DATA_TYPE_YUV420:
+    case CAM_IMG_FMT_YUV420_NV21:
         ret_4cc = IMG_PIX_FMT_NV21;
         break;
 
-    case IMG_DATA_TYPE_YVU420:
+    case CAM_IMG_FMT_YUV420_NV12:
         ret_4cc = IMG_PIX_FMT_NV12;
         break;
 
-    case IMG_DATA_TYPE_YUV420_3PLANE:
+    case CAM_IMG_FMT_YUV420_I420:
         ret_4cc = IMG_PIX_FMT_YUV420;
         break;
 
-    case IMG_DATA_TYPE_RGB565:
-        ret_4cc = IMG_PIX_FMT_RGB565;
-        break;
-
-    case IMG_DATA_TYPE_RAW:
+    case CAM_IMG_FMT_BAYER_MIPI_RAW:
         ret_4cc = IMG_PIX_FMT_GREY;
         break;
 
-    case IMG_DATA_TYPE_PDAF_TYPE3:
-        ret_4cc = IMG_PIX_FMT_PDA3;
-        break;
-
-    case IMG_DATA_TYPE_JPEG:
+    case CAM_IMG_FMT_JPEG:
         ret_4cc = IMG_PIX_FMT_JPEG;
         break;
 
@@ -1478,35 +1470,31 @@ static cmr_u32 cmr_grab_get_img_type(cmr_u32 fourcc) {
 
     switch (fourcc) {
     case IMG_PIX_FMT_YUV422P:
-        img_type = IMG_DATA_TYPE_YUV422;
+        img_type = CAM_IMG_FMT_YUV422P;
         break;
 
     case IMG_PIX_FMT_NV21:
-        img_type = IMG_DATA_TYPE_YUV420;
+        img_type = CAM_IMG_FMT_YUV420_NV21;
         break;
 
     case IMG_PIX_FMT_NV12:
-        img_type = IMG_DATA_TYPE_YVU420;
+        img_type = CAM_IMG_FMT_YUV420_NV12;
         break;
 
     case IMG_PIX_FMT_YUV420:
-        img_type = IMG_DATA_TYPE_YUV420_3PLANE;
-        break;
-
-    case IMG_PIX_FMT_RGB565:
-        img_type = IMG_DATA_TYPE_RGB565;
+        img_type = CAM_IMG_FMT_YUV420_I420;
         break;
 
     case IMG_PIX_FMT_GREY:
-        img_type = IMG_DATA_TYPE_RAW;
+        img_type = CAM_IMG_FMT_BAYER_MIPI_RAW;
         break;
 
     case IMG_PIX_FMT_JPEG:
-        img_type = IMG_DATA_TYPE_JPEG;
+        img_type = CAM_IMG_FMT_JPEG;
         break;
 
     default:
-        img_type = IMG_DATA_TYPE_YUV420;
+        img_type = CAM_IMG_FMT_YUV420_NV21;
         break;
     }
 

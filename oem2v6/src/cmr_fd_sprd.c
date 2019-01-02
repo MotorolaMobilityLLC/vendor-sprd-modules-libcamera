@@ -1046,7 +1046,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         class_handle->frame_in.src_frame.addr_vir.addr_v =
             class_handle->frame_in.src_frame.addr_vir.addr_u;
 
-        class_handle->fd_small.fmt = IMG_DATA_TYPE_YUV420;
+        class_handle->fd_small.fmt = CAM_IMG_FMT_YUV420_NV21;
         class_handle->fd_small.data_end.y_endian = 1;
         class_handle->fd_small.data_end.uv_endian = 2;
         class_handle->fd_small.rect.start_x = 0;

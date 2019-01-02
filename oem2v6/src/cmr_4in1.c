@@ -194,7 +194,7 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
     if (handle->is_inited == 0) {
         goto exit;
     }
-    if (in->src_frame.fmt == IMG_DATA_TYPE_RAW) {
+    if (in->src_frame.fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
         is_raw_capture = 1;
     }
     sem_wait(&handle->sem_4in1);

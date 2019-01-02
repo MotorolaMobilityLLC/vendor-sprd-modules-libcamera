@@ -200,7 +200,7 @@ cmr_int image_sw_algorithm_processing(
     struct image_sw_algorithm_buf *src_sw_algorithm_buf,
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
-    enum img_data_type format);
+    cam_img_format_t format);
 int dump_image_with_isp_info(cmr_handle camera_handle, uint32_t img_fmt,
                              uint32_t width, uint32_t height,
                              uint32_t dump_size, struct img_addr *addr);

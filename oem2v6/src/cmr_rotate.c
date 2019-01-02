@@ -31,21 +31,13 @@ static unsigned int cmr_rot_fmt_cvt(cmr_u32 cmr_fmt) {
     unsigned int fmt = ROT_FMT_MAX;
 
     switch (cmr_fmt) {
-    case IMG_DATA_TYPE_YUV422:
+    case CAM_IMG_FMT_YUV422P:
         fmt = ROT_YUV422;
         break;
 
-    case IMG_DATA_TYPE_YUV420:
-    case IMG_DATA_TYPE_YVU420:
+    case CAM_IMG_FMT_YUV420_NV21:
+    case CAM_IMG_FMT_YUV420_NV12:
         fmt = ROT_YUV420;
-        break;
-
-    case IMG_DATA_TYPE_RGB565:
-        fmt = ROT_RGB565;
-        break;
-
-    case IMG_DATA_TYPE_RGB888:
-        fmt = ROT_RGB888;
         break;
 
     default:

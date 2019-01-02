@@ -1406,7 +1406,7 @@ cmr_int cmr_preview_is_support_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    if (IMG_DATA_TYPE_JPEG == sensor_info->sensor_image_type) {
+    if (CAM_IMG_FMT_JPEG == sensor_info->sensor_image_type) {
         *is_support = 0;
     } else {
         *is_support = 1;
@@ -3659,13 +3659,13 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*init preview memory info*/
     buffer_size = width * height;
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.preview_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.preview_fmt ||
-        IMG_DATA_TYPE_RAW == prev_cxt->prev_param.preview_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.preview_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.preview_fmt ||
+        CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.preview_fmt) {
         prev_cxt->prev_mem_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.preview_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.preview_fmt) {
         prev_cxt->prev_mem_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->prev_param.preview_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.preview_fmt) {
         if (IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot ||
             IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot) {
             prev_cxt->prev_mem_size =
@@ -3676,7 +3676,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 (width + camera_get_aligned_size(aligned_type, width / 2)) *
                 height;
         }
-        prev_cxt->prev_param.preview_fmt = IMG_DATA_TYPE_YUV420;
+        prev_cxt->prev_param.preview_fmt = CAM_IMG_FMT_YUV420_NV21;
     } else {
         CMR_LOGE("unsupprot fmt %ld", prev_cxt->prev_param.preview_fmt);
         return CMR_CAMERA_INVALID_PARAM;
@@ -3928,12 +3928,12 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*init video memory info*/
     buffer_size = width * height;
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.preview_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.preview_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.preview_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.preview_fmt) {
         prev_cxt->video_mem_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.preview_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.preview_fmt) {
         prev_cxt->video_mem_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->prev_param.preview_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.preview_fmt) {
         if (IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot ||
             IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot) {
             prev_cxt->video_mem_size =
@@ -3944,7 +3944,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 (width + camera_get_aligned_size(aligned_type, width / 2)) *
                 height;
         }
-        prev_cxt->prev_param.preview_fmt = IMG_DATA_TYPE_YUV420;
+        prev_cxt->prev_param.preview_fmt = CAM_IMG_FMT_YUV420_NV21;
     } else {
         CMR_LOGE("unsupprot fmt %ld", prev_cxt->prev_param.preview_fmt);
         return CMR_CAMERA_INVALID_PARAM;
@@ -4199,7 +4199,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("mode_4in1 = %d, capture format: %d",
              prev_cxt->prev_param.mode_4in1, prev_cxt->cap_org_fmt);
     if (prev_cxt->prev_param.mode_4in1 > 0 &&
-        IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
+        CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
         ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size);
     } else {
         ret = camera_get_postproc_capture_size(camera_id, &total_mem_size);
@@ -4284,7 +4284,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("prev_cxt->cap_org_fmt: %ld, encode_angle %d",
              prev_cxt->cap_org_fmt, prev_cxt->prev_param.encode_angle);
     for (i = 0; i < buffer->count; i++) {
-        if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
             if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) ||
                 prev_cxt->prev_param.is_cfg_rot_cap) {
                 if (prev_cxt->cap_mem[i].cap_yuv_rot.fd ==
@@ -4332,7 +4332,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             u_addr_vir = y_addr_vir;
             frame_size = buffer_size * RAWRGB_BIT_WIDTH / 8;
             cur_img_frm = &prev_cxt->cap_mem[i].cap_raw;
-        } else if (IMG_DATA_TYPE_JPEG == prev_cxt->cap_org_fmt) {
+        } else if (CAM_IMG_FMT_JPEG == prev_cxt->cap_org_fmt) {
             mem_size = prev_cxt->cap_mem[i].target_jpeg.buf_size;
             if (CAP_SIM_ROT(handle, camera_id)) {
                 fd = prev_cxt->cap_mem[i].cap_yuv.fd;
@@ -4349,8 +4349,8 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             u_addr_vir = y_addr_vir;
             frame_size = CMR_JPEG_SZIE(prev_cxt->actual_pic_size.width,
                                        prev_cxt->actual_pic_size.height);
-        } else if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                   IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
+        } else if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->cap_org_fmt ||
+                   CAM_IMG_FMT_YUV420_NV12 == prev_cxt->cap_org_fmt) {
             if (is_normal_cap) {
                 if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) ||
                     (prev_cxt->prev_param.is_cfg_rot_cap &&
@@ -4569,12 +4569,12 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
 
     /*init preview memory info*/
     buffer_size = width * height;
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->cap_org_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->cap_org_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->cap_org_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->cap_org_fmt) {
         if (IMG_ANGLE_90 == prev_cxt->prev_param.cap_rot ||
             IMG_ANGLE_270 == prev_cxt->prev_param.cap_rot) {
             prev_cxt->cap_zsl_mem_size =
@@ -4585,8 +4585,8 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
                 (width + camera_get_aligned_size(aligned_type, width / 2)) *
                 height;
         }
-        prev_cxt->cap_org_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
+        prev_cxt->cap_org_fmt = CAM_IMG_FMT_YUV420_NV21;
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height * 2);
         if (prev_cxt->prev_param.mode_4in1)
             prev_cxt->cap_zsl_mem_size += (small_w * small_h * 2);
@@ -4716,12 +4716,12 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*init preview memory info*/
     buffer_size = width * height;
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->cap_org_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->cap_org_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->cap_org_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->cap_org_fmt) {
         if (IMG_ANGLE_90 == prev_cxt->prev_param.cap_rot ||
             IMG_ANGLE_270 == prev_cxt->prev_param.cap_rot) {
             prev_cxt->cap_zsl_mem_size =
@@ -4732,8 +4732,8 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 (width + camera_get_aligned_size(aligned_type, width / 2)) *
                 height;
         }
-        prev_cxt->cap_org_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
+        prev_cxt->cap_org_fmt = CAM_IMG_FMT_YUV420_NV21;
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height * 2);
     } else {
         CMR_LOGE("unsupprot fmt %ld", prev_cxt->cap_org_fmt);
@@ -5447,7 +5447,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 height = sensor_info->mode_info[i].trim_height;
                 width = sensor_info->mode_info[i].trim_width;
                 CMR_LOGD("candidate height = %d, width = %d", height, width);
-                if (IMG_DATA_TYPE_JPEG !=
+                if (CAM_IMG_FMT_JPEG !=
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         /* dont choose high fps setting for no-slowmotion */
@@ -5531,7 +5531,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 height = sensor_info->mode_info[i].trim_height;
                 width = sensor_info->mode_info[i].trim_width;
                 CMR_LOGD("height = %d, width = %d", height, width);
-                if (IMG_DATA_TYPE_JPEG !=
+                if (CAM_IMG_FMT_JPEG !=
                     sensor_info->mode_info[i].image_format) {
                     if (search_height == height && search_width == width) {
                         target_mode = i;
@@ -5550,7 +5550,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 height = sensor_info->mode_info[i].trim_height;
                 width = sensor_info->mode_info[i].trim_width;
                 CMR_LOGD("height = %d, width = %d", height, width);
-                if (IMG_DATA_TYPE_JPEG !=
+                if (CAM_IMG_FMT_JPEG !=
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         /* dont choose high fps setting for no-slowmotion */
@@ -5600,7 +5600,7 @@ cmr_int prev_get_sn_inf(struct prev_handle *handle, cmr_u32 camera_id,
 
     sensor_info = &handle->prev_cxt[camera_id].sensor_info;
 
-    if (IMG_DATA_TYPE_RAW == sensor_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info->image_format) {
         sn_if->img_fmt = GRAB_SENSOR_FORMAT_RAWRGB;
         CMR_LOGD("this is RAW sensor");
     } else {
@@ -5636,7 +5636,7 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle, cmr_u32 camera_id,
                               struct img_size *max_size) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 zoom_proc_mode = ZOOM_BY_CAP;
-    cmr_u32 original_fmt = IMG_DATA_TYPE_YUV420;
+    cmr_u32 original_fmt = CAM_IMG_FMT_YUV420_NV21;
     cmr_u32 need_isp = 0;
     struct img_rect img_rc;
     struct img_size img_sz;
@@ -5656,23 +5656,23 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle, cmr_u32 camera_id,
     cap_size = &handle->prev_cxt[camera_id].actual_pic_size;
 
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
-    if (IMG_DATA_TYPE_YUV422 == sn_mode->image_format) {
-        original_fmt = IMG_DATA_TYPE_YUV420;
+    if (CAM_IMG_FMT_YUV422P == sn_mode->image_format) {
+        original_fmt = CAM_IMG_FMT_YUV420_NV21;
         zoom_proc_mode = zoom_post_proc;
-    } else if (IMG_DATA_TYPE_RAW == sn_mode->image_format) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == sn_mode->image_format) {
         if (sn_mode->trim_width <= isp_width_limit) {
             CMR_LOGD("need ISP");
             need_isp = 1;
-            original_fmt = IMG_DATA_TYPE_YUV420;
+            original_fmt = CAM_IMG_FMT_YUV420_NV21;
             zoom_proc_mode = zoom_post_proc;
         } else {
             CMR_LOGD("Need to process raw data");
             need_isp = 0;
-            original_fmt = IMG_DATA_TYPE_RAW;
+            original_fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
             zoom_proc_mode = ZOOM_POST_PROCESS;
         }
-    } else if (IMG_DATA_TYPE_JPEG == sn_mode->image_format) {
-        original_fmt = IMG_DATA_TYPE_JPEG;
+    } else if (CAM_IMG_FMT_JPEG == sn_mode->image_format) {
+        original_fmt = CAM_IMG_FMT_JPEG;
         zoom_proc_mode = ZOOM_POST_PROCESS;
     } else {
         CMR_LOGE("Unsupported sensor format %d for capture",
@@ -6002,7 +6002,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "preview")) {
             if (g_preview_frame_dump_cnt < 10) {
-                dump_image("prev_construct_frame", IMG_DATA_TYPE_YUV420,
+                dump_image("prev_construct_frame", CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
                            &prev_cxt->prev_frm[frm_id].addr_vir,
@@ -6102,12 +6102,11 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "video")) {
             if (g_video_frame_dump_cnt < 10) {
-                dump_image("prev_construct_video_frame", IMG_DATA_TYPE_YUV420,
+                dump_image("prev_construct_video_frame", CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
                            &prev_cxt->video_frm[frm_id].addr_vir,
                            frame_type->width * frame_type->height * 3 / 2);
-
                 g_video_frame_dump_cnt++;
             }
         }
@@ -6179,7 +6178,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "zsl")) {
             if (g_zsl_frame_dump_cnt < 10) {
-                dump_image("prev_construct_zsl_frame", IMG_DATA_TYPE_YUV420,
+                dump_image("prev_construct_zsl_frame", CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
                            &prev_cxt->cap_zsl_frm[frm_id].addr_vir,
@@ -6404,8 +6403,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         chn_param.cap_inf_cfg.cfg.slowmotion = 1;
     }
 
-    if (sensor_mode_info->image_format == IMG_DATA_TYPE_RAW &&
-        chn_param.cap_inf_cfg.cfg.dst_img_fmt != IMG_DATA_TYPE_RAW) {
+    if (sensor_mode_info->image_format == CAM_IMG_FMT_BAYER_MIPI_RAW &&
+        chn_param.cap_inf_cfg.cfg.dst_img_fmt != CAM_IMG_FMT_BAYER_MIPI_RAW) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
 
@@ -6660,7 +6659,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
 
@@ -6804,7 +6803,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
 #endif
     }
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
 
@@ -7050,7 +7049,7 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
 
@@ -7160,12 +7159,12 @@ cmr_int channel0_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     CMR_LOGD("channel0_fmt=%d, w=%d, h=%d", prev_cxt->prev_param.channel0_fmt,
              width, height);
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.channel0_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.channel0_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.channel0_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.channel0_fmt) {
         prev_cxt->channel0.buf_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.channel0_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.channel0_fmt) {
         prev_cxt->channel0.buf_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->prev_param.channel0_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel0_fmt) {
         prev_cxt->channel0.buf_size = width * height * 2;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel0_fmt);
@@ -7661,15 +7660,15 @@ cmr_int channel1_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     CMR_LOGD("channel1_fmt=%d, w=%d, h=%d", prev_cxt->prev_param.channel1_fmt,
              width, height);
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.channel1_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.channel1_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.channel1_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.channel1_fmt) {
         prev_cxt->channel1.buf_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.channel1_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.channel1_fmt) {
         prev_cxt->channel1.buf_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->prev_param.channel1_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel1_fmt) {
         prev_cxt->channel1.buf_size = (width * height * 3) >> 1;
-        prev_cxt->prev_param.channel1_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->prev_param.channel1_fmt) {
+        prev_cxt->prev_param.channel1_fmt = CAM_IMG_FMT_YUV420_NV21;
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel1_fmt) {
         prev_cxt->channel1.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel1_fmt);
@@ -7893,7 +7892,7 @@ cmr_int channel1_configure(struct prev_handle *handle, cmr_u32 camera_id,
         DCAM_SCENE_MODE_CAPTURE_CALLBACK; // TBD
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     } else {
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -8083,7 +8082,7 @@ cmr_int channel1_update_params(struct prev_handle *handle, cmr_u32 camera_id) {
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format)
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format)
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     else
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -8498,15 +8497,15 @@ cmr_int channel2_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     CMR_LOGD("channel2_fmt=%d, w=%d, h=%d", prev_cxt->prev_param.channel2_fmt,
              width, height);
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.channel2_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.channel2_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.channel2_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.channel2_fmt) {
         prev_cxt->channel2.buf_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.channel2_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.channel2_fmt) {
         prev_cxt->channel2.buf_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->prev_param.channel2_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel2_fmt) {
         prev_cxt->channel2.buf_size = (width * height * 3) >> 1;
-        prev_cxt->prev_param.channel2_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->prev_param.channel2_fmt) {
+        prev_cxt->prev_param.channel2_fmt = CAM_IMG_FMT_YUV420_NV21;
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel2_fmt) {
         prev_cxt->channel2.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel2_fmt);
@@ -8730,7 +8729,7 @@ cmr_int channel2_configure(struct prev_handle *handle, cmr_u32 camera_id,
         DCAM_SCENE_MODE_CAPTURE_CALLBACK; // TBD
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     } else {
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -8926,7 +8925,7 @@ cmr_int channel2_update_params(struct prev_handle *handle, cmr_u32 camera_id) {
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format)
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format)
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     else
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -9341,15 +9340,15 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     CMR_LOGD("channel3_fmt=%d, w=%d, h=%d", prev_cxt->prev_param.channel3_fmt,
              width, height);
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.channel3_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.channel3_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.channel3_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.channel3_fmt) {
         prev_cxt->channel3.buf_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.channel3_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.channel3_fmt) {
         prev_cxt->channel3.buf_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->prev_param.channel3_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel3_fmt) {
         prev_cxt->channel3.buf_size = (width * height * 3) >> 1;
-        prev_cxt->prev_param.channel3_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->prev_param.channel3_fmt) {
+        prev_cxt->prev_param.channel3_fmt = CAM_IMG_FMT_YUV420_NV21;
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel3_fmt) {
         prev_cxt->channel3.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel3_fmt);
@@ -9573,7 +9572,7 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
         DCAM_SCENE_MODE_CAPTURE_CALLBACK; // TBD
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     } else {
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -9763,7 +9762,7 @@ cmr_int channel3_update_params(struct prev_handle *handle, cmr_u32 camera_id) {
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format)
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format)
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     else
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -10178,15 +10177,15 @@ cmr_int channel4_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     CMR_LOGD("channel4_fmt=%d, w=%d, h=%d", prev_cxt->prev_param.channel4_fmt,
              width, height);
-    if (IMG_DATA_TYPE_YUV420 == prev_cxt->prev_param.channel4_fmt ||
-        IMG_DATA_TYPE_YVU420 == prev_cxt->prev_param.channel4_fmt) {
+    if (CAM_IMG_FMT_YUV420_NV21 == prev_cxt->prev_param.channel4_fmt ||
+        CAM_IMG_FMT_YUV420_NV12 == prev_cxt->prev_param.channel4_fmt) {
         prev_cxt->channel4.buf_size = (width * height * 3) >> 1;
-    } else if (IMG_DATA_TYPE_YUV422 == prev_cxt->prev_param.channel4_fmt) {
+    } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.channel4_fmt) {
         prev_cxt->channel4.buf_size = (width * height) << 1;
-    } else if (IMG_DATA_TYPE_YV12 == prev_cxt->prev_param.channel4_fmt) {
+    } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel4_fmt) {
         prev_cxt->channel4.buf_size = (width * height * 3) >> 1;
-        prev_cxt->prev_param.channel4_fmt = IMG_DATA_TYPE_YUV420;
-    } else if (IMG_DATA_TYPE_RAW == prev_cxt->prev_param.channel4_fmt) {
+        prev_cxt->prev_param.channel4_fmt = CAM_IMG_FMT_YUV420_NV21;
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel4_fmt) {
         prev_cxt->channel4.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel4_fmt);
@@ -10410,7 +10409,7 @@ cmr_int channel4_configure(struct prev_handle *handle, cmr_u32 camera_id,
         DCAM_SCENE_MODE_CAPTURE_CALLBACK; // TBD
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     } else {
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -10600,7 +10599,7 @@ cmr_int channel4_update_params(struct prev_handle *handle, cmr_u32 camera_id) {
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format)
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format)
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     else
         chn_param.cap_inf_cfg.cfg.need_isp = 0;
@@ -11371,7 +11370,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = prev_cxt->cap_skip_num;
-    if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
         chn_param.cap_inf_cfg.cfg.need_isp = 1;
     }
 
@@ -11447,7 +11446,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
                  sensor_mode_info->image_format);
         CMR_LOGE("inorde to out yuv raw data ,so force set yuv to "
                  "SENSOR_IMAGE_FORMAT_RAW \n");
-        sensor_mode_info->image_format = SENSOR_IMAGE_FORMAT_RAW;
+        sensor_mode_info->image_format = CAM_IMG_FMT_BAYER_MIPI_RAW;
         CMR_LOGE("1 sensor_mode->image_format =%d \n",
                  sensor_mode_info->image_format);
     }
@@ -11475,7 +11474,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 
     /*config capture ability*/
-    chn_param.cap_inf_cfg.cfg.dst_img_fmt = IMG_DATA_TYPE_RAW;
+    chn_param.cap_inf_cfg.cfg.dst_img_fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
@@ -11633,7 +11632,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 
     switch (sn_mode_info->image_format) {
-    case IMG_DATA_TYPE_YUV422:
+    case CAM_IMG_FMT_YUV422P:
         prev_cxt->cap_org_fmt = prev_cxt->prev_param.cap_fmt;
         if (ZOOM_POST_PROCESS == zoom_post_proc) {
             prev_cxt->cap_zoom_mode = zoom_post_proc;
@@ -11644,11 +11643,11 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         }
         break;
 
-    case IMG_DATA_TYPE_RAW:
-        if (IMG_DATA_TYPE_RAW == img_cap->dst_img_fmt) {
+    case CAM_IMG_FMT_BAYER_MIPI_RAW:
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_cap->dst_img_fmt) {
             CMR_LOGD("Get RawData From RawRGB senosr");
             img_cap->need_isp = 0;
-            prev_cxt->cap_org_fmt = IMG_DATA_TYPE_RAW;
+            prev_cxt->cap_org_fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
             prev_cxt->cap_zoom_mode = ZOOM_POST_PROCESS;
             sensor_size->width = sn_mode_info->width;
             sensor_size->height = sn_mode_info->height;
@@ -11667,7 +11666,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
             } else {
                 CMR_LOGD("change to rgbraw type");
                 img_cap->need_isp = 0;
-                prev_cxt->cap_org_fmt = IMG_DATA_TYPE_RAW;
+                prev_cxt->cap_org_fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
                 prev_cxt->cap_zoom_mode = ZOOM_POST_PROCESS;
                 sensor_size->width = sn_mode_info->width;
                 sensor_size->height = sn_mode_info->height;
@@ -11675,8 +11674,8 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         }
         break;
 
-    case IMG_DATA_TYPE_JPEG:
-        prev_cxt->cap_org_fmt = IMG_DATA_TYPE_JPEG;
+    case CAM_IMG_FMT_JPEG:
+        prev_cxt->cap_org_fmt = CAM_IMG_FMT_JPEG;
         prev_cxt->cap_zoom_mode = ZOOM_POST_PROCESS;
         break;
 
@@ -11745,7 +11744,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         img_cap->dst_img_size.width = sn_mode_info->trim_width;
         img_cap->dst_img_size.height = sn_mode_info->trim_height;
 
-        if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt ||
+        if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt ||
             ZOOM_POST_PROCESS == zoom_post_proc) {
             sn_trim_rect->start_x = img_cap->src_img_rect.start_x;
             sn_trim_rect->start_y = img_cap->src_img_rect.start_y;

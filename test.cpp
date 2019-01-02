@@ -1163,14 +1163,10 @@ static void eng_tst_camera_startpreview(void) {
 #if defined(CONFIG_ISP_2_4)
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_CAF);
 #endif
-    // SET_PARM(oem_handle , CAMERA_PARAM_VIDEO_SIZE     ,
-    // (cmr_uint)&video_size);
-    // SET_PARM(oem_handle , CAMERA_PARAM_CAPTURE_SIZE   ,
-    // (cmr_uint)&capture_size);
+
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_PREVIEW_FORMAT,
-             CAMERA_DATA_FORMAT_YUV420);
-    // SET_PARM(oem_handle , CAMERA_PARAM_CAPTURE_FORMAT ,
-    // CAMERA_DATA_FORMAT_YUV420);
+             IMG_DATA_TYPE_YUV420);
+
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_SENSOR_ROTATION, 0);
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
     SET_PARM(mHalOem, oem_handle, CAMERA_PARAM_RANGE_FPS, (cmr_uint)&fps_param);

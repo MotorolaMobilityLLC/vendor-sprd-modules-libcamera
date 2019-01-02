@@ -315,13 +315,6 @@ typedef struct {
 } camera_stream_configure_t;
 
 typedef enum {
-    CAMERA_DATA_FORMAT_YUV422 = 0,
-    CAMERA_DATA_FORMAT_YUV420,
-    CAMERA_DATA_FORMAT_RGB,
-    CAMERA_DATA_FORMAT_RAW = 6,
-} camera_data_format_type_t;
-
-typedef enum {
     CAMERA_PREVIEW_FORMAT_DC = 0,
     CAMERA_PREVIEW_FORMAT_DV,
 } camera_preview_mode_t;
