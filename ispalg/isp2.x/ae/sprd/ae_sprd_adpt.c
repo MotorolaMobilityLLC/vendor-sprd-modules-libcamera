@@ -80,6 +80,7 @@ static float ae_get_real_gain(cmr_u32 gain);
 static cmr_s32 ae_set_pause(struct ae_ctrl_cxt *cxt);
 static cmr_s32 ae_set_restore_cnt(struct ae_ctrl_cxt *cxt);
 static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable);
+static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable);
 static cmr_s32 ae_set_skip_update(struct ae_ctrl_cxt *cxt);
 static cmr_s32 ae_set_restore_skip_update_cnt(struct ae_ctrl_cxt *cxt);
 static cmr_s32 ae_round(float a);
@@ -1303,7 +1304,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->flash_backup.cur_index = cxt->sync_cur_result.wts.cur_index;
 		cxt->flash_backup.bv = cxt->cur_result.cur_bv;
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
-			rtn = ae_set_force_pause(cxt, 1);
+			rtn = ae_set_force_pause_flash(cxt, 1);
 		if (cxt->exposure_compensation.ae_compensation_flag)  {
 			if(0==cxt->cur_status.settings.table_idx){
 				struct ae_exp_compensation exp_comp;
@@ -1314,9 +1315,9 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 				exp_comp.step_denominator=8;
 				ae_set_exposure_compensation(cxt,&exp_comp);
 			}
-			cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
 			ISP_LOGV("AE_FLASH_PRE_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
+		cxt->flash_backup.table_idx = cxt->cur_status.settings.table_idx;
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->cur_status.settings.flash = FLASH_PRE_BEFORE;
 		break;
@@ -1375,7 +1376,17 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
-			rtn = ae_set_force_pause(cxt, 0);
+			struct ae_exp_compensation exp_comp;
+			exp_comp.comp_val=0;
+			exp_comp.comp_range.min=-16;
+			exp_comp.comp_range.max=16;
+			exp_comp.step_numerator=1;
+			exp_comp.step_denominator=8;
+			ae_set_exposure_compensation(cxt,&exp_comp);
+			cxt->cur_status.settings.exp_is_transmit = 1;
+			rtn = ae_set_force_pause_flash(cxt, 0);
+			cxt->cur_status.settings.manual_mode = 1;
+			ISP_LOGD("flash unlock AE_SET_FORCE_RESTORE, exp_is_transmit:%d", cxt->cur_status.settings.exp_is_transmit);
 		}
 
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
@@ -2197,7 +2208,39 @@ static cmr_s32 ae_set_gain(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	}
 	return rtn;
 }
+static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
+{
+       cmr_s32 ret = AE_SUCCESS;
 
+       if (enable) {
+		ISP_LOGI("cxt->expchanged:%d",cxt->expchanged);
+		if(cxt->expchanged == 0){
+			if(cxt->sync_cur_result.wts.cur_index==0) {
+				cxt->sync_cur_result.wts.cur_index=280;
+				ISP_LOGD("wts.cur_index is Zero");
+			}
+			cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
+			ISP_LOGI("ae_base_idx:%d ",cxt->exposure_compensation.ae_base_idx);
+		}
+               cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+               if (0 == cxt->cur_status.settings.pause_cnt) {
+                       cxt->cur_status.settings.exp_line = 0;
+                       cxt->cur_status.settings.gain = 0;
+                       cxt->cur_status.settings.manual_mode = -1;
+               }
+       } else {
+               if (2 > cxt->cur_status.settings.pause_cnt) {
+                       cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+                       cxt->cur_status.settings.pause_cnt = 0;
+                       cxt->cur_status.settings.exp_line = 0;
+                       cxt->cur_status.settings.gain = 0;
+                       cxt->cur_status.settings.manual_mode = -1;
+               }
+       }
+       cxt->cur_status.settings.force_lock_ae = enable;
+       ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae,cxt->cur_status.settings.manual_mode);
+       return ret;
+}
 static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 {
 	cmr_s32 ret = AE_SUCCESS;
@@ -3758,6 +3801,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	cxt->zsl_flag = work_info->zsl_flag;
 	ISP_LOGV("zsl_flag %d", cxt->zsl_flag);
+	cxt->expchanged = 0;
 
 	if((work_info->blk_num.w != work_info->blk_num.h) || (work_info->blk_num.w < 32) || (work_info->blk_num.w % 32)){
 		work_info->blk_num.w = 32;
@@ -4383,9 +4427,13 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 				cxt->exposure_compensation.step_denominator = exp_comp->step_denominator;
 				if (0 ==exp_comp->comp_val && 0 == cxt->exposure_compensation.touch_ev_flag) {
 					cxt->cur_status.settings.manual_mode = 2;
+					if(cxt->exposure_compensation.ae_base_idx!=0){
+						cxt->cur_status.settings.table_idx = cxt->exposure_compensation.ae_base_idx;
+					}
 				} else {
 					cxt->exposure_compensation.touch_ev_flag = 1;//keep index (fps) on first touch ev
 					ae_set_compensation_calc(cxt, &change_idx);
+					cxt->expchanged = 1;
 					cxt->cur_status.settings.manual_mode = 1;
 					cxt->cur_status.settings.table_idx = change_idx;
 					if(cxt->cur_status.settings.table_idx!=cxt->last_table_index){
@@ -5033,6 +5081,12 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST -ae	%dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+       if (cxt->cur_status.settings.exp_is_transmit ==1){
+               cxt->cur_status.settings.exp_is_transmit = 0;   //release transmit expsoure value to ae
+               if(cxt->cur_status.settings.manual_mode == 1){
+                       cxt->cur_status.settings.manual_mode = -1;
+               }
+       }
 
 	cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
 
@@ -5496,6 +5550,12 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
 	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32)((ae_time1 - ae_time0) / 1000));
+	if (cxt->cur_status.settings.exp_is_transmit ==1){
+	        cxt->cur_status.settings.exp_is_transmit = 0;   //release transmit expsoure value to ae
+	        if(cxt->cur_status.settings.manual_mode == 1){
+	                cxt->cur_status.settings.manual_mode = -1;
+	        }
+	}
 
 	if (rtn) {
 		ISP_LOGE("fail to calc ae misc");
@@ -5878,6 +5938,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 
 	case AE_SET_FORCE_PAUSE:
+		cxt->expchanged = 0;
 		rtn = ae_set_force_pause(cxt, 1);
 		cxt->exposure_compensation.ae_compensation_flag = 1;
 		ISP_LOGD("AE_SET_FORCE_PAUSE");
