@@ -439,6 +439,27 @@ void *ispvideo_GetIspHandle(void)
 	return isp_handler;
 }
 
+
+cmr_u32 isp_video_get_image_processed_index(void)
+{
+	return 0;
+}
+
+cmr_u32 isp_video_get_simulation_loop_count(void)
+{
+	return 0;
+}
+
+struct isp_raw_image *isp_video_get_raw_images_info(void)
+{
+	return NULL;
+}
+
+cmr_u32 isp_video_get_simulation_flag(void)
+{
+	return 0;
+}
+
 cmr_u32 ispvideo_SetIspParamToSt(cmr_u8 * dig_ptr, struct isp_parser_buf_in * isp_ptr)
 {
 	cmr_u32 buf_len = 0x00;
@@ -3808,6 +3829,10 @@ void send_capture_complete_msg()
 		sem_post(&capture_sem_lock);
 		capture_flag = 0;
 	}
+}
+
+void isp_video_set_capture_complete_flag(void)
+{
 }
 
 void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)

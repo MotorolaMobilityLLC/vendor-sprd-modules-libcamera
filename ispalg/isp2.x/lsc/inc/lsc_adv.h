@@ -75,7 +75,7 @@ enum alsc_io_ctrl_cmd {
 	ALSC_FW_PROC_START = 15,
 	ALSC_FW_PROC_START_END = 16,
 	ALSC_GET_UPDATE_INFO = 17,
-	ALSC_UNLOCK_UPDATE_FLAG = 18,
+	ALSC_DO_SIMULATION = 18,
 };
 
 	struct tg_alsc_debug_info {
@@ -259,10 +259,14 @@ struct alsc_simulation_info {
 	cmr_u16 lsc_table[32*32*4];
 };
 
-//do simulation
-struct alsc_do_simulation {
-	void* lsc_adv_handle;
-	void* alsc_simulation_info;
+struct alsc_do_simulation{
+	cmr_u32* stat_r;
+	cmr_u32* stat_g;
+	cmr_u32* stat_b;
+	cmr_u32 ct;
+	cmr_s32 bv;
+	cmr_s32 bv_gain;
+	cmr_u16* sim_output_table;
 };
 
 ////////////////////////////// calculation dependent //////////////////////////////
@@ -461,6 +465,8 @@ struct lsc_ctrl_context {
 	cmr_u32 grid;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
+	cmr_u32 init_img_width;
+	cmr_u32 init_img_height;
 	cmr_u32 init_gain_width;
 	cmr_u32 init_gain_height;
 	cmr_u32 init_grid;

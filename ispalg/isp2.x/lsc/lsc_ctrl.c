@@ -1351,6 +1351,8 @@ static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, 
 	cxt->img_height = init_param->img_height;
 	cxt->gain_width  =  init_param->gain_width;
 	cxt->gain_height =  init_param->gain_height;
+	cxt->init_img_width   =  init_param->img_width;
+	cxt->init_img_height  =  init_param->img_height;
 	cxt->init_gain_width  =  init_param->gain_width;
 	cxt->init_gain_height =  init_param->gain_height;
 	cxt->init_grid        =  init_param->grid;
@@ -2649,6 +2651,13 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	struct lsc_last_info* lsc_last_info = (struct lsc_last_info*)cxt->lsc_last_info;
 	struct lsc_flash_proc_param* flash_param = (struct lsc_flash_proc_param*)cxt->lsc_flash_proc_param;
 	struct post_shading_gain_param *post_param = (struct post_shading_gain_param*)cxt->post_shading_gain_param;
+	struct alsc_do_simulation* alsc_do_simulation   = NULL;
+	struct lsc_adv_calc_param* lsc_adv_calc_param   = NULL;
+	struct lsc_adv_calc_result* lsc_adv_calc_result = NULL;
+	cmr_u32 *tmp_buffer_r = NULL;
+	cmr_u32 *tmp_buffer_g = NULL;
+	cmr_u32 *tmp_buffer_b = NULL;
+	cmr_u16 *tmp_buffer = NULL;
 	cmr_u16 *pm0_new = NULL;
 	cmr_s32 is_gr = cxt->output_gain_pattern;
 	cmr_s32 is_gb = 3 - cxt->output_gain_pattern;
@@ -3077,10 +3086,46 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			}
 		break;
 
-		case ALSC_UNLOCK_UPDATE_FLAG:
-			cxt->alsc_update_flag = 1;
-			if(cxt->can_update_dest == 0 && cxt->flash_mode == 0)
-				cxt->alsc_update_flag = 0;
+		case ALSC_DO_SIMULATION:
+			cxt->can_update_dest = 0;
+			alsc_do_simulation  = (struct alsc_do_simulation*)in;
+			lsc_adv_calc_param  = (struct lsc_adv_calc_param*)malloc(sizeof(struct lsc_adv_calc_param));
+			lsc_adv_calc_result = (struct lsc_adv_calc_result*)malloc(sizeof(struct lsc_adv_calc_result));
+			tmp_buffer_r = (cmr_u32*)malloc(32 * 32 * 4 * sizeof(cmr_u32));
+			tmp_buffer_g = (cmr_u32*)malloc(32 * 32 * 4 * sizeof(cmr_u32));
+			tmp_buffer_b = (cmr_u32*)malloc(32 * 32 * 4 * sizeof(cmr_u32));
+			tmp_buffer = (cmr_u16*)malloc(32 * 32 * 4 * sizeof(cmr_u16));
+			lsc_adv_calc_param->stat_img.r  = tmp_buffer_r;
+			lsc_adv_calc_param->stat_img.gr = tmp_buffer_g;
+			lsc_adv_calc_param->stat_img.b  = tmp_buffer_b;
+			lsc_adv_calc_result->dst_gain = tmp_buffer;
+
+			memcpy(lsc_debug_info_ptr->last_lsc_table, cxt->std_init_lsc_table_param_buffer[2], cxt->init_gain_width*cxt->init_gain_height*4*sizeof(cmr_u16));
+
+			lsc_adv_calc_param->img_size.w = cxt->init_img_width;
+			lsc_adv_calc_param->img_size.h = cxt->init_img_height;
+			lsc_adv_calc_param->gain_width = cxt->init_gain_width;
+			lsc_adv_calc_param->gain_height = cxt->init_gain_height;
+			lsc_adv_calc_param->grid = cxt->init_grid;
+			memcpy(lsc_adv_calc_param->stat_img.r,  alsc_do_simulation->stat_r, 32 * 32 * sizeof(cmr_u32));
+			memcpy(lsc_adv_calc_param->stat_img.gr, alsc_do_simulation->stat_g, 32 * 32 * sizeof(cmr_u32));
+			memcpy(lsc_adv_calc_param->stat_img.b,  alsc_do_simulation->stat_b, 32 * 32 * sizeof(cmr_u32));
+			for (i=0; i < 8; i++)
+				lsc_adv_calc_param->std_tab_param[i] = cxt->std_init_lsc_table_param_buffer[i];
+
+			rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, lsc_adv_calc_param, lsc_adv_calc_result);
+			rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, lsc_adv_calc_param, lsc_adv_calc_result);
+
+			post_shading_gain(alsc_do_simulation->sim_output_table, lsc_debug_info_ptr->alsc_lsc_table, cxt->init_gain_width, cxt->init_gain_height, cxt->output_gain_pattern,
+							cxt->frame_count, alsc_do_simulation->bv, alsc_do_simulation->bv_gain, 0, 0, cxt->LSC_SPD_VERSION, post_param);
+			memcpy(lsc_debug_info_ptr->output_lsc_table, alsc_do_simulation->sim_output_table, cxt->init_gain_width*cxt->init_gain_height * 4 * sizeof(unsigned short));
+			std_free(tmp_buffer);
+			std_free(tmp_buffer_r);
+			std_free(tmp_buffer_g);
+			std_free(tmp_buffer_b);
+			std_free(lsc_adv_calc_result);
+			std_free(lsc_adv_calc_param);
+			cxt->can_update_dest = 1;
 		break;
 
 		default:

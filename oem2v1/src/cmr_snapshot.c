@@ -44,7 +44,7 @@
 #define SNP_EVT_CHANNEL_DONE (SNP_EVT_BASE + 30)  /*SNAPSHOT_EVT_CHANNEL_DONE*/
 #define SNP_EVT_RAW_PROC (SNP_EVT_BASE + 31)      /*SNAPSHOT_EVT_RAW_PROC*/
 #define SNP_EVT_SC_DONE (SNP_EVT_BASE + 32)       /*SNAPSHOT_EVT_SC_DONE*/
-#define SNP_EVT_REPROCESS (SNP_EVT_BASE + 33)      /*SNAPSHOT_EVT_REPROCESS*/
+#define SNP_EVT_REPROCESS (SNP_EVT_BASE + 33)     /*SNAPSHOT_EVT_REPROCESS*/
 #define SNP_EVT_CVT_RAW_DATA (SNP_EVT_BASE + 34)  /*SNAPSHOT_EVT_CVT_RAW_DATA*/
 #define SNP_EVT_JPEG_ENC_DONE (SNP_EVT_BASE + 35) /*SNAPSHOT_EVT_JPEG_ENC_DONE*/
 #define SNP_EVT_JPEG_DEC_DONE (SNP_EVT_BASE + 36) /*SNAPSHOT_EVT_JPEG_DEC_DONE*/
@@ -724,6 +724,8 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
         &cxt->req_param.post_proc_setting.mem[cxt->index];
     char value[PROPERTY_VALUE_MAX];
     struct camera_frame_type frame_type;
+    void *isp_info_addr = NULL;
+    int isp_info_size = 0;
 
     if (cxt->err_code) {
         CMR_LOGE("error exit");
@@ -752,12 +754,44 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
         cxt->req_param.post_proc_setting.actual_snp_size.height) {
         if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
             (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
-            send_capture_data(
-                0x10, /* jpg */
-                cxt->req_param.post_proc_setting.actual_snp_size.width,
-                cxt->req_param.post_proc_setting.actual_snp_size.height,
-                (char *)mem_ptr->target_jpeg.addr_vir.addr_y,
-                enc_out_ptr->stream_size, 0, 0, 0, 0);
+            if (isp_video_get_simulation_flag()) {
+                struct img_addr jpeg_addr;
+                jpeg_addr.addr_y = mem_ptr->target_jpeg.addr_vir.addr_y;
+                if (isp_video_get_simulation_loop_count() == 1) {
+                    ret = camera_local_get_isp_info(
+                        cxt->oem_handle, &isp_info_addr, &isp_info_size);
+                    if (ret == 0 && isp_info_size > 0) {
+                        memcpy(((char *)jpeg_addr.addr_y +
+                                enc_out_ptr->stream_size),
+                               (char *)isp_info_addr, isp_info_size);
+                        camera_save_jpg_to_file(0, IMG_DATA_TYPE_JPEG,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.width,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.height,
+                                                enc_out_ptr->stream_size +
+                                                    isp_info_size,
+                                                &jpeg_addr);
+                    } else {
+                        CMR_LOGD("save jpg without isp debug info.");
+                        camera_save_jpg_to_file(0, IMG_DATA_TYPE_JPEG,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.width,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.height,
+                                                enc_out_ptr->stream_size,
+                                                &jpeg_addr);
+                    }
+                }
+                isp_video_set_capture_complete_flag();
+            } else {
+                send_capture_data(
+                    0x10, /* jpg */
+                    cxt->req_param.post_proc_setting.actual_snp_size.width,
+                    cxt->req_param.post_proc_setting.actual_snp_size.height,
+                    (char *)mem_ptr->target_jpeg.addr_vir.addr_y,
+                    enc_out_ptr->stream_size, 0, 0, 0, 0);
+            }
         }
         cxt->jpeg_stream_size = enc_out_ptr->stream_size;
         CMR_LOGD("jpeg_stream_size %d", cxt->jpeg_stream_size);
@@ -1637,13 +1671,25 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
             (char *)mem_ptr->cap_raw.addr_vir.addr_y, size, 0, 0, 0, 0);
 
-        char datetime[15] = {0};
-        CMR_LOGD("save mipi raw to file");
-        camera_get_system_time(datetime);
-        camera_save_raw_or_yuv_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
-                                       mem_ptr->cap_raw.size.width,
-                                       mem_ptr->cap_raw.size.height,
-                                       &mem_ptr->cap_raw.addr_vir);
+        if (isp_video_get_raw_images_info()) {
+            if (CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) {
+                char datetime[15] = {0};
+                CMR_LOGD("save mipi raw to file");
+                camera_get_system_time(datetime);
+                camera_save_raw_or_yuv_to_file(
+                    snp_handle, datetime, IMG_DATA_TYPE_RAW,
+                    mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                    &mem_ptr->cap_raw.addr_vir);
+            }
+        } else {
+            char datetime[15] = {0};
+            CMR_LOGD("save mipi raw to file");
+            camera_get_system_time(datetime);
+            camera_save_raw_or_yuv_to_file(
+                snp_handle, datetime, IMG_DATA_TYPE_RAW,
+                mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                &mem_ptr->cap_raw.addr_vir);
+        }
     }
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
@@ -1887,7 +1933,8 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     }
     jpeg_in_ptr = &chn_param_ptr->jpeg_in[0];
     cmr_cxt = (struct camera_context *)cxt->oem_handle;
-    cmr_snapshot_invalidate_cache(cmr_cxt->snp_cxt.snapshot_handle, &jpeg_in_ptr->dst);
+    cmr_snapshot_invalidate_cache(cmr_cxt->snp_cxt.snapshot_handle,
+                                  &jpeg_in_ptr->dst);
 
     if (cxt->ops.start_exif_encode == NULL) {
         CMR_LOGE("start_exif_encode is null");
