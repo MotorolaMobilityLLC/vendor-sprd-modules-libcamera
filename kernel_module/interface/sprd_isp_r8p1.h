@@ -300,8 +300,7 @@ enum isp_noise_filter_property {
 };
 
 enum isp_3dnr_property {
-	ISP_PRO_3DNR_UPDATE_PRE_PARAM,
-	ISP_PRO_3DNR_UPDATE_CAP_PARAM
+	ISP_PRO_3DNR_BLOCK,
 };
 
 enum isp_ltm_property {
@@ -1416,9 +1415,13 @@ struct isp_raw_proc_info {
 	uint32_t dst1_offset;/*first bytes offset in buffer fd_dst1*/
 };
 
-struct isp_3dnr_const_param {
-	uint32_t fusion_mode;
+struct isp_3dnr_blend_info {
+	uint32_t bypass;
 	uint32_t filter_switch;
+	uint32_t fusion_mode;
+	uint32_t y_pixel_src_weight;
+	uint32_t u_pixel_src_weight;
+	uint32_t v_pixel_src_weight;
 	uint32_t y_pixel_noise_threshold;
 	uint32_t u_pixel_noise_threshold;
 	uint32_t v_pixel_noise_threshold;
@@ -1494,13 +1497,22 @@ struct isp_3dnr_const_param {
 	uint32_t gradient_weight_polyline_8;
 	uint32_t gradient_weight_polyline_9;
 	uint32_t gradient_weight_polyline_10;
-	uint32_t y_pixel_src_weight[4];
-	uint32_t u_pixel_src_weight[4];
-	uint32_t v_pixel_src_weight[4];
-	uint32_t u_threshold_factor[4];
-	uint32_t v_threshold_factor[4];
-	uint32_t u_divisor_factor[4];
-	uint32_t v_divisor_factor[4];
+	uint32_t u_threshold_factor0;
+	uint32_t u_threshold_factor1;
+	uint32_t u_threshold_factor2;
+	uint32_t u_threshold_factor3;
+	uint32_t v_threshold_factor0;
+	uint32_t v_threshold_factor1;
+	uint32_t v_threshold_factor2;
+	uint32_t v_threshold_factor3;
+	uint32_t u_divisor_factor0;
+	uint32_t u_divisor_factor1;
+	uint32_t u_divisor_factor2;
+	uint32_t u_divisor_factor3;
+	uint32_t v_divisor_factor0;
+	uint32_t v_divisor_factor1;
+	uint32_t v_divisor_factor2;
+	uint32_t v_divisor_factor3;
 	uint32_t r1_circle;
 	uint32_t r2_circle;
 	uint32_t r3_circle;
@@ -1511,9 +1523,9 @@ struct isp_3dnr_fast_me {
 	uint32_t nr3_project_mode;
 };
 
-struct isp_3dnr_tunning_param {
+struct isp_dev_3dnr_info {
 	struct isp_3dnr_fast_me fast_me;
-	struct isp_3dnr_const_param blend_param;
+	struct isp_3dnr_blend_info blend;
 };
 
 

@@ -141,6 +141,7 @@ cmr_s32 isp_u_hsv_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_iircnr_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yrandom_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_ltm_block(void *handle, void *block_info);
+cmr_s32 isp_u_3dnr_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_nlm_block(void *handle, void *block_info);
 cmr_s32 isp_u_yuv_precdn_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_postcdn_block(cmr_handle handle, void *block_info);

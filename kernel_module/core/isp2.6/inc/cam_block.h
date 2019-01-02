@@ -20,6 +20,7 @@ struct isp_k_block {
 	struct img_size src;
 	struct isp_dev_nlm_info_v2 nlm_info;
 	struct isp_dev_ynr_info_v2 ynr_info;
+	struct isp_dev_3dnr_info nr3_info;
 };
 
 int dcam_init_lsc(void *param);
@@ -112,6 +113,12 @@ int isp_k_update_nlm(uint32_t idx,
 	uint32_t crop_start_x, uint32_t crop_start_y,
 	uint32_t crop_end_x, uint32_t crop_end_y);
 int isp_k_update_ynr(uint32_t idx,
+	struct isp_k_block *isp_k_param,
+	uint32_t new_width, uint32_t old_width,
+	uint32_t new_height, uint32_t old_height,
+	uint32_t crop_start_x, uint32_t crop_start_y,
+	uint32_t crop_end_x, uint32_t crop_end_y);
+int isp_k_update_3dnr(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
 	uint32_t new_height, uint32_t old_height,

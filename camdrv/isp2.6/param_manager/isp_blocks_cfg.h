@@ -172,7 +172,7 @@ struct isp_rgb_afm_param {
 };
 
 struct isp_nr3d_param {
-	struct isp_3dnr_tunning_param cur;
+	struct isp_dev_3dnr_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;

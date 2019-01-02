@@ -837,6 +837,11 @@ static int isp_adapt_blkparam(struct isp_pipe_context *pctx)
 		new_width, old_width, new_height, old_height,
 		crop_start_x, crop_start_y, crop_end_x, crop_end_y);
 
+	if (pctx->mode_3dnr != MODE_3DNR_OFF)
+		isp_k_update_3dnr(pctx->ctx_id, &pctx->isp_k_param,
+			 new_width, old_width, new_height, old_height,
+			 crop_start_x, crop_start_y, crop_end_x, crop_end_y);
+
 	return 0;
 }
 
@@ -2370,7 +2375,8 @@ static int sprd_isp_cfg_blkparam(
 
 	if (io_param->sub_block == ISP_BLOCK_NLM)
 		ret = isp_k_cfg_nlm(param, &pctx->isp_k_param, ctx_id);
-	else if (io_param->sub_block == ISP_BLOCK_3DNR)
+	else if ((io_param->sub_block == ISP_BLOCK_3DNR) &&
+		 (pctx->mode_3dnr != MODE_3DNR_OFF))
 		ret = isp_k_cfg_3dnr(param, &pctx->isp_k_param, ctx_id);
 	else if (io_param->sub_block == ISP_BLOCK_YNR) {
 		mutex_lock(&pctx->param_mutex);

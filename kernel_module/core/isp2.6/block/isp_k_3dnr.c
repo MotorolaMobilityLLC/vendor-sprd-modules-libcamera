@@ -26,25 +26,29 @@
 #define pr_fmt(fmt) "3DNR: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
-
-static struct isp_3dnr_const_param g_3dnr_param_pre = {
-	0, 1,
+#if 0
+static struct isp_3dnr_blend_info g_3dnr_param_pre = {
+	1, 0,
+	128, 128, 128,
 	5, 3, 3, 255, 255, 255,
 	0, 255, 0, 255,
+	30, 30, 30, 30, 30, 30, 30, 30, 30,
 	20, 20, 20, 20, 20, 20, 20, 20, 20,
-	15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15,
+	20, 20, 20, 20, 20, 20, 20, 20, 20,
 	63, 63, 63, 63, 63, 63, 63, 63, 63,
 	63, 63, 63, 63, 63, 63, 63, 63, 63,
 	63, 63, 63, 63, 63, 63, 63, 63, 63,
 	127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
-	{180, 180, 180, 180}, {180, 180, 180, 180}, {180, 180, 180, 180},
-	{31, 37, 48, 63}, {31, 37, 48, 63}, {1, 2, 2, 3}, {1, 2, 2, 3},
+	31, 37, 48, 63,
+	31, 37, 48, 63,
+	1, 2, 2, 3,
+	1, 2, 2, 3,
 	814, 931, 1047
 };
 
-static struct isp_3dnr_const_param g_3dnr_param_cap = {
-	0, 1,
+static struct isp_3dnr_blend_info g_3dnr_param_cap = {
+	1, 0,
+	128, 128, 128,
 	5, 3, 3, 255, 255, 255,
 	0, 255, 0, 255,
 	30, 30, 30, 30, 30, 30, 30, 30, 30,
@@ -54,38 +58,16 @@ static struct isp_3dnr_const_param g_3dnr_param_cap = {
 	63, 63, 63, 63, 63, 63, 63, 63, 63,
 	63, 63, 63, 63, 63, 63, 63, 63, 63,
 	127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
-	{180, 180, 180, 180}, {180, 180, 180, 180}, {180, 180, 180, 180},
-	{31, 37, 48, 63}, {31, 37, 48, 63}, {1, 2, 2, 3}, {1, 2, 2, 3},
+	31, 37, 48, 63,
+	31, 37, 48, 63,
+	1, 2, 2, 3,
+	1, 2, 2, 3,
 	814, 931, 1047
 };
-
-static unsigned int g_frame_param[4][3] = {
-	{128, 128, 128},
-	{154, 154, 154},
-	{154, 180, 180},
-	{180, 180, 180},
-};
-
+#endif
 /*
  * static function
  */
-#if 0
-static void isp_3dnr_config_fast_me(enum isp_id idx,
-				    struct isp_3dnr_fast_me *fast_me)
-{
-	uint32_t val = 0;
-
-	if (fast_me == NULL) {
-		pr_err("fail to 3ndr fast_me_reg param NULL\n");
-		return;
-	}
-
-	val = ((fast_me->nr3_channel_sel & 0x3) << 2) |
-	       (fast_me->nr3_project_mode & 0x3);
-
-	DCAM_REG_MWR(idx, DCAM_NR3_PARA0, 0xF, val);
-}
-#endif
 
 static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 				     struct isp_3dnr_mem_ctrl *mem_ctrl, bool  nr3sec_eb)
@@ -193,7 +175,7 @@ static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 }
 
 static void isp_3dnr_config_blend(uint32_t idx,
-				  struct isp_3dnr_const_param *blend)
+				  struct isp_3dnr_blend_info *blend)
 {
 	unsigned int val;
 
@@ -201,6 +183,15 @@ static void isp_3dnr_config_blend(uint32_t idx,
 		pr_err("fail to 3ndr config_blend_reg param NULL\n");
 		return;
 	}
+
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_1, blend->fusion_mode << 1);
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_2, blend->filter_switch << 2);
+
+	val = ((blend->y_pixel_src_weight & 0xFF) << 24) |
+	      ((blend->u_pixel_src_weight & 0xFF) << 16) |
+	      ((blend->v_pixel_src_weight & 0xFF) << 8)  |
+	       (blend->y_pixel_noise_threshold & 0xFF);
+	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG1, val);
 
 	val = ((blend->u_pixel_noise_threshold & 0xFF) << 24) |
 	      ((blend->v_pixel_noise_threshold & 0xFF) << 16) |
@@ -312,28 +303,28 @@ static void isp_3dnr_config_blend(uint32_t idx,
 
 	val = ((blend->gradient_weight_polyline_9 & 0x7F) << 24)  |
 	      ((blend->gradient_weight_polyline_10 & 0x7F) << 16) |
-	      ((blend->u_threshold_factor[0] & 0x7F) << 8)	  |
-	       (blend->u_threshold_factor[1] & 0x7F);
+	      ((blend->u_threshold_factor0 & 0x7F) << 8)	  |
+	       (blend->u_threshold_factor1 & 0x7F);
 	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG20, val);
 
-	val = ((blend->u_threshold_factor[2] & 0x7F) << 24)	|
-	      ((blend->u_threshold_factor[3] & 0x7F) << 16)	|
-	      ((blend->v_threshold_factor[0] & 0x7F) << 8)	|
-	       (blend->v_threshold_factor[1] & 0x7F);
+	val = ((blend->u_threshold_factor2 & 0x7F) << 24)	|
+	      ((blend->u_threshold_factor3 & 0x7F) << 16)	|
+	      ((blend->v_threshold_factor0 & 0x7F) << 8)	|
+	       (blend->v_threshold_factor1 & 0x7F);
 	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG21, val);
 
-	val = ((blend->v_threshold_factor[2] & 0x7F) << 24)	|
-	      ((blend->v_threshold_factor[3] & 0x7F) << 16)	|
-	      ((blend->u_divisor_factor[0] & 0x7) << 12)	|
-	      ((blend->u_divisor_factor[1] & 0x7) << 8)		|
-	      ((blend->u_divisor_factor[2] & 0x7) << 4)		|
-	       (blend->u_divisor_factor[3] & 0x7);
+	val = ((blend->v_threshold_factor2 & 0x7F) << 24) |
+	      ((blend->v_threshold_factor3 & 0x7F) << 16) |
+	      ((blend->u_divisor_factor0 & 0x7) << 12)	  |
+	      ((blend->u_divisor_factor1 & 0x7) << 8)	  |
+	      ((blend->u_divisor_factor2 & 0x7) << 4)	  |
+	       (blend->u_divisor_factor3 & 0x7);
 	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG22, val);
 
-	val = ((blend->v_divisor_factor[0] & 0x7) << 28)	|
-	      ((blend->v_divisor_factor[1] & 0x7) << 24)	|
-	      ((blend->v_divisor_factor[2] & 0x7) << 20)	|
-	      ((blend->v_divisor_factor[3] & 0x7) << 16)	|
+	val = ((blend->v_divisor_factor0 & 0x7) << 28)	|
+	      ((blend->v_divisor_factor1 & 0x7) << 24)	|
+	      ((blend->v_divisor_factor2 & 0x7) << 20)	|
+	      ((blend->v_divisor_factor3 & 0x7) << 16)	|
 	       (blend->r1_circle & 0xFFF);
 	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG23, val);
 
@@ -399,35 +390,23 @@ static void isp_3dnr_config_crop(uint32_t idx,
 	ISP_REG_WR(idx, ISP_3DNR_MEM_CTRL_PRE_PARAM3, val);
 }
 
-static int isp_k_3dnr_block(struct isp_io_param *param, uint32_t idx)
+static int isp_k_3dnr_block(struct isp_io_param *param,
+	struct isp_k_block *isp_k_param, uint32_t idx)
 {
 	int ret = 0;
-	struct isp_3dnr_tunning_param tunning_param;
-	struct isp_3dnr_fast_me fast_me = {0};
-	struct isp_3dnr_const_param *blend_para = NULL;
+	struct isp_dev_3dnr_info *pnr3;
 
-	ret = copy_from_user((void *)&tunning_param,
-		param->property_param, sizeof(struct isp_3dnr_tunning_param));
+	pnr3 = &isp_k_param->nr3_info;
+
+	ret = copy_from_user((void *)pnr3,
+			param->property_param,
+			sizeof(struct isp_dev_3dnr_info));
 	if (ret != 0) {
 		pr_err("fail to 3dnr copy from user, ret = %d\n", ret);
 		return -EPERM;
 	}
 
-	if (param->property == ISP_PRO_3DNR_UPDATE_PRE_PARAM)
-		blend_para = &g_3dnr_param_pre;
-	else
-		blend_para = &g_3dnr_param_cap;
-
-	memcpy(blend_para, &tunning_param.blend_param,
-		sizeof(struct isp_3dnr_const_param));
-	memcpy(&fast_me, &tunning_param.fast_me,
-		sizeof(struct isp_3dnr_fast_me));
-
-#if 0
-	isp_3dnr_config_fast_me(idx, &fast_me);
-#endif
-
-	isp_3dnr_config_blend(idx, blend_para);
+	isp_3dnr_config_blend(idx, &pnr3->blend);
 
 	return ret;
 }
@@ -457,12 +436,9 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 			   uint32_t idx,
 			   enum nr3_func_type type_id)
 {
-	uint32_t val = 0;
-	uint32_t blend_cnt = 0;
 	struct isp_3dnr_mem_ctrl *mem_ctrl = NULL;
 	struct isp_3dnr_store *nr3_store = NULL;
 	struct isp_3dnr_crop *crop = NULL;
-	struct isp_3dnr_const_param *blend_ptr = NULL;
 
 	if (!ctx) {
 		pr_err("fail to 3dnr_config_reg parm NULL\n");
@@ -481,8 +457,12 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 	crop = &ctx->crop;
 	isp_3dnr_config_crop(idx, crop);
 
+	/* config bypass blending */
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, ctx->bypass & 0x1);
+
 	/* open nr3 path in common config */
 	ISP_REG_MWR(idx, ISP_COMMON_SCL_PATH_SEL, BIT_8, 0x1 << 8);
+
 #ifdef _NR3_DATA_TO_YUV_
 	if (mem_ctrl->data_toyuv_en) {
 		uint32_t val = 0;
@@ -499,7 +479,6 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 			BIT_0, 1);
 		ISP_REG_MWR(idx, ISP_STORE_THUMB_BASE + ISP_STORE_PARAM,
 			BIT_0, 1);
-
 	} else {
 		uint32_t val = 0;
 
@@ -517,49 +496,42 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 			BIT_0, 1);
 	}
 #endif /* _NR3_DATA_TO_YUV_ */
-
-	/*config variational blending*/
-	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, ctx->bypass & 0x1);
-	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_1, 0 << 1);
-	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_2, 1 << 2);
-
-	blend_cnt = ctx->blending_cnt;
-	if (blend_cnt > 3)
-		blend_cnt = 3;
-
-	if (type_id != NR3_FUNC_CAP) {
-		blend_ptr = &g_3dnr_param_pre;
-		val = (blend_ptr->y_pixel_noise_threshold & 0xFF)	  |
-		((blend_ptr->v_pixel_src_weight[blend_cnt] & 0xFF) << 8)  |
-		((blend_ptr->u_pixel_src_weight[blend_cnt] & 0xFF) << 16) |
-		((blend_ptr->y_pixel_src_weight[blend_cnt] & 0xFF) << 24);
-	} else {
-		blend_ptr = &g_3dnr_param_cap;
-		val = (blend_ptr->y_pixel_noise_threshold & 0xFF)
-			| ((g_frame_param[blend_cnt][2] & 0xFF) << 8)
-			| ((g_frame_param[blend_cnt][1] & 0xFF) << 16)
-			| ((g_frame_param[blend_cnt][0] & 0xFF) << 24);
-	}
-
-	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_1, blend_ptr->fusion_mode << 1);
-	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_2, blend_ptr->filter_switch << 2);
-
-	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG1, val);
-
-	blend_ptr->r1_circle = (unsigned int)(7 * mem_ctrl->img_width / 20);
-	blend_ptr->r2_circle = (unsigned int)(2 * mem_ctrl->img_width / 5);
-	blend_ptr->r3_circle = (unsigned int)(9 * mem_ctrl->img_width / 20);
-
-	val = ((blend_ptr->v_divisor_factor[0] & 0x7) << 28)
-		| ((blend_ptr->v_divisor_factor[1] & 0x7) << 24)
-		| ((blend_ptr->v_divisor_factor[2] & 0x7) << 20)
-		| ((blend_ptr->v_divisor_factor[3] & 0x7) << 16)
-		| (blend_ptr->r1_circle & 0xFFF);
-	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG23, val);
-	val = ((blend_ptr->r2_circle & 0xFFF) << 16)
-		| (blend_ptr->r3_circle & 0xFFF);
-	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG24, val);
 }
+
+
+int isp_k_update_3dnr(uint32_t idx,
+	struct isp_k_block *isp_k_param,
+	uint32_t new_width, uint32_t old_width,
+	uint32_t new_height, uint32_t old_height,
+	uint32_t crop_start_x, uint32_t crop_start_y,
+	uint32_t crop_end_x, uint32_t crop_end_y)
+{
+	unsigned int val;
+	uint32_t r1_circle;
+	uint32_t r2_circle;
+	uint32_t r3_circle;
+	struct isp_dev_3dnr_info *pnr3;
+
+	pnr3 = &isp_k_param->nr3_info;
+
+	r1_circle = pnr3->blend.r1_circle * new_width / old_width;
+	r2_circle = pnr3->blend.r2_circle * new_width / old_width;
+	r3_circle = pnr3->blend.r3_circle * new_width / old_width;
+
+	val = ((pnr3->blend.v_divisor_factor0 & 0x7) << 28) |
+	      ((pnr3->blend.v_divisor_factor1 & 0x7) << 24) |
+	      ((pnr3->blend.v_divisor_factor2 & 0x7) << 20) |
+	      ((pnr3->blend.v_divisor_factor3 & 0x7) << 16) |
+	       (r1_circle & 0xFFF);
+	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG23, val);
+
+	val = ((r2_circle & 0xFFF) << 16) |
+	       (r3_circle & 0xFFF);
+	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG24, val);
+
+	return 0;
+}
+
 
 int isp_k_cfg_3dnr(struct isp_io_param *param,
 	struct isp_k_block *isp_k_param, uint32_t idx)
@@ -572,9 +544,8 @@ int isp_k_cfg_3dnr(struct isp_io_param *param,
 	}
 
 	switch (param->property) {
-	case ISP_PRO_3DNR_UPDATE_CAP_PARAM:
-	case ISP_PRO_3DNR_UPDATE_PRE_PARAM:
-		ret = isp_k_3dnr_block(param, idx);
+	case ISP_PRO_3DNR_BLOCK:
+		ret = isp_k_3dnr_block(param, isp_k_param, idx);
 		break;
 	default:
 		pr_err("fail to 3dnr cmd id = %d\n", param->property);
