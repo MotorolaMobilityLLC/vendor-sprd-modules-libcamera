@@ -7237,6 +7237,7 @@ int SprdCamera3OEMIf::Callback_CaptureFree(cmr_uint *phy_addr,
     HAL_LOGD("mSubRawHeapNum %d sum %d", mSubRawHeapNum, sum);
     Mutex::Autolock l(&mCapBufLock);
 
+    iommu_buf_unmap(mCaptureMallocIommuMapList);
     for (i = 0; i < mSubRawHeapNum; i++) {
         if (NULL != mSubRawHeapArray[i]) {
             freeCameraMem(mSubRawHeapArray[i]);
@@ -7287,6 +7288,7 @@ cap_malloc:
             *phy_addr++ = (cmr_uint)memory->phys_addr;
             *vir_addr++ = (cmr_uint)memory->data;
             *fd++ = memory->fd;
+            iommu_buf_map(&memory->fd, mCaptureMallocIommuMapList);
         }
         mSubRawHeapSize = size;
     } else {
@@ -9706,6 +9708,47 @@ void SprdCamera3OEMIf::ispToolModeInit() {
     cmr_handle isp_handle = 0;
     mHalOem->ops->camera_get_isp_handle(mCameraHandle, &isp_handle);
     setispserver(isp_handle);
+}
+
+/*For pike2 iommu issue, add camera hal workaround*/
+int SprdCamera3OEMIf::iommu_buf_map(cmr_s32 *fd, List<iommu_map_buf> &list) {
+    int ret = NO_ERROR;
+    struct sprd_img_iova iommu_data;
+    iommu_map_buf iommu_buf;
+    iommu_data.fd = (int)*fd;
+    ret = camera_ioctrl(CAMERA_IOCTRL_GET_SG, &iommu_data, NULL);
+    if (ret) {
+        HAL_LOGE("iommu_workaround: iommu_buf_map get sg "
+                 "failed, fd 0x%x",
+                 iommu_data.fd);
+    }
+    camera_ioctrl(CAMERA_IOCTRL_MAP_IOMMU_BUF, &iommu_data, NULL);
+    iommu_buf.fd = (int)*fd;
+    iommu_buf.sg_table = iommu_data.sg_table;
+    iommu_buf.size = iommu_data.size;
+    iommu_buf.map_flag = BUF_MAPED;
+    list.push_back(iommu_buf);
+    HAL_LOGD("iommu_workaround: map fd 0x%x size 0x%x sg %p",
+             iommu_buf.fd, iommu_buf.size, iommu_buf.sg_table);
+    return ret;
+}
+
+void SprdCamera3OEMIf::iommu_buf_unmap(List<iommu_map_buf> &list) {
+    for (List<iommu_map_buf>::iterator i = list.begin();i != list.end(); i++) {
+        struct sprd_img_iova iommu_data;
+
+        iommu_data.fd = i->fd;
+        iommu_data.size = i->size;
+        iommu_data.sg_table = i->sg_table;
+        if (i->map_flag == BUF_MAPED) {
+            camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
+            i->map_flag = BUF_UNMAP;
+            HAL_LOGE(
+                "iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+        }
+    }
+    list.clear();
 }
 
 #ifdef CONFIG_CAMERA_EIS

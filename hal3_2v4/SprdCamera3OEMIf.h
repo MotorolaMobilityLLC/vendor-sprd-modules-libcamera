@@ -545,6 +545,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                   cmr_uint *phy_addr, cmr_uint *vir_addr,
                                   cmr_s32 *fd, void **handle, cmr_uint *width,
                                   cmr_uint *height, void *private_data);
+    int iommu_buf_map(cmr_s32 *fd, List<iommu_map_buf> &list);
+    void iommu_buf_unmap(List<iommu_map_buf> &list);
 
     // zsl start
     int getZSLQueueFrameNum();
@@ -620,6 +622,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_3dnr_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
     List<iommu_map_buf> m3DNRGraphicArrayIommuMapList;
     List<iommu_map_buf> m3DNRGraphicPathArrayIommuMapList;
+    List<iommu_map_buf> mCaptureMallocIommuMapList;
 
     sprd_camera_memory_t *mReDisplayHeap;
     // TODO: put the picture dimensions in the CameraParameters object;
