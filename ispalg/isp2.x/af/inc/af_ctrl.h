@@ -510,6 +510,7 @@ extern "C" {
 		cmr_s32 pdGetFrameID;
 		cmr_s32 pdDCCGain[AREA_LOOP + 1];
 		cmr_u32 pd_roi_num;
+		cmr_u32 af_type;// notify to AF that PDAF is in passive mode or active mode
 	};
 
 	struct tof_result {

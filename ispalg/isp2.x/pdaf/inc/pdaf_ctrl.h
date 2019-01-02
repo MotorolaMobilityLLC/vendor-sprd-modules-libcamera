@@ -21,6 +21,11 @@
 #include "af_ctrl.h"
 #include "pdaf_sprd_adpt.h"
 
+enum AF_TYPE {
+	PASSIVE = 0,//caf type
+	ACTIVE,//touch type
+};
+
 enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_RAW = 0,
 	PDAF_DATA_TYPE_LEFT,
@@ -31,7 +36,9 @@ enum pdaf_ctrl_data_type {
 enum pdaf_ctrl_cmd_type {
 	PDAF_CTRL_CMD_SET_OPEN,
 	PDAF_CTRL_CMD_SET_CLOSE,
-
+	PDAF_CTRL_CMD_SET_COOR,
+	PDAF_CTRL_CMD_SET_MODE,
+	PDAF_CTRL_CMD_SET_AFMFV,
 	/*
 	 * warning if you wanna set ioctrl directly
 	 * please add msg id below here
@@ -88,7 +95,11 @@ struct pdaf_ctrl_param_in {
 	union {
 		struct isp3a_pd_config_t *pd_config;
 		 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
+		 struct af_win_rect touch_area;
+		 cmr_u32 af_type;
 	};
+	void *af_addr;// afm statis buffer
+	cmr_u32 af_addr_len;// in bytes
 };
 
 struct pdaf_ctrl_param_out {

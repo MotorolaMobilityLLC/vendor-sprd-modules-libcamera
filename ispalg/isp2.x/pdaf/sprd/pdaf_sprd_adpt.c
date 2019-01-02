@@ -33,6 +33,7 @@ static cmr_s32 g_getdual = 0;
 
 struct sprd_pdaf_context {
 	cmr_u32 camera_id;
+	cmr_u8 af_type;
 	cmr_u8 pd_open;
 	cmr_u8 is_busy;
 	cmr_u32 frame_id;
@@ -46,6 +47,9 @@ struct sprd_pdaf_context {
 	struct pdaf_ppi_info ppi_info;
 	struct pdaf_roi_info roi_info;
 	struct sprd_pdaf_report_t report_data;
+	struct af_win_rect touch_area;
+	void *af_addr;// afm statis
+	cmr_u32 af_addr_len;// afm statis buffer length
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
 	 cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
 	 cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
@@ -398,6 +402,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pdaf_set_ppi_info = in_p->pdaf_set_ppi_info;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
+	cxt->af_type = PASSIVE;
 	/*TBD dSensorID 0:Imx258 Type3 1:OV13855 2:3L8 3:IMX258 Type2 4:IMX362 Dual PD 5:OV12A10*/
 	if (SENSOR_VENDOR_IMX258_TYPE3 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_0;
@@ -575,6 +580,9 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 	UNUSED(result);
 	if (cxt) {
 		/* deinit lib */
+		if(NULL != cxt->af_addr)// free afm statis buffer
+			free(cxt->af_addr);
+
 		ret = (cmr_s32) PD_Uninit();
 		memset(cxt, 0x00, sizeof(*cxt));
 		free(cxt);
@@ -883,7 +891,12 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4) {
-		ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
+		if(ACTIVE == cxt->af_type){
+			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, ((cxt->touch_area.sx + cxt->touch_area.ex)>>2)<<1, ((cxt->touch_area.sy + cxt->touch_area.ey)>>2)<<1,
+				 480, 480);
+		} else {
+			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
+		}
 	}
 	else {
 		for (area_index = 0; area_index < AREA_LOOP; area_index++) {
@@ -912,6 +925,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		goto exit;
 	}
 	pd_calc_result.pd_roi_num = AREA_LOOP + 1;
+	pd_calc_result.af_type = cxt->af_type;
 	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4]);
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;
@@ -967,6 +981,57 @@ static cmr_s32 pdafsprd_adpt_disable_pdaf(cmr_handle adpt_handle, struct pdaf_ct
 	return ret;
 }
 
+static cmr_s32 pdafsprd_adpt_set_coor(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	cxt->touch_area.sx = in->touch_area.sx;
+	cxt->touch_area.sy = in->touch_area.sy;
+	cxt->touch_area.ex = in->touch_area.ex;
+	cxt->touch_area.ey = in->touch_area.ey;
+	ISP_LOGI("touch pd af coor (%d %d %d %d)",cxt->touch_area.sx, cxt->touch_area.sy, cxt->touch_area.ex ,cxt->touch_area.ey);
+
+	return ret;
+}
+
+static cmr_s32 pdafsprd_adpt_set_mode(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	cxt->af_type = in->af_type;
+
+	ISP_LOGI("pdaf mode %s",cxt->af_type == ACTIVE ? "active" : "passive");
+
+	return ret;
+}
+
+static cmr_s32 pdafsprd_adpt_set_afmfv(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	if(NULL != in->af_addr && 0 != in->af_addr_len){
+		if(NULL == cxt->af_addr){
+			cxt->af_addr = (cmr_u8*)malloc(in->af_addr_len);
+			if(NULL != cxt->af_addr){
+				cxt->af_addr_len = in->af_addr_len;
+				ISP_LOGI("the af_addr_len is %d", in->af_addr_len);
+			}
+		}
+
+		if(NULL != cxt->af_addr && cxt->af_addr_len == in->af_addr_len){
+			memcpy(cxt->af_addr, in->af_addr, in->af_addr_len);
+		}
+	}
+
+	return ret;
+}
+
 static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -984,6 +1049,15 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 		break;
 	case PDAF_CTRL_CMD_DISABLE_PDAF:
 		ret = pdafsprd_adpt_disable_pdaf(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_COOR:
+		ret = pdafsprd_adpt_set_coor(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_MODE:
+		ret = pdafsprd_adpt_set_mode(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_AFMFV:
+		ret = pdafsprd_adpt_set_afmfv(adpt_handle, in_ptr);
 		break;
 	default:
 		ISP_LOGE("fail to case cmd = %d", cmd);
