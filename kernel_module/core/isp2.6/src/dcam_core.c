@@ -669,7 +669,7 @@ static void dcam_init_default(struct dcam_pipe_dev *dev)
 	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_0, bypass);
 	DCAM_REG_MWR(idx, ISP_PPI_PARAM, BIT_0, bypass);
 	DCAM_REG_MWR(idx, ISP_AWBC_GAIN0, BIT_31, bypass << 31);
-	DCAM_REG_MWR(idx, ISP_BPC_PARAM, BIT_0, bypass);
+	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xF, 0xF); /*bpc bypass all */
 	DCAM_REG_MWR(idx, ISP_AFL_PARAM0, BIT_1, bypass << 1); /*bayer2y*/
 
 	/* 3A statistic */

@@ -53,18 +53,24 @@ int dcam_k_bpc_block(struct dcam_dev_param *param)
 	if (s_dbg_bypass[idx] & (1 << _E_BPC))
 		p->bpc_bypass = 1;
 
-	val = (p->bpc_bypass & 0x1) |
-		((p->bpc_ppi_en & 0x1) << 7) |
-		((p->bpc_mod_en & 0x1) << 30);
-	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0x40000081, val);
-	if (p->bpc_bypass)
-		return 0;
+	/* following bit can be 0 only if bpc_bypss is 0 */
+	if (p->bpc_bypass == 1)
+		p->bpc_double_bypass = 1;
+	if (p->bpc_double_bypass == 1)
+		p->bpc_three_bypass = 1;
+	if (p->bpc_three_bypass == 1)
+		p->bpc_four_bypass = 1;
 
 	val = (p->bpc_bypass & 0x1) |
 		((p->bpc_double_bypass & 0x1) << 1) |
 		((p->bpc_three_bypass & 0x1) << 2) |
-		((p->bpc_four_bypass & 0x1) << 3) |
-		((p->bpc_mode & 0x3) << 4) |
+		((p->bpc_four_bypass & 0x1) << 3);
+	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xF, val);
+	val = DCAM_REG_RD(idx, ISP_BPC_PARAM);
+	if (p->bpc_bypass)
+		return 0;
+
+	val = ((p->bpc_mode & 0x3) << 4) |
 		((p->bpc_is_mono_sensor & 0x1) << 6) |
 		((p->bpc_ppi_en & 0x1) << 7) |
 		((p->bpc_edge_hv_mode & 0x3) << 8) |
@@ -76,7 +82,7 @@ int dcam_k_bpc_block(struct dcam_dev_param *param)
 		((p->bpc_blk_mode & 0x1) << 20) |
 		((p->bpc_mod_en & 0x1) << 30) |
 		((p->bpc_cg_dis & 0x1) << 31);
-	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xC01F0FFF, val);
+	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xC01F0FF0, val);
 
 	for (i = 0; i < 4; i++) {
 		val = (p->bpc_four_badpixel_th[i] & 0x3FF) |
