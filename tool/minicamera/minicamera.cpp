@@ -62,7 +62,7 @@ typedef enum {
 static unsigned int minicamera_dump_cnt = 0;
 static pthread_mutex_t previewlock;
 static int previewvalid = 0;
-static int s_mem_method = 0; /*0: physical address, 1: iommu  address*/
+static int is_iommu_enabled = 0;
 static unsigned int mPreviewHeapNum = 0;
 static uint32_t mIspFirmwareReserved_cnt = 0;
 static const int kISPB4awbCount = 16;
@@ -333,7 +333,7 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
         goto getpmem_fail;
     }
 
-    if (0 == s_mem_method) {
+    if (0 == is_iommu_enabled) {
         if (is_cache) {
             pHeapIon = new MemIon("/dev/ion", mem_size, 0,
                                   (1 << 31) | ION_HEAP_ID_MASK_MM);
@@ -369,17 +369,10 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     memory->phys_size = mem_size;
     memory->data = pHeapIon->getBase();
 
-    if (0 == s_mem_method) {
-        CMR_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx"
-                 "heap = %p\n ",
-                 memory->fd, memory->phys_addr, memory->data, memory->phys_size,
-                 pHeapIon);
-    } else {
-        CMR_LOGD("iommu: fd=0x%x, phys_addr=0x%lx, virt_addr=%p"
-                 "size = 0x%lx,heap = %p\n ",
-                 memory->fd, memory->phys_addr, memory->data, memory->phys_size,
-                 pHeapIon);
-    }
+    CMR_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx"
+             "heap = %p",
+             memory->fd, memory->phys_addr, memory->data, memory->phys_size,
+             pHeapIon);
 
     return memory;
 
@@ -550,8 +543,8 @@ static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
             mIspStatisHeapReserved = memory;
         }
 #if defined(CONFIG_ISP_2_6)
-        // sharkl5 dont have get_kaddr interface
-        //m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
+// sharkl5 dont have get_kaddr interface
+// m_isp_statis_heap_reserved->ion_heap->get_kaddr(&kaddr, &ksize);
 #else
         mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
 #endif
@@ -762,8 +755,8 @@ static int minicamera_init(struct minicamera_context *cxt) {
         cameraId, minicamera_cb, &client_data, 0, &cxt->oem_handle,
         (void *)callback_malloc, (void *)callback_free);
 
-    s_mem_method = iommu_is_enabled(cxt);
-    CMR_LOGI("s_mem_method=%d", s_mem_method);
+    is_iommu_enabled = iommu_is_enabled(cxt);
+    CMR_LOGI("is_iommu_enabled=%d", is_iommu_enabled);
 
     return ret;
 }

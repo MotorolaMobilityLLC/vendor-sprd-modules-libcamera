@@ -52,9 +52,9 @@ static int rot_fd = -1;
 #define ROT_DEV "/dev/sprd_rotation"
 
 /*process control*/
-static Mutex previewLock;           /*preview lock*/
-static int previewvalid = 0;        /*preview flag*/
-static int s_mem_method = 0;        /*0: physical address, 1: iommu  address*/
+static Mutex previewLock;    /*preview lock*/
+static int previewvalid = 0; /*preview flag*/
+static int is_iommu_enabled = 0;
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
 static int g_preview_width = 0;
@@ -646,7 +646,7 @@ static void freeCameraMem(sprd_camera_memory_t *memory) {
 
     if (memory->ion_heap) {
 #if 0
-        if (s_mem_method)
+        if (is_iommu_enabled)
             ; // memory->ion_heap->free_iova(ION_MM,memory->phys_addr,
               // memory->phys_size);
 #endif
@@ -810,7 +810,7 @@ static sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
         goto getpmem_fail;
     }
 
-    if (0 == s_mem_method) {
+    if (0 == is_iommu_enabled) {
         ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         if (is_cache) {
             pHeapIon = new MemIon("/dev/ion", mem_size, 0,
@@ -852,16 +852,9 @@ static sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs,
     memory->phys_size = mem_size;
     memory->data = pHeapIon->getBase();
 
-    if (0 == s_mem_method) {
-        ALOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
-              memory->fd, memory->phys_addr, memory->data, memory->phys_size,
-              pHeapIon);
-    } else {
-        ALOGD("iommu: fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, "
-              "heap=%p",
-              memory->fd, memory->phys_addr, memory->data, memory->phys_size,
-              pHeapIon);
-    }
+    ALOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+          memory->fd, memory->phys_addr, memory->data, memory->phys_size,
+          pHeapIon);
 
     return memory;
 
@@ -1349,9 +1342,9 @@ int eng_tst_camera_init(int cameraId, int preview_window_width,
         ALOGE("camera_init failed, ret=%d", ret);
         goto exit;
     }
-    s_mem_method = IommuIsEnabled();
-    ALOGI("%s,%s,%d, s_mem_method %d", __FILE__, __func__, __LINE__,
-          s_mem_method);
+    is_iommu_enabled = IommuIsEnabled();
+    ALOGI("%s,%s,%d, is_iommu_enabled %d", __FILE__, __func__, __LINE__,
+          is_iommu_enabled);
 
     eng_tst_camera_startpreview();
 
