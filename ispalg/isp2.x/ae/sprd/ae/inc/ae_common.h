@@ -525,6 +525,7 @@ struct ae_settings {
 	cmr_u16 ver;
 	cmr_u8 force_lock_ae;
 	cmr_s8 lock_ae;				/* 0:unlock 1:lock 2:pause 3:wait-lock */
+	cmr_s8 exp_is_transmit;		/*ae crtl unlock transmit exppsoure value wo ae lib  0:unable 1:enable*/
 	cmr_s32 pause_cnt;
 	cmr_s8 manual_mode;			/* 0:exp&gain       1:table-index */
 	cmr_u32 exp_line;			/* set exposure lines */
