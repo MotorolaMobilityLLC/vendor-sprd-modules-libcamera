@@ -5611,11 +5611,11 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
             property_get("debug.camera.save.snpfile", value, "0");
             if (atoi(value) == 1 || atoi(value) == 100 ||
                 (atoi(value) & (1 << 1))) {
-                camera_save_yuv_to_file(
-                    FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0), IMG_DATA_TYPE_RAW,
-                    param_ptr->src_frame.size.width,
-                    param_ptr->src_frame.size.height,
-                    &param_ptr->src_frame.addr_vir);
+                dump_raw_image("camera_raw_proc", IMG_DATA_TYPE_RAW,
+                               param_ptr->src_frame.size.width,
+                               param_ptr->src_frame.size.height,
+                               FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
+                               &param_ptr->src_frame.addr_vir);
             }
         }
 
@@ -5630,12 +5630,10 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
             property_get("debug.camera.save.snpfile", value, "0");
             if (atoi(value) == 1 || atoi(value) == 100 ||
                 (atoi(value) & (1 << 1))) {
-
-                camera_save_yuv_to_file(
-                    FORM_DUMPINDEX(0x6000, cxt->dump_cnt, 0),
-                    IMG_DATA_TYPE_YUV420, param_ptr->dst_frame.size.width,
-                    param_ptr->dst_frame.size.height,
-                    &param_ptr->dst_frame.addr_vir);
+                dump_yuv_image("camera_raw_proc", IMG_DATA_TYPE_YUV420,
+                               param_ptr->dst_frame.size.width,
+                               param_ptr->dst_frame.size.height, 0x6000,
+                               &param_ptr->dst_frame.addr_vir);
             }
         }
 
@@ -9521,26 +9519,6 @@ cmr_int camera_local_redisplay_data(
         ret = -CMR_CAMERA_FAIL;
         goto exit;
     }
-#endif
-
-/*for redisplay scale debug*/
-#if 0
-	struct img_addr src_addr;
-	src_addr.addr_y = input_vir_addr;
-	src_addr.addr_u = input_vir_addr + src_img.size.width * src_img.size.height;
-	camera_save_yuv_to_file(11111,
-		IMG_DATA_TYPE_YUV420,
-		src_img.size.width,
-		src_img.size.height,
-		&src_addr);
-	struct img_addr dst_addr;
-	dst_addr.addr_y = output_vir_addr;
-	dst_addr.addr_u = output_vir_addr + dst_img.size.width * dst_img.size.height;
-	camera_save_yuv_to_file(22222,
-		IMG_DATA_TYPE_YUV420,
-		dst_img.size.width,
-		dst_img.size.height,
-		&dst_addr);
 #endif
 
 exit:

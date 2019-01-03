@@ -1183,6 +1183,18 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
                                 struct img_addr *addr);
 
+cmr_int dump_yuv_image(char *tag, cmr_u32 img_fmt, cmr_u32 width,
+                       cmr_u32 height, cmr_u32 index,
+                       struct img_addr *vir_addr);
+
+cmr_int dump_jpeg_image(char *tag, cmr_u32 img_fmt, cmr_u32 width,
+                        cmr_u32 height, cmr_u32 index,
+                        struct img_addr *vir_addr, cmr_u32 image_size);
+
+cmr_int dump_raw_image(char *tag, cmr_u32 img_fmt, cmr_u32 width,
+                       cmr_u32 height, cmr_u32 index,
+                       struct img_addr *vir_addr);
+
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 
 cmr_int save_file(const char *file_name, void *data, uint32_t data_size);
@@ -1871,11 +1883,12 @@ typedef struct oem_ops {
                                              enum takepicture_mode cap_mode,
                                              cmr_uint yaddr, cmr_uint yaddr_vir,
                                              cmr_uint fd);
-    cmr_int (*image_sw_algorithm_processing)(cmr_handle camera_handle,
-                                struct image_sw_algorithm_buf *src_sw_algorithm_buf,
-                                struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
-                                sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
-                                enum img_data_type format);
+    cmr_int (*image_sw_algorithm_processing)(
+        cmr_handle camera_handle,
+        struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+        struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
+        sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+        enum img_data_type format);
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
                                       cmr_s32 *point_x, cmr_s32 *point_y);

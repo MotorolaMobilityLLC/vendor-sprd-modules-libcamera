@@ -6066,10 +6066,10 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "preview")) {
             if (g_preview_frame_dump_cnt < 10) {
-                camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
-                                        IMG_DATA_TYPE_YUV420, frame_type->width,
-                                        frame_type->height,
-                                        &prev_cxt->prev_frm[frm_id].addr_vir);
+                dump_yuv_image("prev_construct_frame", IMG_DATA_TYPE_YUV420,
+                               frame_type->width, frame_type->height,
+                               prev_cxt->prev_frm_cnt,
+                               &prev_cxt->prev_frm[frm_id].addr_vir);
                 g_preview_frame_dump_cnt++;
             }
         }
@@ -6165,10 +6165,11 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "video")) {
             if (g_video_frame_dump_cnt < 10) {
-                camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
-                                        IMG_DATA_TYPE_YUV420, frame_type->width,
-                                        frame_type->height,
-                                        &prev_cxt->video_frm[frm_id].addr_vir);
+                dump_yuv_image("prev_construct_video_frame",
+                               IMG_DATA_TYPE_YUV420, frame_type->width,
+                               frame_type->height, prev_cxt->prev_frm_cnt,
+                               &prev_cxt->video_frm[frm_id].addr_vir);
+
                 g_video_frame_dump_cnt++;
             }
         }
@@ -6239,10 +6240,10 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "zsl")) {
             if (g_zsl_frame_dump_cnt < 10) {
-                camera_save_yuv_to_file(
-                    prev_cxt->prev_frm_cnt, IMG_DATA_TYPE_YUV420,
-                    frame_type->width, frame_type->height,
-                    &prev_cxt->cap_zsl_frm[frm_id].addr_vir);
+                dump_yuv_image("prev_construct_zsl_frame", IMG_DATA_TYPE_YUV420,
+                               frame_type->width, frame_type->height,
+                               prev_cxt->prev_frm_cnt,
+                               &prev_cxt->cap_zsl_frm[frm_id].addr_vir);
                 g_zsl_frame_dump_cnt++;
             }
         }
