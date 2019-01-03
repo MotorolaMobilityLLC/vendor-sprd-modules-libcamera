@@ -251,5 +251,6 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 			uint32_t *dcam_count);
 int sprd_dcam_debugfs_init(void);
 int sprd_dcam_debugfs_deinit(void);
+uint32_t get_outbuf_queue_cnt(void *dev, int path_id);
 
 #endif /* _DCAM_INTERFACE_H_ */

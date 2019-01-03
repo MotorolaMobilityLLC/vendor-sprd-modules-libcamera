@@ -943,7 +943,8 @@ static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
 	dev->is_pdaf = 1;
 	/* pdaf type1,2,3 & 4: dual pd*/
 	dev->pdaf_type = p->mode;
-	if (p->mode > 4 || p->image_vc > 3 || p->image_dt > 0x3F) {
+	if (p->mode == 0 || p->mode > 4 ||
+		p->image_vc > 3 || p->image_dt > 0x3F) {
 		pr_warn("pdaf param error, set mode=0 to disable pdaf\n");
 		p->mode = 0;
 		dev->is_pdaf = 0;
@@ -2669,3 +2670,14 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width)
 
 	return ret;
 }
+
+/* return the number of how many buf in the out_buf_queue */
+uint32_t get_outbuf_queue_cnt(void *dev, int path_id)
+{
+	struct dcam_path_desc *path;
+
+	path = &(((struct dcam_pipe_dev *)dev)->path[path_id]);
+
+	return camera_queue_cnt(&path->out_buf_queue);
+}
+

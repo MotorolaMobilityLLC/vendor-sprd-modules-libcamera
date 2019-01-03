@@ -67,6 +67,10 @@ int camera_queue_init(struct camera_queue *q,
 			uint32_t max, uint32_t type,
 			void (*cb_func)(void *));
 int camera_queue_clear(struct camera_queue *q);
+uint32_t camera_queue_cnt(struct camera_queue *q);
+int camera_queue_same_frame(struct camera_queue *q0, struct camera_queue *q1,
+			struct camera_frame **pf0, struct camera_frame **pf1,
+			int64_t t);
 
 struct camera_frame *get_empty_frame(void);
 int put_empty_frame(struct camera_frame *pframe);

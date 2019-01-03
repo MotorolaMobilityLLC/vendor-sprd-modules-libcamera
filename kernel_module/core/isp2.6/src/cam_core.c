@@ -157,6 +157,7 @@ struct camera_uinfo {
 	uint32_t is_4in1;
 	uint32_t is_3dnr;
 	uint32_t is_ltm;
+	uint32_t is_dual;
 };
 
 struct channel_context {
@@ -250,6 +251,11 @@ struct camera_module {
 	struct timer_list cam_timer;
 	struct workqueue_struct *workqueue;
 	struct sprd_cam_work work;
+
+	struct camera_queue zsl_fifo_queue; /* for cmp timestamp */
+	struct camera_frame *dual_frame; /* 0: no, to find, -1: no need find */
+	atomic_t capture_frames_dcam; /* how many frames report to hal */
+	int64_t capture_times; /* *us, timestamp get from start_capture */
 };
 
 struct camera_group {
@@ -267,6 +273,7 @@ struct camera_group {
 	struct miscdevice *md;
 	struct platform_device *pdev;
 	struct camera_queue empty_frm_q;
+
 };
 
 struct cam_ioctl_cmd {
@@ -492,6 +499,70 @@ static int set_cap_info(struct camera_module *module)
 	return ret;
 }
 
+static struct camera_frame *dual_get_ready_frame(struct camera_module *module,
+		struct camera_frame *frame)
+{
+	struct camera_frame *pframe = NULL;
+
+	if (!module->dual_frame)
+		return pframe;
+	/* no need find, because last find fail */
+	if (module->dual_frame == (void *)(-1)) {
+		module->dual_frame = NULL;
+		return frame;
+	}
+
+	if (atomic_read(&(module->capture_frames_dcam)) > 0)
+		atomic_dec_return(&(module->capture_frames_dcam));
+	pframe = module->dual_frame;
+	module->dual_frame = NULL;
+
+	return pframe;
+}
+
+static int dual_get_same_frame(struct camera_module *module)
+{
+	struct camera_group *grp;
+	struct camera_module *pmd[CAM_COUNT];
+	struct camera_queue *q[CAM_COUNT];
+	struct camera_frame *pframe[CAM_COUNT];
+	int i, j;
+	int ret = 0;
+	int64_t t;
+
+	grp = module->grp;
+	if (!grp)
+		return -EFAULT;
+	/* get the two module */
+	for (i = 0, j = 0; i < CAM_COUNT; i++) {
+		pmd[j] = grp->module[i];
+		if (!pmd[j])
+			continue;
+		if (pmd[j]->cam_uinfo.is_dual)
+			j++;
+	}
+	if (j != 2) {
+		pr_err("dual camera, but have %d module\n", j);
+		return -EFAULT;
+	}
+	q[0] = &(pmd[0]->zsl_fifo_queue);
+	q[1] = &(pmd[1]->zsl_fifo_queue);
+	t = pmd[0]->capture_times;
+	ret = camera_queue_same_frame(q[0], q[1], &pframe[0], &pframe[1], t);
+	if (ret) {
+		pr_err("get same frame fail\n");
+		/* for next SPRD_IMG_IO_START_CAPTURE not find from queue */
+		pmd[0]->dual_frame = (void *)(-1);
+		pmd[1]->dual_frame = (void *)(-1);
+		return ret;
+	}
+	pmd[0]->dual_frame = pframe[0];
+	pmd[1]->dual_frame = pframe[1];
+	pr_debug("frame:%p %p\n", pframe[0], pframe[1]);
+
+	return 0;
+}
+
 int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 {
 	int ret = 0;
@@ -604,7 +675,7 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 {
 	int ret = 0;
-	struct camera_frame *pframe;
+	struct camera_frame *pframe, *pftmp;
 	struct camera_module *module;
 	struct channel_context *channel;
 	struct isp_offline_param *cur;
@@ -708,8 +779,9 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			}
 		} else if (channel->ch_id == CAM_CH_CAP) {
 
-			if ((module->cap_status != CAM_CAPTURE_START) &&
-				(module->cap_status != CAM_CAPTURE_RAWPROC)) {
+			if (((module->cap_status != CAM_CAPTURE_START) &&
+				(module->cap_status != CAM_CAPTURE_RAWPROC)) ||
+				atomic_read(&module->capture_frames_dcam) == 0) {
 				/*
 				 * Release sync if we don't deliver this @pframe
 				 * to ISP.
@@ -717,13 +789,54 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				if (pframe->sync_data)
 					dcam_if_release_sync(pframe->sync_data,
 							     pframe);
-				ret = dcam_ops->cfg_path(
-						module->dcam_dev_handle,
-						DCAM_PATH_CFG_OUTPUT_BUF,
-						channel->dcam_path_id, pframe);
+				/* zsl, save frames to fifo buffer */
+				ret = camera_enqueue(&module->zsl_fifo_queue, pframe);
+				if (get_outbuf_queue_cnt(module->dcam_dev_handle, channel->dcam_path_id)
+					< 1 && 	ret == 0) {
+					/* do fifo */
+					pframe = camera_dequeue(&module->zsl_fifo_queue);
+					if (pframe)
+						ret = -1;
+				}
+				if (ret)
+					ret = dcam_ops->cfg_path(
+						 module->dcam_dev_handle,
+						 DCAM_PATH_CFG_OUTPUT_BUF,
+						 channel->dcam_path_id, pframe);
 				return ret;
 			}
 
+			/* dual camera: frame sync */
+			if (module->cam_uinfo.is_dual) {
+				pftmp = dual_get_ready_frame(module, pframe);
+				if (pftmp == pframe) {
+					goto _FRAME_TO_ISP;
+				} else if (pftmp) {
+					ret = dcam_ops->cfg_path(
+                                                module->dcam_dev_handle,
+                                                DCAM_PATH_CFG_OUTPUT_BUF,
+                                                channel->dcam_path_id, pframe);
+					pframe = pftmp;
+					goto _FRAME_TO_ISP;
+				}
+				/* get the same frame */
+				ret = dual_get_same_frame(module);
+				if (!ret) {
+					pftmp = dual_get_ready_frame(module, pframe);
+					if (pftmp) {
+						ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+							DCAM_PATH_CFG_OUTPUT_BUF,
+							channel->dcam_path_id, pframe);
+						pframe = pftmp;
+						goto _FRAME_TO_ISP;
+					}
+				} else {
+					module->dual_frame = NULL;
+					pr_warn("Sync fail, report current frame\n");
+				}
+			}
+			if (atomic_read(&module->capture_frames_dcam) > 0)
+				atomic_dec_return(&module->capture_frames_dcam);
 			if (module->cam_uinfo.is_4in1 &&
 				(pframe->irq_type == CAMERA_IRQ_4IN1_DONE)) {
 				/* 4in1 send buf to hal for remosaic */
@@ -733,7 +846,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				pr_info("return 4in1 raw frame\n");
 				return ret;
 			}
-
+_FRAME_TO_ISP:
 			ret = camera_enqueue(&channel->share_buf_queue, pframe);
 			if (ret) {
 				pr_debug("capture queue overflow\n");
@@ -2190,12 +2303,14 @@ static int img_ioctl_set_function_mode(
 	uparam = (struct sprd_img_function_mode __user *)arg;
 	ret |= get_user(module->cam_uinfo.is_4in1, &uparam->need_4in1);
 	ret |= get_user(module->cam_uinfo.is_3dnr, &uparam->need_3dnr);
+	ret |= get_user(module->cam_uinfo.is_dual, &uparam->dual_cam);
 	module->cam_uinfo.is_ltm = 0;
 
-	pr_info("4in1:[%d], 3dnr[%d], ltm[%d]\n",
+	pr_info("4in1:[%d], 3dnr[%d], ltm[%d], daul[%d]\n",
 		module->cam_uinfo.is_4in1,
 		module->cam_uinfo.is_3dnr,
-		module->cam_uinfo.is_ltm);
+		module->cam_uinfo.is_ltm,
+		module->cam_uinfo.is_dual);
 
 	if (unlikely(ret)) {
 		pr_err("fail to copy from user, ret %d\n", ret);
@@ -3314,10 +3429,13 @@ static int img_ioctl_stream_on(
 		CAM_IRQ_Q_LEN, 0, camera_put_empty_frame);
 	camera_queue_init(&module->statis_queue,
 		CAM_STATIS_Q_LEN, 0, camera_put_empty_frame);
+	camera_queue_init(&module->zsl_fifo_queue,
+			CAM_SHARED_BUF_NUM, 0, put_k_frame);
 
 	set_cap_info(module);
 
 	atomic_set(&module->state, CAM_RUNNING);
+	module->dual_frame = NULL;
 	ret = dcam_ops->start(module->dcam_dev_handle);
 
 	atomic_set(&module->timeout_flag, 1);
@@ -3488,6 +3606,11 @@ static int img_ioctl_stream_off(
 		camera_queue_clear(&module->frm_queue);
 		camera_queue_clear(&module->irq_queue);
 		camera_queue_clear(&module->statis_queue);
+		if (module->dual_frame) {
+			camera_enqueue(&module->zsl_fifo_queue, module->dual_frame);
+			module->dual_frame = NULL;
+		}
+		camera_queue_clear(&module->zsl_fifo_queue);
 		if (module->dump_thrd.thread_task)
 			camera_queue_clear(&module->dump_queue);
 	}
@@ -3522,7 +3645,14 @@ static int img_ioctl_start_capture(
 				atomic_read(&module->state));
 		return -EFAULT;
 	}
-
+	atomic_set(&module->capture_frames_dcam, -1);
+	module->capture_times = param.timestamp / 1000ll;
+	if (param.timestamp) {
+		/* this time, need 1 frame when timestamp is not 0 */
+		atomic_set(&module->capture_frames_dcam, 1);
+		pr_info("cam%d need %d frame\n", module->idx,
+			atomic_read(&module->capture_frames_dcam));
+	}
 	if (param.type != DCAM_CAPTURE_STOP)
 		module->cap_status = CAM_CAPTURE_START;
 

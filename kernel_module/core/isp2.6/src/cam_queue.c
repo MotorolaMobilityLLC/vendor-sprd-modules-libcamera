@@ -200,6 +200,79 @@ int camera_queue_clear(struct camera_queue *q)
 	return ret;
 }
 
+/* get the number of how many buf in the queue */
+uint32_t camera_queue_cnt(struct camera_queue *q)
+{
+	unsigned long flags;
+	uint32_t tmp;
+
+	spin_lock_irqsave(&q->lock, flags);
+	tmp = q->cnt;
+	spin_unlock_irqrestore(&q->lock, flags);
+
+	return tmp;
+}
+
+/* Get the same time two frame from two queue
+ * Input: q0, q1, two queue
+ *        *pf0, *pf1, return the two frame
+ *        t, no use now
+ */
+int camera_queue_same_frame(struct camera_queue *q0, struct camera_queue *q1,
+			struct camera_frame **pf0, struct camera_frame **pf1,
+			int64_t t)
+{
+	int ret = 0;
+	unsigned long flags0, flags1;
+	struct camera_frame *tmpf0, *tmpf1;
+	int64_t t0, t1, mint;
+
+	spin_lock_irqsave(&q0->lock, flags0);
+	spin_lock_irqsave(&q1->lock, flags1);
+	if (list_empty(&q0->head) || list_empty(&q1->head)) {
+		pr_err("some buffer is empty\n");
+		ret = -EFAULT;
+		goto _EXT;
+	}
+	/* set mint a large value */
+	mint = (((uint64_t)1 << 63) - 1);
+	/* get least delta time two frame */
+	list_for_each_entry(tmpf0, &q0->head, list) {
+		t0 = tmpf0->sensor_time.tv_sec * 1000000ll;
+		t0 += tmpf0->sensor_time.tv_usec;
+		list_for_each_entry(tmpf1, &q1->head, list) {
+			t1 = tmpf1->sensor_time.tv_sec * 1000000ll;
+			t1 += tmpf1->sensor_time.tv_usec;
+			t1 -= t0;
+			if (t1 < 0)
+				t1 = -t1;
+			if (t1 < mint) {
+				*pf0 = tmpf0;
+				*pf1 = tmpf1;
+				mint = t1;
+			}
+		}
+		/* loop 9times --> 3times, 400us */
+		if (mint < 400)
+			break;
+	}
+	pr_info("mint:%lld\n", mint);
+	if (mint > 50 * 1000) { /* delta > 50ms fail */
+		ret = -EFAULT;
+		goto _EXT;
+	}
+	list_del(&((*pf0)->list));
+	q0->cnt--;
+	list_del(&((*pf1)->list));
+	q1->cnt--;
+
+	ret = 0;
+_EXT:
+	spin_unlock_irqrestore(&q0->lock, flags0);
+	spin_unlock_irqrestore(&q1->lock, flags1);
+
+	return ret;
+}
 
 struct camera_frame *get_empty_frame(void)
 {
