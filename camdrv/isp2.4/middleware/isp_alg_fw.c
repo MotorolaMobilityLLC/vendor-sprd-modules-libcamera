@@ -52,6 +52,7 @@ struct commn_info {
 	cmr_handle caller_id;
 	cmr_u8 *log_isp;
 	cmr_u32 log_isp_size;
+	cmr_u32 is_faceId_unlock;
 	struct isp_size src;
 	struct isp_ops ops;
 	struct isp_drv_interface_param interface_param;
@@ -2381,6 +2382,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	cxt->ae_cxt.win_num.h = 32;
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
+	ae_input.is_faceId_unlock = cxt->commn_cxt.is_faceId_unlock;
 
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE: {
@@ -4350,7 +4352,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	if (ret) {
 		ISP_LOGE("fail to init isp bridge");
 	}
-
+	cxt->commn_cxt.is_faceId_unlock =
+		input_ptr->init_param->is_faceId_unlock;
 	ret = ispalg_init(cxt, &isp_alg_input);
 
 	if (ret) {
