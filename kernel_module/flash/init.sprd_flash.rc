@@ -1,2 +1,3 @@
 on sprd-flash-ko
     insmod /vendor/lib/modules/flash_ic_sc2703.ko
+    insmod /vendor/lib/modules/flash_ic_ocp8137.ko
