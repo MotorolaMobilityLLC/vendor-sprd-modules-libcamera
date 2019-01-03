@@ -376,6 +376,9 @@ extern "C" {
 		cmr_u32 history_param[1024];
 		/* backup for ev*/
 		struct ae_ev_param flash_ev_backup;
+
+		cmr_u32 is_faceId_unlock;
+		cmr_u32 face_lock_table_index;
 	};
 
 #endif

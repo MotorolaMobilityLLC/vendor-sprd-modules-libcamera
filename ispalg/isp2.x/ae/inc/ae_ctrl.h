@@ -63,6 +63,7 @@ extern "C" {
 		struct ae_param ae_sync_param;
 		cmr_s16 bv_thd;
 		cmr_u32 is_mono_sensor;
+		cmr_u32 is_faceId_unlock;
 	};
 
 	struct ae_init_out {

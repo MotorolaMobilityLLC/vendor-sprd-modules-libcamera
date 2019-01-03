@@ -2093,7 +2093,7 @@ static cmr_s32 ae_printf_status_log(struct ae_ctrl_cxt *cxt, cmr_s8 scene_mod, s
 }
 
 /*set_scene_mode just be called in ae_sprd_calculation,*/
-static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_scene_mod, enum ae_scene_mode nxt_scene_mod)
+static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_scene_mod, enum ae_scene_mode nxt_scene_mod, cmr_u32 is_faceid_unlock)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	struct ae_tuning_param *cur_param = NULL;
@@ -2113,22 +2113,35 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 	}
 	cur_param = cxt->cur_param;
 	scene_info = &cur_param->scene_info[0];
+	if(is_faceid_unlock)
+		nxt_scene_mod = AE_SCENE_FACEID_UNLOCK;
 	if ((AE_SCENE_NORMAL == cur_scene_mod) && (AE_SCENE_NORMAL == nxt_scene_mod)) {
 		ISP_LOGV("normal  has special setting\n");
 		goto SET_SCENE_MOD_EXIT;
 	}
 
 	if (AE_SCENE_NORMAL != nxt_scene_mod) {
-		for (i = 0; i < AE_SCENE_NUM; ++i) {
-			ISP_LOGV("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
-			if ((1 == scene_info[i].enable) && (nxt_scene_mod == scene_info[i].scene_mode)) {
-				break;
+		if(is_faceid_unlock){
+			i = cxt->face_lock_table_index;
+			ISP_LOGD("faceid_unlock default_index = %d\n", i);
+			if (AE_SCENE_NUM > i) {
+				if (!scene_info[i].table_enable) {
+					ISP_LOGV("Not has special scene setting, just using the normal setting\n");
+					goto SET_SCENE_MOD_EXIT;
+				}
 			}
-		}
+		}else{
+			for (i = 0; i < AE_SCENE_NUM; ++i) {
+				ISP_LOGV("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
+				if ((1 == scene_info[i].enable) && (nxt_scene_mod == scene_info[i].scene_mode)) {
+					break;
+				}
+			}
 
-		if ((i >= AE_SCENE_NUM) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
-			ISP_LOGD("Not has special scene setting, just using the normal setting\n");
-			goto SET_SCENE_MOD_EXIT;
+			if ((i >= AE_SCENE_NUM) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
+				ISP_LOGV("Not has special scene setting, just using the normal setting\n");
+				goto SET_SCENE_MOD_EXIT;
+			}
 		}
 	}
 
@@ -5635,7 +5648,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		if ((nx_mod != cur_mod) || cxt->is_first) {
 			ISP_LOGV("before set scene mode: \n");
 			ae_printf_status_log(cxt, cur_mod, &cxt->cur_status);
-			ae_set_scene_mode(cxt, cur_mod, nx_mod);
+			ae_set_scene_mode(cxt, cur_mod, nx_mod, cxt->is_faceId_unlock);
 			ISP_LOGV("after set scene mode: \n");
 			ae_printf_status_log(cxt, nx_mod, &cxt->cur_status);
 		}
@@ -6530,7 +6543,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_result.wts.cur_dgain = 0;
 	cxt->cur_result.wts.cur_exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 	cxt->cur_result.wts.exposure_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
-
+	cxt->is_faceId_unlock = init_param->is_faceId_unlock;
+	cxt->face_lock_table_index = 4;
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
 	property_get("persist.vendor.cam.isp.ae.manual", ae_property, "off");
 	//ISP_LOGV("persist.vendor.cam.isp.ae.manual: %s", ae_property);
