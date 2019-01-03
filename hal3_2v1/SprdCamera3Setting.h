@@ -343,6 +343,8 @@ typedef struct {
     int32_t partial_result_count;
     uint8_t pipeline_max_depth;
     uint8_t pipeline_depth;
+    /*Frame number to save request frame for auto tracking*/
+    int32_t frame_id;
 } REQUEST_Tag;
 
 typedef struct {
@@ -439,6 +441,14 @@ typedef struct {
     int gender_age_race[10];
 } FACE_Tag;
 
+typedef struct {
+    int32_t at_start_info[3];
+    int32_t at_cb_info[3];
+    int32_t frame_id;
+    float w_ratio;
+    float h_ratio;
+} AUTO_TRACKING_Tag;
+
 typedef struct { int32_t max_latency; } SYNC_Tag;
 
 typedef struct { int32_t crop[4]; } EIS_CROP_Tag;
@@ -520,6 +530,7 @@ typedef struct {
     HAL_PFC_Tag pfcinfo[MAX_PIPELINE_DEPTH];
 #endif
     int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
+    AUTO_TRACKING_Tag autotrackingInfo;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -723,6 +734,9 @@ class SprdCamera3Setting {
     int setVERIFITag(int32_t veri_enable);
     int setHISTOGRAMTag(int32_t *hist_report);
 
+    int setAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
+    int getAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
+
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
     static SprdCameraParameters mDefaultParameters;
@@ -782,6 +796,7 @@ class SprdCamera3Setting {
                            struct img_rect *preview_rect);
     static int GetFovParam(int32_t cameraId);
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    void autotrackingCoordinateConvert(int32_t *area);
 };
 
 }; // namespace sprdcamera

@@ -344,6 +344,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void receiveJpegPicture(struct camera_frame_type *frame);
     void receivePreviewFrame(struct camera_frame_type *frame);
     void receivePreviewFDFrame(struct camera_frame_type *frame);
+    void receivePreviewATFrame(struct camera_frame_type *frame);
     void receiveRawFrame(struct camera_frame_type *frame);
     void receiveCameraExitError(void);
     void receiveTakePictureError(void);
@@ -746,6 +747,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
     sprd_camera_memory_t *m4in1HeapArray[CAP_4IN1_NUM];
     sprd_camera_memory_t *mAISceneScaleHeapReserverd;
+    sprd_camera_memory_t *mAutoTrackingScaleHeapReserverd;
 
     sprd_camera_memory_t *mPrevDepthHeapReserved;
     sprd_camera_memory_t *mPrevSwOutHeapReserved;

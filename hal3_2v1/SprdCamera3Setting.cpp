@@ -1134,6 +1134,46 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
     return ret;
 }
 
+void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area){
+    int32_t touch_point[2] = {0};
+    cmr_u16 picW, picH, snsW, snsH;
+    float w_ratio = 0.000f, h_ratio = 0.000f;
+
+    // change area to point
+    touch_point[0] = (area[2] + area[0]) / 2;
+    touch_point[1] = (area[3] + area[1]) / 2;
+
+    getLargestPictureSize(mCameraId, &picW, &picH);
+    getLargestSensorSize(mCameraId, &snsW, &snsH);
+    HAL_LOGD("picture size = %d x %d, sensor size = %d x %d,",
+        picW, picH, snsW, snsH);
+    // Do coordinate transition
+    w_ratio = (float)snsW / (float)picW;
+    h_ratio = (float)snsH / (float)picH;
+    HAL_LOGD("w_ratio = %f, h_ratio = %f", w_ratio, h_ratio);
+    touch_point[0] *= w_ratio;
+    touch_point[1] *= h_ratio;
+
+    s_setting[mCameraId].autotrackingInfo.at_start_info[2] = 0;
+    s_setting[mCameraId].autotrackingInfo.w_ratio = w_ratio;
+    s_setting[mCameraId].autotrackingInfo.h_ratio = h_ratio;
+    if (0 < touch_point[0] && 0 < touch_point[1]) {
+        s_setting[mCameraId].autotrackingInfo.at_start_info[0] = touch_point[0];
+        s_setting[mCameraId].autotrackingInfo.at_start_info[1] = touch_point[1];
+        s_setting[mCameraId].autotrackingInfo.at_start_info[2] = 1;
+    } else {
+        s_setting[mCameraId].autotrackingInfo.at_start_info[2] = 0;
+    }
+    s_setting[mCameraId].autotrackingInfo.frame_id =
+        s_setting[mCameraId].requestInfo.frame_id;
+    pushAndroidParaTag(ANDROID_SPRD_AUTOCHASING_REGION);
+    HAL_LOGD("sprd auto tracking start x=%d, y=%d, status=%d, frame_id=%d",
+             s_setting[mCameraId].autotrackingInfo.at_start_info[0],
+             s_setting[mCameraId].autotrackingInfo.at_start_info[1],
+             s_setting[mCameraId].autotrackingInfo.at_start_info[2],
+             s_setting[mCameraId].autotrackingInfo.frame_id);
+}
+
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
     struct phySensorInfo *phyPtr = NULL;
@@ -2022,6 +2062,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     } else {
         available_cam_features.add(atoi(prop));
     }
+
+    property_get("persist.vendor.cam.auto.tracking.enable", prop, "1");
+    HAL_LOGI("auto.tracking.enable=%d",atoi(prop));
+    available_cam_features.add(atoi(prop));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -4849,45 +4893,67 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV(" debug sprd auto 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable);
     }
-    HAL_LOGD("isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
-             "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
-             "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
-             "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
-             "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
-             "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled "
-             "is %d",
-             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
-             s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
-             s_setting[mCameraId].flashInfo.mode,
-             s_setting[mCameraId].controlInfo.ae_lock,
-             s_setting[mCameraId].controlInfo.scene_mode,
-             s_setting[mCameraId].sprddefInfo.capture_mode,
-             s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
-             s_setting[mCameraId].sprddefInfo.iso,
-             s_setting[mCameraId].jpgInfo.orientation_original,
-             s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
-             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
-             s_setting[mCameraId].scalerInfo.crop_region[0],
-             s_setting[mCameraId].scalerInfo.crop_region[1],
-             s_setting[mCameraId].scalerInfo.crop_region[2],
-             s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
-             s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
-             s_setting[mCameraId].controlInfo.ae_regions[0],
-             s_setting[mCameraId].controlInfo.ae_regions[1],
-             s_setting[mCameraId].controlInfo.ae_regions[2],
-             s_setting[mCameraId].controlInfo.ae_regions[3],
-             s_setting[mCameraId].controlInfo.ae_regions[4],
-             s_setting[mCameraId].controlInfo.af_trigger,
-             s_setting[mCameraId].controlInfo.af_mode,
-             s_setting[mCameraId].controlInfo.af_state,
-             s_setting[mCameraId].controlInfo.af_regions[0],
-             s_setting[mCameraId].controlInfo.af_regions[1],
-             s_setting[mCameraId].controlInfo.af_regions[2],
-             s_setting[mCameraId].controlInfo.af_regions[3],
-             s_setting[mCameraId].controlInfo.af_regions[4],
-             s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
-             s_setting[mCameraId].sprddefInfo.sprd_filter_type,
-             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
+
+    // update auto tracking start point.
+    if (frame_settings.exists(ANDROID_SPRD_AUTOCHASING_REGION)) {
+        int32_t tag_count =
+            frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION).count;
+        HAL_LOGV("tag_count %d", tag_count);
+        int32_t touch_area[5] = {0};
+        int32_t i = 0;
+
+        for (i = 0; i < tag_count; i++) {
+            touch_area[i] = frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION)
+                             .data.i32[i];
+            HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
+        }
+        autotrackingCoordinateConvert(touch_area);
+    } else {
+        HAL_LOGV("Not AUTOCHASING tag");
+        s_setting[mCameraId].autotrackingInfo.at_start_info[0] = 0;
+        s_setting[mCameraId].autotrackingInfo.at_start_info[1] = 0;
+        s_setting[mCameraId].autotrackingInfo.at_start_info[2] = 0;
+    }
+
+    HAL_LOGD(
+        "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
+        "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
+        "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
+        "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
+        "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
+        "%d, sprd_hdr_plus_enable:%d, filter type= %d, sprd 3dnr enabled is %d",
+        isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
+        s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
+        s_setting[mCameraId].flashInfo.mode,
+        s_setting[mCameraId].controlInfo.ae_lock,
+        s_setting[mCameraId].controlInfo.scene_mode,
+        s_setting[mCameraId].sprddefInfo.capture_mode,
+        s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
+        s_setting[mCameraId].sprddefInfo.iso,
+        s_setting[mCameraId].jpgInfo.orientation_original,
+        s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
+        s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
+        s_setting[mCameraId].scalerInfo.crop_region[0],
+        s_setting[mCameraId].scalerInfo.crop_region[1],
+        s_setting[mCameraId].scalerInfo.crop_region[2],
+        s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
+        s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
+        s_setting[mCameraId].controlInfo.ae_regions[0],
+        s_setting[mCameraId].controlInfo.ae_regions[1],
+        s_setting[mCameraId].controlInfo.ae_regions[2],
+        s_setting[mCameraId].controlInfo.ae_regions[3],
+        s_setting[mCameraId].controlInfo.ae_regions[4],
+        s_setting[mCameraId].controlInfo.af_trigger,
+        s_setting[mCameraId].controlInfo.af_mode,
+        s_setting[mCameraId].controlInfo.af_state,
+        s_setting[mCameraId].controlInfo.af_regions[0],
+        s_setting[mCameraId].controlInfo.af_regions[1],
+        s_setting[mCameraId].controlInfo.af_regions[2],
+        s_setting[mCameraId].controlInfo.af_regions[3],
+        s_setting[mCameraId].controlInfo.af_regions[4],
+        s_setting[mCameraId].sprddefInfo.sprd_hdr_plus_enable,
+        s_setting[mCameraId].sprddefInfo.sprd_filter_type,
+        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
 
 #undef GET_VALUE_IF_DIF
     return rc;
@@ -5544,9 +5610,16 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SPRD_EIS_ENABLED,
                        &(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled), 1);
     camMetadata.update(ANDROID_STATISTICS_HISTOGRAM,
-                       s_setting[mCameraId].hist_report, CAMERA_ISP_HIST_ITEMS
-);
+                       s_setting[mCameraId].hist_report, CAMERA_ISP_HIST_ITEMS);
 
+    //callback autotracking info
+    if (!(s_setting[mCameraId].autotrackingInfo.at_start_info[2])) {
+        //s_setting[mCameraId].autotrackingInfo.at_cb_info[0] = AUTO_TRACKING_FAILTURE;
+        s_setting[mCameraId].autotrackingInfo.at_cb_info[1] = 0;
+        s_setting[mCameraId].autotrackingInfo.at_cb_info[2] = 0;
+    }
+    camMetadata.update(ANDROID_SPRD_AUTOCHASING_TRACEREGION,
+                       s_setting[mCameraId].autotrackingInfo.at_cb_info, 3);
 #endif
 
     resultMetadata = camMetadata.release();
@@ -6495,6 +6568,7 @@ int SprdCamera3Setting::getLEDTag(LED_Tag *ledInfo) {
     *ledInfo = s_setting[mCameraId].ledInfo;
     return 0;
 }
+
 int SprdCamera3Setting::setFACETag(FACE_Tag *faceInfo) {
     s_setting[mCameraId].faceInfo = *faceInfo;
     return 0;
@@ -6519,6 +6593,7 @@ int SprdCamera3Setting::setMETAInfo(meta_info_t metaInfo) {
     s_setting[mCameraId].metaInfo = metaInfo;
     return 0;
 }
+
 int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
     *metaInfo = s_setting[mCameraId].metaInfo;
     return 0;
@@ -6527,6 +6602,18 @@ int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
 int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
     memcpy(s_setting[mCameraId].hist_report, hist_report,
         sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+    return 0;
+}
+
+int SprdCamera3Setting::setAUTOTRACKINGTag(
+    AUTO_TRACKING_Tag *autotrackingInfo) {
+    s_setting[mCameraId].autotrackingInfo = *autotrackingInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::getAUTOTRACKINGTag(
+    AUTO_TRACKING_Tag *autotrackingInfo) {
+    *autotrackingInfo = s_setting[mCameraId].autotrackingInfo;
     return 0;
 }
 }

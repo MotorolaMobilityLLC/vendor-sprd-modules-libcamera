@@ -547,6 +547,13 @@ enum hal_ai_scene_type {
     HAL_AI_SCENE_MAX
 };
 
+enum auto_tracking_type {
+    AUTO_TRACKING_SUCCESS = 0,
+    AUTO_TRACKING_TEMPORARY_FAILURE,
+    AUTO_TRACKING_FAILURE,
+    AUTO_TRACKING_MAX
+};
+
 typedef enum {
     SPRD_CAM_STREAM_NONE,
     SPRD_CAM_STREAM_PREVIEW,
@@ -1116,6 +1123,7 @@ enum ipm_class_type {
     IPM_TYPE_CNR = 0x00000100,
     IPM_TYPE_4IN1 = 0x00000101,
     IPM_TYPE_AI_SCENE = 0x00000200,
+    IPM_TYPE_AUTO_TRACKING = 0x00000400
 };
 
 enum img_fmt {
@@ -1413,6 +1421,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_AE_FLASH_FIRED,
     CAMERA_EVT_CB_HDR_SCENE,
     CAMERA_EVT_CB_AI_SCENE,
+    CAMERA_EVT_CB_AUTO_TRACKING,
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     CAMERA_EVT_CB_AWB_LOCK_NOTIFY,
     CAMERA_EVT_CB_AWB_UNLOCK_NOTIFY,
@@ -1550,6 +1559,7 @@ enum camera_param_type {
     CAMERA_PARAM_SET_DEVICE_ORIENTATION,
     CAMERA_PARAM_GET_DEVICE_ORIENTATION,
     CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+    CAMERA_PARAM_AUTO_TRACKING_INFO,
     CAMERA_PARAM_TYPE_MAX
 
 };
@@ -1605,6 +1615,13 @@ struct camera_sensor_info {
     cmr_s32 exposure_time_denominator;
 };
 
+struct auto_tracking_info {
+    cmr_s32 objectX;
+    cmr_s32 objectY;
+    cmr_s32 status;
+    cmr_s32 frame_id;
+};
+
 struct camera_frame_type {
     cmr_u32 format;
     cmr_u32 width;
@@ -1634,6 +1651,7 @@ struct camera_frame_type {
     cmr_u32 vcm_step;
     cmr_int isMatchFlag;
     cmr_int slave_fd;
+    struct auto_tracking_info at_cb_info;
 };
 
 struct image_sw_algorithm_buf {

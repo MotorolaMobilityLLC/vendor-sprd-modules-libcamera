@@ -31,13 +31,14 @@ struct ipm_frame_in {
     struct img_frm src_frame;
     struct img_frm dst_frame;
     struct img_depth_map depth_map;
-    cmr_uint touch_x;
-    cmr_uint touch_y;
+    cmr_s32 touch_x;
+    cmr_s32 touch_y;
     cmr_uint frame_cnt;
     cmr_handle caller_handle;
     void *private_data;
     cmr_u32 adgain;
     float ev[HDR_CAP_NUM];
+    struct auto_tracking_info input;
 };
 
 struct ipm_frame_out {
@@ -46,6 +47,7 @@ struct ipm_frame_out {
     cmr_handle caller_handle;
     void *private_data;
     cmr_uint is_plus;
+    struct auto_tracking_info output;
 };
 
 typedef cmr_int (*ipm_callback)(cmr_u32 class_type,
@@ -84,6 +86,8 @@ struct ipm_open_in {
     struct img_otp_data otp_data;
     cmr_u32 adgain_valid_frame_num;
     cmr_u32 adgain;
+    struct img_size frame_full_size;
+    struct img_size frame_scale_size;
 };
 
 struct ipm_version {

@@ -1130,6 +1130,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mSetting->getCONTROLTag(&controlInfo);
     mSetting->getFLASHTag(&flashInfo);
 
+    // For auto tracking to save frame num
+    REQUEST_Tag requestInfo;
+    mSetting->getREQUESTTag(&requestInfo);
+    requestInfo.frame_id = mFrameNum;
+    mSetting->setREQUESTTag(&requestInfo);
+    HAL_LOGV("frame_id = %d", requestInfo.frame_id);
+
     captureIntent = controlInfo.capture_intent;
 
     if (meta.exists(ANDROID_REQUEST_ID)) {

@@ -1909,6 +1909,10 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     case PREVIEW_EVT_CB_RESUME:
         oem_cb_type = CAMERA_EVT_CB_RESUME;
         break;
+    case PREVIEW_EVT_CB_AT:
+        oem_cb_type = CAMERA_EVT_CB_AUTO_TRACKING;
+        CMR_LOGD("PREVIEW_EVT_CB_AT");
+        break;
 
     default:
         CMR_LOGE("err, %d", cb_type);
@@ -1961,6 +1965,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
 
         memcpy(message.data, param, sizeof(struct camera_frame_type));
     }
+
     message.msg_type = oem_func;
     message.sub_msg_type = oem_cb_type;
     message.sync_flag = CMR_MSG_SYNC_NONE;
@@ -10631,6 +10636,11 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         break;
     }
 #endif
+    case CAMERA_PARAM_AUTO_TRACKING_INFO:
+        ret = cmr_preview_set_autotracking_param(
+            cxt->prev_cxt.preview_handle, cxt->camera_id,
+            (struct auto_tracking_info *)param);
+        break;
     default:
 
         ret = camera_set_setting(oem_handle, id, param);

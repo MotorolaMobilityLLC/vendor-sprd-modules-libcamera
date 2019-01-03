@@ -1150,6 +1150,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
     }
 
+    // For auto tracking to save frame num
+    REQUEST_Tag requestInfo;
+    mSetting->getREQUESTTag(&requestInfo);
+    requestInfo.frame_id = mFrameNum;
+    mSetting->setREQUESTTag(&requestInfo);
+    HAL_LOGD("frame_id = %d", requestInfo.frame_id);
+
     if (need_apply_settings == 1) {
         mMetadataChannel->request(meta);
     }

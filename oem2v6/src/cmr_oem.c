@@ -1584,6 +1584,10 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     case PREVIEW_EVT_CB_RESUME:
         oem_cb_type = CAMERA_EVT_CB_RESUME;
         break;
+    case PREVIEW_EVT_CB_AT:
+        oem_cb_type = CAMERA_EVT_CB_AUTO_TRACKING;
+        CMR_LOGV("PREVIEW_EVT_CB_AT");
+        break;
 
     default:
         CMR_LOGE("err, %d", cb_type);
@@ -8988,6 +8992,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
+        break;
+    case CAMERA_PARAM_AUTO_TRACKING_INFO:
+        ret = cmr_preview_set_autotracking_param(
+            cxt->prev_cxt.preview_handle, cxt->camera_id,
+            (struct auto_tracking_info *)param);
         break;
     default:
         CMR_LOGI("don't support %d", id);

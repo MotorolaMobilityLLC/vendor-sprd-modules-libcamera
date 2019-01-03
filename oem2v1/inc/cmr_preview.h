@@ -52,6 +52,7 @@ enum preview_cb_type {
     PREVIEW_EVT_CB_FD,
     PREVIEW_EVT_CB_RESUME,
     PREVIEW_EXIT_CB_PREPARE,
+    PREVIEW_EVT_CB_AT,
     PREVIEW_EVT_MAX
 };
 
@@ -345,6 +346,9 @@ cmr_int cal_dcam_output_size(cmr_u16 *src_w, cmr_u16 *src_h, cmr_u32 *dst_w,
 void cmr_preview_set_callback_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
                                   cmr_uint *set_flag);
 #endif
+cmr_int
+cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct auto_tracking_info *input_param);
 
 #ifdef __cplusplus
 }

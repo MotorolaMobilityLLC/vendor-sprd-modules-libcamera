@@ -1003,6 +1003,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_AUTO_3DNR_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
             break;
+        case ANDROID_SPRD_AUTOCHASING_REGION:
+            HAL_LOGV("ANDROID_SPRD_AUTOCHASING_REGION");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTOCHASING_REGION);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

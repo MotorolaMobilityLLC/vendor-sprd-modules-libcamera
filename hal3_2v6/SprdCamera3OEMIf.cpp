@@ -550,6 +550,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mPdafRawHeapReserved = NULL;
     mIspAntiFlickerHeapReserved = NULL;
     mAISceneScaleHeapReserverd = NULL;
+    mAutoTrackingScaleHeapReserverd = NULL;
     mPrevDepthHeapReserved = NULL;
     mPrevSwOutHeapReserved = NULL;
     mFDSceneScaleHeapReserverd = NULL;
@@ -2862,6 +2863,11 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
         mAISceneScaleHeapReserverd = NULL;
     }
 
+    if (NULL != mAutoTrackingScaleHeapReserverd) {
+        freeCameraMem(mAutoTrackingScaleHeapReserverd);
+        mAutoTrackingScaleHeapReserverd = NULL;
+    }
+
     freeRawBuffers();
 
     HAL_LOGI(":hal3: X");
@@ -2884,6 +2890,12 @@ void SprdCamera3OEMIf::deinitPreview() {
         memset(&faceInfo, 0, sizeof(FACE_Tag));
         mSetting->setFACETag(&faceInfo);
     }
+
+    // Clean the autotrackingInfo
+    AUTO_TRACKING_Tag autotrackingInfo;
+    mSetting->getAUTOTRACKINGTag(&autotrackingInfo);
+    memset(&autotrackingInfo, 0, sizeof(AUTO_TRACKING_Tag));
+    mSetting->setAUTOTRACKINGTag(&autotrackingInfo);
 
     HAL_LOGV("X");
 }
@@ -3420,6 +3432,44 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     }
 
     mSetting->setFACETag(&faceInfo);
+}
+
+void SprdCamera3OEMIf::receivePreviewATFrame(struct camera_frame_type *frame) {
+    ATRACE_CALL();
+
+    if (NULL == frame) {
+        HAL_LOGE("invalid frame pointer");
+        return;
+    }
+    Mutex::Autolock l(&mPreviewCbLock);
+    float zoomWidth = 0.0f, zoomHeight = 0.0f;
+    uint16_t sensorOrgW = 0, sensorOrgH = 0;
+    AUTO_TRACKING_Tag autotrackingInfo;
+
+    mSetting->getAUTOTRACKINGTag(&autotrackingInfo);
+
+    HAL_LOGD("frame coordinate x=%d y=%d, status=%d", frame->at_cb_info.objectX,
+             frame->at_cb_info.objectY, frame->at_cb_info.status);
+
+    //Do coordinate transition
+    zoomWidth = autotrackingInfo.w_ratio;
+    zoomHeight = autotrackingInfo.h_ratio;
+    if (0 != zoomWidth && 0 != zoomHeight) {
+        autotrackingInfo.at_cb_info[1] = frame->at_cb_info.objectX / zoomWidth;
+        autotrackingInfo.at_cb_info[2] = frame->at_cb_info.objectY / zoomHeight;
+    } else {
+        autotrackingInfo.at_cb_info[1] = 0;
+        autotrackingInfo.at_cb_info[2] = 0;
+        HAL_LOGE("invalid zoom ratio");
+    }
+
+    autotrackingInfo.at_cb_info[0] = frame->at_cb_info.status;
+
+    HAL_LOGD("cb coordinate status=%d x=%d y=%d,",
+             autotrackingInfo.at_cb_info[0], autotrackingInfo.at_cb_info[1],
+             autotrackingInfo.at_cb_info[2]);
+
+    mSetting->setAUTOTRACKINGTag(&autotrackingInfo);
 }
 
 /*
@@ -4751,6 +4801,13 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
         HAL_LOGV("CAMERA_EVT_CB_FD");
         if (isPreviewing()) {
             receivePreviewFDFrame((struct camera_frame_type *)parm4);
+        }
+        break;
+
+    case CAMERA_EVT_CB_AUTO_TRACKING:
+        HAL_LOGV("CAMERA_EVT_CB_AUTO_TRACKING");
+        if (isPreviewing()) {
+            receivePreviewATFrame((struct camera_frame_type *)parm4);
         }
         break;
 
@@ -6332,6 +6389,19 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         HAL_LOGD("verification_enable:%d", sprddefInfo.verification_enable);
         mSetting->setVERIFITag(sprddefInfo.verification_enable);
     } break;
+    case ANDROID_SPRD_AUTOCHASING_REGION: {
+        AUTO_TRACKING_Tag autotrackingInfo;
+        struct auto_tracking_info info;
+        mSetting->getAUTOTRACKINGTag(&autotrackingInfo);
+        info.objectX = autotrackingInfo.at_start_info[0];
+        info.objectY = autotrackingInfo.at_start_info[1];
+        info.status = autotrackingInfo.at_start_info[2];
+        info.frame_id = autotrackingInfo.frame_id;
+        HAL_LOGD("%d, %d, %d, %d", info.objectX, info.objectY, info.status,
+                 info.frame_id);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
+                 (cmr_uint)&info);
+    } break;
     default:
         ret = BAD_VALUE;
         break;
@@ -7409,6 +7479,13 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         mFDSceneScaleHeapReserverd = NULL;
     }
 
+    if (type == CAMERA_PREVIEW_SCALE_AUTO_TRACKING) {
+        if (NULL != mAutoTrackingScaleHeapReserverd) {
+            freeCameraMem(mAutoTrackingScaleHeapReserverd);
+        }
+        mAutoTrackingScaleHeapReserverd = NULL;
+    }
+
     return 0;
 }
 
@@ -7785,6 +7862,18 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         *phy_addr++ = (cmr_uint)mFDSceneScaleHeapReserverd->phys_addr;
         *vir_addr++ = (cmr_uint)mFDSceneScaleHeapReserverd->data;
         *fd++ = mFDSceneScaleHeapReserverd->fd;
+    } else if (type == CAMERA_PREVIEW_SCALE_AUTO_TRACKING) {
+        if (mAutoTrackingScaleHeapReserverd == NULL) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("memory is null.");
+                goto mem_fail;
+            }
+            mAutoTrackingScaleHeapReserverd = memory;
+        }
+        *phy_addr++ = (cmr_uint)mAutoTrackingScaleHeapReserverd->phys_addr;
+        *vir_addr++ = (cmr_uint)mAutoTrackingScaleHeapReserverd->data;
+        *fd++ = mAutoTrackingScaleHeapReserverd->fd;
     }
 
     return 0;
@@ -7844,7 +7933,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_CHANNEL_3_RESERVED == type ||
                CAMERA_CHANNEL_4_RESERVED == type ||
                CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
-               CAMERA_FD_SMALL == type) {
+               CAMERA_FD_SMALL == type ||
+               CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_CHANNEL_1 == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
@@ -7915,7 +8005,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_CHANNEL_3_RESERVED == type ||
                CAMERA_CHANNEL_4_RESERVED == type ||
                CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
-               CAMERA_FD_SMALL == type) {
+               CAMERA_FD_SMALL == type ||
+               CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
     } else if (CAMERA_CHANNEL_1 == type) {

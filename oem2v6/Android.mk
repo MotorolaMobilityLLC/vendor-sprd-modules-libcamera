@@ -75,6 +75,12 @@ endif
 
 LOCAL_SRC_FILES += src/cmr_ai_scene.c
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_AUTO_TRACKING)),true)
+LOCAL_SRC_FILES += ../oemcommon/src/cmr_auto_tracking.c
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/4dtracking/inc
+LOCAL_SHARED_LIBRARIES += libSprdOTAlgo
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/eis/inc
 endif

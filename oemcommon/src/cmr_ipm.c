@@ -50,6 +50,9 @@ extern struct class_tab_t tab_info_4in1;
 #ifdef CONFIG_CAMERA_AI
 extern struct class_tab_t ai_scene_tab_info;
 #endif
+#ifdef CONFIG_CAMERA_AUTO_TRACKING
+extern struct class_tab_t auto_tracking_tab_info;
+#endif
 
 struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_NONE, NULL},
@@ -83,6 +86,9 @@ struct ipm_class_tab class_type_tab[] = {
 #endif
 #ifdef CONFIG_CAMERA_AI
     {IPM_TYPE_AI_SCENE, &ai_scene_tab_info},
+#endif
+#ifdef CONFIG_CAMERA_AUTO_TRACKING
+    {IPM_TYPE_AUTO_TRACKING, &auto_tracking_tab_info},
 #endif
 };
 

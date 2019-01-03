@@ -355,6 +355,14 @@ struct prev_ai_scene_info {
     struct frm_info data;
 };
 
+struct prev_auto_tracking_info {
+    struct img_frm frm_preview;
+    unsigned long camera_id;
+    void *caller_handle;
+    struct frm_info data;
+    cmr_u32 frm_cnt;
+};
+
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
                          void *client_data, cmr_uint is_autotest,
                          cmr_handle *oem_handle, void *cb_of_malloc,

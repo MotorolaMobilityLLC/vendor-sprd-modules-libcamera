@@ -357,6 +357,7 @@ struct prev_context {
     cmr_handle refocus_handle;
     cmr_handle prev_3dnr_handle;
     cmr_handle ai_scence_handle;
+    cmr_handle auto_tracking_handle;
     cmr_uint recovery_status;
     cmr_uint recovery_cnt;
     cmr_u64 recovery_start_time;
@@ -370,6 +371,12 @@ struct prev_context {
 #ifdef CONFIG_CAMERA_OFFLINE
     int callback_zsl_flag;
 #endif
+    cmr_u32 auto_tracking_inited;
+    cmr_u32 auto_tracking_cnt;
+    cmr_s32 auto_tracking_start_x;
+    cmr_s32 auto_tracking_start_y;
+    cmr_s32 auto_tracking_status;
+    cmr_s32 auto_tracking_frame_id;
 };
 
 struct prev_thread_cxt {
@@ -688,6 +695,18 @@ static cmr_int prev_ai_scene_stop(struct prev_handle *handle);
 static cmr_int prev_ai_scene_send_data(struct prev_handle *handle,
                                        cmr_u32 camera_id, struct img_frm *frm,
                                        struct frm_info *frm_info);
+
+static cmr_int prev_auto_tracking_open(struct prev_handle *handle,
+                                       cmr_u32 camera_id);
+static cmr_int prev_auto_tracking_close(struct prev_handle *handle,
+                                        cmr_u32 camera_id);
+
+static cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
+                                            cmr_u32 camera_id,
+                                            struct img_frm *frm,
+                                            struct frm_info *frm_info);
+static cmr_int prev_auto_tracking_cb(cmr_u32 class_type,
+                                     struct ipm_frame_out *cb_param);
 
 static cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
                                   struct sensor_data_info *otp_data);
@@ -3980,8 +3999,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->prev_param.is_support_fd) {
             prev_fd_open(handle, camera_id);
         }
-        /*init 3dnr*/
 
+        /*init 3dnr*/
         CMR_LOGD("is_support_3dnr %u", prev_cxt->prev_param.is_3dnr);
         if (prev_cxt->prev_param.is_3dnr == 1) {
             prev_3dnr_open(handle, camera_id);
@@ -4006,6 +4025,17 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_depthmap_open(handle, camera_id, &sensor_otp.total_otp);
         }
 #endif
+
+        if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0)) {
+            CMR_LOGD("enable auto tracking");
+            /*init auto tracking*/
+            if (camera_id == 0) {
+                if (!prev_cxt->auto_tracking_inited) {
+                    prev_auto_tracking_open(handle, camera_id);
+                    prev_cxt->auto_tracking_inited = 1;
+                }
+            }
+        }
     }
 #if defined(CONFIG_CAMERA_PDAF)
     if (pdaf_enable) {
@@ -4130,6 +4160,11 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.is_3dnr == 1) {
             prev_3dnr_close(handle, camera_id);
+        }
+
+        /*stop auto tracking*/
+        if (prev_cxt->auto_tracking_inited) {
+            prev_auto_tracking_close(handle, camera_id);
         }
     }
 
@@ -7229,6 +7264,11 @@ cmr_int prev_construct_frame(
         if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1) {
 
             prev_ai_scene_send_data(handle, camera_id, frm_ptr, info);
+        }
+        // auto tracking
+        if (prev_cxt->auto_tracking_inited && prev_cxt->auto_tracking_status == 1) {
+            CMR_LOGD("start auto_tracking");
+            prev_auto_tracking_send_data(handle, camera_id, frm_ptr, info);
         }
         char value[PROPERTY_VALUE_MAX];
         char frame_num[PROPERTY_VALUE_MAX];
@@ -12313,6 +12353,154 @@ exit:
     return ret;
 }
 
+cmr_int prev_auto_tracking_open(struct prev_handle *handle, cmr_u32 camera_id) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    struct ipm_open_in in_param;
+    struct ipm_open_out out_param;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    prev_cxt->auto_tracking_cnt = 0;
+
+    in_param.frame_full_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+    in_param.frame_full_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+    in_param.reg_cb = prev_auto_tracking_cb;
+    if (NULL == prev_cxt->auto_tracking_handle) {
+        ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_AUTO_TRACKING,
+                           &in_param, &out_param,
+                           &prev_cxt->auto_tracking_handle);
+    }
+    CMR_LOGI("end prev_cxt.auto_tracking_handle:%x",
+             prev_cxt->auto_tracking_handle);
+
+exit:
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int prev_auto_tracking_close(struct prev_handle *handle,
+                                 cmr_u32 camera_id) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    prev_cxt->auto_tracking_cnt = 0;
+
+    if (prev_cxt->auto_tracking_handle) {
+        ret = cmr_ipm_close(prev_cxt->auto_tracking_handle);
+        prev_cxt->auto_tracking_handle = 0;
+    }
+    CMR_LOGI("close auto tracking done %ld", ret);
+
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
+                                     cmr_u32 camera_id, struct img_frm *frm,
+                                     struct frm_info *frm_info) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_s32 tmp_X = 0;
+    cmr_s32 tmp_Y = 0;
+    struct camera_context *cxt = NULL;
+    struct ipm_frame_in ipm_in_param;
+    struct ipm_frame_out ipm_out_param;
+    struct prev_auto_tracking_info at_info;
+    struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
+    cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
+    cmr_bzero(&at_info, sizeof(struct prev_auto_tracking_info));
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    cxt = (struct camera_context *)handle->oem_handle;
+    if (!prev_cxt->auto_tracking_handle) {
+        CMR_LOGE("auto tracking closed");
+        ret = CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ipm_in_param.private_data = (void *)(&at_info);
+    at_info.caller_handle = (void *)handle;
+    at_info.camera_id = camera_id;
+    at_info.data = *frm_info;
+    prev_cxt->auto_tracking_cnt ++;
+    at_info.frm_cnt = prev_cxt->auto_tracking_cnt;
+    ipm_in_param.src_frame = *frm;
+    ipm_in_param.dst_frame = *frm;
+    ipm_in_param.caller_handle = (void *)handle;
+
+    CMR_LOGV("in param: x=%d, y=%d",
+             prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y);
+
+
+    // send touch coordinate to ipm
+    ipm_in_param.input.objectX = prev_cxt->auto_tracking_start_x;// tmp_X;
+    ipm_in_param.input.objectY = prev_cxt->auto_tracking_start_y;// tmp_Y;
+    ipm_in_param.input.status = prev_cxt->auto_tracking_status;
+    ipm_in_param.input.frame_id = prev_cxt->auto_tracking_frame_id;
+
+    ret = ipm_transfer_frame(prev_cxt->auto_tracking_handle, &ipm_in_param,
+                             &ipm_out_param);
+    if (ret) {
+        CMR_LOGE("failed to transfer frame to ipm %ld", ret);
+        goto exit;
+    }
+    CMR_LOGD("out param:x=%d, y=%d, status=%d, f_id=%d,",
+             ipm_out_param.output.objectX, ipm_out_param.output.objectY,
+             ipm_out_param.output.status, ipm_out_param.output.frame_id);
+
+exit:
+    CMR_LOGV("ret %ld", ret);
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int prev_auto_tracking_cb(cmr_u32 class_type,
+                              struct ipm_frame_out *cb_param) {
+    UNUSED(class_type);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = NULL;
+    struct prev_context *prev_cxt = NULL;
+    struct camera_frame_type frame_type;
+    struct prev_cb_info cb_data_info;
+    cmr_u32 camera_id = CAMERA_ID_MAX;
+
+    if (!cb_param || !cb_param->caller_handle) {
+        CMR_LOGE("error param");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    handle = (struct prev_handle *)cb_param->caller_handle;
+    camera_id = (cmr_u32)((unsigned long)cb_param->private_data);
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+
+    frame_type.at_cb_info.objectX = cb_param->output.objectX;
+    frame_type.at_cb_info.objectY = cb_param->output.objectY;
+    frame_type.at_cb_info.status = cb_param->output.status;
+
+    /*notify fd info directly*/
+    cb_data_info.cb_type = PREVIEW_EVT_CB_AT;
+    cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+    cb_data_info.frame_data = &frame_type;
+    prev_cb_start(handle, &cb_data_info);
+
+    return ret;
+}
+
 cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
                            struct sensor_data_info *otp_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -12844,3 +13032,22 @@ void cmr_preview_set_callback_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
     return;
 }
 #endif
+
+cmr_int
+cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct auto_tracking_info *input_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
+
+    prev_cxt->auto_tracking_start_x = input_param->objectX;
+    prev_cxt->auto_tracking_start_y = input_param->objectY;
+    prev_cxt->auto_tracking_status = input_param->status;
+    prev_cxt->auto_tracking_frame_id = input_param->frame_id;
+    CMR_LOGD(
+        "start_x=%d, start_y=%d, status=%d, f_id=%d",
+        prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y,
+        prev_cxt->auto_tracking_status, prev_cxt->auto_tracking_frame_id);
+
+    return ret;
+}
