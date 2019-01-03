@@ -6161,17 +6161,9 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
                                           cmr_uint *vir_addr, cmr_s32 *fd,
                                           cmr_u32 sum) {
     cmr_u32 i;
-    SPRD_DEF_Tag sprddefInfo;
-    int ret = 0;
-    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
 
     HAL_LOGD("mZslHeapNum %d sum %d", mZslHeapNum, sum);
     for (i = 0; i < mZslHeapNum; i++) {
-        ret = mapper.unlock(
-            (const native_handle_t *)mZslGraphicsHandle[i].native_handle);
-        if (ret != NO_ERROR) {
-            ALOGE("mapper.unlock fail %p", mZslGraphicsHandle[i].native_handle);
-        }
         if (mZslGraphicsHandle[i].graphicBuffer != NULL) {
             mZslGraphicsHandle[i].graphicBuffer.clear();
             mZslGraphicsHandle[i].graphicBuffer = NULL;
@@ -6248,6 +6240,13 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
         *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
         *fd++ = mZslHeapArray[i]->fd;
+
+        ret = mapper.unlock(
+            (const native_handle_t *)mZslGraphicsHandle[i].native_handle);
+        if (ret) {
+            ALOGE("mapper.unlock fail %p", mZslGraphicsHandle[i].native_handle);
+            goto mem_fail;
+        }
     }
     return 0;
 
@@ -8258,6 +8257,7 @@ exit:
 void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     ATRACE_CALL();
 
+    int ret;
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     struct camera_frame_type zsl_frame;
     struct image_sw_algorithm_buf src_sw_algorithm_buf;
@@ -8338,7 +8338,13 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
             sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 5) {
-                goto exit;
+                ret =
+                    obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
+                if (ret) {
+                    HAL_LOGE("camera_stop_capture failed");
+                }
+                obj->mFlagOffLineZslStart = 0;
+                break;
             }
             continue;
         }
@@ -8368,7 +8374,13 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
             sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 3) {
-                goto exit;
+                ret =
+                    obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
+                if (ret) {
+                    HAL_LOGE("camera_stop_capture failed");
+                }
+                obj->mFlagOffLineZslStart = 0;
+                break;
             }
             continue;
         }

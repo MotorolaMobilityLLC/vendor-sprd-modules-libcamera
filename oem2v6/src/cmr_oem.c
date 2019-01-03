@@ -1553,16 +1553,10 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
 
     frame.channel_id = cxt->snp_cxt.channel_id;
     if (1 == camera_get_hdr_flag(cxt)) {
-        camera_snapshot_cb_to_hal((cmr_handle)cb_param->private_data,
-                                  SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
-                                  SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
         camera_local_set_zsl_snapshot_buffer(
             cxt, cb_param->dst_frame.addr_phy.addr_y,
             cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);
     } else if (1 == camera_get_3dnr_flag(cxt)) {
-        camera_snapshot_cb_to_hal((cmr_handle)cb_param->private_data,
-                                  SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
-                                  SNAPSHOT_FUNC_TAKE_PICTURE, &frame);
         camera_local_set_zsl_snapshot_buffer(
             cxt, cb_param->dst_frame.addr_phy.addr_y,
             cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);

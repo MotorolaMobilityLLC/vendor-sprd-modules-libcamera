@@ -1706,7 +1706,12 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     CMR_LOGD("cxt->req_param.is_zsl_snapshot=%d",
              cxt->req_param.is_zsl_snapshot);
     if (cxt->req_param.is_zsl_snapshot) {
-        if (chn_param_ptr->is_rot) {
+        if (cxt->req_param.is_3dnr == 1 || cxt->req_param.is_hdr == 1) {
+            CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
+            snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                    SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
+                                    NULL, sizeof(struct camera_frame_type));
+        } else if (chn_param_ptr->is_rot) {
             rot_src = chn_param_ptr->rot[0].src_img;
             CMR_LOGD("fd=0x%x", rot_src.fd);
             zsl_frame.fd = rot_src.fd;
@@ -1725,12 +1730,10 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
         } else {
             CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
             zsl_frame.fd = chn_param_ptr->jpeg_in[0].src.fd;
-            if (cxt->req_param.is_3dnr != 1 || cxt->req_param.is_hdr != 1) {
-                snp_send_msg_notify_thr(
-                    snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE,
-                    SNAPSHOT_CB_EVT_RETURN_ZSL_BUF, (void *)&zsl_frame,
-                    sizeof(struct camera_frame_type));
-            }
+            snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE,
+                                    SNAPSHOT_CB_EVT_RETURN_ZSL_BUF,
+                                    (void *)&zsl_frame,
+                                    sizeof(struct camera_frame_type));
         }
     }
 
