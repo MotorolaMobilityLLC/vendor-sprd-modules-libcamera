@@ -1322,7 +1322,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #endif
 
     {
-        Mutex::Autolock lr(mRequestLock);
         /* Update pending request list and pending buffers map */
         uint32_t frameNumber = request->frame_number;
         FLASH_Tag flashInfo;
@@ -1544,8 +1543,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
 #endif
 
-        mPendingRequestsList.push_back(pendingRequest);
-        mPendingRequest++;
+        {
+            Mutex::Autolock lr(mRequestLock);
+            mPendingRequestsList.push_back(pendingRequest);
+            mPendingRequest++;
+        }
 
         if (request->input_buffer != NULL) {
             const camera3_stream_buffer_t *input = request->input_buffer;
@@ -1662,7 +1664,7 @@ exit:
 void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     ATRACE_CALL();
 
-    Mutex::Autolock l(mRequestLock);
+    Mutex::Autolock l(mResultLock);
 
     uint32_t frame_number = result_info->frame_number;
     buffer_handle_t *buffer = result_info->buffer;
@@ -1927,6 +1929,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                      i->num_buffers, mPendingRequest, result.frame_number);
 
             if (0 == i->num_buffers) {
+                Mutex::Autolock l(mRequestLock);
                 receive_req_max = i->receive_req_max;
                 i = mPendingRequestsList.erase(i);
                 mPendingRequest--;
@@ -1956,15 +1959,19 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         mSetting->setSENSORTag(sensor_Info);
     }
 
-    for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
-         i != mPendingRequestsList.end();) {
-        i->pipeline_depth++;
-        i++;
-    }
+    {
+        Mutex::Autolock l(mRequestLock);
+        for (List<PendingRequestInfo>::iterator i =
+                 mPendingRequestsList.begin();
+             i != mPendingRequestsList.end();) {
+            i->pipeline_depth++;
+            i++;
+        }
 
-    if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
-        HAL_LOGV("signal request=%d", oldrequest);
-        mRequestSignal.signal();
+        if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
+            HAL_LOGV("signal request=%d", oldrequest);
+            mRequestSignal.signal();
+        }
     }
 }
 
@@ -2297,26 +2304,33 @@ void SprdCamera3HWI::timer_handler(union sigval arg) {
         reinterpret_cast<SprdCamera3RegularChannel *>(dev->mRegularChan);
     SprdCamera3PicChannel *picChannel =
         reinterpret_cast<SprdCamera3PicChannel *>(dev->mPicChan);
+    List<PendingRequestInfo> *pendingRequestsList =
+        reinterpret_cast<List<PendingRequestInfo> *>(
+            &dev->mPendingRequestsList);
+
     int64_t timestamp = 0;
 
     HAL_LOGD("E");
 
     timestamp = systemTime();
 
-    if (regularChannel) {
-        regularChannel->channelClearAllQBuff(timestamp,
-                                             CAMERA_STREAM_TYPE_PREVIEW);
-        regularChannel->channelClearAllQBuff(timestamp,
-                                             CAMERA_STREAM_TYPE_VIDEO);
-        regularChannel->channelClearAllQBuff(timestamp,
-                                             CAMERA_STREAM_TYPE_CALLBACK);
-    }
+    if (!pendingRequestsList->empty()) {
 
-    if (picChannel) {
-        picChannel->channelClearAllQBuff(timestamp,
-                                         CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
-        picChannel->channelClearAllQBuff(timestamp,
-                                         CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+        if (regularChannel) {
+            regularChannel->channelClearAllQBuff(timestamp,
+                                                 CAMERA_STREAM_TYPE_PREVIEW);
+            regularChannel->channelClearAllQBuff(timestamp,
+                                                 CAMERA_STREAM_TYPE_VIDEO);
+            regularChannel->channelClearAllQBuff(timestamp,
+                                                 CAMERA_STREAM_TYPE_CALLBACK);
+        }
+
+        if (picChannel) {
+            picChannel->channelClearAllQBuff(
+                timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+            picChannel->channelClearAllQBuff(
+                timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+        }
     }
     // dev->mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
     if (dev->mInvaildRequest) {

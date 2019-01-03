@@ -178,6 +178,7 @@ class SprdCamera3HWI {
     // mutex for serialized access to camera3_device_ops_t functions
     Mutex mLock;
     Mutex mRequestLock;
+    Mutex mResultLock;
     Condition mRequestSignal;
     // List <stream_info_t *>                  mStreamInfo;
     bool mIsSkipFrm;
