@@ -2047,6 +2047,15 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
         capture_size.width = (cmr_u32)mRawWidth;
         capture_size.height = (cmr_u32)mRawHeight;
     }
+
+/**********************************
+*it is in SNAPSHOT_NO_ZSL_MODE single shot,
+*need not to do capture with video channel , forBug 957066
+************************************/
+    if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE &&
+        mPicCaptureCnt > 1 && mCaptureMode == CAMERA_NORMAL_MODE)
+            mVideoSnapshotType = 0;
+
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE,
              (cmr_uint)&capture_size);
 
@@ -6667,7 +6676,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
                 mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
             }
         }
-
         break;
     case CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT:
         mTakePictureMode = SNAPSHOT_ZSL_MODE;
