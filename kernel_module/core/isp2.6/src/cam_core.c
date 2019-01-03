@@ -3561,6 +3561,29 @@ static int img_ioctl_stop_capture(
 	return 0;
 }
 
+ static int img_ioctl_ebd_control(struct camera_module *module,
+			 unsigned long arg)
+{
+	int ret = 0;
+	struct sprd_ebd_control ebd_tmp;
+	uint32_t channel_id;
+	struct sprd_img_parm __user *uparam;
+
+	uparam = (struct sprd_img_parm __user *)arg;
+	ret = get_user(channel_id, &uparam->channel_id);
+
+	ret = copy_from_user(&ebd_tmp, &uparam->ebd_ctrl,
+			sizeof(struct sprd_ebd_control));
+
+	pr_info("MODE: %d, VC:%d, DT:%d\n", ebd_tmp.mode,
+		ebd_tmp.image_vc, ebd_tmp.image_dt);
+
+	ret = dcam_ops->ioctl(module->dcam_dev_handle,
+				DCAM_IOCTL_CFG_EBD, &ebd_tmp);
+
+	return ret;
+}
+
 static int raw_proc_done(struct camera_module *module)
 {
 	int ret = 0;
@@ -4568,6 +4591,7 @@ static struct cam_ioctl_cmd ioctl_cmds_table[66] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_FUNCTION_MODE)]	= {SPRD_IMG_IO_SET_FUNCTION_MODE,	img_ioctl_set_function_mode},
 	[_IOC_NR(SPRD_IMG_IO_GET_FLASH_INFO)]	= {SPRD_IMG_IO_GET_FLASH_INFO,	img_ioctl_get_flash},
 	[_IOC_NR(SPRD_ISP_IO_MASK_3A)]		= {SPRD_ISP_IO_MASK_3A,		NULL},
+	[_IOC_NR(SPRD_IMG_IO_EBD_CONTROL)]		= {SPRD_IMG_IO_EBD_CONTROL,	img_ioctl_ebd_control},
 	[_IOC_NR(SPRD_IMG_IO_SET_4IN1_ADDR)]	= {SPRD_IMG_IO_SET_4IN1_ADDR,	img_ioctl_4in1_set_raw_addr},
 	[_IOC_NR(SPRD_IMG_IO_4IN1_POST_PROC)]	= {SPRD_IMG_IO_4IN1_POST_PROC,	img_ioctl_4in1_post_proc},
 	[_IOC_NR(SPRD_IMG_IO_PATH_PAUSE)]	= {SPRD_IMG_IO_PATH_PAUSE,	ioctl_test_dev},

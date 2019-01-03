@@ -211,6 +211,7 @@ struct dcam_pipe_dev {
 	uint32_t is_4in1;
 	uint32_t is_3dnr;
 	uint32_t is_pdaf;
+	uint32_t is_ebd;
 	uint32_t pdaf_type;
 	uint32_t offline; /* flag: set 1 for 4in1 go through dcam1 bin */
 

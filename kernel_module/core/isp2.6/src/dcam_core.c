@@ -63,7 +63,7 @@
  */
 struct statis_path_buf_info s_statis_path_info_all[] = {
 	{DCAM_PATH_PDAF,    STATIS_PDAF_BUF_SIZE,  STATIS_PDAF_BUF_NUM},
-	/*{DCAM_PATH_VCH2,    STATIS_EBD_BUF_SIZE,   STATIS_EBD_BUF_NUM},*/
+	{DCAM_PATH_VCH2,    STATIS_EBD_BUF_SIZE,   STATIS_EBD_BUF_NUM},
 	{DCAM_PATH_AEM,     STATIS_AEM_BUF_SIZE,   STATIS_AEM_BUF_NUM},
 	{DCAM_PATH_AFM,     STATIS_AFM_BUF_SIZE,   STATIS_AFM_BUF_NUM},
 	{DCAM_PATH_AFL,     STATIS_AFL_BUF_SIZE,   STATIS_AFL_BUF_NUM},
@@ -959,6 +959,21 @@ static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
 	return 0;
 }
 
+static int dcam_cfg_ebd(struct dcam_pipe_dev *dev, void *param)
+{
+	struct sprd_ebd_control *p = (struct sprd_ebd_control *)param;
+	uint32_t idx = dev->idx;
+
+	pr_info("mode:0x%x, vc:0x%x, dt:0x%x\n",p->mode,
+			p->image_vc, p->image_dt);
+	dev->is_ebd = 1;
+	DCAM_REG_WR(idx, DCAM_VC2_CONTROL,
+		((p->image_vc & 0x3) << 16) |
+		((p->image_dt & 0x3F) << 8) |
+		(p->mode & 0x3));
+
+	return 0;
+}
 void dcam_ret_src_frame(void *param)
 {
 	struct camera_frame *frame;
@@ -2060,6 +2075,9 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 	case DCAM_IOCTL_CFG_PDAF:
 		ret = dcam_cfg_pdaf(dev, param);
 		break;
+	case DCAM_IOCTL_CFG_EBD:
+		ret = dcam_cfg_ebd(dev, param);
+		break;
 	default:
 		pr_err("error: unknown cmd: %d\n", cmd);
 		ret = -EFAULT;
@@ -2195,6 +2213,9 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		atomic_set(&dev->path[DCAM_PATH_PDAF].user_cnt, 1);
 	if (dev->is_3dnr)
 		atomic_set(&dev->path[DCAM_PATH_3DNR].user_cnt, 1);
+
+	if (dev->is_ebd)
+		atomic_set(&dev->path[DCAM_PATH_VCH2].user_cnt, 1);
 
 	dev->frame_index = 0;
 

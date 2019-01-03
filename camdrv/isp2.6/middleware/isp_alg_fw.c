@@ -110,6 +110,7 @@ struct ae_info {
 	void *buffer_client_data;
 	struct ae_size win_num;
 	struct ae_size win_size;
+	struct ae_ctrl_ebd_info ebd_info;
 	cmr_u32 shift;
 	cmr_u32 flash_version;
 };
@@ -2109,11 +2110,41 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, cmr_u32 data_type, 
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
+	struct sensor_embedded_info sensor_ebd_info;
 	UNUSED(data_type);
 
-	if (cxt->ebd_cxt.ebd_support){
-		//isp_file_ebd_save_info(cxt->handle_file_debug, statis_info);
+	memset((void *)&sensor_ebd_info, 0x00, sizeof(sensor_ebd_info));
+	sensor_ebd_info.embedded_data = (cmr_u8 *)statis_info->uaddr;
+	if (cxt->ioctrl_ptr->sns_ioctl) {
+		cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+					CMD_SNS_IC_GET_EBD_PARSE_DATA,
+					&sensor_ebd_info);
 	}
+
+	cxt->ae_cxt.ebd_info.frame_id = sensor_ebd_info.parse_data.frame_count;
+	cxt->ae_cxt.ebd_info.frame_id_valid =
+				sensor_ebd_info.frame_count_valid;
+	cxt->ae_cxt.ebd_info.exposure = sensor_ebd_info.parse_data.shutter;
+	cxt->ae_cxt.ebd_info.exposure_valid =
+				sensor_ebd_info.shutter_valid;
+	cxt->ae_cxt.ebd_info.again = sensor_ebd_info.parse_data.again;
+	cxt->ae_cxt.ebd_info.again_valid =
+				sensor_ebd_info.again_valid;
+
+	cxt->ae_cxt.ebd_info.dgain_gr = sensor_ebd_info.parse_data.dgain_gr;
+	cxt->ae_cxt.ebd_info.dgain_r = sensor_ebd_info.parse_data.dgain_r;
+	cxt->ae_cxt.ebd_info.dgain_b = sensor_ebd_info.parse_data.dgain_b;
+	cxt->ae_cxt.ebd_info.dgain_gb = sensor_ebd_info.parse_data.dgain_gb;
+	cxt->ae_cxt.ebd_info.gain = sensor_ebd_info.parse_data.gain;
+	cxt->ae_cxt.ebd_info.dgain_valid = sensor_ebd_info.dgain_valid;
+
+	ISP_LOGV("frame id %x %d, shutter %x %d, again %x %d",
+			cxt->ae_cxt.ebd_info.frame_id,
+			cxt->ae_cxt.ebd_info.frame_id_valid,
+			cxt->ae_cxt.ebd_info.exposure,
+			cxt->ae_cxt.ebd_info.exposure_valid,
+			cxt->ae_cxt.ebd_info.again,
+			cxt->ae_cxt.ebd_info.again_valid);
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 
