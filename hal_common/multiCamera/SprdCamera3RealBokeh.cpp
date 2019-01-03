@@ -42,7 +42,7 @@ namespace sprdcamera {
 
 
 #ifdef YUV_CONVERT_TO_JPEG
-#define BOKEH_REFOCUS_COMMON_PARAM_NUM (13)
+#define BOKEH_REFOCUS_COMMON_PARAM_NUM (14)
 #else
 #define BOKEH_REFOCUS_COMMON_PARAM_NUM (11)
 #endif
@@ -1666,6 +1666,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
         uint32_t param_state = param.sprd.cap.param_state;
         uint32_t rotation = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
                                 .jpgInfo.orientation;
+        uint32_t bokeh_version = 0x1C0101;
         unsigned char bokeh_flag[] = {'B', 'O', 'K', 'E'};
         depth_size = mRealBokeh->mBokehSize.depth_snap_size;
         unsigned char *p[] = {
@@ -1677,11 +1678,11 @@ int SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
 #ifdef YUV_CONVERT_TO_JPEG
             (unsigned char *)&process_jpeg, (unsigned char *)&orig_jpeg_size,
 #endif
-            (unsigned char *)&bokeh_flag};
-        HAL_LOGD("sprd param: %d ,%d , %d, %d, %d, %d, %d, %d, %d, %d, %s",
+            (unsigned char *)&bokeh_version, (unsigned char *)&bokeh_flag};
+        HAL_LOGD("sprd param: %d ,%d , %d, %d, %d, %d, %d, %d, %d, %d, %x, %s",
                  main_width, main_height, depth_width, depth_height, depth_size,
                  bokeh_level, position_x, position_y, param_state, rotation,
-                 bokeh_flag);
+                 bokeh_version, bokeh_flag);
 #ifdef YUV_CONVERT_TO_JPEG
         HAL_LOGD("process_jpeg %d,orig_jpeg_size %d", process_jpeg,
                  orig_jpeg_size);

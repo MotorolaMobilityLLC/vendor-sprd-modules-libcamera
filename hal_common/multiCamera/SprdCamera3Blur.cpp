@@ -3052,6 +3052,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t tmp_mode = mCapture2InitParams.tmp_mode;
         uint32_t tmp_thr = mCapture2InitParams.tmp_thr;
         uint32_t tuning_exist = mIspCapture2InitParams.tuning_exist;
+        uint32_t blur_version = 0x180301;
 
         unsigned char *p1[] = {
             (unsigned char *)&enable,         (unsigned char *)&fir_mode,
@@ -3067,7 +3068,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
             (unsigned char *)&FNum,           (unsigned char *)&SelCoordX,
             (unsigned char *)&SelCoordY,      (unsigned char *)&isGalleryBlur,
             (unsigned char *)&tuning_exist,   (unsigned char *)&version,
-            (unsigned char *)&BlurFlag};
+            (unsigned char *)&blur_version,   (unsigned char *)&BlurFlag};
 
         buffer += (use_size - BLUR3_REFOCUS_COMMON_PARAM_NUM * 4);
         for (i = 0; i < BLUR3_REFOCUS_COMMON_PARAM_NUM; i++) {
@@ -3097,7 +3098,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
             (unsigned char *)&height,        (unsigned char *)&FNum,
             (unsigned char *)&SelCoordX,     (unsigned char *)&SelCoordY,
             (unsigned char *)&isGalleryBlur, (unsigned char *)&version,
-            (unsigned char *)&BlurFlag};
+            (unsigned char *)&blur_version,  (unsigned char *)&BlurFlag};
 
         buffer += (use_size - BLUR3_REFOCUS_COMMON_PARAM_NUM * 4);
         for (i = 0; i < BLUR3_REFOCUS_COMMON_PARAM_NUM; i++) {
@@ -3126,6 +3127,11 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t scaleSmoothHeight = MainHeightData / BLUR_SMOOTH_SIZE_SCALE;
         uint32_t box_filter_size = mCaptureInitParams.box_filter_size;
         uint32_t version = mCaptureWeightParams.version;
+        uint32_t blur_version = 0;
+        if (mCaptureWeightParams.roi_type == 2)
+            blur_version = 0x180201;
+        else
+            blur_version = 0x180101;
 
         char prop1[PROPERTY_VALUE_MAX] = {
             0,
@@ -3155,6 +3161,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
                                (unsigned char *)&scaleSmoothHeight,
                                (unsigned char *)&box_filter_size,
                                (unsigned char *)&version,
+                               (unsigned char *)&blur_version,
                                (unsigned char *)&BlurFlag};
 
         // cpoy common param to tail
