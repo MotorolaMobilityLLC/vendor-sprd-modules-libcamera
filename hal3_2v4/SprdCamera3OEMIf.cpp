@@ -5263,10 +5263,9 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void *parm4) {
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
-    if (controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED) {
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK, 0);
+    if (ANDROID_CONTROL_AE_STATE_LOCKED != controlInfo.ae_state) {
+        controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
     }
-    controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
     controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
     mSetting->setAeCONTROLTag(&controlInfo);
     mSetting->setAwbCONTROLTag(&controlInfo);
