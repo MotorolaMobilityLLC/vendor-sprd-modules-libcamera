@@ -454,10 +454,10 @@ struct sensor_bpc_pixel_pos{
 // Bad Pixel Correction
 struct sensor_bpc_ppi_block{
 	cmr_u32 ppi_en;
-	cmr_u8 block_start_col;
-	cmr_u8 block_start_row;
-	cmr_u8 block_end_col;
-	cmr_u8 block_end_row;
+	cmr_u16 block_start_col;
+	cmr_u16 block_start_row;
+	cmr_u16 block_end_col;
+	cmr_u16 block_end_row;
 };
 struct sensor_bpc_comm {
 	cmr_u8 bpc_mode;	//0:normal,1:map,2:both
@@ -527,10 +527,12 @@ struct sensor_ynr_blf_range{
 };
 struct sensor_ynr_blf_str{
 	struct sensor_ynr_blf_range blf_range;
-	cmr_u8 max_Radius;
-	cmr_u8 Radius;
-	cmr_u8 imgCenterX;
-	cmr_u8 imgCenterY;
+	cmr_u16 max_Radius;
+	cmr_u16 max_Radius_factor;
+	cmr_u16 Radius;
+	cmr_u16 Radius_factor;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
 	cmr_u8 range_index;
 	cmr_u8 range_s[4];
 	cmr_u8 dist_weight[3];
@@ -569,6 +571,8 @@ struct sensor_ynr_level {
 	struct sensor_ynr_blf_str ynr_blf_str;
 	struct sensor_ynr_addback addback[4];
 	cmr_u16 coef_mode;
+	cmr_u16 radius_base;
+	cmr_u16 reserved;
 	cmr_u16 bypass;
 };
 
@@ -643,7 +647,7 @@ struct sensor_3dnr_radialval {
 //reduce color noise around corners
 struct sensor_3dnr_radialval_str {
 	cmr_u16 r_circle_cap[3];
-	cmr_u16 reserved;
+	cmr_u16 r_circle_cap_factor[3];
 	struct sensor_3dnr_radialval u_range;
 	struct sensor_3dnr_radialval v_range;
 	struct sensor_3dnr_yuv_noise_wgt_cap noise_wgt_cap;
@@ -666,7 +670,8 @@ struct sensor_3dnr_level {
 	cmr_u8 bypass;
 	cmr_u8 fusion_swt_cap;
 	cmr_u8 filter_swt_cap;
-	cmr_u8 reserved;
+	cmr_u8 reserved[3];
+	cmr_u16 radius_base;
 	struct sensor_3dnr_yuv_cfg yuv_cfg;
 	struct sensor_3dnr_radialval_str sensor_3dnr_cor;
 	struct sensor_3dnr_fast_me fast_me;
@@ -785,9 +790,10 @@ struct sensor_nlm_first_lum {
 
 struct sensor_nlm_radius_param {
 	cmr_u16 radius_threshold_filter_ratio;
+	cmr_u16 radius_threshold_filter_ratio_factor;
 	cmr_u16 coef2;
 	cmr_u16 protect_gain_min;
-	cmr_u16 reserved;
+	cmr_u16 reserved[2];
 };
 
 struct sensor_nlm_radius_1D {
@@ -796,10 +802,12 @@ struct sensor_nlm_radius_1D {
 	cmr_u16 center_x;
 	cmr_u16 update_flat_thr_bypass;
 	cmr_u16 radius_threshold;
+	cmr_u16 radius_threshold_factor;
+	cmr_u16 reserved1;
 	cmr_u16 radial_1D_bypass;
 	struct sensor_nlm_radius_param radius[3][4];
 	cmr_u16 protect_gain_max;
-	cmr_u16 reserved;
+	cmr_u16 reserved0;
 };
 
 struct sensor_nlm_direction {
@@ -832,7 +840,8 @@ struct sensor_nlm_level {
 	cmr_u8 imp_opt_bypass;
 	cmr_u8 vst_bypass;
 	cmr_u8 nlm_bypass;
-	cmr_u8 reserved;
+	cmr_u8 reserved[3];
+	cmr_u16 radius_base;
 };
 
 struct sensor_nlm_imblance_lum_flag {
