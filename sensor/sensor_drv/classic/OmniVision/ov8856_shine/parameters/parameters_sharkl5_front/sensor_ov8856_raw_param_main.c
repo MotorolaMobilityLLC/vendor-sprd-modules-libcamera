@@ -32,7 +32,6 @@
 #include "sensor_ov8856_raw_param_common.c"
 #include "sensor_ov8856_raw_param_prv_0.c"
 #include "sensor_ov8856_raw_param_prv_1.c"
-#include "sensor_ov8856_raw_param_prv_2.c"
 #include "sensor_ov8856_raw_param_cap_0.c"
 #include "sensor_ov8856_raw_param_cap_1.c"
 #include "sensor_ov8856_raw_param_video_0.c"
@@ -159,7 +158,7 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		{s_ov8856_tune_info_common, sizeof(s_ov8856_tune_info_common)},
 		{s_ov8856_tune_info_prv_0, sizeof(s_ov8856_tune_info_prv_0)},
 		{s_ov8856_tune_info_prv_1, sizeof(s_ov8856_tune_info_prv_1)},
-		{s_ov8856_tune_info_prv_2, sizeof(s_ov8856_tune_info_prv_2)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_ov8856_tune_info_cap_0, sizeof(s_ov8856_tune_info_cap_0)},
 		{s_ov8856_tune_info_cap_1, sizeof(s_ov8856_tune_info_cap_1)},
@@ -177,7 +176,7 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		&s_ov8856_fix_info_common,
 		&s_ov8856_fix_info_prv_0,
 		&s_ov8856_fix_info_prv_1,
-		&s_ov8856_fix_info_prv_2,
+		NULL,
 		NULL,
 		&s_ov8856_fix_info_cap_0,
 		&s_ov8856_fix_info_cap_1,
@@ -192,7 +191,7 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		{s_ov8856_common_tool_ui_input, sizeof(s_ov8856_common_tool_ui_input)},
 		{s_ov8856_prv_0_tool_ui_input, sizeof(s_ov8856_prv_0_tool_ui_input)},
 		{s_ov8856_prv_1_tool_ui_input, sizeof(s_ov8856_prv_1_tool_ui_input)},
-		{s_ov8856_prv_2_tool_ui_input, sizeof(s_ov8856_prv_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_ov8856_cap_0_tool_ui_input, sizeof(s_ov8856_cap_0_tool_ui_input)},
 		{s_ov8856_cap_1_tool_ui_input, sizeof(s_ov8856_cap_1_tool_ui_input)},
