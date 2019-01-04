@@ -308,7 +308,6 @@ int cambuf_iommu_map(
 			iommu_data.buf = ionbuf[i];
 			iommu_data.iova_size = buf_info->size[i];
 			iommu_data.ch_type = SPRD_IOMMU_FM_CH_RW;
-			iommu_data.sg_offset = buf_info->offset[i];
 			pr_debug("start map buf: %p, size: %d\n",
 					ionbuf[i], (int)iommu_data.iova_size);
 			ret = sprd_iommu_map(dev_info->dev, &iommu_data);
@@ -319,9 +318,14 @@ int cambuf_iommu_map(
 			}
 			if (g_mem_dbg)
 				atomic_inc(&g_mem_dbg->iommu_map_cnt[type]);
-			pr_debug("done map buf addr: %lx\n",
-					iommu_data.iova_addr);
 			buf_info->iova[i] = iommu_data.iova_addr;
+			buf_info->iova[i] += buf_info->offset[i];
+			pr_debug("mfd %d, kaddr %p, iova: 0x%08x, off 0x%x, size 0x%x\n",
+					buf_info->mfd[i],
+					(void *)buf_info->addr_k[i],
+					(uint32_t)buf_info->iova[i],
+					(uint32_t)buf_info->offset[i],
+					(uint32_t)buf_info->size[i]);
 		} else {
 			ret = sprd_ion_get_phys_addr(-1,
 					buf_info->dmabuf_p[i],
@@ -332,10 +336,12 @@ int cambuf_iommu_map(
 				ret = -EFAULT;
 				goto failed;
 			}
-			pr_debug("mfd %d, kaddr %p, iova: 0x%08x, size 0x%x\n",
+			buf_info->iova[i] += buf_info->offset[i];
+			pr_debug("mfd %d, kaddr %p, iova: 0x%08x, off 0x%x, size 0x%x\n",
 					buf_info->mfd[i],
 					(void *)buf_info->addr_k[i],
 					(uint32_t)buf_info->iova[i],
+					(uint32_t)buf_info->offset[i],
 					(uint32_t)buf_info->size[i]);
 		}
 	}
@@ -351,7 +357,7 @@ failed:
 		if (dev_info->iommu_en) {
 			struct sprd_iommu_unmap_data unmap_data;
 
-			unmap_data.iova_addr = buf_info->iova[i];
+			unmap_data.iova_addr = buf_info->iova[i] - buf_info->offset[i];
 			unmap_data.iova_size = buf_info->size[i];
 			unmap_data.ch_type = SPRD_IOMMU_FM_CH_RW;
 			unmap_data.table = NULL;
@@ -399,7 +405,7 @@ int cambuf_iommu_unmap(
 			continue;
 
 		if (dev_info->iommu_en) {
-			unmap_data.iova_addr = buf_info->iova[i];
+			unmap_data.iova_addr = buf_info->iova[i] - buf_info->offset[i];
 			unmap_data.iova_size = buf_info->size[i];
 			unmap_data.ch_type = SPRD_IOMMU_FM_CH_RW;
 			unmap_data.table = NULL;

@@ -151,8 +151,8 @@ static void dcam_dispatch_frame(struct dcam_pipe_dev *dev,
 	pr_debug("DCAM%u path %d: time %06d.%06d\n", dev->idx, path_id,
 			(int)frame->time.tv_sec, (int)frame->time.tv_usec);
 
-	/* TODO: unmap operation should not be related to path_id */
-	if (path_id == DCAM_PATH_FULL || path_id == DCAM_PATH_BIN)
+	/* data path has independent buffer. statis share one same buffer */
+	if (type == DCAM_CB_DATA_DONE)
 		cambuf_iommu_unmap(&frame->buf);
 
 	dev->dcam_cb_func(type, frame, dev->cb_priv_data);

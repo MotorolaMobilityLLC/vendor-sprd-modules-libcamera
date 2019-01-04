@@ -244,6 +244,9 @@ struct camera_module {
 	uint32_t dump_count;
 	uint32_t in_dump;
 
+	/* for raw capture post process */
+	struct completion streamoff_com;
+
 	struct timer_list cam_timer;
 	struct workqueue_struct *workqueue;
 	struct sprd_cam_work work;
@@ -1901,6 +1904,7 @@ static int camera_module_init(struct camera_module *module)
 	atomic_set(&module->state, CAM_INIT);
 	mutex_init(&module->lock);
 	init_completion(&module->frm_com);
+	init_completion(&module->streamoff_com);
 	module->cap_status = CAM_CAPTURE_STOP;
 
 	for (ch = 0; ch < CAM_CH_MAX; ch++) {
@@ -2806,10 +2810,14 @@ static int img_ioctl_set_frame_addr(
 		}
 		pframe->buf.type = CAM_BUF_USER;
 		pframe->buf.mfd[0] = param.fd_array[i];
+		pframe->buf.offset[0] = param.frame_addr_array[i].y;
+		pframe->buf.offset[1] = param.frame_addr_array[i].u;
+		pframe->buf.offset[2] = param.frame_addr_array[i].v;
 		pframe->channel_id = ch->ch_id;
-		pr_debug("frame %p,  mfd %d, reserved %d\n",
-				pframe, pframe->buf.mfd[0],
-					param.is_reserved_buf);
+		pr_debug("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
+			pframe->channel_id, pframe->buf.mfd[0],
+			pframe->buf.offset[0], pframe->buf.offset[1],
+			pframe->buf.offset[2], param.is_reserved_buf);
 
 		ret = cambuf_get_ionbuf(&pframe->buf);
 		if (ret) {
@@ -3344,7 +3352,7 @@ static int img_ioctl_stream_off(
 {
 	int ret = 0;
 	uint32_t i, j;
-	uint32_t running = 0;
+	uint32_t raw_cap = 0, running = 0;
 	struct channel_context *ch;
 	int isp_ctx_id[CAM_CH_MAX] = { -1 };
 
@@ -3391,6 +3399,8 @@ static int img_ioctl_stream_off(
 		isp_ctx_id[i] = -1;
 		if (!ch->enable)
 			continue;
+		if (ch->ch_id == CAM_CH_RAW)
+			raw_cap = 1;
 		pr_info("clear ch %d, dcam path %d, isp path 0x%x\n",
 				ch->ch_id,
 				ch->dcam_path_id,
@@ -3480,6 +3490,8 @@ static int img_ioctl_stream_off(
 	}
 
 	atomic_set(&module->state, CAM_IDLE);
+	if (raw_cap)
+		complete(&module->streamoff_com);
 
 	ret = mdbg_check();
 	pr_info("cam %d stream off done.\n", module->idx);
@@ -3743,9 +3755,14 @@ static int raw_proc_post(
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_INIT_STATIS_Q, NULL);
 
+	pr_info("src %d 0x%x, mid %d, 0x%x, dst %d, 0x%x\n",
+		proc_info->fd_src, proc_info->src_offset,
+		proc_info->fd_dst0, proc_info->dst0_offset,
+		proc_info->fd_dst1, proc_info->dst1_offset);
 	src_frame = get_empty_frame();
 	src_frame->buf.type = CAM_BUF_USER;
 	src_frame->buf.mfd[0] = proc_info->fd_src;
+	src_frame->buf.offset[0] = proc_info->src_offset;
 	src_frame->channel_id = ch->ch_id;
 	src_frame->width = proc_info->src_size.width;
 	src_frame->height = proc_info->src_size.height;
@@ -3756,6 +3773,7 @@ static int raw_proc_post(
 	dst_frame = get_empty_frame();
 	dst_frame->buf.type = CAM_BUF_USER;
 	dst_frame->buf.mfd[0] = proc_info->fd_dst1;
+	dst_frame->buf.offset[0] = proc_info->dst1_offset;
 	dst_frame->channel_id = ch->ch_id;
 	ret = cambuf_get_ionbuf(&dst_frame->buf);
 	if (ret)
@@ -3858,7 +3876,17 @@ static int img_ioctl_raw_proc(
 		pr_err("error: not init hw resource.\n");
 		return -EFAULT;
 	}
-
+	if (proc_info.cmd == RAW_PROC_PRE) {
+		mutex_unlock(&module->lock);
+		/* raw proc must wait for camera stream off and hw is idle */
+		ret = wait_for_completion_interruptible(
+				&module->streamoff_com);
+		mutex_lock(&module->lock);
+		if (ret != 0) {
+			pr_err("wait ret for exception: %d\n", ret);
+			return -EFAULT;
+		}
+	}
 	error_state = ((proc_info.cmd == RAW_PROC_PRE) &&
 		(atomic_read(&module->state) != CAM_IDLE));
 	error_state |= ((proc_info.cmd == RAW_PROC_POST) &&
