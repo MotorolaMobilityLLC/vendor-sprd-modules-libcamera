@@ -5370,6 +5370,9 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     struct sensor_ex_info *sns_ex_info_ptr = NULL;
+    char value[PROPERTY_VALUE_MAX];
+    struct sensor_mode_info *sensor_mode_info;
+    cmr_u32 sn_mode = 0;
 
     if (!oem_handle || !param_ptr || !caller_handle) {
         CMR_LOGE("in parm error");
@@ -5447,8 +5450,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         in_param.dst2_frame.img_addr_vir.chn1 =
             param_ptr->dst2_frame.addr_vir.addr_u;
         in_param.dst2_slice_height = param_ptr->dst2_slice_height;
-        struct sensor_mode_info *sensor_mode_info;
-        cmr_u32 sn_mode = 0;
+
         ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                   &sn_mode);
         // we think OEM has get sensor info and save it into sensor context,so
@@ -5505,6 +5507,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
             ret = -CMR_CAMERA_INVALID_PARAM;
             goto exit;
         }
+
         if ((NULL == sns_ex_info_ptr->name) ||
             (NULL == sns_ex_info_ptr->sensor_version_info)) {
             ret = cmr_sensor_init_static_info(cxt);
@@ -5514,41 +5517,35 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                 goto exit;
             }
         }
+
         in_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
         CMR_LOGI("ips_in_param:max_gain:%d ",
                  in_param.resolution_info.max_gain);
 
-        {
-            char value[PROPERTY_VALUE_MAX];
-            property_get("debug.camera.save.snpfile", value, "0");
-            if (atoi(value) == 1 || atoi(value) == 100 ||
-                (atoi(value) & (1 << 1))) {
-                dump_raw_image("camera_raw_proc", IMG_DATA_TYPE_RAW,
-                               param_ptr->src_frame.size.width,
-                               param_ptr->src_frame.size.height,
-                               FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
-                               &param_ptr->src_frame.addr_vir);
-            }
+        property_get("debug.camera.save.snpfile", value, "0");
+        if (atoi(value) == 1 || atoi(value) == 100 ||
+            (atoi(value) & (1 << 1))) {
+            dump_raw_image("camera_raw_proc", IMG_DATA_TYPE_RAW,
+                           param_ptr->src_frame.size.width,
+                           param_ptr->src_frame.size.height,
+                           FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
+                           &param_ptr->src_frame.addr_vir);
         }
 
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
-
         if (ret) {
             CMR_LOGE("failed to start proc %ld", ret);
+            goto exit;
         }
 
-        {
-            char value[PROPERTY_VALUE_MAX];
-            property_get("debug.camera.save.snpfile", value, "0");
-            if (atoi(value) == 1 || atoi(value) == 100 ||
-                (atoi(value) & (1 << 1))) {
-                dump_yuv_image("camera_raw_proc", IMG_DATA_TYPE_YUV420,
-                               param_ptr->dst_frame.size.width,
-                               param_ptr->dst_frame.size.height, 0x6000,
-                               &param_ptr->dst_frame.addr_vir);
-            }
+        property_get("debug.camera.save.snpfile", value, "0");
+        if (atoi(value) == 1 || atoi(value) == 100 ||
+            (atoi(value) & (1 << 1))) {
+            dump_yuv_image("camera_raw_proc", IMG_DATA_TYPE_YUV420,
+                           param_ptr->dst_frame.size.width,
+                           param_ptr->dst_frame.size.height, 0x6000,
+                           &param_ptr->dst_frame.addr_vir);
         }
-
     } else {
         struct ipn_in_param in_param;
         struct ips_out_param out_param;
@@ -5561,12 +5558,15 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = isp_proc_next(isp_cxt->isp_handle, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to start proc %ld", ret);
+            goto exit;
         }
     }
+
     if (CMR_CAMERA_SUCCESS == ret) {
         cxt->isp_cxt.caller_handle = caller_handle;
         CMR_LOGD("caller handle 0x%lx", (cmr_uint)caller_handle);
     }
+
 exit:
     ATRACE_END();
     return ret;

@@ -172,6 +172,20 @@ int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
 }
 
 /* how to calculate cap size:
+* for raw capture:
+* target_yuv = w * h * 3 / 2;
+* cap_yuv = w * h * 3 / 2;
+* cap_raw = w * h * 3 / 2, resue target_yuv or cap_yuv
+* cap_raw2 = w * h * 3 / 2
+* thum_yuv = thumW * thumH * 3 / 2; for thumbnail yuv
+* thum_jpeg = thumW * thumH * 3 / 2; for thumbnail jpeg
+* target_jpeg, resue
+* so, the total cap size is:
+* w * h * 3 / 2 + w * h * 3 / 2 + w * h * 3 / 2 + thumW * thumH * 3 = 3 * w * h
+* + thumW * thumH
+* * 3(bytes);
+*
+* for yuv capture:
 * target_yuv = w * h * 3 / 2;
 * cap_yuv = w * h * 3 / 2;
 * cap_raw = w * h * 3 / 2, resue target_yuv or cap_yuv
@@ -185,6 +199,7 @@ int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
 int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
     cmr_u32 max_w, max_h, thumb_w, thumb_h;
     cmr_u32 redundance_size;
+    char value[PROPERTY_VALUE_MAX];
 
     if (pp_cap_size == NULL) {
         CMR_LOGE("pp_cap_size=%p", pp_cap_size);
@@ -202,6 +217,12 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
     redundance_size = 1 * 1024 * 1024;
 
     *pp_cap_size = 3 * max_w * max_h + 3 * thumb_w * thumb_h + redundance_size;
+
+    // for raw capture
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        *pp_cap_size += 3 * max_w * max_h / 2;
+    }
 
     // the above is default configuration, for some special case, you can change
     // it like this:
@@ -419,7 +440,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     uint32_t mem_res = 0, mem_end = 0;
     uint32_t offset = 0;
-    uint32_t raw_size = 0;
+    uint32_t raw_size = 0, raw2_size = 0;
     uint32_t tmp1, tmp2, tmp3, max_size;
     struct cmr_cap_mem *cap_mem = capture_mem;
 
@@ -427,6 +448,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     mem_end = *io_mem_end;
 
     raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
 
     tmp1 = image_size->width * image_size->height * 3 / 2;
     tmp2 = cap_size->width * cap_size->height * 3 / 2;
@@ -472,12 +494,22 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw.size.height = sn_size->height;
     cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
 
+    cap_mem->cap_raw2.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y +
+                                        max_size + max_size;
+    cap_mem->cap_raw2.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y +
+                                        max_size + max_size ;
+    cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
+    cap_mem->cap_raw2.buf_size = raw2_size;
+    cap_mem->cap_raw2.size.width = sn_size->width;
+    cap_mem->cap_raw2.size.height = sn_size->height;
+    cap_mem->cap_raw2.fmt = IMG_DATA_TYPE_RAW2;
+
     cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
 
-    tmp1 = max_size + max_size;
-    tmp2 = max_size + cap_mem->target_jpeg.buf_size;
+    tmp1 = max_size + max_size + max_size;
+    tmp2 = max_size + max_size + cap_mem->target_jpeg.buf_size;
     tmp3 = tmp1 > tmp2 ? tmp1 : tmp2;
     tmp3 = (tmp3 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
