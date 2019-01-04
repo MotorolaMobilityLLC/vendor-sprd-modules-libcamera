@@ -161,6 +161,7 @@ static int isp_fmcu_start(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	ISP_HREG_WR(base + ISP_FMCU_DDR_ADDR,
 			fmcu_ctx->hw_addr[fmcu_ctx->cur_buf_id]);
 	ISP_HREG_MWR(base + ISP_FMCU_CTRL, 0xFFFF0000, cmd_num << 16);
+	ISP_HREG_WR(base + ISP_FMCU_ISP_REG_REGION, ISP_OFFSET_RANGE);
 	ISP_HREG_WR(base + ISP_FMCU_START, 1);
 
 	pr_info("fmcu%d start done, cmdq len %d\n",

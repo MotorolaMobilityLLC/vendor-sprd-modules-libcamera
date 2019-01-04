@@ -21,6 +21,8 @@
 
 #include "cam_buf.h"
 
+/* configure fmcu with isp register offset, range is 0x620-0x630 */
+#define ISP_OFFSET_RANGE		0x6300620
 #define ISP_FMCU_CMDQ_SIZE		0x1000
 
 enum fcmu_id {
