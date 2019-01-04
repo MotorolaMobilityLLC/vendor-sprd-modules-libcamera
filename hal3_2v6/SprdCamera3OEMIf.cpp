@@ -6194,7 +6194,9 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
     uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
-    yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
+    if (!mIommuEnabled) {
+        yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
+    }
     int usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
 
     Rect bounds((mCaptureWidth + 1280), (mCaptureHeight + 960));
