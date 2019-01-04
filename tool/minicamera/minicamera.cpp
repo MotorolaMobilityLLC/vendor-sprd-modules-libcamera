@@ -264,8 +264,8 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
     addr_vir.addr_y = frame->y_vir_addr;
     addr_vir.addr_u = frame->y_vir_addr + frame->width * frame->height;
     if (minicamera_dump_cnt < DUMP_COUNT) {
-        dump_yuv_image("minicamera_cb", IMG_DATA_TYPE_YUV420, frame->width, frame->height,
-                       minicamera_dump_cnt, &addr_vir);
+        camera_save_yuv_to_file(minicamera_dump_cnt, IMG_DATA_TYPE_YUV420,
+                                frame->width, frame->height, &addr_vir);
         minicamera_dump_cnt++;
     }
 
