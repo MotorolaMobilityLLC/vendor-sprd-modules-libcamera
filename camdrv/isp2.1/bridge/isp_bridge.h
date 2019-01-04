@@ -50,7 +50,7 @@ enum isp_br_ioctl_cmd {
 	SET_AEM_SYNC_STAT,
 	GET_AEM_SYNC_STAT,
 	SET_AEM_STAT_BLK_NUM,
-
+	GET_USER_COUNT,
 };
 
 struct awb_stat_data {

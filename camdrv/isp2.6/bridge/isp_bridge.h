@@ -61,6 +61,8 @@ enum isp_br_ioctl_cmd {
 
 	SET_ALL_MODULE_AND_OTP,
 	GET_ALL_MODULE_AND_OTP,
+
+	GET_USER_COUNT,
 };
 
 struct awb_gain_data {

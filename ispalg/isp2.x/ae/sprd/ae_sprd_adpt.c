@@ -519,6 +519,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, cmr_u32 is_force)
 {
 	cmr_s32 ret = ISP_SUCCESS;
+	cmr_u32 dual_sensor_status = 0;
 	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0 };
 	struct q_item actual_item;
@@ -547,8 +548,14 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	}
 	else if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M)) {
 #ifndef CONFIG_ISP_2_2
-		if (cxt->is_master)
-		ae_sync_write_to_sensor_normal(cxt, &write_param);
+		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_USER_COUNT, NULL, &dual_sensor_status);
+		if (cxt->is_master){
+			ISP_LOGV("dual_sensor_status = %d",dual_sensor_status);
+			if(dual_sensor_status > 1)
+				ae_sync_write_to_sensor_normal(cxt, &write_param);
+			else
+				ae_write_to_sensor(cxt, &write_param);
+		}
 #else
 		ae_write_to_sensor(cxt, &write_param);
 #endif

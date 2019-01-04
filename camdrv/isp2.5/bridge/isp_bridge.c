@@ -256,6 +256,12 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_post(&cxt->module_sm);
 		break;
 
+	case GET_USER_COUNT:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->user_cnt,sizeof(cxt->user_cnt));
+		sem_post(&cxt->module_sm);
+		break;
+
 	case GET_SLAVE_SENSOR_MODE:
 		sem_wait(&cxt->module_sm);
 		memcpy(out, &cxt->slave_sensor_mode,

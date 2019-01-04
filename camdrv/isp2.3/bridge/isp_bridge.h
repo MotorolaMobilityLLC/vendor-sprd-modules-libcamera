@@ -67,6 +67,9 @@ enum isp_br_ioctl_cmd {
 	AWB_POST_SEM,
 	AF_WAIT_SEM,
 	AF_POST_SEM,
+
+	//control flow
+	GET_USER_COUNT,
 };
 
 struct awb_gain_data {
