@@ -30,8 +30,8 @@ using namespace android;
 #define MINICAMERA_HEIGHT_MAX 3488
 #define PREVIEW_BUFF_NUM 8
 #define MINICAMERA_PARAM_NUM 4
-#define MINICAMERA_MIN_FPS  5
-#define MINICAMERA_MAX_FPS  30
+#define MINICAMERA_MIN_FPS 5
+#define MINICAMERA_MAX_FPS 30
 #define DUMP_COUNT 10
 
 #define SET_PARM(h, x, y, z)                                                   \
@@ -101,12 +101,12 @@ struct minicamera_context {
 static struct minicamera_context *minicamera_dev;
 
 static void usage(void) {
-    fprintf(
-        stderr,
-        "usage:\n"
-        "minicamera -cameraid camera_id -w preview_width -h preview_height [-fps framerate]\n"
-        "for example: minicamera -cameraid 1 -w 1280 -h 720 -fps 10\n"
-        "or minicamera -cameraid 1 -w 1280 -h 720");
+    fprintf(stderr, "usage:\n"
+                    "minicamera -cameraid camera_id -w preview_width -h "
+                    "preview_height [-fps framerate]\n"
+                    "for example:\n"
+                    "minicamera -cameraid 1 -w 1280 -h 720 -fps 10\n"
+                    "minicamera -cameraid 1 -w 1280 -h 720\n");
 }
 
 static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
@@ -144,7 +144,8 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
             }
         } else if (strcmp(argv[i], "-fps") == 0 && (i < argc - 1)) {
             cxt->fps = atoi(argv[++i]);
-            if (cxt->fps > MINICAMERA_MAX_FPS || (0 < cxt->fps < MINICAMERA_MIN_FPS)) {
+            if (cxt->fps > MINICAMERA_MAX_FPS ||
+                (0 < cxt->fps < MINICAMERA_MIN_FPS)) {
                 cxt->fps = 10;
             }
         } else {
