@@ -6161,9 +6161,18 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
                                           cmr_uint *vir_addr, cmr_s32 *fd,
                                           cmr_u32 sum) {
     cmr_u32 i;
+    int ret = 0;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
 
     HAL_LOGD("mZslHeapNum %d sum %d", mZslHeapNum, sum);
     for (i = 0; i < mZslHeapNum; i++) {
+        ret = mapper.unlock(
+            (const native_handle_t *)mZslGraphicsHandle[i].native_handle);
+        if (ret != NO_ERROR) {
+            HAL_LOGE("mapper.unlock fail %p",
+                     mZslGraphicsHandle[i].native_handle);
+            return ret;
+        }
         if (mZslGraphicsHandle[i].graphicBuffer != NULL) {
             mZslGraphicsHandle[i].graphicBuffer.clear();
             mZslGraphicsHandle[i].graphicBuffer = NULL;
@@ -6242,13 +6251,6 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
         *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
         *fd++ = mZslHeapArray[i]->fd;
-
-        ret = mapper.unlock(
-            (const native_handle_t *)mZslGraphicsHandle[i].native_handle);
-        if (ret) {
-            ALOGE("mapper.unlock fail %p", mZslGraphicsHandle[i].native_handle);
-            goto mem_fail;
-        }
     }
     return 0;
 

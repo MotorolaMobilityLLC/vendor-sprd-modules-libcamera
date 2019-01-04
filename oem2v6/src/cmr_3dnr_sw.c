@@ -417,6 +417,8 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
              sensor_id, param_3dnr_index, param.SearchWindow_x,
              param.SearchWindow_y, param.threthold[3][2]);
 
+    threednr_set_platform_flag(SPECIAL);
+
     ret = threednr_init(&param);
     if (ret < 0) {
         CMR_LOGE("Fail to call threednr_init");
@@ -639,7 +641,8 @@ void *thread_3dnr(void *p_data) {
     cmr_handle oem_handle;
     cmr_u32 sensor_id = 0;
     cmr_u32 threednr_enable = 0;
-    union c3dnr_buffer big_buf, small_buf;
+    union c3dnr_buffer small_image;
+    c3dnr_cap_gpu_buffer_t orig_image;
     struct img_frm *src, dst;
     cmr_u32 cur_frm;
     char filename[128];
@@ -657,7 +660,7 @@ void *thread_3dnr(void *p_data) {
         CMR_LOGE("private_data is ptr of camera_context, now is null");
         goto exit;
     }
-
+#if 0
     // in->dst_frame.addr_vir      in->src_frame.addr_vir.addr_y +
     // threednr_handle->width * threednr_handle->height * 3 / 2
     if (cur_frm == 0) {
@@ -665,6 +668,7 @@ void *thread_3dnr(void *p_data) {
                (void *)in->src_frame.addr_vir.addr_y,
                threednr_handle->width * threednr_handle->height * 3 / 2);
     }
+#endif
 
     addr = &in->dst_frame.addr_vir;
     size = in->src_frame.size;
@@ -701,46 +705,43 @@ void *thread_3dnr(void *p_data) {
                      threednr_handle->small_height);
         }
     }
-#if 0
+
     // call 3dnr function
     CMR_LOGD("Call the threednr_function(). before. cnt: %ld",
              threednr_handle->common.save_frame_count);
-    big_buf.gpu_buffer.handle =
-        out->private_data; //(unsigned char *)in->src_frame.addr_vir.addr_y;
-    small_buf.cpu_buffer.bufferY =
+    orig_image.gpuHandle = out->private_data;
+    orig_image.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
+    orig_image.bufferU =
+        orig_image.bufferY + threednr_handle->width * threednr_handle->height;
+    orig_image.bufferV = orig_image.bufferU;
+
+    small_image.cpu_buffer.bufferY =
         (unsigned char *)in->src_frame.addr_vir.addr_y +
         threednr_handle->width * threednr_handle->height * 3 / 2;
-    small_buf.cpu_buffer.bufferU =
-        small_buf.cpu_buffer.bufferY +
+    small_image.cpu_buffer.bufferU =
+        small_image.cpu_buffer.bufferY +
         threednr_handle->small_width * threednr_handle->small_height;
-    small_buf.cpu_buffer.bufferV = small_buf.cpu_buffer.bufferU;
+    small_image.cpu_buffer.bufferV = small_image.cpu_buffer.bufferU;
     CMR_LOGV("Call the threednr_function().big Y: %p, small Y: %p."
              " ,threednr_handle->is_stop %ld",
-             big_buf.cpu_buffer.bufferY, small_buf.cpu_buffer.bufferY,
+             orig_image.bufferY, small_image.cpu_buffer.bufferY,
              threednr_handle->is_stop);
 
     if (threednr_handle->is_stop) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-    /*CMR_LOGI("add before smallbuf addry:%x , big_buf addry:%x ,
-    size:%d,%d", small_buf.cpu_buffer.bufferY , big_buf.cpu_buffer.bufferY,
-    threednr_handle->width , threednr_handle->height);*/
-    LAUNCHLOGS(CMR_THREEDNR_DO_T);
-    ret = threednr_function(&small_buf, &big_buf);
+
+    ret = threednr_function_new(&small_image, &orig_image);
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
-    LAUNCHLOGE(CMR_THREEDNR_DO_T);
-    /*CMR_LOGI("add after threednr_function smallbuf addry:%x , big_buf
-       addry:%x , size:%d,%d", small_buf.cpu_buffer.bufferY ,
-       big_buf.cpu_buffer.bufferY,
-        threednr_handle->width , threednr_handle->height);*/
+
     if (threednr_handle->is_stop) {
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-#endif
+
     {
         char flag[PROPERTY_VALUE_MAX];
         property_get("vendor.cam.3dnr_save_capture_frame", flag, "0");
@@ -848,7 +849,8 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
     cmr_handle oem_handle;
     cmr_u32 sensor_id = 0;
     cmr_u32 dnr_enable = 0;
-    union c3dnr_buffer big_buf, small_buf;
+    union c3dnr_buffer small_image;
+    c3dnr_cap_gpu_buffer_t orig_image;
     cmr_u32 cur_num = threednr_handle->g_num;
 
     if (!out || !in || !class_handle) {
