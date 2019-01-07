@@ -1388,6 +1388,7 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId){
     } else {
         ptr_lens_inf_tag->mini_focus_distance = cameraId ? 0.0f : 2.0f;
     }
+    ptr_lens_inf_tag->hyperfocal_distance = 2.0f;
 
     // android.lens.info.availableFocalLengths,List of focal lengths
     ptr_lens_inf_tag->available_focal_lengths = sensor_fov[cameraId].focal_lengths;
