@@ -370,7 +370,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mIspPreviewYReserved, 0, sizeof(mIspPreviewYReserved));
     memset(m4in1HeapArray, 0, sizeof(m4in1HeapArray));
 
-    mJpegRotaSet = false;
     mPicCaptureCnt = 0;
 
     mRegularChan = NULL;
@@ -5328,6 +5327,18 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
     return ret;
 }
 
+int SprdCamera3OEMIf::setJpegOrientation(int jpegOrientation) {
+
+    SprdCamera3Setting::s_setting[mCameraId].jpgInfo.orientation =
+        jpegOrientation;
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ENCODE_ROTATION,
+             jpegOrientation);
+    HAL_LOGD("jpegOrientation = %d", jpegOrientation);
+
+    return NO_ERROR;
+}
+
 int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     int ret = 0;
     CONTROL_Tag controlInfo;
@@ -5575,16 +5586,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SATURATION,
                  (uint32_t)sprddefInfo.saturation);
-    } break;
-
-    case ANDROID_JPEG_ORIENTATION: {
-        JPEG_Tag jpegInfo;
-        mSetting->getJPEGTag(&jpegInfo);
-        mJpegRotaSet = true;
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ENCODE_ROTATION,
-                 jpegInfo.orientation);
-        HAL_LOGD("JPEG orientation = %d", jpegInfo.orientation);
     } break;
 
     case ANDROID_CONTROL_AE_MODE:

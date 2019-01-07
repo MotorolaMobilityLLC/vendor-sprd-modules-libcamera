@@ -3657,28 +3657,6 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].jpgInfo.thumbnail_size[1] = thumH;
     }
 
-    if (frame_settings.exists(ANDROID_JPEG_ORIENTATION)) {
-        int32_t jpeg_orientation =
-            frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
-        s_setting[mCameraId].jpgInfo.orientation_original = jpeg_orientation;
-        if (jpeg_orientation == -1) {
-            HAL_LOGV("rot not specified or invalid, set to 0");
-            jpeg_orientation = 0;
-        } else if (jpeg_orientation % 90) {
-            HAL_LOGV("rot %d is not a multiple of 90 degrees!  set to zero.",
-                     jpeg_orientation);
-            jpeg_orientation = 0;
-        } else {
-            // normalize to [0 - 270] degrees
-            jpeg_orientation %= 360;
-            if (jpeg_orientation < 0)
-                jpeg_orientation += 360;
-        }
-
-        s_setting[mCameraId].jpgInfo.orientation = jpeg_orientation;
-        pushAndroidParaTag(ANDROID_JPEG_ORIENTATION);
-    }
-
     if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
         for (size_t i = 0;
              i < frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count; i++) {
@@ -4163,7 +4141,7 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].sprddefInfo.capture_mode,
         s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
         s_setting[mCameraId].sprddefInfo.iso,
-        s_setting[mCameraId].jpgInfo.orientation_original,
+        s_setting[mCameraId].jpgInfo.orientation,
         s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
         s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
         s_setting[mCameraId].scalerInfo.crop_region[0],
@@ -4422,7 +4400,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
                        s_setting[mCameraId].jpgInfo.thumbnail_size, 2);
     camMetadata.update(ANDROID_JPEG_ORIENTATION,
-                       &(s_setting[mCameraId].jpgInfo.orientation_original), 1);
+                       &(s_setting[mCameraId].jpgInfo.orientation), 1);
     camMetadata.update(ANDROID_JPEG_QUALITY,
                        &(s_setting[mCameraId].jpgInfo.quality), 1);
     camMetadata.update(ANDROID_JPEG_THUMBNAIL_QUALITY,

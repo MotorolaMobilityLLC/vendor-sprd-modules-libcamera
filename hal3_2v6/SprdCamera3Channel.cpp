@@ -860,9 +860,6 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_JPEG_GPS_TIMESTAMP:
             HAL_LOGD("ANDROID_JPEG_GPS_TIMESTAMP");
             break;
-        case ANDROID_JPEG_ORIENTATION:
-            mOEMIf->SetCameraParaTag(ANDROID_JPEG_ORIENTATION);
-            break;
         case ANDROID_CONTROL_SCENE_MODE:
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
             break;

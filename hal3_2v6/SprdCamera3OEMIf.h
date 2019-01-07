@@ -194,6 +194,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                 struct img_rect *cropRegion);
     inline bool isCameraInit();
     int SetCameraParaTag(cmr_int cameraParaTag);
+    int setJpegOrientation(int jpegOrientation);
     int SetJpegGpsInfo(bool is_set_gps_location);
     int setCapturePara(camera_capture_mode_t stream_type,
                        uint32_t frame_number);
@@ -637,7 +638,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     struct cmr_zoom_param mZoomInfo;
     int8_t mFlashMode;
 
-    bool mJpegRotaSet;
     bool mIsAutoFocus;
     bool mIspToolStart;
     uint32_t mPreviewHeapNum;

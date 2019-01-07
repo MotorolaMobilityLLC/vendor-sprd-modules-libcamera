@@ -100,12 +100,12 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     if (mCameraId == 0) {
         if (!strcmp(value, "2"))
             mCameraId = 2;
-       else if (!strcmp(value, "4"))
+        else if (!strcmp(value, "4"))
             mCameraId = 4;
     } else if (mCameraId == 1) {
         if (!strcmp(value, "3"))
             mCameraId = 3;
-      else if (!strcmp(value, "5"))
+        else if (!strcmp(value, "5"))
             mCameraId = 5;
     }
 
@@ -1103,6 +1103,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int32_t streamType[4] = {0, 0, 0, 0};
     uint8_t captureIntent = 0;
     int32_t captureRequestId = 0;
+    int32_t jpegOrientation = 0;
     uint32_t frameNumber = request->frame_number;
 
     Mutex::Autolock l(mLock);
@@ -1135,8 +1136,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         camera3_stream_t *stream = output.stream;
         streamType[i] = getStreamType(stream);
         HAL_LOGD("streamType[%d]=%d", i, streamType[i]);
-    }
 
+        if (streamType[i] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+            if (meta.exists(ANDROID_JPEG_ORIENTATION)) {
+                jpegOrientation =
+                    meta.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+                if (jpegOrientation % 90) {
+                    jpegOrientation = 0;
+                }
+            }
+            mOEMIf->setJpegOrientation(jpegOrientation);
+        }
+    }
     // for cts:
     // testMandatoryOutputCombinations, testSingleCapture
     if (mStreamConfiguration.num_streams == 1 &&
