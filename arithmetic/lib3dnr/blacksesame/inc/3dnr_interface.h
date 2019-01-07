@@ -26,21 +26,28 @@ typedef  struct private_handle
 typedef struct c3dnr_cpu_buffer
 {
     uint8_t *bufferY;
-        uint8_t *bufferU;
-        uint8_t *bufferV;
-        int32_t fd; //wxz: for phy addr.
+    uint8_t *bufferU;
+    uint8_t *bufferV;
+    int32_t fd; //wxz: for phy addr.
 }c3dnr_cpu_buffer_t;
 typedef struct c3dnr_gpu_buffer
 {
     //private_handle_t *handle;
     void *handle;
 }c3dnr_gpu_buffer_t;
+
 typedef union c3dnr_buffer
 {
     c3dnr_cpu_buffer_t cpu_buffer;
     c3dnr_gpu_buffer_t gpu_buffer;
 }c3dnr_buffer_t;
 
+typedef struct c3dnr_cap_gpu_buffer {
+    void * gpuHandle;
+	uint8_t *bufferY;
+    uint8_t *bufferU;
+    uint8_t *bufferV;
+}c3dnr_cap_gpu_buffer_t;
 
 typedef struct c3dnr_param_info
 {
@@ -64,20 +71,21 @@ typedef struct c3dnr_param_info
     int thread_num;
     int thread_num_acc;
     int preview_cpyBuf;
-    //---
-    uint16_t SearchWindow_x;
+	
+	//---
+	uint16_t SearchWindow_x;
     uint16_t SearchWindow_y;
-    int (*threthold)[6];
+	int (*threthold)[6];
     int (*slope)[6];
-    int recur_str; // recursion stride for preview
-    int match_ratio_sad;
-    int match_ratio_pro;
-    int feat_thr;
-    int luma_ratio_high;
-    int luma_ratio_low;
-    int zone_size;
-    int gain_thr[6];
-    int reserverd[16];
+	int recur_str; // recursion stride for preview
+	int match_ratio_sad;
+	int match_ratio_pro;
+	int feat_thr;
+	int luma_ratio_high;
+	int luma_ratio_low;
+	int zone_size;
+	int gain_thr[6];
+	int reserverd[16];
 }c3dnr_param_info_t;
 
 typedef struct c3dnr_pre_inparam
@@ -85,11 +93,18 @@ typedef struct c3dnr_pre_inparam
     uint16_t gain;
 }c3dnr_pre_inparam_t;
 
+typedef enum PLATFORM_FLAG{NORMAL, SPECIAL} PLATFORM_FLAG;
+
+
+
 int threednr_init(c3dnr_param_info_t *param);
 int threednr_function(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image);
+int threednr_function_new(c3dnr_buffer_t *small_image, c3dnr_cap_gpu_buffer_t *orig_image);
 int threednr_function_pre(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image , c3dnr_buffer_t *video_image , c3dnr_pre_inparam_t* inputparam);
 int threednr_deinit();
 int threednr_callback();
+int threednr_setstop_flag();
+int threednr_set_platform_flag(int iflag);
 
 #ifdef __cplusplus
 }
@@ -115,6 +130,6 @@ int threednr_callback();
 #define RET_3DNR_FAIL               -1
 #define RET_3DNR_WRONG_PARAM        -2
 #define RET_3DNR_NO_ENOUGH_MEMORY   -3
-#define RET_3DNR_CANCELED          -4
+#define RET_3DNR_CANCELED           -4
 
 #endif
