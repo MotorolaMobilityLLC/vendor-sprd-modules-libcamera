@@ -4438,6 +4438,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
                      frame->type);
             pushZslFrame(frame);
+            sem_post(&((SprdCamera3OEMIf *)this)->mZslQueueSemDone);
 
             if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
                 struct camera_frame_type zsl_frame;
@@ -9713,6 +9714,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     // obj->skipZslFrameForFlashCapture();
 
     while (1) {
+        sem_wait(&obj->mZslQueueSemDone);
+
         // for exception exit
         if (obj->mZslCaptureExitLoop == true) {
             HAL_LOGD("zsl loop exit done.");
@@ -9721,8 +9724,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         zsl_frame = obj->popZslFrame();
         if (zsl_frame.y_vir_addr == 0) {
-            HAL_LOGD("wait for zsl frame");
-            usleep(20 * 1000);
+            HAL_LOGD("wait for correct zsl frame");
             continue;
         }
 
@@ -9808,6 +9810,7 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_init(void *p_data) {
             return ret;
         }
         obj->mZSLModeMonitorInited = 1;
+        sem_init(&obj->mZslQueueSemDone, 0, 0);
 
         message.msg_type = CMR_EVT_ZSL_MON_INIT;
         message.sync_flag = CMR_MSG_SYNC_RECEIVED;
@@ -9825,6 +9828,7 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_deinit(void *p_data) {
     CMR_MSG_INIT(message);
     int ret = NO_ERROR;
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+    sem_post(&obj->mZslQueueSemDone);
 
     if (obj->mZSLModeMonitorInited) {
         message.msg_type = CMR_EVT_ZSL_MON_EXIT;
@@ -9838,6 +9842,7 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_deinit(void *p_data) {
         ret = cmr_thread_destroy((cmr_handle)obj->mZSLModeMonitorMsgQueHandle);
         obj->mZSLModeMonitorMsgQueHandle = 0;
         obj->mZSLModeMonitorInited = 0;
+        sem_destroy(&obj->mZslQueueSemDone);
     }
     return ret;
 }

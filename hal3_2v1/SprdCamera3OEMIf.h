@@ -779,6 +779,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /*ZSL Monitor Thread*/
     pthread_t mZSLModeMonitorMsgQueHandle;
     uint32_t mZSLModeMonitorInited;
+    sem_t mZslQueueSemDone;
 
     /* enable/disable powerhint for CNR (only for capture)*/
     uint32_t mCNRMode;
