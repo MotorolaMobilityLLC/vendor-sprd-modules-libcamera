@@ -85,6 +85,7 @@ struct awb_info_t {
 	cmr_u32 sw_bypass;
 	cmr_u32 alc_awb;
 	cmr_s32 awb_pg_flag;
+	cmr_s32 binning_support;
 	cmr_u8 *log_alc_awb;
 	cmr_u32 log_alc_awb_size;
 	cmr_u8 *log_alc_lsc;
@@ -248,6 +249,7 @@ struct ispalg_lib_ops {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
+	cmr_u8 binning_is_update; /* check for bin statis */
 	struct isp_hist_statistic_info hist_stats;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
@@ -2229,6 +2231,13 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		goto exit;
 	}
 
+	if (cxt->awb_cxt.binning_support) {
+		if (0 == cxt->binning_is_update) {
+			ISP_LOGV("binning is not update");
+			goto exit;
+		}
+	}
+
 	if (cxt->awb_cxt.sw_bypass)
 		goto exit;
 
@@ -2543,6 +2552,9 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	binning_img_ptr = cxt->binning_cxt.binning_img_data;
 
 	double_binning_num = cxt->binning_cxt.binnig_w * cxt->binning_cxt.binnig_h / 6;
+	ISP_LOGV("bin num double [%d] width %d\n",
+		double_binning_num, cxt->binning_cxt.binnig_w);
+
 	for (i = 0; i < double_binning_num; i++) {
 		val = *((cmr_u64 *) u_addr + i);
 		*binning_img_ptr++ = val & 0x3FF;
@@ -2604,6 +2616,7 @@ exit:
 		ISP_LOGE("fail to set statis buf");
 	}
 
+	cxt->binning_is_update = 1;
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -2707,6 +2720,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		if (ret)
 			ISP_LOGE("fail to start awb process");
 		cxt->aem_is_update = 0;
+		cxt->binning_is_update = 0;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
 	case ISP_PROC_AFL_DONE:
@@ -4238,6 +4252,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	memset(&result, 0, sizeof(result));
 	/*update aem information */
 	cxt->aem_is_update = 0;
+	cxt->binning_is_update = 0;
 
 	/*update awb gain */
 	if (cxt->ops.awb_ops.ioctrl) {
@@ -4716,6 +4731,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 			ISP_LOGE("fail to AWB_CTRL_CMD_GET_DATA_TYPE");
 			binning_support = 1;
 		}
+		cxt->awb_cxt.binning_support = binning_support;
 	}
 
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
