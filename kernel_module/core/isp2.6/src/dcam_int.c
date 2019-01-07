@@ -629,7 +629,7 @@ static const struct {
 	},
 	{
 		ARRAY_SIZE(_DCAM1_SEQUENCE),
-		_DCAM2_SEQUENCE,
+		_DCAM1_SEQUENCE,
 	},
 	{
 		ARRAY_SIZE(_DCAM2_SEQUENCE),
