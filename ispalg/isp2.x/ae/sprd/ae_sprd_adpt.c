@@ -3786,6 +3786,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		if(CAMERA_MODE_MANUAL == cxt->app_mode)
 			s_ae_manual[cxt->camera_id] = cxt->mode_switch[cxt->app_mode];
 
+		cxt->last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
+
 		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
 		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
@@ -3809,6 +3811,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
 	cmr_u32 k;
 	cmr_u32 j;
+	cmr_u32 last_cam_mode = 0;
 	if (NULL == param) {
 		ISP_LOGE("param is NULL \n");
 		return AE_ERROR;
@@ -3853,6 +3856,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		memset(&cxt->cur_result.wts, 0, sizeof(struct ae1_senseor_out));
 		memset(&cxt->sync_cur_result.wts, 0, sizeof(struct ae1_senseor_out));
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
+		last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
 	}
 
 	if (0 != cxt->snr_info.binning_factor)
@@ -4003,6 +4007,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
 			src_exp.gain = cxt->last_exp_param.gain;
 			src_exp.dummy = cxt->last_exp_param.dummy;
+			last_cam_mode = 0;
 		}
 		src_exp.cur_index = cxt->last_index;
 		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
@@ -4069,7 +4074,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			 s_bakup_exp_param[cxt->camera_id].bv,
 			 s_bakup_exp_param[cxt->camera_id].exp_line, s_bakup_exp_param[cxt->camera_id].exp_time, s_bakup_exp_param[cxt->camera_id].dummy, s_bakup_exp_param[cxt->camera_id].gain);
 
-	if ((1 == cxt->last_enable) && (1 == work_info->is_snapshot)) {
+	ISP_LOGD("last_cam_mode = (0x%08x,0x%08x)",last_cam_mode , cxt->last_cam_mode);
+	if ((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode))) {
 		dst_exp.exp_time = src_exp.exp_time;
 		dst_exp.exp_line = src_exp.exp_line;
 		dst_exp.gain = src_exp.gain;
