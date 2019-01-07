@@ -245,7 +245,8 @@ enum sprd_support_3dnr_mode {
 };
 
 enum  sprd_faceid_work_mode {
-	FACEID_SINGLE = 0,
+	FACEID_INVALID = 0,
+	FACEID_SINGLE,
 	FACEID_DUAL ,
 	FACEID_3D ,
 };

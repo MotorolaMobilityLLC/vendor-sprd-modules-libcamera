@@ -93,6 +93,8 @@ void cmr_grab_isp_irq_proc_evt_reg(cmr_handle grab_handle,
                                    cmr_evt_cb isp_irq_proc_event_cb);
 void cmr_grab_post_ynr_evt_reg(cmr_handle grab_handle,
                                cmr_evt_cb grab_post_ynr_evt_cb);
+cmr_int cmr_grab_set_security(cmr_handle grab_handle,
+                              struct sprd_cam_sec_cfg *sec_cfg);
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config);
 cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,

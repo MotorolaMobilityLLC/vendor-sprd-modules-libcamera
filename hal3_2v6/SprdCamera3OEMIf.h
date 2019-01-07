@@ -409,6 +409,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setCameraPrivateData(void);
 
     int handleCbData(hal3_trans_info_t &result_info, void *userdata);
+    int setCamSecurity(multiCameraMode multiCamMode);
     int zslTakePicture();
     int reprocessInputBuffer();
     int reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir, cmr_uint fd);

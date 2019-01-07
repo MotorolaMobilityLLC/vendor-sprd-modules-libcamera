@@ -291,6 +291,21 @@ cmr_s32 cmr_grab_get_iommu_status(cmr_handle grab_handle) {
     return ret;
 }
 
+cmr_int cmr_grab_set_security(cmr_handle grab_handle,
+                              struct sprd_cam_sec_cfg *sec_cfg) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    CMR_LOGI("security mode:%d, work_mode =%d", sec_cfg->camsec_mode,
+             sec_cfg->work_mode);
+    p_grab = (struct cmr_grab *)grab_handle;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CAM_SECURITY, sec_cfg);
+    if (ret) {
+        CMR_LOGE("failed to set security, ret = %d", ret);
+    }
+    return ret;
+}
+
 void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb grab_event_cb) {
     struct cmr_grab *p_grab;
 

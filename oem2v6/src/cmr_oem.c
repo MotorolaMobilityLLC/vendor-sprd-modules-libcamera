@@ -28,7 +28,6 @@
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
-#include "sprd_img.h"
 #include "isp_video.h"
 #include "pthread.h"
 
@@ -2377,6 +2376,18 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle) {
 
     ret = cmr_grab_get_iommu_status(grab_cxt->grab_handle);
 
+    return ret;
+}
+
+cmr_int camera_set_security(cmr_handle oem_handle,
+                            struct sprd_cam_sec_cfg *sec_cfg) {
+    cmr_int ret;
+    struct grab_context *grab_cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    grab_cxt = &cxt->grab_cxt;
+
+    ret = cmr_grab_set_security(grab_cxt->grab_handle, sec_cfg);
     return ret;
 }
 

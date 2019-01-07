@@ -1136,6 +1136,13 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_CAM_SECURITY: {
+        struct sprd_cam_sec_cfg *sec_cfg = (struct sprd_cam_sec_cfg *)param;
+        CMR_LOGI("security mode = %d, work mode = %d", sec_cfg->camsec_mode,
+                 sec_cfg->work_mode);
+        camera_set_security(handle, sec_cfg);
+        break;
+    }
     default:
         break;
     }
@@ -1193,7 +1200,8 @@ exit:
 }
 
 cmr_int image_sw_algorithm_processing(
-    cmr_handle camera_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    cmr_handle camera_handle,
+    struct image_sw_algorithm_buf *src_sw_algorithm_buf,
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     enum img_data_type format) {
@@ -1206,7 +1214,8 @@ cmr_int image_sw_algorithm_processing(
     }
 
     ret = camera_local_image_sw_algorithm_processing(
-        camera_handle, src_sw_algorithm_buf, dst_sw_algorithm_buf, sw_algorithm_type, format);
+        camera_handle, src_sw_algorithm_buf, dst_sw_algorithm_buf,
+        sw_algorithm_type, format);
     if (ret) {
         CMR_LOGE("failed %ld", ret);
     }

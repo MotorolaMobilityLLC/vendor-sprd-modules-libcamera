@@ -5101,6 +5101,7 @@ int SprdCamera3OEMIf::openCamera() {
     faceDectect_enable(1);
 #endif
 
+    setCamSecurity(mMultiCameraMode);
     ZSLMode_monitor_thread_init((void *)this);
 
 #ifdef CONFIG_CAMERA_GYRO
@@ -5121,6 +5122,38 @@ int SprdCamera3OEMIf::openCamera() {
 
 exit:
     HAL_LOGI(":hal3: X");
+    return ret;
+}
+
+int SprdCamera3OEMIf::setCamSecurity(multiCameraMode multiCamMode) {
+    struct sprd_cam_sec_cfg securityCfg;
+    int ret = NO_ERROR;
+
+    HAL_LOGI("multi camera mode = %d", multiCamMode);
+
+    memset(&securityCfg, 0, sizeof(sprd_cam_sec_cfg));
+
+#ifdef CONFIG_CAMERA_SECURITY_TEE_FULL
+    if (multiCamMode == MODE_SINGLE_FACEID_REGISTER ||
+        multiCamMode == MODE_SINGLE_FACEID_UNLOCK) {
+        securityCfg.camsec_mode = SEC_TIME_PRIORITY;
+        securityCfg.work_mode = FACEID_SINGLE;
+    } else if (multiCamMode == MODE_DUAL_FACEID_REGISTER ||
+               multiCamMode == MODE_DUAL_FACEID_UNLOCK) {
+        securityCfg.camsec_mode = SEC_TIME_PRIORITY;
+        securityCfg.work_mode = FACEID_DUAL;
+    } else { // close face lock menu
+        securityCfg.camsec_mode = SEC_UNABLE;
+        securityCfg.work_mode = FACEID_INVALID;
+    }
+#else
+    securityCfg.camsec_mode = SEC_UNABLE;
+    securityCfg.work_mode = FACEID_INVALID;
+#endif
+
+    ret = mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_SET_CAM_SECURITY, &securityCfg);
+
     return ret;
 }
 
