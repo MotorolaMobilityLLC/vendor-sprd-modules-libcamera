@@ -121,6 +121,7 @@ int dcam_init_lsc(void *in)
 	val = DCAM_REG_RD(idx, DCAM_LENS_LOAD_ENABLE);
 	buf_sel = !((val & BIT_1) >> 1);
 	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_1, buf_sel << 1);
+	pr_info("buf_sel %d\n", buf_sel);
 
 	/* step 4: if initialized config, polling lens_load_flag done. */
 	dcam_force_copy(dev, DCAM_CTRL_COEF);
@@ -139,6 +140,18 @@ int dcam_init_lsc(void *in)
 		ret = -EPERM;
 		goto exit;
 	}
+
+	/* trigger load to another buffer when next sof */
+	/* in initial phase, there are default data in both buffers(sram)
+	 * if we just load to one buffer, another buffer with default
+	 * second time update lsc, buf_sel shadow and buffer loading
+	 * maybe mismatched and if the buffer without loading data
+	 * is applied, then image corruption will be observed.
+	 * therefore we trigger loading to another buffer to avoid this case.
+	 */
+	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (1 << 2) | 1);
+	param->load_trigger = 1;
+
 	spin_unlock(&param->lock);
 
 	pr_debug("w %d,  grid len %d grid %d  num_t %d (%d, %d)\n",
@@ -231,7 +244,7 @@ int dcam_update_lsc(void *in)
 			DCAM_REG_WR(idx, offset, val);
 			offset += 4;
 		}
-		pr_debug("write weight tab done\n");
+		pr_info("update weight tab done\n");
 	}
 
 	/* step2: load grid table */
@@ -239,8 +252,9 @@ int dcam_update_lsc(void *in)
 	DCAM_REG_MWR(idx, DCAM_LENS_GRID_NUMBER, 0x7FF,
 			info->grid_num_t & 0x7FF);
 
-	/* trigger load next sof for running status  */
-	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (1 << 2) | 1);
+	/* bit0: 1 - enable loading */
+	/* bit2: 0 - trigger load immediately, 1 - trigger load next sof */
+	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (0 << 2) | 1);
 	param->load_trigger = 1;
 
 	/* step3: configure lens enable and grid param...*/
@@ -251,12 +265,16 @@ int dcam_update_lsc(void *in)
 				((info->grid_y_num & 0xff) << 8) |
 				(info->grid_x_num & 0xff);
 		DCAM_REG_WR(idx, DCAM_LENS_GRID_SIZE, val);
+		pr_info("update grid %d x %d y %d\n",info->grid_width,
+				info->grid_x_num, info->grid_y_num);
 	}
 
 	/* lens_load_buf_sel toggle */
 	val = DCAM_REG_RD(idx, DCAM_LENS_LOAD_ENABLE);
 	buf_sel = !((val & BIT_1) >> 1);
 	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_1, buf_sel << 1);
+
+	pr_debug("sof %d, buf_sel %d\n", dev->frame_index, buf_sel);
 
 	/* step 4: auto cpy lens registers next sof */
 	dcam_auto_copy(dev, DCAM_CTRL_COEF);

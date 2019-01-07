@@ -3125,7 +3125,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->awb_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_LSC_BYPASS, value, "1");
+	property_get(PROP_ISP_LSC_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->lsc_cxt.sw_bypass = val;
@@ -3135,12 +3135,12 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->pdaf_cxt.sw_bypass = val;
 
-	property_get(PROP_ISP_AFL_BYPASS, value, "1");
+	property_get(PROP_ISP_AFL_BYPASS, value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->afl_cxt.sw_bypass = val;
 
-	property_get("persist.vendor.camera.bypass.smart", value, "1");
+	property_get("persist.vendor.camera.bypass.smart", value, "0");
 	val = atoi(value);
 	if (val < 2)
 		cxt->smart_cxt.sw_bypass = val;
