@@ -619,6 +619,15 @@ class SprdCamera3Setting {
 
     static int setDefaultParaInfo(int32_t cameraId);
     static bool getLcdSize(uint32_t *width, uint32_t *height);
+    //
+    static int initStaticParametersforSensorInfo(int32_t cameraId);
+    static int initStaticParametersforLensInfo(int32_t cameraId);
+    static int initStaticParametersforScalerInfo(int32_t cameraId);
+    //
+    static int initStaticMetadataforSensorInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    static int initStaticMetadataforLensInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    static int initStaticMetadataforScalerInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    //
     static int initStaticParameters(int32_t cameraId);
     static int initStaticMetadata(int32_t cameraId,
                                   camera_metadata_t **static_metadata);
