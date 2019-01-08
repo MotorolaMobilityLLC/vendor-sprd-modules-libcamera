@@ -725,6 +725,7 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
       mLastAdjustRati(0), mCircleSizeScale(0), mUpdataxy(0), mstartUpdate(0),
       mFirstCapture(false), mFirstPreview(false),
       mUpdateCaptureWeightParams(false), mUpdatePreviewWeightParams(false),
+      mBuffSize(0), mWeightSize(0), mWeightWidth(0), mWeightHeight(0),
       mLastFaceNum(0), mSkipFaceNum(0), mRotation(0), mLastTouchX(0),
       mLastTouchY(0), mBlurBody(true), mUpdataTouch(false), mVersion(0),
       mIsGalleryBlur(false), mIsBlurAlways(false),
@@ -917,6 +918,16 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
             if (mBlurApi[i]->iSmoothCapCreateWeightMap == NULL) {
                 error = dlerror();
                 HAL_LOGE("sym iSmoothCapCreateWeightMap failed.error = %s",
+                         error);
+                return -1;
+            }
+            mBlurApi[i]->iSmoothCapGetAIWeightInfo =
+                (int (*)(void *handle, unsigned int *modelWidth,
+                         unsigned int *modelHeight, unsigned int *bufferSize))
+                    dlsym(mBlurApi[i]->handle, "iSmoothCapGetAIWeightInfo");
+            if (mBlurApi[i]->iSmoothCapGetAIWeightInfo == NULL) {
+                error = dlerror();
+                HAL_LOGE("sym iSmoothCapGetAIWeightInfo failed.error = %s",
                          error);
                 return -1;
             }
@@ -1182,6 +1193,7 @@ int SprdCamera3Blur::CaptureThread::capBlurHandle(buffer_handle_t *input1,
     }
     if (mFirstCapture) {
         mFirstCapture = false;
+        mBuffSize = mWeightSize;
         if (mBlurApi2->mHandle != NULL) {
             int64_t deinitStart = systemTime();
             ret = mBlurApi2->BokehFrames_Deinit(mBlurApi2->mHandle);
@@ -1347,6 +1359,34 @@ int SprdCamera3Blur::CaptureThread::capBlurHandle(buffer_handle_t *input1,
             ret = mBlurApi2->BokehFrames_WeightMap(
                 input2, srcYUV, mBlur->weight_map, mBlurApi2->mHandle);
         } else {
+            if (mCaptureWeightParams.roi_type == 2) {
+                unsigned int buff_size;
+                ret = mBlurApi[1]->iSmoothCapGetAIWeightInfo(
+                    mBlurApi[1]->mHandle, &mWeightWidth, &mWeightHeight,
+                    &buff_size);
+                if (ret != 0)
+                    HAL_LOGE("iSmoothCapGetAIWeightInfo Err:%d", ret);
+                if (mWeightSize != buff_size) {
+                    if (mOutWeightBuff != NULL) {
+                        free(mOutWeightBuff);
+                        mOutWeightBuff = NULL;
+                    }
+                    mOutWeightBuff = (unsigned short *)malloc(buff_size);
+                    memset(mOutWeightBuff, 0, buff_size);
+                    mWeightSize = buff_size;
+                }
+            } else {
+                if (mBuffSize != mWeightSize) {
+
+                    if (mOutWeightBuff != NULL) {
+                        free(mOutWeightBuff);
+                        mOutWeightBuff = NULL;
+                    }
+                    mOutWeightBuff = (unsigned short *)malloc(mBuffSize);
+                    memset(mOutWeightBuff, 0, mBuffSize);
+                    mWeightSize = mBuffSize;
+                }
+            }
             HAL_LOGD("mCaptureWeightParams:rotate_angle:%d "
                      "roi_type:%d f_number:%d sel_x:%d sel_y:%d "
                      "circle_size:%d",
@@ -1885,10 +1925,7 @@ void SprdCamera3Blur::CaptureThread::dumpBlurIMG(
                 mCaptureInitParams.width * mCaptureInitParams.height * 3 / 2;
             uint32_t weight_map_size =
                 mCaptureInitParams.width * mCaptureInitParams.height / 4;
-            uint32_t output_weight_map =
-                (mCaptureInitParams.width / mCaptureInitParams.Scalingratio) *
-                (mCaptureInitParams.height / mCaptureInitParams.Scalingratio) *
-                sizeof(unsigned short);
+            uint32_t output_weight_map = mWeightSize;
             uint32_t para_size = 0;
             uint32_t near_jpeg_size = mBlur->mNearJpegSize;
             uint32_t far_jpeg_size = mBlur->mFarJpegSize;
@@ -2053,6 +2090,10 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mUpdateCaptureWeightParams = true;
     mFirstUpdateFrame = 1;
     mstartUpdate = 0;
+    mBuffSize = 0;
+    mWeightWidth = 0;
+    mWeightHeight = 0;
+    mWeightSize = 0;
 
     // preview 720P v1.0 v1.1
     mLastMinScope = 10;      // min_slope*10000
@@ -2971,10 +3012,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         mCaptureInitParams.width * mCaptureInitParams.height * 3 / 2;
     uint32_t yuv_size2 =
         mCaptureInitParams.width * mCaptureInitParams.height * 3 / 2;
-    uint32_t output_weight_map =
-        (mCaptureInitParams.width / mCaptureInitParams.Scalingratio) *
-        (mCaptureInitParams.height / mCaptureInitParams.Scalingratio) *
-        sizeof(unsigned short);
+    uint32_t output_weight_map = mWeightSize;
     uint32_t para_size = 0;
     uint32_t use_size = 0;
     uint32_t near_jpeg_size = mBlur->mNearJpegSize;
@@ -3126,6 +3164,9 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t scaleSmoothWidth = MainWidthData / BLUR_SMOOTH_SIZE_SCALE;
         uint32_t scaleSmoothHeight = MainHeightData / BLUR_SMOOTH_SIZE_SCALE;
         uint32_t box_filter_size = mCaptureInitParams.box_filter_size;
+        uint32_t weight_width = mWeightWidth;
+        uint32_t weight_height = mWeightHeight;
+        uint32_t weight_size = mWeightSize;
         uint32_t version = mCaptureWeightParams.version;
         uint32_t blur_version = 0;
         if (mCaptureWeightParams.roi_type == 2)
@@ -3145,6 +3186,9 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
                                (unsigned char *)&MainHeightData,
                                (unsigned char *)&near_jpeg_size,
                                (unsigned char *)&rear_cam_en,
+                               (unsigned char *)&weight_width,
+                               (unsigned char *)&weight_height,
+                               (unsigned char *)&weight_size,
                                (unsigned char *)&roi_type,
                                (unsigned char *)&FNum,
                                (unsigned char *)&circle,
@@ -3592,9 +3636,11 @@ int SprdCamera3Blur::configureStreams(
             // workaround jpeg cant handle 16-noalign issue, when jpeg fix
             // this
             // issue, we will remove these code
+#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
             if (h == 1944 && w == 2592) {
                 h = 1952;
             }
+#endif
 
             if (mCaptureWidth != w && mCaptureHeight != h) {
                 freeLocalCapBuffer();
@@ -3605,13 +3651,15 @@ int SprdCamera3Blur::configureStreams(
                         continue;
                     }
                 }
-                int buff_size =
+                mCaptureThread->mWeightSize =
                     (w / mCaptureThread->mCaptureInitParams.Scalingratio) *
                     (h / mCaptureThread->mCaptureInitParams.Scalingratio) *
                     sizeof(unsigned short);
                 mCaptureThread->mOutWeightBuff =
-                    (unsigned short *)malloc(buff_size);
-                memset(mCaptureThread->mOutWeightBuff, 0, buff_size);
+                    (unsigned short *)malloc(mCaptureThread->mWeightSize);
+                memset(mCaptureThread->mOutWeightBuff, 0,
+                       mCaptureThread->mWeightSize);
+
                 weight_map = (void *)malloc(w * h / 4);
                 memset(weight_map, 0, w * h / 4);
 

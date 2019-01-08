@@ -65,7 +65,7 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM2_NUM (11)
 #endif
 
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (23)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (26)
 #define BLUR_MAX_NUM_STREAMS (3)
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
@@ -222,6 +222,9 @@ typedef struct {
                                      capture_weight_params_t *params,
                                      unsigned char *Src_YUV,
                                      unsigned short *outWeightMap);
+    int (*iSmoothCapGetAIWeightInfo)(void *handle, unsigned int *modelWidth,
+                                     unsigned int *modelHeight,
+                                     unsigned int *bufferSize);
     int (*iSmoothBlurImage)(void *handle, unsigned char *Src_YUV,
                             unsigned char *Output_YUV);
     int (*iSmoothCapBlurImage)(void *handle, unsigned char *Src_YUV,
@@ -426,6 +429,10 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mFirstPreview;
         bool mUpdateCaptureWeightParams;
         bool mUpdatePreviewWeightParams;
+        unsigned int mBuffSize;
+        unsigned int mWeightSize;
+        unsigned int mWeightWidth;
+        unsigned int mWeightHeight;
         uint8_t mLastFaceNum;
         uint8_t mSkipFaceNum;
         int mGaussEnable; // when back blur only have blur 1.0 and 1.2
