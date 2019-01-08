@@ -644,12 +644,21 @@ struct sensor_3dnr_radialval {
 	cmr_u16 min_cap;
 	cmr_u16 max_cap;
 };
+
+struct sensor_3dnr_factor {
+      cmr_u8 u_thr[4];
+      cmr_u8 v_thr[4];
+      cmr_u8 u_div[4];
+      cmr_u8 v_div[4];
+};
+
 //reduce color noise around corners
 struct sensor_3dnr_radialval_str {
 	cmr_u16 r_circle_cap[3];
 	cmr_u16 r_circle_cap_factor[3];
 	struct sensor_3dnr_radialval u_range;
 	struct sensor_3dnr_radialval v_range;
+       struct sensor_3dnr_factor uv_factor;
 	struct sensor_3dnr_yuv_noise_wgt_cap noise_wgt_cap;
 };
 //mem_ctrl_submodule
