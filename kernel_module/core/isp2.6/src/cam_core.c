@@ -2603,7 +2603,7 @@ static int img_ioctl_set_crop(
 {
 	int ret = 0, zoom = 0;
 	uint32_t channel_id;
-	struct channel_context *ch;
+	struct channel_context *ch, *ch_vid;
 	struct sprd_img_rect *crop;
 	struct camera_frame *first = NULL;
 	struct camera_frame *zoom_param = NULL;
@@ -2619,6 +2619,7 @@ static int img_ioctl_set_crop(
 
 	ret = get_user(channel_id, &uparam->channel_id);
 	ch = &module->channel[channel_id];
+	ch_vid = &module->channel[CAM_CH_VID];
 	if (ret || (channel_id >= CAM_CH_MAX) || !ch->enable) {
 		pr_err("error set crop, ret %d, ch %d\n", ret, channel_id);
 		ret = -EINVAL;
@@ -2669,6 +2670,8 @@ static int img_ioctl_set_crop(
 			camera_enqueue(&ch->zoom_coeff_queue, zoom_param);
 		}
 		zoom_param = NULL;
+		if (ch_vid->enable && channel_id == CAM_CH_PRE)
+			goto exit;
 		complete(&module->zoom_thrd.thread_com);
 	}
 exit:
