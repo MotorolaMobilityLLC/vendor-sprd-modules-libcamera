@@ -1255,6 +1255,11 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
 
     if (!sensor_cxt->stream_on) {
         param = sensor_cxt->bypass_mode;
+        if (param > 0) {
+            struct sensor_ic_drv_cxt *sns_drv_cxt =
+                (struct sensor_ic_drv_cxt *)sensor_cxt->sns_ic_drv_handle;
+            sns_drv_cxt->is_multi_mode = param;
+        }
         err = stream_on_func(sensor_cxt->sns_ic_drv_handle, param);
     }
     if (0 == err) {
