@@ -721,6 +721,8 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
         &cxt->req_param.post_proc_setting.mem[cxt->index];
     char value[PROPERTY_VALUE_MAX];
     struct camera_frame_type frame_type;
+    void *isp_info_addr = NULL;
+    int isp_info_size = 0;
 
     if (cxt->err_code) {
         CMR_LOGE("error exit");
@@ -749,12 +751,44 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
         cxt->req_param.post_proc_setting.actual_snp_size.height) {
         if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
             (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
-            send_capture_data(
-                0x10, /* jpg */
-                cxt->req_param.post_proc_setting.actual_snp_size.width,
-                cxt->req_param.post_proc_setting.actual_snp_size.height,
-                (char *)mem_ptr->target_jpeg.addr_vir.addr_y,
-                enc_out_ptr->stream_size, 0, 0, 0, 0);
+            if (isp_video_get_simulation_flag()) {
+                struct img_addr jpeg_addr;
+                jpeg_addr.addr_y = mem_ptr->target_jpeg.addr_vir.addr_y;
+                if (isp_video_get_simulation_loop_count() == 1) {
+                    ret = camera_local_get_isp_info(
+                        cxt->oem_handle, &isp_info_addr, &isp_info_size);
+                    if (ret == 0 && isp_info_size > 0) {
+                        memcpy(((char *)jpeg_addr.addr_y +
+                                enc_out_ptr->stream_size),
+                               (char *)isp_info_addr, isp_info_size);
+                        camera_save_jpg_to_file(0, IMG_DATA_TYPE_JPEG,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.width,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.height,
+                                                enc_out_ptr->stream_size +
+                                                    isp_info_size,
+                                                &jpeg_addr);
+                    } else {
+                        CMR_LOGD("save jpg without isp debug info.");
+                        camera_save_jpg_to_file(0, IMG_DATA_TYPE_JPEG,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.width,
+                                                cxt->req_param.post_proc_setting
+                                                    .actual_snp_size.height,
+                                                enc_out_ptr->stream_size,
+                                                &jpeg_addr);
+                    }
+                }
+                isp_video_set_capture_complete_flag();
+            } else {
+                send_capture_data(
+                    0x10, /* jpg */
+                    cxt->req_param.post_proc_setting.actual_snp_size.width,
+                    cxt->req_param.post_proc_setting.actual_snp_size.height,
+                    (char *)mem_ptr->target_jpeg.addr_vir.addr_y,
+                    enc_out_ptr->stream_size, 0, 0, 0, 0);
+            }
         }
         cxt->jpeg_stream_size = enc_out_ptr->stream_size;
         CMR_LOGD("jpeg_stream_size %d", cxt->jpeg_stream_size);
@@ -1643,13 +1677,15 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                 raw_pixel_width / 8,
             0, 0, 0, 0);
 
-        char datetime[15] = {0};
-        CMR_LOGD("save mipi raw to file");
-        camera_get_system_time(datetime);
-        camera_save_mipi_raw_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
+        if (CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) {
+            char datetime[15] = {0};
+            CMR_LOGD("save mipi raw to file");
+            camera_get_system_time(datetime);
+            camera_save_mipi_raw_to_file(snp_handle, datetime, IMG_DATA_TYPE_RAW,
                                      mem_ptr->cap_raw.size.width,
                                      mem_ptr->cap_raw.size.height,
                                      &mem_ptr->cap_raw.addr_vir);
+        }
     }
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);

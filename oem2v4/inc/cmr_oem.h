@@ -31,6 +31,7 @@ extern "C" {
 #include "jpeg_exif_header.h"
 #include "SprdOEMCamera.h"
 #include "cmr_snapshot.h"
+#include "cmr_isptool.h"
 #include "cmr_setting.h"
 #include "cmr_focus.h"
 #include "cmr_preview.h"

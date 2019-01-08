@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include "cmr_common.h"
 #include <cutils/properties.h>
+#include "isp_simulation.h"
+#include "isp_video.h"
 
 #define CAMERA_ZOOM_LEVEL_MAX 8
 #define ZOOM_STEP(x) (((x) - (x) / CMR_ZOOM_FACTOR) / CAMERA_ZOOM_LEVEL_MAX)
@@ -368,29 +370,32 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
                                 struct img_addr *addr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    char file_name[80];
+    char file_name[260] = {0};
     char tmp_str[10];
     FILE *fp = NULL;
 
     CMR_LOGD("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index,
              img_fmt, width, height, addr->addr_y, addr->addr_u);
 
-    cmr_bzero(file_name, 40);
-    strcpy(file_name, CAMERA_DUMP_PATH);
-    sprintf(tmp_str, "%08x", index);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", width);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "X");
-    sprintf(tmp_str, "%d", height);
-    strcat(file_name, tmp_str);
+    if (isp_video_get_simulation_loop_count() == 1) {
+        isp_sim_get_mipi_raw_file_name(file_name);
+    } else {
+        strcpy(file_name, CAMERA_DUMP_PATH);
+        sprintf(tmp_str, "%08x", index);
+        strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", width);
+        strcat(file_name, tmp_str);
+        strcat(file_name, "X");
+        sprintf(tmp_str, "%d", height);
+        strcat(file_name, tmp_str);
+    }
     strcat(file_name, ".jpg");
     CMR_LOGD("file name %s", file_name);
 
     fp = fopen(file_name, "wb");
     if (NULL == fp) {
-        CMR_LOGD("can not open file: %s \n", file_name);
+        CMR_LOGD("can not open file: %s %s\n", file_name, strerror(errno));
         return 0;
     }
 
