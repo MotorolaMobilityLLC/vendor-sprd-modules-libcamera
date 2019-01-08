@@ -934,7 +934,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_GET_LSCTAB,
-			DCAM_BLK_2D_LSC, NULL, 0);
+			ISP_BLK_2D_LSC, NULL, 0);
 	ret = isp_pm_ioctl(pm_handle,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&io_pm_input, (void *)&io_pm_output);
@@ -950,7 +950,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_INFO,
-			DCAM_BLK_2D_LSC, PNULL, 0);
+			ISP_BLK_2D_LSC, PNULL, 0);
 	ret = isp_pm_ioctl(pm_handle,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&io_pm_input, (void *)&io_pm_output);
@@ -1064,7 +1064,7 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 			memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 			BLOCK_PARAM_CFG(io_pm_input, pm_param,
 				ISP_PM_BLK_LSC_MEM_ADDR,
-				DCAM_BLK_2D_LSC, update_info.lsc_buffer_addr,
+				ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
 				lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
 			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 		}
@@ -1601,7 +1601,7 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 
 		BLOCK_PARAM_CFG(pm_input, pm_data,
 				ISP_PM_BLK_LSC_MEM_ADDR,
-				DCAM_BLK_2D_LSC, awb_output->lsc,
+				ISP_BLK_2D_LSC, awb_output->lsc,
 				awb_output->lsc_size);
 		ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_SET_OTHERS, &pm_input, &pm_output);
@@ -3643,7 +3643,7 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 
 	BLOCK_PARAM_CFG(input, pm_param,
 			ISP_PM_BLK_LSC_MEM_ADDR,
-			DCAM_BLK_2D_LSC,
+			ISP_BLK_2D_LSC,
 			lsc_result_address_new, lsc_result_size);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_SET_OTHERS,

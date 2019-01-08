@@ -34,7 +34,7 @@
 
 #define IS_DCAM_BLOCK(id) ((id == ISP_BLK_BLC) ||\
 	(id == DCAM_BLK_RGB_DITHER) || (id == ISP_BLK_RGB_GAIN) || \
-	(id == DCAM_BLK_2D_LSC) || (id == ISP_BLK_AWB_NEW) || \
+	(id == ISP_BLK_2D_LSC) || (id == ISP_BLK_AWB_NEW) || \
 	(id == DCAM_BLK_BPC_V1) || (id == DCAM_BLK_RGB_AFM_V1) ||\
 	(id == ISP_BLK_RGB_AEM))
 

@@ -27,7 +27,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_BLC, dcam_u_blc_block},
 	{ISP_BLK_RGB_GAIN, dcam_u_rgb_gain_block},
 	{DCAM_BLK_RGB_DITHER, dcam_u_rgb_dither_block},
-	{DCAM_BLK_2D_LSC, dcam_u_lsc_block},
+	{ISP_BLK_2D_LSC, dcam_u_lsc_block},
 	{ISP_BLK_AWB_NEW, dcam_u_awbc_block},
 	{DCAM_BLK_BPC_V1, dcam_u_bpc_block},
 	/*{DCAM_BLK_PPE, dcam_u_bpc_ppe},*/

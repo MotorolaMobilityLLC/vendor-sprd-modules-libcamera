@@ -1042,16 +1042,11 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				dst_header[j].block_id, dst_header[j].size, src_header[j].offset, src_data_ptr,
 				dst_data_ptr, (cmr_uint)src_data_ptr - (cmr_uint)src_mod_ptr);
 
-			/* todo: temp solution for LSC  */
-			if (src_header[j].block_id == ISP_BLK_2D_LSC) {
-				src_header[j].block_id = DCAM_BLK_2D_LSC;
-				dst_header[j].block_id = DCAM_BLK_2D_LSC;
-			}
 			memcpy((void *)dst_data_ptr, (void *)src_data_ptr, src_header[j].size);
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 
 			switch (src_header[j].block_id) {
-			case DCAM_BLK_2D_LSC:
+			case ISP_BLK_2D_LSC:
 			{
 				extend_offset += add_lnc_len;
 				dst_header[j].size = src_header[j].size + add_lnc_len;

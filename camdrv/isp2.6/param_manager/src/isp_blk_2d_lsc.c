@@ -163,7 +163,7 @@ cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void *rtn_param0, voi
 	struct isp_2d_lsc_param *lnc_ptr = (struct isp_2d_lsc_param *)lnc_param;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = DCAM_BLK_2D_LSC;
+	param_data_ptr->id = ISP_BLK_2D_LSC;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
