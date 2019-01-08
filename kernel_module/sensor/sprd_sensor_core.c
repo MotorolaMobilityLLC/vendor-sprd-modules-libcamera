@@ -29,7 +29,9 @@
 #include <video/sprd_mmsys_pw_domain.h>
 
 #include "csi_api.h"
+#ifdef CONFIG_COMPAT
 #include "compat_sensor_drv.h"
+#endif
 #include "sprd_sensor_core.h"
 #include "sprd_sensor_drv.h"
 
@@ -685,7 +687,9 @@ static const struct file_operations sensor_fops = {
 	.owner = THIS_MODULE,
 	.open = sprd_sensor_file_open,
 	.unlocked_ioctl = sprd_sensor_file_ioctl,
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = compat_sensor_k_ioctl,
+#endif
 	.release = sprd_sensor_file_release,
 };
 

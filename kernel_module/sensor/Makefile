@@ -5,9 +5,14 @@ endif
 # target source files
 sprd_sensor-objs := sprd_sensor_core.o sprd_sensor_drv.o
 
+# compat ioctl for 32-bit user
+ifeq ($(CONFIG_COMPAT),true)
+sprd_sensor-objs += compat_sensor_drv.o
+ccflags-y += -DCONFIG_COMPAT
+endif
+
 # target source files for isp2.6
 ifeq ($(CSI_VER),r2p1)
-SRC := compat_sensor_drv.c
 SRC += csi2/csi_sprd/receiver_r2p1/csi_api.c
 SRC += csi2/csi_sprd/receiver_r2p1/csi_driver.c
 SRC += csi2/csi_sprd/receiver_r2p1/dphy_drv.c

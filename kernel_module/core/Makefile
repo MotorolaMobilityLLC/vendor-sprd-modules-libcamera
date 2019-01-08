@@ -7,7 +7,15 @@ sprd_camera-objs :=
 
 # target source files for isp2.6
 ifeq ($(ISP_VER),isp2.6)
+
+ifeq ($(CONFIG_COMPAT),true)
+# compat ioctl for 32-bit user
 SRC := $(shell find $(REL_PATH)/isp2.6 -name "*.c")
+ccflags-y += -DCONFIG_COMPAT
+else
+SRC := $(shell find $(REL_PATH)/isp2.6 -name "*.c"  ! -name "compat_cam_drv.c")
+endif
+
 LOCAL_SRC := $(SRC:$(REL_PATH)/%=%)
 
 sprd_camera-objs += $(LOCAL_SRC:%.c=%.o)

@@ -1007,14 +1007,16 @@ static int cfg_slice_scaler_info(
 			cfg_spath_trim1_info(&sinfo, frm_trim0, frm_scaler,
 				slc_scaler);
 
-			if (cur_slc->y == 0 && (cur_slc->x + 1) <
-				SLICE_W_NUM_MAX)
+			if (cur_slc->y == 0 &&
+			    (cur_slc->x + 1) < SLICE_W_NUM_MAX &&
+			    SLICE_W_NUM_MAX > 1)
 				trim1_sum_x[j][cur_slc->x + 1] =
 					slc_scaler->trim1_size_x +
 					trim1_sum_x[j][cur_slc->x];
 
-			if (cur_slc->x == 0 && (cur_slc->y + 1) <
-				SLICE_H_NUM_MAX)
+			if (cur_slc->x == 0 &&
+			    (cur_slc->y + 1) < SLICE_H_NUM_MAX &&
+			    SLICE_H_NUM_MAX > 1)
 				trim1_sum_y[j][cur_slc->y + 1] =
 					slc_scaler->trim1_size_y +
 					trim1_sum_y[j][cur_slc->y];
@@ -1174,14 +1176,16 @@ int isp_cfg_slice_store_info(
 					slc_thumbscaler->y_dst_after_scaler.w;
 				slc_store->size.h =
 					slc_thumbscaler->y_dst_after_scaler.h;
-				if (cur_slc->y == 0 && (cur_slc->x + 1) <
-					SLICE_W_NUM_MAX)
+				if (cur_slc->y == 0 &&
+				    (cur_slc->x + 1) < SLICE_W_NUM_MAX &&
+				    SLICE_W_NUM_MAX > 1)
 					start_col_out[j][cur_slc->x + 1] =
 						slc_store->size.w +
 						start_col_out[j][cur_slc->x];
 
-				if (cur_slc->x == 0 && (cur_slc->y + 1) <
-					SLICE_H_NUM_MAX)
+				if (cur_slc->x == 0 &&
+				    (cur_slc->y + 1) < SLICE_H_NUM_MAX &&
+				    SLICE_H_NUM_MAX > 1)
 					start_row_out[j][cur_slc->y + 1] =
 						slc_store->size.h +
 						start_row_out[j][cur_slc->y];
@@ -1190,14 +1194,16 @@ int isp_cfg_slice_store_info(
 				slc_store->size.w = slc_scaler->trim1_size_x;
 				slc_store->size.h = slc_scaler->trim1_size_y;
 
-				if (cur_slc->y == 0 && (cur_slc->x + 1) <
-					SLICE_W_NUM_MAX)
+				if (cur_slc->y == 0 &&
+				    (cur_slc->x + 1) < SLICE_W_NUM_MAX &&
+				    SLICE_W_NUM_MAX > 1)
 					start_col_out[j][cur_slc->x + 1] =
 						slc_store->size.w +
 						start_col_out[j][cur_slc->x];
 
-				if (cur_slc->x == 0 && (cur_slc->y + 1) <
-					SLICE_H_NUM_MAX)
+				if (cur_slc->x == 0 &&
+				    (cur_slc->y + 1) < SLICE_H_NUM_MAX &&
+				    SLICE_H_NUM_MAX > 1)
 					start_row_out[j][cur_slc->y + 1] =
 						slc_store->size.h +
 						start_row_out[j][cur_slc->y];
