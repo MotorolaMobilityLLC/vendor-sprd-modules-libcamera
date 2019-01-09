@@ -6446,6 +6446,19 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_isp_handle_raw(cmr_handle oem_handle, void **isp_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
+    *isp_handle = (void *)isp_cxt->isp_handle;
+
+    if (*isp_handle == NULL) {
+        CMR_LOGE("isp handle null!!");
+        ret = CMR_CAMERA_FAIL;
+    }
+    return ret;
+}
+
 cmr_int
 camera_get_tuning_info(cmr_handle oem_handle,
                        struct isp_adgain_exp_info *adgain_exp_info_ptr) {

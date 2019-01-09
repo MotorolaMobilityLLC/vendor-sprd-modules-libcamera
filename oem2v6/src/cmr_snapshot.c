@@ -1346,7 +1346,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     uint32_t shutter = 0;
     int32_t bv = 0;
     struct isp_awbc_cfg_test awbc_cfg;
-    void *isp_handle = ispvideo_GetIspHandle();
+    void *isp_handle = NULL;
     uint32_t pos = 0;
     cmr_u32 glb_gain = 0;
     struct isp_adgain_exp_info adgain_exp_info;
@@ -1357,6 +1357,11 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
     shutter = adgain_exp_info.exp_time;
     bv = adgain_exp_info.bv;
 
+    ret = camera_get_isp_handle_raw(snp_cxt->oem_handle, &isp_handle);
+    if (ret != CMR_CAMERA_SUCCESS) {
+        CMR_LOGE("cannot retreive isp handle");
+        return -1;
+    }
     isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
     isp_ioctl(isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
