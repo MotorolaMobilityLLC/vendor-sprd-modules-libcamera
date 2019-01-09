@@ -22,6 +22,7 @@
 #include "cmr_common.h"
 #include <cutils/properties.h>
 #include "isp_simulation.h"
+#include "isp_video.h"
 
 #define CAMERA_ZOOM_LEVEL_MAX 8
 #define ZOOM_STEP(x) (((x) - (x) / CMR_ZOOM_FACTOR) / CAMERA_ZOOM_LEVEL_MAX)
@@ -485,9 +486,9 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     CMR_LOGD("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index,
              img_fmt, width, height, addr->addr_y, addr->addr_u);
 
-    ret = isp_sim_get_mipi_raw_file_name(file_name);
-    /* (ret < 0) means normal raw capture flow */
-    if (ret < 0) {
+    if (isp_video_get_simulation_flag()) {
+        ret = isp_sim_get_mipi_raw_file_name(file_name);
+    } else {
         cmr_bzero(file_name, 260);
         strcpy(file_name, CAMERA_DUMP_PATH);
         sprintf(tmp_str, "%08x", index);
