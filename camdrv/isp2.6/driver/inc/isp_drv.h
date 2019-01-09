@@ -49,6 +49,7 @@ struct isp_statis_info {
 	cmr_u32 sec;
 	cmr_u32 usec;
 	cmr_u32 frame_id;
+	cmr_u32 zoom_ratio;
 };
 
 struct isp_mem_info {

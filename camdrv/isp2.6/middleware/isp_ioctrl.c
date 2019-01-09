@@ -2233,6 +2233,92 @@ static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_ai_process_start(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_PROCESS_START, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_process_stop(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_PROCESS_STOP, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_set_img_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_IMG_PARAM, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_get_img_flag(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_IMG_FLAG, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_ai_get_status(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 app_mode = *(cmr_u32 *) param_ptr;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2299,6 +2385,12 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
 	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
+	{ISP_CTRL_AI_PROCESS_START, ispctl_ai_process_start},
+	{ISP_CTRL_AI_PROCESS_STOP, ispctl_ai_process_stop},
+	{ISP_CTRL_AI_SET_IMG_PARAM, ispctl_ai_set_img_param},
+	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
+	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
+	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_MAX, NULL}
 };
 

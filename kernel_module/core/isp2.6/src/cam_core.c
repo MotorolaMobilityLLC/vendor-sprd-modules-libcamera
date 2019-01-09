@@ -70,6 +70,7 @@
 #define  CAM_ZOOM_COEFF_Q_LEN   10
 
 /* TODO: tuning ratio limit for power/image quality */
+#define ZOOM_RATIO_DEFAULT     1000
 #define MAX_RDS_RATIO 3
 #define RATIO_SHIFT 16
 
@@ -224,6 +225,7 @@ struct camera_module {
 	uint32_t is_smooth_zoom;
 	uint32_t zoom_solution; /* for dynamic zoom type swicth. */
 	uint32_t rds_limit; /* raw downsizer limit */
+	uint32_t zoom_ratio; /* userspace zoom ratio for aem statis */
 	struct camera_uinfo cam_uinfo;
 
 	uint32_t last_channel_id;
@@ -1000,7 +1002,7 @@ static int cal_channel_size(struct camera_module *module)
 	struct sprd_img_rect *crop_p, *crop_v, *crop_c;
 	struct sprd_img_rect crop_dst;
 	struct img_trim trim_pv, trim_c;
-	struct img_size dst_p, dst_v, dcam_out, max, temp;
+	struct img_size src_p, dst_p, dst_v, dcam_out, max, temp;
 
 	ch_prev = &module->channel[CAM_CH_PRE];
 	ch_cap = &module->channel[CAM_CH_CAP];
@@ -1013,6 +1015,8 @@ static int cal_channel_size(struct camera_module *module)
 	ratio_v_w = ratio_v_h = 1;
 	crop_p = crop_v = crop_c = NULL;
 	if (ch_prev->enable) {
+		src_p.w = ch_prev->ch_uinfo.src_size.w;
+		src_p.h = ch_prev->ch_uinfo.src_size.h;
 		crop_p = &ch_prev->ch_uinfo.src_crop;
 		dst_p.w = ch_prev->ch_uinfo.dst_size.w;
 		dst_p.h = ch_prev->ch_uinfo.dst_size.h;
@@ -1094,6 +1098,8 @@ static int cal_channel_size(struct camera_module *module)
 		pr_info("dst_p %d %d, dst_v %d %d, dcam_out %d %d\n",
 			dst_p.w, dst_p.h, dst_v.w, dst_v.h, dcam_out.w, dcam_out.h);
 
+		/* applied latest rect for aem */
+		module->zoom_ratio = src_p.w * ZOOM_RATIO_DEFAULT / crop_p->w;
 		ch_prev->trim_dcam = trim_pv;
 		ch_prev->rds_ratio = ratio_min;
 		ch_prev->dst_dcam = dcam_out;
@@ -4882,6 +4888,10 @@ rewait:
 			read_op.parm.frame.addr_offset = (uint32_t)pframe->buf.addr_vir[0];
 			read_op.parm.frame.vir_addr =
 				(uint32_t)((uint64_t)pframe->buf.addr_vir[0] >> 32);
+			if (module->zoom_ratio)
+				read_op.parm.frame.zoom_ratio = module->zoom_ratio;
+			else
+				read_op.parm.frame.zoom_ratio = ZOOM_RATIO_DEFAULT;
 		} else {
 			pr_err("error event %d\n", pframe->evt);
 			read_op.evt = pframe->evt;

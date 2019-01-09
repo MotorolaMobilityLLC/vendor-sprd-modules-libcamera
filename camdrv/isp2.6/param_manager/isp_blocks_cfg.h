@@ -43,6 +43,26 @@ extern "C" {
 
 /*************************************************************************/
 
+enum isp_pm_ai_scene_type {
+	ISP_PM_AI_SCENE_DEFAULT,
+	ISP_PM_AI_SCENE_FOOD,
+	ISP_PM_AI_SCENE_PORTRAIT,
+	ISP_PM_AI_SCENE_FOLIAGE,
+	ISP_PM_AI_SCENE_SKY,
+	ISP_PM_AI_SCENE_NIGHT,
+	ISP_PM_AI_SCENE_BACKLIGHT,
+	ISP_PM_AI_SCENE_TEXT,
+	ISP_PM_AI_SCENE_SUNRISE,
+	ISP_PM_AI_SCENE_BUILDING,
+	ISP_PM_AI_SCENE_LANDSCAPE,
+	ISP_PM_AI_SCENE_SNOW,
+	ISP_PM_AI_SCENE_FIREWORK,
+	ISP_PM_AI_SCENE_BEACH,
+	ISP_PM_AI_SCENE_PET,
+	ISP_PM_AI_SCENE_FLOWER,
+	ISP_PM_AI_SCENE_MAX
+};
+
 struct isp_blc_offset {
 	cmr_u16 r;
 	cmr_u16 gr;

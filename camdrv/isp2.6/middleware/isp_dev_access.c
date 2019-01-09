@@ -170,11 +170,13 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->frame_id = irq_info->frame_id;
 	statis_info->sec = irq_info->sec;
 	statis_info->usec = irq_info->usec;
-	ISP_LOGV("get stats type %d, uaddr %p, frame id %d time %ds.%dus",
+	statis_info->zoom_ratio = irq_info->zoom_ratio;
+
+	ISP_LOGV("get stats type %d, uaddr %p, frame id %d time %ds.%dus, zoom_ratio: %d",
 		 statis_info->buf_type,
 		 (void *)statis_info->uaddr,
 		 statis_info->frame_id,
-		 statis_info->sec, statis_info->usec);
+		 statis_info->sec, statis_info->usec, statis_info->zoom_ratio);
 
 	if (irq_info->irq_property == STATIS_AEM) {
 		if (cxt->isp_event_cb) {
