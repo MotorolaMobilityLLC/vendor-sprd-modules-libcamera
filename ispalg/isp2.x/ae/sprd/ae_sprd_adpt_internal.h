@@ -44,7 +44,14 @@ extern "C" {
 		cmr_s32 bv;
 		cmr_u32 table_idx;
 	};
-
+	struct ae_ev_param {
+		cmr_s16 target_lum;
+		cmr_s16 target_lum_zone;
+		cmr_s16 stride_config_0;
+		cmr_s16 stride_config_1;
+		cmr_s8 ev_index;
+		cmr_u32 is_mev;
+	};
 	struct ae_exposure_param_switch {
 		cmr_u32 target_offset;
 		cmr_u32 exp_line;
@@ -361,6 +368,8 @@ extern "C" {
 		
 		/*for debug*/
 		cmr_u32 history_param[1024];
+		/* backup for ev*/
+		struct ae_ev_param flash_ev_backup;
 	};
 
 #endif

@@ -1303,6 +1303,15 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->flash_backup.line_time = cxt->cur_status.line_time;
 		cxt->flash_backup.cur_index = cxt->sync_cur_result.wts.cur_index;
 		cxt->flash_backup.bv = cxt->cur_result.cur_bv;
+		if (1 == cxt->app_mode) {
+			cxt->flash_ev_backup.target_lum      = cxt->cur_status.target_lum;
+			cxt->flash_ev_backup.target_lum_zone = cxt->cur_status.target_lum_zone;
+			cxt->flash_ev_backup.stride_config_0 = cxt->cur_status.stride_config[0];
+			cxt->flash_ev_backup.stride_config_1 = cxt->cur_status.stride_config[1];
+			cxt->flash_ev_backup.ev_index        = cxt->cur_status.settings.ev_index;
+			cxt->flash_ev_backup.is_mev          = cxt->mod_update_list.is_mev;
+			ISP_LOGV("tl,tlzone,c0,c1,ev_index:(%d,%d,%d,%d,%d)",cxt->cur_status.target_lum, cxt->cur_status.target_lum_zone, cxt->cur_status.stride_config[0],cxt->cur_status.stride_config[1],cxt->cur_status.settings.ev_index);
+		}
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause_flash(cxt, 1);
 		if (cxt->exposure_compensation.ae_compensation_flag)  {
@@ -1436,7 +1445,15 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			}
 
 		}
-
+		if (1 == cxt->app_mode) {
+			cxt->cur_status.target_lum	  = cxt->flash_ev_backup.target_lum;
+			cxt->cur_status.target_lum_zone   = cxt->flash_ev_backup.target_lum_zone;
+			cxt->cur_status.stride_config[0]  = cxt->flash_ev_backup.stride_config_0;
+			cxt->cur_status.stride_config[1]  = cxt->flash_ev_backup.stride_config_1;
+			cxt->cur_status.settings.ev_index =  cxt->flash_ev_backup.ev_index;
+			cxt->mod_update_list.is_mev = cxt->flash_ev_backup.is_mev;
+			ISP_LOGV("tl,tlzone,c0,c1,ev_index:(%d,%d,%d,%d,%d)",cxt->cur_status.target_lum, cxt->cur_status.target_lum_zone, cxt->cur_status.stride_config[0],cxt->cur_status.stride_config[1],cxt->cur_status.settings.ev_index);
+		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 0);
