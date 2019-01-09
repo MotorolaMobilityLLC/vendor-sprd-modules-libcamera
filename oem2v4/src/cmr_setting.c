@@ -98,7 +98,6 @@ struct setting_local_param {
 struct setting_flash_param {
     cmr_uint flash_mode;
     cmr_uint flash_status;
-    cmr_uint auto_flash_status;
     cmr_uint has_preflashed;
     cmr_s64 last_preflash_time;
     cmr_uint flash_hw_status;
@@ -753,7 +752,6 @@ static cmr_uint setting_flash_mode_to_status(struct setting_component *cpt,
         } else {
             status = FLASH_CLOSE;
         }
-        flash_param->auto_flash_status = ctrl_param.cmd_type_value;
         break;
 
     default:
@@ -2697,7 +2695,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     struct setting_local_param *local_param =
         get_local_param(cpt, parm->camera_id);
     cmr_uint flash_mode = 0;
-    cmr_uint *p_auto_flash_status;
     cmr_uint flash_hw_status = 0;
     cmr_uint image_format = 0;
     struct setting_init_in *init_in = &cpt->init_in;
@@ -2712,7 +2709,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     image_format = local_param->sensor_static_info.image_format;
 
     flash_mode = hal_param->flash_param.flash_mode;
-    p_auto_flash_status = &hal_param->flash_param.auto_flash_status;
     flash_hw_status = hal_param->flash_param.flash_hw_status;
 
     ctrl_flash_status = parm->ctrl_flash.flash_type;
@@ -2834,19 +2830,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     is_to_isp = 1;
                 }
             }
-        } /*else if (((uint32_t)CAMERA_FLASH_MODE_AUTO == flash_mode)
-                && ((uint32_t)FLASH_OPEN == *p_auto_flash_status)) {
-                setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
-                *p_auto_flash_status = FLASH_CLOSE;
-
-                if (IMG_DATA_TYPE_RAW == image_format) {
-                        is_to_isp = 1;
-                }
-        }*/
-
-        // if (!parm->ctrl_flash.will_capture) {
-        // hal_param->flash_param.has_preflashed = 0;
-        //}
+        }
 
         if (is_to_isp) {
             if (0 == work_mode) {
@@ -3219,18 +3203,17 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
 
     last_preflash_time = hal_param->flash_param.last_preflash_time;
     now_time = systemTime(CLOCK_MONOTONIC);
-    CMR_LOGV("last_preflash_time = %lld, now_time=%lld", last_preflash_time,
-             now_time);
-    if (hal_param->flash_param.has_preflashed == 1 &&
-        now_time > last_preflash_time) {
+    CMR_LOGD("last_preflash_time = %lld, now_time=%lld has_preflashed %d",
+        last_preflash_time, now_time, hal_param->flash_param.has_preflashed);
+    if (now_time > last_preflash_time) {
         diff = (now_time - last_preflash_time) / 1000000000;
         CMR_LOGV("diff = %lld", diff);
-        if (diff > PREFLASH_INTERVAL_TIME) {
-            CMR_LOGD("last preflash is 3s ago, need to reset preflash flag");
-            hal_param->flash_param.has_preflashed = 0;
+        if (diff < PREFLASH_INTERVAL_TIME) {
+            CMR_LOGD("last preflash < 3s, no need do preflash again.");
+            hal_param->flash_param.has_preflashed = 1;
+            been_preflash = hal_param->flash_param.has_preflashed;
         }
     }
-    been_preflash = hal_param->flash_param.has_preflashed;
 
     CMR_LOGD("preflash without af, image_format %ld, flash_mode %ld, "
              "been_preflash %ld",

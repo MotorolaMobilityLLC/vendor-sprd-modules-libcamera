@@ -2737,8 +2737,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
             setting_param.ctrl_flash.work_mode = 0;
             setting_param.ctrl_flash.capture_mode.capture_mode = 0;
             setting_param.ctrl_flash.flash_type = FLASH_CLOSE_AFTER_OPEN;
-            // setting_param.ctrl_flash.will_capture = will_capture;
-            setting_param.ctrl_flash.will_capture = 1;
+            setting_param.ctrl_flash.will_capture = will_capture;
             prev_set_preview_skip_frame_num(
                 cxt->prev_cxt.preview_handle, cxt->camera_id,
                 flash_capture_skip_num, has_preflashed);

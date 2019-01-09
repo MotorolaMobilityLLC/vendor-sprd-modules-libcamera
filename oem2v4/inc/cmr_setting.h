@@ -97,7 +97,6 @@ struct setting_ctrl_flash_param {
     cmr_uint is_active;
     cmr_uint flash_type;
     cmr_uint work_mode; // preview or capture
-    cmr_uint is_dv;
     cmr_uint will_capture;
 };
 
