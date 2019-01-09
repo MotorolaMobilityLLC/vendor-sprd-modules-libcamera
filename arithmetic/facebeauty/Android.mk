@@ -24,12 +24,12 @@ endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsprdfacebeauty
-LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libsprdfacebeauty.a
-LOCAL_MODULE_STEM_64 := libsprdfacebeauty.a
-LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty.a
-LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty.a
+LOCAL_MODULE_STEM_32 := libsprdfacebeauty.so
+LOCAL_MODULE_STEM_64 := libsprdfacebeauty.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty.so
 LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
@@ -52,8 +52,6 @@ LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
 LOCAL_SHARED_LIBRARIES:= \
      liblog \
      libcutils \
-
-LOCAL_STATIC_LIBRARIES := \
      libsprdfacebeauty
 
 LOCAL_MODULE := libcamfb
