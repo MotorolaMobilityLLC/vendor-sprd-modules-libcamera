@@ -606,9 +606,9 @@ int dcam_set_fetch(void *dcam_handle, struct dcam_fetch_info *fetch)
 	/* (bitfile)unit 32b,(spec)64b */
 	fetch_pitch /= 4;
 	DCAM_REG_MWR(dev->idx,
-		DCAM_MIPI_CAP_CFG, BIT_0, 1);
-	DCAM_REG_MWR(dev->idx,
-		DCAM_MIPI_CAP_CFG, (0xF << 16), fetch->pattern);
+		DCAM_MIPI_CAP_CFG, 0x7, 0x3);
+	DCAM_REG_MWR(dev->idx, DCAM_MIPI_CAP_CFG,
+		BIT_17 | BIT_16, (fetch->pattern & 3) << 16);
 
 	DCAM_AXIM_MWR(IMG_FETCH_CTRL,
 		BIT_1, fetch->is_loose << 1);

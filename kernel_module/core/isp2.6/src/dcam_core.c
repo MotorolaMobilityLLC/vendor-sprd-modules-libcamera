@@ -1509,8 +1509,8 @@ static int dcam_offline_start_frame(void *param)
 
 	/* todo - need to cfg fetch param from input or frame. */
 	fetch->is_loose = 0;
-	fetch->endian = ENDIAN_LITTLE;
-	fetch->pattern = COLOR_ORDER_GB;
+	fetch->endian = pframe->irq_type;
+	fetch->pattern = pframe->irq_property;
 	fetch->size.w = pframe->width;
 	fetch->size.h = pframe->height;
 	fetch->trim.start_x = 0;
@@ -1520,6 +1520,8 @@ static int dcam_offline_start_frame(void *param)
 	fetch->addr.addr_ch0 = (uint32_t)pframe->buf.iova[0];
 
 	ret = dcam_set_fetch(dev, fetch);
+	dcam_force_copy(dev, DCAM_CTRL_CAP);
+
 	udelay(1000); /* I'm not sure need delay */
 	atomic_set(&dev->state, STATE_RUNNING);
 	dcam_start_fetch();

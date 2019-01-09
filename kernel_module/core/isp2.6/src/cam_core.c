@@ -1718,7 +1718,7 @@ static int init_cam_channel(
 		break;
 
 	case CAM_CH_RAW:
-		dcam_path_id = DCAM_PATH_VCH2;
+		dcam_path_id = DCAM_PATH_FULL;
 		new_dcam_path = 1;
 		break;
 
@@ -3791,7 +3791,7 @@ static int raw_proc_pre(
 	/* config dcam path  */
 	memset(&ch_desc, 0, sizeof(ch_desc));
 	ch_desc.is_loose = module->cam_uinfo.sensor_if.if_spec.mipi.is_loose;
-	ch_desc.endian.y_endian = proc_info->src_y_endian;
+	ch_desc.endian.y_endian = ENDIAN_LITTLE;
 	ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 			DCAM_PATH_CFG_BASE,
 			ch->dcam_path_id, &ch_desc);
@@ -3922,6 +3922,8 @@ static int raw_proc_post(
 	src_frame->channel_id = ch->ch_id;
 	src_frame->width = proc_info->src_size.width;
 	src_frame->height = proc_info->src_size.height;
+	src_frame->irq_type = proc_info->src_y_endian;
+	src_frame->irq_property = proc_info->src_pattern;
 	ret = cambuf_get_ionbuf(&src_frame->buf);
 	if (ret)
 		goto src_fail;
