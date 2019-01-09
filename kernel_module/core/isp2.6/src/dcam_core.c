@@ -2067,6 +2067,9 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		if (ret)
 			dev->blk_dcam_pm->lsc.buf.iova[0] = 0L;
 		break;
+	case DCAM_IOCTL_CFG_STOP:
+		cambuf_iommu_unmap(&dev->blk_dcam_pm->lsc.buf);
+		break;
 	case DCAM_IOCTL_INIT_STATIS_Q:
 		ret = init_statis_bufferq(dev);
 		break;
@@ -2315,7 +2318,6 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 		atomic_dec(&s_dcam_working);
 	atomic_set(&dev->state, STATE_IDLE);
 
-	cambuf_iommu_unmap(&dev->blk_dcam_pm->lsc.buf);
 	dev->blk_dcam_pm->aem.bypass = 1;
 	dev->blk_dcam_pm->afm.bypass = 1;
 	dev->blk_dcam_pm->afl.bypass = 1;

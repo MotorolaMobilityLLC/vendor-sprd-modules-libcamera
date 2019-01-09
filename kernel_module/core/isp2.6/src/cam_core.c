@@ -3511,10 +3511,12 @@ static int img_ioctl_stream_off(
 	if (module->cam_uinfo.is_4in1 && module->aux_dcam_dev)
 		deinit_4in1_aux(module);
 
+	ret = dcam_ops->ioctl(module->dcam_dev_handle,
+		DCAM_IOCTL_CFG_STOP, NULL);
+
 	if (module->dcam_dev_handle)
 		ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
-
 	for (i = 0;  i < CAM_CH_MAX; i++) {
 		ch = &module->channel[i];
 		isp_ctx_id[i] = -1;
