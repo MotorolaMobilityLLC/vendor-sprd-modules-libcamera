@@ -37,6 +37,8 @@
 #define LIBCAM_ALG_FILE "libispalg.so"
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 
+cmr_u32 isp_cur_bv;
+cmr_u32 isp_cur_ct;
 
 #if 0
 enum statis_event_id {
@@ -1753,6 +1755,9 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	}
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-smart:%d ms", (cmr_u32)(time_end - time_start));
+
+	isp_cur_bv = ae_in->ae_output.cur_bv;
+	isp_cur_ct = awb_output->ct;
 
 	ae_info = &cxt->ae_info;
 	awb_info = &cxt->awb_info;

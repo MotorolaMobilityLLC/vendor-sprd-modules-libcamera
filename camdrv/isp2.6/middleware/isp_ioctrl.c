@@ -2214,6 +2214,24 @@ static cmr_int ispctl_post_3dnr(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 glb_gain = 0;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GLB_GAIN, NULL, (void *)&glb_gain);
+	*(cmr_u32 *)param_ptr = glb_gain;
+
+	ISP_LOGV("ret %ld, glb_gain %d", ret, *(cmr_u32 *)param_ptr);
+
+	return ret;
+}
 
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
@@ -2265,6 +2283,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_AE_STATE, ispctl_get_ae_state},	// for mp tool cali
 	{ISP_CTRL_GET_AWB_GAIN, ispctl_get_awb_gain},	// for mp tool cali
 	{ISP_CTRL_GET_AWB_CT, ispctl_awb_ct},
+	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
 	{ISP_CTRL_SET_AE_FPS, ispctl_set_ae_fps},	//for LLS feature
 	{ISP_CTRL_GET_INFO, ispctl_get_info},
 	{ISP_CTRL_SET_AE_NIGHT_MODE, ispctl_set_ae_night_mode},
