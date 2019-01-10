@@ -53,8 +53,10 @@
 #include "SprdBokehAlgo.h"
 
 namespace sprdcamera {
-#define BOKEH_YUV_DATA_TRANSFORM
 #define YUV_CONVERT_TO_JPEG
+#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
+#define BOKEH_YUV_DATA_TRANSFORM
+#endif
 
 #define LOCAL_PREVIEW_NUM (20)
 #define SNAP_DEPTH_NUM 1

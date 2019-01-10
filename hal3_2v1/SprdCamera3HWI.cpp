@@ -302,8 +302,7 @@ static int ispVideoSetParam(uint32_t width, uint32_t height) {
     return rtn;
 }
 
-static int ispVideoSetJpegQuality(uint32_t param1, uint32_t param2)
-{
+static int ispVideoSetJpegQuality(uint32_t param1, uint32_t param2) {
     int rtn = 0x00;
     SprdCamera3HWI *dev =
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
@@ -845,6 +844,7 @@ int SprdCamera3HWI::configureStreams(
         video_size.width = video_size.width - 2;
     }
 #endif
+#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
     if (mMultiCameraMode != MODE_BOKEH) {
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue,
@@ -867,6 +867,7 @@ int SprdCamera3HWI::configureStreams(
             capture_size.height = 608;
         }
     }
+#endif
     mOEMIf->SetDimensionPreview(preview_size);
     mOEMIf->SetDimensionCapture(capture_size);
     mOEMIf->SetDimensionVideo(video_size);
