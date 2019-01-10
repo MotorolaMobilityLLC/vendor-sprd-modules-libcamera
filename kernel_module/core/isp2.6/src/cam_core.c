@@ -3359,12 +3359,6 @@ static int img_ioctl_stream_on(
 			0, camera_put_empty_frame);
 
 		if (ch->alloc_start) {
-			if (atomic_read(&ch->err_status) != 0) {
-				pr_err("ch %d error happens.", ch->ch_id);
-				ret = -EFAULT;
-				goto exit;
-			}
-
 			ret = wait_for_completion_interruptible(&ch->alloc_com);
 			if (ret != 0) {
 				pr_err("config channel/path param work %d\n",
@@ -3372,6 +3366,12 @@ static int img_ioctl_stream_on(
 				goto exit;
 			}
 			ch->alloc_start = 0;
+
+			if (atomic_read(&ch->err_status) != 0) {
+				pr_err("ch %d error happens.", ch->ch_id);
+				ret = -EFAULT;
+				goto exit;
+			}
 
 			/* set shared frame for dcam output */
 			while (1) {
