@@ -1094,7 +1094,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     int ret = NO_ERROR;
     CameraMetadata meta;
-    bool invaildRequest = false;
     SprdCamera3Stream *pre_stream = NULL;
     int receive_req_max = mReciveQeqMax;
     int32_t width = 0, height = 0;
@@ -1105,6 +1104,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int32_t captureRequestId = 0;
     int32_t jpegOrientation = 0;
     uint32_t frameNumber = request->frame_number;
+    PendingRequestInfo pendingRequest;
+    FLASH_Tag flashInfo;
+    CONTROL_Tag controlInfo;
+    SPRD_DEF_Tag sprddefInfo;
 
     Mutex::Autolock l(mLock);
 
@@ -1117,11 +1120,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     meta = request->settings;
     mMetadataChannel->request(meta);
 
-    SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
-
-    CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
+    mSetting->getFLASHTag(&flashInfo);
+
     captureIntent = controlInfo.capture_intent;
 
     if (meta.exists(ANDROID_REQUEST_ID)) {
@@ -1427,7 +1429,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
              mCameraId, request->num_output_buffers, request->frame_number,
              captureIntent, mPictureRequest, mFirstRegularRequest);
 
-#ifndef MINICAMERA
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
@@ -1440,24 +1441,59 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
         acquireFence = NULL;
     }
-#endif
 
-    if (invaildRequest) {
-        mFirstRegularRequest = 0;
-        mPictureRequest = 0;
-        timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
-        cam_result_data_info_t result_info;
+    pendingRequest.meta_info.flash_mode = flashInfo.mode;
+    memcpy(pendingRequest.meta_info.ae_regions, controlInfo.ae_regions,
+           5 * sizeof(controlInfo.ae_regions[0]));
+    memcpy(pendingRequest.meta_info.af_regions, controlInfo.af_regions,
+           5 * sizeof(controlInfo.af_regions[0]));
+    pendingRequest.frame_number = frameNumber;
+    pendingRequest.num_buffers = request->num_output_buffers;
+    pendingRequest.request_id = captureRequestId;
+    pendingRequest.bNotified = 0;
+    pendingRequest.input_buffer = request->input_buffer;
+
+    if (mFlush) {
+        for (i = 0; i < request->num_output_buffers; i++) {
+            const camera3_stream_buffer_t &output = request->output_buffers[i];
+            camera3_stream_t *stream = output.stream;
+            RequestedBufferInfo requestedBuf;
+            SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
+            if (channel == NULL) {
+                HAL_LOGE("invalid channel pointer for stream");
+                continue;
+            }
+            requestedBuf.stream = output.stream;
+            requestedBuf.buffer = output.buffer;
+            pendingRequest.buffers.push_back(requestedBuf);
+        }
+        pendingRequest.receive_req_max = receive_req_max;
+
+        {
+            Mutex::Autolock lr(mRequestLock);
+            mPendingRequestsList.push_back(pendingRequest);
+            mPendingRequest++;
+        }
 
         for (i = 0; i < request->num_output_buffers; i++) {
-            result_info.frame_number = request->frame_number;
-            result_info.timestamp = timestamp;
-            result_info.stream = request->output_buffers[i].stream;
-            result_info.buffer = request->output_buffers[i].buffer;
-            result_info.buff_status = CAMERA3_BUFFER_STATUS_ERROR;
-            result_info.msg_type = CAMERA3_MSG_ERROR;
-            handleCbDataWithLock(&result_info);
+            const camera3_stream_buffer_t &output = request->output_buffers[i];
+            camera3_stream_t *stream = output.stream;
+            SprdCamera3Channel *channel = (SprdCamera3Channel *)stream->priv;
+
+            if (channel == NULL) {
+                HAL_LOGE("invalid channel pointer for stream");
+                continue;
+            }
+
+            ret = channel->request(stream, output.buffer, frameNumber);
+            if (ret) {
+                HAL_LOGE("channel->request failed %p (%d)", output.buffer,
+                         frameNumber);
+                continue;
+            }
         }
-        HAL_LOGI("invalid request");
+
+        HAL_LOGI(":hal3: mFlush=1");
         goto exit;
     }
 
@@ -1473,25 +1509,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
 
     {
-        Mutex::Autolock lr(mRequestLock);
-        FLASH_Tag flashInfo;
-        CONTROL_Tag controlInfo;
-        PendingRequestInfo pendingRequest;
-
-        mSetting->getFLASHTag(&flashInfo);
-        mSetting->getCONTROLTag(&controlInfo);
-
-        pendingRequest.meta_info.flash_mode = flashInfo.mode;
-        memcpy(pendingRequest.meta_info.ae_regions, controlInfo.ae_regions,
-               5 * sizeof(controlInfo.ae_regions[0]));
-        memcpy(pendingRequest.meta_info.af_regions, controlInfo.af_regions,
-               5 * sizeof(controlInfo.af_regions[0]));
-        pendingRequest.frame_number = frameNumber;
-        pendingRequest.num_buffers = request->num_output_buffers;
-        pendingRequest.request_id = captureRequestId;
-        pendingRequest.bNotified = 0;
-        pendingRequest.input_buffer = request->input_buffer;
-
         for (i = 0; i < request->num_output_buffers; i++) {
             const camera3_stream_buffer_t &output = request->output_buffers[i];
             camera3_stream_t *stream = output.stream;
@@ -1507,6 +1524,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
 
         pendingRequest.receive_req_max = receive_req_max;
+
+        Mutex::Autolock lr(mRequestLock);
         mPendingRequestsList.push_back(pendingRequest);
         mPendingRequest++;
     }
@@ -1837,8 +1856,6 @@ int SprdCamera3HWI::flush() {
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     mFlush = true;
-
-    Mutex::Autolock l(mLock);
 
     if (mRegularChan) {
         // TBD: will add a user-kernel interface, to return all inflight
