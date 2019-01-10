@@ -1609,6 +1609,8 @@ exit:
 void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     ATRACE_CALL();
 
+    Mutex::Autolock l(mResultLock);
+
     uint32_t frame_number = result_info->frame_number;
     buffer_handle_t *buffer = result_info->buffer;
     int64_t capture_time = result_info->timestamp;
