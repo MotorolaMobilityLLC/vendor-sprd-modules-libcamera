@@ -5888,6 +5888,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         if (sprddefInfo.sprd_zsl_enabled == 1 || mStreamOnWithZsl == 1) {
             mTakePictureMode = SNAPSHOT_ZSL_MODE;
             mCaptureMode = CAMERA_ZSL_MODE;
+            mVideoSnapshotType = 0;
         } else {
             mCaptureMode = CAMERA_NORMAL_MODE;
             mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
