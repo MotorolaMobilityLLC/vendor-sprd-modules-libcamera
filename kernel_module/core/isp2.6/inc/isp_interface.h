@@ -66,6 +66,10 @@ enum isp_ltm_mode {
 	MODE_LTM_MAX
 };
 
+enum isp_ioctrl_cmd {
+	ISP_IOCTL_CFG_SEC,
+};
+
 enum isp_path_binding_type {
 	ISP_PATH_ALONE = 0,
 	ISP_PATH_MASTER,
@@ -118,6 +122,7 @@ struct isp_offline_param {
 struct isp_pipe_ops {
 	int (*open)(void *isp_handle, void *arg);
 	int (*close)(void *isp_handle);
+	int (*ioctl)(void *isp_handle, enum isp_ioctrl_cmd cmd, void *arg);
 	int (*reset)(void *isp_handle, void *arg);
 
 	int (*get_context)(void *isp_handle, void *param);

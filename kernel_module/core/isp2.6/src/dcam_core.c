@@ -975,6 +975,17 @@ static int dcam_cfg_ebd(struct dcam_pipe_dev *dev, void *param)
 
 	return 0;
 }
+
+static int dcam_cfg_dcamsec(struct dcam_pipe_dev *dev, void *param)
+{
+	bool * sec_eb = (bool*)param;
+
+	dev ->dcamsec_eb =  *sec_eb;
+
+	pr_info("camca : dcamsec_mode=%d \n", dev ->dcamsec_eb);
+	return 0;
+}
+
 void dcam_ret_src_frame(void *param)
 {
 	struct camera_frame *frame;
@@ -1524,7 +1535,11 @@ static int dcam_offline_start_frame(void *param)
 
 	udelay(1000); /* I'm not sure need delay */
 	atomic_set(&dev->state, STATE_RUNNING);
-	dcam_start_fetch();
+
+	if(dev->dcamsec_eb){
+		pr_warn("camca : dcamsec_eb= %d, fetch disable\n", dev->dcamsec_eb);
+	} else
+		dcam_start_fetch();
 
 	return ret;
 
@@ -2083,6 +2098,8 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		break;
 	case DCAM_IOCTL_CFG_EBD:
 		ret = dcam_cfg_ebd(dev, param);
+	case DCAM_IOCTL_CFG_SEC:
+		ret = dcam_cfg_dcamsec(dev, param);
 		break;
 	default:
 		pr_err("error: unknown cmd: %d\n", cmd);

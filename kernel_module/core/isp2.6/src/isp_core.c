@@ -664,9 +664,22 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	ISP_REG_WR(idx, ISP_FETCH_MEM_SLICE_SIZE,
 			fetch->in_trim.size_x | (fetch->in_trim.size_y << 16));
 
-	ISP_REG_WR(idx, ISP_FETCH_SLICE_Y_PITCH, fetch->pitch.pitch_ch0);
-	ISP_REG_WR(idx, ISP_FETCH_SLICE_U_PITCH, fetch->pitch.pitch_ch1);
-	ISP_REG_WR(idx, ISP_FETCH_SLICE_V_PITCH, fetch->pitch.pitch_ch2);
+	pr_info("camca  %s, isp sec mode=%d ,pitch_ch0=0x%x, 0x%x, 0x%x\n", __func__,
+					pctx->dev->sec_mode,
+					fetch->pitch.pitch_ch0,
+					fetch->pitch.pitch_ch1,
+					fetch->pitch.pitch_ch2);
+
+	if( pctx->dev->sec_mode == SEC_SPACE_PRIORITY) {
+			camca_isp_pitch_set(fetch->pitch.pitch_ch0,
+			fetch->pitch.pitch_ch1,
+			fetch->pitch.pitch_ch2);
+	} else {
+		ISP_REG_WR(idx, ISP_FETCH_SLICE_Y_PITCH, fetch->pitch.pitch_ch0);
+		ISP_REG_WR(idx, ISP_FETCH_SLICE_U_PITCH, fetch->pitch.pitch_ch1);
+		ISP_REG_WR(idx, ISP_FETCH_SLICE_V_PITCH, fetch->pitch.pitch_ch2);
+	}
+
 	ISP_REG_WR(idx, ISP_FETCH_LINE_DLY_CTRL, 0x8);
 	ISP_REG_WR(idx, ISP_FETCH_MIPI_INFO,
 		fetch->mipi_word_num | (fetch->mipi_byte_rel_pos << 16));
@@ -2115,7 +2128,7 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		return -EFAULT;
 	}
 
-	if (ctx_id >= ISP_CONTEXT_NUM) {
+	if (ctx_id >= ISP_CONTEXT_NUM  || ctx_id < ISP_CONTEXT_P0 ) {
 		pr_err("error id. ctx %d\n", ctx_id);
 		return -EFAULT;
 	}
@@ -2438,10 +2451,14 @@ static int sprd_isp_dev_open(void *isp_handle, void *param)
 		else
 			line_buffer_len = ISP_LINE_BUFFER_W;
 
-		pr_info("work mode: %d,  line_buf_len: %d\n",
-			s_dbg_work_mode, line_buffer_len);
+		if( dev->sec_mode == SEC_SPACE_PRIORITY)
+			dev->wmode = ISP_AP_MODE;
+		else
+			dev->wmode = s_dbg_work_mode;
 
-		dev->wmode = s_dbg_work_mode;
+		pr_info("camca isp sec_mode=%d, work mode: %d,  line_buf_len: %d\n",
+			dev->sec_mode, dev->wmode, line_buffer_len);
+
 		dev->isp_hw = param;
 		mutex_init(&dev->path_mutex);
 
@@ -2534,9 +2551,48 @@ static int sprd_isp_dev_reset(void *isp_handle, void *param)
 	return ret;
 }
 
+static int sprd_isp_cfg_sec(struct isp_pipe_dev *dev, void *param)
+{
+
+	enum sprd_cam_sec_mode  *sec_mode = (enum sprd_cam_sec_mode *)param;
+
+	dev ->sec_mode=  *sec_mode;
+
+	pr_info("camca :   isp sec_mode=%d \n",  dev ->sec_mode);
+
+	return 0;
+}
+
+static int sprd_isp_ioctrl(void *isp_handle,
+	enum isp_ioctrl_cmd cmd, void *param)
+{
+	int ret = 0;
+	struct isp_pipe_dev *dev = NULL;
+
+	if (!isp_handle) {
+		pr_err("fail to get valid input ptr\n");
+		return -EFAULT;
+	}
+
+	dev = (struct isp_pipe_dev *)isp_handle;
+
+	switch (cmd) {
+		case ISP_IOCTL_CFG_SEC:
+			ret = sprd_isp_cfg_sec(dev, param);
+			break;
+		default:
+			pr_err("error: unknown cmd: %d\n", cmd);
+			ret = -EFAULT;
+			break;
+	}
+
+	return ret;
+}
+
 static struct isp_pipe_ops isp_ops = {
 	.open = sprd_isp_dev_open,
 	.close = sprd_isp_dev_close,
+	.ioctl = sprd_isp_ioctrl,
 	.reset = sprd_isp_dev_reset,
 	.get_context = sprd_isp_get_context,
 	.put_context = sprd_isp_put_context,

@@ -88,7 +88,7 @@ static void isp_3dnr_config_fast_me(enum isp_id idx,
 #endif
 
 static void isp_3dnr_config_mem_ctrl(uint32_t idx,
-				     struct isp_3dnr_mem_ctrl *mem_ctrl)
+				     struct isp_3dnr_mem_ctrl *mem_ctrl, bool  nr3sec_eb)
 {
 	unsigned int val;
 
@@ -135,16 +135,24 @@ static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 	       (mem_ctrl->mv_y & 0xFF);
 	ISP_REG_WR(idx, ISP_3DNR_MEM_CTRL_PARAM7, val);
 
-	ISP_REG_WR(idx,
-		   ISP_3DNR_MEM_CTRL_FT_CUR_LUMA_ADDR,
-		   mem_ctrl->ft_luma_addr);
 
-	ISP_REG_WR(idx,
-		   ISP_3DNR_MEM_CTRL_FT_CUR_CHROMA_ADDR,
-		   mem_ctrl->ft_chroma_addr);
+	if( !nr3sec_eb) {
+		ISP_REG_WR(idx,
+			ISP_3DNR_MEM_CTRL_FT_CUR_LUMA_ADDR,
+			mem_ctrl->ft_luma_addr);
 
-	val = mem_ctrl->img_width & 0xFFFF;
-	ISP_REG_WR(idx, ISP_3DNR_MEM_CTRL_FT_CTRL_PITCH, val);
+		ISP_REG_WR(idx,
+			ISP_3DNR_MEM_CTRL_FT_CUR_CHROMA_ADDR,
+			mem_ctrl->ft_chroma_addr);
+
+		val = mem_ctrl->img_width & 0xFFFF;
+		ISP_REG_WR(idx, ISP_3DNR_MEM_CTRL_FT_CTRL_PITCH, val);
+	} else {
+		val = mem_ctrl->img_width & 0xFFFF;
+		camca_isp_3dnr_fetch_set(mem_ctrl->ft_chroma_addr,
+						mem_ctrl->ft_luma_addr,
+						val);
+	}
 
 	val = ((mem_ctrl->blend_y_en_start_col & 0xFFF) << 16)  |
 	       (mem_ctrl->blend_y_en_start_row & 0xFFF);
@@ -463,7 +471,7 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 
 	/*config memctl*/
 	mem_ctrl = &ctx->mem_ctrl;
-	isp_3dnr_config_mem_ctrl(idx, mem_ctrl);
+	isp_3dnr_config_mem_ctrl(idx, mem_ctrl, ctx->nr3_sec_mode);
 
 	/*config store*/
 	nr3_store = &ctx->nr3_store;

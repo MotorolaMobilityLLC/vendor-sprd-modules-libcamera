@@ -44,6 +44,7 @@ enum cam_iommudev_type {
 
 struct camera_buf {
 	char name[CAM_BUF_NAME_LEN];
+	bool buf_sec;
 
 	/* user buffer info */
 	int32_t mfd[3];

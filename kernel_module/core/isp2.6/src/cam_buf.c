@@ -302,7 +302,8 @@ int cambuf_iommu_map(
 			continue;
 
 		ionbuf[i] = buf_info->ionbuf[i];
-		if (dev_info->iommu_en) {
+
+		if (dev_info->iommu_en && !buf_info->buf_sec ) {
 			memset(&iommu_data, 0,
 				sizeof(struct sprd_iommu_map_data));
 			iommu_data.buf = ionbuf[i];
@@ -404,7 +405,7 @@ int cambuf_iommu_unmap(
 		if (buf_info->size[i] <= 0 || buf_info->iova[i] == 0)
 			continue;
 
-		if (dev_info->iommu_en) {
+		if (dev_info->iommu_en && !buf_info->buf_sec ) {
 			unmap_data.iova_addr = buf_info->iova[i] - buf_info->offset[i];
 			unmap_data.iova_size = buf_info->size[i];
 			unmap_data.ch_type = SPRD_IOMMU_FM_CH_RW;
@@ -539,9 +540,13 @@ int  cambuf_alloc(struct camera_buf *buf_info,
 	iommu_enable = 0;
 #endif
 
-	heap_type = iommu_enable ?
-		ION_HEAP_ID_MASK_SYSTEM :
-		ION_HEAP_ID_MASK_MM;
+	if(buf_info->buf_sec)
+		heap_type  = ION_HEAP_ID_MASK_CAM;
+	else {
+		heap_type = iommu_enable ?
+				ION_HEAP_ID_MASK_SYSTEM :
+				ION_HEAP_ID_MASK_MM;
+	}
 
 	buf_info->dmabuf_p[0] = ion_new_alloc(size, heap_type, 0);
 	if (IS_ERR_OR_NULL(buf_info->dmabuf_p[0])) {

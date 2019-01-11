@@ -262,6 +262,7 @@ struct camera_module {
 
 struct camera_group {
 	atomic_t camera_opened;
+	bool   ca_conn;
 
 	spinlock_t module_lock;
 	uint32_t  module_used;
@@ -275,7 +276,7 @@ struct camera_group {
 	struct miscdevice *md;
 	struct platform_device *pdev;
 	struct camera_queue empty_frm_q;
-
+	struct  sprd_cam_sec_cfg   camsec_cfg;
 };
 
 struct cam_ioctl_cmd {
@@ -373,10 +374,32 @@ static void alloc_buffers(struct work_struct *work)
 	if (channel->ch_uinfo.is_high_fps)
 		total = CAM_SHARED_BUF_NUM;
 
+	if (channel->ch_id == CAM_CH_PRE
+			&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
+		total = 4;
+	}
+
+	pr_info("camca %s():  ch_id =%d, camsec_mode=%d , total = %d \n", __func__,
+					channel->ch_id,
+					module->grp->camsec_cfg.camsec_mode,
+					total);
+
 	for (i = 0, count = 0; i < total; i++) {
 		do {
 			pframe = get_empty_frame();
 			pframe->channel_id = channel->ch_id;
+
+			if(channel->ch_id == CAM_CH_PRE
+				&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
+				pframe->buf.buf_sec = 1;
+			}
+			else
+				pframe->buf.buf_sec = 0;
+
+			 pr_info("camca %s():  ch_id =%d, buf_sec=%d \n", __func__,
+	                                channel->ch_id,
+	                                pframe->buf.buf_sec);
+
 			ret = cambuf_alloc(
 					&pframe->buf, size,
 					0, iommu_enable);
@@ -414,6 +437,15 @@ static void alloc_buffers(struct work_struct *work)
 					channel->ch_id, (int)size);
 		for (i = 0; i < ISP_NR3_BUF_NUM; i++) {
 			pframe = get_empty_frame();
+
+			if(channel->ch_id == CAM_CH_PRE
+					&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
+				pframe->buf.buf_sec = 1;
+				pr_info("camca %s():  ch_id =%d, buf_sec=%d \n", __func__,
+					channel->ch_id,
+					pframe->buf.buf_sec);
+			}
+
 			ret = cambuf_alloc(&pframe->buf, size, 0, iommu_enable);
 			if (ret) {
 				pr_err("fail to alloc 3dnr buf: %d ch %d\n",
@@ -443,6 +475,15 @@ static void alloc_buffers(struct work_struct *work)
 		for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
 			if (channel->ch_id == CAM_CH_PRE) {
 				pframe = get_empty_frame();
+
+				if(channel->ch_id == CAM_CH_PRE
+						&& module->grp->camsec_cfg.camsec_mode ==SEC_TIME_PRIORITY) {
+					pframe->buf.buf_sec = 1;
+					pr_info("camca %s():  ch_id =%d, buf_sec=%d \n", __func__,
+						channel->ch_id,
+						pframe->buf.buf_sec);
+				}
+
 				ret = cambuf_alloc(&pframe->buf, size, 0,
 						   iommu_enable);
 				if (ret) {
@@ -2396,6 +2437,59 @@ exit:
 	return ret;
 }
 
+static int img_ioctl_set_cam_security(
+			struct camera_module *module,
+			unsigned long arg)
+{
+	int ret = 0;
+	bool sec_ret =0;
+	struct sprd_cam_sec_cfg uparam;
+
+	ret = copy_from_user(&uparam,
+				(void __user *)arg,
+				sizeof(struct sprd_cam_sec_cfg));
+
+	if (unlikely(ret)) {
+		pr_err("fail to copy from user, ret %d\n", ret);
+		ret = -EFAULT;
+		goto exit;
+	}
+
+	pr_info("camca : conn = %d, security mode %d,  u camsec_mode=%d, u work_mode=%d \n",
+				module->grp->ca_conn,
+				module->grp->camsec_cfg.camsec_mode,
+				uparam.camsec_mode, uparam.work_mode);
+
+	if( uparam.camsec_mode != SEC_UNABLE ) {
+		if( !module->grp->ca_conn )
+			module->grp->ca_conn = cam_ca_connect();
+
+		if (!module->grp->ca_conn) {
+			pr_err("camca : fail to init cam_ca_connect\n");
+			ret = -EFAULT;
+			goto exit;
+		}
+
+		sec_ret = camca_security_set(&uparam);
+
+		if (!sec_ret) {
+			ret = -EFAULT;
+			pr_err("camca : fail to init cam security set\n");
+			goto exit;
+		}
+
+		module->grp->camsec_cfg.work_mode = uparam.work_mode;
+		module->grp->camsec_cfg.camsec_mode = uparam.camsec_mode;
+
+	}  else {
+		module->grp->camsec_cfg.work_mode = uparam.work_mode;
+		module->grp->camsec_cfg.camsec_mode = uparam.camsec_mode;
+	}
+
+exit:
+	return ret;
+}
+
 static int img_ioctl_set_sensor_size(
 			struct camera_module *module,
 			unsigned long arg)
@@ -3163,6 +3257,22 @@ static int img_ioctl_get_cam_res(
 		goto dcam_fail;
 	}
 
+	pr_info("camca get camera res camsec mode %d.\n",
+				module->grp->camsec_cfg.camsec_mode );
+
+	if(module->grp->camsec_cfg.camsec_mode != SEC_UNABLE)
+	{
+		bool  sec_eb = true;
+
+		ret = dcam_ops->ioctl(module->dcam_dev_handle,
+				DCAM_IOCTL_CFG_SEC, &sec_eb);
+	}
+
+	if (ret) {
+		pr_err("camca: fail to set cam sec %d.\n", module->grp->camsec_cfg.camsec_mode);
+		goto dcam_cb_fail;
+	}
+
 	ret = dcam_ops->set_callback(dcam, dcam_callback, module);
 	if (ret) {
 		pr_err("fail to set cam%d callback for dcam.\n", dcam_idx);
@@ -3179,6 +3289,14 @@ static int img_ioctl_get_cam_res(
 			goto no_isp;
 		}
 		module->isp_dev_handle = isp;
+	}
+
+	ret = isp_ops->ioctl(module->isp_dev_handle,
+                    ISP_IOCTL_CFG_SEC, &module->grp->camsec_cfg.camsec_mode);
+
+	if (ret) {
+		pr_err("camca: fail to set isp sec %d.\n", module->grp->camsec_cfg.camsec_mode);
+		goto wq_fail;
 	}
 
 	ret = isp_ops->open(isp, grp->isp[0]);
@@ -4690,7 +4808,7 @@ exit:
 }
 
 
-static struct cam_ioctl_cmd ioctl_cmds_table[66] = {
+static struct cam_ioctl_cmd ioctl_cmds_table[ ] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_MODE)]		= {SPRD_IMG_IO_SET_MODE,	img_ioctl_set_mode},
 	[_IOC_NR(SPRD_IMG_IO_SET_CAP_SKIP_NUM)]	= {SPRD_IMG_IO_SET_CAP_SKIP_NUM,	img_ioctl_set_cap_skip_num},
 	[_IOC_NR(SPRD_IMG_IO_SET_SENSOR_SIZE)]	= {SPRD_IMG_IO_SET_SENSOR_SIZE,	img_ioctl_set_sensor_size},
@@ -4753,6 +4871,7 @@ static struct cam_ioctl_cmd ioctl_cmds_table[66] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_4IN1_ADDR)]	= {SPRD_IMG_IO_SET_4IN1_ADDR,	img_ioctl_4in1_set_raw_addr},
 	[_IOC_NR(SPRD_IMG_IO_4IN1_POST_PROC)]	= {SPRD_IMG_IO_4IN1_POST_PROC,	img_ioctl_4in1_post_proc},
 	[_IOC_NR(SPRD_IMG_IO_PATH_PAUSE)]	= {SPRD_IMG_IO_PATH_PAUSE,	ioctl_test_dev},
+	[_IOC_NR(SPRD_IMG_IO_SET_CAM_SECURITY)]   = {SPRD_IMG_IO_SET_CAM_SECURITY,  img_ioctl_set_cam_security},
 };
 
 
@@ -5050,6 +5169,9 @@ static int sprd_img_open(struct inode *node, struct file *file)
 	pr_info("sprd_img: the camera opened count %d\n",
 			atomic_read(&grp->camera_opened));
 
+	pr_info("camca : camsec_mode = %d \n",
+                                            grp->camsec_cfg.camsec_mode);
+
 	spin_lock_irqsave(&grp->module_lock, flag);
 	for (i = 0, idx = count; i < count; i++) {
 		if ((grp->module_used & (1 << i)) == 0) {
@@ -5171,6 +5293,16 @@ static int sprd_img_release(struct inode *node, struct file *file)
 
 	group = module->grp;
 	idx = module->idx;
+
+	if(module->grp->camsec_cfg.camsec_mode  != SEC_UNABLE) {
+		bool ret =0;
+
+		module->grp->camsec_cfg.camsec_mode = SEC_UNABLE;
+		ret = camca_security_set(&module->grp->camsec_cfg);
+
+		pr_info("camca :camsec_mode%d, ret %d\n",
+				module->grp->camsec_cfg.camsec_mode, ret);
+	}
 
 	pr_info("cam %d, state %d\n", idx,
 		atomic_read(&module->state));
@@ -5313,6 +5445,11 @@ static int sprd_img_probe(struct platform_device *pdev)
 		goto probe_pw_fail;
 	}
 
+	/* for get ta status
+	group->ca_conn  = cam_ca_connect(); */
+	if (group->ca_conn)
+		pr_info("cam ca-ta unconnect\n");
+
 	ret = sprd_dcam_debugfs_init();
 	if (ret)
 		pr_err("fail to init dcam debugfs\n");
@@ -5338,6 +5475,9 @@ static int sprd_img_remove(struct platform_device *pdev)
 		pr_err("fail to get valid input ptr\n");
 		return -EFAULT;
 	}
+
+	if (group->ca_conn)
+		cam_ca_disconnect();
 
 	group = image_dev.this_device->platform_data;
 	if (group)

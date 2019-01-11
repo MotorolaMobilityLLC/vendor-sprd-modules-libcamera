@@ -244,12 +244,30 @@ enum sprd_support_3dnr_mode {
 	SPRD_3DNR_MAX,
 };
 
+enum  sprd_faceid_work_mode {
+	FACEID_SINGLE = 0,
+	FACEID_DUAL ,
+	FACEID_3D ,
+};
+
+enum  sprd_cam_sec_mode {
+	SEC_UNABLE= 0,
+	SEC_LITE,
+	SEC_SPACE_PRIORITY,
+	SEC_TIME_PRIORITY
+};
+
 #define DCAM_RES_DCAM0_CAP			0x1
 #define DCAM_RES_DCAM0_PATH			0x2
 #define DCAM_RES_DCAM1_CAP			0x4
 #define DCAM_RES_DCAM1_PATH			0x8
 #define DCAM_RES_DCAM2_CAP			0x10
 #define DCAM_RES_DCAM2_PATH			0x20
+
+struct   sprd_cam_sec_cfg {
+	enum sprd_cam_sec_mode   camsec_mode;
+	enum sprd_faceid_work_mode  work_mode;
+};
 
 struct sprd_img_size {
 	uint32_t w;
@@ -878,6 +896,8 @@ struct sprd_dcam_path_size {
 					   struct sprd_img_parm)
 #define SPRD_IMG_IO_4IN1_POST_PROC         _IOW(SPRD_IMG_IO_MAGIC, 65,\
 					   struct sprd_img_parm)
+#define SPRD_IMG_IO_SET_CAM_SECURITY         _IOW(SPRD_IMG_IO_MAGIC, 66,\
+					   struct sprd_cam_sec_cfg)
 
 /*
 * Dump dcam register.

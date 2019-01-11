@@ -195,6 +195,7 @@ struct dcam_pipe_dev {
 	uint32_t irq;
 	atomic_t state;// TODO: use mutex to protect
 	spinlock_t glb_reg_lock;
+	bool  dcamsec_eb;
 
 	uint32_t frame_index;
 	uint32_t enable_slowmotion;

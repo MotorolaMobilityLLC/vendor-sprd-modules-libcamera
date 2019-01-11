@@ -301,5 +301,6 @@ struct isp_pipe_dev {
 	struct isp_ltm_share_ctx_desc *ltm_handle;
 	struct isp_pipe_context ctx[ISP_CONTEXT_NUM];
 	struct sprd_cam_hw_info *isp_hw;
+	enum sprd_cam_sec_mode sec_mode;
 };
 #endif

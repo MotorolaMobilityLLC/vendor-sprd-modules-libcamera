@@ -16,6 +16,7 @@
 
 #include <linux/workqueue.h>
 #include "sprd_img.h"
+#include  "cam_trusty.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a > b) ? a : b)
