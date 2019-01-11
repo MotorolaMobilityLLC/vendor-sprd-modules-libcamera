@@ -5630,7 +5630,7 @@ static struct sensor_module_info s_ov16885_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov16885_ops_tab;
-struct sensor_raw_info *s_ov16885_mipi_raw_info_ptr = &s_ov16885_mipi_raw_info;
+struct sensor_raw_info *s_ov16885_mipi_raw_info_ptr = PNULL;
 
 /*==============================================================================
  * Description:

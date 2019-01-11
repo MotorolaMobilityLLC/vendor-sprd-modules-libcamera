@@ -251,7 +251,7 @@ struct sns_af_drv_entry dw9800_drv_entry = {
             .create = dw9800_drv_create,
             .delete = dw9800_drv_delete,
             .set_pos = dw9800_drv_set_pos,
-            .get_pos = dw9800_drv_get_pos,
+            .get_pos = NULL,
             .ioctl = dw9800_drv_ioctl,
         },
 };
