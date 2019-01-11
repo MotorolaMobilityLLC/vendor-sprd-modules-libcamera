@@ -124,7 +124,6 @@ int dcam_init_lsc(void *in)
 	pr_info("buf_sel %d\n", buf_sel);
 
 	/* step 4: if initialized config, polling lens_load_flag done. */
-	dcam_force_copy(dev, DCAM_CTRL_COEF);
 	i = 0;
 	while (i++ < LENS_LOAD_TIMEOUT) {
 		val = DCAM_REG_RD(idx, DCAM_LENS_LOAD_ENABLE);
@@ -134,6 +133,9 @@ int dcam_init_lsc(void *in)
 	}
 	/* clear lens_load_flag */
 	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_1 , (1 << 1));
+
+	/* force copy must be after first load done and load clear */
+	dcam_force_copy(dev, DCAM_CTRL_COEF);
 
 	if (i >= LENS_LOAD_TIMEOUT) {
 		pr_err("lens grid table load timeout.\n");
