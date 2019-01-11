@@ -39,30 +39,30 @@ int cpp_u_input_param_check(
 		return ret;
 	}
 
-	CMR_LOGE("input_addr %d, %d, %d input_addr_vir %d, %d,%d\n",
+	CMR_LOGD("input_addr %d, %d, %d input_addr_vir %d, %d,%d\n",
 			cfg_parm->input_addr.y, cfg_parm->input_addr.u,
 			cfg_parm->input_addr.v, cfg_parm->input_addr_vir.y,
 			cfg_parm->input_addr_vir.u, cfg_parm->input_addr_vir.v);
-    	CMR_LOGE("output_addr %d, %d, %d output_addr_vir %d, %d,%d\n",
+	CMR_LOGD("output_addr %d, %d, %d output_addr_vir %d, %d,%d\n",
 			cfg_parm->output_addr.y, cfg_parm->output_addr.u,
 			cfg_parm->output_addr.v, cfg_parm->output_addr_vir.y,
 			cfg_parm->output_addr_vir.u, cfg_parm->output_addr_vir.v);
     
-	CMR_LOGE("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
+	CMR_LOGD("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 			cfg_parm->input_rect.w, cfg_parm->input_rect.h,
 			cfg_parm->output_size.w, cfg_parm->output_size.h);
-	CMR_LOGE("schor %d  scver %d,input fmt %d,inputyendian %d\n",
+	CMR_LOGD("schor %d  scver %d,input fmt %d,inputyendian %d\n",
 			cfg_parm->scale_deci.hor, cfg_parm->scale_deci.ver,
 			cfg_parm->input_format,
 			cfg_parm->input_endian.y_endian);
-	CMR_LOGE("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
+	CMR_LOGD("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
 			cfg_parm->output_format,
 			cfg_parm->output_endian.y_endian,
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
-	CMR_LOGE("bptrim x%d y%d w%d h%d\n",
+	CMR_LOGD("bptrim x%d y%d w%d h%d\n",
 			cfg_parm->bp_trim.x, cfg_parm->bp_trim.y,
 			cfg_parm->bp_trim.w, cfg_parm->bp_trim.h);
 
@@ -77,7 +77,7 @@ int cpp_u_input_param_check(
 		cfg_parm->sc_trim.h = ALIGN_DOWN(cfg_parm->sc_trim.h, 2);
 		cfg_parm->sc_trim.x = 0;
 		cfg_parm->sc_trim.y = 0;
-	CMR_LOGE("sctrim x%d y%d w%d h%d\n",
+	CMR_LOGD("sctrim x%d y%d w%d h%d\n",
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
 	}
@@ -86,12 +86,12 @@ int cpp_u_input_param_check(
 			cfg_parm->input_size.h > SCALE_FRAME_HEIGHT_MAX ||
 			cfg_parm->input_size.w < SCALE_FRAME_WIDTH_MIN ||
 			cfg_parm->input_size.h < SCALE_FRAME_HEIGHT_MIN) {
-		CMR_LOGI("fail to get valid src size:%d %d\n",
+		CMR_LOGE("fail to get valid src size:%d %d\n",
 				cfg_parm->input_size.w, cfg_parm->input_size.h);
 		return ret;
 	} else if (cfg_parm->input_rect.w < SCALE_WIDTH_MIN ||
 			cfg_parm->input_rect.h < SCALE_HEIGHT_MIN) {
-		CMR_LOGI("fail to get valid rect1 %d %d %d %d\n",
+		CMR_LOGE("fail to get valid rect1 %d %d %d %d\n",
 				cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 				cfg_parm->input_rect.w, cfg_parm->input_rect.h);
 		return ret;
@@ -99,7 +99,7 @@ int cpp_u_input_param_check(
 			cfg_parm->input_rect.x ||
 			cfg_parm->input_size.h < cfg_parm->input_rect.h +
 			cfg_parm->input_rect.y) {
-		CMR_LOGI("fail to get valid rect2 %d %d %d %d %d %d\n",
+		CMR_LOGE("fail to get valid rect2 %d %d %d %d %d %d\n",
 				cfg_parm->input_size.w, cfg_parm->input_size.h,
 				cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 				cfg_parm->input_rect.w, cfg_parm->input_rect.h);
@@ -114,25 +114,25 @@ int cpp_u_input_param_check(
 			((cfg_parm->sc_trim.y + cfg_parm->sc_trim.h) >
 			 (cfg_parm->input_rect.h >>
 			  cfg_parm->scale_deci.ver))) {
-		CMR_LOGI("fail to get valid trim size %d %d %d %d\n",
+		CMR_LOGE("fail to get valid trim size %d %d %d %d\n",
 				cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 				cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
 		return ret;
 	} else if (cfg_parm->scale_deci.hor > SCALE_DECI_FAC_MAX ||
 			cfg_parm->scale_deci.ver > SCALE_DECI_FAC_MAX) {
-		CMR_LOGI("fail to get deci value %d %d\n",
+		CMR_LOGE("fail to get deci value %d %d\n",
 				cfg_parm->scale_deci.hor,
 				cfg_parm->scale_deci.ver);
 		return ret;
 	} else if ((cfg_parm->sc_trim.w > cfg_parm->output_size.w * 4) ||
 			(cfg_parm->sc_trim.w * 4 < cfg_parm->output_size.w)) {
-		CMR_LOGI("vaild scaler ratio, scaler ratio is 1/4~4\n");
+		CMR_LOGE("vaild scaler ratio, scaler ratio is 1/4~4\n");
 		return ret;
 	}
 
 	/* input/output align */
 	if (MOD(cfg_parm->input_size.w, 8) != 0) {
-		CMR_LOGI("fail to get src scale pitch size %d\n",
+		CMR_LOGE("fail to get src scale pitch size %d\n",
 				cfg_parm->input_size.w);
 		return ret;
 	}
@@ -142,32 +142,32 @@ int cpp_u_input_param_check(
 				(MOD2(cfg_parm->input_size.h) != 0) ||
 				(MOD2(cfg_parm->input_rect.h) != 0) ||
 				(MOD2(cfg_parm->input_rect.y) != 0)) {
-			CMR_LOGI("failed input size rect align size\n");
+			CMR_LOGE("failed input size rect align size\n");
 			return ret;
 		}
 	}
 
 	if ((MOD2(cfg_parm->input_rect.x) != 0) ||
 			(cfg_parm->input_rect.w % 2 != 0)) {
-		CMR_LOGI("failed input  rect align size2\n");
+		CMR_LOGE("failed input  rect align size2\n");
 		return ret;
 	}
 
 	if (MOD2(cfg_parm->output_size.w) != 0) {
-		CMR_LOGI("fail to get dst width align 2: %d\n",
+		CMR_LOGE("fail to get dst width align 2: %d\n",
 				cfg_parm->output_size.w);
 		return ret;
 	}
 
 	if (cfg_parm->output_format == SCALE_YUV420) {
 		if (MOD(cfg_parm->output_size.h, 4) != 0) {
-			CMR_LOGI("fail to get dst height align 4: %d\n",
+			CMR_LOGE("fail to get dst height align 4: %d\n",
 					cfg_parm->output_size.h);
 			return ret;
 		}
 	} else {
 		if (MOD2(cfg_parm->output_size.h) != 0) {
-			CMR_LOGI("fail to get dst height align 2: %d\n",
+			CMR_LOGE("fail to get dst height align 2: %d\n",
 					cfg_parm->output_size.h);
 			return ret;
 		}
@@ -177,7 +177,7 @@ int cpp_u_input_param_check(
 			(MOD2(cfg_parm->sc_trim.w) != 0) ||
 			(MOD2(cfg_parm->sc_trim.y) != 0) ||
 			(MOD2(cfg_parm->sc_trim.h) != 0)) {
-		CMR_LOGI("failed sc trim align size\n");
+		CMR_LOGE("failed sc trim align size\n");
 		return ret;
 	}
 
@@ -187,7 +187,7 @@ int cpp_u_input_param_check(
 			  SCALE_SLICE_OUT_WIDTH_MAX) ||
 			 (cfg_parm->scale_deci.hor > 0) ||
 			 cfg_parm->scale_deci.ver > 0)) {
-		CMR_LOGI("got vaild scale mode failed bp enable check");
+		CMR_LOGE("got vaild scale mode failed bp enable check");
 		return ret;
 	}
 
@@ -199,38 +199,38 @@ int cpp_u_input_param_check(
 			 cfg_parm->bp_trim.w) ||
 			(cfg_parm->input_rect.h < cfg_parm->bp_trim.y +
 			 cfg_parm->bp_trim.h)) {
-		CMR_LOGI("got vaild bp trim size\n");
+		CMR_LOGE("got vaild bp trim size\n");
 		return ret;
 	}
 
 	if ((MOD2(cfg_parm->bp_trim.x) != 0) ||
 			(MOD2(cfg_parm->bp_trim.w) != 0)) {
-		CMR_LOGI("failed bp trim align size1\n");
+		CMR_LOGE("failed bp trim align size1\n");
 		return ret;
 	}
 
 	if (cfg_parm->input_format == SCALE_YUV420) {
 		if ((MOD2(cfg_parm->bp_trim.y) != 0) ||
 				(MOD2(cfg_parm->bp_trim.h) != 0)) {
-			CMR_LOGI("failed bp trim align size2\n");
+			CMR_LOGE("failed bp trim align size2\n");
 		return ret;
 		}
 	}
-	CMR_LOGE("2in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
+	CMR_LOGD("2in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 			cfg_parm->input_rect.w, cfg_parm->input_rect.h,
 			cfg_parm->output_size.w, cfg_parm->output_size.h);
-	CMR_LOGE("2schor %d  scver %d,input fmt %d,inputyendian %d\n",
+	CMR_LOGD("2schor %d  scver %d,input fmt %d,inputyendian %d\n",
 			cfg_parm->scale_deci.hor, cfg_parm->scale_deci.ver,
 			cfg_parm->input_format,
 			cfg_parm->input_endian.y_endian);
-	CMR_LOGE("2scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
+	CMR_LOGD("2scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
 			cfg_parm->output_format,
 			cfg_parm->output_endian.y_endian,
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
-	CMR_LOGE("2check finished bptrim x%d y%d w%d h%d\n",
+	CMR_LOGD("2check finished bptrim x%d y%d w%d h%d\n",
 			cfg_parm->bp_trim.x, cfg_parm->bp_trim.y,
 			cfg_parm->bp_trim.w, cfg_parm->bp_trim.h);
 	return CMR_CAMERA_SUCCESS;
@@ -269,7 +269,7 @@ slice_drv_param_t *slice_parm)
 		slice_parm->slice_w = cfg_parm->input_rect.w /
                 slice_count;
 	}
-        CMR_LOGE("slice_w %d\n", slice_parm->slice_w);
+        CMR_LOGD("slice_w %d\n", slice_parm->slice_w);
 	if (cfg_parm->scale_deci.hor > 0) {
 		slice_parm->bypass_path_param.enable = 0;
 		slice_parm->deci_param.deci_x_en = 1;
