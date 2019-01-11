@@ -1638,6 +1638,7 @@ void af_try_stop(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct af_context *af_cxt = (struct af_context *)af_handle;
     struct sensor_exp_info sensor_info;
+    cmr_s32 af_sem_val = 0;
 
     CMR_LOGD("s");
     if (!af_cxt || !af_cxt->ops.get_sensor_info) {
@@ -1654,12 +1655,11 @@ void af_try_stop(cmr_handle af_handle, cmr_u32 camera_id) {
         goto exit;
     }
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-    if (1 == af_cxt->af_busy) {
-        if (0 != sem_trywait(&af_cxt->isp_af_sem)) {
-            af_cxt->isp_af_timeout = 1;
-            sem_post(&af_cxt->isp_af_sem);
-            CMR_LOGD("post isp sem");
-        }
+    sem_getvalue(&af_cxt->isp_af_sem, &af_sem_val);
+    if (1 == af_cxt->af_busy && af_sem_val == 0) {
+        af_cxt->isp_af_timeout = 1;
+        sem_post(&af_cxt->isp_af_sem);
+        CMR_LOGD("post isp sem");
     }
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 exit:
