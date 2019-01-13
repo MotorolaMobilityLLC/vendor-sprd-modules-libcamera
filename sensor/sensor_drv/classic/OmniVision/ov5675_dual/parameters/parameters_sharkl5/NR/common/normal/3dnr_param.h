@@ -103,11 +103,11 @@
 	{
 		/*bypass*/
 		0x01,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x01,
 		/*channel_sel*/
-		0x01,
-		/*reserved*/
 		0x00,
 
 	}
@@ -216,11 +216,11 @@
 	{
 		/*bypass*/
 		0x01,
+		/*sub_me_bypass*/
+		0x01,
 		/*project_mode*/
 		0x01,
 		/*channel_sel*/
-		0x01,
-		/*reserved*/
 		0x00,
 
 	}
@@ -329,11 +329,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -442,11 +442,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -555,11 +555,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -668,11 +668,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -781,11 +781,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -894,11 +894,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1007,11 +1007,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1120,11 +1120,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1233,11 +1233,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1346,11 +1346,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1459,11 +1459,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1572,11 +1572,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1685,11 +1685,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1798,11 +1798,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -1911,11 +1911,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2024,11 +2024,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2137,11 +2137,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2250,11 +2250,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2363,11 +2363,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2476,11 +2476,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2589,11 +2589,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2702,11 +2702,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
@@ -2815,11 +2815,11 @@
 	{
 		/*bypass*/
 		0x00,
+		/*sub_me_bypass*/
+		0x00,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
-		0x00,
-		/*reserved*/
 		0x00,
 
 	}
