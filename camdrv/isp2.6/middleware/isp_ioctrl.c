@@ -1951,6 +1951,9 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
 
 		switch (header->block_id) {
+		case DCAM_BLK_PPE:
+			update_param->ppe_level_ptr = (struct sensor_ppe_level *)fix_data_ptr->nr.nr_set_group.ppe;
+			break;
 		case DCAM_BLK_BPC_V1:
 			update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;
 			break;
@@ -2006,6 +2009,9 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			break;
 		case ISP_BLK_CNR2_V1:
 			update_param->cnr2_level_ptr = (struct sensor_cnr_level *)fix_data_ptr->nr.nr_set_group.cnr2;
+			break;
+		case ISP_BLK_SW3DNR:
+			update_param->sw3dnr_level_ptr = (struct sensor_sw3dnr_level *)fix_data_ptr->nr.nr_set_group.sw_3dnr;
 			break;
 		default:
 			break;
