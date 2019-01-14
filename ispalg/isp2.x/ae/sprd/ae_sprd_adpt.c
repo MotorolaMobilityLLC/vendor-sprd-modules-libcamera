@@ -3993,6 +3993,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}
 	}
 	cxt->cur_status.ae_table->min_index = 0;
+	cxt->mod_update_list.is_mev = (CAMERA_MODE_MANUAL == cxt->app_mode) ? 1 : 0;
 
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
@@ -4433,11 +4434,11 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			struct ae_set_ev ev;
 			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
 			if (ev.level < AE_LEVEL_MAX) {
-				cxt->mod_update_list.is_mev = 1;
+				//cxt->mod_update_list.is_mev = 1;
 				cxt->cur_status.settings.ev_index = ev.level;
 			} else {
 				/*ev auto */
-				cxt->mod_update_list.is_mev = 0;
+				//cxt->mod_update_list.is_mev = 0;
 				cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
 			}
 			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
