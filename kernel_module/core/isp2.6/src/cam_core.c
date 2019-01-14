@@ -1136,13 +1136,25 @@ static int cal_channel_size(struct camera_module *module)
 			else
 				ratio_min = (1 << RATIO_SHIFT);
 		} else {
+			uint32_t ratio_p_w1, ratio_p_h1;
+			uint32_t ratio_v_w1, ratio_v_h1;
 			ratio_p_w = (1 << RATIO_SHIFT) * max.w / dst_p.w;
 			ratio_p_h = (1 << RATIO_SHIFT) * max.h / dst_p.h;
 			ratio_min = MIN(ratio_p_w, ratio_p_h);
+			temp.w = ((max.h * dst_p.w) / dst_p.h) & (~3);
+			temp.h = ((max.w * dst_p.h) / dst_p.w) & (~3);
+			ratio_p_w1 = (1 << RATIO_SHIFT) * temp.w / dst_p.w;
+			ratio_p_h1 = (1 << RATIO_SHIFT) * temp.h / dst_p.h;
+			ratio_min = MIN(ratio_min, MIN(ratio_p_w1, ratio_p_h1));
 			if (ch_vid->enable) {
 				ratio_v_w = (1 << RATIO_SHIFT) * max.w / dst_v.w;
 				ratio_v_h = (1 << RATIO_SHIFT) * max.h / dst_v.h;
 				ratio_min = MIN(ratio_min, MIN(ratio_v_w, ratio_v_h));
+				temp.w = ((max.h * dst_v.w) / dst_v.h) & (~3);
+				temp.h = ((max.w * dst_v.h) / dst_v.w) & (~3);
+				ratio_v_w1 = (1 << RATIO_SHIFT) * temp.w / dst_v.w;
+				ratio_v_h1 = (1 << RATIO_SHIFT) * temp.h / dst_v.h;
+				ratio_min = MIN(ratio_min, MIN(ratio_v_w1, ratio_v_h1));
 			}
 			ratio_min = MIN(ratio_min, ((module->rds_limit << RATIO_SHIFT) / 10));
 			ratio_min = MAX(ratio_min, (1 << RATIO_SHIFT));
@@ -3739,6 +3751,9 @@ static int raw_proc_done(struct camera_module *module)
 
 	ret = dcam_ops->stop(module->dcam_dev_handle);
 	sprd_stop_timer(&module->cam_timer);
+
+	ret = dcam_ops->ioctl(module->dcam_dev_handle,
+		DCAM_IOCTL_CFG_STOP, NULL);
 
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 			DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
