@@ -583,8 +583,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         }
         break;
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
-        hal_param->hal_common.ae_compensation_param =
-            parm->ae_compensation_param;
+        type_val = parm->ae_compensation_param.ae_exposure_compensation;
         break;
     case SETTING_GENERAL_AI_SCENE_ENABLED:
         if (parm->cmd_type_value) {
