@@ -838,15 +838,19 @@ int flashlightSetValue(int value) {
 }
 
 /*
-    7E 49 00 00 00 0A 00 38 0C 08 01 7E    // White light on
-    7E 49 00 00 00 0A 00 38 0C 04 01 7E    // Back cold light on
-    7E 00 00 00 00 0A 00 38 0C 04 02 7E    // Color temperature light on
+    7E 49 00 00 00 0A 00 38 0C 08 01 7E    // White light on.
+    7E 49 00 00 00 0A 00 38 0C 04 01 7E    // Back cold light on.
+    7E 00 00 00 00 0A 00 38 0C 04 02 7E    // Color temperature light on.
       buf[10] express turn off the light
 
-    you can use that cmd to control light after adb shell enter
-    echo 0x72 > /sys/class/misc/sprd_flash/test  // White light on
-    echo 0x20 > /sys/class/misc/sprd_flash/test  // Color temperature light on
-    echo 0x00 > /sys/class/misc/sprd_flash/test  // Turn off the light
+    you can use that cmd to control light after adb shell enter.
+    echo 0x72 > /sys/class/misc/sprd_flash/test  // White light on.
+    echo 0x20 > /sys/class/misc/sprd_flash/test  // Color temperature light on.
+    echo 0x00 > /sys/class/misc/sprd_flash/test  // Turn off the light.
+
+    echo 0x8072 > /sys/class/misc/sprd_flash/test  // Front white light on.
+    echo 0x8020 > /sys/class/misc/sprd_flash/test  // Front color temperature light on.
+    echo 0x8000 > /sys/class/misc/sprd_flash/test  // Turn off the light.
 */
 int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
 
@@ -865,7 +869,7 @@ int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
         CMR_LOGE("undefined cmd");
     }
 
-    /*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+    /*--------------------------------- generic code ----------------------------*/
     MSG_HEAD_T *p_msg_head;
     memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
     p_msg_head = (MSG_HEAD_T *)(rsp + 1);
@@ -881,13 +885,13 @@ int autotest_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
     }
     CMR_LOGI("rsp[1 + sizeof(MSG_HEAD_T):%d]:%d", sizeof(MSG_HEAD_T),
              rsp[sizeof(MSG_HEAD_T)]);
-    rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
+    rsp[p_msg_head->len + 2 - 1] = 0x7E; // plus data tail flag
     CMR_LOGI("dylib test :return len:%d", p_msg_head->len + 2);
     CMR_LOGI("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1],
              rsp[2], rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
 
     return p_msg_head->len + 2;
-    /*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+    /*----------------------- generic code,Direct assignment --------------------*/
 }
 
 int autotest_front_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
@@ -897,15 +901,15 @@ int autotest_front_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
 
     if (buf[10] == 0x01) {
         CMR_LOGI("open front flash");
-        ret = flashlightSetValue(0x72); // Front cold light on
+        ret = flashlightSetValue(0x8072); // Front cold light on
     } else if (buf[10] == 0x00) {
         CMR_LOGI("close front flash");
-        ret = flashlightSetValue(0x00); // Turn off the light
+        ret = flashlightSetValue(0x8000); // Turn off the light
     } else {
         CMR_LOGE("undefined cmd");
     }
 
-    /*----------------------后续代码为通用代码，所有模块可以直接复制-----------------*/
+    /*--------------------------------- generic code ----------------------------*/
     MSG_HEAD_T *p_msg_head;
     memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1);
     p_msg_head = (MSG_HEAD_T *)(rsp + 1);
@@ -921,13 +925,13 @@ int autotest_front_flash(char *buf, int buf_len, char *rsp, int rsp_size) {
     }
     CMR_LOGI("rsp[1 + sizeof(MSG_HEAD_T):%d]:%d", sizeof(MSG_HEAD_T),
              rsp[sizeof(MSG_HEAD_T)]);
-    rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
+    rsp[p_msg_head->len + 2 - 1] = 0x7E; // plus data tail flag
     CMR_LOGI("dylib test :return len:%d", p_msg_head->len + 2);
     CMR_LOGI("engpc->pc flash:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1],
              rsp[2], rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8], rsp[9]);
 
     return p_msg_head->len + 2;
-    /*----------------------如上虚线之间代码为通用代码，直接赋值即可-----------------*/
+    /*----------------------- generic code,Direct assignment --------------------*/
 }
 
 int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
@@ -981,52 +985,60 @@ int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
         break;
     }
 
-    /*------------------------------后续代码为通用代码，所有模块可以直接复制，------------------------------------------*/
-    //填充协议头7E xx xx xx xx 08 00 38
+    /*--------------------------------- generic code ----------------------------*/
+    // fill protocol header 7E xx xx xx xx 08 00 38
     MSG_HEAD_T *p_msg_head;
-    memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1); //复制7E xx xx xx xx 08 00
-    // 38至rsp,，减1是因为返回值中不包含MSG_HEAD_T的subtype（38后面的数据即为subtype）
+    memcpy(rsp, buf, 1 + sizeof(MSG_HEAD_T) - 1); // copy 7E xx xx xx xx 08 00
+    // 38 to rsp,Subtract 1 because the return value does not contain
+    // the subtype of MSG_HEAD_T (The data behind 38 is subtype).
     p_msg_head = (MSG_HEAD_T *)(rsp + 1);
 
-    //修改返回数据的长度，如上复制的数据长度等于PC发送给engpc的数据长度，现在需要改成engpc返回给pc的数据长度。
-    p_msg_head->len = 8; //返回的最基本数据格式：7E xx xx xx xx 08 00 38 xx
-    // 7E，去掉头和尾的7E，共8个数据。如果需要返回数据,则直接在38
-    // XX后面补充
+    // modify the length of the returned data. The length of the data copied
+    // as above is equal to the length of the data sent by the PC to engpc.
+    // Now it needs to be changed to the data length returned by engpc to pc
+    // The most basic data format returned: 7E xx xx xx xx 08 00 38 xx.
+    p_msg_head->len = 8;
+    // 7E, Remove the head and tail 7E, a total of 8 data.
+    // If you need to return data, add directly after 38 XX
 
-    //填充成功或失败标志位rsp[1 +
-    // sizeof(MSG_HEAD_T)]，如果ret>0,则继续填充返回的数据。
+    // The padding success or failure flag bit rsp[1 + sizeof(MSG_HEAD_T)],
+    // if ret > 0, continues to fill the returned data.
     CMR_LOGI("p_msg_head,ret=%d", ret);
 
     if (ret < 0) {
-        rsp[sizeof(MSG_HEAD_T)] = 1; // 38 01 表示测试失败。
+        // 38 01 indicates test failed.
+        rsp[sizeof(MSG_HEAD_T)] = 1;
     } else if (ret == 0) {
-        rsp[sizeof(MSG_HEAD_T)] = 0; // 38 00 表示测试ok
-    } else if (ret > 0) {
-        // 38 00 表示测试ok,ret > 0,表示需要返回 ret个字节数据。
+    // 38 00 indicates test ok.
         rsp[sizeof(MSG_HEAD_T)] = 0;
-        //将获取到的ret个数据，复制到38 00 后面
+    } else if (ret > 0) {
+        // 38 00 indicates test ok, ret > 0, indicates that ret bytes
+        // of data need to be returned.
+        rsp[sizeof(MSG_HEAD_T)] = 0;
+        // copy the obtained ret data to the back of 38 00
         memcpy(rsp + 1 + sizeof(MSG_HEAD_T), p_buf, ret);
-        //返回长度：基本数据长度8+获取到的ret个字节数据长度。
+        // Return length: basic data length 8 + ret bytes of data length obtained.
         p_msg_head->len += ret;
     }
     CMR_LOGI("rsp[1 + sizeof(MSG_HEAD_T):%d]:%d", sizeof(MSG_HEAD_T),
              rsp[sizeof(MSG_HEAD_T)]);
-    //填充协议尾部的7E
-    rsp[p_msg_head->len + 2 - 1] = 0x7E; //加上数据尾标志
+    // 7E at the end of the fill protocol.
+    // plus data tail flag.
+    rsp[p_msg_head->len + 2 - 1] = 0x7E;
     CMR_LOGI("dylib test :return len:%d", p_msg_head->len + 2);
     CMR_LOGI("engpc->pc:%x %x %x %x %x %x %x %x %x %x", rsp[0], rsp[1], rsp[2],
              rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8],
-             rsp[9]); // 78 xx xx xx xx _ _38 _ _ 打印返回的10个数据
+             rsp[9]); // 78 xx xx xx xx _ _38 _ _ print the 10 data returned.
 
     return p_msg_head->len + 2;
-    /*------------------------------如上虚线之间代码为通用代码，直接赋值即可---------*/
+    /*----------------------- generic code,Direct assignment --------------------*/
 
     delete[] p_buf;
     return ret;
 }
 
 extern "C" void register_this_module_ext(struct eng_callback *reg, int *num) {
-    int moudles_num = 0; //用于表示注册的节点的数目。
+    int moudles_num = 0; // used to indicate the number of registered nodes.
 
     reg->type = 0x38;
     reg->subtype = 0x06;
@@ -1037,6 +1049,7 @@ extern "C" void register_this_module_ext(struct eng_callback *reg, int *num) {
     (reg + 1)->subtype = 0x0C;
     (reg + 1)->diag_ap_cmd = 0x04;
     (reg + 1)->eng_diag_func = autotest_flash;
+    moudles_num++;
 
     (reg + 2)->type = 0x38;
     (reg + 2)->subtype = 0x0C;
