@@ -114,7 +114,7 @@ int sprd_scaledrv_slice_param_check(
 			p->src_pitch);
 		return -1;
 	}
-	if (MOD(p->sc_des_pitch, 8) != 0 ||
+	if (MOD(p->sc_des_pitch, 2) != 0 ||
 		OSIDE(p->sc_des_pitch, SCALE_FRAME_WIDTH_MIN,
 		SCALE_FRAME_HEIGHT_MAX) ||
 		CMP(p->sc_des_pitch, p->sc_des_rect.w, p->sc_des_rect.x)) {
@@ -122,7 +122,7 @@ int sprd_scaledrv_slice_param_check(
 			p->sc_des_pitch);
 		return -1;
 	}
-	if ((p->bp_en == 1) && (MOD(p->bp_des_pitch, 8) != 0 ||
+	if ((p->bp_en == 1) && (MOD(p->bp_des_pitch, 2) != 0 ||
 		OSIDE(p->bp_des_pitch, BP_TRIM_SIZE_MIN, BP_TRIM_SIZE_MAX) ||
 		CMP(p->bp_des_pitch, p->bp_des_rect.w, p->bp_des_rect.x))) {
 		pr_err("fail to get valid bp des pitch %d\n",
