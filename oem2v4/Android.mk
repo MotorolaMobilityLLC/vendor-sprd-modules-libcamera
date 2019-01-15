@@ -159,8 +159,13 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-	LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
-	LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+        ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
+        LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB_VERSION_2
+        LOCAL_SHARED_LIBRARIES += libsprdhdr
+else
+        LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
+        LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)

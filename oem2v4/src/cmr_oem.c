@@ -349,7 +349,7 @@ static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle,
 static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle,
                                              cmr_u32 camera_id,
                                              struct yuv_info_t *yuv);
-
+static cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data);
 /**********************************************************************************************/
 
 cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
@@ -895,6 +895,10 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
         ipm_cxt->frm_num++;
         ipm_in_param.src_frame = out_param;
         ipm_in_param.private_data = (void *)privdata;
+        if (cxt->ipm_cxt.hdr_version.major != 1) {
+            memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
+                   ((HDR_CAP_NUM)-1) * sizeof(float));
+        }
         imp_out_param.dst_frame = out_param;
         imp_out_param.private_data = privdata;
         if (1 == camera_get_hdr_flag(cxt)) {
@@ -1229,12 +1233,19 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             break;*/
     case ISP_HDR_EV_EFFECT_CALLBACK:
         CMR_LOGD("ISP_HDR_EV_EFFECT_CALLBACK");
+        camera_set_hdr_ev(oem_handle, data);
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
         break;
     case ISP_AE_CB_FLASH_FIRED:
         oem_cb = CAMERA_EVT_CB_AE_FLASH_FIRED;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
+        break;
+    case ISP_AUTO_HDR_STATUS_CALLBACK:
+        oem_cb = CAMERA_EVT_CB_HDR_SCENE;
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                       data);
+        break;
     default:
         break;
     }
@@ -6984,8 +6995,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_HDR:
         isp_cmd = ISP_CTRL_HDR;
         hdr_param.hdr_enable = param_ptr->cmd_value;
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+        hdr_param.ev_effect_valid_num =
+            cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 2;
+#else
         hdr_param.ev_effect_valid_num =
             cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
+#endif
         ptr_flag = 1;
         CMR_LOGD("set HDR enable %d, ev_effect_valid_num %d",
                  hdr_param.hdr_enable, hdr_param.ev_effect_valid_num);
@@ -7084,7 +7100,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param = param_ptr->cmd_value;
         CMR_LOGD("set app mode id = %d", param_ptr->cmd_value);
         break;
-
+    case COM_ISP_SET_AUTO_HDR:
+        CMR_LOGI("set auto hdr %d", param_ptr->cmd_value);
+        isp_cmd = ISP_CTRL_AUTO_HDR_MODE;
+        isp_param = param_ptr->cmd_value;
+        break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -7547,10 +7567,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     if (1 == camera_get_hdr_flag(cxt)) {
         struct ipm_open_in in_param;
         struct ipm_open_out out_param;
-        in_param.frame_size.width =
-            CAMERA_ALIGNED_16(cxt->snp_cxt.request_size.width) + 16;
-        in_param.frame_size.height =
-            CAMERA_ALIGNED_16(cxt->snp_cxt.request_size.height) + 16;
+        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
         in_param.frame_rect.start_x = 0;
         in_param.frame_rect.start_y = 0;
         in_param.frame_rect.width = in_param.frame_size.width;
@@ -7566,6 +7584,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             goto exit;
         } else {
             cxt->ipm_cxt.hdr_num = out_param.total_frame_number;
+            cxt->ipm_cxt.hdr_version.major = out_param.version.major;
             CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
         }
     }
@@ -8297,6 +8316,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("auto hdr=%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
     default:
         CMR_LOGI("don't support %d", id);
     }
@@ -10861,5 +10885,19 @@ cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
 
     CMR_LOGI("X");
 
+    return ret;
+}
+
+cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!data || !cxt) {
+        CMR_LOGI("don't need set hdr ev");
+        return ret;
+    }
+    memcpy((void *)&cxt->snp_cxt.hdr_ev[0], data,
+           ((HDR_CAP_NUM)-1) * sizeof(float));
+    CMR_LOGI("hdr ev %f, %f", cxt->snp_cxt.hdr_ev[0], cxt->snp_cxt.hdr_ev[1]);
     return ret;
 }

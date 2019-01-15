@@ -3182,7 +3182,13 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
     uint8_t isTakePictureWithFlash = 0;
     requestInfo.update(ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
-                       &isTakePictureWithFlash, 1);
+                    &isTakePictureWithFlash, 1);
+
+    uint8_t sprdAutoHdrEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_AUTO_HDR_ENABLED, &sprdAutoHdrEnabled, 1);
+
+    uint8_t sprdIsHdrScene = 0;
+    requestInfo.update(ANDROID_SPRD_IS_HDR_SCENE, &sprdIsHdrScene, 1);
 
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
@@ -3971,7 +3977,13 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
     }
-
+    if (frame_settings.exists(ANDROID_SPRD_AUTO_HDR_ENABLED)) {
+           s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable =
+        frame_settings.find(ANDROID_SPRD_AUTO_HDR_ENABLED).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_AUTO_HDR_ENABLED);
+        HAL_LOGV("sprd auto hdr enabled is %d",
+                  s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable);
+    }
     HAL_LOGD(
         "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
         "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
@@ -4426,6 +4438,11 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash), 1);
+
+    HAL_LOGI("auto hdr scene report %d", s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
+    camMetadata.update(
+        ANDROID_SPRD_IS_HDR_SCENE,
+        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene), 1);
 
     resultMetadata = camMetadata.release();
     return resultMetadata;

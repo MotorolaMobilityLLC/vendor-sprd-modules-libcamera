@@ -5695,6 +5695,13 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGI("is_takepicture_with_flash = %d",
                  sprddefInfo.is_takepicture_with_flash);
         break;
+    case CAMERA_EVT_CB_HDR_SCENE:
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
+        mSetting->setSPRDDEFTag(sprdInfo);
+        HAL_LOGI("sprd_is_hdr_scene = %d",sprddefInfo.sprd_is_hdr_scene);
+        break;
     default:
         break;
     }
@@ -6571,6 +6578,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.sprd_filter_type);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FILTER_TYPE,
                  sprddefInfo.sprd_filter_type);
+    } break;
+    case ANDROID_SPRD_AUTO_HDR_ENABLED:{
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        HAL_LOGD("sprdInfo.sprd_auto_hdr_enables=%d ",
+                 sprdInfo.sprd_auto_hdr_enable);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+        sprdInfo.sprd_auto_hdr_enable);
     } break;
     default:
         ret = BAD_VALUE;

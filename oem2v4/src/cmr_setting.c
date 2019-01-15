@@ -77,6 +77,7 @@ enum setting_general_type {
     SETTING_GENERAL_AE_LOCK_UNLOCK,
     SETTING_GENERAL_AWB_LOCK_UNLOCK,
     SETTING_GENERAL_SPRD_APP_MODE,
+    SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -121,6 +122,7 @@ struct setting_hal_common {
     cmr_uint auto_exposure_mode;
     cmr_uint sprd_appmode_id;
     struct cmr_ae_compensation_param ae_compensation_param;
+    cmr_uint is_auto_hdr;
 };
 
 enum zoom_status { ZOOM_IDLE, ZOOM_UPDATING };
@@ -528,7 +530,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
          COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
-         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
+         COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -2359,6 +2363,14 @@ static cmr_int setting_set_appmode(struct setting_component *cpt,
     ret = setting_set_general(cpt, SETTING_GENERAL_SPRD_APP_MODE, parm);
     return ret;
 }
+static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
+                                  struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    CMR_LOGD("set auto hdr %ld", parm->cmd_type_value);
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_HDR, parm);
+    return ret;
+}
 
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
@@ -2441,6 +2453,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     if (invalid_word != hal_param->hal_common.sprd_appmode_id) {
         cmd_param.cmd_type_value = hal_param->hal_common.sprd_appmode_id;
         ret = setting_set_appmode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.is_auto_hdr) {
+        cmd_param.cmd_type_value = hal_param->hal_common.is_auto_hdr;
+        ret = setting_set_auto_hdr(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
@@ -3495,6 +3513,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_sprd_filter_type);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SET_APPMODE,
                              setting_set_appmode);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+                             setting_set_auto_hdr);
     setting_parms_inited = 1;
     return 0;
 }

@@ -117,6 +117,7 @@ struct ipm_context {
     cmr_u32 threednr_num;
     cmr_u32 padding;
     cmr_u32 filter_inited;
+    struct ipm_version hdr_version;
 };
 
 struct preview_context {
@@ -160,6 +161,7 @@ struct snapshot_context {
     cmr_uint is_req_snp;
     cmr_s64 cap_time_stamp;
     cmr_s64 cap_need_time_stamp;
+    float hdr_ev[HDR_CAP_NUM];
     struct img_size request_size;
     struct img_size capture_align_size;
     struct img_size actual_capture_size;
