@@ -2833,7 +2833,7 @@ int32_t camera_isp_flash_set_charge(void *handler,
     cfg.real_cell.element[0].index = element->index;
     cfg.real_cell.element[0].val = element->val;
     cfg.io_id = FLASH_IOID_SET_CHARGE;
-    cfg.flash_idx = cxt->camera_id;
+    cfg.flash_idx = cxt->camera_id % 2;
     CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type,
              element->index);
     ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
@@ -6371,7 +6371,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             cfg.real_cell.element[0].index = atoi(value1); // 0x06;
             cfg.real_cell.element[0].val = 0;
             cfg.io_id = FLASH_IOID_SET_CHARGE;
-            cfg.flash_idx = cxt->camera_id;
+            cfg.flash_idx = cxt->camera_id % 2;
             ret = cmr_grab_cfg_flash(grab_handle, &cfg);
         }
 
