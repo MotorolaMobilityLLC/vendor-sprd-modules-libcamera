@@ -2744,7 +2744,19 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if ((FLASH_PRE_BEFORE == current_status->settings.flash) && !cxt->send_once[0]) {
-			rtn = flash_pre_start(cxt);
+			if(cxt->appunlock==3){
+				struct ae_exp_compensation exp_comp;
+				exp_comp.comp_val=0;
+				exp_comp.comp_range.min=-16;
+				exp_comp.comp_range.max=16;
+				exp_comp.step_numerator=1;
+				exp_comp.step_denominator=8;
+				ae_set_exposure_compensation(cxt,&exp_comp);
+				cxt->cur_status.settings.exp_is_transmit = 1;
+				cxt->cur_status.settings.manual_mode = 1;
+			}else if(cxt->appunlock==0){
+				rtn = flash_pre_start(cxt);
+			}
 		}
 
 		if (FLASH_PRE == current_status->settings.flash) {
@@ -2921,6 +2933,10 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 
 		if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_BEFORE == current_status->settings.flash) {
 			cxt->send_once[0]++;
+			if(cxt->appunlock){
+				cxt->appunlock--;
+				cxt->send_once[0]--;
+			}
 			ISP_LOGI("ae_flash1_status shake_1");
 			if (cxt->ebd_support)
 				cxt->ebd_flash_stable_flag = 1;
@@ -5990,12 +6006,14 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_FORCE_PAUSE:
 		cxt->expchanged = 0;
+		cxt->appunlock= 0;
 		rtn = ae_set_force_pause(cxt, 1);
 		cxt->exposure_compensation.ae_compensation_flag = 1;
 		ISP_LOGD("AE_SET_FORCE_PAUSE");
 		break;
 
 	case AE_SET_FORCE_RESTORE:
+		cxt->appunlock= 3;
 		rtn = ae_set_force_pause(cxt, 0);
 		cxt->exposure_compensation.ae_compensation_flag = 0;
 		ISP_LOGD("AE_SET_FORCE_RESTORE");

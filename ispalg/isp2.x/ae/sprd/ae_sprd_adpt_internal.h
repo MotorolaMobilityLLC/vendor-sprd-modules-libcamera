@@ -367,6 +367,7 @@ extern "C" {
 		cmr_u32 last_cam_mode;
 		cmr_u32 last_table_index; /* for non-zsl, there is a 'ae_set_video_start' between pf and mf.which we need keep the previous table index */
 		cmr_u32 expchanged;
+		cmr_u32 appunlock;
 		
 		/*for debug*/
 		cmr_u32 history_param[1024];
