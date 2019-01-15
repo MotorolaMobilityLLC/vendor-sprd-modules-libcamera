@@ -1331,6 +1331,247 @@ static void* lsc_flash_proc_init ()
 	return param;
 }
 
+static int alsc_get_init_cmd(void)
+{
+	char prop[256];
+	int val = 0;
+
+	property_get("debug.isp.alsc.cmd.enable", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		return val;
+
+	return 0;
+}
+
+static void alsc_get_cmd(struct lsc_ctrl_context *cxt)
+{
+	char prop[256];
+	int val = 0;
+
+	property_get("debug.isp.alsc.table.pattern", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_table_pattern = val;
+
+	property_get("debug.isp.alsc.table.index", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_table_index = val;
+
+	property_get("debug.isp.alsc.dump.aem", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_dump_aem = val;
+}
+
+static void cmd_set_lsc_output(cmr_u16* table, cmr_u32 width, cmr_u32 height, cmr_u32 gain_pattern)
+{
+	char prop[256];
+	property_get("debug.isp.alsc.table.pattern", prop, "0");
+	int index_r, index_gr, index_gb, index_b;
+	unsigned int i, j;
+
+	switch (gain_pattern){
+		case 0:    //  Gr first
+			index_gr = 0;
+			index_r  = 1;
+			index_b  = 2;
+			index_gb = 3;
+		break;
+		case 1:    //  R first
+			index_r  = 0;
+			index_gr = 1;
+			index_gb = 2;
+			index_b  = 3;
+		break;
+		case 2:    //  B first
+			index_b  = 0;
+			index_gb = 1;
+			index_gr = 2;
+			index_r  = 3;
+		break;
+		case 3:    //  Gb first
+			index_gb = 0; //B    //R 3
+			index_b  = 1; //Gb   //Gr2
+			index_r  = 2; //Gr   //Gb1
+			index_gr = 3; //R    //B 0
+		break;
+		default:    //  Gb first
+			index_gb = 0;
+			index_b  = 1;
+			index_r  = 2;
+			index_gr = 3;
+		break;
+	}
+
+	for(i=0; i<width*height*4; i++){
+		table[i] = 1024;
+	}
+
+	if(strcmp(prop, "1000") == 0){           // R gain(8x)
+		for(i=0; i<width*height; i++){
+			table[4*i + index_r] = 8192;
+		}
+	}else if(strcmp(prop, "0100") == 0){    // Gr gain(8x)
+		for(i=0; i<width*height; i++){
+			table[4*i + index_gr] = 8192;
+			table[4*i + index_r] = 8192;
+		}
+	}else if(strcmp(prop, "0010") == 0){    // Gb gain(8x)
+		for(i=0; i<width*height; i++){
+			table[4*i + index_gb] = 8192;
+			table[4*i + index_b] = 8192;
+		}
+	}else if(strcmp(prop, "0001") == 0){    // B gain(8x)
+		for(i=0; i<width*height; i++){
+			table[4*i + index_b] = 8192;
+		}
+	}else if(strcmp(prop, "1100") == 0){    // up(8x)bottom(1x)        
+		for(j=0; j<height/2; j++){
+			for (i=0; i<width; i++){
+				table[4*(j*width + i)+0] = 8192;
+				table[4*(j*width + i)+1] = 8192;
+				table[4*(j*width + i)+2] = 8192;
+				table[4*(j*width + i)+3] = 8192;
+			}
+		}
+	}else if(strcmp(prop, "0011") == 0){    // up(1x)bottom(8x)
+		for(j=height/2; j<height; j++){
+			for (i=0; i<width; i++){
+				table[4*(j*width + i)+0] = 8192;
+				table[4*(j*width + i)+1] = 8192;
+				table[4*(j*width + i)+2] = 8192;
+				table[4*(j*width + i)+3] = 8192;
+			}
+		}
+	}
+}
+
+static int dump_stat_bmp(char* filename, unsigned int img_width, unsigned int img_height, unsigned int width, unsigned int height, unsigned int* buf_r, unsigned int* buf_g, unsigned int* buf_b)
+{
+	unsigned int i, j;
+	unsigned int line_align = (width*3 + 3) & (~3);
+	unsigned char* pbgr = (unsigned char*)malloc(line_align * height);
+	memset(pbgr, 0, line_align * height);
+
+	unsigned int channel_width = img_width / 2;
+	unsigned int channel_height = img_height / 2;
+	unsigned int pix_num_per_block = (unsigned int)(channel_width/width) * (unsigned int)(channel_height/height);
+	unsigned int divisor = pix_num_per_block * 4; // 10 bit to 8 bit
+
+	unsigned char* pbuf = pbgr;
+	for (j=0; j<height; j++){
+		for (i=0; i<width; i++){
+			unsigned int r32 = *buf_r++ / divisor;
+			unsigned int g32 = *buf_g++ / divisor;
+			unsigned int b32 = *buf_b++ / divisor;
+			if (r32 > 255)   r32 = 255;
+			if (g32 > 255)   g32 = 255;
+			if (b32 > 255)   b32 = 255;
+
+			unsigned char r = r32;
+			unsigned char g = g32;
+			unsigned char b = b32;
+
+			*pbuf++ = b;
+			*pbuf++ = g;
+			*pbuf++ = r;
+		}
+		pbuf += line_align - width*3;
+	}
+
+	FILE* fp = fopen(filename, "wb");
+	if (fp == NULL){
+		free(pbgr);
+		return -1;
+	}
+
+#ifndef WIN32
+	struct BITMAPFILEHEADER{
+		unsigned short bfType;
+		unsigned int bfSize;
+		unsigned short bfReserved1;
+		unsigned short bfReserved2;
+		unsigned int bfOffBits;
+	} __attribute__((packed));
+
+	struct BITMAPINFOHEADER{
+		unsigned int biSize;
+		unsigned int biWidth;
+		unsigned int biHeight;
+		unsigned short biPlanes;
+		unsigned short biBitCount;
+		unsigned int biCompression;
+		unsigned int biSizeImage;
+		unsigned int biXPelsPerMeter;
+		unsigned int biYPelsPerMeter;
+		unsigned int biClrUsed;
+		unsigned int biClrImportant;
+	};
+	struct BITMAPFILEHEADER bfheader;
+	struct BITMAPINFOHEADER biheader;
+#else
+	BITMAPFILEHEADER bfheader;
+	BITMAPINFOHEADER biheader;
+#endif
+
+	memset(&bfheader, 0, sizeof(bfheader));
+	bfheader.bfType = 'B' | ('M' << 8);
+	bfheader.bfSize = sizeof(bfheader) + sizeof(biheader) + line_align * height;
+	bfheader.bfOffBits = sizeof(bfheader) + sizeof(biheader);
+	if (fwrite(&bfheader, 1, sizeof(bfheader), fp) != sizeof(bfheader)){
+		fclose(fp);
+		free(pbgr);
+		return -1;
+	}
+
+	memset(&biheader, 0, sizeof(biheader));
+	biheader.biSize = sizeof(biheader);
+	biheader.biPlanes = 1;
+	biheader.biWidth = width;
+	biheader.biHeight = 0 - height;
+	biheader.biBitCount = 24;
+	biheader.biSizeImage = line_align * height;
+	if (fwrite(&biheader, 1, sizeof(biheader), fp) != sizeof(biheader)){
+		fclose(fp);
+		free(pbgr);
+		return -1;
+	}
+
+	if (fwrite(pbgr, 1, line_align * height, fp) != line_align * height){
+		fclose(fp);
+		free(pbgr);
+		return -1;
+	}
+
+	fclose(fp);
+	free(pbgr);
+
+	return 0;
+}
+
+static void cmd_dump_aem(cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32* stat_r, cmr_u32* stat_g, cmr_u32* stat_b, cmr_u32 lsc_id, cmr_u32 type)
+{
+	int dump_state;
+	static int dump_index[2] = {1, 1};
+	char filename[256];
+	char version[1024];
+	property_get("ro.build.version.release", version, (char*)"");
+
+	if (version[0] >= '9'){
+		sprintf(filename, "/data/vendor/cameraserver/lsc/%05d_AEM%d_cam%d_org.bmp", dump_index[lsc_id-1], type, lsc_id);
+	}else if (version[0] >= '7'){
+		sprintf(filename, "/data/misc/cameraserver/lsc/%05d_AEM%d_cam%d_org.bmp", dump_index[lsc_id-1], type, lsc_id);
+	}else{
+		sprintf(filename, "/data/misc/media/lsc/%05d_AEM%d_cam%d_org.bmp", dump_index[lsc_id-1], type, lsc_id);
+	}
+
+	dump_state = dump_stat_bmp(filename, raw_width, raw_height, 32, 32, stat_r, stat_g, stat_b);
+	dump_index[lsc_id-1] ++;
+	ISP_LOGI("dump_state=%d, lsc_id=%d", dump_state, lsc_id);
+}
+
 static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, struct lsc_ctrl_context *cxt)
 {
 	cmr_s32 i, post_act_index;
@@ -1370,6 +1611,9 @@ static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, 
 	cxt->fw_start_end = 0;
 	cxt->alg_bypass = 0;
 	cxt->lsc_pm0 = init_param->lsc_tab_address[0];
+	cxt->cmd_alsc_cmd_enable = alsc_get_init_cmd();
+	if(cxt->cmd_alsc_cmd_enable)
+		ISP_LOGI("[ALSC] cmd mode enable");
 
     // if no pm data, set default parameter and bypass alsc
     if( init_param->tune_param_ptr == NULL){
@@ -2098,6 +2342,18 @@ cmr_u32 get_alsc_alg_in_flag(struct lsc_ctrl_context *cxt, cmr_u32 *IIR_weight)
     return rtn;
 }
 
+static cmr_u32 print_lsc_log(void)
+{
+	char value[256] = { 0 };
+	cmr_u32 is_print = 0;
+	property_get("debug.camera.isp.lsc", value, "0");
+
+	if (!strcmp(value, "1")) {
+		is_print = 1;
+	}
+	return is_print;
+}
+
 static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 {
 	cmr_u32 i;
@@ -2190,6 +2446,33 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		}
 	}
 
+	// updata the mlog info 1
+	if(print_lsc_log()==1 && cxt->alg_count >=1){
+		FILE *pf = NULL;
+		const char saveLogFile1[50] = "/data/mlog/lsc1.txt";
+		const char saveLogFile2[50] = "/data/mlog/lsc2.txt";
+		if(cxt->lsc_id == 1){
+			pf = fopen(saveLogFile1, "wb");
+		}else{
+			pf = fopen(saveLogFile2, "wb");
+		}
+		if (NULL != pf){
+			fprintf(pf, "LSC BASIC INFO\r\n");
+			fprintf(pf, "alg2.c VER: %s \r\n", lsc_debug_info_ptr->LSC_version);
+			fprintf(pf, "final_index: %d, final_ratio_x10000: %d\r\n", lsc_debug_info_ptr->final_index, lsc_debug_info_ptr->final_ratio_x10000);
+			fprintf(pf, "bv: %d, bv_gain: %d, ct: %d\r\n", param->bv, param->bv_gain, param->ct);
+			fprintf(pf, "rGain: %d, bGain: %d\r\n", param->r_gain, param->b_gain);
+			fprintf(pf, "image_size: [%d,%d], grid: %d\r\n", img_width, img_height, grid);
+			fprintf(pf, "gain_size: [%d,%d], gain_pattern: %d\r\n", gain_width, gain_height, cxt->output_gain_pattern);
+			fprintf(pf, "flash_mode: %d, front_cam: %d\r\n", cxt->flash_mode, cxt->camera_id);
+			fprintf(pf, "alg_locked: %d, cam_id: %d\r\n", cxt->alg_locked, cxt->lsc_id);
+			fprintf(pf, "alg_cnt: %d, frame_cnt: %d\r\n", cxt->alg_count, cxt->frame_count);
+			fprintf(pf, "TAB_outer: [%d,%d,%d,%d]\r\n", lsc_debug_info_ptr->output_lsc_table[0], lsc_debug_info_ptr->output_lsc_table[1], lsc_debug_info_ptr->output_lsc_table[2], lsc_debug_info_ptr->output_lsc_table[3]);
+			fprintf(pf, "TAB_inner: [%d,%d,%d,%d]\r\n", lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+0], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+1], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+2], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+3]);
+			fclose(pf);
+		}
+	}
+
 	// first frame just copy the output from fw_start
 	if(cxt->frame_count == 0){   //lunch camera with fullsize
 		memcpy(lsc_debug_info_ptr->last_lsc_table  , cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(cmr_u16));
@@ -2216,6 +2499,14 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		// scale AEM size to 32x32
 		lsc_scl_for_ae_stat(cxt,param);
 
+		// cmd dump AEM0
+		if(cxt->cmd_alsc_cmd_enable){
+			alsc_get_cmd(cxt);
+			if(cxt->cmd_alsc_dump_aem){
+				cmd_dump_aem(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->lsc_id, 0);
+			}
+		}
+
 		// stat_g = 0 return
 		stat_g = param->stat_img.gr;
 		for(i=0; i<32*32; i++){
@@ -2227,6 +2518,14 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 
 		// inverse the LSC on AEM
 		lsc_inverse_ae_stat(cxt, lsc_debug_info_ptr->output_lsc_table);
+
+		// cmd dump AEM1
+		if(cxt->cmd_alsc_cmd_enable){
+			alsc_get_cmd(cxt);
+			if(cxt->cmd_alsc_dump_aem){
+				cmd_dump_aem(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->lsc_id, 1);
+			}
+		}
 
 		// call liblsc.so
 		rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
@@ -2260,6 +2559,28 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		param->bv = cxt->bv_before_flash;
 		param->bv_gain = cxt->bv_gain_before_flash;
 	}
+
+	// cmd set lsc output
+	if(cxt->cmd_alsc_cmd_enable){
+		alsc_get_cmd(cxt);
+		if(cxt->cmd_alsc_table_pattern){
+			cmd_set_lsc_output(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern);
+			ISP_LOGV("[ALSC] cmd_set_lsc_output, final output cxt->lsc_buffer[%d,%d,%d,%d], lsc_id=%d",
+					cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3] , cxt->lsc_id);
+			return rtn;
+		}
+	}
+
+	// cmd set table index
+	//if(cxt->cmd_alsc_cmd_enable){
+		//alsc_get_cmd(cxt);
+		//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
+			//memcpy(cxt->lsc_buffer, param->std_tab_param[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
+			///ISP_LOGV("[ALSC]  cmd set table index %d, final output cxt->lsc_buffer[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
+					//cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3] , cxt->lsc_id);
+			//return rtn;
+		//}
+	//}
 
 	if(cxt->alg_count <= cxt->alg_quick_in_frame + 1 && cxt->frame_count < cxt->calc_freq*3 + 1 && cxt->can_update_dest == 1 && param->bv*cxt->fw_start_bv > 0){
 		memcpy(lsc_debug_info_ptr->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(unsigned short));
@@ -2691,6 +3012,28 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
             ISP_LOGV("[ALSC] FW_START, new (%d,%d) grid %d, lsc_id=%d", fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, cxt->lsc_id);
             ISP_LOGV("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
             ISP_LOGV("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
+
+			// cmd set lsc output
+			if(cxt->cmd_alsc_cmd_enable){
+				alsc_get_cmd(cxt);
+				if(cxt->cmd_alsc_table_pattern){
+					cmd_set_lsc_output(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new, cxt->output_gain_pattern);
+					ISP_LOGV("[ALSC] FW_START, cmd_set_lsc_output, final output fwstart_info->lsc_result_address_new[%d,%d,%d,%d], lsc_id=%d",
+							fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3] , cxt->lsc_id);
+					return rtn;
+				}
+			}
+
+			// cmd set table index
+			//if(cxt->cmd_alsc_cmd_enable){
+				//alsc_get_cmd(cxt);
+				//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
+					//memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[cxt->cmd_alsc_table_index], fwstart_info->gain_width_new*fwstart_info->gain_height_new*4*sizeof(cmr_u16));
+					//ISP_LOGV("[ALSC]  cmd set table index %d, final output fwstart_info->lsc_result_address_new[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
+							//fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3] , cxt->lsc_id);
+					//return rtn;
+				//}
+			//}
 
 			// change to 720p mode
 			if(fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && fwstart_info->grid_new == 32){

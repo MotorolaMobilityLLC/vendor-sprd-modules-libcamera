@@ -501,6 +501,14 @@ struct lsc_ctrl_context {
 	cmr_u32 LSC_SPD_VERSION;
 	cmr_u32 is_multi_mode;
 	cmr_u32 is_master;
+	cmr_u32 cmd_alsc_cmd_enable;
+	cmr_u32 cmd_alsc_table_pattern;
+	cmr_u32 cmd_alsc_table_index;
+	cmr_u32 cmd_alsc_bypass;
+	cmr_u32 cmd_alsc_bypass_otp;
+	cmr_u32 cmd_alsc_dump_aem;
+	cmr_u32 cmd_alsc_dump_table;
+	cmr_u32 cmd_alsc_dump_otp;
 };
 
 	struct binning_info {
