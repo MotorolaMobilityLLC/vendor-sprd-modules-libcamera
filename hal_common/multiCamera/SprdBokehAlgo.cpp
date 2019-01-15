@@ -23,7 +23,8 @@ SprdBokehAlgo::~SprdBokehAlgo() {
     mReadOtp = false;
 }
 
-int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data, bool galleryBokeh) {
+int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data,
+                             bool galleryBokeh) {
     int rc = NO_ERROR;
 
     if (!size || !data) {
@@ -58,7 +59,7 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data, bool galleryBokeh) 
     mPreviewbokehParam.depth_param.F_number =
         mPreviewbokehParam.weight_params.F_number;
     mPreviewbokehParam.depth_param.DisparityImage = NULL;
-    if(!galleryBokeh){
+    if (!galleryBokeh) {
         // capture bokeh params
         mCapbokehParam.sel_x = mSize.capture_w / 2;
         mCapbokehParam.sel_y = mSize.capture_h / 2;
@@ -67,7 +68,7 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data, bool galleryBokeh) 
         mCapbokehParam.param_state = false;
 
         rc = sprd_bokeh_Init(&mBokehCapHandle, mSize.capture_w, mSize.capture_h,
-                         mCapbokehParam.config_param);
+                             mCapbokehParam.config_param);
         if (rc != NO_ERROR) {
             HAL_LOGE("sprd_bokeh_Init failed!");
             goto exit;
@@ -121,7 +122,8 @@ void SprdBokehAlgo::setBokenParam(void *param) {
     mPreviewbokehParam.depth_param.F_number = fnum;
 }
 
-int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3, void *para4) {
+int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3,
+                                void *para4) {
     int rc = NO_ERROR;
     int64_t depthRun = 0;
     distanceRet distance;
@@ -154,7 +156,7 @@ int SprdBokehAlgo::initAlgo() {
         sprd_depth_Close(mDepthPrevHandle);
     }
 
-    struct sprd_depth_configurable_para *depth_config_param = NULL;
+    struct sprd_depth_configurable_para depth_config_param;
     char acVersion[256] = {
         0,
     };
@@ -204,13 +206,14 @@ int SprdBokehAlgo::initAlgo() {
     cap_mode = MODE_CAPTURE;
     cap_outformat = MODE_DISPARITY;
     mDepthCapHandle = NULL;
-    rc = checkDepthPara(depth_config_param);
+    rc = checkDepthPara(&depth_config_param);
     if (rc) {
         prev_input_param.config_param = (char *)(&sprd_depth_config_para);
         cap_input_param.config_param = (char *)(&sprd_depth_config_para);
     } else {
-        prev_input_param.config_param = (char *)depth_config_param;
-        cap_input_param.config_param = (char *)depth_config_param;
+        prev_input_param.config_param = (char *)&depth_config_param;
+        cap_input_param.config_param = (char *)&depth_config_param;
+        HAL_LOGI("sensor_direction=%d", depth_config_param.SensorDirection);
     }
     rc = sprd_depth_VersionInfo_Get(acVersion, 256);
     HAL_LOGD("depth api version [%s]", acVersion);
@@ -410,7 +413,8 @@ exit:
     return rc;
 }
 
-int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH) {
+int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3,
+                                int depthW, int depthH) {
     int rc = NO_ERROR;
     int64_t bokehReFocusTime = 0;
     char acVersion[256] = {
@@ -426,7 +430,8 @@ int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3, int depth
     HAL_LOGD("Bokeh Api Version [%s]", acVersion);
 
     bokehReFocusTime = systemTime();
-    rc = sprd_bokeh_ReFocusPreProcess(mBokehCapHandle, para1, para2, depthW, depthH);
+    rc = sprd_bokeh_ReFocusPreProcess(mBokehCapHandle, para1, para2, depthW,
+                                      depthH);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_bokeh_ReFocusPreProcess failed!");
         goto exit;
@@ -466,13 +471,15 @@ int SprdBokehAlgo::onLine(void *para1, void *para2, void *para3, void *para4) {
     }
     HAL_LOGD("onLine run cost %lld ms", ns2ms(systemTime() - onlineRun));
     onlineScale = systemTime();
-    rc = sprd_depth_OnlineCalibration_postprocess(mDepthPrevHandle, para1, para4);
+    rc = sprd_depth_OnlineCalibration_postprocess(mDepthPrevHandle, para1,
+                                                  para4);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_OnlineCalibration_postprocess failed! %d", rc);
         rc = UNKNOWN_ERROR;
         goto exit;
     }
-    HAL_LOGD("sprd_depth_OnlineCalibration_postprocess run cost %lld ms", ns2ms(systemTime() - onlineScale));
+    HAL_LOGD("sprd_depth_OnlineCalibration_postprocess run cost %lld ms",
+             ns2ms(systemTime() - onlineScale));
 exit:
     return rc;
 }
@@ -500,7 +507,8 @@ int SprdBokehAlgo::checkDepthPara(
         rc = fread(para, sizeof(char),
                    sizeof(struct sprd_depth_configurable_para), fid);
         HAL_LOGD("read depth_config_parameter.bin size %d bytes", rc);
-        depth_config_param = (struct sprd_depth_configurable_para *)para;
+        memcpy((void *)depth_config_param, (void *)para,
+               sizeof(struct sprd_depth_configurable_para));
         HAL_LOGD(
             "read sprd_depth_configurable_para: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
             depth_config_param->SensorDirection,
@@ -511,6 +519,7 @@ int SprdBokehAlgo::checkDepthPara(
             depth_config_param->inDistance, depth_config_param->inRatio,
             depth_config_param->outDistance, depth_config_param->outRatio);
         fclose(fid);
+        rc = NO_ERROR;
     } else {
         HAL_LOGW("open depth_config_parameter.bin file error");
         rc = UNKNOWN_ERROR;
