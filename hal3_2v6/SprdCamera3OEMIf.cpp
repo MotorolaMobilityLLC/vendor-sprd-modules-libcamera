@@ -1888,8 +1888,9 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
-    HAL_LOGD("min_fps=%ld, max_fps=%ld, video_mode=%ld", fps_param.min_fps,
-             fps_param.max_fps, fps_param.video_mode);
+    HAL_LOGD("camera id= %d, min_fps=%ld, max_fps=%ld, video_mode=%ld",
+             mCameraId, fps_param.min_fps, fps_param.max_fps,
+             fps_param.video_mode);
 }
 
 void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
@@ -6182,10 +6183,11 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
         HAL_LOGD("graphicBuffer_handle 0x%lx",
                  mZslGraphicsHandle[i].graphicBuffer_handle);
         mZslGraphicsHandle[i].graphicBuffer_handle = NULL;
+        mZslGraphicsHandle[i].native_handle = NULL;
         if (NULL != mZslHeapArray[i]) {
-            freeCameraMem(mZslHeapArray[i]);
+            free(mZslHeapArray[i]);
+            mZslHeapArray[i] = NULL;
         }
-        mZslHeapArray[i] = NULL;
     }
     mZslHeapNum = 0;
     releaseZSLQueue();
@@ -6224,32 +6226,32 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             memset(memory, 0, sizeof(sprd_camera_memory_t));
             mZslHeapArray[i] = memory;
             mZslHeapNum++;
+
+            graphicBuffer = new GraphicBuffer(
+                (mCaptureWidth + 1280), (mCaptureHeight + 960),
+                HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, "sw_3dnr");
+
+            nativeHandle = (native_handle_t *)graphicBuffer->handle;
+
+            mZslHeapArray[i]->fd = ADP_BUFFD(nativeHandle);
+            mZslHeapArray[i]->phys_addr = 0;
+            mZslHeapArray[i]->phys_size = size;
+            ret = mapper.lock((const native_handle_t *)nativeHandle, usage,
+                              bounds, &vaddr);
+            if (ret) {
+                HAL_LOGE("mapper.lock failed, ret=%d", ret);
+                goto mem_fail;
+            }
+            mZslHeapArray[i]->data = (void *)vaddr;
+            mZslGraphicsHandle[i].graphicBuffer = graphicBuffer;
+            mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
+            mZslGraphicsHandle[i].native_handle = nativeHandle;
+            HAL_LOGD("graphicBuffer_handle 0x%lx",
+                     mZslGraphicsHandle[i].graphicBuffer_handle);
+
+            ADP_FAKESETBUFATTR_CAMERAONLY(nativeHandle, size, mCaptureWidth,
+                                          mCaptureHeight);
         }
-
-        graphicBuffer = new GraphicBuffer(
-            (mCaptureWidth + 1280), (mCaptureHeight + 960),
-            HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, "sw_3dnr");
-
-        nativeHandle = (native_handle_t *)graphicBuffer->handle;
-
-        mZslHeapArray[i]->fd = ADP_BUFFD(nativeHandle);
-        mZslHeapArray[i]->phys_addr = 0;
-        mZslHeapArray[i]->phys_size = size;
-        ret = mapper.lock((const native_handle_t *)nativeHandle, usage, bounds,
-                          &vaddr);
-        if (ret) {
-            HAL_LOGE("mapper.lock failed, ret=%d", ret);
-            goto mem_fail;
-        }
-        mZslHeapArray[i]->data = (void *)vaddr;
-        mZslGraphicsHandle[i].graphicBuffer = graphicBuffer;
-        mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
-        mZslGraphicsHandle[i].native_handle = nativeHandle;
-        HAL_LOGD("graphicBuffer_handle 0x%lx",
-                 mZslGraphicsHandle[i].graphicBuffer_handle);
-
-        ADP_FAKESETBUFATTR_CAMERAONLY(nativeHandle, size, mCaptureWidth,
-                                      mCaptureHeight);
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
         *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
         *fd++ = mZslHeapArray[i]->fd;

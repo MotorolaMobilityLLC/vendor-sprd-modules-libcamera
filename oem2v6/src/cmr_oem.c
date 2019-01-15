@@ -1528,6 +1528,9 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             cxt, cb_param->dst_frame.addr_phy.addr_y,
             cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);
     } else if (1 == camera_get_3dnr_flag(cxt)) {
+        ret = camera_3dnr_set_ev((cmr_handle)cb_param->private_data, 0);
+        if (ret)
+            CMR_LOGE("fail to set 3dnr ev");
         camera_local_set_zsl_snapshot_buffer(
             cxt, cb_param->dst_frame.addr_phy.addr_y,
             cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);
