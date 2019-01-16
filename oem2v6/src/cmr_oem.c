@@ -1221,7 +1221,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                       NULL);
+                       data);
         break;
     case ISP_AE_LOCK_NOTIFY:
         CMR_LOGI("ISP_AE_LOCK_NOTIFY");

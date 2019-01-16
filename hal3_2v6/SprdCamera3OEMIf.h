@@ -150,6 +150,33 @@ typedef struct {
 #define SBS_RAW_DATA_WIDTH 3200
 #define SBS_RAW_DATA_HEIGHT 1200
 
+enum aeTransitionCause{
+    AE_MODE_CHANGE = 0,
+    AE_START,
+    AE_STABLE,
+    AE_STABLE_REQUIRE_FLASH,
+    AE_LOCK_ON,
+    AE_LOCK_OFF,
+    AE_PRECAPTURE_START,
+    AE_PRECAPTURE_CANCEL,
+    AE_MODE_MAX,
+};
+
+enum awbTransitionCause{
+    AWB_MODE_CHANGE = 0,
+    AWB_START,
+    AWB_STABLE,
+    AWB_LOCK_ON,
+    AWB_LOCK_OFF,
+    AWB_MODE_MAX,
+};
+
+struct stateMachine {
+    uint32_t state;
+    uint32_t transitionCause;
+    uint32_t newState;
+};
+
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
     SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -481,6 +508,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t getZslBufferIDForFd(cmr_s32 fd);
     int pushZslFrame(struct camera_frame_type *frame);
     struct camera_frame_type popZslFrame();
+    void setAeState(enum aeTransitionCause cause);
+    void setAwbState(enum awbTransitionCause cause);
+
+    int32_t mLastAeMode;
+    int32_t mLastAwbMode;
 
     List<ZslBufferQueue> mZSLQueue;
     bool mSprdZslEnabled;

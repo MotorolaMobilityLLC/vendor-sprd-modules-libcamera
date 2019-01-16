@@ -828,13 +828,8 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
 
         case ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER:
             HAL_LOGV("ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER");
-            mSetting->getCONTROLTag(&controlInfo);
-            /*if (controlInfo.ae_precap_trigger ==
-            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_START) {
-                    mOEMIf->setAePrecaptureSta(ANDROID_CONTROL_AE_STATE_CONVERGED);
-            }*/
+            mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
             break;
-
         case ANDROID_SCALER_CROP_REGION:
             HAL_LOGV("SCALER_CROP_REGION");
             mOEMIf->setCameraConvertCropRegion();

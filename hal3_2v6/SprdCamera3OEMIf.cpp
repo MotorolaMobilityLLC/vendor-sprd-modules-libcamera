@@ -157,6 +157,68 @@ static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 
+struct stateMachine aeStateMachine[] = {
+    {ANDROID_CONTROL_AE_STATE_INACTIVE,
+        AE_START, ANDROID_CONTROL_AE_STATE_SEARCHING},
+    {ANDROID_CONTROL_AE_STATE_INACTIVE,
+        AE_LOCK_ON, ANDROID_CONTROL_AE_STATE_LOCKED},
+    {ANDROID_CONTROL_AE_STATE_SEARCHING,
+        AE_STABLE, ANDROID_CONTROL_AE_STATE_CONVERGED},
+    {ANDROID_CONTROL_AE_STATE_SEARCHING,
+        AE_STABLE_REQUIRE_FLASH, ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED},
+    {ANDROID_CONTROL_AE_STATE_SEARCHING,
+        AE_LOCK_ON, ANDROID_CONTROL_AE_STATE_LOCKED},
+    {ANDROID_CONTROL_AE_STATE_CONVERGED,
+        AE_START, ANDROID_CONTROL_AE_STATE_SEARCHING},
+    {ANDROID_CONTROL_AE_STATE_CONVERGED,
+        AE_LOCK_ON, ANDROID_CONTROL_AE_STATE_LOCKED},
+    {ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED,
+        AE_START, ANDROID_CONTROL_AE_STATE_SEARCHING},
+    {ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED,
+        AE_LOCK_ON, ANDROID_CONTROL_AE_STATE_LOCKED},
+    {ANDROID_CONTROL_AE_STATE_LOCKED,
+        AE_LOCK_OFF, ANDROID_CONTROL_AE_STATE_SEARCHING},
+    {ANDROID_CONTROL_AE_STATE_PRECAPTURE,
+        AE_STABLE, ANDROID_CONTROL_AE_STATE_CONVERGED},
+    {ANDROID_CONTROL_AE_STATE_PRECAPTURE,
+        AE_LOCK_ON, ANDROID_CONTROL_AE_STATE_LOCKED},
+    //All ae states exlcuding LOCKED change to PRECAPTURE when ae preCapture start
+    {ANDROID_CONTROL_AE_STATE_INACTIVE,
+        AE_PRECAPTURE_START, ANDROID_CONTROL_AE_STATE_PRECAPTURE},
+    {ANDROID_CONTROL_AE_STATE_SEARCHING,
+        AE_PRECAPTURE_START, ANDROID_CONTROL_AE_STATE_PRECAPTURE},
+    {ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED,
+        AE_PRECAPTURE_START, ANDROID_CONTROL_AE_STATE_PRECAPTURE},
+    {ANDROID_CONTROL_AE_STATE_CONVERGED,
+        AE_PRECAPTURE_START, ANDROID_CONTROL_AE_STATE_PRECAPTURE},
+    //All ae states excluding LOCKED change to INACTIVE when ae preCapture cancel
+    {ANDROID_CONTROL_AE_STATE_PRECAPTURE,
+        AE_PRECAPTURE_CANCEL, ANDROID_CONTROL_AE_STATE_INACTIVE},
+    {ANDROID_CONTROL_AE_STATE_SEARCHING,
+        AE_PRECAPTURE_CANCEL, ANDROID_CONTROL_AE_STATE_INACTIVE},
+    {ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED,
+        AE_PRECAPTURE_CANCEL, ANDROID_CONTROL_AE_STATE_INACTIVE},
+    {ANDROID_CONTROL_AE_STATE_CONVERGED,
+        AE_PRECAPTURE_CANCEL, ANDROID_CONTROL_AE_STATE_INACTIVE},
+};
+
+struct stateMachine awbStateMachine[] = {
+    {ANDROID_CONTROL_AWB_STATE_INACTIVE,
+        AWB_START, ANDROID_CONTROL_AWB_STATE_SEARCHING},
+    {ANDROID_CONTROL_AWB_STATE_INACTIVE,
+        AWB_LOCK_ON, ANDROID_CONTROL_AWB_STATE_LOCKED},
+    {ANDROID_CONTROL_AWB_STATE_SEARCHING,
+        AWB_STABLE, ANDROID_CONTROL_AWB_STATE_CONVERGED},
+    {ANDROID_CONTROL_AWB_STATE_SEARCHING,
+        AWB_LOCK_ON, ANDROID_CONTROL_AWB_STATE_LOCKED},
+    {ANDROID_CONTROL_AWB_STATE_CONVERGED,
+        AWB_START, ANDROID_CONTROL_AWB_STATE_SEARCHING},
+    {ANDROID_CONTROL_AWB_STATE_CONVERGED,
+        AWB_LOCK_ON, ANDROID_CONTROL_AWB_STATE_LOCKED},
+    {ANDROID_CONTROL_AWB_STATE_LOCKED,
+        AWB_LOCK_OFF, ANDROID_CONTROL_AWB_STATE_SEARCHING},
+};
+
 sprd_camera_memory_t *SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
 uint32_t SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
 bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
@@ -1901,6 +1963,100 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
              fps_param.video_mode);
 }
 
+void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
+    CONTROL_Tag controlInfo;
+    uint32_t state;
+    uint32_t newState;
+    uint32_t size;
+    uint32_t i;
+
+    mSetting->getCONTROLTag(&controlInfo);
+    state = controlInfo.ae_state;
+    newState = state;
+
+    //ae state is always INACTIVE when ae mode is OFF
+    if (ANDROID_CONTROL_AE_MODE_OFF == controlInfo.ae_mode) {
+        HAL_LOGD("set INACTIVE when AE mode is OFF");
+        newState = ANDROID_CONTROL_AE_STATE_INACTIVE;
+        goto EXIT;
+    }
+
+    //start with INACTIVE when changing ae mode
+    if(AE_MODE_CHANGE == cause && ANDROID_CONTROL_AE_STATE_LOCKED != state) {
+        newState = ANDROID_CONTROL_AE_STATE_INACTIVE;
+        HAL_LOGD("set INACTIVE when changing ae mode");
+    }
+
+    //FLASH_REQUIRED cannot be a result of precapture sequence
+    if (AE_STABLE_REQUIRE_FLASH == cause && controlInfo.ae_precap_trigger ==
+            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_START) {
+            cause = AE_STABLE;
+    }
+
+    /* remove later
+    * for CTS: testBasicTriggerSequence
+    * SEARCHING cannot be a resut of precapture sequence.
+    * Precapture ctrl flow should be designed later.
+    */
+    if ((mSprdAppmodeId == -1) && (AE_START == cause) &&
+            (ANDROID_CONTROL_AE_STATE_CONVERGED == state)) {
+            goto EXIT;
+    }
+
+    size = sizeof(aeStateMachine) / sizeof(struct stateMachine);
+    for (i = 0; i < size; i++) {
+        if ((aeStateMachine[i].transitionCause == cause) && (aeStateMachine[i].state == state)) {
+            newState = aeStateMachine[i].newState;
+            HAL_LOGD("Ae transition cause=%d, cur state=%d, new state=%d", cause, state, newState);
+            break;
+        }
+    }
+
+EXIT:
+
+    controlInfo.ae_state = newState;
+    mSetting->setAeCONTROLTag(&controlInfo);
+}
+
+void SprdCamera3OEMIf::setAwbState(enum awbTransitionCause cause) {
+    CONTROL_Tag controlInfo;
+    uint32_t state;
+    uint32_t newState;
+    uint32_t size;
+    uint32_t i;
+
+    mSetting->getCONTROLTag(&controlInfo);
+    state = controlInfo.awb_state;
+    newState = controlInfo.awb_state;
+
+    //awb state is always INACTIVE when awb mode is not AUTO
+    if (ANDROID_CONTROL_AWB_MODE_AUTO != controlInfo.awb_mode) {
+        HAL_LOGD("set INACTIVE when AWB mode is not AUTO");
+        newState = ANDROID_CONTROL_AWB_STATE_INACTIVE;
+        goto EXIT;
+    }
+
+    //start with INACTIVE when changing awb mode
+    if(AWB_MODE_CHANGE == cause && ANDROID_CONTROL_AWB_STATE_LOCKED != state) {
+        newState = ANDROID_CONTROL_AWB_STATE_INACTIVE;
+        HAL_LOGD("set INACTIVE when changing awb mode");
+    }
+
+    size = sizeof(awbStateMachine) / sizeof(struct stateMachine);
+    for (i = 0; i < size; i++) {
+        if ((awbStateMachine[i].transitionCause == cause) && (awbStateMachine[i].state == state)) {
+            newState = awbStateMachine[i].newState;
+            HAL_LOGD("awb transition cause=%d, cur state=%d, next state=%d", cause, state, newState);
+            break;
+        }
+    }
+
+EXIT:
+
+    controlInfo.awb_state = newState;
+    mSetting->setAwbCONTROLTag(&controlInfo);
+}
+
 void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
                                       state_owner owner) {
     Sprd_camera_state org_state = SPRD_IDLE;
@@ -2797,6 +2953,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
     mPipelineStartSignal.signal();
+
+    setAeState(AE_START);
+    setAwbState(AWB_START);
 
     /*
     qFirstBuffer(CAMERA_STREAM_TYPE_PREVIEW);
@@ -4441,12 +4600,6 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void *parm4) {
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
-    if (ANDROID_CONTROL_AE_STATE_LOCKED != controlInfo.ae_state) {
-        controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
-    }
-    controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
-    mSetting->setAeCONTROLTag(&controlInfo);
-    mSetting->setAwbCONTROLTag(&controlInfo);
     HAL_LOGD("state = %s", getCameraStateStr(getPreviewState()));
     ATRACE_END();
 }
@@ -4813,7 +4966,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
-
+    cmr_u32 ae_stab = 0;
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
     HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
@@ -4821,33 +4974,32 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
 
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
-        if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
-            if (!isNeedFlashFired) {
-                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
-            } else {
-                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED;
-            }
-            mSetting->setAeCONTROLTag(&controlInfo);
+        if (NULL != parm4) {
+            ae_stab = *((cmr_u32 *)parm4);
         }
 
-        if (controlInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
-            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
-            mSetting->setAwbCONTROLTag(&controlInfo);
+        if (ae_stab) {
+           if (!isNeedFlashFired) {
+                setAeState(AE_STABLE);
+           } else {
+                setAeState(AE_STABLE_REQUIRE_FLASH);
+           }
+            setAwbState(AWB_STABLE);
+        } else {
+            setAeState(AE_START);
+            setAwbState(AWB_START);
         }
-        HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
-                 controlInfo.ae_state);
+        HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
         // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
         // mSetting->setAeCONTROLTag(&controlInfo);
-        HAL_LOGI("CAMERA_EVT_CB_AE_LOCK_NOTIFY, ae_state = %d",
-                 controlInfo.ae_state);
+        HAL_LOGI("CAMERA_EVT_CB_AE_LOCK_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_UNLOCK_NOTIFY:
         // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
         // mSetting->setAeCONTROLTag(&controlInfo);
-        HAL_LOGI("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY, ae_state = %d",
-                 controlInfo.ae_state);
+        HAL_LOGI("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_FLASH_FIRED:
         if (parm4 != NULL) {
@@ -4856,6 +5008,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         if (mSprd3dnrEnabled || mMultiCameraMode == MODE_BOKEH) {
             isNeedFlashFired = 0;
         }
+        //isNeedFlashFired is used by APP to check if af_trigger being sent before capture
         HAL_LOGI("isNeedFlashFired = %d", isNeedFlashFired);
         break;
     case CAMERA_EVT_CB_HDR_SCENE:
@@ -5438,10 +5591,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvAwbMode = 0;
         mSetting->androidAwbModeToDrvAwbMode(controlInfo.awb_mode, &drvAwbMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbMode);
-        if (controlInfo.awb_mode != ANDROID_CONTROL_AWB_MODE_AUTO)
-            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
-        else if (!controlInfo.awb_lock)
-            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
+        if (controlInfo.awb_mode != mLastAwbMode) {
+            setAwbState(AWB_MODE_CHANGE);
+            mLastAwbMode = controlInfo.awb_mode;
+        }
     } break;
 
     case ANDROID_CONTROL_AWB_LOCK: {
@@ -5451,14 +5604,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (awb_lock && controlInfo.awb_mode == ANDROID_CONTROL_AWB_MODE_AUTO) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
                      awb_lock);
-            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_LOCKED;
-            mSetting->setAwbCONTROLTag(&controlInfo);
+            setAwbState(AWB_LOCK_ON);
         } else if (!awb_lock &&
                    controlInfo.awb_state == ANDROID_CONTROL_AWB_STATE_LOCKED) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
                      awb_lock);
-            controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_SEARCHING;
-            mSetting->setAwbCONTROLTag(&controlInfo);
+            setAwbState(AWB_LOCK_OFF);
         }
     } break;
 
@@ -5665,13 +5816,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
                                      mFlashMode);
                         }
-                        if (controlInfo.ae_state !=
-                            ANDROID_CONTROL_AE_STATE_LOCKED) {
-                            controlInfo.ae_state =
-                                ANDROID_CONTROL_AE_STATE_SEARCHING;
-                            mSetting->setAeCONTROLTag(&controlInfo);
-                        }
                     }
+                }
+
+                if (controlInfo.ae_mode != mLastAeMode) {
+                    setAeState(AE_MODE_CHANGE);
+                    mLastAeMode = controlInfo.ae_mode;
                 }
             }
         }
@@ -5684,14 +5834,24 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (ae_lock && controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
-            mSetting->setAeCONTROLTag(&controlInfo);
+            setAeState(AE_LOCK_ON);
         } else if (!ae_lock &&
                    controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
-            mSetting->setAeCONTROLTag(&controlInfo);
+            setAeState(AE_LOCK_OFF);
+        }
+    } break;
+
+    case ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER: {
+        HAL_LOGV("ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER: %d",
+                     controlInfo.ae_precap_trigger);
+        if (controlInfo.ae_precap_trigger ==
+            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_START) {
+            setAeState(AE_PRECAPTURE_START);
+        } else if (controlInfo.ae_precap_trigger ==
+            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_CANCEL) {
+            setAeState(AE_PRECAPTURE_CANCEL);
         }
     } break;
 

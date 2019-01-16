@@ -4165,10 +4165,8 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)
                       .data.u8[0];
         s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
-        if (valueU8 == 1) {
-            pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
-            HAL_LOGD("AE precap trigger status = %d", valueU8);
-        }
+        pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
+        HAL_LOGD("AE precap trigger status = %d", valueU8);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
         s_setting[mCameraId].controlInfo.ae_precapture_id =
