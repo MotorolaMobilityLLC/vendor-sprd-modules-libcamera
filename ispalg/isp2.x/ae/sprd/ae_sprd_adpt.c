@@ -519,7 +519,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, cmr_u32 is_force)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0 };
 	struct q_item actual_item;
 
@@ -3663,7 +3663,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	}
 }
 
-static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
+static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
 static struct ae_exposure_param_switch s_ae_manual[4] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
 
 static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch * ae_manual_param)
@@ -3773,6 +3773,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		}
 
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
+		s_bakup_exp_param[cxt->camera_id].is_lock = cxt->cur_status.settings.lock_ae;
 
 		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
 			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
@@ -3802,7 +3803,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cmr_s32 mode = 0;
 	struct ae_trim trim;
 	cmr_u32 max_exp = 0;
-	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
@@ -4042,7 +4043,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
-			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)) {
+			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)
+			&& (0 == s_bakup_exp_param[cxt->camera_id].is_lock)) {
 			src_exp.exp_line = s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.line_time;
 			src_exp.exp_time = s_bakup_exp_param[cxt->camera_id].exp_time;
 			src_exp.gain = s_bakup_exp_param[cxt->camera_id].gain;

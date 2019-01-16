@@ -43,6 +43,7 @@ extern "C" {
 		cmr_s32 target_offset;
 		cmr_s32 bv;
 		cmr_u32 table_idx;
+		cmr_u32 is_lock;
 	};
 	struct ae_ev_param {
 		cmr_s16 target_lum;
