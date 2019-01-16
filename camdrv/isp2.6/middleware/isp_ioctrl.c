@@ -1712,27 +1712,78 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_face_area *face_area = (struct isp_face_area *)param_ptr;
+	struct ai_fd_param ai_fd_para;
+	struct afctrl_face_info af_fd_para;
+	enum ai_status ai_sta = AI_STATUS_MAX;
 
 	if (NULL != face_area) {
-		struct ae_fd_param fd_param;
+		struct ae_fd_param ae_fd_param;
 		cmr_s32 i;
 
-		fd_param.width = face_area->frame_width;
-		fd_param.height = face_area->frame_height;
-		fd_param.face_num = face_area->face_num;
-		for (i = 0; i < fd_param.face_num; ++i) {
-			fd_param.face_area[i].rect.start_x = face_area->face_info[i].sx;
-			fd_param.face_area[i].rect.start_y = face_area->face_info[i].sy;
-			fd_param.face_area[i].rect.end_x = face_area->face_info[i].ex;
-			fd_param.face_area[i].rect.end_y = face_area->face_info[i].ey;
-			fd_param.face_area[i].face_lum = face_area->face_info[i].brightness;
-			fd_param.face_area[i].pose = face_area->face_info[i].pose;
+		ae_fd_param.width = face_area->frame_width;
+		ae_fd_param.height = face_area->frame_height;
+		ae_fd_param.face_num = face_area->face_num;
+		for (i = 0; i < ae_fd_param.face_num; ++i) {
+			ae_fd_param.face_area[i].rect.start_x = face_area->face_info[i].sx;
+			ae_fd_param.face_area[i].rect.start_y = face_area->face_info[i].sy;
+			ae_fd_param.face_area[i].rect.end_x = face_area->face_info[i].ex;
+			ae_fd_param.face_area[i].rect.end_y = face_area->face_info[i].ey;
+			ae_fd_param.face_area[i].face_lum = face_area->face_info[i].brightness;
+			ae_fd_param.face_area[i].pose = face_area->face_info[i].pose;
 		}
 		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &fd_param, NULL);
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &ae_fd_param, NULL);
 
+		if (cxt->ops.ai_ops.ioctrl) {
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)(&ai_sta), NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
+		}
+		if (AI_STATUS_PROCESSING != ai_sta) {
+			ISP_LOGV("AI detection doesn't work.");
+		} else {
+			ai_fd_para.width = face_area->frame_width;
+			ai_fd_para.height = face_area->frame_height;
+			ai_fd_para.face_num = face_area->face_num;
+			for (i = 0; i < ai_fd_para.face_num; ++i) {
+				ai_fd_para.face_area[i].rect.start_x =
+					face_area->face_info[i].sx;
+				ai_fd_para.face_area[i].rect.start_y =
+					face_area->face_info[i].sy;
+				ai_fd_para.face_area[i].rect.width =
+					face_area->face_info[i].ex - face_area->face_info[i].sx + 1;
+				ai_fd_para.face_area[i].rect.height =
+					face_area->face_info[i].ey - face_area->face_info[i].sy + 1;
+				ai_fd_para.face_area[i].yaw_angle =
+					face_area->face_info[i].yaw_angle;
+				ai_fd_para.face_area[i].roll_angle =
+					face_area->face_info[i].roll_angle;
+				ai_fd_para.face_area[i].score =
+					face_area->face_info[i].score;
+				ai_fd_para.face_area[i].id =
+					face_area->face_info[i].id;
+			}
+			ai_fd_para.frame_id = face_area->frame_id;
+			ai_fd_para.timestamp = face_area->timestamp;
+			ISP_LOGV("ai face info: frame_id: %d, timestamp: %llu.",
+				 ai_fd_para.frame_id, (unsigned long long)ai_fd_para.timestamp);
+			if (cxt->ops.ai_ops.ioctrl)
+				ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_PARAM, &ai_fd_para, NULL);
+		}
+		af_fd_para.type = face_area->type;
+		af_fd_para.face_num = face_area->face_num;
+		af_fd_para.frame_width = face_area->frame_width;
+		af_fd_para.frame_height = face_area->frame_height;
+		for (i = 0; i < af_fd_para.face_num; ++i) {
+			af_fd_para.face_info[i].sx = face_area->face_info[i].sx;
+			af_fd_para.face_info[i].sy = face_area->face_info[i].sy;
+			af_fd_para.face_info[i].ex = face_area->face_info[i].ex;
+			af_fd_para.face_info[i].ey = face_area->face_info[i].ey;
+			af_fd_para.face_info[i].brightness = face_area->face_info[i].brightness;
+			af_fd_para.face_info[i].pose = face_area->face_info[i].pose;
+			af_fd_para.face_info[i].angle = face_area->face_info[i].angle;
+		}
 		if (cxt->ops.af_ops.ioctrl)
-			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)param_ptr, NULL);
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)&af_fd_para, NULL);
 	}
 
 	return ret;
