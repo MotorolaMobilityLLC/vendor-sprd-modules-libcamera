@@ -2189,7 +2189,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 		}
 	} else if (SENSOR_PDAF_TYPE1_ENABLE == cxt->pdaf_cxt.pdaf_support){
-		void *pdaf_info = (cmr_s32 *)(u_addr + ISP_PDAF_STATIS_BUF_SIZE / 2);
+		void *pdaf_info = (cmr_s32 *)(u_addr);
 
 		if (cxt->ops.af_ops.ioctrl) {
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_TYPE1_PD_INFO, pdaf_info, NULL);

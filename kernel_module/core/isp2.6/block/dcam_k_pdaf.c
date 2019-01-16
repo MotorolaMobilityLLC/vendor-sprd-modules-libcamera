@@ -96,7 +96,7 @@ static int isp_k_pdaf_type1_block(struct isp_io_param *param, enum dcam_id idx)
 
 	DCAM_REG_MWR(idx, DCAM_CFG, BIT_4, BIT_4);
 
-	DCAM_REG_WR(idx, DCAM_VC2_CONTROL,
+	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		(vch2_info.vch2_vc & 0x03) << 16
 		|(vch2_info.vch2_data_type & 0x3f) << 8
 		|(vch2_info.vch2_mode & 0x03));
