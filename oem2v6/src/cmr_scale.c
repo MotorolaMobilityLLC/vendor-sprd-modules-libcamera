@@ -25,6 +25,7 @@
 #include "cmr_cvt.h"
 #include "sprd_cpp.h"
 #include "cpp_u_dev.h"
+#include "cmr_yuvprocess.h"
 
 #define CMR_EVT_SCALE_INIT (CMR_EVT_OEM_BASE + 16)
 #define CMR_EVT_SCALE_START (CMR_EVT_OEM_BASE + 17)
@@ -156,18 +157,24 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
     }
     if (frame_params->input_size.w >= frame_params->output_size.w &&
         frame_params->input_size.h >= frame_params->output_size.h) {
-        src.addr_vir.addr_y = frame_params->input_addr.y;
-        src.addr_vir.addr_u = frame_params->input_addr.u;
-        src.addr_vir.addr_v = frame_params->input_addr.v;
+        src.addr_vir.addr_y = frame_params->input_addr_vir.y;
+        src.addr_vir.addr_u = frame_params->input_addr_vir.u;
+        src.addr_vir.addr_v = frame_params->input_addr_vir.v;
         src.size.width = frame_params->input_size.w;
         src.size.height = frame_params->input_size.h;
-        dst.addr_vir.addr_y = frame_params->output_addr.y;
-        dst.addr_vir.addr_u = frame_params->output_addr.u;
-        dst.addr_vir.addr_v = frame_params->output_addr.v;
+        dst.addr_vir.addr_y = frame_params->output_addr_vir.y;
+        dst.addr_vir.addr_u = frame_params->output_addr_vir.u;
+        dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
         dst.size.width = frame_params->output_size.w;
         dst.size.height = frame_params->output_size.h;
-        ret = cmr_scaling_down(&src, &dst);
+
+        CMR_LOGI("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
+                 src.addr_vir.addr_y, src.addr_vir.addr_u, dst.addr_vir.addr_y,
+                 dst.addr_vir.addr_u);
+
+        ret = yuv_scale_nv21((void *)&frame_params->input_rect, &src, &dst);
         if (ret) {
+            CMR_LOGI("yuv_scale_nv21 failed ret:%d", ret);
             goto exit;
         }
         if (cfg_params->scale_cb) {
@@ -229,10 +236,17 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         scal_param.scale_cfg_param = &cfg_params->frame_params;
         scal_param.handle = file->handle;
 
+        CMR_LOGI("output_size.width:%d, height: %d", frame_params->output_size.w,
+                 frame_params->output_size.h);
         file->err_code = CMR_CAMERA_SUCCESS;
-        ret = cpp_scale_start(&scal_param);
+        if ((frame_params->output_size.w % 8 != 0)) {
+            ret = cmr_scale_sw_start(cfg_params, file);
+        } else {
+            ret = cpp_scale_start(&scal_param);
+        }
+
         if (ret) {
-            CMR_LOGI("CPP error ret %ld; SW scaler also not working", ret);
+            CMR_LOGI("CPP error or SW scaler error ret %ld;", ret);
             file->sync_none_err_code = CMR_CAMERA_INVALID_PARAM;
             goto exit;
         }
@@ -447,6 +461,8 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->input_addr.mfd[0] = src_img->fd;
     frame_params->input_addr.mfd[1] = src_img->fd;
     frame_params->input_addr.mfd[2] = 0;
+    frame_params->input_addr_vir.y = (uint32_t)src_img->addr_vir.addr_y;
+    frame_params->input_addr_vir.u = (uint32_t)src_img->addr_vir.addr_u;
 
     memcpy((void *)&frame_params->input_endian, (void *)&src_img->data_end,
            sizeof(struct sprd_cpp_scale_endian_sel));
@@ -463,6 +479,12 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->output_addr.mfd[0] = dst_img->fd;
     frame_params->output_addr.mfd[1] = dst_img->fd;
     frame_params->output_addr.mfd[2] = 0;
+    frame_params->output_addr_vir.y = (uint32_t)dst_img->addr_vir.addr_y;
+    frame_params->output_addr_vir.u = (uint32_t)dst_img->addr_vir.addr_u;
+
+    CMR_LOGI("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
+             frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
+             frame_params->output_addr_vir.y, frame_params->output_addr_vir.u);
 
     frame_params->scale_deci.hor =
         get_deci_param(frame_params->input_size.w, frame_params->output_size.w);
