@@ -132,7 +132,7 @@ struct vdsp_core_ops {
 	int (*set_edp_aximo_range)(struct vdsp_context *ctx);
 	int (*isr_triggle_int0)(struct vdsp_context *ctx, u32 index);
 	int (*isr_triggle_int1)(struct vdsp_context *ctx, u32 index);
-	int (*isr_clear)(struct vdsp_context *ctx, u32 index);
+	int (*isr)(struct vdsp_context *ctx);
 };
 
 struct vdsp_clk_ops {
@@ -184,7 +184,7 @@ struct vdsp_dev_t {
 	struct vdsp_glb_ops *glb;
 	struct vdsp_buf ion_in_buf;
 	struct vdsp_buf ion_out_buf;
-	struct vdsp_buf ion_dsp_buf;
+	struct vdsp_buf ion_dsp_buf[4];
 };
 
 #endif

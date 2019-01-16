@@ -75,9 +75,8 @@ static struct vdsp_dev_t vdsp_hw_dev;
 static bool evt_update;
 void *g_kva_vdsp_share_buff_addr;
 extern struct class *vdsp_class;
+static int vdsp_int_status;
 
-
-//static struct task_struct *log_task;
 module_param(need_load_fw, bool, 0644);
 module_param(get_xm6log_flag, int, 0644);
 
@@ -96,10 +95,9 @@ int vdsp_get_ionbuf(struct vdsp_buf *pfinfo)
 						&pfinfo->buf[i],
 						&pfinfo->size[i]);
 			if (ret) {
-				pr_err("fail to get ion buffer\n");
+				VDSP_ERROR("fail to get ion buffer\n");
 				return -EFAULT;
 			}
-			//consider dma_buffer handle
 		}
 	}
 	return 0;
@@ -109,14 +107,15 @@ int vdsp_iommu_map(struct vdsp_buf *pfinfo)
 {
 	int i = 0, ret = 0;
 	struct sprd_iommu_map_data iommu_data;
-
+	bool reserved = true;
 	memset(&iommu_data, 0x00, sizeof(iommu_data));
 
 	for (i = 0; i < 2; i++) {
 		if (pfinfo->size[i] <= 0)
 			continue;
-
-		if (sprd_iommu_attach_device(pfinfo->dev) == 0) {
+		sprd_ion_is_reserved(pfinfo->mfd[i], NULL, &reserved);
+		VDSP_DEBUG("vdsp_iommu_map: reserved= %d,pfinfo->mfd=%d\n", reserved,pfinfo->mfd[i]);
+		if (reserved == false) {
 			memset(&iommu_data, 0x00, sizeof(iommu_data));
 			iommu_data.buf = pfinfo->buf[i];
 			iommu_data.iova_size = pfinfo->size[i];
@@ -125,7 +124,7 @@ int vdsp_iommu_map(struct vdsp_buf *pfinfo)
 
 			ret = sprd_iommu_map(pfinfo->dev, &iommu_data);
 			if (ret) {
-				pr_err("fail to get iommu kaddr %d\n", i);
+				VDSP_ERROR("fail to get iommu kaddr %d\n", i);
 				return -EFAULT;
 			}
 
@@ -137,7 +136,7 @@ int vdsp_iommu_map(struct vdsp_buf *pfinfo)
 					&pfinfo->iova[i],
 					&pfinfo->size[i]);
 			if (ret) {
-				pr_err("fail to get iommu phy addr %d mfd 0x%x\n",
+				VDSP_ERROR("fail to get iommu phy addr %d mfd 0x%x\n",
 				       i, pfinfo->mfd[i]);
 				return -EFAULT;
 			}
@@ -152,14 +151,17 @@ int vdsp_iommu_unmap(struct vdsp_buf *pfinfo)
 {
 	int i, ret;
 	struct sprd_iommu_unmap_data iommu_data;
+	bool reserved = true;
 
 	memset(&iommu_data, 0x00, sizeof(iommu_data));
 
 	for (i = 0; i < 2; i++) {
 		if (pfinfo->size[i] <= 0)
 			continue;
+		sprd_ion_is_reserved(pfinfo->mfd[i], NULL, &reserved);
+		VDSP_DEBUG("vdsp_iommu_unmap: reserved= %d,pfinfo->mfd=%d\n", reserved,pfinfo->mfd[i]);
 
-		if (sprd_iommu_attach_device(pfinfo->dev) == 0) {
+		if (reserved == false) {
 			iommu_data.iova_addr = pfinfo->iova[i]
 					- pfinfo->offset[i];
 			iommu_data.iova_size = pfinfo->size[i];
@@ -169,7 +171,7 @@ int vdsp_iommu_unmap(struct vdsp_buf *pfinfo)
 			ret = sprd_iommu_unmap(pfinfo->dev,
 				&iommu_data);
 			if (ret) {
-				pr_err("failed to free iommu %d\n", i);
+				VDSP_ERROR("failed to free iommu %d\n", i);
 				return -EFAULT;
 			}
 		}
@@ -193,13 +195,13 @@ int32_t vdsp_wait_xm6_done(void)
 					       msecs_to_jiffies(500));
 	evt_update = false;
 
+	get_xm6log_flag = 1;
 	if (!rc) {
 		/* time out */
 		VDSP_ERROR("vdsp wait for ceva done time out!\n");
 		vdsp_hw_dev.is_opened = true;
 		return -1;
 	}
-	get_xm6log_flag = 1;
 	VDSP_DEBUG("get_xm6log_flag=%d\n",get_xm6log_flag);
 	return 0;
 }
@@ -207,8 +209,8 @@ int32_t vdsp_wait_xm6_done(void)
 void send_msg_to_share_memory(struct sprd_dsp_cmd *node)
 {
 	struct sprd_dsp_cmd* msg_queue = (struct sprd_dsp_cmd *)(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_CMD_OFFSET);
+
 	memcpy(msg_queue, node, sizeof(struct sprd_dsp_cmd));
-      //  __dma_flush_area(msg_queue,sizeof(struct sprd_dsp_cmd));
 	VDSP_DEBUG("send_msg_to_vdsp \n");
 	//disable cxrcvr,no send recovery signal when icu_intn is activated
 	//*(volatile u32*)(0x20800064) &= 0xfffffff0;
@@ -220,6 +222,7 @@ static void msg_post_work_func(struct kthread_work *work)
 {
 	struct msg_pending_post *post, *next;
 	struct list_head saved_list;
+
 	mutex_lock(&vdsp_hw_dev.post_lock);
 	memcpy(&saved_list, &vdsp_hw_dev.post_list, sizeof(saved_list));
 	list_replace_init(&vdsp_hw_dev.post_list, &saved_list);
@@ -230,222 +233,150 @@ static void msg_post_work_func(struct kthread_work *work)
 		VDSP_DEBUG("msg_post_work_func entry\n");
 		send_msg_to_share_memory(&post->msg);
 		xm6_state_changed = 1;
-		vdsp_wait_xm6_done();
-		VDSP_DEBUG("msg_post_work_func  end\n");
+		//vdsp_wait_xm6_done();
+		VDSP_DEBUG("msg_post_work_func called end\n");
 		list_del(&post->head);
 		kfree(post);
 	}
-	// xm6 enter stand-by mode
-	if (vdsp_hw_dev.core && vdsp_hw_dev.core->isr_triggle_int1)
-		vdsp_hw_dev.core->isr_triggle_int1(&vdsp_hw_dev.ctx, 1);
 }
 
-int vdsp_cmd_convertor(
-	struct vdsp_dev_t *vdsp_hw_dev,
-	struct sprd_dsp_cmd *msg)
+int vdsp_cmd_free(
+		struct vdsp_dev_t *vdsp_hw_dev,
+		struct sprd_dsp_cmd *msg)
 {
 	int ret = 0;
 	int i = 0;
 	struct vdsp_buf *p_in_buf = &vdsp_hw_dev->ion_in_buf;
 	struct vdsp_buf *p_out_buf = &vdsp_hw_dev->ion_out_buf;
-	struct vdsp_buf *p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf;
+	struct vdsp_buf *p_dsp_buf;
 
-	pr_err("vdsp_cmd_convertor entry\n");
-//in_data addr		
-		if (msg->in_data_fd > 0) {
-			p_in_buf->mfd[0] = msg->in_data_fd;
-			p_in_buf->dev = &vdsp_hw_dev->dev;
-			ret = vdsp_get_ionbuf(p_in_buf);
-				if (ret) {
-					pr_err("fail to get in_ion_buf\n");
-					 return -1;
-				}
-				ret = vdsp_iommu_map(p_in_buf);
-				if (ret) {
-				pr_err("fail to get in_data addr!!!!\n");
-				  return -1;
-				}
-				msg->in_data_addr = (uint32_t)p_in_buf->iova[0];
-			}
-		//out_data addr
-		if (msg->out_data_fd > 0) {
-			p_out_buf->mfd[0] = msg->out_data_fd;
-			p_out_buf->dev = &vdsp_hw_dev->dev;
-			ret = vdsp_get_ionbuf(p_out_buf);
-				if (ret) {
-					pr_err("fail to get  ion_out_buf\n");
-					  return -1;
-				}
-				ret = vdsp_iommu_map(p_out_buf);
-				if (ret) {
-				pr_err("fail to get out_data addr!!!!\n");
-				 return -1;
-				}
-				msg->out_data_addr = (uint32_t)p_out_buf->iova[0];
-			}
-		//bufer addr
-		
-		for (i=0;i< 4;i++) {
-			if (msg->buffer_data[i].fd > 0) {
-					p_dsp_buf->mfd[0] = msg->buffer_data[i].fd;
-					p_dsp_buf->dev = &vdsp_hw_dev->dev;
-					ret = vdsp_get_ionbuf(p_dsp_buf);
-				if (ret) {
-					pr_err("fail to get  ion_des_buf\n");
-					  return -1;
-				}
-				ret = vdsp_iommu_map(p_dsp_buf);
-				if (ret) {
-				pr_err("fail to get dsp addr[%d]!!!!\n", i);
-				 return -1;
-				}
-				msg->buffer_data[i].addr = (uint32_t)p_dsp_buf->iova[0];
-				}
+	//in_data addr
+	if (msg->in_data_fd >= 0) {
+		ret = vdsp_iommu_unmap(p_in_buf);
+		if (ret) {
+			VDSP_ERROR("fail to unmap p_in_buf!!!!\n");
+			return -1;
 		}
-	pr_err("vdsp_cmd_convertor end msg->in_data_addr:%d, msg->out_data_addr:%d msg->buffer_data[].addr:%d;%d;%d\n",
-		msg->in_data_addr,
-		msg->out_data_addr,
-		msg->buffer_data[0].addr,
-		msg->buffer_data[1].addr,
-		msg->buffer_data[2].addr
-		);
+	}
+	//out_data addr
+	if (msg->out_data_fd >= 0) {
+		ret = vdsp_iommu_unmap(p_out_buf);
+		if (ret) {
+			VDSP_ERROR("fail to unmap p_out_buf!!!!\n");
+			return -1;
+		}
+	}
+	//bufer addr
+	for (i=0;i< 3;i++) {
+		if (msg->buffer_data[i].fd >= 0) {
+			p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
+			ret = vdsp_iommu_unmap(p_dsp_buf);
+			if (ret) {
+				VDSP_ERROR("fail to unmap p_dsp_buf[%d]!!!!\n", i);
+				return -1;
+			}
+		}
+	}
 	return ret;
 }
 
-#if 0
+int vdsp_cmd_convertor(
+		struct vdsp_dev_t *vdsp_hw_dev,
+		struct sprd_dsp_cmd *msg)
+{
+	int ret = 0;
+	int i = 0;
+	struct vdsp_buf *p_in_buf = &vdsp_hw_dev->ion_in_buf;
+	struct vdsp_buf *p_out_buf = &vdsp_hw_dev->ion_out_buf;
+	struct vdsp_buf *p_dsp_buf;
+	//in_data addr
+	if (msg->in_data_fd >= 0) {
+		p_in_buf->mfd[0] = msg->in_data_fd;
+		p_in_buf->dev = &vdsp_hw_dev->dev;
+		ret = vdsp_get_ionbuf(p_in_buf);
+		if (ret) {
+			VDSP_ERROR("fail to get in_ion_buf\n");
+			return -1;
+		}
+		ret = vdsp_iommu_map(p_in_buf);
+		if (ret) {
+			VDSP_ERROR("fail to get in_data addr!!!!\n");
+			return -1;
+		}
+		msg->in_data_addr = (uint32_t)p_in_buf->iova[0];
+		VDSP_DEBUG("msg->in_data_addr=0x%x\n",msg->in_data_addr);
+	}
+	//out_data addr
+	if (msg->out_data_fd >= 0) {
+		p_out_buf->mfd[0] = msg->out_data_fd;
+		p_out_buf->dev = &vdsp_hw_dev->dev;
+		ret = vdsp_get_ionbuf(p_out_buf);
+		if (ret) {
+			VDSP_ERROR("fail to get  ion_out_buf\n");
+			return -1;
+		}
+		ret = vdsp_iommu_map(p_out_buf);
+		if (ret) {
+			VDSP_ERROR("fail to get out_data addr!!!!\n");
+			return -1;
+		}
+		msg->out_data_addr = (uint32_t)p_out_buf->iova[0];
+		VDSP_DEBUG("msg->out_data_addr=0x%x\n",msg->out_data_addr);
+	}
+	//bufer addr
+
+	for (i=0;i< 3;i++) {
+		if (msg->buffer_data[i].fd >= 0) {
+			p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
+			p_dsp_buf->mfd[0] = msg->buffer_data[i].fd;
+			p_dsp_buf->dev = &vdsp_hw_dev->dev;
+			ret = vdsp_get_ionbuf(p_dsp_buf);
+			if (ret) {
+				VDSP_ERROR("fail to get  ion_des_buf\n");
+				return -1;
+			}
+			ret = vdsp_iommu_map(p_dsp_buf);
+			if (ret) {
+				VDSP_ERROR("fail to get dsp addr[%d]!!!!\n", i);
+				return -1;
+			}
+			msg->buffer_data[i].addr = (uint32_t)p_dsp_buf->iova[0];
+			VDSP_DEBUG("msg->buffer_data[%d].addr=0x%x\n",i,msg->buffer_data[i].addr);
+		}
+	}
+	return ret;
+}
+
+
 int sprd_vdsp_buf_alloc(struct vdsp_dev_t *vdsp_hw_dev,
 			    int heap_type, size_t *size, u32 *buffer)
 {
-#if 0
-	struct device *parent = NULL;
-	struct page *page;
-	dma_addr_t dma_handle;
-	g_kva_vdsp_share_buff_addr = (void *)__get_free_pages(GFP_DMA32 |
-			GFP_ATOMIC | __GFP_ZERO, get_order(*size));
-	parent = vdsp_hw_dev->dev.parent;
-	page = virt_to_page(g_kva_vdsp_share_buff_addr);
+	struct device_node *node;
+	u64 size64;
+	struct resource r;
 
-	dma_handle = dma_map_page(parent, page, 0, *size,
-					DMA_TO_DEVICE);
-	if (dma_mapping_error(parent, dma_handle)) {
-		VDSP_ERROR("dma map failed for address %p\n", g_kva_vdsp_share_buff_addr);
-		free_pages((unsigned long)g_kva_vdsp_share_buff_addr, get_order(*size));
-		return -1;
+	node = of_parse_phandle(vdsp_hw_dev->dev.of_node,
+					"sprd,vdsp-memory", 0);
+	if (!node) {
+		VDSP_ERROR("no sprd,vdsp-memory specified\n");
+		return -EINVAL;
 	}
-	dma_sync_single_for_device(parent, dma_handle,
-				*size, DMA_TO_DEVICE);
-	*buffer = dma_handle;
-	VDSP_INFO("logo_dst_p:0x%x, logo_dst_v:0x%p\n", (u32)dma_handle, g_kva_vdsp_share_buff_addr);
-#else
-	int fd = 0;
-	struct dma_buf *dmabuf = NULL;
-	unsigned long phyaddr;
-	int ret = 0;
 
-	fd = ion_alloc((size_t)(*size), ION_HEAP_ID_MASK_FB, 0);
-	if (fd < 0) {
-		pr_emerg("ion_alloc buffer fail(fd=%d)\n", fd);
-		return fd;
+	if (of_address_to_resource(node, 0, &r)) {
+		VDSP_ERROR("invalid wb reserved memory node!\n");
+		return -EINVAL;
 	}
-	pr_emerg("fd:%d\n",fd);
-	dmabuf = dma_buf_get(fd);
-	ret = sprd_ion_get_phys_addr(fd, dmabuf, &phyaddr, size);
-	*buffer = (u32)phyaddr;
-	pr_emerg("test3 allocated for vdsp buffer:0x%x, type %d\n",
-	      (u32)phyaddr, ION_HEAP_ID_MASK_FB);
 
-	pr_emerg("jun============\n");
-	pr_emerg("vdsp_epp_probe call1(dmabuf =%p)\n", dmabuf);
-	g_kva_vdsp_share_buff_addr = sprd_ion_map_kernel(dmabuf, 0);
-	pr_emerg("vdsp_epp_probe call2(kvaddr=%p)\n", g_kva_vdsp_share_buff_addr);
-	dma_buf_put(dmabuf);
-	pr_emerg("vdsp_epp_probe call3(dmabuf =%p)\n", dmabuf);
+	*buffer = r.start;
+	size64 = resource_size(&r);
+	g_kva_vdsp_share_buff_addr = phys_to_virt(*buffer);
+
+	if (size64 < *size) {
+		VDSP_ERROR("unable to obtain enough wb memory\n");
+		return -ENOMEM;
+	}
 	VDSP_INFO("logo_dst_p:0x%x, logo_dst_v:0x%p\n", (u32)*buffer, g_kva_vdsp_share_buff_addr);
-#endif
 	return 0;
-}
-#endif
-
-unsigned int src_buf[2*1024];
-static int sprd_vdsp_buf_alloc_2(struct vdsp_dev_t *vdsp_hw_dev,
-			    int heap_type, size_t *size, u32 *buffer)
-{
-		int ret = 0;
-		int i =0;
-		unsigned long phyaddr;
-		struct camera_buf buf;
-
-		buf.dmabuf_p[0] = ion_new_alloc((size_t)(*size), heap_type, 0);
-			if (IS_ERR_OR_NULL(buf.dmabuf_p[0])) {
-					pr_emerg("failed to alloc ion buf size 0x%x \n", (u32)(*size));
-					ret = -1;
-					return ret;
-			}
-	pr_emerg("sprd_vdsp_buf_alloc_2 alloc buffer successed");
-
-	ret = sprd_ion_get_buffer(-1,
-			buf.dmabuf_p[0],
-			&buf.ionbuf[0],
-			&buf.size[0]);
-	if (ret) {
-		pr_emerg("failed to get ionbuf for kernel buffer %p\n", buf.dmabuf_p[0]);
-		ret = -1;
-		goto failed;
-	}		
-
-	ret = sprd_ion_get_phys_addr(-1, buf.dmabuf_p[0], &phyaddr, size);
-		if (ret) {
-				pr_err("failed to get phyaddr %d\n", (u32)phyaddr);
-				ret = -1;
-				goto failed;
-			}
-	*buffer = (u32)phyaddr;
-	pr_emerg("sprd_vdsp_buf_alloc_2 allocated for vdsp buffer:0x%x, type %d\n",
-	      (u32)phyaddr, ION_HEAP_ID_MASK_FB);
-	
-	buf.addr_k[0] = (unsigned long)sprd_ion_map_kernel(buf.dmabuf_p[0], 0);
-	if (IS_ERR_OR_NULL((void *)buf.addr_k[0])) {
-		pr_err("fail to map k_addr for dmabuf[%p]\n", buf.dmabuf_p[0]);
-		ret = -1;
-		goto map_fail;
-	}
-	pr_emerg("get kernel vaddr successed (kvaddr=%p)\n", (void *)buf.addr_k[0]);
-	
-	for(i=0;i<100;i++){
-		unsigned int * p;
-		p = (unsigned int *)buf.addr_k[0];
-		p = p + i;
-		pr_info("vvv:b:data<%d>[%d]\n",i,*p);
-	}
-
-	for (i=0;i<2*1024;i++){
-		src_buf[i] = i;
-	}
-	
-	memcpy((void *)buf.addr_k[0],(void *)src_buf,2*1024);
-
-	for(i=0;i<100;i++){
-		unsigned int * p;
-		p = (unsigned int *)buf.addr_k[0];
-		p = p + i;
-		pr_info("vvv:e:data<%d>[%d]\n",i,*p);
-	}
-
-	g_kva_vdsp_share_buff_addr = (void *)buf.addr_k[0];
-
-	pr_emerg("g_kva_vdsp_share_buff_addr (kvaddr=%p)\n", g_kva_vdsp_share_buff_addr);
-
-	return ret;
-	
-map_fail:
-	sprd_ion_unmap_kernel(buf.dmabuf_p[0], 0);
-failed:
-	ion_free(buf.dmabuf_p[0]);
-	buf.dmabuf_p[0] = NULL;
-	buf.size[0] = 0;
-
-	return ret;
-	
 }
 
 static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
@@ -455,11 +386,12 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	u32 src_crc = 0, dst_crc = 0;
 	u32 src_data_crc = 0, dst_data_crc = 0;
 	u32 copy_times = 0;
+
 	VDSP_DEBUG("overwrite_firmware called !\n");
 	/* TO DO ---- Upload firmware.*/
 	if (request_firmware
 		(&fw, "test_vdsp00.bin", &vdsp_hw_dev->dev)) {
-		pr_emerg("get firmware failed.");
+		VDSP_ERROR("get firmware failed.");
 		err = EINVAL;
 		goto overwrite_firmware_end;
 	}
@@ -477,11 +409,9 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_crc != dst_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr,
 			fw->data, fw->size);
-	//	__dma_flush_area(g_kva_vdsp_share_buff_addr,
-	//		fw->size);
 		dst_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr, fw->size);
 		copy_times++;
-		pr_emerg("src_crc: 0x%x, dst_crc: 0x%x, times: %d\n",
+		VDSP_ERROR("src_crc: 0x%x, dst_crc: 0x%x, times: %d\n",
 			src_crc, dst_crc, copy_times);
  		if (copy_times >= 10)
 			break;
@@ -492,7 +422,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 
 	if (request_firmware
 		(&fw, "test_vdsp10.bin", &vdsp_hw_dev->dev)) {
-		pr_emerg("get firmware failed.");
+		VDSP_ERROR("get firmware failed.");
 		err = EINVAL;
 		goto overwrite_firmware_end;
 	}
@@ -510,8 +440,6 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_data_crc != dst_data_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_CODE_OFFSET,
 			fw->data, fw->size);
-		//__dma_flush_area(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_CODE_OFFSET,
-		//	fw->size);
 		dst_data_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_CODE_OFFSET, fw->size);
 		copy_times++;
 		VDSP_DEBUG("src_data_crc: 0x%x, dst_data_crc: 0x%x, times: %d\n",
@@ -524,7 +452,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 
 	if (request_firmware
 		(&fw, "test_vdsp1d0.bin", &vdsp_hw_dev->dev)) {
-		pr_emerg("get firmware failed.");
+		VDSP_ERROR("get firmware failed.");
 		err = EINVAL;
 		goto overwrite_firmware_end;
 	}
@@ -542,8 +470,6 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_data_crc != dst_data_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_DATA_OFFSET,
 			fw->data, fw->size);
-	//	__dma_flush_area(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_DATA_OFFSET,
-	//		fw->size);
 		dst_data_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_DATA_OFFSET, fw->size);
 		copy_times++;
 		VDSP_DEBUG("src_data_crc: 0x%x, dst_data_crc: 0x%x, times: %d\n",
@@ -556,7 +482,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 
 	if (request_firmware
 		(&fw, "test_vdsp0d0.bin", &vdsp_hw_dev->dev)) {
-		pr_emerg("get firmware failed.");
+		VDSP_ERROR("get firmware failed.");
 		err = EINVAL;
 		goto overwrite_firmware_end;
 	}
@@ -574,11 +500,9 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_crc != dst_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr+VDSP_SHARE_BUFF_DATA_OFFSET,
 			fw->data, fw->size);
-	//	__dma_flush_area(g_kva_vdsp_share_buff_addr+VDSP_SHARE_BUFF_DATA_OFFSET,
-	//		fw->size);
 		dst_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr+VDSP_SHARE_BUFF_DATA_OFFSET, fw->size);
 		copy_times++;
-		pr_emerg("src_crc: 0x%x, dst_crc: 0x%x, times: %d\n",
+		VDSP_ERROR("src_crc: 0x%x, dst_crc: 0x%x, times: %d\n",
 			src_crc, dst_crc, copy_times);
 		if (copy_times >= 10)
 			break;
@@ -627,14 +551,14 @@ static void print_xm6_log(const u32 ahb_buf_size,
 			VDSP_ERROR("fw log vdsp closed: %p", buff_ptr);
 			break;
 		}
-		//pr_emerg("offset=%d,cur_offset=%d\n", offset,cur_offset);
+		//VDSP_ERROR("offset=%d,cur_offset=%d\n", offset,cur_offset);
 		copy_size = cur_offset - offset;
 		if (copy_size > BUFFER_SIZE)
 			copy_size = BUFFER_SIZE;
 		memset(output_str, 0, sizeof(output_str));
 		/* Force to turn on firmware log for debugging */
 		memcpy(output_str, (buff_ptr + offset), copy_size);
-		//pr_emerg("output_str: %s\n", output_str);
+		//VDSP_ERROR("output_str: %s\n", output_str);
 		p = output_str;
 		offset2 = 0;
 		do {
@@ -659,7 +583,7 @@ static void print_xm6_log(const u32 ahb_buf_size,
 			 * rather than a complete whole line when p is null.
 			 */
 #if 0
-			pr_emerg("pos: %p, offset: %d %d, token: %s, len:%zd\n",
+			VDSP_ERROR("pos: %p, offset: %d %d, token: %s, len:%zd\n",
 					p, offset, offset2,
 					token, strlen(token));
 #endif
@@ -676,6 +600,7 @@ static int log_task_func(void *data)
 	u32 err = 0;
 	u32 previous_offset = 0, current_offset = 0;
 	u32 *p = (void *) (g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_LOG_POS_OFFSET);
+
 	do {
 		if (get_xm6log_flag == 0) {
 			usleep_range(1000000, 1000000);
@@ -687,6 +612,7 @@ static int log_task_func(void *data)
 
 		current_offset = p[0];
 		print_xm6_log(PAGE_SIZE_4K, current_offset, &previous_offset);
+		previous_offset = 0;
 		get_xm6log_flag = 0;
 	} while (!kthread_should_stop());
 
@@ -698,6 +624,7 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 	int ret = 0;
 	struct sprd_dsp_cmd msg;
 	struct msg_pending_post* cfg;
+
 	VDSP_DEBUG("vdsp_ioctl called !\n");
 	switch (cmd) {
 	case SPRD_VDSP_IO_VERSION:
@@ -729,6 +656,10 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 		kthread_queue_work(&vdsp_hw_dev.post_worker, &vdsp_hw_dev.post_work);
 		mutex_unlock(&vdsp_hw_dev.post_lock);
 		vdsp_wait_xm6_done();
+		vdsp_cmd_free(&vdsp_hw_dev, &msg);
+		// xm6 enter stand-by mode
+		if (vdsp_hw_dev.core && vdsp_hw_dev.core->isr_triggle_int1)
+			vdsp_hw_dev.core->isr_triggle_int1(&vdsp_hw_dev.ctx, 1);
 		VDSP_DEBUG("vdsp_ioctl SPRD_VDSP_IO_SET_MSG end\n");
 		break;
 	default:
@@ -741,9 +672,9 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 static irqreturn_t vdsp_isr(int irq, void *data)
 {
 	struct vdsp_dev_t *vdsp = data;
-	if (vdsp->core && vdsp->core->isr_clear)
-		vdsp->core->isr_clear(&vdsp->ctx, 2);
-	VDSP_INFO("vdsp isr rec\n");
+
+	vdsp_int_status = vdsp->core->isr(&vdsp->ctx);
+	VDSP_INFO("vdsp isr rec:0x%x\n",vdsp_int_status );
 	evt_update = true;
 	wake_up_interruptible_all(&vdsp_hw_dev.wait_queue);
 
@@ -886,14 +817,13 @@ static int vdsp_open(struct inode *inode, struct file *filp)
 
 static int vdsp_release(struct inode *inode, struct file *filp)
 {
-#if 0
 	bool enable = false;
 
-	VDSP_DEBUG("vdsp_release called !\n");
+	VDSP_DEBUG("vdsp_release called\n");
+	kthread_flush_worker(&vdsp_hw_dev.post_worker);
 	if (vdsp_hw_dev.glb && vdsp_hw_dev.glb->power)
 		vdsp_hw_dev.glb->power(&vdsp_hw_dev.ctx, enable);
 	vdsp_hw_dev.is_opened = false;
-#endif
 	return 0;
 }
 
@@ -915,7 +845,6 @@ static struct miscdevice vdsp_dev = {
 	.fops = &vdsp_fops,
 };
 
-//extern struct class *vdsp_class;
 
 static int vdsp_device_register(struct vdsp_dev_t *vdsp_hw_dev,
                                 struct device *parent)
@@ -945,7 +874,7 @@ static int vdsp_probe(struct platform_device *pdev)
 	struct device_node *node = pdev->dev.of_node;
 	const struct of_device_id *of_id;
 	const char *str;
-	size_t  buf_size = 0xe0000;
+	size_t  buf_size = 0x100000;
 
 	VDSP_DEBUG("vdsp_probe called !\n");
 	vdsp_glb_register();
@@ -989,24 +918,20 @@ static int vdsp_probe(struct platform_device *pdev)
 
 	vdsp_device_register(&vdsp_hw_dev, &pdev->dev);
 	sprd_vdsp_sysfs_init(&vdsp_hw_dev.dev);
-	
 	sprd_vdsp_irq_request(&vdsp_hw_dev);
 
-	ret = sprd_vdsp_buf_alloc_2(&vdsp_hw_dev, ION_HEAP_ID_MASK_FB,
+	ret = sprd_vdsp_buf_alloc(&vdsp_hw_dev, ION_HEAP_ID_MASK_FB,
                                         &buf_size, &(vdsp_share_buff_addr));
         if (ret)
-                return -1;
+		goto errout;
         else
                 VDSP_INFO("vdsp alloc buf(vdsp_addr_v=0x%x,g_kva_vdsp_share_buff_addr=%p)\n",vdsp_share_buff_addr,
 				g_kva_vdsp_share_buff_addr);
 
 	kthread_init_worker(&vdsp_hw_dev.post_worker);
-	VDSP_INFO("vdsp trace1");
 	vdsp_hw_dev.post_thread = kthread_run(kthread_worker_fn,
 			&vdsp_hw_dev.post_worker, "vdsp_msg");
-	VDSP_INFO("vdsp trace2");
 	if (IS_ERR(vdsp_hw_dev.post_thread)) {
-		VDSP_INFO("vdsp trace3");
 		ret = PTR_ERR(vdsp_hw_dev.post_thread);
 		vdsp_hw_dev.post_thread = NULL;
 
@@ -1014,25 +939,18 @@ static int vdsp_probe(struct platform_device *pdev)
 				__func__, ret);
 		goto errout;
 	}
-	VDSP_INFO("vdsp trace4");
 	kthread_init_work(&vdsp_hw_dev.post_work, msg_post_work_func);
 	mutex_init(&vdsp_hw_dev.post_lock);
 	INIT_LIST_HEAD(&vdsp_hw_dev.post_list);
 	init_waitqueue_head(&vdsp_hw_dev.wait_queue);
-	VDSP_INFO("vdsp trace5");
-	//memset((void *)(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_CMD_OFFSET),0,32);	
 	vdsp_hw_dev.log_task = kthread_run(log_task_func, NULL, "xm6_log_thread");
-	VDSP_INFO("vdsp trace6");
-		if (IS_ERR(vdsp_hw_dev.log_task)) {
-			VDSP_INFO("vdsp trace7");
-			ret = PTR_ERR(vdsp_hw_dev.log_task);
-			vdsp_hw_dev.log_task = NULL;
-	}	
-	VDSP_INFO("vdsp trace8");
+	if (IS_ERR(vdsp_hw_dev.log_task)) {
+		ret = PTR_ERR(vdsp_hw_dev.log_task);
+		vdsp_hw_dev.log_task = NULL;
+	}
 	return 0;
 
 errout:
-	VDSP_INFO("vdsp trace9");
 	misc_deregister(&vdsp_dev);
 
 	return ret;

@@ -196,14 +196,15 @@ static int icu_triggle_int1(struct vdsp_context *ctx, u32 index) //set int src i
 	return status;
 }
 
-static int icu_clear(struct vdsp_context *ctx, u32 index)
+static int icu_isr(struct vdsp_context *ctx)
 {
-	int status = 0;
 	struct icu_reg *reg = (struct icu_reg *)ctx->icu_base;
-
-	reg->icr_l = BIT(index);
+	u32 reg_val;
+	reg_val = reg->isr_l; // src 0,1 is for vdsp
+	reg_val &= 0xfffffffc;
+	reg->icr_l = reg_val;
 	VDSP_INFO("icu_triggle_int1(reg->icr_l=%p)\n", &reg->icr_l);
-	return status;
+	return reg_val;
 }
 
 static struct vdsp_core_ops vdsp_core_ops = {
@@ -214,7 +215,7 @@ static struct vdsp_core_ops vdsp_core_ops = {
 	.set_edp_aximo_range = vdsp_set_edp_aximo_range,
 	.isr_triggle_int0 = icu_triggle_int0,
 	.isr_triggle_int1 = icu_triggle_int1,
-	.isr_clear = icu_clear,
+	.isr = icu_isr,
 };
 
 static struct ops_entry entry = {

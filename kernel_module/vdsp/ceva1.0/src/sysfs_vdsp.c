@@ -37,11 +37,7 @@ int vdsp_class_init(void)
 
 //postcore_initcall(vdsp_class_init);
 
-/*
-1.
-2. working
-3. done
-*/
+
 static DEFINE_MUTEX(xm6_state_lock);
 int xm6_state_changed = 0;
 static ssize_t xm6_state_show(struct device *dev,
@@ -73,12 +69,6 @@ static ssize_t xm6_state_store(struct device *dev,
 		pr_err("Invalid input\n");
 		return -EINVAL;
 	}
-#if 0
-	if (enable)
-		xm6_open();
-	else
-		xm6_close();
-#endif
 	return count;
 }
 
