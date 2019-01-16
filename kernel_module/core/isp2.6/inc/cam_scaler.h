@@ -21,9 +21,6 @@
 #define ARC_32_COEF				0x80000000
 /* convert arc of double type to int32 type */
 
-int cam_cos_32(int n);
-int cam_sin_32(int n);
-
 unsigned char isp_gen_scale_coeff(short i_w,
 				   short i_h,
 				   short o_w,

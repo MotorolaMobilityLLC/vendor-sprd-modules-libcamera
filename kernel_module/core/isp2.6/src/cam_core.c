@@ -982,7 +982,7 @@ static inline uint32_t fix_scale(uint32_t size_in, uint32_t ratio16)
 
 	size_scaled = (uint64_t)size_in;
 	size_scaled <<= (2 * RATIO_SHIFT);
-	size_scaled = ((size_scaled / ratio16) >> RATIO_SHIFT);
+	size_scaled = ((div64_u64(size_scaled, ratio16)) >> RATIO_SHIFT);
 	return (uint32_t)size_scaled;
 }
 
@@ -3784,7 +3784,7 @@ static int img_ioctl_start_capture(
 		return -EFAULT;
 	}
 	atomic_set(&module->capture_frames_dcam, -1);
-	module->capture_times = param.timestamp / 1000ll;
+	module->capture_times = div64_s64(param.timestamp, 1000ll);
 	if (param.timestamp) {
 		/* this time, need 1 frame when timestamp is not 0 */
 		atomic_set(&module->capture_frames_dcam, 1);

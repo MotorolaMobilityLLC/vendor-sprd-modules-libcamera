@@ -201,7 +201,7 @@ static int cos_core(int arc_q33, int sign)
 /*          value at Q30 = value * (2 ^ 30)                                 */
 /****************************************************************************/
 /* lint --e{648} */
-int cam_sin_32(int n)
+static int cam_sin_32(int n)
 {
 	/* if s equal to 1, the sin value is negative */
 	int s = n & SINCOS_BIT_31;
@@ -256,7 +256,7 @@ int cam_sin_32(int n)
 /*          value at Q30 = value * (2 ^ 30)                                 */
 /****************************************************************************/
 /* lint --e{648} */
-int cam_cos_32(int n)
+static int cam_cos_32(int n)
 {
 	/* if s equal to 1, the sin value is negative */
 	int s = n & SINCOS_BIT_31;
@@ -1050,7 +1050,7 @@ static int64_t rds_div64(
 		divisor_tmp = divisor * (-1);
 	}
 
-	ret = dividend_tmp / divisor_tmp;
+	ret = div64_s64(dividend_tmp, divisor_tmp);
 	ret *= sign;
 
 	return ret;
@@ -1073,9 +1073,8 @@ static int rds_sinc_weight_calc(
 	int64_t tmp;
 
 	if (FILTER_WINDOW * fabs(index) * dst_size == 0)
-		weight = (int)(
-			(int64_t)dst_size * (1 << 24) /
-			(int64_t)src_size);
+		weight = (int)div64_s64((int64_t)dst_size * (1 << 24),
+					(int64_t)src_size);
 	else if (fabs(index) * dst_size * FILTER_WINDOW
 			<=
 			n * phase * src_size) {
@@ -1155,7 +1154,7 @@ static void rds_weight_normalize(
 
 	for (i = 0; i < kk; ++i) {
 		tmp_weight64 = ((int64_t)tmp_weights[i] * WEIGHT_SUM);
-		temp_value = (int)((tmp_weight64 / tmp_sum));
+		temp_value = (int)div64_s64(tmp_weight64, tmp_sum);
 		norm_weights[i] = (int16_t)(temp_value);
 		sum += norm_weights[i];
 	}
