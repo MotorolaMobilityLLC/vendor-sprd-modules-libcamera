@@ -82,7 +82,8 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 							ISP_AFM_STATIS_BUF_SIZE +
 							ISP_AFL_STATIS_BUF_SIZE +
 							ISP_PDAF_STATIS_BUF_SIZE +
-							ISP_BINNING_STATIS_BUF_SIZE) * 5;
+							ISP_BINNING_STATIS_BUF_SIZE +
+							ISP_HIST_STATIS_BUF_SIZE) * 5;
 		statis_mem_info->isp_statis_mem_num = 1;
 		memset(&fds, 0x00, sizeof(fds));
 		if (statis_mem_info->alloc_cb) {
@@ -314,6 +315,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	} else if (irq_info->irq_property == IRQ_BINNING_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_CTRL_EVT_BINNING, statis_info, (void *)cxt->evt_alg_handle);
+		}
+	} else if (irq_info->irq_property == IRQ_HIST_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_CTRL_EVT_HIST, statis_info, (void *)cxt->evt_alg_handle);
 		}
 	} else if (irq_info->irq_property == IRQ_PDAF_STATIS) {
 		if (cxt->isp_event_cb) {

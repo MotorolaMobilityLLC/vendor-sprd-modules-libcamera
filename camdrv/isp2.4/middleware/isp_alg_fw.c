@@ -242,6 +242,7 @@ struct isp_alg_fw_context {
 	struct afctrl_awb_info awb_info;
 	struct commn_info commn_cxt;
 	struct sensor_data_info sn_cxt;
+	struct isp_hist_statistic_info hist_stats;
 	struct ae_info ae_cxt;
 	struct awb_info awb_cxt;
 	struct smart_info smart_cxt;
@@ -439,6 +440,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_AE_CB_FLASH_FIRED;
 		break;
 	case AE_CB_PROCESS_OUT:
+		break;
+	case AE_CB_HDR_STATUS:
+		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
@@ -1299,6 +1303,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
+	memcpy(&in_param.hist_stats, &cxt->hist_stats, sizeof(struct isp_hist_statistic_info));
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.ae_ops.process) {
 		ret = cxt->ops.ae_ops.process(cxt->ae_cxt.handle, &in_param, &ae_result);
@@ -2016,6 +2021,37 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	return ret;
 }
 
+static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+	struct isp_hist_statistic_info *hist_stat_ptr = NULL;
+	cmr_uint u_addr = 0;
+	cmr_uint i = 0;
+
+	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+
+	ret = isp_get_statis_buf_vir_addr(cxt->dev_access_handle, statis_info, &u_addr);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get_statis_buf_vir_addr"));
+
+	hist_stat_ptr = &cxt->hist_stats;
+	hist_stat_ptr->frame_id = statis_info->frame_id;
+	hist_stat_ptr->sec= statis_info->sec;
+	hist_stat_ptr->usec= statis_info->usec;
+	for(i = 0; i < ISP_HIST_ITEMS; i++) {
+		hist_stat_ptr->value[i] = *((cmr_u64 *)u_addr + i);
+	}
+
+	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_HIST_BLOCK);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int ispalg_ynr_done(cmr_handle isp_alg_handle) {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *) isp_alg_handle;
 	struct isp_alg_fw_context *slv_cxt = NULL;
@@ -2159,6 +2195,9 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_CTRL_EVT_BINNING:
 		ret = ispalg_binning_stats_parser((cmr_handle) cxt, message->data);
+		break;
+	case ISP_CTRL_EVT_HIST:
+		ret = ispalg_hist_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_PDAF:
 		break;
