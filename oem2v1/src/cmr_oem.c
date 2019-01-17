@@ -6728,7 +6728,8 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
                  video_snapshot_type);
         /* for sharkl2 offline path */
         if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
-            video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
+            video_snapshot_type != VIDEO_SNAPSHOT_VIDEO && !((1 == camera_get_3dnr_flag(cxt)) ||
+             (2 == camera_get_3dnr_flag(cxt)))) {
             cmr_bzero(&capture_param, sizeof(capture_param));
             capture_param.type = 1;
             ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,
