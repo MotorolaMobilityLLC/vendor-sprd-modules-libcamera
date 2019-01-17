@@ -26,7 +26,7 @@ static int mmsys_dvfs_probe(struct platform_device *pdev);
 static int mmsys_dvfs_remove(struct platform_device *pdev);
 
 static const struct of_device_id mmsys_dvfs_of_match[] = {
-	{    .compatible = "sprd,hwdvfs-mmsys-sharkl5" },
+	{    .compatible = "sprd,sharkl5-hwdvfs-mmsys" },
 	{    },
 };
 MODULE_DEVICE_TABLE(of, mmsys_dvfs_of_match);

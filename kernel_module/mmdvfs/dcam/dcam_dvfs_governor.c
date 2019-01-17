@@ -925,7 +925,7 @@ static struct attribute *dev_entries[] = {
 };
 
 static struct attribute_group dev_attr_group = {
-	.name    = "dcam_governor",
+	.name    = "dcam-if_governor",
 	.attrs    = dev_entries,
 };
 
@@ -944,7 +944,7 @@ static struct attribute *coeff_entries[] = {
 };
 
 static struct attribute_group coeff_attr_group = {
-	.name    = "dcam_coeff",
+	.name    = "dcam-if_coeff",
 	.attrs    = coeff_entries,
 };
 
@@ -981,23 +981,17 @@ static int dcam_dvfs_gov_get_target(struct devfreq *devfreq,
 
 	pr_info("devfreq_governor-->get_target_freq\n");
 
-	if (dcam->dvfs_enable) {
-		unsigned long adjusted_freq = dcam->user_freq;
+	if (dcam->user_freq_type == DVFS_WORK)
+		*freq = dcam->dcam_dvfs_para.u_work_freq;
+	else
+		*freq = dcam->dcam_dvfs_para.u_idle_freq;
 
+	if (devfreq->max_freq && *freq > devfreq->max_freq)
+		*freq = devfreq->max_freq;
 
-		if (dcam->user_freq_type == DVFS_WORK)
-			adjusted_freq = dcam->dcam_dvfs_para.u_work_freq;
-		else
-			adjusted_freq = dcam->dcam_dvfs_para.u_idle_freq;
+	if (devfreq->min_freq && *freq < devfreq->min_freq)
+		*freq = devfreq->min_freq;
 
-		if (devfreq->max_freq && adjusted_freq > devfreq->max_freq)
-			adjusted_freq = devfreq->max_freq;
-
-		if (devfreq->min_freq && adjusted_freq < devfreq->min_freq)
-			adjusted_freq = devfreq->min_freq;
-	*freq = adjusted_freq;
-	} else
-		*freq = devfreq->previous_freq; /* No user freq specified yet */
 	pr_info("dvfs *freq %lu", *freq);
 	return 0;
 }

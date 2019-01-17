@@ -30,21 +30,12 @@ static int cpp_dvfs_target(struct device *dev, unsigned long *freq,
 	u32 flags)
 {
 	struct cpp_dvfs *cpp = dev_get_drvdata(dev);
-	struct dev_pm_opp *opp;
-	unsigned long target_freq, target_volt;
+	unsigned long target_freq = *freq, target_volt = 0;
 	int err = 0;
 
 	pr_info("devfreq_dev_profile-->target,freq=%lu\n", *freq);
 
-	opp = devfreq_recommended_opp(dev, freq, flags);
-	if (IS_ERR(opp)) {
-		dev_err(dev, "Failed to find opp for %lu KHz\n", *freq);
-		return PTR_ERR(opp);
-	}
-	target_freq = dev_pm_opp_get_freq(opp);
-	target_volt = dev_pm_opp_get_voltage(opp);
-	/* dev_pm_opp_put(opp); */
-	if (cpp->freq == target_freq)
+	if (cpp->freq == *freq)
 		return 0;
 
 	mutex_lock(&cpp->lock);
@@ -143,7 +134,7 @@ static int cpp_dvfs_probe(struct platform_device *pdev)
 	of_property_read_u32(np, "sprd,dvfs-wait-window",
 	&cpp->dvfs_wait_window);
 #endif
-
+#if 0
 	of_property_read_u32(np, "sprd,dvfs-gfree-wait-delay",
 	&cpp->cpp_dvfs_para.ip_coffe.gfree_wait_delay);
 	of_property_read_u32(np, "sprd,dvfs-freq-upd-hdsk-en",
@@ -156,22 +147,17 @@ static int cpp_dvfs_probe(struct platform_device *pdev)
 	&cpp->cpp_dvfs_para.ip_coffe.sw_trig_en);
 	of_property_read_u32(np, "sprd,dvfs-auto-tune",
 	&cpp->cpp_dvfs_para.ip_coffe.auto_tune);
-	of_property_read_u32(np, "sprd,dvfs-work-index-def",
-	&cpp->cpp_dvfs_para.ip_coffe.work_index_def);
 	of_property_read_u32(np, "sprd,dvfs-idle-index-def",
 	&cpp->cpp_dvfs_para.ip_coffe.idle_index_def);
-
-	if (dev_pm_opp_of_add_table(dev)) {
-		dev_err(dev, "Invalid operating-points in device tree.\n");
-		return -EINVAL;
-	}
-
+#endif
+	of_property_read_u32(np, "sprd,dvfs-work-index-def",
+	&cpp->cpp_dvfs_para.ip_coffe.work_index_def);
 	platform_set_drvdata(pdev, cpp);
 	cpp->devfreq = devm_devfreq_add_device(dev,
 			&cpp_dvfs_profile,
 			"cpp_dvfs",
 			NULL);
-	
+
 	if (IS_ERR(cpp->devfreq)) {
 		dev_err(dev,
 		"failed to add devfreq dev with cpp-dvfs governor\n");
@@ -183,11 +169,10 @@ static int cpp_dvfs_probe(struct platform_device *pdev)
 	cpp->pw_nb.priority = 0;
 	cpp->pw_nb.notifier_call =  cpp_dvfs_notify_callback;
 	ret = mmsys_register_notifier(&cpp->pw_nb);
-	
+
 	return 0;
 
 err:
-	dev_pm_opp_of_remove_table(dev);
 	pr_err("cpp-dvfs probe err\n");
 	return ret;
 }
@@ -200,7 +185,7 @@ static int cpp_dvfs_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id cpp_dvfs_of_match[] = {
-	{ .compatible = "sprd,hwdvfs-cpp-sharkl5" },
+	{ .compatible = "sprd,sharkl5-hwdvfs-cpp" },
 	{ },
 };
 
@@ -230,11 +215,11 @@ int cpp_dvfs_init(void)
 		pr_err("%s: failed to add governor: %d\n", __func__, ret);
 		return ret;
 	}
-	
+
 	pr_err("enter platform_driver_register ret=%d\n",ret);
 	ret = platform_driver_register(&cpp_dvfs_driver);
   	pr_err("exit platform_driver_register ret=%d\n",ret);
-  	
+
 	if (ret)
 		devfreq_remove_governor(&cpp_dvfs_gov);
 

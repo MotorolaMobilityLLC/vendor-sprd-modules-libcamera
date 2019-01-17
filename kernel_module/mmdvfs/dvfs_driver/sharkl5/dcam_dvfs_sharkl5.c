@@ -2,6 +2,7 @@
 #include "mmsys_dvfs_comm.h"
 #include "mm_dvfs.h"
 #include "dcam_dvfs.h"
+#include "sharkl5_mm_dvfs_coffe.h"
 
 
 struct ip_dvfs_map_cfg  dcam_dvfs_config_table[] =
@@ -9,7 +10,7 @@ struct ip_dvfs_map_cfg  dcam_dvfs_config_table[] =
 	{0, REG_MM_DVFS_AHB_DCAM_IF_INDEX0_MAP,	VOLT70,   DCAM_CLK1920,	DCAM_CLK_INDEX_1920, 	0, 0,	DCAMAXI_CLK_INDEX_1920, 0	},
 	{1, REG_MM_DVFS_AHB_DCAM_IF_INDEX1_MAP,	VOLT70,   DCAM_CLK1920,	DCAM_CLK_INDEX_1920,	0, 0, 	DCAMAXI_CLK_INDEX_1920, 0	},
 	{2, REG_MM_DVFS_AHB_DCAM_IF_INDEX2_MAP,	VOLT70,   DCAM_CLK2560,	DCAM_CLK_INDEX_2560,	0, 0, 	DCAMAXI_CLK_INDEX_2560, 0	},
-	{3, REG_MM_DVFS_AHB_DCAM_IF_INDEX3_MAP,	VOLT70,   DCAM_CLK2560,	DCAM_CLK_INDEX_2560,	0, 0, DCAMAXI_CLK_INDEX_2560, 0	},
+	{3, REG_MM_DVFS_AHB_DCAM_IF_INDEX3_MAP,	VOLT70,   DCAM_CLK2560,	DCAM_CLK_INDEX_2560,	0, 0,   DCAMAXI_CLK_INDEX_2560, 0	},
 	{4, REG_MM_DVFS_AHB_DCAM_IF_INDEX4_MAP,	VOLT70,   DCAM_CLK3072,	DCAM_CLK_INDEX_3072,	0, 0, 	DCAMAXI_CLK_INDEX_3072, 0	},
 	{5, REG_MM_DVFS_AHB_DCAM_IF_INDEX5_MAP,	VOLT75,   DCAM_CLK3072,	DCAM_CLK_INDEX_3072,	0, 0, 	DCAMAXI_CLK_INDEX_3072, 0	},
 	{6, REG_MM_DVFS_AHB_DCAM_IF_INDEX6_MAP,	VOLT75,   DCAM_CLK3840,	DCAM_CLK_INDEX_3840,	0, 0,	DCAMAXI_CLK_INDEX_3840, 0	},
@@ -63,7 +64,7 @@ static int  get_ip_dvfs_table(struct devfreq *devfreq,
 		dvfs_table[i].axi_index = dcam_dvfs_config_table[i].axi_index;
 		dvfs_table[i].mtx_index = dcam_dvfs_config_table[i].mtx_index;
 	}
-	
+
 	return 1;
 }
 
@@ -87,10 +88,12 @@ static void   get_ip_index_from_table(struct ip_dvfs_map_cfg  *dvfs_cfg,
 	for (i = 0; i < 8; i++) {
 		set_clk = dcam_dvfs_config_table[i].clk_freq;
 
-		if (work_freq == set_clk) {
+		if (work_freq == set_clk||work_freq < set_clk) {
 			*index = i;
 			break;
 	}
+		if(i==7)
+		*index = 7;
 	}
 
 	pr_info("dvfs ops: %s\n", __func__);
@@ -288,7 +291,7 @@ static void dcam_dvfs_map_cfg(void)
 	int i=0;
 
 	for(i=0;i<8;i++)
-	{  
+	{
 		map_cfg_reg = DVFS_REG_RD(dcam_dvfs_config_table[i].reg_add);
 		map_cfg_reg =(map_cfg_reg & (~0x1ffff)) |     \
 		BITS_DCAM_IF_VOTE_AXI_INDEX0(dcam_dvfs_config_table[i].axi_index) |     \
@@ -315,28 +318,30 @@ static int  ip_dvfs_init(struct devfreq *devfreq)
 		return 1;
 	}
 
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.freq_upd_en_byp);
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.freq_upd_delay_en);
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.freq_upd_hdsk_en);
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.gfree_wait_delay);
-	pr_info("dvfs : dcam%d\n", dcam->dcam_dvfs_para.ip_coffe.sw_trig_en);
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.work_index_def);
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.idle_index_def);
-	pr_info("dvfs : dcam %d\n", dcam->dcam_dvfs_para.ip_coffe.auto_tune);
-    
+	pr_info("dvfs : dcam %d\n", DCAM_IF_FREQ_UPD_EN_BYP);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_FREQ_UPD_DELAY_EN);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_FREQ_UPD_HDSK_EN);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_GFREE_WAIT_DELAY);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_SW_TRIG_EN);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_WORK_INDEX_DEF);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_IDLE_INDEX_DEF);
+	pr_info("dvfs : dcam %d\n", DCAM_IF_AUTO_TUNE);
+
 	dcam_dvfs_map_cfg();
-   
-	set_ip_freq_upd_en_byp(dcam->dcam_dvfs_para.ip_coffe.freq_upd_en_byp);
-	set_ip_freq_upd_delay_en(
-		dcam->dcam_dvfs_para.ip_coffe.freq_upd_delay_en);
-	set_ip_freq_upd_hdsk_en(dcam->dcam_dvfs_para.ip_coffe.freq_upd_hdsk_en);
-	set_ip_gfree_wait_delay(dcam->dcam_dvfs_para.ip_coffe.gfree_wait_delay);
-	set_ip_dvfs_swtrig_en(dcam->dcam_dvfs_para.ip_coffe.sw_trig_en);
-	set_ip_dvfs_work_index(devfreq,
-		dcam->dcam_dvfs_para.ip_coffe.work_index_def);
-	set_ip_dvfs_idle_index(devfreq,
-		dcam->dcam_dvfs_para.ip_coffe.idle_index_def);
-	ip_hw_dvfs_en(devfreq, dcam->dcam_dvfs_para.ip_coffe.auto_tune);
+
+	devfreq->max_freq = dcam_dvfs_config_table[7].clk_freq;
+	devfreq->min_freq = dcam_dvfs_config_table[0].clk_freq;
+
+	set_ip_freq_upd_en_byp(DCAM_IF_FREQ_UPD_EN_BYP);
+	set_ip_freq_upd_delay_en(DCAM_IF_FREQ_UPD_DELAY_EN);
+	set_ip_freq_upd_hdsk_en(DCAM_IF_FREQ_UPD_HDSK_EN);
+	set_ip_gfree_wait_delay(DCAM_IF_GFREE_WAIT_DELAY);
+	set_ip_dvfs_swtrig_en(DCAM_IF_SW_TRIG_EN);
+	set_ip_dvfs_work_index(devfreq,DCAM_IF_WORK_INDEX_DEF);
+	set_ip_dvfs_idle_index(devfreq,DCAM_IF_IDLE_INDEX_DEF);
+	ip_hw_dvfs_en(devfreq, DCAM_IF_AUTO_TUNE);
+	dcam->dvfs_enable = DCAM_IF_AUTO_TUNE;
+	dcam->freq = dcam_dvfs_config_table[DCAM_IF_WORK_INDEX_DEF].clk_freq;
 
 	return 1;
 }

@@ -22,7 +22,7 @@ static int isp_dvfs_probe(struct platform_device *pdev);
 static int isp_dvfs_remove(struct platform_device *pdev);
 
 static const struct of_device_id isp_dvfs_of_match[] = {
-	{ .compatible = "sprd,hwdvfs-isp-sharkl5" },
+	{ .compatible = "sprd,sharkl5-hwdvfs-isp" },
 	{ },
 	};
 MODULE_DEVICE_TABLE(of, isp_dvfs_of_match);
@@ -48,21 +48,11 @@ static int isp_dvfs_target(struct device *dev, unsigned long *freq,
 	u32 flags)
 {
 	struct isp_dvfs *isp = dev_get_drvdata(dev);
-	struct dev_pm_opp *opp;
-	unsigned long target_freq, target_volt;
+	unsigned long target_freq = *freq, target_volt = 0;
 	int err = 0;
+	pr_info("devfreq_dev_profile-->target,freq=%lu isp->freq = %lu\n", *freq,isp->freq);
 
-	pr_info("devfreq_dev_profile-->target,freq=%lu\n", *freq);
-
-	opp = devfreq_recommended_opp(dev, freq, flags);
-	if (IS_ERR(opp)) {
-		dev_err(dev, "Failed to find opp for %lu KHz\n", *freq);
-		return PTR_ERR(opp);
-	}
-	target_freq = dev_pm_opp_get_freq(opp);
-	target_volt = dev_pm_opp_get_voltage(opp);
-	/* dev_pm_opp_put(opp); */
-	if (isp->freq == target_freq)
+	if (isp->freq == *freq)
 		return 0;
 
 	mutex_lock(&isp->lock);
@@ -162,7 +152,7 @@ static int isp_dvfs_probe(struct platform_device *pdev)
 	of_property_read_u32(np, "sprd,dvfs-wait-window",
 	&isp->dvfs_wait_window);
 #endif
-
+#if 0
 	of_property_read_u32(np, "sprd,dvfs-gfree-wait-delay",
 	&isp->isp_dvfs_para.ip_coffe.gfree_wait_delay);
 	of_property_read_u32(np, "sprd,dvfs-freq-upd-hdsk-en",
@@ -175,16 +165,11 @@ static int isp_dvfs_probe(struct platform_device *pdev)
 	&isp->isp_dvfs_para.ip_coffe.sw_trig_en);
 	of_property_read_u32(np, "sprd,dvfs-auto-tune",
 	&isp->isp_dvfs_para.ip_coffe.auto_tune);
-	of_property_read_u32(np, "sprd,dvfs-work-index-def",
-	&isp->isp_dvfs_para.ip_coffe.work_index_def);
 	of_property_read_u32(np, "sprd,dvfs-idle-index-def",
 	&isp->isp_dvfs_para.ip_coffe.idle_index_def);
-
-	if (dev_pm_opp_of_add_table(dev)) {
-		dev_err(dev, "Invalid operating-points in device tree.\n");
-		return -EINVAL;
-	}
-
+#endif
+	of_property_read_u32(np, "sprd,dvfs-work-index-def",
+	&isp->isp_dvfs_para.ip_coffe.work_index_def);
 	platform_set_drvdata(pdev, isp);
 	isp->devfreq = devm_devfreq_add_device(dev,
 	&isp_dvfs_profile,
@@ -204,8 +189,6 @@ static int isp_dvfs_probe(struct platform_device *pdev)
 	return 0;
 
 err:
-	dev_pm_opp_of_remove_table(dev);
-
 	return ret;
 }
 

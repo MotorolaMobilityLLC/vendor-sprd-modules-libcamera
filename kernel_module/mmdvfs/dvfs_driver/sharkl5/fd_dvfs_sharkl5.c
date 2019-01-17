@@ -2,6 +2,8 @@
 #include "mmsys_dvfs_comm.h"
 #include "mm_dvfs.h"
 #include "fd_dvfs.h"
+#include "sharkl5_mm_dvfs_coffe.h"
+
 
 
 struct ip_dvfs_map_cfg  fd_dvfs_config_table[] =
@@ -63,7 +65,7 @@ static int  get_ip_dvfs_table(struct devfreq *devfreq,
 		dvfs_table[i].axi_index = fd_dvfs_config_table[i].axi_index;
 		dvfs_table[i].mtx_index = fd_dvfs_config_table[i].mtx_index;
 	}
-	
+
 	return 1;
 }
 
@@ -89,10 +91,12 @@ static void   get_ip_index_from_table(struct ip_dvfs_map_cfg  *dvfs_cfg,
 	for (i = 0; i < 8; i++) {
 		set_clk =  fd_dvfs_config_table[i].clk_freq;
 
-		if (work_freq == set_clk) {
+		if (work_freq == set_clk||work_freq < set_clk) {
 			*index = i;
 			break;
 		}
+		if(i==7)
+		*index = 7;
 	}
 
 	pr_info("dvfs ops: %s,index=%d\n", __func__, *index);
@@ -316,29 +320,29 @@ static int  ip_dvfs_init(struct devfreq *devfreq)
 	}
 
 
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.freq_upd_en_byp);
-	pr_info("dvfs : fd%d\n", fd->fd_dvfs_para.ip_coffe.freq_upd_delay_en);
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.freq_upd_hdsk_en);
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.gfree_wait_delay);
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.sw_trig_en);
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.work_index_def);
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.idle_index_def);
-	pr_info("dvfs : fd %d\n", fd->fd_dvfs_para.ip_coffe.auto_tune);
-	
+	pr_info("dvfs : fd %d\n", FD_FREQ_UPD_EN_BYP);
+	pr_info("dvfs : fd %d\n", FD_FREQ_UPD_DELAY_EN);
+	pr_info("dvfs : fd %d\n", FD_FREQ_UPD_HDSK_EN);
+	pr_info("dvfs : fd %d\n", FD_GFREE_WAIT_DELAY);
+	pr_info("dvfs : fd %d\n", FD_SW_TRIG_EN);
+	pr_info("dvfs : fd %d\n", FD_WORK_INDEX_DEF);
+	pr_info("dvfs : fd %d\n", FD_IDLE_INDEX_DEF);
+	pr_info("dvfs : fd %d\n", FD_AUTO_TUNE);
 	fd_dvfs_map_cfg();
 
-	set_ip_freq_upd_en_byp(fd->fd_dvfs_para.ip_coffe.freq_upd_en_byp);
-	set_ip_freq_upd_delay_en(fd->fd_dvfs_para.ip_coffe.freq_upd_delay_en);
-	set_ip_freq_upd_hdsk_en(fd->fd_dvfs_para.ip_coffe.freq_upd_hdsk_en);
-	set_ip_gfree_wait_delay(fd->fd_dvfs_para.ip_coffe.gfree_wait_delay);
-	set_ip_dvfs_swtrig_en(fd->fd_dvfs_para.ip_coffe.sw_trig_en);
-	set_ip_dvfs_work_index(devfreq,
-		fd->fd_dvfs_para.ip_coffe.work_index_def);
-	set_ip_dvfs_idle_index(devfreq,
-		fd->fd_dvfs_para.ip_coffe.idle_index_def);
-	ip_hw_dvfs_en(devfreq, fd->fd_dvfs_para.ip_coffe.auto_tune);
+	devfreq->max_freq = fd_dvfs_config_table[7].clk_freq;
+	devfreq->min_freq = fd_dvfs_config_table[0].clk_freq;
 
-
+	set_ip_freq_upd_en_byp(FD_FREQ_UPD_EN_BYP);
+	set_ip_freq_upd_delay_en(FD_FREQ_UPD_DELAY_EN);
+	set_ip_freq_upd_hdsk_en(FD_FREQ_UPD_HDSK_EN);
+	set_ip_gfree_wait_delay(FD_GFREE_WAIT_DELAY);
+	set_ip_dvfs_swtrig_en(FD_SW_TRIG_EN);
+	set_ip_dvfs_work_index(devfreq,FD_WORK_INDEX_DEF);
+	set_ip_dvfs_idle_index(devfreq,FD_IDLE_INDEX_DEF);
+	ip_hw_dvfs_en(devfreq, FD_AUTO_TUNE);
+	fd->dvfs_enable = FD_AUTO_TUNE;
+    fd->freq = fd_dvfs_config_table[FD_WORK_INDEX_DEF].clk_freq;
 
 	return 1;
 }

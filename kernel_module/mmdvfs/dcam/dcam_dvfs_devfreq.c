@@ -23,7 +23,7 @@ static int dcam_dvfs_remove(struct platform_device *pdev);
 
 
 static const struct of_device_id dcam_dvfs_of_match[] = {
-	{ .compatible = "sprd,hwdvfs-dcam_if-sharkl5" },
+	{ .compatible = "sprd,sharkl5-hwdvfs-dcam-if" },
 	{ },
 	};
 MODULE_DEVICE_TABLE(of, dcam_dvfs_of_match);
@@ -52,21 +52,12 @@ static int dcam_dvfs_target(struct device *dev, unsigned long *freq,
 	u32 flags)
 {
 	struct dcam_dvfs *dcam = dev_get_drvdata(dev);
-	struct dev_pm_opp *opp;
-	unsigned long target_freq, target_volt;
+	unsigned long target_freq = *freq, target_volt = 0;
 	int err = 0;
 
-	pr_info("devfreq_dev_profile-->target,freq=%lu\n", *freq);
+	pr_info("devfreq_dev_profile-->target,freq=%lu dcam->freq=%lu\n", *freq,dcam->freq);
 
-	opp = devfreq_recommended_opp(dev, freq, flags);
-	if (IS_ERR(opp)) {
-		dev_err(dev, "Failed to find opp for %lu KHz\n", *freq);
-		return PTR_ERR(opp);
-	}
-	target_freq = dev_pm_opp_get_freq(opp);
-	target_volt = dev_pm_opp_get_voltage(opp);
-	/* dev_pm_opp_put(opp); */
-	if (dcam->freq == target_freq)
+	if (dcam->freq == *freq)
 		return 0;
 
 	mutex_lock(&dcam->lock);
@@ -166,7 +157,7 @@ static int dcam_dvfs_probe(struct platform_device *pdev)
 	of_property_read_u32(np, "sprd,dvfs-wait-window",
 	&dcam->dvfs_wait_window);
 #endif
-
+#if 0
 	of_property_read_u32(np, "sprd,dvfs-gfree-wait-delay",
 	&dcam->dcam_dvfs_para.ip_coffe.gfree_wait_delay);
 	of_property_read_u32(np, "sprd,dvfs-freq-upd-hdsk-en",
@@ -177,17 +168,13 @@ static int dcam_dvfs_probe(struct platform_device *pdev)
 	&dcam->dcam_dvfs_para.ip_coffe.freq_upd_en_byp);
 	of_property_read_u32(np, "sprd,dvfs-sw-trig-en",
 	&dcam->dcam_dvfs_para.ip_coffe.sw_trig_en);
+	of_property_read_u32(np, "sprd,dvfs-idle-index-def",
+	&dcam->dcam_dvfs_para.ip_coffe.idle_index_def);
+#endif
 	of_property_read_u32(np, "sprd,dvfs-auto-tune",
 	&dcam->dcam_dvfs_para.ip_coffe.auto_tune);
 	of_property_read_u32(np, "sprd,dvfs-work-index-def",
 	&dcam->dcam_dvfs_para.ip_coffe.work_index_def);
-	of_property_read_u32(np, "sprd,dvfs-idle-index-def",
-	&dcam->dcam_dvfs_para.ip_coffe.idle_index_def);
-
-	if (dev_pm_opp_of_add_table(dev)) {
-		dev_err(dev, "Invalid operating-points in device tree.\n");
-		return -EINVAL;
-	}
 
 	platform_set_drvdata(pdev, dcam);
 	dcam->devfreq = devm_devfreq_add_device(dev,
@@ -208,8 +195,6 @@ static int dcam_dvfs_probe(struct platform_device *pdev)
 	return 0;
 
 err:
-	dev_pm_opp_of_remove_table(dev);
-
 	return ret;
 }
 

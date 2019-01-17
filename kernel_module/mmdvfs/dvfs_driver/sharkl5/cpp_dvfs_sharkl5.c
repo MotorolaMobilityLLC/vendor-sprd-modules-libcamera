@@ -2,6 +2,7 @@
 #include "mmsys_dvfs_comm.h"
 #include "mm_dvfs.h"
 #include "cpp_dvfs.h"
+#include "sharkl5_mm_dvfs_coffe.h"
 
 
 struct ip_dvfs_map_cfg  cpp_dvfs_config_table[] =
@@ -64,7 +65,7 @@ static int  get_ip_dvfs_table(struct devfreq *devfreq,
 		dvfs_table[i].axi_index = cpp_dvfs_config_table[i].axi_index;
 		dvfs_table[i].mtx_index = cpp_dvfs_config_table[i].mtx_index;
 	}
-	
+
 	return 1;
 }
 
@@ -88,10 +89,12 @@ static void   get_ip_index_from_table(struct ip_dvfs_map_cfg  *dvfs_cfg,
 	for (i = 0; i < 8; i++) {
 		set_clk =  cpp_dvfs_config_table[i].clk_freq;
 
-		if (work_freq == set_clk) {
+		if (work_freq == set_clk||work_freq < set_clk) {
 			*index = i;
 			break;
 		}
+		if(i==7)
+		*index = 7;
 	}
 
 	pr_info("dvfs ops: %s,index=%d\n", __func__, *index);
@@ -299,7 +302,7 @@ static void  set_ip_dvfs_idle_index(struct devfreq *devfreq, unsigned int
 	index_cfg_reg = DVFS_REG_RD(REG_MM_DVFS_AHB_CPP_DVFS_INDEX_IDLE_CFG);
 	index_cfg_reg = (index_cfg_reg & (~0x7)) | index;
 	DVFS_REG_WR(REG_MM_DVFS_AHB_CPP_DVFS_INDEX_IDLE_CFG, index_cfg_reg);
-          
+
 	top_mm_dvfs_current_volt(devfreq);
 	mm_dvfs_read_current_volt(devfreq);
 	cpp_dvfs_map_cfg();
@@ -321,15 +324,14 @@ static int  ip_dvfs_init(struct devfreq *devfreq)
 		return 1;
 	}
 
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.freq_upd_en_byp);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.freq_upd_delay_en);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.freq_upd_hdsk_en);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.gfree_wait_delay);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.sw_trig_en);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.work_index_def);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.idle_index_def);
-	pr_info("dvfs : cpp %d\n", cpp->cpp_dvfs_para.ip_coffe.auto_tune);
-	
+	pr_info("dvfs : cpp %d\n", CPP_FREQ_UPD_EN_BYP);
+	pr_info("dvfs : cpp %d\n", CPP_FREQ_UPD_DELAY_EN);
+	pr_info("dvfs : cpp %d\n", CPP_FREQ_UPD_HDSK_EN);
+	pr_info("dvfs : cpp %d\n", CPP_GFREE_WAIT_DELAY);
+	pr_info("dvfs : cpp %d\n", CPP_SW_TRIG_EN);
+	pr_info("dvfs : cpp %d\n", CPP_WORK_INDEX_DEF);
+	pr_info("dvfs : cpp %d\n", CPP_IDLE_INDEX_DEF);
+	pr_info("dvfs : cpp %d\n", CPP_AUTO_TUNE);
 	cpp_dvfs_map_cfg();
 
 #if 0
@@ -339,16 +341,17 @@ static int  ip_dvfs_init(struct devfreq *devfreq)
 	set_ip_gfree_wait_delay(cpp->cpp_dvfs_para.ip_coffe.gfree_wait_delay);
 	set_ip_dvfs_swtrig_en(cpp->cpp_dvfs_para.ip_coffe.sw_trig_en);
 #else
-	cpp->cpp_dvfs_para.ip_coffe.idle_index_def =0;  
-	
+	cpp->cpp_dvfs_para.ip_coffe.idle_index_def =0;
+
 #endif
+	devfreq->max_freq = cpp_dvfs_config_table[7].clk_freq;
+	devfreq->min_freq = cpp_dvfs_config_table[0].clk_freq;
 
-	set_ip_dvfs_work_index(devfreq,
-		cpp->cpp_dvfs_para.ip_coffe.work_index_def);
-	set_ip_dvfs_idle_index(devfreq,
-		cpp->cpp_dvfs_para.ip_coffe.idle_index_def);
-	ip_hw_dvfs_en(devfreq, cpp->cpp_dvfs_para.ip_coffe.auto_tune);
-
+	set_ip_dvfs_work_index(devfreq,CPP_WORK_INDEX_DEF);
+	set_ip_dvfs_idle_index(devfreq,CPP_IDLE_INDEX_DEF);
+	ip_hw_dvfs_en(devfreq, CPP_AUTO_TUNE);
+	cpp->dvfs_enable = CPP_AUTO_TUNE;
+    cpp->freq = cpp_dvfs_config_table[CPP_WORK_INDEX_DEF].clk_freq;
 
 	return 1;
 }
