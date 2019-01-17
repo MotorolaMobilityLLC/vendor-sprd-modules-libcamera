@@ -1411,6 +1411,8 @@ static cmr_int ispctl_3ndr_ioctrl(cmr_handle isp_alg_handle, void *param_ptr)
 			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_CMC);
 		if (cxt->ops.smart_ops.block_disable)
 			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		if (cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_HSV);
 		if (cxt->ops.smart_ops.NR_disable)
 			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 1);
 		if (cxt->ops.awb_ops.ioctrl)
@@ -1426,6 +1428,8 @@ static cmr_int ispctl_3ndr_ioctrl(cmr_handle isp_alg_handle, void *param_ptr)
 			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_CMC);
 		if (cxt->ops.smart_ops.block_enable)
 			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		if (cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_HSV);
 		if (cxt->ops.smart_ops.NR_disable)
 			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 0);
 		if (cxt->ops.awb_ops.ioctrl)
