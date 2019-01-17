@@ -42,10 +42,11 @@ struct camera_frame {
 	void *priv_data;
 	/* for more param extend especially in offline process */
 	void *param_data;
-	void *sync_data; /* struct dcam_frame_synchronizer */
-	struct timeval time;
-	struct timeval sensor_time;
-	ktime_t boot_time;
+	void *sync_data;/* struct dcam_frame_synchronizer */
+	struct timeval time;/* time without suspend @ISP DONE */
+	ktime_t boot_time;/* ns from boot @ISP DONE */
+	struct timeval sensor_time;/* time without suspend @SOF */
+	ktime_t boot_sensor_time;/* ns from boot @SOF */
 	struct camera_buf  buf;
 };
 

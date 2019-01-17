@@ -92,6 +92,7 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 	struct dcam_path_desc *path = NULL;
 	struct camera_frame *frame = NULL;
 	struct dcam_frame_synchronizer *sync = NULL;
+	struct timespec *ts = NULL;
 
 	if (unlikely(!dev || !is_path_id(path_id)))
 		return NULL;
@@ -117,6 +118,13 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 		camera_enqueue(&path->reserved_buf_queue, frame);
 		return NULL;
 	}
+
+	/* assign same SOF time here for each path */
+	ts = &dev->frame_ts[frame->fid % DCAM_FRAME_TIMESTAMP_COUNT];
+	frame->sensor_time.tv_sec = ts->tv_sec;
+	frame->sensor_time.tv_usec = ts->tv_nsec / NSEC_PER_USEC;
+	frame->boot_sensor_time =
+		dev->frame_ts_boot[frame->fid % DCAM_FRAME_TIMESTAMP_COUNT];
 
 	if (frame->sync_data) {
 		sync = (struct dcam_frame_synchronizer *)frame->sync_data;
@@ -183,8 +191,17 @@ static void dcam_cap_sof(void *param)
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
 	struct dcam_path_desc *path;
 	struct dcam_sync_helper *helper = NULL;
+	uint32_t sof_index = 0;
 
 	dev->frame_index++;
+
+	/* record SOF timestamp for each frame */
+	sof_index = dev->frame_index;
+	sof_index += DCAM_FRAME_TIMESTAMP_COUNT - dev->slowmotion_count;
+	sof_index %= DCAM_FRAME_TIMESTAMP_COUNT;
+	ktime_get_ts(&dev->frame_ts[sof_index]);
+	dev->frame_ts_boot[sof_index] = ktime_get_boottime();
+
 	pr_debug("DCAM%u cnt=%d, fid: %u\n", dev->idx,
 		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
 		 dev->frame_index);
@@ -314,10 +331,12 @@ static void dcam_bin_path_done(void *param)
 
 	if (dev->enable_slowmotion) {
 		int i = 1;
+
 		while (i++ < dev->slowmotion_count)
 			dcam_dispatch_frame(dev, DCAM_PATH_BIN,
-				dcam_prepare_frame(dev, DCAM_PATH_BIN),
-				DCAM_CB_DATA_DONE);
+					    dcam_prepare_frame(dev,
+							       DCAM_PATH_BIN),
+					    DCAM_CB_DATA_DONE);
 	}
 
 	if (dev->offline) {

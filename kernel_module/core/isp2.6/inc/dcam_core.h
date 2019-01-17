@@ -35,6 +35,7 @@
 
 // TODO: how many helpers there should be?
 #define DCAM_SYNC_HELPER_COUNT 20
+#define DCAM_FRAME_TIMESTAMP_COUNT 0x40
 
 struct dcam_pipe_dev;
 
@@ -180,15 +181,19 @@ struct dcam_sync_helper {
  * Each IP should implement a dcam_pipe_dev according to features it has. The
  * IP version may change, but basic function of DCAM IP is similar.
  *
- * @idx:              index of this device
- * @irq:              interrupt number for this device
- * @state:            working state of this device
+ * @idx:               index of this device
+ * @irq:               interrupt number for this device
+ * @state:             working state of this device
  *
- * @frame_index:      frame index, tracked by CAP_SOF
- * @helper_enabled:   sync enabled path IDs
- * @helper_lock:      this lock protects synchronizer helper related data
- * @helper_list:      a list of sync helpers
- * @helpers:          memory for helpers
+ * @frame_index:       frame index, tracked by CAP_SOF
+ * $frame_ts:          timestamp at SOF, time without suspend
+ * @frame_ts_boot:     timestamp at SOF, ns counts from system boot
+ * @enable_slowmotion: flag indicating whether slow motion is enabled
+ * @slowmotion_count:  frame count in a slow motion group, AKA slow motion rate
+ * @helper_enabled:    sync enabled path IDs
+ * @helper_lock:       this lock protects synchronizer helper related data
+ * @helper_list:       a list of sync helpers
+ * @helpers:           memory for helpers
  */
 struct dcam_pipe_dev {
 	uint32_t idx;
@@ -198,6 +203,8 @@ struct dcam_pipe_dev {
 	bool  dcamsec_eb;
 
 	uint32_t frame_index;
+	struct timespec frame_ts[DCAM_FRAME_TIMESTAMP_COUNT];
+	ktime_t frame_ts_boot[DCAM_FRAME_TIMESTAMP_COUNT];
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
 	uint32_t helper_enabled;

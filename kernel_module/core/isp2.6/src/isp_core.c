@@ -1138,6 +1138,7 @@ static int set_fmcu_slw_queue(struct isp_pipe_context *pctx)
 		}
 		out_frame->fid = frame_id;
 		out_frame->sensor_time = pframe->sensor_time;
+		out_frame->boot_sensor_time = pframe->boot_sensor_time;
 
 		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",
 				(uint32_t)out_frame->buf.iova[0],
@@ -1288,6 +1289,7 @@ static int isp_offline_start_frame(void *ctx)
 		}
 		out_frame->fid = frame_id;
 		out_frame->sensor_time = pframe->sensor_time;
+		out_frame->boot_sensor_time = pframe->boot_sensor_time;
 
 		/* config store buffer */
 		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",

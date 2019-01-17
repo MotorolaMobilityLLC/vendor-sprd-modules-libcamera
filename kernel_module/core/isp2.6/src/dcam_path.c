@@ -670,7 +670,6 @@ static inline struct camera_frame *
 dcam_path_cycle_frame(struct dcam_pipe_dev *dev, struct dcam_path_desc *path)
 {
 	struct camera_frame *frame = NULL;
-	struct timespec cur_ts;
 
 	frame = camera_dequeue(&path->out_buf_queue);
 	if (frame == NULL)
@@ -693,10 +692,6 @@ dcam_path_cycle_frame(struct dcam_pipe_dev *dev, struct dcam_path_desc *path)
 		return ERR_PTR(-EPERM);
 	}
 
-	/* TODO: consider using same time for all paths here */
-	ktime_get_ts(&cur_ts);
-	frame->sensor_time.tv_sec = cur_ts.tv_sec;
-	frame->sensor_time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
 	frame->fid = dev->frame_index;
 	frame->sync_data = NULL;
 
