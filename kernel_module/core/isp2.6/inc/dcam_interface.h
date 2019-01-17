@@ -71,6 +71,13 @@ enum dcam_path_id {
 	DCAM_PATH_MAX,
 };
 
+struct statis_path_buf_info {
+	enum dcam_path_id path_id;
+	size_t buf_size;
+	size_t buf_cnt;
+	uint32_t buf_type;
+};
+
 /*
  * Quick function to check is @id valid.
  */
@@ -254,5 +261,8 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 int sprd_dcam_debugfs_init(void);
 int sprd_dcam_debugfs_deinit(void);
 uint32_t get_outbuf_queue_cnt(void *dev, int path_id);
+
+struct statis_path_buf_info *dcam_get_statis_distribution_array(void);
+int dcam_get_statis_distribution_size(void);
 
 #endif /* _DCAM_INTERFACE_H_ */

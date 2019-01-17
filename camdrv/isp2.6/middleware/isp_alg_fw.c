@@ -294,6 +294,7 @@ struct isp_alg_fw_context {
 	cmr_u8 aem_is_update;
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
+	struct isp_hist_statistic_info hist2_stats;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info commn_cxt;
@@ -1429,6 +1430,36 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
+static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	cmr_u32 *ptr;
+	struct isp_hist_statistic_info *hist_stats;
+
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+
+	ptr = (cmr_u32 *)statis_info->uaddr;
+
+	/* Y */
+	hist_stats = &cxt->hist2_stats;
+	hist_stats->sec = statis_info->sec;
+	hist_stats->usec = statis_info->usec;
+	hist_stats->frame_id = statis_info->frame_id;
+
+	for(i = 0; i < 256; i++) {
+		hist_stats->value[i] = *(ptr + i);
+	}
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+
+	return ret;
+}
+
 static cmr_int ispalg_3dnr_statis_parser(cmr_handle isp_alg_handle, void *data) {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1521,6 +1552,10 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
+
+	/* copy isp hist2 statis and pass to ae algo */
+	memcpy((void *)&in_param.hist_stats, (void *)&cxt->hist2_stats,
+		sizeof(struct isp_hist_statistic_info));
 
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.ae_ops.process) {
@@ -2395,6 +2430,9 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_EVT_HIST:
 		ret = ispalg_hist_stats_parser((cmr_handle) cxt, message->data);
+		break;
+	case ISP_EVT_HIST2:
+		ret = ispalg_hist2_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_EVT_3DNR:
 		ret = ispalg_3dnr_statis_parser((cmr_handle) cxt, message->data);

@@ -47,6 +47,10 @@
 
 #include "mm_ahb.h"
 
+#include <linux/sprd_iommu.h>
+#include <linux/sprd_ion.h>
+
+
 #ifdef pr_fmt
 #undef pr_fmt
 #endif
@@ -62,17 +66,20 @@
  * todo: avoid conflict between raw/pdaf type3
  */
 struct statis_path_buf_info s_statis_path_info_all[] = {
-	{DCAM_PATH_PDAF,    STATIS_PDAF_BUF_SIZE,  STATIS_PDAF_BUF_NUM},
-	{DCAM_PATH_VCH2,    STATIS_EBD_BUF_SIZE,   STATIS_EBD_BUF_NUM},
-	{DCAM_PATH_AEM,     STATIS_AEM_BUF_SIZE,   STATIS_AEM_BUF_NUM},
-	{DCAM_PATH_AFM,     STATIS_AFM_BUF_SIZE,   STATIS_AFM_BUF_NUM},
-	{DCAM_PATH_AFL,     STATIS_AFL_BUF_SIZE,   STATIS_AFL_BUF_NUM},
-	{DCAM_PATH_HIST,    STATIS_HIST_BUF_SIZE,  STATIS_HIST_BUF_NUM},
-	{DCAM_PATH_3DNR,    STATIS_3DNR_BUF_SIZE,  STATIS_3DNR_BUF_NUM},
+	{DCAM_PATH_PDAF,    STATIS_PDAF_BUF_SIZE,  STATIS_PDAF_BUF_NUM, STATIS_PDAF},
+	{DCAM_PATH_VCH2,    STATIS_EBD_BUF_SIZE,   STATIS_EBD_BUF_NUM, STATIS_EBD},
+	{DCAM_PATH_AEM,     STATIS_AEM_BUF_SIZE,   STATIS_AEM_BUF_NUM, STATIS_AEM},
+	{DCAM_PATH_AFM,     STATIS_AFM_BUF_SIZE,   STATIS_AFM_BUF_NUM, STATIS_AFM},
+	{DCAM_PATH_AFL,     STATIS_AFL_BUF_SIZE,   STATIS_AFL_BUF_NUM, STATIS_AFL},
+	{DCAM_PATH_HIST,    STATIS_HIST_BUF_SIZE,  STATIS_HIST_BUF_NUM, STATIS_HIST},
+	{DCAM_PATH_3DNR,    STATIS_3DNR_BUF_SIZE,  STATIS_3DNR_BUF_NUM, STATIS_3DNR},
+
+	/* DCAM_PATH_MAX used for ISP blocks,must put after DCAM blocks */
+	{DCAM_PATH_MAX,    STATIS_ISP_HIST2_BUF_SIZE,  STATIS_ISP_HIST2_BUF_NUM, STATIS_HIST2},
 };
+
 static atomic_t s_dcam_working;
 static atomic_t s_dcam_axi_opened;
-
 
 /* dcam debugfs start */
 #define DCAM_DEBUG
@@ -1136,7 +1143,15 @@ static int put_reserved_buffer(struct dcam_pipe_dev *dev)
 
 	return 0;
 }
+struct statis_path_buf_info *dcam_get_statis_distribution_array(void)
+{
+	return &s_statis_path_info_all[0];
+}
 
+int dcam_get_statis_distribution_size(void)
+{
+	return ARRAY_SIZE(s_statis_path_info_all);
+}
 
 static int statis_type_to_path_id(enum isp_statis_buf_type type)
 {
@@ -1190,6 +1205,8 @@ static void init_reserved_statis_bufferq(struct dcam_pipe_dev *dev)
 	struct camera_buf *ion_buf = NULL;
 	struct dcam_path_desc *path;
 
+	pr_debug("%s enter\n",__func__);
+
 	if (dev->internal_reserved_buf == NULL) {
 		ion_buf =  get_reserved_buffer(dev);
 		if (IS_ERR_OR_NULL(ion_buf))
@@ -1202,6 +1219,9 @@ static void init_reserved_statis_bufferq(struct dcam_pipe_dev *dev)
 		path_id = s_statis_path_info_all[i].path_id;
 		/* pdaf needs large buffer, no reserved for it */
 		if (path_id == DCAM_PATH_PDAF)
+			continue;
+		/* DCAM_PATH_MAX for ISP statis */
+		if (path_id == DCAM_PATH_MAX)
 			continue;
 		path = &dev->path[path_id];
 		j  = 0;
@@ -1217,13 +1237,14 @@ static void init_reserved_statis_bufferq(struct dcam_pipe_dev *dev)
 		}
 	}
 
-	pr_info("init statis reserver bufq done: %p\n", ion_buf);
+	pr_debug("init statis reserver bufq done: %p\n", ion_buf);
 }
 
 static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 {
 	int ret = 0;
 	int i;
+	int j;
 	int count = 0;
 	size_t used_size = 0, total_size;
 	size_t buf_size;
@@ -1236,8 +1257,15 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 	struct camera_frame *pframe;
 	struct dcam_path_desc *path;
 
+	pr_debug("%s enter\n",__func__);
+
 	for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
 		path_id = s_statis_path_info_all[i].path_id;
+
+		/* DCAM_PATH_MAX for ISP statis */
+		if (path_id == DCAM_PATH_MAX)
+			continue;
+
 		path = &dev->path[path_id];
 		camera_queue_init(&path->out_buf_queue,
 				DCAM_OUT_BUF_Q_LEN, 0, dcam_destroy_statis_buf);
@@ -1261,15 +1289,23 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 	uaddr = ion_buf->addr_vir[0];
 	total_size = ion_buf->size[0];
 
-	pr_info("size %d  addr %p %p,  %08x\n", (int)total_size,
+	pr_debug("size %d  addr %p %p,  %08x\n", (int)total_size,
 			(void *)kaddr, (void *)uaddr, (uint32_t)paddr);
 
-	do {
-		for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
-			path_id = s_statis_path_info_all[i].path_id;
-			buf_size = s_statis_path_info_all[i].buf_size;
-			path = &dev->path[path_id];
-			stats_type = path_id_to_statis_type(path_id);
+	for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
+
+		path_id = s_statis_path_info_all[i].path_id;
+		buf_size = s_statis_path_info_all[i].buf_size;
+
+		/* DCAM_PATH_MAX for ISP statis */
+		if (path_id == DCAM_PATH_MAX)
+			continue;
+			
+		path = &dev->path[path_id];
+		stats_type = path_id_to_statis_type(path_id);
+
+		for (j = 0;j < s_statis_path_info_all[i].buf_cnt; j++) {
+		
 			used_size += buf_size;
 			if (used_size >= total_size)
 				break;
@@ -1287,11 +1323,21 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 				kaddr += buf_size;
 				paddr += buf_size;
 			}
+
+			pr_debug("[%s] dcam path[%d] i[%d] j[%d] uaddr[%lx] kaddr[%lx] paddr[%lx]\n",
+				__func__,
+				path_id,
+				i,
+				j,
+				uaddr,
+				kaddr,
+				paddr);
+
 		}
 		count++;
-	} while ((used_size < total_size) && (count < STATIS_AEM_BUF_NUM));
+	}
 
-	pr_info("done. count %d\n", count);
+	pr_info("done. count %d used_size[%lx] total_size[%lx]\n", count, used_size, total_size);
 	return ret;
 }
 
@@ -1302,9 +1348,17 @@ static int deinit_statis_bufferq(struct dcam_pipe_dev *dev)
 	enum dcam_path_id path_id;
 	struct dcam_path_desc *path;
 
+	pr_debug("%s enter\n",__func__);
+
 	for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
 		path_id = s_statis_path_info_all[i].path_id;
 		path = &dev->path[path_id];
+
+		pr_debug("%s path_id[%d] i[%d]\n",__func__,path_id,i);
+
+		if (path_id == DCAM_PATH_MAX)
+			continue;
+
 		atomic_set(&path->user_cnt, 0);
 		camera_queue_clear(&path->out_buf_queue);
 		camera_queue_clear(&path->result_queue);
@@ -1348,6 +1402,7 @@ static int dcam_cfg_statis_buffer(
 
 	if (input->type == STATIS_INIT) {
 		ion_buf = kzalloc(sizeof(*ion_buf), GFP_KERNEL);
+
 		if (IS_ERR_OR_NULL(ion_buf)) {
 			pr_err("fail to alloc memory for dcam%d statis buf.\n",
 					dev->idx);

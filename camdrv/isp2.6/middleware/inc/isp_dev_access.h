@@ -32,6 +32,7 @@
 #define ISP_EVT_PDAF			(1 << 8)
 #define ISP_EVT_EBD				(1 << 9)
 #define ISP_EVT_3DNR			(1 << 10)
+#define ISP_EVT_HIST2			(1 << 11)
 
 
 enum isp_dev_access_ctrl_cmd {

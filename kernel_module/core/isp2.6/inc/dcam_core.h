@@ -64,12 +64,6 @@ enum dcam_ctrl_id {
 
 };
 
-struct statis_path_buf_info {
-	enum dcam_path_id path_id;
-	size_t buf_size;
-	size_t buf_cnt;
-};
-
 struct dcam_mipi_info {
 	uint32_t sensor_if;  /* MIPI CSI-2 */
 	uint32_t format;  /* input color format */

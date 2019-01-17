@@ -66,10 +66,6 @@ enum isp_ltm_mode {
 	MODE_LTM_MAX
 };
 
-enum isp_ioctrl_cmd {
-	ISP_IOCTL_CFG_SEC,
-};
-
 enum isp_path_binding_type {
 	ISP_PATH_ALONE = 0,
 	ISP_PATH_MASTER,
@@ -82,6 +78,15 @@ enum isp_offline_param_valid {
 	ISP_PATH1_TRIM = (1 << 2),
 	ISP_PATH2_TRIM = (1 << 3),
 };
+
+enum isp_ioctrl_cmd {
+	ISP_IOCTL_CFG_STATIS_BUF,
+	ISP_IOCTL_INIT_STATIS_Q,
+	ISP_IOCTL_DEINIT_STATIS_BUF,
+	ISP_IOCTL_CYCLE_HIST2_FRAME,
+	ISP_IOCTL_CFG_SEC,
+};
+
 
 struct isp_init_param {
 	struct img_size max_size;
@@ -97,6 +102,7 @@ struct isp_ctx_base_desc {
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
 	uint32_t slw_state;
+	enum cam_ch_id ch_id;
 };
 
 struct isp_ctx_size_desc {
@@ -112,6 +118,13 @@ struct isp_path_base_desc {
 	struct img_size output_size;
 };
 
+struct isp_statis_io_desc {
+	struct camera_queue *q;
+	struct camera_buf **buf;
+	struct isp_statis_buf_input* input;
+	uint32_t fid;
+};
+
 struct isp_offline_param {
 	uint32_t valid;
 	struct img_scaler_info src_info;
@@ -122,7 +135,6 @@ struct isp_offline_param {
 struct isp_pipe_ops {
 	int (*open)(void *isp_handle, void *arg);
 	int (*close)(void *isp_handle);
-	int (*ioctl)(void *isp_handle, enum isp_ioctrl_cmd cmd, void *arg);
 	int (*reset)(void *isp_handle, void *arg);
 
 	int (*get_context)(void *isp_handle, void *param);
@@ -132,6 +144,7 @@ struct isp_pipe_ops {
 	int (*put_path)(void *isp_handle, int ctx_id, int path_id);
 	int (*cfg_path)(void *isp_handle, enum isp_path_cfg_cmd cfg_cmd,
 				int ctx_id, int path_id, void *param);
+	int (*ioctl)(void *isp_handle, int ctx_id, enum isp_ioctrl_cmd cmd, void *param);
 	int (*cfg_blk_param)(void *isp_handle, int ctx_id, void *param);
 	int (*proc_frame)(void *isp_handle, void *param, int ctx_id);
 	int (*set_callback)(void *isp_handle, int ctx_id,

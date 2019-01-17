@@ -19,6 +19,9 @@
 #include "cam_types.h"
 #include "cam_block.h"
 
+#define ISP_K_HIST_MIN_W 400
+#define ISP_K_HIST_MIN_H 400
+
 #ifdef pr_fmt
 #undef pr_fmt
 #endif
@@ -34,12 +37,48 @@ static int isp_k_hist2_block(struct isp_io_param *param, uint32_t idx)
 	ret = copy_from_user((void *)&hist2_info,
 			param->property_param,
 			sizeof(hist2_info));
+
+    /* force isp hist2 enable */
+    hist2_info.bypass = 0x0;
+
+	/* 0 for single frame, 1 for multi frame*/
+	hist2_info.mode = 0x1;
+
+	if ( (hist2_info.hist_roi.end_x - hist2_info.hist_roi.start_x) < ISP_K_HIST_MIN_W ) {
+		hist2_info.hist_roi.start_x = 0;
+		hist2_info.hist_roi.end_x = ISP_K_HIST_MIN_W - 1;
+	}
+
+	if ( (hist2_info.hist_roi.end_y - hist2_info.hist_roi.start_y) < ISP_K_HIST_MIN_H ) {
+		hist2_info.hist_roi.start_y = 0;
+		hist2_info.hist_roi.end_y = ISP_K_HIST_MIN_H - 1;
+	}
+
+	pr_debug("%s bypass[%d] mode[%d] skip[%d] channel[%d] sx[%d] sy[%d] ex[%d] ey[%d] clr[%d]\n",
+			__func__,
+			hist2_info.bypass,
+			hist2_info.mode,
+			hist2_info.skip_num,
+			hist2_info.channel_sel,
+			hist2_info.hist_roi.start_x,
+			hist2_info.hist_roi.start_y,
+			hist2_info.hist_roi.end_x,
+			hist2_info.hist_roi.end_y,
+			hist2_info.skip_num_clr);
+
 	if (ret != 0) {
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_HIST2))
+
+	pr_debug("%s hist_bypass cfg [%d]\n",__func__,(s_isp_bypass[idx] & (1 << _EISP_HIST2)));
+
+	if (s_isp_bypass[idx] & (1 << _EISP_HIST2)) {
 		hist2_info.bypass = 1;
+	}
+
+	pr_debug("%s hist_bypass info [%d]\n",__func__,hist2_info.bypass);
+
 	ISP_REG_MWR(idx, ISP_HIST2_PARAM, BIT_0, hist2_info.bypass);
 	if (hist2_info.bypass) {
 		ISP_REG_MWR(idx, ISP_HIST2_CFG_RDY, BIT_0, 1);

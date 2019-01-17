@@ -251,6 +251,7 @@ extern unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
 #define ISP_HIST2_ROI_E0			(0x3718UL)
 #define ISP_HIST2_CFG_RDY			(0x371CUL)
 #define ISP_HIST2_SKIP_CLR			(0x3720UL)
+#define ISP_HIST2_BUF0_ADDR			(0x16000UL)
 
 #define ISP_PSTRZ_PARAM				(0x3410UL)
 #define ISP_PSTRZ_R_BUF0			(0x1b400UL)

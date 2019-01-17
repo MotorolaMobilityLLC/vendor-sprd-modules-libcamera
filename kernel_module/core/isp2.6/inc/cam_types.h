@@ -194,6 +194,7 @@ enum isp_cb_type {
 	ISP_CB_RET_DST_BUF,
 	ISP_CB_DEV_ERR,
 	ISP_CB_MMU_ERR,
+	ISP_CB_STATIS_DONE,
 };
 
 enum dcam_cb_type {

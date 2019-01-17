@@ -237,6 +237,9 @@ struct camera_module {
 	struct camera_queue irq_queue; /* IRQ message queue for user*/
 	struct camera_queue statis_queue; /* statis data queue or user*/
 
+	struct camera_buf *isp_hist2_buf;
+	struct camera_queue isp_hist2_outbuf_queue;
+
 	struct cam_thread_info cap_thrd;
 	struct cam_thread_info zoom_thrd;
 
@@ -822,6 +825,19 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 		}
 		break;
 
+	case ISP_CB_STATIS_DONE:
+		pframe->evt = IMG_TX_DONE;
+		pframe->irq_type = CAMERA_IRQ_STATIS;
+		if (atomic_read(&module->state) == CAM_RUNNING) {
+			ret = camera_enqueue(&module->frm_queue, pframe);
+			complete(&module->frm_com);
+			pr_debug("get statis frame: %p, type %d, %d\n",
+				pframe, pframe->irq_type, pframe->irq_property);
+		} else {
+			put_empty_frame(pframe);
+		}
+		break;
+
 	default:
 		pr_err("unsupported cb cmd: %d\n", type);
 		break;
@@ -838,6 +854,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 	struct camera_module *module;
 	struct channel_context *channel;
 	struct isp_offline_param *cur;
+	struct isp_statis_io_desc io_desc;
 
 	if (!param || !priv_data) {
 		pr_err("Input ptr is NULL\n");
@@ -912,6 +929,14 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				channel->isp_updata = NULL;
 				pr_info("cur %p\n", pframe->param_data);
 			}
+
+			io_desc.q = &module->isp_hist2_outbuf_queue;
+			io_desc.fid = pframe->fid;
+
+			ret = isp_ops->ioctl(module->isp_dev_handle,
+						channel->isp_path_id >> ISP_CTXID_OFFSET,
+						ISP_IOCTL_CYCLE_HIST2_FRAME,
+						&io_desc);
 
 			ret = isp_ops->proc_frame(module->isp_dev_handle, pframe,
 					channel->isp_path_id >> ISP_CTXID_OFFSET);
@@ -1797,6 +1822,7 @@ static int init_cam_channel(
 	new_isp_ctx = 0;
 	new_isp_path = 0;
 	new_dcam_path = 0;
+
 	switch (channel->ch_id) {
 	case CAM_CH_PRE:
 		dcam_path_id = DCAM_PATH_BIN;
@@ -1934,6 +1960,8 @@ static int init_cam_channel(
 		ctx_desc.enable_slowmotion = ch_uinfo->is_high_fps;
 		ctx_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
 		ctx_desc.slw_state = CAM_SLOWMOTION_OFF;
+		ctx_desc.ch_id = channel->ch_id;
+
 		if (module->cam_uinfo.is_3dnr) {
 			if (channel->ch_id == CAM_CH_CAP) {
 				channel->type_3dnr = CAM_3DNR_SW;
@@ -2342,6 +2370,7 @@ static int img_ioctl_set_statis_buf(
 {
 	int ret = 0;
 	struct isp_statis_buf_input statis_buf;
+	struct isp_statis_io_desc io_desc;
 
 	ret = copy_from_user((void *)&statis_buf,
 			(void *)arg, sizeof(struct isp_statis_buf_input));
@@ -2368,9 +2397,24 @@ static int img_ioctl_set_statis_buf(
 		goto exit;
 	}
 
-	ret = dcam_ops->ioctl(module->dcam_dev_handle,
-				DCAM_IOCTL_CFG_STATIS_BUF,
-				&statis_buf);
+	if (statis_buf.type < STATIS_HIST2){
+		ret = dcam_ops->ioctl(module->dcam_dev_handle,
+					DCAM_IOCTL_CFG_STATIS_BUF,
+					&statis_buf);
+	}
+
+	if ((statis_buf.type == STATIS_INIT) || (statis_buf.type >= STATIS_HIST2)){
+
+		io_desc.q = &module->isp_hist2_outbuf_queue;
+		io_desc.buf = &module->isp_hist2_buf;
+		io_desc.input = &statis_buf;
+
+		ret = isp_ops->ioctl(module->isp_dev_handle,
+					0,
+					ISP_IOCTL_CFG_STATIS_BUF,
+					&io_desc);
+
+	}
 exit:
 	return ret;
 }
@@ -3385,7 +3429,7 @@ static int img_ioctl_get_cam_res(
 		module->isp_dev_handle = isp;
 	}
 
-	ret = isp_ops->ioctl(module->isp_dev_handle,
+	ret = isp_ops->ioctl(module->isp_dev_handle, 0,
                     ISP_IOCTL_CFG_SEC, &module->grp->camsec_cfg.camsec_mode);
 
 	if (ret) {
@@ -3532,6 +3576,7 @@ static int img_ioctl_stream_on(
 	int ret = 0;
 	uint32_t i, j, line_w, isp_ctx_id, isp_path_id;
 	struct channel_context *ch;
+	struct isp_statis_io_desc io_desc;
 
 	if (atomic_read(&module->state) != CAM_CFG_CH) {
 		pr_info("cam%d error state: %d\n", module->idx,
@@ -3558,8 +3603,18 @@ static int img_ioctl_stream_on(
 		line_w /= 2;
 	dcam_lbuf_share_mode(module->dcam_idx, line_w);
 
+	camera_queue_init(&module->isp_hist2_outbuf_queue,
+		CAM_STATIS_Q_LEN, 0, camera_put_empty_frame);
+
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_INIT_STATIS_Q, NULL);
+
+	io_desc.q = &module->isp_hist2_outbuf_queue;
+	io_desc.buf = &module->isp_hist2_buf;
+	ret = isp_ops->ioctl(module->isp_dev_handle,
+				0,
+				ISP_IOCTL_INIT_STATIS_Q,
+				&io_desc);
 
 	for (i = 0;  i < CAM_CH_MAX; i++) {
 		ch = &module->channel[i];
@@ -3706,6 +3761,7 @@ static int img_ioctl_stream_off(
 	uint32_t raw_cap = 0, running = 0;
 	struct channel_context *ch;
 	int isp_ctx_id[CAM_CH_MAX] = { -1 };
+	struct isp_statis_io_desc io_desc;
 
 	if ((atomic_read(&module->state) != CAM_RUNNING) &&
 		(atomic_read(&module->state) != CAM_CFG_CH)) {
@@ -3747,6 +3803,16 @@ static int img_ioctl_stream_off(
 	if (module->dcam_dev_handle)
 		ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
+
+	if (module->isp_dev_handle){
+		io_desc.q = &module->isp_hist2_outbuf_queue;
+		io_desc.buf = &module->isp_hist2_buf;
+		ret = isp_ops->ioctl(module->isp_dev_handle,
+				0,
+				ISP_IOCTL_DEINIT_STATIS_BUF,
+				&io_desc);
+	}
+
 	for (i = 0;  i < CAM_CH_MAX; i++) {
 		ch = &module->channel[i];
 		isp_ctx_id[i] = -1;
@@ -3843,6 +3909,7 @@ static int img_ioctl_stream_off(
 			module->dual_frame = NULL;
 		}
 		camera_queue_clear(&module->zsl_fifo_queue);
+		camera_queue_clear(&module->isp_hist2_outbuf_queue);
 		if (module->dump_thrd.thread_task)
 			camera_queue_clear(&module->dump_queue);
 	}
@@ -5153,6 +5220,8 @@ rewait:
 				read_op.parm.frame.zoom_ratio = module->zoom_ratio;
 			else
 				read_op.parm.frame.zoom_ratio = ZOOM_RATIO_DEFAULT;
+			read_op.parm.frame.kaddr[1] = (uint32_t)((uint64_t)pframe->buf.addr_k[0] >> 32);
+			read_op.parm.frame.kaddr[0] = (uint32_t)pframe->buf.addr_k[0];
 		} else {
 			pr_err("error event %d\n", pframe->evt);
 			read_op.evt = pframe->evt;

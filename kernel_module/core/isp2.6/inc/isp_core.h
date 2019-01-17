@@ -34,7 +34,6 @@
 #define ISP_OUT_BUF_Q_LEN		32
 #define ISP_RESERVE_BUF_Q_LEN		12
 
-
 #define ODATA_YUV420			1
 #define ODATA_YUV422			0
 
@@ -247,6 +246,7 @@ struct isp_pipe_context {
 	uint32_t ctx_id;
 	uint32_t in_fmt; /* forcc */
 	enum camera_id attach_cam_id;
+	enum cam_ch_id ch_id;
 
 	uint32_t updated;
 	uint32_t mode_3dnr;
@@ -280,6 +280,9 @@ struct isp_pipe_context {
 	struct camera_frame *ltm_buf[ISP_LTM_BUF_NUM];
 	struct camera_queue ltm_avail_queue;
 	struct camera_queue ltm_wr_queue;
+
+	struct camera_queue hist2_result_queue;
+
 	struct cam_thread_info thread;
 	struct completion frm_done;
 
@@ -303,4 +306,11 @@ struct isp_pipe_dev {
 	struct sprd_cam_hw_info *isp_hw;
 	enum sprd_cam_sec_mode sec_mode;
 };
+
+struct isp_statis_buf_size_info {
+	enum isp_statis_buf_type buf_type;
+	size_t buf_size;
+	size_t buf_cnt;
+};
+
 #endif

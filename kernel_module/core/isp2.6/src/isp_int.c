@@ -50,6 +50,7 @@ static const uint32_t isp_irq_process[] = {
 	ISP_INT_FMCU_LOAD_DONE,
 	ISP_INT_FMCU_SHADOW_DONE,
 	ISP_INT_FMCU_STORE_DONE,
+	ISP_INT_HIST_CAL_DONE,
 };
 
 //#define ISP_INT_RECORD 1
@@ -230,7 +231,7 @@ static void isp_fmcu_store_done(enum isp_context_id idx, void *isp_handle)
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
-	pr_info("fmcu done cxt_id:%d\n", idx);
+	pr_info("fmcu done cxt_id:%d ch_id[%d]\n", idx, pctx->ch_id);
 	isp_frame_done(idx, dev);
 
 	if (pctx->enable_slowmotion == 1) {
@@ -305,6 +306,84 @@ static void isp_ltm_hists_done(enum isp_context_id idx, void *isp_handle)
 	}
 }
 
+static struct camera_frame* isp_hist2_frame_prepare(enum isp_context_id idx, void *isp_handle)
+{
+	int i = 0;
+	int max_item = 256;
+	unsigned long HIST_BUF = ISP_HIST2_BUF0_ADDR;
+	struct camera_frame *frame = NULL;
+	struct isp_pipe_dev *dev;
+	struct isp_pipe_context *pctx;
+
+	uint32_t *buf = NULL;
+
+	dev = (struct isp_pipe_dev *)isp_handle;
+	pctx = &dev->ctx[idx];
+
+	frame = camera_dequeue(&pctx->hist2_result_queue);
+	if (!frame) {
+		pr_err("isp ctx_id[%d] hist2_result_queue unavailable\n",idx);
+		return NULL;
+	}
+
+	buf = (uint32_t *)frame->buf.addr_k[0];
+
+	if (!frame->buf.addr_k[0]) {
+		return NULL;
+	}
+
+	for (i = 0; i < max_item; i++) {
+		buf[i] = ISP_HREG_RD(HIST_BUF + i * 4);
+	}
+
+	return frame;
+}
+
+static void isp_dispatch_frame(enum isp_context_id idx,
+				void *isp_handle,
+				struct camera_frame *frame,
+				enum isp_cb_type type)
+{
+	struct timespec cur_ts;
+	struct isp_pipe_dev *dev;
+	struct isp_pipe_context *pctx;
+
+	dev = (struct isp_pipe_dev *)isp_handle;
+	pctx = &dev->ctx[idx];
+
+	if (unlikely(!dev || !frame ))
+		return;
+
+	ktime_get_ts(&cur_ts);
+	frame->time.tv_sec = cur_ts.tv_sec;
+	frame->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
+	frame->boot_time = ktime_get_boottime();
+
+	pr_debug("isp ctx[%d]: time %06d.%06d\n",idx,
+			(int)frame->time.tv_sec, (int)frame->time.tv_usec);
+
+	pctx->isp_cb_func(type, frame, pctx->cb_priv_data);
+}
+
+static void isp_hist_cal_done(enum isp_context_id idx, void *isp_handle)
+{
+	struct camera_frame *frame = NULL;
+	struct isp_pipe_dev *dev = NULL;
+	struct isp_pipe_context *pctx;
+
+	dev = (struct isp_pipe_dev *)isp_handle;
+	pctx = &dev->ctx[idx];
+
+	/* only use isp hist in preview channel */
+	if(pctx->ch_id != CAM_CH_PRE)
+		return;
+
+	if ((frame = isp_hist2_frame_prepare(idx, isp_handle))) {
+		isp_dispatch_frame(idx, isp_handle, frame, ISP_CB_STATIS_DONE);
+	}
+}
+
+
 static isp_isr isp_isr_handler[32] = {
 	[ISP_INT_ISP_ALL_DONE] = isp_all_done,
 	[ISP_INT_SHADOW_DONE] = isp_shadow_done,
@@ -318,6 +397,7 @@ static isp_isr isp_isr_handler[32] = {
 	[ISP_INT_FMCU_LOAD_DONE] = isp_fmcu_load_done,
 	[ISP_INT_FMCU_SHADOW_DONE] = isp_fmcu_shadow_done,
 	[ISP_INT_FMCU_STORE_DONE] = isp_fmcu_store_done,
+	[ISP_INT_HIST_CAL_DONE] = isp_hist_cal_done,
 };
 
 struct isp_int_ctx {

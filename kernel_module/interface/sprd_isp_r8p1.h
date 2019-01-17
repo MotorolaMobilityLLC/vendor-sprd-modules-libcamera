@@ -58,6 +58,8 @@
 #define STATIS_3DNR_BUF_SIZE (2 * (4672 + 3504))
 #define STATIS_3DNR_BUF_NUM 8
 
+#define STATIS_ISP_HIST2_BUF_SIZE   (256 * 4)
+#define STATIS_ISP_HIST2_BUF_NUM 8
 
 enum SCINFO_COLOR_ORDER {
 	COLOR_ORDER_RG = 0,
@@ -93,6 +95,7 @@ enum isp_statis_buf_type {
 	STATIS_PDAF,
 	STATIS_EBD,
 	STATIS_3DNR,
+	STATIS_HIST2,
 };
 
 enum isp_dev_capability {
