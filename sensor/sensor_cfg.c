@@ -471,6 +471,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef OV7251
     {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#ifdef OV16885
+    {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
 
 // sp area
 #ifdef SP0A09
