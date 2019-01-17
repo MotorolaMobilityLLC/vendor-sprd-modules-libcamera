@@ -111,31 +111,25 @@ static uint32_t af_get_vcm_test_mode(void *handle_af)
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_end_notice(void *handle_af, struct af_result_param *in_param)
+static cmr_s32 af_end_notice(void *handle_af, struct afctrl_notice *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct af_notice af_notice;
 
-	af_notice.mode = AF_MOVE_END;
-	af_notice.valid_win = in_param->suc_win;
-	af_notice.focus_type = in_param->focus_type;
+	in_param->notice_type = AF_MOVE_END;
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_END_NOTICE, (void *)&af_notice, NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_END_NOTICE, (void *)in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
 }
 
-static cmr_s32 af_start_notice(void *handle_af, struct af_result_param *in_param)
+static cmr_s32 af_start_notice(void *handle_af, struct afctrl_notice *in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	struct af_notice af_notice;
 
-	af_notice.mode = AF_MOVE_START;
-	af_notice.valid_win = 0x00;
-	af_notice.focus_type = in_param->focus_type;
+	in_param->notice_type = AF_MOVE_START;
 	if (cxt_ptr->af_set_cb) {
-		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_START_NOTICE, (void *)&af_notice, NULL);
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_START_NOTICE, (void *)in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -415,8 +409,17 @@ static cmr_s32 af_set_clear_next_vcm_pos(cmr_handle handle_af)
 }
 
 // SharkLE Only --
+static cmr_s32 af_set_motor_status(cmr_handle handle_af, cmr_u32 * status)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
-static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in *in_ptr, struct af_result_param *out_ptr)
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_MOTOR_STATUS, status, NULL);
+	}
+	return 0;
+}
+
+static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in *in_ptr, struct afctrl_calc_out *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
@@ -432,7 +435,12 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 	if (1 == atoi((char *)value)) {
 		property_get("persist.vendor.cam.isp.vcm.position", (char *)value, "0");
 		motor_pos = (cmr_u16) atoi((char *)value);
-		af_set_motor_pos(cxt_ptr, motor_pos);
+		lib_ptr = &cxt_ptr->work_lib;
+		if (lib_ptr->adpt_ops->adpt_ioctrl) {
+			rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, AF_CMD_SET_AF_POS, &motor_pos, NULL);
+		} else {
+			af_set_motor_pos(cxt_ptr, motor_pos);
+		}
 		goto exit;
 	}
 
@@ -519,7 +527,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 				   ((struct af_ctrl_msg_ctrl *)message->data)->out);
 		break;
 	case AFCTRL_EVT_PROCESS:
-		rtn = afctrl_process(cxt_ptr, (struct afctrl_calc_in *)message->data, (struct af_result_param *)&cxt_ptr->proc_out);
+		rtn = afctrl_process(cxt_ptr, (struct afctrl_calc_in *)message->data, &cxt_ptr->proc_out);
 		break;
 	default:
 		ISP_LOGE("fail to proc ,don't support msg");
@@ -662,6 +670,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->cb_ops.af_set_next_vcm_pos = af_set_next_vcm_pos;
 	input_ptr->cb_ops.af_set_pulse_log = af_set_pulse_log;
 	input_ptr->cb_ops.af_set_clear_next_vcm_pos = af_set_clear_next_vcm_pos;
+	input_ptr->cb_ops.af_set_motor_status = af_set_motor_status;
 	// SharkLE Only --
 
 	cxt_ptr = (struct afctrl_cxt *)malloc(sizeof(*cxt_ptr));

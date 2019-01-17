@@ -349,7 +349,10 @@ typedef struct _af_ctrl {
 	cmr_u32 camera_id;
 	cmr_u32 sensor_role;
 	af_ctrl_br_ioctrl bridge_ctrl;
+	struct realbokeh_vcm_range realboekh_range;
 	mlog_AFtime AFtime;
+	cmr_u32 motor_status;
+	cmr_u32 frame_counter;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

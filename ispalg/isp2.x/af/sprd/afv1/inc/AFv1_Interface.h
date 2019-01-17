@@ -93,6 +93,16 @@ typedef enum _eAF_MODE {
 	None,			//nothing to do
 } eAF_MODE;
 
+typedef enum _e_AF_MULTI_MODE {
+	SPAF_SINGLE = 0,
+	SPAF_DUAL_C_C,
+	SPAF_DUAL_SBS,
+	SPAF_BLUR_REAR,
+	SPAF_DUAL_W_T,
+	SPAF_DUAL_C_M,
+	SPAF_CAMERA_MAX
+} e_AF_MULTI_MODE;
+
 typedef enum _e_AF_TRIGGER {
 	NO_TRIGGER = 0,
 	AF_TRIGGER,
@@ -148,14 +158,14 @@ typedef struct _AF_Result {
 	cmr_u32 af_mode;
 } AF_Result;
 
-struct spaf_saf_roi {
+struct spaf_saf_data {
 	cmr_u32 sx;
 	cmr_u32 sy;
 	cmr_u32 ex;
 	cmr_u32 ey;
 };
 
-struct spaf_faf_roi {
+struct spaf_face_data {
 	cmr_u32 sx;
 	cmr_u32 sy;
 	cmr_u32 ex;
@@ -165,13 +175,19 @@ struct spaf_faf_roi {
 	cmr_u32 score;
 };
 
+typedef struct spaf_face_info_s {
+	struct spaf_face_data data[10];
+	cmr_u32 num;
+} spaf_face_info_t;
+
 typedef struct spaf_roi_s {
 	cmr_u32 af_mode;
 	cmr_u32 win_num;
 	union {
-		struct spaf_saf_roi saf_roi[SPAF_MAX_ROI_NUM];
-		struct spaf_faf_roi face_roi[SPAF_MAX_ROI_NUM];
+		struct spaf_saf_data saf_roi[SPAF_MAX_ROI_NUM];
+		struct spaf_face_data face_roi[SPAF_MAX_ROI_NUM];
 	};
+	cmr_u32 multi_mode;
 } spaf_roi_t;
 
 struct spaf_coordnicate {
@@ -208,13 +224,6 @@ typedef struct pd_algo_result_s {
 	cmr_u32 af_type;	// notify to AF which mode PDAF is in
 	cmr_u32 reserved[15];
 } pd_algo_result_t;
-
-typedef struct _IO_Face_area_s {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-} IO_Face_area_t;
 
 typedef struct motion_sensor_result_s {
 	cmr_s64 timestamp;
@@ -273,13 +282,13 @@ typedef struct _tof_measure_data_s {
 	cmr_u32 last_MAXdistance;
 	cmr_u32 tof_trigger_flag;
 	cmr_u32 reserved[20];
-
 } tof_measure_data_t;
 
-typedef struct _Bokeh_Motor_Info {
+typedef struct _bokeh_motor_info {
 	cmr_u16 limited_infi;	// calibrated for 30cm
 	cmr_u16 limited_macro;	// calibrated for 150cm
-} Bokeh_Motor_Info;
+	cmr_u32 reserved[10];
+} bokeh_motor_info;
 
 struct AFtoPD_info_param {
 	cmr_u16 Center_X;
@@ -300,7 +309,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
 	 cmr_u8(*clear_fd_stop_counter) (cmr_u32 * FD_count, void *cookie);
 	 cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
-	 cmr_u8(*face_detection_get_data) (IO_Face_area_t * FD_IO, void *cookie);
+	 cmr_u8(*face_detection_get_data) (spaf_face_info_t * FD_IO, void *cookie);
 	 cmr_u8(*motion_sensor_get_data) (motion_sensor_result_t * ms_result, void *cookie);
 	 cmr_u8(*lens_get_pos) (cmr_u16 * pos, void *cookie);
 	 cmr_u8(*lens_move_to) (cmr_u16 pos, void *cookie);
@@ -323,7 +332,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
-	 cmr_u8(*set_bokeh_vcm_info) (Bokeh_Motor_Info * range, void *cookie);
+	 cmr_u8(*set_bokeh_vcm_info) (bokeh_motor_info * range, void *cookie);
 
 	//SharkLE Only ++
 	 cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);

@@ -112,6 +112,7 @@ extern "C" {
 		AF_CMD_GET_AF_FULLSCAN_INFO = 0x2005,
 		AF_CMD_GET_AF_LOG_INFO = 0x2006,
 		AF_CMD_GET_AFT_LOG_INFO = 0x2007,
+		AF_CMD_GET_REALBOKEH_LIMITED_RANGE = 0x2008,
 		AF_CMD_GET_MAX,
 	};
 
@@ -199,6 +200,7 @@ extern "C" {
 		AF_CB_CMD_SET_AFM_CROP_SIZE,
 		AF_CB_CMD_SET_AFM_DONE_TILE_NUM,
 		AF_CB_CMD_SET_MONITOR_WIN_NUM,
+		AF_CB_CMD_SET_MOTOR_STATUS,
 		AF_CB_CMD_SET_MAX,
 
 		AF_CB_CMD_GET_MONITOR_WIN_NUM = 0x2000,
@@ -229,6 +231,14 @@ extern "C" {
 		AF_ROLE_WIDE,
 		AF_ROLE_TELE,
 		AF_ROLE_MAX
+	};
+
+	enum af_motor_sataus {
+		AF_MOTOR_IDLE,
+		AF_MOTOR_SET,
+		AF_MOTOR_DONE,
+		AF_MOTOR_FAIL,
+		AF_MOTOR_MAX
 	};
 
 	struct af_img_blk_info {
@@ -341,18 +351,21 @@ extern "C" {
 		cmr_u32 wait_time;
 	};
 
-	struct af_result_param {
-		cmr_u32 motor_pos;
-		cmr_u32 suc_win;
-		cmr_u32 focus_type;
-		cmr_u32 reserved[10];
+	struct afctrl_roi {
+		cmr_u32 sx;
+		cmr_u32 sy;
+		cmr_u32 ex;
+		cmr_u32 ey;
 	};
 
-	struct af_notice {
-		cmr_u32 mode;
+	struct afctrl_notice {
+		cmr_u32 notice_type;
 		cmr_u32 valid_win;
 		cmr_u32 focus_type;
-		cmr_u32 reserved[10];
+		cmr_u32 motor_pos;
+		cmr_u32 af_mode;
+		struct afctrl_roi af_roi;
+		cmr_u32 reserved[4];
 	};
 
 	struct af_monitor_set {
@@ -411,6 +424,13 @@ extern "C" {
 		struct af_otp_data rdm_data;
 	};
 
+	struct realbokeh_vcm_range {
+		cmr_u16 limited_infi;
+		cmr_u16 limited_macro;
+		cmr_u16 vcm_dac[3];	//50cm,70cm,100cm dac
+		cmr_u16 reserved[7];
+	};
+
 	struct PD_Multi_zone_param {
 		cmr_u16 Center_X;
 		cmr_u16 Center_Y;
@@ -424,8 +444,8 @@ extern "C" {
 	};
 
 	struct afctrl_cb_ops {
-		cmr_s32(*start_notice) (void *handle, struct af_result_param * in_param);
-		cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
+		cmr_s32(*start_notice) (void *handle, struct afctrl_notice * in_param);
+		cmr_s32(*end_notice) (void *handle, struct afctrl_notice * in_param);
 		cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 		cmr_s32(*set_monitor_win) (void *handle, struct af_monitor_win * in_param);
 		cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
@@ -453,6 +473,7 @@ extern "C" {
 		cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);
 		cmr_s32(*af_set_clear_next_vcm_pos) (void *handle);
 		// SharkLE Only --
+		cmr_s32(*af_set_motor_status) (void *handle, cmr_u32 * status);
 	};
 
 	struct af_log_info {

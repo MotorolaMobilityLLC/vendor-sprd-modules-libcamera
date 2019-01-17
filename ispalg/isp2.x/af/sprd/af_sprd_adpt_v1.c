@@ -633,6 +633,7 @@ static void af_set_default_roi(af_ctrl_t * af, cmr_u32 alg_mode)
 	memset(&af_roi, 0, sizeof(spaf_roi_t));
 	af_roi.af_mode = alg_mode;
 	af_roi.win_num = 0;
+	af_roi.multi_mode = af->is_multi_mode;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 }
 
@@ -648,20 +649,43 @@ static cmr_s32 compare_timestamp(af_ctrl_t * af)
 static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 {
 	ISP_LOGV(".");
-	struct af_result_param af_result;
+	struct afctrl_notice af_result;
+
+	memset(&af_result, 0, sizeof(af_result));
+	af_result.valid_win = 0;
 	af_result.focus_type = focus_type;
+	af_result.motor_pos = 0;
+	af_result.af_mode = af->request_mode;
 	af->cb_ops.start_notice(af->caller, &af_result);
 }
 
 static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
 {
-	struct af_result_param af_result;
-	af_result.suc_win = win_num;
+	struct afctrl_notice af_result;
+	cmr_u32 win_index;
+
+	win_index = (af->roi.num > 1) ? (af->roi.num - 1) : 0;
+	memset((void *)&af_result, 0, sizeof(af_result));
+	af_result.valid_win = win_num;
 	af_result.focus_type = focus_type;
+	af_result.motor_pos = af->lens.pos;
+	af_result.af_mode = af->request_mode;
+	if (0 != win_index && win_index < MAX_ROI_NUM) {
+		af_result.af_roi.sx = af->roi.win[win_index].start_x;
+		af_result.af_roi.sy = af->roi.win[win_index].start_y;
+		af_result.af_roi.ex = af->roi.win[win_index].end_x;
+		af_result.af_roi.ey = af->roi.win[win_index].end_y;
+		ISP_LOGI("af roi %d %d %d %d %d", win_index, af_result.af_roi.sx, af_result.af_roi.sy, af_result.af_roi.ex, af_result.af_roi.ey);
+	} else {
+		ISP_LOGI("set_wins data error");
+	}
 	ISP_LOGV(". %s ", (win_num) ? "Suc" : "Fail");
 
-	af->cb_ops.end_notice(af->caller, &af_result);
-
+	ISP_LOGI("af->focus_state %d", af->focus_state);
+	if (AF_STOPPED != af->focus_state) {
+		ISP_LOGI("notify to uplayer");
+		af->cb_ops.end_notice(af->caller, &af_result);
+	}
 #ifdef Enable_mlog_AFtime
 
 	af->AFtime.system_time1_1 = systemTime(CLOCK_MONOTONIC);
@@ -1123,23 +1147,25 @@ static cmr_u8 if_clear_fd_stop_counter(cmr_u32 * FD_count, void *cookie)
 	return 0;
 }
 
-static cmr_u8 if_face_detection_get_data(IO_Face_area_t * FD, void *cookie)
+static cmr_u8 if_face_detection_get_data(spaf_face_info_t * FD, void *cookie)
 {
 
 	UNUSED(FD);
 	UNUSED(cookie);
 
-	/*
-	   af_ctrl_t *af = cookie;
-	   cmr_u8 i = 0;
-	   while (i < af->face_info.face_num) {
-	   FD[i].sx = af->face_info.face_info[i].sx;
-	   FD[i].sy = af->face_info.face_info[i].sy;
-	   FD[i].ex = af->face_info.face_info[i].ex;
-	   FD[i].ey = af->face_info.face_info[i].ey;
-	   i++;
-	   }
-	 */
+	af_ctrl_t *af = cookie;
+	cmr_u8 i = 0;
+	while (i < af->face_info.face_num && i < sizeof(FD->data) / sizeof(FD->data[0])) {
+		FD->data[i].sx = af->face_info.face_info[i].sx;
+		FD->data[i].sy = af->face_info.face_info[i].sy;
+		FD->data[i].ex = af->face_info.face_info[i].ex;
+		FD->data[i].ey = af->face_info.face_info[i].ey;
+		FD->data[i].yaw_angle = af->face_info.face_info[i].pose;
+		FD->data[i].roll_angle = af->face_info.face_info[i].angle;
+		FD->data[i].score = 0;
+		FD->num++;
+		i++;
+	}
 
 	return 0;
 }
@@ -1187,6 +1213,23 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 	}
 	ISP_LOGI("ISP_AFv1: %x, %x", gsensor_x, gsensor_y);
 
+	return 0;
+}
+
+static cmr_u8 if_set_bokeh_vcm_info(bokeh_motor_info * range, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+
+	af->realboekh_range.limited_infi = range->limited_infi;
+	af->realboekh_range.limited_macro = range->limited_macro;
+	af->realboekh_range.vcm_dac[0] = range->reserved[0];
+	af->realboekh_range.vcm_dac[1] = range->reserved[1];
+	af->realboekh_range.vcm_dac[2] = range->reserved[2];
+	af->realboekh_range.reserved[0] = range->reserved[3];
+	af->realboekh_range.reserved[1] = range->reserved[4];
+	af->realboekh_range.reserved[2] = range->reserved[5];
+
+	ISP_LOGI("range(%u %u), %u,%u,%u", af->realboekh_range.limited_infi, af->realboekh_range.limited_macro, range->reserved[0], range->reserved[1], range->reserved[2]);
 	return 0;
 }
 
@@ -1470,6 +1513,7 @@ static void *af_init(af_ctrl_t * af)
 	haf_tuning_param_t haf_tuning_data;
 	void *alg_cxt = NULL;
 
+	memset((void *)&AF_Ops, 0, sizeof(AF_Ctrl_Ops));
 	AF_Ops.cookie = af;
 	AF_Ops.statistics_wait_cal_done = if_statistics_wait_cal_done;
 	AF_Ops.statistics_get_data = if_statistics_get_data;
@@ -1498,6 +1542,7 @@ static void *af_init(af_ctrl_t * af)
 	AF_Ops.lock_ae_partial = if_lock_partial_ae;
 	AF_Ops.face_detection_get_data = if_face_detection_get_data;
 	AF_Ops.clear_fd_stop_counter = if_clear_fd_stop_counter;
+	AF_Ops.set_bokeh_vcm_info = if_set_bokeh_vcm_info;
 
 	// SharkLE Only ++
 	AF_Ops.set_pulse_line = if_af_set_pulse_line;
@@ -2026,6 +2071,7 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 			af_roi.saf_roi[i].ey = win->win_pos[i].ey;
 		}
 	}
+	af_roi.multi_mode = af->is_multi_mode;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
@@ -2066,6 +2112,7 @@ static void faf_start(af_ctrl_t * af, struct af_adpt_roi_info *win)
 			af_roi.face_roi[i].score = win->face[i].score;
 		}
 	}
+	af_roi.multi_mode = af->is_multi_mode;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
@@ -2222,12 +2269,12 @@ static void af_stop_search(af_ctrl_t * af)
 {
 	cmr_u32 force_stop;
 
-	force_stop = AFV1_TRUE;
 	ISP_LOGI("focus_state = %s", FOCUS_STATE_STR(af->focus_state));
+	force_stop = AFV1_TRUE;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	//modifiy for force stop to SAF/Flow control
+	af->focus_state = AF_STOPPED;
 	af->af_ops.calc(af->af_alg_cxt);
 
-	af->focus_state = AF_STOPPED;
 	if (STATE_FAF == af->state) {
 		ISP_LOGI("pre_state %s", STATE_STRING(af->pre_state));
 		af->state = af->pre_state;
@@ -2569,6 +2616,11 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		return rtn;
 	}
 
+	if (AF_SEARCHING == af->focus_state) {
+		ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
+		af_stop_search(af);
+	}
+
 	af->pre_state = af->state;
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
@@ -2585,10 +2637,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
 		af->request_mode = af_mode;
-		if (AF_SEARCHING == af->focus_state) {
-			ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
-			af_stop_search(af);
-		}
 		af->state = AF_MODE_CONTINUE == af_mode ? STATE_CAF : STATE_RECORD_CAF;
 		af->algo_mode = STATE_CAF == af->state ? CAF : VAF;
 		af_set_default_roi(af, af->algo_mode);
@@ -2623,11 +2671,6 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
 	property_set("vendor.cam.af_mode", "none");
 	af->test_loop_quit = 1;
-
-	if (AF_SEARCHING == af->focus_state) {
-		ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
-		af_stop_search(af);
-	}
 
 	if (STATE_FULLSCAN == af->state) {
 		af->algo_mode = CAF;
@@ -3023,7 +3066,7 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 	struct afctrl_face_info *face = (struct afctrl_face_info *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	cmr_u8 i = 0;
-	if (NULL != face && 0 != face->face_num) {
+	if (NULL != face /* && 0 != face->face_num */ ) {
 		memcpy(&af->face_info, face, sizeof(struct afctrl_face_info));
 		af->trigger_source_type |= AF_DATA_FD;
 	}
@@ -3317,6 +3360,9 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	case AF_CMD_SET_AF_POS:
 		if (NULL != af->cb_ops.af_set_motor_pos) {
 			af->cb_ops.af_set_motor_pos(af->caller, *(cmr_u16 *) param0);
+			af->lens.pos = *(cmr_u16 *) param0;
+			af->motor_status = AF_MOTOR_SET;
+			af->frame_counter = 0;
 		}
 		break;
 
@@ -3451,6 +3497,21 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 			log_info->log_cxt = af->trig_ops.init_out.aft_dump_ptr;
 			log_info->log_len = af->trig_ops.init_out.aft_dump_len;
 			ISP_LOGV("Get AFT Log info 0x%x ", log_info->log_len);
+			break;
+		}
+	case AF_CMD_GET_REALBOKEH_LIMITED_RANGE:
+		{
+			struct realbokeh_vcm_range *limited = (struct realbokeh_vcm_range *)param0;
+			limited->limited_infi = af->realboekh_range.limited_infi;
+			limited->limited_macro = af->realboekh_range.limited_macro;
+			limited->vcm_dac[0] = af->realboekh_range.vcm_dac[0];
+			limited->vcm_dac[1] = af->realboekh_range.vcm_dac[1];
+			limited->vcm_dac[2] = af->realboekh_range.vcm_dac[2];
+			limited->reserved[0] = af->realboekh_range.reserved[0];
+			limited->reserved[1] = af->realboekh_range.reserved[1];
+			limited->reserved[2] = af->realboekh_range.reserved[2];
+			ISP_LOGV("Get RealBokeh LimitedRange info (%u %u), %u,%u,%u", limited->limited_infi, limited->limited_macro, limited->vcm_dac[0], limited->vcm_dac[1],
+				 limited->vcm_dac[2]);
 			break;
 		}
 	default:
@@ -3736,6 +3797,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	//[TOF_+++]
 	af->tof.tof_trigger_flag = 0;
 	//[TOF_---]
+	af->motor_status = AF_MOTOR_IDLE;
+	af->frame_counter = 0;
+
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
 
@@ -3842,6 +3906,20 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			if (rtn) {
 				ISP_LOGE("fail to create loop manual mode");
 				return 0;
+			}
+		}
+	}
+
+	if (AF_DATA_IMG_BLK == inparam->data_type) {
+		if (AF_MOTOR_SET == af->motor_status) {
+			af->frame_counter++;
+			if (3 == af->frame_counter) {
+				af->frame_counter = 0;
+				af->motor_status = AF_MOTOR_DONE;
+				if (NULL != af->cb_ops.af_set_motor_status) {
+					af->cb_ops.af_set_motor_status(af->caller, &af->motor_status);
+				}
+				af->motor_status = AF_MOTOR_IDLE;
 			}
 		}
 	}
