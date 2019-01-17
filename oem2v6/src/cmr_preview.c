@@ -11279,8 +11279,9 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1) {
-        CMR_LOGD("4in1 buffer cfg");
+        CMR_LOGD("4in1 buffer cfg, channel id = %d", prev_cxt->cap_channel_id);
         cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+        buf_cfg.channel_id = prev_cxt->cap_channel_id;
         buf_cfg.count = prev_cxt->cap_4in1_mem_num;
         buf_cfg.length = (cmr_u32)prev_cxt->cap_4in1_mem_size;
         buf_cfg.is_4in1 = 1;
