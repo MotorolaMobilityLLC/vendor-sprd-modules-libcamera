@@ -2111,8 +2111,8 @@ static void lsc_inverse_ae_stat(struct lsc_ctrl_context *cxt, cmr_u16 *inverse_t
 
 	for(i=0; i<32*32; i++){
 		stat_r[i] = (cmr_u32)(stat_r[i] / scaled_gain_r [i]) * 1024;
-		stat_g[i] = (cmr_u32)(stat_g[i] / scaled_gain_r [i]) * 1024;
-		stat_b[i] = (cmr_u32)(stat_b[i] / scaled_gain_r [i]) * 1024;
+		stat_g[i] = (cmr_u32)(stat_g[i] / scaled_gain_g [i]) * 1024;
+		stat_b[i] = (cmr_u32)(stat_b[i] / scaled_gain_b [i]) * 1024;
 	}
 }
 
@@ -3049,7 +3049,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				// apply lsc_last_info
 				if((fwstart_info->camera_id == 0 || fwstart_info->camera_id == 1) && cxt->lsc_id == 1
 				&& fwstart_info->gain_width_new  == lsc_last_info->gain_width
-				&& fwstart_info->gain_height_new == lsc_last_info->gain_height){
+				&& fwstart_info->gain_height_new == lsc_last_info->gain_height
+				&& lsc_last_info->table_r[0] && lsc_last_info->table_g[0] && lsc_last_info->table_b[0]){
 					for(i=0; i<fwstart_info->gain_width_new*fwstart_info->gain_height_new; i++){
 						fwstart_info->lsc_result_address_new[4*i + is_r]  = (cmr_u16)(lsc_last_info->table_r[i]);
 						fwstart_info->lsc_result_address_new[4*i + is_gr] = (cmr_u16)(lsc_last_info->table_g[i]);
@@ -3388,10 +3389,11 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					lnc_master_slave_sync(cxt, fwprocstart_info);
 				}
 			}else{
-				ISP_LOGV("[ALSC] FW_PROC_START, NOT ISP_DUAL_SBS MODE, Do nothing.");
+				ISP_LOGV("[ALSC] FW_PROC_START, NOT ISP_DUAL_SBS MODE, Do as FW_START.");
 				if(fwprocstart_info->camera_id <= 1 && cxt->lsc_id == 1
 					&& fwprocstart_info->gain_width_new == lsc_last_info->gain_width
-					&& fwprocstart_info->gain_height_new == lsc_last_info->gain_height){
+					&& fwprocstart_info->gain_height_new == lsc_last_info->gain_height
+					&& lsc_last_info->table_r[0] && lsc_last_info->table_g[0] && lsc_last_info->table_b[0]){
 					for(cmr_u32 i=0; i<fwprocstart_info->gain_width_new*fwprocstart_info->gain_height_new; i++){
 						fwprocstart_info->lsc_result_address_new[4*i + is_r]  = (cmr_u16)(lsc_last_info->table_r[i]);
 						fwprocstart_info->lsc_result_address_new[4*i + is_gr] = (cmr_u16)(lsc_last_info->table_g[i]);
@@ -3431,43 +3433,67 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		case ALSC_DO_SIMULATION:
 			cxt->can_update_dest = 0;
+
+			ISP_LOGI("ALSC_DO_SIMULATION, begin ++");
 			alsc_do_simulation  = (struct alsc_do_simulation*)in;
 			lsc_adv_calc_param  = (struct lsc_adv_calc_param*)malloc(sizeof(struct lsc_adv_calc_param));
 			lsc_adv_calc_result = (struct lsc_adv_calc_result*)malloc(sizeof(struct lsc_adv_calc_result));
-			tmp_buffer_r = (cmr_u32*)malloc(32 * 32 * 4 * sizeof(cmr_u32));
-			tmp_buffer_g = (cmr_u32*)malloc(32 * 32 * 4 * sizeof(cmr_u32));
-			tmp_buffer_b = (cmr_u32*)malloc(32 * 32 * 4 * sizeof(cmr_u32));
-			tmp_buffer = (cmr_u16*)malloc(32 * 32 * 4 * sizeof(cmr_u16));
+			tmp_buffer_r = (cmr_u32*)malloc(32*32*4*sizeof(cmr_u32));
+			tmp_buffer_g = (cmr_u32*)malloc(32*32*4*sizeof(cmr_u32));
+			tmp_buffer_b = (cmr_u32*)malloc(32*32*4*sizeof(cmr_u32));
+			tmp_buffer = (cmr_u16*)malloc(32*32*4*sizeof(cmr_u16));
 			lsc_adv_calc_param->stat_img.r  = tmp_buffer_r;
 			lsc_adv_calc_param->stat_img.gr = tmp_buffer_g;
 			lsc_adv_calc_param->stat_img.b  = tmp_buffer_b;
 			lsc_adv_calc_result->dst_gain = tmp_buffer;
 
-			memcpy(lsc_debug_info_ptr->last_lsc_table, cxt->std_init_lsc_table_param_buffer[2], cxt->init_gain_width*cxt->init_gain_height*4*sizeof(cmr_u16));
+			ISP_LOGI("ALSC_DO_SIMULATION, stat_r=[%d,%d,%d,%d], stat_g=[%d,%d,%d,%d], stat_b=[%d,%d,%d,%d]",
+						alsc_do_simulation->stat_r[0], alsc_do_simulation->stat_r[1], alsc_do_simulation->stat_r[2], alsc_do_simulation->stat_r[3],
+						alsc_do_simulation->stat_g[0], alsc_do_simulation->stat_g[1], alsc_do_simulation->stat_g[2], alsc_do_simulation->stat_g[3],
+						alsc_do_simulation->stat_b[0], alsc_do_simulation->stat_b[1], alsc_do_simulation->stat_b[2], alsc_do_simulation->stat_b[3]);
+			ISP_LOGI("ALSC_DO_SIMULATION, ct=%d, bv=%d, bv_gain=%d", alsc_do_simulation->ct, alsc_do_simulation->bv, alsc_do_simulation->bv_gain);
 
+			memcpy(lsc_debug_info_ptr->last_lsc_table, cxt->std_init_lsc_table_param_buffer[3], cxt->init_gain_width*cxt->init_gain_height*4*sizeof(cmr_u16));
+			ISP_LOGI("ALSC_DO_SIMULATION, reset last_lsc_table to D65[%d,%d,%d,%d]",
+						lsc_debug_info_ptr->last_lsc_table[0], lsc_debug_info_ptr->last_lsc_table[1], lsc_debug_info_ptr->last_lsc_table[2], lsc_debug_info_ptr->last_lsc_table[3]);
+
+			ISP_LOGI("ALSC_DO_SIMULATION, reset lsc_adv_calc_param parameters");
 			lsc_adv_calc_param->img_size.w = cxt->init_img_width;
 			lsc_adv_calc_param->img_size.h = cxt->init_img_height;
 			lsc_adv_calc_param->gain_width = cxt->init_gain_width;
 			lsc_adv_calc_param->gain_height = cxt->init_gain_height;
 			lsc_adv_calc_param->grid = cxt->init_grid;
-			memcpy(lsc_adv_calc_param->stat_img.r,  alsc_do_simulation->stat_r, 32 * 32 * sizeof(cmr_u32));
-			memcpy(lsc_adv_calc_param->stat_img.gr, alsc_do_simulation->stat_g, 32 * 32 * sizeof(cmr_u32));
-			memcpy(lsc_adv_calc_param->stat_img.b,  alsc_do_simulation->stat_b, 32 * 32 * sizeof(cmr_u32));
-			for (i=0; i < 8; i++)
+			memcpy(lsc_adv_calc_param->stat_img.r,  alsc_do_simulation->stat_r, 32*32*sizeof(cmr_u32));
+			memcpy(lsc_adv_calc_param->stat_img.gr, alsc_do_simulation->stat_g, 32*32*sizeof(cmr_u32));
+			memcpy(lsc_adv_calc_param->stat_img.b,  alsc_do_simulation->stat_b, 32*32*sizeof(cmr_u32));
+			for(i=0; i<8; i++)
 				lsc_adv_calc_param->std_tab_param[i] = cxt->std_init_lsc_table_param_buffer[i];
 
+			ISP_LOGI("ALSC_DO_SIMULATION, call liblsc.so do simulation1");
 			rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, lsc_adv_calc_param, lsc_adv_calc_result);
+			memcpy(lsc_debug_info_ptr->last_lsc_table, lsc_debug_info_ptr->alsc_lsc_table, cxt->init_gain_width*cxt->init_gain_height*4*sizeof(cmr_u16));
+			ISP_LOGI("ALSC_DO_SIMULATION, simulation1, alsc_lsc_table=[%d,%d,%d,%d]",
+						lsc_debug_info_ptr->alsc_lsc_table[0], lsc_debug_info_ptr->alsc_lsc_table[1], lsc_debug_info_ptr->alsc_lsc_table[2], lsc_debug_info_ptr->alsc_lsc_table[3]);
+
+			ISP_LOGI("ALSC_DO_SIMULATION, call liblsc.so do simulation2");
 			rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, lsc_adv_calc_param, lsc_adv_calc_result);
 
+			ISP_LOGI("ALSC_DO_SIMULATION, post_gain Begin, alsc_lsc_table=[%d,%d,%d,%d]",
+						lsc_debug_info_ptr->alsc_lsc_table[0], lsc_debug_info_ptr->alsc_lsc_table[1], lsc_debug_info_ptr->alsc_lsc_table[2], lsc_debug_info_ptr->alsc_lsc_table[3]);
 			post_shading_gain(alsc_do_simulation->sim_output_table, lsc_debug_info_ptr->alsc_lsc_table, cxt->init_gain_width, cxt->init_gain_height, cxt->output_gain_pattern,
 							cxt->frame_count, alsc_do_simulation->bv, alsc_do_simulation->bv_gain, 0, 0, cxt->LSC_SPD_VERSION, post_param);
-			memcpy(lsc_debug_info_ptr->output_lsc_table, alsc_do_simulation->sim_output_table, cxt->init_gain_width*cxt->init_gain_height * 4 * sizeof(unsigned short));
+			memcpy(lsc_debug_info_ptr->output_lsc_table, alsc_do_simulation->sim_output_table, cxt->init_gain_width*cxt->init_gain_height*4*sizeof(unsigned short));
+			ISP_LOGI("ALSC_DO_SIMULATION, post_gain End, sim_output_table=[%d,%d,%d,%d]",
+						alsc_do_simulation->sim_output_table[0], alsc_do_simulation->sim_output_table[1], alsc_do_simulation->sim_output_table[2], alsc_do_simulation->sim_output_table[3]);
+
 			std_free(tmp_buffer);
 			std_free(tmp_buffer_r);
 			std_free(tmp_buffer_g);
 			std_free(tmp_buffer_b);
 			std_free(lsc_adv_calc_result);
 			std_free(lsc_adv_calc_param);
+			ISP_LOGI("ALSC_DO_SIMULATION, end ++");
+
 			cxt->can_update_dest = 1;
 		break;
 
