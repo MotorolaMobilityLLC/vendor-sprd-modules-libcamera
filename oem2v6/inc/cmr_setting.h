@@ -100,12 +100,17 @@ struct setting_capture_mode_param {
     cmr_uint is_hdr;
 };
 
-struct setting_ctrl_flash_param {
-    struct setting_capture_mode_param capture_mode;
-    cmr_uint is_active;
-    cmr_uint flash_type;
-    cmr_uint work_mode; // preview or capture
-    cmr_uint will_capture;
+enum setting_flash_status {
+    SETTING_FLASH_CLOSE = 0,
+    SETTING_FLASH_PRE_LIGHTING,
+    SETTING_FLASH_PRE_AFTER,
+    SETTING_FLASH_MAIN_LIGHTING,
+    SETTING_FLASH_MAIN_AFTER,
+    SETTING_FLASH_AF_DONE,
+    SETTING_FLASH_WAIT_TO_CLOSE,
+    SETTING_AF_FLASH_PRE_LIGHTING,
+    SETTING_AF_FLASH_PRE_AFTER,
+    SETTING_FLASH_MODE_MAX
 };
 
 struct setting_cmd_parameter {
@@ -117,7 +122,7 @@ struct setting_cmd_parameter {
         struct cmr_zoom_param zoom_param;
         struct camera_position_type position_info;
         struct img_size size_param;
-        struct setting_ctrl_flash_param ctrl_flash;
+        enum setting_flash_status setting_flash_status;
         struct cmr_preview_fps_param preview_fps_param;
         cmr_int param_buffer[PARAM_BUFFER_MAX]; /*address aligning for struct
                                                    type coercion*/
