@@ -5559,11 +5559,7 @@ static SENSOR_STATIC_INFO_T s_ov16885_static_info[VENDOR_NUM] = {
                      .max_fps = 30,
                      .max_adgain = 8,
                      .ois_supported = 0,
-#ifdef CONFIG_CAMERA_PDAF_TYPE
-                     .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
-#else
                      .pdaf_supported = 0,
-#endif
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,

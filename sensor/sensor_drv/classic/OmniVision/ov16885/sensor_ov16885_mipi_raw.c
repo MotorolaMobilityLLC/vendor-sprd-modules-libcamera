@@ -373,6 +373,7 @@ static cmr_int ov16885_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+#if 0
 static cmr_int ov16885_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
@@ -411,6 +412,7 @@ static cmr_int ov16885_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
+#endif
 
 #if 1
 static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
@@ -685,9 +687,11 @@ static cmr_int ov16885_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
+#if 0
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = ov16885_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
+#endif
     case SENSOR_VAL_TYPE_SET_RAW_INFOR:
         ov16885_drv_set_raw_info(handle, param_ptr->pval);
         break;
