@@ -6954,6 +6954,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     }
     CMR_LOGD("channel config flip:%d", chn_param.cap_inf_cfg.cfg.flip_on);
 
+    // config 4in1 flag
+    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1) {
+        CMR_LOGD("set 4in1 mode to 1");
+        chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
+    }
+
     /*config channel*/
     ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id,
                                   &chn_param, &channel_id, &endian);
