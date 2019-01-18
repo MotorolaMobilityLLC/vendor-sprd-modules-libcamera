@@ -3035,6 +3035,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->cur_status.settings.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5]= 0;
 			cxt->ebd_flash_stable_flag = 0;
+			cxt->expchanged = 0;
 			if (0 != cxt->flash_ver) {
 				flash_finish(cxt);
 			}
@@ -4466,7 +4467,8 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 				} else {
 					cxt->exposure_compensation.touch_ev_flag = 1;//keep index (fps) on first touch ev
 					ae_set_compensation_calc(cxt, &change_idx);
-					cxt->expchanged = 1;
+					if (exp_comp->comp_val)
+						cxt->expchanged = 1;
 					cxt->cur_status.settings.manual_mode = 1;
 					cxt->cur_status.settings.table_idx = change_idx;
 					if(cxt->cur_status.settings.table_idx!=cxt->last_table_index){
