@@ -508,13 +508,19 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 		break;
 	case DCAM_PATH_3DNR:
 		/*
-		 * TODO remove this later after pm ready
 		 * set default value for 3DNR
+		 * nr3_mv_bypass: 0
+		 * nr3_channel_sel: 0
+		 * nr3_project_mode: 0
+		 * nr3_sub_me_bypass: 0x1
+		 * nr3_out_en: 0
+		 * nr3_ping_pong_en: 0
+		 * nr3_bypass: 0
 		 */
-		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x010);
+		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x8);
 		dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x,
 				    dev->cap_info.cap_size.size_y,
-				    1/* project_mode=1 */, idx);
+				    0/* project_mode=0 */, idx);
 		break;
 	default:
 		break;
