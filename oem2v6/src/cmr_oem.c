@@ -7593,7 +7593,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
                 camera_open_ai_scene(oem_handle, &in_param, &out_param);
                 cxt->ipm_cxt.ai_scene_inited = 1;
             }
-            out_param_ptr->ai_scene_enable = 1;
         }
     }
 
