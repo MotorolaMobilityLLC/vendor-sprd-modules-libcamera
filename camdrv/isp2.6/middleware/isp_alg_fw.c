@@ -3715,6 +3715,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.sensor_fps.high_fps_skip_num = param_ptr->sensor_fps.high_fps_skip_num;
 	ae_param.win_num.h = cxt->ae_cxt.win_num.h;
 	ae_param.win_num.w = cxt->ae_cxt.win_num.w;
+	ae_param.blk_num = ae_param.win_num;
 
 	ae_param.win_size.w = ((ae_param.resolution_info.frame_size.w / ae_param.win_num.w) / 2) * 2;
 	ae_param.win_size.h = ((ae_param.resolution_info.frame_size.h / ae_param.win_num.h) / 2) * 2;
