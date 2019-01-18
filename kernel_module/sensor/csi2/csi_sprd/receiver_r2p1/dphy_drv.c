@@ -295,8 +295,8 @@ int phy_parse_dt(int phyid, struct device *dev)
 	u32 args[2] = {0};
 	int ret = 0;
 	int out_value;
-	const char *name;
 	struct device_node *dn = NULL;
+	struct device_node *par_dn = NULL;
 	struct dphy_info *phy = NULL;
 
 	if (phyid > PHY_MAX) {
@@ -308,18 +308,25 @@ int phy_parse_dt(int phyid, struct device *dev)
 		if (!phy)
 			return -EINVAL;
 
-	dn = of_find_node_by_name(NULL, phy_name[phyid]);
-	if (!dn) {
+	par_dn = of_find_compatible_node(NULL, NULL, "sprd,mipi-csi-phy");
+
+	if (!par_dn) {
 		pr_err("get phy node:%s failed\n", phy_name[phyid]);
 		goto err;
 	}
+	dn = of_get_next_available_child(par_dn, NULL);
+	while (dn) {
+		of_property_read_u32(dn, "reg", &out_value);
+		if (out_value == phyid) {
+			break;
+		}
+		dn = of_get_next_available_child(par_dn, dn);
 
-	of_property_read_string(dn, "sprd,phyname", &name);
-	of_property_read_u32(dn, "sprd,phyid", &out_value);
+	}
 
 	phy->phy_id = phyid;
 
-	pr_info("name:%s, id:%d\n", name, out_value);
+	pr_info("phy_id :%d, reg:%d\n", phyid, out_value);
 
 	phy->cam_ahb = syscon_regmap_lookup_by_phandle(dn, "sprd,cam-ahb-syscon");
 	if (IS_ERR_OR_NULL(phy->cam_ahb)) {
