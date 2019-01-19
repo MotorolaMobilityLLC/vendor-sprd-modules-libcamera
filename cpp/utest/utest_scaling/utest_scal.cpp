@@ -110,16 +110,26 @@ static void usage(void) {
     //INFO("utest_scaling -iconfig scaling_parm.txt\n");
     INFO("utest_scaling -if 2 -iw 640 -ih 480 -rx 0 -ry 0 -rw 0 -rh 0 -iey 0 -ieu 0\n");
     INFO("utest_scaling -sctx 0 -scty 0 -sctw 0 -scth 0 -ow 1280 -oh 960 -of 2\n");
-    INFO("utest_scaling -oey 0 -oeu 0 -sm 2 -dech 0 -decv 0 -box 0 -boy 0 -bow 320 -boh 240\n");
+    INFO("utest_scaling -oey 0 -oeu 0 -sm 2 -decih 0 -deciv 0 -box 0 -boy 0 -bow 320 -boh 240\n");
 }
 
 static cpp_memory_t *allocMem(
 	int buf_size, int num_bufs, uint32_t is_cache)
 {
 	size_t mem_size = 0;
+	int heap_type;
+	int iommu_en = false;
 	MemIon *pHeapIon = NULL;
 	unsigned long paddr = 0;
-	UNUSED(is_cache);
+
+#ifdef TEST_ON_HAPS
+	iommu_en = false;
+#else
+	iommu_en = true;
+#endif
+	heap_type = iommu_en ?
+		ION_HEAP_ID_MASK_SYSTEM :
+		ION_HEAP_ID_MASK_MM;
 
 	cpp_memory_t *memory =
 	    (cpp_memory_t *)malloc(sizeof(cpp_memory_t));
@@ -132,7 +142,8 @@ static cpp_memory_t *allocMem(
 	mem_size = buf_size * num_bufs;
 	mem_size = (mem_size + 4095U) & (~4095U);
 
-	pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+	pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING, heap_type);
+
 	if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
 		ERR("failed to alloc ion pmem buffer1.\n");
 		goto getpmem_fail;
@@ -354,10 +365,14 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->input_y_mem->data);
     memset(scal_cxt_ptr->input_y_mem->data, 0x80,
            scal_cxt_ptr->input_y_mem->phys_size);
+#ifdef TEST_ON_HAPS
 	scal_cxt_ptr->scal_cfg.input_addr.y =
 		scal_cxt_ptr->input_y_mem->phys_addr;
+#endif
 	scal_cxt_ptr->scal_cfg.input_addr_vir.y =
 		(unsigned int)scal_cxt_ptr->input_y_mem->data;
+	scal_cxt_ptr->scal_cfg.input_addr.mfd[0] =
+		scal_cxt_ptr->input_y_mem->fd;
     /* alloc input uv buffer */
 	scal_cxt_ptr->input_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.input_size.w *
@@ -367,12 +382,16 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->input_uv_mem->data);
     memset(scal_cxt_ptr->input_uv_mem->data, 0x80,
            scal_cxt_ptr->input_uv_mem->phys_size);
+#ifdef TEST_ON_HAPS
 	scal_cxt_ptr->scal_cfg.input_addr.u =
 		scal_cxt_ptr->input_uv_mem->phys_addr;
 	scal_cxt_ptr->scal_cfg.input_addr.v =
 		scal_cxt_ptr->input_uv_mem->phys_addr;
+#endif
 	scal_cxt_ptr->scal_cfg.input_addr_vir.u =
 		(unsigned int)scal_cxt_ptr->input_uv_mem->data;
+	scal_cxt_ptr->scal_cfg.input_addr.mfd[1] =
+		scal_cxt_ptr->input_uv_mem->fd;
     /* alloc sc outout y buffer */
 	scal_cxt_ptr->output_sc_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
@@ -382,10 +401,14 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->output_sc_y_mem->data);
     memset(scal_cxt_ptr->output_sc_y_mem->data, 0x80,
            scal_cxt_ptr->output_sc_y_mem->phys_size);
+#ifdef TEST_ON_HAPS
 	scal_cxt_ptr->scal_cfg.output_addr.y =
 		scal_cxt_ptr->output_sc_y_mem->phys_addr;
+#endif
 	scal_cxt_ptr->scal_cfg.output_addr_vir.y =
-		(unsigned int)scal_cxt_ptr->output_sc_y_mem->data;	
+		(unsigned int)scal_cxt_ptr->output_sc_y_mem->data;
+	scal_cxt_ptr->scal_cfg.output_addr.mfd[0] =
+		scal_cxt_ptr->output_sc_y_mem->fd;
     /* alloc sc outout uv buffer */
 	scal_cxt_ptr->output_sc_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
@@ -395,12 +418,16 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
          scal_cxt_ptr->output_sc_uv_mem->data);
     memset(scal_cxt_ptr->output_sc_uv_mem->data, 0x80,
            scal_cxt_ptr->output_sc_uv_mem->phys_size);
+#ifdef TEST_ON_HAPS
 	scal_cxt_ptr->scal_cfg.output_addr.u =
 		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
 	scal_cxt_ptr->scal_cfg.output_addr.v =
 		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
+#endif
 	scal_cxt_ptr->scal_cfg.output_addr_vir.u =
-		(unsigned int)scal_cxt_ptr->output_sc_uv_mem->data;	
+		(unsigned int)scal_cxt_ptr->output_sc_uv_mem->data;
+	scal_cxt_ptr->scal_cfg.output_addr.mfd[1] =
+		scal_cxt_ptr->output_sc_uv_mem->fd;
 if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     /* alloc bp outout y buffer */
 	scal_cxt_ptr->output_bp_y_mem =
@@ -411,10 +438,14 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
          scal_cxt_ptr->output_bp_y_mem->data);
     memset(scal_cxt_ptr->output_bp_y_mem->data, 0x80,
            scal_cxt_ptr->output_bp_y_mem->phys_size);
+#ifdef TEST_ON_HAPS
 	scal_cxt_ptr->scal_cfg.bp_output_addr.y =
 		scal_cxt_ptr->output_bp_y_mem->phys_addr;
+#endif
 	scal_cxt_ptr->scal_cfg.bp_output_addr_vir.y =
 		(unsigned int)scal_cxt_ptr->output_bp_y_mem->data;
+	scal_cxt_ptr->scal_cfg.bp_output_addr.mfd[0] =
+		scal_cxt_ptr->output_bp_y_mem->fd;
     /* alloc bp outout uv buffer */
 	scal_cxt_ptr->output_bp_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.bp_trim.w *
@@ -424,12 +455,16 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
          scal_cxt_ptr->output_bp_uv_mem->data);
     memset(scal_cxt_ptr->output_bp_uv_mem->data, 0x80,
            scal_cxt_ptr->output_bp_uv_mem->phys_size);
+#ifdef TEST_ON_HAPS
 	scal_cxt_ptr->scal_cfg.bp_output_addr.u =
 		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
 	scal_cxt_ptr->scal_cfg.bp_output_addr.v =
 		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
+#endif
 	scal_cxt_ptr->scal_cfg.bp_output_addr_vir.u =
 		(unsigned int)scal_cxt_ptr->output_bp_uv_mem->data;
+	scal_cxt_ptr->scal_cfg.bp_output_addr.mfd[1] =
+		scal_cxt_ptr->output_bp_uv_mem->fd;
 }else {
     scal_cxt_ptr->scal_cfg.bp_output_addr.y = 0;
     scal_cxt_ptr->scal_cfg.bp_output_addr.u = 0;

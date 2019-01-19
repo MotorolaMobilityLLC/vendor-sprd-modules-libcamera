@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_SPRD_LIB)),true)
 LOCAL_PATH := $(call my-dir)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_SPRD_LIB)),true)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := lib
@@ -41,7 +41,6 @@ include $(BUILD_PREBUILT)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
-LOCAL_PATH := $(call my-dir)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
@@ -66,7 +65,6 @@ include $(BUILD_PREBUILT)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
-LOCAL_PATH := $(call my-dir)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))

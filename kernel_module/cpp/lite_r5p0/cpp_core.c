@@ -54,6 +54,7 @@
 #define CPP_IRQ_LINE_MASK           CPP_PATH_DONE
 #define CPP_MMU_IRQ_LINE_MASK       CPP_MMU_ERROR_INT
 #define ROT_DRV_DEBUG 1
+#define SCALE_DRV_DEBUG 1
 
 unsigned long g_cpp_base;
 
@@ -186,6 +187,109 @@ void reg_mask(unsigned int addr, unsigned int mask,
 	mb(); /* asm/barrier.h */
 	val = __raw_readl(io_tmp);
 	iounmap(io_tmp);
+}
+#endif
+
+static int sprd_cppcore_sc_reg_trace(
+	struct scale_drv_private *p)
+{
+#ifdef SCALE_DRV_DEBUG
+	unsigned long addr = 0;
+
+	if (!p) {
+		pr_err("fail to get valid input ptr\n");
+		return -EINVAL;
+	}
+	pr_info("CPP:Scaler Register list\n");
+	for (addr = CPP_PATH_EB; addr <= CPP_PATH0_BP_YUV_REGULATE_2;
+		addr += 16) {
+		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+			addr,
+			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
+			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
+	}
+#endif
+
+	return 0;
+}
+
+static int sprd_cppcore_rot_reg_trace(struct rot_drv_private *p)
+{
+#ifdef ROT_DRV_DEBUG
+	unsigned long addr = 0;
+
+	if (!p) {
+		pr_err("fail to get valid input ptr\n");
+		return -EINVAL;
+	}
+	pr_info("CPP:Rotation Register list");
+	for (addr = CPP_ROTATION_SRC_ADDR; addr <= CPP_ROTATION_PATH_CFG;
+		addr += 16) {
+		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+			addr,
+			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
+			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
+	}
+#endif
+
+	return 0;
+}
+
+static int sprd_cppcore_dma_reg_trace(
+	struct dma_drv_private *p)
+{
+#ifdef DMA_DRV_DEBUG
+	unsigned long addr = 0;
+
+	if (!p) {
+		pr_err("fail to get valid input ptr\n");
+		return -EINVAL;
+	}
+	pr_info("CPP:Dma Register list");
+	for (addr = CPP_DMA_SRC_ADDR; addr <= CPP_DMA_CFG; addr += 16) {
+		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+			addr,
+			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
+			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
+	}
+#endif
+
+	return 0;
+}
+
+#ifndef HAPS_TEST
+static void sprd_cppcore_iommu_reg_trace(
+	struct cpp_device *dev)
+{
+	unsigned long addr = 0;
+
+	if (!dev) {
+		pr_err("fail to get valid input ptr\n");
+		return;
+	}
+
+	pr_info("CPP IOMMU INT ERROR:register list\n");
+	for (addr = 0x200; addr <= 0x264 ; addr += 16) {
+		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+			addr,
+			CPP_REG_RD(addr),
+			CPP_REG_RD(addr + 4),
+			CPP_REG_RD(addr + 8),
+			CPP_REG_RD(addr + 12));
+	}
+}
+
+static int sprd_cppcore_iommu_err_pre_proc(
+	struct cpp_device *dev)
+{
+	if (!dev) {
+		pr_err("fail to get valid input ptr\n");
+		return -EFAULT;
+	}
+
+	sprd_cppcore_iommu_reg_trace(dev);
+
+	return 0;
 }
 #endif
 
@@ -339,41 +443,7 @@ static void sprd_cppcore_dma_reset(
 }
 #endif
 }
-#ifndef HAPS_TEST
-static void sprd_cppcore_iommu_reg_trace(
-	struct cpp_device *dev)
-{
-	unsigned long addr = 0;
 
-	if (!dev) {
-		pr_err("fail to get valid input ptr\n");
-		return;
-	}
-
-	pr_info("CPP IOMMU INT ERROR:register list\n");
-	for (addr = 0x200; addr <= 0x264 ; addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
-			addr,
-			CPP_REG_RD(addr),
-			CPP_REG_RD(addr + 4),
-			CPP_REG_RD(addr + 8),
-			CPP_REG_RD(addr + 12));
-	}
-}
-
-static int sprd_cppcore_iommu_err_pre_proc(
-	struct cpp_device *dev)
-{
-	if (!dev) {
-		pr_err("fail to get valid input ptr\n");
-		return -EFAULT;
-	}
-
-	sprd_cppcore_iommu_reg_trace(dev);
-
-	return 0;
-}
-#endif
 static irqreturn_t sprd_cppcore_isr_root(int irq, void *priv)
 {
 	int i = 0;
@@ -396,6 +466,7 @@ static irqreturn_t sprd_cppcore_isr_root(int irq, void *priv)
 #ifndef HAPS_TEST
 	mmu_irq_line = status & CPP_MMU_IRQ_LINE_MASK;
 	if (unlikely(mmu_irq_line != 0)) {
+		sprd_cppcore_sc_reg_trace(&dev->scif->drv_priv);
 		pr_err("fail to run iommu, int 0x%x\n", mmu_irq_line);
 		if (sprd_cppcore_iommu_err_pre_proc(dev))
 			return IRQ_HANDLED;
@@ -421,73 +492,6 @@ static irqreturn_t sprd_cppcore_isr_root(int irq, void *priv)
 	spin_unlock_irqrestore(&dev->slock, flag);
 
 	return IRQ_HANDLED;
-}
-
-static int sprd_cppcore_sc_reg_trace(
-	struct scale_drv_private *p)
-{
-#ifdef SCALE_DRV_DEBUG
-	unsigned long addr = 0;
-
-	if (!p) {
-		pr_err("fail to get valid input ptr\n");
-		return -EINVAL;
-	}
-	pr_info("CPP:Scaler Register list\n");
-	for (addr = CPP_PATH_EB; addr <= CPP_PATH0_BP_YUV_REGULATE_2;
-		addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
-			addr,
-			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
-			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
-	}
-#endif
-
-	return 0;
-}
-
-static int sprd_cppcore_rot_reg_trace(struct rot_drv_private *p)
-{
-#ifdef ROT_DRV_DEBUG
-	unsigned long addr = 0;
-
-	if (!p) {
-		pr_err("fail to get valid input ptr\n");
-		return -EINVAL;
-	}
-	pr_info("CPP:Rotation Register list");
-	for (addr = CPP_ROTATION_SRC_ADDR; addr <= CPP_ROTATION_PATH_CFG;
-		addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
-			addr,
-			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
-			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
-	}
-#endif
-
-	return 0;
-}
-
-static int sprd_cppcore_dma_reg_trace(
-	struct dma_drv_private *p)
-{
-#ifdef DMA_DRV_DEBUG
-	unsigned long addr = 0;
-
-	if (!p) {
-		pr_err("fail to get valid input ptr\n");
-		return -EINVAL;
-	}
-	pr_info("CPP:Dma Register list");
-	for (addr = CPP_DMA_SRC_ADDR; addr <= CPP_DMA_CFG; addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
-			addr,
-			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
-			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
-	}
-#endif
-
-	return 0;
 }
 
 static int sprd_cppcore_module_enable(struct cpp_device *dev)

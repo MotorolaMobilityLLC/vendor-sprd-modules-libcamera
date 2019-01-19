@@ -3,14 +3,14 @@ $(error No KDIR found for platform $(TARGET_PLATFORM))
 endif
 
 # target source files
-sprd_vdsp-objs :=
+vdsp-objs :=
 
 # target source files for ceva1.0
 ifeq ($(VDSP_VER),ceva1.0)
 SRC := $(shell find $(REL_PATH)/ceva1.0 -name "*.c")
 LOCAL_SRC := $(SRC:$(REL_PATH)/%=%)
 
-sprd_vdsp-objs += $(LOCAL_SRC:%.c=%.o)
+vdsp-objs += $(LOCAL_SRC:%.c=%.o)
 
 # target includes
 ccflags-y += -I$(REL_PATH)/ceva1.0/inc/
@@ -18,7 +18,7 @@ ccflags-y += -I$(REL_PATH)/ceva1.0/inc/
 endif
 
 # target
-obj-m += sprd_vdsp.o
+obj-m += vdsp.o
 
 # target includes
 ccflags-y += -I$(REL_PATH)/../sensor/
