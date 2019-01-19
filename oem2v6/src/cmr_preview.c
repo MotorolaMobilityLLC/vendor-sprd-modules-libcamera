@@ -3242,6 +3242,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint skip_num = 0;
     struct video_start_param isp_param;
     struct sensor_mode_info *sensor_mode_info = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -3366,7 +3367,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         /*start ai scene*/
-        if (prev_cxt->prev_param.ai_scene_enable) {
+        if (cxt->ipm_cxt.ai_scene_inited) {
             prev_ai_scene_start(handle);
         }
     }
@@ -3426,6 +3427,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 pdaf_enable = 0;
     cmr_u32 channel_bits = 0;
     struct prev_cb_info cb_data_info;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -3492,7 +3494,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         /*stop ai scene*/
-        if (prev_cxt->prev_param.ai_scene_enable) {
+        if (cxt->ipm_cxt.ai_scene_inited) {
             prev_ai_scene_stop(handle);
         }
     }
@@ -5991,6 +5993,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     struct img_frm *frm_ptr = NULL;
     cmr_s64 ae_time = 0;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -6058,7 +6061,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
             prev_fd_send_data(handle, camera_id, frm_ptr);
         }
 
-        if (prev_cxt->prev_param.ai_scene_enable) {
+        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1) {
             prev_ai_scene_send_data(handle, camera_id, frm_ptr, info);
         }
 

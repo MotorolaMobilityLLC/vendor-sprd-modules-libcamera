@@ -7584,7 +7584,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             goto exit;
         }
         CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
+        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
+            setting_param.camera_id == 0) {
             if (!cxt->ipm_cxt.ai_scene_inited) {
                 struct ipm_open_in in_param;
                 struct ipm_open_out out_param;
@@ -8359,6 +8360,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_AI_SCENE_ENABLED:
+        cxt->ai_scene_enable = param;
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
