@@ -4696,6 +4696,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
     struct cmr_focus_status *focus_status;
+    struct af_ctrl_notice *af_ctrl;
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
@@ -4712,6 +4713,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("camera cb: autofocus succeeded.");
         {
+            if (parm4 != NULL) {
+                af_ctrl = (af_ctrl_notice *)parm4;
+              if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
+                af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
+                controlInfo.af_roi[0] = af_ctrl->af_roi.sx;
+                controlInfo.af_roi[1] = af_ctrl->af_roi.sy;
+                controlInfo.af_roi[2] = af_ctrl->af_roi.ex;
+                controlInfo.af_roi[3] = af_ctrl->af_roi.ey;
+                mSetting->setAfRoiCONTROLTag(&controlInfo);
+                break;
+              }
+            }
             controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
             mSetting->setAfCONTROLTag(&controlInfo);
             // channel->channelCbRoutine(0, timeStamp,

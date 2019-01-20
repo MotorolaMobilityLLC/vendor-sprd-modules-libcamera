@@ -810,6 +810,11 @@ ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9850ka sc9850kh sp9832e sp98
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MEET_JPG_ALIGNMENT
 endif
 
+isp_binning_size := 1
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp9832e)
+isp_binning_size := 2
+endif
+
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9850e sp9853i),)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_VIDEO_1920_1080
 endif
@@ -862,4 +867,4 @@ LOCAL_CFLAGS += -DCONFIG_CAMERA_SECURITY_TEE_FULL
 endif
 LOCAL_CFLAGS += -DCAMERA_SENSOR_NUM=$(max_sensor_num)
 LOCAL_CFLAGS += -DCAMERA_LOGICAL_SENSOR_NUM=$(max_logical_sensor_num)
-
+LOCAL_CFLAGS += -DISP_BINNING_SIZE=$(isp_binning_size)

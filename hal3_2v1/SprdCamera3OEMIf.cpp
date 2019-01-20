@@ -5684,6 +5684,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     struct cmr_focus_status *focus_status;
     int64_t timeStamp = 0;
     timeStamp = systemTime();
+    struct af_ctrl_notice *af_ctrl;
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
@@ -5700,6 +5701,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("camera cb: autofocus succeeded.");
         {
+            if (parm4 != NULL) {
+                af_ctrl = (af_ctrl_notice *)parm4;
+              if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
+                af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
+                controlInfo.af_roi[0] = af_ctrl->af_roi.sx * ISP_BINNING_SIZE;
+                controlInfo.af_roi[1] = af_ctrl->af_roi.sy * ISP_BINNING_SIZE;
+                controlInfo.af_roi[2] = af_ctrl->af_roi.ex * ISP_BINNING_SIZE;
+                controlInfo.af_roi[3] = af_ctrl->af_roi.ey * ISP_BINNING_SIZE;
+                mSetting->setAfRoiCONTROLTag(&controlInfo);
+                break;
+              }
+            }
             controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
             mSetting->setAfCONTROLTag(&controlInfo);
             // channel->channelCbRoutine(0, timeStamp,
@@ -5737,7 +5750,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     } break;
 
     case CAMERA_EVT_CB_FOCUS_MOVE:
-        focus_status = (cmr_focus_status *)parm4;
+        focus_status = (struct cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d, focus_status->is_in_focus: %d, "
                  "focus_status->af_focus_type: %d",
                  parm4, mIsAutoFocus, focus_status->is_in_focus,

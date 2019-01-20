@@ -29,6 +29,7 @@ enum af_cb_type {
     AF_CB_FAILED,
     AF_CB_ABORT,
     AF_CB_FOCUS_MOVE,
+    AF_CB_ROI,
     AF_CB_MAX
 };
 

@@ -1619,6 +1619,9 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
             cxt->focus_rect.y = 0;
         }
         break;
+    case AF_CB_ROI:
+        oem_cb = CAMERA_EXIT_CB_DONE;
+        break;
     default:
         CMR_LOGE("failed focus cb %d", cb);
         ret = -CMR_CAMERA_NO_SUPPORT;

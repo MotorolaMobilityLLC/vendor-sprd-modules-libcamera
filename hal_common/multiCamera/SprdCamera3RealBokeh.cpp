@@ -2365,12 +2365,11 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             mDepthTrigger = TRIGGER_FNUM;
         }
     }
-
-    if (metaSettings.exists(ANDROID_CONTROL_AF_REGIONS)) {
-        int left = metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[0];
-        int top = metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[1];
-        int right = metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[2];
-        int bottom = metaSettings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[3];
+    if (metaSettings.exists(ANDROID_SPRD_AF_ROI)) {
+        int left = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[0];
+        int top = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[1];
+        int right = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[2];
+        int bottom = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[3];
         int x = left, y = top;
         if (left != 0 && top != 0 && right != 0 && bottom != 0) {
             x = left + (right - left) / 2;
@@ -2382,39 +2381,6 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                 mbokehParm.sel_y = y;
                 isUpdate = true;
                 HAL_LOGD("sel_x %d ,sel_y %d", x, y);
-            }
-        }
-    } else {
-        if (((mbokehParm.sel_x != mBokehSize.preview_w / 2 &&
-              mbokehParm.sel_y != mBokehSize.preview_h / 2) ||
-             (numFaces != 0)) &&
-            (mCurAFMode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
-            if (numFaces) {
-                int x =
-                    face_rect[max_index].left +
-                    (face_rect[max_index].right - face_rect[max_index].left) /
-                        2;
-                int y =
-                    face_rect[max_index].top +
-                    (face_rect[max_index].bottom - face_rect[max_index].top) /
-                        2;
-                int prev_x = x * mBokehSize.preview_w / origW;
-                int prev_y = y * mBokehSize.preview_h / origH;
-                if (mbokehParm.sel_x != prev_x || mbokehParm.sel_y != prev_y) {
-                    mbokehParm.sel_x = prev_x;
-                    mbokehParm.sel_y = prev_y;
-                    isUpdate = true;
-                    HAL_LOGD("autofocus and bokeh face,%d,%d", mbokehParm.sel_x,
-                             mbokehParm.sel_y);
-                    mDepthTrigger = TRIGGER_FNUM;
-                }
-            } else {
-                mbokehParm.sel_x = mBokehSize.preview_w / 2;
-                mbokehParm.sel_y = mBokehSize.preview_h / 2;
-
-                isUpdate = true;
-                mDepthTrigger = TRIGGER_FNUM;
-                HAL_LOGD("autofocus and bokeh center");
             }
         }
     }
@@ -2437,6 +2403,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
 }
 
 #ifdef CONFIG_FACE_BEAUTY
+
 /*===========================================================================
  * FUNCTION   :cap_3d_doFaceMakeup
  *
@@ -3494,6 +3461,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             vcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
             setDepthTrigger(vcmSteps);
         }
+        updateApiParams(metadata, 1);
         if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
             if (mCaptureThread->mReprocessing) {
                 HAL_LOGD("hold jpeg picture call bac1k, framenumber:%d",
@@ -4089,7 +4057,6 @@ void SprdCamera3RealBokeh::preClose(void) {
     mCaptureThread->join();
     mDepthMuxerThread->join();
     mPreviewMuxerThread->join();
-
     HAL_LOGI("X");
 }
 

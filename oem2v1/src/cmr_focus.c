@@ -427,7 +427,6 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
             if (NULL != af_cxt->ops.af_pre_proc) {
                 af_cxt->ops.af_pre_proc(af_cxt->oem_handle);
             }
-
             af_cxt->evt_cb(AF_CB_DONE, 0, af_cxt->oem_handle);
 
             if (NULL != af_cxt->ops.af_post_proc) {
@@ -556,9 +555,10 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
         if (!is_caf_mode || af_cxt->af_busy) {
             struct isp_af_notice *isp_af = (struct isp_af_notice *)data;
-
             pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
             if (ISP_FOCUS_MOVE_END == isp_af->mode) {
+                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af,
+                               af_cxt->oem_handle);
                 ret = af_isp_done(af_handle, data);
             }
         } else if (is_caf_mode) {
@@ -571,6 +571,8 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
                 focus_status.is_in_focus = 1;
                 ret = caf_move_start_handle(af_handle, &focus_status);
             } else if (ISP_FOCUS_MOVE_END == isp_af->mode) {
+                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af,
+                               af_cxt->oem_handle);
                 focus_status.is_in_focus = 0;
                 ret = caf_move_stop_handle(af_handle, &focus_status);
             }

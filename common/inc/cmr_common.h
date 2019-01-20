@@ -815,6 +815,20 @@ struct cmr_focus_status {
     int af_mode;
 };
 
+struct af_ctrl_roi {
+    cmr_u32 sx;
+    cmr_u32 sy;
+    cmr_u32 ex;
+    cmr_u32 ey;
+};
+struct af_ctrl_notice {
+    cmr_u32 mode;
+    cmr_u32 valid_win;
+    cmr_u32 focus_type;
+    struct af_ctrl_roi af_roi;
+    cmr_u32 reserved[6];
+};
+
 /********************************** v4l2 end **********************************/
 
 /******************************** memory start ********************************/

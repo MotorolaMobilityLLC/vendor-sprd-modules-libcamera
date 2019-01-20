@@ -136,6 +136,7 @@ typedef struct {
     uint8_t af_mode;
     int32_t af_regions[5];
     uint8_t af_available_modes[6];
+    int32_t af_roi[4];
 
     int32_t ae_available_fps_ranges[18];
     int32_t ae_compensation_range[2];
@@ -497,6 +498,7 @@ class SprdCamera3Setting {
     int setAeCONTROLTag(CONTROL_Tag *controlInfo);
     int setAfCONTROLTag(CONTROL_Tag *controlInfo);
     int setAwbCONTROLTag(CONTROL_Tag *controlInfo);
+    int setAfRoiCONTROLTag(CONTROL_Tag *controlInfo);
 
     int setEDGETag(EDGE_Tag edgeInfo);
     int getEDGETag(EDGE_Tag *edgeInfo);
@@ -624,9 +626,12 @@ class SprdCamera3Setting {
     static int initStaticParametersforLensInfo(int32_t cameraId);
     static int initStaticParametersforScalerInfo(int32_t cameraId);
     //
-    static int initStaticMetadataforSensorInfo(int32_t cameraId,CameraMetadata &staticInfo);
-    static int initStaticMetadataforLensInfo(int32_t cameraId,CameraMetadata &staticInfo);
-    static int initStaticMetadataforScalerInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    static int initStaticMetadataforSensorInfo(int32_t cameraId,
+                                               CameraMetadata &staticInfo);
+    static int initStaticMetadataforLensInfo(int32_t cameraId,
+                                             CameraMetadata &staticInfo);
+    static int initStaticMetadataforScalerInfo(int32_t cameraId,
+                                               CameraMetadata &staticInfo);
     //
     static int initStaticParameters(int32_t cameraId);
     static int initStaticMetadata(int32_t cameraId,

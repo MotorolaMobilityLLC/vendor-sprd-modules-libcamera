@@ -581,6 +581,8 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
 
             pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
             if (ISP_FOCUS_MOVE_END == isp_af->mode) {
+                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af,
+                               af_cxt->oem_handle);
                 ret = af_isp_done(af_handle, data);
             }
         } else if (is_caf_mode) {
@@ -594,6 +596,8 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
                 ret = caf_move_start_handle(af_handle, &focus_status);
             } else if (ISP_FOCUS_MOVE_END == isp_af->mode) {
                 focus_status.is_in_focus = 0;
+                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af,
+                               af_cxt->oem_handle);
                 ret = caf_move_stop_handle(af_handle, &focus_status);
             }
         }
