@@ -2961,6 +2961,8 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.stat_img_format = AWB_CTRL_STAT_IMG_CHN;
 	param.stat_img_size.w = info.win_num.w;
 	param.stat_img_size.h = info.win_num.h;
+	param.stat_img_size_ae.w = info.win_num.w;
+	param.stat_img_size_ae.h = info.win_num.h;
 	param.stat_win_size.w = info.win_size.w;
 	param.stat_win_size.h = info.win_size.h;
 
@@ -3665,6 +3667,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	struct ae_set_work_param ae_param;
 	enum ae_work_mode ae_mode = 0;
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_rgb_aem_info aem_info;
 
 	memset(&ae_param, 0, sizeof(ae_param));
 
@@ -3713,6 +3716,11 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.sensor_fps.min_fps = param_ptr->sensor_fps.min_fps;
 	ae_param.sensor_fps.is_high_fps = param_ptr->sensor_fps.is_high_fps;
 	ae_param.sensor_fps.high_fps_skip_num = param_ptr->sensor_fps.high_fps_skip_num;
+
+	ret = ispalg_get_aem_param(cxt, &aem_info);
+	cxt->ae_cxt.win_num.w = aem_info.blk_num.w;
+	cxt->ae_cxt.win_num.h = aem_info.blk_num.h;
+
 	ae_param.win_num.h = cxt->ae_cxt.win_num.h;
 	ae_param.win_num.w = cxt->ae_cxt.win_num.w;
 	ae_param.blk_num = ae_param.win_num;
@@ -3901,7 +3909,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cmr_u32 sn_mode = 0;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	struct isp_size orig_size;
-	struct isp_rgb_aem_info aem_info;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
@@ -3939,10 +3946,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	if (!cxt->is_master) {
 		isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_SENSOR_MODE, &sn_mode, NULL);
 	}
-
-	ret = ispalg_get_aem_param(cxt, &aem_info);
-	cxt->ae_cxt.win_num.w = aem_info.blk_num.w;
-	cxt->ae_cxt.win_num.h = aem_info.blk_num.h;
 
 	/* malloc statis/lsc and other buffers and mapping buffers to dev. */
 	ret = isp_dev_prepare_buf(cxt->dev_access_handle, &cxt->mem_info);
@@ -4075,18 +4078,22 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 	ISP_TRACE_IF_FAIL(ret, ("fail to do anti_flicker param update"));
 
+	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
+	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
+
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 				AWB_CTRL_CMD_SET_WORK_MODE,
 				&in_ptr->work_mode, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_work_mode"));
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+				AWB_CTRL_CMD_SET_AE_STAT_WIN_NUM,
+				&cxt->ae_cxt.win_num, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_aem_stat_win"));
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 				AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to get_awb_pix_cnt"));
 	}
-
-	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
 
 	memset(&af_start_info, 0, sizeof(struct afctrl_fwstart_info));
 	af_start_info.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
