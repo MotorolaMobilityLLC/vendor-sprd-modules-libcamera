@@ -198,6 +198,7 @@ static void dcam_cap_sof(void *param)
 	/* record SOF timestamp for each frame */
 	sof_index = dev->frame_index;
 	sof_index += DCAM_FRAME_TIMESTAMP_COUNT - dev->slowmotion_count;
+	sof_index -= (!dev->enable_slowmotion);
 	sof_index %= DCAM_FRAME_TIMESTAMP_COUNT;
 	ktime_get_ts(&dev->frame_ts[sof_index]);
 	dev->frame_ts_boot[sof_index] = ktime_get_boottime();
