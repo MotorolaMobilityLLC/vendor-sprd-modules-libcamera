@@ -25,6 +25,7 @@
 
  #define MOD(x, a) (x % a)
 #define MOD2(x)	(x % 2)
+#define MOD8(x)	(x % 8)
 #define OSIDE(x, a, b) ((x < a) || (x > b))
 #define CMP(x, a, b) (x < (a + b))
 #define ALIGN_UP(size, align) ((size + (align - 1)) & (~(align - 1)))

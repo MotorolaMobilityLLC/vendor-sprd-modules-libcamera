@@ -108,9 +108,9 @@ const char *cfg_string[] = {
 static void usage(void) {
     INFO("Usage: 25 args\n");
     //INFO("utest_scaling -iconfig scaling_parm.txt\n");
-    INFO("utest_scaling -if 2 -iw 640 -ih 480 -rx 0 -ry 0 -rw 0 -rh 0 -iey 0 -ieu 0\n");
-    INFO("utest_scaling -sctx 0 -scty 0 -sctw 0 -scth 0 -ow 1280 -oh 960 -of 2\n");
-    INFO("utest_scaling -oey 0 -oeu 0 -sm 2 -decih 0 -deciv 0 -box 0 -boy 0 -bow 320 -boh 240\n");
+    INFO("utest_scaling -if 2 -iw 640 -ih 480 -rx 0 -ry 0 -rw 0 -rh 0 -iey 0 -ieu 0"
+    "-sctx 0 -scty 0 -sctw 0 -scth 0 -ow 1280 -oh 960 -op 1296 -of 2"
+    "-oey 0 -oeu 0 -sm 2 -decih 0 -deciv 0 -box 0 -boy 0 -bow 320 -boh 240 -bop 336\n");
 }
 
 static cpp_memory_t *allocMem(
@@ -236,6 +236,8 @@ static int utest_scal_param_set1(
            scal_cxt_ptr->scal_cfg.output_size.w = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-oh") == 0 && (i < argc - 1)) {
            scal_cxt_ptr->scal_cfg.output_size.h = atoi(argv[++i]);
+        }else if (strcmp(argv[i], "-op") == 0 && (i < argc - 1)) {
+           scal_cxt_ptr->scal_cfg.output_pitch = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-of") == 0 && (i < argc - 1)) {
            scal_cxt_ptr->scal_cfg.output_format = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-oey") == 0 && (i < argc - 1)) {
@@ -256,6 +258,8 @@ static int utest_scal_param_set1(
            scal_cxt_ptr->scal_cfg.bp_trim.w = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-boh") == 0 && (i < argc - 1)) {
            scal_cxt_ptr->scal_cfg.bp_trim.h = atoi(argv[++i]);
+        }else if (strcmp(argv[i], "-bop") == 0 && (i < argc - 1)) {
+           scal_cxt_ptr->scal_cfg.bpout_pitch = atoi(argv[++i]);
         } else {
             usage();
             return -1;
@@ -392,9 +396,10 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
 		(unsigned int)scal_cxt_ptr->input_uv_mem->data;
 	scal_cxt_ptr->scal_cfg.input_addr.mfd[1] =
 		scal_cxt_ptr->input_uv_mem->fd;
+
     /* alloc sc outout y buffer */
 	scal_cxt_ptr->output_sc_y_mem =
-	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
+	allocMem(scal_cxt_ptr->scal_cfg.output_pitch *
 		scal_cxt_ptr->scal_cfg.output_size.h, 1, false);
     INFO("LIKE:sc out y phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_sc_y_mem->phys_addr,
@@ -411,7 +416,7 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
 		scal_cxt_ptr->output_sc_y_mem->fd;
     /* alloc sc outout uv buffer */
 	scal_cxt_ptr->output_sc_uv_mem =
-	allocMem(scal_cxt_ptr->scal_cfg.output_size.w *
+	allocMem(scal_cxt_ptr->scal_cfg.output_pitch *
 		scal_cxt_ptr->scal_cfg.output_size.h, 1, false);
     INFO("LIKE:sc out uv phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_sc_uv_mem->phys_addr,
@@ -431,7 +436,7 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
 if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     /* alloc bp outout y buffer */
 	scal_cxt_ptr->output_bp_y_mem =
-	allocMem(scal_cxt_ptr->scal_cfg.bp_trim.w *
+	allocMem(scal_cxt_ptr->scal_cfg.bpout_pitch *
 		scal_cxt_ptr->scal_cfg.bp_trim.h, 1, false);
     INFO("LIKE:bp out y phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_bp_y_mem->phys_addr,
@@ -448,7 +453,7 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
 		scal_cxt_ptr->output_bp_y_mem->fd;
     /* alloc bp outout uv buffer */
 	scal_cxt_ptr->output_bp_uv_mem =
-	allocMem(scal_cxt_ptr->scal_cfg.bp_trim.w *
+	allocMem(scal_cxt_ptr->scal_cfg.bpout_pitch *
 		scal_cxt_ptr->scal_cfg.bp_trim.h, 1, false);
     INFO("LIKE:bp out uv phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_bp_uv_mem->phys_addr,
@@ -539,7 +544,25 @@ utest_scal_set_src_data(struct utest_scal_cxt *scal_cxt_ptr) {
     INFO("utest scaling read src image OK\n");
     return 0;
 }
+#if 0
+static int crop_raw(uint8 *vect, unsigned int w, unsigned int h, unsigned int pitch) {
+	uint8 *temp = NULL;
+	uint8 *golden = NULL;
+	int i,j;
 
+	if (pitch != w)
+	{
+		temp = (uint8 *)malloc(sizeof(uint8)*w*h);
+		memset(temp, 0, sizeof(uint8)*w*h);
+		for (i=0; i<h;i++) {
+			for(j=0;j<w;j++)
+				temp[i*w+j] = vect[i*pitch+j];
+		}
+		memcpy(vect, temp, w*h);
+		free(temp);
+	}
+}
+#endif
 static int utest_scal_set_des_data(
     struct utest_scal_cxt *scal_cxt_ptr, int count) {
 
@@ -549,7 +572,7 @@ static int utest_scal_set_des_data(
 
 //scale path des data save
 	sprintf(sc_file_name, utest_scal_sc_dst_y_file,
-		scal_cxt_ptr->scal_cfg.output_size.w,
+		scal_cxt_ptr->scal_cfg.output_pitch,
 		scal_cxt_ptr->scal_cfg.output_size.h,
 		scal_cxt_ptr->scal_cfg.input_format,
 		scal_cxt_ptr->scal_cfg.output_format,
@@ -557,7 +580,7 @@ static int utest_scal_set_des_data(
     fp = fopen(sc_file_name, "wb");
     if (fp != NULL) {
         fwrite((void *)scal_cxt_ptr->output_sc_y_mem->data, 1,
-               scal_cxt_ptr->scal_cfg.output_size.w *
+               scal_cxt_ptr->scal_cfg.output_pitch *
                scal_cxt_ptr->scal_cfg.output_size.h,
                fp);
         fclose(fp);
@@ -567,7 +590,7 @@ static int utest_scal_set_des_data(
     }
 
     sprintf(sc_file_name, utest_scal_sc_dst_uv_file,
-		scal_cxt_ptr->scal_cfg.output_size.w,
+		scal_cxt_ptr->scal_cfg.output_pitch,
 		scal_cxt_ptr->scal_cfg.output_size.h,
 		scal_cxt_ptr->scal_cfg.input_format,
 		scal_cxt_ptr->scal_cfg.output_format,
@@ -576,12 +599,12 @@ static int utest_scal_set_des_data(
     if (fp != NULL) {
         if (scal_cxt_ptr->scal_cfg.output_format == 2)
             fwrite((void *)scal_cxt_ptr->output_sc_uv_mem->data, 1,
-                   scal_cxt_ptr->scal_cfg.output_size.w *
+                   scal_cxt_ptr->scal_cfg.output_pitch *
                    scal_cxt_ptr->scal_cfg.output_size.h,
                    fp);
         else if (scal_cxt_ptr->scal_cfg.output_format == 0)
             fwrite((void *)scal_cxt_ptr->output_sc_uv_mem->data, 1,
-                   scal_cxt_ptr->scal_cfg.output_size.w *
+                   scal_cxt_ptr->scal_cfg.output_pitch *
                    scal_cxt_ptr->scal_cfg.output_size.h /2,
                    fp);
 
@@ -594,7 +617,7 @@ static int utest_scal_set_des_data(
 if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
 // bp path des data save
 	sprintf(bp_file_name, utest_scal_bp_dst_y_file,
-		scal_cxt_ptr->scal_cfg.bp_trim.w,
+		scal_cxt_ptr->scal_cfg.bpout_pitch,
 		scal_cxt_ptr->scal_cfg.bp_trim.h,
 		scal_cxt_ptr->scal_cfg.input_format,
 		scal_cxt_ptr->scal_cfg.input_format,
@@ -602,7 +625,7 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     fp = fopen(bp_file_name, "wb");
     if (fp != NULL) {
         fwrite((void *)scal_cxt_ptr->output_bp_y_mem->data, 1,
-               scal_cxt_ptr->scal_cfg.bp_trim.w *
+               scal_cxt_ptr->scal_cfg.bpout_pitch *
                scal_cxt_ptr->scal_cfg.bp_trim.h,
                fp);
         fclose(fp);
@@ -612,7 +635,7 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     }
 
     sprintf(bp_file_name, utest_scal_bp_dst_uv_file,
-		scal_cxt_ptr->scal_cfg.bp_trim.w,
+		scal_cxt_ptr->scal_cfg.bpout_pitch,
 		scal_cxt_ptr->scal_cfg.bp_trim.h,
 		scal_cxt_ptr->scal_cfg.input_format,
 		scal_cxt_ptr->scal_cfg.input_format,
@@ -621,12 +644,12 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     if (fp != NULL) {
         if (scal_cxt_ptr->scal_cfg.input_format == 2)
             fwrite((void *)scal_cxt_ptr->output_bp_uv_mem->data, 1,
-                   scal_cxt_ptr->scal_cfg.bp_trim.w *
+                   scal_cxt_ptr->scal_cfg.bpout_pitch *
                    scal_cxt_ptr->scal_cfg.bp_trim.h,
                    fp);
         else if (scal_cxt_ptr->scal_cfg.input_format == 0)
             fwrite((void *)scal_cxt_ptr->output_bp_uv_mem->data, 1,
-                   scal_cxt_ptr->scal_cfg.bp_trim.w *
+                   scal_cxt_ptr->scal_cfg.bpout_pitch *
                    scal_cxt_ptr->scal_cfg.bp_trim.h /2,
                    fp);
 

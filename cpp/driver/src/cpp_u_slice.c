@@ -47,6 +47,7 @@ int cpp_u_input_param_check(
 			cfg_parm->output_addr.y, cfg_parm->output_addr.u,
 			cfg_parm->output_addr.v, cfg_parm->output_addr_vir.y,
 			cfg_parm->output_addr_vir.u, cfg_parm->output_addr_vir.v);
+ 
 	CMR_LOGD("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
@@ -152,6 +153,12 @@ int cpp_u_input_param_check(
 		return ret;
 	}
 
+	if (MOD8(cfg_parm->output_pitch) != 0) {
+		CMR_LOGE("fail to get sc dst pitch align size not 8: %d\n",
+				cfg_parm->output_pitch);
+		return ret;
+	}
+
 	if (MOD2(cfg_parm->output_size.w) != 0) {
 		CMR_LOGE("fail to get dst width align 2: %d\n",
 				cfg_parm->output_size.w);
@@ -205,6 +212,12 @@ int cpp_u_input_param_check(
 	if ((MOD2(cfg_parm->bp_trim.x) != 0) ||
 			(MOD2(cfg_parm->bp_trim.w) != 0)) {
 		CMR_LOGE("failed bp trim align size1\n");
+		return ret;
+	}
+
+	if (MOD8(cfg_parm->bpout_pitch) != 0) {
+		CMR_LOGE("fail to get bp dst pitch align size not 8: %d\n",
+				cfg_parm->bpout_pitch);
 		return ret;
 	}
 
@@ -294,6 +307,8 @@ slice_drv_param_t *slice_parm)
 		cfg_parm->output_size.w;
 	slice_parm->scaler_path_param.scaler_des_size_y =
 		cfg_parm->output_size.h;
+	slice_parm->scaler_path_param.scaler_des_pitch =
+		cfg_parm->output_pitch;
 	slice_parm->scaler_path_param.trim_size_x =
 		cfg_parm->sc_trim.w;
 	slice_parm->scaler_path_param.trim_size_y =
@@ -310,4 +325,6 @@ slice_drv_param_t *slice_parm)
 		cfg_parm->bp_trim.x;
 	slice_parm->bypass_path_param.trim_start_y =
 		cfg_parm->bp_trim.y;
+	slice_parm->bypass_path_param.bp_des_pitch =
+		cfg_parm->bpout_pitch;
 }

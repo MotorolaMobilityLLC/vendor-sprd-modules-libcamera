@@ -1232,14 +1232,20 @@ void slice_drv_param_calc(slice_drv_param_t *param_ptr)
                     fw_slice_param_ptr->Path0_sc_des_width     = fw_slice_param_ptr->Sc_out_trim_width;
                     fw_slice_param_ptr->Path0_sc_des_height    = fw_slice_param_ptr->Sc_out_trim_height;
                     fw_slice_param_ptr->Path0_sc_output_format = scaler_path_param.slice_param.output_pixfmt; //0:422 1:420
-                    fw_slice_param_ptr->Path0_sc_des_pitch     = scaler_path_param.frame_param.dst_size_x;
+                    if (param_ptr->scaler_path_param.scaler_des_pitch != 0)
+						fw_slice_param_ptr->Path0_sc_des_pitch     = param_ptr->scaler_path_param.scaler_des_pitch;
+                    else
+						fw_slice_param_ptr->Path0_sc_des_pitch     = scaler_path_param.frame_param.dst_size_x;
                 }
 
                 if(1)//bypass path
                 {
                     fw_slice_param_ptr->Path0_bypass_des_width  = fw_slice_param_ptr->bypass_trim_width;
                     fw_slice_param_ptr->Path0_bypass_des_height = fw_slice_param_ptr->bypass_trim_height;
-                    fw_slice_param_ptr->Path0_bypass_des_pitch  = bypass_path_param.frame_param.dst_size_x;
+                    if (param_ptr->bypass_path_param.bp_des_pitch != 0)
+						fw_slice_param_ptr->Path0_bypass_des_pitch  = param_ptr->bypass_path_param.bp_des_pitch;
+                    else
+						fw_slice_param_ptr->Path0_bypass_des_pitch  = bypass_path_param.frame_param.dst_size_x;
                 }
             }while(0);
 

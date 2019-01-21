@@ -112,6 +112,7 @@ typedef struct _tag_slice_drv_scaler_path_param_t {
 	int scaler_init_phase_hor;
 	int scaler_des_size_x;
 	int scaler_des_size_y;
+	int scaler_des_pitch;
 	int scaler_output_format;	/* 0: yuv422; 1: yuv420*/
 
 } slice_drv_scaler_path_param_t;
@@ -123,6 +124,7 @@ typedef struct _tag_slice_drv_bypass_path_param_t {
 	int trim_start_y;
 	int trim_size_x;
 	int trim_size_y;
+	int bp_des_pitch;
 
 } slice_drv_bypass_path_param_t;
 
@@ -315,6 +317,7 @@ struct sprd_cpp_scale_cfg_parm {
 	struct sprd_cpp_trim sc_trim;
 
 	struct sprd_cpp_size output_size;
+	unsigned int output_pitch;
 	unsigned int output_format;
 	struct sprd_cpp_addr output_addr;
 	struct sprd_cpp_addr output_addr_vir;
@@ -334,6 +337,7 @@ struct sprd_cpp_scale_cfg_parm {
 	unsigned int isDirectVirAddr;
 
 	struct sprd_cpp_trim bp_trim;
+	unsigned int bpout_pitch;
 	struct sprd_cpp_addr bp_output_addr;
 	struct sprd_cpp_addr bp_output_addr_vir;
 	slice_drv_param_t slice_param;
