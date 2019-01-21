@@ -48,6 +48,7 @@ struct sprd_pdaf_context {
 	struct pdaf_roi_info roi_info;
 	struct sprd_pdaf_report_t report_data;
 	struct af_win_rect touch_area;
+	struct SetPD_ROI_param af_roi;
 	void *af_addr;// afm statis
 	cmr_u32 af_addr_len;// afm statis buffer length
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
@@ -891,11 +892,30 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4) {
-		if(ACTIVE == cxt->af_type){
+		switch(cxt->af_type) {
+		case MULTIZONE:
+			for (area_index = 0; area_index < cxt->af_roi.ROI_Size; area_index++) {
+				ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, cxt->af_roi.ROI_info[area_index].Center_X, cxt->af_roi.ROI_info[area_index].Center_Y,
+				 cxt->af_roi.ROI_info[area_index].sWidth, cxt->af_roi.ROI_info[area_index].sHeight);
+				if (ret) {
+					ISP_LOGE("fail to do algo.");
+					goto exit;
+				}
+				ret = PD_GetResult(&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
+				if (ret) {
+					ISP_LOGE("fail to get pd_result.");
+					goto exit;
+				}
+			}
+		break;
+		case ACTIVE:
 			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, ((cxt->touch_area.sx + cxt->touch_area.ex)>>2)<<1, ((cxt->touch_area.sy + cxt->touch_area.ey)>>2)<<1,
 				 480, 480);
-		} else {
+		break;
+		case PASSIVE:
+		default:
 			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
+		break;
 		}
 	}
 	else {
@@ -919,12 +939,16 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			}
 		}
 	}
-	ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 4);
-	if (ret) {
-		ISP_LOGE("fail to do get pd_result.");
-		goto exit;
+	if(MULTIZONE != cxt->af_type) {// normal way for PASSIVE and ACTIVE mode
+		ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 4);
+		if (ret) {
+			ISP_LOGE("fail to do get pd_result.");
+			goto exit;
+		}
+		pd_calc_result.pd_roi_num = AREA_LOOP + 1;
+	} else {
+		pd_calc_result.pd_roi_num = cxt->af_roi.ROI_Size;
 	}
-	pd_calc_result.pd_roi_num = AREA_LOOP + 1;
 	pd_calc_result.af_type = cxt->af_type;
 	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4]);
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
@@ -1009,6 +1033,29 @@ static cmr_s32 pdafsprd_adpt_set_mode(cmr_handle adpt_handle, struct pdaf_ctrl_p
 	return ret;
 }
 
+static cmr_s32 pdafsprd_adpt_set_multizone(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+	cmr_u32 i = 0;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+
+	memset(&cxt->af_roi, 0, sizeof(cxt->af_roi));
+	for(; i < in->af_roi.ROI_Size; i++) {
+		cxt->af_roi.ROI_info[i].Center_X = in->af_roi.ROI_info[i].Center_X;
+		cxt->af_roi.ROI_info[i].Center_Y = in->af_roi.ROI_info[i].Center_Y;
+		cxt->af_roi.ROI_info[i].sWidth = in->af_roi.ROI_info[i].sWidth;
+		cxt->af_roi.ROI_info[i].sHeight = in->af_roi.ROI_info[i].sHeight;
+		ISP_LOGV("af set roi_%d (%d %d %d %d)", i, cxt->af_roi.ROI_info[i].Center_X, cxt->af_roi.ROI_info[i].Center_Y,
+			cxt->af_roi.ROI_info[i].sWidth, cxt->af_roi.ROI_info[i].sHeight);
+	}
+	cxt->af_roi.ROI_Size = in->af_roi.ROI_Size;
+	cxt->af_type = MULTIZONE;
+
+	return ret;
+}
+
 static cmr_s32 pdafsprd_adpt_set_afmfv(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1058,6 +1105,9 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 		break;
 	case PDAF_CTRL_CMD_SET_AFMFV:
 		ret = pdafsprd_adpt_set_afmfv(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_MULTIZONE:
+		pdafsprd_adpt_set_multizone(adpt_handle, in_ptr);
 		break;
 	default:
 		ISP_LOGE("fail to case cmd = %d", cmd);

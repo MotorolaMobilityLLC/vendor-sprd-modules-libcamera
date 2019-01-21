@@ -204,7 +204,8 @@ typedef struct pd_algo_result_s {
 	double pd_value[PD_MAX_AREA];
 	cmr_u32 pd_roi_dcc[PD_MAX_AREA];
 	cmr_u32 pd_roi_num;
-	cmr_u32 reserved[16];
+	cmr_u32 af_type;// notify to AF which mode PDAF is in
+	cmr_u32 reserved[15];
 } pd_algo_result_t;
 
 typedef struct _IO_Face_area_s {

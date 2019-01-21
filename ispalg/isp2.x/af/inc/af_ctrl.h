@@ -29,6 +29,13 @@ extern "C" {
 #endif
 
 #define MAX_AF_WINS 32
+#define MAX_MULTIZONE_NUM 45
+
+	enum PDAF_TYPE {
+		PASSIVE = 0,//caf type
+		ACTIVE,//touch type
+		MULTIZONE,
+	};
 
 	enum af_multi_mode {
 		AF_ALG_SINGLE = 0,
@@ -404,6 +411,18 @@ extern "C" {
 		struct af_otp_data rdm_data;
 	};
 
+	struct PD_Multi_zone_param {
+		cmr_u16 Center_X;
+		cmr_u16 Center_Y;
+		cmr_u16 sWidth;
+		cmr_u16 sHeight;
+	};
+
+	struct SetPD_ROI_param {
+		cmr_u16 ROI_Size;
+		struct PD_Multi_zone_param ROI_info[MAX_MULTIZONE_NUM];
+	};
+
 	struct afctrl_cb_ops {
 		cmr_s32(*start_notice) (void *handle, struct af_result_param * in_param);
 		cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
@@ -501,14 +520,14 @@ extern "C" {
 		cmr_u32 suc_win;
 	};
 
-#define AREA_LOOP 4
+#define AREA_LOOP 4 //PASSIVE and ACTIVE mode default
 
 	struct pd_result {
 		/*TBD get reset from */
-		cmr_s32 pdConf[AREA_LOOP + 1];
-		double pdPhaseDiff[AREA_LOOP + 1];
+		cmr_s32 pdConf[MAX_MULTIZONE_NUM + 1];
+		double pdPhaseDiff[MAX_MULTIZONE_NUM + 1];
 		cmr_s32 pdGetFrameID;
-		cmr_s32 pdDCCGain[AREA_LOOP + 1];
+		cmr_s32 pdDCCGain[MAX_MULTIZONE_NUM + 1];// be sure MAX_MULTIZONE_NUM bigger than AREA_LOOP
 		cmr_u32 pd_roi_num;
 		cmr_u32 af_type;// notify to AF that PDAF is in passive mode or active mode
 	};

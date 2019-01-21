@@ -2430,19 +2430,21 @@ static void caf_monitor_phase_diff(af_ctrl_t * af)
 {
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
 
-	memset(prm, 0, sizeof(struct aft_proc_calc_param));
-	prm->active_data_type = AFT_DATA_PD;
-	prm->pd_info.pd_enable = af->pd.pd_enable;
-	prm->pd_info.effective_frmid = af->pd.effective_frmid;
-	prm->pd_info.pd_roi_num = af->pd.pd_roi_num;
-	memcpy(&(prm->pd_info.confidence[0]), &(af->pd.confidence[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
-	memcpy(&(prm->pd_info.pd_value[0]), &(af->pd.pd_value[0]), sizeof(double) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
-	memcpy(&(prm->pd_info.pd_roi_dcc[0]), &(af->pd.pd_roi_dcc[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
-	prm->comm_info.otp_inf_pos = af->otp_info.rdm_data.infinite_cali;
-	prm->comm_info.otp_macro_pos = af->otp_info.rdm_data.macro_cali;
-	prm->comm_info.registor_pos = (cmr_u32) lens_get_pos(af);
-	ISP_LOGV("F[%d]C[%d]PD[%f]DCC[%d] pd data in[%d] ", prm->pd_info.effective_frmid, af->pd.confidence[0], af->pd.pd_value[0], af->pd.pd_roi_dcc[0], prm->pd_info.pd_enable);
-	caf_monitor_calc(af, prm);
+	if(MULTIZONE != af->pd.af_type) {//MULTIZONE mode should consider the central roi for trigger
+		memset(prm, 0, sizeof(struct aft_proc_calc_param));
+		prm->active_data_type = AFT_DATA_PD;
+		prm->pd_info.pd_enable = af->pd.pd_enable;
+		prm->pd_info.effective_frmid = af->pd.effective_frmid;
+		prm->pd_info.pd_roi_num = af->pd.pd_roi_num;
+		memcpy(&(prm->pd_info.confidence[0]), &(af->pd.confidence[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+		memcpy(&(prm->pd_info.pd_value[0]), &(af->pd.pd_value[0]), sizeof(double) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+		memcpy(&(prm->pd_info.pd_roi_dcc[0]), &(af->pd.pd_roi_dcc[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+		prm->comm_info.otp_inf_pos = af->otp_info.rdm_data.infinite_cali;
+		prm->comm_info.otp_macro_pos = af->otp_info.rdm_data.macro_cali;
+		prm->comm_info.registor_pos = (cmr_u32) lens_get_pos(af);
+		ISP_LOGV("F[%d]C[%d]PD[%f]DCC[%d] pd data in[%d] ", prm->pd_info.effective_frmid, af->pd.confidence[0], af->pd.pd_value[0], af->pd.pd_roi_dcc[0], prm->pd_info.pd_enable);
+		caf_monitor_calc(af, prm);
+	}
 
 	return;
 }
@@ -3076,6 +3078,7 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	af->pd.effective_frmid = (cmr_u32) pd_calc_result->pdGetFrameID;
 	af->pd.pd_enable = (af->pd.effective_frmid) ? 1 : 0;
 	af->pd.pd_roi_num = pd_calc_result->pd_roi_num;
+	af->pd.af_type = pd_calc_result->af_type;
 	// transfer full phase diff data value to algorithm
 	memcpy(&(af->pd.confidence[0]), &(pd_calc_result->pdConf[0]), sizeof(cmr_u32) * (af->pd.pd_roi_num));
 	memcpy(&(af->pd.pd_value[0]), &(pd_calc_result->pdPhaseDiff[0]), sizeof(double) * (af->pd.pd_roi_num));
