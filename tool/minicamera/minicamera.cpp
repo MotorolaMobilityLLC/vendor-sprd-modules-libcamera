@@ -32,7 +32,6 @@ using namespace android;
 #define MINICAMERA_PARAM_NUM 4
 #define MINICAMERA_MIN_FPS 5
 #define MINICAMERA_MAX_FPS 30
-#define DUMP_COUNT 10
 
 #define SET_PARM(h, x, y, z)                                                   \
     do {                                                                       \
@@ -61,6 +60,7 @@ typedef enum {
     CAMERA_DATA_FORMAT_RGB,
 } camera_data_format_type_t;
 
+static unsigned int dump_total_count = 10;
 static unsigned int minicamera_dump_cnt = 0;
 static pthread_mutex_t previewlock;
 static int previewvalid = 0;
@@ -95,24 +95,28 @@ struct minicamera_context {
     unsigned int width;
     unsigned int height;
     unsigned int fps;
+    unsigned int loop;
     struct client_t client_data;
 };
 
 static struct minicamera_context *minicamera_dev;
 
 static void usage(void) {
-    fprintf(stderr, "usage:\n"
-                    "minicamera -cameraid camera_id -w preview_width -h "
-                    "preview_height [-fps framerate]\n"
-                    "for example:\n"
-                    "minicamera -cameraid 1 -w 1280 -h 720 -fps 10\n"
-                    "minicamera -cameraid 1 -w 1280 -h 720\n");
+    fprintf(
+        stderr,
+        "usage:\n"
+        "minicamera -cameraid camera_id -w preview_width -h "
+        "preview_height [-fps framerate] [-dump_cnt n] [--loop]\n"
+        "for example:\n"
+        "minicamera -cameraid 1 -w 1280 -h 720\n"
+        "minicamera -cameraid 1 -w 1280 -h 720 -fps 10\n"
+        "minicamera -cameraid 1 -w 1280 -h 720 -fps 10 -dump_cnt 15 --loop\n");
 }
 
 static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
                                   char **argv) {
     int i = 0;
-
+    cxt->loop = 0;
     if (!cxt) {
         CMR_LOGE("failed: input cxt is null");
         goto exit;
@@ -148,6 +152,10 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
                 (0 < cxt->fps < MINICAMERA_MIN_FPS)) {
                 cxt->fps = 10;
             }
+        } else if (strcmp(argv[i], "-dump_cnt") == 0 && (i < argc - 1)) {
+            dump_total_count = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--loop") == 0) {
+            cxt->loop = 1;
         } else {
             usage();
             goto exit;
@@ -264,7 +272,7 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
 
     addr_vir.addr_y = frame->y_vir_addr;
     addr_vir.addr_u = frame->y_vir_addr + frame->width * frame->height;
-    if (minicamera_dump_cnt < DUMP_COUNT) {
+    if (minicamera_dump_cnt < dump_total_count) {
         camera_save_yuv_to_file(minicamera_dump_cnt, IMG_DATA_TYPE_YUV420,
                                 frame->width, frame->height, &addr_vir);
         minicamera_dump_cnt++;
@@ -896,11 +904,11 @@ int main(int argc, char **argv) {
     CMR_LOGI("into finish loop!");
 
     while (1) {
-
         sleep(1);
+        if (cxt.loop == 1)
+            continue;
 
-        if (minicamera_dump_cnt >= DUMP_COUNT) {
-
+        if (minicamera_dump_cnt >= dump_total_count) {
             ret = minicamera_stoppreview(&cxt);
             if (ret) {
                 CMR_LOGE("minicamera_stoppreview failed");
@@ -910,6 +918,7 @@ int main(int argc, char **argv) {
         }
     }
 
+    CMR_LOGI("minicamera_test finish and exit");
     return ret;
 
 exit:
