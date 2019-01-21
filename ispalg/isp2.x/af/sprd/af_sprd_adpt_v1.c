@@ -3426,6 +3426,7 @@ static cmr_s32 af_sprd_set_dac_info(cmr_handle handle, void *param0)
 }
 
 // SharkLE Only --
+
 static cmr_s32 af_sprd_set_realbokeh_distance(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -3441,6 +3442,22 @@ static cmr_s32 af_sprd_set_realbokeh_distance(cmr_handle handle, void *param0)
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_BOKEH_DISTANCE, &bdi);
 
 	return AFV1_SUCCESS;
+}
+
+static cmr_s32 af_sprd_set_zoom_ratio(cmr_handle handle, void *param0)
+{
+	UNUSED(handle);
+	//af_ctrl_t *af = (af_ctrl_t *) handle;
+	cmr_s32 rtn = AFV1_SUCCESS;
+
+	if (NULL == param0) {
+		ISP_LOGE("param null error");
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+	ISP_LOGI("zoom ratio = %d", *(cmr_u32 *) param0);
+
+	return rtn;
 }
 
 cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
@@ -3549,9 +3566,15 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		// SharkLE Only --
 	case AF_CMD_SET_SCENE_INFO:
 		break;
+
 	case AF_CMD_SET_REALBOKEH_DISTANCE:
 		rtn = af_sprd_set_realbokeh_distance(handle, param0);
 		break;
+
+	case AF_CMD_SET_ZOOM_RATIO:
+		rtn = af_sprd_set_zoom_ratio(handle, param0);
+		break;
+
 	default:
 		ISP_LOGW("set cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
