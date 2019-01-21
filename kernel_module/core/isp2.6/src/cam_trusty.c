@@ -28,6 +28,7 @@
 
 #ifdef  CAM_FACEID_SEC
 
+#include <linux/device.h>
 #include <linux/trusty/trusty_ipc.h>
 
 #define CAM_TA_PORT_NAME        "com.android.trusty.camera"
