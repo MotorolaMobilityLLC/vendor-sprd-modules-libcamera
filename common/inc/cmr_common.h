@@ -1624,6 +1624,7 @@ typedef enum {
     SPRD_MIMETPYE_NONE = 0,
     SPRD_MIMETPYE_BLUR = 12,
     SPRD_MIMETPYE_BOKEH = 16,
+    SPRD_MIMETPYE_BOKEH_HDR = 17,
     SPRD_MIMETPYE_AI = 36
 } multiCameraMimetype;
 

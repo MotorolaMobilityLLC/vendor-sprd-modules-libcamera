@@ -1965,6 +1965,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     } else if (atoi(prop) == 1) {
         available_cam_features.add(3);
+    } else if (atoi(prop) == 6) {
+#ifdef CONFIG_BOKEH_HDR_SUPPORT
+        available_cam_features.add(9);
+#else
+        available_cam_features.add(6);
+#endif
     } else {
         available_cam_features.add(atoi(prop));
     }
@@ -3464,7 +3470,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         }
 
         { // Shading Mode  [ANDROID_STATISTICS_LENS_SHADING_MAP_MODE] for still
-          // capture
+            // capture
             bool support_cap_raw = false;
             if (characteristicsInfo.exists(
                     ANDROID_REQUEST_AVAILABLE_CAPABILITIES)) {

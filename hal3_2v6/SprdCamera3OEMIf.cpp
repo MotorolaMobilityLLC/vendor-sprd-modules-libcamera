@@ -8409,13 +8409,33 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
                 dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
             }
+
+            sw_algorithm_buf_cnt++;
+            if (mMultiCameraMode == MODE_BOKEH) {
+                char prop[PROPERTY_VALUE_MAX] = {
+                    0,
+                };
+                property_get("persist.vendor.cam.bokeh.hdr.ev", prop, "3");
+                if (sw_algorithm_buf_cnt == (uint32_t)atoi(prop)) {
+                    receiveRawPicture(&zsl_frame);
+                }
+                if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
+                    mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                        obj->mCameraHandle, zsl_frame.y_phy_addr,
+                        zsl_frame.y_vir_addr, zsl_frame.fd);
+                    break;
+                }
+                if (mCameraId == 2) {
+                    continue;
+                }
+            }
+
             HAL_LOGD("hdr fd=0x%x", zsl_frame.fd);
             mHalOem->ops->image_sw_algorithm_processing(
                 obj->mCameraHandle, &src_sw_algorithm_buf,
                 &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
                 IMG_DATA_TYPE_YVU420);
 
-            sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 3) {
                 ret =
                     obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
@@ -8524,7 +8544,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
-
     if (isCapturing()) {
         WaitForCaptureDone();
     }

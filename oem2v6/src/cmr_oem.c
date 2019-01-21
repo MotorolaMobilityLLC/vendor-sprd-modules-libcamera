@@ -2167,9 +2167,9 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     CMR_LOGD("has_preflashed=%ld", has_preflashed);
 
     if (need_close_flash) {
-        prev_set_preview_skip_frame_num(
-            cxt->prev_cxt.preview_handle, cxt->camera_id,
-            flash_capture_skip_num, has_preflashed);
+        prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
+                                        cxt->camera_id, flash_capture_skip_num,
+                                        has_preflashed);
         setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_AFTER;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CTRL_FLASH, &setting_param);
@@ -2177,8 +2177,8 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
             CMR_LOGE("failed to open flash %ld", ret);
         }
         if (!will_capture) {
-            ret = camera_isp_ioctl(
-                oem_handle, COM_ISP_SET_SNAPSHOT_FINISHED, &isp_param);
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_SNAPSHOT_FINISHED,
+                                   &isp_param);
             if (ret)
                 CMR_LOGE("failed to set snapshot finished %ld", ret);
         }
@@ -8274,13 +8274,6 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     } else if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
         out_ptr->is_zsl_snapshot = 1;
     }
-
-    ret = camera_ipm_open_sw_algorithm((cmr_handle)cxt);
-    if (ret) {
-        CMR_LOGE("failed to open ipm module%ld", ret);
-        goto exit;
-    }
-
     CMR_LOGI("actual size %d %d",
              out_ptr->post_proc_setting.actual_snp_size.width,
              out_ptr->post_proc_setting.actual_snp_size.height);
@@ -8961,6 +8954,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGE("failed to get snp num %ld", ret);
         goto exit;
     }
+    ret = camera_ipm_open_sw_algorithm((cmr_handle)cxt);
+    if (ret) {
+        CMR_LOGE("failed to open ipm module %ld", ret);
+        goto exit;
+    }
 
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -9035,7 +9033,6 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         goto exit;
     }
     video_snapshot_type = setting_param.cmd_type_value;
-
     if (video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
         ret = camera_local_start_capture(oem_handle);
         if (ret) {
@@ -10488,7 +10485,6 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     capture_param.type = DCAM_CAPTURE_START;
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
-
     if (1 == camera_get_hdr_flag(cxt)) {
         capture_param.type = DCAM_CAPTURE_START_HDR;
     } else if (1 == camera_get_3dnr_flag(cxt)) {

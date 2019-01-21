@@ -1679,6 +1679,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     struct img_frm rot_src, scale_src;
     struct snp_jpeg_param *jpeg_in_ptr;
     struct camera_context *cmr_cxt;
+    cmr_cxt = (struct camera_context *)cxt->oem_handle;
 
     if (!data) {
         CMR_LOGE("param error");
@@ -1703,9 +1704,14 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     if (cxt->req_param.is_zsl_snapshot) {
         if (cxt->req_param.is_3dnr == 1 || cxt->req_param.is_hdr == 1) {
             CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
-            snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
-                                    SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
-                                    NULL, sizeof(struct camera_frame_type));
+            // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
+            // snp_yuv_callback_take_picture_done
+            if (cmr_cxt->is_multi_mode != MODE_BOKEH) {
+                snp_send_msg_notify_thr(
+                    snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                    SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
+                    sizeof(struct camera_frame_type));
+            }
         } else if (chn_param_ptr->is_rot) {
             rot_src = chn_param_ptr->rot[0].src_img;
             CMR_LOGD("fd=0x%x", rot_src.fd);
@@ -1757,7 +1763,6 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     }
 
     jpeg_in_ptr = &chn_param_ptr->jpeg_in[0];
-    cmr_cxt = (struct camera_context *)cxt->oem_handle;
     cmr_snapshot_invalidate_cache(cmr_cxt->snp_cxt.snapshot_handle,
                                   &jpeg_in_ptr->dst);
 
@@ -4096,6 +4101,8 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct camera_frame_type frame_type;
+    struct camera_context *cmr_cxt;
+    cmr_cxt = (struct camera_context *)cxt->oem_handle;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -4146,9 +4153,16 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                             SNAPSHOT_CB_EVT_DONE, (void *)&frame_type,
                             sizeof(struct camera_frame_type));
-    snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
-                            SNAPSHOT_CB_EVT_RETURN_ZSL_BUF, (void *)&frame_type,
-                            sizeof(struct camera_frame_type));
+    if (cxt->req_param.is_hdr == 1 && cmr_cxt->is_multi_mode == MODE_BOKEH) {
+        snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
+                                NULL, sizeof(struct camera_frame_type));
+    } else {
+        snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                                SNAPSHOT_CB_EVT_RETURN_ZSL_BUF,
+                                (void *)&frame_type,
+                                sizeof(struct camera_frame_type));
+    }
     sem_post(&cxt->redisplay_sm);
 exit:
     CMR_LOGD("done %ld", ret);

@@ -124,8 +124,10 @@ typedef struct _front_flash_type {
 static SprdCamera3DefaultInfo camera3_default_info;
 
 static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
-static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592, 2592, 2592, 2592};
-static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944, 1944, 1944, 1944};
+static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592,
+                                                    2592, 2592, 2592};
+static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944,
+                                                     1944, 1944, 1944};
 
 // if cant get valid sensor fov info, use the default value
 static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
@@ -136,6 +138,7 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
     {{3.50f, 2.625f}, 3.75f},
 };
+
 
 static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
@@ -1151,10 +1154,10 @@ int SprdCamera3Setting::getPhysicalNumberOfCameras() {
     }
 
     physicalNum = sensor_get_number(camera_is_supprort);
-    // if one board support all kinds of camera feature, for 3 back camera,
-    // 3 camera struct light, dual-camera, and so on, we will do some bindings
-    // mPhysicalSensorNum = physicalNum;
-    // goto exit;
+// if one board support all kinds of camera feature, for 3 back camera,
+// 3 camera struct light, dual-camera, and so on, we will do some bindings
+// mPhysicalSensorNum = physicalNum;
+// goto exit;
 
 #ifdef CONFIG_BACK_CAMERA
     mPhysicalSensorNum++;
@@ -1352,28 +1355,34 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
     // android.sensor.info.activeArraySize,(xmin, ymin, width, height).
     ptr_sns_inf_tag->active_array_size[0] = 0;
     ptr_sns_inf_tag->active_array_size[1] = 0;
-    ptr_sns_inf_tag->active_array_size[2] =largest_picture_size[cameraId].width;
-    ptr_sns_inf_tag->active_array_size[3] =largest_picture_size[cameraId].height;
+    ptr_sns_inf_tag->active_array_size[2] =
+        largest_picture_size[cameraId].width;
+    ptr_sns_inf_tag->active_array_size[3] =
+        largest_picture_size[cameraId].height;
     // android.sensor.info.physicalSize,
     memcpy(ptr_sns_inf_tag->physical_size,
            camera3_default_info.common.sensor_physical_size,
            sizeof(camera3_default_info.common.sensor_physical_size));
-    // Dimensions of the full pixel array, possibly including black calibration pixels.
-    ptr_sns_inf_tag->pixer_array_size[0] =largest_picture_size[cameraId].width;
-    ptr_sns_inf_tag->pixer_array_size[1] =largest_picture_size[cameraId].height;
+    // Dimensions of the full pixel array, possibly including black calibration
+    // pixels.
+    ptr_sns_inf_tag->pixer_array_size[0] = largest_picture_size[cameraId].width;
+    ptr_sns_inf_tag->pixer_array_size[1] =
+        largest_picture_size[cameraId].height;
     // exposureTimeRange.
     memcpy(ptr_sns_inf_tag->exposupre_time_range,
            camera3_default_info.common.exposure_time_range,
            sizeof(camera3_default_info.common.exposure_time_range));
     // maxFrameDuration.
-    ptr_sns_inf_tag->max_frame_duration =camera3_default_info.common.frame_duration_range[1];
+    ptr_sns_inf_tag->max_frame_duration =
+        camera3_default_info.common.frame_duration_range[1];
     // sensitivityRange,Min <= 100, Max >= 800
-    memcpy(ptr_sns_inf_tag->sensitivity_range,
-           ksensitivity_range, sizeof(ksensitivity_range));
+    memcpy(ptr_sns_inf_tag->sensitivity_range, ksensitivity_range,
+           sizeof(ksensitivity_range));
     // colorFilterArrangement
-    ptr_sns_inf_tag->color_filter_arrangement =default_info->common.color_arrangement;
+    ptr_sns_inf_tag->color_filter_arrangement =
+        default_info->common.color_arrangement;
     // whiteLevel
-    ptr_sns_inf_tag->white_level =default_info->common.white_level;
+    ptr_sns_inf_tag->white_level = default_info->common.white_level;
     for (size_t i = 0; i < 4; i++)
         s_setting[cameraId].sensorInfo.black_level_pattern[i] =
             default_info->common.black_level;
@@ -1382,14 +1391,13 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
     ptr_sns_inf_tag->timestamp_source =
         ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
 
-    HAL_LOGD("log_parameters_sensor_statics_info:%d",cameraId);
+    HAL_LOGD("log_parameters_sensor_statics_info:%d", cameraId);
     return 0;
 }
 
-int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId){
+int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     struct camera_info cameraInfo;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
-
 
     LENS_INFO_Tag *ptr_lens_inf_tag = &s_setting[cameraId].lens_InfoInfo;
 
@@ -1403,7 +1411,8 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId){
     }
     s_setting[cameraId].lens_InfoInfo.hyperfocal_distance = 2.0f;
     // android.lens.info.availableFocalLengths,List of focal lengths
-    ptr_lens_inf_tag->available_focal_lengths = sensor_fov[cameraId].focal_lengths;
+    ptr_lens_inf_tag->available_focal_lengths =
+        sensor_fov[cameraId].focal_lengths;
     // android.lens.info.availableApertures,List of aperture size values
     ptr_lens_inf_tag->available_apertures = default_info->common.aperture;
     /*android.lens.info.availableFilterDensities,If a neutral density filter is
@@ -1411,8 +1420,10 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId){
     ptr_lens_inf_tag->filter_density = default_info->common.filter_density;
     /*android.lens.info.availableOpticalStabilization,If OIS is not supported
     this list will contain only OFF.*/
-    ptr_lens_inf_tag->optical_stabilization = default_info->common.optical_stabilization;
-    // android.lens.info.shadingMapSize,Dimensions of lens shading map.Both values >= 1
+    ptr_lens_inf_tag->optical_stabilization =
+        default_info->common.optical_stabilization;
+    // android.lens.info.shadingMapSize,Dimensions of lens shading map.Both
+    // values >= 1
     memcpy(ptr_lens_inf_tag->shading_map_size,
            camera3_default_info.common.lens_shading_map_size,
            sizeof(klens_shading_map_size));
@@ -1431,11 +1442,11 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId){
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_EXTERNAL;
     }
 
-    HAL_LOGD("log_parameters_lens_statics_info:%d",cameraId);
+    HAL_LOGD("log_parameters_lens_statics_info:%d", cameraId);
     return 0;
 }
 
-int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId){
+int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
 
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     cmr_u16 largest_sensor_w = 0;
@@ -1451,7 +1462,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId){
     HAL_LOGD("cameraId=%d, largest_sensor_w=%d, largest_sensor_h=%d", cameraId,
              largest_sensor_w, largest_sensor_h);
 
-    // lists the minimum supportable frame duration for each available raw output size
+    // lists the minimum supportable frame duration for each available raw
+    // output size
     s_setting[cameraId].scalerInfo.raw_min_duration[0] =
         default_info->common.raw_min_duration[0];
     int32_t scaler_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
@@ -1544,7 +1556,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId){
             }
         }
     }
-    // This lists the maximum stall duration for each output format/size combination
+    // This lists the maximum stall duration for each output format/size
+    // combination
     memcpy(s_setting[cameraId].scalerInfo.stall_durations,
            &(available_stall_durations[0]),
            available_stall_durations.size() * sizeof(int64_t));
@@ -1552,13 +1565,16 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId){
     HAL_LOGI("id=%d format=%d", cameraId,
              s_setting[cameraId].scalerInfo.available_stream_configurations[0]);
 
-    // lists the minimum supportable frame duration for each available processed output size
+    // lists the minimum supportable frame duration for each available processed
+    // output size
     memcpy(s_setting[cameraId].scalerInfo.processed_min_durations,
            kavailable_min_durations, sizeof(kavailable_min_durations));
     // The maximum ratio between both active area width and crop region width
-    // and active area height and crop region height, for android.scaler.cropRegion.
+    // and active area height and crop region height, for
+    // android.scaler.cropRegion.
     s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
-    // The minimum frame duration that is supported for each resolution in android.scaler.availableJpegSizes
+    // The minimum frame duration that is supported for each resolution in
+    // android.scaler.availableJpegSizes
     memcpy(s_setting[cameraId].scalerInfo.jpeg_min_durations,
            camera3_default_info.common.FrameDurationRange,
            sizeof(camera3_default_info.common.FrameDurationRange));
@@ -1566,7 +1582,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId){
     s_setting[cameraId].scalerInfo.cropping_type =
         ANDROID_SCALER_CROPPING_TYPE_FREEFORM;
 
-    HAL_LOGD("log_parameters_Scaler_statics_info:%d",cameraId);
+    HAL_LOGD("log_parameters_Scaler_statics_info:%d", cameraId);
     return 0;
 }
 
@@ -1860,6 +1876,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     } else if (atoi(prop) == 1) {
         available_cam_features.add(3);
+    } else if (atoi(prop) == 6) {
+#ifdef CONFIG_BOKEH_HDR_SUPPORT
+        available_cam_features.add(9);
+#else
+        available_cam_features.add(6);
+#endif
     } else {
         available_cam_features.add(atoi(prop));
     }
@@ -1896,11 +1918,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 }
 
 int SprdCamera3Setting::initStaticMetadataforLensInfo(
-    int32_t cameraId,CameraMetadata &staticInfo){
+    int32_t cameraId, CameraMetadata &staticInfo) {
 
     LENS_INFO_Tag *ptr_lens_inf_tag = &s_setting[cameraId].lens_InfoInfo;
 
-    //android.lens.info.x
+    // android.lens.info.x
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
                       &(s_setting[cameraId].lens_InfoInfo.mini_focus_distance),
                       1);
@@ -1926,52 +1948,45 @@ int SprdCamera3Setting::initStaticMetadataforLensInfo(
         ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
         &(s_setting[cameraId].lens_InfoInfo.focus_distance_calibration), 1);
 
-    //android.lens.x
+    // android.lens.x
     staticInfo.update(ANDROID_LENS_FACING,
                       &(s_setting[cameraId].lensInfo.facing), 1);
 
-    HAL_LOGD("log_Metadata_lens_statics_info:%d",cameraId);
+    HAL_LOGD("log_Metadata_lens_statics_info:%d", cameraId);
     return 0;
 }
 
 int SprdCamera3Setting::initStaticMetadataforSensorInfo(
-    int32_t cameraId,CameraMetadata &staticInfo){
+    int32_t cameraId, CameraMetadata &staticInfo) {
 
     SENSOR_INFO_Tag *ptr_sns_inf_tag = &s_setting[cameraId].sensor_InfoInfo;
-    //android.senso.info.x
+    // android.senso.info.x
     staticInfo.update(
-        ANDROID_SENSOR_INFO_PHYSICAL_SIZE,
-        ptr_sns_inf_tag->physical_size,
+        ANDROID_SENSOR_INFO_PHYSICAL_SIZE, ptr_sns_inf_tag->physical_size,
         ARRAY_SIZE(s_setting[cameraId].sensor_InfoInfo.physical_size));
     staticInfo.update(
         ANDROID_SENSOR_INFO_EXPOSURE_TIME_RANGE,
         ptr_sns_inf_tag->exposupre_time_range,
         ARRAY_SIZE(s_setting[cameraId].sensor_InfoInfo.exposupre_time_range));
     staticInfo.update(ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
-                      &(ptr_sns_inf_tag->max_frame_duration),
-                      1);
-    staticInfo.update(
-        ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
-        &(ptr_sns_inf_tag->color_filter_arrangement), 1);
-    staticInfo.update(
-        ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
-        ptr_sns_inf_tag->pixer_array_size,
-        ARRAY_SIZE(ptr_sns_inf_tag->pixer_array_size));
-    staticInfo.update(
-        ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-        ptr_sns_inf_tag->active_array_size,
-        ARRAY_SIZE(ptr_sns_inf_tag->active_array_size));
+                      &(ptr_sns_inf_tag->max_frame_duration), 1);
+    staticInfo.update(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
+                      &(ptr_sns_inf_tag->color_filter_arrangement), 1);
+    staticInfo.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
+                      ptr_sns_inf_tag->pixer_array_size,
+                      ARRAY_SIZE(ptr_sns_inf_tag->pixer_array_size));
+    staticInfo.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                      ptr_sns_inf_tag->active_array_size,
+                      ARRAY_SIZE(ptr_sns_inf_tag->active_array_size));
     staticInfo.update(ANDROID_SENSOR_INFO_WHITE_LEVEL,
                       &(ptr_sns_inf_tag->white_level), 1);
-    staticInfo.update(
-        ANDROID_SENSOR_INFO_SENSITIVITY_RANGE,
-        ptr_sns_inf_tag->sensitivity_range,
-        ARRAY_SIZE(ptr_sns_inf_tag->sensitivity_range));
+    staticInfo.update(ANDROID_SENSOR_INFO_SENSITIVITY_RANGE,
+                      ptr_sns_inf_tag->sensitivity_range,
+                      ARRAY_SIZE(ptr_sns_inf_tag->sensitivity_range));
     staticInfo.update(ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
-                      &(ptr_sns_inf_tag->timestamp_source),
-                      1);
+                      &(ptr_sns_inf_tag->timestamp_source), 1);
 
-    //android.sensor.x
+    // android.sensor.x
     staticInfo.update(ANDROID_SENSOR_BLACK_LEVEL_PATTERN,
                       s_setting[cameraId].sensorInfo.black_level_pattern, 4);
     staticInfo.update(ANDROID_SENSOR_ORIENTATION,
@@ -1985,12 +2000,12 @@ int SprdCamera3Setting::initStaticMetadataforSensorInfo(
                       &(s_setting[cameraId].sensorInfo.max_analog_sensitivity),
                       1);
 
-    HAL_LOGD("log_Metadata_sensor_statics_info:%d",cameraId);
+    HAL_LOGD("log_Metadata_sensor_statics_info:%d", cameraId);
     return 0;
 }
 
 int SprdCamera3Setting::initStaticMetadataforScalerInfo(
-    int32_t cameraId,CameraMetadata &staticInfo){
+    int32_t cameraId, CameraMetadata &staticInfo) {
 
     int array_size;
 
@@ -2001,7 +2016,7 @@ int SprdCamera3Setting::initStaticMetadataforScalerInfo(
     }                                                                          \
     staticInfo.update(Flag, Array, array_size * 4);
 
-    //android.scaler.x
+    // android.scaler.x
     staticInfo.update(
         ANDROID_SCALER_AVAILABLE_RAW_MIN_DURATIONS,
         s_setting[cameraId].scalerInfo.raw_min_duration,
@@ -2013,14 +2028,14 @@ int SprdCamera3Setting::initStaticMetadataforScalerInfo(
     HAL_LOGI("format=%d size=%d",
              s_setting[cameraId].scalerInfo.available_stream_configurations[0],
              array_size);
-    //deprecated
+    // deprecated
     staticInfo.update(
         ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
         s_setting[cameraId].scalerInfo.processed_min_durations,
         ARRAY_SIZE(s_setting[cameraId].scalerInfo.processed_min_durations));
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
                       &(s_setting[cameraId].scalerInfo.max_digital_zoom), 1);
-    //deprecated
+    // deprecated
     staticInfo.update(
         ANDROID_SCALER_AVAILABLE_JPEG_MIN_DURATIONS,
         s_setting[cameraId].scalerInfo.jpeg_min_durations,
@@ -2034,7 +2049,7 @@ int SprdCamera3Setting::initStaticMetadataforScalerInfo(
     staticInfo.update(ANDROID_SCALER_CROPPING_TYPE,
                       &(s_setting[cameraId].scalerInfo.cropping_type), 1);
 
-    HAL_LOGD("log_Metadata_scaler_statics_info:%d",cameraId);
+    HAL_LOGD("log_Metadata_scaler_statics_info:%d", cameraId);
     return 0;
 }
 
@@ -2075,10 +2090,10 @@ int SprdCamera3Setting::initStaticMetadata(
         ARRAY_SIZE(s_setting[cameraId].edgeInfo.available_edge_modes));
 
     /* LENS_INFO*/
-   initStaticMetadataforLensInfo(cameraId,staticInfo);
+    initStaticMetadataforLensInfo(cameraId, staticInfo);
 
     /*SENSOR_INFO*/
-   initStaticMetadataforSensorInfo(cameraId,staticInfo);
+    initStaticMetadataforSensorInfo(cameraId, staticInfo);
 
     /*FLASH_INFO*/
     staticInfo.update(ANDROID_FLASH_INFO_CHARGE_DURATION,
@@ -2113,7 +2128,7 @@ int SprdCamera3Setting::initStaticMetadata(
             s_setting[cameraId].statis_InfoInfo.available_face_detect_modes));
 
     /*SCALER*/
-   initStaticMetadataforScalerInfo(cameraId,staticInfo);
+    initStaticMetadataforScalerInfo(cameraId, staticInfo);
 
     /*CONTROL*/
     /*staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,

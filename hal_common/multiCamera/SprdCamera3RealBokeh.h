@@ -184,6 +184,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 #else
     buffer_handle_t *m_pMainSnapBuffer;
 #endif
+    uint8_t mHdrCallbackCnt;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int id, struct camera_info *info);
@@ -317,6 +318,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mVcmSteps;
     uint64_t mCapTimestamp;
     IBokehAlgo *mBokehAlgo;
+    bool mIsHdrMode;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
