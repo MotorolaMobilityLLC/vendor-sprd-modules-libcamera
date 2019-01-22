@@ -787,10 +787,10 @@ cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
              buf_cfg->count, buf_cfg->base_id);
 
     /* firstly , set the base index for each channel */
-    parm.frame_base_id = buf_cfg->base_id;
+    /*parm.frame_base_id = buf_cfg->base_id;
     parm.channel_id = buf_cfg->channel_id;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRM_ID_BASE, &parm);
-    CMR_RTN_IF_ERR(ret);
+    CMR_RTN_IF_ERR(ret); */
 
     /* secondly , set the frame address */
     parm.channel_id = buf_cfg->channel_id;
