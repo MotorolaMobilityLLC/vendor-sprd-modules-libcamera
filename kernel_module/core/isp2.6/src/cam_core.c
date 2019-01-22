@@ -77,6 +77,7 @@
 #define ISP_PATHID_BITS 8
 #define ISP_PATHID_MASK 0x3
 #define ISP_CTXID_OFFSET ISP_PATHID_BITS
+#define DCAM_4IN1_FRAMES 16
 
 enum camera_module_state {
 	CAM_INIT = 0,
@@ -258,6 +259,11 @@ struct camera_module {
 	struct camera_frame *dual_frame; /* 0: no, to find, -1: no need find */
 	atomic_t capture_frames_dcam; /* how many frames to report, -1:always */
 	int64_t capture_times; /* *us, timestamp get from start_capture */
+
+	/* 4in1: save *frame when remosaic, use timestamp
+	 * sprd_img_read: save; aux_dcam bin_tx_done restore
+	 */
+	struct camera_frame *remosaic_frame[DCAM_4IN1_FRAMES];
 };
 
 struct camera_group {
@@ -662,9 +668,33 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 {
 	int ret;
 
-	/* dcam1 bin tx done, set frame to isp */
-	if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE)
+	/* aux dcam bin tx done, set frame to isp */
+	if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE) {
+		int i;
+		struct camera_frame *p;
+
+		/* offline timestamp */
+		i = pframe->fid % DCAM_4IN1_FRAMES;
+		p = module->remosaic_frame[i];
+		module->remosaic_frame[i] = NULL;
+		if (p) {
+			pframe->sensor_time = p->sensor_time;
+			pframe->boot_sensor_time = p->boot_sensor_time;
+			put_empty_frame(p);
+		}
+		/* check time */
+		if (pframe->sensor_time.tv_sec == 0 &&
+			pframe->sensor_time.tv_usec == 0) {
+			struct timespec cur_ts;
+
+			pframe->boot_sensor_time = ktime_get_boottime();
+			ktime_get_ts(&cur_ts);
+			pframe->sensor_time.tv_sec = cur_ts.tv_sec;
+			pframe->sensor_time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
+		}
+
 		return pframe;
+	}
 	/* dcam0 full tx done, frame report to HAL or drop */
 	if (atomic_read(&module->capture_frames_dcam) > 0) {
 		/* 4in1 send buf to hal for remosaic */
@@ -673,8 +703,8 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 		pframe->channel_id = CAM_CH_RAW;
 		ret = camera_enqueue(&module->frm_queue, pframe);
 		complete(&module->frm_com);
-		pr_info("raw frame fd %d, size[%d %d], 0x%x\n",
-			pframe->buf.mfd[0], pframe->width,
+		pr_info("raw frame[%d] fd %d, size[%d %d], 0x%x\n",
+			pframe->fid, pframe->buf.mfd[0], pframe->width,
 			pframe->height, (uint32_t)pframe->buf.addr_vir[0]);
 
 		return NULL;
@@ -3816,7 +3846,15 @@ static int img_ioctl_stream_off(
 		if (module->dump_thrd.thread_task)
 			camera_queue_clear(&module->dump_queue);
 	}
+	if (module->cam_uinfo.is_4in1) {
+		struct camera_frame *p;
 
+		for (i = 0; i < DCAM_4IN1_FRAMES; i++) {
+			p = module->remosaic_frame[i];
+			if (p)
+				put_empty_frame(p);
+		}
+	}
 	atomic_set(&module->state, CAM_IDLE);
 	if (raw_cap)
 		complete(&module->streamoff_com);
@@ -4387,6 +4425,7 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	 */
 	channel = &module->channel[CAM_CH_CAP];
 	iommu_enable = module->iommu_enable;
+	/* get frame */
 	pframe = get_empty_frame();
 	if (pframe) {
 		pframe->width = channel->ch_uinfo.src_size.w;
@@ -4397,17 +4436,17 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 		pframe->buf.addr_vir[1] = param.frame_addr_vir_array[0].u;
 		pframe->buf.addr_vir[2] = param.frame_addr_vir_array[0].v;
 		pframe->channel_id = channel->ch_id;
+		pframe->fid = param.index;
 		ret = cambuf_get_ionbuf(&pframe->buf);
 		/* ret += cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_DCAM);
 		 * do this in function: dcam_offline_start_frame
 		 */
-
+		pr_info("frame[%d] fd %d\n", pframe->fid, pframe->buf.mfd[0]);
 	} else {
 		pr_err("no empty frame.\n");
 		ret = -ENOMEM;
 		goto exit;
 	}
-
 	ret = dcam_ops->proc_frame(module->aux_dcam_dev, pframe);
 
 
@@ -5121,8 +5160,20 @@ rewait:
 			read_op.parm.frame.irq_property = pframe->irq_property;
 		}
 
-		if (pframe)
-			put_empty_frame(pframe);
+		if (pframe) {
+			if (pframe->irq_type == CAMERA_IRQ_4IN1_DONE) {
+				int i;
+				/* the pframe will be used by 4in1_post
+				 * for use sof timestamp
+				 */
+				i = pframe->fid % DCAM_4IN1_FRAMES;
+				if (module->remosaic_frame[i])
+					put_empty_frame(module->remosaic_frame[i]);
+				module->remosaic_frame[i] = pframe;
+			} else {
+				put_empty_frame(pframe);
+			}
+		}
 
 		pr_debug("read frame, evt 0x%x irq %d ch 0x%x index 0x%x mfd %d\n",
 				read_op.evt,
