@@ -328,7 +328,6 @@ int put_cam_flash_handle(void *flash_handle)
 			while (flash_ctx->is_flash_thread_stop)
 				udelay(1000);
 		}
-		kthread_stop(flash_ctx->flash_thread);
 		flash_ctx->flash_thread = NULL;
 	}
 	kfree(flash_ctx);
