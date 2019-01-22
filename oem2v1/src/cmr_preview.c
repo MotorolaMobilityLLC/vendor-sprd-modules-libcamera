@@ -3920,10 +3920,11 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_depthmap_open(handle, camera_id, &sensor_otp.total_otp);
         }
 #endif
+
         /*start ai scene*/
-        if (cxt->ipm_cxt.ai_scene_inited) {
-            prev_ai_scene_start(handle);
-        }
+        /* if (cxt->ipm_cxt.ai_scene_inited) {
+             prev_ai_scene_start(handle);
+         }*/
     }
 #if defined(CONFIG_CAMERA_PDAF)
     if (pdaf_enable) {
@@ -11978,15 +11979,12 @@ cmr_int prev_ai_scene_start(struct prev_handle *handle) {
     struct common_isp_cmd_param isp_cmd_parm;
     cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
     CHECK_HANDLE_VALID(handle);
-
     CMR_LOGI("start");
-
     if (!handle->ops.isp_ioctl) {
         CMR_LOGE("ops isp_ioctl is null");
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-
     ret = handle->ops.isp_ioctl(handle->oem_handle, COM_ISP_SET_AI_SCENE_START,
                                 &isp_cmd_parm);
     if (ret) {
@@ -12003,14 +12001,12 @@ cmr_int prev_ai_scene_stop(struct prev_handle *handle) {
     struct common_isp_cmd_param isp_cmd_parm;
     cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
     CHECK_HANDLE_VALID(handle);
-
     CMR_LOGI("start");
     if (!handle->ops.isp_ioctl) {
         CMR_LOGE("ops isp_ioctl is null");
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-
     ret = handle->ops.isp_ioctl(handle->oem_handle, COM_ISP_SET_AI_SCENE_STOP,
                                 &isp_cmd_parm);
     if (ret) {
