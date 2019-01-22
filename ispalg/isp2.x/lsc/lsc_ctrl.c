@@ -87,6 +87,50 @@ struct lsc_wrapper_ops {
 	int (*lsc2d_table_postproc) (uint16_t * tbl_chn[4], int w, int h, int sx, int sy, lsc2d_calib_param_t * calib_param);
 };
 
+static int alsc_get_init_cmd(void)
+{
+	char prop[256];
+	int val = 0;
+
+	property_get("debug.isp.alsc.cmd.enable", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		return val;
+
+	return 0;
+}
+
+static void alsc_get_cmd(struct lsc_ctrl_context *cxt)
+{
+	char prop[256];
+	int val = 0;
+
+	property_get("debug.isp.alsc.table.pattern", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_table_pattern = val;
+
+	property_get("debug.isp.alsc.table.index", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_table_index = val;
+
+	property_get("debug.isp.alsc.dump.aem", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_dump_aem = val;
+
+	property_get("debug.isp.alsc.bypass", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_bypass = val;
+
+	property_get("debug.isp.alsc.bypass.otp", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_bypass_otp = val;
+}
+
 static int _lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigned short *dst_16bits, unsigned int size_bytes)
 {
 	unsigned int gain_compressed_bits = 14;
@@ -1268,6 +1312,15 @@ static cmr_s32 _lscsprd_lsc_param_preprocess(struct lsc_adv_init_param *init_par
 	cmr_u32 i;
 	cmr_s32 rtn = LSC_SUCCESS;
 	cmr_u16 *lsc_otp_table_addr = NULL;
+
+	if(cxt->cmd_alsc_cmd_enable){
+		alsc_get_cmd(cxt);
+		if(cxt->cmd_alsc_bypass_otp){
+			init_param->lsc_otp_table_en = 0;
+			ISP_LOGI("[ALSC] cmd_alsc_bypass_otp, lsc_id=%d", cxt->lsc_id);
+		}
+	}
+
 	if(init_param->lsc_otp_table_addr && init_param->lsc_otp_table_en &&
 		cxt->init_gain_width  == init_param->lsc_otp_table_width &&
 		cxt->init_gain_height == init_param->lsc_otp_table_height){
@@ -1329,40 +1382,6 @@ static void* lsc_flash_proc_init ()
 	param->pre_flash_before_ae_touch_framecount=-99;
 	param->pre_flash_before_framecount=-99;
 	return param;
-}
-
-static int alsc_get_init_cmd(void)
-{
-	char prop[256];
-	int val = 0;
-
-	property_get("debug.isp.alsc.cmd.enable", prop, (char *)"0");
-	val = atoi(prop);
-	if(0 <= val)
-		return val;
-
-	return 0;
-}
-
-static void alsc_get_cmd(struct lsc_ctrl_context *cxt)
-{
-	char prop[256];
-	int val = 0;
-
-	property_get("debug.isp.alsc.table.pattern", prop, (char *)"0");
-	val = atoi(prop);
-	if(0 <= val)
-		cxt->cmd_alsc_table_pattern = val;
-
-	property_get("debug.isp.alsc.table.index", prop, (char *)"0");
-	val = atoi(prop);
-	if(0 <= val)
-		cxt->cmd_alsc_table_index = val;
-
-	property_get("debug.isp.alsc.dump.aem", prop, (char *)"0");
-	val = atoi(prop);
-	if(0 <= val)
-		cxt->cmd_alsc_dump_aem = val;
 }
 
 static void cmd_set_lsc_output(cmr_u16* table, cmr_u32 width, cmr_u32 height, cmr_u32 gain_pattern)
@@ -2485,6 +2504,14 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		ISP_LOGV("[ALSC] frame_count=%d, alg_in=%d, lsc_id=%d", cxt->frame_count, alg_in, cxt->lsc_id);
 	}
 
+	if(cxt->cmd_alsc_cmd_enable){
+		alsc_get_cmd(cxt);
+		if(cxt->cmd_alsc_bypass){
+			alg_in = 0;
+			ISP_LOGI("[ALSC] cmd_alsc_bypass, frame_count=%d, alg_in=%d, lsc_id=%d", cxt->frame_count, alg_in, cxt->lsc_id);
+		}
+	}
+
 	// alsc calculation process
 	if(alg_in && cxt->alg_bypass == 0){
 		// select std lsc param
@@ -2501,7 +2528,6 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 
 		// cmd dump AEM0
 		if(cxt->cmd_alsc_cmd_enable){
-			alsc_get_cmd(cxt);
 			if(cxt->cmd_alsc_dump_aem){
 				cmd_dump_aem(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->lsc_id, 0);
 			}
@@ -2521,7 +2547,6 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 
 		// cmd dump AEM1
 		if(cxt->cmd_alsc_cmd_enable){
-			alsc_get_cmd(cxt);
 			if(cxt->cmd_alsc_dump_aem){
 				cmd_dump_aem(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->lsc_id, 1);
 			}
@@ -2561,8 +2586,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	// cmd set lsc output
-	if(cxt->cmd_alsc_cmd_enable){
-		alsc_get_cmd(cxt);
+	if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
 		if(cxt->cmd_alsc_table_pattern){
 			cmd_set_lsc_output(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern);
 			ISP_LOGV("[ALSC] cmd_set_lsc_output, final output cxt->lsc_buffer[%d,%d,%d,%d], lsc_id=%d",
@@ -2572,8 +2596,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	// cmd set table index
-	//if(cxt->cmd_alsc_cmd_enable){
-		//alsc_get_cmd(cxt);
+	//if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
 		//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
 			//memcpy(cxt->lsc_buffer, param->std_tab_param[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
 			///ISP_LOGV("[ALSC]  cmd set table index %d, final output cxt->lsc_buffer[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
@@ -2993,6 +3016,28 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		case ALSC_FW_START:// You have to update two table in FW_START: 1.fwstart_info->lsc_result_address_new, 2.cxt->fwstart_new_scaled_table
 
 			fwstart_info = (struct alsc_fwstart_info*)in;
+
+			// cmd set lsc output
+			if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
+				alsc_get_cmd(cxt);
+				if(cxt->cmd_alsc_table_pattern){
+					cmd_set_lsc_output(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new, cxt->output_gain_pattern);
+					ISP_LOGI("[ALSC] FW_START, cmd_set_lsc_output, final output fwstart_info->lsc_result_address_new[%d,%d,%d,%d], lsc_id=%d",
+							fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3] , cxt->lsc_id);
+					return rtn;
+				}
+			}
+
+			// cmd set table index
+			//if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
+				//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
+					//memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[cxt->cmd_alsc_table_index], fwstart_info->gain_width_new*fwstart_info->gain_height_new*4*sizeof(cmr_u16));
+					//ISP_LOGV("[ALSC]  cmd set table index %d, final output fwstart_info->lsc_result_address_new[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
+							//fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3] , cxt->lsc_id);
+					//return rtn;
+				//}
+			//}
+
 			pm0_new = fwstart_info->lsc_tab_address_new[0];
 			if(fwstart_info->gain_width_new == cxt->init_gain_width && fwstart_info->gain_height_new == cxt->init_gain_height && fwstart_info->grid_new == cxt->init_grid)
 				full_flag = 1;
@@ -3012,28 +3057,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
             ISP_LOGV("[ALSC] FW_START, new (%d,%d) grid %d, lsc_id=%d", fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, cxt->lsc_id);
             ISP_LOGV("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
             ISP_LOGV("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
-
-			// cmd set lsc output
-			if(cxt->cmd_alsc_cmd_enable){
-				alsc_get_cmd(cxt);
-				if(cxt->cmd_alsc_table_pattern){
-					cmd_set_lsc_output(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new, cxt->output_gain_pattern);
-					ISP_LOGV("[ALSC] FW_START, cmd_set_lsc_output, final output fwstart_info->lsc_result_address_new[%d,%d,%d,%d], lsc_id=%d",
-							fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3] , cxt->lsc_id);
-					return rtn;
-				}
-			}
-
-			// cmd set table index
-			//if(cxt->cmd_alsc_cmd_enable){
-				//alsc_get_cmd(cxt);
-				//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
-					//memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[cxt->cmd_alsc_table_index], fwstart_info->gain_width_new*fwstart_info->gain_height_new*4*sizeof(cmr_u16));
-					//ISP_LOGV("[ALSC]  cmd set table index %d, final output fwstart_info->lsc_result_address_new[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
-							//fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3] , cxt->lsc_id);
-					//return rtn;
-				//}
-			//}
 
 			// change to 720p mode
 			if(fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && fwstart_info->grid_new == 32){
