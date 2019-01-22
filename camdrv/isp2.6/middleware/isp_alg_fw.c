@@ -372,6 +372,9 @@ struct isp_alg_fw_context {
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 is_4in1_prev; /* 1: 4c pixel for prev */
 	cmr_u32 lowlight_flag; /* low lux for capture */
+	/* for 4x zoom focus */
+	cmr_u32 last_ratio;
+	cmr_u32 cur_ratio;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -2408,6 +2411,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			cmr_u32 blk_num;
 			cmr_u32 af_temp[15*20][3];
 			cmr_u32 *ptr;
+			cmr_u32 *zoom_ratio;
 			struct isp_statis_info *statis_info = NULL;
 
 			statis_info = (struct isp_statis_info *)in_ptr;
@@ -2434,6 +2438,16 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			pdaf_in.af_addr_len = sizeof(af_temp);
 			if (cxt->ops.pdaf_ops.process && !cxt->pdaf_cxt.sw_bypass) {
 				ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_AFMFV, (void *)&pdaf_in, NULL);
+			}
+
+			/* set zoom ratio to af ctrl */
+			zoom_ratio = &statis_info->zoom_ratio;
+			cxt->cur_ratio = *(zoom_ratio);
+			if (cxt->last_ratio != cxt->cur_ratio) {
+				if (cxt->ops.af_ops.ioctrl) {
+					ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ZOOM_RATIO, (void *)zoom_ratio, NULL);
+				}
+				cxt->last_ratio = cxt->cur_ratio;
 			}
 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
@@ -3441,6 +3455,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 is_af_support = 1;
+	cmr_u32 zoom_ratio;
 	struct afctrl_init_in af_input;
 	struct af_log_info af_param = {NULL, 0};
 	struct af_log_info aft_param = {NULL, 0};
@@ -3534,6 +3549,12 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		ISP_TRACE_IF_FAIL(ret, ("fail to get_aft_log_info"));
 		cxt->aft_cxt.log_aft = aft_param.log_cxt;
 		cxt->aft_cxt.log_aft_size = aft_param.log_len;
+	}
+
+	/* init ratio for 4x zoom */
+	if (cxt->ops.af_ops.ioctrl) {
+		zoom_ratio = 1000;
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ZOOM_RATIO, (void *)&zoom_ratio, NULL);
 	}
 
 	return ret;
@@ -4577,7 +4598,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			if (pdaf_info->sns_mode &&
 					(pdaf_info->sns_mode[sn_mode] || (1 == atoi(value)))){
 				ISP_LOGI("pdaf_info->sns_mode = %d",pdaf_info->sns_mode[sn_mode]);
-				isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE2_CFG;
+				isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE1_CFG;
 			}
 			break;
 		case SENSOR_PDAF_TYPE2_ENABLE:
@@ -4602,7 +4623,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &ppi_info, NULL);
 			break;
 		case SENSOR_DUAL_PDAF_ENABLE:
-			isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE2_CFG;
+			isp_pdaf_type = ISP_DEV_SET_DUAL_PDAF_CFG;
 			break;
 		default:
 			ISP_LOGI("PDAF param is invalid");
