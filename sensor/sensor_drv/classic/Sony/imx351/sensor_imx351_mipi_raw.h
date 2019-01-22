@@ -25,12 +25,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#ifdef _SENSOR_RAW_SHARKL3_H_
-#include "parameters_sharkl3/sensor_imx351_raw_param_main.c"
-#else
-#include "parameters_sharkle/sensor_imx351_raw_param_main.c"
-#endif
-
 #ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
 #include "../../../../ams/tcs3430/tcs_3430_drv.h"
 #endif
@@ -90,7 +84,7 @@
 // struct sensor_ev_info_t s_sensor_ev_info;
 
 static struct sensor_ic_ops s_imx351_ops_tab;
-struct sensor_raw_info *s_imx351_mipi_raw_info_ptr = &s_imx351_mipi_raw_info;
+struct sensor_raw_info *s_imx351_mipi_raw_info_ptr = PNULL;
 
 static const SENSOR_REG_T imx351_init_setting1[] = {
     /*    Stand-by OFF Sequence

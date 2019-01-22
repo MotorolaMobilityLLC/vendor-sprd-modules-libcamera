@@ -1078,6 +1078,18 @@ static cmr_int imx351_drv_get_cct_data(cmr_handle handle, cmr_u8 *param) {
 }
 #endif
 
+#include "parameters/param_manager.c"
+static cmr_int imx351_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_imx351_mipi_raw_info_ptr = imx351_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
+
+
 static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
@@ -1100,6 +1112,9 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = imx351_drv_get_pdaf_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        rtn = imx351_drv_set_raw_info(handle, param_ptr->pval);
         break;
      case SENSOR_VAL_TYPE_SET_OTP_DATA:
          rtn = imx351_drv_set_spc_data(handle, param_ptr->pval);
