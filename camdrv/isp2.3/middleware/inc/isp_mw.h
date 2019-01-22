@@ -412,6 +412,14 @@ enum isp_ai_scene_type {
 	ISP_AI_SCENE_MAX
 };
 
+enum isp_ai_rotation {
+	ISP_AI_SD_ORNT_0,
+	ISP_AI_SD_ORNT_90,
+	ISP_AI_SD_ORNT_180,
+	ISP_AI_SD_ORNT_270,
+	ISP_AI_SD_ORNT_MAX
+};
+
 struct isp_flash_cfg {
 	cmr_u32 type;		// enum isp_flash_type
 	cmr_u32 led_idx;	//enum isp_flash_led
@@ -949,6 +957,12 @@ struct isp_ai_img_param {
 	struct isp_ai_img_buf img_buf;
 	cmr_u32 frame_id;
 	cmr_u64 timestamp;
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_u32 img_y_pitch;
+	cmr_u32 img_uv_pitch;
+	cmr_u32 is_continuous;
+	enum isp_ai_rotation orientation;
 };
 
 enum isp_ai_status {
