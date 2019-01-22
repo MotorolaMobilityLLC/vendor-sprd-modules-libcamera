@@ -68,8 +68,8 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	ISP_LOGI("aci opt: min_frame_interval: %d.\n", cxt->aic_opt.min_frame_interval);
 	ISP_LOGI("aci opt: max_frame_interval: %d.\n", cxt->aic_opt.max_frame_interval);
 	ISP_LOGI("aci opt: thread_num: %d.\n", cxt->aic_opt.thread_num);
-	ISP_LOGI("aci opt: sync_with_worker: %d.\n", cxt->aic_opt.sync_with_worker);	
-	
+	ISP_LOGI("aci opt: sync_with_worker: %d.\n", cxt->aic_opt.sync_with_worker);
+
 	if (0 != AIC_CreateHandle(&cxt->aic_handle, &cxt->aic_opt)) {
 		ISP_LOGE("fail to creat aic handle.\n");
 		rtn = ISP_ERROR;
@@ -77,7 +77,7 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	}
 
 	if (0 != AIC_GetVersion(&cxt->aic_ver)) {
-		ISP_LOGE("fail to get aic version.\n");
+		ISP_LOGW("fail to get aic version.\n");
 	} else {
 		ISP_LOGI("aci version: built data: %s.\n", cxt->aic_ver.built_date);
 		ISP_LOGI("aci version: built time: %s.\n", cxt->aic_ver.built_time);
@@ -277,7 +277,7 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		}
 
 		if (0 != ai_sprd_set_ae_param(cxt, (struct ai_ae_param *)param, (struct ai_scene_detect_info *)result)) {
-			ISP_LOGE("fail to set ae param.");
+			ISP_LOGD("fail to set ae param.");
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -292,16 +292,17 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		cxt->aic_image.frame_id = ai_img_ptr->frame_id;
 		cxt->aic_image.timestamp = ai_img_ptr->timestamp;
 		cxt->aic_image.sd_img.csp = SD_CSP_NV21;
-		cxt->aic_image.sd_img.width = 228;
-		cxt->aic_image.sd_img.height = 228;
+		cxt->aic_image.sd_img.width = ai_img_ptr->width;
+		cxt->aic_image.sd_img.height = ai_img_ptr->height;
 		cxt->aic_image.sd_img.plane = 2;
-		cxt->aic_image.sd_img.stride[0] = 228;
-		cxt->aic_image.sd_img.stride[1] = 228;
+		cxt->aic_image.sd_img.stride[0] = ai_img_ptr->img_y_pitch;
+		cxt->aic_image.sd_img.stride[1] = ai_img_ptr->img_uv_pitch;
 		cxt->aic_image.sd_img.data[0] = (uint8_t *)((uint64_t)ai_img_ptr->img_buf.img_y);
 		cxt->aic_image.sd_img.data[1] = (uint8_t *)((uint64_t)ai_img_ptr->img_buf.img_uv);
 		cxt->aic_image.sd_img.bufptr = (uint8_t *)((uint64_t)ai_img_ptr->img_buf.img_y);
-		cxt->aic_image.sd_img.bufsize = 228 * 228 * 3 / 2;
-		cxt->aic_image.sd_img.is_continuous = 1;
+		cxt->aic_image.sd_img.bufsize = (ai_img_ptr->img_y_pitch * ai_img_ptr->height)+(ai_img_ptr->img_uv_pitch * ai_img_ptr->height/2);
+		cxt->aic_image.sd_img.is_continuous = ai_img_ptr->is_continuous;
+		cxt->aic_image.orientation = (SD_ORNT)(ai_img_ptr->orientation);
 		ISP_LOGV("ai img: frame_id: %d. timestamp: %"PRIu64"", cxt->aic_image.frame_id, cxt->aic_image.timestamp);
 		if (0 != AIC_SetImageData(cxt->aic_handle, &cxt->aic_image)) {
 			rtn = ISP_ERROR;
@@ -346,14 +347,14 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 				ai_img_status_ptr->img_flag = IMAGE_DATA_REQUIRED;
 				break;
 			default:
-				ISP_LOGE("status is invalid. status: %d.", cxt->aic_img_status.img_flag);
+				ISP_LOGW("status is invalid. status: %d.", cxt->aic_img_status.img_flag);
 				ai_img_status_ptr->img_flag = IMAGE_DATA_NOT_REQUIRED;
 				break;
 		}
 		ISP_LOGV("img_flag is: %d", ai_img_status_ptr->img_flag);
 		break;
 	default:
-		ISP_LOGE("cmd is invalid. cmd: %d.", cmd);
+		ISP_LOGW("cmd is invalid. cmd: %d.", cmd);
 		break;
 	}
 

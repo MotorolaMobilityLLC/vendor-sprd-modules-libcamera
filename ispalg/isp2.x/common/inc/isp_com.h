@@ -270,6 +270,14 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		AI_SCENE_MAX
 	};
 
+	enum ai_rotation {
+		AI_SD_ORNT_0,
+		AI_SD_ORNT_90,
+		AI_SD_ORNT_180,
+		AI_SD_ORNT_270,
+		AI_SD_ORNT_MAX
+	};
+
 	struct ai_rect {
 		cmr_u16 start_x;
 		cmr_u16 start_y;
@@ -324,6 +332,12 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		struct ai_img_buf img_buf;
 		cmr_u32 frame_id;
 		cmr_u64 timestamp;
+		cmr_u32 width;
+		cmr_u32 height;
+		cmr_u32 img_y_pitch;
+		cmr_u32 img_uv_pitch;
+		cmr_u32 is_continuous;
+		enum ai_rotation orientation;
 	};
 
 	enum ai_status {

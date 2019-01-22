@@ -32,6 +32,15 @@ enum
     SD_CSP_MAX
 };
 
+typedef enum
+{
+    SD_ORNT_0,
+    SD_ORNT_90,
+    SD_ORNT_180,
+    SD_ORNT_270,
+    SD_ORNT_MAX
+} SD_ORNT;
+
 typedef struct
 {
     int csp;
@@ -212,6 +221,7 @@ enum
 typedef struct
 {
     SD_IMAGE sd_img;
+    SD_ORNT orientation;
     uint32_t frame_id;
     uint64_t timestamp;
 } aic_image_t;
