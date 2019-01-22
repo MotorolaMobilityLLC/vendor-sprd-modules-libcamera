@@ -9360,6 +9360,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
 #endif
+    case CAMERA_PARAM_SET_DEVICE_ORIENTATION:
+        setting_param.cmd_type_value = param;
+        CMR_LOGD("frame_num %u", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     default:
         CMR_LOGI("don't support %d", id);
     }

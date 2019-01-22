@@ -205,6 +205,7 @@ struct setting_hal_param {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     cmr_uint request_frame_info;
 #endif
+    cmr_uint device_orientation;
 };
 
 struct setting_camera_info {
@@ -2623,6 +2624,28 @@ static cmr_int setting_set_focus_distance(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int
+setting_set_device_orientation(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set device_orientation %d", parm->cmd_type_value);
+
+    hal_param->device_orientation = parm->cmd_type_value;
+    return ret;
+}
+static cmr_int
+setting_get_device_orientation(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("device_orientation %d", hal_param->device_orientation);
+
+    parm->cmd_type_value = hal_param->device_orientation;
+    return ret;
+}
 static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -3887,6 +3910,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_focus_distance);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
                              setting_set_auto_hdr);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SET_DEVICE_ORIENTATION,
+                             setting_set_device_orientation);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_DEVICE_ORIENTATION,
+                             setting_get_device_orientation);
     setting_parms_inited = 1;
     return 0;
 }

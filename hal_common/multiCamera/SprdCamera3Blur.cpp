@@ -2292,10 +2292,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 mUpdatePreviewWeightParams = true;
             }
         }
-        if (metaSettings.exists(ANDROID_SPRD_SENSOR_ROTATION_FOR_FRONT_BLUR)) {
+        if (metaSettings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
             mRotation =
-                metaSettings.find(ANDROID_SPRD_SENSOR_ROTATION_FOR_FRONT_BLUR)
-                    .data.i32[0];
+                metaSettings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
             if (mBlur->mCameraId == CAM_BLUR_MAIN_ID) {
                 if (mRotation == 0) {
                     mRotation = 180;
@@ -3633,9 +3632,9 @@ int SprdCamera3Blur::configureStreams(
             w = stream_list->streams[i]->width;
             h = stream_list->streams[i]->height;
 
-            // workaround jpeg cant handle 16-noalign issue, when jpeg fix
-            // this
-            // issue, we will remove these code
+// workaround jpeg cant handle 16-noalign issue, when jpeg fix
+// this
+// issue, we will remove these code
 #ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
             if (h == 1944 && w == 2592) {
                 h = 1952;

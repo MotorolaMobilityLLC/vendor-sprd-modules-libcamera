@@ -4118,7 +4118,13 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGD("orien %d",
                  s_setting[mCameraId].sprddefInfo.sensor_orientation);
     }
-
+    if (frame_settings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
+        s_setting[mCameraId].sprddefInfo.device_orietation =
+            frame_settings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_DEVICE_ORIENTATION);
+        HAL_LOGD("device_orietation %d",
+                 s_setting[mCameraId].sprddefInfo.device_orietation);
+    }
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
         int32_t rotation =
             frame_settings.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];

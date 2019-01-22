@@ -7086,6 +7086,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
                  sprdInfo.sprd_auto_hdr_enable);
     } break;
+    case ANDROID_SPRD_DEVICE_ORIENTATION: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD("sprddefInfo.device_orietation=%d ",
+                 sprddefInfo.device_orietation);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_DEVICE_ORIENTATION,
+                 sprddefInfo.device_orietation);
+    } break;
     default:
         ret = BAD_VALUE;
         break;

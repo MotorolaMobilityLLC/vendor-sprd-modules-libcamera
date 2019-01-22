@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #define LOG_TAG "cmr_ai_scene"
 
 #include <cutils/trace.h>
@@ -180,6 +179,7 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     cmr_handle oem_handle = NULL;
     struct ipm_init_in *ipm_in = NULL;
     struct common_isp_cmd_param isp_cmd_parm;
+    struct setting_cmd_parameter setting_param;
     cmr_bzero(&src, sizeof(struct img_frm));
     cmr_bzero(&dst, sizeof(struct img_frm));
     cmr_bzero(&mean, sizeof(struct cmr_op_mean));
@@ -187,7 +187,6 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
 
     CHECK_HANDLE_VALID(ai_scene_handle);
     ipm_in = &ai_scene_handle->common.ipm_cxt->init_in;
-
     if (!in) {
         CMR_LOGE("invalid parameters");
         ret = CMR_CAMERA_INVALID_PARAM;
@@ -206,9 +205,21 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
         goto exit;
     }
     oem_handle = ai_scene_handle->common.ipm_cxt->init_in.oem_handle;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
     isp_cmd_parm.ai_img_status.frame_id = info->data.frame_num;
     ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_AI_SCENE_IMAGE_REQ_FLAG,
                                 &isp_cmd_parm);
+    ret =
+        cmr_setting_ioctl(setting_cxt->setting_handle,
+                          CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
+    if (setting_param.cmd_type_value == 90) {
+        setting_param.cmd_type_value = 1;
+    } else if (setting_param.cmd_type_value == 180) {
+        setting_param.cmd_type_value = 2;
+    } else if (setting_param.cmd_type_value == 270) {
+        setting_param.cmd_type_value = 3;
+    }
     if (ret) {
         CMR_LOGE("get image flag fail, ret:%d", ret);
         goto exit;
@@ -266,6 +277,12 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     isp_cmd_parm.ai_img_param.img_buf.img_uv = dst.addr_vir.addr_u;
     isp_cmd_parm.ai_img_param.timestamp =
         info->data.sec * 1000000000LL + info->data.usec * 1000;
+    isp_cmd_parm.ai_img_param.height = SMALL_PIC_SIZE;
+    isp_cmd_parm.ai_img_param.width = SMALL_PIC_SIZE;
+    isp_cmd_parm.ai_img_param.img_y_pitch = SMALL_PIC_SIZE;
+    isp_cmd_parm.ai_img_param.img_uv_pitch = SMALL_PIC_SIZE;
+    isp_cmd_parm.ai_img_param.is_continuous = 1;
+    isp_cmd_parm.ai_img_param.orientation = setting_param.cmd_type_value;
     ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_SET_AI_SCENE_IMAGE,
                                 &isp_cmd_parm);
     if (ret) {
@@ -297,4 +314,3 @@ static cmr_int ai_scene_post_proc(cmr_handle class_handle) {
 
     return ret;
 }
-
