@@ -2532,6 +2532,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 	cmr_u16 *binning_img_ptr = NULL;
 	cmr_u32 bayermode = cxt->commn_cxt.image_pattern;
 	cmr_u32 i = 0;
+	cmr_u32 sum = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
@@ -2557,6 +2558,7 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 
 	for (i = 0; i < double_binning_num; i++) {
 		val = *((cmr_u64 *) u_addr + i);
+		sum += val;
 		*binning_img_ptr++ = val & 0x3FF;
 		*binning_img_ptr++ = (val >> 10) & 0x3FF;
 		*binning_img_ptr++ = (val >> 20) & 0x3FF;
@@ -2606,9 +2608,17 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 				cxt->binning_cxt.binning_img_data,
 				&cxt->binning_cxt.binning_stats);
 
-	ISP_LOGV("binning_stats_size=(%d, %d)",
+	ISP_LOGV("binning_stats_size=(%d, %d), statis sum 0x%x\n",
 		 cxt->binning_cxt.binning_stats.binning_size.w,
-		 cxt->binning_cxt.binning_stats.binning_size.h);
+		 cxt->binning_cxt.binning_stats.binning_size.h,
+		 sum);
+
+	if (sum != 0) {
+		cxt->binning_is_update = 1;
+	} else {
+		cxt->binning_is_update = 0;
+		ISP_LOGE("fail to parse the binning stats info");
+	}
 
 exit:
 	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_BINNING_BLOCK);
@@ -2616,8 +2626,8 @@ exit:
 		ISP_LOGE("fail to set statis buf");
 	}
 
-	cxt->binning_is_update = 1;
-	ISP_LOGV("done %ld", ret);
+	ISP_LOGV("done %ld, binning_is_update %d",
+		ret, cxt->binning_is_update);
 	return ret;
 }
 
