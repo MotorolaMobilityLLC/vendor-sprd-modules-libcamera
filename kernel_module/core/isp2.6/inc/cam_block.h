@@ -23,7 +23,7 @@ struct isp_k_block {
 	struct isp_dev_3dnr_info nr3_info;
 };
 
-int dcam_init_lsc(void *param);
+int dcam_init_lsc(void *param, uint32_t online);
 int dcam_update_lsc(void *param);
 int dcam_k_cfg_blc(struct isp_io_param *param,	struct dcam_dev_param *p);
 int dcam_k_cfg_rgb_gain(struct isp_io_param *param, struct dcam_dev_param *p);

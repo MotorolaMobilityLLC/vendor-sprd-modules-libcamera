@@ -36,7 +36,7 @@ enum {
 	_UPDATE_GAIN = BIT(1),
 };
 
-int dcam_init_lsc(void *in)
+int dcam_init_lsc(void *in, uint32_t online)
 {
 	int ret = 0;
 	uint32_t idx, i = 0;
@@ -94,7 +94,7 @@ int dcam_init_lsc(void *in)
 	/* enable internal access sram */
 	DCAM_REG_MWR(idx, DCAM_APB_SRAM_CTRL, BIT_0, 1);
 
-	for (i = 0; i < info->grid_num_t; i+=8) {
+	for (i = 0; i < info->grid_num_t * 4; i += 8) {
 		pr_debug("gain %04x %04x %04x %04x %04x %04x %04x %04x\n",
 			gain_tab[0], gain_tab[1], gain_tab[2], gain_tab[3],
 			gain_tab[4], gain_tab[5], gain_tab[6], gain_tab[7]);
@@ -131,8 +131,11 @@ int dcam_init_lsc(void *in)
 		if (lens_load_flag)
 			break;
 	}
-	/* clear lens_load_flag */
-	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_1 , (1 << 1));
+
+	if (online) {
+		/* clear lens_load_flag */
+		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_1 , (1 << 1));
+	}
 
 	/* force copy must be after first load done and load clear */
 	dcam_force_copy(dev, DCAM_CTRL_COEF);
@@ -151,8 +154,10 @@ int dcam_init_lsc(void *in)
 	 * is applied, then image corruption will be observed.
 	 * therefore we trigger loading to another buffer to avoid this case.
 	 */
-	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (1 << 2) | 1);
-	param->load_trigger = 1;
+	if (online) {
+		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (1 << 2) | 1);
+		param->load_trigger = 1;
+	}
 
 	spin_unlock(&param->lock);
 

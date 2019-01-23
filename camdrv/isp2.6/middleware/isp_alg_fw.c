@@ -4208,6 +4208,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
+	cxt->work_mode = 1; /* 0 - preview, 1 - capture  */
 	cxt->commn_cxt.src.w = in_ptr->src_frame.img_size.w;
 	cxt->commn_cxt.src.h = in_ptr->src_frame.img_size.h;
 

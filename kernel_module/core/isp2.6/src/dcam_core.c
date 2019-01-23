@@ -1570,7 +1570,6 @@ static int dcam_offline_start_frame(void *param)
 		if (path->path_id == DCAM_PATH_BIN)
 			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
-	dcam_init_lsc(dev);
 
 	/* todo - need to cfg fetch param from input or frame. */
 	fetch->is_loose = 0;
@@ -1586,6 +1585,8 @@ static int dcam_offline_start_frame(void *param)
 
 	ret = dcam_set_fetch(dev, fetch);
 	dcam_force_copy(dev, DCAM_CTRL_CAP);
+
+	dcam_init_lsc(dev, 0);
 
 	udelay(10);
 	atomic_set(&dev->state, STATE_RUNNING);
@@ -2337,7 +2338,7 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		if (path->path_id == DCAM_PATH_BIN)
 			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
-	dcam_init_lsc(dev);
+	dcam_init_lsc(dev, 1);
 
 	if (helper) {
 		if (helper->enabled)
