@@ -87,4 +87,36 @@ endif
 
 include $(BUILD_PREBUILT)
 endif
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_hdr_adapter.cpp
+LOCAL_MODULE := libsprdhdradapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wno-error=unused-parameter
+LOCAL_SHARED_LIBRARIES := libcutils liblog
+
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
+LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
+LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+else ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
+LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB_VERSION_2
+LOCAL_SHARED_LIBRARIES += libsprdhdr
+endif
+
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+		 $(LOCAL_PATH)/../inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+ifneq ($(filter $(TARGET_BOARD_PLATFORM), ud710), )
+LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_VDSP
+endif
+
+include $(BUILD_SHARED_LIBRARY)
+
 endif

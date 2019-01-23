@@ -3,7 +3,10 @@
 
 #include "stdint.h"
 
-#define MAX_FRAME_NUM       2
+#ifdef __cplusplus
+extern   "C"
+{
+#endif
 
 /*! version information */
 typedef struct _tag_hdr_version_t
@@ -43,6 +46,12 @@ typedef struct _tag_ldr_image_t
 	int         stride;
 	float       ev;
 } ldr_image_t;
+
+typedef struct
+{
+	ldr_image_t image;
+	int			fd;
+} ldr_image_vdsp_t;
 
 /*! mf_hdr align parameters */
 typedef struct _tag_hdr_align_t
@@ -105,33 +114,30 @@ typedef struct _tag_hdr_config_t
 
 typedef void * hdr_inst_t;
 
-#ifdef _MSC_VER
-	#ifdef _USRDLL
-		#ifdef SPRD_ISP_EXPORTS
-			#define SPRD_ISP_API    __declspec(dllexport)
-		#else
-			#define SPRD_ISP_API    __declspec(dllimport)
-		#endif
+#ifdef _USRDLL
+	#ifdef SPRD_ISP_EXPORTS
+		#define SPRD_ISP_API    __declspec(dllexport)
 	#else
-		#define SPRD_ISP_API
+		#define SPRD_ISP_API    __declspec(dllimport)
 	#endif
 #else
 	#define SPRD_ISP_API
 #endif
 
-#ifdef __cplusplus
-extern   "C"
-{
-#endif
+SPRD_ISP_API int sprd_hdr_scndet(hdr_detect_t* param, hdr_stat_t* stat, float ev[2]);
+SPRD_ISP_API int sprd_hdr_version(hdr_version_t* version);
+SPRD_ISP_API int sprd_hdr_config_default(hdr_config_t* cfg);
+SPRD_ISP_API int sprd_hdr_open(hdr_inst_t* inst, hdr_config_t* cfg);
+SPRD_ISP_API int sprd_hdr_detect(hdr_inst_t inst, hdr_stat_t* stat, float ev[2]);
+SPRD_ISP_API int sprd_hdr_process(hdr_inst_t inst, ldr_image_t* input, uint8_t* output);
+SPRD_ISP_API int sprd_hdr_close(hdr_inst_t inst);
+SPRD_ISP_API int sprd_hdr_fast_stop(hdr_inst_t inst);
+SPRD_ISP_API void sprd_set_buffer_base(hdr_inst_t inst, uint8_t *base);
 
-	SPRD_ISP_API int sprd_hdr_scndet(hdr_detect_t* param, hdr_stat_t* stat, float ev[2]);
-	SPRD_ISP_API int sprd_hdr_version(hdr_version_t* version);
-	SPRD_ISP_API int sprd_hdr_config_default(hdr_config_t* cfg);
-	SPRD_ISP_API int sprd_hdr_open(hdr_inst_t* inst, hdr_config_t* cfg);
-	SPRD_ISP_API int sprd_hdr_detect(hdr_inst_t inst, hdr_stat_t* stat, float ev[2]);
-	SPRD_ISP_API int sprd_hdr_process(hdr_inst_t inst, ldr_image_t* input, uint8_t* output);
-	SPRD_ISP_API int sprd_hdr_close(hdr_inst_t inst);
-	SPRD_ISP_API int sprd_hdr_fast_stop(hdr_inst_t inst);
+// vdsp
+SPRD_ISP_API int sprd_hdr_vdsp_open(hdr_inst_t* inst, hdr_config_t* cfg);
+SPRD_ISP_API int sprd_hdr_vdsp_process(hdr_inst_t inst, ldr_image_vdsp_t* vdsp_input, ldr_image_vdsp_t* vdsp_output);
+SPRD_ISP_API int sprd_hdr_vdsp_close(hdr_inst_t inst);
 
 #ifdef __cplusplus
 }
