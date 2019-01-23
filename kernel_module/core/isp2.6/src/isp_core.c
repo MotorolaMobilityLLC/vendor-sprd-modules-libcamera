@@ -1369,9 +1369,7 @@ static int isp_offline_start_frame(void *ctx)
 		atomic_inc(&path->store_cnt);
 	}
 
-	isp_3dnr_process_frame(pctx, pframe);
 	isp_ltm_process_frame_previous(pctx, pframe);
-	isp_ltm_process_frame(pctx, pframe);
 
 	ret = wait_for_completion_interruptible_timeout(
 					&pctx->frm_done,
@@ -1385,6 +1383,9 @@ static int isp_offline_start_frame(void *ctx)
 		ret = -EFAULT;
 		goto unlock;
 	}
+
+	isp_3dnr_process_frame(pctx, pframe);
+	isp_ltm_process_frame(pctx, pframe);
 
 	if (fmcu)
 		fmcu->ops->ctx_reset(fmcu);
@@ -1998,8 +1999,16 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 		if (pctx->mode_ltm == MODE_LTM_PRE) {
 			dev->ltm_handle->ops->complete_completion();
 			for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
-				if (pctx->ltm_buf[i])
+				if (pctx->ltm_buf[i]) {
 					isp_unmap_frame(pctx->ltm_buf[i]);
+					pctx->ltm_buf[i] = NULL;
+				}
+			}
+		}
+		if (pctx->mode_ltm == MODE_LTM_CAP) {
+			for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
+				if (pctx->ltm_buf[i])
+					pctx->ltm_buf[i] = NULL;
 			}
 		}
 #endif /* USING_LTM_Q */
@@ -2289,6 +2298,10 @@ static int sprd_isp_cfg_path(void *isp_handle,
 			if (pctx->ltm_buf[i] == NULL) {
 				pctx->ltm_buf[i] = pframe;
 				pctx->ltm_ctx.pbuf[i] = &pframe->buf;
+				pr_debug("LTM CFGB[%d][0x%p][0x%p] = 0x%lx, 0x%lx\n",
+					 i, pframe, pctx->ltm_buf[i],
+					 pctx->ltm_ctx.pbuf[i]->iova[0],
+					 pctx->ltm_buf[i]->buf.iova[0]);
 				break;
 			}
 		}

@@ -673,6 +673,10 @@ static int isp_ltm_gen_map_config(struct isp_ltm_ctx_desc *ctx,
 	frame_width_map    = ctx->frame_width;
 	frame_height_map   = ctx->frame_height;
 
+	if ((frame_width_stat == 0) || (frame_height_stat == 0)) {
+		pr_err("input param err\n");
+	}
+
 	if (ctx->type == MODE_LTM_CAP) {
 		pr_debug("tile_num_x[%d], tile_num_y[%d], tile_width[%d], tile_height[%d],\
 			frame_width_stat[%d], frame_height_stat[%d],\
