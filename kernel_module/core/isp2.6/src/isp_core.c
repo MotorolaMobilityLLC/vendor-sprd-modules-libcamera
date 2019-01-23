@@ -2526,7 +2526,7 @@ static int isp_init_statis_bufferq(
 		count++;
 	}
 
-	pr_info("done. count %d used_size[%lx] total_size[%lx]\n", count, used_size, total_size);
+	pr_info("done.\n");
 	return ret;
 }
 

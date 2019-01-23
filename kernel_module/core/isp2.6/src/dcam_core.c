@@ -1337,7 +1337,7 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 		count++;
 	}
 
-	pr_info("done. count %d used_size[%lx] total_size[%lx]\n", count, used_size, total_size);
+	pr_info("done.\n");
 	return ret;
 }
 
