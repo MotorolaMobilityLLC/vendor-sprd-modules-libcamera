@@ -68,7 +68,7 @@ static int lc898213_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos) {
     cmd_len = 6;
     ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                    (uint8_t *)&cmd_val[0], cmd_len);
-    CMR_LOGE("lc898213_drv_set_pos= %d", pos);
+    CMR_LOGI("lc898213_drv_set_pos= %d", pos);
 
     return ret_value;
 }

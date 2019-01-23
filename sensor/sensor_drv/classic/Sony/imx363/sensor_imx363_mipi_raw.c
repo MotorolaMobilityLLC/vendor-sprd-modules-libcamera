@@ -694,7 +694,6 @@ static cmr_int imx363_drv_ext_func(cmr_handle handle, cmr_uint param) {
     return rtn;
 }
 
-#if 0
 cmr_int imx363_drv_write_spcdata(cmr_handle handle, cmr_u8 *param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_LOGI("E");
@@ -757,7 +756,6 @@ static cmr_int imx363_drv_set_pdaf_mode(cmr_handle handle, cmr_uint param) {
 #endif
     return 0;
 }
-#endif
 
 /*==============================================================================
  * Description:
@@ -903,7 +901,6 @@ static cmr_int imx363_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-#if 0
 static const cmr_u16 imx363_pd_is_right[] = {0, 0, 1, 1, 1, 1, 0, 0};
 
 static const cmr_u16 imx363_pd_row[] = {5, 5, 8, 8, 21, 21, 24, 24};
@@ -971,16 +968,16 @@ static cmr_int imx363_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_imx363_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_imx363_pd_pos_l;
-    pdaf_info->vendor_type = SENSOR_VENDOR_imx363_DUAL_PD; // 351;
+    pdaf_info->vendor_type = SENSOR_VENDOR_IMX362_DUAL_PD; // 351;
     pdaf_info->type2_info.data_type = 0x2b;
     pdaf_info->type2_info.data_format = DATA_BYTE2;
     if (DATA_BYTE2 == pdaf_info->type2_info.data_format) {
-        pdaf_info->type2_info.width = 3024; // 260 + 60;
+        pdaf_info->type2_info.width = 3024;      // 260 + 60;
         pdaf_info->type2_info.height = 4032 / 4; // 96;
         pdaf_info->type2_info.pd_size =
             pdaf_info->type2_info.width * pdaf_info->type2_info.height * 2;
     } else if (DATA_RAW10 == pdaf_info->type2_info.data_format) {
-        pdaf_info->type2_info.width = 3024; // 260 + 4;
+        pdaf_info->type2_info.width = 3024;      // 260 + 4;
         pdaf_info->type2_info.height = 4032 / 4; // 96;
         pdaf_info->type2_info.pd_size =
             pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
@@ -993,6 +990,7 @@ static cmr_int imx363_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
+
 static cmr_int imx363_drv_set_spc_data(cmr_handle handle, cmr_u8 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     cmr_u8 *spc_data = (cmr_u8 *)param;
@@ -1003,7 +1001,18 @@ static cmr_int imx363_drv_set_spc_data(cmr_handle handle, cmr_u8 *param) {
 
     return rtn;
 }
-#endif
+
+#include "parameters/param_manager.c"
+static cmr_int imx363_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_imx363_mipi_raw_info_ptr =
+        imx363_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
 
 static cmr_int imx363_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -1026,10 +1035,13 @@ static cmr_int imx363_drv_access_val(cmr_handle handle, cmr_uint param) {
         sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
-        // rtn = imx363_drv_get_pdaf_info(handle, param_ptr->pval);
+        rtn = imx363_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-        //   case SENSOR_VAL_TYPE_SET_OTP_DATA:
+    case SENSOR_VAL_TYPE_SET_OTP_DATA:
         //   rtn = imx363_drv_set_spc_data(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        imx363_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
         break;

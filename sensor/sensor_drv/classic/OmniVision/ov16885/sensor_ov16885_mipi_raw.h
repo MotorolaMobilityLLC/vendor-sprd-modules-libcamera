@@ -28,8 +28,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/parameters_sharkl3/sensor_ov16885_raw_param_main.c"
-
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
@@ -45,8 +43,8 @@
 /* sensor parameters begin */
 
 /* effective sensor output image size */
-#define VIDEO_WIDTH 1280//1920
-#define VIDEO_HEIGHT 720//1080
+#define VIDEO_WIDTH 1280 // 1920
+#define VIDEO_HEIGHT 720 // 1080
 #define PREVIEW_WIDTH 2336
 #define PREVIEW_HEIGHT 1752
 #define SNAPSHOT_WIDTH 4672  // 4608//4672
@@ -55,8 +53,8 @@
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
 #define VIDEO_TRIM_Y 0
-#define VIDEO_TRIM_W 1280//1920
-#define VIDEO_TRIM_H 720//1080
+#define VIDEO_TRIM_W 1280 // 1920
+#define VIDEO_TRIM_H 720 // 1080
 #define PREVIEW_TRIM_X 0
 #define PREVIEW_TRIM_Y 0
 #define PREVIEW_TRIM_W 2336
@@ -80,7 +78,7 @@
 #define SNAPSHOT_LINE_TIME 8750 // 17500
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH 1270//1904
+#define VIDEO_FRAME_LENGTH 1270 // 1904
 #define PREVIEW_FRAME_LENGTH 3808
 #define SNAPSHOT_FRAME_LENGTH 3808
 
