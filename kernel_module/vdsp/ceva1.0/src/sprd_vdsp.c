@@ -46,11 +46,10 @@
 #include <linux/crc32.h>
 #include <linux/dma-mapping.h>
 #include "sprd_vdsp_cmd.h"
-
+#include "ion.h"
 #define VDSP_MINOR MISC_DYNAMIC_MINOR
-#define PAGE_SIZE_4K 0x1000
 /* VDSP Log buffer size*/
-#define LOG_BUFFER_SIZE	  0x1000
+#define PAGE_SIZE_4K 0x10000
 /* Log task buffer size*/
 #define BUFFER_SIZE 220
 
@@ -189,10 +188,9 @@ int32_t vdsp_wait_xm6_done(void)
 		VDSP_INFO("vdsp has not opened!\n");
 		return 0;
 	}
-
 	/*wait for stop done interrupt*/
 	rc = wait_event_interruptible_timeout(vdsp_hw_dev.wait_queue, evt_update,
-					       msecs_to_jiffies(500));
+					       msecs_to_jiffies(5000));
 	evt_update = false;
 
 	get_xm6log_flag = 1;
@@ -211,6 +209,7 @@ void send_msg_to_share_memory(struct sprd_dsp_cmd *node)
 	struct sprd_dsp_cmd* msg_queue = (struct sprd_dsp_cmd *)(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_CMD_OFFSET);
 
 	memcpy(msg_queue, node, sizeof(struct sprd_dsp_cmd));
+	smp_wmb();
 	VDSP_DEBUG("send_msg_to_vdsp \n");
 	//disable cxrcvr,no send recovery signal when icu_intn is activated
 	//*(volatile u32*)(0x20800064) &= 0xfffffff0;
@@ -351,32 +350,35 @@ int vdsp_cmd_convertor(
 int sprd_vdsp_buf_alloc(struct vdsp_dev_t *vdsp_hw_dev,
 			    int heap_type, size_t *size, u32 *buffer)
 {
-	struct device_node *node;
-	u64 size64;
-	struct resource r;
+	struct dma_buf *dmabuf = NULL;
+	unsigned long phyaddr;
+	int ret = 0;
 
-	node = of_parse_phandle(vdsp_hw_dev->dev.of_node,
-					"sprd,vdsp-memory", 0);
-	if (!node) {
-		VDSP_ERROR("no sprd,vdsp-memory specified\n");
-		return -EINVAL;
+	VDSP_INFO("ion_alloc buffer entry\n");
+	dmabuf = ion_new_alloc((size_t)(*size), ION_HEAP_ID_MASK_VDSP, 0);
+	if (IS_ERR_OR_NULL(dmabuf)) {
+		VDSP_INFO("ion_alloc buffer fail\n");
+		ret = -ENOMEM;
+		return ret;
+	}
+	VDSP_INFO("dmabuf:%p\n",dmabuf);
+	ret = sprd_ion_get_phys_addr(-1, dmabuf, &phyaddr, size);
+	if (ret) {
+		pr_err("failed to get ionbuf for phys addr %p\n",
+				dmabuf);
+		ret = -EFAULT;
+		goto failed;
 	}
 
-	if (of_address_to_resource(node, 0, &r)) {
-		VDSP_ERROR("invalid wb reserved memory node!\n");
-		return -EINVAL;
-	}
+	*buffer = (u32)phyaddr;
 
-	*buffer = r.start;
-	size64 = resource_size(&r);
-	g_kva_vdsp_share_buff_addr = phys_to_virt(*buffer);
-
-	if (size64 < *size) {
-		VDSP_ERROR("unable to obtain enough wb memory\n");
-		return -ENOMEM;
-	}
+	g_kva_vdsp_share_buff_addr = sprd_ion_map_kernel(dmabuf, 0);
 	VDSP_INFO("logo_dst_p:0x%x, logo_dst_v:0x%p\n", (u32)*buffer, g_kva_vdsp_share_buff_addr);
 	return 0;
+
+	failed:
+	ion_free(dmabuf);
+	return ret;
 }
 
 static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
@@ -409,6 +411,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_crc != dst_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr,
 			fw->data, fw->size);
+		smp_wmb();
 		dst_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr, fw->size);
 		copy_times++;
 		VDSP_ERROR("src_crc: 0x%x, dst_crc: 0x%x, times: %d\n",
@@ -440,6 +443,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_data_crc != dst_data_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_CODE_OFFSET,
 			fw->data, fw->size);
+		smp_wmb();
 		dst_data_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_CODE_OFFSET, fw->size);
 		copy_times++;
 		VDSP_DEBUG("src_data_crc: 0x%x, dst_data_crc: 0x%x, times: %d\n",
@@ -470,6 +474,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_data_crc != dst_data_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_DATA_OFFSET,
 			fw->data, fw->size);
+		smp_wmb();
 		dst_data_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_EXT_DATA_OFFSET, fw->size);
 		copy_times++;
 		VDSP_DEBUG("src_data_crc: 0x%x, dst_data_crc: 0x%x, times: %d\n",
@@ -500,6 +505,7 @@ static u32 overwrite_firmware(struct vdsp_dev_t *vdsp_hw_dev)
 	while (src_crc != dst_crc) {
 		memcpy(g_kva_vdsp_share_buff_addr+VDSP_SHARE_BUFF_DATA_OFFSET,
 			fw->data, fw->size);
+		smp_wmb();
 		dst_crc = crc32(0xffffeeee, g_kva_vdsp_share_buff_addr+VDSP_SHARE_BUFF_DATA_OFFSET, fw->size);
 		copy_times++;
 		VDSP_ERROR("src_crc: 0x%x, dst_crc: 0x%x, times: %d\n",
@@ -820,6 +826,7 @@ static int vdsp_release(struct inode *inode, struct file *filp)
 	bool enable = false;
 
 	VDSP_DEBUG("vdsp_release called\n");
+
 	kthread_flush_worker(&vdsp_hw_dev.post_worker);
 	if (vdsp_hw_dev.glb && vdsp_hw_dev.glb->power)
 		vdsp_hw_dev.glb->power(&vdsp_hw_dev.ctx, enable);
@@ -920,7 +927,7 @@ static int vdsp_probe(struct platform_device *pdev)
 	sprd_vdsp_sysfs_init(&vdsp_hw_dev.dev);
 	sprd_vdsp_irq_request(&vdsp_hw_dev);
 
-	ret = sprd_vdsp_buf_alloc(&vdsp_hw_dev, ION_HEAP_ID_MASK_FB,
+	ret = sprd_vdsp_buf_alloc(&vdsp_hw_dev, ION_HEAP_ID_MASK_VDSP,
                                         &buf_size, &(vdsp_share_buff_addr));
         if (ret)
 		goto errout;
