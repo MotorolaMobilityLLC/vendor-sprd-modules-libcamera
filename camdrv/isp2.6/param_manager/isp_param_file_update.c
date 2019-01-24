@@ -47,9 +47,9 @@ char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
 	"ee",
 	"iircnr",
 	"yuv_noisefilter",
-	"cnr2",
-	"ltm",
+	"cnr",
 	"imbalance",
+	"ltm",
 	"sw3dnr",
 };
 
@@ -1137,34 +1137,34 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		size_of_per_unit = nr_set_size[k] * nr_level_number_ptr->nr_level_map[k];
 		nr_param_ptr = nr_ptr[k].nr_ptr;
 		for (i = 0; i < MAX_MODE_NUM; i++) {
-			if (multi_nr_scene_map_ptr[i]) {
-				if ((PNULL == fix_data_ptr) || (PNULL == nr_param_ptr)) {
-					ISP_LOGE("fail to get valid param : fix_data_ptr = %p, nr_param_ptr = %p",
-						fix_data_ptr, nr_param_ptr);
-					rtn = ISP_ERROR;
-					return rtn;
-				}
-				for (j = 0; j < MAX_SCENEMODE_NUM; j++) {
-					if ((multi_nr_scene_map_ptr[i] >> j) & 0x01) {
-						sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name,
-							nr_mode_name[i], nr_scene_name[j], nr_param_name[k]);
-						if (0 != access(filename, R_OK)) {
-							ISP_LOGI("no such file : %s",filename);
-						} else {
-							if (NULL != (fp = fopen(filename, "rb"))) {
-								rtn = fread((void *)nr_param_ptr, 1, size_of_per_unit, fp);
-								if (rtn < 0) {
-									ISP_LOGE("fail to fread %s",filename);
-									fclose(fp);
-									return rtn;
-								}
+			if (multi_nr_scene_map_ptr[i] == 0)
+				continue;
+			if (PNULL == nr_param_ptr) {
+				ISP_LOGD("no param for mode %d, nr %d", i, k);
+				continue;
+			}
+			for (j = 0; j < MAX_SCENEMODE_NUM; j++) {
+				if ((multi_nr_scene_map_ptr[i] >> j) & 0x01) {
+					sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name,
+						nr_mode_name[i], nr_scene_name[j], nr_param_name[k]);
+					if (0 != access(filename, R_OK)) {
+						ISP_LOGI("no such file : %s",filename);
+					} else {
+						if (NULL != (fp = fopen(filename, "rb"))) {
+							rtn = fread((void *)nr_param_ptr, 1, size_of_per_unit, fp);
+							if (rtn < 0) {
+								ISP_LOGE("fail to fread %s",filename);
 								fclose(fp);
-							} else {
-								ISP_LOGE("fail to fopen %s",filename);
+								nr_param_ptr += size_of_per_unit;
+								continue;
 							}
+							rtn = 0;
+							fclose(fp);
+						} else {
+							ISP_LOGE("fail to fopen %s",filename);
 						}
-						nr_param_ptr += size_of_per_unit;
 					}
+					nr_param_ptr += size_of_per_unit;
 				}
 			}
 		}

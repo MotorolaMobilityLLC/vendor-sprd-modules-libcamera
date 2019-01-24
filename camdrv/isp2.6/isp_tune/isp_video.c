@@ -142,6 +142,8 @@ typedef enum {
 	SHARKL5_3DNR = 0x43,
 	SHARKL5_NLM = 0x44,
 	SHARKL5_SW3DNR = 0x45,
+	SHARKL5_CNR20 = 0x46,
+	SHARKL5_IIRCNR = 0x47,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -908,7 +910,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[ISP_BLK_POSTCDN_T] = 1;
 			break;
 		}
-	case V21IIRCNR:
+	case SHARKL5_IIRCNR:
 		{
 			static cmr_u32 ynr_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -934,7 +936,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[ISP_BLK_YUV_NOISEFILTER_T] = 1;
 			break;
 		}
-	case SHARKL3_CNR20:
+	case SHARKL5_CNR20:
 		{
 			static cmr_u32 cnr2_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -1228,9 +1230,9 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
 			break;
 		}
-	case V21IIRCNR:
+	case SHARKL5_IIRCNR:
 		{
-			data_head_ptr->sub_type = V21IIRCNR;
+			data_head_ptr->sub_type = SHARKL5_IIRCNR;
 			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
@@ -1244,9 +1246,9 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL3_CNR20:
+	case SHARKL5_CNR20:
 		{
-			data_head_ptr->sub_type = SHARKL3_CNR20;
+			data_head_ptr->sub_type = SHARKL5_CNR20;
 			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;

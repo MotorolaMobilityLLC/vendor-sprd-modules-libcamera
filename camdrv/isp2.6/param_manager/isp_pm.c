@@ -21,6 +21,8 @@
 #include <memory.h>
 #include <string.h>
 #endif
+#include <fcntl.h>
+#include <unistd.h>
 #include "ae_tuning_type.h"
 #include "isp_mw.h"
 #include "isp_pm.h"
@@ -920,6 +922,36 @@ static cmr_s32 isp_pm_mode_list_deinit(cmr_handle handle)
 	return rtn;
 }
 
+
+static cmr_s32 debug_save_nr_data(void *dataptr, cmr_u32 datalen,
+	cmr_u32 unit_len, cmr_u32 level_num,  cmr_u32 nr_type,
+	cmr_s8 *sensor_name, cmr_u32 mode_id)
+{
+	int fd;
+	char file_name[256];
+
+	if (datalen != unit_len * level_num) {
+		ISP_LOGE("mismatch NR data len %d, unit %d, level %d\n", datalen, unit_len, level_num);
+		datalen = (datalen < (unit_len * level_num)) ? datalen : (unit_len * level_num);
+	}
+	if (nr_type >= ISP_BLK_TYPE_MAX) {
+		ISP_LOGE("Invalid nr type %d\n", nr_type);
+		return ISP_ERROR;
+	}
+
+	sprintf(file_name, "%sdump/%s_%s_normal_%s_param.bin", CAMERA_DUMP_PATH,
+		sensor_name,  nr_mode_name[mode_id],  nr_param_name[nr_type]);
+	fd = open(file_name, O_RDWR | O_CREAT, 0);
+	if (fd > 0) {
+		write(fd, dataptr, datalen);
+		close(fd);
+		ISP_LOGD("NR type %d,  base %p   size %d, %d, levels %d, save to file %s\n",
+			nr_type, dataptr, datalen, unit_len, level_num, file_name);
+	}
+
+	return 0;
+}
+
 static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	struct isp_pm_init_input *input, struct isp_pm_init_output *output)
 {
@@ -951,7 +983,10 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	cmr_u32 multi_nr_flag = 0;
 	cmr_u32 isp_blk_nr_type = ISP_BLK_TYPE_MAX;
 	intptr_t nr_set_addr = 0;
-	cmr_u32 nr_set_size = 0;
+	cmr_u32 nr_set_size = 0, nr_unit_size = 0;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+	cmr_u32 val, dump_nrdata = 0;
+	cmr_s8 *sensor_name;
 
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
@@ -973,6 +1008,13 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
 	nr_level_number_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_level_number_ptr);
 	nr_default_level_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_default_level_ptr);
+
+	property_get("debug.isp.pm.dump.nr", value, "0");
+	val = atoi(value);
+	if (val < 2)
+		dump_nrdata = val;
+	ISP_LOGD("dump isp pm nr %d\n", dump_nrdata);
+	sensor_name = input->sensor_raw_info_ptr->version_info->sensor_ver_name.sensor_name;
 
 	for (i = 0; i < ISP_TUNE_MODE_MAX; i++) {
 		cmr_u32 mode_data_size;
@@ -1084,139 +1126,181 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 
 				extend_offset += 3 * sizeof(struct isp_pm_nr_simple_header_param);
 				dst_header[j].size = 3 * sizeof(struct isp_pm_nr_simple_header_param);
+
+				if (dump_nrdata) {
+					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.nlm,
+						fix_data_ptr->nr.nr_set_group.nlm_len,
+						sizeof(struct sensor_nlm_level),
+						nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T],
+						ISP_BLK_NLM_T,
+						sensor_name, src_mod_ptr->mode_id);
+
+					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.vst,
+						fix_data_ptr->nr.nr_set_group.vst_len,
+						sizeof(struct sensor_vst_level),
+						nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T],
+						ISP_BLK_VST_T,
+						sensor_name, src_mod_ptr->mode_id);
+
+					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.ivst,
+						fix_data_ptr->nr.nr_set_group.ivst_len,
+						sizeof(struct sensor_ivst_level),
+						nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T],
+						ISP_BLK_IVST_T,
+						sensor_name, src_mod_ptr->mode_id);
+				}
 				break;
 			}
 			case DCAM_BLK_RGB_DITHER:
 			{
 				isp_blk_nr_type = ISP_BLK_RGB_DITHER_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_dither);
-				nr_set_size = sizeof(struct sensor_rgb_dither_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.rgb_dither_len;
+				nr_unit_size = sizeof(struct sensor_rgb_dither_level);
 				break;
 			}
 			case DCAM_BLK_BPC_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_BPC_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.bpc);
-				nr_set_size = sizeof(struct sensor_bpc_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.bpc_len;
+				nr_unit_size = sizeof(struct sensor_bpc_level);
 				break;
 			}
 			case DCAM_BLK_PPE:
 			{
 				isp_blk_nr_type = ISP_BLK_PPE_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ppe);
-				nr_set_size = sizeof(struct sensor_ppe_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.ppe_len;
+				nr_unit_size = sizeof(struct sensor_ppe_level);
 				break;
 			}
 			case ISP_BLK_GRGB_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_GRGB_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.grgb);
-				nr_set_size = sizeof(struct sensor_grgb_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.grgb_len;
+				nr_unit_size = sizeof(struct sensor_grgb_level);
 				break;
 			}
 			case ISP_BLK_CFA_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_CFA_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cfa);
-				nr_set_size = sizeof(struct sensor_cfa_param_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.cfa_len;
+				nr_unit_size = sizeof(struct sensor_cfa_param_level);
 				break;
 			}
 			case DCAM_BLK_RGB_AFM_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_RGB_AFM_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_afm);
-				nr_set_size = sizeof(struct sensor_rgb_afm_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.rgb_afm_len;
+				nr_unit_size = sizeof(struct sensor_rgb_afm_level);
 				break;
 			}
 			case ISP_BLK_UVDIV_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_UVDIV_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.uvdiv);
-				nr_set_size = sizeof(struct sensor_cce_uvdiv_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.uvdiv_len;
+				nr_unit_size = sizeof(struct sensor_cce_uvdiv_level);
 				break;
 			}
 			case ISP_BLK_3DNR:
 			{
 				isp_blk_nr_type = ISP_BLK_3DNR_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d);
-				nr_set_size = sizeof(struct sensor_3dnr_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.nr3d_len;
+				nr_unit_size = sizeof(struct sensor_3dnr_level);
 				break;
 			}
 			case ISP_BLK_SW3DNR:
 			{
 				isp_blk_nr_type = ISP_BLK_SW3DNR_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.sw_3dnr);
-				nr_set_size = sizeof(struct sensor_sw3dnr_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.sw_3dnr_len;
+				nr_unit_size = sizeof(struct sensor_sw3dnr_level);
 				break;
 			}
 			case ISP_BLK_YUV_PRECDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YUV_PRECDN_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.yuv_precdn);
-				nr_set_size = sizeof(struct sensor_yuv_precdn_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.yuv_precdn_len;
+				nr_unit_size = sizeof(struct sensor_yuv_precdn_level);
 				break;
 			}
 			case ISP_BLK_YNR_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YNR_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ynr);
-				nr_set_size = sizeof(struct sensor_ynr_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.ynr_len;
+				nr_unit_size = sizeof(struct sensor_ynr_level);
 				break;
 			}
 			case ISP_BLK_EE_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_EDGE_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.edge);
-				nr_set_size = sizeof(struct sensor_ee_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.edge_len;
+				nr_unit_size = sizeof(struct sensor_ee_level);
 				break;
 			}
 			case ISP_BLK_UV_CDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_CDN_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cdn);
-				nr_set_size = sizeof(struct sensor_uv_cdn_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.cdn_len;
+				nr_unit_size = sizeof(struct sensor_uv_cdn_level);
 				break;
 			}
 			case ISP_BLK_UV_POSTCDN_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_POSTCDN_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.postcdn);
-				nr_set_size = sizeof(struct sensor_uv_postcdn_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.postcdn_len;
+				nr_unit_size = sizeof(struct sensor_uv_postcdn_level);
 				break;
 			}
 			case ISP_BLK_IIRCNR_IIR_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_IIRCNR_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.iircnr);
-				nr_set_size = sizeof(struct sensor_iircnr_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.iircnr_len;
+				nr_unit_size = sizeof(struct sensor_iircnr_level);
 				break;
 			}
 			case ISP_BLK_YUV_NOISEFILTER_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_YUV_NOISEFILTER_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.yuv_noisefilter);
-				nr_set_size = sizeof(struct sensor_yuv_noisefilter_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.yuv_noisefilter_len;
+				nr_unit_size = sizeof(struct sensor_yuv_noisefilter_level);
 				break;
 			}
 			case ISP_BLK_CNR2_V1:
 			{
 				isp_blk_nr_type = ISP_BLK_CNR2_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr2);
-				nr_set_size = sizeof(struct sensor_cnr_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.cnr2_len;
+				nr_unit_size = sizeof(struct sensor_cnr_level);
 				break;
 			}
 			case ISP_BLK_IMBALANCE:
 			{
 				isp_blk_nr_type = ISP_BLK_IMBALANCEE_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.imblance);
-				nr_set_size = sizeof(struct sensor_nlm_imbalance_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.imblance_len;
+				nr_unit_size = sizeof(struct sensor_nlm_imbalance_level);
 				break;
 			}
 			case ISP_BLK_LTM:
 			{
 				isp_blk_nr_type = ISP_BLK_LTM_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ltm);
-				nr_set_size = sizeof(struct sensor_ltm_level);
+				nr_set_size = fix_data_ptr->nr.nr_set_group.ltm_len;
+				nr_unit_size = sizeof(struct sensor_ltm_level);
 				break;
 			}
 			default:
@@ -1254,6 +1338,13 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 
 				extend_offset += sizeof(struct isp_pm_nr_simple_header_param);
 				dst_header[j].size = sizeof(struct isp_pm_nr_simple_header_param);
+				if (dump_nrdata)
+					debug_save_nr_data((void *)nr_set_addr,
+						nr_set_size,
+						nr_unit_size,
+						dst_blk_data->level_number,
+						isp_blk_nr_type,
+						sensor_name, src_mod_ptr->mode_id);
 			}
 		}
 
