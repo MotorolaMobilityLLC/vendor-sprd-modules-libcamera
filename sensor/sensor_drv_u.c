@@ -2747,6 +2747,7 @@ static cmr_int
 sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     SENSOR_MATCH_T *module = NULL;
 
+    sensor_af_init(sensor_cxt);
     sensor_otp_module_init(sensor_cxt);
     module = sensor_cxt->current_module;
     if ((SENSOR_IMAGE_FORMAT_RAW ==
@@ -2761,6 +2762,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
         }
     }
     sensor_otp_module_deinit(sensor_cxt);
+    sensor_af_deinit(sensor_cxt);
 
     return 0;
 }
@@ -3024,7 +3026,8 @@ static cmr_int sensor_drv_ic_identify(struct sensor_drv_context *sensor_cxt,
 exit:
     if (identify_off || ret) {
         SENSOR_LOGI("sensor drv ic identify power off");
-        sensor_drv_get_dynamic_info(sensor_cxt);
+        if (ret == 0 && identify_off)
+            sensor_drv_get_dynamic_info(sensor_cxt);
         sensor_power_on(sensor_cxt, SCI_FALSE);
         sensor_i2c_deinit(sensor_cxt, sensor_id);
         sensor_ic_delete(sensor_cxt);
