@@ -1370,6 +1370,8 @@ static int isp_offline_start_frame(void *ctx)
 	}
 
 	isp_ltm_process_frame_previous(pctx, pframe);
+	isp_3dnr_process_frame(pctx, pframe);
+	isp_ltm_process_frame(pctx, pframe);
 
 	ret = wait_for_completion_interruptible_timeout(
 					&pctx->frm_done,
@@ -1383,9 +1385,6 @@ static int isp_offline_start_frame(void *ctx)
 		ret = -EFAULT;
 		goto unlock;
 	}
-
-	isp_3dnr_process_frame(pctx, pframe);
-	isp_ltm_process_frame(pctx, pframe);
 
 	if (fmcu)
 		fmcu->ops->ctx_reset(fmcu);
