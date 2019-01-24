@@ -353,6 +353,11 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 		goto exit;
 	}
 
+	if (!in->pdaf_support) {
+		ISP_LOGI("sensor don't support PDAF");
+		return ret;
+	}
+
 	in->pdaf_set_pdinfo_to_af = pdaf_set_pdinfo_to_af;
 	in->pdaf_set_cfg_param = pdaf_set_cfg_param;
 	in->pdaf_set_bypass = pdaf_set_bypass;
@@ -376,12 +381,12 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	cxt->pdaf_support = in->pdaf_support;
 	ISP_LOGI("cxt->pdaf_support = %d", cxt->pdaf_support);
 	//cxt->init_in_param = *in;
-	if (SENSOR_PDAF_TYPE3_ENABLE != cxt->pdaf_support
+/*	if (SENSOR_PDAF_TYPE3_ENABLE != cxt->pdaf_support
 		&& SENSOR_DUAL_PDAF_ENABLE != cxt->pdaf_support) {
 		ISP_LOGI("this module isnot support pdaf type3");
 		ret = ISP_SUCCESS;
 		goto sucess_exit;
-	}
+	}*/
 
 	/* find vendor adpter */
 	ret = adpt_get_ops(ADPT_LIB_PDAF, &in->lib_param, &cxt->work_lib.adpt_ops);
@@ -429,8 +434,8 @@ cmr_int pdaf_ctrl_deinit(cmr_handle * handle)
 	CMR_MSG_INIT(message);
 
 	if (!cxt_ptr) {
-		ISP_LOGE("fail to deinit, handle_pdaf is NULL");
-		return -ISP_ERROR;
+		ISP_LOGI("sensor don't support PDAF");
+		return ret;
 	}
 	if (!cxt_ptr->pdaf_support) {
 		ret = ISP_SUCCESS;
@@ -462,8 +467,13 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in * in, s
 	cmr_int ret = ISP_SUCCESS;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
 	CMR_MSG_INIT(message);
-	ISP_CHECK_HANDLE_VALID(handle);
 	UNUSED(out);
+
+	if(!cxt) {
+		ISP_LOGV("sensor don't support PDAF");
+		return ret;
+	}
+
 	if (!in) {
 		ISP_LOGE("fail to check param,input param %p !!!", in);
 		goto exit;
@@ -505,9 +515,8 @@ cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_
 	struct pdaf_ctrl_msg_ctrl msg_ctrl;
 	CMR_MSG_INIT(message);
 
-	ISP_CHECK_HANDLE_VALID(handle);
-	if (!cxt->pdaf_support) {
-		ret = ISP_SUCCESS;
+	if (!cxt) {
+		ISP_LOGI("sensor don't support PDAF");
 		goto exit;
 	}
 
