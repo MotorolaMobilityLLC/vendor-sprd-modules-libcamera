@@ -1612,6 +1612,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue, we will remove these code
+#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
         if (is_raw_capture == 0) {
             if (exif_unit->picture_size.height == 3008 &&
                 exif_unit->picture_size.width == 4000) {
@@ -1659,6 +1660,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                 exif_unit->actual_picture_size.height = 600;
             }
         }
+#endif
     }
 
     time(&timep);
