@@ -8531,6 +8531,13 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
     SET_PARM(obj->mHalOem, obj->mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
+    if (sprddefInfo.sprd_ai_scene_type_current) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 SPRD_MIMETPYE_AI);
+    } else {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 MODE_SINGLE_CAMERA);
+    }
 
     // the following code will cause preview stuck, should be removed later
     if (SprdCamera3Setting::mSensorFocusEnable[mCameraId]) {
