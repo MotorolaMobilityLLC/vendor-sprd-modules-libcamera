@@ -303,6 +303,7 @@ struct isp_alg_fw_context {
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
 	struct isp_hist_statistic_info hist2_stats;
+	struct ae_size hist2_roi;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info commn_cxt;
@@ -486,6 +487,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_callback_cmd cmd = 0;
+	struct ae_size *hdr_statis_size;
 
 	switch (cb_type) {
 	case AE_CB_FLASHING_CONVERGED:
@@ -519,6 +521,11 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_PROCESS_OUT:
 		break;
+	case AE_CB_HDR_STATIS_SIZE:
+		hdr_statis_size = (struct ae_size *)data;
+		hdr_statis_size->w = cxt->hist2_roi.w;
+		hdr_statis_size->h = cxt->hist2_roi.h;
+		return ret;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;
@@ -1462,11 +1469,16 @@ static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 i;
 	cmr_u32 *ptr;
 	struct isp_hist_statistic_info *hist_stats;
-
+	struct ae_size *hist2_roi_info;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 
 	ptr = (cmr_u32 *)statis_info->uaddr;
+
+	/* update hist2 roi info */
+	hist2_roi_info = &cxt->hist2_roi;
+	hist2_roi_info->w = statis_info->width;
+	hist2_roi_info->h = statis_info->height;
 
 	/* Y */
 	hist_stats = &cxt->hist2_stats;

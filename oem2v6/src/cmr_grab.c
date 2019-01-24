@@ -1355,6 +1355,8 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.frame_id = op.parm.frame.frame_id;
                 statis_info.zoom_ratio = op.parm.frame.zoom_ratio;
                 statis_info.dac_info = op.parm.frame.dac_info;
+                statis_info.width = op.parm.frame.length;
+                statis_info.height = op.parm.frame.height;
                 CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
                          "vir_addr 0x%x irq_property 0x%x, "
                          "op.parm.frame.vir_addr = 0x%x, "

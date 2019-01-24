@@ -172,6 +172,8 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->sec = irq_info->sec;
 	statis_info->usec = irq_info->usec;
 	statis_info->zoom_ratio = irq_info->zoom_ratio;
+	statis_info->width = irq_info->width;
+	statis_info->height = irq_info->height;
 
 	ISP_LOGV("get stats type %d, uaddr %p, frame id %d time %ds.%dus, zoom_ratio: %d",
 		 statis_info->buf_type,

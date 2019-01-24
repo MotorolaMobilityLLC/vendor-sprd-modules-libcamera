@@ -400,6 +400,8 @@ struct sprd_img_statis_info {
 	uint32_t frame_id;
 	struct sprd_img_vcm_dac_info dac_info;
 	uint32_t zoom_ratio;
+	uint32_t width;
+	uint32_t height;
 };
 
 struct sprd_irq_info {

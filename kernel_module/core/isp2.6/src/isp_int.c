@@ -336,6 +336,9 @@ static struct camera_frame* isp_hist2_frame_prepare(enum isp_context_id idx, voi
 		buf[i] = ISP_HREG_RD(HIST_BUF + i * 4);
 	}
 
+	frame->width = pctx->fetch.in_trim.size_x;
+	frame->height = pctx->fetch.in_trim.size_y;
+
 	return frame;
 }
 
