@@ -344,13 +344,23 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     small_buf_size =
         threednr_handle->small_width * threednr_handle->small_height * 3 / 2;
     small_buf_num = CAP_3DNR_NUM;
-    threednr_handle->out_buf.cpu_buffer.bufferY =
-        (unsigned char *)threednr_handle->out_buf_vir;
-    threednr_handle->out_buf.cpu_buffer.bufferU =
-        threednr_handle->out_buf.cpu_buffer.bufferY +
-        threednr_handle->width * threednr_handle->height;
-    threednr_handle->out_buf.cpu_buffer.bufferV =
-        threednr_handle->out_buf.cpu_buffer.bufferU;
+
+    if (cam_cxt->hal_malloc == NULL) {
+        CMR_LOGE("cam_cxt->hal_malloc is NULL");
+        goto free_all;
+    }
+
+    ret = cam_cxt->hal_malloc(
+        CAMERA_SNAPSHOT_3DNR, &small_buf_size, &small_buf_num,
+        (cmr_uint *)threednr_handle->small_buf_phy,
+        (cmr_uint *)threednr_handle->small_buf_vir,
+        threednr_handle->small_buf_fd, cam_cxt->client_data);
+    if (ret) {
+        CMR_LOGE("Fail to malloc buffers for small image");
+        goto free_all;
+    }
+    CMR_LOGD("OK to malloc buffers for small image");
+
     param.orig_width = threednr_handle->width;
     param.orig_height = threednr_handle->height;
     param.small_width = threednr_handle->small_width;
@@ -362,7 +372,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.ratio = 2;
     param.sigma_tmp = sigma_tmp;
     param.slope_tmp = slope_tmp;
-    param.yuv_mode = 0; // NV12?
+    param.yuv_mode = 1; // NV21
     param.control_en = 0x0;
     param.thread_num_acc = 4; // 2 | (1 << 4) | (2 << 6) |(1<<12);
     param.thread_num = 4;     // 2 | (1<<4) | (2<<6) | (1<<12);
@@ -680,8 +690,51 @@ void *thread_3dnr(void *p_data) {
     }
 #endif
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
+    src = &in->src_frame;
+    src->addr_vir.addr_u = in->src_frame.addr_vir.addr_y +
+                           threednr_handle->width * threednr_handle->height;
+    src->addr_vir.addr_v = src->addr_vir.addr_u;
+    src->addr_phy.addr_u = in->src_frame.addr_phy.addr_y +
+                           threednr_handle->width * threednr_handle->height;
+    src->addr_phy.addr_v = src->addr_vir.addr_u;
+    src->data_end.y_endian = 0;
+    src->data_end.uv_endian = 0;
+    src->rect.start_x = 0;
+    src->rect.start_y = 0;
+    src->rect.width = threednr_handle->width;
+    src->rect.height = threednr_handle->height;
+    memcpy(&dst, &in->src_frame, sizeof(struct img_frm));
+    dst.buf_size =
+        threednr_handle->small_width * threednr_handle->small_height * 3 / 2;
+    dst.rect.start_x = 0;
+    dst.rect.start_y = 0;
+    dst.rect.width = threednr_handle->small_width;
+    dst.rect.height = threednr_handle->small_height;
+    dst.size.width = threednr_handle->small_width;
+    dst.size.height = threednr_handle->small_height;
+    dst.addr_phy.addr_y = threednr_handle->small_buf_phy[cur_frm];
+    dst.addr_phy.addr_u =
+        dst.addr_phy.addr_y +
+        threednr_handle->small_width * threednr_handle->small_height;
+    dst.addr_phy.addr_v = dst.addr_phy.addr_u;
+    dst.addr_vir.addr_y = threednr_handle->small_buf_vir[cur_frm];
+    dst.addr_vir.addr_u =
+        dst.addr_vir.addr_y +
+        threednr_handle->small_width * threednr_handle->small_height;
+    dst.addr_vir.addr_v = dst.addr_vir.addr_u;
+    dst.fd = threednr_handle->small_buf_fd[cur_frm];
+    CMR_LOGD("Call the threednr_start_scale().src Y: 0x%lx, 0x%x, dst Y: "
+             "0x%lx, 0x%x",
+             src->addr_vir.addr_y, src->fd, dst.addr_vir.addr_y, dst.fd);
+
     if (threednr_handle->is_stop) {
         CMR_LOGE("threednr_handle is stop");
+        goto exit;
+    }
+
+    ret = threednr_start_scale(oem_handle, src, &dst);
+    if (ret) {
+        CMR_LOGE("Fail to call threednr_start_scale");
         goto exit;
     }
 
@@ -698,9 +751,7 @@ void *thread_3dnr(void *p_data) {
             sprintf(filename, "small_in_%ldx%ld_index_%d.yuv",
                     threednr_handle->small_width, threednr_handle->small_height,
                     cur_frm);
-            save_yuv(filename, (char *)in->src_frame.addr_vir.addr_y +
-                                   threednr_handle->width *
-                                       threednr_handle->height * 3 / 2,
+            save_yuv(filename, (char *)dst.addr_vir.addr_y,
                      threednr_handle->small_width,
                      threednr_handle->small_height);
         }
@@ -716,12 +767,12 @@ void *thread_3dnr(void *p_data) {
     orig_image.bufferV = orig_image.bufferU;
 
     small_image.cpu_buffer.bufferY =
-        (unsigned char *)in->src_frame.addr_vir.addr_y +
-        threednr_handle->width * threednr_handle->height * 3 / 2;
+        (unsigned char *)threednr_handle->small_buf_vir[cur_frm];
     small_image.cpu_buffer.bufferU =
         small_image.cpu_buffer.bufferY +
         threednr_handle->small_width * threednr_handle->small_height;
     small_image.cpu_buffer.bufferV = small_image.cpu_buffer.bufferU;
+    small_image.cpu_buffer.fd = threednr_handle->small_buf_fd[cur_frm];
     CMR_LOGV("Call the threednr_function().big Y: %p, small Y: %p."
              " ,threednr_handle->is_stop %ld",
              orig_image.bufferY, small_image.cpu_buffer.bufferY,

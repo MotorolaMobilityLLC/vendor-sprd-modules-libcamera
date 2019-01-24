@@ -646,20 +646,6 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.reserved[2] = config->cfg.src_img_size.height;
     parm.scene_mode = config->cfg.sence_mode;
 
-    if (config->cfg.enable_slave_img == 1) {
-        CMR_LOGD("config->cfg.dst_slave_img_size.width %d"
-                 "config->cfg.dst_slave_img_size.height %d"
-                 "cmr_grab_get_4cc(config->cfg.slave_img_fmt) %d ",
-                 config->cfg.dst_slave_img_size.width,
-                 config->cfg.dst_slave_img_size.height,
-                 cmr_grab_get_4cc(config->cfg.slave_img_fmt));
-        parm.aux_img.dst_size.w = config->cfg.dst_slave_img_size.width;
-        parm.aux_img.dst_size.h = config->cfg.dst_slave_img_size.height;
-        pxl_fmt = cmr_grab_get_4cc(config->cfg.slave_img_fmt);
-        parm.aux_img.pixel_fmt = pxl_fmt;
-        parm.aux_img.enable = config->cfg.enable_slave_img;
-    }
-
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_OUTPUT_SIZE, &parm);
     CMR_RTN_IF_ERR(ret);
 
