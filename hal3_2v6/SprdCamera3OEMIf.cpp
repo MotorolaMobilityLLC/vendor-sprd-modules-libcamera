@@ -5097,6 +5097,10 @@ int SprdCamera3OEMIf::openCamera() {
     }
     HAL_LOGI("mIommuEnabled=%d", mIommuEnabled);
 
+#if defined(CONFIG_CAMERA_FACE_DETECT)
+    faceDectect_enable(1);
+#endif
+
     ZSLMode_monitor_thread_init((void *)this);
 
 #ifdef CONFIG_CAMERA_GYRO

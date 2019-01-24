@@ -891,9 +891,6 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             break;
         case ANDROID_STATISTICS_FACE_DETECT_MODE:
             HAL_LOGV("FACE DECTION");
-#if defined(CONFIG_CAMERA_FACE_DETECT)
-            mOEMIf->faceDectect_enable(1);
-#endif
             mSetting->getSPRDDEFTag(&sprddefInfo);
             mSetting->getSTATISTICSTag(&statisticsInfo);
             if (statisticsInfo.face_detect_mode ==

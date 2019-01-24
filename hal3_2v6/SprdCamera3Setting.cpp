@@ -3502,6 +3502,7 @@ int SprdCamera3Setting::updateWorkParameters(
     float valueFloat = 0.0f;
     int32_t valueI32 = 0;
     int64_t valueI64 = 0;
+    bool is_push = false;
 
     uint8_t is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
@@ -3512,11 +3513,18 @@ int SprdCamera3Setting::updateWorkParameters(
 
     Mutex::Autolock l(mLock);
 
-#define GET_VALUE_IF_DIF(x, y, tag)                                            \
-    if (((x) != (y)) || ((x) == (y) && (x) == 0)) {                            \
-        if ((x) != (y))                                                        \
-            rc++;                                                              \
-        (x) = (y);                                                             \
+#define GET_VALUE_IF_DIF(x, y, tag, count)                                     \
+    is_push = false;                                                           \
+    for (size_t i = 0; i < count; i++) {                                       \
+        if (*(&x + i) != *(&y + i)) {                                          \
+            is_push = true;                                                    \
+            break;                                                             \
+        }                                                                      \
+    }                                                                          \
+    if (is_push == true) {                                                     \
+        rc++;                                                                  \
+        for (size_t i = 0; i < count; i++)                                     \
+            *(&x + i) = *(&y + i);                                             \
         pushAndroidParaTag(tag);                                               \
     }
 
@@ -3528,18 +3536,247 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
-        s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
-            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
-        pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
+        valueI32 = frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_appmode_id,
+                         valueI32, ANDROID_SPRD_APP_MODE_ID, 1)
         HAL_LOGV("sprd sprd app mode id is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_SENSOR_ORIENTATION).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sensor_orientation,
+                         valueU8, ANDROID_SPRD_SENSOR_ORIENTATION, 1)
+        HAL_LOGV("orien %d",
+                 s_setting[mCameraId].sprddefInfo.sensor_orientation);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
+        int32_t rotation =
+            frame_settings.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];
+
+        if (-1 == rotation)
+            rotation = 0;
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sensor_rotation,
+                         rotation, ANDROID_SPRD_SENSOR_ROTATION, 1)
+        HAL_LOGV("rot %d", s_setting[mCameraId].sprddefInfo.sensor_rotation);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
+        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM] = {0};
+        if (is_raw_capture == 1) {
+            memset(perfectskinlevel, 0,
+                   sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
+        } else {
+            for (size_t i = 0;
+                 i < (frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).count);
+                 i++) {
+                perfectskinlevel[i] =
+                    frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL)
+                        .data.i32[i];
+                HAL_LOGV("face beauty level %d : %d", i, perfectskinlevel[i]);
+            }
+        }
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.perfect_skin_level[0],
+                         perfectskinlevel[0], ANDROID_SPRD_UCAM_SKIN_LEVEL,
+                         SPRD_FACE_BEAUTY_PARAM_NUM)
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_EIS_ENABLED)) {
+        int32_t sprd_eis_enabled =
+            frame_settings.find(ANDROID_SPRD_EIS_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
+                         sprd_eis_enabled, ANDROID_SPRD_EIS_ENABLED, 1)
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)) {
+        uint8_t flip_on =
+            frame_settings.find(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)
+                .data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.flip_on, flip_on,
+                         ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR, 1)
+        HAL_LOGV("flip_on_level %d", s_setting[mCameraId].sprddefInfo.flip_on);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_FILTER_TYPE)) {
+        uint32_t sprd_filter_type =
+            frame_settings.find(ANDROID_SPRD_FILTER_TYPE).data.i32[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_filter_type,
+                         sprd_filter_type, ANDROID_SPRD_FILTER_TYPE, 1)
+    }
+    // SPRD
+    if (frame_settings.exists(ANDROID_SPRD_CAPTURE_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_CAPTURE_MODE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.capture_mode, valueU8,
+                         ANDROID_SPRD_CAPTURE_MODE, 1)
+    }
+    if (frame_settings.exists(ANDROID_SPRD_BURST_CAP_CNT)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_BURST_CAP_CNT).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
+                         valueU8, ANDROID_SPRD_BURST_CAP_CNT, 1)
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_BRIGHTNESS)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_BRIGHTNESS).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.brightness, valueU8,
+                         ANDROID_SPRD_BRIGHTNESS, 1)
+        HAL_LOGV("brightness is %d",
+                 s_setting[mCameraId].sprddefInfo.brightness);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_AI_SCENE_ENABLED)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_AI_SCENE_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.ai_scene_enabled,
+                         valueU8, ANDROID_SPRD_AI_SCENE_ENABLED, 1)
+        HAL_LOGV("availabe_ai_scene %d",
+                 s_setting[mCameraId].sprddefInfo.ai_scene_enabled);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_CONTRAST)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_CONTRAST).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.contrast, valueU8,
+                         ANDROID_SPRD_CONTRAST, 1)
+        HAL_LOGV("contrast is %d", s_setting[mCameraId].sprddefInfo.contrast);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_SATURATION)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_SATURATION).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.saturation, valueU8,
+                         ANDROID_SPRD_SATURATION, 1)
+        HAL_LOGV("saturation is %d",
+                 s_setting[mCameraId].sprddefInfo.saturation);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_ISO)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.iso, valueU8,
+                         ANDROID_SPRD_ISO, 1)
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_SLOW_MOTION).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.slowmotion, valueU8,
+                         ANDROID_SPRD_SLOW_MOTION, 1)
+        HAL_LOGV("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.am_mode, valueU8,
+                         ANDROID_SPRD_METERING_MODE, 1)
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_AF_MODE_MACRO_FIXED)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_AF_MODE_MACRO_FIXED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.is_macro_fixed,
+                         valueU8, ANDROID_SPRD_AF_MODE_MACRO_FIXED, 1)
+        HAL_LOGD("is_macro_fixed is %d",
+                 s_setting[mCameraId].sprddefInfo.is_macro_fixed);
+    }
+
+    /**add for 3d calibration update metadata begin*/
+    if (frame_settings.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
+            valueU8, ANDROID_SPRD_3DCALIBRATION_ENABLED, 1)
+        HAL_LOGD("sprd_3dcalibration_enabled %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
+    } else {
+        char prop[PROPERTY_VALUE_MAX];
+        int val = 0;
+        property_get("persist.vendor.cam.hal.3d", prop, "0");
+        val = atoi(prop);
+        if (1 == val) {
+            GET_VALUE_IF_DIF(
+                s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
+                val, ANDROID_SPRD_3DCALIBRATION_ENABLED, 1)
+            HAL_LOGD(
+                "force set sprd_3dcalibration_enabled %d",
+                s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
+        } else {
+            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = 0;
+        }
+    }
+    /**add for 3d calibration update metadata end*/
+
+    if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
+        uint8_t sprd_zsl_enabled;
+        if (is_raw_capture == 1) {
+            sprd_zsl_enabled = 0;
+        } else {
+            sprd_zsl_enabled =
+                frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
+            /**add for 3d calibration force set sprd zsl enable begin*/
+            if (s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled)
+                sprd_zsl_enabled =
+                    s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
+            /**add for 3d calibration force set sprd zsl enable end*/
+        }
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
+                         sprd_zsl_enabled, ANDROID_SPRD_ZSL_ENABLED, 1)
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.refocus_enable,
+                         valueU8, ANDROID_SPRD_CONTROL_REFOCUS_ENABLE, 1)
+        HAL_LOGD("camera id %d, refocus mode %d", mCameraId,
+                 s_setting[mCameraId].sprddefInfo.refocus_enable);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_SET_TOUCH_INFO)) {
+        uint32_t touchxy[2];
+        touchxy[0] =
+            frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[0];
+        touchxy[1] =
+            frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[1];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.touchxy[0],
+                         touchxy[0], ANDROID_SPRD_SET_TOUCH_INFO, 2)
+        HAL_LOGD("touch info %d %d",
+                 s_setting[mCameraId].sprddefInfo.touchxy[0],
+                 s_setting[mCameraId].sprddefInfo.touchxy[1]);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_PIPVIV_ENABLED)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled,
+                         valueU8, ANDROID_SPRD_FIXED_FPS_ENABLED, 1)
+        HAL_LOGD("sprd pipviv enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
+                         valueU8, ANDROID_SPRD_3DNR_ENABLED, 1)
+        HAL_LOGV("sprd 3dnr enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
+        if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1) {
+            valueU8 = 1;
+            GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
+                             valueU8, ANDROID_SPRD_ZSL_ENABLED, 1)
+        }
+    }
+    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled,
+                         valueU8, ANDROID_SPRD_FIXED_FPS_ENABLED, 1)
+        HAL_LOGV("sprd fixed fps enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_AUTO_HDR_ENABLED)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_AUTO_HDR_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable,
+                         valueU8, ANDROID_SPRD_AUTO_HDR_ENABLED, 1)
+        HAL_LOGV("sprd auto hdr enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
         valueU8 =
             frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.antibanding_mode,
-                         valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE)
+                         valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE, 1)
         HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d", valueU8);
     }
 
@@ -3548,14 +3785,14 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 =
             frame_settings.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.capture_intent,
-                         valueU8, ANDROID_CONTROL_CAPTURE_INTENT)
+                         valueU8, ANDROID_CONTROL_CAPTURE_INTENT, 1)
     }
 
     // LENS
     if (frame_settings.exists(ANDROID_LENS_FOCAL_LENGTH)) {
         valueFloat = frame_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focal_length, valueFloat,
-                         ANDROID_LENS_FOCAL_LENGTH)
+                         ANDROID_LENS_FOCAL_LENGTH, 1)
         HAL_LOGV("lens focal len is %f", valueFloat);
     }
 
@@ -3563,14 +3800,14 @@ int SprdCamera3Setting::updateWorkParameters(
     /*if (frame_settings.exists(ANDROID_REQUEST_ID)) {
             valueI32 = frame_settings.find(ANDROID_REQUEST_ID).data.i32[0];
             GET_VALUE_IF_DIF(s_setting[mCameraId].requestInfo.id, valueI32,
-    ANDROID_REQUEST_ID)
+    ANDROID_REQUEST_ID, 1)
             HAL_LOGD("android request id %d", valueI32);
     }*/
 
     if (frame_settings.exists(ANDROID_REQUEST_TYPE)) {
         valueU8 = frame_settings.find(ANDROID_REQUEST_TYPE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].requestInfo.type, valueU8,
-                         ANDROID_REQUEST_TYPE)
+                         ANDROID_REQUEST_TYPE, 1)
         HAL_LOGD("req type %d", valueU8);
     }
 
@@ -3578,7 +3815,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_BLACK_LEVEL_LOCK)) {
         valueU8 = frame_settings.find(ANDROID_BLACK_LEVEL_LOCK).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].black_level_lock, valueU8,
-                         ANDROID_BLACK_LEVEL_LOCK)
+                         ANDROID_BLACK_LEVEL_LOCK, 1)
         HAL_LOGV("android black level lock %d", valueU8);
     }
 
@@ -3586,7 +3823,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_EDGE_MODE)) {
         valueU8 = frame_settings.find(ANDROID_EDGE_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].edgeInfo.mode, valueU8,
-                         ANDROID_EDGE_MODE)
+                         ANDROID_EDGE_MODE, 1)
         HAL_LOGV("android edge mode %d", valueU8);
     }
 
@@ -3594,7 +3831,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_NOISE_REDUCTION_MODE)) {
         valueU8 = frame_settings.find(ANDROID_NOISE_REDUCTION_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].noiseInfo.reduction_mode, valueU8,
-                         ANDROID_NOISE_REDUCTION_MODE)
+                         ANDROID_NOISE_REDUCTION_MODE, 1)
         HAL_LOGV("android noise reduction mode %d", valueU8);
     }
 
@@ -3604,14 +3841,14 @@ int SprdCamera3Setting::updateWorkParameters(
                       .data.u8[0];
         GET_VALUE_IF_DIF(
             s_setting[mCameraId].statisticsInfo.lens_shading_map_mode, valueU8,
-            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE)
+            ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, 1)
         HAL_LOGV("android statistics lens shading map mode  %d", valueU8);
     }
     // shading mode
     if (frame_settings.exists(ANDROID_SHADING_MODE)) {
         valueU8 = frame_settings.find(ANDROID_SHADING_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].shadingInfo.mode, valueU8,
-                         ANDROID_SHADING_MODE)
+                         ANDROID_SHADING_MODE, 1)
         HAL_LOGV("android shading mode %d", valueU8);
     }
 
@@ -3643,7 +3880,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_TONEMAP_MODE)) {
         valueU8 = frame_settings.find(ANDROID_TONEMAP_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].toneInfo.mode, valueU8,
-                         ANDROID_TONEMAP_MODE)
+                         ANDROID_TONEMAP_MODE, 1)
         HAL_LOGV("android tonemap mode %d", valueU8);
     }
 
@@ -3652,7 +3889,7 @@ int SprdCamera3Setting::updateWorkParameters(
         valueI64 =
             frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.exposure_time,
-                         valueI64, ANDROID_SENSOR_EXPOSURE_TIME)
+                         valueI64, ANDROID_SENSOR_EXPOSURE_TIME, 1)
         HAL_LOGV("sensor exposure_time is %" PRId64, valueI64);
     }
 
@@ -3660,179 +3897,124 @@ int SprdCamera3Setting::updateWorkParameters(
         valueI64 =
             frame_settings.find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.frame_duration,
-                         valueI64, ANDROID_SENSOR_FRAME_DURATION)
+                         valueI64, ANDROID_SENSOR_FRAME_DURATION, 1)
         HAL_LOGV("frame duration %" PRId64, valueI64);
     }
 
     if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
         valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32,
-                         ANDROID_SENSOR_SENSITIVITY)
+                         ANDROID_SENSOR_SENSITIVITY, 1)
         HAL_LOGV("sensitivity is %d", valueI32);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
-        s_setting[mCameraId].sprddefInfo.sensor_orientation =
-            frame_settings.find(ANDROID_SPRD_SENSOR_ORIENTATION).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_SENSOR_ORIENTATION);
-        HAL_LOGV("orien %d",
-                 s_setting[mCameraId].sprddefInfo.sensor_orientation);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
-        int32_t rotation =
-            frame_settings.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];
-
-        if (-1 == rotation)
-            rotation = 0;
-        s_setting[mCameraId].sprddefInfo.sensor_rotation = rotation;
-        pushAndroidParaTag(ANDROID_SPRD_SENSOR_ROTATION);
-        HAL_LOGV("rot %d", s_setting[mCameraId].sprddefInfo.sensor_rotation);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
-        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM] = {0};
-        if (is_raw_capture == 1) {
-            memset(perfectskinlevel, 0,
-                   sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
-        } else {
-            for (size_t i = 0;
-                 i < (frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).count);
-                 i++) {
-                perfectskinlevel[i] =
-                    frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL)
-                        .data.i32[i];
-                HAL_LOGV("face beauty level %d : %d", i, perfectskinlevel[i]);
-            }
-        }
-        memcpy(s_setting[mCameraId].sprddefInfo.perfect_skin_level,
-               perfectskinlevel, sizeof(int32_t) * SPRD_FACE_BEAUTY_PARAM_NUM);
-        pushAndroidParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_EIS_ENABLED)) {
-        int32_t sprd_eis_enabled =
-            frame_settings.find(ANDROID_SPRD_EIS_ENABLED).data.u8[0];
-
-        s_setting[mCameraId].sprddefInfo.sprd_eis_enabled = sprd_eis_enabled;
-        pushAndroidParaTag(ANDROID_SPRD_EIS_ENABLED);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)) {
-        uint8_t flip_on =
-            frame_settings.find(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)
-                .data.u8[0];
-        s_setting[mCameraId].sprddefInfo.flip_on = flip_on;
-        pushAndroidParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);
-        HAL_LOGV("flip_on_level %d", s_setting[mCameraId].sprddefInfo.flip_on);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_FILTER_TYPE)) {
-        s_setting[mCameraId].sprddefInfo.sprd_filter_type =
-            frame_settings.find(ANDROID_SPRD_FILTER_TYPE).data.i32[0];
-        pushAndroidParaTag(ANDROID_SPRD_FILTER_TYPE);
     }
 
     // JPEG
     if (frame_settings.exists(ANDROID_JPEG_QUALITY)) {
         valueU8 = frame_settings.find(ANDROID_JPEG_QUALITY).data.u8[0];
-        s_setting[mCameraId].jpgInfo.quality = valueU8;
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.quality, valueU8,
+                         ANDROID_JPEG_QUALITY, 1)
         HAL_LOGV("jpeg quality is %d", valueU8);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_QUALITY)) {
         valueU8 =
             frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8[0];
-        s_setting[mCameraId].jpgInfo.thumbnail_quality = valueU8;
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.thumbnail_quality,
+                         valueU8, ANDROID_JPEG_THUMBNAIL_QUALITY, 1)
         HAL_LOGV("thumnail quality %d",
                  s_setting[mCameraId].jpgInfo.thumbnail_quality);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_SIZE)) {
-        int32_t thumW =
-            frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[0];
-        int32_t thumH =
-            frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[1];
-        s_setting[mCameraId].jpgInfo.thumbnail_size[0] = thumW;
-        s_setting[mCameraId].jpgInfo.thumbnail_size[1] = thumH;
+        int32_t thum[2];
+        thum[0] = frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[0];
+        thum[1] = frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[1];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.thumbnail_size[0],
+                         thum[0], ANDROID_JPEG_THUMBNAIL_SIZE, 2)
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
-        for (size_t i = 0;
-             i < frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count; i++) {
-            s_setting[mCameraId].jpgInfo.gps_coordinates[i] =
+        double gps_coordinates[3];
+        size_t num_elements =
+            frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count;
+        for (size_t i = 0; i < num_elements; i++) {
+            gps_coordinates[i] =
                 frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d[i];
-            HAL_LOGD("GPS coordinates %lf",
-                     s_setting[mCameraId].jpgInfo.gps_coordinates[i]);
+            HAL_LOGD("GPS coordinates %lf", gps_coordinates[i]);
         }
-        pushAndroidParaTag(ANDROID_JPEG_GPS_COORDINATES);
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.gps_coordinates[0],
+                         gps_coordinates[0], ANDROID_JPEG_GPS_COORDINATES,
+                         num_elements)
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
-        for (size_t i = 0;
-             i < frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count;
-             i++) {
-            s_setting[mCameraId].jpgInfo.gps_processing_method[i] =
+        uint8_t gps_processing_method[36];
+        size_t num_elements =
+            frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count;
+        for (size_t i = 0; i < num_elements; i++) {
+            gps_processing_method[i] =
                 frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD)
                     .data.u8[i];
         }
-        s_setting[mCameraId].jpgInfo.gps_processing_method
-            [frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count] = 0;
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.gps_processing_method[0],
+                         gps_processing_method[0],
+                         ANDROID_JPEG_GPS_PROCESSING_METHOD, num_elements)
+        s_setting[mCameraId].jpgInfo.gps_processing_method[num_elements] = 0;
         HAL_LOGD("GPS processin method %s",
                  s_setting[mCameraId].jpgInfo.gps_processing_method);
-        pushAndroidParaTag(ANDROID_JPEG_GPS_PROCESSING_METHOD);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_TIMESTAMP)) {
-        s_setting[mCameraId].jpgInfo.gps_timestamp =
-            frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
+        valueI64 = frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.gps_timestamp, valueI64,
+                         ANDROID_JPEG_GPS_TIMESTAMP, 1)
         HAL_LOGD("GPS timestamp %" PRId64,
                  s_setting[mCameraId].jpgInfo.gps_timestamp);
-        pushAndroidParaTag(ANDROID_JPEG_GPS_TIMESTAMP);
     }
 
     if (frame_settings.exists(ANDROID_FLASH_MODE)) {
         valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
-                         ANDROID_FLASH_MODE)
+                         ANDROID_FLASH_MODE, 1)
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
         HAL_LOGV("ae mode %d", s_setting[mCameraId].controlInfo.ae_mode);
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, valueU8,
-                         ANDROID_CONTROL_AE_MODE)
+                         ANDROID_CONTROL_AE_MODE, 1)
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_lock, valueU8,
-                         ANDROID_CONTROL_AE_LOCK)
+                         ANDROID_CONTROL_AE_LOCK, 1)
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_SCENE_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.scene_mode, valueU8,
-                         ANDROID_CONTROL_SCENE_MODE)
+                         ANDROID_CONTROL_SCENE_MODE, 1)
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_EFFECT_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.effect_mode, valueU8,
-                         ANDROID_CONTROL_EFFECT_MODE)
+                         ANDROID_CONTROL_EFFECT_MODE, 1)
         HAL_LOGV("effect %d", valueU8);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AWB_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.awb_mode, valueU8,
-                         ANDROID_CONTROL_AWB_MODE)
+                         ANDROID_CONTROL_AWB_MODE, 1)
         HAL_LOGV("awb %d", valueU8);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AWB_LOCK)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AWB_LOCK).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.awb_lock, valueU8,
-                         ANDROID_CONTROL_AWB_LOCK)
+                         ANDROID_CONTROL_AWB_LOCK, 1)
         HAL_LOGV("awb_lock %d", valueU8);
     }
 
@@ -3847,74 +4029,16 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 =
             frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_abtibanding_mode,
-                         valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE)
+                         valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE, 1)
         HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d", valueU8);
     }
-    // SPRD
-    if (frame_settings.exists(ANDROID_SPRD_CAPTURE_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_SPRD_CAPTURE_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.capture_mode, valueU8,
-                         ANDROID_SPRD_CAPTURE_MODE)
-    }
-    if (frame_settings.exists(ANDROID_SPRD_BURST_CAP_CNT)) {
-        valueU8 = frame_settings.find(ANDROID_SPRD_BURST_CAP_CNT).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
-                         valueU8, ANDROID_SPRD_BURST_CAP_CNT)
-    }
 
-    if (frame_settings.exists(ANDROID_SPRD_BRIGHTNESS)) {
-        s_setting[mCameraId].sprddefInfo.brightness =
-            frame_settings.find(ANDROID_SPRD_BRIGHTNESS).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_BRIGHTNESS);
-        HAL_LOGV("brightness is %d",
-                 s_setting[mCameraId].sprddefInfo.brightness);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_AI_SCENE_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.ai_scene_enabled =
-            frame_settings.find(ANDROID_SPRD_AI_SCENE_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_AI_SCENE_ENABLED);
-        HAL_LOGV("availabe_ai_scene %d",
-                 s_setting[mCameraId].sprddefInfo.ai_scene_enabled);
-    }
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
         s_setting[mCameraId].controlInfo.mode =
             frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
         // pushAndroidParaTag(ANDROID_SPRD_BRIGHTNESS);
         HAL_LOGV("ANDROID_CONTROL_MODE is %d",
                  s_setting[mCameraId].controlInfo.mode);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_CONTRAST)) {
-        s_setting[mCameraId].sprddefInfo.contrast =
-            frame_settings.find(ANDROID_SPRD_CONTRAST).data.u8[0];
-        valueU8 = frame_settings.find(ANDROID_SPRD_CONTRAST).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_CONTRAST);
-        HAL_LOGV("contrast is %d", valueU8);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_SATURATION)) {
-        s_setting[mCameraId].sprddefInfo.saturation =
-            frame_settings.find(ANDROID_SPRD_SATURATION).data.u8[0];
-        valueU8 = frame_settings.find(ANDROID_SPRD_SATURATION).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_SATURATION);
-        HAL_LOGV("saturation is %d", valueU8);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_ISO)) {
-        s_setting[mCameraId].sprddefInfo.iso =
-            frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
-        valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_ISO);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
-        s_setting[mCameraId].sprddefInfo.slowmotion =
-            frame_settings.find(ANDROID_SPRD_SLOW_MOTION).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_SLOW_MOTION);
-        HAL_LOGV("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
-        s_setting[mCameraId].sprddefInfo.am_mode =
-            frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_METERING_MODE);
     }
 
     int updateAE = false;
@@ -3960,95 +4084,36 @@ int SprdCamera3Setting::updateWorkParameters(
                         HAL_LOGD("cancel auto focus dont set ae region");
                     } else {
                         updateAE = true;
-                        for (size_t i = 0;
-                             i < frame_settings.find(ANDROID_CONTROL_AE_REGIONS)
-                                     .count;
-                             i++)
-                            s_setting[mCameraId].controlInfo.ae_regions[i] =
-                                ae_area[i];
-
-                        pushAndroidParaTag(ANDROID_CONTROL_AE_REGIONS);
+                        GET_VALUE_IF_DIF(
+                            s_setting[mCameraId].controlInfo.ae_regions[0],
+                            ae_area[0], ANDROID_CONTROL_AE_REGIONS, 5)
                     }
                 }
             }
         }
     }
 
-    if (frame_settings.exists(ANDROID_SPRD_AF_MODE_MACRO_FIXED)) {
-        valueU8 =
-            frame_settings.find(ANDROID_SPRD_AF_MODE_MACRO_FIXED).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.is_macro_fixed,
-                         valueU8, ANDROID_SPRD_AF_MODE_MACRO_FIXED)
-        HAL_LOGD("is_macro_fixed is %d", valueU8);
-    }
-
-    /**add for 3d calibration update metadata begin*/
-    if (frame_settings.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
-        valueU8 =
-            frame_settings.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
-        GET_VALUE_IF_DIF(
-            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
-            valueU8, ANDROID_SPRD_3DCALIBRATION_ENABLED)
-        HAL_LOGD("sprd_3dcalibration_enabled %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
-    } else {
-        char prop[PROPERTY_VALUE_MAX];
-        int val = 0;
-        property_get("persist.vendor.cam.hal.3d", prop, "0");
-        val = atoi(prop);
-        if (1 == val) {
-            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = val;
-            pushAndroidParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
-            HAL_LOGD(
-                "force set sprd_3dcalibration_enabled %d",
-                s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
-        } else {
-            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = 0;
-        }
-    }
-    /**add for 3d calibration update metadata end*/
-
-    if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-        if (is_raw_capture == 1) {
-            s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 0;
-        } else {
-            s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
-                frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
-            /**add for 3d calibration force set sprd zsl enable begin*/
-            if (s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled)
-                s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled =
-                    s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
-            /**add for 3d calibration force set sprd zsl enable end*/
-        }
-        pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
-    }
-
     int32_t cropRegionUpdate = false;
     if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
-        int32_t x = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
-        int32_t y = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[1];
-        int32_t w = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[2];
-        int32_t h = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[3];
-        if (s_setting[mCameraId].scalerInfo.crop_region[0] != x ||
-            s_setting[mCameraId].scalerInfo.crop_region[1] != y ||
-            s_setting[mCameraId].scalerInfo.crop_region[2] != w ||
-            s_setting[mCameraId].scalerInfo.crop_region[3] != h) {
-            s_setting[mCameraId].scalerInfo.crop_region[0] = x;
-            s_setting[mCameraId].scalerInfo.crop_region[1] = y;
-            s_setting[mCameraId].scalerInfo.crop_region[2] = w;
-            s_setting[mCameraId].scalerInfo.crop_region[3] = h;
-            // pushAndroidParaTag(ANDROID_SCALER_CROP_REGION);
-            cropRegionUpdate = true;
-        } else if (s_setting[mCameraId].video_size.width != 0 &&
-                   s_setting[mCameraId].video_size.height != 0 &&
-                   (s_setting[mCameraId].preview_size.width !=
-                        s_setting[mCameraId].video_size.width ||
-                    s_setting[mCameraId].preview_size.height !=
-                        s_setting[mCameraId].video_size.height)) {
-            cropRegionUpdate = true;
-        }
-        if (cropRegionUpdate == true)
+        int32_t crop_region[4];
+        crop_region[0] =
+            frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
+        crop_region[1] =
+            frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[1];
+        crop_region[2] =
+            frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[2];
+        crop_region[3] =
+            frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[3];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].scalerInfo.crop_region[0],
+                         crop_region[0], ANDROID_SCALER_CROP_REGION, 4)
+        if (is_push == 0 && (s_setting[mCameraId].video_size.width != 0 &&
+                             s_setting[mCameraId].video_size.height != 0 &&
+                             (s_setting[mCameraId].preview_size.width !=
+                                  s_setting[mCameraId].video_size.width ||
+                              s_setting[mCameraId].preview_size.height !=
+                                  s_setting[mCameraId].video_size.height))) {
             pushAndroidParaTag(ANDROID_SCALER_CROP_REGION);
+        }
     }
 
     // AE
@@ -4069,20 +4134,17 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].controlInfo.ae_precapture_id);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-        // if((s_setting[mCameraId].controlInfo.ae_target_fps_range[1]
-        // !=frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1]))
-        // {
+        int32_t fps_range[2];
         HAL_LOGV("AE target fps min %d, max %d",
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
-        pushAndroidParaTag(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
-        //}
-        s_setting[mCameraId].controlInfo.ae_target_fps_range[0] =
-            frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
-                .data.i32[0];
-        s_setting[mCameraId].controlInfo.ae_target_fps_range[1] =
-            frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
-                .data.i32[1];
+        fps_range[0] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
+                           .data.i32[0];
+        fps_range[1] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
+                           .data.i32[1];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
+            fps_range[0], ANDROID_CONTROL_AE_TARGET_FPS_RANGE, 2)
         HAL_LOGV("AE target fps min %d, max %d",
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
@@ -4159,71 +4221,20 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8,
-                         ANDROID_CONTROL_AF_MODE)
+                         ANDROID_CONTROL_AF_MODE, 1)
     }
     if (frame_settings.exists(ANDROID_CONTROL_AF_STATE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_STATE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_state, valueU8,
-                         ANDROID_CONTROL_AF_STATE)
+                         ANDROID_CONTROL_AF_STATE, 1)
     }
 
     if (frame_settings.exists(ANDROID_STATISTICS_FACE_DETECT_MODE)) {
         valueU8 =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
-        s_setting[mCameraId].statisticsInfo.face_detect_mode = valueU8;
-        pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
+        GET_VALUE_IF_DIF(s_setting[mCameraId].statisticsInfo.face_detect_mode,
+                         valueU8, ANDROID_STATISTICS_FACE_DETECT_MODE, 1)
         HAL_LOGV("fd mode %d", valueU8);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE)) {
-        valueU8 =
-            frame_settings.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
-        s_setting[mCameraId].sprddefInfo.refocus_enable = valueU8;
-        pushAndroidParaTag(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE);
-        HAL_LOGD("camera id %d, refocus mode %d", mCameraId, valueU8);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_SET_TOUCH_INFO)) {
-        s_setting[mCameraId].sprddefInfo.touchxy[0] =
-            frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[0];
-        s_setting[mCameraId].sprddefInfo.touchxy[1] =
-            frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[1];
-        pushAndroidParaTag(ANDROID_SPRD_SET_TOUCH_INFO);
-        HAL_LOGD("touch info %d %d",
-                 s_setting[mCameraId].sprddefInfo.touchxy[0],
-                 s_setting[mCameraId].sprddefInfo.touchxy[1]);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_PIPVIV_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled =
-            frame_settings.find(ANDROID_SPRD_PIPVIV_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_PIPVIV_ENABLED);
-        HAL_LOGD("sprd pipviv enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
-    }
-    if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
-            frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
-        HAL_LOGV("sprd 3dnr enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
-
-        if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1) {
-            s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 1;
-            pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
-        }
-    }
-    if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled =
-            frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_FIXED_FPS_ENABLED);
-        HAL_LOGV("sprd fixed fps enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_AUTO_HDR_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable =
-            frame_settings.find(ANDROID_SPRD_AUTO_HDR_ENABLED).data.u8[0];
-        pushAndroidParaTag(ANDROID_SPRD_AUTO_HDR_ENABLED);
-        HAL_LOGV("sprd auto hdr enabled is %d",
-                 s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable);
     }
 
     HAL_LOGD(
