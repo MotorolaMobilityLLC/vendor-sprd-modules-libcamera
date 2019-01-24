@@ -1080,7 +1080,7 @@ static cmr_int camera_isp_ctrl_flash(cmr_handle setting_handle, void *data) {
     }
 
 ctrl_flash:
-    setting_param.cmd_type_value= flash_type;
+    setting_param.cmd_type_value = flash_type;
     ret = cmr_setting_ioctl(setting_handle, CAMERA_PARAM_ISP_FLASH,
                             &setting_param);
     if (ret) {
@@ -7467,6 +7467,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
     out_param_ptr->memory_setting.free_mem = camera_free;
 
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -7506,6 +7511,20 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     out_param_ptr->prev_rot = setting_param.cmd_type_value;
+
+    /*get raw capture size, this is only for choosing sensor mode*/
+    if (is_raw_capture == 1) {
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                SETTING_GET_RAW_CAPTURE_SIZE, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get prev size %ld", ret);
+            goto exit;
+        }
+        out_param_ptr->raw_capture_size = setting_param.size_param;
+        CMR_LOGD("raw_capture height = %d, width = %d",
+                 out_param_ptr->raw_capture_size.height,
+                 out_param_ptr->raw_capture_size.width);
+    }
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
