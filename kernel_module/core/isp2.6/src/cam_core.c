@@ -73,6 +73,7 @@
 #define ZOOM_RATIO_DEFAULT     1000
 #define MAX_RDS_RATIO 3
 #define RATIO_SHIFT 16
+#define PATH_BIG_SIZE  2592
 
 #define ISP_PATHID_BITS 8
 #define ISP_PATHID_MASK 0x3
@@ -2786,6 +2787,7 @@ static int img_ioctl_set_output_size(
 	uint32_t cap_type;
 	uint32_t sn_fmt, dst_fmt;
 	struct channel_context *channel = NULL;
+	struct channel_context *pre_channel = NULL;
 	struct camera_uchannel *dst;
 	struct sprd_img_parm __user *uparam;
 
@@ -2804,6 +2806,8 @@ static int img_ioctl_set_output_size(
 		goto exit;
 	}
 
+	pre_channel = &module->channel[CAM_CH_PRE];
+
 	if (((cap_type == CAM_CAP_RAW_FULL) || (dst_fmt == sn_fmt)) &&
 		(module->channel[CAM_CH_RAW].enable == 0)) {
 		channel = &module->channel[CAM_CH_RAW];
@@ -2813,7 +2817,10 @@ static int img_ioctl_set_output_size(
 		channel = &module->channel[CAM_CH_PRE];
 		channel->enable = 1;
 	} else if (((scene_mode == DCAM_SCENE_MODE_RECORDING) ||
-			(scene_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK)) &&
+			(scene_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK) ||
+			(scene_mode == DCAM_SCENE_MODE_CAPTURE &&
+			(pre_channel->enable &&
+			(pre_channel->ch_uinfo.dst_size.w >= PATH_BIG_SIZE)))) &&
 			(module->channel[CAM_CH_VID].enable == 0)) {
 		channel = &module->channel[CAM_CH_VID];
 		channel->enable = 1;
