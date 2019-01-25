@@ -79,6 +79,11 @@
 #define ISP_CTXID_OFFSET ISP_PATHID_BITS
 #define DCAM_4IN1_FRAMES 16
 
+/* TODO: need to pass the num to driver by hal */
+#define CAP_NUM_COMMON 1
+#define CAP_NUM_HDR 3
+
+
 enum camera_module_state {
 	CAM_INIT = 0,
 	CAM_IDLE,
@@ -214,6 +219,7 @@ struct camera_module {
 	int attach_sensor_id;
 	uint32_t iommu_enable;
 	enum camera_cap_status cap_status;
+	enum dcam_capture_status dcam_cap_status;
 
 	void *isp_dev_handle;
 	void *dcam_dev_handle;
@@ -261,7 +267,7 @@ struct camera_module {
 	struct camera_queue zsl_fifo_queue; /* for cmp timestamp */
 	struct camera_frame *dual_frame; /* 0: no, to find, -1: no need find */
 	atomic_t capture_frames_dcam; /* how many frames to report, -1:always */
-	int64_t capture_times; /* *us, timestamp get from start_capture */
+	int64_t capture_times; /* *ns, timestamp get from start_capture */
 
 	/* 4in1: save *frame when remosaic, use timestamp
 	 * sprd_img_read: save; aux_dcam bin_tx_done restore
@@ -815,6 +821,7 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 			}
 			pframe->evt = IMG_TX_DONE;
 			ch_id = pframe->channel_id;
+
 			ret = camera_enqueue(&module->frm_queue, pframe);
 			complete(&module->frm_com);
 			pr_debug("ch %d get out frame: %p, evt %d\n",
@@ -969,6 +976,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				 * Release sync if we don't deliver this @pframe
 				 * to ISP.
 				 */
+
 				if (pframe->sync_data)
 					dcam_if_release_sync(pframe->sync_data,
 							     pframe);
@@ -982,20 +990,64 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 						 DCAM_PATH_CFG_OUTPUT_BUF,
 						 channel->dcam_path_id, pframe);
 				return ret;
-			} else if (module->cam_uinfo.is_dual) {
+			}
+
+			/* cap scene special process */
+			if (module->cam_uinfo.is_dual) {
+
 				pframe = deal_dual_frame(module,
 						pframe, channel);
+
 				if (!pframe)
 					return 0;
+
+				if (atomic_read(&module->capture_frames_dcam) > 0)
+					atomic_dec_return(&module->capture_frames_dcam);
+
 			} else if (module->cam_uinfo.is_4in1) {
 				pframe = deal_4in1_frame(module,
 						pframe, channel);
 				if (!pframe)
 					return 0;
+
+				if (atomic_read(&module->capture_frames_dcam) > 0)
+					atomic_dec_return(&module->capture_frames_dcam);
+
+			} else if ((module->dcam_cap_status == DCAM_CAPTURE_START_HDR)) {
+
+				if (pframe->boot_sensor_time < module->capture_times) {
+
+					pr_info("hdr skip frame cap_time[%lld] sof_time[%lld]\n",
+						module->capture_times,
+						pframe->boot_sensor_time
+						);
+
+					ret = dcam_ops->cfg_path(
+						module->dcam_dev_handle,
+						DCAM_PATH_CFG_OUTPUT_BUF,
+						channel->dcam_path_id, pframe);
+
+					return ret;
+
+				} else {
+					if (atomic_read(&module->capture_frames_dcam)>0) {
+						pr_info("num[%d]\n",atomic_read(&module->capture_frames_dcam));
+						atomic_dec(&module->capture_frames_dcam);
+					} else {
+
+						pr_info("num[%d]\n",atomic_read(&module->capture_frames_dcam));
+						ret = dcam_ops->cfg_path(
+							module->dcam_dev_handle,
+							DCAM_PATH_CFG_OUTPUT_BUF,
+							channel->dcam_path_id, pframe);
+
+						return ret;
+
+					}
+				}
 			}
+
 			/* to isp */
-			if (atomic_read(&module->capture_frames_dcam) > 0)
-				atomic_dec_return(&module->capture_frames_dcam);
 
 			ret = camera_enqueue(&channel->share_buf_queue, pframe);
 			if (ret) {
@@ -1561,7 +1613,7 @@ static int capture_proc(void *param)
 
 	ret = -1;
 	if (module->cap_status != CAM_CAPTURE_STOP) {
-		pr_info("capture frame No.%d\n", pframe->fid);
+		pr_info("capture frame fid[%d]\n", pframe->fid);
 		ret = isp_ops->proc_frame(module->isp_dev_handle, pframe,
 			channel->isp_path_id >> ISP_CTXID_OFFSET);
 	}
@@ -3166,8 +3218,14 @@ static int img_ioctl_set_frame_addr(
 			param.channel_id,  param.buffer_count);
 		return -EFAULT;
 	}
+
 	pr_debug("ch %d, buffer_count %d\n", param.channel_id,
-		param.buffer_count);
+			param.buffer_count);
+
+	if (param.channel_id == CAM_CH_CAP){
+		pr_info("ch %d, buffer_count %d\n", param.channel_id,
+				param.buffer_count);
+    }
 
 	ch = &module->channel[param.channel_id];
 	for (i = 0; i < param.buffer_count; i++) {
@@ -3183,11 +3241,18 @@ static int img_ioctl_set_frame_addr(
 		pframe->buf.offset[1] = param.frame_addr_array[i].u;
 		pframe->buf.offset[2] = param.frame_addr_array[i].v;
 		pframe->channel_id = ch->ch_id;
+
 		pr_debug("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
 			pframe->channel_id, pframe->buf.mfd[0],
 			pframe->buf.offset[0], pframe->buf.offset[1],
 			pframe->buf.offset[2], param.is_reserved_buf);
 
+		if (param.channel_id == CAM_CH_CAP){
+			pr_info("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
+				pframe->channel_id, pframe->buf.mfd[0],
+				pframe->buf.offset[0], pframe->buf.offset[1],
+				pframe->buf.offset[2], param.is_reserved_buf);
+        }
 		ret = cambuf_get_ionbuf(&pframe->buf);
 		if (ret) {
 			put_empty_frame(pframe);
@@ -3939,6 +4004,7 @@ static int img_ioctl_start_capture(
 {
 	int ret = 0;
 	struct sprd_img_capture_param param;
+	ktime_t start_time = 0;
 
 	ret = copy_from_user(&param, (void __user *)arg,
 			sizeof(struct sprd_img_capture_param));
@@ -3953,16 +4019,31 @@ static int img_ioctl_start_capture(
 		return -EFAULT;
 	}
 	atomic_set(&module->capture_frames_dcam, -1);
-	module->capture_times = div64_s64(param.timestamp, 1000ll);
-	if (module->cam_uinfo.is_dual) {
+	start_time = ktime_get_boottime();
+
+	/* recognize the capture scene */
+
+	if (param.type == DCAM_CAPTURE_START_HDR ) {
+		module->dcam_cap_status = DCAM_CAPTURE_START_HDR;
+		atomic_set(&module->capture_frames_dcam, CAP_NUM_HDR);
+		module->capture_times = start_time;
+
+	} else if (module->cam_uinfo.is_dual) {
+		module->dcam_cap_status = DCAM_CAPTURE_START_WITH_TIMESTAMP;
 		/* dual camera need 1 frame */
-		atomic_set(&module->capture_frames_dcam, 1);
-	}
-	/* 4in1: report 1 frame for remosaic */
-	if (module->cam_uinfo.is_4in1) {
+		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
+		module->capture_times = param.timestamp;
+
+	} else if (module->cam_uinfo.is_4in1) {
+		module->dcam_cap_status = DCAM_CAPTURE_START_4IN1_LOWLUX;
 		/* 4in1: report 1 frame for remosaic */
-		atomic_set(&module->capture_frames_dcam, 1);
+		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
+
+	} else if (param.type == DCAM_CAPTURE_START ) {
+		module->dcam_cap_status = DCAM_CAPTURE_START;
+		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
 	}
+
 	if (param.type != DCAM_CAPTURE_STOP)
 		module->cap_status = CAM_CAPTURE_START;
 
@@ -3983,7 +4064,7 @@ static int img_ioctl_start_capture(
 	}
 
 	pr_info("cam %d start capture type %d, cnt %d, time %lld\n",
-		module->idx, param.type, param.cnr_cnt, param.timestamp);
+		module->idx, param.type, param.cnr_cnt, module->capture_times);
 	return ret;
 }
 
