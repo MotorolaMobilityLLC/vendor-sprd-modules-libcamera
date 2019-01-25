@@ -344,6 +344,7 @@ static cmr_int ov12a10_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->tof_supported = static_info->tof_supported;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
@@ -379,7 +380,7 @@ static cmr_int ov12a10_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 /*block size 16x16 normal pos(x,y) mirror(16-x,y) flip(x,16-y)
  * mirror&&flip(16-x, 16-y)*/
 
-#if 0//defined(CONFIG_DUAL_MODULE)
+#if 0 // defined(CONFIG_DUAL_MODULE)
 // static int  mirror_diasble_factor = -1; //enable: -1  diable: 1
 // static int  flip_disable_factor = -1; //enable: -1  diable: 1
 
@@ -458,7 +459,7 @@ static cmr_int ov12a10_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pitch_x = PDAF_BLOCK_SIZE_W;
     pdaf_info->pd_pitch_y = PDAF_BLOCK_SIZE_H;
     pdaf_info->pd_density_x = PDAF_BLOCK_SIZE_W;
-    pdaf_info->pd_density_y = PDAF_BLOCK_SIZE_H/2;
+    pdaf_info->pd_density_y = PDAF_BLOCK_SIZE_H / 2;
     pdaf_info->pd_block_num_x = SNAPSHOT_TRIM_W / PDAF_BLOCK_SIZE_W;
     pdaf_info->pd_block_num_y = SNAPSHOT_TRIM_H / PDAF_BLOCK_SIZE_H;
     pdaf_info->pd_pos_size = pd_pos_r_size;
@@ -466,7 +467,7 @@ static cmr_int ov12a10_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov12a10_pd_pos_l;
     pdaf_info->vendor_type = SENSOR_VENDOR_OV12A10;
 
-#if 0//def CONFIG_DUAL_MODULE
+#if 0 // def CONFIG_DUAL_MODULE
     pdaf_info->sns_orientation = 1; /*mirror+flip*/
 #else
     pdaf_info->sns_orientation = 0; /*Normal*/
@@ -475,7 +476,6 @@ static cmr_int ov12a10_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
-
 
 /*==============================================================================
  * Description:
@@ -499,7 +499,7 @@ static cmr_int ov12a10_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         ret = ov12a10_drv_get_fps_info(handle, param_ptr->pval);
         break;
-     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
+    case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = ov12a10_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
@@ -700,7 +700,8 @@ static cmr_int ov12a10_drv_set_master_FrameSync(cmr_handle handle,
     SENSOR_LOGI("E");
 
     /* 0x381a/0x381b (row timing) : Time to send Fsync.
-        calc method: 2*VTS -16. If needed, can be fine-tuned. Current settings are based on 20fps*/
+        calc method: 2*VTS -16. If needed, can be fine-tuned. Current settings
+       are based on 20fps*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3818, 0x02);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3819, 0x10);
@@ -731,8 +732,8 @@ static cmr_int ov12a10_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 
 #if defined(CONFIG_DUAL_MODULE)
-	ov12a10_drv_set_master_FrameSync(handle, param);
-	//ov12a10_drv_set_slave_FrameSync(handle, param);
+    ov12a10_drv_set_master_FrameSync(handle, param);
+// ov12a10_drv_set_slave_FrameSync(handle, param);
 #endif
     /*TODO*/
 

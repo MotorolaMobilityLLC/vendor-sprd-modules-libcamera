@@ -320,6 +320,11 @@ static SENSOR_STATIC_INFO_T s_ov12a10_static_info[VENDOR_NUM] = {
                      .max_fps = 30,
                      .max_adgain = 16,
                      .ois_supported = 0,
+#ifdef TARGET_CAMERA_SENSOR_TOF_VL53L0
+                     .tof_supported = 1,
+#else
+                     .tof_supported = 0,
+#endif
                      .pdaf_supported = 3,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
