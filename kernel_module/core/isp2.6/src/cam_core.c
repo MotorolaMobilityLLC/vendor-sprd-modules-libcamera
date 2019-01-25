@@ -82,6 +82,7 @@
 /* TODO: need to pass the num to driver by hal */
 #define CAP_NUM_COMMON 1
 #define CAP_NUM_HDR 3
+#define CAP_NUM_FLASH 1
 
 
 enum camera_module_state {
@@ -1013,11 +1014,13 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				if (atomic_read(&module->capture_frames_dcam) > 0)
 					atomic_dec_return(&module->capture_frames_dcam);
 
-			} else if ((module->dcam_cap_status == DCAM_CAPTURE_START_HDR)) {
+			} else if ((module->dcam_cap_status == DCAM_CAPTURE_START_HDR)||
+						(module->dcam_cap_status == DCAM_CAPTURE_START_WITH_FLASH)) {
 
 				if (pframe->boot_sensor_time < module->capture_times) {
 
-					pr_info("hdr skip frame cap_time[%lld] sof_time[%lld]\n",
+					pr_info("cap skip frame mode[%d] cap_time[%lld] sof_time[%lld]\n",
+						module->dcam_cap_status,
 						module->capture_times,
 						pframe->boot_sensor_time
 						);
@@ -1031,11 +1034,13 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 
 				} else {
 					if (atomic_read(&module->capture_frames_dcam)>0) {
-						pr_info("num[%d]\n",atomic_read(&module->capture_frames_dcam));
+						pr_info("cap mode[%d] num[%d] \n",
+								module->dcam_cap_status,atomic_read(&module->capture_frames_dcam));
 						atomic_dec(&module->capture_frames_dcam);
 					} else {
 
-						pr_info("num[%d]\n",atomic_read(&module->capture_frames_dcam));
+						pr_info("cap mode[%d] num[%d] \n",
+								module->dcam_cap_status,atomic_read(&module->capture_frames_dcam));
 						ret = dcam_ops->cfg_path(
 							module->dcam_dev_handle,
 							DCAM_PATH_CFG_OUTPUT_BUF,
@@ -4027,6 +4032,12 @@ static int img_ioctl_start_capture(
 		module->dcam_cap_status = DCAM_CAPTURE_START_HDR;
 		atomic_set(&module->capture_frames_dcam, CAP_NUM_HDR);
 		module->capture_times = start_time;
+
+	} else if (param.type == DCAM_CAPTURE_START_WITH_FLASH ) {
+		module->dcam_cap_status = DCAM_CAPTURE_START_WITH_FLASH;
+		atomic_set(&module->capture_frames_dcam, CAP_NUM_FLASH);
+		module->capture_times = param.timestamp;
+
 
 	} else if (module->cam_uinfo.is_dual) {
 		module->dcam_cap_status = DCAM_CAPTURE_START_WITH_TIMESTAMP;
