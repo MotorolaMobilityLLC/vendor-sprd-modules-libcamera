@@ -5549,11 +5549,24 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	if(!cxt->is_snapshot) {
+		struct ae_size hdr_stat_size;
 		hdr_stat.hist256 = calc_in->hist_stats.value;
-		for (int i = 0; i < 256; i++)
-			ISP_LOGV("auto_hdr hist[%d] %d", i, hdr_stat.hist256[i]);
-		hdr_stat.w = cxt->snr_info.frame_size.w;
-		hdr_stat.h = cxt->snr_info.frame_size.h;
+		hdr_stat_size.w = 0;
+		hdr_stat_size.h = 0;
+		//for (int i = 0; i < 256; i++)
+		//	ISP_LOGV("auto_hdr hist[%d] %d", i, hdr_stat.hist256[i]);
+		if (cxt->isp_ops.callback) {
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATIS_SIZE, &hdr_stat_size);
+		}
+		if(hdr_stat_size.w && hdr_stat_size.h)
+		{
+			hdr_stat.w = hdr_stat_size.w;
+			hdr_stat.h = hdr_stat_size.h;
+		}
+		else{
+			hdr_stat.w = cxt->snr_info.frame_size.w;
+			hdr_stat.h = cxt->snr_info.frame_size.h;
+		}
 		hdr_param.thres_bright = 250;
 		hdr_param.thres_dark = 20;
 		auto_hdr_enable = (cmr_s8)sprd_hdr_scndet(&hdr_param, &hdr_stat, ev_result);
