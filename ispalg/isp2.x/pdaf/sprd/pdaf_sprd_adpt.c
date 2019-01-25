@@ -950,6 +950,14 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		pd_calc_result.pd_roi_num = cxt->af_roi.ROI_Size;
 	}
 	pd_calc_result.af_type = cxt->af_type;
+
+	if(cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4) {
+		cmr_u16 i = 0;
+		for(; i < MAX_MULTIZONE_NUM + 1; i++) {
+			pd_calc_result.pdDCCGain[i] = 39;
+		}
+	}
+
 	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4]);
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;
