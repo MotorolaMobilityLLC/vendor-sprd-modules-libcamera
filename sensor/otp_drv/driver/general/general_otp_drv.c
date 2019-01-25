@@ -2466,11 +2466,13 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         if (otp_cxt->sensor_id == 0) {
             /* including rear dual_master and single */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/", "rear_master");
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
+                     "rear_master");
         } else if (otp_cxt->sensor_id == 2) {
             /* including rear dual_slave */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/", "rear_slave");
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
+                     "rear_slave");
         } else if (otp_cxt->sensor_id == 1) {
             /* including front dual_master and single */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
@@ -2479,7 +2481,8 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
         } else if (otp_cxt->sensor_id == 3) {
             /* including front dual_slave */
             snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/", "front_slave");
+                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
+                     "front_slave");
         }
 
         OTP_LOGD("otp_data_read_path:%s", otp_read_bin_path);
@@ -2607,22 +2610,24 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
         _general_otp_parse_module_data_1v0(otp_drv_handle);
 
 #ifdef SENSOR_OV8856_TELE
-        if (otp_cxt->sensor_id == 0) {
+        if (otp_cxt->sensor_id == 0)
 #else
-        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
+        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1)
 #endif
+        {
             _general_otp_parse_master_af_1v0(otp_drv_handle);
             _general_otp_parse_master_awb_1v0(otp_drv_handle);
             _general_otp_parse_master_lsc_1v0(otp_drv_handle);
             _general_otp_parse_master_pdaf(otp_drv_handle);
             _general_otp_parse_master_ae_1v0(otp_drv_handle);
             _general_otp_parse_master_dualcam_1v0(otp_drv_handle);
-
+        }
 #ifdef SENSOR_OV8856_TELE
-        } else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2) {
+        else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2)
 #else
-        } else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3) {
+        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3)
 #endif
+        {
             _general_otp_parse_slave_af_1v0(otp_drv_handle);
             _general_otp_parse_slave_awb_1v0(otp_drv_handle);
             _general_otp_parse_slave_lsc_1v0(otp_drv_handle);
@@ -2700,23 +2705,24 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
     case CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT:
 
 #ifdef SENSOR_OV8856_TELE
-        if (otp_cxt->sensor_id == 0) {
+        if (otp_cxt->sensor_id == 0)
 #else
-        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
+        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1)
 #endif
-
+        {
             if (otp_cxt->eeprom_num == DUAL_CAM_ONE_EEPROM ||
                 otp_cxt->eeprom_num == DUAL_CAM_TWO_EEPROM) {
                 _general_otp_compatible_convert_master(otp_drv_handle, param);
             } else {
                 _general_otp_compatible_convert_single(otp_drv_handle, param);
             }
-
+        }
 #ifdef SENSOR_OV8856_TELE
-        } else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2) {
+        else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2)
 #else
-        } else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3) {
+        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3)
 #endif
+        {
 
             _general_otp_compatible_convert_slave(otp_drv_handle, param);
         } else {
