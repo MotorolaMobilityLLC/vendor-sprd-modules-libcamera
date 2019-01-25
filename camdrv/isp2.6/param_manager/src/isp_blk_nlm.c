@@ -108,6 +108,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 
 			for (j = 0; j < 4; j++) {
 				dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].radius_threshold_filter_ratio;
+				dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio_factor[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].radius_threshold_filter_ratio_factor;
 				dst_ptr->cur.nlm_radial_1D_coef2[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].coef2;
 				dst_ptr->cur.nlm_radial_1D_protect_gain_min[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].protect_gain_min;
 
@@ -123,6 +124,9 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 		dst_ptr->cur.nlm_radial_1D_center_y = nlm_param[strength_level].radius_1d.center_y;
 		dst_ptr->cur.nlm_radial_1D_radius_threshold = nlm_param[strength_level].radius_1d.radius_threshold;
 		dst_ptr->cur.nlm_radial_1D_protect_gain_max = nlm_param[strength_level].radius_1d.protect_gain_max;
+
+		dst_ptr->cur.nlm_radial_1D_radius_threshold_factor = nlm_param[strength_level].radius_1d.radius_threshold_factor;
+		dst_ptr->cur.radius_base = nlm_param[strength_level].radius_base;
 
 		dst_ptr->cur.simple_bpc_bypass = nlm_param[strength_level].simple_bpc.simple_bpc_bypass;
 		dst_ptr->cur.simple_bpc_lum_th = nlm_param[strength_level].simple_bpc.simple_bpc_lum_thr;

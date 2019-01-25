@@ -109,21 +109,15 @@ int isp_k_cfg_yuv_noisefilter(struct isp_io_param *param, uint32_t idx);
 int isp_k_update_nlm(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
-	uint32_t new_height, uint32_t old_height,
-	uint32_t crop_start_x, uint32_t crop_start_y,
-	uint32_t crop_end_x, uint32_t crop_end_y);
+	uint32_t new_height, uint32_t old_height);
 int isp_k_update_ynr(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
-	uint32_t new_height, uint32_t old_height,
-	uint32_t crop_start_x, uint32_t crop_start_y,
-	uint32_t crop_end_x, uint32_t crop_end_y);
+	uint32_t new_height, uint32_t old_height);
 int isp_k_update_3dnr(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
-	uint32_t new_height, uint32_t old_height,
-	uint32_t crop_start_x, uint32_t crop_start_y,
-	uint32_t crop_end_x, uint32_t crop_end_y);
+	uint32_t new_height, uint32_t old_height);
 /* for bypass dcam,isp sub-block */
 enum block_bypass {
 	_E_4IN1 = 0,

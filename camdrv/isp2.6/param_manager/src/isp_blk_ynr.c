@@ -176,6 +176,10 @@ static cmr_u32 _pm_ynr_convert_param(
 		dst_ptr->cur.blf_range_s0_mid = ynr_param[strength_level].ynr_blf_str.blf_range.s0_mid;
 		dst_ptr->cur.blf_range_s0_high = ynr_param[strength_level].ynr_blf_str.blf_range.s0_high;
 		dst_ptr->cur.radius = ynr_param[strength_level].ynr_blf_str.Radius;
+		dst_ptr->cur.radius_factor = ynr_param[strength_level].ynr_blf_str.Radius_factor;
+		dst_ptr->cur.max_radius = ynr_param[strength_level].ynr_blf_str.max_Radius;
+		dst_ptr->cur.max_radius_factor = ynr_param[strength_level].ynr_blf_str.max_Radius_factor;
+		dst_ptr->cur.radius_base = ynr_param[strength_level].radius_base;
 		dst_ptr->cur.dis_interval = (ynr_param[strength_level].ynr_blf_str.max_Radius - dst_ptr->cur.radius) >> 2;
 		dst_ptr->cur.center_x = ynr_param[strength_level].ynr_blf_str.imgCenterX;
 		dst_ptr->cur.center_y = ynr_param[strength_level].ynr_blf_str.imgCenterY;

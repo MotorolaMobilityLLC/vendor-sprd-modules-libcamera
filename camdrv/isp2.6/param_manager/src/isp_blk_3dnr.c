@@ -152,6 +152,10 @@ cmr_u32 _pm_3dnr_convert_param(
 		dst_ptr->cur.blend.r1_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap[0];
 		dst_ptr->cur.blend.r2_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap[1];
 		dst_ptr->cur.blend.r3_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap[2];
+		dst_ptr->cur.blend.r1_circle_factor = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap_factor[0];
+		dst_ptr->cur.blend.r2_circle_factor = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap_factor[1];
+		dst_ptr->cur.blend.r3_circle_factor = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap_factor[2];
+		dst_ptr->cur.blend.r_circle_base = nr_3d_param[strength_level].radius_base;
 	}
 	return rtn;
 }

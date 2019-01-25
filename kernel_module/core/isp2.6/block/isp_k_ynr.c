@@ -286,51 +286,43 @@ int isp_k_cfg_ynr(struct isp_io_param *param,
 int isp_k_update_ynr(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
-	uint32_t new_height, uint32_t old_height,
-	uint32_t crop_start_x, uint32_t crop_start_y,
-	uint32_t crop_end_x, uint32_t crop_end_y)
+	uint32_t new_height, uint32_t old_height)
 {
 	int ret = 0;
-	uint32_t val;
-	uint32_t center_x = 0, center_y = 0;
-	uint32_t radius, dis_interval;
+	uint32_t val, center_x, center_y;
+	uint32_t radius, radius_limit, dis_interval;
+	uint32_t max_radius, max_radius_limit;
 	struct isp_dev_ynr_info_v2 *ynr_info;
 
 	ynr_info = &isp_k_param->ynr_info;
 	if (ynr_info->bypass)
 		return 0;
 
-	center_x = ynr_info->center_x;
-	center_y = ynr_info->center_y;
-	if ((center_x < crop_start_x) ||
-		(center_y < crop_start_y) ||
-		(center_x > crop_end_x) ||
-		(center_y > crop_end_y)) {
-		pr_err("error: ynr center{%d,%d},crop{%d,%d,%d,%d}\n",
-			center_x, center_y,
-			crop_start_x, crop_start_y,
-			crop_end_x, crop_end_y);
-		return -EINVAL;
-	}
-	center_x -= crop_start_x;
-	center_y -= crop_start_y;
-	center_x = (center_x * new_width + (old_width / 2)) / old_width;
-	center_y = (center_y * new_height + (old_height / 2)) / old_height;
-
+	center_x = new_width >> 1;
+	center_y = new_height >> 1;
 	val = (center_y << 16) | center_x;
 	ISP_REG_WR(idx, ISP_YNR_CFG31, val);
 
-	radius = ynr_info->radius;
-	radius *= new_width;
-	radius = (radius + (old_width / 2)) / old_width;
-	dis_interval = ynr_info->dis_interval;
-	dis_interval *= new_width;
-	dis_interval = (dis_interval + (old_width / 2)) / old_width;
+	radius = ynr_info->radius * new_width / old_width;
+	radius_limit = new_height * ynr_info->radius_factor / ynr_info->radius_base;
+	radius = (radius < radius_limit) ? radius : radius_limit;
+
+	max_radius = ynr_info->max_radius * new_width / old_width;
+	max_radius_limit = (new_height + new_width) *
+		ynr_info->max_radius_factor / ynr_info->radius_base;
+	max_radius = (max_radius < max_radius_limit) ? max_radius : max_radius_limit;
+	dis_interval = ((max_radius - radius) >> 2);
+
 	val = (dis_interval << 16) | radius;
 	ISP_REG_WR(idx, ISP_YNR_CFG32, val);
 
 	val = (new_height << 16) | new_width;
 	ISP_REG_WR(idx, ISP_YNR_CFG33, val);
+
+	pr_debug("cen %d %d,  orig radius %d %d %d %d, base %d, new %d %d %d\n",
+		center_x, center_y, ynr_info->radius, ynr_info->max_radius,
+		ynr_info->radius_factor, ynr_info->max_radius_factor,
+		ynr_info->radius_base, radius, max_radius, dis_interval);
 
 	return ret;
 }

@@ -502,21 +502,33 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 int isp_k_update_3dnr(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
-	uint32_t new_height, uint32_t old_height,
-	uint32_t crop_start_x, uint32_t crop_start_y,
-	uint32_t crop_end_x, uint32_t crop_end_y)
+	uint32_t new_height, uint32_t old_height)
 {
 	unsigned int val;
-	uint32_t r1_circle;
-	uint32_t r2_circle;
-	uint32_t r3_circle;
+	uint32_t r1_circle, r1_circle_limit;
+	uint32_t r2_circle, r2_circle_limit;
+	uint32_t r3_circle, r3_circle_limit;
 	struct isp_dev_3dnr_info *pnr3;
 
 	pnr3 = &isp_k_param->nr3_info;
 
 	r1_circle = pnr3->blend.r1_circle * new_width / old_width;
+	r1_circle_limit = (new_width / 2);
+	r1_circle_limit *= pnr3->blend.r1_circle_factor;
+	r1_circle_limit /= pnr3->blend.r_circle_base;
+	r1_circle = (r1_circle < r1_circle_limit) ? r1_circle : r1_circle_limit;
+
 	r2_circle = pnr3->blend.r2_circle * new_width / old_width;
+	r2_circle_limit = (new_width / 2);
+	r2_circle_limit *= pnr3->blend.r2_circle_factor;
+	r2_circle_limit /= pnr3->blend.r_circle_base;
+	r2_circle = (r2_circle < r2_circle_limit) ? r2_circle : r2_circle_limit;
+
 	r3_circle = pnr3->blend.r3_circle * new_width / old_width;
+	r3_circle_limit = (new_width / 2);
+	r3_circle_limit *= pnr3->blend.r3_circle_factor;
+	r3_circle_limit /= pnr3->blend.r_circle_base;
+	r3_circle = (r3_circle < r3_circle_limit) ? r3_circle : r3_circle_limit;
 
 	val = ((pnr3->blend.v_divisor_factor0 & 0x7) << 28) |
 	      ((pnr3->blend.v_divisor_factor1 & 0x7) << 24) |
@@ -529,6 +541,11 @@ int isp_k_update_3dnr(uint32_t idx,
 	       (r3_circle & 0xFFF);
 	ISP_REG_WR(idx, ISP_3DNR_BLEND_CFG24, val);
 
+	pr_debug("orig %d %d %d, factor %d %d %d, base %d, new %d %d %d\n",
+		pnr3->blend.r1_circle, pnr3->blend.r2_circle, pnr3->blend.r3_circle,
+		pnr3->blend.r1_circle_factor, pnr3->blend.r2_circle_factor,
+		pnr3->blend.r3_circle_factor, pnr3->blend.r_circle_base,
+		r1_circle, r2_circle, r3_circle);
 	return 0;
 }
 

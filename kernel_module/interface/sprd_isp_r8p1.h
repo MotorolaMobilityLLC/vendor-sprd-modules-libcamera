@@ -985,6 +985,10 @@ struct isp_dev_nlm_info_v2 {
 	uint32_t nlm_radial_1D_coef2[3][4];
 	uint32_t nlm_radial_1D_protect_gain_min[3][4];
 
+	uint32_t nlm_radial_1D_radius_threshold_factor;
+	uint32_t nlm_radial_1D_radius_threshold_filter_ratio_factor[3][4];
+	uint32_t radius_base;
+
 	uint32_t nlm_direction_addback_mode_bypass;
 	uint32_t nlm_first_lum_direction_addback[3][4];
 	uint32_t nlm_first_lum_direction_addback_noise_clip[3][4];
@@ -1243,6 +1247,10 @@ struct isp_dev_ynr_info_v2 {
 	uint32_t center_x;
 	uint32_t dis_interval;
 	uint32_t radius;
+	uint32_t radius_factor;
+	uint32_t max_radius;
+	uint32_t max_radius_factor;
+	uint32_t radius_base;
 };
 
 struct isp_dev_yrandom_info {
@@ -1519,6 +1527,10 @@ struct isp_3dnr_blend_info {
 	uint32_t r1_circle;
 	uint32_t r2_circle;
 	uint32_t r3_circle;
+	uint32_t r1_circle_factor;
+	uint32_t r2_circle_factor;
+	uint32_t r3_circle_factor;
+	uint32_t r_circle_base;
 };
 
 struct isp_3dnr_fast_me {

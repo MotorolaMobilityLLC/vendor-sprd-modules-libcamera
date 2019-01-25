@@ -289,14 +289,13 @@ int isp_k_cfg_nlm(struct isp_io_param *param,
 int isp_k_update_nlm(uint32_t idx,
 	struct isp_k_block *isp_k_param,
 	uint32_t new_width, uint32_t old_width,
-	uint32_t new_height, uint32_t old_height,
-	uint32_t crop_start_x, uint32_t crop_start_y,
-	uint32_t crop_end_x, uint32_t crop_end_y)
+	uint32_t new_height, uint32_t old_height)
 {
 	int ret = 0;
 	int i, j, loop;
 	uint32_t val;
 	uint32_t center_x, center_y, radius_threshold;
+	uint32_t radius_limit, r_factor, r_base;
 	uint32_t filter_ratio, coef2, flat_thresh_coef;
 	struct isp_dev_nlm_info_v2 *p;
 
@@ -304,34 +303,23 @@ int isp_k_update_nlm(uint32_t idx,
 	if (p->bypass)
 		return 0;
 
-	center_x = p->nlm_radial_1D_center_x;
-	center_y = p->nlm_radial_1D_center_y;
-	if ((center_x < crop_start_x) ||
-		(center_y < crop_start_y) ||
-		(center_x > crop_end_x) ||
-		(center_y > crop_end_y)) {
-		pr_err("error: nlm center %d,%d,crop %d,%d,%d,%d\n",
-			center_x, center_y,
-			crop_start_x, crop_start_y,
-			crop_end_x, crop_end_y);
-		return -EINVAL;
-	}
-	center_x -= crop_start_x;
-	center_y -= crop_start_y;
-	center_x = (center_x * new_width + (old_width / 2)) / old_width;
-	center_y = (center_y * new_height + (old_height / 2)) / old_height;
+	center_x = new_width >> 1;
+	center_y = new_height >> 1;
 	val = ((center_y & 0x3FFF) << 16) | (center_x & 0x3FFF);
 	ISP_REG_WR(idx, ISP_NLM_RADIAL_1D_DIST, val);
 
+	r_base = p->radius_base;
+	r_factor = p->nlm_radial_1D_radius_threshold_factor;
 	radius_threshold = p->nlm_radial_1D_radius_threshold;
 	radius_threshold *= new_width;
 	radius_threshold = (radius_threshold + (old_width / 2)) / old_width;
+	radius_limit = (new_width + new_height) * r_factor / r_base;
+	radius_threshold = (radius_threshold < radius_limit) ? radius_threshold : radius_limit;
+	ISP_REG_MWR(idx, ISP_NLM_RADIAL_1D_THRESHOLD, 0x7FFF, radius_threshold);
 
-	pr_debug("nlm center (%d %d) => (%d %d)\n",
-		p->nlm_radial_1D_center_x,
-		p->nlm_radial_1D_center_y, center_x, center_y);
-	pr_debug("nlm radius threshold %d => %d\n",
-		p->nlm_radial_1D_radius_threshold, radius_threshold);
+	pr_debug("center (%d %d)  raius %d  (%d %d), new %d\n",
+		center_x, center_y, p->nlm_radial_1D_radius_threshold,
+		r_factor, r_base, radius_threshold);
 
 	for (loop = 0; loop < 12; loop++) {
 		i = loop >> 2;
@@ -341,6 +329,14 @@ int isp_k_update_nlm(uint32_t idx,
 		filter_ratio *= new_width;
 		filter_ratio += (old_width / 2);
 		filter_ratio /= old_width;
+
+		r_factor = p->nlm_radial_1D_radius_threshold_filter_ratio_factor[i][j];
+		radius_limit = (new_width + new_height) * r_factor / r_base;
+		filter_ratio = (filter_ratio < radius_limit) ? filter_ratio : radius_limit;
+		pr_debug("%d, factor %d , new %d\n",
+			p->nlm_radial_1D_radius_threshold_filter_ratio[i][j],
+			r_factor, filter_ratio);
+
 		coef2 = p->nlm_radial_1D_coef2[i][j];
 		coef2 *= old_width;
 		coef2 = (coef2 + (new_width / 2)) / new_width;

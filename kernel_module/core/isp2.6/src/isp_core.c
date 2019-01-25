@@ -831,16 +831,13 @@ static int isp_adapt_blkparam(struct isp_pipe_context *pctx)
 		old_width, old_height, new_width, new_height);
 
 	isp_k_update_nlm(pctx->ctx_id, &pctx->isp_k_param,
-		new_width, old_width, new_height, old_height,
-		crop_start_x, crop_start_y, crop_end_x, crop_end_y);
+		new_width, old_width, new_height, old_height);
 	isp_k_update_ynr(pctx->ctx_id, &pctx->isp_k_param,
-		new_width, old_width, new_height, old_height,
-		crop_start_x, crop_start_y, crop_end_x, crop_end_y);
+		new_width, old_width, new_height, old_height);
 
 	if (pctx->mode_3dnr != MODE_3DNR_OFF)
 		isp_k_update_3dnr(pctx->ctx_id, &pctx->isp_k_param,
-			 new_width, old_width, new_height, old_height,
-			 crop_start_x, crop_start_y, crop_end_x, crop_end_y);
+			 new_width, old_width, new_height, old_height);
 
 	return 0;
 }
@@ -2706,10 +2703,10 @@ static int sprd_isp_cfg_blkparam(
 
 	if (io_param->sub_block == ISP_BLOCK_NLM)
 		ret = isp_k_cfg_nlm(param, &pctx->isp_k_param, ctx_id);
-	else if ((io_param->sub_block == ISP_BLOCK_3DNR) &&
-		 (pctx->mode_3dnr != MODE_3DNR_OFF))
-		ret = isp_k_cfg_3dnr(param, &pctx->isp_k_param, ctx_id);
-	else if (io_param->sub_block == ISP_BLOCK_YNR) {
+	else if (io_param->sub_block == ISP_BLOCK_3DNR){
+		 if (pctx->mode_3dnr != MODE_3DNR_OFF)
+			ret = isp_k_cfg_3dnr(param, &pctx->isp_k_param, ctx_id);
+	} else if (io_param->sub_block == ISP_BLOCK_YNR) {
 		mutex_lock(&pctx->param_mutex);
 		pctx->isp_k_param.src.w = pctx->input_trim.size_x;
 		pctx->isp_k_param.src.h = pctx->input_trim.size_y;
