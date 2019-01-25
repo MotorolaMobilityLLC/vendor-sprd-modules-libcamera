@@ -621,20 +621,18 @@ struct sensor_cce_uvdiv_level {
 	cmr_u8 bypass;
 };
 
-struct sensor_3dnr_yuv_noise_wgt_cap {
-	cmr_u32 yuv_src_weight_cap[3];
-	cmr_u32 yuv_pixel_noise_thr_cap[3];
-	cmr_u32 yuv_pixel_noise_weight_cap[3];
-};
-
 struct sensor_3dnr_thr_cfg{
-	cmr_u16 thr_polyline_cap[9];
-	cmr_u16 gain_polyline_cap[9];
+       cmr_u8 src_wgt[4];	// dynamic weight needs 4 buffer
+       cmr_u8 nr_thr;
+       cmr_u8 nr_wgt;
+       cmr_u8 reserved[2];//for 4 bytes align
+       cmr_u16 thr_polyline_cap[9];
+       cmr_u16 gain_polyline_cap[9];
 };
 
 struct sensor_3dnr_yuv_cfg {
-	cmr_u16 grad_wgt_polyline_cap[11];
-	cmr_u16 reserved;
+	cmr_u8 grad_wgt_polyline_cap[11];
+	cmr_u8 reserved;
 	struct sensor_3dnr_thr_cfg y_cfg;
 	struct sensor_3dnr_thr_cfg u_cfg;
 	struct sensor_3dnr_thr_cfg v_cfg;
@@ -655,11 +653,10 @@ struct sensor_3dnr_factor {
 //reduce color noise around corners
 struct sensor_3dnr_radialval_str {
 	cmr_u16 r_circle_cap[3];
-	cmr_u16 r_circle_cap_factor[3];
+	cmr_u16 r_circle_cap_factor[3]; //r_circle_cap_factor/radius_base*(w+h) = r_circle_cap
 	struct sensor_3dnr_radialval u_range;
 	struct sensor_3dnr_radialval v_range;
        struct sensor_3dnr_factor uv_factor;
-	struct sensor_3dnr_yuv_noise_wgt_cap noise_wgt_cap;
 };
 //mem_ctrl_submodule
 struct sensor_3dnr_ctrl{
@@ -677,8 +674,8 @@ struct sensor_3dnr_fast_me {
 
 struct sensor_3dnr_level {
 	cmr_u8 bypass;
-	cmr_u8 fusion_swt_cap;
-	cmr_u8 filter_swt_cap;
+	cmr_u8 fusion_mode;
+	cmr_u8 filter_swt_en;
 	cmr_u8 reserved[3];
 	cmr_u16 radius_base;
 	struct sensor_3dnr_yuv_cfg yuv_cfg;
@@ -1427,6 +1424,9 @@ struct sensor_filter_weights
 };
 
 struct sensor_cnr_level {
+       cmr_u8 level_enable;
+       cmr_u16 low_ct_thrd;
+       cmr_u8 reserved; //for 4 bytes allign
 	cmr_u8 filter_en[CNR_LEVEL]; //enable control of filter
 	cmr_u8 rangTh[CNR_LEVEL][2]; //threshold for different scale(rangTh[CNR_LEVEL][0]:U threshold, rangTh[CNR_LEVEL][1]:V threshold)
 	struct sensor_filter_weights weight[CNR_LEVEL][2]; //weight table(wTable[CNR_LEVEL][0]:U weight table, wTable[CNR_LEVEL][1]:V weight table)
