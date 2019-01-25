@@ -275,6 +275,11 @@ typedef struct _tof_measure_data_s {
 
 } tof_measure_data_t;
 
+typedef struct _Bokeh_Motor_Info {
+	cmr_u16 limited_infi;// calibrated for 30cm
+	cmr_u16 limited_macro;// calibrated for 150cm
+} Bokeh_Motor_Info;
+
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
@@ -305,6 +310,8 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
+	 cmr_u8(*set_bokeh_vcm_info)(Bokeh_Motor_Info* range, void* cookie);
+
 	//SharkLE Only ++
 	 cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
 	 cmr_u8(*set_next_vcm_pos) (cmr_u32 pos, void *cookie);
