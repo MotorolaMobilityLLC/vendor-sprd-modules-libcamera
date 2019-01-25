@@ -150,6 +150,9 @@ static int sc2703_flash_led_enable(void *drvd,
 {
 	struct flash_driver_data *drv_data = (struct flash_driver_data *)drvd;
 
+	if (enable)
+		regmap_write(drv_data->reg_map, SC2703_FLASH_EVENT, 0xff);
+
 	if (SPRD_FLASH_LED0 & idx) {
 		regmap_update_bits(drv_data->reg_map,
 			SC2703_FLASH_DRIVER_ACTIVE,
