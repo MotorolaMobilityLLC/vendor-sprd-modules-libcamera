@@ -598,7 +598,7 @@ static cmr_u16 lens_get_pos(af_ctrl_t * af)
 	} else {
 		af->cb_ops.af_get_motor_pos(af->caller, &pos);
 	}
-	if (0 == pos || pos > 1023) {
+	if (0 == pos || pos > 2047) {
 		pos = af->lens.pos;
 	}
 
@@ -1622,7 +1622,7 @@ static void set_manual(af_ctrl_t * af, char *test_param)
 	trigger_stop(af);
 
 	ISP_LOGV("Now is in ISP_FOCUS_MANUAL mode");
-	ISP_LOGV("pls adb shell setprop \"vendor.cam.af_set_pos\" 0~1023 to fix lens position");
+	ISP_LOGV("pls adb shell setprop \"vendor.cam.af_set_pos\" 0~2047 to fix lens position");
 }
 
 static void af_stop_search(af_ctrl_t * af);
@@ -1658,8 +1658,8 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	aft_in.AFT_mode = af->algo_mode;
 	aft_in.bisTrigger = AF_TRIGGER;
 	aft_in.AF_Trigger_Type = atoi(test_param);
-	aft_in.defocus_param.scan_from = (atoi(p1) > 0 && atoi(p1) < 1023) ? (atoi(p1)) : (0);
-	aft_in.defocus_param.scan_to = (atoi(p2) > 0 && atoi(p2) < 1023) ? (atoi(p2)) : (0);
+	aft_in.defocus_param.scan_from = (atoi(p1) > 0 && atoi(p1) < 2047) ? (atoi(p1)) : (0);
+	aft_in.defocus_param.scan_to = (atoi(p2) > 0 && atoi(p2) < 2047) ? (atoi(p2)) : (0);
 	aft_in.defocus_param.per_steps = (atoi(p3) > 0 && atoi(p3) < 200) ? (atoi(p3)) : (0);
 
 	trigger_stop(af);
@@ -1988,8 +1988,8 @@ static cmr_u32 af_get_defocus_param(char *string, defocus_param_t * defocus, cmr
 	if (token != NULL) {
 		*times = atoi(token);
 	}
-	defocus->scan_from = (scan_from > 0 && scan_from < 1023) ? scan_from : 0;
-	defocus->scan_to = (scan_to > 0 && scan_to < 1023) ? scan_to : 0;
+	defocus->scan_from = (scan_from > 0 && scan_from < 2047) ? scan_from : 0;
+	defocus->scan_to = (scan_to > 0 && scan_to < 2047) ? scan_to : 0;
 	defocus->per_steps = (per_steps > 0 && per_steps < 200) ? per_steps : 0;
 	ISP_LOGI("scan_from %d, scan_to %d, per_steps %d, times %d", defocus->scan_from, defocus->scan_to, defocus->per_steps, *times);
 
