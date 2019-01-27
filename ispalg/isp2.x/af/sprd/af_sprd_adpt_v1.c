@@ -2430,7 +2430,7 @@ static void caf_monitor_phase_diff(af_ctrl_t * af)
 {
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
 
-	if(MULTIZONE != af->pd.af_type) {//MULTIZONE mode should consider the central roi for trigger
+	if (MULTIZONE != af->pd.af_type) {	//MULTIZONE mode should consider the central roi for trigger
 		memset(prm, 0, sizeof(struct aft_proc_calc_param));
 		prm->active_data_type = AFT_DATA_PD;
 		prm->pd_info.pd_enable = af->pd.pd_enable;
@@ -2439,10 +2439,12 @@ static void caf_monitor_phase_diff(af_ctrl_t * af)
 		memcpy(&(prm->pd_info.confidence[0]), &(af->pd.confidence[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
 		memcpy(&(prm->pd_info.pd_value[0]), &(af->pd.pd_value[0]), sizeof(double) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
 		memcpy(&(prm->pd_info.pd_roi_dcc[0]), &(af->pd.pd_roi_dcc[0]), sizeof(cmr_u32) * (MIN(af->pd.pd_roi_num, PD_MAX_AREA)));
+
 		prm->comm_info.otp_inf_pos = af->otp_info.rdm_data.infinite_cali;
 		prm->comm_info.otp_macro_pos = af->otp_info.rdm_data.macro_cali;
 		prm->comm_info.registor_pos = (cmr_u32) lens_get_pos(af);
-		ISP_LOGV("F[%d]C[%d]PD[%f]DCC[%d] pd data in[%d] ", prm->pd_info.effective_frmid, af->pd.confidence[0], af->pd.pd_value[0], af->pd.pd_roi_dcc[0], prm->pd_info.pd_enable);
+		ISP_LOGV("F[%d]C[%d]PD[%f]DCC[%d] pd data in[%d] ", prm->pd_info.effective_frmid, af->pd.confidence[0], af->pd.pd_value[0], af->pd.pd_roi_dcc[0],
+			 prm->pd_info.pd_enable);
 		caf_monitor_calc(af, prm);
 	}
 
@@ -3613,6 +3615,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	ISP_LOGI("Enter");
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
+	AF_OTP_Data otp_info;
+	memset((void *)&otp_info, 0, sizeof(AF_OTP_Data));
 
 	if (NULL == init_param) {
 		ISP_LOGE("fail to init param:%p, result:%p", init_param, result);
@@ -3728,6 +3732,13 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	//[TOF_---]
 	result->log_info.log_cxt = (cmr_u8 *) af->af_alg_cxt;
 	result->log_info.log_len = af->af_dump_info_len;
+
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_GET_OTP, &otp_info);
+	ISP_LOGI("otp bIsExist = %d, (inf, macro) = %d,%d.", otp_info.bIsExist, otp_info.INF, otp_info.MACRO);
+	if (T_LENS_BY_OTP != otp_info.bIsExist) {
+		af->otp_info.rdm_data.infinite_cali = otp_info.INF;
+		af->otp_info.rdm_data.macro_cali = otp_info.MACRO;
+	}
 
 	property_get("persist.vendor.cam.isp.af.bypass", value, "0");
 	af->bypass = ! !atoi(value);

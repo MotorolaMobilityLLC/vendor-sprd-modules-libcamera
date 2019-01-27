@@ -137,6 +137,7 @@ typedef enum _AF_IOCTRL_CMD {
 	AF_IOCTRL_Set_Pre_Trigger_Data,
 	AF_IOCTRL_Record_FV,
 	AF_IOCTRL_Set_Dac_info,
+	AF_IOCTRL_GET_OTP,
 	AF_IOCTRL_MAX,
 } AF_IOCTRL_CMD;
 
@@ -204,7 +205,7 @@ typedef struct pd_algo_result_s {
 	double pd_value[PD_MAX_AREA];
 	cmr_u32 pd_roi_dcc[PD_MAX_AREA];
 	cmr_u32 pd_roi_num;
-	cmr_u32 af_type;// notify to AF which mode PDAF is in
+	cmr_u32 af_type;	// notify to AF which mode PDAF is in
 	cmr_u32 reserved[15];
 } pd_algo_result_t;
 
@@ -276,9 +277,21 @@ typedef struct _tof_measure_data_s {
 } tof_measure_data_t;
 
 typedef struct _Bokeh_Motor_Info {
-	cmr_u16 limited_infi;// calibrated for 30cm
-	cmr_u16 limited_macro;// calibrated for 150cm
+	cmr_u16 limited_infi;	// calibrated for 30cm
+	cmr_u16 limited_macro;	// calibrated for 150cm
 } Bokeh_Motor_Info;
+
+struct AFtoPD_info_param {
+	cmr_u16 Center_X;
+	cmr_u16 Center_Y;
+	cmr_u16 sWidth;
+	cmr_u16 sHeight;
+};
+
+typedef struct _ROIinfo_param {
+	cmr_u16 ROI_Size;
+	struct AFtoPD_info_param ROI_info[45];
+} ROIinfo;
 
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
@@ -310,7 +323,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_wins) (cmr_u32 index, cmr_u32 start_x, cmr_u32 start_y, cmr_u32 end_x, cmr_u32 end_y, void *cookie);
 	 cmr_u8(*get_win_info) (cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h, void *cookie);
 	 cmr_u8(*lock_ae_partial) (cmr_u32 is_lock, void *cookie);
-	 cmr_u8(*set_bokeh_vcm_info)(Bokeh_Motor_Info* range, void* cookie);
+	 cmr_u8(*set_bokeh_vcm_info) (Bokeh_Motor_Info * range, void *cookie);
 
 	//SharkLE Only ++
 	 cmr_u8(*set_pulse_line) (cmr_u32 line, void *cookie);
@@ -322,6 +335,10 @@ typedef struct _AF_Ctrl_Ops {
 	//[TOF_+++]
 	 cmr_u8(*get_tof_data) (tof_measure_data_t * tof_result, void *cookie);
 	//[TOF_---]
+
+	//[MZ_+++] // Multi zone af to PD info
+	 cmr_u8(*set_Gridinfo_to_PD) (eAF_MODE AF_mode, ROIinfo * PD_ROI, void *cookie);
+	//[MZ_---]
 
 } AF_Ctrl_Ops;
 
