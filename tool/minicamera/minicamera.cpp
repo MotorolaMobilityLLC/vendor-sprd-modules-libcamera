@@ -262,8 +262,6 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
         return;
     }
 
-    frame->buf_id = get_preview_buffer_id_for_fd(frame->fd);
-
     if (!previewvalid) {
         CMR_LOGI("preview disabled");
         pthread_mutex_unlock(&previewlock);
@@ -283,11 +281,13 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
         return;
     }
 
-    oem_dev->ops->camera_set_preview_buffer(
-        oem_handle, (cmr_uint)previewHeapArray[frame->buf_id]->phys_addr,
-        (cmr_uint)previewHeapArray[frame->buf_id]->data,
-        (cmr_s32)previewHeapArray[frame->buf_id]->fd);
-
+    frame->buf_id = get_preview_buffer_id_for_fd(frame->fd);
+    if (frame->buf_id != 0xFFFFFFFF) {
+        oem_dev->ops->camera_set_preview_buffer(
+            oem_handle, (cmr_uint)previewHeapArray[frame->buf_id]->phys_addr,
+            (cmr_uint)previewHeapArray[frame->buf_id]->data,
+            (cmr_s32)previewHeapArray[frame->buf_id]->fd);
+    }
     pthread_mutex_unlock(&previewlock);
 }
 
