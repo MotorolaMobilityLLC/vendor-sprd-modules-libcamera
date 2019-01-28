@@ -452,6 +452,7 @@ getHalOem_fail:
     mIspAntiFlickerHeapReserved = NULL;
     m3DNRHeapReserverd = NULL;
     mAISceneScaleHeapReserverd = NULL;
+    mCapSlaveReserverd = NULL;
 
     mVideoShotFlag = 0;
     mVideoShotNum = 0;
@@ -494,6 +495,7 @@ getHalOem_fail:
     mZslStreamInfo = NULL;
     isCallbackCapture = false;
     mMasterId = 0;
+    memset(&mBokehScaleInfo, 0, sizeof(struct img_frm));
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -602,6 +604,7 @@ int SprdCamera3OEMIf::getCameraId() const { return mCameraId; }
 void SprdCamera3OEMIf::initialize() {
     memset(&mSlowPara, 0, sizeof(slow_motion_para));
     mIsRecording = false;
+    memset(&mBokehScaleInfo, 0, sizeof(struct img_frm));
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -1569,6 +1572,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
     }
     case CAMERA_IOCTRL_SET_MASTER_ID: {
         mMasterId = *(int8_t *)param1;
+        break;
+    }
+    case CAMERA_IOCTRL_SET_BOKEH_SCALE_INFO: {
+        mBokehScaleInfo = *(struct img_frm *)param1;
         break;
     }
     }
@@ -3024,6 +3031,10 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
     if (NULL != mAISceneScaleHeapReserverd) {
         freeCameraMem(mAISceneScaleHeapReserverd);
         mAISceneScaleHeapReserverd = NULL;
+    }
+    if (NULL != mCapSlaveReserverd) {
+        freeCameraMem(mCapSlaveReserverd);
+        mCapSlaveReserverd = NULL;
     }
 
     HAL_LOGI(":hal3: X");
@@ -4874,6 +4885,17 @@ void SprdCamera3OEMIf::returnYuvCallbackFrame(struct camera_frame_type *frame) {
     }
     if (frame_num > mPictureFrameNum)
         mPictureFrameNum = frame_num;
+    if (mBokehScaleInfo.addr_vir.addr_y && frame->slave_fd) {
+        HAL_LOGD("slave_fd=%d", frame->slave_fd);
+        memcpy((char *)mBokehScaleInfo.addr_vir.addr_y,
+               (char *)(cmr_uint)mCapSlaveReserverd->data,
+               (mBokehScaleInfo.size.width * mBokehScaleInfo.size.height * 3) /
+                   2);
+        flushIonBuffer(
+            mBokehScaleInfo.fd, (void *)mBokehScaleInfo.addr_vir.addr_y, NULL,
+            (mBokehScaleInfo.size.width * mBokehScaleInfo.size.height * 3) / 2);
+        mBokehScaleInfo.addr_vir.addr_y = 0;
+    }
 
     if ((mTakePictureMode == SNAPSHOT_NO_ZSL_MODE) ||
         (mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
@@ -6740,6 +6762,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         HAL_LOGD(" sprddefInfo.ai_scene_enabled: %d",
                  sprddefInfo.ai_scene_enabled);
+
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AI_SCENE_ENABLED,
                  (uint32_t)sprddefInfo.ai_scene_enabled);
     } break;
@@ -8991,7 +9014,12 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         }
         mAISceneScaleHeapReserverd = NULL;
     }
-
+    if (type == CAMERA_SNAPSHOT_SLAVE_RESERVED) {
+        if (NULL != mCapSlaveReserverd) {
+            freeCameraMem(mCapSlaveReserverd);
+        }
+        mCapSlaveReserverd = NULL;
+    }
     return 0;
 }
 
@@ -9300,6 +9328,18 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         *phy_addr++ = (cmr_uint)mAISceneScaleHeapReserverd->phys_addr;
         *vir_addr++ = (cmr_uint)mAISceneScaleHeapReserverd->data;
         *fd++ = mAISceneScaleHeapReserverd->fd;
+    } else if (type == CAMERA_SNAPSHOT_SLAVE_RESERVED) {
+        if (mCapSlaveReserverd == NULL) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("memory is null.");
+                goto mem_fail;
+            }
+            mCapSlaveReserverd = memory;
+        }
+        *phy_addr++ = (cmr_uint)mCapSlaveReserverd->phys_addr;
+        *vir_addr++ = (cmr_uint)mCapSlaveReserverd->data;
+        *fd++ = mCapSlaveReserverd->fd;
     }
 
     return 0;
@@ -9356,6 +9396,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
     } else if (CAMERA_PREVIEW_RESERVED == type ||
                CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
                CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
+               CAMERA_SNAPSHOT_SLAVE_RESERVED == type ||
                CAMERA_DEPTH_MAP_RESERVED == type ||
                CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
                CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
@@ -9416,6 +9457,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
     } else if (CAMERA_PREVIEW_RESERVED == type ||
                CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
                CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
+               CAMERA_SNAPSHOT_SLAVE_RESERVED == type ||
                CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
                CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
                CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||

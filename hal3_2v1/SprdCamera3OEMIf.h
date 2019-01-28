@@ -603,6 +603,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static const uint32_t kISPB4awbCount = 16;
     static multiCameraMode mMultiCameraMode;
     uint8_t mMasterId;
+    struct img_frm mBokehScaleInfo;
     static multi_camera_zsl_match_frame *mMultiCameraMatchZsl;
     Mutex mLock; // API lock -- all public methods
     Mutex mPreviewCbLock;
@@ -766,6 +767,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
     sprd_camera_memory_t *m4in1HeapArray[CAP_4IN1_NUM];
     sprd_camera_memory_t *mAISceneScaleHeapReserverd;
+    sprd_camera_memory_t *mCapSlaveReserverd;
 
     uint32_t mPreviewHeapBakUseFlag;
     uint32_t mPreviewHeapArray_size[kPreviewBufferCount +

@@ -71,7 +71,6 @@
 #define PREV_EVT_CB_EXIT (PREV_EVT_BASE + 0x13)
 #define PREV_EVT_ASSIST_START (PREV_EVT_BASE + 0x14)
 #define PREV_EVT_ASSIST_STOP (PREV_EVT_BASE + 0x15)
-
 #define ALIGN_16_PIXEL(x) (((x) + 15) & (~15))
 
 #define IS_PREVIEW(handle, cam_id)                                             \
@@ -273,6 +272,7 @@ struct prev_context {
     cmr_uint cap_zsl_frm_cnt;
     struct img_frm cap_zsl_frm[ZSL_FRM_CNT];
     struct img_frm cap_zsl_reserved_frm;
+    struct img_frm cap_slave_frm;
     cmr_uint cap_zsl_rot_index;
     cmr_uint cap_zsl_rot_frm_is_lock[ZSL_ROT_FRM_CNT];
     struct img_frm cap_zsl_rot_frm[ZSL_ROT_FRM_CNT];
@@ -287,6 +287,13 @@ struct prev_context {
     cmr_uint cap_zsl_mem_size;
     cmr_uint cap_zsl_mem_num;
     cmr_int cap_zsl_mem_valid_num;
+
+    cmr_uint cap_slave_phys_addr;
+    cmr_uint cap_slave_virt_addr;
+    cmr_s32 cap_slave_fd;
+    cmr_uint cap_slave_mem_size;
+    cmr_uint cap_slave_mem_num;
+    struct hal_sprd_slave_info slave_frame_info;
 
     cmr_uint cap_4in1_phys_addr_array[CAP_4IN1_NUM];
     cmr_uint cap_4in1_virt_addr_array[CAP_4IN1_NUM];
@@ -5642,8 +5649,10 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint reserved_count = 1;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
+    struct camera_context *cxt = NULL;
     struct memory_param *mem_ops = NULL;
     cmr_int zoom_post_proc = 0;
+    char prop[PROPERTY_VALUE_MAX];
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -5653,6 +5662,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     prev_cxt = &handle->prev_cxt[camera_id];
+    cxt = (struct camera_context *)handle->oem_handle;
     CMR_LOGD("is_restart %d", is_restart);
 
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
@@ -5700,7 +5710,21 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGD("need increase buf for rotation");
         prev_cxt->cap_zsl_mem_num += PREV_ROT_FRM_CNT;
     }
+    property_get("persist.vendor.cam.bokeh.scale", prop, "sw");
 
+    if (cxt->is_multi_mode == MODE_BOKEH && camera_id == 0 &&
+        (!strcmp(prop, "hw-k"))) {
+        prev_cxt->cap_slave_mem_num = 1;
+        prev_cxt->slave_frame_info.dst_size.w = BOKEH_DEPTH_WIDTH;
+        prev_cxt->slave_frame_info.dst_size.h = BOKEH_DEPTH_HEIGHT;
+        prev_cxt->cap_slave_mem_size =
+            (prev_cxt->slave_frame_info.dst_size.w *
+             prev_cxt->slave_frame_info.dst_size.h * 3) >>
+            1;
+        CMR_LOGD("slave info set");
+    } else {
+        prev_cxt->cap_slave_mem_num = 0;
+    }
     /*alloc preview buffer*/
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
         CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,
@@ -5708,6 +5732,34 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
     if (!is_restart) {
+        if (prev_cxt->cap_slave_mem_num) {
+            CMR_LOGD("slave info set,cap_slave_mem_num=%d",
+                     prev_cxt->cap_slave_mem_num);
+            mem_ops->alloc_mem(
+                CAMERA_SNAPSHOT_SLAVE_RESERVED, handle->oem_handle,
+                (cmr_u32 *)&prev_cxt->cap_slave_mem_size,
+                (cmr_u32 *)&prev_cxt->cap_slave_mem_num,
+                &prev_cxt->cap_slave_phys_addr, &prev_cxt->cap_slave_virt_addr,
+                &prev_cxt->cap_slave_fd);
+            prev_cxt->slave_frame_info.is_slave_eb = 1;
+            prev_cxt->slave_frame_info.buffer_count = 1;
+            prev_cxt->slave_frame_info.fd_array[0] = prev_cxt->cap_slave_fd;
+            prev_cxt->slave_frame_info.frame_addr_vir_array[0].addr_y =
+                prev_cxt->cap_slave_virt_addr;
+            prev_cxt->slave_frame_info.frame_addr_vir_array[0].addr_u =
+                prev_cxt->slave_frame_info.frame_addr_vir_array[0].addr_y +
+                prev_cxt->slave_frame_info.dst_size.w *
+                    prev_cxt->slave_frame_info.dst_size.h;
+            prev_cxt->slave_frame_info.frame_addr_array[0].addr_y =
+                prev_cxt->cap_slave_phys_addr;
+            prev_cxt->slave_frame_info.frame_addr_array[0].addr_u =
+                prev_cxt->cap_slave_phys_addr +
+                prev_cxt->slave_frame_info.dst_size.w *
+                    prev_cxt->slave_frame_info.dst_size.h;
+
+            memcpy(&buffer->slave_frame_info, &prev_cxt->slave_frame_info,
+                   sizeof(struct hal_sprd_slave_info));
+        }
         prev_cxt->cap_zsl_mem_valid_num = 0;
         mem_ops->alloc_mem(CAMERA_SNAPSHOT_ZSL, handle->oem_handle,
                            (cmr_u32 *)&prev_cxt->cap_zsl_mem_size,
@@ -5864,6 +5916,15 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->cap_zsl_reserved_phys_addr = 0;
         prev_cxt->cap_zsl_reserved_virt_addr = 0;
         prev_cxt->cap_zsl_reserved_fd = 0;
+        if (prev_cxt->cap_slave_mem_num) {
+            mem_ops->free_mem(
+                CAMERA_SNAPSHOT_SLAVE_RESERVED, handle->oem_handle,
+                &prev_cxt->cap_slave_phys_addr, &prev_cxt->cap_slave_virt_addr,
+                &prev_cxt->cap_slave_fd, (cmr_u32)1);
+            prev_cxt->cap_slave_phys_addr = 0;
+            prev_cxt->cap_slave_virt_addr = 0;
+            prev_cxt->cap_slave_fd = 0;
+        }
     }
 
     CMR_LOGD("out");
@@ -10756,6 +10817,12 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         buf_cfg.addr_vir[0].addr_u =
             prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u;
         buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
+    }
+
+    if (cxt->is_multi_mode == MODE_BOKEH && prev_cxt->cap_slave_mem_num) {
+        CMR_LOGD("set slave info");
+        memcpy(&buf_cfg.slave_frame_info, &prev_cxt->slave_frame_info,
+               sizeof(struct hal_sprd_slave_info));
     }
 
     ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);

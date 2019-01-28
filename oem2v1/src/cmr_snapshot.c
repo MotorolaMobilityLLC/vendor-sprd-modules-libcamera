@@ -4358,6 +4358,7 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     frame_type.y_phy_addr = data->yaddr;
     frame_type.uv_phy_addr = data->uaddr;
     frame_type.format = data->fmt;
+    frame_type.slave_fd = data->slave_fd;
     property_get("debug.camera.save.3dcalfile", prop, "0");
     if (atoi(prop) == 1 || atoi(prop) == 100 || (atoi(prop) & (1 << 1))) {
         char datetime[15] = {0};

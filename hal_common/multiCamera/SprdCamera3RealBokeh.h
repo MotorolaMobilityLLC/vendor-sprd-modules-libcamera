@@ -160,8 +160,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     Mutex mDefaultStreamLock;
     Mutex mFlushLock;
     camera_metadata_t *mStaticMetadata;
-
     new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
+    new_mem_t mLocalScaledBuffer;
+    struct img_frm mScaleInfo;
     Mutex mRequestLock;
     List<new_mem_t *> mLocalBufferList;
     List<camera3_notify_msg_t> mNotifyListMain;

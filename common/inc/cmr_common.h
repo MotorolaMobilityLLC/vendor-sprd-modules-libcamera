@@ -118,6 +118,9 @@ extern "C" {
 #define SNP_JPEG_STREAM 0x2000     /*debug.camera.save.snpfile 8*/
 #define SNP_HDR_OUT_DATA 0x3000    /*debug.camera.save.snpfile 9*/
 
+#define BOKEH_DEPTH_WIDTH (800)
+#define BOKEH_DEPTH_HEIGHT (600)
+
 #define FORM_DUMPINDEX(flag, dumpindex, ext)                                   \
     (((dumpindex) << 24) + ((flag) << 8) + (ext))
 
@@ -1625,6 +1628,7 @@ struct camera_frame_type {
     cmr_s64 monoboottime;
     cmr_u32 vcm_step;
     cmr_int isMatchFlag;
+    cmr_int slave_fd;
 };
 
 struct image_sw_algorithm_buf {
@@ -1807,6 +1811,7 @@ typedef enum {
     CAMERA_IOCTRL_CB_FACE_DETECT,
     CAMERA_IOCTRL_ROTATE,
     CAMERA_IOCTRL_SET_MASTER_ID,
+    CAMERA_IOCTRL_SET_BOKEH_SCALE_INFO,
     CAMERA_IOCTRL_SET_TRIM_INFO,
     CAMERA_IOCTRL_SET_CAM_SECURITY,
     CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO,
