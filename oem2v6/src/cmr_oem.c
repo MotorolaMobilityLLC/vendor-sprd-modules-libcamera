@@ -2120,9 +2120,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
     cmr_int need_close_flash = 1;
-    struct sensor_raw_info *raw_info_ptr = NULL;
-    struct sensor_libuse_info *libuse_info = NULL;
-    cmr_int product_id = 0;
     struct common_isp_cmd_param isp_param;
     cmr_uint video_snapshot_type;
     cmr_uint has_preflashed = 0;
@@ -2169,51 +2166,21 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     has_preflashed = setting_param.cmd_type_value;
     CMR_LOGD("has_preflashed=%ld", has_preflashed);
 
-    /*for third ae*/
-    raw_info_ptr = cxt->sn_cxt.sensor_info.raw_info_ptr;
-    if (raw_info_ptr) {
-        libuse_info = raw_info_ptr->libuse_info;
-        if (libuse_info) {
-            product_id = libuse_info->ae_lib_info.product_id;
+    if (need_close_flash) {
+        prev_set_preview_skip_frame_num(
+            cxt->prev_cxt.preview_handle, cxt->camera_id,
+            flash_capture_skip_num, has_preflashed);
+        setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_AFTER;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_CTRL_FLASH, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to open flash %ld", ret);
         }
-    }
-    if (product_id) {
-        if (need_close_flash) {
-
-            prev_set_preview_skip_frame_num(
-                cxt->prev_cxt.preview_handle, cxt->camera_id,
-                flash_capture_skip_num, has_preflashed);
-            setting_param.setting_flash_status = SETTING_FLASH_AF_DONE;
-            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                    SETTING_CTRL_FLASH, &setting_param);
-            if (ret) {
-                CMR_LOGE("failed to open flash %ld", ret);
-            }
-            setting_param.setting_flash_status = SETTING_FLASH_WAIT_TO_CLOSE;
-            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                    SETTING_CTRL_FLASH, &setting_param);
-            if (ret) {
-                CMR_LOGE("failed to open flash %ld", ret);
-            }
-        }
-    } else {
-        if (need_close_flash) {
-
-            prev_set_preview_skip_frame_num(
-                cxt->prev_cxt.preview_handle, cxt->camera_id,
-                flash_capture_skip_num, has_preflashed);
-            setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_AFTER;
-            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                    SETTING_CTRL_FLASH, &setting_param);
-            if (ret) {
-                CMR_LOGE("failed to open flash %ld", ret);
-            }
-            if (!will_capture) {
-                ret = camera_isp_ioctl(
-                    oem_handle, COM_ISP_SET_SNAPSHOT_FINISHED, &isp_param);
-                if (ret)
-                    CMR_LOGE("failed to set snapshot finished %ld", ret);
-            }
+        if (!will_capture) {
+            ret = camera_isp_ioctl(
+                oem_handle, COM_ISP_SET_SNAPSHOT_FINISHED, &isp_param);
+            if (ret)
+                CMR_LOGE("failed to set snapshot finished %ld", ret);
         }
     }
 

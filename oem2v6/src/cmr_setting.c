@@ -2860,28 +2860,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 ctrl_flash_status = FLASH_CLOSE_AFTER_OPEN;
                 exif_flash = 0;
                 if (IMG_DATA_TYPE_RAW == image_format) {
-                        struct sensor_raw_info *raw_info_ptr = NULL;
-                        struct sensor_libuse_info *libuse_info = NULL;
-                        cmr_int product_id = 0;
-
-                        /*for third ae*/
-                        setting_get_sensor_static_info(cpt, parm,
-                                                       &local_param->sensor_static_info);
-                        raw_info_ptr = local_param->sensor_static_info.raw_info_ptr;
-                        if (raw_info_ptr) {
-                            libuse_info = raw_info_ptr->libuse_info;
-                            if (libuse_info) {
-                                product_id = libuse_info->ae_lib_info.product_id;
-                            }
-                        }
-
-                        if (product_id) {
-                            if (SETTING_FLASH_WAIT_TO_CLOSE == setting_flash_status) {
-                                CMR_LOGD("wait to close");
-                                setting_isp_wait_notice(cpt);
-                            }
-                        }
-
                         /*disable*/
                         if(FLASH_CLOSE != flash_hw_status) {
                             if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
@@ -2896,20 +2874,9 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
                                 cmr_sem_post(&cpt->preflash_sem);
                             } else {
-                                if (product_id) {
-                                    CMR_LOGD("wait to capture end");
-                                    setting_isp_wait_notice(cpt);
-                                }
                                 hal_param->flash_param.has_preflashed = 0;
                                 hal_param->flash_param.flash_status = setting_flash_status;
                                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
-                            }
-                        }
-
-                        if (product_id) {
-                            if (FLASH_WAIT_TO_CLOSE == ctrl_flash_status) {
-                                CMR_LOGD("wait to preflash period end");
-                                setting_isp_wait_notice(cpt);
                             }
                         }
                     } else {
@@ -2938,14 +2905,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     } else {
                         setting_set_flashdevice(cpt, parm, ctrl_flash_status);
                     }
-                break;
-            case SETTING_FLASH_AF_DONE:
-                exif_flash = 0;
-                CMR_LOGD("pre flash AF DONE");
-                if (IMG_DATA_TYPE_RAW == image_format) {
-                    hal_param->flash_param.flash_status = setting_flash_status;
-                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_AF_DONE);
-                }
                 break;
             default:
                 ctrl_flash_status = flash_hw_status;
@@ -3237,7 +3196,7 @@ setting_get_pre_lowflash_value(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->flash_param.has_preflashed;
-    CMR_LOGD("hal_param->flash_param.has_preflashed=%ld",
+    CMR_LOGD("hal_param->flash_param.has_preflashed=%lld",
              hal_param->flash_param.has_preflashed);
 
     return ret;
