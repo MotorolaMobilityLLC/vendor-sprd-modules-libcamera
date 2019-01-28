@@ -348,7 +348,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // imx area
 #ifdef IMX258
-    {MODULE_SUNNY, "imx258", &g_imx258_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+     {MODULE_SUNNY, "imx258", &g_imx258_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef IMX135
     {MODULE_SUNNY, "imx135", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, {NULL, 0, 0, 0}},

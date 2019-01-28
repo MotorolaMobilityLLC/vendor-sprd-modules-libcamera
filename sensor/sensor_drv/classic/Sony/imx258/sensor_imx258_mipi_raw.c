@@ -26,6 +26,7 @@
 #define MIPI_RAW_INFO g_imx258_mipi_raw_info
 #define MODULE_INFO s_imx258_module_info_tab
 
+
 /*==============================================================================
  * Description:
  * set video mode
@@ -722,7 +723,7 @@ static cmr_int imx258_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 #endif
 #if 1//defined(_SENSOR_RAW_SHARKL3_H_)
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x00);
 #endif
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
@@ -985,7 +986,10 @@ static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
         pdaf_info->type2_info.pd_size =
             pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
     }
-
+    pdaf_info->vch2_info.bypass = 0;
+    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_data_type = 0x2f;
+    pdaf_info->vch2_info.vch2_mode = 0x01;
     return rtn;
 }
 

@@ -9,6 +9,8 @@ struct sensor_raw_info *imx258_drv_init_raw_info(int sensor_id, int vendor_id, i
 #include "parameters_sharkl3/sensor_imx258_raw_param_main.c"
 #elif defined(CONFIG_ISP_2_3)
 #include "parameters_sharkle/sensor_imx258_raw_param_main.c"
+#elif defined(_SENSOR_RAW_SHARKL5_H_)
+#include "parameters_sharkl5/sensor_imx258_raw_param_main.c"
 return &s_imx258_mipi_raw_info;
 
 #else

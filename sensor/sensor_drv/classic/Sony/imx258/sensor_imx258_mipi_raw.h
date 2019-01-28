@@ -68,6 +68,7 @@
 
 /* please don't change it */
 #define EX_MCLK 24
+#define PDAF_TYPE2
 
 /*==============================================================================
  * Description:
@@ -205,12 +206,12 @@ static const SENSOR_REG_T imx258_2096x1552_setting[] = {
 #endif
 };
 
-static const SENSOR_REG_T imx258_4208x3120_setting[] = {
+static const SENSOR_REG_T imx258_4208x3120_setting[] = {   
     /*4Lane
     reg_A30
     Full (4:3) 30fps
     H: 4208
-    V: 3120
+    V: 3120 //3126
     Output format Setting
         Address value*/
     {0x0112, 0x0A},
@@ -225,12 +226,13 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
     {0x030B, 0x01},
     {0x030D, 0x02},
     {0x030E, 0x00},
-    {0x030F, 0xD8},
+    {0x030F, 0xd8},
     {0x0310, 0x00},
     {0x0820, 0x14},
     {0x0821, 0x40},
     {0x0822, 0x00},
     {0x0823, 0x00}, // Line Length Setting
+    
     {0x0342, 0x14},
     {0x0343, 0xE8}, // Frame Length Setting
     {0x0340, 0x0C},
@@ -270,7 +272,7 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
     {0x034E, 0x0C},
     {0x034F, 0x30}, // Integration Time Setting
     {0x0202, 0x0C},
-    {0x0203, 0x8E}, // Gain Setting
+    {0x0203, 0x8e}, // Gain Setting
     {0x0204, 0x00},
     {0x0205, 0x00},
     {0x020E, 0x01},
@@ -824,7 +826,7 @@ static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] = {
         .iovdd_val = SENSOR_AVDD_1800MV,
         .dvdd_val = SENSOR_AVDD_1200MV,
 
-        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+        .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
         .preview_skip_num = 1,
         .capture_skip_num = 1,
