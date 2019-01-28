@@ -384,10 +384,10 @@ static cmr_int ov5675_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         usleep(1 * 1000);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val,
-                              iovdd_val);
+
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
