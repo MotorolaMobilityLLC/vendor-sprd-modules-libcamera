@@ -1857,23 +1857,32 @@ int SprdCamera3HWI::flush() {
     int64_t timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
-    mFlush = true;
+    {
+        Mutex::Autolock l(&mLock);
+        mFlush = true;
+    }
+
+    if (mRegularChan) {
+        mRegularChan->stop(mFrameNum);
+    }
+    if (mPicChan) {
+        mPicChan->stop(mFrameNum);
+    }
+
+    Mutex::Autolock l(&mLock);
 
     if (mRegularChan) {
         // TBD: will add a user-kernel interface, to return all inflight
         // buffers, then we need not to stop streams
-        mRegularChan->stop(mFrameNum);
         mRegularChan->channelClearAllQBuff(timestamp,
                                            CAMERA_STREAM_TYPE_PREVIEW);
         mRegularChan->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_VIDEO);
         mRegularChan->channelClearAllQBuff(timestamp,
                                            CAMERA_STREAM_TYPE_CALLBACK);
     }
-
     if (mPicChan) {
         // TBD: will add a user-kernel interface, to return all inflight
         // buffers, then we need not to stop streams
-        mPicChan->stop(mFrameNum);
         mPicChan->channelClearAllQBuff(timestamp,
                                        CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
     }
