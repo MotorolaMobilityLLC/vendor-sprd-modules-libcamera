@@ -2870,9 +2870,11 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 
                             if (setting_flash_status == SETTING_AF_FLASH_PRE_AFTER
                                 || setting_flash_status == SETTING_FLASH_PRE_AFTER) {
-                                hal_param->flash_param.flash_status = setting_flash_status;
-                                setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
-                                cmr_sem_post(&cpt->preflash_sem);
+                                if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
+                                    hal_param->flash_param.flash_status = setting_flash_status;
+                                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
+                                    cmr_sem_post(&cpt->preflash_sem);
+                                }
                             } else {
                                 hal_param->flash_param.has_preflashed = 0;
                                 hal_param->flash_param.flash_status = setting_flash_status;
