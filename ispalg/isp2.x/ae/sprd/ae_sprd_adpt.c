@@ -2125,7 +2125,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 		}
 
 		if ((i >= AE_SCENE_NUM) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
-			ISP_LOGV("Not has special scene setting, just using the normal setting\n");
+			ISP_LOGD("Not has special scene setting, just using the normal setting\n");
 			goto SET_SCENE_MOD_EXIT;
 		}
 	}
@@ -2206,7 +2206,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 		cur_status->settings.scene_mode = nxt_scene_mod;
 	}
   SET_SCENE_MOD_EXIT:
-	ISP_LOGV("cam-id %d, change scene mode from %d to %d, rtn=%d", cxt->camera_id, cur_scene_mod, nxt_scene_mod, rtn);
+	ISP_LOGD("cam-id %d, change scene mode from %d to %d, rtn=%d", cxt->camera_id, cur_scene_mod, nxt_scene_mod, rtn);
 	return rtn;
 }
 
@@ -3875,6 +3875,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->cur_status.start_index;
+			cxt->last_cur_lum = cxt->cur_result.cur_lum;
+			cxt->last_exp_param.is_lock = cxt->cur_status.settings.lock_ae;
 			cxt->last_index = cxt->cur_status.start_index;
 			if (0 != cxt->cur_result.cur_bv)
 				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
@@ -3887,6 +3889,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = cxt->sync_cur_result.wts.cur_again;
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.wts.cur_index;
+			cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
+			cxt->last_exp_param.is_lock = cxt->sync_cur_status.settings.lock_ae;
 			cxt->last_index = cxt->sync_cur_result.wts.cur_index;
 			if (0 != cxt->cur_result.cur_bv)
 				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
@@ -3902,7 +3906,6 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		}
 
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
-		s_bakup_exp_param[cxt->camera_id].is_lock = cxt->cur_status.settings.lock_ae;
 
 		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
 			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
@@ -3941,6 +3944,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cmr_u32 k;
 	cmr_u32 j;
 	cmr_u32 last_cam_mode = 0;
+	cmr_u32 ae_target_lum = 0;
+
 	if (NULL == param) {
 		ISP_LOGE("param is NULL \n");
 		return AE_ERROR;
@@ -4103,9 +4108,13 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	}
 
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
-	if (AE_SCENE_NORMAL != cxt->sync_cur_status.settings.scene_mode) {
+	if ((AE_SCENE_NORMAL != cxt->sync_cur_status.settings.scene_mode) || (CAMERA_MODE_3DNR_PHOTO == cxt->app_mode)) {
 		cmr_u32 i = 0;
 		struct ae_scene_info *scene_info = &cxt->cur_param->scene_info[0];
+
+		if(CAMERA_MODE_3DNR_PHOTO == cxt->app_mode)
+			cxt->cur_status.settings.scene_mode = AE_SCENE_NIGHT;
+
 		for (i = 0; i < AE_SCENE_NUM; ++i) {
 			ISP_LOGV("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
 			if ((1 == scene_info[i].enable) && ((cmr_u32) cxt->cur_status.settings.scene_mode == scene_info[i].scene_mode)) {
@@ -4118,9 +4127,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			}
 			if (0 != scene_info[i].target_lum) {
 				cxt->cur_status.target_lum = scene_info[i].target_lum;
+				if((CAMERA_MODE_3DNR_PHOTO == cxt->app_mode) && (cxt->cur_status.line_time == cxt->last_exp_param.line_time))
+					ae_target_lum = cxt->cur_status.target_lum;
 			}
 		}
 	}
+
 	cxt->cur_status.ae_table->min_index = 0;
 	cxt->mod_update_list.is_mev = (CAMERA_MODE_MANUAL == cxt->app_mode) ? 1 : 0;
 
@@ -4164,8 +4176,24 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 					src_exp.exp_time = cxt->mode_switch[0].exp_time;
 					src_exp.dummy = cxt->mode_switch[0].dummy;
 					src_exp.cur_index = cxt->mode_switch[0].table_idx;
+					if(ae_target_lum){
+						cmr_u32 tmp_gain = 0;
+						cxt->last_cur_lum = cxt->last_cur_lum ? cxt->last_cur_lum : 1;
+						tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->last_cur_lum + 0.5);
+						if(tmp_gain > cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index]){
+							tmp_gain = cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index];
+							src_exp.exp_line = src_exp.exp_line * ae_target_lum * src_exp.gain / (tmp_gain * cxt->last_cur_lum);
+							max_exp = cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index];
+							if(src_exp.exp_line > max_exp)
+								src_exp.exp_line = max_exp;
+							src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
+						}
+						src_exp.gain = tmp_gain;
+						ISP_LOGD("exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
+					}
 				}
 			}
+
 			if (work_info->is_snapshot && (cxt->cur_status.line_time != cxt->last_exp_param.line_time)){
 				src_exp.exp_line = (cmr_u32) (1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.line_time + 0.5);
 				if (cxt->min_exp_line > src_exp.exp_line)
@@ -4204,7 +4232,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			 s_bakup_exp_param[cxt->camera_id].bv,
 			 s_bakup_exp_param[cxt->camera_id].exp_line, s_bakup_exp_param[cxt->camera_id].exp_time, s_bakup_exp_param[cxt->camera_id].dummy, s_bakup_exp_param[cxt->camera_id].gain);
 
-	ISP_LOGD("last_cam_mode = (0x%08x,0x%08x)",last_cam_mode , cxt->last_cam_mode);
 	if ((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode))) {
 		dst_exp.exp_time = src_exp.exp_time;
 		dst_exp.exp_line = src_exp.exp_line;
@@ -4387,7 +4414,7 @@ static cmr_s32 ae_set_scene(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.settings.scene_mode = (cmr_s8) scene_mode->mode;
 			cxt->mod_update_list.is_scene = 1;
 		}
-		ISP_LOGV("AE_SET_SCENE %d\n", cxt->cur_status.settings.scene_mode);
+		ISP_LOGD("AE_SET_SCENE %d\n", cxt->cur_status.settings.scene_mode);
 	}
 
 	return AE_SUCCESS;
