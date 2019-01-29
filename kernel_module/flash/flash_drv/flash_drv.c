@@ -352,12 +352,24 @@ static int sprd_flash_open(struct inode *node, struct file *file)
 static int sprd_flash_release(struct inode *node, struct file *file)
 {
 	struct flash_device *flash_dev;
+	uint8_t led_idx;
+	uint8_t flash_idx;
 
 	flash_dev = (struct flash_device *)file->private_data;
 	if (!flash_dev)
 		return -EFAULT;
 
 	/* TODO */
+
+	for (flash_idx = SPRD_FLASH_REAR; flash_idx < SPRD_FLASH_MAX;
+				 flash_idx++) {
+		for (led_idx = SPRD_FLASH_LED0; led_idx < SPRD_FLASH_LED2;
+				 led_idx <<= 0x01) {
+			flash_close_all(flash_dev,
+					flash_idx,
+					led_idx);
+		}
+	}
 
 	file->private_data = NULL;
 
