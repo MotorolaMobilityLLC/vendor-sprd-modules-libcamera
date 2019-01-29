@@ -68,6 +68,7 @@ enum {
 	CMD_DOWNLOAD_RAW_PIC,
 	CMD_WRTIE_SCENE_PARAM,
 	CMD_START_SIMULATION,
+	CMD_START_HW_SIMULATION,
 
 	CMD_SFT_READ = 200,
 	CMD_SFT_WRITE,
@@ -291,6 +292,7 @@ struct camera_func {
 	cmr_s32(*stop_preview) (cmr_u32 param1, cmr_u32 param2);
 	cmr_s32(*take_picture) (cmr_u32 param1, cmr_u32 param2);
 	cmr_s32(*set_capture_size) (cmr_u32 width, cmr_u32 height);
+	cmr_s32(*set_jpeg_quality)(cmr_u32 width, cmr_u32 height);
 };
 
 #define PREVIEW_MAX_WIDTH 640
@@ -323,6 +325,11 @@ static cmr_s32 capture_format = 1;		// 1: start preview
 static cmr_s32 capture_flag = 0;		// 1: call get pic
 char raw_filename[200] = { 0 };
 
+static cmr_u32 hw_simulation_flag = 0;
+static cmr_u32 image_process_index = 0;
+static cmr_u32 hw_simulation_loop = 0;
+static struct isp_raw_image raw_images = { 0, NULL };
+
 cmr_u32 tool_fmt_pattern = INVALID_FORMAT_PATTERN;
 static FILE *raw_fp = NULL;
 static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -336,7 +343,7 @@ static cmr_s32 sock_fd = 0;
 static cmr_s32 rx_packet_len = 0;
 static cmr_s32 rx_packet_total_len = 0;
 cmr_s32 sequence_num = 0;
-struct camera_func s_camera_fun = { PNULL, PNULL, PNULL, PNULL };
+struct camera_func s_camera_fun = { PNULL, PNULL, PNULL, PNULL, PNULL };
 
 struct camera_func *s_camera_fun_ptr = &s_camera_fun;
 static void *isp_handler;
@@ -384,6 +391,32 @@ cmr_u32 ispvideo_GetImgDataLen(cmr_u8 * dig_ptr)
 	}
 
 	return data_len;
+}
+
+cmr_s32 ispvideo_GetImgInfo(cmr_u8 *dig_ptr, struct isp_raw_image *raw_images_ptr)
+{
+	cmr_u32 i = 0;
+	char *tmp_ptr = NULL;
+	cmr_u16 *data_ptr = NULL;
+
+	if (!dig_ptr || !raw_images_ptr) {
+		ISP_LOGE("fail to check param");
+		return -1;
+	}
+
+	data_ptr = (cmr_u16 *)(dig_ptr + 0x09);
+	raw_images_ptr->count = data_ptr[0];
+	raw_images_ptr->raw_image_ptr =
+		(struct raw_image_info *)ispParserAlloc(raw_images_ptr->count * sizeof(struct raw_image_info));
+	tmp_ptr = (char *) (dig_ptr + 0x0b);
+	while (i < raw_images_ptr->count) {
+		memcpy((char *)&raw_images_ptr->raw_image_ptr[i], (char *)tmp_ptr,
+			sizeof(struct raw_image_info));
+		tmp_ptr += sizeof(struct raw_image_info);
+		i++;
+	}
+
+	return 0;
 }
 
 cmr_u8 *ispvideo_GetImgDataInfo(cmr_u8 * dig_ptr, cmr_u32 * packet_sn, cmr_u32 * total_pack, cmr_u32 * img_width, cmr_u32 * img_height, cmr_u32 * img_headlen)
@@ -444,6 +477,26 @@ cmr_s32 ispvideo_GetIspParamFromSt(cmr_u8 * dig_ptr, struct isp_parser_buf_rtn *
 void *ispvideo_GetIspHandle(void)
 {
 	return isp_handler;
+}
+
+cmr_u32 isp_video_get_image_processed_index(void)
+{
+	return image_process_index;
+}
+
+cmr_u32 isp_video_get_simulation_loop_count(void)
+{
+	return hw_simulation_loop;
+}
+
+struct isp_raw_image *isp_video_get_raw_images_info(void)
+{
+	return &raw_images;
+}
+
+cmr_u32 isp_video_get_simulation_flag(void)
+{
+	return hw_simulation_flag;
 }
 
 cmr_u32 ispvideo_SetIspParamToSt(cmr_u8 * dig_ptr, struct isp_parser_buf_in * isp_ptr)
@@ -3650,6 +3703,50 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			}
 			break;
 		}
+	case CMD_START_HW_SIMULATION:
+		{
+			ret = ispvideo_GetImgInfo(buf, &raw_images);
+			if (0x00 == ret) {
+				image_process_index = 0;
+				while (image_process_index < raw_images.count) {
+					hw_simulation_loop = 0;
+					while (hw_simulation_loop < 2) {
+						capture_img_end_flag = 0;
+						capture_flag = 1;
+						hw_simulation_flag = 1;
+						capture_format = 0x10;
+						if (NULL != fun_ptr->set_jpeg_quality) {
+							fun_ptr->set_jpeg_quality(95, 0);
+						}
+						if (NULL != fun_ptr->set_capture_size) {
+							fun_ptr->set_capture_size(raw_images.raw_image_ptr[image_process_index].uWidth,
+								raw_images.raw_image_ptr[image_process_index].uHeight);
+						}
+						if (NULL != fun_ptr->take_picture) {
+							fun_ptr->take_picture(1, capture_format);
+						}
+						sem_wait(&capture_sem_lock);
+						if (NULL != fun_ptr->stop_preview) {
+							fun_ptr->stop_preview(0, 0);
+						}
+						hw_simulation_loop++;
+					}
+					image_process_index++;
+				}
+				raw_images.count = 0;
+				ispParserFree((void *)raw_images.raw_image_ptr);
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *)&eng_rsp_diag[rsp_len], image_process_index);
+			} else {
+				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *)&eng_rsp_diag[rsp_len], 0);
+			}
+			capture_flag = 0;
+			hw_simulation_flag = 0;
+			eng_rsp_diag[rsp_len] = 0x7e;
+			msg_ret->len = rsp_len - 1;
+			res = send(sockfd, eng_rsp_diag, rsp_len + 1, 0);
+			break;
+		}
+
 	default:
 		break;
 	}
@@ -3759,6 +3856,11 @@ void send_capture_complete_msg()
 		sem_post(&capture_sem_lock);
 		capture_flag = 0;
 	}
+}
+
+void isp_video_set_capture_complete_flag(void)
+{
+	capture_img_end_flag = 1;
 }
 
 void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len)
@@ -4024,6 +4126,11 @@ cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32))
 	case REG_SET_PARAM:
 		{
 			fun_ptr->set_capture_size = func;
+			break;
+		}
+	case REG_SET_JPEG_QUALITY:
+		{
+			fun_ptr->set_jpeg_quality = func;
 			break;
 		}
 	default:

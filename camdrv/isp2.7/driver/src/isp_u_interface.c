@@ -353,11 +353,7 @@ cmr_s32 isp_set_fetch_param(cmr_handle handle)
 			isp_context_ptr->data.input_format);
 	}
 
-	if (ISP_SIMULATION_MODE == isp_context_ptr->data.input) {
-		fetch_param_ptr->dcam_fetch_endian = ISP_ENDIAN_BIG;
-	} else {
-		fetch_param_ptr->dcam_fetch_endian = ISP_ENDIAN_LITTLE;
-	}
+	fetch_param_ptr->dcam_fetch_endian = ISP_ENDIAN_LITTLE;
 
 	ISP_LOGI("fetch format %d sbs_mode %d sbs w %d h %d\n",
 		fetch_param_ptr->color_format, sbs_info_ptr->sbs_mode,
