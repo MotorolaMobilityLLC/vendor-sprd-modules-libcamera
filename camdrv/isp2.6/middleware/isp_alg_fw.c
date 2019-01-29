@@ -148,6 +148,7 @@ struct smart_info {
 	cmr_u8	lock_ccnr_en;
 	cmr_u8	lock_ynr_en;
 	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	cmr_u8 atm_is_set;
 	void *tunning_gamma_cur;
 };
 
@@ -1050,9 +1051,23 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 		break;
 
 	case ISP_SMART_SET_GAMMA_CUR:
-		/* todo: callback from auto gamma */
-		break;
+	{
+		/* param0 should be (struct sensor_rgbgamma_curve *)  */
+		void *gamma_cur = param0;
 
+		if (cxt->smart_cxt.atm_is_set == 0) {
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(io_pm_input, pm_param,
+				ISP_PM_BLK_GAMMA_CUR,
+				ISP_BLK_RGB_GAMC,
+				gamma_cur,
+				sizeof(struct sensor_rgbgamma_curve));
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to set gammar cur"));
+			cxt->smart_cxt.atm_is_set = 1;
+		}
+		break;
+	}
 	default:
 		ISP_LOGE("fail to get smart callback cmd: %d", (cmr_u32)type);
 		break;
@@ -1891,6 +1906,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
 			smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 			isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+			cxt->smart_cxt.atm_is_set = 0;
 
 			num = (cxt->zsl_flag) ? 2 : 1;
 			for (i = 0; i < num; i++) {
@@ -3955,6 +3971,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+		cxt->smart_cxt.atm_is_set = 0;
 
 		for (i = 0; i < num; i++) {
 			if (i == 0)

@@ -23,27 +23,25 @@ cmr_s32 _pm_frgb_gamc_init(
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
 	cmr_u32 index = 0;
+	cmr_uint size;
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_frgb_gamc_param *dst_ptr = (struct isp_frgb_gamc_param *)dst_gamc_param;
 	struct sensor_frgb_gammac_param *src_ptr = (struct sensor_frgb_gammac_param *)src_gamc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
+	size = sizeof(struct isp_point) * SENSOR_GAMMA_POINT_NUM;
 	if (1 == header_ptr->param_id) {
 		for (i = 0; i < SENSOR_GAMMA_NUM; i++) {
-			for (j = 0; j < SENSOR_GAMMA_POINT_NUM; j++) {
-				dst_ptr->curve_tab[i].points_r[j].y = src_ptr->curve_tab[i].points_r[j].y;
-				dst_ptr->curve_tab[i].points_g[j].y = src_ptr->curve_tab[i].points_g[j].y;
-				dst_ptr->curve_tab[i].points_b[j].y = src_ptr->curve_tab[i].points_b[j].y;
-			}
+			memcpy(&dst_ptr->curve_tab[i].points_r[0], &src_ptr->curve_tab[i].points_r[0], size);
+			memcpy(&dst_ptr->curve_tab[i].points_g[0], &src_ptr->curve_tab[i].points_g[0], size);
+			memcpy(&dst_ptr->curve_tab[i].points_b[0], &src_ptr->curve_tab[i].points_b[0], size);
 		}
 	} else {
 		for (i = 0; i < SENSOR_GAMMA_NUM; i++) {
-			for (j = 0; j < SENSOR_GAMMA_POINT_NUM; j++) {
-				dst_ptr->curve_tab[i].points_r[j].y = src_ptr->curve_tab[i].points_r[j].y;
-				dst_ptr->curve_tab[i].points_g[j].y = src_ptr->curve_tab[i].points_r[j].y;
-				dst_ptr->curve_tab[i].points_b[j].y = src_ptr->curve_tab[i].points_r[j].y;
-			}
+			memcpy(&dst_ptr->curve_tab[i].points_r[0], &src_ptr->curve_tab[i].points_r[0], size);
+			memcpy(&dst_ptr->curve_tab[i].points_g[0], &src_ptr->curve_tab[i].points_r[0], size);
+			memcpy(&dst_ptr->curve_tab[i].points_b[0], &src_ptr->curve_tab[i].points_r[0], size);
 		}
 	}
 
