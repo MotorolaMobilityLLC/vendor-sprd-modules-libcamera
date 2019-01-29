@@ -4,6 +4,7 @@ on early-init
     insmod /vendor/lib/modules/sprd_camera.ko
     insmod /vendor/lib/modules/sprd_cpp.ko
     insmod /vendor/lib/modules/sprd_fd.ko
+    insmod /vendor/lib/modules/mmdvfs.ko
     trigger sprd-flash-ko
 
 on factorytest
@@ -12,4 +13,5 @@ on factorytest
     insmod /vendor/lib/modules/sprd_camera.ko
     insmod /vendor/lib/modules/sprd_cpp.ko
     insmod /vendor/lib/modules/sprd_fd.ko
+    insmod /vendor/lib/modules/mmdvfs.ko
     trigger sprd-flash-ko
