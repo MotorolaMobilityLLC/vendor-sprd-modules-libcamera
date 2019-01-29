@@ -1430,9 +1430,9 @@ struct isp_3dnr_blend_info {
 	uint32_t bypass;
 	uint32_t filter_switch;
 	uint32_t fusion_mode;
-	uint32_t y_pixel_src_weight;
-	uint32_t u_pixel_src_weight;
-	uint32_t v_pixel_src_weight;
+	uint32_t y_pixel_src_weight[4];
+	uint32_t u_pixel_src_weight[4];
+	uint32_t v_pixel_src_weight[4];
 	uint32_t y_pixel_noise_threshold;
 	uint32_t u_pixel_noise_threshold;
 	uint32_t v_pixel_noise_threshold;

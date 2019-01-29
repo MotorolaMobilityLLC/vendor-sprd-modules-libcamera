@@ -214,7 +214,10 @@ int isp_3dnr_update_memctrl_slice_info(struct nr3_slice *in, struct nr3_slice_fo
  */
 int isp_3dnr_gen_config(struct isp_3dnr_ctx_desc *ctx);
 
-void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx, uint32_t idx, enum nr3_func_type type_id);
+void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
+			   struct isp_k_block *isp_k_param,
+			   uint32_t idx,
+			   enum nr3_func_type type_id);
 
 void isp_3dnr_bypass_config(uint32_t idx);
 

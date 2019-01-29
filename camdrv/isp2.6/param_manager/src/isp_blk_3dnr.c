@@ -24,6 +24,7 @@ cmr_u32 _pm_3dnr_convert_param(
 	cmr_u32 total_offset_units = 0;
 	struct isp_nr3d_param *dst_ptr = (struct isp_nr3d_param *)dst_3dnr_param;
 	struct sensor_3dnr_level *nr_3d_param = PNULL;
+	cmr_s32 i = 0;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		nr_3d_param = (struct sensor_3dnr_level *)(dst_ptr->param_ptr);
@@ -40,19 +41,21 @@ cmr_u32 _pm_3dnr_convert_param(
 		dst_ptr->cur.fast_me.nr3_channel_sel = nr_3d_param[strength_level].fast_me.channel_sel;
 		dst_ptr->cur.fast_me.nr3_project_mode = nr_3d_param[strength_level].fast_me.project_mode;
 
-		dst_ptr->cur.blend.fusion_mode = nr_3d_param[strength_level].fusion_swt_cap;
-		dst_ptr->cur.blend.filter_switch = nr_3d_param[strength_level].filter_swt_cap;
+		dst_ptr->cur.blend.fusion_mode = nr_3d_param[strength_level].fusion_mode;
+		dst_ptr->cur.blend.filter_switch = nr_3d_param[strength_level].filter_swt_en;
 
-		dst_ptr->cur.blend.y_pixel_src_weight = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_src_weight_cap[0];
-		dst_ptr->cur.blend.u_pixel_src_weight = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_src_weight_cap[1];
-		dst_ptr->cur.blend.v_pixel_src_weight = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_src_weight_cap[2];
+		for (i = 0; i < 4; i++) {
+			dst_ptr->cur.blend.y_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.y_cfg.src_wgt[i];
+			dst_ptr->cur.blend.u_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.u_cfg.src_wgt[i];
+			dst_ptr->cur.blend.v_pixel_src_weight[i] = nr_3d_param[strength_level].yuv_cfg.v_cfg.src_wgt[i];
+		}
 
-		dst_ptr->cur.blend.y_pixel_noise_threshold = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_pixel_noise_thr_cap[0];
-		dst_ptr->cur.blend.u_pixel_noise_threshold = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_pixel_noise_thr_cap[1];
-		dst_ptr->cur.blend.v_pixel_noise_threshold = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_pixel_noise_thr_cap[2];
-		dst_ptr->cur.blend.y_pixel_noise_weight = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_pixel_noise_weight_cap[0];
-		dst_ptr->cur.blend.u_pixel_noise_weight = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_pixel_noise_weight_cap[1];
-		dst_ptr->cur.blend.v_pixel_noise_weight = nr_3d_param[strength_level].sensor_3dnr_cor.noise_wgt_cap.yuv_pixel_noise_weight_cap[2];
+		dst_ptr->cur.blend.y_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_thr;
+		dst_ptr->cur.blend.u_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_thr;
+		dst_ptr->cur.blend.v_pixel_noise_threshold = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_thr;
+		dst_ptr->cur.blend.y_pixel_noise_weight = nr_3d_param[strength_level].yuv_cfg.y_cfg.nr_wgt;
+		dst_ptr->cur.blend.u_pixel_noise_weight = nr_3d_param[strength_level].yuv_cfg.u_cfg.nr_wgt;
+		dst_ptr->cur.blend.v_pixel_noise_weight = nr_3d_param[strength_level].yuv_cfg.v_cfg.nr_wgt;
 
 		dst_ptr->cur.blend.threshold_radial_variation_u_range_min = nr_3d_param[strength_level].sensor_3dnr_cor.u_range.min_cap;
 		dst_ptr->cur.blend.threshold_radial_variation_u_range_max = nr_3d_param[strength_level].sensor_3dnr_cor.u_range.max_cap;

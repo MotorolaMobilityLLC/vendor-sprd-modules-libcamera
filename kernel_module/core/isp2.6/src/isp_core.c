@@ -937,6 +937,7 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 
 		isp_3dnr_gen_config(nr3_ctx);
 		isp_3dnr_config_param(nr3_ctx,
+				      &pctx->isp_k_param,
 				      pctx->ctx_id,
 				      NR3_FUNC_PRE);
 
@@ -960,6 +961,7 @@ static int isp_3dnr_process_frame(struct isp_pipe_context *pctx,
 
 		isp_3dnr_gen_config(nr3_ctx);
 		isp_3dnr_config_param(nr3_ctx,
+				      &pctx->isp_k_param,
 				      pctx->ctx_id,
 				      NR3_FUNC_CAP);
 
