@@ -4125,6 +4125,9 @@ static int raw_proc_done(struct camera_module *module)
 	int ret = 0;
 	int isp_ctx_id, isp_path_id;
 	struct channel_context *ch;
+	struct isp_statis_io_desc io_desc;
+
+	pr_info("start\n");
 
 	module->cap_status = CAM_CAPTURE_STOP;
 	atomic_set(&module->state, CAM_STREAM_OFF);
@@ -4150,6 +4153,15 @@ static int raw_proc_done(struct camera_module *module)
 	isp_ops->put_path(module->isp_dev_handle,
 					isp_ctx_id, isp_path_id);
 	isp_ops->put_context(module->isp_dev_handle, isp_ctx_id);
+
+	if (module->isp_dev_handle){
+		io_desc.q = &module->isp_hist2_outbuf_queue;
+		io_desc.buf = &module->isp_hist2_buf;
+		ret = isp_ops->ioctl(module->isp_dev_handle,
+				0,
+				ISP_IOCTL_DEINIT_STATIS_BUF,
+				&io_desc);
+	}
 
 	ch->enable = 0;
 	ch->dcam_path_id = -1;
@@ -4179,6 +4191,7 @@ static int raw_proc_pre(
 	struct isp_path_base_desc isp_path_desc;
 
 	pr_info("start\n");
+
 	ch = &module->channel[CAM_CH_CAP];
 	ch->dcam_path_id = -1;
 	ch->isp_path_id = -1;
@@ -4307,6 +4320,9 @@ static int raw_proc_post(
 	struct camera_frame *src_frame;
 	struct camera_frame *mid_frame;
 	struct camera_frame *dst_frame;
+	struct isp_statis_io_desc io_desc;
+
+	pr_info("start\n");
 
 	ch = &module->channel[CAM_CH_CAP];
 	if (ch->enable == 0) {
@@ -4316,6 +4332,13 @@ static int raw_proc_post(
 
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_INIT_STATIS_Q, NULL);
+
+	io_desc.q = &module->isp_hist2_outbuf_queue;
+	io_desc.buf = &module->isp_hist2_buf;
+	ret = isp_ops->ioctl(module->isp_dev_handle,
+				0,
+				ISP_IOCTL_INIT_STATIS_Q,
+				&io_desc);
 
 	pr_info("src %d 0x%x, mid %d, 0x%x, dst %d, 0x%x\n",
 		proc_info->fd_src, proc_info->src_offset,

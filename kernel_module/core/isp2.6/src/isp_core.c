@@ -2540,6 +2540,7 @@ static int isp_deinit_statis_buffer(
 		return 0;
 	}
 
+	cambuf_kunmap(ion_buf);
 	cambuf_iommu_unmap(ion_buf);
 	cambuf_put_ionbuf(ion_buf);
 	kfree(ion_buf);

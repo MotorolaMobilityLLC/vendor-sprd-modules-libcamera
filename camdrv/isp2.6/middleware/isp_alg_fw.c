@@ -521,6 +521,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_PROCESS_OUT:
 		break;
+	case AE_CB_HDR_STATUS:
+		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
+		break;
 	case AE_CB_HDR_STATIS_SIZE:
 		hdr_statis_size = (struct ae_size *)data;
 		hdr_statis_size->w = cxt->hist2_roi.w;

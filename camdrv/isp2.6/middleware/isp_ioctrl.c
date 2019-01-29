@@ -2265,6 +2265,21 @@ static cmr_int ispctl_get_leds_ctrl(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_auto_hdr(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AUTO_HDR, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_post_3dnr(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2446,6 +2461,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
 	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
+	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_AI_PROCESS_START, ispctl_ai_process_start},
 	{ISP_CTRL_AI_PROCESS_STOP, ispctl_ai_process_stop},
 	{ISP_CTRL_AI_SET_IMG_PARAM, ispctl_ai_set_img_param},
