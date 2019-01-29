@@ -342,6 +342,15 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mReqTimestamp = 0;
     mPrevFrameNumber = 0;
     mCapFrameNumber = 0;
+    freeLocalBuffer();
+    mSavedRequestList.clear();
+    mLocalBufferList.clear();
+    mMetadataList.clear();
+    mUnmatchedFrameListMain.clear();
+    mUnmatchedFrameListAux.clear();
+    mNotifyListMain.clear();
+    mNotifyListAux.clear();
+
     if (mBokehAlgo) {
         if (!mCaptureThread->mAbokehGallery) {
             rc = mBokehAlgo->deinitAlgo();
@@ -644,6 +653,12 @@ int SprdCamera3RealBokeh::allocateBuff() {
     int w = 0, h = 0;
     HAL_LOGI(":E");
     mLocalBufferList.clear();
+    mSavedRequestList.clear();
+    mMetadataList.clear();
+    mUnmatchedFrameListMain.clear();
+    mUnmatchedFrameListAux.clear();
+    mNotifyListMain.clear();
+    mNotifyListAux.clear();
     freeLocalBuffer();
 
     for (size_t j = 0; j < preview_num; j++) {
@@ -1985,7 +2000,8 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             HAL_LOGD("start process normal frame to get "
                      "depth data!");
             if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                HAL_LOGI("mRealBokeh->mOtpData.otp_exist %d",mRealBokeh->mOtpData.otp_exist);
+                HAL_LOGI("mRealBokeh->mOtpData.otp_exist %d",
+                         mRealBokeh->mOtpData.otp_exist);
                 if (mRealBokeh->mOtpData.otp_exist) {
                     rc = sprdDepthCaptureHandle(capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr,
@@ -2866,7 +2882,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
     }
     CameraMetadata metadata;
     metadata = fwk_metadata;
-    if ((mOtpData.otp_exist == false) && metadata.exists(ANDROID_SPRD_OTP_DATA)) {
+    if (mOtpData.otp_exist == false && metadata.exists(ANDROID_SPRD_OTP_DATA)) {
         uint8_t otpType;
         int otpSize;
         otpType = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
@@ -3519,6 +3535,11 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             pushBufferList(mLocalBuffer, result->output_buffers->buffer,
                            mLocalBufferNumber, mLocalBufferList);
         }
+        if (mhasCallbackStream &&
+            mThumbReq.frame_number == result->frame_number &&
+            mThumbReq.frame_number) {
+            CallBackSnapResult(CAMERA3_BUFFER_STATUS_ERROR);
+        }
         CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
 
         return;
@@ -3527,12 +3548,17 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     if (mIsCapturing && (currStreamType == DEFAULT_STREAM)) {
         if (mFlushing ||
             result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
+            if (mhasCallbackStream &&
+                mThumbReq.frame_number == result->frame_number &&
+                mThumbReq.frame_number) {
+                CallBackSnapResult(CAMERA3_BUFFER_STATUS_ERROR);
+            }
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
             return;
         }
         if (mhasCallbackStream && mThumbReq.frame_number) {
             thumbYuvProc(result->output_buffers->buffer);
-            CallBackSnapResult();
+            CallBackSnapResult(CAMERA3_BUFFER_STATUS_OK);
         }
         Mutex::Autolock l(mDefaultStreamLock);
         if (mIsHdrMode) {
@@ -3922,7 +3948,7 @@ void SprdCamera3RealBokeh::CallBackMetadata() {
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3RealBokeh::CallBackSnapResult() {
+void SprdCamera3RealBokeh::CallBackSnapResult(int status) {
 
     camera3_capture_result_t result;
     camera3_stream_buffer_t result_buffers;
@@ -3932,7 +3958,7 @@ void SprdCamera3RealBokeh::CallBackSnapResult() {
     result_buffers.stream = mThumbReq.preview_stream;
     result_buffers.buffer = mThumbReq.buffer;
 
-    result_buffers.status = CAMERA3_BUFFER_STATUS_OK;
+    result_buffers.status = status;
     result_buffers.acquire_fence = -1;
     result_buffers.release_fence = -1;
     result.result = NULL;
@@ -4063,15 +4089,6 @@ void SprdCamera3RealBokeh::preClose(void) {
     mCaptureThread->join();
     mDepthMuxerThread->join();
     mPreviewMuxerThread->join();
-
-    freeLocalBuffer();
-    mSavedRequestList.clear();
-    mLocalBufferList.clear();
-    mMetadataList.clear();
-    mUnmatchedFrameListMain.clear();
-    mUnmatchedFrameListAux.clear();
-    mNotifyListMain.clear();
-    mNotifyListAux.clear();
 
     HAL_LOGI("X");
 }

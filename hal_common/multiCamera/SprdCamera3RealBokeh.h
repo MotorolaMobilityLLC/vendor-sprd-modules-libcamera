@@ -334,7 +334,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void CallBackResult(uint32_t frame_number,
                         camera3_buffer_status_t buffer_status);
     void CallBackMetadata();
-    void CallBackSnapResult();
+    void CallBackSnapResult(int status);
     void initDepthApiParams();
     void initBokehPrevApiParams();
     void dumpCaptureBokeh(unsigned char *result_buffer_addr,
