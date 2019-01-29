@@ -134,7 +134,7 @@ int dcam_k_aem_skip_num(struct dcam_dev_param *param)
 	 * TODO: handle skip_num not equal to slowmotion_count - 1
 	 */
 	dev = param->dev;
-	if (dev->enable_slowmotion) {
+	if (dev->slowmotion_count) {
 		pr_info("DCAM%u AEM ignore skip_num %u, slowmotion_count %u\n",
 			dev->idx, param->aem.skip_num, dev->slowmotion_count);
 		return 0;

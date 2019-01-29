@@ -157,7 +157,6 @@ int dcam_cfg_path_base(void *dcam_handle,
 		 * Better not binding dcam_if feature to BIN path, which is a
 		 * architecture defect and not going to be fixed now.
 		 */
-		dev->enable_slowmotion = ch_desc->enable_slowmotion;
 		dev->slowmotion_count = ch_desc->slowmotion_count;
 		dev->is_3dnr = ch_desc->enable_3dnr;
 		break;
@@ -474,7 +473,7 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 		DCAM_REG_MWR(idx,
 			DCAM_CAM_BIN_CFG, BIT_0, path->is_loose);
 		DCAM_REG_MWR(idx, DCAM_CAM_BIN_CFG,
-				BIT_16, dev->enable_slowmotion << 16);
+				BIT_16, !!dev->slowmotion_count << 16);
 		DCAM_REG_MWR(idx, DCAM_CAM_BIN_CFG,
 				BIT_19 | BIT_18 | BIT_17,
 				(dev->slowmotion_count & 7) << 17);
@@ -698,7 +697,7 @@ dcam_path_cycle_frame(struct dcam_pipe_dev *dev, struct dcam_path_desc *path)
 		return ERR_PTR(-EPERM);
 	}
 
-	frame->fid = dev->frame_index;
+	frame->fid = dev->index_to_set;
 	frame->sync_data = NULL;
 
 	return frame;
@@ -735,12 +734,14 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	if (idx == 2) {
 		/* dcam2 path0 ~ full path */
 		addr = dcam2_store_addr[path_id];
-	} else if (dev->enable_slowmotion && path_id == DCAM_PATH_AEM) {
+	} else if (dev->slowmotion_count && path_id == DCAM_PATH_AEM) {
 		/* slow motion AEM */
 		addr = slowmotion_store_addr[_aem][i];
-	} else if (dev->enable_slowmotion && path_id == DCAM_PATH_HIST) {
+		frame->fid += i;
+	} else if (dev->slowmotion_count && path_id == DCAM_PATH_HIST) {
 		/* slow motion HIST */
 		addr = slowmotion_store_addr[_hist][i];
+		frame->fid += i;
 	} else {
 		/* normal scene */
 		addr = dcam_store_addr[path_id];
@@ -811,7 +812,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 			    frame->buf.iova[0] + STATIS_PDAF_BUF_SIZE / 2);
 	}
 
-	if (dev->enable_slowmotion && !dev->frame_index &&
+	if (dev->slowmotion_count && !dev->index_to_set &&
 	    (path_id == DCAM_PATH_AEM || path_id == DCAM_PATH_HIST)) {
 		/* configure reserved buffer for AEM and hist */
 		frame = camera_dequeue(&path->reserved_buf_queue);
@@ -837,12 +838,12 @@ int dcam_path_set_store_frm(void *dcam_handle,
 
 		/* put it back */
 		camera_enqueue(&path->reserved_buf_queue, frame);
-	} else if (dev->enable_slowmotion && path_id == DCAM_PATH_BIN) {
+	} else if (dev->slowmotion_count && path_id == DCAM_PATH_BIN) {
 		i = 1;
 		while (i < dev->slowmotion_count) {
 			frame = dcam_path_cycle_frame(dev, path);
 			/* in init phase, return failure if error happens */
-			if (IS_ERR(frame) && !dev->frame_index)
+			if (IS_ERR(frame) && !dev->index_to_set)
 				return PTR_ERR(frame);
 
 			/* in normal running, just stop configure */
@@ -853,7 +854,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 			DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
 			atomic_inc(&path->set_frm_cnt);
 
-			frame->fid = dev->frame_index + i;
+			frame->fid = dev->index_to_set + i;
 
 			pr_debug("DCAM%u BIN set frame: fid %u, count %d\n",
 				 idx, frame->fid,

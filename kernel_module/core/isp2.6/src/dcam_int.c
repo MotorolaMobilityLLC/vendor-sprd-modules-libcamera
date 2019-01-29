@@ -99,8 +99,11 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 
 	path = &dev->path[path_id];
 	if (atomic_read(&path->set_frm_cnt) <= 1) {
-		pr_warn("DCAM%u %s should not output, deci %u\n",
-			dev->idx, to_path_name(path_id), path->frm_deci);
+		pr_warn("DCAM%u %s cnt %d, deci %u, out %u, result %u\n",
+			dev->idx, to_path_name(path_id),
+			atomic_read(&path->set_frm_cnt), path->frm_deci,
+			camera_queue_cnt(&path->out_buf_queue),
+			camera_queue_cnt(&path->result_queue));
 		return NULL;
 	}
 
@@ -113,18 +116,19 @@ static struct camera_frame *dcam_prepare_frame(struct dcam_pipe_dev *dev,
 
 	atomic_dec(&path->set_frm_cnt);
 	if (unlikely(frame->is_reserved)) {
-		pr_warn("DCAM%u %s use reserved buffer\n",
-			dev->idx, to_path_name(path_id));
+		pr_info("DCAM%u %s use reserved buffer, out %u, result %u\n",
+			dev->idx, to_path_name(path_id),
+			camera_queue_cnt(&path->out_buf_queue),
+			camera_queue_cnt(&path->result_queue));
 		camera_enqueue(&path->reserved_buf_queue, frame);
 		return NULL;
 	}
 
 	/* assign same SOF time here for each path */
-	ts = &dev->frame_ts[frame->fid % DCAM_FRAME_TIMESTAMP_COUNT];
+	ts = &dev->frame_ts[tsid(frame->fid)];
 	frame->sensor_time.tv_sec = ts->tv_sec;
 	frame->sensor_time.tv_usec = ts->tv_nsec / NSEC_PER_USEC;
-	frame->boot_sensor_time =
-		dev->frame_ts_boot[frame->fid % DCAM_FRAME_TIMESTAMP_COUNT];
+	frame->boot_sensor_time = dev->frame_ts_boot[tsid(frame->fid)];
 
 	if (frame->sync_data) {
 		sync = (struct dcam_frame_synchronizer *)frame->sync_data;
@@ -185,29 +189,201 @@ static void dcam_dispatch_sof_event(struct dcam_pipe_dev *dev)
 	}
 }
 
+static void dcam_fix_index(struct dcam_pipe_dev *dev,
+			   uint32_t begin, uint32_t num_group)
+{
+	struct dcam_path_desc *path = NULL;
+	struct camera_frame *frame = NULL;
+	struct list_head head;
+	uint32_t count = 0;
+	int i = 0, j = 0;
+
+	for (i = 0; i < DCAM_PATH_MAX; i++) {
+		path = &dev->path[i];
+		count = num_group;
+		if (i == DCAM_PATH_BIN)
+			count *= dev->slowmotion_count;
+
+		if (atomic_read(&path->user_cnt) < 1)
+			continue;
+
+		if (camera_queue_cnt(&path->result_queue) < count)
+			continue;
+
+		pr_info("DCAM%u %s fix %u index to %u\n",
+			dev->idx, to_path_name(i), count, begin);
+		INIT_LIST_HEAD(&head);
+
+		j = 0;
+		while (j++ < count) {
+			frame = camera_dequeue_tail(&path->result_queue);
+			list_add_tail(&frame->list, &head);
+		}
+
+		j = 0;
+		while (j++ < count) {
+			frame = list_last_entry(&head,
+						struct camera_frame,
+						list);
+			list_del(&frame->list);
+			frame->fid = begin - 1;
+			if (i == DCAM_PATH_BIN) {
+				frame->fid += j;
+			} else if (i == DCAM_PATH_AEM || i == DCAM_PATH_HIST) {
+				frame->fid += j * dev->slowmotion_count;
+			} else {
+				frame->fid += (j - 1) * dev->slowmotion_count;
+				frame->fid += 1;
+			}
+			camera_enqueue(&path->result_queue, frame);
+		}
+	}
+}
+
+/* fix result */
+enum dcam_fix_result {
+	DEFER_TO_NEXT,
+	INDEX_FIXED,
+	BUFFER_READY,
+};
+
+/*
+ * Use mipi_cap_frm_cnt to fix frame index error issued by interrupt delay.
+ * Since max value of mipi_cap_frm_cnt is 0x3f, the max delay we can recover
+ * from is 2.1s in normal scene or 0.525s in slow motion scene.
+ */
+static enum dcam_fix_result dcam_fix_index_if_needed(struct dcam_pipe_dev *dev)
+{
+	uint32_t frm_cnt = 0, cur_cnt = 0;
+	uint32_t old_index = 0, begin = 0, end = 0;
+	uint32_t old_n = 0, cur_n = 0, old_d = 0, cur_d = 0, cur_rd = 0;
+	struct timespec delta_ts;
+	ktime_t delta_ns;
+
+	frm_cnt = DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f;
+	cur_cnt = tsid(dev->frame_index + 1);
+
+	/* adjust frame index for current frame */
+	if (cur_cnt != frm_cnt) {
+		uint32_t diff = DCAM_FRAME_TIMESTAMP_COUNT;
+
+		/*
+		 * leave fixing work to next frame to make sure there's enough
+		 * time for us in slow motion scene, assuming that next CAP_SOF
+		 * is not delayed
+		 */
+		if (dev->slowmotion_count && !dev->need_fix) {
+			dev->handled_bits = 0xFFFFFFFF;
+			dev->need_fix = true;
+			return DEFER_TO_NEXT;
+		}
+
+		diff = diff + frm_cnt - cur_cnt;
+		diff &= DCAM_FRAME_TIMESTAMP_COUNT - 1;
+
+		old_index = dev->frame_index - 1;
+		dev->frame_index += diff;
+		pr_info("DCAM%u adjust index by %u, new %u\n",
+			dev->idx, diff, dev->frame_index);
+	}
+
+	/* record SOF timestamp for current frame */
+	dev->frame_ts_boot[tsid(dev->frame_index)] = ktime_get_boottime();
+	ktime_get_ts(&dev->frame_ts[tsid(dev->frame_index)]);
+
+	if (frm_cnt == cur_cnt) {
+		dev->index_to_set = dev->frame_index + 1;
+		return INDEX_FIXED;
+	}
+
+	if (!dev->slowmotion_count) {
+		struct dcam_path_desc *path = NULL;
+		struct camera_frame *frame = NULL;
+		int i = 0;
+
+		/* fix index for last 1 frame */
+		for (i = 0; i < DCAM_PATH_MAX; i++) {
+			path = &dev->path[i];
+
+			if (atomic_read(&path->set_frm_cnt) <= 1)
+				continue;
+
+			frame = camera_dequeue_tail(&path->result_queue);
+			frame->fid = dev->frame_index;
+			camera_enqueue(&path->result_queue, frame);
+		}
+
+		dev->index_to_set = dev->frame_index + 1;
+		return INDEX_FIXED;
+	}
+
+	dev->need_fix = false;
+
+	/* restore timestamp and index for slow motion */
+	delta_ns = ktime_sub(dev->frame_ts_boot[tsid(old_index)],
+			     dev->frame_ts_boot[tsid(old_index - 1)]);
+	delta_ts = timespec_sub(dev->frame_ts[tsid(old_index)],
+				dev->frame_ts[tsid(old_index - 1)]);
+
+	end = dev->frame_index;
+	begin = max(rounddown(end, dev->slowmotion_count), old_index + 1);
+	while (--end >= begin) {
+		dev->frame_ts_boot[tsid(end)]
+			= ktime_sub_ns(dev->frame_ts_boot[tsid(end + 1)],
+				       delta_ns);
+		dev->frame_ts[tsid(end)]
+			= timespec_sub(dev->frame_ts[tsid(end + 1)],
+				       delta_ts);
+	}
+
+	/* still in-time if index not delayed to another group */
+	old_d = old_index / dev->slowmotion_count;
+	cur_d = dev->frame_index / dev->slowmotion_count;
+	if (old_d == cur_d)
+		return INDEX_FIXED;
+
+	old_n = old_index % dev->slowmotion_count;
+	cur_n = dev->frame_index % dev->slowmotion_count;
+	cur_rd = rounddown(dev->frame_index, dev->slowmotion_count);
+	if (old_n != dev->slowmotion_count - 1) {
+		/* fix index for last 1~8 frames */
+		dev->handled_bits = DCAMINT_ALL_TX_DONE;
+		dcam_fix_index(dev, cur_rd, 2);
+
+		return BUFFER_READY;
+	} else /* if (cur_n != dev->slowmotion_count - 1) */{
+		/* fix index for last 1~4 frames */
+		struct dcam_path_desc *path = &dev->path[DCAM_PATH_BIN];
+		if (camera_queue_cnt(&path->result_queue)
+		    <= dev->slowmotion_count) {
+			/*
+			 * ignore TX DONE if already handled in last interrupt
+			 */
+			dev->handled_bits = DCAMINT_ALL_TX_DONE;
+		}
+		dcam_fix_index(dev, cur_rd, 1);
+
+		return INDEX_FIXED;
+	}
+}
+
+/*
+ * Set buffer and update parameters. Fix potential index error issued by
+ * interrupt delay.
+ */
 static void dcam_cap_sof(void *param)
 {
-	int i;
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
 	struct dcam_path_desc *path;
 	struct dcam_sync_helper *helper = NULL;
-	uint32_t sof_index = 0;
+	enum dcam_fix_result fix_result;
+	int i;
 
-	dev->frame_index++;
+	fix_result = dcam_fix_index_if_needed(dev);
+	if (fix_result == DEFER_TO_NEXT)
+		return;
 
-	/* record SOF timestamp for each frame */
-	sof_index = dev->frame_index;
-	sof_index += DCAM_FRAME_TIMESTAMP_COUNT - dev->slowmotion_count;
-	sof_index -= (!dev->enable_slowmotion);
-	sof_index %= DCAM_FRAME_TIMESTAMP_COUNT;
-	ktime_get_ts(&dev->frame_ts[sof_index]);
-	dev->frame_ts_boot[sof_index] = ktime_get_boottime();
-
-	pr_debug("DCAM%u cnt=%d, fid: %u\n", dev->idx,
-		 DCAM_REG_RD(dev->idx, DCAM_CAP_FRM_CLR) & 0x3f,
-		 dev->frame_index);
-
-	if (dev->enable_slowmotion) {
+	if (dev->slowmotion_count) {
 		uint32_t n = dev->frame_index % dev->slowmotion_count;
 
 		/* auto copy at last frame of a group of slow motion frames */
@@ -218,12 +394,14 @@ static void dcam_cap_sof(void *param)
 		}
 
 		/* set buffer at first frame of a group of slow motion frames */
-		if (n)
-			return;
+		if (n || fix_result == BUFFER_READY)
+			goto dispatch_sof;
+
+		dev->index_to_set = dev->frame_index + dev->slowmotion_count;
 	}
 
 	/* don't need frame sync in slow motion */
-	if (!dev->enable_slowmotion)
+	if (!dev->slowmotion_count)
 		helper = dcam_get_sync_helper(dev);
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
@@ -237,7 +415,8 @@ static void dcam_cap_sof(void *param)
 			continue;
 
 		/* @frm_deci is the frame index of output frame */
-		if (path->frm_deci_cnt++ >= path->frm_deci) {
+		if ((path->frm_deci_cnt++ >= path->frm_deci)
+		    || dev->slowmotion_count) {
 			path->frm_deci_cnt = 0;
 			dcam_path_set_store_frm(dev, path, helper);
 		}
@@ -245,13 +424,18 @@ static void dcam_cap_sof(void *param)
 
 	if (helper) {
 		if (helper->enabled)
-			helper->sync.index = dev->frame_index;
+			helper->sync.index = dev->index_to_set;
 		else
 			dcam_put_sync_helper(dev, helper);
 	}
 
-	dcam_dispatch_sof_event(dev);
-	dcam_update_lsc(dev);
+dispatch_sof:
+	if (!(dev->frame_index % dev->slowmotion_count)) {
+		dcam_dispatch_sof_event(dev);
+		dcam_update_lsc(dev);
+	}
+
+	dev->frame_index++;
 }
 
 /* for slow motion mode */
@@ -320,25 +504,33 @@ static void dcam_full_path_done(void *param)
 static void dcam_bin_path_done(void *param)
 {
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)param;
+	struct dcam_path_desc *path = NULL;
 	struct camera_frame *frame = NULL;
+	int i = 0, cnt = 0;
 
 	if (unlikely(dev->idx == DCAM_ID_2))
 		return;
+
+	path = &dev->path[DCAM_PATH_BIN];
+	cnt = atomic_read(&path->set_frm_cnt);
+	if (cnt <= dev->slowmotion_count) {
+		pr_warn("DCAM%u BIN cnt %d, deci %u, out %u, result %u\n",
+			dev->idx, cnt, path->frm_deci,
+			camera_queue_cnt(&path->out_buf_queue),
+			camera_queue_cnt(&path->result_queue));
+		return;
+	}
 
 	if ((frame = dcam_prepare_frame(dev, DCAM_PATH_BIN))) {
 		dcam_dispatch_frame(dev, DCAM_PATH_BIN, frame,
 				    DCAM_CB_DATA_DONE);
 	}
 
-	if (dev->enable_slowmotion) {
-		int i = 1;
-
-		while (i++ < dev->slowmotion_count)
-			dcam_dispatch_frame(dev, DCAM_PATH_BIN,
-					    dcam_prepare_frame(dev,
-							       DCAM_PATH_BIN),
-					    DCAM_CB_DATA_DONE);
-	}
+	i = 0;
+	while (++i < dev->slowmotion_count)
+		dcam_dispatch_frame(dev, DCAM_PATH_BIN,
+				    dcam_prepare_frame(dev, DCAM_PATH_BIN),
+				    DCAM_CB_DATA_DONE);
 
 	if (dev->offline) {
 		/* there is source buffer for offline process */
@@ -715,6 +907,8 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 		if (status & BIT(cur_int)) {
 			if (_DCAM_ISRS[cur_int]) {
 				_DCAM_ISRS[cur_int](dev);
+				status &= ~dev->handled_bits;
+				dev->handled_bits = 0;
 			} else {
 				pr_warn("DCAM%u missing handler for int %d\n",
 					dev->idx, cur_int);

@@ -941,12 +941,10 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 
 			io_desc.q = &module->isp_hist2_outbuf_queue;
 			io_desc.fid = pframe->fid;
-
 			ret = isp_ops->ioctl(module->isp_dev_handle,
 						channel->isp_path_id >> ISP_CTXID_OFFSET,
 						ISP_IOCTL_CYCLE_HIST2_FRAME,
 						&io_desc);
-
 			ret = isp_ops->proc_frame(module->isp_dev_handle, pframe,
 					channel->isp_path_id >> ISP_CTXID_OFFSET);
 			if (ret) {
@@ -1983,7 +1981,6 @@ static int init_cam_channel(
 		 * and @high_fps_skip_num for both preview channel and video
 		 * channel so BIN path can enable slow motion feature correctly.
 		 */
-		ch_desc.enable_slowmotion = ch_uinfo->is_high_fps;
 		ch_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
 
 		ch_desc.endian.y_endian = ENDIAN_LITTLE;
@@ -2855,6 +2852,10 @@ static int img_ioctl_set_output_size(
 	dst->dst_fmt = dst_fmt;
 	ret |= get_user(dst->is_high_fps, &uparam->is_high_fps);
 	ret |= get_user(dst->high_fps_skip_num, &uparam->high_fps_skip_num);
+	if (dst->high_fps_skip_num == 1) {
+		pr_err("invalid high fps %u\n", dst->high_fps_skip_num);
+		ret = -EINVAL;
+	}
 	ret |= copy_from_user(&dst->src_crop,
 			&uparam->crop_rect, sizeof(struct sprd_img_rect));
 	ret |= copy_from_user(&dst->dst_size,
@@ -3802,6 +3803,10 @@ static int img_ioctl_stream_on(
 	atomic_set(&module->state, CAM_RUNNING);
 	module->dual_frame = NULL;
 	ret = dcam_ops->start(module->dcam_dev_handle);
+	if (ret < 0) {
+		pr_err("fail to start dcam dev, ret %d\n", ret);
+		goto exit;
+	}
 
 	atomic_set(&module->timeout_flag, 1);
 	ret = sprd_start_timer(&module->cam_timer, CAMERA_TIMEOUT);

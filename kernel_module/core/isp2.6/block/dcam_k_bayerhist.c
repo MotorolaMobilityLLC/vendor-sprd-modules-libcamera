@@ -59,7 +59,7 @@ int dcam_k_bayerhist_block(struct dcam_dev_param *param)
 	 * TODO: handle skip_num not equal to slowmotion_count - 1
 	 */
 	dev = param->dev;
-	if (p->hist_skip_num > 0 && dev->enable_slowmotion) {
+	if (p->hist_skip_num > 0 && dev->slowmotion_count) {
 		pr_info("DCAM%u HIST ignore skip_num %u, slowmotion_count %u\n",
 			dev->idx, p->hist_skip_num, dev->slowmotion_count);
 		p->hist_skip_num = 0;

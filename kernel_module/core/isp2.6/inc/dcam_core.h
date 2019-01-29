@@ -35,7 +35,10 @@
 
 // TODO: how many helpers there should be?
 #define DCAM_SYNC_HELPER_COUNT 20
+/* DO NOT MODIFY!! */
 #define DCAM_FRAME_TIMESTAMP_COUNT 0x40
+/* get index of timestamp from frame index */
+#define tsid(x) ((x) & (DCAM_FRAME_TIMESTAMP_COUNT - 1))
 
 struct dcam_pipe_dev;
 
@@ -180,10 +183,16 @@ struct dcam_sync_helper {
  * @state:             working state of this device
  *
  * @frame_index:       frame index, tracked by CAP_SOF
+ * @index_to_set:      index of next frame, or group of frames, updated in
+ *                     CAP_SOF or initial phase
+ * @need_fix:          leave fixing work to next CAP_SOF, only in slow motion
+ *                     for now
+ * @handled_bits:      mask bits that will not be handled this time
  * $frame_ts:          timestamp at SOF, time without suspend
  * @frame_ts_boot:     timestamp at SOF, ns counts from system boot
- * @enable_slowmotion: flag indicating whether slow motion is enabled
+ *
  * @slowmotion_count:  frame count in a slow motion group, AKA slow motion rate
+ *
  * @helper_enabled:    sync enabled path IDs
  * @helper_lock:       this lock protects synchronizer helper related data
  * @helper_list:       a list of sync helpers
@@ -193,14 +202,16 @@ struct dcam_pipe_dev {
 	uint32_t idx;
 	uint32_t irq;
 	atomic_t state;// TODO: use mutex to protect
-	spinlock_t glb_reg_lock;
-	bool  dcamsec_eb;
 
 	uint32_t frame_index;
+	uint32_t index_to_set;
+	bool need_fix;
+	uint32_t handled_bits;
 	struct timespec frame_ts[DCAM_FRAME_TIMESTAMP_COUNT];
 	ktime_t frame_ts_boot[DCAM_FRAME_TIMESTAMP_COUNT];
-	uint32_t enable_slowmotion;
+
 	uint32_t slowmotion_count;
+
 	uint32_t helper_enabled;
 	spinlock_t helper_lock;
 	struct list_head helper_list;
@@ -208,6 +219,8 @@ struct dcam_pipe_dev {
 
 	struct sprd_cam_hw_info *hw;
 
+	spinlock_t glb_reg_lock;
+	bool  dcamsec_eb;
 	uint32_t err_status;// TODO: change to use state
 
 	uint32_t is_4in1;

@@ -190,7 +190,7 @@ static void isp_all_done(enum isp_context_id idx, void *isp_handle)
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 	if (pctx->fmcu_handle) {
-		pr_info("fmcu started. skip all done.\n ");
+		pr_debug("fmcu started. skip all done.\n ");
 		return;
 	}
 	pr_debug("cxt_id:%d done.\n", idx);

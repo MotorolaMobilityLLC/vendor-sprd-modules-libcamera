@@ -2292,20 +2292,20 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		atomic_set(&dev->path[DCAM_PATH_VCH2].user_cnt, 1);
 
 	dev->frame_index = 0;
+	dev->index_to_set = 0;
 	memset(dev->frame_ts, 0,
 	       sizeof(dev->frame_ts[0]) * DCAM_FRAME_TIMESTAMP_COUNT);
 	memset(dev->frame_ts_boot, 0,
 	       sizeof(dev->frame_ts_boot[0]) * DCAM_FRAME_TIMESTAMP_COUNT);
 
 	dev->helper_enabled = 0;
-	if (!dev->enable_slowmotion) {
+	if (!dev->slowmotion_count) {
 		/* enable frame sync for 3DNR in normal mode */
 		dcam_if_set_sync_enable(dev, DCAM_PATH_FULL, 1);
 		dcam_if_set_sync_enable(dev, DCAM_PATH_BIN, 1);
 		dcam_if_set_sync_enable(dev, DCAM_PATH_3DNR, 1);
 
-		/* make sure slowmotion_count is 0 */
-		dev->slowmotion_count = 0;
+		helper = dcam_get_sync_helper(dev);
 	}
 
 	ret = dcam_set_mipi_cap(dev, &dev->cap_info);
@@ -2313,9 +2313,6 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 		pr_err("DCAM%u fail to set mipi cap\n", dev->idx);
 		return ret;
 	}
-
-	if (!dev->enable_slowmotion)
-		helper = dcam_get_sync_helper(dev);
 
 	for (i = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
@@ -2342,14 +2339,10 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 	if (helper) {
 		if (helper->enabled)
-			helper->sync.index = dev->frame_index;
+			helper->sync.index = dev->index_to_set;
 		else
 			dcam_put_sync_helper(dev, helper);
 	}
-
-	/* set frame_index to index of last frame in init phase */
-	if (dev->enable_slowmotion)
-		dev->frame_index = dev->slowmotion_count - 1;
 
 	/* TODO: change AFL trigger */
 	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);
@@ -2385,6 +2378,13 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 
 	dcam_stop(dev);
 	dcam_reset(dev);
+
+	if (0) {
+		int i;
+		for (i = 0; i < DCAM_FRAME_TIMESTAMP_COUNT; i++)
+			pr_info("DCAM%u i=%02d t=%lld\n",
+				dev->idx, i, dev->frame_ts_boot[i]);
+	}
 
 	dcam_dump_int_tracker(dev->idx);
 	dcam_reset_int_tracker(dev->idx);
