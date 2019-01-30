@@ -1475,6 +1475,11 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
 
     /* Add input/output stream configurations for each scaler formats*/
     Vector<int32_t> available_stream_configs;
+    /* android.scaler.availableMinFrameDurations */
+    Vector<int64_t> available_min_durations;
+    /*available stall durations*/
+    Vector<int64_t> available_stall_durations;
+
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
             if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
@@ -1488,52 +1493,12 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
-
-                /* keep largest */
-                if (stream_info[i].stream_sizes_tbl.width *
-                        stream_info[i].stream_sizes_tbl.height >
-                    largest_picture_size[cameraId].width *
-                        largest_picture_size[cameraId].height) {
-                    largest_picture_size[cameraId] =
-                        stream_info[i].stream_sizes_tbl;
-                }
-            }
-        }
-    }
-    memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations,
-           &(available_stream_configs[0]),
-           available_stream_configs.size() * sizeof(int32_t));
-
-    /* android.scaler.availableMinFrameDurations */
-    Vector<int64_t> available_min_durations;
-    for (size_t j = 0; j < scaler_formats_count; j++) {
-        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
-                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
-                (stream_info[i].stream_sizes_tbl.width == 480 &&
-                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
                 available_min_durations.add(stream_info[i].stream_min_duration);
-            }
-        }
-    }
-    // This lists the minimum frame duration for each format/size combination
-    memcpy(s_setting[cameraId].scalerInfo.min_frame_durations,
-           &(available_min_durations[0]),
-           available_min_durations.size() * sizeof(int64_t));
-
-    /*available stall durations*/
-    Vector<int64_t> available_stall_durations;
-    for (size_t j = 0; j < scaler_formats_count; j++) {
-        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
-                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
-                (stream_info[i].stream_sizes_tbl.width == 480 &&
-                 stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] ==
                     (HAL_PIXEL_FORMAT_BLOB ||
                      HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
@@ -1553,11 +1518,28 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                         stream_info[i].stream_sizes_tbl.height);
                     available_stall_durations.add(0);
                 }
+                /* keep largest */
+                if (stream_info[i].stream_sizes_tbl.width *
+                        stream_info[i].stream_sizes_tbl.height >
+                    largest_picture_size[cameraId].width *
+                        largest_picture_size[cameraId].height) {
+                    largest_picture_size[cameraId] =
+                        stream_info[i].stream_sizes_tbl;
+                }
             }
         }
     }
-    // This lists the maximum stall duration for each output format/size
-    // combination
+    // This lists the input/output stream configurations for each scaler formats
+    memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations,
+           &(available_stream_configs[0]),
+           available_stream_configs.size() * sizeof(int32_t));
+
+    // This lists the minimum frame duration for each format/size combination
+    memcpy(s_setting[cameraId].scalerInfo.min_frame_durations,
+           &(available_min_durations[0]),
+           available_min_durations.size() * sizeof(int64_t));
+
+    // This lists the maximum stall duration for each output format/size  combination
     memcpy(s_setting[cameraId].scalerInfo.stall_durations,
            &(available_stall_durations[0]),
            available_stall_durations.size() * sizeof(int64_t));
@@ -1782,7 +1764,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].requestInfo.available_capabilites,
            kavailable_capabilities, sizeof(kavailable_capabilities));
     s_setting[cameraId].requestInfo.partial_result_count = 1;
-    s_setting[cameraId].requestInfo.pipeline_max_depth = 4;
+    s_setting[cameraId].requestInfo.pipeline_max_depth = 8;
 
     // noise
     memcpy(
@@ -4502,7 +4484,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].metaInfo.flash_mode), 1);
     camMetadata.update(ANDROID_EDGE_MODE, &(s_setting[mCameraId].edgeInfo.mode),
                        1);
-    s_setting[mCameraId].requestInfo.pipeline_depth = 2;
     camMetadata.update(ANDROID_REQUEST_PIPELINE_DEPTH,
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
     camMetadata.update(ANDROID_CONTROL_AE_STATE,

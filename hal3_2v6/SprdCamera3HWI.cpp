@@ -1447,6 +1447,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     pendingRequest.request_id = captureRequestId;
     pendingRequest.bNotified = 0;
     pendingRequest.input_buffer = request->input_buffer;
+    pendingRequest.pipeline_depth = 0;
 
     if (mFlush) {
         for (i = 0; i < request->num_output_buffers; i++) {
@@ -1655,6 +1656,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
                 requestInfo.frame_count = i->frame_number;
+                requestInfo.pipeline_depth =
+                    (i->pipeline_depth == 0)
+                        ? 1
+                        : i->pipeline_depth; // in case of 0, Burst do not fire
+                                             // in testYUVBurst so use 1 as min
                 mSetting->setREQUESTTag(&requestInfo);
                 metaInfo.flash_mode = i->meta_info.flash_mode;
                 memcpy(metaInfo.ae_regions, i->meta_info.ae_regions,
@@ -1696,6 +1702,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
                 requestInfo.frame_count = i->frame_number;
+                requestInfo.pipeline_depth =
+                    (i->pipeline_depth == 0)
+                        ? 1
+                        : i->pipeline_depth; // in case of 0, Burst do not fire
+                                             // in testYUVBurst so use 1 as min
                 mSetting->setREQUESTTag(&requestInfo);
                 metaInfo.flash_mode = i->meta_info.flash_mode;
                 memcpy(metaInfo.ae_regions, i->meta_info.ae_regions,
@@ -1777,6 +1788,12 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             /**add for 3d capture reprocessing end   */
             break;
         }
+    }
+
+    for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+         i != mPendingRequestsList.end();) {
+        i->pipeline_depth++;
+        i++;
     }
 
     if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
