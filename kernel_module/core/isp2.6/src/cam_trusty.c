@@ -35,7 +35,7 @@
 
 static struct cam_ca_ctrl cam_ca ={TIPC_CHANNEL_DISCONNECTED, 0, };
 
-struct tipc_msg_buf *cam_ca_handle_msg(void *data, struct tipc_msg_buf *rxbuf)
+struct tipc_msg_buf *cam_ca_handle_msg(void *data, struct tipc_msg_buf *rxbuf, u16 flag)
 {
 	struct cam_ca_ctrl *ca = data;
 	struct tipc_msg_buf *newbuf = rxbuf;
