@@ -7689,7 +7689,8 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         // bokeh use zsl capture for callback stream
         // TBD: bokeh use standard callback strem, dont use zsl capture
         if (getMultiCameraMode() != MODE_BLUR &&
-            getMultiCameraMode() != MODE_BOKEH) {
+            getMultiCameraMode() != MODE_BOKEH &&
+            getMultiCameraMode() != MODE_3D_CALIBRATION) {
             mHalOem->ops->queue_buffer(mCameraHandle, buffer,
                                        SPRD_CAM_STREAM_CALLBACK);
         }
