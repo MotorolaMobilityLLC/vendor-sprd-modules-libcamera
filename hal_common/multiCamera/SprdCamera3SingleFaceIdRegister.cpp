@@ -563,6 +563,7 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::cameraDeviceOpen(
         }
         hw_dev[i] = NULL;
 
+        hw->setMultiCameraMode(MODE_SINGLE_FACEID_REGISTER);
         rc = hw->openCamera(&hw_dev[i]);
         if (NO_ERROR != rc) {
             HAL_LOGE("failed, camera id:%d", Phy_id);
