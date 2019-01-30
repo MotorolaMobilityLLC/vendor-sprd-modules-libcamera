@@ -1394,7 +1394,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	switch (mode) {
 	case AE_FLASH_PRE_BEFORE:
 		ISP_LOGI("ae_flash_status FLASH_PRE_BEFORE");
-		if(!cxt->sync_cur_result.wts.stable || (cxt->sync_cur_status.settings.lock_ae == AE_STATE_LOCKED)){
+		if(!cxt->sync_cur_result.wts.stable || (!cxt->cur_status.settings.force_lock_ae && (AE_STATE_LOCKED == cxt->sync_cur_status.settings.lock_ae))){
 			cmr_u32 ae_base_idx = ae_set_pflash_exposure_compensation(cxt, 0);
 			cxt->pf_wait_stable_cnt++;
 			cxt->cur_status.settings.exp_is_transmit = 1;
