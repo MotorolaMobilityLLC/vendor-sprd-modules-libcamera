@@ -995,7 +995,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			}
 
 			/* cap scene special process */
-			if (module->cam_uinfo.is_dual) {
+			if (module->dcam_cap_status == DCAM_CAPTURE_START_WITH_TIMESTAMP) {
 
 				pframe = deal_dual_frame(module,
 						pframe, channel);
@@ -1020,7 +1020,8 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 
 				if (pframe->boot_sensor_time < module->capture_times) {
 
-					pr_info("cap skip frame mode[%d] cap_time[%lld] sof_time[%lld]\n",
+					pr_info("cam%d cap skip frame type[%d] cap_time[%lld] sof_time[%lld]\n",
+						module->idx,
 						module->dcam_cap_status,
 						module->capture_times,
 						pframe->boot_sensor_time
@@ -1035,12 +1036,12 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 
 				} else {
 					if (atomic_read(&module->capture_frames_dcam)>0) {
-						pr_info("cap mode[%d] num[%d] \n",
+						pr_info("cam%d cap type[%d] num[%d]\n", module->idx,
 								module->dcam_cap_status,atomic_read(&module->capture_frames_dcam));
 						atomic_dec(&module->capture_frames_dcam);
 					} else {
 
-						pr_info("cap mode[%d] num[%d] \n",
+						pr_info("cam%d cap type[%d] num[%d]\n", module->idx,
 								module->dcam_cap_status,atomic_read(&module->capture_frames_dcam));
 						ret = dcam_ops->cfg_path(
 							module->dcam_dev_handle,
@@ -4046,7 +4047,7 @@ static int img_ioctl_start_capture(
 		module->capture_times = param.timestamp;
 
 
-	} else if (module->cam_uinfo.is_dual) {
+	} else if (param.type == DCAM_CAPTURE_START_WITH_TIMESTAMP) {
 		module->dcam_cap_status = DCAM_CAPTURE_START_WITH_TIMESTAMP;
 		/* dual camera need 1 frame */
 		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
