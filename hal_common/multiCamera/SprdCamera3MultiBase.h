@@ -48,6 +48,7 @@
 //#include "ts_makeup_api.h"
 #include "SprdMultiCam3Common.h"
 #include "hal_yuvprocess.h"
+#include "core_yuvscaler.h"
 namespace sprdcamera {
 
 typedef enum {
@@ -109,6 +110,8 @@ class SprdCamera3MultiBase {
     virtual void dumpFps();
     virtual void dumpData(unsigned char *addr, int type, int size, int param1,
                           int param2, int param3, const char param4[20]);
+    virtual void dumpDataDepth16(uint16_t *addr, int type, int size, int param1,
+                          int param2, int param3, const char param4[20]);
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
                                hwi_frame_buffer_info_t *result2);
@@ -152,6 +155,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     int swScale(uint8_t *dst_buf, uint16_t dst_width, uint16_t dst_height,
                 uint16_t dst_fd, uint8_t *src_buf, uint16_t src_width,
                 uint16_t src_height, uint16_t src_fd);
+    int Yuv420Scale(uint8_t *dst_buf, uint16_t dst_width, uint16_t dst_height,
+                 uint8_t *src_buf, uint16_t src_width,
+                uint16_t src_height);
     int NV21Rotate(int8_t *dst_buf, uint16_t dst_fd, int8_t *src_buf,
                    uint16_t src_fd, uint16_t width, uint16_t height,
                    uint8_t angle);

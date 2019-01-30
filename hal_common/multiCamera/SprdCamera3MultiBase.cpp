@@ -694,6 +694,7 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
             HAL_LOGE("open yuv file fail!\n");
             return;
         }
+        size = param1 * param2 * 3 / 2;
         fwrite((void *)addr, 1, size, fp);
         fclose(fp);
     } break;
@@ -742,6 +743,39 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fp = fopen(file_name, "wb");
         if (fp == NULL) {
             HAL_LOGE("can not open file: %s \n", file_name);
+            return;
+        }
+        fwrite((void *)addr, 1, size, fp);
+        fclose(fp);
+    } break;
+    default:
+        break;
+    }
+}
+
+void SprdCamera3MultiBase::dumpDataDepth16(uint16_t *addr, int type, int size,
+                                     int param1, int param2, int param3,
+                                     const char param4[20]) {
+    FILE *fp = NULL;
+    char tmp_str[64] = {0};
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    char file_name[256] = {0};
+    p = localtime(&timep);
+    strcpy(file_name, CAMERA_DUMP_PATH);
+    sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    strcat(file_name, tmp_str);
+    switch (type) {
+    case 1: {
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "_%dx%d_%d_%s.yuv", param1, param2, param3, param4);
+        strcat(file_name, tmp_str);
+
+        fp = fopen(file_name, "w");
+        if (fp == NULL) {
+            HAL_LOGE("open yuv file fail!\n");
             return;
         }
         fwrite((void *)addr, 1, size, fp);
@@ -1386,6 +1420,21 @@ int SprdCamera3MultiBase::swScale(uint8_t *dst_buf, uint16_t dst_width,
                      IMG_DATA_TYPE_YUV420, pScale[1]);
     ret = yuv_scale_nv21_hal(pScale[1], pScale[0]);
 
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
+int SprdCamera3MultiBase::Yuv420Scale(uint8_t *dst_buf, uint16_t dst_width,
+                                      uint16_t dst_height, uint8_t *src_buf,
+                                      uint16_t src_width, uint16_t src_height) {
+    int ret = NO_ERROR;
+    HAL_LOGI("in");
+    if (mHwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+    ret = Y_U_V420_scaler(dst_buf, dst_width, dst_height, src_buf, src_width,
+                          src_height);
     HAL_LOGI("out,ret=%d", ret);
     return ret;
 }
