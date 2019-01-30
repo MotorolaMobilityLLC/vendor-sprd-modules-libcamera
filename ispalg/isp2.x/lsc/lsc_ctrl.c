@@ -110,7 +110,7 @@ static void alsc_get_cmd(struct lsc_ctrl_context *cxt)
 	if(0 <= val)
 		cxt->cmd_alsc_table_pattern = val;
 
-	property_get("debug.isp.alsc.table.index", prop, (char *)"0");
+	property_get("debug.isp.alsc.table.index", prop, (char *)"9");
 	val = atoi(prop);
 	if(0 <= val)
 		cxt->cmd_alsc_table_index = val;
@@ -2596,29 +2596,38 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	// cmd set table index
-	//if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
-		//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
-			//memcpy(cxt->lsc_buffer, param->std_tab_param[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
-			///ISP_LOGV("[ALSC]  cmd set table index %d, final output cxt->lsc_buffer[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
-					//cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3] , cxt->lsc_id);
-			//return rtn;
-		//}
-	//}
-
-	if(cxt->alg_count <= cxt->alg_quick_in_frame + 1 && cxt->frame_count < cxt->calc_freq*3 + 1 && cxt->can_update_dest == 1 && param->bv*cxt->fw_start_bv > 0){
-		memcpy(lsc_debug_info_ptr->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(unsigned short));
-		memcpy(cxt->lsc_buffer                     , cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(unsigned short));
-		ISP_LOGV("[ALSC] alg_quick_in_frame=%d, alg_count=%d, frame_count=%d, replace output by fwstart_new_scaled_table[%d,%d,%d,%d], lsc_id=%d", cxt->alg_quick_in_frame, cxt->alg_count, cxt->frame_count,
-				cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3], cxt->lsc_id);	
-	}else{
-		if( cxt->can_update_dest ==1 ){
-			post_shading_gain( lsc_debug_info_ptr->output_lsc_table, lsc_debug_info_ptr->last_lsc_table, gain_width, gain_height, cxt->output_gain_pattern, cxt->frame_count,
-							param->bv, param->bv_gain, cxt->flash_mode, cxt->pre_flash_mode, cxt->LSC_SPD_VERSION, post_param);
-			// copy the table after post_gain_act
-			memcpy(cxt->lsc_buffer, lsc_debug_info_ptr->output_lsc_table, gain_width*gain_height*4*sizeof(unsigned short));
-		}else{
-			ISP_LOGV("[ALSC] post_gain SKIP, Not Update dst_gain due to just fw_start, frame_count=%d, lsc_id=%d, can_update_dest=%d", cxt->frame_count, cxt->lsc_id, cxt->can_update_dest);
+	if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
+		ISP_LOGI("[ALSC] cmd_alsc_table_index=%d", cxt->cmd_alsc_table_index);
+		if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
+			if(cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
+				memcpy(cxt->lsc_buffer, cxt->std_init_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
+			}else{
+				memcpy(cxt->lsc_buffer, cxt->std_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
+			}
+			ISP_LOGI("[ALSC]  cmd set table index %d, final output cxt->lsc_buffer[%d,%d,%d,%d], lsc_id=%d", cxt->cmd_alsc_table_index,
+					cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3] , cxt->lsc_id);
+			return rtn;
 		}
+	}
+
+	if(!cxt->cmd_alsc_bypass){
+		if(cxt->alg_count <= cxt->alg_quick_in_frame + 1 && cxt->frame_count < cxt->calc_freq*3 + 1 && cxt->can_update_dest == 1 && param->bv*cxt->fw_start_bv > 0){
+			memcpy(lsc_debug_info_ptr->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(unsigned short));
+			memcpy(cxt->lsc_buffer                     , cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(unsigned short));
+			ISP_LOGV("[ALSC] alg_quick_in_frame=%d, alg_count=%d, frame_count=%d, replace output by fwstart_new_scaled_table[%d,%d,%d,%d], lsc_id=%d", cxt->alg_quick_in_frame, cxt->alg_count, cxt->frame_count,
+					cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3], cxt->lsc_id);
+		}else{
+			if( cxt->can_update_dest ==1 ){
+				post_shading_gain( lsc_debug_info_ptr->output_lsc_table, lsc_debug_info_ptr->last_lsc_table, gain_width, gain_height, cxt->output_gain_pattern, cxt->frame_count,
+								param->bv, param->bv_gain, cxt->flash_mode, cxt->pre_flash_mode, cxt->LSC_SPD_VERSION, post_param);
+				// copy the table after post_gain_act
+				memcpy(cxt->lsc_buffer, lsc_debug_info_ptr->output_lsc_table, gain_width*gain_height*4*sizeof(unsigned short));
+			}else{
+				ISP_LOGV("[ALSC] post_gain SKIP, Not Update dst_gain due to just fw_start, frame_count=%d, lsc_id=%d, can_update_dest=%d", cxt->frame_count, cxt->lsc_id, cxt->can_update_dest);
+			}
+		}
+	}else{
+		ISP_LOGV("[ALSC] cmd bypass");
 	}
 	ISP_LOGV("[ALSC] final output cxt->lsc_buffer[%d,%d,%d,%d], frame_count=%d, lsc_id=%d, can_update_dest=%d",
 			cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3], 
