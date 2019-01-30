@@ -1350,11 +1350,13 @@ static cmr_u32 ae_set_pflash_exposure_compensation(struct ae_ctrl_cxt *cxt, int 
 	cmr_u16 effect_index = 0;
 	cmr_u32 ae_base_idx = 0;
 	cmr_u16 max_idx = cxt->cur_status.ae_table->max_index;
-	cmr_s32 tgoft = cxt->sync_cur_result.cur_lum - cxt->cur_status.target_lum;
+	cmr_s32 tar_lum = cxt->cur_status.target_lum + cxt->cur_status.target_offset;
+	cmr_s32 tgoft = cxt->sync_cur_result.cur_lum - tar_lum;
 
+	tar_lum = tar_lum ? tar_lum : 1;
 	cxt->sync_cur_result.cur_lum = cxt->sync_cur_result.cur_lum? cxt->sync_cur_result.cur_lum:1;
 
-	float temp = (float)(1.0 *cxt->cur_status.target_lum)/(float)cxt->sync_cur_result.cur_lum;
+	float temp = (float)(1.0 * tar_lum)/(float)cxt->sync_cur_result.cur_lum;
 	if(cxt->effect_index_index == 3)
 		effect_index = cxt->effect_index[0];
 	else if(cxt->effect_index_index == 2)
@@ -1370,12 +1372,12 @@ static cmr_u32 ae_set_pflash_exposure_compensation(struct ae_ctrl_cxt *cxt, int 
 		ae_base_idx = ae_base_idx > max_idx ? max_idx : ae_base_idx;
 	}
 	else{
-		value = (cmr_s16)(log(temp) /0.026 + 0.5);
+		value = (cmr_s16)(log(temp) /0.026 - 0.5);
 		ae_base_idx = effect_index + value;
 		ae_base_idx = ae_base_idx < 0 ? 0 : ae_base_idx;
 	}
 
-	ISP_LOGD("value=%hd, ae_base_idx=%d, cur_lum=%d, t=%d table_idx=%d call=%d",value, ae_base_idx,cxt->sync_cur_result.cur_lum, cxt->cur_status.target_lum,effect_index, call);
+	ISP_LOGD("value=%hd, ae_base_idx=%d, cur_lum=%d, t=%d t_offset = %d table_idx=%d call=%d",value, ae_base_idx,cxt->sync_cur_result.cur_lum, cxt->cur_status.target_lum,cxt->cur_status.target_offset,effect_index, call);
 
 	return ae_base_idx;
 }
@@ -2808,7 +2810,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 	if (0 != cxt->flash_ver) {
 		if(cxt->pf_wait_stable_cnt){
-			if(cxt->pf_wait_stable_cnt < 5){
+			if(cxt->pf_wait_stable_cnt < 6){
 				cxt->pf_wait_stable_cnt++;
 			}
 			else {
@@ -2854,7 +2856,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 		if ((FLASH_MAIN_BEFORE == current_status->settings.flash) || (FLASH_MAIN == current_status->settings.flash)) {
 			if (cxt->flash_esti_result.isEnd) {
-				if (1 == cxt->exposure_compensation.ae_compensation_flag) {
+				if ((1 == cxt->exposure_compensation.ae_compensation_flag) && (cxt->expchanged)) {
 					if(current_status->settings.manual_mode !=2){
 						ISP_LOGV("manual_mode:%d,table_idx:%d",current_status->settings.manual_mode,cxt->cur_status.settings.table_idx);
 						current_status->settings.manual_mode = 1;
