@@ -1413,6 +1413,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 	param_source = ISP_PARAM_FROM_TOOL;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_PARAM_SOURCE, (void *)&param_source, NULL);
 
+	memset(&input, 0, sizeof(struct isp_pm_init_input));
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
 			input.tuning_data[i].data_ptr = sensor_raw_info_ptr->mode_ptr[i].addr;
@@ -1424,6 +1425,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 		}
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
+	input.is_4in1_sensor = cxt->is_4in1_sensor;
 
 	ret = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != ret) {
@@ -1623,6 +1625,7 @@ static cmr_int ispctl_param_update(cmr_handle isp_alg_handle, void *param_ptr)
 	param_source = ISP_PARAM_FROM_TOOL;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_PARAM_SOURCE, (void *)&param_source, NULL);
 
+	memset(&input, 0, sizeof(struct isp_pm_init_input));
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		if (mode_param_ptr->mode_id == i) {
 			input.tuning_data[i].data_ptr = mode_param_ptr;
@@ -1634,6 +1637,7 @@ static cmr_int ispctl_param_update(cmr_handle isp_alg_handle, void *param_ptr)
 		mode_param_ptr = (struct isp_mode_param *)((cmr_u8 *) mode_param_ptr + mode_param_ptr->size);
 	}
 
+	input.is_4in1_sensor = cxt->is_4in1_sensor;
 	ret = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, NULL);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to update  isp param");
