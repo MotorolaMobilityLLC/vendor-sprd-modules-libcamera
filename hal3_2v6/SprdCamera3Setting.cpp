@@ -4250,6 +4250,11 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     // AF_CONTROL
+    if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8,
+                         ANDROID_CONTROL_AF_MODE, 1)
+    }
     if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
         s_setting[mCameraId].controlInfo.af_trigger = valueU8;
@@ -4259,11 +4264,6 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].controlInfo.af_trigger_Id =
             frame_settings.find(ANDROID_CONTROL_AF_TRIGGER_ID).data.i32[0];
         pushAndroidParaTag(ANDROID_CONTROL_AF_TRIGGER_ID);
-    }
-    if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8,
-                         ANDROID_CONTROL_AF_MODE, 1)
     }
     if (frame_settings.exists(ANDROID_CONTROL_AF_STATE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_STATE).data.u8[0];

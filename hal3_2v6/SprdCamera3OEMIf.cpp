@@ -225,6 +225,56 @@ bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
 multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
 
+struct afStateMachine afStateMachine[] = {
+    {ANDROID_CONTROL_AF_STATE_INACTIVE,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN,
+        AF_FOCUSED, ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
+    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN,
+        AF_NOT_FOCUSED, ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
+    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN,
+        AF_TRIGGER_CANCEL, ANDROID_CONTROL_AF_STATE_INACTIVE},
+    {ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED,
+        AF_TRIGGER_CANCEL, ANDROID_CONTROL_AF_STATE_INACTIVE},
+    {ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED,
+        AF_TRIGGER_CANCEL, ANDROID_CONTROL_AF_STATE_INACTIVE},
+    {ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN},
+};
+
+struct afStateMachine cafStateMachine[] = {
+    {ANDROID_CONTROL_AF_STATE_INACTIVE,
+        AF_START, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_INACTIVE,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN,
+        AF_FOCUSED, ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN,
+        AF_NOT_FOCUSED, ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED,
+        AF_START, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED,
+        AF_START, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED,
+        AF_TRIGGER_START, ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
+    //when cancel af trigger in caf mode, set af state to PASSIVE_SCAN
+    {ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED,
+        AF_TRIGGER_CANCEL, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED,
+        AF_TRIGGER_CANCEL, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+    //when changing af to caf, af state starts with PASSIVE_SCAN
+    {ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED,
+        AF_MODE_CHANGE, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+    {ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED,
+        AF_MODE_CHANGE, ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
+};
+
 static void writeCamInitTimeToApct(char *buf) {
     int apct_dir_fd = open("/data/apct", O_CREAT, 0777);
 
@@ -1244,20 +1294,19 @@ status_t SprdCamera3OEMIf::autoFocus() {
                      CAMERA_FOCUS_MODE_AUTO);
         }
     }
-    if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
-        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
-    } else if (controlInfo.af_mode ==
-               ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
-        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-    } else {
-        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
+
+    //do immediate transition in CONTINUOUS_VIDEO/AUTO/MACRO when af trigger is sent
+    //do eventual transition in CONTINUOUS_PICTURE when af trigger is done (see HandleFocus)
+    if(controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO ||
+               controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+               controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+        setAfState(AF_TRIGGER_START);
     }
-    mSetting->setAfCONTROLTag(&controlInfo);
+
     if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
         HAL_LOGE("auto foucs fail.");
         setCameraState(SPRD_IDLE, STATE_FOCUS);
-        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-        mSetting->setAfCONTROLTag(&controlInfo);
+        setAfState(AF_NOT_FOCUSED);
     }
 
     HAL_LOGD("X");
@@ -1290,30 +1339,16 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
     {
         CONTROL_Tag controlInfo;
         mSetting->getCONTROLTag(&controlInfo);
-        if (!(controlInfo.af_state ==
-                  ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED &&
-              (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START ||
-               controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_IDLE))) {
-            if (controlInfo.af_mode ==
-                    ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
-                controlInfo.af_mode ==
-                    ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
-                controlInfo.af_state =
-                    ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED;
-            } else {
-                controlInfo.af_state = ANDROID_CONTROL_AF_STATE_INACTIVE;
-            }
+        if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
+            setAfState(AF_TRIGGER_CANCEL);
         }
         /*auto focus resume to caf*/
         if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE &&
             mCameraId == 0 && mIsAutoFocus) {
-            if (controlInfo.af_mode ==
-                ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
+            mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
                      CAMERA_FOCUS_MODE_CAF);
         }
-        mSetting->setAfCONTROLTag(&controlInfo);
     }
     mIsAutoFocus = false;
     HAL_LOGD("X");
@@ -1888,6 +1923,61 @@ int SprdCamera3OEMIf::setSnapshotParams() {
              (cmr_uint)mSprdZslEnabled);
 
     return 0;
+}
+
+void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
+    CONTROL_Tag controlInfo;
+    uint32_t state;
+    uint32_t newState;
+    struct afStateMachine *stateMachine;
+    uint32_t size;
+    uint32_t i;
+
+    mSetting->getCONTROLTag(&controlInfo);
+    state = controlInfo.af_state;
+    newState = state;
+
+     //af state is always INACTIVE when af mode is OFF
+    if (ANDROID_CONTROL_AF_MODE_OFF == controlInfo.af_mode ||
+            ANDROID_CONTROL_AF_MODE_EDOF == controlInfo.af_mode) {
+        HAL_LOGD("set INACTIVE when AF mode is OFF");
+        newState = ANDROID_CONTROL_AF_STATE_INACTIVE;
+        goto EXIT;
+    }
+
+    //start with INACTIVE when changing af with caf
+    if(AF_MODE_CHANGE == cause) {
+        //switching between AF_MODE_CONTINOUS_* will be ignored
+        if (!(controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO &&
+                mLastAfMode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) &&
+            !(controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE &&
+                mLastAfMode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
+            newState = ANDROID_CONTROL_AF_STATE_INACTIVE;
+        }
+    }
+
+    if(ANDROID_CONTROL_AF_MODE_AUTO == controlInfo.af_mode ||
+            ANDROID_CONTROL_AF_MODE_MACRO == controlInfo.af_mode) {
+        stateMachine = afStateMachine;
+        size = sizeof(afStateMachine) / sizeof(struct afStateMachine);
+    } else {
+        stateMachine = cafStateMachine;
+        size = sizeof(cafStateMachine) / sizeof(struct afStateMachine);
+    }
+
+    for (i = 0; i < size; i++) {
+        if ((stateMachine[i].transitionCause == cause) && (stateMachine[i].state == state)) {
+            newState = stateMachine[i].newState;
+            break;
+        }
+    }
+
+EXIT:
+    HAL_LOGD("Af mode=%d, transition cause=%d, cur state=%d, new state=%d", controlInfo.af_mode,
+             cause, state, newState);
+
+    controlInfo.af_state = newState;
+    mSetting->setAfCONTROLTag(&controlInfo);
 }
 
 void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
@@ -4886,8 +4976,14 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                     break;
                 }
             }
-            controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
-            mSetting->setAfCONTROLTag(&controlInfo);
+
+            if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+                controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+                setAfState(AF_FOCUSED);
+            } else {
+                setAfState(AF_TRIGGER_START);
+            }
+
             // channel->channelCbRoutine(0, timeStamp,
             // CAMERA_STREAM_TYPE_DEFAULT);
             if (controlInfo.af_mode ==
@@ -4901,8 +4997,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
-        controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-        mSetting->setAfCONTROLTag(&controlInfo);
+        setAfState(AF_NOT_FOCUSED);
         // channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
         if (controlInfo.af_mode ==
             ANDROID_CONTROL_AF_MODE_AUTO) // reset autofocus only in TouchAF
@@ -4916,16 +5011,13 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
-        if (!mIsAutoFocus) {
+        if (!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_CAF) {
             if (focus_status->is_in_focus) {
-                controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
+                setAfState(AF_START);
             } else {
-                controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
+                setAfState(AF_FOCUSED);
                 mLastCafDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
             }
-
-            if (focus_status->af_focus_type == CAM_AF_FOCUS_CAF)
-                mSetting->setAfCONTROLTag(&controlInfo);
         }
         break;
 
@@ -4951,8 +5043,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     default:
         HAL_LOGE("camera cb: unknown cb %d for CAMERA_FUNC_START_FOCUS!", cb);
         {
-            controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-            mSetting->setAfCONTROLTag(&controlInfo);
+            setAfState(AF_NOT_FOCUSED);
 
             // channel->channelCbRoutine(0, timeStamp,
             // CAMERA_STREAM_TYPE_DEFAULT);
@@ -5652,7 +5743,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&ae_compensation_param);
         break;
     case ANDROID_CONTROL_AF_TRIGGER:
-        HAL_LOGV("AF_TRIGGER %d", controlInfo.af_trigger);
+        HAL_LOGD("AF_TRIGGER %d", controlInfo.af_trigger);
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
             struct img_rect zoom1 = {0, 0, 0, 0};
             struct img_rect zoom = {0, 0, 0, 0};
@@ -5680,7 +5771,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                              (cmr_uint)&focus_para);
                 }
             }
-
             autoFocus();
         } else if (controlInfo.af_trigger ==
                    ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
@@ -5749,6 +5839,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AF_MODE: {
         int8_t AfMode = 0;
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
+
         if (!mIsAutoFocus) {
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==
@@ -5756,6 +5847,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 AfMode = CAMERA_FOCUS_MODE_CAF_VIDEO;
             }
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, AfMode);
+        }
+        if (controlInfo.af_mode != mLastAfMode) {
+            setAfState(AF_MODE_CHANGE);
+            mLastAfMode = controlInfo.af_mode;
         }
     } break;
     case ANDROID_CONTROL_AE_ANTIBANDING_MODE: {

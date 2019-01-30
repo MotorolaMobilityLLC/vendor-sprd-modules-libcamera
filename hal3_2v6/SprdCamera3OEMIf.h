@@ -140,6 +140,22 @@ typedef struct {
     uint32_t heapNum;
 } camera_oem_buff_info_t;
 
+enum afTransitionCause{
+    AF_MODE_CHANGE = 0,
+    AF_START,
+    AF_FOCUSED,
+    AF_NOT_FOCUSED,
+    AF_TRIGGER_START,
+    AF_TRIGGER_CANCEL,
+    AF_MODE_MAX,
+};
+
+struct afStateMachine {
+    uint32_t state;
+    uint32_t transitionCause;
+    uint32_t newState;
+};
+
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
 #define MAX_Y_UV_COUNT 2
@@ -525,6 +541,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t mZslNum;
     Mutex mZslBufLock;
     // zsl end
+
+    void setAfState(enum afTransitionCause cause);
+    int32_t mLastAfMode;
 
     uint32_t getRawQueueFrameNum();
     struct rawBufferQueue popRawQueue();
