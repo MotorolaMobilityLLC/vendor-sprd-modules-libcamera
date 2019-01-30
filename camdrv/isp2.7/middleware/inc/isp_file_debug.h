@@ -17,10 +17,10 @@
 #ifndef _ISP_FILE_DEBUG_H_
 #define _ISP_FILE_DEBUG_H_
 
-cmr_int isp_file_ae_save_stats(cmr_handle *handle,
+cmr_int isp_file_ae_save_stats(cmr_handle handle,
 			cmr_u32 *r_info, cmr_u32 *g_info, cmr_u32 *b_info,
 			cmr_u32 size);
-cmr_int isp_file_ebd_save_info(cmr_handle *handle, void *info);
+cmr_int isp_file_ebd_save_info(cmr_handle handle, void *info);
 cmr_int isp_file_debug_init(cmr_handle *handle);
 cmr_int isp_file_debug_deinit(cmr_handle handle);
 #endif

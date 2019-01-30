@@ -40,7 +40,7 @@ cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info)
 	return ret;
 }
 
-cmr_s32 isp_u_fetch_raw_transaddr(cmr_handle handle, struct isp_dev_block_addr * addr)
+cmr_s32 isp_u_fetch_raw_transaddr(cmr_handle handle, struct isp_dev_block_addr *addr)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

@@ -31,7 +31,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CTRL_EVT_TX				(1 << 2)
 #define ISP_CTRL_EVT_SOF			(1 << 3)
 #define ISP_CTRL_EVT_AE				(1 << 4)
-#define ISP_CTRL_EVT_SW_AE			(1 << 4) + 1
+#define ISP_CTRL_EVT_SW_AE			((1 << 4) + 1)
 #define ISP_CTRL_EVT_AF				(1 << 5)
 #define ISP_CTRL_EVT_PDAF			(1 << 6)
 #define ISP_PROC_AFL_DONE			(1 << 7)
@@ -632,17 +632,16 @@ struct isp_img_frm {
 	cmr_u32 format_pattern;
 };
 
-struct soft_isp_misc_img_frm
-{
+struct soft_isp_misc_img_frm {
 	struct isp_img_frm cpu_frminfo;
-	void*  graphicbuffer;
+	void *graphicbuffer;
 };
 
 typedef struct {
-        int F_number;
-        int sel_x;
-        int sel_y;
-        unsigned char *DisparityImage;
+	int F_number;
+	int sel_x;
+	int sel_y;
+	unsigned char *DisparityImage;
 } WeightParams_t;
 
 struct soft_isp_frm_param {
@@ -876,8 +875,8 @@ struct isp_ynr_info {
 };
 
 struct isp_exp_comprnsation {
-       cmr_u16 idx;
-       cmr_s16 value;
+	cmr_u16 idx;
+	cmr_s16 value;
 };
 
 struct isp_exp_compensation{
@@ -937,8 +936,7 @@ struct isp_sw_cnr2_level_info {
 	cmr_u16 low_ct_thrd;
 };
 
-struct isp_sw_filter_weights
-{
+struct isp_sw_filter_weights {
 	cmr_u8 distWeight[9];
 	cmr_u8 rangWeight[128];
 };

@@ -29,7 +29,7 @@ cmr_s32 isp_u_anti_flicker_new_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32
 		return -1;
 	}
 
-	file = (struct isp_file *)(handle);
+	file = (struct isp_file *)handle;
 	param.isp_id = file->isp_id;
 	param.scene_id = scene_id;
 	param.sub_block = ISP_BLOCK_ANTI_FLICKER_NEW;

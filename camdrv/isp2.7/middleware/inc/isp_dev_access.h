@@ -119,5 +119,5 @@ cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, void *out);
 void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr);
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr);
-cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr) ;
+cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr);
 #endif

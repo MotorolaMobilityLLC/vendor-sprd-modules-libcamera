@@ -38,6 +38,7 @@ cmr_int isp_dev_4in1_flag(cmr_handle isp_dev_handle, cmr_u32 flag)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
 	cxt->cam_4in1_flag = flag;
 	ISP_LOGV("cam_4in1_flag = %d", cxt->cam_4in1_flag);
 	return ret;

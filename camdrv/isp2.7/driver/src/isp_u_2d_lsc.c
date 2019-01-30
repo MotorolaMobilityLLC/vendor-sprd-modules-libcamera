@@ -21,7 +21,7 @@
 
 #define ISP_LSC_BUF_SIZE                             (32 * 1024)
 
-#define CLIP1(input,top, bottom) {if (input>top) input = top; if (input < bottom) input = bottom;}
+#define CLIP1(input, top, bottom) {if (input > top) input = top; if (input < bottom) input = bottom;}
 #define MAX_TABLE_SIZE 129
 
 typedef struct lnc_bicubic_weight_t_64_tag {
@@ -32,18 +32,18 @@ typedef struct lnc_bicubic_weight_t_64_tag {
 
 LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_simple[129];
 
-void generate_bicubic_weight_table(LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_simple[129],cmr_u16 LNC_GRID)
+void generate_bicubic_weight_table(LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_simple[129], cmr_u16 LNC_GRID)
 {
 	double PRECISION = 1024;
 	double param[4][4] =
 	{
 		{0, 2, 0, 0},
-		{-1,0, 1, 0},
+		{-1, 0, 1, 0},
 		{2, -5, 4, -1},
 		{-1, 3, -3, 1},
 	};
 
-	double t,matrix_result;
+	double t, matrix_result;
 	cmr_u16 relative;
 
 	//init
@@ -58,17 +58,17 @@ void generate_bicubic_weight_table(LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight
 		t = relative * 1.0 / LNC_GRID;
 
 		matrix_result = 1*param[0][0] + t*param[1][0] + t*t*param[2][0] + t*t*t*param[3][0];
-		lnc_bicubic_weight_t_simple[relative].w0 = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+		lnc_bicubic_weight_t_simple[relative].w0 = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) + 0.5));
 
 		matrix_result = 1*param[0][1] + t*param[1][1] + t*t*param[2][1] + t*t*t*param[3][1];
-		lnc_bicubic_weight_t_simple[relative].w1 = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+		lnc_bicubic_weight_t_simple[relative].w1 = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) + 0.5));
 
 		matrix_result = 1*param[0][2] + t*param[1][2] + t*t*param[2][2] + t*t*t*param[3][2];
-		lnc_bicubic_weight_t_simple[relative].w2 = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+		lnc_bicubic_weight_t_simple[relative].w2 = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) + 0.5));
 	}
 }
 
-cmr_u16 cubic_1D( cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16 box, LNC_BICUBIC_WEIGHT_TABLE_T *lnc_bicubic_weight_t_simple)
+cmr_u16 cubic_1D(cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16 box, LNC_BICUBIC_WEIGHT_TABLE_T *lnc_bicubic_weight_t_simple)
 {
 	cmr_s32 out_value;
 	cmr_u16 out_value_uint16;
@@ -117,7 +117,7 @@ static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_
 	cmr_u32 *addr = (cmr_u32 *) param_address;
 
 	if (param_address == 0x0 || grid_num == 0x0) {
-		ISP_LOGE("fail to get ISP_GenerateQValues param_address : addr=0x%lx grid_num=%d \n", param_address, grid_num);
+		ISP_LOGE("fail to get ISP_GenerateQValues param_address : addr=0x%lx grid_num=%d", param_address, grid_num);
 		return -1;
 	}
 

@@ -47,7 +47,7 @@ struct isp_file_context {
 
 static cmr_s32 g_isp_open_cnt;
 
-static FILE *ispfile_open_file(char* name, cmr_s32 open_cnt)
+static FILE *ispfile_open_file(char *name, cmr_s32 open_cnt)
 {
 	FILE *fp = NULL;
 	char file_name[100] = { 0 };
@@ -55,7 +55,7 @@ static FILE *ispfile_open_file(char* name, cmr_s32 open_cnt)
 	sprintf(file_name, "/data/vendor/cameraserver/%s_%d.txt", name, open_cnt);
 
 	fp = fopen(file_name, "w+");
-	if (NULL ==fp)
+	if (NULL == fp)
 		ISP_LOGE("fail to open file");
 
 	return fp;
@@ -94,7 +94,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp_file_ae_save_stats(cmr_handle *handle,
+cmr_int isp_file_ae_save_stats(cmr_handle handle,
 		cmr_u32 *r_info, cmr_u32 *g_info, cmr_u32 *b_info,
 		cmr_u32 size)
 {
@@ -154,7 +154,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp_file_ebd_save_info(cmr_handle *handle, void *info)
+cmr_int isp_file_ebd_save_info(cmr_handle handle, void *info)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_file_context *cxt = (struct isp_file_context *)handle;

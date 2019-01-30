@@ -195,7 +195,7 @@ struct isp_u_blocks_info {
 	cmr_u32 scene_id;
 };
 
-cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle * handle);
+cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle);
 cmr_s32 isp_dev_close(cmr_handle handle);
 cmr_s32 isp_dev_cfg_start(cmr_handle handle);
 cmr_s32 isp_dev_update_param_start(cmr_handle handle);
@@ -206,8 +206,8 @@ cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
 cmr_s32 isp_dev_ynr(cmr_handle handle, struct isp_ynr_info *param);
 cmr_s32 isp_dev_reset(isp_handle handle);
 
-cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 * width, cmr_u32 * height);
-cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec);
+cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 *width, cmr_u32 *height);
+cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 *sec, cmr_u32 *usec);
 
 cmr_s32 isp_u_fetch_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_fetch_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h);
@@ -236,7 +236,7 @@ cmr_s32 isp_u_cfa_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_cmc_block(cmr_handle handle, void *block_info);
 
 cmr_s32 isp_u_gamma_block(cmr_handle handle, void *block_info);
-cmr_s32 isp_u_gamma_status(cmr_handle handle, cmr_u32 * status);
+cmr_s32 isp_u_gamma_status(cmr_handle handle, cmr_u32 *status);
 
 cmr_s32 isp_u_cce_matrix_block(cmr_handle handle, void *block_info);
 
@@ -259,7 +259,7 @@ cmr_s32 isp_u_hist_ratio(cmr_handle handle, cmr_u16 low_ratio, cmr_u16 high_rati
 cmr_s32 isp_u_hist_maxmin(cmr_handle handle, cmr_u32 in_min, cmr_u32 in_max, cmr_u32 out_min, cmr_u32 out_max);
 cmr_s32 isp_u_hist_clear_eb(cmr_handle handle, cmr_u32 eb);
 cmr_s32 isp_u_hist_statistic(cmr_handle handle, void *out_value);
-cmr_s32 isp_u_hist_statistic_num(cmr_handle handle, cmr_u32 * num);
+cmr_s32 isp_u_hist_statistic_num(cmr_handle handle, cmr_u32 *num);
 
 cmr_s32 isp_u_afm_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_afm_bypass(cmr_handle handle, cmr_u32 bypass);
@@ -269,7 +269,7 @@ cmr_s32 isp_u_afm_skip_num(cmr_handle handle, cmr_u32 skip_num);
 cmr_s32 isp_u_afm_skip_num_clr(cmr_handle handle, cmr_u32 is_clear);
 cmr_s32 isp_u_afm_win(cmr_handle handle, void *win_rangs);
 cmr_s32 isp_u_afm_statistic(cmr_handle handle, void *out_statistic);
-cmr_s32 isp_u_afm_win_num(cmr_handle handle, cmr_u32 * win_num);
+cmr_s32 isp_u_afm_win_num(cmr_handle handle, cmr_u32 *win_num);
 cmr_s32 isp_u_raw_afm_spsmd_square_en(cmr_handle handle, cmr_u32 en);
 
 cmr_s32 isp_u_edge_block(cmr_handle handle, void *block_info);
@@ -284,9 +284,9 @@ cmr_s32 isp_u_fcs_mode(cmr_handle handle, cmr_u32 mode);
 
 cmr_s32 isp_u_css_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_css_bypass(cmr_handle handle, cmr_u32 bypass);
-cmr_s32 isp_u_css_thrd(cmr_handle handle, cmr_u8 * low_thr, cmr_u8 * low_sum_thr, cmr_u8 lum_thr, cmr_u8 chr_thr);
+cmr_s32 isp_u_css_thrd(cmr_handle handle, cmr_u8 *low_thr, cmr_u8 *low_sum_thr, cmr_u8 lum_thr, cmr_u8 chr_thr);
 cmr_s32 isp_u_css_slice_size(cmr_handle handle, cmr_u32 w, cmr_u32 h);
-cmr_s32 isp_u_css_ratio(cmr_handle handle, cmr_u8 * ratio);
+cmr_s32 isp_u_css_ratio(cmr_handle handle, cmr_u8 *ratio);
 
 cmr_s32 isp_u_csa_block(cmr_handle handle, void *block_info);
 
@@ -317,7 +317,7 @@ cmr_s32 isp_u_comm_shadow(cmr_handle handle, cmr_u32 shadow);
 cmr_s32 isp_u_comm_shadow_all(cmr_handle handle, cmr_u8 shadow);
 cmr_s32 isp_u_comm_bayer_mode(cmr_handle handle, cmr_u32 nlc_bayer, cmr_u32 awbc_bayer, cmr_u32 wave_bayer, cmr_u32 cfa_bayer, cmr_u32 gain_bayer);
 cmr_s32 isp_u_comm_isp_s32_clear(cmr_handle handle, cmr_u32 isp_s32_num);
-cmr_s32 isp_u_comm_get_isp_s32_raw(cmr_handle handle, cmr_u32 * raw);
+cmr_s32 isp_u_comm_get_isp_s32_raw(cmr_handle handle, cmr_u32 *raw);
 cmr_s32 isp_u_comm_pmu_raw_mask(cmr_handle handle, cmr_u8 raw_mask);
 cmr_s32 isp_u_comm_hw_mask(cmr_handle handle, cmr_u32 hw_logic);
 cmr_s32 isp_u_comm_hw_enable(cmr_handle handle, cmr_u32 hw_logic);
@@ -330,9 +330,9 @@ cmr_s32 isp_u_comm_axi_stop(cmr_handle handle, cmr_u8 eb);
 cmr_s32 isp_u_comm_slice_cnt_enable(cmr_handle handle, cmr_u8 eb);
 cmr_s32 isp_u_comm_preform_cnt_enable(cmr_handle handle, cmr_u8 eb);
 cmr_s32 isp_u_comm_set_slice_num(cmr_handle handle, cmr_u8 num);
-cmr_s32 isp_u_comm_get_slice_num(cmr_handle handle, cmr_u8 * slice_num);
-cmr_s32 isp_u_comm_perform_cnt_rstatus(cmr_handle handle, cmr_u32 * status);
-cmr_s32 isp_u_comm_preform_cnt_status(cmr_handle handle, cmr_u32 * status);
+cmr_s32 isp_u_comm_get_slice_num(cmr_handle handle, cmr_u8 *slice_num);
+cmr_s32 isp_u_comm_perform_cnt_rstatus(cmr_handle handle, cmr_u32 *status);
+cmr_s32 isp_u_comm_preform_cnt_status(cmr_handle handle, cmr_u32 *status);
 
 cmr_s32 isp_u_glb_gain_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_glb_gain_bypass(cmr_handle handle, cmr_u32 bypass);
@@ -400,7 +400,7 @@ cmr_s32 isp_u_3a_ctrl(cmr_handle handle, cmr_u32 enable, cmr_u32 scene_id);
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block);
 cmr_s32 isp_set_arbiter(cmr_handle handle);
 cmr_s32 isp_set_dispatch(cmr_handle handle);
-cmr_s32 isp_cfg_dispatch(cmr_handle handle, struct isp_dev_dispatch_info * param_ptr);
+cmr_s32 isp_cfg_dispatch(cmr_handle handle, struct isp_dev_dispatch_info *param_ptr);
 cmr_s32 isp_get_fetch_addr(struct isp_drv_interface_param *isp_context_ptr, struct isp_dev_fetch_info *fetch_ptr);
 cmr_s32 isp_set_fetch_param(cmr_handle handle);
 cmr_s32 isp_set_store_param(cmr_handle handle);
@@ -410,7 +410,7 @@ cmr_s32 isp_set_comm_param(cmr_handle handle);
 cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_dev_common_info *param_ptr);
 cmr_s32 isp_u_bq_init_bufqueue(cmr_handle handle);
 cmr_s32 isp_u_bq_enqueue_buf(cmr_handle handle, cmr_u64 k_addr, cmr_u64 u_addr, cmr_u32 type);
-cmr_s32 isp_u_bq_dequeue_buf(cmr_handle handle, cmr_u64 * k_addr, cmr_u64 * u_addr, cmr_u32 type);
+cmr_s32 isp_u_bq_dequeue_buf(cmr_handle handle, cmr_u64 *k_addr, cmr_u64 *u_addr, cmr_u32 type);
 
 cmr_s32 isp_u_rgb2y_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_nlm_block(cmr_handle handle, void *block_info);

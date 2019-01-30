@@ -29,7 +29,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{DCAM_BLK_NLM, isp_u_nlm_block},
 	{ISP_BLK_POSTBLC, isp_u_post_blc_block},
 	//{ISP_BLK_RGB_GAIN, isp_u_rgb_gain_block},
-	{ISP_BLK_RGB_DITHER,isp_u_rgb_dither_block},
+	{ISP_BLK_RGB_DITHER, isp_u_rgb_dither_block},
 	{ISP_BLK_NLC, isp_u_nlc_block},
 	{ISP_BLK_2D_LSC, isp_u_2d_lsc_block},
 	{ISP_BLK_1D_LSC, isp_u_1d_lsc_block},
@@ -61,8 +61,8 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_AE_NEW, isp_u_raw_aem_block},
 	{ISP_BLK_AWB_NEW, isp_u_awbc_block},
 	{DCAM_BLK_RGB_AFM, isp_u_raw_afm_block},
-	{DCAM_BLK_3DNR_PRE,isp_u_3dnr_pre_block},
-	{DCAM_BLK_3DNR_CAP,isp_u_3dnr_cap_block},
+	{DCAM_BLK_3DNR_PRE, isp_u_3dnr_pre_block},
+	{DCAM_BLK_3DNR_CAP, isp_u_3dnr_cap_block},
 };
 
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)
@@ -86,7 +86,7 @@ cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)
 	return ret;
 }
 
-cmr_u32 isp_get_cfa_default_param( struct isp_dev_cfa_info * cfa_param)
+cmr_u32 isp_get_cfa_default_param(struct isp_dev_cfa_info *cfa_param)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 
@@ -198,7 +198,7 @@ cmr_s32 isp_set_dispatch(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_cfg_dispatch(cmr_handle handle, struct isp_dev_dispatch_info * param_ptr)
+cmr_s32 isp_cfg_dispatch(cmr_handle handle, struct isp_dev_dispatch_info *param_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 
@@ -288,7 +288,7 @@ static cmr_s32 isp_get_fetch_pitch(struct isp_pitch *pitch_ptr, cmr_u16 width, e
 	return ret;
 }
 
-cmr_s32 isp_get_fetch_addr(struct isp_drv_interface_param * isp_context_ptr, struct isp_dev_fetch_info * fetch_ptr)
+cmr_s32 isp_get_fetch_addr(struct isp_drv_interface_param *isp_context_ptr, struct isp_dev_fetch_info *fetch_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u16 fetch_width = fetch_ptr->size.width;
@@ -550,7 +550,7 @@ cmr_s32 isp_set_comm_param(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_dev_common_info * param_ptr)
+cmr_s32 isp_cfg_comm_data(cmr_handle handle, struct isp_dev_common_info *param_ptr)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 

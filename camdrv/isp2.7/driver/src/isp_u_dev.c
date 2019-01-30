@@ -196,12 +196,13 @@ cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
 	isp_3dnr.blending_no = param->blending_no;
 
 	ISP_LOGI("ref buf: 0x%x, 0x%x, cur buf: 0x%x, 0x%x, store buf: 0x%x, 0x%x,",
-		isp_3dnr.fetch_ref_addr,isp_3dnr.fetch_ref_addr_fd,
-		isp_3dnr.fetch_cur_addr,isp_3dnr.fetch_cur_addr_fd,
-		isp_3dnr.store_ref_addr,isp_3dnr.store_ref_addr_fd);
+		isp_3dnr.fetch_ref_addr, isp_3dnr.fetch_ref_addr_fd,
+		isp_3dnr.fetch_cur_addr, isp_3dnr.fetch_cur_addr_fd,
+		isp_3dnr.store_ref_addr, isp_3dnr.store_ref_addr_fd);
 
 	ISP_LOGI("w,h, mv, no: %d, %d, %d, %d, %d.\n",
-		isp_3dnr.image_width,isp_3dnr.image_height,isp_3dnr.mv_x, isp_3dnr.mv_y, isp_3dnr.blending_no);
+		isp_3dnr.image_width, isp_3dnr.image_height,
+		isp_3dnr.mv_x, isp_3dnr.mv_y, isp_3dnr.blending_no);
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_POST_3DNR, &isp_3dnr);
 	if (ret) {

@@ -319,7 +319,7 @@ static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
 	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO)
 		flag = 1;
 
-	if(cxt->afl_cxt.version) {
+	if (cxt->afl_cxt.version) {
 		isp_dev_anti_flicker_new_bypass(cxt->dev_access_handle, flag);
 		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, 1);
 	} else {
@@ -361,9 +361,9 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 	struct ae_flash_notice ae_notice;
 	enum smart_ctrl_flash_mode flash_mode = 0;
 	enum awb_ctrl_flash_status awb_flash_status = 0;
-	float captureFlashEnvRatio=0.0;
-	float captureFlash1ofALLRatio=0.0;
-	struct alsc_flash_info flash_info = { 0, 0};
+	float captureFlashEnvRatio = 0.0;
+	float captureFlash1ofALLRatio = 0.0;
+	struct alsc_flash_info flash_info = { 0, 0 };
 
 	if (NULL == cxt || NULL == flash_notice) {
 		ISP_LOGE("fail to get valid handle %p,notice %p ", cxt, flash_notice);
@@ -453,7 +453,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		flash_info.io_captureFlashEnvRatio = captureFlashEnvRatio;
 		flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
 		if (cxt->ops.lsc_ops.ioctrl)
-			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void*)&flash_info, NULL);
+			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void *)&flash_info, NULL);
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
@@ -712,12 +712,14 @@ static cmr_int ispctl_video_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (0 != *((cmr_u32 *) param_ptr)) {
 		cmr_u32 work_mode = 2;
+
 		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &work_mode, NULL);
 			ISP_RETURN_IF_FAIL(ret, ("fail to awb set_work_mode"));
 		}
 	} else {
 		cmr_u32 work_mode = 0;
+
 		if (cxt->ops.awb_ops.ioctrl) {
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &work_mode, NULL);
 			ISP_RETURN_IF_FAIL(ret, ("fail to awb set_work_mode"));

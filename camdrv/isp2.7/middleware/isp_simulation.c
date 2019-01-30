@@ -107,7 +107,7 @@ cmr_int isp_sim_save_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32
 
 	fprintf(fp, "stat_w:%d\n", stat_w);
 	fprintf(fp, "stat_h:%d\n", stat_h);
-	for (i=0; i < stat_w*stat_h; i++) {
+	for (i = 0; i < stat_w*stat_h; i++) {
 		fprintf(fp, "blk_id:%d R:%d G:%d B:%d\n",
 			i, awb_statis->r_info[i], awb_statis->g_info[i], awb_statis->b_info[i]);
 	}
