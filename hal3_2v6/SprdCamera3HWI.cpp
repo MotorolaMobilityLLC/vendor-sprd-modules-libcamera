@@ -876,11 +876,6 @@ int SprdCamera3HWI::configureStreams(
     //    capture_size.height = 368;
     //}
 
-    if (mStreamConfiguration.preview.width >= 2592 &&
-        mStreamConfiguration.snapshot.width >= 2592) {
-        mOEMIf->setJpegWithBigSizePreviewFlag();
-    }
-
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
     mOEMIf->setCamStreamInfo(video_size, videoFormat, videoStreamType);
