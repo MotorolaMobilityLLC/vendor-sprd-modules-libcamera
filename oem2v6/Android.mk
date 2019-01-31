@@ -20,7 +20,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/otp_drv \
     $(LOCAL_PATH)/../arithmetic/inc \
     $(LOCAL_PATH)/../cpp/driver/inc \
-    $(LOCAL_PATH)/../cpp/algo/inc
+    $(LOCAL_PATH)/../cpp/algo/inc \
+    $(LOCAL_PATH)/../arithmetic/sprd_easy_hdr/inc
 
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
@@ -148,7 +149,7 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB_VERSION_2
-LOCAL_SHARED_LIBRARIES += libsprdhdr
+LOCAL_SHARED_LIBRARIES += libsprdhdradapter
 else
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
