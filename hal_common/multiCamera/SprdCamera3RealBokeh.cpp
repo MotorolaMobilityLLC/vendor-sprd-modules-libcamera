@@ -1985,6 +1985,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             HAL_LOGD("start process normal frame to get "
                      "depth data!");
             if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
+                HAL_LOGI("mRealBokeh->mOtpData.otp_exist %d",mRealBokeh->mOtpData.otp_exist);
                 if (mRealBokeh->mOtpData.otp_exist) {
                     rc = sprdDepthCaptureHandle(capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr,
@@ -2865,8 +2866,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
     }
     CameraMetadata metadata;
     metadata = fwk_metadata;
-    mOtpData.otp_exist = false;
-    if (metadata.exists(ANDROID_SPRD_OTP_DATA)) {
+    if ((mOtpData.otp_exist == false) && metadata.exists(ANDROID_SPRD_OTP_DATA)) {
         uint8_t otpType;
         int otpSize;
         otpType = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
