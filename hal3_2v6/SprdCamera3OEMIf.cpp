@@ -839,8 +839,6 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
     }
     setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
 
-    mHalOem->ops->camera_fast_ctrl(mCameraHandle, CAMERA_FAST_MODE_FD, 0);
-
     if (mCaptureWidth != 0 && mCaptureHeight != 0) {
         if (mVideoWidth != 0 && mVideoHeight != 0 && mRecordingMode == true &&
             ((mCaptureMode != CAMERA_ISP_TUNING_MODE) &&
@@ -1768,13 +1766,11 @@ int SprdCamera3OEMIf::setPreviewParams() {
 int SprdCamera3OEMIf::setSnapshotParams() {
     struct img_size previewSize = {0, 0}, videoSize = {0, 0};
     struct img_size callbackSize = {0, 0}, captureSize = {0, 0};
-
+    int ret = 0;
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
-
-    mHalOem->ops->camera_fast_ctrl(mCameraHandle, CAMERA_FAST_MODE_FD, 0);
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PREVIEW_SIZE,
              (cmr_uint)&previewSize);
