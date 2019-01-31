@@ -71,11 +71,6 @@ static cmr_u32 _pm_bpc_convert_param(void *dst_param,
 		dst_ptr->cur.bpc_maxcoeff = bpc_param[strength_level].bpc_rules.k_val.max;
 
 		dst_ptr->cur.bpc_ppi_en = bpc_param[strength_level].ppi_block.ppi_en;
-		dst_ptr->cur.bpc_ppe_info.bpc_ppi_block_start_row = bpc_param[strength_level].ppi_block.block_start_row;
-		dst_ptr->cur.bpc_ppe_info.bpc_ppi_block_end_row = bpc_param[strength_level].ppi_block.block_end_row;
-		dst_ptr->cur.bpc_ppe_info.bpc_ppi_block_start_col = bpc_param[strength_level].ppi_block.block_start_col;
-		dst_ptr->cur.bpc_ppe_info.bpc_ppi_block_end_col = bpc_param[strength_level].ppi_block.block_end_col;
-
 		dst_ptr->cur.bpc_map_addr = 0x00;
 		dst_ptr->cur.bpc_bad_pixel_pos_out_addr = 0x00;
 		dst_ptr->cur.bad_pixel_num = 0x00;

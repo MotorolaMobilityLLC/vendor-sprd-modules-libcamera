@@ -55,6 +55,8 @@ int dcam_k_afm_block(struct dcam_dev_param *param)
 	param->afm.update &= (~(_UPDATE_INFO));
 
 	p = &(param->afm.af_param);
+
+#if 0 // afm block just set NR parameters. AFM control should be set by algo
 	if (s_dbg_bypass[idx] & (1 << _E_AFM))
 		p->bypass = 1;
 	val = (p->bypass & 0x1) |
@@ -74,7 +76,7 @@ int dcam_k_afm_block(struct dcam_dev_param *param)
 
 	/* afm_skip_num_clr */
 	DCAM_REG_MWR(idx, ISP_AFM_FRM_CTRL1, BIT_1, 1 << 1);
-
+#endif
 	val = (p->afm_cg_dis & 0x1) |
 		((p->afm_iir_enable & 0x1) << 2) |
 		((p->afm_lum_stat_chn_sel & 0x3) << 4) |

@@ -30,7 +30,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_2D_LSC, dcam_u_lsc_block},
 	{ISP_BLK_AWB_NEW, dcam_u_awbc_block},
 	{DCAM_BLK_BPC_V1, dcam_u_bpc_block},
-	/*{DCAM_BLK_PPE, dcam_u_bpc_ppe},*/
+	{DCAM_BLK_PPE, dcam_u_bpc_ppe},
 	{DCAM_BLK_RGB_AFM_V1, dcam_u_afm_block},
 
 	{ISP_BLK_BCHS, isp_u_bchs_block},
@@ -47,6 +47,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_LTM, isp_u_ltm_block},
 	{ISP_BLK_3DNR, isp_u_3dnr_block},
 	{ISP_BLK_NLM_V1, isp_u_nlm_block},
+	{ISP_BLK_IMBALANCE, isp_u_nlm_imblance},
 	{ISP_BLK_YUV_PRECDN_V1, isp_u_yuv_precdn_block},
 	{ISP_BLK_UV_POSTCDN_V1, isp_u_yuv_postcdn_block},
 	{ISP_BLK_UV_CDN_V1, isp_u_yuv_cdn_block},

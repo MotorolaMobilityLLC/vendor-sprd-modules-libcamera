@@ -208,62 +208,78 @@ static int isp_k_nlm_block(struct isp_io_param *param,
 	}
 
 	ret = load_vst_ivst_buf(p, idx);
+	return ret;
+}
+
+static int isp_k_nlm_imblance(
+		struct isp_io_param *param, uint32_t idx)
+{
+	int ret = 0;
+	struct isp_dev_nlm_imblance imblance_info;
+
+	ret = copy_from_user((void *)&imblance_info,
+			(void __user *)param->property_param,
+			sizeof(struct isp_dev_nlm_imblance));
+	if (ret != 0) {
+		pr_err("fail to copy from user, ret = %d\n", ret);
+		return  ret;
+	}
 
 	/* new added below */
 	ISP_REG_MWR(idx, ISP_NLM_PARA, BIT_7,
-			(p->imblance_dev.nlm_imblance_en)<<7);
-	if (p->imblance_dev.nlm_imblance_en == 0)
+			(imblance_info.nlm_imblance_en)<<7);
+	if (imblance_info.nlm_imblance_en == 0)
 		return 0;
 
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA1,
-		(p->imblance_dev.nlm_imblance_slash_edge_thr & 0xff) |
-		((p->imblance_dev.nlm_imblance_hv_edge_thr & 0xff) << 8) |
-		((p->imblance_dev.nlm_imblance_S_baohedu2 & 0xff) << 16) |
-		((p->imblance_dev.nlm_imblance_S_baohedu1 & 0xff) << 24));
+		(imblance_info.nlm_imblance_slash_edge_thr & 0xff) |
+		((imblance_info.nlm_imblance_hv_edge_thr & 0xff) << 8) |
+		((imblance_info.nlm_imblance_S_baohedu2 & 0xff) << 16) |
+		((imblance_info.nlm_imblance_S_baohedu1 & 0xff) << 24));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA2,
-		(p->imblance_dev.nlm_imblance_slash_flat_thr & 0x3ff) |
-		((p->imblance_dev.nlm_imblance_hv_flat_thr & 0x3ff) << 10));
+		(imblance_info.nlm_imblance_slash_flat_thr & 0x3ff) |
+		((imblance_info.nlm_imblance_hv_flat_thr & 0x3ff) << 10));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA3,
-		(p->imblance_dev.nlm_imblance_flag3_frez & 0x3ff) |
-		((p->imblance_dev.nlm_imblance_flag3_lum & 0x3ff) << 10) |
-		((p->imblance_dev.nlm_imblance_flag3_grid & 0x3ff) << 20));
+		(imblance_info.nlm_imblance_flag3_frez & 0x3ff) |
+		((imblance_info.nlm_imblance_flag3_lum & 0x3ff) << 10) |
+		((imblance_info.nlm_imblance_flag3_grid & 0x3ff) << 20));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA4,
-		(p->imblance_dev.nlm_imblance_lumth2 & 0xffff) |
-		((p->imblance_dev.nlm_imblance_lumth1 & 0xffff) << 16));
+		(imblance_info.nlm_imblance_lumth2 & 0xffff) |
+		((imblance_info.nlm_imblance_lumth1 & 0xffff) << 16));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA5,
-		(p->imblance_dev.nlm_imblance_lum1_flag4_r & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum1_flag2_r & 0x7ff) << 11) |
-		((p->imblance_dev.nlm_imblance_flag12_frezthr & 0x3ff) << 22));
+		(imblance_info.nlm_imblance_lum1_flag4_r & 0x7ff) |
+		((imblance_info.nlm_imblance_lum1_flag2_r & 0x7ff) << 11) |
+		((imblance_info.nlm_imblance_flag12_frezthr & 0x3ff) << 22));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA6,
-		(p->imblance_dev.nlm_imblance_lum1_flag0_r & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum1_flag0_rs & 0x7ff) << 11));
+		(imblance_info.nlm_imblance_lum1_flag0_r & 0x7ff) |
+		((imblance_info.nlm_imblance_lum1_flag0_rs & 0x7ff) << 11));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA7,
-		(p->imblance_dev.nlm_imblance_lum2_flag2_r & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum1_flag1_r & 0x7ff) << 11));
+		(imblance_info.nlm_imblance_lum2_flag2_r & 0x7ff) |
+		((imblance_info.nlm_imblance_lum1_flag1_r & 0x7ff) << 11));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA8,
-		(p->imblance_dev.nlm_imblance_lum2_flag0_rs & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum2_flag4_r & 0x7ff) << 11));
+		(imblance_info.nlm_imblance_lum2_flag0_rs & 0x7ff) |
+		((imblance_info.nlm_imblance_lum2_flag4_r & 0x7ff) << 11));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA9,
-		(p->imblance_dev.nlm_imblance_lum2_flag1_r & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum2_flag0_r & 0x7ff) << 11));
+		(imblance_info.nlm_imblance_lum2_flag1_r & 0x7ff) |
+		((imblance_info.nlm_imblance_lum2_flag0_r & 0x7ff) << 11));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA10,
-		(p->imblance_dev.nlm_imblance_lum3_flag4_r & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum3_flag2_r & 0x7ff) << 11));
+		(imblance_info.nlm_imblance_lum3_flag4_r & 0x7ff) |
+		((imblance_info.nlm_imblance_lum3_flag2_r & 0x7ff) << 11));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA11,
-		(p->imblance_dev.nlm_imblance_lum3_flag0_r & 0x7ff) |
-		((p->imblance_dev.nlm_imblance_lum3_flag0_rs & 0x7ff) << 11));
+		(imblance_info.nlm_imblance_lum3_flag0_r & 0x7ff) |
+		((imblance_info.nlm_imblance_lum3_flag0_rs & 0x7ff) << 11));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA12,
-		(p->imblance_dev.nlm_imblance_diff & 0x3ff) |
-		((p->imblance_dev.nlm_imblance_lum3_flag1_r & 0x7ff) << 10));
+		(imblance_info.nlm_imblance_diff & 0x3ff) |
+		((imblance_info.nlm_imblance_lum3_flag1_r & 0x7ff) << 10));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA13,
-		(p->imblance_dev.nlm_imblance_faceRmax & 0xffff) |
-		((p->imblance_dev.nlm_imblance_faceRmin & 0xffff) << 16));
+		(imblance_info.nlm_imblance_faceRmax & 0xffff) |
+		((imblance_info.nlm_imblance_faceRmin & 0xffff) << 16));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA14,
-		(p->imblance_dev.nlm_imblance_faceBmax & 0xffff) |
-		((p->imblance_dev.nlm_imblance_faceBmin & 0xffff) << 16));
+		(imblance_info.nlm_imblance_faceBmax & 0xffff) |
+		((imblance_info.nlm_imblance_faceBmin & 0xffff) << 16));
 	ISP_REG_WR(idx, ISP_NLM_IMBLANCE_PARA15,
-		(p->imblance_dev.nlm_imblance_faceGmax & 0xffff) |
-		((p->imblance_dev.nlm_imblance_faceGmin & 0xffff) << 16));
+		(imblance_info.nlm_imblance_faceGmax & 0xffff) |
+		((imblance_info.nlm_imblance_faceGmin & 0xffff) << 16));
 
 	return ret;
 }
@@ -276,6 +292,9 @@ int isp_k_cfg_nlm(struct isp_io_param *param,
 	switch (param->property) {
 	case ISP_PRO_NLM_BLOCK:
 		ret = isp_k_nlm_block(param, isp_k_param, idx);
+		break;
+	case ISP_PRO_NLM_IMBLANCE:
+		ret = isp_k_nlm_imblance(param, idx);
 		break;
 	default:
 		pr_err("fail to support cmd id = %d\n",

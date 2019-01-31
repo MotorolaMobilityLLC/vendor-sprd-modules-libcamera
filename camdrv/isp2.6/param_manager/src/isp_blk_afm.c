@@ -56,7 +56,6 @@ static cmr_u32 _pm_rgb_afm_convert_param(void *dst_param,
 		dst_ptr->cur.afm_fv0_shift = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv0.fv_shift;
 		dst_ptr->cur.afm_fv0_th.min = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv0.fv_min_th;
 		dst_ptr->cur.afm_fv0_th.max = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv0.fv_max_th;
-		dst_ptr->cur.afm_fv0_th.max = 1023547;// wait for tool ready
 
 		dst_ptr->cur.afm_clip_en1 = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv1.clip_en;
 		dst_ptr->cur.afm_fv1_shift = rgb_afm_param[strength_level].afm_enhanced.afm_enhanced_post.enhanced_fv1.fv_shift;

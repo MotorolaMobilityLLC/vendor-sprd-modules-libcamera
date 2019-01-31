@@ -37,8 +37,19 @@ static cmr_u32 _pm_ppe_convert_param(void *dst_param,
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
 	if (ppe_param != NULL) {
-		/* todo: */
-		i++;
+		dst_ptr->cur.ppi_bypass = ppe_param[strength_level].ppe_bypass;
+		dst_ptr->cur.ppi_upperbound_r = ppe_param[strength_level].pdaf_upperbound.pdaf_r;
+		dst_ptr->cur.ppi_upperbound_b = ppe_param[strength_level].pdaf_upperbound.pdaf_b;
+		dst_ptr->cur.ppi_upperbound_gr = ppe_param[strength_level].pdaf_upperbound.pdaf_gr;
+		dst_ptr->cur.ppi_upperbound_gb = ppe_param[strength_level].pdaf_upperbound.pdaf_gb;
+		dst_ptr->cur.ppi_blc_r = ppe_param[strength_level].pdaf_blacklevel.pdaf_r;
+		dst_ptr->cur.ppi_blc_b = ppe_param[strength_level].pdaf_blacklevel.pdaf_b;
+		dst_ptr->cur.ppi_blc_gr = ppe_param[strength_level].pdaf_blacklevel.pdaf_gr;
+		dst_ptr->cur.ppi_blc_gb = ppe_param[strength_level].pdaf_blacklevel.pdaf_gb;
+		for (i = 0; i < PDAF_GAIN_MAP_LEN; i++)
+			dst_ptr->cur.ppi_l_gain_map[i] = ppe_param[strength_level].pdaf_l_gain_map[i];
+		for (i = 0; i < PDAF_GAIN_MAP_LEN; i++)
+			dst_ptr->cur.ppi_r_gain_map[i] = ppe_param[strength_level].pdaf_r_gain_map[i];
 	}
 	return rtn;
 }
@@ -51,7 +62,7 @@ cmr_s32 _pm_ppe_init(void *dst_ppe_param, void *src_ppe_param, void *param1, voi
 	struct isp_pm_block_header *ppe_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-//	dst_ptr->cur.bypass = ppe_header_ptr->bypass;
+	dst_ptr->cur.ppi_bypass = ppe_header_ptr->bypass;
 	dst_ptr->cur_level = src_ptr->default_strength_level;
 	dst_ptr->level_num = src_ptr->level_number;
 	dst_ptr->param_ptr = src_ptr->param_ptr;
@@ -59,7 +70,7 @@ cmr_s32 _pm_ppe_init(void *dst_ppe_param, void *src_ppe_param, void *param1, voi
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 	if (!ppe_header_ptr->bypass)
 		rtn = _pm_ppe_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-//	dst_ptr->cur.ppe_bypass |= ppe_header_ptr->bypass;
+	dst_ptr->cur.ppi_bypass |= ppe_header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm ppe param !");
 		return rtn;
@@ -104,7 +115,7 @@ cmr_s32 _pm_ppe_set_param(void *ppe_param, cmr_u32 cmd, void *param_ptr0, void *
 				nr_tool_flag[ISP_BLK_PPE_T] = 0;
 
 				rtn = _pm_ppe_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
-				//dst_ptr->cur.ppe_bypass |= header_ptr->bypass;
+				dst_ptr->cur.ppi_bypass |= header_ptr->bypass;
 
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm ppe param !");

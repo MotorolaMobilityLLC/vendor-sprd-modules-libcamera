@@ -40,3 +40,26 @@ cmr_s32 isp_u_nlm_block(void *handle, void *block_info)
 
 	return ret;
 }
+
+cmr_s32 isp_u_nlm_imblance(void *handle, void *block_info)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+	struct isp_u_blocks_info *block_param = (struct isp_u_blocks_info *)block_info;
+
+	if (!handle || !block_info) {
+		ISP_LOGE("fail to get handle: handle = %p, block_info = %p.", handle, block_info);
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.scene_id = block_param->scene_id;
+	param.sub_block = ISP_BLOCK_NLM;
+	param.property = ISP_PRO_NLM_IMBLANCE;
+	param.property_param = block_param->block_info;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}

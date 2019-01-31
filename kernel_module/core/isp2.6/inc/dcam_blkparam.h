@@ -72,8 +72,9 @@ struct dcam_dev_awbc_param {
 struct dcam_dev_bpc_param {
 	uint32_t update;
 	struct dcam_dev_bpc_info bpc_info;
-	uint32_t bad_pixel_num_bk; /* no use now 180914 */
+	struct dcam_bpc_ppi_info ppi_info;
 };
+
 struct dcam_dev_3dnr_param {
 	uint32_t update;
 	struct dcam_dev_3dnr_me nr3_me;

@@ -19,6 +19,7 @@
 #define ISP_PDAF_STATIS_BUF_SIZE                BUF_ALIGN(0x3A23D0)
 
 #define PDAF_PPI_NUM			64
+#define PDAF_PPI_GAIN_MAP_LEN 128
 #define ISP_HSV_TABLE_NUM 	360
 #define ISP_VST_IVST_NUM		1024
 #define ISP_FRGB_GAMMA_PT_NUM 257
@@ -268,6 +269,7 @@ enum isp_iircnr_property {
 
 enum isp_nlm_property {
 	ISP_PRO_NLM_BLOCK,
+	ISP_PRO_NLM_IMBLANCE,
 };
 
 enum isp_post_cdn_property {
@@ -515,18 +517,18 @@ struct dcam_bpc_rawhdr_info{
 };
 
 struct dcam_bpc_ppi_info{
-	uint32_t bpc_ppi_block_start_row;
-	uint32_t bpc_ppi_block_end_row;
-	uint32_t bpc_ppi_block_start_col;
-	uint32_t bpc_ppi_block_end_col;
+	uint32_t ppi_bypass;
+	uint32_t ppi_upperbound_r;
+	uint32_t ppi_upperbound_b;
+	uint32_t ppi_upperbound_gr;
+	uint32_t ppi_upperbound_gb;
+	uint32_t ppi_blc_r;
+	uint32_t ppi_blc_b;
+	uint32_t ppi_blc_gr;
+	uint32_t ppi_blc_gb;
 
-	uint32_t bpc_ppi_block_width;
-	uint32_t bpc_ppi_block_height;
-
-	uint32_t bpc_ppi_phase_pixel_num;
-	uint32_t bpc_ppi_pattern_col[64];
-	uint32_t bpc_ppi_pattern_row[64];
-	uint32_t bpc_ppi_pattern_pos[64];
+	uint16_t ppi_l_gain_map[PDAF_PPI_GAIN_MAP_LEN];
+	uint16_t ppi_r_gain_map[PDAF_PPI_GAIN_MAP_LEN];
 };
 
 struct dcam_dev_bpc_info {
@@ -575,10 +577,6 @@ struct dcam_dev_bpc_info {
 	uint32_t bpc_map_addr;
 	uint32_t bpc_bad_pixel_pos_out_addr;
 	uint32_t bpc_last_waddr;
-	/* zzhdr */
-	struct dcam_bpc_rawhdr_info bpc_rawhdr_info;
-	/* ppi */
-	struct dcam_bpc_ppi_info bpc_ppe_info;
 };
 
 struct dcam_dev_3dnr_me {
@@ -992,8 +990,6 @@ struct isp_dev_nlm_info_v2 {
 	uint32_t nlm_direction_addback_mode_bypass;
 	uint32_t nlm_first_lum_direction_addback[3][4];
 	uint32_t nlm_first_lum_direction_addback_noise_clip[3][4];
-
-	struct isp_dev_nlm_imblance imblance_dev;
 
 	uint32_t vst_len;
 	uint32_t ivst_len;

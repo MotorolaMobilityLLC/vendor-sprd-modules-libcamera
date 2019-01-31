@@ -2395,6 +2395,67 @@ static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_cnr2_en(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_cnr2_level_info *level_info = NULL;
+	cmr_u32 ct = 0;
+	cmr_u32 level_enable = 0;
+	cmr_u32 low_ct_thrd = 0;
+	cmr_u32 cnr2_en = 0;
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
+	}
+	ISP_LOGV("ct = %d", ct);
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, ISP_BLK_CNR2_V1, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		level_info = (struct isp_cnr2_level_info *)output.param_data->data_ptr;
+		level_enable = (cmr_u32)level_info->level_enable;
+		low_ct_thrd = (cmr_u32)level_info->low_ct_thrd;
+		ISP_LOGV("level_enable = %d, low_ct_thrd = %d", level_enable, low_ct_thrd);
+	} else {
+		ISP_LOGE("fail to get valid cnr2 level info");
+	}
+
+	if (level_enable || (ct < low_ct_thrd))
+		cnr2_en = 1;
+
+	ISP_LOGV("cnr2_en = %d", cnr2_en);
+	*(cmr_u32 *)param_ptr = cnr2_en;
+
+	return ret;
+}
+
+
+static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_CNR2_V1, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_sw_cnr2_info));
+	} else {
+		ISP_LOGE("fail to get valid cnr2 param");
+	}
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2468,6 +2529,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
 	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
+	{ISP_CTRL_GET_CNR2_EN, ispctl_get_cnr2_en},
+	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_MAX, NULL}
 };
 

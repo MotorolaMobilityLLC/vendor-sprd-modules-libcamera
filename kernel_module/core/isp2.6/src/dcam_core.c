@@ -1474,7 +1474,7 @@ int dcam_offline_cfg_param(struct dcam_dev_param *pm)
 		dcam_k_aem_mode, dcam_k_aem_win, dcam_k_aem_skip_num,
 		dcam_k_aem_rgb_thr, dcam_k_afl_block, dcam_k_afl_bypass,
 		dcam_k_awbc_block, dcam_k_awbc_gain, dcam_k_awbc_block,
-		dcam_k_bpc_block, dcam_k_bpc_map, dcam_k_bpc_hdr_param,
+		dcam_k_bpc_block,
 		dcam_k_bpc_ppe_param, dcam_k_3dnr_me, dcam_k_afm_block,
 		dcam_k_afm_bypass, dcam_k_afm_win, dcam_k_afm_win_num,
 		dcam_k_afm_mode, dcam_k_afm_skipnum, dcam_k_afm_crop_eb,
