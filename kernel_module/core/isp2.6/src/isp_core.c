@@ -1477,12 +1477,12 @@ unlock:
 			continue;
 		pframe = camera_dequeue_tail(&path->result_queue);
 		/* ret frame to original queue */
-		if (out_frame->is_reserved)
+		if (pframe->is_reserved)
 			camera_enqueue(
-				&path->reserved_buf_queue, out_frame);
+				&path->reserved_buf_queue, pframe);
 		else
 			camera_enqueue(
-				&path->out_buf_queue, out_frame);
+				&path->out_buf_queue, pframe);
 		atomic_dec(&path->store_cnt);
 	}
 
