@@ -31,6 +31,7 @@
 #include "isp_video.h"
 #include "pthread.h"
 
+#define FILE_NAME_LEN 200
 #define PREVIEW_MSG_QUEUE_SIZE 100
 #define SNAPSHOT_MSG_QUEUE_SIZE 50
 #define CMR_EVT_INIT (CMR_EVT_OEM_BASE)
@@ -3285,6 +3286,7 @@ cmr_int camera_snapshot_init(cmr_handle oem_handle) {
     init_param.ops.get_jpeg_param_info = camera_get_jpeg_param_info;
     init_param.ops.stop_codec = camera_stop_codec;
     init_param.ops.ipm_process = camera_ipm_process;
+    init_param.ops.dump_image_with_3a_info = dump_image_with_3a_info;
     init_param.private_data = NULL;
     ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
     if (ret) {
@@ -6405,19 +6407,6 @@ cmr_int camera_get_sensor_fps_info(cmr_handle oem_handle, cmr_uint sensor_id,
         goto exit;
     }
 exit:
-    return ret;
-}
-
-cmr_int camera_get_isp_handle_raw(cmr_handle oem_handle, void **isp_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct isp_context *isp_cxt = &cxt->isp_cxt;
-    *isp_handle = (void *)isp_cxt->isp_handle;
-
-    if (*isp_handle == NULL) {
-        CMR_LOGE("isp handle null!!");
-        ret = CMR_CAMERA_FAIL;
-    }
     return ret;
 }
 
@@ -11193,4 +11182,152 @@ cmr_int camera_local_image_sw_algorithm_processing(
 
 exit:
     return ret;
+}
+
+struct awbc_cfg {
+    cmr_u32 r_gain;
+    cmr_u32 g_gain;
+    cmr_u32 b_gain;
+    cmr_u32 r_offset;
+    cmr_u32 g_offset;
+    cmr_u32 b_offset;
+};
+extern cmr_u32 isp_cur_bv;
+extern cmr_u32 isp_cur_ct;
+/* dump image with 3a info */
+int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
+                            uint32_t width, uint32_t height, uint32_t dump_size,
+                            struct img_addr *addr) {
+    int ret = CMR_CAMERA_SUCCESS;
+    char file_name[FILE_NAME_LEN] = {0};
+    char tmp_str[20] = {0};
+    FILE *fp = NULL;
+    uint32_t size;
+    uint32_t gain = 0;
+    uint32_t shutter = 0;
+    int32_t bv = 0;
+    uint32_t pos = 0;
+    cmr_u32 glb_gain = 0;
+    struct isp_adgain_exp_info adgain_exp_info;
+    struct awbc_cfg awbc;
+    char datetime[15];
+
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
+    if (isp_cxt->isp_handle == NULL) {
+        CMR_LOGE("isp handle null!!");
+        ret = CMR_CAMERA_FAIL;
+        return -1;
+    }
+
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(datetime, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+
+    camera_get_tuning_info(oem_handle, &adgain_exp_info);
+    gain = adgain_exp_info.adgain;
+    shutter = adgain_exp_info.exp_time;
+    bv = adgain_exp_info.bv;
+
+    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc);
+    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
+    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
+    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
+
+    strcpy(file_name, CAMERA_DUMP_PATH);
+    sprintf(tmp_str, "%d", width);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "X");
+    sprintf(tmp_str, "%d", height);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%s", datetime);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    strcat(file_name, "gain");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", gain);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    strcat(file_name, "ispdgain");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", glb_gain);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    strcat(file_name, "shutter");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", shutter);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    strcat(file_name, "awbgain");
+    strcat(file_name, "_");
+    strcat(file_name, "r");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", awbc.r_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    strcat(file_name, "g");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", awbc.g_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    strcat(file_name, "b");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", awbc.b_gain);
+    strcat(file_name, tmp_str);
+
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "afpos");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", pos);
+    strcat(file_name, tmp_str);
+
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "ct");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", isp_cur_ct);
+    strcat(file_name, tmp_str);
+
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "bv");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", isp_cur_bv);
+    strcat(file_name, tmp_str);
+
+    if (img_fmt == IMG_DATA_TYPE_RAW) {
+        strcat(file_name, ".mipi_raw");
+        size = width * height * 5 / 4;
+    } else if (img_fmt == IMG_DATA_TYPE_RAW2) {
+        strcat(file_name, "_dcam.mipi_raw");
+        size = width * height * 5 / 4;
+    } else if (img_fmt == IMG_DATA_TYPE_YUV420) {
+        strcat(file_name, ".yuv");
+        size = width * height * 3 / 2;
+    } else if (img_fmt == IMG_DATA_TYPE_JPEG) {
+        strcat(file_name, ".jpg");
+        size = dump_size;
+    }
+
+    CMR_LOGD("file name %s", file_name);
+    fp = fopen(file_name, "wb");
+    if (NULL == fp) {
+        CMR_LOGE("can not open file: %s errno = %d", file_name, errno);
+        return -1;
+    }
+
+    fwrite((void *)addr->addr_y, 1, size, fp);
+    fclose(fp);
+
+    return 0;
 }

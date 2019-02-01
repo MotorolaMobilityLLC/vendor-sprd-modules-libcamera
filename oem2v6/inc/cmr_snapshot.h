@@ -154,6 +154,9 @@ struct snapshot_md_ops {
     cmr_int (*get_jpeg_param_info)(cmr_handle oem_handle,
                                    struct jpeg_param *param);
     cmr_int (*ipm_process)(cmr_handle oem_handle, void *data);
+    int (*dump_image_with_3a_info)(cmr_handle oem_handle, uint32_t img_fmt,
+                                   uint32_t width, uint32_t height,
+                                   uint32_t dump_size, struct img_addr *addr);
 };
 
 struct snapshot_init_param {
