@@ -1583,8 +1583,8 @@ static int isp_create_offline_thread(void *param)
 						isp_offline_thread_loop,
 					      thrd, thread_name);
 	if (IS_ERR_OR_NULL(thrd->thread_task)) {
-		pr_err("fail to start offline thread for isp ctx%d\n",
-				pctx->ctx_id);
+		pr_err("fail to start offline thread for isp ctx%d err %ld\n",
+				pctx->ctx_id, PTR_ERR(thrd->thread_task));
 		return -EFAULT;
 	}
 
