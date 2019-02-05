@@ -2839,6 +2839,7 @@ static int img_ioctl_set_output_size(
 
 	if (channel == NULL) {
 		pr_err("fail to get valid channel\n");
+		ret = -EINVAL;
 		goto exit;
 	}
 
