@@ -3885,19 +3885,6 @@ static int img_ioctl_stream_off(
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 		DCAM_IOCTL_CFG_STOP, NULL);
 
-	if (module->dcam_dev_handle)
-		ret = dcam_ops->ioctl(module->dcam_dev_handle,
-				DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
-
-	if (module->isp_dev_handle){
-		io_desc.q = &module->isp_hist2_outbuf_queue;
-		io_desc.buf = &module->isp_hist2_buf;
-		ret = isp_ops->ioctl(module->isp_dev_handle,
-				0,
-				ISP_IOCTL_DEINIT_STATIS_BUF,
-				&io_desc);
-	}
-
 	for (i = 0;  i < CAM_CH_MAX; i++) {
 		ch = &module->channel[i];
 		isp_ctx_id[i] = -1;
@@ -3974,6 +3961,19 @@ static int img_ioctl_stream_off(
 				}
 			}
 		}
+	}
+
+	if (module->dcam_dev_handle)
+		ret = dcam_ops->ioctl(module->dcam_dev_handle,
+				DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
+
+	if (module->isp_dev_handle){
+		io_desc.q = &module->isp_hist2_outbuf_queue;
+		io_desc.buf = &module->isp_hist2_buf;
+		ret = isp_ops->ioctl(module->isp_dev_handle,
+				0,
+				ISP_IOCTL_DEINIT_STATIS_BUF,
+				&io_desc);
 	}
 
 	for (i = 0; i < CAM_CH_MAX; i++) {
