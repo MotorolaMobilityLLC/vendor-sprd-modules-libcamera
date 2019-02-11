@@ -9701,6 +9701,8 @@ static struct sensor_raw_fix_info s_ov12a10_fix_info_video_1=
 			0,
 			NULL,
 			0,
+			NULL,
+			0,
 		},
 	},
 };
