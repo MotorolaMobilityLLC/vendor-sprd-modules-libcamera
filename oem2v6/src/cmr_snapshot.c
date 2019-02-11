@@ -1306,6 +1306,159 @@ exit:
     return ret;
 }
 
+static int camera_get_system_time(char *datetime) {
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(datetime, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+
+    CMR_LOGD("datatime = %s", datetime);
+
+    return 0;
+}
+
+struct isp_awbc_cfg_test {
+    uint32_t r_gain;
+    uint32_t g_gain;
+    uint32_t b_gain;
+    uint32_t r_offset;
+    uint32_t g_offset;
+    uint32_t b_offset;
+};
+
+extern uint32_t isp_cur_bv;
+extern uint32_t isp_cur_ct;
+
+/* dump mipi raw */
+static int snp_dump_image_with_3a_info(cmr_handle snp_handle, char *name,
+                                       uint32_t img_fmt, uint32_t width,
+                                       uint32_t height, struct img_addr *addr) {
+    struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
+#define FILE_NAME_LEN 200
+    int ret = CMR_CAMERA_SUCCESS;
+    char file_name[FILE_NAME_LEN] = {0};
+    char tmp_str[20] = {0};
+    FILE *fp = NULL;
+    uint32_t dump_size;
+    uint32_t gain = 0;
+    uint32_t shutter = 0;
+    int32_t bv = 0;
+    struct isp_awbc_cfg_test awbc_cfg;
+    void *isp_handle = NULL;
+    uint32_t pos = 0;
+    cmr_u32 glb_gain = 0;
+    struct isp_adgain_exp_info adgain_exp_info;
+
+    snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
+
+    gain = adgain_exp_info.adgain;
+    shutter = adgain_exp_info.exp_time;
+    bv = adgain_exp_info.bv;
+
+    ret = camera_get_isp_handle_raw(snp_cxt->oem_handle, &isp_handle);
+    if (ret != CMR_CAMERA_SUCCESS) {
+        CMR_LOGE("cannot retreive isp handle");
+        return -1;
+    }
+    isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc_cfg);
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+    isp_ioctl(isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
+#endif
+    isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
+    isp_ioctl(isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
+
+    CMR_LOGD("name %s, format %d, width %d, heght %d", name, img_fmt, width,
+             height);
+
+    strcpy(file_name, CAMERA_DUMP_PATH);
+    sprintf(tmp_str, "%d", width);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "X");
+    sprintf(tmp_str, "%d", height);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%s", name);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+
+    strcat(file_name, "gain");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    strcat(file_name, "ispdgain");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", glb_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    strcat(file_name, "shutter");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", shutter);
+    strcat(file_name, tmp_str);
+
+    strcat(file_name, "_");
+    strcat(file_name, "awbgain");
+    strcat(file_name, "_");
+    strcat(file_name, "r");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", awbc_cfg.r_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    strcat(file_name, "g");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", awbc_cfg.g_gain);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    strcat(file_name, "b");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", awbc_cfg.b_gain);
+    strcat(file_name, tmp_str);
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "afpos");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", pos);
+    strcat(file_name, tmp_str);
+
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "ct");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", isp_cur_ct);
+    strcat(file_name, tmp_str);
+    memset(tmp_str, 0, sizeof(tmp_str));
+    strcat(file_name, "_");
+    strcat(file_name, "bv");
+    strcat(file_name, "_");
+    sprintf(tmp_str, "%d", isp_cur_bv);
+    strcat(file_name, tmp_str);
+    if (img_fmt == IMG_DATA_TYPE_RAW) {
+        strcat(file_name, ".mipi_raw");
+        dump_size = width * height * 5 / 4;
+    } else if (img_fmt == IMG_DATA_TYPE_RAW2) {
+        strcat(file_name, "_dcam.mipi_raw");
+        dump_size = width * height * 5 / 4;
+    } else if (img_fmt == IMG_DATA_TYPE_YUV420) {
+        strcat(file_name, ".yuv");
+        dump_size = width * height * 3 / 2;
+    }
+
+    CMR_LOGD("file name %s", file_name);
+    fp = fopen(file_name, "wb");
+    if (NULL == fp) {
+        CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
+        return -1;
+    }
+
+    fwrite((void *)addr->addr_y, 1, dump_size, fp);
+    fclose(fp);
+
+    return 0;
+}
+
 cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
@@ -1358,12 +1511,12 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                           0, 0, 0, 0);
     }
 
+    char datetime[15] = {0};
     CMR_LOGD("dump mipi raw");
-    snp_cxt->ops.dump_image_with_3a_info(
-        snp_cxt->oem_handle, IMG_DATA_TYPE_RAW, mem_ptr->cap_raw.size.width,
-        mem_ptr->cap_raw.size.height,
-        mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
-        &mem_ptr->cap_raw.addr_vir);
+    camera_get_system_time(datetime);
+    snp_dump_image_with_3a_info(
+        snp_handle, datetime, IMG_DATA_TYPE_RAW, mem_ptr->cap_raw.size.width,
+        mem_ptr->cap_raw.size.height, &mem_ptr->cap_raw.addr_vir);
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
     if (ret) {
@@ -4369,9 +4522,9 @@ cmr_int isp_overwrite_cap_mem(cmr_handle snp_handle) {
 cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct frm_info *chn_data_ptr = (struct frm_info *)data;
-    struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
+    struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct cmr_cap_mem *mem_ptr =
-        &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
+        &cxt->req_param.post_proc_setting.mem[cxt->index];
     char value[PROPERTY_VALUE_MAX];
     CMR_MSG_INIT(message);
 
@@ -4384,27 +4537,26 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
     message.alloc_flag = 0;
     message.sub_msg_type = SNP_TRIGGER;
     message.data = data;
-    ret = cmr_thread_msg_send(snp_cxt->thread_cxt.cvt_thr_handle, &message);
+    ret = cmr_thread_msg_send(cxt->thread_cxt.cvt_thr_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send start cvt msg to cvt thr %ld", ret);
     }
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
-        cmr_u32 width, height;
+        char datetime[15] = {0};
         CMR_LOGD("dump dcam raw");
-        width = mem_ptr->cap_raw2.size.width;
-        height = mem_ptr->cap_raw2.size.height;
-        snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, IMG_DATA_TYPE_RAW2, width, height,
-            width * height * 5 / 4, &mem_ptr->cap_raw2.addr_vir);
+        camera_get_system_time(datetime);
+        snp_dump_image_with_3a_info(snp_handle, datetime, IMG_DATA_TYPE_RAW2,
+                                    mem_ptr->cap_raw2.size.width,
+                                    mem_ptr->cap_raw2.size.height,
+                                    &mem_ptr->cap_raw2.addr_vir);
 
         CMR_LOGD("dump yuv");
-        width = mem_ptr->target_yuv.size.width;
-        height = mem_ptr->target_yuv.size.height;
-        snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, IMG_DATA_TYPE_YUV420, width, height,
-            width * height * 3 / 2, &mem_ptr->target_yuv.addr_vir);
+        snp_dump_image_with_3a_info(snp_handle, datetime, IMG_DATA_TYPE_YUV420,
+                                    mem_ptr->target_yuv.size.width,
+                                    mem_ptr->target_yuv.size.height,
+                                    &mem_ptr->target_yuv.addr_vir);
     }
 
     chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;

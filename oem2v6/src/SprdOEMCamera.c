@@ -997,13 +997,6 @@ exit:
     return 0;
 }
 
-int dump_image_with_isp_info(cmr_handle camera_handle, uint32_t img_fmt,
-                             uint32_t width, uint32_t height,
-                             uint32_t dump_size, struct img_addr *addr) {
-    return dump_image_with_3a_info(camera_handle, img_fmt, width, height,
-                                   dump_size, addr);
-}
-
 cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle) {
     camera_local_set_sensor_close_flag(camera_handle);
     return 0;
@@ -1254,13 +1247,13 @@ static oem_ops_t oem_module_ops = {
     camera_vendor_hdr_enable, camera_is_vendor_hdr, camera_set_lls_shot_mode,
     camera_get_lls_shot_mode, camera_get_isp_info, camera_start_burst_notice,
     camera_end_burst_notice, camera_transfer_caf_to_af,
-    camera_transfer_af_to_caf, dump_jpeg_file, dump_image_with_isp_info,
-    camera_get_gain_thrs, camera_set_sensor_info_to_af,
-    camera_get_sensor_max_fps, camera_snapshot_is_need_flash,
-    camera_get_sensor_otp_info, camera_get_sensor_vcm_step,
-    camera_set_sensor_close_flag, camera_set_reprocess_picture_size,
-    camera_start_capture, camera_stop_capture, camera_set_largest_picture_size,
-    camera_ioctrl, camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
+    camera_transfer_af_to_caf, dump_jpeg_file, camera_get_gain_thrs,
+    camera_set_sensor_info_to_af, camera_get_sensor_max_fps,
+    camera_snapshot_is_need_flash, camera_get_sensor_otp_info,
+    camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
+    camera_set_reprocess_picture_size, camera_start_capture,
+    camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
+    camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,

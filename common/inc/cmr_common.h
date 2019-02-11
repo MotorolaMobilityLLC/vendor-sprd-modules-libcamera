@@ -1892,9 +1892,6 @@ typedef struct oem_ops {
         struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
         sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
         enum img_data_type format);
-    cmr_int (*dump_image_with_isp_info)(cmr_handle camera_handle, uint32_t img_fmt,
-                                    uint32_t width, uint32_t height,
-                                    uint32_t dump_size, struct img_addr *addr);
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_4)
     cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
                                       cmr_s32 *point_x, cmr_s32 *point_y);
