@@ -944,20 +944,25 @@ static int dcam_set_mipi_cap(struct dcam_pipe_dev *dev,
 static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
 {
 	struct sprd_pdaf_control *p = (struct sprd_pdaf_control *)param;
-	//uint32_t idx = dev->idx;
+	uint32_t idx = dev->idx;
 
 	dev->is_pdaf = 1;
 	/* pdaf type1,2,3 & 4: dual pd*/
 	dev->pdaf_type = p->mode;
+
+	/* dual pd use pdaf path  */
+	if (p->mode == 4) {
+		p->mode = 1;
+		return 0;
+	}
+
 	if (p->mode == 0 || p->mode > 4 ||
 		p->image_vc > 3 || p->image_dt > 0x3F) {
-		pr_warn("pdaf param error, set mode=0 to disable pdaf\n");
+		pr_warn("dcam%d pdaf param error, disable pdaf\n", idx);
 		p->mode = 0;
 		dev->is_pdaf = 0;
 	}
-	/* workaround */
-	if (p->mode == 4)
-		p->mode = 1;
+
 	/*DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		((p->image_vc & 0x3) << 16) |
 		((p->image_dt & 0x3F) << 8) |
