@@ -5527,11 +5527,13 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         property_get("debug.camera.save.snpfile", value, "0");
         if (atoi(value) == 1 || atoi(value) == 100 ||
             (atoi(value) & (1 << 1))) {
-            dump_raw_image("camera_raw_proc", IMG_DATA_TYPE_RAW,
-                           param_ptr->src_frame.size.width,
-                           param_ptr->src_frame.size.height,
-                           FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
-                           &param_ptr->src_frame.addr_vir);
+            dump_image("camera_raw_proc", IMG_DATA_TYPE_RAW,
+                       param_ptr->src_frame.size.width,
+                       param_ptr->src_frame.size.height,
+                       FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
+                       &param_ptr->src_frame.addr_vir,
+                       param_ptr->src_frame.size.width *
+                           param_ptr->src_frame.size.height * 5 / 4);
         }
 
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
@@ -5543,10 +5545,12 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         property_get("debug.camera.save.snpfile", value, "0");
         if (atoi(value) == 1 || atoi(value) == 100 ||
             (atoi(value) & (1 << 1))) {
-            dump_yuv_image("camera_raw_proc", IMG_DATA_TYPE_YUV420,
-                           param_ptr->dst_frame.size.width,
-                           param_ptr->dst_frame.size.height, 0x6000,
-                           &param_ptr->dst_frame.addr_vir);
+            dump_image("camera_raw_proc", IMG_DATA_TYPE_YUV420,
+                       param_ptr->dst_frame.size.width,
+                       param_ptr->dst_frame.size.height, 0x6000,
+                       &param_ptr->dst_frame.addr_vir,
+                       param_ptr->dst_frame.size.width *
+                           param_ptr->dst_frame.size.height * 3 / 2);
         }
     } else {
         struct ipn_in_param in_param;

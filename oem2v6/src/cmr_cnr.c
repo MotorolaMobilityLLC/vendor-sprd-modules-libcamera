@@ -163,8 +163,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.dump.before.docnr", value, "null");
     if (!strcmp(value, "true")) {
-        dump_yuv_image("cnr_transfer_frame_before_cnr", IMG_DATA_TYPE_YUV420,
-                       width, height, 0, addr);
+        dump_image("cnr_transfer_frame_before_cnr", IMG_DATA_TYPE_YUV420, width,
+                   height, 0, addr, width * height * 3 / 2);
     }
     CMR_LOGD("w=%lu,h=%lu, addr= %p", width, height, addr);
 
@@ -189,8 +189,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     }
     property_get("debug.dump.after.docnr", value, "null");
     if (!strcmp(value, "true")) {
-        dump_yuv_image("cnr_transfer_frame_after_cnr", IMG_DATA_TYPE_YUV420,
-                       width, height, 1, addr);
+        dump_image("cnr_transfer_frame_after_cnr", IMG_DATA_TYPE_YUV420, width,
+                   height, 1, addr, width * height * 3 / 2);
     }
 
 exit:

@@ -175,7 +175,8 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.dump.filter.frame", value, "null");
     if (!strcmp(value, "true")) {
-        dump_yuv_image("filter_transfer_frame", IMG_DATA_TYPE_YUV420, width, height, 0, addr);
+        dump_image("filter_transfer_frame", IMG_DATA_TYPE_YUV420, width, height,
+                   0, addr, width * height * 3 / 2);
     }
     CMR_LOGI("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);
 

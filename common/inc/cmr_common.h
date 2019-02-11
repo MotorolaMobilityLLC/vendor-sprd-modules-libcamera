@@ -1183,17 +1183,9 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
                                 struct img_addr *addr);
 
-cmr_int dump_yuv_image(char *tag, cmr_u32 img_fmt, cmr_u32 width,
-                       cmr_u32 height, cmr_u32 index,
-                       struct img_addr *vir_addr);
-
-cmr_int dump_jpeg_image(char *tag, cmr_u32 img_fmt, cmr_u32 width,
-                        cmr_u32 height, cmr_u32 index,
-                        struct img_addr *vir_addr, cmr_u32 image_size);
-
-cmr_int dump_raw_image(char *tag, cmr_u32 img_fmt, cmr_u32 width,
-                       cmr_u32 height, cmr_u32 index,
-                       struct img_addr *vir_addr);
+cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
+                   cmr_u32 index, struct img_addr *vir_addr,
+                   cmr_u32 image_size);
 
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 
