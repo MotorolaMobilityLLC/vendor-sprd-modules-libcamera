@@ -3409,7 +3409,9 @@ int SprdCamera3OEMIf::cancelPictureInternal() {
                  getCameraStateStr(getCaptureState()));
 
         setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
+        mZslCaptureExitLoop = true;
         if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
+            mZslCaptureExitLoop = false;
             HAL_LOGE("camera_stop_capture failed!");
             return UNKNOWN_ERROR;
         }
@@ -3419,6 +3421,7 @@ int SprdCamera3OEMIf::cancelPictureInternal() {
             deinitCapture(mIsPreAllocCapMem);
             // camera_set_capture_trace(0);
         }
+        mZslCaptureExitLoop = false;
         break;
 
     default:
@@ -3426,7 +3429,6 @@ int SprdCamera3OEMIf::cancelPictureInternal() {
                  getCameraStateStr(getCaptureState()));
         break;
     }
-
     HAL_LOGD("X");
     return result ? NO_ERROR : UNKNOWN_ERROR;
 }
@@ -4456,7 +4458,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     mCameraHandle, frame->y_phy_addr, frame->y_vir_addr,
                     frame->fd);
+                sem_post(&((SprdCamera3OEMIf *)this)->mZslQueueSemDone);
             }
+        } else if (mZslCaptureExitLoop == true) {
+            sem_post(&((SprdCamera3OEMIf *)this)->mZslQueueSemDone);
         }
     }
 exit:
