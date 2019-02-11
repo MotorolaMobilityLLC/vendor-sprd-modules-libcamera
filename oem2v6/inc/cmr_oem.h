@@ -547,11 +547,13 @@ cmr_int camera_local_image_sw_algorithm_processing(
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     enum img_data_type format);
-cmr_int camera_get_isp_handle_raw(cmr_handle, void **isp_handle);
 cmr_int camera_local_start_scale(cmr_handle oem_handle,
                                  struct img_frm **scale_param);
 cmr_int camera_local_start_rotate(cmr_handle oem_handle,
                                   struct rotate_param *rotate_param);
+int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
+                            uint32_t width, uint32_t height, uint32_t dump_size,
+                            struct img_addr *addr);
 
 #ifdef __cplusplus
 }

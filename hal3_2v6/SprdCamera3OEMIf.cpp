@@ -4179,9 +4179,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         // dump jpeg file
         if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
             (!strcmp(debug_value, "debug")) || mIsRawCapture == 1) {
-            mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir,
-                                         encInfo->size + ispInfoSize,
-                                         mCaptureWidth, mCaptureHeight);
+            struct img_addr vir_addr;
+            vir_addr.addr_y = pic_addr_vir;
+            mHalOem->ops->dump_image_with_isp_info(
+                mCameraHandle, IMG_DATA_TYPE_JPEG, mCaptureWidth,
+                mCaptureHeight, encInfo->size + ispInfoSize, &vir_addr);
         }
     }
 

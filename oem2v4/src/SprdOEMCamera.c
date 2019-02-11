@@ -1233,10 +1233,20 @@ exit:
 }
 
 cmr_int image_sw_algorithm_processing(
-    cmr_handle camera_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    cmr_handle camera_handle,
+    struct image_sw_algorithm_buf *src_sw_algorithm_buf,
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
-    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type, enum img_data_type format) {
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+    enum img_data_type format) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    return ret;
+}
+
+int dump_image_with_isp_info(cmr_handle camera_handle, uint32_t img_fmt,
+                             uint32_t width, uint32_t height,
+                             uint32_t dump_size, struct img_addr *addr) {
+    int ret = CMR_CAMERA_SUCCESS;
 
     return ret;
 }
@@ -1281,9 +1291,10 @@ static oem_ops_t oem_module_ops = {
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
     camera_set_reprocess_picture_size, camera_start_capture,
     camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing, camera_get_focus_point,
-    camera_isp_sw_check_buf, camera_isp_sw_proc, camera_raw_post_proc,
-    camera_get_tuning_param, camera_set_gpu_mem_ops,
+    camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
+    dump_image_with_isp_info, camera_get_focus_point, camera_isp_sw_check_buf,
+    camera_isp_sw_proc, camera_raw_post_proc, camera_get_tuning_param,
+    camera_set_gpu_mem_ops,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
