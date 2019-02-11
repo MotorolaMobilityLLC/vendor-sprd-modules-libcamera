@@ -4153,16 +4153,15 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     struct ipm_frame_in ipm_in_param;
     struct ipm_frame_out imp_out_param;
     struct img_frm *img_frame = (struct img_frm *)data;
-    cmr_uint is_cnr, is_filter;
+    cmr_uint is_filter;
     CMR_LOGD("E");
 
     CHECK_HANDLE_VALID(oem_handle);
     CHECK_HANDLE_VALID(data);
     CHECK_HANDLE_VALID(ipm_cxt);
 
-    is_cnr = camera_get_cnr_realtime_flag(oem_handle);
     is_filter = cxt->snp_cxt.filter_type;
-    if (is_cnr || is_filter) {
+    if (cxt->is_cnr || is_filter) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
@@ -4171,7 +4170,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
         ipm_in_param.private_data = (void *)cxt;
         imp_out_param.dst_frame = *img_frame;
         // do cnr
-        if (is_cnr)
+        if (cxt->is_cnr)
             ret = ipm_transfer_frame(ipm_cxt->cnr_handle, &ipm_in_param, NULL);
         if (ret) {
             CMR_LOGE("failed to do cnr process %ld", ret);
@@ -5107,8 +5106,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
     setting_param.camera_id = cxt->camera_id;
 
-    // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
-    // we will remove these code
+// workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
+// we will remove these code
 #ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
     if (is_raw_capture == 0) {
         if (dst->size.height == 3008 && dst->size.width == 4000) {
@@ -6733,8 +6732,9 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
                  video_snapshot_type);
         /* for sharkl2 offline path */
         if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
-            video_snapshot_type != VIDEO_SNAPSHOT_VIDEO && !((1 == camera_get_3dnr_flag(cxt)) ||
-             (2 == camera_get_3dnr_flag(cxt)))) {
+            video_snapshot_type != VIDEO_SNAPSHOT_VIDEO &&
+            !((1 == camera_get_3dnr_flag(cxt)) ||
+              (2 == camera_get_3dnr_flag(cxt)))) {
             cmr_bzero(&capture_param, sizeof(capture_param));
             capture_param.type = 1;
             ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,
@@ -8816,7 +8816,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
 
     cnr_typ = camera_get_cnr_realtime_flag(oem_handle);
     out_ptr->is_cnr = cnr_typ;
-
+    cxt->is_cnr = cnr_typ;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_ENCODE_ANGLE, &setting_param);
     if (ret) {

@@ -331,6 +331,7 @@ struct camera_context {
     cmr_uint cmr_set_env;
     cmr_u8 mode_4in1;
     struct img_rect trim_reset_info;
+    cmr_u8 is_cnr;
 };
 
 struct prev_threednr_info {
