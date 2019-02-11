@@ -96,9 +96,8 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AEM)
 		dcam_stats_buffer_size += ISP_AEM_STATIS_BUF_SIZE *
 			(ISP_AEM_STATIS_BUF_NUM + 1);
-	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFM)
-		dcam_stats_buffer_size += ISP_AFM_STATIS_BUF_SIZE *
-			(ISP_AFM_STATIS_BUF_NUM + 1);
+	dcam_stats_buffer_size += ISP_AFM_STATIS_BUF_SIZE *
+		(ISP_AFM_STATIS_BUF_NUM + 1);
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AFL)
 		dcam_stats_buffer_size += ISP_AFL_STATIS_BUF_SIZE *
 			(ISP_AFL_STATIS_BUF_NUM + 1);
