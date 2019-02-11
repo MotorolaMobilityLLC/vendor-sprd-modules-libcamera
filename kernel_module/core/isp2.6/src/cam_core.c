@@ -3348,8 +3348,9 @@ static int img_ioctl_set_frm_deci(struct camera_module *module,
 	if (unlikely(!module))
 		return -EINVAL;
 
-	if ((atomic_read(&module->state) != CAM_CFG_CH)) {
-		pr_err("error: only for state CFG_CH\n");
+	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
+		(atomic_read(&module->state) != CAM_RUNNING)) {
+		pr_err("error: only for state CFG_CH or RUNNING\n");
 		return -EPERM;
 	}
 

@@ -176,7 +176,7 @@ long compat_sprd_img_ioctl(struct file *file,
 		break;
 	}
 	default:
-		file->f_op->unlocked_ioctl(file, cmd, (unsigned long)data32);
+		ret = file->f_op->unlocked_ioctl(file, cmd, (unsigned long)data32);
 		break;
 	}
 
