@@ -99,3 +99,7 @@ static struct sensor_nr_scene_map_param s_imx258_nr_scene_map_param = {{
 #include "NR/common/normal/ltm_param.h"
 #endif
 
+#ifdef _NR_SW3DNR_PARAM_
+#include "NR/common/normal/sw3dnr_param.h"
+#endif
+

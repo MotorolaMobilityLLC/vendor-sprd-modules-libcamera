@@ -103,13 +103,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -221,13 +221,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -339,13 +339,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -457,13 +457,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -575,13 +575,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -693,13 +693,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -811,13 +811,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -929,13 +929,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1047,13 +1047,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1165,13 +1165,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1283,13 +1283,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1401,13 +1401,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1519,13 +1519,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1637,13 +1637,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1755,13 +1755,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1873,13 +1873,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -1991,13 +1991,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2109,13 +2109,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2227,13 +2227,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2345,13 +2345,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2463,13 +2463,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2581,13 +2581,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2699,13 +2699,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2817,13 +2817,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
@@ -2935,13 +2935,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x09,
+		0x0000,
 		/*block_start_row*/
-		0x09,
+		0x0000,
 		/*block_end_col*/
-		0x04,
+		0x0000,
 		/*block_end_row*/
-		0x05,
+		0x0000,
 
 	},
 	/*bpc_result_en*/
