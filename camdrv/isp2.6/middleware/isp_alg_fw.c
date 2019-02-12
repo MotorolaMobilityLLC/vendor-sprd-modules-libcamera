@@ -301,6 +301,7 @@ struct isp_alg_sw_init_in {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
+	cmr_u8 first_frm;
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
 	struct isp_hist_statistic_info hist2_stats;
@@ -1383,7 +1384,15 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGE("fail to set statis buf");
 	}
 
-	cxt->aem_is_update = 1;
+	/*
+	  * This is a workaround for sharkl5: first frame aem value is smaller
+	  * todo: find the root-cause of first frame aem data abnormal and fix it
+	  */
+	if (cxt->first_frm)
+		cxt->first_frm = 0;
+	else
+		cxt->aem_is_update = 1;
+
 	return ret;
 }
 
@@ -4073,6 +4082,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &in_ptr->size.w, &in_ptr->size.h);
 
+	cxt->first_frm = 1;
 	cxt->work_mode = in_ptr->work_mode;
 	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -4378,9 +4388,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
 		ret = ispalg_update_alg_param(cxt);
 		ISP_RETURN_IF_FAIL(ret, ("fail to update alg parm"));
-
-		ret = ispalg_update_alsc_result(cxt, (void *)&fwprocstart_info);
-		ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 	}
 
 	ret = ispalg_alsc_get_info(cxt);
