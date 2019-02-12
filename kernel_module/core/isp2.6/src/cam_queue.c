@@ -286,7 +286,10 @@ struct camera_frame *get_empty_frame(void)
 		pframe = camera_dequeue(q);
 		if (pframe == NULL) {
 			for (i = 0; i < CAM_EMP_Q_LEN_INC; i++) {
-				pframe = kzalloc(sizeof(*pframe), GFP_KERNEL);
+				if (in_interrupt())
+					pframe = kzalloc(sizeof(*pframe), GFP_ATOMIC);
+				else
+					pframe = kzalloc(sizeof(*pframe), GFP_KERNEL);
 				if (pframe == NULL) {
 					pr_err("error: no memory.\n");
 					break;
