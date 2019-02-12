@@ -117,17 +117,20 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 	switch (cmd) {
 	case ISP_PM_BLK_SMART_SETTING:
 		{
-			cmr_s32 i;
+			cmr_u32 i;
 			cmr_u32 data_num;
 			cmr_u16 weight[2] = { 0, 0 };
-			void* src_map[2] = { NULL, NULL };
-			void *dst;			
+			cmr_u32 hsv_level = 8;
+			cmr_u32 text_coeff = 10;
+			cmr_u32 pet_coeff = 8;
+			void * src_map[2] = { NULL, NULL };
+			cmr_u32 *dst;
+			char prop[PROPERTY_VALUE_MAX];
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_weight_value *weight_value = NULL;
 			struct isp_range val_range = { 0, 0 };
-			struct isp_weight_value hsv_value = { {0}, {0} };			
-			struct isp_weight_value *bv_value = &weight_value[0];
-			struct isp_weight_value *ct_value[2] = {&weight_value[1],&weight_value[2]};
+			struct isp_weight_value *bv_value;
+			struct isp_weight_value *ct_value[2];
 
 			if (0 == block_result->update || hsv_header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
@@ -146,11 +149,33 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 			bv_value = &weight_value[0];
 			ct_value[0] = &weight_value[1];
-			ct_value[0] = &weight_value[2];
-			dst = dst_hsv_ptr->final_map.data_ptr;
+			ct_value[1] = &weight_value[2];
+
+			if (block_result->ai_scene_id == ISP_PM_AI_SCENE_FOLIAGE ||
+				block_result->ai_scene_id == ISP_PM_AI_SCENE_SKY) {
+				property_get("debug.isp.hsv.hsv_value.level", prop, "8");
+				hsv_level = atoi(prop);
+				for (i = 0; i < 2; i++) {
+					ct_value[i]->value[0] = hsv_level;
+					ct_value[i]->value[1] = hsv_level;
+					ct_value[i]->weight[0] = 256;
+					ct_value[i]->weight[1] = 0;
+				}
+			} else {
+				property_get("debug.isp.hsv.hsv_value.tune", prop, "0");
+				if (atoi(prop)) {
+					for (i = 0; i < 2; i++) {
+						ct_value[i]->value[0] = 0;
+						ct_value[i]->value[1] = 0;
+						ct_value[i]->weight[0] = 256;
+						ct_value[i]->weight[1] = 0;
+					}
+				}
+			}
+
+			dst = (cmr_u32 *)dst_hsv_ptr->final_map.data_ptr;
 			data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);
-			for(i = 0; i < 2; i++)
-			{
+			for(i = 0; i < 2; i++) {
 				src_map[0] = (void *)dst_hsv_ptr->map[ct_value[i]->value[0]].data_ptr;
 				src_map[1] = (void *)dst_hsv_ptr->map[ct_value[i]->value[1]].data_ptr;
 				weight[0] = ct_value[i]->weight[0];
@@ -165,9 +190,43 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			weight[1] = bv_value->weight[1];
 			weight[0] = weight[0]/(SMART_WEIGHT_UNIT/16) * (SMART_WEIGHT_UNIT/16);
 			weight[1] = SMART_WEIGHT_UNIT - weight[0];
-			isp_interp_data(dst , src_map , weight , data_num , ISP_INTERP_UINT20);
-			ISP_LOGV("ISP_SMART: value=(%d, %d), weight=(%d, %d) , map size:%d",
-			hsv_value.value[0], hsv_value.value[1], hsv_value.weight[0], hsv_value.weight[1] , dst_hsv_ptr->final_map.size);
+			isp_interp_data((void *)dst , src_map , weight , data_num , ISP_INTERP_UINT20);
+
+			property_get("debug.isp.hsv.text_coeff.val", prop, "10");
+			text_coeff = atoi(prop);
+			property_get("debug.isp.hsv.pet_coeff.val", prop, "8");
+			pet_coeff = atoi(prop);
+
+			ISP_LOGV("ai_scene_id = %d", block_result->ai_scene_id);
+			switch (block_result->ai_scene_id) {
+			case ISP_PM_AI_SCENE_TEXT:
+				for (i = 0; i < data_num; i++) {
+					cmr_u32 dst_val = *dst;
+					cmr_u32 dst_val_h = dst_val & 0x1FF;
+					cmr_u32 dst_val_s = (dst_val >> 9) & 0x7FF;
+					dst_val_h = dst_val_h * 1;
+					dst_val_s = dst_val_s * 10 / text_coeff;
+					dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
+					*dst++ = dst_val;
+				}
+				break;
+
+			case ISP_PM_AI_SCENE_PET:
+				for (i = 0; i < data_num; i++) {
+					cmr_u32 dst_val = *dst;
+					cmr_u32 dst_val_h = dst_val & 0x1FF;
+					cmr_u32 dst_val_s = (dst_val >> 9) & 0x7FF;
+					dst_val_h = dst_val_h * 1;
+					dst_val_s = dst_val_s * 10 / pet_coeff;
+					dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
+					*dst++ = dst_val;
+				}
+				break;
+
+			default:
+				break;
+			}
+
 			hsv_header_ptr->is_update = ISP_ONE;
 
 			ISP_LOGV("ISP_SMART: cmd=%d, update=%d, value=(%d, %d), weight=(%d, %d)\n",

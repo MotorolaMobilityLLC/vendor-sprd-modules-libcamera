@@ -18,11 +18,17 @@
 
 static cmr_u32 _pm_edge_convert_param(
 	void *dst_edge_param, cmr_u32 strength_level,
-	cmr_u32 mode_flag, cmr_u32 scene_flag)
+	cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 ai_scene_id)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
 	cmr_u32 i, j;
+	char prop[PROPERTY_VALUE_MAX];
+	cmr_u32 ee_param_log_en = 0;
+	cmr_u32 foliage_coeff = 10;
+	cmr_u32 text_coeff = 7;
+	cmr_u32 pet_coeff = 8;
+	cmr_u32 max_ee_neg = 0x100;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
 
@@ -192,6 +198,91 @@ static cmr_u32 _pm_edge_convert_param(
 			}
 		}
 	}
+
+	property_get("debug.isp.ee.foliage_coeff.val", prop, "10");
+	foliage_coeff = atoi(prop);
+	property_get("debug.isp.ee.text_coeff.val", prop, "7");
+	text_coeff = atoi(prop);
+	property_get("debug.isp.ee.pet_coeff.val", prop, "8");
+	pet_coeff = atoi(prop);
+	property_get("debug.isp.ee.param.log.en", prop, "0");
+	ee_param_log_en = atoi(prop);
+
+	ISP_LOGV("ai_scene_id = %d", ai_scene_id);
+
+	switch (ai_scene_id) {
+	case ISP_PM_AI_SCENE_FOLIAGE:
+	case ISP_PM_AI_SCENE_FLOWER:
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / foliage_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / foliage_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
+					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
+		break;
+
+	case ISP_PM_AI_SCENE_TEXT:
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / text_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / text_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
+					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
+		break;
+
+	case ISP_PM_AI_SCENE_PET:
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / pet_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / pet_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
+					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+
+
 	return rtn;
 }
 
@@ -211,7 +302,8 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 	if (!header_ptr->bypass)
-		rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+		rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level,
+				ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO, ISP_PM_AI_SCENE_DEFAULT);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm edge param !");
@@ -265,7 +357,10 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_EDGE_T] = 0;
 
-				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
+				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level,
+							header_ptr->mode_id,
+							block_result->scene_flag,
+							block_result->ai_scene_id);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");
