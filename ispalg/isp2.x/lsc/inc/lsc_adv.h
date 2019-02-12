@@ -223,6 +223,8 @@ struct lsc2_context {
 		cmr_u32 image_pattern_new;
 		cmr_u32 grid_new;
 		cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
+		cmr_u32 img_width_new;
+		cmr_u32 img_height_new;
 	};
 
 //for fw proc start
@@ -509,6 +511,8 @@ struct lsc_ctrl_context {
 	cmr_u32 cmd_alsc_dump_aem;
 	cmr_u32 cmd_alsc_dump_table;
 	cmr_u32 cmd_alsc_dump_otp;
+	cmr_u32 cur_lsc_pm_mode;
+	cmr_u32 pre_lsc_pm_mode;
 };
 
 	struct binning_info {
@@ -539,6 +543,26 @@ struct lsc_ctrl_context {
 		unsigned short *tab;
 	};
 
+struct pm_lsc_full {
+	unsigned int img_width;
+	unsigned int img_height;
+	unsigned int grid;
+	unsigned int gain_width;
+	unsigned int gain_height;
+	unsigned short* input_table_buffer;
+};
+
+struct pm_lsc_crop {
+	unsigned int img_width;
+	unsigned int img_height;
+	unsigned int start_x;
+	unsigned int start_y;
+	unsigned int grid;
+	unsigned int gain_width;
+	unsigned int gain_height;
+	unsigned short* output_table_buffer;
+};
+
 /**---------------------------------------------------------------------------*
 **					Data Prototype				**
 **----------------------------------------------------------------------------*/
@@ -568,6 +592,7 @@ struct lsc_ctrl_context {
 						cmr_u32 gainWidth, cmr_u32 gainHeight, cmr_s32 bayerPattern);
 
 	cmr_s32 lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, cmr_u32 input_pattern, cmr_u32 output_pattern);
+	float table_bicubic_interpolation(unsigned short *src_tab, unsigned int src_gain_width, unsigned int src_gain_height, int TL_i, int TL_j, float dx, float dy);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**

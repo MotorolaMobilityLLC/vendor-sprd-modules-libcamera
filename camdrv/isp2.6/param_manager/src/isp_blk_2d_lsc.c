@@ -149,6 +149,45 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 		}
 		break;
 
+	case ISP_PM_BLK_LSC_UPDATE_GRID:
+		{
+			//cmr_u32 i = 0;
+			cmr_u32* adaptive_size_info = (cmr_u32 *) param_ptr0;
+			cmr_u32 cur_resolution_w = adaptive_size_info[0];
+			cmr_u32 cur_resolution_h = adaptive_size_info[1];
+			cmr_u32 lsc_grid = adaptive_size_info[2];
+			struct isp_2d_lsc_param *dst_ptr = dst_lnc_ptr;
+
+			ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_grid=%d, orig=%d",
+						lsc_grid, dst_lnc_ptr->cur.grid_width);
+
+			if (lsc_grid != dst_lnc_ptr->cur.grid_width) {
+				ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_resolution[%d,%d], orig[%d,%d]",
+						cur_resolution_w, cur_resolution_h,
+						dst_ptr->resolution.w, dst_ptr->resolution.h);
+
+				memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
+				_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, lsc_grid);
+
+				dst_ptr->cur.weight_tab = (void *)dst_ptr->weight_tab;
+				dst_ptr->lsc_info.grid = lsc_grid;
+				dst_ptr->resolution.w = cur_resolution_w;
+				dst_ptr->resolution.h = cur_resolution_h;
+				dst_ptr->lsc_info.gain_w = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.w, ISP_ONE);
+				dst_ptr->lsc_info.gain_h = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.h, ISP_ONE);
+
+				dst_ptr->cur.grid_width = lsc_grid;
+				dst_ptr->cur.grid_x_num = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.w, ISP_ZERO)+2;
+				dst_ptr->cur.grid_y_num = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.h, ISP_ZERO)+2;
+				dst_ptr->cur.grid_num_t = dst_ptr->cur.grid_x_num * dst_ptr->cur.grid_y_num ;
+				dst_ptr->cur.weight_num = (lsc_grid / 2 + 1)* 3 * sizeof(cmr_s16);
+
+				dst_ptr->cur.update_all = 1;
+				lnc_header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
+			}
+		}
+		break;
+
 	default:
 		break;
 	}

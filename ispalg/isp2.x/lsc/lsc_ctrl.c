@@ -1607,6 +1607,8 @@ static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, 
 	cxt->quik_in_start_frame = -99;
 	cxt->init_skip_frame = 5;      // alsc ctrl setting
 	cxt->bv_skip_frame = 0;
+	cxt->cur_lsc_pm_mode = 0;   // 0: common table size,  1: 720p table size
+	cxt->pre_lsc_pm_mode = 0;   // 0: common table size,  1: 720p table size
 	cxt->img_width = init_param->img_width;
 	cxt->img_height = init_param->img_height;
 	cxt->gain_width  =  init_param->gain_width;
@@ -2402,6 +2404,12 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	lsc_last_info->bv = param->bv;
 	lsc_last_info->bv_gain = param->bv_gain;
 
+	if(cxt->LSC_SPD_VERSION >= 6){
+		gain_width  = cxt->gain_width;
+		gain_height = cxt->gain_height;
+		grid = cxt->grid;
+	}
+
 	//save debug info
     lsc_debug_info_ptr->gain_width = gain_width;
     lsc_debug_info_ptr->gain_height = gain_height;
@@ -2420,11 +2428,12 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	// alsc_calc ++
 	// change mode
 	if(cxt->fw_start_end){
-		if(cxt->lsc_pm0 != param->lsc_tab_address[0]){
-			ISP_LOGV("[ALSC] change mode: start frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
-			ISP_LOGV("[ALSC] change mode: pre_pm0=%p, new_pm0=%p", cxt->lsc_pm0, param->lsc_tab_address[0]);
-			ISP_LOGV("[ALSC] change mode: pre, img_size[%d,%d], table_size[%d,%d], grid=%d, lsc_id=%d", cxt->img_width, cxt->img_height, cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
-			ISP_LOGV("[ALSC] change mode: new, img_size[%d,%d], table_size[%d,%d], grid=%d, lsc_id=%d", img_width, img_height, gain_width, gain_height, grid, cxt->lsc_id);
+		ISP_LOGV("[ALSC] change mode: LSC_SPD_VERSION=%d, start frame_count=%d, lsc_id=%d", cxt->LSC_SPD_VERSION, cxt->frame_count, cxt->lsc_id);
+		if(cxt->LSC_SPD_VERSION <=5){
+			if(cxt->lsc_pm0 != param->lsc_tab_address[0]){
+				ISP_LOGV("[ALSC] change mode: pre_pm0=%p, new_pm0=%p", cxt->lsc_pm0, param->lsc_tab_address[0]);
+				ISP_LOGV("[ALSC] change mode: pre, img_size[%d,%d], table_size[%d,%d], grid=%d, lsc_id=%d", cxt->img_width, cxt->img_height, cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
+				ISP_LOGV("[ALSC] change mode: new, img_size[%d,%d], table_size[%d,%d], grid=%d, lsc_id=%d", img_width, img_height, gain_width, gain_height, grid, cxt->lsc_id);
 
 			if(gain_width != cxt->gain_width || gain_height != cxt->gain_height || cxt->flash_mode == 1 || cxt->pre_flash_mode == 1 || cxt->frame_count == 0){			
 				cxt->img_width = img_width;
@@ -2444,6 +2453,35 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				sync_g_channel(cxt->std_lsc_table_param_buffer, gain_width, gain_height, cxt->output_gain_pattern);
 			}
 
+				cxt->fw_start_end=0;
+				cxt->can_update_dest=1;
+				if(cxt->frame_count == 0){//lunch camera with binning size or 720p both will run the fw_start
+					cxt->frame_count = 1;
+					cxt->alg_count = 0;   // set zero to skip iir
+					ISP_LOGV("[ALSC] change mode END (return 0): set frame_count=1, set alg_count=1 to do quick in, lsc_id=%d", cxt->lsc_id);
+					return rtn;
+				}else{
+					cxt->frame_count = cxt->calc_freq*3-2;  // do not quick in and skip 3 frame for AEM stable
+					cxt->alg_count = 0;                     // set zero to skip iir
+					ISP_LOGV("[ALSC] change mode END (return 0): set ALSC normal in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+					return rtn;
+				}
+			}else{
+				cxt->fw_start_end=0;
+				cxt->can_update_dest=1;
+				ISP_LOGV("[ALSC] change mode SKIP (return 0): protect for previouse calc thread, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+				return rtn;
+			}
+		}else{
+			ISP_LOGV("[ALSC] change mode: pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d, lsc_id=%d", cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode, cxt->lsc_id);
+			ISP_LOGV("[ALSC] change mode: pre_img_size=[%d,%d], new_img_size=[%d,%d], lsc_id=%d", cxt->img_width, cxt->img_height, img_width, img_height, cxt->lsc_id);
+
+			cxt->pre_lsc_pm_mode = cxt->cur_lsc_pm_mode;
+			cxt->img_width = img_width;
+			cxt->img_height = img_height;
+			memcpy(lsc_debug_info_ptr->last_lsc_table  , cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(cmr_u16));
+			memcpy(lsc_debug_info_ptr->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(cmr_u16));
+
 			cxt->fw_start_end=0;
 			cxt->can_update_dest=1;
 			if(cxt->frame_count == 0){//lunch camera with binning size or 720p both will run the fw_start
@@ -2455,40 +2493,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				cxt->frame_count = cxt->calc_freq*3-2;  // do not quick in and skip 3 frame for AEM stable
 				cxt->alg_count = 0;                     // set zero to skip iir
 				ISP_LOGV("[ALSC] change mode END (return 0): set ALSC normal in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
-                return rtn;
-            }
-		}else{
-			cxt->fw_start_end=0;
-			cxt->can_update_dest=1;
-			ISP_LOGV("[ALSC] change mode SKIP (return 0): protect for previouse calc thread, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
-			return rtn;
-		}
-	}
-
-	// updata the mlog info 1
-	if(print_lsc_log()==1 && cxt->alg_count >=1){
-		FILE *pf = NULL;
-		const char saveLogFile1[50] = "/data/mlog/lsc1.txt";
-		const char saveLogFile2[50] = "/data/mlog/lsc2.txt";
-		if(cxt->lsc_id == 1){
-			pf = fopen(saveLogFile1, "wb");
-		}else{
-			pf = fopen(saveLogFile2, "wb");
-		}
-		if (NULL != pf){
-			fprintf(pf, "LSC BASIC INFO\r\n");
-			fprintf(pf, "alg2.c VER: %s \r\n", lsc_debug_info_ptr->LSC_version);
-			fprintf(pf, "final_index: %d, final_ratio_x10000: %d\r\n", lsc_debug_info_ptr->final_index, lsc_debug_info_ptr->final_ratio_x10000);
-			fprintf(pf, "bv: %d, bv_gain: %d, ct: %d\r\n", param->bv, param->bv_gain, param->ct);
-			fprintf(pf, "rGain: %d, bGain: %d\r\n", param->r_gain, param->b_gain);
-			fprintf(pf, "image_size: [%d,%d], grid: %d\r\n", img_width, img_height, grid);
-			fprintf(pf, "gain_size: [%d,%d], gain_pattern: %d\r\n", gain_width, gain_height, cxt->output_gain_pattern);
-			fprintf(pf, "flash_mode: %d, front_cam: %d\r\n", cxt->flash_mode, cxt->camera_id);
-			fprintf(pf, "alg_locked: %d, cam_id: %d\r\n", cxt->alg_locked, cxt->lsc_id);
-			fprintf(pf, "alg_cnt: %d, frame_cnt: %d\r\n", cxt->alg_count, cxt->frame_count);
-			fprintf(pf, "TAB_outer: [%d,%d,%d,%d]\r\n", lsc_debug_info_ptr->output_lsc_table[0], lsc_debug_info_ptr->output_lsc_table[1], lsc_debug_info_ptr->output_lsc_table[2], lsc_debug_info_ptr->output_lsc_table[3]);
-			fprintf(pf, "TAB_inner: [%d,%d,%d,%d]\r\n", lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+0], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+1], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+2], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+3]);
-			fclose(pf);
+				return rtn;
+			}
 		}
 	}
 
@@ -2981,6 +2987,114 @@ static void lsc_read_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr
 	}
 }
 
+int pm_lsc_table_crop(struct pm_lsc_full *src, struct pm_lsc_crop *dst)
+{
+	int rtn = 0;
+	unsigned int i, j, k;
+
+	ISP_LOGV("pm_lsc_full[%d,%d,%d,%d,%d,%p]", src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height, src->input_table_buffer);
+	ISP_LOGV("pm_lsc_full->input_table_buffer [%d,%d,%d,%d]", src->input_table_buffer[0], src->input_table_buffer[1], src->input_table_buffer[2], src->input_table_buffer[3]);
+	ISP_LOGV("pm_lsc_crop[%d,%d,%d,%d,%d,%d,%d,%p]", dst->img_width, dst->img_height, dst->start_x, dst->start_y, dst->grid, dst->gain_width, dst->gain_height, dst->output_table_buffer);
+
+	// error cases
+	if (dst->start_x > src->img_width
+		|| dst->start_y > src->img_height
+		|| dst->start_x + dst->img_width > src->img_width
+		|| dst->start_y + dst->img_height > src->img_height
+		|| dst->start_x < 0
+		|| dst->start_y < 0
+		|| dst->start_x + (dst->gain_width - 2) * (dst->grid * 2) > (src->gain_width - 2) * (src->grid * 2)
+		|| dst->start_y + (dst->gain_height - 2) * (dst->grid * 2) > (src->gain_height - 2) * (src->grid * 2)) {
+
+		for (i = 0; i < dst->gain_width * dst->gain_height * 4; i++) {
+			dst->output_table_buffer[i] = 1024;
+		}
+		ISP_LOGE("do LSC_CROP error, return 1X gain table");
+		return -1;
+	}
+
+	// save input table to channel
+	unsigned short *src_ch0 = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+	unsigned short *src_ch1 = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+	unsigned short *src_ch2 = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+	unsigned short *src_ch3 = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+	for (i = 0; i < src->gain_width * src->gain_height; i++) {
+		src_ch0[i] = src->input_table_buffer[4 * i + 0];
+		src_ch1[i] = src->input_table_buffer[4 * i + 1];
+		src_ch2[i] = src->input_table_buffer[4 * i + 2];
+		src_ch3[i] = src->input_table_buffer[4 * i + 3];
+	}
+
+	// define crop table parameters
+	unsigned int ch_start_x = 0;		// start_x on channel plane;
+	unsigned int ch_start_y = 0;		// start_y on channel plane;
+	unsigned int crop_table_x = 0;		// dst table coord-x on channel plane
+	unsigned int crop_table_y = 0;		// dst table coord-y on channel plane
+	int TL_i = 0;						// src table top left index-i
+	int TL_j = 0;						// src table top left index-j
+	float dx = 0.0;						// distence to left  , where total length normalize to 1
+	float dy = 0.0;						// distence to bottem, where total length normalize to 1
+
+	// start to crop table
+
+	ch_start_x = dst->start_x / 2;
+	ch_start_y = dst->start_y / 2;
+	for (j = 1; j < dst->gain_height - 1; j++) {
+		for (i = 1; i < dst->gain_width - 1; i++) {
+			crop_table_x = ch_start_x + (i - 1) * dst->grid;
+			crop_table_y = ch_start_y + (j - 1) * dst->grid;
+
+			TL_i = (int)(crop_table_x / src->grid) + 1;
+			TL_j = (int)(crop_table_y / src->grid) + 1;
+			dx = (float)(crop_table_x - (TL_i - 1) * src->grid) / src->grid;
+			dy = (float)(TL_j * src->grid - crop_table_y) / src->grid;
+
+			dst->output_table_buffer[(j * dst->gain_width + i) * 4 + 0] = (unsigned short)table_bicubic_interpolation(src_ch0, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
+			dst->output_table_buffer[(j * dst->gain_width + i) * 4 + 1] = (unsigned short)table_bicubic_interpolation(src_ch1, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
+			dst->output_table_buffer[(j * dst->gain_width + i) * 4 + 2] = (unsigned short)table_bicubic_interpolation(src_ch2, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
+			dst->output_table_buffer[(j * dst->gain_width + i) * 4 + 3] = (unsigned short)table_bicubic_interpolation(src_ch3, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
+		}
+	}
+
+	// generate outer table edge
+	unsigned short inner_table_1 = 0;
+	unsigned short inner_table_2 = 0;
+	unsigned short inner_table_3 = 0;
+	for (k = 0; k < 4; k++) {
+		for (j = 1; j < dst->gain_height - 1; j++) {
+			inner_table_1 = dst->output_table_buffer[(j * dst->gain_width + 1) * 4 + k];
+			inner_table_2 = dst->output_table_buffer[(j * dst->gain_width + 2) * 4 + k];
+			inner_table_3 = dst->output_table_buffer[(j * dst->gain_width + 3) * 4 + k];
+			dst->output_table_buffer[(j * dst->gain_width + 0) * 4 + k] = (inner_table_1 - inner_table_2) * 3 + inner_table_3;
+			inner_table_1 = dst->output_table_buffer[(j * dst->gain_width + (dst->gain_width - 2)) * 4 + k];
+			inner_table_2 = dst->output_table_buffer[(j * dst->gain_width + (dst->gain_width - 3)) * 4 + k];
+			inner_table_3 = dst->output_table_buffer[(j * dst->gain_width + (dst->gain_width - 4)) * 4 + k];
+			dst->output_table_buffer[(j * dst->gain_width + (dst->gain_width - 1)) * 4 + k] = (inner_table_1 - inner_table_2) * 3 + inner_table_3;
+		}
+	}
+
+	for (k = 0; k < 4; k++) {
+		for (i = 0; i < dst->gain_width; i++) {
+			inner_table_1 = dst->output_table_buffer[(1 * dst->gain_width + i) * 4 + k];
+			inner_table_2 = dst->output_table_buffer[(2 * dst->gain_width + i) * 4 + k];
+			inner_table_3 = dst->output_table_buffer[(3 * dst->gain_width + i) * 4 + k];
+			dst->output_table_buffer[(0 * dst->gain_width + i) * 4 + k] = (inner_table_1 - inner_table_2) * 3 + inner_table_3;
+			inner_table_1 = dst->output_table_buffer[((dst->gain_height - 2) * dst->gain_width + i) * 4 + k];
+			inner_table_2 = dst->output_table_buffer[((dst->gain_height - 3) * dst->gain_width + i) * 4 + k];
+			inner_table_3 = dst->output_table_buffer[((dst->gain_height - 4) * dst->gain_width + i) * 4 + k];
+			dst->output_table_buffer[((dst->gain_height - 1) * dst->gain_width + i) * 4 + k] = (inner_table_1 - inner_table_2) * 3 + inner_table_3;
+		}
+	}
+
+	// free generated buffer
+	std_free(src_ch0);
+	std_free(src_ch1);
+	std_free(src_ch2);
+	std_free(src_ch3);
+
+	return rtn;
+}
+
 static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_u32 i;
@@ -3004,6 +3118,9 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	struct lsc_last_info* lsc_last_info = (struct lsc_last_info*)cxt->lsc_last_info;
 	struct lsc_flash_proc_param* flash_param = (struct lsc_flash_proc_param*)cxt->lsc_flash_proc_param;
 	struct post_shading_gain_param *post_param = (struct post_shading_gain_param*)cxt->post_shading_gain_param;
+	struct pm_lsc_full* pm_lsc_full = NULL;
+	struct pm_lsc_crop* pm_lsc_crop = NULL;
+	int binning_crop = 0;
 	struct alsc_do_simulation* alsc_do_simulation   = NULL;
 	struct lsc_adv_calc_param* lsc_adv_calc_param   = NULL;
 	struct lsc_adv_calc_result* lsc_adv_calc_result = NULL;
@@ -3025,6 +3142,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		case ALSC_FW_START:// You have to update two table in FW_START: 1.fwstart_info->lsc_result_address_new, 2.cxt->fwstart_new_scaled_table
 
 			fwstart_info = (struct alsc_fwstart_info*)in;
+			ISP_LOGV("[ALSC] FW_START +++++, LSC_SPD_VERSION=%d, frame_count=%d, fwstart_info->camera_id=%d, lsc_id=%d, cxt->can_update_dest=%d, fwstart_info %p", cxt->LSC_SPD_VERSION, cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id, cxt->can_update_dest, fwstart_info);
 
 			// cmd set lsc output
 			if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
@@ -3047,25 +3165,25 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				//}
 			//}
 
-			pm0_new = fwstart_info->lsc_tab_address_new[0];
-			if(fwstart_info->gain_width_new == cxt->init_gain_width && fwstart_info->gain_height_new == cxt->init_gain_height && fwstart_info->grid_new == cxt->init_grid)
-				full_flag = 1;
-			if(fwstart_info->camera_id <= 1){
-				lsc_read_last_info(lsc_last_info, fwstart_info->camera_id, full_flag);
-				cxt->fw_start_bv = lsc_last_info->bv;
-				cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
-			}
+			if(cxt->LSC_SPD_VERSION <= 5){
+				pm0_new = fwstart_info->lsc_tab_address_new[0];
+				if(fwstart_info->gain_width_new == cxt->init_gain_width && fwstart_info->gain_height_new == cxt->init_gain_height && fwstart_info->grid_new == cxt->init_grid)
+					full_flag = 1;
+				if(fwstart_info->camera_id <= 1){
+					lsc_read_last_info(lsc_last_info, fwstart_info->camera_id, full_flag);
+					cxt->fw_start_bv = lsc_last_info->bv;
+					cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
+				}
 
-            ISP_LOGV("[ALSC] FW_START +++++, frame_count=%d, fwstart_info->camera_id=%d, lsc_id=%d, cxt->can_update_dest=%d, fwstart_info %p", cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id, cxt->can_update_dest, fwstart_info);
-            ISP_LOGV("[ALSC] FW_START, old tab0 address = %p, lsc_id=%d", cxt->lsc_pm0, cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, new tab0 address = %p, lsc_id=%d", fwstart_info->lsc_tab_address_new[0], cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, old tab0=[%d,%d,%d,%d], lsc_id=%d", cxt->lsc_pm0[0], cxt->lsc_pm0[1], cxt->lsc_pm0[2], cxt->lsc_pm0[3], cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, new tab0=[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_tab_address_new[0][0], fwstart_info->lsc_tab_address_new[0][1], fwstart_info->lsc_tab_address_new[0][2], fwstart_info->lsc_tab_address_new[0][3], cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, new dest address = %p, lsc_id=%d", fwstart_info->lsc_result_address_new, cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, old (%d,%d) grid %d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, new (%d,%d) grid %d, lsc_id=%d", fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
-            ISP_LOGV("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, old tab0 address = %p, lsc_id=%d", cxt->lsc_pm0, cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, new tab0 address = %p, lsc_id=%d", fwstart_info->lsc_tab_address_new[0], cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, old tab0=[%d,%d,%d,%d], lsc_id=%d", cxt->lsc_pm0[0], cxt->lsc_pm0[1], cxt->lsc_pm0[2], cxt->lsc_pm0[3], cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, new tab0=[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_tab_address_new[0][0], fwstart_info->lsc_tab_address_new[0][1], fwstart_info->lsc_tab_address_new[0][2], fwstart_info->lsc_tab_address_new[0][3], cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, new dest address = %p, lsc_id=%d", fwstart_info->lsc_result_address_new, cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, old (%d,%d) grid %d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, new (%d,%d) grid %d, lsc_id=%d", fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
+				ISP_LOGV("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
 
 			// change to 720p mode
 			if(fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && fwstart_info->grid_new == 32){
@@ -3124,8 +3242,155 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					change_mode_rtn = fwstart_update_first_tab(cxt, fwstart_info);
 				}
 
-				if(change_mode_rtn == -1)
-					ISP_LOGV("[ALSC] FW_START, Change Mode Failed, lsc_id=%d", cxt->lsc_id);
+					if(change_mode_rtn == -1)
+						ISP_LOGV("[ALSC] FW_START, Change Mode Failed, lsc_id=%d", cxt->lsc_id);
+				}
+			}else{
+				if(cxt->init_img_width == fwstart_info->img_width_new && cxt->init_img_height == fwstart_info->img_height_new)
+					full_flag = 1;
+				if(fwstart_info->camera_id <= 1){
+					lsc_read_last_info(lsc_last_info, fwstart_info->camera_id, full_flag);
+					cxt->fw_start_bv = lsc_last_info->bv;
+					cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
+				}
+
+				ISP_LOGE("[ALSC] FW_START, new dest address = %p, lsc_id=%d", fwstart_info->lsc_result_address_new, cxt->lsc_id);
+				ISP_LOGE("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
+				ISP_LOGE("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
+				ISP_LOGE("[ALSC] FW_START, old table size=[%d,%d] grid=%d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
+
+				// do parameter normalization
+				if(cxt->LSC_SPD_VERSION >= 6){
+					if(cxt->init_img_width / fwstart_info->img_width_new ==  cxt->init_img_height / fwstart_info->img_height_new){
+						cxt->cur_lsc_pm_mode = 0;
+						cxt->grid = (cmr_u32)(cxt->init_grid / (cxt->init_img_width / fwstart_info->img_width_new));
+						cxt->gain_width = cxt->init_gain_width;
+						cxt->gain_height = cxt->init_gain_height;
+						fwstart_info->grid_new = cxt->grid;
+						fwstart_info->gain_width_new = cxt->gain_width;
+						fwstart_info->gain_height_new = cxt->gain_height;
+						for(i=0; i<8; i++){
+							fwstart_info->lsc_tab_address_new[i] = cxt->std_init_lsc_table_param_buffer[i];
+							memcpy(cxt->std_lsc_table_param_buffer[i],cxt->std_init_lsc_table_param_buffer[i],cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+						}
+						ISP_LOGI("[ALSC] FW_START parameter normalization, case1 n binning, grid=%d, lsc_id=%d", cxt->grid, cxt->lsc_id);
+					}else if(fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720){
+						cxt->cur_lsc_pm_mode = 1;
+						cxt->grid = 32;
+						cxt->gain_width = 23;
+						cxt->gain_height = 15;
+						fwstart_info->grid_new = cxt->grid;
+						fwstart_info->gain_width_new = cxt->gain_width;
+						fwstart_info->gain_height_new = cxt->gain_height;
+						pm_lsc_full = (struct pm_lsc_full*)malloc(sizeof(struct pm_lsc_full));
+						pm_lsc_full->img_width = cxt->init_img_width;
+						pm_lsc_full->img_height = cxt->init_img_height;
+						pm_lsc_full->grid = cxt->init_grid;
+						pm_lsc_full->gain_width = cxt->init_gain_width;
+						pm_lsc_full->gain_height = cxt->init_gain_height;
+						// Notice, if the crop action from binning size raw, do following action
+						binning_crop = 1;
+						if(binning_crop){
+							pm_lsc_full->img_width /= 2;
+							pm_lsc_full->img_height /= 2;
+							pm_lsc_full->grid /= 2;
+						}
+
+						pm_lsc_crop = (struct pm_lsc_crop*)malloc(sizeof(struct pm_lsc_crop));
+						pm_lsc_crop->img_width = fwstart_info->img_width_new;
+						pm_lsc_crop->img_height = fwstart_info->img_height_new;
+						pm_lsc_crop->start_x = (pm_lsc_full->img_width - pm_lsc_crop->img_width) / 2;      // for crop center case
+						pm_lsc_crop->start_y = (pm_lsc_full->img_height - pm_lsc_crop->img_height) / 2;    // for crop center case
+						pm_lsc_crop->grid = 32;
+						pm_lsc_crop->gain_width = 23;
+						pm_lsc_crop->gain_height = 15;
+						for(i=0; i<8; i++){
+							pm_lsc_full->input_table_buffer = cxt->std_init_lsc_table_param_buffer[i];
+							pm_lsc_crop->output_table_buffer = cxt->std_lsc_table_param_buffer[i];
+							rtn = pm_lsc_table_crop(pm_lsc_full, pm_lsc_crop);
+							fwstart_info->lsc_tab_address_new[i] = cxt->std_lsc_table_param_buffer[i];
+						}
+						std_free(pm_lsc_full);
+						std_free(pm_lsc_crop);
+					}else{
+						ISP_LOGE("[ALSC] FW_START, lsc do not support img_size=[%d,%d], please check, lsc_id=%d", fwstart_info->img_width_new, fwstart_info->img_height_new, cxt->lsc_id);
+					}
+				}
+				ISP_LOGE("[ALSC] FW_START, new table size=[%d,%d] grid=%d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
+				ISP_LOGE("[ALSC] FW_START, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d, lsc_id=%d ", cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode, cxt->lsc_id);
+
+				// change to 720p mode
+				if(fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720){
+					ISP_LOGV("[ALSC] FW_START, 720p Mode, Send TL84 table[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_tab_address_new[2][0], fwstart_info->lsc_tab_address_new[2][1], fwstart_info->lsc_tab_address_new[2][2], fwstart_info->lsc_tab_address_new[2][3], cxt->lsc_id);
+					memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[2], cxt->gain_width*cxt->gain_height *4*sizeof(cmr_u16));
+					memcpy(cxt->fwstart_new_scaled_table, fwstart_info->lsc_result_address_new, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+				// first frame
+				}else if( cxt->frame_count == 0 ){
+					ISP_LOGV("[ALSC] FW_START, First Frame Mode, read table from file, lsc_id=%d", cxt->lsc_id);
+					// apply lsc_last_info
+					if((fwstart_info->camera_id == 0 || fwstart_info->camera_id == 1) && cxt->lsc_id == 1
+					&& cxt->gain_width  == lsc_last_info->gain_width
+					&& cxt->gain_height == lsc_last_info->gain_height){
+						for(i=0; i<cxt->gain_width*cxt->gain_height; i++){
+							fwstart_info->lsc_result_address_new[4*i + is_r]  = (cmr_u16)(lsc_last_info->table_r[i]);
+							fwstart_info->lsc_result_address_new[4*i + is_gr] = (cmr_u16)(lsc_last_info->table_g[i]);
+							fwstart_info->lsc_result_address_new[4*i + is_gb] = (cmr_u16)(lsc_last_info->table_g[i]);
+							fwstart_info->lsc_result_address_new[4*i + is_b]  = (cmr_u16)(lsc_last_info->table_b[i]);
+						}
+						ISP_LOGV("[ALSC] FW_START, last_table_rgb[%d,%d,%d], camera_id=%d, lsc_id=%d", lsc_last_info->table_r[0], lsc_last_info->table_g[0], lsc_last_info->table_b[0], fwstart_info->camera_id, cxt->lsc_id);
+					}else{
+						ISP_LOGV("[ALSC] FW_START, no last info, Send TL84 table[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_tab_address_new[2][0], fwstart_info->lsc_tab_address_new[2][1], fwstart_info->lsc_tab_address_new[2][2], fwstart_info->lsc_tab_address_new[2][3], cxt->lsc_id);
+						memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[2], cxt->gain_width * cxt->gain_height *4*sizeof(cmr_u16));
+						post_shading_gain(fwstart_info->lsc_result_address_new, fwstart_info->lsc_result_address_new, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern,
+										cxt->frame_count, cxt->fw_start_bv, cxt->fw_start_bv_gain, 0, 0, cxt->LSC_SPD_VERSION, post_param);
+					}
+
+					// copy output table to fwstart_new_scaled_table for next alsc calc
+					memcpy(cxt->fwstart_new_scaled_table, fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new * fwstart_info->gain_height_new*4*sizeof(cmr_u16));
+					ISP_LOGV("[ALSC] FW_START, init lsc table=[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3], cxt->lsc_id);
+				// change mode
+				}else{
+					ISP_LOGV("[ALSC] FW_START, Change Mode, lsc_id=%d", cxt->lsc_id);
+					// case for the same table size, then we just copy the output_lsc_table, and calc do nothing.
+					if( cxt->pre_lsc_pm_mode == cxt->cur_lsc_pm_mode && flash_param->main_flash_from_other_parameter !=1 ){
+						ISP_LOGV("[ALSC] FW_START, The same table size mode, COPY fwstop_output_table for output, lsc_id=%d", cxt->lsc_id);
+						memcpy(fwstart_info->lsc_result_address_new, cxt->fwstop_output_table, cxt->gain_width * cxt->gain_height *4*sizeof(cmr_u16));
+						memcpy(cxt->fwstart_new_scaled_table, cxt->fwstop_output_table, cxt->gain_width * cxt->gain_height*4*sizeof(cmr_u16));
+					// flash change mode with same param file
+					}else if(cxt->pre_lsc_pm_mode == cxt->cur_lsc_pm_mode && flash_param->main_flash_from_other_parameter ==1){
+						ISP_LOGV("[ALSC] FW_START, Flash change mode, the same table size, don't need scale, COPY the preflash_current_output_table to fwstop_output_table and lsc_result_address_new, lsc_id=%d", cxt->lsc_id);
+						memcpy(cxt->fwstart_new_scaled_table,        flash_param->preflash_current_output_table, cxt->gain_width * cxt->gain_height *4*sizeof(unsigned short));
+						memcpy(fwstart_info->lsc_result_address_new, flash_param->preflash_current_output_table, cxt->gain_width * cxt->gain_height *4*sizeof(unsigned short));
+						flash_param->main_flash_from_other_parameter = 0;
+						flash_param->preflash_current_lnc_table_address = NULL;
+					// non common size mode change back to common size mode
+					}else{
+						if(cxt->cur_lsc_pm_mode == 0){
+							ISP_LOGV("[ALSC] FW_START, non common size mode change back to common size mode, use last_info, lsc_id=%d", cxt->lsc_id);
+							if((fwstart_info->camera_id == 0 || fwstart_info->camera_id == 1) && cxt->lsc_id == 1
+							&& cxt->gain_width  == lsc_last_info->gain_width
+							&& cxt->gain_height == lsc_last_info->gain_height
+							&& lsc_last_info->table_r[0] && lsc_last_info->table_g[0] && lsc_last_info->table_b[0]){
+								for(i=0; i<cxt->gain_width*cxt->gain_height; i++){
+									fwstart_info->lsc_result_address_new[4*i + is_r]  = (cmr_u16)(lsc_last_info->table_r[i]);
+									fwstart_info->lsc_result_address_new[4*i + is_gr] = (cmr_u16)(lsc_last_info->table_g[i]);
+									fwstart_info->lsc_result_address_new[4*i + is_gb] = (cmr_u16)(lsc_last_info->table_g[i]);
+									fwstart_info->lsc_result_address_new[4*i + is_b]  = (cmr_u16)(lsc_last_info->table_b[i]);
+								}
+								ISP_LOGV("[ALSC] FW_START, last_table_rgb[%d,%d,%d], camera_id=%d, lsc_id=%d", lsc_last_info->table_r[0], lsc_last_info->table_g[0], lsc_last_info->table_b[0], fwstart_info->camera_id, cxt->lsc_id);
+							}else{
+								ISP_LOGV("[ALSC] FW_START, no last info, Send TL84 table[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_tab_address_new[2][0], fwstart_info->lsc_tab_address_new[2][1], fwstart_info->lsc_tab_address_new[2][2], fwstart_info->lsc_tab_address_new[2][3], cxt->lsc_id);
+								memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[2], cxt->gain_width * cxt->gain_height *4*sizeof(cmr_u16));
+								post_shading_gain(fwstart_info->lsc_result_address_new, fwstart_info->lsc_result_address_new, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern,
+											cxt->frame_count, cxt->fw_start_bv, cxt->fw_start_bv_gain, 0, 0, cxt->LSC_SPD_VERSION, post_param);
+							}
+
+							// copy output table to fwstart_new_scaled_table for next alsc calc
+							memcpy(cxt->fwstart_new_scaled_table, fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new * fwstart_info->gain_height_new*4*sizeof(cmr_u16));
+							ISP_LOGV("[ALSC] FW_START, init lsc table=[%d,%d,%d,%d], lsc_id=%d", fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3], cxt->lsc_id);
+						}
+					}
+				}
 			}
 
 			ISP_LOGV("[ALSC] FW_START -----, frame_count=%d, cxt->can_update_dest=%d, lsc_id=%d", cxt->frame_count, cxt->can_update_dest, cxt->lsc_id);
@@ -3133,21 +3398,35 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		case ALSC_FW_START_END:
 			fwstart_info = (struct alsc_fwstart_info*)in;
-			ISP_LOGV("[ALSC] FW_START_END +++++, frame_count=%d, fwstart_info %p, lsc_id=%d", cxt->frame_count, fwstart_info, cxt->lsc_id);
+			ISP_LOGV("[ALSC] FW_START_END +++++, LSC_SPD_VERSION=%d, frame_count=%d, fwstart_info %p, lsc_id=%d", cxt->LSC_SPD_VERSION, cxt->frame_count, fwstart_info, cxt->lsc_id);
 			ISP_LOGV("[ALSC] FW_START_END, Ori cxt->fw_start_end=%d, cxt->can_update_dest=%d, lsc_id=%d", cxt->fw_start_end, cxt->can_update_dest, cxt->lsc_id);
 			ISP_LOGV("[ALSC] FW_START_END, old tab address = %p, lsc_id=%d", cxt->lsc_pm0, cxt->lsc_id);
 			ISP_LOGV("[ALSC] FW_START_END, new tab address = %p, lsc_id=%d", fwstart_info->lsc_tab_address_new[0], cxt->lsc_id);
 			ISP_LOGV("[ALSC] FW_START_END, new dest address = %p, lsc_id=%d", fwstart_info->lsc_result_address_new, cxt->lsc_id);
 
-            //case for old parameter file the same with new parameter file, then we just copy the output_lsc_table, and calc do nothing.
-			if( cxt->lsc_pm0 == fwstart_info->lsc_tab_address_new[0] ){
-				//reset the flag
-				cxt->fw_start_end =0;    //set 0, we hope calc don't perform change mode.
-				cxt->can_update_dest=1;  //set 1, then the calc can keep update the destination buffer and post gain.
-				ISP_LOGV("[ALSC] FW_START_END, The same parameter file, SET lsc_id->fw_start_end=%d, lsc_id->can_update_dest=%d, lsc_id=%d", cxt->fw_start_end, cxt->can_update_dest, cxt->lsc_id);
-				ISP_LOGV("[ALSC] FW_START_END, The same parameter file, calc will not perform change mode, lsc_id=%d", cxt->lsc_id);
+			if(cxt->LSC_SPD_VERSION <= 5){
+				//case for old parameter file the same with new parameter file, then we just copy the output_lsc_table, and calc do nothing.
+				if( cxt->lsc_pm0 == fwstart_info->lsc_tab_address_new[0]){
+					//reset the flag
+					cxt->fw_start_end =0;    //set 0, we hope calc don't perform change mode.
+					cxt->can_update_dest=1;  //set 1, then the calc can keep update the destination buffer and post gain.
+					ISP_LOGV("[ALSC] FW_START_END, The same parameter file, SET lsc_id->fw_start_end=%d, lsc_id->can_update_dest=%d, lsc_id=%d", cxt->fw_start_end, cxt->can_update_dest, cxt->lsc_id);
+					ISP_LOGV("[ALSC] FW_START_END, The same parameter file, calc will not perform change mode, lsc_id=%d", cxt->lsc_id);
+				}else{
+					cxt->fw_start_end =1;// calc will perforem the change mode
+					ISP_LOGV("[ALSC] FW_START_END, calc will perform change mode, lsc_id=%d", cxt->lsc_id);
+				}
 			}else{
-				cxt->fw_start_end =1;// calc will perforem the change mode
+				if( cxt->pre_lsc_pm_mode == cxt->cur_lsc_pm_mode){
+					//reset the flag
+					cxt->fw_start_end =0;    //set 0, we hope calc don't perform change mode.
+					cxt->can_update_dest=1;  //set 1, then the calc can keep update the destination buffer and post gain.
+					ISP_LOGV("[ALSC] FW_START_END, pre_lsc_pm_mode=cur_lsc_pm_mode=%d, SET lsc_id->fw_start_end=%d, lsc_id->can_update_dest=%d, lsc_id=%d", cxt->cur_lsc_pm_mode, cxt->fw_start_end, cxt->can_update_dest, cxt->lsc_id);
+					ISP_LOGV("[ALSC] FW_START_END, The same parameter file, calc will not perform change mode, lsc_id=%d", cxt->lsc_id);
+				}else{
+					cxt->fw_start_end =1;// calc will perforem the change mode
+					ISP_LOGV("[ALSC] FW_START_END, calc will perform change mode, lsc_id=%d", cxt->lsc_id);
+				}
 			}
 
 			ISP_LOGV("[ALSC] FW_START_END, SET cxt->fw_start_end=%d, cxt->can_update_dest=%d, lsc_id=%d", cxt->fw_start_end, cxt->can_update_dest, cxt->lsc_id);
@@ -3377,24 +3656,26 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		case ALSC_FW_PROC_START: //for sbs feature now
 			// ISP_SINGLE 0, ISP_DUAL_NORMAL 1, ISP_DUAL_SBS 2, ISP_DUAL_SWITCH 3
-			ISP_LOGV("[ALSC] FW_PROC_START, is_master=%d, is_multi_mode=%d, frame_count=%d, lsc_id=%d", cxt->is_master, cxt->is_multi_mode, cxt->frame_count, cxt->lsc_id);
+			ISP_LOGV("[ALSC] FW_PROC_START, LSC_SPD_VERSION=%d, is_master=%d, is_multi_mode=%d, frame_count=%d, lsc_id=%d", cxt->LSC_SPD_VERSION, cxt->is_master, cxt->is_multi_mode, cxt->frame_count, cxt->lsc_id);
 
 			fwprocstart_info = (struct alsc_fwprocstart_info*)in;
-			pm0_new = fwprocstart_info->lsc_tab_address_new[0];
-			if(fwprocstart_info->gain_width_new == cxt->init_gain_width && fwprocstart_info->gain_height_new == cxt->init_gain_height && fwprocstart_info->grid_new == cxt->init_grid)
-				full_flag = 1;
-			if(fwprocstart_info->camera_id <= 1){
-				lsc_read_last_info(lsc_last_info, fwprocstart_info->camera_id, full_flag);
-				cxt->fw_start_bv = lsc_last_info->bv;
-				cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
-			}
-			if(cxt->is_multi_mode == 2 ){
-				ISP_LOGV("[ALSC] FW_PROC_START, ISP_DUAL_SBS MODE, camera_id=%d", fwprocstart_info->camera_id);
-				ISP_LOGV("[ALSC] FW_PROC_START, old tab address = %p", cxt->lsc_pm0);
-				ISP_LOGV("[ALSC] FW_PROC_START, new tab address = %p", fwprocstart_info->lsc_tab_address_new[0]);
-				ISP_LOGV("[ALSC] FW_PROC_START, new dest address = %p", fwprocstart_info->lsc_result_address_new);
-				ISP_LOGV("[ALSC] FW_PROC_START, old table size(%d,%d) grid %d ", cxt->gain_width, cxt->gain_height, cxt->grid);
-				ISP_LOGV("[ALSC] FW_PROC_START, new table size(%d,%d) grid %d", fwprocstart_info->gain_width_new,fwprocstart_info->gain_height_new,fwprocstart_info->grid_new);
+
+			if(cxt->LSC_SPD_VERSION <= 5){
+				pm0_new = fwprocstart_info->lsc_tab_address_new[0];
+				if(fwprocstart_info->gain_width_new == cxt->init_gain_width && fwprocstart_info->gain_height_new == cxt->init_gain_height && fwprocstart_info->grid_new == cxt->init_grid)
+					full_flag = 1;
+				if(fwprocstart_info->camera_id <= 1){
+					lsc_read_last_info(lsc_last_info, fwprocstart_info->camera_id, full_flag);
+					cxt->fw_start_bv = lsc_last_info->bv;
+					cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
+				}
+				if(cxt->is_multi_mode == 2 ){
+					ISP_LOGV("[ALSC] FW_PROC_START, ISP_DUAL_SBS MODE, camera_id=%d", fwprocstart_info->camera_id);
+					ISP_LOGV("[ALSC] FW_PROC_START, old tab address = %p", cxt->lsc_pm0);
+					ISP_LOGV("[ALSC] FW_PROC_START, new tab address = %p", fwprocstart_info->lsc_tab_address_new[0]);
+					ISP_LOGV("[ALSC] FW_PROC_START, new dest address = %p", fwprocstart_info->lsc_result_address_new);
+					ISP_LOGV("[ALSC] FW_PROC_START, old table size(%d,%d) grid %d ", cxt->gain_width, cxt->gain_height, cxt->grid);
+					ISP_LOGV("[ALSC] FW_PROC_START, new table size(%d,%d) grid %d", fwprocstart_info->gain_width_new,fwprocstart_info->gain_height_new,fwprocstart_info->grid_new);
 
 				ISP_LOGV("[ALSC] FW_PROC_START, new DNP=[%d,%d,%d,%d]", fwprocstart_info->lsc_tab_address_new[0][0], fwprocstart_info->lsc_tab_address_new[0][1],
 																		fwprocstart_info->lsc_tab_address_new[0][2], fwprocstart_info->lsc_tab_address_new[0][3]);
@@ -3418,14 +3699,50 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					ISP_LOGV("[ALSC] FW_PROC_START, Get master output table=[%d,%d,%d,%d]", proc_start_output_table[0], proc_start_output_table[1], proc_start_output_table[2], proc_start_output_table[3]);
 					ISP_LOGV("[ALSC] FW_PROC_START, Get master DNP table=[%d,%d,%d,%d]", proc_start_param_table[0], proc_start_param_table[1], proc_start_param_table[2], proc_start_param_table[3]);
 
-					lnc_master_slave_sync(cxt, fwprocstart_info);
+						lnc_master_slave_sync(cxt, fwprocstart_info);
+					}
+				}else{
+					ISP_LOGV("[ALSC] FW_PROC_START, NOT ISP_DUAL_SBS MODE, Do as FW_START.");
+					if(fwprocstart_info->camera_id <= 1 && cxt->lsc_id == 1
+						&& fwprocstart_info->gain_width_new == lsc_last_info->gain_width
+						&& fwprocstart_info->gain_height_new == lsc_last_info->gain_height
+						&& lsc_last_info->table_r[0] && lsc_last_info->table_g[0] && lsc_last_info->table_b[0]){
+						for(cmr_u32 i=0; i<fwprocstart_info->gain_width_new*fwprocstart_info->gain_height_new; i++){
+							fwprocstart_info->lsc_result_address_new[4*i + is_r]  = (cmr_u16)(lsc_last_info->table_r[i]);
+							fwprocstart_info->lsc_result_address_new[4*i + is_gr] = (cmr_u16)(lsc_last_info->table_g[i]);
+							fwprocstart_info->lsc_result_address_new[4*i + is_gb] = (cmr_u16)(lsc_last_info->table_g[i]);
+							fwprocstart_info->lsc_result_address_new[4*i + is_b]  = (cmr_u16)(lsc_last_info->table_b[i]);
+						}
+						ISP_LOGV("[ALSC] FW_PROC_START, last_table_rgb[%d,%d,%d]", lsc_last_info->table_r[0], lsc_last_info->table_g[0], lsc_last_info->table_b[0]);
+					}else{
+						memcpy(fwprocstart_info->lsc_result_address_new, fwprocstart_info->lsc_tab_address_new[2], fwprocstart_info->gain_width_new * fwprocstart_info->gain_height_new *4*sizeof(unsigned short));
+						post_shading_gain(fwprocstart_info->lsc_result_address_new, fwprocstart_info->lsc_result_address_new, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern,
+										cxt->frame_count, cxt->fw_start_bv, cxt->fw_start_bv_gain, 0, 0, cxt->LSC_SPD_VERSION, post_param);
+						change_lsc_pattern(fwprocstart_info->lsc_result_address_new, fwprocstart_info->gain_width_new, fwprocstart_info->gain_height_new, cxt->gain_pattern, cxt->output_gain_pattern);
+					}
+					ISP_LOGV("[ALSC] FW_PROC_START, init lsc table=[%d,%d,%d,%d], lsc_id=%d", fwprocstart_info->lsc_result_address_new[0], fwprocstart_info->lsc_result_address_new[1], fwprocstart_info->lsc_result_address_new[2], fwprocstart_info->lsc_result_address_new[3], cxt->lsc_id);
+
+					//output for first tab, ex: fwprocstart_info->lsc_tab_address_new[2] is TW84
+					//keep the update for calc to as a source for inversing static data
+					memcpy(cxt->fwstart_new_scaled_table, fwprocstart_info->lsc_result_address_new, fwprocstart_info->gain_width_new * fwprocstart_info->gain_height_new*4*sizeof(unsigned short));
+					ISP_LOGV("[ALSC] FW_PROC_START, send the TL84 to output, lsc_id=%d", cxt->lsc_id);
 				}
 			}else{
-				ISP_LOGV("[ALSC] FW_PROC_START, NOT ISP_DUAL_SBS MODE, Do as FW_START.");
+				ISP_LOGV("[ALSC] FW_PROC_START, NOT ISP_DUAL_SBS MODE, Do nothing.");
+				full_flag = 1;
+				if(fwprocstart_info->camera_id <= 1){
+					lsc_read_last_info(lsc_last_info, fwprocstart_info->camera_id, full_flag);
+					cxt->fw_start_bv = lsc_last_info->bv;
+					cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
+				}
+
+				for(i=0; i<8; i++){
+					fwprocstart_info->lsc_tab_address_new[i] = cxt->std_init_lsc_table_param_buffer[i];
+				}
+
 				if(fwprocstart_info->camera_id <= 1 && cxt->lsc_id == 1
 					&& fwprocstart_info->gain_width_new == lsc_last_info->gain_width
-					&& fwprocstart_info->gain_height_new == lsc_last_info->gain_height
-					&& lsc_last_info->table_r[0] && lsc_last_info->table_g[0] && lsc_last_info->table_b[0]){
+					&& fwprocstart_info->gain_height_new == lsc_last_info->gain_height){
 					for(cmr_u32 i=0; i<fwprocstart_info->gain_width_new*fwprocstart_info->gain_height_new; i++){
 						fwprocstart_info->lsc_result_address_new[4*i + is_r]  = (cmr_u16)(lsc_last_info->table_r[i]);
 						fwprocstart_info->lsc_result_address_new[4*i + is_gr] = (cmr_u16)(lsc_last_info->table_g[i]);
@@ -3437,7 +3754,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					memcpy(fwprocstart_info->lsc_result_address_new, fwprocstart_info->lsc_tab_address_new[2], fwprocstart_info->gain_width_new * fwprocstart_info->gain_height_new *4*sizeof(unsigned short));
 					post_shading_gain(fwprocstart_info->lsc_result_address_new, fwprocstart_info->lsc_result_address_new, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern,
 									cxt->frame_count, cxt->fw_start_bv, cxt->fw_start_bv_gain, 0, 0, cxt->LSC_SPD_VERSION, post_param);
-					change_lsc_pattern(fwprocstart_info->lsc_result_address_new, fwprocstart_info->gain_width_new, fwprocstart_info->gain_height_new, cxt->gain_pattern, cxt->output_gain_pattern);
 				}
 				ISP_LOGV("[ALSC] FW_PROC_START, init lsc table=[%d,%d,%d,%d], lsc_id=%d", fwprocstart_info->lsc_result_address_new[0], fwprocstart_info->lsc_result_address_new[1], fwprocstart_info->lsc_result_address_new[2], fwprocstart_info->lsc_result_address_new[3], cxt->lsc_id);
 
