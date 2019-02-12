@@ -1551,7 +1551,7 @@ static int isp_stop_offline_thread(void *param)
 	if (thrd->thread_task) {
 		atomic_set(&thrd->thread_stop, 1);
 		complete(&thrd->thread_com);
-		while (cnt < 1000) {
+		while (cnt < 2500) {
 			cnt++;
 			if (atomic_read(&thrd->thread_stop) == 0)
 				break;
