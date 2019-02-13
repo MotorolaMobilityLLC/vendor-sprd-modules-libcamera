@@ -2692,6 +2692,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
+    } else if (mRecordingMode == false && mIsIspToolMode == 1) {
+        mSprdZslEnabled = false;
     } else if (mRecordingMode == false && mStreamOnWithZsl == 1) {
         mSprdZslEnabled = true;
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||

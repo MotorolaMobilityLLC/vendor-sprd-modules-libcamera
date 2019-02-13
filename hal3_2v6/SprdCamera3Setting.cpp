@@ -1539,7 +1539,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
            &(available_min_durations[0]),
            available_min_durations.size() * sizeof(int64_t));
 
-    // This lists the maximum stall duration for each output format/size  combination
+    // This lists the maximum stall duration for each output format/size
+    // combination
     memcpy(s_setting[cameraId].scalerInfo.stall_durations,
            &(available_stall_durations[0]),
            available_stall_durations.size() * sizeof(int64_t));
@@ -3502,11 +3503,8 @@ int SprdCamera3Setting::updateWorkParameters(
     bool is_push = false;
 
     uint8_t is_raw_capture = 0;
+    uint8_t is_isptool_mode = 0;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
-    }
 
     Mutex::Autolock l(mLock);
 
@@ -3530,6 +3528,15 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (tagCnt == 0) {
         return rc;
+    }
+
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+    property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+    if (!strcmp(value, "true")) {
+        is_isptool_mode = 1;
     }
 
     if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
@@ -3697,7 +3704,7 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
         uint8_t sprd_zsl_enabled;
-        if (is_raw_capture == 1) {
+        if (is_raw_capture == 1 || is_isptool_mode == 1) {
             sprd_zsl_enabled = 0;
         } else {
             sprd_zsl_enabled =
