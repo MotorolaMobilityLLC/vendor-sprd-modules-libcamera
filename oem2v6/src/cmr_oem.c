@@ -11180,6 +11180,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
         ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
                                  &imp_out_param);
     } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_HDR) {
+        if (cxt->ipm_cxt.hdr_version.major != 1) {
+            memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
+                   ((HDR_CAP_NUM)-1) * sizeof(float));
+        }
         ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
                                  &imp_out_param);
     }
