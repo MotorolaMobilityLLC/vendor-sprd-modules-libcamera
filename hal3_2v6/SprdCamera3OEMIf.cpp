@@ -4779,9 +4779,14 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            if (!isNeedFlashFired) {
+                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            } else {
+                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED;
+            }
             mSetting->setAeCONTROLTag(&controlInfo);
         }
+
         if (controlInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAwbCONTROLTag(&controlInfo);
@@ -4802,15 +4807,13 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
                  controlInfo.ae_state);
         break;
     case CAMERA_EVT_CB_AE_FLASH_FIRED:
-        SPRD_DEF_Tag sprddefInfo;
-        mSetting->getSPRDDEFTag(&sprddefInfo);
-        sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
-        if (mSprd3dnrEnabled || mMultiCameraMode == MODE_BOKEH) {
-            sprddefInfo.is_takepicture_with_flash = 0;
+        if (parm4 != NULL) {
+            isNeedFlashFired = *(uint8_t *)parm4;
         }
-        mSetting->setSPRDDEFTag(sprddefInfo);
-        HAL_LOGI("is_takepicture_with_flash = %d",
-                 sprddefInfo.is_takepicture_with_flash);
+        if (mSprd3dnrEnabled || mMultiCameraMode == MODE_BOKEH) {
+            isNeedFlashFired = 0;
+        }
+        HAL_LOGI("isNeedFlashFired = %d", isNeedFlashFired);
         break;
     case CAMERA_EVT_CB_HDR_SCENE:
         SPRD_DEF_Tag sprdInfo;

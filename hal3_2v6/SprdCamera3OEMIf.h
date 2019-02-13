@@ -804,6 +804,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFaceDetectStartedFlag;
 
     bool mIsJpegWithBigSizePreview;
+    uint32_t isNeedFlashFired;
 };
 
 }; // namespace sprdcamera
