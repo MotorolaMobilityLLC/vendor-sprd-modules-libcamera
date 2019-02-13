@@ -5106,9 +5106,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
     setting_param.camera_id = cxt->camera_id;
 
-// workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
-// we will remove these code
-#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
+    // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
+    // we will remove these code
     if (is_raw_capture == 0) {
         if (dst->size.height == 3008 && dst->size.width == 4000) {
             enc_dst.size.height = 3000;
@@ -5129,7 +5128,6 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         }
 #endif
     }
-#endif
 
 /* from sharkl2, jpeg support mirror/flip/rotation, mirror feature always use
  * jpeg if jpeg support it */

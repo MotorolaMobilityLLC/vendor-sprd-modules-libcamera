@@ -1612,7 +1612,6 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue, we will remove these code
-#ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
         if (is_raw_capture == 0) {
             if (exif_unit->picture_size.height == 3008 &&
                 exif_unit->picture_size.width == 4000) {
@@ -1660,7 +1659,6 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                 exif_unit->actual_picture_size.height = 600;
             }
         }
-#endif
     }
 
     time(&timep);
@@ -3149,7 +3147,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         /*disable*/
         if (setting_is_need_flash(cpt, parm) ||
             FLASH_NEED_QUIT == cpt->flash_need_quit) {
-            if(FLASH_CLOSE != flash_hw_status){
+            if (FLASH_CLOSE != flash_hw_status) {
                 /*open flash*/
                 if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
                     setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
@@ -3565,7 +3563,8 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
     last_preflash_time = hal_param->flash_param.last_preflash_time;
     now_time = systemTime(CLOCK_MONOTONIC);
     CMR_LOGD("last_preflash_time = %lld, now_time=%lld has_preflashed %d",
-        last_preflash_time, now_time, hal_param->flash_param.has_preflashed);
+             last_preflash_time, now_time,
+             hal_param->flash_param.has_preflashed);
     if (now_time > last_preflash_time) {
         diff = (now_time - last_preflash_time) / 1000000000;
         CMR_LOGV("diff = %lld", diff);
