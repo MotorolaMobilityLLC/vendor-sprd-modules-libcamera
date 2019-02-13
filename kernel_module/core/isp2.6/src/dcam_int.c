@@ -430,7 +430,8 @@ static void dcam_cap_sof(void *param)
 	}
 
 dispatch_sof:
-	if (!(dev->frame_index % dev->slowmotion_count)) {
+	if (!dev->slowmotion_count
+	    || !(dev->frame_index % dev->slowmotion_count)) {
 		dcam_dispatch_sof_event(dev);
 		dcam_update_lsc(dev);
 	}
