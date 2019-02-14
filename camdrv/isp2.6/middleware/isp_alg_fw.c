@@ -38,6 +38,7 @@
 
 #define LIBCAM_ALG_FILE "libispalg.so"
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
+#define MIN_FRAME_INTERVAL_MS  (20)
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
@@ -307,6 +308,7 @@ struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
 	cmr_u8 first_frm;
+	nsecs_t last_sof_time;
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
 	struct isp_hist_statistic_info hist2_stats;
@@ -2395,8 +2397,8 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 	cxt->ai_cxt.ae_param.ae_stat.g_info = cxt->aem_stats_data.g_info;
 	cxt->ai_cxt.ae_param.ae_stat.b_info = cxt->aem_stats_data.b_info;
 
-	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_info.img_blk_info.block_w;
-	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_info.img_blk_info.block_h;
+	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_cxt.win_num.w;
+	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_cxt.win_num.h;
 	ISP_LOGI("ai ae info: blk_num_hor: %d, blk_num_ver: %d.", cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
 
 	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu.", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp);
@@ -2457,6 +2459,8 @@ exit:
 cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
+	nsecs_t cur_time;
+	cmr_u32 timems_diff;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
 
 	if (!message || !p_data) {
@@ -2481,6 +2485,15 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ai_process((cmr_handle)cxt);
 		break;
 	case ISP_EVT_SOF:
+		cur_time = ispalg_get_sys_timestamp();
+		timems_diff = (cmr_u32)(cur_time - cxt->last_sof_time);
+		if (timems_diff < MIN_FRAME_INTERVAL_MS) {
+			/* workaround for AE jittering when high CPU loading causing SOF delay
+			    todo: improve whole system performance and optimize SOF message queue.
+			    */
+			ISP_LOGD("time interval is too small: %d\n", timems_diff);
+			goto exit;
+		}
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
@@ -2488,6 +2501,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		if (ret)
 			ISP_LOGE("fail to start awb process");
 		cxt->aem_is_update = 0;
+		cxt->last_sof_time = cur_time;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
 	case ISP_EVT_AFL:
