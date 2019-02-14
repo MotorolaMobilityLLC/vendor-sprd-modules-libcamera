@@ -7629,9 +7629,9 @@ int channel0_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cb_data_info.frame_data = &frame_type;
     prev_cb_start(handle, &cb_data_info);
 
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%d",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%d",
              prev_cxt->camera_id, frame_type.fd, info->channel_id,
-             prev_cxt->channel0.valid_buf_cnt);
+             info->frame_real_id, prev_cxt->channel0.valid_buf_cnt);
 
 exit:
     return ret;
@@ -8440,9 +8440,9 @@ int channel1_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cb_data_info.frame_data = &frame_type;
     prev_cb_start(handle, &cb_data_info);
 
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%d",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%d",
              prev_cxt->camera_id, frame_type.fd, info->channel_id,
-             prev_cxt->channel1.valid_buf_cnt);
+             info->frame_real_id, prev_cxt->channel1.valid_buf_cnt);
 
 exit:
     return ret;
@@ -9277,9 +9277,9 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cb_data_info.frame_data = &frame_type;
     prev_cb_start(handle, &cb_data_info);
 
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%d",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%d",
              prev_cxt->camera_id, frame_type.fd, info->channel_id,
-             prev_cxt->channel2.valid_buf_cnt);
+             info->frame_real_id, prev_cxt->channel2.valid_buf_cnt);
 
 exit:
     return ret;
@@ -10114,9 +10114,9 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cb_data_info.frame_data = &frame_type;
     prev_cb_start(handle, &cb_data_info);
 
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%d",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%d",
              prev_cxt->camera_id, frame_type.fd, info->channel_id,
-             prev_cxt->channel3.valid_buf_cnt);
+             info->frame_real_id, prev_cxt->channel3.valid_buf_cnt);
 
 exit:
     return ret;
@@ -10951,9 +10951,9 @@ int channel4_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cb_data_info.frame_data = &frame_type;
     prev_cb_start(handle, &cb_data_info);
 
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%d",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%d",
              prev_cxt->camera_id, frame_type.fd, info->channel_id,
-             prev_cxt->channel4.valid_buf_cnt);
+             info->frame_real_id, prev_cxt->channel4.valid_buf_cnt);
 
 exit:
     return ret;
@@ -12335,9 +12335,9 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%ld",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%ld",
              prev_cxt->camera_id, data->fd, data->channel_id,
-             prev_cxt->prev_mem_valid_num);
+             data->frame_real_id, prev_cxt->prev_mem_valid_num);
     ATRACE_END();
     return ret;
 }
@@ -12564,9 +12564,9 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, valid_num=%ld",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%ld",
              prev_cxt->camera_id, data->fd, data->channel_id,
-             prev_cxt->video_mem_valid_num);
+             data->frame_real_id, prev_cxt->video_mem_valid_num);
     ATRACE_END();
     return ret;
 }
@@ -12765,9 +12765,10 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("cam_id = %ld, fd=0x%x, chn_id=0x%x, valid_num=%ld",
-             prev_cxt->camera_id, data->fd, data->channel_id,
-             prev_cxt->cap_zsl_mem_valid_num);
+    CMR_LOGD(
+        "cam_id = %ld, fd=0x%x, chn_id=0x%x, frame_index=%d, valid_num=%ld",
+        prev_cxt->camera_id, data->fd, data->channel_id, data->frame_real_id,
+        prev_cxt->cap_zsl_mem_valid_num);
     ATRACE_END();
     return ret;
 }
