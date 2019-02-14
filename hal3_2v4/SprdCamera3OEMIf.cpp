@@ -2683,9 +2683,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         /*get sensor otp from oem layer*/
 
         /*read refoucs mode begin*/
-        if (MODE_SINGLE_CAMERA != mMultiCameraMode &&
-            MODE_3D_CAPTURE != mMultiCameraMode &&
-            MODE_BLUR != mMultiCameraMode && MODE_SBS != mMultiCameraMode) {
+        if (MODE_REFOCUS == mMultiCameraMode ||
+            MODE_3D_CALIBRATION == mMultiCameraMode) {
             mSprdRefocusEnabled = true;
             CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
         }
