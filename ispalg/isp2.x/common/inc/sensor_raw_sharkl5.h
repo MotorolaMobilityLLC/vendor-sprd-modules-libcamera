@@ -1717,9 +1717,8 @@ struct alsc_alg0_turn_param {
 
 /* sw 3DNR tuning param */
 struct sensor_sw3dnr_level {
-        cmr_s32 threshold[4][6];
-        cmr_s32 slope[4][6];
-        cmr_s32 gain_thr[6];
+        cmr_s32 threshold[4];
+        cmr_s32 slope[4];
         cmr_u16 searchWindow_x;
         cmr_u16 searchWindow_y;
         cmr_s32 recur_str;
