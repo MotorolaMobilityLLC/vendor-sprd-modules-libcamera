@@ -159,8 +159,8 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
              src_trim_rect->width, src_trim_rect->height, sensor_w, sensor_h,
              zoom_ratio, dst_aspect_ratio, sensor_aspect_ratio);
 
-    sensor_w = CAMERA_ALIGNED_16(sensor_w);
-    sensor_h = CAMERA_ALIGNED_16(sensor_h);
+    sensor_w = CAMERA_START(sensor_w);
+    sensor_h = CAMERA_START(sensor_h);
 
     CMR_LOGD("align sensor w,h  %d %d", sensor_w, sensor_h);
 
