@@ -4986,7 +4986,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_drv_interface_param *interface_ptr = &cxt->commn_cxt.interface_param;
 	struct isp_size org_size;
 	struct isp_video_start param;
-	struct alsc_fwstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
 
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
