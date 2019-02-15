@@ -1323,7 +1323,7 @@ static cmr_s32 do_ae_flash_pre_before(struct ae_ctrl_cxt *cxt)
 		}
 		ISP_LOGI("AE_FLASH_PRE_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 	}
-	if (cxt->cur_result.wts.stable){
+	if (cxt->sync_cur_result.wts.stable && !cxt->sync_cur_status.settings.lock_ae){
 		cmr_u16 effect_index = 0;
 		if(cxt->effect_index_index == 3)
 			effect_index = cxt->effect_index[0];
