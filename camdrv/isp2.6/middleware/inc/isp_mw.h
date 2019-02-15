@@ -483,11 +483,19 @@ struct pd_frame_in {
 	void *private_data;
 };
 
+struct isp_afctrl_roi {
+    cmr_u32 sx;
+    cmr_u32 sy;
+    cmr_u32 ex;
+    cmr_u32 ey;
+};
+
 struct isp_af_notice {
 	cmr_u32 mode;
 	cmr_u32 valid_win;
 	cmr_u32 focus_type;
-	cmr_u32 reserved[10];
+	struct isp_afctrl_roi af_roi;
+	cmr_u32 reserved[6];
 };
 
 enum isp_flash_type {
