@@ -1784,7 +1784,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].syncInfo.max_latency =
         4; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
 
-    // sprd
+   // sprd
+   // app ui show contrast value and saturation value all are (-3,3) is one-to-one
+   // correspondence with hal value (0~6),so need set 3 as defalut value
+    s_setting[cameraId].sprddefInfo.contrast = 3;
+    s_setting[cameraId].sprddefInfo.saturation = 3;
+
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
            camera3_default_info.common.availableBrightNess,
            sizeof(camera3_default_info.common.availableBrightNess));
