@@ -363,6 +363,8 @@ struct isp_alg_fw_context {
 	struct isp_event_node *event_list_head;
 #endif
 	cmr_u32 sn_mode;
+	/* 4in1 */
+	cmr_u32 is_4in1_prev; /* 1: 4c pixel for prev */
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -427,7 +429,18 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	gain_info.g_gain = inptr->g_gain;
 	gain_info.b_gain = inptr->b_gain;
 	block_info.block_info = &gain_info;
-	/* todo: also set capture gain if 4in1 */
+	if (cxt->is_4in1_prev) {
+		/* this value for capture, prev need / 4 */
+		block_info.scene_id = PM_SCENE_CAP;
+		ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
+			gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
+		if (ret) {
+			ISP_LOGW("fail to set rgb gain for 4in1 capture");
+		}
+		gain_info.global_gain /= 4;
+	}
+	/* also set capture gain if 4in1 */
 	block_info.scene_id = PM_SCENE_PRE;
 
 	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
@@ -664,7 +677,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 	cmr_u32 slv_sensor_mode = 0;
 
 	if (!cxt) {
-		ISP_LOGE("fail to get valid ctx ptr\n");
+		ISP_LOGE("fail to get valid cxt ptr\n");
 		return ISP_PARAM_NULL;
 	}
 
@@ -751,6 +764,11 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		gain.gb = awb_gain->g;
 		gain.b = awb_gain->b;
 		/* todo: also set capture gain if 4in1 */
+		if (cxt->is_4in1_prev) {
+			cfg.scene_id = PM_SCENE_CAP;
+			cfg.block_info = &gain;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
+		}
 		cfg.scene_id = PM_SCENE_PRE;
 		cfg.block_info = &gain;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
@@ -770,7 +788,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	if (!cxt) {
-		ISP_LOGE("fail to get valid ctx ptr\n");
+		ISP_LOGE("fail to get valid cxt ptr\n");
 		return ISP_PARAM_NULL;
 	}
 
@@ -916,7 +934,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	if (!cxt) {
-		ISP_LOGE("fail to get valid ctx ptr\n");
+		ISP_LOGE("fail to get valid cxt ptr\n");
 		return ISP_PARAM_NULL;
 	}
 
@@ -978,7 +996,7 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	if (!cxt) {
-		ISP_LOGE("fail to get valid ctx ptr\n");
+		ISP_LOGE("fail to get valid cxt ptr\n");
 		return ISP_PARAM_NULL;
 	}
 	switch (type) {
@@ -1273,7 +1291,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		for (i = 0; i < output.cap_param_num; i++) {
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
-			if (!IS_DCAM_BLOCK(param_data->id)) {
+			if ((!IS_DCAM_BLOCK(param_data->id)) || (cxt->is_4in1_prev)) {
 				/* todo: refine for 4in1 sensor */
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
@@ -3889,6 +3907,10 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.zsl_flag = param_ptr->capture_mode;
 	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.src.w;
 	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.src.h;
+	if (cxt->is_4in1_prev) {
+		ae_param.resolution_info.frame_size.w /= 2;
+		ae_param.resolution_info.frame_size.h /= 2;
+	}
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
 	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
 	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
@@ -4146,6 +4168,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
 	cxt->sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	cxt->sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
+	cxt->is_4in1_prev = in_ptr->mode_4in1;
+	ISP_LOGV("4c prev[%d]\n", cxt->is_4in1_prev);
+
 
 	orig_size.w = cxt->commn_cxt.src.w;
 	orig_size.h = cxt->commn_cxt.src.h;
@@ -4306,8 +4331,17 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 				AWB_CTRL_CMD_SET_AE_STAT_WIN_NUM,
 				&cxt->ae_cxt.win_num, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_aem_stat_win"));
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+		if (cxt->is_4in1_prev) {
+			struct isp_size size;
+
+			size.w = in_ptr->size.w / 2;
+			size.h = in_ptr->size.h / 2;
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+				AWB_CTRL_CMD_GET_PIX_CNT, &size, NULL);
+		} else {
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 				AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
+		}
 		ISP_RETURN_IF_FAIL(ret, ("fail to get_awb_pix_cnt"));
 	}
 
@@ -4317,6 +4351,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
 			af_start_info.size = in_ptr->size;
+			if (cxt->is_4in1_prev) {
+				af_start_info.size.w /= 2;
+				af_start_info.size.h /= 2;
+			}
 			ISP_LOGD("trigger AF video start.  size %d %d\n", af_start_info.size.w, af_start_info.size.h);
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
 					AF_CMD_SET_ISP_START_INFO,
@@ -4586,7 +4624,10 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	//cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
-	ISP_LOGV("camera_id = %ld, master %d\n", cxt->camera_id, cxt->is_master);
+	cxt->is_4in1_prev = input_ptr->init_param->is_4in1_sensor;
+	ISP_LOGI("camera_id = %ld, master %d, 4c prev[%d]\n", cxt->camera_id,
+		cxt->is_master, cxt->is_4in1_prev);
+
 
 	cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));
 	if (!cxt->pdaf_info) {
