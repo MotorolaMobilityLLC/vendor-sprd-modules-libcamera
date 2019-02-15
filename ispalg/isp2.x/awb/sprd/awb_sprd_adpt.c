@@ -1377,7 +1377,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		return AWB_CTRL_ERROR;
 	}
 #ifndef CONFIG_ISP_2_2
-	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
+	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) || (cxt->is_multi_mode == ISP_ALG_DUAL_C_C)) {
 		if ((!cxt->sensor_role) && (cxt->ptr_isp_br_ioctrl != NULL) && (cxt->is_mono_sensor == 0)) {
 			struct awb_sync_info awb_sync;
 			#if 0

@@ -27,6 +27,8 @@ extern "C" {
 		cmr_u32 exp_time;
 		cmr_u32 exp_line;
 		cmr_u32 dumy_line;
+		cmr_u32 frm_len;
+		cmr_u32 frm_len_def;
 		cmr_u32 sensor_gain;
 		cmr_u32 isp_gain;
 	};
@@ -41,6 +43,8 @@ extern "C" {
 		cmr_u32 exp_line;
 		cmr_u32 exp_time;
 		cmr_u32 dmy_line;
+		cmr_u32 frm_len;
+		cmr_u32 frm_len_def;
 		cmr_u32 sensor_gain;
 		cmr_u32 isp_gain;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
