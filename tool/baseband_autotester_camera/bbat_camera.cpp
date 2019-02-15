@@ -1030,11 +1030,9 @@ int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
              rsp[3], rsp[4], rsp[5], rsp[6], rsp[7], rsp[8],
              rsp[9]); // 78 xx xx xx xx _ _38 _ _ print the 10 data returned.
 
+    delete[] p_buf;
     return p_msg_head->len + 2;
     /*----------------------- generic code,Direct assignment --------------------*/
-
-    delete[] p_buf;
-    return ret;
 }
 
 extern "C" void register_this_module_ext(struct eng_callback *reg, int *num) {
