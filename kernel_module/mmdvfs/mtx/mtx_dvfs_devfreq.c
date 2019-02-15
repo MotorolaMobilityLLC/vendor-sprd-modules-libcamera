@@ -22,7 +22,7 @@ static int mtx_dvfs_probe(struct platform_device *pdev);
 static int mtx_dvfs_remove(struct platform_device *pdev);
 
 static const struct of_device_id mtx_dvfs_of_match[] = {
-	{ .compatible = "sprd,sharkl5-hwdvfs-mtx" },
+	{ .compatible = "sprd,hwdvfs-mtx" },
 	{ },
 	};
 MODULE_DEVICE_TABLE(of, mtx_dvfs_of_match);

@@ -26,7 +26,7 @@ static int mmsys_dvfs_probe(struct platform_device *pdev);
 static int mmsys_dvfs_remove(struct platform_device *pdev);
 
 static const struct of_device_id mmsys_dvfs_of_match[] = {
-	{    .compatible = "sprd,sharkl5-hwdvfs-mmsys" },
+	{    .compatible = "sprd,hwdvfs-mmsys" },
 	{    },
 };
 MODULE_DEVICE_TABLE(of, mmsys_dvfs_of_match);
@@ -212,19 +212,19 @@ err:
 }
 
 static int mmsys_dvfs_power(struct notifier_block *self, unsigned long event,
- 		void *ptr) 
- {  
+ 		void *ptr)
+ {
     int ret = 0;
 	pr_err("%s:on=%ld ", __func__,event);
 	if(event==_E_PW_ON)
 		mmsys_notify_call_chain(MMSYS_POWER_ON);
 	else
-		mmsys_notify_call_chain(MMSYS_POWER_OFF);	
+		mmsys_notify_call_chain(MMSYS_POWER_OFF);
 
 	pr_err("%s:", __func__);
-	
+
     return ret;
-     
+
 
  }
 
@@ -239,10 +239,10 @@ static struct notifier_block dvfs_power_notifier = {
 	if(on==MMSYS_POWER_ON)
 		mmsys_notify_call_chain(MMSYS_POWER_ON);
 	else
-		mmsys_notify_call_chain(MMSYS_POWER_OFF);	
+		mmsys_notify_call_chain(MMSYS_POWER_OFF);
 
 	pr_err("%s:", __func__);
-	
+
     return ret;
 
 }*/
@@ -265,20 +265,20 @@ int  mmsys_dvfs_init(void)
 	return ret;
 	}
 
-	
+
 	ret = sprd_mm_pw_notify_register(&dvfs_power_notifier);
 	if (ret) {
 		pr_err("%s: failed to add dvfs_power: %d\n", __func__, ret);
 	return ret;
 	}
-	
+
 
 	ret = devfreq_add_governor(&mmsys_dvfs_gov);
 	if (ret) {
 		pr_err("%s: failed to add governor: %d\n", __func__, ret);
 		return ret;
 	}
-    
+
 	ret = platform_driver_register(&mmsys_dvfs_driver);
 
 	if (ret)
@@ -303,7 +303,7 @@ void  mmsys_dvfs_exit(void)
 	ret = sprd_mm_pw_notify_unregister((&dvfs_power_notifier));
 	if (ret)
 		pr_err("%s: failed to remove mm_dvfs_power: %d\n", __func__, ret);
-	
+
 
 }
 
@@ -361,7 +361,7 @@ int __init mmsys_module_init(void)
 	int ret = 0;
 
 	pr_err("enter mmsys_moudule_init \n");
-	
+
 	ret=mmsys_dvfs_init();
 	ret=cpp_dvfs_init();
 	ret=fd_dvfs_init();
@@ -378,7 +378,7 @@ int __init mmsys_module_init(void)
 void __exit mmsys_module_exit(void)
 {
 	pr_err("enter mmsys_moudule_exit \n");
-	
+
 	fd_dvfs_exit();
 	cpp_dvfs_exit();
 	isp_dvfs_exit();

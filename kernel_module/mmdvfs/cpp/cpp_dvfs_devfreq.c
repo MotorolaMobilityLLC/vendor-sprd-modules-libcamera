@@ -185,7 +185,7 @@ static int cpp_dvfs_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id cpp_dvfs_of_match[] = {
-	{ .compatible = "sprd,sharkl5-hwdvfs-cpp" },
+	{ .compatible = "sprd,hwdvfs-cpp" },
 	{ },
 };
 

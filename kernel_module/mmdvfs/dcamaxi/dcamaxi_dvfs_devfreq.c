@@ -22,7 +22,7 @@ static int dcamaxi_dvfs_probe(struct platform_device *pdev);
 static int dcamaxi_dvfs_remove(struct platform_device *pdev);
 
 static const struct of_device_id dcamaxi_dvfs_of_match[] = {
-	{ .compatible = "sprd,sharkl5-hwdvfs-dcam-axi" },
+	{ .compatible = "sprd,hwdvfs-dcam-axi" },
 	{ },
 	};
 MODULE_DEVICE_TABLE(of, dcamaxi_dvfs_of_match);

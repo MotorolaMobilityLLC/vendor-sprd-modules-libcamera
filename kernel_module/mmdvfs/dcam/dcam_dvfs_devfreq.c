@@ -23,7 +23,7 @@ static int dcam_dvfs_remove(struct platform_device *pdev);
 
 
 static const struct of_device_id dcam_dvfs_of_match[] = {
-	{ .compatible = "sprd,sharkl5-hwdvfs-dcam-if" },
+	{ .compatible = "sprd,hwdvfs-dcam-if" },
 	{ },
 	};
 MODULE_DEVICE_TABLE(of, dcam_dvfs_of_match);

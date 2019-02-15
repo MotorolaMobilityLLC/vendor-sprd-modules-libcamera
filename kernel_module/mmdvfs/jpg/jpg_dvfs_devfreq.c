@@ -22,7 +22,7 @@ static int jpg_dvfs_probe(struct platform_device *pdev);
 static int jpg_dvfs_remove(struct platform_device *pdev);
 
 static const struct of_device_id jpg_dvfs_of_match[] = {
-	{ .compatible = "sprd,sharkl5-hwdvfs-jpg" },
+	{ .compatible = "sprd,hwdvfs-jpg" },
 	{ },
 	};
 MODULE_DEVICE_TABLE(of, jpg_dvfs_of_match);
