@@ -210,6 +210,10 @@ bool cam_ca_write(void *buf, size_t len)
 	memcpy(mb_put_data(txbuf, len), buf, len);
 
 	msg_ret = tipc_chan_queue_msg(ca->chan, txbuf);
+	if (msg_ret)
+		goto err;
+
+	return ret;
 
 err:
 	tipc_chan_put_txbuf(ca->chan, txbuf);
