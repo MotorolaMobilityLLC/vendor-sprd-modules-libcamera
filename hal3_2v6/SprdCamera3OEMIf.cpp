@@ -5875,23 +5875,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
                  sprddefInfo.sprd_appmode_id);
-
-        if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-            (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
-            (CAMERA_MODE_3DNR_PHOTO != mSprdAppmodeId) && (0 == mFbOn) &&
-            (0 == mMultiCameraMode) &&
-            (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
-            (false == mRecordingMode)) {
-            property_get("persist.vendor.cam.cnr.mode", value, "0");
-            if (atoi(value)) {
-                mCNRMode = 1;
-            }
-        } else {
-            mCNRMode = 0;
-        }
-        HAL_LOGD("mCNRMode = %d", mCNRMode);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR,
-                 mCNRMode);
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;
@@ -8605,6 +8588,25 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         SET_PARM(obj->mHalOem, obj->mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,
                  (int32_t)(lensInfo.focal_length * 1000));
     }
+
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
+    char value[PROPERTY_VALUE_MAX];
+    if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
+        (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
+        (CAMERA_MODE_3DNR_PHOTO != mSprdAppmodeId) && (0 == mFbOn) &&
+        (0 == mMultiCameraMode) &&
+        (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
+        (false == mRecordingMode)) {
+        property_get("persist.vendor.cam.cnr.mode", value, "0");
+        if (atoi(value)) {
+            mCNRMode = 1;
+        }
+    } else {
+        mCNRMode = 0;
+    }
+    HAL_LOGD("mCNRMode = %d", mCNRMode);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
 
     JPEG_Tag jpgInfo;
     struct img_size jpeg_thumb_size;
