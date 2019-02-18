@@ -10496,9 +10496,13 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
     if (1 == camera_get_hdr_flag(cxt)) {
-        capture_param.type = DCAM_CAPTURE_START_HDR;
+        // 3 continuous frames start from next sof interrupt
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = 3;
     } else if (1 == camera_get_3dnr_flag(cxt)) {
-        capture_param.type = DCAM_CAPTURE_START_3DNR;
+        // 5 continuous frames start from next sof interrupt
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = 5;
     } else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
 #ifdef CONFIG_CAMERA_4IN1
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
@@ -10517,7 +10521,9 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
             return ret;
         }
     } else if (flash_status > 0) {
-        capture_param.type = DCAM_CAPTURE_START_WITH_FLASH;
+        // need get 1 frame start from next sof interrupt
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = 1;
     }
 
     isp_param.cmd_value = 1;
