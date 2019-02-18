@@ -75,6 +75,8 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_AVAILABLE_SENSORTYPE,
     ANDROID_SPRD_AI_SCENE_ENABLED,
     ANDROID_SPRD_BLUR_CAPVERSION,
+    ANDROID_SPRD_CALIBRATION_VCM_INFO,
+    ANDROID_SPRD_CALIBRATION_VCM_RESULT,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

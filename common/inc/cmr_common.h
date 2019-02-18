@@ -396,6 +396,7 @@ enum common_isp_cmd_type {
     COM_ISP_GET_PER_FRAME_RESULT,
 #endif
     COM_ISP_SET_AI_SCENE_ENABLED,
+    COM_ISP_GET_CALIBRATION_VCMINFO,
     COM_ISP_TYPE_MAX
 };
 
@@ -654,6 +655,13 @@ struct img_debug {
     void *params;
 };
 
+struct vcm_range_info {
+    cmr_u16 limited_infi;
+    cmr_u16 limited_macro;
+    cmr_u16 vcm_dac[3];
+    cmr_u16 resverd[7];
+};
+
 typedef struct {
     int fd;
     size_t size;
@@ -803,6 +811,8 @@ enum cmr_af_focus_type {
 struct cmr_focus_status {
     int is_in_focus;
     int af_focus_type;
+    int af_motor_pos;
+    int af_mode;
 };
 
 /********************************** v4l2 end **********************************/
@@ -962,6 +972,7 @@ struct common_isp_cmd_param {
         struct req_frame_info req_info;
         struct isp_pfc_per_frame_cxt *per_frame_res;
 #endif
+        struct vcm_range_info vcm_range;
     };
 };
 
@@ -1303,6 +1314,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_SNAPSHOT_DONE,
     CAMERA_EVT_CB_FD,
     CAMERA_EVT_CB_FOCUS_MOVE,
+    CAMERA_EVT_CB_FOCUS_END,
     CAMERA_EVT_CB_FLUSH,
     CAMERA_EVT_CB_ZSL_FRM,
     CAMERA_EXIT_CB_PREPARE, /* prepared to be executed      */
@@ -1330,6 +1342,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_INVALIDATE_CACHE,
     CAMERA_EVT_CB_RAW_FRAME,
     CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF,
+    CAMERA_EVT_CB_VCM_RESULT,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1678,6 +1691,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_MASTER_ID,
     CAMERA_IOCTRL_SET_TRIM_INFO,
     CAMERA_IOCTRL_SET_CAM_SECURITY,
+    CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

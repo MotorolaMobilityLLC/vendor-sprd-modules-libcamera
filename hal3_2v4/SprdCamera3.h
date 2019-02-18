@@ -213,6 +213,8 @@ static tags_info_t
         {"availableSensorType", TYPE_BYTE},
         {"sprdAISceneEnabled", TYPE_BYTE},
         {"sprd3BlurCapVersion", TYPE_INT32},
+        {"sprdCalibrationVCMInfo", TYPE_INT32},
+        {"sprdCalibrationVCMResult", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

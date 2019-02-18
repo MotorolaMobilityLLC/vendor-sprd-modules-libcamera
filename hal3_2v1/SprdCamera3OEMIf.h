@@ -566,6 +566,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSprdPipVivEnabled;
     bool mSprdHighIsoEnabled;
 
+    bool mSprdFullscanEnabled;
     bool mSprdRefocusEnabled;
     bool mSprd3dCalibrationEnabled; /**add for 3d calibration */
     bool mSprdYuvCallBack;          /**add for 3d capture */

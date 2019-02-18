@@ -438,7 +438,16 @@ typedef struct {
     int otp_size;
 } OTP_Tag;
 
-typedef struct { int32_t vcm_step; } VCM_Tag;
+typedef struct {
+    int32_t vcm_step;
+} VCM_Tag;
+
+enum vcm_result {
+    VCM_RESULT_NO = 0x0,
+    VCM_RESULT_IN = 0x1,
+    VCM_RESULT_DONE = 0x2,
+    VCM_RESULT_FAIL = 0x3
+};
 
 typedef struct {
     cam_dimension_t preview_size;
@@ -484,6 +493,8 @@ typedef struct {
     EIS_CROP_Tag eiscrop_Info;
     OTP_Tag otpInfo;
     VCM_Tag vcmInfo;
+    int32_t vcm_dac[3];
+    int32_t vcm_result;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     HAL_PFC_Tag pfcinfo[MAX_PIPELINE_DEPTH];
 #endif
@@ -679,6 +690,10 @@ class SprdCamera3Setting {
     int getOTPTag(OTP_Tag *otpInfo);
 
     int setVCMTag(VCM_Tag vcmInfo);
+    int setVCMDACTag(uint16_t *vcmInfo);
+    int getVCMDACTag(uint16_t *vcmInfo);
+    int setVCMRETag(int32_t result);
+    int getVCMRETag(int32_t *result);
     int getVCMTag(VCM_Tag *vcmInfo);
 
     static uint8_t mMaxCameraCount;

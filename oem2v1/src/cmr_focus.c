@@ -28,6 +28,7 @@
 
 #define CMR_AF_MSG_QUEUE_SIZE (5)
 #define ISP_PROCESS_SEC_TIMEOUT (2)
+#define ISP_CALIBRATED_SEC_TIMEOUT (6)
 #define ISP_PROCESS_NSEC_TIMEOUT (800000000)
 #define CAMERA_FOCUS_RECT_PARAM_LEN (200)
 
@@ -1567,6 +1568,14 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
             }
         } else {
             ts.tv_sec += ISP_PROCESS_SEC_TIMEOUT;
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
+            property_get("ro.vendor.camera.dualcamera_cali_time", prop,
+                         "0");
+            if (camera_id == 0 && 3 == atoi(prop)) {
+                ts.tv_sec += ISP_CALIBRATED_SEC_TIMEOUT;
+            }
         }
         if (ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT >= (1000 * 1000 * 1000)) {
             ts.tv_nsec =

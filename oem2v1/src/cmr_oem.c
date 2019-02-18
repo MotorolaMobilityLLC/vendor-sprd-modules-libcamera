@@ -94,6 +94,8 @@ static cmr_uint camera_isp_to_param(cmr_uint cmd, cmr_uint cmd_value);
 #else
 static cmr_int camera_isp_ctrl_done(cmr_u32 cmd, void *data);
 #endif
+static cmr_uint camera_isp_af_param(cmr_uint cmd, cmr_uint cmd_value);
+
 static void camera_sensor_evt_cb(cmr_int evt, void *data, void *privdata);
 static cmr_int camera_is_need_change_fmt(cmr_handle oem_handle,
                                          struct frm_info *data_ptr);
@@ -1233,6 +1235,51 @@ exit:
 }
 #endif
 
+cmr_uint camera_isp_af_param(cmr_uint cmd, cmr_uint cmd_value) {
+    cmr_uint in_param = cmd_value;
+    cmr_uint out_param = 0;
+
+    switch (cmd) {
+    case ISP_AF_NOTICE_CALLBACK: {
+        switch (in_param) {
+        case ISP_FOCUS_TRIG:
+            out_param = CAMERA_FOCUS_MODE_AUTO;
+            break;
+        case ISP_FOCUS_MULTI_ZONE:
+            out_param = CAMERA_FOCUS_MODE_AUTO_MULTI;
+            break;
+        case ISP_FOCUS_MACRO:
+            out_param = CAMERA_FOCUS_MODE_MACRO;
+            break;
+        case ISP_FOCUS_NONE:
+            out_param = CAMERA_FOCUS_MODE_INFINITY;
+            break;
+        case ISP_FOCUS_CONTINUE:
+            out_param = CAMERA_FOCUS_MODE_CAF;
+            break;
+        case ISP_FOCUS_VIDEO:
+            out_param = CAMERA_FOCUS_MODE_CAF_VIDEO;
+            break;
+        case ISP_FOCUS_MACRO_FIXED:
+            out_param = CAMERA_FOCUS_MODE_MACRO_FIXED;
+            break;
+        case ISP_FOCUS_PICTURE:
+            out_param = CAMERA_FOCUS_MODE_PICTURE;
+            break;
+        case ISP_FOCUS_FULLSCAN:
+            out_param = CAMERA_FOCUS_MODE_FULLSCAN;
+            break;
+        default:
+            break;
+        }
+    } break;
+    default:
+        break;
+    }
+    CMR_LOGV("[PFC] out_param %d X", out_param);
+    return out_param;
+}
+
 void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len,
                            void *privdata) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1372,6 +1419,8 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     cmr_u32 cmd = evt & 0xFF;
     cmr_int oem_cb;
     cmr_int ae_stab_flag;
+    struct cmr_focus_status focus_status;
+    struct isp_af_notice *isp_af = NULL;
 
     if (!oem_handle || CMR_EVT_ISP_BASE != (CMR_EVT_ISP_BASE & evt)) {
         CMR_LOGE("err param, 0x%lx 0x%x 0x%lx", (cmr_uint)data, evt,
@@ -1415,6 +1464,22 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             ret = cmr_focus_isp_handle(cxt->focus_cxt.focus_handle,
                                        FOCUS_EVT_ISP_AF_NOTICE, cxt->camera_id,
                                        data);
+        }
+        isp_af = (struct isp_af_notice *)data;
+        if (cxt->camera_cb && (isp_af->motor_pos != 0)) {
+            oem_cb = CAMERA_EVT_CB_FOCUS_END;
+            memset(&focus_status, 0, sizeof(struct cmr_focus_status));
+
+            focus_status.af_motor_pos = isp_af->motor_pos;
+            focus_status.af_mode =
+                camera_isp_af_param(ISP_AF_NOTICE_CALLBACK, isp_af->af_mode);
+            CMR_LOGD("ISP_AF_NOTICE_CALLBACK isp_af->af_mode %d "
+                     "focus_status.af_mode %d",
+                     isp_af->af_mode, focus_status.af_mode);
+            cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_START_FOCUS,
+                           (void *)&focus_status);
+        } else {
+            CMR_LOGD("cxt->camera_cb null error");
         }
         break;
     /*	case ISP_FLASH_AE_CALLBACK:
@@ -1511,6 +1576,12 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         camera_isp_convert(cxt, cmd, data);
         break;
 #endif
+    case ISP_AF_VCM_NOTICE_CALLBACK:
+        CMR_LOGD("ISP_AF_VCM_NOTICE_CALLBACK");
+        oem_cb = CAMERA_EVT_CB_VCM_RESULT;
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                       data);
+        break;
 
     default:
         break;
@@ -7933,6 +8004,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_SET_CAP_FLAG;
         isp_param = param_ptr->cmd_value;
         break;
+    case COM_ISP_GET_CALIBRATION_VCMINFO:
+        isp_cmd = ISP_CTRL_GET_BOKEH_RANGE;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->vcm_range;
+        break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -11036,6 +11112,33 @@ cmr_int cmr_get_sensor_vcm_step(cmr_handle oem_handle, cmr_u32 camera_id,
     }
     CMR_LOGD("isp_param.vcm_step = %d", isp_param.vcm_step);
     *vcm_step = isp_param.vcm_step;
+
+exit:
+    return ret;
+}
+
+cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
+                          struct vcm_range_info *vcm_range) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct common_isp_cmd_param isp_param;
+
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    isp_param.camera_id = cxt->camera_id;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CALIBRATION_VCMINFO, &isp_param);
+    if (ret) {
+        CMR_LOGE("get isp vcm range error %ld", ret);
+        goto exit;
+    }
+
+    memcpy(vcm_range, &isp_param.vcm_range, sizeof(struct vcm_range_info));
+    CMR_LOGD("VCM_INFO:isp_param.range [%d, %d]", vcm_range->limited_infi,
+             vcm_range->limited_macro);
 
 exit:
     return ret;

@@ -220,8 +220,8 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
       mUsingSW3DNR(false), mVideoProcessedWithPreview(false), mRedisplayFum(0),
-      mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
-      mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
+      mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
+      mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
       mIsUnpopped(false), mIsBlur2Zsl(false), mParameters(),
       mPreviewHeight_trimy(0), mPreviewWidth_trimx(0),
@@ -1331,7 +1331,10 @@ status_t SprdCamera3OEMIf::autoFocus() {
     HAL_LOGD("E");
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
-
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("ro.vendor.camera.dualcamera_cali_time", prop, "0");
     if (mCameraId == 3) {
         return NO_ERROR;
     }
@@ -1371,6 +1374,11 @@ status_t SprdCamera3OEMIf::autoFocus() {
             if (mCameraId == 1) {
                 autoFocusToFaceFocus();
             }
+            mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_FULLSCAN);
+        } else if (mSprdRefocusEnabled && mCameraId == 0 && 3 == atoi(prop)) {
+            HAL_LOGD("mm-test set full scan mode");
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
                      CAMERA_FOCUS_MODE_FULLSCAN);
@@ -4068,7 +4076,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         sprdvcmInfo.vcm_step = vcm_step;
         mSetting->setVCMTag(sprdvcmInfo);
     }
-
+    HAL_LOGD("mSprdRefocusEnabled %d mSprdFullscanEnabled %d",
+             mSprdRefocusEnabled, mSprdFullscanEnabled);
+    if (mSprdRefocusEnabled == true && mCameraId == 0 && mSprdFullscanEnabled) {
+        struct vcm_range_info range;
+        mSetting->getVCMDACTag(range.vcm_dac);
+        ret = mHalOem->ops->camera_ioctrl(
+            mCameraHandle, CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
+        mSetting->setVCMDACTag(range.vcm_dac);
+        mSprdFullscanEnabled = 0;
+    }
     SprdCamera3RegularChannel *channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     cmr_uint pre_addr_vir = 0, rec_addr_vir = 0, callback_addr_vir = 0;
@@ -5738,6 +5755,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         }
         break;
 
+    case CAMERA_EVT_CB_FOCUS_END:
+        focus_status = (cmr_focus_status *)parm4;
+        HAL_LOGD("CAMERA_EVT_CB_FOCUS_END focus_status->af_mode %d "
+                 "mSprdRefocusEnabled %d mCameraId %d mSprdFullscanEnabled %d",
+                 focus_status->af_mode, mSprdRefocusEnabled, mCameraId,
+                 mSprdFullscanEnabled);
+        if (mSprdRefocusEnabled == true && mCameraId == 0 &&
+            CAMERA_FOCUS_MODE_FULLSCAN == focus_status->af_mode) {
+            mSprdFullscanEnabled = 1;
+        }
+        break;
+
     default:
         HAL_LOGE("camera cb: unknown cb %d for CAMERA_FUNC_START_FOCUS!", cb);
         {
@@ -5871,6 +5900,15 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
                  resultInfo.awb_state);
         break;
 #endif
+    case CAMERA_EVT_CB_VCM_RESULT: {
+        int32_t vcm_result;
+        mSetting->getVCMRETag(&vcm_result);
+        vcm_result = *(int32_t *)parm4;
+        mSetting->setVCMRETag(vcm_result);
+        HAL_LOGD("CAMERA_EVT_CB_VCM_RESULT vcm_result %d", vcm_result);
+
+    } break;
+
     default:
         break;
     }
