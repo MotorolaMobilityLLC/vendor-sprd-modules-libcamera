@@ -7310,6 +7310,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_SET_CAP_FLAG;
         isp_param = param_ptr->cmd_value;
         break;
+    case COM_ISP_GET_SW3DNR_PARAM:
+        isp_cmd = ISP_CTRL_GET_SW3DNR_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->threednr_param;
+        break;
 
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);

@@ -283,6 +283,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_num;
     cmr_uint sensor_id;
     struct threednr_tuning_param *cap_3dnr_param;
+    struct common_isp_cmd_param isp_cmd_parm;
     char flag[PROPERTY_VALUE_MAX];
 
     CMR_LOGI("E");
@@ -435,6 +436,15 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else {
         CMR_LOGD("ok to call threednr_init");
     }
+
+    ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
+                                &isp_cmd_parm);
+    if (ret) {
+        CMR_LOGE("failed to get isp param  %ld", ret);
+    }
+
+    threednr_setparams(isp_cmd_parm.threednr_param.threshold,
+                       isp_cmd_parm.threednr_param.slope);
     *class_handle = threednr_handle;
     CMR_LOGD("X");
     return ret;

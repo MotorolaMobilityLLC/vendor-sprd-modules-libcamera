@@ -397,6 +397,7 @@ enum common_isp_cmd_type {
 #endif
     COM_ISP_SET_AI_SCENE_ENABLED,
     COM_ISP_GET_CALIBRATION_VCMINFO,
+    COM_ISP_GET_SW3DNR_PARAM,
     COM_ISP_TYPE_MAX
 };
 
@@ -966,6 +967,7 @@ struct common_isp_cmd_param {
 #ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
 #endif
+        struct isp_sw3dnr_info threednr_param;
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
