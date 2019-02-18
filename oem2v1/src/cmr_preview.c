@@ -9870,18 +9870,12 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             memcpy(&prev_cxt->prev_frm[i], &prev_cxt->prev_frm[i + 1],
                    sizeof(struct img_frm));
         }
-        prev_cxt->prev_phys_addr_array[valid_num - 1] = 0;
-        prev_cxt->prev_virt_addr_array[valid_num - 1] = 0;
-        prev_cxt->prev_fd_array[valid_num - 1] = 0;
-        cmr_bzero(&prev_cxt->prev_frm[valid_num - 1], sizeof(struct img_frm));
-        prev_cxt->prev_mem_valid_num--;
         if (is_to_hal) {
             cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
             frame_type.y_phy_addr = prev_cxt->prev_frm[0].addr_phy.addr_y;
             frame_type.y_vir_addr = prev_cxt->prev_frm[0].addr_vir.addr_y;
             frame_type.fd = prev_cxt->prev_frm[0].fd;
             frame_type.type = PREVIEW_CANCELED_FRAME;
-
             CMR_LOGV("fd addr 0x%x addr 0x%lx", frame_type.fd,
                      frame_type.y_vir_addr);
             frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
@@ -9891,6 +9885,11 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             cb_data_info.frame_data = &frame_type;
             prev_cb_start(handle, &cb_data_info);
         }
+        prev_cxt->prev_phys_addr_array[valid_num - 1] = 0;
+        prev_cxt->prev_virt_addr_array[valid_num - 1] = 0;
+        prev_cxt->prev_fd_array[valid_num - 1] = 0;
+        cmr_bzero(&prev_cxt->prev_frm[valid_num - 1], sizeof(struct img_frm));
+        prev_cxt->prev_mem_valid_num--;
     } else {
         CMR_LOGE(
             "got wrong buf: data->fd=0x%x, prev_frm[0].fd=0x%x, valid_num=%ld",
