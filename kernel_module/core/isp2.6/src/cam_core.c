@@ -270,11 +270,6 @@ struct camera_module {
 	struct camera_frame *dual_frame; /* 0: no, to find, -1: no need find */
 	atomic_t capture_frames_dcam; /* how many frames to report, -1:always */
 	int64_t capture_times; /* *ns, timestamp get from start_capture */
-
-	/* 4in1: save *frame when remosaic, use timestamp
-	 * sprd_img_read: save; aux_dcam bin_tx_done restore
-	 */
-	struct camera_frame *remosaic_frame[DCAM_4IN1_FRAMES];
 };
 
 struct camera_group {
@@ -681,19 +676,7 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 
 	/* aux dcam bin tx done, set frame to isp */
 	if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE) {
-		int i;
-		struct camera_frame *p;
-
-		/* offline timestamp */
-		i = pframe->fid % DCAM_4IN1_FRAMES;
-		p = module->remosaic_frame[i];
-		module->remosaic_frame[i] = NULL;
-		if (p) {
-			pframe->sensor_time = p->sensor_time;
-			pframe->boot_sensor_time = p->boot_sensor_time;
-			put_empty_frame(p);
-		}
-		/* check time */
+		/* offline timestamp, check time */
 		if (pframe->sensor_time.tv_sec == 0 &&
 			pframe->sensor_time.tv_usec == 0) {
 			struct timespec cur_ts;
@@ -3998,15 +3981,6 @@ static int img_ioctl_stream_off(
 		if (module->dump_thrd.thread_task)
 			camera_queue_clear(&module->dump_queue);
 	}
-	if (module->cam_uinfo.is_4in1) {
-		struct camera_frame *p;
-
-		for (i = 0; i < DCAM_4IN1_FRAMES; i++) {
-			p = module->remosaic_frame[i];
-			if (p)
-				put_empty_frame(p);
-		}
-	}
 	atomic_set(&module->state, CAM_IDLE);
 	if (raw_cap)
 		complete(&module->streamoff_com);
@@ -4182,6 +4156,7 @@ static int raw_proc_done(struct camera_module *module)
 	ch->dcam_path_id = -1;
 	ch->isp_path_id = -1;
 	ch->aux_dcam_path_id = -1;
+	camera_queue_clear(&module->isp_hist2_outbuf_queue);
 	camera_queue_clear(&module->frm_queue);
 	camera_queue_clear(&ch->share_buf_queue);
 	atomic_set(&module->state, CAM_IDLE);
@@ -4347,7 +4322,8 @@ static int raw_proc_post(
 
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_INIT_STATIS_Q, NULL);
-
+	camera_queue_init(&module->isp_hist2_outbuf_queue,
+		CAM_STATIS_Q_LEN, 0, camera_put_empty_frame);
 	io_desc.q = &module->isp_hist2_outbuf_queue;
 	io_desc.buf = &module->isp_hist2_buf;
 	ret = isp_ops->ioctl(module->isp_dev_handle,
@@ -5359,20 +5335,8 @@ rewait:
 			read_op.parm.frame.irq_property = pframe->irq_property;
 		}
 
-		if (pframe) {
-			if (pframe->irq_type == CAMERA_IRQ_4IN1_DONE) {
-				int i;
-				/* the pframe will be used by 4in1_post
-				 * for use sof timestamp
-				 */
-				i = pframe->fid % DCAM_4IN1_FRAMES;
-				if (module->remosaic_frame[i])
-					put_empty_frame(module->remosaic_frame[i]);
-				module->remosaic_frame[i] = pframe;
-			} else {
+		if (pframe)
 				put_empty_frame(pframe);
-			}
-		}
 
 		pr_debug("read frame, evt 0x%x irq %d ch 0x%x index 0x%x mfd %d\n",
 				read_op.evt,

@@ -2503,8 +2503,10 @@ static int isp_init_statis_bufferq(
 					pframe->buf.addr_k[0] = kaddr;
 					pframe->buf.iova[0] = paddr;
 					pframe->buf.size[0] = buf_size;
-					camera_enqueue(io_desc->q, pframe);
+					ret = camera_enqueue(io_desc->q, pframe);
 					pr_debug("outputq[%p] qcnt[%d] qmax[%d]\n",io_desc->q,io_desc->q->cnt,io_desc->q->max);
+					if (ret)
+						put_empty_frame(pframe);
 				}
 			}
 

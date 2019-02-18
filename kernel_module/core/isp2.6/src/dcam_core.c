@@ -1455,10 +1455,12 @@ static int dcam_cfg_statis_buffer(
 		pframe->buf.addr_vir[0] = (unsigned long)input->uaddr;
 		pframe->buf.addr_k[0] = (unsigned long)input->kaddr;
 		pframe->buf.iova[0] = input->u.block_data.hw_addr;
-		camera_enqueue(&dev->path[path_id].out_buf_queue, pframe);
+		ret = camera_enqueue(&dev->path[path_id].out_buf_queue, pframe);
 		pr_debug("statis type %d, iova 0x%08x,  uaddr 0x%lx\n",
 			input->type, (uint32_t)pframe->buf.iova[0],
 			pframe->buf.addr_vir[0]);
+		if (ret)
+			put_empty_frame(pframe);
 	}
 exit:
 	return ret;
