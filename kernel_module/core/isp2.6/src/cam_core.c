@@ -2048,6 +2048,7 @@ static int init_cam_channel(
 		path_desc.endian.uv_endian = ENDIAN_LITTLE;
 		path_desc.output_size.w = ch_uinfo->dst_size.w;
 		path_desc.output_size.h = ch_uinfo->dst_size.h;
+		path_desc.regular_mode = ch_uinfo->regular_desc.regular_mode;
 		ret = isp_ops->cfg_path(module->isp_dev_handle,
 					ISP_PATH_CFG_PATH_BASE,
 					isp_ctx_id, isp_path_id, &path_desc);

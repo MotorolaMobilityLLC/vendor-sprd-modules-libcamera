@@ -647,6 +647,7 @@ int isp_cfg_path_base(struct isp_path_desc *path, void *param)
 	path->out_fmt = cfg_in->out_fmt;
 	path->data_endian = cfg_in->endian;
 	path->bind_type = cfg_in->slave_type;
+	path->regular_info.regular_mode = cfg_in->regular_mode;
 	if (path->bind_type == ISP_PATH_MASTER)
 		path->slave_path_id = cfg_in->slave_path_id;
 
@@ -848,7 +849,7 @@ static void set_path_shrink_info(
 	unsigned long addr = 0;
 	uint32_t reg_val = 0;
 
-	pr_debug("regular_mode %d\n", regular_info->regular_mode);
+	pr_info("regular_mode %d\n", regular_info->regular_mode);
 	addr = ISP_SCALER_CFG + scaler_base;
 	ISP_REG_MWR(idx, addr, (BIT_25 | BIT_26),
 		regular_info->regular_mode << 25);
