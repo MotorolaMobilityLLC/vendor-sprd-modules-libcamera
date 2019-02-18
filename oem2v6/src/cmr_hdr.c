@@ -51,13 +51,11 @@ struct class_hdr_lib_context {
     struct ipm_version version;
 };
 
-#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
 struct hdr_frame_addr {
     struct img_addr addr_phy;
     struct img_addr addr_vir;
     cmr_s32 fd;
 };
-#endif
 
 struct class_hdr {
     struct ipm_common common;
