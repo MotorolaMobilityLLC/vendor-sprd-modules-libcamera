@@ -201,7 +201,7 @@ static int sprd_sensor_config(struct device *dev,
 
 	phy_id = csi_api_mipi_phy_cfg_init(sensor_info->dev_node,
 					   sensor_info->sensor_id);
-	if (phy_id >= 5){
+	if (phy_id < 0){
 		pr_err("sprd,phyid is invalid\n");
 		return -1;
 	}

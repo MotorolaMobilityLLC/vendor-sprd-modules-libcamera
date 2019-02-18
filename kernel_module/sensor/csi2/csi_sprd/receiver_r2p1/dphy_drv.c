@@ -54,9 +54,18 @@ static char *phy_name[] = {
 	"mipi-csi-phy2", /* 2lane */
 	"mipi-csi-phy1-m", /*2p2l_m*/
 	"mipi-csi-phy1-s", /*2p2l_s*/
+	"mipi-csi-phy3", /*4lane_1*/
 };
 
+/* Temp varibale to know which project, 0 : SharkL5, 1 : ROC1 */
+uint32_t g_project_id = 0;
+
 static struct dphy_info *g_phy_info[4];
+
+static unsigned int csi_addr[] = {
+	0x62300000,
+	0x62400000,
+	0x62500000};
 
 static struct dphy_info *get_phy_info(int phyid)
 {
@@ -323,7 +332,7 @@ int phy_parse_dt(int phyid, struct device *dev)
 		dn = of_get_next_available_child(par_dn, dn);
 
 	}
-
+	of_property_read_u32(dn, "sprd,project-id", &g_project_id);
 	phy->phy_id = phyid;
 
 	pr_info("phy_id :%d, reg:%d\n", phyid, out_value);
@@ -338,7 +347,6 @@ int phy_parse_dt(int phyid, struct device *dev)
 	phy->anlg_phy = syscon_regmap_lookup_by_name(dn, "iso_sw_en");
 	if (IS_ERR_OR_NULL(phy->anlg_phy)) {
 		pr_err("get anlg phy failed\n");
-		/* return PRT_ERR(csi_info->phy.anlg_phy); */
 		goto err;
 	}
 
@@ -370,9 +378,9 @@ int phy_parse_dt(int phyid, struct device *dev)
 	}
 
 	/* csi mode for 2p2l */
-	if (phy->phy_id == 1
-		|| phy->phy_id == 3
-		|| phy->phy_id == 4) {
+	if (phy->phy_id == PHY_2P2
+		|| phy->phy_id == PHY_2P2_M
+		|| phy->phy_id == PHY_2P2_S) {
 		ret = syscon_get_args_by_name(dn, "csi_mode_sel", 2, args);
 		if (ret == 2) {
 			phy->csi_mode = args[0];
@@ -472,6 +480,50 @@ err:
 	return -1;
 }
 
+int reg_mwr(unsigned int reg, unsigned int msk, unsigned int value)
+{
+	void __iomem *reg_base = NULL;
+
+	reg_base = ioremap_nocache(reg, 0x4);
+	if (!reg_base) {
+		pr_info("0x%x: ioremap failed\n", reg);
+		return -1;
+	}
+	REG_MWR(reg_base, msk, value);
+	mb();
+	iounmap(reg_base);
+	return 0;
+}
+
+int reg_wr(unsigned int reg, unsigned int value)
+{
+	void __iomem *reg_base = NULL;
+
+	reg_base = ioremap_nocache(reg, 0x4);
+	if (!reg_base) {
+		pr_info("0x%x: ioremap failed\n", reg);
+		return -1;
+	}
+	REG_WR(reg_base,value);
+	mb();
+	iounmap(reg_base);
+	return 0;
+}
+
+int reg_rd(unsigned int reg)
+{
+	void __iomem *reg_base = NULL;
+	int val = 0;
+
+	reg_base = ioremap_nocache(reg, 0x4);
+	if (!reg_base) {
+		pr_info("0x%x: ioremap failed\n", reg);
+		return -1;
+	}
+	val = REG_RD(reg_base);
+	iounmap(reg_base);
+	return val;
+}
 void csi_phy_power_down(unsigned int phyid, int csiId, int sensor_id, int is_eb)
 {
 	unsigned int shutdownz = 0;
@@ -556,7 +608,7 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int sensor_id, int is_eb)
 			csi_dphy_2p2_testclr_set(phy);
 		} else if (phy->phy_id == PHY_4LANE
 			|| phy->phy_id == PHY_2LANE){
-			CSI_REG_MWR(csiId, PHY_TEST_CRTL0, PHY_TESTCLR, 1);
+				CSI_REG_MWR(sensor_id, PHY_TEST_CRTL0, PHY_TESTCLR, 1);
 		}
 
 		regmap_update_bits(phy->anlg_phy, phy->ps_pd_s,
@@ -583,7 +635,7 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int sensor_id, int is_eb)
 			csi_dphy_2p2_reset(phy, sensor_id);
 		} else if (phy->phy_id == PHY_4LANE
 			|| phy->phy_id == PHY_2LANE){
-			CSI_REG_MWR(csiId, PHY_TEST_CRTL0, PHY_TESTCLR, 0);
+				CSI_REG_MWR(sensor_id, PHY_TEST_CRTL0, PHY_TESTCLR, 0);
 		}
 
 		csi_shut_down_phy(0, sensor_id);
@@ -603,7 +655,7 @@ int dphy_csi_path_cfg(struct csi_dt_node_info *dt_info)
 
 	switch (dt_info->phy_id) {
 	case PHY_2P2: {
-		cphy_sel_val = 3;
+		cphy_sel_val = 0x1;
 		break;
 	}
 	case PHY_4LANE: {
@@ -654,51 +706,174 @@ int dphy_csi_path_cfg(struct csi_dt_node_info *dt_info)
  * testout ____________________/-----\_/-----\___
  *
  */
-/* static void phy_testclr(int idx)
+int phy_read(int idx, int addr)
 {
-	CSI_REG_MWR(idx, PHY_TEST_CRTL0, PHY_TESTCLR, 1);
-	udelay(1);
-	CSI_REG_MWR(idx, PHY_TEST_CRTL0, PHY_TESTCLR, 0);
-	udelay(1);
-} */
+	int temp = 0;
 
-static void phy_testen(int idx, int value)
-{
-	CSI_REG_MWR(idx, PHY_TEST_CRTL0, PHY_TESTCLR, value);
+	/* testen = 1 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL1, BIT_16);
+	udelay(10);
+	/* testclk = 1 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL0, BIT_1);
+	udelay(10);
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL1, addr | BIT_16);
+	udelay(10);
+	/* testclk = 0 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL0, 0);
+	udelay(10);
+	temp = reg_rd(csi_addr[idx] + PHY_TEST_CRTL1);
+
+	return (temp);
 }
 
-static void phy_testclk(int idx, int value)
+void phy_write(int idx, int addr, int data)
 {
-	CSI_REG_MWR(idx, PHY_TEST_CRTL0, PHY_TESTCLK, value);
+	pr_debug("idx:%d, addr:0x%x, data:0x%x\n", idx, addr, data);
+
+	/* testen = 1 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL1, BIT_16);
+	udelay(10);
+	/* testclk = 1 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL0, BIT_1);
+	udelay(10);
+	/* set reg addr */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL1, addr | BIT_16);
+	udelay(10);
+	/* testclk = 0 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL0, 0);
+	udelay(10);
+
+	/* testen = 0 for data */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL1, /*addr*/0);
+	udelay(10);
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL1, data);
+	udelay(10);
+	/* testclk = 1 */
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL0, BIT_1);
+	reg_wr(csi_addr[idx] + PHY_TEST_CRTL0, 0);
 }
 
-static void phy_write(int idx, int addr, int data)
+void dphy_2p2l_init(int phy_id, int csi_id, int sensor_id)
 {
-	int temp;
+	pr_info("phy_id: %d, csi_id:%d, sensor_id:%d\n", phy_id, csi_id, sensor_id);
+	if (phy_id == PHY_2P2
+		|| phy_id == PHY_2P2_M
+		|| phy_id == PHY_2P2_S) {
+		pr_info("set 2p2l work mode\n");
+		/* M/S_EN */
+		//reg_mwr(0x323f0058, BIT_24|BIT_21, BIT_24|BIT_21);
+		/* set 2p2l mode 1:4lane 0:2lane */
+		if (phy_id == PHY_2P2_M
+			|| phy_id == PHY_2P2_S)
+			reg_mwr(0x323f000c, BIT_4, ~BIT_4);
+		else {
+			//reg_mwr(0x323f000c, BIT_4, BIT_4);
+		}
 
-	pr_info("idx:%d, addr:0x%x, data:0x%x\n", idx, addr, data);
-	/* for addr */
-	phy_testen(idx, 1);
-	udelay(2);
+		pr_info("config phy debug module\n");
+		switch (phy_id) {
+		case PHY_2P2:
+		case PHY_2P2_M:
+		case PHY_2P2_S:
+			reg_mwr(0x323f0000 + 0x60, BIT_3, BIT_3); //dbg_dsi_if_sel_db = 1
+			reg_mwr(0x323f0000 + 0x4C, BIT_5, ~BIT_5); //DSI_IF_SEL_DB = 0
+			reg_mwr(0x323f0000 + 0x50, BIT_0, BIT_0); //DSI_TESTCLR_DB = 1
+			break;
+		default:
+			pr_info("this phy is not 2p2\n");
+		}
 
-	/* set addr */
-	phy_testclk(idx, 1);
-	udelay(2);
-	CSI_REG_MWR(idx, PHY_TEST_CRTL1, PHY_TESTDIN, addr);
-	phy_testclk(idx, 0);
-	udelay(2);
+		pr_info("reset phy from controller\n");
+		dphy_cfg_clr(sensor_id);
 
-	/* readout value */
-	temp = CSI_REG_RD(idx, PHY_TEST_CRTL1) & 0x0000ff00;
-	temp |= data;
-	pr_info("temp: 0x%x\n", temp);
+		pr_info("set phy force shutdownz\n");
+		reg_mwr(0x323f0000 + 0x58, BIT_26, BIT_26); //CSI force S shutdownz
+		reg_mwr(0x323f0000 + 0x58, BIT_28, BIT_28); //CSI force shutdownz
 
-	/* for data */
-	phy_testen(idx, 0);
-	udelay(2);
-	CSI_REG_MWR(idx, PHY_TEST_CRTL1, PHY_TESTDIN, temp);
-	phy_testclk(idx, 1);
-	udelay(1);
+		pr_info("init 2p2l_s to lane2/3\n");
+		reg_wr(0x62200030, 0x1b<<(csi_id*6));
+		dphy_cfg_clr(sensor_id);
+		pr_info("0x62200030:0x%x\n", reg_rd(0x62200030));
+		phy_write(csi_id, 0x4d, 0x48);
+		pr_info("0x4d = 0x%d\n", phy_read(csi_id, 0x4d));
+		phy_write(csi_id, 0x5d, 0x68);
+		pr_info("0x5d = 0x%d\n", phy_read(csi_id, 0x5d));
+	}else {
+		pr_info("reset phy from controller\n");
+		dphy_cfg_clr(sensor_id);
+
+		pr_info("set phy force shutdownz\n");
+		reg_mwr(0x323f0000 + 0x58, BIT_26, BIT_26); //CSI force S shutdownz
+		reg_mwr(0x323f0000 + 0x58, BIT_28, BIT_28); //CSI force shutdownz
+	}
+}
+
+int dphy_csi_match(struct csi_dt_node_info *dt_info)
+{
+	uint32_t cphy_sel_val;
+	uint32_t rx2_sel_val;
+	static int flag = 0;
+
+	/* init phy->csi = 0 */
+	if (!flag) {
+		reg_mwr(0x62200030, 0x30007fff, 0);
+		flag = 1;
+	}
+
+	/* Roc1 */
+	if (!dt_info) {
+		pr_err("input param is invalid\n");
+		return -EINVAL;
+	}
+
+	switch (dt_info->phy_id) {
+	case PHY_2P2: {
+		cphy_sel_val = 0x12;
+		rx2_sel_val = 0x20002000;
+		break;
+	}
+	case PHY_4LANE: {
+		cphy_sel_val = 0x0;
+		rx2_sel_val = 0x0;
+		break;
+	}
+	case PHY_4LANE_1: {
+		cphy_sel_val = 0x9;
+		rx2_sel_val = 0x10001000;
+		break;
+	}
+	case PHY_2P2_S: {
+		cphy_sel_val = 0x11;
+		rx2_sel_val = 0x11;
+		break;
+	}
+	case PHY_2P2_M: {
+		cphy_sel_val = 0x10;
+		rx2_sel_val = 0x10;
+		break;
+	}
+	default:
+		pr_err("fail to get valid csi phy id\n");
+		return -1;
+	}
+
+	pr_info("phyid:%d, csi_id:%d, select value:0x%x\n",
+					dt_info->phy_id, dt_info->controller_id, cphy_sel_val);
+
+	if (dt_info->controller_id != 2) {
+		cphy_sel_val = cphy_sel_val << (dt_info->controller_id*6);
+		/*regmap_update_bits(dt_info->syscon.mm_ahb,
+			dt_info->syscon.dphy_sel, dt_info->syscon.dphy_msk,
+			cphy_sel_val);*/
+		reg_mwr(0x62200030, 0x33<<(dt_info->controller_id*6),
+				cphy_sel_val);
+	} else {
+		/* regmap_update_bits(dt_info->syscon.mm_ahb,
+			dt_info->syscon.dphy_sel, dt_info->syscon.dphy_msk,
+			rx2_sel_val); */
+		reg_mwr(0x62200030, 0x30003000, rx2_sel_val);
+	}
+	return 0;
 }
 
 void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id)
@@ -719,7 +894,7 @@ void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id)
 			0x7 << (csi_id*6), 0x0 << (csi_id*6));
 
 		/* To init 2p2l_s on SharkL5 */
-		phy_write(sensor_id, 0x4d, 0x10);
-		phy_write(sensor_id, 0x5d, 0x11);
+		phy_write(csi_id, 0x4d, 0x48);
+		phy_write(csi_id, 0x5d, 0x68);
 	}
 }

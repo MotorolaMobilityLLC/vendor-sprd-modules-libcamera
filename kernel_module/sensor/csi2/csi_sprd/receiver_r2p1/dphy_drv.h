@@ -88,6 +88,12 @@ void csi_phy_power_down(unsigned int phyid, int csiId, int sensor_id, int is_eb)
 int dphy_csi_path_cfg(struct csi_dt_node_info *dt_info);
 void dphy_init_state(unsigned int phyid, int csi_id, int sensor_id);
 int phy_parse_dt(int phyid, struct device *dev);
-
+void dphy_2p2l_init(int phy_id, int csi_id, int sensor_id);
+int dphy_csi_match(struct csi_dt_node_info *dt_info);
+int reg_mwr(unsigned int reg, unsigned int msk, unsigned int value);
+int reg_wr(unsigned int reg, unsigned int value);
+int reg_rd(unsigned int reg);
+int phy_read(int idx, int addr);
+void phy_write(int idx, int addr, int data);
 #endif
 

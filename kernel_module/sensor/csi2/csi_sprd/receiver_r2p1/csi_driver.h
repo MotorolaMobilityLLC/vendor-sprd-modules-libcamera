@@ -21,10 +21,11 @@
 
 enum csi_phy_t {
 	PHY_4LANE = 0,
-	PHY_2LANE,
 	PHY_2P2,
+	PHY_2LANE,
 	PHY_2P2_M,
 	PHY_2P2_S,
+	PHY_4LANE_1,
 	PHY_MAX,
 };
 

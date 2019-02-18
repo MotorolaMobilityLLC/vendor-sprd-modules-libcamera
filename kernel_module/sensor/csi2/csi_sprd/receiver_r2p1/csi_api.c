@@ -41,6 +41,7 @@
 #define CSI_PATTERN_ENABLE (1)
 
 static struct csi_dt_node_info *s_csi_dt_info_p[3];
+extern uint32_t g_project_id;
 
 static struct csi_dt_node_info *csi_get_dt_node_data(int sensor_id)
 {
@@ -247,7 +248,7 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 	}
 
 	csi_reg_base_save(csi_info, sensor_id);
-	csi_phy_power_down(phy_id, csi_info->controller_id, sensor_id, 1);
+	//csi_phy_power_down(phy_id, csi_info->controller_id, sensor_id, 1);
 	s_csi_dt_info_p[sensor_id] = csi_info;
 	pr_info("csi dt info:sensor_id :%d, phy_id:%d, csi_id:%d, csi_info:0x%p\n",
 		sensor_id, csi_info->phy_id, csi_info->controller_id,
@@ -284,27 +285,92 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id, int 
 {
 	int ret = 0;
 	struct csi_dt_node_info *dt_info = csi_get_dt_node_data(sensor_id);
+	unsigned int csi_base_addr[] = {0x62300000, 0x62400000, 0x62500000};
 
-	pr_info("entry, phyid:%d, lane_number:%d, csi_id:%d\n",
-			phy_id, lane_num, sensor_id);
+	pr_info("entry, phyid:%d, lane_number:%d, sensor_id:%d, project_id: %d\n",
+			phy_id, lane_num, sensor_id, g_project_id);
 
 	if (!dt_info) {
 		pr_err("fail to get valid phy ptr\n");
 		return -EINVAL;
 	}
-	ret = csi_ahb_reset(dt_info, dt_info->controller_id);
-	if (unlikely(ret))
-		goto EXIT;
-
-	ret = csi_mipi_clk_enable(sensor_id, is_pattern);
-	if (unlikely(ret < 0))
-		goto EXIT;
-
-	udelay(1);
 	phy_id = dt_info->phy_id;
-	ret = dphy_init(bps_per_lane, phy_id, sensor_id);
-	if (unlikely(ret))
-		goto EXIT;
+	if (g_project_id == 0) {
+		ret = csi_ahb_reset(dt_info, dt_info->controller_id);
+		if (unlikely(ret))
+			goto EXIT;
+
+		ret = csi_mipi_clk_enable(sensor_id, is_pattern);
+		if (unlikely(ret < 0))
+			goto EXIT;
+
+		udelay(1);
+
+		ret = dphy_init(bps_per_lane, phy_id, sensor_id);
+		if (unlikely(ret))
+			goto EXIT;
+	} else { //roc1
+
+		dphy_csi_match(dt_info);
+		if (phy_id == PHY_2P2
+			|| phy_id == PHY_2P2_M
+			|| phy_id == PHY_2P2_S) {
+			//m/s_en
+			reg_mwr(0x323f0058, BIT_24|BIT_21, BIT_24|BIT_21);
+			//set 2p2l mode = 4lane
+			reg_mwr(0x323f000c, BIT_4, BIT_4);
+			//enable clock
+			ret = csi_mipi_clk_enable(sensor_id, is_pattern);
+			if (unlikely(ret < 0))
+				goto EXIT;
+
+			reg_mwr(0x323f0000 + 0x60, BIT_3, BIT_3); //dbg_dsi_if_sel_db = 1
+			reg_mwr(0x323f0000 + 0x4C, BIT_5, ~BIT_5); //DSI_IF_SEL_DB = 0
+			reg_mwr(0x323f0000 + 0x50, BIT_0, BIT_0); //DSI_TESTCLR_DB = 1
+			//testclr = 1
+			reg_mwr(csi_base_addr[dt_info->controller_id] + 0x48, BIT_0, BIT_0);
+			udelay(100);
+			//testclr = 0
+			reg_mwr(csi_base_addr[dt_info->controller_id] + 0x48, BIT_0, ~(BIT_0));
+
+			reg_mwr(0x323f0000 + 0x58, BIT_26, BIT_26);  //CSI force S shutdownz
+			reg_mwr(0x323f0000 + 0x58, BIT_28, BIT_28);  //CSI force shutdownz
+
+			reg_mwr(0x62200030, 0x30007fff, 0x1b<<(dt_info->controller_id*6));
+
+			phy_write(dt_info->controller_id, 0x4d, 0x48);
+			pr_info("val:0x%x\n", phy_read(dt_info->controller_id, 0x4d));
+			phy_write(dt_info->controller_id, 0x5d, 0x68);
+			pr_info("val:0x%x\n",  phy_read(dt_info->controller_id, 0x5d));
+
+			dphy_csi_match(dt_info);
+		} else {
+			pr_info("enable clock\n");
+			ret = csi_mipi_clk_enable(sensor_id, is_pattern);
+			if (unlikely(ret < 0))
+				goto EXIT;
+			pr_info("reset phy from controller: %d\n", dt_info->controller_id);
+			//testclr = 1
+			reg_mwr(csi_base_addr[dt_info->controller_id] + 0x48, BIT_0, BIT_0);
+			udelay(100);
+			//testclr = 0;
+			reg_mwr(csi_base_addr[dt_info->controller_id] + 0x48, BIT_0, ~(BIT_0));
+
+			pr_info("set phy force shutdownz\n");
+			reg_mwr(0x323f0000 + 0x58, BIT_26, BIT_26); //CSI force S shutdownz
+			reg_mwr(0x323f0000 + 0x58, BIT_28, BIT_28); //CSI force shutdownz
+			dphy_csi_match(dt_info);
+		}
+
+		if (0) {
+			dphy_2p2l_init(phy_id, dt_info->controller_id, sensor_id);
+			dphy_csi_match(dt_info);
+		}
+
+		ret = csi_ahb_reset(dt_info, dt_info->controller_id);
+		if (unlikely(ret))
+			goto EXIT;
+	}
 
 	csi_start(sensor_id);
 	csi_set_on_lanes(lane_num, sensor_id);
@@ -334,7 +400,8 @@ int csi_api_close(uint32_t phy_id, int sensor_id)
 	if (CSI_PATTERN_ENABLE)
 		csi_ipg_mode_cfg(sensor_id, 0, 0, 4224, 3136);
 	csi_close(sensor_id);
-	csi_phy_power_down(phy_id, dt_info->controller_id, sensor_id, 1);
+	if (g_project_id == 0)
+		csi_phy_power_down(phy_id, dt_info->controller_id, sensor_id, 1);
 	csi_mipi_clk_disable(sensor_id);
 	pr_info("csi api close ret: %d\n", ret);
 
