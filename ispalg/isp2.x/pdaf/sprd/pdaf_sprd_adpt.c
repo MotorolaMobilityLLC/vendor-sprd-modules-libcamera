@@ -958,7 +958,11 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		}
 	}
 
-	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d", pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4]);
+	//Transfer Sensor ID to AF_adpt: MAX_MULTIZONE_NUM = 45
+	pd_calc_result.pdDCCGain[15] = 2000 + cxt->pd_gobal_setting.dSensorMode;
+	ISP_LOGV("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf, DCC[4]= %d, DCC[15]=%d",
+	pd_calc_result.pdConf[4], pd_calc_result.pdPhaseDiff[4], pd_calc_result.pdDCCGain[4], pd_calc_result.pdDCCGain[15]);
+
 	cxt->pdaf_set_pdinfo_to_af(cxt->caller, &pd_calc_result);
 	cxt->frame_id++;
   exit:
