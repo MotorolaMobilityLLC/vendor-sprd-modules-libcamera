@@ -3002,8 +3002,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.multi_mode = ISP_SINGLE;
     }
 
-    if(cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK||
-        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK){
+    if (cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
+        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK) {
         isp_param.is_faceId_unlock = 1;
     }
 
@@ -5998,6 +5998,26 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         param_ptr->cap_inf_cfg.cfg.need_3dnr = 1;
     } else {
         param_ptr->cap_inf_cfg.cfg.need_3dnr = 0;
+    }
+
+    if (1 == sn_cxt->cur_sns_ex_info.embedded_line_enable) {
+        SENSOR_VAL_T val;
+        struct sensor_embedded_info ebd_info;
+        cmr_bzero(&ebd_info, sizeof(ebd_info));
+
+        val.type = SENSOR_VAL_TYPE_GET_EBDLINE_INFO;
+        val.pval = &ebd_info;
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                               SENSOR_ACCESS_VAL, (cmr_uint)&val);
+        if (ret) {
+            CMR_LOGE("get sensor embed line info failed %ld", ret);
+            goto exit;
+        }
+
+        param_ptr->cap_inf_cfg.cfg.ebd_ctrl.mode = ebd_info.vc_info.vch_mode;
+        param_ptr->cap_inf_cfg.cfg.ebd_ctrl.image_vc = ebd_info.vc_info.vch_id;
+        param_ptr->cap_inf_cfg.cfg.ebd_ctrl.image_dt =
+            ebd_info.vc_info.vch_data_type;
     }
 
     if (cxt->is_multi_mode == MODE_BOKEH ||
@@ -10052,6 +10072,7 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
     out_isp_sn_ex_info->max_adgain = in_sn_ex_info->max_adgain;
     out_isp_sn_ex_info->ois_supported = in_sn_ex_info->ois_supported;
     out_isp_sn_ex_info->pdaf_supported = in_sn_ex_info->pdaf_supported;
+    out_isp_sn_ex_info->ebd_supported = in_sn_ex_info->embedded_line_enable;
     out_isp_sn_ex_info->exp_valid_frame_num =
         in_sn_ex_info->exp_valid_frame_num;
     out_isp_sn_ex_info->clamp_level = in_sn_ex_info->clamp_level;
