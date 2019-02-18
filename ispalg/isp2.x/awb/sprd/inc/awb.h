@@ -160,6 +160,18 @@ extern "C" {
 
 		cmr_s16 lm2DefaultCt[5];
 		float lm2DefaultPgr[5];
+
+
+		cmr_s32 nodeWTabSz;
+		cmr_u8 nodeWTabSzSub[6];
+		cmr_s16 nodeWTabBv[6];
+		cmr_s16 nodeWTabCt[6][16];
+		cmr_s16 nodeWTabData[6][16];
+
+		cmr_s32 defExSz;
+		cmr_s16 defExBv[8];
+		cmr_s16 defExCt[8];
+		float defExPgr[8];
 	};
 
 	struct awb_tuning_param {
