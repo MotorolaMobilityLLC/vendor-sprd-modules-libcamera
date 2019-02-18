@@ -772,10 +772,12 @@ cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
-
 cmr_int sensor_get_number(unsigned char *camera_support);
 
 SENSOR_INFO_FOR_HAL *sensor_get_info_for_hal(cmr_u32 sensor_id);
+
+cmr_int
+sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data);
 
 // utest refer
 #ifdef __cplusplus

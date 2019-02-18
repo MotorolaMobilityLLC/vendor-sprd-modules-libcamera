@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <cutils/sockets.h>
 
 #include "hw_sensor_drv.h"
 #include "sensor_cfg.h"
@@ -3243,4 +3244,92 @@ SENSOR_INFO_FOR_HAL *sensor_get_info_for_hal(cmr_u32 sensor_id) {
     camera_info_ptr = sensor_get_camera_info_reg_tab(sensor_id);
 
     return camera_info_ptr;
+};
+
+#define OTP_CONTROL_SIZE 30
+#define OTP_LENGTH_SIZE 2
+#define OTP_DATA_SIZE 2048
+#define OTP_WRITE_BUFFER_SIZE OTP_CONTROL_SIZE + OTP_LENGTH_SIZE
+#define OTP_READ_BUFFER_SIZE OTP_CONTROL_SIZE + OTP_LENGTH_SIZE + OTP_DATA_SIZE
+
+#define SOCKET_NAME_OTPD "otpd"
+#define OTPD_WRITE_DATA "Otp Write Data"
+#define OTPD_READ_DATA "Otp Read Data"
+#define OTPD_READ_GOLDEN_DATA "Otp Read Golden Data"
+#define OTPD_READ_RSP "Otp Read Rsp"
+#define OTPD_MSG_OK "Otp Data Ok"
+#define OTPD_MSG_FAILED "Otp Data Failed"
+cmr_int
+sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data) {
+    cmr_int ret = -1;
+    cmr_int s_otpd_fd = -1;
+    cmr_u32 read_num = 0;
+    cmr_u8 write_buf[OTP_WRITE_BUFFER_SIZE] = {0};
+    static cmr_u8 read_buf[OTP_READ_BUFFER_SIZE] = {0};
+    cmr_u8 otp_length[OTP_LENGTH_SIZE] = {0};
+
+    SENSOR_LOGV("E");
+
+    s_otpd_fd = socket_local_client(
+        SOCKET_NAME_OTPD, ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
+    if (s_otpd_fd < 0) {
+        SENSOR_LOGD("otpd:connect %s failed", SOCKET_NAME_OTPD);
+        return SENSOR_FAIL;
+    }
+    SENSOR_LOGD("otpd:connect %s success", SOCKET_NAME_OTPD);
+
+    memset(otp_length, 0, OTP_LENGTH_SIZE);
+    otp_length[0] = OTP_DATA_SIZE & 0xFF;
+    otp_length[1] = (OTP_DATA_SIZE >> 8) & 0xFF;
+    memset(write_buf, 0, OTP_WRITE_BUFFER_SIZE);
+    memset(read_buf, 0, OTP_READ_BUFFER_SIZE);
+    memcpy(write_buf, OTPD_READ_DATA, OTP_CONTROL_SIZE);
+    memcpy(&write_buf[OTP_CONTROL_SIZE], otp_length, OTP_LENGTH_SIZE);
+    for (int i = 0; i < OTP_WRITE_BUFFER_SIZE; i = i + 8) {
+        SENSOR_LOGV("otpd:write_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
+                    "0x%x 0x%x 0x%x 0x%x 0x%x",
+                    i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
+                    write_buf[i], write_buf[i + 1], write_buf[i + 2],
+                    write_buf[i + 3], write_buf[i + 4], write_buf[i + 5],
+                    write_buf[i + 6], write_buf[i + 7]);
+    }
+
+    ret = write(s_otpd_fd, write_buf, OTP_WRITE_BUFFER_SIZE);
+    SENSOR_LOGD("otpd:write to fd %d string: %s", s_otpd_fd, write_buf);
+    if (ret < 0) {
+        SENSOR_LOGD("otpd:write to fd %d failed", s_otpd_fd);
+        close(s_otpd_fd);
+        return SENSOR_FAIL;
+    }
+
+    read_num = read(s_otpd_fd, read_buf, OTP_READ_BUFFER_SIZE);
+    SENSOR_LOGD("otpd:read number is %d bytes", read_num);
+    if (read_num <= 0) {
+        SENSOR_LOGD("otpd:read otpd data failed, %s", read_buf);
+        close(s_otpd_fd);
+        return SENSOR_FAIL;
+    }
+
+    otp_data->total_otp.data_ptr = read_buf;
+    otp_data->total_otp.size = OTP_READ_BUFFER_SIZE;
+    otp_data->dual_otp.dual_flag = 1;
+    otp_data->dual_otp.data_3d.data_ptr =
+        read_buf + OTP_CONTROL_SIZE + OTP_LENGTH_SIZE;
+    otp_length[0] = read_buf[OTP_CONTROL_SIZE];
+    otp_length[1] = read_buf[OTP_CONTROL_SIZE + 1];
+    otp_data->dual_otp.data_3d.size = otp_length[1] << 8 | otp_length[0];
+
+    for (int i = 0; i < OTP_READ_BUFFER_SIZE; i = i + 8) {
+        SENSOR_LOGV("otpd:read_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
+                    "0x%x 0x%x 0x%x 0x%x 0x%x",
+                    i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
+                    read_buf[i], read_buf[i + 1], read_buf[i + 2],
+                    read_buf[i + 3], read_buf[i + 4], read_buf[i + 5],
+                    read_buf[i + 6], read_buf[i + 7]);
+    }
+
+    close(s_otpd_fd);
+
+    SENSOR_LOGV("X");
+    return SENSOR_SUCCESS;
 };
