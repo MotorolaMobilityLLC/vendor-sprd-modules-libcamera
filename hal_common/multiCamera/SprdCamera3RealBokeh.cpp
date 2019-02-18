@@ -269,11 +269,24 @@ int SprdCamera3RealBokeh::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
+    struct logicalSensorInfo *logicalPtr = NULL;
+    int i = 0;
 
     HAL_LOGD("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
+    }
+
+    logicalPtr = sensorGetLogicaInfo4MulitCameraId(atoi(id));
+    if (logicalPtr) {
+        if (mRealBokeh->m_nPhyCameras == logicalPtr->physicalNum) {
+            for (i = 0; i < logicalPtr->physicalNum; i++) {
+                mRealBokeh->m_pPhyCamera[i].id =
+                    (uint8_t)logicalPtr->phyIdGroup[i];
+                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i]);
+            }
+        }
     }
 
     rc = mRealBokeh->cameraDeviceOpen(atoi(id), hw_device);

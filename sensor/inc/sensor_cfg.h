@@ -30,15 +30,24 @@ typedef struct sensor_match_tab {
      * and MODULE_MAX at enumeration group{@camera_vendor_name_type}
      **/
     cmr_u16 module_id;
-    char sn_name[36];
+    char sn_name[SENSOR_IC_NAME_LEN];
     SENSOR_INFO_T *sensor_info;
     struct sns_af_drv_cfg af_dev_info;
     otp_drv_info_t otp_drv_info;
 } SENSOR_MATCH_T;
 
+typedef struct snsMultiCameraInfo {
+    int multiCameraId;
+    int multiCameraMode;
+    int sensorNum;
+    char sensor_name[SENSOR_ID_MAX][SENSOR_IC_NAME_LEN];
+    int face_type;
+    int angle;
+} SNS_MULTI_CAMERA_INFO_T;
+
 SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id);
 char *sensor_get_name_list(cmr_u32 sensor_id);
 SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx);
 cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr);
-SENSOR_INFO_FOR_HAL *sensor_get_camera_info_reg_tab(cmr_u32 sensor_id);
+SNS_MULTI_CAMERA_INFO_T *sensor_cfg_multi_camera_group(cmr_int *group_num);
 #endif

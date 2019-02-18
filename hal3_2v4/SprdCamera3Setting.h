@@ -93,7 +93,7 @@ typedef int64_t nsecs_t;
 #define SPRD_NUM_SHADING_MODES 3        // Shading mode
 #define SPRD_NUM_LENS_SHADING_MODES 2   // Shading mode
 #define SPRD_MAX_TONE_CURVE_POINT 64    //>=64
-#define SPRD_FACE_BEAUTY_PARAM_NUM  9
+#define SPRD_FACE_BEAUTY_PARAM_NUM 9
 #ifdef CONFIG_CAMERA_FACE_DETECT
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 2
 #else
@@ -591,6 +591,8 @@ class SprdCamera3Setting {
     static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];
     static uint8_t mSensorFocusEnable[CAMERA_ID_COUNT];
     int mFaceDetectModeSet;
+    static int mLogicalSensorNum;
+    static int mPhysicalSensorNum;
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

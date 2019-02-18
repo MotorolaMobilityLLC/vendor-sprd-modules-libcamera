@@ -774,15 +774,6 @@ const camera_info kCameraInfo[] = {
 
 };
 
-// TBD: not used for now, will remove it later
-unsigned char camera_is_supprort[] = {
-    BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
-    BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
-};
-
-int SprdCamera3Setting::mPhysicalSensorNum = 0;
-
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];
 
@@ -791,6 +782,8 @@ const int64_t MSEC = USEC * 1000LL;
 const int64_t SEC = MSEC * 1000LL;
 
 sprd_setting_info_t SprdCamera3Setting::s_setting[CAMERA_ID_COUNT];
+int SprdCamera3Setting::mLogicalSensorNum = 0;
+int SprdCamera3Setting::mPhysicalSensorNum = 0;
 
 /**********************Function********************************/
 int SprdCamera3Setting::parse_int(const char *str, int *data, char delim,
@@ -978,7 +971,7 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
 }
 
 int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
-    sensor_info_for_hal_t *camera_info_ptr = NULL;
+    struct phySensorInfo *phyPtr = NULL;
     int ret = 0;
 
     // just for camera developer debug
@@ -998,35 +991,33 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     HAL_LOGI("E");
 
-    camera_info_ptr = sensor_get_info_for_hal(cameraId);
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
-    if (camera_info_ptr == NULL) {
+    if (phyPtr == NULL) {
         HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
         goto exit;
     }
 
-    mSensorType[cameraId] = camera_info_ptr->sensor_type;
-    mSensorFocusEnable[cameraId] = camera_info_ptr->focus_eb;
+    mSensorType[cameraId] = phyPtr->sensor_type;
+    mSensorFocusEnable[cameraId] = phyPtr->focus_eb;
 
     // if sensor fov info is valid, use it; else use default value
-    if (camera_info_ptr->fov_info.physical_size[0] > 0 &&
-        camera_info_ptr->fov_info.physical_size[1] > 0 &&
-        camera_info_ptr->fov_info.focal_lengths > 0) {
-        memcpy(&sensor_fov[cameraId], &camera_info_ptr->fov_info,
-               sizeof(camera_info_ptr->fov_info));
+    if (phyPtr->fov_info.physical_size[0] > 0 &&
+        phyPtr->fov_info.physical_size[1] > 0 &&
+        phyPtr->fov_info.focal_lengths > 0) {
+        memcpy(&sensor_fov[cameraId], &phyPtr->fov_info,
+               sizeof(phyPtr->fov_info));
     }
 
-    if (camera_info_ptr->source_width_max == 1920 &&
-        camera_info_ptr->source_height_max == 1080) {
+    if (phyPtr->source_width_max == 1920 && phyPtr->source_height_max == 1080) {
         setLargestSensorSize(cameraId, 1920, 1088);
     } else {
-        setLargestSensorSize(cameraId, camera_info_ptr->source_width_max,
-                             camera_info_ptr->source_height_max);
+        setLargestSensorSize(cameraId, phyPtr->source_width_max,
+                             phyPtr->source_height_max);
     }
 
     HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
-             cameraId, camera_info_ptr->source_height_max,
-             camera_info_ptr->source_width_max);
+             cameraId, phyPtr->source_height_max, phyPtr->source_width_max);
 
     HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, "
              "%f), focal_lengths %f",
@@ -1124,6 +1115,8 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
 // just for physical camera, multi-camera fill the info in multi-camera layer
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
                                       struct camera_info *cameraInfo) {
+    struct phySensorInfo *phyPtr = NULL;
+
     if (cameraInfo == NULL) {
         HAL_LOGE("cameraInfo is NULL");
         return -1;
@@ -1134,80 +1127,35 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
     // TBD: for spreadtrum internal development use
     // add struct light camera info and three back camera phone info
 
-    if (cameraId >= mPhysicalSensorNum ||
-        kCameraInfo[cameraId].orientation == -1) {
+    if (cameraId >= mPhysicalSensorNum) {
         HAL_LOGE("failed");
         return -1;
     }
 
-    cameraInfo->facing = kCameraInfo[cameraId].facing;
-    cameraInfo->orientation = kCameraInfo[cameraId].orientation;
-    cameraInfo->resource_cost = kCameraInfo[cameraId].resource_cost;
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+
+    cameraInfo->facing = phyPtr->face_type;
+    cameraInfo->orientation = phyPtr->angle;
+    cameraInfo->resource_cost = phyPtr->resource_cost;
     // TBD: may be will add other variable in struct camera_info
 
     return 0;
 }
 
 int SprdCamera3Setting::getNumberOfCameras() {
-    int numberOfCameras = 0;
+    int num = 0;
 
-    numberOfCameras = getPhysicalNumberOfCameras();
+    mPhysicalSensorNum = sensorGetPhysicalSnsNum();
 
-    // will add logical camera num here later
-
-    HAL_LOGI("numberOfCameras=%d", numberOfCameras);
-
-    return numberOfCameras;
-}
-
-int SprdCamera3Setting::getPhysicalNumberOfCameras() {
-    int physicalNum = 0;
-    // just for camera developer debug
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
-    if (!strcmp(value, "off")) {
-        HAL_LOGI("turn off auto detect sensor, just for debug");
-        mPhysicalSensorNum = 2;
-        goto exit;
+    if (mPhysicalSensorNum) {
+        mLogicalSensorNum = sensorGetLogicalSnsNum();
     }
 
-    if (mPhysicalSensorNum > 0) {
-        HAL_LOGV("mPhysicalSensorNum=%d", mPhysicalSensorNum);
-        goto exit;
-    }
+    num = mPhysicalSensorNum;
 
-    physicalNum = sensor_get_number(camera_is_supprort);
-// if one board support all kinds of camera feature, for 3 back camera,
-// 3 camera struct light, dual-camera, and so on, we will do some bindings
-// mPhysicalSensorNum = physicalNum;
-// goto exit;
+    LOGI("getNumberOfCameras:%d", num);
 
-#ifdef CONFIG_BACK_CAMERA
-    mPhysicalSensorNum++;
-#endif
-
-#ifdef CONFIG_FRONT_CAMERA
-    mPhysicalSensorNum++;
-#endif
-
-#ifdef CONFIG_BACK_SECONDARY_CAMERA
-    mPhysicalSensorNum++;
-#endif
-
-#ifdef CONFIG_FRONT_SECONDARY_CAMERA
-    mPhysicalSensorNum++;
-#endif
-
-    HAL_LOGV("mPhysicalSensorNum=%d", mPhysicalSensorNum);
-
-exit:
-    return mPhysicalSensorNum;
-}
-
-int SprdCamera3Setting::getLogicalNumberOfCameras() {
-    // will add these
-
-    return 0;
+    return num;
 }
 
 bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
@@ -1876,7 +1824,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     Vector<uint8_t> available_cam_features;
     char prop[PROPERTY_VALUE_MAX];
     int physicalNumberOfCameras;
-    physicalNumberOfCameras = SprdCamera3Setting::getPhysicalNumberOfCameras();
+    physicalNumberOfCameras = SprdCamera3Setting::mPhysicalSensorNum;
 
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));

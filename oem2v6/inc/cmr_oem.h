@@ -304,6 +304,7 @@ struct camera_context {
     sem_t sbs_sync_sm;
     cmr_uint share_path_sm_flag;
     cmr_handle init_thread;
+    cmr_int face_type;
 
     /*callback thread to hal*/
     cmr_handle prev_cb_thr_handle;

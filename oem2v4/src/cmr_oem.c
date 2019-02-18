@@ -2453,7 +2453,7 @@ exit:
 
 cmr_int camera_grab_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
-
+    struct phySensorInfo *phyPtr = NULL;
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct grab_context *grab_cxt = NULL;
@@ -2474,10 +2474,11 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
         CMR_LOGE("fail to get sensor info ret %ld", ret);
         goto exit;
     }
+    phyPtr = sensorGetPhysicalSnsInfo(cxt->camera_id);
 
     if (0 == grab_cxt->inited) {
         grab_param.oem_handle = oem_handle;
-        grab_param.sensor_id = cxt->camera_id;
+        grab_param.sensor_id = phyPtr->slotId;
         grab_param.sensor_max_size.width = sn_cxt->sensor_info.source_width_max;
         grab_param.sensor_max_size.height =
             sn_cxt->sensor_info.source_height_max;
@@ -2844,7 +2845,7 @@ int32_t camera_isp_flash_set_charge(void *handler,
     cfg.real_cell.element[0].index = element->index;
     cfg.real_cell.element[0].val = element->val;
     cfg.io_id = FLASH_IOID_SET_CHARGE;
-    cfg.flash_idx = cxt->camera_id % 2;
+    cfg.flash_idx = cxt->face_type % 2;
     CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type,
              element->index);
     ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
@@ -2895,7 +2896,7 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
     flash_opt.led0_enable = cfg_ptr->led0_enable;
     flash_opt.led1_enable = cfg_ptr->led1_enable;
     flash_opt.flash_mode = real_type;
-    flash_opt.flash_index = cxt->camera_id%2;
+    flash_opt.flash_index = cxt->face_type % 2;
     ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
     return ret;
@@ -3078,8 +3079,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     else
         isp_param.multi_mode = ISP_SINGLE;
 
-    if(cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK||
-        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK){
+    if (cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
+        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK) {
         isp_param.is_faceId_unlock = 1;
     }
 
@@ -3091,7 +3092,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         "focal_length=%d, max_fps=%d, max_adgain=%d, ois_supported=%d, "
         "pdaf_supported=%d, exp_valid_frame_num=%d, clamp_level=%d, "
         "adgain_valid_frame_num=%d, prev_skip_num=%d, cap_skip_num=%d, w=%d, "
-        "h=%d, sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, is_faceId_unlock=%d",
+        "h=%d, sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
+        "is_faceId_unlock=%d",
         cxt->is_multi_mode, isp_param.multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
@@ -6387,7 +6389,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             cfg.real_cell.element[0].index = atoi(value1); // 0x06;
             cfg.real_cell.element[0].val = 0;
             cfg.io_id = FLASH_IOID_SET_CHARGE;
-            cfg.flash_idx = cxt->camera_id % 2;
+            cfg.flash_idx = cxt->face_type % 2;
             ret = cmr_grab_cfg_flash(grab_handle, &cfg);
         }
 
@@ -6402,7 +6404,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         }
 
         flash_opt.flash_mode = param_ptr->cmd_value;
-        flash_opt.flash_index = cxt->camera_id%2;
+        flash_opt.flash_index = cxt->face_type % 2;
         CMR_LOGV("led0_enable=%d, led1_enable=%d", flash_opt.led0_enable,
                  flash_opt.led1_enable);
         cmr_grab_flash_cb(grab_handle, &flash_opt);
@@ -8366,6 +8368,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
                          void *cb_of_free) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = NULL;
+    struct phySensorInfo *phyPtr = NULL;
 
     if (!oem_handle) {
         CMR_LOGE("in parm error");
@@ -8390,6 +8393,8 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     cxt->hal_gpu_malloc = NULL;
     cxt->is_multi_mode = is_multi_camera_mode_oem;
     cxt->blur_facebeauty_flag = 0;
+    phyPtr = sensorGetPhysicalSnsInfo(camera_id);
+    cxt->face_type = phyPtr->face_type;
 
     CMR_LOGI("cxt=%p, client_data=%p", cxt, cxt->client_data);
     ret = camera_init_internal((cmr_handle)cxt, is_autotest);
@@ -8502,7 +8507,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     }
 
     if (CAMERA_ZSL_MODE == cxt->camera_mode) {
-        prev_ret = cmr_setting_cancel_notice_flash(cxt->setting_cxt.setting_handle);
+        prev_ret =
+            cmr_setting_cancel_notice_flash(cxt->setting_cxt.setting_handle);
         CMR_LOGD("zsl takpicture calling stop_preview in stop flow %ld", ret);
     }
 

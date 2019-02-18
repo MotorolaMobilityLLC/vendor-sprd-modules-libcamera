@@ -39,10 +39,18 @@
 #define SENSOR_CTRL_EVT_CFGOTP (SENSOR_CTRL_EVT_BASE + 0x4)
 #define SENSOR_CTRL_EVT_STREAM_CTRL (SENSOR_CTRL_EVT_BASE + 0x5)
 
+#define LOGICAL_SENSOR_ID_MAX 10
+
 /**---------------------------------------------------------------------------*
  **                         Local Variables                                   *
  **---------------------------------------------------------------------------*/
-struct sensor_drv_context s_local_sensor_cxt[6];
+struct sensor_drv_context s_local_sensor_cxt[SENSOR_ID_MAX];
+
+static struct slotSensorInfo slot_sensor_info_list[SENSOR_ID_MAX] = {0};
+static struct phySensorInfo phy_sensor_info_list[SENSOR_ID_MAX] = {0};
+static struct logicalSensorInfo
+    logical_sensor_info_list[LOGICAL_SENSOR_ID_MAX] = {0};
+static struct camera_device_manager camera_dev_manger = {0};
 
 static const int sensor_is_support[] = {
     BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
@@ -61,7 +69,6 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt);
 static cmr_int
 sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt);
-static cmr_int sensor_drv_index_info_file_init(cmr_u8 *sensor_index);
 static cmr_int
 sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt);
 
@@ -71,8 +78,7 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
                                    cmr_u32 sensor_id);
 static cmr_int sensor_drv_open(struct sensor_drv_context *sensor_cxt,
                                cmr_u32 sensor_id);
-static cmr_int sensor_drv_scan_hw(struct sensor_drv_context *sensor_cxt,
-                                  unsigned char *camera_support);
+static cmr_int sensor_drv_scan_hw(void);
 
 static void sensor_set_status(struct sensor_drv_context *sensor_cxt,
                               SENSOR_ID_E sensor_id);
@@ -636,7 +642,6 @@ static void sensor_set_status(struct sensor_drv_context *sensor_cxt,
 }
 
 cmr_int sns_load_drv(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id) {
-    ATRACE_BEGIN(__FUNCTION__);
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_REGISTER_INFO_T_PTR register_info = PNULL;
@@ -644,28 +649,25 @@ cmr_int sns_load_drv(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id) {
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     register_info = &sensor_cxt->sensor_register_info;
 
-    if (sensor_cxt->sensor_identified) {
-        ret = sensor_get_match_info(sensor_cxt, sensor_id);
-        SENSOR_LOGI("ret:%ld,sensor_id:%d", ret, sensor_id);
-        if (SENSOR_SUCCESS != ret) {
-            register_info->is_register[sensor_id] = SCI_FALSE;
-            return ret;
-        }
+    ret = sensor_get_match_info(sensor_cxt, sensor_id);
+    if (ret) {
+        register_info->is_register[sensor_id] = SCI_FALSE;
+    } else {
         register_info->is_register[sensor_id] = SCI_TRUE;
         register_info->img_sensor_num++;
     }
 
-    ATRACE_END();
+    SENSOR_LOGI("ret:%ld", ret);
     return ret;
 }
 
-LOCAL cmr_int sensor_load_idx_inf_file(struct sensor_drv_context *sensor_cxt) {
+LOCAL cmr_int sensor_load_idx_inf_file(cmr_u8 *sensor_index) {
     FILE *fp;
     cmr_u8 sensor_idx[SENSOR_PARAM_NUM];
     cmr_u32 len = 0;
     cmr_u32 i;
+    BOOLEAN sensor_identified = 0;
 
-    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     cmr_bzero(sensor_idx, SENSOR_PARAM_NUM);
 
     /* open and read the sensor idx file.*/
@@ -691,54 +693,48 @@ LOCAL cmr_int sensor_load_idx_inf_file(struct sensor_drv_context *sensor_cxt) {
     /*    sensor_parser_idx_mark(sensor_cxt, sensor_param); */
     if ((SIGN_0 == sensor_idx[0]) && (SIGN_1 == sensor_idx[1]) &&
         (SIGN_2 == sensor_idx[2]) && (SIGN_3 == sensor_idx[3])) {
-        sensor_cxt->sensor_identified = SCI_TRUE;
+        sensor_identified = SCI_TRUE;
         for (i = 0; i < SENSOR_ID_MAX; i++) {
-            sensor_cxt->sensor_index[i] = sensor_idx[4 + i];
-            SENSOR_LOGV("load indx index is %d,%d.", i,
-                        sensor_cxt->sensor_index[i]);
+            sensor_index[i] = sensor_idx[4 + i];
+            SENSOR_LOGV("load indx index is %d,%d.", i, sensor_index[i]);
         }
     } else {
         for (i = 0; i < SENSOR_ID_MAX; i++) {
             /* 0xff means invalid idx.*/
-            sensor_cxt->sensor_index[i] = 0xff;
+            sensor_index[i] = 0xff;
         }
-        sensor_cxt->sensor_identified = SCI_FALSE;
+        sensor_identified = SCI_FALSE;
     }
-    return SENSOR_SUCCESS;
+    return sensor_identified;
 }
 
-LOCAL cmr_int sensor_save_idx_inf_file(struct sensor_drv_context *sensor_cxt) {
+LOCAL cmr_int sensor_save_idx_inf_file(cmr_u8 *sensor_index) {
 
     FILE *fp;
     cmr_u8 idx_with_mark[SENSOR_PARAM_NUM];
     cmr_u32 i;
     cmr_u8 *id_mark = idx_with_mark;
 
-    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     cmr_bzero(idx_with_mark, sizeof(idx_with_mark));
 
-    if (sensor_cxt->sensor_param_saved) {
+    /* generate the idx mark and idx data. */
+    // sensor_generate_idx_mark(sensor_cxt, sns_idx_with_mark);
+    *id_mark++ = SIGN_0;
+    *id_mark++ = SIGN_1;
+    *id_mark++ = SIGN_2;
+    *id_mark++ = SIGN_3;
+    for (i = 0; i < SENSOR_ID_MAX; i++) {
+        *id_mark++ = sensor_index[i];
+        SENSOR_LOGV("save indx index is %d,%d.", i, sensor_index[i]);
+    }
 
-        /* generate the idx mark and idx data. */
-        // sensor_generate_idx_mark(sensor_cxt, sns_idx_with_mark);
-        *id_mark++ = SIGN_0;
-        *id_mark++ = SIGN_1;
-        *id_mark++ = SIGN_2;
-        *id_mark++ = SIGN_3;
-        for (i = 0; i < SENSOR_ID_MAX; i++) {
-            *id_mark++ = sensor_cxt->sensor_index[i];
-            SENSOR_LOGI("save indx index is %d,%d.", i,
-                        sensor_cxt->sensor_index[i]);
-        }
-
-        fp = fopen(SENSOR_PARA, "wb+");
-        if (NULL == fp) {
-            SENSOR_LOGE(" failed to open file %s open error:%s ", SENSOR_PARA,
-                        strerror(errno));
-        } else {
-            fwrite(idx_with_mark, 1, SENSOR_PARAM_NUM, fp);
-            fclose(fp);
-        }
+    fp = fopen(SENSOR_PARA, "wb+");
+    if (NULL == fp) {
+        SENSOR_LOGE(" failed to open file %s open error:%s ", SENSOR_PARA,
+                    strerror(errno));
+    } else {
+        fwrite(idx_with_mark, 1, SENSOR_PARAM_NUM, fp);
+        fclose(fp);
     }
     return SENSOR_SUCCESS;
 }
@@ -971,24 +967,25 @@ cmr_int sensor_context_deinit(struct sensor_drv_context *sensor_cxt) {
  **/
 cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 sensor_id, cmr_uint is_autotest) {
-    ATRACE_BEGIN(__FUNCTION__);
-
     cmr_int ret_val = SENSOR_FAIL;
     cmr_u32 sensor_num = 0;
     cmr_int i = 0;
+    struct phySensorInfo *phyPtr = phy_sensor_info_list + sensor_id;
 
-    SENSOR_LOGI("open_common sensor id %d autotest %ld", sensor_id,
-                is_autotest);
+    sensor_id = (cmr_u32)phyPtr->slotId;
+    SENSOR_LOGI("open_common sensor_id %d,slotId %d,autotest %ld", sensor_id,
+                phyPtr->slotId, is_autotest);
+
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     /* init ctx, exif, load sensor file, open hw driver with sensor id.*/
     ret_val = sensor_context_init(sensor_cxt, sensor_id, is_autotest);
-    if (SENSOR_SUCCESS != ret_val) {
+    if (ret_val) {
         /*Will never come here*/
         return ret_val;
     }
     /* create sensor process thread. */
     ret_val = sensor_create_ctrl_thread(sensor_cxt);
-    if (SENSOR_SUCCESS != ret_val) {
+    if (ret_val) {
         SENSOR_LOGE("Failed to create sensor ctrl thread");
         goto init_exit;
     }
@@ -1010,18 +1007,18 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     sensor_cxt->hw_drv_handle = hw_drv_handle;
     sensor_cxt->sensor_hw_handler = hw_drv_handle;
 
-    sensor_load_idx_inf_file(sensor_cxt);
+    sensor_cxt->sensor_identified =
+        sensor_load_idx_inf_file(sensor_cxt->sensor_index);
 
-    sns_load_drv(sensor_cxt, sensor_id);
-
-    SENSOR_LOGI("sensor_id %d is identify, register OK", sensor_id);
+    if (sensor_cxt->sensor_identified)
+        sns_load_drv(sensor_cxt, sensor_id);
 
     ret_val = sensor_drv_open(sensor_cxt, sensor_id);
-    if (ret_val != SENSOR_SUCCESS) {
+    if (ret_val) {
         SENSOR_LOGI("first open sensor failed, restart identify and open");
         if (SENSOR_SUCCESS == sensor_drv_identify(sensor_cxt, sensor_id)) {
             ret_val = sensor_drv_open(sensor_cxt, sensor_id);
-            sensor_save_idx_inf_file(sensor_cxt);
+            sensor_save_idx_inf_file(sensor_cxt->sensor_index);
         }
         if (ret_val)
             goto init_exit;
@@ -1048,15 +1045,12 @@ init_exit:
         sensor_cxt->sensor_hw_handler = NULL;
     }
 
-    ATRACE_END();
     return ret_val;
 }
 
 cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt) {
-    ATRACE_BEGIN(__FUNCTION__);
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-    ATRACE_END();
     return sensor_cxt->sensor_isInit;
 }
 
@@ -2519,6 +2513,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     cmr_u16 i2c_slave_addr[AEC_I2C_SENSOR_MAX];
     cmr_u16 addr_bits_type[AEC_I2C_SENSOR_MAX];
     cmr_u16 data_bits_type[AEC_I2C_SENSOR_MAX];
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_DRV_CHECK_ZERO(sensor_cxt->sensor_info_ptr);
@@ -2550,7 +2545,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     for (k = 0; k < count; k++) {
         size = 0;
         aec_info = aec_reg_info[k].aec_i2c_info_out;
-        sensor_id[k] = ae_info[k].camera_id;
+        sensor_id[k] = (phyPtr + ae_info[k].camera_id)->slotId;
         muti_aec_info.id_size = count;
         i2c_slave_addr[k] = aec_info->slave_addr;
         muti_aec_info.i2c_slave_len = count;
@@ -2734,6 +2729,275 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
 sensor_drv_u optimize
 ================================================================
 */
+static void sensor_drv_print_slot_list_info() {
+    cmr_int i = 0;
+    struct slotSensorInfo *slotPtr = slot_sensor_info_list;
+
+    for (i = 0; i < SENSOR_ID_MAX; i++) {
+        if ((slotPtr + i)->slotId == 0xff)
+            continue;
+        SENSOR_LOGI("slotId %d,sensor_index %d,sensor_name %s\n",
+                    (slotPtr + i)->slotId, (slotPtr + i)->sensor_index,
+                    (slotPtr + i)->sensor_name);
+    }
+};
+
+static void sensor_drv_print_phy_list_info() {
+    cmr_int i = 0;
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+
+    for (i = 0; i < devPtr->physical_num; i++) {
+        SENSOR_LOGI("phyId %d,slotId %d,sensor_name %s\n", (phyPtr + i)->phyId,
+                    (phyPtr + i)->slotId, (phyPtr + i)->sensor_name);
+    }
+};
+
+static void sensor_drv_print_logical_list_info() {
+    cmr_int i, j;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+
+    for (i = 0; i < devPtr->logical_num; i++) {
+        SENSOR_LOGI("logicalId %d,multiCameraId %d,physicalNum %d\n",
+                    (logicalPtr + i)->logicalId,
+                    (logicalPtr + i)->multiCameraId,
+                    (logicalPtr + i)->physicalNum);
+        for (j = 0; j < (logicalPtr + i)->physicalNum; j++) {
+            SENSOR_LOGI("---phyId %d\n", (logicalPtr + i)->phyIdGroup[j]);
+        }
+    }
+};
+
+static cmr_int sensor_drv_sensor_info_list_init() {
+    cmr_int i = 0;
+    struct slotSensorInfo *slotPtr = slot_sensor_info_list;
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+
+    for (i = 0; i < SENSOR_ID_MAX; i++) {
+        // slot sensor list
+        (slotPtr + i)->slotId = 0xff;
+        (slotPtr + i)->sensor_index = 0xff;
+        memset((slotPtr + i)->sensor_name, 0, SENSOR_IC_NAME_LEN);
+        // physical sensor list
+        (phyPtr + i)->phyId = 0xff;
+        (phyPtr + i)->slotId = 0xff;
+    }
+    // logical sensor list
+    for (i = 0; i < LOGICAL_SENSOR_ID_MAX; i++) {
+        (logicalPtr + i)->logicalId = 0xff;
+        (logicalPtr + i)->multiCameraId = 0xff;
+    }
+
+    return 0;
+};
+
+static cmr_int
+sensor_drv_create_slot_sensor_info(struct sensor_drv_context *sensor_cxt,
+                                   cmr_u32 slot_id) {
+    struct slotSensorInfo *slotPtr = slot_sensor_info_list + slot_id;
+    SENSOR_MATCH_T *module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+
+    slotPtr->slotId = slot_id;
+    slotPtr->sensor_index = sensor_cxt->sensor_index[slot_id];
+    strcpy(slotPtr->sensor_name, module->sn_name);
+
+    return 0;
+};
+
+static cmr_int
+sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
+                                  cmr_u32 slot_id, cmr_u32 phy_id) {
+    struct slotSensorInfo *slotPtr = NULL;
+    struct phySensorInfo *phyPtr = NULL;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+
+#ifdef CAMERA_CONFIG_SENSOR_NUM
+    phy_id = slot_id;
+#endif
+    slotPtr = slot_sensor_info_list + slot_id;
+    phyPtr = phy_sensor_info_list + phy_id;
+
+    phyPtr->slotId = slot_id;
+    phyPtr->phyId = phy_id;
+    strcpy(phyPtr->sensor_name, slotPtr->sensor_name);
+
+    SENSOR_LOGV("phy_id %d,slot_id %d,sensor_name %s", phy_id, slot_id,
+                phyPtr->sensor_name);
+
+    // config sensor attribute
+    sensor_cxt->sensor_info_ptr->focus_eb =
+        (module->af_dev_info.af_drv_entry != NULL);
+    phyPtr->focus_eb = sensor_cxt->sensor_info_ptr->focus_eb;
+
+    if (sensor_cxt->fov_info.physical_size[0] > 0 &&
+        sensor_cxt->fov_info.physical_size[1] > 0 &&
+        sensor_cxt->fov_info.focal_lengths > 0) {
+        memcpy(&phyPtr->fov_info, &sensor_cxt->fov_info,
+               sizeof(sensor_cxt->fov_info));
+    }
+
+    phyPtr->source_width_max = sensor_cxt->sensor_info_ptr->source_width_max;
+    phyPtr->source_height_max = sensor_cxt->sensor_info_ptr->source_height_max;
+
+    phyPtr->image_format = sensor_cxt->sensor_info_ptr->image_format;
+    phyPtr->sensor_type = sensor_cxt->sensor_img_type;
+    phyPtr->data_type = 0;
+
+    switch (slot_id) {
+    case SENSOR_MAIN:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+        phyPtr->resource_cost = 100;
+        break;
+    case SENSOR_SUB:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_FRONT;
+        phyPtr->angle = 270;
+        phyPtr->resource_cost = 100;
+        break;
+    case SENSOR_MAIN2:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+        phyPtr->resource_cost = 0;
+        break;
+    case SENSOR_SUB2:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_FRONT;
+        phyPtr->angle = 270;
+        phyPtr->resource_cost = 0;
+        break;
+    case SENSOR_MAIN3:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+        phyPtr->resource_cost = 0;
+        break;
+    case SENSOR_SUB3:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_FRONT;
+        phyPtr->angle = 270;
+        phyPtr->resource_cost = 0;
+        break;
+    }
+
+    return 0;
+};
+
+static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+    struct snsMultiCameraInfo *multiCameraGroupPtr;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    cmr_int i, j, k = 0;
+    cmr_int multiCamNum = 0;
+    cmr_int group_num = 0;
+    int slotId;
+    int singleFaceUnlockId = 0xff;
+    int phyIdGroup[SENSOR_ID_MAX];
+
+    // single sensor
+    /*
+    single sensor config logical list info
+    the logical id is equal the physical id for single sensor
+    */
+    for (i = 0; i < physical_num; i++) {
+        (logicalPtr + i)->logicalId = (phyPtr + i)->phyId;
+        (logicalPtr + i)->multiCameraId = 0xff;
+        (logicalPtr + i)->multiCameraMode = MODE_SINGLE_CAMERA;
+        (logicalPtr + i)->physicalNum = 1;
+        (logicalPtr + i)->phyIdGroup[0] = (phyPtr + i)->phyId;
+        /*
+           store the physical id of front camera to prepare for single face
+           unlock multicamera mode
+        */
+        if (singleFaceUnlockId == 0xff &&
+            SNS_FACE_FRONT == (phyPtr + i)->face_type) {
+            singleFaceUnlockId = (phyPtr + i)->phyId;
+        }
+    }
+
+    // multi camera feature
+    multiCameraGroupPtr = sensor_cfg_multi_camera_group(&group_num);
+    logicalPtr += physical_num;
+    SENSOR_LOGV("group_num %d\n", group_num);
+
+    for (i = 0; i < group_num; i++) {
+        SENSOR_LOGV("sensorNum %d\n", (multiCameraGroupPtr + i)->sensorNum);
+
+        if ((multiCameraGroupPtr + i)->sensorNum > physical_num)
+            continue;
+
+        if ((multiCameraGroupPtr + i)->sensorNum < 2 &&
+            singleFaceUnlockId != 0xff) {
+            /*
+                config the logical info for single face unlock multicamera mode
+            */
+            (logicalPtr + multiCamNum)->logicalId = physical_num + multiCamNum;
+            (logicalPtr + multiCamNum)->multiCameraId =
+                (multiCameraGroupPtr + i)->multiCameraId;
+            (logicalPtr + multiCamNum)->multiCameraMode =
+                (multiCameraGroupPtr + i)->multiCameraMode;
+            (logicalPtr + multiCamNum)->physicalNum = 1;
+            (logicalPtr + multiCamNum)->phyIdGroup[0] = singleFaceUnlockId;
+
+            multiCamNum++;
+        } else if ((multiCameraGroupPtr + i)->sensorNum >= 2) {
+            /*
+                config the logical info for dual/trible multicamera mode
+            */
+            memset(phyIdGroup, 0xff, SENSOR_ID_MAX);
+            k = 0;
+            for (j = 0; j < physical_num; j++) {
+                slotId = (phyPtr + j)->slotId;
+                SENSOR_LOGV("slotId %d\n", slotId);
+                if (slotId == 0xff)
+                    continue;
+
+                SENSOR_LOGV("group sensor_name %s,phyiscal sensor_name %s",
+                            (multiCameraGroupPtr + i)->sensor_name[slotId],
+                            (phyPtr + j)->sensor_name);
+
+                if (!strcmp((multiCameraGroupPtr + i)->sensor_name[slotId],
+                            (phyPtr + j)->sensor_name)) {
+                    phyIdGroup[k] = (phyPtr + j)->phyId;
+                    k++;
+                }
+
+                if (k == (multiCameraGroupPtr + i)->sensorNum) {
+                    (logicalPtr + multiCamNum)->logicalId =
+                        physical_num + multiCamNum;
+                    (logicalPtr + multiCamNum)->multiCameraId =
+                        (multiCameraGroupPtr + i)->multiCameraId;
+                    (logicalPtr + multiCamNum)->multiCameraMode =
+                        (multiCameraGroupPtr + i)->multiCameraMode;
+                    (logicalPtr + multiCamNum)->physicalNum =
+                        (multiCameraGroupPtr + i)->sensorNum;
+                    for (k = 0; k < (multiCameraGroupPtr + i)->sensorNum; k++) {
+                        (logicalPtr + multiCamNum)->phyIdGroup[k] =
+                            phyIdGroup[k];
+                        (phyPtr + phyIdGroup[k])->face_type =
+                            (multiCameraGroupPtr + i)->face_type;
+                        (phyPtr + phyIdGroup[k])->angle =
+                            (multiCameraGroupPtr + i)->angle;
+                    }
+                    multiCamNum++;
+                    break;
+                }
+            }
+        }
+    }
+
+    devPtr->logical_num = physical_num + multiCamNum;
+    SENSOR_LOGI("physical_num %d,logical_num %d", physical_num,
+                devPtr->logical_num);
+
+    return devPtr->logical_num;
+};
+
 static cmr_int
 sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
 
@@ -2814,7 +3078,7 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
         if (sensor_size >= 1000000) {
             sprintf(buffer, "%s %ldM \n",
                     sensor_cxt->sensor_info_ptr->sensor_version_info,
-                    sensor_size / 1000000);
+                    (cmr_u32)((float)sensor_size / 1000000.0 + 0.2));
         } else {
             sprintf(buffer, "%s 0.%ldM \n",
                     sensor_cxt->sensor_info_ptr->sensor_version_info,
@@ -2823,86 +3087,6 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
 
         strcat(sensor_info, buffer);
     }
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-
-static cmr_int sensor_drv_index_info_file_init(cmr_u8 *sensor_index) {
-    FILE *fp;
-    cmr_u32 len = 0;
-    cmr_u8 idx_with_mark[SENSOR_PARAM_NUM];
-    cmr_u32 i;
-    cmr_u8 *id_mark = idx_with_mark;
-    SENSOR_LOGI("E");
-
-    cmr_bzero(idx_with_mark, SENSOR_PARAM_NUM);
-
-    fp = fopen(SENSOR_PARA, "r");
-    if (NULL == fp) {
-        fp = fopen(SENSOR_PARA, "wb+");
-        if (NULL == fp) {
-            SENSOR_LOGE(" failed to create index file %s open error:%s ",
-                        SENSOR_PARA, strerror(errno));
-            return -1;
-        } else {
-            *id_mark++ = SIGN_0;
-            *id_mark++ = SIGN_1;
-            *id_mark++ = SIGN_2;
-            *id_mark++ = SIGN_3;
-
-            for (i = 0; i < SENSOR_ID_MAX; i++) {
-                SENSOR_LOGI("info file init i %d,%d", i, *sensor_index);
-                *id_mark++ = *sensor_index++;
-                SENSOR_LOGI("info file init i %d,%d", i, idx_with_mark[4 + i]);
-            }
-
-            fwrite(idx_with_mark, 1, SENSOR_PARAM_NUM, fp);
-            fclose(fp);
-        }
-    } else {
-        fclose(fp);
-    }
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-
-static cmr_int
-sensor_drv_cfg_camera_info_reg(struct sensor_drv_context *sensor_cxt,
-                               cmr_u32 sensor_id) {
-
-    SENSOR_INFO_FOR_HAL *camera_info_ptr = NULL;
-    SENSOR_MATCH_T *module = sensor_cxt->current_module;
-
-    SENSOR_LOGI("E");
-
-    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-    SENSOR_DRV_CHECK_ZERO(module);
-
-    camera_info_ptr = sensor_get_camera_info_reg_tab(sensor_id);
-
-    camera_info_ptr->image_format = sensor_cxt->sensor_info_ptr->image_format;
-
-    sensor_cxt->sensor_info_ptr->focus_eb =
-        (module->af_dev_info.af_drv_entry != NULL);
-
-    camera_info_ptr->focus_eb = sensor_cxt->sensor_info_ptr->focus_eb;
-
-    if (sensor_cxt->fov_info.physical_size[0] > 0 &&
-        sensor_cxt->fov_info.physical_size[1] > 0 &&
-        sensor_cxt->fov_info.focal_lengths > 0) {
-        memcpy(&camera_info_ptr->fov_info, &sensor_cxt->fov_info,
-               sizeof(sensor_cxt->fov_info));
-    }
-
-    camera_info_ptr->source_width_max =
-        sensor_cxt->sensor_info_ptr->source_width_max;
-    camera_info_ptr->source_height_max =
-        sensor_cxt->sensor_info_ptr->source_height_max;
-
-    camera_info_ptr->sensor_type = sensor_cxt->sensor_img_type;
-
     SENSOR_LOGI("X");
 
     return 0;
@@ -3040,7 +3224,8 @@ exit:
 static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
                                    cmr_u32 sensor_id) {
     cmr_int ret = SENSOR_SUCCESS;
-    cmr_u32 sensor_index = 0;
+    cmr_u32 search_index = 0;
+    cmr_u32 saved_index = 0;
     SENSOR_INFO_T *sensor_info_ptr = PNULL;
     SENSOR_REGISTER_INFO_T_PTR register_info = PNULL;
     SENSOR_MATCH_T *sns_module = PNULL;
@@ -3048,7 +3233,6 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
     SENSOR_LOGI("sensor drv identify sensor_id %d", sensor_id);
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     register_info = &sensor_cxt->sensor_register_info;
-
     sensor_set_cxt_common(sensor_cxt);
 
     SENSOR_LOGI("search all sensor in the register tab for current sensor_id");
@@ -3058,8 +3242,12 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
         return SENSOR_FAIL;
     }
 
+    saved_index = sensor_cxt->sensor_index[sensor_id];
+    search_index = (saved_index == 0xff) ? 0 : saved_index;
+
     do {
-        sns_module = sensor_get_entry_by_idx(sensor_id, sensor_index);
+
+        sns_module = sensor_get_entry_by_idx(sensor_id, search_index);
         if (sns_module == NULL || sns_module->sensor_info == NULL) {
             SENSOR_LOGE("sns_module == null");
             return SENSOR_FAIL;
@@ -3067,7 +3255,7 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
 
         ret = sensor_check_name(sensor_id, sns_module);
         if (ret) {
-            sensor_index++;
+            search_index++;
             continue;
         }
 
@@ -3078,20 +3266,33 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
         ret = sensor_drv_ic_identify(sensor_cxt, sensor_id, 1);
 
         if (ret == SENSOR_SUCCESS) {
-            sensor_cxt->sensor_index[sensor_id] = sensor_index;
+            sensor_cxt->sensor_index[sensor_id] = search_index;
             goto exit;
         }
-        sensor_index++;
+
+        if (saved_index == 0) {
+            // search next index.
+            search_index++;
+        } else {
+            if (search_index == saved_index) {
+                // identify saved_index failed, search from header.
+                search_index = 0;
+            } else {
+                // indentify search_index failded.
+                search_index++;
+                if (search_index == saved_index) {
+                    // skip the saved_index, it's failed to identified.
+                    search_index++;
+                }
+            }
+        }
     } while (1);
 
 exit:
 
-    if (SCI_TRUE == register_info->is_register[sensor_id]) {
-        SENSOR_LOGI("sensor drv identify id %d ok", (cmr_u32)sensor_id);
-        sensor_cxt->sensor_param_saved = SCI_TRUE;
-    } else {
-        SENSOR_LOGI("sensor drv identify id %d failed!", (cmr_u32)sensor_id);
-    }
+    SENSOR_LOGI("sensor identify id %d %s", (cmr_u32)sensor_id,
+                ret ? "failed" : "ok");
+
     return ret;
 }
 
@@ -3177,19 +3378,26 @@ exit:
     return ret;
 };
 
-static cmr_int sensor_drv_scan_hw(struct sensor_drv_context *sensor_cxt,
-                                  unsigned char *camera_support) {
-    cmr_u32 sensor_num = 0;
+static cmr_int sensor_drv_scan_hw(void) {
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    struct sensor_drv_context sns_cxt;
+    struct sensor_drv_context *sensor_cxt = &sns_cxt;
+    cmr_u32 physical_num = 0;
     cmr_int i = 0;
     cmr_int ret = SENSOR_FAIL;
     cmr_int identify_num = (int)ARRAY_SIZE(sensor_is_support);
     cmr_u8 sensor_index[SENSOR_ID_MAX];
     char sensor_version_info[SENSOR_ID_MAX * 32] = {0};
 
-    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-    SENSOR_DRV_CHECK_ZERO(camera_support);
+    if (devPtr->hasScaned) {
+        SENSOR_LOGI("driver has scaned camera number %d", devPtr->physical_num);
+        return devPtr->physical_num;
+    }
 
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     memset(sensor_index, 0xff, SENSOR_ID_MAX);
+    sensor_drv_sensor_info_list_init();
+    sensor_load_idx_inf_file(sensor_index);
 
     while (i < identify_num) {
 
@@ -3203,16 +3411,19 @@ static cmr_int sensor_drv_scan_hw(struct sensor_drv_context *sensor_cxt,
         if (ret) {
             SENSOR_LOGE("sensor context init error id = %d", i);
             sensor_drv_context_scan_deinit(sensor_cxt);
-            goto exit;
+            i++;
+            continue;
         }
 
+        if (sensor_index[i] != 0xff) {
+            sensor_cxt->sensor_index[i] = sensor_index[i];
+        }
         if (SENSOR_SUCCESS == sensor_drv_identify(sensor_cxt, i)) {
-            sensor_drv_cfg_camera_info_reg(sensor_cxt, i);
             sensor_drv_store_version_info(sensor_cxt, sensor_version_info);
+            sensor_drv_create_slot_sensor_info(sensor_cxt, i);
+            sensor_drv_create_phy_sensor_info(sensor_cxt, i, physical_num);
             sensor_index[i] = sensor_cxt->sensor_index[i];
-            sensor_num++;
-        } else {
-            *(camera_support + i) = 0;
+            physical_num++;
         }
 
         sensor_drv_context_scan_deinit(sensor_cxt);
@@ -3221,30 +3432,74 @@ static cmr_int sensor_drv_scan_hw(struct sensor_drv_context *sensor_cxt,
     }
 
 exit:
-    sensor_drv_index_info_file_init(sensor_index);
+    sensor_save_idx_inf_file(sensor_index);
     sensor_rid_save_sensor_info(sensor_version_info);
 
-    SENSOR_LOGI("scan total camera number %d", sensor_num);
-    return sensor_num;
+#ifdef CAMERA_CONFIG_SENSOR_NUM
+    devPtr->physical_num = CAMERA_SENSOR_NUM;
+#else
+    devPtr->physical_num = physical_num;
+#endif
+    devPtr->hasScaned = 1;
+
+    SENSOR_LOGI("scan physical camera number %d", devPtr->physical_num);
+    return devPtr->physical_num;
 };
 
-cmr_int sensor_get_number(unsigned char *camera_support) {
-    struct sensor_drv_context sensor_cxt;
-    cmr_u32 sensor_num = 0;
-    SENSOR_LOGI("E");
+int sensorGetPhysicalSnsNum(void) {
+    cmr_int physical_num = 0;
 
-    sensor_num = sensor_drv_scan_hw(&sensor_cxt, camera_support);
+    physical_num = sensor_drv_scan_hw();
+    // sensor_drv_print_slot_list_info();
 
-    SENSOR_LOGI("X");
-    return sensor_num;
+    return physical_num;
 };
 
-SENSOR_INFO_FOR_HAL *sensor_get_info_for_hal(cmr_u32 sensor_id) {
-    SENSOR_INFO_FOR_HAL *camera_info_ptr = NULL;
+int sensorGetLogicalSnsNum(void) {
+    cmr_int physical_num = 0;
+    cmr_int logical_num = 0;
 
-    camera_info_ptr = sensor_get_camera_info_reg_tab(sensor_id);
+    physical_num = sensor_drv_scan_hw();
+    logical_num = sensor_drv_create_logical_sensor_info(physical_num);
+    // sensor_drv_print_phy_list_info();
+    // sensor_drv_print_logical_list_info();
 
-    return camera_info_ptr;
+    return logical_num;
+};
+
+PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id) {
+
+    if (phy_id >= SENSOR_ID_MAX)
+        return NULL;
+
+    return &phy_sensor_info_list[phy_id];
+};
+
+LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id) {
+
+    if (logical_id >= LOGICAL_SENSOR_ID_MAX)
+        return NULL;
+
+    return &logical_sensor_info_list[logical_id];
+};
+
+LOGICAL_SENSOR_INFO_T *
+sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
+    int i = 0;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+
+    for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+        if ((logicalPtr + i)->logicalId == 0xff)
+            continue;
+
+        if (multiCameraId == (logicalPtr + i)->multiCameraId) {
+            logicalPtr += i;
+            return logicalPtr;
+        }
+    }
+
+    return NULL;
 };
 
 #define OTP_CONTROL_SIZE 30

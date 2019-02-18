@@ -465,8 +465,6 @@ class SprdCamera3Setting {
                                      cmr_u16 *height);
     static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);
     static int getNumberOfCameras();
-    static int getPhysicalNumberOfCameras();
-    static int getLogicalNumberOfCameras();
     static int initDefaultParameters(int32_t cameraId);
     static int getStaticMetadata(int32_t cameraId,
                                  camera_metadata_t **static_metadata);
@@ -623,6 +621,7 @@ class SprdCamera3Setting {
     static uint8_t mSensorFocusEnable[CAMERA_ID_COUNT];
     static uint8_t mSensorType[CAMERA_ID_COUNT];
     static int mPhysicalSensorNum;
+    static int mLogicalSensorNum;
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

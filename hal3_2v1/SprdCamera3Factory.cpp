@@ -158,8 +158,8 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
         else if (!strcmp(value, "5"))
             camera_id = 5;
     }
-    if (!mNumOfCameras || (camera_id >= mNumOfCameras && 2 < camera_id) ||
-        !info || (camera_id < 0)) {
+    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
+        (camera_id < 0)) {
         return -ENODEV;
     }
 
@@ -172,10 +172,7 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
         return rc;
     }
 
-    rc = SprdCamera3Setting::getCameraInfo(camera_id, info);
-    if (rc < 0) {
-        return rc;
-    }
+    SprdCamera3Setting::getCameraInfo(camera_id, info);
 
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
@@ -241,8 +238,13 @@ void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
 int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
                                          struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
+    struct phySensorInfo *phyPtr = NULL;
 
     if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) > mNumOfCameras)
+        return -ENODEV;
+
+    phyPtr = sensorGetPhysicalSnsInfo(multiCameraModeIdToPhyId(camera_id));
+    if (phyPtr->phyId != phyPtr->slotId)
         return -ENODEV;
 
     SprdCamera3HWI *hw =
@@ -309,7 +311,7 @@ ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
 */
 bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     /*Camera ID Expose To Camera Apk On MultiCameraMode*/
-    if ((SprdCamera3Setting::mPhysicalSensorNum > cameraId) || (2 > cameraId) ||
+    if ((SprdCamera3Setting::mPhysicalSensorNum > cameraId) ||
         (cameraId > SPRD_MULTI_CAMERA_MAX_ID))
         return false;
 

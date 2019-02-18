@@ -603,7 +603,32 @@ const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
-SENSOR_INFO_FOR_HAL camera_info_global_reg_tab[SENSOR_ID_MAX];
+const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
+#ifdef CONFIG_BOKEH_SUPPORT
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "s5k5e9yu05", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
+#endif
+#ifdef CONFIG_SINGLE_FACEID_SUPPORT
+    {SPRD_SINGLE_FACEID_REGISTER_ID, MODE_SINGLE_FACEID_REGISTER, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
+    {SPRD_SINGLE_FACEID_UNLOCK_ID, MODE_SINGLE_FACEID_UNLOCK, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
+#endif
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    {SPRD_SOFY_OPTICAL_ZOOM_ID, MODE_SOFY_OPTICAL_ZOOM, 2, {"s5k3p9sx04", "ov8856_shine", "0", "0", "0", "0"}, SNS_FACE_BACK, 90},
+#endif
+#ifdef CONFIG_3DFACE_SUPPORT
+    {SPRD_3D_FACE_ID, MODE_3D_FACE, 3, {"s5k4h9yx", "0", "ov7251_dual", "ov7251", "0", "0"}, SNS_FACE_FRONT, 270},
+#endif
+};
+
+SNS_MULTI_CAMERA_INFO_T *sensor_cfg_multi_camera_group(cmr_int *group_num) {
+      SNS_MULTI_CAMERA_INFO_T *multiCameraGroupPtr = multi_camera_sensor_group;
+
+      *group_num = ARRAY_SIZE(multi_camera_sensor_group);
+
+      return multiCameraGroupPtr;
+}
 
 SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
     SENSOR_MATCH_T *sensor_reg_tab_ptr = NULL;
@@ -690,13 +715,3 @@ cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr) {
     return SENSOR_FAIL;
 }
 
-SENSOR_INFO_FOR_HAL *sensor_get_camera_info_reg_tab(cmr_u32 sensor_id) {
-    SENSOR_INFO_FOR_HAL *camera_info_tab_ptr = camera_info_global_reg_tab;
-
-    if (camera_info_tab_ptr == NULL)
-        return NULL;
-
-    camera_info_tab_ptr += sensor_id;
-
-    return camera_info_tab_ptr;
-}

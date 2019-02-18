@@ -2982,7 +2982,7 @@ exit:
 
 cmr_int camera_grab_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
-
+    struct phySensorInfo *phyPtr = NULL;
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct grab_context *grab_cxt = NULL;
@@ -2995,9 +2995,10 @@ cmr_int camera_grab_init(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(grab_cxt);
     LAUNCHLOGS(CMR_GRAB_INIT_T);
 
+    phyPtr = sensorGetPhysicalSnsInfo(cxt->camera_id);
     if (0 == grab_cxt->inited) {
         grab_param.oem_handle = oem_handle;
-        grab_param.sensor_id = cxt->camera_id;
+        grab_param.sensor_id = phyPtr->slotId;
         ret = cmr_grab_init(&grab_param, &grab_handle);
         if (ret) {
             CMR_LOGE("failed to init grab %ld", ret);
@@ -3386,7 +3387,7 @@ int32_t camera_isp_flash_set_charge(void *handler,
     cfg.real_cell.element[0].index = element->index;
     cfg.real_cell.element[0].val = element->val;
     cfg.io_id = FLASH_IOID_SET_CHARGE;
-    cfg.flash_idx = cxt->camera_id % 2;
+    cfg.flash_idx = cxt->face_type % 2;
     CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type,
              element->index);
     ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
@@ -3437,7 +3438,7 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr,
     flash_opt.led0_enable = cfg_ptr->led0_enable;
     flash_opt.led1_enable = cfg_ptr->led1_enable;
     flash_opt.flash_mode = real_type;
-    flash_opt.flash_index = cxt->camera_id % 2;
+    flash_opt.flash_index = cxt->face_type % 2;
     ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
     return ret;
@@ -7203,7 +7204,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             }
             cfg.real_cell.element[0].val = 0;
             cfg.io_id = FLASH_IOID_SET_CHARGE;
-            cfg.flash_idx = cxt->camera_id % 2;
+            cfg.flash_idx = cxt->face_type % 2;
             ret = cmr_grab_cfg_flash(grab_handle, &cfg);
         }
 
@@ -7218,7 +7219,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         }
 
         flash_opt.flash_mode = param_ptr->cmd_value;
-        flash_opt.flash_index = cxt->camera_id % 2;
+        flash_opt.flash_index = cxt->face_type % 2;
         CMR_LOGV("led0_enable=%d, led1_enable=%d", flash_opt.led0_enable,
                  flash_opt.led1_enable);
         cmr_grab_flash_cb(grab_handle, &flash_opt);
@@ -9484,6 +9485,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
                          void *cb_of_free) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = NULL;
+    struct phySensorInfo *phyPtr = NULL;
 
     if (!oem_handle) {
         CMR_LOGE("in parm error");
@@ -9508,6 +9510,8 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     cxt->hal_gpu_malloc = NULL;
     cxt->is_multi_mode = is_multi_camera_mode_oem;
     cxt->blur_facebeauty_flag = 0;
+    phyPtr = sensorGetPhysicalSnsInfo(camera_id);
+    cxt->face_type = phyPtr->face_type;
 
     CMR_LOGI("create handle 0x%lx 0x%lx", (cmr_uint)cxt,
              (cmr_uint)cxt->client_data);
@@ -11846,7 +11850,7 @@ cmr_int camera_set_flash_level(void *handler, cmr_uint target_level) {
     cfg.real_cell.element[0].index = flash_level_trans; // this place set level
     cfg.real_cell.element[0].val = 0;
     cfg.io_id = FLASH_IOID_SET_CHARGE;
-    cfg.flash_idx = cxt->camera_id % 2;
+    cfg.flash_idx = cxt->face_type % 2;
     ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 
     return ret;

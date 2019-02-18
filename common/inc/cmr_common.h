@@ -237,6 +237,26 @@ enum img_angle {
     IMG_ANGLE_MAX
 };
 
+enum face_type {
+    SNS_FACE_BACK = 0,
+    SNS_FACE_FRONT,
+    SNS_FACE_LEFT,
+    SNS_FACE_RIGHT,
+    SNS_FACE_TOP,
+    SNS_FACE_BOTTOM,
+    SNS_FACE_TYPE_MAX
+};
+
+enum sensor_role {
+    SENSOR_SINGLE = 0,
+    SENSOR_MASTER,
+    SENSOR_SLAVE,
+    SENSOR_TW,
+    SENSOR_IR_L,
+    SENSOR_IR_R,
+    SENSOR_ROLE_MAX
+};
+
 enum sensor_data_type {
     SENSOR_DATATYPE_DISABLED = 0,
     SENSOR_REAL_DEPTH_ENABLE,

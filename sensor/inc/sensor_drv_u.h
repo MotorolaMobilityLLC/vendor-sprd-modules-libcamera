@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#define CAMERA_CONFIG_SENSOR_NUM
+
 /*sensor operation return status*/
 #define SENSOR_SUCCESS CMR_CAMERA_SUCCESS
 #define SENSOR_FAIL CMR_CAMERA_FAIL
@@ -691,7 +693,6 @@ struct sns_thread_cxt {
 struct sensor_drv_context {
     BOOLEAN sensor_isInit;
     BOOLEAN sensor_identified;
-    BOOLEAN sensor_param_saved;
     BOOLEAN reserverd1;
     cmr_u8 sensor_index[SENSOR_ID_MAX];
     cmr_u16 i2c_addr;
@@ -726,6 +727,19 @@ struct sensor_drv_context {
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
     cmr_handle sns_ic_drv_handle;
+};
+
+struct camera_device_manager {
+    cmr_u8 hasScaned;
+    cmr_int physical_num;
+    cmr_int logical_num;
+    // some variables of sensor_drv_context
+    // moved to here later
+    /*
+        cmr_u8 sensor_index[SENSOR_ID_MAX];
+        SENSOR_INFO_T *sensor_list_ptr[SENSOR_ID_MAX];
+        void *module_list[SENSOR_ID_MAX];
+    */
 };
 
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
@@ -772,9 +786,11 @@ cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
-cmr_int sensor_get_number(unsigned char *camera_support);
-
-SENSOR_INFO_FOR_HAL *sensor_get_info_for_hal(cmr_u32 sensor_id);
+int sensorGetPhysicalSnsNum(void);
+int sensorGetLogicalSnsNum(void);
+PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
+LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
+LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId);
 
 cmr_int
 sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data);

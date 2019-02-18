@@ -37,7 +37,9 @@ LOCAL_C_INCLUDES := \
        $(LOCAL_PATH)/../../$(ISPDRV_DIR)/isp_tune \
        $(LOCAL_PATH)/../../$(ISPALG_DIR)/common/inc \
        $(LOCAL_PATH)/../../$(ISPDRV_DIR)/middleware/inc \
-       $(LOCAL_PATH)/../../$(ISPDRV_DIR)/driver/inc
+       $(LOCAL_PATH)/../../$(ISPDRV_DIR)/driver/inc \
+       $(LOCAL_PATH)/../../sensor/inc
+
 
 LOCAL_C_INCLUDES += \
        $(LOCAL_PATH)/../.. \
@@ -59,7 +61,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../../kernel_module/interface
 endif
 
-LOCAL_SHARED_LIBRARIES := libcutils liblog libcamoem libcamcommon libmemion
+LOCAL_SHARED_LIBRARIES := libcutils liblog libcamoem libcamcommon libmemion libcamsensor
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 

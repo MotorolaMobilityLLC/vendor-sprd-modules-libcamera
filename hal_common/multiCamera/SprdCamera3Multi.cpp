@@ -186,12 +186,24 @@ int SprdCamera3Multi::get_camera_info(__unused int camera_id,
 
 int SprdCamera3Multi::getCameraInfo(int id, struct camera_info *info) {
     int rc = NO_ERROR;
+    struct logicalSensorInfo *logicalPtr = NULL;
+    int i = 0;
 
     config_multi_camera *config_info = load_config_file();
     if (!config_info) {
         HAL_LOGE("failed to get config file ");
     }
     parse_configure_info(config_info);
+
+    logicalPtr = sensorGetLogicaInfo4MulitCameraId(id);
+    if (logicalPtr) {
+        if (m_nPhyCameras == logicalPtr->physicalNum) {
+            for (i = 0; i < logicalPtr->physicalNum; i++) {
+                m_pPhyCamera[i].id = (uint8_t)logicalPtr->phyIdGroup[i];
+                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i]);
+            }
+        }
+    }
 
     if (mStaticMetadata)
         free_camera_metadata(mStaticMetadata);

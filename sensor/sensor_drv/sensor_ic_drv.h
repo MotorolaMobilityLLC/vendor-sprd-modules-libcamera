@@ -6,6 +6,8 @@
 #define SENSOR_IC_SUCCESS CMR_CAMERA_SUCCESS
 #define SENSOR_IC_FAILED CMR_CAMERA_FAIL
 
+#define SENSOR_IC_NAME_LEN 36
+
 #define SENSOR_IC_CHECK_HANDLE(handle)                                         \
     if (NULL == handle) {                                                      \
         SENSOR_LOGE("Handle is invalid " #handle);                             \
@@ -683,26 +685,37 @@ struct sensor_ic_drv_cxt {
         void *priv_handle;
     } privata_data;
 };
-/*
-sensor drv optimize
-==================================
-*/
 
-struct sensor_resolution_size_section {
-    cmr_u16 width;
-    cmr_u16 height;
-    cmr_u32 current_fps;
-};
+typedef struct slotSensorInfo {
+    int slotId;
+    int sensor_index;
+    char sensor_name[SENSOR_IC_NAME_LEN];
+} SLOT_SENSOR_INFO_T;
 
-typedef struct sensor_info_for_hal {
+typedef struct phySensorInfo {
+    int phyId;
+    int slotId;
+    int sensor_role;
+    int face_type;
+    int angle;
+    int resource_cost;
     SENSOR_IMAGE_FORMAT image_format;
+    int data_type;
     cmr_u8 focus_eb;
     struct module_fov_info fov_info;
     cmr_u16 source_width_max;
     cmr_u16 source_height_max;
-    cmr_u8 sensor_type;
-    struct sensor_resolution_size_section resolution[SENSOR_MODE_MAX];
-} SENSOR_INFO_FOR_HAL,sensor_info_for_hal_t;
+    int sensor_type;
+    char sensor_name[SENSOR_IC_NAME_LEN];
+} PHYSICAL_SENSOR_INFO_T;
+
+typedef struct logicalSensorInfo {
+    int logicalId;
+    int multiCameraId;
+    int multiCameraMode;
+    int physicalNum;
+    int phyIdGroup[SENSOR_ID_MAX];
+} LOGICAL_SENSOR_INFO_T;
 
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
                              cmr_handle *sns_ic_drv_handle);

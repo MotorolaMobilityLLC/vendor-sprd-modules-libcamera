@@ -23,6 +23,7 @@
 #include "sprd_ion.h"
 #include "MemIon.h"
 #include <pthread.h>
+#include "sensor_drv_u.h"
 
 using namespace android;
 
@@ -116,6 +117,8 @@ static void usage(void) {
 static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
                                   char **argv) {
     int i = 0;
+    int num = 0;
+
     cxt->loop = 0;
     if (!cxt) {
         CMR_LOGE("failed: input cxt is null");
@@ -162,6 +165,14 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
         }
     }
 
+    num = sensorGetPhysicalSnsNum();
+#ifndef CAMERA_CONFIG_SENSOR_NUM
+    CMR_LOGI("num: %d",num);
+    if (num && cxt->camera_id && cxt->camera_id >= (unsigned int)num) {
+        cxt->camera_id = num - 1;
+        CMR_LOGI("camera_id: %d",cxt->camera_id);
+    }
+#endif
     return 0;
 
 exit:
