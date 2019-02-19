@@ -1586,6 +1586,12 @@ static cmr_s32 trigger_set_mode(af_ctrl_t * af, enum aft_mode mode)
 	return 0;
 }
 
+static cmr_s32 trigger_set_flash_status(af_ctrl_t * af, enum af_flash_status flash_status)
+{
+	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_FLASH_STATUS, &flash_status, NULL);
+	return 0;
+}
+
 static cmr_s32 trigger_start(af_ctrl_t * af)
 {
 	if (!(AF_ALG_DUAL_W_T == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role))
@@ -2721,7 +2727,7 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 	default:
 		break;
 	}
-
+	trigger_set_flash_status(af, flash_status);
 	return rtn;
 }
 
