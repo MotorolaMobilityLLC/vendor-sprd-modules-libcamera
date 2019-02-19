@@ -1365,7 +1365,7 @@ status_t SprdCamera3OEMIf::autoFocus() {
             mHalOem->ops->camera_transfer_caf_to_af(mCameraHandle);
         else if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO)
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
-
+        int verification_enable = mSetting->getVERIFITag();
         if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan() &&
             controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START &&
             controlInfo.af_regions[0] == 0 && controlInfo.af_regions[1] == 0 &&
@@ -1377,7 +1377,8 @@ status_t SprdCamera3OEMIf::autoFocus() {
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
                      CAMERA_FOCUS_MODE_FULLSCAN);
-        } else if (mSprdRefocusEnabled && mCameraId == 0 && 3 == atoi(prop)) {
+        } else if (mSprdRefocusEnabled && mCameraId == 0 && 3 == atoi(prop) &&
+                   (1 != verification_enable)) {
             HAL_LOGD("mm-test set full scan mode");
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,

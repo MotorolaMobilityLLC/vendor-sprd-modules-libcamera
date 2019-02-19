@@ -4518,6 +4518,12 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = 0;
         }
     }
+    if (frame_settings.exists(ANDROID_SPRD_SET_VERIFICATION_FLAG)) {
+        s_setting[mCameraId].verification_enable =
+            frame_settings.find(ANDROID_SPRD_SET_VERIFICATION_FLAG).data.u8[0];
+        HAL_LOGD("s_setting[mCameraId].verification_enable %d",
+                 s_setting[mCameraId].verification_enable);
+    }
     /**add for 3d calibration update metadata end*/
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
@@ -5675,6 +5681,15 @@ int SprdCamera3Setting::getVCMRETag(int32_t *result) {
 int SprdCamera3Setting::getVCMTag(VCM_Tag *vcmInfo) {
     *vcmInfo = s_setting[mCameraId].vcmInfo;
     return 0;
+}
+
+int SprdCamera3Setting::setVERIFITag(int32_t veri_enable) {
+    s_setting[mCameraId].verification_enable = veri_enable;
+    return 0;
+}
+
+int SprdCamera3Setting::getVERIFITag() {
+    return s_setting[mCameraId].verification_enable;
 }
 
 int SprdCamera3Setting::androidAeModeToDrvAeMode(uint8_t androidAeMode,

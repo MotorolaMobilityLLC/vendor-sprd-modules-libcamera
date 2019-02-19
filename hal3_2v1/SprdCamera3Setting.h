@@ -438,9 +438,7 @@ typedef struct {
     int otp_size;
 } OTP_Tag;
 
-typedef struct {
-    int32_t vcm_step;
-} VCM_Tag;
+typedef struct { int32_t vcm_step; } VCM_Tag;
 
 enum vcm_result {
     VCM_RESULT_NO = 0x0,
@@ -495,6 +493,7 @@ typedef struct {
     VCM_Tag vcmInfo;
     int32_t vcm_dac[3];
     int32_t vcm_result;
+    int32_t verification_enable;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     HAL_PFC_Tag pfcinfo[MAX_PIPELINE_DEPTH];
 #endif
@@ -695,6 +694,8 @@ class SprdCamera3Setting {
     int setVCMRETag(int32_t result);
     int getVCMRETag(int32_t *result);
     int getVCMTag(VCM_Tag *vcmInfo);
+    int getVERIFITag();
+    int setVERIFITag(int32_t veri_enable);
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
@@ -735,9 +736,12 @@ class SprdCamera3Setting {
     static int initStaticParametersforLensInfo(int32_t cameraId);
     static int initStaticParametersforScalerInfo(int32_t cameraId);
     //
-    static int initStaticMetadataforSensorInfo(int32_t cameraId,CameraMetadata &staticInfo);
-    static int initStaticMetadataforLensInfo(int32_t cameraId,CameraMetadata &staticInfo);
-    static int initStaticMetadataforScalerInfo(int32_t cameraId,CameraMetadata &staticInfo);
+    static int initStaticMetadataforSensorInfo(int32_t cameraId,
+                                               CameraMetadata &staticInfo);
+    static int initStaticMetadataforLensInfo(int32_t cameraId,
+                                             CameraMetadata &staticInfo);
+    static int initStaticMetadataforScalerInfo(int32_t cameraId,
+                                               CameraMetadata &staticInfo);
     //
     static int initStaticParameters(int32_t cameraId);
     static int initStaticMetadata(int32_t cameraId,
