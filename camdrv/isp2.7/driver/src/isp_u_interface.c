@@ -323,41 +323,22 @@ cmr_s32 isp_set_fetch_param(cmr_handle handle)
 	struct isp_drv_interface_param *isp_context_ptr = (struct isp_drv_interface_param *)handle;
 	struct isp_dev_fetch_info *fetch_param_ptr = &isp_context_ptr->fetch;
 	struct isp_dev_block_addr *fetch_addr = &fetch_param_ptr->fetch_addr;
-	struct isp_sbs_info *sbs_info_ptr = &isp_context_ptr->sbs_info;
 
 	fetch_param_ptr->bypass = ISP_ZERO;
 	fetch_param_ptr->size.width = isp_context_ptr->data.input_size.w;
 	fetch_param_ptr->size.height = isp_context_ptr->data.input_size.h;
-	if (sbs_info_ptr->sbs_mode == ISP_SBS_MODE_LEFT) {
-		isp_context_ptr->data.input_format = ISP_DATA_NORMAL_RAW10;
-		fetch_param_ptr->color_format = isp_get_fetch_format(isp_context_ptr->data.input_format);
-		fetch_addr->img_fd = isp_context_ptr->data.input_fd;
-		fetch_addr->offset.x = isp_context_ptr->data.input_offset;
-		isp_get_fetch_pitch((struct isp_pitch *)&(fetch_param_ptr->pitch),
-			sbs_info_ptr->img_size.w,
-			isp_context_ptr->data.input_format);
-	} else if (sbs_info_ptr->sbs_mode == ISP_SBS_MODE_RIGHT) {
-		isp_context_ptr->data.input_format = ISP_DATA_NORMAL_RAW10;
-		fetch_param_ptr->color_format = isp_get_fetch_format(isp_context_ptr->data.input_format);
-		fetch_addr->img_fd = isp_context_ptr->data.input_fd;
-		fetch_addr->offset.x = isp_context_ptr->data.input_offset;
-		isp_get_fetch_pitch((struct isp_pitch *)&(fetch_param_ptr->pitch),
-			sbs_info_ptr->img_size.w,
-			isp_context_ptr->data.input_format);
-	} else {
-		fetch_param_ptr->color_format = isp_get_fetch_format(isp_context_ptr->data.input_format);
-		fetch_addr->img_fd = isp_context_ptr->data.input_fd;
-		fetch_addr->offset.x = isp_context_ptr->data.input_offset;
-		isp_get_fetch_pitch((struct isp_pitch *)&(fetch_param_ptr->pitch),
-			isp_context_ptr->data.input_size.w,
-			isp_context_ptr->data.input_format);
-	}
+
+	fetch_param_ptr->color_format = isp_get_fetch_format(isp_context_ptr->data.input_format);
+	fetch_addr->img_fd = isp_context_ptr->data.input_fd;
+	fetch_addr->offset.x = isp_context_ptr->data.input_offset;
+	isp_get_fetch_pitch((struct isp_pitch *)&(fetch_param_ptr->pitch),
+		isp_context_ptr->data.input_size.w,
+		isp_context_ptr->data.input_format);
 
 	fetch_param_ptr->dcam_fetch_endian = ISP_ENDIAN_LITTLE;
 
-	ISP_LOGI("fetch format %d sbs_mode %d sbs w %d h %d\n",
-		fetch_param_ptr->color_format, sbs_info_ptr->sbs_mode,
-		sbs_info_ptr->img_size.w, sbs_info_ptr->img_size.h);
+	ISP_LOGI("fetch format %d\n", fetch_param_ptr->color_format);
+
 	return ret;
 }
 

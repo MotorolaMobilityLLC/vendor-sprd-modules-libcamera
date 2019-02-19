@@ -29,10 +29,6 @@ struct isp_alg_fw_init_in {
 
 cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_alg_handle);
 cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle);
-cmr_int isp_alg_sw_proc(cmr_handle isp_alg_handle, void *param_ptr);
-cmr_int isp_alg_sw_isp_buf_check(cmr_handle isp_alg_handle, void *param_ptr);
-cmr_int isp_alg_get_bokeh_status(cmr_handle isp_alg_handle);
-cmr_int ispalg_ynr_done(cmr_handle isp_alg_handle);
 cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr);
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr);
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle);

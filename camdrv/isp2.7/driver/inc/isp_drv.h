@@ -128,14 +128,6 @@ enum isp_endian {
 	ISP_ENDIAN_MAX
 };
 
-enum {
-	ISP_SBS_MODE_OFF = 0,
-	ISP_SBS_MODE_ON,
-	ISP_SBS_MODE_LEFT,
-	ISP_SBS_MODE_RIGHT,
-	ISP_SBS_MODE_MAX
-};
-
 enum isp_drv_slice_type {
 	ISP_DRV_LSC = 0x00,
 	ISP_DRV_CSC,
@@ -187,7 +179,6 @@ struct isp_drv_interface_param {
 	struct isp_dev_common_info com;
 	struct isp_size src;
 	struct isp_drv_slice_param slice;
-	struct isp_sbs_info sbs_info;
 };
 
 struct isp_u_blocks_info {

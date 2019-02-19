@@ -47,19 +47,6 @@ void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 	isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);
 }
 
-cmr_s32 isp_ynr_post_proc(cmr_handle handle)
-{
-	struct isp_mw_context *mw_cxt = NULL;
-
-	if (!handle) {
-		ISP_LOGE("invalid handle!");
-		return -ISP_PARAM_NULL;
-	}
-
-	mw_cxt = (struct isp_mw_context *) handle;
-	return ispalg_ynr_done(mw_cxt->alg_fw_handle);
-}
-
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
 {
 	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
@@ -229,55 +216,6 @@ cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_ioctl"));
 
-	return ret;
-}
-
-cmr_int isp_sw_check_buf(cmr_handle handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
-
-	if (!handle || !param_ptr) {
-		ret = -ISP_PARAM_ERROR;
-		goto exit;
-	}
-	ret = isp_alg_sw_isp_buf_check(cxt->alg_fw_handle, param_ptr);
-
-exit:
-	ISP_LOGV("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp_sw_get_bokeh_status(cmr_handle handle)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
-
-	if (!handle) {
-		ret = -ISP_PARAM_ERROR;
-		goto exit;
-	}
-	ret = isp_alg_get_bokeh_status(cxt->alg_fw_handle);
-
-exit:
-	ISP_LOGV("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp_sw_proc(cmr_handle handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
-
-	if (!handle || !param_ptr) {
-		ret = -ISP_PARAM_ERROR;
-		goto exit;
-	}
-
-	ret = isp_alg_sw_proc(cxt->alg_fw_handle, param_ptr);
-
-exit:
-	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

@@ -413,7 +413,6 @@ enum isp_flash_led_tag {
 enum {
 	ISP_SINGLE = 0,
 	ISP_DUAL_NORMAL,
-	ISP_DUAL_SBS,
 	ISP_BLUR_REAR,
 	ISP_BOKEH,
 	ISP_WIDETELE,
@@ -744,11 +743,6 @@ struct isp_sensor_resolution_info {
 	struct isp_size sensor_output_size;
 };
 
-struct isp_sbs_info {
-	cmr_u32 sbs_mode;
-	struct isp_size img_size;
-};
-
 struct ips_in_param {
 	struct isp_img_frm src_frame;
 	cmr_u32 src_avail_height;
@@ -761,7 +755,6 @@ struct ips_in_param {
 	struct isp_sensor_resolution_info resolution_info;
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 cap_mode;
-	struct isp_sbs_info sbs_info;
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
@@ -825,7 +818,6 @@ struct isp_video_start {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
-	cmr_u32 is_real_bokeh;
 	struct isp_img_frm s_yuv_depth;
 	struct isp_img_frm s_yuv_sw_out;
 	cmr_u32 is_4in1_sensor;
@@ -1089,10 +1081,6 @@ cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *para
 cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
-cmr_int isp_sw_proc(cmr_handle handle, void *param_ptr);
-cmr_int isp_sw_check_buf(cmr_handle handle, void *param_ptr);
-cmr_int isp_sw_get_bokeh_status(cmr_handle handle);
-cmr_s32 isp_ynr_post_proc(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
