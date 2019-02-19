@@ -116,6 +116,7 @@ enum isp_callback_cmd {
 	ISP_AUTO_HDR_STATUS_CALLBACK = 0x00005000,
 	ISP_AI_SCENE_INFO_CALLBACK = 0x00006000,
 	ISP_AI_SCENE_TYPE_CALLBACK = 0x00007000,
+	ISP_AF_VCM_NOTICE_CALLBACK = 0x00008000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -279,6 +280,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_LUM,	// for isp tool
 	ISP_CTRL_SET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_POS,	// for isp tool
+	ISP_CTRL_GET_BOKEH_RANGE,
 	ISP_CTRL_GET_AF_MODE,	// for isp tool
 	ISP_CTRL_FACE_AREA,
 	ISP_CTRL_AF_FACE_AREA,
@@ -468,7 +470,9 @@ struct isp_af_notice {
 	cmr_u32 mode;
 	cmr_u32 valid_win;
 	cmr_u32 focus_type;
-	cmr_u32 reserved[10];
+	cmr_u32 motor_pos;
+	cmr_u32 af_mode;
+	cmr_u32 reserved[8];;
 };
 
 enum isp_flash_type {
