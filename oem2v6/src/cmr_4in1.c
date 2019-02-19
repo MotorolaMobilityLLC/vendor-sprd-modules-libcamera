@@ -230,6 +230,7 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
         buf_cfg.addr_vir[0].addr_y = in->src_frame.addr_vir.addr_y;
         buf_cfg.fd[0] = in->src_frame.fd;
         buf_cfg.is_4in1 = 1;
+        buf_cfg.monoboottime = in->src_frame.monoboottime;
         ret = handle->common.ipm_cxt->init_in.ops.channel_reproc(oem_handle,
                                                                  &buf_cfg);
     }

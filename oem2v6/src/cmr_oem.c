@@ -10992,6 +10992,7 @@ cmr_int camera_4in1_handle(cmr_int evt, void *data, void *privdata) {
     src_param.addr_phy.addr_y = frame->yaddr;
     src_param.addr_phy.addr_u = frame->uaddr;
     src_param.addr_phy.addr_v = frame->vaddr;
+    src_param.monoboottime = frame->monoboottime;
     ipm_in_param.src_frame = src_param;
     ipm_in_param.private_data = privdata;
     cxt->snp_cxt.cur_frm_info = *frame;

@@ -528,6 +528,7 @@ struct img_frm {
     struct img_data_end data_end;
     cmr_u32 format_pattern;
     void *reserved;
+    cmr_s64 monoboottime;
 };
 
 struct snp_thumb_yuv_param {
@@ -755,6 +756,7 @@ struct buffer_cfg {
     cmr_u32 fd[GRAB_BUF_MAX];
     cmr_uint zsl_private;
     cmr_uint is_4in1;
+    cmr_s64 monoboottime;
 };
 
 struct cap_cfg {

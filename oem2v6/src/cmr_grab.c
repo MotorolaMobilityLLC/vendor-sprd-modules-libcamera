@@ -811,6 +811,11 @@ cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
     parm.buf_flag = buf_cfg->flag;
     parm.buffer_count = buf_cfg->count;
     parm.reserved[0] = buf_cfg->zsl_private;
+    // low 32bit for timestamp
+    parm.reserved[1] = (cmr_u32)buf_cfg->monoboottime;
+    // high 32bit for timestamp
+    parm.reserved[2] =
+        (cmr_u32)(buf_cfg->monoboottime >> 32);
     for (i = 0; i < buf_cfg->count; i++) {
         parm.frame_addr_array[i].y = buf_cfg->addr[i].addr_y;
         parm.frame_addr_array[i].u = buf_cfg->addr[i].addr_u;
