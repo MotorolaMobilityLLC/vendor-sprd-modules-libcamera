@@ -1360,6 +1360,8 @@ static int cal_channel_size(struct camera_module *module)
 		temp.w = module->cam_uinfo.sn_rect.w;
 		temp.h = module->cam_uinfo.sn_rect.h;
 		align_w16(&temp, &max, &ratio_min);
+		max.w += ALIGN_OFFSET;
+		max.h += ALIGN_OFFSET;
 
 		ch_prev->swap_size = max;
 		pr_info("prev path swap size %d %d\n",
@@ -3059,6 +3061,12 @@ static int img_ioctl_set_crop(
 	ret = copy_from_user(crop,
 			(void __user *)&uparam->crop_rect,
 			sizeof(struct sprd_img_rect));
+
+	crop->x = ALIGN(crop->x, 2);
+	crop->y = ALIGN(crop->y, 2);
+	crop->w = ALIGN(crop->w, 4);
+	crop->h = ALIGN(crop->h, 4);
+
 	pr_info("4in1[%d],set ch%d crop %d %d %d %d.\n",
 		module->cam_uinfo.is_4in1, channel_id,
 		crop->x, crop->y, crop->w, crop->h);

@@ -26,6 +26,7 @@
 #endif
 
 #define CAM_BUF_ALIGN_SIZE		4
+#define	ALIGN_OFFSET			16
 
 
 /*************** for global debug starts********************/
