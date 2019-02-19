@@ -136,13 +136,6 @@ enum alg_flash_type {
 	FLASH_MAX
 };
 
-enum {
-	AE_3DNR_ON,
-	AE_3DNR_OFF,
-	AE_3DNR_AUTO,
-	AE_3DNR_MAX,
-};
-
 enum ae_flicker_mode {
 	AE_FLICKER_50HZ = 0x00,
 	AE_FLICKER_60HZ,
@@ -504,11 +497,6 @@ struct ae_hist_info {
 	cmr_u32 usec;
 };
 
-struct ae_thrd_param {
-	cmr_s16 thr_up;
-	cmr_s16 thr_down;
-};
-
 struct ae_buffer_param {
 	cmr_u32 ae_target_smooth[5];
 	cmr_s32 ae_target_offset_smooth[5];
@@ -568,7 +556,6 @@ struct ae_settings {
 	cmr_u8 *reserve_info;		/* reserve for future */
 	cmr_s16 reserve_len;		/*len for reserve */
 	cmr_u8 is_snapshot;
-	cmr_u8 threednr_mode;
 };
 
 struct ae_alg_calc_param {
@@ -607,12 +594,10 @@ struct ae_alg_calc_param {
 	cmr_s32 effect_expline;
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
-	cmr_s32 effect_frm_len;
 	cmr_s32 effect_idx;
 	cmr_u8 led_state;			//0:off, 1:on
 	cmr_u8 flash_fired;		//just notify APP in flash auto
 	cmr_s32 flash_mode;		//0:off, 1:force, 3:auto
-	cmr_u8 threednr_status;
 //caliberation for bv match with lv
 	float lv_cali_lv;
 	float lv_cali_bv;
@@ -630,7 +615,7 @@ struct ae_alg_calc_param {
 	//for face AE
 	struct ae1_fd_param ae1_finfo;
 //adv_alg module init
-	cmr_handle adv[19];
+	cmr_handle adv[14];
 	/*
 	   0:region
 	   1: flat
@@ -644,13 +629,8 @@ struct ae_alg_calc_param {
 	   9: lowlight
 	   10: outdoor
 	   11: indoor
-	   12: food
-	   13: document
-	   14: sunriseset
-	   15: snow
-	   16: others
-	   17: abl
-	   18: pcp
+	   12: abl
+	   13: pcp
 	 */
 	struct ae_settings settings;
 	cmr_u32 awb_mode;
@@ -674,8 +654,6 @@ struct ae1_senseor_out {
 	cmr_s16 cur_again;			/*current analog gain */
 	cmr_s16 cur_dgain;			/*current digital gain */
 	cmr_s32 cur_bv;
-	cmr_u32 frm_len;
-	cmr_u32 frm_len_def;
 };
 
 struct ae_alg_calc_result {
@@ -747,10 +725,6 @@ struct ae_sync_info{			//ae_dynamic_sync struct
 	struct otp_ae_info ae_otp_info;
 	cmr_u32 exposure;
 	cmr_u32 gain;
-	cmr_s32 dmy_line;
-	cmr_u32 frm_len;
-	cmr_u32 frm_len_def;
-	cmr_u64 monoboottime;
 };
 
 //ae_sync_param
@@ -763,11 +737,7 @@ struct ae_sync_info{			//ae_dynamic_sync struct
 	cmr_u32 y_ratio_stb_thr;
 	cmr_u32 y_ratio_stb_cnt;
 	cmr_u32 adpt_speed; //adapt speed
-	cmr_u8 soft_frm_sync;/*software frame sync--enable*/
-	cmr_u8 adj_ratio;/*software frame sync--ajdust ratio: 0~100*/
-	cmr_u8 reserved[2];
-	cmr_u32 adj_thrd;/*software frame sync--adjust threshold: unit: us*/
-	cmr_s8 reserve[20];
+	cmr_u32 reserve[7];
 	cmr_u32 magic_end_num;
 };
 

@@ -1302,9 +1302,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 
 	in_param.sec = cxt->ae_cxt.time.sec;
 	in_param.usec = cxt->ae_cxt.time.usec;
-	in_param.monoboottime = irq_info->monoboottime;
-	in_param.is_last_frm = irq_info->is_last_frm;
-	in_param.time_diff = irq_info->time_diff;
 	in_param.binning_stat_info.r_info = cxt->binning_stats.r_info;
 	in_param.binning_stat_info.g_info = cxt->binning_stats.g_info;
 	in_param.binning_stat_info.b_info = cxt->binning_stats.b_info;
@@ -3362,7 +3359,6 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
 	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
 	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
-	ae_param.resolution_info.snr_setting_max_fps = param_ptr->sensor_fps.max_fps;
 	ae_param.is_snapshot = param_ptr->is_snapshot;
 	ae_param.dv_mode = param_ptr->dv_mode;
 

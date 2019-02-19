@@ -352,9 +352,6 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	statis_info->zoom_ratio = irq_info->zoom_ratio;
 	statis_info->sec = irq_info->sec;
 	statis_info->usec = irq_info->usec;
-	statis_info->monoboottime = irq_info->monoboottime;
-	statis_info->is_last_frm = irq_info->is_last_frm;
-	statis_info->time_diff = irq_info->time_diff;
 
 	ISP_LOGV("got one frame stats offset 0x%x vaddr 0x%x property %d frame id %d timestamp %ds %dus",
 		 statis_info->addr_offset, statis_info->vir_addr,
@@ -404,9 +401,6 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 			irq_u_info->frame_id = irq_info->frame_id;
 			irq_u_info->sec = irq_info->sec;
 			irq_u_info->usec = irq_info->usec;
-			irq_u_info->monoboottime = irq_info->monoboottime;
-			irq_u_info->is_last_frm = irq_info->is_last_frm;
-			irq_u_info->time_diff = irq_info->time_diff;
 
 			(cxt->isp_event_cb) (ISP_CTRL_EVT_SOF, irq_u_info, (void *)cxt->evt_alg_handle);
 		}

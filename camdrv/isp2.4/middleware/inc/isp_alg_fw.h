@@ -13,121 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _ISP_BRIDGE_H_
-#define _ISP_BRIDGE_H_
+#ifndef _ISP_ALG_FW_H_
+#define _ISP_ALG_FW_H_
 
-#include "isp_type.h"
-#include "cmr_sensor_info.h"
+#ifndef LOCAL_INCLUDE_ONLY
+#error "Hi, This is only for camdrv."
+#endif
 
-#define SENSOR_NUM_MAX 4
-
-typedef cmr_int(*func_isp_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
-
-enum isp_br_ioctl_cmd {
-	SET_MATCH_AWB_DATA = 0,
-	GET_MATCH_AWB_DATA,
-	SET_MATCH_AE_DATA,
-	GET_MATCH_AE_DATA,
-	SET_MATCH_BV_DATA,
-	GET_MATCH_BV_DATA,
-	SET_STAT_AWB_DATA,
-	GET_STAT_AWB_DATA,
-	SET_GAIN_AWB_DATA,
-	GET_GAIN_AWB_DATA,
-	SET_MODULE_INFO,
-	GET_MODULE_INFO,
-	SET_OTP_AE,
-	GET_OTP_AE,
-	SET_OTP_AWB,
-	GET_OTP_AWB,
-	SET_ALL_MODULE_AND_OTP,
-	GET_ALL_MODULE_AND_OTP,
-	AE_WAIT_SEM,
-	AE_POST_SEM,
-	AWB_WAIT_SEM,
-	AWB_POST_SEM,
-	/*aem sat*/ //20180405
-	SET_AEM_SYNC_STAT,
-	GET_AEM_SYNC_STAT,
-	SET_AEM_STAT_BLK_NUM,
-	GET_USER_COUNT,
+#include "isp_mw.h"
+#include "isp_blocks_cfg.h"
+struct isp_alg_fw_init_in {
+	cmr_handle dev_access_handle;
+	struct isp_init_param *init_param;
 };
 
-struct awb_stat_data {
-	cmr_u32 r_info[1024];
-	cmr_u32 g_info[1024];
-	cmr_u32 b_info[1024];
-};
+cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle * isp_alg_handle);
+cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle);
+cmr_int isp_alg_sw_proc(cmr_handle isp_alg_handle, void *param_ptr);
+cmr_int isp_alg_sw_isp_buf_check(cmr_handle isp_alg_handle, void *param_ptr);
+cmr_int isp_alg_get_bokeh_status(cmr_handle isp_alg_handle);
+cmr_int isp_alg_sw_stop(cmr_handle isp_alg_handle);
+cmr_int isp_alg_sw_get_depth_cali_info(cmr_handle isp_alg_handle, void *param_ptr);
+cmr_int ispalg_ynr_done(cmr_handle isp_alg_handle);
+cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr);
+cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr);
+cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle);
+cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr);
+cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd cmd, void *param_ptr);
 
-struct awb_gain_data {
-	cmr_u32 r_gain;
-	cmr_u32 g_gain;
-	cmr_u32 b_gain;
-};
-
-struct awb_match_data {
-	cmr_u32 ct;
-};
-
-struct ae_otp_param {
-	struct sensor_otp_ae_info otp_info;
-};
-
-struct awb_otp_param {
-	struct sensor_otp_awb_info awb_otp_info;
-};
-
-struct sensor_info {
-	cmr_s16 min_exp_line;
-	cmr_s16 max_again;
-	cmr_s16 min_again;
-	cmr_s16 sensor_gain_precision;
-	cmr_u32 line_time;
-	cmr_u32 frm_len_def;
-};
-
-struct module_sensor_info {
-	struct sensor_info sensor_info[SENSOR_NUM_MAX];
-};
-
-struct module_otp_info {
-	struct ae_otp_param ae_otp[SENSOR_NUM_MAX];
-	struct awb_otp_param awb_otp[SENSOR_NUM_MAX];
-};
-
-struct module_info {
-	struct module_sensor_info module_sensor_info;
-	struct module_otp_info module_otp_info;
-};
-
-struct ae_match_data {
-	cmr_u32 frame_len;
-	cmr_u32 frame_len_def;
-	cmr_u32 gain;
-	cmr_u32 isp_gain;
-	struct sensor_ex_exposure exp;
-};
-
-struct ae_match_stats_data {
-	cmr_u32 *stats_data;
-	cmr_u32 len;
-	cmr_s64 monoboottime;
-	cmr_u32 is_last_frm;
-};
-
-struct match_data_param {
-	struct module_info module_info;
-	struct ae_match_data ae_info;
-	struct awb_match_data awb_info;
-	struct awb_stat_data awb_stat[SENSOR_NUM_MAX];
-	struct awb_gain_data awb_gain;
-	cmr_u16 bv;
-};
-
-cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id);
-cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle);
-cmr_int isp_br_deinit(cmr_u32 camera_id);
-cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
-cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dual_otp);
-cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dual_otp);
 #endif

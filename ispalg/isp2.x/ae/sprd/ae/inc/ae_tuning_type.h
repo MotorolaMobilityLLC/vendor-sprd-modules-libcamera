@@ -25,7 +25,6 @@
 #define ABL_CFG_NUM AE_CFG_NUM
 #define PCP_CFG_NUM AE_CFG_NUM
 #define HM_CFG_NUM AE_CFG_NUM
-#define AI_CFG_NUM AE_CFG_NUM
 
 struct ae_param_tmp_001 {
 	cmr_u32 version;
@@ -312,16 +311,13 @@ struct ae_monitor_tuning_param {
 };
 
 struct ai_cfg {
-	cmr_s16 x_idx;
-	cmr_s16 y_lum; /*1 * 4bytes*/
-	cmr_u32 reserved;
+	cmr_s16 y_lum;         /*1 * 2bytes*/
 };
 
 struct ai_tuning_param {
-	cmr_u16 enable;
-	cmr_u16 num; 					/*1 * 4bytes*/
-	cmr_u32 reserved[3]; 				/*3 * 4bytes*/
-	struct ai_cfg cfg_ai[AI_CFG_NUM];	/*16 * 4bytes*/
+	cmr_u8 enable;		/*1 * 1bytes*/
+	cmr_u8 reserved;		/*1 * 1bytes*/
+	struct ai_cfg cfg_ai;	/*1 * 2bytes*/
 };
 
 struct ae_ai_tuning_param {
@@ -331,12 +327,6 @@ struct ae_ai_tuning_param {
 	struct ai_tuning_param night_param;
 	struct ai_tuning_param outdoor_param;
 	struct ai_tuning_param indoor_param;
-	struct ai_tuning_param food_param;
-	struct ai_tuning_param document_param;
-	struct ai_tuning_param sunriseset_param;
-	struct ai_tuning_param snow_param;
-	struct ai_tuning_param others_param;
-	cmr_u32 reserved[20]; /*20 * 4bytes*/
 };
 	
 typedef struct {
@@ -354,7 +344,7 @@ struct abl_tuning_param {
 	abl_cfg cfg_info[ABL_CFG_NUM];
 	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
 	cmr_u32 abl_weight;
-	cmr_u32 center_tar_lum;
+	cmr_u32 tar_lum;
 	cmr_u32 tar_lum_ev_diff;
 };
 
@@ -425,13 +415,12 @@ struct ae_tuning_param {		//total bytes must be 312696
 	struct ae_flash_control_param flash_control_param;
 	struct ae_video_set_fps_param ae_video_fps;
 	struct ae_monitor_tuning_param monitor_param;
-	struct ae_ai_tuning_param ai_param;  /*240 * 4bytes*/
+	struct ae_ai_tuning_param ai_param;
 	struct abl_tuning_param abl_param;   /*46 * 4bytes*/
 	struct pcp_tuning_param pcp_param; /*27 * 4bytes*/
 	struct ae_hm_tuning_param hm_param; /*240 * 4bytes*/
 	struct ae_nsm_tuning_param ns_param; /*109 * 4bytes*/
-	struct ae_thrd_param threednr_ctrl_param;
-	cmr_u32 reserved[1348];
+	cmr_u32 reserved[1583];
 };
 
 #endif

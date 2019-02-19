@@ -89,7 +89,6 @@ struct sensor_info {
 	cmr_s16 min_again;
 	cmr_s16 sensor_gain_precision;
 	cmr_u32 line_time;
-	cmr_u32 frm_len_def;
 };
 
 struct module_sensor_info {
@@ -107,18 +106,9 @@ struct module_info {
 };
 
 struct ae_match_data {
-	cmr_u32 frame_len;
-	cmr_u32 frame_len_def;
 	cmr_u32 gain;
 	cmr_u32 isp_gain;
 	struct sensor_ex_exposure exp;
-};
-
-struct ae_match_stats_data {
-	cmr_u32 *stats_data;
-	cmr_u32 len;
-	cmr_s64 monoboottime;
-	cmr_u32 is_last_frm;
 };
 
 struct fov_data {
@@ -129,7 +119,6 @@ struct fov_data {
 struct match_data_param {
 	struct module_info module_info;
 	struct ae_match_data ae_info[SENSOR_NUM_MAX];
-	struct ae_match_stats_data ae_stats_data[SENSOR_NUM_MAX];
 	struct awb_match_data awb_info[SENSOR_NUM_MAX];
 	struct awb_gain_data awb_gain[SENSOR_NUM_MAX];
 	struct fov_data fov_info[SENSOR_NUM_MAX];

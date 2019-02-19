@@ -71,45 +71,18 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case SET_AEM_SYNC_STAT:
 		sem_wait(&cxt->module_sm);
-		/*
 		if (NULL != cxt->aem_sync_stat[sensor_role]) {
 			memcpy(cxt->aem_sync_stat[sensor_role], in,
 				3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
-		}*/
-		{
-			struct ae_match_stats_data *stats_data= (struct ae_match_stats_data*)in;
-			if ((NULL != cxt->aem_sync_stat[sensor_role]) && (NULL != stats_data)) {
-				if (NULL !=stats_data->stats_data) {
-					memcpy(cxt->aem_sync_stat[sensor_role], stats_data->stats_data,
-							3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
-					cxt->match_param.ae_stats_data[sensor_role].stats_data = cxt->aem_sync_stat[sensor_role];
-					cxt->match_param.ae_stats_data[sensor_role].len = 3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32);
-					cxt->match_param.ae_stats_data[sensor_role].monoboottime = stats_data->monoboottime;
-					cxt->match_param.ae_stats_data[sensor_role].is_last_frm = stats_data->is_last_frm;
-				}
-			}
 		}
 		sem_post(&cxt->module_sm);
 		break;
 
 	case GET_AEM_SYNC_STAT:
 		sem_wait(&cxt->module_sm);
-		/*
 		if (NULL != cxt->aem_sync_stat[sensor_role]) {
 			memcpy(out, cxt->aem_sync_stat[sensor_role],
 				3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
-		}*/
-		{
-			struct ae_match_stats_data *stats_data= (struct ae_match_stats_data*)out;
-			if ((NULL != cxt->aem_sync_stat[sensor_role]) && (NULL != stats_data)) {
-				if (NULL !=stats_data->stats_data) {
-					memcpy(stats_data->stats_data, cxt->aem_sync_stat[sensor_role],
-							3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
-					stats_data->len = 3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32);
-					stats_data->monoboottime = cxt->match_param.ae_stats_data[sensor_role].monoboottime;
-					stats_data->is_last_frm = cxt->match_param.ae_stats_data[sensor_role].is_last_frm;
-				}
-			}
 		}
 		sem_post(&cxt->module_sm);
 		break;

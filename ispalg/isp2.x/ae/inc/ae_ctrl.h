@@ -21,10 +21,18 @@
 #include "isp_pm.h"
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
+#ifndef CONFIG_ISP_2_2
 #include "isp_bridge.h"
+#else
+#include "isp_match.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef CONFIG_ISP_2_2
+	typedef cmr_int(*func_isp_br_ioctrl) (cmr_u32 camera_id, cmr_int cmd, void *in, void *out);
 #endif
 
 	struct ae_init_in {
@@ -104,9 +112,6 @@ extern "C" {
 		struct ae_stat_img_info info;
 		cmr_u32 sec;
 		cmr_u32 usec;
-		cmr_s64 monoboottime;
-		cmr_u32 is_last_frm;
-		cmr_s32 time_diff;
 		struct isp_sensor_fps_info sensor_fps;
 		cmr_u32 awb_mode;
 		cmr_u32 awb_cur_gain_r;

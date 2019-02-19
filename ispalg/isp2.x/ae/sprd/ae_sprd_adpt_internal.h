@@ -20,7 +20,12 @@
 #include "ae_tuning_type.h"
 #include "ae_ctrl_types.h"
 #include "ae_ctrl.h"
+
+#if defined(CONFIG_ISP_2_2)
+#include "isp_match.h"
+#elif defined(CONFIG_ISP_2_3)
 #include "isp_bridge.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,8 +37,6 @@ extern "C" {
 		cmr_u32 exp_line;
 		cmr_u32 exp_time;
 		cmr_s32 dummy;
-		cmr_s32 frm_len;
-		cmr_s32 frm_len_def;
 		cmr_u32 gain;			/*gain = sensor_gain * isp_gain */
 		cmr_u32 sensor_gain;
 		cmr_u32 isp_gain;
@@ -55,8 +58,6 @@ extern "C" {
 		cmr_u32 exp_line;
 		cmr_u32 exp_time;
 		cmr_s32 dummy;
-		cmr_u32 frm_len;
-		cmr_u32 frm_len_def;
 		cmr_u32 gain;
 		cmr_u32 table_idx;
 	};
@@ -327,15 +328,22 @@ extern "C" {
 		cmr_u8 is_master;
 		cmr_u32 is_multi_mode;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
-		struct ae_sync_para ae_sync_param;
-		struct ae_sync_info master_ae_sync_info;
-		struct ae_sync_info slave_ae_sync_info;
+
+#ifdef  CONFIG_ISP_2_2
+//  struct ae_calc_result pre_write_exp_data_slv;
+		struct ae_exposure_param pre_write_exp_data_slv;
+//  struct ae_calc_result pre_write_exp_data;
+		struct ae_exposure_param pre_write_exp_data;
+		struct match_data_param dualcam_aesync_param;
+#endif
+		cmr_u32 end_id;
 		/*
 		 * for binning facter = 2
 		 */
 		cmr_s32 binning_factor_before;
 		cmr_s32 binning_factor_after;
 		struct ae_exposure_compensation exposure_compensation;
+		struct ae_sync_para ae_sync_param;
 		cmr_u32 slw_prev_skip_num;
 
 		/*
@@ -365,12 +373,12 @@ extern "C" {
 		cmr_u32 effect_index_index;
 		cmr_u32 effect_index[4];
 		/*for debug*/
-		cmr_s8 history_param[8 * 1024];
+		cmr_u32 history_param[1024];
 		/* backup for ev*/
 		struct ae_ev_param flash_ev_backup;
+
 		cmr_u32 is_faceId_unlock;
 		cmr_u32 face_lock_table_index;
-		cmr_u32 end_id;
 	};
 
 #endif

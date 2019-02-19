@@ -127,8 +127,6 @@ static void s_q_add_item(struct queue_context *q_cxt, struct q_item *cur_item, s
 	q_cxt->q_pool.queue_ptr[idx->idx_exp_l].exp_line = cur_item->exp_line;
 	q_cxt->q_pool.queue_ptr[idx->idx_exp_t].exp_time = cur_item->exp_time;
 	q_cxt->q_pool.queue_ptr[idx->idx_dmy].dumy_line = cur_item->dumy_line;
-	q_cxt->q_pool.queue_ptr[idx->idx_dmy].frm_len = cur_item->frm_len;
-	q_cxt->q_pool.queue_ptr[idx->idx_dmy].frm_len_def = cur_item->frm_len;
 	q_cxt->q_pool.queue_ptr[idx->idx_sensor_gain].sensor_gain = cur_item->sensor_gain;
 	q_cxt->q_pool.queue_ptr[idx->idx_isp_gain].isp_gain = cur_item->isp_gain;
 }
@@ -138,8 +136,6 @@ static void s_q_get_item(struct queue_context *q_cxt, struct q_item_index *idx, 
 	item->exp_time = q_cxt->q_pool.queue_ptr[idx->idx_exp_t].exp_time;
 	item->exp_line = q_cxt->q_pool.queue_ptr[idx->idx_exp_l].exp_line;
 	item->dumy_line = q_cxt->q_pool.queue_ptr[idx->idx_dmy].dumy_line;
-	item->frm_len = q_cxt->q_pool.queue_ptr[idx->idx_dmy].frm_len;
-	item->frm_len_def = q_cxt->q_pool.queue_ptr[idx->idx_dmy].frm_len_def;
 	item->sensor_gain = q_cxt->q_pool.queue_ptr[idx->idx_sensor_gain].sensor_gain;
 	item->isp_gain = q_cxt->q_pool.queue_ptr[idx->idx_isp_gain].isp_gain;
 }
@@ -160,8 +156,6 @@ cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_ou
 		q_cxt->q_pool.queue_ptr[i].exp_line = in->exp_line;
 		q_cxt->q_pool.queue_ptr[i].exp_time = in->exp_time;
 		q_cxt->q_pool.queue_ptr[i].dumy_line = in->dmy_line;
-		q_cxt->q_pool.queue_ptr[i].frm_len = in->frm_len;
-		q_cxt->q_pool.queue_ptr[i].frm_len_def = in->frm_len_def;
 		q_cxt->q_pool.queue_ptr[i].sensor_gain = in->sensor_gain;
 		q_cxt->q_pool.queue_ptr[i].isp_gain = in->isp_gain;
 	}
