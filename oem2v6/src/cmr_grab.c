@@ -920,6 +920,11 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle) {
     CMR_CHECK_FD;
 
     pthread_mutex_lock(&p_grab->status_mutex);
+    if (p_grab->is_on == 0) {
+        CMR_LOGI("already stopped");
+        pthread_mutex_unlock(&p_grab->status_mutex);
+        return ret;
+    }
     p_grab->is_on = 0;
     pthread_mutex_unlock(&p_grab->status_mutex);
 
