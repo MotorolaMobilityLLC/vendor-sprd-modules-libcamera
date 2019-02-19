@@ -302,7 +302,7 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 	return ISP_SUCCESS;
 }
 
-
+static struct ae_exposure_param master_param_backup;
 static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *write_param)
 {
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
@@ -327,7 +327,9 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 	else
 		ae_dynamic_flag = 0;
 
-
+	if(cxt->is_master == 0){
+		memcpy(write_param, &master_param_backup, sizeof(struct ae_exposure_param));
+	}
 	if (0 != write_param->exp_line && 0 != write_param->sensor_gain) {
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
 
@@ -406,7 +408,13 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 			ae_info[1].exp.dummy = (ae_info[0].exp.exposure + ae_info[0].exp.dummy)* info_master.line_time / info_slave.line_time - ae_info[1].exp.exposure;
 			ae_info[1].exp.size_index = 2;
 			ISP_LOGV("(sharkl3)normal mode:ae_info[1] exposure %d dummy %d size_index %d gain %d", ae_info[1].exp.exposure, ae_info[1].exp.dummy, ae_info[1].exp.size_index, ae_info[1].gain);
-
+			if(cxt->is_master == 0){
+				ae_info[0].count = 1;
+				ae_info[0].exp.exposure = ae_info[1].exp.exposure;
+				ae_info[0].exp.dummy = ae_info[1].exp.dummy;
+				ae_info[0].exp.size_index = ae_info[1].exp.size_index;
+				ae_info[0].gain = ae_info[1].gain;
+			}
 			if (cxt->isp_ops.write_multi_ae) {
 				(*cxt->isp_ops.write_multi_ae) (cxt->isp_ops.isp_handler, ae_info);
 			} else {
@@ -537,7 +545,8 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	write_param.dummy = write_item.dumy_line;
 	write_param.isp_gain = write_item.isp_gain;
 	write_param.sensor_gain = write_item.sensor_gain;
-
+	if (cxt->is_master && is_force)
+		memcpy(&master_param_backup, &write_param, sizeof(struct ae_exposure_param));
 	cxt->glb_gain = (cmr_u32) (write_item.isp_gain * 1.0 / 4096 * cxt->backup_rgb_gain + 0.5);
 
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS) {
@@ -549,7 +558,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	else if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M)) {
 #ifndef CONFIG_ISP_2_2
 		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_USER_COUNT, NULL, &dual_sensor_status);
-		if (cxt->is_master){
+		if (cxt->is_master  || is_force){
 			ISP_LOGV("dual_sensor_status = %d",dual_sensor_status);
 			if(dual_sensor_status > 1)
 				ae_sync_write_to_sensor_normal(cxt, &write_param);
