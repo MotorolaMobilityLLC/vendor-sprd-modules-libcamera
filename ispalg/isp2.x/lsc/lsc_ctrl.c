@@ -2498,6 +2498,33 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		}
 	}
 
+	// updata the mlog info
+	if(print_lsc_log()==1 && cxt->alg_count >=1){
+		FILE *pf = NULL;
+		const char saveLogFile1[50] = "/data/mlog/lsc1.txt";
+		const char saveLogFile2[50] = "/data/mlog/lsc2.txt";
+		if(cxt->lsc_id == 1){
+			pf = fopen(saveLogFile1, "wb");
+		}else{
+			pf = fopen(saveLogFile2, "wb");
+		}
+		if (NULL != pf){
+			fprintf(pf, "LSC BASIC INFO\r\n");
+			fprintf(pf, "alg2.c VER: %s \r\n", lsc_debug_info_ptr->LSC_version);
+			fprintf(pf, "final_index: %d, final_ratio_x10000: %d\r\n", lsc_debug_info_ptr->final_index, lsc_debug_info_ptr->final_ratio_x10000);
+			fprintf(pf, "bv: %d, bv_gain: %d, ct: %d\r\n", param->bv, param->bv_gain, param->ct);
+			fprintf(pf, "rGain: %d, bGain: %d\r\n", param->r_gain, param->b_gain);
+			fprintf(pf, "image_size: [%d,%d], grid: %d\r\n", img_width, img_height, grid);
+			fprintf(pf, "gain_size: [%d,%d], gain_pattern: %d\r\n", gain_width, gain_height, cxt->output_gain_pattern);
+			fprintf(pf, "flash_mode: %d, front_cam: %d\r\n", cxt->flash_mode, cxt->camera_id);
+			fprintf(pf, "alg_locked: %d, cam_id: %d\r\n", cxt->alg_locked, cxt->lsc_id);
+			fprintf(pf, "alg_cnt: %d, frame_cnt: %d\r\n", cxt->alg_count, cxt->frame_count);
+			fprintf(pf, "TAB_outer: [%d,%d,%d,%d]\r\n", lsc_debug_info_ptr->output_lsc_table[0], lsc_debug_info_ptr->output_lsc_table[1], lsc_debug_info_ptr->output_lsc_table[2], lsc_debug_info_ptr->output_lsc_table[3]);
+			fprintf(pf, "TAB_inner: [%d,%d,%d,%d]\r\n", lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+0], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+1], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+2], lsc_debug_info_ptr->output_lsc_table[4*(gain_width+1)+3]);
+			fclose(pf);
+		}
+	}
+
 	// first frame just copy the output from fw_start
 	if(cxt->frame_count == 0){   //lunch camera with fullsize
 		memcpy(lsc_debug_info_ptr->last_lsc_table  , cxt->fwstart_new_scaled_table, gain_width*gain_height*4*sizeof(cmr_u16));
