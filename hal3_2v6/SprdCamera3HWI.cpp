@@ -1186,9 +1186,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     mPictureRequest = 1;
                     mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                            mFrameNum);
-                    if (request->num_output_buffers >= 2) {
-                        mOEMIf->setFrameSyncFlag(request->frame_number);
-                    }
                 }
                 break;
             }
@@ -1215,9 +1212,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 mPictureRequest = 1;
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                        mFrameNum);
-                if (request->num_output_buffers >= 2) {
-                    mOEMIf->setFrameSyncFlag(request->frame_number);
-                }
             }
             break;
         }
@@ -1249,10 +1243,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     mPictureRequest = 1;
                     mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                            mFrameNum);
-                    if (request->num_output_buffers >= 2 &&
-                        mOEMIf->getJpegWithBigSizePreviewFlag() == 0) {
-                        mOEMIf->setFrameSyncFlag(request->frame_number);
-                    }
                 }
                 break;
             }
@@ -1263,10 +1253,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 mPictureRequest = 1;
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                        mFrameNum);
-                if (request->num_output_buffers >= 2 &&
-                    mOEMIf->getJpegWithBigSizePreviewFlag() == 0) {
-                    mOEMIf->setFrameSyncFlag(request->frame_number);
-                }
             }
             break;
         }
@@ -1348,9 +1334,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 mPictureRequest = 1;
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                        mFrameNum);
-                if (request->num_output_buffers >= 2) {
-                    mOEMIf->setFrameSyncFlag(request->frame_number);
-                }
             }
             break;
         }
@@ -1361,9 +1344,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mPictureRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                    mFrameNum);
-            if (request->num_output_buffers >= 2) {
-                mOEMIf->setFrameSyncFlag(request->frame_number);
-            }
         }
         break;
 
@@ -1380,7 +1360,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT,
                                        mFrameNum);
                 mPictureRequest = true;
-                mOEMIf->setFrameSyncFlag(request->frame_number);
             }
         }
         break;
@@ -1391,7 +1370,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT,
                                    mFrameNum);
             mPictureRequest = true;
-            mOEMIf->setFrameSyncFlag(request->frame_number);
         }
         break;
 

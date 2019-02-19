@@ -447,8 +447,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mMasterId = 0;
 
     mStreamOnWithZsl = 0;
-    mFrameSyncFlag = 0;
-    mFrameSyncNum = 0;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -565,8 +563,6 @@ void SprdCamera3OEMIf::initialize() {
     mStreamOnWithZsl = 0;
     mSprdZslEnabled = 0;
     mSprd3dnrEnabled = 0;
-    mFrameSyncFlag = 0;
-    mFrameSyncNum = 0;
     mVideoSnapshotType = 0;
 }
 
@@ -3332,10 +3328,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             goto bypass_rec;
         }
 
-        if (mFrameSyncFlag == 1 && frame_num >= mFrameSyncNum) {
-            mFrameSyncSignal.signal();
-        }
-
         ATRACE_BEGIN("video_frame");
         HAL_LOGD("record:fd=%d, vir=0x%lx, num=%d, time=%" PRId64
                  ", rec=%" PRId64,
@@ -3444,10 +3436,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 }
             }
 
-            if (mFrameSyncFlag == 1 && frame_num >= mFrameSyncNum) {
-                mFrameSyncSignal.signal();
-            }
-
             if (mIsRecording && rec_stream) {
                 calculateTimestampForSlowmotion(buffer_timestamp);
 
@@ -3519,10 +3507,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         channel->channelCbRoutine(frame_num, buffer_timestamp,
                                   CAMERA_STREAM_TYPE_CALLBACK);
-
-        if (mFrameSyncFlag == 1 && frame_num >= mFrameSyncNum) {
-            mFrameSyncSignal.signal();
-        }
 
         if ((mTakePictureMode == SNAPSHOT_PREVIEW_MODE) &&
             (isJpegRequest == true)) {
@@ -8356,14 +8340,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     bzero(&src_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
     bzero(&dst_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
 
-    if (mFrameSyncFlag == 1) {
-        HAL_LOGD("wait for frame sync");
-        // TBD: later will add select same timestamp of zsl with preview frame
-        Mutex::Autolock l(mFrameSyncLock);
-        mFrameSyncSignal.waitRelative(mFrameSyncLock, ZSL_FRAME_TIMEOUT);
-        mFrameSyncFlag = 0;
-    }
-
     // this is for real zsl flash capture, like sharkls/sharklt8, not
     // sharkl2-like
     // obj->skipZslFrameForFlashCapture();
@@ -8903,13 +8879,6 @@ int32_t SprdCamera3OEMIf::setStreamOnWithZsl() {
 }
 
 int32_t SprdCamera3OEMIf::getStreamOnWithZsl() { return mStreamOnWithZsl; }
-
-int32_t SprdCamera3OEMIf::setFrameSyncFlag(uint32_t frameNum) {
-    mFrameSyncFlag = 1;
-    mFrameSyncNum = frameNum;
-    HAL_LOGD("mFrameSyncNum=%d", mFrameSyncNum);
-    return 0;
-}
 
 int32_t SprdCamera3OEMIf::setJpegWithBigSizePreviewFlag() {
     mIsJpegWithBigSizePreview = 1;

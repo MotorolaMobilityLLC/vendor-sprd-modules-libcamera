@@ -216,7 +216,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void ispToolModeInit();
     int32_t setStreamOnWithZsl();
     int32_t getStreamOnWithZsl();
-    int32_t setFrameSyncFlag(uint32_t frameNum);
     int32_t setJpegWithBigSizePreviewFlag();
     int32_t getJpegWithBigSizePreviewFlag();
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
@@ -799,12 +798,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     int64_t mLastCafDoneTime;
     int32_t mStreamOnWithZsl;
-    // for frame sync, same request with preview and capture buffer
-    uint32_t mFrameSyncFlag;
-    uint32_t mFrameSyncNum;
-    Mutex mFrameSyncLock;
-    Condition mFrameSyncSignal;
-
     Mutex mPipelineStartLock;
     Condition mPipelineStartSignal;
 
