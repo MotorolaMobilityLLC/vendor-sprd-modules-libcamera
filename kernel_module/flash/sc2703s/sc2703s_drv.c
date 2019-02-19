@@ -435,6 +435,16 @@ static int sprd_flash_sc2703s_remove(struct i2c_client *client)
 	return 0;
 }
 
+static void sprd_flash_sc2703s_shutdown(struct i2c_client *client)
+{
+	struct flash_driver_data *drv_data = i2c_get_clientdata(client);
+	int idx =SPRD_FLASH_LED0|SPRD_FLASH_LED1;
+
+	sc2703_flash_led_enable(drv_data, idx, 0);
+	sc2703_torch_mode_ac_charge_switch(drv_data, 0);
+	pr_info("sprd_flash_sc2703s_shutdown\n");
+}
+
 static struct i2c_driver sprd_flash_sc2703s_drvier = {
 	.driver = {
 		.name = "sc2703-flash",
@@ -445,6 +455,7 @@ static struct i2c_driver sprd_flash_sc2703s_drvier = {
 	},
 	.probe = sprd_flash_sc2703s_probe,
 	.remove = sprd_flash_sc2703s_remove,
+	.shutdown = sprd_flash_sc2703s_shutdown,
 	.id_table = sc2703_flash_i2c_id,
 };
 
