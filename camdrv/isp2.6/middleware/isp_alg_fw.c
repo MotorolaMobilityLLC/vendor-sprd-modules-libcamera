@@ -3026,6 +3026,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.camera_id = cxt->camera_id;
 	ae_input.lib_param = cxt->lib_use_info->ae_lib_info;
 	ae_input.caller_handle = (cmr_handle) cxt;
+	ae_input.ebd_support = cxt->ebd_cxt.ebd_support;
 	ae_input.ae_set_cb = ispalg_ae_set_cb;
 
 	ret = ispalg_get_aem_param(cxt, &aem_info);
@@ -4623,7 +4624,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->is_multi_mode = input_ptr->init_param->multi_mode;
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
-	//cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
+	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
 	cxt->is_4in1_prev = input_ptr->init_param->is_4in1_sensor;
 	ISP_LOGI("camera_id = %ld, master %d, 4c prev[%d]\n", cxt->camera_id,
 		cxt->is_master, cxt->is_4in1_prev);
