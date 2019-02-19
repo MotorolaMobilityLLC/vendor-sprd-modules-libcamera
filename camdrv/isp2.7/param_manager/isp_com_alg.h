@@ -27,19 +27,9 @@ enum isp_interp_type {
 	ISP_INTERP_UINT20 = 4,
 };
 
-struct isp_gamma_curve_info {
-	cmr_u32 axis[2][ISP_GAMMA_SAMPLE_NUM];
-};
-
-cmr_s32 isp_gamma_adjust(struct isp_gamma_curve_info *src_ptr0, struct isp_gamma_curve_info *src_ptr1, struct isp_gamma_curve_info *dst_ptr, struct isp_weight_value *point_ptr);
-
-cmr_s32 isp_cmc_adjust(cmr_u16 src0[9], cmr_u16 src1[9], struct isp_sample_point_info *point_ptr, cmr_u16 dst[9]);
-
 cmr_s32 isp_cmc_adjust_4_reduce_saturation(cmr_u16 src_cmc[9], cmr_u16 dst_cmc[9], cmr_u32 percent);
 
 cmr_s32 isp_cce_adjust(cmr_u16 src[9], cmr_u16 coef[3], cmr_u16 dst[9], cmr_u16 base_gain);
-
-cmr_s32 isp_lsc_adjust(void *lnc0_ptr, void *lnc1_ptr, cmr_u32 lnc_len, struct isp_weight_value *point_ptr, void *dst_lnc_ptr);
 
 cmr_s32 isp_hue_saturation_2_gain(cmr_s32 hue, cmr_s32 saturation, struct isp_rgb_gains *gain);
 

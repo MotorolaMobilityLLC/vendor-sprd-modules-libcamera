@@ -1677,25 +1677,18 @@ cmr_handle isp_pm_init(struct isp_pm_init_input *input, struct isp_pm_init_outpu
 
 	if ((PNULL == input) || (PNULL == output)) {
 		ISP_LOGE("fail to get valid param : input = %p, output = %p", input, output);
-		goto init_error_exit;
+		goto exit;
 	}
 
-	pm_cxt_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
+	pm_cxt_ptr = (struct isp_pm_context *)calloc(1, sizeof(struct isp_pm_context));
 	if (PNULL == pm_cxt_ptr) {
 		ISP_LOGE("fail to malloc pm_cxt_ptr");
-		goto init_error_exit;
+		goto exit;
 	}
-	memset((void *)pm_cxt_ptr, 0x00, sizeof(struct isp_pm_context));
 
 	pm_cxt_ptr->magic_flag = ISP_PM_MAGIC_FLAG;
 
 	pthread_mutex_init(&pm_cxt_ptr->pm_mutex, NULL);
-
-	rtn = isp_pm_check_handle((cmr_handle)pm_cxt_ptr);
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to do isp_pm_check_handle");
-		goto init_error_exit;
-	}
 
 	rtn = isp_pm_param_list_init((cmr_handle)pm_cxt_ptr, input, output);
 	if (ISP_SUCCESS != rtn) {
@@ -1714,6 +1707,8 @@ init_error_exit:
 		free(pm_cxt_ptr);
 		pm_cxt_ptr = PNULL;
 	}
+
+exit:
 	return PNULL;
 }
 

@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 #define LOG_TAG "isp_blk_cfg"
-#ifdef WIN32
-#include <memory.h>
-#include <string.h>
-#include <malloc.h>
-#include "cmr_types.h"
-#include "isp_type.h"
-#endif
+
 #include "isp_blocks_cfg.h"
-#include "isp_pm_com_type.h"
-#include "isp_com_alg.h"
-#include "smart_ctrl.h"
-#include <cutils/properties.h>
-#include "isp_video.h"
 
 struct isp_block_operations s_bright_ops = { _pm_brightness_init, _pm_brightness_set_param, _pm_brightness_get_param, PNULL, PNULL };
 struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_set_param, _pm_contrast_get_param, PNULL, PNULL };

@@ -16,13 +16,6 @@
 #ifndef _ISP_BLOCKS_CFG_H_
 #define _ISP_BLOCKS_CFG_H_
 
-#ifdef WIN32
-#include <memory.h>
-#include <string.h>
-#include <malloc.h>
-#include "isp_type.h"
-#endif
-
 #include "isp_pm_com_type.h"
 #include "isp_com_alg.h"
 #include "smart_ctrl.h"
