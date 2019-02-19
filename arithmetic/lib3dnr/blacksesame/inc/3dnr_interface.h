@@ -105,6 +105,7 @@ int threednr_deinit();
 int threednr_callback();
 int threednr_setstop_flag();
 int threednr_set_platform_flag(int iflag);
+int threednr_setparams(int thr[4], int slp[4]);
 
 #ifdef __cplusplus
 }
