@@ -4287,6 +4287,18 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 				ISP_DEV_SET_PDAF_TYPE2_CFG, &vch2_info, 0);
 	}
 	if (pdaf_info && in_ptr->pdaf_enable
+		&& SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support  ) {
+		vch2_info.bypass = pdaf_info->vch2_info.bypass;
+		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
+		vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
+		vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
+		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
+				vch2_info.bypass, vch2_info.vch2_vc,
+				vch2_info.vch2_data_type, vch2_info.vch2_mode);
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+				ISP_DEV_SET_PDAF_TYPE3_CFG, &vch2_info, 0);
+	}
+	if (pdaf_info && in_ptr->pdaf_enable
 		&& SENSOR_DUAL_PDAF_ENABLE == cxt->pdaf_cxt.pdaf_support  ) {
 		vch2_info.bypass = pdaf_info->vch2_info.bypass;
 		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;

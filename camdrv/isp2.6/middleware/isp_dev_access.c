@@ -495,6 +495,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	case ISP_DEV_SET_PDAF_TYPE2_CFG:
 		ret = dcam_u_pdaf_type2_block(cxt->isp_driver_handle, param0);
 		break;
+	case ISP_DEV_SET_PDAF_TYPE3_CFG:
+		ret = dcam_u_pdaf_type3_block(cxt->isp_driver_handle, param0);
+		break;
 	case ISP_DEV_SET_DUAL_PDAF_CFG:
 		ret = dcam_u_dual_pdaf_block(cxt->isp_driver_handle, param0);
 		break;

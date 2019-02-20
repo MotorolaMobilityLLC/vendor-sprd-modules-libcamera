@@ -129,6 +129,8 @@ cmr_s32 dcam_u_pdaf_ppi_info(cmr_handle handle, void *ppi_info);
 cmr_s32 dcam_u_pdaf_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_pdaf_type1_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_pdaf_type2_block(cmr_handle handle, void *block_info);
+cmr_s32 dcam_u_pdaf_type3_block(cmr_handle handle, void *block_info);
+
 cmr_s32 dcam_u_dual_pdaf_block(cmr_handle handle, void *block_info);
 
 cmr_s32 isp_u_bchs_block(cmr_handle handle, void *block_info);
