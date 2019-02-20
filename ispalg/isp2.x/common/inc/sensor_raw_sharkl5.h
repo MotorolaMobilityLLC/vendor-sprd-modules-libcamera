@@ -356,6 +356,7 @@ struct sensor_yuv_noisefilter_adv {
 
 struct sensor_yuv_noisefilter_level {
 	cmr_u32 noisefilter_shape_mode;
+	cmr_u32 noisefilter_random_seed_mode;
 	struct sensor_yuv_noisefilter_gaussian yuv_noisefilter_gaussian;
 	struct sensor_yuv_noisefilter_adv yuv_noisefilter_adv;
 	cmr_u32 bypass;
