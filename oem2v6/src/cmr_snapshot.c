@@ -407,90 +407,6 @@ exit:
 }*/
 cmr_int snp_proc_copy_frame(cmr_handle snp_handle, void *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-#ifdef CONFIG_MULTI_CAP_MEM
-    struct frm_info *chn_data_ptr = (struct frm_info *)data;
-    struct snp_context *cxt = (struct snp_context *)snp_handle;
-    struct snp_proc_param *proc_param_ptr = &cxt->req_param.post_proc_setting;
-    struct frm_info chn_data;
-    unsigned long src_vir, dst_vir;
-
-    if (1 != cxt->req_param.is_video_snapshot &&
-        1 != cxt->req_param.is_zsl_snapshot) {
-        cmr_u32 width =
-            cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
-        cmr_u32 height =
-            cxt->req_param.post_proc_setting.chn_out_frm[0].size.height;
-        cmr_u32 act_width =
-            cxt->req_param.post_proc_setting.actual_snp_size.width;
-        cmr_u32 act_height =
-            cxt->req_param.post_proc_setting.actual_snp_size.height;
-
-        memcpy(&chn_data, data, sizeof(struct frm_info));
-        chn_data.base = CMR_CAP0_ID_BASE;
-        chn_data.frame_id = CMR_CAP0_ID_BASE;
-        if (1 == cxt->req_param.is_zsl_snapshot) {
-            chn_data.base = CMR_CAP1_ID_BASE;
-            chn_data.frame_id = CMR_CAP1_ID_BASE;
-        }
-        chn_data.yaddr =
-            cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
-        chn_data.uaddr =
-            cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
-
-        if (IMG_DATA_TYPE_RAW == chn_data_ptr->fmt) {
-            cmr_u32 raw_pixel_width = 0;
-
-            raw_pixel_width = cxt->sensor_info.sn_interface.pixel_width;
-            src_vir = (unsigned long)chn_data.yaddr_vir;
-            dst_vir =
-                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
-                    .addr_vir.addr_y;
-            CMR_LOGD("raw y src_vir = %lx dst_vir = %lx width %d height %d "
-                     "channel_zoom_mode %ld",
-                     src_vir, dst_vir, width, height,
-                     proc_param_ptr->channel_zoom_mode);
-            CMR_LOGD("raw_pixel_width=%d", raw_pixel_width);
-            cmr_copy((void *)dst_vir, (void *)src_vir,
-                     width * height * raw_pixel_width / 8);
-        } else {
-            src_vir = (unsigned long)chn_data.yaddr_vir;
-            dst_vir =
-                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
-                    .addr_vir.addr_y;
-            CMR_LOGD("y src_vir = %lx dst_vir = %lx width %d height %d "
-                     "channel_zoom_mode %ld",
-                     src_vir, dst_vir, width, height,
-                     proc_param_ptr->channel_zoom_mode);
-            cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
-
-            if (ZOOM_POST_PROCESS == proc_param_ptr->channel_zoom_mode) {
-                src_vir = (unsigned long)chn_data.yaddr_vir + width * height;
-            } else if (ZOOM_POST_PROCESS_WITH_TRIM ==
-                       proc_param_ptr->channel_zoom_mode) {
-                src_vir = (unsigned long)chn_data.yaddr_vir +
-                          proc_param_ptr->max_size.width *
-                              proc_param_ptr->max_size.height;
-            } else {
-                src_vir =
-                    (unsigned long)chn_data.yaddr_vir + act_width * act_height;
-            }
-
-            dst_vir =
-                (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
-                    .addr_vir.addr_u;
-            CMR_LOGD("uv src_vir = %lx dst_vir = %lx width %d height %d "
-                     "act_width %d act_height %d",
-                     src_vir, dst_vir, width, height, act_width, act_height);
-
-            cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
-        }
-
-        // for cache coherency
-        cmr_snapshot_memory_flush(
-            snp_handle, &cxt->req_param.post_proc_setting.chn_out_frm[0]);
-    }
-    CMR_LOGD("done");
-#endif
     return ret;
 }
 cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
@@ -4208,7 +4124,6 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     property_get("debug.camera.save.snpfile", value, "0");
     if (atoi(value) == 1 || atoi(value) == 100 || (atoi(value) & (1 << 1))) {
         struct camera_context *cam_ctx = cxt->oem_handle;
-        cmr_u32 image_size = 0;
         cmr_u32 image_width = 0;
         cmr_u32 image_height = 0;
         image_width =
@@ -4217,17 +4132,12 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
         image_height =
             chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
                 .size.height;
-        image_size = image_width * image_height * 3 / 2;
         dump_image(
-            "snp_post_proc_for_yuv", IMG_DATA_TYPE_YUV420,
-            chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
-                .size.width,
-            chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
-                .size.height,
-            SNP_CHN_OUT_DATA,
+            "snp_post_proc_for_yuv", IMG_DATA_TYPE_YUV420, image_width,
+            image_height, SNP_CHN_OUT_DATA,
             &chn_param_ptr->chn_frm[chn_data_ptr->frame_id - chn_data_ptr->base]
                  .addr_vir,
-            image_size);
+            image_width * image_height * 3 / 2);
     }
 
     if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {

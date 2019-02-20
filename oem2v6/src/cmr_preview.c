@@ -4233,32 +4233,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 return CMR_CAMERA_NO_MEM;
             }
         }
-
-#ifdef CONFIG_MULTI_CAP_MEM
-        if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-             IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-            is_normal_cap) {
-            mem_ops->alloc_mem(CAMERA_SNAPSHOT_PATH, handle->oem_handle,
-                               &channel_buffer_size, &cap_sum,
-                               prev_cxt->cap_phys_addr_path_array,
-                               prev_cxt->cap_virt_addr_path_array,
-                               prev_cxt->cap_fd_path_array);
-
-            /*check memory valid*/
-            CMR_LOGD("CAMERA_SNAPSHOT_PATH mem size 0x%x, mem_num %d",
-                     channel_buffer_size, cap_sum);
-            for (i = 0; i < cap_sum; i++) {
-                CMR_LOGD("%d, virt_addr 0x%lx, fd 0x%x", i,
-                         prev_cxt->cap_virt_addr_path_array[i],
-                         prev_cxt->cap_fd_path_array[i]);
-                if ((0 == prev_cxt->cap_virt_addr_path_array[i]) ||
-                    (0 == prev_cxt->cap_fd_path_array[i])) {
-                    CMR_LOGE("CAMERA_SNAPSHOT_PATH memory is invalid");
-                    return CMR_CAMERA_NO_MEM;
-                }
-            }
-        }
-#endif
     }
 
     /*arrange the buffer*/
@@ -4479,35 +4453,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         buffer->addr_vir[i].addr_y = prev_cxt->cap_frm[i].addr_vir.addr_y;
         buffer->addr_vir[i].addr_u = prev_cxt->cap_frm[i].addr_vir.addr_u;
         buffer->fd[i] = prev_cxt->cap_frm[i].fd;
-
-#ifdef CONFIG_MULTI_CAP_MEM
-        if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-             IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-            is_normal_cap /* && i > 0*/) {
-            /*prev_cxt->cap_frm[i].addr_phy.addr_y =
-            prev_cxt->cap_phys_addr_path_array[i];
-            prev_cxt->cap_frm[i].addr_phy.addr_u =
-            prev_cxt->cap_frm[i].addr_phy.addr_y + buffer_size;
-            prev_cxt->cap_frm[i].addr_phy.addr_v = 0;
-            prev_cxt->cap_frm[i].addr_vir.addr_y =
-            prev_cxt->cap_virt_addr_path_array[i];
-            prev_cxt->cap_frm[i].addr_vir.addr_u =
-            prev_cxt->cap_frm[i].addr_vir.addr_y + buffer_size;
-            prev_cxt->cap_frm[i].addr_vir.addr_v = 0;
-
-            buffer->addr[i].addr_y = prev_cxt->cap_frm[i].addr_phy.addr_y;
-            buffer->addr[i].addr_u = prev_cxt->cap_frm[i].addr_phy.addr_u;
-            buffer->addr_vir[i].addr_y = prev_cxt->cap_frm[i].addr_vir.addr_y;
-            buffer->addr_vir[i].addr_u = prev_cxt->cap_frm[i].addr_vir.addr_u;*/
-
-            buffer->addr[i].addr_y = prev_cxt->cap_phys_addr_path_array[i];
-            buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
-            buffer->addr_vir[i].addr_y = prev_cxt->cap_virt_addr_path_array[i];
-            buffer->addr_vir[i].addr_u =
-                buffer->addr_vir[i].addr_y + channel_size;
-            buffer->fd[i] = prev_cxt->cap_fd_path_array[i];
-        }
-#endif
     }
 
     buffer->length = frame_size;
@@ -4546,21 +4491,6 @@ cmr_int prev_free_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                  mem_ops->free_mem);
         return CMR_CAMERA_INVALID_PARAM;
     }
-
-#ifdef CONFIG_MULTI_CAP_MEM
-    if (0 != prev_cxt->cap_phys_addr_path_array[0] && !is_restart) {
-        mem_ops->free_mem(CAMERA_SNAPSHOT_PATH, handle->oem_handle,
-                          prev_cxt->cap_phys_addr_path_array,
-                          prev_cxt->cap_virt_addr_path_array,
-                          prev_cxt->cap_fd_path_array, cap_sum);
-        cmr_bzero(prev_cxt->cap_phys_addr_path_array,
-                  CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
-        cmr_bzero(prev_cxt->cap_virt_addr_path_array,
-                  CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
-        cmr_bzero(prev_cxt->cap_fd_path_array,
-                  CMR_CAPTURE_MEM_SUM * sizeof(cmr_s32));
-    }
-#endif
 
     if (0 == prev_cxt->cap_fd_array[0]) {
         CMR_LOGE("already freed");

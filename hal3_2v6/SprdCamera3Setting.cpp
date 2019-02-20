@@ -426,7 +426,7 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_3M)
     {2048, 1536},
 #elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_2M_1080P)
-    {1920, HEIGHT_2M},
+    {1920, 1080},
 #elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_2M)
     {1600, 1200},
 #elif defined(CONFIG_BACK_EXT2_CAMERA_SUPPORT_0M3)
@@ -452,7 +452,7 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_3M)
     {2048, 1536},
 #elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_2M_1080P)
-    {1920, HEIGHT_2M},
+    {1920, 1080},
 #elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_2M)
     {1600, 1200},
 #elif defined(CONFIG_FRONT_EXT2_CAMERA_SUPPORT_0M3)

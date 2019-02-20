@@ -1280,7 +1280,8 @@ enum cmr_flash_mode {
  * and can do power and other things.
  */
 enum sprd_camera_app_mode {
-    CAMERA_MODE_AUTO_PHOTO = 0,
+    CAMERA_MODE_NONE = 0,
+    CAMERA_MODE_AUTO_PHOTO,
     CAMERA_MODE_MANUAL,
     CAMERA_MODE_CONTINUE,
     CAMERA_MODE_INTERVAL,

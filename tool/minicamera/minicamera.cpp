@@ -108,9 +108,9 @@ static void usage(void) {
         "minicamera -cameraid camera_id -w preview_width -h "
         "preview_height [-fps framerate] [-dump_cnt n] [--loop]\n"
         "for example:\n"
-        "minicamera -cameraid 1 -w 1280 -h 720\n"
-        "minicamera -cameraid 1 -w 1280 -h 720 -fps 10\n"
-        "minicamera -cameraid 1 -w 1280 -h 720 -fps 10 -dump_cnt 15 --loop\n");
+        "minicamera -cameraid 0 -w 1280 -h 720\n"
+        "minicamera -cameraid 0 -w 1280 -h 720 -fps 10\n"
+        "minicamera -cameraid 0 -w 1280 -h 720 -fps 10 -dump_cnt 15 --loop\n");
 }
 
 static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
