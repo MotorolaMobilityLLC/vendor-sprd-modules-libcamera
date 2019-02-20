@@ -2183,8 +2183,9 @@ static int camera_thread_loop(void *arg)
 			break;
 		}
 	}
+	pr_info("%s thread stop.\n", thrd->thread_name);
 	complete(&thrd->thread_stop_com);
-	pr_info("%s thread stopped.\n", thrd->thread_name);
+
 	return 0;
 }
 
