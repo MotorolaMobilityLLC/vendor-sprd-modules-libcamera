@@ -1457,6 +1457,9 @@ static void *cmr_grab_thread_proc(void *data) {
                 statis_info.mfd = op.parm.frame.mfd;
                 statis_info.sec = op.parm.frame.sec;
                 statis_info.usec = op.parm.frame.usec;
+		 statis_info.monoboottime = op.parm.frame.monoboottime;
+		 statis_info.is_last_frm = op.parm.frame.reserved[0];
+		 statis_info.time_diff = op.parm.frame.reserved[1];
                 statis_info.frame_id = op.parm.frame.frame_id;
                 statis_info.zoom_ratio = op.parm.frame.zoom_ratio;
                 statis_info.dac_info = op.parm.frame.dac_info;
@@ -1478,6 +1481,9 @@ static void *cmr_grab_thread_proc(void *data) {
                 irq_info.irq_property = op.parm.frame.irq_property;
                 irq_info.sec = op.parm.frame.sec;
                 irq_info.usec = op.parm.frame.usec;
+                irq_info.monoboottime = op.parm.frame.monoboottime;
+                irq_info.is_last_frm = op.parm.frame.reserved[0];
+                irq_info.time_diff = op.parm.frame.reserved[1];
                 irq_info.frame_id = op.parm.frame.frame_id;
 
                 pthread_mutex_lock(&p_grab->cb_mutex);

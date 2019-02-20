@@ -1886,7 +1886,7 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, struct cmr_ms
 	return ret;
 }
 
-cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
+cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1899,12 +1899,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	cmr_u32 awb_mode = 0;
 	struct afl_ctrl_proc_out afl_info = {0, 0};
 	cmr_int nxt_flicker = 0;
+	struct isp_u_irq_info *irq_info = (struct isp_u_irq_info *)data;
 
 	memset(&gain, 0, sizeof(gain));
 	memset(&cur_gain, 0, sizeof(cur_gain));
 	memset(&afl_info, 0, sizeof(afl_info));
 
-	if (cxt->ae_cxt.sw_bypass) {
+	if (cxt->ae_cxt.sw_bypass || !irq_info) {
 		return ret;
 	}
 
@@ -1966,6 +1967,9 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 
 	in_param.sec = cxt->ae_cxt.time.sec;
 	in_param.usec = cxt->ae_cxt.time.usec;
+	in_param.monoboottime = irq_info->monoboottime;
+	in_param.is_last_frm = irq_info->is_last_frm;
+	in_param.time_diff = irq_info->time_diff;
 	in_param.is_update = cxt->aem_is_update;
 	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
 	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
@@ -2449,14 +2453,14 @@ exit:
 	return ret;
 }
 
-cmr_int ispalg_ae_process(cmr_handle isp_alg_handle)
+cmr_int ispalg_ae_process(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
-	ret = ispalg_start_ae_process((cmr_handle) cxt);
+	ret = ispalg_start_ae_process((cmr_handle) cxt, data);
 exit:
 
 	return ret;
@@ -2992,7 +2996,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ai_process((cmr_handle)cxt);
 		if (cxt->is_multi_mode == ISP_DUAL_SBS) {
 			if (!cxt->is_master) {
-				ret = ispalg_ae_process((cmr_handle) cxt);
+				ret = ispalg_ae_process((cmr_handle) cxt, message->data);
 				if (ret)
 					ISP_LOGE("fail to start ae process");
 				ret = ispalg_handle_sensor_sof((cmr_handle) cxt, message->data);
@@ -3001,14 +3005,14 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_CTRL_EVT_SW_AE:
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message);
-		ret = ispalg_ae_process((cmr_handle) cxt);
+		ret = ispalg_ae_process((cmr_handle) cxt, message->data);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
 		ret = ispalg_handle_sw_isp_aem(cxt,
 				ISP_PM_CMD_GET_ISP_SETTING);
 		break;
 	case ISP_CTRL_EVT_SOF:
-		ret = ispalg_ae_process((cmr_handle) cxt);
+		ret = ispalg_ae_process((cmr_handle) cxt, message->data);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
 		ret = ispalg_awb_process((cmr_handle) cxt);
@@ -4396,6 +4400,7 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
 	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
 	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
+	ae_param.resolution_info.snr_setting_max_fps = param_ptr->sensor_fps.max_fps;
 	ae_param.is_snapshot = param_ptr->is_snapshot;
 	ae_param.dv_mode = param_ptr->dv_mode;
 

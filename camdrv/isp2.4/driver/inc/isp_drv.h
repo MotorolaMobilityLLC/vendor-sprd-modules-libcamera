@@ -73,12 +73,17 @@ struct isp_statis_info {
 	cmr_u32 sec;
 	cmr_u32 usec;
 	cmr_s64 monoboottime;
+	cmr_u32 is_last_frm;
+	cmr_s32 time_diff;
 };
 
 struct isp_u_irq_info {
 	cmr_s32 frame_id;
 	cmr_u32 sec;
 	cmr_u32 usec;
+	cmr_s64 monoboottime;
+	cmr_u32 is_last_frm;
+	cmr_s32 time_diff;
 };
 
 enum isp_fetch_format {
