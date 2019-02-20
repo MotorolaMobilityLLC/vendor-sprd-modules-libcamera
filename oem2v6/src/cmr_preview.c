@@ -838,9 +838,6 @@ static cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param);
 
 static cmr_int prev_fd_ctrl(struct prev_handle *handle, cmr_u32 camera_id,
                             cmr_u32 on_off);
-static cmr_int prev_ai_scene_start(struct prev_handle *handle);
-
-static cmr_int prev_ai_scene_stop(struct prev_handle *handle);
 
 static cmr_int prev_ai_scene_send_data(struct prev_handle *handle,
                                        cmr_u32 camera_id, struct img_frm *frm,
@@ -3365,11 +3362,6 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->prev_param.is_support_fd) {
             prev_fd_open(handle, camera_id);
         }
-
-        /*start ai scene*/
-        if (cxt->ipm_cxt.ai_scene_inited) {
-            prev_ai_scene_start(handle);
-        }
     }
 
 exit:
@@ -3491,11 +3483,6 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         /*deinit fd*/
         if (prev_cxt->prev_param.is_support_fd) {
             prev_fd_close(handle, camera_id);
-        }
-
-        /*stop ai scene*/
-        if (cxt->ipm_cxt.ai_scene_inited) {
-            prev_ai_scene_stop(handle);
         }
     }
 
@@ -13879,56 +13866,6 @@ cmr_int prev_fd_ctrl(struct prev_handle *handle, cmr_u32 camera_id,
         prev_fd_open(handle, camera_id);
     }
 
-    return ret;
-}
-
-cmr_int prev_ai_scene_start(struct prev_handle *handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct common_isp_cmd_param isp_cmd_parm;
-    cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
-    CHECK_HANDLE_VALID(handle);
-
-    CMR_LOGI("start");
-
-    if (!handle->ops.isp_ioctl) {
-        CMR_LOGE("ops isp_ioctl is null");
-        ret = CMR_CAMERA_FAIL;
-        goto exit;
-    }
-
-    ret = handle->ops.isp_ioctl(handle->oem_handle, COM_ISP_SET_AI_SCENE_START,
-                                &isp_cmd_parm);
-    if (ret) {
-        CMR_LOGE("failed to start ai scene %ld", ret);
-        goto exit;
-    }
-exit:
-    CMR_LOGI("end");
-    return ret;
-}
-
-cmr_int prev_ai_scene_stop(struct prev_handle *handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct common_isp_cmd_param isp_cmd_parm;
-    cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
-    CHECK_HANDLE_VALID(handle);
-
-    CMR_LOGI("start");
-    if (!handle->ops.isp_ioctl) {
-        CMR_LOGE("ops isp_ioctl is null");
-        ret = CMR_CAMERA_FAIL;
-        goto exit;
-    }
-
-    ret = handle->ops.isp_ioctl(handle->oem_handle, COM_ISP_SET_AI_SCENE_STOP,
-                                &isp_cmd_parm);
-    if (ret) {
-        CMR_LOGE("failed to stop ai scene %ld", ret);
-        goto exit;
-    }
-
-exit:
-    CMR_LOGI("end");
     return ret;
 }
 
