@@ -756,6 +756,13 @@ static cmr_u32 _awb_flash_snopshot_recovery(struct awb_ctrl_cxt *cxt, void *para
 	cxt->flash_info.main_flash_enable = 1;
 	cxt->lock_info.lock_flash_frame = 10;
 
+	cxt->recover_gain.r = cxt->lock_info.lock_gain.r;
+	cxt->recover_gain.g = cxt->lock_info.lock_gain.g;
+	cxt->recover_gain.b = cxt->lock_info.lock_gain.b;
+	cxt->recover_ct = cxt->cur_ct;
+
+	ISP_LOGV("Reset recgain for frames after flashing: (%d,%d,%d) %dK", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_ct);
+
 	return rtn;
 }
 
