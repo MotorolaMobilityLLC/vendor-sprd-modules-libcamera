@@ -1477,6 +1477,13 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                  stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
+                if ((176 == stream_info[i].stream_sizes_tbl.width) &&
+                    (HAL_PIXEL_FORMAT_BLOB == scaler_formats[j])) {
+                    CMR_LOGI("skip %d x %d",
+                             stream_info[i].stream_sizes_tbl.width,
+                             stream_info[i].stream_sizes_tbl.height);
+                    continue;
+                }
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
