@@ -82,9 +82,6 @@
 
 /* TODO: need to pass the num to driver by hal */
 #define CAP_NUM_COMMON 1
-#define CAP_NUM_HDR 3
-#define CAP_NUM_FLASH 1
-
 
 enum camera_module_state {
 	CAM_INIT = 0,
@@ -996,8 +993,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 				if (atomic_read(&module->capture_frames_dcam) > 0)
 					atomic_dec_return(&module->capture_frames_dcam);
 
-			} else if ((module->dcam_cap_status == DCAM_CAPTURE_START_HDR)||
-						(module->dcam_cap_status == DCAM_CAPTURE_START_WITH_FLASH)) {
+			} else if (module->dcam_cap_status == DCAM_CAPTURE_START_FROM_NEXT_SOF) {
 
 				if (pframe->boot_sensor_time < module->capture_times) {
 
@@ -4027,16 +4023,10 @@ static int img_ioctl_start_capture(
 
 	/* recognize the capture scene */
 
-	if (param.type == DCAM_CAPTURE_START_HDR ) {
-		module->dcam_cap_status = DCAM_CAPTURE_START_HDR;
-		atomic_set(&module->capture_frames_dcam, CAP_NUM_HDR);
+	if (param.type == DCAM_CAPTURE_START_FROM_NEXT_SOF ) {
+		module->dcam_cap_status = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+		atomic_set(&module->capture_frames_dcam, param.cap_cnt);
 		module->capture_times = start_time;
-
-	} else if (param.type == DCAM_CAPTURE_START_WITH_FLASH ) {
-		module->dcam_cap_status = DCAM_CAPTURE_START_WITH_FLASH;
-		atomic_set(&module->capture_frames_dcam, CAP_NUM_FLASH);
-		module->capture_times = param.timestamp;
-
 
 	} else if (param.type == DCAM_CAPTURE_START_WITH_TIMESTAMP) {
 		module->dcam_cap_status = DCAM_CAPTURE_START_WITH_TIMESTAMP;
@@ -4074,7 +4064,7 @@ static int img_ioctl_start_capture(
 	}
 
 	pr_info("cam %d start capture type %d, cnt %d, time %lld\n",
-		module->idx, param.type, param.cnr_cnt, module->capture_times);
+		module->idx, param.type, param.cap_cnt, module->capture_times);
 	return ret;
 }
 

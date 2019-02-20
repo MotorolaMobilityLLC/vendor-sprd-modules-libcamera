@@ -219,6 +219,7 @@ enum dcam_capture_status {
 	DCAM_CAPTURE_START_3DNR,
 	DCAM_CAPTURE_START_WITH_TIMESTAMP,
 	DCAM_CAPTURE_START_4IN1_LOWLUX,
+	DCAM_CAPTURE_START_FROM_NEXT_SOF,
 	DCAM_CAPTURE_NONE,
 	DCAM_CAPTURE_MAX
 };
@@ -760,7 +761,7 @@ struct sprd_img_3dnr_param {
 #pragma pack(push, 4)
 struct sprd_img_capture_param {
 	uint32_t type;
-	uint32_t cnr_cnt;
+	uint32_t cap_cnt;/* frame num for DCAM_CAPTURE_START_FROM_NEXT_SOF */
 	int64_t  timestamp;
 };
 #pragma pack(pop)
