@@ -4385,7 +4385,7 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].sprddefInfo.ai_scene_enabled =
                 frame_settings.find(ANDROID_SPRD_AI_SCENE_ENABLED).data.u8[0];
             pushAndroidParaTag(ANDROID_SPRD_AI_SCENE_ENABLED);
-            HAL_LOGV("availabe_ai_scene %d",
+            HAL_LOGV("ai_scene_enabled %d",
                      s_setting[mCameraId].sprddefInfo.ai_scene_enabled);
         }
     }

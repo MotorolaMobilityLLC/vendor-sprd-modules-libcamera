@@ -3702,8 +3702,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.multi_mode = ISP_SINGLE;
     }
 
-    if(cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK||
-        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK){
+    if (cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
+        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK) {
         isp_param.is_faceId_unlock = 1;
     }
 
@@ -7979,10 +7979,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param = param_ptr->cmd_value;
         break;
     case COM_ISP_SET_AI_SCENE_START:
+        CMR_LOGI("COM_ISP_SET_AI_SCENE_START");
         isp_cmd = ISP_CTRL_AI_PROCESS_START;
         isp_param = param_ptr->cmd_value;
         break;
     case COM_ISP_SET_AI_SCENE_STOP:
+        CMR_LOGI("COM_ISP_SET_AI_SCENE_STOP");
         isp_cmd = ISP_CTRL_AI_PROCESS_STOP;
         isp_param = param_ptr->cmd_value;
         break;
@@ -8303,8 +8305,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
                 goto exit;
             }
             CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-            if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
-                setting_param.camera_id == 0) {
+            if (setting_param.camera_id == 0) {
                 if (!cxt->ipm_cxt.ai_scene_inited) {
                     struct ipm_open_in in_param;
                     struct ipm_open_out out_param;
@@ -11146,7 +11147,8 @@ cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
     }
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
     isp_param.camera_id = cxt->camera_id;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CALIBRATION_VCMINFO, &isp_param);
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CALIBRATION_VCMINFO,
+                           &isp_param);
     if (ret) {
         CMR_LOGE("get isp vcm range error %ld", ret);
         goto exit;

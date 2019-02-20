@@ -3922,9 +3922,9 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
 #endif
 
         /*start ai scene*/
-        /* if (cxt->ipm_cxt.ai_scene_inited) {
-             prev_ai_scene_start(handle);
-         }*/
+        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable) {
+            prev_ai_scene_start(handle);
+        }
     }
 #if defined(CONFIG_CAMERA_PDAF)
     if (pdaf_enable) {
@@ -4051,7 +4051,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
             prev_3dnr_close(handle, camera_id);
         }
         /*stop ai scene*/
-        if (cxt->ipm_cxt.ai_scene_inited) {
+        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable) {
             prev_ai_scene_stop(handle);
         }
     }
