@@ -144,6 +144,7 @@ typedef enum {
 	SHARKL5_SW3DNR = 0x45,
 	SHARKL5_CNR20 = 0x46,
 	SHARKL5_IIRCNR = 0x47,
+	SHARKL5_NOISEFILTER = 0x48,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -923,7 +924,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[ISP_BLK_IIRCNR_T] = 1;
 			break;
 		}
-	case V21NOISEFILTER:
+	case SHARKL5_NOISEFILTER:
 		{
 			static cmr_u32 yuv_noisefilter_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -1238,9 +1239,9 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
 			break;
 		}
-	case V21NOISEFILTER:
+	case SHARKL5_NOISEFILTER:
 		{
-			data_head_ptr->sub_type = V21NOISEFILTER;
+			data_head_ptr->sub_type = SHARKL5_NOISEFILTER;
 			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
