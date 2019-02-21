@@ -40,6 +40,7 @@ static cmr_u32 _pm_yuv_noisefilter_convert_param(
 		dst_ptr->cur.yrandom_bypass = yuv_noisefilter_param[strength_level].bypass;
 
 		dst_ptr->cur.shape_mode = yuv_noisefilter_param[strength_level].noisefilter_shape_mode;
+		dst_ptr->cur.yrandom_mode = yuv_noisefilter_param[strength_level].noisefilter_random_seed_mode;
 
 		for (i = 0; i < 4; i++) {
 			dst_ptr->cur.yrandom_seed[i] = yuv_noisefilter_param[strength_level].yuv_noisefilter_gaussian.random_seed[i];
