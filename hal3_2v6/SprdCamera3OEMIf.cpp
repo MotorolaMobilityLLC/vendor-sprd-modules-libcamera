@@ -84,7 +84,7 @@ namespace sprdcamera {
 #define CAP_START_TIMEOUT 5000000000     /* 5000ms*/
 #define PREV_STOP_TIMEOUT 3000000000     /* 3000ms*/
 #define CANCEL_AF_TIMEOUT 500000000      /*1000ms*/
-#define PIPELINE_START_TIMEOUT 500000000 /*5s*/
+#define PIPELINE_START_TIMEOUT 5000000000 /*5s*/
 
 #define SET_PARAMS_TIMEOUT 250 /*250 means 250*10ms*/
 #define ON_OFF_ACT_TIMEOUT 50  /*50 means 50*10ms*/

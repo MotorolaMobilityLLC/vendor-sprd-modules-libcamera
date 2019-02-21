@@ -6255,6 +6255,8 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 is_raw_capture = 0;
+    char value[PROPERTY_VALUE_MAX];
     struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 
     CHECK_HANDLE_VALID(handle);
@@ -6354,8 +6356,14 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+
     if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
-        if (handle->prev_cxt[camera_id].prev_param.tool_eb) {
+        if (handle->prev_cxt[camera_id].prev_param.tool_eb &&
+            is_raw_capture == 1) {
             ret = prev_set_cap_param_raw(handle, camera_id, is_restart,
                                          out_param_ptr);
         } else {
