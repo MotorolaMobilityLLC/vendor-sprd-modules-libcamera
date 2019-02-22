@@ -366,11 +366,17 @@ extern "C" {
 		cmr_u32 effect_index[4];
 		/*for debug*/
 		cmr_s8 history_param[8 * 1024];
+		cmr_s16 ae_comp_value;
+		cmr_u16 flash_backup_aebaseidx;
 		/* backup for ev*/
 		struct ae_ev_param flash_ev_backup;
 		cmr_u32 is_faceId_unlock;
 		cmr_u32 face_lock_table_index;
 		cmr_u32 end_id;
+		/* aelock, env change detection */
+		cmr_u32 env_cum_changedCalc_delay_cnt;
+		cmr_u32 env_cum_changed;
+		cmr_s16 previous_lum;
 	};
 
 #endif
