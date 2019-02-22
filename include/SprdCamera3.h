@@ -192,7 +192,7 @@ static tags_info_t
         {"sprd3AvailableSensorSelfShot", TYPE_INT32},
         {"sprd3BlurCircleSize", TYPE_INT32},
         {"maxPreviewSize", TYPE_INT32},
-        {"sprd3BlurSensorRotation", TYPE_INT32},
+        {"sprd3DeviceOrientation", TYPE_INT32},
         {"sprdHdrPlusEnabled", TYPE_BYTE},
         {"sprdAppmodeId", TYPE_INT32},
         {"sprdFixedFpsEnabled", TYPE_BYTE},

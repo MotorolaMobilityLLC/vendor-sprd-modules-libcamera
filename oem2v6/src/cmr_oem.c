@@ -3561,7 +3561,6 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     CHECK_HANDLE_VALID(data);
     CHECK_HANDLE_VALID(ipm_cxt);
 
-
     is_filter = cxt->snp_cxt.filter_type;
     if (cxt->is_cnr || is_filter) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
@@ -8680,6 +8679,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED:
         setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_SET_DEVICE_ORIENTATION:
+        setting_param.cmd_type_value = param;
+        CMR_LOGD("frame_num %u", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;

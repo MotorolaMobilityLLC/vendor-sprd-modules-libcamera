@@ -365,6 +365,7 @@ typedef struct {
     uint8_t availabe_ai_scene;
     uint8_t sprd_ai_scene_type_current;
     uint8_t availabe_sensor_type;
+    uint32_t device_orietation;
 } SPRD_DEF_Tag;
 
 typedef struct {
