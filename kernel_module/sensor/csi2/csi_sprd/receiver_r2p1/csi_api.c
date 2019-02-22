@@ -336,6 +336,7 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id, int 
 			reg_mwr(0x323f0000 + 0x58, BIT_26, BIT_26);  //CSI force S shutdownz
 			reg_mwr(0x323f0000 + 0x58, BIT_28, BIT_28);  //CSI force shutdownz
 
+			/* config csi & phy connection, and set phy regs */
 			reg_mwr(0x62200030, 0x30007fff, 0x1b<<(dt_info->controller_id*6));
 
 			phy_write(dt_info->controller_id, 0x4d, 0x48);

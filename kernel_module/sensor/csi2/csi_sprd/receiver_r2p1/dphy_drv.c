@@ -860,19 +860,17 @@ int dphy_csi_match(struct csi_dt_node_info *dt_info)
 	pr_info("phyid:%d, csi_id:%d, select value:0x%x\n",
 					dt_info->phy_id, dt_info->controller_id, cphy_sel_val);
 
-	if (dt_info->controller_id != 2) {
-		cphy_sel_val = cphy_sel_val << (dt_info->controller_id*6);
-		/*regmap_update_bits(dt_info->syscon.mm_ahb,
+	if (dt_info->controller_id != 2)
+		regmap_update_bits(dt_info->syscon.mm_ahb,
 			dt_info->syscon.dphy_sel, dt_info->syscon.dphy_msk,
-			cphy_sel_val);*/
-		reg_mwr(0x62200030, 0x33<<(dt_info->controller_id*6),
-				cphy_sel_val);
-	} else {
-		/* regmap_update_bits(dt_info->syscon.mm_ahb,
+			(cphy_sel_val << (dt_info->controller_id*6)));
+	else
+		regmap_update_bits(dt_info->syscon.mm_ahb,
 			dt_info->syscon.dphy_sel, dt_info->syscon.dphy_msk,
-			rx2_sel_val); */
-		reg_mwr(0x62200030, 0x30003000, rx2_sel_val);
-	}
+			rx2_sel_val);
+
+	pr_info("0x62200030: 0x%x\n", reg_rd(0x62200030));
+
 	return 0;
 }
 
