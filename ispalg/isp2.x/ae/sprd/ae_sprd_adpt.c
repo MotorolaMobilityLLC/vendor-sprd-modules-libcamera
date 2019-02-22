@@ -4062,50 +4062,42 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}
 		src_exp.cur_index = cxt->last_index;
 		if((cxt->app_mode < 32)&&(cxt->app_mode >= 0)){
-			if(0 != cxt->mode_switch[cxt->app_mode].gain){
-				src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
-				src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
-				src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
-				src_exp.exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
-				src_exp.dummy = cxt->mode_switch[cxt->app_mode].dummy;
-				src_exp.cur_index = cxt->mode_switch[cxt->app_mode].table_idx;
-				src_exp.frm_len = cxt->mode_switch[cxt->app_mode].frm_len;
-				src_exp.frm_len_def = cxt->mode_switch[cxt->app_mode].frm_len_def;
-			}else{
-				if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
-					src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
-					src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
-					src_exp.gain = s_ae_manual[cxt->camera_id].gain;
-					src_exp.exp_time = s_ae_manual[cxt->camera_id].exp_time;
-					src_exp.dummy = s_ae_manual[cxt->camera_id].dummy;
-					src_exp.frm_len = s_ae_manual[cxt->camera_id].frm_len;
-					src_exp.frm_len_def = s_ae_manual[cxt->camera_id].frm_len_def;
-					src_exp.cur_index = s_ae_manual[cxt->app_mode].table_idx;
-				}
-				else if(0 != cxt->mode_switch[0].gain){
-					src_exp.target_offset = cxt->mode_switch[0].target_offset;
-					src_exp.exp_line = cxt->mode_switch[0].exp_line;
-					src_exp.gain = cxt->mode_switch[0].gain;
-					src_exp.exp_time = cxt->mode_switch[0].exp_time;
-					src_exp.dummy = cxt->mode_switch[0].dummy;
-					src_exp.frm_len = cxt->mode_switch[0].frm_len;
-					src_exp.frm_len_def = cxt->mode_switch[0].frm_len_def;
-					src_exp.cur_index = cxt->mode_switch[0].table_idx;
-					if(ae_target_lum){
-						cmr_u32 tmp_gain = 0;
-						cxt->last_cur_lum = cxt->last_cur_lum ? cxt->last_cur_lum : 1;
-						tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->last_cur_lum + 0.5);
-						if(tmp_gain > cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index]){
-							tmp_gain = cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index];
-							src_exp.exp_line = src_exp.exp_line * ae_target_lum * src_exp.gain / (tmp_gain * cxt->last_cur_lum);
-							max_exp = cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index];
-							if(src_exp.exp_line > max_exp)
-								src_exp.exp_line = max_exp;
-							src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
-						}
-						src_exp.gain = tmp_gain;
-						ISP_LOGD("exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
+			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
+			if(CAMERA_MODE_MANUAL == last_app_mode )
+				last_app_mode = 0;
+			if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
+				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
+				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
+				src_exp.gain = s_ae_manual[cxt->camera_id].gain;
+				src_exp.exp_time = s_ae_manual[cxt->camera_id].exp_time;
+				src_exp.dummy = s_ae_manual[cxt->camera_id].dummy;
+				src_exp.frm_len = s_ae_manual[cxt->camera_id].frm_len;
+				src_exp.frm_len_def = s_ae_manual[cxt->camera_id].frm_len_def;
+				src_exp.cur_index = s_ae_manual[cxt->app_mode].table_idx;
+			}
+			else if(0 != cxt->mode_switch[last_app_mode].gain){
+				src_exp.target_offset = cxt->mode_switch[last_app_mode].target_offset;
+				src_exp.exp_line = cxt->mode_switch[last_app_mode].exp_line;
+				src_exp.gain = cxt->mode_switch[last_app_mode].gain;
+				src_exp.exp_time = cxt->mode_switch[last_app_mode].exp_time;
+				src_exp.dummy = cxt->mode_switch[last_app_mode].dummy;
+				src_exp.frm_len = cxt->mode_switch[last_app_mode].frm_len;
+				src_exp.frm_len_def = cxt->mode_switch[last_app_mode].frm_len_def;
+				src_exp.cur_index = cxt->mode_switch[last_app_mode].table_idx;
+				if(ae_target_lum){
+					cmr_u32 tmp_gain = 0;
+					cxt->last_cur_lum = cxt->last_cur_lum ? cxt->last_cur_lum : 1;
+					tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->last_cur_lum + 0.5);
+					if(tmp_gain > cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index]){
+						tmp_gain = cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index];
+						src_exp.exp_line = src_exp.exp_line * ae_target_lum * src_exp.gain / (tmp_gain * cxt->last_cur_lum);
+						max_exp = cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index];
+						if(src_exp.exp_line > max_exp)
+							src_exp.exp_line = max_exp;
+						src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
 					}
+					src_exp.gain = tmp_gain;
+					ISP_LOGD("exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 				}
 			}
 
@@ -6056,7 +6048,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
                 ISP_LOGE("fail to malloc");
                 goto ERR_EXIT;
 	}
-	ISP_LOGI("is_multi_mode=%d\n", init_param->is_multi_mode);
+	ISP_LOGI("is_multi_mode=%d ebd_support=%d\n", init_param->is_multi_mode,init_param->ebd_support);
 
 	// parser ae otp info
 	ae_parser_otp_info(init_param);
