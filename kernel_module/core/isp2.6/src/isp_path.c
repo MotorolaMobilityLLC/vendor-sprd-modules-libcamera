@@ -40,7 +40,7 @@
 #define SHRINK_UV_UP_TH 240
 #define SHRINK_UV_DN_TH 16
 #define SHRINK_Y_OFFSET 16
-#define SHRINK_Y_RANGE 2
+#define SHRINK_Y_RANGE 3
 #define SHRINK_C_OFFSET 16
 #define SHRINK_C_RANGE 6
 
