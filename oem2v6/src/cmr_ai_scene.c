@@ -23,6 +23,10 @@
 
 #define SMALL_PIC_SIZE 228
 
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
 struct class_ai_scene {
     struct ipm_common common;
     cmr_uint small_width;
@@ -168,6 +172,7 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     struct img_frm src, dst;
     struct cmr_op_mean mean;
     cmr_u32 cur_frm_idx;
+    cmr_u32 crop_size;
     struct class_ai_scene *ai_scene_handle =
         (struct class_ai_scene *)class_handle;
     struct prev_ai_scene_info *info = NULL;
@@ -216,10 +221,11 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     src = in->src_frame;
     src.data_end.y_endian = 0;
     src.data_end.uv_endian = 0;
-    src.rect.start_x = 0;
-    src.rect.start_y = 0;
-    src.rect.width = in->src_frame.size.width;
-    src.rect.height = in->src_frame.size.height;
+    crop_size = min(in->src_frame.size.width, in->src_frame.size.height);
+    src.rect.start_x = (in->src_frame.size.width - crop_size + 1)>>1;
+    src.rect.start_y = (in->src_frame.size.height - crop_size + 1)>>1;
+    src.rect.width = crop_size;
+    src.rect.height = crop_size;
     memcpy(&dst, &src, sizeof(struct img_frm));
     dst.buf_size =
         ai_scene_handle->small_width * ai_scene_handle->small_height * 3 / 2;
