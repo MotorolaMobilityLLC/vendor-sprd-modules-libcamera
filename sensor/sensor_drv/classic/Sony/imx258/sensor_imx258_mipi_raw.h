@@ -572,7 +572,7 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info[VENDOR_NUM] = {
 #else
            .pdaf_supported = 0,
 #endif
-        .embedded_line_enable = 1,
+        .embedded_line_enable = 0,
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
@@ -592,7 +592,7 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info[VENDOR_NUM] = {
 #else
           .pdaf_supported = 0,
 #endif
-        .embedded_line_enable = 1,
+        .embedded_line_enable = 0,
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
@@ -612,7 +612,7 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info[VENDOR_NUM] = {
 #else
           .pdaf_supported = 0,
 #endif
-        .embedded_line_enable = 1,
+        .embedded_line_enable = 0,
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
