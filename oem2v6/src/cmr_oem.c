@@ -2169,9 +2169,9 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     CMR_LOGD("has_preflashed=%ld", has_preflashed);
 
     if (need_close_flash) {
-        prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
+        /* prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
                                         cxt->camera_id, flash_capture_skip_num,
-                                        has_preflashed);
+                                        has_preflashed); */
         setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_AFTER;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CTRL_FLASH, &setting_param);
