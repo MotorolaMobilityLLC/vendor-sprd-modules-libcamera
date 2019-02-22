@@ -15,6 +15,7 @@
  */
 
 #ifdef FEATRUE_ISP_FW_IOCTRL
+#include "awb.h"
 
 #define SEPARATE_GAMMA_IN_VIDEO
 #define VIDEO_GAMMA_INDEX                    (8)
@@ -58,6 +59,12 @@ static const char *SMART_START = "ISP_SMART_";
 static const char *SMART_END = "ISP_SMART_";
 static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
+static cmr_u8 awb_log_buff[256 * 1024] = {0};
+struct isp_awbsprd_lib_ops {
+	void *(*awb_init_v1) (struct awb_init_param *init_param, struct awb_rgb_gain *gain);
+	cmr_s32(*awb_calc_v1) (void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
+	cmr_s32(*awb_deinit_v1) (void *awb_handle);
+};
 
 static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 {
@@ -999,8 +1006,10 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		log.ver = 0;
 
 		off = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t);
+		if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
 		COPY_LOG(ae, AE);
 		COPY_LOG(af, AF);
+		}
 		COPY_LOG(aft, AFT);
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
@@ -2129,16 +2138,298 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 	return ISP_SUCCESS;
 }
 
+static cmr_int isp_sim_dump_awb_info(struct awb_init_param *init_param, struct awb_calc_param *calc_param, struct awb_rgb_gain *out_gain)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	FILE *fp = NULL;
+	char file_name[260] = { 0 };
+	char loop_cnt_str[10] = { 0 };
+
+	if (init_param == NULL || calc_param == NULL) {
+		ISP_LOGE("fail to awb param pointer.");
+		return ISP_ERROR;
+	}
+	ret = isp_sim_get_mipi_raw_file_name(file_name);
+	if (strlen(file_name)) {
+		sprintf(loop_cnt_str, ".%d", isp_video_get_simulation_loop_count());
+		strcat(file_name, loop_cnt_str);
+		strcat(file_name, ".awb.log");
+	} else {
+		ISP_LOGE("fail to get mipi raw file name.");
+		return ISP_ERROR;
+	}
+	CMR_LOGD("file name %s", file_name);
+	fp = fopen(file_name, "wb");
+	if (fp == NULL) {
+		ISP_LOGE("fail to open file");
+		return ISP_ERROR;
+	}
+
+	fprintf(fp, "1.input awb init param:\n");
+	fprintf(fp, "stat_w:%d\n", init_param->stat_w);
+	fprintf(fp, "stat_h:%d\n", init_param->stat_h);
+	fprintf(fp, "otp_random_r:%d\n", init_param->otp_random_r);
+	fprintf(fp, "otp_random_g:%d\n", init_param->otp_random_g);
+	fprintf(fp, "otp_random_b:%d\n", init_param->otp_random_b);
+	fprintf(fp, "otp_golden_r:%d\n", init_param->otp_golden_r);
+	fprintf(fp, "otp_golden_g:%d\n", init_param->otp_golden_g);
+	fprintf(fp, "otp_golden_b:%d\n", init_param->otp_golden_b);
+
+	fprintf(fp, "2.input awb calc param:\n");
+	fprintf(fp, "stat_img_w:%d\n", calc_param->stat_img_w);
+	fprintf(fp, "stat_img_h:%d\n", calc_param->stat_img_h);
+	fprintf(fp, "bv:%d\n", calc_param->bv);
+	for (i = 0; i < 9; i++) {
+		fprintf(fp, "matrix[%d]=%d\n", i, calc_param->matrix[i]);
+	}
+	for (i=0; i < calc_param->stat_img_w*calc_param->stat_img_h; i++) {
+		fprintf(fp, "blk_id:%d R:%d G:%d B:%d\n",
+			i, calc_param->stat_img.r[i],
+			calc_param->stat_img.g[i],
+			calc_param->stat_img.b[i]);
+	}
+
+	fprintf(fp, "3.output awb gain:\n");
+	fprintf(fp, "r_gain:%d\n", out_gain->r_gain);
+	fprintf(fp, "g_gain:%d\n", out_gain->g_gain);
+	fprintf(fp, "b_gain:%d\n", out_gain->b_gain);
+	fprintf(fp, "ct:%d\n", out_gain->ct);
+
+	fflush(fp);
+	fclose(fp);
+	return ret;
+}
+
+static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
+			       cmr_u32 width, cmr_u32 height,
+			       cmr_u32 stat_w, cmr_u32 stat_h,
+			       struct isp_awb_statistic_info *awb_statis,
+			       cmr_s32 bv,
+			       cmr_s32 *p_matrix,
+			       unsigned char *awb_param,
+			       struct awb_ctrl_opt_info *opt_info,
+			       struct isp_awbc_cfg *awbc_cfg,
+			       cmr_u32* ct)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct awb_init_param init_param;
+	struct awb_calc_param calc_param;
+	struct awb_calc_result calc_result;
+	struct awb_rgb_gain rgb_gain;
+	struct isp_awbsprd_lib_ops lib_ops;
+	void *lib_handle = NULL;
+	char value[PROPERTY_VALUE_MAX];
+
+	memset(&init_param, 0, sizeof(init_param));
+	memset(&calc_param, 0, sizeof(calc_param));
+	memset(&calc_result, 0, sizeof(calc_result));
+	memset(&rgb_gain, 0, sizeof(rgb_gain));
+
+	lib_handle = dlopen("libawb1.so", RTLD_NOW);
+	if (!lib_handle) {
+		ISP_LOGE("fail to dlopen awb lib");
+		ret = ISP_ERROR;
+		goto exit;
+	}
+
+	lib_ops.awb_init_v1 = dlsym(lib_handle, "awb_init_v1");
+	if (!lib_ops.awb_init_v1) {
+		ISP_LOGE("fail to dlsym awb_init");
+		ret = ISP_ERROR;
+		goto load_error;
+	}
+
+	lib_ops.awb_calc_v1 = dlsym(lib_handle, "awb_calc_v1");
+	if (!lib_ops.awb_calc_v1) {
+		ISP_LOGE("fail to dlsym awb_calculation");
+		ret = ISP_ERROR;
+		goto load_error;
+	}
+
+	lib_ops.awb_deinit_v1 = dlsym(lib_handle, "awb_deinit_v1");
+	if (!lib_ops.awb_deinit_v1) {
+		ISP_LOGE("fail to dlsym awb_deinit");
+		ret = ISP_ERROR;
+		goto load_error;
+	}
+
+	init_param.stat_w = stat_w;
+	init_param.stat_h = stat_h;
+	init_param.otp_random_r = opt_info->rdm_stat_info.r;
+	init_param.otp_random_g = opt_info->rdm_stat_info.g;
+	init_param.otp_random_b = opt_info->rdm_stat_info.b;
+	init_param.otp_golden_r = opt_info->gldn_stat_info.r;
+	init_param.otp_golden_g = opt_info->gldn_stat_info.g;
+	init_param.otp_golden_b = opt_info->gldn_stat_info.b;
+	memcpy(&init_param.tuning_param, awb_param, sizeof(struct awb_tuning_param));
+
+	void* awb_handle = lib_ops.awb_init_v1(&init_param, &rgb_gain);
+
+	calc_param.bv = bv;
+	calc_param.stat_img.r = (cmr_u32*)awb_statis->r_info;
+	calc_param.stat_img.g = (cmr_u32*)awb_statis->g_info;
+	calc_param.stat_img.b = (cmr_u32*)awb_statis->b_info;
+	calc_param.stat_img_w = stat_w;
+	calc_param.stat_img_h = stat_h;
+	calc_param.r_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+	calc_param.g_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+	calc_param.b_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+
+	memcpy(calc_param.matrix, p_matrix, 9 * sizeof(cmr_s32));
+
+	lib_ops.awb_calc_v1(awb_handle, &calc_param, &calc_result);
+	awbc_cfg->r_gain = calc_result.awb_gain[0].r_gain;
+	awbc_cfg->g_gain = calc_result.awb_gain[0].g_gain;
+	awbc_cfg->b_gain = calc_result.awb_gain[0].b_gain;
+	*ct = calc_result.awb_gain[0].ct;
+
+	property_get("persist.vendor.cam.debug.simulation", value, "false");
+	if (!strcmp(value, "true")) {
+		isp_sim_dump_awb_info(&init_param, &calc_param, &calc_result.awb_gain[0]);
+	}
+
+	/*for debug info*/
+	if (cxt != NULL) {
+		memcpy(awb_log_buff, calc_result.log_buffer, calc_result.log_size);
+		cxt->awb_cxt.log_awb = awb_log_buff;
+		cxt->awb_cxt.log_awb_size = calc_result.log_size;
+	}
+
+	lib_ops.awb_deinit_v1(awb_handle);
+	ret = ISP_SUCCESS;
+load_error:
+	if (lib_handle) {
+		dlclose(lib_handle);
+		lib_handle = NULL;
+	}
+exit:
+	return ret;
+}
 static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
+	cmr_u32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
+	struct isp_pm_ioctl_input ioctl_input;
+	struct isp_pm_param_data ioctl_data;
+	struct isp_awbc_cfg awbc_cfg;
+	struct smart_proc_input smart_proc_in;
+	cmr_u32 stat_w = 0;
+	cmr_u32 stat_h = 0;
+	cmr_u32 ct = 0;
+	struct isp_awb_statistic_info awb_stat;
+	struct isp_pm_ioctl_input input;
+	struct isp_pm_ioctl_output output;
+	struct awb_ctrl_opt_info opt_info;
+	struct awb_ctrl_calc_result awb_calc_result;
+	struct isp_pm_param_data pm_param;
+	cmr_u16 *cmc_info = NULL;
+	cmr_s32 i = 0;
+	cmr_s32 matrix[9];
+
+	ISP_LOGV("hwsim:enter\n");
+
+	memset((void *)&input, 0, sizeof(input));
+	memset((void *)&output, 0, sizeof(output));
+	memset((void *)&pm_param, 0, sizeof(pm_param));
+	memset((void *)&awb_stat, 0, sizeof(struct isp_awb_statistic_info));
+	memset((void *)&smart_proc_in, 0, sizeof(struct smart_proc_input));
+	memset(&opt_info, 0, sizeof(opt_info));
+	memset(&awb_calc_result, 0, sizeof(awb_calc_result));
+	memset(matrix, 0, 9 * sizeof(cmr_s32));
+
+	cxt->takepicture_mode = CAMERA_ISP_SIMULATION_MODE;
 
 	scene_parm = (struct isptool_scene_param *)param_ptr;
 	memcpy(&cxt->simu_param, scene_parm, sizeof(struct isptool_scene_param));
 	cxt->takepicture_mode = CAMERA_ISP_SIMULATION_MODE;
 
-	return 0;
+	awbc_cfg.r_gain = scene_parm->awb_gain_r;
+	awbc_cfg.g_gain = scene_parm->awb_gain_g;
+	awbc_cfg.b_gain = scene_parm->awb_gain_b;
+	awbc_cfg.r_offset = 0;
+	awbc_cfg.g_offset = 0;
+	awbc_cfg.b_offset = 0;
+
+	ioctl_data.id = ISP_BLK_AWB_NEW;
+	ioctl_data.cmd = ISP_PM_BLK_AWBC;
+	ioctl_data.data_ptr = &awbc_cfg;
+	ioctl_data.data_size = sizeof(awbc_cfg);
+
+	ioctl_input.param_data_ptr = &ioctl_data;
+	ioctl_input.param_num = 1;
+
+	if (0 == awbc_cfg.r_gain && 0 == awbc_cfg.g_gain && 0 == awbc_cfg.b_gain) {
+		awbc_cfg.r_gain = 1800;
+		awbc_cfg.g_gain = 1024;
+		awbc_cfg.b_gain = 1536;
+	}
+
+	if (isp_video_get_simulation_loop_count() == 1) {
+		if (isp_sim_get_ae_stats(&awb_stat, &stat_w, &stat_h))
+			goto label_set_awb;
+
+		memset((void *)&input, 0, sizeof(input));
+		memset((void *)&output, 0, sizeof(output));
+		BLOCK_PARAM_CFG(input, pm_param, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, 0, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+		if (output.param_data != NULL && ISP_SUCCESS == ret) {
+			cmc_info = output.param_data->data_ptr;
+			if (cmc_info != NULL) {
+				for (i = 0; i < 9; i++) {
+					matrix[i] = CMC10(cmc_info[i]);
+				}
+			}
+		}
+
+		memset((void *)&input, 0, sizeof(input));
+		memset((void *)&output, 0, sizeof(output));
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
+		if (cxt->ops.awb_ops.ioctrl)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_OTP_INFO, NULL, (void *)&opt_info);
+
+		ispctl_calc_awb(cxt,
+				scene_parm->width, scene_parm->height,
+				stat_w, stat_h,
+				&awb_stat,
+				scene_parm->smart_bv, matrix,
+				output.param_data->data_ptr,
+				&opt_info,
+				&awbc_cfg,
+				&ct);
+
+		awb_calc_result.gain.r = awbc_cfg.r_gain;
+		awb_calc_result.gain.g = awbc_cfg.g_gain;
+		awb_calc_result.gain.b = awbc_cfg.b_gain;
+		awb_calc_result.ct = ct;
+	}
+label_set_awb:
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to set awb gain ");
+		return ret;
+	}
+
+	//cxt->rgb_glb_gain = scene_parm->global_gain;
+	//ISP_LOGV("global_gain = %d", cxt->rgb_glb_gain);
+
+	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
+	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
+	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
+	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
+	smart_proc_in.handle_pm = cxt->handle_pm;
+//	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+	if (cxt->ops.smart_ops.calc)
+		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to set smart gain");
+		return ret;
+	}
+	cxt->smart_cxt.log_smart = smart_proc_in.log;
+	cxt->smart_cxt.log_smart_size = smart_proc_in.size;
+	return ret;
 }
 
 static cmr_int ispctl_force_ae_quick_mode(cmr_handle isp_alg_handle, void *param_ptr)

@@ -1405,6 +1405,11 @@ enum raw_proc_cmd {
 	RAW_PROC_DONE,
 };
 
+enum raw_proc_scene {
+	RAW_PROC_SCENE_RAWCAP = 0,
+	RAW_PROC_SCENE_HWSIM,
+};
+
 struct isp_raw_proc_info {
 	enum raw_proc_cmd cmd;
 	struct isp_img_size src_size;
@@ -1422,6 +1427,7 @@ struct isp_raw_proc_info {
 	uint32_t src_offset;/*first bytes offset in buffer fd_src*/
 	uint32_t dst0_offset;/*first bytes offset in buffer fd_dst0*/
 	uint32_t dst1_offset;/*first bytes offset in buffer fd_dst1*/
+	enum raw_proc_scene scene;
 };
 
 struct isp_3dnr_blend_info {

@@ -1137,6 +1137,17 @@ static int dcam_cfg_dcamsec(struct dcam_pipe_dev *dev, void *param)
 	return 0;
 }
 
+static int dcam_cfg_rps(struct dcam_pipe_dev *dev, void *param)
+{
+	uint32_t *data = (uint32_t *)param;
+
+	dev->rps =  *data;
+
+	pr_info("hwsim : rps[%d]\n", dev->rps);
+	return 0;
+}
+
+
 void dcam_ret_src_frame(void *param)
 {
 	struct camera_frame *frame;
@@ -1696,7 +1707,14 @@ static int dcam_offline_start_frame(void *param)
 	}
 
 	/* todo: enable statis path from user config */
-	atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 0);
+	pr_debug("hwsim:rps[%d]\n",dev->rps);
+
+	if (dev->rps == 1) {
+		pr_debug("hwsim:offline enable aem\n");
+		atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 1); /* hwsim first loop need aem statis */
+	} else {
+		atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 0);
+	}
 	atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 0);
 	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);
 	atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 0);
@@ -2385,6 +2403,9 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		fbc_mode = (int *)param;
 		if (fbc_mode)
 			ret = dcam_cfg_fbc(dev, *fbc_mode);
+		break;
+	case DCAM_IOCTL_CFG_RPS:
+		ret = dcam_cfg_rps(dev, param);
 		break;
 	case DCAM_IOCTL_CFG_REPLACER:
 		dev->replacer = (struct dcam_image_replacer *)param;

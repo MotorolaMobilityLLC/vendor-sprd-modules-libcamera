@@ -19,6 +19,7 @@
 #include "cmr_oem.h"
 #include <unistd.h>
 #include "cutils/properties.h"
+#include "isp_video.h"
 
 /*
           to add more.........
@@ -227,7 +228,7 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
 
     // for raw capture
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if ((!strcmp(value, "raw"))||isp_video_get_simulation_flag()) {
         *pp_cap_size += 3 * max_w * max_h / 2;
     }
 

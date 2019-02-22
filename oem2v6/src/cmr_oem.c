@@ -28,6 +28,7 @@
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
+#include "isp_simulation.h"
 #include "isp_video.h"
 #include "pthread.h"
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
@@ -11750,95 +11751,101 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
         return -1;
     }
 
-    // get millisecond of the time
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    if (isp_video_get_simulation_flag()) {
+        ret = isp_sim_get_mipi_raw_file_name(file_name);
+    } else {
 
-    time_t timep;
-    struct tm *p;
-    time(&timep);
-    p = localtime(&timep);
-    sprintf(datetime, "%04d%02d%02d%02d%02d%02d%03d", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec,
-            tv.tv_usec / 1000);
+        // get millisecond of the time
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
 
-    camera_get_tuning_info(oem_handle, &adgain_exp_info);
-    gain = adgain_exp_info.adgain;
-    shutter = adgain_exp_info.exp_time;
-    bv = adgain_exp_info.bv;
+        time_t timep;
+        struct tm *p;
+        time(&timep);
+        p = localtime(&timep);
+        sprintf(datetime, "%04d%02d%02d%02d%02d%02d%03d", (1900 + p->tm_year),
+                (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec,
+                tv.tv_usec / 1000);
 
-    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc);
-    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
-    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
-    isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
+        camera_get_tuning_info(oem_handle, &adgain_exp_info);
+        gain = adgain_exp_info.adgain;
+        shutter = adgain_exp_info.exp_time;
+        bv = adgain_exp_info.bv;
 
-    strcpy(file_name, CAMERA_DUMP_PATH);
-    sprintf(tmp_str, "%d", width);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "X");
-    sprintf(tmp_str, "%d", height);
-    strcat(file_name, tmp_str);
+        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc);
+        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
+        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
+        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
 
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%s", datetime);
-    strcat(file_name, tmp_str);
+        strcpy(file_name, CAMERA_DUMP_PATH);
+        sprintf(tmp_str, "%d", width);
+        strcat(file_name, tmp_str);
+        strcat(file_name, "X");
+        sprintf(tmp_str, "%d", height);
+        strcat(file_name, tmp_str);
 
-    strcat(file_name, "_");
-    strcat(file_name, "gain");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", gain);
-    strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%s", datetime);
+        strcat(file_name, tmp_str);
 
-    strcat(file_name, "_");
-    strcat(file_name, "ispdgain");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", glb_gain);
-    strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        strcat(file_name, "gain");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", gain);
+        strcat(file_name, tmp_str);
 
-    strcat(file_name, "_");
-    strcat(file_name, "shutter");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", shutter);
-    strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        strcat(file_name, "ispdgain");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", glb_gain);
+        strcat(file_name, tmp_str);
 
-    strcat(file_name, "_");
-    strcat(file_name, "awbgain");
-    strcat(file_name, "_");
-    strcat(file_name, "r");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", awbc.r_gain);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "_");
-    strcat(file_name, "g");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", awbc.g_gain);
-    strcat(file_name, tmp_str);
-    strcat(file_name, "_");
-    strcat(file_name, "b");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", awbc.b_gain);
-    strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        strcat(file_name, "shutter");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", shutter);
+        strcat(file_name, tmp_str);
 
-    memset(tmp_str, 0, sizeof(tmp_str));
-    strcat(file_name, "_");
-    strcat(file_name, "afpos");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", pos);
-    strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        strcat(file_name, "awbgain");
+        strcat(file_name, "_");
+        strcat(file_name, "r");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", awbc.r_gain);
+        strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        strcat(file_name, "g");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", awbc.g_gain);
+        strcat(file_name, tmp_str);
+        strcat(file_name, "_");
+        strcat(file_name, "b");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", awbc.b_gain);
+        strcat(file_name, tmp_str);
 
-    memset(tmp_str, 0, sizeof(tmp_str));
-    strcat(file_name, "_");
-    strcat(file_name, "ct");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", isp_cur_ct);
-    strcat(file_name, tmp_str);
+        memset(tmp_str, 0, sizeof(tmp_str));
+        strcat(file_name, "_");
+        strcat(file_name, "afpos");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", pos);
+        strcat(file_name, tmp_str);
 
-    memset(tmp_str, 0, sizeof(tmp_str));
-    strcat(file_name, "_");
-    strcat(file_name, "bv");
-    strcat(file_name, "_");
-    sprintf(tmp_str, "%d", isp_cur_bv);
-    strcat(file_name, tmp_str);
+        memset(tmp_str, 0, sizeof(tmp_str));
+        strcat(file_name, "_");
+        strcat(file_name, "ct");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", isp_cur_ct);
+        strcat(file_name, tmp_str);
+
+        memset(tmp_str, 0, sizeof(tmp_str));
+        strcat(file_name, "_");
+        strcat(file_name, "bv");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", isp_cur_bv);
+        strcat(file_name, tmp_str);
+
+    }
 
     if (img_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
         strcat(file_name, ".mipi_raw");

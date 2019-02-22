@@ -29,15 +29,39 @@
 #define ISP_TOOL_JPG (1<<4)
 #define ISP_TOOL_YVU422_2FRAME (1<<5)
 #define ISP_TOOL_YVU420_2FRAME (1<<6)
+#define MAX_PATH_LEN 260
 
 enum {
 	REG_START_PREVIEW = 1,
 	REG_STOP_PREVIEW,
 	REG_TAKE_PICTURE,
 	REG_SET_PARAM,
+	REG_SET_JPEG_QUALITY,
 	REG_CTRL_FLASH,
 	REG_MAX,
 };
+
+struct raw_image_info{
+	char filename[MAX_PATH_LEN];
+	cmr_u16 uWidth;
+	cmr_u16 uHeight;
+	cmr_u16 uTotalGain;
+	cmr_u16 udGain;
+	cmr_u32 uShutter;
+	cmr_u16 uRGain;
+	cmr_u16 uGGain;
+	cmr_u16 uBGain;
+	cmr_u16 uAfPos;
+	cmr_u16 uCt;
+	cmr_u16 uBv;
+	cmr_u16 uReserved[28];
+} __attribute__ ((packed));
+
+struct isp_raw_image{
+	cmr_u16 count;
+	struct raw_image_info *raw_image_ptr;
+};
+
 extern char raw_filename[200];
 extern cmr_u32 tool_fmt_pattern;
 extern cmr_u8 nr_tool_flags[ISP_BLK_TYPE_MAX];
@@ -51,5 +75,11 @@ void startispserver(cmr_u32 cam_id);
 void stopispserver();
 void setispserver(void *handle);
 void send_capture_complete_msg();
+void isp_video_set_capture_complete_flag(void);
 void *ispvideo_GetIspHandle(void);
+cmr_u32 isp_video_get_image_processed_index(void);
+cmr_u32 isp_video_get_simulation_loop_count(void);
+struct isp_raw_image *isp_video_get_raw_images_info(void);
+cmr_u32 isp_video_get_simulation_flag(void);
+
 #endif

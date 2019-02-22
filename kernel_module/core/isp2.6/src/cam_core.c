@@ -3195,10 +3195,13 @@ static int img_ioctl_cfg_param(
 	}
 
 	if (((param.scene_id == PM_SCENE_CAP) &&
-		(module->channel[CAM_CH_CAP].enable == 0)) ||
-		((param.scene_id == PM_SCENE_PRE) &&
-		(module->channel[CAM_CH_PRE].enable == 0))) {
-		pr_warn("ch is not enable for scene %d\n", param.scene_id);
+		(module->channel[CAM_CH_CAP].enable == 0))
+		) {
+		pr_warn("ch scene_id[%d] ch_cap en[%d] ch_pre en[%d]\n", 
+				param.scene_id, 
+				module->channel[CAM_CH_CAP].enable, 
+				module->channel[CAM_CH_PRE].enable);
+
 		return 0;
 	}
 
@@ -4839,9 +4842,9 @@ static int img_ioctl_start_capture(
 	}
 
 	if (atomic_read(&module->state) != CAM_RUNNING) {
-		pr_info("cam%d error state: %d\n", module->idx,
+		pr_info("cam%d state: %d\n", module->idx,
 				atomic_read(&module->state));
-		return -EFAULT;
+		return ret;
 	}
 	start_time = ktime_get_boottime();
 
@@ -4951,6 +4954,7 @@ static int raw_proc_done(struct camera_module *module)
 	unsigned long flag = 0;
 	struct camera_group *grp = module->grp;
 	struct channel_context *ch;
+	struct channel_context *ch_raw;
 	struct isp_statis_io_desc io_desc;
 
 	pr_info("cam%d start\n", module->idx);
@@ -4969,6 +4973,25 @@ static int raw_proc_done(struct camera_module *module)
 
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 			DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
+
+	ch_raw = &module->channel[CAM_CH_RAW];
+	if(ch_raw->enable!=0) {
+
+		dcam_ops->put_path(module->dcam_dev_handle,
+					ch_raw->dcam_path_id);
+
+		isp_ctx_id = ch_raw->isp_path_id >> ISP_CTXID_OFFSET;
+		isp_path_id = ch_raw->isp_path_id & ISP_PATHID_MASK;
+
+		isp_ops->put_path(module->isp_dev_handle,
+					isp_ctx_id, isp_path_id);
+		isp_ops->put_context(module->isp_dev_handle, isp_ctx_id);
+
+		ch_raw->enable = 0;
+		ch_raw->dcam_path_id = -1;
+		ch_raw->isp_path_id = -1;
+		ch_raw->aux_dcam_path_id = -1;
+	}
 
 	ch = &module->channel[CAM_CH_CAP];
 	dcam_ops->put_path(module->dcam_dev_handle,
@@ -5267,7 +5290,6 @@ static int raw_proc_post(
 
 	pr_info("raw proc, src %p, mid %p, dst %p\n",
 		src_frame, mid_frame, dst_frame);
-
 	camera_queue_init(&ch->share_buf_queue,
 			CAM_SHARED_BUF_NUM, 0, put_k_frame);
 	camera_queue_init(&module->frm_queue,
@@ -5308,6 +5330,7 @@ static int img_ioctl_raw_proc(
 	int ret = 0;
 	int error_state = 0;
 	struct isp_raw_proc_info proc_info;
+	uint32_t rps_info;
 
 	ret = copy_from_user(&proc_info, (void __user *)arg,
 				sizeof(struct isp_raw_proc_info));
@@ -5320,7 +5343,14 @@ static int img_ioctl_raw_proc(
 		pr_err("error: not init hw resource.\n");
 		return -EFAULT;
 	}
-	if (proc_info.cmd == RAW_PROC_PRE) {
+
+	if (proc_info.scene == RAW_PROC_SCENE_HWSIM) {
+		rps_info = 1;
+		ret = dcam_ops->ioctl(module->dcam_dev_handle,
+				DCAM_IOCTL_CFG_RPS, &rps_info);
+	}
+
+	if ((proc_info.cmd == RAW_PROC_PRE) && (proc_info.scene == RAW_PROC_SCENE_RAWCAP)) {
 		mutex_unlock(&module->lock);
 		/* raw proc must wait for camera stream off and hw is idle */
 		ret = wait_for_completion_interruptible(
@@ -5331,15 +5361,21 @@ static int img_ioctl_raw_proc(
 			return -EFAULT;
 		}
 	}
-	error_state = ((proc_info.cmd == RAW_PROC_PRE) &&
-		(atomic_read(&module->state) != CAM_IDLE));
-	error_state |= ((proc_info.cmd == RAW_PROC_POST) &&
-		(atomic_read(&module->state) != CAM_CFG_CH));
-	if (error_state) {
-		pr_info("cam%d rawproc %d error state: %d\n",
-				module->idx, proc_info.cmd,
-				atomic_read(&module->state));
-		return -EFAULT;
+
+	if (proc_info.scene == RAW_PROC_SCENE_RAWCAP) {
+
+		error_state = ((proc_info.cmd == RAW_PROC_PRE) &&
+			(atomic_read(&module->state) != CAM_IDLE));
+		error_state |= ((proc_info.cmd == RAW_PROC_POST) &&
+			(atomic_read(&module->state) != CAM_CFG_CH));
+		if (error_state) {
+			pr_info("cam%d rawproc %d error state: %d\n",
+					module->idx, proc_info.cmd,
+					atomic_read(&module->state));
+			return -EFAULT;
+		}
+	} else {
+		pr_info("state[%d]\n", atomic_read(&module->state));
 	}
 
 	if (proc_info.cmd == RAW_PROC_PRE) {

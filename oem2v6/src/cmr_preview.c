@@ -29,6 +29,8 @@
 #include "cmr_sensor.h"
 #include "SprdOEMCamera.h"
 #include "cmr_oem.h"
+#include "isp_simulation.h"
+#include "isp_video.h"
 
 #undef YUV_TO_ISP
 /**************************MCARO
@@ -6308,8 +6310,8 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
-        if (handle->prev_cxt[camera_id].prev_param.tool_eb &&
-            is_raw_capture == 1) {
+        if ((handle->prev_cxt[camera_id].prev_param.tool_eb &&
+            is_raw_capture == 1)||isp_video_get_simulation_flag()) {
             ret = prev_set_cap_param_raw(handle, camera_id, is_restart,
                                          out_param_ptr);
         } else {

@@ -166,6 +166,7 @@ enum dcam_ioctrl_cmd {
 	DCAM_IOCTL_CFG_EBD,
 	DCAM_IOCTL_CFG_SEC,
 	DCAM_IOCTL_CFG_FBC,
+	DCAM_IOCTL_CFG_RPS, /* raw proc scene */
 	DCAM_IOCTL_CFG_REPLACER,
 };
 

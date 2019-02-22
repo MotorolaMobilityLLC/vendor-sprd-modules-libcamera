@@ -243,6 +243,20 @@ static int ispVideoSetParam(uint32_t width, uint32_t height) {
     return rtn;
 }
 
+static int ispVideoSetJpegQuality(uint32_t param1, uint32_t param2) {
+    int rtn = 0x00;
+    SprdCamera3HWI *dev =
+        reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
+    SprdCamera3Setting *setting = dev->mSetting;
+    cam_dimension_t capture_size;
+    JPEG_Tag jpgInfo;
+
+    memset(&jpgInfo, 0, sizeof(JPEG_Tag));
+    jpgInfo.quality = param1;
+    setting->setJPEGTag(jpgInfo);
+    return 0;
+}
+
 static int ispCtrlFlash(uint32_t param, uint32_t status) {
     SprdCamera3HWI *dev =
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
@@ -340,6 +354,7 @@ int SprdCamera3HWI::openCamera() {
         ispvideo_RegCameraFunc(2, ispVideoStopPreview);
         ispvideo_RegCameraFunc(3, ispVideoTakePicture);
         ispvideo_RegCameraFunc(4, ispVideoSetParam);
+        ispvideo_RegCameraFunc(5, ispVideoSetJpegQuality);
     }
 
     HAL_LOGI(":hal3: X");
@@ -406,6 +421,7 @@ int SprdCamera3HWI::closeCamera() {
         ispvideo_RegCameraFunc(2, NULL);
         ispvideo_RegCameraFunc(3, NULL);
         ispvideo_RegCameraFunc(4, NULL);
+        ispvideo_RegCameraFunc(5, NULL);
     }
 
     if (mCameraSessionActive == 0) {
