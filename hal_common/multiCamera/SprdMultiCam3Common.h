@@ -68,7 +68,7 @@ namespace sprdcamera {
 #undef MAX_MULTI_NUM_CAMERA
 #define MAX_MULTI_NUM_CAMERA 4
 #undef MAX_MULTI_NUM_BUFFER
-#define MAX_MULTI_NUM_BUFFER 8
+#define MAX_MULTI_NUM_BUFFER 4
 
 typedef signed int MInt32;
 typedef unsigned int MUInt32;
