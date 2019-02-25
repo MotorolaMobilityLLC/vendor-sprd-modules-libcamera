@@ -33,7 +33,7 @@
 //#include <androidfw/SprdIlog.h>
 #include "SprdCamera3Setting.h"
 
-#include "SprdCamera3.h"
+#include "include/SprdCamera3.h"
 //#include "SprdCameraHardwareConfig2.h"
 #include "inc/SprdCamera3Config.h"
 
