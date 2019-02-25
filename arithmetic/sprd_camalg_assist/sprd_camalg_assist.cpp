@@ -140,7 +140,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_cmd_addbuffer(void* pcmd ,
 	struct sprd_dsp_buffer* dsp_buffer;
         struct sprd_dsp_cmd* cmd = (struct sprd_dsp_cmd*)pcmd;
 	VDSP_CMD_LOGI("add buffer buffer_fd:%d , size:%d , index:%d" , buffer_fd , size , index);
-	if(1)//cmd->buffer_addr == 0)
+	if(cmd->buffer_addr == 0)
 	{
 		cmd->buffer_data[index].size = size;
 		cmd->buffer_data[index].fd = buffer_fd;

@@ -76,3 +76,4 @@ endif
 
 LOCAL_SHARED_LIBRARIES += libyuv
 LOCAL_SHARED_LIBRARIES += libyuv420_scaler
+LOCAL_SHARED_LIBRARIES += libsprdcamalgassist
