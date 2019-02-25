@@ -81,6 +81,9 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_SET_VERIFICATION_FLAG,
     ANDROID_SPRD_AF_ROI,
     ANDROID_SPRD_CALIBRATION_DIST,
+    ANDROID_SPRD_IS_3DNR_SCENE,
+    ANDROID_SPRD_AUTO_3DNR_ENABLED,
+    ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

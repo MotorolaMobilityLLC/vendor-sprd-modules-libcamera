@@ -58,6 +58,7 @@ typedef struct {
     uint8_t sprd_refocus_enabled;
     uint8_t sprd_hdr_plus_enable;
     uint8_t sprd_auto_hdr_enable;
+    uint8_t sprd_auto_3dnr_enable;
 } CapRequestPara;
 
 class SprdCamera3OEMIf;
@@ -78,6 +79,7 @@ class SprdCamera3Channel {
     virtual int request(camera3_stream_t *stream, buffer_handle_t *buffer,
                         uint32_t frameNumber) = 0;
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+
   protected:
     SprdCamera3OEMIf *mOEMIf;
     channel_cb_routine mChannelCB;
@@ -120,7 +122,7 @@ class SprdCamera3RegularChannel : public SprdCamera3Channel {
 
     int setInputBuff(buffer_handle_t *buff);
     int getInputBuff(cmr_uint *addr_vir, cmr_uint *addr_phy,
-                        cmr_uint *zsl_private);
+                     cmr_uint *zsl_private);
     int releaseInputBuff();
 
     static int kMaxBuffers;

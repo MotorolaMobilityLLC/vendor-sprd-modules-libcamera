@@ -3197,7 +3197,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     mVideoProcessedWithPreview = false;
     unsigned int on_off = VIDEO_OFF;
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
-
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
@@ -3539,11 +3538,11 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
         width = scalerCrop.width;
         height = cropAspect * scalerCrop.height / previewAspect;
         left = scalerCrop.start_x;
-        top = scalerCrop.start_y+ (scalerCrop.height - height) / 2;
+        top = scalerCrop.start_y + (scalerCrop.height - height) / 2;
     } else {
         width = previewAspect * scalerCrop.width / cropAspect;
         height = scalerCrop.height;
-        left = scalerCrop.start_x+ (scalerCrop.width - width) / 2;
+        left = scalerCrop.start_x + (scalerCrop.width - width) / 2;
         top = scalerCrop.start_y;
     }
     zoomWidth = width / (float)mPreviewWidth;
@@ -3586,11 +3585,11 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
         width = scalerCrop.width;
         height = cropAspect * scalerCrop.height / previewAspect;
         left = scalerCrop.start_x;
-        top = scalerCrop.start_y+ (scalerCrop.height - height) / 2;
+        top = scalerCrop.start_y + (scalerCrop.height - height) / 2;
     } else {
         width = previewAspect * scalerCrop.width / cropAspect;
         height = scalerCrop.height;
-        left = scalerCrop.start_x+ (scalerCrop.width - width) / 2;
+        left = scalerCrop.start_x + (scalerCrop.width - width) / 2;
         top = scalerCrop.start_y;
     }
     zoomWidth = (float)mPreviewWidth / width;
@@ -5966,8 +5965,14 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         mSetting->getSPRDDEFTag(&sprdInfo);
         sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
-        HAL_LOGI("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
-        break;
+        HAL_LOGD("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
+    } break;
+    case CAMERA_EVT_CB_3DNR_SCENE: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        sprdInfo.sprd_is_3dnr_scene = *(uint8_t *)parm4;
+        mSetting->setSPRDDEFTag(sprdInfo);
+        HAL_LOGD(" sprd_is_3dnr_scene = %d", sprdInfo.sprd_is_3dnr_scene);
     } break;
     case CAMERA_EVT_CB_AI_SCENE: {
         SPRD_DEF_Tag sprdInfo;
@@ -7186,6 +7191,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.device_orietation);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_DEVICE_ORIENTATION,
                  sprddefInfo.device_orietation);
+    } break;
+    case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        HAL_LOGD("sprdInfo.sprd_auto_3dnr_enables=%d ",
+                 sprdInfo.sprd_auto_3dnr_enable);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+                 sprdInfo.sprd_auto_3dnr_enable);
     } break;
     default:
         ret = BAD_VALUE;
@@ -10265,7 +10278,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         // single capture wait the caf focused frame
         if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
             zsl_frame.timestamp < obj->mLastCafDoneTime &&
-            (getMultiCameraMode() != MODE_BOKEH)&&!sprddefInfo.sprd_3dnr_enabled) {
+            (getMultiCameraMode() != MODE_BOKEH) &&
+            !sprddefInfo.sprd_3dnr_enabled) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,

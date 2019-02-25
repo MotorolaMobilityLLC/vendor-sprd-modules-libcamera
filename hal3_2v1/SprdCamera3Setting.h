@@ -397,6 +397,10 @@ typedef struct {
     uint8_t sprd_cam_feature_list_size;
     uint8_t availabe_sensor_type;
     uint32_t device_orietation;
+    uint8_t availabe_auto_3dnr;
+    uint8_t sprd_is_3dnr_scene;
+    uint8_t sprd_auto_3dnr_enable;
+    uint8_t flash_mode;
 } SPRD_DEF_Tag;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL

@@ -999,6 +999,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_CALIBRATION_DIST");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_CALIBRATION_DIST);
             break;
+        case ANDROID_SPRD_AUTO_3DNR_ENABLED:
+            HAL_LOGV("ANDROID_SPRD_AUTO_3DNR_ENABLED");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+            break;
         default:
             HAL_LOGV("other tag");
             break;
@@ -1094,6 +1098,16 @@ int SprdCamera3MetadataChannel::getCapRequestPara(
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         request_para->sprd_auto_hdr_enable = sprddefInfo.sprd_auto_hdr_enable;
+    }
+    if (metadata.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
+        request_para->sprd_auto_3dnr_enable =
+            metadata.find(ANDROID_SPRD_AUTO_3DNR_ENABLED).data.u8[0];
+        HAL_LOGD("sprd_auto_3dnr_enable exist, set sprd_auto_3dnr_enables %d",
+                 request_para->sprd_auto_3dnr_enable);
+    } else {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        request_para->sprd_auto_3dnr_enable = sprddefInfo.sprd_auto_3dnr_enable;
     }
     return NO_ERROR;
 }

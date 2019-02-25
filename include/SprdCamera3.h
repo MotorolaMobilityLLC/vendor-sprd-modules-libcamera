@@ -219,6 +219,9 @@ static tags_info_t
         {"sprdSetVerificationFlag", TYPE_INT32},
         {"sprdAfRoi", TYPE_INT32},
         {"sprdCalibrationDist", TYPE_INT32},
+        {"sprd3is3dnrScene", TYPE_BYTE},
+        {"sprd3auto3dnrEnabled", TYPE_BYTE},
+        {"sprd3availableAuto3dnr", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

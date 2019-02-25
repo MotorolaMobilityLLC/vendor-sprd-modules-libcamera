@@ -87,6 +87,7 @@ enum setting_general_type {
     SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_AI_SCENE_ENABLED,
+    SETTING_GENERAL_AUTO_3DNR,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -137,6 +138,7 @@ struct setting_hal_common {
     cmr_uint is_auto_hdr;
     cmr_uint sprd_appmode_id;
     cmr_uint ai_scene;
+    cmr_uint is_auto_3dnr;
     struct cmr_ae_compensation_param ae_compensation_param;
 };
 
@@ -580,7 +582,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
          COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AI_SCENE_ENABLED, &hal_param->hal_common.ai_scene,
-         COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AUTO_3DNR, &hal_param->hal_common.is_auto_3dnr,
+         COM_ISP_SET_AUTO_3DNR, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -631,7 +635,11 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         *item->cmd_type_value = 0;
         type_val = parm->cmd_type_value;
         break;
+    case SETTING_GENERAL_AUTO_3DNR:
 
+        item->isp_cmd = COM_ISP_SET_AUTO_3DNR;
+        ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        break;
     case SETTING_GENERAL_AI_SCENE_ENABLED:
         if (parm->cmd_type_value) {
             item->isp_cmd = COM_ISP_SET_AI_SCENE_START;
@@ -2657,6 +2665,19 @@ static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
 
     return ret;
 }
+
+static cmr_int setting_set_auto_3dnr(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set auto 3dnr %ld", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_3DNR, parm);
+
+    return ret;
+}
+
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -2665,7 +2686,6 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     struct setting_cmd_parameter cmd_param;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
     cmr_uint invalid_word = 0;
-
     cpt->force_set = 1;
     memset(&invalid_word, INVALID_SETTING_BYTE, sizeof(cmr_uint));
     cmd_param = *parm;
@@ -3914,6 +3934,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_device_orientation);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_DEVICE_ORIENTATION,
                              setting_get_device_orientation);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+                             setting_set_auto_3dnr);
     setting_parms_inited = 1;
     return 0;
 }

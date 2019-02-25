@@ -1611,7 +1611,12 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
-
+    case ISP_3DNR_CALLBACK:
+        oem_cb = CAMERA_EVT_CB_3DNR_SCENE;
+        CMR_LOGD("[PFC] 3dnr scene=%d", data);
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                       data);
+        break;
     default:
         break;
     }
@@ -2912,6 +2917,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
             setting_param.ctrl_flash.capture_mode.capture_mode = 0;
             setting_param.ctrl_flash.flash_type = FLASH_CLOSE_AFTER_OPEN;
             setting_param.ctrl_flash.will_capture = will_capture;
+            // setting_param.ctrl_flash.will_capture = 1;
             prev_set_preview_skip_frame_num(
                 cxt->prev_cxt.preview_handle, cxt->camera_id,
                 flash_capture_skip_num, has_preflashed);
@@ -8081,6 +8087,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_AUTO_HDR_MODE;
         isp_param = param_ptr->cmd_value;
         break;
+    case COM_ISP_SET_AUTO_3DNR:
+        CMR_LOGI("set auto 3dnr %d", param_ptr->cmd_value);
+        isp_cmd = ISP_CTRL_SET_3DNR_MODE;
+        isp_param = param_ptr->cmd_value;
+        break;
     case COM_ISP_SET_AI_SCENE_START:
         CMR_LOGI("COM_ISP_SET_AI_SCENE_START");
         isp_cmd = ISP_CTRL_AI_PROCESS_START;
@@ -9498,6 +9509,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_SET_DEVICE_ORIENTATION:
         setting_param.cmd_type_value = param;
         CMR_LOGD("frame_num %u", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("auto 3dnr=%lu", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;

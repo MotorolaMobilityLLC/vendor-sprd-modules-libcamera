@@ -96,6 +96,7 @@ typedef struct {
     uint8_t availableIso[7];
     uint8_t availableAutoHdr;
     uint8_t availableAiScene;
+    uint8_t availableAuto3Dnr;
 } camera3_common_t;
 
 typedef struct {
@@ -297,10 +298,17 @@ const int32_t max_output_streams[3] = {0, 2, 1};
 const uint8_t availableBrightNess[] = {0, 1, 2, 3, 4, 5, 6};
 const uint8_t availableContrast[] = {0, 1, 2, 3, 4, 5, 6};
 const uint8_t availableSaturation[] = {0, 1, 2, 3, 4, 5, 6};
+
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 const uint8_t availableAutoHDR = 1;
 #else
 const uint8_t availableAutoHDR = 0;
+#endif
+
+#ifdef CONFIG_SUPPROT_AUTO_3DNR
+const uint8_t availableAuto3DNR = 1;
+#else
+const uint8_t availableAuto3DNR = 0;
 #endif
 
 const uint8_t availableSlowMotion[] = {0, 1, 4};
@@ -657,6 +665,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
     ANDROID_SPRD_AVAILABLE_AI_SCENE,
     ANDROID_SPRD_AVAILABLE_SENSORTYPE,
+    ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -1270,7 +1279,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     memcpy(camera3_default_info.common.availableFaceDetectModes,
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
     camera3_default_info.common.availableAutoHdr = availableAutoHDR;
-
+    camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
     camera3_default_info.common.availableAiScene =
         property_get_bool("persist.vendor.cam.ai.scence.enable", 0);
 
@@ -1906,7 +1915,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
     s_setting[cameraId].sprddefInfo.availabe_auto_hdr =
         camera3_default_info.common.availableAutoHdr;
-
+    s_setting[cameraId].sprddefInfo.availabe_auto_3dnr =
+        camera3_default_info.common.availableAuto3Dnr;
 #ifdef CONFIG_VIDEO_SNAPSHOT_NOT_SUPPORT
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_OFF;
@@ -1941,6 +1951,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 #endif
     s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene = 0;
+    s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene = 0;
     HAL_LOGI("cameraId:%d, availableSprdFlashLevel:%d, availableAutohdr %d ",
              cameraId,
              s_setting[cameraId].sprddefInfo.sprd_available_flash_level,
@@ -2416,7 +2427,13 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SENSORTYPE,
                       &(s_setting[cameraId].sprddefInfo.availabe_sensor_type),
                       1);
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
+                      &(s_setting[cameraId].sprddefInfo.availabe_auto_3dnr), 1);
+    HAL_LOGI("%s availabe_auto_3dnr =%d,", __FUNCTION__,
+             s_setting[cameraId].sprddefInfo.availabe_auto_3dnr);
 
+    staticInfo.update(ANDROID_SPRD_IS_3DNR_SCENE,
+                      &(s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene), 1);
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
 #undef FILL_CAM_INFO_ARRAY
@@ -3668,6 +3685,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 
     uint8_t sprdIsHdrScene = 0;
     requestInfo.update(ANDROID_SPRD_IS_HDR_SCENE, &sprdIsHdrScene, 1);
+    uint8_t sprdAuto3DnrEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_AUTO_3DNR_ENABLED, &sprdAuto3DnrEnabled, 1);
+    uint8_t sprdIs3DnrScene = 0;
+    requestInfo.update(ANDROID_SPRD_IS_3DNR_SCENE, &sprdIs3DnrScene, 1);
     uint8_t sprdAiSceneType = HAL_AI_SCENE_DEFAULT;
     requestInfo.update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT, &sprdAiSceneType, 1);
 
@@ -3873,7 +3894,8 @@ int SprdCamera3Setting::updateWorkParameters(
     int32_t valueI32 = 0;
     int64_t valueI64 = 0;
     int32_t is_capture = 0;
-
+    uint8_t is_flash_on = 0;
+    int32_t aeMode = -1;
     uint8_t is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
@@ -4088,12 +4110,30 @@ int SprdCamera3Setting::updateWorkParameters(
         GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
                          ANDROID_FLASH_MODE)
     }
-
     if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
-        HAL_LOGV("ae mode %d", valueU8);
-        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, valueU8,
+        aeMode = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
+        HAL_LOGV("ae mode %d", aeMode);
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, aeMode,
                          ANDROID_CONTROL_AE_MODE)
+    }
+    if ((aeMode != -1) && (aeMode != ANDROID_CONTROL_AE_MODE_OFF)) {
+        if (aeMode == ANDROID_CONTROL_AE_MODE_ON) {
+            s_setting[mCameraId].sprddefInfo.flash_mode = CAMERA_FLASH_MODE_OFF;
+        } else if (aeMode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH) {
+            s_setting[mCameraId].sprddefInfo.flash_mode =
+                CAMERA_FLASH_MODE_AUTO;
+        } else if (aeMode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) {
+            s_setting[mCameraId].sprddefInfo.flash_mode = CAMERA_FLASH_MODE_ON;
+        } else {
+            s_setting[mCameraId].sprddefInfo.flash_mode = CAMERA_FLASH_MODE_OFF;
+        }
+    }
+    if ((s_setting[mCameraId].sprddefInfo.flash_mode ==
+             CAMERA_FLASH_MODE_AUTO &&
+         s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash == 1) ||
+        s_setting[mCameraId].sprddefInfo.flash_mode == CAMERA_FLASH_MODE_ON) {
+        HAL_LOGV("is_flash_on Done");
+        is_flash_on = 1;
     }
 
     // SENSOR
@@ -4765,7 +4805,7 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd fixed fps enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_fixedfps_enabled);
     }
-    if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+    if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED) && (!is_flash_on)) {
         s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
             frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
         pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
@@ -4788,7 +4828,15 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd auto hdr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_auto_hdr_enable);
     }
-
+    if (frame_settings.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable =
+            frame_settings.find(ANDROID_SPRD_AUTO_3DNR_ENABLED).data.u8[0] == 1
+                ? 2
+                : 0;
+        pushAndroidParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+        HAL_LOGV(" debug sprd auto 3dnr enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable);
+    }
     HAL_LOGD("isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
              "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
@@ -5356,6 +5404,11 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
              s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
     camMetadata.update(ANDROID_SPRD_IS_HDR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
+                       1);
+    HAL_LOGV("auto 3dnr scene report %d",
+             s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene);
+    camMetadata.update(ANDROID_SPRD_IS_3DNR_SCENE,
+                       &(s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene),
                        1);
     camMetadata.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
