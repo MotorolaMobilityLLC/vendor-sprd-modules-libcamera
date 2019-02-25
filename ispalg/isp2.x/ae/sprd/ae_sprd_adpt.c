@@ -1887,17 +1887,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->cur_status.adv[2] = (cmr_handle) & cxt->cur_param->mulaes_param;
 	cxt->cur_status.adv[3] = (cmr_handle) & cxt->cur_param->touch_info;
 	cxt->cur_status.adv[4] = (cmr_handle) & cxt->cur_param->face_param;
-	cxt->cur_status.adv[6] = (cmr_handle) & cxt->cur_param->ai_param.backlight_param;
-	cxt->cur_status.adv[7] = (cmr_handle) & cxt->cur_param->ai_param.sky_param;
-	cxt->cur_status.adv[8] = (cmr_handle) & cxt->cur_param->ai_param.foliage_param;
-	cxt->cur_status.adv[9] = (cmr_handle) & cxt->cur_param->ai_param.night_param;
-	cxt->cur_status.adv[10] = (cmr_handle) & cxt->cur_param->ai_param.outdoor_param;
-	cxt->cur_status.adv[11] = (cmr_handle) & cxt->cur_param->ai_param.indoor_param;
-	cxt->cur_status.adv[12] = (cmr_handle) & cxt->cur_param->ai_param.food_param;
-	cxt->cur_status.adv[13] = (cmr_handle) & cxt->cur_param->ai_param.document_param;
-	cxt->cur_status.adv[14] = (cmr_handle) & cxt->cur_param->ai_param.sunriseset_param;
-	cxt->cur_status.adv[15] = (cmr_handle) & cxt->cur_param->ai_param.snow_param;
-	cxt->cur_status.adv[16] = (cmr_handle) & cxt->cur_param->ai_param.others_param;
+	cxt->cur_status.adv[6] = (cmr_handle) & cxt->cur_param->ai_param;
 	/* caliberation for bv match with lv */
 	cxt->cur_status.lv_cali_bv = cxt->cur_param->lv_cali.bv_value;
 	{

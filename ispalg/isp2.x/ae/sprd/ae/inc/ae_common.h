@@ -151,24 +151,6 @@ enum ae_flicker_mode {
 	AE_FLICKER_MAX
 };
 
-enum ae_ai_scene_type {
- 	AE_AI_SCENE_FOOD,
- 	AE_AI_SCENE_PORTRAIT,
- 	AE_AI_SCENE_FOLIAGE,
- 	AE_AI_SCENE_SKY,
- 	AE_AI_SCENE_NIGHT,
- 	AE_AI_SCENE_BACKLIGHT,
- 	AE_AI_SCENE_TEXT,
- 	AE_AI_SCENE_SUNRISE,
- 	AE_AI_SCENE_BUILDING,
- 	AE_AI_SCENE_LANDSCAPE,
- 	AE_AI_SCENE_SNOW,
- 	AE_AI_SCENE_FIREWORK,
- 	AE_AI_SCENE_BEACH,
- 	AE_AI_SCENE_PET,
- 	AE_AI_SCENE_MAX
- };
-
 enum ae_sensor_role_type {
 	AE_SENSOR_SINGLE = 0,
 	AE_SENSOR_MASTER = 1,
@@ -310,7 +292,7 @@ struct ae_flash_tuning {
 };
 
 struct ae_stat_req {
-	cmr_u32 mode;			//0:normal, 1:G(center area)
+	cmr_u32 mode;				//0:normal, 1:G(center area)
 	cmr_u32 G_width;			//100:G mode(100x100)
 };
 
@@ -446,6 +428,26 @@ struct ae_stats_sensor_info {
 	struct ae_stats_accelerator_info accelerator;
 };
 
+enum ae_ai_scene_type {
+	AE_AI_SCENE_DEFAULT,
+	AE_AI_SCENE_FOOD,
+	AE_AI_SCENE_PORTRAIT,
+	AE_AI_SCENE_FOLIAGE,
+	AE_AI_SCENE_SKY,
+	AE_AI_SCENE_NIGHT,
+	AE_AI_SCENE_BACKLIGHT,
+	AE_AI_SCENE_TEXT,
+	AE_AI_SCENE_SUNRISE,
+	AE_AI_SCENE_BUILDING,
+	AE_AI_SCENE_LANDSCAPE,
+	AE_AI_SCENE_SNOW,
+	AE_AI_SCENE_FIREWORK,
+	AE_AI_SCENE_BEACH,
+	AE_AI_SCENE_PET,
+	AE_AI_SCENE_FLOWER,
+	AE_AI_SCENE_MAX
+};
+
 enum ai_task0 {
 	AE_AI_SCENE_TASK0_INDOOR,
 	AE_AI_SCENE_TASK0_OUTDOOR,
@@ -561,7 +563,7 @@ struct ae_settings {
 	cmr_s8 scene_mode;			/* pano sports night */
 	cmr_s16 intelligent_module;	/* pano sports night */
 	cmr_s8 af_info;				/*AF trigger info */
-	cmr_s8 reserve_case;
+	cmr_s8 reserve_case;		/*0: normal mode, 1: just for debug mode, and manual control the exp/gain by APP*/
 	cmr_u32 iso_special_mode;
 	cmr_u32 iso_manual_status;	/*iso manual setting */
 	cmr_u32 ev_manual_status;	/*ev manual setting */
@@ -630,7 +632,7 @@ struct ae_alg_calc_param {
 	//for face AE
 	struct ae1_fd_param ae1_finfo;
 //adv_alg module init
-	cmr_handle adv[19];
+	cmr_handle adv[9];
 	/*
 	   0:region
 	   1: flat
@@ -638,19 +640,9 @@ struct ae_alg_calc_param {
 	   3: touch ae
 	   4: face ae
 	   5: flash ae
-	   6: backlight
-	   7: sky
-	   8: foliage
-	   9: lowlight
-	   10: outdoor
-	   11: indoor
-	   12: food
-	   13: document
-	   14: sunriseset
-	   15: snow
-	   16: others
-	   17: abl
-	   18: pcp
+	   6: AI
+	   7: abl
+	   8: pcp
 	 */
 	struct ae_settings settings;
 	cmr_u32 awb_mode;
@@ -704,13 +696,6 @@ struct ae_alg_calc_result {
 	void *pmulaes;
 	void *pflat;
 	void *pregion;
-	void *pnight;
-	void *pfoliage;
-	void *psky;
-	void *pbacklight;
-	void *pindoor;
-	void *poutdoor;
-	void *psnow;
 	void *pai;
 	void *pabl;
 	void *ppcp;
@@ -725,7 +710,6 @@ struct ae_alg_calc_result {
 	cmr_u32 face_trigger;
 	cmr_u32 *reserved;			/*resurve for future */
 	cmr_u32 privated_data;
-	
 };
 
 struct otp_ae_info {
