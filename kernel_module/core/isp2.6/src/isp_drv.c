@@ -191,6 +191,7 @@ static void set_common(struct sprd_cam_hw_info *hw)
 
 	ISP_HREG_MWR(ISP_AXI_ISOLATION, BIT_0, 0);
 	ISP_HREG_MWR(ISP_ARBITER_ENDIAN0, BIT_0, 0);
+	ISP_HREG_MWR(ISP_ARBITER_ENDIAN1, BIT(0) | BIT(1), 0);
 	ISP_HREG_WR(ISP_ARBITER_CHK_SUM_CLR, 0xF10);
 	ISP_HREG_WR(ISP_ARBITER_CHK_SUM0, 0x0);
 	/* enable axim transfering */

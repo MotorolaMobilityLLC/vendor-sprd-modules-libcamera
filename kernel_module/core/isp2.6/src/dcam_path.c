@@ -746,7 +746,20 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		/* normal scene */
 		addr = dcam_store_addr[path_id];
 	}
-	DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+
+	if (frame->is_compressed) {
+		struct dcam_compressed_addr compressed_addr;
+		struct img_size *size = &path->out_size;
+
+		dcam_if_cal_compressed_addr(size->w, size->h,
+					    frame->buf.iova[0],
+					    &compressed_addr);
+		DCAM_REG_WR(idx, addr, compressed_addr.low2_addr);
+		DCAM_REG_WR(idx, DCAM_FBC_PAYLOAD_WADDR,
+			    compressed_addr.tile_addr);
+	} else {
+		DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+	}
 
 	atomic_inc(&path->set_frm_cnt);
 	if (path_id == DCAM_PATH_AFL)

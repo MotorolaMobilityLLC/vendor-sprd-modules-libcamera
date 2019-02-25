@@ -108,6 +108,51 @@ struct isp_fetch_info {
 	uint32_t mipi_word_num;
 };
 
+struct isp_fbd_raw_info {
+	/* ISP_FBD_RAW_SEL */
+	uint32_t pixel_start_in_hor:6;
+	uint32_t pixel_start_in_ver:2;
+	uint32_t chk_sum_auto_clr:1;
+	uint32_t fetch_fbd_bypass:1;
+	/* ISP_FBD_RAW_SLICE_SIZE */
+	uint32_t height;
+	uint32_t width;
+	/* ISP_FBD_RAW_PARAM0 */
+	uint32_t tiles_num_in_ver:11;
+	uint32_t tiles_num_in_hor:6;
+	/* ISP_FBD_RAW_PARAM1 */
+	uint32_t time_out_th:8;
+	uint32_t tiles_start_odd:1;
+	uint32_t tiles_num_pitch:8;
+	/* ISP_FBD_RAW_PARAM2 */
+	uint32_t header_addr_init;
+	/* ISP_FBD_RAW_PARAM3 */
+	uint32_t tile_addr_init_x256;
+	/* ISP_FBD_RAW_PARAM4 */
+	uint32_t fbd_cr_ch0123_val0;
+	/* ISP_FBD_RAW_PARAM5 */
+	uint32_t fbd_cr_ch0123_val1;
+	/* ISP_FBD_RAW_PARAM6 */
+	uint32_t fbd_cr_uv_val1:8;
+	uint32_t fbd_cr_y_val1:8;
+	uint32_t fbd_cr_uv_val0:8;
+	uint32_t fbd_cr_y_val0:8;
+	/* ISP_FBD_RAW_LOW_PARAM0 */
+	uint32_t low_bit_addr_init;
+	/* ISP_FBD_RAW_LOW_PARAM1 */
+	uint32_t low_bit_pitch:16;
+	/* ISP_FBD_RAW_HBLANK */
+	uint32_t hblank_en:1;
+	uint32_t hblank_num:16;
+
+	/*
+	 * For ISP trim feature. In capture channel, DCAM FULL crop is not used
+	 * in zoom. ISP fetch trim is used instead.
+	 * @size is normally same as @width and @height above.
+	 */
+	struct img_size size;
+	struct img_trim trim;
+};
 
 struct isp_regular_info {
 	uint32_t regular_mode;
@@ -188,11 +233,47 @@ struct isp_store_info {
 	struct img_pitch pitch;
 };
 
+struct isp_fbc_store_info {
+	/* ISP_FBC_STORE_PARAM */
+	uint32_t endian:2;
+	uint32_t color_format:4;
+	uint32_t mirror_en:1;
+	uint32_t slice_mode_en:1;
+	uint32_t bypass_flag:1;
+	/* ISP_FBC_STORE_SLICE_SIZE */
+	uint32_t size_in_ver;
+	uint32_t size_in_hor;
+	/* ISP_FBC_STORE_BORDER */
+	uint32_t right_border:8;
+	uint32_t left_border:8;
+	uint32_t down_border:8;
+	uint32_t up_border:8;
+	/* ISP_FBC_STORE_SLICE_Y_ADDR */
+	uint32_t y_tile_addr_init_x256;
+	/* ISP_FBC_STORE_SLICE_C_ADDR */
+	uint32_t c_tile_addr_init_x256;
+	/* ISP_FBC_STORE_P0 */
+	uint32_t func_bits:8;
+	/* ISP_FBC_STORE_TILE_PITCH */
+	uint32_t tile_number_pitch:16;
+	/* ISP_FBC_STORE_SLICE_Y_HEADER */
+	uint32_t y_header_addr_init;
+	/* ISP_FBC_STORE_SLICE_C_HEADER */
+	uint32_t c_header_addr_init;
+	/* ISP_FBC_STORE_CONSTANT */
+	uint32_t fbc_constant_yuv;
+	/* ISP_FBC_STORE_TILE_NUM */
+	uint32_t tile_number:20;
+	/* ISP_FBC_STORE_NFULL_LEVEL */
+	uint32_t c_nearly_full_level:8;
+	uint32_t y_nearly_full_level:9;
+};
 
 struct slice_cfg_input {
 	struct img_size frame_in_size;
 	struct img_size *frame_out_size[ISP_SPATH_NUM];
 	struct isp_fetch_info *frame_fetch;
+	struct isp_fbd_raw_info *frame_fbd_raw;
 	struct isp_store_info *frame_store[ISP_SPATH_NUM];
 	struct isp_scaler_info *frame_scaler[ISP_SPATH_NUM];
 	struct img_deci_info *frame_deci[ISP_SPATH_NUM];
@@ -218,10 +299,12 @@ struct isp_path_desc {
 	uint32_t out_fmt; /* forcc */
 	uint32_t bind_type;
 	uint32_t slave_path_id;
+	uint32_t store_fbc;/* 1 for fbc store; 0 for normal store */
 	struct isp_pipe_context *attach_ctx;
 
 	struct isp_regular_info regular_info;
 	struct isp_store_info store;
+	struct isp_fbc_store_info fbc_store;
 	union {
 		struct isp_scaler_info scaler;
 		struct isp_thumbscaler_info thumbscaler;
@@ -256,7 +339,8 @@ struct isp_pipe_context {
 	uint32_t slowmotion_count;
 	uint32_t dispatch_color;
 	uint32_t dispatch_bayer_mode; /* RAWRGB_GR, RAWRGB_Gb, RAWRGB_R... */
-	uint32_t fetch_path_sel; /* fbd or normal */
+	uint32_t fetch_path_sel;/* 1: fetch_fbd; 0: fetch */
+	uint32_t nr3_fbc_fbd;/* 1: 3dnr compressed; 0: 3dnr plain data */
 	/* lock ctx/path param(size) updated from zoom */
 	struct mutex param_mutex;
 
@@ -268,6 +352,7 @@ struct isp_pipe_context {
 	struct img_size input_size;
 	struct img_trim input_trim;
 	struct isp_fetch_info fetch;
+	struct isp_fbd_raw_info fbd_raw;
 	struct isp_path_desc isp_path[ISP_SPATH_NUM];
 	struct isp_pipe_dev *dev;
 	struct isp_k_block isp_k_param;

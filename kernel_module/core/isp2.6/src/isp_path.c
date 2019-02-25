@@ -483,7 +483,6 @@ int isp_cfg_ctx_base(struct isp_pipe_context *pctx, void *param)
 	pctx->mode_3dnr = cfg_in->mode_3dnr;
 	pctx->mode_ltm = cfg_in->mode_ltm;
 	pctx->in_fmt = cfg_in->in_fmt;
-	pctx->fetch_path_sel = cfg_in->fetch_fbd;
 	pctx->dispatch_bayer_mode = cfg_in->bayer_pattern;
 	pctx->dev->ltm_handle->ops->set_status(1, pctx->ctx_id,
 					       pctx->mode_ltm);
@@ -509,6 +508,7 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 	struct img_size *src;
 	struct img_trim *intrim;
 	struct isp_fetch_info *fetch = &pctx->fetch;
+	struct isp_fbd_raw_info *fbd_raw = &pctx->fbd_raw;
 
 	if (!pctx || !param) {
 		pr_err("error input ptr: null\n");
@@ -539,6 +539,37 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 		pctx->ctx_id, fetch->fetch_fmt, src->w, src->h,
 		intrim->start_x, intrim->start_y, intrim->size_x,
 			intrim->size_y);
+
+	if (pctx->fetch_path_sel) {
+		fbd_raw = &pctx->fbd_raw;
+		fbd_raw->width = cfg_in->src.w;
+		fbd_raw->height = cfg_in->src.h;
+		/* assign same value as width and height */
+		fbd_raw->size = pctx->input_size;
+		fbd_raw->trim = pctx->input_trim;
+
+		fbd_raw->pixel_start_in_hor = 0;
+		fbd_raw->pixel_start_in_ver = 0;
+		fbd_raw->tiles_num_in_hor =
+			div64_u64(ALIGN(fbd_raw->trim.size_x,
+					DCAM_FBC_TILE_WIDTH),
+				  DCAM_FBC_TILE_WIDTH);
+		fbd_raw->tiles_num_in_ver =
+			div64_u64(ALIGN(fbd_raw->trim.size_y,
+					DCAM_FBC_TILE_HEIGHT),
+				  DCAM_FBC_TILE_HEIGHT);
+		fbd_raw->tiles_start_odd = 0;
+		fbd_raw->tiles_num_pitch =
+			div64_u64(ALIGN(fbd_raw->width, DCAM_FBC_TILE_WIDTH),
+				  DCAM_FBC_TILE_WIDTH);
+		fbd_raw->low_bit_pitch = fbd_raw->width >> 1;
+		fbd_raw->fetch_fbd_bypass = 0;
+
+		pr_info("ctx%d fbd_raw: size %u %u, crop %u %u %u %u\n",
+			pctx->ctx_id, fbd_raw->width, fbd_raw->height,
+			fbd_raw->trim.start_x, fbd_raw->trim.start_y,
+			fbd_raw->trim.size_x, fbd_raw->trim.size_y);
+	}
 
 	switch (fetch->fetch_fmt) {
 	case ISP_FETCH_YUV422_3FRAME:
@@ -629,6 +660,19 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 	fetch->trim_off.addr_ch2 = trim_offset[2];
 
 	return ret;
+}
+
+int isp_cfg_ctx_compression(struct isp_pipe_context *pctx, void *param)
+{
+	struct isp_ctx_compression_desc *compression = param;
+
+	pctx->fetch_path_sel = compression->fetch_fbd;
+	pctx->nr3_fbc_fbd = compression->nr3_fbc_fbd;
+
+	pr_info("ctx %u, fetch_fbd %d, compress_3dnr %d\n",
+		pctx->ctx_id, pctx->fetch_path_sel, pctx->nr3_fbc_fbd);
+
+	return 0;
 }
 
 int isp_cfg_path_base(struct isp_path_desc *path, void *param)
@@ -762,6 +806,17 @@ int isp_cfg_path_size(struct isp_path_desc *path, void *param)
 		break;
 	}
 	return ret;
+}
+
+int isp_cfg_path_compression(struct isp_path_desc *path, void *param)
+{
+	struct isp_path_compression_desc *compression = param;
+
+	path->store_fbc = compression->store_fbc;
+
+	pr_info("path %d, store_fbc %u\n", path->spath_id, path->store_fbc);
+
+	return 0;
 }
 
 static int set_path_common(struct isp_path_desc *path)
@@ -1268,11 +1323,8 @@ int isp_path_set_store_frm(
 	return ret;
 }
 
-
-int isp_path_set_fetch_frm(
-		struct isp_pipe_context *pctx,
-		struct camera_frame *frame,
-		struct img_addr *fetch_addr)
+int isp_path_set_fetch_frm(struct isp_pipe_context *pctx,
+			   struct camera_frame *frame)
 {
 	int ret = 0;
 	int idx;
@@ -1280,11 +1332,39 @@ int isp_path_set_fetch_frm(
 	unsigned long offset_u, offset_v, yuv_addr[3] = {0};
 	struct isp_fetch_info *fetch = &pctx->fetch;
 
-	if (!pctx || !frame || !fetch_addr) {
+	if (!pctx || !frame) {
 		pr_err("error input ptr: null\n");
 		return -EINVAL;
 	}
 	pr_debug("enter.\n");
+
+	idx = pctx->ctx_id;
+
+	if (pctx->fetch_path_sel) {
+		struct dcam_compressed_addr compressed_addr;
+		struct isp_fbd_raw_info *fbd_raw;
+
+		dcam_if_cal_compressed_addr(pctx->input_size.w,
+					    pctx->input_size.h,
+					    frame->buf.iova[0],
+					    &compressed_addr);
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM2, compressed_addr.tile_addr);
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM3, compressed_addr.tile_addr);
+		ISP_REG_WR(idx, ISP_FBD_RAW_LOW_PARAM0,
+			   compressed_addr.low2_addr);
+
+		/* store start address for slice use */
+		fbd_raw = &pctx->fbd_raw;
+		fbd_raw->header_addr_init = compressed_addr.tile_addr;
+		fbd_raw->tile_addr_init_x256 = compressed_addr.tile_addr;
+		fbd_raw->low_bit_addr_init = compressed_addr.low2_addr;
+
+		pr_debug("fetch_fbd: %u 0x%lx, 0x%lx, size %u %u\n", frame->fid,
+			 compressed_addr.tile_addr, compressed_addr.low2_addr,
+			 pctx->input_size.w, pctx->input_size.h);
+
+		return 0;
+	}
 
 	if (fetch->fetch_fmt == ISP_FETCH_YUV422_3FRAME)
 		planes = 3;
@@ -1312,15 +1392,13 @@ int isp_path_set_fetch_frm(
 	}
 
 	/* set the start address of source frame */
-	fetch_addr->addr_ch0 = yuv_addr[0];
-	fetch_addr->addr_ch1 = yuv_addr[1];
-	fetch_addr->addr_ch2 = yuv_addr[2];
+	fetch->addr.addr_ch0 = yuv_addr[0];
+	fetch->addr.addr_ch1 = yuv_addr[1];
+	fetch->addr.addr_ch2 = yuv_addr[2];
 
 	yuv_addr[0] += fetch->trim_off.addr_ch0;
 	yuv_addr[1] += fetch->trim_off.addr_ch1;
 	yuv_addr[2] += fetch->trim_off.addr_ch2;
-
-	idx = pctx->ctx_id;
 
 	if( pctx->dev->sec_mode == SEC_SPACE_PRIORITY) {
 		camca_isp_fetch_addr_set(yuv_addr[0],  yuv_addr[1],  yuv_addr[2] );
@@ -1337,4 +1415,3 @@ int isp_path_set_fetch_frm(
 
 	return ret;
 }
-

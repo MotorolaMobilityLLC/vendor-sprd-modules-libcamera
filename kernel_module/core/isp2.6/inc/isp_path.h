@@ -16,16 +16,16 @@
 
 int isp_cfg_ctx_base(struct isp_pipe_context *pctx, void *param);
 int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param);
+int isp_cfg_ctx_compression(struct isp_pipe_context *pctx, void *param);
 
 int isp_cfg_path_base(struct isp_path_desc *path, void *param);
 int isp_cfg_path_size(struct isp_path_desc *path, void *param);
+int isp_cfg_path_compression(struct isp_path_desc *path, void *param);
 
 int isp_set_path(struct isp_path_desc *path);
 
-int isp_path_set_fetch_frm(
-		struct isp_pipe_context *pctx,
-		struct camera_frame *frame,
-		struct img_addr *fetch_addr);
+int isp_path_set_fetch_frm(struct isp_pipe_context *pctx,
+			   struct camera_frame *frame);
 
 int isp_path_set_store_frm(
 		struct isp_path_desc *path,

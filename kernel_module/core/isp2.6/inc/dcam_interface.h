@@ -19,8 +19,30 @@
 #include "cam_hw.h"
 #include "cam_types.h"
 
+/*
+ * dcam_if fbc capability limit
+ * modification to these values may cause some function in isp_slice.c not
+ * work, check @_cfg_slice_fbd_raw and all other symbol references for details
+ */
+#define DCAM_FBC_TILE_WIDTH 64
+#define DCAM_FBC_TILE_HEIGHT 4
+#define DCAM_FBC_TILE_ADDR_ALIGN 256
 
-#define DCAM_SCALE_DOWN_MAX		4
+/* 4-pixel align for MIPI CAP input from CSI */
+#define DCAM_MIPI_CAP_ALIGN 4
+
+/* 2-pixel align for RDS output size */
+#define DCAM_RDS_OUT_ALIGN 2
+
+/* 16-pixel align for debug convenience */
+#define DCAM_OUTPUT_DEBUG_ALIGN 16
+
+/* align size for full/bin crop, use 4 for zzhdr sensor, 2 for normal sensor */
+#define DCAM_CROP_SIZE_ALIGN 4
+
+#define DCAM_SCALE_DOWN_MAX 4
+
+typedef unsigned long addr_t;
 
 /*
  * Supported dcam_if index. Number 0&1 for dcam_if and 2 for dcam_if_lite.
@@ -91,6 +113,53 @@ enum dcam_path_cfg_cmd {
 	DCAM_PATH_CFG_FULL_SOURCE, /* 4in1 select full path source */
 };
 
+/* fbc mode */
+enum {
+	DCAM_FBC_DISABLE = 0,
+	DCAM_FBC_FULL = 0x2,
+	DCAM_FBC_BIN = 0x3,
+};
+
+/* for dcam fbc */
+struct dcam_compressed_addr {
+	addr_t head_addr;
+	addr_t tile_addr;
+	addr_t low2_addr;
+};
+
+/*
+ * tile_num = w/64 * h/4;
+ * head_bytes = tile_num * 4 / 8;
+ * tile_bytes = tile_num * 256;
+ * low2_bytes = w * h * 2 / 8;
+ */
+static inline void
+dcam_if_cal_compressed_addr(uint32_t width, uint32_t height, addr_t in,
+			    struct dcam_compressed_addr *out)
+{
+	uint32_t pixel_count, head_bytes;
+
+	if (unlikely(!out))
+		return;
+
+	pixel_count = roundup(width, DCAM_FBC_TILE_WIDTH) * height;
+	head_bytes = pixel_count >> 9;
+
+	out->tile_addr = ALIGN(in + head_bytes, DCAM_FBC_TILE_ADDR_ALIGN);
+	out->head_addr = out->tile_addr - head_bytes;
+	out->low2_addr = out->tile_addr + pixel_count;
+}
+
+/* see @dcam_if_cal_compressed_addr */
+static inline uint32_t
+dcam_if_cal_compressed_size(uint32_t width, uint32_t height)
+{
+	uint32_t pixel_count;
+
+	pixel_count = roundup(width, DCAM_FBC_TILE_WIDTH) * height;
+	return ALIGN(pixel_count + (pixel_count >> 9) + (pixel_count >> 2),
+		     DCAM_FBC_TILE_ADDR_ALIGN);
+}
 
 enum dcam_ioctrl_cmd {
 	DCAM_IOCTL_CFG_CAP,
@@ -102,6 +171,7 @@ enum dcam_ioctrl_cmd {
 	DCAM_IOCTL_CFG_PDAF,
 	DCAM_IOCTL_CFG_EBD,
 	DCAM_IOCTL_CFG_SEC,
+	DCAM_IOCTL_CFG_FBC,
 };
 
 

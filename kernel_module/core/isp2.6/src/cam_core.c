@@ -139,6 +139,7 @@ struct camera_uchannel {
 	uint32_t deci_factor;/* for ISP output path */
 	uint32_t is_high_fps;/* for DCAM slow motion feature */
 	uint32_t high_fps_skip_num;/* for DCAM slow motion feature */
+	uint32_t is_compressed;/* for ISP output fbc format */
 
 	struct sprd_img_size src_size;
 	struct sprd_img_rect src_crop;
@@ -173,6 +174,10 @@ struct channel_context {
 	uint32_t frm_base_id;
 	uint32_t frm_cnt;
 	atomic_t err_status;
+
+	uint32_t compress_input;
+	uint32_t compress_3dnr;
+	uint32_t compress_output;
 
 	int32_t dcam_path_id;
 	uint32_t second_path_id; /* second path */
@@ -346,12 +351,149 @@ static void camera_put_empty_frame(void *param)
 	ret = put_empty_frame(frame);
 }
 
+struct compression_override g_compression_override[CAM_ID_MAX];
+
+/* compression policy */
+static void config_compression(struct camera_module *module)
+{
+	struct channel_context *ch_pre, *ch_cap, *ch_vid;
+	struct sprd_cam_hw_info *dcam_hw;
+	struct compression_override *override;
+	struct isp_ctx_compression_desc ctx_compression_desc;
+	struct isp_path_compression_desc path_compression_desc;
+	int dcam_fbc_mode;
+
+	ch_pre = &module->channel[CAM_CH_PRE];
+	ch_cap = &module->channel[CAM_CH_CAP];
+	ch_vid = &module->channel[CAM_CH_VID];
+
+	/*
+	 * Enable compression for DCAM path by default. Full path is prior to
+	 * bin path.
+	 */
+	ch_cap->compress_input = ch_cap->enable
+		&& ch_cap->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY
+		&& !ch_cap->ch_uinfo.is_high_fps;
+	ch_pre->compress_input = ch_pre->enable
+		&& ch_pre->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY
+		&& !ch_pre->ch_uinfo.is_high_fps
+		&& !ch_cap->compress_input;
+	ch_vid->compress_input = ch_pre->compress_input;
+
+	/* Enable compression for 3DNR by default */
+	ch_cap->compress_3dnr = 1;
+	ch_pre->compress_3dnr = 1;
+	ch_vid->compress_3dnr = ch_pre->compress_3dnr;
+
+	/*
+	 * Enable compression for ISP store according to HAL setting. Normally
+	 * this only happens in slow motion and only for video path.
+	 */
+	ch_cap->compress_output =
+		ch_cap->enable && ch_cap->ch_uinfo.is_compressed;
+	ch_pre->compress_output =
+		ch_pre->enable && ch_pre->ch_uinfo.is_compressed;
+	ch_vid->compress_output =
+		ch_vid->enable && ch_vid->ch_uinfo.is_compressed;
+
+	/* disable all compression on SharkL5 */
+	dcam_hw = module->grp->dcam[module->dcam_idx];
+	if (dcam_hw->prj_id == SHARKL5) {
+		ch_cap->compress_input = ch_cap->compress_output =
+			ch_cap->compress_3dnr = 0;
+		ch_pre->compress_input = ch_pre->compress_output =
+			ch_pre->compress_3dnr = 0;
+		ch_vid->compress_input = ch_vid->compress_output =
+			ch_vid->compress_3dnr = 0;
+	}
+
+	/* manually control compression policy here */
+	override = &g_compression_override[module->idx];
+	if (override->enable) {
+		ch_cap->compress_input = override->override[CH_CAP][FBC_DCAM];
+		ch_cap->compress_3dnr = override->override[CH_CAP][FBC_3DNR];
+		ch_cap->compress_output = override->override[CH_CAP][FBC_ISP];
+
+		ch_pre->compress_input = override->override[CH_PRE][FBC_DCAM];
+		ch_pre->compress_3dnr = override->override[CH_PRE][FBC_3DNR];
+		ch_pre->compress_output = override->override[CH_PRE][FBC_ISP];
+
+		ch_vid->compress_input = override->override[CH_VID][FBC_DCAM];
+		ch_vid->compress_3dnr = override->override[CH_VID][FBC_3DNR];
+		ch_vid->compress_output = override->override[CH_VID][FBC_ISP];
+	}
+
+	pr_info("cam%d: cap %u %u %u, pre %u %u %u, vid %u %u %u\n",
+		module->idx,
+		ch_cap->compress_input, ch_cap->compress_3dnr,
+		ch_cap->compress_output,
+		ch_pre->compress_input, ch_pre->compress_3dnr,
+		ch_pre->compress_output,
+		ch_vid->compress_input, ch_vid->compress_3dnr,
+		ch_vid->compress_output);
+
+	/* dcam */
+	if (ch_cap->compress_input)
+		dcam_fbc_mode = DCAM_FBC_FULL;
+	else if (ch_pre->compress_input)
+		dcam_fbc_mode = DCAM_FBC_BIN;
+	else
+		dcam_fbc_mode = DCAM_FBC_DISABLE;
+
+	dcam_ops->ioctl(module->dcam_dev_handle,
+			DCAM_IOCTL_CFG_FBC, &dcam_fbc_mode);
+
+	/* capture context */
+	ctx_compression_desc.fetch_fbd = ch_cap->compress_input;
+	ctx_compression_desc.nr3_fbc_fbd = ch_cap->compress_3dnr;
+	isp_ops->cfg_path(module->isp_dev_handle,
+			  ISP_PATH_CFG_CTX_COMPRESSION,
+			  ch_cap->isp_path_id >> ISP_CTXID_OFFSET,
+			  0, &ctx_compression_desc);
+
+	path_compression_desc.store_fbc = ch_cap->compress_output;
+	isp_ops->cfg_path(module->isp_dev_handle,
+			  ISP_PATH_CFG_PATH_COMPRESSION,
+			  ch_cap->isp_path_id >> ISP_CTXID_OFFSET,
+			  ch_cap->isp_path_id & ISP_PATHID_MASK,
+			  &path_compression_desc);
+
+	/* preview context */
+	ctx_compression_desc.fetch_fbd = ch_pre->compress_input;
+	ctx_compression_desc.nr3_fbc_fbd = ch_pre->compress_3dnr;
+	isp_ops->cfg_path(module->isp_dev_handle,
+			  ISP_PATH_CFG_CTX_COMPRESSION,
+			  ch_pre->isp_path_id >> ISP_CTXID_OFFSET,
+			  0, &ctx_compression_desc);
+
+	path_compression_desc.store_fbc = ch_pre->compress_output;
+	isp_ops->cfg_path(module->isp_dev_handle,
+			  ISP_PATH_CFG_PATH_COMPRESSION,
+			  ch_pre->isp_path_id >> ISP_CTXID_OFFSET,
+			  ch_pre->isp_path_id & ISP_PATHID_MASK,
+			  &path_compression_desc);
+
+	/* video context */
+	ctx_compression_desc.fetch_fbd = ch_vid->compress_input;
+	ctx_compression_desc.nr3_fbc_fbd = ch_vid->compress_3dnr;
+	isp_ops->cfg_path(module->isp_dev_handle,
+			  ISP_PATH_CFG_CTX_COMPRESSION,
+			  ch_vid->isp_path_id >> ISP_CTXID_OFFSET,
+			  0, &ctx_compression_desc);
+
+	path_compression_desc.store_fbc = ch_vid->compress_output;
+	isp_ops->cfg_path(module->isp_dev_handle,
+			  ISP_PATH_CFG_PATH_COMPRESSION,
+			  ch_vid->isp_path_id >> ISP_CTXID_OFFSET,// TODO
+			  ch_vid->isp_path_id & ISP_PATHID_MASK,
+			  &path_compression_desc);
+}
+
 static void alloc_buffers(struct work_struct *work)
 {
 	int ret = 0;
 	int i, count, total, iommu_enable;
-	uint32_t width, height;
-	ssize_t  size;
+	uint32_t width, height, size;
 	struct sprd_cam_work *alloc_work;
 	struct camera_module *module;
 	struct camera_frame *pframe;
@@ -360,24 +502,26 @@ static void alloc_buffers(struct work_struct *work)
 	pr_info("enter.\n");
 
 	alloc_work = container_of(work, struct sprd_cam_work, work);
-	channel = container_of(alloc_work, struct channel_context, alloc_buf_work);
+	channel = container_of(alloc_work,
+			       struct channel_context, alloc_buf_work);
 	atomic_set(&alloc_work->status, CAM_WORK_RUNNING);
 
 	module = (struct camera_module *)alloc_work->priv_data;
 	iommu_enable = module->iommu_enable;
 
-	pr_info("orig ch%d swap size %d , %d\n",
-		channel->ch_id,  channel->swap_size.w, channel->swap_size.h);
-
 	width = channel->swap_size.w;
 	height = channel->swap_size.h;
-	if (channel->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY)
+	if (channel->compress_input) {
+		size = dcam_if_cal_compressed_size(width, height);
+	} else if (channel->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY) {
 		size = cal_sprd_raw_pitch(width) * height;
-	else
+	} else {
 		size = width * height * 3;
+	}
 	size = ALIGN(size, CAM_BUF_ALIGN_SIZE);
-	pr_debug("channel %d alloc shared buffer size: %d (w %d h %d)\n",
-			channel->ch_id, (int)size, width, height);
+
+	pr_info("ch%d alloc shared buffer size: %u (w %u h %u)\n",
+		channel->ch_id, size, width, height);
 
 	total = 5;
 	if (module->dump_thrd.thread_task)
@@ -401,6 +545,7 @@ static void alloc_buffers(struct work_struct *work)
 		do {
 			pframe = get_empty_frame();
 			pframe->channel_id = channel->ch_id;
+			pframe->is_compressed = channel->compress_input;
 
 			if(channel->ch_id == CAM_CH_PRE
 				&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
@@ -423,6 +568,7 @@ static void alloc_buffers(struct work_struct *work)
 				atomic_inc(&channel->err_status);
 				goto exit;
 			}
+
 			cambuf_kmap(&pframe->buf);
 			ret = camera_enqueue(&channel->share_buf_queue, pframe);
 			if (ret) {
@@ -446,8 +592,7 @@ static void alloc_buffers(struct work_struct *work)
 		/* YUV420 for 3DNR ref*/
 		size = ((width + 1) & (~1)) * height * 3 / 2;
 		size = ALIGN(size, CAM_BUF_ALIGN_SIZE);
-		pr_info("ch %d 3dnr buffer size: %d.\n",
-					channel->ch_id, (int)size);
+		pr_info("ch %d 3dnr buffer size: %u.\n", channel->ch_id, size);
 		for (i = 0; i < ISP_NR3_BUF_NUM; i++) {
 			pframe = get_empty_frame();
 
@@ -483,8 +628,7 @@ static void alloc_buffers(struct work_struct *work)
 
 		size = ALIGN(size, CAM_BUF_ALIGN_SIZE);
 
-		pr_info("ch %d ltm buffer size: %d.\n",
-			channel->ch_id, (int)size);
+		pr_info("ch %d ltm buffer size: %u.\n", channel->ch_id, size);
 		for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
 			if (channel->ch_id == CAM_CH_PRE) {
 				pframe = get_empty_frame();
@@ -1239,12 +1383,23 @@ static void align_w16(struct img_size *in, struct img_size *out, uint32_t *ratio
 	}
 }
 
+static inline uint32_t multiply_ratio16(uint64_t num, uint32_t ratio16)
+{
+	return (uint32_t)((num * ratio16) >> 16);
+}
+
+static inline uint32_t divide_ratio16(uint64_t num, uint32_t ratio16)
+{
+	return (uint32_t)div64_u64(num << 16, ratio16);
+}
+
 static int cal_channel_size(struct camera_module *module)
 {
 	uint32_t ratio_min, is_same_fov = 0;
 	uint32_t ratio_p_w, ratio_p_h;
 	uint32_t ratio_v_w, ratio_v_h;
-	uint32_t end_x, end_y;
+	uint32_t ratio16_w, ratio16_h;
+	uint32_t align_w, align_h;
 	uint32_t illegal;
 	struct channel_context *ch_prev;
 	struct channel_context *ch_vid;
@@ -1271,16 +1426,16 @@ static int cal_channel_size(struct camera_module *module)
 		crop_p = &ch_prev->ch_uinfo.src_crop;
 		dst_p.w = ch_prev->ch_uinfo.dst_size.w;
 		dst_p.h = ch_prev->ch_uinfo.dst_size.h;
-		pr_info("src crop prev %d %d %d %d\n", crop_p->x, crop_p->y,
-			crop_p->x + crop_p->w, crop_p->y + crop_p->h);
+		pr_info("src crop prev %u %u %u %u\n",
+			crop_p->x, crop_p->y, crop_p->w, crop_p->h);
 	}
 
 	if (ch_vid->enable) {
 		crop_v = &ch_vid->ch_uinfo.src_crop;
 		dst_v.w = ch_vid->ch_uinfo.dst_size.w;
 		dst_v.h = ch_vid->ch_uinfo.dst_size.h;
-		pr_info("src crop vid %d %d %d %d\n", crop_v->x, crop_v->y,
-			crop_v->x + crop_v->w, crop_v->y + crop_v->h);
+		pr_info("src crop vid %u %u %u %u\n",
+			crop_v->x, crop_v->y, crop_v->w, crop_v->h);
 	}
 
 	if (ch_cap->enable && ch_prev->enable &&
@@ -1295,12 +1450,10 @@ static int cal_channel_size(struct camera_module *module)
 		crop_dst = *crop_p;
 		get_largest_crop(&crop_dst, crop_v);
 		get_largest_crop(&crop_dst, crop_c);
-		end_x = (crop_dst.x + crop_dst.w + 3) & ~3;
-		end_y = (crop_dst.y + crop_dst.h + 3) & ~3;
-		trim_pv.start_x = crop_dst.x & ~3;
-		trim_pv.start_y = crop_dst.y & ~3;
-		trim_pv.size_x = end_x - trim_pv.start_x;
-		trim_pv.size_y = end_y - trim_pv.start_y;
+		trim_pv.start_x = crop_dst.x;
+		trim_pv.start_y = crop_dst.y;
+		trim_pv.size_x = crop_dst.w;
+		trim_pv.size_y = crop_dst.h;
 	}
 
 	if (is_same_fov)
@@ -1310,12 +1463,20 @@ static int cal_channel_size(struct camera_module *module)
 		trim_c.start_y = ch_cap->ch_uinfo.src_crop.y & ~1;
 		trim_c.size_x = (ch_cap->ch_uinfo.src_crop.w + 1) & ~1;
 		trim_c.size_y = (ch_cap->ch_uinfo.src_crop.h + 1) & ~1;
+
+		if (ch_cap->compress_input) {
+			uint32_t aligned_y;
+
+			aligned_y = ALIGN_DOWN(trim_c.start_y, 4);
+			trim_c.size_y += trim_c.start_y - aligned_y;
+			trim_c.start_y = aligned_y;
+		}
 	}
 
-	pr_info("trim_pv: %d %d %d %d\n", trim_pv.start_x, trim_pv.start_y,
-		trim_pv.start_x + trim_pv.size_x, trim_pv.start_y + trim_pv.size_y);
-	pr_info("trim_c: %d %d %d %d\n", trim_c.start_x, trim_c.start_y,
-		trim_c.start_x + trim_c.size_x, trim_c.start_y + trim_c.size_y);
+	pr_info("trim_pv: %u %u %u %u\n", trim_pv.start_x, trim_pv.start_y,
+		trim_pv.size_x, trim_pv.size_y);
+	pr_info("trim_c: %u %u %u %u\n", trim_c.start_x, trim_c.start_y,
+		trim_c.size_x, trim_c.size_y);
 
 	if (ch_prev->enable) {
 		if (module->zoom_solution == 0) {
@@ -1338,35 +1499,90 @@ static int cal_channel_size(struct camera_module *module)
 				ratio_p_w, ratio_p_h, ratio_v_w, ratio_v_h, ratio_min);
 		}
 
-		dcam_out.w = fix_scale(trim_pv.size_x, ratio_min);
-		dcam_out.w = (dcam_out.w + 1) & ~1;
-		dcam_out.h = fix_scale(trim_pv.size_y, ratio_min);
-		dcam_out.h = (dcam_out.h + 1) & ~1;
-		temp.w = trim_pv.size_x;
-		temp.h = trim_pv.size_y;
-		align_w16(&temp, &dcam_out, &ratio_min);
+		/* align bin path output size */
+		align_w = align_h = DCAM_RDS_OUT_ALIGN;
+		if (ch_prev->compress_input)
+			align_h = MAX(align_h, DCAM_FBC_TILE_HEIGHT);
+		align_w = MAX(align_w, DCAM_OUTPUT_DEBUG_ALIGN);
+		dcam_out.w = divide_ratio16(trim_pv.size_x, ratio_min);
+		dcam_out.h = divide_ratio16(trim_pv.size_y, ratio_min);
+		dcam_out.w = ALIGN(dcam_out.w, align_w);
+		dcam_out.h = ALIGN(dcam_out.h, align_h);
 
-		pr_info("dst_p %d %d, dst_v %d %d, dcam_out %d %d\n",
-			dst_p.w, dst_p.h, dst_v.w, dst_v.h, dcam_out.w, dcam_out.h);
+		/* keep same ratio between width and height */
+		ratio16_w = div_u64(trim_pv.size_x << RATIO_SHIFT, dcam_out.w);
+		ratio16_h = div_u64(trim_pv.size_y << RATIO_SHIFT, dcam_out.h);
+		ratio_min = min(ratio16_w, ratio16_h);
+
+		/* if sensor size is too small */
+		if (src_p.w < dcam_out.w || src_p.h < dcam_out.h) {
+			dcam_out.w = src_p.w;
+			dcam_out.h = src_p.h;
+			if (ch_prev->compress_input)
+				dcam_out.h = ALIGN_DOWN(dcam_out.h,
+							DCAM_FBC_TILE_HEIGHT);
+			ratio_min = 1 << RATIO_SHIFT;
+		}
+
+		if ((1 << RATIO_SHIFT) >= ratio_min) {
+			/* enlarge @trim_pv and crop it in isp */
+			uint32_t align = 2;// TODO set to 4 for zzhdr
+
+			trim_pv.start_x =
+				ALIGN_DOWN((src_p.w - dcam_out.w) >> 1, align);
+			trim_pv.start_y =
+				ALIGN_DOWN((src_p.h - dcam_out.h) >> 1, align);
+			trim_pv.size_x =
+				ALIGN(src_p.w - (trim_pv.start_x << 1), align);
+			trim_pv.size_y =
+				ALIGN(src_p.h - (trim_pv.start_y << 1), align);
+			ratio_min = 1 << RATIO_SHIFT;
+			pr_info("trim_pv aligned %u %u %u %u\n",
+				trim_pv.start_x, trim_pv.start_y,
+				trim_pv.size_x, trim_pv.size_y);
+		} else {
+			dcam_out.w = divide_ratio16(trim_pv.size_x, ratio_min);
+			dcam_out.h = divide_ratio16(trim_pv.size_y, ratio_min);
+			dcam_out.w = ALIGN(dcam_out.w, align_w);
+			dcam_out.h = ALIGN(dcam_out.h, align_h);
+		}
+
+		pr_info("dst_p %u %u, dst_v %u %u, dcam_out %u %u, ratio %u\n",
+			dst_p.w, dst_p.h, dst_v.w, dst_v.h,
+			dcam_out.w, dcam_out.h, ratio_min);
 
 		/* applied latest rect for aem */
 		module->zoom_ratio = src_p.w * ZOOM_RATIO_DEFAULT / crop_p->w;
 		ch_prev->trim_dcam = trim_pv;
-		ch_prev->rds_ratio = ratio_min;
+		ch_prev->rds_ratio = ratio_min;/* rds_ratio is not used */
 		ch_prev->dst_dcam = dcam_out;
 
-		get_diff_trim(&ch_prev->ch_uinfo.src_crop,
-			ratio_min, &trim_pv, &ch_prev->trim_isp);
-
-		illegal = ((ch_prev->trim_isp.start_x + ch_prev->trim_isp.size_x) > dcam_out.w);
-		illegal |= ((ch_prev->trim_isp.start_y + ch_prev->trim_isp.size_y) > dcam_out.h);
-		pr_info("trim isp, prev %d %d %d %d\n",
+		ch_prev->trim_isp.size_x =
+			divide_ratio16(ch_prev->ch_uinfo.src_crop.w, ratio_min);
+		ch_prev->trim_isp.size_y =
+			divide_ratio16(ch_prev->ch_uinfo.src_crop.h, ratio_min);
+		ch_prev->trim_isp.start_x =
+			(dcam_out.w - ch_prev->trim_isp.size_x) >> 1;
+		ch_prev->trim_isp.start_y =
+			(dcam_out.h - ch_prev->trim_isp.size_y) >> 1;
+		pr_info("trim isp, prev %u %u %u %u\n",
 			ch_prev->trim_isp.start_x, ch_prev->trim_isp.start_y,
 			ch_prev->trim_isp.size_x, ch_prev->trim_isp.size_y);
 
+		illegal = ((ch_prev->trim_isp.start_x + ch_prev->trim_isp.size_x) > dcam_out.w);
+		illegal |= ((ch_prev->trim_isp.start_y + ch_prev->trim_isp.size_y) > dcam_out.h);
+
 		if (ch_vid->enable) {
-			get_diff_trim(&ch_vid->ch_uinfo.src_crop,
-				ratio_min, &trim_pv, &ch_vid->trim_isp);
+			ch_vid->trim_isp.size_x =
+				divide_ratio16(ch_vid->ch_uinfo.src_crop.w,
+					       ratio_min);
+			ch_vid->trim_isp.size_y =
+				divide_ratio16(ch_vid->ch_uinfo.src_crop.h,
+					       ratio_min);
+			ch_vid->trim_isp.start_x =
+				(dcam_out.w - ch_vid->trim_isp.size_x) >> 1;
+			ch_vid->trim_isp.start_y =
+				(dcam_out.h - ch_vid->trim_isp.size_y) >> 1;
 			illegal |= ((ch_vid->trim_isp.start_x + ch_vid->trim_isp.size_x) > dcam_out.w);
 			illegal |= ((ch_vid->trim_isp.start_y + ch_vid->trim_isp.size_y) > dcam_out.h);
 			pr_info("trim isp, vid %d %d %d %d\n",
@@ -1426,6 +1642,10 @@ static int cal_channel_size(struct camera_module *module)
 		max.w += ALIGN_OFFSET;
 		max.h += ALIGN_OFFSET;
 
+		/* enlarge size for fbc */
+		max.w = ALIGN(max.w, DCAM_FBC_TILE_WIDTH);
+		max.h = ALIGN(max.h, DCAM_FBC_TILE_HEIGHT);
+
 		ch_prev->swap_size = max;
 		pr_info("prev path swap size %d %d\n",
 			ch_prev->swap_size.w, ch_prev->swap_size.h);
@@ -1449,7 +1669,9 @@ static int cal_channel_size(struct camera_module *module)
 				ch_cap->trim_isp.start_x, ch_cap->trim_isp.start_y,
 				ch_cap->trim_isp.size_x, ch_cap->trim_isp.size_y);
 	}
+
 	pr_info("done.\n");
+
 	return 0;
 }
 
@@ -2195,7 +2417,6 @@ static int init_cam_channel(
 		/* todo: cfg param to user setting. */
 		ctx_desc.in_fmt = ch_uinfo->sn_fmt;
 		ctx_desc.bayer_pattern = module->cam_uinfo.sensor_if.img_ptn;
-		ctx_desc.fetch_fbd = 0;
 		ctx_desc.mode_ltm = MODE_LTM_OFF;
 		ctx_desc.mode_3dnr = MODE_3DNR_OFF;
 		ctx_desc.enable_slowmotion = ch_uinfo->is_high_fps;
@@ -2912,7 +3133,8 @@ static int img_ioctl_set_sensor_trim(
 				(void __user *)arg,
 				sizeof(struct sprd_img_rect));
 	pr_info("sensor_trim %d %d %d %d\n", dst->x, dst->y, dst->w, dst->h);
-	if (unlikely(ret)) {
+	/* make sure MIPI CAP size is 4 pixel aligned */
+	if (unlikely(ret || (dst->w | dst->h) & (DCAM_MIPI_CAP_ALIGN - 1))) {
 		pr_err("fail to copy from user, ret %d\n", ret);
 		ret = -EFAULT;
 		goto exit;
@@ -3062,6 +3284,9 @@ static int img_ioctl_set_output_size(
 	ret |= get_user(dst->slave_img_fmt, &uparam->aux_img.pixel_fmt);
 	ret |= copy_from_user(&dst->slave_img_size,
 			&uparam->aux_img.dst_size, sizeof(struct sprd_img_size));
+
+	// TODO get this from HAL
+	dst->is_compressed = 0;
 
 	pr_info("high fps %u %u. crop %d %d %d %d. dst size %d %d. aux %d %d %d %d\n",
 		dst->is_high_fps, dst->high_fps_skip_num,
@@ -3958,6 +4183,9 @@ static int img_ioctl_stream_on(
 	atomic_set(&module->state, CAM_STREAM_ON);
 	pr_info("cam%d stream on starts\n", module->idx);
 
+	/* settle down compression policy here */
+	config_compression(module);
+
 	ret = cal_channel_size(module);
 	ch = &module->channel[CAM_CH_PRE];
 	if (ch->enable)
@@ -4560,7 +4788,6 @@ static int raw_proc_pre(
 	memset(&ctx_desc, 0, sizeof(ctx_desc));
 	ctx_desc.in_fmt = proc_info->src_format;
 	ctx_desc.bayer_pattern = proc_info->src_pattern;
-	ctx_desc.fetch_fbd = 0;
 	ctx_desc.mode_ltm = MODE_LTM_OFF;
 	ctx_desc.mode_3dnr = MODE_3DNR_OFF;
 	ret = isp_ops->cfg_path(module->isp_dev_handle,
@@ -5258,7 +5485,6 @@ static int test_isp(struct camera_module *module,
 		/* todo: cfg param to user setting. */
 		ctx_desc.in_fmt = test_info->in_fmt;
 		ctx_desc.bayer_pattern = COLOR_ORDER_GB;
-		ctx_desc.fetch_fbd = 0;
 		ctx_desc.mode_ltm = MODE_LTM_OFF;
 		ctx_desc.mode_3dnr = MODE_3DNR_OFF;
 		ret = isp_ops->cfg_path(module->isp_dev_handle,
@@ -6055,6 +6281,9 @@ static int sprd_img_probe(struct platform_device *pdev)
 		pr_err("alloc memory fail.");
 		return -ENOMEM;
 	}
+
+	memset(&g_compression_override, 0,
+	       sizeof(struct compression_override) * CAM_ID_MAX);
 
 	ret = misc_register(&image_dev);
 	if (ret) {

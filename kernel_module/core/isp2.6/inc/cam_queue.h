@@ -39,6 +39,7 @@ struct camera_frame {
 	uint32_t irq_type;
 	uint32_t irq_property;
 	uint32_t is_reserved;
+	uint32_t is_compressed;
 	void *priv_data;
 	/* for more param extend especially in offline process */
 	void *param_data;
@@ -47,7 +48,7 @@ struct camera_frame {
 	ktime_t boot_time;/* ns from boot @ISP DONE */
 	struct timeval sensor_time;/* time without suspend @SOF */
 	ktime_t boot_sensor_time;/* ns from boot @SOF */
-	struct camera_buf  buf;
+	struct camera_buf buf;
 };
 
 struct camera_queue {

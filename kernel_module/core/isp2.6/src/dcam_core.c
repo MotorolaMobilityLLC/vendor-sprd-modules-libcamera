@@ -1887,6 +1887,15 @@ void dcam_put_sync_helper(struct dcam_pipe_dev *dev,
 	spin_unlock_irqrestore(&dev->helper_lock, flags);
 }
 
+/* config fbc, see dcam_interface.h for @fbc_mode */
+static int dcam_cfg_fbc(struct dcam_pipe_dev *dev, int fbc_mode)
+{
+	DCAM_REG_MWR(dev->idx, DCAM_PATH_ENDIAN, 0x3, fbc_mode);
+	pr_info("fbc mode %d\n", fbc_mode);
+
+	return 0;
+}
+
 static int sprd_dcam_get_path(
 	void *dcam_handle, int path_id)
 {
@@ -2123,6 +2132,7 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 	int ret = 0;
 	struct dcam_pipe_dev *dev = NULL;
 	struct dcam_mipi_info *cap;
+	int *fbc_mode;
 
 	if (!dcam_handle) {
 		pr_err("fail to get valid input ptr\n");
@@ -2170,6 +2180,11 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		ret = dcam_cfg_ebd(dev, param);
 	case DCAM_IOCTL_CFG_SEC:
 		ret = dcam_cfg_dcamsec(dev, param);
+		break;
+	case DCAM_IOCTL_CFG_FBC:
+		fbc_mode = (int *)param;
+		if (fbc_mode)
+			ret = dcam_cfg_fbc(dev, *fbc_mode);
 		break;
 	default:
 		pr_err("error: unknown cmd: %d\n", cmd);

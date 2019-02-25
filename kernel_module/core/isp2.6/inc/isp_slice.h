@@ -149,6 +149,39 @@ struct slice_fetch_info {
 	uint32_t mipi_word_num;
 };
 
+struct slice_fbd_raw_info {
+	/* ISP_FBD_RAW_SEL */
+	uint32_t pixel_start_in_hor:6;
+	uint32_t pixel_start_in_ver:2;
+	uint32_t fetch_fbd_bypass:1;
+	/* ISP_FBD_RAW_SLICE_SIZE */
+	uint32_t height;
+	uint32_t width;
+	/* ISP_FBD_RAW_PARAM0 */
+	uint32_t tiles_num_in_ver:11;
+	uint32_t tiles_num_in_hor:6;
+	/* ISP_FBD_RAW_PARAM1 */
+	uint32_t tiles_start_odd:1;
+	uint32_t tiles_num_pitch:8;
+	/* ISP_FBD_RAW_PARAM2 */
+	uint32_t header_addr_init;
+	/* ISP_FBD_RAW_PARAM3 */
+	uint32_t tile_addr_init_x256;
+	/* ISP_FBD_RAW_PARAM4 */
+	uint32_t fbd_cr_ch0123_val0;
+	/* ISP_FBD_RAW_PARAM5 */
+	uint32_t fbd_cr_ch0123_val1;
+	/* ISP_FBD_RAW_PARAM6 */
+	uint32_t fbd_cr_uv_val1:8;
+	uint32_t fbd_cr_y_val1:8;
+	uint32_t fbd_cr_uv_val0:8;
+	uint32_t fbd_cr_y_val0:8;
+	/* ISP_FBD_RAW_LOW_PARAM0 */
+	uint32_t low_bit_addr_init;
+	/* ISP_FBD_RAW_LOW_PARAM1 */
+	uint32_t low_bit_pitch:16;
+};
+
 struct slice_3dnr_memctrl_info {
 	uint32_t bypass;
 	uint32_t start_col;
@@ -203,6 +236,7 @@ struct isp_slice_desc {
 	struct slice_pos_info slice_pos;
 	struct slice_overlap_info slice_overlap;
 	struct slice_fetch_info slice_fetch;
+	struct slice_fbd_raw_info slice_fbd_raw;
 	struct slice_store_info slice_store[ISP_SPATH_NUM];
 	struct slice_scaler_info slice_scaler[ISP_SPATH_NUM];
 	struct slice_thumbscaler_info slice_thumbscaler;

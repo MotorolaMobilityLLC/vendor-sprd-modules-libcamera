@@ -454,8 +454,169 @@ static const struct file_operations lbuf_len_ops = {
 	.write = lbuf_len_write,
 };
 
+static int fbc_ctrl_read(struct seq_file *s, void *unused)
+{
+	struct compression_override *override;
+	int i;
+
+	override = (struct compression_override *)s->private;
+
+	for (i = 0; i < CAM_ID_MAX; i++, override++) {
+		seq_printf(s, "\n===== CAM%d override %u =====\n",
+			   i, override->enable);
+		seq_printf(s, "          dcam   3dnr   isp\n");
+		seq_printf(s, "preview      %u      %u     %u\n",
+			   override->override[CH_PRE][FBC_DCAM],
+			   override->override[CH_PRE][FBC_3DNR],
+			   override->override[CH_PRE][FBC_ISP]);
+		seq_printf(s, "capture      %u      %u     %u\n",
+			   override->override[CH_CAP][FBC_DCAM],
+			   override->override[CH_CAP][FBC_3DNR],
+			   override->override[CH_CAP][FBC_ISP]);
+		seq_printf(s, "video        %u      %u     %u\n",
+			   override->override[CH_VID][FBC_DCAM],
+			   override->override[CH_VID][FBC_3DNR],
+			   override->override[CH_VID][FBC_ISP]);
+	}
+
+	seq_printf(s, "\nUsage:\n");
+	seq_printf(s, "         echo ID override 1|0 > fbc_ctrl\n");
+	seq_printf(s, "         echo ID pre|cap|vid dcam|3dnr|isp 0|1 > fbc_ctrl\n");
+	seq_printf(s, "\nExample:\n");
+	seq_printf(s, "         echo 0 override 1 > fbc_ctrl   // enable fbc control override\n");
+	seq_printf(s, "         echo 1 cap dcam 1 > fbc_ctrl   // enable dcam fbc for cam1 capture channel\n");
+	seq_printf(s, "         echo 2 vid isp 0 > fbc_ctrl    // disable isp fbc for cam2 video channel\n");
+	seq_printf(s, "         echo 3 pre 3dnr 1 > fbc_ctrl   // enable 3dnr fbc for cam3 preview channel\n");
+
+	return 0;
+}
+
+static int fbc_ctrl_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, fbc_ctrl_read, inode->i_private);
+}
+
+static ssize_t fbc_ctrl_write(struct file *filp, const char __user *buffer,
+			      size_t count, loff_t *ppos)
+{
+	struct seq_file *p = (struct seq_file *)filp->private_data;
+	struct compression_override *override =
+		(struct compression_override *)p->private;
+	char buf[32] = { 0 }, *s, *c;
+	unsigned int id = 0, ch, type, en = 0;
+	int ret;
+
+	if (count > 32) {
+		pr_err("command too long\n");
+		return -EINVAL;
+	}
+
+	ret = copy_from_user(buf, (void __user *)buffer, count);
+	if (ret) {
+		pr_err("fail to copy_from_user\n");
+		return -EINVAL;
+	}
+	buf[count - 1] = '\0';
+
+	/* camera id */
+	s = buf;
+	c = strchr(s, ' ');
+	if (!c) {
+		pr_err("fail to get camera id\n");
+		return -EINVAL;
+	}
+	*c = '\0';
+
+	if (kstrtouint(s, 10, &id) < 0) {
+		pr_err("fail to parse camera id '%s'\n", s);
+		return -EINVAL;
+	}
+
+	if (id >= CAM_ID_MAX) {
+		pr_err("invalid camera id %u\n", id);
+		return -EINVAL;
+	}
+
+	/* commands or path */
+	s = c + 1;
+	c = strchr(s, ' ');
+	if (!c) {
+		pr_err("fail to get path or cmd\n");
+		return -EINVAL;
+	}
+	*c = '\0';
+
+	if (!strncmp(s, "override", 8)) {
+		ch = CH_MAX;
+	} else if (!strncmp(s, "pre", 3)) {
+		ch = CH_PRE;
+	} else if (!strncmp(s, "cap", 3)) {
+		ch = CH_CAP;
+	} else if (!strncmp(s, "vid", 3)) {
+		ch = CH_VID;
+	} else {
+		pr_err("fail to parse path or cmd '%s'\n", s);
+		return -EINVAL;
+	}
+
+	if (ch != CH_MAX) {
+		/* type if needed */
+		s = c + 1;
+		c = strchr(s, ' ');
+		if (!c) {
+			pr_err("fail to get fbc type\n");
+			return -EINVAL;
+		}
+		*c = '\0';
+
+		if (!strncmp(s, "dcam", 4)) {
+			type = FBC_DCAM;
+		} else if (!strncmp(s, "3dnr", 4)) {
+			type = FBC_3DNR;
+		} else if (!strncmp(s, "isp", 3)) {
+			type = FBC_ISP;
+		} else {
+			pr_err("fail to get fbc type '%s'\n", s);
+			return -EINVAL;
+		}
+	}
+
+	/* enable */
+	s = c + 1;
+	if (kstrtouint(s, 10, &en) < 0) {
+		pr_err("fail to parse enable '%s'\n", s);
+		return -EINVAL;
+	}
+
+	if (en > 1) {
+		pr_err("invalid enable %u\n", en);
+		return -EINVAL;
+	}
+
+	/* set */
+	if (ch == CH_MAX) {
+		pr_info("CAM%u override enable %u\n", id, en);
+		override[id].enable = en;
+	} else {
+		pr_info("CAM%u compression override %u %u %u\n",
+			id, ch, type, en);
+		override[id].override[ch][type] = en;
+	}
+
+	return count;
+}
+
+static const struct file_operations fbc_ctrl_ops = {
+	.owner = THIS_MODULE,
+	.open = fbc_ctrl_open,
+	.read = seq_read,
+	.write = fbc_ctrl_write,
+};
+
+extern struct compression_override g_compression_override;
 int sprd_isp_debugfs_init(void)
 {
+	struct dentry *entry = NULL;
 	char dirname[32] = {0};
 
 	snprintf(dirname, sizeof(dirname), "sprd_isp");
@@ -503,6 +664,11 @@ int sprd_isp_debugfs_init(void)
 		return -ENOMEM;
 	if (!debugfs_create_file("cap1_bypass", 0660,
 			debugfs_base, &debug_ctx_id[3], &isp_bypass_ops))
+		return -ENOMEM;
+
+	entry = debugfs_create_file("fbc_ctrl", 0660, debugfs_base,
+				    &g_compression_override, &fbc_ctrl_ops);
+	if (IS_ERR_OR_NULL(entry))
 		return -ENOMEM;
 
 	return 0;
@@ -624,6 +790,7 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	uint32_t bypass = 0;
 	uint32_t en_3dnr;
 	struct isp_fetch_info *fetch = &pctx->fetch;
+	struct isp_fbd_raw_info *fbd_raw = &pctx->fbd_raw;
 
 	pr_info("enter %s: fmt:%d, w:%d, h:%d\n", __func__, fetch->fetch_fmt,
 			fetch->in_trim.size_x, fetch->in_trim.size_y);
@@ -683,6 +850,27 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	ISP_REG_WR(idx, ISP_FETCH_LINE_DLY_CTRL, 0x8);
 	ISP_REG_WR(idx, ISP_FETCH_MIPI_INFO,
 		fetch->mipi_word_num | (fetch->mipi_byte_rel_pos << 16));
+
+	/* fetch fbd */
+	if (pctx->fetch_path_sel) {
+		ISP_REG_MWR(idx, ISP_FBD_RAW_SEL,
+			    BIT(0), fbd_raw->fetch_fbd_bypass);
+		ISP_REG_MWR(idx, ISP_FBD_RAW_SEL,
+			    0x00003f00, fbd_raw->pixel_start_in_hor);
+		ISP_REG_MWR(idx, ISP_FBD_RAW_SEL,
+			    0x00000030, fbd_raw->pixel_start_in_ver);
+		ISP_REG_WR(idx, ISP_FBD_RAW_SLICE_SIZE,
+			   fbd_raw->width | (fbd_raw->height << 16));
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM0,
+			   fbd_raw->tiles_num_in_hor
+			   | (fbd_raw->tiles_num_in_ver << 16));
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM1,
+			   0x2 << 16
+			   | (fbd_raw->tiles_start_odd & 0x1) << 8
+			   | ((fbd_raw->tiles_num_pitch) & 0xff));
+		ISP_REG_WR(idx, ISP_FBD_RAW_LOW_PARAM1, fbd_raw->low_bit_pitch);
+		pr_info("enable fbd: %d\n", !fbd_raw->fetch_fbd_bypass);
+	}
 
 	ISP_REG_WR(idx, ISP_DISPATCH_DLY,  0x253C);
 	ISP_REG_WR(idx, ISP_DISPATCH_LINE_DLY1,  0x280001C);
@@ -1147,7 +1335,7 @@ static int set_fmcu_slw_queue(struct isp_pipe_context *pctx)
 	pframe->width = pctx->input_size.w;
 	pframe->height = pctx->input_size.h;
 	frame_id = pframe->fid;
-	isp_path_set_fetch_frm(pctx, pframe, &pctx->fetch.addr);
+	isp_path_set_fetch_frm(pctx, pframe);
 
 	for (i = 0; i < ISP_SPATH_NUM; i++) {
 		path = &pctx->isp_path[i];
@@ -1280,7 +1468,7 @@ static int isp_offline_start_frame(void *ctx)
 	}
 
 	/* config fetch address */
-	isp_path_set_fetch_frm(pctx, pframe, &pctx->fetch.addr);
+	isp_path_set_fetch_frm(pctx, pframe);
 
 	/* Reset blending count if frame size change */
 	isp_3dnr_process_frame_previous(pctx, pframe);
@@ -1399,6 +1587,7 @@ static int isp_offline_start_frame(void *ctx)
 			slc_cfg.frame_store[i] = &path->store;
 		}
 		slc_cfg.frame_fetch = &pctx->fetch;
+		slc_cfg.frame_fbd_raw = &pctx->fbd_raw;
 		isp_cfg_slice_fetch_info(&slc_cfg, pctx->slice_ctx);
 		isp_cfg_slice_store_info(&slc_cfg, pctx->slice_ctx);
 
@@ -1729,6 +1918,7 @@ static int isp_slice_ctx_init(struct isp_pipe_context *pctx)
 	slc_cfg_in.frame_in_size.w = pctx->input_trim.size_x;
 	slc_cfg_in.frame_in_size.h = pctx->input_trim.size_y;
 	slc_cfg_in.frame_fetch = &pctx->fetch;
+	slc_cfg_in.frame_fbd_raw = &pctx->fbd_raw;
 	for (j = 0; j < ISP_SPATH_NUM; j++) {
 		path = &pctx->isp_path[j];
 		if (atomic_read(&path->user_cnt) <= 0)
@@ -1870,6 +2060,8 @@ new_ctx:
 	complete(&pctx->frm_done);
 	pctx->isp_k_param.nlm_info.bypass = 1;
 	pctx->isp_k_param.ynr_info.bypass = 1;
+	/* bypass fbd_raw by default */
+	pctx->fbd_raw.fetch_fbd_bypass = 1;
 
 	ret = isp_create_offline_thread(pctx);
 	if (unlikely(ret != 0)) {
@@ -2181,7 +2373,8 @@ static int sprd_isp_cfg_path(void *isp_handle,
 	pctx = &dev->ctx[ctx_id];
 
 	if ((cfg_cmd != ISP_PATH_CFG_CTX_BASE) &&
-		(cfg_cmd != ISP_PATH_CFG_CTX_SIZE)) {
+		(cfg_cmd != ISP_PATH_CFG_CTX_SIZE) &&
+		(cfg_cmd != ISP_PATH_CFG_CTX_COMPRESSION)) {
 		if (path_id >= ISP_SPATH_NUM) {
 			pr_err("error id. path %d\n", path_id);
 			return -EFAULT;
@@ -2329,6 +2522,13 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		mutex_unlock(&pctx->param_mutex);
 		break;
 
+	case ISP_PATH_CFG_CTX_COMPRESSION:
+		mutex_lock(&pctx->param_mutex);
+		ret = isp_cfg_ctx_compression(pctx, param);
+		pctx->updated = 1;
+		mutex_unlock(&pctx->param_mutex);
+		break;
+
 	case ISP_PATH_CFG_PATH_BASE:
 		mutex_lock(&pctx->param_mutex);
 		ret = isp_cfg_path_base(path, param);
@@ -2343,6 +2543,13 @@ static int sprd_isp_cfg_path(void *isp_handle,
 			slave_path = &pctx->isp_path[path->slave_path_id];
 			ret = isp_cfg_path_size(slave_path, param);
 		}
+		pctx->updated = 1;
+		mutex_unlock(&pctx->param_mutex);
+		break;
+
+	case ISP_PATH_CFG_PATH_COMPRESSION:
+		mutex_lock(&pctx->param_mutex);
+		ret = isp_cfg_path_compression(path, param);
 		pctx->updated = 1;
 		mutex_unlock(&pctx->param_mutex);
 		break;

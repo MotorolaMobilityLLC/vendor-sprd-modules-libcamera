@@ -158,7 +158,8 @@ static int cfg_slice_base_info(
 	uint32_t slice_total_row, slice_total_col, slice_num;
 	uint32_t fetch_start_x, fetch_start_y;
 	uint32_t fetch_end_x, fetch_end_y;
-	struct isp_fetch_info *frame_fetch= in_ptr->frame_fetch;
+	struct isp_fetch_info *frame_fetch = in_ptr->frame_fetch;
+	struct isp_fbd_raw_info *frame_fbd_raw = in_ptr->frame_fbd_raw;
 
 	struct isp_slice_desc *cur_slc;
 
@@ -172,6 +173,14 @@ static int cfg_slice_base_info(
 	fetch_start_y = frame_fetch->in_trim.start_y;
 	fetch_end_x = frame_fetch->in_trim.start_x + frame_fetch->in_trim.size_x - 1;
 	fetch_end_y = frame_fetch->in_trim.start_y + frame_fetch->in_trim.size_y - 1;
+	if (!frame_fbd_raw->fetch_fbd_bypass) {
+		fetch_start_x = frame_fbd_raw->trim.start_x;
+		fetch_start_y = frame_fbd_raw->trim.start_y;
+		fetch_end_x = frame_fbd_raw->trim.start_x
+			+ frame_fbd_raw->trim.size_x - 1;
+		fetch_end_y = frame_fbd_raw->trim.start_y
+			+ frame_fbd_raw->trim.size_y - 1;
+	}
 	slice_total_row = (img_height + slice_height - 1) / slice_height;
 	slice_total_col = (img_width + slice_width - 1) / slice_width;
 	slice_num = slice_total_col * slice_total_row;
@@ -185,9 +194,14 @@ static int cfg_slice_base_info(
 	pr_info("img w %d, h %d, slice w %d, h %d, slice num %d\n",
 		img_width, img_height,
 		slice_width, slice_height, slice_num);
-	pr_info("src %d %d, fetch crop %d %d %d %d\n",
-		frame_fetch->src.w, frame_fetch->src.h,
-		fetch_start_x, fetch_start_y, fetch_end_x, fetch_end_y);
+	if (!frame_fbd_raw->fetch_fbd_bypass)
+		pr_info("src %d %d, fbd_raw crop %d %d %d %d\n",
+			frame_fetch->src.w, frame_fetch->src.h,
+			fetch_start_x, fetch_start_y, fetch_end_x, fetch_end_y);
+	else
+		pr_info("src %d %d, fetch crop %d %d %d %d\n",
+			frame_fbd_raw->width, frame_fbd_raw->height,
+			fetch_start_x, fetch_start_y, fetch_end_x, fetch_end_y);
 
 	for (i = 0; i < SLICE_NUM_MAX; i++)
 		pr_debug("slice %d valid %d\n", i, slc_ctx->slices[i].valid);
@@ -264,6 +278,9 @@ static int cfg_slice_base_info(
 					cur_slc->slice_overlap.overlap_down,
 					cur_slc->slice_overlap.overlap_left,
 					cur_slc->slice_overlap.overlap_right);
+
+			cur_slc->slice_fbd_raw.fetch_fbd_bypass =
+				frame_fbd_raw->fetch_fbd_bypass;
 
 			cur_slc++;
 		}
@@ -1041,94 +1058,159 @@ static int cfg_slice_scaler_info(
 	return 0;
 }
 
-
-
-int isp_cfg_slice_fetch_info(
-			void *cfg_in, struct isp_slice_context *slc_ctx)
+static void _cfg_slice_fetch(struct isp_fetch_info *frm_fetch,
+			     struct isp_slice_desc *cur_slc)
 {
-	int i;
 	uint32_t start_col, start_row;
 	uint32_t end_col, end_row;
 	uint32_t ch_offset[3] = { 0 };
-	struct slice_cfg_input *in_ptr = (struct slice_cfg_input *)cfg_in;
-	struct isp_fetch_info *frm_fetch;
-	struct slice_fetch_info *slc_fetch;
-	struct isp_slice_desc *cur_slc;
-	struct img_pitch *pitch;
 	uint32_t mipi_word_num_start[16] = {
-		0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5};
+		0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5
+	};
 	uint32_t mipi_word_num_end[16] = {
-		0, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5};
+		0, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5
+	};
+	struct slice_fetch_info *slc_fetch;
+	struct img_pitch *pitch;
 
-	frm_fetch = in_ptr->frame_fetch;
-	cur_slc = &slc_ctx->slices[0];
+	start_col = cur_slc->slice_pos_fetch.start_col;
+	start_row = cur_slc->slice_pos_fetch.start_row;
+	end_col = cur_slc->slice_pos_fetch.end_col;
+	end_row = cur_slc->slice_pos_fetch.end_row;
+
+	slc_fetch = &cur_slc->slice_fetch;
+	pitch = &frm_fetch->pitch;
+
+	switch (frm_fetch->fetch_fmt) {
+	case ISP_FETCH_YUV422_3FRAME:
+		ch_offset[0] = start_row * pitch->pitch_ch0 + start_col;
+		ch_offset[1] = start_row * pitch->pitch_ch1 + (start_col >> 1);
+		ch_offset[2] = start_row * pitch->pitch_ch2 + (start_col >> 1);
+		break;
+
+	case ISP_FETCH_YUV422_2FRAME:
+	case ISP_FETCH_YVU422_2FRAME:
+		ch_offset[0] = start_row * pitch->pitch_ch0 + start_col;
+		ch_offset[1] = start_row * pitch->pitch_ch1 + start_col;
+		break;
+
+	case ISP_FETCH_YUV420_2FRAME:
+	case ISP_FETCH_YVU420_2FRAME:
+		ch_offset[0] = start_row * pitch->pitch_ch0 + start_col;
+		ch_offset[1] = (start_row >> 1) * pitch->pitch_ch1 + start_col;
+		break;
+
+	case ISP_FETCH_CSI2_RAW10:
+		ch_offset[0] = start_row * pitch->pitch_ch0
+			+ (start_col >> 2) * 5 + (start_col & 0x3);
+
+		slc_fetch->mipi_byte_rel_pos = start_col & 0x0f;
+		slc_fetch->mipi_word_num =
+			((((end_col + 1) >> 4) * 5
+			+ mipi_word_num_end[(end_col + 1) & 0x0f])
+			-(((start_col + 1) >> 4) * 5
+			+ mipi_word_num_start[(start_col + 1)
+			& 0x0f]) + 1);
+		pr_debug("(%d %d %d %d), pitch %d, offset %d, mipi %d %d\n",
+			start_row, start_col, end_row, end_col,
+			pitch->pitch_ch0, ch_offset[0],
+			slc_fetch->mipi_byte_rel_pos, slc_fetch->mipi_word_num);
+		break;
+
+	default:
+		ch_offset[0] = start_row * pitch->pitch_ch0 + start_col * 2;
+		break;
+	}
+
+	slc_fetch->addr.addr_ch0 = frm_fetch->addr.addr_ch0 + ch_offset[0];
+	slc_fetch->addr.addr_ch1 = frm_fetch->addr.addr_ch1 + ch_offset[1];
+	slc_fetch->addr.addr_ch2 = frm_fetch->addr.addr_ch2 + ch_offset[2];
+	slc_fetch->size.h = end_row - start_row + 1;
+	slc_fetch->size.w = end_col - start_col + 1;
+
+	pr_debug("slice fetch size %d, %d\n",
+		 slc_fetch->size.w, slc_fetch->size.h);
+}
+
+static void _cfg_slice_fbd_raw(struct isp_fbd_raw_info *frame_fbd_raw,
+			       struct isp_slice_desc *cur_slc)
+{
+	uint32_t sx, sy, ex, ey;
+	uint32_t w0, h0, w, h;
+	uint32_t tsx, tsy, tex, tey;
+	uint32_t shx, shy, tid;
+	struct slice_fbd_raw_info *slc_fbd_raw;
+
+	/* sx, sy, ex, ey: start and stop of fetched region (unit: pixel) */
+	sx = cur_slc->slice_pos_fetch.start_col;
+	sy = cur_slc->slice_pos_fetch.start_row;
+	ex = cur_slc->slice_pos_fetch.end_col;
+	ey = cur_slc->slice_pos_fetch.end_row;
+
+	/* w0, h0: size of whole region */
+	w0 = frame_fbd_raw->size.w;
+	h0 = frame_fbd_raw->size.h;
+	/* w, h: size of fetched region */
+	w = ex - sx + 1;
+	h = ey - sy + 1;
+	/* shx, shy: quick for division */
+	shx = ffs(DCAM_FBC_TILE_WIDTH) - 1;
+	shy = ffs(DCAM_FBC_TILE_HEIGHT) - 1;
+	/* tsx, tsy, tex, tey: start and stop of (sx, sy) tile (unit: tile) */
+	tsx = sx >> shx;
+	tsy = sy >> shy;
+	tex = ex >> shx;
+	tey = ey >> shy;
+	/* tid: start index of (sx, sy) tile in all tiles */
+	tid = tsy * frame_fbd_raw->tiles_num_pitch + tsx;
+
+	pr_info("tid %u, w %u h %u\n", tid, w, h);
+
+	slc_fbd_raw = &cur_slc->slice_fbd_raw;
+
+	slc_fbd_raw->pixel_start_in_hor = sx & (DCAM_FBC_TILE_WIDTH - 1);
+	slc_fbd_raw->pixel_start_in_ver = sy & (DCAM_FBC_TILE_HEIGHT - 1);
+	slc_fbd_raw->height = h;
+	slc_fbd_raw->width = w;
+	slc_fbd_raw->tiles_num_in_hor = tex - tsx + 1;
+	slc_fbd_raw->tiles_num_in_ver = tey - tsy + 1;
+	slc_fbd_raw->tiles_start_odd = tid & 0x1;
+
+	slc_fbd_raw->header_addr_init =
+		frame_fbd_raw->tile_addr_init_x256 - (tid >> 1);
+	slc_fbd_raw->tile_addr_init_x256 =
+		frame_fbd_raw->tile_addr_init_x256 + (tid << 8);
+	slc_fbd_raw->low_bit_addr_init =
+		frame_fbd_raw->low_bit_addr_init + (sx >> 1) + ((sy * w0) >> 2);
+
+	/* have to copy these here for fmcu cmd queue, sad */
+	slc_fbd_raw->tiles_num_pitch = frame_fbd_raw->tiles_num_pitch;
+	slc_fbd_raw->low_bit_pitch = frame_fbd_raw->low_bit_pitch;
+	slc_fbd_raw->fetch_fbd_bypass = 0;
+
+	pr_info("fetch (%u %u %u %u) from %ux%u\n",
+		sx, sy, ex, ey, w0, h0);
+	pr_info("tile %u %u %u %u\n", tsx, tsy, tex, tey);
+	pr_info("head %x, tile %x, low2 %x\n",
+		slc_fbd_raw->header_addr_init,
+		slc_fbd_raw->tile_addr_init_x256,
+		slc_fbd_raw->low_bit_addr_init);
+}
+
+int isp_cfg_slice_fetch_info(void *cfg_in, struct isp_slice_context *slc_ctx)
+{
+	int i;
+	struct slice_cfg_input *in_ptr = (struct slice_cfg_input *)cfg_in;
+	struct isp_slice_desc *cur_slc = &slc_ctx->slices[0];
+
 	for (i = 0; i < SLICE_NUM_MAX; i++, cur_slc++) {
 		if (cur_slc->valid == 0)
 			continue;
-		slc_fetch = &cur_slc->slice_fetch;
 
-		start_col = cur_slc->slice_pos_fetch.start_col;
-		start_row = cur_slc->slice_pos_fetch.start_row;
-		end_col = cur_slc->slice_pos_fetch.end_col;
-		end_row = cur_slc->slice_pos_fetch.end_row;
-
-		pitch = &frm_fetch->pitch;
-
-		switch (frm_fetch->fetch_fmt) {
-		case ISP_FETCH_YUV422_3FRAME:
-			ch_offset[0] = start_row * pitch->pitch_ch0 + start_col;
-			ch_offset[1] = start_row * pitch->pitch_ch1 +
-					(start_col >> 1);
-			ch_offset[2] = start_row * pitch->pitch_ch2 +
-					(start_col >> 1);
-			break;
-
-		case ISP_FETCH_YUV422_2FRAME:
-		case ISP_FETCH_YVU422_2FRAME:
-			ch_offset[0] = start_row * pitch->pitch_ch0 + start_col;
-			ch_offset[1] = start_row * pitch->pitch_ch1 + start_col;
-			break;
-
-		case ISP_FETCH_YUV420_2FRAME:
-		case ISP_FETCH_YVU420_2FRAME:
-			ch_offset[0] = start_row * pitch->pitch_ch0 + start_col;
-			ch_offset[1] =
-				(start_row >> 1) * pitch->pitch_ch1 + start_col;
-			break;
-
-		case ISP_FETCH_CSI2_RAW10:
-			ch_offset[0] = start_row * pitch->pitch_ch0
-					+ (start_col >> 2) * 5
-					+ (start_col & 0x3);
-
-			slc_fetch->mipi_byte_rel_pos = start_col & 0x0f;
-			slc_fetch->mipi_word_num =
-				((((end_col + 1) >> 4) * 5 +
-				mipi_word_num_end[(end_col + 1) & 0x0f])
-				-(((start_col + 1) >> 4) * 5 +
-				mipi_word_num_start[(start_col + 1)
-				& 0x0f]) + 1);
-			pr_debug("(%d %d %d %d), pitch %d, offset %d, mipi %d %d\n",
-				start_row, start_col, end_row, end_col,
-				pitch->pitch_ch0, ch_offset[0],
-				slc_fetch->mipi_byte_rel_pos, slc_fetch->mipi_word_num);
-			break;
-
-		default:
-			ch_offset[0] = start_row * pitch->pitch_ch0 + start_col * 2;
-			break;
-		}
-
-		slc_fetch->addr.addr_ch0 = frm_fetch->addr.addr_ch0 +
-			ch_offset[0];
-		slc_fetch->addr.addr_ch1 = frm_fetch->addr.addr_ch1 +
-			ch_offset[1];
-		slc_fetch->addr.addr_ch2 = frm_fetch->addr.addr_ch2 +
-			ch_offset[2];
-		slc_fetch->size.h = end_row - start_row + 1;
-		slc_fetch->size.w = end_col - start_col + 1;
-		pr_debug("slice fetch size %d, %d\n",
-			slc_fetch->size.w, slc_fetch->size.h);
+		if (!in_ptr->frame_fbd_raw->fetch_fbd_bypass)
+			_cfg_slice_fbd_raw(in_ptr->frame_fbd_raw, cur_slc);
+		else
+			_cfg_slice_fetch(in_ptr->frame_fetch, cur_slc);
 	}
 
 	return 0;
@@ -1884,6 +1966,70 @@ static int set_slice_fetch(struct isp_fmcu_ctx_desc *fmcu,
 	return 0;
 }
 
+static int set_slice_fbd_raw(struct isp_fmcu_ctx_desc *fmcu,
+			     struct slice_fbd_raw_info *fbd_raw_info)
+{
+	uint32_t addr = 0, cmd = 0;
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_SEL);
+	cmd = (fbd_raw_info->pixel_start_in_hor << 8)
+		| (fbd_raw_info->pixel_start_in_ver << 4)
+		| fbd_raw_info->fetch_fbd_bypass;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_SLICE_SIZE);
+	cmd = (fbd_raw_info->height << 16) | fbd_raw_info->width;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_PARAM0);
+	cmd = (fbd_raw_info->tiles_num_in_ver << 16)
+		| fbd_raw_info->tiles_num_in_hor;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_PARAM1);
+	cmd = 0x2 << 16/* time_out_th default value */
+		| (fbd_raw_info->tiles_start_odd << 8)
+		| fbd_raw_info->tiles_num_pitch;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_PARAM2);
+	cmd = fbd_raw_info->header_addr_init;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_PARAM3);
+	cmd = fbd_raw_info->tile_addr_init_x256;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_LOW_PARAM0);
+	cmd = fbd_raw_info->low_bit_addr_init;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_FBD_RAW_LOW_PARAM1);
+	cmd = fbd_raw_info->low_bit_pitch;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	/* dispatch size same as fetch size */
+	addr = ISP_GET_REG(ISP_DISPATCH_CH0_SIZE);
+	cmd = (fbd_raw_info->height << 16) | fbd_raw_info->width;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	pr_info("pixel start: %u %u, size: %u %u, tile num: %u %u\n",
+		 fbd_raw_info->pixel_start_in_hor,
+		 fbd_raw_info->pixel_start_in_ver,
+		 fbd_raw_info->width, fbd_raw_info->height,
+		 fbd_raw_info->tiles_num_in_ver,
+		 fbd_raw_info->tiles_num_in_hor);
+	pr_info("odd: %u, pitch: %u %u, head: %x, tile: %x, low2: %x\n",
+		 fbd_raw_info->tiles_start_odd,
+		 fbd_raw_info->tiles_num_pitch,
+		 fbd_raw_info->low_bit_pitch,
+		 fbd_raw_info->header_addr_init,
+		 fbd_raw_info->tile_addr_init_x256,
+		 fbd_raw_info->low_bit_addr_init);
+
+	return 0;
+}
+
 static int set_slice_spath_thumbscaler(
 		struct isp_fmcu_ctx_desc *fmcu,
 		uint32_t path_en,
@@ -2278,7 +2424,11 @@ int isp_set_slices_fmcu_cmds(
 			set_fmcu_cfg(fmcu, ctx_idx);
 
 		set_slice_nr_info(fmcu, cur_slc);
-		set_slice_fetch(fmcu, &cur_slc->slice_fetch);
+
+		if (!cur_slc->slice_fbd_raw.fetch_fbd_bypass)
+			set_slice_fbd_raw(fmcu, &cur_slc->slice_fbd_raw);
+		else
+			set_slice_fetch(fmcu, &cur_slc->slice_fetch);
 
 		set_slice_3dnr(fmcu, cur_slc);
 		set_slice_ltm(fmcu, cur_slc);

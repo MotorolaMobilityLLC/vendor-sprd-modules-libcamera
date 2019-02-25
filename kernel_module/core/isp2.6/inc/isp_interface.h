@@ -44,8 +44,10 @@ enum isp_sub_path_id {
 enum isp_path_cfg_cmd {
 	ISP_PATH_CFG_CTX_BASE,
 	ISP_PATH_CFG_CTX_SIZE,
+	ISP_PATH_CFG_CTX_COMPRESSION,
 	ISP_PATH_CFG_PATH_BASE,
 	ISP_PATH_CFG_PATH_SIZE,
+	ISP_PATH_CFG_PATH_COMPRESSION,
 	ISP_PATH_CFG_OUTPUT_BUF,
 	ISP_PATH_CFG_OUTPUT_RESERVED_BUF,
 	ISP_PATH_CFG_3DNR_BUF,
@@ -98,7 +100,6 @@ struct isp_ctx_base_desc {
 	uint32_t mode_ltm;
 	uint32_t in_fmt;
 	uint32_t bayer_pattern;
-	uint32_t fetch_fbd;
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
 	uint32_t slw_state;
@@ -110,6 +111,11 @@ struct isp_ctx_size_desc {
 	struct img_trim crop;
 };
 
+struct isp_ctx_compression_desc {
+	uint32_t fetch_fbd;
+	uint32_t nr3_fbc_fbd;
+};
+
 struct isp_path_base_desc {
 	uint32_t out_fmt;
 	uint32_t slave_type;
@@ -117,6 +123,29 @@ struct isp_path_base_desc {
 	uint32_t regular_mode;
 	struct img_endian endian;
 	struct img_size output_size;
+};
+
+struct isp_path_compression_desc {
+	uint32_t store_fbc;
+};
+
+/* compression override commands */
+enum {
+	CH_PRE = 0,
+	CH_CAP = 1,
+	CH_VID = 2,
+	CH_MAX = 3,
+
+	FBC_DCAM = 0,
+	FBC_3DNR = 1,
+	FBC_ISP = 2,
+	FBC_MAX = 3,
+};
+
+/* compression override setting */
+struct compression_override {
+	uint32_t enable;
+	uint32_t override[CH_MAX][FBC_MAX];
 };
 
 struct isp_statis_io_desc {
