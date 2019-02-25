@@ -862,8 +862,8 @@ int SprdCamera3OEMIf::takePicture() {
     }
 
     HAL_LOGD("mVideoSnapshotType=%d", mVideoSnapshotType);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,(cmr_uint)mVideoSnapshotType);
-
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
+             (cmr_uint)mVideoSnapshotType);
 
     setCameraPreviewFormat();
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
@@ -2048,13 +2048,13 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
         capture_size.height = (cmr_u32)mRawHeight;
     }
 
-/**********************************
-*it is in SNAPSHOT_NO_ZSL_MODE single shot,
-*need not to do capture with video channel , forBug 957066
-************************************/
-    if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE &&
-        mPicCaptureCnt > 1 && mCaptureMode == CAMERA_NORMAL_MODE)
-            mVideoSnapshotType = 0;
+    /**********************************
+    *it is in SNAPSHOT_NO_ZSL_MODE single shot,
+    *need not to do capture with video channel , forBug 957066
+    ************************************/
+    if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE && mPicCaptureCnt > 1 &&
+        mCaptureMode == CAMERA_NORMAL_MODE)
+        mVideoSnapshotType = 0;
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE,
              (cmr_uint)&capture_size);
@@ -3602,56 +3602,95 @@ void SprdCamera3OEMIf::getPictureFormat(int *format) {
     } while (0)
 
 int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
-    float zoomWidth, zoomHeight;
+
+    float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+          zoomHeight = 0;
     uint32_t i = 0;
     int ret = 0;
+    SCALER_Tag scaleInfo;
+    struct img_rect scalerCrop;
     uint16_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
-    HAL_LOGD("crop %d %d %d %d", cropRegion[0], cropRegion[1], cropRegion[2],
-             cropRegion[3]);
-
-    mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
-
+    HAL_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
+             mPreviewWidth, mPreviewHeight, cropRegion[0], cropRegion[1],
+             cropRegion[2], cropRegion[3]);
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
     if (fdWid == 0 || fdHeight == 0) {
         HAL_LOGE("parameters error.");
         return 1;
     }
-    zoomWidth = (float)sensorOrgW / (float)mPreviewWidth;
-    zoomHeight = (float)sensorOrgH / (float)mPreviewHeight;
-    cropRegion[0] = (cmr_u32)((float)cropRegion[0] * zoomWidth);
-    cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight);
-    cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth);
-    cropRegion[3] = (cmr_u32)((float)cropRegion[3] * zoomHeight);
-    HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d)", cropRegion[0],
+    mSetting->getSCALERTag(&scaleInfo);
+    scalerCrop.start_x = scaleInfo.crop_region[0];
+    scalerCrop.start_y = scaleInfo.crop_region[1];
+    scalerCrop.width = scaleInfo.crop_region[2];
+    scalerCrop.height = scaleInfo.crop_region[3];
+    float previewAspect = (float)mPreviewWidth / mPreviewHeight;
+    float cropAspect = (float)scalerCrop.width / scalerCrop.height;
+    if (previewAspect > cropAspect) {
+        width = scalerCrop.width;
+        height = cropAspect * scalerCrop.height / previewAspect;
+        left = scalerCrop.start_x;
+        top = scalerCrop.start_y+ (scalerCrop.height - height) / 2;
+    } else {
+        width = previewAspect * scalerCrop.width / cropAspect;
+        height = scalerCrop.height;
+        left = scalerCrop.start_x+ (scalerCrop.width - width) / 2;
+        top = scalerCrop.start_y;
+    }
+    zoomWidth = width / (float)mPreviewWidth;
+    zoomHeight = height / (float)mPreviewHeight;
+    cropRegion[0] = (cmr_u32)((float)cropRegion[0] * zoomWidth + left);
+    cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight + top);
+    cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth + left);
+    cropRegion[3] = (cmr_u32)((float)cropRegion[3] * zoomHeight + top);
+    HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d, )", cropRegion[0],
              cropRegion[1], cropRegion[2], cropRegion[3]);
     return ret;
 }
 
 int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
     int32_t *cropRegion) {
-    float zoomWidth, zoomHeight;
+    float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+          zoomHeight = 0;
     uint32_t i = 0;
     int ret = 0;
+    SCALER_Tag scaleInfo;
+    struct img_rect scalerCrop;
     uint16_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
-    HAL_LOGD("crop %d %d %d %d", cropRegion[0], cropRegion[1], cropRegion[2],
-             cropRegion[3]);
-
-    mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
-
+    HAL_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
+             mPreviewWidth, mPreviewHeight, cropRegion[0], cropRegion[1],
+             cropRegion[2], cropRegion[3]);
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
     if (fdWid == 0 || fdHeight == 0) {
         HAL_LOGE("parameters error.");
         return 1;
     }
-    zoomWidth = (float)mPreviewWidth / (float)sensorOrgW;
-    zoomHeight = (float)mPreviewHeight / (float)sensorOrgH;
-    cropRegion[0] = (cmr_u32)((float)cropRegion[0] * zoomWidth);
-    cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight);
-    cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth);
-    cropRegion[3] = (cmr_u32)((float)cropRegion[3] * zoomHeight);
-    HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d)", cropRegion[0],
+    mSetting->getSCALERTag(&scaleInfo);
+    scalerCrop.start_x = scaleInfo.crop_region[0];
+    scalerCrop.start_y = scaleInfo.crop_region[1];
+    scalerCrop.width = scaleInfo.crop_region[2];
+    scalerCrop.height = scaleInfo.crop_region[3];
+    float previewAspect = (float)mPreviewWidth / mPreviewHeight;
+    float cropAspect = (float)scalerCrop.width / scalerCrop.height;
+    if (previewAspect > cropAspect) {
+        width = scalerCrop.width;
+        height = cropAspect * scalerCrop.height / previewAspect;
+        left = scalerCrop.start_x;
+        top = scalerCrop.start_y+ (scalerCrop.height - height) / 2;
+    } else {
+        width = previewAspect * scalerCrop.width / cropAspect;
+        height = scalerCrop.height;
+        left = scalerCrop.start_x+ (scalerCrop.width - width) / 2;
+        top = scalerCrop.start_y;
+    }
+    zoomWidth = (float)mPreviewWidth / width;
+    zoomHeight = (float)mPreviewHeight / height;
+    cropRegion[0] = (cmr_u32)(((float)cropRegion[0] - left) * zoomWidth);
+    cropRegion[1] = (cmr_u32)(((float)cropRegion[1] - top) * zoomHeight);
+    cropRegion[2] = (cmr_u32)(((float)cropRegion[2] - left) * zoomWidth);
+    cropRegion[3] = (cmr_u32)(((float)cropRegion[3] - top) * zoomHeight);
+    HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d, )", cropRegion[0],
              cropRegion[1], cropRegion[2], cropRegion[3]);
     return ret;
 }
@@ -5701,7 +5740,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         mSetting->getSPRDDEFTag(&sprdInfo);
         sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
-        HAL_LOGI("sprd_is_hdr_scene = %d",sprddefInfo.sprd_is_hdr_scene);
+        HAL_LOGI("sprd_is_hdr_scene = %d", sprddefInfo.sprd_is_hdr_scene);
         break;
     default:
         break;
@@ -6580,13 +6619,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FILTER_TYPE,
                  sprddefInfo.sprd_filter_type);
     } break;
-    case ANDROID_SPRD_AUTO_HDR_ENABLED:{
+    case ANDROID_SPRD_AUTO_HDR_ENABLED: {
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
         HAL_LOGD("sprdInfo.sprd_auto_hdr_enables=%d ",
                  sprdInfo.sprd_auto_hdr_enable);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
-        sprdInfo.sprd_auto_hdr_enable);
+                 sprdInfo.sprd_auto_hdr_enable);
     } break;
     default:
         ret = BAD_VALUE;
@@ -9744,13 +9783,13 @@ int SprdCamera3OEMIf::iommu_buf_map(cmr_s32 *fd, List<iommu_map_buf> &list) {
     iommu_buf.size = iommu_data.size;
     iommu_buf.map_flag = BUF_MAPED;
     list.push_back(iommu_buf);
-    HAL_LOGD("iommu_workaround: map fd 0x%x size 0x%x sg %p",
-             iommu_buf.fd, iommu_buf.size, iommu_buf.sg_table);
+    HAL_LOGD("iommu_workaround: map fd 0x%x size 0x%x sg %p", iommu_buf.fd,
+             iommu_buf.size, iommu_buf.sg_table);
     return ret;
 }
 
 void SprdCamera3OEMIf::iommu_buf_unmap(List<iommu_map_buf> &list) {
-    for (List<iommu_map_buf>::iterator i = list.begin();i != list.end(); i++) {
+    for (List<iommu_map_buf>::iterator i = list.begin(); i != list.end(); i++) {
         struct sprd_img_iova iommu_data;
 
         iommu_data.fd = i->fd;
@@ -9759,9 +9798,8 @@ void SprdCamera3OEMIf::iommu_buf_unmap(List<iommu_map_buf> &list) {
         if (i->map_flag == BUF_MAPED) {
             camera_ioctrl(CAMERA_IOCTRL_UNMAP_IOMMU_BUF, &iommu_data, NULL);
             i->map_flag = BUF_UNMAP;
-            HAL_LOGE(
-                "iommu_workaround: unmap 0x%x size 0x%x sg %p",
-                iommu_data.fd, iommu_data.size, iommu_data.sg_table);
+            HAL_LOGE("iommu_workaround: unmap 0x%x size 0x%x sg %p",
+                     iommu_data.fd, iommu_data.size, iommu_data.sg_table);
         }
     }
     list.clear();
@@ -10224,7 +10262,6 @@ int SprdCamera3OEMIf::gyro_get_data(
     return ret;
 }
 
-
 #ifdef CONFIG_SPRD_ANDROID_8
 void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
@@ -10251,7 +10288,6 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
         sem_post(&obj->mGyro_sem);
         obj->mGyroExit = 1;
         return NULL;
-
     }
 
     mNumSensors = ASensorManager_getSensorList(mSensorManager, &mSensorList);
