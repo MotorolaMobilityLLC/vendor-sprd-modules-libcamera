@@ -835,7 +835,8 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
 
     flash_mode = parm->cmd_type_value;
 
-      CMR_LOGD("flash_mode:%lu has_preflashed:%lu", flash_mode, flash_param->has_preflashed);
+    CMR_LOGD("flash_mode:%lu has_preflashed:%lu", flash_mode,
+             flash_param->has_preflashed);
 
     flash_param->flash_mode = flash_mode;
     setting_flash_handle(cpt, parm, flash_param->flash_mode);
@@ -1150,18 +1151,10 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
         const float EPSINON = 0.01f;
         float zoom_dif =
             zoom_param.zoom_info.zoom_ratio - org_zoom.zoom_info.zoom_ratio;
-        float pre_dif = zoom_param.zoom_info.prev_aspect_ratio -
-                        org_zoom.zoom_info.prev_aspect_ratio;
-        float video_dif = zoom_param.zoom_info.video_aspect_ratio -
-                          org_zoom.zoom_info.video_aspect_ratio;
-        float cap_dif = zoom_param.zoom_info.capture_aspect_ratio -
-                        org_zoom.zoom_info.capture_aspect_ratio;
-        if ((zoom_dif >= EPSINON || zoom_dif <= -EPSINON) ||
-            (pre_dif >= EPSINON || pre_dif <= -EPSINON) ||
-            (video_dif >= EPSINON || video_dif <= -EPSINON) ||
-            (cap_dif >= EPSINON || cap_dif <= -EPSINON))
+        if (zoom_dif >= EPSINON || zoom_dif <= -EPSINON)
             is_changed = 1;
     }
+
     if (is_changed) {
         if (setting_is_active(cpt)) {
             ret = setting_before_set_ctrl(cpt, PARAM_ZOOM);
@@ -2633,18 +2626,17 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
              flash_mode, flash_status, capture_mode, shot_num);
 
     if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status &&
-        (flash_status != SETTING_FLASH_MAIN_LIGHTING||
-         (flash_status == SETTING_FLASH_MAIN_LIGHTING &&
-          pre_flash_status))) {
-            if (CAMERA_NORMAL_MODE == capture_mode ||
-                CAMERA_ISP_SIMULATION_MODE == capture_mode ||
-                CAMERA_ZSL_MODE == capture_mode || shot_num > 1) {
-                is_need = 1;
-            }
-            if (CAMERA_ISP_TUNING_MODE == capture_mode){
-                is_need = 0;
-            }
+        (flash_status != SETTING_FLASH_MAIN_LIGHTING ||
+         (flash_status == SETTING_FLASH_MAIN_LIGHTING && pre_flash_status))) {
+        if (CAMERA_NORMAL_MODE == capture_mode ||
+            CAMERA_ISP_SIMULATION_MODE == capture_mode ||
+            CAMERA_ZSL_MODE == capture_mode || shot_num > 1) {
+            is_need = 1;
         }
+        if (CAMERA_ISP_TUNING_MODE == capture_mode) {
+            is_need = 0;
+        }
+    }
 
     if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
         is_need = 0;
@@ -2733,11 +2725,14 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
 
     isp_param.flash_notice.mode = flash_mode;
     isp_param.flash_notice.will_capture =
-        (hal_param->flash_param.flash_status == SETTING_FLASH_PRE_AFTER||
-        hal_param->flash_param.flash_status == SETTING_AF_FLASH_PRE_AFTER)?1:0;
+        (hal_param->flash_param.flash_status == SETTING_FLASH_PRE_AFTER ||
+         hal_param->flash_param.flash_status == SETTING_AF_FLASH_PRE_AFTER)
+            ? 1
+            : 0;
 
-    CMR_LOGV("will_capture (%d) flash_status (%d) ",\
-        isp_param.flash_notice.will_capture,hal_param->flash_param.flash_status);
+    CMR_LOGV("will_capture (%d) flash_status (%d) ",
+             isp_param.flash_notice.will_capture,
+             hal_param->flash_param.flash_status);
 
     if (init_in->setting_isp_ioctl) {
         ret = (*init_in->setting_isp_ioctl)(
@@ -2776,7 +2771,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                                   struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-    struct setting_local_param *local_param = get_local_param(cpt, parm->camera_id);
+    struct setting_local_param *local_param =
+        get_local_param(cpt, parm->camera_id);
     cmr_uint flash_mode = 0;
     cmr_uint flash_hw_status = 0;
     cmr_uint image_format = 0;
@@ -2791,9 +2787,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     flash_mode = hal_param->flash_param.flash_mode;
     flash_hw_status = hal_param->flash_param.flash_hw_status;
     setting_flash_status = parm->setting_flash_status;
-    CMR_LOGD(
-        " flash_mode %ld, setting_flash_status %d flash_status %ld",
-         flash_mode, (cmr_u32)setting_flash_status, flash_hw_status);
+    CMR_LOGD(" flash_mode %ld, setting_flash_status %d flash_status %ld",
+             flash_mode, (cmr_u32)setting_flash_status, flash_hw_status);
 
     if ((CAMERA_FLASH_MODE_AUTO == flash_mode) &&
         (setting_flash_status == SETTING_AF_FLASH_PRE_LIGHTING)) {
@@ -2802,117 +2797,121 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 
     if (setting_is_need_flash(cpt, parm) ||
         (FLASH_NEED_QUIT == cpt->flash_need_quit &&
-        setting_flash_status == SETTING_AF_FLASH_PRE_AFTER)) {
+         setting_flash_status == SETTING_AF_FLASH_PRE_AFTER)) {
         switch (setting_flash_status) {
-            case SETTING_FLASH_PRE_LIGHTING:
-            case SETTING_AF_FLASH_PRE_LIGHTING:
-                ctrl_flash_status = FLASH_OPEN;
-                exif_flash = 1;
-                if (flash_hw_status == FLASH_OPEN) {
-                    cmr_setting_clear_sem(cpt);
-                    hal_param->flash_param.flash_status = setting_flash_status;
-                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
-                    setting_isp_wait_notice(cpt);
+        case SETTING_FLASH_PRE_LIGHTING:
+        case SETTING_AF_FLASH_PRE_LIGHTING:
+            ctrl_flash_status = FLASH_OPEN;
+            exif_flash = 1;
+            if (flash_hw_status == FLASH_OPEN) {
+                cmr_setting_clear_sem(cpt);
+                hal_param->flash_param.flash_status = setting_flash_status;
+                setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
+                setting_isp_wait_notice(cpt);
+                goto EXIT;
+            }
+            if (IMG_DATA_TYPE_RAW == image_format) {
+                CMR_LOGD("pre flash open");
+                hal_param->flash_param.has_preflashed = 1;
+                cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
+                while (0 < tmpVal) {
+                    cmr_sem_trywait(&cpt->preflash_sem);
+                    cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
+                }
+
+                cmr_setting_clear_sem(cpt);
+                time1 = systemTime(CLOCK_MONOTONIC);
+                setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
+                setting_isp_wait_notice(cpt);
+                time2 = systemTime(CLOCK_MONOTONIC);
+                CMR_LOGI("isp_flash_pre_before cost %" PRId64 " ms",
+                         (time2 - time1) / 1000000);
+
+                if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
                     goto EXIT;
                 }
-                if (IMG_DATA_TYPE_RAW == image_format) {
-                    CMR_LOGD("pre flash open");
-                    hal_param->flash_param.has_preflashed = 1;
-                    cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
-                    while (0 < tmpVal) {
-                        cmr_sem_trywait(&cpt->preflash_sem);
-                        cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
+
+                setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+                hal_param->flash_param.flash_status = setting_flash_status;
+                time1 = systemTime(CLOCK_MONOTONIC);
+                setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
+                setting_isp_wait_notice(cpt);
+                time2 = systemTime(CLOCK_MONOTONIC);
+                CMR_LOGI("isp_flash_pre_lighting cost %" PRId64 " ms",
+                         (time2 - time1) / 1000000);
+
+                hal_param->flash_param.has_preflashed = 1;
+                hal_param->flash_param.last_preflash_time =
+                    systemTime(CLOCK_MONOTONIC);
+            } else {
+                setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+            }
+            break;
+
+        case SETTING_FLASH_PRE_AFTER:
+        case SETTING_FLASH_MAIN_AFTER:
+        case SETTING_AF_FLASH_PRE_AFTER:
+        case SETTING_FLASH_WAIT_TO_CLOSE:
+            ctrl_flash_status = FLASH_CLOSE_AFTER_OPEN;
+            exif_flash = 0;
+            if (IMG_DATA_TYPE_RAW == image_format) {
+                /*disable*/
+                if (FLASH_CLOSE != flash_hw_status) {
+                    if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
+                        setting_set_flashdevice(cpt, parm,
+                                                FLASH_CLOSE_AFTER_OPEN);
+                        CMR_LOGD("flash close");
+                        hal_param->flash_param.has_preflashed = 0;
                     }
 
-                    cmr_setting_clear_sem(cpt);
-                    time1 = systemTime(CLOCK_MONOTONIC);
-                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
-                    setting_isp_wait_notice(cpt);
-                    time2 = systemTime(CLOCK_MONOTONIC);
-                    CMR_LOGI("isp_flash_pre_before cost %" PRId64 " ms",
-                             (time2 - time1) / 1000000);
-
-                    if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
-                        goto EXIT;
-                    }
-
-                    setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-                    hal_param->flash_param.flash_status = setting_flash_status;
-                    time1 = systemTime(CLOCK_MONOTONIC);
-                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
-                    setting_isp_wait_notice(cpt);
-                    time2 = systemTime(CLOCK_MONOTONIC);
-                    CMR_LOGI("isp_flash_pre_lighting cost %" PRId64 " ms",
-                             (time2 - time1) / 1000000);
-
-                    hal_param->flash_param.has_preflashed = 1;
-                    hal_param->flash_param.last_preflash_time =
-                        systemTime(CLOCK_MONOTONIC);
-                } else {
-                    setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-                }
-                break;
-
-            case SETTING_FLASH_PRE_AFTER:
-            case SETTING_FLASH_MAIN_AFTER:
-            case SETTING_AF_FLASH_PRE_AFTER:
-            case SETTING_FLASH_WAIT_TO_CLOSE:
-                ctrl_flash_status = FLASH_CLOSE_AFTER_OPEN;
-                exif_flash = 0;
-                if (IMG_DATA_TYPE_RAW == image_format) {
-                        /*disable*/
-                        if(FLASH_CLOSE != flash_hw_status) {
-                            if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
-                                setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
-                                CMR_LOGD("flash close");
-                                hal_param->flash_param.has_preflashed = 0;
-                            }
-
-                            if (setting_flash_status == SETTING_AF_FLASH_PRE_AFTER
-                                || setting_flash_status == SETTING_FLASH_PRE_AFTER) {
-                                if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
-                                    hal_param->flash_param.flash_status = setting_flash_status;
-                                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
-                                    cmr_sem_post(&cpt->preflash_sem);
-                                }
-                            } else {
-                                hal_param->flash_param.has_preflashed = 0;
-                                hal_param->flash_param.flash_status = setting_flash_status;
-                                setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
-                            }
+                    if (setting_flash_status == SETTING_AF_FLASH_PRE_AFTER ||
+                        setting_flash_status == SETTING_FLASH_PRE_AFTER) {
+                        if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
+                            hal_param->flash_param.flash_status =
+                                setting_flash_status;
+                            setting_isp_flash_notify(cpt, parm,
+                                                     ISP_FLASH_PRE_AFTER);
+                            cmr_sem_post(&cpt->preflash_sem);
                         }
                     } else {
-                        setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+                        hal_param->flash_param.has_preflashed = 0;
+                        hal_param->flash_param.flash_status =
+                            setting_flash_status;
+                        setting_isp_flash_notify(cpt, parm,
+                                                 ISP_FLASH_MAIN_AFTER);
                     }
-                break;
+                }
+            } else {
+                setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+            }
+            break;
 
-            case SETTING_FLASH_MAIN_LIGHTING: // high flash
-                ctrl_flash_status = FLASH_HIGH_LIGHT;
-                exif_flash = 1;
-                if (IMG_DATA_TYPE_RAW == image_format) {
-                    CMR_LOGD("high flash Set Ae setting");
+        case SETTING_FLASH_MAIN_LIGHTING: // high flash
+            ctrl_flash_status = FLASH_HIGH_LIGHT;
+            exif_flash = 1;
+            if (IMG_DATA_TYPE_RAW == image_format) {
+                CMR_LOGD("high flash Set Ae setting");
 
-                    cmr_setting_clear_sem(cpt);
-                    setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
-                    setting_isp_wait_notice(cpt);
-                    CMR_LOGD("high flash Open flash");
+                cmr_setting_clear_sem(cpt);
+                setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
+                setting_isp_wait_notice(cpt);
+                CMR_LOGD("high flash Open flash");
 
-                    setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-                    hal_param->flash_param.flash_status = setting_flash_status;
+                setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+                hal_param->flash_param.flash_status = setting_flash_status;
 
-                    setting_isp_flash_notify(cpt, parm,
-                                             ISP_FLASH_MAIN_LIGHTING);
-                    setting_isp_wait_notice(cpt);
-                    CMR_LOGD("high flash Will do-capture");
-                    } else {
-                        setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-                    }
-                break;
-            default:
-                ctrl_flash_status = flash_hw_status;
-                exif_flash = 0;
-                CMR_LOGD("reserved flash ctrl");
-                break;
+                setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_LIGHTING);
+                setting_isp_wait_notice(cpt);
+                CMR_LOGD("high flash Will do-capture");
+            } else {
+                setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+            }
+            break;
+        default:
+            ctrl_flash_status = flash_hw_status;
+            exif_flash = 0;
+            CMR_LOGD("reserved flash ctrl");
+            break;
         }
     }
 
@@ -3387,7 +3386,8 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                     goto exit;
                 }
                 setting_set_flashdevice(cpt, parm, (uint32_t)FLASH_OPEN);
-                hal_param->flash_param.flash_status = SETTING_FLASH_PRE_LIGHTING;
+                hal_param->flash_param.flash_status =
+                    SETTING_FLASH_PRE_LIGHTING;
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
                 setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);

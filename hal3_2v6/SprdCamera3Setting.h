@@ -71,12 +71,7 @@ namespace sprdcamera {
 #define CAMERA_ID_COUNT 6
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
-
-#ifdef CONFIG_CAMERA_ZOOM_FACTOR_SUPPORT_4X
 #define MAX_DIGITAL_ZOOM_RATIO (4.0f)
-#else
-#define MAX_DIGITAL_ZOOM_RATIO (2.0f)
-#endif
 
 /* Time related macros */
 typedef int64_t nsecs_t;

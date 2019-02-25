@@ -77,13 +77,13 @@ namespace sprdcamera {
     do {                                                                       \
         s_use_time = (s_end_timestamp - s_start_timestamp) / 1000000;          \
     } while (0)
-#define ZSL_FRAME_TIMEOUT 1000000000     /*1000ms*/
-#define SET_PARAM_TIMEOUT 2000000000     /*2000ms*/
-#define CAP_TIMEOUT 5000000000           /*5000ms*/
-#define PREV_TIMEOUT 5000000000          /*5000ms*/
-#define CAP_START_TIMEOUT 5000000000     /* 5000ms*/
-#define PREV_STOP_TIMEOUT 3000000000     /* 3000ms*/
-#define CANCEL_AF_TIMEOUT 500000000      /*1000ms*/
+#define ZSL_FRAME_TIMEOUT 1000000000      /*1000ms*/
+#define SET_PARAM_TIMEOUT 2000000000      /*2000ms*/
+#define CAP_TIMEOUT 5000000000            /*5000ms*/
+#define PREV_TIMEOUT 5000000000           /*5000ms*/
+#define CAP_START_TIMEOUT 5000000000      /* 5000ms*/
+#define PREV_STOP_TIMEOUT 3000000000      /* 3000ms*/
+#define CANCEL_AF_TIMEOUT 500000000       /*1000ms*/
 #define PIPELINE_START_TIMEOUT 5000000000 /*5s*/
 
 #define SET_PARAMS_TIMEOUT 250 /*250 means 250*10ms*/
@@ -4699,15 +4699,15 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         {
             if (parm4 != NULL) {
                 af_ctrl = (af_ctrl_notice *)parm4;
-              if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
-                af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
-                controlInfo.af_roi[0] = af_ctrl->af_roi.sx;
-                controlInfo.af_roi[1] = af_ctrl->af_roi.sy;
-                controlInfo.af_roi[2] = af_ctrl->af_roi.ex;
-                controlInfo.af_roi[3] = af_ctrl->af_roi.ey;
-                mSetting->setAfRoiCONTROLTag(&controlInfo);
-                break;
-              }
+                if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
+                    af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
+                    controlInfo.af_roi[0] = af_ctrl->af_roi.sx;
+                    controlInfo.af_roi[1] = af_ctrl->af_roi.sy;
+                    controlInfo.af_roi[2] = af_ctrl->af_roi.ex;
+                    controlInfo.af_roi[3] = af_ctrl->af_roi.ey;
+                    mSetting->setAfRoiCONTROLTag(&controlInfo);
+                    break;
+                }
             }
             controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
             mSetting->setAfCONTROLTag(&controlInfo);
@@ -5207,52 +5207,8 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
 
     mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
 
-    sensorAspectRatio = static_cast<float>(sensorOrgW) / sensorOrgH;
-
-    if (mPreviewWidth != 0 && mPreviewHeight != 0) {
-        prevAspectRatio = static_cast<float>(mPreviewWidth) / mPreviewHeight;
-    } else {
-        prevAspectRatio = sensorAspectRatio;
-    }
-
-    if (mVideoWidth != 0 && mVideoHeight != 0) {
-        videoAspectRatio = static_cast<float>(mVideoWidth) / mVideoHeight;
-    } else {
-        videoAspectRatio = prevAspectRatio;
-    }
-
-    if (mSetCapRatioFlag == true && mCaptureWidth != 0 && mCaptureHeight != 0) {
-        capAspectRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
-    } else if (mCallbackWidth != 0 && mCallbackHeight != 0) {
-        capAspectRatio = static_cast<float>(mCallbackWidth) / mCallbackHeight;
-    } else if (mCaptureWidth != 0 && mCaptureHeight != 0) {
-        capAspectRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
-    } else {
-        capAspectRatio = prevAspectRatio;
-    }
-
     if (cropRegion.width > 0 && cropRegion.height > 0) {
-        zoomWidth = static_cast<float>(cropRegion.width);
-        zoomHeight = static_cast<float>(cropRegion.height);
-    } else {
-        zoomWidth = static_cast<float>(sensorOrgW);
-        zoomHeight = static_cast<float>(sensorOrgH);
-    }
-
-    if (mPreviewWidth != 0 && mPreviewHeight != 0) {
-        if (prevAspectRatio >= sensorAspectRatio) {
-            zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
-        } else {
-            zoomRatio = static_cast<float>(sensorOrgH) / zoomHeight;
-        }
-    } else if (mCaptureWidth != 0 && mCaptureHeight != 0) {
-        if (capAspectRatio >= sensorAspectRatio) {
-            zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
-        } else {
-            zoomRatio = static_cast<float>(sensorOrgH) / zoomHeight;
-        }
-    } else {
-        zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
+        zoomRatio = static_cast<float>(sensorOrgW) / cropRegion.width;
     }
 
     if (zoomRatio < MIN_DIGITAL_ZOOM_RATIO)
@@ -5262,15 +5218,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
 
     mZoomInfo.mode = ZOOM_INFO;
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
-    mZoomInfo.zoom_info.prev_aspect_ratio = prevAspectRatio;
-    mZoomInfo.zoom_info.video_aspect_ratio = videoAspectRatio;
-    mZoomInfo.zoom_info.capture_aspect_ratio = capAspectRatio;
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
 
-    HAL_LOGD(
-        "camId=%d, zoomRatio=%f, outputAspectRatio: prev=%f, video=%f, cap=%f",
-        mCameraId, zoomRatio, prevAspectRatio, videoAspectRatio,
-        capAspectRatio);
+    HAL_LOGD("camId=%d, zoomRatio=%f", mCameraId, zoomRatio);
 
     return ret;
 }
