@@ -3858,6 +3858,9 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 
 		cxt->last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
 
+		if(cxt->sync_cur_result.tcAE_status == 2)
+			ae_set_restore_cnt(cxt);
+
 		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
 		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
