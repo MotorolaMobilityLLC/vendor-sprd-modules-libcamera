@@ -1435,6 +1435,11 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_PRE_LIGHTING:
 		ISP_LOGI("ae_flash_status FLASH_PRE_LIGHTING");
+		if(cxt->cur_status.settings.flash != FLASH_PRE_BEFORE){
+			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE_BEFORE",cxt->cur_status.settings.flash);
+			rtn = AE_ERROR;
+			break;
+		}
 		cxt->cur_status.settings.flash_target = cxt->cur_param->flash_param.target_lum;
 		if (0 != cxt->flash_ver) {
 			/*lock AE algorithm */
@@ -1446,6 +1451,11 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
+		if(cxt->cur_status.settings.flash != FLASH_PRE){
+			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE",cxt->cur_status.settings.flash);
+			rtn = AE_ERROR;
+			break;
+		}
 		if (cxt->exposure_compensation.ae_compensation_flag) {
 			if (cxt->cur_status.settings.manual_mode !=2)
 				cxt->cur_status.settings.manual_mode = 1;
@@ -1514,6 +1524,11 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_MAIN_BEFORE:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_BEFORE");
+		if((cxt->cur_status.settings.flash != FLASH_PRE_AFTER)&&(cxt->cur_status.settings.flash != FLASH_NONE)){
+			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE_AFTER",cxt->cur_status.settings.flash);
+			rtn = AE_ERROR;
+			break;
+		}
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1);
 		if (cxt->exposure_compensation.ae_compensation_flag )  {
@@ -1537,6 +1552,11 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_MAIN_AFTER:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_AFTER");
+		if(cxt->cur_status.settings.flash != FLASH_MAIN){
+			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_MAIN",cxt->cur_status.settings.flash);
+			rtn = AE_ERROR;
+			break;
+		}
 		cxt->has_mf = 1;
 		cxt->exposure_compensation.ae_base_idx = cxt->flash_backup_aebaseidx;
 		if (cxt->exposure_compensation.ae_compensation_flag) {
@@ -1580,6 +1600,11 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_MAIN_LIGHTING:
 		ISP_LOGI("ae_flash_status FLASH_MAIN_LIGHTING");
+		if(cxt->cur_status.settings.flash != FLASH_MAIN_BEFORE){
+			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_MAIN_BEFORE",cxt->cur_status.settings.flash);
+			rtn = AE_ERROR;
+			break;
+		}
 		if (0 != cxt->flash_ver) {
 			cxt->cur_status.settings.flash = FLASH_MAIN;
 		}
@@ -6243,3 +6268,4 @@ struct adpt_ops_type ae_sprd_adpt_ops_ver0 = {
 	.adpt_process = ae_sprd_calculation,
 	.adpt_ioctrl = ae_sprd_io_ctrl,
 };
+
