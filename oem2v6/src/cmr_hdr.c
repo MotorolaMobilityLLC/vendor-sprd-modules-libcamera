@@ -19,7 +19,7 @@
 #define LOG_TAG "cmr_hdr"
 
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
-typedef void * hdr_inst_t;
+typedef void *hdr_inst_t;
 #endif
 
 #include "cmr_msg.h"
@@ -125,8 +125,8 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
 static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle);
 static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle);
-static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle, sprd_hdr_cmd_t cmd,
-                                        void* param);
+static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle,
+                                        sprd_hdr_cmd_t cmd, void *param);
 #endif
 static struct class_ops hdr_ops_tab_info = {
     hdr_open, hdr_close, hdr_transfer_frame, hdr_pre_proc, hdr_post_proc,
@@ -199,8 +199,13 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     out->version.nano = 0;
 
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
-ret = hdr_sprd_adapter_init(hdr_handle);
+    ret = hdr_sprd_adapter_init(hdr_handle);
 #endif
+
+    out->version.major = hdr_handle->lib_cxt.version.major;
+    out->version.minor = hdr_handle->lib_cxt.version.minor;
+    out->version.micro = hdr_handle->lib_cxt.version.micro;
+    out->version.nano = hdr_handle->lib_cxt.version.nano;
     return ret;
 
 free_all:
@@ -514,44 +519,54 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
                            height, width, p_format);
 #else
         sprd_hdr_param.input[0].format = SPRD_CAMALG_IMG_NV21;
-        sprd_hdr_param.input[0].addr[0] = (void *)hdr_handle->hdr_addr[0].addr_vir.addr_y;
-        sprd_hdr_param.input[0].addr[1] = (void *)hdr_handle->hdr_addr[0].addr_vir.addr_u;
-        sprd_hdr_param.input[0].addr[2] = (void *)hdr_handle->hdr_addr[0].addr_vir.addr_v;
+        sprd_hdr_param.input[0].addr[0] =
+            (void *)hdr_handle->hdr_addr[0].addr_vir.addr_y;
+        sprd_hdr_param.input[0].addr[1] =
+            (void *)hdr_handle->hdr_addr[0].addr_vir.addr_u;
+        sprd_hdr_param.input[0].addr[2] =
+            (void *)hdr_handle->hdr_addr[0].addr_vir.addr_v;
         sprd_hdr_param.input[0].ion_fd = hdr_handle->hdr_addr[0].fd;
         sprd_hdr_param.input[0].offset[0] = 0;
         sprd_hdr_param.input[0].offset[1] = width * height;
         sprd_hdr_param.input[0].width = width;
         sprd_hdr_param.input[0].height = height;
         sprd_hdr_param.input[0].stride = width;
-        sprd_hdr_param.input[0].size = width*height*3/2;
+        sprd_hdr_param.input[0].size = width * height * 3 / 2;
         sprd_hdr_param.ev[0] = hdr_handle->lib_cxt.ev[0];
 
         sprd_hdr_param.input[1].format = SPRD_CAMALG_IMG_NV21;
-        sprd_hdr_param.input[1].addr[0] = (void *)hdr_handle->hdr_addr[1].addr_vir.addr_y;
-        sprd_hdr_param.input[1].addr[1] = (void *)hdr_handle->hdr_addr[1].addr_vir.addr_u;
-        sprd_hdr_param.input[1].addr[2] = (void *)hdr_handle->hdr_addr[1].addr_vir.addr_v;
+        sprd_hdr_param.input[1].addr[0] =
+            (void *)hdr_handle->hdr_addr[1].addr_vir.addr_y;
+        sprd_hdr_param.input[1].addr[1] =
+            (void *)hdr_handle->hdr_addr[1].addr_vir.addr_u;
+        sprd_hdr_param.input[1].addr[2] =
+            (void *)hdr_handle->hdr_addr[1].addr_vir.addr_v;
         sprd_hdr_param.input[1].ion_fd = hdr_handle->hdr_addr[1].fd;
         sprd_hdr_param.input[1].offset[0] = 0;
         sprd_hdr_param.input[1].offset[1] = width * height;
         sprd_hdr_param.input[1].width = width;
         sprd_hdr_param.input[1].height = height;
         sprd_hdr_param.input[1].stride = width;
-        sprd_hdr_param.input[1].size = width*height*3/2;
+        sprd_hdr_param.input[1].size = width * height * 3 / 2;
         sprd_hdr_param.ev[1] = hdr_handle->lib_cxt.ev[1];
 
         sprd_hdr_param.output.format = SPRD_CAMALG_IMG_NV21;
-        sprd_hdr_param.output.addr[0] = (void *)hdr_handle->hdr_addr[0].addr_vir.addr_y;
-        sprd_hdr_param.output.addr[1] = (void *)hdr_handle->hdr_addr[0].addr_vir.addr_u;
-        sprd_hdr_param.output.addr[2] = (void *)hdr_handle->hdr_addr[0].addr_vir.addr_v;
+        sprd_hdr_param.output.addr[0] =
+            (void *)hdr_handle->hdr_addr[0].addr_vir.addr_y;
+        sprd_hdr_param.output.addr[1] =
+            (void *)hdr_handle->hdr_addr[0].addr_vir.addr_u;
+        sprd_hdr_param.output.addr[2] =
+            (void *)hdr_handle->hdr_addr[0].addr_vir.addr_v;
         sprd_hdr_param.output.ion_fd = hdr_handle->hdr_addr[0].fd;
         sprd_hdr_param.output.offset[0] = 0;
         sprd_hdr_param.output.offset[1] = width * height;
         sprd_hdr_param.output.width = width;
         sprd_hdr_param.output.height = height;
         sprd_hdr_param.output.stride = width;
-        sprd_hdr_param.output.size = width*height*3/2;
+        sprd_hdr_param.output.size = width * height * 3 / 2;
 
-        ret = hdr_sprd_adapter_process(hdr_handle, SPRD_HDR_PROCESS_CMD,(void*)&sprd_hdr_param);
+        ret = hdr_sprd_adapter_process(hdr_handle, SPRD_HDR_PROCESS_CMD,
+                                       (void *)&sprd_hdr_param);
 #endif
 
         if (ret != 0) {
@@ -614,13 +629,19 @@ static cmr_int hdr_save_frame(cmr_handle class_handle,
              in->src_frame.addr_vir.addr_y);
     if (hdr_handle->mem_size >= in->src_frame.buf_size &&
         NULL != (void *)in->src_frame.addr_vir.addr_y) {
-        hdr_handle->hdr_addr[frame_sn].addr_phy.addr_y = in->src_frame.addr_phy.addr_y;
-        hdr_handle->hdr_addr[frame_sn].addr_phy.addr_u = in->src_frame.addr_phy.addr_u;
-        hdr_handle->hdr_addr[frame_sn].addr_phy.addr_v = in->src_frame.addr_phy.addr_v;
+        hdr_handle->hdr_addr[frame_sn].addr_phy.addr_y =
+            in->src_frame.addr_phy.addr_y;
+        hdr_handle->hdr_addr[frame_sn].addr_phy.addr_u =
+            in->src_frame.addr_phy.addr_u;
+        hdr_handle->hdr_addr[frame_sn].addr_phy.addr_v =
+            in->src_frame.addr_phy.addr_v;
 
-        hdr_handle->hdr_addr[frame_sn].addr_vir.addr_y = in->src_frame.addr_vir.addr_y;
-        hdr_handle->hdr_addr[frame_sn].addr_vir.addr_u = in->src_frame.addr_vir.addr_u;
-        hdr_handle->hdr_addr[frame_sn].addr_vir.addr_v = in->src_frame.addr_vir.addr_v;
+        hdr_handle->hdr_addr[frame_sn].addr_vir.addr_y =
+            in->src_frame.addr_vir.addr_y;
+        hdr_handle->hdr_addr[frame_sn].addr_vir.addr_u =
+            in->src_frame.addr_vir.addr_u;
+        hdr_handle->hdr_addr[frame_sn].addr_vir.addr_v =
+            in->src_frame.addr_vir.addr_v;
 
         hdr_handle->hdr_addr[frame_sn].fd = in->src_frame.fd;
     } else {
@@ -800,7 +821,8 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
     strcat(file_name, "_1");
     strcat(file_name, ".NV21");
     fp = fopen(file_name, "wb");
-    fwrite((void *)hdr_handle->hdr_addr[0].addr_vir.addr_y, 1, width * height * 3 / 2, fp);
+    fwrite((void *)hdr_handle->hdr_addr[0].addr_vir.addr_y, 1,
+           width * height * 3 / 2, fp);
     fclose(fp);
     fp = NULL;
 
@@ -813,7 +835,8 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
     strcat(file_name1, "_2");
     strcat(file_name1, ".NV21");
     fp1 = fopen(file_name1, "wb");
-    fwrite((void *)hdr_handle->hdr_addr[1].addr_vir.addr_y, 1, width * height * 3 / 2, fp1);
+    fwrite((void *)hdr_handle->hdr_addr[1].addr_vir.addr_y, 1,
+           width * height * 3 / 2, fp1);
     fclose(fp1);
     fp1 = NULL;
 
@@ -826,7 +849,8 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
     strcat(file_name2, "_3");
     strcat(file_name2, ".NV21");
     fp2 = fopen(file_name2, "wb");
-    fwrite((void *)hdr_handle->hdr_addr[2].addr_vir.addr_y, 1, width * height * 3 / 2, fp2);
+    fwrite((void *)hdr_handle->hdr_addr[2].addr_vir.addr_y, 1,
+           width * height * 3 / 2, fp2);
     fclose(fp2);
     fp2 = NULL;
 
@@ -834,14 +858,14 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
 }
 
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
-static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle){
+static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     cmr_u32 max_width;
     cmr_u32 max_height;
     sprd_hdr_version_t version;
 
-    if(NULL == hdr_handle){
+    if (NULL == hdr_handle) {
         CMR_LOGE("error:hdr handle is NULL\n");
         return -CMR_CAMERA_INVALID_PARAM;
     }
@@ -849,17 +873,19 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle){
     max_width = hdr_handle->width;
     max_height = hdr_handle->height;
 
-    CMR_LOGI("max width*height = [%d * %d]\n",max_width,max_height);
+    CMR_LOGI("max width*height = [%d * %d]\n", max_width, max_height);
 
-    hdr_handle->lib_cxt.lib_handle = sprd_hdr_adpt_init(max_width, max_height, NULL);
-    if(NULL == hdr_handle->lib_cxt.lib_handle){
+    hdr_handle->lib_cxt.lib_handle =
+        sprd_hdr_adpt_init(max_width, max_height, NULL);
+    if (NULL == hdr_handle->lib_cxt.lib_handle) {
         CMR_LOGE("error:hdr handle is NULL\n");
         return -CMR_CAMERA_INVALID_PARAM;
     }
 
     memset(&version, 0, sizeof(sprd_hdr_version_t));
 
-    if(!hdr_sprd_adapter_process(hdr_handle, SPRD_HDR_GET_VERSION_CMD,(void*)&version)){
+    if (!hdr_sprd_adapter_process(hdr_handle, SPRD_HDR_GET_VERSION_CMD,
+                                  (void *)&version)) {
         hdr_handle->lib_cxt.version.major = version.major;
         hdr_handle->lib_cxt.version.minor = version.minor;
         hdr_handle->lib_cxt.version.micro = version.micro;
@@ -871,18 +897,19 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle){
     return ret;
 }
 
-static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle){
+static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle, SPRD_HDR_FAST_STOP_CMD, NULL);
-    if(!ret){
+    ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,
+                             SPRD_HDR_FAST_STOP_CMD, NULL);
+    if (!ret) {
         CMR_LOGI("stop done %ld", ret);
     } else {
         CMR_LOGE("stop failed! ret:%ld", ret);
     }
 
     ret = sprd_hdr_adpt_deinit(hdr_handle->lib_cxt.lib_handle);
-    if(!ret){
+    if (!ret) {
         CMR_LOGI("deinit done %ld", ret);
     } else {
         CMR_LOGE("deinit failed! ret:%ld", ret);
@@ -890,8 +917,8 @@ static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle){
 
     return ret;
 }
-static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle, sprd_hdr_cmd_t cmd,
-                                        void* param){
+static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle,
+                                        sprd_hdr_cmd_t cmd, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     sprd_hdr_version_t version;
     sprd_hdr_param_t param_hdr;
@@ -901,20 +928,25 @@ static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle, sprd_hdr_c
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto process_exit;
     }
-    switch(cmd){
-        case SPRD_HDR_GET_VERSION_CMD:
-            ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,SPRD_HDR_GET_VERSION_CMD,(sprd_hdr_version_t *)param);
-            break;
-        case SPRD_HDR_PROCESS_CMD:
-            ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,SPRD_HDR_PROCESS_CMD,(sprd_hdr_param_t *)param);
-            break;
-        case SPRD_HDR_FAST_STOP_CMD:
-            ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,SPRD_HDR_FAST_STOP_CMD,NULL);
-            break;
-        default:
-            CMR_LOGE("Invalid cmd : %d\n",cmd);
-            ret = -CMR_CAMERA_INVALID_PARAM;
-            break;
+    switch (cmd) {
+    case SPRD_HDR_GET_VERSION_CMD:
+        ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,
+                                 SPRD_HDR_GET_VERSION_CMD,
+                                 (sprd_hdr_version_t *)param);
+        break;
+    case SPRD_HDR_PROCESS_CMD:
+        ret =
+            sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,
+                               SPRD_HDR_PROCESS_CMD, (sprd_hdr_param_t *)param);
+        break;
+    case SPRD_HDR_FAST_STOP_CMD:
+        ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,
+                                 SPRD_HDR_FAST_STOP_CMD, NULL);
+        break;
+    default:
+        CMR_LOGE("Invalid cmd : %d\n", cmd);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        break;
     }
 
 process_exit:
