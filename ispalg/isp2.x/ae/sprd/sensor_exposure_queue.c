@@ -189,21 +189,18 @@ cmr_handle s_q_open(struct s_q_open_param * param)
 {
 	struct queue_context *q_cxt = NULL;
 
-	q_cxt = (struct queue_context *)malloc(sizeof(struct queue_context));
+	q_cxt = (struct queue_context *)calloc(1,sizeof(struct queue_context));
 	if (NULL == q_cxt) {
-		ISP_LOGE("malloc cxt fail\n");
+		ISP_LOGE("calloc cxt fail\n");
 		goto q_init_error_exit;
 	}
 
-	memset((void *)q_cxt, 0, sizeof(struct queue_context));
-
-	q_cxt->q_pool.queue_ptr = (struct q_item *)malloc(S_Q_LENGTH * sizeof(struct q_item));
+	q_cxt->q_pool.queue_ptr = (struct q_item *)calloc(S_Q_LENGTH, sizeof(struct q_item));
 	if (NULL == q_cxt->q_pool.queue_ptr) {
-		ISP_LOGE("malloc pool fail\n");
+		ISP_LOGE("calloc pool fail\n");
 		goto q_init_error_exit;
 	}
 
-	memset((void *)q_cxt->q_pool.queue_ptr, 0, S_Q_LENGTH * sizeof(struct q_item));
 	q_cxt->q_pool.num = S_Q_LENGTH;
 
 	q_cxt->exp_valid_num = param->exp_valid_num;

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-#define AE_MAX_PARAM_NUM 8
+#define AE_MAX_PARAM_NUM 1
 #define AE_TBL_MAX_INDEX 256
 #define AE_FD_NUM 20
 #define AE_FLASH_MAX_CELL	40

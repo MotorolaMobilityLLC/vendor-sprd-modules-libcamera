@@ -567,13 +567,12 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_blk_num = ae_set_blk_num;
 	input_ptr->isp_ops.set_rgb_gain_4in1 = ae_set_rgb_gain_4in1;
 
-	cxt_ptr = (struct aectrl_cxt *)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct aectrl_cxt *)calloc(1,sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("fail to create ae ctrl context!");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
 
 	input_ptr->isp_ops.isp_handler = (cmr_handle) cxt_ptr;
 	cxt_ptr->caller_handle = input_ptr->caller_handle;

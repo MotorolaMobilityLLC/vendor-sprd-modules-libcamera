@@ -1729,7 +1729,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 			ISP_LOGE("fail to set ae param, cxt %p, init_param %p", cxt, init_param);
 			return AE_ERROR;
 		}
-
+		ISP_LOGD("param_num = %d",init_param->param_num);
 		cur_work_mode = AE_WORK_MODE_COMMON;
 		for (i = 0; i < init_param->param_num && i < AE_MAX_PARAM_NUM; ++i) {
 			rtn = ae_unpack_tunning_param(init_param->param[i].param, init_param->param[i].size, &cxt->tuning_param[i]);
@@ -6045,15 +6045,14 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	sprd_hdr_version(&hdr_version);
 	ISP_LOGV("HDR_version :%s", hdr_version.built_rev);
 #endif
-	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
+	cxt = (struct ae_ctrl_cxt *)calloc(1,sizeof(struct ae_ctrl_cxt));
 
 	if (NULL == cxt) {
 		rtn = AE_ALLOC_ERROR;
-		ISP_LOGE("fail to malloc");
+		ISP_LOGE("fail to calloc");
 		goto ERR_EXIT;
 	}
 	memset(&work_param, 0, sizeof(work_param));
-	memset(cxt, 0, sizeof(*cxt));
 
 	if (NULL == param) {
 		ISP_LOGE("fail to get input param %p\r\n", param);
