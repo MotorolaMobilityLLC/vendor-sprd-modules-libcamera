@@ -2137,7 +2137,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 	if(is_faceid_unlock)
 		nxt_scene_mod = AE_SCENE_FACEID_UNLOCK;
 	if ((AE_SCENE_NORMAL == cur_scene_mod) && (AE_SCENE_NORMAL == nxt_scene_mod)) {
-		ISP_LOGV("normal  has special setting\n");
+		ISP_LOGD("normal  has not special setting\n");
 		goto SET_SCENE_MOD_EXIT;
 	}
 
@@ -2147,20 +2147,23 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			ISP_LOGD("faceid_unlock default_index = %d\n", i);
 			if (AE_SCENE_NUM > i) {
 				if (!scene_info[i].table_enable) {
-					ISP_LOGV("Not has special scene setting, just using the normal setting\n");
+					ISP_LOGD("Not has special scene setting, just using the normal setting\n");
 					goto SET_SCENE_MOD_EXIT;
 				}
+			}else{
+				ISP_LOGD("Not has special scene setting, just using the normal setting2\n");
+				goto SET_SCENE_MOD_EXIT;
 			}
 		}else{
 			for (i = 0; i < AE_SCENE_NUM; ++i) {
-				ISP_LOGV("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
+				ISP_LOGD("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
 				if ((1 == scene_info[i].enable) && (nxt_scene_mod == scene_info[i].scene_mode)) {
 					break;
 				}
 			}
 
 			if ((i >= AE_SCENE_NUM) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
-				ISP_LOGV("Not has special scene setting, just using the normal setting\n");
+				ISP_LOGD("Not has special scene setting, just using the normal setting\n");
 				goto SET_SCENE_MOD_EXIT;
 			}
 		}
