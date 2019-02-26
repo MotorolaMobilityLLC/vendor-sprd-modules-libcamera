@@ -5352,7 +5352,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_SCENE_MODE: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        if (1 == mSprd3dnrEnabled) {
+        if (1 == sprddefInfo.sprd_3dnr_enabled) {
             controlInfo.scene_mode = ANDROID_CONTROL_SCENE_MODE_NIGHT;
         }
 

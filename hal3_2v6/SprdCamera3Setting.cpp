@@ -136,7 +136,6 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f}, {{3.50f, 2.625f}, 3.75f},
 };
 
-
 static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
@@ -1761,9 +1760,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].syncInfo.max_latency =
         4; // ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
 
-   // sprd
-   // app ui show contrast value and saturation value all are (-3,3) is one-to-one
-   // correspondence with hal value (0~6),so need set 3 as defalut value
+    // sprd
+    // app ui show contrast value and saturation value all are (-3,3) is
+    // one-to-one
+    // correspondence with hal value (0~6),so need set 3 as defalut value
     s_setting[cameraId].sprddefInfo.contrast = 3;
     s_setting[cameraId].sprddefInfo.saturation = 3;
 
@@ -3493,7 +3493,8 @@ int SprdCamera3Setting::updateWorkParameters(
 #define GET_VALUE_IF_DIF(x, y, tag, count)                                     \
     is_push = false;                                                           \
     for (size_t i = 0; i < count; i++) {                                       \
-        if (*(&x + i) != *(&y + i)) {                                          \
+        if ((*(&x + i) != *(&y + i)) ||                                        \
+            (*(&x + i) == *(&y + i) && *(&x + i) == 0)) {                      \
             is_push = true;                                                    \
             break;                                                             \
         }                                                                      \
