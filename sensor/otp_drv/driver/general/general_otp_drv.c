@@ -2420,8 +2420,8 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     OTP_LOGV("E");
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
-    char otp_read_bin_path[255];
-    char otp_dump_name[255];
+    char otp_read_bin_path[255] = "otp_read_bin_path";
+    char otp_dump_name[255] = "otp_dump_name";
     char value1[255];
     char value2[255];
     char value3[255];
