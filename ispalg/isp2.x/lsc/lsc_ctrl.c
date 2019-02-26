@@ -801,9 +801,9 @@ cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	}
 
 	if (lsc_otp_chn_gain_num != lsc_otp_width * lsc_otp_height) {
-		ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width,
+		ISP_LOGD("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width,
 				 lsc_otp_height, lsc_otp_grid);
-		goto EXIT;
+		//goto EXIT;
 	}
 
 	cmr_s32 lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
