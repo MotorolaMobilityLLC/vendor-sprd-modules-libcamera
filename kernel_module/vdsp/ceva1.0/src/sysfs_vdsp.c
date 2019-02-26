@@ -24,8 +24,6 @@ struct class *vdsp_class;
 extern int32_t vdsp_wait_xm6_done(void);
 int vdsp_class_init(void)
 {
-	pr_emerg("vdsp class register\n");
-
 	vdsp_class = class_create(THIS_MODULE, "vdsp");
 	if (IS_ERR(vdsp_class)) {
 		pr_err("Unable to create vdsp class\n");
@@ -47,7 +45,6 @@ static ssize_t xm6_state_show(struct device *dev,
 	int ret = 0;
 	vdsp_wait_xm6_done();
 	mutex_lock(&xm6_state_lock);
-	pr_emerg("xm6_state_show\n");
 	ret = sprintf(buf,
                 "%d\n",
                 xm6_state_changed);
@@ -86,7 +83,6 @@ int sprd_vdsp_sysfs_init(struct device *dev)
 {
 	int rc;
 
-	pr_emerg("sprd_vdsp_sysfs_init\n");
 	rc = sysfs_create_groups(&dev->kobj, vdsp_groups);
 	if (rc)
 		pr_err("create dsi attr node failed, rc=%d\n", rc);

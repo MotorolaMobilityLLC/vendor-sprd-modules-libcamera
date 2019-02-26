@@ -167,6 +167,10 @@ static int vdsp_set_edp_aximo_range(struct vdsp_context *ctx)
 
 	reg->add0_start = 0x200000;
 	reg->addx_start = 0x20160000;
+
+	reg->mss_ddcl |= 0x60;
+	reg->mss_dacc |= 0x3c0;
+
 	VDSP_INFO("vdsp_set_edp_aximo_range end\n");
 	return status;
 }

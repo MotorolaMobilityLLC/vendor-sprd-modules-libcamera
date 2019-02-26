@@ -60,6 +60,7 @@
 #define VDSP_SHARE_BUFF_EXT_DATA_OFFSET	0x50000
 #define VDSP_SHARE_BUFF_DATA_OFFSET	0x90000
 #define VDSP_SHARE_BUFF_CMD_OFFSET	0xd0000
+#define VDSP_SHARE_BUFF_CMD_BUF_DATA_OFFSET	0xd0a00
 #define VDSP_SHARE_BUFF_LOG_POS_OFFSET	0xd1000
 #define VDSP_SHARE_BUFF_LOG_OFFSET	0xd2000
 
@@ -75,6 +76,7 @@ static bool evt_update;
 void *g_kva_vdsp_share_buff_addr;
 extern struct class *vdsp_class;
 static int vdsp_int_status;
+struct sprd_dsp_buffer buffer_data[4];
 
 module_param(need_load_fw, bool, 0644);
 module_param(get_xm6log_flag, int, 0644);
@@ -210,7 +212,7 @@ void send_msg_to_share_memory(struct sprd_dsp_cmd *node)
 
 	memcpy(msg_queue, node, sizeof(struct sprd_dsp_cmd));
 	smp_wmb();
-	VDSP_DEBUG("send_msg_to_vdsp \n");
+	//VDSP_DEBUG("send_msg_to_vdsp \n");
 	//disable cxrcvr,no send recovery signal when icu_intn is activated
 	//*(volatile u32*)(0x20800064) &= 0xfffffff0;
 	if (vdsp_hw_dev.core && vdsp_hw_dev.core->isr_triggle_int0)
@@ -266,9 +268,9 @@ int vdsp_cmd_free(
 		}
 	}
 	//bufer addr
-	for (i=0;i< 3;i++) {
-		if (msg->buffer_data[i].fd >= 0) {
-			p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
+	for (i=0; i< msg->buffer_size / sizeof(struct sprd_dsp_buffer); i++) {
+		p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
+		if (p_dsp_buf->mfd[0] >= 0) {
 			ret = vdsp_iommu_unmap(p_dsp_buf);
 			if (ret) {
 				VDSP_ERROR("fail to unmap p_dsp_buf[%d]!!!!\n", i);
@@ -323,24 +325,65 @@ int vdsp_cmd_convertor(
 		VDSP_DEBUG("msg->out_data_addr=0x%x\n",msg->out_data_addr);
 	}
 	//bufer addr
+		VDSP_DEBUG("msg->buffer_size=0%x\n",msg->buffer_size);
+		VDSP_DEBUG("(msg->buffer_data_size=0%x\n", sizeof(msg->buffer_data[SPRD_DSP_CMD_INLINE_BUFFER_COUNT]));
+	if (msg->buffer_size > sizeof(msg->buffer_data)) {
 
-	for (i=0;i< 3;i++) {
-		if (msg->buffer_data[i].fd >= 0) {
-			p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
-			p_dsp_buf->mfd[0] = msg->buffer_data[i].fd;
-			p_dsp_buf->dev = &vdsp_hw_dev->dev;
-			ret = vdsp_get_ionbuf(p_dsp_buf);
-			if (ret) {
-				VDSP_ERROR("fail to get  ion_des_buf\n");
-				return -1;
+#if 1
+		VDSP_DEBUG("msg buffer_data handle entry !\n");
+		ret = copy_from_user((void *)&buffer_data, (void __user *)(unsigned long)msg->buffer_addr,
+				msg->buffer_size);
+		VDSP_DEBUG("msg buffer_data handle exit !\n");
+		VDSP_DEBUG("msg->buffer_size=0%x\n",msg->buffer_size);
+		VDSP_DEBUG("buffer_data[0].flags=0%x\n",buffer_data[0].flags);
+		VDSP_DEBUG("buffer_data[0].size=0%x\n",buffer_data[0].size);
+		VDSP_DEBUG("buffer_data[0].fd=%d\n",buffer_data[0].fd);
+		VDSP_DEBUG("buffer_data[0].addr=0%x\n",buffer_data[0].addr);
+		VDSP_DEBUG("buffer_data[1].fd=%d\n",buffer_data[1].fd);
+		VDSP_DEBUG("buffer_data[2].fd=%d\n",buffer_data[2].fd);
+		for (i=0; i < msg->buffer_size / sizeof(struct sprd_dsp_buffer); i++) {
+			if (buffer_data[i].fd >= 0) {
+				p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
+				p_dsp_buf->mfd[0] = buffer_data[i].fd;
+				p_dsp_buf->dev = &vdsp_hw_dev->dev;
+				ret = vdsp_get_ionbuf(p_dsp_buf);
+				if (ret) {
+					VDSP_ERROR("fail to get  ion_des_buf\n");
+					return -1;
+				}
+				ret = vdsp_iommu_map(p_dsp_buf);
+				if (ret) {
+					VDSP_ERROR("fail to get dsp addr[%d]!!!!\n", i);
+					return -1;
+				}
+				buffer_data[i].addr = (uint32_t)p_dsp_buf->iova[0];
+				// change msg->buffer_addr to cmd share memory
+				VDSP_DEBUG("msg->buffer_data[%d].addr=0x%x\n", i, buffer_data[i].addr);
 			}
-			ret = vdsp_iommu_map(p_dsp_buf);
-			if (ret) {
-				VDSP_ERROR("fail to get dsp addr[%d]!!!!\n", i);
-				return -1;
+		}
+		memcpy((void *)(g_kva_vdsp_share_buff_addr + VDSP_SHARE_BUFF_CMD_BUF_DATA_OFFSET)
+				, &buffer_data, msg->buffer_size);
+		msg->buffer_addr = vdsp_share_buff_addr + VDSP_SHARE_BUFF_CMD_BUF_DATA_OFFSET;
+#endif
+	} else {
+		for (i=0; i< msg->buffer_size / sizeof(struct sprd_dsp_buffer); i++) {
+			if (msg->buffer_data[i].fd >= 0) {
+				p_dsp_buf = &vdsp_hw_dev->ion_dsp_buf[i];
+				p_dsp_buf->mfd[0] = msg->buffer_data[i].fd;
+				p_dsp_buf->dev = &vdsp_hw_dev->dev;
+				ret = vdsp_get_ionbuf(p_dsp_buf);
+				if (ret) {
+					VDSP_ERROR("fail to get  ion_des_buf\n");
+					return -1;
+				}
+				ret = vdsp_iommu_map(p_dsp_buf);
+				if (ret) {
+					VDSP_ERROR("fail to get dsp addr[%d]!!!!\n", i);
+					return -1;
+				}
+				msg->buffer_data[i].addr = (uint32_t)p_dsp_buf->iova[0];
+				VDSP_DEBUG("msg->buffer_data[%d].addr=0x%x\n",i,msg->buffer_data[i].addr);
 			}
-			msg->buffer_data[i].addr = (uint32_t)p_dsp_buf->iova[0];
-			VDSP_DEBUG("msg->buffer_data[%d].addr=0x%x\n",i,msg->buffer_data[i].addr);
 		}
 	}
 	return ret;
@@ -669,7 +712,7 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 		VDSP_DEBUG("vdsp_ioctl SPRD_VDSP_IO_SET_MSG end\n");
 		break;
 	default:
-		VDSP_ERROR("bad vdsp-ioctl cmd %d\n", cmd);
+		VDSP_ERROR("bad vdsp-ioctl cmd 0x%x(SPRD_VDSP_IO_SET_MSG=0x%x)\n", cmd,SPRD_VDSP_IO_SET_MSG);
 		return -EINVAL;
 	}
 	return ret;

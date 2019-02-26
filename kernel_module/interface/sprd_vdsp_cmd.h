@@ -6,7 +6,7 @@
 #include <linux/compat.h>
 
 #define SPRD_DSP_CMD_INLINE_DATA_SIZE	16
-#define SPRD_DSP_CMD_INLINE_BUFFER_COUNT	4
+#define SPRD_DSP_CMD_INLINE_BUFFER_COUNT	1
 #define SPRD_DSP_CMD_NAMESPACE_ID_SIZE	16
 
 enum sprd_dsp_cmd_flag {

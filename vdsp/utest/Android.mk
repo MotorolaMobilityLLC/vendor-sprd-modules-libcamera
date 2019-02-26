@@ -40,7 +40,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 LOCAL_SHARED_LIBRARIES :=libmemion liblog libEGL libbinder libutils
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamoem
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-LOCAL_SHARED_LIBRARIES += libsprdvdspcmd libsprdhdr
+LOCAL_SHARED_LIBRARIES += libsprdhdr
 endif
 
 LOCAL_MODULE := utest_vdsp

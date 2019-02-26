@@ -42,8 +42,8 @@ using namespace android;
 #define INFO(x...) fprintf(stdout, x)
 #define HDR_NEED_FRAME_NUM 2
 #define IMAGE_FORMAT "YVU420_SEMIPLANAR"
-static char src1_yuv_420_file[] = "/vendor/pic/src1_yuv_420.raw";
-static char src2_yuv_420_file[] = "/vendor/pic/src1_yuv_420.raw";
+static char src1_yuv_420_file[] = "/vendor/pic/src0.yuv";
+static char src2_yuv_420_file[] = "/vendor/pic/src1.yuv";
 static char src3_yuv_420_file[] = "/vendor/pic/src1_yuv_420.raw";
 static char dst_y_420_file[] = "/vendor/pic/dst_y_420.raw";
 static char dst_uv_420_file[] = "/vendor/pic/dst_uv_420.raw";
@@ -325,7 +325,7 @@ static int utest_hdr_open(struct utest_hdr_cxt *hdr_cxt){
 	        cfg.max_width = hdr_cxt->width;
 	        cfg.max_height = hdr_cxt->height;
 	        cfg.core_str = "_4_0_1_2_3";
-	        ret = sprd_hdr_open(&hdr_cxt->lib_cxt.lib_handle, &cfg);
+	        ret = sprd_hdr_vdsp_open(&hdr_cxt->lib_cxt.lib_handle, &cfg);
         if (ret) {
             ERR("vdsp_trace failed to open lib!\n");
             goto exit;
@@ -352,7 +352,7 @@ static int utest_hdr_close(struct utest_hdr_cxt *hdr_cxt){
 		ERR("vdsp_trace HDR fast stop failed.\n");
 	}
 	ERR("vdsp_trace interface SPRD_HDR_FAST_STOP successed\n");
-	ret = sprd_hdr_close(hdr_cxt->lib_cxt.lib_handle);
+	ret = sprd_hdr_vdsp_close(hdr_cxt->lib_cxt.lib_handle);
 	if (ret) {
 		ERR("vdsp_trace HDR close failed.\n");
 	}
@@ -367,8 +367,8 @@ static int utest_hdr_arithmetic(struct utest_hdr_cxt *hdr_cxt){
 	cmr_u8 *temp_addr0 = NULL;
 	cmr_u8 *temp_addr1 = NULL;
 	cmr_u8 *temp_addr2 = NULL;
-	ldr_image_t input_img[HDR_NEED_FRAME_NUM];
-	ldr_image_t out_img;
+	ldr_image_vdsp_t input_img[HDR_NEED_FRAME_NUM];
+	ldr_image_vdsp_t out_img;
 	const char *p_format = IMAGE_FORMAT;
 
 	temp_addr0 = hdr_cxt->alloc_addr[0];
@@ -376,26 +376,26 @@ static int utest_hdr_arithmetic(struct utest_hdr_cxt *hdr_cxt){
 	temp_addr2 = hdr_cxt->alloc_addr[2];
 	ERR("vdsp_trace utest_hdr_arithmetic entry \n");
 	if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
-		input_img[0].data = hdr_cxt->alloc_addr[0];
+		input_img[0].image.data = hdr_cxt->alloc_addr[0];
 		input_img[0].fd = hdr_cxt->fd[0];
-		input_img[0].ev = hdr_cxt->lib_cxt.ev[0];
-		input_img[0].width = hdr_cxt->width;
-		input_img[0].height = hdr_cxt->height;
-		input_img[0].stride = hdr_cxt->width;
-		input_img[1].data = hdr_cxt->alloc_addr[1];
+		input_img[0].image.ev = -1;
+		input_img[0].image.width = hdr_cxt->width;
+		input_img[0].image.height = hdr_cxt->height;
+		input_img[0].image.stride = hdr_cxt->width;
+		input_img[1].image.data = hdr_cxt->alloc_addr[1];
 		input_img[1].fd = hdr_cxt->fd[1];
-		input_img[1].ev = hdr_cxt->lib_cxt.ev[1];
-		input_img[1].width = hdr_cxt->width;
-		input_img[1].height = hdr_cxt->height;
-		input_img[1].stride = hdr_cxt->width;
-		out_img.data = hdr_cxt->alloc_addr[2];
+		input_img[1].image.ev = 1;
+		input_img[1].image.width = hdr_cxt->width;
+		input_img[1].image.height = hdr_cxt->height;
+		input_img[1].image.stride = hdr_cxt->width;
+		out_img.image.data = hdr_cxt->alloc_addr[2];
 		out_img.fd = hdr_cxt->fd[2];
-		out_img.width = hdr_cxt->width;
-		out_img.height = hdr_cxt->height;
-		out_img.stride = hdr_cxt->width;
-		INFO("addr: 0x%lx, 0x%lx, ev: %f, %f \n", input_img[0].data,
-		input_img[1].data, input_img[0].ev, input_img[1].ev);
-		ret = sprd_hdr_process(hdr_cxt->lib_cxt.lib_handle, &input_img[0],
+		out_img.image.width = hdr_cxt->width;
+		out_img.image.height = hdr_cxt->height;
+		out_img.image.stride = hdr_cxt->width;
+		INFO("addr: 0x%lx, 0x%lx, ev: %f, %f \n", input_img[0].image.data,
+		input_img[1].image.data, input_img[0].image.ev, input_img[1].image.ev);
+		ret = sprd_hdr_vdsp_process(hdr_cxt->lib_cxt.lib_handle, &input_img[0],
 		   &out_img);
 		if (ret) {
 		ERR("vdsp_trace faild to hdr process\n");
