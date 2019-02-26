@@ -1852,6 +1852,9 @@ static int init_cam_channel(
 
 	/* for debug. */
 	module->zoom_solution = g_dbg_zoom_mode;
+	/* bypass RDS if sensor output binning size for image quality */
+	if ((module->cam_uinfo.sn_size.w * 2) <= module->cam_uinfo.sn_max_size.w)
+		module->zoom_solution = 0;
 	pr_info("zoom_solution %d\n", module->zoom_solution);
 
 	ch_uinfo = &channel->ch_uinfo;
