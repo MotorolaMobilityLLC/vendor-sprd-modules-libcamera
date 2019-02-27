@@ -3283,7 +3283,7 @@ sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data) {
     otp_length[1] = (OTP_DATA_SIZE >> 8) & 0xFF;
     memset(write_buf, 0, OTP_WRITE_BUFFER_SIZE);
     memset(read_buf, 0, OTP_READ_BUFFER_SIZE);
-    memcpy(write_buf, OTPD_READ_DATA, OTP_CONTROL_SIZE);
+    memcpy(write_buf, OTPD_READ_DATA, sizeof(OTPD_READ_DATA));
     memcpy(&write_buf[OTP_CONTROL_SIZE], otp_length, OTP_LENGTH_SIZE);
     for (int i = 0; i < OTP_WRITE_BUFFER_SIZE; i = i + 8) {
         SENSOR_LOGV("otpd:write_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
