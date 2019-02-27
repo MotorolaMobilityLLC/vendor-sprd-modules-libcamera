@@ -79,6 +79,7 @@
 #define ISP_PATHID_MASK 0x3
 #define ISP_CTXID_OFFSET ISP_PATHID_BITS
 #define DCAM_4IN1_FRAMES 16
+#define ALIGN_UP(a, x)	(((a) + (x) - 1) & (~((x) - 1)))
 
 /* TODO: need to pass the num to driver by hal */
 #define CAP_NUM_COMMON 1
@@ -174,6 +175,8 @@ struct channel_context {
 	atomic_t err_status;
 
 	int32_t dcam_path_id;
+	uint32_t second_path_id; /* second path */
+	uint32_t second_path_enable;
 
 	/* for which need anoter dcam & path offline processing.*/
 	int32_t aux_dcam_path_id;
@@ -712,6 +715,44 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 	return NULL;
 }
 
+/* 4in1_raw_capture
+ * full path: sensor raw(4cell), bin path: 4in1 bin sum
+ * two image save in one fd(one buffer), full + bin
+ */
+struct camera_frame *deal_4in1_raw_capture(struct camera_module *module,
+			struct camera_frame *pframe,
+			struct channel_context *ch)
+{
+	static uint32_t flag_path; /* b0:bin tx done, b1:full tx done */
+	static uint32_t offset; /* the offset for 4M, 16m:from 0 */
+
+	/* full path tx done */
+	if (pframe->irq_type == CAMERA_IRQ_4IN1_DONE) {
+		flag_path |= BIT(1);
+	} else { /* bin path tx done */
+		flag_path |= BIT(0);
+		offset = pframe->buf.offset[0];
+	}
+	/* check bin, full both tx done */
+	if ((flag_path & 0x3) == 0x3) {
+		pframe->evt = IMG_TX_DONE;
+		pframe->irq_type = CAMERA_IRQ_4IN1_DONE;
+		flag_path = 0;
+		/* set size, full size */
+		pframe->width = ch->ch_uinfo.dst_size.w;
+		pframe->height = ch->ch_uinfo.dst_size.h;
+		/* offset
+		 * pframe->buf.addr_vir[0] = offset;
+		 */
+		return pframe;
+	}
+	/* not report */
+	cambuf_put_ionbuf(&pframe->buf);
+	put_empty_frame(pframe);
+
+	return NULL;
+}
+
 int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 {
 	int ret = 0;
@@ -893,9 +934,17 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			pframe->evt = IMG_TX_DONE;
 			if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE)
 				pframe->irq_type = CAMERA_IRQ_IMG;
+			if (module->cam_uinfo.is_4in1) {
+				pframe = deal_4in1_raw_capture(module, pframe, channel);
+				if (!pframe)
+					return 0;
+			}
+			/* set width,heigth */
+			pframe->width = channel->ch_uinfo.dst_size.w;
+			pframe->height = channel->ch_uinfo.dst_size.h;
 			ret = camera_enqueue(&module->frm_queue, pframe);
 			complete(&module->frm_com);
-			pr_info("get out raw frame: %p\n", pframe);
+			pr_info("get out raw frame: fd:%d\n", pframe->buf.mfd[0]);
 
 		} else if (channel->ch_id == CAM_CH_PRE) {
 
@@ -1838,6 +1887,71 @@ static int deinit_4in1_aux(struct camera_module *module)
 	return ret;
 }
 
+/* 4in1_raw_capture
+ * init second path for bin sum
+ */
+static int init_4in1_secondary_path(struct camera_module *module,
+			struct channel_context *ch)
+{
+	int ret = 0;
+	uint32_t second_path_id = DCAM_PATH_BIN;
+	struct dcam_path_cfg_param ch_desc;
+
+	/* now only raw capture can run to here */
+	if (ch->ch_id != CAM_CH_RAW)
+		return -EFAULT;
+
+	ch->second_path_enable = 0;
+	ret = dcam_ops->get_path(
+		module->dcam_dev_handle, second_path_id);
+	if (ret < 0) {
+		pr_err("fail to get dcam path %d\n", second_path_id);
+		return -EFAULT;
+	}
+	ch->second_path_id = second_path_id;
+
+	/* todo: cfg param to user setting. */
+	memset(&ch_desc, 0, sizeof(ch_desc));
+	ch_desc.is_loose =
+		module->cam_uinfo.sensor_if.if_spec.mipi.is_loose;
+	/*
+	 * Configure slow motion for BIN path. HAL must set @is_high_fps
+	 * and @high_fps_skip_num for both preview channel and video
+	 * channel so BIN path can enable slow motion feature correctly.
+	 */
+	ch_desc.slowmotion_count = ch->ch_uinfo.high_fps_skip_num;
+
+	ch_desc.endian.y_endian = ENDIAN_LITTLE;
+	ch_desc.enable_3dnr = module->cam_uinfo.is_3dnr;
+	if (ch->ch_id == CAM_CH_RAW)
+		ch_desc.is_raw = 1;
+	ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+			DCAM_PATH_CFG_BASE,
+			ch->second_path_id, &ch_desc);
+	/* bypass bin path all sub block except 4in1 */
+
+
+	ch->second_path_enable = 1;
+	pr_info("done\n");
+
+	return 0;
+}
+
+/* 4in1_raw_capture
+ * deinit second path
+ */
+static void deinit_4in1_secondary_path(struct camera_module *module,
+			struct channel_context *ch)
+{
+	/* now only raw capture can run to here */
+	if (ch->ch_id != CAM_CH_RAW || (!ch->second_path_enable))
+		return ;
+	dcam_ops->put_path(module->dcam_dev_handle, ch->second_path_id);
+	ch->second_path_enable = 0;
+	pr_info("done\n");
+}
+
+
 static int init_cam_channel(
 			struct camera_module *module,
 			struct channel_context *channel)
@@ -2090,6 +2204,13 @@ static int init_cam_channel(
 			goto exit;
 		}
 	}
+	if (channel->ch_id == CAM_CH_RAW && module->cam_uinfo.is_4in1) {
+		ret = init_4in1_secondary_path(module, channel);
+		if (ret) {
+			pr_err("4in1 raw capture init bin fail\n");
+		}
+	}
+
 exit:
 	pr_info("path id:dcam = %d, aux dcam = %d, isp = %d\n",
 		channel->dcam_path_id, channel->aux_dcam_path_id,
@@ -3197,6 +3318,45 @@ exit:
 	return ret;
 }
 
+/* 4in1_raw_capture
+ * get the second buffer from the same fd for (bin) path
+ * input: i: get i group buffer
+ */
+static struct camera_frame *get_secondary_buf(struct sprd_img_parm *p,
+			struct channel_context *ch, uint32_t i)
+{
+	struct camera_frame *pframe;
+	int ret;
+	uint32_t offset;
+
+	pframe = get_empty_frame();
+	if (pframe == NULL) {
+		pr_err("fail to get empty frame node\n");
+		return NULL;
+	}
+	pframe->buf.type = CAM_BUF_USER;
+	pframe->buf.mfd[0] = p->fd_array[i];
+	/* raw capture: 4cell + bin-sum, cal offset */
+	offset = cal_sprd_raw_pitch(ch->ch_uinfo.src_size.w);
+	offset *= ch->ch_uinfo.src_size.h;
+	offset = ALIGN_UP(offset, 4096);
+	/* first buf offset: p->frame_addr_array[i].y */
+	pr_info("start 0x%x, offset 0x%x\n", p->frame_addr_array[i].y,
+			offset);
+	offset += p->frame_addr_array[i].y;
+	pframe->buf.offset[0] = offset;
+	pframe->channel_id = ch->ch_id;
+
+	ret = cambuf_get_ionbuf(&pframe->buf);
+	if (ret) {
+		put_empty_frame(pframe);
+		pr_err("Get second buffer fail, ret %d\n", ret);
+		return NULL;
+	}
+
+	return pframe;
+}
+
 static int img_ioctl_set_frame_addr(
 			struct camera_module *module,
 			unsigned long arg)
@@ -3234,7 +3394,7 @@ static int img_ioctl_set_frame_addr(
 	if (param.channel_id == CAM_CH_CAP){
 		pr_info("ch %d, buffer_count %d\n", param.channel_id,
 				param.buffer_count);
-    }
+	}
 
 	ch = &module->channel[param.channel_id];
 	for (i = 0; i < param.buffer_count; i++) {
@@ -3264,7 +3424,7 @@ static int img_ioctl_set_frame_addr(
 				pframe->channel_id, pframe->buf.mfd[0],
 				pframe->buf.offset[0], pframe->buf.offset[1],
 				pframe->buf.offset[2], param.is_reserved_buf);
-        }
+		}
 		ret = cambuf_get_ionbuf(&pframe->buf);
 		if (ret) {
 			put_empty_frame(pframe);
@@ -3290,6 +3450,16 @@ static int img_ioctl_set_frame_addr(
 			}
 			ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 					cmd, ch->dcam_path_id, pframe);
+			/* 4in1_raw_capture, maybe need two image once */
+			if (ch->second_path_enable) {
+				pframe = get_secondary_buf(&param, ch, i);
+				if (!pframe) {
+					ret = -EFAULT;
+					break;
+				}
+				ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+					cmd, ch->second_path_id, pframe);
+			}
 		}
 
 		if (ret) {
@@ -3887,8 +4057,11 @@ static int img_ioctl_stream_off(
 		isp_ctx_id[i] = -1;
 		if (!ch->enable)
 			continue;
-		if (ch->ch_id == CAM_CH_RAW)
+		if (ch->ch_id == CAM_CH_RAW) {
 			raw_cap = 1;
+			if (module->cam_uinfo.is_4in1)
+				deinit_4in1_secondary_path(module, ch);
+		}
 		pr_info("clear ch %d, dcam path %d, isp path 0x%x\n",
 				ch->ch_id,
 				ch->dcam_path_id,
