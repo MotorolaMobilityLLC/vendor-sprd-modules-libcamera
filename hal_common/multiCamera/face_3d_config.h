@@ -37,7 +37,6 @@ MODE_3D_FACE,
         // which index camera stream width and heigh to set.
         /*********************************************************************/
         {12, 640, 480, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0},      {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0},
 
     },
     /*struct config_physical_descriptor.camera id and stream info .*/
