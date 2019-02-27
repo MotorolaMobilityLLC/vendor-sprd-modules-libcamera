@@ -494,8 +494,10 @@ struct isp_af_notice {
 	cmr_u32 mode;
 	cmr_u32 valid_win;
 	cmr_u32 focus_type;
+	cmr_u32 motor_pos;
+	cmr_u32 af_mode;
 	struct isp_afctrl_roi af_roi;
-	cmr_u32 reserved[6];
+	cmr_u32 reserved[4];
 };
 
 enum isp_flash_type {
