@@ -61,7 +61,7 @@ static cmr_int ov5675_drv_set_video_mode(cmr_handle handle, cmr_uint param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_REG_T_PTR sensor_reg_ptr = PNULL;
     cmr_u16 i = 0x00;
-    cmr_u32 mode;
+    cmr_u32 mode = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
