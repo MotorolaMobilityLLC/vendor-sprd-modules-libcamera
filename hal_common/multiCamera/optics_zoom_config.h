@@ -42,6 +42,10 @@ MODE_SOFY_OPTICAL_ZOOM,
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
 
     },
     /*struct config_physical_descriptor.camera id and stream info .*/

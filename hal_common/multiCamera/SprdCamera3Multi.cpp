@@ -892,7 +892,7 @@ void SprdCamera3Multi::saveRequest(
 int SprdCamera3Multi::createOutputBufferStream(
     camera3_stream_buffer_t *outputBuffer, int req_stream_mask,
     const sprdcamera_physical_descriptor_t *camera_phy_info,
-    camera3_stream_buffer_t fw_buffer[MAX_MULTI_NUM_STREAMS + 1], int *buffer_num) {
+    camera3_stream_buffer_t fw_buffer[MAX_MULTI_NUM_STREAMS], int *buffer_num) {
     int ret = 0;
     int stream_type = 0;
     int i = 0;
@@ -1889,7 +1889,7 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
 
-    List<multi_request_saved_t> *mSavedRequestList = NULL;
+    List<multi_request_saved_t> *mSavedRequestList;
     if (stream_type == CALLBACK_STREAM) {
         mSavedRequestList = &mSavedPrevRequestList;
     } else if (stream_type == DEFAULT_STREAM) {
