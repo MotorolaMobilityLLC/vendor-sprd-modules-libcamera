@@ -144,7 +144,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -297,7 +297,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -450,7 +450,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -603,7 +603,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -756,7 +756,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -909,7 +909,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1062,7 +1062,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1215,7 +1215,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1368,7 +1368,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1521,7 +1521,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1674,7 +1674,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1827,7 +1827,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -1980,7 +1980,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -2133,7 +2133,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -2286,7 +2286,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -2439,7 +2439,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -2592,7 +2592,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -2745,7 +2745,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -2898,7 +2898,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -3051,7 +3051,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -3204,7 +3204,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -3357,7 +3357,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -3510,7 +3510,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -3663,7 +3663,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
@@ -3816,7 +3816,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/
