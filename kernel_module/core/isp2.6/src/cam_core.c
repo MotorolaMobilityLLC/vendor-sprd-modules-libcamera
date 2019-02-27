@@ -891,7 +891,8 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 		} else if (channel->ch_id == CAM_CH_RAW) {
 			/* RAW capture or test_dcam only */
 			pframe->evt = IMG_TX_DONE;
-			pframe->irq_type = CAMERA_IRQ_IMG;
+			if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE)
+				pframe->irq_type = CAMERA_IRQ_IMG;
 			ret = camera_enqueue(&module->frm_queue, pframe);
 			complete(&module->frm_com);
 			pr_info("get out raw frame: %p\n", pframe);
@@ -3248,6 +3249,9 @@ static int img_ioctl_set_frame_addr(
 		pframe->buf.offset[1] = param.frame_addr_array[i].u;
 		pframe->buf.offset[2] = param.frame_addr_array[i].v;
 		pframe->channel_id = ch->ch_id;
+		pframe->buf.addr_vir[0] = param.frame_addr_vir_array[i].y;
+		pframe->buf.addr_vir[1] = param.frame_addr_vir_array[i].u;
+		pframe->buf.addr_vir[2] = param.frame_addr_vir_array[i].v;
 
 		pr_debug("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
 			pframe->channel_id, pframe->buf.mfd[0],

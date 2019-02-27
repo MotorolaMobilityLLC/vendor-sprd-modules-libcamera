@@ -856,8 +856,16 @@ static const struct {
 static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 				      uint32_t status)
 {
-	pr_err("DCAM%u error 0x%x\n", dev->idx, status);
-
+	/* pr_err("DCAM%u error 0x%x\n", dev->idx, status);
+	 * as L3, show which erro
+	 */
+	if (status & BIT(DCAM_DCAM_OVF))
+		pr_err("overflow,");
+	if (status & BIT(DCAM_CAP_LINE_ERR))
+		pr_err("line error,");
+	if (status & BIT(DCAM_CAP_FRM_ERR))
+		pr_err("frame error,");
+	pr_err("DCAM%u status 0x%x\n", dev->idx, status);
 	if (atomic_read(&dev->state) == STATE_ERROR)
 		return IRQ_HANDLED;
 	atomic_set(&dev->state, STATE_ERROR);
