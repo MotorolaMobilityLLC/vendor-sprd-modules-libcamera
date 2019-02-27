@@ -1050,7 +1050,7 @@ static SENSOR_STATIC_INFO_T s_imx351_static_info[VENDOR_NUM] = {
                      .tof_supported = 0,
 #endif
                      .pdaf_supported = SENSOR_PDAF_TYPE1_ENABLE,
-                     .embedded_line_enable = 0,
+                     .embedded_line_enable = 1,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 2,

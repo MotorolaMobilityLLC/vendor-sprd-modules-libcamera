@@ -336,6 +336,7 @@ struct isp_alg_fw_context {
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
 	cmr_handle tof_handle;
+	struct dcam_dev_rgb_gain_info rgb_gain;
 
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
@@ -401,6 +402,15 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		gain_info = (struct dcam_dev_rgb_gain_info *)output.param_data->data_ptr;
 		*param = gain_info->global_gain;
+
+		cxt->rgb_gain.bypass = gain_info->bypass;
+		cxt->rgb_gain.global_gain = gain_info->global_gain;
+		cxt->rgb_gain.r_gain = gain_info->r_gain;
+		cxt->rgb_gain.g_gain = gain_info->g_gain;
+		cxt->rgb_gain.b_gain = gain_info->b_gain;
+		ISP_LOGV("rgbgain_bypass = %d, global_gain = %d, r_gain = %d, g_gain = %d, b_gain = %d",
+			cxt->rgb_gain.bypass, cxt->rgb_gain.global_gain,
+			cxt->rgb_gain.r_gain, cxt->rgb_gain.g_gain, cxt->rgb_gain.b_gain);
 	} else {
 		*param = 4096;
 	}
@@ -1645,7 +1655,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
-
+	if (cxt->ebd_cxt.ebd_support) {
+		memcpy(&in_param.ebd_info, &cxt->ae_cxt.ebd_info, sizeof(cxt->ae_cxt.ebd_info));
+		in_param.isp_dgain.global_gain = cxt->rgb_gain.global_gain;
+		in_param.isp_dgain.r_gain = cxt->rgb_gain.r_gain;
+		in_param.isp_dgain.g_gain = cxt->rgb_gain.g_gain;
+		in_param.isp_dgain.b_gain = cxt->rgb_gain.b_gain;
+	}
 	/* copy isp hist2 statis and pass to ae algo */
 	memcpy((void *)&in_param.hist_stats, (void *)&cxt->hist2_stats,
 		sizeof(struct isp_hist_statistic_info));
