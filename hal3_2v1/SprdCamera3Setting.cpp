@@ -3671,15 +3671,21 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+        s_setting[mCameraId].vcm_num = 7;
         requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
-                           s_setting[mCameraId].vcm_dac, 3);
+                           s_setting[mCameraId].vcm_dac,
+                           s_setting[mCameraId].vcm_num);
         requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
                            &(s_setting[mCameraId].vcm_result), 1);
         HAL_LOGD(
-            "vcmstatus  vcm_result %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
-            "%d",
-            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_dac[0],
-            s_setting[mCameraId].vcm_dac[1], s_setting[mCameraId].vcm_dac[2]);
+            "vcm_result %d vcm_num %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
+            "%d "
+            "vcm_dac[3] %d vcm_dac[4] %d vcm_dac[5] %d vcm_dac[6] %d ",
+            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_num,
+            s_setting[mCameraId].vcm_dac[0], s_setting[mCameraId].vcm_dac[1],
+            s_setting[mCameraId].vcm_dac[2], s_setting[mCameraId].vcm_dac[3],
+            s_setting[mCameraId].vcm_dac[4], s_setting[mCameraId].vcm_dac[5],
+            s_setting[mCameraId].vcm_dac[6]);
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             requestInfo.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,
@@ -4537,6 +4543,12 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGD("s_setting[mCameraId].verification_enable %d",
                  s_setting[mCameraId].verification_enable);
     }
+    if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_COUNT)) {
+        s_setting[mCameraId].vcm_count =
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_COUNT).data.u8[0];
+        HAL_LOGD("s_setting[mCameraId].vcm_count %d",
+                 s_setting[mCameraId].vcm_count);
+    }
     /**add for 3d calibration update metadata end*/
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
@@ -5303,15 +5315,22 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     if (mCameraId == 0) {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+        s_setting[mCameraId].vcm_num = 7;
         camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
-                           s_setting[mCameraId].vcm_dac, 3);
+                           s_setting[mCameraId].vcm_dac,
+                           s_setting[mCameraId].vcm_num);
         camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
                            &(s_setting[mCameraId].vcm_result), 1);
         HAL_LOGD(
-            "vcmstatus  vcm_result %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
-            "%d",
-            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_dac[0],
-            s_setting[mCameraId].vcm_dac[1], s_setting[mCameraId].vcm_dac[2]);
+            "vcm_result %d vcm_num %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
+            "%d "
+            "vcm_dac[3] %d vcm_dac[4] %d vcm_dac[5] %d vcm_dac[6] %d ",
+            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_num,
+            s_setting[mCameraId].vcm_dac[0], s_setting[mCameraId].vcm_dac[1],
+            s_setting[mCameraId].vcm_dac[2], s_setting[mCameraId].vcm_dac[3],
+            s_setting[mCameraId].vcm_dac[4], s_setting[mCameraId].vcm_dac[5],
+            s_setting[mCameraId].vcm_dac[6]);
+
         if (s_setting[mCameraId].vcm_result == VCM_RESULT_DONE ||
             s_setting[mCameraId].vcm_result == VCM_RESULT_FAIL) {
             s_setting[mCameraId].vcm_result = VCM_RESULT_NO;
@@ -5673,6 +5692,10 @@ int SprdCamera3Setting::setVCMDACTag(uint16_t *vcmInfo) {
     s_setting[mCameraId].vcm_dac[0] = vcmInfo[0];
     s_setting[mCameraId].vcm_dac[1] = vcmInfo[1];
     s_setting[mCameraId].vcm_dac[2] = vcmInfo[2];
+    s_setting[mCameraId].vcm_dac[3] = vcmInfo[3];
+    s_setting[mCameraId].vcm_dac[4] = vcmInfo[4];
+    s_setting[mCameraId].vcm_dac[5] = vcmInfo[5];
+    s_setting[mCameraId].vcm_dac[6] = vcmInfo[6];
     return 0;
 }
 
@@ -5680,6 +5703,10 @@ int SprdCamera3Setting::getVCMDACTag(uint16_t *vcmInfo) {
     vcmInfo[0] = s_setting[mCameraId].vcm_dac[0];
     vcmInfo[1] = s_setting[mCameraId].vcm_dac[1];
     vcmInfo[2] = s_setting[mCameraId].vcm_dac[2];
+    vcmInfo[3] = s_setting[mCameraId].vcm_dac[3];
+    vcmInfo[4] = s_setting[mCameraId].vcm_dac[4];
+    vcmInfo[5] = s_setting[mCameraId].vcm_dac[5];
+    vcmInfo[6] = s_setting[mCameraId].vcm_dac[6];
     return 0;
 }
 

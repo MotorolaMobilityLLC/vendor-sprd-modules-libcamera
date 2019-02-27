@@ -661,8 +661,8 @@ struct img_debug {
 struct vcm_range_info {
     cmr_u16 limited_infi;
     cmr_u16 limited_macro;
-    cmr_u16 vcm_dac[3];
-    cmr_u16 resverd[7];
+    cmr_u16 vcm_dac[7];
+    cmr_u16 resverd[3];
 };
 
 typedef struct {

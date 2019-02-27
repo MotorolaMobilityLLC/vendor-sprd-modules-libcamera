@@ -1849,6 +1849,10 @@ static cmr_int ispctl_get_bokeh_range(cmr_handle isp_alg_handle, void *param_ptr
 		temp->vcm_dac[0] = result.vcm_dac[0];
 		temp->vcm_dac[1] = result.vcm_dac[1];
 		temp->vcm_dac[2] = result.vcm_dac[2];
+               temp->vcm_dac[3] = result.vcm_dac[3];
+               temp->vcm_dac[4] = result.vcm_dac[4];
+               temp->vcm_dac[5] = result.vcm_dac[5];
+               temp->vcm_dac[6] = result.vcm_dac[6];
 	}
 
 	return ret;

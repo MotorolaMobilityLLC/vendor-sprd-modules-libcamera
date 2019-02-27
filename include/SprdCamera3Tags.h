@@ -79,6 +79,8 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_CALIBRATION_VCM_RESULT,
     ANDROID_SPRD_SET_VERIFICATION_FLAG,
     ANDROID_SPRD_AF_ROI,
+    ANDROID_SPRD_CALIBRATION_COUNT,
+    ANDROID_SPRD_CALIBRATION_DIST,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

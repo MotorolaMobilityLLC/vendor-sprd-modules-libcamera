@@ -493,9 +493,11 @@ typedef struct {
     EIS_CROP_Tag eiscrop_Info;
     OTP_Tag otpInfo;
     VCM_Tag vcmInfo;
-    int32_t vcm_dac[3];
+    int32_t vcm_dac[20];
+    int32_t vcm_num;
     int32_t vcm_result;
     int32_t verification_enable;
+    int32_t vcm_count;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     HAL_PFC_Tag pfcinfo[MAX_PIPELINE_DEPTH];
 #endif

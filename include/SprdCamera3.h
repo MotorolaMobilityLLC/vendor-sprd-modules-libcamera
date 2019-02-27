@@ -217,6 +217,8 @@ static tags_info_t
         {"sprdCalibrationVCMResult", TYPE_INT32},
         {"sprdSetVerificationFlag", TYPE_INT32},
         {"sprdAfRoi", TYPE_INT32},
+        {"sprdCalibrationCount", TYPE_INT32},
+        {"sprdCalibrationDist", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
