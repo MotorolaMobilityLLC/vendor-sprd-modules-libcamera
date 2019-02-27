@@ -524,8 +524,8 @@ static void free_offline_pararm(void *param)
 	cur = (struct isp_offline_param *)param;
 	while (cur) {
 		prev = (struct isp_offline_param *)cur->prev;
-		kfree(cur);
 		pr_info("free %p\n", cur);
+		kfree(cur);
 		cur = prev;
 	}
 }
@@ -2166,7 +2166,7 @@ static int sprd_isp_cfg_path(void *isp_handle,
 	struct isp_pipe_dev *dev;
 	struct isp_path_desc *path = NULL;
 	struct isp_path_desc *slave_path;
-	struct camera_frame *pframe;
+	struct camera_frame *pframe = NULL;
 
 	if (!isp_handle || !param) {
 		pr_err("fail to get valid input ptr\n");
@@ -2197,8 +2197,6 @@ static int sprd_isp_cfg_path(void *isp_handle,
 	switch (cfg_cmd) {
 	case ISP_PATH_CFG_OUTPUT_RESERVED_BUF:
 	case ISP_PATH_CFG_OUTPUT_BUF:
-		pr_debug("cfg buf path %d, %p\n",
-			path->spath_id, pframe);
 		pframe = (struct camera_frame *)param;
 		ret = cambuf_iommu_map(
 				&pframe->buf, CAM_IOMMUDEV_ISP);
@@ -2207,6 +2205,8 @@ static int sprd_isp_cfg_path(void *isp_handle,
 			ret = -EINVAL;
 			goto exit;
 		}
+		pr_debug("cfg buf path %d, %p\n",
+			path->spath_id, pframe);
 
 		/* is_reserved:
 		 *  1:  basic mapping reserved buffer;
@@ -2547,11 +2547,10 @@ static int isp_deinit_statis_buffer(
 	cambuf_kunmap(ion_buf);
 	cambuf_iommu_unmap(ion_buf);
 	cambuf_put_ionbuf(ion_buf);
+	pr_info("done %p\n", ion_buf);
 	kfree(ion_buf);
 
 	*io_desc->buf = NULL;
-
-	pr_info("done %p\n", ion_buf);
 
 	return ret;
 }
@@ -2977,9 +2976,9 @@ int put_isp_pipe_dev(void *isp_handle)
 				user_cnt, en_cnt);
 
 	if (atomic_dec_return(&dev->user_cnt) == 0) {
+		pr_info("free isp pipe dev %p\n", dev);
 		vfree(dev);
 		s_isp_dev = NULL;
-		pr_info("free isp pipe dev %p\n", dev);
 	}
 	mutex_unlock(&isp_pipe_dev_mutex);
 
