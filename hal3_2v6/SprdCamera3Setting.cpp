@@ -1767,6 +1767,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.contrast = 3;
     s_setting[cameraId].sprddefInfo.saturation = 3;
 
+   // better not use default value 0,so set default value -1
+    s_setting[cameraId].sprddefInfo.sprd_appmode_id = -1;
+
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
            camera3_default_info.common.availableBrightNess,
            sizeof(camera3_default_info.common.availableBrightNess));
