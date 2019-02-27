@@ -950,23 +950,11 @@ static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
 	/* pdaf type1,2,3 & 4: dual pd*/
 	dev->pdaf_type = p->mode;
 
-	/* dual pd use pdaf path  */
-	if (p->mode == 4) {
-		p->mode = 1;
-		return 0;
-	}
-
-	if (p->mode == 0 || p->mode > 4 ||
-		p->image_vc > 3 || p->image_dt > 0x3F) {
+	if (p->mode == 0) {
 		pr_warn("dcam%d pdaf param error, disable pdaf\n", idx);
-		p->mode = 0;
+		
 		dev->is_pdaf = 0;
 	}
-
-	/*DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
-		((p->image_vc & 0x3) << 16) |
-		((p->image_dt & 0x3F) << 8) |
-		(p->mode & 0x3));*/
 
 	return 0;
 }
