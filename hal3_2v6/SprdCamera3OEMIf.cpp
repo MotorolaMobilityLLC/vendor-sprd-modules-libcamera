@@ -402,6 +402,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mAISceneScaleHeapReserverd = NULL;
     mPrevDepthHeapReserved = NULL;
     mPrevSwOutHeapReserved = NULL;
+    mFDSceneScaleHeapReserverd = NULL;
 
     mVideoShotFlag = 0;
     mVideoShotNum = 0;
@@ -6979,6 +6980,13 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         mAISceneScaleHeapReserverd = NULL;
     }
 
+    if (type == CAMERA_FD_SMALL) {
+        if (NULL != mFDSceneScaleHeapReserverd) {
+            freeCameraMem(mFDSceneScaleHeapReserverd);
+        }
+        mFDSceneScaleHeapReserverd = NULL;
+    }
+
     return 0;
 }
 
@@ -7343,6 +7351,18 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         *phy_addr++ = (cmr_uint)mAISceneScaleHeapReserverd->phys_addr;
         *vir_addr++ = (cmr_uint)mAISceneScaleHeapReserverd->data;
         *fd++ = mAISceneScaleHeapReserverd->fd;
+    } else if (type == CAMERA_FD_SMALL) {
+        if (mFDSceneScaleHeapReserverd == NULL) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("memory is null.");
+                goto mem_fail;
+            }
+            mFDSceneScaleHeapReserverd = memory;
+        }
+        *phy_addr++ = (cmr_uint)mFDSceneScaleHeapReserverd->phys_addr;
+        *vir_addr++ = (cmr_uint)mFDSceneScaleHeapReserverd->data;
+        *fd++ = mFDSceneScaleHeapReserverd->fd;
     }
 
     return 0;
@@ -7401,7 +7421,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_CHANNEL_2_RESERVED == type ||
                CAMERA_CHANNEL_3_RESERVED == type ||
                CAMERA_CHANNEL_4_RESERVED == type ||
-               CAMERA_PREVIEW_SCALE_AI_SCENE == type) {
+               CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
+               CAMERA_FD_SMALL == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_CHANNEL_1 == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
@@ -7471,7 +7492,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_CHANNEL_2_RESERVED == type ||
                CAMERA_CHANNEL_3_RESERVED == type ||
                CAMERA_CHANNEL_4_RESERVED == type ||
-               CAMERA_PREVIEW_SCALE_AI_SCENE == type) {
+               CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
+               CAMERA_FD_SMALL == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
     } else if (CAMERA_CHANNEL_1 == type) {

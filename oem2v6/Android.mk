@@ -142,6 +142,10 @@ LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfar
 LOCAL_SHARED_LIBRARIES += libsprdfd
 endif
 
+ifeq ($(strip $(TARGET_BOARD_FD_HW_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_SPRD_FD_HW_SUPPORT
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_SHARED_LIBRARIES += libgyrostab
 endif

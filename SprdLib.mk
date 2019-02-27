@@ -16,7 +16,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfar
-LOCAL_SHARED_LIBRARIES += libsprdfd
+LOCAL_SHARED_LIBRARIES += libsprdfd libsprdfd_hw
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)

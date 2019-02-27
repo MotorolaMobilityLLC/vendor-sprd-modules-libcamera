@@ -30,7 +30,7 @@
 #include "sprdfdapi.h"
 #include "facealignapi.h"
 #include "faceattributeapi.h"
-
+#include "cmr_oem.h"
 #define FD_MAX_FACE_NUM 10
 #define FD_RUN_FAR_INTERVAL                                                    \
     8 /* The frame interval to run FAR. For reducing computation cost */
@@ -73,6 +73,7 @@ struct class_fd {
     FD_DETECTOR_HANDLE hDT;     /* Face Detection Handle */
     FA_ALIGN_HANDLE hFaceAlign; /* Handle for face alignment */
     FAR_RECOGNIZER_HANDLE hFAR; /* Handle for face attribute recognition */
+    struct img_frm fd_small;
 };
 
 struct fd_start_parameter {
@@ -99,7 +100,8 @@ static cmr_uint fd_is_busy(struct class_fd *class_handle);
 static void fd_set_busy(struct class_fd *class_handle, cmr_uint is_busy);
 static cmr_int fd_thread_create(struct class_fd *class_handle);
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data);
-
+cmr_int fd_start_scale(cmr_handle oem_handle, struct img_frm *src,
+                             struct img_frm *dst);
 static struct class_ops fd_ops_tab_info = {
     fd_open, fd_close, fd_transfer_frame, fd_pre_proc, fd_post_proc,
 };
@@ -117,6 +119,18 @@ struct class_tab_t fd_tab_info = {
 #define CAMERA_FD_MSG_QUEUE_SIZE 5
 #define IMAGE_FORMAT "YVU420_SEMIPLANAR"
 
+#define FD_SMALL_SIZE_4_3_WIDTH 640
+#define FD_SMALL_SIZE_4_3_HEIGHT 480
+
+#define FD_SMALL_SIZE_16_9_WIDTH 640
+#define FD_SMALL_SIZE_16_9_HEIGHT 360
+
+#define FD_SMALL_SIZE_2_1_WIDTH 640
+#define FD_SMALL_SIZE_2_1_HEIGHT 320
+
+#define FD_SMALL_SIZE_1_1_WIDTH 480
+#define FD_SMALL_SIZE_1_1_HEIGHT 480
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -129,7 +143,12 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_fd *fd_handle = NULL;
     struct img_size *fd_img_size;
-
+    struct camera_context *cam_cxt = NULL;
+    cmr_handle oem_handle = NULL;
+    cmr_u32 fd_small_buf_num = 1;
+    float src_ratio;
+    float fd_small_4_3_ratio, fd_small_16_9_ratio;
+    float fd_small_2_1_ratio, fd_small_1_1_ratio;
     if (!out || !in || !ipm_handle || !out_class_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
@@ -156,7 +175,51 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     fd_handle->curr_frame_idx = 0;
     fd_handle->faceattr_arr.count = 0;
 
-    CMR_LOGD("mem_size = 0x%ld", fd_handle->mem_size);
+    src_ratio = (float)in->frame_size.width / (float)in->frame_size.height;
+    fd_small_4_3_ratio = (float)4 / 3;
+    fd_small_16_9_ratio = (float)16 / 9;
+    fd_small_2_1_ratio = (float)2 / 1;
+    fd_small_1_1_ratio = (float)1 / 1;
+    CMR_LOGD("src_ratio = %d", src_ratio);
+    if (src_ratio == fd_small_4_3_ratio ) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
+    } else if (src_ratio == fd_small_16_9_ratio ) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_16_9_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_16_9_HEIGHT;
+    } else if (src_ratio == fd_small_2_1_ratio ) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_2_1_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_2_1_HEIGHT;
+    } else if (src_ratio == fd_small_1_1_ratio ) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_1_1_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_1_1_HEIGHT;
+    } else {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
+        CMR_LOGW("fd_small size w/h was set defalut size.");
+    }
+    fd_handle->fd_small.buf_size =
+        fd_handle->fd_small.size.width * fd_handle->fd_small.size.height * 3;
+
+    oem_handle = fd_handle->common.ipm_cxt->init_in.oem_handle;
+    cam_cxt = (struct camera_context *)oem_handle;
+
+    if (NULL != cam_cxt->hal_malloc) {
+        if (0 != cam_cxt->hal_malloc(CAMERA_FD_SMALL,
+                &fd_handle->fd_small.buf_size, &fd_small_buf_num,
+                &fd_handle->fd_small.addr_phy.addr_y,
+                &fd_handle->fd_small.addr_vir.addr_y,
+                &fd_handle->fd_small.fd, cam_cxt->client_data)) {
+            CMR_LOGE("Fail to malloc buffers for fd_small image");
+        } else {
+            CMR_LOGD("OK to malloc buffers for fd_small image");
+        }
+    } else {
+        CMR_LOGE("cam_cxt->hal_malloc is NULL");
+    }
+
+    CMR_LOGD("mem_size = 0x%ld, fd_small.buf_size = %ld",
+                        fd_handle->mem_size, fd_handle->fd_small.buf_size);
     fd_handle->alloc_addr = malloc(fd_handle->mem_size);
     if (!fd_handle->alloc_addr) {
         CMR_LOGE("mem alloc failed");
@@ -172,7 +235,7 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     fd_img_size = &in->frame_size;
     CMR_LOGI("fd_img_size height = %d, width = %d", fd_img_size->height,
              fd_img_size->width);
-    ret = fd_call_init(fd_handle, fd_img_size);
+    ret = fd_call_init(fd_handle, &fd_handle->fd_small.size);
     if (ret) {
         CMR_LOGE("failed to init fd");
         fd_close(fd_handle);
@@ -193,6 +256,8 @@ free_fd_handle:
 static cmr_int fd_close(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_fd *fd_handle = (struct class_fd *)class_handle;
+    struct camera_context *cam_cxt = NULL;
+    cmr_handle oem_handle = NULL;
     CMR_MSG_INIT(message);
 
     CHECK_HANDLE_VALID(fd_handle);
@@ -213,6 +278,22 @@ static cmr_int fd_close(cmr_handle class_handle) {
 
     if (fd_handle->alloc_addr) {
         free(fd_handle->alloc_addr);
+    }
+
+    oem_handle = fd_handle->common.ipm_cxt->init_in.oem_handle;
+    cam_cxt = (struct camera_context *)oem_handle;
+
+    if (NULL != cam_cxt->hal_free) {
+        if (0 != cam_cxt->hal_free(CAMERA_FD_SMALL,
+                &fd_handle->fd_small.addr_phy.addr_y,
+                &fd_handle->fd_small.addr_vir.addr_y,
+                &fd_handle->fd_small.fd, 1, cam_cxt->client_data)) {
+            CMR_LOGE("Fail to free the fd_small image buffers");
+        } else {
+            CMR_LOGD("Ok to free the fd_small image buffers");
+        }
+    } else {
+        CMR_LOGE("cam_cxt->hal_free is NULL");
     }
 
     free(fd_handle);
@@ -782,9 +863,15 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
 static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
                                   const struct img_size *fd_img_size) {
     FD_OPTION opt;
-
+    FD_VERSION_T version;
+    FdGetVersion(&version);
+    CMR_LOGI("SPRD FD version: %s .", version.built_rev);
+#ifdef CONFIG_SPRD_FD_HW_SUPPORT
+    opt.fdEnv = FD_ENV_HW;
+#else
+    opt.fdEnv = FD_ENV_SW;
+#endif
     FdInitOption(&opt);
-    CMR_LOGI("SPRD FD version: %s .", FdGetVersion());
     opt.workMode = FD_WORKMODE_MOVIE;
     opt.maxFaceNum = FACE_DETECT_NUM;
     opt.minFaceSize = MIN(fd_img_size->width, fd_img_size->height) / 12;
@@ -802,6 +889,8 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     opt.holdSizeRate = 4;
     opt.swapFaceRate = 200;
     opt.guessFaceDirection = 1;
+    opt.cfgPoolingMode = 1;
+    opt.cfgPoolingFrameNum = 5;
 
     /* For tuning FD parameter: read parameter from file */
     /*
@@ -846,6 +935,39 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     return FdCreateDetector(hDT, &opt);
 }
 
+cmr_int fd_start_scale(cmr_handle oem_handle, struct img_frm *src,
+                             struct img_frm *dst) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!oem_handle || !src || !dst) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    CMR_LOGD(
+        "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
+        src->size.width, src->size.height, dst->size.width, dst->size.height,
+        src->rect.start_x, src->rect.start_y, src->rect.width, src->rect.height,
+        src->data_end.y_endian, src->data_end.uv_endian, dst->data_end.y_endian,
+        dst->data_end.uv_endian);
+
+    CMR_LOGD("src fd: 0x%x, yaddr: 0x%lx, fmt: %d dst fd: 0x%x, yaddr: 0x%lx, "
+             "fmt: %d",
+             src->fd, src->addr_vir.addr_y, src->fmt, dst->fd,
+             dst->addr_vir.addr_y, dst->fmt);
+    ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
+                          (cmr_evt_cb)NULL, NULL);
+    if (ret) {
+        CMR_LOGE("failed to start scaler, ret %ld", ret);
+    }
+exit:
+    CMR_LOGV("done %ld", ret);
+
+    return ret;
+}
+
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_fd *class_handle = (struct class_fd *)private_data;
@@ -855,6 +977,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
     FD_IMAGE fd_img;
     clock_t start_time, end_time;
     int duration;
+    float ratio;
+    cmr_u32 i = 0;
     cmr_bzero(&fd_img, sizeof(fd_img));
     if (!message || !class_handle) {
         CMR_LOGE("parameter is fail");
@@ -895,11 +1019,58 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
 
         fd_set_busy(class_handle, 1);
 
+        class_handle->frame_in.src_frame.data_end.y_endian = 1;
+        class_handle->frame_in.src_frame.data_end.uv_endian = 2;
+        class_handle->frame_in.src_frame.rect.start_x = 0;
+        class_handle->frame_in.src_frame.rect.start_y = 0;
+        class_handle->frame_in.src_frame.rect.width =
+            class_handle->frame_in.src_frame.size.width;
+        class_handle->frame_in.src_frame.rect.height =
+            class_handle->frame_in.src_frame.size.height;
+
+        class_handle->frame_in.src_frame.addr_phy.addr_u =
+            class_handle->frame_in.src_frame.addr_phy.addr_y +
+            class_handle->frame_in.src_frame.size.width *
+            class_handle->frame_in.src_frame.size.height;
+        class_handle->frame_in.src_frame.addr_phy.addr_v =
+            class_handle->frame_in.src_frame.addr_vir.addr_u;
+
+        class_handle->frame_in.src_frame.addr_vir.addr_u =
+            class_handle->frame_in.src_frame.addr_vir.addr_y +
+            class_handle->frame_in.src_frame.size.width *
+            class_handle->frame_in.src_frame.size.height;
+        class_handle->frame_in.src_frame.addr_vir.addr_v =
+            class_handle->frame_in.src_frame.addr_vir.addr_u;
+
+        class_handle->fd_small.fmt = IMG_DATA_TYPE_YUV420;
+        class_handle->fd_small.data_end.y_endian = 1;
+        class_handle->fd_small.data_end.uv_endian = 2;
+        class_handle->fd_small.rect.start_x = 0;
+        class_handle->fd_small.rect.start_y = 0;
+        class_handle->fd_small.rect.width = class_handle->fd_small.size.width;
+        class_handle->fd_small.rect.height = class_handle->fd_small.size.height;
+
+        class_handle->fd_small.addr_phy.addr_u = class_handle->fd_small.addr_phy.addr_y +
+            class_handle->fd_small.size.width * class_handle->fd_small.size.height;
+        class_handle->fd_small.addr_phy.addr_v = class_handle->fd_small.addr_phy.addr_u;
+
+        class_handle->fd_small.addr_vir.addr_u = class_handle->fd_small.addr_vir.addr_y +
+            class_handle->fd_small.size.width * class_handle->fd_small.size.height;
+        class_handle->fd_small.addr_vir.addr_v = class_handle->fd_small.addr_vir.addr_u;
+
+        ret = fd_start_scale(class_handle->common.ipm_cxt->init_in.oem_handle,
+                                        &class_handle->frame_in.src_frame,
+                                        &class_handle->fd_small);
+        if (ret) {
+            CMR_LOGE("Fail to call fd_start_scale");
+        }
+
         /* Executes Face Detection */
-        fd_img.data = (unsigned char *)class_handle->alloc_addr;
-        fd_img.width = class_handle->fd_img_size.width;
-        fd_img.height = class_handle->fd_img_size.height;
-        fd_img.step = fd_img.width;
+        fd_img.data = (unsigned char *)class_handle->fd_small.addr_vir.addr_y;
+        fd_img.width = class_handle->fd_small.size.width;
+        fd_img.height = class_handle->fd_small.size.height;
+        fd_img.step = class_handle->fd_small.size.width;
+        fd_img.data_handle = class_handle->fd_small.fd;
 
         start_time = clock();
         ret = FdDetectFace(class_handle->hDT, &fd_img);
@@ -914,15 +1085,15 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         /* recognize face attribute (smile detection) */
         fd_recognize_face_attribute(
             class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
-            &(class_handle->faceattr_arr), (cmr_u8 *)class_handle->alloc_addr,
-            class_handle->fd_img_size, class_handle->curr_frame_idx);
+            &(class_handle->faceattr_arr), (cmr_u8 *)class_handle->fd_small.addr_vir.addr_y,
+            class_handle->fd_small.size, class_handle->curr_frame_idx);
 
         class_handle->is_get_result = 1;
         /* extract face detection results */
         fd_get_fd_results(class_handle->hDT, &(class_handle->faceattr_arr),
                           &(class_handle->face_area_prev),
                           &(class_handle->frame_out.face_area),
-                          class_handle->fd_img_size,
+                          class_handle->fd_small.size,
                           class_handle->curr_frame_idx);
         /* save a copy for next frame */
         memcpy(&(class_handle->face_area_prev),
@@ -935,11 +1106,32 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.src_frame.size.height;
         class_handle->frame_out.dst_frame.reserved =
             class_handle->frame_in.dst_frame.reserved;
+        ratio = (float)class_handle->frame_in.src_frame.size.width /
+            (float)class_handle->fd_small.size.width;
+
+        for (i = 0; i < class_handle->frame_out.face_area.face_count; i++) {
+            class_handle->frame_out.face_area.range[i].sx =
+                class_handle->frame_out.face_area.range[i].sx * ratio;
+            class_handle->frame_out.face_area.range[i].sy =
+                class_handle->frame_out.face_area.range[i].sy * ratio;
+            class_handle->frame_out.face_area.range[i].srx =
+                class_handle->frame_out.face_area.range[i].srx * ratio;
+            class_handle->frame_out.face_area.range[i].sry =
+                class_handle->frame_out.face_area.range[i].sry * ratio;
+            class_handle->frame_out.face_area.range[i].ex =
+                class_handle->frame_out.face_area.range[i].ex * ratio;
+            class_handle->frame_out.face_area.range[i].ey =
+                class_handle->frame_out.face_area.range[i].ey * ratio;
+            class_handle->frame_out.face_area.range[i].elx =
+                class_handle->frame_out.face_area.range[i].elx * ratio;
+            class_handle->frame_out.face_area.range[i].ely =
+                class_handle->frame_out.face_area.range[i].ely * ratio;
+        }
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
         CMR_LOGI("%dx%d, face_num=%ld, time=%d ms",
-                 class_handle->frame_in.src_frame.size.width,
-                 class_handle->frame_in.src_frame.size.height,
+                 class_handle->fd_small.size.width,
+                 class_handle->fd_small.size.height,
                  class_handle->frame_out.face_area.face_count, duration);
         /*callback*/
         if (class_handle->frame_cb) {

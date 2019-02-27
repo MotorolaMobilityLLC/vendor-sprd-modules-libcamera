@@ -703,6 +703,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mPrevDepthHeapReserved;
     sprd_camera_memory_t *mPrevSwOutHeapReserved;
 
+    sprd_camera_memory_t *mFDSceneScaleHeapReserverd;
+
     uint32_t mPreviewHeapBakUseFlag;
     uint32_t mPreviewHeapArray_size[kPreviewBufferCount +
                                     kPreviewRotBufferCount + 1];
