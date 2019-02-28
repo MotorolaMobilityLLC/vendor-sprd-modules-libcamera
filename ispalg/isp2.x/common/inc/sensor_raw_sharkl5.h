@@ -178,6 +178,42 @@ struct dual_flash_tune_param {
 	cmr_u8 reserved1[1024];	/*256 * 4bytes */
 };				/*2053 * 4 bypes */
 
+//capture bokeh
+struct bokeh_dof_params{
+	cmr_u16 dof_offset;
+    float dof_ratio;
+    float slope_fore;
+    float slope_back;
+    cmr_u16 reserved[5];
+};
+
+//preview bokeh
+struct bokeh_init_params {
+    cmr_u8 smooth_win_size;//odd number
+    cmr_u8 reserved[3];
+};
+
+//depth
+struct bokeh_depth_params {
+    cmr_u8 sensor_direction; //1 vertical 0 horizontal
+    cmr_u16 search_range;
+    cmr_u8 enable;
+    cmr_u16 reserved[6];
+};
+
+struct bokeh_dualcam_params {
+    struct bokeh_depth_params depth_params;
+    struct bokeh_init_params init_params;
+    struct bokeh_dof_params dof_params;
+    cmr_u32 bypass;
+};
+
+struct bokeh_dualcam_tuning_param {
+    struct bokeh_dualcam_params bokeh_params;
+    cmr_u16 version;
+    cmr_u16 reserve[31];
+};
+
 struct bokeh_micro_depth_tune_param {
 	cmr_u32 tuning_exist;
 	cmr_u32 enable;
