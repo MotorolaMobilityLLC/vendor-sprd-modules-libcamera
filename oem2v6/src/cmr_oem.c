@@ -937,7 +937,7 @@ void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata) {
 
     switch (evt) {
     case CMR_GRAB_TX_DONE:
-        if (frame->is_4in1_frame) {
+        if (frame->is_4in1_frame && frame->fmt != IMG_DATA_TYPE_RAW) {
             camera_4in1_handle(evt, data, privdata);
         }
 #if defined OEM_HANDLE_HDR
@@ -3291,6 +3291,7 @@ cmr_int camera_snapshot_init(cmr_handle oem_handle) {
     init_param.ops.channel_buff_cfg = camera_channel_buff_cfg;
     init_param.ops.channel_cap_cfg = camera_channel_cap_cfg;
     init_param.ops.get_sensor_info = camera_get_sensor_info;
+    init_param.ops.sensor_ioctl = camera_sensor_ioctl;
     init_param.ops.get_tuning_info = camera_get_tuning_info;
     init_param.ops.get_jpeg_param_info = camera_get_jpeg_param_info;
     init_param.ops.stop_codec = camera_stop_codec;
@@ -11243,7 +11244,7 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     cmr_u32 glb_gain = 0;
     struct isp_adgain_exp_info adgain_exp_info;
     struct awbc_cfg awbc;
-    char datetime[15];
+    char datetime[18];
 
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
@@ -11253,12 +11254,17 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
         return -1;
     }
 
+    // get millisecond of the time
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
     time_t timep;
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
-    sprintf(datetime, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    sprintf(datetime, "%04d%02d%02d%02d%02d%02d%03d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec,
+            tv.tv_usec / 1000);
 
     camera_get_tuning_info(oem_handle, &adgain_exp_info);
     gain = adgain_exp_info.adgain;

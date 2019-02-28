@@ -4194,13 +4194,19 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     is_need_scaling = prev_is_need_scaling(handle, camera_id);
     /*caculate memory size for capture*/
 
-    ret = camera_get_postproc_capture_size(camera_id, &total_mem_size);
+    CMR_LOGD("mode_4in1 = %d, capture format: %d",
+             prev_cxt->prev_param.mode_4in1, prev_cxt->cap_org_fmt);
+    if (prev_cxt->prev_param.mode_4in1 > 0 &&
+        IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
+        ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size);
+    } else {
+        ret = camera_get_postproc_capture_size(camera_id, &total_mem_size);
+    }
     if (ret) {
         CMR_LOGE("get mem size err");
         return CMR_CAMERA_FAIL;
     }
     sum = 1;
-
     /*alloc capture buffer*/
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
         CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,
@@ -4253,7 +4259,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 &prev_cxt->prev_param.thumb_size, &prev_cxt->cap_mem[i],
                 ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) ||
                  prev_cxt->prev_param.is_cfg_rot_cap),
-                is_need_scaling, 1);
+                is_need_scaling, 1, prev_cxt->prev_param.mode_4in1);
         } else {
             ret = camera_arrange_capture_buf(
                 &cap_2_mems, &prev_cxt->cap_sn_size,
@@ -4262,7 +4268,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 &prev_cxt->prev_param.thumb_size, &prev_cxt->cap_mem[i],
                 (prev_cxt->prev_param.is_cfg_rot_cap &&
                  (IMG_ANGLE_0 != prev_cxt->prev_param.encode_angle)),
-                is_need_scaling, 1);
+                is_need_scaling, 1, prev_cxt->prev_param.mode_4in1);
         }
     }
 
@@ -4529,6 +4535,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
     cmr_u32 cap_rot = 0;
     cmr_uint reserved_count = 1;
     cmr_u32 aligned_type = 0;
+    cmr_u32 small_w, small_h;
     struct prev_context *prev_cxt = NULL;
     struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
     struct memory_param *mem_ops = NULL;
@@ -4550,7 +4557,11 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
         height = prev_cxt->actual_pic_size.height;
     }
 
-    CMR_LOGD("width %d height %d", width, height);
+    small_w = width >> 1;
+    small_h = height >> 1;
+
+    CMR_LOGV("width %d height %d, small_w = %d, small_h =%d", width, height,
+             small_w, small_h);
     cap_rot = 0; // prev_cxt->prev_param.cap_rot;
     aligned_type = CAMERA_MEM_NO_ALIGNED;
 
@@ -4575,6 +4586,9 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
         prev_cxt->cap_org_fmt = IMG_DATA_TYPE_YUV420;
     } else if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height * 2);
+        if (prev_cxt->prev_param.mode_4in1)
+            prev_cxt->cap_zsl_mem_size += (small_w * small_h * 2);
+        CMR_LOGI("cap_zsl_mem_size = %d", prev_cxt->cap_zsl_mem_size);
     } else {
         CMR_LOGE("unsupprot fmt %ld", prev_cxt->cap_org_fmt);
         return CMR_CAMERA_INVALID_PARAM;

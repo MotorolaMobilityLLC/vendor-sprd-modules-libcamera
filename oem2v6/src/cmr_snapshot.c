@@ -1228,6 +1228,10 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     struct frm_info *frm_ptr = (struct frm_info *)data;
     struct snp_channel_param *chn_param_ptr = &snp_cxt->chn_param;
     struct raw_proc_param isp_in_param;
+    struct common_sn_cmd_param sn_param;
+    struct img_frm cap_raw_small;
+    struct img_frm cap_raw_big;
+    cmr_u32 small_w, small_h;
     cmr_u32 index = frm_ptr->frame_id - frm_ptr->base;
 
     if (snp_cxt->ops.raw_proc == NULL) {
@@ -1251,6 +1255,32 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     isp_in_param.dst_slice_height = isp_in_param.src_avail_height;
     isp_in_param.dst2_slice_height = isp_in_param.src_avail_height;
     isp_in_param.slice_num = 1;
+
+    CMR_LOGI("is_4in1_frame: %d", frm_ptr->is_4in1_frame);
+    if (frm_ptr->is_4in1_frame) {
+        isp_in_param.src_frame.buf_size =
+            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4;
+
+        small_w = mem_ptr->cap_raw.size.width >> 1;
+        small_h = mem_ptr->cap_raw.size.height >> 1;
+        cap_raw_big = mem_ptr->cap_raw;
+        cap_raw_big.buf_size =
+            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4;
+
+        cap_raw_small.addr_phy.addr_y =
+            mem_ptr->cap_raw.addr_phy.addr_y +
+                (cap_raw_big.buf_size + PAGE_SIZE - 1) &
+            ~(PAGE_SIZE - 1);
+        cap_raw_small.addr_vir.addr_y =
+            mem_ptr->cap_raw.addr_vir.addr_y +
+                (cap_raw_big.buf_size + PAGE_SIZE - 1) &
+            ~(PAGE_SIZE - 1);
+        cap_raw_small.fd = mem_ptr->cap_raw.fd;
+        cap_raw_small.buf_size = small_w * small_h * RAWRGB_BIT_WIDTH / 8;
+        cap_raw_small.size.width = small_w;
+        cap_raw_small.size.height = small_h;
+        cap_raw_small.fmt = ISP_DATA_CSI2_RAW10;
+    }
 
     if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) ||
         (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
@@ -1280,6 +1310,30 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         mem_ptr->cap_raw.size.height,
         mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
         &mem_ptr->cap_raw.addr_vir);
+
+    if (frm_ptr->is_4in1_frame) {
+        CMR_LOGD("dump 4in1 mipi raw");
+        snp_cxt->ops.dump_image_with_3a_info(
+            snp_cxt->oem_handle, IMG_DATA_TYPE_RAW, cap_raw_small.size.width,
+            cap_raw_small.size.height,
+            cap_raw_small.size.width * cap_raw_small.size.height * 5 / 4,
+            &cap_raw_small.addr_vir);
+
+        cmr_bzero(&sn_param, sizeof(struct common_sn_cmd_param));
+        sn_param.postproc_info.src = cap_raw_big;
+        sn_param.postproc_info.dst = cap_raw_big;
+        ret = snp_cxt->ops.sensor_ioctl(
+            snp_cxt->oem_handle, COM_SN_GET_4IN1_FORMAT_CONVERT, &sn_param);
+        if (ret) {
+            CMR_LOGE("failed to sensor ioctl");
+        }
+        CMR_LOGD("dump 4in1 mipi raw after remosaic");
+        snp_cxt->ops.dump_image_with_3a_info(
+            snp_cxt->oem_handle, IMG_DATA_TYPE_RAW, mem_ptr->cap_raw.size.width,
+            mem_ptr->cap_raw.size.height,
+            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
+            &mem_ptr->cap_raw.addr_vir);
+    }
 
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
     if (ret) {

@@ -117,6 +117,13 @@ static int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
                            uint32_t *io_mem_res, uint32_t *io_mem_end,
                            uint32_t *io_channel_size);
 
+static int arrange_4in1_raw_buf(
+    struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
+    struct img_rect *sn_trim, struct img_size *image_size, uint32_t orig_fmt,
+    struct img_size *cap_size, struct img_size *thum_size,
+    struct cmr_cap_mem *capture_mem, uint32_t need_rot, uint32_t *io_mem_res,
+    uint32_t *io_mem_end, uint32_t *io_channel_size);
+
 static int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm,
                             struct img_size *sn_size, struct img_rect *sn_trim,
                             struct img_size *image_size, uint32_t orig_fmt,
@@ -235,12 +242,57 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
     return 0;
 }
 
+int camera_get_4in1_postproc_capture_size(cmr_u32 camera_id,
+                                          cmr_u32 *pp_cap_size) {
+    cmr_u32 max_w, max_h, thumb_w, thumb_h, small_w, small_h;
+    cmr_u32 redundance_size;
+    char value[PROPERTY_VALUE_MAX];
+
+    if (pp_cap_size == NULL) {
+        CMR_LOGE("pp_cap_size=%p", pp_cap_size);
+        return -1;
+    }
+
+    max_w = largest_picture_width[camera_id];
+    max_h = largest_picture_height[camera_id];
+    small_w = max_w >> 1;
+    small_h = max_h >> 1;
+
+    // we assume that thumb size is not bigger than 512*512
+    thumb_w = 512;
+    thumb_h = 512;
+
+    // alloc more redundance_size(1M) memory for alignment use
+    redundance_size = 1 * 1024 * 1024;
+
+    *pp_cap_size = 3 * max_w * max_h + 3 * thumb_w * thumb_h + redundance_size;
+    *pp_cap_size += 3 * small_w * small_h;
+
+    // for raw capture
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        *pp_cap_size += 3 * max_w * max_h / 2;
+        *pp_cap_size += 3 * small_w * small_h / 2;
+    }
+
+    // the above is default configuration, for some special case, you can change
+    // it like this:
+    // if (max_w * max_h <= xyyz && max_w * max_h > abcd) {
+    //    *pp_cap_size = you_wanted_size;
+    //}
+
+    CMR_LOGD("postporc_capture_size=0x%x, small_w =%d, small_h =%d",
+             *pp_cap_size, small_w, small_h);
+
+    return 0;
+}
+
 int camera_arrange_capture_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     struct img_rect *sn_trim, struct img_size *image_size, uint32_t orig_fmt,
     struct img_size *cap_size, struct img_size *thum_size,
     struct cmr_cap_mem *capture_mem, uint32_t need_rot, uint32_t need_scale,
-    uint32_t image_cnt) {
+    uint32_t image_cnt, cmr_u32 is_4in1_mode) {
     if (NULL == cap_2_frm || NULL == image_size || NULL == thum_size ||
         NULL == capture_mem || NULL == sn_size || NULL == sn_trim) {
         CMR_LOGE("Parameter error 0x%p 0x%p 0x%p 0x%p 0x%p 0x%p", cap_2_frm,
@@ -257,10 +309,11 @@ int camera_arrange_capture_buf(
     channel_size = (uint32_t)(image_size->width * image_size->height);
     mem_res = cap_2_frm->mem_frm.buf_size;
 
-    CMR_LOGD("mem frame, 0x%lx 0x%lx, fd 0x%x, buf_size = %d bytes",
+    CMR_LOGD("mem frame, 0x%lx 0x%lx, fd 0x%x, buf_size = %d bytes, "
+             "is_4in1_mode = %d",
              cap_2_frm->mem_frm.addr_phy.addr_y,
              cap_2_frm->mem_frm.addr_vir.addr_y, cap_2_frm->mem_frm.fd,
-             cap_2_frm->mem_frm.buf_size);
+             cap_2_frm->mem_frm.buf_size, is_4in1_mode);
 
     CMR_LOGD("channel_size, 0x%x, image_cnt %d, rot %d, orig_fmt %d",
              channel_size, image_cnt, need_rot, orig_fmt);
@@ -277,7 +330,15 @@ int camera_arrange_capture_buf(
         get_jpeg_size(image_size->width, image_size->height, thum_size->width,
                       thum_size->height);
 
-    if (IMG_DATA_TYPE_RAW == orig_fmt) {
+    if (IMG_DATA_TYPE_RAW == orig_fmt && is_4in1_mode > 0) {
+        ret = arrange_4in1_raw_buf(cap_2_frm, sn_size, sn_trim, image_size,
+                                   orig_fmt, cap_size, thum_size, cap_mem,
+                                   need_rot, &mem_res, &mem_end, &channel_size);
+        if (ret) {
+            CMR_LOGE("raw fmt arrange failed!");
+            return -1;
+        }
+    } else if (IMG_DATA_TYPE_RAW == orig_fmt) {
         ret = arrange_raw_buf(cap_2_frm, sn_size, sn_trim, image_size, orig_fmt,
                               cap_size, thum_size, cap_mem, need_rot, &mem_res,
                               &mem_end, &channel_size);
@@ -494,10 +555,117 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw.size.height = sn_size->height;
     cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
 
-    cap_mem->cap_raw2.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y +
-                                        max_size + max_size;
-    cap_mem->cap_raw2.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y +
-                                        max_size + max_size ;
+    cap_mem->cap_raw2.addr_phy.addr_y =
+        cap_2_frm->mem_frm.addr_phy.addr_y + max_size + max_size;
+    cap_mem->cap_raw2.addr_vir.addr_y =
+        cap_2_frm->mem_frm.addr_vir.addr_y + max_size + max_size;
+    cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
+    cap_mem->cap_raw2.buf_size = raw2_size;
+    cap_mem->cap_raw2.size.width = sn_size->width;
+    cap_mem->cap_raw2.size.height = sn_size->height;
+    cap_mem->cap_raw2.fmt = IMG_DATA_TYPE_RAW2;
+
+    cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
+    cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
+    cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
+
+    tmp1 = max_size + max_size + max_size;
+    tmp2 = max_size + max_size + cap_mem->target_jpeg.buf_size;
+    tmp3 = tmp1 > tmp2 ? tmp1 : tmp2;
+    tmp3 = (tmp3 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+    CMR_NO_MEM(tmp3, mem_res);
+
+    *io_mem_res = mem_res - tmp3;
+    *io_mem_end = mem_end + tmp3;
+
+    return 0;
+}
+
+int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
+                         struct img_size *sn_size, struct img_rect *sn_trim,
+                         struct img_size *image_size, uint32_t orig_fmt,
+                         struct img_size *cap_size, struct img_size *thum_size,
+                         struct cmr_cap_mem *capture_mem, uint32_t need_rot,
+                         uint32_t *io_mem_res, uint32_t *io_mem_end,
+                         uint32_t *io_channel_size) {
+    UNUSED(thum_size);
+    if (IMG_DATA_TYPE_RAW != orig_fmt || NULL == io_mem_res ||
+        NULL == io_mem_end || NULL == io_channel_size) {
+        return -1;
+    }
+
+    cmr_u32 small_w, small_h;
+    uint32_t mem_res = 0, mem_end = 0;
+    uint32_t offset = 0;
+    uint32_t raw_size = 0, raw2_size = 0, raw_size_4K_align;
+    uint32_t tmp1, tmp2, tmp3, max_size;
+    struct cmr_cap_mem *cap_mem = capture_mem;
+
+    small_w = sn_size->width >> 1;
+    small_h = sn_size->height >> 1;
+
+    mem_res = *io_mem_res;
+    mem_end = *io_mem_end;
+
+    raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    raw_size_4K_align = (raw_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+    tmp1 = image_size->width * image_size->height * 3 / 2 +
+           small_w * small_h * 3 / 2;
+    tmp2 =
+        cap_size->width * cap_size->height * 3 / 2 + small_w * small_h * 3 / 2;
+    tmp3 = sn_size->width * sn_size->height * 3 / 2 + small_w * small_h * 3 / 2;
+    max_size = tmp1 > tmp2 ? tmp1 : tmp2;
+    max_size = max_size > tmp3 ? max_size : tmp3;
+    max_size = (max_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+    cap_mem->target_yuv.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y;
+    cap_mem->target_yuv.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y;
+    cap_mem->target_yuv.addr_phy.addr_u =
+        cap_mem->target_yuv.addr_phy.addr_y +
+        image_size->width * image_size->height;
+    cap_mem->target_yuv.addr_vir.addr_u =
+        cap_mem->target_yuv.addr_vir.addr_y +
+        image_size->width * image_size->height;
+    cap_mem->target_yuv.fd = cap_2_frm->mem_frm.fd;
+    cap_mem->target_yuv.buf_size =
+        image_size->width * image_size->height * 3 / 2;
+    cap_mem->target_yuv.size.width = image_size->width;
+    cap_mem->target_yuv.size.height = image_size->height;
+    cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
+
+    cap_mem->cap_yuv.addr_phy.addr_y =
+        cap_2_frm->mem_frm.addr_phy.addr_y + max_size;
+    cap_mem->cap_yuv.addr_vir.addr_y =
+        cap_2_frm->mem_frm.addr_vir.addr_y + max_size;
+    cap_mem->cap_yuv.addr_phy.addr_u =
+        cap_mem->cap_yuv.addr_phy.addr_y + cap_size->width * cap_size->height;
+    cap_mem->cap_yuv.addr_vir.addr_u =
+        cap_mem->cap_yuv.addr_vir.addr_y + cap_size->width * cap_size->height;
+    cap_mem->cap_yuv.fd = cap_2_frm->mem_frm.fd;
+    cap_mem->cap_yuv.buf_size = cap_size->width * cap_size->height * 3 / 2;
+    cap_mem->cap_yuv.size.width = cap_size->width;
+    cap_mem->cap_yuv.size.height = cap_size->height;
+    cap_mem->cap_yuv.fmt = IMG_DATA_TYPE_YUV420;
+
+    cap_mem->cap_raw.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
+    cap_mem->cap_raw.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
+    cap_mem->cap_raw.fd = cap_mem->cap_yuv.fd;
+    cap_mem->cap_raw.buf_size =
+        raw_size_4K_align + small_w * small_h * RAWRGB_BIT_WIDTH / 8;
+    cap_mem->cap_raw.size.width = sn_size->width;
+    cap_mem->cap_raw.size.height = sn_size->height;
+    cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
+
+    CMR_LOGD("cap_raw.buf_size= 0x%x, small_w =%d, small_h =%d",
+             cap_mem->cap_raw.buf_size, small_w, small_h);
+
+    cap_mem->cap_raw2.addr_phy.addr_y =
+        cap_2_frm->mem_frm.addr_phy.addr_y + max_size + max_size;
+    cap_mem->cap_raw2.addr_vir.addr_y =
+        cap_2_frm->mem_frm.addr_vir.addr_y + max_size + max_size;
     cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
     cap_mem->cap_raw2.buf_size = raw2_size;
     cap_mem->cap_raw2.size.width = sn_size->width;
