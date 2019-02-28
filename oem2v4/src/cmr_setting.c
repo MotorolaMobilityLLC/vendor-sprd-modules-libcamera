@@ -2832,18 +2832,18 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         /*disable*/
         if (setting_is_need_flash(cpt, parm) ||
             FLASH_NEED_QUIT == cpt->flash_need_quit) {
-                if(FLASH_CLOSE != flash_hw_status) {
+            if ((FLASH_CLOSE != flash_hw_status) &&
+                ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode)) {
                 /*open flash*/
-                if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
-                    setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
-                    CMR_LOGD("flash close");
-                    CMR_LOGD("parm->ctrl_flash.will_capture=%ld",
-                             parm->ctrl_flash.will_capture);
-                    if (!parm->ctrl_flash.will_capture) {
-                        hal_param->flash_param.has_preflashed = 0;
-                    }
-                    hal_param->flash_param.flash_opened = 0;
+                setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
+                CMR_LOGD("flash close");
+                CMR_LOGD("parm->ctrl_flash.will_capture=%ld",
+                         parm->ctrl_flash.will_capture);
+                if (!parm->ctrl_flash.will_capture) {
+                    hal_param->flash_param.has_preflashed = 0;
                 }
+                hal_param->flash_param.flash_opened = 0;
+
                 if (IMG_DATA_TYPE_RAW == image_format) {
                     is_to_isp = 1;
                 }
