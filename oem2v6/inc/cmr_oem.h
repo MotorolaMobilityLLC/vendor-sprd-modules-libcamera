@@ -36,6 +36,9 @@ extern "C" {
 #include "cmr_focus.h"
 #include "cmr_preview.h"
 #include "cmr_ipm.h"
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+#include "cmr_mm_dvfs.h"
+#endif
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
@@ -211,6 +214,12 @@ struct setting_context {
     cmr_u32 is_auto_iso;
     cmr_uint iso_value;
 };
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+struct mm_dvfs_context {
+    cmr_handle mm_dvfs_handle;
+    cmr_u32 inited;
+};
+#endif
 
 struct camera_settings {
     cmr_u32 preview_width;
@@ -272,7 +281,9 @@ struct camera_context {
     struct focus_context focus_cxt;
     struct ipm_context ipm_cxt;
     struct setting_context setting_cxt;
-
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    struct mm_dvfs_context mm_dvfs_cxt;
+#endif
     /*for the workflow management*/
     cmr_u32 camera_id;
     cmr_u32 err_code;
@@ -559,6 +570,11 @@ cmr_int camera_local_start_rotate(cmr_handle oem_handle,
 int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
                             uint32_t width, uint32_t height, uint32_t dump_size,
                             struct img_addr *addr);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+cmr_int camera_local_set_mm_dvfs_policy(cmr_handle oem_handle,
+                                        enum DVFS_MM_MODULE module,
+                                        enum CamProcessingState camera_state);
+#endif
 
 #ifdef __cplusplus
 }

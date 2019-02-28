@@ -163,6 +163,11 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(OEM_DIR)/inc \
     $(LOCAL_PATH)/oemcommon/inc
 
+ifeq ($(strip $(CONFIG_CAMERA_MM_DVFS_SUPPORT)),true)
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/oemcommon/mm_dvfs
+endif
+
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/inc \
     $(LOCAL_PATH)/arithmetic/facebeauty/inc \

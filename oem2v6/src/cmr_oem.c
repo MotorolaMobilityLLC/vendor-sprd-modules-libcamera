@@ -30,7 +30,9 @@
 #endif
 #include "isp_video.h"
 #include "pthread.h"
-
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+#include "cmr_mm_dvfs.h"
+#endif
 #define FILE_NAME_LEN 200
 #define PREVIEW_MSG_QUEUE_SIZE 100
 #define SNAPSHOT_MSG_QUEUE_SIZE 50
@@ -373,6 +375,10 @@ static cmr_int camera_close_4in1(cmr_handle oem_handle);
 static cmr_int camera_channel_reproc(cmr_handle oem_handle,
                                      struct buffer_cfg *buf_cfg);
 static cmr_int camera_4in1_handle(cmr_int evt, void *data, void *privdata);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+static cmr_int camera_mm_dvfs_init(cmr_handle oem_handle);
+static cmr_int camera_mm_dvfs_deinit(cmr_handle oem_handle);
+#endif
 
 /**********************************************************************************************/
 
@@ -2362,6 +2368,73 @@ exit:
     ATRACE_END();
     return ret;
 }
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+cmr_int camera_mm_dvfs_init(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct mm_dvfs_context *mm_dvfs_cxt = NULL;
+    cmr_handle mm_dvfs_handle = NULL;
+    CHECK_HANDLE_VALID(oem_handle);
+
+    mm_dvfs_cxt = &cxt->mm_dvfs_cxt;
+
+    if (0 == mm_dvfs_cxt->inited) {
+        ret = cmr_mm_dvfs_init(&mm_dvfs_handle);
+        if (ret) {
+            CMR_LOGE("failed to init dvfs %ld", ret);
+            ret = -CMR_CAMERA_NO_SUPPORT;
+            goto exit;
+        }
+        mm_dvfs_cxt->inited = 1;
+        mm_dvfs_cxt->mm_dvfs_handle = mm_dvfs_handle;
+    }
+exit:
+    CMR_LOGD("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_mm_dvfs_deinit(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct mm_dvfs_context *mm_dvfs_cxt = NULL;
+
+    CHECK_HANDLE_VALID(oem_handle);
+    mm_dvfs_cxt = &cxt->mm_dvfs_cxt;
+    if (0 == mm_dvfs_cxt->inited) {
+        CMR_LOGD("mm_dvfs_ has been de-intialized");
+        goto exit;
+    }
+
+    ret = cmr_mm_dvfs_deinit(mm_dvfs_cxt->mm_dvfs_handle);
+    if (ret) {
+        CMR_LOGE("failed to de-init mm_dvfs %ld", ret);
+        goto exit;
+    }
+    cmr_bzero(mm_dvfs_cxt, sizeof(*mm_dvfs_cxt));
+exit:
+    CMR_LOGD("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_local_set_mm_dvfs_policy(cmr_handle oem_handle,
+                                        enum DVFS_MM_MODULE module,
+                                        enum CamProcessingState camera_state) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CHECK_HANDLE_VALID(oem_handle);
+    ret = cmr_set_mm_dvfs_policy(oem_handle, module, camera_state);
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_set_mm_dvfs_param(cmr_handle oem_handle,
+                                 struct prev_sn_param_dvfs_type dvfs_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CHECK_HANDLE_VALID(oem_handle);
+    ret = cmr_set_mm_dvfs_param(oem_handle, dvfs_param);
+    CMR_LOGD("done %ld", ret);
+    return ret;
+}
+#endif
 
 cmr_int camera_grab_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -4178,6 +4251,12 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         ret = camera_init_thread(oem_handle);
     }
 
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    ret = camera_mm_dvfs_init(oem_handle);
+    if (ret)
+        CMR_LOGE("failed to init dvfs %ld", ret);
+#endif
+
 exit:
     if (ret) {
         camera_res_deinit_internal(oem_handle);
@@ -4219,6 +4298,10 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     camera_ipm_deinit(oem_handle);
 
     camera_deinit_thread(oem_handle);
+
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    camera_mm_dvfs_deinit(oem_handle);
+#endif
 
 exit:
 
@@ -8924,7 +9007,11 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct preview_context *prev_cxt = &cxt->prev_cxt;
     struct setting_cmd_parameter setting_param;
-
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    struct prev_sn_param_dvfs_type camParam;
+    struct sensor_exp_info sensor_info;
+    struct sensor_mode_fps_tag fps_info;
+#endif
     ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
     if (ret) {
         CMR_LOGE("failed to set prev param %ld", ret);
@@ -8935,6 +9022,26 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_SET_ENVIRONMENT, &setting_param);
+// for mm dvfs
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    if (cxt->camera_id == 1 || cxt->camera_id == 0) {
+        camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
+        camera_get_sensor_fps_info(oem_handle, cxt->camera_id,
+                                   prev_cxt->preview_sn_mode, &fps_info);
+        camParam.lane_num = sensor_info.sn_interface.bus_width;
+        camParam.bps_per_lane =
+            sensor_info.mode_info[prev_cxt->preview_sn_mode].bps_per_lane;
+        camParam.sn_trim_w =
+            sensor_info.mode_info[prev_cxt->preview_sn_mode].trim_width;
+        camParam.sn_trim_h =
+            sensor_info.mode_info[prev_cxt->preview_sn_mode].trim_height;
+        camParam.slowmotion = fps_info.is_high_fps;
+        camera_set_mm_dvfs_param(oem_handle, camParam);
+        camera_local_set_mm_dvfs_policy(oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
+        camera_local_set_mm_dvfs_policy(oem_handle, DVFS_DCAM_IF,
+                                  IS_PREVIEW_BEGIN);
+   }
+#endif
 
     ret = cmr_preview_start(prev_cxt->preview_handle, cxt->camera_id);
     if (ret) {

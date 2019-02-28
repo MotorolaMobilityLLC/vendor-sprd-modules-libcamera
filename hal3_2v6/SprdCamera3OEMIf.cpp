@@ -723,6 +723,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+        mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
+                                                IS_CAP_BEGIN);
+#endif
 
         if (mSprdReprocessing) {
             ret = reprocessInputBuffer();
@@ -4525,7 +4529,12 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     } else {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
     }
-
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    if (mSprdAppmodeId != CAMERA_MODE_CONTINUE) {
+        mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
+                                                IS_CAP_END);
+    }
+#endif
 exit:
     HAL_LOGD("X");
 }

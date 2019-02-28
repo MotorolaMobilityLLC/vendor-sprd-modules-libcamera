@@ -207,6 +207,12 @@ cmr_int image_sw_algorithm_processing(
 int dump_image_with_isp_info(cmr_handle camera_handle, uint32_t img_fmt,
                              uint32_t width, uint32_t height,
                              uint32_t dump_size, struct img_addr *addr);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
+                                  enum DVFS_MM_MODULE module,
+                                  enum CamProcessingState camera_state);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

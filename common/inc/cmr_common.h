@@ -1584,6 +1584,40 @@ struct camera_cap_frm_info {
         struct frm_info          frame_info;
 };*/
 
+typedef struct prev_sn_param_dvfs_type {
+    cmr_u32 bps_per_lane;
+    cmr_u32 lane_num;
+    cmr_u32 sn_trim_w;
+    cmr_u32 sn_trim_h;
+    cmr_u32 sn_max_w;
+    cmr_u32 sn_max_h;
+    int slowmotion;
+    int cam_mode; // reserved
+
+} dvfs_cam_param_t;
+
+typedef enum DVFS_MM_MODULE {
+    DVFS_CPP = 1,
+    DVFS_FD,
+    DVFS_JPG,
+    DVFS_ISP,
+    DVFS_DCAM_IF,
+    DVFS_DCAM_AXI,
+    DVFS_MTX,
+    DVFS_DEBUG,
+} dvfs_mm_module_t;
+
+typedef enum CamProcessingState {
+    IS_PREVIEW_BEGIN = 1,
+    IS_PREVIEW_END,
+    IS_CAP_BEGIN,
+    IS_CAP_END,
+    IS_VIDEO_PREVIEW,
+    IS_VIDEO_BEGIN,
+    IS_VIDEO_END,
+    IS_CAM_EXIT,
+} cam_processing_state_t;
+
 struct camera_position_type {
     long timestamp;
     double latitude;
@@ -1951,6 +1985,13 @@ typedef struct oem_ops {
     cmr_uint (*camera_get_isp_perFrame_result)(
         cmr_handle camera_handle, struct isp_pfc_per_frame_cxt *perFrame_res);
 #endif
+
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    cmr_int (*camera_set_mm_dvfs_policy)(cmr_handle oem_handle,
+                                         enum DVFS_MM_MODULE module,
+                                         enum CamProcessingState camera_state);
+#endif
+
 } oem_ops_t;
 
 typedef struct oem_module {

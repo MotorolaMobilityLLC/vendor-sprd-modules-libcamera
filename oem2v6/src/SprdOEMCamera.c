@@ -1243,6 +1243,21 @@ int dump_image_with_isp_info(cmr_handle camera_handle, uint32_t img_fmt,
                                    dump_size, addr);
 }
 
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
+                                  enum DVFS_MM_MODULE module,
+                                  enum CamProcessingState camera_state) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+    }
+    ret = camera_local_set_mm_dvfs_policy(camera_handle, module, camera_state);
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+#endif
+
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1276,6 +1291,9 @@ static oem_ops_t oem_module_ops = {
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,
+#endif
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    camera_set_mm_dvfs_policy,
 #endif
 };
 
