@@ -8454,7 +8454,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         // single capture wait the caf focused frame
         if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
-            zsl_frame.monoboottime < obj->mLastCafDoneTime) {
+            zsl_frame.monoboottime < obj->mLastCafDoneTime && mFlashCaptureFlag == 0) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
