@@ -2126,9 +2126,9 @@ static void lsc_inverse_ae_stat(struct lsc_ctrl_context *cxt, cmr_u16 *inverse_t
 
 static cmr_s32 linear_lut_bv(cmr_s32 input, cmr_s32 *lut_x_val, cmr_s32 *lut_y_val, cmr_s32 num_ctrl_point)
 {
-	cmr_s32 output;
-	cmr_s32 x0, x1;
-	cmr_s32 y0, y1;
+	cmr_s32 output = 0;
+	cmr_s32 x0 = 0, x1 = 0;
+	cmr_s32 y0 = 0, y1 = 0;
 	cmr_s32 input_clip = (input >= 1600) ? 1599 : ((input < 0) ? 0 : input);
 	for (cmr_s32 i = 0 ; i < num_ctrl_point-1; i++){
 		if (lut_x_val[i] <= input_clip && input_clip < lut_x_val[i+1]){
@@ -2150,9 +2150,9 @@ static cmr_s32 linear_lut_bv(cmr_s32 input, cmr_s32 *lut_x_val, cmr_s32 *lut_y_v
 
 static cmr_s32 linear_lut_bv_gain(cmr_s32 input, cmr_s32 *lut_x_val, cmr_s32 *lut_y_val, cmr_s32 num_ctrl_point)
 {
-	cmr_s32 output;
-	cmr_s32 x0, x1;
-	cmr_s32 y0, y1;
+	cmr_s32 output = 0;
+	cmr_s32 x0 = 0, x1 = 0;
+	cmr_s32 y0 = 0, y1 = 0;
 	for (cmr_s32 i = 0 ; i < num_ctrl_point-1; i++){
 		if (lut_x_val[i] >= input && input > lut_x_val[i+1]){
 			x0 = lut_x_val[i];
@@ -2171,7 +2171,7 @@ static cmr_s32 linear_lut_bv_gain(cmr_s32 input, cmr_s32 *lut_x_val, cmr_s32 *lu
 static void post_shading_gain(cmr_u16 *dst_gain, cmr_u16 *org_gain, cmr_u32 gain_width, cmr_u32 gain_height, cmr_u32 gain_pattern, cmr_u32 frame_count,
 							cmr_s32 bv, cmr_s32 bv_gain, cmr_u32 flash_mode, cmr_u32 pre_flash_mode, cmr_u32 LSC_SPD_VERSION, struct post_shading_gain_param *param)
 {
-	cmr_s32 off_gb, off_gr, off_b, off_r;
+	cmr_s32 off_gb = 0, off_gr = 0, off_b = 0, off_r = 0;
 	switch (gain_pattern){
 		case 0:    //LSC_GAIN_PATTERN_GRBG:
 			off_gr = 0;
@@ -2290,7 +2290,7 @@ cmr_u32 get_alsc_alg_in_flag(struct lsc_ctrl_context *cxt, cmr_u32 *IIR_weight)
 
 	if(cxt->frame_count == 1){
 		cxt->alg_quick_in = 1;
-		cxt->quik_in_start_frame == -99;
+		cxt->quik_in_start_frame = -99;
 		ISP_LOGV("[ALSC] frame_count=1, set alg_quick_in=1 and wait for init_skip_frame, lsc_id=%d", cxt->lsc_id);
 	}
 
@@ -2618,7 +2618,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	// cmd set table index
 	if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
 		ISP_LOGI("[ALSC] cmd_alsc_table_index=%d", cxt->cmd_alsc_table_index);
-		if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
+		if(cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0){
 			if(cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
 				memcpy(cxt->lsc_buffer, cxt->std_init_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
 			}else{
