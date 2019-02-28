@@ -468,11 +468,15 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 	struct ae_exposure_param *write_param = &tmp_param;
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
 
-	if ((cxt->zsl_flag == 0) && (cxt->binning_factor_before > cxt->binning_factor_after)) {
-		tmp_param.exp_time = (cmr_u32) (1.0 * tmp_param.exp_time * cxt->binning_factor_before / cxt->binning_factor_after + 0.5);
-		tmp_param.exp_line = (cmr_u32) (1.0 * tmp_param.exp_line * cxt->binning_factor_before / cxt->binning_factor_after + 0.5);
+	if ((cxt->zsl_flag == 0) && (cxt->binning_factor_cap != cxt->binning_factor_prev)) {
+		if(!cxt->binning_factor_prev)
+			cxt->binning_factor_prev = 128;
+
+		tmp_param.exp_time = (cmr_u32) (1.0 * tmp_param.exp_time * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
+		tmp_param.exp_line = (cmr_u32) (1.0 * tmp_param.exp_line * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
 	}
-	ISP_LOGV("exp_line %d, binning_factor_before %d, binning_factor_after %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_before, cxt->binning_factor_after, cxt->zsl_flag);
+	ISP_LOGV("exp_line %d, binning_factor %d / %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_cap, cxt->binning_factor_prev,cxt->zsl_flag);
+
 	if (0 != write_param->exp_line) {
 		struct ae_exposure exp;
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
@@ -3889,8 +3893,13 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->capture_skip_num = work_info->capture_skip_num;
 	ISP_LOGV("capture_skip_num %d", cxt->capture_skip_num);
 
-	cxt->zsl_flag = work_info->zsl_flag;
-	ISP_LOGV("zsl_flag %d", cxt->zsl_flag);
+	if(work_info->is_snapshot && ((cxt->prv_status.frame_size.w != work_info->resolution_info.frame_size.w) ||
+		(cxt->prv_status.frame_size.h !=work_info->resolution_info.frame_size.h)))
+		cxt->zsl_flag = 0;
+	else
+		cxt->zsl_flag = 1;
+	ISP_LOGD("zsl_flag %d  prev_size (%d x %d)", cxt->zsl_flag,cxt->prv_status.frame_size.w,cxt->prv_status.frame_size.h);
+
 	cxt->expchanged = 0;
 
 	if((work_info->blk_num.w != work_info->blk_num.h) || (work_info->blk_num.w < 32) || (work_info->blk_num.w % 32)){
@@ -3928,17 +3937,22 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
 	}
 
-	if (0 != cxt->snr_info.binning_factor)
-		cxt->binning_factor_before = cxt->snr_info.binning_factor;
-	else
-		cxt->binning_factor_before = 1;
 	cxt->snr_info = work_info->resolution_info;
 	cxt->monitor_cfg.blk_num.w = work_info->blk_num.w;
 	cxt->monitor_cfg.blk_num.h = work_info->blk_num.h;
-	if (0 != work_info->resolution_info.binning_factor)
-		cxt->binning_factor_after = work_info->resolution_info.binning_factor;
+
+	if (work_info->is_snapshot)
+		cxt->binning_factor_cap = 128;
 	else
-		cxt->binning_factor_after = 1;
+		cxt->binning_factor_prev = 128;
+
+	if (0 != work_info->binning_factor)
+	{
+		if (work_info->is_snapshot)
+			cxt->binning_factor_cap = work_info->binning_factor;
+		else
+			cxt->binning_factor_prev = work_info->binning_factor;
+	}
 	cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
 	cxt->cur_status.line_time = work_info->resolution_info.line_time;
 	cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;

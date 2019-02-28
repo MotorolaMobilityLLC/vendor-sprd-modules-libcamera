@@ -333,8 +333,8 @@ extern "C" {
 		/*
 		 * for binning facter = 2
 		 */
-		cmr_s32 binning_factor_before;
-		cmr_s32 binning_factor_after;
+		cmr_u16 binning_factor_cap;
+		cmr_u16 binning_factor_prev;
 		struct ae_exposure_compensation exposure_compensation;
 		cmr_u32 slw_prev_skip_num;
 
