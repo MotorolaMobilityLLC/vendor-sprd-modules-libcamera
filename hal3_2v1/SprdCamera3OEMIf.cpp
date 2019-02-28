@@ -5684,7 +5684,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     struct cmr_focus_status *focus_status;
     int64_t timeStamp = 0;
     timeStamp = systemTime();
-    struct af_ctrl_notice *af_ctrl;
+    struct isp_af_notice *af_ctrl;
 
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
@@ -5702,7 +5702,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         HAL_LOGV("camera cb: autofocus succeeded.");
         {
             if (parm4 != NULL) {
-                af_ctrl = (af_ctrl_notice *)parm4;
+                af_ctrl = (isp_af_notice *)parm4;
               if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
                 af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
                 controlInfo.af_roi[0] = af_ctrl->af_roi.sx * ISP_BINNING_SIZE;
