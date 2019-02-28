@@ -2065,6 +2065,7 @@ int SprdCamera3HWI::flush() {
     if (ret == TIMED_OUT) {
         HAL_LOGE("Flush is time out");
         mFlush = false;
+        abort();
         return -ENODEV;
     }
 
@@ -2332,6 +2333,7 @@ void SprdCamera3HWI::timer_handler(union sigval arg) {
         }
     }
     // dev->mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
+    Mutex::Autolock l(dev->mLock);
     if (dev->mInvaildRequest) {
         (dev->mFlushInvReqSignal).signal();
     }
