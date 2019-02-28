@@ -270,6 +270,7 @@ struct camera_module {
 	struct camera_frame *dual_frame; /* 0: no, to find, -1: no need find */
 	atomic_t capture_frames_dcam; /* how many frames to report, -1:always */
 	int64_t capture_times; /* *ns, timestamp get from start_capture */
+	uint32_t lowlux_4in1; /* flag */
 };
 
 struct camera_group {
@@ -674,7 +675,9 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 {
 	int ret;
 
-	/* aux dcam bin tx done, set frame to isp */
+	/* 1: aux dcam bin tx done, set frame to isp
+	 * 2: lowlux capture, dcam0 full path done, set frame to isp
+	 */
 	if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE) {
 		/* offline timestamp, check time */
 		if (pframe->sensor_time.tv_sec == 0 &&
@@ -752,7 +755,6 @@ struct camera_frame *deal_4in1_raw_capture(struct camera_module *module,
 
 	return NULL;
 }
-
 int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 {
 	int ret = 0;
@@ -817,17 +819,31 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 			}
 
 			if (module->cam_uinfo.is_4in1 &&
-				channel->aux_dcam_path_id == DCAM_PATH_BIN)
-				/* 4in1, buf set to dcam1 bin path */
-				ret = dcam_ops->cfg_path(module->aux_dcam_dev,
+				channel->aux_dcam_path_id == DCAM_PATH_BIN) {
+				if (pframe->buf.type == CAM_BUF_USER) {
+					/* 4in1, lowlux capture, use dcam0
+					 * full path output buffer, from
+					 * SPRD_IMG_IO_SET_4IN1_ADDR, user space
+					 */
+					ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+						DCAM_PATH_CFG_OUTPUT_BUF,
+						channel->dcam_path_id,
+						pframe);
+				} else {
+					/* 4in1, dcam1 bin path output buffer
+					 * alloced by kernel
+					 */
+					ret = dcam_ops->cfg_path(module->aux_dcam_dev,
 						DCAM_PATH_CFG_OUTPUT_BUF,
 						channel->aux_dcam_path_id,
 						pframe);
-			else
+				}
+			} else {
 				ret = dcam_ops->cfg_path(
 					module->dcam_dev_handle,
 					DCAM_PATH_CFG_OUTPUT_BUF,
 					channel->dcam_path_id, pframe);
+			}
 		}
 		break;
 
@@ -1082,7 +1098,6 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			}
 
 			/* to isp */
-
 			ret = camera_enqueue(&channel->share_buf_queue, pframe);
 			if (ret) {
 				pr_debug("capture queue overflow\n");
@@ -1185,6 +1200,7 @@ static void get_diff_trim(struct sprd_img_rect *orig,
 	trim1->start_x = fix_scale(orig->x - trim0->start_x, ratio16);
 	trim1->start_y = fix_scale(orig->y - trim0->start_y, ratio16);
 	trim1->size_x =  fix_scale(orig->w, ratio16);
+	trim1->size_x = ALIGN(trim1->size_x, 2);
 	trim1->size_y =  fix_scale(orig->h, ratio16);
 }
 
@@ -1569,6 +1585,64 @@ cfg_path:
 	}
 	pr_info("update channel size done for CAP\n");
 	return ret;
+}
+
+/* set capture channel size for isp fetch and crop, scaler
+ * lowlux: 1: size / 2, 0: full size
+ */
+static int config_4in1_channel_size(struct camera_module *module,
+				uint32_t lowlux_flag)
+{
+	struct channel_context *ch;
+	struct channel_context ch_tmp;
+	struct camera_uchannel *p;
+
+	ch  = &module->channel[CAM_CH_CAP];
+	/* backup */
+	memcpy(&ch_tmp, ch, sizeof(struct channel_context));
+	p = &ch_tmp.ch_uinfo;
+	if (lowlux_flag) {
+		/* bin-sum image, size should /2 */
+		p->src_size.w /= 2;
+		p->src_size.h /= 2;
+		if ((p->src_size.w & 0x1) || (p->src_size.h & 0x1))
+			pr_warn("Some problem with sensor size in lowlux\n");
+		p->src_crop.x /= 2;
+		p->src_crop.y /= 2;
+		p->src_crop.w /= 2;
+		p->src_crop.h /= 2;
+		/* check zoom, low lux not support zoom now 190306 */
+		if (p->src_crop.w != p->src_size.w ||
+			p->src_crop.h != p->src_size.h) {
+			pr_warn("lowlux capture not support zoom now\n");
+			p->src_crop.x = 0;
+			p->src_crop.y = 0;
+			p->src_crop.w = p->src_size.w;
+			p->src_crop.h = p->src_size.h;
+		}
+		p->src_crop.x = ALIGN(p->src_crop.x, 2);
+		p->src_crop.y = ALIGN(p->src_crop.y, 2);
+		p->src_crop.w = ALIGN(p->src_crop.w, 2);
+		p->src_crop.h = ALIGN(p->src_crop.h, 2);
+	}
+	pr_info("src[%d %d], crop[%d %d %d %d] dst[%d %d]\n",
+		p->src_size.w, p->src_size.h,
+		p->src_crop.x, p->src_crop.y, p->src_crop.w, p->src_crop.h,
+		p->dst_size.w, p->dst_size.h);
+	ch_tmp.trim_dcam.start_x = p->src_crop.x;
+	ch_tmp.trim_dcam.start_y = p->src_crop.y;
+	ch_tmp.trim_dcam.size_x = p->src_crop.w;
+	ch_tmp.trim_dcam.size_y = p->src_crop.h;
+	ch_tmp.swap_size.w = p->src_size.w;
+	ch_tmp.swap_size.h = p->src_size.h;
+	get_diff_trim(&ch_tmp.ch_uinfo.src_crop,
+		(1 << RATIO_SHIFT), &ch_tmp.trim_dcam, &ch_tmp.trim_isp);
+	pr_info("trim_isp[%d %d %d %d]\n", ch_tmp.trim_isp.start_x,
+		ch_tmp.trim_isp.start_y,ch_tmp.trim_isp.size_x,
+		ch_tmp.trim_isp.size_y);
+	config_channel_size(module, &ch_tmp);
+
+	return 0;
 }
 
 static int zoom_proc(void *param)
@@ -4199,7 +4273,6 @@ static int img_ioctl_start_capture(
 				atomic_read(&module->state));
 		return -EFAULT;
 	}
-	atomic_set(&module->capture_frames_dcam, -1);
 	start_time = ktime_get_boottime();
 
 	/* recognize the capture scene */
@@ -4216,13 +4289,28 @@ static int img_ioctl_start_capture(
 		module->capture_times = param.timestamp;
 
 	} else if (module->cam_uinfo.is_4in1) {
-		module->dcam_cap_status = DCAM_CAPTURE_START_4IN1_LOWLUX;
-		/* 4in1: report 1 frame for remosaic */
-		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
-
+		/* not report when setting */
+		atomic_set(&module->capture_frames_dcam, 0);
+		if (param.type == DCAM_CAPTURE_START_4IN1_LOWLUX) {
+			/* 4in1: low lux mode, report until stop capture
+			 * maybe need 1 frame
+			 */
+			module->lowlux_4in1 = 1;
+			dcam_ops->cfg_path(module->dcam_dev_handle,
+				DCAM_PATH_CFG_FULL_SOURCE,
+				DCAM_PATH_FULL,
+				&module->lowlux_4in1);
+		} else {
+			/* 4in1: report 1 frame for remosaic */
+			module->lowlux_4in1 = 0;
+			atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
+		}
+		config_4in1_channel_size(module, module->lowlux_4in1);
 	} else if (param.type == DCAM_CAPTURE_START ) {
 		module->dcam_cap_status = DCAM_CAPTURE_START;
 		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
+	} else {
+		atomic_set(&module->capture_frames_dcam, -1);
 	}
 
 	if (param.type != DCAM_CAPTURE_STOP)
@@ -4262,6 +4350,14 @@ static int img_ioctl_stop_capture(
 	if (module->dump_thrd.thread_task && module->in_dump) {
 		module->dump_count = 0;
 		complete(&module->dump_com);
+	}
+	/* 4in1 lowlux deinit */
+	if (module->cam_uinfo.is_4in1 && module->lowlux_4in1) {
+		module->lowlux_4in1 = 0;
+		dcam_ops->cfg_path(module->dcam_dev_handle,
+				DCAM_PATH_CFG_FULL_SOURCE,
+				DCAM_PATH_FULL,
+				&module->lowlux_4in1);
 	}
 
 	return 0;

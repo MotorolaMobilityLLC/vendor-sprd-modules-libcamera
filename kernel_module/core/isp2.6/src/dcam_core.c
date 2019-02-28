@@ -1961,6 +1961,29 @@ static int sprd_dcam_put_path(
 	return ret;
 }
 
+static int  dcam_cfg_path_full_source(void *dcam_handle,
+				struct dcam_path_desc *path,
+				void *param)
+{
+	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)dcam_handle;
+	uint32_t lowlux_4in1 = *(uint32_t *)param;
+	const char *tb_src[] = {"(4c)raw", "bin-sum"};
+
+	if (lowlux_4in1) {
+		dev->lowlux_4in1 = 1;
+		DCAM_REG_MWR(dev->idx, DCAM_FULL_CFG, BIT(2), BIT(2));
+		dev->skip_4in1 = 1; /* auto copy, so need skip 1 frame */
+	} else {
+		dev->lowlux_4in1 = 0;
+		DCAM_REG_MWR(dev->idx, DCAM_FULL_CFG, BIT(2), 0);
+		dev->skip_4in1 = 1;
+	}
+	pr_info("dev%d lowlux %d, skip_4in1 %d, full src: %s\n", dev->idx,
+		dev->lowlux_4in1, dev->skip_4in1, tb_src[lowlux_4in1]);
+
+	return 0;
+}
+
 static int sprd_dcam_cfg_path(
 	void *dcam_handle,
 	enum dcam_path_cfg_cmd cfg_cmd,
@@ -2052,7 +2075,8 @@ static int sprd_dcam_cfg_path(
 	case DCAM_PATH_CFG_BASE:
 		ret = dcam_cfg_path_base(dev, path, param);
 		break;
-
+	case DCAM_PATH_CFG_FULL_SOURCE:
+		ret = dcam_cfg_path_full_source(dev, path, param);
 	default:
 		pr_warn("unsupported command: %d\n", cfg_cmd);
 		break;

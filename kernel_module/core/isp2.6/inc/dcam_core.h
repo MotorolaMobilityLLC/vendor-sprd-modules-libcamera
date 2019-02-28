@@ -224,6 +224,8 @@ struct dcam_pipe_dev {
 	uint32_t err_status;// TODO: change to use state
 
 	uint32_t is_4in1;
+	uint32_t lowlux_4in1; /* 4in1 low lux mode capture */
+	uint32_t skip_4in1; /* need skip 1 frame then change full source */
 	uint32_t is_3dnr;
 	uint32_t is_pdaf;
 	uint32_t is_ebd;

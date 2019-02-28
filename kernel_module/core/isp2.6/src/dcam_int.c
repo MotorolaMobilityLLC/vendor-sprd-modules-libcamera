@@ -490,9 +490,20 @@ static void dcam_full_path_done(void *param)
 
 	if ((frame = dcam_prepare_frame(dev, DCAM_PATH_FULL))) {
 		if (dev->is_4in1) {
-			/* 4in1,send to hal for remosaic */
-			frame->irq_type = CAMERA_IRQ_4IN1_DONE;
-			/* TODO: stop dcam0 full path */
+			if (dev->skip_4in1 > 0) {
+				dev->skip_4in1--;
+				/* need skip 1 frame when switch full source
+				 * give buffer back to queue
+				 */
+				cambuf_iommu_unmap(&frame->buf);
+				dev->dcam_cb_func(DCAM_CB_RET_SRC_BUF, frame,
+					dev->cb_priv_data);
+				return;
+			}
+			if (!dev->lowlux_4in1) /* 4in1,send to hal for remosaic */
+				frame->irq_type = CAMERA_IRQ_4IN1_DONE;
+			else /* low lux, to isp as normal */
+				frame->irq_type = CAMERA_IRQ_IMG;
 		}
 		dcam_dispatch_frame(dev, DCAM_PATH_FULL, frame,
 				    DCAM_CB_DATA_DONE);
