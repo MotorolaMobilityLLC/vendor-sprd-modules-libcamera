@@ -22,7 +22,7 @@
 #include <dlfcn.h>
 #include "isp_mw.h"
 #include <utils/Timers.h>
-
+#include <sys/stat.h>
 #define SMART_LSC_VERSION 1
 
 cmr_u32 proc_start_gain_w = 0;                  // SBS master gain width
@@ -105,6 +105,11 @@ static void alsc_get_cmd(struct lsc_ctrl_context *cxt)
 	val = atoi(prop);
 	if(0 <= val)
 		cxt->cmd_alsc_dump_aem = val;
+
+	property_get("debug.isp.alsc.dump.table", prop, (char *)"0");
+	val = atoi(prop);
+	if(0 <= val)
+		cxt->cmd_alsc_dump_table = val;
 
 	property_get("debug.isp.alsc.bypass", prop, (char *)"0");
 	val = atoi(prop);
@@ -1578,6 +1583,63 @@ static void cmd_dump_aem(cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32* stat_r,
 	ISP_LOGI("dump_state=%d, lsc_id=%d", dump_state, lsc_id);
 }
 
+void dump_lsc(unsigned short* gain, int width, int height, const char* filename )
+{
+	FILE* fp  = fopen(filename, "w");
+	if(fp != NULL)
+	{
+		int i, j;
+		for(j=0; j<height; j++)
+		{
+			for(i=0; i<width; i++)
+			{
+				fprintf(fp, "%4d,",gain[j*width+i]);
+			}
+			fprintf(fp,"\r\n");
+		}
+		fclose(fp);
+	}
+}
+
+void dump_lsc_gain(unsigned short* lsc_table_in, unsigned int lsc_with,unsigned int lsc_height)
+{
+	char prop[256];
+	property_get("debug.isp.alsc.dump.table",prop,"0");
+	if(strcmp(prop,"0") != 0){
+		unsigned short tmp[1118*4];
+		unsigned i;
+		static int index = 1;
+		char version[1024];
+		property_get("ro.build.version.release",version,(char*)"");
+		ISP_LOGI("debug.isp.alsc.dump.table: %s ro.build.version.release: %s",prop,version);
+		for(i = 0; i<lsc_with * lsc_height; i++)
+			{
+				tmp[lsc_with * lsc_height * 0 + i] = lsc_table_in[4 * i + 1];
+				tmp[lsc_with * lsc_height * 1 + i] = lsc_table_in[4 * i + 0];
+				tmp[lsc_with * lsc_height * 2 + i] = lsc_table_in[4 * i + 3];
+				tmp[lsc_with * lsc_height * 3 + i] = lsc_table_in[4 * i + 2];
+			}
+		if(version[0] > '6'){
+			if(mkdir("/data/vendor/cameraserver/lsc/", 0755) != 0){
+				char filename[256];
+				sprintf(filename,"/data/vendor/cameraserver/lsc/%05d_r0c0.txt",index);
+				dump_lsc(tmp + lsc_with * lsc_height * 0, lsc_with, lsc_height, filename);
+
+				sprintf(filename,"/data/vendor/cameraserver/lsc/%05d_r0c1.txt",index);
+				dump_lsc(tmp + lsc_with * lsc_height * 1, lsc_with, lsc_height, filename);
+
+				sprintf(filename,"/data/vendor/cameraserver/lsc/%05d_r1c0.txt",index);
+				dump_lsc(tmp + lsc_with * lsc_height * 2, lsc_with, lsc_height, filename);
+
+				sprintf(filename,"/data/vendor/cameraserver/lsc/%05d_r1c1.txt",index);
+				dump_lsc(tmp + lsc_with * lsc_height * 3, lsc_with, lsc_height, filename);
+
+				index ++;
+			}
+		}
+	}
+}
+
 static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, struct lsc_ctrl_context *cxt)
 {
 	cmr_s32 i, post_act_index;
@@ -2656,7 +2718,11 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	cxt->flash_done_frame_count++;
 	cxt->frame_count++;
 	// alsc_calc --
-
+	if(cxt->cmd_alsc_cmd_enable){
+		if(cxt->cmd_alsc_dump_table){
+			dump_lsc_gain(cxt->lsc_buffer,gain_width,gain_height);
+		}
+	}
 	cxt->alsc_update_flag = 1;
 	if(!cxt->can_update_dest)
 		cxt->alsc_update_flag = 0;
