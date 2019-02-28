@@ -355,6 +355,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AI_SET_IMG_PARAM,
 	ISP_CTRL_AI_GET_IMG_FLAG,
 	ISP_CTRL_AI_GET_STATUS,
+	ISP_CTRL_GET_SW3DNR_PARAM,
 	/*camera mode which appearby right slip*/
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_MAX
@@ -833,6 +834,25 @@ struct isp_3dnr_info {
 	cmr_s8 mv_x;
 	cmr_s8 mv_y;
 	cmr_u8 blending_no;
+};
+
+/* sw 3DNR param */
+/* used to pass sw3dnr param from tuning array to HAL->3dnr adapt
+  * must keep consistent with struct ( sensor_sw3dnr_level) in sensor_raw_xxx.h
+  * should not be modified except sensor_raw_xxx.h changes corresponding structure */
+struct isp_sw3dnr_info {
+        cmr_s32 threshold[4];
+        cmr_s32 slope[4];
+        cmr_u16 searchWindow_x;
+        cmr_u16 searchWindow_y;
+        cmr_s32 recur_str;
+        cmr_s32 match_ratio_sad;
+        cmr_s32 match_ratio_pro;
+        cmr_s32 feat_thr;
+        cmr_s32 zone_size;
+        cmr_s32 luma_ratio_high;
+        cmr_s32 luma_ratio_low;
+        cmr_s32 reserverd[16];
 };
 
 struct isp_ynr_info {

@@ -2456,6 +2456,31 @@ static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_sw3dnr_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param ptr!");
+		return ISP_PARAM_NULL;
+	}
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_SW3DNR, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct sensor_sw3dnr_level));
+	} else {
+		ISP_LOGE("fail to get valid sw3dnr param");
+		return ISP_PARAM_ERROR;
+	}
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2531,6 +2556,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_GET_CNR2_EN, ispctl_get_cnr2_en},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
+	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
 	{ISP_CTRL_MAX, NULL}
 };
 
