@@ -2689,13 +2689,11 @@ int dcam_if_put_dev(void *dcam_handle)
 		pr_warn("releasing DCAM%u in state %d may cause leak\n",
 			dev->idx, ret);
 	}
-
+	pr_info("put DCAM%u pipe dev: %p\n", idx, dev);
 	vfree(dev);
 	s_dcam_dev[idx] = NULL;
 
 	mutex_unlock(&s_dcam_dev_mutex);
-
-	pr_info("put DCAM%u pipe dev: %p\n", idx, dev);
 
 	return ret;
 }

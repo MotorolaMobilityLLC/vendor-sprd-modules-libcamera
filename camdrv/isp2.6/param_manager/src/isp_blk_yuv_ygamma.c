@@ -35,9 +35,10 @@ cmr_s32 _pm_yuv_ygamma_init(void *dst_gamc_param, void *src_gamc_param, void *pa
 	index = src_ptr->cur_idx;
 
 	final_points = &dst_ptr->curve_tab[index].points[0];
-	for (j = 0; j < ISP_YUV_GAMMA_NUM; j++) {
+	for (j = 0; j < ISP_YUV_GAMMA_NUM - 1; j++) {
 		dst_ptr->cur.gain[j] = (final_points[j * 2].y + final_points[j * 2 + 1].y) >> 1;
 	}
+	dst_ptr->cur.gain[ISP_YUV_GAMMA_NUM - 1] = final_points[SENSOR_GAMMA_POINT_NUM - 1].y;
 
 	header_ptr->is_update = ISP_ONE;
 	return rtn;
@@ -71,9 +72,10 @@ cmr_s32 _pm_yuv_ygamma_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0
 			ygamma_ptr->cur_idx_weight.weight0 = 256;
 			ygamma_ptr->cur_idx_weight.weight1 = 0;
 			final_points = &dst_ptr->curve_tab[index].points[0];
-			for (j = 0; j < ISP_YUV_GAMMA_NUM; j++) {
+			for (j = 0; j < ISP_YUV_GAMMA_NUM - 1; j++) {
 				dst_ptr->cur.gain[j] = (final_points[j * 2].y + final_points[j * 2 + 1].y) >> 1;
 			}
+			dst_ptr->cur.gain[ISP_YUV_GAMMA_NUM - 1] = final_points[SENSOR_GAMMA_POINT_NUM - 1].y;
 			gamc_header_ptr->is_update = ISP_ONE;
 		}
 		break;
@@ -123,9 +125,10 @@ cmr_s32 _pm_yuv_ygamma_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0
 					ygamma_ptr->cur_idx_weight.weight0 = weight_value->weight[0];
 					ygamma_ptr->cur_idx_weight.weight1 = weight_value->weight[1];
 					final_points = &ygamma_ptr->final_curve.points[0];
-					for (j = 0; j < ISP_YUV_GAMMA_NUM; j++) {
+					for (j = 0; j < ISP_YUV_GAMMA_NUM - 1; j++) {
 						dst_ptr->cur.gain[j] = (final_points[j * 2].y + final_points[j * 2 + 1].y) >> 1;
 					}
+					dst_ptr->cur.gain[ISP_YUV_GAMMA_NUM - 1] = final_points[SENSOR_GAMMA_POINT_NUM - 1].y;
 				}
 				gamc_header_ptr->is_update = ISP_ONE;
 			}

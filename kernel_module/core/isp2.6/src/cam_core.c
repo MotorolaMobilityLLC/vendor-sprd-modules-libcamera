@@ -1186,7 +1186,8 @@ static int cal_channel_size(struct camera_module *module)
 	struct channel_context *ch_cap;
 	struct sprd_img_rect *crop_p, *crop_v, *crop_c;
 	struct sprd_img_rect crop_dst;
-	struct img_trim trim_pv, trim_c;
+	struct img_trim trim_pv = {0};
+	struct img_trim trim_c = {0};
 	struct img_size src_p, dst_p, dst_v, dcam_out, max, temp;
 
 	ch_prev = &module->channel[CAM_CH_PRE];
@@ -3936,8 +3937,8 @@ static int img_ioctl_stream_off(
 				ch->isp_updata = NULL;
 				while (cur) {
 					prev = (struct isp_offline_param *)cur->prev;
-					kfree(cur);
 					pr_info("free %p\n", cur);
+					kfree(cur);
 					cur = prev;
 				}
 			}
