@@ -24,6 +24,7 @@ endif
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsprdfd_hw
 
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := src/sprd_fd_hw_api.cpp
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc

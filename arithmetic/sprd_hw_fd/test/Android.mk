@@ -17,12 +17,14 @@ LOCAL_PATH := $(call my-dir)
 ifeq ($(TARGET_BUILD_VARIANT),userdebug)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := fdhwdemo
+
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../inc
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/modules/libmemion
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/external/kernel-headers
 
 LOCAL_SHARED_LIBRARIES += libsprdfd_hw libcutils libutils libmemion
-LOCAL_MODULE    := fdhwdemo
+
 LOCAL_CFLAGS := -O3
 
 #LOCAL_CFLAGS += -DFD_DEBUG

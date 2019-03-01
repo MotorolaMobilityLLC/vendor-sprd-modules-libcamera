@@ -2,7 +2,7 @@
 /*  Copyright(C) 2015 by Spreadtrum                                  */
 /*  All Rights Reserved.                                             */
 /*-------------------------------------------------------------------*/
-/*
+/* 
     Face Detection Library API
 */
 
@@ -41,10 +41,29 @@
 #define FD_WORKMODE_MOVIE       0x01  /* Movie mode: detection + tracking         */
 #define FD_WORKMODE_DEFAULT     FD_WORKMODE_STILL /* the default work mode        */
 
+#define FD_ENV_SW  0x00
+#define FD_ENV_HW  0x01
+#define FD_ENV_DEFAULT  FD_ENV_SW
+
+/**
+\brief version information
+*/
+typedef struct
+{
+    unsigned char major;              /*!< API major version */
+    unsigned char minor;              /*!< API minor version */
+    unsigned char micro;              /*!< API micro version */
+    unsigned char nano;               /*!< API nano version */
+    char built_date[0x20];      /*!< API built date */
+    char built_time[0x20];      /*!< API built time */
+    char built_rev[0x100];      /*!< API built version, linked with vcs resivion?> */
+} FD_VERSION_T;
+
 /* The gray-scale image structure */
 typedef struct
 {
     unsigned char *data;              /* Image data                               */
+    int data_handle;                  /* Image data from Ion handle               */
     int width;                        /* Image width                              */
     int height;                       /* Image height                             */
     int step;                         /* The byte count per scan line             */
@@ -61,6 +80,8 @@ typedef struct {
 
 /* Face Detection option */
 typedef struct {
+    unsigned int fdEnv;              /*FD_ENV_SW or FD_ENV_HW*/
+    
     unsigned int workMode;           /* Work mode: FD_WORKMODE_STILL or FD_WORKMODE_MOVIE           */
     unsigned int threadNum;          /* Number of CPU threads. (In [1, 4], default: 1)              */
 
@@ -84,6 +105,9 @@ typedef struct {
     unsigned int holdSizeRate;       /* If the size change during tracking is below the rate, the face size will be corrected back to the previous one. (In [0, 30]) */
     unsigned int swapFaceRate;       /* When the detected face count is larger than "maxFaceNum", only if the new face is larger than the old face by the rate, the old face is replaced by the new face. */
     unsigned int guessFaceDirection; /* 1-->TRUE; 0 --> FALSE; If set as TRUE, new face search will only be performed on the guessed directions, which can speed up the detection */
+    unsigned int cfgPoolingMode;     /*pooling mode 0:off 1:on. default is off*/
+    unsigned int cfgPoolingFrameNum; /*frame number for pooling detect. [1, detectDensity]. default is detectDensity*/
+
 } FD_OPTION;
 
 /* Face Detector handle */
@@ -94,8 +118,8 @@ typedef void * FD_DETECTOR_HANDLE;
 extern "C" {
 #endif
 
-/* Get the software version */
-FDAPI(const char *) FdGetVersion();
+/* Get the software version_new*/
+FDAPI(int) FdGetVersion(FD_VERSION_T* o_version);
 
 /* Init the FD_OPTION structure by default values */
 FDAPI(void) FdInitOption(FD_OPTION *option);
@@ -118,6 +142,14 @@ FDAPI(int)  FdGetFaceCount(const FD_DETECTOR_HANDLE hDT);
 /* Get the face information at the specified index */
 FDAPI(int)  FdGetFaceInfo(const FD_DETECTOR_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
 
+// This function is provided for speed up face detection. 
+// minFaceSize and refFaceAngle will override the settings in FD_OPTION
+// It can only run the the STILL mode
+// faceDirection must be a subset of FD_OPTION.directions
+FDAPI(int)  FdDetectFaceExt(FD_DETECTOR_HANDLE hDT,
+                            const FD_IMAGE *grayImage,
+                            unsigned int minFaceSize,
+                            unsigned int faceDirection);
 
 #ifdef  __cplusplus
 }

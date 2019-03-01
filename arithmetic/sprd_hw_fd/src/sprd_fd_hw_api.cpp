@@ -1,3 +1,4 @@
+#define LOG_TAG "HW_FD"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <log/log.h>
@@ -12,7 +13,6 @@
 #include "sprd_fd_hw_api.h"
 #include "sprd_fd.h"
 
-#define LOG_TAG "HW_FD"
 
 #define FD_IP_STATUS_MASK 0x00010000
 #define FD_IP_ERR_FLG_MASK 0x00000001
@@ -50,7 +50,7 @@ typedef struct sprd_camera_fd_memory {
 
 sprd_camera_fd_memory_t* dim;
 sprd_camera_fd_memory_t* out;
-
+int g_iommu_status = SPRD_FD_IOMMU_ENABLED;/*Default is enable*/
 
 
 
@@ -73,8 +73,7 @@ sprd_camera_fd_memory_t *AllocFDMem(int buf_size,int num_bufs,uint32_t is_cache)
     if (mem_size == 0) {
         goto getpmem_fail;
     }
-
-    if (1) {
+    if (SPRD_FD_IOMMU_ENABLED == SPRD_FD_IOMMU_DISABLED) {
         if (is_cache) {
             pHeapIon = new android::MemIon("/dev/ion", mem_size, 0,
                                   (1 << 31) | ION_HEAP_ID_MASK_MM);
@@ -216,11 +215,27 @@ int get_fd_info(HWFD_DETECTOR_HANDLE *hDT)
 		{
 			file->ip_err_flg = FD_IP_ERR_FLG_CORRECT;
 		}
-		
 	}
 	return ret;
 }
+void get_fd_iommu_status(int fd)
+{
+	int ret = 0;
+	unsigned int iommu_status;
 
+	ret = ioctl(fd,SPRD_FD_IO_GET_IOMMU_STATUS,&iommu_status);
+	if(ret < 0)
+	{
+		ALOGE("Get iommu status fail.");
+		g_iommu_status = SPRD_FD_IOMMU_ENABLED;
+	}
+	else
+	{
+		ALOGI("Get iommu status %d",iommu_status);
+		g_iommu_status = iommu_status;
+	}
+	return;
+}
 int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 {
 	int ret = HWFD_OK;
@@ -235,7 +250,7 @@ int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 	if (!file) {
 	  ret = HWFD_ERROR;
 	}
-	
+
 	sprintf(dev , "/dev/%s" ,SPRD_FD_DEVICE_NAME);
 
 	fd = open(dev, O_RDWR, 0);
@@ -256,6 +271,7 @@ int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 		{
 			ALOGI("Get FD IP version %02X ",cmd_para.reg_val);
 		}
+		get_fd_iommu_status(fd);
 		dim = AllocFDMem(DIM_BUFFER_SIZE, 1, false);
 		out = AllocFDMem(OUT_BUFFER_SIZE, 1, false);
 
