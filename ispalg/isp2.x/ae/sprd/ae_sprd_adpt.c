@@ -4991,9 +4991,10 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 #define BLK_NUM_W_ALG 32
 static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 {
-	cmr_u32 i,j,ii,jj;
-	cmr_u64 r = 0, g = 0, b = 0;
-	cmr_u64 sum, avg, max_value = 0x3ff;
+	cmr_u32 i,j,ii,jj = 0;
+	//cmr_u64 r = 0, g = 0, b = 0;
+	cmr_u64 avg;
+	cmr_u32 tmp_r = 0,tmp_g = 0,tmp_b = 0;
 	cmr_u32 blk_num_w = cxt->monitor_cfg.blk_num.w;
 	cmr_u32 blk_num_h = cxt->monitor_cfg.blk_num.h;
 	cmr_u32 bayer_pixels = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/4;
@@ -5005,8 +5006,6 @@ static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 	cmr_u32 ratio_h = blk_num_h/BLK_NUM_W_ALG;
 	cmr_u32 ratio_w = blk_num_w/BLK_NUM_W_ALG;
 
-	memset(cxt->sync_aem,0,1024 * 3* sizeof(cmr_u32));
-
 	cxt->cur_status.base_size.h = cxt->monitor_cfg.blk_size.h;
 	cxt->cur_status.base_size.w = cxt->monitor_cfg.blk_size.w;
 	cxt->cur_status.base_num.w = blk_num_w;
@@ -5016,32 +5015,28 @@ static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 	cxt->cur_status.win_size.w = ratio_w * cxt->monitor_cfg.blk_size.w;
 	cxt->cur_status.win_size.h = ratio_h * cxt->monitor_cfg.blk_size.h;
 
-	for (i = 0; i < blk_num_h; ++i) {
-		ii = (cmr_u32)(i / ratio_h);
-		for (j = 0; j < blk_num_w; ++j) {
-			jj = j / ratio_w;
-			/*for r channel */
-			sum = r_stat[i * blk_num_w + j];
-			avg = sum/ bayer_pixels;
-			r = avg > max_value ? max_value : avg;
+	for(i = 0; i < BLK_NUM_W_ALG; i++){
+		for(j = 0; j < BLK_NUM_W_ALG; j++){
+			for(ii = 0; ii < ratio_w; ii++){
+				for(jj = 0; jj < ratio_h; jj++){
+					cmr_u32 idx = i * ratio_w * ratio_h * BLK_NUM_W_ALG + j * ratio_w + ii * ratio_h * BLK_NUM_W_ALG + jj;
+					avg = r_stat[idx]/bayer_pixels;
+					tmp_r += avg/(ratio_w * ratio_h);
+					cxt->cur_status.base_img[idx] = avg;
 
-			/*for g channel */
-			sum = g_stat[i * blk_num_w + j];
-			avg = sum/ bayer_pixels;
-			g = avg > max_value ? max_value : avg;
+					avg = g_stat[idx]/bayer_pixels;
+					tmp_g += avg/(ratio_w * ratio_h);
+					cxt->cur_status.base_img[idx] = avg;
 
-			/*for b channel */
-			sum = b_stat[i * blk_num_w + j];
-			avg = sum/ bayer_pixels;
-			b = avg > max_value ? max_value : avg;
-
-			cxt->sync_aem[ii * BLK_NUM_W_ALG + jj] += r/(ratio_w * ratio_h);
-			cxt->sync_aem[ii * BLK_NUM_W_ALG + jj + 1024] += g/(ratio_w * ratio_h);
-			cxt->sync_aem[ii * BLK_NUM_W_ALG + jj + 2048] += b/(ratio_w * ratio_h);
-
-			cxt->cur_status.base_img[i * blk_num_w + j] = r;
-			cxt->cur_status.base_img[i * blk_num_w + j + blk_num_w * blk_num_h] = g;
-			cxt->cur_status.base_img[i * blk_num_w + j + 2 * blk_num_w * blk_num_h] = b;
+					avg = b_stat[idx]/bayer_pixels;
+					tmp_b += avg/(ratio_w * ratio_h);
+					cxt->cur_status.base_img[idx] = avg;
+				}
+			}
+			cxt->sync_aem[i * BLK_NUM_W_ALG + j] = tmp_r;
+			cxt->sync_aem[i * BLK_NUM_W_ALG + j + 1024] = tmp_g;
+			cxt->sync_aem[i * BLK_NUM_W_ALG + j + 2048] = tmp_b;
+			tmp_r = tmp_g = tmp_b = 0;
 		}
 	}
 }
