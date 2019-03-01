@@ -4520,6 +4520,7 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width, uint32_t height) {
         if (buffer_size > mReDisplayHeap->phys_size) {
             HAL_LOGD("Redisplay need re-allocm. 0x%x 0x%lx", buffer_size,
                      mReDisplayHeap->phys_size);
+            iommu_buf_unmap(mRedisplayMallocIommuMapList);
             freeCameraMem(mReDisplayHeap);
             mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
         }
@@ -4531,13 +4532,14 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width, uint32_t height) {
         HAL_LOGE("get redisplay ion mem failed");
         return 0;
     }
-
+    iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
     HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
     return mReDisplayHeap->fd;
 }
 
 void SprdCamera3OEMIf::FreeReDisplayMem() {
     HAL_LOGD("free redisplay mem.");
+    iommu_buf_unmap(mRedisplayMallocIommuMapList);
     if (mReDisplayHeap) {
         freeCameraMem(mReDisplayHeap);
         mReDisplayHeap = NULL;

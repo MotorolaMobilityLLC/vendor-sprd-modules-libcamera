@@ -623,6 +623,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     List<iommu_map_buf> m3DNRGraphicArrayIommuMapList;
     List<iommu_map_buf> m3DNRGraphicPathArrayIommuMapList;
     List<iommu_map_buf> mCaptureMallocIommuMapList;
+    List<iommu_map_buf> mRedisplayMallocIommuMapList;
 
     sprd_camera_memory_t *mReDisplayHeap;
     // TODO: put the picture dimensions in the CameraParameters object;
