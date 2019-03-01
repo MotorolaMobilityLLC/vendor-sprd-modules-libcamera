@@ -2065,7 +2065,6 @@ int SprdCamera3HWI::flush() {
     if (ret == TIMED_OUT) {
         HAL_LOGE("Flush is time out");
         mFlush = false;
-        abort();
         return -ENODEV;
     }
 
