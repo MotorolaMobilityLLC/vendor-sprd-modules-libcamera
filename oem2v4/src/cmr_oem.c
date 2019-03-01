@@ -8480,6 +8480,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     cmr_int prev_ret = CMR_CAMERA_SUCCESS;
     cmr_int snp_ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
     struct common_isp_cmd_param param;
 
     CMR_LOGI("E");
@@ -8506,9 +8507,13 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
         CMR_LOGE("failed to stop prev %ld", ret);
     }
 
-    if (CAMERA_ZSL_MODE == cxt->camera_mode) {
-        prev_ret =
-            cmr_setting_cancel_notice_flash(cxt->setting_cxt.setting_handle);
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
+
+    if (CAMERA_ZSL_MODE == cxt->camera_mode && setting_param.cmd_type_value == 1) {
+        prev_ret = cmr_setting_cancel_notice_flash(cxt->setting_cxt.setting_handle);
         CMR_LOGD("zsl takpicture calling stop_preview in stop flow %ld", ret);
     }
 

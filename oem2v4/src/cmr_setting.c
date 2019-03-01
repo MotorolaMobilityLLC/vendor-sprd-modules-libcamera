@@ -3587,7 +3587,9 @@ cmr_int cmr_setting_cancel_notice_flash(cmr_handle setting_handle) {
     CMR_LOGD("cmr_setting_cancel_notice_flash");
 
     pthread_mutex_lock(&cpt->isp_mutex);
-    cpt->flash_need_quit = FLASH_NEED_QUIT;
+    if(cpt->flash_need_quit == FLASH_OPEN){
+        cpt->flash_need_quit = FLASH_NEED_QUIT;
+    }
     pthread_mutex_unlock(&cpt->isp_mutex);
     sem_post(&cpt->isp_sem); // fastly quit af process when flash on
     sem_post(&cpt->isp_sem); // fastly quit af process when flash on
