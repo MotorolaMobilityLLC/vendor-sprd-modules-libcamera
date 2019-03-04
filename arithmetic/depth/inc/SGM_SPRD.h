@@ -67,6 +67,9 @@ extern "C" {
 		int sel_x; /* The point which be touched */
 		int sel_y; /* The point which be touched */
 		unsigned char *DisparityImage;
+		int VCM_cur_value;
+		int VCMup;
+                int VCMdown;
 	} weightmap_param;
 
 	typedef struct DistanceTwoPointInfo
@@ -78,6 +81,12 @@ extern "C" {
 		int y2_pos;
 	}DistanceTwoPointInfo;
 
+	typedef struct {
+          unsigned short near;
+	  unsigned short far;
+	  unsigned char *confidence_map;
+	  unsigned char *depthnorm_data;
+	} gdepth_outparam;
 
 	int sprd_depth_VersionInfo_Get(char a_acOutRetbuf[256], unsigned int a_udInSize);
 
@@ -97,6 +106,10 @@ extern "C" {
 	int sprd_depth_distancemeasurement(int *distance , void* disparity , DistanceTwoPointInfo *points_info);
 
 	int sprd_depth_Close(void *handle);
+
+	int sprd_depth_get_gdepthinfo(void* handle , void * a_pOutDisparity, gdepth_outparam *gdepth_output);
+
+	int sprd_depth_userset(char *ptr,int size);
 
 
 #ifdef __cplusplus
