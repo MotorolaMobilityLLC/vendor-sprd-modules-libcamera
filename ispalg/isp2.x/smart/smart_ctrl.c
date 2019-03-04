@@ -88,6 +88,7 @@ static const char *s_smart_block_name[] = {
 	"imbalance",
 	"ltm",
 	"3dnr",
+	"sw3dnr",
 
 	"unkown"
 };
@@ -1213,8 +1214,14 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->smt_dbginfo.nr_param.imbalance[0] = 0;
 	cxt->smt_dbginfo.nr_param.imbalance[1] = 5;
 	cxt->smt_dbginfo.nr_param.imbalance[2] = 0;
-#endif	
-	
+	cxt->smt_dbginfo.nr_param.threednr[0] = 0;
+	cxt->smt_dbginfo.nr_param.threednr[1] = 33;
+	cxt->smt_dbginfo.nr_param.threednr[2] = 0;
+	cxt->smt_dbginfo.nr_param.sw3dnr[0] = 0;
+	cxt->smt_dbginfo.nr_param.sw3dnr[1] = 34;
+	cxt->smt_dbginfo.nr_param.sw3dnr[2] = 0;
+#endif
+
 	cxt->magic_flag = ISP_SMART_MAGIC_FLAG;
 	cxt->work_mode = 0;
 	cxt->flash_mode = SMART_CTRL_FLASH_CLOSE;
@@ -1850,6 +1857,14 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 			    cxt->smt_dbginfo.nr_param.imbalance[0] = 1;
 			    cxt->smt_dbginfo.nr_param.imbalance[2] = blk->component[0].fix_data[0];
 			    break;
+			case ISP_SMART_3DNR:
+			    cxt->smt_dbginfo.nr_param.threednr[0] = 1;
+			    cxt->smt_dbginfo.nr_param.threednr[2] = blk->component[0].fix_data[0];
+			    break;
+			case ISP_SMART_SW3DNR:
+			    cxt->smt_dbginfo.nr_param.sw3dnr[0] = 1;
+			    cxt->smt_dbginfo.nr_param.sw3dnr[2] = blk->component[0].fix_data[0];
+			    break;
 			default:
 			    break;
 #endif
@@ -2109,7 +2124,9 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 				ISP_SMART_UVCDN == smart_param->block[i].smart_id ||
 				ISP_SMART_YUV_NOISEFILTER == smart_param->block[i].smart_id||
 				ISP_SMART_LTM == smart_param->block[i].smart_id ||
-				ISP_SMART_IMBALANCE == smart_param->block[i].smart_id) {
+				ISP_SMART_IMBALANCE == smart_param->block[i].smart_id||
+				ISP_SMART_3DNR == smart_param->block[i].smart_id ||
+				ISP_SMART_SW3DNR == smart_param->block[i].smart_id) {
 				if (is_diseb){
 					smart_param->block[i].enable = 0;
 					} else {

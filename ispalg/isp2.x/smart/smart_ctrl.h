@@ -185,6 +185,8 @@ extern "C" {
 		cmr_u32 noisefilter[3];
 		cmr_u32 ltm[3];
 		cmr_u32 imbalance[3];
+		cmr_u32 threednr[3];
+		cmr_u32 sw3dnr[3];
 	};
 
 	typedef struct {
