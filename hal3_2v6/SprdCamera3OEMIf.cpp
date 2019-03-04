@@ -414,7 +414,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mSprdZslEnabled = false;
     mZslMaxFrameNum = 1;
-    mZslNum = 2;
+    mZslNum = 3;
     mZslShotPushFlag = 0;
     mZslChannelStatus = 1;
     mZSLQueue.clear();
@@ -2679,8 +2679,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else {
         mSprd3dnrEnabled = 0;
     }
-    mZslNum = 3;
-    mZslMaxFrameNum = 3;
+
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
     mVideo3dnrFlag = VIDEO_OFF;
@@ -8587,6 +8586,14 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
             /*after caf picture, set af mode again to isp*/
             SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
         }
+    }
+
+    if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+        mZslMaxFrameNum = 3;
+    } else if (mSprd3dnrEnabled == 1 && mRecordingMode == false) {
+        mZslMaxFrameNum = 5;
+    } else {
+        mZslMaxFrameNum = 1;
     }
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
