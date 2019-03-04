@@ -201,8 +201,8 @@ const int32_t kavailable_fps_ranges_back[] = {10, 10, 5,  15, 15, 15, 5,  20,
 const int32_t kavailable_fps_ranges_front[] = {10, 10, 5,  15, 15, 15,
                                                5,  30, 15, 30, 30, 30};
 
-const int32_t kexposureCompensationRange[2] = {-16, 16};
-const camera_metadata_rational kae_compensation_step = {1, 8};
+const int32_t kexposureCompensationRange[2] = {-32, 32};
+const camera_metadata_rational kae_compensation_step = {1, 16};
 // const int32_t kavailable_processed_sizes[16] = {/*must order from bigger to
 // smaller*/
 //	2592, 1944,
