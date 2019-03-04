@@ -439,6 +439,12 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	gain_info.g_gain = inptr->g_gain;
 	gain_info.b_gain = inptr->b_gain;
 	block_info.block_info = &gain_info;
+
+	cxt->rgb_gain.bypass=inptr->bypass;
+	cxt->rgb_gain.global_gain=inptr->global_gain;
+	cxt->rgb_gain.r_gain=inptr->r_gain;
+	cxt->rgb_gain.g_gain=inptr->g_gain;
+	cxt->rgb_gain.b_gain=inptr->b_gain;
 	if (cxt->is_4in1_prev) {
 		/* this value for capture, prev need / 4 */
 		block_info.scene_id = PM_SCENE_CAP;
