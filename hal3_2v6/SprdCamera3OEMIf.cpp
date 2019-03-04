@@ -8350,6 +8350,13 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         // for zsl hdr
         if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+            if (zsl_frame.monoboottime < mZslSnapshotTime) {
+                HAL_LOGD("not the right hdr frame, skip it");
+                mHalOem->ops->camera_set_zsl_buffer(
+                    obj->mCameraHandle, zsl_frame.y_phy_addr,
+                    zsl_frame.y_vir_addr, zsl_frame.fd);
+                continue;
+            }
             src_sw_algorithm_buf.height = zsl_frame.height;
             src_sw_algorithm_buf.width = zsl_frame.width;
             src_sw_algorithm_buf.fd = zsl_frame.fd;
