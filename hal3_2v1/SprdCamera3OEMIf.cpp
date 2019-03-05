@@ -8601,7 +8601,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED ||
         type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
         if (mCommonHeapReserved == NULL) {
-            mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
+            mem_size = CAMERA_ALIGNED_16(mLargestPictureWidth) *
+                       CAMERA_ALIGNED_16(mLargestPictureHeight) * 3 / 2;
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
                 HAL_LOGE("memory is null");
