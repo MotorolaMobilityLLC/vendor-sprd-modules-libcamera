@@ -2232,7 +2232,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			rtn = AE_ERROR;
 			goto SET_SCENE_MOD_EXIT;
 		}
-		if(CAMERA_MODE_MANUAL == cxt->app_mode)
+		if(CAMERA_MODE_MANUAL == cxt->app_mode && (cxt->manual_level != 0xff))
 			prv_status->settings.ev_index = cxt->manual_level;
 		target_lum = ae_calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
@@ -6171,6 +6171,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->env_cum_changed = 0;
 	cxt->previous_lum = 0;
 	cxt->bypass = init_param->has_force_bypass;
+	cxt->manual_level = 0xff;
 	if (init_param->has_force_bypass) {
 		cxt->cur_param->touch_info.enable = 0;
 		cxt->cur_param->face_param.face_tuning_enable = 0;
