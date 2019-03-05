@@ -461,6 +461,7 @@ struct lsc_ctrl_context {
 	cmr_u16 *lsc_buffer;
 	cmr_u16 *fwstart_new_scaled_table;
 	cmr_u16 *fwstop_output_table;
+	cmr_u16 *flash_y_gain;
 	cmr_u32 *ae_stat;
 	cmr_u32 img_width;
 	cmr_u32 img_height;

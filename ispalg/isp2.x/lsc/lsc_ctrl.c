@@ -23,6 +23,7 @@
 #include "isp_mw.h"
 #include <utils/Timers.h>
 #include <sys/stat.h>
+#include <math.h>
 #define SMART_LSC_VERSION 1
 
 cmr_u32 proc_start_gain_w = 0;                  // SBS master gain width
@@ -1640,6 +1641,52 @@ void dump_lsc_gain(unsigned short* lsc_table_in, unsigned int lsc_with,unsigned 
 	}
 }
 
+static void gen_flash_y_gain(unsigned short* flash_y_gain, unsigned int gain_width, unsigned int gain_height, unsigned int percent, unsigned int shift_x, unsigned int shift_y)
+{
+	unsigned int i, j;
+	float ratio_4, ratio_2, x_2, y_2, cos_2, cos_4, inv_cos_4;
+	unsigned int table_width  = 200;
+	unsigned int table_height = 150;
+	unsigned short inv_cos4_table[200*150] = {0};
+	unsigned int center_x = table_width /2;
+	unsigned int center_y = table_height/2;
+	unsigned int length_2 = center_x*center_x + center_y*center_y;
+
+	if(percent == 0 || shift_x == 0 || shift_y ==0){
+		for(i=0; i<gain_width*gain_height; i++){
+			flash_y_gain[i] = 0;
+		}
+	}else{
+		percent = percent <    0 ?    0 : percent;
+		percent = percent > 1000 ? 1000 : percent;
+		shift_x = shift_x <  50 ?  50 : shift_x;
+		shift_x = shift_x > 150 ? 150 : shift_x;
+		shift_y = shift_y <  50 ?  50 : shift_y;
+		shift_y = shift_y > 150 ? 150 : shift_y;
+		center_x = center_x + shift_x - 100;
+		center_y = center_y + shift_y - 100;
+
+		ratio_4 = 100.0 / (float)(percent + 100);
+		ratio_2 = (float)(sqrt((double)(ratio_4)));
+		x_2 = ratio_2/(1.0 - ratio_2);
+
+		ISP_LOGI("[ALSC] flash_y_gain, percent=%d, shift_x=%d, shift_y=%d, center_x=%d, center_y=%d, length_2=%d, ratio_4=%f, ratio_2=%f, x_2=%f", percent, shift_x, shift_y, center_x, center_y, length_2, ratio_4, ratio_2, x_2);
+
+		for(j=0; j<table_height; j++){
+			for(i=0; i<table_width; i++){
+				y_2 = (float)((i-center_x)*(i-center_x) + (j-center_y)*(j-center_y))/length_2;
+				cos_2 = x_2 / (x_2 + y_2);
+				cos_4 = cos_2 * cos_2;
+				inv_cos_4 = 1.0/cos_4;
+
+				inv_cos4_table[j*table_width + i] = (unsigned short)(inv_cos_4 * 1024);
+			}
+		}
+
+		_scale_bilinear_short(inv_cos4_table, table_width, table_height, flash_y_gain, gain_width, gain_height);
+	}
+}
+
 static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, struct lsc_ctrl_context *cxt)
 {
 	cmr_s32 i, post_act_index;
@@ -1799,6 +1846,9 @@ static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, 
 	ISP_LOGV("[ALSC] init_weight_r = %d, lsc_id=%d", param->weight_r, cxt->lsc_id);
 	ISP_LOGV("[ALSC] init_weight_b = %d, lsc_id=%d", param->weight_b, cxt->lsc_id);
 	ISP_LOGV("[ALSC] init_bv2gainw_en = %d, lsc_id=%d", param->bv2gainw_en, cxt->lsc_id);
+	ISP_LOGV("[ALSC] flash_y_ratio = %d, lsc_id=%d", param->flash_enhance_en, cxt->lsc_id);
+	ISP_LOGV("[ALSC] flash_shift_x = %d, lsc_id=%d", param->flash_enhance_max_strength, cxt->lsc_id);
+	ISP_LOGV("[ALSC] flash_shift_y = %d, lsc_id=%d", param->flash_enahnce_gain, cxt->lsc_id);
 	for(i=0; i<6; i++){
 		ISP_LOGV("[ALSC] init_bv2gainw_p_bv[%d]=%d, lsc_id=%d", i, param->bv2gainw_p_bv[i], cxt->lsc_id);
 		ISP_LOGV("[ALSC] init_bv2gainw_b_gainw[%d]=%d, lsc_id=%d", i, param->bv2gainw_b_gainw[i], cxt->lsc_id);
@@ -1807,6 +1857,9 @@ static cmr_s32 _lscsprd_set_tuning_param(struct lsc_adv_init_param *init_param, 
 
 	// lsc_debug_info_ptr
 	init_param->lsc_debug_info_ptr = cxt->lsc_debug_info_ptr;
+
+	// generate flash_y_gain
+	gen_flash_y_gain(cxt->flash_y_gain, cxt->gain_width, cxt->gain_height, param->flash_enhance_en, param->flash_enhance_max_strength, param->flash_enahnce_gain);
 
 	return rtn;
 }
@@ -1892,6 +1945,13 @@ static void *lsc_sprd_init(void *in, void *out)
 	if (NULL == cxt->fwstop_output_table) {
 		rtn = LSC_ALLOC_ERROR;
 		ISP_LOGE("fail to alloc fwstop_output_table!");
+		goto EXIT;
+	}
+
+	cxt->flash_y_gain = (cmr_u16 *) malloc(32 * 32 * sizeof(cmr_u16));
+	if (NULL == cxt->flash_y_gain) {
+		rtn = LSC_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc flash_y_gain!");
 		goto EXIT;
 	}
 
@@ -2018,6 +2078,7 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 	std_free(cxt->ae_stat);
 	std_free(cxt->post_shading_gain_param);
 	std_free(cxt->lsc_flash_proc_param);
+	std_free(cxt->flash_y_gain);
 	if(cxt->lsc_id==1){
 		id1_addr = NULL;
 	}else{
@@ -2680,7 +2741,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	// cmd set table index
 	if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
 		ISP_LOGI("[ALSC] cmd_alsc_table_index=%d", cxt->cmd_alsc_table_index);
-		if(cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0){
+		if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
 			if(cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
 				memcpy(cxt->lsc_buffer, cxt->std_init_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
 			}else{
@@ -3623,8 +3684,19 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			cxt->can_update_dest=0;
 			cxt->alsc_update_flag = 0;
 
-			// apply the guessing table
-			memcpy(cxt->lsc_buffer, flash_param->preflash_guessing_mainflash_output_table, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+			if(cxt->flash_y_gain[0] == 0){
+				// apply the guessing table
+				memcpy(cxt->lsc_buffer, flash_param->preflash_guessing_mainflash_output_table, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+			}else{
+				// apply the guessing table and flash_y_gain
+				ISP_LOGV("[ALSC] flash lsc apply flash_y_gain");
+				for(i=0; i<cxt->gain_width*cxt->gain_height; i++){
+					cxt->lsc_buffer[4*i + 0] = flash_param->preflash_guessing_mainflash_output_table[4*i + 0] * cxt->flash_y_gain[i] / 1024;
+					cxt->lsc_buffer[4*i + 1] = flash_param->preflash_guessing_mainflash_output_table[4*i + 1] * cxt->flash_y_gain[i] / 1024;
+					cxt->lsc_buffer[4*i + 2] = flash_param->preflash_guessing_mainflash_output_table[4*i + 2] * cxt->flash_y_gain[i] / 1024;
+					cxt->lsc_buffer[4*i + 3] = flash_param->preflash_guessing_mainflash_output_table[4*i + 3] * cxt->flash_y_gain[i] / 1024;
+				}
+			}
 			ISP_LOGV("[ALSC] FLASH_MAIN_BEFORE, copy preflash_guessing_mainflash_output_table=[%d,%d,%d,%d] to cxt->lsc_buffer, lsc_id=%d",
 					flash_param->preflash_guessing_mainflash_output_table[0], flash_param->preflash_guessing_mainflash_output_table[1], flash_param->preflash_guessing_mainflash_output_table[2], flash_param->preflash_guessing_mainflash_output_table[3], cxt->lsc_id);
 
