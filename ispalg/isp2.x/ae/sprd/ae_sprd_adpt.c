@@ -4498,7 +4498,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 	cmr_s16 change_offset = 0;
 
 	if (exp_comp) {
-		if (1 == cxt->app_mode) {
+		if ((1 == cxt->app_mode) && (cxt->cur_status.settings.flash == FLASH_NONE)) {
 			struct ae_set_ev ev;
 			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
 			if (ev.level < AE_LEVEL_MAX) {
