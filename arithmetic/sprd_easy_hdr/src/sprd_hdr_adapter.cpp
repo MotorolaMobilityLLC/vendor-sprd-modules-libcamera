@@ -1,5 +1,7 @@
 #include "sprd_hdr_adapter.h"
 #include "sprd_hdr_adapter_log.h"
+#include "properties.h"
+#include <string.h>
 
 #ifdef CONFIG_SPRD_HDR_LIB
 #include "HDR_SPRD.h"
@@ -26,7 +28,16 @@ void *sprd_hdr_adpt_init(int max_width, int max_height, void *param)
 	cfg.img_width = max_width;
 	cfg.img_height = max_height;
 	cfg.img_stride = max_width;
-	
+
+    char strRunType[256];
+    property_get("persist.vendor.cam.hdr2.run_type", strRunType , "");
+    if (!(strcmp("cpu", strRunType)))
+        g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
+    else if (!(strcmp("vdsp", strRunType)))
+        g_run_type = SPRD_CAMALG_RUN_TYPE_VDSP;
+
+    HDR_LOGI("current run type: %d\n", g_run_type);
+
 	if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU)
 		sprd_hdr_open(&handle, &cfg);
 	else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
