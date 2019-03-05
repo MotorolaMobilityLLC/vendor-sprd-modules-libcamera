@@ -74,6 +74,7 @@ struct class_fd {
     FD_DETECTOR_HANDLE hDT;     /* Face Detection Handle */
     FA_ALIGN_HANDLE hFaceAlign; /* Handle for face alignment */
     FAR_RECOGNIZER_HANDLE hFAR; /* Handle for face attribute recognition */
+    struct frm_info trans_frm;
 };
 
 struct fd_start_parameter {
@@ -260,7 +261,12 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     if (!is_busy) {
         fd_handle->frame_cnt = 0;
         fd_handle->frame_in = *in;
-
+        if (in->dst_frame.reserved) {
+            memcpy((void *)&fd_handle->trans_frm, in->dst_frame.reserved,
+                   sizeof(struct frm_info));
+            fd_handle->frame_in.dst_frame.reserved =
+                (void *)&fd_handle->trans_frm;
+        }
         param.frame_data = (void *)in->src_frame.addr_vir.addr_y;
         param.frame_cb = fd_handle->frame_cb;
         param.caller_handle = in->caller_handle;
@@ -746,7 +752,8 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
             // it is a tuning parameter, must
             // be in [1, 50]
             char algo_smile_thr_char[PROPERTY_VALUE_MAX];
-            property_get("persist.vendor.cam.smile.thr", algo_smile_thr_char, "1");
+            property_get("persist.vendor.cam.smile.thr", algo_smile_thr_char,
+                         "1");
             cmr_int algo_smile_threshold = atoi(algo_smile_thr_char);
             if (algo_smile_threshold <= 0 || algo_smile_threshold > 50) {
                 CMR_LOGW("algo smile threadhold is %ld out of range: [1, 50], "
