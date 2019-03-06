@@ -72,6 +72,10 @@ enum sprd_fd_clk_freq {
     SPRD_FD_CLK_FREQ_INVALID
 };
 
+enum sprd_fd_iommu_status {
+    SPRD_FD_IOMMU_ENABLED,
+    SPRD_FD_IOMMU_DISABLED
+};
 /*structure for fd
  * reg_param--> send the addr param to be updated
  * reg_val--> value to the corresponding bit
@@ -102,5 +106,6 @@ struct sprd_fd_multi_reg_cfg_param {
 	_IOR(SPRD_FD_IO_MAGIC, 5, unsigned int)
 #define SPRD_FD_IO_IDLE_CLOCK_SEL \
 	_IOR(SPRD_FD_IO_MAGIC, 6, unsigned int)
-
+#define SPRD_FD_IO_GET_IOMMU_STATUS \
+	_IOR(SPRD_FD_IO_MAGIC, 7, unsigned int)
 #endif

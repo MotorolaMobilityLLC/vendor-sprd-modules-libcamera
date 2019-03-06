@@ -158,7 +158,26 @@ static int fd_ioctl_dvfs_idle_clk_cfg(struct fd_module *module,
 	return ret;
 }
 
+static int fd_ioctl_get_iommu_status(struct fd_module *module,
+					unsigned long arg)
+{
+	int ret = 0;
+	unsigned int status;
 
+	mutex_lock(&module->mod_lock);
+	if (get_iommu_status(CAM_IOMMUDEV_FD) ==  0)
+		status = SPRD_FD_IOMMU_ENABLED;
+	else
+		status = SPRD_FD_IOMMU_DISABLED;
+
+	pr_info("FD_core, iommu enable %d\n", status);
+
+	ret = copy_to_user((unsigned int  __user *)arg,	&status,
+				sizeof(unsigned int)
+				);
+	mutex_unlock(&module->mod_lock);
+	return ret;
+}
 static struct fd_ioctl_cmd fd_ioctl_cmds_table[] = {
 
 	[_IOC_NR(SPRD_FD_IO_WRITE)] = {SPRD_FD_IO_WRITE,
@@ -175,6 +194,8 @@ static struct fd_ioctl_cmd fd_ioctl_cmds_table[] = {
 						fd_ioctl_dvfs_work_clk_cfg},
 	[_IOC_NR(SPRD_FD_IO_IDLE_CLOCK_SEL)] = {SPRD_FD_IO_IDLE_CLOCK_SEL,
 						fd_ioctl_dvfs_idle_clk_cfg},
+	[_IOC_NR(SPRD_FD_IO_GET_IOMMU_STATUS)] = {SPRD_FD_IO_GET_IOMMU_STATUS,
+						fd_ioctl_get_iommu_status},
 };
 
 static int sprd_fd_open(struct inode *node, struct file *file)
@@ -236,18 +257,8 @@ static long sprd_fd_ioctl(struct file *file, unsigned int cmd,
 	struct fd_ioctl_cmd *p_ioctl = NULL;
 	int ioctl_nr = _IOC_NR(cmd);
 	struct miscdevice *md = file->private_data;
-	//unsigned int result = 0;
 
 	pr_info("%s start %d\n", __func__, ioctl_nr);
-#if 0
-	if (cmd == SPRD_FD_IO_CHECK_RESULT) {
-
-		ret = copy_from_user(&result, (unsigned int *)arg,
-			sizeof(unsigned int));
-		pr_info("fd result %d\n", result);
-		return 0;
-	}
-#endif
 	module  = md->this_device->platform_data;
 	p_ioctl = &fd_ioctl_cmds_table[ioctl_nr];
 	if (!p_ioctl->cmd_proc) {

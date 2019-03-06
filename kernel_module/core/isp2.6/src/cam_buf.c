@@ -146,6 +146,7 @@ int get_iommu_status(enum cam_iommudev_type type)
 
 	return ret;
 }
+EXPORT_SYMBOL(get_iommu_status);
 
 static struct iommudev_info *get_iommu_dev(
 	enum cam_iommudev_type type, struct device *dev)
