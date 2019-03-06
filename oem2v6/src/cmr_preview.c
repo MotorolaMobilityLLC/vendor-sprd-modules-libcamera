@@ -764,7 +764,8 @@ static cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
                                   struct preview_out_param *out_param_ptr);
 
 static cmr_int prev_update_cap_param(struct prev_handle *handle,
-                                     cmr_u32 camera_id, cmr_u32 encode_angle);
+                                     cmr_u32 camera_id, cmr_u32 encode_angle,
+                                     struct snp_proc_param *out_param_ptr);
 
 static cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
                                           cmr_u32 camera_id);
@@ -2191,7 +2192,8 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data) {
         camera_id = (cmr_u32)((unsigned long)inter_param->param1);
 
         ret = prev_update_cap_param(
-            handle, camera_id, (cmr_u32)((unsigned long)inter_param->param2));
+            handle, camera_id, (cmr_u32)((unsigned long)inter_param->param2),
+            (struct snp_proc_param *)inter_param->param3);
 
         ret = prev_get_cap_post_proc_param(
             handle, camera_id, (cmr_u32)((unsigned long)inter_param->param2),
@@ -11269,7 +11271,8 @@ exit:
 }
 
 static cmr_int prev_update_cap_param(struct prev_handle *handle,
-                                     cmr_u32 camera_id, cmr_u32 encode_angle) {
+                                     cmr_u32 camera_id, cmr_u32 encode_angle,
+                                     struct snp_proc_param *out_param_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct sensor_exp_info *sensor_info = NULL;
     struct sensor_mode_info *sensor_mode_info = NULL;
@@ -11301,6 +11304,12 @@ static cmr_int prev_update_cap_param(struct prev_handle *handle,
         /*normal cap ignore this*/
         cmr_bzero(&chn_param, sizeof(struct channel_start_param));
         prev_cxt->prev_param.encode_angle = encode_angle;
+        if (out_param_ptr->thumb_size.width !=
+                prev_cxt->prev_param.thumb_size.width ||
+            out_param_ptr->thumb_size.height !=
+                prev_cxt->prev_param.thumb_size.height) {
+            prev_cxt->prev_param.thumb_size = out_param_ptr->thumb_size;
+        }
 
         /*trigger cap mem re-arrange*/
         ret = prev_alloc_cap_buf(handle, camera_id, 1, &chn_param.buffer);
