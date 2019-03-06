@@ -559,9 +559,13 @@ static cmr_u32 s5k5e8yx_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x01);
     cap_shutter = s5k5e8yx_drv_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
     s5k5e8yx_drv_write_gain(handle, cap_gain);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
+
     SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = 0x%x",
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
@@ -603,8 +607,10 @@ static cmr_int s5k5e8yx_drv_write_exposure(cmr_handle handle, cmr_uint param) {
                 exposure_line, dummy_line);
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x01);
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         s5k5e8yx_drv_update_exposure(handle, exposure_line, dummy_line);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
     return ret_value;
 }
@@ -640,7 +646,10 @@ static cmr_int s5k5e8yx_drv_write_gain_value(cmr_handle handle, cmr_u32 param) {
     SENSOR_LOGI("param = 0x%x real_gain %f", param, real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x01);
     s5k5e8yx_drv_write_gain(handle, real_gain);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
     return ret_value;
 }
