@@ -98,6 +98,82 @@ enum isp_special_effect_mode {
 	ISP_EFFECT_MAX
 };
 
+
+/* Following enum/structure used for new isp pm searching solution */
+
+/* ***Custom*** */
+enum tuning_custom {
+	DEFMODE_DEFAULT = 0x0000,
+	DEFMODE_CUSTOM0,
+	DEFMODE_CUSTOM1,
+	DEFMODE_CUSTOM2,
+	DEFMODE_CUSTOM_MAX
+};
+
+/* ***Mode*** */
+enum tuning_mode {
+	WORKMODE_PREVIEW = 0x0000,
+	WORKMODE_CAPTURE,
+	WORKMODE_VIDEO,
+	WORKMODE_MAX,
+};
+
+/* ***Scene (app scene mode)*** */
+enum tuning_scene_mode {
+	//normal scene
+	SCENEMODE_NROMAL = 0x0000,
+	SCENEMODE_NIGHT,
+	SCENEMODE_SPORT, //0x0002
+	SCENEMODE_PORTRAIT,
+	SCENEMODE_LANDSCAPE,
+	SCENEMODE_PANORAMA, //0x0005
+	SCENEMODE_BOKEH,
+	SCENEMODE_FIREWORK,
+	SCENEMODE_DUSK,
+	SCENEMODE_AUTUMN,   //0x0009
+	SCENEMODE_SLOWMOTION,
+
+	//known AI  scene
+	SCENEMODE_AI_NIGHT = 0x0100,
+	SCENEMODE_AI_BACKLIGHT,
+	SCENEMODE_AI_SUNRISESET,
+	SCENEMODE_AI_FIREWORK,
+	SCENEMODE_AI_OTHERS,
+	SCENEMODE_AI_FOOD,
+	SCENEMODE_AI_GREENPLANT,
+	SCENEMODE_AI_DOCUMENT, //texture
+	SCENEMODE_AI_CATDOG,
+	SCENEMODE_AI_FLOWER,
+	SCENEMODE_AI_BLUESKY,
+	SCENEMODE_AI_BUILDING,
+	SCENEMODE_AI_SNOW,
+
+	//custom scene
+	SCENEMODE_WECHAT= 0x0200,
+	SCENEMODE_HDR,
+	SCENEMODE_FACE_YELLOW,
+	SCENEMODE_FACE_BLACK,
+	SCENEMODE_FACE_WHITE,
+	SCENEMODE_CUSTOM0,
+	SCENEMODE_CUSTOM1,
+	SCENEMODE_CUSTOM2,
+
+	SCENEMODE_MAX
+};
+
+struct sensor_find_param_list {
+    cmr_u32 custom; /* should be enum tuning_custom */
+    cmr_u32 scene;  /* should be enum tuning_scene_mode*/
+    cmr_u32 mode;  /* should be enum tuning_mode*/
+    cmr_u32 size_w;
+    cmr_u32 size_h;
+    cmr_u32 blk_id;
+    cmr_u32 param_mode_id;
+    cmr_u32 param_scene_id;
+};
+/* End of new isp pm searching solution enum/structure define */
+
+
 //testcode,should ask AE module to change struct define mothod
 struct ae_exp_gain_index_2 {
 	cmr_u32 min_index;
@@ -2043,6 +2119,11 @@ struct sensor_nr_fix_info {
 	struct sensor_nr_level_map_param *nr_default_level_ptr;
 };
 
+struct sensor_param_list_info {
+	struct sensor_find_param_list  *list_ptr;
+	cmr_u32 list_len;
+};
+
 struct sensor_raw_info {
 	struct sensor_version_info *version_info;
 	struct isp_mode_param_info mode_ptr[MAX_MODE_NUM];
@@ -2052,6 +2133,7 @@ struct sensor_raw_info {
 	struct sensor_raw_fix_info *fix_ptr[MAX_MODE_NUM];
 	struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
 	struct sensor_nr_fix_info nr_fix;
+	struct sensor_param_list_info param_list_info;
 };
 
 struct denoise_param_update {

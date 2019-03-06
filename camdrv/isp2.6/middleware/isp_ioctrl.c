@@ -1300,6 +1300,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 	param_source = ISP_PARAM_FROM_TOOL;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_PARAM_SOURCE, (void *)&param_source, NULL);
 
+	memset(&input, 0, sizeof(input));
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
 			input.tuning_data[i].data_ptr = sensor_raw_info_ptr->mode_ptr[i].addr;
@@ -1311,6 +1312,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 		}
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
+	input.sensor_raw_info_ptr = sensor_raw_info_ptr;
 
 	ret = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != ret) {
@@ -1452,6 +1454,7 @@ static cmr_int ispctl_param_update(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_pm_ioctl_input awb_input = { NULL, 0 };
 	struct isp_pm_ioctl_output awb_output = { NULL, 0 };
 	struct awb_data_info awb_data_ptr = { NULL, 0 };
+	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
 
 	ISP_LOGV("--IOCtrl--PARAM_UPDATE--");
 
@@ -1464,10 +1467,15 @@ static cmr_int ispctl_param_update(cmr_handle isp_alg_handle, void *param_ptr)
 		ISP_LOGE("fail to get valid param!");
 		return ISP_PARAM_NULL;
 	}
+	sensor_raw_info_ptr = (struct sensor_raw_info *)cxt->sn_cxt.sn_raw_info;
+	if (sensor_raw_info_ptr == NULL) {
+		ISP_LOGV("sensor_raw_info_ptr is  null");
+	}
 
 	param_source = ISP_PARAM_FROM_TOOL;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_PARAM_SOURCE, (void *)&param_source, NULL);
 
+	memset(&input, 0, sizeof(input));
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		if (mode_param_ptr->mode_id == i) {
 			input.tuning_data[i].data_ptr = mode_param_ptr;
@@ -1478,6 +1486,7 @@ static cmr_int ispctl_param_update(cmr_handle isp_alg_handle, void *param_ptr)
 		}
 		mode_param_ptr = (struct isp_mode_param *)((cmr_u8 *) mode_param_ptr + mode_param_ptr->size);
 	}
+	input.sensor_raw_info_ptr = sensor_raw_info_ptr;
 
 	ret = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, NULL);
 	if (ISP_SUCCESS != ret) {
@@ -2080,63 +2089,12 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
-	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
-	struct isp_awbc_cfg awbc_cfg;
-	struct smart_proc_input smart_proc_in;
-	cmr_u32 ret = ISP_SUCCESS;
-
-	memset((void *)&smart_proc_in, 0, sizeof(struct smart_proc_input));
-
-	cxt->takepicture_mode = CAMERA_ISP_SIMULATION_MODE;
 
 	scene_parm = (struct isptool_scene_param *)param_ptr;
+	memcpy(&cxt->simu_param, scene_parm, sizeof(struct isptool_scene_param));
+	cxt->takepicture_mode = CAMERA_ISP_SIMULATION_MODE;
 
-	awbc_cfg.r_gain = scene_parm->awb_gain_r;
-	awbc_cfg.g_gain = scene_parm->awb_gain_g;
-	awbc_cfg.b_gain = scene_parm->awb_gain_b;
-	awbc_cfg.r_offset = 0;
-	awbc_cfg.g_offset = 0;
-	awbc_cfg.b_offset = 0;
-
-	ioctl_data.id = ISP_BLK_AWB_NEW;
-	ioctl_data.cmd = ISP_PM_BLK_AWBC;
-	ioctl_data.data_ptr = &awbc_cfg;
-	ioctl_data.data_size = sizeof(awbc_cfg);
-
-	ioctl_input.param_data_ptr = &ioctl_data;
-	ioctl_input.param_num = 1;
-
-	if (0 == awbc_cfg.r_gain && 0 == awbc_cfg.g_gain && 0 == awbc_cfg.b_gain) {
-		awbc_cfg.r_gain = 1800;
-		awbc_cfg.g_gain = 1024;
-		awbc_cfg.b_gain = 1536;
-	}
-
-	ISP_LOGV("AWB_TAG:  ret=%d, gain=(%d, %d, %d)", ret, awbc_cfg.r_gain, awbc_cfg.g_gain, awbc_cfg.b_gain);
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("fail to set awb gain ");
-		return ret;
-	}
-
-	//cxt->rgb_glb_gain = scene_parm->global_gain;
-	//ISP_LOGV("global_gain = %d", cxt->rgb_glb_gain);
-
-	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
-	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
-	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
-	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-	smart_proc_in.handle_pm = cxt->handle_pm;
-	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
-	if (cxt->ops.smart_ops.calc)
-		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("fail to set smart gain");
-		return ret;
-	}
-
-	return ret;
+	return 0;
 }
 
 static cmr_int ispctl_force_ae_quick_mode(cmr_handle isp_alg_handle, void *param_ptr)

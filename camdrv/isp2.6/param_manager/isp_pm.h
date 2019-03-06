@@ -82,12 +82,16 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_UPDATE_THIRD_PART_BASE = 0x6000,
 };
 
-struct pm_workmode_info {
+struct pm_workmode_input {
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 cam_4in1_mode;
-	cmr_u32 mode_id;
-	cmr_u32 prv_mode_id;
-	cmr_u32 cap_mode_id;
+	cmr_u32 pm_sets_num;
+	cmr_u32 mode_id[PARAM_SET_MAX];
+	enum tuning_mode mode[PARAM_SET_MAX];
+	enum tuning_scene_mode scene[PARAM_SET_MAX];
+	enum tuning_custom define[PARAM_SET_MAX];
+	cmr_u32 img_w[PARAM_SET_MAX];
+	cmr_u32 img_h[PARAM_SET_MAX];
 };
 
 struct isp_pm_init_input {
@@ -134,5 +138,6 @@ cmr_handle isp_pm_init(struct isp_pm_init_input *input, struct isp_pm_init_outpu
 cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_deinit(cmr_handle handle);
+
 
 #endif

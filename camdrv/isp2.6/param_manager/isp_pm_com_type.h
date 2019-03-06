@@ -26,14 +26,15 @@ extern "C" {
 
 
 #define ISP_TUNE_MODE_MAX 16
-#define ISP_TUNE_BLOCK_MAX 256
+#define ISP_TUNE_BLOCK_MAX 64
 #define ISP_TUNE_MODE_INVALID 0xff
 #define ISP_PM_MAGIC_FLAG        0xFFEE5511
+#define ISP_PM_BLK_UPDATE   (1 << 31)
 
 enum {
-	ISP_SCENE_PRV = 0,
-	ISP_SCENE_CAP,
-	ISP_SCENE_MAX
+	PARAM_SET0 = 0,
+	PARAM_SET1,
+	PARAM_SET_MAX
 };
 
 enum isp_pm_blk_cmd {
@@ -226,6 +227,16 @@ struct isp_pm_mode_param {
 	cmr_u32 fps;
 	struct isp_pm_block_header header[ISP_TUNE_BLOCK_MAX];
 	cmr_u32 data_area[0];
+};
+
+struct isp_pm_blocks_param {
+	cmr_u32 is_init;
+	cmr_u32 block_num;
+	struct isp_size resolution;
+	cmr_u32 cus_define;
+	cmr_u32 scene;
+	cmr_u32 mode;
+	struct isp_pm_block_header header[ISP_TUNE_BLOCK_MAX];
 };
 
 struct isp_pm_nr_header_param {
