@@ -134,9 +134,8 @@ int dcam_k_bpc_ppe_param(struct dcam_dev_param *param)
 	param->bpc.update &= (~(_UPDATE_PPE));
 	p = &(param->bpc.ppi_info);
 
-	DCAM_REG_MWR(idx, ISP_PPI_PARAM, BIT_0, p->ppi_bypass & 1);
-	if (p->ppi_bypass)
-		return 0;
+	val = ((p->ppi_phase_map_corr_en & 1) << 3) | (p->ppi_bypass & 1);
+	DCAM_REG_MWR(idx, ISP_PPI_PARAM, BIT_3 | BIT_0, val);
 
 	val = ((p->ppi_upperbound_gr & 0x3ff) << 16) |
 		(p->ppi_upperbound_gb & 0x3ff);
@@ -145,6 +144,17 @@ int dcam_k_bpc_ppe_param(struct dcam_dev_param *param)
 	val = ((p->ppi_upperbound_r & 0x3ff) << 16) |
 		(p->ppi_upperbound_b & 0x3ff);
 	DCAM_REG_WR(idx, ISP_PPI_GAIN_PARA1, val);
+
+	val = ((p->ppi_blc_b & 0x3ff) << 10) |
+		(p->ppi_blc_r & 0x3ff);
+	DCAM_REG_WR(idx, ISP_PPI_BLC_PARA0, val);
+
+	val = ((p->ppi_blc_gb & 0x3ff) << 10) |
+		(p->ppi_blc_gr & 0x3ff);
+	DCAM_REG_WR(idx, ISP_PPI_BLC_PARA1, val);
+
+	if (!p->ppi_phase_map_corr_en)
+		return 0;
 
 	offset = PDAF_CORR_TABLE_START;
 	for (i = 0; i < PDAF_PPI_GAIN_MAP_LEN; i++) {

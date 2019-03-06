@@ -527,7 +527,7 @@ struct dcam_bpc_ppi_info{
 	uint32_t ppi_blc_b;
 	uint32_t ppi_blc_gr;
 	uint32_t ppi_blc_gb;
-
+	uint32_t ppi_phase_map_corr_en;
 	uint16_t ppi_l_gain_map[PDAF_PPI_GAIN_MAP_LEN];
 	uint16_t ppi_r_gain_map[PDAF_PPI_GAIN_MAP_LEN];
 };

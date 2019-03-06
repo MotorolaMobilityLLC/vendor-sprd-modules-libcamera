@@ -46,6 +46,7 @@ static cmr_u32 _pm_ppe_convert_param(void *dst_param,
 		dst_ptr->cur.ppi_blc_b = ppe_param[strength_level].pdaf_blacklevel.pdaf_b;
 		dst_ptr->cur.ppi_blc_gr = ppe_param[strength_level].pdaf_blacklevel.pdaf_gr;
 		dst_ptr->cur.ppi_blc_gb = ppe_param[strength_level].pdaf_blacklevel.pdaf_gb;
+		dst_ptr->cur.ppi_phase_map_corr_en = ppe_param[strength_level].phase_map_corr_en;
 		for (i = 0; i < PDAF_GAIN_MAP_LEN; i++)
 			dst_ptr->cur.ppi_l_gain_map[i] = ppe_param[strength_level].pdaf_l_gain_map[i];
 		for (i = 0; i < PDAF_GAIN_MAP_LEN; i++)
