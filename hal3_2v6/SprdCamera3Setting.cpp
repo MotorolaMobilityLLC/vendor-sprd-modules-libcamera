@@ -1767,7 +1767,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.contrast = 3;
     s_setting[cameraId].sprddefInfo.saturation = 3;
 
-   // better not use default value 0,so set default value -1
+    // better not use default value 0,so set default value -1
     s_setting[cameraId].sprddefInfo.sprd_appmode_id = -1;
 
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
@@ -3543,10 +3543,12 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
-        s_setting[mCameraId].sprddefInfo.device_orietation =
+        uint32_t device_orientation =
             frame_settings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
-        pushAndroidParaTag(ANDROID_SPRD_DEVICE_ORIENTATION);
-        HAL_LOGD("device_orietation %d",
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.device_orietation,
+                         device_orientation, ANDROID_SPRD_DEVICE_ORIENTATION, 1)
+
+        HAL_LOGV("device_orietation %d",
                  s_setting[mCameraId].sprddefInfo.device_orietation);
     }
 
