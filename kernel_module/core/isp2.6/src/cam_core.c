@@ -1437,6 +1437,14 @@ static int cal_channel_size(struct camera_module *module)
 		ch_cap->swap_size.h = ch_cap->ch_uinfo.src_size.h;
 		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
 			(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
+		ch_cap->trim_isp.start_x &= ~1;
+		ch_cap->trim_isp.start_y &= ~1;
+		ch_cap->trim_isp.size_x &= ~1;
+		ch_cap->trim_isp.size_y &= ~1;
+		if (ch_cap->trim_isp.size_x > trim_c.size_x)
+			ch_cap->trim_isp.size_x = trim_c.size_x;
+		if (ch_cap->trim_isp.size_y > trim_c.size_y)
+			ch_cap->trim_isp.size_y = trim_c.size_y;
 		pr_info("trim isp, cap %d %d %d %d\n",
 				ch_cap->trim_isp.start_x, ch_cap->trim_isp.start_y,
 				ch_cap->trim_isp.size_x, ch_cap->trim_isp.size_y);
@@ -3211,6 +3219,7 @@ static int img_ioctl_set_crop(
 {
 	int ret = 0, zoom = 0;
 	uint32_t channel_id;
+	struct img_size max;
 	struct channel_context *ch, *ch_vid;
 	struct sprd_img_rect *crop;
 	struct camera_frame *first = NULL;
@@ -3258,11 +3267,13 @@ static int img_ioctl_set_crop(
 	ret = copy_from_user(crop,
 			(void __user *)&uparam->crop_rect,
 			sizeof(struct sprd_img_rect));
+	if (unlikely(ret)) {
+		pr_err("fail to copy from user, ret %d\n", ret);
+		goto exit;
+	}
 
-	crop->x = ALIGN(crop->x, 2);
-	crop->y = ALIGN(crop->y, 2);
-	crop->w = ALIGN(crop->w, 4);
-	crop->h = ALIGN(crop->h, 4);
+	max.w = module->cam_uinfo.sn_rect.w;
+	max.h = module->cam_uinfo.sn_rect.h;
 
 	pr_info("4in1[%d],set ch%d crop %d %d %d %d.\n",
 		module->cam_uinfo.is_4in1, channel_id,
@@ -3270,15 +3281,24 @@ static int img_ioctl_set_crop(
 	/* 4in1 prev, enable 4in1 binning, size/2 */
 	if (module->cam_uinfo.is_4in1 &&
 		((channel_id == CAM_CH_PRE) || (channel_id == CAM_CH_VID))) {
-		crop->x = ALIGN(crop->x / 2, 2);
-		crop->y = ALIGN(crop->y / 2, 2);
-		crop->w = ALIGN(crop->w / 2, 2);
-		crop->h = ALIGN(crop->h / 2, 2);
+		crop->x >>= 1;
+		crop->y >>= 1;
+		crop->w >>= 1;
+		crop->h >>= 1;
+		max.w >>= 1;
+		max.h >>= 1;
 	}
-	if (unlikely(ret)) {
-		pr_err("fail to copy from user, ret %d\n", ret);
-		goto exit;
-	}
+	crop->x &= ~1;
+	crop->y &= ~1;
+	crop->w = ((crop->w + 3) & ~3);
+	crop->h = ((crop->h + 3) & ~3);
+	if ((crop->x + crop->w) > max.w)
+		crop->w -= 4;
+	if ((crop->y + crop->h) > max.h)
+		crop->h -= 4;
+
+	pr_info("aligned crop %d %d %d %d.  max %d %d\n",
+		crop->x, crop->y, crop->w, crop->h, max.w, max.h);
 
 	if (zoom) {
 		if (camera_enqueue(&ch->zoom_coeff_queue, zoom_param)) {
