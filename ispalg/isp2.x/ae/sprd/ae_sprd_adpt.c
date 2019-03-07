@@ -2352,7 +2352,7 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 
        if (enable) {
 		ISP_LOGI("cxt->expchanged:%d",cxt->expchanged);
-		if(cxt->expchanged == 0){
+		if((cxt->expchanged == 0)&&(cxt->appunlock==0)){
 			if(cxt->sync_cur_result.wts.cur_index==0) {
 				cxt->sync_cur_result.wts.cur_index=280;
 				ISP_LOGD("wts.cur_index is Zero");
