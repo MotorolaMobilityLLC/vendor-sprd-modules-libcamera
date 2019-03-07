@@ -125,6 +125,7 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
 static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle);
 static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle);
+static cmr_int hdr_sprd_adapter_fast_stop(struct class_hdr *hdr_handle);
 static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle,
                                         sprd_hdr_cmd_t cmd, void *param);
 #endif
@@ -227,13 +228,15 @@ static cmr_int hdr_close(cmr_handle class_handle) {
 #endif
 
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
-    ret = hdr_sprd_adapter_deinit(hdr_handle);
+    ret = hdr_sprd_adapter_fast_stop(hdr_handle);
 #endif
     ret = hdr_thread_destroy(hdr_handle);
     if (ret) {
         CMR_LOGE("HDR failed to destroy hdr thread.");
     }
-
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+    ret = hdr_sprd_adapter_deinit(hdr_handle);
+#endif
     if (NULL != hdr_handle)
         free(hdr_handle);
 
@@ -897,9 +900,8 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
     return ret;
 }
 
-static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle) {
+static cmr_int hdr_sprd_adapter_fast_stop(struct class_hdr *hdr_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-
     ret = sprd_hdr_adpt_ctrl(hdr_handle->lib_cxt.lib_handle,
                              SPRD_HDR_FAST_STOP_CMD, NULL);
     if (!ret) {
@@ -907,14 +909,17 @@ static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle) {
     } else {
         CMR_LOGE("stop failed! ret:%ld", ret);
     }
+    return ret;
+}
 
+static cmr_int hdr_sprd_adapter_deinit(struct class_hdr *hdr_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
     ret = sprd_hdr_adpt_deinit(hdr_handle->lib_cxt.lib_handle);
     if (!ret) {
         CMR_LOGI("deinit done %ld", ret);
     } else {
         CMR_LOGE("deinit failed! ret:%ld", ret);
     }
-
     return ret;
 }
 static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle,
