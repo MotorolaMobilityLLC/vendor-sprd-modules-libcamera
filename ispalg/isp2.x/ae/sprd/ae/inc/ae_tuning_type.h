@@ -119,7 +119,9 @@ struct face_tuning_param {
 	cmr_u8 max_with_ratio;		//10~100 will trans 0~1
 	cmr_u8 num;
 	struct face_cfg cfg[FACE_CFG_NUM];	/*8 * 6bytes */
-	cmr_u16 reserved[5];		//?
+	cmr_u8 face_disappear_count;
+	cmr_u8 face_block_threshold;
+	cmr_u16 reserved[4];		//?
 };
 
 struct ae_touch_param {
