@@ -42,6 +42,9 @@ struct csi_dt_node_info {
 	struct clk *mipi_csi_gate_eb;
 	struct clk *csi_eb;
 	struct clk *csi_src_eb;
+	int irq_e0; /* phy */
+	int irq_e1; /* controller */
+	int sid;
 
 	//struct csi_phy_info phy;
 	struct glb_syscon syscon;

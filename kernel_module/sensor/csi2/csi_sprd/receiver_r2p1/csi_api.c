@@ -43,6 +43,10 @@
 static struct csi_dt_node_info *s_csi_dt_info_p[3];
 extern uint32_t g_project_id;
 
+static char *irqname[] = {"CSI0_E0", "CSI0_E1",
+			"CSI1_E0", "CSI1_E1",
+			"CSI2_E0", "CSI2_E1"};
+
 static struct csi_dt_node_info *csi_get_dt_node_data(int sensor_id)
 {
 	return s_csi_dt_info_p[sensor_id];
@@ -241,14 +245,19 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 		goto err;
 	}
 
+	csi_info->irq_e0 = irq_of_parse_and_map(dn, 3);
+	pr_info("irq e0 id:%d\n", csi_info->irq_e0);
+	csi_info->irq_e1 = irq_of_parse_and_map(dn, 2);
+	pr_info("irq e1 id:%d\n", csi_info->irq_e1);
+
 	ret = phy_parse_dt(phy_id, dev);
 	if (ret != 0) {
 		pr_err("parse phy dts efailed\n");
 		goto err;
 	}
 
+	csi_info->sid = sensor_id;
 	csi_reg_base_save(csi_info, sensor_id);
-	//csi_phy_power_down(phy_id, csi_info->controller_id, sensor_id, 1);
 	s_csi_dt_info_p[sensor_id] = csi_info;
 	pr_info("csi dt info:sensor_id :%d, phy_id:%d, csi_id:%d, csi_info:0x%p\n",
 		sensor_id, csi_info->phy_id, csi_info->controller_id,
@@ -279,6 +288,28 @@ int csi_api_mipi_phy_cfg(void)
 {
 	int ret = 0;
 	return ret;
+}
+
+irqreturn_t csi_int0_func(int irq, void *handle)
+{
+	struct csi_dt_node_info *csi_cxt  = (struct csi_dt_node_info *)handle;
+
+	pr_err_ratelimited("sid:%d, reg:0x%x, val:0x%x\n",
+		csi_cxt->sid, ERR0, CSI_REG_RD(csi_cxt->sid, ERR0));
+	CSI_REG_WR(csi_cxt->sid, ERR0_CLR, 0xffffffff);
+
+	return 0;
+}
+
+irqreturn_t csi_int1_func(int irq, void *handle)
+{
+	struct csi_dt_node_info *csi_cxt  = (struct csi_dt_node_info *)handle;
+
+	pr_err_ratelimited("sid:%d, reg:0x%x, val:0x%x\n",
+		csi_cxt->sid, ERR1, CSI_REG_RD(csi_cxt->sid, ERR1));
+	CSI_REG_WR(csi_cxt->sid, ERR1_CLR, 0xffffffff);
+
+	return 0;
 }
 
 int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id, int is_pattern)
@@ -373,6 +404,19 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id, int 
 			goto EXIT;
 	}
 
+	ret = request_irq(dt_info->irq_e0, csi_int0_func,
+                     IRQF_TRIGGER_HIGH | IRQF_SHARED,
+                     irqname[dt_info->controller_id*2], dt_info);
+	if (ret < 0)
+			pr_info("irq0 register faild: %s\n",
+				irqname[dt_info->controller_id*2]);
+
+	ret = request_irq(dt_info->irq_e1, csi_int1_func,
+	                     IRQF_TRIGGER_HIGH | IRQF_SHARED,
+	                     irqname[dt_info->controller_id*2 + 1], dt_info);
+	if (ret < 0)
+			pr_info("irq1 register faild: %s\n",
+				irqname[dt_info->controller_id*2 + 1]);
 	csi_start(sensor_id);
 	csi_set_on_lanes(lane_num, sensor_id);
 	if (is_pattern)
@@ -397,6 +441,8 @@ int csi_api_close(uint32_t phy_id, int sensor_id)
 		pr_err("fail to get valid phy ptr\n");
 		return -EINVAL;
 	}
+	free_irq(dt_info->irq_e0, dt_info);
+	free_irq(dt_info->irq_e1, dt_info);
 
 	if (CSI_PATTERN_ENABLE)
 		csi_ipg_mode_cfg(sensor_id, 0, 0, 4224, 3136);

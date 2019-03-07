@@ -362,8 +362,8 @@ void csi_start(int sensor_id)
 	CSI_REG_MWR(sensor_id, RST_CSI2_N, BIT_0, 1);
 
 	/* event mask */
-	CSI_REG_WR(sensor_id, MASK0, CSI_MASK0);
-	CSI_REG_WR(sensor_id, MASK1, CSI_MASK1);
+	CSI_REG_WR(sensor_id, MASK0, ~CSI_MASK0);
+	CSI_REG_WR(sensor_id, MASK1, ~CSI_MASK1);
 
 }
 
