@@ -427,8 +427,8 @@ extern "C" {
 	struct realbokeh_vcm_range {
 		cmr_u16 limited_infi;
 		cmr_u16 limited_macro;
-		cmr_u16 vcm_dac[3];	//50cm,70cm,100cm dac
-		cmr_u16 reserved[7];
+		cmr_u16 vcm_dac[7];	//50cm,60cm,70cm,80cm,100cm,120cm,150cm dac
+		cmr_u16 reserved[3];
 	};
 
 	struct PD_Multi_zone_param {

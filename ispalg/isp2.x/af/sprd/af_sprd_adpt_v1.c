@@ -1225,11 +1225,13 @@ static cmr_u8 if_set_bokeh_vcm_info(bokeh_motor_info * range, void *cookie)
 	af->realboekh_range.vcm_dac[0] = range->reserved[0];
 	af->realboekh_range.vcm_dac[1] = range->reserved[1];
 	af->realboekh_range.vcm_dac[2] = range->reserved[2];
-	af->realboekh_range.reserved[0] = range->reserved[3];
-	af->realboekh_range.reserved[1] = range->reserved[4];
-	af->realboekh_range.reserved[2] = range->reserved[5];
+	af->realboekh_range.vcm_dac[3] = range->reserved[3];
+	af->realboekh_range.vcm_dac[4] = range->reserved[4];
+	af->realboekh_range.vcm_dac[5] = range->reserved[5];
+	af->realboekh_range.vcm_dac[6] = range->reserved[6];
 
-	ISP_LOGI("range(%u %u), %u,%u,%u", af->realboekh_range.limited_infi, af->realboekh_range.limited_macro, range->reserved[0], range->reserved[1], range->reserved[2]);
+	ISP_LOGI("range(%u %u), %u,%u,%u,%u,%u,%u,%u", af->realboekh_range.limited_infi, af->realboekh_range.limited_macro, range->reserved[0], range->reserved[1],
+		 range->reserved[2], range->reserved[3], range->reserved[4], range->reserved[5], range->reserved[6]);
 	return 0;
 }
 
@@ -3507,11 +3509,12 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 			limited->vcm_dac[0] = af->realboekh_range.vcm_dac[0];
 			limited->vcm_dac[1] = af->realboekh_range.vcm_dac[1];
 			limited->vcm_dac[2] = af->realboekh_range.vcm_dac[2];
-			limited->reserved[0] = af->realboekh_range.reserved[0];
-			limited->reserved[1] = af->realboekh_range.reserved[1];
-			limited->reserved[2] = af->realboekh_range.reserved[2];
-			ISP_LOGV("Get RealBokeh LimitedRange info (%u %u), %u,%u,%u", limited->limited_infi, limited->limited_macro, limited->vcm_dac[0], limited->vcm_dac[1],
-				 limited->vcm_dac[2]);
+			limited->vcm_dac[3] = af->realboekh_range.vcm_dac[3];
+			limited->vcm_dac[4] = af->realboekh_range.vcm_dac[4];
+			limited->vcm_dac[5] = af->realboekh_range.vcm_dac[5];
+			limited->vcm_dac[6] = af->realboekh_range.vcm_dac[6];
+			ISP_LOGV("Get RealBokeh LimitedRange info (%u %u), %u,%u,%u,%u,%u,%u,%u", limited->limited_infi, limited->limited_macro, limited->vcm_dac[0],
+				 limited->vcm_dac[1], limited->vcm_dac[2], limited->vcm_dac[3], limited->vcm_dac[4], limited->vcm_dac[5], limited->vcm_dac[6]);
 			break;
 		}
 	default:
