@@ -450,6 +450,6 @@ typedef struct _isp_log_info {
 
 #define SPRD_DEBUG_START_FLAG   0x65786966
 #define SPRD_DEBUG_END_FLAG     0x637a6768
-#define SPRD_DEBUG_VERSION_ID   (0x00000004)
+#define SPRD_DEBUG_VERSION_ID   (0x00000005)
 
 #endif

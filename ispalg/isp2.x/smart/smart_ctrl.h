@@ -187,9 +187,11 @@ extern "C" {
 		cmr_u32 imbalance[3];
 		cmr_u32 threednr[3];
 		cmr_u32 sw3dnr[3];
+		cmr_u32 reserved[144];
 	};
 
 	typedef struct {
+		cmr_u32 version;
 		cmr_u64 u8Hist[256];
 		cmr_u32 u4RespCurve[256];
 		cmr_u8 uOutputGamma[3][256];

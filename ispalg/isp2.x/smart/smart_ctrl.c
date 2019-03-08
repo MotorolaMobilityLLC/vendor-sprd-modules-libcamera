@@ -1435,6 +1435,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
     }
 
     // fill debug info
+	dbginfo->version = 1;
     memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
     memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
     memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], 256);
