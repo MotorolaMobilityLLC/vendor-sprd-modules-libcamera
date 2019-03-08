@@ -2173,6 +2173,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	static cmr_u8 *data_addr = NULL;
 	static cmr_u32 offset = 0;
 	static cmr_u32 flag = 0;
+	static cmr_u32 buf_len = 0;
 	cmr_u32 data_len = 0;
 
 	cmr_u8 mode_id = write_cmd->isp_mode;
@@ -2208,34 +2209,39 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 		ISP_LOGE("fail to check param");
 		return ISP_ERROR;
 	}
-	ISP_LOGV("down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
+	ISP_LOGD("down_isp_param write_cmd->main_type %d, mode %d\n", write_cmd->main_type, mode_id);
 
 	switch (write_cmd->main_type) {
 	case MODE_TUNE_INFO:
 		{
 			ISP_LOGV("MODE_TUNE_INFO \n");
 			if (0 == flag) {
-				data_len = mode_param_info.len;
-				ISP_LOGV("mode tune data len = %d", data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (!data_addr)
+				buf_len = mode_param_info.len;
+				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+				ISP_LOGD("mode tune buf len = %d, data_addr %p, mode addr %p", buf_len, data_addr, mode_param_info.addr);
+				if (!data_addr) {
 					ISP_LOGE("fail to do malloc mem!");
-				data_len = msg->len - len_msg - len_data_header;
-				memcpy(data_addr + offset, isp_data_ptr, data_len);
-				offset += data_len;
+					return ISP_ERROR;
+				}
 				flag++;
-			} else {
-				data_len = msg->len - len_msg - len_data_header;
-				memcpy(data_addr + offset, isp_data_ptr, data_len);
-				offset += data_len;
 			}
+
+			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
+			memcpy(data_addr + offset, isp_data_ptr, data_len);
+			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
 				offset = 0;
 				flag = 0;
 				if (MAX_MODE_NUM > mode_id){
-					if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr)
-						ISP_LOGV(" sensor raw mode ptr addr is , mode_id=%d", mode_id);
-					memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
+					if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
+						ISP_LOGE("sensor raw mode ptr addr is NULL, mode_id=%d", mode_id);
+					} else {
+						memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
+					}
 				}
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
@@ -2259,8 +2265,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					rtn = 0x01;
 					return rtn;
 				}
-				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
@@ -2269,6 +2275,10 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
@@ -2298,8 +2308,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					rtn = 0x01;
 					return rtn;
 				}
-				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
@@ -2308,6 +2318,10 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 
@@ -2337,8 +2351,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					rtn = 0x01;
 					return rtn;
 				}
-				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
@@ -2347,6 +2361,10 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
@@ -2376,8 +2394,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					rtn = 0x01;
 					return rtn;
 				}
-				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
@@ -2386,6 +2404,10 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
@@ -2410,6 +2432,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	case MODE_LNC_DATA:
 		{
 			if (0 == flag) {
+				buf_len = write_cmd->data_total_len;
 				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2419,12 +2442,16 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				rtn = down_lnc_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
+				rtn = down_lnc_param(sensor_raw_fix, write_cmd->sub_type, data_addr, buf_len);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 
 				eng_rsp_diag[value] = 0x00;
@@ -2439,6 +2466,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	case MODE_AWB_DATA:
 		{
 			if (0 == flag) {
+				buf_len = write_cmd->data_total_len;
 				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2448,12 +2476,16 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				rtn = down_awb_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
+				rtn = down_awb_param(sensor_raw_fix, write_cmd->sub_type, data_addr, buf_len);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 
 				eng_rsp_diag[value] = 0x00;
@@ -2468,8 +2500,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	case MODE_NOTE_DATA:
 		{
 			if (0 == flag) {
-				data_len = sensor_note_param.node_len;
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+				buf_len = sensor_note_param.node_len;
+				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
 					rtn = 0x01;
@@ -2478,6 +2510,10 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
@@ -2502,6 +2538,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	case MODE_LIB_INFO_DATA:
 		{
 			if (0 == flag) {
+				buf_len = write_cmd->data_total_len;
 				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2511,12 +2548,21 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				flag++;
 			}
 			data_len = msg->len - len_msg - len_data_header;
+			if ((offset + data_len) > buf_len) {
+				ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+				data_len = buf_len - offset;
+			}
 			memcpy(data_addr + offset, isp_data_ptr, data_len);
 			offset += data_len;
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				memcpy(sensor_raw_info_ptr->libuse_info, data_addr, sizeof(struct sensor_libuse_info));
+				if (buf_len < sizeof(struct sensor_libuse_info)) {
+					ISP_LOGE("total data len is smaller %d\n", buf_len);
+					memcpy(sensor_raw_info_ptr->libuse_info, data_addr, buf_len);
+				} else {
+					memcpy(sensor_raw_info_ptr->libuse_info, data_addr, sizeof(struct sensor_libuse_info));
+				}
 
 				eng_rsp_diag[value] = 0x00;
 				value = value + 0x04;

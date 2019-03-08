@@ -31,59 +31,63 @@
 #include "cmr_types.h"
 
 
+struct blk_info {
+	enum ISP_BLK_ID blk_id;
+	cmr_u32 data_size;
+};
 
-static cmr_u32 blocks_array[] = {
+static struct blk_info blocks_array[] = {
 	/* DCAM blocks */
-	ISP_BLK_BLC,
-	ISP_BLK_RGB_GAIN,
-	DCAM_BLK_RGB_DITHER,
-	ISP_BLK_2D_LSC,
-	ISP_BLK_RGB_AEM,
-	ISP_BLK_AWB_NEW,
-	DCAM_BLK_BPC_V1,
-	DCAM_BLK_PPE,
-	DCAM_BLK_RGB_AFM_V1,
+	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
+	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
+	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
+	{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
+	{ ISP_BLK_AWB_NEW, 0 },
+	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
+	{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
+	{ DCAM_BLK_PPE, 0 }, /* NR block */
+	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
 	/*  ISP blocks */
-	ISP_BLK_3DNR,
-	ISP_BLK_BCHS,
-	ISP_BLK_CCE,
-	ISP_BLK_CFA_V1,
-	ISP_BLK_CMC10,
-	ISP_BLK_EE_V1,
-	ISP_BLK_RGB_GAMC,
-	ISP_BLK_GRGB_V1,
-	ISP_BLK_HIST2,
-	ISP_BLK_HSV,
-	ISP_BLK_IIRCNR_IIR_V1,
-	ISP_BLK_IIRCNR_YRANDOM,
-	ISP_BLK_LTM,
-	ISP_BLK_NLM_V1,
-	ISP_BLK_IMBALANCE,
-	ISP_BLK_POSTERIZE,
-	ISP_BLK_UVDIV_V1,
-	ISP_BLK_YNR_V1,
-	ISP_BLK_YUV_PRECDN_V1,
-	ISP_BLK_UV_CDN_V1,
-	ISP_BLK_UV_POSTCDN_V1,
-	ISP_BLK_Y_GAMMC,
-	ISP_BLK_YUV_NOISEFILTER_V1,
+	{ ISP_BLK_HSV, 0 }, /* parsed in hsv block init() */
+	{ ISP_BLK_BCHS, sizeof(struct sensor_bchs_level) },
+	{ ISP_BLK_CCE, sizeof(struct sensor_cce_param) },
+	{ ISP_BLK_CMC10, sizeof(struct sensor_cmc10_param) },
+	{ ISP_BLK_RGB_GAMC, sizeof(struct sensor_frgb_gammac_param) },
+	{ ISP_BLK_HIST2, 0 }, // todo: should be sizeof(struct sensor_hists2_param)
+	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
+	{ ISP_BLK_POSTERIZE, sizeof(struct sensor_posterize_param) },
+	{ ISP_BLK_Y_GAMMC, sizeof(struct sensor_y_gamma_param) },
+	{ ISP_BLK_3DNR, 0 }, /* NR block */
+	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
+	{ ISP_BLK_EE_V1, 0 }, /* NR block */
+	{ ISP_BLK_GRGB_V1, 0 }, /* NR block */
+	{ ISP_BLK_IIRCNR_IIR_V1, 0 }, /* NR block */
+	{ ISP_BLK_LTM, 0 }, /* NR block */
+	{ ISP_BLK_NLM_V1, 0 }, /* NR block */
+	{ ISP_BLK_IMBALANCE, 0 }, /* NR block */
+	{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
+	{ ISP_BLK_YNR_V1, 0 }, /* NR block */
+	{ ISP_BLK_YUV_PRECDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_UV_POSTCDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
 
 	/* software algo blocks */
-	ISP_BLK_CNR2_V1,
-	ISP_BLK_SW3DNR,
-	ISP_BLK_AE_NEW,
-	ISP_BLK_ALSC,
-	ISP_BLK_AF_NEW,
-	ISP_BLK_SMART,
-	ISP_BLK_AFT,
-	ISP_BLK_PDAF_TUNE,
-	ISP_BLK_DUAL_FLASH,
-	ISP_BLK_AE_SYNC,
-	ISP_BLK_AE_ADAPT_PARAM,
-	ISP_BLK_4IN1_PARAM,
-	ISP_BLK_TOF_TUNE,
-	ISP_BLK_ATM_TUNE,
+	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
+	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
+	{ ISP_BLK_AE_NEW, 0 },
+	{ ISP_BLK_ALSC, 0 },
+	{ ISP_BLK_AF_NEW, 0 },
+	{ ISP_BLK_SMART, 0 },
+	{ ISP_BLK_AFT, 0 },
+	{ ISP_BLK_PDAF_TUNE, 0 },
+	{ ISP_BLK_DUAL_FLASH, 0 },
+	{ ISP_BLK_AE_SYNC, 0 },
+	{ ISP_BLK_AE_ADAPT_PARAM, 0 },
+	{ ISP_BLK_4IN1_PARAM, 0 },
+	{ ISP_BLK_TOF_TUNE, 0 },
+	{ ISP_BLK_ATM_TUNE, 0 },
 };
 
 static cmr_u32 search_modes[3][ISP_TUNE_MODE_MAX] = {
@@ -223,14 +227,19 @@ static cmr_s32 isp_pm_check_handle(cmr_handle handle)
 	return rtn;
 }
 
-static cmr_u32 check_blk_id_valid(cmr_u32 blk_id)
+static cmr_u32 check_blk_id_valid(cmr_u32 blk_id, cmr_u32 data_size)
 {
 	cmr_u32 i, blk_num;
 
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
 	for (i = 0; i < blk_num; i++) {
-		if (blocks_array[i] == blk_id)
-			return 1;
+		if (blocks_array[i].blk_id != blk_id)
+			continue;
+		if (blocks_array[i].data_size != 0 && blocks_array[i].data_size != data_size) {
+			ISP_LOGE("blk 0x%04x, data size %d != %d\n", blk_id, data_size, blocks_array[i].data_size);
+			return 0;
+		}
+		return 1;
 	}
 	return 0;
 }
@@ -338,8 +347,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 set_id)
 					blk_header_ptr->source_flag &= ~ISP_PM_BLK_UPDATE;
 					rtn = ops->init(blk_ptr, param_data_ptr, blk_header_ptr, &blk_param_ptr->resolution);
 					if (rtn) {
-						ISP_LOGE("fail to init block 0x%04x\n", id);
-						return ISP_ERROR;
+						ISP_LOGW("init block 0x%04x rtn %d\n", id, rtn);
 					}
 				}
 			}
@@ -370,7 +378,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 		isp_cxt_ptr = &pm_cxt_ptr->cxt_array[j];
 		blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
 		for (i = 0; i < blk_num; i++) {
-			id = blocks_array[i];
+			id = blocks_array[i].blk_id;
 			blk_cfg_ptr = isp_pm_get_block_cfg(id);
 			if (PNULL != blk_cfg_ptr && blk_cfg_ptr->ops) {
 				ops = blk_cfg_ptr->ops;
@@ -633,7 +641,7 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
 	item_num = pm_cxt_ptr->param_search_list_size / sizeof(struct sensor_find_param_list);
 	for (i = 0; i < blk_num; i++) {
-		blk_id = blocks_array[i];
+		blk_id = blocks_array[i].blk_id;
 		item = pm_cxt_ptr->param_search_list;
 		param_mode_id = ISP_MODE_ID_COMMON;
 		for (j = 0; j < item_num; j++, item++) {
@@ -742,7 +750,7 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
 	for (i = 0; i < blk_num; i++) {
-		blk_id = blocks_array[i];
+		blk_id = blocks_array[i].blk_id;
 		param_mode_id = mode_id;
 retry:
 		src_mode = NULL;
@@ -1145,10 +1153,7 @@ static cmr_s32 debug_save_nr_data(void *dataptr, cmr_u32 datalen,
 	int fd;
 	char file_name[256];
 
-	if (datalen != unit_len * level_num) {
-		ISP_LOGE("mismatch NR data len %d, unit %d, level %d\n", datalen, unit_len, level_num);
-		datalen = (datalen < (unit_len * level_num)) ? datalen : (unit_len * level_num);
-	}
+	datalen = (datalen < (unit_len * level_num)) ? datalen : (unit_len * level_num);
 	if (nr_type >= ISP_BLK_TYPE_MAX) {
 		ISP_LOGE("Invalid nr type %d\n", nr_type);
 		return ISP_ERROR;
@@ -1199,6 +1204,9 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	cmr_u32 isp_blk_nr_type = ISP_BLK_TYPE_MAX;
 	intptr_t nr_set_addr = 0;
 	cmr_u32 nr_set_size = 0, nr_unit_size = 0;
+	cmr_u32 nr_mode_offset[ISP_BLK_TYPE_MAX];
+	cmr_u32 nr_data_len[ISP_BLK_TYPE_MAX];
+	cmr_u32 nr_blk_id[ISP_BLK_TYPE_MAX];
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	cmr_u32 val, dump_nrdata = 0;
 	cmr_s8 *sensor_name;
@@ -1228,6 +1236,9 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
 	nr_level_number_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_level_number_ptr);
 	nr_default_level_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_default_level_ptr);
+	memset(&nr_mode_offset[0], 0, sizeof(nr_mode_offset));
+	memset(&nr_data_len[0], 0, sizeof(nr_data_len));
+	memset(&nr_blk_id[0], 0, sizeof(nr_blk_id));
 
 	property_get("debug.isp.pm.dump.nr", value, "0");
 	val = atoi(value);
@@ -1317,7 +1328,7 @@ start_parse:
 		dst_header = (struct isp_pm_block_header *)dst_mod_ptr->header;
 
 		for (j = 0; j < src_mod_ptr->block_num; j++) {
-			if (!check_blk_id_valid(src_header[j].block_id)) {
+			if (!check_blk_id_valid(src_header[j].block_id, src_header[j].size)) {
 				ISP_LOGD("discard blk 0x%04x for mode %d\n", src_header[j].block_id, src_mod_ptr->mode_id);
 				continue;
 			}
@@ -1384,29 +1395,35 @@ start_parse:
 
 				extend_offset += 3 * sizeof(struct isp_pm_nr_simple_header_param);
 				dst_header[j].size = 3 * sizeof(struct isp_pm_nr_simple_header_param);
-
+				nr_data_len[ISP_BLK_NLM_T] = fix_data_ptr->nr.nr_set_group.nlm_len;
+				nr_data_len[ISP_BLK_VST_T] = fix_data_ptr->nr.nr_set_group.vst_len;
+				nr_data_len[ISP_BLK_IVST_T] = fix_data_ptr->nr.nr_set_group.ivst_len;
+				nr_blk_id[ISP_BLK_NLM_T] = ISP_BLK_NLM_V1;
 				if (dump_nrdata) {
-					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.nlm,
+					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.nlm + nr_mode_offset[ISP_BLK_NLM_T],
 						fix_data_ptr->nr.nr_set_group.nlm_len,
 						sizeof(struct sensor_nlm_level),
 						nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T],
 						ISP_BLK_NLM_T,
 						sensor_name, src_mod_ptr->mode_id);
 
-					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.vst,
+					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.vst + nr_mode_offset[ISP_BLK_VST_T],
 						fix_data_ptr->nr.nr_set_group.vst_len,
 						sizeof(struct sensor_vst_level),
 						nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T],
 						ISP_BLK_VST_T,
 						sensor_name, src_mod_ptr->mode_id);
 
-					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.ivst,
+					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.ivst + nr_mode_offset[ISP_BLK_IVST_T],
 						fix_data_ptr->nr.nr_set_group.ivst_len,
 						sizeof(struct sensor_ivst_level),
 						nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T],
 						ISP_BLK_IVST_T,
 						sensor_name, src_mod_ptr->mode_id);
 				}
+				nr_mode_offset[ISP_BLK_NLM_T] += sizeof(struct sensor_nlm_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
+				nr_mode_offset[ISP_BLK_VST_T] += sizeof(struct sensor_vst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T];
+				nr_mode_offset[ISP_BLK_IVST_T] += sizeof(struct sensor_ivst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T];
 				break;
 			}
 			case DCAM_BLK_RGB_DITHER:
@@ -1415,6 +1432,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_dither);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.rgb_dither_len;
 				nr_unit_size = sizeof(struct sensor_rgb_dither_level);
+				nr_blk_id[ISP_BLK_RGB_DITHER_T] = DCAM_BLK_RGB_DITHER;
 				break;
 			}
 			case DCAM_BLK_BPC_V1:
@@ -1423,6 +1441,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.bpc);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.bpc_len;
 				nr_unit_size = sizeof(struct sensor_bpc_level);
+				nr_blk_id[ISP_BLK_PPE_T] = DCAM_BLK_BPC_V1;
 				break;
 			}
 			case DCAM_BLK_PPE:
@@ -1431,6 +1450,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ppe);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.ppe_len;
 				nr_unit_size = sizeof(struct sensor_ppe_level);
+				nr_blk_id[ISP_BLK_PPE_T] = DCAM_BLK_PPE;
 				break;
 			}
 			case ISP_BLK_GRGB_V1:
@@ -1439,6 +1459,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.grgb);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.grgb_len;
 				nr_unit_size = sizeof(struct sensor_grgb_level);
+				nr_blk_id[ISP_BLK_GRGB_T] = ISP_BLK_GRGB_V1;
 				break;
 			}
 			case ISP_BLK_CFA_V1:
@@ -1447,6 +1468,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cfa);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.cfa_len;
 				nr_unit_size = sizeof(struct sensor_cfa_param_level);
+				nr_blk_id[ISP_BLK_CFA_T] = ISP_BLK_CFA_V1;
 				break;
 			}
 			case DCAM_BLK_RGB_AFM_V1:
@@ -1455,6 +1477,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.rgb_afm);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.rgb_afm_len;
 				nr_unit_size = sizeof(struct sensor_rgb_afm_level);
+				nr_blk_id[ISP_BLK_RGB_AFM_T] = DCAM_BLK_RGB_AFM_V1;
 				break;
 			}
 			case ISP_BLK_UVDIV_V1:
@@ -1463,6 +1486,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.uvdiv);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.uvdiv_len;
 				nr_unit_size = sizeof(struct sensor_cce_uvdiv_level);
+				nr_blk_id[ISP_BLK_UVDIV_T] = ISP_BLK_UVDIV_V1;
 				break;
 			}
 			case ISP_BLK_3DNR:
@@ -1471,6 +1495,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.nr3d_len;
 				nr_unit_size = sizeof(struct sensor_3dnr_level);
+				nr_blk_id[ISP_BLK_3DNR_T] = ISP_BLK_3DNR;
 				break;
 			}
 			case ISP_BLK_SW3DNR:
@@ -1479,6 +1504,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.sw_3dnr);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.sw_3dnr_len;
 				nr_unit_size = sizeof(struct sensor_sw3dnr_level);
+				nr_blk_id[ISP_BLK_SW3DNR_T] = ISP_BLK_SW3DNR;
 				break;
 			}
 			case ISP_BLK_YUV_PRECDN_V1:
@@ -1487,6 +1513,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.yuv_precdn);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.yuv_precdn_len;
 				nr_unit_size = sizeof(struct sensor_yuv_precdn_level);
+				nr_blk_id[ISP_BLK_YUV_PRECDN_T] = ISP_BLK_YUV_PRECDN_V1;
 				break;
 			}
 			case ISP_BLK_YNR_V1:
@@ -1495,6 +1522,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ynr);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.ynr_len;
 				nr_unit_size = sizeof(struct sensor_ynr_level);
+				nr_blk_id[ISP_BLK_YNR_T] = ISP_BLK_YNR_V1;
 				break;
 			}
 			case ISP_BLK_EE_V1:
@@ -1503,6 +1531,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.edge);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.edge_len;
 				nr_unit_size = sizeof(struct sensor_ee_level);
+				nr_blk_id[ISP_BLK_EDGE_T] = ISP_BLK_EE_V1;
 				break;
 			}
 			case ISP_BLK_UV_CDN_V1:
@@ -1511,6 +1540,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cdn);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.cdn_len;
 				nr_unit_size = sizeof(struct sensor_uv_cdn_level);
+				nr_blk_id[ISP_BLK_CDN_T] = ISP_BLK_UV_CDN_V1;
 				break;
 			}
 			case ISP_BLK_UV_POSTCDN_V1:
@@ -1519,6 +1549,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.postcdn);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.postcdn_len;
 				nr_unit_size = sizeof(struct sensor_uv_postcdn_level);
+				nr_blk_id[ISP_BLK_POSTCDN_T] = ISP_BLK_UV_POSTCDN_V1;
 				break;
 			}
 			case ISP_BLK_IIRCNR_IIR_V1:
@@ -1527,6 +1558,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.iircnr);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.iircnr_len;
 				nr_unit_size = sizeof(struct sensor_iircnr_level);
+				nr_blk_id[ISP_BLK_IIRCNR_T] = ISP_BLK_IIRCNR_IIR_V1;
 				break;
 			}
 			case ISP_BLK_YUV_NOISEFILTER_V1:
@@ -1535,6 +1567,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.yuv_noisefilter);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.yuv_noisefilter_len;
 				nr_unit_size = sizeof(struct sensor_yuv_noisefilter_level);
+				nr_blk_id[ISP_BLK_YUV_NOISEFILTER_T] = ISP_BLK_YUV_NOISEFILTER_V1;
 				break;
 			}
 			case ISP_BLK_CNR2_V1:
@@ -1543,6 +1576,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr2);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.cnr2_len;
 				nr_unit_size = sizeof(struct sensor_cnr_level);
+				nr_blk_id[ISP_BLK_CNR2_T] = ISP_BLK_CNR2_V1;
 				break;
 			}
 			case ISP_BLK_IMBALANCE:
@@ -1551,6 +1585,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.imblance);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.imblance_len;
 				nr_unit_size = sizeof(struct sensor_nlm_imbalance_level);
+				nr_blk_id[ISP_BLK_IMBALANCEE_T] = ISP_BLK_IMBALANCE;
 				break;
 			}
 			case ISP_BLK_LTM:
@@ -1559,6 +1594,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ltm);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.ltm_len;
 				nr_unit_size = sizeof(struct sensor_ltm_level);
+				nr_blk_id[ISP_BLK_LTM_T] = ISP_BLK_LTM;
 				break;
 			}
 			default:
@@ -1596,13 +1632,17 @@ start_parse:
 
 				extend_offset += sizeof(struct isp_pm_nr_simple_header_param);
 				dst_header[j].size = sizeof(struct isp_pm_nr_simple_header_param);
+
+				nr_data_len[isp_blk_nr_type] = nr_set_size;
+				nr_set_size = nr_unit_size * dst_blk_data->level_number;
 				if (dump_nrdata)
-					debug_save_nr_data((void *)nr_set_addr,
+					debug_save_nr_data((void *)(nr_set_addr + nr_mode_offset[isp_blk_nr_type]),
 						nr_set_size,
 						nr_unit_size,
 						dst_blk_data->level_number,
 						isp_blk_nr_type,
 						sensor_name, src_mod_ptr->mode_id);
+				nr_mode_offset[isp_blk_nr_type] += nr_set_size;
 			}
 		}
 
@@ -1620,6 +1660,42 @@ start_parse:
 
 		ISP_LOGV("mode = %d, mode_name = %s, param modify_time : %d",
 			i, src_mod_ptr->mode_name, src_mod_ptr->reserved[0]);
+	}
+
+	/* check if NR block data is legal or not. If not, discard it */
+	for (i = 0; i < ISP_BLK_TYPE_MAX; i++) {
+		if (nr_blk_id[i] == 0)
+			continue;
+		if (nr_blk_id[i] == ISP_BLK_NLM_V1) {
+			if ((nr_data_len[i] == nr_mode_offset[i]) &&
+				(nr_data_len[ISP_BLK_VST_T] == nr_mode_offset[ISP_BLK_VST_T]) &&
+				(nr_data_len[ISP_BLK_IVST_T] == nr_mode_offset[ISP_BLK_IVST_T]))
+				continue;
+			else
+				ISP_LOGE("NLM data mismatch, nlm %d %d, vst %d %d, ivst %d %d\n",
+					nr_data_len[i], nr_mode_offset[i],
+					nr_data_len[ISP_BLK_VST_T], nr_mode_offset[ISP_BLK_VST_T],
+					nr_data_len[ISP_BLK_IVST_T], nr_mode_offset[ISP_BLK_IVST_T]);
+		} else if (nr_data_len[i] == nr_mode_offset[i]) {
+			continue;
+		} else {
+			ISP_LOGE("nr blk 0x%04x data mismatch: %d %d\n", nr_blk_id[i], nr_data_len[i], nr_mode_offset[i]);
+		}
+
+		/* data size mismatched, discard the block in all mode */
+		for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
+			dst_mod_ptr = pm_cxt_ptr->tune_mode_array[k];
+			if (dst_mod_ptr == PNULL)
+				continue;
+			dst_header = (struct isp_pm_block_header *)dst_mod_ptr->header;
+			for (j = 0; j < dst_mod_ptr->block_num; j++) {
+				if (dst_header[j].block_id == nr_blk_id[i]) {
+					dst_header[j].block_id = 0;
+					ISP_LOGE("discard NR blk 0x%04x for mode %d\n", nr_blk_id[i], k);
+					break;
+				}
+			}
+		}
 	}
 
 	size = ISP_TUNE_BLOCK_MAX * sizeof(struct isp_pm_param_data);

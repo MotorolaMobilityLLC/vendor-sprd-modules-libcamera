@@ -1136,13 +1136,14 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&io_pm_input, (void *)&io_pm_output);
 
-	cxt->lsc_cxt.lsc_tab_address = io_pm_output.param_data->data_ptr;
-	cxt->lsc_cxt.lsc_tab_size = io_pm_output.param_data->data_size;
-
-	if (NULL == cxt->lsc_cxt.lsc_tab_address || ISP_SUCCESS != ret) {
+	if ((ret != ISP_SUCCESS) || (io_pm_output.param_num != 1)
+		|| (io_pm_output.param_data->data_ptr == NULL)) {
 		ISP_LOGE("fail to get lsc tab");
 		return ISP_ERROR;
 	}
+
+	cxt->lsc_cxt.lsc_tab_address = io_pm_output.param_data->data_ptr;
+	cxt->lsc_cxt.lsc_tab_size = io_pm_output.param_data->data_size;
 
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
@@ -1152,11 +1153,12 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&io_pm_input, (void *)&io_pm_output);
 
-	cxt->lsc_cxt.lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
-	if (NULL == cxt->lsc_cxt.lsc_info || ISP_SUCCESS != ret) {
+	if ((ret != ISP_SUCCESS) || (io_pm_output.param_num != 1)
+		|| (io_pm_output.param_data->data_ptr == NULL)) {
 		ISP_LOGE("fail to get lsc info");
 		return ISP_ERROR;
 	}
+	cxt->lsc_cxt.lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
 
 	return ISP_SUCCESS;
 }
@@ -1286,9 +1288,10 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
 
 	if (start)
-		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
 	else
-		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
 
 	/* work_mode: 1 - capture only, 0 - auto/preview */
 	scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
@@ -1795,6 +1798,7 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 				&awbc_cfg,  sizeof(awbc_cfg));
 		ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_SET_AWB, (void *)&pm_input, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
 	}
 
 	if (awb_output->use_ccm) {
@@ -2185,6 +2189,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			&pm_afl_input, &pm_afl_output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get afl param"));
 	if (ISP_SUCCESS == ret && 1 == pm_afl_output.param_num) {
 		afl_input.afl_param_ptr = (struct isp_antiflicker_param *)pm_afl_output.param_data->data_ptr;
 		afl_input.pm_param_num = pm_afl_output.param_num;
@@ -2491,7 +2496,6 @@ cmr_int ispalg_afthread_proc(struct cmr_msg *message, void *p_data)
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
-
 }
 
 cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
@@ -3108,9 +3112,6 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	cxt->awb_cxt.cur_gain.r = 1;
 	cxt->awb_cxt.cur_gain.b = 1;
 
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get awb init param"));
-
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
 		ISP_TRACE_IF_FAIL(ret, ("fail to get ae monitor info"));
@@ -3131,8 +3132,12 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	ISP_LOGE("awb get ae win %d %d %d %d %d %d\n", info.trim.x, info.trim.y,
 		info.win_size.w, info.win_size.h, info.win_num.w, info.win_num.h);
 
-	param.tuning_param = output.param_data->data_ptr;
-	param.param_size = output.param_data->data_size;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get awb init param"));
+	if (ret == ISP_SUCCESS && output.param_data != NULL) {
+		param.tuning_param = output.param_data->data_ptr;
+		param.param_size = output.param_data->data_size;
+	}
 	param.lib_param = cxt->lib_use_info->awb_lib_info;
 	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
 
@@ -3401,7 +3406,8 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_INIT_ALSC, &io_pm_input, &io_pm_output);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do get init alsc"));
 
-	if (io_pm_output.param_data->data_size != sizeof(struct lsc2_tune_param)) {
+	if ((ret != ISP_SUCCESS) || (io_pm_output.param_data == NULL) ||
+		(io_pm_output.param_data->data_size != sizeof(struct lsc2_tune_param))) {
 		lsc_param.tune_param_ptr = NULL;
 		ISP_LOGE("fail to get alsc param from sensor file");
 	} else {

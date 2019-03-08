@@ -22,7 +22,8 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	cmr_u32 j = 0;
 	cmr_u32 index = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
-	intptr_t addr = 0, tmp_addr = 0;
+	cmr_uint addr = 0, tmp_addr = 0, addr1 = 0;
+	cmr_uint base, end;
 	struct isp_data_bin_info *specialeffect = PNULL;
 	struct isp_hsv_param *dst_ptr = (struct isp_hsv_param *)dst_hsv_param;
 	struct sensor_hsv_param *src_ptr = (struct sensor_hsv_param *)src_hsv_param;
@@ -35,18 +36,44 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	dst_ptr->cur_idx.weight0 = src_ptr->cur_idx.weight0;
 	dst_ptr->cur_idx.weight1 = src_ptr->cur_idx.weight1;
 
+	base = (cmr_uint)src_ptr;
+	end = base + header_ptr->size;
+	ISP_LOGD("data size %d, addr range (%p ~ %p)\n", header_ptr->size, (void *)base, (void *)end);
+
 	for (i = 0; i < SENSOR_HSV_NUM; i++) {
 		dst_ptr->map[i].size = src_ptr->map[i].size;
-		addr = (intptr_t) & src_ptr->data_area + src_ptr->map[i].offset;
+		addr = (cmr_uint) & src_ptr->data_area + src_ptr->map[i].offset;
 		dst_ptr->map[i].data_ptr = (void *)addr;
+
+		addr1 = addr + src_ptr->map[i].size;
+		ISP_LOGV("index %d, offset %d, size %d,  cur %p, end %p\n", i,
+			src_ptr->map[i].offset, src_ptr->map[i].size, (void *)addr, (void *)addr1);
+
+		if ((addr > base) && (addr1 <= end))
+			continue;
+
+		ISP_LOGE("out of range, index %d, offset %d, size %d,  cur %p, end %p\n",
+			i, src_ptr->map[i].offset, src_ptr->map[i].size, (void *)addr, (void *)addr1);
+		goto exit;
 	}
 	addr += src_ptr->map[SENSOR_HSV_NUM - 1].size;
 	specialeffect = (struct isp_data_bin_info *)addr;
 	addr += sizeof(struct isp_data_bin_info) * MAX_SPECIALEFFECT_NUM;
 	for (i = 0; i < MAX_SPECIALEFFECT_NUM; i++) {
 		dst_ptr->specialeffect_tab[i].size = specialeffect[i].size;
-		tmp_addr = (intptr_t) (addr + specialeffect[i].offset);
+		tmp_addr = (cmr_uint) (addr + specialeffect[i].offset);
 		dst_ptr->specialeffect_tab[i].data_ptr = (void *)tmp_addr;
+
+		addr1 = tmp_addr + specialeffect[i].size;
+		ISP_LOGV("index %d, offset %d, size %d,  cur %p, end %p\n",
+			i, specialeffect[i].offset, specialeffect[i].size, (void *)tmp_addr, (void *)addr1);
+
+		if ((tmp_addr > base) && (addr1 <= end))
+			continue;
+
+		ISP_LOGE("out of range, index %d, offset %d, size %d,  cur %p, end %p\n",
+			i, specialeffect[i].offset, specialeffect[i].size, (void *)tmp_addr, (void *)addr1);
+		goto exit;
 	}
 
 	if (PNULL == dst_ptr->final_map.data_ptr) {
@@ -54,7 +81,7 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 		if (PNULL == dst_ptr->final_map.data_ptr) {
 			ISP_LOGE("fail to malloc  hsv map\n");
 			rtn = ISP_ERROR;
-			return rtn;
+			goto exit;
 		}
 	}
 
@@ -94,6 +121,10 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	return 0;
 
 exit:
+	ISP_LOGE("discard hsv block.\n");
+	dst_ptr->cur.bypass = 1;
+	header_ptr->bypass = 1;
+	header_ptr->is_update = ISP_ZERO;
 	if (dst_ptr->final_map.data_ptr) {
 		free(dst_ptr->final_map.data_ptr);
 		dst_ptr->final_map.data_ptr = PNULL;
@@ -238,6 +269,10 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 		{
 			cmr_u32 idx = *((cmr_u32 *) param_ptr0);
+			if (hsv_header_ptr->bypass) {
+				ISP_LOGV("do not need update\n");
+				return ISP_SUCCESS;
+			}
 			if (0 == idx) {
 				dst_hsv_ptr->cur.size = dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].size;
 				dst_hsv_ptr->cur.hsv_table_addr = (cmr_u64)dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr;
