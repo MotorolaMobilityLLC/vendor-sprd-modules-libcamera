@@ -478,6 +478,19 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     cam_cxt = (struct camera_context *)oem_handle;
     sem_post(&threednr_handle->sem_3dnr);
 
+    if (cam_cxt->hal_free == NULL) {
+        CMR_LOGE("cam_cxt->hal_free is NULL");
+        goto exit;
+    }
+    ret = cam_cxt->hal_free(
+        CAMERA_SNAPSHOT_3DNR, (cmr_uint *)threednr_handle->small_buf_phy,
+        (cmr_uint *)threednr_handle->small_buf_vir,
+        threednr_handle->small_buf_fd, CAP_3DNR_NUM, cam_cxt->client_data);
+    if (ret) {
+        CMR_LOGE("Fail to free the small image buffers");
+    }
+
+exit:
     ret = threednr_thread_destroy(threednr_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
