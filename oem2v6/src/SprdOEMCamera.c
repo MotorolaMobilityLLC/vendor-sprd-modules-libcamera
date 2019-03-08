@@ -1143,6 +1143,12 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         camera_set_security(handle, sec_cfg);
         break;
     }
+    case CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO: {
+        struct camera_context *cxt = (struct camera_context *)handle;
+        ret = cmr_get_vcm_range(handle, cxt->camera_id,
+                                (struct vcm_range_info *)param);
+        break;
+    }
     default:
         break;
     }

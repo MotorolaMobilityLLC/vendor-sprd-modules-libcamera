@@ -225,8 +225,8 @@ bool getApctCamInitSupport() {
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
-      mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
-      mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
+      mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
+      mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
       mIsUnpopped(false), mIsBlur2Zsl(false),
       mPreviewFormat(CAMERA_DATA_FORMAT_YUV422), mPictureFormat(1),
@@ -1123,6 +1123,10 @@ status_t SprdCamera3OEMIf::autoFocus() {
     HAL_LOGD("E");
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("ro.vendor.camera.dualcamera_cali_time", prop, "0");
 
     if (mCameraId == 3) {
         return NO_ERROR;
@@ -1154,7 +1158,7 @@ status_t SprdCamera3OEMIf::autoFocus() {
             mHalOem->ops->camera_transfer_caf_to_af(mCameraHandle);
         else if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO)
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
-
+        int verification_enable = mSetting->getVERIFITag();
         if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan() &&
             controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START &&
             controlInfo.af_regions[0] == 0 && controlInfo.af_regions[1] == 0 &&
@@ -1163,6 +1167,12 @@ status_t SprdCamera3OEMIf::autoFocus() {
             if (mCameraId == 1) {
                 autoFocusToFaceFocus();
             }
+            mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_FULLSCAN);
+        } else if (mSprdRefocusEnabled && mCameraId == 0 && 3 == atoi(prop) &&
+                   (1 != verification_enable)) {
+            HAL_LOGD("mm-test set full scan mode");
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
                      CAMERA_FOCUS_MODE_FULLSCAN);
@@ -3207,6 +3217,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         sprdvcmInfo.vcm_step = vcm_step;
         mSetting->setVCMTag(sprdvcmInfo);
     }
+    HAL_LOGD("mSprdRefocusEnabled %d mSprdFullscanEnabled %d",
+             mSprdRefocusEnabled, mSprdFullscanEnabled);
+    if (mSprdRefocusEnabled == true && mCameraId == 0 && mSprdFullscanEnabled) {
+        struct vcm_range_info range;
+        mSetting->getVCMDACTag(range.vcm_dac);
+        ret = mHalOem->ops->camera_ioctrl(
+            mCameraHandle, CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
+        mSetting->setVCMDACTag(range.vcm_dac);
+        mSprdFullscanEnabled = 0;
+    }
 
     SprdCamera3RegularChannel *channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -4751,6 +4771,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         }
         break;
 
+    case CAMERA_EVT_CB_FOCUS_END:
+        focus_status = (cmr_focus_status *)parm4;
+        HAL_LOGD("CAMERA_EVT_CB_FOCUS_END focus_status->af_mode %d "
+                 "mSprdRefocusEnabled %d mCameraId %d mSprdFullscanEnabled %d",
+                 focus_status->af_mode, mSprdRefocusEnabled, mCameraId,
+                 mSprdFullscanEnabled);
+        if (mSprdRefocusEnabled == true && mCameraId == 0 &&
+            CAMERA_FOCUS_MODE_FULLSCAN == focus_status->af_mode) {
+            mSprdFullscanEnabled = 1;
+        }
+        break;
+
     default:
         HAL_LOGE("camera cb: unknown cb %d for CAMERA_FUNC_START_FOCUS!", cb);
         {
@@ -4829,6 +4861,16 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGD("sprdInfo.sprd_ai_scene_type_current :%u",
                  sprdAIInfo.sprd_ai_scene_type_current);
         break;
+
+    case CAMERA_EVT_CB_VCM_RESULT: {
+        int32_t vcm_result;
+        mSetting->getVCMRETag(&vcm_result);
+        vcm_result = *(int32_t *)parm4;
+        mSetting->setVCMRETag(vcm_result);
+        HAL_LOGD("CAMERA_EVT_CB_VCM_RESULT vcm_result %d", vcm_result);
+
+    } break;
+
     default:
         break;
     }
@@ -5010,6 +5052,11 @@ int SprdCamera3OEMIf::openCamera() {
     lensInfo.aperture = exif_info.aperture;
     mSetting->setLENSTag(lensInfo);
     HAL_LOGV("lensInfo.aperture %f", lensInfo.aperture);
+
+    if (MODE_3D_CALIBRATION == mMultiCameraMode) {
+        mSprdRefocusEnabled = true;
+        CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
+    }
 
     // dual otp
     if ((mMultiCameraMode == MODE_BOKEH ||
@@ -5832,6 +5879,19 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.sprd_filter_type);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FILTER_TYPE,
                  sprddefInfo.sprd_filter_type);
+    } break;
+    case ANDROID_LENS_FOCUS_DISTANCE: {
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_OFF) {
+            LENS_Tag lensInfo;
+            mSetting->getLENSTag(&lensInfo);
+
+            HAL_LOGD("focus_distance:%f", lensInfo.focus_distance);
+            if (lensInfo.focus_distance) {
+                SET_PARM(mHalOem, mCameraHandle,
+                         CAMERA_PARAM_LENS_FOCUS_DISTANCE,
+                         (cmr_uint)(lensInfo.focus_distance));
+            }
+        }
     } break;
     case ANDROID_SPRD_AUTO_HDR_ENABLED: {
         SPRD_DEF_Tag sprdInfo;
@@ -8471,7 +8531,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         // single capture wait the caf focused frame
         if (sprddefInfo.capture_mode == 1 && obj->mLastCafDoneTime > 0 &&
-            zsl_frame.monoboottime < obj->mLastCafDoneTime && mFlashCaptureFlag == 0) {
+            zsl_frame.monoboottime < obj->mLastCafDoneTime &&
+            mFlashCaptureFlag == 0) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,

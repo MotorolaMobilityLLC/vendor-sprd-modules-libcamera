@@ -629,7 +629,8 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_SCALER_CROP_REGION, ANDROID_STATISTICS_FACE_DETECT_MODE,
     ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, ANDROID_LENS_APERTURE,
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
-    ANDROID_LENS_FOCAL_LENGTH, ANDROID_SENSOR_FRAME_DURATION,
+    ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
+    ANDROID_SENSOR_FRAME_DURATION,
     // ANDROID_SENSOR_EXPOSURE_TIME,
     // ANDROID_SENSOR_SENSITIVITY,
     // ANDROID_BLACK_LEVEL_LOCK,
@@ -657,7 +658,8 @@ const int32_t front_kavailable_request_keys[] = {
     ANDROID_SCALER_CROP_REGION, ANDROID_STATISTICS_FACE_DETECT_MODE,
     ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, ANDROID_LENS_APERTURE,
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
-    ANDROID_LENS_FOCAL_LENGTH, ANDROID_SENSOR_FRAME_DURATION,
+    ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
+    ANDROID_SENSOR_FRAME_DURATION,
     // ANDROID_SENSOR_EXPOSURE_TIME,
     // ANDROID_SENSOR_SENSITIVITY,
     // ANDROID_BLACK_LEVEL_LOCK,
@@ -676,6 +678,7 @@ const int32_t kavailable_result_keys[] = {
     ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
     ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
     ANDROID_JPEG_THUMBNAIL_QUALITY, ANDROID_LENS_FOCAL_LENGTH,
+    ANDROID_LENS_FOCUS_DISTANCE,
     // ANDROID_NOISE_REDUCTION_MODE,
     ANDROID_REQUEST_PIPELINE_DEPTH, ANDROID_SCALER_CROP_REGION,
     ANDROID_SENSOR_TIMESTAMP, ANDROID_STATISTICS_FACE_DETECT_MODE,
@@ -3422,6 +3425,21 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+        s_setting[mCameraId].vcm_num = 7;
+        requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
+                           s_setting[mCameraId].vcm_dac,
+                           s_setting[mCameraId].vcm_num);
+        requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
+                           &(s_setting[mCameraId].vcm_result), 1);
+        HAL_LOGD(
+            "vcm_result %d vcm_num %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
+            "%d "
+            "vcm_dac[3] %d vcm_dac[4] %d vcm_dac[5] %d vcm_dac[6] %d ",
+            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_num,
+            s_setting[mCameraId].vcm_dac[0], s_setting[mCameraId].vcm_dac[1],
+            s_setting[mCameraId].vcm_dac[2], s_setting[mCameraId].vcm_dac[3],
+            s_setting[mCameraId].vcm_dac[4], s_setting[mCameraId].vcm_dac[5],
+            s_setting[mCameraId].vcm_dac[6]);
         requestInfo.update(ANDROID_SPRD_OTP_DATA,
                            s_setting[mCameraId].otpInfo.otp_data,
                            SPRD_DUAL_OTP_SIZE);
@@ -3698,6 +3716,20 @@ int SprdCamera3Setting::updateWorkParameters(
     }
     /**add for 3d calibration update metadata end*/
 
+    if (frame_settings.exists(ANDROID_SPRD_SET_VERIFICATION_FLAG)) {
+        s_setting[mCameraId].verification_enable =
+            frame_settings.find(ANDROID_SPRD_SET_VERIFICATION_FLAG).data.u8[0];
+        HAL_LOGD("s_setting[mCameraId].verification_enable %d",
+                 s_setting[mCameraId].verification_enable);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_COUNT)) {
+        s_setting[mCameraId].vcm_count =
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_COUNT).data.u8[0];
+        HAL_LOGD("s_setting[mCameraId].vcm_count %d",
+                 s_setting[mCameraId].vcm_count);
+    }
+
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
         uint8_t sprd_zsl_enabled;
         if (is_raw_capture == 1 || is_isptool_mode == 1) {
@@ -3794,6 +3826,15 @@ int SprdCamera3Setting::updateWorkParameters(
         GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focal_length, valueFloat,
                          ANDROID_LENS_FOCAL_LENGTH, 1)
         HAL_LOGV("lens focal len is %f", valueFloat);
+    }
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
+        valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focus_distance,
+                         valueFloat, ANDROID_LENS_FOCUS_DISTANCE, 1)
+        if (valueFloat) {
+            s_setting[mCameraId].vcm_result = VCM_RESULT_IN;
+        }
+        HAL_LOGD("lens focus distance is %f ", valueFloat);
     }
 
     // REQUEST
@@ -4687,6 +4728,25 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     if (mCameraId == 0) {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+        s_setting[mCameraId].vcm_num = 7;
+        camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
+                           s_setting[mCameraId].vcm_dac,
+                           s_setting[mCameraId].vcm_num);
+        camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
+                           &(s_setting[mCameraId].vcm_result), 1);
+        HAL_LOGD(
+            "vcm_result %d vcm_num %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
+            "%d "
+            "vcm_dac[3] %d vcm_dac[4] %d vcm_dac[5] %d vcm_dac[6] %d ",
+            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_num,
+            s_setting[mCameraId].vcm_dac[0], s_setting[mCameraId].vcm_dac[1],
+            s_setting[mCameraId].vcm_dac[2], s_setting[mCameraId].vcm_dac[3],
+            s_setting[mCameraId].vcm_dac[4], s_setting[mCameraId].vcm_dac[5],
+            s_setting[mCameraId].vcm_dac[6]);
+        if (s_setting[mCameraId].vcm_result == VCM_RESULT_DONE ||
+            s_setting[mCameraId].vcm_result == VCM_RESULT_FAIL) {
+            s_setting[mCameraId].vcm_result = VCM_RESULT_NO;
+        }
     }
 
     camMetadata.update(
@@ -4938,6 +4998,47 @@ int SprdCamera3Setting::setVCMTag(VCM_Tag vcmInfo) {
 int SprdCamera3Setting::getVCMTag(VCM_Tag *vcmInfo) {
     *vcmInfo = s_setting[mCameraId].vcmInfo;
     return 0;
+}
+
+int SprdCamera3Setting::setVCMDACTag(uint16_t *vcmInfo) {
+    s_setting[mCameraId].vcm_dac[0] = vcmInfo[0];
+    s_setting[mCameraId].vcm_dac[1] = vcmInfo[1];
+    s_setting[mCameraId].vcm_dac[2] = vcmInfo[2];
+    s_setting[mCameraId].vcm_dac[3] = vcmInfo[3];
+    s_setting[mCameraId].vcm_dac[4] = vcmInfo[4];
+    s_setting[mCameraId].vcm_dac[5] = vcmInfo[5];
+    s_setting[mCameraId].vcm_dac[6] = vcmInfo[6];
+    return 0;
+}
+
+int SprdCamera3Setting::getVCMDACTag(uint16_t *vcmInfo) {
+    vcmInfo[0] = s_setting[mCameraId].vcm_dac[0];
+    vcmInfo[1] = s_setting[mCameraId].vcm_dac[1];
+    vcmInfo[2] = s_setting[mCameraId].vcm_dac[2];
+    vcmInfo[3] = s_setting[mCameraId].vcm_dac[3];
+    vcmInfo[4] = s_setting[mCameraId].vcm_dac[4];
+    vcmInfo[5] = s_setting[mCameraId].vcm_dac[5];
+    vcmInfo[6] = s_setting[mCameraId].vcm_dac[6];
+    return 0;
+}
+
+int SprdCamera3Setting::setVCMRETag(int32_t result) {
+    s_setting[mCameraId].vcm_result = result;
+    return 0;
+}
+
+int SprdCamera3Setting::getVCMRETag(int32_t *result) {
+    *result = s_setting[mCameraId].vcm_result;
+    return 0;
+}
+
+int SprdCamera3Setting::setVERIFITag(int32_t veri_enable) {
+    s_setting[mCameraId].verification_enable = veri_enable;
+    return 0;
+}
+
+int SprdCamera3Setting::getVERIFITag() {
+    return s_setting[mCameraId].verification_enable;
 }
 
 int SprdCamera3Setting::androidAeModeToDrvAeMode(uint8_t androidAeMode,

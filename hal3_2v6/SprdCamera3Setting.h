@@ -388,6 +388,13 @@ typedef struct {
 
 typedef struct { int32_t vcm_step; } VCM_Tag;
 
+enum vcm_result {
+    VCM_RESULT_NO = 0x0,
+    VCM_RESULT_IN = 0x1,
+    VCM_RESULT_DONE = 0x2,
+    VCM_RESULT_FAIL = 0x3
+};
+
 typedef struct {
     cam_dimension_t preview_size;
     cam_dimension_t picture_size;
@@ -427,6 +434,11 @@ typedef struct {
     EIS_CROP_Tag eiscrop_Info;
     OTP_Tag otpInfo;
     VCM_Tag vcmInfo;
+    int32_t vcm_dac[20];
+    int32_t vcm_num;
+    int32_t vcm_result;
+    int32_t verification_enable;
+    int32_t vcm_count;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -587,6 +599,12 @@ class SprdCamera3Setting {
 
     int setVCMTag(VCM_Tag vcmInfo);
     int getVCMTag(VCM_Tag *vcmInfo);
+    int setVCMDACTag(uint16_t *vcmInfo);
+    int getVCMDACTag(uint16_t *vcmInfo);
+    int setVCMRETag(int32_t result);
+    int getVCMRETag(int32_t *result);
+    int getVERIFITag();
+    int setVERIFITag(int32_t veri_enable);
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];

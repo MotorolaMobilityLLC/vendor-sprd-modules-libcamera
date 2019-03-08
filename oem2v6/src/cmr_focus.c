@@ -29,6 +29,7 @@
 
 #define CMR_AF_MSG_QUEUE_SIZE (5)
 #define ISP_PROCESS_SEC_TIMEOUT (2)
+#define ISP_CALIBRATED_SEC_TIMEOUT (6)
 #define ISP_PROCESS_NSEC_TIMEOUT (800000000)
 #define CAMERA_FOCUS_RECT_PARAM_LEN (200)
 
@@ -581,8 +582,7 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
 
             pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
             if (ISP_FOCUS_MOVE_END == isp_af->mode) {
-                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af,
-                               af_cxt->oem_handle);
+                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af, af_cxt->oem_handle);
                 ret = af_isp_done(af_handle, data);
             }
         } else if (is_caf_mode) {
@@ -596,8 +596,7 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
                 ret = caf_move_start_handle(af_handle, &focus_status);
             } else if (ISP_FOCUS_MOVE_END == isp_af->mode) {
                 focus_status.is_in_focus = 0;
-                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af,
-                               af_cxt->oem_handle);
+                af_cxt->evt_cb(AF_CB_ROI, (cmr_uint)isp_af, af_cxt->oem_handle);
                 ret = caf_move_stop_handle(af_handle, &focus_status);
             }
         }
@@ -1599,6 +1598,13 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
             }
         } else {
             ts.tv_sec += ISP_PROCESS_SEC_TIMEOUT;
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
+            property_get("ro.vendor.camera.dualcamera_cali_time", prop, "0");
+            if (camera_id == 0 && 3 == atoi(prop)) {
+                ts.tv_sec += ISP_CALIBRATED_SEC_TIMEOUT;
+            }
         }
         if (ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT >= (1000 * 1000 * 1000)) {
             ts.tv_nsec =
