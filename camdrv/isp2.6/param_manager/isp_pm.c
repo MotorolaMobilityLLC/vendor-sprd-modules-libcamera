@@ -188,6 +188,37 @@ struct sensor_find_param_list params_list_ov5675[] =
     {0x0000, 0x0000, 0x0002, 0x0510, 0x03cc, 0x400a, 0x000a, 0x0000},
 };
 
+/* todo: delete it later */
+/* workaround for 4in1. It should be passed from source tuning data */
+struct sensor_find_param_list params_list_ov16885[] =
+{
+    //custom	Scene	Mode	Size	   Block	 ID
+	/*ov16885:  4in1 prev0 */
+    {0x0001, 0x0000, 0x0000, 0x0920, 0x06d8, 0x4002, 0x0001, 0x0000},
+    {0x0001, 0x0000, 0x0000, 0x0920, 0x06d8, 0x400a, 0x0001, 0x0000},
+    {0x0001, 0x0000, 0x0000, 0x0920, 0x06d8, 0x4013, 0x0001, 0x0000},
+    {0x0001, 0x0000, 0x0000, 0x0920, 0x06d8, 0x5009, 0x0001, 0x0000},
+
+	/*ov16885:  binning prev1 */
+    {0x0000, 0x0000, 0x0000, 0x0920, 0x06d8, 0x4002, 0x0002, 0x0000},
+    {0x0000, 0x0000, 0x0000, 0x0920, 0x06d8, 0x400a, 0x0002, 0x0000},
+
+	/*ov16885:  4in1 cap0(full size remosic) */
+    {0x0000, 0x0000, 0x0001, 0x1240, 0x0db0, 0x5009, 0x0005, 0x0000},
+
+	/*ov16885:  4in1 binning cap1() */
+    {0x0001, 0x0000, 0x0001, 0x0920, 0x06d8, 0x4002, 0x0006, 0x0000},
+    {0x0001, 0x0000, 0x0001, 0x0920, 0x06d8, 0x400a, 0x0006, 0x0000},
+
+	/*ov16885:  binning video1 */
+    {0x0000, 0x0000, 0x0002, 0x0920, 0x06d8, 0x4002, 0x000a, 0x0000},
+    {0x0000, 0x0000, 0x0002, 0x0920, 0x06d8, 0x400a, 0x000a, 0x0000},
+
+	/*ov16885:  slw video2 (1280x720) */
+    {0x0000, 0x0000, 0x0002, 0x0500, 0x02D0, 0x4002, 0x000b, 0x0000},
+    {0x0000, 0x0000, 0x0002, 0x0500, 0x02D0, 0x400a, 0x000b, 0x0000},
+};
+
 struct isp_pm_context {
 	cmr_u32 magic_flag;
 	cmr_u32 param_source;
@@ -1256,7 +1287,10 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
 		pm_cxt_ptr->param_search_list = PNULL;
 		pm_cxt_ptr->param_search_list_size = 0;
-		goto start_parse;
+
+		/* workaround for 4in1 */
+		if (strncmp((const char *)sensor_name, "ov16885", 6))
+			goto start_parse;
 	} else {
 		ISP_LOGD("specified pm searching list. %p, %d\n",
 			pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
@@ -1277,6 +1311,10 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 		pm_cxt_ptr->param_search_list = &params_list_ov5675[0];
 		pm_cxt_ptr->param_search_list_size = sizeof(params_list_ov5675);
 		ISP_LOGD("ov5675  %p, size = %d\n", pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
+	} else if (!strncmp((const char *)sensor_name, "ov16885", 6)) {
+		pm_cxt_ptr->param_search_list = &params_list_ov16885[0];
+		pm_cxt_ptr->param_search_list_size = sizeof(params_list_ov16885);
+		ISP_LOGD("ov16885  %p, size = %d\n", pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
 	}
 
 start_parse:

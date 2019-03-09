@@ -4205,7 +4205,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	cxt->sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	cxt->is_4in1_prev = in_ptr->mode_4in1;
-	ISP_LOGV("4c prev[%d]\n", cxt->is_4in1_prev);
+	ISP_LOGD("4c prev[%d]\n", cxt->is_4in1_prev);
 
 	orig_size.w = cxt->commn_cxt.src.w;
 	orig_size.h = cxt->commn_cxt.src.h;
@@ -4275,6 +4275,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	pm_input.mode[0] = base_mode;
 	pm_input.img_w[0] = cxt->commn_cxt.src.w;
 	pm_input.img_h[0] = cxt->commn_cxt.src.h;
+	if (cxt->is_4in1_prev) {
+		pm_input.cam_4in1_mode = 1;
+		pm_input.define[0] = 1; /* todo: workaround for 4in1 binning prev*/
+		pm_input.img_w[0] >>= 1;
+		pm_input.img_h[0] >>= 1;
+	}
 	if (cxt->zsl_flag)  {
 		pm_input.pm_sets_num++;
 		pm_input.mode_id[1] = cap_mode;
