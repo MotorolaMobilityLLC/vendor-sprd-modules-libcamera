@@ -37,6 +37,8 @@ struct ai_ctrl_cxt {
 	aic_status_t aic_img_status;
 	aic_image_t aic_image;
 	enum ai_status aic_status;
+	cmr_u32 fd_on_off;
+	cmr_u32 temp_fd_frameid;
 };
 
 cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
@@ -229,7 +231,6 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 	cmr_s32 rtn = ISP_SUCCESS, i;
 	struct ai_ctrl_cxt *cxt = NULL;
 	struct aictrl_cxt *aictrl_cxt_ptr = NULL;
-	struct ai_img_status *ai_img_status_ptr = NULL;
 	struct ai_img_param *ai_img_ptr = NULL;
 
 	rtn = ai_check_handle(handle);
@@ -260,10 +261,35 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 			ISP_LOGV("ai fd: yaw: %d, roll: %d, score: %d, human_id: %d.",
 				cxt->aic_faceinfo.face_area[i].yaw_angle, cxt->aic_faceinfo.face_area[i].roll_angle, cxt->aic_faceinfo.face_area[i].score, cxt->aic_faceinfo.face_area[i].human_id);
 		}
-		if (0 != AIC_SetFaceInfo(cxt->aic_handle, &cxt->aic_faceinfo)) {
-			rtn = ISP_ERROR;
-			ISP_LOGE("fail to AIC_SetFaceInfo.");
+		cxt->temp_fd_frameid = cxt->aic_faceinfo.frame_id;
+
+		if(1 == cxt->fd_on_off){
+			if (0 != AIC_SetFaceInfo(cxt->aic_handle, &cxt->aic_faceinfo)) {
+				rtn = ISP_ERROR;
+				ISP_LOGE("fail to AIC_SetFaceInfo.");
+				goto exit;
+			}
+		}
+		break;
+	case AI_SET_FD_ON_OFF:
+		if (!param) {
+			ISP_LOGE("fail to set fd on off");
 			goto exit;
+		}
+		cxt->fd_on_off = *(cmr_u32 *)param;
+		ISP_LOGI("FD_ON_OFF flag is: %d", cxt->fd_on_off);
+
+		if(0 == cxt->fd_on_off){
+			memset(&cxt->aic_faceinfo, 0, sizeof(struct ai_fd_param));
+			cxt->aic_faceinfo.frame_id = cxt->temp_fd_frameid + 1;
+                	cxt->aic_faceinfo.width = 1;
+                	cxt->aic_faceinfo.height = 1;
+
+			if (0 != AIC_SetFaceInfo(cxt->aic_handle, &cxt->aic_faceinfo)) {
+				rtn = ISP_ERROR;
+				ISP_LOGE("fail to AIC_SetFaceInfo.");
+				goto exit;
+			}
 		}
 		break;
 	case AI_SET_AE_PARAM:
@@ -313,13 +339,41 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 	case AI_PROCESS_START:
 		AIC_StartProcess(cxt->aic_handle);
 		cxt->aic_status = AI_STATUS_PROCESSING;
-		ISP_LOGV("AI start.");
+		ISP_LOGI("AI start.");
 		break;
 	case AI_PROCESS_STOP:
 		AIC_StopProcess(cxt->aic_handle);
 		cxt->aic_status = AI_STATUS_IDLE;
-		ISP_LOGV("AI stop.");
+		ISP_LOGI("AI stop.");
 		break;
+
+	default:
+		ISP_LOGW("cmd is invalid. cmd: %d.", cmd);
+		break;
+	}
+
+exit:
+	return rtn;
+}
+
+static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_handle result)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	struct ai_ctrl_cxt *cxt = NULL;
+	struct ai_img_status *ai_img_status_ptr = NULL;
+
+	//UNUSED(param);
+	UNUSED(result);
+
+	rtn = ai_check_handle(handle);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to check handle %p", handle);
+		return ISP_PARAM_NULL;
+	}
+
+	cxt = (struct ai_ctrl_cxt *)handle;
+	pthread_mutex_lock(&cxt->data_sync_lock);
+	switch (cmd) {
 	case AI_GET_STATUS:
 		if (!param) {
 			ISP_LOGE("fail to get ai status.");
@@ -354,38 +408,10 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		ISP_LOGV("img_flag is: %d", ai_img_status_ptr->img_flag);
 		break;
 	default:
-		ISP_LOGW("cmd is invalid. cmd: %d.", cmd);
-		break;
-	}
-
-exit:
-	return rtn;
-}
-
-static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_handle result)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	struct ai_ctrl_cxt *cxt = NULL;
-
-	UNUSED(param);
-	UNUSED(result);
-
-	rtn = ai_check_handle(handle);
-	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("fail to check handle %p", handle);
-		return ISP_PARAM_NULL;
-	}
-
-	cxt = (struct ai_ctrl_cxt *)handle;
-	pthread_mutex_lock(&cxt->data_sync_lock);
-	switch (cmd) {
-	/*case AE_GET_CALC_RESULTS:
-		rtn = ae_get_calc_reuslts(cxt, result);
-		break;*/
-	default:
 		rtn = ISP_ERROR;
 		break;
 	}
+exit:
 	pthread_mutex_unlock(&cxt->data_sync_lock);
 	return rtn;
 }
@@ -419,6 +445,7 @@ cmr_s32 ai_sprd_adpt_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle o
 	UNUSED(in_param);
 	UNUSED(out_param);
 
+	ISP_LOGI("enter");
 	rtn = ai_check_handle(handle);
 	if (ISP_SUCCESS != rtn) {
 		return ISP_ERROR;

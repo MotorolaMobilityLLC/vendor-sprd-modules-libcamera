@@ -94,9 +94,9 @@ static cmr_int aictrl_ioctrl(struct aictrl_cxt *cxt_ptr, enum ai_io_ctrl_cmd cmd
 	}
 
 	ISP_LOGV("done %ld", rtn);
-	
+
   exit:
-	
+
 	return rtn;
 }
 
@@ -296,7 +296,7 @@ cmr_s32 ai_ctrl_init(struct ai_init_in *input_ptr, cmr_handle *handle_ai, cmr_ha
 
 	*handle_ai = (cmr_handle)cxt_ptr;
 
-	ISP_LOGV("done %d", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 
   error_init:
@@ -343,7 +343,7 @@ cmr_int ai_ctrl_deinit(cmr_handle * handle_ai)
 		*handle_ai = NULL;
 	}
 
-	ISP_LOGV("done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
