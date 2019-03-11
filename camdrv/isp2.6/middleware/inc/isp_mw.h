@@ -377,6 +377,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_SW3DNR_PARAM = 124,
 	/*camera mode which appearby right slip*/
 	ISP_CTRL_SET_APP_MODE,
+	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_MAX
 };
 

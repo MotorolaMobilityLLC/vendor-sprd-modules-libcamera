@@ -2267,6 +2267,21 @@ static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_ptr)
+{
+       cmr_int ret = ISP_SUCCESS;
+       struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+       if (NULL == param_ptr) {
+               return ISP_PARAM_NULL;
+       }
+
+       if (cxt->ops.ai_ops.ioctrl)
+               ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_ON_OFF, (void *)param_ptr, NULL);
+
+       return ret;
+}
+
 static cmr_int ispctl_ai_process_start(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2515,6 +2530,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR2_EN, ispctl_get_cnr2_en},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
+	{ISP_CTRL_AI_SET_FD_STATUS,ispctl_ai_set_fd_status},
 	{ISP_CTRL_MAX, NULL}
 };
 
