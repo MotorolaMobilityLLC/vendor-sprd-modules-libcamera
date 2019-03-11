@@ -3087,9 +3087,13 @@ static int img_ioctl_set_cam_security(
 		module->grp->camsec_cfg.work_mode = uparam.work_mode;
 		module->grp->camsec_cfg.camsec_mode = uparam.camsec_mode;
 
+		ret = sprd_iommu_set_cam_bypass(true);
+
 	}  else {
 		module->grp->camsec_cfg.work_mode = uparam.work_mode;
 		module->grp->camsec_cfg.camsec_mode = uparam.camsec_mode;
+
+		ret = sprd_iommu_set_cam_bypass(false);
 	}
 
 exit:
@@ -4039,7 +4043,6 @@ static int img_ioctl_get_cam_res(
 		ret = -EINVAL;
 		goto isp_fail;
 	}
-
 
 	module->attach_sensor_id = res.sensor_id;
 	module->workqueue = create_workqueue("sprd_camera_module");
