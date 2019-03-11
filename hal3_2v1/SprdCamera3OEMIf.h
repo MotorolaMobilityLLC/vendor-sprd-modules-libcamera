@@ -124,6 +124,8 @@ typedef struct sprd_3dnr_memory {
     void *private_handle;
 } sprd_3dnr_memory_t;
 
+typedef sprd_3dnr_memory_t sprd_graphic_memory_t;
+
 struct ZslBufferQueue {
     camera_frame_type frame;
     sprd_camera_memory_t *heap_array;
@@ -147,6 +149,7 @@ typedef struct {
     uint32_t heapNum;
 } camera_oem_buff_info_t;
 
+#define MAX_GRAPHIC_BUF_NUM 20
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
 #define MAX_Y_UV_COUNT 2
@@ -284,7 +287,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
                              struct cmr_af_aux_sensor_info *sensor_info);
 #endif
     void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
-
+    void setUltraWideMode();
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     // sw 3dnr solution used
@@ -351,6 +354,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void receiveCameraExitError(void);
     void receiveTakePictureError(void);
     void receiveJpegPictureError(void);
+    void HandleGetBufHandle(enum camera_cb_type cb, void *parm4);
+    void HandleReleaseBufHandle(enum camera_cb_type cb, void *parm4);
     void HandleStopCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartPreview(enum camera_cb_type cb, void *parm4);
@@ -532,6 +537,16 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                        cmr_uint *phy_addr, cmr_uint *vir_addr,
                                        cmr_s32 *fd, void **handle,
                                        cmr_uint width, cmr_uint height);
+    int Callback_GraphicBufferMalloc(cmr_u32 size, cmr_u32 sum,
+                                     cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                     cmr_s32 *fd, void **handle, cmr_uint width,
+                                     cmr_uint height);
+    int Callback_ZslGraphicBufferMalloc(cmr_u32 size, cmr_u32 sum,
+                                        cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                        cmr_s32 *fd, void **handle,
+                                        cmr_uint width, cmr_uint height);
+    int Callback_GraphicBufferFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                   cmr_s32 *fd, cmr_u32 sum);
     int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
     int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
@@ -624,6 +639,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_3dnr_memory_t m3DNRGraphicArray[MAX_SUB_RAWHEAP_NUM];
     sprd_3dnr_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_graphic_memory_t mGraphicBufArray[MAX_GRAPHIC_BUF_NUM];
 
     sprd_camera_memory_t *mSmallSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mSmallPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
@@ -715,6 +731,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mSubRawHeapNum;
     uint32_t m3dnrGraphicHeapNum;
     uint32_t m3dnrGraphicPathHeapNum;
+    uint32_t mGraphicBufNum;
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;
@@ -866,6 +883,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
+    bool mIsUltraWideMode;
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif

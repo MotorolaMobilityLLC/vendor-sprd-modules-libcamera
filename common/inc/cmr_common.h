@@ -749,6 +749,17 @@ typedef struct {
     int format;
 } cam_buffer_info_t;
 
+typedef struct {
+    int width;
+    int height;
+    cmr_u32 buf_size;
+    cmr_s32 fd;
+    cmr_uint addr_phy;
+    cmr_uint addr_vir;
+    void *graphic_buffer;
+    void *private_data;
+} cam_graphic_buffer_info_t;
+
 /********************************* v4l2 start *********************************/
 
 /********************************* v4l2 start *********************************/
@@ -1062,7 +1073,6 @@ struct common_isp_cmd_param {
 #endif
         struct vcm_range_info vcm_range;
         struct vcm_disc_info vcm_disc;
-
     };
 };
 
@@ -1123,6 +1133,7 @@ enum ipm_class_type {
     IPM_TYPE_CNR = 0x00000100,
     IPM_TYPE_4IN1 = 0x00000101,
     IPM_TYPE_AI_SCENE = 0x00000200,
+    IPM_TYPE_ULTRA_WIDE = 0x00000300,
     IPM_TYPE_AUTO_TRACKING = 0x00000400
 };
 
@@ -1432,6 +1443,8 @@ enum camera_cb_type {
     CAMERA_EVT_CB_CONVERT_EV,
     CAMERA_EVT_CB_AF_MODE,
 #endif
+    CAMERA_EVT_PREVIEW_BUF_HANDLE,
+    CAMERA_EVT_CAPTURE_BUF_HANDLE,
     CAMERA_EVT_CB_INVALIDATE_CACHE,
     CAMERA_EVT_CB_RAW_FRAME,
     CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF,
@@ -1455,6 +1468,8 @@ enum camera_func_type {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     CAMERA_FUNC_CONVERT_PARAM,
 #endif
+    CAMERA_FUNC_GET_BUF_HANDLE,
+    CAMERA_FUNC_RELEASE_BUF_HANDLE,
     CAMERA_FUNC_TYPE_MAX
 };
 
@@ -1581,7 +1596,11 @@ enum camera_preview_mode_type {
 
 enum fast_ctrl_mode { CAMERA_FAST_MODE_FD = 0, CAMERA_FAST_MODE_MAX };
 
-enum af_focus_state { AF_STATE_NOT_FOCUSED_LOCKED = 0, AF_STATE_FOCUSED_LOCKED,AF_STATE_FOCUSE_MAX };
+enum af_focus_state {
+    AF_STATE_NOT_FOCUSED_LOCKED = 0,
+    AF_STATE_FOCUSED_LOCKED,
+    AF_STATE_FOCUSE_MAX
+};
 
 struct camera_face_info {
     cmr_u32 face_id;
@@ -1767,6 +1786,7 @@ typedef enum {
     SPRD_DUAL_FACEID_REGISTER_ID,
     SPRD_DUAL_FACEID_UNLOCK_ID,
     SPRD_3D_VIDEO_ID,
+    SPRD_ULTRA_WIDE_ID,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
@@ -1841,6 +1861,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO,
     CAMERA_IOCTRL_SET_HDR_DISABLE,
     CAMERA_IOCTRL_SET_VCM_DISC,
+    CAMERA_IOCTRL_ULTRA_WIDE_MODE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);
@@ -2065,7 +2086,8 @@ typedef struct oem_ops {
                                        struct tuning_param_info *tuning_info);
 #endif
 #if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
-    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
+    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
+    defined(CONFIG_CAMERA_SUPPORT_ULTRA_WIDE)
     cmr_int (*camera_set_gpu_mem_ops)(cmr_handle camera_handle,
                                       void *cb_of_malloc, void *cb_of_free);
 #endif

@@ -51,7 +51,7 @@ SprdCamera3Stream::SprdCamera3Stream(camera3_stream_t *new_stream,
     mStreamType = type;
     mUserChan = userdata;
     mBuffNum = 0;
-
+    mIsUltraWideMode = 0;
     mMemory = new SprdCamera3GrallocMemory();
     if (NULL == mMemory) {
         HAL_LOGE("object NULL");
@@ -153,7 +153,12 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber,
     }
 
     buff_hal->buffer_handle = buffer;
-    ret = mMemory->map(buffer, buf_mem_info);
+    if (mIsUltraWideMode == 1) {
+        ret = mMemory->map3(buffer, buf_mem_info);
+    } else {
+        ret = mMemory->map(buffer, buf_mem_info);
+    }
+
     if (ret != NO_ERROR) {
         HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
         mBuffNum++;
@@ -193,7 +198,12 @@ int SprdCamera3Stream::buffDoneDQ(uint32_t frameNumber,
     for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
         if ((*iter) && (*iter)->frame_number == frameNumber) {
             *buffer = (*iter)->buffer_handle;
-            mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
+            if (mIsUltraWideMode == 1 && mStreamType == 1) {
+                mMemory->unmap3((*iter)->buffer_handle, &((*iter)->mem_info));
+            } else {
+                mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
+            }
+
             HAL_LOGV("frame_number %d, mStreamType %d", (*iter)->frame_number,
                      mStreamType);
             delete *iter;
@@ -377,6 +387,27 @@ int SprdCamera3Stream::getQBufHandleForNum(uint32_t frameNumber,
     }
     return BAD_VALUE;
 }
+
+int SprdCamera3Stream::getQBufHandle(cmr_uint addr_vir, cmr_uint addr_phy,
+                                     cmr_s32 fd, buffer_handle_t **buff,
+                                     void **prevGraphBuffer) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+    Vector<hal_buff_list_t *>::iterator iter;
+
+    for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
+        if (*iter) {
+            hal_mem_info_t *mem_info = &((*iter)->mem_info);
+            if ((cmr_uint)mem_info->addr_vir == addr_vir) {
+                *buff = (*iter)->buffer_handle;
+                *prevGraphBuffer = mem_info->bufferPtr;
+                return ret;
+            }
+        }
+    }
+    return BAD_VALUE;
+}
+
 int SprdCamera3Stream::getQBufNumForVir(cmr_uint addr_vir,
                                         uint32_t *frameNumber) {
     Mutex::Autolock l(mLock);
@@ -411,4 +442,8 @@ int SprdCamera3Stream::getQBufForHandle(buffer_handle_t *buff,
     return BAD_VALUE;
 }
 
+void SprdCamera3Stream::setUltraWideMode(bool ultra_wide_mode) {
+    mIsUltraWideMode = ultra_wide_mode;
+    HAL_LOGD("mIsUltraWideMode:%d", mIsUltraWideMode);
+}
 }; // namespace sprdcamera

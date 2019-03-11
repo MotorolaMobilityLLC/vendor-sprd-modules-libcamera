@@ -31,6 +31,7 @@
 #define __SPRDCAMERA3HWI_MEM_H__
 #include <hardware/camera3.h>
 #include <utils/Mutex.h>
+#include <ui/GraphicBuffer.h>
 
 extern "C" {
 #include <sys/types.h>
@@ -44,6 +45,8 @@ typedef struct {
     // offset from fd, always set to 0
     void *addr_phy;
     void *addr_vir;
+    sp<GraphicBuffer> pbuffer;
+    void *bufferPtr;
 } hal_mem_info_t;
 
 // Base class for all memory types. Abstract.
@@ -103,6 +106,8 @@ class SprdCamera3GrallocMemory : public SprdCamera3Memory {
     // addr
     int map2(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
     virtual int unmap(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
+    int map3(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
+    int unmap3(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
 };
 };
 #endif

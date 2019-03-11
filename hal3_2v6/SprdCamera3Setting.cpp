@@ -128,7 +128,8 @@ static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592,
                                                     2592, 2592, 2592};
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944,
                                                      1944, 1944, 1944};
-static float blur_fnum[BLUR_FNUM_COUNT] = {0.95, 1.4, 2.0, 2.8, 4.0, 5.6, 8.0, 11.0, 13.0, 16.0};
+static float blur_fnum[BLUR_FNUM_COUNT] = {0.95, 1.4, 2.0,  2.8,  4.0,
+                                           5.6,  8.0, 11.0, 13.0, 16.0};
 
 // if cant get valid sensor fov info, use the default value
 static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
@@ -302,9 +303,9 @@ enum {
     CAMERA_ISO_100,
     CAMERA_ISO_MAX
 };
-const uint8_t availableIso[] = {
-    CAMERA_ISO_AUTO, CAMERA_ISO_100,  CAMERA_ISO_200, CAMERA_ISO_400,
-    CAMERA_ISO_800,  CAMERA_ISO_1600};
+const uint8_t availableIso[] = {CAMERA_ISO_AUTO, CAMERA_ISO_100,
+                                CAMERA_ISO_200,  CAMERA_ISO_400,
+                                CAMERA_ISO_800,  CAMERA_ISO_1600};
 
 typedef struct cam_stream_info {
     cam_dimension_t stream_sizes_tbl;
@@ -528,8 +529,7 @@ const cam_stream_info_t stream_info[] = {
     {{320, 240}, 33331760L, 33331760L},
     {{288, 352}, 33331760L, 33331760L},
     {{240, 320}, 33331760L, 33331760L},
-    {{176, 144}, 33331760L, 33331760L}
-};
+    {{176, 144}, 33331760L, 33331760L}};
 
 const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.6, 2.8, 3.0};
 
@@ -1124,7 +1124,7 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
     return ret;
 }
 
-void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area){
+void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area) {
     int32_t touch_point[2] = {0};
     cmr_u16 picW, picH, snsW, snsH;
     float w_ratio = 0.000f, h_ratio = 0.000f;
@@ -1135,8 +1135,8 @@ void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area){
 
     getLargestPictureSize(mCameraId, &picW, &picH);
     getLargestSensorSize(mCameraId, &snsW, &snsH);
-    HAL_LOGD("picture size = %d x %d, sensor size = %d x %d,",
-        picW, picH, snsW, snsH);
+    HAL_LOGD("picture size = %d x %d, sensor size = %d x %d,", picW, picH, snsW,
+             snsH);
     // Do coordinate transition
     w_ratio = (float)snsW / (float)picW;
     h_ratio = (float)snsH / (float)picH;
@@ -1931,10 +1931,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features.add(atoi(prop));
-    }else {
+    } else {
         available_cam_features.add(0);
     }
 
+// BACKULTRAWIDEANGLEENABLE
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+
+    ALOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -3905,8 +3913,8 @@ int SprdCamera3Setting::updateWorkParameters(
     }
     if (frame_settings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
         valueI32 = frame_settings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.aperture, blur_fnum[valueI32 - 1],
-                         ANDROID_SPRD_BLUR_F_NUMBER, 1)
+        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.aperture,
+                         blur_fnum[valueI32 - 1], ANDROID_SPRD_BLUR_F_NUMBER, 1)
         HAL_LOGD("lens aperture is %f", blur_fnum[valueI32 - 1]);
     }
     if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
@@ -4328,7 +4336,8 @@ int SprdCamera3Setting::updateWorkParameters(
                 } else if (af_area[0] == 0 && af_area[1] == 0 &&
                            af_area[2] == 0 && af_area[3] == 0) {
                     for (i = 0; i < 5; i++)
-                        s_setting[mCameraId].controlInfo.af_regions[i] = af_area[i];
+                        s_setting[mCameraId].controlInfo.af_regions[i] =
+                            af_area[i];
                 }
             }
         }
@@ -4373,7 +4382,8 @@ int SprdCamera3Setting::updateWorkParameters(
         int32_t i = 0;
 
         for (i = 0; i < tag_count; i++) {
-            touch_area[i] = frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION).data.i32[i];
+            touch_area[i] = frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION)
+                                .data.i32[i];
             HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
         }
         autotrackingCoordinateConvert(touch_area);
@@ -4677,7 +4687,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
     // Update ANDROID_SPRD_DEVICE_ORIENTATION
     camMetadata.update(ANDROID_SPRD_DEVICE_ORIENTATION,
-                       &(s_setting[mCameraId].sprddefInfo.device_orietation), 1);
+                       &(s_setting[mCameraId].sprddefInfo.device_orietation),
+                       1);
     if ((s_setting[mCameraId].jpgInfo.orientation == 90 ||
          s_setting[mCameraId].jpgInfo.orientation == 270)) {
         int32_t rotated_thumbnail_size[2];
@@ -4889,9 +4900,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
         &(s_setting[mCameraId].sprddefInfo.sprd_ai_scene_type_current), 1);
 
-    //callback autotracking info
+    // callback autotracking info
     if (!(s_setting[mCameraId].autotrackingInfo.at_start_info[2])) {
-        //s_setting[mCameraId].autotrackingInfo.at_cb_info[0] = AUTO_TRACKING_FAILTURE;
+        // s_setting[mCameraId].autotrackingInfo.at_cb_info[0] =
+        // AUTO_TRACKING_FAILTURE;
         s_setting[mCameraId].autotrackingInfo.at_cb_info[1] = 0;
         s_setting[mCameraId].autotrackingInfo.at_cb_info[2] = 0;
     }
@@ -5691,7 +5703,7 @@ int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
 
 int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
     memcpy(s_setting[mCameraId].hist_report, hist_report,
-        sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+           sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
     return 0;
 }
 

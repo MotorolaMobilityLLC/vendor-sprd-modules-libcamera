@@ -177,6 +177,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/depth_bokeh/inc\
     $(LOCAL_PATH)/arithmetic/sprd_yuvprocess/inc\
     $(LOCAL_PATH)/arithmetic/sprd_scale/inc\
+    $(LOCAL_PATH)/arithmetic/sprd_warp/inc
 
 LOCAL_SRC_FILES += \
       arithmetic/sprd_yuvprocess/src/hal_yuvprocess.c

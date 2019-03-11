@@ -328,6 +328,7 @@ struct camera_context {
     cmr_uint is_start_snapshot;
     cmr_uint is_3dnr_video;
     cmr_u32 blur_facebeauty_flag;
+    cmr_uint is_ultra_wide;
 
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
@@ -489,12 +490,11 @@ cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id,
 cmr_int cmr_get_sensor_vcm_step(cmr_handle oem_handle, cmr_u32 camera_id,
                                 cmr_u32 *max_fps);
 cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
-                                    struct vcm_range_info *vcm_range);
+                          struct vcm_range_info *vcm_range);
 
 cmr_int cmr_set_vcm_disc(cmr_handle oem_handle, cmr_u32 camera_id,
-                                    struct vcm_disc_info *vcm_disc);
+                         struct vcm_disc_info *vcm_disc);
 int af_state_focus_to_hal(cmr_u32 valid_win);
-
 
 cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle);
 cmr_int camera_local_set_cap_size(
@@ -520,6 +520,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             cmr_uint yaddr, cmr_uint yaddr_vir,
                                             cmr_uint fd);
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
+cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
+                                   cmr_uint is_ultra_wide);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 cmr_int camera_get_cpp_capability(cmr_handle oem_handle, cmr_u32 *max_width,
                                   cmr_u32 *max_height);

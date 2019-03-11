@@ -1108,6 +1108,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_set_3dnr_video(handle, *(cmr_uint *)param);
         break;
     }
+    case CAMERA_IOCTRL_ULTRA_WIDE_MODE: {
+        ret = camera_set_ultra_wide_mode(handle, *(cmr_uint *)param);
+        break;
+    }
     case CAMERA_IOCTRL_GET_CPP_CAPABILITY: {
         ret = camera_local_get_cpp_capability(
             handle, &(((struct img_size *)param)->width),
@@ -1316,7 +1320,9 @@ static oem_ops_t oem_module_ops = {
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,
 #endif
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
+    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
+    defined(CONFIG_CAMERA_SUPPORT_ULTRA_WIDE)
     camera_set_gpu_mem_ops,
 #endif
     camera_get_rolling_shutter,

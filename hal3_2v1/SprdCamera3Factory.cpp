@@ -262,6 +262,11 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;
+    } else {
+        unsigned int on_off = 0;
+        if (SPRD_ULTRA_WIDE_ID == camera_id)
+            on_off = 1;
+        hw->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
     }
     return rc;
 }
@@ -315,7 +320,8 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         (cameraId > SPRD_MULTI_CAMERA_MAX_ID))
         return false;
 
-    if (SPRD_REFOCUS_ID == cameraId || (SPRD_3D_CALIBRATION_ID == cameraId)) {
+    if (SPRD_REFOCUS_ID == cameraId || (SPRD_3D_CALIBRATION_ID == cameraId) ||
+        (SPRD_ULTRA_WIDE_ID == cameraId)) {
         return false;
     }
 
@@ -333,6 +339,9 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
         // transform to open physics Camera
         // id is 0 and 2
         return 0;
+    } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
+        return property_get_int32("persist.vendor.camera.ultra_wide.cam_id",
+                                  /*default*/ 0);
     } else if (SPRD_3D_CALIBRATION_ID ==
                cameraId) { // ValidationTools apk open  camera id is
         // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to

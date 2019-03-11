@@ -1715,6 +1715,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     }
 
+// BACKULTRAWIDEANGLEENABLE
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+
+    ALOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -4509,7 +4517,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash), 1);
 
-    HAL_LOGI("auto hdr scene report %d",
+    HAL_LOGD("auto hdr scene report %d",
              s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
     camMetadata.update(ANDROID_SPRD_IS_HDR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),

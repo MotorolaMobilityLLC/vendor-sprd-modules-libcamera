@@ -74,11 +74,14 @@ class SprdCamera3Stream {
     int getQBufAddrForNum(uint32_t frameNumber, cmr_uint *addr_vir,
                           cmr_uint *addr_phy, cmr_s32 *fd);
     int getQBufHandleForNum(uint32_t frameNumber, buffer_handle_t **buff);
+    int getQBufHandle(cmr_uint addr_vir, cmr_uint addr_phy, cmr_s32 fd,
+                      buffer_handle_t **buff, void **prevGraphBuffer);
     int getQBufNumForVir(cmr_uint addr_vir, uint32_t *frameNumber);
     int getQBufForHandle(buffer_handle_t *buff, cmr_uint *addr_vir,
                          cmr_uint *addr_phy, cmr_s32 *fd);
     int getQBuffFirstPhy(cmr_uint *addr_phy);
     int getQBuffFirstFd(cmr_s32 *fd);
+    void setUltraWideMode(bool ultra_wide_mode);
 
   private:
     camera_stream_type_t mStreamType;
@@ -88,6 +91,7 @@ class SprdCamera3Stream {
     camera3_stream_t *mCameraStream;
 
     uint32_t mBuffNum;
+    uint8_t mIsUltraWideMode;
     //	Vector<hal_buffer_idex_table_t*> mBufferTable;
     Vector<hal_buff_list_t *> mBufferList;
 

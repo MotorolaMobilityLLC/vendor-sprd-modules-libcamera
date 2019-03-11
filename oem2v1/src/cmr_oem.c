@@ -3430,6 +3430,38 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_buff_handle(cmr_handle oem_handle, int frame_type,
+                               cam_graphic_buffer_info_t *buf_cfg) {
+    int32_t ret = 0;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (cxt->camera_cb) {
+        enum camera_cb_type cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
+        if (frame_type == PREVIEW_ZSL_FRAME)
+            cb = CAMERA_EVT_CAPTURE_BUF_HANDLE;
+
+        cxt->camera_cb(cb, cxt->client_data, CAMERA_FUNC_GET_BUF_HANDLE,
+                       buf_cfg);
+    }
+    return ret;
+}
+
+cmr_int camera_release_buff_handle(cmr_handle oem_handle, int frame_type,
+                                   cam_graphic_buffer_info_t *buf_cfg) {
+    int32_t ret = 0;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (cxt->camera_cb) {
+        enum camera_cb_type cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
+        if (frame_type == PREVIEW_ZSL_FRAME)
+            cb = CAMERA_EVT_CAPTURE_BUF_HANDLE;
+
+        cxt->camera_cb(cb, cxt->client_data, CAMERA_FUNC_RELEASE_BUF_HANDLE,
+                       buf_cfg);
+    }
+    return ret;
+}
+
 int32_t camera_isp_flash_get_charge(void *handler,
                                     struct isp_flash_cfg *cfg_ptr,
                                     struct isp_flash_cell *cell) {
@@ -4007,6 +4039,8 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.set_preview_yuv = camera_preview_set_yuv_to_isp;
     init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
     init_param.ops.get_sensor_otp = camera_get_otpinfo;
+    init_param.ops.get_buff_handle = camera_get_buff_handle;
+    init_param.ops.release_buff_handle = camera_release_buff_handle;
     init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
     init_param.ops.hdr_set_ev = camera_hdr_set_ev;
     init_param.ops.set_3dnr_ev = camera_3dnr_set_ev;
@@ -6128,6 +6162,15 @@ cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cxt->is_3dnr_video = is_3dnr_video;
     CMR_LOGI("is_3dnr_video %ld", cxt->is_3dnr_video);
+    return ret;
+}
+
+cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
+                                   cmr_uint is_ultra_wide) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->is_ultra_wide = is_ultra_wide;
+    CMR_LOGI("is_ultra_wide %ld", cxt->is_ultra_wide);
     return ret;
 }
 
@@ -8372,6 +8415,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         out_param_ptr->preview_eb = 1;
         out_param_ptr->is_support_fd = cxt->is_support_fd;
         out_param_ptr->is_lls_enable = cxt->is_lls_enable;
+        out_param_ptr->is_ultra_wide = cxt->is_ultra_wide;
         /*get prev rot*/
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_GET_PREVIEW_ANGLE, &setting_param);

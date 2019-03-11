@@ -53,6 +53,9 @@ extern struct class_tab_t ai_scene_tab_info;
 #ifdef CONFIG_CAMERA_AUTO_TRACKING
 extern struct class_tab_t auto_tracking_tab_info;
 #endif
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+extern struct class_tab_t ultrawide_tab_info;
+#endif
 
 struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_NONE, NULL},
@@ -89,6 +92,9 @@ struct ipm_class_tab class_type_tab[] = {
 #endif
 #ifdef CONFIG_CAMERA_AUTO_TRACKING
     {IPM_TYPE_AUTO_TRACKING, &auto_tracking_tab_info},
+#endif
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    {IPM_TYPE_ULTRA_WIDE, &ultrawide_tab_info},
 #endif
 };
 
