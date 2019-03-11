@@ -722,6 +722,19 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 			ret = cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
 				CMD_SNS_IC_WRITE_MULTI_AE, ae_info);
 		break;
+	case ISP_AE_HDR_BOKEH:
+		ISP_LOGV("ISP_AE_HDR_BOKEH");
+
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
+		isp_3a_handle_slv = isp_br_get_3a_handle(slv_camera_id);
+		cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
+		if (cxt_slv != NULL) {
+			ret = ispalg_ae_callback(cxt_slv, AE_CB_HDR_START, (void *)param0);
+		} else {
+			ISP_LOGE("fail to get slave sensor handle , it is not ready");
+			return ret;
+		}
+		break;
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		break;

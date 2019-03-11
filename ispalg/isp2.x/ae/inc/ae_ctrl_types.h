@@ -450,6 +450,7 @@ extern "C" {
 		 cmr_s32(*set_wbc_gain) (cmr_handle handler, struct ae_alg_rgb_gain * awb_gain);
 		 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
 		 cmr_int(*write_multi_ae) (cmr_handle handler, void *ae_info);
+		 cmr_int(*ae_bokeh_hdr_cb) (cmr_handle handler, void *in_param);
 		 cmr_s32(*set_stats_monitor) (cmr_handle handler, struct ae_stats_monitor_cfg * in_param);
 		 cmr_s32(*set_blk_num) (cmr_handle handler, struct ae_size *blk_num);
 		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);

@@ -3635,7 +3635,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
 			exposure = min_frame_line * cxt->cur_status.line_time;
 
-		if (exposure >= 10000000) {
+		if (exposure >= 10000000 || cxt->is_multi_mode) {
 			exp_time = (cmr_u32) (1.0 * exposure / 10000000 + 0.5) * 10000000;
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
 			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
@@ -3649,7 +3649,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
 			exposure = min_frame_line * cxt->cur_status.line_time;
 
-		if (exposure >= 8333333) {
+		if (exposure >= 8333333 || cxt->is_multi_mode) {
 			exp_time = (cmr_u32) (1.0 * exposure / 8333333 + 0.5) * 8333333;
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
 			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
@@ -3693,6 +3693,9 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	if (cxt->hdr_frame_cnt == hdr_callback_flag) {
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, (void *)ev_result);
+		if (cxt->is_multi_mode && cxt->isp_ops.ae_bokeh_hdr_cb) {
+			(*cxt->isp_ops.ae_bokeh_hdr_cb) (cxt->isp_ops.isp_handler, (void *)ev_result);
+		}
 #else
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, NULL);
 #endif
@@ -3745,6 +3748,10 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		ISP_LOGI("up_exp %d, up_ev_offset %f, pow2 %f\n", up_exposure, up_EV_offset / 100.0, pow(2, up_EV_offset / 100.0));
 #endif
 		ae_hdr_calculation(cxt, max_frame_line, min_frame_line, up_exposure, base_gain, &gain, &exp_line);
+		if(exp_line * gain < base_exposure_line * base_gain){
+			exp_line = base_exposure_line;
+			gain = base_gain;
+		}
 		ISP_LOGV("base_idx: %d, base_exposure: %d, base_gain: %d, up_exposure: %d, exp_line: %d", base_idx, base_exposure_line, base_gain, up_exposure, exp_line);
 		cxt->cur_status.settings.manual_mode = 0;
 		cxt->cur_status.settings.exp_line = exp_line;
@@ -4753,7 +4760,10 @@ static cmr_s32 ae_get_flicker_mode(struct ae_ctrl_cxt *cxt, void *result)
 
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
-	if (param) {
+	if((cxt->is_multi_mode) && (!cxt->is_master)){
+		ISP_LOGD("is_multi_mode=%d",cxt->is_multi_mode);
+	}
+	else if (param) {
 		struct ae_hdr_param *hdr_param = (struct ae_hdr_param *)param;
 		cxt->hdr_enable = hdr_param->hdr_enable;
 		cxt->hdr_cb_cnt = hdr_param->ev_effect_valid_num;
@@ -4766,7 +4776,7 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 			ae_set_force_pause(cxt, 0);
 			cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 		}
-		ISP_LOGV("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, base_ae_idx %d, lock_ae_state %d, force_lock_ae_state %d",
+		ISP_LOGD("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, base_ae_idx %d, lock_ae_state %d, force_lock_ae_state %d",
 			cxt->hdr_enable,
 			cxt->hdr_cb_cnt,
 			cxt->hdr_base_ae_idx,

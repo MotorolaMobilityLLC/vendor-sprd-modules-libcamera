@@ -102,6 +102,21 @@ static cmr_int ae_write_multi_ae(cmr_handle handler, cmr_handle dualsnyc_ptr)
 	return 0;
 }
 
+static cmr_int ae_bokeh_hdr_cb(cmr_handle handler, cmr_handle in_param)
+{
+#if defined(CONFIG_ISP_2_6)
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_HDR_BOKEH, in_param, NULL);
+	}
+#else
+	UNUSED(handler);
+	UNUSED(in_param);
+#endif
+	ISP_LOGV("AE set dual camear sync ae hdr");
+	return 0;
+}
+
 static cmr_s32 ae_set_monitor(cmr_handle handler, cmr_u32 skip_number)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -563,6 +578,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_shutter_gain_delay_info = ae_set_shutter_gain_delay_info;
 	input_ptr->isp_ops.set_wbc_gain = ae_set_wbc_gain;
 	input_ptr->isp_ops.write_multi_ae = ae_write_multi_ae;
+	input_ptr->isp_ops.ae_bokeh_hdr_cb = ae_bokeh_hdr_cb;
 	input_ptr->isp_ops.set_stats_monitor = ae_set_stats_monitor;
 	input_ptr->isp_ops.set_blk_num = ae_set_blk_num;
 	input_ptr->isp_ops.set_rgb_gain_4in1 = ae_set_rgb_gain_4in1;
