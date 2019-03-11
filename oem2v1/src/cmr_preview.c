@@ -11573,7 +11573,7 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     struct ipm_open_in in_param;
     struct ipm_open_out out_param;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
-
+    struct common_isp_cmd_param isp_cmd_parm;
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
@@ -11627,7 +11627,11 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     }
 
     in_param.reg_cb = prev_fd_cb;
-
+    isp_cmd_parm.cmd_value = 1;
+    if (!prev_cxt->fd_handle && cxt->ai_scene_enable) {
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
+    }
     ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_FD, &in_param, &out_param,
                        &prev_cxt->fd_handle);
     if (ret) {
@@ -11648,14 +11652,20 @@ cmr_int prev_fd_close(struct prev_handle *handle, cmr_u32 camera_id) {
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
-
+    struct common_isp_cmd_param isp_cmd_parm;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     CMR_LOGD("is_support_fd %ld, is_fd_on %ld",
              prev_cxt->prev_param.is_support_fd, prev_cxt->prev_param.is_fd_on);
-
+    isp_cmd_parm.cmd_value = 0;
     CMR_LOGV("fd_handle 0x%p", prev_cxt->fd_handle);
     if (prev_cxt->fd_handle) {
+        if (cxt->ai_scene_enable) {
+            ret = handle->ops.isp_ioctl(handle->oem_handle,
+                                        COM_ISP_SET_AI_SET_FD_ON_OFF,
+                                        &isp_cmd_parm);
+        }
         ret = cmr_ipm_close(prev_cxt->fd_handle);
         prev_cxt->fd_handle = 0;
     }
