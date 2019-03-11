@@ -1688,6 +1688,34 @@ static cmr_int ispctl_get_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_bokeh_range(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.af_ops.ioctrl) {
+
+		struct vcm_range_info *temp = (struct vcm_range_info *)param_ptr;
+		struct realbokeh_vcm_range result;
+
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
+					AF_CMD_GET_REALBOKEH_LIMITED_RANGE,
+					(void *)&result, NULL);
+
+		temp->limited_infi = result.limited_infi;
+		temp->limited_macro = result.limited_macro;
+		temp->vcm_dac[0] = result.vcm_dac[0];
+		temp->vcm_dac[1] = result.vcm_dac[1];
+		temp->vcm_dac[2] = result.vcm_dac[2];
+		temp->vcm_dac[3] = result.vcm_dac[3];
+		temp->vcm_dac[4] = result.vcm_dac[4];
+		temp->vcm_dac[5] = result.vcm_dac[5];
+		temp->vcm_dac[6] = result.vcm_dac[6];
+	}
+
+	return ret;
+}
+
 static cmr_int ispctl_set_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2495,6 +2523,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AF_CTRL, ispctl_af_info},	// for tool cali
 	{ISP_CTRL_SET_AF_POS, ispctl_set_af_pos},	// for tool cali
 	{ISP_CTRL_GET_AF_POS, ispctl_get_af_pos},	// for tool cali
+	{ISP_CTRL_GET_BOKEH_RANGE, ispctl_get_bokeh_range},
 	{ISP_CTRL_GET_AF_MODE, ispctl_get_af_mode},	// for tool cali
 	{ISP_CTRL_DENOISE_PARAM_READ, ispctl_denoise_param_read},	//for tool cali
 	{ISP_CTRL_START_3A, ispctl_start_3a},
