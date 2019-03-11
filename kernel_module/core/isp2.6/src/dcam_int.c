@@ -51,7 +51,10 @@ static uint32_t int_index[DCAM_ID_MAX][DCAM_IRQ_NUMBER];
 #endif
 
 static uint32_t dcam_int_tracker[DCAM_ID_MAX][DCAM_IRQ_NUMBER];
-
+static char *dcam_dev_name[] = {"DCAM0",
+				"DCAM1",
+				"DCAM2"
+				};
 
 static inline void record_dcam_int(uint32_t idx, uint32_t status)
 {
@@ -954,7 +957,6 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 int dcam_irq_request(struct device *pdev, int irq, void *param)
 {
 	struct dcam_pipe_dev *dev = NULL;
-	char dev_name[32];
 	int ret = 0;
 
 	if (unlikely(!pdev || !param || irq < 0)) {
@@ -964,10 +966,9 @@ int dcam_irq_request(struct device *pdev, int irq, void *param)
 
 	dev = (struct dcam_pipe_dev *)param;
 	dev->irq = irq;
-	sprintf(dev_name, "DCAM%u\n", dev->idx);
 
 	ret = devm_request_irq(pdev, dev->irq, dcam_isr_root,
-			       IRQF_SHARED, dev_name, dev);
+			       IRQF_SHARED, dcam_dev_name[dev->idx], dev);
 	if (ret < 0) {
 		pr_err("DCAM%u fail to install irq %d\n", dev->idx, dev->irq);
 		return -EFAULT;

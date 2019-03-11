@@ -61,6 +61,9 @@ static uint32_t int_index[ISP_CONTEXT_NUM][32];
 #endif
 
 static uint32_t irq_done[ISP_CONTEXT_NUM][32];
+static char *isp_dev_name[] = {"isp0",
+				"isp1"
+				};
 
 static inline void record_isp_int(enum isp_context_id c_id, uint32_t irq_line)
 {
@@ -521,7 +524,6 @@ int isp_irq_request(struct device *p_dev,
 {
 	int ret = 0;
 	uint32_t  id;
-	char dev_name[32];
 	struct isp_pipe_dev *ispdev;
 
 	if (!p_dev || !isp_handle || !irq_no) {
@@ -531,11 +533,10 @@ int isp_irq_request(struct device *p_dev,
 	ispdev = (struct isp_pipe_dev *)isp_handle;
 
 	for (id = 0; id < ISP_LOGICAL_COUNT; id++) {
-		sprintf(dev_name, "ISP%d", id);
 		ispdev->irq_no[id] = irq_no[id];
 		ret = devm_request_irq(p_dev,
 				ispdev->irq_no[id], isp_isr_root,
-				IRQF_SHARED, dev_name, (void *)ispdev);
+				IRQF_SHARED, isp_dev_name[id], (void *)ispdev);
 		if (ret) {
 			pr_err("fail to install isp%d irq_no %d\n",
 					id, ispdev->irq_no[id]);
