@@ -3543,6 +3543,28 @@ static int img_ioctl_set_frame_addr(
 					ch->isp_path_id >> ISP_CTXID_OFFSET,
 					ch->isp_path_id & ISP_PATHID_MASK,
 					pframe);
+
+			if (param.is_reserved_buf &&
+					(param.channel_id ==  CAM_CH_CAP ||
+					 param.channel_id ==  CAM_CH_PRE)) 
+			{
+				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;
+				pframe = get_empty_frame();
+
+				pframe->buf.type = CAM_BUF_USER;
+
+				pframe->buf.mfd[0] = param.fd_array[i];
+				pframe->buf.offset[0] = param.frame_addr_array[i].y;
+				pframe->buf.offset[1] = param.frame_addr_array[i].u;
+				pframe->buf.offset[2] = param.frame_addr_array[i].v;
+				pframe->channel_id = ch->ch_id;
+				pframe->buf.addr_vir[0] = param.frame_addr_vir_array[i].y;
+				pframe->buf.addr_vir[1] = param.frame_addr_vir_array[i].u;
+				pframe->buf.addr_vir[2] = param.frame_addr_vir_array[i].v;
+				ret = cambuf_get_ionbuf(&pframe->buf);
+				ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+						cmd, ch->dcam_path_id, pframe);
+			}
 		} else {
 			cmd = DCAM_PATH_CFG_OUTPUT_BUF;
 			if (param.is_reserved_buf) {
