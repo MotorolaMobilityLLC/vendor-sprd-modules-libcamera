@@ -4907,6 +4907,18 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 		pframe->buf.addr_vir[2] = param.frame_addr_vir_array[0].v;
 		pframe->channel_id = channel->ch_id;
 		pframe->fid = param.index;
+		/* timestamp, reserved	([2]<<32)|[1]
+		 * Attention: Only send back one time, maybe need some
+		 * change when hal use another time
+		 */
+		pframe->boot_sensor_time = param.reserved[2];
+		pframe->boot_sensor_time <<= 32;
+		pframe->boot_sensor_time |= param.reserved[1];
+		pframe->sensor_time = ktime_to_timeval(ktime_sub(
+			pframe->boot_sensor_time, ktime_sub(
+			ktime_get_boottime(), ktime_get())));
+		/* timestamp end */
+
 		ret = cambuf_get_ionbuf(&pframe->buf);
 		/* ret += cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_DCAM);
 		 * do this in function: dcam_offline_start_frame
