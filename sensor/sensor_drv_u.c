@@ -3304,7 +3304,7 @@ sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data) {
 
     read_num = read(s_otpd_fd, read_buf, OTP_READ_BUFFER_SIZE);
     SENSOR_LOGD("otpd:read number is %d bytes", read_num);
-    if (read_num <= 0) {
+    if (!strcmp(read_buf, OTPD_MSG_FAILED)) {
         SENSOR_LOGD("otpd:read otpd data failed, %s", read_buf);
         close(s_otpd_fd);
         return SENSOR_FAIL;

@@ -3279,27 +3279,25 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle,
         CMR_LOGE("in parm error");
         goto exit;
     }
-    val.type = SENSOR_VAL_TYPE_READ_OTP;
-    val.pval = NULL;
-    ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                           SENSOR_ACCESS_VAL, (cmr_uint)&val);
-    if (ret) {
-        CMR_LOGE("SENSOR_VAL_TYPE_READ_OTP failed, ret = %ld", ret);
-        goto exit;
-    }
 
-    otp_ptr = (struct sensor_otp_cust_info *)val.pval;
-    if (otp_ptr && (0 != otp_ptr->dual_otp.data_3d.size)) {
-        memcpy(otp_data, val.pval, sizeof(struct sensor_otp_cust_info));
-        CMR_LOGD("dual_otp data in eeprom");
+    ret = sensor_get_frameless_dualcam_otpd(otp_data);
+    if (CMR_CAMERA_SUCCESS == ret) {
+        CMR_LOGD("dual_otp data from socket");
     } else {
-        ret = sensor_get_frameless_dualcam_otpd(otp_data);
-        if (ret) {
-            ret = -1;
+        val.type = SENSOR_VAL_TYPE_READ_OTP;
+        val.pval = NULL;
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                               SENSOR_ACCESS_VAL, (cmr_uint)&val);
+
+        otp_ptr = (struct sensor_otp_cust_info *)val.pval;
+        if (otp_ptr && (0 != otp_ptr->dual_otp.data_3d.size)) {
+            memcpy(otp_data, val.pval, sizeof(struct sensor_otp_cust_info));
+            CMR_LOGD("dual_otp data in eeprom");
+        } else {
+            ret = CMR_CAMERA_FAIL;
             CMR_LOGI("no dual_otp data");
             goto exit;
         }
-        CMR_LOGD("dual_otp data from socket");
     }
 
     CMR_LOGD("total_otp raw buffer %p, total_otp size %d, dual_otp ptr %p, "
