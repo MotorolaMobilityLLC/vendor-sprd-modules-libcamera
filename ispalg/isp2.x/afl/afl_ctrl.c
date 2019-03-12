@@ -326,6 +326,11 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	memset(&param_data, 0, sizeof(param_data));
 #endif
+#if defined(CONFIG_ISP_2_6)
+	char data[16];
+	cmr_s32 *out = NULL;
+	cmr_u32 k=0;
+#endif
 	cmr_s32 algo_width;
 	cmr_s32 algo_height;
 	void *afl_stat = NULL;
@@ -351,7 +356,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	ae_exp_flag = in_ptr->ae_exp_flag;
 	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5)
 	cmr_s32 afl_stat_tmp[2] = { 0 };
 	for (i = 0; i < (480 * cxt->frame_num); i += 2) {
 		afl_stat_tmp[0] = (*(cmr_s32 *)(addr + i)) & 0x3ffff;
@@ -361,6 +366,29 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	}
 #endif
 
+#if defined(CONFIG_ISP_2_6)
+#define AFL_BATCH_SIZE ((80+481)*16)
+#define AFL_GLB_ROW (239)
+#define AFL_RIG_ROW (481)
+	/* parsing raw afl data (afl global data)*/
+	out = (cmr_s32 *)malloc(AFL_BATCH_SIZE);
+	if(out==NULL){
+		ISP_LOGE("fail to malloc afl output buffer");
+		rtn = ISP_ERROR;
+		goto exit;
+	}
+	for(i=0;i<80/*the real AFL_GLB_ROW is 80*/;i++){ 
+		memcpy(data, addr+i*16/4, 16);
+		out[k++] = ((data[2] & 0x3)<<16)|((data[1] & 0xff)<<8)|(data[0]&0xff);
+		// ISP_LOGI("out[%d]:%d",k-1,out[k-1]); // for debuging
+		out[k++] = ((data[4] & 0xf)<<14)|((data[3] & 0xff)<<6)|((data[2]>>2)&0x3f);
+		out[k++] = ((data[6] & 0x3f)<<12)|((data[5] & 0xff)<<4)|((data[4]>>4)&0xf);
+		out[k++] = ((data[8] & 0xff)<<10)|((data[7] & 0xff)<<2)|((data[6]>>6)&0x3);
+		out[k++] = ((data[11] & 0x3)<<16)|((data[10] & 0xff)<<8)|((data[9])&0xff);
+		out[k++] = ((data[13] & 0xf)<<14)|((data[12] & 0xff)<<6)|((data[11]>>2)&0x3f);
+	}
+	addr = out;
+#endif
 #ifdef CONFIG_ISP_2_2
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_ANTI_FLICKER, NULL, 0);
 	ret = isp_pm_ioctl(in_ptr->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
@@ -500,6 +528,10 @@ exit:
        if(ae_stat_ptr)
                free(ae_stat_ptr);
 
+#if defined(CONFIG_ISP_2_6)
+	if (out)
+		free(out);
+#endif
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
