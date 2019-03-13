@@ -1545,10 +1545,10 @@ static int dcam_offline_start_frame(void *param)
 	}
 
 	/* todo: enable statis path from user config */
-	atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 1);
-	atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 1);
-	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 1);
-	atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 1);
+	atomic_set(&dev->path[DCAM_PATH_AEM].user_cnt, 0);
+	atomic_set(&dev->path[DCAM_PATH_AFM].user_cnt, 0);
+	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);
+	atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 0);
 
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];

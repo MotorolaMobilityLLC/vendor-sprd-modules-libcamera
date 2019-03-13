@@ -364,6 +364,7 @@ struct isp_alg_fw_context {
 #endif
 	cmr_u32 sn_mode;
 	/* 4in1 */
+	cmr_u32 is_4in1_sensor;
 	cmr_u32 is_4in1_prev; /* 1: 4c pixel for prev */
 };
 
@@ -2943,6 +2944,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	}
 	pm_init_input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
 	pm_init_input.sensor_raw_info_ptr = sensor_raw_info_ptr;
+	pm_init_input.is_4in1_sensor = cxt->is_4in1_sensor;
 
 	cxt->handle_pm = isp_pm_init(&pm_init_input, &pm_init_output);
 	if (PNULL == cxt->handle_pm) {
@@ -4178,17 +4180,15 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	enum tuning_mode base_mode = WORKMODE_PREVIEW, second_mode = WORKMODE_CAPTURE;
-	cmr_s32 mode = 0, prv_mode = 0, cap_mode = 0;
 	cmr_u32 sn_mode = 0;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
-	struct isp_size orig_size;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
 	struct dcam_dev_vc2_control vch2_info;
 	struct sensor_pdaf_info *pdaf_info = NULL;
 	struct pm_workmode_input  pm_input;
+	struct pm_workmode_output pm_output;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ISP_LOGE("fail to get valid ptr.");
@@ -4207,12 +4207,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	cxt->sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	cxt->is_4in1_prev = in_ptr->mode_4in1;
-	ISP_LOGD("4c prev[%d]\n", cxt->is_4in1_prev);
-
-	orig_size.w = cxt->commn_cxt.src.w;
-	orig_size.h = cxt->commn_cxt.src.h;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
+
+	ISP_LOGD("work_mode %d, is_dv %d, zsl %d,  size %d %d, 4in1_prev %d\n",
+		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
+		in_ptr->size.w, in_ptr->size.h, (cmr_u32)in_ptr->mode_4in1);
 
 	memset(&cxt->mem_info, 0, sizeof(struct isp_mem_info));
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
@@ -4229,68 +4229,56 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_prepare_buf(cxt->dev_access_handle, &cxt->mem_info);
 	ISP_RETURN_IF_FAIL(ret, ("fail to prepare buf"));
 
+	/* initialize isp pm */
+	memset(&pm_input, 0, sizeof(struct pm_workmode_input));
+	memset(&pm_output, 0, sizeof(struct pm_workmode_output));
+	pm_input.pm_sets_num = 1;
 	switch (in_ptr->work_mode) {
-	case 0:		/*preview */
+	case 0:		/*preview / video */
 	{
-		if (in_ptr->dv_mode) {
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION, in_ptr, &prv_mode);
-			mode = prv_mode;
-			base_mode = WORKMODE_VIDEO;
-		} else {
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION, in_ptr, &prv_mode);
-			mode = prv_mode;
-			base_mode = WORKMODE_PREVIEW;
+		if (in_ptr->dv_mode)
+			pm_input.mode[0] = WORKMODE_VIDEO;
+		else
+			pm_input.mode[0] = WORKMODE_PREVIEW;
+		pm_input.img_w[0] = cxt->commn_cxt.src.w;
+		pm_input.img_h[0] = cxt->commn_cxt.src.h;
+		if (cxt->is_4in1_prev) {
+			pm_input.cam_4in1_mode = 1;
+			pm_input.define[0] = 1; /* todo: workaround for 4in1 binning prev*/
+			pm_input.img_w[0] >>= 1;
+			pm_input.img_h[0] >>= 1;
 		}
-		if (cxt->zsl_flag) {
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, in_ptr, &cap_mode);
-			second_mode = WORKMODE_CAPTURE;
+		if (cxt->zsl_flag)  {
+			pm_input.pm_sets_num++;
+			pm_input.mode[1] = WORKMODE_CAPTURE;
+			pm_input.img_w[1] = cxt->commn_cxt.src.w;
+			pm_input.img_h[1] = cxt->commn_cxt.src.h;
 		}
 		break;
 	}
 	case 1:		/* capture only */
 	{
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, in_ptr, &cap_mode);
-		mode = cap_mode;
-		prv_mode = cap_mode;
-		base_mode = WORKMODE_CAPTURE;
+		pm_input.mode[0] = WORKMODE_CAPTURE;
+		pm_input.img_w[0] = cxt->commn_cxt.src.w;
+		pm_input.img_h[0] = cxt->commn_cxt.src.h;
 		break;
 	}
-	case 2:
-		mode = ISP_MODE_ID_VIDEO_0;
-		base_mode = WORKMODE_VIDEO;
-		break;
 	default:
-		mode = ISP_MODE_ID_PRV_0;
+		pm_input.mode[0] = WORKMODE_PREVIEW;
+		pm_input.img_w[0] = cxt->commn_cxt.src.w;
+		pm_input.img_h[0] = cxt->commn_cxt.src.h;
 		break;
 	}
-	ISP_LOGD("work_mode %d, pm mode %d %d %d\n", cxt->work_mode, mode, prv_mode, cap_mode);
 
-	cxt->commn_cxt.isp_pm_mode[0] = mode;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to isp pm set mode"));
+
+	cxt->commn_cxt.isp_pm_mode[0] = pm_output.mode_id[0];
 	if (cxt->zsl_flag)
-		cxt->commn_cxt.isp_pm_mode[1] = cap_mode;
+		cxt->commn_cxt.isp_pm_mode[1] = pm_output.mode_id[1];
 	else
 		cxt->commn_cxt.isp_pm_mode[1] = ISP_TUNE_MODE_INVALID;
-
-	memset(&pm_input, 0, sizeof(struct pm_workmode_input));
-	pm_input.pm_sets_num = 1;
-	pm_input.mode_id[0] = mode;
-	pm_input.mode[0] = base_mode;
-	pm_input.img_w[0] = cxt->commn_cxt.src.w;
-	pm_input.img_h[0] = cxt->commn_cxt.src.h;
-	if (cxt->is_4in1_prev) {
-		pm_input.cam_4in1_mode = 1;
-		pm_input.define[0] = 1; /* todo: workaround for 4in1 binning prev*/
-		pm_input.img_w[0] >>= 1;
-		pm_input.img_h[0] >>= 1;
-	}
-	if (cxt->zsl_flag)  {
-		pm_input.pm_sets_num++;
-		pm_input.mode_id[1] = cap_mode;
-		pm_input.mode[1] = second_mode;
-		pm_input.img_w[1] = cxt->commn_cxt.src.w;
-		pm_input.img_h[1] = cxt->commn_cxt.src.h;
-	}
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, NULL);
+	ISP_LOGD("pm mode 0x%x 0x%x\n", cxt->commn_cxt.isp_pm_mode[0], cxt->commn_cxt.isp_pm_mode[1]);
 
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->size);
 
@@ -4393,7 +4381,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	}
 	ISP_TRACE_IF_FAIL(ret, ("fail to do anti_flicker param update"));
 
-	ret = ispalg_ae_set_work_mode(cxt, mode, 1, in_ptr);
+	ret = ispalg_ae_set_work_mode(cxt, cxt->commn_cxt.isp_pm_mode[0], 1, in_ptr);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ae cfg"));
 
 	if (cxt->ops.awb_ops.ioctrl) {
@@ -4479,11 +4467,11 @@ exit:
 cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_s32 mode = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_video_start param;
 	struct isp_raw_proc_info raw_proc_in;
 	struct pm_workmode_input  pm_input;
+	struct pm_workmode_output pm_output;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ISP_LOGE("fail to get valid ptr.");
@@ -4534,22 +4522,18 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = isp_dev_prepare_buf(cxt->dev_access_handle, &cxt->mem_info);
 	ISP_RETURN_IF_FAIL(ret, ("fail to prepare buf"));
 
-	param.size.w = cxt->commn_cxt.src.w;
-	param.size.h = cxt->commn_cxt.src.h;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION, &param, &mode);
-	ISP_RETURN_IF_FAIL(ret, ("fail to get cap mode"));
-
-	cxt->commn_cxt.isp_pm_mode[0] = mode;
-	cxt->commn_cxt.isp_pm_mode[1] = ISP_TUNE_MODE_INVALID;
 
 	memset(&pm_input, 0, sizeof(struct pm_workmode_input));
+	memset(&pm_output, 0, sizeof(struct pm_workmode_output));
 	pm_input.pm_sets_num = 1;
-	pm_input.mode_id[0] = mode;
 	pm_input.mode[0] = WORKMODE_CAPTURE;
 	pm_input.img_w[0] = cxt->commn_cxt.src.w;
 	pm_input.img_h[0] = cxt->commn_cxt.src.h;
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, NULL);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
+
+	cxt->commn_cxt.isp_pm_mode[0] = pm_output.mode_id[0];
+	cxt->commn_cxt.isp_pm_mode[1] = ISP_TUNE_MODE_INVALID;
 
 	cxt->commn_cxt.param_index =
 		ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->src_frame.img_size);
@@ -4572,7 +4556,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	param.sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
 	param.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	param.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
-	ret = ispalg_ae_set_work_mode(cxt, mode, 0, &param);
+	ret = ispalg_ae_set_work_mode(cxt, cxt->commn_cxt.isp_pm_mode[0], 0, &param);
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
@@ -4681,9 +4665,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
-	cxt->is_4in1_prev = input_ptr->init_param->is_4in1_sensor;
-	ISP_LOGI("camera_id = %ld, master %d, 4c prev[%d]\n", cxt->camera_id,
-		cxt->is_master, cxt->is_4in1_prev);
+	cxt->is_4in1_sensor = input_ptr->init_param->is_4in1_sensor;
+	ISP_LOGI("camera_id = %ld, master %d, is_4in1_sensor %d\n", cxt->camera_id,
+		cxt->is_master, cxt->is_4in1_sensor);
 
 
 	cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));

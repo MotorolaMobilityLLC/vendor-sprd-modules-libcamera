@@ -225,6 +225,7 @@ struct isp_pm_mode_param {
 	cmr_u32 block_num;
 	struct isp_size resolution;
 	cmr_u32 fps;
+	cmr_u32 for_4in1;
 	struct isp_pm_block_header header[ISP_TUNE_BLOCK_MAX];
 	cmr_u32 data_area[0];
 };

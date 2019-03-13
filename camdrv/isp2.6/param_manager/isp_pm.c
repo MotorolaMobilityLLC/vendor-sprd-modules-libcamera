@@ -439,6 +439,8 @@ static cmr_s32 check_block_skip(struct isp_pm_context *pm_cxt_ptr,
 
 	isp_cxt_prv = &pm_cxt_ptr->cxt_array[set_id];
 	if (isp_cxt_prv->is_validate) {
+		if (pm_cxt_ptr->cam_4in1_mode && !pm_cxt_ptr->lowlight_flag)
+			return 0;
 		if (IS_DCAM_BLOCK(blk_id))
 			return 1;
 	}
@@ -861,7 +863,7 @@ retry:
 }
 
 
-static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *param_ptr)
+static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *param_ptr, void *out_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
@@ -875,30 +877,84 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 	switch (cmd) {
 	case ISP_PM_CMD_SET_MODE:
 	{
-		cmr_u32 i, set_id;
+		cmr_u32 i, k, set_id;
+		cmr_u32 *search, mode_id;
 		struct pm_workmode_input *input = (struct pm_workmode_input *)param_ptr;
+		struct pm_workmode_output *output = (struct pm_workmode_output *)out_ptr;
 		struct isp_context *isp_cxt_ptr = PNULL;
 
+		if (out_ptr == PNULL) {
+			ISP_LOGE("fail to get output ptr.\n");
+			rtn = ISP_ERROR;
+			return rtn;
+		}
+
+		pm_cxt_ptr->cam_4in1_mode = input->cam_4in1_mode;
 		for (i  = 0; i < input->pm_sets_num && i < PARAM_SET_MAX; i++) {
 			if (input->mode[i] >= WORKMODE_MAX)
 				continue;
+
+			if (input->mode[i] == WORKMODE_PREVIEW)
+				search = &search_modes[0][0];
+			else if (input->mode[i] == WORKMODE_CAPTURE)
+				search = &search_modes[1][0];
+			else
+				search = &search_modes[2][0];
+
+			output->mode_id[i] = ISP_MODE_ID_COMMON;
+			for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
+				mode_id = search[k];
+				if (mode_id == ISP_MODE_ID_MAX)
+					break;
+				if (pm_cxt_ptr->tune_mode_array[mode_id] == PNULL)
+					continue;
+
+				ISP_LOGD("i %d, k %d, mode %d, mode_id %d.  4in1 %d,  size %d %d.  insize %d %d\n",
+					i,  k, mode_id,
+					pm_cxt_ptr->tune_mode_array[mode_id]->mode_id,
+					pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1,
+					pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w,
+					pm_cxt_ptr->tune_mode_array[mode_id]->resolution.h,
+					input->img_w[i], input->img_h[i]);
+
+				if (pm_cxt_ptr->is_4in1_sensor && input->mode[i] == WORKMODE_PREVIEW) {
+					/* todo:  workaround for 4in1 preview  */
+					ISP_LOGD("i %d, k %d, is_4in1_sensor & preview. 4in1 %d %d. size %d in %d\n", i, k,
+					pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1,
+					input->cam_4in1_mode,
+					pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w,
+					input->img_w[i]);
+					if ((pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) &&
+						(pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
+						output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
+						ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
+						break;
+					}
+				} else  if (pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) {
+					output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
+					ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
+					break;
+				}
+			}
+
 			if (pm_cxt_ptr->param_search_list)
 				isp_pm_get_all_blocks(handle, &pm_cxt_ptr->blocks_param[i],
 					input->mode[i], input->scene[i], input->define[i],
 					input->img_w[i], input->img_h[i]);
 			else
 				isp_pm_get_all_blocks_compatible(handle,
-					&pm_cxt_ptr->blocks_param[i], input->mode_id[i],
+					&pm_cxt_ptr->blocks_param[i], output->mode_id[i],
 					input->mode[i], input->scene[i], input->define[i],
 					input->img_w[i], input->img_h[i]);
 			set_id = i;
 			isp_cxt_ptr = &pm_cxt_ptr->cxt_array[set_id];
 			isp_cxt_ptr->is_validate = 1;
-			isp_cxt_ptr->mode_id = input->mode_id[i];
+			isp_cxt_ptr->mode_id = output->mode_id[i];
 			rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, set_id);
 			if (rtn)
 				return ISP_PARAM_ERROR;
-			ISP_LOGD("pm context %p for set %d\n", isp_cxt_ptr, set_id);
+			ISP_LOGD("pm context %p for set %d, mode_id %d 4in1 mode %d\n", isp_cxt_ptr,
+				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->cam_4in1_mode);
 		}
 		break;
 	}
@@ -1012,6 +1068,11 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				break;
 			if (pm_cxt_ptr->tune_mode_array[mode] == PNULL)
 				continue;
+			ISP_LOGD("i %d, mode %d, mode_id %d.  size %d %d.  insize %d %d\n", i, mode,
+				pm_cxt_ptr->tune_mode_array[mode]->mode_id,
+				pm_cxt_ptr->tune_mode_array[mode]->resolution.w,
+				pm_cxt_ptr->tune_mode_array[mode]->resolution.h,
+				param_ptr->size.w, param_ptr->size.h);
 			if (cmd == ISP_PM_CMD_GET_DV_MODEID_BY_FPS) {
 				if (pm_cxt_ptr->tune_mode_array[mode]->fps == (cmr_u32)(*(cmr_s32 *)in_ptr)) {
 					*((cmr_s32 *)out_ptr) = pm_cxt_ptr->tune_mode_array[mode]->mode_id;
@@ -1260,8 +1321,10 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	if (output)
 		output->multi_nr_flag = multi_nr_flag;
 
-	pm_cxt_ptr->is_4in1_sensor = input->is_4in1_sensor;
-	ISP_LOGV("is_4in1_sensor = %d", pm_cxt_ptr->is_4in1_sensor);
+	if (pm_cxt_ptr->param_source != ISP_PARAM_FROM_TOOL) {
+		pm_cxt_ptr->is_4in1_sensor = input->is_4in1_sensor;
+		ISP_LOGD("is_4in1_sensor = %d", pm_cxt_ptr->is_4in1_sensor);
+	}
 
 	nr_fix_ptr = input->nr_fix_info;
 	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
@@ -1335,8 +1398,8 @@ start_parse:
 		mode_data_size = input->tuning_data[i].size;
 		ISP_LOGD("size hdr %d, data_size %d,  size hdr1 %d, size1 %d\n", (cmr_u32)sizeof(struct isp_mode_param),
 			data_area_size, (cmr_u32)sizeof(struct isp_pm_mode_param), size);
-		ISP_LOGD("mode %d, ptr %p, size %d, blknum %d, fixptr %p\n", src_mod_ptr->mode_id,
-			src_mod_ptr, mode_data_size, src_mod_ptr->block_num, fix_data_ptr);
+		ISP_LOGD("mode %d, ptr %p, size %d, blknum %d, fixptr %p. img size %d %d\n", src_mod_ptr->mode_id,
+			src_mod_ptr, mode_data_size, src_mod_ptr->block_num, fix_data_ptr, src_mod_ptr->width, src_mod_ptr->height);
 
 		add_ae_len = fix_data_ptr->ae.ae_param.ae_len;
 		add_lnc_len = fix_data_ptr->lnc.lnc_param.lnc_len;
@@ -1693,6 +1756,11 @@ start_parse:
 		dst_mod_ptr->resolution.h = src_mod_ptr->height;
 		dst_mod_ptr->fps = src_mod_ptr->fps;
 
+		/* todo: delete it later */
+		/* This is temp hard code for 4in1 param. It should be passed from source flag */
+		if (pm_cxt_ptr->is_4in1_sensor && dst_mod_ptr->mode_id == ISP_MODE_ID_PRV_0)
+			dst_mod_ptr->for_4in1 = 1;
+
 		memcpy((void *)dst_mod_ptr->mode_name,
 			(void *)src_mod_ptr->mode_name, sizeof(src_mod_ptr->mode_name));
 
@@ -1912,7 +1980,7 @@ cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *
 	switch ((cmd & isp_pm_cmd_mask)) {
 	case ISP_PM_CMD_SET_BASE:
 		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
-		rtn = isp_pm_set_param((cmr_handle)pm_cxt_ptr, cmd, input);
+		rtn = isp_pm_set_param((cmr_handle)pm_cxt_ptr, cmd, input, output);
 		pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
 		break;
 	case ISP_PM_CMD_GET_BASE:

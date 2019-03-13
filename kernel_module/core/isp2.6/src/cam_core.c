@@ -1960,6 +1960,7 @@ static int deinit_4in1_aux(struct camera_module *module)
 
 	pr_info("E\n");
 	dev = module->aux_dcam_dev;
+	ret = dcam_ops->ioctl(dev, DCAM_IOCTL_CFG_STOP, NULL);
 	ret = dcam_ops->put_path(dev, DCAM_PATH_BIN);
 	ret += dcam_ops->close(dev);
 	ret += dcam_if_put_dev(dev);
@@ -2052,6 +2053,8 @@ static int init_cam_channel(
 	module->zoom_solution = g_dbg_zoom_mode;
 	/* bypass RDS if sensor output binning size for image quality */
 	if ((module->cam_uinfo.sn_size.w * 2) <= module->cam_uinfo.sn_max_size.w)
+		module->zoom_solution = 0;
+	if (module->cam_uinfo.is_4in1)
 		module->zoom_solution = 0;
 	pr_info("zoom_solution %d\n", module->zoom_solution);
 
@@ -2726,6 +2729,10 @@ static int img_ioctl_cfg_start(
 
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 			DCAM_IOCTL_CFG_START, NULL);
+	if (module->cam_uinfo.is_4in1 && module->aux_dcam_dev)
+		ret = dcam_ops->ioctl(module->aux_dcam_dev,
+			DCAM_IOCTL_CFG_START, NULL);
+
 	return ret;
 }
 
@@ -4898,6 +4905,8 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	/* get frame */
 	pframe = get_empty_frame();
 	if (pframe) {
+		pframe->irq_type = ENDIAN_LITTLE;
+		pframe->irq_property = module->cam_uinfo.sensor_if.img_ptn;
 		pframe->width = channel->ch_uinfo.src_size.w;
 		pframe->height = channel->ch_uinfo.src_size.h;
 		pframe->buf.type = CAM_BUF_USER;
@@ -4930,7 +4939,6 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 		goto exit;
 	}
 	ret = dcam_ops->proc_frame(module->aux_dcam_dev, pframe);
-
 
 	return ret;
 

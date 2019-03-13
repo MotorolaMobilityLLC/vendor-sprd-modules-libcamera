@@ -36,7 +36,7 @@
 	(id == DCAM_BLK_RGB_DITHER) || (id == ISP_BLK_RGB_GAIN) || \
 	(id == ISP_BLK_2D_LSC) || (id == ISP_BLK_AWB_NEW) || \
 	(id == DCAM_BLK_BPC_V1) || (id == DCAM_BLK_RGB_AFM_V1) ||\
-	(id == ISP_BLK_RGB_AEM))
+	(id == ISP_BLK_RGB_AEM) || (id == DCAM_BLK_PPE))
 
 enum isp_pm_cmd {
 	ISP_PM_CMD_SET_BASE = 0x1000,
@@ -83,15 +83,17 @@ enum isp_pm_cmd {
 };
 
 struct pm_workmode_input {
-	cmr_u32 is_4in1_sensor;
 	cmr_u32 cam_4in1_mode;
 	cmr_u32 pm_sets_num;
-	cmr_u32 mode_id[PARAM_SET_MAX];
 	enum tuning_mode mode[PARAM_SET_MAX];
 	enum tuning_scene_mode scene[PARAM_SET_MAX];
 	enum tuning_custom define[PARAM_SET_MAX];
 	cmr_u32 img_w[PARAM_SET_MAX];
 	cmr_u32 img_h[PARAM_SET_MAX];
+};
+
+struct pm_workmode_output {
+	cmr_u32 mode_id[PARAM_SET_MAX];
 };
 
 struct isp_pm_init_input {

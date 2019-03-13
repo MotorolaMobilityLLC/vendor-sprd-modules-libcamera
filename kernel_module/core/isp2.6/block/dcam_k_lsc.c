@@ -64,6 +64,7 @@ int dcam_init_lsc(void *in, uint32_t online)
 	if (info->bypass) {
 		pr_debug("bypass\n");
 		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_0, 1);
+		dcam_force_copy(dev, DCAM_CTRL_COEF);
 		spin_unlock(&param->lock);
 		return 0;
 	}
@@ -169,6 +170,7 @@ int dcam_init_lsc(void *in, uint32_t online)
 exit:
 	/* bypass lsc if there is exception */
 	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_0, 1);
+	dcam_force_copy(dev, DCAM_CTRL_COEF);
 	spin_unlock(&param->lock);
 	return ret;
 }
