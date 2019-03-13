@@ -40,6 +40,20 @@
 #include "isp_adpt.h"
 #include "ae_debug_info_parser.h"
 
+#ifdef ISP_LOGV
+#undef ISP_LOGV
+cmr_int g_ae_log_level = LEVEL_OVER_LOGD;
+cmr_int g_ae_perf_log_level = LEVEL_OVER_LOGD;
+extern long g_isp_log_level;
+#define ISP_LOGV(format, ...)                                                  \
+	ALOGD_IF((((g_ae_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_ae_log_level!=6)), DEBUG_STR format, DEBUG_ARGS, \
+        ##__VA_ARGS__)
+#define ISP_LOG_PERF(format, ...)                                                  \
+	ALOGD_IF(g_ae_perf_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
+        ##__VA_ARGS__)
+
+#endif
+
 #define AE_UPDATE_BASE_EOF 0
 #define AE_UPDATE_BASE_SOF 0
 #define AE_UPDAET_BASE_OFFSET AE_UPDATE_BASE_SOF
@@ -5523,7 +5537,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
-	ISP_LOGV("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32)((ae_time1 - ae_time0) / 1000));
+	ISP_LOG_PERF("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32)((ae_time1 - ae_time0) / 1000));
 	if (cxt->cur_status.settings.exp_is_transmit ==1){
 	        cxt->cur_status.settings.exp_is_transmit = 0;   //release transmit expsoure value to ae
 	        if(cxt->cur_status.settings.manual_mode == 1){
@@ -6250,6 +6264,19 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	} else {
 		cxt->manual_ae_on = 0;
 	}
+	int val = 0;
+	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
+	property_get("persist.vendor.cam.isp.ae.perflog", ae_property, "0");
+	val = atoi(ae_property);
+	if (0 < val)
+		g_ae_perf_log_level = val+LEVEL_OVER_LOGD;
+
+	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
+	property_get("persist.vendor.cam.isp.ae.logv", ae_property, "0");
+	val = atoi(ae_property);
+	if (0 < val)
+		g_ae_log_level = val;
+
 	ISP_LOGI("done, cam-id %d, flash ver %d", cxt->camera_id, cxt->flash_ver);
 	return (cmr_handle) cxt;
 
