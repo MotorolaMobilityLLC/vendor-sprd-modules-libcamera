@@ -754,12 +754,14 @@ static cmr_u32 _awb_flash_snopshot_recovery(struct awb_ctrl_cxt *cxt, void *para
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 
 	cxt->flash_info.main_flash_enable = 1;
-	cxt->lock_info.lock_flash_frame = 10;
+	cxt->lock_info.lock_flash_frame = 2;
 
-	cxt->recover_gain.r = cxt->lock_info.lock_gain.r;
-	cxt->recover_gain.g = cxt->lock_info.lock_gain.g;
-	cxt->recover_gain.b = cxt->lock_info.lock_gain.b;
-	cxt->recover_ct = cxt->cur_ct;
+	if (0 != cxt->lock_info.lock_gain.r && 0 != cxt->lock_info.lock_gain.g && 0 != cxt->lock_info.lock_gain.b) {
+		cxt->recover_gain.r = cxt->lock_info.lock_gain.r;
+		cxt->recover_gain.g = cxt->lock_info.lock_gain.g;
+		cxt->recover_gain.b = cxt->lock_info.lock_gain.b;
+		cxt->recover_ct = cxt->lock_info.lock_ct;
+	}
 
 	ISP_LOGV("Reset recgain for frames after flashing: (%d,%d,%d) %dK", cxt->recover_gain.r, cxt->recover_gain.g, cxt->recover_gain.b, cxt->recover_ct);
 
@@ -781,7 +783,7 @@ static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 	}
 
 	if (cxt->flash_info.flash_status == 2) {
-		cxt->flash_pre_state = 10;
+		cxt->flash_pre_state = 2;
 	} else {
 		cxt->flash_pre_state = 0;
 	}
