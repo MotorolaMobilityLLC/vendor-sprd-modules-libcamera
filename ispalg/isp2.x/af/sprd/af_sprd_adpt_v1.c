@@ -410,8 +410,8 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 #endif
 
 #if defined(CONFIG_ISP_2_6)
-#define FV0_INDEX(block) ((block) << 2)
-#define FV1_INDEX(block) (((block) << 2) + 1)
+#define FV0_INDEX(block) ((block) * 3)
+#define FV1_INDEX(block) (((block) * 3) + 1)
 #endif
 
 	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face FV mapping
