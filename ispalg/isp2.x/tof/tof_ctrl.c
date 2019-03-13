@@ -131,7 +131,7 @@ cmr_int vl53l0_getdata(void * data)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
 	VL53L0_RangingMeasurementData_t *range_datas_call =  (VL53L0_RangingMeasurementData_t *)data;
-	VL53L0_RangingMeasurementData_t range_datas;
+	VL53L0_RangingMeasurementData_t range_datas = {0};
 
 	//to get datas
 	ioctl(tof_fd, VL53L0_IOCTL_GETDATAS,&range_datas);
