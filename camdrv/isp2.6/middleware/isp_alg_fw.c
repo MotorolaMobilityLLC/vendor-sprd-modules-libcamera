@@ -3655,6 +3655,8 @@ static cmr_u32 ispalg_deinit(cmr_handle isp_alg_handle)
 	if (cxt->ops.afl_ops.deinit)
 		cxt->ops.afl_ops.deinit(&cxt->afl_cxt.handle);
 
+	if (cxt->ops.ai_ops.deinit)
+		cxt->ops.ai_ops.deinit(&cxt->ai_cxt.handle);
 	ISP_LOGI("done");
 	return ISP_SUCCESS;
 }
