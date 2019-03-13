@@ -1699,6 +1699,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_TRIM_INFO,
     CAMERA_IOCTRL_SET_CAM_SECURITY,
     CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO,
+    CAMERA_IOCTRL_SET_HDR_DISABLE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

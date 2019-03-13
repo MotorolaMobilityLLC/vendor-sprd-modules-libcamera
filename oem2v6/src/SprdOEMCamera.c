@@ -1149,6 +1149,11 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                 (struct vcm_range_info *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_HDR_DISABLE: {
+        ret = camera_set_hdr_disable(handle, *(cmr_u32 *)param);
+        break;
+    }
+
     default:
         break;
     }

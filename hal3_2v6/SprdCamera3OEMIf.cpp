@@ -8361,6 +8361,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     struct camera_frame_type zsl_frame;
     struct image_sw_algorithm_buf src_sw_algorithm_buf;
     struct image_sw_algorithm_buf dst_sw_algorithm_buf;
+    cmr_u32 value = 0;
     uint32_t cnt = 0;
     int64_t diff_ms = 0;
     uint32_t sw_algorithm_buf_cnt = 0;
@@ -8475,6 +8476,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                     receiveRawPicture(&zsl_frame);
                 }
                 if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
+                    mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
+                                                CAMERA_IOCTRL_SET_HDR_DISABLE,
+                                                &value);
                     mHalOem->ops->camera_set_zsl_snapshot_buffer(
                         obj->mCameraHandle, zsl_frame.y_phy_addr,
                         zsl_frame.y_vir_addr, zsl_frame.fd);

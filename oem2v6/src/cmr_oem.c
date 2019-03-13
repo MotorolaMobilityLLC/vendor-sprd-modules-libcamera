@@ -2464,6 +2464,33 @@ cmr_int camera_set_security(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param) {
+    cmr_int ret;
+    struct grab_context *grab_cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_exp_info sensor_info;
+    struct common_isp_cmd_param isp_param;
+
+    ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
+    if (ret) {
+        CMR_LOGE("get_sensor info failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+        isp_param.cmd_value = param;
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param);
+    } else {
+        isp_param.cmd_value = param;
+        ret = camera_sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV,
+                                  (void *)&isp_param);
+    }
+
+exit:
+    return ret;
+}
+
 cmr_int camera_jpeg_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 

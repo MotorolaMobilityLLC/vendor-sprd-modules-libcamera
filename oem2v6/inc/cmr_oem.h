@@ -478,6 +478,7 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle);
 
 cmr_int camera_set_security(cmr_handle oem_handle,
                             struct sprd_cam_sec_cfg *sec_cfg);
+cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param);
 
 cmr_int
 camera_isp_set_sensor_info_to_af(cmr_handle oem_handle,
