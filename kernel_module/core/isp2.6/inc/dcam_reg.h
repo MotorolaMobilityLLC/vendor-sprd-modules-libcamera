@@ -499,19 +499,6 @@ struct endian_field {
 #define LSC_GRID_BUF_START1		(0x8000UL)
 #define LSC_GRID_BUF_SIZE		(0x4000UL)
 
-
-enum camera_copy_id {
-	CAP_COPY = BIT(0),
-	RDS_COPY = BIT(1),
-	FULL_COPY = BIT(2),
-	BIN_COPY = BIT(3),
-	AEM_COPY = BIT(4),
-	PDAF_COPY = BIT(5),
-	VCH2_COPY = BIT(6),
-	VCH3_COPY = BIT(7),
-	ALL_COPY = 0xFF,
-};
-
 /*
  * DCAM register map range
  *

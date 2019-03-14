@@ -15,6 +15,7 @@
 #include <sprd_mm.h>
 #include <sprd_isp_r8p1.h>
 
+#include "dcam_core.h"
 #include "dcam_reg.h"
 #include "dcam_interface.h"
 #include "cam_types.h"
@@ -257,12 +258,13 @@ static int isp_k_pdaf_set_ppi_info(struct isp_io_param *param, enum dcam_id idx)
 	return ret;
 }
 
-static int isp_k_pdaf_set_roi(struct isp_io_param *param, enum dcam_id idx)
+static int isp_k_pdaf_set_roi(struct isp_io_param *param, void *in)
 {
 
 	int ret = 0;
 	unsigned int val = 0;
 	struct pdaf_roi_info roi_info;
+	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)in;
 
 	pr_debug("E\n");
 	memset(&roi_info, 0x00, sizeof(roi_info));
@@ -276,13 +278,11 @@ static int isp_k_pdaf_set_roi(struct isp_io_param *param, enum dcam_id idx)
 		roi_info.win.start_y, roi_info.win.end_x, roi_info.win.end_y);
 	val = ((roi_info.win.start_y & 0xFFFF) << 16) |
 		(roi_info.win.start_x & 0xFFFF);
-	DCAM_REG_WR(idx, ISP_PPI_AF_WIN_START, val);
+	DCAM_REG_WR(dev->idx, ISP_PPI_AF_WIN_START, val);
 
 	val = ((roi_info.win.end_y & 0xFFFF) << 16) |
 		(roi_info.win.end_x & 0xFFFF);
-	DCAM_REG_WR(idx, ISP_PPI_AF_WIN_END, val);
-
-	DCAM_REG_MWR(idx, DCAM_CONTROL, PDAF_COPY, PDAF_COPY);
+	DCAM_REG_WR(dev->idx, ISP_PPI_AF_WIN_END, val);
 
 	return ret;
 }
@@ -356,7 +356,7 @@ int dcam_k_cfg_pdaf(struct isp_io_param *param, struct dcam_dev_param *p)
 		ret = isp_k_pdaf_set_skip_num(param, idx);
 		break;
 	case DCAM_PRO_PDAF_SET_ROI:
-		ret = isp_k_pdaf_set_roi(param, idx);
+		ret = isp_k_pdaf_set_roi(param, p);
 		break;
 	case DCAM_PRO_PDAF_SET_PPI_INFO:
 		ret = isp_k_pdaf_set_ppi_info(param, idx);
