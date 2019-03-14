@@ -4,8 +4,8 @@
 /*
  * for flash calibration
 */
-#define CALI_VERSION 5
-#define CALI_VERSION_SUB 20180626
+#define CALI_VERSION 6
+#define CALI_VERSION_SUB 20190320
 struct flash_led_brightness {
 	uint16 levelNumber_pf1;
 	uint16 levelNumber_pf2;
@@ -355,10 +355,16 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 		element.index = led1_driver_ind;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 
+		if (led2 == -1)
+		{
+		}
+		else
+		{
 		cfg.led_idx = 2;
 		cfg.type = type;
 		element.index = led2_driver_ind;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+		}
 
 		if (led1 == -1)
 			cfg.led0_enable = 0;

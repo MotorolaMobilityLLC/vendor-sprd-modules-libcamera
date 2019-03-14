@@ -26,8 +26,9 @@ extern "C" {
 typedef  unsigned char uint8;
 typedef  short int16;
 typedef  unsigned short uint16;
-typedef unsigned int uint32;
-//#define uint32 unsigned int
+//typedef unsigned long uint32;
+#define uint32 unsigned int
+#define int32 int
 #else
 typedef  unsigned char uint8;
 typedef  unsigned short uint16;
@@ -36,18 +37,7 @@ typedef  unsigned int uint32;
 typedef  signed char int8;
 typedef  signed short int16;
 typedef  signed int int32;
-
-#ifndef TRUE
-#define TRUE 1
 #endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#endif
-
-
 
 typedef void* flash_handle;
 
@@ -98,7 +88,7 @@ struct flash_tune_param {
 	int16 with_ct_tab;  //1: tuning with ct table,  0: ct table from awb
 	uint32 max_pf_shutter; //0: from ae, others: assign max preflash shutter by tuning data
 	//v5 end
-	
+
 	uint32 alg_id_sub;
 
 	//
@@ -134,9 +124,20 @@ struct flash_tune_param {
 	uint16 gPf1[32];
 	uint16 rPf2[32];
 	uint16 gPf2[32];
-	uint8 awbWithCtTab;
-	uint8 reserved1[7];
-};/*2053 * 4 bypes*/
+	uint32 awbWithCtTab;
+
+	uint32 multiColorLcdEn;
+	float capGainRMul;
+	float capGainBMul;
+	uint32 maxMfShutter;
+	uint32 customFlashIntensityEn;
+	int32 flashIntensityBv1;
+	int32 flashIntensityBv2;
+	int16 flashIntensityLevel1;
+	int16 flashIntensityLevel2;
+	uint8 reserved1[1760];
+};/*2500 * 4 bypes*/
+
 
 struct Flash_initInput
 {
@@ -159,6 +160,7 @@ struct Flash_initOut
 	uint8 mainFlashEn;
 };
 
+
 enum Flash_flickerMode
 {
 
@@ -166,6 +168,19 @@ enum Flash_flickerMode
 	flash_flicker_60hz,
 
 };
+
+#define AE_EXP_GAIN_TABLE_SIZE 512
+
+struct ae_exp_gain_table_copy {
+	int32 min_index;
+	int32 max_index;
+	uint32 exposure[AE_EXP_GAIN_TABLE_SIZE]; //exposure_line
+	uint32 dummy[AE_EXP_GAIN_TABLE_SIZE];/*unused*/
+	uint16 again[AE_EXP_GAIN_TABLE_SIZE]; //128->1x
+	uint16 dgain[AE_EXP_GAIN_TABLE_SIZE]; /*unused*/
+};
+
+
 struct Flash_pfStartInput
 {
 	float ctTabRg[20];
@@ -202,6 +217,9 @@ struct Flash_pfStartInput
 #if defined(__i386)
 	uint32 tmp4pack4[4];
 #endif
+	int32 bv;
+	uint32 expsure_line_ns;
+	void* ae_table;
 };
 
 struct Flash_pfStartOutput
