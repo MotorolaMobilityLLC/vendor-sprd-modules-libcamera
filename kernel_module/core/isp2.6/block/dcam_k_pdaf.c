@@ -264,7 +264,7 @@ static int isp_k_pdaf_set_roi(struct isp_io_param *param, void *in)
 	int ret = 0;
 	unsigned int val = 0;
 	struct pdaf_roi_info roi_info;
-	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)in;
+	struct dcam_dev_param *dev = (struct dcam_dev_param *)in;
 
 	pr_debug("E\n");
 	memset(&roi_info, 0x00, sizeof(roi_info));
