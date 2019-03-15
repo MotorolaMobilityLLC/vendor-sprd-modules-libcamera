@@ -3189,7 +3189,8 @@ int put_isp_pipe_dev(void *isp_handle)
 	}
 	mutex_unlock(&isp_pipe_dev_mutex);
 
-	pr_info("put isp pipe dev: %p\n", dev);
+	if (dev)
+		pr_info("put isp pipe dev: %p\n", dev);
 
 	return ret;
 }

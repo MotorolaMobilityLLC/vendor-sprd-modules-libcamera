@@ -473,7 +473,7 @@ static ssize_t get_ip_status_show(struct device *dev,
 {
 	struct devfreq *devfreq = to_devfreq(dev);
 	struct cpp_dvfs *cpp;
-	struct ip_dvfs_status ip_status;
+	struct ip_dvfs_status ip_status = {0};
 	ssize_t len = 0;
 	int ret = 0;
 	unsigned int top_volt = 0, mm_volt = 0;
@@ -564,7 +564,7 @@ static ssize_t set_dvfs_table_info_store(struct device *dev,
 {
 	struct devfreq *devfreq = to_devfreq(dev);
 	struct cpp_dvfs *cpp;
-	struct ip_dvfs_map_cfg dvfs_table;
+	struct ip_dvfs_map_cfg dvfs_table = {0};
 	uint32_t  map_index;
 	int err = 0;
 

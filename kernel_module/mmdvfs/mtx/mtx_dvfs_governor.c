@@ -516,7 +516,7 @@ static ssize_t get_dvfs_table_info_show(struct device *dev,
 {
 	struct devfreq *devfreq = to_devfreq(dev);
 	struct mtx_dvfs *mtx;
-	struct ip_dvfs_map_cfg dvfs_table[8];
+	struct ip_dvfs_map_cfg dvfs_table[8] = {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}};
 	ssize_t len = 0;
 	int err = 0, i = 0;
 

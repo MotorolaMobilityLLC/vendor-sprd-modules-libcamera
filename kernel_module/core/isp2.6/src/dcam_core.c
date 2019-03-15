@@ -1437,6 +1437,7 @@ static int dcam_cfg_statis_buffer(
 		if (path_id < 0) {
 			pr_err("invalid statis type: %d\n", input->type);
 			ret = -EINVAL;
+			goto exit;
 		}
 		pframe = get_empty_frame();
 		pframe->irq_property = input->type;
