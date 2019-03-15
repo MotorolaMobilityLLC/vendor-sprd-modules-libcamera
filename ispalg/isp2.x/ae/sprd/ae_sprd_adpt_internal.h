@@ -60,6 +60,17 @@ extern "C" {
 		cmr_u32 gain;
 		cmr_u32 table_idx;
 	};
+	struct ae_exposure_param_switch_m {
+		cmr_u32 target_offset;
+		cmr_u32 exp_line;
+		cmr_u32 exp_time;
+		cmr_s32 dummy;
+		cmr_u32 frm_len;
+		cmr_u32 frm_len_def;
+		cmr_u32 gain;
+		cmr_u32 table_idx;
+		cmr_u32 manual_level;
+	};
 
 	struct ae_sensor_exp_data {
 		struct ae_exposure_param lib_data;	/*AE lib output data */
@@ -76,6 +87,11 @@ extern "C" {
 	enum initialization {
 		AE_PARAM_NON_INIT,
 		AE_PARAM_INIT
+	};
+
+	enum manual_mode_ev_status {
+		AE_MANUAL_EV_INIT = 0xf0,
+		AE_MANUAL_EV_SET
 	};
 
 	struct flash_cali_data {

@@ -2271,8 +2271,9 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			rtn = AE_ERROR;
 			goto SET_SCENE_MOD_EXIT;
 		}
-		if(CAMERA_MODE_MANUAL == cxt->app_mode && (cxt->manual_level != 0xff))
+		if(CAMERA_MODE_MANUAL == cxt->app_mode && (cxt->manual_level != AE_MANUAL_EV_INIT))
 			prv_status->settings.ev_index = cxt->manual_level;
+		ISP_LOGD("ev_index = %d %d",prv_status->settings.ev_index,cxt->manual_level);
 		target_lum = ae_calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
 		cur_status->target_lum_zone = cur_param->stable_zone_ev[cur_param->ev_table.default_level];
@@ -3774,9 +3775,9 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 }
 
 static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
-static struct ae_exposure_param_switch s_ae_manual[4] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}};
+static struct ae_exposure_param_switch_m s_ae_manual[4] = {{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0}};
 
-static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch * ae_manual_param)
+static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
 {
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
@@ -3790,7 +3791,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 			}
 
 			fwrite((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
+			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 			fclose(pf);
 			pf = NULL;
 		}
@@ -3802,7 +3803,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 			}
 
 			fwrite((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
+			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 			fclose(pf);
 			pf = NULL;
 		}
@@ -3810,7 +3811,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 
 }
 
-static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch * ae_manual_param)
+static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
 {
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
@@ -3821,7 +3822,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
 			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
+			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 			fclose(pf);
 			pf = NULL;
 
@@ -3834,7 +3835,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
 			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch), pf);
+			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 			fclose(pf);
 			pf = NULL;
 
@@ -3856,7 +3857,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->cur_status.start_index;
-			cxt->last_cur_lum = cxt->cur_result.cur_lum;
+			if(CAMERA_MODE_MANUAL != cxt->app_mode)
+				cxt->last_cur_lum = cxt->cur_result.cur_lum;
 			cxt->last_exp_param.is_lock = cxt->cur_status.settings.lock_ae;
 			cxt->last_index = cxt->cur_status.start_index;
 			if (0 != cxt->cur_result.cur_bv)
@@ -3870,7 +3872,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = cxt->sync_cur_result.wts.cur_again;
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.wts.cur_index;
-			cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
+			if(CAMERA_MODE_MANUAL != cxt->app_mode)
+				cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
 			cxt->last_exp_param.is_lock = cxt->sync_cur_status.settings.lock_ae;
 			cxt->last_index = cxt->sync_cur_result.wts.cur_index;
 			if (0 != cxt->cur_result.cur_bv)
@@ -3896,8 +3899,15 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
 			cxt->mode_switch[cxt->app_mode].table_idx = cxt->last_exp_param.cur_index;
 		}
-		if(CAMERA_MODE_MANUAL == cxt->app_mode)
-			s_ae_manual[cxt->camera_id] = cxt->mode_switch[cxt->app_mode];
+		if(CAMERA_MODE_MANUAL == cxt->app_mode){
+			s_ae_manual[cxt->camera_id].exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
+			s_ae_manual[cxt->camera_id].dummy = cxt->mode_switch[cxt->app_mode].dummy;
+			s_ae_manual[cxt->camera_id].gain = cxt->mode_switch[cxt->app_mode].gain;
+			s_ae_manual[cxt->camera_id].exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
+			s_ae_manual[cxt->camera_id].target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
+			s_ae_manual[cxt->camera_id].table_idx = cxt->mode_switch[cxt->app_mode].table_idx;
+			s_ae_manual[cxt->camera_id].manual_level = cxt->manual_level;
+		}
 
 		cxt->last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
 
@@ -4154,6 +4164,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				src_exp.frm_len = s_ae_manual[cxt->camera_id].frm_len;
 				src_exp.frm_len_def = s_ae_manual[cxt->camera_id].frm_len_def;
 				src_exp.cur_index = s_ae_manual[cxt->app_mode].table_idx;
+				cxt->manual_level = s_ae_manual[cxt->app_mode].manual_level;
 			}
 			else if(0 != cxt->mode_switch[last_app_mode].gain){
 				src_exp.target_offset = cxt->mode_switch[last_app_mode].target_offset;
@@ -4165,6 +4176,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				src_exp.frm_len_def = cxt->mode_switch[last_app_mode].frm_len_def;
 				src_exp.cur_index = cxt->mode_switch[last_app_mode].table_idx;
 				if(ae_target_lum){
+					ISP_LOGD("1. exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 					cmr_u32 tmp_gain = 0;
 					cxt->last_cur_lum = cxt->last_cur_lum ? cxt->last_cur_lum : 1;
 					tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->last_cur_lum + 0.5);
@@ -4177,7 +4189,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 						src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
 					}
 					src_exp.gain = tmp_gain;
-					ISP_LOGD("exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
+					ISP_LOGD("2. exp_line=%d  gain=%d tar_lum=(%d %d)",src_exp.exp_line, src_exp.gain, cxt->last_cur_lum, ae_target_lum);
 				}
 			}
 
@@ -4204,6 +4216,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.frm_len = s_bakup_exp_param[cxt->camera_id].frm_len;
 			src_exp.frm_len_def = s_bakup_exp_param[cxt->camera_id].frm_len_def;
 			cxt->sync_cur_result.cur_bv = cxt->cur_result.cur_bv = s_bakup_exp_param[cxt->camera_id].bv;
+			if(CAMERA_MODE_MANUAL == cxt->app_mode)
+				cxt->manual_level = s_ae_manual[cxt->app_mode].manual_level;
 		} else {
 			src_exp.exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 			src_exp.exp_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
@@ -4559,6 +4573,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
+			cxt->manual_level = cxt->cur_status.settings.ev_index;
 			ISP_LOGD("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
 		} else {
 			if (cxt->cur_status.settings.force_lock_ae == 1) {
@@ -5406,12 +5421,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	 */
 	if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
 		cxt->prv_status = cxt->cur_status;
-		if(CAMERA_MODE_MANUAL == cxt->app_mode)
-			cxt->manual_level = cxt->prv_status.settings.ev_index;
 		if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
 			cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
 		}
 	}
+
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
@@ -6225,7 +6239,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->env_cum_changed = 0;
 	cxt->previous_lum = 0;
 	cxt->bypass = init_param->has_force_bypass;
-	cxt->manual_level = 0xff;
+	cxt->manual_level = AE_MANUAL_EV_INIT;
 	if (init_param->has_force_bypass) {
 		cxt->cur_param->touch_info.enable = 0;
 		cxt->cur_param->face_param.face_tuning_enable = 0;
