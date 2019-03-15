@@ -25,6 +25,7 @@ ccflags-y += -I$(REL_PATH)/../sensor/
 ccflags-y += -I$(REL_PATH)/../common
 ccflags-y += -I$(REL_PATH)/../interface
 ccflags-y += -I$(srctree)/drivers/staging/android/ion
+ccflags-y += -I$(srctree)/drivers/devfreq/apsys/
 
 modules:
 	$(MAKE) ARCH=$(ARCH) -C $(KDIR) M=$(CURDIR) $@

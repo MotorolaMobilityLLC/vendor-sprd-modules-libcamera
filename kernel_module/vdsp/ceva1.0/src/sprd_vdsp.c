@@ -47,6 +47,8 @@
 #include <linux/dma-mapping.h>
 #include "sprd_vdsp_cmd.h"
 #include "ion.h"
+#include "sprd_dvfs_vdsp.h"
+
 #define VDSP_MINOR MISC_DYNAMIC_MINOR
 /* VDSP Log buffer size*/
 #define PAGE_SIZE_4K 0x10000
@@ -673,6 +675,7 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 	int ret = 0;
 	struct sprd_dsp_cmd msg;
 	struct msg_pending_post* cfg;
+	u32 dvfs_freq = VDSP_CLK_INDEX_768M;
 
 	VDSP_DEBUG("vdsp_ioctl called !\n");
 	switch (cmd) {
@@ -701,6 +704,7 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 		mutex_lock(&vdsp_hw_dev.post_lock);
 		vdsp_cmd_convertor(&vdsp_hw_dev, &msg);
 		cfg->msg = msg;
+		vdsp_dvfs_notifier_call_chain(&dvfs_freq);
 		list_add_tail(&cfg->head, &vdsp_hw_dev.post_list);
 		kthread_queue_work(&vdsp_hw_dev.post_worker, &vdsp_hw_dev.post_work);
 		mutex_unlock(&vdsp_hw_dev.post_lock);
@@ -709,6 +713,8 @@ static long vdsp_ioctl(struct file *filp, unsigned int cmd, unsigned long param)
 		// xm6 enter stand-by mode
 		if (vdsp_hw_dev.core && vdsp_hw_dev.core->isr_triggle_int1)
 			vdsp_hw_dev.core->isr_triggle_int1(&vdsp_hw_dev.ctx, 1);
+		dvfs_freq = VDSP_CLK_INDEX_192M;
+		vdsp_dvfs_notifier_call_chain(&dvfs_freq);
 		VDSP_DEBUG("vdsp_ioctl SPRD_VDSP_IO_SET_MSG end\n");
 		break;
 	default:
