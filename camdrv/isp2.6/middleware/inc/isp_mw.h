@@ -381,6 +381,7 @@ enum isp_ctrl_cmd {
 	/*camera mode which appearby right slip*/
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_AI_SET_FD_STATUS,
+	ISP_CTRL_SET_VCM_DIST,
 	ISP_CTRL_MAX
 };
 

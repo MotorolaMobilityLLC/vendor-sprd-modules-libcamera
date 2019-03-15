@@ -280,6 +280,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_LUM,	// for isp tool
 	ISP_CTRL_SET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_POS,	// for isp tool
+	ISP_CTRL_GET_BOKEH_RANGE,
 	ISP_CTRL_GET_AF_MODE,	// for isp tool
 	ISP_CTRL_FACE_AREA,
 	ISP_CTRL_SCALER_TRIM,
@@ -360,6 +361,7 @@ enum isp_ctrl_cmd {
 	/*camera mode which appearby right slip*/
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_AI_SET_FD_STATUS,
+	ISP_CTRL_SET_VCM_DIST,
 	ISP_CTRL_MAX
 };
 

@@ -1861,6 +1861,40 @@ static cmr_int ispctl_get_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_bokeh_range(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_u16 i;
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.af_ops.ioctrl) {
+		struct vcm_range_info *temp = (struct vcm_range_info *)param_ptr;
+		struct realbokeh_vcm_range result;
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_REALBOKEH_LIMITED_RANGE, (void *)&result, NULL);
+		temp->limited_infi = result.limited_infi;
+		temp->limited_macro = result.limited_macro;
+		temp->total_seg = result.total_seg;
+		for (i = 0;i < temp->total_seg; i++){
+			temp->vcm_dac[i] = result.vcm_dac[i];
+		}
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_set_vcm_distance(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct vcm_disc_info *result = (struct vcm_disc_info *)param_ptr;
+
+	if (cxt->ops.af_ops.ioctrl) {
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_REALBOKEH_DISTANCE, (void *)result, NULL);
+	}
+
+	return ret;
+}
+
 static cmr_int ispctl_set_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2578,6 +2612,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AF_CTRL, ispctl_af_info},	// for tool cali
 	{ISP_CTRL_SET_AF_POS, ispctl_set_af_pos},	// for tool cali
 	{ISP_CTRL_GET_AF_POS, ispctl_get_af_pos},	// for tool cali
+	{ISP_CTRL_GET_BOKEH_RANGE, ispctl_get_bokeh_range},
+	{ISP_CTRL_SET_VCM_DIST, ispctl_set_vcm_distance},
 	{ISP_CTRL_GET_AF_MODE, ispctl_get_af_mode},	// for tool cali
 	{ISP_CTRL_REG_CTRL, ispctl_reg},	// for tool cali
 	{ISP_CTRL_AF_END_INFO, ispctl_reg},	// for tool cali
