@@ -13,7 +13,7 @@
 
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "isp_slice.h"
 #include "isp_3dnr_cap.h"

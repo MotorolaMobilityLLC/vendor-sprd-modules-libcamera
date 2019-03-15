@@ -26,7 +26,7 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/mfd/syscon.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 #include "sprd_sensor_core.h"
 #include "csi_api.h"
 #include "csi_driver.h"
@@ -193,7 +193,7 @@ int csi_api_mipi_phy_cfg_init(struct device_node *phy_node, int sensor_id)
 }
 
 int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
-					int sensor_id, unsigned int phy_id)
+			int sensor_id, unsigned int phy_id)
 {
 	struct csi_dt_node_info *csi_info = NULL;
 	struct resource res;
@@ -361,7 +361,8 @@ int csi_api_mipi_phy_cfg(void)
 	return ret;
 }
 
-int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id)
+int csi_api_open(int bps_per_lane, int phy_id, int lane_num,
+		int sensor_id, int is_pattern)
 {
 	int ret = 0;
 	struct csi_dt_node_info *dt_info = csi_get_dt_node_data(sensor_id);

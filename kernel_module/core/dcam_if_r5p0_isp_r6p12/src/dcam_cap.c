@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "dcam_drv.h"
 

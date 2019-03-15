@@ -399,6 +399,9 @@ struct sprd_img_statis_info {
 	uint32_t mfd;
 	uint32_t sec;
 	uint32_t usec;
+	int64_t monoboottime;
+	uint32_t is_last_frm;
+	uint32_t time_diff;
 	uint32_t frame_id;
 	struct sprd_img_vcm_dac_info dac_info;
 	uint32_t zoom_ratio;
@@ -411,6 +414,9 @@ struct sprd_irq_info {
 	uint32_t irq_property;
 	uint32_t sec;
 	uint32_t usec;
+	int64_t monoboottime;
+	uint32_t is_last_frm;
+	uint32_t time_diff;
 	uint32_t frame_id;
 };
 

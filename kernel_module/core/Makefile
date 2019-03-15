@@ -30,6 +30,25 @@ ifeq ($(TEST_ON_HAPS),true)
 ccflags-y += -DTEST_ON_HAPS
 endif
 
+else ifeq ($(ISP_VER),dcam_if_r5p0_isp_r6p12)
+
+ifeq ($(CONFIG_COMPAT),true)
+# compat ioctl for 32-bit user
+SRC := $(shell find $(REL_PATH)/dcam_if_r5p0_isp_r6p12 -name "*.c")
+ccflags-y += -DCONFIG_COMPAT
+else
+SRC := $(shell find $(REL_PATH)/dcam_if_r5p0_isp_r6p12 -name "*.c"  ! -name "compat_cam_drv.c")
+endif
+
+LOCAL_SRC := $(SRC:$(REL_PATH)/%=%)
+
+sprd_camera-objs += $(LOCAL_SRC:%.c=%.o)
+
+# TODO: refine these includes
+ccflags-y += -I$(REL_PATH)/../sensor/
+ccflags-y += -I$(REL_PATH)/dcam_if_r5p0_isp_r6p12/inc/
+ccflags-y += -I$(REL_PATH)/../flash/flash_drv/
+
 endif
 
 # target

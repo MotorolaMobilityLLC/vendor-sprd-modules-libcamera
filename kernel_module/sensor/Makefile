@@ -28,6 +28,16 @@ ifeq ($(TEST_ON_HAPS),true)
 ccflags-y += -DTEST_ON_HAPS
 endif
 
+else ifeq ($(CSI_VER),r2p0)
+
+SRC += csi2/csi_sprd/receiver_r2p0/csi_api.c
+SRC += csi2/csi_sprd/receiver_r2p0/csi_driver.c
+
+sprd_sensor-objs += $(SRC:%.c=%.o)
+
+# TODO: refine these includes
+ccflags-y += -I$(REL_PATH)/csi2/csi_sprd/receiver_r2p0/
+
 endif
 
 # target

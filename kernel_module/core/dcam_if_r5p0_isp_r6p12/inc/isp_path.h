@@ -14,7 +14,7 @@
 #ifndef _ISP_PATH_HEADER_
 #define _ISP_PATH_HEADER_
 
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "isp_drv.h"
 #include "isp_slice.h"

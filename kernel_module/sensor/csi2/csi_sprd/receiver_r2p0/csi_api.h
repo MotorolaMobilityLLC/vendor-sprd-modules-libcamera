@@ -41,8 +41,9 @@ int csi_set_dt_node_data(void *param, int sensor_id);
 int csi_api_mipi_phy_cfg(void);
 int csi_api_mipi_phy_cfg_init(struct device_node *phy_node, int sensor_id);
 int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
-				int sensor_id, unsigned int phy_id);
-int csi_api_open(int bps_per_lane, int phy_id, int lane_num, int sensor_id);
+			int sensor_id, unsigned int phy_id);
+int csi_api_open(int bps_per_lane, int phy_id, int lane_num,
+		int sensor_id, int is_pattern);
 int csi_api_close(uint32_t phy_id, int sensor_id);
 void csi_api_reg_trace(void);
 int csi_api_switch(int sensor_id);

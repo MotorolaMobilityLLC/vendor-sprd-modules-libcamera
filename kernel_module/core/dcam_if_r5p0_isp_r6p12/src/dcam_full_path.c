@@ -12,7 +12,7 @@
  */
 
 #include <linux/delay.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "dcam_drv.h"
 

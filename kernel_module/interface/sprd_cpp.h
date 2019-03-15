@@ -429,6 +429,7 @@ struct sprd_cpp_path2_path3_cfg_parm {
 
 struct sprd_cpp_scale_capability  {
 	struct sprd_cpp_size src_size;
+	struct sprd_cpp_rect rect_size;
 	int src_format;
 	struct sprd_cpp_size dst_size;
 	struct sprd_cpp_size dst_bp_size;

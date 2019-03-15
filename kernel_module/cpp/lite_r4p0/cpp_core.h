@@ -23,7 +23,7 @@
 #include <linux/sprd_iommu.h>
 #include <linux/sprd_ion.h>
 #include <linux/types.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 struct cpp_iommu_info {
 	struct device *dev;

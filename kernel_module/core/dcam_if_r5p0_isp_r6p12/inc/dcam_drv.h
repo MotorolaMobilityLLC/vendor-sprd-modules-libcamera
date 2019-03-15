@@ -14,8 +14,6 @@
 #ifndef _DCAM_DRV_H_
 #define _DCAM_DRV_H_
 
-#include <video/sprd_img.h>
-
 #include "dcam_reg.h"
 #include "cam_common.h"
 #include "dcam_int.h"
@@ -23,6 +21,7 @@
 #include "cam_queue.h"
 #include "cam_statistic.h"
 #include "isp_3dnr_drv.h"
+#include "sprd_img.h"
 
 #define DCAM_LOWEST_ADDR               0x800
 #define DCAM_ADDR_INVALID(addr) \

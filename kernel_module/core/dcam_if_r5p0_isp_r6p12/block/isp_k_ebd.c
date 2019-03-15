@@ -12,7 +12,7 @@
  */
 
 #include <linux/uaccess.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "isp_drv.h"
 #include "isp_block.h"

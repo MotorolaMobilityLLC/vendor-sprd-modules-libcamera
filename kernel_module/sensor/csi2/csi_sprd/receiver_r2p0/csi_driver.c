@@ -26,7 +26,7 @@
 #include <linux/regmap.h>
 #include <linux/semaphore.h>
 #include <linux/spinlock.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 #include "csi_api.h"
 #include "csi_driver.h"
 #include "sprd_sensor_core.h"

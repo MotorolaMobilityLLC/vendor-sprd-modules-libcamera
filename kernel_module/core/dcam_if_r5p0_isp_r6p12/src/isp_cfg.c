@@ -13,7 +13,7 @@
 
 #include <linux/printk.h>
 #include <asm/cacheflush.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "isp_cfg.h"
 #include "isp_buf.h"
@@ -290,13 +290,13 @@ int sprd_isp_cfg_buf_update(struct isp_cfg_ctx_desc *cfg_ctx)
 		pr_debug("buf_id %d shadow_vaddr:0x%p, work (vaddr 0x%p addr 0x%lx)\n",
 			work_buf_id, shadow_buf_vaddr,
 			work_buf_vaddr, work_buf_paddr);
-
+#if 0
 #ifdef CONFIG_64BIT
 		__flush_dcache_area(work_buf_vaddr, ISP_REG_SIZE);
 #else
 		flush_kernel_vmap_range(work_buf_vaddr, ISP_REG_SIZE);
 #endif
-
+#endif
 		ISP_HREG_WR(id, cfg_cmd_addr[id][scene_id], work_buf_paddr);
 		cfg_buf_p->cmd_buf[cfg_buf_p->cur_buf_id].flag = 0;
 	} else {

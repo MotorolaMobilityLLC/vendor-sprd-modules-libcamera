@@ -17,10 +17,10 @@
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/regmap.h>
-#include <video/sprd_cpp.h>
 
 #include "cpp_common.h"
 #include "cpp_reg.h"
+#include "sprd_cpp.h"
 #include "rot_drv.h"
 
 #define ROT_ADDR_ALIGN 0x07

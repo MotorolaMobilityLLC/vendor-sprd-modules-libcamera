@@ -23,10 +23,10 @@
 #include <linux/mfd/syscon.h>
 #include <linux/regmap.h>
 #include <linux/completion.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
+#include <video/sprd_mmsys_pw_domain.h>
 
 #include "dcam_drv.h"
-#include "cam_pw_domain.h"
 #include "isp_drv.h"
 
 #ifdef pr_fmt

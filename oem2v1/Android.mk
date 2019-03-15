@@ -42,6 +42,11 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/otp_drv \
     $(LOCAL_PATH)/../arithmetic/inc
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/../kernel_module/interface
+endif
+
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/isp_tune \

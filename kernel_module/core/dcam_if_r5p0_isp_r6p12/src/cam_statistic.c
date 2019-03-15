@@ -14,7 +14,7 @@
 #include <linux/types.h>
 #include <linux/sprd_ion.h>
 #include <linux/sprd_iommu.h>
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "cam_statistic.h"
 #include "dcam_drv.h"

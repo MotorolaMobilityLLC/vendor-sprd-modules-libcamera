@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <video/sprd_mm.h>
+#include <sprd_mm.h>
 
 #include "isp_3dnr_cap.h"
 #include "isp_drv.h"

@@ -20,17 +20,17 @@
 #include <linux/of_irq.h>
 #include <linux/regmap.h>
 #include <linux/kthread.h>
-#include <video/sprd_img.h>
+#include <video/sprd_mmsys_pw_domain.h>
 
 #include "isp_buf.h"
 #include "isp_int.h"
 #include "isp_path.h"
 #include "isp_slice.h"
-#include "cam_pw_domain.h"
 #include "cam_gen_scale_coef.h"
 #include "isp_3dnr_cap.h"
 #include "isp_3dnr_drv.h"
 #include "cam_common.h"
+#include "sprd_img.h"
 
 
 #ifdef pr_fmt
@@ -57,7 +57,6 @@ static struct clk *isp_eb;
 struct isp_ch_irq s_isp_irq[ISP_MAX_COUNT];
 static struct mutex isp_module_sema[ISP_MAX_COUNT];
 static struct regmap *cam_ahb_gpr;
-static struct regmap *aon_apb_gpr;
 
 static spinlock_t isp_glb_reg_axi_lock[ISP_MAX_COUNT];
 static spinlock_t isp_glb_reg_mask_lock[ISP_MAX_COUNT];
@@ -2133,11 +2132,6 @@ int sprd_isp_drv_dt_parse(struct device_node *dn, uint32_t *isp_count)
 			"sprd,cam-ahb-syscon");
 		if (IS_ERR_OR_NULL(cam_ahb_gpr))
 			return PTR_ERR(cam_ahb_gpr);
-
-		aon_apb_gpr = syscon_regmap_lookup_by_phandle(isp_node,
-			"sprd,aon-apb-syscon");
-		if (IS_ERR_OR_NULL(aon_apb_gpr))
-			return PTR_ERR(aon_apb_gpr);
 
 		isp_clk_default = clk_get_parent(isp_clk);
 		if (IS_ERR_OR_NULL(isp_clk_default)) {

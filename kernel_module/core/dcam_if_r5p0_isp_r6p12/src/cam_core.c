@@ -26,8 +26,8 @@
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 #include <linux/sprd_iommu.h>
+#include <video/sprd_mmsys_pw_domain.h>
 
-#include "cam_pw_domain.h"
 #include "dcam_drv.h"
 #include "isp_path.h"
 #include "isp_3dnr_drv.h"
@@ -37,7 +37,6 @@
 #ifdef CONFIG_COMPAT
 #include "cam_drv_compat.h"
 #endif
-#include "csi_api.h"
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -765,7 +764,9 @@ static ssize_t sprd_camcore_read(struct file *file,
 				read_op.parm.frame.irq_type = node.irq_type;
 				read_op.parm.frame.irq_property
 					= node.irq_property;
+			#if 0
 				csi_api_reg_trace();
+			#endif
 				sprd_dcam_drv_reg_trace(idx);
 			}
 		}
@@ -927,12 +928,6 @@ static int sprd_camcore_probe(struct platform_device *pdev)
 	complete(&group->fetch_com);
 
 	pr_info("sprd img probe pdev name %s\n", pdev->name);
-	ret = sprd_cam_pw_domain_init(pdev);
-	if (ret) {
-		pr_err("fail to init pw domain\n");
-		goto exit;
-	}
-
 	pr_info("sprd dcam dev name %s\n", pdev->dev.init_name);
 	ret = sprd_dcam_drv_dt_parse(pdev, &group->dcam_count);
 	if (ret) {

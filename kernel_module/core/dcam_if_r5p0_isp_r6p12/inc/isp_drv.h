@@ -15,7 +15,6 @@
 #define _ISP_DRV_HEADER_
 
 #include <linux/platform_device.h>
-#include <video/sprd_img.h>
 
 #include "isp_reg.h"
 #include "cam_common.h"
@@ -23,6 +22,7 @@
 #include "isp_cfg.h"
 #include "dcam_drv.h"
 #include "sprd_isp_hw.h"
+#include "sprd_img.h"
 
 #define ISP_PIXEL_ALIGN_WIDTH          4
 #define ISP_PIXEL_ALIGN_HEIGHT         2

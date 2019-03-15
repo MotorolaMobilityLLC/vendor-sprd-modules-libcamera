@@ -30,16 +30,17 @@
 #include <linux/semaphore.h>
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
-#include <video/sprd_cpp.h>
-#include <video/sprd_img.h>
-#include <video/sprd_mm.h>
-#include <uapi/video/sprd_vsp_pw_domain.h>
+#include <sprd_mm.h>
+#include <video/sprd_vsp_pw_domain.h>
 
 #include "cpp_common.h"
 #include "cpp_reg.h"
+#include "sprd_cpp.h"
+#include "sprd_img.h"
 #include "dma_drv.h"
 #include "rot_drv.h"
 #include "scale_drv.h"
+
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -115,10 +116,7 @@ struct cpp_device {
 
 	struct clk *clk_mm_vsp_eb;
 
-	struct regmap *cam_ahb_gpr;
 	struct regmap *vsp_ahb_gpr;
-	struct regmap *pmu_apb_gpr;
-	struct regmap *aon_apb_gpr;
 };
 
 typedef void (*cpp_isr) (struct cpp_device *dev);
@@ -615,7 +613,7 @@ static long sprd_cppcore_ioctl(struct file *file,
 	struct scif_device *scif = NULL;
 	struct dmaif_device *dmaif = NULL;
 	struct sprd_cpp_rot_cfg_parm rot_parm;
-	struct sprd_cpp_scale_cfg_parm sc_parm;
+	struct sprd_cpp_scale_cfg_parm *sc_parm;
 	struct sprd_cpp_dma_cfg_parm dma_parm;
 	struct sprd_cpp_scale_capability sc_cap_param;
 	struct sprd_cpp_size s_sc_cap;
@@ -633,7 +631,6 @@ static long sprd_cppcore_ioctl(struct file *file,
 	}
 
 	memset(&rot_parm, 0x00, sizeof(rot_parm));
-	memset(&sc_parm, 0x00, sizeof(sc_parm));
 	memset(&dma_parm, 0x00, sizeof(dma_parm));
 	memset(&sc_cap_param, 0x00, sizeof(sc_cap_param));
 	memset(&s_sc_cap, 0x00, sizeof(s_sc_cap));
@@ -760,23 +757,31 @@ static long sprd_cppcore_ioctl(struct file *file,
 			return -EFAULT;
 		}
 
+		sc_parm = kzalloc(sizeof(*sc_parm), GFP_KERNEL);
+		if (sc_parm == NULL) {
+			pr_err("fail to alloc memory\n");
+			return -EFAULT;
+		}
+
 		mutex_lock(&scif->sc_mutex);
 
-		ret = copy_from_user(&sc_parm,
-					(void __user *)arg, sizeof(sc_parm));
+		ret = copy_from_user(sc_parm,
+				(void __user *)arg, sizeof(*sc_parm));
 		if (ret) {
 			pr_err("fail to get parm form user\n");
 			mutex_unlock(&scif->sc_mutex);
+			kfree(sc_parm);
 			return -EFAULT;
 		}
 
 		scif->drv_priv.iommu_src.dev = &dev->pdev->dev;
 		scif->drv_priv.iommu_dst.dev = &dev->pdev->dev;
 
-		ret = sprd_scale_drv_start(&sc_parm, &scif->drv_priv);
+		ret = sprd_scale_drv_start(sc_parm, &scif->drv_priv);
 		if (ret) {
 			pr_err("fail to start scaler\n");
 			mutex_unlock(&scif->sc_mutex);
+			kfree(sc_parm);
 			return -EFAULT;
 		}
 
@@ -789,12 +794,14 @@ static long sprd_cppcore_ioctl(struct file *file,
 			sprd_cppcore_scale_reset(dev);
 			mutex_unlock(&scif->sc_mutex);
 			pr_err("fail to get scaling done com\n");
+			kfree(sc_parm);
 			return -EBUSY;
 		}
 
 		sprd_scale_drv_stop(&scif->drv_priv);
 		sprd_cppcore_scale_reset(dev);
 		mutex_unlock(&scif->sc_mutex);
+		kfree(sc_parm);
 		pr_info("cpp scale over\n");
 		break;
 	}
@@ -1052,10 +1059,7 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 	unsigned int irq = 0;
 	struct cpp_device *dev = NULL;
 	void __iomem *reg_base = NULL;
-	struct regmap *cam_ahb_gpr = NULL;
 	struct regmap *vsp_ahb_gpr = NULL;
-	struct regmap *pmu_apb_gpr = NULL;
-	struct regmap *aon_apb_gpr = NULL;
 
 	if (!pdev) {
 		pr_err("fail to get valid input ptr\n");
@@ -1134,15 +1138,6 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 		goto misc_fail;
 	}
 
-	cam_ahb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,cam-ahb-syscon");
-	if (IS_ERR_OR_NULL(cam_ahb_gpr)) {
-		ret = PTR_ERR(cam_ahb_gpr);
-		pr_err("fail to get cam_ahb_gpr %d\n", ret);
-		goto misc_fail;
-	}
-	dev->cam_ahb_gpr = cam_ahb_gpr;
-
 	vsp_ahb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 			"sprd,vsp-ahb-syscon");
 	if (IS_ERR_OR_NULL(vsp_ahb_gpr)) {
@@ -1151,24 +1146,6 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 		goto misc_fail;
 	}
 	dev->vsp_ahb_gpr = vsp_ahb_gpr;
-
-	pmu_apb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,pmu-apb-syscon");
-	if (IS_ERR_OR_NULL(pmu_apb_gpr)) {
-		pr_err("fail to get pmu_ahb_gpr\n");
-		ret = PTR_ERR(pmu_apb_gpr);
-		goto misc_fail;
-	}
-	dev->pmu_apb_gpr = pmu_apb_gpr;
-
-	aon_apb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,aon-apb-syscon");
-	if (IS_ERR_OR_NULL(aon_apb_gpr)) {
-		pr_err("fail to get aon_apb_gpr\n");
-		ret = PTR_ERR(aon_apb_gpr);
-		goto misc_fail;
-	}
-	dev->aon_apb_gpr = aon_apb_gpr;
 
 	reg_base = of_iomap(pdev->dev.of_node, 0);
 	if (IS_ERR_OR_NULL(reg_base)) {

@@ -15,10 +15,10 @@
 #define _CAM_COMMON_H_
 
 #include <linux/types.h>
-#include <video/sprd_img.h>
 
 #include "cam_buf.h"
 #include "isp_3dnr_drv.h"
+#include "sprd_img.h"
 
 /* #define CAM_DEBUG */
 
