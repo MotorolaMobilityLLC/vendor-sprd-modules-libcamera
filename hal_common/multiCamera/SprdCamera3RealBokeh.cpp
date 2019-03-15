@@ -132,6 +132,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mCameraId = 0;
     mFlushing = false;
     mVcmSteps = 0;
+    mVcmStepsFixed = 0;
     mApiVersion = SPRD_API_MODE;
     mLocalBufferNumber = 0;
     mIsSupportPBokeh = false;
@@ -2202,11 +2203,13 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
         rc = mRealBokeh->mBokehAlgo->capDepthRun(
             mRealBokeh->mDepthBuffer.snap_depth_buffer,
             mRealBokeh->mDepthBuffer.depth_out_map_table, input_buf2_addr,
-            scaled_buffer_addr);
+            scaled_buffer_addr, mRealBokeh->mVcmStepsFixed,
+            mRealBokeh->mlimited_infi, mRealBokeh->mlimited_macro);
     } else {
         rc = mRealBokeh->mBokehAlgo->capDepthRun(
             mRealBokeh->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
-            scaled_buffer_addr);
+            scaled_buffer_addr, mRealBokeh->mVcmStepsFixed,
+            mRealBokeh->mlimited_infi, mRealBokeh->mlimited_macro);
         HAL_LOGD("close online depth");
     }
     if (rc != ALRNB_ERR_SUCCESS) {
@@ -2526,6 +2529,8 @@ int SprdCamera3RealBokeh::initialize(
 #else
     m_pMainSnapBuffer = NULL;
 #endif
+    mlimited_infi = 0;
+    mlimited_macro = 0;
     memset(&mbokehParm, 0, sizeof(bokeh_params));
 
     sprdcamera_physical_descriptor_t sprdCam =
@@ -3451,6 +3456,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     CameraMetadata metadata;
     meta_save_t metadata_t;
     int vcmSteps = 0;
+    int vcmSteps_fixed = 0;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
@@ -3462,6 +3468,13 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             setDepthTrigger(vcmSteps);
         }
         updateApiParams(metadata, 1);
+        if (metadata.exists(ANDROID_SPRD_VCM_STEP_FOR_BOKEH) &
+            cur_frame_number) {
+            vcmSteps_fixed =
+                metadata.find(ANDROID_SPRD_VCM_STEP_FOR_BOKEH).data.i32[0];
+            HAL_LOGV("VCM_INFO:vcmSteps=%d", vcmSteps_fixed);
+            mVcmStepsFixed = vcmSteps_fixed;
+        }
         if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
             if (mCaptureThread->mReprocessing) {
                 HAL_LOGD("hold jpeg picture call bac1k, framenumber:%d",

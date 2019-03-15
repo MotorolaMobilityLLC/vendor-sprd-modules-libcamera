@@ -3671,6 +3671,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     if (mCameraId == 0) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+        requestInfo.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
+                           &(s_setting[mCameraId].vcmInfo.vcm_step_for_bokeh),
+                           1);
         s_setting[mCameraId].vcm_num = 7;
         requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
                            s_setting[mCameraId].vcm_dac,
@@ -5315,6 +5318,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     if (mCameraId == 0) {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+        camMetadata.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
+                           &(s_setting[mCameraId].vcmInfo.vcm_step_for_bokeh),
+                           1);
         s_setting[mCameraId].vcm_num = 7;
         camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
                            s_setting[mCameraId].vcm_dac,

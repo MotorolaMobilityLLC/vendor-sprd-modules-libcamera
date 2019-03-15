@@ -382,10 +382,17 @@ int SprdBokehAlgo::deinitCapDepth() {
 }
 
 int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
-                               void *para4) {
+                               void *para4, int vcmCurValue, int vcmUp,
+                               int vcmDown) {
     int rc = NO_ERROR;
     int f_number = 0;
     weightmap_param weightParams;
+    char prop1[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    char prop2[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     if (!para1 || !para3 || !para4) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
@@ -399,13 +406,22 @@ int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
                            mSize.capture_h / mSize.preview_h;
     mCapbokehParam.bokeh_level =
         (MAX_F_FUMBER + 1 - f_number) * 255 / MAX_F_FUMBER;
-    HAL_LOGD("capture fnum %d, coordinate (%d,%d)", mCapbokehParam.bokeh_level,
-             mCapbokehParam.sel_x, mCapbokehParam.sel_y);
 
     weightParams.F_number = mCapbokehParam.bokeh_level;
     weightParams.sel_x = mCapbokehParam.sel_x;
     weightParams.sel_y = mCapbokehParam.sel_y;
     weightParams.DisparityImage = NULL;
+    weightParams.VCM_cur_value = vcmCurValue;
+
+    // set vcm range
+    property_get("persist.vendor.cam.vcm.up", prop1, "0");
+    property_get("persist.vendor.cam.vcm.down", prop2, "0");
+    weightParams.VCMup = atoi(prop1);
+    weightParams.VCMdown = atoi(prop2);
+    HAL_LOGD("capture fnum %d coordinate (%d,%d) VCM_INFO:%d, %d, %d",
+             weightParams.F_number, mCapbokehParam.sel_x, mCapbokehParam.sel_y,
+             weightParams.VCM_cur_value, weightParams.VCMup,
+             weightParams.VCMdown);
 
     rc = sprd_depth_Run(mDepthCapHandle, para1, para2, para3, para4,
                         &weightParams);

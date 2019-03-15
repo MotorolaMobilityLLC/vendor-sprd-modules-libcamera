@@ -179,6 +179,7 @@ static tags_info_t
         {"isSupportRefocus", TYPE_BYTE},
         {"afModeMacroFixed", TYPE_BYTE},
         {"VcmValue", TYPE_INT32},
+        {"VcmValueBokeh", TYPE_INT32},
         {"OtpValue", TYPE_BYTE},
         {"sprdDualOtpFlag", TYPE_BYTE},
         {"srpd3dCalibrationEnable", TYPE_BYTE},

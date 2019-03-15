@@ -178,6 +178,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool mIsSupportPBokeh;
     int mApiVersion;
     int mJpegOrientation;
+    int mlimited_infi;
+    int mlimited_macro;
 #ifdef YUV_CONVERT_TO_JPEG
     buffer_handle_t *m_pDstJpegBuffer;
     cmr_uint mOrigJpegSize;
@@ -316,6 +318,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     uint64_t mReqTimestamp;
     int mLastOnlieVcm;
     int mVcmSteps;
+    int mVcmStepsFixed;
     uint64_t mCapTimestamp;
     IBokehAlgo *mBokehAlgo;
     bool mIsHdrMode;

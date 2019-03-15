@@ -440,7 +440,10 @@ typedef struct {
     int otp_size;
 } OTP_Tag;
 
-typedef struct { int32_t vcm_step; } VCM_Tag;
+typedef struct {
+    int32_t vcm_step;
+    int32_t vcm_step_for_bokeh;
+} VCM_Tag;
 
 enum vcm_result {
     VCM_RESULT_NO = 0x0,

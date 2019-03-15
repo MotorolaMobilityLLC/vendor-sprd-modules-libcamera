@@ -4774,6 +4774,13 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EVT_CB_FOCUS_END:
         focus_status = (cmr_focus_status *)parm4;
+        VCM_Tag sprdvcmInfo;
+        if (getMultiCameraMode() == MODE_BOKEH && mCameraId == 0) {
+            mSetting->getVCMTag(&sprdvcmInfo);
+            HAL_LOGD("VCM_INFO:vcm step is 0x%x", focus_status->af_motor_pos);
+            sprdvcmInfo.vcm_step_for_bokeh = focus_status->af_motor_pos;
+            mSetting->setVCMTag(sprdvcmInfo);
+        }
         HAL_LOGD("CAMERA_EVT_CB_FOCUS_END focus_status->af_mode %d "
                  "mSprdRefocusEnabled %d mCameraId %d mSprdFullscanEnabled %d",
                  focus_status->af_mode, mSprdRefocusEnabled, mCameraId,
