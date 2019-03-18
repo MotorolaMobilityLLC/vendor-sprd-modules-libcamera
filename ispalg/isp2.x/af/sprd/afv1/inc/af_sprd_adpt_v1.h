@@ -75,6 +75,7 @@ enum focus_state {
 	AF_IDLE,
 	AF_SEARCHING,
 	AF_STOPPED,
+	AF_STOPPED_INNER,
 };
 
 enum dcam_after_vcm {

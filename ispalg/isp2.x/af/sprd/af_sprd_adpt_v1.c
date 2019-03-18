@@ -90,6 +90,7 @@ static const char *focus_state_str[] = {
 	"af idle",
 	"af searching",
 	"af stop",
+	"af stop inner",
 };
 
 #define FOCUS_STATE_STR(state)    focus_state_str[state]
@@ -307,7 +308,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8) / win_num.y;
 		winparam.win_rect.w = (winparam.win_rect.w >> 1) << 1;
 		winparam.win_rect.h = (winparam.win_rect.h >> 1) << 1;
-	} else if (STATE_FULLSCAN == af->state) {
+	} else if (STATE_FULLSCAN == af->state && (AF_ALG_BLUR_REAR == af->is_multi_mode)) {
 		// crop enable
 		cmr_u32 crop_eb = 1;
 		struct af_monitor_tile_num tile_num;
@@ -376,6 +377,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		// tile num
 		tile_num.x = win_num.x - 1;
 		tile_num.y = win_num.y - 1;
+		ISP_LOGI("win_num x,y %d%d", win_num.x, win_num.y);
 
 		af->cb_ops.af_monitor_crop_eb(af->caller, &crop_eb);
 		af->cb_ops.af_monitor_crop_size(af->caller, &winparam.win_rect);
@@ -483,7 +485,7 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(12)] + af_fv_val[FV1_INDEX(6)];
 			}
 		}
-	} else if (STATE_FULLSCAN == af->state) {
+	} else if (STATE_FULLSCAN == af->state && (AF_ALG_BLUR_REAR == af->is_multi_mode)) {
 		af->af_fv_val.af_fv0[9] = 0;
 		af->af_fv_val.af_fv1[9] = 0;
 		for (i = 0; i < 3; i++) {	//3//3x3 map to 12x6
@@ -650,12 +652,23 @@ static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 {
 	ISP_LOGV(".");
 	struct afctrl_notice af_result;
+	cmr_u32 win_index;
 
+	win_index = (af->roi.num > 1) ? (af->roi.num - 1) : 0;
 	memset(&af_result, 0, sizeof(af_result));
 	af_result.valid_win = 0;
 	af_result.focus_type = focus_type;
 	af_result.motor_pos = 0;
 	af_result.af_mode = af->request_mode;
+	if (0 != win_index && win_index < MAX_ROI_NUM) {
+		af_result.af_roi.sx = af->roi.win[win_index].start_x;
+		af_result.af_roi.sy = af->roi.win[win_index].start_y;
+		af_result.af_roi.ex = af->roi.win[win_index].end_x;
+		af_result.af_roi.ey = af->roi.win[win_index].end_y;
+		ISP_LOGI("af roi %d %d %d %d %d", win_index, af_result.af_roi.sx, af_result.af_roi.sy, af_result.af_roi.ex, af_result.af_roi.ey);
+	} else {
+		ISP_LOGI("set_wins data error");
+	}
 	af->cb_ops.start_notice(af->caller, &af_result);
 }
 
@@ -1219,19 +1232,12 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 static cmr_u8 if_set_bokeh_vcm_info(bokeh_motor_info * range, void *cookie)
 {
 	af_ctrl_t *af = cookie;
-
 	af->realboekh_range.limited_infi = range->limited_infi;
 	af->realboekh_range.limited_macro = range->limited_macro;
-	af->realboekh_range.vcm_dac[0] = range->reserved[0];
-	af->realboekh_range.vcm_dac[1] = range->reserved[1];
-	af->realboekh_range.vcm_dac[2] = range->reserved[2];
-	af->realboekh_range.vcm_dac[3] = range->reserved[3];
-	af->realboekh_range.vcm_dac[4] = range->reserved[4];
-	af->realboekh_range.vcm_dac[5] = range->reserved[5];
-	af->realboekh_range.vcm_dac[6] = range->reserved[6];
-
-	ISP_LOGI("range(%u %u), %u,%u,%u,%u,%u,%u,%u", af->realboekh_range.limited_infi, af->realboekh_range.limited_macro, range->reserved[0], range->reserved[1],
-		 range->reserved[2], range->reserved[3], range->reserved[4], range->reserved[5], range->reserved[6]);
+	af->realboekh_range.total_seg = range->total_seg;
+	memcpy(&af->realboekh_range.vcm_dac[0], &range->vcm_dac[0], 20 * sizeof(cmr_u16));
+	ISP_LOGI("range(%u %u), %u,%u,%u,%u,%u,%u,%u", af->realboekh_range.limited_infi, af->realboekh_range.limited_macro, range->vcm_dac[0], range->vcm_dac[1],
+		 range->vcm_dac[2], range->vcm_dac[3], range->vcm_dac[4], range->vcm_dac[5], range->vcm_dac[6]);
 	return 0;
 }
 
@@ -2286,6 +2292,7 @@ static void af_stop_search(af_ctrl_t * af)
 static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm, struct aft_proc_result *result)
 {
 	struct af_adpt_roi_info win;
+	cmr_u32 force_stop;
 
 	if (AF_SEARCHING != af->focus_state) {
 		if (result->is_caf_trig) {
@@ -2334,11 +2341,17 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 			ISP_LOGW("cancel af while not searching AF_mode = %d", alg_mode);
 		}
 	} else {
-		if (AFT_CANC_FD == result->is_cancel_caf || AFT_CANC_CB == result->is_cancel_caf) {
-			af_stop_search(af);
-		}
-		if (AFT_CANC_FD_GONE == result->is_cancel_caf) {
-			af_stop_search(af);
+		if (AFT_CANC_FD == result->is_cancel_caf || AFT_CANC_CB == result->is_cancel_caf || AFT_CANC_FD_GONE == result->is_cancel_caf) {
+			ISP_LOGI("focus_state = %s, is_cancel_caf %d", FOCUS_STATE_STR(af->focus_state), result->is_cancel_caf);
+			force_stop = AFV1_TRUE;
+			af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	//modifiy for force stop to SAF/Flow control
+			af->focus_state = AF_STOPPED_INNER;
+			af->af_ops.calc(af->af_alg_cxt);
+
+			if (STATE_FAF == af->state) {
+				ISP_LOGI("pre_state %s", STATE_STRING(af->pre_state));
+				af->state = af->pre_state;
+			}
 		}
 
 		if (AFT_TRIG_FD == result->is_caf_trig || AFT_TRIG_CB == result->is_caf_trig) {
@@ -2824,7 +2837,20 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	if (AF_ALG_DUAL_W_T == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role) {
 		trigger_stop(af);
 	}
-
+#if 0
+	// debug only
+	bokeh_distance_info bdi;
+	memset(&bdi, 0, sizeof(bokeh_distance_info));
+	bdi.total_seg = 7;
+	bdi.distance[0] = 50;
+	bdi.distance[1] = 60;
+	bdi.distance[2] = 70;
+	bdi.distance[3] = 80;
+	bdi.distance[4] = 100;
+	bdi.distance[5] = 120;
+	bdi.distance[6] = 150;
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_BOKEH_DISTANCE, &bdi);
+#endif
 	return AFV1_SUCCESS;
 }
 
@@ -3351,6 +3377,22 @@ static cmr_s32 af_sprd_set_dac_info(cmr_handle handle, void *param0)
 }
 
 // SharkLE Only --
+static cmr_s32 af_sprd_set_realbokeh_distance(cmr_handle handle, void *param0)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	struct realbokeh_distance *rb_dis = (struct realbokeh_distance *)param0;
+	bokeh_distance_info bdi;
+	cmr_u16 i = 0;
+
+	memset(&bdi, 0, sizeof(bokeh_distance_info));
+	bdi.total_seg = rb_dis->total_seg;
+	for (i = 0; i < rb_dis->total_seg; i++) {
+		bdi.distance[i] = rb_dis->distance[i];
+	}
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_BOKEH_DISTANCE, &bdi);
+
+	return AFV1_SUCCESS;
+}
 
 cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
@@ -3458,6 +3500,9 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		// SharkLE Only --
 	case AF_CMD_SET_SCENE_INFO:
 		break;
+	case AF_CMD_SET_REALBOKEH_DISTANCE:
+		rtn = af_sprd_set_realbokeh_distance(handle, param0);
+		break;
 	default:
 		ISP_LOGW("set cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -3506,14 +3551,10 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 			struct realbokeh_vcm_range *limited = (struct realbokeh_vcm_range *)param0;
 			limited->limited_infi = af->realboekh_range.limited_infi;
 			limited->limited_macro = af->realboekh_range.limited_macro;
-			limited->vcm_dac[0] = af->realboekh_range.vcm_dac[0];
-			limited->vcm_dac[1] = af->realboekh_range.vcm_dac[1];
-			limited->vcm_dac[2] = af->realboekh_range.vcm_dac[2];
-			limited->vcm_dac[3] = af->realboekh_range.vcm_dac[3];
-			limited->vcm_dac[4] = af->realboekh_range.vcm_dac[4];
-			limited->vcm_dac[5] = af->realboekh_range.vcm_dac[5];
-			limited->vcm_dac[6] = af->realboekh_range.vcm_dac[6];
-			ISP_LOGV("Get RealBokeh LimitedRange info (%u %u), %u,%u,%u,%u,%u,%u,%u", limited->limited_infi, limited->limited_macro, limited->vcm_dac[0],
+			memcpy(&limited->vcm_dac[0], &af->realboekh_range.vcm_dac[0], 20 * sizeof(cmr_u16));
+			limited->total_seg = af->realboekh_range.total_seg;
+
+			ISP_LOGI("Get RealBokeh LimitedRange info (%u %u), %u,%u,%u,%u,%u,%u,%u", limited->limited_infi, limited->limited_macro, limited->vcm_dac[0],
 				 limited->vcm_dac[1], limited->vcm_dac[2], limited->vcm_dac[3], limited->vcm_dac[4], limited->vcm_dac[5], limited->vcm_dac[6]);
 			break;
 		}

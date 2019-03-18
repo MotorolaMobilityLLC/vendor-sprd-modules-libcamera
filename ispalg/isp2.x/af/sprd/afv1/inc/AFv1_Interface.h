@@ -148,6 +148,7 @@ typedef enum _AF_IOCTRL_CMD {
 	AF_IOCTRL_Record_FV,
 	AF_IOCTRL_Set_Dac_info,
 	AF_IOCTRL_GET_OTP,
+	AF_IOCTRL_SET_BOKEH_DISTANCE,
 	AF_IOCTRL_MAX,
 } AF_IOCTRL_CMD;
 
@@ -284,10 +285,18 @@ typedef struct _tof_measure_data_s {
 	cmr_u32 reserved[20];
 } tof_measure_data_t;
 
+typedef struct _bokeh_distance_info {
+	cmr_u16 total_seg;
+	cmr_u16 distance[20];
+	cmr_u16 reserved[20];
+} bokeh_distance_info;
+
 typedef struct _bokeh_motor_info {
 	cmr_u16 limited_infi;	// calibrated for 30cm
 	cmr_u16 limited_macro;	// calibrated for 150cm
-	cmr_u32 reserved[10];
+	cmr_u16 total_seg;
+	cmr_u16 vcm_dac[20];
+	cmr_u16 reserved[20];
 } bokeh_motor_info;
 
 struct AFtoPD_info_param {

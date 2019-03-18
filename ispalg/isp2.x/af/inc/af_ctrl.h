@@ -32,8 +32,8 @@ extern "C" {
 #define MAX_MULTIZONE_NUM 45
 
 	enum PDAF_TYPE {
-		PASSIVE = 0,//caf type
-		ACTIVE,//touch type
+		PASSIVE = 0,	//caf type
+		ACTIVE,		//touch type
 		MULTIZONE,
 	};
 
@@ -102,6 +102,7 @@ extern "C" {
 		AF_CMD_SET_TYPE1_PD_INFO = 0x1019,
 		AF_CMD_SET_TOF_INFO = 0x101A,
 		AF_CMD_SET_SCENE_INFO = 0x101B,
+		AF_CMD_SET_REALBOKEH_DISTANCE = 0x101C,
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
@@ -424,11 +425,18 @@ extern "C" {
 		struct af_otp_data rdm_data;
 	};
 
+	struct realbokeh_distance {
+		cmr_u16 total_seg;
+		cmr_u16 distance[20];	//50cm ~ 145cm
+		cmr_u16 reserved[20];
+	};
+
 	struct realbokeh_vcm_range {
 		cmr_u16 limited_infi;
 		cmr_u16 limited_macro;
-		cmr_u16 vcm_dac[7];	//50cm,60cm,70cm,80cm,100cm,120cm,150cm dac
-		cmr_u16 reserved[3];
+		cmr_u16 total_seg;
+		cmr_u16 vcm_dac[20];	//50cm ~ 145cm
+		cmr_u16 reserved[20];
 	};
 
 	struct PD_Multi_zone_param {
@@ -541,16 +549,16 @@ extern "C" {
 		cmr_u32 suc_win;
 	};
 
-#define AREA_LOOP 4 //PASSIVE and ACTIVE mode default
+#define AREA_LOOP 4		//PASSIVE and ACTIVE mode default
 
 	struct pd_result {
 		/*TBD get reset from */
 		cmr_s32 pdConf[MAX_MULTIZONE_NUM + 1];
 		double pdPhaseDiff[MAX_MULTIZONE_NUM + 1];
 		cmr_s32 pdGetFrameID;
-		cmr_s32 pdDCCGain[MAX_MULTIZONE_NUM + 1];// be sure MAX_MULTIZONE_NUM bigger than AREA_LOOP
+		cmr_s32 pdDCCGain[MAX_MULTIZONE_NUM + 1];	// be sure MAX_MULTIZONE_NUM bigger than AREA_LOOP
 		cmr_u32 pd_roi_num;
-		cmr_u32 af_type;// notify to AF that PDAF is in passive mode or active mode
+		cmr_u32 af_type;	// notify to AF that PDAF is in passive mode or active mode
 	};
 
 	struct tof_result {
