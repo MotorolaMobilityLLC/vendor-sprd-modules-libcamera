@@ -802,9 +802,10 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
 static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
                                   const struct img_size *fd_img_size) {
     FD_OPTION opt;
-
+    FD_VERSION_T version;
+    FdGetVersion(&version);
+    CMR_LOGI("SPRD FD version: %s .", version.built_rev);
     FdInitOption(&opt);
-    CMR_LOGI("SPRD FD version: %s .", FdGetVersion());
     opt.workMode = FD_WORKMODE_MOVIE;
     opt.maxFaceNum = FACE_DETECT_NUM;
     opt.minFaceSize = MIN(fd_img_size->width, fd_img_size->height) / 12;
