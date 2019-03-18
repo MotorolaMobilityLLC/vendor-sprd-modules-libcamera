@@ -2221,7 +2221,8 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 			camera_queue_clear(&path->out_buf_queue);
 			camera_queue_clear(&path->reserved_buf_queue);
 		}
-
+		pctx->isp_cb_func = NULL;
+		pctx->cb_priv_data = NULL;
 		trace_isp_irq_cnt(pctx->ctx_id);
 	} else {
 		pr_err("ctx %d is already release.\n", ctx_id);

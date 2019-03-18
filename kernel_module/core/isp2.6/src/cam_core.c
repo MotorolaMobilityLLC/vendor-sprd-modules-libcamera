@@ -286,6 +286,9 @@ struct camera_group {
 	uint32_t  module_used;
 	struct camera_module *module[CAM_COUNT];
 
+	spinlock_t rawproc_lock;
+	uint32_t rawproc_in;
+
 	uint32_t dcam_count; /*dts cfg dcam count*/
 	uint32_t isp_count; /*dts cfg isp count*/
 	struct sprd_cam_hw_info *dcam[DCAM_ID_MAX]; /* dcam hw dev from dts */
@@ -1295,7 +1298,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 		break;
 
 	case DCAM_CB_RET_SRC_BUF:
-		pr_info("dcam ret src frame %p\n", pframe);
+		pr_info("dcam ret src frame %p. module %p, %d\n", pframe, module, module->idx);
 		if ((module->cap_status == CAM_CAPTURE_RAWPROC) ||
 			(atomic_read(&module->state) != CAM_RUNNING)) {
 			/* for case raw capture post-proccessing
@@ -4670,10 +4673,12 @@ static int raw_proc_done(struct camera_module *module)
 {
 	int ret = 0;
 	int isp_ctx_id, isp_path_id;
+	unsigned long flag = 0;
+	struct camera_group *grp = module->grp;
 	struct channel_context *ch;
 	struct isp_statis_io_desc io_desc;
 
-	pr_info("start\n");
+	pr_info("cam%d start\n", module->idx);
 
 	module->cap_status = CAM_CAPTURE_STOP;
 	atomic_set(&module->state, CAM_STREAM_OFF);
@@ -4719,6 +4724,12 @@ static int raw_proc_done(struct camera_module *module)
 	atomic_set(&module->state, CAM_IDLE);
 	pr_info("camera%d rawproc done.\n", module->idx);
 
+	spin_lock_irqsave(&grp->rawproc_lock, flag);
+	if (grp->rawproc_in == 0)
+		pr_err("cam%d rawproc_in should be 1 here.\n", module->idx);
+	grp->rawproc_in = 0;
+	spin_unlock_irqrestore(&grp->rawproc_lock, flag);
+
 	return ret;
 }
 
@@ -4729,6 +4740,9 @@ static int raw_proc_pre(
 {
 	int ret = 0;
 	int ctx_id, dcam_path_id, isp_path_id;
+	uint32_t loop = 0;
+	unsigned long flag = 0;
+	struct camera_group *grp = module->grp;
 	struct channel_context *ch;
 	struct img_size max_size;
 	struct img_trim path_trim;
@@ -4737,7 +4751,28 @@ static int raw_proc_pre(
 	struct isp_ctx_size_desc ctx_size;
 	struct isp_path_base_desc isp_path_desc;
 
-	pr_info("start\n");
+	pr_info("cam%d in. module:%p,  grp %p, %p\n",
+		module->idx, module, grp, &grp->rawproc_in);
+
+	do {
+		spin_lock_irqsave(&grp->rawproc_lock, flag);
+		if (grp->rawproc_in == 0) {
+			grp->rawproc_in = 1;
+			spin_unlock_irqrestore(&grp->rawproc_lock, flag);
+			pr_info("cam%d get rawproc_in\n", module->idx);
+			break;
+		} else {
+			spin_unlock_irqrestore(&grp->rawproc_lock, flag);
+			pr_info("cam%d will wait. loop %d\n", module->idx, loop);
+			loop++;
+			msleep(10);
+		}
+	} while (loop < 2000);
+
+	if (loop >= 1000) {
+		pr_err("wait another camera raw proc time out");
+		return -EFAULT;
+	}
 
 	ch = &module->channel[CAM_CH_CAP];
 	ch->dcam_path_id = -1;
@@ -6301,6 +6336,7 @@ static int sprd_img_probe(struct platform_device *pdev)
 	group->pdev = pdev;
 	atomic_set(&group->camera_opened, 0);
 	spin_lock_init(&group->module_lock);
+	spin_lock_init(&group->rawproc_lock);
 
 	pr_info("sprd img probe pdev name %s\n", pdev->name);
 	pr_info("sprd dcam dev name %s\n", pdev->dev.init_name);
@@ -6350,12 +6386,13 @@ static int sprd_img_remove(struct platform_device *pdev)
 		return -EFAULT;
 	}
 
-	if (group->ca_conn)
-		cam_ca_disconnect();
-
 	group = image_dev.this_device->platform_data;
-	if (group)
+	if (group) {
+		if (group->ca_conn)
+			cam_ca_disconnect();
 		kfree(group);
+		image_dev.this_device->platform_data = NULL;
+	}
 	misc_deregister(&image_dev);
 
 	return 0;
