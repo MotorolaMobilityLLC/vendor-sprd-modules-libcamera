@@ -441,7 +441,6 @@ typedef struct {
     int32_t vcm_num;
     int32_t vcm_result;
     int32_t verification_enable;
-    int32_t vcm_count;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {

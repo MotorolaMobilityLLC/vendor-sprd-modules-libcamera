@@ -399,6 +399,7 @@ enum common_isp_cmd_type {
     COM_ISP_GET_CALIBRATION_VCMINFO,
     COM_ISP_GET_SW3DNR_PARAM,
     COM_ISP_SET_AI_SET_FD_ON_OFF,
+    COM_ISP_SET_CALIBRATION_VCMDISC,
     COM_ISP_TYPE_MAX
 };
 
@@ -661,8 +662,15 @@ struct img_debug {
 struct vcm_range_info {
     cmr_u16 limited_infi;
     cmr_u16 limited_macro;
-    cmr_u16 vcm_dac[7];
-    cmr_u16 resverd[3];
+    cmr_u16 total_seg;
+    cmr_u16 vcm_dac[VCM_DISTANCE_COUNT];
+    cmr_u16 reserved[20];
+};
+
+struct vcm_disc_info {
+    cmr_u16 total_seg;
+    cmr_u16 distance[VCM_DISTANCE_COUNT];
+    cmr_u16 reserved[20];
 };
 
 typedef struct {
@@ -978,6 +986,8 @@ struct common_isp_cmd_param {
         struct isp_pfc_per_frame_cxt *per_frame_res;
 #endif
         struct vcm_range_info vcm_range;
+        struct vcm_disc_info vcm_disc;
+
     };
 };
 
@@ -1700,6 +1710,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_CAM_SECURITY,
     CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO,
     CAMERA_IOCTRL_SET_HDR_DISABLE,
+    CAMERA_IOCTRL_SET_VCM_DISC,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

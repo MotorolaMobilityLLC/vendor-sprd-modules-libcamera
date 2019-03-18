@@ -36,6 +36,7 @@ extern "C" {
 #define CMR_CAMERA_NORNAL_EXIT 9
 #define CMR_CAMERA_INVALID_FRAME 10
 #define CMR_CAMERA_FD_INIT -1
+#define VCM_DISTANCE_COUNT 20
 
 /******************************************************************************/
 

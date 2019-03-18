@@ -8029,6 +8029,10 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_AI_SET_FD_STATUS;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
+    case COM_ISP_SET_CALIBRATION_VCMDISC:
+        isp_cmd = ISP_CTRL_SET_VCM_DIST;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&(param_ptr->vcm_disc);
         break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
@@ -11166,6 +11170,33 @@ cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
     memcpy(vcm_range, &isp_param.vcm_range, sizeof(struct vcm_range_info));
     CMR_LOGD("VCM_INFO:isp_param.range [%d, %d]", vcm_range->limited_infi,
              vcm_range->limited_macro);
+
+exit:
+    return ret;
+}
+
+cmr_int cmr_set_vcm_disc(cmr_handle oem_handle, cmr_u32 camera_id,
+                         struct vcm_disc_info *vcm_disc) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct common_isp_cmd_param isp_param;
+
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    isp_param.camera_id = cxt->camera_id;
+    CMR_LOGD("Total_seg %d disc[0] %d disc[3] %d", vcm_disc->total_seg,
+             vcm_disc->distance[0], vcm_disc->distance[3]);
+    memcpy(&isp_param.vcm_disc, vcm_disc, sizeof(struct vcm_disc_info));
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_CALIBRATION_VCMDISC,
+                           &isp_param);
+    if (ret) {
+        CMR_LOGE("set isp vcm_disc error %ld", ret);
+        goto exit;
+    }
 
 exit:
     return ret;

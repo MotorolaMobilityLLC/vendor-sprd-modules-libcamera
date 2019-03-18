@@ -3726,13 +3726,6 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].verification_enable);
     }
 
-    if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_COUNT)) {
-        s_setting[mCameraId].vcm_count =
-            frame_settings.find(ANDROID_SPRD_CALIBRATION_COUNT).data.u8[0];
-        HAL_LOGD("s_setting[mCameraId].vcm_count %d",
-                 s_setting[mCameraId].vcm_count);
-    }
-
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
         uint8_t sprd_zsl_enabled;
         if (is_raw_capture == 1 || is_isptool_mode == 1) {

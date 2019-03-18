@@ -4120,10 +4120,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
              mSprdRefocusEnabled, mSprdFullscanEnabled);
     if (mSprdRefocusEnabled == true && mCameraId == 0 && mSprdFullscanEnabled) {
         struct vcm_range_info range;
-        mSetting->getVCMDACTag(range.vcm_dac);
         ret = mHalOem->ops->camera_ioctrl(
             mCameraHandle, CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
-        mSetting->setVCMDACTag(range.vcm_dac);
+
+        mSetting->setVCMDACTag(range.vcm_dac, range.total_seg);
         mSprdFullscanEnabled = 0;
     }
     SprdCamera3RegularChannel *channel =
@@ -6928,6 +6928,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSprdZslEnabled = false;
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
         }
+    } break;
+
+    case ANDROID_SPRD_CALIBRATION_DIST: {
+        VCM_DIST_TAG disc_info;
+        vcm_disc_info vcm_disc;
+        mSetting->getVCMDISTTag(&disc_info);
+        vcm_disc.total_seg = disc_info.vcm_dist_count;
+        for (int i = 0; i < disc_info.vcm_dist_count; i++) {
+            vcm_disc.distance[i] = disc_info.vcm_dist[i];
+        }
+        ret = mHalOem->ops->camera_ioctrl(
+            mCameraHandle, CAMERA_IOCTRL_SET_VCM_DISC, &vcm_disc);
     } break;
 
     case ANDROID_SPRD_SLOW_MOTION: {
