@@ -238,7 +238,7 @@ static struct sensor_i2c_reg_tab imx363_shutter_tab = {
 };
 
 static struct sensor_reg_tag imx363_again_reg[] = {
-    {0x0204, 0}, {0x0205, 0},
+    {0x0104, 0x01}, {0x0204, 0x00}, {0x0205, 0x00},
 };
 
 static struct sensor_i2c_reg_tab imx363_again_tab = {
@@ -246,9 +246,7 @@ static struct sensor_i2c_reg_tab imx363_again_tab = {
 };
 
 static struct sensor_reg_tag imx363_dgain_reg[] = {
-    /*{0x020e, 0x00}, {0x020f, 0x00}, {0x0210, 0x00}, {0x0211, 0x00},
-    {0x0212, 0x00}, {0x0213, 0x00}, {0x0214, 0x00}, {0x0215, 0x00},
-    {0x0104, 0x00},*/
+    {0x020e, 0x00}, {0x020f, 0x00}, {0x0104, 0x00},
 };
 
 struct sensor_i2c_reg_tab imx363_dgain_tab = {
@@ -341,9 +339,9 @@ static SENSOR_TRIM_T s_imx363_resolution_trim_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .trim_info = {{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
                    /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
-                   {0, 0, 1280, 720, 10291, 300, 1024, {0, 0, 1280, 720}},
-                   {0, 0, 2016, 1512, 20697, 300, 1668, {0, 0, 2016, 1512}},
-                   {0, 0, 4032, 3024, 10687, 1032, 3112, {0, 0, 4032, 3024}}}},
+                   {0, 0, 1280, 720, 10291, 510, 808, {0, 0, 1280, 720}},
+                   {0, 0, 2016, 1512, 20697, 374, 1610, {0, 0, 2016, 1512}},
+                   {0, 0, 4032, 3024, 10687, 1308, 3118, {0, 0, 4032, 3024}}}},
 };
 
 static const SENSOR_REG_T

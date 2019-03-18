@@ -131,8 +131,6 @@ static void imx363_drv_write_gain(cmr_handle handle, float gain) {
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x01);
 
-    // gain = gain / 32.0;
-
     temp_gain = gain;
     if (temp_gain < 1.0)
         temp_gain = 1.0;
@@ -153,15 +151,6 @@ static void imx363_drv_write_gain(cmr_handle handle, float gain) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020e,
                         (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x020f, sensor_dgain & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0210,
-                        (sensor_dgain >> 8) & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0211, sensor_dgain & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0212,
-                        (sensor_dgain >> 8) & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0213, sensor_dgain & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0214,
-                        (sensor_dgain >> 8) & 0xFF);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0215, sensor_dgain & 0xFF);
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
@@ -1084,6 +1073,7 @@ static cmr_u16 imx363_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
     aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
+
     aec_info->shutter->settings[0].reg_value = (shutter >> 8) & 0xff;
     aec_info->shutter->settings[1].reg_value = shutter & 0xff;
     return shutter;
@@ -1104,10 +1094,11 @@ static void imx363_drv_calc_gain(float gain,
         temp_gain = 1.0;
     else if (temp_gain > 8.0)
         temp_gain = 8.0;
-    sensor_again = (cmr_u16)(1024.0 - 1024.0 / temp_gain);
-
-    aec_info->again->settings[1].reg_value = (sensor_again >> 8) & 0xFF;
-    aec_info->again->settings[2].reg_value = sensor_again & 0xFF;
+    sensor_again = (cmr_u16)(512.0 - 512.0 / temp_gain);
+    if (aec_info->again->size) {
+        aec_info->again->settings[1].reg_value = (sensor_again >> 8) & 0xFF;
+        aec_info->again->settings[2].reg_value = sensor_again & 0xFF;
+    }
 
     temp_gain = gain / 8;
     if (temp_gain > 16.0)
@@ -1115,14 +1106,10 @@ static void imx363_drv_calc_gain(float gain,
     else if (temp_gain < 1.0)
         temp_gain = 1.0;
     sensor_dgain = (cmr_u16)(256 * temp_gain);
-    aec_info->dgain->settings[0].reg_value = (sensor_dgain >> 8) & 0xFF;
-    aec_info->dgain->settings[1].reg_value = sensor_dgain & 0xFF;
-    aec_info->dgain->settings[2].reg_value = (sensor_dgain >> 8) & 0xFF;
-    aec_info->dgain->settings[3].reg_value = sensor_dgain & 0xFF;
-    aec_info->dgain->settings[4].reg_value = (sensor_dgain >> 8) & 0xFF;
-    aec_info->dgain->settings[5].reg_value = sensor_dgain & 0xFF;
-    aec_info->dgain->settings[6].reg_value = (sensor_dgain >> 8) & 0xFF;
-    aec_info->dgain->settings[7].reg_value = sensor_dgain & 0xFF;
+    if (aec_info->dgain->size) {
+        aec_info->dgain->settings[0].reg_value = (sensor_dgain >> 8) & 0xFF;
+        aec_info->dgain->settings[1].reg_value = sensor_dgain & 0xFF;
+    }
 }
 
 static unsigned long imx363_drv_read_aec_info(cmr_handle handle,
@@ -1145,7 +1132,6 @@ static unsigned long imx363_drv_read_aec_info(cmr_handle handle,
     mode = info->exp.size_index;
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
-#if 1
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
     sns_drv_cxt->sensor_ev_info.preview_shutter = imx363_drv_calc_exposure(
         handle, exposure_line, dummy_line, &imx363_aec_info);
@@ -1153,7 +1139,6 @@ static unsigned long imx363_drv_read_aec_info(cmr_handle handle,
     gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
     real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
     imx363_drv_calc_gain(real_gain, &imx363_aec_info);
-#endif
 
     return ret_value;
 }
