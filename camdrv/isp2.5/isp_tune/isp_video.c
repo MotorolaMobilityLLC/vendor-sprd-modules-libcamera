@@ -3853,8 +3853,8 @@ void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, 
 void send_capture_complete_msg()
 {
 	if ((capture_flag == 1) && (1 == capture_img_end_flag)) {
-		sem_post(&capture_sem_lock);
 		capture_flag = 0;
+		sem_post(&capture_sem_lock);
 	}
 }
 

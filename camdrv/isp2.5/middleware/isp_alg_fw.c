@@ -5053,7 +5053,11 @@ cmr_int ispalg_slice_raw_proc(struct isp_alg_fw_context *cxt, struct ips_in_para
 	slice_raw_info.img_offset.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
 	slice_raw_info.img_offset.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
 	slice_raw_info.sensor_id = in_ptr->sensor_id;
-
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
+		slice_raw_info.hw_simu_flag = 1;
+	} else {
+		slice_raw_info.hw_simu_flag = 0;
+	}
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RAW_SLICE, &slice_raw_info, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_DEV_SET_RAW_SLICE"));
 
