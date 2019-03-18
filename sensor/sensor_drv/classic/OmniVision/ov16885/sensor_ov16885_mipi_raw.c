@@ -417,6 +417,7 @@ static cmr_int ov16885_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 #endif
 
 #if 1
+static cmr_int sns_4in1_init = 0;
 static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
 static cmr_int ov16885_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -424,13 +425,13 @@ static cmr_int ov16885_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_IC_CHECK_PTR(param);
 
     SENSOR_LOGI("E\n");
-
-    sn_4in1_info = (struct sensor_4in1_info *)param;
-    sn_4in1_info->is_4in1_supported = 1;
-    sn_4in1_info->limited_4in1_width = 2336;
-    sn_4in1_info->limited_4in1_height = 1752;
-    sn_4in1_info->sns_mode = sns_4in1_mode;
-
+    if (sns_4in1_init) {
+        sn_4in1_info = (struct sensor_4in1_info *)param;
+        sn_4in1_info->is_4in1_supported = 1;
+        sn_4in1_info->limited_4in1_width = 2336;
+        sn_4in1_info->limited_4in1_height = 1752;
+        sn_4in1_info->sns_mode = sns_4in1_mode;
+    }
     return rtn;
 }
 
@@ -438,8 +439,8 @@ static cmr_int ov16885_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
 #include "dlfcn.h"
 #include <fcntl.h>
 
-void *handlelib;
-uint16 *pOutImage; // for mipi_raw to raw16
+void *handlelib = NULL;
+uint16 *pOutImage = NULL; // for mipi_raw to raw16
 #define OTPDPC_MIRROR 0
 #define OTPDPC_FLIP 0
 static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
@@ -459,7 +460,8 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     const char *fcellXtalkFile = XTALK_DATA;
     struct otp_parser_section_with_version xtalk_data;
     struct otp_parser_section_with_version dpc_data;
-    void *otp_parser_handle;
+    void *otp_parser_handle = NULL;
+
 #if 0
    char pFcellXtalk[XTALK_LEN];
    FILE *fp1 = fopen(fcellXtalkFile, "rb");
@@ -485,6 +487,7 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     if (otp_parser_handle == NULL) {
         char const *err_str = dlerror();
         SENSOR_LOGE("%s", err_str ? err_str : "unknown");
+        return SENSOR_FAIL;
     } else {
         SENSOR_LOGV("dlopen libcam_otp_parser.so success");
     }
@@ -497,11 +500,21 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     } else {
         SENSOR_LOGV("link libcam_otp_parser.so symbol success");
     }
-    otp_parser_ptr(param_ptr, OTP_PARSER_CROSS_TALK, OTP_EEPROM_SINGLE,
-                   sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &xtalk_data);
-    otp_parser_ptr(param_ptr, OTP_PARSER_DPC, OTP_EEPROM_SINGLE,
-                   sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &dpc_data);
 
+    rtn = otp_parser_ptr(param_ptr, OTP_PARSER_CROSS_TALK, OTP_EEPROM_SINGLE,
+                         sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH,
+                         &xtalk_data);
+    if (rtn) {
+        dlclose(otp_parser_handle);
+        return SENSOR_FAIL;
+    }
+    rtn = otp_parser_ptr(param_ptr, OTP_PARSER_DPC, OTP_EEPROM_SINGLE,
+                         sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH,
+                         &dpc_data);
+    if (rtn) {
+        dlclose(otp_parser_handle);
+        return SENSOR_FAIL;
+    }
     init.xtalk = xtalk_data.data_addr;
     init.otpdpc = dpc_data.data_addr;
     init.xtalk_len = xtalk_data.data_size;
@@ -511,6 +524,7 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
 
     dlclose(otp_parser_handle);
 #endif
+
     init.ofst_xtalk[0] = XTALK_OFFSET_X;
     init.ofst_xtalk[1] = XTALK_OFFSET_Y;
     init.imgwin_xtalk[0] = XTALK_IMGWIDTH;
@@ -545,8 +559,6 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     init.ofst_otpdpc[0] = OTPDPC_OFFSET_X;
     init.ofst_otpdpc[1] = OTPDPC_OFFSET_Y;
 
-    pOutImage = malloc(imgsize);
-
 #endif
     handlelib = dlopen("libsprd_fcell.so", RTLD_NOW);
     if (handlelib == NULL) {
@@ -567,6 +579,10 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
         SENSOR_LOGI("link libsprd_fcell.so symbol success");
     }
     init_ov4c(init); //(unsigned char *)param, (unsigned char *)param);
+
+    pOutImage = malloc(imgsize);
+
+    sns_4in1_init = 1;
     return rtn;
 }
 
@@ -608,9 +624,12 @@ static cmr_int ov16885_drv_ov4c_process(cmr_handle handle, cmr_u32 *param) {
     } else {
         SENSOR_LOGI("link symbol success");
     }
-    proc_ov4c((unsigned short *)pFcellImage, (unsigned short *)pOutImage);
-    //  proc_ov4c((unsigned short *)img_addr, (unsigned short *)img_addr);
-    SENSOR_LOGI("X %x %x", frame_4in1->im_addr_in, pOutImage[1]);
+
+    if (pOutImage) {
+        proc_ov4c((unsigned short *)pFcellImage, (unsigned short *)pOutImage);
+        //  proc_ov4c((unsigned short *)img_addr, (unsigned short *)img_addr);
+        SENSOR_LOGI("X %x %x", frame_4in1->im_addr_in, pOutImage[1]);
+    }
     frame_4in1->im_addr_out = frame_4in1->im_addr_in;
 
 #if 0
@@ -640,6 +659,9 @@ static cmr_int ov16885_drv_ov4c_deinit(cmr_handle handle, cmr_u32 *param) {
     const char *sym = "ov4c_release";
     typedef int (*func_release)();
     func_release release_ov4c = NULL;
+
+    sns_4in1_init  = 0;
+
     if (handlelib) {
         release_ov4c = (int *)dlsym(handlelib, sym);
     }
