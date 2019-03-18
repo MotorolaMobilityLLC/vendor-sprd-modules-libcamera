@@ -4503,7 +4503,7 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 		calc_idx = ((cxt->exposure_compensation.ae_base_idx + value) > max_idx) ? max_idx : (cxt->exposure_compensation.ae_base_idx + value);
 	} else if (0 > cxt->exposure_compensation.comp_val) {
 		value = (cmr_s16)(log(temp) / (-0.0132) + 0.5);
-		calc_idx = (cxt->exposure_compensation.ae_base_idx < value) ? 0 : (cxt->exposure_compensation.ae_base_idx - value);
+		calc_idx = (cxt->exposure_compensation.ae_base_idx < value) ? 1 : (cxt->exposure_compensation.ae_base_idx - value);
 	} else {
 		calc_idx = cxt->exposure_compensation.ae_base_idx;
 		cxt->exposure_compensation.ae_ev_value = 1;
@@ -5450,13 +5450,18 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->effect_index_index = 0;
 	cxt->effect_index[cxt->effect_index_index] = cxt->sync_cur_result.wts.cur_index;
 	if( cxt->exposure_compensation.ae_compensation_flag == 1) {
-	        if(cxt->env_cum_changedCalc_delay_cnt>10){
-	                if(cxt->cur_result.cur_lum<=cxt->previous_lum*0.9||cxt->cur_result.cur_lum>=cxt->previous_lum*1.1)
+		double curlum,prelum;
+		if(cxt->env_cum_changedCalc_delay_cnt>10){
+			curlum = (double ) cxt->cur_result.cur_lum;
+			prelum = (double ) cxt->previous_lum;
+	                if((curlum<=prelum*0.9||curlum>=prelum*1.1)&&(fabs(curlum-prelum)>5)){
+				ISP_LOGV("lowboundary,upboundary:(%lf,%lf)", prelum*0.9, prelum*1.1);
 	                        cxt->env_cum_changed = 1;
+			}
 	        }else
 	                cxt->env_cum_changedCalc_delay_cnt++;
 	        cxt->previous_lum=cxt->cur_result.cur_lum;
-	        ISP_LOGD("envcnt:%d, envchanged:%d, prelum,curlum:(%d,%d)", cxt->env_cum_changedCalc_delay_cnt,cxt->env_cum_changed, cxt->previous_lum, cxt->cur_result.cur_lum);
+	        ISP_LOGV("envcnt:%d, envchanged:%d, prelum,curlum:(%lf,%lf)", cxt->env_cum_changedCalc_delay_cnt,cxt->env_cum_changed, prelum, curlum);
 	}
 
 	rtn = ae_pre_process(cxt);
