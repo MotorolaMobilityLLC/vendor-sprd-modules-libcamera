@@ -180,23 +180,24 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     fd_small_16_9_ratio = (float)16 / 9;
     fd_small_2_1_ratio = (float)2 / 1;
     fd_small_1_1_ratio = (float)1 / 1;
-    CMR_LOGD("src_ratio = %d", src_ratio);
-    if (src_ratio == fd_small_4_3_ratio ) {
+    CMR_LOGD("src_ratio = %f", src_ratio);
+
+    if (fabsf(src_ratio - fd_small_4_3_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
-    } else if (src_ratio == fd_small_16_9_ratio ) {
+    } else if (fabsf(src_ratio - fd_small_16_9_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_16_9_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_16_9_HEIGHT;
-    } else if (src_ratio == fd_small_2_1_ratio ) {
+    } else if (fabsf(src_ratio - fd_small_2_1_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_2_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_2_1_HEIGHT;
-    } else if (src_ratio == fd_small_1_1_ratio ) {
+    } else if (fabsf(src_ratio - fd_small_1_1_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_1_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_1_1_HEIGHT;
     } else {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
-        CMR_LOGW("fd_small size w/h was set defalut size.");
+        CMR_LOGW("fd_small size w / h was set defalut size.");
     }
     fd_handle->fd_small.buf_size =
         fd_handle->fd_small.size.width * fd_handle->fd_small.size.height * 3;
@@ -204,21 +205,22 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     oem_handle = fd_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
 
-    if (NULL != cam_cxt->hal_malloc) {
-        if (0 != cam_cxt->hal_malloc(CAMERA_FD_SMALL,
+    if (cam_cxt->hal_malloc == NULL) {
+        CMR_LOGE("cam_cxt->hal_malloc is NULL");
+        goto free_fd_handle;
+    }
+    ret = cam_cxt->hal_malloc(CAMERA_FD_SMALL,
                 &fd_handle->fd_small.buf_size, &fd_small_buf_num,
                 &fd_handle->fd_small.addr_phy.addr_y,
                 &fd_handle->fd_small.addr_vir.addr_y,
-                &fd_handle->fd_small.fd, cam_cxt->client_data)) {
-            CMR_LOGE("Fail to malloc buffers for fd_small image");
-        } else {
-            CMR_LOGD("OK to malloc buffers for fd_small image");
-        }
-    } else {
-        CMR_LOGE("cam_cxt->hal_malloc is NULL");
+                &fd_handle->fd_small.fd, cam_cxt->client_data);
+    if (ret) {
+        CMR_LOGE("Fail to malloc buffers for fd_small image");
+        goto free_fd_handle;
     }
+    CMR_LOGD("OK to malloc buffers for fd_small image");
 
-    CMR_LOGD("mem_size = 0x%ld, fd_small.buf_size = %ld",
+    CMR_LOGD("mem_size = %ld, fd_small.buf_size = %ld",
                         fd_handle->mem_size, fd_handle->fd_small.buf_size);
     fd_handle->alloc_addr = malloc(fd_handle->mem_size);
     if (!fd_handle->alloc_addr) {
@@ -283,18 +285,19 @@ static cmr_int fd_close(cmr_handle class_handle) {
     oem_handle = fd_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
 
-    if (NULL != cam_cxt->hal_free) {
-        if (0 != cam_cxt->hal_free(CAMERA_FD_SMALL,
+    if (cam_cxt->hal_free == NULL) {
+        CMR_LOGE("cam_cxt->hal_free is NULL");
+        goto out;
+    }
+    ret = cam_cxt->hal_free(CAMERA_FD_SMALL,
                 &fd_handle->fd_small.addr_phy.addr_y,
                 &fd_handle->fd_small.addr_vir.addr_y,
-                &fd_handle->fd_small.fd, 1, cam_cxt->client_data)) {
-            CMR_LOGE("Fail to free the fd_small image buffers");
-        } else {
-            CMR_LOGD("Ok to free the fd_small image buffers");
-        }
-    } else {
-        CMR_LOGE("cam_cxt->hal_free is NULL");
+                &fd_handle->fd_small.fd, 1, cam_cxt->client_data);
+    if (ret) {
+        CMR_LOGE("Fail to free the fd_small image buffers");
+        goto out;
     }
+    CMR_LOGD("Ok to free the fd_small image buffers");
 
     free(fd_handle);
 
