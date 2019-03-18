@@ -1864,11 +1864,15 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         fps_param.video_mode = 0;
 
         // TBD: check why 20fps, not 30fps
-        if (MODE_BOKEH == mMultiCameraMode) {
-            if (fps_param.min_fps < 20) {
-                fps_param.min_fps = 20;
-                fps_param.max_fps = 20;
-            }
+        if (mMultiCameraMode == MODE_BOKEH||
+            mMultiCameraMode == MODE_3D_CALIBRATION||
+            mMultiCameraMode == MODE_REFOCUS ||
+            mMultiCameraMode == MODE_RANGE_FINDER ||
+            mMultiCameraMode == MODE_TUNING ||
+            mMultiCameraMode == MODE_DUAL_FACEID_REGISTER ||
+            mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) {
+            fps_param.min_fps = 20;
+            fps_param.max_fps = 20;
         }
 
         // to set preview fps by setprop
