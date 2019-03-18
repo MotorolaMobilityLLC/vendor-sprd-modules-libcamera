@@ -19,7 +19,7 @@
 
 unsigned long g_dcam_regbase[DCAM_ID_MAX];
 unsigned long g_dcam_aximbase;
-
+unsigned long g_dcam_mmubase;
 
 struct reg_add_val_tag {
 	unsigned int addr;

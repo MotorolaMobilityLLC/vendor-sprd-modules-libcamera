@@ -21,6 +21,7 @@
 extern unsigned long s_isp_regbase[ISP_MAX_COUNT];
 extern unsigned long isp_phys_base[ISP_MAX_COUNT];
 extern unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
+extern unsigned long s_isp_mmubase;
 
 
 #define ISP_PHYS_ADDR(idx)		(isp_phys_base[idx])
@@ -767,7 +768,6 @@ extern unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
 #define ISP_AXI_CHK_SUM_CTRL			(0x052CUL)
 #define ISP_AXI_TIMEOUT_PARAM			(0x0558UL)
 
-
 /******************************************************************************/
 
 
@@ -802,4 +802,13 @@ extern unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
 #define ISP_HREG_OWR(reg, val) \
 		(REG_WR(s_isp_regbase[0] + (reg), \
 			(REG_RD(s_isp_regbase[0] + (reg)) | (val))))
+
+
+/* To access ISP IOMMU  Registers*/
+#define ISP_MMU_BASE s_isp_mmubase
+#define ISP_MMU_WR(reg, val)             (REG_WR(ISP_MMU_BASE+(reg), (val)))
+#define ISP_MMU_RD(reg)                  (REG_RD(ISP_MMU_BASE+(reg)))
+#define ISP_MMU_MWR(reg, msk, val) \
+	ISP_MMU_WR((reg), ((val) & (msk)) | (ISP_MMU_RD(reg) & (~(msk))))
+
 #endif

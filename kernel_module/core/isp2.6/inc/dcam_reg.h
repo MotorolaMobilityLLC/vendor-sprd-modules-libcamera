@@ -18,6 +18,7 @@
 
 extern unsigned long g_dcam_regbase[];
 extern unsigned long g_dcam_aximbase;
+extern unsigned long g_dcam_mmubase;
 
 
 /* DCAM0/DCAM1 module registers define */
@@ -529,7 +530,7 @@ struct endian_field {
 #define DCAM_BASE(idx)                  (g_dcam_regbase[idx])
 #define DCAM_AXIM_BASE			(g_dcam_aximbase)
 /* TODO: implement mmu */
-#define DCAM_MMU_BASE			(s_dcam_mmubase)
+#define DCAM_MMU_BASE			(g_dcam_mmubase)
 
 #define DCAM_REG_WR(idx, reg, val)        (REG_WR(DCAM_BASE(idx)+(reg), (val)))
 #define DCAM_REG_RD(idx, reg)             (REG_RD(DCAM_BASE(idx)+(reg)))

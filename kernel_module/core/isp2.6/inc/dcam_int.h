@@ -114,7 +114,8 @@ enum {
 #define DCAMINT_ALL_ERROR \
 	(BIT(DCAM_DCAM_OVF) |\
 	 BIT(DCAM_CAP_LINE_ERR) |\
-	 BIT(DCAM_CAP_FRM_ERR))
+	 BIT(DCAM_CAP_FRM_ERR)  |\
+	 BIT(DCAM_MMU_INT))
 
 /*
  * SOF bits

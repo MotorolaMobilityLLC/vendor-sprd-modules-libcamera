@@ -201,6 +201,7 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 	struct sprd_cam_hw_info *hw = NULL;
 	struct device_node *dn = NULL;
 	struct device_node *qos_node = NULL;
+	struct device_node *iommu_node = NULL;
 	struct regmap *ahb_map = NULL;
 	void __iomem *reg_base = NULL;
 	struct resource reg_res = {0}, irq_res = {0};
@@ -256,6 +257,21 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 		pdev->name, dn->full_name, ahb_map, count);
 
 	pr_info("DCAM dcam_max_w = %u dcam_max_h = %u\n",dcam_max_w, dcam_max_h);
+
+	iommu_node = of_parse_phandle(dn, "iommus", 0);
+	if (iommu_node) {
+		if (of_address_to_resource(iommu_node, 1, &reg_res))
+			pr_err("fail to get DCAM IOMMU  addr\n");
+		else {
+			reg_base = ioremap(reg_res.start,
+				reg_res.end - reg_res.start + 1);
+			if (!reg_base)
+				pr_err("fail to map DCAM IOMMU base\n");
+			else
+				g_dcam_mmubase = (unsigned long)reg_base;
+		}
+	}
+	pr_info("DCAM IOMMU Base  0x%lx \n", g_dcam_mmubase);
 
 	for (i = 0; i < count; i++) {
 		hw = &s_dcam_hw[i];
@@ -399,6 +415,8 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 err_iounmap:
 	for (i = i - 1; i >= 0; i--)
 		iounmap((void __iomem *)(dcam_hw[0]->reg_base));
+	iounmap((void __iomem *)g_dcam_mmubase);
+	g_dcam_mmubase = 0;
 
 	return -ENXIO;
 }

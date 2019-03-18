@@ -46,6 +46,7 @@
 static uint32_t  s_isp_irq_no[ISP_LOGICAL_COUNT];
 unsigned long s_isp_regbase[ISP_MAX_COUNT];
 unsigned long isp_phys_base[ISP_MAX_COUNT];
+unsigned long s_isp_mmubase;
 
 static unsigned long irq_base[4] = {
 	ISP_P0_INT_BASE,
@@ -409,6 +410,7 @@ int sprd_isp_parse_dt(struct device_node *dn,
 	void __iomem *reg_base;
 	struct device_node *isp_node = NULL;
 	struct device_node *qos_node = NULL;
+	struct device_node *iommu_node = NULL;
 	struct resource res = {0};
 	struct sprd_cam_hw_info *isp_hw = &s_isp_hw_dev;
 
@@ -467,6 +469,20 @@ int sprd_isp_parse_dt(struct device_node *dn,
 		}
 		isp_hw->clk_default = clk_get_parent(isp_hw->clk);
 #endif
+
+		iommu_node = of_parse_phandle(isp_node, "iommus", 0);
+		if (iommu_node) {
+			if (of_address_to_resource(iommu_node, 1, &res))
+				pr_err("fail to get ISP IOMMU  addr\n");
+			else {
+				reg_base = ioremap(res.start, res.end - res.start + 1);
+				if (!reg_base)
+					pr_err("fail to map ISP IOMMU base\n");
+				else
+					s_isp_mmubase = (unsigned long)reg_base;
+			}
+		}
+		pr_info("ISP IOMMU Base  0x%lx \n", s_isp_mmubase);
 
 		/* qos dt parse */
 		qos_node = of_parse_phandle(isp_node, "isp_qos", 0);

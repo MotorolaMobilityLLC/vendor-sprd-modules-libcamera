@@ -867,6 +867,14 @@ static const struct {
 /*
  * report error back to adaptive layer
  */
+
+static void  dcam_dump_iommu_regs(void)
+{
+	uint32_t reg = 0;
+	for (reg = 0; reg <= MMU_STS; reg+=4)
+		pr_info("Reg = 0x%x Value = 0x%x \n", reg, DCAM_MMU_RD(reg));
+}
+
 static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 				      uint32_t status)
 {
@@ -879,6 +887,10 @@ static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 		pr_err("line error,");
 	if (status & BIT(DCAM_CAP_FRM_ERR))
 		pr_err("frame error,");
+	if (status & BIT(DCAM_MMU_INT)) {
+		pr_err("IOMMU  Error, IOMMU Registers Dump \n");
+		dcam_dump_iommu_regs();
+	}
 	pr_err("DCAM%u status 0x%x\n", dev->idx, status);
 	if (atomic_read(&dev->state) == STATE_ERROR)
 		return IRQ_HANDLED;

@@ -23,6 +23,8 @@
 
 #include "isp_interface.h"
 #include "isp_reg.h"
+/* To include IOMMU relared registers which are common in both DCAM & ISP */
+#include "dcam_reg.h"
 #include "isp_int.h"
 #include "isp_core.h"
 
@@ -179,9 +181,7 @@ static int isp_err_pre_proc(enum isp_context_id idx, void *isp_handle)
 	pr_err("isp cxt_id:%d error happened\n", idx);
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
-
-	/* todo: isp error handling */
-	/*pctx->isp_cb_func(ISP_CB_DEV_ERR, dev, pctx->cb_priv_data);*/
+	pctx->isp_cb_func(ISP_CB_DEV_ERR, dev, pctx->cb_priv_data);
 	return 0;
 }
 
@@ -414,29 +414,36 @@ struct isp_int_ctx {
 } isp_int_ctxs[4] = {
 		{ /* P0 */
 			ISP_P0_INT_BASE,
-			ISP_INT_LINE_MASK_ERR,
+			ISP_INT_LINE_MASK_ERR | ISP_INT_LINE_MASK_MMU,
 			(uint32_t)ARRAY_SIZE(isp_irq_process),
 			isp_irq_process,
 		},
 		{ /* C0 */
 			ISP_C0_INT_BASE,
-			ISP_INT_LINE_MASK_ERR,
+			ISP_INT_LINE_MASK_ERR | ISP_INT_LINE_MASK_MMU,
 			(uint32_t)ARRAY_SIZE(isp_irq_process),
 			isp_irq_process,
 		},
 		{ /* P1 */
 			ISP_P1_INT_BASE,
-			ISP_INT_LINE_MASK_ERR,
+			ISP_INT_LINE_MASK_ERR | ISP_INT_LINE_MASK_MMU,
 			(uint32_t)ARRAY_SIZE(isp_irq_process),
 			isp_irq_process,
 		},
 		{ /* C1 */
 			ISP_C1_INT_BASE,
-			ISP_INT_LINE_MASK_ERR,
+			ISP_INT_LINE_MASK_ERR | ISP_INT_LINE_MASK_MMU,
 			(uint32_t)ARRAY_SIZE(isp_irq_process),
 			isp_irq_process,
 		},
 };
+
+static void  isp_dump_iommu_regs(void)
+{
+	uint32_t reg = 0;
+	for (reg = 0; reg <= MMU_STS; reg+=4)
+		pr_info("Reg = 0x%x Value = 0x%x \n", reg, ISP_MMU_RD(reg));
+}
 
 static irqreturn_t isp_isr_root(int irq, void *priv)
 {
@@ -495,6 +502,11 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 		if (unlikely(err_mask & irq_line)) {
 			pr_err("error irq: isp ctx %d, INT:0x%x\n",
 					c_id, irq_line);
+			if (irq_line & ISP_INT_LINE_MASK_MMU) {
+				pr_err("IOMMU  Error, IOMMU Registers Dump \n");
+				isp_dump_iommu_regs();
+			}
+
 			/*handle the error here*/
 			if (isp_err_pre_proc(c_id, isp_handle))
 				return IRQ_HANDLED;
