@@ -9628,6 +9628,166 @@ cmr_int camera_local_fd_start(cmr_handle oem_handle) {
     return ret;
 }
 
+cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
+                               cmr_uint param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    cmr_uint isp_cmd = ISP_CTRL_MAX;
+    cmr_u32 isp_param = 0;
+    struct isp_context *isp_cxt = &cxt->isp_cxt;
+    struct cmr_ae_param ae_param;
+    struct isp_pos_rect trim;
+    struct cmr_ae_compensation_param ae_compensation_param;
+    struct isp_exp_compensation ae_compensation;
+
+    cmr_u32 ptr_flag = 0;
+    cmr_uint set_exif_flag = 0;
+    cmr_uint set_isp_flag = 1;
+
+    void *isp_param_ptr = NULL;
+    SENSOR_EXIF_CTRL_E exif_cmd = SENSOR_EXIF_CTRL_MAX;
+
+    switch (id) {
+    case CAMERA_PARAM_AUTO_EXPOSURE_MODE:
+        ae_param = *(struct cmr_ae_param *)param;
+        isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
+        isp_param = param;
+
+    case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
+        isp_cmd = ISP_CTRL_SET_AE_LOCK_UNLOCK;
+        isp_param = param;
+        CMR_LOGD("set AE Lock & Unlock %d", isp_param);
+        break;
+
+    case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
+        isp_cmd = ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK;
+        isp_param = param;
+        if (isp_param == ISP_AWB_UNLOCK)
+            isp_param = ISP_AWB_UNLOCK;
+        else if (isp_param == ISP_AWB_LOCK)
+            isp_param = ISP_AWB_LOCK;
+        break;
+
+    case CAMERA_PARAM_ANTIBANDING:
+        isp_cmd = ISP_CTRL_FLICKER;
+        isp_param = param;
+        CMR_LOGD("flicker %d", isp_param);
+        break;
+
+    case CAMERA_PARAM_ISO:
+        isp_cmd = ISP_CTRL_ISO;
+        set_exif_flag = 1;
+        exif_cmd = SENSOR_EXIF_CTRL_ISOSPEEDRATINGS;
+        isp_param = param;
+        CMR_LOGD("iso %d", param);
+        break;
+
+    case CAMERA_PARAM_AE_REGION:
+        isp_cmd = ISP_CTRL_AE_TOUCH;
+        ae_param = *(struct cmr_ae_param *)param;
+
+        trim.start_x = ae_param.win_area.rect[0].start_x;
+        trim.start_y = ae_param.win_area.rect[0].start_y;
+        if (0 == ae_param.win_area.rect[0].width)
+            trim.end_x = 0;
+        else
+            trim.end_x = ae_param.win_area.rect[0].start_x +
+                         ae_param.win_area.rect[0].width - 1;
+
+        if (0 == ae_param.win_area.rect[0].height)
+            trim.end_y = 0;
+        else
+            trim.end_y = ae_param.win_area.rect[0].start_y +
+                         ae_param.win_area.rect[0].height - 1;
+
+        CMR_LOGD("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y, trim.end_x,
+                 trim.end_y);
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&trim;
+        break;
+
+    case CAMERA_PARAM_EXPOSURE_COMPENSATION:
+        isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
+        ptr_flag = 1;
+        ae_compensation_param = *(struct cmr_ae_compensation_param *)param;
+
+        ae_compensation.comp_val =ae_compensation_param.ae_exposure_compensation;
+        ae_compensation.comp_range.min =ae_compensation_param.ae_compensation_range[0];
+        ae_compensation.comp_range.max =ae_compensation_param.ae_compensation_range[1];
+        ae_compensation.step_numerator =ae_compensation_param.ae_compensation_step_numerator;
+        ae_compensation.step_denominator =ae_compensation_param.ae_compensation_step_denominator;
+        isp_param_ptr = (void *)&ae_compensation;
+        CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, "
+                 "step_numerator=%d, step_denominator=%d",
+                 ae_compensation.comp_val, ae_compensation.comp_range.min,
+                 ae_compensation.comp_range.max, ae_compensation.step_numerator,
+                 ae_compensation.step_denominator);
+        break;
+
+    case CAMERA_PARAM_EFFECT:
+        isp_cmd = ISP_CTRL_SPECIAL_EFFECT;
+        isp_param = param;
+        break;
+
+    case CAMERA_PARAM_BRIGHTNESS:
+        isp_cmd = ISP_CTRL_BRIGHTNESS;
+        isp_param = param;
+        break;
+
+    case CAMERA_PARAM_CONTRAST:
+        isp_cmd = ISP_CTRL_CONTRAST;
+        isp_param = param;
+        break;
+
+    case CAMERA_PARAM_SATURATION:
+        isp_cmd = ISP_CTRL_SATURATION;
+        isp_param = param;
+        break;
+
+    default:
+        CMR_LOGE("don't support cmd %ld",id);
+        ret = CMR_CAMERA_NO_SUPPORT;
+        break;
+    }
+
+    if (ptr_flag) {
+        ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, isp_param_ptr);
+        if (ret) {
+            CMR_LOGE("failed isp ioctl %ld", ret);
+        }
+        CMR_LOGV("done %ld and direct return", ret);
+        return ret;
+    }
+
+    if (set_isp_flag) {
+        ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, (void *)&isp_param);
+        if (ret) {
+            CMR_LOGE("failed isp ioctl %ld", ret);
+        }else {
+            if (CAMERA_PARAM_ISO == id) {
+                if (0 == param) {
+                    isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO,
+                                   (void *)&isp_param);
+                    cxt->setting_cxt.is_auto_iso = 1;
+                } else {
+                    cxt->setting_cxt.is_auto_iso = 0;
+                }
+                isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+                CMR_LOGI("auto iso %d, exif iso %d",
+                         cxt->setting_cxt.is_auto_iso, isp_param);
+            }
+        }
+    }
+
+    if (set_exif_flag) {
+            cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                exif_cmd, isp_param);
+    }
+
+    return ret;
+}
+
 cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                                cmr_uint param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -9684,10 +9844,27 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     }
+/*
     case CAMERA_PARAM_ISO:
         cxt->setting_cxt.iso_value = param;
         ret = camera_set_setting(oem_handle, id, param);
         break;
+*/
+
+    case CAMERA_PARAM_AUTO_EXPOSURE_MODE:
+    case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
+    case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
+    case CAMERA_PARAM_ANTIBANDING:
+    case CAMERA_PARAM_ISO:
+    case CAMERA_PARAM_AE_REGION:
+    case CAMERA_PARAM_EXPOSURE_COMPENSATION:
+    case CAMERA_PARAM_EFFECT:
+    case CAMERA_PARAM_BRIGHTNESS:
+    case CAMERA_PARAM_CONTRAST:
+    case CAMERA_PARAM_SATURATION:
+        ret = camera_isp_set_params(oem_handle, id, param);
+        break;
+
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;
