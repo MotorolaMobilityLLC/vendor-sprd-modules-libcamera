@@ -37,9 +37,10 @@
 #define STATIS_AFM_BUF_SIZE  (20 * 15 * 16)
 #define STATIS_AFM_BUF_NUM 8
 
-/* AFL: 239 x 16bytes for global, 482 x 16bytes for region */
-#define STATIS_AFL_GBUF_SIZE   (239 * 16)
-#define STATIS_AFL_BUF_SIZE   (239 * 16 + 482 * 16)
+/* AFL: global 80 x 16 bytes for one frame, region 482 x 16 bytes one frame */
+#define STATIS_AFL_GBUF_SIZE   (80 * 16 * 3 + 64)
+#define STATIS_AFL_RBUF_SIZE   (482 * 16 * 3 + 64)
+#define STATIS_AFL_BUF_SIZE   (STATIS_AFL_GBUF_SIZE + STATIS_AFL_RBUF_SIZE)
 #define STATIS_AFL_BUF_NUM 8
 
 /* hist: 154 x 16 bytes */
