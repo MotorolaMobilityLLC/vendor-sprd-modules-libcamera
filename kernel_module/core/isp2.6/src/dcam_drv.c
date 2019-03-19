@@ -34,11 +34,18 @@
 #define pr_fmt(fmt) "DCAM_DRV: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
+static atomic_t clk_users;
+
 static int dcam_enable_clk(struct sprd_cam_hw_info *hw, void *arg)
 {
 	int ret = 0;
 
 	pr_debug(", E\n");
+	if (atomic_inc_return(&clk_users) != 1) {
+		pr_info("clk has enabled, users: %d\n",
+			atomic_read(&clk_users));
+		return 0;
+	}
 #ifndef TEST_ON_HAPS
 	if (!hw) {
 		pr_err("param erro\n");
@@ -91,6 +98,11 @@ static int dcam_disable_clk(struct sprd_cam_hw_info *hw, void *arg)
 	int ret = 0;
 
 	pr_debug(", E\n");
+	if (atomic_dec_return(&clk_users) != 0) {
+		pr_info("Other using, users: %d\n",
+			atomic_read(&clk_users));
+		return 0;
+	}
 #ifndef TEST_ON_HAPS
 	if (!hw) {
 		pr_err("param erro\n");
