@@ -330,6 +330,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	char data[16];
 	cmr_s32 *out = NULL;
 	cmr_u32 k=0;
+	cmr_u32 fm=0;
 #endif
 	cmr_s32 algo_width;
 	cmr_s32 algo_height;
@@ -367,25 +368,27 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 #endif
 
 #if defined(CONFIG_ISP_2_6)
-#define AFL_BATCH_SIZE ((80+481)*16)
-#define AFL_GLB_ROW (239)
+#define AFL_BATCH_SIZE_GLB ((80)*16)
+#define AFL_GLB_ROW (80)
 #define AFL_RIG_ROW (481)
 	/* parsing raw afl data (afl global data)*/
-	out = (cmr_s32 *)malloc(AFL_BATCH_SIZE);
+	out = (cmr_s32 *)malloc(AFL_BATCH_SIZE_GLB*cxt->frame_num);
 	if(out==NULL){
 		ISP_LOGE("fail to malloc afl output buffer");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
-	for(i=0;i<80/*the real AFL_GLB_ROW is 80*/;i++){ 
-		memcpy(data, addr+i*16/4, 16);
-		out[k++] = ((data[2] & 0x3)<<16)|((data[1] & 0xff)<<8)|(data[0]&0xff);
-		// ISP_LOGI("out[%d]:%d",k-1,out[k-1]); // for debuging
-		out[k++] = ((data[4] & 0xf)<<14)|((data[3] & 0xff)<<6)|((data[2]>>2)&0x3f);
-		out[k++] = ((data[6] & 0x3f)<<12)|((data[5] & 0xff)<<4)|((data[4]>>4)&0xf);
-		out[k++] = ((data[8] & 0xff)<<10)|((data[7] & 0xff)<<2)|((data[6]>>6)&0x3);
-		out[k++] = ((data[11] & 0x3)<<16)|((data[10] & 0xff)<<8)|((data[9])&0xff);
-		out[k++] = ((data[13] & 0xf)<<14)|((data[12] & 0xff)<<6)|((data[11]>>2)&0x3f);
+	for (fm = 0; fm < cxt->frame_num; fm++) {
+		for(i = 0; i < AFL_GLB_ROW; i++) {
+			memcpy(data, addr + AFL_GLB_ROW * 16/4 * fm + i * 16/4, 16);
+			out[k++] = ((data[2] & 0x3)<<16)|((data[1] & 0xff)<<8)|(data[0]&0xff);
+			//ISP_LOGI("out[%d]:%d",k-1,out[k-1]); // for debuging
+			out[k++] = ((data[4] & 0xf)<<14)|((data[3] & 0xff)<<6)|((data[2]>>2)&0x3f);
+			out[k++] = ((data[6] & 0x3f)<<12)|((data[5] & 0xff)<<4)|((data[4]>>4)&0xf);
+			out[k++] = ((data[8] & 0xff)<<10)|((data[7] & 0xff)<<2)|((data[6]>>6)&0x3);
+			out[k++] = ((data[11] & 0x3)<<16)|((data[10] & 0xff)<<8)|((data[9])&0xff);
+			out[k++] = ((data[13] & 0xf)<<14)|((data[12] & 0xff)<<6)|((data[11]>>2)&0x3f);
+		}
 	}
 	addr = out;
 #endif
