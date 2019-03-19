@@ -117,17 +117,12 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	struct ai_ctrl_cxt *cxt = (struct ai_ctrl_cxt *)handle;
 	enum ai_scene_type scene_id;
 
-	if (AI_STATUS_PROCESSING != cxt->aic_status) {
-		ISP_LOGE("ai decete doesn't work. status: %d.", cxt->aic_status);
-		return ISP_ERROR;
-	}
-
 	ISP_LOGV("frameID: %d, zoom_ratio: %d.", ae_param->frame_id, ae_param->zoom_ratio);
 	ISP_LOGV("blk_width: %d, blk_height: %d.", ae_param->blk_width, ae_param->blk_height);
 	ISP_LOGV("blk_num_hor: %d, blk_num_ver: %d.", ae_param->blk_num_hor, ae_param->blk_num_ver);
 	ISP_LOGV("timestamp: %"PRIu64".", ae_param->timestamp);
-	ISP_LOGV("r_g_b_info: %p, %p, %p.", ae_param->ae_stat.r_info, ae_param->ae_stat.g_info, ae_param->ae_stat.b_info);	
-	ISP_LOGV("r_g_b_info data: %d, %d, %d.", *ae_param->ae_stat.r_info, *ae_param->ae_stat.g_info, *ae_param->ae_stat.b_info);		
+	ISP_LOGV("r_g_b_info: %p, %p, %p.", ae_param->ae_stat.r_info, ae_param->ae_stat.g_info, ae_param->ae_stat.b_info);
+	ISP_LOGV("r_g_b_info data: %d, %d, %d.", *ae_param->ae_stat.r_info, *ae_param->ae_stat.g_info, *ae_param->ae_stat.b_info);
 
 	cxt->aic_aeminfo.frame_id = ae_param->frame_id;
 	cxt->aic_aeminfo.timestamp = ae_param->timestamp;
@@ -246,11 +241,16 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	switch (cmd) {
 	case AI_SET_FD_PARAM:
-		if (!param) {
-			ISP_LOGE("fail to set fd param");
+		if (AI_STATUS_PROCESSING != cxt->aic_status) {
+			ISP_LOGW("ai set fd doesn't work. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
 			goto exit;
 		}
-
+		if (!param) {
+			ISP_LOGW("fail to set fd param");
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		memcpy(&cxt->aic_faceinfo, param, sizeof(struct ai_fd_param));
 		ISP_LOGV("ai fd: width: %d, height: %d, facenum: %d.", cxt->aic_faceinfo.width, cxt->aic_faceinfo.height, cxt->aic_faceinfo.face_num);
 		ISP_LOGV("ai fd: frame_id: %d, timestamp: %"PRIu64".", cxt->aic_faceinfo.frame_id, cxt->aic_faceinfo.timestamp);
@@ -272,8 +272,14 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		}
 		break;
 	case AI_SET_FD_ON_OFF:
+		if (AI_STATUS_PROCESSING != cxt->aic_status) {
+			ISP_LOGW("ai set fd_on_off doesn't work. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		if (!param) {
 			ISP_LOGE("fail to set fd on off");
+			rtn = ISP_ERROR;
 			goto exit;
 		}
 		cxt->fd_on_off = *(cmr_u32 *)param;
@@ -293,15 +299,21 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		}
 		break;
 	case AI_SET_AE_PARAM:
+		if (AI_STATUS_PROCESSING != cxt->aic_status) {
+			ISP_LOGW("ai set ae param doesn't work. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		if (!param) {
-			ISP_LOGE("fail to set ae param. param is null.");
+			ISP_LOGW("fail to set ae param. param is null.");
+			rtn = ISP_ERROR;
 			goto exit;
 		}
 		if (!result) {
-			ISP_LOGE("fail to set ae param. result is null.");
+			ISP_LOGW("fail to set ae param. result is null.");
+			rtn = ISP_ERROR;
 			goto exit;
 		}
-
 		if (0 != ai_sprd_set_ae_param(cxt, (struct ai_ae_param *)param, (struct ai_scene_detect_info *)result)) {
 			ISP_LOGD("fail to set ae param.");
 			rtn = ISP_ERROR;
@@ -309,11 +321,16 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		}
 		break;
 	case AI_SET_IMG_PARAM:
-		if (!param) {
-			ISP_LOGE("fail to set img data");
+		if (AI_STATUS_PROCESSING != cxt->aic_status) {
+			ISP_LOGW("ai set image param doesn't work. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
 			goto exit;
 		}
-
+		if (!param) {
+			ISP_LOGW("fail to set img data");
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		ai_img_ptr = (struct ai_img_param *)param;
 		cxt->aic_image.frame_id = ai_img_ptr->frame_id;
 		cxt->aic_image.timestamp = ai_img_ptr->timestamp;
@@ -337,11 +354,21 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		}
 		break;
 	case AI_PROCESS_START:
+		if (AI_STATUS_PROCESSING == cxt->aic_status) {
+			ISP_LOGW("ai is still in-processing. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		AIC_StartProcess(cxt->aic_handle);
 		cxt->aic_status = AI_STATUS_PROCESSING;
 		ISP_LOGI("AI start.");
 		break;
 	case AI_PROCESS_STOP:
+		if (AI_STATUS_IDLE == cxt->aic_status) {
+			ISP_LOGW("ai already idle. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		AIC_StopProcess(cxt->aic_handle);
 		cxt->aic_status = AI_STATUS_IDLE;
 		ISP_LOGI("AI stop.");
@@ -376,14 +403,20 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 	switch (cmd) {
 	case AI_GET_STATUS:
 		if (!param) {
-			ISP_LOGE("fail to get ai status.");
+			ISP_LOGW("fail to get ai status.");
 			goto exit;
 		}
 		memcpy(param, &cxt->aic_status, sizeof(enum ai_status));
 		break;
 	case AI_GET_IMG_FLAG:
+		if (AI_STATUS_PROCESSING != cxt->aic_status) {
+			ISP_LOGW("ai get image param doesn't work. status: %d.", cxt->aic_status);
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		if (!param) {
-			ISP_LOGE("fail to get ai img status.");
+			ISP_LOGW("fail to get ai img status.");
+			rtn = ISP_ERROR;
 			goto exit;
 		}
 		ai_img_status_ptr = (struct ai_img_status *)param;
@@ -448,6 +481,7 @@ cmr_s32 ai_sprd_adpt_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle o
 	ISP_LOGI("enter");
 	rtn = ai_check_handle(handle);
 	if (ISP_SUCCESS != rtn) {
+		ISP_LOGW("ai_check_handle fail");
 		return ISP_ERROR;
 	}
 	cxt = (struct ai_ctrl_cxt *)handle;
@@ -458,6 +492,7 @@ cmr_s32 ai_sprd_adpt_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle o
 	pthread_mutex_destroy(&cxt->data_sync_lock);
 
 	free(cxt);
+	cxt = NULL;
 
 	ISP_LOGI("done");
 	return rtn;
