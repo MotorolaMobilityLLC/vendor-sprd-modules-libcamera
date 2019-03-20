@@ -5396,8 +5396,12 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 /***********************************************************/
 /* send STAB notify to HAL */
 	if (cxt->isp_ops.callback) {
+		cmr_u32 ae_stab_bv = 0;
 		cb_type = AE_CB_STAB_NOTIFY;
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
+		ae_stab_bv = (cur_calc_result->ae_output.is_stab & 0x00000001) | ((unsigned int)(cur_calc_result->ae_output.cur_bv<<16) & 0xffff0000)
+			|((cur_calc_result->ae_result.abl_weighting<<1) & 0x000007fe);
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &ae_stab_bv);
+		ISP_LOGV("normal notify stable_flag %d", cur_calc_result->ae_output.is_stab);
 	}
 
 	if (1 == cxt->debug_enable) {
@@ -5791,8 +5795,11 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 /* send STAB notify to HAL */
 	if (cxt->isp_ops.callback) {
+		cmr_u32 ae_stab_bv = 0;
 		cb_type = AE_CB_STAB_NOTIFY;
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
+		ae_stab_bv = (cur_calc_result->ae_output.is_stab & 0x00000001) | ((unsigned int)(cur_calc_result->ae_output.cur_bv<<16) & 0xffff0000)
+			|((cur_calc_result->ae_result.abl_weighting<<1) & 0x000007fe);
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &ae_stab_bv);
 		ISP_LOGV("normal notify stable_flag %d", cur_calc_result->ae_output.is_stab);
 	}
 
