@@ -5742,15 +5742,19 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         {
             if (parm4 != NULL) {
                 af_ctrl = (isp_af_notice *)parm4;
-              if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
-                af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
-                controlInfo.af_roi[0] = af_ctrl->af_roi.sx * ISP_BINNING_SIZE;
-                controlInfo.af_roi[1] = af_ctrl->af_roi.sy * ISP_BINNING_SIZE;
-                controlInfo.af_roi[2] = af_ctrl->af_roi.ex * ISP_BINNING_SIZE;
-                controlInfo.af_roi[3] = af_ctrl->af_roi.ey * ISP_BINNING_SIZE;
-                mSetting->setAfRoiCONTROLTag(&controlInfo);
-                break;
-              }
+                if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
+                    af_ctrl->af_roi.ex != 0 || af_ctrl->af_roi.ey != 0) {
+                    controlInfo.af_roi[0] =
+                        af_ctrl->af_roi.sx * ISP_BINNING_SIZE;
+                    controlInfo.af_roi[1] =
+                        af_ctrl->af_roi.sy * ISP_BINNING_SIZE;
+                    controlInfo.af_roi[2] =
+                        af_ctrl->af_roi.ex * ISP_BINNING_SIZE;
+                    controlInfo.af_roi[3] =
+                        af_ctrl->af_roi.ey * ISP_BINNING_SIZE;
+                    mSetting->setAfRoiCONTROLTag(&controlInfo);
+                    break;
+                }
             }
             controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
             mSetting->setAfCONTROLTag(&controlInfo);
@@ -8654,6 +8658,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     *phy_addr = 0;
     *vir_addr = 0;
     *fd = 0;
+    cmr_s32 not_support = -3;
 
 #ifdef USE_ONE_RESERVED_BUF
     if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED ||
@@ -8760,7 +8765,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             mIspStatisHeapReserved = memory;
         }
         rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
-        if (rtn) {
+        if (rtn && (rtn != not_support)) {
             HAL_LOGE("get kaddr error");
             goto mem_fail;
         }
@@ -8786,7 +8791,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *phy_addr_64++ = (cmr_u64)memory->phys_addr;
             *vir_addr_64++ = (cmr_u64)memory->data;
             rtn = memory->ion_heap->get_kaddr(&kaddr, &ksize);
-            if (rtn) {
+            if (rtn && (rtn != not_support)) {
                 HAL_LOGE("get kaddr error");
                 goto mem_fail;
             }
