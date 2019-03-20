@@ -261,7 +261,7 @@ int cambuf_put_ionbuf(struct camera_buf *buf_info)
 		return -EFAULT;
 	}
 	if (buf_info->type != CAM_BUF_USER) {
-		pr_info("buffer type: %d is not user buf.\n", buf_info->type);
+		pr_debug("buffer type: %d is not user buf.\n", buf_info->type);
 		return 0;
 	}
 
@@ -385,20 +385,21 @@ int cambuf_iommu_unmap(
 	struct iommudev_info *dev_info;
 	struct sprd_iommu_unmap_data unmap_data;
 
-	if (!buf_info || !buf_info->dev) {
+	if (!buf_info) {
 		pr_err("error: input ptr is NULL\n");
 		return -EFAULT;
+	}
+
+	if (!buf_info->dev ||
+		((buf_info->mapping_state & CAM_BUF_MAPPING_DEV) == 0)) {
+		pr_info("buf dev %p, may not be mapping %d \n",
+			buf_info->dev, buf_info->mapping_state);
+		return ret;
 	}
 
 	dev_info = get_iommu_dev(CAM_IOMMUDEV_MAX, buf_info->dev);
 	if (!dev_info) {
 		pr_err("error: no matched iommu dev.\n");
-		return -EFAULT;
-	}
-
-	if ((buf_info->mapping_state & CAM_BUF_MAPPING_DEV) == 0) {
-		pr_err("error map status: %x, %p",
-			buf_info->mapping_state, buf_info->dev);
 		return -EFAULT;
 	}
 

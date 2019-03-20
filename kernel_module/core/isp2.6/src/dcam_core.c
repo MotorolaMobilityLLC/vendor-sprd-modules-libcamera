@@ -951,8 +951,7 @@ static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
 	dev->pdaf_type = p->mode;
 
 	if (p->mode == 0) {
-		pr_warn("dcam%d pdaf param error, disable pdaf\n", idx);
-		
+		pr_warn("dcam%d pdaf mode 0, disable pdaf\n", idx);
 		dev->is_pdaf = 0;
 	}
 

@@ -38,13 +38,13 @@ int camera_enqueue(struct camera_queue *q, struct camera_frame *pframe)
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (q->state == CAM_Q_CLEAR) {
-		pr_err("error: q is not inited.\n");
+		pr_warn("q is clear\n");
 		ret = -EPERM;
 		goto unlock;
 	}
 
 	if (q->cnt >= q->max) {
-		pr_debug("warn: queue full %d\n", q->cnt);
+		pr_warn("q full, cnt %d, max %d\n", q->cnt, q->max);
 		ret = -EPERM;
 		goto unlock;
 	}
@@ -70,7 +70,7 @@ struct camera_frame *camera_dequeue(struct camera_queue *q)
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (q->state == CAM_Q_CLEAR) {
-		pr_err("error: q is not inited.\n");
+		pr_warn("q is clear\n");
 		goto unlock;
 	}
 
@@ -107,7 +107,7 @@ struct camera_frame *camera_dequeue_tail(struct camera_queue *q)
 
 	spin_lock_irqsave(&q->lock, flags);
 	if (q->state == CAM_Q_CLEAR) {
-		pr_err("error: q is not inited.\n");
+		pr_warn("q is clear\n");
 		goto unlock;
 	}
 
@@ -274,6 +274,9 @@ _EXT:
 	return ret;
 }
 
+/* in irq handler, may return NULL if alloc failed
+  * else: will always retry alloc and return valid frame
+  */
 struct camera_frame *get_empty_frame(void)
 {
 	int ret = 0;
@@ -285,26 +288,30 @@ struct camera_frame *get_empty_frame(void)
 	do {
 		pframe = camera_dequeue(q);
 		if (pframe == NULL) {
-			for (i = 0; i < CAM_EMP_Q_LEN_INC; i++) {
-				if (in_interrupt())
-					pframe = kzalloc(sizeof(*pframe), GFP_ATOMIC);
+			if (in_interrupt()) {
+				/* fast alloc and return for irq handler */
+				pframe = kzalloc(sizeof(*pframe), GFP_ATOMIC);
+				if (pframe)
+					atomic_inc(&g_mem_dbg->empty_frm_cnt);
 				else
-					pframe = kzalloc(sizeof(*pframe), GFP_KERNEL);
-				if (pframe == NULL) {
 					pr_err("error: no memory.\n");
-					break;
+				return pframe;
+			}
+
+			for (i = 0; i < CAM_EMP_Q_LEN_INC; i++) {
+				pframe = kzalloc(sizeof(*pframe), GFP_KERNEL);
+				if (pframe == NULL) {
+					pr_err("error: no memory. retry\n");
+					continue;
 				}
+				atomic_inc(&g_mem_dbg->empty_frm_cnt);
 				pr_debug("alloc frame %p\n", pframe);
 				ret = camera_enqueue(q, pframe);
 				if (ret) {
-					pr_err("fail to input empty q, %p\n",
-						pframe);
-					kfree(pframe);
-					pframe = NULL;
+					/* q full, return pframe directly here */
 					break;
 				}
 				pframe = NULL;
-				atomic_inc(&g_mem_dbg->empty_frm_cnt);
 			}
 			pr_info("alloc %d empty frames, cnt %d\n",
 				i, atomic_read(&g_mem_dbg->empty_frm_cnt));
@@ -324,16 +331,16 @@ int put_empty_frame(struct camera_frame *pframe)
 		pr_err("error: null input.\n");
 		return -EINVAL;
 	}
+	pr_debug("put frame %p\n", pframe);
 
 	memset(pframe, 0, sizeof(struct camera_frame));
 	ret = camera_enqueue(g_empty_frm_q, pframe);
 	if (ret) {
-		pr_err("fail to input frame to empty queue.\n");
-		ret = -EINVAL;
+		pr_info("queue should be enlarged\n");
+		atomic_dec(&g_mem_dbg->empty_frm_cnt);
+		kfree(pframe);
 	}
-	pr_debug("put frame %p\n", pframe);
-
-	return ret;
+	return 0;
 }
 
 void free_empty_frame(void *param)

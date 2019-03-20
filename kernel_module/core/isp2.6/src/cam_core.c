@@ -64,7 +64,7 @@
 #define  CAM_COUNT  CAM_ID_MAX
 /* TODO: extend this for slow motion dev */
 #define  CAM_SHARED_BUF_NUM  16
-#define  CAM_FRAME_Q_LEN   16
+#define  CAM_FRAME_Q_LEN   48
 #define  CAM_IRQ_Q_LEN        16
 #define  CAM_STATIS_Q_LEN   16
 #define  CAM_ZOOM_COEFF_Q_LEN   10
@@ -447,49 +447,55 @@ static void config_compression(struct camera_module *module)
 			DCAM_IOCTL_CFG_FBC, &dcam_fbc_mode);
 
 	/* capture context */
-	ctx_compression_desc.fetch_fbd = ch_cap->compress_input;
-	ctx_compression_desc.nr3_fbc_fbd = ch_cap->compress_3dnr;
-	isp_ops->cfg_path(module->isp_dev_handle,
-			  ISP_PATH_CFG_CTX_COMPRESSION,
-			  ch_cap->isp_path_id >> ISP_CTXID_OFFSET,
-			  0, &ctx_compression_desc);
+	if (ch_cap->enable) {
+		ctx_compression_desc.fetch_fbd = ch_cap->compress_input;
+		ctx_compression_desc.nr3_fbc_fbd = ch_cap->compress_3dnr;
+		isp_ops->cfg_path(module->isp_dev_handle,
+				  ISP_PATH_CFG_CTX_COMPRESSION,
+				  ch_cap->isp_path_id >> ISP_CTXID_OFFSET,
+				  0, &ctx_compression_desc);
 
-	path_compression_desc.store_fbc = ch_cap->compress_output;
-	isp_ops->cfg_path(module->isp_dev_handle,
-			  ISP_PATH_CFG_PATH_COMPRESSION,
-			  ch_cap->isp_path_id >> ISP_CTXID_OFFSET,
-			  ch_cap->isp_path_id & ISP_PATHID_MASK,
-			  &path_compression_desc);
+		path_compression_desc.store_fbc = ch_cap->compress_output;
+		isp_ops->cfg_path(module->isp_dev_handle,
+				  ISP_PATH_CFG_PATH_COMPRESSION,
+				  ch_cap->isp_path_id >> ISP_CTXID_OFFSET,
+				  ch_cap->isp_path_id & ISP_PATHID_MASK,
+				  &path_compression_desc);
+	}
 
 	/* preview context */
-	ctx_compression_desc.fetch_fbd = ch_pre->compress_input;
-	ctx_compression_desc.nr3_fbc_fbd = ch_pre->compress_3dnr;
-	isp_ops->cfg_path(module->isp_dev_handle,
-			  ISP_PATH_CFG_CTX_COMPRESSION,
-			  ch_pre->isp_path_id >> ISP_CTXID_OFFSET,
-			  0, &ctx_compression_desc);
+	if (ch_pre->enable) {
+		ctx_compression_desc.fetch_fbd = ch_pre->compress_input;
+		ctx_compression_desc.nr3_fbc_fbd = ch_pre->compress_3dnr;
+		isp_ops->cfg_path(module->isp_dev_handle,
+				  ISP_PATH_CFG_CTX_COMPRESSION,
+				  ch_pre->isp_path_id >> ISP_CTXID_OFFSET,
+				  0, &ctx_compression_desc);
 
-	path_compression_desc.store_fbc = ch_pre->compress_output;
-	isp_ops->cfg_path(module->isp_dev_handle,
-			  ISP_PATH_CFG_PATH_COMPRESSION,
-			  ch_pre->isp_path_id >> ISP_CTXID_OFFSET,
-			  ch_pre->isp_path_id & ISP_PATHID_MASK,
-			  &path_compression_desc);
+		path_compression_desc.store_fbc = ch_pre->compress_output;
+		isp_ops->cfg_path(module->isp_dev_handle,
+				  ISP_PATH_CFG_PATH_COMPRESSION,
+				  ch_pre->isp_path_id >> ISP_CTXID_OFFSET,
+				  ch_pre->isp_path_id & ISP_PATHID_MASK,
+				  &path_compression_desc);
+	}
 
 	/* video context */
-	ctx_compression_desc.fetch_fbd = ch_vid->compress_input;
-	ctx_compression_desc.nr3_fbc_fbd = ch_vid->compress_3dnr;
-	isp_ops->cfg_path(module->isp_dev_handle,
-			  ISP_PATH_CFG_CTX_COMPRESSION,
-			  ch_vid->isp_path_id >> ISP_CTXID_OFFSET,
-			  0, &ctx_compression_desc);
+	if (ch_vid->enable) {
+		ctx_compression_desc.fetch_fbd = ch_vid->compress_input;
+		ctx_compression_desc.nr3_fbc_fbd = ch_vid->compress_3dnr;
+		isp_ops->cfg_path(module->isp_dev_handle,
+				  ISP_PATH_CFG_CTX_COMPRESSION,
+				  ch_vid->isp_path_id >> ISP_CTXID_OFFSET,
+				  0, &ctx_compression_desc);
 
-	path_compression_desc.store_fbc = ch_vid->compress_output;
-	isp_ops->cfg_path(module->isp_dev_handle,
-			  ISP_PATH_CFG_PATH_COMPRESSION,
-			  ch_vid->isp_path_id >> ISP_CTXID_OFFSET,// TODO
-			  ch_vid->isp_path_id & ISP_PATHID_MASK,
-			  &path_compression_desc);
+		path_compression_desc.store_fbc = ch_vid->compress_output;
+		isp_ops->cfg_path(module->isp_dev_handle,
+				  ISP_PATH_CFG_PATH_COMPRESSION,
+				  ch_vid->isp_path_id >> ISP_CTXID_OFFSET,// TODO
+				  ch_vid->isp_path_id & ISP_PATHID_MASK,
+				  &path_compression_desc);
+	}
 }
 
 static void alloc_buffers(struct work_struct *work)
@@ -920,9 +926,11 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 	if (type == ISP_CB_DEV_ERR) {
 		pr_err("ISP error happens. camera %d\n", module->idx);
 		pframe = get_empty_frame();
-		pframe->evt = IMG_TX_ERR;
-		pframe->irq_type = CAMERA_IRQ_IMG;
-		ret = camera_enqueue(&module->frm_queue, pframe);
+		if (pframe) {
+			pframe->evt = IMG_TX_ERR;
+			pframe->irq_type = CAMERA_IRQ_IMG;
+			ret = camera_enqueue(&module->frm_queue, pframe);
+		}
 		complete(&module->frm_com);
 		return 0;
 	}
@@ -1060,9 +1068,11 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 		dcam_ops->stop(module->dcam_dev_handle);
 
 		pframe = get_empty_frame();
-		pframe->evt = IMG_TX_ERR;
-		pframe->irq_type = CAMERA_IRQ_IMG;
-		ret = camera_enqueue(&module->frm_queue, pframe);
+		if (pframe) {
+			pframe->evt = IMG_TX_ERR;
+			pframe->irq_type = CAMERA_IRQ_IMG;
+			ret = camera_enqueue(&module->frm_queue, pframe);
+		}
 		complete(&module->frm_com);
 		return 0;
 	}
@@ -1759,7 +1769,7 @@ static int config_channel_size(
 			isp_param->valid |= ISP_PATH1_TRIM;
 			isp_param->trim_path[1] = vid->trim_isp;
 		}
-		pr_info("isp_param %p\n", isp_param);
+		pr_debug("isp_param %p\n", isp_param);
 	}
 
 	do {
@@ -1772,7 +1782,7 @@ static int config_channel_size(
 			 * (zoom ratio changes in short gap)
 			 * wait here and retry(how long?)
 			 */
-			pr_err("update dcam path %d size failed, zoom %d, lp %d\n",
+			pr_info("wait to update dcam path %d size, zoom %d, lp %d\n",
 				channel->dcam_path_id, is_zoom, loop_count);
 			msleep(20);
 		} else {
@@ -2865,9 +2875,8 @@ static int img_ioctl_set_statis_buf(
 
 	if ((statis_buf.type != STATIS_INIT) &&
 		(atomic_read(&module->state) != CAM_RUNNING)) {
-		pr_err("error state to configure statis buf: %d\n",
+		pr_warn("should not configure statis buf for state %d\n",
 			atomic_read(&module->state));
-		ret = -EFAULT;
 		goto exit;
 	}
 
@@ -2913,11 +2922,13 @@ static int img_ioctl_cfg_param(
 		ret = -EFAULT;
 		goto exit;
 	}
-	if ((atomic_read(&module->state) != CAM_RUNNING) &&
-		(atomic_read(&module->state) != CAM_CFG_CH)) {
-		pr_info("cam%d state: %d\n", module->idx,
-				atomic_read(&module->state));
-		return -EFAULT;
+
+	if (((param.scene_id == PM_SCENE_CAP) &&
+		(module->channel[CAM_CH_CAP].enable == 0)) ||
+		((param.scene_id == PM_SCENE_PRE) &&
+		(module->channel[CAM_CH_PRE].enable == 0))) {
+		pr_warn("ch is not enable for scene %d\n", param.scene_id);
+		return 0;
 	}
 
 	if ((param.sub_block & DCAM_ISP_BLOCK_MASK) == DCAM_BLOCK_BASE) {
@@ -3378,10 +3389,15 @@ static int img_ioctl_set_shrink(
 	uint32_t channel_id;
 	struct sprd_img_parm __user *uparam;
 
+	if (atomic_read(&module->state) != CAM_CFG_CH) {
+		pr_debug("skip\n");
+		return ret;
+	}
+
 	uparam = (struct sprd_img_parm __user *)arg;
 
 	ret = get_user(channel_id, &uparam->channel_id);
-	if (ret  == 0 && channel_id < CAM_CH_MAX) {
+	if (ret == 0 && channel_id < CAM_CH_MAX) {
 		ret = copy_from_user(
 			&module->channel[channel_id].ch_uinfo.regular_desc,
 			(void __user *)&uparam->regular_desc,
@@ -3398,8 +3414,6 @@ exit:
 	return ret;
 }
 
-
-
 static int img_ioctl_pdaf_control(
 			struct camera_module *module,
 			unsigned long arg)
@@ -3409,9 +3423,14 @@ static int img_ioctl_pdaf_control(
 	struct sprd_pdaf_control tmp;
 	struct sprd_img_parm __user *uparam;
 
+	if (atomic_read(&module->state) != CAM_CFG_CH) {
+		pr_debug("skip\n");
+		return ret;
+	}
+
 	uparam = (struct sprd_img_parm __user *)arg;
 	ret = get_user(channel_id, &uparam->channel_id);
-	if (ret || (channel_id == CAM_CH_RAW))
+	if (ret || (channel_id != CAM_CH_PRE))
 		return 0;
 
 	ret = copy_from_user(&tmp, &uparam->pdaf_ctrl,
@@ -3429,6 +3448,40 @@ static int img_ioctl_pdaf_control(
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_CFG_PDAF, &tmp);
 	return 0;
+}
+
+ static int img_ioctl_ebd_control(struct camera_module *module,
+			 unsigned long arg)
+{
+	int ret = 0;
+	struct sprd_ebd_control ebd_tmp;
+	uint32_t channel_id;
+	struct sprd_img_parm __user *uparam;
+
+	if (atomic_read(&module->state) != CAM_CFG_CH) {
+		pr_debug("skip\n");
+		return ret;
+	}
+
+	uparam = (struct sprd_img_parm __user *)arg;
+	ret = get_user(channel_id, &uparam->channel_id);
+	if (ret || (channel_id != CAM_CH_PRE))
+		return 0;
+
+	ret = copy_from_user(&ebd_tmp, &uparam->ebd_ctrl,
+			sizeof(struct sprd_ebd_control));
+	if (unlikely(ret)) {
+		pr_err("fail to copy pdaf param from user, ret %d\n", ret);
+		return -EFAULT;
+	}
+
+	pr_info("MODE: %d, VC:%d, DT:%d\n", ebd_tmp.mode,
+		ebd_tmp.image_vc, ebd_tmp.image_dt);
+
+	ret = dcam_ops->ioctl(module->dcam_dev_handle,
+				DCAM_IOCTL_CFG_EBD, &ebd_tmp);
+
+	return ret;
 }
 
 static int img_ioctl_set_zoom_mode(
@@ -3467,8 +3520,8 @@ static int img_ioctl_set_crop(
 
 	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
 		(atomic_read(&module->state) != CAM_RUNNING)) {
-		pr_err("error module state: %d\n", atomic_read(&module->state));
-		return -EFAULT;
+		pr_warn("module state: %d\n", atomic_read(&module->state));
+		return 0;
 	}
 
 	uparam = (struct sprd_img_parm __user *)arg;
@@ -3487,7 +3540,8 @@ static int img_ioctl_set_crop(
 	 * and it is forbidden during capture.
 	 */
 	if (atomic_read(&module->state) == CAM_RUNNING) {
-		if (module->cap_status == CAM_CAPTURE_START) {
+		if ((module->cap_status == CAM_CAPTURE_START) &&
+			module->channel[CAM_CH_CAP].enable) {
 			pr_err("zoom is not allowed during capture\n");
 			goto exit;
 		}
@@ -3608,6 +3662,11 @@ static int img_ioctl_check_fmt(
 	struct sprd_img_format img_format;
 	struct channel_context *channel;
 
+	if (atomic_read(&module->state) != CAM_CFG_CH) {
+		pr_debug("skip\n");
+		return ret;
+	}
+
 	pr_debug("check fmt\n");
 	ret = copy_from_user(&img_format,
 				(void __user *)arg,
@@ -3663,10 +3722,6 @@ static struct camera_frame *get_secondary_buf(struct sprd_img_parm *p,
 	uint32_t offset;
 
 	pframe = get_empty_frame();
-	if (pframe == NULL) {
-		pr_err("fail to get empty frame node\n");
-		return NULL;
-	}
 	pframe->buf.type = CAM_BUF_USER;
 	pframe->buf.mfd[0] = p->fd_array[i];
 	/* raw capture: 4cell + bin-sum, cal offset */
@@ -3698,18 +3753,18 @@ static int img_ioctl_set_frame_addr(
 	uint32_t i, cmd;
 	struct sprd_img_parm param;
 	struct channel_context *ch;
-	struct camera_frame *pframe;
+	struct camera_frame *pframe, *pframe1;
+
+	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
+		(atomic_read(&module->state) != CAM_RUNNING)) {
+		pr_warn("warn: only for state CFG_CH or RUNNING\n");
+		return 0;
+	}
 
 	ret = copy_from_user(&param, (void __user *)arg,
 				sizeof(struct sprd_img_parm));
 	if (ret) {
 		pr_err("fail to copy from user. ret %d\n", ret);
-		return -EFAULT;
-	}
-
-	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
-		(atomic_read(&module->state) != CAM_RUNNING)) {
-		pr_err("error: only for state CFG_CH or RUNNING\n");
 		return -EFAULT;
 	}
 
@@ -3732,11 +3787,6 @@ static int img_ioctl_set_frame_addr(
 	ch = &module->channel[param.channel_id];
 	for (i = 0; i < param.buffer_count; i++) {
 		pframe = get_empty_frame();
-		if (pframe == NULL) {
-			pr_err("fail to get empty frame node\n");
-			ret = -EFAULT;
-			break;
-		}
 		pframe->buf.type = CAM_BUF_USER;
 		pframe->buf.mfd[0] = param.fd_array[i];
 		pframe->buf.offset[0] = param.frame_addr_array[i].y;
@@ -3766,6 +3816,25 @@ static int img_ioctl_set_frame_addr(
 		}
 
 		if (ch->isp_path_id >= 0) {
+			if (param.is_reserved_buf &&
+				((ch->ch_id == CAM_CH_CAP) ||(ch->ch_id == CAM_CH_PRE))) {
+				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;
+				pframe1 = get_empty_frame();
+				pframe1->buf.type = CAM_BUF_USER;
+				pframe1->buf.mfd[0] = param.fd_array[i];
+				pframe1->buf.offset[0] = param.frame_addr_array[i].y;
+				pframe1->buf.offset[1] = param.frame_addr_array[i].u;
+				pframe1->buf.offset[2] = param.frame_addr_array[i].v;
+				pframe1->channel_id = ch->ch_id;
+				cambuf_get_ionbuf(&pframe1->buf);
+				ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+						cmd, ch->dcam_path_id, pframe1);
+				if (ret) {
+					cambuf_put_ionbuf(&pframe1->buf);
+					put_empty_frame(pframe1);
+				}
+			}
+
 			cmd = ISP_PATH_CFG_OUTPUT_BUF;
 			if (param.is_reserved_buf) {
 				ch->reserved_buf_fd = pframe->buf.mfd[0];
@@ -3775,28 +3844,6 @@ static int img_ioctl_set_frame_addr(
 					ch->isp_path_id >> ISP_CTXID_OFFSET,
 					ch->isp_path_id & ISP_PATHID_MASK,
 					pframe);
-
-			if (param.is_reserved_buf &&
-					(param.channel_id ==  CAM_CH_CAP ||
-					 param.channel_id ==  CAM_CH_PRE)) 
-			{
-				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;
-				pframe = get_empty_frame();
-
-				pframe->buf.type = CAM_BUF_USER;
-
-				pframe->buf.mfd[0] = param.fd_array[i];
-				pframe->buf.offset[0] = param.frame_addr_array[i].y;
-				pframe->buf.offset[1] = param.frame_addr_array[i].u;
-				pframe->buf.offset[2] = param.frame_addr_array[i].v;
-				pframe->channel_id = ch->ch_id;
-				pframe->buf.addr_vir[0] = param.frame_addr_vir_array[i].y;
-				pframe->buf.addr_vir[1] = param.frame_addr_vir_array[i].u;
-				pframe->buf.addr_vir[2] = param.frame_addr_vir_array[i].v;
-				ret = cambuf_get_ionbuf(&pframe->buf);
-				ret = dcam_ops->cfg_path(module->dcam_dev_handle,
-						cmd, ch->dcam_path_id, pframe);
-			}
 		} else {
 			cmd = DCAM_PATH_CFG_OUTPUT_BUF;
 			if (param.is_reserved_buf) {
@@ -3868,13 +3915,10 @@ static int img_ioctl_set_frm_deci(struct camera_module *module,
 	uint32_t deci_factor = 0, channel_id = 0;
 	int ret = 0;
 
-	if (unlikely(!module))
-		return -EINVAL;
-
 	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
 		(atomic_read(&module->state) != CAM_RUNNING)) {
-		pr_err("error: only for state CFG_CH or RUNNING\n");
-		return -EPERM;
+		pr_warn("warn: only for state CFG_CH or RUNNING\n");
+		return 0;
 	}
 
 	uparam = (struct sprd_img_parm __user *)arg;
@@ -3908,8 +3952,8 @@ static int img_ioctl_set_frame_id_base(
 
 	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
 		(atomic_read(&module->state) != CAM_RUNNING)) {
-		pr_err("error: only for state CFG_CH or RUNNING\n");
-		return -EFAULT;
+		pr_warn("warn: only for state CFG_CH or RUNNING\n");
+		return 0;
 	}
 
 	uparam = (struct sprd_img_parm __user *)arg;
@@ -4046,6 +4090,7 @@ static int img_ioctl_get_cam_res(
 		ret = -EINVAL;
 		goto isp_fail;
 	}
+
 
 	module->attach_sensor_id = res.sensor_id;
 	module->workqueue = create_workqueue("sprd_camera_module");
@@ -4646,29 +4691,6 @@ static int img_ioctl_stop_capture(
 	return 0;
 }
 
- static int img_ioctl_ebd_control(struct camera_module *module,
-			 unsigned long arg)
-{
-	int ret = 0;
-	struct sprd_ebd_control ebd_tmp;
-	uint32_t channel_id;
-	struct sprd_img_parm __user *uparam;
-
-	uparam = (struct sprd_img_parm __user *)arg;
-	ret = get_user(channel_id, &uparam->channel_id);
-
-	ret = copy_from_user(&ebd_tmp, &uparam->ebd_ctrl,
-			sizeof(struct sprd_ebd_control));
-
-	pr_info("MODE: %d, VC:%d, DT:%d\n", ebd_tmp.mode,
-		ebd_tmp.image_vc, ebd_tmp.image_dt);
-
-	ret = dcam_ops->ioctl(module->dcam_dev_handle,
-				DCAM_IOCTL_CFG_EBD, &ebd_tmp);
-
-	return ret;
-}
-
 static int raw_proc_done(struct camera_module *module)
 {
 	int ret = 0;
@@ -5116,11 +5138,6 @@ static int img_ioctl_4in1_set_raw_addr(struct camera_module *module,
 	ch = &module->channel[param.channel_id];
 	for (i = 0; i < param.buffer_count; i++) {
 		pframe = get_empty_frame();
-		if (pframe == NULL) {
-			pr_err("fail to get empty frame node\n");
-			ret = -EFAULT;
-			break;
-		}
 		pframe->buf.type = CAM_BUF_USER;
 		pframe->buf.mfd[0] = param.fd_array[i];
 		pframe->buf.addr_vir[0] = param.frame_addr_vir_array[i].y;
@@ -5191,45 +5208,37 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	iommu_enable = module->iommu_enable;
 	/* get frame */
 	pframe = get_empty_frame();
-	if (pframe) {
-		pframe->irq_type = ENDIAN_LITTLE;
-		pframe->irq_property = module->cam_uinfo.sensor_if.img_ptn;
-		pframe->width = channel->ch_uinfo.src_size.w;
-		pframe->height = channel->ch_uinfo.src_size.h;
-		pframe->buf.type = CAM_BUF_USER;
-		pframe->buf.mfd[0] = param.fd_array[0];
-		pframe->buf.addr_vir[0] = param.frame_addr_vir_array[0].y;
-		pframe->buf.addr_vir[1] = param.frame_addr_vir_array[0].u;
-		pframe->buf.addr_vir[2] = param.frame_addr_vir_array[0].v;
-		pframe->channel_id = channel->ch_id;
-		pframe->fid = param.index;
-		/* timestamp, reserved	([2]<<32)|[1]
-		 * Attention: Only send back one time, maybe need some
-		 * change when hal use another time
-		 */
-		pframe->boot_sensor_time = param.reserved[2];
-		pframe->boot_sensor_time <<= 32;
-		pframe->boot_sensor_time |= param.reserved[1];
-		pframe->sensor_time = ktime_to_timeval(ktime_sub(
-			pframe->boot_sensor_time, ktime_sub(
-			ktime_get_boottime(), ktime_get())));
-		/* timestamp end */
+	pframe->irq_type = ENDIAN_LITTLE;
+	pframe->irq_property = module->cam_uinfo.sensor_if.img_ptn;
+	pframe->width = channel->ch_uinfo.src_size.w;
+	pframe->height = channel->ch_uinfo.src_size.h;
+	pframe->buf.type = CAM_BUF_USER;
+	pframe->buf.mfd[0] = param.fd_array[0];
+	pframe->buf.addr_vir[0] = param.frame_addr_vir_array[0].y;
+	pframe->buf.addr_vir[1] = param.frame_addr_vir_array[0].u;
+	pframe->buf.addr_vir[2] = param.frame_addr_vir_array[0].v;
+	pframe->channel_id = channel->ch_id;
+	pframe->fid = param.index;
+	/* timestamp, reserved	([2]<<32)|[1]
+	 * Attention: Only send back one time, maybe need some
+	 * change when hal use another time
+	 */
+	pframe->boot_sensor_time = param.reserved[2];
+	pframe->boot_sensor_time <<= 32;
+	pframe->boot_sensor_time |= param.reserved[1];
+	pframe->sensor_time = ktime_to_timeval(ktime_sub(
+		pframe->boot_sensor_time, ktime_sub(
+		ktime_get_boottime(), ktime_get())));
+	/* timestamp end */
 
-		ret = cambuf_get_ionbuf(&pframe->buf);
-		/* ret += cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_DCAM);
-		 * do this in function: dcam_offline_start_frame
-		 */
-		pr_info("frame[%d] fd %d\n", pframe->fid, pframe->buf.mfd[0]);
-	} else {
-		pr_err("no empty frame.\n");
-		ret = -ENOMEM;
-		goto exit;
+	ret = cambuf_get_ionbuf(&pframe->buf);
+	if (ret) {
+		put_empty_frame(pframe);
+		return -EFAULT;
 	}
+	pr_info("frame[%d] fd %d\n", pframe->fid, pframe->buf.mfd[0]);
 	ret = dcam_ops->proc_frame(module->aux_dcam_dev, pframe);
 
-	return ret;
-
-exit:
 	return ret;
 }
 
@@ -5880,7 +5889,7 @@ rewait:
 
 		if (!pframe) {
 			/* any exception happens or user trigger exit. */
-			pr_err("fail to read frame buffer queue. tx stop.\n");
+			pr_err("read null frame buffer. tx stop.\n");
 			read_op.evt = IMG_TX_STOP;
 		} else if (pframe->evt == IMG_TX_DONE) {
 			atomic_set(&module->timeout_flag, 0);

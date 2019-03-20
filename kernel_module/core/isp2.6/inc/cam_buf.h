@@ -50,10 +50,6 @@ struct camera_buf {
 	int32_t mfd[3];
 	struct dma_buf *dmabuf_p[3];
 
-	/* kernel buffer info */
-	struct ion_client *client[3];
-	struct ion_handle *handle[3];
-
 	void *ionbuf[3]; /* for iommu map */
 	uint32_t offset[3];
 	size_t size[3];

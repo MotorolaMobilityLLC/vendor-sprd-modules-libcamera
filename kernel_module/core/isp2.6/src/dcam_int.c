@@ -871,8 +871,15 @@ static const struct {
 static void  dcam_dump_iommu_regs(void)
 {
 	uint32_t reg = 0;
-	for (reg = 0; reg <= MMU_STS; reg+=4)
-		pr_info("Reg = 0x%x Value = 0x%x \n", reg, DCAM_MMU_RD(reg));
+	uint32_t val[4];
+	for (reg = 0; reg <= MMU_STS; reg += 16) {
+		val[0] = DCAM_MMU_RD(reg);
+		val[1] = DCAM_MMU_RD(reg + 4);
+		val[2] = DCAM_MMU_RD(reg + 8);
+		val[3] = DCAM_MMU_RD(reg + 12);
+		pr_err_ratelimited("offset=0x%04x: %08x %08x %08x %08x\n",
+			 reg, val[0], val[1], val[2], val[3]);
+	}
 }
 
 static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
@@ -881,6 +888,7 @@ static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 	/* pr_err("DCAM%u error 0x%x\n", dev->idx, status);
 	 * as L3, show which erro
 	 */
+	pr_err("DCAM%u status 0x%x\n", dev->idx, status);
 	if (status & BIT(DCAM_DCAM_OVF))
 		pr_err("overflow,");
 	if (status & BIT(DCAM_CAP_LINE_ERR))
@@ -890,8 +898,8 @@ static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 	if (status & BIT(DCAM_MMU_INT)) {
 		pr_err("IOMMU  Error, IOMMU Registers Dump \n");
 		dcam_dump_iommu_regs();
+		return IRQ_HANDLED;
 	}
-	pr_err("DCAM%u status 0x%x\n", dev->idx, status);
 	if (atomic_read(&dev->state) == STATE_ERROR)
 		return IRQ_HANDLED;
 	atomic_set(&dev->state, STATE_ERROR);
@@ -932,8 +940,10 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 
 	record_dcam_int(dev->idx, status);
 
-	if (unlikely(DCAMINT_ALL_ERROR & status))
-		return dcam_error_handler(dev, status);
+	if (unlikely(DCAMINT_ALL_ERROR & status)) {
+		dcam_error_handler(dev, status);
+		status &= (~DCAMINT_ALL_ERROR);
+	}
 
 	pr_debug("DCAM%u status=0x%x\n", dev->idx, status);
 

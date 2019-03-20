@@ -181,7 +181,8 @@ static int isp_err_pre_proc(enum isp_context_id idx, void *isp_handle)
 	pr_err("isp cxt_id:%d error happened\n", idx);
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
-	pctx->isp_cb_func(ISP_CB_DEV_ERR, dev, pctx->cb_priv_data);
+	/* todo: isp error handling */
+	/*pctx->isp_cb_func(ISP_CB_DEV_ERR, dev, pctx->cb_priv_data);*/
 	return 0;
 }
 
@@ -441,8 +442,15 @@ struct isp_int_ctx {
 static void  isp_dump_iommu_regs(void)
 {
 	uint32_t reg = 0;
-	for (reg = 0; reg <= MMU_STS; reg+=4)
-		pr_info("Reg = 0x%x Value = 0x%x \n", reg, ISP_MMU_RD(reg));
+	uint32_t val[4];
+	for (reg = 0; reg <= MMU_STS; reg += 16) {
+		val[0] = ISP_MMU_RD(reg);
+		val[1] = ISP_MMU_RD(reg + 4);
+		val[2] = ISP_MMU_RD(reg + 8);
+		val[3] = ISP_MMU_RD(reg + 12);
+		pr_err_ratelimited("offset=0x%04x: %08x %08x %08x %08x\n",
+			 reg, val[0], val[1], val[2], val[3]);
+	}
 }
 
 static irqreturn_t isp_isr_root(int irq, void *priv)
