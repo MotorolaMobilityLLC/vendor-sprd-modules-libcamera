@@ -2078,8 +2078,8 @@ void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
     }
 
     //FLASH_REQUIRED cannot be a result of precapture sequence
-    if (AE_STABLE_REQUIRE_FLASH == cause && controlInfo.ae_precap_trigger ==
-            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_START) {
+    if (AE_STABLE_REQUIRE_FLASH == cause &&
+            ANDROID_CONTROL_AE_STATE_PRECAPTURE == state) {
             cause = AE_STABLE;
     }
 
