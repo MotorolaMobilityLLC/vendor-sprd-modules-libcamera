@@ -143,7 +143,7 @@ cmr_int vl53l0_getdata(void * data)
 	*/
 	memcpy(range_datas_call, &range_datas, sizeof(VL53L0_RangingMeasurementData_t));
 
-	ISP_LOGI("VL53L0 Range MilliMeter:%4d, status:0x%x, DMax MilliMeter:%4d\n",
+	ISP_LOGV("VL53L0 Range MilliMeter:%4d, status:0x%x, DMax MilliMeter:%4d\n",
 		range_datas.RangeMilliMeter, range_datas.RangeStatus, range_datas.RangeDMaxMilliMeter);
 
 	property_get("persist.vendor.cam.tofmlog.enable", value, "1");

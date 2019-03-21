@@ -69,6 +69,7 @@ static int dw9714v_drv_create(struct af_drv_init_para *input_ptr,
 static int dw9714v_drv_delete(cmr_handle sns_af_drv_handle, void *param) {
     cmr_int ret = AF_SUCCESS;
     CHECK_PTR(sns_af_drv_handle);
+    _dw9714v_drv_power_on(sns_af_drv_handle, AF_FALSE);
     ret = af_drv_delete(sns_af_drv_handle, param);
     return ret;
 }
