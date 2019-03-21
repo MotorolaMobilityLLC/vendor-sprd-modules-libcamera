@@ -59,12 +59,12 @@
 
 #define VDSP_SHARE_BUFF_CODE_OFFSET	0x0
 #define VDSP_SHARE_BUFF_EXT_CODE_OFFSET	0x10000
-#define VDSP_SHARE_BUFF_EXT_DATA_OFFSET	0x50000
-#define VDSP_SHARE_BUFF_DATA_OFFSET	0x90000
-#define VDSP_SHARE_BUFF_CMD_OFFSET	0xd0000
-#define VDSP_SHARE_BUFF_CMD_BUF_DATA_OFFSET	0xd0a00
-#define VDSP_SHARE_BUFF_LOG_POS_OFFSET	0xd1000
-#define VDSP_SHARE_BUFF_LOG_OFFSET	0xd2000
+#define VDSP_SHARE_BUFF_EXT_DATA_OFFSET	0x150000
+#define VDSP_SHARE_BUFF_DATA_OFFSET	0x190000
+#define VDSP_SHARE_BUFF_CMD_OFFSET	0x1d0000
+#define VDSP_SHARE_BUFF_CMD_BUF_DATA_OFFSET	0x1d0a00
+#define VDSP_SHARE_BUFF_LOG_POS_OFFSET	0x1d1000
+#define VDSP_SHARE_BUFF_LOG_OFFSET	0x1d2000
 
 LIST_HEAD(vdsp_core_head);
 LIST_HEAD(vdsp_clk_head);
@@ -78,7 +78,7 @@ static bool evt_update;
 void *g_kva_vdsp_share_buff_addr;
 extern struct class *vdsp_class;
 static int vdsp_int_status;
-struct sprd_dsp_buffer buffer_data[4];
+struct sprd_dsp_buffer buffer_data[8];
 
 module_param(need_load_fw, bool, 0644);
 module_param(get_xm6log_flag, int, 0644);
@@ -930,7 +930,7 @@ static int vdsp_probe(struct platform_device *pdev)
 	struct device_node *node = pdev->dev.of_node;
 	const struct of_device_id *of_id;
 	const char *str;
-	size_t  buf_size = 0x100000;
+	size_t  buf_size = 0x200000;
 
 	VDSP_DEBUG("vdsp_probe called !\n");
 	vdsp_glb_register();

@@ -184,7 +184,7 @@ struct vdsp_dev_t {
 	struct vdsp_glb_ops *glb;
 	struct vdsp_buf ion_in_buf;
 	struct vdsp_buf ion_out_buf;
-	struct vdsp_buf ion_dsp_buf[4];
+	struct vdsp_buf ion_dsp_buf[8];
 };
 
 #endif
