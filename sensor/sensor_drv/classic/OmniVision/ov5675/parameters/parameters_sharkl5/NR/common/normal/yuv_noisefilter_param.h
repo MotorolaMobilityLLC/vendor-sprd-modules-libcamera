@@ -3,8 +3,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -51,8 +49,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -99,8 +95,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -147,8 +141,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -195,8 +187,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -243,8 +233,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -291,8 +279,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -339,8 +325,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -387,8 +371,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -435,8 +417,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -483,8 +463,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -531,8 +509,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -579,8 +555,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -627,8 +601,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -675,8 +647,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -723,8 +693,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -771,8 +739,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -819,8 +785,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -867,8 +831,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -915,8 +877,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -963,8 +923,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -1011,8 +969,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -1059,8 +1015,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -1107,8 +1061,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
@@ -1155,8 +1107,6 @@
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
-	/*noisefilter_random_seed_mode*/
-	0x00000000,
 	/*yuv_noisefilter_gaussian*/
 	{
 		/*random_r_shift*/
