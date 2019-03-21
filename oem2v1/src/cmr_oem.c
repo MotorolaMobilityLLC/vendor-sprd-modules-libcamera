@@ -1473,9 +1473,15 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             focus_status.af_motor_pos = isp_af->motor_pos;
             focus_status.af_mode =
                 camera_isp_af_param(ISP_AF_NOTICE_CALLBACK, isp_af->af_mode);
+            focus_status.af_state_result =
+                af_state_focus_to_hal(isp_af->valid_win);
+            if (!(focus_status.af_state_result)) {
+                focus_status.af_motor_pos = FOCUS_FAIL;
+            }
             CMR_LOGD("ISP_AF_NOTICE_CALLBACK isp_af->af_mode %d "
-                     "focus_status.af_mode %d",
-                     isp_af->af_mode, focus_status.af_mode);
+                     "focus_status.af_mode %d af_state_result %d",
+                     isp_af->af_mode, focus_status.af_mode,
+                     focus_status.af_state_result);
             cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_START_FOCUS,
                            (void *)&focus_status);
         } else {
@@ -1588,6 +1594,23 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     }
 exit:
     return ret;
+}
+
+int af_state_focus_to_hal(cmr_u32 valid_win) {
+    int af_state_result = AF_STATE_FOCUSE_MAX;
+
+    switch (valid_win) {
+    case 0:
+        af_state_result = AF_STATE_NOT_FOCUSED_LOCKED;
+        break;
+    case 1:
+        af_state_result = AF_STATE_FOCUSED_LOCKED;
+        break;
+    default:
+        CMR_LOGD("unknown value");
+        ;
+    }
+    return af_state_result;
 }
 
 void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {

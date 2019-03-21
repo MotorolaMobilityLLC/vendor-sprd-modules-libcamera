@@ -94,6 +94,7 @@ extern "C" {
 #define FRAME_FLASH_MAX 0x0000FFFF
 #define INVALID_FORMAT_PATTERN 255
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
+#define FOCUS_FAIL 2048
 
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
@@ -825,6 +826,7 @@ struct cmr_focus_status {
     int af_focus_type;
     int af_motor_pos;
     int af_mode;
+    int af_state_result;
 };
 
 /********************************** v4l2 end **********************************/
@@ -1497,6 +1499,8 @@ enum camera_preview_mode_type {
 };
 
 enum fast_ctrl_mode { CAMERA_FAST_MODE_FD = 0, CAMERA_FAST_MODE_MAX };
+
+enum af_focus_state { AF_STATE_NOT_FOCUSED_LOCKED = 0, AF_STATE_FOCUSED_LOCKED,AF_STATE_FOCUSE_MAX };
 
 struct camera_face_info {
     cmr_u32 face_id;

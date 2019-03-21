@@ -2781,7 +2781,7 @@ int SprdCamera3RealBokeh::configureStreams(
                                mCaptureThread->mAbokehGallery);
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initParam");
-        return rc;
+        //return rc;
     }
 
     if (mOtpData.otp_exist) {
@@ -2795,12 +2795,12 @@ int SprdCamera3RealBokeh::configureStreams(
     rc = mBokehAlgo->initAlgo();
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initAlgo");
-        return rc;
+        //return rc;
     }
     rc = mBokehAlgo->initPrevDepth();
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initPrevDepth");
-        return rc;
+        //return rc;
     }
 
     HAL_LOGI("x rc%d.", rc);
@@ -3457,6 +3457,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     meta_save_t metadata_t;
     int vcmSteps = 0;
     int vcmSteps_fixed = 0;
+    uint8_t afState = 0;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
@@ -3472,8 +3473,14 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             cur_frame_number) {
             vcmSteps_fixed =
                 metadata.find(ANDROID_SPRD_VCM_STEP_FOR_BOKEH).data.i32[0];
-            HAL_LOGV("VCM_INFO:vcmSteps=%d", vcmSteps_fixed);
+            if (metadata.exists(ANDROID_CONTROL_AF_STATE)) {
+                afState = metadata.find(ANDROID_CONTROL_AF_STATE).data.i32[0];
+            }
+            if (afState == ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED) {
+                vcmSteps_fixed = FOCUS_FAIL;
+            }
             mVcmStepsFixed = vcmSteps_fixed;
+            HAL_LOGD("VCM_INFO:vcmSteps=%d afState %d", vcmSteps_fixed,afState);
         }
         if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
             if (mCaptureThread->mReprocessing) {

@@ -5777,6 +5777,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
         controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+        HAL_LOGD("af_state %d", controlInfo.af_state);
         mSetting->setAfCONTROLTag(&controlInfo);
         // channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
         if (controlInfo.af_mode ==
@@ -5806,7 +5807,6 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                 controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
                 mLastCafDoneTime = systemTime();
             }
-
             if (focus_status->af_focus_type == CAM_AF_FOCUS_CAF)
                 mSetting->setAfCONTROLTag(&controlInfo);
         }
@@ -5817,7 +5817,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         VCM_Tag sprdvcmInfo;
         if (getMultiCameraMode() == MODE_BOKEH && mCameraId == 0) {
             mSetting->getVCMTag(&sprdvcmInfo);
-            HAL_LOGD("VCM_INFO:vcm step is 0x%x", focus_status->af_motor_pos);
+            HAL_LOGD("VCM_INFO:vcm step is %d", focus_status->af_motor_pos);
             sprdvcmInfo.vcm_step_for_bokeh = focus_status->af_motor_pos;
             mSetting->setVCMTag(sprdvcmInfo);
         }

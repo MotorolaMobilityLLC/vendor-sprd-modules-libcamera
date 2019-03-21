@@ -137,8 +137,11 @@ int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3,
              mPreviewbokehParam.depth_param.sel_x,
              mPreviewbokehParam.depth_param.sel_y);
     depthRun = systemTime();
-    rc = sprd_depth_Run_distance(mDepthPrevHandle, para1, para4, para3, para2,
-                                 &mPreviewbokehParam.depth_param, &distance);
+    if (mDepthPrevHandle) {
+        rc = sprd_depth_Run_distance(mDepthPrevHandle, para1, para4, para3,
+                                     para2, &mPreviewbokehParam.depth_param,
+                                     &distance);
+    }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
         rc = UNKNOWN_ERROR;
@@ -152,8 +155,12 @@ exit:
 int SprdBokehAlgo::initAlgo() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
-        sprd_depth_Close(mDepthCapHandle);
-        sprd_depth_Close(mDepthPrevHandle);
+        if (mDepthCapHandle) {
+            sprd_depth_Close(mDepthCapHandle);
+        }
+        if (mDepthPrevHandle) {
+            sprd_depth_Close(mDepthPrevHandle);
+        }
     }
 
     struct sprd_depth_configurable_para depth_config_param;
@@ -248,7 +255,9 @@ exit:
 int SprdBokehAlgo::deinitAlgo() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
-        sprd_bokeh_Close(mBokehCapHandle);
+        if (mBokehCapHandle) {
+            sprd_bokeh_Close(mBokehCapHandle);
+        }
     }
     mBokehCapHandle = NULL;
 
@@ -258,7 +267,9 @@ int SprdBokehAlgo::deinitAlgo() {
 int SprdBokehAlgo::initPrevDepth() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
-        rc = iBokehDeinit(mBokehDepthPrevHandle);
+        if (mBokehDepthPrevHandle) {
+            rc = iBokehDeinit(mBokehDepthPrevHandle);
+        }
         if (rc != NO_ERROR) {
             rc = UNKNOWN_ERROR;
             HAL_LOGE("Deinit Err:%d", rc);
@@ -323,9 +334,10 @@ int SprdBokehAlgo::prevBluImage(sp<GraphicBuffer> &srcBuffer,
     }
 
     mPreviewbokehParam.weight_params.DisparityImage = (unsigned char *)param;
-
-    rc = iBokehCreateWeightMap(mBokehDepthPrevHandle,
-                               &mPreviewbokehParam.weight_params);
+    if (mBokehDepthPrevHandle) {
+        rc = iBokehCreateWeightMap(mBokehDepthPrevHandle,
+                                   &mPreviewbokehParam.weight_params);
+    }
     if (rc != NO_ERROR) {
         HAL_LOGE("iBokehCreateWeightMap failed!");
         goto exit;
@@ -333,7 +345,10 @@ int SprdBokehAlgo::prevBluImage(sp<GraphicBuffer> &srcBuffer,
     HAL_LOGD("iBokehCreateWeightMap cost %lld ms",
              ns2ms(systemTime() - bokehCreateWeightMap));
     bokehBlurImage = systemTime();
-    rc = iBokehBlurImage(mBokehDepthPrevHandle, &(*srcBuffer), &(*dstBuffer));
+    if (mBokehDepthPrevHandle) {
+        rc = iBokehBlurImage(mBokehDepthPrevHandle, &(*srcBuffer),
+                             &(*dstBuffer));
+    }
 
     if (rc != NO_ERROR) {
         HAL_LOGE("iBokehBlurImage failed!");
@@ -370,7 +385,9 @@ int SprdBokehAlgo::initCapDepth() {
 int SprdBokehAlgo::deinitCapDepth() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
-        rc = sprd_depth_Close(mDepthCapHandle);
+        if (mDepthCapHandle) {
+            rc = sprd_depth_Close(mDepthCapHandle);
+        }
         if (rc != NO_ERROR) {
             HAL_LOGE("cap sprd_depth_Close failed! %d", rc);
             return rc;
@@ -441,13 +458,17 @@ int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3,
         rc = BAD_VALUE;
         goto exit;
     }
+    if (mBokehCapHandle) {
 
-    sprd_bokeh_VersionInfo_Get(acVersion, 256);
-    HAL_LOGD("Bokeh Api Version [%s]", acVersion);
+        sprd_bokeh_VersionInfo_Get(acVersion, 256);
+        HAL_LOGD("Bokeh Api Version [%s]", acVersion);
+    }
 
     bokehReFocusTime = systemTime();
-    rc = sprd_bokeh_ReFocusPreProcess(mBokehCapHandle, para1, para2, depthW,
-                                      depthH);
+    if (mBokehCapHandle) {
+        rc = sprd_bokeh_ReFocusPreProcess(mBokehCapHandle, para1, para2, depthW,
+                                          depthH);
+    }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_bokeh_ReFocusPreProcess failed!");
         goto exit;
@@ -455,9 +476,11 @@ int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3,
     HAL_LOGD("bokeh ReFocusProcess cost %lld ms",
              ns2ms(systemTime() - bokehReFocusTime));
     bokehReFocusTime = systemTime();
-    rc = sprd_bokeh_ReFocusGen(mBokehCapHandle, para3,
-                               mCapbokehParam.bokeh_level, mCapbokehParam.sel_x,
-                               mCapbokehParam.sel_y);
+    if (mBokehCapHandle) {
+        rc = sprd_bokeh_ReFocusGen(mBokehCapHandle, para3,
+                                   mCapbokehParam.bokeh_level,
+                                   mCapbokehParam.sel_x, mCapbokehParam.sel_y);
+    }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_bokeh_ReFocusGen failed!");
         goto exit;
@@ -479,7 +502,10 @@ int SprdBokehAlgo::onLine(void *para1, void *para2, void *para3, void *para4) {
     }
 
     onlineRun = systemTime();
-    rc = sprd_depth_OnlineCalibration(mDepthPrevHandle, para1, para3, para2);
+    if (mDepthPrevHandle) {
+        rc =
+            sprd_depth_OnlineCalibration(mDepthPrevHandle, para1, para3, para2);
+    }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_OnlineCalibration failed! %d", rc);
         rc = UNKNOWN_ERROR;
@@ -487,8 +513,10 @@ int SprdBokehAlgo::onLine(void *para1, void *para2, void *para3, void *para4) {
     }
     HAL_LOGD("onLine run cost %lld ms", ns2ms(systemTime() - onlineRun));
     onlineScale = systemTime();
-    rc = sprd_depth_OnlineCalibration_postprocess(mDepthPrevHandle, para1,
-                                                  para4);
+    if (mDepthPrevHandle) {
+        rc = sprd_depth_OnlineCalibration_postprocess(mDepthPrevHandle, para1,
+                                                      para4);
+    }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_OnlineCalibration_postprocess failed! %d", rc);
         rc = UNKNOWN_ERROR;
