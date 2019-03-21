@@ -21,10 +21,15 @@
 
 #define LOG_TAG "ov8856_shine"
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(SHARKL5_GO_SENSOR_OV8856)
+#define MIPI_NUM_4LANE
+#else
 #define MIPI_NUM_2LANE
+#endif
 #else
 #define MIPI_NUM_4LANE
 #endif
+
 #ifdef MIPI_NUM_2LANE
 #include "sensor_ov8856_shine_mipi_raw_2lane.h"
 #else
