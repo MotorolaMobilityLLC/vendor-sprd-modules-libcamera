@@ -4349,7 +4349,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_LOGI("pdaf_support = %d, pdaf_enable = %d, is_multi_mode = %d",
 			cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable, cxt->is_multi_mode);
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support
-		&& in_ptr->pdaf_enable && !cxt->is_multi_mode) {
+		&& in_ptr->pdaf_enable) {
 		if (cxt->ops.pdaf_ops.ioctrl) {
 			ISP_LOGI("open pdaf type 3");
 			ret = cxt->ops.pdaf_ops.ioctrl(
