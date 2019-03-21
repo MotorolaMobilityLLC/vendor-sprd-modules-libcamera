@@ -579,7 +579,7 @@ void SprdBokehAlgo::loadDebugOtp() {
         0,
     };
 
-    FILE *fid = fopen("/data/vendor/cameraserver/calibration.txt", "rb");
+    FILE *fid = fopen("/mnt/vendor/productinfo/calibration.txt", "rb");
     if (NULL == fid) {
         HAL_LOGD("dualotp read failed!");
         rc = -1;
