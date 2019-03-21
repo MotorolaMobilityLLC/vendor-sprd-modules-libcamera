@@ -142,21 +142,22 @@ static int get_ip_status(struct devfreq *devfreq,
 
 	u32 volt_reg;
 	u32 clk_reg;
-
+	u32 i;
 	volt_reg = DVFS_REG_RD(REG_MM_DVFS_AHB_MM_DVFS_VOLTAGE_DBG);
-
 	clk_reg = DVFS_REG_RD(REG_MM_DVFS_AHB_MM_DVFS_CGM_CFG_DBG);
 
-		ip_status->current_ip_clk = (clk_reg >>
-			SHFT_BITS_CGM_DCAM_IF_SEL_DVFS) &
-			MASK_BITS_CGM_DCAM_IF_SEL_DVFS;
-
-		ip_status->current_sys_volt = ((volt_reg >>
-			SHFT_BITS_DCAM_IF_VOLTAGE)
-					& MASK_BITS_DCAM_IF_VOLTAGE);
-
+	ip_status->current_ip_clk = (clk_reg >>SHFT_BITS_CGM_DCAM_IF_SEL_DVFS) &
+		MASK_BITS_CGM_DCAM_IF_SEL_DVFS;
+	for (i = 0; i < 8; i++){
+		if(ip_status->current_ip_clk==dcam_dvfs_config_table[i].clk){
+			ip_status->current_ip_clk=dcam_dvfs_config_table[i].clk_freq;
+				break;
+	  }
+	}
+	ip_status->current_sys_volt = ((volt_reg >>
+		SHFT_BITS_DCAM_IF_VOLTAGE)
+				& MASK_BITS_DCAM_IF_VOLTAGE);
 	pr_info("dvfs ops: %s\n", __func__);
-
 	return 1;
 }
 

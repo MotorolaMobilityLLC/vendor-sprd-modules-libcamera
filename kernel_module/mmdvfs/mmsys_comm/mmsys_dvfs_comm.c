@@ -55,20 +55,20 @@ int mmsys_set_fix_dvfs_value(unsigned long  fix_volt)
 int top_mm_dvfs_current_volt(struct devfreq *devfreq)
 {
 	unsigned int volt_reg;
-	
+
 	 msleep(1);
 	volt_reg = DVFS_REG_RD_ABS(
 		REG_TOP_DVFS_APB_DCDC_MM_DVFS_STATE_DBG);
-		
+	volt_reg=(volt_reg>>20)&0x7;
 	pr_info("dvfs_debug : %s volt_reg=%d \n", __func__, volt_reg);
-	return (unsigned int)(volt_reg & 0x0F);
+	return volt_reg;
 
 }
 
 int mm_dvfs_read_current_volt(struct devfreq *devfreq)
 {
 	unsigned int volt_reg;
-	
+
 	msleep(1);
 	volt_reg = DVFS_REG_RD(REG_MM_DVFS_AHB_MM_DVFS_VOLTAGE_DBG);
 
