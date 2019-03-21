@@ -101,6 +101,7 @@ int dcam_k_afl_block(struct dcam_dev_param *param)
 		p->bayer2y_chanel, p->bayer2y_mode);
 	if (s_dbg_bypass[idx] & (1 << _E_AFL)) /* debug bypass */
 		p->bypass = 1;
+	param->afl.bypass = p->bypass;
 	DCAM_REG_MWR(idx, ISP_AFL_FRM_CTRL0, BIT_0, p->bypass);
 	/* bayer2y, bypass should be same as afl bypass. */
 	DCAM_REG_MWR(idx, ISP_AFL_PARAM0, BIT_1, p->bypass << 1);
