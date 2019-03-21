@@ -5075,11 +5075,11 @@ static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 
 					avg = g_stat[idx]/bayer_pixels;
 					tmp_g += avg/(ratio_w * ratio_h);
-					cxt->cur_status.base_img[idx] = avg;
+					cxt->cur_status.base_img[idx + blk_num_w * blk_num_h] = avg;
 
 					avg = b_stat[idx]/bayer_pixels;
 					tmp_b += avg/(ratio_w * ratio_h);
-					cxt->cur_status.base_img[idx] = avg;
+					cxt->cur_status.base_img[idx+ 2 * blk_num_w * blk_num_h] = avg;
 				}
 			}
 			cxt->sync_aem[i * BLK_NUM_W_ALG + j] = tmp_r;
@@ -5371,7 +5371,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	backup_expline = cxt->cur_status.effect_expline;
 	backup_gain = cxt->cur_status.effect_gain;
 	backup_expgain = backup_expline*backup_gain;
-	ISP_LOGE("ebd: ae_lib effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
+	ISP_LOGV("ebd: ae_lib effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
 	if(cxt->ebd_support){
 		cxt->cur_status.effect_expline =  calc_in->ebd_info.exposure_valid ?calc_in->ebd_info.exposure : cxt->exp_data.actual_data.exp_line;
 #if CONFIG_ISP_2_3
@@ -5380,7 +5380,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->cur_status.effect_gain = (cmr_u32)(1.0 *calc_in->ebd_info.gain * calc_in->isp_dgain.global_gain/(4096.0 *cxt->ob_rgb_gain)+ 0.5);
 #endif
 	effect_ebd_expgain = cxt->cur_status.effect_expline * cxt->cur_status.effect_gain;
-	ISP_LOGE("ebd: sensor effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
+	ISP_LOGD("ebd: sensor effect_expline %d, effect_gain %d", cxt->cur_status.effect_expline, cxt->cur_status.effect_gain);
 	}
 #if CONFIG_ISP_2_3
 	/*it will be enable lately */
@@ -5642,7 +5642,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	if (cxt->isp_ops.callback) {
 		cb_type = AE_CB_STAB_NOTIFY;
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
-		ISP_LOGI("normal notify stable_flag %d", cur_calc_result->ae_output.is_stab);
+		ISP_LOGV("normal notify stable_flag %d", cur_calc_result->ae_output.is_stab);
 	}
 
 /***********************************************************/
