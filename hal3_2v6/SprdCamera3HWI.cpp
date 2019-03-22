@@ -1852,6 +1852,9 @@ int SprdCamera3HWI::flush() {
         mFlush = true;
     }
 
+    // for performance tuning: close camera
+    mOEMIf->setSensorCloseFlag();
+
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);
     }

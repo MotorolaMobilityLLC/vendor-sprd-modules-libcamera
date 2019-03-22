@@ -774,27 +774,27 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int ov5675_drv_stream_off(cmr_handle handle, cmr_uint param) {
-
+    SENSOR_LOGI("E:");
     UNUSED(param);
-    unsigned char value;
-    unsigned int sleep_time = 0;
+    unsigned char value = 0;
+    cmr_u16 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    SENSOR_LOGI("E:");
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value != 0x00) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 50 * 1000;
-            usleep(sleep_time);
+            sleep_time = 100;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
-
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X:sleep_time=%dus", sleep_time);
+
+    SENSOR_LOGI("X:");
     return 0;
 }
 
