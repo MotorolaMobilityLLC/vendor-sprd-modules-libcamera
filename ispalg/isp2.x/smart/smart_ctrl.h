@@ -192,6 +192,7 @@ extern "C" {
 
 	typedef struct {
 		cmr_u32 version;
+		cmr_u32 reserved;
 		cmr_u64 u8Hist[256];
 		cmr_u32 u4RespCurve[256];
 		cmr_u8 uOutputGamma[3][256];
@@ -199,6 +200,7 @@ extern "C" {
 		cmr_u8 uHighPT;
 		cmr_u8 uFinalLowBin;
 		cmr_u8 uFinalHighBin;
+		cmr_u32 reserved1;
 	} smart_gamma_debuginfo;
 
 	typedef struct {

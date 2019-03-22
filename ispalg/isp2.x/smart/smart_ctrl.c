@@ -1361,7 +1361,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
         ATMInput.stAlgoParams.i4BV = i4BV;
         ATMInput.stAlgoParams.i4LowPT = atm_param.i4LowPT;
         ATMInput.stAlgoParams.i4LowPcentThd = atm_param.i4LowPcentThd;
-        ATMInput.stAlgoParams.i4LowRightThd   = atm_param.i4HighRightThd;
+        ATMInput.stAlgoParams.i4LowRightThd   = atm_param.i4LowRightThd;
         ATMInput.stAlgoParams.i4LowLeftThd     = atm_param.i4LowLeftThd;
         ATMInput.stAlgoParams.i4HighPT = atm_param.i4HighPT;
         ATMInput.stAlgoParams.i4HighPcentThd = atm_param.i4HighPcentThd;
