@@ -74,7 +74,7 @@ static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 {
 	unsigned int val;
 
-	if (s_isp_bypass[idx] & (1 << _EISP_NR3))
+	if (g_isp_bypass[idx] & (1 << _EISP_NR3))
 		mem_ctrl->bypass = 1;
 
 	val = ((mem_ctrl->nr3_done_mode & 0x1) << 1)	|
@@ -118,7 +118,7 @@ static void isp_3dnr_config_mem_ctrl(uint32_t idx,
 	ISP_REG_WR(idx, ISP_3DNR_MEM_CTRL_PARAM7, val);
 
 
-	if( !nr3sec_eb) {
+	if (!nr3sec_eb) {
 		ISP_REG_WR(idx,
 			ISP_3DNR_MEM_CTRL_FT_CUR_LUMA_ADDR,
 			mem_ctrl->ft_luma_addr);
@@ -338,7 +338,7 @@ static void isp_3dnr_config_store(uint32_t idx,
 {
 	unsigned int val;
 
-	if (s_isp_bypass[idx] & (1 << _EISP_NR3))
+	if (g_isp_bypass[idx] & (1 << _EISP_NR3))
 		nr3_store->st_bypass = 1;
 	val = ((nr3_store->chk_sum_clr_en & 0x1) << 4)	|
 	      ((nr3_store->shadow_clr_sel & 0x1) << 3)	|
@@ -370,7 +370,7 @@ static void isp_3dnr_config_crop(uint32_t idx,
 {
 	unsigned int val;
 
-	if (s_isp_bypass[idx] & (1 << _EISP_NR3))
+	if (g_isp_bypass[idx] & (1 << _EISP_NR3))
 		crop->crop_bypass = 1;
 	ISP_REG_MWR(idx,
 		    ISP_3DNR_MEM_CTRL_PRE_PARAM0,
@@ -443,8 +443,8 @@ void isp_3dnr_config_param(struct isp_3dnr_ctx_desc *ctx,
 	uint32_t blend_cnt = 0;
 	unsigned int val;
 	struct isp_dev_3dnr_info *pnr3;
-	pnr3 = &isp_k_param->nr3_info;
 
+	pnr3 = &isp_k_param->nr3_info;
 	if (!ctx) {
 		pr_err("fail to 3dnr_config_reg parm NULL\n");
 		return;

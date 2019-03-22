@@ -151,7 +151,7 @@ struct compression_override {
 struct isp_statis_io_desc {
 	struct camera_queue *q;
 	struct camera_buf **buf;
-	struct isp_statis_buf_input* input;
+	struct isp_statis_buf_input *input;
 	uint32_t fid;
 };
 
@@ -173,12 +173,13 @@ struct isp_pipe_ops {
 	int (*get_path)(void *isp_handle, int ctx_id, int path_id);
 	int (*put_path)(void *isp_handle, int ctx_id, int path_id);
 	int (*cfg_path)(void *isp_handle, enum isp_path_cfg_cmd cfg_cmd,
-				int ctx_id, int path_id, void *param);
-	int (*ioctl)(void *isp_handle, int ctx_id, enum isp_ioctrl_cmd cmd, void *param);
+			int ctx_id, int path_id, void *param);
+	int (*ioctl)(void *isp_handle, int ctx_id,
+			enum isp_ioctrl_cmd cmd, void *param);
 	int (*cfg_blk_param)(void *isp_handle, int ctx_id, void *param);
 	int (*proc_frame)(void *isp_handle, void *param, int ctx_id);
 	int (*set_callback)(void *isp_handle, int ctx_id,
-					isp_dev_callback cb, void *priv_data);
+			isp_dev_callback cb, void *priv_data);
 	int (*update_clk)(void *isp_handle, void *arg);
 };
 

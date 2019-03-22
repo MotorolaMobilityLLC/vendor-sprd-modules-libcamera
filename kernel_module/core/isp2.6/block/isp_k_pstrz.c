@@ -41,7 +41,7 @@ static int isp_k_pstrz_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_PSTRZ))
+	if (g_isp_bypass[idx] & (1 << _EISP_PSTRZ))
 		pstrz_info.bypass = 1;
 	ISP_REG_MWR(idx, ISP_PSTRZ_PARAM, BIT_0, pstrz_info.bypass);
 	if (pstrz_info.bypass)

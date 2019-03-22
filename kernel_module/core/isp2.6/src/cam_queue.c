@@ -275,8 +275,8 @@ _EXT:
 }
 
 /* in irq handler, may return NULL if alloc failed
-  * else: will always retry alloc and return valid frame
-  */
+ * else: will always retry alloc and return valid frame
+ */
 struct camera_frame *get_empty_frame(void)
 {
 	int ret = 0;

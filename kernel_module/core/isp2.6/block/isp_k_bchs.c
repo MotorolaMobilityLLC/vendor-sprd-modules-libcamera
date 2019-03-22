@@ -36,7 +36,7 @@ static int isp_k_bchs_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return -1;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_BCHS))
+	if (g_isp_bypass[idx] & (1 << _EISP_BCHS))
 		bchs_info.bchs_bypass = 1;
 	ISP_REG_MWR(idx, ISP_BCHS_PARAM, BIT_0, bchs_info.bchs_bypass);
 	if (bchs_info.bchs_bypass)

@@ -87,11 +87,11 @@ static int isp_k_nlm_block(struct isp_io_param *param,
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return  ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_NLM))
+	if (g_isp_bypass[idx] & (1 << _EISP_NLM))
 		p->bypass = 1;
-	if (s_isp_bypass[idx] & (1 << _EISP_VST))
+	if (g_isp_bypass[idx] & (1 << _EISP_VST))
 		p->vst_bypass = 1;
-	if (s_isp_bypass[idx] & (1 << _EISP_IVST))
+	if (g_isp_bypass[idx] & (1 << _EISP_IVST))
 		p->ivst_bypass = 1;
 	ISP_REG_MWR(idx, ISP_NLM_PARA, BIT_0, p->bypass);
 	ISP_REG_MWR(idx, ISP_VST_PARA, BIT_0, p->vst_bypass);

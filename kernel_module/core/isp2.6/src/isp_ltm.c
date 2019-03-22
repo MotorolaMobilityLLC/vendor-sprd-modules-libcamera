@@ -26,9 +26,9 @@
 #undef pr_fmt
 #endif
 #define pr_fmt(fmt) "LTM logic: %d %d %s : "\
-        fmt, current->pid, __LINE__, __func__
+	fmt, current->pid, __LINE__, __func__
 
-#define ISP_LTM_TIMEOUT	msecs_to_jiffies(10000)
+#define ISP_LTM_TIMEOUT			msecs_to_jiffies(10000)
 
 /*
  * 1. The static of preview frame N can be applied to another preview frame N+1
@@ -39,18 +39,18 @@
  * 5. Horizen (8, 6, 4, 2), no limitation in vertical
  * 6. Min tile is 128 x 20
  * 7. Max tile is 65536 (tile_height x tile_width)
- * */
-#define BIN_NUM_BIT 7
-#define TILE_NUM_MIN 4
-#define TILE_NUM_MAX 8
-#define TILE_MAX_SIZE (1<<16)
-#define TILE_WIDTH_MIN 160
+ */
+#define BIN_NUM_BIT			7
+#define TILE_NUM_MIN			4
+#define TILE_NUM_MAX			8
+#define TILE_MAX_SIZE			(1 << 16)
+#define TILE_WIDTH_MIN			160
 
 /*
  * row : 2, 4, 8
  * col : 2, 4, 8
- * */
-#define MAX_TILE 64
+ */
+#define MAX_TILE			64
 
 /*
  * LTM Share ctx for pre / cap
@@ -80,11 +80,10 @@ static int isp_ltm_share_ctx_get_status(int type)
 
 	mutex_lock(&s_share_ctx_param.share_mutex);
 
-	if (type == MODE_LTM_PRE) {
+	if (type == MODE_LTM_PRE)
 		status = s_share_ctx_param.pre_ctx_status;
-	} else {
+	else
 		status = s_share_ctx_param.cap_ctx_status;
-	}
 
 	mutex_unlock(&s_share_ctx_param.share_mutex);
 
@@ -95,11 +94,10 @@ static int isp_ltm_share_ctx_set_update(int update, int type)
 {
 	mutex_lock(&s_share_ctx_param.share_mutex);
 
-	if (type == MODE_LTM_PRE) {
+	if (type == MODE_LTM_PRE)
 		s_share_ctx_param.pre_update = update;
-	} else {
+	else
 		s_share_ctx_param.cap_update = update;
-	}
 
 	mutex_unlock(&s_share_ctx_param.share_mutex);
 
@@ -112,11 +110,10 @@ static int isp_ltm_share_ctx_get_update(int type)
 
 	mutex_lock(&s_share_ctx_param.share_mutex);
 
-	if (type == MODE_LTM_PRE) {
+	if (type == MODE_LTM_PRE)
 		update = s_share_ctx_param.pre_update;
-	} else {
+	else
 		update = s_share_ctx_param.cap_update;
-	}
 
 	mutex_unlock(&s_share_ctx_param.share_mutex);
 
@@ -173,7 +170,7 @@ static int isp_ltm_share_ctx_set_config(struct isp_ltm_ctx_desc *ctx)
 {
 	if (ctx->type != MODE_LTM_PRE) {
 		pr_err("Only PRE ctx can setting share ctx, except ctx[%d]\n",
-		       ctx->type);
+			ctx->type);
 		return 0;
 	}
 
@@ -196,7 +193,7 @@ static int isp_ltm_share_ctx_get_config(struct isp_ltm_ctx_desc *ctx)
 {
 	if (ctx->type != MODE_LTM_CAP) {
 		pr_err("Only CAP ctx can setting share ctx, except ctx[%d]\n",
-		       ctx->type);
+			ctx->type);
 		return 0;
 	}
 
@@ -316,14 +313,14 @@ int isp_put_ltm_share_ctx_desc(struct isp_ltm_share_ctx_desc *param)
 
 /*
  * Input:
- *	frame size: x, y
+ * frame size: x, y
  *
  * Output:
- *	frame size after binning: x, y
- *	binning factor
+ * frame size after binning: x, y
+ * binning factor
  *
  * Notes:
- *	Sharkl5 ONLY suppout 1/2 binning
+ * Sharkl5 ONLY suppout 1/2 binning
  *
  */
 static int ltm_calc_binning_factor(ltm_param_t *histo)
@@ -337,9 +334,10 @@ static int ltm_calc_binning_factor(ltm_param_t *histo)
 
 	frame_size = histo->frame_width * histo->frame_height;
 	/*
-	 * min_tile_num = (uint8)ceil ((float)(frame_width*frame_height)/TILE_MAX_SIZE);
+	 * min_tile_num = (uint8)ceil(
+	 * (float)(frame_width*frame_height)/TILE_MAX_SIZE);
 	 */
-	min_tile_num = (frame_size + TILE_MAX_SIZE - 1 ) / TILE_MAX_SIZE;
+	min_tile_num = (frame_size + TILE_MAX_SIZE - 1) / TILE_MAX_SIZE;
 	set_tile_num = histo->tile_num_x * histo->tile_num_y;
 
 	/*
@@ -348,7 +346,7 @@ static int ltm_calc_binning_factor(ltm_param_t *histo)
 	if (min_tile_num <= set_tile_num) {
 		binning_factor = 0;
 		pow_factor = 1; /* pow(2.0, binning_factor) */
-	} else if (min_tile_num <= set_tile_num *4) {
+	} else if (min_tile_num <= set_tile_num * 4) {
 		binning_factor = 1;
 		pow_factor = 2; /* pow(2.0, binning_factor) */
 	} else {
@@ -360,14 +358,14 @@ static int ltm_calc_binning_factor(ltm_param_t *histo)
 	 * frame_height = frame_height/(2*(uint16)pow(2.0, binning_factor)) *2;
 	 */
 	pr_debug("B binning_factor[%d], pow_factor[%d], frame_width[%d], frame_height[%d]\n",
-		binning_factor, pow_factor, histo->frame_width, histo->frame_height);
+		binning_factor, pow_factor, histo->frame_width,	histo->frame_height);
 
 	histo->frame_width  = histo->frame_width  / (2 * pow_factor) * 2;
 	histo->frame_height = histo->frame_height / (2 * pow_factor) * 2;
 
 	histo->binning_en = binning_factor;
 	pr_debug("A binning_factor[%d], pow_factor[%d], frame_width[%d], frame_height[%d]\n",
-		binning_factor, pow_factor, histo->frame_width, histo->frame_height);
+		binning_factor, pow_factor, histo->frame_width,	histo->frame_height);
 
 	return ret;
 }
@@ -375,7 +373,7 @@ static int ltm_calc_binning_factor(ltm_param_t *histo)
 static int ltm_calc_histo_param(ltm_param_t *param_histo)
 {
 #if 0
-	uint8 min_tile_num, binning_factor, max_tile_col, min_tile_row, tile_num_x, tile_num_y;
+	uint8 min_tile_num, binning_factor, max_tile_col, min_tile_row,	tile_num_x, tile_num_y;
 	uint8 cropRows, cropCols, cropUp, cropLeft, cropRight;
 	uint16 min_tile_width, max_tile_height, tile_width, tile_height;
 	uint16 clipLimit_min, clipLimit;
@@ -395,42 +393,37 @@ static int ltm_calc_histo_param(ltm_param_t *param_histo)
 	frame_width  = param_histo->frame_width;
 	frame_height = param_histo->frame_height;
 
-	if (param_histo->tile_num_auto)
-	{
+	if (param_histo->tile_num_auto) {
 		int v_ceil = 0;
 		int tmp = 0;
 
-		max_tile_col = MAX(MIN(frame_width /(TILE_WIDTH_MIN*2) *2,
-				       TILE_NUM_MAX), TILE_NUM_MIN);
-		min_tile_width = frame_width /(max_tile_col*2) *2;
-		max_tile_height = TILE_MAX_SIZE /(min_tile_width*2) *2;
+		max_tile_col = MAX(MIN(frame_width / (TILE_WIDTH_MIN * 2) * 2,
+				TILE_NUM_MAX), TILE_NUM_MIN);
+		min_tile_width = frame_width / (max_tile_col*2) * 2;
+		max_tile_height = TILE_MAX_SIZE / (min_tile_width * 2) * 2;
 		/*
-		min_tile_row = (uint8)MAX(MIN(ceil((float)frame_height / max_tile_height), TILE_NUM_MAX), TILE_NUM_MIN);
-		*/
+		 * min_tile_row = (uint8)MAX(MIN(ceil((float)frame_height /
+		 *  max_tile_height), TILE_NUM_MAX), TILE_NUM_MIN);
+		 */
 		v_ceil = (frame_height + max_tile_height - 1) / max_tile_height;
-		min_tile_row = MAX(MIN(v_ceil, TILE_NUM_MAX),
-					  TILE_NUM_MIN);
+		min_tile_row = MAX(MIN(v_ceil, TILE_NUM_MAX), TILE_NUM_MIN);
 
 		tile_num_y = (min_tile_row / 2) * 2;
-		tile_num_x = MIN(MAX(((tile_num_y * frame_width / frame_height) / 2 ) * 2,
-				     TILE_NUM_MIN), max_tile_col);
+		tile_num_x = MIN(MAX(((tile_num_y * frame_width / frame_height) / 2) * 2,
+				TILE_NUM_MIN), max_tile_col);
 
 		tile_width  = frame_width  / (2 * tile_num_x) * 2;
 		tile_height = frame_height / (2 * tile_num_y) * 2;
 
-		while(tile_width*tile_height >= TILE_MAX_SIZE)
-		{
-			tile_num_y = MIN(MAX(tile_num_y + 2, TILE_NUM_MIN),
-					 TILE_NUM_MAX);
+		while (tile_width*tile_height >= TILE_MAX_SIZE) {
+			tile_num_y = MIN(MAX(tile_num_y + 2, TILE_NUM_MIN), TILE_NUM_MAX);
 			tmp = ((tile_num_y * frame_width / frame_height) / 2) * 2;
 			tile_num_x = MIN(MAX(tmp, TILE_NUM_MIN), max_tile_col);
 
 			tile_width  = frame_width  / (2 * tile_num_x) * 2;
 			tile_height = frame_height / (2 * tile_num_y) * 2;
 		}
-	}
-	else
-	{
+	} else {
 		tile_num_x = param_histo->tile_num_x;
 		tile_num_y = param_histo->tile_num_y;
 		tile_width = frame_width / (2 * tile_num_x) * 2;
@@ -447,7 +440,7 @@ static int ltm_calc_histo_param(ltm_param_t *param_histo)
 	clipLimit_min = tile_width * tile_height >> BIN_NUM_BIT;
 	clipLimit = clipLimit_min * strength >> 2;
 
-	//update patameters
+	/* update patameters */
 	param_histo->cropUp   = cropUp;
 	param_histo->cropDown = cropDown;
 	param_histo->cropLeft = cropLeft;
@@ -460,7 +453,7 @@ static int ltm_calc_histo_param(ltm_param_t *param_histo)
 	param_histo->frame_height = frame_height;
 	param_histo->clipLimit     = clipLimit;
 	param_histo->clipLimit_min = clipLimit_min;
-//	param_histo->binning_en = binning_factor;
+	/* param_histo->binning_en = binning_factor; */
 	param_histo->tile_num_x = tile_num_x;
 	param_histo->tile_num_y = tile_num_y;
 	param_histo->tile_size  = tile_width * tile_height;
@@ -469,56 +462,64 @@ static int ltm_calc_histo_param(ltm_param_t *param_histo)
 }
 
 static void ltm_rgb_map_dump_data_rtl(ltm_param_t *param_map,
-			       uint32_t *img_info,
-			       ltm_map_rtl_t *param_map_rtl)
+				uint32_t *img_info,
+				ltm_map_rtl_t *param_map_rtl)
 {
 	int temp;
 	int tile_index_xs, tile_index_xe;
 	int tile_index_ys, tile_index_ye;
 	int tile_1st_xs, tile_1st_ys;
 	uint8_t tile_x_num_out, tile_y_num_out;
-	uint8_t tile_left_flag=0, tile_right_flag=0;
+	uint8_t tile_left_flag = 0, tile_right_flag = 0;
 	uint16_t tile0_start_x, tile0_start_y, tileX_start_x;
 	uint16_t tile1_start_x, tile1_start_y;
 	int img_tile1_xs_offset, img_tile1_ys_offset;
 
-	// slice infomation
+	/* slice infomation */
 	int img_start_x = img_info[0];
 	int img_start_y = img_info[1];
 	int img_end_x	= img_info[2];
 	int img_end_y	= img_info[3];
 
-	// frame infomation
+	/* frame infomation */
 	uint8_t cropUp    = param_map->cropUp;
-//	uint8_t cropDown  = param_map->cropDown;
+	/* uint8_t cropDown  = param_map->cropDown; */
 	uint8_t cropLeft  = param_map->cropLeft;
-//	uint8_t cropRight = param_map->cropRight;
+	/* uint8_t cropRight = param_map->cropRight; */
 	uint8_t tile_num_x = param_map->tile_num_x;
 	uint8_t tile_num_y = param_map->tile_num_y;
 	uint16_t tile_width  = param_map->tile_width;
 	uint16_t tile_height = param_map->tile_height;
 
-	tile_index_xs = (img_start_x + tile_width/2 - cropLeft)/tile_width - 1;
-	if(tile_index_xs < 0) tile_index_xs = 0;
-	tile_index_xe = (img_end_x + tile_width/2 - cropLeft)/tile_width;
-	if(tile_index_xe > tile_num_x-1) tile_index_xe = tile_num_x-1;
+	tile_index_xs = (img_start_x + tile_width / 2 - cropLeft) / tile_width - 1;
+	if (tile_index_xs < 0)
+		tile_index_xs = 0;
+	tile_index_xe = (img_end_x + tile_width / 2 - cropLeft) / tile_width;
+	if (tile_index_xe > tile_num_x - 1)
+		tile_index_xe = tile_num_x - 1;
 	tile_x_num_out = tile_index_xe - tile_index_xs + 1;
 
-	tile_index_ys = (img_start_y + tile_height/2 - cropUp)/tile_height - 1;
-	if(tile_index_ys < 0) tile_index_ys = 0;
-	tile_index_ye = (img_end_y + tile_height/2 - cropUp)/tile_height;
-	if(tile_index_ye > tile_num_y-1) tile_index_ye = tile_num_y-1;
+	tile_index_ys = (img_start_y + tile_height / 2 - cropUp) / tile_height - 1;
+	if (tile_index_ys < 0)
+		tile_index_ys = 0;
+	tile_index_ye = (img_end_y + tile_height / 2 - cropUp) / tile_height;
+	if (tile_index_ye > tile_num_y - 1)
+		tile_index_ye = tile_num_y - 1;
 	tile_y_num_out = tile_index_ye - tile_index_ys + 1;
 
-	tile_1st_xs = (img_start_x-cropLeft)/tile_width;
-	if(tile_1st_xs < 0) tile_1st_xs = 0;
-	if(tile_1st_xs > tile_num_x-1) tile_1st_xs = tile_num_x-1;
+	tile_1st_xs = (img_start_x - cropLeft) / tile_width;
+	if (tile_1st_xs < 0)
+		tile_1st_xs = 0;
+	if (tile_1st_xs > tile_num_x - 1)
+		tile_1st_xs = tile_num_x - 1;
 	pr_debug("img_start_x[%d], cropLeft[%d], tile_width[%d], tile_1st_xs[%d]\n",
 		img_start_x, cropLeft, tile_width, tile_1st_xs);
 
-	tile_1st_ys = (img_start_y-cropUp)/tile_height;
-	if(tile_1st_ys < 0) tile_1st_ys = 0;
-	if(tile_1st_ys > tile_num_y-1) tile_1st_ys = tile_num_y-1;
+	tile_1st_ys = (img_start_y - cropUp) / tile_height;
+	if (tile_1st_ys < 0)
+		tile_1st_ys = 0;
+	if (tile_1st_ys > tile_num_y - 1)
+		tile_1st_ys = tile_num_y - 1;
 	pr_debug("img_start_y[%d], cropUp[%d], tile_height[%d], tile_1st_ys[%d]\n",
 		img_start_y, cropUp, tile_height, tile_1st_ys);
 
@@ -534,11 +535,13 @@ static void ltm_rgb_map_dump_data_rtl(ltm_param_t *param_map,
 
 	tileX_start_x = tile_index_xe * tile_width + cropLeft;
 	temp = img_start_x - (int)tile0_start_x;
-	if ((temp >= tile_width)&&(temp < tile_width*3/2)) tile_left_flag = 1;
+	if ((temp >= tile_width) && (temp < tile_width*3 / 2))
+		tile_left_flag = 1;
 	temp = (int)tileX_start_x - img_end_x;
-	if ((temp > 0)&&(temp <= tile_width/2)) tile_right_flag = 1;
+	if ((temp > 0) && (temp <= tile_width / 2))
+		tile_right_flag = 1;
 
-	//output parameters for rtl
+	/* output parameters for rtl */
 	param_map_rtl->tile_index_xs = tile_index_xs;
 	param_map_rtl->tile_index_ys = tile_index_ys;
 	param_map_rtl->tile_index_xe = tile_index_xe;
@@ -558,7 +561,7 @@ static void ltm_rgb_map_dump_data_rtl(ltm_param_t *param_map,
 
 
 static int isp_ltm_gen_histo_config(struct isp_ltm_ctx_desc *ctx,
-			     struct isp_dev_ltm_stat_info *tuning)
+			struct isp_dev_ltm_stat_info *tuning)
 {
 	int ret = 0;
 	int idx = 0;
@@ -594,7 +597,6 @@ static int isp_ltm_gen_histo_config(struct isp_ltm_ctx_desc *ctx,
 	ltm_calc_histo_param(param);
 
 	idx = ctx->fid % ISP_LTM_BUF_NUM;
-
 	hists->bypass		= param->bypass;
 	hists->binning_en	= param->binning_en;
 	hists->region_est_en	= param->region_est_en;
@@ -627,14 +629,15 @@ static int isp_ltm_gen_histo_config(struct isp_ltm_ctx_desc *ctx,
 		ctx->fid, hists->roi_start_x,
 		hists->roi_start_y, hists->addr);
 	pr_debug("region_est_en[%d], text_point_thres[%d], texture_proportion[%d]\n",
-		 hists->region_est_en, hists->text_point_thres, hists->texture_proportion);
+			hists->region_est_en, hists->text_point_thres,
+			hists->texture_proportion);
 
 	return ret;
 }
 
 
 static int isp_ltm_gen_map_config(struct isp_ltm_ctx_desc *ctx,
-				  struct isp_dev_ltm_map_info *tuning)
+			struct isp_dev_ltm_map_info *tuning)
 {
 	int idx = 0;
 
@@ -673,13 +676,12 @@ static int isp_ltm_gen_map_config(struct isp_ltm_ctx_desc *ctx,
 	frame_width_map    = ctx->frame_width;
 	frame_height_map   = ctx->frame_height;
 
-	if ((frame_width_stat == 0) || (frame_height_stat == 0)) {
+	if ((frame_width_stat == 0) || (frame_height_stat == 0))
 		pr_err("input param err\n");
-	}
 
 	if (ctx->type == MODE_LTM_CAP) {
 		pr_debug("tile_num_x[%d], tile_num_y[%d], tile_width[%d], tile_height[%d],\
-			frame_width_stat[%d], frame_height_stat[%d],\
+			frame_width_stat[%d], frame_height_stat[%d], \
 			frame_width_map[%d], frame_height_map[%d]\n",
 			mnum.tile_num_x, mnum.tile_num_y,
 			ts.tile_width, ts.tile_height,
@@ -690,7 +692,7 @@ static int isp_ltm_gen_map_config(struct isp_ltm_ctx_desc *ctx,
 	/*
 	 * frame_width_map/frame_width_stat should be
 	 * equal to frame_height_map/frame_height_stat
-	 * */
+	 */
 	ratio = (frame_width_map << 7) / frame_width_stat;
 
 	tm.tile_width  = (ratio * ts.tile_width  + 128) >> 8 << 1;
@@ -751,7 +753,7 @@ static int isp_ltm_gen_map_config(struct isp_ltm_ctx_desc *ctx,
 	map->tile_left_flag  = prtl->tile_left_flag_rtl;
 	map->tile_start_y    = prtl->tile_start_y_rtl;
 	map->tile_right_flag = prtl->tile_right_flag_rtl;
-	map->hist_pitch      = mnum.tile_num_x - 1 ;
+	map->hist_pitch      = mnum.tile_num_x - 1;
 
 	idx = ctx->fid % ISP_LTM_BUF_NUM;
 
@@ -783,15 +785,15 @@ static int isp_ltm_gen_map_config(struct isp_ltm_ctx_desc *ctx,
  */
 
 int isp_ltm_gen_map_slice_config(struct isp_ltm_ctx_desc *ctx,
-				 struct isp_ltm_rtl_param  *prtl,
-				 uint32_t *slice_info)
+				struct isp_ltm_rtl_param  *prtl,
+				uint32_t *slice_info)
 {
 	struct isp_ltm_hist_param map_param;
 	struct isp_ltm_hist_param *param = &map_param;
-/*
-	struct isp_ltm_rtl_param  rtl_param;
-	struct isp_ltm_rtl_param  *prtl = &rtl_param;
-*/
+	/*
+	 * struct isp_ltm_rtl_param  rtl_param;
+	 * struct isp_ltm_rtl_param  *prtl = &rtl_param;
+	 */
 	struct isp_ltm_hists *hists = &ctx->hists;
 
 	struct isp_ltm_tile_num_minus1 mnum;
@@ -817,7 +819,7 @@ int isp_ltm_gen_map_slice_config(struct isp_ltm_ctx_desc *ctx,
 
 	if (ctx->type == MODE_LTM_CAP) {
 		pr_debug("tile_num_x[%d], tile_num_y[%d], tile_width[%d], tile_height[%d],\
-			frame_width_stat[%d], frame_height_stat[%d],\
+			frame_width_stat[%d], frame_height_stat[%d], \
 			frame_width_map[%d], frame_height_map[%d]\n",
 			mnum.tile_num_x, mnum.tile_num_y,
 			ts.tile_width, ts.tile_height,
@@ -875,7 +877,7 @@ int isp_ltm_gen_frame_config(struct isp_ltm_ctx_desc *ctx)
 
 	for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
 		pr_debug("ctx->pbuf[%d] =  0x%p, 0x%lx\n",
-			 i, ctx->pbuf[i], ctx->pbuf[i]->iova[0]);
+			i, ctx->pbuf[i], ctx->pbuf[i]->iova[0]);
 	}
 
 	switch (ctx->type) {

@@ -69,9 +69,9 @@ static void write_pd_table(struct pdaf_ppi_info *pdaf_info, enum dcam_id idx)
 		is_right = pdaf_info->pattern_pixel_is_right[i] & 0x01;
 		pr_info("col %d, row %d, right %d\n", col, row, is_right);
 		if (i%2 == 0) {
-			pdafinfo[reg_pos] = col | (row<<6) | (is_right << 12);
-		} else if (i%2 == 1){
-			pdafinfo[reg_pos] |= (col<<16) | (row<<22) | (is_right << 28);
+			pdafinfo[reg_pos] = col | (row << 6) | (is_right << 12);
+		} else if (i % 2 == 1) {
+			pdafinfo[reg_pos] |= (col << 16) | (row << 22) | (is_right << 28);
 			reg_pos++;
 		}
 	}
@@ -340,6 +340,9 @@ int dcam_k_cfg_pdaf(struct isp_io_param *param, struct dcam_dev_param *p)
 		pr_err("fail to get property_param\n");
 		return -1;
 	}
+	/* debugfs bypass pdaf */
+	if (g_dcam_bypass[idx] & (1 << _E_PDAF))
+		return 0;
 
 	idx = p->idx;
 	switch (param->property) {

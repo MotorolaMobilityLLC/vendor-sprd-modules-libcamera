@@ -23,8 +23,7 @@ extern "C" {
 #include "isp_interface.h"
 
 
-typedef struct isp_ltm_hist_param
-{
+typedef struct isp_ltm_hist_param {
 	/* match ltm stat info */
 	uint32_t bypass;
 	uint32_t region_est_en;
@@ -59,8 +58,7 @@ typedef struct isp_ltm_hist_param
 } ltm_param_t;
 
 
-typedef struct isp_ltm_rtl_param
-{
+typedef struct isp_ltm_rtl_param {
 	int tile_index_xs;
 	int tile_index_ys;
 	int tile_index_xe;

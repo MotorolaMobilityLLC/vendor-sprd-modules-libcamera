@@ -552,12 +552,12 @@ static void alloc_buffers(struct work_struct *work)
 	if (channel->ch_uinfo.is_high_fps)
 		total = CAM_SHARED_BUF_NUM;
 
-	if (channel->ch_id == CAM_CH_PRE
-			&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
+	if (channel->ch_id == CAM_CH_PRE &&
+		module->grp->camsec_cfg.camsec_mode != SEC_UNABLE) {
 		total = 4;
 	}
 
-	pr_info("camca %s():  ch_id =%d, camsec_mode=%d , total = %d \n", __func__,
+	pr_info("camca: ch_id =%d, camsec_mode=%d , total = %d\n",
 					channel->ch_id,
 					module->grp->camsec_cfg.camsec_mode,
 					total);
@@ -568,16 +568,16 @@ static void alloc_buffers(struct work_struct *work)
 			pframe->channel_id = channel->ch_id;
 			pframe->is_compressed = channel->compress_input;
 
-			if(channel->ch_id == CAM_CH_PRE
-				&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
+			if (channel->ch_id == CAM_CH_PRE &&
+				module->grp->camsec_cfg.camsec_mode != SEC_UNABLE) {
 				pframe->buf.buf_sec = 1;
-			}
-			else
+			} else {
 				pframe->buf.buf_sec = 0;
+			}
 
-			 pr_info("camca %s():  ch_id =%d, buf_sec=%d \n", __func__,
-	                                channel->ch_id,
-	                                pframe->buf.buf_sec);
+			pr_info("camca: ch_id =%d, buf_sec=%d\n",
+				channel->ch_id,
+				pframe->buf.buf_sec);
 
 			ret = cambuf_alloc(
 					&pframe->buf, size,
@@ -617,10 +617,10 @@ static void alloc_buffers(struct work_struct *work)
 		for (i = 0; i < ISP_NR3_BUF_NUM; i++) {
 			pframe = get_empty_frame();
 
-			if(channel->ch_id == CAM_CH_PRE
-					&& module->grp->camsec_cfg.camsec_mode !=SEC_UNABLE) {
+			if (channel->ch_id == CAM_CH_PRE &&
+				module->grp->camsec_cfg.camsec_mode != SEC_UNABLE) {
 				pframe->buf.buf_sec = 1;
-				pr_info("camca %s():  ch_id =%d, buf_sec=%d \n", __func__,
+				pr_info("camca:  ch_id =%d, buf_sec=%d\n",
 					channel->ch_id,
 					pframe->buf.buf_sec);
 			}
@@ -654,10 +654,10 @@ static void alloc_buffers(struct work_struct *work)
 			if (channel->ch_id == CAM_CH_PRE) {
 				pframe = get_empty_frame();
 
-				if(channel->ch_id == CAM_CH_PRE
-						&& module->grp->camsec_cfg.camsec_mode ==SEC_TIME_PRIORITY) {
+				if (channel->ch_id == CAM_CH_PRE
+					&& module->grp->camsec_cfg.camsec_mode == SEC_TIME_PRIORITY) {
 					pframe->buf.buf_sec = 1;
-					pr_info("camca %s():  ch_id =%d, buf_sec=%d \n", __func__,
+					pr_info("camca: ch_id =%d, buf_sec=%d\n",
 						channel->ch_id,
 						pframe->buf.buf_sec);
 				}
@@ -876,7 +876,7 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 	ret = dcam_ops->cfg_path(
 		module->dcam_dev_handle,
 		DCAM_PATH_CFG_OUTPUT_BUF,
-                channel->dcam_path_id, pframe);
+		channel->dcam_path_id, pframe);
 	if (unlikely(ret))
 		pr_err("set buffer to out_buf_queue err, ret %d\n", ret);
 
@@ -1165,7 +1165,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			if (ret) {
 				pr_warn_ratelimited("warning: isp proc frame failed.\n");
 				/* ISP in_queue maybe overflow.
-				 * If current frame taking (param_data ) for size updating
+				 * If current frame taking (param_data) for size updating
 				 * we should hold it here and set it in next frame for ISP
 				 */
 				if (pframe->param_data) {
@@ -1247,14 +1247,16 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 					return ret;
 
 				} else {
-					if (atomic_read(&module->capture_frames_dcam)>0) {
+					if (atomic_read(&module->capture_frames_dcam) > 0) {
 						pr_info("cam%d cap type[%d] num[%d]\n", module->idx,
-								module->dcam_cap_status,atomic_read(&module->capture_frames_dcam));
+							module->dcam_cap_status,
+							atomic_read(&module->capture_frames_dcam));
 						atomic_dec(&module->capture_frames_dcam);
 					} else {
 
 						pr_info("cam%d cap type[%d] num[%d]\n", module->idx,
-								module->dcam_cap_status,atomic_read(&module->capture_frames_dcam));
+							module->dcam_cap_status,
+							atomic_read(&module->capture_frames_dcam));
 						ret = dcam_ops->cfg_path(
 							module->dcam_dev_handle,
 							DCAM_PATH_CFG_OUTPUT_BUF,
@@ -1635,6 +1637,7 @@ static int cal_channel_size(struct camera_module *module)
 		} else {
 			uint32_t ratio_p_w1, ratio_p_h1;
 			uint32_t ratio_v_w1, ratio_v_h1;
+
 			ratio_p_w = (1 << RATIO_SHIFT) * max.w / dst_p.w;
 			ratio_p_h = (1 << RATIO_SHIFT) * max.h / dst_p.h;
 			ratio_min = MIN(ratio_p_w, ratio_p_h);
@@ -1714,7 +1717,7 @@ static int config_channel_size(
 	struct isp_ctx_size_desc ctx_size;
 	struct img_trim path_trim;
 
-	if ((atomic_read(&module->state) == CAM_RUNNING)) {
+	if (atomic_read(&module->state) == CAM_RUNNING) {
 		is_zoom = 1;
 		loop_count = 5;
 	} else {
@@ -1893,7 +1896,7 @@ static int config_4in1_channel_size(struct camera_module *module,
 	get_diff_trim(&ch_tmp.ch_uinfo.src_crop,
 		(1 << RATIO_SHIFT), &ch_tmp.trim_dcam, &ch_tmp.trim_isp);
 	pr_info("trim_isp[%d %d %d %d]\n", ch_tmp.trim_isp.start_x,
-		ch_tmp.trim_isp.start_y,ch_tmp.trim_isp.size_x,
+		ch_tmp.trim_isp.start_y, ch_tmp.trim_isp.size_x,
 		ch_tmp.trim_isp.size_y);
 	config_channel_size(module, &ch_tmp);
 
@@ -2023,11 +2026,11 @@ static void write_image_to_file(uint8_t *buffer,
 		total += result;
 	} while ((result > 0) && (size > 0));
 	filp_close(wfp, NULL);
-	pr_debug("write image done, total=%d \n", (uint32_t)total);
+	pr_debug("write image done, total=%d\n", (uint32_t)total);
 }
 
-static int dump_one_frame  (struct camera_module *module,
-	struct camera_frame *pframe)
+static int dump_one_frame(struct camera_module *module,
+			struct camera_frame *pframe)
 {
 	ssize_t size = 0;
 	struct channel_context *channel;
@@ -2428,6 +2431,7 @@ static int init_cam_channel(
 
 	if (new_isp_ctx) {
 		struct isp_ctx_base_desc ctx_desc;
+
 		init_param.is_high_fps = ch_uinfo->is_high_fps;
 		ret = isp_ops->get_context(module->isp_dev_handle, &init_param);
 		if (ret < 0) {
@@ -2537,9 +2541,8 @@ static int init_cam_channel(
 	}
 	if (channel->ch_id == CAM_CH_RAW && module->cam_uinfo.is_4in1) {
 		ret = init_4in1_secondary_path(module, channel);
-		if (ret) {
+		if (ret)
 			pr_err("4in1 raw capture init bin fail\n");
-		}
 	}
 
 exit:
@@ -2892,22 +2895,23 @@ static int img_ioctl_set_statis_buf(
 		goto exit;
 	}
 
-	if (statis_buf.type < STATIS_HIST2){
+	if (statis_buf.type < STATIS_HIST2) {
 		ret = dcam_ops->ioctl(module->dcam_dev_handle,
 					DCAM_IOCTL_CFG_STATIS_BUF,
 					&statis_buf);
 	}
 
-	if ((statis_buf.type == STATIS_INIT) || (statis_buf.type >= STATIS_HIST2)){
+	if ((statis_buf.type == STATIS_INIT) ||
+		(statis_buf.type >= STATIS_HIST2)) {
 
 		io_desc.q = &module->isp_hist2_outbuf_queue;
 		io_desc.buf = &module->isp_hist2_buf;
 		io_desc.input = &statis_buf;
 
 		if (module->isp_hist2_buf) {
-			if(((unsigned long int)statis_buf.kaddr < module->isp_hist2_buf->addr_k[0]) ||
+			if (((unsigned long int)statis_buf.kaddr < module->isp_hist2_buf->addr_k[0]) ||
 				((unsigned long int)statis_buf.kaddr > (module->isp_hist2_buf->addr_k[0] + module->isp_hist2_buf->size[0]))) {
-				pr_err("Wrong buffer from user, skip in kernel to avoid PANIC. statis_buf.kaddr = 0x%lx \n",
+				pr_err("Wrong buffer from user, skip in kernel to avoid PANIC. statis_buf.kaddr = 0x%lx\n",
 					(unsigned long int)statis_buf.kaddr);
 				return 0;
 			}
@@ -2920,7 +2924,8 @@ static int img_ioctl_set_statis_buf(
 
 		if (!ret &&  statis_buf.type == STATIS_INIT)
 			pr_info("module->isp_hist2_buf.addr_k[0] = 0x%lx size = 0x%zx\n",
-				module->isp_hist2_buf->addr_k[0],module->isp_hist2_buf->size[0]);
+				module->isp_hist2_buf->addr_k[0],
+				module->isp_hist2_buf->size[0]);
 
 	}
 exit:
@@ -3087,7 +3092,7 @@ static int img_ioctl_set_cam_security(
 			unsigned long arg)
 {
 	int ret = 0;
-	bool sec_ret =0;
+	bool sec_ret = 0;
 	struct sprd_cam_sec_cfg uparam;
 
 	ret = copy_from_user(&uparam,
@@ -3100,13 +3105,13 @@ static int img_ioctl_set_cam_security(
 		goto exit;
 	}
 
-	pr_info("camca : conn = %d, security mode %d,  u camsec_mode=%d, u work_mode=%d \n",
+	pr_info("camca : conn = %d, security mode %d,  u camsec_mode=%d, u work_mode=%d\n",
 				module->grp->ca_conn,
 				module->grp->camsec_cfg.camsec_mode,
 				uparam.camsec_mode, uparam.work_mode);
 
-	if( uparam.camsec_mode != SEC_UNABLE ) {
-		if( !module->grp->ca_conn )
+	if (uparam.camsec_mode != SEC_UNABLE) {
+		if (!module->grp->ca_conn)
 			module->grp->ca_conn = cam_ca_connect();
 
 		if (!module->grp->ca_conn) {
@@ -3804,7 +3809,7 @@ static int img_ioctl_set_frame_addr(
 	pr_debug("ch %d, buffer_count %d\n", param.channel_id,
 			param.buffer_count);
 
-	if (param.channel_id == CAM_CH_CAP){
+	if (param.channel_id == CAM_CH_CAP) {
 		pr_info("ch %d, buffer_count %d\n", param.channel_id,
 				param.buffer_count);
 	}
@@ -3827,7 +3832,7 @@ static int img_ioctl_set_frame_addr(
 			pframe->buf.offset[0], pframe->buf.offset[1],
 			pframe->buf.offset[2], param.is_reserved_buf);
 
-		if (param.channel_id == CAM_CH_CAP){
+		if (param.channel_id == CAM_CH_CAP) {
 			pr_info("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
 				pframe->channel_id, pframe->buf.mfd[0],
 				pframe->buf.offset[0], pframe->buf.offset[1],
@@ -3842,7 +3847,7 @@ static int img_ioctl_set_frame_addr(
 
 		if (ch->isp_path_id >= 0) {
 			if (param.is_reserved_buf &&
-				((ch->ch_id == CAM_CH_CAP) ||(ch->ch_id == CAM_CH_PRE))) {
+				((ch->ch_id == CAM_CH_CAP) || (ch->ch_id == CAM_CH_PRE))) {
 				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;
 				pframe1 = get_empty_frame();
 				pframe1->buf.type = CAM_BUF_USER;
@@ -4068,10 +4073,9 @@ static int img_ioctl_get_cam_res(
 	}
 
 	pr_info("camca get camera res camsec mode %d.\n",
-				module->grp->camsec_cfg.camsec_mode );
+		module->grp->camsec_cfg.camsec_mode);
 
-	if(module->grp->camsec_cfg.camsec_mode != SEC_UNABLE)
-	{
+	if (module->grp->camsec_cfg.camsec_mode != SEC_UNABLE) {
 		bool  sec_eb = true;
 
 		ret = dcam_ops->ioctl(module->dcam_dev_handle,
@@ -4102,7 +4106,7 @@ static int img_ioctl_get_cam_res(
 	}
 
 	ret = isp_ops->ioctl(module->isp_dev_handle, 0,
-                    ISP_IOCTL_CFG_SEC, &module->grp->camsec_cfg.camsec_mode);
+		ISP_IOCTL_CFG_SEC, &module->grp->camsec_cfg.camsec_mode);
 
 	if (ret) {
 		pr_err("camca: fail to set isp sec %d.\n", module->grp->camsec_cfg.camsec_mode);
@@ -4564,7 +4568,7 @@ static int img_ioctl_stream_off(
 		ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_DEINIT_STATIS_Q, NULL);
 
-	if (module->isp_dev_handle){
+	if (module->isp_dev_handle) {
 		io_desc.q = &module->isp_hist2_outbuf_queue;
 		io_desc.buf = &module->isp_hist2_buf;
 		ret = isp_ops->ioctl(module->isp_dev_handle,
@@ -4630,7 +4634,7 @@ static int img_ioctl_start_capture(
 
 	/* recognize the capture scene */
 
-	if (param.type == DCAM_CAPTURE_START_FROM_NEXT_SOF ) {
+	if (param.type == DCAM_CAPTURE_START_FROM_NEXT_SOF) {
 		module->dcam_cap_status = DCAM_CAPTURE_START_FROM_NEXT_SOF;
 		atomic_set(&module->capture_frames_dcam, param.cap_cnt);
 		module->capture_times = start_time;
@@ -4659,7 +4663,7 @@ static int img_ioctl_start_capture(
 			atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
 		}
 		config_4in1_channel_size(module, module->lowlux_4in1);
-	} else if (param.type == DCAM_CAPTURE_START ) {
+	} else if (param.type == DCAM_CAPTURE_START) {
 		module->dcam_cap_status = DCAM_CAPTURE_START;
 		atomic_set(&module->capture_frames_dcam, CAP_NUM_COMMON);
 	} else {
@@ -4752,7 +4756,7 @@ static int raw_proc_done(struct camera_module *module)
 					isp_ctx_id, isp_path_id);
 	isp_ops->put_context(module->isp_dev_handle, isp_ctx_id);
 
-	if (module->isp_dev_handle){
+	if (module->isp_dev_handle) {
 		io_desc.q = &module->isp_hist2_outbuf_queue;
 		io_desc.buf = &module->isp_hist2_buf;
 		ret = isp_ops->ioctl(module->isp_dev_handle,
@@ -5396,9 +5400,10 @@ static int test_dcam(struct camera_module *module,
 	}
 
 	pr_info("copy source image.\n");
-	/* todo: user should alloc new buffer for output */
-	/* memcpy((void *)pframe->buf.addr_k[0],
-			(void *)user_frame->buf.addr_k[0], size); */
+	/* todo: user should alloc new buffer for output
+	 * memcpy((void *)pframe->buf.addr_k[0],
+	 * (void *)user_frame->buf.addr_k[0], size);
+	 */
 
 	ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 				DCAM_PATH_CFG_OUTPUT_BUF,
@@ -5739,7 +5744,7 @@ exit:
 }
 
 
-static struct cam_ioctl_cmd ioctl_cmds_table[ ] = {
+static struct cam_ioctl_cmd ioctl_cmds_table[] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_MODE)]		= {SPRD_IMG_IO_SET_MODE,	img_ioctl_set_mode},
 	[_IOC_NR(SPRD_IMG_IO_SET_CAP_SKIP_NUM)]	= {SPRD_IMG_IO_SET_CAP_SKIP_NUM,	img_ioctl_set_cap_skip_num},
 	[_IOC_NR(SPRD_IMG_IO_SET_SENSOR_SIZE)]	= {SPRD_IMG_IO_SET_SENSOR_SIZE,	img_ioctl_set_sensor_size},
@@ -5942,10 +5947,10 @@ rewait:
 			read_op.parm.frame.real_index = pframe->fid;
 			read_op.parm.frame.frame_id = pframe->fid;
 			/*
-			read_op.parm.frame.sec = pframe->time.tv_sec;
-			read_op.parm.frame.usec = pframe->time.tv_usec;
-			read_op.parm.frame.monoboottime = pframe->boot_time;
-			*/
+			 * read_op.parm.frame.sec = pframe->time.tv_sec;
+			 * read_op.parm.frame.usec = pframe->time.tv_usec;
+			 * read_op.parm.frame.monoboottime = pframe->boot_time;
+			 */
 			/* use SOF time instead of ISP time for better accuracy */
 			read_op.parm.frame.sec = pframe->sensor_time.tv_sec;
 			read_op.parm.frame.usec = pframe->sensor_time.tv_usec;
@@ -5973,7 +5978,7 @@ rewait:
 		}
 
 		if (pframe)
-				put_empty_frame(pframe);
+			put_empty_frame(pframe);
 
 		pr_debug("read frame, evt 0x%x irq %d ch 0x%x index 0x%x mfd %d\n",
 				read_op.evt,
@@ -6109,8 +6114,7 @@ static int sprd_img_open(struct inode *node, struct file *file)
 	pr_info("sprd_img: the camera opened count %d\n",
 			atomic_read(&grp->camera_opened));
 
-	pr_info("camca : camsec_mode = %d \n",
-                                            grp->camsec_cfg.camsec_mode);
+	pr_info("camca: camsec_mode = %d\n", grp->camsec_cfg.camsec_mode);
 
 	spin_lock_irqsave(&grp->module_lock, flag);
 	for (i = 0, idx = count; i < count; i++) {
@@ -6234,8 +6238,8 @@ static int sprd_img_release(struct inode *node, struct file *file)
 	group = module->grp;
 	idx = module->idx;
 
-	if(module->grp->camsec_cfg.camsec_mode  != SEC_UNABLE) {
-		bool ret =0;
+	if (module->grp->camsec_cfg.camsec_mode  != SEC_UNABLE) {
+		bool ret = 0;
 
 		module->grp->camsec_cfg.camsec_mode = SEC_UNABLE;
 		ret = camca_security_set(&module->grp->camsec_cfg);
@@ -6390,7 +6394,8 @@ static int sprd_img_probe(struct platform_device *pdev)
 	}
 
 	/* for get ta status
-	group->ca_conn  = cam_ca_connect(); */
+	 * group->ca_conn  = cam_ca_connect();
+	 */
 	if (group->ca_conn)
 		pr_info("cam ca-ta unconnect\n");
 

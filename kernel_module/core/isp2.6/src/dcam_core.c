@@ -83,7 +83,7 @@ static atomic_t s_dcam_axi_opened;
 
 /* dcam debugfs start */
 #define DCAM_DEBUG
-uint32_t s_dbg_bypass[DCAM_ID_MAX] = { 0, 0, 0 };
+uint32_t g_dcam_bypass[DCAM_ID_MAX] = { 0, 0, 0 };
 static atomic_t s_dcam_opened[DCAM_ID_MAX];
 uint32_t g_dbg_zoom_mode = 1;
 uint32_t g_dbg_rds_limit = 30;
@@ -98,21 +98,20 @@ struct bypass_tag {
 	uint32_t bpos; /* bit position */
 };
 static const struct bypass_tag tb_bypass[] = {
-	[_E_4IN1] = {"4in1", 0x0100, 12},
-	[_E_PDAF] = {"pdaf", 0x0120, 1},
-	[_E_LSC]  = {"lsc", 0x0138, 0},
-	[_E_AEM]  = {"aem",  0x0150, 0},
-	[_E_HIST] = {"hist", 0x0160, 0},
-	[_E_AFL]  = {"afl",  0x0170, 0}, /* if on, must [0x354.0] = 1 */
-	[_E_AFM]  = {"afm",  0x01A0, 0},
-	[_E_BPC]  = {"bpc",  0x0200, 0},
-	[_E_BLC]  = {"blc",  0x0258, 31},
-	[_E_RGB]  = {"rgb",  0x0278, 0}, /* rgb gain */
-	[_E_RAND] = {"rand", 0x0278, 1},
-	[_E_PPI]  = {"ppi",  0x0284, 0},
-	[_E_AWBC] = {"awbc", 0x0380, 31},
-	[_E_NR3]  = {"nr3",  0x03F0, 0},
-
+	[_E_4IN1] = {"4in1", DCAM_MIPI_CAP_CFG, 12}, /* 0x100.b12 */
+	[_E_PDAF] = {"pdaf", DCAM_PPE_FRM_CTRL0, 1}, /* 0x120.b1 */
+	[_E_LSC]  = {"lsc", DCAM_LENS_LOAD_ENABLE, 0}, /* 0x138.b0 */
+	[_E_AEM]  = {"aem",  DCAM_AEM_FRM_CTRL0, 0}, /* 0x150.b0 */
+	[_E_HIST] = {"hist", DCAM_HIST_FRM_CTRL0, 0}, /* 0x160.b0 */
+	[_E_AFL]  = {"afl",  ISP_AFL_FRM_CTRL0, 0}, /* 0x170.b0 */
+	[_E_AFM]  = {"afm",  ISP_AFM_FRM_CTRL, 0}, /* 0x1A0.b0 */
+	[_E_BPC]  = {"bpc",  ISP_BPC_PARAM, 0}, /* 0x200.b0 */
+	[_E_BLC]  = {"blc",  DCAM_BLC_PARA_R_B, 31}, /* 0x268.b31 */
+	[_E_RGB]  = {"rgb",  ISP_RGBG_YRANDOM_PARAMETER0, 0}, /* 0x278.b0 rgb gain */
+	[_E_RAND] = {"rand", ISP_RGBG_YRANDOM_PARAMETER0, 1}, /* 0x278.b1 */
+	[_E_PPI]  = {"ppi",  ISP_PPI_PARAM, 0}, /* 0x284.b0 */
+	[_E_AWBC] = {"awbc", ISP_AWBC_GAIN0, 31}, /* 0x380.b31 */
+	[_E_NR3]  = {"nr3",  NR3_FAST_ME_PARAM, 0}, /* 0x3F0.b0 */
 };
 /* dcam sub block bypass
  * How: echo 4in1:1 > bypass_dcam0
@@ -169,13 +168,13 @@ static ssize_t bypass_write(struct file *filp,
 			dat = tb_bypass[i];
 			pr_debug("set dcam%d addr 0x%x, bit %d val %d\n",
 				idx, dat.addr, dat.bpos, val);
-			s_dbg_bypass[idx] &= (~(1 << i));
-			s_dbg_bypass[idx] |= (val << i);
+			g_dcam_bypass[idx] &= (~(1 << i));
+			g_dcam_bypass[idx] |= (val << i);
+			msleep(20); /* If PM writing,wait little time */
 			DCAM_REG_MWR(idx, dat.addr, 1 << dat.bpos,
 				val << dat.bpos);
-
 			/* afl need rgb2y work */
-			if (strcpy(name, "afl") == 0)
+			if (strcmp(name, "afl") == 0)
 				DCAM_REG_MWR(idx, ISP_AFL_PARAM0,
 					BIT_0, val);
 			if (!bypass_all)
@@ -560,7 +559,7 @@ int sprd_dcam_debugfs_deinit(void)
 #else
 int sprd_dcam_debugfs_init(void)
 {
-	memset(s_dbg_bypass, 0x00, sizeof(s_dbg_bypass));
+	memset(g_dcam_bypass, 0x00, sizeof(g_dcam_bypass));
 	return 0;
 }
 
@@ -572,7 +571,7 @@ int sprd_dcam_debugfs_deinit(void)
 /* dcam debugfs end */
 
 
-static uint32_t dcam_trace_regs [] = {
+static uint32_t dcam_trace_regs[] = {
 		DCAM_CFG,
 		DCAM_APB_SRAM_CTRL,
 		DCAM_IMAGE_CONTROL,
@@ -613,7 +612,7 @@ static void dcam_debug_trace(struct dcam_pipe_dev *dev)
 			addr = dcam_trace_regs[i + j];
 			val[j] = DCAM_REG_RD(dev->idx, addr);
 		}
-		pr_info("n=%d, %08x %08x %08x %08x %08x %08x %08x %08x\n",n,
+		pr_info("n=%d, %08x %08x %08x %08x %08x %08x %08x %08x\n", n,
 			val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7]);
 	}
 	return;
@@ -1024,11 +1023,11 @@ static int dcam_cfg_ebd(struct dcam_pipe_dev *dev, void *param)
 
 static int dcam_cfg_dcamsec(struct dcam_pipe_dev *dev, void *param)
 {
-	bool * sec_eb = (bool*)param;
+	bool *sec_eb = (bool *)param;
 
-	dev ->dcamsec_eb =  *sec_eb;
+	dev->dcamsec_eb =  *sec_eb;
 
-	pr_info("camca : dcamsec_mode=%d \n", dev ->dcamsec_eb);
+	pr_info("camca : dcamsec_mode=%d\n", dev->dcamsec_eb);
 	return 0;
 }
 
@@ -1245,7 +1244,7 @@ static void init_reserved_statis_bufferq(struct dcam_pipe_dev *dev)
 	struct camera_buf *ion_buf = NULL;
 	struct dcam_path_desc *path;
 
-	pr_debug("%s enter\n",__func__);
+	pr_debug("enter\n");
 
 	if (dev->internal_reserved_buf == NULL) {
 		ion_buf =  get_reserved_buffer(dev);
@@ -1297,7 +1296,7 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 	struct camera_frame *pframe;
 	struct dcam_path_desc *path;
 
-	pr_debug("%s enter\n",__func__);
+	pr_debug("enter\n");
 
 	for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
 		path_id = s_statis_path_info_all[i].path_id;
@@ -1340,12 +1339,11 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 		/* DCAM_PATH_MAX for ISP statis */
 		if (path_id == DCAM_PATH_MAX)
 			continue;
-			
+
 		path = &dev->path[path_id];
 		stats_type = path_id_to_statis_type(path_id);
 
-		for (j = 0;j < s_statis_path_info_all[i].buf_cnt; j++) {
-		
+		for (j = 0; j < s_statis_path_info_all[i].buf_cnt; j++) {
 			used_size += buf_size;
 			if (used_size >= total_size)
 				break;
@@ -1364,8 +1362,7 @@ static int init_statis_bufferq(struct dcam_pipe_dev *dev)
 				paddr += buf_size;
 			}
 
-			pr_debug("[%s] dcam path[%d] i[%d] j[%d] uaddr[%lx] kaddr[%lx] paddr[%lx]\n",
-				__func__,
+			pr_debug("dcam path[%d] i[%d] j[%d] uaddr[%lx] kaddr[%lx] paddr[%lx]\n",
 				path_id,
 				i,
 				j,
@@ -1388,13 +1385,13 @@ static int deinit_statis_bufferq(struct dcam_pipe_dev *dev)
 	enum dcam_path_id path_id;
 	struct dcam_path_desc *path;
 
-	pr_debug("%s enter\n",__func__);
+	pr_debug("enter\n");
 
 	for (i = 0; i < ARRAY_SIZE(s_statis_path_info_all); i++) {
 		path_id = s_statis_path_info_all[i].path_id;
 		path = &dev->path[path_id];
 
-		pr_debug("%s path_id[%d] i[%d]\n",__func__,path_id,i);
+		pr_debug("path_id[%d] i[%d]\n", path_id, i);
 
 		if (path_id == DCAM_PATH_MAX)
 			continue;
@@ -1636,7 +1633,7 @@ static int dcam_offline_start_frame(void *param)
 	atomic_set(&dev->state, STATE_RUNNING);
 	dcam_debug_trace(dev);
 
-	if(dev->dcamsec_eb)
+	if (dev->dcamsec_eb)
 		pr_warn("camca : dcamsec_eb= %d, fetch disable\n", dev->dcamsec_eb);
 	else
 		dcam_start_fetch();
@@ -2026,7 +2023,7 @@ static int  dcam_cfg_path_full_source(void *dcam_handle,
 {
 	struct dcam_pipe_dev *dev = (struct dcam_pipe_dev *)dcam_handle;
 	uint32_t lowlux_4in1 = *(uint32_t *)param;
-	const char *tb_src[] = {"(4c)raw", "bin-sum"};
+	static const char *tb_src[] = {"(4c)raw", "bin-sum"}; /* for log */
 
 	if (lowlux_4in1) {
 		dev->lowlux_4in1 = 1;
@@ -2160,11 +2157,11 @@ static int sprd_dcam_proc_frame(
 
 	pr_debug("dcam%d offline proc frame!\n", dev->idx);
 	/* if enable, 4in1 capture once more then dcam1 can't run
-	if (atomic_read(&dev->state) == STATE_RUNNING) {
-		pr_err("DCAM%u started for online\n", dev->idx);
-		return -EFAULT;
-	}
-	*/
+	 * if (atomic_read(&dev->state) == STATE_RUNNING) {
+	 *	pr_err("DCAM%u started for online\n", dev->idx);
+	 *	return -EFAULT;
+	 * }
+	 */
 	pframe = (struct camera_frame *)param;
 	pframe->priv_data = dev;
 	ret = camera_enqueue(&dev->in_queue, pframe);
@@ -2469,6 +2466,7 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 
 	if (0) {
 		int i;
+
 		for (i = 0; i < DCAM_FRAME_TIMESTAMP_COUNT; i++)
 			pr_info("DCAM%u i=%02d t=%lld\n",
 				dev->idx, i, dev->frame_ts_boot[i]);

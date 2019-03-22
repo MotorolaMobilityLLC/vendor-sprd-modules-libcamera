@@ -99,7 +99,7 @@ static int get_slice_size_info(
 		if (output && (output->w > max_w))
 			max_w = output->w;
 	}
-	if (max_w > 0){
+	if (max_w > 0) {
 		if (max_w <= line_buffer_len) {
 			slice_w_out = max_w;
 		} else {
@@ -1655,9 +1655,8 @@ static int cfg_slice_3dnr_memctrl_update_info(
 
 	cur_slc = &slc_ctx->slices[0];
 
-	if (nr3_ctx->type == NR3_FUNC_OFF) {
+	if (nr3_ctx->type == NR3_FUNC_OFF)
 		return 0;
-	}
 
 	for (idx = 0; idx < SLICE_NUM_MAX; idx++, cur_slc++) {
 		if (cur_slc->valid == 0)
@@ -1765,7 +1764,7 @@ int isp_cfg_slice_ltm_info(
 	struct isp_ltm_rtl_param  *prtl = &rtl_param;
 
 	struct isp_slice_desc *cur_slc;
-	struct slice_ltm_map_info* slc_ltm_map;
+	struct slice_ltm_map_info *slc_ltm_map;
 	uint32_t slice_info[4];
 
 	cur_slc = &slc_ctx->slices[0];
@@ -1794,7 +1793,7 @@ int isp_cfg_slice_ltm_info(
 		isp_ltm_gen_map_slice_config(ltm_ctx, prtl, slice_info);
 
 		slc_ltm_map->tile_width = map->tile_width;
-		slc_ltm_map->tile_height= map->tile_height;
+		slc_ltm_map->tile_height = map->tile_height;
 
 		slc_ltm_map->tile_num_x = prtl->tile_x_num_rtl;
 		slc_ltm_map->tile_num_y = prtl->tile_y_num_rtl;
@@ -2359,7 +2358,7 @@ static int set_slice_ltm(
 		struct isp_slice_desc *cur_slc)
 {
 	uint32_t addr = 0, cmd = 0;
-	struct slice_ltm_map_info* map = &cur_slc->slice_ltm_map;
+	struct slice_ltm_map_info *map = &cur_slc->slice_ltm_map;
 
 	if (map->bypass) {
 		return 0;
@@ -2534,7 +2533,7 @@ int isp_set_slw_fmcu_cmds(void *fmcu_handle, struct isp_pipe_context *pctx)
 		cmd = store_addr->addr_ch0;
 		FMCU_PUSH(fmcu, addr, cmd);
 
-		addr = ISP_GET_REG(+ ISP_STORE_SLICE_U_ADDR) + sbase;
+		addr = ISP_GET_REG(ISP_STORE_SLICE_U_ADDR) + sbase;
 		cmd = store_addr->addr_ch1;
 		FMCU_PUSH(fmcu, addr, cmd);
 

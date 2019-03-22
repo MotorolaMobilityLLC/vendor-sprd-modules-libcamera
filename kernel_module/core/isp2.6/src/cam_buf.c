@@ -103,6 +103,7 @@ int cambuf_reg_iommudev(struct device *dev,
 		pr_info("dev %d, iommu_mode %d iommu_hw_en %d\n",
 			type, g_dbg_iommu_mode, s_iommudevs[type].iommu_en);
 	}
+
 	return 0;
 }
 EXPORT_SYMBOL(cambuf_reg_iommudev);
@@ -133,6 +134,7 @@ int get_iommu_status(enum cam_iommudev_type type)
 	cur = &s_iommudevs[type];
 	if ((cur->type == type) && (cur->dev != NULL)) {
 		int enable;
+
 		if (g_dbg_iommu_mode == IOMMU_AUTO)
 			ret = cur->iommu_en ? 0 : -1;
 		else if (g_dbg_iommu_mode == IOMMU_ON)
@@ -304,7 +306,7 @@ int cambuf_iommu_map(
 
 		ionbuf[i] = buf_info->ionbuf[i];
 
-		if (dev_info->iommu_en && !buf_info->buf_sec ) {
+		if (dev_info->iommu_en && !buf_info->buf_sec) {
 			memset(&iommu_data, 0,
 				sizeof(struct sprd_iommu_map_data));
 			iommu_data.buf = ionbuf[i];
@@ -407,7 +409,7 @@ int cambuf_iommu_unmap(
 		if (buf_info->size[i] <= 0 || buf_info->iova[i] == 0)
 			continue;
 
-		if (dev_info->iommu_en && !buf_info->buf_sec ) {
+		if (dev_info->iommu_en && !buf_info->buf_sec) {
 			unmap_data.iova_addr = buf_info->iova[i] - buf_info->offset[i];
 			unmap_data.iova_size = buf_info->size[i];
 			unmap_data.ch_type = SPRD_IOMMU_FM_CH_RW;
@@ -462,7 +464,7 @@ int cambuf_kmap(struct camera_buf *buf_info)
 		}
 
 		pr_debug("buf%d, addr_k %p, dmabuf[%p]\n", i,
-			(void *)buf_info->addr_k[i],buf_info->dmabuf_p[i]);
+			(void *)buf_info->addr_k[i], buf_info->dmabuf_p[i]);
 		if (g_mem_dbg)
 			atomic_inc(&g_mem_dbg->ion_kmap_cnt);
 	}
@@ -507,7 +509,7 @@ int cambuf_kunmap(struct camera_buf *buf_info)
 			continue;
 
 		pr_debug("buf%d, addr_k %p, dmabuf[%p]\n", i,
-			(void *)buf_info->addr_k[i],buf_info->dmabuf_p[i]);
+			(void *)buf_info->addr_k[i], buf_info->dmabuf_p[i]);
 
 		sprd_ion_unmap_kernel(buf_info->dmabuf_p[i], 0);
 		buf_info->addr_k[i] = 0;
@@ -540,7 +542,7 @@ int  cambuf_alloc(struct camera_buf *buf_info,
 	iommu_enable = 0;
 #endif
 
-	if(buf_info->buf_sec)
+	if (buf_info->buf_sec)
 		heap_type  = ION_HEAP_ID_MASK_CAM;
 	else {
 		heap_type = iommu_enable ?
@@ -594,7 +596,7 @@ int cambuf_free(struct camera_buf *buf_info)
 		return -EFAULT;
 	}
 
-	if (buf_info->type != CAM_BUF_KERNEL){
+	if (buf_info->type != CAM_BUF_KERNEL) {
 		pr_err("error buffer type: %d\n", buf_info->type);
 		return -EPERM;
 	}
@@ -605,7 +607,7 @@ int cambuf_free(struct camera_buf *buf_info)
 	}
 
 	dmabuf = buf_info->dmabuf_p[0];
-	if (dmabuf){
+	if (dmabuf) {
 		ion_free(dmabuf);
 		buf_info->dmabuf_p[0] = NULL;
 		buf_info->mfd[0] = 0;

@@ -44,9 +44,6 @@ int dcam_k_rgb_gain_block(struct dcam_dev_param *param)
 		return 0;
 	param->rgb.update &= (~(_UPDATE_GAIN));
 	p = &(param->rgb.gain_info);
-	/* debug bypass mode */
-	if (s_dbg_bypass[idx] & (1 << _E_RGB))
-		p->bypass = 1;
 	DCAM_REG_MWR(idx, ISP_RGBG_YRANDOM_PARAMETER0, BIT_0, p->bypass);
 	if (p->bypass)
 		return 0;
@@ -75,8 +72,6 @@ int dcam_k_rgb_dither_random_block(struct dcam_dev_param *param)
 	param->rgb.update &= (~(_UPDATE_DITH));
 
 	p = &(param->rgb.rgb_dither);
-	if (s_dbg_bypass[idx] & (1 << _E_RAND))
-		p->random_bypass = 1;
 	DCAM_REG_MWR(idx, ISP_RGBG_YRANDOM_PARAMETER0,
 			BIT_1, p->random_bypass << 1);
 	if (p->random_bypass)
@@ -112,6 +107,9 @@ int dcam_k_cfg_rgb_gain(struct isp_io_param *param, struct dcam_dev_param *p)
 		pr_err("fail to get property_param\n");
 		return -1;
 	}
+	/* debug bypass rgb gain */
+	if (g_dcam_bypass[p->idx] & (1 << _E_RGB))
+		return 0;
 
 	switch (param->property) {
 	case DCAM_PRO_GAIN_BLOCK:
@@ -154,6 +152,10 @@ int dcam_k_cfg_rgb_gain(struct isp_io_param *param, struct dcam_dev_param *p)
 int dcam_k_cfg_rgb_dither(struct isp_io_param *param, struct dcam_dev_param *p)
 {
 	int ret = 0;
+
+	/* debugfs bypass rgb dither(rand) */
+	if (g_dcam_bypass[p->idx] & (1 << _E_RAND))
+		return 0;
 
 	switch (param->property) {
 	case DCAM_PRO_GAIN_DITHER_BLOCK:

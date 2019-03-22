@@ -38,7 +38,7 @@ static int isp_k_yrandom_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_YRAND))
+	if (g_isp_bypass[idx] & (1 << _EISP_YRAND))
 		yrandom_info.bypass = 1;
 	ISP_REG_MWR(idx, ISP_YRANDOM_PARAM1,
 		BIT_0, yrandom_info.bypass);

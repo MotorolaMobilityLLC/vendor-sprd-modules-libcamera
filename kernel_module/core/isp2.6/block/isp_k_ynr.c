@@ -41,7 +41,7 @@ static int isp_k_ynr_block(struct isp_io_param *param,
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_YNR))
+	if (g_isp_bypass[idx] & (1 << _EISP_YNR))
 		ynr->bypass = 1;
 	ISP_REG_MWR(idx, ISP_YNR_CONTRL0, BIT_0, ynr->bypass);
 	if (ynr->bypass)

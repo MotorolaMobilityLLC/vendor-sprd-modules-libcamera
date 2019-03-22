@@ -240,17 +240,14 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 		return PTR_ERR(ahb_map);
 	}
 
-	/* TODO: clk parse */
-	pr_info("skip parse clock tree on haps.\n");
-
 	if (of_property_read_u32(dn, "sprd,dcam-count", &count)) {
 		pr_err("fail to parse the property of sprd,dcam-count\n");
 		return -EINVAL;
 	}
 
-	if (of_property_read_u32(dn, "sprd,project-id", &prj_id)) {
+	if (of_property_read_u32(dn, "sprd,project-id", &prj_id))
 		pr_info("fail to parse the property of sprd,projectj-id\n");
-	}
+
 
 	dcam_max_w = DCAM_PATH_WMAX;
 	dcam_max_h = DCAM_PATH_HMAX;
@@ -268,7 +265,7 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 	pr_info("dev: %s, full name: %s, cam_ahb_gpr: %p, count: %u\n",
 		pdev->name, dn->full_name, ahb_map, count);
 
-	pr_info("DCAM dcam_max_w = %u dcam_max_h = %u\n",dcam_max_w, dcam_max_h);
+	pr_info("DCAM dcam_max_w = %u dcam_max_h = %u\n", dcam_max_w, dcam_max_h);
 
 	iommu_node = of_parse_phandle(dn, "iommus", 0);
 	if (iommu_node) {
@@ -283,7 +280,7 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 				g_dcam_mmubase = (unsigned long)reg_base;
 		}
 	}
-	pr_info("DCAM IOMMU Base  0x%lx \n", g_dcam_mmubase);
+	pr_info("DCAM IOMMU Base  0x%lx\n", g_dcam_mmubase);
 
 	for (i = 0; i < count; i++) {
 		hw = &s_dcam_hw[i];
@@ -292,7 +289,7 @@ int dcam_if_parse_dt(struct platform_device *pdev,
 		hw->idx = i;
 
 		/* Assign project ID, DCAM Max Height & Width Info */
-		hw->prj_id =(enum sprd_cam_prj_id) prj_id;
+		hw->prj_id = (enum sprd_cam_prj_id) prj_id;
 		hw->path_max_width = dcam_max_w;
 		hw->path_max_height = dcam_max_h;
 

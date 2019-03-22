@@ -59,7 +59,8 @@ int dcam_init_lsc(void *in, uint32_t online)
 	info = &param->lens_info;
 	param->update = 0;
 	param->load_trigger = 0;
-	if (s_dbg_bypass[idx] & (1 << _E_LSC))
+	/* debugfs bypass, not return, need force copy */
+	if (g_dcam_bypass[idx] & (1 << _E_LSC))
 		info->bypass = 1;
 	if (info->bypass) {
 		pr_debug("bypass\n");
@@ -108,7 +109,7 @@ int dcam_init_lsc(void *in, uint32_t online)
 			info->grid_num_t & 0x7FF);
 
 	/* trigger load immediately */
-	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (0 << 2) | 1);
+	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0, (0 << 2) | 1);
 
 	/* step3: configure lens enable and grid param...*/
 	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_0, 0);
@@ -135,7 +136,7 @@ int dcam_init_lsc(void *in, uint32_t online)
 
 	if (online) {
 		/* clear lens_load_flag */
-		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_1 , (1 << 1));
+		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_1, (1 << 1));
 	}
 
 	/* force copy must be after first load done and load clear */
@@ -156,7 +157,7 @@ int dcam_init_lsc(void *in, uint32_t online)
 	 * therefore we trigger loading to another buffer to avoid this case.
 	 */
 	if (online) {
-		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (1 << 2) | 1);
+		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0, (1 << 2) | 1);
 		param->load_trigger = 1;
 	}
 
@@ -202,8 +203,10 @@ int dcam_update_lsc(void *in)
 	info = &param->lens_info;
 	update = param->update;
 	param->update = 0;
-	if (s_dbg_bypass[idx] & (1 << _E_LSC))
-		info->bypass = 1;
+	if (g_dcam_bypass[idx] & (1 << _E_LSC)) {
+		spin_unlock(&param->lock);
+		return 0;
+	}
 	if (info->bypass) {
 		pr_debug("bypass\n");
 		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_0, 1);
@@ -263,7 +266,7 @@ int dcam_update_lsc(void *in)
 
 	/* bit0: 1 - enable loading */
 	/* bit2: 0 - trigger load immediately, 1 - trigger load next sof */
-	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0 , (0 << 2) | 1);
+	DCAM_REG_MWR(idx, DCAM_LENS_LOAD_CLR, BIT_2 | BIT_0, (0 << 2) | 1);
 	param->load_trigger = 1;
 
 	/* step3: configure lens enable and grid param...*/
@@ -274,7 +277,7 @@ int dcam_update_lsc(void *in)
 				((info->grid_y_num & 0xff) << 8) |
 				(info->grid_x_num & 0xff);
 		DCAM_REG_WR(idx, DCAM_LENS_GRID_SIZE, val);
-		pr_info("update grid %d x %d y %d\n",info->grid_width,
+		pr_info("update grid %d x %d y %d\n", info->grid_width,
 				info->grid_x_num, info->grid_y_num);
 	}
 

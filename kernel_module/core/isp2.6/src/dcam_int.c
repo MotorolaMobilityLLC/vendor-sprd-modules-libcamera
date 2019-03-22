@@ -73,7 +73,7 @@ static inline void record_dcam_int(uint32_t idx, uint32_t status)
 		ktime_get_ts(&cur_ts);
 		time = (uint32_t)(cur_ts.tv_sec & 0xffff);
 		time <<= 16;
-		time |= (uint32_t)((cur_ts.tv_nsec / (NSEC_PER_USEC *100)) & 0xffff);
+		time |= (uint32_t)((cur_ts.tv_nsec / (NSEC_PER_USEC * 100)) & 0xffff);
 		for (int_no = 0; int_no < DCAM_IRQ_NUMBER; int_no++) {
 			if (status & BIT(int_no)) {
 				cnt = int_index[idx][int_no];
@@ -759,7 +759,7 @@ void dcam_dump_int_tracker(uint32_t idx)
 #ifdef DCAM_INT_RECORD
 	{
 		uint32_t cnt, j;
-		for (cnt = 0; cnt < (uint32_t)dcam_int_tracker[idx][DCAM_SENSOR_EOF]; cnt+=4) {
+		for (cnt = 0; cnt < (uint32_t)dcam_int_tracker[idx][DCAM_SENSOR_EOF]; cnt += 4) {
 			j = (cnt & (INT_RCD_SIZE - 1)); //rolling
 			pr_info("DCAM%u j=%d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d\n",
 			idx, j, (uint32_t)dcam_int_recorder[idx][DCAM_SENSOR_EOF][j] >> 16,
@@ -875,6 +875,7 @@ static void  dcam_dump_iommu_regs(void)
 {
 	uint32_t reg = 0;
 	uint32_t val[4];
+
 	for (reg = 0; reg <= MMU_STS; reg += 16) {
 		val[0] = DCAM_MMU_RD(reg);
 		val[1] = DCAM_MMU_RD(reg + 4);
@@ -888,18 +889,18 @@ static void  dcam_dump_iommu_regs(void)
 static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 				      uint32_t status)
 {
+	const char *tb_ovr[2] = {"", ", overflow"};
+	const char *tb_lne[2] = {"", ", line error"};
+	const char *tb_frm[2] = {"", ", frame error"};
 	/* pr_err("DCAM%u error 0x%x\n", dev->idx, status);
-	 * as L3, show which erro
+	 * as L3, show which kind of erro
 	 */
-	pr_err("DCAM%u status 0x%x\n", dev->idx, status);
-	if (status & BIT(DCAM_DCAM_OVF))
-		pr_err("overflow,");
-	if (status & BIT(DCAM_CAP_LINE_ERR))
-		pr_err("line error,");
-	if (status & BIT(DCAM_CAP_FRM_ERR))
-		pr_err("frame error,");
+	pr_err("DCAM%u status 0x%x%s%s%s\n", dev->idx, status,
+		tb_ovr[!!(status & BIT(DCAM_DCAM_OVF))],
+		tb_lne[!!(status & BIT(DCAM_CAP_LINE_ERR))],
+		tb_frm[!!(status & BIT(DCAM_CAP_FRM_ERR))]);
 	if (status & BIT(DCAM_MMU_INT)) {
-		pr_err("IOMMU  Error, IOMMU Registers Dump \n");
+		pr_err("IOMMU Error, Registers Dump\n");
 		dcam_dump_iommu_regs();
 		return IRQ_HANDLED;
 	}
@@ -928,8 +929,9 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 
 	if (atomic_read(&dev->state) != STATE_RUNNING) {
 		/* clear int */
+		pr_warn_ratelimited("DCAM%u ignore irq in NON-running, 0x%x\n",
+			dev->idx, DCAM_REG_RD(dev->idx, DCAM_INT_MASK));
 		DCAM_REG_WR(dev->idx, DCAM_INT_CLR, 0xFFFFFFFF);
-		pr_warn("DCAM%u ignore irq in NON-running state\n", dev->idx);
 		return IRQ_NONE;
 	}
 
@@ -952,6 +954,7 @@ static irqreturn_t dcam_isr_root(int irq, void *priv)
 
 	for (i = 0; i < DCAM_SEQUENCES[dev->idx].count; i++) {
 		int cur_int = DCAM_SEQUENCES[dev->idx].bits[i];
+
 		if (status & BIT(cur_int)) {
 			if (_DCAM_ISRS[cur_int]) {
 				_DCAM_ISRS[cur_int](dev);

@@ -48,9 +48,6 @@ int dcam_k_awbc_block(struct dcam_dev_param *param)
 	param->awbc.update &= (~(_UPDATE_INFO));
 
 	p = &(param->awbc.awbc_info);
-	/* debug */
-	if (s_dbg_bypass[idx] & (1 << _E_AWBC))
-		p->awbc_bypass = 1;
 	DCAM_REG_MWR(idx, ISP_AWBC_GAIN0, BIT_31,
 			((p->awbc_bypass & 1) << 31));
 	if (p->awbc_bypass)
@@ -121,8 +118,6 @@ int dcam_k_awbc_bypass(struct dcam_dev_param *param)
 		return 0;
 	param->awbc.update &= (~(_UPDATE_BYPASS));
 	bypass = param->awbc.bypass;
-	if (s_dbg_bypass[idx] & (1 << _E_AWBC))
-		bypass = 1;
 	DCAM_REG_MWR(idx, ISP_AWBC_GAIN0, BIT_31, bypass << 31);
 
 	return ret;
@@ -135,6 +130,10 @@ int dcam_k_cfg_awbc(struct isp_io_param *param,	struct dcam_dev_param *p)
 	int size;
 	int32_t bit_update;
 	FUNC_DCAM_PARAM sub_func = NULL;
+
+	/* debugfs bypass awbc */
+	if (g_dcam_bypass[p->idx] & (1 << _E_AWBC))
+		return 0;
 
 	switch (param->property) {
 	case DCAM_PRO_AWBC_BLOCK:

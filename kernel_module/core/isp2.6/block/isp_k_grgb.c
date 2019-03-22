@@ -40,7 +40,7 @@ static int isp_k_grgb_block(struct isp_io_param *param, uint32_t idx)
 		return -1;
 	}
 
-	if (s_isp_bypass[idx] & (1 << _EISP_GC))
+	if (g_isp_bypass[idx] & (1 << _EISP_GC))
 		return 0;
 	/*valid when bpc_mode_en_gc=1*/
 	ISP_REG_MWR(idx, ISP_GRGB_CTRL, BIT_0, grgb_info.bypass);

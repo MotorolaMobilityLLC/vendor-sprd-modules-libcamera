@@ -79,7 +79,7 @@ static int isp_slice_ctx_init(struct isp_pipe_context *pctx);
 static struct dentry *debugfs_base;
 static uint32_t s_dbg_linebuf_len = ISP_LINE_BUFFER_W;
 static int s_dbg_work_mode = ISP_CFG_MODE;
-uint32_t s_isp_bypass[ISP_CONTEXT_NUM] = { 0, 0, 0, 0 };
+uint32_t g_isp_bypass[ISP_CONTEXT_NUM] = { 0, 0, 0, 0 };
 static uint32_t debug_ctx_id[4] = {0, 1, 2, 3};
 int g_dbg_iommu_mode = IOMMU_AUTO;
 int g_dbg_set_iommu_mode = IOMMU_AUTO;;
@@ -169,6 +169,10 @@ static int bypass_read(struct seq_file *s, void *unused)
 	struct bypass_isptag dat;
 	int i;
 
+	if (!s_isp_dev) { /* isp not working */
+		seq_printf(s, "isp hardware not working, can't read\n");
+		return 0;
+	}
 	seq_printf(s, "===========isp context %d=============\n", idx);
 	for (i = 0; i < sizeof(tb_bypass) /
 		sizeof(struct bypass_isptag); i++) {
@@ -199,6 +203,10 @@ static ssize_t bypass_write(struct file *filp,
 	char name[16 + 1];
 	uint32_t bypass_all = 0;
 
+	if (!s_isp_dev) { /* isp not working */
+		pr_warn("isp hardware not working, can't write\n");
+		return count;
+	}
 	memset(buf, 0x00, sizeof(buf));
 	i = count;
 	if (i >= sizeof(buf))
@@ -234,15 +242,15 @@ static ssize_t bypass_write(struct file *filp,
 		if (strcmp(name, "ltm") == 0) {
 			ISP_REG_MWR(idx, ISP_LTM_HIST_PARAM, BIT_0, val);
 			ISP_REG_MWR(idx, ISP_LTM_MAP_PARAM0, BIT_0, val);
-			s_isp_bypass[idx] &= (~(1 << _EISP_LTM));
+			g_isp_bypass[idx] &= (~(1 << _EISP_LTM));
 			if (val)
-				s_isp_bypass[idx] |= (1 << _EISP_LTM);
+				g_isp_bypass[idx] |= (1 << _EISP_LTM);
 			return count;
 		} else if (strcmp(name, "nr3") == 0 ||
 			strcmp(name, "3dnr") == 0) {
-			s_isp_bypass[idx] &= (~(1 << _EISP_NR3));
+			g_isp_bypass[idx] &= (~(1 << _EISP_NR3));
 			if (val)
-				s_isp_bypass[idx] |= (1 << _EISP_NR3);
+				g_isp_bypass[idx] |= (1 << _EISP_NR3);
 			ISP_REG_MWR(idx, ISP_3DNR_MEM_CTRL_PARAM0, BIT_0, val);
 			ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, val);
 			ISP_REG_MWR(idx, ISP_3DNR_STORE_PARAM, BIT_0, val);
@@ -257,8 +265,8 @@ static ssize_t bypass_write(struct file *filp,
 			pr_debug("set isp addr 0x%x, bit %d val %d\n",
 				dat.addr, dat.bpos, val);
 			if (i < _EISP_TOTAL) {
-				s_isp_bypass[idx] &= (~(1 << i));
-				s_isp_bypass[idx] |= (val << i);
+				g_isp_bypass[idx] &= (~(1 << i));
+				g_isp_bypass[idx] |= (val << i);
 			}
 			if (bypass_all && (dat.all == 0))
 				continue;
@@ -625,7 +633,7 @@ int sprd_isp_debugfs_init(void)
 		pr_err("fail to create debugfs dir\n");
 		return -ENOMEM;
 	}
-	memset(s_isp_bypass, 0x00, sizeof(s_isp_bypass));
+	memset(g_isp_bypass, 0x00, sizeof(g_isp_bypass));
 	if (!debugfs_create_file("work_mode", 0644,
 			debugfs_base, NULL, &work_mode_ops))
 		return -ENOMEM;
@@ -805,7 +813,7 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	struct isp_fetch_info *fetch = &pctx->fetch;
 	struct isp_fbd_raw_info *fbd_raw = &pctx->fbd_raw;
 
-	pr_info("enter %s: fmt:%d, w:%d, h:%d\n", __func__, fetch->fetch_fmt,
+	pr_info("enter: fmt:%d, w:%d, h:%d\n", fetch->fetch_fmt,
 			fetch->in_trim.size_x, fetch->in_trim.size_y);
 
 	en_3dnr = 0;/* (pctx->mode_3dnr == MODE_3DNR_OFF) ? 0 : 1; */
@@ -844,14 +852,14 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 	ISP_REG_WR(idx, ISP_FETCH_MEM_SLICE_SIZE,
 			fetch->in_trim.size_x | (fetch->in_trim.size_y << 16));
 
-	pr_info("camca  %s, isp sec mode=%d ,pitch_ch0=0x%x, 0x%x, 0x%x\n", __func__,
-					pctx->dev->sec_mode,
-					fetch->pitch.pitch_ch0,
-					fetch->pitch.pitch_ch1,
-					fetch->pitch.pitch_ch2);
+	pr_info("camca, isp sec mode=%d ,pitch_ch0=0x%x, 0x%x, 0x%x\n",
+		pctx->dev->sec_mode,
+		fetch->pitch.pitch_ch0,
+		fetch->pitch.pitch_ch1,
+		fetch->pitch.pitch_ch2);
 
-	if( pctx->dev->sec_mode == SEC_SPACE_PRIORITY) {
-			camca_isp_pitch_set(fetch->pitch.pitch_ch0,
+	if (pctx->dev->sec_mode == SEC_SPACE_PRIORITY) {
+		camca_isp_pitch_set(fetch->pitch.pitch_ch0,
 			fetch->pitch.pitch_ch1,
 			fetch->pitch.pitch_ch2);
 	} else {
@@ -1272,8 +1280,8 @@ static int isp_update_offline_param(
 	struct img_trim path_trim;
 	struct isp_path_desc *path;
 	struct isp_ctx_size_desc cfg;
-	uint32_t update[ISP_SPATH_NUM] =
-		{ISP_PATH0_TRIM, ISP_PATH1_TRIM, ISP_PATH2_TRIM};
+	uint32_t update[ISP_SPATH_NUM] = {
+			ISP_PATH0_TRIM,	ISP_PATH1_TRIM, ISP_PATH2_TRIM};
 
 	if (in_param->valid & ISP_SRC_SIZE) {
 		memcpy(&pctx->original, &in_param->src_info,
@@ -1976,7 +1984,7 @@ static int sprd_isp_proc_frame(void *isp_handle,
 {
 	int ret = 0;
 	struct camera_frame *pframe;
-	static int slw_frm_cnt = 0;
+	static int slw_frm_cnt;
 	struct isp_pipe_context *pctx;
 	struct isp_pipe_dev *dev;
 
@@ -1998,7 +2006,7 @@ static int sprd_isp_proc_frame(void *isp_handle,
 		ctx_id, ctx_id, pframe->channel_id, pframe->buf.mfd[0]);
 	ret = camera_enqueue(&pctx->in_queue, pframe);
 	if (ret == 0) {
-		if(pctx->enable_slowmotion && ++slw_frm_cnt < pctx->slowmotion_count)
+		if (pctx->enable_slowmotion && ++slw_frm_cnt < pctx->slowmotion_count)
 			return ret;
 		complete(&pctx->thread.thread_com);
 		slw_frm_cnt = 0;
@@ -2401,7 +2409,7 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		return -EFAULT;
 	}
 
-	if (ctx_id >= ISP_CONTEXT_NUM  || ctx_id < ISP_CONTEXT_P0 ) {
+	if (ctx_id >= ISP_CONTEXT_NUM  || ctx_id < ISP_CONTEXT_P0) {
 		pr_err("error id. ctx %d\n", ctx_id);
 		return -EFAULT;
 	}
@@ -2607,7 +2615,7 @@ static int isp_cfg_statis_buffer(
 	struct camera_frame *pframe;
 	struct camera_buf *ion_buf_isp = NULL;
 
-	pr_debug("%s enter\n",__func__);
+	pr_debug("enter\n");
 
 	if (io_desc->input->type == STATIS_INIT) {
 
@@ -2644,8 +2652,7 @@ static int isp_cfg_statis_buffer(
 
 		cambuf_kmap(ion_buf_isp);
 
-		pr_debug("%s isp_ iova[%lx] uaddr[%lx] kaddr[%lx] mfd[%d] dmabuf[%p] ionbuf[%p]\n",
-				__func__,
+		pr_debug("isp_ iova[%lx] uaddr[%lx] kaddr[%lx] mfd[%d] dmabuf[%p] ionbuf[%p]\n",
 				ion_buf_isp->iova[0],
 				ion_buf_isp->addr_vir[0],
 				ion_buf_isp->addr_k[0],
@@ -2666,7 +2673,7 @@ static int isp_cfg_statis_buffer(
 
 		pr_debug("statis type %d, iova 0x%08x,  uaddr 0x%lx kaddr[0x%lx]\n",
 			io_desc->input->type, (uint32_t)pframe->buf.iova[0],
-			pframe->buf.addr_vir[0],pframe->buf.addr_k[0]);
+			pframe->buf.addr_vir[0], pframe->buf.addr_k[0]);
 	}
 exit:
 	return ret;
@@ -2692,7 +2699,7 @@ static int isp_init_statis_bufferq(
 	struct statis_path_buf_info *array;
 	int array_size;
 
-	pr_debug("%s enter\n",__func__);
+	pr_debug("enter\n");
 
 	array = dcam_get_statis_distribution_array();
 	array_size = dcam_get_statis_distribution_size();
@@ -2708,7 +2715,7 @@ static int isp_init_statis_bufferq(
 	uaddr = ion_buf->addr_vir[0];
 	total_size = ion_buf->size[0];
 
-	pr_debug("[%s] size %d  addr %p %p,  %08x\n", __func__, (int)total_size,
+	pr_debug("size %d  addr %p %p,  %08x\n", (int)total_size,
 			(void *)kaddr, (void *)uaddr, (uint32_t)paddr);
 
 	for (i = 0; i < array_size; i++) {
@@ -2716,9 +2723,9 @@ static int isp_init_statis_bufferq(
 		buf_size = array[i].buf_size;
 		stats_type = array[i].buf_type;
 
-		pr_debug("buf_stats_type[%d] i[%d]\n",array[i].buf_type,i);
+		pr_debug("buf_stats_type[%d] i[%d]\n", array[i].buf_type, i);
 
-		for (j = 0;j < array[i].buf_cnt; j++) {
+		for (j = 0; j < array[i].buf_cnt; j++) {
 
 			used_size += buf_size;
 			if (used_size >= total_size)
@@ -2735,7 +2742,9 @@ static int isp_init_statis_bufferq(
 					pframe->buf.iova[0] = paddr;
 					pframe->buf.size[0] = buf_size;
 					ret = camera_enqueue(io_desc->q, pframe);
-					pr_debug("outputq[%p] qcnt[%d] qmax[%d]\n",io_desc->q,io_desc->q->cnt,io_desc->q->max);
+					pr_debug("outputq[%p] qcnt[%d] qmax[%d]\n",
+						io_desc->q, io_desc->q->cnt,
+						io_desc->q->max);
 					if (ret)
 						put_empty_frame(pframe);
 					else
@@ -2748,12 +2757,7 @@ static int isp_init_statis_bufferq(
 			paddr += buf_size;
 
 			pr_debug("isp i[%d] j[%d] uaddr[%lx] kaddr[%lx] paddr[%lx] stats_type[%d]\n",
-				i,
-				j,
-				uaddr,
-				kaddr,
-				paddr,
-				stats_type);
+				i, j, uaddr, kaddr, paddr, stats_type);
 
 		}
 		count++;
@@ -2813,10 +2817,9 @@ static int isp_cycle_hist2_frame(
 
 	if (frame == NULL) {
 		pr_err("outputq[%p] q_cnt[%d] q_max[%d]\n",
-		(void*)io_desc->q,
-		io_desc->q->cnt,
-		io_desc->q->max);
-
+			(void*)io_desc->q,
+			io_desc->q->cnt,
+			io_desc->q->max);
 		return -ENOMEM;
 	}
 
@@ -2837,9 +2840,9 @@ static int sprd_isp_cfg_sec(struct isp_pipe_dev *dev, void *param)
 
 	enum sprd_cam_sec_mode  *sec_mode = (enum sprd_cam_sec_mode *)param;
 
-	dev ->sec_mode=  *sec_mode;
+	dev->sec_mode =  *sec_mode;
 
-	pr_info("camca :   isp sec_mode=%d \n",  dev ->sec_mode);
+	pr_info("camca: isp sec_mode=%d\n", dev->sec_mode);
 
 	return 0;
 }
@@ -2872,7 +2875,7 @@ static int sprd_isp_ioctl(void *isp_handle, int ctx_id,
 		break;
 	case ISP_IOCTL_CFG_SEC:
 	    ret = sprd_isp_cfg_sec(dev, param);
-	    break;
+		break;
 	default:
 		pr_err("error: unknown cmd: %d\n", cmd);
 		ret = -EFAULT;
@@ -2942,8 +2945,8 @@ static int sprd_isp_cfg_blkparam(
 
 	if (io_param->sub_block == ISP_BLOCK_NLM)
 		ret = isp_k_cfg_nlm(param, &pctx->isp_k_param, ctx_id);
-	else if (io_param->sub_block == ISP_BLOCK_3DNR){
-		 if (pctx->mode_3dnr != MODE_3DNR_OFF)
+	else if (io_param->sub_block == ISP_BLOCK_3DNR) {
+		if (pctx->mode_3dnr != MODE_3DNR_OFF)
 			ret = isp_k_cfg_3dnr(param, &pctx->isp_k_param, ctx_id);
 	} else if (io_param->sub_block == ISP_BLOCK_YNR) {
 		mutex_lock(&pctx->param_mutex);
@@ -3026,7 +3029,7 @@ static int sprd_isp_dev_open(void *isp_handle, void *param)
 		else
 			line_buffer_len = ISP_LINE_BUFFER_W;
 
-		if( dev->sec_mode == SEC_SPACE_PRIORITY)
+		if (dev->sec_mode == SEC_SPACE_PRIORITY)
 			dev->wmode = ISP_AP_MODE;
 		else
 			dev->wmode = s_dbg_work_mode;

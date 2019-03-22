@@ -60,7 +60,8 @@ static const char *_DCAM_PATH_NAMES[DCAM_PATH_MAX] = {
 /*
  * convert @path_id to path name
  */
-const char *to_path_name(enum dcam_path_id path_id) {
+const char *to_path_name(enum dcam_path_id path_id)
+{
 	return is_path_id(path_id) ? _DCAM_PATH_NAMES[path_id] : "(null)";
 }
 
@@ -264,7 +265,7 @@ int dcam_cfg_path_size(void *dcam_handle,
 		 */
 		spin_lock(&path->size_lock);
 		if (path->size_update) {
-			if(atomic_read(&dev->state) != STATE_RUNNING)
+			if (atomic_read(&dev->state) != STATE_RUNNING)
 				pr_info("Overwrite dcam path size before dcam start if any\n");
 			else {
 				spin_unlock(&path->size_lock);

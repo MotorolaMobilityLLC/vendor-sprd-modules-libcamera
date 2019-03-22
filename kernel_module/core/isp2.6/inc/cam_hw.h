@@ -1,4 +1,4 @@
-			/*
+/*
  * Copyright (C) 2017-2018 Spreadtrum Communications Inc.
  *
  * This software is licensed under the terms of the GNU General Public

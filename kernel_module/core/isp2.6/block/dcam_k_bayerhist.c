@@ -47,9 +47,6 @@ int dcam_k_bayerhist_block(struct dcam_dev_param *param)
 		return 0;
 	param->hist.update &= (~(_UPDATE_INFO));
 	p = &(param->hist.bayerHist_info);
-	/* debugfs hist bypass */
-	if (s_dbg_bypass[idx] & (1 << _E_HIST))
-		p->hist_bypass = 1;
 	DCAM_REG_MWR(idx, DCAM_HIST_FRM_CTRL0, BIT_0, p->hist_bypass);
 	if (p->hist_bypass)
 		return 0;
@@ -89,6 +86,10 @@ int dcam_k_cfg_bayerhist(struct isp_io_param *param,
 			struct dcam_dev_param *p)
 {
 	int ret = 0;
+
+	/* debugfs hist bypass */
+	if (g_dcam_bypass[p->idx] & (1 << _E_HIST))
+		return 0;
 
 	switch (param->property) {
 	case DCAM_PRO_BAYERHIST_BLOCK:

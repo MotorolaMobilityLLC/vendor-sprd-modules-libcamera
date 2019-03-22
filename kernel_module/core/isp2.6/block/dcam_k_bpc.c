@@ -45,7 +45,7 @@ int dcam_k_bpc_block(struct dcam_dev_param *param)
 	param->bpc.update &= (~(_UPDATE_BLOCK));
 	p = &(param->bpc.bpc_info);
 	/* debugfs bpc not bypass then write*/
-	if (s_dbg_bypass[idx] & (1 << _E_BPC))
+	if (g_dcam_bypass[idx] & (1 << _E_BPC))
 		p->bpc_bypass = 1;
 
 	/* following bit can be 0 only if bpc_bypss is 0 */

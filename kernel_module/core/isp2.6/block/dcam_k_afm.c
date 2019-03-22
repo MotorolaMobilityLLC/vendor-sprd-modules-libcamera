@@ -57,7 +57,7 @@ int dcam_k_afm_block(struct dcam_dev_param *param)
 	p = &(param->afm.af_param);
 
 #if 0 // afm block just set NR parameters. AFM control should be set by algo
-	if (s_dbg_bypass[idx] & (1 << _E_AFM))
+	if (g_dcam_bypass[idx] & (1 << _E_AFM))
 		p->bypass = 1;
 	val = (p->bypass & 0x1) |
 		((p->afm_mode_sel & 0x1) << 2) |
@@ -142,8 +142,6 @@ int dcam_k_afm_bypass(struct dcam_dev_param *param)
 	if (!(param->afm.update & _UPDATE_BYPASS))
 		return 0;
 	param->afm.update &= (~(_UPDATE_BYPASS));
-	if (s_dbg_bypass[idx] & (1 << _E_AFM)) /* write when not debug */
-		param->afm.bypass = 1;
 	DCAM_REG_MWR(idx, ISP_AFM_FRM_CTRL, BIT_0, param->afm.bypass);
 
 	return ret;
@@ -320,6 +318,10 @@ int dcam_k_cfg_afm(struct isp_io_param *param, struct dcam_dev_param *p)
 	int size;
 	int32_t bit_update;
 	FUNC_DCAM_PARAM sub_func = NULL;
+
+	/* debugfs bypass afm */
+	if (g_dcam_bypass[p->idx] & (1 << _E_AFM))
+		return 0;
 
 	switch (param->property) {
 	case DCAM_PRO_AFM_BYPASS:

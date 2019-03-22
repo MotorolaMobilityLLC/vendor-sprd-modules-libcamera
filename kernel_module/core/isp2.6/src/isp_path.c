@@ -1400,8 +1400,8 @@ int isp_path_set_fetch_frm(struct isp_pipe_context *pctx,
 	yuv_addr[1] += fetch->trim_off.addr_ch1;
 	yuv_addr[2] += fetch->trim_off.addr_ch2;
 
-	if( pctx->dev->sec_mode == SEC_SPACE_PRIORITY) {
-		camca_isp_fetch_addr_set(yuv_addr[0],  yuv_addr[1],  yuv_addr[2] );
+	if (pctx->dev->sec_mode == SEC_SPACE_PRIORITY) {
+		camca_isp_fetch_addr_set(yuv_addr[0], yuv_addr[1], yuv_addr[2]);
 	} else {
 		ISP_REG_WR(idx, ISP_FETCH_SLICE_Y_ADDR, yuv_addr[0]);
 		ISP_REG_WR(idx, ISP_FETCH_SLICE_U_ADDR, yuv_addr[1]);

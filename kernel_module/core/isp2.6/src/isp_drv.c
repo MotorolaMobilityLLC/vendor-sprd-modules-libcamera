@@ -173,10 +173,10 @@ static void set_common(struct sprd_cam_hw_info *hw)
 
 	wqos_val = (0x1 << 13) | (0x0 << 12) | (0x4 << 8) |
 			((hw->awqos_high & 0xF) << 4) |
-			(hw->awqos_low &0xF);
+			(hw->awqos_low & 0xF);
 	rqos_val = (0x0 << 8) |
 			((hw->arqos_high & 0xF) << 4) |
-			(hw->arqos_low &0xF);
+			(hw->arqos_low & 0xF);
 	ISP_HREG_MWR(ISP_AXI_ARBITER_WQOS,
 					0x37FF,
 					wqos_val);
@@ -482,7 +482,7 @@ int sprd_isp_parse_dt(struct device_node *dn,
 					s_isp_mmubase = (unsigned long)reg_base;
 			}
 		}
-		pr_info("ISP IOMMU Base  0x%lx \n", s_isp_mmubase);
+		pr_info("ISP IOMMU Base  0x%lx\n", s_isp_mmubase);
 
 		/* qos dt parse */
 		qos_node = of_parse_phandle(isp_node, "isp_qos", 0);

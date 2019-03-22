@@ -59,7 +59,7 @@ static void isp_ltm_config_hists(uint32_t idx, struct isp_ltm_hists *hists)
 {
 	unsigned int val;
 
-	if (s_isp_bypass[idx] & (1 << _EISP_LTM))
+	if (g_isp_bypass[idx] & (1 << _EISP_LTM))
 		hists->bypass = 1;
 	ISP_REG_MWR(idx, ISP_LTM_HIST_PARAM, BIT_0, hists->bypass);
 
@@ -104,7 +104,7 @@ static void isp_ltm_config_map(uint32_t idx, struct isp_ltm_map *map)
 {
 	unsigned int val;
 
-	if (s_isp_bypass[idx] & (1 << _EISP_LTM))
+	if (g_isp_bypass[idx] & (1 << _EISP_LTM))
 		map->bypass = 1;
 	ISP_REG_MWR(idx, ISP_LTM_MAP_PARAM0, BIT_0, map->bypass);
 	if (map->bypass)

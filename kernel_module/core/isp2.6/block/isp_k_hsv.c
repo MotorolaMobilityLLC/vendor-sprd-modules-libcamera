@@ -45,7 +45,7 @@ static int isp_k_hsv_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_HSV))
+	if (g_isp_bypass[idx] & (1 << _EISP_HSV))
 		hsv_info.bypass = 1;
 	ISP_REG_MWR(idx, ISP_HSV_PARAM, BIT_0, hsv_info.bypass);
 	if (hsv_info.bypass)

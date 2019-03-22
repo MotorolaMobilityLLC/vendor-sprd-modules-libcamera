@@ -39,7 +39,7 @@ static int isp_k_noisefilter_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_YUVNF))
+	if (g_isp_bypass[idx] & (1 << _EISP_YUVNF))
 		nf_info.yrandom_bypass = 1;
 	ISP_REG_MWR(idx, ISP_YUV_NF_CTRL, BIT_0, nf_info.yrandom_bypass);
 	if (nf_info.yrandom_bypass)

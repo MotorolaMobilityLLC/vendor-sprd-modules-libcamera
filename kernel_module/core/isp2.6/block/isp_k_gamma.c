@@ -42,7 +42,7 @@ static int isp_k_gamma_block(
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return  ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_GAMC))
+	if (g_isp_bypass[idx] & (1 << _EISP_GAMC))
 		gamma_info->bypass = 1;
 	ISP_REG_MWR(idx, ISP_GAMMA_PARAM, BIT_0,
 			gamma_info->bypass);

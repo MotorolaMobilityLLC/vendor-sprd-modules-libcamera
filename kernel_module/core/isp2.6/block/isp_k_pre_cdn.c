@@ -40,7 +40,7 @@ static int isp_k_precdn_block(struct isp_io_param *param,
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_PRECDN))
+	if (g_isp_bypass[idx] & (1 << _EISP_PRECDN))
 		pre_cdn_info.bypass = 1;
 	ISP_REG_MWR(idx, ISP_PRECDN_PARAM, BIT_0, pre_cdn_info.bypass);
 	if (pre_cdn_info.bypass)

@@ -84,7 +84,7 @@ static inline void record_isp_int(enum isp_context_id c_id, uint32_t irq_line)
 		ktime_get_ts(&cur_ts);
 		time = (uint32_t)(cur_ts.tv_sec & 0xffff);
 		time <<= 16;
-		time |= (uint32_t)((cur_ts.tv_nsec / (NSEC_PER_USEC *100)) & 0xffff);
+		time |= (uint32_t)((cur_ts.tv_nsec / (NSEC_PER_USEC * 100)) & 0xffff);
 		for (int_no = 0; int_no < 32; int_no++) {
 			if (irq_line & BIT(int_no)) {
 				cnt = int_index[c_id][int_no];
@@ -241,7 +241,7 @@ static void isp_fmcu_store_done(enum isp_context_id idx, void *isp_handle)
 	if (pctx->enable_slowmotion == 1) {
 		if (pctx->enable_slowmotion == 1)
 			complete(&pctx->frm_done);
-		for (i = 0;i < pctx->slowmotion_count - 1;i++)
+		for (i = 0; i < pctx->slowmotion_count - 1; i++)
 			isp_frame_done(idx, dev);
 	}
 }
@@ -301,15 +301,15 @@ static void isp_ltm_hists_done(enum isp_context_id idx, void *isp_handle)
 		idx, pctx->ltm_ctx.isp_pipe_ctx_id,
 		pctx->ltm_ctx.fid, completion);
 
-	if (completion && (pctx->ltm_ctx.fid >= completion))
-	{
+	if (completion && (pctx->ltm_ctx.fid >= completion)) {
 		completion = dev->ltm_handle->ops->complete_completion();
 		pr_info("complete completion fid [%d], completion[%d]\n",
 			pctx->ltm_ctx.fid, completion);
 	}
 }
 
-static struct camera_frame* isp_hist2_frame_prepare(enum isp_context_id idx, void *isp_handle)
+static struct camera_frame *isp_hist2_frame_prepare(enum isp_context_id idx,
+						void *isp_handle)
 {
 	int i = 0;
 	int max_item = 256;
@@ -325,7 +325,7 @@ static struct camera_frame* isp_hist2_frame_prepare(enum isp_context_id idx, voi
 
 	frame = camera_dequeue(&pctx->hist2_result_queue);
 	if (!frame) {
-		pr_err("isp ctx_id[%d] hist2_result_queue unavailable\n",idx);
+		pr_err("isp ctx_id[%d] hist2_result_queue unavailable\n", idx);
 		return NULL;
 	}
 
@@ -337,10 +337,9 @@ static struct camera_frame* isp_hist2_frame_prepare(enum isp_context_id idx, voi
 			pr_err("fatal err\n");
 		return NULL;
 	}
-
-	for (i = 0; i < max_item; i++) {
+	for (i = 0; i < max_item; i++)
 		buf[i] = ISP_HREG_RD(HIST_BUF + i * 4);
-	}
+
 
 	frame->width = pctx->fetch.in_trim.size_x;
 	frame->height = pctx->fetch.in_trim.size_y;
@@ -360,7 +359,7 @@ static void isp_dispatch_frame(enum isp_context_id idx,
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
-	if (unlikely(!dev || !frame ))
+	if (unlikely(!dev || !frame))
 		return;
 
 	ktime_get_ts(&cur_ts);
@@ -368,8 +367,8 @@ static void isp_dispatch_frame(enum isp_context_id idx,
 	frame->time.tv_usec = cur_ts.tv_nsec / NSEC_PER_USEC;
 	frame->boot_time = ktime_get_boottime();
 
-	pr_debug("isp ctx[%d]: time %06d.%06d\n",idx,
-			(int)frame->time.tv_sec, (int)frame->time.tv_usec);
+	pr_debug("isp ctx[%d]: time %06d.%06d\n", idx,
+		(int)frame->time.tv_sec, (int)frame->time.tv_usec);
 
 	pctx->isp_cb_func(type, frame, pctx->cb_priv_data);
 }
@@ -384,12 +383,12 @@ static void isp_hist_cal_done(enum isp_context_id idx, void *isp_handle)
 	pctx = &dev->ctx[idx];
 
 	/* only use isp hist in preview channel */
-	if(pctx->ch_id != CAM_CH_PRE)
+	if (pctx->ch_id != CAM_CH_PRE)
 		return;
 
-	if ((frame = isp_hist2_frame_prepare(idx, isp_handle))) {
+	if ((frame = isp_hist2_frame_prepare(idx, isp_handle)))
 		isp_dispatch_frame(idx, isp_handle, frame, ISP_CB_STATIS_DONE);
-	}
+
 }
 
 
@@ -445,6 +444,7 @@ static void  isp_dump_iommu_regs(void)
 {
 	uint32_t reg = 0;
 	uint32_t val[4];
+
 	for (reg = 0; reg <= MMU_STS; reg += 16) {
 		val[0] = ISP_MMU_RD(reg);
 		val[1] = ISP_MMU_RD(reg + 4);
@@ -517,7 +517,7 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 			pr_err("error irq: isp ctx %d, INT:0x%x\n",
 					c_id, irq_line);
 			if (irq_line & ISP_INT_LINE_MASK_MMU) {
-				pr_err("IOMMU  Error, IOMMU Registers Dump \n");
+				pr_err("IOMMU  Error, IOMMU Registers Dump\n");
 				isp_dump_iommu_regs();
 			}
 
@@ -606,7 +606,7 @@ int trace_isp_irq_cnt(int ctx_id)
 	{
 		uint32_t cnt, j;
 		int idx = ctx_id;
-		for (cnt = 0; cnt < (uint32_t)irq_done[idx][ISP_INT_SHADOW_DONE]; cnt+=4) {
+		for (cnt = 0; cnt < (uint32_t)irq_done[idx][ISP_INT_SHADOW_DONE]; cnt += 4) {
 			j = (cnt & (INT_RCD_SIZE - 1)); //rolling
 			pr_info("isp%u j=%d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d, %03d.%04d\n",
 			idx, j, (uint32_t)isp_int_recorder[idx][ISP_INT_ISP_ALL_DONE][j] >> 16,

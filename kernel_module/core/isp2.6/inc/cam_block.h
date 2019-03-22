@@ -133,7 +133,7 @@ enum block_bypass {
 	_E_AWBC,
 	_E_NR3,
 };
-extern uint32_t s_dbg_bypass[];
+extern uint32_t g_dcam_bypass[];
 enum isp_bypass {
 	_EISP_GC = 0, /* E:enum, ISP: isp */
 	_EISP_NLM,
@@ -161,6 +161,6 @@ enum isp_bypass {
 	_EISP_NR3 = 31,
 	/* Attention up to 31 */
 };
-extern uint32_t s_isp_bypass[];
+extern uint32_t g_isp_bypass[];
 
 #endif

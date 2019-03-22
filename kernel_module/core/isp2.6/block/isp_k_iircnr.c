@@ -39,7 +39,7 @@ static int isp_k_iircnr_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return -1;
 	}
-	if (s_isp_bypass[idx] & (1 << _EISP_IIRCNR))
+	if (g_isp_bypass[idx] & (1 << _EISP_IIRCNR))
 		iircnr_info.bypass = 1;
 	ISP_REG_MWR(idx, ISP_IIRCNR_PARAM,
 		BIT_0, iircnr_info.bypass);

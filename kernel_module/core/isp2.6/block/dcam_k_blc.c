@@ -44,9 +44,6 @@ int dcam_k_blc_block(struct dcam_dev_param *param)
 		return 0;
 	param->blc.update &= (~(_UPDATE_INFO));
 	p = &(param->blc.blc_info);
-	/* debugfs blc bypass */
-	if (s_dbg_bypass[idx] & (1 << _E_BLC))
-		p->bypass = 1;
 	DCAM_REG_MWR(idx, DCAM_BLC_PARA_R_B, BIT_31,
 		(p->bypass) << 31);
 	if (p->bypass)
@@ -69,6 +66,9 @@ int dcam_k_cfg_blc(struct isp_io_param *param, struct dcam_dev_param *p)
 		pr_err("property_param is null error.\n");
 		return -1;
 	}
+	/* debugfs bypass blc */
+	if (g_dcam_bypass[p->idx] & (1 << _E_BLC))
+		return 0;
 
 	switch (param->property) {
 	case DCAM_PRO_BLC_BLOCK:
