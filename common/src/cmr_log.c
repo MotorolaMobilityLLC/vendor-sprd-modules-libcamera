@@ -31,6 +31,12 @@ void isp_init_log_level(void) {
     val = atoi(prop);
     if (0 < val)
         g_isp_log_level = val;
+
+    // user verson camera log dont print >= LOGD
+    property_get("ro.debuggable", prop, "1");
+    if (!strcmp(prop, "0")) {
+        g_isp_log_level = LEVEL_OVER_LOGI;
+    }
 }
 
 void oem_init_log_level(void) {
@@ -58,4 +64,10 @@ void sensor_init_log_level(void) {
     val = atoi(prop);
     if (0 < val)
         g_sensor_log_level = val;
+
+    // user verson camera log dont print >= LOGD
+    property_get("ro.debuggable", prop, "1");
+    if (!strcmp(prop, "0")) {
+        g_sensor_log_level = LEVEL_OVER_LOGI;
+    }
 }
