@@ -21,14 +21,10 @@
 
 #define LOG_TAG "ov8856_shine"
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
-#if defined(OV8856_MIPI_NUM_4LANE)
+#if defined(OV8856_SHINE_MIPI_4LANE)
 #include "sensor_ov8856_shine_mipi_raw_4lane.h"
 #else
 #include "sensor_ov8856_shine_mipi_raw_2lane.h"
-#endif
-#else
-#include "sensor_ov8856_shine_mipi_raw_4lane.h"
 #endif
 
 /*==============================================================================
