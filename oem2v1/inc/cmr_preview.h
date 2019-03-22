@@ -285,7 +285,8 @@ cmr_int cmr_preview_set_cap_size(
     cmr_handle preview_handle, cmr_u32 is_reprocessing, cmr_u32 camera_id,
     cmr_u32 width,
     cmr_u32 height); /**add for 3d capture to reset reprocessing capture size*/
-
+cmr_int cmr_preview_set_thumb_size(cmr_handle preview_handle,
+                                        cmr_u32 camera_id, struct img_size thum_size);
 cmr_int cmr_preview_get_post_proc_param(cmr_handle preview_handle,
                                         cmr_u32 camera_id, cmr_u32 encode_angle,
                                         struct snp_proc_param *out_param_ptr);

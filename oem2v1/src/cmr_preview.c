@@ -1365,6 +1365,21 @@ cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle,
 }
 /**add for 3d capture to reset reprocessing capture size end*/
 
+cmr_int cmr_preview_set_thumb_size(cmr_handle preview_handle,
+                                        cmr_u32 camera_id, struct img_size thum_size) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    CHECK_HANDLE_VALID(handle);
+
+    if (thum_size.width * thum_size.height >
+        handle->prev_cxt[camera_id].prev_param.thumb_size.width *
+        handle->prev_cxt[camera_id].prev_param.thumb_size.height)
+        handle->prev_cxt[camera_id].prev_param.thumb_size = thum_size;
+
+    CMR_LOGD("update thumb size %dx%d", thum_size.width, thum_size.height);
+    return ret;
+}
+
 cmr_int cmr_preview_get_post_proc_param(cmr_handle preview_handle,
                                         cmr_u32 camera_id, cmr_u32 encode_angle,
                                         struct snp_proc_param *out_param_ptr) {
