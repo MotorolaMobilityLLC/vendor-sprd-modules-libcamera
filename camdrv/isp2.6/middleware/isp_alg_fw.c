@@ -2265,6 +2265,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
 	afl_input.private_len = sizeof(struct isp_statis_info);
 	afl_input.private_data = statis_info;
+	afl_input.ae_win_num.w = cxt->ae_cxt.win_num.w;
+	afl_input.ae_win_num.h = cxt->ae_cxt.win_num.h;
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
