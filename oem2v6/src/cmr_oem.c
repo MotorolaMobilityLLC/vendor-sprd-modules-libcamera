@@ -1700,7 +1700,7 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         break;
     }
 
-    CMR_LOGI("camera_cb %ld %ld", oem_cb_type, oem_func);
+    CMR_LOGD("camera_cb %ld %ld", oem_cb_type, oem_func);
 
     // TBD: remove camera_frame_type and cam_ion_buffer_t, only data and size
     if (param) {
@@ -2044,7 +2044,7 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
             break;
         case SNAPSHOT_CB_EVT_STATE:
             cxt->snp_cxt.status = ((struct camera_frame_type *)param)->status;
-            CMR_LOGI("snapshot state is %d", cxt->snp_cxt.status);
+            CMR_LOGD("snapshot state is %d", cxt->snp_cxt.status);
             break;
         default:
             CMR_LOGE("don't support cb %d", cb);
@@ -2068,7 +2068,7 @@ void camera_snapshot_cb(cmr_handle oem_handle, enum snapshot_cb_type cb,
         CMR_LOGE("error handle");
         return;
     }
-    CMR_LOGI("func %d", func);
+    CMR_LOGD("func %d", func);
     if (SNAPSHOT_FUNC_TAKE_PICTURE == func ||
         SNAPSHOT_FUNC_ENCODE_PICTURE == func) {
         if ((SNAPSHOT_FUNC_ENCODE_PICTURE == func) &&
@@ -5193,7 +5193,7 @@ cmr_int camera_preview_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
         goto exit;
     }
     flash_status = setting_param.cmd_type_value;
-    CMR_LOGI("HW flash_status=%ld", flash_status);
+    CMR_LOGD("HW flash_status=%ld", flash_status);
     /*close flash*/
     if ((CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) &&
         ((FLASH_OPEN == flash_status) || (FLASH_HIGH_LIGHT == flash_status))) {

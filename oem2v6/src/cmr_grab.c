@@ -1066,7 +1066,7 @@ cmr_int cmr_grab_get_cap_time(cmr_handle grab_handle, cmr_u32 *sec,
 
     *sec = time.sec;
     *usec = time.usec;
-    CMR_LOGI("sec=%d, usec=%d", *sec, *usec);
+    CMR_LOGD("sec=%d, usec=%d", *sec, *usec);
 
 exit:
     return ret;

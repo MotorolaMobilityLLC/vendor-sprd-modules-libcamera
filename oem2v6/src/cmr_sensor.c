@@ -687,7 +687,7 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
     struct cmr_sns_ioctl_param ioctl_param;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -714,7 +714,7 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGD("X ret %ld", ret);
     return ret;
 }
 

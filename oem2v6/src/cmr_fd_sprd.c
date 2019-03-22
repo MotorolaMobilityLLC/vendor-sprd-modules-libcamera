@@ -1132,7 +1132,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         }
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
-        CMR_LOGI("%dx%d, face_num=%ld, time=%d ms",
+        CMR_LOGD("%dx%d, face_num=%ld, time=%d ms",
                  class_handle->fd_small.size.width,
                  class_handle->fd_small.size.height,
                  class_handle->frame_out.face_area.face_count, duration);

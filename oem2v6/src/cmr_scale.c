@@ -227,7 +227,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
 
     case CMR_EVT_SCALE_START:
         ATRACE_BEGIN("cpp_scale");
-        CMR_LOGI("scale start");
+        CMR_LOGD("scale start");
         struct img_frm frame;
         struct sprd_cpp_scale_cfg_parm *frame_params =
             &cfg_params->frame_params;
@@ -236,7 +236,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         scal_param.scale_cfg_param = &cfg_params->frame_params;
         scal_param.handle = file->handle;
 
-        CMR_LOGI("output_size.width:%d, height: %d", frame_params->output_size.w,
+        CMR_LOGD("output_size.width:%d, height: %d", frame_params->output_size.w,
                  frame_params->output_size.h);
         file->err_code = CMR_CAMERA_SUCCESS;
         if ((frame_params->output_size.w % 8 != 0)) {
@@ -410,7 +410,7 @@ cmr_int get_deci_param(int input_value, int output_value) {
             deci_value = 3; // driver value: 1/8
         }
     }
-    CMR_LOGI("input_value:%d, output_value: %d, deci_value: %d", input_value,
+    CMR_LOGD("input_value:%d, output_value: %d, deci_value: %d", input_value,
              output_value, deci_value);
     return deci_value;
 }
@@ -482,7 +482,7 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->output_addr_vir.y = (uint32_t)dst_img->addr_vir.addr_y;
     frame_params->output_addr_vir.u = (uint32_t)dst_img->addr_vir.addr_u;
 
-    CMR_LOGI("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
+    CMR_LOGD("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
              frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
              frame_params->output_addr_vir.y, frame_params->output_addr_vir.u);
 

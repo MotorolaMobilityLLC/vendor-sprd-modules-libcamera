@@ -5124,12 +5124,12 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
         // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
         // mSetting->setAeCONTROLTag(&controlInfo);
-        HAL_LOGI("CAMERA_EVT_CB_AE_LOCK_NOTIFY");
+        HAL_LOGD("CAMERA_EVT_CB_AE_LOCK_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_UNLOCK_NOTIFY:
         // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
         // mSetting->setAeCONTROLTag(&controlInfo);
-        HAL_LOGI("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY");
+        HAL_LOGD("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_FLASH_FIRED:
         if (parm4 != NULL) {
@@ -5139,14 +5139,14 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             isNeedFlashFired = 0;
         }
         //isNeedFlashFired is used by APP to check if af_trigger being sent before capture
-        HAL_LOGI("isNeedFlashFired = %d", isNeedFlashFired);
+        HAL_LOGD("isNeedFlashFired = %d", isNeedFlashFired);
         break;
     case CAMERA_EVT_CB_HDR_SCENE:
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
         sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
-        HAL_LOGI("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
+        HAL_LOGD("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
         break;
     case CAMERA_EVT_CB_AI_SCENE:
         SPRD_DEF_Tag sprdAIInfo;
