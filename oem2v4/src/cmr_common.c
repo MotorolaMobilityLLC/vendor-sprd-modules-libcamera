@@ -133,6 +133,8 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 trim_width;
     cmr_u32 trim_height;
+    cmr_u32 width_temp;
+    cmr_u32 height_temp;
     float output_aspect_ratio;
     float zoom_width, zoom_height, sensor_aspect_ratio;
 
@@ -169,12 +171,21 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
     trim_width = (cmr_u32)zoom_width;
     trim_height = (cmr_u32)zoom_height;
 
-    src_trim_rect->start_x += (src_trim_rect->width - trim_width) >> 1;
-    src_trim_rect->start_y += (src_trim_rect->height - trim_height) >> 1;
-    src_trim_rect->start_x = CAMERA_START(src_trim_rect->start_x);
-    src_trim_rect->start_y = CAMERA_START(src_trim_rect->start_y);
+    if (trim_width > src_trim_rect->width)
+        trim_width = src_trim_rect->width;
+
+    if (trim_height > src_trim_rect->height)
+        trim_height = src_trim_rect->height;
+
+    width_temp = src_trim_rect->width;
+    height_temp = src_trim_rect->height;
     src_trim_rect->width = CAMERA_WIDTH(trim_width);
     src_trim_rect->height = CAMERA_HEIGHT(trim_height);
+    src_trim_rect->start_x += (width_temp - src_trim_rect->width) >> 1;
+    src_trim_rect->start_y += (height_temp - src_trim_rect->height) >> 1;
+    src_trim_rect->start_x = CAMERA_START(src_trim_rect->start_x);
+    src_trim_rect->start_y = CAMERA_START(src_trim_rect->start_y);
+
 
     CMR_LOGD("output trim rect %d %d %d %d", src_trim_rect->start_x,
              src_trim_rect->start_y, src_trim_rect->width,
