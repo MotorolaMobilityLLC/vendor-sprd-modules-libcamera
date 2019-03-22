@@ -419,7 +419,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 					blk_ptr = (void *)(isp_cxt_start_addr + offset);
 					ops->deinit(blk_ptr);
 				}
-				ISP_LOGD("deinit block 0x%04x, set %d\n", id, j);
+				ISP_LOGV("deinit block 0x%04x, set %d\n", id, j);
 			} else {
 				ISP_LOGV("i = %d, id = 0x%x, blk_cfg_ptr = %p", i, id, blk_cfg_ptr);
 			}
@@ -1450,7 +1450,7 @@ start_parse:
 
 			dst_header[j].absolute_addr = (void *)dst_data_ptr;
 			dst_header[j].mode_id = i;
-			ISP_LOGD("j %d, blk 0x%04x, bypass %d, size %d, offset 0x%x, ptr0 %p, pt1 %p, real_off %ld\n", j,
+			ISP_LOGV("j %d, blk 0x%04x, bypass %d, size %d, offset 0x%x, ptr0 %p, pt1 %p, real_off %ld\n", j,
 				dst_header[j].block_id, src_header[j].bypass, dst_header[j].size, src_header[j].offset, src_data_ptr,
 				dst_data_ptr, (cmr_uint)src_data_ptr - (cmr_uint)src_mod_ptr);
 

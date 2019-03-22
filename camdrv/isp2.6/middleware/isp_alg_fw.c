@@ -804,7 +804,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		break;
 	}
 	default:
-		ISP_LOGE("unsupported ae cb: %lx\n", type);
+		ISP_LOGV("unsupported ae cb: %lx\n", type);
 		break;
 	}
 
@@ -1082,8 +1082,9 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 		break;
 	case ISP_AFL_SET_STATS_BUFFER:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, param0, param1);
+		break;
 	default:
-		ISP_LOGE("unsupported afl cb: %lx\n", type);
+		ISP_LOGV("unsupported afl cb: %lx\n", type);
 		break;
 	}
 
@@ -1185,7 +1186,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 
-	ISP_LOGD("enter\n");
+	ISP_LOGV("enter\n");
 
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
@@ -1472,9 +1473,9 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		  * here we shift 1 to get average of G for AE algo compatibility */
 		ae_stat_ptr->g_info[i] >>= 1;
 	}
-	ISP_LOGD("sum[0]: r 0x%x, g 0x%x, b 0x%x\n",
+	ISP_LOGV("sum[0]: r 0x%x, g 0x%x, b 0x%x\n",
 		ae_stat_ptr->r_info[0], ae_stat_ptr->g_info[0], ae_stat_ptr->b_info[0]);
-	ISP_LOGD("cnt: r 0x%x, 0x%x,  g 0x%x, 0x%x, b 0x%x, 0x%x\n",
+	ISP_LOGV("cnt: r 0x%x, 0x%x,  g 0x%x, 0x%x, b 0x%x, 0x%x\n",
 		cnt_r_ue, cnt_r_oe, cnt_g_ue, cnt_g_oe, cnt_b_ue, cnt_b_oe);
 
 	cxt->ai_cxt.ae_param.frame_id = statis_info->frame_id;
@@ -1579,7 +1580,7 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 	hist_stats->value[j++] = (cmr_u32)(val0 & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)((val0 >> 24) & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)(((val1 & 0xff) << 16) | ((val0 >> 48) & 0xffff));
-	ISP_LOGD("data: r %d %d, g %d %d, b %d %d\n",
+	ISP_LOGV("data: r %d %d, g %d %d, b %d %d\n",
 		cxt->bayer_hist_stats[0].value[0], cxt->bayer_hist_stats[0].value[1],
 		cxt->bayer_hist_stats[1].value[0], cxt->bayer_hist_stats[1].value[1],
 		cxt->bayer_hist_stats[2].value[0], cxt->bayer_hist_stats[2].value[1]);
@@ -2248,7 +2249,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			&pm_afl_input, &pm_afl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get afl param"));
 	if (ISP_SUCCESS == ret && 1 == pm_afl_output.param_num) {
 		afl_input.afl_param_ptr = (struct isp_antiflicker_param *)pm_afl_output.param_data->data_ptr;
 		afl_input.pm_param_num = pm_afl_output.param_num;
@@ -2318,7 +2318,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				af_temp[i][2] = *ptr++;
 				ptr++;
 			}
-			ISP_LOGD("data: %x %x %x\n", af_temp[0][0], af_temp[0][1], af_temp[0][2]);
+			ISP_LOGV("data: %x %x %x\n", af_temp[0][0], af_temp[0][1], af_temp[0][2]);
 
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.data = (void *)(af_temp);
@@ -2579,7 +2579,8 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 	case ISP_EVT_AE:
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->aem_stats_data;
-		ISP_LOGI("is_master :%d\n", cxt->is_master);
+		if (cxt->is_multi_mode)
+			ISP_LOGD("is_master :%d\n", cxt->is_master);
 		if (cxt->is_master) {
 			isp_br_ioctrl(CAM_SENSOR_MASTER, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
 		} else {
@@ -2594,7 +2595,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 			/* workaround for AE jittering when high CPU loading causing SOF delay
 			    todo: improve whole system performance and optimize SOF message queue.
 			    */
-			ISP_LOGD("time interval is too small: %d\n", timems_diff);
+			ISP_LOGW("time interval is too small: %d\n", timems_diff);
 			goto exit;
 		}
 		ret = ispalg_ae_process((cmr_handle) cxt);
