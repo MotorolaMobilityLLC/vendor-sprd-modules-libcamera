@@ -368,7 +368,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 #endif
 
 #if defined(CONFIG_ISP_2_6)
-#define AFL_BATCH_SIZE_GLB ((80)*16)
+#define AFL_BATCH_SIZE_GLB ((80)*24)
 #define AFL_GLB_ROW (80)
 #define AFL_RIG_ROW (481)
 	/* parsing raw afl data (afl global data)*/
