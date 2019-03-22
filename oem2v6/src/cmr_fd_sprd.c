@@ -1098,10 +1098,6 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                           &(class_handle->frame_out.face_area),
                           class_handle->fd_small.size,
                           class_handle->curr_frame_idx);
-        /* save a copy for next frame */
-        memcpy(&(class_handle->face_area_prev),
-               &(class_handle->frame_out.face_area),
-               sizeof(struct img_face_area));
 
         class_handle->frame_out.dst_frame.size.width =
             class_handle->frame_in.src_frame.size.width;
@@ -1130,6 +1126,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_out.face_area.range[i].ely =
                 class_handle->frame_out.face_area.range[i].ely * ratio;
         }
+
+        /* save a copy for next frame */
+        memcpy(&(class_handle->face_area_prev),
+               &(class_handle->frame_out.face_area),
+               sizeof(struct img_face_area));
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
         CMR_LOGD("%dx%d, face_num=%ld, time=%d ms",
