@@ -6403,8 +6403,12 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 is_3D_video = 0;
     cmr_u32 is_3D_caputre = 0;
     cmr_u32 is_3D_preview = 0;
+    struct sensor_pdaf_info pdaf_info;
+    SENSOR_VAL_T val;
+    struct sensor_context *sn_cxt = NULL;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
-
+    sn_cxt = &(cxt->sn_cxt);
+    CHECK_HANDLE_VALID(sn_cxt);
     if (!sensor_info) {
         CMR_LOGE("sn info is null!");
         return CMR_CAMERA_FAIL;
@@ -6433,7 +6437,15 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_width = target_size->width;
         search_height = target_size->height;
     }
-
+#ifdef CONFIG_VIDEO_PDAF_MODE
+    val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
+    val.pval = &pdaf_info;
+    ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                           SENSOR_ACCESS_VAL, (cmr_uint)&val);
+    CMR_LOGD("pdaf_supported %d  video_eb %d",
+             sn_cxt->cur_sns_ex_info.pdaf_supported,
+             handle->prev_cxt[camera_id].prev_param.video_eb);
+#endif
     if (is_raw_capture == 1) {
         search_height =
             handle->prev_cxt[camera_id].prev_param.raw_capture_size.height;
@@ -6482,9 +6494,27 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                             CMR_LOGD("dont choose high fps setting");
                             continue;
                         }
-                        target_mode = i;
-                        ret = CMR_CAMERA_SUCCESS;
-                        break;
+
+//Select sensor mode with pdaf
+#ifdef CONFIG_VIDEO_PDAF_MODE
+                        if (handle->prev_cxt[camera_id].prev_param.video_eb &&
+                            sn_cxt->cur_sns_ex_info.pdaf_supported &&
+                            pdaf_info.sns_mode != NULL) {
+                            if (pdaf_info.sns_mode[i] == 1) {
+                                target_mode = i;
+                                ret = CMR_CAMERA_SUCCESS;
+                                break;
+                            } else
+                                continue;
+                        } else {
+                            target_mode = i;
+                            ret = CMR_CAMERA_SUCCESS;
+                            break;
+                        }
+#endif
+                            target_mode = i;
+                            ret = CMR_CAMERA_SUCCESS;
+                            break;
                     } else {
                         last_one = i;
                     }

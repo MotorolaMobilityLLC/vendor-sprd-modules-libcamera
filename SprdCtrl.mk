@@ -888,3 +888,6 @@ endif
 LOCAL_CFLAGS += -DCAMERA_SENSOR_NUM=$(max_sensor_num)
 LOCAL_CFLAGS += -DCAMERA_LOGICAL_SENSOR_NUM=$(max_logical_sensor_num)
 LOCAL_CFLAGS += -DISP_BINNING_SIZE=$(isp_binning_size)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_VIDEO_PDAF_MODE)), true)
+LOCAL_CFLAGS += -DCONFIG_VIDEO_PDAF_MODE
+endif
