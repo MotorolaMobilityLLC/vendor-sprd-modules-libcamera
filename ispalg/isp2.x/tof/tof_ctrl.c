@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#include "tof_ctrl.h"
+ #include "tof_ctrl.h"
 
 static int tof_fd;
 
 cmr_int vl53l0_init()
 {
-	cmr_int rtn = ISP_SUCCESS;
-
 	tof_fd = open("/dev/stmvl53l0_ranging",O_RDWR | O_SYNC);
-	if (tof_fd <= 0) {
+	if (tof_fd <= 0)
+	{
 		ISP_LOGE("Error open stmvl53l0_ranging device,error num:%s",strerror(errno));
 		return ISP_ERROR;
 	}
@@ -67,63 +66,59 @@ cmr_int vl53l0_init()
 	parameter.value = SpadCount;
 	parameter.value2 = IsApertureSpads;
 	parameter.name =REFERENCESPADS_PAR;
-	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_PARAMETER: %s", strerror(errno));
-		rtn = ISP_ERROR;
-		goto exit;
+		close(tof_fd);
+		return ISP_ERROR;
 	}
 
 	parameter.is_read = 0;
 	parameter.name  = OFFSET_PAR;
 	parameter.value= offset;
-	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_PARAMETER");
-		rtn = ISP_ERROR;
-		goto exit;
+		close(tof_fd);
+		return ISP_ERROR;
 	}
 
 	parameter.is_read = 0;
 	parameter.name = XTALKENABLE_PAR;
 	parameter.value = XtalkEnable;
-	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER , &parameter) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER , &parameter) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_PARAMETER");
-		rtn = ISP_ERROR;
-		goto exit;
+		close(tof_fd);
+		return ISP_ERROR;
 	}
 
 	parameter.is_read = 0;
 	parameter.name  = XTALKRATE_PAR;
 	parameter.value = XtalkInt;
-	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_PARAMETER");
-		rtn = ISP_ERROR;
-		goto exit;
+		close(tof_fd);
+		return ISP_ERROR;
 	}
 
 	parameter.is_read = 0;
 	parameter.name = DEVICEMODE_PAR;
 	parameter.value = VL53L0_DEVICEMODE_CONTINUOUS_RANGING;
-	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_PARAMETER, &parameter) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_PARAMETER(CONTINOUS_TIMED_RANGING)");
-		rtn = ISP_ERROR;
-		goto exit;
+		close(tof_fd);
+		return ISP_ERROR;
 	}
 
-	if (ioctl(tof_fd, VL53L0_IOCTL_INIT , NULL) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_INIT , NULL) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_INIT");
-		rtn = ISP_ERROR;
-		goto exit;
+		close(tof_fd);
+		return ISP_ERROR;
 	}
-	return rtn;
-
-  exit:
-	close(tof_fd);
-	return rtn;
+	return ISP_SUCCESS;
 }
 
 cmr_int vl53l0_deinit()
 {
-	if (ioctl(tof_fd, VL53L0_IOCTL_STOP , NULL) != ISP_SUCCESS) {
+	if (ioctl(tof_fd, VL53L0_IOCTL_STOP , NULL) < 0) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_DEINIT");
 		close(tof_fd);
 		return ISP_ERROR;
@@ -139,11 +134,13 @@ cmr_int vl53l0_getdata(void * data)
 	VL53L0_RangingMeasurementData_t range_datas = {0};
 
 	//to get datas
-	if (ioctl(tof_fd, VL53L0_IOCTL_GETDATAS,&range_datas) != ISP_SUCCESS) {
-		ISP_LOGE("Error: Could not perform vl53l0_getdata");
-		return ISP_ERROR;
-	}
+	ioctl(tof_fd, VL53L0_IOCTL_GETDATAS,&range_datas);
 
+	/*
+	range_datas_call->RangeMilliMeter = range_datas.RangeMilliMeter;
+	range_datas_call->RangeStatus = range_datas.RangeStatus;
+	range_datas_call->RangeDMaxMilliMeter = range_datas.RangeDMaxMilliMeter;
+	*/
 	memcpy(range_datas_call, &range_datas, sizeof(VL53L0_RangingMeasurementData_t));
 
 	ISP_LOGV("VL53L0 Range MilliMeter:%4d, status:0x%x, DMax MilliMeter:%4d\n",
@@ -170,7 +167,7 @@ cmr_int vl53l0_getdata(void * data)
 				//fprintf(pf, "ZoneId:%4d \n",range_datas.ZoneId);
 				//fprintf(pf, "TimeStamp:%4d \n",range_datas.TimeStamp);
 	            fclose(pf);
-			}
+		}
 	}
 
 	return ISP_SUCCESS;
@@ -235,6 +232,8 @@ static cmr_s32 _tof_create_thread(struct tof_ctrl_cxt *cxt_ptr)
 }
 #endif
 
+cmr_s32 is_deinit = 0;  // 0: tof not deinit , 1: tof is deinit
+
 static void *  _tof_ctrl_thr_proc(void *p_data)
 {
 	struct tof_ctrl_cxt *cxt_ptr = (struct tof_ctrl_cxt *)p_data;
@@ -247,12 +246,11 @@ static void *  _tof_ctrl_thr_proc(void *p_data)
 
 	while(1){
 
-	if(1==cxt_ptr->is_deinit)
+	if(1==is_deinit)
 			break;
 
-		if(ISP_SUCCESS == vl53l0_getdata(&data)){
-			_set_tof_info_to_af(cxt_ptr, &data);
-		}
+		vl53l0_getdata(&data);
+		_set_tof_info_to_af(cxt_ptr, &data);
 
 		usleep(30000);
 	}
@@ -278,7 +276,7 @@ static cmr_s32 _tof_create_thread(struct tof_ctrl_cxt *cxt_ptr)
 	pthread_setname_np(cxt_ptr->thr_handle, "tof_ctrl");
 	pthread_attr_destroy(&attr);
 
-	cxt_ptr->is_deinit = 0;
+	is_deinit = 0;
 
   exit:
 	ISP_LOGI("tof_ctrl thread rtn %ld", rtn);
@@ -302,7 +300,7 @@ static cmr_s32 _tof_destroy_thread(struct tof_ctrl_cxt *cxt_ptr)
 	//	rtn = cmr_thread_destroy(cxt_ptr->thr_handle);
 		if (!rtn) {
 		//	cxt_ptr->thr_handle = NULL;
-			cxt_ptr->is_deinit = 1;
+			is_deinit = 1;
 			rtn = pthread_join(cxt_ptr->thr_handle, &dummy);
 			cxt_ptr->thr_handle = 0;
 		} else {
@@ -332,11 +330,7 @@ cmr_int tof_ctrl_init(struct tof_ctrl_init_in * input_ptr, cmr_handle * handle)
 		goto exit;
 	}
 
-	rtn = vl53l0_init();
-	if (rtn) {
-		ISP_LOGE("fail to vl53l0_init %ld", rtn);
-		goto exit;
-	}
+  	vl53l0_init();
 
 	cxt_ptr->tof_set_cb = input_ptr->tof_set_cb;
 	cxt_ptr->caller_handle = input_ptr->caller_handle;
@@ -371,11 +365,7 @@ cmr_int tof_ctrl_deinit(cmr_handle * handle)
 		goto exit;
 	}
 
-	rtn = vl53l0_deinit();
-	if (rtn) {
-		ISP_LOGE("fail to vl53l0_deinit %ld", rtn);
-		goto exit;
-	}
+  	vl53l0_deinit();
 
   exit:
 	if (cxt_ptr) {

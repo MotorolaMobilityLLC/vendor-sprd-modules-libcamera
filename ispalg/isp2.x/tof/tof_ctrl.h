@@ -26,7 +26,6 @@ struct tof_ctrl_work_lib {
 };
 
 struct tof_ctrl_cxt {
-	cmr_s32 is_deinit;  // 0: tof not deinit , 1: tof is deinit
 	pthread_t thr_handle;
 	//cmr_handle thr_handle;
 	cmr_handle caller_handle;
