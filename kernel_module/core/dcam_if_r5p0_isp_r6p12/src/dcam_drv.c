@@ -486,7 +486,7 @@ int sprd_dcam_drv_reset(enum dcam_id idx, int is_irq)
 	else if (idx == DCAM_ID_1)
 		flag = MASK_MM_AHB_DCAM1_SOFT_RST;
 	if (sprd_dcam_drv_chip_id_get() == SHARKL3 && idx == DCAM_ID_2)
-		flag = DCAM2_SOFT_RST;
+		flag = MASK_MM_AHB_DCAM2_SOFT_RST;
 
 	if (is_irq && atomic_read(&s_dcam_total_users) == 1)
 		flag = MASK_MM_AHB_DCAM_ALL_SOFT_RST;

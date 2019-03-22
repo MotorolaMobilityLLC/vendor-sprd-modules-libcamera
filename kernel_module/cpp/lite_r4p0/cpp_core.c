@@ -11,8 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <dt-bindings/soc/sprd,sharkl3-regs.h>
-#include <dt-bindings/soc/sprd,sharkl3-mask.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -55,6 +53,20 @@
 #define CPP_IRQ_LINE_MASK           CPP_PATH_DONE
 #define CPP_MMU_IRQ_LINE_MASK       CPP_MMU_ERROR_INT
 
+static const char * const syscon_name[] = {
+	"cpp_rst",
+	"path0_rst",
+	"path1_rst",
+	"dma_rst"
+};
+
+enum  {
+	CPP_RST = 0,
+	CPP_PATH0_RST,
+	CPP_PATH1_RST,
+	CPP_DMA_RST
+};
+
 enum cpp_irq_id {
 	CPP_SCALE_DONE = 0,
 	CPP_ROT_DONE,
@@ -84,6 +96,12 @@ struct scif_device {
 };
 
 typedef void (*cpp_isr_func) (void *);
+
+struct register_gpr {
+	struct regmap *gpr;
+	uint32_t reg;
+	uint32_t mask;
+};
 
 struct cpp_device {
 	atomic_t users;
@@ -116,7 +134,7 @@ struct cpp_device {
 
 	struct clk *clk_mm_vsp_eb;
 
-	struct regmap *vsp_ahb_gpr;
+	struct register_gpr syscon_regs[ARRAY_SIZE(syscon_name)];
 };
 
 typedef void (*cpp_isr) (struct cpp_device *dev);
@@ -162,13 +180,15 @@ static void sprd_cppcore_module_reset(
 		return;
 	}
 
-	regmap_update_bits(dev->vsp_ahb_gpr, MM_VSP_AHB_RESET,
-			CPP_PATH_RESET_MASK,
-			(unsigned int)CPP_PATH_RESET_MASK);
+	regmap_update_bits(dev->syscon_regs[CPP_RST].gpr,
+		dev->syscon_regs[CPP_RST].reg,
+		dev->syscon_regs[CPP_RST].mask,
+		dev->syscon_regs[CPP_RST].mask);
 	udelay(2);
-	regmap_update_bits(dev->vsp_ahb_gpr, MM_VSP_AHB_RESET,
-			CPP_PATH_RESET_MASK,
-			~(unsigned int)CPP_PATH_RESET_MASK);
+	regmap_update_bits(dev->syscon_regs[CPP_RST].gpr,
+		dev->syscon_regs[CPP_RST].reg,
+		dev->syscon_regs[CPP_RST].mask,
+		~dev->syscon_regs[CPP_RST].mask);
 }
 
 static void sprd_cppcore_scale_reset(
@@ -178,13 +198,15 @@ static void sprd_cppcore_scale_reset(
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	regmap_update_bits(dev->vsp_ahb_gpr, (unsigned int)MM_VSP_AHB_RESET,
-			(unsigned int)CPP_PATH0_AHB_RESET_BIT,
-			(unsigned int)CPP_PATH0_AHB_RESET_BIT);
+	regmap_update_bits(dev->syscon_regs[CPP_PATH0_RST].gpr,
+		dev->syscon_regs[CPP_PATH0_RST].reg,
+		dev->syscon_regs[CPP_PATH0_RST].mask,
+		dev->syscon_regs[CPP_PATH0_RST].mask);
 	udelay(2);
-	regmap_update_bits(dev->vsp_ahb_gpr, (unsigned int)MM_VSP_AHB_RESET,
-			(unsigned int)CPP_PATH0_AHB_RESET_BIT,
-			~(unsigned int)CPP_PATH0_AHB_RESET_BIT);
+	regmap_update_bits(dev->syscon_regs[CPP_PATH0_RST].gpr,
+		dev->syscon_regs[CPP_PATH0_RST].reg,
+		dev->syscon_regs[CPP_PATH0_RST].mask,
+		~dev->syscon_regs[CPP_PATH0_RST].mask);
 }
 
 static void sprd_cppcore_rot_reset(struct cpp_device *dev)
@@ -193,13 +215,15 @@ static void sprd_cppcore_rot_reset(struct cpp_device *dev)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	regmap_update_bits(dev->vsp_ahb_gpr, MM_VSP_AHB_RESET,
-			CPP_PATH1_AHB_RESET_BIT,
-			(unsigned int)CPP_PATH1_AHB_RESET_BIT);
+	regmap_update_bits(dev->syscon_regs[CPP_PATH1_RST].gpr,
+		dev->syscon_regs[CPP_PATH1_RST].reg,
+		dev->syscon_regs[CPP_PATH1_RST].mask,
+		dev->syscon_regs[CPP_PATH1_RST].mask);
 	udelay(2);
-	regmap_update_bits(dev->vsp_ahb_gpr, MM_VSP_AHB_RESET,
-			CPP_PATH1_AHB_RESET_BIT,
-			~(unsigned int)CPP_PATH1_AHB_RESET_BIT);
+	regmap_update_bits(dev->syscon_regs[CPP_PATH1_RST].gpr,
+		dev->syscon_regs[CPP_PATH1_RST].reg,
+		dev->syscon_regs[CPP_PATH1_RST].mask,
+		~dev->syscon_regs[CPP_PATH1_RST].mask);
 }
 
 static void sprd_cppcore_dma_reset(
@@ -209,13 +233,15 @@ static void sprd_cppcore_dma_reset(
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	regmap_update_bits(dev->vsp_ahb_gpr, MM_VSP_AHB_RESET,
-			CPP_DMA_AHB_RESET_BIT,
-			(unsigned int)CPP_DMA_AHB_RESET_BIT);
+	regmap_update_bits(dev->syscon_regs[CPP_DMA_RST].gpr,
+		dev->syscon_regs[CPP_DMA_RST].reg,
+		dev->syscon_regs[CPP_DMA_RST].mask,
+		dev->syscon_regs[CPP_DMA_RST].mask);
 	udelay(2);
-	regmap_update_bits(dev->vsp_ahb_gpr, MM_VSP_AHB_RESET,
-			CPP_DMA_AHB_RESET_BIT,
-			~(unsigned int)CPP_DMA_AHB_RESET_BIT);
+	regmap_update_bits(dev->syscon_regs[CPP_DMA_RST].gpr,
+		dev->syscon_regs[CPP_DMA_RST].reg,
+		dev->syscon_regs[CPP_DMA_RST].mask,
+		~dev->syscon_regs[CPP_DMA_RST].mask);
 }
 
 static void sprd_cppcore_iommu_reg_trace(
@@ -1055,11 +1081,14 @@ static const struct file_operations cpp_fops = {
 
 static int sprd_cppcore_probe(struct platform_device *pdev)
 {
-	int ret = 0;
+	int i, ret = 0;
 	unsigned int irq = 0;
 	struct cpp_device *dev = NULL;
 	void __iomem *reg_base = NULL;
-	struct regmap *vsp_ahb_gpr = NULL;
+	struct device_node *np;
+	const char *pname;
+	struct regmap *tregmap;
+	uint32_t args[2];
 
 	if (!pdev) {
 		pr_err("fail to get valid input ptr\n");
@@ -1082,6 +1111,7 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 	dev->pdev = pdev;
 	dev->md.this_device->of_node = pdev->dev.of_node;
 	dev->md.this_device->platform_data = (void *)dev;
+	np = pdev->dev.of_node;
 
 	mutex_init(&dev->lock);
 	spin_lock_init(&dev->slock);
@@ -1138,16 +1168,7 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 		goto misc_fail;
 	}
 
-	vsp_ahb_gpr = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-			"sprd,vsp-ahb-syscon");
-	if (IS_ERR_OR_NULL(vsp_ahb_gpr)) {
-		pr_err("fail to get vsp_ahb_gpr\n");
-		ret = PTR_ERR(vsp_ahb_gpr);
-		goto misc_fail;
-	}
-	dev->vsp_ahb_gpr = vsp_ahb_gpr;
-
-	reg_base = of_iomap(pdev->dev.of_node, 0);
+	reg_base = of_iomap(np, 0);
 	if (IS_ERR_OR_NULL(reg_base)) {
 		pr_err("fail to get dcam axim_base\n");
 		ret = PTR_ERR(reg_base);
@@ -1155,12 +1176,33 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 	}
 	dev->io_base = reg_base;
 
-	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
+	irq = irq_of_parse_and_map(np, 0);
 	if (irq <= 0) {
 		pr_err("fail to get dcam irq %d\n", irq);
 		goto misc_fail;
 	}
 	dev->irq = irq;
+
+	/* read global register */
+	for (i = 0; i < ARRAY_SIZE(syscon_name); i++) {
+		pname = syscon_name[i];
+		tregmap =  syscon_regmap_lookup_by_name(np, pname);
+		if (IS_ERR_OR_NULL(tregmap)) {
+			pr_err("fail to read %s regmap\n", pname);
+			continue;
+		}
+		ret = syscon_get_args_by_name(np, pname, 2, args);
+		if (ret != 2) {
+			pr_err("fail to read %s args, ret %d\n",
+				pname, ret);
+			continue;
+		}
+		dev->syscon_regs[i].gpr = tregmap;
+		dev->syscon_regs[i].reg = args[0];
+		dev->syscon_regs[i].mask = args[1];
+		pr_info("dts[%s] 0x%x 0x%x\n", pname,
+			dev->syscon_regs[i].reg, dev->syscon_regs[i].mask);
+	}
 
 	pr_info("cpp probe OK\n");
 

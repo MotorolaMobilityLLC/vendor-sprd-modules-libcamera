@@ -14,15 +14,6 @@
 #ifndef _CPP_REG_H_
 #define _CPP_REG_H_
 
-#define MM_VSP_AHB_RESET                  (0x0004UL)
-#define CPP_DMA_AHB_RESET_BIT             (1 << 9)
-#define CPP_PATH1_AHB_RESET_BIT           (1 << 8)
-#define CPP_PATH0_AHB_RESET_BIT           (1 << 7)
-#define CPP_AHB_RESET_BIT                 (1 << 6)
-#define CPP_PATH_RESET_MASK \
-		(CPP_AHB_RESET_BIT | CPP_PATH0_AHB_RESET_BIT | \
-		CPP_PATH1_AHB_RESET_BIT | CPP_DMA_AHB_RESET_BIT)
-
 #define CPP_BASE                          0x00
 
 #define CPP_PATH_EB                       0x00
