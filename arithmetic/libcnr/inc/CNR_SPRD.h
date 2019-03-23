@@ -34,6 +34,7 @@ extern "C" {
 	void *cnr_init(LibVersion * verInfo, ThreadSet threadInfo);
 	int cnr(void *handle, CNR_Parameter *curthr, unsigned char * img,int w,int h);
 	int cnr_destroy(void *handle);
+	int cnr_get_version(LibVersion * verInfo);
 
 #ifdef __cplusplus
 }
