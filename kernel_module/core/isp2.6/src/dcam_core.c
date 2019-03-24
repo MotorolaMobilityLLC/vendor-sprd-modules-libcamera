@@ -571,6 +571,55 @@ int sprd_dcam_debugfs_deinit(void)
 #endif
 /* dcam debugfs end */
 
+
+static uint32_t dcam_trace_regs [] = {
+		DCAM_CFG,
+		DCAM_APB_SRAM_CTRL,
+		DCAM_IMAGE_CONTROL,
+		DCAM_PDAF_CONTROL,
+		DCAM_LENS_LOAD_ENABLE,
+		ISP_BPC_PARAM,
+		DCAM_AEM_FRM_CTRL0,
+		ISP_AFM_FRM_CTRL,
+		ISP_AFL_FRM_CTRL0,
+		DCAM_HIST_FRM_CTRL0,
+		NR3_FAST_ME_PARAM,
+		DCAM_FULL_BASE_WADDR,
+		DCAM_BIN_BASE_WADDR0,
+		DCAM_PDAF_BASE_WADDR,
+		DCAM_VCH2_BASE_WADDR,
+		DCAM_VCH3_BASE_WADDR,
+		DCAM_AEM_BASE_WADDR,
+		DCAM_HIST_BASE_WADDR,
+		DCAM_PPE_RIGHT_WADDR,
+		ISP_AFL_GLB_WADDR,
+		ISP_AFL_REGION_WADDR,
+		ISP_BPC_OUT_ADDR,
+		ISP_AFM_BASE_WADDR,
+		ISP_NR3_WADDR,
+};
+static void dcam_debug_trace(struct dcam_pipe_dev *dev)
+{
+	uint32_t addr, val_mmu, val[8], i, j, n, cnt;
+
+	val_mmu = DCAM_MMU_RD(MMU_EN);
+	cnt = sizeof(dcam_trace_regs) / sizeof(dcam_trace_regs[0]);
+	pr_info("dcam%d: 0x%08x, cnt %d\n", dev->idx, val_mmu, cnt);
+
+	for (i = 0; i < cnt; i += 8) {
+		memset(val, 0, sizeof(val));
+		n = ((cnt - i) < 8) ? (cnt - i) : 8;
+		for (j = 0; j < n; j++) {
+			addr = dcam_trace_regs[i + j];
+			val[j] = DCAM_REG_RD(dev->idx, addr);
+		}
+		pr_info("n=%d, %08x %08x %08x %08x %08x %08x %08x %08x\n",n,
+			val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7]);
+	}
+	return;
+}
+
+
 /*
  * Do force copy to before capture enabled.
  * id: refer to enum dcam_ctrl_id in dcam_core.h
@@ -637,6 +686,7 @@ void dcam_auto_copy(struct dcam_pipe_dev *dev, uint32_t id)
 	DCAM_REG_MWR(dev->idx, DCAM_CONTROL, mask, mask);
 	spin_unlock_irqrestore(&dev->glb_reg_lock, flags);
 }
+
 
 
 /* TODO: check this */
@@ -925,8 +975,6 @@ static int dcam_set_mipi_cap(struct dcam_pipe_dev *dev,
 				(!!cap_info->is_4in1) << 13);
 	DCAM_REG_MWR(idx, DCAM_MIPI_CAP_CFG, BIT_12,
 			(!cap_info->is_4in1) << 12);
-
-	dcam_force_copy(dev, DCAM_CTRL_CAP);
 
 	pr_info("cap size : %d %d %d %d\n",
 		cap_info->cap_size.start_x, cap_info->cap_size.start_y,
@@ -1501,6 +1549,7 @@ static int dcam_offline_start_frame(void *param)
 {
 	int ret = 0;
 	int i, loop;
+	uint32_t force_ids = DCAM_CTRL_ALL;
 	struct dcam_pipe_dev *dev = NULL;
 	struct camera_frame *pframe = NULL;
 	struct dcam_path_desc *path;
@@ -1561,9 +1610,6 @@ static int dcam_offline_start_frame(void *param)
 			atomic_inc(&path->set_frm_cnt);
 			dcam_start_path(dev, path);
 		}
-		dcam_force_copy(dev, path_ctrl_id[path->path_id]);
-		if (path->path_id == DCAM_PATH_BIN)
-			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
 
 	/* todo - need to cfg fetch param from input or frame. */
@@ -1579,16 +1625,20 @@ static int dcam_offline_start_frame(void *param)
 	fetch->addr.addr_ch0 = (uint32_t)pframe->buf.iova[0];
 
 	ret = dcam_set_fetch(dev, fetch);
-	dcam_force_copy(dev, DCAM_CTRL_CAP);
 
 	dcam_init_lsc(dev, 0);
 
-	udelay(10);
-	atomic_set(&dev->state, STATE_RUNNING);
+	/* DCAM_CTRL_COEF will always set in dcam_init_lsc() */
+	force_ids &= ~DCAM_CTRL_COEF;
+	dcam_force_copy(dev, force_ids);
+	udelay(500);
 
-	if(dev->dcamsec_eb){
+	atomic_set(&dev->state, STATE_RUNNING);
+	dcam_debug_trace(dev);
+
+	if(dev->dcamsec_eb)
 		pr_warn("camca : dcamsec_eb= %d, fetch disable\n", dev->dcamsec_eb);
-	} else
+	else
 		dcam_start_fetch();
 
 	return ret;
@@ -2280,6 +2330,7 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 {
 	int ret = 0;
 	int i;
+	uint32_t force_ids = DCAM_CTRL_ALL;
 	struct dcam_pipe_dev *dev = NULL;
 	struct dcam_sync_helper *helper = NULL;
 	struct dcam_path_desc *path;
@@ -2364,12 +2415,13 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 
 		if (atomic_read(&path->set_frm_cnt) > 0)
 			dcam_start_path(dev, path);
-
-		dcam_force_copy(dev, path_ctrl_id[path->path_id]);
-		if (path->path_id == DCAM_PATH_BIN)
-			dcam_force_copy(dev, DCAM_CTRL_RDS);
 	}
+
 	dcam_init_lsc(dev, 1);
+
+	/* DCAM_CTRL_COEF will always set in dcam_init_lsc() */
+	force_ids &= ~DCAM_CTRL_COEF;
+	dcam_force_copy(dev, force_ids);
 
 	if (helper) {
 		if (helper->enabled)
@@ -2387,7 +2439,9 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 	if (dev->idx < 2)
 		atomic_inc(&s_dcam_working);
 	atomic_set(&dev->state, STATE_RUNNING);
-	pr_info("start dcam pipe dev[%d]!\n", dev->idx);
+	dcam_debug_trace(dev);
+	dev->auto_cpy_id = 0;
+	pr_info("dcam%d done\n", dev->idx);
 	return ret;
 }
 

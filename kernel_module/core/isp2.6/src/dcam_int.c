@@ -393,7 +393,7 @@ static void dcam_cap_sof(void *param)
 		if (n == dev->slowmotion_count - 1) {
 			/* This register write is time critical,do not modify
 			 * fresh bin_auto_copy coef_auto_copy */
-			DCAM_REG_MWR(dev->idx, DCAM_CONTROL, 0x820, 0x820);
+			dev->auto_cpy_id |= (DCAM_CTRL_BIN | DCAM_CTRL_COEF);
 		}
 
 		/* set buffer at first frame of a group of slow motion frames */
@@ -431,12 +431,15 @@ static void dcam_cap_sof(void *param)
 		else
 			dcam_put_sync_helper(dev, helper);
 	}
+	dcam_update_lsc(dev);
 
 dispatch_sof:
+	dcam_auto_copy(dev, dev->auto_cpy_id);
+	dev->auto_cpy_id = 0;
+
 	if (!dev->slowmotion_count
 	    || !(dev->frame_index % dev->slowmotion_count)) {
 		dcam_dispatch_sof_event(dev);
-		dcam_update_lsc(dev);
 	}
 
 	dev->frame_index++;

@@ -286,7 +286,7 @@ int dcam_update_lsc(void *in)
 	pr_debug("sof %d, buf_sel %d\n", dev->frame_index, buf_sel);
 
 	/* step 4: auto cpy lens registers next sof */
-	dcam_auto_copy(dev, DCAM_CTRL_COEF);
+	dev->auto_cpy_id |= DCAM_CTRL_COEF;
 
 	spin_unlock(&param->lock);
 	pr_debug("done\n");

@@ -424,6 +424,7 @@ static int dcam_update_path_size(
 			reg_val = ((path->out_size.h & 0xfff) << 16) |
 						(path->out_size.w & 0x1fff);
 			DCAM_REG_WR(idx, DCAM_RDS_DES_SIZE, reg_val);
+			dev->auto_cpy_id |= DCAM_CTRL_RDS;
 		}
 		break;
 	default:
@@ -709,7 +710,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 {
 	struct dcam_pipe_dev *dev = NULL;
 	struct camera_frame *frame = NULL;
-	uint32_t idx = 0, path_id = 0, cpy_ctrl_id;
+	uint32_t idx = 0, path_id = 0;
 	unsigned long flags = 0, addr = 0;
 	const int _bin = 0, _aem = 1, _hist = 2;
 	int i = 0;
@@ -720,7 +721,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	dev = (struct dcam_pipe_dev *)dcam_handle;
 	idx = dev->idx;
 	path_id = path->path_id;
-	cpy_ctrl_id = path_ctrl_id[path_id];
+	dev->auto_cpy_id |= path_ctrl_id[path_id];
 
 	pr_debug("DCAM%u %s enter\n", idx, to_path_name(path_id));
 
@@ -796,24 +797,9 @@ int dcam_path_set_store_frm(void *dcam_handle,
 				frame->param_data = path->priv_size_data;
 				path->size_update = 0;
 				path->priv_size_data = NULL;
-				if (path_id == DCAM_PATH_BIN)
-					cpy_ctrl_id |= DCAM_CTRL_RDS;
 			}
 			spin_unlock_irqrestore(&path->size_lock, flags);
 		}
-#if 0
-		if (spin_trylock_irqsave(&path->size_lock, flags)) {
-			if (path->size_update) {
-				lock = 1;
-				dcam_update_path_size(dev, path);
-				frame->param_data = path->priv_size_data;
-				path->size_update = 0;
-				path->priv_size_data = NULL;
-			} else {
-				spin_unlock_irqrestore(&path->size_lock, flags);
-			}
-		}
-#endif
 	}
 
 	if (dev->is_pdaf && dev->pdaf_type == 3 && path_id == DCAM_PATH_PDAF) {
@@ -879,10 +865,6 @@ int dcam_path_set_store_frm(void *dcam_handle,
 			pr_warn("DCAM%u BIN %d frame missed\n",
 				idx, dev->slowmotion_count - i);
 	}
-
-	if ((atomic_read(&dev->state) == STATE_RUNNING)
-		&& (dev->offline == 0))
-		dcam_auto_copy(dev, cpy_ctrl_id);
 
 	return 0;
 }

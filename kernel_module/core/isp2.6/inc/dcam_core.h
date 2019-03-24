@@ -64,8 +64,8 @@ enum dcam_ctrl_id {
 	DCAM_CTRL_PDAF = (1 << 5),
 	DCAM_CTRL_VCH2 = (1 << 6),
 	DCAM_CTRL_VCH3 = (1 << 7),
-
 };
+#define DCAM_CTRL_ALL  0xff
 
 struct dcam_mipi_info {
 	uint32_t sensor_if;  /* MIPI CSI-2 */
@@ -202,6 +202,7 @@ struct dcam_pipe_dev {
 	uint32_t idx;
 	uint32_t irq;
 	atomic_t state;// TODO: use mutex to protect
+	uint32_t auto_cpy_id;
 
 	uint32_t frame_index;
 	uint32_t index_to_set;
