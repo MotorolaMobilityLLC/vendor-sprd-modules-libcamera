@@ -446,23 +446,25 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	cxt->rgb_gain.r_gain=inptr->r_gain;
 	cxt->rgb_gain.g_gain=inptr->g_gain;
 	cxt->rgb_gain.b_gain=inptr->b_gain;
+	block_info.scene_id = PM_SCENE_PRE;
+
+	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
+		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
+	/* also set capture gain if 4in1 */
 	if (cxt->is_4in1_prev) {
-		/* this value for capture, prev need / 4 */
+		/* this value for capture, need * 4
+		 * not active while pm * 4
+		 */
 		block_info.scene_id = PM_SCENE_CAP;
+		gain_info.global_gain *= 4;
 		ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 			gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
 		if (ret) {
 			ISP_LOGW("fail to set rgb gain for 4in1 capture");
 		}
-		gain_info.global_gain /= 4;
 	}
-	/* also set capture gain if 4in1 */
-	block_info.scene_id = PM_SCENE_PRE;
-
-	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
-		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
 
 	return ret;
 }
