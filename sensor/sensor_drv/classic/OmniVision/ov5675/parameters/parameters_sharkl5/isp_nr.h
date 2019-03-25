@@ -1,15 +1,15 @@
 #ifdef _NR_MAP_PARAM_
-static struct sensor_nr_level_map_param s_ov5675_dual_nr_level_number_map_param = {{
+static struct sensor_nr_level_map_param s_ov5675_nr_level_number_map_param = {{
 	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,
 	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25
 }};
 
-static struct sensor_nr_level_map_param s_ov5675_dual_default_nr_level_map_param = {{
+static struct sensor_nr_level_map_param s_ov5675_default_nr_level_map_param = {{
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 }};
 
-static struct sensor_nr_scene_map_param s_ov5675_dual_nr_scene_map_param = {{
+static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
 	0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
 	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 }};
