@@ -4399,9 +4399,13 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.settings.iso = iso->mode;
 			cxt->mod_update_list.is_miso = 1;
 		}
-		ISP_LOGV("AE_SET_ISO %d\n", cxt->cur_status.settings.iso);
+		ISP_LOGD("AE_SET_ISO %d", cxt->cur_status.settings.iso);
 		if (AE_SCENE_NORMAL == cxt->cur_status.settings.scene_mode) {
 			cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][cxt->cur_status.settings.iso];
+			if(!cxt->cur_status.ae_table->max_index){
+				cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
+				ISP_LOGD("Do not have this iso ae_table");
+			}
 		}
 	}
 	return AE_SUCCESS;
