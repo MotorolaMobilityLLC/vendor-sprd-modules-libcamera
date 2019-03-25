@@ -9227,6 +9227,7 @@ void SprdCamera3OEMIf::setSensorCloseFlag() {
         return;
     }
 
+    // for performance: dont delay for dc/dv switch or front/back switch
     mHalOem->ops->camera_set_sensor_close_flag(mCameraHandle);
 }
 

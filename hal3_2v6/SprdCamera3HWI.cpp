@@ -364,7 +364,8 @@ int SprdCamera3HWI::closeCamera() {
     }
 
     // mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-    // for performance tuning: close camera
+
+    // for performance: dont delay for dc/dv switch or front/back switch
     mOEMIf->setSensorCloseFlag();
 
     if (mMetadataChannel) {
@@ -623,6 +624,8 @@ int SprdCamera3HWI::configureStreams(
             return INVALID_OPERATION;
         }
     } else {
+        // for performance: dont delay for dc/dv switch or front/back switch
+        mOEMIf->setSensorCloseFlag();
         mRegularChan->stop(mFrameNum);
     }
 
@@ -1080,7 +1083,7 @@ void SprdCamera3HWI::getLogLevel() {
     // user verson camera log dont print >= LOGD
     property_get("ro.debuggable", value, "1");
     if (!strcmp(value, "0") || turn_off_flag) {
-         gHALLogLevel = LEVEL_OVER_LOGI;
+        gHALLogLevel = LEVEL_OVER_LOGI;
     }
 }
 
@@ -1852,7 +1855,7 @@ int SprdCamera3HWI::flush() {
         mFlush = true;
     }
 
-    // for performance tuning: close camera
+    // for performance: dont delay for dc/dv switch or front/back switch
     mOEMIf->setSensorCloseFlag();
 
     if (mRegularChan) {
