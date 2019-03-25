@@ -1539,7 +1539,7 @@ int SprdCamera3RealBokeh::DepthMuxerThread::sprdDepthDo(
             mRealBokeh->dumpData((unsigned char *)mRealBokeh->mDepthBuffer
                                      .prev_depth_buffer[buffer_index]
                                      .buffer,
-                                 1, mRealBokeh->mBokehSize.depth_prev_size,
+                                 5, mRealBokeh->mBokehSize.depth_prev_size,
                                  mRealBokeh->mBokehSize.preview_w,
                                  mRealBokeh->mBokehSize.preview_h,
                                  mRealBokeh->mPrevBlurFrameNumber, "depth");

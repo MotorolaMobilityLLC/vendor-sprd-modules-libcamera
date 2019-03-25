@@ -748,6 +748,20 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         fwrite((void *)addr, 1, size, fp);
         fclose(fp);
     } break;
+    case 5: {
+        memset(tmp_str, 0, sizeof(tmp_str));
+        sprintf(tmp_str, "_%dx%d_%d_%s.yuv", param1, param2, param3, param4);
+        strcat(file_name, tmp_str);
+
+        fp = fopen(file_name, "w");
+        if (fp == NULL) {
+            HAL_LOGE("open yuv file fail!\n");
+            return;
+        }
+        size = param1 * param2 * 2;
+        fwrite((void *)addr, 1, size, fp);
+        fclose(fp);
+    } break;
     default:
         break;
     }
