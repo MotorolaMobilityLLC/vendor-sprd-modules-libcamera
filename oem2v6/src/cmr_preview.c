@@ -13638,6 +13638,13 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
         goto exit;
     }
 
+    isp_cmd_parm.cmd_value = 1;
+    CMR_LOGD("fd_handle = %p", cxt->ai_scene_enable);
+    if (prev_cxt->fd_handle) {
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
+    }
+
     if (prev_cxt->fd_handle) {
         CMR_LOGD("fd inited already");
         goto exit;
@@ -13662,13 +13669,6 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     }
 
     in_param.reg_cb = prev_fd_cb;
-
-    isp_cmd_parm.cmd_value = 1;
-    if (!prev_cxt->fd_handle && cxt->ai_scene_enable) {
-        ret = handle->ops.isp_ioctl(
-            handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
-    }
-
     ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_FD, &in_param, &out_param,
                        &prev_cxt->fd_handle);
     if (ret) {
@@ -13700,11 +13700,9 @@ cmr_int prev_fd_close(struct prev_handle *handle, cmr_u32 camera_id) {
 
     isp_cmd_parm.cmd_value = 0;
     if (prev_cxt->fd_handle) {
-        if (cxt->ai_scene_enable) {
             ret = handle->ops.isp_ioctl(handle->oem_handle,
                                         COM_ISP_SET_AI_SET_FD_ON_OFF,
                                         &isp_cmd_parm);
-        }
         ret = cmr_ipm_close(prev_cxt->fd_handle);
         prev_cxt->fd_handle = 0;
     }

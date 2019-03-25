@@ -1136,15 +1136,9 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
         return ret;
 
     if (enable) {
-        if (mFaceDetectStartedFlag == 0) {
-            mHalOem->ops->camera_fd_start(mCameraHandle, 1);
-            mFaceDetectStartedFlag = 1;
-        }
+        mHalOem->ops->camera_fd_start(mCameraHandle, 1);
     } else {
-        if (mFaceDetectStartedFlag == 1) {
-            mHalOem->ops->camera_fd_start(mCameraHandle, 0);
-            mFaceDetectStartedFlag = 0;
-        }
+        mHalOem->ops->camera_fd_start(mCameraHandle, 0);
     }
     return ret;
 }

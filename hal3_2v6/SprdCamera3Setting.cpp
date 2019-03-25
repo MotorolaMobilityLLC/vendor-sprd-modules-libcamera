@@ -4265,11 +4265,10 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_STATISTICS_FACE_DETECT_MODE)) {
-        valueU8 =
+        s_setting[mCameraId].statisticsInfo.face_detect_mode =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].statisticsInfo.face_detect_mode,
-                         valueU8, ANDROID_STATISTICS_FACE_DETECT_MODE, 1)
-        HAL_LOGV("fd mode %d", valueU8);
+        pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
+        HAL_LOGV("fd mode %d", s_setting[mCameraId].statisticsInfo.face_detect_mode);
     }
 
     HAL_LOGD(
