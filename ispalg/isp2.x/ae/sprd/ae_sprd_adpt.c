@@ -4574,6 +4574,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
 			cxt->manual_level = cxt->cur_status.settings.ev_index;
+			s_ae_manual[cxt->app_mode].manual_level = cxt->manual_level;
 			ISP_LOGD("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
 		} else {
 			if (cxt->cur_status.settings.force_lock_ae == 1) {
@@ -5507,7 +5508,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		auto_hdr_enable = (cmr_s8)sprd_hdr_scndet(&hdr_param, &hdr_stat, ev_result);
 		cxt->hdr_calc_result.ev[0] = fabs(ev_result[0]);
 		cxt->hdr_calc_result.ev[1] = ev_result[1];
-		ISP_LOGI("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
+		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
 	}
 	if (cxt->hdr_menu_ctrl) {
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
