@@ -3935,11 +3935,6 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_depthmap_open(handle, camera_id, &sensor_otp.total_otp);
         }
 #endif
-
-        /*start ai scene*/
-        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable) {
-            prev_ai_scene_start(handle);
-        }
     }
 #if defined(CONFIG_CAMERA_PDAF)
     if (pdaf_enable) {
@@ -4064,10 +4059,6 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.is_3dnr == 1) {
             prev_3dnr_close(handle, camera_id);
-        }
-        /*stop ai scene*/
-        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable) {
-            prev_ai_scene_stop(handle);
         }
     }
 
