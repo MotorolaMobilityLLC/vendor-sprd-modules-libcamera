@@ -391,6 +391,11 @@ typedef struct {
     int32_t vcm_step_for_bokeh;
 } VCM_Tag;
 
+typedef struct {
+    uint16_t vcm_dist_count;
+    uint16_t vcm_dist[VCM_DISTANCE_COUNT];
+} VCM_DIST_TAG;
+
 enum vcm_result {
     VCM_RESULT_NO = 0x0,
     VCM_RESULT_IN = 0x1,
@@ -437,10 +442,11 @@ typedef struct {
     EIS_CROP_Tag eiscrop_Info;
     OTP_Tag otpInfo;
     VCM_Tag vcmInfo;
-    int32_t vcm_dac[20];
+    int32_t vcm_dac[VCM_DISTANCE_COUNT];
     int32_t vcm_num;
     int32_t vcm_result;
     int32_t verification_enable;
+    VCM_DIST_TAG vcmDist;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -601,8 +607,9 @@ class SprdCamera3Setting {
 
     int setVCMTag(VCM_Tag vcmInfo);
     int getVCMTag(VCM_Tag *vcmInfo);
-    int setVCMDACTag(uint16_t *vcmInfo);
-    int getVCMDACTag(uint16_t *vcmInfo);
+    int setVCMDACTag(uint16_t *vcmInfo, uint8_t num);
+    int getVCMDISTTag(VCM_DIST_TAG *vcmDist);
+    int setVCMDISTTag(VCM_DIST_TAG *vcmDist);
     int setVCMRETag(int32_t result);
     int getVCMRETag(int32_t *result);
     int getVERIFITag();

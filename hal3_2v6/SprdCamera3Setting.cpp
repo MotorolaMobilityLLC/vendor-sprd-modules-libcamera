@@ -482,6 +482,7 @@ const cam_stream_info_t stream_info[] = {
     {{4032, 2268}, 33331760L, 33331760L},
     {{4032, 2016}, 33331760L, 33331760L},
     {{4032, 1912}, 33331760L, 33331760L},
+    {{4000, 3000}, 33331760L, 33331760L},
     {{3840, 2160}, 33331760L, 33331760L},
     {{3264, 2448}, 33331760L, 33331760L},
     {{3264, 1836}, 33331760L, 33331760L},
@@ -510,6 +511,7 @@ const cam_stream_info_t stream_info[] = {
     {{1280, 720}, 33331760L, 33331760L},
     {{960, 720}, 33331760L, 33331760L},
     {{864, 480}, 33331760L, 33331760L},
+    {{800, 600}, 33331760L, 33331760L},
     {{720, 544}, 33331760L, 33331760L},
     {{720, 480}, 33331760L, 33331760L},
     {{640, 480}, 33331760L, 33331760L},
@@ -2381,6 +2383,7 @@ SprdCamera3Setting::~SprdCamera3Setting() {
 int SprdCamera3Setting::constructDefaultMetadata(int type,
                                                  camera_metadata_t **metadata) {
     size_t i = 0;
+    int32_t j = 0;
     if (mDefaultMetadata[type] != NULL) {
         return 0;
     }
@@ -3470,21 +3473,16 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         requestInfo.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
                            &(s_setting[mCameraId].vcmInfo.vcm_step_for_bokeh),
                            1);
-        s_setting[mCameraId].vcm_num = 7;
         requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
                            s_setting[mCameraId].vcm_dac,
                            s_setting[mCameraId].vcm_num);
         requestInfo.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
                            &(s_setting[mCameraId].vcm_result), 1);
-        HAL_LOGD(
-            "vcm_result %d vcm_num %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
-            "%d "
-            "vcm_dac[3] %d vcm_dac[4] %d vcm_dac[5] %d vcm_dac[6] %d ",
-            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_num,
-            s_setting[mCameraId].vcm_dac[0], s_setting[mCameraId].vcm_dac[1],
-            s_setting[mCameraId].vcm_dac[2], s_setting[mCameraId].vcm_dac[3],
-            s_setting[mCameraId].vcm_dac[4], s_setting[mCameraId].vcm_dac[5],
-            s_setting[mCameraId].vcm_dac[6]);
+        HAL_LOGD("vcm_result %d vcm_num %d", s_setting[mCameraId].vcm_result,
+                 s_setting[mCameraId].vcm_num);
+        for (j = 0; j < s_setting[mCameraId].vcm_num; j++) {
+            HAL_LOGD("vcm_dac[%d] %d", j, s_setting[mCameraId].vcm_dac[j]);
+        }
         requestInfo.update(ANDROID_SPRD_OTP_DATA,
                            s_setting[mCameraId].otpInfo.otp_data,
                            SPRD_DUAL_OTP_SIZE);
@@ -3766,6 +3764,20 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_SPRD_SET_VERIFICATION_FLAG).data.u8[0];
         HAL_LOGD("s_setting[mCameraId].verification_enable %d",
                  s_setting[mCameraId].verification_enable);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_DIST)) {
+        s_setting[mCameraId].vcmDist.vcm_dist_count =
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_DIST).data.i32[0];
+        for (int i = 0; i < s_setting[mCameraId].vcmDist.vcm_dist_count; i++) {
+            s_setting[mCameraId].vcmDist.vcm_dist[i] =
+                frame_settings.find(ANDROID_SPRD_CALIBRATION_DIST)
+                    .data.i32[i + 1];
+            HAL_LOGD("s_setting[mCameraId].vcm_count %d vcm_dist %d %d",
+                     s_setting[mCameraId].vcmDist.vcm_dist_count, i,
+                     s_setting[mCameraId].vcmDist.vcm_dist[i]);
+        }
+        pushAndroidParaTag(ANDROID_SPRD_CALIBRATION_DIST);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
@@ -4405,6 +4417,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     CameraMetadata camMetadata;
     camera_metadata_t *resultMetadata;
     int area[5];
+    int32_t j = 0;
     Mutex::Autolock l(mLock);
     int32_t maxRegionsAe = 0;
     int32_t maxRegionsAwb = 0;
@@ -4766,21 +4779,16 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         camMetadata.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
                            &(s_setting[mCameraId].vcmInfo.vcm_step_for_bokeh),
                            1);
-        s_setting[mCameraId].vcm_num = 7;
         camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_INFO,
                            s_setting[mCameraId].vcm_dac,
                            s_setting[mCameraId].vcm_num);
         camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
                            &(s_setting[mCameraId].vcm_result), 1);
-        HAL_LOGD(
-            "vcm_result %d vcm_num %d vcm_dac[0] %d vcm_dac[1] %d vcm_dac[2] "
-            "%d "
-            "vcm_dac[3] %d vcm_dac[4] %d vcm_dac[5] %d vcm_dac[6] %d ",
-            s_setting[mCameraId].vcm_result, s_setting[mCameraId].vcm_num,
-            s_setting[mCameraId].vcm_dac[0], s_setting[mCameraId].vcm_dac[1],
-            s_setting[mCameraId].vcm_dac[2], s_setting[mCameraId].vcm_dac[3],
-            s_setting[mCameraId].vcm_dac[4], s_setting[mCameraId].vcm_dac[5],
-            s_setting[mCameraId].vcm_dac[6]);
+        HAL_LOGD("vcm_result %d vcm_num %d", s_setting[mCameraId].vcm_result,
+                 s_setting[mCameraId].vcm_num);
+        for (j = 0; j < s_setting[mCameraId].vcm_num; j++) {
+            HAL_LOGD("vcm_dac[%d] %d", j, s_setting[mCameraId].vcm_dac[j]);
+        }
         if (s_setting[mCameraId].vcm_result == VCM_RESULT_DONE ||
             s_setting[mCameraId].vcm_result == VCM_RESULT_FAIL) {
             s_setting[mCameraId].vcm_result = VCM_RESULT_NO;
@@ -5038,25 +5046,28 @@ int SprdCamera3Setting::getVCMTag(VCM_Tag *vcmInfo) {
     return 0;
 }
 
-int SprdCamera3Setting::setVCMDACTag(uint16_t *vcmInfo) {
-    s_setting[mCameraId].vcm_dac[0] = vcmInfo[0];
-    s_setting[mCameraId].vcm_dac[1] = vcmInfo[1];
-    s_setting[mCameraId].vcm_dac[2] = vcmInfo[2];
-    s_setting[mCameraId].vcm_dac[3] = vcmInfo[3];
-    s_setting[mCameraId].vcm_dac[4] = vcmInfo[4];
-    s_setting[mCameraId].vcm_dac[5] = vcmInfo[5];
-    s_setting[mCameraId].vcm_dac[6] = vcmInfo[6];
+int SprdCamera3Setting::setVCMDACTag(uint16_t *vcmInfo, uint8_t num) {
+    for (uint8_t i = 0; i < num; i++) {
+        s_setting[mCameraId].vcm_dac[i] = vcmInfo[i];
+        s_setting[mCameraId].vcm_num = num;
+    }
+
     return 0;
 }
 
-int SprdCamera3Setting::getVCMDACTag(uint16_t *vcmInfo) {
-    vcmInfo[0] = s_setting[mCameraId].vcm_dac[0];
-    vcmInfo[1] = s_setting[mCameraId].vcm_dac[1];
-    vcmInfo[2] = s_setting[mCameraId].vcm_dac[2];
-    vcmInfo[3] = s_setting[mCameraId].vcm_dac[3];
-    vcmInfo[4] = s_setting[mCameraId].vcm_dac[4];
-    vcmInfo[5] = s_setting[mCameraId].vcm_dac[5];
-    vcmInfo[6] = s_setting[mCameraId].vcm_dac[6];
+int SprdCamera3Setting::setVCMDISTTag(VCM_DIST_TAG *vcmDist) {
+    s_setting[mCameraId].vcmDist.vcm_dist_count = vcmDist->vcm_dist_count;
+    for (uint8_t i = 0; i < vcmDist->vcm_dist_count; i++) {
+        s_setting[mCameraId].vcmDist.vcm_dist[i] = vcmDist->vcm_dist[i];
+    }
+    return 0;
+}
+
+int SprdCamera3Setting::getVCMDISTTag(VCM_DIST_TAG *vcmDist) {
+    vcmDist->vcm_dist_count = s_setting[mCameraId].vcmDist.vcm_dist_count;
+    for (uint8_t i = 0; i < vcmDist->vcm_dist_count; i++) {
+        vcmDist->vcm_dist[i] = s_setting[mCameraId].vcmDist.vcm_dist[i];
+    }
     return 0;
 }
 

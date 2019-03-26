@@ -1009,6 +1009,11 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_DEVICE_ORIENTATION");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_DEVICE_ORIENTATION);
             break;
+        case ANDROID_SPRD_CALIBRATION_DIST:
+            HAL_LOGV("ANDROID_SPRD_CALIBRATION_DIST");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_CALIBRATION_DIST);
+            break;
+
         default:
             HAL_LOGV("other tag");
             break;

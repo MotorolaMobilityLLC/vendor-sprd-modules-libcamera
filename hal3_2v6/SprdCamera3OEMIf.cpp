@@ -3522,10 +3522,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
              mSprdRefocusEnabled, mSprdFullscanEnabled);
     if (mSprdRefocusEnabled == true && mCameraId == 0 && mSprdFullscanEnabled) {
         struct vcm_range_info range;
-        mSetting->getVCMDACTag(range.vcm_dac);
         ret = mHalOem->ops->camera_ioctrl(
             mCameraHandle, CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
-        mSetting->setVCMDACTag(range.vcm_dac);
+        mSetting->setVCMDACTag(range.vcm_dac, range.total_seg);
         mSprdFullscanEnabled = 0;
     }
 
@@ -5050,6 +5049,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
+        HAL_LOGD("af_state %d", controlInfo.af_state);
         setAfState(AF_NOT_FOCUSED);
         // channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
         if (controlInfo.af_mode ==
@@ -5079,7 +5079,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         VCM_Tag sprdvcmInfo;
         if (getMultiCameraMode() == MODE_BOKEH && mCameraId == 0) {
             mSetting->getVCMTag(&sprdvcmInfo);
-            HAL_LOGD("VCM_INFO:vcm step is 0x%x", focus_status->af_motor_pos);
+            HAL_LOGD("VCM_INFO:vcm step is %d", focus_status->af_motor_pos);
             sprdvcmInfo.vcm_step_for_bokeh = focus_status->af_motor_pos;
             mSetting->setVCMTag(sprdvcmInfo);
         }
@@ -6108,6 +6108,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_SPRD_ZSL_ENABLED:
         break;
+
+    case ANDROID_SPRD_CALIBRATION_DIST: {
+        VCM_DIST_TAG disc_info;
+        vcm_disc_info vcm_disc;
+        mSetting->getVCMDISTTag(&disc_info);
+        vcm_disc.total_seg = disc_info.vcm_dist_count;
+        for (int i = 0; i < disc_info.vcm_dist_count; i++) {
+            vcm_disc.distance[i] = disc_info.vcm_dist[i];
+        }
+        ret = mHalOem->ops->camera_ioctrl(
+            mCameraHandle, CAMERA_IOCTRL_SET_VCM_DISC, &vcm_disc);
+    } break;
 
     case ANDROID_SPRD_SLOW_MOTION: {
         SPRD_DEF_Tag sprddefInfo;

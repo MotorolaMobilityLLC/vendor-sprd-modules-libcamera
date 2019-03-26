@@ -1149,6 +1149,12 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                 (struct vcm_range_info *)param);
         break;
     }
+    case CAMERA_IOCTRL_SET_VCM_DISC: {
+        struct camera_context *cxt = (struct camera_context *)handle;
+        ret = cmr_set_vcm_disc(handle, cxt->camera_id,
+                               (struct vcm_disc_info *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_HDR_DISABLE: {
         ret = camera_set_hdr_disable(handle, *(cmr_u32 *)param);
         break;
