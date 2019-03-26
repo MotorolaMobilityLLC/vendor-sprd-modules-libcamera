@@ -42,7 +42,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
 
     if (jcxt->mLibHandle == NULL) {
         CMR_LOGE("can't open lib: %s", libName);
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     CMR_LOGI(" open lib: %s", libName);
@@ -52,7 +53,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_init in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_encode = dlsym(jcxt->mLibHandle, "sprd_jpg_encode");
@@ -60,7 +62,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_enc_start in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_decode = dlsym(jcxt->mLibHandle, "sprd_jpg_decode");
@@ -68,7 +71,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_dec_start in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_stop = dlsym(jcxt->mLibHandle, "sprd_stop_codec");
@@ -76,7 +80,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_stop in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_deinit = dlsym(jcxt->mLibHandle, "sprd_jpeg_deinit");
@@ -84,7 +89,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_deinit in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_get_iommu_status =
@@ -93,7 +99,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_get_Iommu_status in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_dec_get_resolution =
@@ -102,7 +109,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find jpeg_dec_get_resolution in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     jcxt->ops.jpeg_set_resolution =
@@ -111,15 +119,29 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Can't find sprd_jpg_set_resolution in %s", libName);
         dlclose(jcxt->mLibHandle);
         jcxt->mLibHandle = NULL;
-        return -CMR_CAMERA_NO_SUPPORT;
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
     }
 
     ret = jcxt->ops.jpeg_init(codec_handle, adp_event_cb);
     if (ret) {
         CMR_LOGE("jpeg init fail");
-        return CMR_CAMERA_FAIL;
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
     }
     *jpeg_handle = (cmr_handle)jcxt;
+
+exit:
+    if (ret) { // ret = 0 means jpeg_init success, buffer should not free
+        if (codec_handle) {
+            free(codec_handle);
+            codec_handle = NULL;
+        }
+        if (jcxt) {
+            free(jcxt);
+            jcxt = NULL;
+        }
+    }
 
     CMR_LOGD("ret %d", ret);
     return ret;
