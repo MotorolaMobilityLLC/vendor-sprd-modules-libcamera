@@ -3755,6 +3755,8 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	if (NULL == init_param->aftuning_data || 0 == init_param->aftuning_data_len) {
 		ISP_LOGE("fail to get sensor tuning param data");
+		free(af);
+		af = NULL;
 		return NULL;
 	}
 
