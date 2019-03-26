@@ -11680,7 +11680,7 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     char file_name[FILE_NAME_LEN] = {0};
     char tmp_str[20] = {0};
     FILE *fp = NULL;
-    uint32_t size;
+    uint32_t size = 0;
     uint32_t gain = 0;
     uint32_t shutter = 0;
     int32_t bv = 0;
