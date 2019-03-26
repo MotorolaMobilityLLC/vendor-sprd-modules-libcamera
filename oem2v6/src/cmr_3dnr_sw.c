@@ -243,10 +243,11 @@ static cmr_int read_threednr_param_parser(char *parafile,
             fgets(line, 256, pFile);
         }
     }
+
+exit:
     if (pFile != NULL)
         fclose(pFile);
 
-exit:
     return ret;
 }
 
