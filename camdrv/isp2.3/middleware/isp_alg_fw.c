@@ -1694,6 +1694,28 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
+static cmr_int ispalg_hist_process(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	ret = ispalg_hist_stats_parser(cxt, data);
+	if (ret) {
+		ISP_LOGE("fail to parse hist stats");
+	}
+
+	if (cxt->commn_cxt.callback) {
+		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
+					      ISP_CALLBACK_EVT | ISP_HIST_REPORT_CALLBACK,
+					      cxt->hist_stats.value,
+					      sizeof(cmr_u32) * ISP_HIST_ITEMS);
+		if (ret)
+			ISP_LOGE("fail to report hist stats");
+	}
+
+	return ret;
+}
+
 cmr_int ispalg_write_exp_gain(cmr_handle isp_alg_handle, struct sensor_ex_exposure exp, cmr_u32 gain)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2792,7 +2814,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ebd_process((cmr_handle) cxt, message->data);
 		break;
 	case ISP_PROC_HIST_DONE:
-		ret = ispalg_hist_stats_parser((cmr_handle) cxt, message->data);
+		ret = ispalg_hist_process((cmr_handle) cxt, message->data);
 		break;
 	default:
 		ISP_LOGV("don't support msg");
