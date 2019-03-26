@@ -431,8 +431,16 @@ static void cfg_spath_deci_info(
 {
 	uint32_t start;
 
-	sinfo->deci_x = frm_deci->deci_x;
-	sinfo->deci_y = frm_deci->deci_y;
+	if (frm_deci->deci_x_eb)
+		sinfo->deci_x = 1 << (frm_deci->deci_x + 1);
+	else
+		sinfo->deci_x = 1;
+
+	if (frm_deci->deci_y_eb)
+		sinfo->deci_y = 1 << (frm_deci->deci_y + 1);
+	else
+		sinfo->deci_y = 1;
+
 	sinfo->deci_x_align = sinfo->deci_x * 2;
 
 	start = sinfo->start_col + sinfo->overlap_bad_left;
