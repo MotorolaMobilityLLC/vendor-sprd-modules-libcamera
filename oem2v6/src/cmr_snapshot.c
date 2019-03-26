@@ -2566,6 +2566,7 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle) {
         }
     }
 
+    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
     CMR_LOGD("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx fd 0x%x",
              chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
              chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
@@ -2578,6 +2579,7 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle) {
              chn_param_ptr->scale[i].src_img.size.height,
              chn_param_ptr->scale[i].dst_img.size.width,
              chn_param_ptr->scale[i].dst_img.size.height);
+    }
     return ret;
 }
 
@@ -3009,6 +3011,8 @@ cmr_int snp_set_isp_proc_param(cmr_handle snp_handle) {
             chn_param_ptr->isp_process[i].is_encoding = 1;
         }
     }
+
+    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
     CMR_LOGD("src: fd 0x%x addr_y 0x%lx dst: fd 0x%x addr_y 0x%lx 0x%lx "
              "dst2: fd 0x%x addr_y 0x%lx w=%d h=%d",
              chn_param_ptr->isp_proc_in[i].src_frame.fd,
@@ -3020,6 +3024,7 @@ cmr_int snp_set_isp_proc_param(cmr_handle snp_handle) {
              chn_param_ptr->isp_proc_in[i].dst2_frame.addr_phy.addr_y,
              req_param_ptr->post_proc_setting.chn_out_frm[i].size.width,
              req_param_ptr->post_proc_setting.chn_out_frm[i].size.height);
+        }
     return ret;
 }
 
@@ -3185,6 +3190,7 @@ cmr_int snp_update_scale_param(cmr_handle snp_handle, struct img_frm chn_data) {
         chn_param_ptr->scale[i].src_img.fd = chn_data.fd;
     }
 
+    for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
     CMR_LOGD("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx, fd 0x%x",
              chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
              chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
@@ -3197,6 +3203,7 @@ cmr_int snp_update_scale_param(cmr_handle snp_handle, struct img_frm chn_data) {
              chn_param_ptr->scale[i].src_img.size.height,
              chn_param_ptr->scale[i].dst_img.size.width,
              chn_param_ptr->scale[i].dst_img.size.height);
+    }
     return ret;
 }
 
