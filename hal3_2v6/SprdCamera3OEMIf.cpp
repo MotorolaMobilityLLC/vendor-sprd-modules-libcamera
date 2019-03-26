@@ -877,7 +877,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
 
     if (mSprdZslEnabled == true) {
         CMR_MSG_INIT(message);
-        mZslShotPushFlag = 1;
         message.msg_type = CMR_EVT_ZSL_MON_SNP;
         message.sync_flag = CMR_MSG_SYNC_NONE;
         message.data = NULL;
@@ -9079,6 +9078,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:
+        obj->mZslShotPushFlag = 1;
         obj->processZslSnapshot(p_data);
         break;
     case CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH:
