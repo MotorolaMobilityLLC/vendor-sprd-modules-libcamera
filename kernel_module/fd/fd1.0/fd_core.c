@@ -131,7 +131,7 @@ static int fd_ioctl_dvfs_work_clk_cfg(struct fd_module *module,
 		mutex_unlock(&module->mod_lock);
 		return ret;
 	}
-	pr_info("FD_core, dvfs work clk index %d", index);
+	pr_debug("FD_core, dvfs work clk index %d", index);
 	ret = fd_drv_dvfs_work_clk_cfg(module->drv_handle, index);
 	mutex_unlock(&module->mod_lock);
 	return ret;
@@ -152,7 +152,7 @@ static int fd_ioctl_dvfs_idle_clk_cfg(struct fd_module *module,
 		mutex_unlock(&module->mod_lock);
 		return ret;
 	}
-	pr_info("FD_core, dvfs idle clk index %d", index);
+	pr_debug("FD_core, dvfs idle clk index %d", index);
 	ret = fd_drv_dvfs_idle_clk_cfg(module->drv_handle, index);
 	mutex_unlock(&module->mod_lock);
 	return ret;
@@ -170,7 +170,7 @@ static int fd_ioctl_get_iommu_status(struct fd_module *module,
 	else
 		status = SPRD_FD_IOMMU_DISABLED;
 
-	pr_info("FD_core, iommu enable %d\n", status);
+	pr_debug("FD_core, iommu enable %d\n", status);
 
 	ret = copy_to_user((unsigned int  __user *)arg,	&status,
 				sizeof(unsigned int)
@@ -228,7 +228,6 @@ static int sprd_fd_release(struct inode *node, struct file *file)
 
 	pr_info("%s start\n", __func__);
 	module  = md->this_device->platform_data;
-	/* Code logic */
 	mutex_lock(&module->mod_lock);
 	ret = sprd_fd_drv_close(module->drv_handle);
 	mutex_unlock(&module->mod_lock);
@@ -258,7 +257,7 @@ static long sprd_fd_ioctl(struct file *file, unsigned int cmd,
 	int ioctl_nr = _IOC_NR(cmd);
 	struct miscdevice *md = file->private_data;
 
-	pr_info("%s start %d\n", __func__, ioctl_nr);
+	pr_debug("%s start %d\n", __func__, ioctl_nr);
 	module  = md->this_device->platform_data;
 	p_ioctl = &fd_ioctl_cmds_table[ioctl_nr];
 	if (!p_ioctl->cmd_proc) {
@@ -266,7 +265,9 @@ static long sprd_fd_ioctl(struct file *file, unsigned int cmd,
 		return -EINVAL;
 	}
 	ret  = p_ioctl->cmd_proc(module, arg);
-	pr_info("%s end ret %d\n", __func__,  ret);
+	if (ret)
+		pr_err("%s err for cmd %d ret %d\n", __func__, ioctl_nr, ret);
+	pr_debug("%s end\n", __func__);
 
 	return ret;
 }

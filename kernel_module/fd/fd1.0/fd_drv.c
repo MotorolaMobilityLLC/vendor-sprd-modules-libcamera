@@ -640,7 +640,7 @@ static int fd_write_baddr(struct fd_drv *hw_handle,
 	}
 	phys_addr = hw_handle->fd_buf_info[index].buf_info.iova[0];
 	phys_addr &= FD_MASK_BADDR;
-	pr_info("fd phys addr mask 0x%lx  index %d\n", phys_addr, index);
+	pr_debug("fd phys addr mask 0x%lx  index %d\n", phys_addr, index);
 	FD_REG_WR(hw_handle->io_base, reg_addr, phys_addr);
 	return 0;
 }
