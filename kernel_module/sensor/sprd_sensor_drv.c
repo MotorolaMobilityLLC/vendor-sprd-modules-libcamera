@@ -348,7 +348,7 @@ int sprd_sensor_set_voltage(int sensor_id, unsigned int val, int type)
 	int ret = 0;
 	struct sprd_sensor_dev_info_tag *p_dev = NULL;
 	struct device *dev = NULL;
-	unsigned int tolerance = 15000;
+	unsigned int tolerance = 0;
 
 	p_dev = sprd_sensor_get_dev_context(sensor_id);
 	if (p_dev == NULL) {
@@ -368,7 +368,8 @@ int sprd_sensor_set_voltage(int sensor_id, unsigned int val, int type)
 		return -EINVAL;
 	}
 	if (val) {
-		ret = regulator_set_voltage(p_regulator, val - tolerance, val + tolerance);
+		tolerance = regulator_get_linear_step(p_regulator);
+		ret = regulator_set_voltage(p_regulator, val - tolerance/2, val + tolerance/2);
 		if (ret) {
 			pr_err("regulator %s vol set %d fail ret%d\n",
 			       sprd_sensor_supply_names[type], val, ret);
