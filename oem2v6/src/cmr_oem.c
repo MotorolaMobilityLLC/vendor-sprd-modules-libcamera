@@ -551,7 +551,7 @@ void camera_set_discard_frame(cmr_handle oem_handle, cmr_uint is_discard) {
     sem_wait(&cxt->access_sm);
     cxt->is_discard_frm = is_discard;
     sem_post(&cxt->access_sm);
-    CMR_LOGI("%ld", cxt->is_discard_frm);
+    CMR_LOGD("%ld", cxt->is_discard_frm);
 }
 
 cmr_uint camera_get_is_discard_frame(cmr_handle oem_handle,
@@ -575,7 +575,7 @@ void camera_set_snp_req(cmr_handle oem_handle, cmr_uint is_req) {
     sem_wait(&cxt->access_sm);
     cxt->snp_cxt.is_req_snp = is_req;
     sem_post(&cxt->access_sm);
-    CMR_LOGI("%ld", cxt->snp_cxt.is_req_snp);
+    CMR_LOGV("%ld", cxt->snp_cxt.is_req_snp);
 }
 
 cmr_uint camera_get_snp_req(cmr_handle oem_handle) {
@@ -842,7 +842,7 @@ cmr_int camera_get_cap_time(cmr_handle snp_handle) {
 
     sem_wait(&cxt->access_sm);
     ret = cmr_grab_get_cap_time(cxt->grab_cxt.grab_handle, &sec, &usec);
-    CMR_LOGI("cap time %d %d", sec, usec);
+    CMR_LOGD("cap time %d %d", sec, usec);
     cxt->snp_cxt.cap_time_stamp = sec * SEC_TO_NANOSEC + usec * MS_TO_NANOSEC;
     sem_post(&cxt->access_sm);
     return ret;
@@ -1075,7 +1075,7 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
         CMR_LOGE("err, param, 0x%lx 0x%lx", (cmr_uint)data, evt);
         return;
     }
-    CMR_LOGI("evt 0x%lx, handle 0x%lx", evt, (cmr_uint)privdata);
+    CMR_LOGD("evt 0x%lx, handle 0x%lx", evt, (cmr_uint)privdata);
 
     switch (evt) {
     case CMR_JPEG_ENC_DONE:
@@ -1853,12 +1853,12 @@ cmr_int camera_open_3dnr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                          struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("start");
+    CMR_LOGD("start");
     sem_wait(&cxt->threednr_flag_sm);
     ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_3DNR, in_ptr, out_ptr,
                        &cxt->ipm_cxt.threednr_handle);
     sem_post(&cxt->threednr_flag_sm);
-    CMR_LOGI("end");
+    CMR_LOGD("end");
     return ret;
 }
 
@@ -1872,7 +1872,7 @@ cmr_int camera_close_3dnr(struct camera_context *cxt) {
     }
     sem_post(&cxt->threednr_flag_sm);
     sem_destroy(&cxt->threednr_proc_sm);
-    CMR_LOGI("close 3dnr done %ld", ret);
+    CMR_LOGD("close 3dnr done %ld", ret);
     return ret;
 }
 
@@ -1880,14 +1880,14 @@ cmr_int camera_open_cnr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                         struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("start");
+    CMR_LOGD("start");
     sem_wait(&cxt->cnr_flag_sm);
     if (NULL == cxt->ipm_cxt.cnr_handle) {
         ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_CNR, in_ptr,
                            out_ptr, &cxt->ipm_cxt.cnr_handle);
     }
     sem_post(&cxt->cnr_flag_sm);
-    CMR_LOGI("end");
+    CMR_LOGD("end");
 
     return ret;
 }
@@ -1910,14 +1910,14 @@ cmr_int camera_open_ai_scene(struct camera_context *cxt,
                              struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("start");
+    CMR_LOGD("start");
     sem_wait(&cxt->ai_scene_flag_sm);
     if (NULL == cxt->ipm_cxt.ai_scene_handle) {
         ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_AI_SCENE, in_ptr,
                            out_ptr, &cxt->ipm_cxt.ai_scene_handle);
     }
     sem_post(&cxt->ai_scene_flag_sm);
-    CMR_LOGI("end cxt->ipm_cxt.ai_scene_handle:%x",
+    CMR_LOGD("end cxt->ipm_cxt.ai_scene_handle:%x",
              cxt->ipm_cxt.ai_scene_handle);
 
     return ret;
@@ -1932,7 +1932,7 @@ cmr_int camera_close_ai_scene(struct camera_context *cxt) {
         cxt->ipm_cxt.ai_scene_handle = 0;
     }
     sem_post(&cxt->ai_scene_flag_sm);
-    CMR_LOGI("close ai scene done %ld", ret);
+    CMR_LOGD("close ai scene done %ld", ret);
     return ret;
 }
 
@@ -1956,12 +1956,12 @@ cmr_int camera_open_hdr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                         struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("start");
+    CMR_LOGD("start");
     sem_wait(&cxt->hdr_flag_sm);
     ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_HDR, in_ptr, out_ptr,
                        &cxt->ipm_cxt.hdr_handle);
     sem_post(&cxt->hdr_flag_sm);
-    CMR_LOGI("end");
+    CMR_LOGD("end");
     return ret;
 }
 
@@ -1974,7 +1974,7 @@ cmr_int camera_close_hdr(struct camera_context *cxt) {
         cxt->ipm_cxt.hdr_handle = 0;
     }
     sem_post(&cxt->hdr_flag_sm);
-    CMR_LOGI("close hdr done %ld", ret);
+    CMR_LOGD("close hdr done %ld", ret);
     return ret;
 }
 
@@ -2001,12 +2001,12 @@ cmr_int camera_open_filter(struct camera_context *cxt,
                            struct ipm_open_in *in_ptr,
                            struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    CMR_LOGI("start");
+    CMR_LOGD("start");
     sem_wait(&cxt->filter_sm);
     ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_FILTER, in_ptr,
                        out_ptr, &cxt->ipm_cxt.filter_handle);
     sem_post(&cxt->filter_sm);
-    CMR_LOGI("end");
+    CMR_LOGD("end");
     return ret;
 }
 
@@ -2019,13 +2019,13 @@ cmr_int camera_close_filter(struct camera_context *cxt) {
         cxt->ipm_cxt.filter_handle = 0;
     }
     sem_post(&cxt->filter_sm);
-    CMR_LOGI("close filter done %ld", ret);
+    CMR_LOGD("close filter done %ld", ret);
     return ret;
 }
 
 void camera_set_touch_xy(struct camera_context *cxt,
                          struct touch_coordinate touch_info) {
-    CMR_LOGI("touch_info.touchX %d touch_info.touchY %d", touch_info.touchX,
+    CMR_LOGD("touch_info.touchX %d touch_info.touchY %d", touch_info.touchX,
              touch_info.touchY);
     cxt->snp_cxt.touch_xy.touchX = touch_info.touchX;
     cxt->snp_cxt.touch_xy.touchY = touch_info.touchY;
@@ -2040,13 +2040,13 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
     if (SNAPSHOT_FUNC_STATE == func) {
         switch (cb) {
         case SNAPSHOT_CB_EVT_ENC_DONE:
-            CMR_LOGI("close hdr before jpeg enc done");
+            CMR_LOGD("close hdr before jpeg enc done");
             if (1 == camera_get_hdr_flag(cxt)) {
                 ret = camera_close_hdr(cxt);
             } else if (1 == camera_get_3dnr_flag(cxt)) {
                 ret = camera_close_3dnr(cxt);
             }
-            CMR_LOGI("jpeg enc done");
+            CMR_LOGD("jpeg enc done");
             break;
         case SNAPSHOT_CB_EVT_STATE:
             cxt->snp_cxt.status = ((struct camera_frame_type *)param)->status;
@@ -2213,7 +2213,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     cmr_bzero(&exp_info_ptr, sizeof(struct sensor_exp_info));
 
     /*close flash*/
-    CMR_LOGI("will_capture %ld", will_capture);
+    CMR_LOGD("will_capture %ld", will_capture);
 
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -2231,7 +2231,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
         CMR_LOGE("camera_get_sensor_info failed");
     }
     flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num;
-    CMR_LOGI("flash_capture_skip_num = %d", flash_capture_skip_num);
+    CMR_LOGD("flash_capture_skip_num = %d", flash_capture_skip_num);
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -3596,7 +3596,7 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         }
         cxt->ipm_cxt.hdr_num = out_param.total_frame_number;
         cxt->ipm_cxt.hdr_version.major = out_param.version.major;
-        CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
+        CMR_LOGD("get hdr num %d", cxt->ipm_cxt.hdr_num);
     }
 
     if (1 != cxt->is_3dnr_video && camera_get_3dnr_flag(cxt) == 1) {
@@ -3615,7 +3615,7 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         } else {
             in_param.adgain = adgain_exp_info.adgain / 128;
         }
-        CMR_LOGI("SW 3DRN, Get Gain from ISP: %d", in_param.adgain);
+        CMR_LOGD("SW 3DRN, Get Gain from ISP: %d", in_param.adgain);
 
         ret = camera_open_3dnr(cxt, &in_param, &out_param);
         if (ret) {
@@ -3623,7 +3623,7 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
             return ret;
         }
         cxt->ipm_cxt.threednr_num = out_param.total_frame_number;
-        CMR_LOGI("get 3dnr num %d", cxt->ipm_cxt.threednr_num);
+        CMR_LOGD("get 3dnr num %d", cxt->ipm_cxt.threednr_num);
     }
 
     if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited) {
@@ -4786,16 +4786,16 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 #endif
     cxt->jpeg_cxt.enc_caller_handle = caller_handle;
 
-    CMR_LOGI("src: fd=0x%x, y_offset=0x%lx, u_offset=0x%lx, virt_y=0x%lx, "
+    CMR_LOGD("src: fd=0x%x, y_offset=0x%lx, u_offset=0x%lx, virt_y=0x%lx, "
              "virt_u=0x%lx, width=%d, height=%d, y_endian=%d, uv_endian=%d",
              src->fd, src->addr_phy.addr_y, src->addr_phy.addr_u,
              src->addr_vir.addr_y, src->addr_vir.addr_u, src->size.width,
              src->size.height, src->data_end.y_endian, src->data_end.uv_endian);
-    CMR_LOGI("dst: fd=0x%x, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, "
+    CMR_LOGD("dst: fd=0x%x, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, "
              "height=%d",
              enc_dst.fd, enc_dst.addr_phy.addr_y, enc_dst.addr_vir.addr_y,
              enc_dst.size.width, enc_dst.size.height);
-    CMR_LOGI("enc_mean: mirror=%d, flip=%d, rot=%d, is_sync=%d, is_thumb=%d",
+    CMR_LOGD("enc_mean: mirror=%d, flip=%d, rot=%d, is_sync=%d, is_thumb=%d",
              enc_mean.mirror, enc_mean.flip, enc_mean.rot, enc_mean.is_sync,
              enc_mean.is_thumb);
 
@@ -5049,14 +5049,14 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
                                 &out_pram);
     if (!ret) {
         *out_ptr = out_pram;
-        CMR_LOGI("out addr 0x%lx size %ld", out_ptr->output_buf_virt_addr,
+        CMR_LOGD("out addr 0x%lx size %ld", out_ptr->output_buf_virt_addr,
                  out_ptr->output_buf_size);
     } else {
         CMR_LOGE("failed to compund exif jpeg %ld", ret);
     }
 
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
     return ret;
 }
 
@@ -5145,12 +5145,12 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGI("caller_handle 0x%lx is_sync %d", (cmr_uint)caller_handle,
+    CMR_LOGD("caller_handle 0x%lx is_sync %d", (cmr_uint)caller_handle,
              mean->is_sync);
-    CMR_LOGI("src fd 0x%x , dst fd 0x%x", src->fd, dst->fd);
-    CMR_LOGI("src 0x%lx 0x%lx , dst 0x%lx 0x%lx", src->addr_phy.addr_y,
+    CMR_LOGD("src fd 0x%x , dst fd 0x%x", src->fd, dst->fd);
+    CMR_LOGD("src 0x%lx 0x%lx , dst 0x%lx 0x%lx", src->addr_phy.addr_y,
              src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);
-    CMR_LOGI(
+    CMR_LOGD(
         "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
         src->size.width, src->size.height, dst->size.width, dst->size.height,
         src->rect.start_x, src->rect.start_y, src->rect.width, src->rect.height,
@@ -5168,7 +5168,7 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle,
         CMR_LOGE("failed to start scaler, ret %ld", ret);
     }
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
 
     ATRACE_END();
     return ret;
@@ -5371,8 +5371,8 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
             // goto exit;
         }
         flash_status = setting_param.cmd_type_value;
-        CMR_LOGI("HW flash_status=%ld", flash_status);
-        CMR_LOGI("start");
+        CMR_LOGD("HW flash_status=%ld", flash_status);
+        CMR_LOGD("start");
         if (FLASH_OPEN == flash_status || FLASH_HIGH_LIGHT == flash_status) {
             /*close flash*/
             memset(&setting_param, 0, sizeof(setting_param));
@@ -5394,7 +5394,7 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
     }
 
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -5423,7 +5423,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
 
     snp_cxt = &cxt->snp_cxt;
 
-    CMR_LOGI("camera id %d, capture mode %d", camera_id, snp_cxt->snp_mode);
+    CMR_LOGD("camera id %d, capture mode %d", camera_id, snp_cxt->snp_mode);
 
     memset(&setting_param, 0, sizeof(setting_param));
     setting_param.camera_id = camera_id;
@@ -5434,7 +5434,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
         goto exit;
     }
     *is_need_flash = setting_param.cmd_type_value;
-    CMR_LOGI("is_need_flash = %d", *is_need_flash);
+    CMR_LOGD("is_need_flash = %d", *is_need_flash);
 exit:
     return ret;
 }
@@ -5455,7 +5455,7 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
 
     snp_cxt = &cxt->snp_cxt;
 
-    CMR_LOGI("camera id %d, capture mode %d", camera_id, snp_cxt->snp_mode);
+    CMR_LOGD("camera id %d, capture mode %d", camera_id, snp_cxt->snp_mode);
 
     if ((1 != camera_get_hdr_flag(cxt)) && (1 != camera_get_3dnr_flag(cxt))) {
         /*open flash*/
@@ -5493,7 +5493,7 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
     }
 
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
     return ret;
 }
 
@@ -7112,7 +7112,7 @@ cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
         }
     }
 
-    CMR_LOGI("%p %d", *addr, *size);
+    CMR_LOGD("%p %d", *addr, *size);
     return ret;
 }
 
@@ -7393,19 +7393,19 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                 isp_param, &isp_param);
         }
         /**add for 3d calibration set 3d calibration flag end*/
-        CMR_LOGI("ISP_CTRL_SET_CONVERGENCE_REQ");
+        CMR_LOGD("ISP_CTRL_SET_CONVERGENCE_REQ");
         break;
 
     case COM_ISP_SET_SNAPSHOT_FINISHED:
         isp_cmd = ISP_CTRL_SET_SNAPSHOT_FINISHED;
         ptr_flag = 1;
-        CMR_LOGI("ISP_CTRL_SET_SNAPSHOT_FINISHED");
+        CMR_LOGD("ISP_CTRL_SET_SNAPSHOT_FINISHED");
         break;
 
     case COM_ISP_SET_FLASH_MODE:
         isp_cmd = ISP_CTRL_SET_FLASH_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("flash mode %d", param_ptr->cmd_value);
+        CMR_LOGD("flash mode %d", param_ptr->cmd_value);
         break;
 
     case COM_ISP_GET_YIMG_INFO:
@@ -7503,7 +7503,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         break;
     case COM_ISP_SET_CAP_FLAG:
-        CMR_LOGI("set cap flag %d", param_ptr->cmd_value);
+        CMR_LOGD("set cap flag %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_CAP_FLAG;
         isp_param = param_ptr->cmd_value;
         break;
@@ -7518,7 +7518,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->vcm_range;
         break;
     case COM_ISP_SET_AI_SET_FD_ON_OFF:
-        CMR_LOGI("set FD on/off %d", param_ptr->cmd_value);
+        CMR_LOGD("set FD on/off %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AI_SET_FD_STATUS;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
@@ -7583,7 +7583,7 @@ void camera_get_iso_value(cmr_handle oem_handle) {
     if (cxt->isp_cxt.is_work && (1 == cxt->setting_cxt.is_auto_iso)) {
         struct isp_context *isp_cxt = &cxt->isp_cxt;
         isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO, (void *)&isp_param);
-        CMR_LOGI("iso value is %d", isp_param);
+        CMR_LOGD("iso value is %d", isp_param);
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_ISOSPEEDRATINGS, isp_param);
     }
@@ -8500,12 +8500,12 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     } else if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
         out_ptr->is_zsl_snapshot = 1;
     }
-    CMR_LOGI("actual size %d %d",
+    CMR_LOGD("actual size %d %d",
              out_ptr->post_proc_setting.actual_snp_size.width,
              out_ptr->post_proc_setting.actual_snp_size.height);
 
 exit:
-    CMR_LOGI("done,total num %d enc angle %d", out_ptr->total_num,
+    CMR_LOGD("done,total num %d enc angle %d", out_ptr->total_num,
              out_ptr->rot_angle);
     return ret;
 }
@@ -9230,7 +9230,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     } else {
         flash_status = setting_param.cmd_type_value;
     }
-    CMR_LOGI("HW flash_status=%ld", flash_status);
+    CMR_LOGD("HW flash_status=%ld", flash_status);
     if (flash_status != FLASH_TORCH) {
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_FLASH, 0);
@@ -9509,7 +9509,7 @@ cmr_int camera_get_sensor_mode_trim(cmr_handle oem_handle,
 
     ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                               &sensor_mode);
-    CMR_LOGI("camera_id =%d sns mode =%d", cxt->camera_id, sensor_mode);
+    CMR_LOGD("camera_id =%d sns mode =%d", cxt->camera_id, sensor_mode);
     if (sensor_mode >= SENSOR_MODE_MAX) {
         // note:cmr_sensor_get_mode would not set parameter.so sensor_mode
         // ==SENSOR_MODE_MAX
@@ -9522,7 +9522,7 @@ cmr_int camera_get_sensor_mode_trim(cmr_handle oem_handle,
     sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
     sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
     sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height;
-    CMR_LOGI("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
+    CMR_LOGD("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
              sn_trim->width, sn_trim->height);
 exit:
     if (sensor_info) {
@@ -9881,7 +9881,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
                     cxt->setting_cxt.is_auto_iso = 0;
                 }
                 isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
-                CMR_LOGI("auto iso %d, exif iso %d",
+                CMR_LOGD("auto iso %d, exif iso %d",
                          cxt->setting_cxt.is_auto_iso, isp_param);
             }
         }
@@ -9903,12 +9903,12 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
 
     switch (id) {
     case CAMERA_PARAM_FOCUS_RECT:
-        CMR_LOGI("set focus rect 0x%lx", param);
+        CMR_LOGD("set focus rect 0x%lx", param);
         ret = cmr_focus_set_param(cxt->focus_cxt.focus_handle, cxt->camera_id,
                                   id, (void *)param);
         break;
     case CAMERA_PARAM_AF_MODE:
-        CMR_LOGI("set focus af mode 0x%lx", param);
+        CMR_LOGD("set focus af mode 0x%lx", param);
         ret = cmr_focus_set_param(cxt->focus_cxt.focus_handle, cxt->camera_id,
                                   id, (void *)param);
         break;
@@ -10029,7 +10029,7 @@ cmr_int camera_local_pre_flash(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     setting_param.camera_id = cxt->camera_id;
 
@@ -10331,7 +10331,7 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle,
         img_frame.data_end.y_endian = 1;  // ?
         img_frame.data_end.uv_endian = 2; // ?
         img_frame.fd = fd;
-        CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.fd 0x%x",
+        CMR_LOGD("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.fd 0x%x",
                  src_phy_addr, src_vir_addr, img_frame.fd);
 
         zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle,
@@ -10355,7 +10355,7 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle,
         goto exit;
     }
 exit:
-    CMR_LOGI("out");
+    CMR_LOGD("out");
     ATRACE_END();
     return ret;
 }
@@ -10869,7 +10869,7 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
         }
     }
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
     return ret;
 }
 
@@ -10892,7 +10892,7 @@ cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable) {
     }
 
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
     return ret;
 }
 
@@ -11142,7 +11142,7 @@ cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp) {
 
     snp_cxt->cap_need_time_stamp = timestamp;
 
-    CMR_LOGI("timestamp=%" PRId64, snp_cxt->cap_need_time_stamp);
+    CMR_LOGD("timestamp=%" PRId64, snp_cxt->cap_need_time_stamp);
 
     return ret;
 }
@@ -11284,7 +11284,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     if (snp_param.channel_id == 0 || snp_param.channel_id >= GRAB_CHANNEL_MAX) {
         snp_param.channel_id = frm_data->channel_id;
     }
-    CMR_LOGI("chn id: %d ,picture: width:%d, height:%d", snp_param.channel_id,
+    CMR_LOGD("chn id: %d ,picture: width:%d, height:%d", snp_param.channel_id,
              cxt->snp_cxt.post_proc_setting.actual_snp_size.width,
              cxt->snp_cxt.post_proc_setting.actual_snp_size.height);
 
@@ -11477,7 +11477,7 @@ cmr_int camera_open_4in1(cmr_handle oem_handle) {
         }
     }
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGD("done %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -11596,7 +11596,7 @@ cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data) {
     }
     memcpy((void *)&cxt->snp_cxt.hdr_ev[0], data,
            ((HDR_CAP_NUM)-1) * sizeof(float));
-    CMR_LOGI("hdr ev %f, %f", cxt->snp_cxt.hdr_ev[0], cxt->snp_cxt.hdr_ev[1]);
+    CMR_LOGD("hdr ev %f, %f", cxt->snp_cxt.hdr_ev[0], cxt->snp_cxt.hdr_ev[1]);
     return ret;
 }
 

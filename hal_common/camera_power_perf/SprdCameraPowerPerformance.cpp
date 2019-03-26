@@ -209,7 +209,7 @@ void SprdCameraSystemPerformance::setPowerHint(
         HAL_LOGE("need init.");
         return;
     }
-    HAL_LOGI("IN, mCurrentPowerHint=%d", mCurrentPowerHint);
+    HAL_LOGD("IN, mCurrentPowerHint=%d", mCurrentPowerHint);
 
 #if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
     switch (mCurrentPowerHint) {
@@ -264,7 +264,7 @@ void SprdCameraSystemPerformance::setPowerHint(
     }
 #endif
 exit:
-    HAL_LOGI("out, mCurrentPowerHint=%d", mCurrentPowerHint);
+    HAL_LOGD("out, mCurrentPowerHint=%d", mCurrentPowerHint);
     return;
 }
 
@@ -321,7 +321,7 @@ int SprdCameraSystemPerformance::changeDfsPolicy(dfs_policy_t dfs_policy) {
         HAL_LOGW("unrecognize dfs policy");
         break;
     }
-    HAL_LOGI("mCameraDfsPolicyCur: %d", mCameraDfsPolicyCur);
+    HAL_LOGD("mCameraDfsPolicyCur: %d", mCameraDfsPolicyCur);
 
     return NO_ERROR;
 }

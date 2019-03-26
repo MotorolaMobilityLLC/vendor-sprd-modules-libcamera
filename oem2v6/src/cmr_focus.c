@@ -535,14 +535,14 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
         CMR_LOGD("AF stop");
         camera_id = (cmr_u32)((unsigned long)message->data);
         is_need_abort_msg = message->sub_msg_type;
-        CMR_LOGI("camera_id = %d is_need_abort_msg = %d", camera_id,
+        CMR_LOGD("camera_id = %d is_need_abort_msg = %d", camera_id,
                  is_need_abort_msg);
         af_stop(af_handle, camera_id, is_need_abort_msg);
         CMR_PRINT_TIME;
         break;
 
     case CMR_EVT_AF_EXIT:
-        CMR_LOGI("AF exit");
+        CMR_LOGD("AF exit");
         CMR_PRINT_TIME;
         break;
 
@@ -1164,7 +1164,7 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     if (!af_cxt->af_busy) {
         pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-        CMR_LOGI("autofocus is IDLE direct return!");
+        CMR_LOGD("autofocus is IDLE direct return!");
         return ret;
     }
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
@@ -1506,7 +1506,7 @@ cmr_int focus_rect_parse(cmr_handle af_handle,
 
 exit:
     if (af_cxt != NULL)
-        CMR_LOGI("ret %ld  af_mode %d zone_cnt %d", ret, af_cxt->af_mode,
+        CMR_LOGD("ret %ld  af_mode %d zone_cnt %d", ret, af_cxt->af_mode,
                  af_param.zone_cnt);
     return ret;
 }

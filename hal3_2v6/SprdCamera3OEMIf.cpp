@@ -689,7 +689,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    HAL_LOGI("channel_type = %d, frame_number = %d", channel_type,
+    HAL_LOGD("channel_type = %d, frame_number = %d", channel_type,
              frame_number);
     mStartFrameNum = frame_number;
 
@@ -747,7 +747,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
 
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     return ret;
 }
 
@@ -915,7 +915,7 @@ int SprdCamera3OEMIf::reprocessInputBuffer() {
         channel->releaseInputBuff();
     }
 
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     return ret;
 }
 
@@ -928,7 +928,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    HAL_LOGI("E");
+    HAL_LOGD("E");
     GET_START_TIME;
     print_time();
 
@@ -998,7 +998,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
         jpeg_thumb_size.width = 0;
         jpeg_thumb_size.height = 0;
     }
-    HAL_LOGI("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width,
+    HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width,
              jpeg_thumb_size.height);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
@@ -1021,7 +1021,7 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
     print_time();
 
 exit:
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     return ret;
 }
 
@@ -1039,7 +1039,7 @@ int SprdCamera3OEMIf::checkIfNeedToStopOffLineZsl() {
     // capture_mode: 1 single capture; >1: n capture
     if (mFlagOffLineZslStart && mSprdZslEnabled == 1 &&
         sprddefInfo.capture_mode == 1 && mZslShotPushFlag == 0) {
-        HAL_LOGI("mFlagOffLineZslStart=%d, sprddefInfo.capture_mode=%d",
+        HAL_LOGD("mFlagOffLineZslStart=%d, sprddefInfo.capture_mode=%d",
                  mFlagOffLineZslStart, sprddefInfo.capture_mode);
         CMR_MSG_INIT(message);
         message.msg_type = CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH;
@@ -1595,7 +1595,7 @@ void SprdCamera3OEMIf::setMimeType(int type) {
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE, mime_type);
 
-    HAL_LOGI("X,mime_type=0x%x", mime_type);
+    HAL_LOGD("X,mime_type=0x%x", mime_type);
 }
 
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state) {
@@ -4493,7 +4493,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     if (mSprdReprocessing) {
         SprdCamera3RegularChannel *channel =
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-        HAL_LOGI("jpeg encode done, reprocessing end");
+        HAL_LOGD("jpeg encode done, reprocessing end");
         setCaptureReprocessMode(false, mCallbackWidth, mCallbackHeight);
         channel->releaseInputBuff();
     }
@@ -5804,7 +5804,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                     focus_para.zone[0].width = zoom.width;
                     focus_para.zone[0].height = zoom.height;
                     focus_para.zone_cnt = 1;
-                    HAL_LOGI(
+                    HAL_LOGD(
                         "after crop AF region is %d %d %d %d",
                         focus_para.zone[0].start_x, focus_para.zone[0].start_y,
                         focus_para.zone[0].width, focus_para.zone[0].height);
@@ -8897,7 +8897,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
-    HAL_LOGI("E");
+    HAL_LOGD("E");
 
     if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
         NULL == obj->mHalOem->ops) {
@@ -9021,7 +9021,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     snapshotZsl(p_data);
 
 exit:
-    HAL_LOGI("X");
+    HAL_LOGD("X");
 }
 
 int SprdCamera3OEMIf::ZSLMode_monitor_thread_init(void *p_data) {

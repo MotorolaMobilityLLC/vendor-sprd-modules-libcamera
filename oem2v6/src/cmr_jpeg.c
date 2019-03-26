@@ -227,7 +227,7 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
         return JPEG_CODEC_NO_MEM;
     }
 
-    CMR_LOGI("jpeg:src jpeg addr 0x%p, size %d thumbnail addr 0x%p, size %d "
+    CMR_LOGD("jpeg:src jpeg addr 0x%p, size %d thumbnail addr 0x%p, size %d "
              "target addr 0x%p,size %d",
              input_param.src_jpeg_buf_ptr, input_param.src_jpeg_size,
              input_param.thumbnail_buf_ptr, input_param.thumbnail_buf_size,
@@ -241,7 +241,7 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
     free(input_param.temp_exif_isp_buf_ptr);
     free(input_param.temp_exif_isp_dbg_buf_ptr);
     input_param.temp_buf_ptr = PNULL;
-    CMR_LOGI("jpeg:output: addr 0x%lx,size %d", out_ptr->output_buf_virt_addr,
+    CMR_LOGD("jpeg:output: addr 0x%lx,size %d", out_ptr->output_buf_virt_addr,
              (cmr_u32)out_ptr->output_buf_size);
 
     return ret;
@@ -257,14 +257,14 @@ cmr_int cmr_jpeg_enc_add_eixf(cmr_handle jpeg_handle,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGI("jpeg:enc add exit start");
+    CMR_LOGD("jpeg:enc add exit start");
     ret = _jpeg_enc_wexif(param_ptr, output_ptr);
     if (ret) {
         CMR_LOGE("jpeg encode add eixf error");
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGI("jpeg:output addr 0x%x,size %d",
+    CMR_LOGD("jpeg:output addr 0x%x,size %d",
              (cmr_u32)output_ptr->output_buf_virt_addr,
              (cmr_u32)output_ptr->output_buf_size);
     return ret;

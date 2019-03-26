@@ -469,7 +469,7 @@ camera_metadata_t *SprdCamera3HWI::constructDefaultMetadata(int type) {
 
     camera_metadata_t *metadata = NULL;
 
-    HAL_LOGI("type = %d", type);
+    HAL_LOGD("type = %d", type);
 
     if (!mSetting) {
         HAL_LOGE("NULL camera device");
@@ -477,7 +477,7 @@ camera_metadata_t *SprdCamera3HWI::constructDefaultMetadata(int type) {
     }
     mSetting->constructDefaultMetadata(type, &metadata);
 
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     return metadata;
 }
 
@@ -1762,7 +1762,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 (HAL_PIXEL_FORMAT_YCbCr_420_888 ==
                      result_info->stream->format &&
                  mMultiCameraMode == MODE_BLUR)) {
-                HAL_LOGI("capture result, continue search");
+                HAL_LOGD("capture result, continue search");
                 i++;
                 continue;
             }

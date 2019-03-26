@@ -966,7 +966,7 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
     if (ret) {
         CMR_LOGE("SPRD_IMG_IO_START_CAPTURE failed");
     }
-    CMR_LOGI("ret = %ld,capture_status %u,timestamp=%" PRId64, ret,
+    CMR_LOGD("ret = %ld,capture_status %u,timestamp=%" PRId64, ret,
              capture_param.type, capture_param.timestamp);
 
     return ret;
@@ -986,7 +986,7 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle) {
     if (ret) {
         CMR_LOGE("failed to stop offline path");
     }
-    CMR_LOGI("ret = %ld", ret);
+    CMR_LOGD("ret = %ld", ret);
 
     return ret;
 }

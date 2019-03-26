@@ -287,7 +287,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct common_isp_cmd_param isp_cmd_parm;
     char flag[PROPERTY_VALUE_MAX];
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     if (!out || !in || !ipm_handle || !class_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
@@ -463,12 +463,12 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     CHECK_HANDLE_VALID(threednr_handle);
 
     threednr_handle->is_stop = 1;
     // threednr_cancel();
-    CMR_LOGI("OK to threednr_cancel");
+    CMR_LOGD("OK to threednr_cancel");
 
     ret = threednr_deinit();
     if (ret) {
@@ -503,7 +503,7 @@ exit:
 
     sem_post(&cam_cxt->threednr_proc_sm);
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     return ret;
 }
 static cmr_int req_3dnr_do(cmr_handle class_handle, struct img_addr *dst_addr,
@@ -626,10 +626,10 @@ static cmr_int threednr_process_thread_proc(struct cmr_msg *message,
 
     switch (evt) {
     case CMR_EVT_3DNR_INIT:
-        CMR_LOGI("3dnr thread inited.");
+        CMR_LOGD("3dnr thread inited.");
         break;
     case CMR_EVT_3DNR_SAVE_FRAME:
-        CMR_LOGI("3dnr save frame");
+        CMR_LOGD("3dnr save frame");
         in = message->data;
         ret = threednr_save_frame(class_handle, in);
         if (ret != CMR_CAMERA_SUCCESS) {

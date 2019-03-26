@@ -607,7 +607,7 @@ cmr_int cmr_sensor_get_exif(cmr_handle sensor_handle, cmr_uint sensor_id,
     CHECK_HANDLE_VALID(sensor_exif_ptr);
 
     if (cur_sensor_exif_ptr) {
-        CMR_LOGI("get sensor context exif addr %p", cur_sensor_exif_ptr);
+        CMR_LOGD("get sensor context exif addr %p", cur_sensor_exif_ptr);
         cmr_copy(sensor_exif_ptr, cur_sensor_exif_ptr,
                  sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
     }

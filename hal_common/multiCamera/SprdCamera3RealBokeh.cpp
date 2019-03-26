@@ -421,14 +421,14 @@ SprdCamera3RealBokeh::construct_default_request_settings(
     const struct camera3_device *device, int type) {
     const camera_metadata_t *rc;
 
-    HAL_LOGI("E");
+    HAL_LOGD("E");
     if (!mRealBokeh) {
         HAL_LOGE("Error getting capture ");
         return NULL;
     }
     rc = mRealBokeh->constructDefaultRequestSettings(device, type);
 
-    HAL_LOGI("X");
+    HAL_LOGD("X");
 
     return rc;
 }
@@ -2001,7 +2001,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             HAL_LOGD("start process normal frame to get "
                      "depth data!");
             if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
-                HAL_LOGI("mRealBokeh->mOtpData.otp_exist %d",
+                HAL_LOGD("mRealBokeh->mOtpData.otp_exist %d",
                          mRealBokeh->mOtpData.otp_exist);
                 if (mRealBokeh->mOtpData.otp_exist) {
                     rc = sprdDepthCaptureHandle(capture_msg.combo_buff.buffer1,
@@ -2145,7 +2145,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
     void *scaled_buffer_addr = NULL;
     int64_t depthRun = 0;
     int rc = NO_ERROR;
-    HAL_LOGI("E");
+    HAL_LOGD("E");
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -2245,7 +2245,7 @@ exit : { // dump yuv data
             mRealBokeh->mCapFrameNumber, "depth");
     }
 }
-    HAL_LOGI(":X");
+    HAL_LOGD(":X");
 
     mRealBokeh->unmap(scaled_buffer);
 fail_map_scale:
@@ -2869,7 +2869,7 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
                otpSize);
     }
 
-    HAL_LOGI("X");
+    HAL_LOGD("X");
 
     return fwk_metadata;
 }
@@ -4012,7 +4012,7 @@ void SprdCamera3RealBokeh::CallBackResult(
     result.partial_result = 0;
 
     mCallbackOps->process_capture_result(mCallbackOps, &result);
-    HAL_LOGI("id:%d buffer_status %u", result.frame_number, buffer_status);
+    HAL_LOGD("id:%d buffer_status %u", result.frame_number, buffer_status);
     if (!buffer_status) {
         mRealBokeh->dumpFps();
     }

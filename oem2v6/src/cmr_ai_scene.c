@@ -76,7 +76,7 @@ static cmr_int ai_scene_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_size;
     cmr_u32 small_buf_num;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     if (!out || !in || !ipm_handle || !out_class_handle) {
         CMR_LOGE("Invalid Param!");
         ret = CMR_CAMERA_INVALID_PARAM;
@@ -126,7 +126,7 @@ exit:
             free(ai_scene_handle);
         }
     }
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     return ret;
 }
 
@@ -140,7 +140,7 @@ static cmr_int ai_scene_close(cmr_handle class_handle) {
     struct ipm_init_in *ipm_in = NULL;
     CHECK_HANDLE_VALID(ai_scene_handle);
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     oem_handle = ai_scene_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
     ipm_in = &ai_scene_handle->common.ipm_cxt->init_in;
@@ -160,7 +160,7 @@ static cmr_int ai_scene_close(cmr_handle class_handle) {
     sem_destroy(&ai_scene_handle->sem_ai_scene);
     free(ai_scene_handle);
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     return ret;
 }
 

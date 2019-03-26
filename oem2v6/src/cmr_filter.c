@@ -78,7 +78,7 @@ static cmr_int filter_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     out->format = IMG_FMT_YCBCR420;
     out->total_frame_number = 1;
 
-    CMR_LOGI("in->frame_size.width = %d,in->frame_size.height = %d",
+    CMR_LOGD("in->frame_size.width = %d,in->frame_size.height = %d",
              in->frame_size.width, in->frame_size.height);
 
     filter_handle->common.ipm_cxt = (struct ipm_context_t *)ipm_handle;
@@ -98,7 +98,7 @@ static cmr_int filter_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     filter_handle->filter_ops = filter_ops_mode[filter_handle->vendor];
-    CMR_LOGI("filter version %d, ops %p", filter_handle->vendor,
+    CMR_LOGD("filter version %d, ops %p", filter_handle->vendor,
              filter_handle->filter_ops);
 
     ret = filter_arithmetic_init((cmr_handle)filter_handle);
@@ -110,7 +110,7 @@ static cmr_int filter_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     sem_init(&filter_handle->sem, 0, 1);
 
     *class_handle = (cmr_handle)filter_handle;
-    CMR_LOGI("x");
+    CMR_LOGD("x");
 
     return ret;
 
@@ -127,7 +127,7 @@ static cmr_int filter_close(cmr_handle class_handle) {
         CMR_LOGE("filter_handle is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (filter_handle->is_inited) {
         sem_wait(&filter_handle->sem);
@@ -141,7 +141,7 @@ static cmr_int filter_close(cmr_handle class_handle) {
 
     filter_handle->is_inited = 0;
     free(filter_handle);
-    CMR_LOGI("X");
+    CMR_LOGD("X");
 
     return ret;
 }
@@ -156,7 +156,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     cmr_uint height = 0;
     struct camera_context *cxt = (struct camera_context *)in->private_data;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!out || !in || !class_handle || !cxt) {
         CMR_LOGE("Invalid Param!");
@@ -178,7 +178,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
         dump_image("filter_transfer_frame", IMG_DATA_TYPE_YUV420, width, height,
                    0, addr, width * height * 3 / 2);
     }
-    CMR_LOGI("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);
+    CMR_LOGD("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);
 
     ret = filter_arithmetic_do(class_handle, addr, width, height);
     if (ret) {
@@ -189,7 +189,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     out->dst_frame = in->src_frame;
     out->private_data = in->private_data;
 
-    CMR_LOGI("x,private_data=%p,type=%lu", out->private_data,
+    CMR_LOGD("x,private_data=%p,type=%lu", out->private_data,
              filter_handle->filter_type);
 exit:
     sem_post(&filter_handle->sem);
@@ -200,7 +200,7 @@ static cmr_int filter_arithmetic_init(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     cmr_uint type = filter_handle->filter_type;
     cmr_uint width = filter_handle->width;
@@ -217,7 +217,7 @@ static cmr_int filter_arithmetic_init(cmr_handle class_handle) {
         ret = CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGI("x");
+    CMR_LOGD("x");
 
     return ret;
 }
@@ -225,7 +225,7 @@ static cmr_int filter_arithmetic_init(cmr_handle class_handle) {
 static cmr_int filter_arithmetic_deinit(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     cmr_handle handle = filter_handle->handle;
 
@@ -244,7 +244,7 @@ static cmr_int filter_arithmetic_deinit(cmr_handle class_handle) {
         ret = CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGI("x");
+    CMR_LOGD("x");
 exit:
     return ret;
 }
@@ -256,7 +256,7 @@ static cmr_int filter_arithmetic_do(cmr_handle class_handle,
     struct timespec start_time, end_time;
     cmr_uint duration = 0;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     struct filter_pic_data pic_data;
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
     cmr_bzero(&start_time, sizeof(struct timespec));

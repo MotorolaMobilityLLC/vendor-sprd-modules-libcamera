@@ -71,7 +71,7 @@ static void ov8856_drv_write_gain(cmr_handle handle,
             gain_d = 0x4 * 0x400 - 1;
     }
 
-    SENSOR_LOGI("(cmr_u16)gain_a = %f ,(cmr_u16)gain_d = %f", gain_a, gain_d);
+    SENSOR_LOGD("(cmr_u16)gain_a = %f ,(cmr_u16)gain_d = %f", gain_a, gain_d);
     if (aec_info->again->size) {
         /*TODO*/
         aec_info->again->settings[2].reg_value = ((cmr_u16)gain_a >> 8) & 0x1f;
