@@ -23,6 +23,16 @@
 #include "pthread.h"
 #include "cmr_types.h"
 #include "inttypes.h"
+#include <cutils/properties.h>
+
+#ifdef ISP_LOGV
+#undef ISP_LOGV
+cmr_int g_ai_log_level = LEVEL_OVER_LOGD;
+extern long g_isp_log_level;
+#define ISP_LOGV(format, ...)                                                  \
+	ALOGD_IF((((g_ai_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_ai_log_level!=6)), DEBUG_STR format, DEBUG_ARGS, \
+        ##__VA_ARGS__)
+#endif
 
 struct ai_ctrl_cxt {
 	struct aictrl_cxt *aictrl_cxt_ptr;
@@ -45,6 +55,8 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct ai_ctrl_cxt *cxt = NULL;
+	char ai_property[PROPERTY_VALUE_MAX];
+	int val = 0;
 
 	UNUSED(param);
 
@@ -87,6 +99,12 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	}
 
 	cxt->aic_status = AI_STATUS_IDLE;
+
+	memset((cmr_handle) & ai_property, 0, sizeof(ai_property));
+	property_get("persist.vendor.cam.isp.ai.logv", ai_property, "0");
+	val = atoi(ai_property);
+	if (0 < val)
+		g_ai_log_level = val;
 
 	ISP_LOGI("done.");
 

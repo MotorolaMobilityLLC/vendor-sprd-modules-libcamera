@@ -42,6 +42,15 @@ typedef int bool;
 
 #define GATM_ENABLE 1
 
+#ifdef ISP_LOGV
+#undef ISP_LOGV
+cmr_int g_smart_log_level = LEVEL_OVER_LOGD;
+extern long g_isp_log_level;
+#define ISP_LOGV(format, ...)                                                  \
+	ALOGD_IF((((g_smart_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_smart_log_level!=6)), DEBUG_STR format, DEBUG_ARGS, \
+        ##__VA_ARGS__)
+#endif
+
 struct block_name_map {
 	cmr_u32 block_id;
 	char name[8];
@@ -751,7 +760,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 			fix_data[2].value[0] = tmp_result[1].value[0];
 			fix_data[2].value[1] = tmp_result[1].value[1];
 			if(smart_id == ISP_SMART_HSV)
-			ISP_LOGI("yzl add hsv fixdata0:%d,%d,%d,%d, fixdata1:%d,%d,%d,%d, fixdata2:%d,%d,%d,%d" , 
+			ISP_LOGV("yzl add hsv fixdata0:%d,%d,%d,%d, fixdata1:%d,%d,%d,%d, fixdata2:%d,%d,%d,%d" , 
 			fix_data[0].value[0], fix_data[0].value[1],fix_data[0].weight[0],fix_data[0].weight[1],
 			fix_data[1].value[0] ,fix_data[1].value[1] ,fix_data[1].weight[0],fix_data[1].weight[1],
 			fix_data[2].value[0] ,fix_data[2].value[1],fix_data[2].weight[0],fix_data[2].weight[1]);
@@ -1056,6 +1065,8 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cmr_s32 rtn = ISP_SUCCESS;
 	smart_handle_t handle = NULL;
 	struct smart_context *cxt = NULL;
+	char smart_property[PROPERTY_VALUE_MAX];
+	int val = 0;
 
 	if (NULL == param) {
 		ISP_LOGE("fail to check input param, in: %p, out: %p\n", param, result);
@@ -1230,6 +1241,12 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->caller_handle = param->caller_handle;
 	cxt->smart_set_cb = param->smart_set_cb;
 	handle = (smart_handle_t) cxt;
+
+	memset((cmr_handle) & smart_property, 0, sizeof(smart_property));
+	property_get("persist.vendor.cam.isp.smart.logv", smart_property, "0");
+	val = atoi(smart_property);
+	if (0 < val)
+		g_smart_log_level = val;
 
 	ISP_LOGI("done rtn %d", rtn);
 	return handle;
