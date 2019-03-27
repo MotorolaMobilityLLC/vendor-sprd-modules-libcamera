@@ -354,6 +354,18 @@ static void camera_put_empty_frame(void *param)
 	ret = put_empty_frame(frame);
 }
 
+void cam_destroy_statis_buf(void *param)
+{
+	struct camera_frame *frame;
+
+	if (!param) {
+		pr_err("error: null input ptr.\n");
+		return;
+	}
+	frame = (struct camera_frame *)param;
+	put_empty_frame(frame);
+}
+
 struct compression_override g_compression_override[CAM_ID_MAX];
 
 /* compression policy */
@@ -4267,7 +4279,7 @@ static int img_ioctl_stream_on(
 	dcam_lbuf_share_mode(module->dcam_idx, line_w);
 
 	camera_queue_init(&module->isp_hist2_outbuf_queue,
-		CAM_STATIS_Q_LEN, 0, camera_put_empty_frame);
+		CAM_STATIS_Q_LEN, 0, cam_destroy_statis_buf);
 
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_INIT_STATIS_Q, NULL);
@@ -4949,7 +4961,7 @@ static int raw_proc_post(
 	ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_INIT_STATIS_Q, NULL);
 	camera_queue_init(&module->isp_hist2_outbuf_queue,
-		CAM_STATIS_Q_LEN, 0, camera_put_empty_frame);
+		CAM_STATIS_Q_LEN, 0, cam_destroy_statis_buf);
 	io_desc.q = &module->isp_hist2_outbuf_queue;
 	io_desc.buf = &module->isp_hist2_buf;
 	ret = isp_ops->ioctl(module->isp_dev_handle,

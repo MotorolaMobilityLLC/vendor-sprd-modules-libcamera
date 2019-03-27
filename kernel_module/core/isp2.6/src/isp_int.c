@@ -239,6 +239,8 @@ static void isp_fmcu_store_done(enum isp_context_id idx, void *isp_handle)
 	isp_frame_done(idx, dev);
 
 	if (pctx->enable_slowmotion == 1) {
+		if (pctx->enable_slowmotion == 1)
+			complete(&pctx->frm_done);
 		for (i = 0;i < pctx->slowmotion_count - 1;i++)
 			isp_frame_done(idx, dev);
 	}
@@ -251,9 +253,6 @@ static void isp_fmcu_shadow_done(enum isp_context_id idx, void *isp_handle)
 
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
-
-	if (pctx->enable_slowmotion == 1)
-		complete(&pctx->frm_done);
 
 	pr_debug("cxt_id:%d done.\n", idx);
 }
@@ -333,6 +332,9 @@ static struct camera_frame* isp_hist2_frame_prepare(enum isp_context_id idx, voi
 	buf = (uint32_t *)frame->buf.addr_k[0];
 
 	if (!frame->buf.addr_k[0]) {
+		pr_err("err: null ptr\n");
+		if (camera_enqueue(&pctx->hist2_result_queue, frame) < 0)
+			pr_err("fatal err\n");
 		return NULL;
 	}
 
@@ -482,6 +484,7 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 
 	for (sid = 0; sid < 2; sid++) {
 		c_id = (iid << 1) | sid;
+		isp_handle->ctx[c_id].in_irq_handler = 1;
 		irq_offset = isp_int_ctxs[c_id].reg_offset;
 		err_mask = isp_int_ctxs[c_id].err_mask;
 		irq_numbers = isp_int_ctxs[c_id].irq_numbers;
@@ -491,8 +494,10 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 				irq_offset, irq_numbers,  irq_vect);
 		irq_line = ISP_HREG_RD(irq_offset + ISP_INT_INT0);
 		pr_debug("cid: %d,  irq_line: %08x\n", c_id,  irq_line);
-		if (unlikely(irq_line == 0))
+		if (unlikely(irq_line == 0)) {
+			isp_handle->ctx[c_id].in_irq_handler = 0;
 			continue;
+		}
 
 		record_isp_int(c_id, irq_line);
 
@@ -503,7 +508,8 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 						c_id, irq, irq_line);
 
 		if (atomic_read(&isp_handle->ctx[c_id].user_cnt) < 1) {
-			pr_err("error irq: contex %d not started.\n", c_id);
+			pr_info("contex %d is stopped\n", c_id);
+			isp_handle->ctx[c_id].in_irq_handler = 0;
 			return IRQ_HANDLED;
 		}
 
@@ -516,8 +522,10 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 			}
 
 			/*handle the error here*/
-			if (isp_err_pre_proc(c_id, isp_handle))
+			if (isp_err_pre_proc(c_id, isp_handle)) {
+				isp_handle->ctx[c_id].in_irq_handler = 0;
 				return IRQ_HANDLED;
+			}
 		}
 
 		for (k = 0; k < irq_numbers; k++) {
@@ -533,6 +541,7 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 			if (!irq_line)
 				break;
 		}
+		isp_handle->ctx[c_id].in_irq_handler = 0;
 	}
 
 	return IRQ_HANDLED;

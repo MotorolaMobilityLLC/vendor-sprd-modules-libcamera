@@ -784,6 +784,19 @@ void isp_destroy_reserved_buf(void *param)
 	put_empty_frame(frame);
 }
 
+void isp_destroy_statis_buf(void *param)
+{
+	struct camera_frame *frame;
+
+	if (!param) {
+		pr_err("error: null input ptr.\n");
+		return;
+	}
+
+	frame = (struct camera_frame *)param;
+	put_empty_frame(frame);
+}
+
 void isp_set_ctx_common(struct isp_pipe_context *pctx)
 {
 	uint32_t idx = pctx->ctx_id;
@@ -1733,9 +1746,12 @@ static int isp_offline_thread_loop(void *arg)
 static int isp_stop_offline_thread(void *param)
 {
 	int cnt = 0;
+	int ret = 0;
 	struct cam_thread_info *thrd;
+	struct isp_pipe_context *pctx;
 
 	thrd = (struct cam_thread_info *)param;
+	pctx = (struct isp_pipe_context *)thrd->ctx_handle;
 
 	if (thrd->thread_task) {
 		atomic_set(&thrd->thread_stop, 1);
@@ -1750,6 +1766,16 @@ static int isp_stop_offline_thread(void *param)
 		pr_info("offline thread stopped. wait %d ms\n", cnt);
 	}
 
+	/* wait for last frame done */
+	ret = wait_for_completion_interruptible_timeout(
+					&pctx->frm_done,
+					ISP_CONTEXT_TIMEOUT);
+	if (ret == -ERESTARTSYS)
+		pr_err("interrupt when isp wait\n");
+	else if (ret == 0)
+		pr_err("error: ctx %d timeout.\n", pctx->ctx_id);
+	else
+		pr_info("wait time %d\n", ret);
 	return 0;
 }
 
@@ -2098,9 +2124,8 @@ new_ctx:
 						0, isp_unmap_frame);
 	camera_queue_init(&pctx->ltm_wr_queue, ISP_LTM_BUF_NUM,
 						0, isp_unmap_frame);
-
 	camera_queue_init(&pctx->hist2_result_queue, 16,
-						0, isp_unmap_frame);
+						0, isp_destroy_statis_buf);
 
 	isp_set_ctx_default(pctx);
 	reset_isp_irq_cnt(pctx->ctx_id);
@@ -2141,6 +2166,7 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 {
 	int ret = 0;
 	int i;
+	uint32_t loop = 0;
 	struct isp_pipe_dev *dev;
 	struct isp_pipe_context *pctx;
 	struct isp_path_desc *path;
@@ -2160,13 +2186,22 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 	pctx = &dev->ctx[ctx_id];
 
 	mutex_lock(&dev->path_mutex);
-	if (atomic_dec_return(&pctx->user_cnt) == 0) {
-		pr_info("free context %d without users.\n", pctx->ctx_id);
 
+	if (atomic_read(&pctx->user_cnt) == 1)
 		isp_stop_offline_thread(&pctx->thread);
+
+	if (atomic_dec_return(&pctx->user_cnt) == 0) {
 		hw = dev->isp_hw;
 		ret = hw->ops->disable_irq(hw, &pctx->ctx_id);
 		ret = hw->ops->irq_clear(hw, &pctx->ctx_id);
+		pr_info("free context %d without users.\n", pctx->ctx_id);
+
+		/* make sure irq handler exit to avoid crash */
+		while (pctx->in_irq_handler && (loop < 1000)) {
+			pr_info("cxt % in irq. wait %d", pctx->ctx_id, loop);
+			loop++;
+			udelay(500);
+		};
 
 		fmcu = (struct isp_fmcu_ctx_desc *)pctx->fmcu_handle;
 		if (fmcu) {
@@ -2564,20 +2599,6 @@ exit:
 	return ret;
 }
 
-void isp_destroy_statis_buf(void *param)
-{
-	struct camera_frame *frame;
-
-	if (!param) {
-		pr_err("error: null input ptr.\n");
-		return;
-	}
-
-	frame = (struct camera_frame *)param;
-	put_empty_frame(frame);
-}
-
-
 static int isp_cfg_statis_buffer(
 		struct isp_statis_io_desc *io_desc)
 {
@@ -2639,7 +2660,9 @@ static int isp_cfg_statis_buffer(
 		pframe->buf.addr_vir[0] = (unsigned long)io_desc->input->uaddr;
 		pframe->buf.addr_k[0] = (unsigned long)io_desc->input->kaddr;
 		pframe->buf.iova[0] = io_desc->input->u.block_data.hw_addr;
-		camera_enqueue(io_desc->q, pframe);
+		ret = camera_enqueue(io_desc->q, pframe);
+		if (ret)
+			pr_err("fail to enq\n");
 
 		pr_debug("statis type %d, iova 0x%08x,  uaddr 0x%lx kaddr[0x%lx]\n",
 			io_desc->input->type, (uint32_t)pframe->buf.iova[0],
@@ -2715,6 +2738,8 @@ static int isp_init_statis_bufferq(
 					pr_debug("outputq[%p] qcnt[%d] qmax[%d]\n",io_desc->q,io_desc->q->cnt,io_desc->q->max);
 					if (ret)
 						put_empty_frame(pframe);
+					else
+						pr_info("kaddr %p, vaddr %p\n", (void *)kaddr, (void *)uaddr);
 				}
 			}
 
@@ -2787,7 +2812,7 @@ static int isp_cycle_hist2_frame(
 	frame = camera_dequeue(io_desc->q);
 
 	if (frame == NULL) {
-		pr_err("isp statis buffer unavailable outputq[%p] q_cnt[%d] q_max[%d]\n",
+		pr_err("outputq[%p] q_cnt[%d] q_max[%d]\n",
 		(void*)io_desc->q,
 		io_desc->q->cnt,
 		io_desc->q->max);
@@ -2798,7 +2823,9 @@ static int isp_cycle_hist2_frame(
 	/* give hist statis frame_id */
 	frame->fid = io_desc->fid;
 	if (camera_enqueue(&pctx->hist2_result_queue, frame) < 0) {
-		pr_err("ctx_id[%d] hist2_result_queue overflow \n",ctx_id);
+		pr_err("ctx_id[%d] overflow \n",ctx_id);
+		if (camera_enqueue(io_desc->q, frame) < 0)
+			pr_err("ctx_id[%d] fatal\n",ctx_id);
 		return -EPERM;
 	}
 
