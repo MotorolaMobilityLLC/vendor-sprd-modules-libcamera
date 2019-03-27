@@ -1984,6 +1984,23 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 capture_msg.combo_buff.buffer2 == NULL) {
                 HAL_LOGD("start process hdr frame to get "
                          "bokeh data!");
+#ifdef YUV_CONVERT_TO_JPEG
+                mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
+                    mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
+                rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
+                                     &pic_vir_addr);
+                if (rc != NO_ERROR) {
+                    HAL_LOGE("fail to map jpeg buffer");
+                }
+                mRealBokeh->mOrigJpegSize =
+                    mRealBokeh->jpeg_encode_exif_simplify(
+                        capture_msg.combo_buff.buffer1, input_buf1_addr,
+                        mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
+                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
+#else
+                mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
+#endif
                 if (!mAbokehGallery) {
                     rc = sprdBokehCaptureHandle(output_buffer,
                                                 capture_msg.combo_buff.buffer1,
@@ -2042,25 +2059,28 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     mime_type = (int)SPRD_MIMETPYE_BOKEH;
                 }
             }
+            if (!mRealBokeh->mIsHdrMode) {
 #ifdef YUV_CONVERT_TO_JPEG
-            mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
-                mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
-            if (mBokehResult) {
-                rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
-                                     &pic_vir_addr);
-                if (rc != NO_ERROR) {
-                    HAL_LOGE("fail to map jpeg buffer");
+                mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
+                    mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
+                if (mBokehResult) {
+                    rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
+                                         &pic_vir_addr);
+                    if (rc != NO_ERROR) {
+                        HAL_LOGE("fail to map jpeg buffer");
+                    }
+                    mRealBokeh->mOrigJpegSize =
+                        mRealBokeh->jpeg_encode_exif_simplify(
+                            capture_msg.combo_buff.buffer1, input_buf1_addr,
+                            mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL,
+                            NULL,
+                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                    mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
                 }
-                mRealBokeh->mOrigJpegSize =
-                    mRealBokeh->jpeg_encode_exif_simplify(
-                        capture_msg.combo_buff.buffer1, input_buf1_addr,
-                        mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
-                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
-                mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
-            }
 #else
-            mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
+                mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
 #endif
+            }
 
             mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
             if (!mRealBokeh->mFlushing)
@@ -2781,7 +2801,7 @@ int SprdCamera3RealBokeh::configureStreams(
                                mCaptureThread->mAbokehGallery);
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initParam");
-        //return rc;
+        // return rc;
     }
 
     if (mOtpData.otp_exist) {
@@ -2795,12 +2815,12 @@ int SprdCamera3RealBokeh::configureStreams(
     rc = mBokehAlgo->initAlgo();
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initAlgo");
-        //return rc;
+        // return rc;
     }
     rc = mBokehAlgo->initPrevDepth();
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initPrevDepth");
-        //return rc;
+        // return rc;
     }
 
     HAL_LOGI("x rc%d.", rc);
@@ -3480,7 +3500,8 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                 vcmSteps_fixed = FOCUS_FAIL;
             }
             mVcmStepsFixed = vcmSteps_fixed;
-            HAL_LOGD("VCM_INFO:vcmSteps=%d afState %d", vcmSteps_fixed,afState);
+            HAL_LOGD("VCM_INFO:vcmSteps=%d afState %d", vcmSteps_fixed,
+                     afState);
         }
         if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
             if (mCaptureThread->mReprocessing) {
