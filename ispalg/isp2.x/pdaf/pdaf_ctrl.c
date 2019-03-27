@@ -211,7 +211,7 @@ static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_
 	}
 
   exit:
-	ISP_LOGI("cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 
 }
@@ -233,7 +233,7 @@ static cmr_int pdafctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *
 		ISP_LOGI("ioctrl fun is NULL");
 	}
   exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGV("done %ld", rtn);
 	return rtn;
 
 }
@@ -379,7 +379,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	memset((void *)cxt, 0x00, sizeof(*cxt));
 	cxt->camera_id = in->camera_id;
 	cxt->pdaf_support = in->pdaf_support;
-	ISP_LOGI("cxt->pdaf_support = %d", cxt->pdaf_support);
+	ISP_LOGV("cxt->pdaf_support = %d", cxt->pdaf_support);
 	//cxt->init_in_param = *in;
 /*	if (SENSOR_PDAF_TYPE3_ENABLE != cxt->pdaf_support
 		&& SENSOR_DUAL_PDAF_ENABLE != cxt->pdaf_support) {
@@ -503,7 +503,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in * in, s
 	}
 	return ISP_SUCCESS;
   exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

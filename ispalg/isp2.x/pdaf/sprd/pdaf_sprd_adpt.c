@@ -422,7 +422,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		goto exit;
 	}
 
-	ISP_LOGI("PDALGO Init. Sensor Mode[%d] ", cxt->pd_gobal_setting.dSensorMode);
+	ISP_LOGV("PDALGO Init. Sensor Mode[%d] ", cxt->pd_gobal_setting.dSensorMode);
 
 	#ifdef CONFIG_ISP_2_5
 	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
@@ -523,7 +523,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
 	//0: Normal, 1:Mirror+Flip
 	cxt->pd_gobal_setting.dSensorSetting = in_p->pd_info->sns_orientation;
-	ISP_LOGI("gobal_setting.dSensorSetting = %d\n", cxt->pd_gobal_setting.dSensorSetting);
+	ISP_LOGV("gobal_setting.dSensorSetting = %d\n", cxt->pd_gobal_setting.dSensorSetting);
 
 	property_get("debug.isp.pdaf.otp.dump", otp_pdaf_name, "/dev/null");
 	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
@@ -724,7 +724,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		}
 	}
 
-	ISP_LOGI("PDALGO Converter. Sensor[%d] OTP[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation, cxt->pd_gobal_setting.dSensorMode);
+	ISP_LOGV("PDALGO Converter. Sensor[%d] OTP[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation, cxt->pd_gobal_setting.dSensorMode);
 
 	pPD_left  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
 	pPD_right = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
@@ -868,7 +868,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	  ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
 	}
 	else{
-		ISP_LOGI("PDALGO No need Converter. SensorID[%d]", cxt->pd_gobal_setting.dSensorMode);
+		ISP_LOGV("PDALGO No need Converter. SensorID[%d]", cxt->pd_gobal_setting.dSensorMode);
 	}
 
 	if (cxt->pd_gobal_setting.dSensorSetting != otp_orientation) {
