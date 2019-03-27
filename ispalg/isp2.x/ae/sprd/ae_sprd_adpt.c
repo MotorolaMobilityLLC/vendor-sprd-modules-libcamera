@@ -4245,7 +4245,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		dst_exp.dummy = src_exp.dummy;
 		dst_exp.cur_index = src_exp.cur_index;
 		dst_exp.frm_len = src_exp.frm_len;
-		dst_exp.frm_len = src_exp.frm_len_def;
+		dst_exp.frm_len_def = src_exp.frm_len_def;
 	} else {
 		src_exp.dummy = 0;
 		max_exp = cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index];
@@ -5469,7 +5469,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->effect_index_index = 0;
 	cxt->effect_index[cxt->effect_index_index] = cxt->sync_cur_result.wts.cur_index;
 	if( cxt->exposure_compensation.ae_compensation_flag == 1) {
-		double curlum,prelum;
+		double curlum = 0, prelum = 0;
 		if(cxt->env_cum_changedCalc_delay_cnt>10){
 			curlum = (double ) cxt->cur_result.cur_lum;
 			prelum = (double ) cxt->previous_lum;
