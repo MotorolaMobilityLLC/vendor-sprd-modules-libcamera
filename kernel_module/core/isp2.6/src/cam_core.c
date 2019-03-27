@@ -2892,10 +2892,23 @@ static int img_ioctl_set_statis_buf(
 		io_desc.buf = &module->isp_hist2_buf;
 		io_desc.input = &statis_buf;
 
+		if (module->isp_hist2_buf) {
+			if(((unsigned long int)statis_buf.kaddr < module->isp_hist2_buf->addr_k[0]) ||
+				((unsigned long int)statis_buf.kaddr > (module->isp_hist2_buf->addr_k[0] + module->isp_hist2_buf->size[0]))) {
+				pr_err("Wrong buffer from user, skip in kernel to avoid PANIC. statis_buf.kaddr = 0x%lx \n",
+					(unsigned long int)statis_buf.kaddr);
+				return 0;
+			}
+		}
+
 		ret = isp_ops->ioctl(module->isp_dev_handle,
 					0,
 					ISP_IOCTL_CFG_STATIS_BUF,
 					&io_desc);
+
+		if (!ret &&  statis_buf.type == STATIS_INIT)
+			pr_info("module->isp_hist2_buf.addr_k[0] = 0x%lx size = 0x%zx\n",
+				module->isp_hist2_buf->addr_k[0],module->isp_hist2_buf->size[0]);
 
 	}
 exit:
