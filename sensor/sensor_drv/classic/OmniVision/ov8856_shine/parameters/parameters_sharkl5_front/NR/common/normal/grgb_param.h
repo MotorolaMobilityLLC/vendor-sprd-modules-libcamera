@@ -1,18 +1,18 @@
-/*versionid=0x00090007*/
+/*versionid=0x000A0008*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0x78,
 	/*hv_edge_thr*/
-	0x1A,
+	0x1E,
 	/*hv_flat_thr*/
-	0x0019,
-	/*slash_edge_thr*/
 	0x0028,
+	/*slash_edge_thr*/
+	0x001E,
 	/*slash_flat_thr*/
-	0x0019,
+	0x0028,
 	/*grgb_ratio*/
 	{
 		/*gr_ratio*/
@@ -177,9 +177,9 @@
 			/*grgb_r1_cfg*/
 			0x10,
 			/*grgb_r2_cfg*/
-			0x10,
+			0x08,
 			/*grgb_r3_cfg*/
-			0x10,
+			0x00,
 			/*reserved*/
 			0x00,
 

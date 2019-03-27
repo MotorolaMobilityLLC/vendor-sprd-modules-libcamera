@@ -406,13 +406,13 @@
 	/*uvdiv_lum*/
 	{
 		/*lum_th_h_len*/
-		0x03,
+		0x07,
 		/*lum_th_h*/
-		0xF7,
+		0xFF,
 		/*lum_th_l_len*/
-		0x04,
+		0x07,
 		/*lum_th_l*/
-		0x0A,
+		0xFF,
 
 	},
 	/*uvdiv_chroma*/
@@ -477,15 +477,15 @@
 		/*luma_ratio*/
 		0x40,
 		/*ratio_0*/
-		0x30,
+		0x40,
 		/*ratio_1*/
-		0x38,
+		0x40,
 		/*ratio_uv_min*/
 		0x30,
 		/*ratio_y_min0*/
-		0x40,
+		0x30,
 		/*ratio_y_min1*/
-		0x00,
+		0x40,
 		/*reserved*/
 		0x00,
 
