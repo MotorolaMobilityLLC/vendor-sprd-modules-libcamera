@@ -160,64 +160,6 @@ mem_fail:
 	return NULL;
 }
 
-
-
-int get_fd_info(HWFD_DETECTOR_HANDLE *hDT)
-{
-	struct sprd_fd_cfg_param cmd_para;
-    cmd_para.reg_param = SPRD_FD_REG_PARAM_INFO;
-	cmd_para.reg_val = 0;
-    fd_int fd = -1;
-	int ret = HWFD_OK;
-	struct fd_hw_handle *file = NULL;
-
-	file = (struct fd_hw_handle *)hDT;
-    if (!file)
-	{
-	   ALOGE("GetFDInfo Invalid Param fd_hw_handle !");
- 	   ret = HWFD_ERROR;
-    }
-	else
-	{
-		fd = file->fd;
-		if(fd < 0)
-		{
-			ALOGE("GetFDInfo Invalid Param fd !");
-			ret = HWFD_ERROR;
-		}
-		ret = ioctl(fd, SPRD_FD_IO_READ, &cmd_para);
-		if(ret < 0)
-		{
-			ALOGE("GetFDInfo Fd ioctl fail !");
-			ret = HWFD_ERROR;
-		}
-		else
-		{
-			ALOGI("Get FD info is 0x%02X .",cmd_para.reg_val);
-		}
-
-
-		if(FD_IP_STATUS_MASK == (FD_IP_STATUS_MASK & cmd_para.reg_val))
-		{
-			file->ip_status = FD_IP_BUSY;
-		}
-		else
-		{
-			file->ip_status = FD_IP_IDLE;
-		}
-		if(FD_IP_ERR_FLG_MASK == (FD_IP_ERR_FLG_MASK & cmd_para.reg_val))
-		{
-			file->ip_err_flg = FD_IP_ERR_FLG_ERROR;
-
-			file->ip_err_code = (FD_IP_ERR_CODE_MASK & cmd_para.reg_val) >> 1;
-		}
-		else
-		{
-			file->ip_err_flg = FD_IP_ERR_FLG_CORRECT;
-		}
-	}
-	return ret;
-}
 void get_fd_iommu_status(int fd)
 {
 	int ret = 0;
@@ -242,19 +184,33 @@ int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 	struct fd_hw_handle *file = NULL;
 	fd_s32 fd = -1;
 	char dev[32] ={0};
+	char fd_set_freq[128];
 
-	ALOGI("HW Face Detect API V0.90");
-	
+	ALOGI("HW Face Detect API V0.91");
+
 	file = (fd_hw_handle*)malloc(sizeof(struct fd_hw_handle));
 	memset(file,0,sizeof(struct fd_hw_handle));
 	if (!file) {
 	  ret = HWFD_ERROR;
 	}
+	/*set dvfs*/
+	fd_int work_clock = SPRD_FD_DVFS_INDEX2;
+	sprintf(fd_set_freq, "/sys/class/devfreq/fd-dvfs/fd_governor/set_work_index");
+	FILE *fp = fopen(fd_set_freq, "wb");
+	if (fp == NULL) {
+		ALOGE("fail to open file for fd dvfs: %d ", errno);
+	}
+	else
+	{
+		fprintf(fp, "%ld", work_clock);
+		fclose(fp);
+		fp = NULL;
+	}
 
 	sprintf(dev , "/dev/%s" ,SPRD_FD_DEVICE_NAME);
 
 	fd = open(dev, O_RDWR, 0);
-	if (fd > 0) 
+	if (fd > 0)
 	{
 		file->fd = fd;
 		*hDT = (HWFD_DETECTOR_HANDLE)file;
@@ -303,8 +259,8 @@ void hwfd_close(HWFD_DETECTOR_HANDLE *hDT)
 	FreeFDMem(out);
 	FreeFDMem(dim);
 
-    if(file)
-    {
+	if(file)
+	{
 		if (-1 == file->fd)
 		{
 		   ALOGE("Invalid fd");
@@ -329,11 +285,11 @@ int32_t  hwfd_is_busy(HWFD_DETECTOR_HANDLE hDT)
 	struct fd_hw_handle *file = NULL;
 
 	file = (struct fd_hw_handle *)hDT;
-    if (!file) 
+	if (!file) 
 	{
  	   ALOGE(" GetFDInfo Invalid Param fd_hw_handle !");
  	   return HWFD_ERROR;
-    }
+	}
 	else
 	{
 		fd = file->fd;
@@ -390,16 +346,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 			ALOGE("Invalid Param fd %d !",fd);
 			return HWFD_ERROR;
 		}
-		
-		/*Set idle clock*/
-		fd_int idle_clock = 0;
-		ret = ioctl(fd,SPRD_FD_IO_IDLE_CLOCK_SEL,&idle_clock);
-		if(ret < 0)
-		{
-			ALOGI("SPRD_FD_IO_IDLE_CLOCK_SEL ret %d",ret);
-			return HWFD_ERROR;
-		}
-		
+
 		/*Set mode cfg*/
 		cmd_para.reg_param = SPRD_FD_REG_PARAM_MOD_CFG;
 		cmd_para.reg_val = 0x00110000;  //default value
@@ -470,15 +417,6 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 			return HWFD_ERROR;
 		}
 
-		/*Set work clock*/
-		fd_int work_clock = SPRD_FD_DVFS_INDEX7;
-		ret = ioctl(fd,SPRD_FD_IO_WORK_CLOCK_SEL,&work_clock);
-		if(ret < 0)
-		{
-			ALOGI("SPRD_FD_DVFS_INDEX7 ret %d",ret);
-			return HWFD_ERROR;
-		}
-		
 		/*Set cmd queue addr*/
 		cmd_para.reg_param = SPRD_FD_REG_PARAM_CMD_BADDR;
 		sprd_camera_fd_memory_t* cmd_queue = CopyToIon(request->fd_cmd_addr,request->fd_cmd_size);
