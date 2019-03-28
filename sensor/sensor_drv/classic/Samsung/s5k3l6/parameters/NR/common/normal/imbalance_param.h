@@ -1,0 +1,2777 @@
+/*versionid=0x000A0008*/
+/*maxGain=0.00*/
+/*param0.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param1.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param2.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param3.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param4.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param5.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param6.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param7.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param8.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param9.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param10.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param11.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param12.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param13.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param14.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param15.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param16.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param17.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param18.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param19.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param20.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param21.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param22.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param23.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,
+/*param24.&BasePoint=1&*/
+/*sharkl5_sensor_nlm_imbalance_level*/
+{
+	/*imblance_face_rbg*/
+	{
+		/*face_r*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_g*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		},
+		/*face_b*/
+		{
+			/*face_max*/
+			0x0000,
+			/*face_min*/
+			0x0000,
+
+		}
+	},
+	/*lum_flag*/
+	{
+		/*[0x0]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x1]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		},
+		/*[0x2]*/
+		{
+			/*nlm_imblance_lum_flag_2_r*/
+			0x00000064,
+			/*nlm_imblance_lum_flag_4_r*/
+			0x000000C8,
+			/*nlm_imblance_lum_flag_0_rs*/
+			0x00000400,
+			/*nlm_imblance_lum_flag_0_r*/
+			0x00000384,
+			/*nlm_imblance_lum_flag_1_r*/
+			0x0000012C,
+
+		}
+	},
+	/*nlm_imblance_flag3*/
+	{
+		/*flag3_grid*/
+		0x000000FA,
+		/*flag3_lum*/
+		0x0000012C,
+		/*flag3_frez*/
+		0x000000C8,
+
+	},
+	/*sensor_imblance_lumth*/
+	{
+		0x000000C8,0x00000190/*0-1*/
+	},
+	/*sensor_imblance_S_baohedu*/
+	{
+		0x0000004E,0x00000048/*0-1*/
+	},
+	/*imblance_slash_edge_thr*/
+	0x2E,
+	/*imblance_hv_edge_thr*/
+	0x2E,
+	/*nlm_imblance_flag12_frezthr*/
+	0xC8,
+	/*nlm_imblance_diff*/
+	0x28,
+	/*imblance_hv_flat_thr*/
+	0x14,
+	/*imblance_slash_flat_thr*/
+	0x14,
+	/*reversed*/
+	0x00,
+	/*imblance_en*/
+	0x01,
+}
+,

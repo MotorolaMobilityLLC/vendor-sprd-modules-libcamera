@@ -105,7 +105,7 @@ static struct sensor_raw_ioctrl s_hi846_ioctrl=
 
 static struct sensor_version_info s_hi846_version_info=
 {
-	0x00070005,
+	0x000A0008,
 	{
 		{
 			0x34386968,

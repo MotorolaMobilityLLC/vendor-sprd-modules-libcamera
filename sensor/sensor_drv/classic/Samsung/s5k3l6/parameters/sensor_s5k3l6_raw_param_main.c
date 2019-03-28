@@ -36,6 +36,7 @@
 #include "sensor_s5k3l6_raw_param_cap_1.c"
 #include "sensor_s5k3l6_raw_param_video_0.c"
 #include "sensor_s5k3l6_raw_param_video_1.c"
+#include "sensor_s5k3l6_raw_param_video_2.c"
 
 /* End Include */
 
@@ -49,7 +50,7 @@
 
 
 /* Capture Sizes:
-	4208x3120,2104x1560
+	4208x3120,2104x1560,1280x720
 */
 
 
@@ -104,7 +105,7 @@ static struct sensor_raw_ioctrl s_s5k3l6_ioctrl=
 
 static struct sensor_version_info s_s5k3l6_version_info=
 {
-	0x00090007,
+	0x000A0008,
 	{
 		{
 			0x336B3573,
@@ -165,7 +166,7 @@ static struct sensor_raw_info s_s5k3l6_mipi_raw_info=
 		{NULL, 0},
 		{s_s5k3l6_tune_info_video_0, sizeof(s_s5k3l6_tune_info_video_0)},
 		{s_s5k3l6_tune_info_video_1, sizeof(s_s5k3l6_tune_info_video_1)},
-		{NULL, 0},
+		{s_s5k3l6_tune_info_video_2, sizeof(s_s5k3l6_tune_info_video_2)},
 		{NULL, 0},
 	},
 	&s_s5k3l6_trim_info,
@@ -183,7 +184,7 @@ static struct sensor_raw_info s_s5k3l6_mipi_raw_info=
 		NULL,
 		&s_s5k3l6_fix_info_video_0,
 		&s_s5k3l6_fix_info_video_1,
-		NULL,
+		&s_s5k3l6_fix_info_video_2,
 		NULL,
 	},
 	{
@@ -198,7 +199,7 @@ static struct sensor_raw_info s_s5k3l6_mipi_raw_info=
 		{NULL, 0},
 		{s_s5k3l6_video_0_tool_ui_input, sizeof(s_s5k3l6_video_0_tool_ui_input)},
 		{s_s5k3l6_video_1_tool_ui_input, sizeof(s_s5k3l6_video_1_tool_ui_input)},
-		{NULL, 0},
+		{s_s5k3l6_video_2_tool_ui_input, sizeof(s_s5k3l6_video_2_tool_ui_input)},
 		{NULL, 0},
 	},
 	{

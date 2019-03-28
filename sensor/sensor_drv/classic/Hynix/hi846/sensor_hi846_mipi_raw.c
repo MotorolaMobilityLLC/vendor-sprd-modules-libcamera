@@ -21,12 +21,10 @@
 
 #define LOG_TAG "hi846_sharkl2"
 
-//#define MIPI_NUM_2LANE
-
-#ifdef MIPI_NUM_2LANE
-#include "sensor_hi846_mipi_raw_2lane.h"
-#else
+#if defined(HI846_MIPI_4LANE)
 #include "sensor_hi846_mipi_raw_4lane.h"
+#else
+#include "sensor_hi846_mipi_raw_2lane.h"
 #endif
 
 /*==============================================================================
@@ -185,7 +183,7 @@ static void hi846_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 sensor_gain = 0;
 
-    sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
+    sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
     if (SENSOR_MAX_GAIN < sensor_gain)
         sensor_gain = SENSOR_MAX_GAIN;
@@ -396,8 +394,7 @@ static cmr_int hi846_drv_access_val(cmr_handle handle, cmr_uint param) {
         // ret = hi846_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
-        ret =
-            hi846_qunhui_identify_otp(handle, s_hi846_otp_info_ptr, param_ptr);
+    // ret = hi846_qunhui_identify_otp(handle, s_hi846_otp_info_ptr, param_ptr);
     default:
         break;
     }
@@ -606,11 +603,10 @@ static cmr_int hi846_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
-#if defined(CONFIG_DUAL_MODULE)
     hi846_drv_set_master_FrameSync(handle, param);
-#endif
+
     /*TODO*/
-	usleep(100 * 1000);
+    usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0a00, 0x0100);
 
     /*END*/
@@ -635,12 +631,12 @@ static cmr_int hi846_drv_stream_off(cmr_handle handle, cmr_uint param) {
         usleep(5 * 1000);
     }
     /*TODO*/
-	usleep(20 * 1000);
+    usleep(20 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0a00, 0x0000);
 
     /*END*/
     /*delay*/
-	usleep(100 * 1000);
+    usleep(100 * 1000);
     sns_drv_cxt->is_sensor_close = 0;
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
@@ -721,10 +717,7 @@ static struct sensor_ic_ops s_hi846_ops_tab = {
     .identify = hi846_drv_identify,
     .ex_write_exp = hi846_drv_write_exposure,
     .write_gain_value = hi846_drv_write_gain_value,
-
-#if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = hi846_drv_read_aec_info,
-#endif
 
     .ext_ops = {
             [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = hi846_drv_before_snapshot,

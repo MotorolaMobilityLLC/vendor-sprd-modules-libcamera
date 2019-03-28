@@ -228,16 +228,16 @@ static cmr_int s5k3l6_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         usleep(5 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         usleep(5 * 1000);
-        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        usleep(5 * 1000);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(5 * 1000);
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
+        usleep(5 * 1000);
         // hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
     } else {
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(1 * 1000);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -370,6 +370,7 @@ static cmr_int s5k3l6_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+#if 0
 /*==============================================================================
  * Description:
  * Get PDAF info for every sensor with SIN_MODULE or DUAL_MODULE
@@ -425,6 +426,7 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
+#endif
 
 /*==============================================================================
  * Description:
@@ -452,7 +454,7 @@ static cmr_int s5k3l6_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
-        ret = s5k3l6_drv_get_pdaf_info(handle, param_ptr->pval);
+        // ret = s5k3l6_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -690,10 +692,8 @@ static cmr_int s5k3l6_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
-#if defined(CONFIG_DUAL_MODULE)
-    s5k3l6_drv_set_master_FrameSync(handle, param);
-// s5k3l6_drv_set_Slave_FrameSync(handle, param);
-#endif
+    //s5k3l6_drv_set_master_FrameSync(handle, param);
+
     /*TODO*/
     usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C1E, 0x0100);
@@ -819,10 +819,7 @@ static struct sensor_ic_ops s_s5k3l6_ops_tab = {
     .identify = s5k3l6_drv_identify,
     .ex_write_exp = s5k3l6_drv_write_exposure,
     .write_gain_value = s5k3l6_drv_write_gain_value,
-
-#if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = s5k3l6_drv_read_aec_info,
-#endif
 
     .ext_ops = {
             [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = s5k3l6_drv_before_snapshot,
