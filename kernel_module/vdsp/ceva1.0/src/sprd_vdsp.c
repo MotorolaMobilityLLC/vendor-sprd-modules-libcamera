@@ -201,6 +201,8 @@ int32_t vdsp_wait_xm6_done(void)
 	if (!rc) {
 		/* time out */
 		VDSP_ERROR("vdsp wait for ceva done time out!\n");
+		if (vdsp_hw_dev.core && vdsp_hw_dev.core->dump)
+			vdsp_hw_dev.core->dump(&vdsp_hw_dev.ctx);
 		vdsp_hw_dev.is_opened = true;
 		return -1;
 	}

@@ -133,6 +133,7 @@ struct vdsp_core_ops {
 	int (*isr_triggle_int0)(struct vdsp_context *ctx, u32 index);
 	int (*isr_triggle_int1)(struct vdsp_context *ctx, u32 index);
 	int (*isr)(struct vdsp_context *ctx);
+	void (*dump)(struct vdsp_context *ctx);
 };
 
 struct vdsp_clk_ops {

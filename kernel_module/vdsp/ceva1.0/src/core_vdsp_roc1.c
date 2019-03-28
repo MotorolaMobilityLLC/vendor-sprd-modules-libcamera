@@ -211,12 +211,43 @@ static int icu_isr(struct vdsp_context *ctx)
 	return reg_val;
 }
 
+static void vdsp_dump(struct vdsp_context *ctx)
+{
+        u32 *reg = (u32 *)ctx->icu_base;
+	struct xm6_reg *reg_xm6 = (struct xm6_reg *)ctx->xm6_base;
+        int i;
+
+        VDSP_INFO("dump vdsp icu reg list\n");
+        VDSP_INFO("      0          4          8          C\n");
+        for (i = 0; i < 64; i += 4) {
+                VDSP_INFO("%04x: 0x%08x 0x%08x 0x%08x 0x%08x\n",
+                        i * 4, reg[i], reg[i + 1], reg[i + 2], reg[i + 3]);
+        }
+        VDSP_INFO("dump vdsp ceva reg\n");
+	VDSP_INFO("reg->mss_pdea1=0x%x\n",reg_xm6->mss_pdea1);
+	VDSP_INFO("reg->mss_pdia1=0x%x\n",reg_xm6->mss_pdia1);
+	VDSP_INFO("reg->mss_pdtc1=0x%x\n",reg_xm6->mss_pdtc1);
+	VDSP_INFO("reg->mss_ddea=0x%x\n",reg_xm6->mss_ddea);
+	VDSP_INFO("reg->mss_ddia=0x%x\n",reg_xm6->mss_ddia);
+	VDSP_INFO("reg->mss_ddtc=0x%x\n",reg_xm6->mss_ddtc);
+	VDSP_INFO("reg->mss_ddcl=0x%x\n",reg_xm6->mss_ddcl);
+	VDSP_INFO("reg->add[0].p_addx_att0=-x%x\n",reg_xm6->add[0].p_addx_att0);
+	VDSP_INFO("reg->add0_start=0x%x\n",reg_xm6->add0_start);
+	VDSP_INFO("reg->addx_start=0x%x\n",reg_xm6->addx_start);
+	VDSP_INFO("reg->mss_ddcl=0x%x\n",reg_xm6->mss_ddcl);
+	VDSP_INFO("reg->mss_dacc=0x%x\n",reg_xm6->mss_dacc);
+
+}
+
+
+
 static struct vdsp_core_ops vdsp_core_ops = {
 	.parse_dt = vdsp_core_parse_dt,
 	.do_pdma = vdsp_do_pdma,
 	.do_ddma = vdsp_do_ddma,
 	.set_pcache = vdsp_set_pcache,
 	.set_edp_aximo_range = vdsp_set_edp_aximo_range,
+	.dump = vdsp_dump,
 	.isr_triggle_int0 = icu_triggle_int0,
 	.isr_triggle_int1 = icu_triggle_int1,
 	.isr = icu_isr,
