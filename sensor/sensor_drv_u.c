@@ -2932,6 +2932,7 @@ sensor_drv_context_scan_init(struct sensor_drv_context *sensor_cxt,
     fd_sensor = hw_sensor_drv_create(&input_ptr, &hw_drv_handle);
     if ((SENSOR_FD_INIT == fd_sensor) || (NULL == hw_drv_handle)) {
         SENSOR_LOGE("hw sensor drv create error id = %d", sensor_id);
+        hw_sensor_drv_delete(hw_drv_handle);
         ret = SENSOR_FAIL;
     } else {
         sensor_cxt->fd_sensor = fd_sensor;
