@@ -332,7 +332,7 @@ cmr_s32 isp_set_fetch_param(cmr_handle handle)
 	isp_get_fetch_pitch((struct isp_pitch *)&(fetch_param_ptr->pitch),
 		isp_context_ptr->data.input_size.w,
 		isp_context_ptr->data.input_format);
-	ISP_LOGI("fetch format %d pitch %d, y addr %x img_fd is%x\n",
+	ISP_LOGD("fetch format %d pitch %d, y addr 0x%x fd 0x%x",
 		fetch_param_ptr->color_format,
 		fetch_param_ptr->pitch.chn0,
 		fetch_param_ptr->addr.chn0,
@@ -423,7 +423,7 @@ cmr_s32 isp_set_store_param(cmr_handle handle)
 	store_param_ptr->addr.chn1 = isp_context_ptr->data.output_addr.chn1;
 	store_param_ptr->addr.chn2 = isp_context_ptr->data.output_addr.chn2;
 	store_param_ptr->addr.img_fd = isp_context_ptr->data.output_addr.img_fd;
-	ISP_LOGI("isp store dst addr is %x, fmt is %x, in fmt is %x\n",
+	ISP_LOGD("store addr 0x%x, color fmt 0x%x, output fmt 0x%x",
 		store_param_ptr->addr.chn0, store_param_ptr->color_format,
 		isp_context_ptr->data.output_format);
 	isp_get_store_pitch((struct isp_pitch *)&(store_param_ptr->pitch),

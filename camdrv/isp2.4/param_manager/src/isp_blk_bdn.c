@@ -178,7 +178,7 @@ cmr_s32 _pm_bdn_set_param(void *bdn_param, cmr_u32 cmd, void* param_ptr0, void* 
 	break;
 	}
 
-	ISP_LOGI("ISP_SMART: cmd=%d, update=%d, cur_level[0]=%d, cur_level[1]=%d", cmd, bdn_header_ptr->is_update,
+	ISP_LOGV("ISP_SMART: cmd=%d, update=%d, cur_level[0]=%d, cur_level[1]=%d", cmd, bdn_header_ptr->is_update,
 					bdn_ptr->cur.ran_level, bdn_ptr->cur.dis_level);
 
 	return rtn;

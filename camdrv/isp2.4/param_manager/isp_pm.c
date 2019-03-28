@@ -160,7 +160,7 @@ static struct isp_pm_context * isp_mem_ptr = NULL;
 sem_t sem_mem;
 cmr_s32 isp_mem_alloc(void)
 {
-	ISP_LOGI("E");
+	ISP_LOGD("E");
 	if (isp_mem_ptr) {
 		ISP_LOGI("isp_mem_ptr not null");
 		goto exit;
@@ -171,13 +171,13 @@ cmr_s32 isp_mem_alloc(void)
 		ISP_LOGE("fail to malloc");
 		goto exit;
 	}
-	ISP_LOGI("the isp_pm_context: %p, size %d", isp_mem_ptr, sizeof(struct isp_pm_context));
+	ISP_LOGI("isp_pm_context: %p, size %d", isp_mem_ptr, sizeof(struct isp_pm_context));
 
 	memset((void *)isp_mem_ptr, 0x00, sizeof(struct isp_pm_context));
 
 exit:
 	sem_post(&sem_mem);
-	ISP_LOGI("X");
+	ISP_LOGD("X");
 
 	return 0;
 }
@@ -235,7 +235,7 @@ static cmr_handle isp_pm_context_create(void)
 
 	memset((void *)cxt_ptr, 0x00, sizeof(struct isp_pm_context));
 #else
-	ISP_LOGI("E");
+	ISP_LOGD("E");
 	sem_wait(&sem_mem);
 	if (isp_mem_ptr == PNULL) {
 		ISP_LOGE("isp_mem_ptr is null fail, please check");
@@ -305,7 +305,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle)
 	struct isp_pm_block_header *blk_header_array = PNULL;
 	struct isp_pm_block_header *blk_header_ptr = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
-	ISP_LOGI("<tang> pm_cxt_ptr: 0x%p", handle);
+	ISP_LOGI("pm_cxt_ptr: %p", handle);
 
 	pm_cxt_ptr = (struct isp_pm_context *)handle;
 	isp_cxt_ptr = (struct isp_context *)pm_cxt_ptr->active_cxt_ptr;

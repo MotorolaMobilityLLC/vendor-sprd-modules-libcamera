@@ -125,7 +125,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	memset(&isp_2d_lsc_buf, 0x00, sizeof(isp_2d_lsc_buf));
 	file = (struct isp_file *)(cxt->isp_driver_handle);
 	file->reserved = (void *)statis_mem_info->isp_lsc_virtaddr;
-	ISP_LOGI("file %p reserved %p", file, file->reserved);
+	ISP_LOGD("file %p reserved %p", file, file->reserved);
 	isp_2d_lsc_buf.buf_size = statis_mem_info->isp_lsc_mem_size;
 	isp_2d_lsc_buf.buf_num = statis_mem_info->isp_lsc_mem_num;
 	isp_2d_lsc_buf.phy_addr = statis_mem_info->isp_lsc_physaddr;

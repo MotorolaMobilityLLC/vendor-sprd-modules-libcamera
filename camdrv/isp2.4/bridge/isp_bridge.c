@@ -183,12 +183,12 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 
-	ISP_LOGI("camera_id %d", camera_id);
+	ISP_LOGD("camera_id %d", camera_id);
 	cxt->isp_3afw_handles[camera_id] = isp_3a_handle;
 	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt++;
 	pthread_mutex_unlock(&g_br_mutex);
-	ISP_LOGI("cnt = %d", cxt->user_cnt);
+	ISP_LOGD("cnt = %d", cxt->user_cnt);
 	if (1 == cxt->user_cnt) {
 		sem_init(&cxt->ae_sm, 0, 1);
 		sem_init(&cxt->awb_sm, 0, 1);
@@ -209,7 +209,7 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt--;
 	pthread_mutex_unlock(&g_br_mutex);
-	ISP_LOGI("cnt = %d", cxt->user_cnt);
+	ISP_LOGD("cnt = %d", cxt->user_cnt);
 	if (0 == cxt->user_cnt) {
 		sem_destroy(&cxt->ae_sm);
 		sem_destroy(&cxt->awb_sm);

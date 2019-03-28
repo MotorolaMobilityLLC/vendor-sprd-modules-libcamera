@@ -43,7 +43,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 	file->isp_id = 0;
 	*handle = (cmr_handle) file;
 
-	ISP_LOGI("fd %d handle %p", file->fd, file);
+	ISP_LOGD("fd %d handle %p", file->fd, file);
 	return ret;
 
 isp_free:
