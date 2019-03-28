@@ -729,7 +729,7 @@ static cmr_int ov12a10_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
 
     char value1[PROPERTY_VALUE_MAX];
-    property_get("debug.camera.test.mode", value1, "0");
+    property_get("persist.vendor.cam.colorbar", value1, "0");
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }

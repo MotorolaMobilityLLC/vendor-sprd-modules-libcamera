@@ -913,6 +913,12 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.colorbar", value1, "0");
+    if (!strcmp(value1, "1")) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
+    }
+
     SENSOR_LOGI("E:module_id=%d is_mulit_mode = %d", sns_drv_cxt->module_id,
                 sns_drv_cxt->is_multi_mode);
     if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode &&
