@@ -360,7 +360,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 set_id)
 				continue;
 			}
 		}
-		ISP_LOGV("i %d, blk 0x%04x, cfgptr %p\n", i, id, blk_cfg_ptr);
+		ISP_LOGV("i %d, blk 0x%04x, cfgptr %p,  source_flag %x\n", i, id, blk_cfg_ptr, blk_header_ptr->source_flag);
 		if (blk_cfg_ptr != PNULL && blk_cfg_ptr->ops) {
 			ops = blk_cfg_ptr->ops;
 			if (ops->init && blk_header_ptr->size > 0) {
@@ -645,7 +645,8 @@ static cmr_s32 isp_pm_get_setting_param(
 static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 	struct isp_pm_blocks_param *output,
 	enum tuning_mode mode, enum tuning_scene_mode scene,
-	enum tuning_custom define,  cmr_u32 img_w, cmr_u32 img_h)
+	enum tuning_custom define,  cmr_u32 img_w, cmr_u32 img_h,
+	cmr_u32 update_always)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i, j, k, tail_idx, blk_id, blk_num, item_num;
@@ -656,7 +657,8 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 	struct isp_pm_mode_param *src_mode;
 	struct isp_pm_block_header *dst_header, new_header;
 
-	if (output->is_init && (output->mode == mode) &&
+	if ((update_always == 0) &&
+		output->is_init && (output->mode == mode) &&
 		(output->scene == scene) &&
 		(output->cus_define == define) &&
 		(output->resolution.w == img_w) &&
@@ -727,10 +729,13 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 				dst_header = &output->header[j];
 				source_flag = dst_header->source_flag;
 				*dst_header = new_header;
+				dst_header->source_flag |= (source_flag & ISP_PM_BLK_UPDATE);
 				if ((source_flag & (~ISP_PM_BLK_UPDATE)) != new_header.source_flag)
 					dst_header->source_flag |= ISP_PM_BLK_UPDATE;
-				ISP_LOGV("get exist block 0x%04x, j = %d,  mode %d => %d\n", blk_id, j,
-					source_flag, new_header.source_flag);
+				if (update_always)
+					dst_header->source_flag |= ISP_PM_BLK_UPDATE;
+				ISP_LOGV("get exist block 0x%04x, j = %d,  mode %x => %x... %x\n", blk_id, j,
+					source_flag, new_header.source_flag, dst_header->source_flag);
 				break;
 			}
 		}
@@ -756,7 +761,8 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	struct isp_pm_blocks_param *output, cmr_u32 mode_id,
 	enum tuning_mode mode, enum tuning_scene_mode scene,
-	enum tuning_custom define,  cmr_u32 img_w, cmr_u32 img_h)
+	enum tuning_custom define,  cmr_u32 img_w, cmr_u32 img_h,
+	cmr_u32 update_always)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i, j, k, tail_idx, blk_id, blk_num;
@@ -766,7 +772,8 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	struct isp_pm_mode_param *src_mode;
 	struct isp_pm_block_header *dst_header, new_header;
 
-	if (output->is_init && (output->mode == mode) &&
+	if ((update_always == 0) &&
+		output->is_init && (output->mode == mode) &&
 		(output->scene == scene) &&
 		(output->cus_define == define) &&
 		(output->resolution.w == img_w) &&
@@ -838,10 +845,13 @@ retry:
 				dst_header = &output->header[j];
 				source_flag = dst_header->source_flag;
 				*dst_header = new_header;
+				dst_header->source_flag |= (source_flag & ISP_PM_BLK_UPDATE);
 				if ((source_flag & (~ISP_PM_BLK_UPDATE)) != new_header.source_flag)
 					dst_header->source_flag |= ISP_PM_BLK_UPDATE;
-				ISP_LOGV("get exist block 0x%04x, j = %d,  mode %d => %d\n", blk_id, j,
-					(source_flag & (~ISP_PM_BLK_UPDATE)), new_header.source_flag);
+				if (update_always)
+					dst_header->source_flag |= ISP_PM_BLK_UPDATE;
+				ISP_LOGV("get exist block 0x%04x, j = %d,  mode %x => %x... %x\n", blk_id, j,
+					source_flag, new_header.source_flag, dst_header->source_flag);
 				break;
 			}
 		}
@@ -866,6 +876,7 @@ retry:
 static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *param_ptr, void *out_ptr)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 update_always[PARAM_SET_MAX];
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
 
 	if ((PNULL == pm_cxt_ptr) || (PNULL == param_ptr)) {
@@ -889,10 +900,35 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 			return rtn;
 		}
 
+		for (i  = 0; i < PARAM_SET_MAX; i++) {
+			isp_cxt_ptr = &pm_cxt_ptr->cxt_array[i];
+			update_always[i] = (isp_cxt_ptr->is_validate == 0) ? 1 : 0;
+			isp_cxt_ptr->is_validate = 0;
+		}
+
 		pm_cxt_ptr->cam_4in1_mode = input->cam_4in1_mode;
 		for (i  = 0; i < input->pm_sets_num && i < PARAM_SET_MAX; i++) {
 			if (input->mode[i] >= WORKMODE_MAX)
 				continue;
+
+			if (pm_cxt_ptr->is_4in1_sensor) {
+				if (input->mode[i] == WORKMODE_PREVIEW) {
+					if (pm_cxt_ptr->cam_4in1_mode)
+						output->mode_id[i] = ISP_MODE_ID_PRV_0;
+					else
+						output->mode_id[i] = ISP_MODE_ID_PRV_1;
+					goto get_blocks;
+				} else if (input->mode[i] == WORKMODE_CAPTURE) {
+					if (!pm_cxt_ptr->cam_4in1_mode)
+						output->mode_id[i] = ISP_MODE_ID_CAP_2;
+					else if (pm_cxt_ptr->lowlight_flag)
+						output->mode_id[i] = ISP_MODE_ID_CAP_1;
+					else
+						output->mode_id[i] = ISP_MODE_ID_CAP_0;
+					update_always[i] = 1;
+					goto get_blocks;
+				}
+			}
 
 			if (input->mode[i] == WORKMODE_PREVIEW)
 				search = &search_modes[0][0];
@@ -936,16 +972,16 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 					break;
 				}
 			}
-
+get_blocks:
 			if (pm_cxt_ptr->param_search_list)
 				isp_pm_get_all_blocks(handle, &pm_cxt_ptr->blocks_param[i],
 					input->mode[i], input->scene[i], input->define[i],
-					input->img_w[i], input->img_h[i]);
+					input->img_w[i], input->img_h[i], update_always[i]);
 			else
 				isp_pm_get_all_blocks_compatible(handle,
 					&pm_cxt_ptr->blocks_param[i], output->mode_id[i],
 					input->mode[i], input->scene[i], input->define[i],
-					input->img_w[i], input->img_h[i]);
+					input->img_w[i], input->img_h[i], update_always[i]);
 			set_id = i;
 			isp_cxt_ptr = &pm_cxt_ptr->cxt_array[set_id];
 			isp_cxt_ptr->is_validate = 1;
@@ -953,8 +989,8 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 			rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, set_id);
 			if (rtn)
 				return ISP_PARAM_ERROR;
-			ISP_LOGD("pm context %p for set %d, mode_id %d 4in1 mode %d\n", isp_cxt_ptr,
-				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->cam_4in1_mode);
+			ISP_LOGD("pm context %p for set %d, mode_id %d 4in1 mode %d, size %d %d\n", isp_cxt_ptr,
+				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->cam_4in1_mode, input->img_w[i], input->img_h[i]);
 		}
 		break;
 	}
@@ -1350,10 +1386,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
 		pm_cxt_ptr->param_search_list = PNULL;
 		pm_cxt_ptr->param_search_list_size = 0;
-
-		/* workaround for 4in1 */
-		if (strncmp((const char *)sensor_name, "ov16885", 6))
-			goto start_parse;
+		goto start_parse;
 	} else {
 		ISP_LOGD("specified pm searching list. %p, %d\n",
 			pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
@@ -1756,11 +1789,6 @@ start_parse:
 		dst_mod_ptr->resolution.h = src_mod_ptr->height;
 		dst_mod_ptr->fps = src_mod_ptr->fps;
 
-		/* todo: delete it later */
-		/* This is temp hard code for 4in1 param. It should be passed from source flag */
-		if (pm_cxt_ptr->is_4in1_sensor && dst_mod_ptr->mode_id == ISP_MODE_ID_PRV_0)
-			dst_mod_ptr->for_4in1 = 1;
-
 		memcpy((void *)dst_mod_ptr->mode_name,
 			(void *)src_mod_ptr->mode_name, sizeof(src_mod_ptr->mode_name));
 
@@ -1866,7 +1894,7 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 			WORKMODE_PREVIEW,
 			SCENEMODE_NROMAL,
 			DEFMODE_DEFAULT,
-			img_w, img_h);
+			img_w, img_h, 1);
 		else
 			isp_pm_get_all_blocks_compatible(handle,
 			&pm_cxt_ptr->blocks_param[PARAM_SET0],
@@ -1874,7 +1902,7 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 			WORKMODE_PREVIEW,
 			SCENEMODE_NROMAL,
 			DEFMODE_DEFAULT,
-			img_w, img_h);
+			img_w, img_h, 1);
 
 		isp_cxt_ptr = &pm_cxt_ptr->cxt_array[PARAM_SET0];
 		isp_cxt_ptr->is_validate = 1;
@@ -1903,11 +1931,11 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 			ISP_LOGD("update %d from tools (%d %d %d %d %d)\n", set_id, mode, scene, define, img_w, img_h);
 			memset(blk_param_ptr, 0, sizeof(struct isp_pm_blocks_param));
 			if (pm_cxt_ptr->param_search_list)
-				isp_pm_get_all_blocks(handle, blk_param_ptr, mode, scene, define, img_w, img_h);
+				isp_pm_get_all_blocks(handle, blk_param_ptr, mode, scene, define, img_w, img_h, 1);
 			else
 				isp_pm_get_all_blocks_compatible(handle,
 					blk_param_ptr, isp_cxt_ptr->mode_id,
-					mode, scene, define, img_w, img_h);
+					mode, scene, define, img_w, img_h, 1);
 			rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, set_id);
 			if (rtn)
 				goto init_error;
