@@ -48,9 +48,9 @@
 	fmt, current->pid, __LINE__, __func__
 
 #define CPP_DEVICE_NAME             "sprd_cpp"
-#define ROT_TIMEOUT                 50000
-#define SCALE_TIMEOUT               5000
-#define DMA_TIMEOUT                 5000
+#define ROT_TIMEOUT                 500
+#define SCALE_TIMEOUT               500
+#define DMA_TIMEOUT                 500
 #define CPP_IRQ_LINE_MASK           CPP_PATH_DONE
 #define CPP_MMU_IRQ_LINE_MASK       CPP_MMU_ERROR_INT
 #define ROT_DRV_DEBUG 1
@@ -200,10 +200,10 @@ static int sprd_cppcore_sc_reg_trace(
 		pr_err("fail to get valid input ptr\n");
 		return -EINVAL;
 	}
-	pr_info("CPP:Scaler Register list\n");
+	pr_debug("CPP:Scaler Register list\n");
 	for (addr = CPP_PATH_EB; addr <= CPP_PATH0_BP_YUV_REGULATE_2;
 		addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+		pr_debug("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
 			addr,
 			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
 			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
@@ -222,10 +222,10 @@ static int sprd_cppcore_rot_reg_trace(struct rot_drv_private *p)
 		pr_err("fail to get valid input ptr\n");
 		return -EINVAL;
 	}
-	pr_info("CPP:Rotation Register list");
+	pr_debug("CPP:Rotation Register list");
 	for (addr = CPP_ROTATION_SRC_ADDR; addr <= CPP_ROTATION_PATH_CFG;
 		addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+		pr_debug("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
 			addr,
 			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
 			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
@@ -245,9 +245,9 @@ static int sprd_cppcore_dma_reg_trace(
 		pr_err("fail to get valid input ptr\n");
 		return -EINVAL;
 	}
-	pr_info("CPP:Dma Register list");
+	pr_debug("CPP:Dma Register list");
 	for (addr = CPP_DMA_SRC_ADDR; addr <= CPP_DMA_CFG; addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+		pr_debug("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
 			addr,
 			CPP_REG_RD(addr), CPP_REG_RD(addr + 4),
 			CPP_REG_RD(addr + 8), CPP_REG_RD(addr + 12));
@@ -268,9 +268,9 @@ static void sprd_cppcore_iommu_reg_trace(
 		return;
 	}
 
-	pr_info("CPP IOMMU INT ERROR:register list\n");
+	pr_debug("CPP IOMMU INT ERROR:register list\n");
 	for (addr = 0x200; addr <= 0x264 ; addr += 16) {
-		pr_info("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
+		pr_debug("0x%lx: 0x%x 0x%x 0x%x 0x%x\n",
 			addr,
 			CPP_REG_RD(addr),
 			CPP_REG_RD(addr + 4),
@@ -462,21 +462,22 @@ static irqreturn_t sprd_cppcore_isr_root(int irq, void *priv)
 	dev = (struct cpp_device *)priv;
 	pr_debug("%s enter =====\n", __func__);
 	status = CPP_REG_RD(CPP_INT_STS);
-	pr_err("%s status %d\n", __func__, status);
+	pr_debug("%s status %d\n", __func__, status);
 #ifndef HAPS_TEST
 	mmu_irq_line = status & CPP_MMU_IRQ_LINE_MASK;
 	if (unlikely(mmu_irq_line != 0)) {
 		sprd_cppcore_sc_reg_trace(&dev->scif->drv_priv);
 		pr_err("fail to run iommu, int 0x%x\n", mmu_irq_line);
-		if (sprd_cppcore_iommu_err_pre_proc(dev))
-			return IRQ_HANDLED;
+		sprd_cppcore_iommu_err_pre_proc(dev);
+		CPP_REG_WR(CPP_INT_CLR, status);
+		return IRQ_HANDLED;
 	}
 #endif
 	path_irq_line = status & CPP_IRQ_LINE_MASK;
-	pr_err("%s path_irq_line %d\n", __func__,  path_irq_line);
+	pr_debug("%s path_irq_line %d\n", __func__,  path_irq_line);
 	if (unlikely(path_irq_line == 0))
 		return IRQ_NONE;
-	pr_err("%s int clr status %d\n", __func__,  status);
+	pr_debug("%s int clr status %d\n", __func__,  status);
 	CPP_REG_WR(CPP_INT_CLR, status);
 
 	spin_lock_irqsave(&dev->slock, flag);
@@ -499,7 +500,7 @@ static int sprd_cppcore_module_enable(struct cpp_device *dev)
 	int ret = 0;
 
 	if (!dev) {
-		pr_info("fail to get valid input ptr\n");
+		pr_err("fail to get valid input ptr\n");
 		return -1;
 	}
 
@@ -653,7 +654,7 @@ static void sprd_cppcore_rot_isr(void *priv)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	complete(&rotif->done_com);
 }
 
@@ -665,7 +666,7 @@ static void sprd_cppcore_scale_isr(void *priv)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	complete(&scif->done_com);
 }
 
@@ -677,7 +678,7 @@ static void sprd_cppcore_dma_isr(void *priv)
 		pr_err("fail to get valid input ptr\n");
 		return;
 	}
-	pr_err("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	complete(&dmaif->done_com);
 }
 
@@ -827,7 +828,7 @@ static int ioctl_start_rot(struct cpp_device *dev,
 			ret = -EFAULT;
 			goto rot_start_exit;
 		}
-	pr_err("param check finished\n");
+	pr_debug("param check finished\n");
 	rotif->drv_priv.iommu_src.dev = &dev->pdev->dev;
 	rotif->drv_priv.iommu_dst.dev = &dev->pdev->dev;
 
@@ -839,9 +840,9 @@ static int ioctl_start_rot(struct cpp_device *dev,
 		ret = -EFAULT;
 		goto rot_start_exit;
 	}
-	pr_err("param set finished\n");
+	pr_debug("param set finished\n");
 	sprd_rot_drv_start(&rotif->drv_priv);
-	pr_err("rot started\n");
+	pr_debug("rot started\n");
 	sprd_cppcore_rot_reg_trace(&rotif->drv_priv);
 	if (!sprd_rot_drv_is_end(&rot_parm)) {
 		timeleft = wait_for_completion_timeout
@@ -856,7 +857,7 @@ static int ioctl_start_rot(struct cpp_device *dev,
 			ret = -EBUSY;
 			goto rot_start_exit;
 		}
-		pr_err("rot set uv param\n");
+		pr_debug("rot set uv param\n");
 		sprd_rot_drv_uv_parm_set(&rotif->drv_priv);
 		sprd_rot_drv_start(&rotif->drv_priv);
 	}
@@ -877,10 +878,10 @@ static int ioctl_start_rot(struct cpp_device *dev,
 	sprd_rot_drv_stop(&rotif->drv_priv);
 	sprd_cppcore_rot_reset(dev);
 	mutex_unlock(&rotif->rot_mutex);
-	pr_info("cpp rotation over\n");
+	pr_debug("cpp rotation over\n");
 
 rot_start_exit:
-	pr_info("cpp rotation ret %d\n", ret);
+	pr_debug("cpp rotation ret %d\n", ret);
 	return ret;
 }
 
@@ -948,7 +949,7 @@ static int ioctl_start_scale(struct cpp_device *dev,
 	sprd_scaledrv_stop(&scif->drv_priv);
 	sprd_scaledrv_dev_enable(&scif->drv_priv);
 	do {
-		pr_err("start scaler slice process\n");
+		pr_debug("start scaler slice process\n");
 		convert_param_to_drv(&scif->drv_priv,
 				sc_parm,
 				&sc_parm->slice_param.output.hw_slice_param[i]);
@@ -981,14 +982,14 @@ static int ioctl_start_scale(struct cpp_device *dev,
 			ret = -EBUSY;
 			goto start_scal_exit;
 		}
-		pr_err("slice count %d, done i:%d\n",
+		pr_debug("slice count %d, done i:%d\n",
 				sc_parm->slice_param.output.slice_count, i);
 		i++;
 	} while (--sc_parm->slice_param.output.slice_count);
 	sprd_scale_drv_stop(&scif->drv_priv);
 	sprd_cppcore_scale_reset(dev);
 	mutex_unlock(&scif->sc_mutex);
-	pr_info("cpp scale over\n");
+	pr_debug("cpp scale over\n");
 
 start_scal_exit:
 	if (sc_parm != NULL)
@@ -1050,7 +1051,7 @@ static int ioctl_start_dma(struct cpp_device *dev,
 	sprd_dma_drv_stop(&dmaif->drv_priv);
 	sprd_cppcore_dma_reset(dev);
 	mutex_unlock(&dmaif->dma_mutex);
-	pr_info("cpp dma over\n");
+	pr_debug("cpp dma over\n");
 
 start_dma_exit:
 	return ret;
@@ -1089,7 +1090,7 @@ static int ioctl_get_scale_cap(struct cpp_device *dev,
 		goto get_cap_exit;
 	}
 
-	pr_info("cpp scale_capability done ret = %d\n", ret);
+	pr_debug("cpp scale_capability done ret = %d\n", ret);
 
 get_cap_exit:
 	return ret;
@@ -1157,23 +1158,23 @@ static int sprd_cppcore_open(struct inode *node, struct file *file)
 	struct scif_device *scif = NULL;
 	struct dmaif_device *dmaif = NULL;
 
-	pr_info("start open cpp\n");
+	pr_debug("start open cpp\n");
 
 	if (!node || !file) {
-		pr_info("fail to get valid input ptr\n");
+		pr_err("fail to get valid input ptr\n");
 		return -EINVAL;
 	}
-	pr_info("start get miscdevice\n");
+	pr_debug("start get miscdevice\n");
 	md = (struct miscdevice *)file->private_data;
 	if (!md) {
-		pr_info("fail to get md device\n");
+		pr_err("fail to get md device\n");
 		return -EFAULT;
 	}
 	dev = md->this_device->platform_data;
 
 	file->private_data = (void *)dev;
 	if (atomic_inc_return(&dev->users) != 1) {
-		pr_info("cpp device node has been opened %d\n",
+		pr_debug("cpp device node has been opened %d\n",
 			atomic_read(&dev->users));
 		return 0;
 	}
@@ -1246,7 +1247,7 @@ static int sprd_cppcore_open(struct inode *node, struct file *file)
 		sprd_cppcore_isr_root,
 		IRQF_SHARED, "CPP", (void *)dev);
 	if (ret < 0) {
-		pr_info("fail to install IRQ %d\n", ret);
+		pr_err("fail to install IRQ %d\n", ret);
 		goto exit;
 	}
 
@@ -1374,7 +1375,7 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 	spin_lock_init(&dev->slock);
 	atomic_set(&dev->users, 0);
 
-	pr_info("sprd cpp probe pdev name %s\n", pdev->name);
+	pr_debug("sprd cpp probe pdev name %s\n", pdev->name);
 
 #ifndef HACKCODE_TEST
 	dev->cpp_eb = devm_clk_get(&pdev->dev, "cpp_eb");
@@ -1446,8 +1447,8 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 	}
 	dev->io_base = reg_base;
 	g_cpp_base = (unsigned long)reg_base;
-	pr_err("reg base === 0x%lx\n", g_cpp_base);
-	pr_err("io base === 0x%lx\n", (unsigned long)dev->io_base);
+	pr_debug("reg base === 0x%lx\n", g_cpp_base);
+	pr_debug("io base === 0x%lx\n", (unsigned long)dev->io_base);
 
 	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
 	if (irq <= 0) {
@@ -1455,13 +1456,13 @@ static int sprd_cppcore_probe(struct platform_device *pdev)
 		goto misc_fail;
 	}
 	dev->irq = irq;
-	pr_err("cpp probe ok, irq is %d\n", dev->irq);
+	pr_debug("cpp probe ok, irq is %d\n", dev->irq);
 #endif
 	pr_info("cpp probe OK\n");
 	return 0;
 
 misc_fail:
-	pr_info("cpp probe fail\n");
+	pr_err("cpp probe fail\n");
 	misc_deregister(&dev->md);
 fail:
 	return ret;

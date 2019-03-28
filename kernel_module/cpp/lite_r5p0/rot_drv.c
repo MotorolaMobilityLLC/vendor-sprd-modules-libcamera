@@ -63,7 +63,7 @@ static int sprd_rotdrv_rot_format_get(
 	case ROT_RGB888:
 		fmt = ROT_FOUR_BYTES;
 	default:
-		pr_info("fail to get invalid format\n");
+		pr_err("fail to get invalid format\n");
 		break;
 	}
 
@@ -78,11 +78,11 @@ int sprd_rot_drv_parm_check(
 		return -EINVAL;
 	}
 
-	pr_info("format %d angle %d w %d h %d\n",
+	pr_debug("format %d angle %d w %d h %d\n",
 		parm->format, parm->angle, parm->size.w, parm->size.h);
-	pr_info("src mfd %u y:u:v 0x%x 0x%x 0x%x\n", parm->src_addr.mfd[0],
+	pr_debug("src mfd %u y:u:v 0x%x 0x%x 0x%x\n", parm->src_addr.mfd[0],
 		parm->src_addr.y, parm->src_addr.u, parm->src_addr.v);
-	pr_info("dst mfd %u y:u:v 0x%x 0x%x 0x%x\n", parm->dst_addr.mfd[0],
+	pr_debug("dst mfd %u y:u:v 0x%x 0x%x 0x%x\n", parm->dst_addr.mfd[0],
 		parm->dst_addr.y, parm->dst_addr.u, parm->dst_addr.v);
 
 	if ((parm->src_addr.y & ROT_ADDR_ALIGN) ||
@@ -291,13 +291,13 @@ void sprd_rot_drv_start(struct rot_drv_private *p)
 	}
 	sprd_rotdrv_dev_stop(p);
 	sprd_rotdrv_dev_enable(p);
-	pr_err("src_addr 0x%x, dsr_addr 0x%x\n", p->rot_src_addr,
+	pr_debug("src_addr 0x%x, dsr_addr 0x%x\n", p->rot_src_addr,
 			p->rot_dst_addr);
-	pr_err("rot io_base 0x%lx\n", (unsigned long)p->io_base);
+	pr_debug("rot io_base 0x%lx\n", (unsigned long)p->io_base);
 	CPP_REG_WR(CPP_ROTATION_SRC_ADDR, p->rot_src_addr);
 	CPP_REG_WR(CPP_ROTATION_DES_ADDR, p->rot_dst_addr);
 
-	pr_info("rot:src addr:0x%x, dst addr:0x%x\n",
+	pr_debug("rot:src addr:0x%x, dst addr:0x%x\n",
 			p->rot_src_addr, p->rot_dst_addr);
 
 	CPP_REG_WR(CPP_ROTATION_OFFSET_START, 0x0);

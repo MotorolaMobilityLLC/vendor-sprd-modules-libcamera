@@ -92,7 +92,7 @@ rot_c_free:
 	free(file);
 
 rot_c_out:
-	CMR_LOGI("ret=%ld\n", ret);
+	CMR_LOGD("ret=%ld\n", ret);
 	return ret;
 }
 
@@ -137,7 +137,7 @@ cmr_int cpp_rot_start(struct cpp_rot_param *rot_param)
 
 rot_s_exit:
 
-	CMR_LOGI("rot X ret=%ld", ret);
+	CMR_LOGD("rot X ret=%ld", ret);
 	return ret;
 }
 
@@ -189,7 +189,7 @@ cmr_int cpp_scale_close(cmr_handle handle)
 	struct sc_file *file = (struct sc_file *)(handle);
 
 	if (!file) {
-		CMR_LOGI("scale fail: file hand is null\n");
+		CMR_LOGE("scale fail: file hand is null\n");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto sc_c_out;
 	}
@@ -265,7 +265,7 @@ cmr_int cpp_scale_start(struct cpp_scale_param *scale_param)
         cpp_save_cpp_to_file(scale_param);
 
 sc_exit:
-	CMR_LOGI("scale X ret=%ld\n", ret);
+	CMR_LOGD("scale X ret=%ld\n", ret);
 	return ret;
 }
 
@@ -310,7 +310,7 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
                     CMR_LOGD("file name %s", file_name);
                     fp = fopen(file_name, "wb");
                     if (NULL == fp) {
-                        CMR_LOGD("can not open file: %s \n", file_name);
+                        CMR_LOGE("can not open file: %s \n", file_name);
                         return ret;
                     }
                     fwrite((void *)(long)scale_cfg_param->input_addr_vir.y, 1,
@@ -331,7 +331,7 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
                     CMR_LOGD("file name %s", file_name);
                     fp = fopen(file_name, "wb");
                     if (NULL == fp) {
-                        CMR_LOGD("can not open file: %s \n", file_name);
+                        CMR_LOGE("can not open file: %s \n", file_name);
                         return ret;
                     }
 
@@ -365,7 +365,7 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
                     CMR_LOGD("file name %s", file_name);
                     fp = fopen(file_name, "wb");
                     if (NULL == fp) {
-                        CMR_LOGD("can not open file: %s \n", file_name);
+                        CMR_LOGE("can not open file: %s \n", file_name);
                         return ret;
                     }
                     fwrite((void *)(long)scale_cfg_param->output_addr_vir.y, 1,
@@ -386,7 +386,7 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
                     CMR_LOGD("file name %s", file_name);
                     fp = fopen(file_name, "wb");
                     if (NULL == fp) {
-                        CMR_LOGD("can not open file: %s \n", file_name);
+                        CMR_LOGE("can not open file: %s \n", file_name);
                         return ret;
                     }
 

@@ -96,11 +96,11 @@ int sprd_scaledrv_slice_param_check(
 	struct scale_drv_private *p)
 {
 	/* pitch check */
-	pr_err("srcpitch%d,rect%d,%d,%d,%d,infmt%d,inend%d,%d,scdespi%d\n",
+	pr_debug("srcpitch%d,rect%d,%d,%d,%d,infmt%d,inend%d,%d,scdespi%d\n",
 	p->src_pitch, p->src_rect.x, p->src_rect.y,
 	p->src_rect.w, p->src_rect.h, p->input_fmt,
 	p->input_endian, p->input_uv_endian, p->sc_des_pitch);
-	pr_err("scdesrect%d,%d,%d,%d,bpp%d,rec%d,%d,%d,%d,hor%dver%d,ofmt%d\n",
+	pr_debug("scdesrect%d,%d,%d,%d,bpp%d,rec%d,%d,%d,%d,hor%dver%d,ofmt%d\n",
 	p->sc_des_rect.x, p->sc_des_rect.y, p->sc_des_rect.w,
 	p->sc_des_rect.h, p->bp_des_pitch, p->bp_des_rect.x,
 	p->bp_des_rect.y, p->bp_des_rect.w, p->bp_des_rect.h,
@@ -456,7 +456,7 @@ static void scale_scaledrv_coeff_set(struct scale_drv_private *p,
 	}
 
 	CPP_REG_AWR(CPP_PATH0_CFG0, ~CPP_PATH0_CLK_SWITCH);
-	pr_err("set scale coeff over\n");
+	pr_debug("set scale coeff over\n");
 }
 
 

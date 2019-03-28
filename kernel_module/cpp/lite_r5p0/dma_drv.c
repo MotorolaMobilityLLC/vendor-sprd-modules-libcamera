@@ -90,12 +90,12 @@ static int sprd_dmadrv_parm_check(struct sprd_cpp_dma_cfg_parm *parm)
 		return -EINVAL;
 	}
 
-	pr_info("DMA:\n");
-	pr_info("dma total num %d\n", parm->total_num);
-	pr_info("src mfd %u y:u:v 0x%x 0x%x 0x%x\n",
+	pr_debug("DMA:\n");
+	pr_debug("dma total num %d\n", parm->total_num);
+	pr_debug("src mfd %u y:u:v 0x%x 0x%x 0x%x\n",
 		parm->input_addr.mfd[0],
 		parm->input_addr.y, parm->input_addr.u, parm->input_addr.v);
-	pr_info("dst mfd %u y:u:v 0x%x 0x%x 0x%x\n",
+	pr_debug("dst mfd %u y:u:v 0x%x 0x%x 0x%x\n",
 		parm->output_addr.mfd[0],
 		parm->output_addr.y, parm->output_addr.u, parm->output_addr.v);
 
