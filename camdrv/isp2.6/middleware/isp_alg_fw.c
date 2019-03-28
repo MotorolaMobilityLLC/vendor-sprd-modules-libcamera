@@ -164,6 +164,7 @@ struct afl_info {
 	cmr_uint mfd;
 	cmr_int buf_property;
 	void *buffer_client_data;
+	struct isp_statis_info afl_statis_info;
 };
 
 struct af_info {
@@ -2257,6 +2258,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		afl_input.pm_param_num = 0;
 	}
 
+	cxt->afl_cxt.afl_statis_info = *statis_info;
 	afl_input.ae_stat_ptr = &cxt->aem_stats_data;
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
@@ -2264,7 +2266,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.vir_addr = statis_info->uaddr;
 	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
 	afl_input.private_len = sizeof(struct isp_statis_info);
-	afl_input.private_data = statis_info;
+	afl_input.private_data = &cxt->afl_cxt.afl_statis_info;
 	afl_input.ae_win_num.w = cxt->ae_cxt.win_num.w;
 	afl_input.ae_win_num.h = cxt->ae_cxt.win_num.h;
 
