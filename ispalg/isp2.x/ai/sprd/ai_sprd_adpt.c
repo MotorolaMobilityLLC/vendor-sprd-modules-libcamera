@@ -260,12 +260,12 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 	switch (cmd) {
 	case AI_SET_FD_PARAM:
 		if (AI_STATUS_PROCESSING != cxt->aic_status) {
-			ISP_LOGW("ai set fd doesn't work. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai set fd doesn't work. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}
 		if (!param) {
-			ISP_LOGW("fail to set fd param");
+			ISP_LOGD("fail to set fd param");
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -291,7 +291,7 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 	case AI_SET_FD_ON_OFF:
 		if (AI_STATUS_PROCESSING != cxt->aic_status) {
-			ISP_LOGW("ai set fd_on_off doesn't work. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai set fd_on_off doesn't work. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -301,7 +301,7 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 			goto exit;
 		}
 		cxt->fd_on_off = *(cmr_u32 *)param;
-		ISP_LOGI("FD_ON_OFF flag is: %d", cxt->fd_on_off);
+		ISP_LOGD("FD_ON_OFF flag is: %d", cxt->fd_on_off);
 
 		if(0 == cxt->fd_on_off){
 			memset(&cxt->aic_faceinfo, 0, sizeof(struct ai_fd_param));
@@ -318,17 +318,17 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 	case AI_SET_AE_PARAM:
 		if (AI_STATUS_PROCESSING != cxt->aic_status) {
-			ISP_LOGW("ai set ae param doesn't work. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai set ae param doesn't work. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}
 		if (!param) {
-			ISP_LOGW("fail to set ae param. param is null.");
+			ISP_LOGD("fail to set ae param. param is null.");
 			rtn = ISP_ERROR;
 			goto exit;
 		}
 		if (!result) {
-			ISP_LOGW("fail to set ae param. result is null.");
+			ISP_LOGD("fail to set ae param. result is null.");
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -340,12 +340,12 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 	case AI_SET_IMG_PARAM:
 		if (AI_STATUS_PROCESSING != cxt->aic_status) {
-			ISP_LOGW("ai set image param doesn't work. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai set image param doesn't work. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}
 		if (!param) {
-			ISP_LOGW("fail to set img data");
+			ISP_LOGD("fail to set img data");
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -373,7 +373,7 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 	case AI_PROCESS_START:
 		if (AI_STATUS_PROCESSING == cxt->aic_status) {
-			ISP_LOGW("ai is still in-processing. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai is still in-processing. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -383,7 +383,7 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 	case AI_PROCESS_STOP:
 		if (AI_STATUS_IDLE == cxt->aic_status) {
-			ISP_LOGW("ai already idle. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai already idle. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}
@@ -421,14 +421,14 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 	switch (cmd) {
 	case AI_GET_STATUS:
 		if (!param) {
-			ISP_LOGW("fail to get ai status.");
+			ISP_LOGD("fail to get ai status.");
 			goto exit;
 		}
 		memcpy(param, &cxt->aic_status, sizeof(enum ai_status));
 		break;
 	case AI_GET_IMG_FLAG:
 		if (AI_STATUS_PROCESSING != cxt->aic_status) {
-			ISP_LOGW("ai get image param doesn't work. status: %d.", cxt->aic_status);
+			ISP_LOGD("ai get image param doesn't work. status: %d.", cxt->aic_status);
 			rtn = ISP_ERROR;
 			goto exit;
 		}

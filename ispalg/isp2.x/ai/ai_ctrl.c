@@ -62,7 +62,6 @@ static cmr_int aictrl_ioctrl(struct aictrl_cxt *cxt_ptr, enum ai_io_ctrl_cmd cmd
 		}
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to call ioctrl.");
 			goto exit;
 		}
 	} else {
