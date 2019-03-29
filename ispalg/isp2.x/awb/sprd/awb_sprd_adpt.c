@@ -1404,7 +1404,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 			struct awb_ctrl_gain gain_master;
 			struct awb_ctrl_gain gain_slave;
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_GAIN_AWB_DATA, NULL, &gain_master);
-			ISP_LOGI("awb_sync master RGB gain:%d,%d,%d.\n",gain_master.r,gain_master.g,gain_master.b);
+			ISP_LOGV("awb_sync master RGB gain:%d,%d,%d.\n",gain_master.r,gain_master.g,gain_master.b);
 
 			awb_sync.stat_master_info.height = g_stat_img_size[cxt->camera_id - 2].h;
 			awb_sync.stat_master_info.width = g_stat_img_size[cxt->camera_id - 2].w;
