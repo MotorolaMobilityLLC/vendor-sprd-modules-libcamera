@@ -1360,7 +1360,7 @@ static cmr_s32 do_ae_flash_pre_before(struct ae_ctrl_cxt *cxt)
 			exp_comp.step_denominator=8;
 			ae_set_exposure_compensation(cxt,&exp_comp);
 		}
-		ISP_LOGI("AE_FLASH_PRE_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
+		ISP_LOGD("AE_FLASH_PRE_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 	}
 	if (cxt->sync_cur_result.wts.stable && !cxt->sync_cur_status.settings.lock_ae){
 		cmr_u16 effect_index = 0;
@@ -1434,7 +1434,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	mode = flash_notice->mode;
 	switch (mode) {
 	case AE_FLASH_PRE_BEFORE:
-		ISP_LOGI("ae_flash_status FLASH_PRE_BEFORE");
+		ISP_LOGD("ae_flash_status FLASH_PRE_BEFORE");
 		if((!cxt->sync_cur_result.wts.stable || (!cxt->cur_status.settings.force_lock_ae && (AE_STATE_LOCKED == cxt->sync_cur_status.settings.lock_ae)))&&(cxt->env_cum_changed==1)){
 			cmr_u32 ae_base_idx = ae_set_pflash_exposure_compensation(cxt, 0);
 			cxt->pf_wait_stable_cnt++;
@@ -1448,7 +1448,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_PRE_LIGHTING:
-		ISP_LOGI("ae_flash_status FLASH_PRE_LIGHTING");
+		ISP_LOGD("ae_flash_status FLASH_PRE_LIGHTING");
 		if(cxt->cur_status.settings.flash != FLASH_PRE_BEFORE){
 			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE_BEFORE",cxt->cur_status.settings.flash);
 			rtn = AE_ERROR;
@@ -1464,7 +1464,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_PRE_AFTER:
-		ISP_LOGI("ae_flash_status FLASH_PRE_AFTER");
+		ISP_LOGD("ae_flash_status FLASH_PRE_AFTER");
 		if(cxt->cur_status.settings.flash != FLASH_PRE){
 			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE",cxt->cur_status.settings.flash);
 			rtn = AE_ERROR;
@@ -1537,7 +1537,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_BEFORE:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_BEFORE");
+		ISP_LOGD("ae_flash_status FLASH_MAIN_BEFORE");
 		if((cxt->cur_status.settings.flash != FLASH_PRE_AFTER)&&(cxt->cur_status.settings.flash != FLASH_NONE)){
 			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE_AFTER",cxt->cur_status.settings.flash);
 			rtn = AE_ERROR;
@@ -1565,7 +1565,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_AFTER:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_AFTER");
+		ISP_LOGD("ae_flash_status FLASH_MAIN_AFTER");
 		if(cxt->cur_status.settings.flash != FLASH_MAIN){
 			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_MAIN",cxt->cur_status.settings.flash);
 			rtn = AE_ERROR;
@@ -1613,7 +1613,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_LIGHTING:
-		ISP_LOGI("ae_flash_status FLASH_MAIN_LIGHTING");
+		ISP_LOGD("ae_flash_status FLASH_MAIN_LIGHTING");
 		if(cxt->cur_status.settings.flash != FLASH_MAIN_BEFORE){
 			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_MAIN_BEFORE",cxt->cur_status.settings.flash);
 			rtn = AE_ERROR;
@@ -1627,7 +1627,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	case AE_LED_FLASH_ON:
 		cxt->cur_status.led_state = 1;
 		cxt->cur_status.settings.flash = FLASH_LED_ON;
-		ISP_LOGI("ae_flash_status FLASH_LED_ON");
+		ISP_LOGD("ae_flash_status FLASH_LED_ON");
 		break;
 
 	case AE_LED_FLASH_OFF:
@@ -2391,14 +2391,14 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
        cmr_s32 ret = AE_SUCCESS;
 
        if (enable) {
-		ISP_LOGI("cxt->expchanged:%d",cxt->expchanged);
+		ISP_LOGD("cxt->expchanged:%d",cxt->expchanged);
 		if((cxt->expchanged == 0)&&(cxt->appunlock==0)){
 			if(cxt->sync_cur_result.wts.cur_index==0) {
 				cxt->sync_cur_result.wts.cur_index=280;
 				ISP_LOGD("wts.cur_index is Zero");
 			}
 			cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
-			ISP_LOGI("ae_base_idx:%d ",cxt->exposure_compensation.ae_base_idx);
+			ISP_LOGD("ae_base_idx:%d ",cxt->exposure_compensation.ae_base_idx);
 		}
                cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
                if (0 == cxt->cur_status.settings.pause_cnt) {
@@ -2709,7 +2709,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 	}
 #else
 if ((cxt->flash_last_exp_line != current_status->effect_expline) || (1.0 * cxt->flash_last_gain / current_status->effect_gain < 0.97) || (1.0 * cxt->flash_last_gain / current_status->effect_gain > 1.03)) {
-		ISP_LOGI("ae_flash esti: sensor param do not take effect, (%d, %d)-(%d, %d)skip\n",
+		ISP_LOGD("ae_flash esti: sensor param do not take effect, (%d, %d)-(%d, %d)skip\n",
 				 cxt->flash_last_exp_line, cxt->flash_last_gain, current_status->effect_expline, current_status->effect_gain);
 		goto EXIT;
 	}
@@ -2744,10 +2744,10 @@ if ((cxt->flash_last_exp_line != current_status->effect_expline) || (1.0 * cxt->
 		current_status->settings.exp_line = (cmr_u32) (out.nextExposure / cxt->cur_status.line_time + 0.5);
 		current_status->settings.gain = out.nextGain;
 		cxt->flash_esti_result.isEnd = 0;
-		ISP_LOGI("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
+		ISP_LOGD("ae_flash esti: doing %d, %d", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 
 		if (1 == out.isEnd) {
-			ISP_LOGI("ae_flash esti: isEnd:%d, cap(%d, %d), led(%d, %d), rgb(%d, %d, %d)\n",
+			ISP_LOGD("ae_flash esti: isEnd:%d, cap(%d, %d), led(%d, %d), rgb(%d, %d, %d)\n",
 					 out.isEnd, current_status->settings.exp_line, out.captureGain, out.captureFlahLevel1, out.captureFlahLevel2, out.captureRGain, out.captureGGain, out.captureBGain);
 
 			/*save the flash estimation results */
@@ -2988,7 +2988,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 					if ((cxt->send_once[4] >= (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 1)) {
 						Bavoid_rewrite_prev_param=1;
 					}
-					ISP_LOGI("once4,constvalue,rewrite:(%d,%d,%d)",cxt->send_once[4], (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 1,Bavoid_rewrite_prev_param);
+					ISP_LOGD("once4,constvalue,rewrite:(%d,%d,%d)",cxt->send_once[4], (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 1,Bavoid_rewrite_prev_param);
 					if (Bavoid_rewrite_prev_param==0) {
 						current_status->settings.manual_mode = 0;
 						current_status->settings.table_idx = 0;
@@ -3073,24 +3073,24 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	/* for flash algorithm 0 */
 	if (0 == cxt->flash_ver) {
 		if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_BEFORE == current_status->settings.flash) {
-			ISP_LOGI("ae_flash0_status shake_1");
+			ISP_LOGD("ae_flash0_status shake_1");
 			if (0 == cxt->send_once[0]) {
 				cxt->send_once[0]++;
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-				ISP_LOGI("ae_flash0_callback do-pre-open!\r\n");
+				ISP_LOGD("ae_flash0_callback do-pre-open!\r\n");
 			}
 		}
 
 		if (FLASH_PRE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE == current_status->settings.flash) {
-			ISP_LOGI("ae_flash0_status shake_2 %d %d %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum, cxt->cur_result.flash_effect, cxt->send_once[3]);
+			ISP_LOGD("ae_flash0_status shake_2 %d %d %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum, cxt->cur_result.flash_effect, cxt->send_once[3]);
 			cxt->send_once[3]++;
 			if (cxt->cur_result.wts.stable || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
 				if (0 == cxt->send_once[1]) {
 					cxt->send_once[1]++;
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-					ISP_LOGI("ae_flash0_callback do-pre-close!\r\n");
+					ISP_LOGD("ae_flash0_callback do-pre-close!\r\n");
 				}
 				cxt->flash_effect = cxt->cur_result.flash_effect;
 			}
@@ -3098,25 +3098,25 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->settings.flash) {
-			ISP_LOGI("ae_flash0_status shake_3 %d", cxt->cur_result.flash_effect);
+			ISP_LOGD("ae_flash0_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;
 			cxt->send_once[3] = 0;
 			cxt->send_once[1] = 0;
 		}
 
 		if (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash) {
-			ISP_LOGI("ae_flash0_status shake_4 %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum);
+			ISP_LOGD("ae_flash0_status shake_4 %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum);
 			if (cxt->cur_result.wts.stable) {
 				if (1 == cxt->send_once[2]) {
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-					ISP_LOGI("ae_flash0_callback do-main-flash!\r\n");
+					ISP_LOGD("ae_flash0_callback do-main-flash!\r\n");
 				} else if (4 == cxt->send_once[2]) {
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-					ISP_LOGI("ae_flash0_callback do-capture!\r\n");
+					ISP_LOGD("ae_flash0_callback do-capture!\r\n");
 				} else {
-					ISP_LOGI("ae_flash0 wait-capture!\r\n");
+					ISP_LOGD("ae_flash0 wait-capture!\r\n");
 				}
 				cxt->send_once[2]++;
 			}
@@ -3124,7 +3124,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->settings.flash) {
 
-			ISP_LOGI("ae_flash0_status shake_6");
+			ISP_LOGD("ae_flash0_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = 0;
 		}
@@ -3138,29 +3138,29 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cxt->appunlock--;
 				cxt->send_once[0]--;
 			}
-			ISP_LOGI("ae_flash1_status shake_1");
+			ISP_LOGD("ae_flash1_status shake_1");
 			if (cxt->ebd_support)
 				cxt->ebd_flash_stable_flag = 1;
 			if (cxt->cur_param->flash_control_param.pre_open_count == cxt->send_once[0]) {
-				ISP_LOGI("ae_flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
+				ISP_LOGD("ae_flash p: led level: %d, %d\n", cxt->pre_flash_level1, cxt->pre_flash_level2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_PREFLASH);
 
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
-				ISP_LOGI("ae_flash1_callback do-pre-open!\r\n");
+				ISP_LOGD("ae_flash1_callback do-pre-open!\r\n");
 			}
 		}
 
 		if (FLASH_PRE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE == current_status->settings.flash) {
-			ISP_LOGI("ae_flash1_status shake_2 %d %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum, cxt->cur_result.flash_effect);
+			ISP_LOGD("ae_flash1_status shake_2 %d %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum, cxt->cur_result.flash_effect);
 			cxt->send_once[3]++;	//prevent flash_pfOneIteration time out
 			if (cxt->flash_esti_result.isEnd || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
 				if (cxt->cur_param->flash_control_param.pre_close_count == cxt->send_once[1]) {
 					cxt->send_once[3] = 0;
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-					ISP_LOGI("ae_flash1_callback do-pre-close!\r\n");
+					ISP_LOGD("ae_flash1_callback do-pre-close!\r\n");
 					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
 				}
 				cxt->send_once[1]++;
@@ -3169,7 +3169,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->settings.flash) {
-			ISP_LOGI("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
+			ISP_LOGD("ae_flash1_status shake_3 %d", cxt->cur_result.flash_effect);
 			cxt->cur_status.settings.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		}
@@ -3189,21 +3189,21 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 
 		if ((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash)
 			|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash)) {
-			ISP_LOGI("ae_flash1_status shake_4 %d, %d, cnt: %d\n", cxt->send_once[2], cxt->send_once[4], main_flash_counts);
+			ISP_LOGD("ae_flash1_status shake_4 %d, %d, cnt: %d\n", cxt->send_once[2], cxt->send_once[4], main_flash_counts);
 
 			if (cxt->cur_param->flash_control_param.main_set_count == cxt->send_once[4]) {
-				ISP_LOGI("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1, cxt->flash_esti_result.captureFlahLevel2);
+				ISP_LOGD("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1, cxt->flash_esti_result.captureFlahLevel2);
 				rtn = ae_set_flash_charge(cxt, AE_FLASH_TYPE_MAIN);
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
-				ISP_LOGI("ae_flash1_callback do-main-flash!\r\n");
+				ISP_LOGD("ae_flash1_callback do-main-flash!\r\n");
 			} else if (main_flash_capture_counts == cxt->send_once[4]) {
 				if(cxt->ebd_support) {
 					if((cxt->ebd_stable_flag) || (2 < cxt->send_once[5])) {
 						cb_type = AE_CB_CONVERGED;
 						(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 						cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
-						ISP_LOGI("ae_flash1_callback do-capture!\r\n");
+						ISP_LOGD("ae_flash1_callback do-capture!\r\n");
 					} else {
 						cxt->send_once[4]--;
 						cxt->send_once[5]++;
@@ -3212,11 +3212,11 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					cb_type = AE_CB_CONVERGED;
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
-					ISP_LOGI("ae_flash1_callback do-capture!\r\n");
+					ISP_LOGD("ae_flash1_callback do-capture!\r\n");
 				}
 			} else if (main_flash_capture_counts + 1 == cxt->send_once[4]) {
 				sensor_param_updating_interface(cxt);
-				ISP_LOGI("ae_flash1_callback update next prev-param!\r\n");
+				ISP_LOGD("ae_flash1_callback update next prev-param!\r\n");
 			} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
 
 				struct ae_flash_cfg cfg;
@@ -3227,11 +3227,11 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 			} else {
 				if (1 > cxt->send_once[4]) {
-					ISP_LOGI("ae_flash1 wait-main-flash!\r\n");
+					ISP_LOGD("ae_flash1 wait-main-flash!\r\n");
 				} else if (cxt->cur_param->flash_control_param.main_capture_count < cxt->send_once[4]) {
-					ISP_LOGI("ae_flash1 wait-get-image!\r\n");
+					ISP_LOGD("ae_flash1 wait-get-image!\r\n");
 				} else {
-					ISP_LOGI("ae_flash1 wait-capture!\r\n");
+					ISP_LOGD("ae_flash1 wait-capture!\r\n");
 				}
 			}
 
@@ -3265,7 +3265,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->settings.flash) {
-			ISP_LOGI("ae_flash1_status shake_6");
+			ISP_LOGD("ae_flash1_status shake_6");
 			cxt->cur_status.settings.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5]= 0;
 			cxt->ebd_flash_stable_flag = 0;
@@ -5650,9 +5650,9 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			cb_type = AE_CB_CONVERGED;
 			stop_skip_en = 1;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stop_skip_en);
-			ISP_LOGI("skip_num stop \r\n");
+			ISP_LOGD("skip_num stop \r\n");
 		} else {
-			ISP_LOGI("skip_num prepare\r\n");
+			ISP_LOGD("skip_num prepare\r\n");
 			cxt->has_mf_cnt++;
 		}
 	}
