@@ -3593,6 +3593,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     }
                 }
                 init_fb_handle(&face_beauty, 1, 2);
+                invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
+                                frame->width * frame->height * 3 / 2);
                 construct_fb_image(
                     &face_beauty, frame->width, frame->height,
                     (unsigned char *)(frame->y_vir_addr),
