@@ -4539,9 +4539,9 @@ static cmr_s32 ae_set_compensation_calc_2(struct ae_ctrl_cxt *cxt, cmr_s16 *out_
 	cmr_s16 target_offset = 0;
 
 	temp = 1.0 * cxt->exposure_compensation.comp_val * cxt->exposure_compensation.step_numerator / cxt->exposure_compensation.step_denominator;
-	ISP_LOGD("jhin1 comp_val %d step_numerator %d step_denominator %d \n",cxt->exposure_compensation.comp_val,cxt->exposure_compensation.step_numerator,cxt->exposure_compensation.step_denominator);
+	//ISP_LOGD("comp_val %d step_numerator %d step_denominator %d \n",cxt->exposure_compensation.comp_val,cxt->exposure_compensation.step_numerator,cxt->exposure_compensation.step_denominator);
 	temp = pow(2, temp);
-	ISP_LOGV("jhin1 temp%f\n",temp);
+	//ISP_LOGV("temp%f\n",temp);
 	if (0 < cxt->exposure_compensation.comp_val) {
 		target_offset = cxt->exposure_compensation.ae_base_target * temp;
 	} else if (0 > cxt->exposure_compensation.comp_val) { 
@@ -4552,7 +4552,7 @@ static cmr_s32 ae_set_compensation_calc_2(struct ae_ctrl_cxt *cxt, cmr_s16 *out_
 
 	*out_offset = target_offset;
 
-	ISP_LOGD("jhin1 value %d, temp %f ", target_offset, temp);
+	//ISP_LOGD("value %d, temp %f ", target_offset, temp);
 	return AE_SUCCESS;
 }
 
@@ -6236,6 +6236,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	/*jhin add flash mode*/
 	cxt->cur_status.flash_mode = 0;
+	cxt->cur_status.settings.led_thr_up = cxt->flash_swith.led_thr_up;
+	cxt->cur_status.settings.led_thr_down = cxt->flash_swith.led_thr_down;
 	/*jhin add touch ev to reset */
 	cxt->exposure_compensation.touch_ev_flag = 0;
 	cxt->last_table_index = 0;

@@ -571,6 +571,8 @@ struct ae_settings {
 	cmr_s16 reserve_len;		/*len for reserve */
 	cmr_u8 is_snapshot;
 	cmr_u8 threednr_mode;
+	cmr_s16 led_thr_up;		/* judge flash auto mode  flash unable up threahold*/
+	cmr_s16 led_thr_down;	/* judge flash auto mode  flash enable down threahold*/
 };
 
 struct ae_alg_calc_param {
