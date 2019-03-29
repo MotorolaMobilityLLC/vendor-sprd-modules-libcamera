@@ -377,7 +377,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		// tile num
 		tile_num.x = win_num.x - 1;
 		tile_num.y = win_num.y - 1;
-		ISP_LOGI("win_num x,y %d%d", win_num.x, win_num.y);
+		ISP_LOGD("win_num x,y %d%d", win_num.x, win_num.y);
 
 		af->cb_ops.af_monitor_crop_eb(af->caller, &crop_eb);
 		af->cb_ops.af_monitor_crop_size(af->caller, &winparam.win_rect);
@@ -619,7 +619,7 @@ static void lens_move_to(af_ctrl_t * af, cmr_u16 pos)
 
 	last_pos = lens_get_pos(af);
 	if (last_pos != pos) {
-		ISP_LOGI("pos = %d", pos);
+		ISP_LOGD("pos = %d", pos);
 		af->cb_ops.af_set_motor_pos(af->caller, pos);
 		af->lens.pos = pos;
 	} else {
@@ -1224,7 +1224,7 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 	} else {
 		af->g_orientation = AF_G_NONE;
 	}
-	ISP_LOGI("ISP_AFv1: %x, %x", gsensor_x, gsensor_y);
+	ISP_LOGD("ISP_AFv1: %x, %x", gsensor_x, gsensor_y);
 
 	return 0;
 }
