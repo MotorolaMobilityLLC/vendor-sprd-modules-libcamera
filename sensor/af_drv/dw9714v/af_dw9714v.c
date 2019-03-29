@@ -35,7 +35,7 @@ static uint32_t _dw9714v_write_dac_code(cmr_handle sns_af_drv_handle,
     uint16_t cmd_len = 0;
     uint16_t step_4bit = 0x09;
 
-    SENSOR_PRINT("%d", code);
+    SENSOR_LOGD("%d", code);
 
     cmd_len = 3;
     cmd_val[0] = 0x03;
@@ -44,7 +44,7 @@ static uint32_t _dw9714v_write_dac_code(cmr_handle sns_af_drv_handle,
     ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                    (uint8_t *)&cmd_val[0], cmd_len);
 
-    SENSOR_PRINT("code:%d,ret_value:%d", code, ret_value);
+    SENSOR_LOGD("code:%d,ret_value:%d", code, ret_value);
 
     return ret_value;
 }
@@ -87,7 +87,7 @@ static int dw9714v_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos) {
     CHECK_PTR(sns_af_drv_handle);
     int32_t target_code = pos & 0x3FF;
 
-    SENSOR_PRINT("%d", target_code);
+    SENSOR_LOGD("%d", target_code);
     _dw9714v_write_dac_code(sns_af_drv_handle, target_code);
     af_drv_cxt->current_pos = target_code;
 
@@ -160,7 +160,7 @@ static int _dw9714v_drv_power_on(cmr_handle sns_af_drv_handle,
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
 
-    SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+    SENSOR_LOGD("(1:on, 0:off): %d", power_on);
     return AF_SUCCESS;
 }
 
@@ -181,7 +181,7 @@ static int _dw9714v_drv_set_mode(cmr_handle sns_af_drv_handle) {
         mode = dw9714v_drv_entry.default_work_mode;
     }
 
-    SENSOR_PRINT("mode = %d\n", mode);
+    SENSOR_LOGD("mode = %d\n", mode);
     switch (mode) {
     case 1:
         /* When you use direct mode after power on, you don't need register set.

@@ -77,11 +77,11 @@ void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
         faceBeauty->fb_face[j].height = ey - sy;
         faceBeauty->fb_face[j].rollAngle = angle;
         faceBeauty->fb_face[j].yawAngle = pose;
-        ALOGD("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
+        ALOGV("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
               j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
               faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
               angle, pose);
-    } 
+    }
 }
 
 void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
@@ -276,7 +276,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
         duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
         ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
-        ALOGD("SPRD_FB: FB_FaceBeauty_YUV420SP duration is %d ms", duration);
+        ALOGV("SPRD_FB: FB_FaceBeauty_YUV420SP duration is %d ms", duration);
         if (faceBeauty->fb_mode == 0) { // this work mode is useless.
             int i = 0;
             for (i = 0; i < faceCount; i++) {
