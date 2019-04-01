@@ -891,16 +891,8 @@ int SprdCamera3HWI::configureStreams(
     mSetting->setVideoSize(video_size);
     mSetting->setPictureSize(capture_size);
 
-    // for cts
-    if (preview_size.height * preview_size.width > 3264 * 2448 ||
-        callback_size.height * callback_size.width > 3264 * 2448) {
-        mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
-    } else {
-        mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
-    }
-
+    mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
     mFirstRequestGet = false;
-    /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
 
     return ret;
@@ -1847,7 +1839,7 @@ int SprdCamera3HWI::flush() {
     ATRACE_CALL();
 
     int ret = NO_ERROR;
-    int64_t timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+    int64_t timestamp;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     {
@@ -1865,22 +1857,52 @@ int SprdCamera3HWI::flush() {
         mPicChan->stop(mFrameNum);
     }
 
-    Mutex::Autolock l(&mLock);
-
-    if (mRegularChan) {
-        // TBD: will add a user-kernel interface, to return all inflight
-        // buffers, then we need not to stop streams
-        mRegularChan->channelClearAllQBuff(timestamp,
-                                           CAMERA_STREAM_TYPE_PREVIEW);
-        mRegularChan->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_VIDEO);
-        mRegularChan->channelClearAllQBuff(timestamp,
-                                           CAMERA_STREAM_TYPE_CALLBACK);
+    {
+        Mutex::Autolock l(&mLock);
+        HAL_LOGI(":hal3: clear all buffers");
+        timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+        if (mRegularChan) {
+            // TBD: will add a user-kernel interface, to return all inflight
+            // buffers, then we need not to stop streams
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_PREVIEW);
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_VIDEO);
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_CALLBACK);
+        }
+        if (mPicChan) {
+            // TBD: will add a user-kernel interface, to return all inflight
+            // buffers, then we need not to stop streams
+            mPicChan->channelClearAllQBuff(timestamp,
+                                           CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+        }
     }
-    if (mPicChan) {
-        // TBD: will add a user-kernel interface, to return all inflight
-        // buffers, then we need not to stop streams
-        mPicChan->channelClearAllQBuff(timestamp,
-                                       CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+
+    // fix issue pendingList full, last request come after flush
+    HAL_LOGD("clear buffers ...");
+    usleep(1000);
+
+    {
+        Mutex::Autolock l(&mLock);
+        HAL_LOGD(":hal3: re-clear all buffers");
+        timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+        if (mRegularChan) {
+            // TBD: will add a user-kernel interface, to return all inflight
+            // buffers, then we need not to stop streams
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_PREVIEW);
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_VIDEO);
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_CALLBACK);
+        }
+        if (mPicChan) {
+            // TBD: will add a user-kernel interface, to return all inflight
+            // buffers, then we need not to stop streams
+            mPicChan->channelClearAllQBuff(timestamp,
+                                           CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+        }
     }
 
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
