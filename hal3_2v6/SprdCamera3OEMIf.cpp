@@ -1153,6 +1153,7 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
 status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     status_t ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
+    char value[PROPERTY_VALUE_MAX];
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -1166,6 +1167,12 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     mSetting->getSPRDDEFTag(&sprddefInfo);
     if (sprddefInfo.slowmotion > 1)
         return ret;
+
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        mHalOem->ops->camera_fd_enable(mCameraHandle, 0);
+        return ret;
+    }
 
     if (enable) {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
