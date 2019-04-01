@@ -65,8 +65,9 @@ struct class_fd {
     ipm_callback frame_cb;
     struct img_size fd_img_size;
     struct img_face_area
-        face_area_prev; /* The faces detected from the previous frame; It is
-                           used to make face detection results more stable */
+        face_area_prev; /* The faces detected from the previous frame;
+                            It is used to directly callback if face detect is busying */
+    struct img_face_area face_small_area;
     struct class_faceattr_array faceattr_arr; /* face attributes */
     cmr_uint curr_frame_idx;
     cmr_uint is_get_result;
@@ -1094,7 +1095,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         class_handle->is_get_result = 1;
         /* extract face detection results */
         fd_get_fd_results(class_handle->hDT, &(class_handle->faceattr_arr),
-                          &(class_handle->face_area_prev),
+                          &(class_handle->face_small_area),
                           &(class_handle->frame_out.face_area),
                           class_handle->fd_small.size,
                           class_handle->curr_frame_idx);
@@ -1108,6 +1109,12 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         ratio = (float)class_handle->frame_in.src_frame.size.width /
             (float)class_handle->fd_small.size.width;
 
+        /* save a copy face_small_area for next frame to smooth */
+        memcpy(&(class_handle->face_small_area),
+               &(class_handle->frame_out.face_area),
+               sizeof(struct img_face_area));
+
+        /* coherence of coordinates */
         for (i = 0; i < class_handle->frame_out.face_area.face_count; i++) {
             class_handle->frame_out.face_area.range[i].sx =
                 class_handle->frame_out.face_area.range[i].sx * ratio;
@@ -1127,7 +1134,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                 class_handle->frame_out.face_area.range[i].ely * ratio;
         }
 
-        /* save a copy for next frame */
+        /* save a copy for next frame to directly callback if busying */
         memcpy(&(class_handle->face_area_prev),
                &(class_handle->frame_out.face_area),
                sizeof(struct img_face_area));
