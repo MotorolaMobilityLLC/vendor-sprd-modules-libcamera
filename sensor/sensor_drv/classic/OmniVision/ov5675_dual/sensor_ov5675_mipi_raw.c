@@ -406,6 +406,7 @@ ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
     cur_fr_len = ov5675_drv_get_cur_frm_len(handle, aec_info);
     if (cur_fr_len != dest_fr_len)
         ov5675_drv_set_cur_frm_len(handle, dest_fr_len, aec_info);
+    sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
 
     SENSOR_LOGI("shutter=%d, dummy_line=%d,dest_fr_len=%d,cur_fr_len=%d",
                 shutter, dummy_line, dest_fr_len, cur_fr_len);
@@ -632,6 +633,7 @@ static cmr_int ov5675_drv_write_exposure(cmr_handle handle, cmr_uint param) {
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+    sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = ov5675_drv_update_exposure(
         handle, exposure_line, dummy_line, &ov5675_aec_info);
@@ -951,7 +953,8 @@ static cmr_int ov5675_drv_stream_off(cmr_handle handle, cmr_uint param) {
     if (value != 0x00) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 100;
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                        sns_drv_cxt->line_time_def / 1000000) + 10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }
@@ -1036,6 +1039,7 @@ ov5675_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
     ov5675_drv_set_cur_frm_len(sns_drv_cxt, sns_drv_cxt->frame_length_def,
                                &ov5675_aec_info);
 

@@ -763,7 +763,8 @@ static cmr_int ov12a10_drv_stream_off(cmr_handle handle, cmr_uint param) {
     if (value != 0x00) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 100;
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                        sns_drv_cxt->line_time_def / 1000000) + 10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }
@@ -792,6 +793,7 @@ ov12a10_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
 
     ov12a10_drv_write_frame_length(
         sns_drv_cxt, &ov12a10_aec_info,

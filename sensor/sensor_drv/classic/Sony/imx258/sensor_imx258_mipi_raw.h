@@ -57,6 +57,16 @@
 #define SNAPSHOT_MIPI_PER_LANE_BPS 858
 #define PREVIEW_MIPI_PER_LANE_BPS 660
 
+/*line time unit: 1ns*/
+#define VIDEO_LINE_TIME 13939
+#define PREVIEW_LINE_TIME 20650
+#define SNAPSHOT_LINE_TIME 10568
+
+/* frame length*/
+#define VIDEO_FRAME_LENGTH 796
+#define PREVIEW_FRAME_LENGTH 1612
+#define SNAPSHOT_FRAME_LENGTH 3152
+
 /* please ref your spec */
 #define FRAME_OFFSET 10
 #define SENSOR_MAX_GAIN 0xF0

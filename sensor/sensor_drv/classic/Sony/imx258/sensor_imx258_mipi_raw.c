@@ -265,6 +265,8 @@ static cmr_u16 imx258_drv_update_exposure(cmr_handle handle, cmr_u32 shutter,
 
     if (dest_fr_len != cur_fr_len)
         imx258_drv_write_frame_length(handle, dest_fr_len);
+
+    sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
 write_sensor_shutter:
     /* write shutter to sensor registers */
     imx258_drv_write_shutter(handle, shutter);
@@ -524,6 +526,7 @@ static cmr_int imx258_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
+    sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         imx258_drv_update_exposure(handle, exposure_line, dummy_line);
 
@@ -737,28 +740,29 @@ static cmr_int imx258_drv_stream_on(cmr_handle handle, cmr_uint param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int imx258_drv_stream_off(cmr_handle handle, cmr_uint param) {
+    SENSOR_LOGI("E");
     UNUSED(param);
-    unsigned char value;
-    unsigned int sleep_time = 0;
+    unsigned char value = 0;
+    cmr_u16 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    SENSOR_LOGI("E");
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value != 0x00) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = 100 * 1000;
-            usleep(sleep_time);
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                        sns_drv_cxt->line_time_def / 1000000) + 10;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }
-        usleep(50 * 1000);
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
-
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
-    return 0;
+
+    SENSOR_LOGI("X");
+    return SENSOR_SUCCESS;
 }
 
 static cmr_int imx258_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
@@ -1072,6 +1076,8 @@ static cmr_u16 imx258_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
     aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
+    sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
+
     aec_info->shutter->settings[0].reg_value = (shutter >> 8) & 0xff;
     aec_info->shutter->settings[1].reg_value = shutter & 0xff;
     return shutter;
@@ -1159,6 +1165,9 @@ imx258_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
         return SENSOR_FAIL;
 
     sns_drv_cxt = (struct sensor_ic_drv_cxt *)*sns_ic_drv_handle;
+
+    sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
