@@ -2838,7 +2838,7 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)(&ai_sta), NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
 	}
-	if (AI_STATUS_PROCESSING != ai_sta) {
+	if (AI_STATUS_PROCESSING != ai_sta || cxt->work_mode == 1) {
 		ISP_LOGV("AI detection doesn't work.");
 		return ret;
 	}
