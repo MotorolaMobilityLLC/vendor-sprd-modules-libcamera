@@ -8797,6 +8797,12 @@ cmr_int channel2_configure(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
+    // config 4in1 flag
+    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1) {
+        CMR_LOGD("set 4in1 mode to 1");
+        chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
+    }
+
     ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id,
                                   &chn_param, &channel_id, &endian);
     if (ret) {
