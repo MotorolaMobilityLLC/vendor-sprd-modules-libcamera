@@ -3572,7 +3572,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
 #ifdef CONFIG_FACE_BEAUTY
     if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
-        faceDectect(1);
         if (isPreviewing() && frame->type == PREVIEW_FRAME) {
             if (MODE_3D_VIDEO != mMultiCameraMode &&
                 MODE_3D_PREVIEW != mMultiCameraMode) {
