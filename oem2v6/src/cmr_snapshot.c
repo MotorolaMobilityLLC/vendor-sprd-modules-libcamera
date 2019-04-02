@@ -438,6 +438,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     case SNP_EVT_POSTPROC_FREE_FRM:
         if (cxt->ops.channel_buff_cfg) {
             struct frm_info frame = *(struct frm_info *)message->data;
+            cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = frame.channel_id;
             buf_cfg.base_id = CMR_BASE_ID(frame.frame_id);
             buf_cfg.count = 1;
@@ -448,6 +449,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
             buf_cfg.addr_vir[0].addr_y = frame.yaddr_vir;
             buf_cfg.addr_vir[0].addr_u = frame.uaddr_vir;
             buf_cfg.addr_vir[0].addr_v = frame.vaddr_vir;
+            buf_cfg.is_4in1 = frame.is_4in1_frame;
             buf_cfg.fd[0] = frame.fd;
             cxt->ops.channel_buff_cfg(cxt->oem_handle, &buf_cfg);
             CMR_LOGD("free frame");
@@ -2567,18 +2569,18 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle) {
     }
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-    CMR_LOGD("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx fd 0x%x",
-             chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
-             chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
-             chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
-             chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
-             chn_param_ptr->scale[i].dst_img.fd);
+        CMR_LOGD("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx fd 0x%x",
+                 chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
+                 chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
+                 chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
+                 chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
+                 chn_param_ptr->scale[i].dst_img.fd);
 
-    CMR_LOGD("src size %d %d dst size %d %d",
-             chn_param_ptr->scale[i].src_img.size.width,
-             chn_param_ptr->scale[i].src_img.size.height,
-             chn_param_ptr->scale[i].dst_img.size.width,
-             chn_param_ptr->scale[i].dst_img.size.height);
+        CMR_LOGD("src size %d %d dst size %d %d",
+                 chn_param_ptr->scale[i].src_img.size.width,
+                 chn_param_ptr->scale[i].src_img.size.height,
+                 chn_param_ptr->scale[i].dst_img.size.width,
+                 chn_param_ptr->scale[i].dst_img.size.height);
     }
     return ret;
 }
@@ -3013,18 +3015,18 @@ cmr_int snp_set_isp_proc_param(cmr_handle snp_handle) {
     }
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-    CMR_LOGD("src: fd 0x%x addr_y 0x%lx dst: fd 0x%x addr_y 0x%lx 0x%lx "
-             "dst2: fd 0x%x addr_y 0x%lx w=%d h=%d",
-             chn_param_ptr->isp_proc_in[i].src_frame.fd,
-             chn_param_ptr->isp_proc_in[i].src_frame.addr_phy.addr_y,
-             chn_param_ptr->isp_proc_in[i].dst_frame.fd,
-             chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_y,
-             chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_u,
-             chn_param_ptr->isp_proc_in[i].dst2_frame.fd,
-             chn_param_ptr->isp_proc_in[i].dst2_frame.addr_phy.addr_y,
-             req_param_ptr->post_proc_setting.chn_out_frm[i].size.width,
-             req_param_ptr->post_proc_setting.chn_out_frm[i].size.height);
-        }
+        CMR_LOGD("src: fd 0x%x addr_y 0x%lx dst: fd 0x%x addr_y 0x%lx 0x%lx "
+                 "dst2: fd 0x%x addr_y 0x%lx w=%d h=%d",
+                 chn_param_ptr->isp_proc_in[i].src_frame.fd,
+                 chn_param_ptr->isp_proc_in[i].src_frame.addr_phy.addr_y,
+                 chn_param_ptr->isp_proc_in[i].dst_frame.fd,
+                 chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_y,
+                 chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_u,
+                 chn_param_ptr->isp_proc_in[i].dst2_frame.fd,
+                 chn_param_ptr->isp_proc_in[i].dst2_frame.addr_phy.addr_y,
+                 req_param_ptr->post_proc_setting.chn_out_frm[i].size.width,
+                 req_param_ptr->post_proc_setting.chn_out_frm[i].size.height);
+    }
     return ret;
 }
 
@@ -3191,18 +3193,18 @@ cmr_int snp_update_scale_param(cmr_handle snp_handle, struct img_frm chn_data) {
     }
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-    CMR_LOGD("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx, fd 0x%x",
-             chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
-             chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
-             chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
-             chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
-             chn_param_ptr->scale[i].src_img.fd);
+        CMR_LOGD("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx, fd 0x%x",
+                 chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
+                 chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
+                 chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
+                 chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
+                 chn_param_ptr->scale[i].src_img.fd);
 
-    CMR_LOGD("src size %d %d dst size %d %d",
-             chn_param_ptr->scale[i].src_img.size.width,
-             chn_param_ptr->scale[i].src_img.size.height,
-             chn_param_ptr->scale[i].dst_img.size.width,
-             chn_param_ptr->scale[i].dst_img.size.height);
+        CMR_LOGD("src size %d %d dst size %d %d",
+                 chn_param_ptr->scale[i].src_img.size.width,
+                 chn_param_ptr->scale[i].src_img.size.height,
+                 chn_param_ptr->scale[i].dst_img.size.width,
+                 chn_param_ptr->scale[i].dst_img.size.height);
     }
     return ret;
 }
