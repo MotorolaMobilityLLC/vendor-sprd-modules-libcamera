@@ -882,7 +882,7 @@ static cmr_s32 ae_unpack_tunning_param(cmr_handle param, cmr_u32 size, struct ae
 	return AE_SUCCESS;
 }
 
-static cmr_u32 ae_calc_target_lum(cmr_u32 cur_target_lum, enum ae_level level, struct ae_ev_table *ev_table)
+static cmr_u32 ae_calc_target_lum(struct ae_ctrl_cxt *cxt, cmr_u32 cur_target_lum, enum ae_level level, struct ae_ev_table *ev_table)
 {
 	cmr_s32 target_lum = 0;
 
@@ -897,11 +897,16 @@ static cmr_u32 ae_calc_target_lum(cmr_u32 cur_target_lum, enum ae_level level, s
 	if (level >= ev_table->diff_num)
 		level = ev_table->diff_num - 1;
 
-	ISP_LOGD("cur target lum=%d, ev diff=%d, level=%d", cur_target_lum, ev_table->lum_diff[level], level);
+	ISP_LOGD("cur target lum=%d, ev diff=%d, level=%d", cur_target_lum, ev_table->ev_item[level].lum_diff, level);
 
-	target_lum = (cmr_s32) cur_target_lum + ev_table->lum_diff[level];
+	target_lum = (cmr_s32) cur_target_lum + ev_table->ev_item[level].lum_diff;
 	target_lum = (target_lum < 0) ? 0 : target_lum;
 
+	cxt->cur_status.target_range_in_zone = ev_table->ev_item[level].stable_zone_in;
+	cxt->cur_status.target_range_out_zone = ev_table->ev_item[level].stable_zone_out;
+
+	ISP_LOGD("target_range_in =%d, target_range_out =%d", cxt->cur_status.target_range_in_zone, cxt->cur_status.target_range_out_zone);
+	
 	return (cmr_u32) target_lum;
 }
 
@@ -1342,6 +1347,8 @@ static cmr_s32 do_ae_flash_pre_before(struct ae_ctrl_cxt *cxt)
 	if (1 == cxt->app_mode) {
 		cxt->flash_ev_backup.target_lum      = cxt->cur_status.target_lum;
 		cxt->flash_ev_backup.target_lum_zone = cxt->cur_status.target_lum_zone;
+			cxt->flash_ev_backup.target_range_in_zone = cxt->cur_status.target_range_in_zone;
+			cxt->flash_ev_backup.target_range_out_zone = cxt->cur_status.target_range_out_zone;
 		cxt->flash_ev_backup.stride_config_0 = cxt->cur_status.stride_config[0];
 		cxt->flash_ev_backup.stride_config_1 = cxt->cur_status.stride_config[1];
 		cxt->flash_ev_backup.ev_index        = cxt->cur_status.settings.ev_index;
@@ -1594,6 +1601,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		if (1 == cxt->app_mode) {
 			cxt->cur_status.target_lum	  = cxt->flash_ev_backup.target_lum;
 			cxt->cur_status.target_lum_zone   = cxt->flash_ev_backup.target_lum_zone;
+			cxt->cur_status.target_range_in_zone = cxt->flash_ev_backup.target_range_in_zone;
+			cxt->cur_status.target_range_out_zone = cxt->flash_ev_backup.target_range_out_zone;
 			cxt->cur_status.stride_config[0]  = cxt->flash_ev_backup.stride_config_0;
 			cxt->cur_status.stride_config[1]  = cxt->flash_ev_backup.stride_config_1;
 			cxt->cur_status.settings.ev_index =  cxt->flash_ev_backup.ev_index;
@@ -1918,7 +1927,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	
 	cxt->cur_status.start_index = cxt->cur_param->start_index;
 	ev_table = &cxt->cur_param->ev_table;
-	cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, ev_table->default_level, ev_table);
+	cxt->cur_status.target_lum = ae_calc_target_lum(cxt, cxt->cur_param->target_lum, ev_table->default_level, ev_table);
 	cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[ev_table->default_level];
 
 	cxt->cur_status.b = NULL;
@@ -2251,7 +2260,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			cur_status->settings.min_fps = scene_info[i].min_fps;
 			cur_status->settings.max_fps = scene_info[i].max_fps;
 		}
-		target_lum = ae_calc_target_lum(scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
+		target_lum = ae_calc_target_lum(cxt, scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
 		cur_status->target_lum_zone = (cmr_s16) (cur_param->stable_zone_ev[cur_param->ev_table.default_level] * target_lum * 1.0 / cur_param->target_lum + 0.5);
 		if (2 > cur_status->target_lum_zone) {
 			cur_status->target_lum_zone = 2;
@@ -2274,7 +2283,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 		if(CAMERA_MODE_MANUAL == cxt->app_mode && (cxt->manual_level != AE_MANUAL_EV_INIT))
 			prv_status->settings.ev_index = cxt->manual_level;
 		ISP_LOGD("ev_index = %d %d",prv_status->settings.ev_index,cxt->manual_level);
-		target_lum = ae_calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
+		target_lum = ae_calc_target_lum(cxt, cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
 		cur_status->target_lum_zone = cur_param->stable_zone_ev[cur_param->ev_table.default_level];
 		//cur_status->target_lum_zone = (cmr_s16)(cur_param->target_lum_zone * (target_lum * 1.0 / cur_param->target_lum) + 0.5);
@@ -2419,6 +2428,7 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
        ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d", cxt->cur_status.settings.pause_cnt, cxt->cur_status.settings.lock_ae, cxt->cur_status.settings.force_lock_ae,cxt->cur_status.settings.manual_mode);
        return ret;
 }
+
 static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 {
 	cmr_s32 ret = AE_SUCCESS;
@@ -3408,7 +3418,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_r
 	result->flash_param.captureFlash1ofALLRatio = cxt->flash_esti_result.captureFlash1Ratio;
 
 	for (i = 0; i < cxt->cur_param->ev_table.diff_num; i++) {
-		result->ae_ev.ev_tab[i] = cxt->cur_param->target_lum + cxt->cur_param->ev_table.lum_diff[i];
+		result->ae_ev.ev_tab[i] = cxt->cur_param->target_lum + cxt->cur_param->ev_table.ev_item[i].lum_diff;
 	}
 
 	ae_get_iso(cxt, &result->ae_output.cur_iso);
@@ -3444,7 +3454,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_re
 	result->flash_param.captureFlash1ofALLRatio = cxt->flash_esti_result.captureFlash1Ratio;
 
 	for (i = 0; i < cxt->cur_param->ev_table.diff_num; i++) {
-		result->ae_ev.ev_tab[i] = cxt->cur_param->target_lum + cxt->cur_param->ev_table.lum_diff[i];
+		result->ae_ev.ev_tab[i] = cxt->cur_param->target_lum + cxt->cur_param->ev_table.ev_item[i].lum_diff;
 	}
 
 	ae_get_iso(cxt, &result->ae_output.cur_iso);
@@ -4472,6 +4482,8 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;
 			cxt->cur_status.settings.touch_scrn_status = 1;
 			cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
+			cxt->cur_status.target_range_in_zone = cxt->target_lum_range_in_bak;
+			cxt->cur_status.target_range_out_zone = cxt->target_lum_range_out_bak;
 
 			if (cxt->cur_status.to_ae_state == 2)
 				rtn = ae_set_restore_cnt(cxt);
@@ -4492,7 +4504,7 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 		if (ev->level < AE_LEVEL_MAX) {
 			cxt->mod_update_list.is_mev = 1;
 			cxt->cur_status.settings.ev_index = ev->level;
-			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+			cxt->cur_status.target_lum = ae_calc_target_lum(cxt, cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
@@ -4500,7 +4512,7 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 			/*ev auto */
 			cxt->mod_update_list.is_mev = 0;
 			cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
-			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+			cxt->cur_status.target_lum = ae_calc_target_lum(cxt, cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
@@ -4566,7 +4578,6 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 {
 	cmr_u16 change_idx = 0;
 	cmr_s16 change_offset = 0;
-
 	if (exp_comp) {
 		if ((1 == cxt->app_mode) && (cxt->cur_status.settings.flash == FLASH_NONE)) {
 			struct ae_set_ev ev;
@@ -4579,7 +4590,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 				//cxt->mod_update_list.is_mev = 0;
 				cxt->cur_status.settings.ev_index = cxt->cur_param->ev_table.default_level;
 			}
-			cxt->cur_status.target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+			cxt->cur_status.target_lum = ae_calc_target_lum(cxt, cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[cxt->cur_status.settings.ev_index];
 			cxt->cur_status.stride_config[0] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2];
 			cxt->cur_status.stride_config[1] = cxt->cnvg_stride_ev[cxt->cur_status.settings.ev_index * 2 + 1];
@@ -4738,7 +4749,7 @@ static cmr_s32 ae_get_ev(struct ae_ctrl_cxt *cxt, void *result)
 		ev_info->ev_index = cxt->cur_status.settings.ev_index;
 
 		for (i = 0; i < ev_table->diff_num; i++) {
-			ev_info->ev_tab[i] = target_lum + ev_table->lum_diff[i];
+			ev_info->ev_tab[i] = target_lum + ev_table->ev_item[i].lum_diff;
 		}
 	}
 
@@ -4858,6 +4869,8 @@ static cmr_s32 ae_get_fps(struct ae_ctrl_cxt *cxt, void *result)
 static cmr_s32 ae_set_caf_lockae_start(struct ae_ctrl_cxt *cxt)
 {
 	cxt->target_lum_zone_bak = cxt->cur_status.target_lum_zone;
+	cxt->target_lum_range_in_bak = cxt->cur_status.target_range_in_zone;
+	cxt->target_lum_range_out_bak = cxt->cur_status.target_range_out_zone;
 
 	if (cxt->cur_result.wts.stable) {
 		cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[15];
@@ -4872,7 +4885,9 @@ static cmr_s32 ae_set_caf_lockae_start(struct ae_ctrl_cxt *cxt)
 static cmr_s32 ae_set_caf_lockae_stop(struct ae_ctrl_cxt *cxt)
 {
 	cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
-
+	cxt->cur_status.target_range_in_zone = cxt->target_lum_range_in_bak;
+	cxt->cur_status.target_range_out_zone = cxt->target_lum_range_out_bak;
+	
 	return AE_SUCCESS;
 }
 
@@ -5228,7 +5243,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	current_status->ae_table->min_index = 0;	//AE table start index = 0
 #endif
 	// change settings related by EV
-	current_status->target_lum = ae_calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+	current_status->target_lum = ae_calc_target_lum(cxt, cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
 	current_status->target_lum_zone = cxt->stable_zone_ev[current_status->settings.ev_index];
 	current_status->stride_config[0] = cxt->cnvg_stride_ev[current_status->settings.ev_index * 2];
 	current_status->stride_config[1] = cxt->cnvg_stride_ev[current_status->settings.ev_index * 2 + 1];
@@ -5271,12 +5286,10 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 
 /***********************************************************/
 /* send STAB notify to HAL */
-
 	if (cxt->isp_ops.callback) {
 		cb_type = AE_CB_STAB_NOTIFY;
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cur_calc_result->ae_output.is_stab);
 	}
-
 
 	if (1 == cxt->debug_enable) {
 		ae_save_to_mlog_file(cxt, &misc_calc_out);
@@ -5399,6 +5412,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cxt->cur_status.effect_expline = cxt->exp_data.actual_data.exp_line;
 	cxt->cur_status.effect_dummy = cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.effect_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
+
 	backup_expline = cxt->cur_status.effect_expline;
 	backup_gain = cxt->cur_status.effect_gain;
 	backup_expgain = backup_expline*backup_gain;
@@ -5441,7 +5455,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
 		}
 	}
-
 	{
 		cmr_s8 cur_mod = cxt->sync_cur_status.settings.scene_mode;
 		cmr_s8 nx_mod = cxt->cur_status.settings.scene_mode;
@@ -5569,7 +5582,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		current_status->cam_id = AE_SENSOR_SINGLE;
 	}
 
-
 	current_status->ae_start_delay = 0;
 	misc_calc_in.sync_settings = current_status;
 	misc_calc_out.ae_output = &cxt->cur_result;
@@ -5693,6 +5705,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 
 	cxt->cur_status.frame_id++;
 	cxt->is_first = 0;
+
   ERROR_EXIT:
 	return rtn;
 }

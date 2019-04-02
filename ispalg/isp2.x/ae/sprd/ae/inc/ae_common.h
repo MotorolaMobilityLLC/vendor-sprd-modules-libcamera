@@ -265,8 +265,14 @@ struct ae_weight_table {
 	cmr_u8 weight[AE_WEIGHT_TABLE_SIZE];
 };
 
+struct ae_ev_setting_item {
+	cmr_s16 lum_diff;
+	cmr_u8 stable_zone_in;
+	cmr_u8 stable_zone_out;
+};
+
 struct ae_ev_table {
-	cmr_s32 lum_diff[AE_EV_LEVEL_NUM];
+	struct ae_ev_setting_item ev_item[AE_EV_LEVEL_NUM];
 	/* number of level */
 	cmr_u32 diff_num;
 	/* index of default */
@@ -598,6 +604,8 @@ struct ae_alg_calc_param {
 	cmr_s8 target_offset;
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;
+	cmr_u16 target_range_in_zone;
+	cmr_u16 target_range_out_zone;
 	cmr_s16 start_index;
 	cmr_u32 line_time;
 	cmr_s16 snr_max_fps;
@@ -677,6 +685,8 @@ struct ae_alg_calc_result {
 	cmr_s16 cur_lum;			/*the lum of image:0 ~255 */
 	cmr_s16 cur_lum_avg;		/*the lum without weight of image:0 ~255*/
 	cmr_s16 target_lum;			/*the ae target lum: 0 ~255 */
+	cmr_s16 target_range_in;		/*ae target lum stable zone: 0~255 */
+	cmr_s16 target_range_out;
 	cmr_s16 target_zone;		/*ae target lum stable zone: 0~255 */
 	cmr_s16 target_lum_ori;		/*the ae target lum(original): 0 ~255 */
 	cmr_s16 target_zone_ori;	/*the ae target lum stable zone(original):0~255 */
