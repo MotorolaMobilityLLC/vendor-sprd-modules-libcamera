@@ -1470,6 +1470,18 @@ static cmr_u8 if_aft_log(cmr_u32 log_level, const char *format, ...)
 	return 0;
 }
 
+static cmr_u8 if_get_saf_extra_data(saf_extra_data_t * safex, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+	cmr_u32 pd_workable = 0;
+
+	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
+	safex->pd_enable = af->pd.pd_enable;
+	safex->pd_workable = pd_workable;
+	ISP_LOGD("enable %d, workable %d", safex->pd_enable, safex->pd_workable);
+	return 0;
+}
+
 static cmr_s32 load_af_symbols(af_ctrl_t * af)
 {
 	LOAD_SYMBOL(af->af_lib, af->af_ops.init, "AF_init");
@@ -1562,6 +1574,7 @@ static void *af_init(af_ctrl_t * af)
 	//[TOF_+++]
 	AF_Ops.get_tof_data = if_get_tof_data;
 	//[TOF_---]
+	AF_Ops.get_saf_extra_data = if_get_saf_extra_data;
 	memset((void *)&af_tuning_data, 0, sizeof(af_tuning_data));
 	af_tuning_data.data = af->aftuning_data;
 	af_tuning_data.data_len = af->aftuning_data_len;
@@ -3166,8 +3179,8 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 	ISP_LOGV("PD\t%lf\t%lf\t%lf\t%lf\n", pd_calc_result->pdPhaseDiff[0], pd_calc_result->pdPhaseDiff[1], pd_calc_result->pdPhaseDiff[2], pd_calc_result->pdPhaseDiff[3]);
 	ISP_LOGV("Conf\t%d\t%d\t%d\t%d Total [%d]\n", pd_calc_result->pdConf[0], pd_calc_result->pdConf[1], pd_calc_result->pdConf[2], pd_calc_result->pdConf[3],
 		 af->pd.pd_roi_num);
-	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d", pd_calc_result->pdGetFrameID,
-		 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4]);
+	ISP_LOGV("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf, pd_calc_result->pdDCCGain[4] = %d, af_type %d", pd_calc_result->pdGetFrameID,
+		 pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4], pd_calc_result->pdDCCGain[4], pd_calc_result->af_type);
 
 	return AFV1_SUCCESS;
 }

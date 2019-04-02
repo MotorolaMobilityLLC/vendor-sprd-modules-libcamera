@@ -311,6 +311,12 @@ typedef struct _ROIinfo_param {
 	struct AFtoPD_info_param ROI_info[45];
 } ROIinfo;
 
+typedef struct _saf_extra_data_s {
+	cmr_u8 pd_enable;
+	cmr_u8 pd_workable;
+	cmr_u32 reserved[20];
+} saf_extra_data_t;
+
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
@@ -357,7 +363,7 @@ typedef struct _AF_Ctrl_Ops {
 	//[MZ_+++] // Multi zone af to PD info
 	 cmr_u8(*set_Gridinfo_to_PD) (eAF_MODE AF_mode, ROIinfo * PD_ROI, void *cookie);
 	//[MZ_---]
-
+	 cmr_u8(*get_saf_extra_data) (saf_extra_data_t * saf_extra, void *cookie);
 } AF_Ctrl_Ops;
 
 typedef struct _af_tuning_block_param {
