@@ -3636,10 +3636,13 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
 			exposure = min_frame_line * cxt->cur_status.line_time;
 
-		if (exposure >= 10000000 || cxt->is_multi_mode) {
+		if (exposure >= 10000000) {
 			exp_time = (cmr_u32) (1.0 * exposure / 10000000 + 0.5) * 10000000;
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
-			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+			if(cxt->is_multi_mode)
+				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
+			else
+				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
 		} else
 			exp_line = (cmr_u32) (1.0 * exposure / cxt->cur_status.line_time + 0.5);
 	}
@@ -3650,10 +3653,13 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
 			exposure = min_frame_line * cxt->cur_status.line_time;
 
-		if (exposure >= 8333333 || cxt->is_multi_mode) {
+		if (exposure >= 8333333) {
 			exp_time = (cmr_u32) (1.0 * exposure / 8333333 + 0.5) * 8333333;
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
-			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+			if(cxt->is_multi_mode)
+				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
+			else
+				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
 		} else
 			exp_line = (cmr_u32) (1.0 * exposure / cxt->cur_status.line_time + 0.5);
 	}
