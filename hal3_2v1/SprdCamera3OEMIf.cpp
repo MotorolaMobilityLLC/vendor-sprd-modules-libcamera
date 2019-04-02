@@ -618,6 +618,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         if (mParaDCDVMode == CAMERA_PREVIEW_FORMAT_DV)
             mRecordingFirstFrameTime = 0;
 
+        if (sprddefInfo.slowmotion > 1) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+        }
+
 #ifdef CONFIG_CAMERA_EIS
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
