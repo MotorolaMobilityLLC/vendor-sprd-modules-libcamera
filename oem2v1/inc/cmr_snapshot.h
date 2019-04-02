@@ -212,6 +212,7 @@ struct snapshot_param {
     cmr_u32 is_yuv_callback_mode;
     cmr_uint filter_type;
     cmr_u32 is_cnr;
+    cmr_u32 is_snapshot;
 };
 
 struct encode_cb_param {

@@ -1316,7 +1316,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,
 #endif
-#if defined(CONFIG_ISP_2_3)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
     camera_set_gpu_mem_ops,
 #endif
     camera_get_rolling_shutter,

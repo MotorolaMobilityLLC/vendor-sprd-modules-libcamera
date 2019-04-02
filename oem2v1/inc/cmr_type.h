@@ -99,7 +99,6 @@ struct cmr_ae_compensation_param {
     cmr_s32 ae_exposure_compensation;
 };
 
-
 struct cmr_preview_fps_param {
     cmr_int is_recording;
     cmr_uint frame_rate;
@@ -153,6 +152,7 @@ struct frm_info {
     cmr_uint is_4in1_frame;
     cmr_u32 frame_num;
     cmr_u32 zoom_ratio;
+    cmr_int slave_fd;
 };
 
 struct beauty_info {

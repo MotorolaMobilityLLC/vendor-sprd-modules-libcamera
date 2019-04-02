@@ -741,6 +741,7 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
 
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
+    cmr_bzero(&parm, sizeof(struct sprd_img_parm));
 
     CMR_LOGV("chn_id=%d, cnt=%d, base_id=0x%x ", buf_cfg->channel_id,
              buf_cfg->count, buf_cfg->base_id);
@@ -770,6 +771,36 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
                  buf_cfg->channel_id, i, buf_cfg->fd[i],
                  buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
                  buf_cfg->is_reserved_buf);
+    }
+    if (buf_cfg->slave_frame_info.is_slave_eb) {
+        for (i = 0; i < buf_cfg->slave_frame_info.buffer_count; i++) {
+            parm.slave_frame_info.frame_addr_array[i].y =
+                buf_cfg->slave_frame_info.frame_addr_array[i].addr_y;
+            parm.slave_frame_info.frame_addr_array[i].u =
+                buf_cfg->slave_frame_info.frame_addr_array[i].addr_u;
+            parm.slave_frame_info.frame_addr_array[i].v =
+                buf_cfg->slave_frame_info.frame_addr_array[i].addr_u;
+            parm.slave_frame_info.frame_addr_vir_array[i].y =
+                buf_cfg->slave_frame_info.frame_addr_vir_array[i].addr_y;
+            parm.slave_frame_info.frame_addr_vir_array[i].u =
+                buf_cfg->slave_frame_info.frame_addr_vir_array[i].addr_u;
+            parm.slave_frame_info.frame_addr_vir_array[i].v =
+                buf_cfg->slave_frame_info.frame_addr_vir_array[i].addr_u;
+            parm.slave_frame_info.fd_array[i] =
+                buf_cfg->slave_frame_info.fd_array[i];
+            parm.slave_frame_info.is_slave_eb =
+                buf_cfg->slave_frame_info.is_slave_eb;
+            parm.slave_frame_info.buffer_count =
+                buf_cfg->slave_frame_info.buffer_count;
+            parm.slave_frame_info.dst_size.w =
+                buf_cfg->slave_frame_info.dst_size.w;
+            parm.slave_frame_info.dst_size.h =
+                buf_cfg->slave_frame_info.dst_size.h;
+            CMR_LOGD("slave_fd=0x%x slave_y=0x%lx slave_u=0x%lx slave_w=%d slave_h=%d",
+                     parm.slave_frame_info.fd_array[i],
+                     parm.slave_frame_info.frame_addr_vir_array[i].y,
+                     parm.slave_frame_info.frame_addr_vir_array[i].u,parm.slave_frame_info.dst_size.w,parm.slave_frame_info.dst_size.h);
+        }
     }
     if (buf_cfg->count > 0) {
         if (buf_cfg->is_4in1) {
@@ -916,7 +947,7 @@ cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR, threednr_info);
     CMR_RTN_IF_ERR(ret);
-    CMR_LOGI("SPRD_IMG_IO_SET_3DNR = %ld", ret);
+    CMR_LOGI("SPRD_IMG_IO_SET_3DNR = %ld ", ret);
 exit:
     CMR_LOGI("ret = %ld", ret);
     ATRACE_END();
@@ -1429,11 +1460,12 @@ static void *cmr_grab_thread_proc(void *data) {
                 frame.channel_id = op.parm.frame.channel_id;
 
                 CMR_LOGV("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
-                         "sec %u usec %u fd 0x%x, yaddr_vir 0x%x",
+                         "sec %u usec %u fd 0x%x, yaddr_vir 0x%x "
+                         "op.parm.frame.reserved[0] 0x%x",
                          p_grab->init_param.sensor_id, op.parm.frame.channel_id,
                          op.parm.frame.index, evt_id, op.parm.frame.sec,
                          op.parm.frame.usec, op.parm.frame.mfd,
-                         op.parm.frame.yaddr_vir);
+                         op.parm.frame.yaddr_vir, op.parm.frame.reserved[0]);
 
                 frame.height = op.parm.frame.height;
                 frame.frame_id = op.parm.frame.index;
@@ -1453,6 +1485,7 @@ static void *cmr_grab_thread_proc(void *data) {
                 frame.fd = op.parm.frame.mfd;
                 frame.frame_num = op.parm.frame.frame_id;
                 frame.zoom_ratio = op.parm.frame.zoom_ratio;
+                frame.slave_fd = op.parm.frame.reserved[0];
 
                 pthread_mutex_lock(&p_grab->status_mutex);
                 on_flag = p_grab->is_on;

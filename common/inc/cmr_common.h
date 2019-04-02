@@ -801,6 +801,15 @@ struct img_frm_cap {
     cmr_u32 enable_slave_img;
 };
 
+struct hal_sprd_slave_info {
+    cmr_u32 is_slave_eb;
+    cmr_u32 buffer_count;
+    struct sprd_img_size dst_size;
+    cmr_u32 fd_array[GRAB_BUF_MAX];
+    struct img_addr frame_addr_vir_array[GRAB_BUF_MAX];
+    struct img_addr frame_addr_array[GRAB_BUF_MAX];
+};
+
 struct buffer_cfg {
     cmr_u32 channel_id;
     cmr_u32 base_id;
@@ -817,6 +826,7 @@ struct buffer_cfg {
     cmr_uint zsl_private;
     cmr_uint is_4in1;
     cmr_s64 monoboottime;
+    struct hal_sprd_slave_info slave_frame_info;
 };
 
 struct cap_cfg {
@@ -2022,7 +2032,8 @@ typedef struct oem_ops {
     cmr_int (*camera_get_tuning_param)(cmr_handle camera_handle,
                                        struct tuning_param_info *tuning_info);
 #endif
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
+    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
     cmr_int (*camera_set_gpu_mem_ops)(cmr_handle camera_handle,
                                       void *cb_of_malloc, void *cb_of_free);
 #endif

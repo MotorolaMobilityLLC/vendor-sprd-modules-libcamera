@@ -216,6 +216,8 @@ struct preview_param {
     cmr_u32 isp_to_dram;
     cmr_u32 video_snapshot_type;
     cmr_u32 sprd_3dcalibration_enabled;
+    cmr_uint threednr_small_width;
+    cmr_uint threednr_small_height;
 };
 
 struct preview_out_param {
@@ -329,6 +331,11 @@ cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
                                        cmr_uint *vir_addr_y,
                                        cmr_u32 is_for_path,
                                        void **thrednr_handle);
+cmr_int cmr_preview_get_3dnr_target_buf(cmr_handle handle, cmr_u32 camera_id,
+                                        struct img_frm *buf_ptr);
+cmr_int cmr_preview_get_3dnr_buf_extra_small(
+    cmr_handle handle, cmr_u32 camera_id, struct frm_info *in,
+    cmr_uint *addr_vir_y, void **threednr_handle, struct img_frm *small_ptr);
 
 cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id);
 

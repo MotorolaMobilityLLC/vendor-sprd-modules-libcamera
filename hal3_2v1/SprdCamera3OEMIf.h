@@ -117,6 +117,9 @@ typedef struct sprd_camera_memory {
 } sprd_camera_memory_t;
 
 typedef struct sprd_3dnr_memory {
+#ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
+    const native_handle_t *native_handle;
+#endif
     sp<GraphicBuffer> bufferhandle;
     void *private_handle;
 } sprd_3dnr_memory_t;
@@ -508,6 +511,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                    cmr_s32 *fd);
     int Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                  cmr_s32 *fd, cmr_u32 sum);
+    int Callback_SmallPathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                               cmr_s32 *fd, cmr_u32 sum);
     int Callback_Sw3DNRCaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                    cmr_s32 *fd, cmr_u32 sum);
     int Callback_Sw3DNRCaptureMalloc(cmr_u32 size, cmr_u32 sum,
@@ -516,10 +521,16 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                      cmr_uint height);
     int Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                        cmr_s32 *fd, cmr_u32 sum);
+    int Callback_Sw3DNRSmallPathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                     cmr_s32 *fd, cmr_u32 sum);
     int Callback_Sw3DNRCapturePathMalloc(cmr_u32 size, cmr_u32 sum,
                                          cmr_uint *phy_addr, cmr_uint *vir_addr,
                                          cmr_s32 *fd, void **handle,
                                          cmr_uint width, cmr_uint height);
+    int Callback_Sw3DNRSmallPathMalloc(cmr_u32 size, cmr_u32 sum,
+                                       cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                       cmr_s32 *fd, void **handle,
+                                       cmr_uint width, cmr_uint height);
     int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
     int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
@@ -612,6 +623,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_3dnr_memory_t m3DNRGraphicArray[MAX_SUB_RAWHEAP_NUM];
     sprd_3dnr_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
 
+    sprd_camera_memory_t *mSmallSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_camera_memory_t *mSmallPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_3dnr_memory_t mSmall3DNRGraphicArray[MAX_SUB_RAWHEAP_NUM];
+    sprd_3dnr_memory_t mSmall3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
+
     sprd_camera_memory_t *mReDisplayHeap;
     // TODO: put the picture dimensions in the CameraParameters object;
     SprdCameraParameters mParameters;
@@ -700,6 +716,13 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;
+
+    uint32_t mSmallSubRawHeapNum;
+    uint32_t mSmall3dnrGraphicHeapNum;
+    uint32_t mSmall3dnrGraphicPathHeapNum;
+    uint32_t mSmallSubRawHeapSize;
+    uint32_t mSmallPathRawHeapNum;
+    uint32_t mSmallPathRawHeapSize;
 
     uint32_t mPreviewDcamAllocBufferCnt;
     sprd_camera_memory_t

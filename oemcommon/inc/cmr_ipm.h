@@ -30,6 +30,7 @@ struct ipm_class_tab {
 struct ipm_frame_in {
     struct img_frm src_frame;
     struct img_frm dst_frame;
+    struct img_frm small_src_frame;
     struct img_depth_map depth_map;
     cmr_uint touch_x;
     cmr_uint touch_y;
@@ -99,6 +100,8 @@ struct ipm_open_out {
     enum img_fmt format;
     cmr_uint total_frame_number;
     struct ipm_version version;
+    cmr_uint small_image_width;
+    cmr_uint small_image_height;
 };
 
 struct ipm_capability {

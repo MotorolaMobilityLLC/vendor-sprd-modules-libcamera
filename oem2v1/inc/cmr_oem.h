@@ -124,6 +124,8 @@ struct ipm_context {
     cmr_u32 ai_scene_inited;
     struct ipm_version hdr_version;
     cmr_u32 four_in_one_inited;
+    cmr_uint threenr_small_width;
+    cmr_uint threenr_small_height;
 };
 
 struct preview_context {
@@ -333,6 +335,7 @@ struct camera_context {
     cmr_u8 mode_4in1;
     struct img_rect trim_reset_info;
     cmr_u8 is_cnr;
+    cmr_uint is_snapshot;
 };
 
 struct prev_threednr_info {
