@@ -1553,8 +1553,23 @@ static int cal_channel_size(struct camera_module *module)
 
 		if ((1 << RATIO_SHIFT) >= ratio_min) {
 			/* enlarge @trim_pv and crop it in isp */
-			uint32_t align = 2;// TODO set to 4 for zzhdr
+			uint32_t align = 2; /* TODO set to 4 for zzhdr */
 
+			trim_pv.size_x = max(trim_pv.size_x, dcam_out.w);
+			trim_pv.size_y = max(trim_pv.size_y, dcam_out.h);
+			trim_pv.size_x = ALIGN(trim_pv.size_x, align >> 1);
+			trim_pv.size_y = ALIGN(trim_pv.size_y, align >> 1);
+			if (src_p.w >= trim_pv.size_x)
+				trim_pv.start_x = (src_p.w - trim_pv.size_x) >> 1;
+			else
+				trim_pv.start_x = 0;
+			if (src_p.h >= trim_pv.size_y)
+				trim_pv.start_y = (src_p.h - trim_pv.size_y) >> 1;
+			else
+				trim_pv.start_y = 0;
+			trim_pv.start_x = ALIGN_DOWN(trim_pv.start_x, align);
+			trim_pv.start_y = ALIGN_DOWN(trim_pv.start_y, align);
+#if			0 /* if no need, remove later */
 			trim_pv.start_x =
 				ALIGN_DOWN((src_p.w - dcam_out.w) >> 1, align);
 			trim_pv.start_y =
@@ -1563,6 +1578,7 @@ static int cal_channel_size(struct camera_module *module)
 				ALIGN(src_p.w - (trim_pv.start_x << 1), align);
 			trim_pv.size_y =
 				ALIGN(src_p.h - (trim_pv.start_y << 1), align);
+#endif
 			ratio_min = 1 << RATIO_SHIFT;
 			pr_info("trim_pv aligned %u %u %u %u\n",
 				trim_pv.start_x, trim_pv.start_y,
@@ -1588,10 +1604,25 @@ static int cal_channel_size(struct camera_module *module)
 			divide_ratio16(ch_prev->ch_uinfo.src_crop.w, ratio_min);
 		ch_prev->trim_isp.size_y =
 			divide_ratio16(ch_prev->ch_uinfo.src_crop.h, ratio_min);
-		ch_prev->trim_isp.start_x =
-			(dcam_out.w - ch_prev->trim_isp.size_x) >> 1;
-		ch_prev->trim_isp.start_y =
-			(dcam_out.h - ch_prev->trim_isp.size_y) >> 1;
+		ch_prev->trim_isp.size_x =
+			min(ch_prev->trim_isp.size_x, dcam_out.w);
+		ch_prev->trim_isp.size_y =
+			min(ch_prev->trim_isp.size_y, dcam_out.h);
+		if (dcam_out.w >= ch_prev->trim_isp.size_x)
+			ch_prev->trim_isp.start_x =
+				(dcam_out.w - ch_prev->trim_isp.size_x) >> 1;
+		else {
+			ch_prev->trim_isp.start_x = 0;
+			pr_warn("shouldn't run here\n");
+		}
+		if (dcam_out.h >= ch_prev->trim_isp.size_y)
+			ch_prev->trim_isp.start_y =
+				(dcam_out.h - ch_prev->trim_isp.size_y) >> 1;
+		else {
+			ch_prev->trim_isp.start_y = 0;
+			pr_warn("shouldn't run here\n");
+		}
+
 		pr_info("trim isp, prev %u %u %u %u\n",
 			ch_prev->trim_isp.start_x, ch_prev->trim_isp.start_y,
 			ch_prev->trim_isp.size_x, ch_prev->trim_isp.size_y);
