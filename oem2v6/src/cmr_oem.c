@@ -11646,6 +11646,8 @@ cmr_int camera_local_image_sw_algorithm_processing(
         goto exit;
     }
 
+    cmr_snapshot_invalidate_cache(cxt->snp_cxt.snapshot_handle, &ipm_in_param.src_frame);
+
     if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR) {
         ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
                                  &imp_out_param);
