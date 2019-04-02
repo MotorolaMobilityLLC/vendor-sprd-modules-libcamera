@@ -2413,17 +2413,17 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		pr_err("error id. ctx %d\n", ctx_id);
 		return -EFAULT;
 	}
+	if (path_id >= ISP_SPATH_NUM) {
+			pr_err("error id. path %d\n", path_id);
+			return -EFAULT;
+	}
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[ctx_id];
+	path = &pctx->isp_path[path_id];
 
 	if ((cfg_cmd != ISP_PATH_CFG_CTX_BASE) &&
 		(cfg_cmd != ISP_PATH_CFG_CTX_SIZE) &&
 		(cfg_cmd != ISP_PATH_CFG_CTX_COMPRESSION)) {
-		if (path_id >= ISP_SPATH_NUM) {
-			pr_err("error id. path %d\n", path_id);
-			return -EFAULT;
-		}
-		path = &pctx->isp_path[path_id];
 		if (atomic_read(&path->user_cnt) == 0) {
 			pr_err("isp cxt %d, path %d is not in use.\n",
 					ctx_id, path_id);

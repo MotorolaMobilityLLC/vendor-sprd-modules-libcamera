@@ -876,6 +876,7 @@ int isp_ltm_gen_frame_config(struct isp_ltm_ctx_desc *ctx)
 		ctx->type, ctx->fid, ctx->frame_width, ctx->frame_height);
 
 	for (i = 0; i < ISP_LTM_BUF_NUM; i++) {
+		if (ctx->pbuf[i])
 		pr_debug("ctx->pbuf[%d] =  0x%p, 0x%lx\n",
 			i, ctx->pbuf[i], ctx->pbuf[i]->iova[0]);
 	}
