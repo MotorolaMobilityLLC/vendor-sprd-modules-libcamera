@@ -4475,7 +4475,7 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 
 			if (cxt->cur_status.to_ae_state == 2)
 				rtn = ae_set_restore_cnt(cxt);
-			ISP_LOGV("AE_SET_TOUCH_ZONE ae triger %d", cxt->cur_status.settings.touch_scrn_status);
+			ISP_LOGD("AE_SET_TOUCH_ZONE ae triger %d", cxt->cur_status.settings.touch_scrn_status);
 		} else {
 			ISP_LOGV("AE_SET_TOUCH_ZONE touch ignore\n");
 		}
@@ -4613,6 +4613,11 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			} else {
 				if (cxt->exposure_compensation.comp_val == 0){
 					cxt->exposure_compensation.ae_base_target = cxt->cur_param->target_lum;
+					cxt->mod_update_list.is_mev = 0;
+					cxt->cur_status.settings.ev_manual_status = 0;
+				}else{
+					cxt->mod_update_list.is_mev = 1;
+					cxt->cur_status.settings.ev_manual_status = 1;
 				}
 				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
 				cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;
