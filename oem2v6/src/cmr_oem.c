@@ -9759,7 +9759,9 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_AUTO_EXPOSURE_MODE:
         ae_param = *(struct cmr_ae_param *)param;
         isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
-        isp_param = param;
+        isp_param = ae_param.mode;
+        CMR_LOGD("set AE mode %d", isp_param);
+        break;
 
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
         isp_cmd = ISP_CTRL_SET_AE_LOCK_UNLOCK;
