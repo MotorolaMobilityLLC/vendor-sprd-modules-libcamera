@@ -1666,7 +1666,8 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
 
 static void camera_cfg_face_roi(cmr_handle oem_handle,
                                 struct camera_frame_type *frame_param,
-                                struct isp_face_area *face_area) {
+                                struct isp_face_area *face_area,
+                                struct sprd_img_path_rect *sn_trim) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_s32 sx = 0;
     cmr_s32 sy = 0;
@@ -1698,9 +1699,7 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
         cxt->fd_face_area.face_info[i].sy = sy;
         cxt->fd_face_area.face_info[i].ex = ex;
         cxt->fd_face_area.face_info[i].ey = ey;
-        cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
-        cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
-
+#ifdef CONFIG_CAMERA_FACE_ROI
         face_area->face_info[i].sx = 1.0 * sx * (float)face_area->frame_width /
                                      (float)frame_param->width;
         face_area->face_info[i].sy = 1.0 * sy * (float)face_area->frame_height /
@@ -1709,6 +1708,38 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
                                      (float)frame_param->width;
         face_area->face_info[i].ey = 1.0 * ey * (float)face_area->frame_height /
                                      (float)frame_param->height;
+#else
+        float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+              zoomHeight = 0;
+        struct sprd_img_rect scalerCrop;
+        CMR_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
+                 frame_param->width, frame_param->height, sx, sy, ex, ey);
+        scalerCrop.x = sn_trim->trim_valid_rect.x;
+        scalerCrop.y = sn_trim->trim_valid_rect.y;
+        scalerCrop.w = sn_trim->trim_valid_rect.w;
+        scalerCrop.h = sn_trim->trim_valid_rect.h;
+        float previewAspect = (float)frame_param->width / frame_param->height;
+        float cropAspect = (float)scalerCrop.w / scalerCrop.h;
+        if (previewAspect > cropAspect) {
+            width = scalerCrop.w;
+            height = scalerCrop.w / previewAspect;
+            left = scalerCrop.x;
+            top = scalerCrop.y + (scalerCrop.h - height) / 2;
+        } else {
+            width = previewAspect * scalerCrop.h;
+            height = scalerCrop.h;
+            left = scalerCrop.x + (scalerCrop.w - width) / 2;
+            top = scalerCrop.y;
+        }
+        zoomWidth = width / (float)frame_param->width;
+        zoomHeight = height / (float)frame_param->height;
+        face_area->face_info[i].sx = (cmr_s32)((float)sx * zoomWidth + left);
+        face_area->face_info[i].sy = (cmr_s32)((float)sy * zoomHeight + top);
+        face_area->face_info[i].ex = (cmr_s32)((float)ex * zoomWidth + left);
+        face_area->face_info[i].ey = (cmr_s32)((float)ey * zoomHeight + top);
+#endif
+        cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
+        cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
         face_area->face_info[i].brightness =
             frame_param->face_info[i].brightness;
         face_area->face_info[i].angle = frame_param->face_info[i].angle;
@@ -1770,6 +1801,8 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct img_rect src_prev_rect;
             struct sensor_mode_info *sensor_mode_info = NULL;
             cmr_u32 sn_mode = 0;
+            struct sprd_img_path_rect sn_trim;
+            bzero(&sn_trim, sizeof(struct sprd_img_path_rect));
 #ifdef CONFIG_CAMERA_OFFLINE
             struct img_rect af_trim = {0, 0, 0, 0};
 #endif
@@ -1786,6 +1819,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
 
             cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                 &sn_mode);
+#ifndef CONFIG_CAMERA_FACE_ROI
+            cmr_grab_get_dcam_path_trim(cxt->grab_cxt.grab_handle, &sn_trim);
+#endif
             sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
             face_area.frame_width = sensor_mode_info->trim_width;
             face_area.frame_height = sensor_mode_info->trim_height;
@@ -1798,7 +1834,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             CMR_LOGV("face_num %d, size:%dx%d, frame_param->is_update_isp:%d ",
                      face_area.face_num, face_area.frame_width,
                      face_area.frame_height, frame_param->is_update_isp);
-            camera_cfg_face_roi(cxt, frame_param, &face_area);
+            camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
 
             if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format &&
                 (!cxt->is_vendor_hdr) && /* SS requires to disable FD when HDR
@@ -1818,7 +1854,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             CMR_LOGV("af face_num %d, size:%dx%d", face_area.face_num,
                      face_area.frame_width, face_area.frame_height);
 
-            camera_cfg_face_roi(cxt, frame_param, &face_area);
+            camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
 
             if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format &&
                 (!cxt->is_vendor_hdr) && /* SS requires to disable FD when HDR
@@ -8826,7 +8862,7 @@ cmr_int camera_local_set_thumb_size(cmr_handle oem_handle,
     }
 
     ret = cmr_preview_set_thumb_size(prv_cxt->preview_handle, cxt->camera_id,
-                               thum_size);
+                                     thum_size);
 
     return ret;
 }

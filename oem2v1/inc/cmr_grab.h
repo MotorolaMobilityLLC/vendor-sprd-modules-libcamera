@@ -118,9 +118,12 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
                                  cmr_u32 channel_id);
 cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg);
-cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle, struct buffer_cfg *buf_cfg);
+cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
+                             struct buffer_cfg *buf_cfg);
 cmr_int cmr_grab_dcam_size(cmr_handle grab_handle,
                            struct sprd_dcam_path_size *dcam_cfg);
+cmr_int cmr_grab_get_dcam_path_trim(cmr_handle grab_handle,
+                                    struct sprd_img_path_rect *path_trim);
 cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
                              struct sprd_img_3dnr_param *threednr);
 
