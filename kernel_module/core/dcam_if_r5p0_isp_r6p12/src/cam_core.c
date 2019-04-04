@@ -181,6 +181,7 @@ struct camera_dev {
 	struct isp_dev_fetch_info fetch_info;
 	struct camera_group *grp;
 	uint32_t need_downsizer;
+	uint32_t hw_simu_k_flag;
 };
 
 struct camera_group {

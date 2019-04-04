@@ -116,6 +116,9 @@ static int sprd_camdrv_compat_get_raw_proc_info(
 	err = get_user(tmp, &data32->img_fd);
 	err |= put_user(tmp, &data->img_fd);
 
+	err = get_user(tmp, &data32->hw_simu_flag);
+	err |= put_user(tmp, &data->hw_simu_flag);
+
 	return err;
 }
 

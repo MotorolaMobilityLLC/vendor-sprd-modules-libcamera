@@ -64,6 +64,7 @@ struct compat_isp_raw_proc_info {/* TODO */
 	struct compat_isp_addr img_offset;
 	unsigned int img_fd;
 	unsigned int padding;
+	unsigned int hw_simu_flag;
 };
 
 struct compat_isp_io_param {/* TODO */

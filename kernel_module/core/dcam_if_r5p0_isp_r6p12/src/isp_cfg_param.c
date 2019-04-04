@@ -37,6 +37,7 @@ static struct isp_cfg_fun isp_cfg_fun_tab[] = {
 	{ISP_BLOCK_YUV_CDN,     isp_k_cfg_yuv_cdn},
 	{ISP_BLOCK_UVD,         isp_k_cfg_uvd},
 	{ISP_BLOCK_HSV,         isp_k_cfg_hsv},
+	{ISP_BLOCK_HUE,         isp_k_cfg_hue},
 	{ISP_BLOCK_YNR,         isp_k_cfg_ynr},
 	{ISP_BLOCK_IIRCNR,      isp_k_cfg_iircnr},
 	{ISP_BLOCK_NLM,         isp_k_cfg_nlm},

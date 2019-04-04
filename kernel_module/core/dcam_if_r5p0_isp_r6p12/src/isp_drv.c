@@ -498,7 +498,6 @@ static void sprd_ispdrv_common_cfg(uint32_t com_idx)
 	ISP_REG_MWR(com_idx, ISP_HIST_PARAM, BIT_0 | BIT_1, 0x1);
 	ISP_REG_MWR(com_idx, ISP_HIST_CFG_READY, BIT_0, 1);
 #endif
-	ISP_REG_MWR(com_idx, ISP_HUA_PARAM, BIT_0, 1);
 	ISP_REG_MWR(com_idx, ISP_YGAMMA_PARAM, BIT_0, 1);
 	ISP_REG_MWR(com_idx, ISP_YRANDOM_PARAM1, BIT_0, 1);
 

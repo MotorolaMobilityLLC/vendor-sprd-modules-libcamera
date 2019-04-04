@@ -1083,6 +1083,7 @@ static int sprd_camioctl_video_update(struct camera_dev *dev,
 	struct camera_size out_size;
 	struct crop_param_t crop_param;
 	struct rawsizer_param_t rawsizer_parm;
+	int output_ratio = 1, input_ratio = 1;
 
 	if (!dev) {
 		pr_err("fail to get valid input ptr\n");
@@ -1118,9 +1119,18 @@ static int sprd_camioctl_video_update(struct camera_dev *dev,
 					path_bin->zoom_info.zoom_mode
 						= ZOOM_RAWSIZER;
 			}
+			output_ratio = path->out_size.w * 1000
+					/ path->out_size.h;
+			input_ratio = path->in_size.w * 1000
+					/ path->in_size.h;
 			if (path->in_rect.w) {
-				zoom_ratio = path->in_size.w * 1000
+				if (output_ratio > input_ratio) {
+					zoom_ratio = path->in_size.w * 1000
 						/ path->in_rect.w;
+				} else {
+					zoom_ratio = path->in_size.h * 1000
+						/ path->in_rect.h;
+				}
 				dev->zoom_ratio = zoom_ratio;
 			}
 			if (path_vid->is_work)
@@ -1192,8 +1202,16 @@ static int sprd_camioctl_video_update(struct camera_dev *dev,
 					&path->in_size,
 					&path->in_rect,
 					&path->out_size);
+	output_ratio = path->out_size.w * 1000 / path->out_size.h;
+	input_ratio = path->in_size.w * 1000 / path->in_size.h;
 	if (path->in_rect.w) {
-		zoom_ratio = path->in_size.w * 1000 / path->in_rect.w;
+		if (output_ratio > input_ratio) {
+			zoom_ratio = path->in_size.w * 1000
+				/ path->in_rect.w;
+		} else {
+			zoom_ratio = path->in_size.h * 1000
+				/ path->in_rect.h;
+		}
 		dev->zoom_ratio = zoom_ratio;
 	}
 
@@ -1666,6 +1684,7 @@ static int sprd_camioctl_bin_size_get(struct camera_path_spec *pre,
 {
 	int ret = 0;
 	int zoom_ratio = 1;
+	int output_ratio = 1, input_ratio = 1;
 	struct crop_param_t crop_param;
 	struct rawsizer_param_t rawsizer_parm;
 
@@ -1694,8 +1713,17 @@ static int sprd_camioctl_bin_size_get(struct camera_path_spec *pre,
 					pre->in_size.h,
 					pre->out_size.w,
 					pre->out_size.h);
-				zoom_ratio = pre->in_size.w * 1000
+				output_ratio = pre->out_size.w * 1000
+						/ pre->out_size.h;
+				input_ratio = pre->in_size.w * 1000
+						/ pre->in_size.h;
+				if (output_ratio > input_ratio) {
+					zoom_ratio = pre->in_size.w * 1000
 						/ pre->in_rect.w;
+				} else {
+					zoom_ratio = pre->in_size.h * 1000
+						/ pre->in_rect.h;
+				}
 				pr_debug("in_size.w = %d, in_rect.w = %d, ratio = %d\n",
 					pre->in_size.w,
 					pre->in_rect.w,
@@ -1768,8 +1796,17 @@ static int sprd_camioctl_bin_size_get(struct camera_path_spec *pre,
 					vid->in_size.h,
 					vid->out_size.w,
 					vid->out_size.h);
-				zoom_ratio = vid->in_size.w * 1000
+				output_ratio = vid->out_size.w * 1000
+						/ vid->out_size.h;
+				input_ratio = vid->in_size.w * 1000
+						/ vid->in_size.h;
+				if (output_ratio > input_ratio) {
+					zoom_ratio = vid->in_size.w * 1000
 						/ vid->in_rect.w;
+				} else {
+					zoom_ratio = vid->in_size.h * 1000
+						/ vid->in_rect.h;
+				}
 				pr_debug("in_size.w = %d, in_rect.w = %d, ratio = %d\n",
 					vid->in_size.w,
 					vid->in_rect.w,
@@ -3044,6 +3081,11 @@ static int sprd_camioctl_dcam_fetch_stop(enum dcam_id idx,
 	group->fetch_inited &= ~(1 << fetch_idx);
 	pr_info("dcam%d => dcam%d fetch stop end!\n", idx, fetch_idx);
 
+	if (dev->hw_simu_k_flag == 1) {
+		sprd_cam_buf_sg_table_put(idx);
+		dev->hw_simu_k_flag = 0;
+	}
+
 	return ret;
 }
 
@@ -4308,6 +4350,9 @@ static int sprd_camioctl_io_raw_cap(struct camera_file *camerafile,
 		mutex_unlock(&dev->cam_mutex);
 		goto exit;
 	}
+
+	dev->hw_simu_k_flag = raw_cap.hw_simu_flag;
+
 	wait_for_completion(&group->fetch_com);
 	ret = sprd_isp_drv_raw_cap_proc(isp_dev, &raw_cap);
 	mutex_unlock(&dev->cam_mutex);

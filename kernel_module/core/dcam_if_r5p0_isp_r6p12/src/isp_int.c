@@ -570,6 +570,14 @@ static void sprd_ispint_fmcu_config_done(enum isp_id idx, void *isp_handle)
 			pr_err("fail to start slice capture\n");
 			return;
 		}
+		if (nr3_info->cur_cap_frame == ISP_3DNR_NUM
+			&& dev->cap_flag == DCAM_CAPTURE_START_3DNR) {
+			dev->isp_offline_state = ISP_ST_START;
+			sprd_dcam_full_path_buf_reset(id);
+			sprd_cam_queue_frm_clear(&module->full_zsl_queue);
+			sprd_dcam_full_path_next_frm_set(id);
+			sprd_dcam_drv_path_resume(id, CAMERA_FULL_PATH);
+		}
 	} else {
 		while (!sprd_cam_queue_frm_dequeue(
 			&module->full_zsl_queue, &frame)) {

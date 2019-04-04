@@ -198,35 +198,6 @@ int sprd_isp_3dnr_blending_calc(struct nr3_slice *in,
 				out->src_chr_addr += mv_x;
 			}
 		}
-		if (mv_y < 0) {
-			if ((mv_y) & 0x1) {
-				out->last_line_mode = 0;
-				out->ft_uv_height =
-					global_img_height / 2 + mv_y / 2;
-			} else {
-				out->last_line_mode = 1;
-				out->ft_uv_height =
-					global_img_height / 2 + mv_y / 2 + 1;
-			}
-			out->first_line_mode = 0;
-			out->ft_y_height = global_img_height + mv_y;
-		} else if (mv_y > 0) {
-			if ((mv_y) & 0x1) {
-				out->first_line_mode = 1;
-				out->last_line_mode = 0;
-				out->ft_y_height = global_img_height - mv_y;
-				out->ft_uv_height =
-					global_img_height / 2 - (mv_y / 2);
-				out->src_lum_addr += ft_pitch * mv_y;
-				out->src_chr_addr += ft_pitch * (mv_y / 2);
-			} else {
-				out->ft_y_height = global_img_height - mv_y;
-				out->ft_uv_height =
-					global_img_height / 2 - (mv_y / 2);
-				out->src_lum_addr += ft_pitch*mv_y;
-				out->src_chr_addr += ft_pitch * (mv_y / 2);
-			}
-		}
 	} else {
 		if (out->start_col == 0) {
 			if (mv_x < 0) {
@@ -293,42 +264,32 @@ int sprd_isp_3dnr_blending_calc(struct nr3_slice *in,
 				}
 			}
 		}
-		if (out->start_row == 0) {
-			if (mv_y < 0) {
-				out->ft_y_height = out->ft_y_height + mv_y;
-				out->ft_uv_height =
-					out->ft_uv_height + (mv_y / 2);
-			}
-		}
-		if ((global_img_height - 1) == end_row) {
-			if (mv_y > 0) {
-				out->ft_y_height = out->ft_y_height - mv_y;
-				out->ft_uv_height =
-					out->ft_uv_height - (mv_y / 2);
-			}
-		}
-		if ((out->start_row == 0) && mv_y < 0) {
-			out->src_lum_addr = out->src_lum_addr;
-			out->src_chr_addr = out->src_chr_addr;
+	}
+
+	if (mv_y < 0) {
+		if ((mv_y) & 0x1) {
+			out->last_line_mode = 0;
+			out->ft_uv_height = global_img_height / 2 + mv_y / 2;
 		} else {
-			out->src_lum_addr = out->src_lum_addr
-				+ ft_pitch * mv_y;
-			out->src_chr_addr = out->src_chr_addr
-				+ ft_pitch * (mv_y / 2);
-		}
-		if ((out->start_row != 0 || mv_y > 0)
-			&& ((mv_y) & 0x1)) {
-			out->first_line_mode = 1;
-			out->ft_uv_height = out->ft_uv_height + 1;
-			if (mv_y < 0) {
-				out->src_chr_addr = out->src_chr_addr
-					- ft_pitch;
-			}
-		}
-		if (((global_img_height - 1) != end_row || mv_y < 0)
-			&& ((mv_y) & 0x1) == 0) {
 			out->last_line_mode = 1;
-			out->ft_uv_height = out->ft_uv_height + 1;
+			out->ft_uv_height =
+				global_img_height / 2 + mv_y / 2 + 1;
+		}
+		out->first_line_mode = 0;
+		out->ft_y_height = global_img_height + mv_y;
+	} else if (mv_y > 0) {
+		if ((mv_y) & 0x1) {
+			out->first_line_mode = 1;
+			out->last_line_mode = 0;
+			out->ft_y_height = global_img_height - mv_y;
+			out->ft_uv_height = global_img_height / 2 - (mv_y / 2);
+			out->src_lum_addr += ft_pitch * mv_y;
+			out->src_chr_addr += ft_pitch * (mv_y / 2);
+		} else {
+			out->ft_y_height = global_img_height - mv_y;
+			out->ft_uv_height = global_img_height / 2 - (mv_y / 2);
+			out->src_lum_addr += ft_pitch * mv_y;
+			out->src_chr_addr += ft_pitch * (mv_y / 2);
 		}
 	}
 
