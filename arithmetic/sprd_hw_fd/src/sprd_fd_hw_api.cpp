@@ -353,17 +353,17 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_MOD_CFG ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_MOD_CFG ret %d",ret);
 			return HWFD_ERROR;
 		}
-		
+
 		/*Set cmd num*/
 		cmd_para.reg_param = SPRD_FD_REG_PARAM_CMD_NUM;
 		cmd_para.reg_val = request->fd_cmd_num;
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_CMD_NUM ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_CMD_NUM ret %d",ret);
 			return HWFD_ERROR;
 		}
 
@@ -373,7 +373,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_IMAGE_BADDR ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_IMAGE_BADDR ret %d",ret);
 			return HWFD_ERROR;
 		}
 
@@ -383,7 +383,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_IMAGE_LINENUM ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_IMAGE_LINENUM ret %d",ret);
 			return HWFD_ERROR;
 		}
 
@@ -393,7 +393,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_FACE_NUM ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_FACE_NUM ret %d",ret);
 			return HWFD_ERROR;
 		}
 
@@ -403,7 +403,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_OUT_BUF_ADDR ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_OUT_BUF_ADDR ret %d",ret);
 			return HWFD_ERROR;
 		}
 
@@ -413,7 +413,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_DIM_BUF_ADDR ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_DIM_BUF_ADDR ret %d",ret);
 			return HWFD_ERROR;
 		}
 
@@ -428,7 +428,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_CMD_BADDR ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_CMD_BADDR ret %d",ret);
 			FreeFDMem(cmd_queue);
 			return HWFD_ERROR;
 		}
@@ -439,7 +439,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd, SPRD_FD_IO_WRITE, &cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_RUN ret %d",ret);
+			ALOGE("SPRD_FD_REG_PARAM_RUN ret %d",ret);
 			FreeFDMem(cmd_queue);
 			return HWFD_ERROR;
 		}
@@ -450,11 +450,13 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		ret = ioctl(fd, SPRD_FD_IO_READ, &cmd_para);
 		if(ret < 0)
 		{
-			ALOGI("SPRD_FD_REG_PARAM_FACE_NUM ret %d",ret >> 16);
+			ALOGE("SPRD_FD_REG_PARAM_FACE_NUM ret %d",ret >> 16);
 			FreeFDMem(cmd_queue);
 			return HWFD_ERROR;
 		}
+#ifdef LOG_DEBUG
 		ALOGI("Get face num %02X",cmd_para.reg_val);
+#endif
 		response->face_count = cmd_para.reg_val >> 16;
 		response->data = out->data;
 		FreeFDMem(cmd_queue);

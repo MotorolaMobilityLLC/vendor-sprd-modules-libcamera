@@ -31,10 +31,14 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/modules/libmemion
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/external/kernel-headers
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/modules/libcamera/kernel_module/interface
-	
+
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils libmemion
 #LOCAL_CFLAGS += -DFD_DEBUG
 LOCAL_CFLAGS += -Wall -Wextra -Wno-date-time
+
+ifeq ($(TARGET_BUILD_VARIANT),userdebug)
+LOCAL_CFLAGS += -DLOG_DEBUG
+endif
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_PROPRIETARY_MODULE := true
