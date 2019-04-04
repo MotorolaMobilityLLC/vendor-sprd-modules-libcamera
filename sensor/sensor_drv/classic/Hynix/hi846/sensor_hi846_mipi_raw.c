@@ -394,7 +394,7 @@ static cmr_int hi846_drv_access_val(cmr_handle handle, cmr_uint param) {
         // ret = hi846_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
-    // ret = hi846_qunhui_identify_otp(handle, s_hi846_otp_info_ptr, param_ptr);
+        ret = hi846_qunhui_identify_otp(handle, s_hi846_otp_info_ptr, param_ptr);
     default:
         break;
     }

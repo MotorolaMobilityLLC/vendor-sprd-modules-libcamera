@@ -417,7 +417,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "s5k4h9yx", &g_s5k4h9yx_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef S5K3L6
-    {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef S5K3P9SX04
     {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
