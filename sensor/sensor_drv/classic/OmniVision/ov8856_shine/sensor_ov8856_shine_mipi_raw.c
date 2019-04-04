@@ -176,13 +176,12 @@ static void ov8856_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         fps = 1000000000.0 / ((shutter + dummy_line) *
                               sns_drv_cxt->trim_tab_info[mode].line_time);
     }
-    SENSOR_LOGV("fps = %f", fps);
 
     frame_interval = (uint16_t)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
-    SENSOR_LOGI(
-        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
-        mode, shutter, dummy_line, frame_interval);
+    SENSOR_LOGD(
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms, fps = %f",
+        mode, shutter, dummy_line, frame_interval, fps);
 
     if (dest_fr_len != cur_fr_len) {
         sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
@@ -619,8 +618,6 @@ static cmr_int ov8856_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    SENSOR_LOGV("E");
 
     info->aec_i2c_info_out = &ov8856_aec_info;
     exposure_line = info->exp.exposure;

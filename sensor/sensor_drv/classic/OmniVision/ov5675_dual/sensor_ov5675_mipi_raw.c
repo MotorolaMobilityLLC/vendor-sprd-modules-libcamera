@@ -408,7 +408,7 @@ ov5675_drv_update_exposure(cmr_handle handle, uint32_t shutter,
         ov5675_drv_set_cur_frm_len(handle, dest_fr_len, aec_info);
     sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
 
-    SENSOR_LOGI("shutter=%d, dummy_line=%d,dest_fr_len=%d,cur_fr_len=%d",
+    SENSOR_LOGD("shutter=%d, dummy_line=%d,dest_fr_len=%d,cur_fr_len=%d",
                 shutter, dummy_line, dest_fr_len, cur_fr_len);
 
 write_sensor_shutter:
@@ -629,7 +629,7 @@ static cmr_int ov5675_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     dummy_line = ex->dummy;
     mode = ex->size_index;
 
-    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+    SENSOR_LOGD("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
@@ -671,7 +671,7 @@ static cmr_int ov5675_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     real_gain = real_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : real_gain;
     real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_LOGI("real_gain = %f", real_gain);
+    SENSOR_LOGD("real_gain = %f", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     ov5675_drv_write_gain(handle, real_gain, &ov5675_aec_info);
@@ -840,8 +840,6 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGV("E");
-
     info->aec_i2c_info_out = &ov5675_aec_info;
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
@@ -850,7 +848,7 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
     frame_interval = (uint16_t)(
         ((exposure_line + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
-    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line= %d, "
+    SENSOR_LOGD("current mode = %d, exposure_line = %d, dummy_line= %d, "
                 "frame_interval= %d ms",
                 mode, exposure_line, dummy_line, frame_interval);
 
@@ -871,7 +869,6 @@ static cmr_int ov5675_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
 
     // ov5675_drv_write_gain_value(handle, info->gain);
 
-    SENSOR_LOGV("ov5675_drv_read_aec_info!!!!!");
     return ret_value;
 }
 

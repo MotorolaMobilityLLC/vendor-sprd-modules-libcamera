@@ -154,7 +154,7 @@ static void imx363_drv_write_gain(cmr_handle handle, float gain) {
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
-    SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
+    SENSOR_LOGD("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
 
     // imx363_group_hold_off(handle);
 }
@@ -523,7 +523,7 @@ static cmr_int imx363_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     dummy_line = ex->dummy;
     mode = ex->size_index;
 
-    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+    SENSOR_LOGD("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
@@ -565,7 +565,7 @@ static cmr_int imx363_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     real_gain = (float)param / ISP_BASE_GAIN * 1.0;
 
-    SENSOR_LOGI("real_gain = %f", real_gain);
+    SENSOR_LOGD("real_gain = %f", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     imx363_drv_write_gain(handle, real_gain);
@@ -1073,7 +1073,7 @@ static cmr_u16 imx363_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     cmr_u16 frame_interval = 0x00;
     frame_interval = (cmr_u16)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
-    SENSOR_LOGI("exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+    SENSOR_LOGD("exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
                 shutter, dummy_line, frame_interval);
 
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;

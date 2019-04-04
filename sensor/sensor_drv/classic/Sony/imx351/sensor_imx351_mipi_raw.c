@@ -171,7 +171,7 @@ static void imx351_drv_write_gain(cmr_handle handle, double gain) {
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
-    SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, sensor_dgain);
+    SENSOR_LOGD("realgain=%f,again=%d,dgain=%f", gain, sensor_again, sensor_dgain);
 
     // imx351_group_hold_off(handle);
 }
@@ -536,7 +536,7 @@ static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     dummy_line = ex->dummy;
     mode = ex->size_index;
 
-    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+    SENSOR_LOGD("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
@@ -1171,7 +1171,7 @@ static cmr_u16 imx351_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     cmr_u16 frame_interval = 0x00;
     frame_interval = (cmr_u16)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
-    SENSOR_LOGI("exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+    SENSOR_LOGD("exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
                 shutter, dummy_line, frame_interval);
 
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;

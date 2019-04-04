@@ -165,7 +165,7 @@ static void imx258_drv_write_gain(cmr_handle handle, double gain) {
                         (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0215, sensor_dgain & 0xFF);
 
-    SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, sensor_dgain);
+    SENSOR_LOGD("realgain=%f,again=%d,dgain=%f", gain, sensor_again, sensor_dgain);
 
     // imx258_group_hold_off(handle);
 }
@@ -522,7 +522,7 @@ static cmr_int imx258_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     dummy_line = ex->dummy;
     mode = ex->size_index;
 
-    SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
+    SENSOR_LOGD("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                 exposure_line, dummy_line);
 
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
@@ -557,7 +557,7 @@ static cmr_int imx258_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     real_gain = (double)param  / ISP_BASE_GAIN * 1.0;
 
-    SENSOR_LOGI("real_gain = %f %d", real_gain,param);
+    SENSOR_LOGD("real_gain = %f %d", real_gain,param);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     imx258_drv_write_gain(handle, real_gain);
@@ -897,7 +897,7 @@ static cmr_int imx258_drv_parse_ebd_data(cmr_handle handle,
     parse_data->dgain_b =  *(embedded_data+56+56/4) << 8 |*(embedded_data+58+58/4);
     parse_data->dgain_gb =  *(embedded_data+60+60/4) << 8 | *(embedded_data+62+62/4);
     parse_data->gain =  (double)512.0/(512.0-parse_data->again)*(double)(parse_data->dgain_r/256.0)*ISP_BASE_GAIN;
-    SENSOR_LOGI("X frame_count %x shutter: %d again %x %x %x %x %x %d", parse_data->frame_count,
+    SENSOR_LOGV("X frame_count %x shutter: %d again %x %x %x %x %x %d", parse_data->frame_count,
         parse_data->shutter, parse_data->again,parse_data->dgain_gr,parse_data->dgain_r,
         parse_data->dgain_b,parse_data->dgain_gb,parse_data->gain);
 
@@ -1017,7 +1017,7 @@ static cmr_int imx258_drv_access_val(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("ptr:%p,type:0x%x", param_ptr, param_ptr->type);
+    SENSOR_LOGV("ptr:%p,type:0x%x", param_ptr, param_ptr->type);
 
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
