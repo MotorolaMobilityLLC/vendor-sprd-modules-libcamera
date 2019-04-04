@@ -396,6 +396,7 @@ extern "C" {
 		cmr_u32 env_cum_changedCalc_delay_cnt;
 		cmr_u32 env_cum_changed;
 		cmr_s16 previous_lum;
+		float capcompvalue_norm;
 		cmr_u32 end_id;
 	};
 

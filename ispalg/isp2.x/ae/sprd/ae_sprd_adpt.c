@@ -77,6 +77,9 @@ const char AE_MAGIC_TAG[] = "ae_debug_info";
 #define AEM_SLAVE_STAT_FILE "/data/vendor/cameraserver/aem_slave.file"
 #define AEM_Y_STAT_FILE "/data/vendor/cameraserver/aem_y.file"
 #define EPSINON 0.00000001
+#define FLASHMAIN_MAXCAP_60HZ 60000000
+#define FLASHMAIN_MAXCAP_50HZ 50000000
+#define FLASHMAIN_MINCAP 10000000
 /**************************************************************************/
 
 #define AE_PRINT_TIME \
@@ -1447,7 +1450,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	switch (mode) {
 	case AE_FLASH_PRE_BEFORE:
 		ISP_LOGD("ae_flash_status FLASH_PRE_BEFORE");
-		if((!cxt->sync_cur_result.wts.stable || cxt->sync_cur_status.settings.lock_ae) && (cxt->env_cum_changed || (cxt->sync_cur_result.cur_lum < 10))){
+		if((!cxt->sync_cur_result.wts.stable || cxt->sync_cur_status.settings.lock_ae) && (cxt->env_cum_changed || (cxt->sync_cur_result.cur_lum < 10)
+|| (cxt->sync_cur_result.cur_lum > 245))){
 			cmr_u32 ae_base_idx = ae_set_pflash_exposure_compensation(cxt, 0);
 			cxt->pf_wait_stable_cnt++;
 			cxt->cur_status.settings.exp_is_transmit = 1;
@@ -1572,7 +1576,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			ISP_LOGV("AE_FLASH_MAIN_BEFORE store ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
 		ISP_LOGV("AE_FLASH_MAIN_BEFORE table_idx is %d, manual_mode:%d ", cxt->flash_backup.table_idx,cxt->cur_status.settings.manual_mode);
-		cxt->flash_backup_aebaseidx = cxt->exposure_compensation.ae_base_idx;
 		cxt->cur_status.settings.flash = FLASH_MAIN_BEFORE;
 		break;
 
@@ -1584,7 +1587,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			break;
 		}
 		cxt->has_mf = 1;
-		cxt->exposure_compensation.ae_base_idx = cxt->flash_backup_aebaseidx;
 		if (cxt->exposure_compensation.ae_compensation_flag) {
 			if (cxt->cur_status.settings.manual_mode !=2){
 				cxt->cur_status.settings.manual_mode = 1;
@@ -1619,6 +1621,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			rtn = ae_set_force_pause(cxt, 0);
 
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
+		cxt->capcompvalue_norm = 0.0;
 		cxt->cur_status.settings.flash = FLASH_MAIN_AFTER;
 		break;
 
@@ -2405,7 +2408,7 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
        cmr_s32 ret = AE_SUCCESS;
 
        if (enable) {
-		ISP_LOGD("cxt->expchanged:%d",cxt->expchanged);
+		ISP_LOGD("cxt->expchanged:%d, cxt->appunlock:%d",cxt->expchanged,cxt->appunlock);
 		if((cxt->expchanged == 0)&&(cxt->appunlock==0)){
 			if(cxt->sync_cur_result.wts.cur_index==0) {
 				cxt->sync_cur_result.wts.cur_index=280;
@@ -2445,7 +2448,7 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 				ISP_LOGD("wts.cur_index is Zero");
 			}
 			cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
-			ISP_LOGD("cxt->is_snapshot:%d, cxt->exposure_compensation.ae_base_idx:%d, cxt->sync_cur_result.wts.cur_index:%d",cxt->is_snapshot, cxt->exposure_compensation.ae_base_idx, cxt->sync_cur_result.wts.cur_index);
+			ISP_LOGD("is_snapshot:%d, ae_base_idx:%d",cxt->is_snapshot, cxt->exposure_compensation.ae_base_idx);
 		}
 
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
@@ -2472,8 +2475,10 @@ static cmr_s32 ae_set_pause(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 ret = AE_SUCCESS;
 
-	if((!cxt->is_snapshot) && (!cxt->cur_status.settings.lock_ae))
-		cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
+	if((!cxt->is_snapshot) && (!cxt->cur_status.settings.lock_ae)){
+		cxt->exposure_compensation.ae_base_idx = cxt->cur_result.wts.cur_index;
+		ISP_LOGD("ae_base_idx:%d",cxt->exposure_compensation.ae_base_idx);
+	}
 	cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 	if (0 == cxt->cur_status.settings.pause_cnt) {
 		cxt->cur_status.settings.exp_line = 0;
@@ -2963,30 +2968,73 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 		if ((FLASH_MAIN_BEFORE == current_status->settings.flash) || (FLASH_MAIN == current_status->settings.flash)) {
 			if (cxt->flash_esti_result.isEnd) {
-				if (1 == cxt->exposure_compensation.ae_compensation_flag) {
-					if (0 == cxt->send_once[4]){
+				if ((1 == cxt->exposure_compensation.ae_compensation_flag) && (cxt->capcompvalue_norm!=0)) {
+					if(current_status->settings.manual_mode !=2){
+						cmr_u32 maxcapexp = 0;
+						double offset = 0.0;
+						double exp_user_comp = 0.0;
+						double gain_alpha = 0.5;
+						cmr_u32 origin_capexp = 0;
+						uint32 modify_gain = 0;
+						struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+						struct ae_exposure_param dst_exp;
+						struct ae_range fps_range;
+
+						origin_capexp = (cmr_u32) (cxt->flash_esti_result.captureExposure/ current_status->line_time + 0.5);
+						/* clip for min and max value by flicker */
+						if(cxt->cur_flicker == 0) {
+							maxcapexp = FLASHMAIN_MAXCAP_60HZ;
+						} else if(cxt->cur_flicker == 1) {
+							maxcapexp = FLASHMAIN_MAXCAP_50HZ;
+						}
+						/* levelup depends on linear val
+						 * leveldown depends on non-linear(exponential)
+						 **/
+						if (cxt->exposure_compensation.comp_val > 0) {
+							offset = 1.0*(maxcapexp - cxt->flash_esti_result.captureExposure );
+							exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure + offset*cxt->capcompvalue_norm;
+							if (exp_user_comp >= maxcapexp)
+								/* exp max using gain */
+								modify_gain = cxt->flash_esti_result.captureGain*(1+cxt->capcompvalue_norm * gain_alpha);
+							else
+								modify_gain = cxt->flash_esti_result.captureGain;
+
+						} else {
+							offset = 0;
+							exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure*cxt->capcompvalue_norm;
+							modify_gain = cxt->flash_esti_result.captureGain;
+						}
+						current_status->settings.exp_line = (cmr_u32) (exp_user_comp / current_status->line_time + 0.5);
+
+						/* exp align with flicker*/
+						src_exp.exp_line = current_status->settings.exp_line;
+						src_exp.exp_time = exp_user_comp;
+						src_exp.gain = modify_gain;
+						src_exp.cur_index = cxt->cur_result.wts.cur_index;
+						src_exp.frm_len = cxt->cur_result.wts.frm_len;
+						src_exp.frm_len_def = cxt->cur_result.wts.frm_len_def;
+						fps_range.min = cxt->fps_range.min;
+						fps_range.max = cxt->fps_range.max;
+						ae_adjust_exp_gain(cxt, &src_exp, &fps_range, cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index] /* max_exp */, &dst_exp);
+
 						current_status->settings.manual_mode = 0;
 						current_status->settings.table_idx = 0;
-						current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
-						current_status->settings.gain = cxt->flash_esti_result.captureGain;
-
-					}else if (1 == cxt->send_once[4]) {
-						// record
-						cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.wts.cur_index;
-						ISP_LOGD("send,cidx:(%d,%d)",cxt->send_once[4],cxt->sync_cur_result.wts.cur_index);
-					}else{
-						if(current_status->settings.manual_mode !=2){
-							ISP_LOGV("manual_mode:%d,table_idx:%d",current_status->settings.manual_mode,cxt->cur_status.settings.table_idx);
-							current_status->settings.manual_mode = 1;
-							if (0 < cxt->exposure_compensation.comp_val) {
-								cxt->cur_status.settings.table_idx = ((cxt->exposure_compensation.ae_base_idx + cxt->ae_comp_value) > cxt->cur_status.ae_table->max_index) ? cxt->cur_status.ae_table->max_index : (cxt->exposure_compensation.ae_base_idx + cxt->ae_comp_value);
-							} else if (0 > cxt->exposure_compensation.comp_val) {
-								cxt->cur_status.settings.table_idx = (cxt->exposure_compensation.ae_base_idx < cxt->ae_comp_value) ? 0 : (cxt->exposure_compensation.ae_base_idx - cxt->ae_comp_value);
-							} else {
-								cxt->cur_status.settings.table_idx = cxt->exposure_compensation.ae_base_idx;
-							}
-							ISP_LOGD("tbidx,baseidx,compval:(%d,%d,%d)",cxt->cur_status.settings.table_idx, cxt->exposure_compensation.ae_base_idx, cxt->ae_comp_value);
-						}
+						current_status->settings.gain = dst_exp.gain;
+						current_status->settings.exp_line = dst_exp.exp_line;
+						ISP_LOGD("origi et,el,g:(%f,%d,%d); aftercomp el,g:(%d,%d); norm,ffset(%f,%f)",
+									cxt->flash_esti_result.captureExposure,
+									origin_capexp,
+									cxt->flash_esti_result.captureGain,
+									current_status->settings.exp_line,
+									current_status->settings.gain,
+									cxt->capcompvalue_norm,
+									offset);
+					}
+					if ((cxt->send_once[4] >= (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 2)) {
+						current_status->settings.manual_mode = 0;
+						current_status->settings.table_idx = 0;
+						current_status->settings.exp_line = cxt->flash_backup.exp_line;
+						current_status->settings.gain = cxt->flash_backup.gain;
 					}
 				} else {
 					current_status->settings.manual_mode = 0;
@@ -4346,6 +4394,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	}
 
 	cxt->is_first = 1;
+	cxt->capcompvalue_norm = 0.0;
 	ISP_LOGI("AE_VIDEO_START cam-id %d BV %d lt %d W %d H %d , exp: %d, gain:%d flash: %d CAP %d, enable: %d",
 			 cxt->camera_id, cxt->cur_result.cur_bv, cxt->cur_status.line_time, cxt->snr_info.frame_size.w,
 			 cxt->snr_info.frame_size.h, cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again, cxt->cur_status.settings.flash, work_info->is_snapshot, cxt->last_enable);
@@ -4534,16 +4583,21 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 	cmr_u16 max_idx;
 	cmr_s16 value = 0;
 	float temp = 0.0;
+	#define MAX_COMPVALUE (32)
 
 	max_idx = cxt->cur_status.ae_table->max_index;
 
 	temp = 1.0 * cxt->exposure_compensation.comp_val * cxt->exposure_compensation.step_numerator / cxt->exposure_compensation.step_denominator;
+	if(temp!=0){
+		cxt->capcompvalue_norm = temp/(1.0 * MAX_COMPVALUE*cxt->exposure_compensation.step_numerator / cxt->exposure_compensation.step_denominator);
+	}
 	temp = pow(2, temp);
 	if (0 < cxt->exposure_compensation.comp_val) {
-		value = (cmr_s16)(log(temp) / 0.0128 + 0.5);
+		value = (cmr_s16)(log(temp) / 0.036 + 0.5);
 		calc_idx = ((cxt->exposure_compensation.ae_base_idx + value) > max_idx) ? max_idx : (cxt->exposure_compensation.ae_base_idx + value);
 	} else if (0 > cxt->exposure_compensation.comp_val) {
-		value = (cmr_s16)(log(temp) / (-0.0132) + 0.5);
+		cxt->capcompvalue_norm = temp;
+		value = (cmr_s16)(log(temp) / (-0.026) + 0.5);
 		calc_idx = (cxt->exposure_compensation.ae_base_idx < value) ? 1 : (cxt->exposure_compensation.ae_base_idx - value);
 	} else {
 		calc_idx = cxt->exposure_compensation.ae_base_idx;
@@ -4552,7 +4606,7 @@ static cmr_s32 ae_set_compensation_calc(struct ae_ctrl_cxt *cxt, cmr_u16 *out_id
 
 	*out_idx = calc_idx;
 	cxt->ae_comp_value = value;
-	ISP_LOGD("value %d, temp %f calc_idx %d", value, temp, calc_idx);
+	ISP_LOGD("capcompvalue_norm:%f, value %d, temp %f calc_idx %d",cxt->capcompvalue_norm, value, temp, calc_idx);
 	return AE_SUCCESS;
 }
 
@@ -5949,6 +6003,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_FORCE_RESTORE:
 		cxt->appunlock= 3;
+		cxt->capcompvalue_norm = 0.0;
 		rtn = ae_set_force_pause(cxt, 0);
 		cxt->exposure_compensation.ae_compensation_flag = 0;
 		ISP_LOGD("AE_SET_FORCE_RESTORE");
@@ -6271,6 +6326,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->exposure_compensation.touch_ev_flag = 0;
 	cxt->last_table_index = 0;
 	cxt->ae_comp_value = 0;
+	cxt->capcompvalue_norm = 0.0;
 	cxt->env_cum_changedCalc_delay_cnt = 0;
 	cxt->env_cum_changed = 0;
 	cxt->previous_lum = 0;
