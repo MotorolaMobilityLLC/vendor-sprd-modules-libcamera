@@ -388,11 +388,13 @@ static void config_compression(struct camera_module *module)
 	 */
 	ch_cap->compress_input = ch_cap->enable
 		&& ch_cap->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY
-		&& !ch_cap->ch_uinfo.is_high_fps;
+		&& !ch_cap->ch_uinfo.is_high_fps
+		&& !module->cam_uinfo.is_4in1;
 	ch_pre->compress_input = ch_pre->enable
 		&& ch_pre->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY
 		&& !ch_pre->ch_uinfo.is_high_fps
-		&& !ch_cap->compress_input;
+		&& !ch_cap->compress_input
+		&& !module->cam_uinfo.is_4in1;
 	ch_vid->compress_input = ch_pre->compress_input;
 
 	/* Enable compression for 3DNR by default */
