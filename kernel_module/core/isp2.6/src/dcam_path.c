@@ -750,15 +750,15 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	}
 
 	if (frame->is_compressed) {
-		struct dcam_compressed_addr compressed_addr;
+		struct compressed_addr compressed_addr;
 		struct img_size *size = &path->out_size;
 
 		dcam_if_cal_compressed_addr(size->w, size->h,
 					    frame->buf.iova[0],
 					    &compressed_addr);
-		DCAM_REG_WR(idx, addr, compressed_addr.low2_addr);
+		DCAM_REG_WR(idx, addr, compressed_addr.addr2);
 		DCAM_REG_WR(idx, DCAM_FBC_PAYLOAD_WADDR,
-			    compressed_addr.tile_addr);
+			    compressed_addr.addr1);
 	} else {
 		DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
 	}

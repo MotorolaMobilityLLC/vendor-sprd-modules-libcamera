@@ -2063,7 +2063,7 @@ static void write_image_to_file(uint8_t *buffer,
 }
 
 static int dump_one_frame(struct camera_module *module,
-			struct camera_frame *pframe)
+			  struct camera_frame *pframe)
 {
 	ssize_t size = 0;
 	struct channel_context *channel;
@@ -2073,6 +2073,7 @@ static int dump_one_frame(struct camera_module *module,
 
 	ch_id = pframe->channel_id;
 	channel = &module->channel[ch_id];
+
 	strcat(file_name, CAMERA_DUMP_PATH);
 	if (ch_id == CAM_CH_PRE)
 		strcat(file_name, "prevraw_");
@@ -2091,25 +2092,44 @@ static int dump_one_frame(struct camera_module *module,
 
 	sprintf(tmp_str, "_No%d", pframe->fid);
 	strcat(file_name, tmp_str);
-	strcat(file_name, ".mipi_raw");
 
-	size = cal_sprd_raw_pitch(pframe->width) * pframe->height;
+	if (pframe->is_compressed) {
+		struct compressed_addr addr;
+
+		dcam_if_cal_compressed_addr(pframe->width, pframe->height,
+					    pframe->buf.iova[0], &addr);
+		sprintf(tmp_str, "_tile%08lx",
+			addr.addr1 - pframe->buf.iova[0]);
+		strcat(file_name, tmp_str);
+		sprintf(tmp_str, "_low2tile%08lx",
+			addr.addr2 - addr.addr1);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".mipi_raw");
+		size = dcam_if_cal_compressed_size(pframe->width,
+						   pframe->height);
+	} else {
+		size = cal_sprd_raw_pitch(pframe->width) * pframe->height;
+	}
+
 	write_image_to_file((char *)pframe->buf.addr_k[0], size, file_name);
-
 	pr_debug("dump for ch %d, size %d, kaddr %p, file %s\n", ch_id,
 		(int)size, (void *)pframe->buf.addr_k[0], file_name);
 
-	/* return it to dcam output queue */
-	dcam_ops->cfg_path(module->dcam_dev_handle,
-			DCAM_PATH_CFG_OUTPUT_BUF,
-			channel->dcam_path_id, pframe);
 	return 0;
+}
+
+static inline int should_dump(int mode, int path)
+{
+	return (mode == DUMP_PATH_BOTH)
+		|| (mode == DUMP_PATH_BIN && path == DCAM_PATH_BIN)
+		|| (mode == DUMP_PATH_FULL && path == DCAM_PATH_FULL);
 }
 
 static int dumpraw_proc(void *param)
 {
 	uint32_t idx, cnt = 0;
 	struct camera_module *module;
+	struct channel_context *channel;
 	struct camera_frame *pframe = NULL;
 	struct cam_dbg_dump *dbg = &g_dbg_dump;
 
@@ -2132,18 +2152,30 @@ static int dumpraw_proc(void *param)
 		if (wait_for_completion_interruptible(
 			&module->dump_com) == 0) {
 			if ((atomic_read(&module->state) != CAM_RUNNING) ||
-				(module->dump_count == 0))
+				(module->dump_count == 0)) {
+				pr_info("dump raw proc exit, %d %u\n",
+					atomic_read(&module->state),
+					module->dump_count);
 				break;
+			}
 			pframe = camera_dequeue(&module->dump_queue);
 			if (!pframe)
-				break;
-			dump_one_frame(module, pframe);
-			cnt++;
+				continue;
+
+			channel = &module->channel[pframe->channel_id];
+			if (should_dump(dbg->dump_en, channel->dcam_path_id)) {
+				dump_one_frame(module, pframe);
+				module->dump_count--;
+				cnt++;
+			}
+			/* return it to dcam output queue */
+			dcam_ops->cfg_path(module->dcam_dev_handle,
+					   DCAM_PATH_CFG_OUTPUT_BUF,
+					   channel->dcam_path_id, pframe);
 		} else {
-			pr_debug("dump raw proc exit.");
+			pr_info("dump raw proc exit.");
 			break;
 		}
-		module->dump_count--;
 	}
 	module->dump_count = 0;
 	module->in_dump = 0;
@@ -3816,7 +3848,7 @@ static int img_ioctl_set_frame_addr(
 	uint32_t i, cmd;
 	struct sprd_img_parm param;
 	struct channel_context *ch;
-	struct camera_frame *pframe, *pframe1;
+	struct camera_frame *pframe;
 
 	if ((atomic_read(&module->state) != CAM_CFG_CH) &&
 		(atomic_read(&module->state) != CAM_RUNNING)) {
@@ -3879,6 +3911,8 @@ static int img_ioctl_set_frame_addr(
 		}
 
 		if (ch->isp_path_id >= 0) {
+			struct camera_frame *pframe1;
+
 			if (param.is_reserved_buf &&
 				((ch->ch_id == CAM_CH_CAP) || (ch->ch_id == CAM_CH_PRE))) {
 				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;

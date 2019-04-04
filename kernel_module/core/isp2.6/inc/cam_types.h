@@ -62,10 +62,16 @@ struct cam_mem_dbg_info {
 };
 extern struct cam_mem_dbg_info *g_mem_dbg;
 
+enum {
+	DUMP_DISABLE = 0,
+	DUMP_PATH_BOTH,
+	DUMP_PATH_FULL,
+	DUMP_PATH_BIN,
+};
 
 /* for raw picture dump */
 struct cam_dbg_dump {
-	uint32_t dump_en;
+	uint32_t dump_en;/* see enumerations above */
 	uint32_t dump_count;
 	uint32_t dump_ongoing;
 	struct mutex dump_lock;
@@ -209,6 +215,23 @@ enum dcam_cb_type {
 	DCAM_CB_DEV_ERR,
 	DCAM_CB_MMU_ERR,
 
+};
+
+#define FBC_TILE_ADDR_ALIGN 256
+#define FBC_HEADER_REDUNDANT 64
+
+/* for fbc/fbd */
+typedef unsigned long addr_t;
+
+/*
+ * @addr0: start address of this buffer
+ * @addr1: tile address for raw, y tile address for yuv
+ * @addr2: low 2 bit address for raw, uv tile address for yuv
+ */
+struct compressed_addr {
+	addr_t addr0;
+	addr_t addr1;
+	addr_t addr2;
 };
 
 extern struct camera_queue *g_empty_frm_q;

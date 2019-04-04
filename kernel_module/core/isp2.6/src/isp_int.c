@@ -451,7 +451,7 @@ static void  isp_dump_iommu_regs(void)
 		val[2] = ISP_MMU_RD(reg + 8);
 		val[3] = ISP_MMU_RD(reg + 12);
 		pr_err_ratelimited("offset=0x%04x: %08x %08x %08x %08x\n",
-			 reg, val[0], val[1], val[2], val[3]);
+				   reg, val[0], val[1], val[2], val[3]);
 	}
 }
 
@@ -517,7 +517,6 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 			pr_err("error irq: isp ctx %d, INT:0x%x\n",
 					c_id, irq_line);
 			if (irq_line & ISP_INT_LINE_MASK_MMU) {
-				pr_err("IOMMU  Error, IOMMU Registers Dump\n");
 				isp_dump_iommu_regs();
 			}
 

@@ -1341,26 +1341,27 @@ int isp_path_set_fetch_frm(struct isp_pipe_context *pctx,
 	idx = pctx->ctx_id;
 
 	if (pctx->fetch_path_sel) {
-		struct dcam_compressed_addr compressed_addr;
+		struct compressed_addr compressed_addr;
 		struct isp_fbd_raw_info *fbd_raw;
 
 		dcam_if_cal_compressed_addr(pctx->input_size.w,
 					    pctx->input_size.h,
 					    frame->buf.iova[0],
 					    &compressed_addr);
-		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM2, compressed_addr.tile_addr);
-		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM3, compressed_addr.tile_addr);
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM2, compressed_addr.addr1);
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM3, compressed_addr.addr1);
 		ISP_REG_WR(idx, ISP_FBD_RAW_LOW_PARAM0,
-			   compressed_addr.low2_addr);
+			   compressed_addr.addr2);
 
 		/* store start address for slice use */
 		fbd_raw = &pctx->fbd_raw;
-		fbd_raw->header_addr_init = compressed_addr.tile_addr;
-		fbd_raw->tile_addr_init_x256 = compressed_addr.tile_addr;
-		fbd_raw->low_bit_addr_init = compressed_addr.low2_addr;
+		fbd_raw->header_addr_init = compressed_addr.addr1;
+		fbd_raw->tile_addr_init_x256 = compressed_addr.addr1;
+		fbd_raw->low_bit_addr_init = compressed_addr.addr2;
 
-		pr_debug("fetch_fbd: %u 0x%lx, 0x%lx, size %u %u\n", frame->fid,
-			 compressed_addr.tile_addr, compressed_addr.low2_addr,
+		pr_debug("fetch_fbd: %u 0x%lx 0x%lx, 0x%lx, size %u %u\n",
+			 frame->fid, compressed_addr.addr0,
+			 compressed_addr.addr1, compressed_addr.addr2,
 			 pctx->input_size.w, pctx->input_size.h);
 
 		return 0;

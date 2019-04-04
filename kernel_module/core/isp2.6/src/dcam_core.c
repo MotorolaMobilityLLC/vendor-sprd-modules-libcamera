@@ -392,9 +392,10 @@ static ssize_t dump_raw_show(
 		struct file *filp, char __user *buffer,
 		size_t count, loff_t *ppos)
 {
-	char buf[16];
+	const char *desc = "0: disable, 1: both, 2: full, 3: bin";
+	char buf[48];
 
-	snprintf(buf, sizeof(buf), "%d\n", g_dbg_dump.dump_en);
+	snprintf(buf, sizeof(buf), "%u\n\n%s\n", g_dbg_dump.dump_en, desc);
 
 	return simple_read_from_buffer(
 			buffer, count, ppos,
@@ -407,8 +408,7 @@ static ssize_t dump_raw_write(
 {
 	int ret = 0;
 	char msg[8];
-	char *last;
-	int val;
+	uint32_t val;
 
 	if (count > 2)
 		return -EINVAL;
@@ -419,16 +419,16 @@ static ssize_t dump_raw_write(
 		return -EFAULT;
 	}
 
-	msg[1] = '\0';
-	val = simple_strtol(msg, &last, 0);
-	if (val == 0)
-		g_dbg_dump.dump_en = 0;
-	else if (val == 1)
-		g_dbg_dump.dump_en = 1;
-	else
-		pr_err("error: invalid dump_raw_en %d", val);
+	msg[count] = '\0';
+	ret = kstrtouint(msg, 10, &val);
+	if (ret < 0) {
+		pr_err("fail to convert '%s', ret %d", msg, ret);
+		return ret;
+	}
 
-	pr_info("set dump_raw_en %d\n", g_dbg_dump.dump_en);
+	g_dbg_dump.dump_en = val;
+	pr_info("set dump_raw_en %u\n", g_dbg_dump.dump_en);
+
 	return count;
 }
 

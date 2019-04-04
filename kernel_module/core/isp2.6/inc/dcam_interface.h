@@ -26,7 +26,6 @@
  */
 #define DCAM_FBC_TILE_WIDTH 64
 #define DCAM_FBC_TILE_HEIGHT 4
-#define DCAM_FBC_TILE_ADDR_ALIGN 256
 
 /* 4-pixel align for MIPI CAP input from CSI */
 #define DCAM_MIPI_CAP_ALIGN 4
@@ -120,13 +119,6 @@ enum {
 	DCAM_FBC_BIN = 0x3,
 };
 
-/* for dcam fbc */
-struct dcam_compressed_addr {
-	addr_t head_addr;
-	addr_t tile_addr;
-	addr_t low2_addr;
-};
-
 /*
  * tile_num = w/64 * h/4;
  * head_bytes = tile_num * 4 / 8;
@@ -135,30 +127,33 @@ struct dcam_compressed_addr {
  */
 static inline void
 dcam_if_cal_compressed_addr(uint32_t width, uint32_t height, addr_t in,
-			    struct dcam_compressed_addr *out)
+			    struct compressed_addr *out)
 {
-	uint32_t pixel_count, head_bytes;
+	uint32_t pixel_count, header_bytes;
 
 	if (unlikely(!out))
 		return;
 
 	pixel_count = roundup(width, DCAM_FBC_TILE_WIDTH) * height;
-	head_bytes = pixel_count >> 9;
+	header_bytes = pixel_count >> 9;
+	header_bytes += FBC_HEADER_REDUNDANT;
 
-	out->tile_addr = ALIGN(in + head_bytes, DCAM_FBC_TILE_ADDR_ALIGN);
-	out->head_addr = out->tile_addr - head_bytes;
-	out->low2_addr = out->tile_addr + pixel_count;
+	out->addr0 = in;
+	out->addr1 = ALIGN(out->addr0 + header_bytes, FBC_TILE_ADDR_ALIGN);
+	out->addr2 = out->addr1 + pixel_count;
 }
 
 /* see @dcam_if_cal_compressed_addr */
 static inline uint32_t
 dcam_if_cal_compressed_size(uint32_t width, uint32_t height)
 {
-	uint32_t pixel_count;
+	uint32_t pixel_count, header, low2;
 
 	pixel_count = roundup(width, DCAM_FBC_TILE_WIDTH) * height;
-	return ALIGN(pixel_count + (pixel_count >> 9) + (pixel_count >> 2),
-		     DCAM_FBC_TILE_ADDR_ALIGN);
+	header = pixel_count >> 9;
+	header += FBC_HEADER_REDUNDANT + FBC_TILE_ADDR_ALIGN;
+	low2 = pixel_count >> 2;
+	return pixel_count + header + low2;
 }
 
 enum dcam_ioctrl_cmd {

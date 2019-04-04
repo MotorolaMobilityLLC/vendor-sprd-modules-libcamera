@@ -895,15 +895,17 @@ static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 	/* pr_err("DCAM%u error 0x%x\n", dev->idx, status);
 	 * as L3, show which kind of erro
 	 */
+
 	pr_err("DCAM%u status 0x%x%s%s%s\n", dev->idx, status,
 		tb_ovr[!!(status & BIT(DCAM_DCAM_OVF))],
 		tb_lne[!!(status & BIT(DCAM_CAP_LINE_ERR))],
 		tb_frm[!!(status & BIT(DCAM_CAP_FRM_ERR))]);
+
 	if (status & BIT(DCAM_MMU_INT)) {
-		pr_err("IOMMU Error, Registers Dump\n");
 		dcam_dump_iommu_regs();
 		return IRQ_HANDLED;
 	}
+
 	if (atomic_read(&dev->state) == STATE_ERROR)
 		return IRQ_HANDLED;
 	atomic_set(&dev->state, STATE_ERROR);
