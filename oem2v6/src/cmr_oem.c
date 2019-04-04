@@ -9039,8 +9039,8 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         camera_set_mm_dvfs_param(oem_handle, camParam);
         camera_local_set_mm_dvfs_policy(oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
         camera_local_set_mm_dvfs_policy(oem_handle, DVFS_DCAM_IF,
-                                  IS_PREVIEW_BEGIN);
-   }
+                                        IS_PREVIEW_BEGIN);
+    }
 #endif
 
     ret = cmr_preview_start(prev_cxt->preview_handle, cxt->camera_id);
@@ -9736,7 +9736,7 @@ cmr_int camera_local_fd_start(cmr_handle oem_handle) {
 }
 
 cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
-                               cmr_uint param) {
+                              cmr_uint param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
@@ -9821,11 +9821,16 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         ptr_flag = 1;
         ae_compensation_param = *(struct cmr_ae_compensation_param *)param;
 
-        ae_compensation.comp_val =ae_compensation_param.ae_exposure_compensation;
-        ae_compensation.comp_range.min =ae_compensation_param.ae_compensation_range[0];
-        ae_compensation.comp_range.max =ae_compensation_param.ae_compensation_range[1];
-        ae_compensation.step_numerator =ae_compensation_param.ae_compensation_step_numerator;
-        ae_compensation.step_denominator =ae_compensation_param.ae_compensation_step_denominator;
+        ae_compensation.comp_val =
+            ae_compensation_param.ae_exposure_compensation;
+        ae_compensation.comp_range.min =
+            ae_compensation_param.ae_compensation_range[0];
+        ae_compensation.comp_range.max =
+            ae_compensation_param.ae_compensation_range[1];
+        ae_compensation.step_numerator =
+            ae_compensation_param.ae_compensation_step_numerator;
+        ae_compensation.step_denominator =
+            ae_compensation_param.ae_compensation_step_denominator;
         isp_param_ptr = (void *)&ae_compensation;
         CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, "
                  "step_numerator=%d, step_denominator=%d",
@@ -9855,7 +9860,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         break;
 
     default:
-        CMR_LOGE("don't support cmd %ld",id);
+        CMR_LOGE("don't support cmd %ld", id);
         ret = CMR_CAMERA_NO_SUPPORT;
         break;
     }
@@ -9873,7 +9878,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, (void *)&isp_param);
         if (ret) {
             CMR_LOGE("failed isp ioctl %ld", ret);
-        }else {
+        } else {
             if (CAMERA_PARAM_ISO == id) {
                 if (0 == param) {
                     isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO,
@@ -9882,7 +9887,9 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
                 } else {
                     cxt->setting_cxt.is_auto_iso = 0;
                 }
-                isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+                if (cxt->setting_cxt.is_auto_iso != 1) {
+                    isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+                }
                 CMR_LOGD("auto iso %d, exif iso %d",
                          cxt->setting_cxt.is_auto_iso, isp_param);
             }
@@ -9890,8 +9897,8 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
     }
 
     if (set_exif_flag) {
-            cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                                exif_cmd, isp_param);
+        cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, exif_cmd,
+                            isp_param);
     }
 
     return ret;
@@ -9953,12 +9960,12 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     }
-/*
-    case CAMERA_PARAM_ISO:
-        cxt->setting_cxt.iso_value = param;
-        ret = camera_set_setting(oem_handle, id, param);
-        break;
-*/
+    /*
+        case CAMERA_PARAM_ISO:
+            cxt->setting_cxt.iso_value = param;
+            ret = camera_set_setting(oem_handle, id, param);
+            break;
+    */
 
     case CAMERA_PARAM_AUTO_EXPOSURE_MODE:
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
