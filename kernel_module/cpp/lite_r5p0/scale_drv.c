@@ -1088,6 +1088,20 @@ exit:
 	return ret;
 }
 
+void sprd_scale_drv_free_mem(struct scale_drv_private *p)
+{
+	if (!p) {
+		pr_err("fail to get valid input ptr\n");
+		return;
+	}
+#ifndef HAPS_TEST
+	sprd_cpp_core_free_addr(&p->iommu_src);
+	sprd_cpp_core_free_addr(&p->iommu_dst);
+	if (p->bp_en == 1)
+		sprd_cpp_core_free_addr(&p->iommu_dst_bp);
+#endif
+}
+
 void sprd_scale_drv_start(struct scale_drv_private *p)
 {
 	if (!p) {
@@ -1106,12 +1120,6 @@ void sprd_scale_drv_stop(struct scale_drv_private *p)
 	}
 	sprd_scaledrv_stop(p);
 	sprd_scaledrv_dev_disable(p);
-#ifndef HAPS_TEST
-	sprd_cpp_core_free_addr(&p->iommu_src);
-	sprd_cpp_core_free_addr(&p->iommu_dst);
-	if (p->bp_en == 1)
-		sprd_cpp_core_free_addr(&p->iommu_dst_bp);
-#endif
 }
 
 /*this function used to check parament from user space whether suitable*/

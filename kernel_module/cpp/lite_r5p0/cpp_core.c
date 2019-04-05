@@ -976,12 +976,14 @@ static int ioctl_start_scale(struct cpp_device *dev,
 		if (timeleft == 0) {
 			sprd_cppcore_sc_reg_trace(&scif->drv_priv);
 			sprd_scale_drv_stop(&scif->drv_priv);
+			sprd_scale_drv_free_mem(&scif->drv_priv);
 			sprd_cppcore_scale_reset(dev);
 			mutex_unlock(&scif->sc_mutex);
 			pr_err("fail to get scaling done com\n");
 			ret = -EBUSY;
 			goto start_scal_exit;
 		}
+		sprd_scale_drv_free_mem(&scif->drv_priv);
 		pr_debug("slice count %d, done i:%d\n",
 				sc_parm->slice_param.output.slice_count, i);
 		i++;

@@ -81,5 +81,6 @@ void sprd_scale_drv_max_size_get(unsigned int *max_width,
 			struct sprd_cpp_scale_cfg_parm *sc_cfg);
 	void sprd_scaledrv_start(struct scale_drv_private *p);
 	void sprd_scaledrv_stop(struct scale_drv_private *p);
+	void sprd_scale_drv_free_mem(struct scale_drv_private *p);
 
 #endif
