@@ -1395,14 +1395,15 @@ static cmr_u32 ae_set_pflash_exposure_compensation(struct ae_ctrl_cxt *cxt, int 
 	cmr_s16 value = 0;
 	cmr_u16 effect_index = 0;
 	cmr_u32 ae_base_idx = 0;
+	cmr_u32 cur_lum = cxt->sync_cur_result.cur_lum;
 	cmr_u16 max_idx = cxt->cur_status.ae_table->max_index;
 	cmr_s32 tar_lum = cxt->cur_status.target_lum + cxt->cur_status.target_offset;
-	cmr_s32 tgoft = cxt->sync_cur_result.cur_lum - tar_lum;
+	cmr_s32 tgoft = cur_lum - tar_lum;
 
 	tar_lum = tar_lum ? tar_lum : 1;
-	cxt->sync_cur_result.cur_lum = cxt->sync_cur_result.cur_lum? cxt->sync_cur_result.cur_lum:1;
+	cur_lum = cur_lum? cur_lum:1;
 
-	float temp = (float)(1.0 * tar_lum)/(float)cxt->sync_cur_result.cur_lum;
+	float temp = (float)(1.0 * tar_lum)/(float)cur_lum;
 	if(cxt->effect_index_index == 3)
 		effect_index = cxt->effect_index[0];
 	else if(cxt->effect_index_index == 2)
@@ -1421,6 +1422,10 @@ static cmr_u32 ae_set_pflash_exposure_compensation(struct ae_ctrl_cxt *cxt, int 
 		value = (cmr_s16)(log(temp) /0.026 - 0.5);
 		ae_base_idx = effect_index + value;
 		ae_base_idx = ae_base_idx < 0 ? 0 : ae_base_idx;
+	}
+
+	if(!cxt->sync_cur_result.cur_lum){
+		ae_base_idx = MAX(max_idx * 4 / 5, ae_base_idx);
 	}
 
 	ISP_LOGD("value=%hd, ae_base_idx=%d, cur_lum=%d, t=%d t_offset = %d table_idx=%d call=%d",value, ae_base_idx,cxt->sync_cur_result.cur_lum, cxt->cur_status.target_lum,cxt->cur_status.target_offset,effect_index, call);
