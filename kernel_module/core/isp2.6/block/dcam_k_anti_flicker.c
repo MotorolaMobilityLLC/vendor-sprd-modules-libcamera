@@ -195,7 +195,7 @@ int dcam_k_cfg_afl(struct isp_io_param *param, struct dcam_dev_param *p)
 	FUNC_DCAM_PARAM sub_func = NULL;
 
 	/* debugfs bypass afl */
-	if (g_dcam_bypass[p->idx] & (1 << _E_AFL))
+	if ((g_dcam_bypass[p->idx] & (1 << _E_AFL)) || p->afl.bypass)
 		return 0;
 
 	switch (param->property) {
