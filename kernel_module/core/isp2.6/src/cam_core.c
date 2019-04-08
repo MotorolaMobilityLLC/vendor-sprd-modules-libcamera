@@ -971,9 +971,9 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 			if (pframe->buf.type == CAM_BUF_USER)
 				cambuf_put_ionbuf(&pframe->buf);
 			else
+				pr_info("raw proc return mid frame %p\n", pframe);
 				cambuf_free(&pframe->buf);
-			put_empty_frame(pframe);
-			pr_info("raw proc return mid frame %p\n", pframe);
+				put_empty_frame(pframe);
 		} else {
 			/* return offline buffer to dcam available queue. */
 			pr_debug("isp reset dcam path out %d\n",
@@ -3513,7 +3513,7 @@ static int img_ioctl_pdaf_control(
 			struct camera_module *module,
 			unsigned long arg)
 {
-	int ret;
+	int ret = 0;
 	uint32_t channel_id;
 	struct sprd_pdaf_control tmp;
 	struct sprd_img_parm __user *uparam;
