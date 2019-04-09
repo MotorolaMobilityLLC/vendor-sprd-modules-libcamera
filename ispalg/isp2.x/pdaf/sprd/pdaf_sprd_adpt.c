@@ -919,7 +919,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		}
 	}
 	else {
-		for (area_index = 0; area_index < AREA_LOOP; area_index++) {
+		for (area_index = 0; area_index < 1; area_index++) {
 			if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2) {
 				ret = PD_DoType2((void *)pPD_left_reorder, (void *)pPD_right_reorder, dRectX, dRectY, dRectW, dRectH, area_index);
 			} else {
@@ -931,7 +931,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 				goto exit;
 			}
 		}
-		for (area_index = 0; area_index < AREA_LOOP; area_index++) {
+		for (area_index = 0; area_index < 1; area_index++) {
 			ret = PD_GetResult(&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
 			if (ret) {
 				ISP_LOGE("fail to do get pd_result.");
