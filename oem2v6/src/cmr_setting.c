@@ -2920,6 +2920,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                         }
                     } else {
                         hal_param->flash_param.has_preflashed = 0;
+                        hal_param->flash_param.last_preflash_time = 0;
                         hal_param->flash_param.flash_status =
                             setting_flash_status;
                         setting_isp_flash_notify(cpt, parm,
