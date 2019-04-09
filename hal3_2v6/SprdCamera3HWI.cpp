@@ -1160,6 +1160,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                mStreamConfiguration.yuvcallback.status == CONFIGURED &&
                mStreamConfiguration.snapshot.status == CONFIGURED) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+    } else if (mStreamConfiguration.num_streams == 3 &&
+               mStreamConfiguration.preview.status == CONFIGURED &&
+               mStreamConfiguration.video.status == CONFIGURED &&
+               mStreamConfiguration.snapshot.status == CONFIGURED &&
+               captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
     }
 
     switch (captureIntent) {
@@ -1349,8 +1355,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO, mFrameNum);
         }
 
-        // for cts intent video record width 3 buffers
-        if (request->num_output_buffers == 3) {
+        if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
             if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT,
                                        mFrameNum);
@@ -1362,9 +1369,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT:
         if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ||
             mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
-            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT,
-                                   mFrameNum);
-            mPictureRequest = true;
+            if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+                streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT,
+                                       mFrameNum);
+                mPictureRequest = true;
+            }
         }
         break;
 
