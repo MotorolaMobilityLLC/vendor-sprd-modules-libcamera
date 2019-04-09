@@ -725,7 +725,8 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
 int SprdCamera3OEMIf::takePicture() {
     ATRACE_CALL();
-
+    SPRD_DEF_Tag sprdInfo;
+    mSetting->getSPRDDEFTag(&sprdInfo);
     HAL_LOGI("E");
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -745,7 +746,13 @@ int SprdCamera3OEMIf::takePicture() {
     }
 
     setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
-
+    if (sprdInfo.sprd_ai_scene_type_current) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 SPRD_MIMETPYE_AI);
+    } else {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
+                 MODE_SINGLE_CAMERA);
+    }
     if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
         mTakePictureMode == SNAPSHOT_PREVIEW_MODE ||
         mTakePictureMode == SNAPSHOT_ONLY_MODE) {
