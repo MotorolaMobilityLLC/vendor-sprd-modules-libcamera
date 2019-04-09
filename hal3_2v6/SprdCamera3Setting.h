@@ -93,7 +93,7 @@ typedef int64_t nsecs_t;
 #else
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 1
 #endif
-#define SPRD_DUAL_OTP_SIZE 1024
+#define SPRD_DUAL_OTP_SIZE 10240
 
 #define THIRD_OTP_SIZE 8192
 
