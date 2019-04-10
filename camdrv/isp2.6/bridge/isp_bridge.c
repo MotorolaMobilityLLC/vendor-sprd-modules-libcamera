@@ -19,7 +19,6 @@
 
 struct ispbr_context {
 	cmr_u32 user_cnt;
-	cmr_u32 camera_init[SENSOR_NUM_MAX];
 	cmr_handle isp_3afw_handles[SENSOR_NUM_MAX];
 	struct match_data_param match_param;
 	void *aem_sync_stat[SENSOR_NUM_MAX];
@@ -305,6 +304,7 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	cmr_u32 aem_sync_stat_size = 0;
 	void *awb_stat_data = NULL;
 	cmr_u32 awb_stat_data_size = 0;
+	cmr_u32 i = 0;
 
 	ISP_LOGI("camera_id %d, is_master %d", camera_id, is_master);
 	cxt->isp_3afw_handles[camera_id] = isp_3a_handle;
@@ -319,32 +319,6 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	pthread_mutex_unlock(&g_br_mutex);
 	ISP_LOGI("cnt = %d", cxt->user_cnt);
 
-	if (cxt->aem_sync_stat[camera_id] == NULL) {
-		aem_sync_stat_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
-		aem_sync_stat = (void *)malloc(aem_sync_stat_size);
-		if (NULL == aem_sync_stat) {
-			ret = ISP_ALLOC_ERROR;
-			ISP_LOGE("fail to alloc aem_sync_stat");
-			goto exit;
-		}
-		cxt->aem_sync_stat[camera_id] = aem_sync_stat;
-		cxt->aem_sync_stat_size = aem_sync_stat_size;
-		ISP_LOGV("camera %d aem_sync_stat %p", camera_id, aem_sync_stat);
-	}
-
-	if (cxt->awb_stat_data[camera_id] == NULL) {
-		awb_stat_data_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
-		awb_stat_data = (void *)malloc(awb_stat_data_size);
-		if (NULL == awb_stat_data) {
-			ret = ISP_ALLOC_ERROR;
-			ISP_LOGE("fail to alloc awb_stat_data");
-			goto exit;
-		}
-		cxt->awb_stat_data[camera_id] = awb_stat_data;
-		cxt->awb_stat_data_size = awb_stat_data_size;
-		ISP_LOGV("camera %d awb_stat_data %p", camera_id, awb_stat_data);
-	}
-
 	if (cxt->user_cnt == 1) {
 		sem_init(&cxt->ae_sm, 0, 1);
 		sem_init(&cxt->awb_sm, 0, 1);
@@ -354,18 +328,53 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 		sem_init(&cxt->awb_wait_sm, 0, 1);
 		sem_init(&cxt->af_wait_sm, 0, 1);
 	}
-	cxt->camera_init[camera_id] = 1;
-	ISP_LOGD("camera %d done\n", camera_id);
+
+	aem_sync_stat_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
+	cxt->aem_sync_stat_size = aem_sync_stat_size;
+	aem_sync_stat = (void *)malloc(aem_sync_stat_size);
+	if (NULL == aem_sync_stat) {
+		ret = ISP_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc aem_sync_stat");
+		goto exit;
+	}
+	if (is_master) {
+		cxt->aem_sync_stat[CAM_SENSOR_MASTER] = aem_sync_stat;
+		ISP_LOGV("master_aem_sync_stat %p", cxt->aem_sync_stat[CAM_SENSOR_MASTER]);
+	} else {
+		cxt->aem_sync_stat[CAM_SENSOR_SLAVE0] = aem_sync_stat;
+		ISP_LOGV("slave_aem_sync_stat %p", cxt->aem_sync_stat[CAM_SENSOR_SLAVE0]);
+	}
+
+	awb_stat_data_size = 3 * ISP_AEM_STAT_BLK_NUM * sizeof(cmr_u32);
+	cxt->awb_stat_data_size = awb_stat_data_size;
+	awb_stat_data = (void *)malloc(awb_stat_data_size);
+	if (NULL == awb_stat_data) {
+		ret = ISP_ALLOC_ERROR;
+		ISP_LOGE("fail to alloc awb_stat_data");
+		goto exit;
+	}
+	if (is_master) {
+		cxt->awb_stat_data[CAM_SENSOR_MASTER] = awb_stat_data;
+		ISP_LOGV("master_awb_stat_data %p", cxt->awb_stat_data[CAM_SENSOR_MASTER]);
+	} else {
+		cxt->awb_stat_data[CAM_SENSOR_SLAVE0] = awb_stat_data;
+		ISP_LOGV("slave_awb_stat_data %p", cxt->awb_stat_data[CAM_SENSOR_SLAVE0]);
+	}
+
 	return ret;
 
 exit:
-	if (cxt->aem_sync_stat[camera_id]) {
-		free(cxt->aem_sync_stat[camera_id]);
-		cxt->aem_sync_stat[camera_id] = NULL;
-	}
-	if (cxt->awb_stat_data[camera_id]) {
-		free(cxt->awb_stat_data[camera_id]);
-		cxt->awb_stat_data[camera_id] = NULL;
+
+	for (i = 0; i < SENSOR_NUM_MAX; i++) {
+		if (cxt->aem_sync_stat[i]) {
+			free(cxt->aem_sync_stat[i]);
+			cxt->aem_sync_stat[i] = NULL;
+		}
+
+		if (cxt->awb_stat_data[i]) {
+			free(cxt->awb_stat_data[i]);
+			cxt->awb_stat_data[i] = NULL;
+		}
 	}
 
 	cxt->isp_3afw_handles[camera_id] = NULL;
@@ -379,20 +388,8 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
+	cmr_u8 i = 0;
 
-	if (cxt->camera_init[camera_id] == 0) {
-		ISP_LOGI("camera %d is not inited\n", camera_id);
-		return ret;
-	}
-
-	if (cxt->aem_sync_stat[camera_id]) {
-		free(cxt->aem_sync_stat[camera_id]);
-		cxt->aem_sync_stat[camera_id] = NULL;
-	}
-	if (cxt->awb_stat_data[camera_id]) {
-		free(cxt->awb_stat_data[camera_id]);
-		cxt->awb_stat_data[camera_id] = NULL;
-	}
 	cxt->isp_3afw_handles[camera_id] = NULL;
 
 	pthread_mutex_lock(&g_br_mutex);
@@ -409,6 +406,18 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 		sem_destroy(&cxt->awb_wait_sm);
 		sem_destroy(&cxt->af_wait_sm);
 	}
-	cxt->camera_init[camera_id] = 0;
+
+	for (i = 0; i < SENSOR_NUM_MAX; i++) {
+		if (NULL != cxt->aem_sync_stat[i]) {
+			free(cxt->aem_sync_stat[i]);
+			cxt->aem_sync_stat[i] = NULL;
+		}
+
+		if (NULL != cxt->awb_stat_data[i]) {
+			free(cxt->awb_stat_data[i]);
+			cxt->awb_stat_data[i] = NULL;
+		}
+	}
+
 	return ret;
 }

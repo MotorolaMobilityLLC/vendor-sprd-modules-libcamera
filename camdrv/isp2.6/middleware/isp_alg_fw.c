@@ -1484,10 +1484,10 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		  * here we shift 1 to get average of G for AE algo compatibility */
 		ae_stat_ptr->g_info[i] >>= 1;
 	}
-	ISP_LOGV("sum[0]: r 0x%x, g 0x%x, b 0x%x\n",
-		ae_stat_ptr->r_info[0], ae_stat_ptr->g_info[0], ae_stat_ptr->b_info[0]);
-	ISP_LOGV("cnt: r 0x%x, 0x%x,  g 0x%x, 0x%x, b 0x%x, 0x%x\n",
-		cnt_r_ue, cnt_r_oe, cnt_g_ue, cnt_g_oe, cnt_b_ue, cnt_b_oe);
+	ISP_LOGV("sum[0]: r 0x%x, g 0x%x, b 0x%x cam[%d]\n",
+		ae_stat_ptr->r_info[0], ae_stat_ptr->g_info[0], ae_stat_ptr->b_info[0], (cmr_u32)cxt->camera_id);
+	ISP_LOGV("cnt: r 0x%x, 0x%x,  g 0x%x, 0x%x, b 0x%x, 0x%x cam[%d]\n",
+		cnt_r_ue, cnt_r_oe, cnt_g_ue, cnt_g_oe, cnt_b_ue, cnt_b_oe, (cmr_u32)cxt->camera_id);
 
 	cxt->ai_cxt.ae_param.frame_id = statis_info->frame_id;
 	cxt->ai_cxt.ae_param.zoom_ratio = statis_info->zoom_ratio;
