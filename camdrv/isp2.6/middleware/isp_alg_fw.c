@@ -4269,7 +4269,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		return ret;
 	}
 
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &in_ptr->size.w, &in_ptr->size.h);
+	/* ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &in_ptr->size.w, &in_ptr->size.h); */
 
 	cxt->first_frm = 1;
 	cxt->work_mode = in_ptr->work_mode;
@@ -4286,6 +4286,18 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_LOGD("work_mode %d, is_dv %d, zsl %d,  size %d %d, 4in1_prev %d\n",
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
 		in_ptr->size.w, in_ptr->size.h, (cmr_u32)in_ptr->mode_4in1);
+	do { /* dcam-hist size need div 2 when 4in1, TODO: for capture */
+		cmr_u32 w, h;
+
+		w = in_ptr->size.w;
+		h = in_ptr->size.h;
+		if (cxt->is_4in1_prev) {
+			w = (w / 2) & (~1);
+			h = (h / 2) & (~1);
+		}
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &w, &h);
+
+	} while (0);
 
 	memset(&cxt->mem_info, 0, sizeof(struct isp_mem_info));
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
