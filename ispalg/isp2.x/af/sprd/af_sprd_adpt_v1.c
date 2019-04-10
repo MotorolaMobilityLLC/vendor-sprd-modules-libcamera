@@ -2374,7 +2374,10 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 		}
 
 		if (AFT_TRIG_TOF == result->is_caf_trig) {
-			tof_start(af, RE_TRIGGER, result);
+			af_stop_search(af);
+
+			tof_start(af, AF_TRIGGER, result);
+			af->focus_state = AF_SEARCHING;
 		} else if (AFT_TRIG_PD == result->is_caf_trig) {
 			pd_start(af, RE_TRIGGER, result);
 		}
@@ -3163,6 +3166,16 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 
 static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 {
+
+	char value[PROPERTY_VALUE_MAX] = { '\0' };
+	
+	property_get("persist.vendor.cam.pd.enable", value, "1");
+	if (atoi(value) != 1){
+		UNUSED(handle);
+		ISP_LOGI("af_sprd_set_pd_info Disable! E %p", param0);
+		return AFV1_SUCCESS;
+	}
+
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct pd_result *pd_calc_result = (struct pd_result *)param0;
 
