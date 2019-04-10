@@ -505,6 +505,15 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
         return ret;
     }
 
+    parm.channel_id = channel_id;
+    parm.pdaf_ctrl.mode = config->cfg.pdaf_ctrl.mode;
+    parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
+    if (ret) {
+        CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%ld", ret);
+        return ret;
+    }
+
     if (1 == config->cfg.ebd_ctrl.mode) {
         parm.channel_id = channel_id;
         parm.ebd_ctrl.mode = config->cfg.ebd_ctrl.mode;
