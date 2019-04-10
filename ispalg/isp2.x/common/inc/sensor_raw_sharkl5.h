@@ -363,7 +363,7 @@ struct sensor_envi_detect_param {
 #define SENSOR_CCE_NUM 0x09
 #define SENSOR_CMC_NUM 16
 #define SENSOR_CTM_NUM 0x09
-#define SENSOR_HSV_NUM 24
+#define SENSOR_HSV_NUM 32
 #define SENSOR_LENS_NUM 0x09
 #define SENSOR_BLC_NUM 0x09
 #define SENSOR_MODE_NUM 0x02
