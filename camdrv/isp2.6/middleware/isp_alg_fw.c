@@ -367,6 +367,7 @@ struct isp_alg_fw_context {
 	/* 4in1 */
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 is_4in1_prev; /* 1: 4c pixel for prev */
+	cmr_u32 lowlight_flag; /* low lux for capture */
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -1401,6 +1402,13 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
 					AF_CMD_SET_DCAM_TIMESTAMP, (void *)(&af_ts), NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
+	}
+
+	if (cxt->is_4in1_prev) {
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&cxt->lowlight_flag);
+
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG, &cxt->lowlight_flag, NULL);
 	}
 
 	return ret;

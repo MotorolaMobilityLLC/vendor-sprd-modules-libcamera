@@ -1378,15 +1378,20 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
+		if (cxt->is_4in1_prev)
+			cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&cxt->lowlight_flag);
+
 	}
 
 	if (!ret) {
 		info_ptr->adgain = (cmr_u32) gain;
 		info_ptr->exp_time = exp_time;
 		info_ptr->bv = bv;
+		info_ptr->lowlight_flag = cxt->lowlight_flag;
 	}
-	ISP_LOGV("adgain = %d, exp = %d, bv = %d",
-		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv);
+	ISP_LOGV("adgain = %d, exp = %d, bv = %d, lowlight_flag = %d",
+		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv,
+		info_ptr->lowlight_flag);
 	return ret;
 }
 
