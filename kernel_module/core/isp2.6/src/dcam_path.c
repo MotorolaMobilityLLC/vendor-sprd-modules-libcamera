@@ -519,9 +519,14 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 		 * nr3_bypass: 0
 		 */
 		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x8);
-		dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x,
-				    dev->cap_info.cap_size.size_y,
-				    0/* project_mode=0 */, idx);
+		if (dev->is_4in1) /* -300,-200,workaround before set DCAM_3DNR_ROI_MAX_WIDTH */
+			dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x / 2 - 300,
+				dev->cap_info.cap_size.size_y / 2 - 200,
+				0/* project_mode=0 */, idx);
+		else
+			dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x,
+				dev->cap_info.cap_size.size_y,
+				0/* project_mode=0 */, idx);
 		break;
 	default:
 		break;
