@@ -2532,6 +2532,7 @@ int SprdCamera3RealBokeh::initialize(
     const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
     HAL_LOGI("E");
+    mPendingRequest = 0;
     mBokehSize.capture_w = 0;
     mBokehSize.capture_h = 0;
     mPreviewStreamsNum = 0;
