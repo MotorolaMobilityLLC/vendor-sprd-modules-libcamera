@@ -165,9 +165,9 @@ static void ov16885_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
     frame_interval = (uint16_t)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
-    SENSOR_LOGD(
-        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms, fps = %f",
-        mode, shutter, dummy_line, frame_interval, fps);
+    SENSOR_LOGD("mode = %d, exposure_line = %d, dummy_line= %d, "
+                "frame_interval= %d ms, fps = %f",
+                mode, shutter, dummy_line, frame_interval, fps);
 
     if (dest_fr_len != cur_fr_len) {
         sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
@@ -414,7 +414,6 @@ static cmr_int ov16885_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
 #endif
 
 #if 1
-static cmr_int sns_4in1_init = 0;
 static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
 static cmr_int ov16885_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -422,13 +421,13 @@ static cmr_int ov16885_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_IC_CHECK_PTR(param);
 
     SENSOR_LOGI("E\n");
-    if (sns_4in1_init) {
-        sn_4in1_info = (struct sensor_4in1_info *)param;
-        sn_4in1_info->is_4in1_supported = 1;
-        sn_4in1_info->limited_4in1_width = 2336;
-        sn_4in1_info->limited_4in1_height = 1752;
-        sn_4in1_info->sns_mode = sns_4in1_mode;
-    }
+
+    sn_4in1_info = (struct sensor_4in1_info *)param;
+    sn_4in1_info->is_4in1_supported = 1;
+    sn_4in1_info->limited_4in1_width = 2336;
+    sn_4in1_info->limited_4in1_height = 1752;
+    sn_4in1_info->sns_mode = sns_4in1_mode;
+
     return rtn;
 }
 
@@ -491,8 +490,8 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
 
     otp_parser_ptr = dlsym(otp_parser_handle, "otp_parser");
     if (otp_parser_ptr == NULL) {
-       dlclose(otp_parser_handle);
-       SENSOR_LOGE(
+        dlclose(otp_parser_handle);
+        SENSOR_LOGE(
             "load libcam_otp_parser.so: couldn't find symbol otp_parser");
         return SENSOR_FAIL;
     } else {
@@ -579,8 +578,6 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
     init_ov4c(init); //(unsigned char *)param, (unsigned char *)param);
 
     pOutImage = malloc(imgsize);
-
-    sns_4in1_init = 1;
     return rtn;
 }
 
@@ -657,8 +654,6 @@ static cmr_int ov16885_drv_ov4c_deinit(cmr_handle handle, cmr_u32 *param) {
     const char *sym = "ov4c_release";
     typedef int (*func_release)();
     func_release release_ov4c = NULL;
-
-    sns_4in1_init  = 0;
 
     if (handlelib) {
         release_ov4c = (int *)dlsym(handlelib, sym);
@@ -990,7 +985,8 @@ static cmr_int ov16885_drv_stream_off(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
-                        sns_drv_cxt->line_time_def / 1000000) + 10;
+                          sns_drv_cxt->line_time_def / 1000000) +
+                         10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }
