@@ -1121,14 +1121,6 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle,
 			ISP_LOGV("set param %d, id=%x, data=%p", i, block_result->block_id, block_result);
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
-
-#ifdef Y_GAMMA_SMART_WITH_RGB_GAMMA
-			if (ISP_BLK_RGB_GAMC == block_result->block_id) {
-				pm_param.id = ISP_BLK_Y_GAMMC;
-				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_SMART, &io_pm_input, NULL);
-				ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
-			}
-#endif
 		}
 		break;
 	}
