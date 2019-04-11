@@ -1937,8 +1937,25 @@ void dcam_put_sync_helper(struct dcam_pipe_dev *dev,
 /* config fbc, see dcam_interface.h for @fbc_mode */
 static int dcam_cfg_fbc(struct dcam_pipe_dev *dev, int fbc_mode)
 {
+	struct dcam_path_desc *path = NULL;
+	struct camera_frame *frame = NULL;
+
 	DCAM_REG_MWR(dev->idx, DCAM_PATH_ENDIAN, 0x3, fbc_mode);
 	pr_info("fbc mode %d\n", fbc_mode);
+
+	/* update compressed flag for reserved buffer */
+	if (fbc_mode == DCAM_FBC_FULL)
+		path = &dev->path[DCAM_PATH_FULL];
+	else if (fbc_mode == DCAM_PATH_BIN)
+		path = &dev->path[DCAM_PATH_BIN];
+
+	if (!path)
+		return 0;
+
+	/* bad code, but don't have any other choice */
+	list_for_each_entry(frame, &path->reserved_buf_queue.head, list) {
+		frame->is_compressed = 1;
+	}
 
 	return 0;
 }
@@ -2040,6 +2057,24 @@ static int  dcam_cfg_path_full_source(void *dcam_handle,
 	return 0;
 }
 
+static inline void sprd_dcam_show_frame_info(struct dcam_pipe_dev *dev,
+					     struct dcam_path_desc *path,
+					     struct camera_frame *frame)
+{
+	uint32_t size = 0;
+
+	if (frame->is_compressed)
+		size = dcam_if_cal_compressed_size(frame->width, frame->height);
+	else
+		size = cal_sprd_raw_pitch(frame->width) * frame->height;
+
+	pr_info("DCAM%u %s frame %u %u size %u %u buf %08lx %08x\n",
+		dev->idx, to_path_name(path->path_id),
+		frame->is_reserved, frame->is_compressed,
+		frame->width, frame->width,
+		frame->buf.iova[0], size);
+}
+
 static int sprd_dcam_cfg_path(
 	void *dcam_handle,
 	enum dcam_path_cfg_cmd cfg_cmd,
@@ -2076,6 +2111,9 @@ static int sprd_dcam_cfg_path(
 		ret = cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_DCAM);
 		if (ret)
 			goto exit;
+
+		if (atomic_read(&dev->state) != STATE_RUNNING)
+			sprd_dcam_show_frame_info(dev, path, pframe);
 
 		/* is_reserved:
 		 *  1:  basic mapping reserved buffer;

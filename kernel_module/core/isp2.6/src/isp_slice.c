@@ -1172,7 +1172,7 @@ static void _cfg_slice_fbd_raw(struct isp_fbd_raw_info *frame_fbd_raw,
 	/* tid: start index of (sx, sy) tile in all tiles */
 	tid = tsy * frame_fbd_raw->tiles_num_pitch + tsx;
 
-	pr_info("tid %u, w %u h %u\n", tid, w, h);
+	pr_debug("tid %u, w %u h %u\n", tid, w, h);
 
 	slc_fbd_raw = &cur_slc->slice_fbd_raw;
 
@@ -1196,13 +1196,13 @@ static void _cfg_slice_fbd_raw(struct isp_fbd_raw_info *frame_fbd_raw,
 	slc_fbd_raw->low_bit_pitch = frame_fbd_raw->low_bit_pitch;
 	slc_fbd_raw->fetch_fbd_bypass = 0;
 
-	pr_info("fetch (%u %u %u %u) from %ux%u\n",
-		sx, sy, ex, ey, w0, h0);
-	pr_info("tile %u %u %u %u\n", tsx, tsy, tex, tey);
-	pr_info("head %x, tile %x, low2 %x\n",
-		slc_fbd_raw->header_addr_init,
-		slc_fbd_raw->tile_addr_init_x256,
-		slc_fbd_raw->low_bit_addr_init);
+	pr_debug("fetch (%u %u %u %u) from %ux%u\n",
+		 sx, sy, ex, ey, w0, h0);
+	pr_debug("tile %u %u %u %u\n", tsx, tsy, tex, tey);
+	pr_debug("head %x, tile %x, low2 %x\n",
+		 slc_fbd_raw->header_addr_init,
+		 slc_fbd_raw->tile_addr_init_x256,
+		 slc_fbd_raw->low_bit_addr_init);
 }
 
 int isp_cfg_slice_fetch_info(void *cfg_in, struct isp_slice_context *slc_ctx)

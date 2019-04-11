@@ -178,7 +178,7 @@ static int isp_err_pre_proc(enum isp_context_id idx, void *isp_handle)
 	struct isp_pipe_dev *dev = NULL;
 	struct isp_pipe_context *pctx;
 
-	pr_err("isp cxt_id:%d error happened\n", idx);
+	//pr_err("isp cxt_id:%d error happened\n", idx);
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 	/* todo: isp error handling */

@@ -569,6 +569,8 @@ static void alloc_buffers(struct work_struct *work)
 			pframe = get_empty_frame();
 			pframe->channel_id = channel->ch_id;
 			pframe->is_compressed = channel->compress_input;
+			pframe->width = width;
+			pframe->height = height;
 
 			if (channel->ch_id == CAM_CH_PRE &&
 				module->grp->camsec_cfg.camsec_mode != SEC_UNABLE) {
@@ -3917,6 +3919,7 @@ static int img_ioctl_set_frame_addr(
 				((ch->ch_id == CAM_CH_CAP) || (ch->ch_id == CAM_CH_PRE))) {
 				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;
 				pframe1 = get_empty_frame();
+				pframe1->is_reserved = 1;
 				pframe1->buf.type = CAM_BUF_USER;
 				pframe1->buf.mfd[0] = param.fd_array[i];
 				pframe1->buf.offset[0] = param.frame_addr_array[i].y;
@@ -3946,6 +3949,7 @@ static int img_ioctl_set_frame_addr(
 			if (param.is_reserved_buf) {
 				ch->reserved_buf_fd = pframe->buf.mfd[0];
 				cmd = DCAM_PATH_CFG_OUTPUT_RESERVED_BUF;
+				pframe->is_reserved = 1;
 			}
 			ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 					cmd, ch->dcam_path_id, pframe);
@@ -5254,6 +5258,7 @@ static int img_ioctl_4in1_set_raw_addr(struct camera_module *module,
 
 		if (param.is_reserved_buf) {
 			ch->reserved_buf_fd = pframe->buf.mfd[0];
+			pframe->is_reserved = 1;
 			ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 					DCAM_PATH_CFG_OUTPUT_RESERVED_BUF,
 					ch->dcam_path_id, pframe);
