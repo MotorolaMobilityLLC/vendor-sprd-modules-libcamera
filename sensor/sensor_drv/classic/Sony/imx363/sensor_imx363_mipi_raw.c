@@ -749,6 +749,24 @@ static cmr_int imx363_drv_set_pdaf_mode(cmr_handle handle, cmr_uint param) {
     return 0;
 }
 
+static cmr_int imx363_drv_set_master_FrameSync(cmr_handle handle,
+                                                cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    SENSOR_LOGI("E");
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4B68, 0xFF);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5873, 0x0C);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30A1, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4B70, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4BD0, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0350, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5D0C, 0x01);
+
+    return SENSOR_SUCCESS;
+}
+
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -777,6 +795,8 @@ static cmr_int imx363_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0601, 0x02);
     }
 #endif
+
+    imx363_drv_set_master_FrameSync(handle, param);
 
 #if 1 // defined(CONFIG_CAMERA_ISP_DIR_3)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x00);
