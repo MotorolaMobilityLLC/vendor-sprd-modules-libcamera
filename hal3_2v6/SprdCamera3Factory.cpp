@@ -146,6 +146,19 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     Mutex::Autolock l(mLock);
 
     HAL_LOGV("E, camera_id = %d", camera_id);
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.id", value, "0");
+    if (camera_id == 0) {
+        if (!strcmp(value, "2"))
+            camera_id = 2;
+        else if (!strcmp(value, "4"))
+            camera_id = 4;
+    } else if (camera_id == 1) {
+        if (!strcmp(value, "3"))
+            camera_id = 3;
+        else if (!strcmp(value, "5"))
+            camera_id = 5;
+    }
     if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
         (camera_id < 0)) {
         return -ENODEV;
