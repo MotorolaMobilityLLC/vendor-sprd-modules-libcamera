@@ -140,22 +140,6 @@ typedef struct {
     uint32_t heapNum;
 } camera_oem_buff_info_t;
 
-enum afTransitionCause{
-    AF_MODE_CHANGE = 0,
-    AF_START,
-    AF_FOCUSED,
-    AF_NOT_FOCUSED,
-    AF_TRIGGER_START,
-    AF_TRIGGER_CANCEL,
-    AF_MODE_MAX,
-};
-
-struct afStateMachine {
-    uint32_t state;
-    uint32_t transitionCause;
-    uint32_t newState;
-};
-
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
 #define MAX_Y_UV_COUNT 2
@@ -166,7 +150,19 @@ struct afStateMachine {
 #define SBS_RAW_DATA_WIDTH 3200
 #define SBS_RAW_DATA_HEIGHT 1200
 
-enum aeTransitionCause{
+enum afTransitionCause {
+    AF_MODE_CHANGE = 0,
+    AF_INITIATES_NEW_SCAN,
+    AF_PASSIVE_FOCUSED,   // af in focus after passive scan
+    AF_PASSIVE_UNFOCUSED, // af not in focus after passive scan
+    AF_FOCUSED_LOCKED, // af focused locked when af_trigger start
+    AF_NOT_FOCUSED_LOCKED, // af not focused locked when af_trigger start
+    AF_TRIGGER_START,
+    AF_TRIGGER_CANCEL,
+    AF_MODE_MAX,
+};
+
+enum aeTransitionCause {
     AE_MODE_CHANGE = 0,
     AE_START,
     AE_STABLE,
@@ -178,7 +174,7 @@ enum aeTransitionCause{
     AE_MODE_MAX,
 };
 
-enum awbTransitionCause{
+enum awbTransitionCause {
     AWB_MODE_CHANGE = 0,
     AWB_START,
     AWB_STABLE,

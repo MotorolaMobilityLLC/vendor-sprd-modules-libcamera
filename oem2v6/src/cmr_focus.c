@@ -60,7 +60,6 @@ struct af_context {
     cmr_u32 af_mode;
     cmr_u32 focus_zone_param[CMR_FOCUS_RECT_PARAM_LEN];
     cmr_u32 focus_need_quit;
-    cmr_u32 af_mode_inflight;
 };
 
 struct af_isp_mode_pairs {
@@ -289,30 +288,6 @@ cmr_int cmr_af_cancel_notice_focus(cmr_handle af_handle) {
     return ret;
 }
 
-cmr_int cmr_transfer_caf_to_af(cmr_handle af_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct af_context *af_cxt = (struct af_context *)af_handle;
-
-    pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-    af_cxt->af_mode_inflight = CAMERA_FOCUS_MODE_CAF;
-    CMR_LOGD("E");
-    pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-
-    return ret;
-}
-
-cmr_int cmr_transfer_af_to_caf(cmr_handle af_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct af_context *af_cxt = (struct af_context *)af_handle;
-
-    pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-    af_cxt->af_mode_inflight = CAMERA_FOCUS_MODE_AUTO;
-    CMR_LOGD("E");
-    pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-
-    return ret;
-}
-
 /*send message to lunch af*/
 cmr_int cmr_focus_start(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -426,28 +401,6 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
 
             break;
         }
-
-        if (((CAMERA_FOCUS_MODE_CAF == af_cxt->af_mode) ||
-             (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode)) &&
-            af_get_focusmove_flag(af_handle)) {
-            /*caf move done, return directly*/
-            CMR_LOGD("CAF move done already isp_af_win_val=%d ",
-                     af_cxt->isp_af_win_val);
-
-            if (NULL != af_cxt->ops.af_pre_proc) {
-                af_cxt->ops.af_pre_proc(af_cxt->oem_handle);
-            }
-
-            af_cxt->evt_cb(AF_CB_DONE, 0, af_cxt->oem_handle);
-
-            if (NULL != af_cxt->ops.af_post_proc) {
-                af_cxt->ops.af_post_proc(af_cxt->oem_handle, 0);
-            }
-
-            break;
-        }
-
-        af_cxt->evt_cb(AF_CB_DONE, 1, af_cxt->oem_handle);
 
         ret = af_start(af_handle, camera_id);
         CMR_LOGD("af_start ret=%ld", ret);
@@ -1018,11 +971,11 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         com_isp_af.af_param = isp_af_param;
 
         flash = af_cxt->ops.get_flash_info(af_cxt->oem_handle, camera_id);
-        CMR_LOGD("flash %d af_cxt->af_mode_inflight %d", flash,
-                 af_cxt->af_mode_inflight);
+        CMR_LOGD("flash %d af_cxt->af_mode %d", flash,
+                 af_cxt->af_mode);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-        if (af_cxt->af_mode_inflight == CAMERA_FOCUS_MODE_CAF &&
+        if (af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF &&
             1 !=
                 af_cxt->ops.get_flash_info(
                     af_cxt->oem_handle,
@@ -1161,13 +1114,6 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
         goto exit;
     }
 
-    pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-    if (!af_cxt->af_busy) {
-        pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-        CMR_LOGD("autofocus is IDLE direct return!");
-        return ret;
-    }
-    pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
     CMR_LOGD("set autofocus quit");
     if (IMG_DATA_TYPE_RAW == sensor_info.image_format) {
         struct isp_af_win isp_af_param;

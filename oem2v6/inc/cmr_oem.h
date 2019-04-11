@@ -434,10 +434,6 @@ cmr_int camera_local_start_focus(cmr_handle oem_handle);
 
 cmr_int camera_local_cancel_focus(cmr_handle oem_handle);
 
-cmr_int camera_local_transfer_caf_to_af(cmr_handle oem_handle);
-
-cmr_int camera_local_transfer_af_to_caf(cmr_handle oem_handle);
-
 cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle,
                                         cmr_u32 camera_id, cmr_uint skip_num,
                                         cmr_uint has_preflashed);

@@ -93,10 +93,6 @@ cmr_int cmr_af_start_notice_focus(cmr_handle af_handle);
 
 cmr_int cmr_af_cancel_notice_focus(cmr_handle af_handle);
 
-cmr_int cmr_transfer_caf_to_af(cmr_handle af_handle);
-
-cmr_int cmr_transfer_af_to_caf(cmr_handle af_handle);
-
 #ifdef __cplusplus
 }
 #endif

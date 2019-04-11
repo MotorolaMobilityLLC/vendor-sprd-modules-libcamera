@@ -148,9 +148,6 @@ cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size);
 void camera_start_burst_notice(cmr_handle camera_handle);
 void camera_end_burst_notice(cmr_handle camera_handle);
 
-cmr_int camera_transfer_caf_to_af(cmr_handle camera_handle);
-cmr_int camera_transfer_af_to_caf(cmr_handle camera_handle);
-
 cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width,
                        int height);
 

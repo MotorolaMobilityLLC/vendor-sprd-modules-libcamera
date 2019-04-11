@@ -193,26 +193,6 @@ exit:
     return ret;
 }
 
-// when autoFocus, hal set caf mode to af in oem and isp,but in fact,the af mode
-// is always caf which app and hal know this
-cmr_int camera_transfer_caf_to_af(cmr_handle camera_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    ret = camera_local_transfer_caf_to_af(camera_handle);
-
-    return ret;
-}
-
-// when cancelFocus, hal set af mode to caf in oem and isp,but in fact,the af
-// mode is always caf which app and hal know this
-cmr_int camera_transfer_af_to_caf(cmr_handle camera_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    ret = camera_local_transfer_af_to_caf(camera_handle);
-
-    return ret;
-}
-
 cmr_int camera_cancel_takepicture(cmr_handle camera_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
@@ -1285,8 +1265,8 @@ static oem_ops_t oem_module_ops = {
     camera_get_isp_handle, camera_lls_enable, camera_is_lls_enabled,
     camera_vendor_hdr_enable, camera_is_vendor_hdr, camera_set_lls_shot_mode,
     camera_get_lls_shot_mode, camera_get_isp_info, camera_start_burst_notice,
-    camera_end_burst_notice, camera_transfer_caf_to_af,
-    camera_transfer_af_to_caf, dump_jpeg_file, camera_get_gain_thrs,
+    camera_end_burst_notice, NULL,
+    NULL, dump_jpeg_file, camera_get_gain_thrs,
     camera_set_sensor_info_to_af, camera_get_sensor_max_fps,
     camera_snapshot_is_need_flash, camera_get_sensor_otp_info,
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,

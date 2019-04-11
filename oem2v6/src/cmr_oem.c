@@ -10047,24 +10047,6 @@ cmr_int camera_local_cancel_focus(cmr_handle oem_handle) {
     return ret;
 }
 
-cmr_int camera_local_transfer_caf_to_af(cmr_handle oem_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-
-    ret = cmr_transfer_caf_to_af(cxt->focus_cxt.focus_handle);
-
-    return ret;
-}
-
-cmr_int camera_local_transfer_af_to_caf(cmr_handle oem_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-
-    ret = cmr_transfer_af_to_caf(cxt->focus_cxt.focus_handle);
-
-    return ret;
-}
-
 cmr_int camera_local_pre_flash(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
