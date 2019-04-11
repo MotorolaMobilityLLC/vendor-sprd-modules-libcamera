@@ -173,13 +173,6 @@ typedef enum {
 } ERR_SENSOR_E;
 
 typedef enum {
-    SENSOR_TYPE_NONE = 0x00,
-    SENSOR_TYPE_IMG_SENSOR,
-    SENSOR_TYPE_ATV,
-    SENSOR_TYPE_MAX
-} SENSOR_TYPE_E;
-
-typedef enum {
     SENSOR_HDR_EV_LEVE_0 = 0,
     SENSOR_HDR_EV_LEVE_1,
     SENSOR_HDR_EV_LEVE_2,
@@ -460,12 +453,6 @@ typedef struct sensor_mode_info_tag {
     cmr_u16 out_height; // sensor output height after binning and crop/trim
 } SENSOR_MODE_INFO_T, *SENSOR_MODE_INFO_T_PTR;
 
-typedef struct sensor_register_tag {
-    cmr_u32 img_sensor_num;
-    cmr_u8 cur_id;
-    cmr_u8 is_register[SENSOR_ID_MAX];
-} SENSOR_REGISTER_INFO_T, *SENSOR_REGISTER_INFO_T_PTR;
-
 typedef struct sensor_exp_info_tag {
     SENSOR_IMAGE_FORMAT image_format;
     cmr_u32 image_pattern;
@@ -692,36 +679,28 @@ struct sns_thread_cxt {
 
 struct sensor_drv_context {
     BOOLEAN sensor_isInit;
-    BOOLEAN sensor_identified;
-    BOOLEAN reserverd1;
-    cmr_u8 sensor_index[SENSOR_ID_MAX];
+    cmr_u8 *sensor_index;
     cmr_u16 i2c_addr;
     cmr_int fd_sensor; /*sensor device id, used when sensor dev alive*/
     cmr_u32 is_calibration;
     cmr_u32 stream_on;
-    SENSOR_INFO_T *sensor_list_ptr[SENSOR_ID_MAX];
+    cmr_int slot_id;
+    cmr_u8 has_register;
+
     SENSOR_INFO_T *sensor_info_ptr;
     SENSOR_EXP_INFO_T sensor_exp_info; /*!!!BE CAREFUL!!! for the 3rd party
                                           issue, the SENSOR_EXP_INFO_T must
                                           equal the sensor_exp_info*/
-    SENSOR_TYPE_E sensor_type;
-    enum sensor_mode sensor_mode[SENSOR_ID_MAX];
-    SENSOR_REGISTER_INFO_T sensor_register_info;
-    cmr_u32 flash_mode;
-    cmr_u32 padding;
+    enum sensor_mode sensor_mode;
     cmr_uint is_autotest;
-    cmr_int is_register_sensor;
+    cmr_int i2c_init_ok;
     EXIF_SPEC_PIC_TAKING_COND_T default_exif;
     struct sns_thread_cxt ctrl_thread_cxt;
-    cmr_u32 exit_flag;
-    cmr_u32 error_cnt;
-    cmr_uint lnc_addr_bakup[8][4];
     cmr_u32 bypass_mode;
     struct drv_fov_info fov_info;
-    cmr_int sensor_img_type;
+    cmr_int sensor_type;
 
     cmr_handle sensor_hw_handler;
-    void *module_list[SENSOR_ID_MAX];
     void *current_module;
     cmr_handle hw_drv_handle;
     cmr_handle otp_drv_handle;
@@ -733,13 +712,7 @@ struct camera_device_manager {
     cmr_u8 hasScaned;
     cmr_int physical_num;
     cmr_int logical_num;
-    // some variables of sensor_drv_context
-    // moved to here later
-    /*
-        cmr_u8 sensor_index[SENSOR_ID_MAX];
-        SENSOR_INFO_T *sensor_list_ptr[SENSOR_ID_MAX];
-        void *module_list[SENSOR_ID_MAX];
-    */
+    cmr_u8 drv_idx[SENSOR_ID_MAX];
 };
 
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"

@@ -622,7 +622,50 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #endif
 };
 
-SNS_MULTI_CAMERA_INFO_T *sensor_cfg_multi_camera_group(cmr_int *group_num) {
+void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot_id) {
+
+    switch (slot_id) {
+    case SENSOR_MAIN:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+        phyPtr->resource_cost = 100;
+        break;
+    case SENSOR_SUB:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_FRONT;
+        phyPtr->angle = 270;
+        phyPtr->resource_cost = 100;
+        break;
+    case SENSOR_MAIN2:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+        phyPtr->resource_cost = 0;
+        break;
+    case SENSOR_SUB2:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_FRONT;
+        phyPtr->angle = 270;
+        phyPtr->resource_cost = 0;
+        break;
+    case SENSOR_MAIN3:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+        phyPtr->resource_cost = 0;
+        break;
+    case SENSOR_SUB3:
+        phyPtr->sensor_role = 0;
+        phyPtr->face_type = SNS_FACE_FRONT;
+        phyPtr->angle = 270;
+        phyPtr->resource_cost = 0;
+        break;
+    }
+
+}
+
+SNS_MULTI_CAMERA_INFO_T *sensor_get_multi_cam_cfg_group(cmr_int *group_num) {
       SNS_MULTI_CAMERA_INFO_T *multiCameraGroupPtr = multi_camera_sensor_group;
 
       *group_num = ARRAY_SIZE(multi_camera_sensor_group);

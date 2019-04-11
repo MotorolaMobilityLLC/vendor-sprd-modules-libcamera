@@ -49,5 +49,6 @@ SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id);
 char *sensor_get_name_list(cmr_u32 sensor_id);
 SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx);
 cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr);
-SNS_MULTI_CAMERA_INFO_T *sensor_cfg_multi_camera_group(cmr_int *group_num);
+SNS_MULTI_CAMERA_INFO_T *sensor_get_multi_cam_cfg_group(cmr_int *group_num);
+void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot_id);
 #endif

@@ -652,20 +652,6 @@ const uint8_t kavailable_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
 
 /**********************Static Members**********************/
 
-const camera_info kCameraInfo[] = {
-    {CAMERA_FACING_BACK, 90, /*orientation*/
-     0, 0, 100, 0, 0},
-
-    {CAMERA_FACING_FRONT, 270, /*orientation*/
-     0, 0, 100, 0, 0},
-
-    {CAMERA_FACING_BACK, 90, /*orientation*/
-     0, 0, 0, 0, 0},
-
-    {CAMERA_FACING_FRONT, 270, /*orientation*/
-     0, 0, 0, 0, 0},
-};
-
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];

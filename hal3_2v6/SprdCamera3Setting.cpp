@@ -761,25 +761,6 @@ const uint8_t kavailable_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
 
 /**********************Static Members**********************/
 
-const camera_info kCameraInfo[] = {
-#ifdef CONFIG_BACK_CAMERA
-    {CAMERA_FACING_BACK, 90, 0, 0, 100, 0, 0},
-#endif
-
-#ifdef CONFIG_FRONT_CAMERA
-    {CAMERA_FACING_FRONT, 270, 0, 0, 100, 0, 0},
-#endif
-
-#ifdef CONFIG_BACK_SECONDARY_CAMERA
-    {CAMERA_FACING_BACK, 90, 0, 0, 0, 0, 0},
-#endif
-
-#ifdef CONFIG_FRONT_SECONDARY_CAMERA
-    {CAMERA_FACING_FRONT, 270, 0, 0, 0, 0, 0},
-#endif
-
-};
-
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];
 
@@ -1604,10 +1585,12 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
 
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
+    struct phySensorInfo *phyPtr = NULL;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     int i = 0;
 
     memset(&(s_setting[cameraId]), 0, sizeof(sprd_setting_info_t));
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
     s_setting[cameraId].supported_hardware_level =
         ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
@@ -1744,9 +1727,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].flashInfo.firing_power = 10;
 
     // flash_info
-    if (kCameraInfo[cameraId].facing == CAMERA_FACING_BACK) {
+    if (phyPtr->face_type == CAMERA_FACING_BACK) {
         s_setting[cameraId].flash_InfoInfo.available = 1;
-    } else if (kCameraInfo[cameraId].facing == CAMERA_FACING_FRONT) {
+    } else if (phyPtr->face_type == CAMERA_FACING_FRONT) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
             s_setting[cameraId].flash_InfoInfo.available = 0;
@@ -3590,6 +3573,9 @@ int SprdCamera3Setting::updateWorkParameters(
     uint8_t is_raw_capture = 0;
     uint8_t is_isptool_mode = 0;
     char value[PROPERTY_VALUE_MAX];
+    struct camera_info cameraInfo;
+    memset(&cameraInfo, 0, sizeof(cameraInfo));
+    getCameraInfo(mCameraId, &cameraInfo);
 
     Mutex::Autolock l(mLock);
 
@@ -4403,7 +4389,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_FLASH_LCD_MODE)) {
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
-            kCameraInfo[mCameraId].facing == CAMERA_FACING_FRONT) {
+            cameraInfo.facing == CAMERA_FACING_FRONT) {
             s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode =
                 frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
             pushAndroidParaTag(ANDROID_SPRD_FLASH_LCD_MODE);
