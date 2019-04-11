@@ -31,11 +31,11 @@
 
 static void s5k3l6_drv_write_reg2sensor(cmr_handle handle,
                                         struct sensor_i2c_reg_tab *reg_info) {
+    cmr_int i = 0;
     SENSOR_IC_CHECK_PTR_VOID(reg_info);
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
 
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_int i = 0;
 
     for (i = 0; i < reg_info->size; i++) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle,
@@ -59,8 +59,6 @@ static void s5k3l6_drv_write_gain(cmr_handle handle,
     if (aec_info->again->size) {
         /*TODO*/
         aec_info->again->settings[0].reg_value = gain;
-        // aec_info->again->settings[0].reg_value = (gain >> 8) & 0xff;
-        // aec_info->again->settings[1].reg_value = (gain) & 0xff;
         /*END*/
     }
 
@@ -86,11 +84,7 @@ static void s5k3l6_drv_write_frame_length(cmr_handle handle,
 
     if (aec_info->frame_length->size) {
         /*TODO*/
-
         aec_info->frame_length->settings[0].reg_value = frame_len;
-        // aec_info->frame_length->settings[0].reg_value = (frame_len >> 8) &
-        // 0xff;
-        // aec_info->frame_length->settings[1].reg_value = frame_len & 0xFF;
         /*END*/
     }
 }
@@ -111,9 +105,6 @@ static void s5k3l6_drv_write_shutter(cmr_handle handle,
     if (aec_info->shutter->size) {
         /*TODO*/
         aec_info->shutter->settings[0].reg_value = shutter;
-        // aec_info->shutter->settings[0].reg_value = (shutter >> 8) & 0xff;
-        // aec_info->shutter->settings[1].reg_value = shutter & 0xff;
-
         /*END*/
     }
 }
@@ -157,6 +148,7 @@ static void s5k3l6_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         fps = 1000000000.0 / ((shutter + dummy_line) *
                               sns_drv_cxt->trim_tab_info[mode].line_time);
     }
+
     SENSOR_LOGI("fps = %f", fps);
 
     frame_interval = (cmr_u16)(
@@ -169,6 +161,7 @@ static void s5k3l6_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
         s5k3l6_drv_write_frame_length(handle, aec_info, dest_fr_len);
     }
+
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     s5k3l6_drv_write_shutter(handle, aec_info, shutter);
 
@@ -180,9 +173,9 @@ static void s5k3l6_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
 static void s5k3l6_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
                                  struct sensor_aec_i2c_tag *aec_info) {
+    cmr_u32 sensor_gain = 0;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_u32 sensor_gain = 0;
 
     sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
@@ -221,20 +214,18 @@ static cmr_int s5k3l6_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
-        usleep(5 * 1000);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
-        usleep(5 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
-        usleep(5 * 1000);
+        usleep(1 * 1000);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(5 * 1000);
+        usleep(1 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        usleep(5 * 1000);
-        // hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+        usleep(2 * 1000);
     } else {
+        usleep(1 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
@@ -254,15 +245,16 @@ static cmr_int s5k3l6_drv_power_on(cmr_handle handle, cmr_uint power_on) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int s5k3l6_drv_init_fps_info(cmr_handle handle) {
+
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
 
     SENSOR_LOGI("E");
+
     if (!fps_info->is_init) {
         cmr_u32 i, modn, tempfps = 0;
         SENSOR_LOGI("start init");
@@ -297,21 +289,21 @@ static cmr_int s5k3l6_drv_init_fps_info(cmr_handle handle) {
         }
         fps_info->is_init = 1;
     }
+
     SENSOR_LOGI("X");
+
     return rtn;
 }
 
 static cmr_int s5k3l6_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
+
     cmr_u32 up = 0;
     cmr_u32 down = 0;
-
+    cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
-    SENSOR_IC_CHECK_PTR(ex_info);
     SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
@@ -338,17 +330,18 @@ static cmr_int s5k3l6_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
 }
 
 static cmr_int s5k3l6_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
+
     cmr_int rtn = SENSOR_SUCCESS;
-    SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
-    SENSOR_IC_CHECK_PTR(fps_info);
     SENSOR_IC_CHECK_PTR(param);
+    SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
 
@@ -356,12 +349,14 @@ static cmr_int s5k3l6_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     if (!fps_data->is_init) {
         s5k3l6_drv_init_fps_info(handle);
     }
+
     cmr_u32 sensor_mode = fps_info->mode;
     fps_info->max_fps = fps_data->sensor_mode_fps[sensor_mode].max_fps;
     fps_info->min_fps = fps_data->sensor_mode_fps[sensor_mode].min_fps;
     fps_info->is_high_fps = fps_data->sensor_mode_fps[sensor_mode].is_high_fps;
     fps_info->high_fps_skip_num =
         fps_data->sensor_mode_fps[sensor_mode].high_fps_skip_num;
+
     SENSOR_LOGI("mode %d, max_fps: %d", fps_info->mode, fps_info->max_fps);
     SENSOR_LOGI("min_fps: %d", fps_info->min_fps);
     SENSOR_LOGI("is_high_fps: %d", fps_info->is_high_fps);
@@ -370,7 +365,6 @@ static cmr_int s5k3l6_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-#if 0
 /*==============================================================================
  * Description:
  * Get PDAF info for every sensor with SIN_MODULE or DUAL_MODULE
@@ -389,15 +383,17 @@ static const cmr_u16 s5k3l6_pd_row[] = {
     39, 39, 43, 43, 43, 43, 47, 47, 55, 55, 59, 59, 59, 59, 63, 63};
 
 static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
+
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
-    SENSOR_IC_CHECK_PTR(param);
     cmr_u16 i = 0;
     cmr_u16 pd_pos_row_size = 0;
     cmr_u16 pd_pos_col_size = 0;
     cmr_u16 pd_pos_is_right_size = 0;
 
-    SENSOR_PRINT_ERR("E\n");
+    SENSOR_IC_CHECK_PTR(param);
+
+    SENSOR_PRINT("E.\n");
 
     pdaf_info = (struct sensor_pdaf_info *)param;
     pd_pos_is_right_size = NUMBER_OF_ARRAY(s5k3l6_pd_is_right);
@@ -406,6 +402,7 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     if ((pd_pos_row_size != pd_pos_col_size) ||
         (pd_pos_row_size != pd_pos_is_right_size) ||
         (pd_pos_is_right_size != pd_pos_col_size)) {
+
         SENSOR_LOGE("pd_pos_row size and pd_pos_is_right size are not match");
         return SENSOR_FAIL;
     }
@@ -418,15 +415,16 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_block_h = 3;
     pdaf_info->pd_block_num_x = 65;
     pdaf_info->pd_block_num_y = 48;
+    pdaf_info->vch2_info.vch2_mode = 0x03;
     pdaf_info->pd_is_right = (cmr_u16 *)s5k3l6_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)s5k3l6_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)s5k3l6_pd_col;
+    pdaf_info->pd_pos_size = (pd_pos_is_right_size / 2);
     pdaf_info->vendor_type = SENSOR_VENDOR_S5K3L8XXM3;
     pdaf_info->sns_orientation = 0; // 1: mirror+flip; 0: normal
 
     return rtn;
 }
-#endif
 
 /*==============================================================================
  * Description:
@@ -434,6 +432,7 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int s5k3l6_drv_access_val(cmr_handle handle, cmr_uint param) {
+
     cmr_int ret = SENSOR_FAIL;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
 
@@ -454,7 +453,7 @@ static cmr_int s5k3l6_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
-        // ret = s5k3l6_drv_get_pdaf_info(handle, param_ptr->pval);
+        ret = s5k3l6_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -470,6 +469,7 @@ static cmr_int s5k3l6_drv_access_val(cmr_handle handle, cmr_uint param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int s5k3l6_drv_identify(cmr_handle handle, cmr_uint param) {
+
     cmr_u16 pid_value = 0x00;
     cmr_u16 ver_value = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
@@ -480,7 +480,6 @@ static cmr_int s5k3l6_drv_identify(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("mipi raw identify");
 
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, s5k3l6_PID_ADDR);
-
     if (s5k3l6_PID_VALUE == pid_value) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, s5k3l6_VER_ADDR);
         SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value,
@@ -506,6 +505,7 @@ static cmr_int s5k3l6_drv_identify(cmr_handle handle, cmr_uint param) {
  * you can change this function if it's necessary
  *============================================================================*/
 static cmr_int s5k3l6_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
+
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
     cmr_u32 prv_gain = 0;
@@ -525,11 +525,6 @@ static cmr_int s5k3l6_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 (unsigned int)sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    if (sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
-
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
         cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
@@ -538,6 +533,11 @@ static cmr_int s5k3l6_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
     cap_gain = prv_gain;
@@ -573,14 +573,15 @@ snapshot_info:
  * please don't change this function unless it's necessary
  *============================================================================*/
 static cmr_int s5k3l6_drv_write_exposure(cmr_handle handle, cmr_uint param) {
+
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
 
-    struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
-    SENSOR_IC_CHECK_HANDLE(ex);
+    SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = ex->exposure;
@@ -601,8 +602,8 @@ static cmr_int s5k3l6_drv_write_exposure(cmr_handle handle, cmr_uint param) {
  * you can change this function if it's necessary
  *============================================================================*/
 static cmr_int s5k3l6_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
-    cmr_int ret_value = SENSOR_SUCCESS;
 
+    cmr_int ret_value = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -619,14 +620,15 @@ static cmr_int s5k3l6_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
  * please don't change this function unless it's necessary
  *============================================================================*/
 static cmr_int s5k3l6_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+
     cmr_int ret_value = SENSOR_SUCCESS;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
-    SENSOR_IC_CHECK_HANDLE(handle);
-    SENSOR_IC_CHECK_PTR(info);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
 
@@ -651,11 +653,14 @@ static cmr_int s5k3l6_drv_set_master_FrameSync(cmr_handle handle,
 
     /*TODO*/
     cmr_u16 val1 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c67);
-    cmr_u16 val2 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c68);
+    cmr_u16 val2 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c71);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c67,
                         (0x10 << 8) | val1 & 0x00ff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c71,
+                        (0x83 << 8) | val2 & 0x00ff);
     cmr_u16 val3 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c67);
-    cmr_u16 val4 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c68);
+
+    cmr_u16 val4 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c71);
     SENSOR_LOGI("val1:%04x val2:%04x  val3 :%04x val4:%04x ", val1, val2, val3,
                 val4);
     /*END*/
@@ -670,12 +675,9 @@ static cmr_int s5k3l6_drv_set_Slave_FrameSync(cmr_handle handle,
     SENSOR_LOGI("E");
 
     /*TODO*/
-
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3f00, 0x0500);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c68, 0x0400);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3f05, 0x5A00);
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c67, 0x10);
-
     /*END*/
 
     return SENSOR_SUCCESS;
@@ -687,23 +689,22 @@ static cmr_int s5k3l6_drv_set_Slave_FrameSync(cmr_handle handle,
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int s5k3l6_drv_stream_on(cmr_handle handle, cmr_uint param) {
+
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
     SENSOR_LOGI("E");
 
-    //s5k3l6_drv_set_master_FrameSync(handle, param);
+#if defined(CONFIG_DUAL_MODULE)
+    s5k3l6_drv_set_master_FrameSync(handle, param);
+#endif
 
     /*TODO*/
-    usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C1E, 0x0100);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0100);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C1E, 0x0000);
     /*END*/
 
-    /*delay*/
-    usleep(1 * 1000);
-
+    SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
 }
 
@@ -713,30 +714,36 @@ static cmr_int s5k3l6_drv_stream_on(cmr_handle handle, cmr_uint param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int s5k3l6_drv_stream_off(cmr_handle handle, cmr_uint param) {
-    SENSOR_LOGI("E");
 
+    SENSOR_LOGI("E");
+    cmr_u16 value = 0;
+    cmr_u16 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    if (!sns_drv_cxt->is_sensor_close) {
-        usleep(5 * 1000);
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
+    if (value != 0x0000) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
+        if (!sns_drv_cxt->is_sensor_close) {
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                          sns_drv_cxt->line_time_def / 1000000) +
+                         10;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+        }
+    } else {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
     }
-    /*TODO*/
-
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
-    usleep(100 * 1000);
-
-    /*END*/
-    /*delay*/
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X");
 
+    SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
 }
 
 static cmr_int
 s5k3l6_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
                          cmr_handle *sns_ic_drv_handle) {
+
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
     void *pri_data = NULL;
@@ -750,6 +757,7 @@ s5k3l6_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
 
     s5k3l6_drv_write_frame_length(
         sns_drv_cxt, &s5k3l6_aec_info,
@@ -782,12 +790,14 @@ s5k3l6_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 }
 
 static cmr_int s5k3l6_drv_handle_delete(cmr_handle handle, void *param) {
+
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     ret = sensor_ic_drv_delete(handle, param);
+
     return ret;
 }
 
@@ -798,6 +808,7 @@ static cmr_int s5k3l6_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     SENSOR_IC_CHECK_PTR(param);
 
     ret = sensor_ic_get_private_data(handle, cmd, param);
+
     return ret;
 }
 
@@ -819,7 +830,10 @@ static struct sensor_ic_ops s_s5k3l6_ops_tab = {
     .identify = s5k3l6_drv_identify,
     .ex_write_exp = s5k3l6_drv_write_exposure,
     .write_gain_value = s5k3l6_drv_write_gain_value,
+
+#if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = s5k3l6_drv_read_aec_info,
+#endif
 
     .ext_ops = {
             [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = s5k3l6_drv_before_snapshot,
@@ -827,6 +841,6 @@ static struct sensor_ic_ops s_s5k3l6_ops_tab = {
             [SENSOR_IOCTL_STREAM_OFF].ops = s5k3l6_drv_stream_off,
             /* expand interface,if you want to add your sub cmd ,
              *  you can add it in enum {@SENSOR_IOCTL_VAL_TYPE}
-             */
+            */
             [SENSOR_IOCTL_ACCESS_VAL].ops = s5k3l6_drv_access_val,
     }};
