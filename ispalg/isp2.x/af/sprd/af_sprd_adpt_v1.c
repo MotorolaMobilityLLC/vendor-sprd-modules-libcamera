@@ -2713,23 +2713,15 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 		do_start_af(af);
 	} else if (STATE_NORMAL_AF == af->state) {
 		saf_start(af, win);
-	} else {		//caf
-		cmr_u32 pd_workable = 0;
-		struct aft_proc_result aft_result;
-		memset(&aft_result, 0, sizeof(struct aft_proc_result));
-
+	} else if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state) {
+		af->cont_mode_trigger = 1;
+		trigger_set_mode(af, AFT_MODE_NORMAL);
+		trigger_stop(af);
 		if (AF_SEARCHING == af->focus_state) {
 			ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
 			af_stop_search(af);
 		}
-
-		af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
-		if (AFV1_TRUE == pd_workable) {
-			aft_result.is_caf_trig = AFT_TRIG_PD;
-		} else {
-			aft_result.is_caf_trig = AFT_TRIG_CB;
-		}
-		caf_start(af, &aft_result);
+		saf_start(af, win);
 	}
 	af->focus_state = AF_SEARCHING;
 	ISP_LOGV("saf start done \n");
@@ -2747,6 +2739,15 @@ static cmr_s32 af_sprd_set_af_cancel(cmr_handle handle, void *param0)
 		ISP_LOGW("serious problem, current af is not done, af state %s", STATE_STRING(af->state));
 		//wait saf/caf done, caf : for camera enter, switch to manual; saf : normal non zsl
 		af_stop_search(af);
+	}
+	if (1 == af->cont_mode_trigger) {
+		af->cont_mode_trigger = 0;
+		if (AF_MODE_CONTINUE == af->request_mode) {
+			trigger_set_mode(af, AFT_MODE_CONTINUE);
+		} else if (AF_MODE_VIDEO == af->request_mode) {
+			trigger_set_mode(af, AFT_MODE_VIDEO);
+		}
+		trigger_start(af);
 	}
 
 	return rtn;

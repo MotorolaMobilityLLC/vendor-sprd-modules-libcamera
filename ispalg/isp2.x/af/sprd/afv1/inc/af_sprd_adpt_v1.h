@@ -354,6 +354,7 @@ typedef struct _af_ctrl {
 	mlog_AFtime AFtime;
 	cmr_u32 motor_status;
 	cmr_u32 frame_counter;
+	cmr_u32 cont_mode_trigger;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
