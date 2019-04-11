@@ -195,7 +195,7 @@ cmr_s32 isp_dev_set_statis_buf(cmr_handle handle, struct isp_statis_buf_input *p
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param);
 cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
 cmr_s32 isp_dev_ynr(cmr_handle handle, struct isp_ynr_info *param);
-cmr_s32 isp_dev_reset(isp_handle handle);
+cmr_s32 isp_dev_reset(cmr_handle handle);
 
 cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 *width, cmr_u32 *height);
 cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 *sec, cmr_u32 *usec);

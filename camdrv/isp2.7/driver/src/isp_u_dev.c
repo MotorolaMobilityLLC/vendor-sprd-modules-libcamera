@@ -18,8 +18,6 @@
 
 #include "isp_drv.h"
 
-#define ISP_REGISTER_MAX_NUM 20
-
 cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 {
 	cmr_s32 ret = 0;
@@ -41,7 +39,7 @@ cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle *handle)
 
 	file->fd = fd;
 	file->isp_id = 0;
-	*handle = (cmr_handle) file;
+	*handle = (cmr_handle)file;
 
 	ISP_LOGI("fd %d handle %p", file->fd, file);
 	return ret;
@@ -68,7 +66,6 @@ cmr_s32 isp_dev_close(cmr_handle handle)
 
 	free((void *)file);
 	file = NULL;
-
 
 	return ret;
 }
@@ -269,7 +266,7 @@ cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *
 	return ret;
 }
 
-cmr_s32 isp_dev_reset(isp_handle handle)
+cmr_s32 isp_dev_reset(cmr_handle handle)
 {
 	cmr_s32 ret = 0;
 	cmr_u32 isp_id = 0;

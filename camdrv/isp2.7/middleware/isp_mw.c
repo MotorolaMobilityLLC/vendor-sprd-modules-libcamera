@@ -33,36 +33,30 @@ struct isp_mw_context {
 	cmr_u32 isp_mw_sts;
 };
 
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
-{
-	UNUSED(handle);
-	UNUSED(grab_event_cb);
-}
-
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 {
-	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
 
-	isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);
+	isp_dev_statis_info_proc(cxt->dev_access_handle, data);
 }
 
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
 {
-	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
+	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
 	UNUSED(evt);
 
-	if (mw_cxt == NULL) {
-		ISP_LOGE("fail to get mw_cxt value, mw_cxt is NULL!");
+	if (cxt == NULL) {
+		ISP_LOGE("fail to get cxt value, cxt is NULL!");
 		return;
 	}
 
-	isp_dev_irq_info_proc(mw_cxt->dev_access_handle, data);
+	isp_dev_irq_info_proc(cxt->dev_access_handle, data);
 }
 
-static cmr_s32 ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
+static cmr_int ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
 {
-	cmr_s32 ret = ISP_SUCCESS;
+	cmr_int ret = ISP_SUCCESS;
 
 	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w & ISP_ONE)) ||
 	    (ISP_ZERO != (in_param_ptr->src_frame.img_size.h & ISP_ONE))) {
@@ -75,9 +69,9 @@ static cmr_s32 ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
 	return ret;
 }
 
-static cmr_s32 ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
+static cmr_int ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
 {
-	cmr_s32 ret = ISP_SUCCESS;
+	cmr_int ret = ISP_SUCCESS;
 
 	if ((ISP_ZERO != (in_param_ptr->src_slice_height & ISP_ONE)) ||
 	    (ISP_ZERO != (in_param_ptr->src_avail_height & ISP_ONE))) {
@@ -136,7 +130,7 @@ exit:
 			cxt = NULL;
 		}
 	} else {
-		*handle = (cmr_handle) cxt;
+		*handle = (cmr_handle)cxt;
 	}
 
 	ISP_LOGI("done %ld", ret);

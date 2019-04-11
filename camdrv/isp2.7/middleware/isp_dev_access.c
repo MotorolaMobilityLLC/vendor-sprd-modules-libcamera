@@ -34,22 +34,22 @@ struct isp_dev_access_context {
 	cmr_u32 cam_4in1_flag;
 };
 
-cmr_int isp_dev_4in1_flag(cmr_handle isp_dev_handle, cmr_u32 flag)
+cmr_int isp_dev_4in1_flag(cmr_handle handle, cmr_u32 flag)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	cxt->cam_4in1_flag = flag;
 	ISP_LOGV("cam_4in1_flag = %d", cxt->cam_4in1_flag);
 	return ret;
 }
 
-cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr)
+cmr_int isp_get_statis_buf_vir_addr(cmr_handle handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
-	if (!isp_dev_handle) {
+	if (!handle) {
 		ret = ISP_PARAM_ERROR;
 		return ret;
 	}
@@ -62,10 +62,10 @@ cmr_int isp_get_statis_buf_vir_addr(cmr_handle isp_dev_handle, struct isp_statis
 	return ret;
 }
 
-cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_mem_info *in_ptr)
+cmr_int isp_dev_statis_buf_malloc(cmr_handle handle, struct isp_statis_mem_info *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_s32 fds[2];
 	cmr_uint kaddr[2];
@@ -154,10 +154,10 @@ exit:
 	return ret;
 }
 
-cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
+cmr_int isp_dev_trans_addr(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	struct isp_file *file = NULL;
 	struct isp_statis_buf_input isp_statis_buf;
@@ -187,7 +187,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 
 	isp_u_2d_lsc_transaddr(cxt->isp_driver_handle, &isp_2d_lsc_buf, 0);
 
-	ret = isp_dev_access_ioctl(isp_dev_handle, ISP_DEV_SET_STSTIS_BUF, &isp_statis_buf, NULL);
+	ret = isp_dev_access_ioctl(handle, ISP_DEV_SET_STSTIS_BUF, &isp_statis_buf, NULL);
 
 	return ret;
 }
@@ -223,10 +223,10 @@ exit:
 	return ret;
 }
 
-cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param *in_ptr)
+cmr_int isp_dev_start(cmr_handle handle, struct isp_drv_interface_param *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
 	struct isp_dev_cfa_info cfa_param;
 #endif
@@ -262,10 +262,10 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_drv_interface_param 
 	return ret;
 }
 
-cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, cmr_int bypass)
+cmr_int isp_dev_anti_flicker_bypass(cmr_handle handle, cmr_int bypass)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	if (cxt->cam_4in1_flag)
 		ret = isp_u_anti_flicker_bypass(cxt->isp_driver_handle, (void *)&bypass, SCENE_MODE_CAP);
@@ -274,10 +274,10 @@ cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, cmr_int bypass)
 	return ret;
 }
 
-cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypass)
+cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle handle, cmr_int bypass)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	if (cxt->cam_4in1_flag)
 		ret = isp_u_anti_flicker_new_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
@@ -286,20 +286,20 @@ cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypas
 	return ret;
 }
 
-cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id)
+cmr_int isp_dev_cfg_block(cmr_handle handle, void *data_ptr, cmr_int data_id)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	ret = isp_cfg_block(cxt->isp_driver_handle, data_ptr, data_id);
 
 	return ret;
 }
 
-cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
+cmr_int isp_dev_awb_gain(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 	cmr_u32 r_gain = 0;
 	cmr_u32 g_gain = 0;
 	cmr_u32 b_gain = 0;
@@ -316,29 +316,29 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u3
 	return ret;
 }
 
-cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow)
+cmr_int isp_dev_comm_shadow(cmr_handle handle, cmr_int shadow)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	ret = isp_u_comm_shadow_ctrl(cxt->isp_driver_handle, shadow, 0);
 
 	return ret;
 }
 
-void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata)
+void isp_dev_access_evt_reg(cmr_handle handle, isp_evt_cb isp_event_cb, void *privdata)
 {
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	cxt->isp_event_cb = isp_event_cb;
 	cxt->evt_alg_handle = privdata;
 }
 
-void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
+void isp_dev_statis_info_proc(cmr_handle handle, void *param_ptr)
 {
 	struct sprd_img_statis_info *irq_info = (struct sprd_img_statis_info *)param_ptr;
 	struct isp_statis_info *statis_info = NULL;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	statis_info = malloc(sizeof(*statis_info));
 
@@ -391,11 +391,11 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	}
 }
 
-void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
+void isp_dev_irq_info_proc(cmr_handle handle, void *param_ptr)
 {
 	struct sprd_irq_info *irq_info = (struct sprd_irq_info *)param_ptr;
 	struct isp_u_irq_info *irq_u_info = NULL;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	if (irq_info->irq_property == IRQ_DCAM_SOF) {
 		if (cxt->isp_event_cb) {
@@ -415,7 +415,7 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	}
 }
 
-cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle)
+cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = NULL;
@@ -426,7 +426,7 @@ cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle)
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	*isp_dev_handle = NULL;
+	*handle = NULL;
 	memset((void *)cxt, 0x00, sizeof(*cxt));
 
 	ret = isp_dev_open(fd, &cxt->isp_driver_handle);
@@ -442,7 +442,7 @@ exit:
 			cxt = NULL;
 		}
 	} else {
-		*isp_dev_handle = (cmr_handle) cxt;
+		*handle = (cmr_handle) cxt;
 	}
 
 	ISP_LOGI("done %ld", ret);
@@ -497,12 +497,12 @@ cmr_int isp_dev_access_deinit(cmr_handle handle)
 	return ret;
 }
 
-cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void *param_ptr)
+cmr_int isp_dev_access_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
-	if (!isp_dev_handle || !param_ptr) {
+	if (!handle || !param_ptr) {
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
@@ -522,10 +522,10 @@ exit:
 	return ret;
 }
 
-static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct isp_dev_access_ae_stats_info *stats_info)
+static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle handle, struct isp_dev_access_ae_stats_info *stats_info)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	switch (stats_info->mode) {
 	case ISP_DEV_AE_STATS_MODE_SINGLE:
@@ -552,10 +552,10 @@ static cmr_int ispdev_access_ae_set_stats_mode(cmr_handle isp_dev_handle, struct
 	return ret;
 }
 
-static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, void *rgb_gain, cmr_u32 scene_id)
+static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle handle, void *rgb_gain, cmr_u32 scene_id)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 	struct isp_dev_rgb_gain_info *gain_info = (struct isp_dev_rgb_gain_info *)rgb_gain;
 	struct isp_u_blocks_info block_info;
 
@@ -569,10 +569,10 @@ static cmr_int ispdev_access_ae_set_rgb_gain(cmr_handle isp_dev_handle, void *rg
 	return ret;
 }
 
-static cmr_int ispdev_access_set_af_monitor(cmr_handle isp_dev_handle, struct isp_dev_access_afm_info *afm_info)
+static cmr_int ispdev_access_set_af_monitor(cmr_handle handle, struct isp_dev_access_afm_info *afm_info)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	if (cxt->cam_4in1_flag) {
 		isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1, SCENE_MODE_CAP);
@@ -590,10 +590,10 @@ static cmr_int ispdev_access_set_af_monitor(cmr_handle isp_dev_handle, struct is
 	return ret;
 }
 
-static cmr_int ispdev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp_raw_proc_info *info)
+static cmr_int ispdev_access_set_slice_raw(cmr_handle handle, struct isp_raw_proc_info *info)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	ret = isp_dev_set_slice_raw_info(cxt->isp_driver_handle, info);
 	ISP_TRACE_IF_FAIL(ret, ("fail to slice raw info"));
@@ -603,10 +603,10 @@ static cmr_int ispdev_access_set_slice_raw(cmr_handle isp_dev_handle, struct isp
 	return ret;
 }
 
-static cmr_int ispdev_access_set_aem_win(cmr_handle isp_dev_handle, struct isp_dev_access_aem_win_info *aem_win_info)
+static cmr_int ispdev_access_set_aem_win(cmr_handle handle, struct isp_dev_access_aem_win_info *aem_win_info)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	if (cxt->cam_4in1_flag) {
 		ret = isp_u_raw_aem_offset(cxt->isp_driver_handle, aem_win_info->offset.x, aem_win_info->offset.y, SCENE_MODE_CAP);
@@ -623,10 +623,10 @@ static cmr_int ispdev_access_set_aem_win(cmr_handle isp_dev_handle, struct isp_d
 	return ret;
 }
 
-static cmr_int ispdev_access_get_timestamp(cmr_handle isp_dev_handle, struct isp_time *time)
+static cmr_int ispdev_access_get_timestamp(cmr_handle handle, struct isp_time *time)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 	cmr_u32 sec = 0;
 	cmr_u32 usec = 0;
 
@@ -637,10 +637,10 @@ static cmr_int ispdev_access_get_timestamp(cmr_handle isp_dev_handle, struct isp
 	return ret;
 }
 
-cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *in, void *out)
+cmr_int isp_dev_access_ioctl(cmr_handle handle, cmr_int cmd, void *in, void *out)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)handle;
 
 	switch (cmd) {
 	case ISP_DEV_SET_AE_MONITOR: {
