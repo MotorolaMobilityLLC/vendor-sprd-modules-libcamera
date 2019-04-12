@@ -40,7 +40,7 @@
 
 #define CSI_PATTERN_ENABLE (1)
 
-static struct csi_dt_node_info *s_csi_dt_info_p[3];
+static struct csi_dt_node_info *s_csi_dt_info_p[SPRD_SENSOR_ID_MAX];
 extern uint32_t g_project_id;
 
 static char *irqname[] = {"CSI0_E0", "CSI0_E1",

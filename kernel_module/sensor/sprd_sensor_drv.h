@@ -22,8 +22,10 @@
 #define SPRD_SENSOR_DEVICE_NAME		"sprd_sensor"
 #define SPRD_SENSOR_MAIN_DRIVER_NAME	"sensor_main"
 #define SPRD_SENSOR_SUB_DRIVER_NAME	"sensor_sub"
-#define SPRD_SENSOR_DEVICE2_DRIVER_NAME	"sensor_main2"
-#define SPRD_SENSOR_DEVICE3_DRIVER_NAME	"sensor_sub2"
+#define SPRD_SENSOR_MAIN2_DRIVER_NAME	"sensor_main2"
+#define SPRD_SENSOR_SUB2_DRIVER_NAME	"sensor_sub2"
+#define SPRD_SENSOR_MAIN3_DRIVER_NAME	"sensor_main3"
+#define SPRD_SENSOR_SUB3_DRIVER_NAME	"sensor_sub3"
 #define SPRD_SENSOR_MCLK_VALUE		1000000
 
 #define SPRD_SENSOR_I2C_OP_TRY_NUM		3

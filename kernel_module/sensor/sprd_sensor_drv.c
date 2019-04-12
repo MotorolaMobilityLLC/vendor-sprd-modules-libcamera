@@ -266,6 +266,14 @@ static int sprd_sensor_probe(struct i2c_client *client,
 		pdata->sensor_id = SPRD_SENSOR_SUB2_ID_E;
 		ret = sprd_sensor_config(dev, pdata);
 		s_sensor_dev_data[SPRD_SENSOR_SUB2_ID_E] = pdata;
+	} else if (of_device_is_compatible(dev->of_node, "sprd,sensor-main3")) {
+		pdata->sensor_id = SPRD_SENSOR_MAIN3_ID_E;
+		ret = sprd_sensor_config(dev, pdata);
+		s_sensor_dev_data[SPRD_SENSOR_MAIN3_ID_E] = pdata;
+	} else if (of_device_is_compatible(dev->of_node, "sprd,sensor-sub3")) {
+		pdata->sensor_id = SPRD_SENSOR_SUB3_ID_E;
+		ret = sprd_sensor_config(dev, pdata);
+		s_sensor_dev_data[SPRD_SENSOR_SUB3_ID_E] = pdata;
 	}
 
 	return ret;
@@ -274,7 +282,7 @@ static int sprd_sensor_probe(struct i2c_client *client,
 static struct sprd_sensor_dev_info_tag *sprd_sensor_get_dev_context(int
 								sensor_id)
 {
-	if (sensor_id > SPRD_SENSOR_ID_MAX || sensor_id < 0) {
+	if (sensor_id >= SPRD_SENSOR_ID_MAX || sensor_id < 0) {
 		pr_err("sensor_id %d error!\n", sensor_id);
 		return NULL;
 	}
@@ -444,24 +452,44 @@ static struct i2c_driver sprd_main_sensor_driver = {
 	.id_table = sprd_sensor_main_ids,
 };
 
-static const struct of_device_id sprd_sensor_device2_of_match_table[] = {
+static const struct of_device_id sprd_sensor_main2_of_match_table[] = {
 	{.compatible = "sprd,sensor-main2"},
 };
 
-static const struct i2c_device_id sprd_sensor_device2_ids[] = {
+static const struct i2c_device_id sprd_sensor_main2_ids[] = {
 	{}
 };
 
 static struct i2c_driver sprd_main2_sensor_driver = {
 	.driver = {
 		.of_match_table =
-			of_match_ptr(sprd_sensor_device2_of_match_table),
-		.name = SPRD_SENSOR_DEVICE2_DRIVER_NAME,
+			of_match_ptr(sprd_sensor_main2_of_match_table),
+		.name = SPRD_SENSOR_MAIN2_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		},
 	.probe = sprd_sensor_probe,
 	.remove = sprd_sensor_remove,
-	.id_table = sprd_sensor_device2_ids,
+	.id_table = sprd_sensor_main2_ids,
+};
+
+static const struct of_device_id sprd_sensor_main3_of_match_table[] = {
+	{.compatible = "sprd,sensor-main3"},
+};
+
+static const struct i2c_device_id sprd_sensor_main3_ids[] = {
+	{}
+};
+
+static struct i2c_driver sprd_main3_sensor_driver = {
+	.driver = {
+		.of_match_table =
+			of_match_ptr(sprd_sensor_main3_of_match_table),
+		.name = SPRD_SENSOR_MAIN3_DRIVER_NAME,
+		.owner = THIS_MODULE,
+		},
+	.probe = sprd_sensor_probe,
+	.remove = sprd_sensor_remove,
+	.id_table = sprd_sensor_main3_ids,
 };
 
 static const struct i2c_device_id sprd_sensor_sub_ids[] = {
@@ -484,26 +512,45 @@ static struct i2c_driver sprd_sub_sensor_driver = {
 	.id_table = sprd_sensor_sub_ids,
 };
 
-static const struct i2c_device_id sprd_sensor_device3_ids[] = {
+static const struct i2c_device_id sprd_sensor_sub2_ids[] = {
 	{}
 };
 
-static const struct of_device_id sprd_sensor_device3_of_match_table[] = {
+static const struct of_device_id sprd_sensor_sub2_of_match_table[] = {
 	{.compatible = "sprd,sensor-sub2"},
 };
 
 static struct i2c_driver sprd_sub2_sensor_driver = {
 	.driver = {
 		.of_match_table =
-			of_match_ptr(sprd_sensor_device3_of_match_table),
-		.name = SPRD_SENSOR_DEVICE3_DRIVER_NAME,
+			of_match_ptr(sprd_sensor_sub2_of_match_table),
+		.name = SPRD_SENSOR_SUB2_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		},
 	.probe = sprd_sensor_probe,
 	.remove = sprd_sensor_remove,
-	.id_table = sprd_sensor_device3_ids,
+	.id_table = sprd_sensor_sub2_ids,
 };
 
+static const struct i2c_device_id sprd_sensor_sub3_ids[] = {
+	{}
+};
+
+static const struct of_device_id sprd_sensor_sub3_of_match_table[] = {
+	{.compatible = "sprd,sensor-sub3"},
+};
+
+static struct i2c_driver sprd_sub3_sensor_driver = {
+	.driver = {
+		.of_match_table =
+			of_match_ptr(sprd_sensor_sub3_of_match_table),
+		.name = SPRD_SENSOR_SUB3_DRIVER_NAME,
+		.owner = THIS_MODULE,
+		},
+	.probe = sprd_sensor_probe,
+	.remove = sprd_sensor_remove,
+	.id_table = sprd_sensor_sub3_ids,
+};
 
 int sprd_sensor_register_driver(void)
 {
@@ -515,9 +562,13 @@ int sprd_sensor_register_driver(void)
 	ret = i2c_add_driver(&sprd_sub_sensor_driver);
 	pr_info("register sub sensor:%d\n", ret);
 	ret = i2c_add_driver(&sprd_main2_sensor_driver);
-	pr_info("register device2 sensor:%d\n", ret);
+	pr_info("register main2 sensor:%d\n", ret);
 	ret = i2c_add_driver(&sprd_sub2_sensor_driver);
 	pr_info("register  sub2 sensor:%d\n", ret);
+	ret = i2c_add_driver(&sprd_main3_sensor_driver);
+	pr_info("register main3 sensor:%d\n", ret);
+	ret = i2c_add_driver(&sprd_sub3_sensor_driver);
+	pr_info("register  sub3 sensor:%d\n", ret);
 
 	return 0;
 }
@@ -528,6 +579,8 @@ void sprd_sensor_unregister_driver(void)
 	i2c_del_driver(&sprd_sub_sensor_driver);
 	i2c_del_driver(&sprd_main2_sensor_driver);
 	i2c_del_driver(&sprd_sub2_sensor_driver);
+	i2c_del_driver(&sprd_main3_sensor_driver);
+	i2c_del_driver(&sprd_sub3_sensor_driver);
 }
 
 int select_sensor_mclk(uint8_t clk_set, char **clk_src_name, uint8_t *clk_div)
