@@ -1422,8 +1422,7 @@ static int unmap_statis_buffer(struct dcam_pipe_dev *dev)
 	cambuf_put_ionbuf(ion_buf);
 	kfree(ion_buf);
 	dev->statis_buf = NULL;
-
-	pr_info("done %p\n", ion_buf);
+	pr_info("done.\n");
 
 	return 0;
 }
