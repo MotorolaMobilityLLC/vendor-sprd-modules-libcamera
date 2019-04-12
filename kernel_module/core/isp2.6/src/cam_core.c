@@ -3635,42 +3635,6 @@ exit:
 	return ret;
 }
 
-static int img_ioctl_pdaf_control(
-			struct camera_module *module,
-			unsigned long arg)
-{
-	int ret = 0;
-	uint32_t channel_id;
-	struct sprd_pdaf_control tmp;
-	struct sprd_img_parm __user *uparam;
-
-	if (atomic_read(&module->state) != CAM_CFG_CH) {
-		pr_debug("skip\n");
-		return ret;
-	}
-
-	uparam = (struct sprd_img_parm __user *)arg;
-	ret = get_user(channel_id, &uparam->channel_id);
-	if (ret || (channel_id != CAM_CH_PRE))
-		return 0;
-
-	ret = copy_from_user(&tmp, &uparam->pdaf_ctrl,
-			sizeof(struct sprd_pdaf_control));
-	if (unlikely(ret)) {
-		pr_err("fail to copy pdaf param from user, ret %d\n", ret);
-		return -EFAULT;
-	}
-
-	pr_info("mode %d, type %d, vc %d, dt 0x%x, isp %d\n",
-		tmp.mode, tmp.phase_data_type, tmp.image_vc,
-		tmp.image_dt, tmp.isp_tool_mode);
-
-	/* config pdaf */
-	ret = dcam_ops->ioctl(module->dcam_dev_handle,
-				DCAM_IOCTL_CFG_PDAF, &tmp);
-	return 0;
-}
-
  static int img_ioctl_ebd_control(struct camera_module *module,
 			 unsigned long arg)
 {
@@ -5986,7 +5950,7 @@ static struct cam_ioctl_cmd ioctl_cmds_table[] = {
 	[_IOC_NR(SPRD_IMG_IO_SET_SHRINK)]	= {SPRD_IMG_IO_SET_SHRINK,	img_ioctl_set_shrink},
 	[_IOC_NR(SPRD_IMG_IO_SET_FREQ_FLAG)]	= {SPRD_IMG_IO_SET_FREQ_FLAG,	NULL},
 	[_IOC_NR(SPRD_IMG_IO_CFG_FLASH)]	= {SPRD_IMG_IO_CFG_FLASH,	img_ioctl_cfg_flash},
-	[_IOC_NR(SPRD_IMG_IO_PDAF_CONTROL)]	= {SPRD_IMG_IO_PDAF_CONTROL,	img_ioctl_pdaf_control},
+	[_IOC_NR(SPRD_IMG_IO_PDAF_CONTROL)]	= {SPRD_IMG_IO_PDAF_CONTROL,	NULL},
 	[_IOC_NR(SPRD_IMG_IO_GET_IOMMU_STATUS)]	= {SPRD_IMG_IO_GET_IOMMU_STATUS,	img_ioctl_get_iommu_status},
 	[_IOC_NR(SPRD_IMG_IO_DISABLE_MODE)]	= {SPRD_IMG_IO_DISABLE_MODE,	NULL},
 	[_IOC_NR(SPRD_IMG_IO_ENABLE_MODE)]	= {SPRD_IMG_IO_ENABLE_MODE,	NULL},

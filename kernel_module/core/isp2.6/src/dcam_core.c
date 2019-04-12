@@ -1111,23 +1111,6 @@ static int dcam_set_mipi_cap(struct dcam_pipe_dev *dev,
 	return ret;
 }
 
-static int dcam_cfg_pdaf(struct dcam_pipe_dev *dev, void *param)
-{
-	struct sprd_pdaf_control *p = (struct sprd_pdaf_control *)param;
-	uint32_t idx = dev->idx;
-
-	dev->is_pdaf = 1;
-	/* pdaf type1,2,3 & 4: dual pd*/
-	dev->pdaf_type = p->mode;
-
-	if (p->mode == 0) {
-		pr_warn("dcam%d pdaf mode 0, disable pdaf\n", idx);
-		dev->is_pdaf = 0;
-	}
-
-	return 0;
-}
-
 static int dcam_cfg_ebd(struct dcam_pipe_dev *dev, void *param)
 {
 	struct sprd_ebd_control *p = (struct sprd_ebd_control *)param;
@@ -2393,9 +2376,6 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		put_reserved_buffer(dev);
 		unmap_statis_buffer(dev);
 		break;
-	case DCAM_IOCTL_CFG_PDAF:
-		ret = dcam_cfg_pdaf(dev, param);
-		break;
 	case DCAM_IOCTL_CFG_EBD:
 		ret = dcam_cfg_ebd(dev, param);
 	case DCAM_IOCTL_CFG_SEC:
@@ -2904,6 +2884,7 @@ void *dcam_if_get_dev(uint32_t idx, struct sprd_cam_hw_info *hw)
 
 	dev->idx = idx;
 	dev->hw = hw;
+	dev->is_pdaf = 0;
 
 	/* frame sync helper */
 	spin_lock_init(&dev->helper_lock);
