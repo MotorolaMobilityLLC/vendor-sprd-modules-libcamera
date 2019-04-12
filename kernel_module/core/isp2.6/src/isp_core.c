@@ -2017,6 +2017,63 @@ static int sprd_isp_proc_frame(void *isp_handle,
 	return ret;
 }
 
+static int sprd_isp_update_context(void *isp_handle, int ctx_id, void *param)
+{
+	int ret = 0;
+	struct isp_pipe_context *pctx;
+	struct isp_pipe_dev *dev;
+	struct isp_fmcu_ctx_desc *fmcu = NULL;
+	struct isp_init_param *init_param;
+	struct img_size *max_size;
+
+	if (!isp_handle || !param) {
+		pr_err("fail to get valid input ptr\n");
+		return -EFAULT;
+	}
+
+	dev = (struct isp_pipe_dev *)isp_handle;
+	init_param = (struct isp_init_param *)param;
+	max_size = &init_param->max_size;
+
+	mutex_lock(&dev->path_mutex);
+
+	if (ctx_id < 0 || ctx_id >= ISP_CONTEXT_NUM) {
+		pr_err("Illegal. ctx_id %d\n", ctx_id);
+		return -EFAULT;
+	}
+
+	pctx = &dev->ctx[ctx_id];
+
+	if (max_size->w > line_buffer_len) {
+		fmcu = get_isp_fmcu_ctx_desc();
+		pr_info("ctx get fmcu %p\n", fmcu);
+		if (fmcu == NULL) {
+			pr_err("error: no fmcu for size %d, %d\n",
+				max_size->w, max_size->h);
+			return -EFAULT;
+		} else if (fmcu->ops) {
+			ret = fmcu->ops->ctx_init(fmcu);
+			if (ret) {
+				pr_err("error: fmcu ctx init failed.\n");
+				goto fmcu_error;
+			}
+		} else {
+			pr_err("error: no fmcu ops.\n");
+			goto fmcu_error;
+		}
+		pctx->fmcu_handle = fmcu;
+	}
+
+	goto exit;
+
+fmcu_error:
+	if (fmcu)
+		put_isp_fmcu_ctx_desc(fmcu);
+exit:
+	mutex_unlock(&dev->path_mutex);
+	return ret;
+}
+
 /*
  * Get a free context and initialize it.
  * Input param is possible max_size of image.
@@ -3135,6 +3192,7 @@ static struct isp_pipe_ops isp_ops = {
 	.open = sprd_isp_dev_open,
 	.close = sprd_isp_dev_close,
 	.reset = sprd_isp_dev_reset,
+	.update_context = sprd_isp_update_context,
 	.get_context = sprd_isp_get_context,
 	.put_context = sprd_isp_put_context,
 	.get_path = sprd_isp_get_path,

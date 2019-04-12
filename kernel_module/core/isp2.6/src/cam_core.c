@@ -2483,7 +2483,7 @@ static int init_cam_channel(
 	int ret = 0;
 	int isp_ctx_id = 0, isp_path_id = 0, dcam_path_id = 0;
 	int slave_path_id = 0;
-	int new_isp_ctx, new_isp_path, new_dcam_path;
+	int update_isp_ctx, new_isp_ctx, new_isp_path, new_dcam_path;
 	struct channel_context *channel_prev = NULL;
 	struct channel_context *channel_cap = NULL;
 	struct camera_uchannel *ch_uinfo;
@@ -2503,6 +2503,7 @@ static int init_cam_channel(
 	ch_uinfo->src_size.w = module->cam_uinfo.sn_rect.w;
 	ch_uinfo->src_size.h = module->cam_uinfo.sn_rect.h;
 	new_isp_ctx = 0;
+	update_isp_ctx = 0;
 	new_isp_path = 0;
 	new_dcam_path = 0;
 
@@ -2533,10 +2534,21 @@ static int init_cam_channel(
 			/* todo: video only support ?? */
 			pr_err("vid channel is not independent from preview\n");
 		}
+
+		module->rds_limit = g_dbg_rds_limit;
+		if (module->zoom_solution == 0)
+			init_param.max_size.w = ch_uinfo->src_size.w / 2;
+		else
+			init_param.max_size.w = (ch_uinfo->src_size.w * 10 + 40) / module->rds_limit;
+
+		if (init_param.max_size.w < ch_uinfo->dst_size.w)
+				init_param.max_size.w = ch_uinfo->dst_size.w;
+
 		channel->dcam_path_id = channel_prev->dcam_path_id;
 		isp_ctx_id = (channel_prev->isp_path_id >> ISP_CTXID_OFFSET);
 		isp_path_id = ISP_SPATH_VID;
 		new_isp_path = 1;
+		update_isp_ctx = 1;
 		break;
 
 	case CAM_CH_CAP:
@@ -2618,6 +2630,15 @@ static int init_cam_channel(
 		ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 				DCAM_PATH_CFG_BASE,
 				channel->dcam_path_id, &ch_desc);
+	}
+
+	if (update_isp_ctx) {
+		ret = isp_ops->update_context(module->isp_dev_handle, isp_ctx_id, &init_param);
+		if (ret < 0) {
+			pr_err("fail to update isp context for size %d %d.\n",
+					init_param.max_size.w, init_param.max_size.h);
+			goto exit;
+		}
 	}
 
 	if (new_isp_ctx) {

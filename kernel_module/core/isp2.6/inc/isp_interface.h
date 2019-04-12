@@ -191,6 +191,7 @@ struct isp_pipe_ops {
 	int (*close)(void *isp_handle);
 	int (*reset)(void *isp_handle, void *arg);
 
+	int (*update_context)(void *isp_handle, int ctx_id, void *param);
 	int (*get_context)(void *isp_handle, void *param);
 	int (*put_context)(void *isp_handle, int ctx_id);
 
