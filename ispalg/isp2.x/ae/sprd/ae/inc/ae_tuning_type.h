@@ -159,7 +159,7 @@ struct ae_flash_control_param {
 	cmr_u8 main_set_count;
 	cmr_u8 main_capture_count;
 	cmr_u8 main_flash_notify_delay;
-	cmr_u8 reserved;
+	cmr_u8 flash_frameskip_count;
 };
 
 struct ae_video_set_fps_param {
