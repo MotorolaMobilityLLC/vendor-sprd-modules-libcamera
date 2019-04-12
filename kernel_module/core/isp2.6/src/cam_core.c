@@ -276,6 +276,7 @@ struct camera_module {
 	atomic_t capture_frames_dcam; /* how many frames to report, -1:always */
 	int64_t capture_times; /* *ns, timestamp get from start_capture */
 	uint32_t lowlux_4in1; /* flag */
+	struct camera_queue remosaic_queue; /* 4in1: save camera_frame when remosaic */
 };
 
 struct camera_group {
@@ -362,6 +363,20 @@ void cam_destroy_statis_buf(void *param)
 		pr_err("error: null input ptr.\n");
 		return;
 	}
+	frame = (struct camera_frame *)param;
+	put_empty_frame(frame);
+}
+
+/* No need release buffer, only give back camera_frame
+ * for remosaic_queue, it save camera_frame info when
+ * buf send to hal for remosaic, use again when 4in1_post
+ */
+static void cam_release_camera_frame(void *param)
+{
+	struct camera_frame *frame;
+
+	if (!param)
+		return;
 	frame = (struct camera_frame *)param;
 	put_empty_frame(frame);
 }
@@ -812,6 +827,9 @@ static struct camera_frame *deal_dual_frame(struct camera_module *module,
 		/* no need report to hal, do fifo */
 		pframe = dual_fifo_queue(module, pframe, channel);
 		if (pframe) {
+			if (pframe->sync_data)
+				dcam_if_release_sync(pframe->sync_data,
+					pframe);
 			ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 				DCAM_PATH_CFG_OUTPUT_BUF,
 				channel->dcam_path_id, pframe);
@@ -824,6 +842,8 @@ static struct camera_frame *deal_dual_frame(struct camera_module *module,
 	if (pftmp) {
 		module->dual_frame = NULL;
 		/* cur frame to out_buf_queue */
+		if (pframe->sync_data)
+			dcam_if_release_sync(pframe->sync_data,	pframe);
 		ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 			DCAM_PATH_CFG_OUTPUT_BUF,
 			channel->dcam_path_id, pframe);
@@ -835,6 +855,10 @@ static struct camera_frame *deal_dual_frame(struct camera_module *module,
 		pftmp = module->dual_frame;
 		if (pftmp) {
 			module->dual_frame = NULL;
+			/* cur frame to out_buf_queue */
+			if (pframe->sync_data)
+				dcam_if_release_sync(pframe->sync_data,
+					pframe);
 			ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 				DCAM_PATH_CFG_OUTPUT_BUF,
 				channel->dcam_path_id, pframe);
@@ -843,7 +867,7 @@ static struct camera_frame *deal_dual_frame(struct camera_module *module,
 	}
 	pr_warn("Sync fail, report current frame\n");
 
-	return NULL;
+	return pframe;
 }
 
 static struct camera_frame *deal_4in1_frame(struct camera_module *module,
@@ -852,13 +876,20 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 {
 	int ret;
 
+	/* full path release sync */
+	if (pframe->sync_data)
+		dcam_if_release_sync(pframe->sync_data,	pframe);
 	/* 1: aux dcam bin tx done, set frame to isp
 	 * 2: lowlux capture, dcam0 full path done, set frame to isp
 	 */
 	if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE) {
-		/* offline timestamp, check time */
-		if (pframe->sensor_time.tv_sec == 0 &&
-			pframe->sensor_time.tv_usec == 0) {
+		/* offline timestamp, check time
+		 * recove this time:190415
+		 *
+		 * if (pframe->sensor_time.tv_sec == 0 &&
+		 *	pframe->sensor_time.tv_usec == 0)
+		 */
+		{
 			struct timespec cur_ts;
 
 			pframe->boot_sensor_time = ktime_get_boottime();
@@ -4474,6 +4505,9 @@ static int img_ioctl_stream_on(
 		CAM_STATIS_Q_LEN, 0, camera_put_empty_frame);
 	camera_queue_init(&module->zsl_fifo_queue,
 			CAM_SHARED_BUF_NUM, 0, put_k_frame);
+	/* no need release buffer, only release camera_frame */
+	camera_queue_init(&module->remosaic_queue,
+			CAM_IRQ_Q_LEN, 0, cam_release_camera_frame);
 
 	set_cap_info(module);
 
@@ -4675,6 +4709,7 @@ static int img_ioctl_stream_off(
 		}
 		camera_queue_clear(&module->zsl_fifo_queue);
 		camera_queue_clear(&module->isp_hist2_outbuf_queue);
+		camera_queue_clear(&module->remosaic_queue);
 		if (module->dump_thrd.thread_task)
 			camera_queue_clear(&module->dump_queue);
 	}
@@ -5300,6 +5335,8 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	int iommu_enable;
 	struct channel_context *channel;
 	struct camera_frame *pframe;
+	int i;
+	ktime_t sensor_time;
 
 	ret = copy_from_user(&param, (void __user *)arg,
 				sizeof(struct sprd_img_parm));
@@ -5315,8 +5352,36 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	 */
 	channel = &module->channel[CAM_CH_CAP];
 	iommu_enable = module->iommu_enable;
-	/* get frame */
-	pframe = get_empty_frame();
+	/* timestamp, reserved	([2]<<32)|[1]
+	 * Attention: Only send back one time, maybe need some
+	 * change when hal use another time
+	 */
+	sensor_time = param.reserved[2];
+	sensor_time <<= 32;
+	sensor_time |= param.reserved[1];
+	/* get frame: 1:check id;2:check time;3:get first,4:get new */
+	i = camera_queue_cnt(&module->remosaic_queue);
+	while (i--) {
+		pframe = camera_dequeue(&module->remosaic_queue);
+		/* check frame id */
+		if (pframe == NULL)
+			break;
+		if (pframe->fid == param.index)
+			break;
+		if (pframe->boot_sensor_time == sensor_time)
+			break;
+		camera_enqueue(&module->remosaic_queue, pframe);
+		pframe = NULL;
+	}
+	if (pframe == NULL) {
+		pr_info("Can't find frame in the queue, get new one\n");
+		pframe = get_empty_frame();
+		pframe->boot_sensor_time = sensor_time;
+		pframe->sensor_time = ktime_to_timeval(ktime_sub(
+			pframe->boot_sensor_time, ktime_sub(
+			ktime_get_boottime(), ktime_get())));
+		pframe->fid = param.index;
+	}
 	pframe->irq_type = ENDIAN_LITTLE;
 	pframe->irq_property = module->cam_uinfo.sensor_if.img_ptn;
 	pframe->width = channel->ch_uinfo.src_size.w;
@@ -5327,18 +5392,6 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	pframe->buf.addr_vir[1] = param.frame_addr_vir_array[0].u;
 	pframe->buf.addr_vir[2] = param.frame_addr_vir_array[0].v;
 	pframe->channel_id = channel->ch_id;
-	pframe->fid = param.index;
-	/* timestamp, reserved	([2]<<32)|[1]
-	 * Attention: Only send back one time, maybe need some
-	 * change when hal use another time
-	 */
-	pframe->boot_sensor_time = param.reserved[2];
-	pframe->boot_sensor_time <<= 32;
-	pframe->boot_sensor_time |= param.reserved[1];
-	pframe->sensor_time = ktime_to_timeval(ktime_sub(
-		pframe->boot_sensor_time, ktime_sub(
-		ktime_get_boottime(), ktime_get())));
-	/* timestamp end */
 
 	ret = cambuf_get_ionbuf(&pframe->buf);
 	if (ret) {
@@ -6057,15 +6110,29 @@ rewait:
 			read_op.parm.frame.irq_property = pframe->irq_property;
 		}
 
-		if (pframe)
-			put_empty_frame(pframe);
-
 		pr_debug("read frame, evt 0x%x irq %d ch 0x%x index 0x%x mfd %d\n",
 				read_op.evt,
 				read_op.parm.frame.irq_type,
 				read_op.parm.frame.channel_id,
 				read_op.parm.frame.real_index,
 				read_op.parm.frame.mfd);
+
+		if (pframe) {
+			if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE) {
+				put_empty_frame(pframe);
+				break;
+			}
+			/* 4in1 report frame for remosaic
+			 * save frame for 4in1_post IOCTL
+			 */
+			ret = camera_enqueue(&module->remosaic_queue, pframe);
+			if (!ret)
+				break;
+			/* fail, give back */
+			put_empty_frame(pframe);
+			ret = 0;
+		}
+
 		break;
 
 	case SPRD_IMG_GET_PATH_CAP:

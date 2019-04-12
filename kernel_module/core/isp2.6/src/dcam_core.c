@@ -1595,6 +1595,19 @@ static int dcam_offline_start_frame(void *param)
 	atomic_set(&dev->path[DCAM_PATH_AFL].user_cnt, 0);
 	atomic_set(&dev->path[DCAM_PATH_HIST].user_cnt, 0);
 
+	/* prepare frame info for tx done
+	 * ASSERT: this dev has no cap_sof
+	 */
+	dev->index_to_set = pframe->fid;
+	if (pframe->sensor_time.tv_sec || pframe->sensor_time.tv_usec) {
+		dev->frame_ts[tsid(pframe->fid)].tv_sec =
+			pframe->sensor_time.tv_sec;
+		dev->frame_ts[tsid(pframe->fid)].tv_nsec =
+			pframe->sensor_time.tv_usec * NSEC_PER_USEC;
+		dev->frame_ts_boot[tsid(pframe->fid)] = pframe->boot_sensor_time;
+		pr_info("frame[%d]\n", pframe->fid);
+	}
+
 	for (i  = 0; i < DCAM_PATH_MAX; i++) {
 		path = &dev->path[i];
 		if (atomic_read(&path->user_cnt) < 1)
