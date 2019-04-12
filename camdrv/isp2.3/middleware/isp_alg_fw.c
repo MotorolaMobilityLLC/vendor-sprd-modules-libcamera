@@ -613,6 +613,42 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	return ret;
 }
 
+static cmr_int ispalg_af_mode_convert(struct isp_af_notice *isp_af)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 af_mode = 0;
+
+	af_mode = isp_af->af_mode;
+	switch (af_mode) {
+	case AF_MODE_NORMAL:
+		isp_af->af_mode = ISP_FOCUS_TRIG;
+		break;
+	case AF_MODE_MACRO:
+		isp_af->af_mode = ISP_FOCUS_MACRO;
+		break;
+	case AF_MODE_CONTINUE:
+		isp_af->af_mode = ISP_FOCUS_CONTINUE;
+		break;
+	case AF_MODE_MANUAL:
+		isp_af->af_mode = ISP_FOCUS_MANUAL;
+		break;
+	case AF_MODE_VIDEO:
+		isp_af->af_mode = ISP_FOCUS_VIDEO;
+		break;
+	case AF_MODE_PICTURE:
+		isp_af->af_mode = ISP_FOCUS_PICTURE;
+		break;
+	case AF_MODE_FULLSCAN:
+		isp_af->af_mode = ISP_FOCUS_FULLSCAN;
+		break;
+	default:
+		isp_af->af_mode = ISP_FOCUS_TRIG;
+		break;
+	}
+
+	return ret;
+}
+
 static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -634,7 +670,10 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		break;
 	case AF_CB_CMD_SET_END_NOTICE:
 		if (ISP_ZERO == cxt->commn_cxt.isp_callback_bypass) {
-			ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK, param0, sizeof(struct isp_af_notice));
+			struct isp_af_notice *isp_af = (struct isp_af_notice *)param0;
+
+			ret = ispalg_af_mode_convert(isp_af);
+			ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK, isp_af, sizeof(struct isp_af_notice));
 		}
 		break;
 	case AF_CB_CMD_SET_MOTOR_POS:
@@ -838,6 +877,9 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		break;
 	case AF_CB_CMD_SET_CLEAR_NEXT_VCM_POS:
 		ret = cxt->commn_cxt.ops.set_next_vcm_pos(cxt->commn_cxt.caller_id, -1);
+		break;
+	case AF_CB_CMD_SET_MOTOR_STATUS:
+		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT | ISP_AF_VCM_NOTICE_CALLBACK, param0, sizeof(cmr_u32));
 		break;
 	default:
 		break;
