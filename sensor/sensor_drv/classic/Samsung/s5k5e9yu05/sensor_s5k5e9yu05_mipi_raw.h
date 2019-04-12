@@ -27,8 +27,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_s5k5e9yu05_raw_param_main.c"
-
 #define VENDOR_NUM 1
 
 #define SENSOR_NAME "s5k5e9yu05"
@@ -301,8 +299,7 @@ static struct sensor_module_info s_s5k5e9yu05_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s5k5e9yu05_ops_tab;
-static struct sensor_raw_info *s_s5k5e9yu05_mipi_raw_info_ptr =
-    &s_s5k5e9yu05_mipi_raw_info;
+static struct sensor_raw_info *s_s5k5e9yu05_mipi_raw_info_ptr = PNULL;
 /*==============================================================================
  * Description:
  * sensor all info

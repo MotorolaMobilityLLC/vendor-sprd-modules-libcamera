@@ -23,8 +23,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters_sharkl3/sensor_ov7251_dual_raw_param_main.c"
-
 #define SENSOR_NAME "ov7251_dual_mipi_raw"
 #define I2C_SLAVE_ADDR 0x66
 
@@ -412,7 +410,7 @@ static SENSOR_TRIM_T s_ov7251_dual_resolution_trim_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov7251_dual_ops_tab;
-static struct sensor_raw_info *s_ov7251_dual_mipi_raw_info_ptr = &s_ov7251_dual_mipi_raw_info;
+static struct sensor_raw_info *s_ov7251_dual_mipi_raw_info_ptr = PNULL;
 
 SENSOR_INFO_T g_ov7251_dual_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |
