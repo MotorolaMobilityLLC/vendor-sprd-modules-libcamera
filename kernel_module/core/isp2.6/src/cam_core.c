@@ -440,6 +440,14 @@ static void config_compression(struct camera_module *module)
 		ch_vid->compress_output = override->override[CH_VID][FBC_ISP];
 	}
 
+	/* TODO disable all fbc/fbd for bug 1040757 */
+	ch_cap->compress_input = ch_cap->compress_3dnr
+		= ch_cap->compress_output = 0;
+	ch_pre->compress_input = ch_pre->compress_3dnr
+		= ch_pre->compress_output = 0;
+	ch_vid->compress_input = ch_vid->compress_3dnr
+		= ch_vid->compress_output = 0;
+
 	pr_info("cam%d: cap %u %u %u, pre %u %u %u, vid %u %u %u\n",
 		module->idx,
 		ch_cap->compress_input, ch_cap->compress_3dnr,
