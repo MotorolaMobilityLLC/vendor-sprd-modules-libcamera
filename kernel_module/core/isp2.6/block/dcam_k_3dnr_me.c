@@ -28,8 +28,6 @@
 #define pr_fmt(fmt) "BPC: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
-#define DCAM_3DNR_ROI_MAX_WIDTH 4672u
-#define DCAM_3DNR_ROI_MAX_HEIGHT 3504u
 #define DCAM_3DNR_ROI_SIZE_ALIGN 16u
 #define DCAM_3DNR_ROI_LINE_CUT 32u
 
@@ -38,17 +36,36 @@ enum {
 	_UPDATE_NR3 = BIT(0),
 };
 
+struct roi_size {
+	uint32_t roi_width;
+	uint32_t roi_height;
+};
+
+/* [DCAM_ID] [project_Mode] [line_Buf_Share_Mode] */
+struct roi_size roi_max_size_info [2][2][4] = {
+						{
+							{{2336,1752},{2336,1752},{2112,1584},{2112,1584}},
+							{{4672,3504},{4672,3504},{4224,3168},{4224,3168}}
+						},
+						{
+							{{2112,1584},{2112,1584},{2336,1752},{2336,1752}},
+							{{4224,3168},{4224,3168},{4672,3504},{4672,3504}}
+						}};
+
+
 void dcam_k_3dnr_set_roi(uint32_t img_w, uint32_t img_h,
 			 uint32_t project_mode, uint32_t idx)
 {
 	uint32_t roi_w_max, roi_h_max;
 	uint32_t roi_w, roi_h, roi_x = 0, roi_y = 0;
+	uint32_t lbuf_share_mode = 0;
 
 	/* get max roi size
 	 * max roi size should be half of normal value if project_mode is off
 	 */
-	roi_w_max = DCAM_3DNR_ROI_MAX_WIDTH >> !project_mode;
-	roi_h_max = DCAM_3DNR_ROI_MAX_HEIGHT >> !project_mode;
+	lbuf_share_mode = DCAM_AXIM_RD(DCAM_LBUF_SHARE_MODE);
+	roi_w_max = roi_max_size_info[idx][project_mode][lbuf_share_mode].roi_width;
+	roi_h_max = roi_max_size_info[idx][project_mode][lbuf_share_mode].roi_height;
 
 	/* get roi and align to 16 pixels */
 	roi_w = ALIGN_DOWN(min(roi_w_max, img_w), DCAM_3DNR_ROI_SIZE_ALIGN);
