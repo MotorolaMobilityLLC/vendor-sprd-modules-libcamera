@@ -5949,6 +5949,11 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 			*(cmr_u32 *) result = cxt->glb_gain;
 		}
 		break;
+	case AE_GET_FLASH_SKIP_FRAME_NUM:
+		if (result) {
+			*(cmr_u32 *) result = cxt->cur_param->flash_control_param.flash_frameskip_count;
+		}
+		break;
 	default:
 		rtn = AE_ERROR;
 		break;
