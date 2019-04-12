@@ -70,12 +70,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		break;
 
 	case SET_AEM_SYNC_STAT:
-		sem_wait(&cxt->module_sm);
-		/*
-		if (NULL != cxt->aem_sync_stat[sensor_role]) {
-			memcpy(cxt->aem_sync_stat[sensor_role], in,
-				3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
-		}*/
+		sem_wait(&cxt->ae_sm);
 		{
 			struct ae_match_stats_data *stats_data= (struct ae_match_stats_data*)in;
 			if ((NULL != cxt->aem_sync_stat[sensor_role]) && (NULL != stats_data)) {
@@ -83,22 +78,18 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 					memcpy(cxt->aem_sync_stat[sensor_role], stats_data->stats_data,
 							3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
 					cxt->match_param.ae_stats_data[sensor_role].stats_data = cxt->aem_sync_stat[sensor_role];
-					cxt->match_param.ae_stats_data[sensor_role].len = 3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32);
+					cxt->match_param.ae_stats_data[sensor_role].len =
+						3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32);
 					cxt->match_param.ae_stats_data[sensor_role].monoboottime = stats_data->monoboottime;
 					cxt->match_param.ae_stats_data[sensor_role].is_last_frm = stats_data->is_last_frm;
 				}
 			}
 		}
-		sem_post(&cxt->module_sm);
+		sem_post(&cxt->ae_sm);
 		break;
 
 	case GET_AEM_SYNC_STAT:
-		sem_wait(&cxt->module_sm);
-		/*
-		if (NULL != cxt->aem_sync_stat[sensor_role]) {
-			memcpy(out, cxt->aem_sync_stat[sensor_role],
-				3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
-		}*/
+		sem_wait(&cxt->ae_sm);
 		{
 			struct ae_match_stats_data *stats_data= (struct ae_match_stats_data*)out;
 			if ((NULL != cxt->aem_sync_stat[sensor_role]) && (NULL != stats_data)) {
@@ -111,15 +102,15 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 				}
 			}
 		}
-		sem_post(&cxt->module_sm);
+		sem_post(&cxt->ae_sm);
 		break;
 
 	case SET_AEM_STAT_BLK_NUM:
-		sem_wait(&cxt->module_sm);
+		sem_wait(&cxt->ae_sm);
 		cxt->aem_stat_blk_num[sensor_role] = *(cmr_u32 *)in;
 		ISP_LOGV("sensor_role %d, aem_stat_blk_num %d",
 			sensor_role, cxt->aem_stat_blk_num[sensor_role]);
-		sem_post(&cxt->module_sm);
+		sem_post(&cxt->ae_sm);
 		break;
 
 	case SET_MATCH_BV_DATA:
@@ -299,28 +290,11 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 	case SET_ALL_MODULE_AND_OTP:
 		ISP_LOGW("not implemented");
 		break;
+
 	case GET_ALL_MODULE_AND_OTP:
 		sem_wait(&cxt->ae_sm);
 		memcpy(out, &cxt->match_param.module_info, sizeof(cxt->match_param.module_info));
 		sem_post(&cxt->ae_sm);
-		break;
-	case AE_WAIT_SEM:
-		sem_wait(&cxt->ae_wait_sm);
-		break;
-	case AE_POST_SEM:
-		sem_post(&cxt->ae_wait_sm);
-		break;
-	case AWB_WAIT_SEM:
-		sem_wait(&cxt->awb_wait_sm);
-		break;
-	case AWB_POST_SEM:
-		sem_post(&cxt->awb_wait_sm);
-		break;
-	case AF_WAIT_SEM:
-		sem_wait(&cxt->af_wait_sm);
-		break;
-	case AF_POST_SEM:
-		sem_post(&cxt->af_wait_sm);
 		break;
 
 	default:
@@ -398,7 +372,6 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	return ret;
 
 exit:
-
 	for (i = 0; i < SENSOR_NUM_MAX; i++) {
 		if (cxt->aem_sync_stat[i]) {
 			free(cxt->aem_sync_stat[i]);
