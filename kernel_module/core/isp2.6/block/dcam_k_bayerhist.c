@@ -87,10 +87,6 @@ int dcam_k_cfg_bayerhist(struct isp_io_param *param,
 {
 	int ret = 0;
 
-	/* debugfs hist bypass */
-	if (g_dcam_bypass[p->idx] & (1 << _E_HIST))
-		return 0;
-
 	switch (param->property) {
 	case DCAM_PRO_BAYERHIST_BLOCK:
 		if (DCAM_ONLINE_MODE) {

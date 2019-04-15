@@ -319,10 +319,6 @@ int dcam_k_cfg_afm(struct isp_io_param *param, struct dcam_dev_param *p)
 	int32_t bit_update;
 	FUNC_DCAM_PARAM sub_func = NULL;
 
-	/* debugfs bypass afm */
-	if (g_dcam_bypass[p->idx] & (1 << _E_AFM))
-		return 0;
-
 	switch (param->property) {
 	case DCAM_PRO_AFM_BYPASS:
 		pcpy = (void *)&(p->afm.bypass);

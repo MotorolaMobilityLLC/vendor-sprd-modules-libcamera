@@ -340,9 +340,6 @@ int dcam_k_cfg_pdaf(struct isp_io_param *param, struct dcam_dev_param *p)
 		pr_err("fail to get property_param\n");
 		return -1;
 	}
-	/* debugfs bypass pdaf */
-	if (g_dcam_bypass[idx] & (1 << _E_PDAF))
-		return 0;
 
 	idx = p->idx;
 	switch (param->property) {

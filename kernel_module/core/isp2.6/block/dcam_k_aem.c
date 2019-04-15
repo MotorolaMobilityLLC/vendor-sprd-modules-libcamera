@@ -203,10 +203,6 @@ int dcam_k_cfg_aem(struct isp_io_param *param, struct dcam_dev_param *p)
 	int32_t bit_update;
 	FUNC_DCAM_PARAM sub_func = NULL;
 
-	/* debugfs aem bypass */
-	if (g_dcam_bypass[p->idx] & (1 << _E_AEM))
-		return 0;
-
 	switch (param->property) {
 	case DCAM_PRO_AEM_BYPASS:
 		pcpy = (void *)&(p->aem.bypass);
