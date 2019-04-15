@@ -36,33 +36,11 @@ static void write_pd_table(struct pdaf_ppi_info *pdaf_info, enum dcam_id idx)
 {
 	int i = 0;
 	int col = 0, row = 0, is_right = 0;
-	int block_size = 16;
 	int pd_num = 0;
 	int reg_pos = 0;
 	uint32_t pdafinfo[32] = {0};
 
-	switch (pdaf_info->block_size.height) {
-	case 0:
-		block_size = 8;
-		pd_num = 2;
-		break;
-	case 1:
-		block_size = 16;
-		pd_num = 4;
-		break;
-	case 2:
-		block_size = 32;
-		pd_num = 8;
-		break;
-	case 3:
-		block_size = 64;
-		pd_num = 16;
-		break;
-	default:
-		pr_err("fail to check pd_block_num\n");
-		break;
-	}
-
+	pd_num = pdaf_info->pd_pos_size * 2;
 	for (i = 0; i < pd_num; i++) {
 		col = pdaf_info->pattern_pixel_col[i];
 		row = pdaf_info->pattern_pixel_row[i];
@@ -95,8 +73,6 @@ static int isp_k_pdaf_type1_block(struct isp_io_param *param, enum dcam_id idx)
 		return -1;
 	}
 
-	DCAM_REG_MWR(idx, DCAM_CFG, BIT_4, BIT_4);
-
 	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		(vch2_info.vch2_vc & 0x03) << 16
 		|(vch2_info.vch2_data_type & 0x3f) << 8
@@ -117,8 +93,6 @@ static int isp_k_pdaf_type2_block(struct isp_io_param *param, enum dcam_id idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return -1;
 	}
-
-	DCAM_REG_MWR(idx, DCAM_CFG, BIT_3, BIT_3);
 
 	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		(vch2_info.vch2_vc & 0x03) << 16
@@ -145,7 +119,6 @@ static int isp_k_pdaf_type3_block(struct isp_io_param *param, void *in)
 		return -1;
 	}
 	pr_info("pdaf_info.vch2_mode = %d\n", vch2_info.vch2_mode);
-	DCAM_REG_MWR(idx, DCAM_CFG, BIT_3, BIT_3);
 	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		(vch2_info.vch2_vc & 0x03) << 16
 		|(vch2_info.vch2_data_type & 0x3f) << 8
@@ -167,7 +140,6 @@ static int isp_k_dual_pdaf_block(struct isp_io_param *param, enum dcam_id idx)
 		return -1;
 	}
 
-	DCAM_REG_MWR(idx, DCAM_CFG, BIT_3, BIT_3);
 	DCAM_REG_WR(idx, DCAM_PDAF_CONTROL,
 		(vch2_info.vch2_vc & 0x03) << 16
 		|(vch2_info.vch2_data_type & 0x3f) << 8

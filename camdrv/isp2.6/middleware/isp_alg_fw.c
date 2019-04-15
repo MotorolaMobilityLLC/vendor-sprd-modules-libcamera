@@ -2475,6 +2475,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_uint u_addr = 0;
+	void *pdaf_info = NULL;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
 	struct pdaf_ctrl_process_in pdaf_param_in;
@@ -2486,22 +2487,19 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 
 	u_addr = statis_info->uaddr;
 	pdaf_param_in.u_addr = statis_info->uaddr;
-	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support){
-		if (cxt->ops.pdaf_ops.ioctrl)
-			cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
-		ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
-		if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
-			if (cxt->ops.pdaf_ops.process)
-				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
-		}
-	} else if (SENSOR_PDAF_TYPE1_ENABLE == cxt->pdaf_cxt.pdaf_support){
-		void *pdaf_info = (cmr_s32 *)(u_addr);
+
+	switch (cxt->pdaf_cxt.pdaf_support) {
+	case SENSOR_PDAF_TYPE1_ENABLE:
+		pdaf_info = (cmr_s32 *)(u_addr);
 
 		if (cxt->ops.af_ops.ioctrl) {
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_TYPE1_PD_INFO, pdaf_info, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to AF_CMD_SET_TYPE1_PD_INFO"));
 		}
-	} else if (SENSOR_PDAF_TYPE2_ENABLE == cxt->pdaf_cxt.pdaf_support) {
+		break;
+	case SENSOR_PDAF_TYPE2_ENABLE:
+	case SENSOR_PDAF_TYPE3_ENABLE:
+	case SENSOR_DUAL_PDAF_ENABLE:
 		if (cxt->ops.pdaf_ops.ioctrl)
 			cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
 		ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
@@ -2509,14 +2507,9 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 			if (cxt->ops.pdaf_ops.process)
 				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 		}
-	}else if (SENSOR_DUAL_PDAF_ENABLE == cxt->pdaf_cxt.pdaf_support) {
-		if (cxt->ops.pdaf_ops.ioctrl)
-			cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);
-		ISP_LOGV("pdaf_is_busy=%d\n", pdaf_param_out.is_busy);
-		if (!pdaf_param_out.is_busy && !cxt->pdaf_cxt.sw_bypass) {
-			if (cxt->ops.pdaf_ops.process)
-				ret = cxt->ops.pdaf_ops.process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
-		}
+		break;
+	default:
+		ISP_LOGV("Invalid pdaf param:%d", cxt->pdaf_cxt.pdaf_support);
 	}
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
@@ -4435,6 +4428,8 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_int isp_pdaf_type = 0;
+	cmr_int i = 0;
 	cmr_u32 sn_mode = 0;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -4444,6 +4439,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct sensor_pdaf_info *pdaf_info = NULL;
 	struct pm_workmode_input  pm_input;
 	struct pm_workmode_output pm_output;
+	struct pdaf_ppi_info ppi_info;
 
 	if (!isp_alg_handle || !in_ptr) {
 		ISP_LOGE("fail to get valid ptr.");
@@ -4563,25 +4559,48 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	property_get("debug.camera.pdaf.type1.supprot", (char *)value, "0");
 	sn_mode = in_ptr->resolution_info.size_index;
 	pdaf_info = cxt->pdaf_info;
-	ISP_LOGV("sn_mode = 0x%x", sn_mode);
-	if(pdaf_info && pdaf_info->sns_mode
-		&& SENSOR_PDAF_TYPE1_ENABLE == cxt->pdaf_cxt.pdaf_support) {
-		ISP_LOGI("pdaf_info->sns_mode = %d",pdaf_info->sns_mode[sn_mode]);
-		if ((pdaf_info->sns_mode[sn_mode]) || (1 == atoi(value))) {
-			vch2_info.bypass = pdaf_info->vch2_info.bypass;
-			vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
-			vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
-			vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
-			ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
-					vch2_info.bypass, vch2_info.vch2_vc,
-					vch2_info.vch2_data_type, vch2_info.vch2_mode);
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-					ISP_DEV_SET_PDAF_TYPE1_CFG, &vch2_info, 0);
-		}
-	}
+	ISP_LOGV("sn_mode:0x%x, type1.support:%d", sn_mode, atoi(value));
 
-	if (pdaf_info && in_ptr->pdaf_enable
-		&& SENSOR_PDAF_TYPE2_ENABLE == cxt->pdaf_cxt.pdaf_support  ) {
+	/* start config PDAF information */
+	if (in_ptr->pdaf_enable && pdaf_info) {
+
+		switch (cxt->pdaf_cxt.pdaf_support){
+		case SENSOR_PDAF_TYPE1_ENABLE:
+			if (pdaf_info->sns_mode &&
+					(pdaf_info->sns_mode[sn_mode] || (1 == atoi(value)))){
+				ISP_LOGI("pdaf_info->sns_mode = %d",pdaf_info->sns_mode[sn_mode]);
+				isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE2_CFG;
+			}
+			break;
+		case SENSOR_PDAF_TYPE2_ENABLE:
+			isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE2_CFG;
+			break;
+		case SENSOR_PDAF_TYPE3_ENABLE:
+			isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE3_CFG;
+			/* config pdaf block: ROI, coordinate, window */
+			ppi_info.block.start_x = pdaf_info->pd_offset_x;
+			ppi_info.block.end_x = pdaf_info->pd_end_x;
+			ppi_info.block.start_y = pdaf_info->pd_offset_y;
+			ppi_info.block.end_y = pdaf_info->pd_end_y;
+			ppi_info.block_size.height = pdaf_info->pd_block_h;
+			ppi_info.block_size.width = pdaf_info->pd_block_w;
+			ppi_info.pd_pos_size = pdaf_info->pd_pos_size;
+
+			for (i = 0; i < pdaf_info->pd_pos_size * 2; i++) {
+				ppi_info.pattern_pixel_is_right[i] = pdaf_info->pd_is_right[i];
+				ppi_info.pattern_pixel_row[i] = pdaf_info->pd_pos_row[i];
+				ppi_info.pattern_pixel_col[i] = pdaf_info->pd_pos_col[i];
+			}
+			isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &ppi_info, NULL);
+			break;
+		case SENSOR_DUAL_PDAF_ENABLE:
+			isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE2_CFG;
+			break;
+		default:
+			ISP_LOGI("PDAF param is invalid");
+			break;
+		}
+
 		vch2_info.bypass = pdaf_info->vch2_info.bypass;
 		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
 		vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
@@ -4589,33 +4608,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
 				vch2_info.bypass, vch2_info.vch2_vc,
 				vch2_info.vch2_data_type, vch2_info.vch2_mode);
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-				ISP_DEV_SET_PDAF_TYPE2_CFG, &vch2_info, 0);
-	}
-	if (pdaf_info && in_ptr->pdaf_enable
-		&& SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support  ) {
-		vch2_info.bypass = pdaf_info->vch2_info.bypass;
-		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
-		vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
-		vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
-		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
-				vch2_info.bypass, vch2_info.vch2_vc,
-				vch2_info.vch2_data_type, vch2_info.vch2_mode);
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-				ISP_DEV_SET_PDAF_TYPE3_CFG, &vch2_info, 0);
-	}
-	if (pdaf_info && in_ptr->pdaf_enable
-		&& SENSOR_DUAL_PDAF_ENABLE == cxt->pdaf_cxt.pdaf_support  ) {
-		vch2_info.bypass = pdaf_info->vch2_info.bypass;
-		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
-		vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
-		vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
-		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
-				vch2_info.bypass, vch2_info.vch2_vc,
-				vch2_info.vch2_data_type, vch2_info.vch2_mode);
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-				ISP_DEV_SET_DUAL_PDAF_CFG, &vch2_info, 0);
-	}
+		if (isp_pdaf_type != 0)
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, isp_pdaf_type, &vch2_info, 0);
+	} /* end config pdaf */
 
 	if (cxt->ebd_cxt.ebd_support) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_EBD_CFG, 0, 0);
