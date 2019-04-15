@@ -3082,6 +3082,24 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		}
 		++param_data;
 	}
+	/* 4in1 bv_thd */
+	memset(&output, 0, sizeof(output));
+        ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_4IN1_PARAM, NULL, &output);
+        if (ISP_SUCCESS != ret) {
+                ISP_LOGE("fail to get 4in1 param");
+                return ret;
+        }
+        if (0 == output.param_num) {
+                ISP_LOGE("fail to check param: 4in1 param num=%d", output.param_num);
+                return ISP_ERROR;
+        }
+        param_data = output.param_data;
+        for (i = 0; i < output.param_num; ++i) {
+                if (NULL != param_data->data_ptr) {
+                        ae_input.bv_thd = *(cmr_s16 *)param_data->data_ptr;
+                }
+                ++param_data;
+        }
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_SYNC, NULL, &output);
