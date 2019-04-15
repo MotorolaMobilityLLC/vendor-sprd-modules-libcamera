@@ -450,9 +450,40 @@ static void  isp_dump_iommu_regs(void)
 		val[1] = ISP_MMU_RD(reg + 4);
 		val[2] = ISP_MMU_RD(reg + 8);
 		val[3] = ISP_MMU_RD(reg + 12);
-		pr_err_ratelimited("offset=0x%04x: %08x %08x %08x %08x\n",
-				   reg, val[0], val[1], val[2], val[3]);
+		pr_err("offset=0x%04x: %08x %08x %08x %08x\n",
+			reg, val[0], val[1], val[2], val[3]);
 	}
+
+	pr_err("fetch y %08x u %08x v %08x fbd_raw head %08x tile %08x low2 %08x\n",
+		ISP_HREG_RD(ISP_FETCH_SLICE_Y_ADDR),
+		ISP_HREG_RD(ISP_FETCH_SLICE_U_ADDR),
+		ISP_HREG_RD(ISP_FETCH_SLICE_V_ADDR),
+		ISP_HREG_RD(ISP_FBD_RAW_PARAM2),
+		ISP_HREG_RD(ISP_FBD_RAW_PARAM3),
+		ISP_HREG_RD(ISP_FBD_RAW_LOW_PARAM0));
+
+	pr_err("store pre cap y %08x u %08x v %08x fbc head y %08x c %08x tile y %08x c %08x\n",
+		ISP_HREG_RD(ISP_STORE_PRE_CAP_BASE + ISP_STORE_SLICE_Y_ADDR),
+		ISP_HREG_RD(ISP_STORE_PRE_CAP_BASE + ISP_STORE_SLICE_U_ADDR),
+		ISP_HREG_RD(ISP_STORE_PRE_CAP_BASE + ISP_STORE_SLICE_V_ADDR),
+		ISP_HREG_RD(ISP_FBC_STORE1_BASE + ISP_FBC_STORE_SLICE_YHEADER),
+		ISP_HREG_RD(ISP_FBC_STORE1_BASE + ISP_FBC_STORE_SLICE_CHEADER),
+		ISP_HREG_RD(ISP_FBC_STORE1_BASE + ISP_FBC_STORE_SLICE_YADDR),
+		ISP_HREG_RD(ISP_FBC_STORE1_BASE + ISP_FBC_STORE_SLICE_CADDR));
+
+	pr_err("store vid y %08x u %08x v %08x fbc head y %08x c %08x tile y %08x c %08x\n",
+		ISP_HREG_RD(ISP_STORE_VID_BASE + ISP_STORE_SLICE_Y_ADDR),
+		ISP_HREG_RD(ISP_STORE_VID_BASE + ISP_STORE_SLICE_U_ADDR),
+		ISP_HREG_RD(ISP_STORE_VID_BASE + ISP_STORE_SLICE_V_ADDR),
+		ISP_HREG_RD(ISP_FBC_STORE2_BASE + ISP_FBC_STORE_SLICE_YHEADER),
+		ISP_HREG_RD(ISP_FBC_STORE2_BASE + ISP_FBC_STORE_SLICE_CHEADER),
+		ISP_HREG_RD(ISP_FBC_STORE2_BASE + ISP_FBC_STORE_SLICE_YADDR),
+		ISP_HREG_RD(ISP_FBC_STORE2_BASE + ISP_FBC_STORE_SLICE_CADDR));
+
+	pr_err("store thumb y %08x u %08x v %08x\n",
+		ISP_HREG_RD(ISP_STORE_THUMB_BASE + ISP_STORE_SLICE_Y_ADDR),
+		ISP_HREG_RD(ISP_STORE_THUMB_BASE + ISP_STORE_SLICE_U_ADDR),
+		ISP_HREG_RD(ISP_STORE_THUMB_BASE + ISP_STORE_SLICE_V_ADDR));
 }
 
 static irqreturn_t isp_isr_root(int irq, void *priv)
@@ -514,10 +545,18 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 		}
 
 		if (unlikely(err_mask & irq_line)) {
-			pr_err("error irq: isp ctx %d, INT:0x%x\n",
-					c_id, irq_line);
+			pr_err("ISP ctx%d status 0x%x\n", c_id, irq_line);
 			if (irq_line & ISP_INT_LINE_MASK_MMU) {
-				isp_dump_iommu_regs();
+				struct isp_pipe_context *ctx;
+				uint32_t val;
+
+				ctx = &isp_handle->ctx[c_id];
+				val = ISP_MMU_RD(MMU_STS);
+
+				if (val != ctx->iommu_status) {
+					ctx->iommu_status = val;
+					isp_dump_iommu_regs();
+				}
 			}
 
 			/*handle the error here*/

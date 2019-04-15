@@ -118,6 +118,14 @@ enum {
 	 BIT(DCAM_MMU_INT))
 
 /*
+ * fatal error bits
+ */
+#define DCAMINT_FATAL_ERROR \
+	(BIT(DCAM_DCAM_OVF) |\
+	 BIT(DCAM_CAP_LINE_ERR) |\
+	 BIT(DCAM_CAP_FRM_ERR))
+
+/*
  * SOF bits
  * some bits is reserved in DCAM2
  */

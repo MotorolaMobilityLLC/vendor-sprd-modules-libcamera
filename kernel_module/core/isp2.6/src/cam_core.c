@@ -39,6 +39,7 @@
 #include "cam_queue.h"
 #include "cam_hw.h"
 #include "cam_block.h"
+#include "cam_debugger.h"
 
 #include "isp_interface.h"
 #include "dcam_interface.h"
@@ -299,6 +300,7 @@ struct camera_group {
 	struct platform_device *pdev;
 	struct camera_queue empty_frm_q;
 	struct  sprd_cam_sec_cfg   camsec_cfg;
+	struct camera_debugger debugger;
 };
 
 struct cam_ioctl_cmd {
@@ -381,8 +383,6 @@ static void cam_release_camera_frame(void *param)
 	put_empty_frame(frame);
 }
 
-struct compression_override g_compression_override[CAM_ID_MAX];
-
 /* compression policy */
 static void config_compression(struct camera_module *module)
 {
@@ -440,7 +440,7 @@ static void config_compression(struct camera_module *module)
 	}
 
 	/* manually control compression policy here */
-	override = &g_compression_override[module->idx];
+	override = &module->grp->debugger.compression[module->idx];
 	if (override->enable) {
 		ch_cap->compress_input = override->override[CH_CAP][FBC_DCAM];
 		ch_cap->compress_3dnr = override->override[CH_CAP][FBC_3DNR];
@@ -535,6 +535,70 @@ static void config_compression(struct camera_module *module)
 	}
 }
 
+static void prepare_frame_from_file(struct camera_queue *queue,
+				    char *filename,
+				    uint32_t width, uint32_t height)
+{
+	struct camera_frame *frame, *f;
+	struct file *raw;
+	uint8_t *buf;
+	char fullname[DCAM_IMAGE_REPLACER_FILENAME_MAX + 32] = { 0 };
+	const char *folder = "/data/ylog/";
+	size_t cur;
+	uint32_t total;
+	int64_t left;
+	const uint32_t per = 4096;
+	ktime_t start, stop;
+	int result = 0;
+
+	/* prepare 1st buffer */
+	frame = camera_dequeue_tail(queue);
+	if (!frame)
+		return;
+
+	if (frame->is_compressed)
+		total = dcam_if_cal_compressed_size(width, height);
+	else
+		total = cal_sprd_raw_pitch(width) * height;
+
+	strcpy(fullname, folder);
+	/* length of filename is less then DCAM_IMAGE_REPLACER_FILENAME_MAX */
+	strcpy(fullname + strlen(folder), filename);
+
+	pr_info("reading %u bytes from %s\n", total, fullname);
+	start = ktime_get_boottime();
+	raw = filp_open(fullname, O_RDONLY, 0);
+	if (IS_ERR_OR_NULL(raw)) {
+		pr_err("fail to open data file\n");
+		goto enqueue_frame;
+	}
+
+	buf = (uint8_t *)frame->buf.addr_k[0];
+	left = total;
+	do {
+		cur = min((uint32_t)left, per);
+		result = kernel_read(raw, buf, cur, &raw->f_pos);
+		buf += result;
+		left -= result;
+	} while (result > 0 && left > 0);
+	filp_close(raw, 0);
+	stop = ktime_get_boottime();
+	pr_info("read succeed, costs %lldns\n", ktime_sub(stop, start));
+
+	/* prepare other buffers */
+	list_for_each_entry(f, &queue->head, list) {
+		start = ktime_get_boottime();
+		memcpy((uint8_t *)f->buf.addr_k[0],
+			(uint8_t *)frame->buf.addr_k[0], total);
+		stop = ktime_get_boottime();
+		pr_info("copy succeed, costs %lldns\n", ktime_sub(stop, start));
+	}
+	pr_info("done\n");
+
+enqueue_frame:
+	camera_enqueue(queue, frame);
+}
+
 static void alloc_buffers(struct work_struct *work)
 {
 	int ret = 0;
@@ -544,6 +608,8 @@ static void alloc_buffers(struct work_struct *work)
 	struct camera_module *module;
 	struct camera_frame *pframe;
 	struct channel_context *channel;
+	struct camera_debugger *debugger;
+	int path_id;
 
 	pr_info("enter.\n");
 
@@ -634,6 +700,25 @@ static void alloc_buffers(struct work_struct *work)
 				break;
 			}
 		} while (1);
+	}
+
+	debugger = &module->grp->debugger;
+	path_id = channel->dcam_path_id;
+	if (is_dcam_id(module->dcam_idx) && path_id >= 0
+		&& path_id < DCAM_IMAGE_REPLACER_PATH_MAX) {
+		struct dcam_image_replacer *replacer;
+
+		replacer = &debugger->replacer[module->dcam_idx];
+		if (replacer->enabled[path_id]) {
+			prepare_frame_from_file(&channel->share_buf_queue,
+						replacer->filename[path_id],
+						width, height);
+			dcam_ops->ioctl(module->dcam_dev_handle,
+					DCAM_IOCTL_CFG_REPLACER, replacer);
+		}
+	} else {
+		dcam_ops->ioctl(module->dcam_dev_handle,
+				DCAM_IOCTL_CFG_REPLACER, NULL);
 	}
 
 	if (channel->type_3dnr == CAM_3DNR_HW) {
@@ -2145,12 +2230,12 @@ static int dump_one_frame(struct camera_module *module,
 		sprintf(tmp_str, "_low2tile%08lx",
 			addr.addr2 - addr.addr1);
 		strcat(file_name, tmp_str);
-		strcat(file_name, ".mipi_raw");
 		size = dcam_if_cal_compressed_size(pframe->width,
 						   pframe->height);
 	} else {
 		size = cal_sprd_raw_pitch(pframe->width) * pframe->height;
 	}
+	strcat(file_name, ".mipi_raw");
 
 	write_image_to_file((char *)pframe->buf.addr_k[0], size, file_name);
 	pr_debug("dump for ch %d, size %d, kaddr %p, file %s\n", ch_id,
@@ -6505,9 +6590,6 @@ static int sprd_img_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	memset(&g_compression_override, 0,
-	       sizeof(struct compression_override) * CAM_ID_MAX);
-
 	ret = misc_register(&image_dev);
 	if (ret) {
 		pr_err("fail to register misc devices, ret %d\n", ret);
@@ -6546,11 +6628,11 @@ static int sprd_img_probe(struct platform_device *pdev)
 	if (group->ca_conn)
 		pr_info("cam ca-ta unconnect\n");
 
-	ret = sprd_dcam_debugfs_init();
+	ret = sprd_dcam_debugfs_init(&group->debugger);
 	if (ret)
 		pr_err("fail to init dcam debugfs\n");
 
-	ret = sprd_isp_debugfs_init();
+	ret = sprd_isp_debugfs_init(&group->debugger);
 	if (ret)
 		pr_err("fail to init isp debugfs\n");
 

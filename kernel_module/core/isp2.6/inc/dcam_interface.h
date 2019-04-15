@@ -167,6 +167,7 @@ enum dcam_ioctrl_cmd {
 	DCAM_IOCTL_CFG_EBD,
 	DCAM_IOCTL_CFG_SEC,
 	DCAM_IOCTL_CFG_FBC,
+	DCAM_IOCTL_CFG_REPLACER,
 };
 
 
@@ -323,7 +324,8 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width);
 int dcam_if_parse_dt(struct platform_device *pdev,
 			struct sprd_cam_hw_info **dcam_hw,
 			uint32_t *dcam_count);
-int sprd_dcam_debugfs_init(void);
+struct camera_debugger;
+int sprd_dcam_debugfs_init(struct camera_debugger *debugger);
 int sprd_dcam_debugfs_deinit(void);
 uint32_t get_outbuf_queue_cnt(void *dev, int path_id);
 

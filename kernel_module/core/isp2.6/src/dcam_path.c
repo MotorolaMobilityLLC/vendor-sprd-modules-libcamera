@@ -24,6 +24,7 @@
 #include "cam_queue.h"
 #include "cam_buf.h"
 #include "cam_block.h"
+#include "cam_debugger.h"
 
 #include "dcam_interface.h"
 #include "dcam_reg.h"
@@ -710,16 +711,26 @@ dcam_path_cycle_frame(struct dcam_pipe_dev *dev, struct dcam_path_desc *path)
 	return frame;
 }
 
+static inline void swap_frame_pointer(struct camera_frame **frame1,
+				      struct camera_frame **frame2)
+{
+	struct camera_frame *frame;
+
+	frame = *frame1;
+	*frame1 = *frame2;
+	*frame2 = frame;
+}
+
 int dcam_path_set_store_frm(void *dcam_handle,
 			    struct dcam_path_desc *path,
 			    struct dcam_sync_helper *helper)
 {
 	struct dcam_pipe_dev *dev = NULL;
-	struct camera_frame *frame = NULL;
+	struct camera_frame *frame = NULL, *saved = NULL;
 	uint32_t idx = 0, path_id = 0;
 	unsigned long flags = 0, addr = 0;
 	const int _bin = 0, _aem = 1, _hist = 2;
-	int i = 0;
+	int i = 0, ret = 0;
 
 	if (unlikely(!dcam_handle || !path))
 		return -EINVAL;
@@ -754,6 +765,17 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		addr = dcam_store_addr[path_id];
 	}
 
+	/* replace image data for debug */
+	if (dev->replacer) {
+		struct dcam_image_replacer *replacer = dev->replacer;
+
+		if ((path_id < DCAM_IMAGE_REPLACER_PATH_MAX)
+			&& replacer->enabled[path_id])
+			saved = camera_dequeue(&path->reserved_buf_queue);
+	}
+
+	if (saved)
+		swap_frame_pointer(&frame, &saved);
 	if (frame->is_compressed) {
 		struct compressed_addr compressed_addr;
 		struct img_size *size = &path->out_size;
@@ -767,6 +789,8 @@ int dcam_path_set_store_frm(void *dcam_handle,
 	} else {
 		DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
 	}
+	if (saved)
+		swap_frame_pointer(&frame, &saved);
 
 	atomic_inc(&path->set_frm_cnt);
 	if (path_id == DCAM_PATH_AFL)
@@ -848,15 +872,21 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		while (i < dev->slowmotion_count) {
 			frame = dcam_path_cycle_frame(dev, path);
 			/* in init phase, return failure if error happens */
-			if (IS_ERR(frame) && !dev->index_to_set)
-				return PTR_ERR(frame);
+			if (IS_ERR(frame) && !dev->index_to_set) {
+				ret = PTR_ERR(frame);
+				goto enqueue_reserved;
+			}
 
 			/* in normal running, just stop configure */
 			if (IS_ERR(frame))
 				break;
 
 			addr = slowmotion_store_addr[_bin][i];
+			if (saved)
+				swap_frame_pointer(&frame, &saved);
 			DCAM_REG_WR(idx, addr, frame->buf.iova[0]);
+			if (saved)
+				swap_frame_pointer(&frame, &saved);
 			atomic_inc(&path->set_frm_cnt);
 
 			frame->fid = dev->index_to_set + i;
@@ -872,5 +902,9 @@ int dcam_path_set_store_frm(void *dcam_handle,
 				idx, dev->slowmotion_count - i);
 	}
 
-	return 0;
+enqueue_reserved:
+	if (saved)
+		camera_enqueue(&path->reserved_buf_queue, saved);
+
+	return ret;
 }

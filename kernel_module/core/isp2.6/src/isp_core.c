@@ -35,6 +35,7 @@
 #include "cam_queue.h"
 #include "cam_buf.h"
 #include "cam_block.h"
+#include "cam_debugger.h"
 
 #include "dcam_interface.h"
 
@@ -621,8 +622,7 @@ static const struct file_operations fbc_ctrl_ops = {
 	.write = fbc_ctrl_write,
 };
 
-extern struct compression_override g_compression_override;
-int sprd_isp_debugfs_init(void)
+int sprd_isp_debugfs_init(struct camera_debugger *debugger)
 {
 	struct dentry *entry = NULL;
 	char dirname[32] = {0};
@@ -675,7 +675,7 @@ int sprd_isp_debugfs_init(void)
 		return -ENOMEM;
 
 	entry = debugfs_create_file("fbc_ctrl", 0660, debugfs_base,
-				    &g_compression_override, &fbc_ctrl_ops);
+				    &debugger->compression[0], &fbc_ctrl_ops);
 	if (IS_ERR_OR_NULL(entry))
 		return -ENOMEM;
 
@@ -1643,6 +1643,8 @@ static int isp_offline_start_frame(void *ctx)
 			if (ret)
 				pr_err("unable to set fmcu slw queue\n");
 		}
+
+	pctx->iommu_status = 0;
 
 	/* start to prepare/kickoff cfg buffer. */
 	if (likely(dev->wmode == ISP_CFG_MODE)) {

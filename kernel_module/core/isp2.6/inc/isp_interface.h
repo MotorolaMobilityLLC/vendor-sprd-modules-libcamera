@@ -172,25 +172,6 @@ isp_3dnr_cal_compressed_size(uint32_t width, uint32_t height)
 	return header_y + tile_y + header_c + tile_c;
 }
 
-/* compression override commands */
-enum {
-	CH_PRE = 0,
-	CH_CAP = 1,
-	CH_VID = 2,
-	CH_MAX = 3,
-
-	FBC_DCAM = 0,
-	FBC_3DNR = 1,
-	FBC_ISP = 2,
-	FBC_MAX = 3,
-};
-
-/* compression override setting */
-struct compression_override {
-	uint32_t enable;
-	uint32_t override[CH_MAX][FBC_MAX];
-};
-
 struct isp_statis_io_desc {
 	struct camera_queue *q;
 	struct camera_buf **buf;
@@ -231,7 +212,8 @@ struct isp_pipe_ops *get_isp_ops(void);
 void *get_isp_pipe_dev(void);
 int put_isp_pipe_dev(void *isp_handle);
 
-int sprd_isp_debugfs_init(void);
+struct camera_debugger;
+int sprd_isp_debugfs_init(struct camera_debugger *debugger);
 int sprd_isp_debugfs_deinit(void);
 
 int sprd_isp_parse_dt(struct device_node *dn,

@@ -188,7 +188,8 @@ struct dcam_sync_helper {
  * @need_fix:          leave fixing work to next CAP_SOF, only in slow motion
  *                     for now
  * @handled_bits:      mask bits that will not be handled this time
- * $frame_ts:          timestamp at SOF, time without suspend
+ * @iommu_status:      iommu status register
+ * @frame_ts:          timestamp at SOF, time without suspend
  * @frame_ts_boot:     timestamp at SOF, ns counts from system boot
  *
  * @slowmotion_count:  frame count in a slow motion group, AKA slow motion rate
@@ -208,6 +209,7 @@ struct dcam_pipe_dev {
 	uint32_t index_to_set;
 	bool need_fix;
 	uint32_t handled_bits;
+	uint32_t iommu_status;
 	struct timespec frame_ts[DCAM_FRAME_TIMESTAMP_COUNT];
 	ktime_t frame_ts_boot[DCAM_FRAME_TIMESTAMP_COUNT];
 
@@ -217,6 +219,7 @@ struct dcam_pipe_dev {
 	spinlock_t helper_lock;
 	struct list_head helper_list;
 	struct dcam_sync_helper helpers[DCAM_SYNC_HELPER_COUNT];
+	struct dcam_image_replacer *replacer;
 
 	struct sprd_cam_hw_info *hw;
 

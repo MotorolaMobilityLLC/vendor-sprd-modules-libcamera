@@ -331,6 +331,7 @@ struct isp_pipe_context {
 	enum camera_id attach_cam_id;
 	enum cam_ch_id ch_id;
 	uint32_t in_irq_handler;
+	uint32_t iommu_status;
 
 	uint32_t updated;
 	uint32_t mode_3dnr;

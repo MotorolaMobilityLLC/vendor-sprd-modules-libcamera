@@ -871,7 +871,7 @@ static const struct {
  * report error back to adaptive layer
  */
 
-static void  dcam_dump_iommu_regs(void)
+static void dcam_dump_iommu_regs(struct dcam_pipe_dev *dev)
 {
 	uint32_t reg = 0;
 	uint32_t val[4];
@@ -881,9 +881,32 @@ static void  dcam_dump_iommu_regs(void)
 		val[1] = DCAM_MMU_RD(reg + 4);
 		val[2] = DCAM_MMU_RD(reg + 8);
 		val[3] = DCAM_MMU_RD(reg + 12);
-		pr_err_ratelimited("offset=0x%04x: %08x %08x %08x %08x\n",
-			 reg, val[0], val[1], val[2], val[3]);
+		pr_err("offset=0x%04x: %08x %08x %08x %08x\n",
+			reg, val[0], val[1], val[2], val[3]);
 	}
+
+	pr_err("fbc %08x full %08x bin0 %08x bin1 %08x bin2 %08x bin3 %08x\n",
+		DCAM_REG_RD(dev->idx, DCAM_FBC_PAYLOAD_WADDR),
+		DCAM_REG_RD(dev->idx, DCAM_FULL_BASE_WADDR),
+		DCAM_REG_RD(dev->idx, DCAM_BIN_BASE_WADDR0),
+		DCAM_REG_RD(dev->idx, DCAM_BIN_BASE_WADDR1),
+		DCAM_REG_RD(dev->idx, DCAM_BIN_BASE_WADDR2),
+		DCAM_REG_RD(dev->idx, DCAM_BIN_BASE_WADDR3));
+	pr_err("pdaf %08x vch2 %08x vch3 %08x lsc %08x aem %08x hist %08x\n",
+		DCAM_REG_RD(dev->idx, DCAM_PDAF_BASE_WADDR),
+		DCAM_REG_RD(dev->idx, DCAM_VCH2_BASE_WADDR),
+		DCAM_REG_RD(dev->idx, DCAM_VCH3_BASE_WADDR),
+		DCAM_REG_RD(dev->idx, DCAM_LENS_BASE_RADDR),
+		DCAM_REG_RD(dev->idx, DCAM_AEM_BASE_WADDR),
+		DCAM_REG_RD(dev->idx, DCAM_HIST_BASE_WADDR));
+	pr_err("ppe %08x afl %08x %08x bpc %08x %08x afm %08x nr3 %08x\n",
+		DCAM_REG_RD(dev->idx, DCAM_PPE_RIGHT_WADDR),
+		DCAM_REG_RD(dev->idx, ISP_AFL_GLB_WADDR),
+		DCAM_REG_RD(dev->idx, ISP_AFL_REGION_WADDR),
+		DCAM_REG_RD(dev->idx, ISP_BPC_MAP_ADDR),
+		DCAM_REG_RD(dev->idx, ISP_BPC_OUT_ADDR),
+		DCAM_REG_RD(dev->idx, ISP_AFM_BASE_WADDR),
+		DCAM_REG_RD(dev->idx, ISP_NR3_WADDR));
 }
 
 static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
@@ -902,15 +925,19 @@ static irqreturn_t dcam_error_handler(struct dcam_pipe_dev *dev,
 		tb_frm[!!(status & BIT(DCAM_CAP_FRM_ERR))]);
 
 	if (status & BIT(DCAM_MMU_INT)) {
-		dcam_dump_iommu_regs();
-		return IRQ_HANDLED;
+		uint32_t val = DCAM_MMU_RD(MMU_STS);
+
+		if (val != dev->iommu_status) {
+			dcam_dump_iommu_regs(dev);
+			dev->iommu_status = val;
+		}
 	}
 
-	if (atomic_read(&dev->state) == STATE_ERROR)
-		return IRQ_HANDLED;
-	atomic_set(&dev->state, STATE_ERROR);
-
-	dev->dcam_cb_func(DCAM_CB_DEV_ERR, dev, dev->cb_priv_data);
+	if ((status & DCAMINT_FATAL_ERROR)
+		&& (atomic_read(&dev->state) != STATE_ERROR)) {
+		atomic_set(&dev->state, STATE_ERROR);
+		dev->dcam_cb_func(DCAM_CB_DEV_ERR, dev, dev->cb_priv_data);
+	}
 
 	return IRQ_HANDLED;
 }
