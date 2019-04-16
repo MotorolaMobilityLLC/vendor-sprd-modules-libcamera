@@ -93,6 +93,7 @@ struct commn_info {
 	cmr_u8 *log_isp;
 	cmr_u32 log_isp_size;
 	struct isp_size src;
+	struct isp_size prv_size;
 	struct isp_ops ops;
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 };
@@ -3028,6 +3029,8 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	cxt->commn_cxt.multi_nr_flag = pm_init_output.multi_nr_flag;
 	cxt->commn_cxt.src.w = input_ptr->size.w;
 	cxt->commn_cxt.src.h = input_ptr->size.h;
+	cxt->commn_cxt.prv_size.w = input_ptr->size.w;
+	cxt->commn_cxt.prv_size.h = input_ptr->size.h;
 	cxt->commn_cxt.callback = input_ptr->ctrl_callback;
 	cxt->commn_cxt.caller_id = input_ptr->oem_handle;
 	cxt->commn_cxt.ops = input_ptr->ops;
@@ -4027,12 +4030,8 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.highflash_measure.capture_skip_num = param_ptr->capture_skip_num;
 	ae_param.capture_skip_num = param_ptr->capture_skip_num;
 	ae_param.zsl_flag = param_ptr->capture_mode;
-	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.src.w;
-	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.src.h;
-	if (cxt->is_4in1_prev) {
-		ae_param.resolution_info.frame_size.w /= 2;
-		ae_param.resolution_info.frame_size.h /= 2;
-	}
+	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.prv_size.w;
+	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.prv_size.h;
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
 	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
 	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
@@ -4287,7 +4286,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		return ret;
 	}
 
-	/* ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &in_ptr->size.w, &in_ptr->size.h); */
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 
 	cxt->first_frm = 1;
 	cxt->work_mode = in_ptr->work_mode;
@@ -4300,22 +4299,15 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->is_4in1_prev = in_ptr->mode_4in1;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
+	cxt->commn_cxt.prv_size = cxt->commn_cxt.src;
+	if (cxt->is_4in1_prev) {
+		cxt->commn_cxt.prv_size.w >>= 1;
+		cxt->commn_cxt.prv_size.h >>= 1;
+	}
 
 	ISP_LOGD("work_mode %d, is_dv %d, zsl %d,  size %d %d, 4in1_prev %d\n",
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
 		in_ptr->size.w, in_ptr->size.h, (cmr_u32)in_ptr->mode_4in1);
-	do { /* dcam-hist size need div 2 when 4in1, TODO: for capture */
-		cmr_u32 w, h;
-
-		w = in_ptr->size.w;
-		h = in_ptr->size.h;
-		if (cxt->is_4in1_prev) {
-			w = (w / 2) & (~1);
-			h = (h / 2) & (~1);
-		}
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, &w, &h);
-
-	} while (0);
 
 	memset(&cxt->mem_info, 0, sizeof(struct isp_mem_info));
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
@@ -4474,8 +4466,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ispalg_cfg_param"));
 
 	if (cxt->afl_cxt.handle) {
-		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.src.w;
-		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.src.h;
+		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.prv_size.w;
+		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.prv_size.h;
 	}
 
 	if(cxt->afl_cxt.version) {
@@ -4496,17 +4488,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 				AWB_CTRL_CMD_SET_AE_STAT_WIN_NUM,
 				&cxt->ae_cxt.win_num, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set_awb_aem_stat_win"));
-		if (cxt->is_4in1_prev) {
-			struct isp_size size;
 
-			size.w = in_ptr->size.w / 2;
-			size.h = in_ptr->size.h / 2;
-			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
-				AWB_CTRL_CMD_GET_PIX_CNT, &size, NULL);
-		} else {
-			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
-				AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
-		}
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+				AWB_CTRL_CMD_GET_PIX_CNT, &cxt->commn_cxt.prv_size, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to get_awb_pix_cnt"));
 	}
 
@@ -4515,11 +4499,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	af_start_info.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
 		if (cxt->ops.af_ops.ioctrl) {
-			af_start_info.size = in_ptr->size;
-			if (cxt->is_4in1_prev) {
-				af_start_info.size.w /= 2;
-				af_start_info.size.h /= 2;
-			}
+			af_start_info.size = cxt->commn_cxt.prv_size;
 			ISP_LOGD("trigger AF video start.  size %d %d\n", af_start_info.size.w, af_start_info.size.h);
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
 					AF_CMD_SET_ISP_START_INFO,

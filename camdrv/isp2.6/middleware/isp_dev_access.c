@@ -22,10 +22,6 @@ struct isp_dev_access_context {
 	cmr_handle evt_alg_handle;
 	isp_evt_cb isp_event_cb;
 	cmr_handle isp_driver_handle;
-
-	/* todo: delete later, force 3a static setting legal */
-	cmr_u32 sn_width;
-	cmr_u32 sn_height;
 };
 
 cmr_int isp_dev_start(cmr_handle isp_dev_handle)
@@ -322,28 +318,6 @@ exit:
 
 }
 
-/* todo: delete later. temp enable bayerhist here */
-static cmr_int set_dcam_bayerhist(cmr_handle isp_dev_handle)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt;
-	struct dcam_dev_hist_info bayerHist_info;
-
-	cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	memset(&bayerHist_info, 0, sizeof(bayerHist_info));
-	bayerHist_info.hist_bypass = 0;
-	bayerHist_info.bayer_hist_endx = cxt->sn_width;
-	bayerHist_info.bayer_hist_endy = cxt->sn_height;
-	bayerHist_info.hist_mode_sel = 1;
-	bayerHist_info.hist_mul_enable = 1;
-	bayerHist_info.hist_initial_clear = 1;
-	bayerHist_info.hist_skip_num_clr = 1;
-	ret = dcam_u_bayerhist_block(cxt->isp_driver_handle, &bayerHist_info);
-
-	return ret;
-}
-
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	cmr_int cmd, void *param0, void *param1)
 {
@@ -353,12 +327,6 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	switch (cmd) {
 	case ISP_DEV_RESET:
 		ret = isp_dev_reset(cxt->isp_driver_handle);
-
-		/* todo: delete later. for 3A statis debug*/
-		if (param0 != NULL && param1 != NULL) {
-			cxt->sn_width = *(cmr_u32 *)param0;
-			cxt->sn_height = *(cmr_u32 *)param1;
-		}
 		break;
 	/* aem */
 	case ISP_DEV_SET_AE_SKIP_NUM:
@@ -373,8 +341,6 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		break;
 	case ISP_DEV_SET_AE_MONITOR_WIN:
 		dcam_u_aem_win(cxt->isp_driver_handle, param0);
-		/* todo: delete later. temp enable bayerhist here */
-		set_dcam_bayerhist(cxt);
 		break;
 
 	/* awbc */
