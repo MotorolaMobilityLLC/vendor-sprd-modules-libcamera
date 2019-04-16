@@ -991,14 +991,14 @@ struct sensor_nlm_imbalance_level {
 	struct sensor_imblance_flag3 nlm_imblance_flag3;
 	cmr_u32 sensor_imblance_lumth[2];
 	cmr_u32 sensor_imblance_S_baohedu[2];
-	cmr_u8 imblance_slash_edge_thr;
-	cmr_u8 imblance_hv_edge_thr;
-	cmr_u8 nlm_imblance_flag12_frezthr;
-	cmr_u8 nlm_imblance_diff;
-	cmr_u8 imblance_hv_flat_thr;
-	cmr_u8 imblance_slash_flat_thr;
-	cmr_u8 reversed;
-	cmr_u8 imblance_en;
+	cmr_u16 imblance_slash_edge_thr;
+	cmr_u16 imblance_hv_edge_thr;
+	cmr_u16 nlm_imblance_flag12_frezthr;
+	cmr_u16 nlm_imblance_diff;
+	cmr_u16 imblance_hv_flat_thr;
+	cmr_u16 imblance_slash_flat_thr;
+	cmr_u16 reversed;//for 4-byte alignment
+	cmr_u16 imblance_en;
 };
 
 // CFAI, css color saturation suppression
@@ -1033,10 +1033,10 @@ struct sensor_cfai_css_green {
 };
 
 struct sensor_cfai_css_ratio {
-	cmr_u8 edge_ratio;
-	cmr_u8 weak_edge_ratio;
-	cmr_u8 txt1_ratio;
-	cmr_u8 txt2_ratio;
+	cmr_u16 edge_ratio;
+	cmr_u16 weak_edge_ratio;
+	cmr_u16 txt1_ratio;
+	cmr_u16 txt2_ratio;
 	cmr_u32 flat_ratio;
 };
 
