@@ -237,6 +237,7 @@ struct isp_pm_blocks_param {
 	cmr_u32 cus_define;
 	cmr_u32 scene;
 	cmr_u32 mode;
+	cmr_u32 compatible_mode_id;
 	struct isp_pm_block_header header[ISP_TUNE_BLOCK_MAX];
 };
 

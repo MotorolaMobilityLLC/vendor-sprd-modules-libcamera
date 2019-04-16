@@ -774,6 +774,7 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 
 	if ((update_always == 0) &&
 		output->is_init && (output->mode == mode) &&
+		(output->compatible_mode_id == mode_id) &&
 		(output->scene == scene) &&
 		(output->cus_define == define) &&
 		(output->resolution.w == img_w) &&
@@ -786,6 +787,7 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	output->mode = mode;
 	output->scene = scene;
 	output->cus_define = define;
+	output->compatible_mode_id = mode_id;
 
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
