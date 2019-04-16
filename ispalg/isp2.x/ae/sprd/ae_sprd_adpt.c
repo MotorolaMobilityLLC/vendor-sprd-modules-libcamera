@@ -4285,8 +4285,18 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.frm_len = s_bakup_exp_param[cxt->camera_id].frm_len;
 			src_exp.frm_len_def = s_bakup_exp_param[cxt->camera_id].frm_len_def;
 			cxt->sync_cur_result.cur_bv = cxt->cur_result.cur_bv = s_bakup_exp_param[cxt->camera_id].bv;
-			if(CAMERA_MODE_MANUAL == cxt->app_mode)
+			if(CAMERA_MODE_MANUAL == cxt->app_mode){
+				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
+				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
+				src_exp.gain = s_ae_manual[cxt->camera_id].gain;
+				src_exp.exp_time = s_ae_manual[cxt->camera_id].exp_time;
+				src_exp.dummy = s_ae_manual[cxt->camera_id].dummy;
+				src_exp.frm_len = s_ae_manual[cxt->camera_id].frm_len;
+				src_exp.frm_len_def = s_ae_manual[cxt->camera_id].frm_len_def;
+				src_exp.cur_index = s_ae_manual[cxt->app_mode].table_idx;
 				cxt->manual_level = s_ae_manual[cxt->app_mode].manual_level;
+				ISP_LOGD("manual param read from ae.file");
+			}
 		} else {
 			src_exp.exp_line = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 			src_exp.exp_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
