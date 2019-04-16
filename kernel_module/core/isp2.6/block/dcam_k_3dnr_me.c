@@ -43,17 +43,19 @@ struct roi_size {
 
 /* [DCAM_ID] [project_Mode] [line_Buf_Share_Mode] */
 struct roi_size roi_max_size_info [2][2][4] = {
-						{
-							{{2336,1752},{2336,1752},{2112,1584},{2112,1584}},
-							{{4672,3504},{4672,3504},{4224,3168},{4224,3168}}
-						},
-						{
-							{{2112,1584},{2112,1584},{2336,1752},{2336,1752}},
-							{{4224,3168},{4224,3168},{4672,3504},{4672,3504}}
-						}};
+	{
+		{{2336,1752},{2336,1752},{2112,1584},{2112,1584}},
+		{{4672,3504},{4672,3504},{4224,3168},{4224,3168}}
+	},
+	{
+		{{2112,1584},{2112,1584},{2336,1752},{2336,1752}},
+		{{4224,3168},{4224,3168},{4672,3504},{4672,3504}}
+	}
+};
 
-
-void dcam_k_3dnr_set_roi(uint32_t img_w, uint32_t img_h,
+/* input: rect: bin path crop size, include start point(x,y), and size(w,h)
+ */
+void dcam_k_3dnr_set_roi(struct isp_img_rect rect,
 			 uint32_t project_mode, uint32_t idx)
 {
 	uint32_t roi_w_max, roi_h_max;
@@ -68,12 +70,14 @@ void dcam_k_3dnr_set_roi(uint32_t img_w, uint32_t img_h,
 	roi_h_max = roi_max_size_info[idx][project_mode][lbuf_share_mode].roi_height;
 
 	/* get roi and align to 16 pixels */
-	roi_w = ALIGN_DOWN(min(roi_w_max, img_w), DCAM_3DNR_ROI_SIZE_ALIGN);
-	roi_h = ALIGN_DOWN(min(roi_h_max, img_h), DCAM_3DNR_ROI_SIZE_ALIGN);
+	roi_w = ALIGN_DOWN(min(roi_w_max, rect.w), DCAM_3DNR_ROI_SIZE_ALIGN);
+	roi_h = ALIGN_DOWN(min(roi_h_max, rect.h), DCAM_3DNR_ROI_SIZE_ALIGN);
 
 	/* get offset */
-	roi_x = ALIGN_DOWN(img_w - roi_w, 2) >> 1;
-	roi_y = ALIGN_DOWN(img_h - roi_h, 2) >> 1;
+	roi_x = (rect.w - roi_w) >> 1;
+	roi_y = (rect.h - roi_h) >> 1;
+	roi_x = ALIGN_DOWN(roi_x + rect.x, 2);
+	roi_y = ALIGN_DOWN(roi_y + rect.y, 2);
 
 	/* leave 32 lines to make sure BIN DONE comes earlier than NR3 DONE */
 	roi_h = max(roi_h, DCAM_3DNR_ROI_LINE_CUT) - DCAM_3DNR_ROI_LINE_CUT;
@@ -92,6 +96,8 @@ int dcam_k_3dnr_me(struct dcam_dev_param *param)
 	uint32_t idx = param->idx;
 	struct dcam_pipe_dev *dev = param->dev;
 	struct dcam_dev_3dnr_me *p = NULL; /* nr3_me; */
+	struct dcam_path_desc *path;
+	struct isp_img_rect rect;
 
 	if (param == NULL)
 		return -EPERM;
@@ -121,8 +127,14 @@ int dcam_k_3dnr_me(struct dcam_dev_param *param)
 	DCAM_REG_MWR(idx, NR3_FAST_ME_PARAM, BIT(2), 0 << 2);
 
 	/* update ROI according to project_mode */
-	dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x,
-			    dev->cap_info.cap_size.size_y,
+	path = &dev->path[DCAM_PATH_3DNR];
+	rect.x = path->in_trim.start_x;
+	rect.y = path->in_trim.start_y;
+	rect.w = path->in_trim.size_x;
+	rect.h = path->in_trim.size_y;
+	if ((rect.x + rect.w) <= dev->cap_info.cap_size.size_x &&
+		(rect.y + rect.h) <= dev->cap_info.cap_size.size_y)
+	dcam_k_3dnr_set_roi(rect,
 			    p->nr3_project_mode, idx);
 
 	/*  sub_me_bypass.  */

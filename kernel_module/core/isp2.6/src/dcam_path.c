@@ -338,6 +338,14 @@ int dcam_cfg_path_size(void *dcam_handle,
 		}
 		path->priv_size_data = ch_desc->priv_size_data;
 		path->size_update = 1;
+		/* if 3dnr path enable, need update when zoom */
+		{
+			struct dcam_path_desc *path_3dnr;
+
+			path_3dnr = &dev->path[DCAM_PATH_3DNR];
+			if (atomic_read(&path_3dnr->user_cnt) > 0)
+				path_3dnr->size_update = 1;
+		}
 		spin_unlock(&path->size_lock);
 
 		pr_info("cfg bin path done. size %d %d  dst %d %d\n",
@@ -364,6 +372,8 @@ static int dcam_update_path_size(
 	uint32_t idx;
 	uint32_t path_id;
 	uint32_t reg_val;
+	struct dcam_path_desc *path_3dnr;
+	struct isp_img_rect rect; /* for 3dnr path */
 
 	pr_debug("enter.");
 
@@ -397,7 +407,13 @@ static int dcam_update_path_size(
 		DCAM_REG_MWR(idx, DCAM_CAM_BIN_CFG,
 					BIT_3 | BIT_2,
 					(path->scaler_sel & 3) << 2);
-
+		/* set size to path[DCAM_PATH_3DNR]
+		 * because, 3dnr set roi need know bin path crop size
+		 * 3dnr end_y should <= bin crop.end_y
+		 */
+		path_3dnr = &dev->path[DCAM_PATH_3DNR];
+		path_3dnr->in_trim = path->in_trim;
+		path_3dnr->in_size = path->in_size;
 		if ((path->in_size.w > path->in_trim.size_x) ||
 			(path->in_size.h > path->in_trim.size_y)) {
 
@@ -429,6 +445,21 @@ static int dcam_update_path_size(
 			dev->auto_cpy_id |= DCAM_CTRL_RDS;
 		}
 		break;
+	case DCAM_PATH_3DNR:
+		/* reset when zoom */
+		rect.x = path->in_trim.start_x;
+		rect.y = path->in_trim.start_y;
+		rect.w = path->in_trim.size_x;
+		rect.h = path->in_trim.size_y;
+		if (dev->cap_info.cap_size.size_x < (rect.x + rect.w) ||
+			dev->cap_info.cap_size.size_y < (rect.y + rect.h)) {
+			pr_err("dcam 3dnr input rect error[%d %d %d %d]\n",
+				rect.x, rect.y, rect.w, rect.h);
+			break;
+		}
+		dcam_k_3dnr_set_roi(rect,
+				0/* project_mode=0 */, idx);
+		break;
 	default:
 		break;
 	}
@@ -443,6 +474,7 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 	uint32_t idx;
 	uint32_t path_id;
 	struct dcam_pipe_dev *dev = NULL;
+	struct isp_img_rect rect; /* for 3dnr */
 
 	pr_debug("enter.");
 
@@ -519,14 +551,18 @@ int dcam_start_path(void *dcam_handle, struct dcam_path_desc *path)
 		 * nr3_ping_pong_en: 0
 		 * nr3_bypass: 0
 		 */
+		rect.x = path->in_trim.start_x;
+		rect.y = path->in_trim.start_y;
+		rect.w = path->in_trim.size_x;
+		rect.h = path->in_trim.size_y;
+		if (dev->cap_info.cap_size.size_x < (rect.x + rect.w) ||
+			dev->cap_info.cap_size.size_y < (rect.y + rect.h)) {
+			pr_err("dcam 3dnr input rect error[%d %d %d %d]\n",
+				rect.x, rect.y, rect.w, rect.h);
+			break;
+		}
 		DCAM_REG_WR(idx, NR3_FAST_ME_PARAM, 0x8);
-		if (dev->is_4in1) /* -300,-200,workaround before set DCAM_3DNR_ROI_MAX_WIDTH */
-			dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x / 2 - 300,
-				dev->cap_info.cap_size.size_y / 2 - 200,
-				0/* project_mode=0 */, idx);
-		else
-			dcam_k_3dnr_set_roi(dev->cap_info.cap_size.size_x,
-				dev->cap_info.cap_size.size_y,
+		dcam_k_3dnr_set_roi(rect,
 				0/* project_mode=0 */, idx);
 		break;
 	default:
@@ -811,7 +847,8 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		frame->sync_data = &helper->sync;
 	}
 
-	if ((path_id == DCAM_PATH_FULL) || (path_id == DCAM_PATH_BIN)) {
+	if ((path_id == DCAM_PATH_FULL) || (path_id == DCAM_PATH_BIN) ||
+		(path_id == DCAM_PATH_3DNR)) {
 		/* use trylock here to avoid waiting if cfg_path_size
 		 * is already lock
 		 * because this function maybe called from irq handling.
