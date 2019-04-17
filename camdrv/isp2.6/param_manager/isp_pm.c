@@ -1890,27 +1890,42 @@ static cmr_s32 isp_pm_param_init_and_update(cmr_handle handle,
 		memset(pm_cxt_ptr->blocks_param, 0, sizeof(pm_cxt_ptr->blocks_param));
 
 		/* init one param set for preview */
-		if (pm_cxt_ptr->param_search_list)
+		if (pm_cxt_ptr->param_search_list) {
 			isp_pm_get_all_blocks(handle,
-			&pm_cxt_ptr->blocks_param[PARAM_SET0],
-			WORKMODE_PREVIEW,
-			SCENEMODE_NROMAL,
-			DEFMODE_DEFAULT,
-			img_w, img_h, 1);
-		else
+				&pm_cxt_ptr->blocks_param[PARAM_SET0],
+				WORKMODE_PREVIEW,
+				SCENEMODE_NROMAL,
+				DEFMODE_DEFAULT,
+				img_w, img_h, 1);
+			isp_pm_get_all_blocks(handle,
+				&pm_cxt_ptr->blocks_param[PARAM_SET1],
+				WORKMODE_CAPTURE,
+				SCENEMODE_NROMAL,
+				DEFMODE_DEFAULT,
+				img_w, img_h, 1);
+		} else {
 			isp_pm_get_all_blocks_compatible(handle,
-			&pm_cxt_ptr->blocks_param[PARAM_SET0],
-			ISP_MODE_ID_COMMON,
-			WORKMODE_PREVIEW,
-			SCENEMODE_NROMAL,
-			DEFMODE_DEFAULT,
-			img_w, img_h, 1);
-
-		isp_cxt_ptr = &pm_cxt_ptr->cxt_array[PARAM_SET0];
-		isp_cxt_ptr->is_validate = 1;
-		isp_cxt_ptr->mode_id = ISP_MODE_ID_COMMON;
-		ISP_LOGD("pm context %p\n", isp_cxt_ptr);
-		rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, PARAM_SET0);
+				&pm_cxt_ptr->blocks_param[PARAM_SET0],
+				ISP_MODE_ID_COMMON,
+				WORKMODE_PREVIEW,
+				SCENEMODE_NROMAL,
+				DEFMODE_DEFAULT,
+				img_w, img_h, 1);
+			isp_pm_get_all_blocks_compatible(handle,
+				&pm_cxt_ptr->blocks_param[PARAM_SET1],
+				ISP_MODE_ID_COMMON,
+				WORKMODE_CAPTURE,
+				SCENEMODE_NROMAL,
+				DEFMODE_DEFAULT,
+				img_w, img_h, 1);
+		}
+		for (set_id = 0; set_id < PARAM_SET_MAX; set_id++) {
+			isp_cxt_ptr = &pm_cxt_ptr->cxt_array[set_id];
+			isp_cxt_ptr->is_validate = 1;
+			isp_cxt_ptr->mode_id = ISP_MODE_ID_COMMON;
+			ISP_LOGD("pm set %d, context %p\n", set_id, isp_cxt_ptr);
+			rtn |= isp_pm_context_init((cmr_handle)pm_cxt_ptr, set_id);
+		}
 		if (rtn)
 			goto init_error;
 	} else {
