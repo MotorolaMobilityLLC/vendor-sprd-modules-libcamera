@@ -541,6 +541,11 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 			intrim->size_y);
 
 	if (pctx->fetch_path_sel) {
+		uint32_t sx, sy, ex, ey;
+		uint32_t w0, h0, w, h;
+		uint32_t tsx, tsy, tex, tey;
+		uint32_t shx, shy, tid;
+
 		fbd_raw = &pctx->fbd_raw;
 		fbd_raw->width = cfg_in->src.w;
 		fbd_raw->height = cfg_in->src.h;
@@ -548,27 +553,56 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 		fbd_raw->size = pctx->input_size;
 		fbd_raw->trim = pctx->input_trim;
 
-		fbd_raw->pixel_start_in_hor = 0;
-		fbd_raw->pixel_start_in_ver = 0;
-		fbd_raw->tiles_num_in_hor =
-			div64_u64(ALIGN(fbd_raw->trim.size_x,
-					DCAM_FBC_TILE_WIDTH),
-				  DCAM_FBC_TILE_WIDTH);
-		fbd_raw->tiles_num_in_ver =
-			div64_u64(ALIGN(fbd_raw->trim.size_y,
-					DCAM_FBC_TILE_HEIGHT),
-				  DCAM_FBC_TILE_HEIGHT);
-		fbd_raw->tiles_start_odd = 0;
+		fbd_raw->fetch_fbd_bypass = 0;
 		fbd_raw->tiles_num_pitch =
 			div64_u64(ALIGN(fbd_raw->width, DCAM_FBC_TILE_WIDTH),
 				  DCAM_FBC_TILE_WIDTH);
 		fbd_raw->low_bit_pitch = fbd_raw->width >> 1;
-		fbd_raw->fetch_fbd_bypass = 0;
 
-		pr_info("ctx%d fbd_raw: size %u %u, crop %u %u %u %u\n",
-			pctx->ctx_id, fbd_raw->width, fbd_raw->height,
-			fbd_raw->trim.start_x, fbd_raw->trim.start_y,
-			fbd_raw->trim.size_x, fbd_raw->trim.size_y);
+		/* w0, h0: size of whole region */
+		w0 = fbd_raw->size.w;
+		h0 = fbd_raw->size.h;
+		/* w, h: size of fetched region */
+		w = fbd_raw->trim.size_x;
+		h = fbd_raw->trim.size_y;
+		/* sx, sy, ex, ey: start and stop of fetched region (unit: pixel) */
+		sx = fbd_raw->trim.start_x;
+		sy = fbd_raw->trim.start_y;
+		ex = sx + w - 1;
+		ey = sy + h - 1;
+		/* shx, shy: quick for division */
+		shx = ffs(DCAM_FBC_TILE_WIDTH) - 1;
+		shy = ffs(DCAM_FBC_TILE_HEIGHT) - 1;
+		/* tsx, tsy, tex, tey: start and stop of (sx, sy) tile (unit: tile) */
+		tsx = sx >> shx;
+		tsy = sy >> shy;
+		tex = ex >> shx;
+		tey = ey >> shy;
+		/* tid: start index of (sx, sy) tile in all tiles */
+		tid = tsy * fbd_raw->tiles_num_pitch + tsx;
+
+		fbd_raw->pixel_start_in_hor = sx & (DCAM_FBC_TILE_WIDTH - 1);
+		fbd_raw->pixel_start_in_ver = sy & (DCAM_FBC_TILE_HEIGHT - 1);
+		fbd_raw->tiles_num_in_hor = tex - tsx + 1;
+		fbd_raw->tiles_num_in_ver = tey - tsy + 1;
+		fbd_raw->tiles_start_odd = tid & 0x1;
+
+		fbd_raw->header_addr_offset = tid >> 1;
+		fbd_raw->tile_addr_offset_x256 = tid << 8;
+		fbd_raw->low_bit_addr_offset = (sx >> 1) + ((sy * w0) >> 2);
+
+		pr_debug("tid %u, w %u h %u\n", tid, w, h);
+		pr_debug("fetch (%u %u %u %u) from %ux%u\n",
+			 sx, sy, ex, ey, w0, h0);
+		pr_debug("tile %u %u %u %u\n", tsx, tsy, tex, tey);
+		pr_debug("fetch_fbd: %08x %08x %08x\n",
+			 fbd_raw->header_addr_offset,
+			 fbd_raw->tile_addr_offset_x256,
+			 fbd_raw->low_bit_addr_offset);
+		pr_debug("ctx%d fbd_raw: size %u %u, crop %u %u %u %u\n",
+			 pctx->ctx_id, fbd_raw->width, fbd_raw->height,
+			 fbd_raw->trim.start_x, fbd_raw->trim.start_y,
+			 fbd_raw->trim.size_x, fbd_raw->trim.size_y);
 	}
 
 	switch (fetch->fetch_fmt) {
@@ -645,9 +679,10 @@ int isp_cfg_ctx_size(struct isp_pipe_context *pctx, void *param)
 		trim_offset[0] = start_row * fetch->pitch.pitch_ch0
 					+ (start_col >> 2) * 5
 					+ (start_col & 0x3);
-		pr_info("fetch pitch %d, offset %ld, rel_pos %d, wordn %d\n",
-			fetch->pitch.pitch_ch0, trim_offset[0],
-			mipi_byte_info, mipi_word_info);
+		if (!pctx->fetch_path_sel)
+			pr_debug("fetch pitch %d, offset %ld, rel_pos %d, wordn %d\n",
+				 fetch->pitch.pitch_ch0, trim_offset[0],
+				 mipi_byte_info, mipi_word_info);
 		break;
 	}
 	default:
@@ -1343,18 +1378,21 @@ int isp_path_set_fetch_frm(struct isp_pipe_context *pctx,
 	if (pctx->fetch_path_sel) {
 		struct compressed_addr compressed_addr;
 		struct isp_fbd_raw_info *fbd_raw;
+		uint32_t addr;
 
+		fbd_raw = &pctx->fbd_raw;
 		dcam_if_cal_compressed_addr(pctx->input_size.w,
 					    pctx->input_size.h,
 					    frame->buf.iova[0],
 					    &compressed_addr);
-		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM2, compressed_addr.addr1);
-		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM3, compressed_addr.addr1);
-		ISP_REG_WR(idx, ISP_FBD_RAW_LOW_PARAM0,
-			   compressed_addr.addr2);
+		addr = compressed_addr.addr1 - fbd_raw->header_addr_offset;
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM2, addr);
+		addr = compressed_addr.addr1 + fbd_raw->tile_addr_offset_x256;
+		ISP_REG_WR(idx, ISP_FBD_RAW_PARAM3, addr);
+		addr = compressed_addr.addr2 + fbd_raw->low_bit_addr_offset;
+		ISP_REG_WR(idx, ISP_FBD_RAW_LOW_PARAM0, addr);
 
 		/* store start address for slice use */
-		fbd_raw = &pctx->fbd_raw;
 		fbd_raw->header_addr_init = compressed_addr.addr1;
 		fbd_raw->tile_addr_init_x256 = compressed_addr.addr1;
 		fbd_raw->low_bit_addr_init = compressed_addr.addr2;

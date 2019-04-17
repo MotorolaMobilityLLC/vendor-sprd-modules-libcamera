@@ -1172,10 +1172,7 @@ static void _cfg_slice_fbd_raw(struct isp_fbd_raw_info *frame_fbd_raw,
 	/* tid: start index of (sx, sy) tile in all tiles */
 	tid = tsy * frame_fbd_raw->tiles_num_pitch + tsx;
 
-	pr_debug("tid %u, w %u h %u\n", tid, w, h);
-
 	slc_fbd_raw = &cur_slc->slice_fbd_raw;
-
 	slc_fbd_raw->pixel_start_in_hor = sx & (DCAM_FBC_TILE_WIDTH - 1);
 	slc_fbd_raw->pixel_start_in_ver = sy & (DCAM_FBC_TILE_HEIGHT - 1);
 	slc_fbd_raw->height = h;
@@ -1196,6 +1193,7 @@ static void _cfg_slice_fbd_raw(struct isp_fbd_raw_info *frame_fbd_raw,
 	slc_fbd_raw->low_bit_pitch = frame_fbd_raw->low_bit_pitch;
 	slc_fbd_raw->fetch_fbd_bypass = 0;
 
+	pr_debug("tid %u, w %u h %u\n", tid, w, h);
 	pr_debug("fetch (%u %u %u %u) from %ux%u\n",
 		 sx, sy, ex, ey, w0, h0);
 	pr_debug("tile %u %u %u %u\n", tsx, tsy, tex, tey);
@@ -2020,13 +2018,13 @@ static int set_slice_fbd_raw(struct isp_fmcu_ctx_desc *fmcu,
 	cmd = (fbd_raw_info->height << 16) | fbd_raw_info->width;
 	FMCU_PUSH(fmcu, addr, cmd);
 
-	pr_info("pixel start: %u %u, size: %u %u, tile num: %u %u\n",
+	pr_debug("pixel start: %u %u, size: %u %u, tile num: %u %u\n",
 		 fbd_raw_info->pixel_start_in_hor,
 		 fbd_raw_info->pixel_start_in_ver,
 		 fbd_raw_info->width, fbd_raw_info->height,
 		 fbd_raw_info->tiles_num_in_ver,
 		 fbd_raw_info->tiles_num_in_hor);
-	pr_info("odd: %u, pitch: %u %u, head: %x, tile: %x, low2: %x\n",
+	pr_debug("odd: %u, pitch: %u %u, head: %x, tile: %x, low2: %x\n",
 		 fbd_raw_info->tiles_start_odd,
 		 fbd_raw_info->tiles_num_pitch,
 		 fbd_raw_info->low_bit_pitch,

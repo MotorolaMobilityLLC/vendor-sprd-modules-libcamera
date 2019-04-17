@@ -152,6 +152,9 @@ struct isp_fbd_raw_info {
 	 */
 	struct img_size size;
 	struct img_trim trim;
+	uint32_t header_addr_offset;
+	uint32_t tile_addr_offset_x256;
+	uint32_t low_bit_addr_offset;
 };
 
 struct isp_regular_info {
