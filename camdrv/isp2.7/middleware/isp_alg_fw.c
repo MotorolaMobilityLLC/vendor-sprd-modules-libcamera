@@ -43,6 +43,7 @@
 #define LIBCAM_ALG_PATH "libispalg.so"
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 #define ISP_RGB_GAIN_BASE_GAIN 4096
+#define ISP_ALG_SOFTWARE_SPENT_TIME 25
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
@@ -2750,6 +2751,9 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+	nsecs_t time_start = 0;
+	nsecs_t time_end = 0;
+	cmr_int time_sum = 0;
 
 	if (!message || !p_data) {
 		ISP_LOGE("fail to check input param ");
@@ -2785,14 +2789,31 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 			ISP_LOGE("fail to start ae process");
 		break;
 	case ISP_CTRL_EVT_SOF:
+		time_start = ispalg_get_sys_timestamp();
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
+		time_end = ispalg_get_sys_timestamp();
+		if ((time_end - time_start) > ISP_ALG_SOFTWARE_SPENT_TIME)
+			ISP_LOGW("AE spent too much time:%lld ms", (long long)time_end - time_start);
+		time_sum += (time_end - time_start);
+		time_start = time_end;
 		ret = ispalg_awb_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start awb process");
 		cxt->aem_is_update = 0;
+		time_end = ispalg_get_sys_timestamp();
+		if ((time_end - time_start) > ISP_ALG_SOFTWARE_SPENT_TIME)
+			ISP_LOGW("AWB spent too much time:%lld ms", (long long)time_end - time_start);
+		time_sum += (time_end - time_start);
+		time_start = time_end;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt, message->data);
+		time_end = ispalg_get_sys_timestamp();
+		if ((time_end - time_start) > ISP_ALG_SOFTWARE_SPENT_TIME)
+			ISP_LOGW("sof handle spent too much time:%lld ms", (long long)time_end - time_start);
+		time_sum += (time_end - time_start);
+		if (time_sum > ISP_ALG_SOFTWARE_SPENT_TIME)
+			ISP_LOGW("sof spent too much time:%ld ms", time_sum);
 		break;
 	case ISP_PROC_AFL_DONE:
 		ret = ispalg_afl_process((cmr_handle) cxt, message->data);
