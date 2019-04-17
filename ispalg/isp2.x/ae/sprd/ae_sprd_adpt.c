@@ -2243,7 +2243,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 		}
 
 		if (AE_SCENE_NORMAL == cur_scene_mod) {	/*from normal scene to special scene */
-			cxt->prv_status = *cur_status;	/*backup the normal scene's information */
+			cxt->prv_status = cxt->sync_cur_status;	/*backup the normal scene's information */
 		}
 		/*ae table */
 		max_index = scene_info[i].ae_table[0].max_index;
@@ -4285,7 +4285,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.frm_len = s_bakup_exp_param[cxt->camera_id].frm_len;
 			src_exp.frm_len_def = s_bakup_exp_param[cxt->camera_id].frm_len_def;
 			cxt->sync_cur_result.cur_bv = cxt->cur_result.cur_bv = s_bakup_exp_param[cxt->camera_id].bv;
-			if(CAMERA_MODE_MANUAL == cxt->app_mode){
+			if((CAMERA_MODE_MANUAL == cxt->app_mode) &&(0 != s_ae_manual[cxt->camera_id].gain)){
 				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
 				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
 				src_exp.gain = s_ae_manual[cxt->camera_id].gain;
