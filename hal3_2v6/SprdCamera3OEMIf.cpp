@@ -1329,6 +1329,13 @@ status_t SprdCamera3OEMIf::autoFocus() {
         }
     }
 
+    // remove later, not same with google doc
+    // a new auto focus is needed when flash snapshot even af_state is
+    // PASSIVE_FOCUSED and PASSIVE_UNFOCUSED
+    if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+        setAfState(AF_INITIATES_NEW_SCAN);
+    }
+
     setAfState(AF_TRIGGER_START);
 
     if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
