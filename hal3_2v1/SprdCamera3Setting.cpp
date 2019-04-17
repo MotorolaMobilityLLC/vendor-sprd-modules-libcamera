@@ -2039,7 +2039,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
         available_cam_features.add(9);
 #else
-        available_cam_features.add(6);
+        if (sensorGetLogicaInfo4MulitCameraId(SPRD_BLUR_ID)) {
+            available_cam_features.add(6);
+        } else {
+            available_cam_features.add(0);
+        }
 #endif
     } else {
         available_cam_features.add(atoi(prop));

@@ -314,14 +314,10 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 
 // ov area
 #ifdef OV8856_SHINE
-#ifdef OV8856_DUAL_MASTER_DW9714_OTP_1EEPROM
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
-#else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
-#endif
 #ifdef OV8856
-    {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&ov8856_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+    {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {&dw9763_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV8858
     {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
@@ -605,9 +601,12 @@ const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 
 const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #ifdef CONFIG_BOKEH_SUPPORT
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "s5k5e9yu05", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov13855", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov8856", "0", "ov2680", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "s5k5e9yu05", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
 #endif
 #ifdef CONFIG_SINGLE_FACEID_SUPPORT

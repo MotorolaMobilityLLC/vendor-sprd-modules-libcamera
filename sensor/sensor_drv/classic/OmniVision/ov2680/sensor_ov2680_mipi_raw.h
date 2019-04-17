@@ -434,13 +434,12 @@ static SENSOR_TRIM_T s_ov2680_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-             //{0, 0, 800, 600, 51800, 330, 644, {0, 0, 800, 600}},
 
              {.trim_start_x = 0,
               .trim_start_y = 0,
               .trim_width = 1600,
               .trim_height = 1200,
-              .line_time = 25758,
+              .line_time = 53590,
               .bps_per_lane = 628,
               .frame_line = 1244,
               .scaler_trim = {.x = 0, .y = 0, .w = 1600, .h = 1200}},
