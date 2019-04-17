@@ -113,10 +113,6 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-ifneq ($(filter $(TARGET_BOARD_PLATFORM), ud710), )
-LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_VDSP
-endif
-
 include $(BUILD_SHARED_LIBRARY)
 
 endif
