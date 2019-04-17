@@ -98,15 +98,15 @@ cmr_u8 hi846_Sensor_OTP_read(cmr_handle handle, uint16_t otp_addr) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     Sensor_writereg8bits(handle, 0x070a,
-                         (otp_addr >> 8) & 0xff); // start address
+                         (otp_addr >> 8) & 0xff);            // start address
     Sensor_writereg8bits(handle, 0x070b, (otp_addr & 0xff)); // start address L
-    Sensor_writereg8bits(handle, 0x0702, 0x01); // single read
+    Sensor_writereg8bits(handle, 0x0702, 0x01);              // single read
 
     return Sensor_readreg8bits(handle, 0x0708); // OTP data read
 }
 static void hi846_qunhui_enable_awb_otp(void) {
     /*TODO enable awb otp update*/
-    //Sensor_writereg8bits(0x021c, 0x04 | Sensor_readreg8bits(0x021c));
+    // Sensor_writereg8bits(0x021c, 0x04 | Sensor_readreg8bits(0x021c));
 }
 
 static uint32_t hi846_qunhui_update_awb(cmr_handle handle, void *param_ptr) {
@@ -161,7 +161,8 @@ static uint32_t hi846_qunhui_update_awb(cmr_handle handle, void *param_ptr) {
     return rtn;
 }
 
-static void hi846_qunhui_enable_lsc_otp(void) { /*TODO enable lsc otp update*/ }
+static void hi846_qunhui_enable_lsc_otp(void) { /*TODO enable lsc otp update*/
+}
 
 static uint32_t hi846_qunhui_update_lsc(cmr_handle handle, void *param_ptr) {
     uint32_t rtn = SENSOR_SUCCESS;
@@ -279,7 +280,8 @@ static uint32_t hi846_qunhui_read_otp_info(cmr_handle handle, void *param_ptr,
     otp_info->g_typical = G_TYPICAL_hi846_qunhui;
     otp_info->b_typical = B_TYPICAL_hi846_qunhui;
     /*TODO*/
-    uint16_t flag, start_address, wb_rg_golden, wb_bg_golden, wb_gg_golden, status;
+    uint16_t flag, start_address, wb_rg_golden, wb_bg_golden, wb_gg_golden,
+        status;
     uint32_t checksum, i, checksum_reg;
 
     /*OTP Initial Setting*/
@@ -303,17 +305,15 @@ static uint32_t hi846_qunhui_read_otp_info(cmr_handle handle, void *param_ptr,
     status = 0x00;
     flag = hi846_Sensor_OTP_read(handle, 0x0201);
     SENSOR_PRINT("module info flag=0x%x\n", flag);
-    if(0 == flag)
-    {
-      status = hi846_Sensor_OTP_read(handle, 0x0a00);
-      SENSOR_PRINT("0x0a00 = 0x%x\n", status);
-      if(0x01 != status)
-      {
-        Sensor_writereg8bits(handle, 0x0a00, 0x01);
-        usleep(1000);
+    if (0 == flag) {
         status = hi846_Sensor_OTP_read(handle, 0x0a00);
         SENSOR_PRINT("0x0a00 = 0x%x\n", status);
-      }
+        if (0x01 != status) {
+            Sensor_writereg8bits(handle, 0x0a00, 0x01);
+            usleep(1000);
+            status = hi846_Sensor_OTP_read(handle, 0x0a00);
+            SENSOR_PRINT("0x0a00 = 0x%x\n", status);
+        }
     }
 
     if (flag == 0x01) {
@@ -354,15 +354,15 @@ static uint32_t hi846_qunhui_read_otp_info(cmr_handle handle, void *param_ptr,
     /////////////////////* module information end*/////////////////
     /////////////////////* lsc information*////////////////////////
     /*flag check*/
-    flag = hi846_Sensor_OTP_read(handle, 0x0260);
+    flag = hi846_Sensor_OTP_read(handle, 0x0235);
     SENSOR_PRINT("lsc flag=0x%x\n", flag);
 
     if (flag == 0x01) {
-        start_address = 0x0261; // group1
-        checksum_reg = 0x0949;
+        start_address = 0x0236; // group1
+        checksum_reg = 0x0598;
     } else if (flag == 0x13) {
-        start_address = 0x094a; // group2
-        checksum_reg = 0x1032;
+        start_address = 0x0599; // group2
+        checksum_reg = 0x08fb;
     } else if (flag == 0x37) {
         start_address = 0x08fc; // group3
         checksum_reg = 0x0c5e;
@@ -370,37 +370,35 @@ static uint32_t hi846_qunhui_read_otp_info(cmr_handle handle, void *param_ptr,
         start_address = 0x00;
         SENSOR_PRINT("no lsc information in otp\n");
     }
-#if 0
-	/*checksum*/
-	checksum=0;
-	for(i=0;i<858;i++){
-		checksum=checksum+hi846_Sensor_OTP_read(handle,start_address+i);
-	}
-	checksum=(checksum%0xff)+1;
-	SENSOR_PRINT("lsc information checksum=0x%x\n",checksum);
-	if(checksum==hi846_Sensor_OTP_read(handle,checksum_reg)){
-		SENSOR_PRINT("lsc information checksum success\n");
-		otp_info->flag|=0x10;
-	}	
-	else{
-		SENSOR_PRINT("lsc information checksum error\n");
-		otp_info->flag&=0xef;
-	}
-#endif
+
+    /*checksum*/
+    checksum = 0;
+    for (i = 0; i < 858; i++) {
+        checksum = checksum + hi846_Sensor_OTP_read(handle, start_address + i);
+    }
+    checksum = (checksum % 0xff) + 1;
+    SENSOR_PRINT("lsc information checksum=0x%x\n", checksum);
+    if (checksum == hi846_Sensor_OTP_read(handle, checksum_reg)) {
+        SENSOR_PRINT("lsc information checksum success\n");
+        otp_info->flag |= 0x10;
+    } else {
+        SENSOR_PRINT("lsc information checksum error.\n");
+        otp_info->flag &= 0xef;
+    }
     /*read lsc information*/
 
     /////////////////////* lsc information end*/////////////////////
     /////////////////////* awb information*///////////////////////
     /*flag check*/
-    flag = hi846_Sensor_OTP_read(handle, 0x0225);
+    flag = hi846_Sensor_OTP_read(handle, 0x0c5f);
     SENSOR_PRINT("awb flag=0x%x\n", flag);
 
     if (flag == 0x01) {
-        start_address = 0x0226; // group1
-        checksum_reg = 0x0242;
+        start_address = 0x0c60; // group1
+        checksum_reg = 0x0c7d;
     } else if (flag == 0x13) {
-        start_address = 0x0243; // group2
-        checksum_reg = 0x025f;
+        start_address = 0x0c7e; // group2
+        checksum_reg = 0x0c9b;
     } else if (flag == 0x37) {
         start_address = 0x0c9c; // group3
         checksum_reg = 0x0cb9;
@@ -474,7 +472,7 @@ static uint32_t hi846_qunhui_read_otp_info(cmr_handle handle, void *param_ptr,
         otp_info->bg_ratio_typical = wb_bg_golden;
         otp_info->gbgr_ratio_typical = wb_gg_golden;
     }
-    /////////////////////* awb information end*//////////////////
+/////////////////////* awb information end*//////////////////
 #if AF_OTP_SUPPORT
     /////////////////////* af information*///////////////////////
     /*flag check*/
@@ -524,7 +522,7 @@ static uint32_t hi846_qunhui_read_otp_info(cmr_handle handle, void *param_ptr,
         (hi846_Sensor_OTP_read(handle, start_address + 3) << 8) +
         hi846_Sensor_OTP_read(handle, start_address + 4);
 
-/*****************************covert af data**************************/
+    /*****************************covert af data**************************/
 
     cmr_u8 *hi846_af_otp_data = malloc((sizeof(cmr_u8) * 4));
     cmr_u8 *hi846_module_info =
@@ -639,4 +637,3 @@ static uint32_t hi846_qunhui_identify_otp(cmr_handle handle, void *param_ptr,
 
     return rtn;
 }
-
