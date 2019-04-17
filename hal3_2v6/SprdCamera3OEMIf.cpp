@@ -6282,6 +6282,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_DEVICE_ORIENTATION,
                  sprddefInfo.device_orietation);
     } break;
+    case ANDROID_SPRD_SET_VERIFICATION_FLAG: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD("verification_enable:%d", sprddefInfo.verification_enable);
+        mSetting->setVERIFITag(sprddefInfo.verification_enable);
+    } break;
     default:
         ret = BAD_VALUE;
         break;

@@ -3705,12 +3705,14 @@ int SprdCamera3Setting::updateWorkParameters(
         }
     }
     /**add for 3d calibration update metadata end*/
-
     if (frame_settings.exists(ANDROID_SPRD_SET_VERIFICATION_FLAG)) {
-        s_setting[mCameraId].verification_enable =
+        valueU8 =
             frame_settings.find(ANDROID_SPRD_SET_VERIFICATION_FLAG).data.u8[0];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].sprddefInfo.verification_enable,
+            valueU8, ANDROID_SPRD_SET_VERIFICATION_FLAG, 1)
         HAL_LOGD("s_setting[mCameraId].verification_enable %d",
-                 s_setting[mCameraId].verification_enable);
+                 s_setting[mCameraId].sprddefInfo.verification_enable);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_DIST)) {

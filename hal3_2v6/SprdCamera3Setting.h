@@ -346,6 +346,7 @@ typedef struct {
     uint32_t touchxy[2];
     uint8_t is_macro_fixed;
     uint8_t sprd_3dcalibration_enabled;
+    int32_t verification_enable;
     uint32_t sprd_3dcalibration_cap_size[SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE];
     uint8_t sprd_burstmode_enable;
     uint8_t sprd_3dcapture_enabled;
