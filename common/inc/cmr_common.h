@@ -118,8 +118,10 @@ extern "C" {
 #define SNP_JPEG_STREAM 0x2000     /*debug.camera.save.snpfile 8*/
 #define SNP_HDR_OUT_DATA 0x3000    /*debug.camera.save.snpfile 9*/
 
-#define BOKEH_DEPTH_WIDTH (800)
-#define BOKEH_DEPTH_HEIGHT (600)
+#define CAM_AUX_SNAP_WIDTH (800)
+#define CAM_AUX_SNAP_HEIGHT (600)
+#define CAM_AUX_PREV_WIDTH (800)
+#define CAM_AUX_PREV_HEIGHT (600)
 
 #define FORM_DUMPINDEX(flag, dumpindex, ext)                                   \
     (((dumpindex) << 24) + ((flag) << 8) + (ext))

@@ -1047,11 +1047,11 @@ void SprdCamera3RealBokeh::getDepthImageSize(int inputWidth, int inputHeight,
         }
         // TODO:Remove this after depth engine support 16:9
         if (type == PREVIEW_STREAM) {
-            *outWidth = BOKEH_DEPTH_WIDTH;
-            *outHeight = BOKEH_DEPTH_HEIGHT;
+            *outWidth = CAM_AUX_PREV_WIDTH;
+            *outHeight = CAM_AUX_PREV_HEIGHT;
         } else if (type == SNAPSHOT_STREAM) {
-            *outWidth = BOKEH_DEPTH_WIDTH;
-            *outHeight = BOKEH_DEPTH_HEIGHT;
+            *outWidth = CAM_AUX_SNAP_WIDTH;
+            *outHeight = CAM_AUX_SNAP_HEIGHT;
 
             property_get("persist.vendor.cam.bokeh.main.w", prop, "800");
             value = atoi(prop);
@@ -2244,13 +2244,15 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
         rc = mRealBokeh->mBokehAlgo->capDepthRun(
             mRealBokeh->mDepthBuffer.snap_depth_buffer,
             mRealBokeh->mDepthBuffer.depth_out_map_table, input_buf2_addr,
-            (void*)mRealBokeh->mScaleInfo.addr_vir.addr_y, mRealBokeh->mVcmStepsFixed,
-            mRealBokeh->mlimited_infi, mRealBokeh->mlimited_macro);
+            (void *)mRealBokeh->mScaleInfo.addr_vir.addr_y,
+            mRealBokeh->mVcmStepsFixed, mRealBokeh->mlimited_infi,
+            mRealBokeh->mlimited_macro);
     } else {
         rc = mRealBokeh->mBokehAlgo->capDepthRun(
             mRealBokeh->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
-            (void*)mRealBokeh->mScaleInfo.addr_vir.addr_y, mRealBokeh->mVcmStepsFixed,
-            mRealBokeh->mlimited_infi, mRealBokeh->mlimited_macro);
+            (void *)mRealBokeh->mScaleInfo.addr_vir.addr_y,
+            mRealBokeh->mVcmStepsFixed, mRealBokeh->mlimited_infi,
+            mRealBokeh->mlimited_macro);
         HAL_LOGD("close online depth");
     }
     if (rc != ALRNB_ERR_SUCCESS) {
@@ -2273,12 +2275,11 @@ exit : { // dump yuv data
                              mRealBokeh->mBokehSize.depth_snap_sub_w,
                              mRealBokeh->mBokehSize.depth_snap_sub_h,
                              mRealBokeh->mCapFrameNumber, "Sub");
-        mRealBokeh->dumpData(
-            (uint8_t *)mRealBokeh->mScaleInfo.addr_vir.addr_y, 1,
-            mRealBokeh->mScaleInfo.buf_size,
-            mRealBokeh->mBokehSize.depth_snap_main_w,
-            mRealBokeh->mBokehSize.depth_snap_main_h,
-            mRealBokeh->mCapFrameNumber, "MainScale");
+        mRealBokeh->dumpData((uint8_t *)mRealBokeh->mScaleInfo.addr_vir.addr_y,
+                             1, mRealBokeh->mScaleInfo.buf_size,
+                             mRealBokeh->mBokehSize.depth_snap_main_w,
+                             mRealBokeh->mBokehSize.depth_snap_main_h,
+                             mRealBokeh->mCapFrameNumber, "MainScale");
         mRealBokeh->dumpDataDepth16(
             (uint16_t *)(mRealBokeh->mDepthBuffer.snap_depth_buffer), 1,
             mRealBokeh->mBokehSize.depth_snap_size,

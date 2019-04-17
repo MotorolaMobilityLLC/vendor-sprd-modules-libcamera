@@ -844,7 +844,7 @@ int SprdCamera3HWI::configureStreams(
         video_size.width = video_size.width - 2;
     }
 #endif
-    if (mMultiCameraMode != MODE_BOKEH) {
+    if (mMultiCameraMode != MODE_BOKEH && mMultiCameraMode != MODE_TUNING) {
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue,
         // we will remove these code

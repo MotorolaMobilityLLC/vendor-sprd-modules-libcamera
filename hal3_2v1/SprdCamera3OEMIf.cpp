@@ -7095,7 +7095,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
             (0 == mMultiCameraMode) &&
             (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
-            (false == mRecordingMode)&&(!mUsingSW3DNR)) {
+            (false == mRecordingMode) && (!mUsingSW3DNR)) {
             property_get("persist.vendor.cam.cnr.mode", value, "0");
             if (atoi(value)) {
                 mCNRMode = 1;
@@ -9607,14 +9607,17 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
     }
 
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
-        mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
-        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-            HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
-                     mode_info[i].trim_height);
-            if (mode_info[i].trim_width >= mCaptureWidth) {
-                mCaptureWidth = mode_info[i].trim_width;
-                mCaptureHeight = mode_info[i].trim_height;
-                break;
+        if (getMultiCameraMode() != MODE_TUNING) {
+            mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle,
+                                                         mode_info);
+            for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+                HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
+                         mode_info[i].trim_height);
+                if (mode_info[i].trim_width >= mCaptureWidth) {
+                    mCaptureWidth = mode_info[i].trim_width;
+                    mCaptureHeight = mode_info[i].trim_height;
+                    break;
+                }
             }
         }
         req_size.width = mCaptureWidth;
@@ -9624,7 +9627,6 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
         HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
                  mCaptureWidth, mCaptureHeight);
     }
-
     return NO_ERROR;
 }
 

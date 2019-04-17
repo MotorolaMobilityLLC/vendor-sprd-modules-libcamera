@@ -615,7 +615,7 @@ int SprdDualCamera3Tuning::getCameraInfo(struct camera_info *info) {
     }
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
 
-    property_get("persist.vendor.cam.res.dual.tuning", prop, "RES_5M");
+    property_get("persist.vendor.cam.res.dual.tuning", prop, "RES_12M");
     HAL_LOGI("tuning support cap resolution %s", prop);
     addAvailableStreamSize(metadata, prop);
 
@@ -814,6 +814,8 @@ int SprdDualCamera3Tuning::configureStreams(
     auxconfig = *stream_list;
     auxconfig.num_streams = MAX_NUM_TUNING_STREAMS;
     auxconfig.streams = pauxStreams;
+    auxconfig.streams[1]->width = CAM_AUX_SNAP_WIDTH;
+    auxconfig.streams[1]->height = CAM_AUX_SNAP_HEIGHT;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_TAUX].hwi;
 
     rc = hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_TAUX].dev, &auxconfig);

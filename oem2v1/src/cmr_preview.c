@@ -1376,15 +1376,15 @@ cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle,
 }
 /**add for 3d capture to reset reprocessing capture size end*/
 
-cmr_int cmr_preview_set_thumb_size(cmr_handle preview_handle,
-                                        cmr_u32 camera_id, struct img_size thum_size) {
+cmr_int cmr_preview_set_thumb_size(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct img_size thum_size) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     CHECK_HANDLE_VALID(handle);
 
     if (thum_size.width * thum_size.height >
         handle->prev_cxt[camera_id].prev_param.thumb_size.width *
-        handle->prev_cxt[camera_id].prev_param.thumb_size.height)
+            handle->prev_cxt[camera_id].prev_param.thumb_size.height)
         handle->prev_cxt[camera_id].prev_param.thumb_size = thum_size;
 
     CMR_LOGD("update thumb size %dx%d", thum_size.width, thum_size.height);
@@ -5354,8 +5354,10 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                     prev_cxt->small_cap_3dnr_fd_path_array[i];
                 buffer->slave_frame_info.is_slave_eb = 1;
                 buffer->slave_frame_info.buffer_count = CAP_3DNR_NUM;
-                buffer->slave_frame_info.dst_size.w = prev_cxt->threednr_cap_smallwidth;
-                buffer->slave_frame_info.dst_size.h = prev_cxt->threednr_cap_smallheight;
+                buffer->slave_frame_info.dst_size.w =
+                    prev_cxt->threednr_cap_smallwidth;
+                buffer->slave_frame_info.dst_size.h =
+                    prev_cxt->threednr_cap_smallheight;
             }
         }
 #else
@@ -5715,8 +5717,8 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     if (cxt->is_multi_mode == MODE_BOKEH && camera_id == 0 &&
         (!strcmp(prop, "hw-k"))) {
         prev_cxt->cap_slave_mem_num = 1;
-        prev_cxt->slave_frame_info.dst_size.w = BOKEH_DEPTH_WIDTH;
-        prev_cxt->slave_frame_info.dst_size.h = BOKEH_DEPTH_HEIGHT;
+        prev_cxt->slave_frame_info.dst_size.w = CAM_AUX_SNAP_WIDTH;
+        prev_cxt->slave_frame_info.dst_size.h = CAM_AUX_SNAP_HEIGHT;
         prev_cxt->cap_slave_mem_size =
             (prev_cxt->slave_frame_info.dst_size.w *
              prev_cxt->slave_frame_info.dst_size.h * 3) >>
@@ -6692,7 +6694,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                             continue;
                         }
 
-//Select sensor mode with pdaf
+// Select sensor mode with pdaf
 #ifdef CONFIG_VIDEO_PDAF_MODE
                         if (handle->prev_cxt[camera_id].prev_param.video_eb &&
                             sn_cxt->cur_sns_ex_info.pdaf_supported &&
@@ -6709,9 +6711,9 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                             break;
                         }
 #endif
-                            target_mode = i;
-                            ret = CMR_CAMERA_SUCCESS;
-                            break;
+                        target_mode = i;
+                        ret = CMR_CAMERA_SUCCESS;
+                        break;
                     } else {
                         last_one = i;
                     }
@@ -6770,8 +6772,9 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_width = target_size->width;
         search_height = target_size->height;
     }
-
-    if (is_raw_capture == 1 || handle->prev_cxt[camera_id].prev_param.tool_eb) {
+    if ((is_raw_capture == 1 ||
+         handle->prev_cxt[camera_id].prev_param.tool_eb) &&
+        (cxt->is_multi_mode != MODE_TUNING)) {
         CMR_LOGD("search_height = %d", search_height);
         for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
             if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
@@ -12657,16 +12660,20 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
     cmr_int is_need_scaling = 1;
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
+    struct camera_context *cxt = NULL;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
+    cxt = (struct camera_context *)(handle->oem_handle);
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw") || !strcmp(value, "bin")) {
         is_raw_capture = 1;
     }
-
+    if (cxt->is_multi_mode == MODE_TUNING) {
+        return 0;
+    }
     // yuv no scale condition
     if ((ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) &&
         (prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) &&
