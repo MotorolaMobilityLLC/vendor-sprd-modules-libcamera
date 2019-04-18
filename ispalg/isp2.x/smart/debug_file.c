@@ -77,8 +77,10 @@ debug_handle_t smart_debug_file_init(const char file_name[], const char open_mod
 	struct awbl_debug_file *debug_file = NULL;
 
 	debug_file = (struct awbl_debug_file *)malloc(sizeof(struct awbl_debug_file));
-	if (NULL == debug_file)
+	if (NULL == debug_file) {
+		ISP_LOGE("fail to malloc debug_file\n");
 		return NULL;
+	}
 
 	debug_file->buffer_size = DEBUG_FILE_BUF_SIZE;
 	debug_file->buffer_used_size = 0;
