@@ -87,20 +87,12 @@ struct cmr_sns_thread_cxt {
     cmr_handle thread_handle;
 };
 
-struct cmr_sns_ops_thread_cxt {
-    cmr_uint is_exit;
-    pthread_t thread_handle;
-    pthread_mutex_t cb_mutex;
-};
-
 struct cmr_sensor_handle {
     struct sensor_drv_context sensor_cxt[CAMERA_ID_MAX];
     cmr_handle oem_handle;
     cmr_uint sensor_bits;
     cmr_evt_cb sensor_event_cb;
     struct cmr_sns_thread_cxt thread_cxt;
-    struct cmr_sns_ops_thread_cxt monitor_thread_cxt;
-    struct cmr_sns_ops_thread_cxt fmove_thread_cxt;
     void *private_data;
     cmr_uint is_autotest;
 };
@@ -118,16 +110,6 @@ static cmr_int cmr_sns_close(struct cmr_sensor_handle *handle,
 static cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt,
                              cmr_uint cmd, cmr_uint arg);
 static cmr_int cmr_sns_af_init(struct sensor_drv_context *sensor_cxt);
-static void cmr_sns_check_err(struct cmr_sensor_handle *sensor_handle,
-                              cmr_u32 camera_id);
-static cmr_int cmr_sns_monitor_proc(void *data);
-static cmr_int cmr_sns_create_monitor_thread(struct cmr_sensor_handle *handle);
-static cmr_int cmr_sns_kill_monitor_thread(struct cmr_sensor_handle *handle);
-static void cmr_sns_check_fmove(struct cmr_sensor_handle *sensor_handle,
-                                cmr_u32 camera_id);
-static cmr_int cmr_sns_fmove_proc(void *data);
-static cmr_int cmr_sns_create_fmove_thread(struct cmr_sensor_handle *handle);
-static cmr_int cmr_sns_kill_fmove_thread(struct cmr_sensor_handle *handle);
 static cmr_int cmr_sns_copy_mode_info(struct sensor_mode_info *out_mode_info,
                                       SENSOR_MODE_INFO_T *in_mode_info);
 static cmr_int cmr_sns_copy_video_info(struct sensor_video_info *out_video_info,
@@ -971,36 +953,13 @@ cmr_int cmr_sns_open(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits) {
                                      handle->is_autotest);
             if (ret) {
                 CMR_LOGE("camera %u open failed!", cameraId);
-            } else {
-                handle->sensor_bits |= (1 << cameraId);
+                goto exit;
             }
+            handle->sensor_bits |= (1 << cameraId);
         }
     }
 
-    if (!handle->sensor_bits) {
-        ret = CMR_CAMERA_FAIL;
-    } else {
-        ret = cmr_sns_create_monitor_thread(handle);
-        if (ret)
-            CMR_LOGE("camera monitor thread create failed");
-        pthread_debug_setname(handle->monitor_thread_cxt.thread_handle,
-                              "sns_monitor");
-        for (cameraId = 0; cameraId < CAMERA_ID_MAX; cameraId++) {
-            if (0 != (sensor_id_bits & (1 << cameraId))) {
-                CMR_LOGD(
-                    "sensor format =%d",
-                    handle->sensor_cxt[cameraId].sensor_info_ptr->image_format);
-                if (CAM_IMG_FMT_BAYER_MIPI_RAW !=
-                    handle->sensor_cxt[cameraId]
-                        .sensor_info_ptr->image_format) {
-                    ret = cmr_sns_create_fmove_thread(handle);
-                    if (ret)
-                        CMR_LOGE("Failed to create focus move dummy thread");
-                }
-            }
-        }
-    }
-
+exit:
     ATRACE_END();
     return ret;
 }
@@ -1028,14 +987,6 @@ cmr_int cmr_sns_close(struct cmr_sensor_handle *handle,
             }
         }
     }
-
-    if (!handle->sensor_bits) {
-        /*when all sensors are closed, the monitor and focus move thread should
-         * be returned off*/
-        cmr_sns_kill_fmove_thread(handle);
-        cmr_sns_kill_monitor_thread(handle);
-    }
-    /*todo, if close not success, how to handle the issue*/
 
     ATRACE_END();
     return ret;
@@ -1339,193 +1290,5 @@ static cmr_int cmr_sns_af_init(struct sensor_drv_context *sensor_cxt) {
         CMR_LOGI("OK to init auto focus");
     }
 
-    return ret;
-}
-
-static void cmr_sns_check_err(struct cmr_sensor_handle *sensor_handle,
-                              cmr_u32 camera_id) {
-    cmr_u32 param = 0;
-    cmr_u32 ret = CMR_CAMERA_SUCCESS;
-
-    if (sensor_handle->sensor_cxt[camera_id].stream_on) {
-        ret = cmr_sns_ioctl(&sensor_handle->sensor_cxt[camera_id],
-                            SENSOR_GET_STATUS, (cmr_uint)&param);
-        if (ret) {
-            CMR_LOGE("Sensor run in wrong way");
-            pthread_mutex_lock(&sensor_handle->monitor_thread_cxt.cb_mutex);
-            if (sensor_handle->sensor_event_cb) {
-                (*sensor_handle->sensor_event_cb)(
-                    SENSOR_ERROR, NULL, (void *)sensor_handle->oem_handle);
-            }
-            pthread_mutex_unlock(&sensor_handle->monitor_thread_cxt.cb_mutex);
-        }
-    }
-}
-
-static cmr_int cmr_sns_monitor_proc(void *p_data) {
-    cmr_u32 ret = CMR_CAMERA_SUCCESS;
-    cmr_u32 i = 0, cnt = 0;
-    struct cmr_sensor_handle *sensor_handle =
-        (struct cmr_sensor_handle *)p_data;
-
-    while (1) {
-        if (!sensor_handle) {
-            CMR_LOGE("sensor_handle is NULL");
-            return CMR_CAMERA_INVALID_PARAM;
-        }
-        usleep(10000);
-
-        if (sensor_handle->monitor_thread_cxt.is_exit) {
-            sensor_handle->monitor_thread_cxt.is_exit = 0;
-            CMR_LOGI("EXIT!");
-            break;
-        }
-
-        cnt++;
-        if (cnt >= SENSOR_CHECK_STATUS_INTERVAL) {
-            cnt = 0;
-            for (i = 0; i < CAMERA_ID_MAX; i++) {
-                if (0 != ((1 << i) & sensor_handle->sensor_bits)) {
-                    cmr_sns_check_err(sensor_handle, i);
-                }
-            }
-        }
-    }
-
-    return ret;
-}
-
-static cmr_int
-cmr_sns_create_monitor_thread(struct cmr_sensor_handle *sensor_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    pthread_attr_t attr;
-
-    CHECK_HANDLE_VALID(sensor_handle);
-
-    CMR_LOGI("thrd %p",
-             (void *)sensor_handle->monitor_thread_cxt.thread_handle);
-
-    if (!sensor_handle->monitor_thread_cxt.thread_handle) {
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-        ret = pthread_create(&sensor_handle->monitor_thread_cxt.thread_handle,
-                             &attr, (void *(*)(void *))cmr_sns_monitor_proc,
-                             (void *)sensor_handle);
-        pthread_setname_np(sensor_handle->monitor_thread_cxt.thread_handle,
-                           "sns_monitor");
-        pthread_attr_destroy(&attr);
-    }
-
-    CMR_LOGV("ret %ld", ret);
-
-    return ret;
-}
-
-static cmr_int
-cmr_sns_kill_monitor_thread(struct cmr_sensor_handle *sensor_handle) {
-    ATRACE_BEGIN(__FUNCTION__);
-
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    void *dummy;
-
-    CHECK_HANDLE_VALID(sensor_handle);
-
-    CMR_LOGI("E is_inited %p",
-             (void *)sensor_handle->monitor_thread_cxt.thread_handle);
-
-    if (sensor_handle->monitor_thread_cxt.thread_handle) {
-        sensor_handle->monitor_thread_cxt.is_exit = 1;
-        while (1 == sensor_handle->monitor_thread_cxt.is_exit) {
-            CMR_LOGD("Wait 1 ms");
-            usleep(1000);
-        }
-        ret = pthread_join(sensor_handle->monitor_thread_cxt.thread_handle,
-                           &dummy);
-        sensor_handle->monitor_thread_cxt.thread_handle = 0;
-    }
-
-    CMR_LOGI("X kill sensor monitor thread done!");
-    ATRACE_END();
-    return ret;
-}
-
-static void cmr_sns_check_fmove(struct cmr_sensor_handle *sensor_handle,
-                                cmr_u32 camera_id) {
-    cmr_u32 ret = CMR_CAMERA_SUCCESS;
-    cmr_u32 gain_val = 0;
-    SENSOR_EXT_FUN_PARAM_T af_param;
-}
-
-static cmr_int cmr_sns_fmove_proc(void *p_data) {
-    cmr_u32 ret = CMR_CAMERA_SUCCESS;
-    cmr_u32 i = 0, cnt = 0;
-    struct cmr_sensor_handle *sensor_handle =
-        (struct cmr_sensor_handle *)p_data;
-
-    while (1) {
-        CHECK_HANDLE_VALID(sensor_handle);
-        usleep(10000);
-
-        if (sensor_handle->fmove_thread_cxt.is_exit) {
-            sensor_handle->fmove_thread_cxt.is_exit = 0;
-            CMR_LOGI("EXIT !");
-            break;
-        }
-
-        cnt++;
-        if (cnt >= SENSOR_CHECK_STATUS_INTERVAL) {
-            cnt = 0;
-            for (i = 0; i < CAMERA_ID_MAX; i++) {
-                if (0 != (sensor_handle->sensor_bits & (1 << i))) {
-                    /*					CMR_LOGV("valid camera
-                     * id
-                     * =%d",i);*/
-                    cmr_sns_check_fmove(sensor_handle, i);
-                }
-            }
-        }
-    }
-
-    return ret;
-}
-
-static cmr_int
-cmr_sns_create_fmove_thread(struct cmr_sensor_handle *sensor_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    pthread_attr_t attr;
-
-    CHECK_HANDLE_VALID(sensor_handle);
-
-    CMR_LOGI("E is_inited thread %p",
-             (void *)sensor_handle->fmove_thread_cxt.thread_handle);
-    CMR_LOGI("X ret %ld", ret);
-    return ret;
-}
-
-static cmr_int
-cmr_sns_kill_fmove_thread(struct cmr_sensor_handle *sensor_handle) {
-    ATRACE_BEGIN(__FUNCTION__);
-
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    void *dummy;
-
-    CHECK_HANDLE_VALID(sensor_handle);
-
-    CMR_LOGI("E is_inited %p",
-             (void *)sensor_handle->fmove_thread_cxt.thread_handle);
-
-    if (sensor_handle->fmove_thread_cxt.thread_handle) {
-        sensor_handle->fmove_thread_cxt.is_exit = 1;
-        while (1 == sensor_handle->fmove_thread_cxt.is_exit) {
-            CMR_LOGW("Wait 1 ms");
-            usleep(1000);
-        }
-        ret =
-            pthread_join(sensor_handle->fmove_thread_cxt.thread_handle, &dummy);
-        sensor_handle->fmove_thread_cxt.thread_handle = 0;
-    }
-
-    CMR_LOGI("X kill sensor monitor thread done!");
-    ATRACE_END();
     return ret;
 }
