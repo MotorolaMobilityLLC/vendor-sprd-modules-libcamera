@@ -2378,9 +2378,10 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 
 			tof_start(af, AF_TRIGGER, result);
 			af->focus_state = AF_SEARCHING;
-		} else if (AFT_TRIG_PD == result->is_caf_trig) {
-			pd_start(af, RE_TRIGGER, result);
 		}
+		/*else if (AFT_TRIG_PD == result->is_caf_trig) {
+			pd_start(af, RE_TRIGGER, result);
+		}*/
 	}
 }
 
