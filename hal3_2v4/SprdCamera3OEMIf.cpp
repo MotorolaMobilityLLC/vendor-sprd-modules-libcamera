@@ -567,6 +567,10 @@ void SprdCamera3OEMIf::closeCamera() {
     gyro_monitor_thread_deinit((void *)this);
 #endif
 
+    if (mReDisplayHeap) {
+        iommu_buf_unmap(mRedisplayMallocIommuMapList);
+    }
+
     if (mUsingSW3DNR) {
         for (int i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
             if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
@@ -701,6 +705,9 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
     case CAMERA_CHANNEL_TYPE_REGULAR:
         SprdCamera3Flash::releaseFlash(mCameraId);
         stopPreviewInternal();
+        if (mCaptureMode == CAMERA_NORMAL_MODE) {
+            FreeReDisplayMem();
+        }
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
             video_stab_close(mPreviewInst);
@@ -4562,17 +4569,23 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width, uint32_t height) {
             iommu_buf_unmap(mRedisplayMallocIommuMapList);
             freeCameraMem(mReDisplayHeap);
             mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
+            if (mReDisplayHeap) {
+                iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
+                HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
+            }
         }
     } else {
         mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
+        if (mReDisplayHeap) {
+            iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
+            HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
+        }
     }
 
     if (NULL == mReDisplayHeap) {
         HAL_LOGE("get redisplay ion mem failed");
         return 0;
     }
-    iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
-    HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
     return mReDisplayHeap->fd;
 }
 
