@@ -920,6 +920,14 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 					else
 						output->mode_id[i] = ISP_MODE_ID_PRV_1;
 					goto get_blocks;
+				} else if (input->mode[i] == WORKMODE_VIDEO) {
+					if (pm_cxt_ptr->cam_4in1_mode) {
+						output->mode_id[i] = ISP_MODE_ID_VIDEO_0;
+						goto get_blocks;
+					}
+					search = &search_modes[2][0];
+					search++;
+					goto search;
 				} else if (input->mode[i] == WORKMODE_CAPTURE) {
 					if (!pm_cxt_ptr->cam_4in1_mode)
 						output->mode_id[i] = ISP_MODE_ID_CAP_2;
@@ -938,7 +946,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 				search = &search_modes[1][0];
 			else
 				search = &search_modes[2][0];
-
+search:
 			output->mode_id[i] = ISP_MODE_ID_COMMON;
 			for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
 				mode_id = search[k];
