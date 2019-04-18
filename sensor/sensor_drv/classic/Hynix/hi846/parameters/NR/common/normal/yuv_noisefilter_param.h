@@ -1,5 +1,5 @@
 /*param0.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -47,7 +47,7 @@
 }
 ,
 /*param1.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -95,7 +95,7 @@
 }
 ,
 /*param2.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -143,7 +143,7 @@
 }
 ,
 /*param3.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -191,7 +191,7 @@
 }
 ,
 /*param4.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -239,7 +239,7 @@
 }
 ,
 /*param5.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -287,7 +287,7 @@
 }
 ,
 /*param6.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -335,7 +335,7 @@
 }
 ,
 /*param7.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -383,7 +383,7 @@
 }
 ,
 /*param8.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -431,7 +431,7 @@
 }
 ,
 /*param9.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -479,7 +479,7 @@
 }
 ,
 /*param10.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -527,7 +527,7 @@
 }
 ,
 /*param11.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -575,7 +575,7 @@
 }
 ,
 /*param12.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -623,7 +623,7 @@
 }
 ,
 /*param13.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -671,7 +671,7 @@
 }
 ,
 /*param14.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -719,7 +719,7 @@
 }
 ,
 /*param15.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -767,7 +767,7 @@
 }
 ,
 /*param16.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -815,7 +815,7 @@
 }
 ,
 /*param17.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -863,7 +863,7 @@
 }
 ,
 /*param18.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -911,7 +911,7 @@
 }
 ,
 /*param19.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -959,7 +959,7 @@
 }
 ,
 /*param20.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -1007,7 +1007,7 @@
 }
 ,
 /*param21.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -1055,7 +1055,7 @@
 }
 ,
 /*param22.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -1103,7 +1103,7 @@
 }
 ,
 /*param23.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,
@@ -1151,7 +1151,7 @@
 }
 ,
 /*param24.*/
-/*v21_sensor_yuv_noisefilter_level*/
+/*sharkl5_sensor_yuv_noisefilter_level*/
 {
 	/*noisefilter_shape_mode*/
 	0x00000001,

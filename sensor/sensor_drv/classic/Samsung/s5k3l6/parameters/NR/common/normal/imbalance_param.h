@@ -1,4 +1,6 @@
-/*param0.*/
+/*versionid=0x000A0008*/
+/*maxGain=0.00*/
+/*param0.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -92,24 +94,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param1.*/
+/*param1.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -203,24 +205,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param2.*/
+/*param2.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -314,24 +316,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param3.*/
+/*param3.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -425,24 +427,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param4.*/
+/*param4.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -536,24 +538,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param5.*/
+/*param5.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -647,24 +649,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param6.*/
+/*param6.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -758,24 +760,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param7.*/
+/*param7.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -869,24 +871,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param8.*/
+/*param8.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -980,24 +982,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param9.*/
+/*param9.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1091,24 +1093,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param10.*/
+/*param10.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1202,24 +1204,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param11.*/
+/*param11.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1313,24 +1315,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param12.*/
+/*param12.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1424,24 +1426,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param13.*/
+/*param13.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1535,24 +1537,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param14.*/
+/*param14.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1646,24 +1648,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param15.*/
+/*param15.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1757,24 +1759,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param16.*/
+/*param16.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1868,24 +1870,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param17.*/
+/*param17.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -1979,24 +1981,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param18.*/
+/*param18.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2090,24 +2092,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param19.*/
+/*param19.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2201,24 +2203,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param20.*/
+/*param20.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2312,24 +2314,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param21.*/
+/*param21.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2423,24 +2425,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param22.*/
+/*param22.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2534,24 +2536,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param23.*/
+/*param23.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2645,24 +2647,24 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
-/*param24.*/
+/*param24.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
@@ -2756,20 +2758,20 @@
 		0x0000004E,0x00000048/*0-1*/
 	},
 	/*imblance_slash_edge_thr*/
-	0x2E,
+	0x002E,
 	/*imblance_hv_edge_thr*/
-	0x2E,
+	0x002E,
 	/*nlm_imblance_flag12_frezthr*/
-	0xC8,
+	0x00C8,
 	/*nlm_imblance_diff*/
-	0x28,
+	0x0028,
 	/*imblance_hv_flat_thr*/
-	0x14,
+	0x0014,
 	/*imblance_slash_flat_thr*/
-	0x14,
+	0x0014,
 	/*reversed*/
-	0x00,
+	0x0000,
 	/*imblance_en*/
-	0x01,
+	0x0001,
 }
 ,
