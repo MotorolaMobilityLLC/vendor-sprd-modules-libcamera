@@ -4886,10 +4886,21 @@ static int img_ioctl_stop_capture(
 			struct camera_module *module,
 			unsigned long arg)
 {
+	struct channel_context *channel = NULL;
 	module->cap_status = CAM_CAPTURE_STOP;
 	pr_info("cam %d stop capture.\n", module->idx);
-	if (module->cam_uinfo.is_dual)
+	/* Handling special case in which stop_capture comes before start_capture.
+	 * In this case before assigning NULL to  module->dual_frame, we should check if it points
+	 * to some valid frame, if yes then add that frame to dcam path queue to avoid Memroy leak.
+	 */
+	if (module->cam_uinfo.is_dual && module->dual_frame) {
+		channel = &module->channel[module->dual_frame->channel_id];
+		dcam_ops->cfg_path(module->dcam_dev_handle,
+				DCAM_PATH_CFG_OUTPUT_BUF,
+				channel->dcam_path_id, module->dual_frame);
+		pr_info("stop capture comes before start capture, dcam_path_Id = %d\n", channel->dcam_path_id);
 		module->dual_frame = NULL;
+	}
 	/* stop dump for capture */
 	if (module->dump_thrd.thread_task && module->in_dump) {
 		module->dump_count = 0;
