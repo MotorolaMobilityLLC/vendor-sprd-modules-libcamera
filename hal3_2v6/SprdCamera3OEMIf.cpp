@@ -5856,11 +5856,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                     focus_para.zone[0].start_y = zoom.start_y;
                     focus_para.zone[0].width = zoom.width;
                     focus_para.zone[0].height = zoom.height;
-                    focus_para.zone_cnt = 1;
-                    HAL_LOGD(
-                        "after crop AF region is %d %d %d %d",
-                        focus_para.zone[0].start_x, focus_para.zone[0].start_y,
-                        focus_para.zone[0].width, focus_para.zone[0].height);
+                    focus_para.zone_cnt = controlInfo.af_regions[4];
+                    HAL_LOGD("after crop AF region is %d %d %d %d, zone_cnt %d",
+                             focus_para.zone[0].start_x,
+                             focus_para.zone[0].start_y,
+                             focus_para.zone[0].width,
+                             focus_para.zone[0].height, focus_para.zone_cnt);
                     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCUS_RECT,
                              (cmr_uint)&focus_para);
                 }

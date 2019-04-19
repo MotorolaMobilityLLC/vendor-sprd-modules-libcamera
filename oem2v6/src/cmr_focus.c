@@ -876,7 +876,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_u32 i = 0;
     cmr_u32 zone_cnt = 0;
     cmr_u32 af_cancel_is_ext = 0;
-    cmr_u32 focus_stop_prew = 0;
+    cmr_u32 will_capture = 0;
     SENSOR_EXT_FUN_PARAM_T af_param;
     struct isp_af_win isp_af_param;
     struct common_isp_cmd_param com_isp_af;
@@ -959,11 +959,11 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
             (isp_af_param.win[0].start_y == 0) &&
             (isp_af_param.win[0].end_x == 0) &&
             (isp_af_param.win[0].end_y == 0)) {
-            focus_stop_prew = 1; // need stop preview
+            will_capture = 1; // will capture
         } else {
-            focus_stop_prew = 0;
+            will_capture = 0;
         }
-        CMR_LOGD("focus_stop_prew %d", focus_stop_prew);
+        CMR_LOGD("will_capture %d", will_capture);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
         af_cxt->isp_af_timeout = 0;
@@ -971,8 +971,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         com_isp_af.af_param = isp_af_param;
 
         flash = af_cxt->ops.get_flash_info(af_cxt->oem_handle, camera_id);
-        CMR_LOGD("flash %d af_cxt->af_mode %d", flash,
-                 af_cxt->af_mode);
+        CMR_LOGD("flash %d af_cxt->af_mode %d", flash, af_cxt->af_mode);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
         if (af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF &&
@@ -1007,9 +1006,9 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
             (yuv_sn_param.yuv_sn_af_param.zone[0].start_y == 0) &&
             (yuv_sn_param.yuv_sn_af_param.zone[0].width == 0) &&
             (yuv_sn_param.yuv_sn_af_param.zone[0].height == 0)) {
-            focus_stop_prew = 1; // need stop preview
+            will_capture = 1; // will capture
         } else {
-            focus_stop_prew = 0;
+            will_capture = 0; // will not capture
         }
         ret = af_cxt->ops.af_sensor_ioctrl(af_cxt->oem_handle, COM_SN_SET_FOCUS,
                                            &yuv_sn_param);
@@ -1020,7 +1019,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
 
 exit:
     // if (FOCUS_NEED_QUIT != af_cxt->focus_need_quit) {
-    af_cxt->ops.af_post_proc(af_cxt->oem_handle, focus_stop_prew);
+    af_cxt->ops.af_post_proc(af_cxt->oem_handle, will_capture);
     //}
     CMR_LOGD("focus_need_quit %d ret %ld", af_cxt->focus_need_quit, ret);
     return ret;
@@ -1250,8 +1249,6 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
     sensor_mode_info = &sensor_info.mode_info[sensor_mode];
 
     for (i = 0; i < rect_num; i++) {
-        CMR_LOGD("rect_ptr[i].width =%d rect_ptr[i].height=%d",
-                 rect_ptr[i].width, rect_ptr[i].height);
         CMR_LOGD("rect_ptr->width =%d sensor_mode_info->trim_width=%d",
                  rect_ptr->width, sensor_mode_info->trim_width);
         CMR_LOGD("rect_ptr->height =%d sensor_mode_info->trim_height=%d",
@@ -1272,6 +1269,7 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
             ret = CMR_CAMERA_INVALID_PARAM;
             break;
         }
+        rect_ptr++;
     }
 
 exit:

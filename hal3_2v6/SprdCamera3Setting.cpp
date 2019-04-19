@@ -3708,9 +3708,8 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_SET_VERIFICATION_FLAG)) {
         valueU8 =
             frame_settings.find(ANDROID_SPRD_SET_VERIFICATION_FLAG).data.u8[0];
-        GET_VALUE_IF_DIF(
-            s_setting[mCameraId].sprddefInfo.verification_enable,
-            valueU8, ANDROID_SPRD_SET_VERIFICATION_FLAG, 1)
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.verification_enable,
+                         valueU8, ANDROID_SPRD_SET_VERIFICATION_FLAG, 1)
         HAL_LOGD("s_setting[mCameraId].verification_enable %d",
                  s_setting[mCameraId].sprddefInfo.verification_enable);
     }
@@ -4240,6 +4239,11 @@ int SprdCamera3Setting::updateWorkParameters(
                                     af_area[i];
                         }
                     }
+                } else if (af_area[0] == 0 && af_area[1] == 0 &&
+                           af_area[2] == 0 && af_area[3] == 0) {
+                    for (i = 0; i < 4; i++)
+                        s_setting[mCameraId].controlInfo.af_regions[i] = af_area[i];
+                    s_setting[mCameraId].controlInfo.af_regions[4] = 0;
                 }
             }
         }
@@ -4271,7 +4275,8 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].statisticsInfo.face_detect_mode =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
         pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
-        HAL_LOGV("fd mode %d", s_setting[mCameraId].statisticsInfo.face_detect_mode);
+        HAL_LOGV("fd mode %d",
+                 s_setting[mCameraId].statisticsInfo.face_detect_mode);
     }
 
     HAL_LOGD(
