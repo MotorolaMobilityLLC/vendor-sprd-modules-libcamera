@@ -3832,7 +3832,6 @@ int SprdCamera3Setting::updateWorkParameters(
         if (valueFloat) {
             s_setting[mCameraId].vcm_result = VCM_RESULT_IN;
         }
-        HAL_LOGD("lens focus distance is %f ", valueFloat);
     }
 
     // REQUEST
@@ -4161,7 +4160,6 @@ int SprdCamera3Setting::updateWorkParameters(
                       .data.u8[0];
         s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
         pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
-        HAL_LOGD("AE precap trigger status = %d", valueU8);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
         s_setting[mCameraId].controlInfo.ae_precapture_id =
@@ -4280,11 +4278,14 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     HAL_LOGD(
+        "focus_distance=%f, ae_precap_trigger= %d, "
         "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
         "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
         "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
         "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
         "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d %d",
+        s_setting[mCameraId].lensInfo.focus_distance,
+        s_setting[mCameraId].controlInfo.ae_precap_trigger,
         isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
         s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
         s_setting[mCameraId].flashInfo.mode,
