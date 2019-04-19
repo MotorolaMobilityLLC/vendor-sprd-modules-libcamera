@@ -73,6 +73,7 @@
 /* TODO: tuning ratio limit for power/image quality */
 #define ZOOM_RATIO_DEFAULT     1000
 #define MAX_RDS_RATIO 3
+#define DCAM_RDS_OUT_LIMIT 2048
 #define RATIO_SHIFT 16
 #define PATH_BIG_SIZE  2592
 
@@ -1721,6 +1722,19 @@ static int cal_channel_size(struct camera_module *module)
 			dcam_out.h = ALIGN(dcam_out.h, align_h);
 		}
 
+		/* check rds out limit if rds used */
+		if (module->zoom_solution == 1 && dcam_out.w > DCAM_RDS_OUT_LIMIT) {
+			dcam_out.w = DCAM_RDS_OUT_LIMIT;
+			dcam_out.h = dcam_out.w * trim_pv.size_y / trim_pv.size_x;
+			dcam_out.w = ALIGN(dcam_out.w, align_w);
+			dcam_out.h = ALIGN(dcam_out.h, align_h);
+
+			/* keep same ratio between width and height */
+			ratio16_w = div_u64(trim_pv.size_x << RATIO_SHIFT, dcam_out.w);
+			ratio16_h = div_u64(trim_pv.size_y << RATIO_SHIFT, dcam_out.h);
+			ratio_min = min(ratio16_w, ratio16_h);
+		}
+
 		pr_info("dst_p %u %u, dst_v %u %u, dcam_out %u %u, ratio %u\n",
 			dst_p.w, dst_p.h, dst_v.w, dst_v.h,
 			dcam_out.w, dcam_out.h, ratio_min);
@@ -1829,6 +1843,18 @@ static int cal_channel_size(struct camera_module *module)
 		temp.w = module->cam_uinfo.sn_rect.w;
 		temp.h = module->cam_uinfo.sn_rect.h;
 		align_w16(&temp, &max, &ratio_min);
+
+		/* check rds out limit if rds used */
+		if (module->zoom_solution == 1 && max.w > DCAM_RDS_OUT_LIMIT) {
+			temp.w = ch_prev->trim_dcam.size_x;
+			temp.h = ch_prev->trim_dcam.size_y;
+			max.w = DCAM_RDS_OUT_LIMIT;
+			max.h = max.w * temp.h / temp.w;
+			max.w = (max.w + 1) & ~1;
+			max.h = (max.h + 1) & ~1;
+			align_w16(&temp, &max, &ratio_min);
+		}
+
 		max.w += ALIGN_OFFSET;
 		max.h += ALIGN_OFFSET;
 
