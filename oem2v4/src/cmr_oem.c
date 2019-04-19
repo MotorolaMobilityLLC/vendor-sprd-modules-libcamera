@@ -2253,9 +2253,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
         offset = FLASH_CAPTURE_SKIP_NUM_OFFSET;
     }
 
-    flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num + offset;
-    CMR_LOGI("flash_capture_skip_num = %d", flash_capture_skip_num);
-
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -2309,6 +2306,12 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
             setting_param.ctrl_flash.capture_mode.capture_mode = 0;
             setting_param.ctrl_flash.flash_type = FLASH_CLOSE_AFTER_OPEN;
             setting_param.ctrl_flash.will_capture = will_capture;
+            ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM,
+                                &flash_capture_skip_num);
+            if (ret) {
+                CMR_LOGE("failed to get preflash skip number %ld", ret);
+            }
+            CMR_LOGD("flash_capture_skip_num = %d", flash_capture_skip_num);
             prev_set_preview_skip_frame_num(
                 cxt->prev_cxt.preview_handle, cxt->camera_id,
                 flash_capture_skip_num, has_preflashed);
