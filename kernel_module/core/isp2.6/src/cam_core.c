@@ -1366,7 +1366,8 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 						module->capture_times,
 						pframe->boot_sensor_time
 						);
-
+					if (pframe->sync_data)
+						dcam_if_release_sync(pframe->sync_data, pframe);
 					ret = dcam_ops->cfg_path(
 						module->dcam_dev_handle,
 						DCAM_PATH_CFG_OUTPUT_BUF,
@@ -1385,6 +1386,8 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 						pr_info("cam%d cap type[%d] num[%d]\n", module->idx,
 							module->dcam_cap_status,
 							atomic_read(&module->capture_frames_dcam));
+						if (pframe->sync_data)
+							dcam_if_release_sync(pframe->sync_data, pframe);
 						ret = dcam_ops->cfg_path(
 							module->dcam_dev_handle,
 							DCAM_PATH_CFG_OUTPUT_BUF,
