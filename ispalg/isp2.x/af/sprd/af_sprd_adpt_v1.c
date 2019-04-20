@@ -2339,7 +2339,7 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
-			} else if (AFT_TRIG_TOF == result->is_caf_trig && af->tof.data.RangeStatus == 0) {	//[TOF_+++]
+			} else if (AFT_TRIG_TOF == result->is_caf_trig /*&& af->tof.data.RangeStatus == 0*/) {	//[TOF_+++]
 				//ISP_LOGV("ddd flag:%d. dis:%d, maxdis:%d, status:%d ", af->tof.tof_trigger_flag, af->tof.last_distance, af->tof.last_MAXdistance, af->tof.last_status );
 				tof_start(af, AF_TRIGGER, result);	//[TOF_---]
 			} else if (AFT_TRIG_PD == result->is_caf_trig) {
@@ -2374,7 +2374,16 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 		}
 
 		if (AFT_TRIG_TOF == result->is_caf_trig) {
-			af_stop_search(af);
+			ISP_LOGI("tof focus_state = %s,", FOCUS_STATE_STR(af->focus_state));
+			force_stop = AFV1_TRUE;
+			af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_STOP, &force_stop);	//modifiy for force stop to SAF/Flow control
+			af->focus_state = AF_STOPPED_INNER;
+			af->af_ops.calc(af->af_alg_cxt);
+
+			if (STATE_FAF == af->state) {
+				ISP_LOGI("pre_state %s", STATE_STRING(af->pre_state));
+				af->state = af->pre_state;
+			}
 
 			tof_start(af, AF_TRIGGER, result);
 			af->focus_state = AF_SEARCHING;
