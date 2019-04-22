@@ -2324,9 +2324,17 @@ static int dumpraw_proc(void *param)
 				cnt++;
 			}
 			/* return it to dcam output queue */
-			dcam_ops->cfg_path(module->dcam_dev_handle,
+			if (module->cam_uinfo.is_4in1 &&
+				channel->aux_dcam_path_id == DCAM_PATH_BIN &&
+				pframe->buf.type == CAM_BUF_KERNEL)
+				dcam_ops->cfg_path(module->aux_dcam_dev,
+					   DCAM_PATH_CFG_OUTPUT_BUF,
+					   channel->aux_dcam_path_id, pframe);
+			else
+				dcam_ops->cfg_path(module->dcam_dev_handle,
 					   DCAM_PATH_CFG_OUTPUT_BUF,
 					   channel->dcam_path_id, pframe);
+
 		} else {
 			pr_info("dump raw proc exit.");
 			break;
@@ -3600,7 +3608,8 @@ static int img_ioctl_get_ch_id(
 
 	if ((atomic_read(&module->state) != CAM_IDLE) &&
 		(atomic_read(&module->state) != CAM_CFG_CH)) {
-		pr_err("error: only for state IDLE or CFG_CH\n");
+		pr_err("error: only for state IDLE or CFG_CH, state %d\n",
+			atomic_read(&module->state));
 		return -EFAULT;
 	}
 
