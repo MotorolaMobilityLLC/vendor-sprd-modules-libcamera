@@ -4950,9 +4950,18 @@ static cmr_s32 ae_set_caf_lockae_start(struct ae_ctrl_cxt *cxt)
 	cxt->target_lum_range_out_bak = cxt->cur_status.target_range_out_zone;
 
 	if (cxt->cur_result.wts.stable) {
-		cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[15];
+		if(cxt->cur_status.alg_id == 2) {
+			cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[15];
+		} else if(cxt->cur_status.alg_id == 3) {
+			cxt->cur_status.target_range_in_zone = cxt->stable_zone_ev[15] * 20;
+		}
+		
 		if (cxt->cur_status.target_lum_zone < cxt->target_lum_zone_bak) {
 			cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
+		}
+		
+		if (cxt->cur_status.target_range_in_zone < cxt->target_lum_range_in_bak) {
+			cxt->cur_status.target_range_in_zone = cxt->target_lum_range_in_bak;
 		}
 	}
 
