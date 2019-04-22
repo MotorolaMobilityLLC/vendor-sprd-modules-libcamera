@@ -1195,7 +1195,8 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
         return UNKNOWN_ERROR;
     }
 
-    if (mMultiCameraMode == MODE_BOKEH && mCameraId == 2) {
+    if ((mMultiCameraMode == MODE_BOKEH && mCameraId == 2) ||
+        mMultiCameraMode == MODE_3D_CALIBRATION) {
         return ret;
     }
 
