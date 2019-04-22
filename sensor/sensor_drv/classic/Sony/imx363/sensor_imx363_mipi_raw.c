@@ -280,9 +280,6 @@ static cmr_int imx363_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     BOOLEAN reset_level = MIPI_RAW_INFO.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-
-        hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_2800MV);
-
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
