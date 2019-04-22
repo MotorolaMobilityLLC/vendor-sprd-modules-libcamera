@@ -2044,7 +2044,7 @@ static int sprd_isp_update_context(void *isp_handle, int ctx_id, void *param)
 
 	pctx = &dev->ctx[ctx_id];
 
-	if (max_size->w > line_buffer_len) {
+	if (pctx->fmcu_handle == NULL && max_size->w > line_buffer_len) {
 		fmcu = get_isp_fmcu_ctx_desc();
 		pr_info("ctx get fmcu %p\n", fmcu);
 		if (fmcu == NULL) {
