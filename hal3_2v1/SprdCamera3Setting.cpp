@@ -5157,6 +5157,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 #else
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].controlInfo.ae_state), 1);
+    // Update ANDROID_SPRD_AE_INFO
+    camMetadata.update(ANDROID_SPRD_AE_INFO,
+                       &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
     // Update ANDROID_CONTROL_AE_LOCK
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                        &(s_setting[mCameraId].controlInfo.ae_lock), 1);
@@ -5164,6 +5167,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.awb_mode), 1);
     camMetadata.update(ANDROID_CONTROL_AWB_STATE,
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
+    // Update ANDROID_SPRD_DEVICE_ORIENTATION
+    camMetadata.update(ANDROID_SPRD_DEVICE_ORIENTATION,
+                       &(s_setting[mCameraId].sprddefInfo.device_orietation), 1);
     // perfect_level
     camMetadata.update(ANDROID_SPRD_UCAM_SKIN_LEVEL,
                        s_setting[mCameraId].sprddefInfo.perfect_skin_level,
@@ -5515,6 +5521,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        1);
     camMetadata.update(ANDROID_SPRD_EIS_ENABLED,
                        &(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled), 1);
+    camMetadata.update(ANDROID_STATISTICS_HISTOGRAM,
+                       s_setting[mCameraId].hist_report, CAMERA_ISP_HIST_ITEMS
+);
 
 #endif
 
@@ -6490,6 +6499,12 @@ int SprdCamera3Setting::setMETAInfo(meta_info_t metaInfo) {
 }
 int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
     *metaInfo = s_setting[mCameraId].metaInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
+    memcpy(s_setting[mCameraId].hist_report, hist_report,
+        sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
     return 0;
 }
 }

@@ -222,6 +222,7 @@ static tags_info_t
         {"sprd3is3dnrScene", TYPE_BYTE},
         {"sprd3auto3dnrEnabled", TYPE_BYTE},
         {"sprd3availableAuto3dnr", TYPE_BYTE},
+        {"sprdAeInfo", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

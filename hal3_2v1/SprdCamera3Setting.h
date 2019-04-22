@@ -123,6 +123,9 @@ typedef int64_t nsecs_t;
 #define MAX_PIPELINE_DEPTH 5
 #endif
 
+//Histogram items
+#define CAMERA_ISP_HIST_ITEMS 256
+
 typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;
@@ -396,11 +399,12 @@ typedef struct {
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
     uint8_t sprd_cam_feature_list_size;
     uint8_t availabe_sensor_type;
-    uint32_t device_orietation;
+    int32_t device_orietation;
     uint8_t availabe_auto_3dnr;
     uint8_t sprd_is_3dnr_scene;
     uint8_t sprd_auto_3dnr_enable;
     uint8_t flash_mode;
+    int32_t ae_info;
 } SPRD_DEF_Tag;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -513,6 +517,7 @@ typedef struct {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     HAL_PFC_Tag pfcinfo[MAX_PIPELINE_DEPTH];
 #endif
+    int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -714,6 +719,7 @@ class SprdCamera3Setting {
     int getVCMTag(VCM_Tag *vcmInfo);
     int getVERIFITag();
     int setVERIFITag(int32_t veri_enable);
+    int setHISTOGRAMTag(int32_t *hist_report);
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
