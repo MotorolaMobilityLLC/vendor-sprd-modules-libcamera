@@ -1207,12 +1207,6 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     if (sprddefInfo.slowmotion > 1)
         return ret;
 
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        mHalOem->ops->camera_fd_enable(mCameraHandle, 0);
-        return ret;
-    }
-
     if (enable) {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
     } else {
@@ -5498,10 +5492,6 @@ int SprdCamera3OEMIf::openCamera() {
     }
     HAL_LOGI("mIommuEnabled=%d", mIommuEnabled);
 
-#if defined(CONFIG_CAMERA_FACE_DETECT)
-    faceDectect_enable(1);
-#endif
-
     setCamSecurity(mMultiCameraMode);
     ZSLMode_monitor_thread_init((void *)this);
 
@@ -5520,6 +5510,14 @@ int SprdCamera3OEMIf::openCamera() {
         mIsIspToolMode = 1;
         HAL_LOGI("mIsIspToolMode=%d", mIsIspToolMode);
     }
+
+#if defined(CONFIG_CAMERA_FACE_DETECT)
+    if (mIsRawCapture == 1) {
+        faceDectect_enable(0);
+    } else {
+        faceDectect_enable(1);
+    }
+#endif
 
 exit:
     HAL_LOGI(":hal3: X");
