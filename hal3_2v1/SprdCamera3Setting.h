@@ -405,6 +405,7 @@ typedef struct {
     uint8_t sprd_auto_3dnr_enable;
     uint8_t flash_mode;
     int32_t ae_info;
+    uint8_t availabe_gender_race_age_enable;
 } SPRD_DEF_Tag;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -435,6 +436,7 @@ typedef struct {
     int angle[10];
     int pose[10];
     uint8_t face_num;
+    int gender_age_race[10];
 } FACE_Tag;
 
 typedef struct { int32_t max_latency; } SYNC_Tag;

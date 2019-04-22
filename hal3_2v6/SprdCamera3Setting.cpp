@@ -654,6 +654,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
     ANDROID_SPRD_AVAILABLE_AI_SCENE,
     ANDROID_SPRD_AVAILABLE_SENSORTYPE,
+    ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -1789,6 +1790,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
+    s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable = 7;
+#else
+    s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable = 0;
+#endif
     s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
 
     s_setting[cameraId].sprddefInfo.is_support_refocus = 0;
@@ -2224,6 +2230,9 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SMILEENABLE,
                       &(s_setting[cameraId].sprddefInfo.availabe_smile_enable),
                       1);
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
+        &(s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable), 1);
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
         &(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported), 1);

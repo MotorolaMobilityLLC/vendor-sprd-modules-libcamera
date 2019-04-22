@@ -223,6 +223,8 @@ static tags_info_t
         {"sprd3auto3dnrEnabled", TYPE_BYTE},
         {"sprd3availableAuto3dnr", TYPE_BYTE},
         {"sprdAeInfo", TYPE_INT32},
+        {"availableFaceFeatureMask", TYPE_BYTE},
+        {"sprdFaceAttributes", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

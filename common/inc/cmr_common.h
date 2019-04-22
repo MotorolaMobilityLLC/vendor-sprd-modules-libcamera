@@ -1148,6 +1148,7 @@ struct face_finder_data {
     int pose;
     int score;
     int smile_conf;
+    int gender_age_race;
 };
 
 struct img_face_area {
@@ -1588,6 +1589,7 @@ struct camera_face_info {
     cmr_u32 smile_level;
     cmr_u32 blink_level;
     cmr_u32 padding;
+    cmr_u32 gender_age_race;
 };
 
 struct camera_jpeg_param {

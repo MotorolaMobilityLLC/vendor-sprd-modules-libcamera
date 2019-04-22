@@ -370,6 +370,7 @@ typedef struct {
     uint8_t sprd_cam_feature_list_size;
     int32_t device_orietation;
     int32_t ae_info;
+    uint8_t availabe_gender_race_age_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

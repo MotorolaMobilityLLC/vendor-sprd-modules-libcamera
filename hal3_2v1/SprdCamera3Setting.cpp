@@ -666,6 +666,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_AVAILABLE_AI_SCENE,
     ANDROID_SPRD_AVAILABLE_SENSORTYPE,
     ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
+    ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -1926,6 +1927,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
+//Bit0 indicates whether or not to support Age.
+//Bit1 indicates whether or not to support Gender.
+//Bit2 indicates whether the skin is supported.
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
+    s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable = 7;
+#else
+    s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable = 0;
+#endif
     s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
 
 #ifdef CONFIG_CAMERA_RT_REFOCUS
@@ -2366,6 +2375,9 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SMILEENABLE,
                       &(s_setting[cameraId].sprddefInfo.availabe_smile_enable),
                       1);
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
+        &(s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable), 1);
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
         &(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported), 1);
@@ -5277,6 +5289,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         uint8_t numFaces = faceDetectionInfo->face_num;
         int32_t faceIds[MAX_ROI];
         uint8_t faceScores[MAX_ROI];
+        int32_t faceGenderRaceAge[MAX_ROI];
         int32_t faceRectangles[MAX_ROI * 4];
         int32_t faceLandmarks[MAX_ROI * 6];
         uint8_t dataSize = 1;
@@ -5284,6 +5297,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         for (int i = 0; i < numFaces; i++) {
             faceIds[i] = faceDetectionInfo->face[i].id;
             faceScores[i] = faceDetectionInfo->face[i].score;
+            faceGenderRaceAge[i] = faceDetectionInfo->gender_age_race[i];
             convertToRegions(faceDetectionInfo->face[i].rect,
                              faceRectangles + j, -1);
             j += 4;
@@ -5291,6 +5305,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         if (numFaces <= 0) {
             memset(faceIds, 0, sizeof(int32_t) * MAX_ROI);
             memset(faceScores, 0, sizeof(uint8_t) * MAX_ROI);
+            memset(faceGenderRaceAge, 0, sizeof(int32_t) * MAX_ROI);
             memset(faceRectangles, 0, sizeof(int32_t) * MAX_ROI * 4);
             memset(faceLandmarks, 0, sizeof(int32_t) * MAX_ROI * 6);
         }
@@ -5320,6 +5335,13 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             HAL_LOGV("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
                      g_face_info1, g_face_info2, g_face_info3, g_face_info4);
         }
+        //Bit0 and Bit1 represent ages,
+        //Bit2 represent gender,
+        //Bit3 represent skin color
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
+        camMetadata.update(ANDROID_SPRD_FACE_ATTRIBUTES, faceGenderRaceAge,
+                           dataSize);
+#endif
         // hangcheng note:have to remove this memset,
         // due to it would face crop can not show when face detect lib cost time
         // large than frame rate time.

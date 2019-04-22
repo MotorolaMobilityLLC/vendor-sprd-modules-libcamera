@@ -12019,6 +12019,8 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             cb_param->face_area.range[i].smile_level;
         frame_type.face_info[i].blink_level =
             cb_param->face_area.range[i].blink_level;
+        frame_type.face_info[i].gender_age_race =
+            cb_param->face_area.range[i].gender_age_race;
     }
     CMR_LOGD(" frame_type.timestamp:%lld   frame_type.face_num  :%u,  "
              "frame_type.frame_num:%u ",

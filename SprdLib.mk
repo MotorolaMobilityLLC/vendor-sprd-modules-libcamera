@@ -15,8 +15,15 @@ LOCAL_SHARED_LIBRARIES += libcamfb
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfar
-LOCAL_SHARED_LIBRARIES += libsprdfd libsprdfd_hw
+LOCAL_SHARED_LIBRARIES += libsprdfa libsprdfd
+LOCAL_SHARED_LIBRARIES += libsprdfd_hw
+ifeq ($(strip $(TARGET_BOARD_SPRD_FD_VERSION)),1)
+LOCAL_CFLAGS += -DCONFIG_SPRD_FD_LIB_VERSION_2
+LOCAL_SHARED_LIBRARIES += libsprdfarcnn
+else
+LOCAL_SHARED_LIBRARIES += libsprdfar
+LOCAL_CFLAGS += -DCONFIG_SPRD_FD_LIB_VERSION_1
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)

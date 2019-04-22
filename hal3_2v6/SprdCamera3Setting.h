@@ -371,6 +371,7 @@ typedef struct {
     uint8_t availabe_sensor_type;
     int32_t device_orietation;
     int32_t ae_info;
+    uint8_t availabe_gender_race_age_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

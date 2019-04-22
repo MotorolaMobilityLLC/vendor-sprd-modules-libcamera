@@ -29,12 +29,15 @@
 #include <time.h>
 #include "sprdfdapi.h"
 #include "facealignapi.h"
+#include "faceattrcnnapi.h"
 #include "faceattributeapi.h"
 #include <cutils/properties.h>
 
 #define FD_MAX_FACE_NUM 10
 #define FD_RUN_FAR_INTERVAL                                                    \
     8 /* The frame interval to run FAR. For reducing computation cost */
+#define FD_THREAD_NUM 2
+#define FD_MAX_CNN_FACE_NUM 3
 
 #ifndef ABS
 #define ABS(x) (((x) > 0) ? (x) : -(x))
@@ -46,11 +49,23 @@ struct class_faceattr {
     int face_id; /* face id gotten from face detection */
 };
 
+struct class_faceattr_v2 {
+    FA_SHAPE shape;
+    FAR_ATTRIBUTE_V2 attr_v2;
+    int face_id; /* face id gotten from face detection */
+};
+
 struct class_faceattr_array {
     int count;          /* face count      */
     cmr_uint frame_idx; /* The frame when the face attributes are updated */
     struct class_faceattr face[FD_MAX_FACE_NUM + 1]; /* face attricutes */
+    struct class_faceattr_v2 face_v2[FD_MAX_FACE_NUM + 1];
 };
+
+typedef enum {
+    YUV420_FORMAT_CBCR = 0, /* NV12 format; pixel order:  CbCrCbCr     */
+    YUV420_FORMAT_CRCB = 1  /* NV21 format; pixel order:  CrCbCrCb     */
+} FAR_YUV420_FORMAT;
 
 struct class_fd {
     struct ipm_common common;
@@ -58,6 +73,7 @@ struct class_fd {
     cmr_uint is_busy;
     cmr_uint is_inited;
     void *alloc_addr;
+    void *alloc_addr_u;
     cmr_uint mem_size;
     cmr_uint frame_cnt;
     cmr_uint frame_total_num;
@@ -74,6 +90,7 @@ struct class_fd {
     FD_DETECTOR_HANDLE hDT;     /* Face Detection Handle */
     FA_ALIGN_HANDLE hFaceAlign; /* Handle for face alignment */
     FAR_RECOGNIZER_HANDLE hFAR; /* Handle for face attribute recognition */
+    FAR_HANDLE hFAR_v2;
     struct frm_info trans_frm;
 };
 
@@ -83,6 +100,10 @@ struct fd_start_parameter {
     cmr_handle caller_handle;
     void *private_data;
 };
+
+typedef enum { SPRD_API_MODE = 0, SPRD_API_MODE_V2 } ApiMode;
+
+static cmr_int sprd_fd_api = 0;
 
 static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                        struct ipm_open_out *out, cmr_handle *out_class_handle);
@@ -131,6 +152,11 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_fd *fd_handle = NULL;
     struct img_size *fd_img_size;
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
+    sprd_fd_api = SPRD_API_MODE_V2;
+#else
+    sprd_fd_api = SPRD_API_MODE;
+#endif
 
     if (!out || !in || !ipm_handle || !out_class_handle) {
         CMR_LOGE("Invalid Param!");
@@ -142,7 +168,6 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         CMR_LOGE("No mem!");
         return CMR_CAMERA_NO_MEM;
     }
-
     cmr_bzero(fd_handle, sizeof(struct class_fd));
 
     fd_handle->common.ipm_cxt = (struct ipm_context_t *)ipm_handle;
@@ -160,7 +185,12 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     CMR_LOGD("mem_size = 0x%ld", fd_handle->mem_size);
     fd_handle->alloc_addr = malloc(fd_handle->mem_size);
+    fd_handle->alloc_addr_u = malloc(fd_handle->mem_size / 2);
     if (!fd_handle->alloc_addr) {
+        CMR_LOGE("mem alloc failed");
+        goto free_fd_handle;
+    }
+    if (!fd_handle->alloc_addr_u) {
         CMR_LOGE("mem alloc failed");
         goto free_fd_handle;
     }
@@ -172,7 +202,7 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     fd_img_size = &in->frame_size;
-    CMR_LOGI("fd_img_size height = %d, width = %d", fd_img_size->height,
+    CMR_LOGI("sprd_fd_api %d fd_img_size height = %d, width = %d", sprd_fd_api, fd_img_size->height,
              fd_img_size->width);
     ret = fd_call_init(fd_handle, fd_img_size);
     if (ret) {
@@ -187,6 +217,9 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 free_fd_handle:
     if (fd_handle->alloc_addr) {
         free(fd_handle->alloc_addr);
+    }
+    if (fd_handle->alloc_addr_u) {
+        free(fd_handle->alloc_addr_u);
     }
     free(fd_handle);
     return ret;
@@ -215,6 +248,9 @@ static cmr_int fd_close(cmr_handle class_handle) {
 
     if (fd_handle->alloc_addr) {
         free(fd_handle->alloc_addr);
+    }
+    if (fd_handle->alloc_addr_u) {
+        free(fd_handle->alloc_addr_u);
     }
 
     free(fd_handle);
@@ -274,6 +310,8 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
 
         memcpy(fd_handle->alloc_addr, (void *)in->src_frame.addr_vir.addr_y,
                fd_handle->mem_size);
+        memcpy(fd_handle->alloc_addr_u, (void *)in->src_frame.addr_vir.addr_u,
+               fd_handle->mem_size / 2);
 
         ret = fd_start(class_handle, &param);
         if (ret) {
@@ -485,20 +523,28 @@ end:
 
 static void fd_recognize_face_attribute(
     FD_DETECTOR_HANDLE hDT, FA_ALIGN_HANDLE hFaceAlign,
-    FAR_RECOGNIZER_HANDLE hFAR, struct class_faceattr_array *io_faceattr_arr,
-    const cmr_u8 *i_image_data, struct img_size i_image_size,
+    FAR_RECOGNIZER_HANDLE hFAR, FAR_HANDLE hFAR_v2,
+    struct class_faceattr_array *io_faceattr_arr, const cmr_u8 *i_image_data,
+    const cmr_u8 *i_image_data_u, struct img_size i_image_size,
     const cmr_uint i_curr_frame_idx) {
     cmr_int face_count = 0;
     cmr_int fd_idx = 0;
     cmr_int i = 0;
+    cmr_int ret = 0;
     struct class_faceattr_array new_attr_array;
     FA_IMAGE img;
+    FAR_IMAGE_YUV420SP img_420sp;
+    FA_SHAPE fattr_shape;
+    FAR_FACEINFO_V2 faface_v2;
 
     face_count = FdGetFaceCount(hDT);
     if (face_count <= 0) {
         return;
     }
-
+    FAR_ATTRIBUTE_V2 faceAtt[face_count];
+    FAR_ATTRIBUTE_VEC fattr_v2_vec;
+    FAR_FACEINFO_VEC farface_v2_vec;
+    FAR_FACEINFO_V2 faceInfo[face_count];
     /* Don't update face attribute, if the frame interval is not enough. For
      * reducing computation cost */
     if ((io_faceattr_arr->count > 0) &&
@@ -508,7 +554,9 @@ static void fd_recognize_face_attribute(
 
     cmr_bzero(&new_attr_array, sizeof(struct class_faceattr_array));
     cmr_bzero(&img, sizeof(FA_IMAGE));
-
+    cmr_bzero(&img_420sp, sizeof(FAR_IMAGE_YUV420SP));
+    cmr_bzero(faceAtt, sizeof(FAR_ATTRIBUTE_V2) * face_count);
+    cmr_bzero(faceInfo, sizeof(FAR_FACEINFO_V2) * face_count);
     img.data = (unsigned char *)i_image_data;
     img.width = i_image_size.width;
     img.height = i_image_size.height;
@@ -516,10 +564,16 @@ static void fd_recognize_face_attribute(
 
     // When there are many faces, process every face will be too slow.
     // Limit face count to 2
-    face_count = MIN(face_count, 2);
+    if (sprd_fd_api == SPRD_API_MODE)
+        face_count = MIN(face_count, 2);
+    if (sprd_fd_api == SPRD_API_MODE_V2) {
+        fattr_v2_vec.faceAtt = faceAtt;
+        farface_v2_vec.faceInfo = faceInfo;
+    }
 
     for (fd_idx = 0; fd_idx < face_count; fd_idx++) {
         struct class_faceattr *fattr = &(new_attr_array.face[fd_idx]);
+
         FD_FACEINFO info;
         FdGetFaceInfo(hDT, fd_idx, &info);
 
@@ -537,8 +591,14 @@ static void fd_recognize_face_attribute(
             faface.height = info.height;
             faface.yawAngle = info.yawAngle;
             faface.rollAngle = info.rollAngle;
-            FaFaceAlign(hFaceAlign, &img, &faface, &(fattr->shape));
+            ret = FaFaceAlign(hFaceAlign, &img, &faface, &(fattr->shape));
         }
+        for (i = 0; i < 7; i++) {
+
+            fattr_shape.data[i * 2] = fattr->shape.data[i * 2];
+            fattr_shape.data[i * 2 + 1] = fattr->shape.data[i * 2 + 1];
+        }
+        fattr_shape.score = fattr->shape.score;
 
         /* Run face attribute recognition */
         {
@@ -549,23 +609,93 @@ static void fd_recognize_face_attribute(
             opt.smileOn = 1;
             opt.eyeOn = 0;
             opt.infantOn = 0;
-            opt.genderOn = 0;
-
-            /* Set the eye locations */
-            for (i = 0; i < 7; i++) {
-                farface.landmarks[i].x = fattr->shape.data[i * 2];
-                farface.landmarks[i].y = fattr->shape.data[i * 2 + 1];
-            }
+            opt.genderOn = 1;
 
             {
-                int err = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface,
+                if (sprd_fd_api == SPRD_API_MODE) {
+                    for (i = 0; i < 7; i++) {
+                        farface.landmarks[i].x = fattr->shape.data[i * 2];
+                        farface.landmarks[i].y = fattr->shape.data[i * 2 + 1];
+                    }
+                    ret = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface,
                                        &opt, &(fattr->attr));
-                // CMR_LOGI("FarRecognize: err=%d, smile=%d", err,
-                // fattr->attr.smile);
+                } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+
+                    struct class_faceattr_v2 *fattr =
+                        &(new_attr_array.face_v2[fd_idx]);
+                    fattr->attr_v2.smile = 0;
+                    fattr->attr_v2.eyeClose = 0;
+                    fattr->attr_v2.infant = 0;
+                    fattr->attr_v2.genderPre = 0;
+                    fattr->attr_v2.agePre = 0;
+                    fattr->attr_v2.genderCnn = 0;
+                    fattr->attr_v2.race = 0;
+                    fattr->attr_v2.raceScore = 0;
+                    fattr->attr_v2.faceIdx = info.id;
+                    fattr->face_id = info.id;
+                    faface_v2.x = info.x;
+                    faface_v2.y = info.y;
+                    faface_v2.width = info.width;
+                    faface_v2.height = info.height;
+                    faface_v2.yawAngle = info.yawAngle;
+                    faface_v2.rollAngle = info.rollAngle;
+                    faface_v2.faceIdx = info.id;
+                    for (i = 0; i < 7; i++) {
+                        fattr->shape.data[i * 2] = fattr_shape.data[i * 2];
+                        fattr->shape.data[i * 2 + 1] =
+                            fattr_shape.data[i * 2 + 1];
+                    }
+                    fattr->shape.score = fattr_shape.score;
+                    farface_v2_vec.faceNum = face_count;
+                    memcpy(&faceInfo[fd_idx], &faface_v2, sizeof(FAR_FACEINFO_V2));
+                    fattr_v2_vec.faceNum = face_count;
+                    memcpy(&faceAtt[fd_idx], &fattr->attr_v2,
+                           sizeof(FAR_ATTRIBUTE_V2));
+                    if (fd_idx == (face_count - 1)) {
+                        img_420sp.yData = img.data;
+                        img_420sp.uvData = (unsigned char *)i_image_data_u;
+                        img_420sp.width = img.width;
+                        img_420sp.height = img.height;
+                        img_420sp.format = YUV420_FORMAT_CRCB;
+                        ret = FarRun_YUV420SP(
+                            hFAR_v2, (const FAR_IMAGE_YUV420SP *)&img_420sp,
+                            (const FAR_FACEINFO_VEC *)&farface_v2_vec,
+                            &fattr_v2_vec);
+                        for (fd_idx = 0; fd_idx < face_count; fd_idx++) {
+                            CMR_LOGI("face num %d", fattr_v2_vec.faceNum);
+                            for (int i = 0; i < fattr_v2_vec.faceNum; i++) {
+                                if (new_attr_array.face_v2[fd_idx].face_id ==
+                                    faceAtt[i].faceIdx) {
+                                    memcpy(&(new_attr_array.face_v2[fd_idx]
+                                                 .attr_v2),
+                                           &faceAtt[i],
+                                           sizeof(FAR_ATTRIBUTE_V2));
+                                    break;
+                                }
+                            }
+                            CMR_LOGV(
+                                "face num %d fattr_v2_vec %d %d %d %d %d %d %d %d %d",
+                                fattr_v2_vec.faceNum,
+                                new_attr_array.face_v2[fd_idx].attr_v2.smile,
+                                new_attr_array.face_v2[fd_idx].attr_v2.eyeClose,
+                                new_attr_array.face_v2[fd_idx].attr_v2.infant,
+                                new_attr_array.face_v2[fd_idx]
+                                    .attr_v2.genderPre,
+                                new_attr_array.face_v2[fd_idx].attr_v2.agePre,
+                                new_attr_array.face_v2[fd_idx]
+                                    .attr_v2.genderCnn,
+                                new_attr_array.face_v2[fd_idx].attr_v2.race,
+                                new_attr_array.face_v2[fd_idx]
+                                    .attr_v2.raceScore,
+                                new_attr_array.face_v2[fd_idx].attr_v2.faceIdx);
+                        }
+                    }
+                    // CMR_LOGI("FarRecognize: err=%d, smile=%d", err,
+                    // fattr->attr.smile);
+                }
             }
         }
     }
-
     new_attr_array.count = face_count;
     new_attr_array.frame_idx = i_curr_frame_idx;
     memcpy(io_faceattr_arr, &new_attr_array,
@@ -601,24 +731,38 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
     cmr_int overlap_thr = 0;
     cmr_uint trust_curr_face = 0;
     cmr_uint prevIdx = 0;
+    FA_SHAPE fattr_shape;
 
     // Try to correct the face rectangle by the face shape which is often more
     // accurate
     if (i_faceattr_arr != NULL) {
         // find the face shape with the same face ID
         const cmr_int shape_score_thr = 200;
-        const struct class_faceattr *fattr = NULL;
         cmr_int i = 0;
-        for (i = 0; i < i_faceattr_arr->count; i++) {
-            if (i_faceattr_arr->face[i].face_id == io_curr_face->face_id) {
-                fattr = &(i_faceattr_arr->face[i]);
-                break;
-            }
+        if (sprd_fd_api == SPRD_API_MODE) {
+            const struct class_faceattr *fattr = NULL;
+            for (i = 0; i < i_faceattr_arr->count; i++)
+                if (i_faceattr_arr->face[i].face_id == io_curr_face->face_id) {
+                    fattr = &(i_faceattr_arr->face[i]);
+                    break;
+                }
+            if (fattr != NULL)
+                fattr_shape = fattr->shape;
+        } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+            const struct class_faceattr_v2 *fattr = NULL;
+            for (i = 0; i < i_faceattr_arr->count; i++)
+                if (i_faceattr_arr->face_v2[i].face_id ==
+                    io_curr_face->face_id) {
+                    fattr = &(i_faceattr_arr->face_v2[i]);
+                    break;
+                }
+            if (fattr != NULL)
+                fattr_shape = fattr->shape;
         }
 
         // Calculate the new face rectangle according to the face shape
-        if (fattr != NULL && fattr->shape.score >= shape_score_thr) {
-            const int *sdata = (const int *)(fattr->shape.data);
+        if (fattr_shape.score >= shape_score_thr) {
+            const int *sdata = (const int *)(fattr_shape.data);
             cmr_int eye_cx = (sdata[0] + sdata[2] + sdata[4] + sdata[6]) / 4;
             cmr_int eye_cy = (sdata[1] + sdata[3] + sdata[5] + sdata[7]) / 4;
             cmr_int mouth_cx = (sdata[10] + sdata[12]) / 2;
@@ -686,7 +830,6 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
     struct face_finder_data *face_ptr = NULL;
     const struct class_faceattr_array *curr_faceattr =
         (i_curr_frame_idx == i_faceattr_arr->frame_idx) ? i_faceattr_arr : NULL;
-
     face_num = FdGetFaceCount(hDT);
     for (face_idx = 0; face_idx < face_num; face_idx++) {
         /* Gets the detection result for each face */
@@ -765,32 +908,98 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
             const cmr_int algo_smile_thr = algo_smile_threshold;
 
             cmr_int i = 0;
+            cmr_int gender_age = 0;
             for (i = 0; i < i_faceattr_arr->count; i++) {
-                const struct class_faceattr *fattr = &(i_faceattr_arr->face[i]);
-                if (fattr->face_id == info.id) {
-                    /* Note: The original smile score is in [-100, 100].
-                       But the Camera APP needs a score in [0, 100], and also
-                       the definitions for smile degree are different
-                       with the algorithm. So, we need to adjust the smile score
-                       to fit the APP.
-                    */
-                    cmr_int smile_score = MAX(0, fattr->attr.smile);
-                    if (smile_score >= algo_smile_thr) {
-                        /* norm_score is in [0, 70] */
-                        cmr_int norm_score = ((smile_score - algo_smile_thr) *
-                                              (100 - app_smile_thr)) /
-                                             (100 - algo_smile_thr);
-                        /* scale the smile score to be in [30, 100] */
-                        smile_score = norm_score + app_smile_thr;
-                    } else {
-                        /* scale the smile score to be in [0, 30) */
-                        smile_score =
-                            (smile_score * app_smile_thr) / algo_smile_thr;
-                    }
+                if (sprd_fd_api == SPRD_API_MODE) {
+                    const struct class_faceattr *fattr =
+                        &(i_faceattr_arr->face[i]);
+                    if (fattr->face_id == info.id) {
+                        /* Note: The original smile score is in [-100, 100].
+                           But the Camera APP needs a score in [0, 100], and
+                           also
+                           the definitions for smile degree are different
+                           with the algorithm. So, we need to adjust the smile
+                           score
+                           to fit the APP.
+                        */
+                        cmr_int smile_score = MAX(0, fattr->attr.smile);
+                        if (smile_score >= algo_smile_thr) {
+                            /* norm_score is in [0, 70] */
+                            cmr_int norm_score =
+                                ((smile_score - algo_smile_thr) *
+                                 (100 - app_smile_thr)) /
+                                (100 - algo_smile_thr);
+                            /* scale the smile score to be in [30, 100] */
+                            smile_score = norm_score + app_smile_thr;
+                        } else {
+                            /* scale the smile score to be in [0, 30) */
+                            smile_score =
+                                (smile_score * app_smile_thr) / algo_smile_thr;
+                        }
 
-                    face_ptr->smile_level = MAX(1, smile_score);
-                    face_ptr->blink_level = MAX(0, fattr->attr.eyeClose);
-                    break;
+                        face_ptr->smile_level = MAX(1, smile_score);
+                        face_ptr->blink_level = MAX(0, fattr->attr.eyeClose);
+                    }
+                } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+                    const struct class_faceattr_v2 *fattr =
+                        &(i_faceattr_arr->face_v2[i]);
+                    if (fattr->face_id == info.id) {
+                        /* Note: The original smile score is in [-100, 100].
+                           But the Camera APP needs a score in [0, 100], and
+                           also
+                           the definitions for smile degree are different
+                           with the algorithm. So, we need to adjust the smile
+                           score
+                           to fit the APP.
+                        */
+                        cmr_int smile_score = MAX(0, fattr->attr_v2.smile);
+                        if (smile_score >= algo_smile_thr) {
+                            /* norm_score is in [0, 70] */
+                            cmr_int norm_score =
+                                ((smile_score - algo_smile_thr) *
+                                 (100 - app_smile_thr)) /
+                                (100 - algo_smile_thr);
+                            /* scale the smile score to be in [30, 100] */
+                            smile_score = norm_score + app_smile_thr;
+                        } else {
+                            /* scale the smile score to be in [0, 30) */
+                            smile_score =
+                                (smile_score * app_smile_thr) / algo_smile_thr;
+                        }
+                        face_ptr->smile_level = MAX(1, smile_score);
+                        face_ptr->blink_level = MAX(0, fattr->attr_v2.eyeClose);
+                        /*The first digit of gender_age represents gender:
+                         * Male(1);Female(2);unknown(0)*/
+                        if (fattr->attr_v2.genderCnn == 0 &&
+                            fattr->attr_v2.race == 0 && fattr->attr_v2.agePre == 0)
+                            face_ptr->gender_age_race = 0;
+                        else {
+                            gender_age =
+                                fattr->attr_v2.genderCnn > 0
+                                    ? fattr->attr_v2.agePre + 100
+                                    : ((fattr->attr_v2.genderCnn < 0)
+                                           ? fattr->attr_v2.agePre + 200
+                                           : fattr->attr_v2.agePre + 0);
+                            switch (fattr->attr_v2.race) {
+                            case 0:
+                                face_ptr->gender_age_race = gender_age + 1000;
+                                break;
+                            case 1:
+                                face_ptr->gender_age_race = gender_age + 2000;
+                                break;
+                            case 2:
+                                face_ptr->gender_age_race = gender_age + 3000;
+                                break;
+                            case 3:
+                                face_ptr->gender_age_race = gender_age + 4000;
+                                break;
+                            default:
+                                face_ptr->gender_age_race = gender_age;
+                                break;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -891,9 +1100,27 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             CMR_LOGE("FaCreateAlignHandle() Error");
             break;
         }
-        if (FAR_OK != FarCreateRecognizerHandle(&(class_handle->hFAR))) {
-            CMR_LOGE("FarCreateRecognizerHandle() Error");
-            break;
+        if (sprd_fd_api == SPRD_API_MODE_V2) {
+            FAR_OPTION_V2 opt_v2;
+            FAR_InitOption(&opt_v2);
+            opt_v2.raceOn = 1;
+            opt_v2.ageOn = 1;
+            opt_v2.smileOn = 1;
+            opt_v2.trackInterval = 0;
+            int threadNum = FD_THREAD_NUM;
+            opt_v2.workMode = FAR_WORKMODE_MOVIE;
+            opt_v2.maxFaceNum = FD_MAX_CNN_FACE_NUM;
+            /* set option: only do smile detection */
+            if (FAR_OK != FarCreateRecognizerHandle_V2(&(class_handle->hFAR_v2),
+                                                       threadNum, &opt_v2)) {
+                CMR_LOGE("FarCreateRecognizerHandle_V2() Error");
+                break;
+            }
+        } else if (sprd_fd_api == SPRD_API_MODE) {
+            if (FAR_OK != FarCreateRecognizerHandle(&(class_handle->hFAR))) {
+                CMR_LOGE("FarCreateRecognizerHandle() Error");
+                break;
+            }
         }
 
         /* Creates Face Detection handle */
@@ -935,8 +1162,10 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         /* recognize face attribute (smile detection) */
         fd_recognize_face_attribute(
             class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
-            &(class_handle->faceattr_arr), (cmr_u8 *)class_handle->alloc_addr,
-            class_handle->fd_img_size, class_handle->curr_frame_idx);
+            class_handle->hFAR_v2, &(class_handle->faceattr_arr),
+            (cmr_u8 *)class_handle->alloc_addr,
+            (cmr_u8 *)class_handle->alloc_addr_u, class_handle->fd_img_size,
+            class_handle->curr_frame_idx);
 
         class_handle->is_get_result = 1;
         /* extract face detection results */
@@ -977,7 +1206,10 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
     case CMR_EVT_FD_EXIT:
         /* Deletes Face Detection handle */
         FaDeleteAlignHandle(&(class_handle->hFaceAlign));
-        FarDeleteRecognizerHandle(&(class_handle->hFAR));
+        if (sprd_fd_api == SPRD_API_MODE)
+            FarDeleteRecognizerHandle(&(class_handle->hFAR));
+        else if (sprd_fd_api == SPRD_API_MODE_V2)
+            FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
         FdDeleteDetector(&(class_handle->hDT));
         break;
 
