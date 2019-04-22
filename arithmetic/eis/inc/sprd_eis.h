@@ -2,15 +2,13 @@
 #define _SPRD_EIS_H_
 
 #ifndef _DATA_TYPE_H_
-typedef struct
-{
-    double		dat[3][3];
-} mat33;
+typedef struct { double dat[3][3]; } mat33;
 #endif
 
 typedef struct frame_in {
     uint8_t *frame_data;
     double timestamp;
+    double ae_time;
     double zoom;
     uint32_t frame_num;
 } vsInFrame;
@@ -59,9 +57,9 @@ typedef struct eis_info {
 #ifdef _MSC_VER
 #ifdef _USRDLL
 #ifdef SPRD_ISP_EXPORTS
-#define SPRD_ISP_API	__declspec(dllexport)
+#define SPRD_ISP_API __declspec(dllexport)
 #else
-#define SPRD_ISP_API	__declspec(dllimport)
+#define SPRD_ISP_API __declspec(dllimport)
 #endif
 #else
 #define SPRD_ISP_API
@@ -70,15 +68,15 @@ typedef struct eis_info {
 #define SPRD_ISP_API
 #endif
 #ifdef __cplusplus
-extern   "C"
-{
+extern "C" {
 #endif
-SPRD_ISP_API void video_stab_param_default(vsParam* param);
-SPRD_ISP_API void video_stab_open(vsInst* inst, vsParam* param);
-SPRD_ISP_API void video_stab_write_frame(vsInst inst, vsInFrame* frame);
-SPRD_ISP_API void video_stab_write_gyro(vsInst inst, vsGyro* gyro, int gyro_num);
+SPRD_ISP_API void video_stab_param_default(vsParam *param);
+SPRD_ISP_API void video_stab_open(vsInst *inst, vsParam *param);
+SPRD_ISP_API void video_stab_write_frame(vsInst inst, vsInFrame *frame);
+SPRD_ISP_API void video_stab_write_gyro(vsInst inst, vsGyro *gyro,
+                                        int gyro_num);
 SPRD_ISP_API int video_stab_check_gyro(vsInst inst);
-SPRD_ISP_API int video_stab_read(vsInst inst, vsOutFrame* frame);
+SPRD_ISP_API int video_stab_read(vsInst inst, vsOutFrame *frame);
 SPRD_ISP_API void video_stab_close(vsInst inst);
 
 const sprd_eis_init_info_t eis_init_info_tab[] = {
@@ -87,7 +85,7 @@ const sprd_eis_init_info_t eis_init_info_tab[] = {
     {"sp9860g-3", 1160.0f, -0.01f, 0.024f},
     {"sp9861e-1", 1230.0f, 0.004f, 0.021f},
     {"sp9861e-2", 1230.0f, 0.004f, 0.021f},
-    {"sp9863a-1", 0.773f, 0.004f, 0.021f},
+    {"sp9863a-1", 0.7747f, 0.038f, 0.024f},
 };
 
 #ifdef __cplusplus

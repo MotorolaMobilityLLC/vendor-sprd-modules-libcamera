@@ -10117,8 +10117,8 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         HAL_LOGV("boot_time = %" PRId64, boot_time);
         HAL_LOGV("ae_time = %" PRId64 ", zoom_ratio = %f", ae_time, zoom_ratio);
         frame_in.frame_data = (uint8_t *)buff_vir;
-        frame_in.timestamp = (double)(boot_time - ae_time / 2);
-        frame_in.timestamp = frame_in.timestamp / 1000000000;
+        frame_in.timestamp = (double)boot_time / 1000000000;
+        frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_out = processPreviewEIS(frame_in);
         HAL_LOGD(
@@ -10172,8 +10172,8 @@ void SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame) {
         HAL_LOGV("boot_time = %" PRId64, boot_time);
         HAL_LOGV("ae_time = %" PRId64 ", zoom_ratio = %f", ae_time, zoom_ratio);
         frame_in.frame_data = (uint8_t *)buff_vir;
-        frame_in.timestamp = (double)(boot_time - ae_time / 2);
-        frame_in.timestamp = frame_in.timestamp / 1000000000;
+        frame_in.timestamp = (double)boot_time / 1000000000;
+        frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_out = processVideoEIS(frame_in);
         HAL_LOGD(
