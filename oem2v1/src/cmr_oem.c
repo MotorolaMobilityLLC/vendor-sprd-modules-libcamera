@@ -12034,7 +12034,7 @@ cmr_int camera_open_4in1(cmr_handle oem_handle) {
         goto exit;
     }
     if (cxt->ipm_cxt.four_in_one_inited == 1) {
-        CMR_LOGE("camera_open_4in1 has init ,go exit ");
+        CMR_LOGD("camera_open_4in1 has init ,go exit ");
         goto exit;
     }
 

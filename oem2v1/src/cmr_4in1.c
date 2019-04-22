@@ -236,7 +236,7 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
     if (is_raw_capture){
         struct ipm_frame_out out;
         out.dst_frame = in->src_frame;
-        out.private_data = handle->frame_in.private_data;
+        out.private_data = in->private_data;
         out.is_plus = 0;
         if (handle->reg_cb) {
             (handle->reg_cb)(IPM_TYPE_4IN1, &out);
