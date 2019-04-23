@@ -1788,6 +1788,7 @@ static int dcam_offline_thread_loop(void *arg)
 {
 	struct dcam_pipe_dev *dev = NULL;
 	struct cam_thread_info *thrd;
+	uint32_t idx = 0;
 
 	if (!arg) {
 		pr_err("fail to get valid input ptr\n");
@@ -1796,14 +1797,14 @@ static int dcam_offline_thread_loop(void *arg)
 
 	thrd = (struct cam_thread_info *)arg;
 	dev = (struct dcam_pipe_dev *)thrd->ctx_handle;
+	idx = dev->idx;
 
 	while (1) {
 		if (wait_for_completion_interruptible(
 			&thrd->thread_com) == 0) {
 			if (atomic_cmpxchg(
 					&thrd->thread_stop, 1, 0) == 1) {
-				pr_info("dcam%d offline thread stop.\n",
-						dev->idx);
+				pr_info("dcam%d offline thread stop.\n", idx);
 				break;
 			}
 			pr_debug("thread com done.\n");
