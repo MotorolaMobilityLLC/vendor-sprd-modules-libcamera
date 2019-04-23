@@ -4029,7 +4029,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.highflash_measure.highflash_flag = param_ptr->is_need_flash;
 	ae_param.highflash_measure.capture_skip_num = param_ptr->capture_skip_num;
 	ae_param.capture_skip_num = param_ptr->capture_skip_num;
-	ae_param.zsl_flag = param_ptr->capture_mode;
+	/* ae_param.zsl_flag = param_ptr->capture_mode; */
 	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.prv_size.w;
 	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.prv_size.h;
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
