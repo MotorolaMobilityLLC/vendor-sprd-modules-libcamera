@@ -89,6 +89,7 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_FACE_ATTRIBUTES,
     ANDROID_SPRD_AUTOCHASING_REGION,
     ANDROID_SPRD_AUTOCHASING_TRACEREGION,
+    ANDROID_SPRD_FLASH_LCD_MODE,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

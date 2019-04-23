@@ -371,6 +371,7 @@ typedef struct {
     int32_t device_orietation;
     int32_t ae_info;
     uint8_t availabe_gender_race_age_enable;
+    uint8_t sprd_flash_lcd_mode;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -534,6 +535,7 @@ class SprdCamera3Setting {
                                                int8_t *convertAntibandingMode);
 
     int androidAfModeToDrvAfMode(uint8_t androidAfMode, int8_t *convertDrvMode);
+    int flashLcdModeToDrvFlashMode(uint8_t flashLcdMode, int8_t *convertDrvMode);
     int setTONEMAPTag(TONEMAP_Tag *toneInfo);
     int getTONEMAPTag(TONEMAP_Tag *toneInfo);
 

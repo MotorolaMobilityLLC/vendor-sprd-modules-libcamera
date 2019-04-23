@@ -7323,6 +7323,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
                  sprdInfo.sprd_auto_3dnr_enable);
     } break;
+    case ANDROID_SPRD_FLASH_LCD_MODE: {
+        int8_t flashMode;
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode, &flashMode);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
+    } break;
     default:
         ret = BAD_VALUE;
         break;
