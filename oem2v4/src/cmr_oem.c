@@ -1138,6 +1138,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     cmr_u32 sub_type;
     cmr_u32 cmd = evt & 0xFF;
     cmr_int oem_cb;
+    cmr_u32 ae_info;
 
     if (!oem_handle || CMR_EVT_ISP_BASE != (CMR_EVT_ISP_BASE & evt)) {
         CMR_LOGE("err param, 0x%lx 0x%x 0x%lx", (cmr_uint)data, evt,
@@ -1202,8 +1203,14 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     case ISP_AE_STAB_NOTIFY:
         CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
-        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                       NULL);
+        if (data != NULL) {
+            //data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            ae_info = *(cmr_u32 *)data;
+            cxt->camera_cb(oem_cb, cxt->client_data,
+                           CAMERA_FUNC_AE_STATE_CALLBACK, &ae_info);
+        } else
+            cxt->camera_cb(oem_cb, cxt->client_data,
+                           CAMERA_FUNC_AE_STATE_CALLBACK, NULL);
         break;
     case ISP_AE_LOCK_NOTIFY:
         CMR_LOGI("ISP_AE_LOCK_NOTIFY");
@@ -1246,6 +1253,11 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
+    case ISP_HIST_REPORT_CALLBACK:
+        CMR_LOGD("ISP_HIST_REPORT_CALLBACK");
+        oem_cb = CAMERA_EVT_CB_HIST_REPORT;
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                      data);
     default:
         break;
     }
@@ -8331,6 +8343,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         CMR_LOGI("auto hdr=%lu", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
+    case CAMERA_PARAM_SET_DEVICE_ORIENTATION:
+        setting_param.cmd_type_value = param;
+        CMR_LOGD("frame_num %u", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     default:
         CMR_LOGI("don't support %d", id);
     }

@@ -105,6 +105,9 @@ typedef int64_t nsecs_t;
 #define MAX_PREVIEW_SIZE_WIDTH 1920
 #define MAX_PREVIEW_SIZE_HEIGHT 1080
 
+//Histogram items
+#define CAMERA_ISP_HIST_ITEMS 256
+
 typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;
@@ -366,7 +369,8 @@ typedef struct {
     uint8_t availabe_ai_scene;
     uint8_t sprd_ai_scene_type_current;
     uint8_t availabe_sensor_type;
-    uint32_t device_orietation;
+    int32_t device_orietation;
+    int32_t ae_info;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -448,6 +452,7 @@ typedef struct {
     int32_t vcm_result;
     int32_t verification_enable;
     VCM_DIST_TAG vcmDist;
+    int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -613,6 +618,7 @@ class SprdCamera3Setting {
     int getVCMRETag(int32_t *result);
     int getVERIFITag();
     int setVERIFITag(int32_t veri_enable);
+    int setHISTOGRAMTag(int32_t *hist_report);
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];

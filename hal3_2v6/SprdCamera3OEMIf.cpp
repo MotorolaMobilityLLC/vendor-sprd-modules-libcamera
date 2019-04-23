@@ -5151,15 +5151,21 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
     cmr_u32 ae_stab = 0;
+    cmr_u32 ae_info = 0;
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+
     HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
 
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (NULL != parm4) {
-            ae_stab = *((cmr_u32 *)parm4);
+            ae_info = *((cmr_u32 *)parm4);
+            ae_stab = ae_info & (0x00000001);
+            HAL_LOGI("ae_info = %d, ae_stab = %d", ae_info, ae_stab);
         }
 
         if (ae_stab) {
@@ -5173,6 +5179,13 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             setAeState(AE_START);
             setAwbState(AWB_START);
         }
+
+        if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
+            // callback ae info [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            sprddefInfo.ae_info = ae_info;
+            mSetting->setSPRDDEFTag(sprddefInfo);
+        }
+
         HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
@@ -5218,7 +5231,21 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         vcm_result = *(int32_t *)parm4;
         mSetting->setVCMRETag(vcm_result);
         HAL_LOGD("CAMERA_EVT_CB_VCM_RESULT vcm_result %d", vcm_result);
+    } break;
 
+    case CAMERA_EVT_CB_HIST_REPORT: {
+        int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};
+        memcpy(hist_report, (int32_t *)parm4, sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+        mSetting->setHISTOGRAMTag(hist_report);
+
+        // control log print
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.histogram.log.enable", prop, "0");
+        if (atoi(prop)) {
+            for (int i = 0; i < CAMERA_ISP_HIST_ITEMS; i++) {
+                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d", hist_report[i]);
+            }
+        }
     } break;
 
     default:

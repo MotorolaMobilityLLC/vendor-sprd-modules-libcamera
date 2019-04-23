@@ -1149,6 +1149,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     cmr_u32 sub_type;
     cmr_u32 cmd = evt & 0xFF;
     cmr_int oem_cb;
+    cmr_u32 ae_info;
     struct cmr_focus_status focus_status;
     struct isp_af_notice *isp_af = NULL;
 
@@ -1233,8 +1234,14 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     case ISP_AE_STAB_NOTIFY:
         CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
-        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                       data);
+        if (data != NULL) {
+            //data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            ae_info = *(cmr_u32 *)data;
+            cxt->camera_cb(oem_cb, cxt->client_data,
+                           CAMERA_FUNC_AE_STATE_CALLBACK, &ae_info);
+        } else
+            cxt->camera_cb(oem_cb, cxt->client_data,
+                           CAMERA_FUNC_AE_STATE_CALLBACK, NULL);
         break;
     case ISP_AE_LOCK_NOTIFY:
         CMR_LOGI("ISP_AE_LOCK_NOTIFY");
@@ -1290,7 +1297,12 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
-
+    case ISP_HIST_REPORT_CALLBACK:
+        CMR_LOGD("ISP_HIST_REPORT_CALLBACK");
+        oem_cb = CAMERA_EVT_CB_HIST_REPORT;
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                      data);
+        break;
     default:
         break;
     }

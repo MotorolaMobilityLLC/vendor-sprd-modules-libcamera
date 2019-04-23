@@ -5710,15 +5710,26 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
+    cmr_u32 ae_info = 0;
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+
     HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
 
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
+        if (parm4 != NULL) {
+            ae_info = *((cmr_u32 *)parm4);
+            HAL_LOGD("ae_info = 0x%x", ae_info);
+        }
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+            // callback ae info [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            sprddefInfo.ae_info = ae_info;
+            mSetting->setSPRDDEFTag(sprddefInfo);
             mSetting->setAeCONTROLTag(&controlInfo);
         }
         if (controlInfo.awb_state != ANDROID_CONTROL_AWB_STATE_LOCKED) {
@@ -5755,6 +5766,21 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         mSetting->setSPRDDEFTag(sprdInfo);
         HAL_LOGI("sprd_is_hdr_scene = %d", sprddefInfo.sprd_is_hdr_scene);
         break;
+    case CAMERA_EVT_CB_HIST_REPORT: {
+        int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};
+        memcpy(hist_report, (int32_t *)parm4, sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+        mSetting->setHISTOGRAMTag(hist_report);
+
+        // control log print
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.histogram.log.enable", prop, "0");
+        if (atoi(prop)) {
+            for (int i = 0; i < CAMERA_ISP_HIST_ITEMS; i++) {
+                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d", hist_report[i]);
+            }
+        }
+    } break;
+
     default:
         break;
     }
@@ -6639,6 +6665,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprdInfo.sprd_auto_hdr_enable);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
                  sprdInfo.sprd_auto_hdr_enable);
+    } break;
+    case ANDROID_SPRD_DEVICE_ORIENTATION: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD("sprddefInfo.device_orietation=%d ",
+                 sprddefInfo.device_orietation);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_DEVICE_ORIENTATION,
+                 sprddefInfo.device_orietation);
     } break;
     default:
         ret = BAD_VALUE;

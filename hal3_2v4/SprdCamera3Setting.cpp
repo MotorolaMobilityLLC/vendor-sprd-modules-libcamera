@@ -3447,6 +3447,14 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].sprddefInfo.sensor_orientation);
     }
 
+    if (frame_settings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
+        s_setting[mCameraId].sprddefInfo.device_orietation =
+            frame_settings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_DEVICE_ORIENTATION);
+        HAL_LOGD("device_orietation %d",
+                 s_setting[mCameraId].sprddefInfo.device_orietation);
+    }
+
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
         int32_t rotation =
             frame_settings.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];
@@ -4251,6 +4259,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     //			s_setting[mCameraId].controlInfo.ae_precapture_id);
     camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
                        &(s_setting[mCameraId].controlInfo.ae_precapture_id), 1);
+    // Update ANDROID_SPRD_AE_INFO
+    camMetadata.update(ANDROID_SPRD_AE_INFO,
+                       &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
+    HAL_LOGV("sprddefInfo.ae_info = 0x%x", s_setting[mCameraId].sprddefInfo.ae_info);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                        &(s_setting[mCameraId].controlInfo.ae_lock), 1);
 
@@ -4262,6 +4274,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // ANDROID_CONTROL_AWB_STATE_INACTIVE;
     camMetadata.update(ANDROID_CONTROL_AWB_STATE,
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
+    // Update ANDROID_SPRD_DEVICE_ORIENTATION
+    camMetadata.update(ANDROID_SPRD_DEVICE_ORIENTATION,
+                       &(s_setting[mCameraId].sprddefInfo.device_orietation), 1);
     uint8_t hardware_level_limited = 0;
     if (s_setting[mCameraId].supported_hardware_level ==
         ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
@@ -4324,6 +4339,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
     camMetadata.update(ANDROID_SPRD_EIS_ENABLED,
                        &(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled), 1);
+    camMetadata.update(ANDROID_STATISTICS_HISTOGRAM,
+                       s_setting[mCameraId].hist_report, CAMERA_ISP_HIST_ITEMS);
     if (ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ==
             s_setting[mCameraId].controlInfo.capture_intent &&
         s_setting[mCameraId].sprddefInfo.sprd_eis_enabled) {
@@ -5156,4 +5173,11 @@ int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
     *metaInfo = s_setting[mCameraId].metaInfo;
     return 0;
 }
+
+int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
+    memcpy(s_setting[mCameraId].hist_report, hist_report,
+        sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+    return 0;
+}
+
 }

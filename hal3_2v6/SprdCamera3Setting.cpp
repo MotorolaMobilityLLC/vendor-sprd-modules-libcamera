@@ -3556,7 +3556,7 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
-        uint32_t device_orientation =
+        int32_t device_orientation =
             frame_settings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.device_orietation,
                          device_orientation, ANDROID_SPRD_DEVICE_ORIENTATION, 1)
@@ -4541,6 +4541,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].controlInfo.ae_state), 1);
+    // Update ANDROID_SPRD_AE_INFO
+    camMetadata.update(ANDROID_SPRD_AE_INFO,
+                       &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
     //			s_setting[mCameraId].controlInfo.ae_precapture_id);
@@ -4557,6 +4560,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // ANDROID_CONTROL_AWB_STATE_INACTIVE;
     camMetadata.update(ANDROID_CONTROL_AWB_STATE,
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
+    // Update ANDROID_SPRD_DEVICE_ORIENTATION
+    camMetadata.update(ANDROID_SPRD_DEVICE_ORIENTATION,
+                       &(s_setting[mCameraId].sprddefInfo.device_orietation), 1);
     if ((s_setting[mCameraId].jpgInfo.orientation == 90 ||
          s_setting[mCameraId].jpgInfo.orientation == 270)) {
         int32_t rotated_thumbnail_size[2];
@@ -4615,6 +4621,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
     camMetadata.update(ANDROID_SPRD_EIS_ENABLED,
                        &(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled), 1);
+    camMetadata.update(ANDROID_STATISTICS_HISTOGRAM,
+                       s_setting[mCameraId].hist_report, CAMERA_ISP_HIST_ITEMS);
     if (ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ==
             s_setting[mCameraId].controlInfo.capture_intent &&
         s_setting[mCameraId].sprddefInfo.sprd_eis_enabled) {
@@ -5531,4 +5539,11 @@ int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
     *metaInfo = s_setting[mCameraId].metaInfo;
     return 0;
 }
+
+int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
+    memcpy(s_setting[mCameraId].hist_report, hist_report,
+        sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+    return 0;
+}
+
 }
