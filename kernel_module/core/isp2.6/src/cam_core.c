@@ -1612,6 +1612,10 @@ static int cal_channel_size(struct camera_module *module)
 	if (ch_prev->enable) {
 		src_p.w = ch_prev->ch_uinfo.src_size.w;
 		src_p.h = ch_prev->ch_uinfo.src_size.h;
+		if (module->cam_uinfo.is_4in1) {
+			src_p.w /= 2;
+			src_p.h /= 2;
+		}
 		crop_p = &ch_prev->ch_uinfo.src_crop;
 		dst_p.w = ch_prev->ch_uinfo.dst_size.w;
 		dst_p.h = ch_prev->ch_uinfo.dst_size.h;
@@ -1669,7 +1673,7 @@ static int cal_channel_size(struct camera_module *module)
 
 	if (ch_prev->enable) {
 		if (module->zoom_solution == 0) {
-			if (module->cam_uinfo.sn_size.w > ISP_MAX_LINE_WIDTH)
+			if (crop_p->w > ISP_MAX_LINE_WIDTH)
 				ratio_min = (2 << RATIO_SHIFT);
 			else
 				ratio_min = (1 << RATIO_SHIFT);
@@ -1836,7 +1840,7 @@ static int cal_channel_size(struct camera_module *module)
 			max.h = module->cam_uinfo.sn_rect.h;
 		}
 		if (module->zoom_solution == 0) {
-			if (module->cam_uinfo.sn_size.w > ISP_MAX_LINE_WIDTH)
+			if (crop_p->w > ISP_MAX_LINE_WIDTH)
 				ratio_min = (2 << RATIO_SHIFT);
 			else
 				ratio_min = (1 << RATIO_SHIFT);
