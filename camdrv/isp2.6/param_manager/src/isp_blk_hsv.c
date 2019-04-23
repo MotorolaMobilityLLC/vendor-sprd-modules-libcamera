@@ -115,7 +115,7 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	}
 	dst_ptr->cur.size = dst_ptr->final_map.size;
 	dst_ptr->cur.hsv_table_addr = (cmr_u64)dst_ptr->final_map.data_ptr;
-	ISP_LOGV("hsv table addr 0x%lx\n", (cmr_uint)dst_ptr->cur.hsv_table_addr);
+	ISP_LOGV("hsv table addr 0x%lx, size %d\n", (cmr_uint)dst_ptr->cur.hsv_table_addr, dst_ptr->cur.size);
 
 	header_ptr->is_update = ISP_ONE;
 	return 0;
@@ -151,12 +151,9 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			cmr_u32 i;
 			cmr_u32 data_num;
 			cmr_u16 weight[2] = { 0, 0 };
-			cmr_u32 hsv_level = 8;
-			cmr_u32 text_coeff = 10;
-			cmr_u32 pet_coeff = 8;
+			cmr_s32 hsv_level = -1;
 			void * src_map[2] = { NULL, NULL };
 			cmr_u32 *dst;
-			char prop[PROPERTY_VALUE_MAX];
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_weight_value *weight_value = NULL;
 			struct isp_range val_range = { 0, 0 };
@@ -176,93 +173,113 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
-
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 			bv_value = &weight_value[0];
 			ct_value[0] = &weight_value[1];
 			ct_value[1] = &weight_value[2];
 
-			if (block_result->ai_scene_id == ISP_PM_AI_SCENE_FOLIAGE ||
-				block_result->ai_scene_id == ISP_PM_AI_SCENE_SKY) {
-				property_get("debug.isp.hsv.hsv_value.level", prop, "8");
-				hsv_level = atoi(prop);
-				for (i = 0; i < 2; i++) {
-					ct_value[i]->value[0] = hsv_level;
-					ct_value[i]->value[1] = hsv_level;
-					ct_value[i]->weight[0] = 256;
-					ct_value[i]->weight[1] = 0;
+			ISP_LOGV("ISP_SMART, ai_scene %d,  weit (%d %d %d %d), weit (%d %d %d %d), weit (%d %d %d %d)\n",
+				block_result->ai_scene_id,
+				ct_value[0]->value[0], ct_value[0]->value[1], ct_value[0]->weight[0], ct_value[0]->weight[1],
+				ct_value[1]->value[0], ct_value[1]->value[1], ct_value[1]->weight[0], ct_value[1]->weight[1],
+				bv_value->value[0], bv_value->value[1], bv_value->weight[0], bv_value->weight[1]);
+
+			switch (block_result->ai_scene_id) {
+			case ISP_PM_AI_SCENE_FOOD:
+				hsv_level = 10;
+				break;
+			case ISP_PM_AI_SCENE_PORTRAIT:
+				hsv_level = 11;
+				break;
+			case ISP_PM_AI_SCENE_FOLIAGE:
+				hsv_level = 12;
+				break;
+			case ISP_PM_AI_SCENE_SKY:
+				hsv_level = 13;
+				break;
+			case ISP_PM_AI_SCENE_NIGHT:
+				hsv_level = 14;
+				break;
+			case ISP_PM_AI_SCENE_TEXT:
+				hsv_level = 16;
+				break;
+			case ISP_PM_AI_SCENE_SUNRISE:
+				hsv_level = 17;
+				break;
+			case ISP_PM_AI_SCENE_BUILDING:
+				hsv_level = 18;
+				break;
+			case ISP_PM_AI_SCENE_SNOW:
+				hsv_level = 20;
+				break;
+			case ISP_PM_AI_SCENE_FIREWORK:
+				hsv_level = 21;
+				break;
+			case ISP_PM_AI_SCENE_PET:
+				hsv_level = 23;
+				break;
+			case ISP_PM_AI_SCENE_FLOWER:
+				hsv_level = 24;
+				break;
+			default:
+				hsv_level = -1;
+				break;
+			}
+
+			/* todo: delete it later. just for tuning trace */
+			if (dst_hsv_ptr->cur_idx.weight0 != block_result->ai_scene_id) {
+				if (hsv_level != -1)
+					ISP_LOGD("ai_scene_id %d, hsv_index %d\n", block_result->ai_scene_id, hsv_level);
+				else
+					ISP_LOGD("ai_scene_id change to %d, apply smart result\n", block_result->ai_scene_id);
+			}
+			dst_hsv_ptr->cur_idx.weight0 = block_result->ai_scene_id;
+			/* todo: end */
+
+			if (hsv_level != -1) {
+				src_map[0] = dst_hsv_ptr->map[hsv_level].data_ptr;
+				if (src_map[0] != NULL) {
+					cmr_u32 *temp = (cmr_u32 *)src_map[0];
+					memcpy((void *)dst_hsv_ptr->final_map.data_ptr, src_map[0], dst_hsv_ptr->final_map.size);
+					ISP_LOGV("hsv level %d, val %05x %05x %05x %05x %05x %05x %05x %05x\n",
+						hsv_level, temp[0], temp[1], temp[2], temp[3], temp[4], temp[5], temp[6], temp[7]);
+				} else {
+					ISP_LOGE("hsv level %d data table is null\n", hsv_level);
 				}
 			} else {
-				property_get("debug.isp.hsv.hsv_value.tune", prop, "0");
-				if (atoi(prop)) {
-					for (i = 0; i < 2; i++) {
-						ct_value[i]->value[0] = 0;
-						ct_value[i]->value[1] = 0;
-						ct_value[i]->weight[0] = 256;
-						ct_value[i]->weight[1] = 0;
-					}
-				}
-			}
+				weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
+				bv_value = &weight_value[0];
+				ct_value[0] = &weight_value[1];
+				ct_value[1] = &weight_value[2];
 
-			dst = (cmr_u32 *)dst_hsv_ptr->final_map.data_ptr;
-			data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);
-			for(i = 0; i < 2; i++) {
-				src_map[0] = (void *)dst_hsv_ptr->map[ct_value[i]->value[0]].data_ptr;
-				src_map[1] = (void *)dst_hsv_ptr->map[ct_value[i]->value[1]].data_ptr;
-				weight[0] = ct_value[i]->weight[0];
-				weight[1] = ct_value[i]->weight[1];
+				dst = (cmr_u32 *)dst_hsv_ptr->final_map.data_ptr;
+				data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);
+				for(i = 0; i < 2; i++) {
+					src_map[0] = (void *)dst_hsv_ptr->map[ct_value[i]->value[0]].data_ptr;
+					src_map[1] = (void *)dst_hsv_ptr->map[ct_value[i]->value[1]].data_ptr;
+					weight[0] = ct_value[i]->weight[0];
+					weight[1] = ct_value[i]->weight[1];
+					weight[0] = weight[0]/(SMART_WEIGHT_UNIT/16) * (SMART_WEIGHT_UNIT/16);
+					weight[1] = SMART_WEIGHT_UNIT - weight[0];
+					isp_interp_data(dst_hsv_ptr->ct_result[i] , src_map , weight , data_num , ISP_INTERP_UINT20);
+				}
+				src_map[0] = dst_hsv_ptr->ct_result[0];
+				src_map[1] = dst_hsv_ptr->ct_result[1];
+				weight[0] = bv_value->weight[0];
+				weight[1] = bv_value->weight[1];
 				weight[0] = weight[0]/(SMART_WEIGHT_UNIT/16) * (SMART_WEIGHT_UNIT/16);
 				weight[1] = SMART_WEIGHT_UNIT - weight[0];
-				isp_interp_data(dst_hsv_ptr->ct_result[i] , src_map , weight , data_num , ISP_INTERP_UINT20);
-			}
-			src_map[0] = dst_hsv_ptr->ct_result[0];
-			src_map[1] = dst_hsv_ptr->ct_result[1];
-			weight[0] = bv_value->weight[0];
-			weight[1] = bv_value->weight[1];
-			weight[0] = weight[0]/(SMART_WEIGHT_UNIT/16) * (SMART_WEIGHT_UNIT/16);
-			weight[1] = SMART_WEIGHT_UNIT - weight[0];
-			isp_interp_data((void *)dst , src_map , weight , data_num , ISP_INTERP_UINT20);
+				isp_interp_data((void *)dst , src_map , weight , data_num , ISP_INTERP_UINT20);
 
-			property_get("debug.isp.hsv.text_coeff.val", prop, "10");
-			text_coeff = atoi(prop);
-			property_get("debug.isp.hsv.pet_coeff.val", prop, "8");
-			pet_coeff = atoi(prop);
+				if (dst) {
+					cmr_u32 *temp = dst;
 
-			ISP_LOGV("ai_scene_id = %d", block_result->ai_scene_id);
-			switch (block_result->ai_scene_id) {
-			case ISP_PM_AI_SCENE_TEXT:
-				for (i = 0; i < data_num; i++) {
-					cmr_u32 dst_val = *dst;
-					cmr_u32 dst_val_h = dst_val & 0x1FF;
-					cmr_u32 dst_val_s = (dst_val >> 9) & 0x7FF;
-					dst_val_h = dst_val_h * 1;
-					dst_val_s = dst_val_s * 10 / text_coeff;
-					dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
-					*dst++ = dst_val;
+					ISP_LOGV("hsv val %05x %05x %05x %05x %05x %05x %05x %05x\n",
+						temp[0], temp[1], temp[2], temp[3], temp[4], temp[5], temp[6], temp[7]);
 				}
-				break;
-
-			case ISP_PM_AI_SCENE_PET:
-				for (i = 0; i < data_num; i++) {
-					cmr_u32 dst_val = *dst;
-					cmr_u32 dst_val_h = dst_val & 0x1FF;
-					cmr_u32 dst_val_s = (dst_val >> 9) & 0x7FF;
-					dst_val_h = dst_val_h * 1;
-					dst_val_s = dst_val_s * 10 / pet_coeff;
-					dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
-					*dst++ = dst_val;
-				}
-				break;
-
-			default:
-				break;
 			}
 
 			hsv_header_ptr->is_update = ISP_ONE;
-
-			ISP_LOGV("ISP_SMART: cmd=%d, update=%d, value=(%d, %d), weight=(%d, %d)\n",
-				cmd, hsv_header_ptr->is_update, dst_hsv_ptr->cur_idx.x0, dst_hsv_ptr->cur_idx.x1,
-				dst_hsv_ptr->cur_idx.weight0, dst_hsv_ptr->cur_idx.weight1);
 		}
 		break;
 

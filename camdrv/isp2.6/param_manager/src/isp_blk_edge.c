@@ -16,6 +16,11 @@
 #define LOG_TAG "isp_blk_edge"
 #include "isp_blocks_cfg.h"
 
+#define INVALID_EE_COEFF ((cmr_u32)(-1))
+
+/* todo: delete it later. just for tuning debug */
+static cmr_u32 prev_ai_scene;
+
 static cmr_u32 _pm_edge_convert_param(
 	void *dst_edge_param, cmr_u32 strength_level,
 	cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 ai_scene_id)
@@ -28,6 +33,7 @@ static cmr_u32 _pm_edge_convert_param(
 	cmr_u32 foliage_coeff = 10;
 	cmr_u32 text_coeff = 7;
 	cmr_u32 pet_coeff = 8;
+	cmr_u32 sel_coeff = INVALID_EE_COEFF;
 	cmr_u32 max_ee_neg = 0x100;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
@@ -213,75 +219,48 @@ static cmr_u32 _pm_edge_convert_param(
 	switch (ai_scene_id) {
 	case ISP_PM_AI_SCENE_FOLIAGE:
 	case ISP_PM_AI_SCENE_FLOWER:
-		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / foliage_coeff;
-		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / foliage_coeff;
-		if (ee_param_log_en) {
-			for (i = 0; i < 3; i++) {
-				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
-					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
-					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
-			}
-		}
+		sel_coeff = foliage_coeff;
 		break;
 
 	case ISP_PM_AI_SCENE_TEXT:
-		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / text_coeff;
-		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / text_coeff;
-		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / text_coeff;
-		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / text_coeff;
-		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / text_coeff;
-		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / text_coeff;
-		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / text_coeff;
-		if (ee_param_log_en) {
-			for (i = 0; i < 3; i++) {
-				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
-					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
-					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
-			}
-		}
+		sel_coeff = text_coeff;
 		break;
 
 	case ISP_PM_AI_SCENE_PET:
-		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / pet_coeff;
-		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / pet_coeff;
-		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / pet_coeff;
-		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / pet_coeff;
-		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / pet_coeff;
-		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / pet_coeff;
-		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / pet_coeff;
-		if (ee_param_log_en) {
-			for (i = 0; i < 3; i++) {
-				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
-					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
-					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
-			}
-		}
+		sel_coeff = pet_coeff;
 		break;
 
 	default:
 		break;
 	}
 
+	if (sel_coeff != INVALID_EE_COEFF) {
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / sel_coeff;
+		if (ee_param_log_en) {
+			for (i = 0; i < 3; i++) {
+				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
+					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
+			}
+		}
+
+		/* todo: delete it later. just for tuning debug */
+		if (prev_ai_scene != ai_scene_id) {
+			ISP_LOGD("ai_scene_id %d, ee coeff %d\n", ai_scene_id, sel_coeff);
+		}
+	}
+	prev_ai_scene = ai_scene_id;
 
 	return rtn;
 }

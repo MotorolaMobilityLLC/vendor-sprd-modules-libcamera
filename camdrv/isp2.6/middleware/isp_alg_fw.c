@@ -2047,6 +2047,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.cal_para.ct = awb_output->ct;
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 			smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+			smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
 			smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 			smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
 			smart_proc_in.lock_precdn = cxt->smart_cxt.lock_precdn_en;
@@ -4138,6 +4139,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.cal_para.ct = ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+		smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
 		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
 		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		cxt->smart_cxt.atm_is_set = 0;
