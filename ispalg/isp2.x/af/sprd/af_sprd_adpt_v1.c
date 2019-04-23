@@ -1658,6 +1658,12 @@ static cmr_s32 trigger_set_flash_status(af_ctrl_t * af, enum af_flash_status fla
 	return 0;
 }
 
+static cmr_s32 trigger_notice_force(af_ctrl_t * af)
+{
+	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_FORCE_TRIGGER, NULL, NULL);
+	return 0;
+}
+
 static cmr_s32 trigger_start(af_ctrl_t * af)
 {
 	if (!(AF_ALG_DUAL_W_T == af->is_multi_mode && AF_ROLE_TELE == af->sensor_role))
@@ -2339,7 +2345,7 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
 				faf_start(af, &win);
-			} else if (AFT_TRIG_TOF == result->is_caf_trig /*&& af->tof.data.RangeStatus == 0*/) {	//[TOF_+++]
+			} else if (AFT_TRIG_TOF == result->is_caf_trig /*&& af->tof.data.RangeStatus == 0 */ ) {	//[TOF_+++]
 				//ISP_LOGV("ddd flag:%d. dis:%d, maxdis:%d, status:%d ", af->tof.tof_trigger_flag, af->tof.last_distance, af->tof.last_MAXdistance, af->tof.last_status );
 				tof_start(af, AF_TRIGGER, result);	//[TOF_---]
 			} else if (AFT_TRIG_PD == result->is_caf_trig) {
@@ -2389,8 +2395,8 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 			af->focus_state = AF_SEARCHING;
 		}
 		/*else if (AFT_TRIG_PD == result->is_caf_trig) {
-			pd_start(af, RE_TRIGGER, result);
-		}*/
+		   pd_start(af, RE_TRIGGER, result);
+		   } */
 	}
 }
 
@@ -2856,6 +2862,11 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 
 	af_set_default_roi(af, af->algo_mode);
 	do_start_af(af);
+
+	if (AF_STOPPED == af->focus_state) {
+		trigger_notice_force(af);
+	}
+
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 		trigger_start(af);	// for hdr capture no af mode update at whole procedure
 	}
@@ -3179,9 +3190,9 @@ static cmr_s32 af_sprd_set_pd_info(cmr_handle handle, void *param0)
 {
 
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
-	
+
 	property_get("persist.vendor.cam.pd.enable", value, "1");
-	if (atoi(value) != 1){
+	if (atoi(value) != 1) {
 		UNUSED(handle);
 		ISP_LOGI("af_sprd_set_pd_info Disable! E %p", param0);
 		return AFV1_SUCCESS;
