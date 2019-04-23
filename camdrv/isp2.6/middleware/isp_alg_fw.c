@@ -158,6 +158,7 @@ struct afl_info {
 	cmr_handle handle;
 	cmr_u32 version;
 	cmr_u32 sw_bypass;
+	cmr_u32 hw_bypass;
 	cmr_uint vir_addr;
 	cmr_int buf_size;
 	cmr_int buf_num;
@@ -1073,6 +1074,7 @@ static cmr_int ispalg_tof_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 bypass;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	if (!cxt) {
@@ -1084,6 +1086,13 @@ static cmr_int ispalg_afl_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_CFG_PARAM, param0, param1);
 		break;
 	case ISP_AFL_NEW_SET_BYPASS:
+		bypass = *(cmr_u32 *)param0;
+		ISP_LOGV("hw_bypass= %d, new bypass %d\n", cxt->afl_cxt.hw_bypass, bypass);
+		if ((cxt->afl_cxt.hw_bypass == 0) && (bypass == 0)) {
+			ISP_LOGV("should not trigger afl when hw is working\n");
+			break;
+		}
+		cxt->afl_cxt.hw_bypass = bypass;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, param0, param1);
 		break;
 	case ISP_AFL_SET_STATS_BUFFER:
@@ -2208,7 +2217,6 @@ exit:
 cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_int bypass = 0;
 	cmr_u32 cur_flicker = 0;
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
@@ -2217,33 +2225,21 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
-	struct isp_pm_param_data pm_afl_data;
-	struct isp_pm_ioctl_input pm_afl_input = {NULL, 0};
-	struct isp_pm_ioctl_output pm_afl_output = {NULL, 0};
 
-	memset(&pm_afl_data, 0, sizeof(pm_afl_data));
 	memset(&afl_input, 0, sizeof(afl_input));
 	memset(&afl_output, 0, sizeof(afl_output));
+	cxt->afl_cxt.hw_bypass = 1;
 
 	if (cxt->afl_cxt.sw_bypass) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 		if (ret) {
 			ISP_LOGE("fail to set statis buf");
 		}
-		if(cxt->afl_cxt.version) {
-			cmr_u32 bypass = 0;
-			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-						ISP_DEV_SET_AFL_NEW_BYPASS,
-						&bypass, NULL);
-		}
-		goto exit;
-	}
-
-	bypass = 1;
-	if(cxt->afl_cxt.version) {
+		cxt->afl_cxt.hw_bypass = 0;
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-						ISP_DEV_SET_AFL_NEW_BYPASS,
-						&bypass, NULL);
+					ISP_DEV_SET_AFL_NEW_BYPASS,
+					&cxt->afl_cxt.hw_bypass, NULL);
+		goto exit;
 	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
@@ -2263,19 +2259,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FLICKER_SWITCH_FLAG"));
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
-	BLOCK_PARAM_CFG(pm_afl_input, pm_afl_data,
-			ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_ANTI_FLICKER, NULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			&pm_afl_input, &pm_afl_output);
-	if (ISP_SUCCESS == ret && 1 == pm_afl_output.param_num) {
-		afl_input.afl_param_ptr = (struct isp_antiflicker_param *)pm_afl_output.param_data->data_ptr;
-		afl_input.pm_param_num = pm_afl_output.param_num;
-	} else {
-		afl_input.afl_param_ptr = NULL;
-		afl_input.pm_param_num = 0;
-	}
 
 	cxt->afl_cxt.afl_statis_info = *statis_info;
 	afl_input.ae_stat_ptr = &cxt->aem_stats_data;
@@ -2288,21 +2271,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.private_data = &cxt->afl_cxt.afl_statis_info;
 	afl_input.ae_win_num.w = cxt->ae_cxt.win_num.w;
 	afl_input.ae_win_num.h = cxt->ae_cxt.win_num.h;
+	ISP_LOGV("afl_mode %d\n",  cxt->afl_cxt.afl_mode);
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to afl process"));
-	}
-
-	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ)
-		bypass = 0;
-	else
-		bypass = 1;
-
-	if(cxt->afl_cxt.version) {
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-						ISP_DEV_SET_AFL_NEW_BYPASS,
-						&bypass, NULL);
 	}
 
 exit:
@@ -4546,6 +4519,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.prv_size.h;
 	}
 
+	cxt->afl_cxt.hw_bypass = 1;
 	if(cxt->afl_cxt.version) {
 		if (cxt->ops.afl_ops.config_new)
 			ret = cxt->ops.afl_ops.config_new(cxt->afl_cxt.handle);

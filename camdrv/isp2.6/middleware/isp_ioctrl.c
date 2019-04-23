@@ -304,17 +304,14 @@ static cmr_int ispctl_ae_exp_compensation(cmr_handle isp_alg_handle, void *param
 	return ret;
 }
 
-static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_int bypass)
+static cmr_int ispctl_flicker_bypass(cmr_handle isp_alg_handle, cmr_u32 bypass)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	if (cxt->afl_cxt.afl_mode != AE_FLICKER_AUTO || cxt->sensor_fps.is_high_fps == 1)
-		bypass = 1;
-
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AFL_NEW_BYPASS, &bypass, NULL);
-	if(ret) {
-		ISP_LOGE("fail to set afl bypass");
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_NEW_SET_BYPASS, &bypass, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_SET_BYPASS"));
 	}
 
 	return ret;
@@ -325,7 +322,7 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_flicker set_flicker = { 0 };
-	cmr_int bypass = 0;
+	cmr_u32 bypass = 0;
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -335,7 +332,7 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	set_flicker.mode = *(cmr_u32 *) param_ptr;
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &set_flicker, NULL);
-	ISP_LOGV("ISP_AE: AE_SET_FLICKER=%d, ret=%ld", set_flicker.mode, ret);
+	ISP_LOGD("afl_mode=%d, ret=%ld", set_flicker.mode, ret);
 
 	ispctl_flicker_bypass(isp_alg_handle, bypass);
 
