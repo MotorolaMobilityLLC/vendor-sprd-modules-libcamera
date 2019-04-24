@@ -14,7 +14,7 @@
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 LOCAL_PATH:= $(call my-dir)
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9832e sp9863a sp7731e ums312),)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9832e sp9863a sp7731e ums312 ud710),)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := blacksesame/mv_lib/lib
 endif
