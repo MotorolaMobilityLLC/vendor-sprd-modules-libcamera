@@ -1516,7 +1516,8 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                          face_area.face_info[i].ex, face_area.face_info[i].ey);
             }
             /* SS requires to disable FD when HDR is on */
-            if (CAM_IMG_FMT_BAYER_MIPI_RAW == cxt->sn_cxt.sensor_info.image_format &&
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+                    cxt->sn_cxt.sensor_info.image_format &&
                 (!cxt->is_vendor_hdr) && frame_param->is_update_isp) {
                 isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_FACE_AREA,
                           (void *)&face_area);
@@ -3510,6 +3511,8 @@ cmr_int camera_snapshot_init(cmr_handle oem_handle) {
         goto exit;
     }
     snp_cxt->inited = 1;
+    snp_cxt->start_capture_flag = 0;
+
 exit:
     CMR_LOGD("done %ld", ret);
     ATRACE_END();
@@ -3537,6 +3540,10 @@ cmr_int camera_snapshot_deinit(cmr_handle oem_handle) {
     if (cxt->ipm_cxt.filter_inited) {
         ret = camera_close_filter(cxt);
         cxt->ipm_cxt.filter_inited = 0;
+    }
+
+    if (cxt->snp_cxt.start_capture_flag) {
+        cxt->snp_cxt.start_capture_flag = 0;
     }
 
     ret = cmr_snapshot_deinit(snp_cxt->snapshot_handle);
@@ -9327,12 +9334,14 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         goto exit;
     }
     video_snapshot_type = setting_param.cmd_type_value;
-    if (video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
+    if (video_snapshot_type != VIDEO_SNAPSHOT_VIDEO &&
+        cxt->snp_cxt.start_capture_flag == 0) {
         ret = camera_local_start_capture(oem_handle);
         if (ret) {
             CMR_LOGE("camera_start_capture failed");
             goto exit;
         }
+        cxt->snp_cxt.start_capture_flag = 1;
     }
 
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
@@ -11062,7 +11071,7 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle) {
         CMR_LOGE("cmr_grab_stop_capture failed");
         goto exit;
     }
-
+    cxt->snp_cxt.start_capture_flag = 0;
 exit:
     return ret;
 }
@@ -11697,7 +11706,8 @@ cmr_int camera_local_image_sw_algorithm_processing(
         goto exit;
     }
 
-    cmr_snapshot_invalidate_cache(cxt->snp_cxt.snapshot_handle, &ipm_in_param.src_frame);
+    cmr_snapshot_invalidate_cache(cxt->snp_cxt.snapshot_handle,
+                                  &ipm_in_param.src_frame);
 
     if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR) {
         ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
@@ -11773,8 +11783,10 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
         bv = adgain_exp_info.bv;
 
         isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_GAIN, (void *)&awbc);
-        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_GLB_GAIN, (void *)&glb_gain);
-        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_CT, (void *)&isp_cur_ct);
+        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_GLB_GAIN,
+                  (void *)&glb_gain);
+        isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AWB_CT,
+                  (void *)&isp_cur_ct);
         isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_AF_POS, (void *)&pos);
 
         strcpy(file_name, CAMERA_DUMP_PATH);
@@ -11844,7 +11856,6 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", isp_cur_bv);
         strcat(file_name, tmp_str);
-
     }
 
     if (img_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {

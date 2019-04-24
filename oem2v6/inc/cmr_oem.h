@@ -188,6 +188,8 @@ struct snapshot_context {
     cmr_u32 zsl_frame;
     cmr_uint filter_type;
     cmr_uint is_req_snp;
+    // fix burst called cmr_grab_start_capture repeatedly
+    cmr_u32 start_capture_flag;
     cmr_s64 cap_time_stamp;
     cmr_s64 cap_need_time_stamp;
     float hdr_ev[HDR_CAP_NUM];
@@ -438,7 +440,8 @@ cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle,
                                         cmr_u32 camera_id, cmr_uint skip_num,
                                         cmr_uint has_preflashed);
 
-cmr_int camera_isp_set_params(cmr_handle camera_handle, enum camera_param_type id, cmr_uint param);
+cmr_int camera_isp_set_params(cmr_handle camera_handle,
+                              enum camera_param_type id, cmr_uint param);
 
 cmr_int camera_local_set_param(cmr_handle camera_handle,
                                enum camera_param_type id, cmr_uint param);
@@ -518,7 +521,7 @@ cmr_int cmr_get_sensor_vcm_step(cmr_handle oem_handle, cmr_u32 camera_id,
 cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
                           struct vcm_range_info *vcm_range);
 cmr_int cmr_set_vcm_disc(cmr_handle oem_handle, cmr_u32 camera_id,
-                                    struct vcm_disc_info *vcm_disc);
+                         struct vcm_disc_info *vcm_disc);
 int af_state_focus_to_hal(cmr_u32 valid_win);
 cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle);
 cmr_int camera_local_set_cap_size(
