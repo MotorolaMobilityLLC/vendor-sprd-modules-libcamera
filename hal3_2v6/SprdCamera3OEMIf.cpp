@@ -8549,12 +8549,18 @@ uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd) {
     uint32_t id = 0xFFFFFFFF;
     uint32_t i;
     for (i = 0; i < mZslHeapNum; i++) {
+        if (mZslHeapArray[i] == NULL) {
+            HAL_LOGE("mZslHeapArray[%d] is null", i);
+            goto exit;
+        }
+
         if (0 != mZslHeapArray[i]->fd && mZslHeapArray[i]->fd == fd) {
             id = i;
             break;
         }
     }
 
+exit:
     return id;
 }
 
@@ -8576,10 +8582,12 @@ int SprdCamera3OEMIf::pushZslFrame(struct camera_frame_type *frame) {
     ZslBufferQueue zsl_buffer_q;
 
     frame->buf_id = getZslBufferIDForFd(frame->fd);
-    memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
-    zsl_buffer_q.frame = *frame;
-    zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
-    pushZSLQueue(&zsl_buffer_q);
+    if (frame->buf_id != 0xFFFFFFFF) {
+        memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
+        zsl_buffer_q.frame = *frame;
+        zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
+        pushZSLQueue(&zsl_buffer_q);
+    }
     return ret;
 }
 
@@ -8793,6 +8801,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         // for 3dnr sw 2.0
         if (mSprd3dnrEnabled) {
             buf_id = getZslBufferIDForFd(zsl_frame.fd);
+            if (buf_id == 0xFFFFFFFF) {
+                goto exit;
+            }
             src_sw_algorithm_buf.reserved =
                 (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
             src_sw_algorithm_buf.height = zsl_frame.height;
