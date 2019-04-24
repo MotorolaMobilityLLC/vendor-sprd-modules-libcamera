@@ -1721,6 +1721,31 @@ static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
+static cmr_int ispalg_hist2_process(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	ret = ispalg_hist2_stats_parser(cxt, data);
+	if (ret) {
+		ISP_LOGE("fail to parse hist2 stats");
+		return ret;
+	}
+
+	if (cxt->commn_cxt.callback) {
+		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
+					      ISP_CALLBACK_EVT | ISP_HIST_REPORT_CALLBACK,
+					      cxt->hist2_stats.value,
+					      sizeof(cmr_u32) * 256);
+		if (ret) {
+			ISP_LOGE("fail to report hist2 stats");
+			return ret;
+		}
+	}
+
+	return ret;
+}
+
 static cmr_int ispalg_3dnr_statis_parser(cmr_handle isp_alg_handle, void *data) {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2697,7 +2722,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_hist_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_EVT_HIST2:
-		ret = ispalg_hist2_stats_parser((cmr_handle) cxt, message->data);
+		ret = ispalg_hist2_process((cmr_handle) cxt, message->data);
 		break;
 	case ISP_EVT_3DNR:
 		ret = ispalg_3dnr_statis_parser((cmr_handle) cxt, message->data);
