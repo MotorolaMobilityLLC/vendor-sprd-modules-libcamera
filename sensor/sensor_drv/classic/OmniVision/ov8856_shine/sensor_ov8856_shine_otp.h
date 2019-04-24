@@ -303,6 +303,7 @@ static uint32_t ov8856_update_lsc(cmr_handle handle, void *param_ptr) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5900 + i,
                                 otp_info->lsc_param[i]);
         }
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x59f4, 0x32);
     }
 
     return rtn;
