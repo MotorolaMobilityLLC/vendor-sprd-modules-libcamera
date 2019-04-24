@@ -3430,9 +3430,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         for (j = 0; j < s_setting[mCameraId].vcm_num; j++) {
             HAL_LOGD("vcm_dac[%d] %d", j, s_setting[mCameraId].vcm_dac[j]);
         }
-        requestInfo.update(ANDROID_SPRD_OTP_DATA,
-                           s_setting[mCameraId].otpInfo.otp_data,
-                           SPRD_DUAL_OTP_SIZE);
+        if (s_setting[mCameraId].otpInfo.otp_size != 0)
+            requestInfo.update(ANDROID_SPRD_OTP_DATA,
+                               s_setting[mCameraId].otpInfo.otp_data,
+                               s_setting[mCameraId].otpInfo.otp_size);
         requestInfo.update(ANDROID_SPRD_DUAL_OTP_FLAG,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
