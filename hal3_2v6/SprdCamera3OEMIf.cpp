@@ -230,9 +230,9 @@ struct stateMachine awbStateMachine[] = {
 struct stateMachine afModeAutoOrMacroStateMachine[] = {
     {ANDROID_CONTROL_AF_STATE_INACTIVE, AF_TRIGGER_START,
      ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN},
-    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN, AF_FOCUSED_LOCKED,
+    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN, AF_SWEEP_DONE_AND_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
-    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN, AF_NOT_FOCUSED_LOCKED,
+    {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN, AF_SWEEP_DONE_AND_NOT_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
     {ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN, AF_TRIGGER_CANCEL,
      ANDROID_CONTROL_AF_STATE_INACTIVE},
@@ -251,14 +251,13 @@ struct stateMachine afModeContinuousPictureStateMachine[] = {
      ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
     {ANDROID_CONTROL_AF_STATE_INACTIVE, AF_TRIGGER_START,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_PASSIVE_FOCUSED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_COMPLETES_CURRENT_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_PASSIVE_UNFOCUSED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_FAILS_CURRENT_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED},
-    // eventual transition, differ with afModeContinuousVideoStateMachine
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_FOCUSED_LOCKED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_NOT_FOCUSED_LOCKED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
     {ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED, AF_INITIATES_NEW_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
@@ -284,12 +283,13 @@ struct stateMachine afModeContinuousVideoStateMachine[] = {
      ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
     {ANDROID_CONTROL_AF_STATE_INACTIVE, AF_TRIGGER_START,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_PASSIVE_FOCUSED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_COMPLETES_CURRENT_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_PASSIVE_UNFOCUSED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_FAILS_CURRENT_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED},
-    // immediate transition, differ with afModeContinuousPictureStateMachine
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_FOCUSED_LOCKED,
+     ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
     {ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED, AF_INITIATES_NEW_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
@@ -375,7 +375,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
-      mIsUnpopped(false), mIsBlur2Zsl(false), mPreviewFormat(CAM_IMG_FMT_YUV420_NV21),
+      mIsUnpopped(false), mIsBlur2Zsl(false),
+      mPreviewFormat(CAM_IMG_FMT_YUV420_NV21),
       mVideoFormat(CAM_IMG_FMT_YUV420_NV21),
       mCallbackFormat(CAM_IMG_FMT_YUV420_NV21),
       mPictureFormat(CAM_IMG_FMT_YUV420_NV21),
@@ -1328,19 +1329,28 @@ status_t SprdCamera3OEMIf::autoFocus() {
         }
     }
 
-    // remove later, not same with google doc
-    // a new auto focus is needed when flash snapshot even af_state is
-    // PASSIVE_FOCUSED and PASSIVE_UNFOCUSED
-    if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+    if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+        controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+        setAfState(AF_TRIGGER_START);
+    } else if (controlInfo.af_mode ==
+                   ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+               controlInfo.af_mode ==
+                   ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
         setAfState(AF_INITIATES_NEW_SCAN);
     }
-
-    setAfState(AF_TRIGGER_START);
 
     if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
         HAL_LOGE("auto foucs fail.");
         setCameraState(SPRD_IDLE, STATE_FOCUS);
-        setAfState(AF_NOT_FOCUSED_LOCKED);
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+            controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+            setAfState(AF_SWEEP_DONE_AND_NOT_FOCUSED_LOCKED);
+        } else if (controlInfo.af_mode ==
+                       ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+                   controlInfo.af_mode ==
+                       ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+            setAfState(AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED);
+        }
     }
 
     HAL_LOGD("X");
@@ -3291,7 +3301,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     scalerCrop.width = scaleInfo.crop_region[2];
     scalerCrop.height = scaleInfo.crop_region[3];
     // changed code hare to handle crop reagion 0 ,0 ,0 ,0
-    if (scalerCrop.width == 0 || scalerCrop.height == 0){
+    if (scalerCrop.width == 0 || scalerCrop.height == 0) {
         mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
         scalerCrop.width = picW;
         scalerCrop.height = picH;
@@ -5138,7 +5148,15 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                 }
             }
 
-            setAfState(AF_FOCUSED_LOCKED);
+            if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+                controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+                setAfState(AF_SWEEP_DONE_AND_FOCUSED_LOCKED);
+            } else if (controlInfo.af_mode ==
+                           ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+                       controlInfo.af_mode ==
+                           ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+                setAfState(AF_TRIGGER_START_AND_FOCUSED_LOCKED);
+            }
 
             // channel->channelCbRoutine(0, timeStamp,
             // CAMERA_STREAM_TYPE_DEFAULT);
@@ -5153,7 +5171,15 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
-        setAfState(AF_NOT_FOCUSED_LOCKED);
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+            controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+            setAfState(AF_SWEEP_DONE_AND_NOT_FOCUSED_LOCKED);
+        } else if (controlInfo.af_mode ==
+                       ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+                   controlInfo.af_mode ==
+                       ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+            setAfState(AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED);
+        }
         // channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
         if (controlInfo.af_mode ==
             ANDROID_CONTROL_AF_MODE_AUTO) // reset autofocus only in TouchAF
@@ -5171,7 +5197,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
             if (focus_status->is_in_focus) {
                 setAfState(AF_INITIATES_NEW_SCAN);
             } else {
-                setAfState(AF_PASSIVE_FOCUSED);
+                setAfState(AF_COMPLETES_CURRENT_SCAN);
                 mLastCafDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
             }
         }
@@ -5199,7 +5225,15 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     default:
         HAL_LOGE("camera cb: unknown cb %d for CAMERA_FUNC_START_FOCUS!", cb);
         {
-            setAfState(AF_NOT_FOCUSED_LOCKED);
+            if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
+                controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
+                setAfState(AF_SWEEP_DONE_AND_NOT_FOCUSED_LOCKED);
+            } else if (controlInfo.af_mode ==
+                           ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
+                       controlInfo.af_mode ==
+                           ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
+                setAfState(AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED);
+            }
 
             // channel->channelCbRoutine(0, timeStamp,
             // CAMERA_STREAM_TYPE_DEFAULT);
@@ -5298,7 +5332,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EVT_CB_HIST_REPORT: {
         int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};
-        memcpy(hist_report, (int32_t *)parm4, sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+        memcpy(hist_report, (int32_t *)parm4,
+               sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
         mSetting->setHISTOGRAMTag(hist_report);
 
         // control log print
@@ -5306,7 +5341,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         property_get("persist.vendor.cam.histogram.log.enable", prop, "0");
         if (atoi(prop)) {
             for (int i = 0; i < CAMERA_ISP_HIST_ITEMS; i++) {
-                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d", hist_report[i]);
+                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d",
+                         hist_report[i]);
             }
         }
     } break;

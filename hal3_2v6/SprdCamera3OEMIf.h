@@ -153,11 +153,13 @@ typedef struct {
 enum afTransitionCause {
     AF_MODE_CHANGE = 0,
     AF_INITIATES_NEW_SCAN,
-    AF_PASSIVE_FOCUSED,   // af in focus after passive scan
-    AF_PASSIVE_UNFOCUSED, // af not in focus after passive scan
-    AF_FOCUSED_LOCKED, // af focused locked when af_trigger start
-    AF_NOT_FOCUSED_LOCKED, // af not focused locked when af_trigger start
+    AF_COMPLETES_CURRENT_SCAN,
+    AF_FAILS_CURRENT_SCAN,
     AF_TRIGGER_START,
+    AF_SWEEP_DONE_AND_FOCUSED_LOCKED,
+    AF_SWEEP_DONE_AND_NOT_FOCUSED_LOCKED,
+    AF_TRIGGER_START_AND_FOCUSED_LOCKED,
+    AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
     AF_TRIGGER_CANCEL,
     AF_MODE_MAX,
 };
