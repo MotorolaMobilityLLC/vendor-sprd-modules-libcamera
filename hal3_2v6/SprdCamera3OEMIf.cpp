@@ -375,7 +375,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
-      mIsUnpopped(false), mIsBlur2Zsl(false), mPreviewFormat(CAM_IMG_FMT_NONE),
+      mIsUnpopped(false), mIsBlur2Zsl(false), mPreviewFormat(CAM_IMG_FMT_YUV420_NV21),
       mVideoFormat(CAM_IMG_FMT_YUV420_NV21),
       mCallbackFormat(CAM_IMG_FMT_YUV420_NV21),
       mPictureFormat(CAM_IMG_FMT_YUV420_NV21),
