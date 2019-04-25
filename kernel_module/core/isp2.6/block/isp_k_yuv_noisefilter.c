@@ -26,7 +26,7 @@
 	fmt, current->pid, __LINE__, __func__
 
 
-static int isp_k_noisefilter_block(struct isp_io_param *param, uint32_t idx)
+static int isp_k_noisefilter_block(struct isp_io_param *param, struct isp_k_block *isp_k_param, uint32_t idx)
 {
 	int ret = 0;
 	uint32_t val = 0;
@@ -39,23 +39,31 @@ static int isp_k_noisefilter_block(struct isp_io_param *param, uint32_t idx)
 		pr_err("fail to copy from user, ret = %d\n", ret);
 		return ret;
 	}
+
 	if (g_isp_bypass[idx] & (1 << _EISP_YUVNF))
 		nf_info.yrandom_bypass = 1;
 	ISP_REG_MWR(idx, ISP_YUV_NF_CTRL, BIT_0, nf_info.yrandom_bypass);
 	if (nf_info.yrandom_bypass)
 		return 0;
 
+	pr_debug("yrandom_mode=%d,shape_mode=%d,index=%d\n", nf_info.yrandom_mode, nf_info.shape_mode, idx);
 	val = ((nf_info.shape_mode & 1) << 1) |
 		((nf_info.filter_thr_mode & 0x3) << 2) |
 		((nf_info.yrandom_mode & 0x1) << 5);
 	ISP_REG_MWR(idx, ISP_YUV_NF_CTRL, 0x2E, val);
+	ISP_REG_WR(idx, ISP_YUV_NF_SEED_INIT, 1);
 
-	ISP_REG_WR(idx, ISP_YUV_NF_SEED0, nf_info.yrandom_seed[0]);
-	ISP_REG_WR(idx, ISP_YUV_NF_SEED1, nf_info.yrandom_seed[1]);
-	ISP_REG_WR(idx, ISP_YUV_NF_SEED2, nf_info.yrandom_seed[2]);
-	ISP_REG_WR(idx, ISP_YUV_NF_SEED3, nf_info.yrandom_seed[3]);
-	ISP_REG_WR(idx, ISP_YUV_NF_SEED_INIT, nf_info.yrandom_init);
+	if (nf_info.shape_mode == 0) {
+		ISP_REG_WR(idx, ISP_YUV_NF_SEED0, nf_info.yrandom_seed[0]);
+		ISP_REG_WR(idx, ISP_YUV_NF_SEED1, nf_info.yrandom_seed[1]);
+		ISP_REG_WR(idx, ISP_YUV_NF_SEED2, nf_info.yrandom_seed[2]);
+		ISP_REG_WR(idx, ISP_YUV_NF_SEED3, nf_info.yrandom_seed[3]);
 
+	} else {
+		isp_k_param->seed0_for_mode1 = nf_info.yrandom_seed[0];
+		isp_k_param->shape_mode = nf_info.shape_mode;
+		pr_debug("seed0_for_mode1=%d\n", isp_k_param->seed0_for_mode1);
+	}
 	val = (nf_info.takebit[0]  & 0xF) |
 			((nf_info.takebit[1] & 0xF) << 4) |
 			((nf_info.takebit[2] & 0xF) << 8) |
@@ -92,13 +100,13 @@ static int isp_k_noisefilter_block(struct isp_io_param *param, uint32_t idx)
 	return ret;
 }
 
-int isp_k_cfg_yuv_noisefilter(struct isp_io_param *param, uint32_t idx)
+int isp_k_cfg_yuv_noisefilter(struct isp_io_param *param, struct isp_k_block *isp_k_param, uint32_t idx)
 {
 	int ret = 0;
 
 	switch (param->property) {
 	case ISP_PRO_NOISE_FILTER_BLOCK:
-		ret = isp_k_noisefilter_block(param, idx);
+		ret = isp_k_noisefilter_block(param, isp_k_param, idx);
 		break;
 	default:
 		pr_err("fail to support cmd id = %d\n",

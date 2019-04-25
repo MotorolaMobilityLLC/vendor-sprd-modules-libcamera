@@ -64,6 +64,92 @@ struct isp_scaler_slice_tmp {
 	uint32_t scaler_out_width_temp;
 };
 
+static uint32_t sprd_ispslice_noisefilter_24b_shift8(uint32_t seed,
+	uint32_t *data_out)
+{
+	uint32_t bit_0 = 0, bit_1 = 0;
+	uint32_t bit_2 = 0, bit_3 = 0;
+	uint32_t bit_in[8] = {0}, bit_in8b = 0;
+	uint32_t out = 0;
+	uint32_t i = 0;
+
+	for (i = 0; i < 8; i++) {
+		bit_0 = (seed >> (0 + i)) & 0x1;
+		bit_1 = (seed >> (1 + i)) & 0x1;
+		bit_2 = (seed >> (2 + i)) & 0x1;
+		bit_3 = (seed >> (7 + i)) & 0x1;
+		bit_in[i] = bit_0 ^ bit_1 ^ bit_2 ^ bit_3;
+	}
+	bit_in8b = (bit_in[7] << 7) | (bit_in[6] << 6) | (bit_in[5] << 5) |
+		(bit_in[4] << 4) | (bit_in[3] << 3) | (bit_in[2] << 2) |
+		(bit_in[1] << 1) | bit_in[0];
+
+	out = seed & 0xffffff;
+	out = out | (bit_in8b << 24);
+	if (data_out)
+		*data_out = out;
+
+	out = out >> 8;
+
+	return out;
+}
+
+static void sprd_ispslice_noisefilter_seeds(uint32_t image_width,
+	uint32_t seed0, uint32_t *seed1, uint32_t *seed2, uint32_t *seed3)
+{
+	uint32_t i = 0;
+
+	*seed1 = sprd_ispslice_noisefilter_24b_shift8(seed0, NULL);
+	*seed2 = seed0;
+
+	for (i = 0; i < image_width; i++)
+		*seed2 = sprd_ispslice_noisefilter_24b_shift8(*seed2, NULL);
+
+	*seed3 = sprd_ispslice_noisefilter_24b_shift8(*seed2, NULL);
+}
+
+static int sprd_ispslice_noisefliter_info_set(struct isp_slice_desc *slc_ctx,
+	struct isp_slice_context *ctx)
+{
+	int rtn = 0,slice_id = 0;
+	uint32_t slice_num = 0;
+	uint32_t slice_width = 0 ;
+	uint32_t seed0 = 0;
+	struct isp_slice_desc *cur_slc=slc_ctx;
+	struct slice_noisefilter_info *noisefilter_info = NULL;
+	struct slice_scaler_info *scaler_info = NULL;
+
+	if (!ctx) {
+		pr_err("fail to get valid input ptr\n");
+		rtn = -EINVAL;
+		goto exit;
+	}
+
+	slice_num = ctx->slice_num;
+	scaler_info = &cur_slc->slice_scaler[0];
+	seed0 = cur_slc->slice_noisefilter_mode.seed_for_mode1;
+	pr_debug("shape_mode=%d,slice_num=%d\n",
+		cur_slc->slice_noisefilter_mode.shape_mode, slice_num);
+	if (cur_slc->slice_noisefilter_mode.shape_mode == 1) {
+		for (slice_id = 0; slice_id < slice_num; slice_id++,cur_slc++) {
+			noisefilter_info = &cur_slc->noisefilter_info;
+			noisefilter_info->seed0 = seed0;
+			slice_width = scaler_info->trim1_size_x;
+			sprd_ispslice_noisefilter_seeds(slice_width,
+				noisefilter_info->seed0,&noisefilter_info->seed1,
+					&noisefilter_info->seed2, &noisefilter_info->seed3);
+			pr_debug("seed0=%d,seed1=%d,seed2=%d,seed3=%d,slice_width=%d\n",
+				noisefilter_info->seed0, noisefilter_info->seed1,
+					noisefilter_info->seed2, noisefilter_info->seed3, slice_width);
+		}
+	} else
+		return rtn;
+
+exit:
+	return rtn;
+}
+
+
 static int get_slice_size_info(
 			struct slice_cfg_input *in_ptr,
 			uint32_t *w, uint32_t *h)
@@ -1819,6 +1905,27 @@ int isp_cfg_slice_ltm_info(
 	return ret;
 }
 
+int isp_cfg_slice_noisefilter_info(void *cfg_in, struct isp_slice_context *slc_ctx){
+
+	int ret = 0, rtn = 0;
+	struct isp_slice_desc *cur_slc;
+	struct slice_cfg_input *in_ptr = (struct slice_cfg_input *)cfg_in;
+	struct isp_k_block  *isp_k_param = in_ptr->nofilter_ctx;
+
+	if (!slc_ctx){
+		pr_err("error: null input ptr.\n");
+		return -EFAULT;
+	}
+
+	cur_slc = &slc_ctx->slices[0];
+	cur_slc->slice_noisefilter_mode.seed_for_mode1 = isp_k_param->seed0_for_mode1;
+	cur_slc->slice_noisefilter_mode.shape_mode = isp_k_param->shape_mode;
+
+	rtn=sprd_ispslice_noisefliter_info_set(cur_slc, slc_ctx);
+
+	return ret;
+
+}
 
 int isp_cfg_slices(void *cfg_in,
 		struct isp_slice_context *slc_ctx)
@@ -2389,6 +2496,36 @@ static int set_slice_ltm(
 	return 0;
 }
 
+
+static int set_slice_nofilter(
+		struct isp_fmcu_ctx_desc *fmcu,
+		struct isp_slice_desc *cur_slc)
+{
+	uint32_t addr = 0, cmd = 0;
+	struct slice_noisefilter_info *map = &cur_slc->noisefilter_info;
+
+	pr_debug("seed0=%d,seed1=%d,seed2=%d,seed3=%d\n", map->seed0, map->seed1,
+		map->seed2, map->seed3);
+	addr = ISP_GET_REG(ISP_YUV_NF_SEED0);
+	cmd = map->seed0;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_YUV_NF_SEED1);
+	cmd = map->seed1;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_YUV_NF_SEED2);
+	cmd = map->seed2;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	addr = ISP_GET_REG(ISP_YUV_NF_SEED3);
+	cmd = map->seed3;
+	FMCU_PUSH(fmcu, addr, cmd);
+
+	return 0;
+}
+
+
 int isp_set_slices_fmcu_cmds(
 		void *fmcu_handle, void *slc_handle,
 		uint32_t ctx_idx, uint32_t wmode)
@@ -2400,7 +2537,7 @@ int isp_set_slices_fmcu_cmds(
 	struct slice_scaler_info *slc_scaler;
 	struct isp_slice_context *slc_ctx;
 	struct isp_fmcu_ctx_desc *fmcu;
-	uint32_t reg_off, addr = 0, cmd = 0;
+	uint32_t reg_off, addr = 0, cmd = 0, shape_mode = 0;
 	uint32_t shadow_done_cmd[ISP_CONTEXT_NUM] = {
 		PRE0_SHADOW_DONE, CAP0_SHADOW_DONE,
 		PRE1_SHADOW_DONE, CAP1_SHADOW_DONE,
@@ -2428,6 +2565,7 @@ int isp_set_slices_fmcu_cmds(
 		base =  ISP_FMCU1_BASE;
 
 	cur_slc = &slc_ctx->slices[0];
+	shape_mode = cur_slc->slice_noisefilter_mode.shape_mode;
 	for (i = 0; i < SLICE_NUM_MAX; i++, cur_slc++) {
 		if (cur_slc->valid == 0)
 			continue;
@@ -2443,6 +2581,8 @@ int isp_set_slices_fmcu_cmds(
 
 		set_slice_3dnr(fmcu, cur_slc);
 		set_slice_ltm(fmcu, cur_slc);
+		if(shape_mode == 1)
+			set_slice_nofilter(fmcu, cur_slc);
 
 		for (j = 0; j < ISP_SPATH_NUM; j++) {
 			slc_store = &cur_slc->slice_store[j];

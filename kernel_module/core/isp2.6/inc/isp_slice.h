@@ -223,6 +223,19 @@ struct slice_ltm_map_info {
 	uint32_t mem_addr;
 };
 
+struct slice_noisefilter_info {
+	uint32_t seed0;
+	uint32_t seed1;
+	uint32_t seed2;
+	uint32_t seed3;
+	uint32_t seed_int;
+};
+
+struct slice_noisefilter_mode_info {
+	uint32_t seed_for_mode1;
+	uint32_t shape_mode;
+};
+
 struct isp_slice_desc {
 	uint32_t valid;
 	uint32_t x;
@@ -247,6 +260,8 @@ struct isp_slice_desc {
 	struct slice_3dnr_store_info   slice_3dnr_store;
 	struct slice_3dnr_crop_info    slice_3dnr_crop;
 	struct slice_ltm_map_info      slice_ltm_map;
+	struct slice_noisefilter_info  noisefilter_info;
+	struct slice_noisefilter_mode_info slice_noisefilter_mode;
 };
 
 struct isp_slice_context {
@@ -274,6 +289,8 @@ int isp_cfg_slice_store_info(
 
 int isp_cfg_slice_3dnr_info(
 		void *cfg_in, struct isp_slice_context *slc_ctx);
+int isp_cfg_slice_noisefilter_info(void *cfg_in, struct isp_slice_context *slc_ctx);
+
 
 int isp_cfg_slice_ltm_info(
 	       void *cfg_in, struct isp_slice_context *slc_ctx);

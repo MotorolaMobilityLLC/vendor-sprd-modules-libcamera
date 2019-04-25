@@ -1610,6 +1610,9 @@ static int isp_offline_start_frame(void *ctx)
 		slc_cfg.ltm_ctx = &pctx->ltm_ctx;
 		isp_cfg_slice_ltm_info(&slc_cfg, pctx->slice_ctx);
 
+		slc_cfg.nofilter_ctx = &pctx->isp_k_param;
+		isp_cfg_slice_noisefilter_info(&slc_cfg, pctx->slice_ctx);
+
 		if (!fmcu) {
 			/* should not be here */
 			pr_err("error: no fmcu to support slices.\n");
@@ -2972,7 +2975,6 @@ static struct isp_cfg_entry cfg_func_tab[ISP_BLOCK_TOTAL - ISP_BLOCK_BASE] = {
 [ISP_BLOCK_UVD - ISP_BLOCK_BASE]	= {ISP_BLOCK_UVD, isp_k_cfg_uvd},
 [ISP_BLOCK_YGAMMA - ISP_BLOCK_BASE]	= {ISP_BLOCK_YGAMMA, isp_k_cfg_ygamma},
 [ISP_BLOCK_YRANDOM - ISP_BLOCK_BASE]	= {ISP_BLOCK_YRANDOM, isp_k_cfg_yrandom},
-[ISP_BLOCK_NOISEFILTER - ISP_BLOCK_BASE] = {ISP_BLOCK_NOISEFILTER, isp_k_cfg_yuv_noisefilter},
 };
 
 static int sprd_isp_cfg_blkparam(
@@ -3013,6 +3015,8 @@ static int sprd_isp_cfg_blkparam(
 		pctx->isp_k_param.src.h = pctx->input_trim.size_y;
 		mutex_unlock(&pctx->param_mutex);
 		ret = isp_k_cfg_ynr(param, &pctx->isp_k_param, ctx_id);
+	} else if (io_param->sub_block == ISP_BLOCK_NOISEFILTER) {
+		ret = isp_k_cfg_yuv_noisefilter(param, &pctx->isp_k_param, ctx_id);
 	} else {
 		i = io_param->sub_block - ISP_BLOCK_BASE;
 		if (cfg_func_tab[i].sub_block == io_param->sub_block)

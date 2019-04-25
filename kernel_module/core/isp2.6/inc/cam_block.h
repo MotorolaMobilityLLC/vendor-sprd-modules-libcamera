@@ -21,6 +21,8 @@ struct isp_k_block {
 	struct isp_dev_nlm_info_v2 nlm_info;
 	struct isp_dev_ynr_info_v2 ynr_info;
 	struct isp_dev_3dnr_info nr3_info;
+	uint32_t seed0_for_mode1;
+	uint32_t shape_mode;
 };
 
 int dcam_init_lsc(void *param, uint32_t online);
@@ -102,7 +104,7 @@ int isp_k_cfg_pstrz(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_uvd(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_ygamma(struct isp_io_param *param, uint32_t idx);
 int isp_k_cfg_yrandom(struct isp_io_param *param, uint32_t idx);
-int isp_k_cfg_yuv_noisefilter(struct isp_io_param *param, uint32_t idx);
+int isp_k_cfg_yuv_noisefilter(struct isp_io_param *param, struct isp_k_block *isp_k_param, uint32_t idx);
 
 int isp_k_update_nlm(uint32_t idx,
 	struct isp_k_block *isp_k_param,
