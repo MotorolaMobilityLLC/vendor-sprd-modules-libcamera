@@ -121,7 +121,11 @@ struct face_tuning_param {
 	struct face_cfg cfg[FACE_CFG_NUM];	/*8 * 6bytes */
 	cmr_u8 face_disappear_count;
 	cmr_u8 face_block_threshold;
-	cmr_u16 reserved[4];		//?
+	cmr_u8 ae_thd;
+	cmr_u8 face_low_thd;
+	cmr_u8 face_high_thd;
+	cmr_u8 reserved0;
+	cmr_u16 reserved[2];		//?
 };
 
 struct ae_touch_param {
