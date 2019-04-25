@@ -4240,9 +4240,8 @@ int SprdCamera3Setting::updateWorkParameters(
                     }
                 } else if (af_area[0] == 0 && af_area[1] == 0 &&
                            af_area[2] == 0 && af_area[3] == 0) {
-                    for (i = 0; i < 4; i++)
+                    for (i = 0; i < 5; i++)
                         s_setting[mCameraId].controlInfo.af_regions[i] = af_area[i];
-                    s_setting[mCameraId].controlInfo.af_regions[4] = 0;
                 }
             }
         }
