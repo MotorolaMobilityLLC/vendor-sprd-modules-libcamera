@@ -5258,7 +5258,11 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
     ion_buf.fd = img->fd;
     ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
     ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
-    ion_buf.size = img->size.width * img->size.height * 3 / 2;
+    if(img->fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
+        ion_buf.size = img->size.width * img->size.height * 5 / 4;
+    } else {
+        ion_buf.size = img->size.width * img->size.height * 3 / 2;
+    }
     CMR_LOGD("flush bug info: fd=%d, addr_vir=%p, size=%ld", ion_buf.fd,
              ion_buf.addr_vir, ion_buf.size);
     ret = snp_send_msg_notify_thr(snapshot_handle, SNAPSHOT_FUNC_TAKE_PICTURE,

@@ -11495,6 +11495,8 @@ cmr_int camera_4in1_handle(cmr_int evt, void *data, void *privdata) {
     src_param.addr_phy.addr_y = frame->yaddr;
     src_param.addr_phy.addr_u = frame->uaddr;
     src_param.addr_phy.addr_v = frame->vaddr;
+    src_param.size.height = frame->height;
+    src_param.size.width = frame->length;
     src_param.monoboottime = frame->monoboottime;
     ipm_in_param.src_frame = src_param;
     ipm_in_param.private_data = privdata;
@@ -11569,12 +11571,23 @@ cmr_int camera_channel_reproc(cmr_handle oem_handle,
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct img_frm img;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     if (!oem_handle) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+
+    cmr_bzero(&img, sizeof(struct img_frm));
+    img.fd = buf_cfg->fd[0];
+    img.addr_phy.addr_y = buf_cfg->addr[0].addr_y;
+    img.addr_vir.addr_y = buf_cfg->addr_vir[0].addr_y;
+    img.size.height = buf_cfg->slice_height;
+    img.size.width = (buf_cfg->length * 4) / (buf_cfg->slice_height * 5);
+    img.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
+
+    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &img);
 
     ret = cmr_grab_buff_reproc(cxt->grab_cxt.grab_handle, buf_cfg);
     if (ret) {

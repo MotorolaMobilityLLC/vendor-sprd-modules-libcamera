@@ -226,6 +226,7 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
         buf_cfg.count = 1;
         buf_cfg.length =
             in->src_frame.size.width * in->src_frame.size.height * 5 / 4;
+        buf_cfg.slice_height = in->src_frame.size.height;
         buf_cfg.addr[0].addr_y = in->src_frame.addr_phy.addr_y;
         buf_cfg.addr_vir[0].addr_y = in->src_frame.addr_vir.addr_y;
         buf_cfg.fd[0] = in->src_frame.fd;
