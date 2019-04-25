@@ -128,6 +128,7 @@ SprdCamera3Blur::SprdCamera3Blur() {
     weight_map = NULL;
     mCameraId = CAM_BLUR_MAIN_ID;
     mFlushing = false;
+    mInitThread = false;
     mReqState = PREVIEW_REQUEST_STATE;
     mPerfectskinlevel = 0;
     mCoverValue = 1;
@@ -292,6 +293,7 @@ int SprdCamera3Blur::closeCameraDevice() {
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
         }
+        mInitThread = false;
     }
 
     freeLocalCapBuffer();
@@ -3540,6 +3542,7 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     m_pNearJpegBuffer = NULL;
     m_pFarJpegBuffer = NULL;
     mFlushing = false;
+    mInitThread = false;
     mReqState = PREVIEW_REQUEST_STATE;
     SprdCamera3MultiBase::initialize(MODE_BLUR, hwiMain);
 
@@ -3572,12 +3575,28 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     memset(&mCaptureThread->mSavedCapReqstreambuff, 0,
            sizeof(camera3_stream_buffer_t));
     mCaptureThread->mCallbackOps = callback_ops;
+    mBlur->initThread();
+    HAL_LOGI("X");
+
+    return rc;
+}
+
+int SprdCamera3Blur::initThread() {
+    int rc = NO_ERROR;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
     mCaptureThread->run(String8::format("Blur").string(), -7);
     rc = mCaptureThread->initBlurInitParams();
     mCaptureThread->initBlurWeightParams();
-    HAL_LOGI("X");
+    mInitThread = true;
+    return rc;
+}
 
+int SprdCamera3Blur::resetVariablesToDefault() {
+    int rc = NO_ERROR;
+    mFlushing = false;
+    if (!mInitThread) {
+        mBlur->initThread();
+    }
     return rc;
 }
 
@@ -3604,6 +3623,7 @@ int SprdCamera3Blur::configureStreams(
     struct stream_info_s stream_info;
 
     Mutex::Autolock l(mLock);
+    mBlur->resetVariablesToDefault();
 
     HAL_LOGD("configurestreams, stream num:%d", stream_list->num_streams);
     for (size_t i = 0; i < stream_list->num_streams; i++) {
@@ -4261,6 +4281,7 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
             mCaptureThread->requestExit();
         }
         mCaptureThread->join();
+        mInitThread = false;
     }
     HAL_LOGI("X");
 

@@ -336,6 +336,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mCaptureHeight;
     new_mem_t mLocalCapBuffer[BLUR_LOCAL_CAPBUFF_NUM];
     bool mFlushing;
+    bool mInitThread;
     List<request_saved_blur_t> mSavedRequestList;
     camera3_stream_t *mSavedReqStreams[BLUR_MAX_NUM_STREAMS];
     int mPreviewStreamsNum;
@@ -468,6 +469,8 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     sp<CaptureThread> mCaptureThread;
 
     int initialize(const camera3_callback_ops_t *callback_ops);
+    int initThread();
+    int resetVariablesToDefault();
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
     int processCaptureRequest(const struct camera3_device *device,
