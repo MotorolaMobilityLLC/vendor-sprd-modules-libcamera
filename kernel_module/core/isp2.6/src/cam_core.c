@@ -1245,6 +1245,36 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			}
 		} else if (channel->ch_id == CAM_CH_RAW) {
 			/* RAW capture or test_dcam only */
+			if (module->cam_uinfo.is_4in1 == 0) {
+				uint32_t capture = 0;
+				if (module->cap_status == CAM_CAPTURE_START) {
+					if (module->dcam_cap_status != DCAM_CAPTURE_START_FROM_NEXT_SOF) {
+						capture = 1;
+					} else if (pframe->boot_sensor_time > module->capture_times) {
+						/*  raw capture with flash */
+						capture = 1;
+					}
+				}
+				pr_info("capture %d, fid %d, start %d  type %d\n", capture,
+					pframe->fid, module->cap_status, module->dcam_cap_status);
+				pr_info("cap time %lld, frame time %lld\n",
+					module->capture_times, pframe->boot_sensor_time);
+				if (pframe->sync_data)
+					dcam_if_release_sync(pframe->sync_data, pframe);
+				if (capture == 0) {
+					ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+							DCAM_PATH_CFG_OUTPUT_BUF,
+							channel->dcam_path_id, pframe);
+					return 0;
+				}
+				pframe->evt = IMG_TX_DONE;
+				pframe->irq_type = CAMERA_IRQ_IMG;
+				ret = camera_enqueue(&module->frm_queue, pframe);
+				complete(&module->frm_com);
+				pr_info("get out raw frame: fd:%d\n", pframe->buf.mfd[0]);
+				return 0;
+			}
+
 			pframe->evt = IMG_TX_DONE;
 			if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE)
 				pframe->irq_type = CAMERA_IRQ_IMG;
@@ -2941,6 +2971,7 @@ static int camera_module_init(struct camera_module *module)
 	init_completion(&module->frm_com);
 	init_completion(&module->streamoff_com);
 	module->cap_status = CAM_CAPTURE_STOP;
+	module->dcam_cap_status = DCAM_CAPTURE_STOP;
 
 	for (ch = 0; ch < CAM_CH_MAX; ch++) {
 		channel = &module->channel[ch];
@@ -4683,6 +4714,8 @@ static int img_ioctl_stream_off(
 	pr_info("cam %d stream off. state: %d\n",
 		module->idx, atomic_read(&module->state));
 	atomic_set(&module->state, CAM_STREAM_OFF);
+	module->cap_status = CAM_CAPTURE_STOP;
+	module->dcam_cap_status = DCAM_CAPTURE_STOP;
 
 	/* stop raw dump */
 	if (module->dump_thrd.thread_task) {
@@ -4926,6 +4959,7 @@ static int img_ioctl_stop_capture(
 {
 	struct channel_context *channel = NULL;
 	module->cap_status = CAM_CAPTURE_STOP;
+	module->dcam_cap_status = DCAM_CAPTURE_STOP;
 	pr_info("cam %d stop capture.\n", module->idx);
 	/* Handling special case in which stop_capture comes before start_capture.
 	 * In this case before assigning NULL to  module->dual_frame, we should check if it points
@@ -4969,6 +5003,7 @@ static int raw_proc_done(struct camera_module *module)
 	pr_info("cam%d start\n", module->idx);
 
 	module->cap_status = CAM_CAPTURE_STOP;
+	module->dcam_cap_status = DCAM_CAPTURE_STOP;
 	atomic_set(&module->state, CAM_STREAM_OFF);
 
 	if (atomic_read(&module->timeout_flag) == 1)
@@ -5304,6 +5339,7 @@ static int raw_proc_post(
 	camera_queue_init(&module->frm_queue,
 		CAM_FRAME_Q_LEN, 0, camera_put_empty_frame);
 	module->cap_status = CAM_CAPTURE_RAWPROC;
+	module->dcam_cap_status = DCAM_CAPTURE_START;
 	atomic_set(&module->state, CAM_RUNNING);
 	ret = dcam_ops->proc_frame(module->dcam_dev_handle, src_frame);
 	if (ret)

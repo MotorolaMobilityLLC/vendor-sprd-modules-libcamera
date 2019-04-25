@@ -441,7 +441,7 @@ dispatch_sof:
 	    || !(dev->frame_index % dev->slowmotion_count)) {
 		dcam_dispatch_sof_event(dev);
 	}
-
+	dev->iommu_status = (uint32_t)(-1);
 	dev->frame_index++;
 }
 

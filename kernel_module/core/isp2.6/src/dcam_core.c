@@ -1766,6 +1766,7 @@ static int dcam_offline_start_frame(void *param)
 	dcam_force_copy(dev, force_ids);
 	udelay(500);
 
+	dev->iommu_status = (uint32_t)(-1);
 	atomic_set(&dev->state, STATE_RUNNING);
 	dcam_debug_trace(dev);
 

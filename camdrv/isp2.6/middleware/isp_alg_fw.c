@@ -310,6 +310,7 @@ struct isp_alg_sw_init_in {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
+	cmr_u8 fw_started;
 	cmr_u8 first_frm;
 	nsecs_t last_sof_time;
 	struct isp_awb_statistic_info aem_stats_data;
@@ -2559,6 +2560,8 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 	cmr_int ret = ISP_SUCCESS;
 	nsecs_t cur_time;
 	cmr_u32 timems_diff;
+	cmr_u32 is_raw_capture = 0;
+	char value[PROPERTY_VALUE_MAX];
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
 
 	if (!message || !p_data) {
@@ -2584,6 +2587,21 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ai_process((cmr_handle)cxt);
 		break;
 	case ISP_EVT_SOF:
+		if (cxt->fw_started == 0) {
+			/* workaround for raw capture with flash
+			  * because no statis data for raw, force AE process running to return flash messege to HAL
+			  */
+			property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+			if (!strcmp(value, "raw"))
+				is_raw_capture = 1;
+			if (is_raw_capture == 0)
+				break;
+			ISP_LOGD("force AE process for raw capture\n");
+			cxt->aem_is_update = 1;
+			ret = ispalg_start_ae_process((cmr_handle) cxt);
+			break;
+		}
+
 		cur_time = ispalg_get_sys_timestamp();
 		timems_diff = (cmr_u32)(cur_time - cxt->last_sof_time);
 		if (timems_diff < MIN_FRAME_INTERVAL_MS) {
@@ -4340,6 +4358,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
 
 	cxt->first_frm = 1;
+	cxt->aem_is_update = 0;
 	cxt->work_mode = in_ptr->work_mode;
 	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
@@ -4563,7 +4582,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
-
+	cxt->fw_started = 1;
 exit:
 	ISP_LOGD("done %ld", ret);
 	return ret;
@@ -4595,6 +4614,7 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	ISP_RETURN_IF_FAIL(ret, ("fail to stop isp alg fw"));
 
 exit:
+	cxt->fw_started = 0;
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -4840,16 +4860,18 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = ispalg_cfg_param(cxt, 1);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
-	param.is_need_flash = 0;
-	param.capture_skip_num = 0;
-	param.is_snapshot = 1;
-	param.dv_mode = 0;
-	param.sensor_fps.mode = in_ptr->sensor_fps.mode;
-	param.sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
-	param.sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
-	param.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
-	param.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
-	ret = ispalg_ae_set_work_mode(cxt, cxt->commn_cxt.isp_pm_mode[0], 0, &param);
+	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
+		param.is_need_flash = 0;
+		param.capture_skip_num = 0;
+		param.is_snapshot = 1;
+		param.dv_mode = 0;
+		param.sensor_fps.mode = in_ptr->sensor_fps.mode;
+		param.sensor_fps.max_fps = in_ptr->sensor_fps.max_fps;
+		param.sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
+		param.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
+		param.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
+		ret = ispalg_ae_set_work_mode(cxt, cxt->commn_cxt.isp_pm_mode[0], 0, &param);
+	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
