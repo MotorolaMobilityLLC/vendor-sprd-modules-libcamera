@@ -1286,7 +1286,7 @@ static cmr_s32 isp_pm_mode_list_deinit(cmr_handle handle)
 
 static cmr_s32 debug_save_nr_data(void *dataptr, cmr_u32 datalen,
 	cmr_u32 unit_len, cmr_u32 level_num,  cmr_u32 nr_type,
-	cmr_s8 *sensor_name, cmr_u32 mode_id)
+	cmr_s8 *sensor_name, cmr_u32 mode_id, cmr_u32 scene_id)
 {
 	int fd;
 	char file_name[256];
@@ -1297,8 +1297,9 @@ static cmr_s32 debug_save_nr_data(void *dataptr, cmr_u32 datalen,
 		return ISP_ERROR;
 	}
 
-	sprintf(file_name, "%sdump/%s_%s_normal_%s_param.bin", CAMERA_DUMP_PATH,
-		sensor_name,  nr_mode_name[mode_id],  nr_param_name[nr_type]);
+	sprintf(file_name, "%sdump/%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH,
+		sensor_name,  nr_mode_name[mode_id],
+		nr_scene_name[scene_id], nr_param_name[nr_type]);
 	fd = open(file_name, O_RDWR | O_CREAT, 0);
 	if (fd > 0) {
 		write(fd, dataptr, datalen);
@@ -1322,6 +1323,8 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	cmr_u32 data_area_size = 0;
 	cmr_u32 size = 0;
 	cmr_u32 add_ae_len = 0, add_awb_len = 0, add_lnc_len = 0;
+	cmr_u32 nr_scene_map;
+	cmr_u32 nr_scene_id;
 
 	struct isp_mode_param *src_mod_ptr = PNULL;
 	struct isp_pm_mode_param *dst_mod_ptr = PNULL;
@@ -1543,31 +1546,37 @@ start_parse:
 				nr_data_len[ISP_BLK_VST_T] = fix_data_ptr->nr.nr_set_group.vst_len;
 				nr_data_len[ISP_BLK_IVST_T] = fix_data_ptr->nr.nr_set_group.ivst_len;
 				nr_blk_id[ISP_BLK_NLM_T] = ISP_BLK_NLM_V1;
-				if (dump_nrdata) {
-					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.nlm + nr_mode_offset[ISP_BLK_NLM_T],
-						fix_data_ptr->nr.nr_set_group.nlm_len,
-						sizeof(struct sensor_nlm_level),
-						nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T],
-						ISP_BLK_NLM_T,
-						sensor_name, src_mod_ptr->mode_id);
+				nr_scene_map = nr_scene_map_ptr->nr_scene_map[src_mod_ptr->mode_id];
+				for (nr_scene_id = ISP_SCENEMODE_AUTO; nr_scene_id < ISP_SCENEMODE_MAX; nr_scene_id++) {
+					if ((nr_scene_map & (1 << nr_scene_id)) == 0)
+						continue;
+					ISP_LOGV("ISP_BLK_NLM, mode %d, scene_id %d\n", src_mod_ptr->mode_id, nr_scene_id);
+					if (dump_nrdata) {
+						debug_save_nr_data(fix_data_ptr->nr.nr_set_group.nlm + nr_mode_offset[ISP_BLK_NLM_T],
+							fix_data_ptr->nr.nr_set_group.nlm_len,
+							sizeof(struct sensor_nlm_level),
+							nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T],
+							ISP_BLK_NLM_T,
+							sensor_name, src_mod_ptr->mode_id, nr_scene_id);
 
-					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.vst + nr_mode_offset[ISP_BLK_VST_T],
-						fix_data_ptr->nr.nr_set_group.vst_len,
-						sizeof(struct sensor_vst_level),
-						nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T],
-						ISP_BLK_VST_T,
-						sensor_name, src_mod_ptr->mode_id);
+						debug_save_nr_data(fix_data_ptr->nr.nr_set_group.vst + nr_mode_offset[ISP_BLK_VST_T],
+							fix_data_ptr->nr.nr_set_group.vst_len,
+							sizeof(struct sensor_vst_level),
+							nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T],
+							ISP_BLK_VST_T,
+							sensor_name, src_mod_ptr->mode_id, nr_scene_id);
 
-					debug_save_nr_data(fix_data_ptr->nr.nr_set_group.ivst + nr_mode_offset[ISP_BLK_IVST_T],
-						fix_data_ptr->nr.nr_set_group.ivst_len,
-						sizeof(struct sensor_ivst_level),
-						nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T],
-						ISP_BLK_IVST_T,
-						sensor_name, src_mod_ptr->mode_id);
+						debug_save_nr_data(fix_data_ptr->nr.nr_set_group.ivst + nr_mode_offset[ISP_BLK_IVST_T],
+							fix_data_ptr->nr.nr_set_group.ivst_len,
+							sizeof(struct sensor_ivst_level),
+							nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T],
+							ISP_BLK_IVST_T,
+							sensor_name, src_mod_ptr->mode_id, nr_scene_id);
+					}
+					nr_mode_offset[ISP_BLK_NLM_T] += sizeof(struct sensor_nlm_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
+					nr_mode_offset[ISP_BLK_VST_T] += sizeof(struct sensor_vst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T];
+					nr_mode_offset[ISP_BLK_IVST_T] += sizeof(struct sensor_ivst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T];
 				}
-				nr_mode_offset[ISP_BLK_NLM_T] += sizeof(struct sensor_nlm_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_NLM_T];
-				nr_mode_offset[ISP_BLK_VST_T] += sizeof(struct sensor_vst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_VST_T];
-				nr_mode_offset[ISP_BLK_IVST_T] += sizeof(struct sensor_ivst_level) * nr_level_number_ptr->nr_level_map[ISP_BLK_IVST_T];
 				break;
 			}
 			case DCAM_BLK_RGB_DITHER:
@@ -1779,14 +1788,20 @@ start_parse:
 
 				nr_data_len[isp_blk_nr_type] = nr_set_size;
 				nr_set_size = nr_unit_size * dst_blk_data->level_number;
-				if (dump_nrdata)
-					debug_save_nr_data((void *)(nr_set_addr + nr_mode_offset[isp_blk_nr_type]),
-						nr_set_size,
-						nr_unit_size,
-						dst_blk_data->level_number,
-						isp_blk_nr_type,
-						sensor_name, src_mod_ptr->mode_id);
-				nr_mode_offset[isp_blk_nr_type] += nr_set_size;
+				nr_scene_map = nr_scene_map_ptr->nr_scene_map[src_mod_ptr->mode_id];
+				for (nr_scene_id = ISP_SCENEMODE_AUTO; nr_scene_id < ISP_SCENEMODE_MAX; nr_scene_id++) {
+					if ((nr_scene_map & (1 << nr_scene_id)) == 0)
+						continue;
+					ISP_LOGV("blk id 0x%x, mode %d, scene_id %d\n", src_header[j].block_id, src_mod_ptr->mode_id, nr_scene_id);
+					if (dump_nrdata)
+						debug_save_nr_data((void *)(nr_set_addr + nr_mode_offset[isp_blk_nr_type]),
+							nr_set_size,
+							nr_unit_size,
+							dst_blk_data->level_number,
+							isp_blk_nr_type,
+							sensor_name, src_mod_ptr->mode_id, nr_scene_id);
+					nr_mode_offset[isp_blk_nr_type] += nr_set_size;
+				}
 			}
 		}
 
