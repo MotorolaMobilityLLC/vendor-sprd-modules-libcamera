@@ -3554,10 +3554,6 @@ cmr_int camera_snapshot_deinit(cmr_handle oem_handle) {
         cxt->ipm_cxt.filter_inited = 0;
     }
 
-    if (cxt->snp_cxt.start_capture_flag) {
-        cxt->snp_cxt.start_capture_flag = 0;
-    }
-
     ret = cmr_snapshot_deinit(snp_cxt->snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to de-init snapshot %ld", ret);
@@ -9101,6 +9097,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     }
 
     cxt->camera_mode = mode;
+    cxt->snp_cxt.start_capture_flag = 0;
     CMR_LOGI("camera mode %d", cxt->camera_mode);
 
 #if 1
@@ -9168,6 +9165,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     cxt->prev_cxt.channel4_chn_id = 0;
     cxt->prev_cxt.channel4_sn_mode = 0;
     cxt->prev_cxt.snapshot_eb = 0;
+
+    cxt->snp_cxt.start_capture_flag = 0;
 
     cxt->is_start_snapshot = 0;
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
@@ -9451,9 +9450,11 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     }
 
     cxt->snp_cxt.status = IDLE;
+    cxt->snp_cxt.start_capture_flag = 0;
 
     cxt->is_start_snapshot = 0;
     cxt->prev_cxt.snapshot_eb = 0;
+
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_PREVIEW_SIZE, &setting_param);

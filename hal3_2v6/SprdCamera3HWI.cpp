@@ -1237,7 +1237,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mStreamConfiguration.preview.status == CONFIGURED &&
             mStreamConfiguration.snapshot.status == CONFIGURED) {
             // raw capture need non-zsl for now
-            if (mOEMIf->isRawCapture()) {
+            if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode()) {
                 if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ||
                     mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW) {
                     mFirstRegularRequest = 1;
@@ -1332,7 +1332,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
         // raw capture need non-zsl for now
-        if (mOEMIf->isRawCapture()) {
+        if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode()) {
             mPictureRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                    mFrameNum);
