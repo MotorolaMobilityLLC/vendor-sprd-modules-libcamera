@@ -1661,8 +1661,11 @@ cmr_int ispalg_ae_process(cmr_handle isp_alg_handle)
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
+	if (!cxt->aem_is_update) {
+		ISP_LOGV("aem is not update\n");
+		return ret;
+	}
 	ret = ispalg_start_ae_process((cmr_handle) cxt);
-exit:
 
 	return ret;
 }
