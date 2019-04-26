@@ -1812,6 +1812,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
         // TBD: may be this is no use, will remove it
         previewSize.width = 720;
         previewSize.height = 576;
+        mPreviewFormat = CAM_IMG_FMT_YUV420_NV21;
     }
     // for cts testAllOutputYUVResolutions
     if (mIsJpegWithBigSizePreview == 1) {
