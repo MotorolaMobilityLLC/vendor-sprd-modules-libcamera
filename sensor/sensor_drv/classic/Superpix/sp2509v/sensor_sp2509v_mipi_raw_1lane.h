@@ -210,7 +210,7 @@ static struct sensor_i2c_reg_tab sp2509v_dgain_tab = {
 };
 
 static SENSOR_REG_T sp2509v_frame_length_reg[] = {
-    //  {0xfd, 0x01}, {0x0e, 0x04}, {0x0f, 0xc8}, {0x01, 0x01},
+    {0xfd, 0x01}, {0x0e, 0x04}, {0x0f, 0xc8}, {0x01, 0x01},
 };
 
 static struct sensor_i2c_reg_tab sp2509v_frame_length_tab = {
