@@ -7958,8 +7958,8 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
             mVideoFormat = CAM_IMG_FMT_YUV422P;
         }
 
-        if (mVideoWidth > 0 && mVideoWidth >= mCaptureWidth &&
-            sprddefInfo.slowmotion <= 1) {
+        if (mVideoWidth > 0 && mVideoWidth == mCaptureWidth &&
+            mVideoHeight == mCaptureHeight && sprddefInfo.slowmotion <= 1) {
             mVideoSnapshotType = 1;
         } else {
             mVideoSnapshotType = 0;
