@@ -2914,7 +2914,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 	if (0 != cxt->flash_ver) {
 		if(cxt->pf_wait_stable_cnt){
-			if(cxt->pf_wait_stable_cnt < 6){
+			if(cxt->pf_wait_stable_cnt < 9){
 				cxt->pf_wait_stable_cnt++;
 			}
 			else {
