@@ -9964,6 +9964,13 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         isp_param = param;
         break;
 
+    case CAMERA_PARAM_APERTURE:
+        set_exif_flag = 1;
+        exif_cmd = SENSOR_EXIF_CTRL_APERTUREVALUE;
+        isp_param = param;
+        CMR_LOGD("aperture %d", param);
+        break;
+
     default:
         CMR_LOGE("don't support cmd %ld", id);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -10083,6 +10090,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_BRIGHTNESS:
     case CAMERA_PARAM_CONTRAST:
     case CAMERA_PARAM_SATURATION:
+    case CAMERA_PARAM_APERTURE:
         ret = camera_isp_set_params(oem_handle, id, param);
         break;
 

@@ -69,6 +69,7 @@ namespace sprdcamera {
 #endif
 
 #define CAMERA_ID_COUNT 6
+#define BLUR_FNUM_COUNT 10
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 #define MAX_DIGITAL_ZOOM_RATIO (4.0f)

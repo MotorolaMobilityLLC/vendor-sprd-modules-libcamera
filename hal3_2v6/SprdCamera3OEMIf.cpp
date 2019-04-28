@@ -6403,6 +6403,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
                  (cmr_uint)&info);
     } break;
+    case ANDROID_SPRD_BLUR_F_NUMBER:{
+        LENS_Tag lensInfo;
+        mSetting->getLENSTag(&lensInfo);
+        if (lensInfo.aperture) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_APERTURE,
+                     (cmr_uint)(lensInfo.aperture * 100));
+        }
+    }break;
     default:
         ret = BAD_VALUE;
         break;

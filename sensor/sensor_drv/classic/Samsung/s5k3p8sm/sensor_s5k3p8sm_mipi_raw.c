@@ -589,7 +589,7 @@ CFG_INFO:
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
                                   SENSOR_EXIF_CTRL_EXPOSURETIME, exposure_line);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+                                  SENSOR_EXIF_CTRL_APERTUREVALUE, 200);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
                                   SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
