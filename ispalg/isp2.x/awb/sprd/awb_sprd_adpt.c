@@ -1551,8 +1551,14 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,
-			 calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
+	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain,\
+		calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (cmr_s32) ((time1 - time0) / 1000));
+	if (_awb_get_cmd_property() == 1){
+		ISP_LOGI("[AWB_TEST] calc frame_count: %d, awb_camera_id: %d --(0: back camera, 1: front camera), awb_work_mode: %d --(0: preview, 1:capture, 2:video),\
+			awb_mode: %d --(0:auto,1:sunny,2:cloudy,3:fluorescent,4:incandescent,5:user0,6:user1,7:off), awb_lock_status: %d --(1: lock, 0: unlock), lib_calc time :%dus,\
+			calc_param.stat_img_size: (%dx,%d), calc_result.Gain: (%d,%d,%d) calc_result.CT: %dK",cxt->frame_count, cxt->camera_id, cxt->work_mode, cxt->wb_mode, cxt->lock_info.lock_mode,\
+			(cmr_s32)((time1 - time0) / 1000), calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain, calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct );
+	}
 
 	result.gain.r = calc_result.awb_gain[0].r_gain;
 	result.gain.g = calc_result.awb_gain[0].g_gain;

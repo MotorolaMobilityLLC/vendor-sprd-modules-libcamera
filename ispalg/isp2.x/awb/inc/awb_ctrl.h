@@ -19,6 +19,8 @@
 #include "isp_awb_types.h"
 #include "isp_com.h"
 #include "isp_common_types.h"
+#include <cutils/properties.h>
+
 #ifndef CONFIG_ISP_2_2
 #include "isp_bridge.h"
 #else
@@ -285,7 +287,7 @@ extern "C" {
 		cmr_handle in;
 		cmr_handle out;
 	};
-
+	cmr_u32 _awb_get_cmd_property(void);
 	cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle * handle_awb);
 	cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result);
 	cmr_int awb_ctrl_deinit(cmr_handle * handle_awb);

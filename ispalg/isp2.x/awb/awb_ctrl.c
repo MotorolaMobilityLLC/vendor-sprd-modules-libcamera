@@ -18,6 +18,8 @@
 #include "awb_ctrl.h"
 #include "isp_adpt.h"
 #include "cmr_common.h"
+#include <utils/Timers.h>
+
 
 #define AWBCTRL_MSG_QUEUE_SIZE      100
 #define AWBCTRL_EVT_BASE            0x2000
@@ -36,6 +38,17 @@ struct awbctrl_cxt {
 	cmr_handle thr_handle;
 	struct awbctrl_work_lib work_lib;
 };
+cmr_u32 _awb_get_cmd_property(void)
+{
+  //prot = 1:on,other:off
+	char prop[PROPERTY_VALUE_MAX];
+	int val = 0;
+	property_get("persist.vendor.cam.isp.awb.test_log", prop, "0");
+	val = atoi(prop);
+	if(0 < val)
+		return val;
+	return 0;
+}
 
 static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 {
@@ -127,6 +140,8 @@ cmr_int awbctrl_ioctrl(struct awbctrl_cxt * cxt_ptr, enum awb_ctrl_cmd cmd, void
 static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc_param *in_ptr, struct awb_ctrl_calc_result *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
+	int64_t time0 = 0;
+	int64_t time1 = 0;
 	struct awbctrl_work_lib *lib_ptr = NULL;
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param, param is NULL!");
@@ -134,9 +149,14 @@ static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc
 	}
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
+		time0= systemTime(CLOCK_MONOTONIC);
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
+		time1= systemTime(CLOCK_MONOTONIC);
 	} else {
 		ISP_LOGI("process fun is NULL");
+	}
+	if (_awb_get_cmd_property() == 1) {
+		ISP_LOGI("[AWB_TEST] adapt process time is %dus",(cmr_s32)(time1 - time0)/1000);
 	}
   exit:
 	ISP_LOGV("done %ld", rtn);
