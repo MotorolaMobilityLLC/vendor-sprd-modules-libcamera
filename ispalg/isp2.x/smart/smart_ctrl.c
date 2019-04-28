@@ -1091,7 +1091,7 @@ static cmr_s32 smart_ctl_parse_atm_tuning_param(struct atm_tune_param *src, cmr_
 			memcpy(dst,src,sizeof(struct atm_tune_param));
 		}
 	} else {
-		rtn = ISP_ERROR;
+		//rtn = ISP_ERROR;
 		ISP_LOGE("smart_ctl_parse_atm_tuning_param error,src null");
 	}
 	return rtn;
