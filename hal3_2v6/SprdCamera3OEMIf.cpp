@@ -3263,7 +3263,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     int ret = 0;
     SCALER_Tag scaleInfo;
     struct img_rect scalerCrop;
-    uint16_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
+    uint16_t picW = 0, picH = 0, fdWid = 0, fdHeight = 0;
     HAL_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
              mPreviewWidth, mPreviewHeight, cropRegion[0], cropRegion[1],
              cropRegion[2], cropRegion[3]);
@@ -3278,6 +3278,12 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     scalerCrop.start_y = scaleInfo.crop_region[1];
     scalerCrop.width = scaleInfo.crop_region[2];
     scalerCrop.height = scaleInfo.crop_region[3];
+    // changed code hare to handle crop reagion 0 ,0 ,0 ,0
+    if (scalerCrop.width == 0 || scalerCrop.height == 0){
+        mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
+        scalerCrop.width = picW;
+        scalerCrop.height = picH;
+    }
     float previewAspect = (float)mPreviewWidth / mPreviewHeight;
     float cropAspect = (float)scalerCrop.width / scalerCrop.height;
     if (previewAspect > cropAspect) {
