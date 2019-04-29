@@ -329,9 +329,15 @@ static int cfg_slice_nr_info(
 		cur_slc->slice_ynr.center_offset_x =
 			(int32_t)in_ptr->ynr_center_x - (int32_t)start_col;
 		cur_slc->slice_ynr.center_offset_y =
-			(int32_t)in_ptr->ynr_center_x - (int32_t)start_col;
+			(int32_t)in_ptr->ynr_center_y - (int32_t)start_row;
 		cur_slc->slice_ynr.slice_width = end_col - start_col + 1;
 		cur_slc->slice_ynr.slice_height = end_row - start_row + 1;
+		pr_debug("slice %d,  (%d %d %d %d),  ynr_off %d %d, size %d %d\n",
+			i, start_row, start_col, end_row, end_col,
+			cur_slc->slice_ynr.center_offset_x,
+			cur_slc->slice_ynr.center_offset_y,
+			cur_slc->slice_ynr.slice_width,
+			cur_slc->slice_ynr.slice_height);
 	}
 
 	return 0;

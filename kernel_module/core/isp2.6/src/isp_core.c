@@ -1973,6 +1973,9 @@ static int isp_slice_ctx_init(struct isp_pipe_context *pctx)
 	val = ISP_REG_RD(pctx->ctx_id, ISP_YNR_CFG31);
 	slc_cfg_in.ynr_center_x = val & 0xFFFF;
 	slc_cfg_in.ynr_center_y = (val >> 16) & 0xfFFF;
+	pr_debug("ctx %d,  nlm center %d %d, ynr center %d, %d\n",
+		pctx->ctx_id, slc_cfg_in.nlm_center_x, slc_cfg_in.nlm_center_y,
+		slc_cfg_in.ynr_center_x, slc_cfg_in.ynr_center_y);
 
 	isp_cfg_slices(&slc_cfg_in, pctx->slice_ctx);
 
