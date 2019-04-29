@@ -1133,6 +1133,59 @@ static cmr_int ispalg_ai_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 
 	return ret;
 }
+
+static cmr_int ispalg_dump_rgbgamma_curve(struct sensor_rgbgamma_curve *gamma_cur)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	FILE *fp = NULL;
+	char file_name[260] = { 0 };
+	char loop_cnt_str[10] = { 0 };
+
+	if (gamma_cur == NULL) {
+		ISP_LOGE("fail to gamma param pointer.");
+		return ISP_ERROR;
+	}
+	ret = isp_sim_get_mipi_raw_file_name(file_name);
+	if (strlen(file_name)) {
+		sprintf(loop_cnt_str, ".%d", isp_video_get_simulation_loop_count());
+		strcat(file_name, loop_cnt_str);
+		strcat(file_name, ".gamma.log");
+		ISP_LOGI("dump to [%s] start\n", file_name);
+	} else {
+		ISP_LOGE("fail to get mipi raw file name.");
+		return ISP_ERROR;
+	}
+	CMR_LOGD("file name %s", file_name);
+	fp = fopen(file_name, "wb");
+	if (fp == NULL) {
+		ISP_LOGE("fail to open file");
+		return ISP_ERROR;
+	}
+
+	fprintf(fp, "1.r gamma:\n");
+	for (i=0; i < SENSOR_GAMMA_POINT_NUM; i++) {
+		fprintf(fp, "<%d>:x[%d]y[%d] \n",
+			i, gamma_cur->points_r[i].x, gamma_cur->points_r[i].y);
+	}
+
+	fprintf(fp, "2.g gamma:\n");
+	for (i=0; i < SENSOR_GAMMA_POINT_NUM; i++) {
+		fprintf(fp, "<%d>:x[%d]y[%d] \n",
+			i, gamma_cur->points_g[i].x, gamma_cur->points_g[i].y);
+	}
+
+	fprintf(fp, "3.b gamma:\n");
+	for (i=0; i < SENSOR_GAMMA_POINT_NUM; i++) {
+		fprintf(fp, "<%d>:x[%d]y[%d] \n",
+			i, gamma_cur->points_b[i].x, gamma_cur->points_b[i].y);
+	}
+
+	fflush(fp);
+	fclose(fp);
+	return ret;
+}
+
 static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1142,6 +1195,7 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 	struct smart_block_result *block_result = NULL;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
+	char value[PROPERTY_VALUE_MAX];
 
 	UNUSED(param1);
 
@@ -1179,6 +1233,15 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 				ISP_BLK_RGB_GAMC,
 				gamma_cur,
 				sizeof(struct sensor_rgbgamma_curve));
+			
+			if (isp_video_get_simulation_flag()) {
+				property_get("persist.vendor.cam.debug.simulation", value, "false");
+				if (!strcmp(value, "true")) {
+					ISP_LOGI("vvv:ISP_SMART_SET_GAMMA_CUR\n");
+					ispalg_dump_rgbgamma_curve(gamma_cur);
+				}
+			}
+
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to set gammar cur"));
 			cxt->smart_cxt.atm_is_set = 1;
@@ -4178,7 +4241,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-#if 1
 static cmr_int ispalg_update_smart_param(cmr_handle isp_alg_handle)
 {
 
@@ -4244,7 +4306,6 @@ static cmr_int ispalg_update_smart_param(cmr_handle isp_alg_handle)
 	return ret;
 
 }
-#endif
 
 static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle out_ptr)
 {
@@ -4661,6 +4722,7 @@ static cmr_int ispalg_dump_alsc_info(struct alsc_do_simulation *alsc_param, cmr_
 	fclose(fp);
 	return ret;
 }
+
 
 
 static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)

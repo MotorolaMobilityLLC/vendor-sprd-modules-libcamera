@@ -1571,8 +1571,6 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 	struct sensor_rgbgamma_curve atm_gamma_out;
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
 
-	ISP_LOGI("enter\n");
-
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to get valid input handle, rtn:%d\n", rtn);
@@ -1586,8 +1584,6 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 	if (cxt->atm_tuning_param.atmenable == 1) {
 		bATMEnable = 1;
 	}
-
-	ISP_LOGI("ATM[%d]\n", bATMEnable);
 
 	if (bATMEnable) {
 		ret = _smart_gamma(in_ptr, block_result, &sm_gamma_out);

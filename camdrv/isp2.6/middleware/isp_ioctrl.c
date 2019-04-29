@@ -1003,10 +1003,10 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		log.ver = 0;
 
 		off = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t);
-		if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
+		//if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
 		COPY_LOG(ae, AE);
 		COPY_LOG(af, AF);
-		}
+		//}
 		COPY_LOG(aft, AFT);
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);

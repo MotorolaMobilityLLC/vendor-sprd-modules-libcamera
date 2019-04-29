@@ -5155,6 +5155,8 @@ static int raw_proc_pre(
 			DCAM_PATH_CFG_SIZE,
 			ch->dcam_path_id, &ch_desc);
 
+	dcam_lbuf_share_mode(module->idx, proc_info->src_size.width);
+
 	/* specify isp context & path */
 	max_size.w = proc_info->src_size.width;
 	max_size.h = proc_info->src_size.height;

@@ -2990,6 +2990,8 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width)
 		return 0;
 	}
 
+	pr_debug("idx[%d] width[%d]\n", idx, width);
+
 	switch (idx) {
 	case 0:
 		for (i = 3; i >= 0; i--) {
