@@ -926,14 +926,13 @@ struct sprd_img_path_rect {
 					   struct sprd_img_parm)
 #define SPRD_IMG_IO_SET_CAM_SECURITY         _IOW(SPRD_IMG_IO_MAGIC, 66,\
 					   struct sprd_cam_sec_cfg)
-#define SPRD_IMG_IO_GET_PATH_RECT          _IOW(SPRD_IMG_IO_MAGIC, 66,\
+#define SPRD_IMG_IO_GET_PATH_RECT          _IOW(SPRD_IMG_IO_MAGIC, 67,\
 					   struct sprd_img_path_rect)
-
 /*
-* Dump dcam register.
-* buf:      input dump buffer addr
-* buf_len:  input dump buffer size(>=0x400), and buf_len=0x400 is ok
-* return    real dump size
-*/
+ * Dump dcam register.
+ * buf:      input dump buffer addr
+ * buf_len:  input dump buffer size(>=0x400), and buf_len=0x400 is ok
+ * return    real dump size
+ */
 int32_t sprd_dcam_registers_dump(void *buf, uint32_t buf_len);
 #endif /*_SPRD_V4L2_H_*/

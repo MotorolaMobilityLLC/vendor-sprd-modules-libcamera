@@ -5601,6 +5601,47 @@ static int img_ioctl_4in1_post_proc(struct camera_module *module,
 	return ret;
 }
 
+static int img_ioctl_get_path_rect(struct camera_module *module,
+                        unsigned long arg)
+{
+	int ret = 0;
+	struct sprd_img_path_rect parm;
+
+	if (!module) {
+		pr_err("module is NULL\n");
+		return -EINVAL;
+	}
+
+	memset((void *)&parm, 0, sizeof(parm));
+	ret = copy_from_user(&parm, (void __user *)arg,
+				sizeof(struct sprd_img_path_rect));
+	if (ret) {
+		pr_err("fail to get user info ret %d\n", ret);
+		return -EFAULT;
+	}
+
+	ret = dcam_ops->ioctl(module->dcam_dev_handle,
+		DCAM_IOCTL_GET_PATH_RECT, &parm);
+	pr_debug("TRIM rect info x %d y %d w %d h %d\n",
+		parm.trim_valid_rect.x, parm.trim_valid_rect.y,
+		parm.trim_valid_rect.w, parm.trim_valid_rect.h);
+	pr_debug("AE rect info x %d y %d w %d h %d\n",
+		parm.ae_valid_rect.x, parm.ae_valid_rect.y,
+		parm.ae_valid_rect.w, parm.ae_valid_rect.h);
+	pr_debug("AF rect info x %d y %d w %d h %d\n",
+		parm.af_valid_rect.x, parm.af_valid_rect.y,
+		parm.af_valid_rect.w, parm.af_valid_rect.h);
+
+	ret = copy_to_user((void __user *)arg, &parm,
+			sizeof(struct sprd_img_path_rect));
+	if (ret) {
+		ret = -EFAULT;
+		pr_err("fail to copy to user\n");
+		return ret;
+	}
+
+	return ret;
+}
 /*--------------- Core controlling interface end --------------- */
 
 
@@ -6138,6 +6179,7 @@ static struct cam_ioctl_cmd ioctl_cmds_table[] = {
 	[_IOC_NR(SPRD_IMG_IO_4IN1_POST_PROC)]	= {SPRD_IMG_IO_4IN1_POST_PROC,	img_ioctl_4in1_post_proc},
 	[_IOC_NR(SPRD_IMG_IO_PATH_PAUSE)]	= {SPRD_IMG_IO_PATH_PAUSE,	ioctl_test_dev},
 	[_IOC_NR(SPRD_IMG_IO_SET_CAM_SECURITY)]   = {SPRD_IMG_IO_SET_CAM_SECURITY,  img_ioctl_set_cam_security},
+	[_IOC_NR(SPRD_IMG_IO_GET_PATH_RECT)]             = {SPRD_IMG_IO_GET_PATH_RECT,   img_ioctl_get_path_rect},
 };
 
 

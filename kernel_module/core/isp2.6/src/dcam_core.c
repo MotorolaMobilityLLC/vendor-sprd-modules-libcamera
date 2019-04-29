@@ -2317,6 +2317,75 @@ exit:
 	return ret;
 }
 
+/* get path rect from register
+ */
+static int dcam_get_path_rect(struct dcam_pipe_dev *dev, void *param)
+{
+	struct sprd_img_path_rect *p = (struct sprd_img_path_rect *)param;
+	struct dcam_path_desc *path;
+	struct dcam_dev_aem_win *aem_win;
+	struct isp_img_rect *afm_crop;
+
+
+	if ((!dev) || (!param)) {
+		pr_err("input param error\n");
+		return -EINVAL;
+	}
+	path = &dev->path[DCAM_PATH_BIN];
+	p->trim_valid_rect.x = path->in_trim.start_x;
+	p->trim_valid_rect.y = path->in_trim.start_y;
+	p->trim_valid_rect.w = path->in_trim.size_x;
+	p->trim_valid_rect.h = path->in_trim.size_y;
+	if (!dev->blk_dcam_pm) {
+		pr_err("pm struct error\n");
+		return -EINVAL;
+	}
+	aem_win = &(dev->blk_dcam_pm->aem.win_info);
+	afm_crop = &(dev->blk_dcam_pm->afm.crop_size);
+	p->ae_valid_rect.x = aem_win->offset_x;
+	p->ae_valid_rect.y = aem_win->offset_y;
+	p->ae_valid_rect.w = aem_win->blk_width * aem_win->blk_num_x;
+	p->ae_valid_rect.h = aem_win->blk_height * aem_win->blk_num_y;
+
+	p->af_valid_rect.x = afm_crop->x;
+	p->af_valid_rect.y = afm_crop->y;
+	p->af_valid_rect.w = afm_crop->w;
+	p->af_valid_rect.h = afm_crop->h;
+#if	0
+	/* trim rect */
+	val = DCAM_REG_RD(dev->id, DCAM_BIN_CROP_START);
+	if (val & (1 << 31)) {
+		param->trim_valid_rect.x = val & 0x1FFF; /* b12:b0 */
+		param->trim_valid_rect.y = (val >> 16) & 0x1FFF; /* b28:b16 */
+		val = DCAM_REG_RD(dev->id, ISP_AFM_CROP_SIZE);
+		param->trim_valid_rect.w = val & 0x1FFF;
+		param->trim_valid_rect.h = (val >> 16) & 0x1FFF;
+	} else {
+
+	}
+
+	/* aem */
+	val = DCAM_REG_RD(dev->idx, DCAM_AEM_OFFSET);
+	param->ae_valid_rect.x = val & 0x1FFF;
+	param->ae_valid_rect.y = (val >> 16) & 0x1FFF;
+	val = DCAM_REG_RD(dev->idx, DCAM_AEM_BLK_NUM);
+	blk_num_w = val & 0xFF;
+	blk_num_h = (val >> 8) 0xFF;
+	val = DCAM_REG_RD(dev->idx, DCAM_AEM_BLK_SIZE);
+	param->ae_valid_rect.w = (val & 0xFF) * blk_num_w;
+	param->ae_valid_rect.h = ((val >> 8) & 0xFF) * blk_num_h;
+
+	/* afm */
+	val = DCAM_REG_RD(dev->idx, ISP_RAW_AFM_CROP_START);
+	param->af_valid_rect.x = val & 0x1FFF;
+	param->af_valid_rect.y = (val >> 16) & 0x1FFF;
+	val = DCAM_REG_RD(dev->idx, ISP_RAW_AFM_CROP_SIZE);
+	param->af_valid_rect.w = val & 0x1FFF;
+	param->af_valid_rect.h = (val >> 16) & 0x1FFF;
+#endif
+	return 0;
+}
+
 /* offline process frame */
 static int sprd_dcam_proc_frame(
 		void *dcam_handle,  void *param)
@@ -2411,6 +2480,9 @@ static int sprd_dcam_ioctrl(void *dcam_handle,
 		break;
 	case DCAM_IOCTL_CFG_REPLACER:
 		dev->replacer = (struct dcam_image_replacer *)param;
+		break;
+	case DCAM_IOCTL_GET_PATH_RECT:
+		ret = dcam_get_path_rect(dev, param);
 		break;
 	default:
 		pr_err("error: unknown cmd: %d\n", cmd);
