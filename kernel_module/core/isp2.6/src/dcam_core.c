@@ -2825,6 +2825,10 @@ int sprd_dcam_dev_close(void *dcam_handle)
 	if (dev->blk_dcam_pm) {
 		cambuf_kunmap(&dev->blk_dcam_pm->lsc.buf);
 		cambuf_free(&dev->blk_dcam_pm->lsc.buf);
+		if(dev->blk_dcam_pm->lsc.weight_tab){
+			kfree(dev->blk_dcam_pm->lsc.weight_tab);
+			dev->blk_dcam_pm->lsc.weight_tab = NULL;
+		}
 		kfree(dev->blk_dcam_pm);
 		dev->blk_dcam_pm = NULL;
 	}

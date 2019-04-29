@@ -313,11 +313,11 @@ int dcam_k_lsc_block(struct dcam_dev_param *p)
 	info = &param->lens_info;
 	if (param->weight_tab_size < info->weight_num) {
 		if (param->weight_tab) {
-			vfree(param->weight_tab);
+			kfree(param->weight_tab);
 			param->weight_tab = NULL;
 			param->weight_tab_size = 0;
 		}
-		w_buff = vzalloc(info->weight_num);
+		w_buff = kzalloc(info->weight_num, GFP_ATOMIC);
 		if (w_buff == NULL) {
 			ret = -ENOMEM;
 			goto exit;
