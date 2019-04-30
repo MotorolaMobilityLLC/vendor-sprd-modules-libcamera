@@ -6551,7 +6551,7 @@ cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits) {
             CMR_LOGE("failed to stop off the fly path %ld", ret);
         }
     }
-
+    cxt->snp_cxt.start_capture_flag = 0;
     // sharkl5 TBD remove these code
     /*
         ret = isp_sw_stop(isp_cxt->isp_handle);
