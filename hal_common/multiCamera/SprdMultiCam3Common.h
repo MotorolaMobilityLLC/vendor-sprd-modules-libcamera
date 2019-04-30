@@ -299,7 +299,11 @@ typedef struct {
     int vcmSteps;
 } frame_matched_info_t;
 
-typedef enum { MUXER_MSG_DATA_PROC = 1, MUXER_MSG_EXIT } muxerMsgType;
+typedef enum {
+    MUXER_MSG_DATA_PROC = 1,
+    MUXER_MSG_EXIT,
+    MUXER_MSG_INIT
+} muxerMsgType;
 
 typedef struct {
     muxerMsgType msg_type;

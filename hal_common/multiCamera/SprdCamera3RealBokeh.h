@@ -248,6 +248,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         ~PreviewMuxerThread();
         virtual bool threadLoop();
         virtual void requestExit();
+        virtual void requestInit();
         int sprdBokehPreviewHandle(buffer_handle_t *output_buf,
                                    buffer_handle_t *input_buf1);
         bool sprdDepthHandle(muxer_queue_msg_t *muxer_msg);

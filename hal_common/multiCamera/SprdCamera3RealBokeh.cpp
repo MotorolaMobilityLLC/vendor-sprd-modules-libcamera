@@ -1144,6 +1144,18 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
             mPreviewMuxerMsgList.erase(it);
         }
         switch (muxer_msg.msg_type) {
+        case MUXER_MSG_INIT: {
+            rc = mRealBokeh->mBokehAlgo->initAlgo();
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to initAlgo");
+                // return rc;
+            }
+            rc = mRealBokeh->mBokehAlgo->initPrevDepth();
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to initPrevDepth");
+                // return rc;
+            }
+        } break;
         case MUXER_MSG_EXIT: {
 
             List<multi_request_saved_t>::iterator itor =
@@ -1356,7 +1368,22 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
 
     return rc;
 }
-
+/*===========================================================================
+ * FUNCTION   :requestInit
+ *
+ * DESCRIPTION: request thread init
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3RealBokeh::PreviewMuxerThread::requestInit() {
+    Mutex::Autolock l(mMergequeueMutex);
+    muxer_queue_msg_t muxer_msg;
+    muxer_msg.msg_type = MUXER_MSG_INIT;
+    mPreviewMuxerMsgList.push_back(muxer_msg);
+    mMergequeueSignal.signal();
+}
 /*===========================================================================
  * FUNCTION   :requestExit
  *
@@ -2830,17 +2857,9 @@ int SprdCamera3RealBokeh::configureStreams(
         mIsSupportPBokeh = false;
         HAL_LOGD("mIsSupportPBokeh %d", mIsSupportPBokeh);
     }
-    rc = mBokehAlgo->initAlgo();
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to initAlgo");
-        // return rc;
+    if (mPreviewMuxerThread->isRunning()) {
+        mPreviewMuxerThread->requestInit();
     }
-    rc = mBokehAlgo->initPrevDepth();
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to initPrevDepth");
-        // return rc;
-    }
-
     HAL_LOGI("x rc%d.", rc);
     for (i = 0; i < stream_list->num_streams; i++) {
         HAL_LOGD(
@@ -3794,7 +3813,6 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
     camera3_stream_t *newStream = NULL;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
-
     HAL_LOGV("aux frame_number %d", cur_frame_number);
     if (result->output_buffers == NULL) {
         return;
