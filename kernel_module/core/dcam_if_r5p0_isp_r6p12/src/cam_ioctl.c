@@ -175,6 +175,7 @@ static int sprd_camioctl_cam_path_clear(struct camera_dev *dev)
 		path->status = PATH_IDLE;
 	}
 	ctx->need_isp_tool = 0;
+	ctx->is_slave_eb = 0;
 
 	return 0;
 }
@@ -340,6 +341,7 @@ static int sprd_camioctl_tx_done(struct camera_frame *frame, void *param)
 		node.uaddr_vir = frame->uaddr_vir;
 		node.vaddr_vir = frame->vaddr_vir;
 		node.frame_id = frame->frame_id;
+		node.slave_mfd = frame->slave_mfd;
 		if (dev->zoom_ratio)
 			node.zoom_ratio = frame->zoom_ratio;
 		else
@@ -1524,6 +1526,66 @@ static int sprd_camioctl_path_cap_check(uint32_t fourcc,
 	return 0;
 }
 
+static int sprd_camioctl_slave_frame_info_set(struct camera_file *camerafile,
+	struct camera_dev *dev, struct sprd_slave_info *frame)
+{
+	int ret = 0;
+	uint32_t i = 0;
+	struct camera_addr frame_addr = {0};
+	struct camera_path_spec *path_cap = NULL;
+	struct camera_path_spec *path_vid = NULL;
+
+	if (!camerafile || !dev || !frame) {
+		ret = -EFAULT;
+		pr_err("fail to get valid input ptr file %p dev %p frame %p\n",
+			camerafile, dev, frame);
+		goto exit;
+	}
+
+	path_cap = &dev->cam_ctx.cam_path[CAMERA_CAP_PATH];
+	path_vid = &dev->cam_ctx.cam_path[CAMERA_VID_PATH];
+
+	dev->cam_ctx.is_slave_eb = frame->is_slave_eb;
+	dev->cam_ctx.slave_dst_size.w = frame->dst_size.w;
+	dev->cam_ctx.slave_dst_size.h = frame->dst_size.h;
+	for (i = 0; i < frame->buffer_count; i++) {
+		if (frame->fd_array[0] == 0) {
+			pr_err("fail to get valid fd\n");
+			ret = -EINVAL;
+			goto exit;
+		}
+		frame_addr.yaddr = frame->frame_addr_array[i].y;
+		frame_addr.uaddr = frame->frame_addr_array[i].u;
+		frame_addr.vaddr = frame->frame_addr_array[i].v;
+		frame_addr.yaddr_vir = frame->frame_addr_vir_array[i].y;
+		frame_addr.uaddr_vir = frame->frame_addr_vir_array[i].u;
+		frame_addr.vaddr_vir = frame->frame_addr_vir_array[i].v;
+		frame_addr.mfd_y = frame->fd_array[i];
+		frame_addr.mfd_u = frame->fd_array[i];
+		frame_addr.mfd_v = frame->fd_array[i];
+		frame_addr.buf_info.dev = &camerafile->grp->pdev->dev;
+		if (atomic_read(&dev->stream_on) == 1
+			&& path_cap->status == PATH_RUN) {
+			ret = sprd_isp_drv_path_cfg_set(
+				dev->isp_dev_handle, ISP_PATH_IDX_VID,
+				ISP_PATH_OUTPUT_ADDR, &frame_addr);
+			if (unlikely(ret)) {
+				pr_err("fail to cfg slave\n");
+				goto exit;
+			}
+		} else {
+			ret = sprd_cam_queue_buf_write(
+				&path_vid->buf_queue, &frame_addr);
+			pr_debug("y=0x%x u=0x%x mfd=0x%x 0x%x\n",
+				frame_addr.yaddr, frame_addr.uaddr,
+				frame_addr.mfd_y, frame_addr.mfd_u);
+		}
+	}
+
+exit:
+	return ret;
+}
+
 static int sprd_camioctl_frame_addr_set(struct camera_file *camerafile,
 	struct camera_dev *dev, struct sprd_img_parm *p)
 {
@@ -1531,6 +1593,7 @@ static int sprd_camioctl_frame_addr_set(struct camera_file *camerafile,
 	uint32_t i = 0;
 	enum dcam_id idx = DCAM_ID_0;
 	struct camera_path_spec *path = NULL;
+	struct sprd_slave_info *slave_frame = NULL;
 	enum isp_path_index path_index = ISP_PATH_IDX_0;
 
 	if (!p) {
@@ -1540,6 +1603,7 @@ static int sprd_camioctl_frame_addr_set(struct camera_file *camerafile,
 	}
 
 	idx = camerafile->idx;
+	slave_frame = &p->slave_frame_info;
 
 	switch (p->channel_id) {
 	case CAMERA_FULL_PATH:
@@ -1671,6 +1735,16 @@ static int sprd_camioctl_frame_addr_set(struct camera_file *camerafile,
 					frame_addr.yaddr, frame_addr.uaddr,
 					frame_addr.mfd_y, frame_addr.mfd_u);
 			}
+		}
+	}
+
+	if (p->channel_id == CAMERA_CAP_PATH
+		&& slave_frame->is_slave_eb) {
+		ret = sprd_camioctl_slave_frame_info_set(
+			camerafile, dev, slave_frame);
+		if (unlikely(ret)) {
+			pr_err("fail to set slave frame info\n");
+			goto exit;
 		}
 	}
 
@@ -2756,13 +2830,6 @@ static int sprd_camioctl_isp_path_cfg(struct camera_dev *dev)
 		pr_err("fail to register isp isr\n");
 		goto exit;
 	}
-	ret = sprd_cam_statistic_queue_init(
-		&isp_dev->module_info.statis_module_info,
-		dev->idx, ISP_DEV_STATIS);
-	if (ret) {
-		pr_err("fail to init isp statis queue\n");
-		return ret;
-	}
 
 	do {
 		/* config isp pre path */
@@ -2812,6 +2879,26 @@ static int sprd_camioctl_isp_path_cfg(struct camera_dev *dev)
 				break;
 			}
 			path_cap->status = PATH_RUN;
+			if (ctx->is_slave_eb) {
+				ret = sprd_isp_drv_path_cfg_set(
+					dev->isp_dev_handle,
+					ISP_PATH_IDX_VID,
+					ISP_PATH_OUTPUT_SIZE,
+					&ctx->slave_dst_size);
+				if (unlikely(ret)) {
+					pr_err("fail to cfg slave dst size\n");
+					break;
+				}
+				ret = sprd_camioctl_isp_path_buf_cfg(
+					dev->isp_dev_handle,
+					ISP_PATH_OUTPUT_ADDR,
+					ISP_PATH_IDX_VID, &path_vid->buf_queue);
+				if (unlikely(ret)) {
+					pr_err("fail to cfg slave output addr\n");
+					break;
+				}
+				isp_dev->is_slave_eb = ctx->is_slave_eb;
+			}
 		} else {
 			ret = sprd_isp_drv_path_cfg_set(dev->isp_dev_handle,
 				ISP_PATH_IDX_CAP, ISP_PATH_ENABLE,
@@ -4802,6 +4889,60 @@ exit:
 	return ret;
 }
 
+static int sprd_camioctl_io_path_rect_get(struct camera_file *camerafile,
+	struct camera_dev *dev, unsigned long arg)
+{
+	int ret = 0;
+	struct sprd_img_path_rect parm;
+	struct camera_rect *in_rect = NULL;
+
+	if (!camerafile || !dev) {
+		ret = -EFAULT;
+		pr_err("fail to get valid input ptr file %p dev %p\n",
+			camerafile, dev);
+		goto exit;
+	}
+
+	memset((void *)&parm, 0, sizeof(parm));
+	mutex_lock(&dev->cam_mutex);
+	ret = copy_from_user(&parm, (void __user *)arg,
+				sizeof(struct sprd_img_path_rect));
+	if (ret) {
+		pr_err("fail to get user info ret %d\n", ret);
+		ret = -EFAULT;
+		goto exit;
+	}
+
+	in_rect = &dev->cam_ctx.cam_path[CAMERA_PRE_PATH].in_rect;
+	ret = sprd_dcam_drv_path_rect_get(camerafile->idx, in_rect, &parm);
+	if (ret) {
+		pr_err("fail to get 3A rect\n");
+		ret = -EFAULT;
+		goto exit;
+	}
+	pr_debug("TRIM rect info x %d y %d w %d h %d\n",
+		parm.trim_valid_rect.x, parm.trim_valid_rect.y,
+		parm.trim_valid_rect.w, parm.trim_valid_rect.h);
+	pr_debug("AE rect info x %d y %d w %d h %d\n",
+		parm.ae_valid_rect.x, parm.ae_valid_rect.y,
+		parm.ae_valid_rect.w, parm.ae_valid_rect.h);
+	pr_debug("AF rect info x %d y %d w %d h %d\n",
+		parm.af_valid_rect.x, parm.af_valid_rect.y,
+		parm.af_valid_rect.w, parm.af_valid_rect.h);
+
+	ret = copy_to_user((void __user *)arg, &parm,
+			sizeof(struct sprd_img_path_rect));
+	if (ret) {
+		ret = -EFAULT;
+		pr_err("fail to copy to user\n");
+		goto exit;
+	}
+
+exit:
+	mutex_unlock(&dev->cam_mutex);
+	return ret;
+}
+
 static struct dcam_io_ctrl_fun s_cam_io_ctrl_fun_tab[] = {
 	{SPRD_IMG_IO_SET_MODE,            sprd_camioctl_io_cap_mode_set},
 	{SPRD_IMG_IO_SET_CAP_SKIP_NUM,    sprd_camioctl_io_cap_skip_num_set},
@@ -4846,7 +4987,8 @@ static struct dcam_io_ctrl_fun s_cam_io_ctrl_fun_tab[] = {
 	{SPRD_ISP_IO_UPDATE_PARAM_START,  sprd_camioctl_io_update_param_start},
 	{SPRD_ISP_IO_UPDATE_PARAM_END,    sprd_camioctl_io_update_param_end},
 	{SPRD_IMG_IO_SET_4IN1_ADDR,       sprd_camioctl_io_4in1_raw_addr_set},
-	{SPRD_IMG_IO_4IN1_POST_PROC,      sprd_camioctl_io_4in1_post_proc}
+	{SPRD_IMG_IO_4IN1_POST_PROC,      sprd_camioctl_io_4in1_post_proc},
+	{SPRD_IMG_IO_GET_PATH_RECT,       sprd_camioctl_io_path_rect_get}
 };
 
 static dcam_io_fun sprd_camioctl_get_fun(uint32_t cmd)

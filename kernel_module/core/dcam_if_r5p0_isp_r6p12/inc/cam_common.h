@@ -159,6 +159,7 @@ struct camera_frame {
 	uint32_t irq_property;/*isp moddule*/
 	uint32_t frame_id;/*isp moddule*/
 	uint32_t zoom_ratio;
+	uint32_t slave_mfd;
 	struct cam_buf_info buf_info;
 	struct frame_mv mv;
 	unsigned long timestamp;

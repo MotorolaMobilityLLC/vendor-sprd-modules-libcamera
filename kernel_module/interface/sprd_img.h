@@ -420,6 +420,15 @@ struct sprd_irq_info {
 	uint32_t frame_id;
 };
 
+struct sprd_slave_info {
+	uint32_t is_slave_eb;
+	uint32_t buffer_count;
+	struct sprd_img_size dst_size;
+	uint32_t fd_array[IMG_PATH_BUFFER_COUNT];
+	struct sprd_img_frm_addr frame_addr_vir_array[IMG_PATH_BUFFER_COUNT];
+	struct sprd_img_frm_addr frame_addr_array[IMG_PATH_BUFFER_COUNT];
+};
+
 struct sprd_img_parm {
 	uint32_t                  channel_id;
 	uint32_t                  frame_base_id;
@@ -459,6 +468,7 @@ struct sprd_img_parm {
 	uint32_t                  is_high_fps;
 	uint32_t                  high_fps_skip_num;
 	struct sprd_img_binding	  aux_img;
+	struct sprd_slave_info    slave_frame_info;
 	uint32_t                  reserved[4];
 };
 
@@ -795,6 +805,14 @@ struct sprd_dcam_path_size {
 };
 #pragma pack(pop)
 
+#pragma pack(push, 4)
+struct sprd_img_path_rect {
+	struct sprd_img_rect ae_valid_rect;
+	struct sprd_img_rect af_valid_rect;
+	struct sprd_img_rect trim_valid_rect;
+};
+#pragma pack(pop)
+
 #define SPRD_IMG_IO_MAGIC            'Z'
 #define SPRD_IMG_IO_SET_MODE          _IOW(SPRD_IMG_IO_MAGIC, 0, uint32_t)
 #define SPRD_IMG_IO_SET_CAP_SKIP_NUM  _IOW(SPRD_IMG_IO_MAGIC, 1, uint32_t)
@@ -908,6 +926,8 @@ struct sprd_dcam_path_size {
 					   struct sprd_img_parm)
 #define SPRD_IMG_IO_SET_CAM_SECURITY         _IOW(SPRD_IMG_IO_MAGIC, 66,\
 					   struct sprd_cam_sec_cfg)
+#define SPRD_IMG_IO_GET_PATH_RECT          _IOW(SPRD_IMG_IO_MAGIC, 66,\
+					   struct sprd_img_path_rect)
 
 /*
 * Dump dcam register.

@@ -284,6 +284,7 @@ struct slice_param_in {
 	uint32_t com_idx;
 	uint32_t is_raw_capture;
 	uint32_t fetch_format;
+	uint32_t vid_slice_need;
 	uint32_t cap_slice_need;
 	uint32_t *fmcu_addr_vir;
 	struct slice_addr fetch_addr;
@@ -295,6 +296,8 @@ struct slice_param_in {
 	uint32_t nlm_row_center;
 	uint32_t ynr_center_x;
 	uint32_t ynr_center_y;
+	uint32_t seed_for_mode1;
+	uint32_t shape_mode;
 };
 
 int sprd_isp_slice_fmcu_slice_cfg(void *fmcu_handler,

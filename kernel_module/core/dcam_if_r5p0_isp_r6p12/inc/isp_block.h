@@ -99,3 +99,5 @@ int isp_k_cfg_3dnr_param(struct isp_io_param *param,
 		struct isp_k_block *isp_k_param, uint32_t com_idx);
 int isp_k_cfg_3dnr(struct isp_io_param *param,
 		struct isp_k_block *isp_k_param, uint32_t com_idx);
+int isp_k_cfg_yuv_noisefilter(struct isp_io_param *param,
+		struct isp_k_block *isp_k_param, uint32_t com_idx);

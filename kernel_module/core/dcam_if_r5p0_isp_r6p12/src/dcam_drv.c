@@ -76,6 +76,7 @@ unsigned long s_dcam_mmubase;
 static uint32_t s_dcam_count;
 int s_dcam_irq[DCAM_MAX_COUNT];
 spinlock_t dcam_lock[DCAM_MAX_COUNT];
+spinlock_t dcam_full_path_lock;
 static struct dcam_group s_dcam_group;
 
 
@@ -553,25 +554,34 @@ int sprd_dcam_drv_path_resume(enum dcam_id idx, uint32_t channel_id)
 {
 	enum dcam_drv_rtn rtn = DCAM_RTN_SUCCESS;
 	struct dcam_path_desc *path = NULL;
+	unsigned long flag;
 
 	if (DCAM_ADDR_INVALID(s_p_dcam_mod[idx])) {
 		pr_err("fail to get valid input ptr\n");
 		return -EFAULT;
 	}
 
+	spin_lock_irqsave(&dcam_full_path_lock, flag);
 	if (channel_id == CAMERA_FULL_PATH) {
 #if DCAM_FULL_PATH_PAUSE
-		sprd_dcam_drv_glb_reg_owr(idx, DCAM_CFG, BIT_1, DCAM_CFG_REG);
-		sprd_dcam_drv_auto_copy(idx, FULL_COPY);
 		path = &s_p_dcam_mod[idx]->full_path;
+		if (path->status != DCAM_ST_STOP) {
+			sprd_dcam_drv_glb_reg_owr(idx, DCAM_CFG, BIT_1,
+				DCAM_CFG_REG);
+			sprd_dcam_drv_auto_copy(idx, FULL_COPY);
+		}
 #else
 		return -rtn;
 #endif
 	} else {
-		sprd_dcam_drv_glb_reg_owr(idx, DCAM_CFG, BIT_2, DCAM_CFG_REG);
 		path = &s_p_dcam_mod[idx]->bin_path;
+		if (path->status != DCAM_ST_STOP)
+			sprd_dcam_drv_glb_reg_owr(idx, DCAM_CFG,
+				BIT_2, DCAM_CFG_REG);
 	}
 	path->status = DCAM_ST_START;
+	spin_unlock_irqrestore(&dcam_full_path_lock, flag);
+
 	return -rtn;
 }
 
@@ -695,7 +705,7 @@ int sprd_dcam_drv_start(enum dcam_id idx)
 int sprd_dcam_drv_stop(enum dcam_id idx, int is_irq)
 {
 	enum dcam_drv_rtn rtn = DCAM_RTN_SUCCESS;
-	unsigned long flag;
+	unsigned long flag, flag1;
 	int32_t ret = 0;
 	int time_out = 5000;
 	struct dcam_path_desc *bin_path = sprd_dcam_drv_bin_path_get(idx);
@@ -705,9 +715,11 @@ int sprd_dcam_drv_stop(enum dcam_id idx, int is_irq)
 		return -EFAULT;
 	}
 
+	spin_lock_irqsave(&dcam_full_path_lock, flag1);
 	s_p_dcam_mod[idx]->state |= DCAM_STATE_QUICKQUIT;
 	s_p_dcam_mod[idx]->full_path.status = DCAM_ST_STOP;
 	s_p_dcam_mod[idx]->bin_path.status = DCAM_ST_STOP;
+	spin_unlock_irqrestore(&dcam_full_path_lock, flag1);
 
 	if (!is_irq)
 		spin_lock_irqsave(&dcam_lock[idx], flag);
@@ -895,6 +907,7 @@ int sprd_dcam_drv_init(struct platform_device *p_dev)
 
 		mutex_init(&dcam_module_sema[i]);
 
+		dcam_full_path_lock = __SPIN_LOCK_UNLOCKED(dcam_full_path_lock);
 		dcam_lock[i] = __SPIN_LOCK_UNLOCKED(dcam_lock);
 		dcam_glb_reg_cfg_lock[i] =
 			__SPIN_LOCK_UNLOCKED(dcam_glb_reg_cfg_lock);
@@ -925,6 +938,7 @@ void sprd_dcam_drv_deinit(void)
 
 		mutex_init(&dcam_module_sema[i]);
 
+		dcam_full_path_lock = __SPIN_LOCK_UNLOCKED(dcam_full_path_lock);
 		dcam_lock[i] = __SPIN_LOCK_UNLOCKED(dcam_lock);
 		dcam_glb_reg_cfg_lock[i] =
 			__SPIN_LOCK_UNLOCKED(dcam_glb_reg_cfg_lock);
@@ -1442,4 +1456,75 @@ void sprd_dcam_drv_update_rawsizer_param(
 			rawsizer_param->output_height,
 			rawsizer_param->output_width);
 	}
+}
+
+int sprd_dcam_drv_path_rect_get(uint32_t idx,
+	struct camera_rect *in_rect, struct sprd_img_path_rect *param)
+{
+	int ret = 0;
+	struct sprd_img_rect *trim_valid_rect = NULL;
+	struct sprd_img_rect *ae_valid_rect = NULL;
+	struct sprd_img_rect *af_valid_rect = NULL;
+	uint32_t blk_num_w = 0, blk_num_h = 0;
+	uint32_t blk_size_w = 0, blk_size_h = 0;
+	uint32_t bin_crop = 0;
+	uint32_t val = 0;
+
+	if (!in_rect || !param) {
+		pr_err("fail to get valid input ptr rect %p param %p\n",
+			in_rect, param);
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	trim_valid_rect = &param->trim_valid_rect;
+	ae_valid_rect = &param->ae_valid_rect;
+	af_valid_rect = &param->af_valid_rect;
+
+	val = DCAM_REG_RD(idx, DCAM_CAM_BIN_CFG);
+	bin_crop = (val >> 1) & 0x1;
+	if (bin_crop) {
+		val = DCAM_REG_RD(idx, DCAM_BIN_CROP_START);
+		trim_valid_rect->x = val & 0x1FFF;
+		trim_valid_rect->y = (val >> 16) & 0x1FFF;
+		val = DCAM_REG_RD(idx, DCAM_BIN_CROP_SIZE);
+		trim_valid_rect->w = val & 0x1FFF;
+		trim_valid_rect->h = (val >> 16) & 0x1FFF;
+	} else {
+		trim_valid_rect->x = in_rect->x;
+		trim_valid_rect->y = in_rect->y;
+		trim_valid_rect->w = in_rect->w;
+		trim_valid_rect->h = in_rect->h;
+	}
+	pr_debug("TRIM rect info x %d y %d w %d h %d\n",
+		trim_valid_rect->x, trim_valid_rect->y,
+		trim_valid_rect->w, trim_valid_rect->h);
+
+	val = DCAM_REG_RD(idx, ISP_AEM_OFFSET);
+	ae_valid_rect->x = val & 0x1FFF;
+	ae_valid_rect->y = (val >> 16) & 0x1FFF;
+	val = DCAM_REG_RD(idx, ISP_AEM_BLK_NUM);
+	blk_num_w = val & 0xFF;
+	blk_num_h = (val >> 8) & 0xFF;
+	val = DCAM_REG_RD(idx, ISP_AEM_BLK_SIZE);
+	blk_size_w = val & 0xFF;
+	blk_size_h = (val >> 8) & 0xFF;
+	ae_valid_rect->w = blk_num_w * blk_size_w;
+	ae_valid_rect->h = blk_num_h * blk_size_h;
+	pr_debug("AE rect info x %d y %d w %d h %d\n",
+		ae_valid_rect->x, ae_valid_rect->y,
+		ae_valid_rect->w, ae_valid_rect->h);
+
+	val = DCAM_REG_RD(idx, ISP_RAW_AFM_CROP_START);
+	af_valid_rect->x = val & 0x1FFF;
+	af_valid_rect->y = (val >> 16) & 0x1FFF;
+	val = DCAM_REG_RD(idx, ISP_RAW_AFM_CROP_SIZE);
+	af_valid_rect->w = val & 0x1FFF;
+	af_valid_rect->h = (val >> 16) & 0x1FFF;
+	pr_debug("AF rect info x %d y %d w %d h %d\n",
+		af_valid_rect->x, af_valid_rect->y,
+		af_valid_rect->w, af_valid_rect->h);
+
+exit:
+	return ret;
 }

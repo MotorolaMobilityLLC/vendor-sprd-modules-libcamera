@@ -484,6 +484,7 @@ static void sprd_ispint_fmcu_config_done(enum isp_id idx, void *isp_handle)
 	struct isp_path_desc *path_cap = NULL;
 	struct isp_fmcu_slice_desc *fmcu_slice = NULL;
 	struct camera_frame frame;
+	struct camera_frame slave_frame;
 	struct isp_module *module = NULL;
 	struct isp_nr3_param *nr3_info = NULL;
 	struct sprd_img_capture_param capture_param;
@@ -494,6 +495,7 @@ static void sprd_ispint_fmcu_config_done(enum isp_id idx, void *isp_handle)
 	}
 
 	memset(&frame, 0x00, sizeof(frame));
+	memset(&slave_frame, 0x00, sizeof(slave_frame));
 	memset(&capture_param, 0x00, sizeof(capture_param));
 
 	id = idx;
@@ -519,6 +521,16 @@ static void sprd_ispint_fmcu_config_done(enum isp_id idx, void *isp_handle)
 				return;
 			}
 			sprd_cam_buf_addr_unmap(&frame.buf_info);
+			if (dev->is_slave_eb) {
+				ret = sprd_cam_queue_frm_dequeue(
+					&path_vid->frame_queue, &slave_frame);
+				if (ret) {
+					pr_debug("fail to dequeue slave frame\n");
+					return;
+				}
+				sprd_cam_buf_addr_unmap(&slave_frame.buf_info);
+				frame.slave_mfd = slave_frame.buf_info.mfd[0];
+			}
 			if (!sprd_cam_buf_is_equal(&frame.buf_info,
 				&path_cap->path_reserved_frame.buf_info)) {
 				frame.width = path_cap->dst.w;

@@ -136,7 +136,7 @@ int sprd_isp_3dnr_cap_frame_proc(void *isp_handle, void *data)
 	nr3_info->fetch_format = ISP_FETCH_YUV420_2FRAME;
 	nr3_info->store_format = ISP_STORE_YUV420_2FRAME;
 
-	if (nr3_info->need_3dnr) {
+	if (nr3_info->need_3dnr && !dev->is_slave_eb) {
 		sprd_isp_3dnr_conversion_mv(nr3_info, data);
 		sprd_isp3dnr_memctrl_cfg(&nr3_info->mem_ctrl, data);
 		sprd_isp3dnr_store_cfg(&nr3_info->nr3_store, data);

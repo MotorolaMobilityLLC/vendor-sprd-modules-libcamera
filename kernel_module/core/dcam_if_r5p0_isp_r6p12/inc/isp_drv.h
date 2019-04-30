@@ -309,6 +309,8 @@ struct isp_k_block {
 	uint32_t ynr_center_x;
 	uint32_t ynr_center_y;
 	uint32_t need_4in1;
+	uint32_t seed0_for_mode1;
+	uint32_t shape_mode;
 };
 
 struct isp_store_info {
@@ -350,7 +352,6 @@ struct isp_path_desc {
 	uint32_t odata_mode;
 	uint32_t frame_base_id;
 	uint32_t output_frame_count;
-	uint32_t path_sel;
 	uint32_t frm_cnt;
 	uint32_t skip_num;
 	uint32_t buf_cnt;
@@ -448,6 +449,7 @@ struct isp_pipe_dev {
 	uint32_t isp_offline_thread_flag;
 	uint32_t offline_proc_cap;
 	uint32_t need_4in1;
+	uint32_t is_slave_eb;
 	uint32_t lowlux_4in1_cap;
 	uint32_t sn_mode;
 };

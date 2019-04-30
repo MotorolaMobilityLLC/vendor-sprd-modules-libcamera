@@ -99,42 +99,6 @@ static void sprd_isppath_store_pitch_get(struct slice_pitch *pitch_ptr,
 
 }
 
-static int sprd_isppath_store_param_get(struct isp_path_desc *path)
-{
-	struct isp_store_info *store_info = NULL;
-
-	if (!path) {
-		pr_err("fail to get valid input ptr\n");
-		return -EFAULT;
-	}
-
-	store_info = &path->store_info;
-	store_info->bypass = 0;
-	store_info->endian = path->data_endian.uv_endian;
-	store_info->speed_2x = 1;
-	store_info->mirror_en = 0;
-	store_info->color_format =
-		sprd_isppath_format_store(path->output_format);
-	store_info->max_len_sel = 0;
-	store_info->shadow_clr_sel = 1;
-	store_info->shadow_clr = 1;
-	store_info->store_res = 1;
-	store_info->rd_ctrl = 0;
-
-	store_info->size.w = path->trim1_info.size_x;
-	store_info->size.h = path->trim1_info.size_y;
-
-	store_info->border.up_border = 0;
-	store_info->border.down_border = 0;
-	store_info->border.left_border = 0;
-	store_info->border.right_border = 0;
-
-	sprd_isppath_store_pitch_get((void *)&store_info->pitch,
-			store_info->color_format, store_info->size.w);
-
-	return 0;
-}
-
 static int sprd_isppath_store_cfg(struct isp_path_desc *pre,
 			struct isp_path_desc *vid,
 			struct isp_path_desc *cap)
@@ -147,7 +111,7 @@ static int sprd_isppath_store_cfg(struct isp_path_desc *pre,
 	}
 
 	if (pre->valid) {
-		rtn = sprd_isppath_store_param_get(pre);
+		rtn = sprd_isp_path_store_param_get(pre);
 		if (rtn) {
 			pr_err("fail to get pre store param\n");
 			return rtn;
@@ -155,7 +119,7 @@ static int sprd_isppath_store_cfg(struct isp_path_desc *pre,
 	}
 
 	if (vid->valid) {
-		rtn = sprd_isppath_store_param_get(vid);
+		rtn = sprd_isp_path_store_param_get(vid);
 		if (rtn) {
 			pr_err("fail to get vid store param error\n");
 			return rtn;
@@ -163,7 +127,7 @@ static int sprd_isppath_store_cfg(struct isp_path_desc *pre,
 	}
 
 	if (cap->valid) {
-		rtn = sprd_isppath_store_param_get(cap);
+		rtn = sprd_isp_path_store_param_get(cap);
 		if (rtn) {
 			pr_err("fail to get cap store param error\n");
 			return rtn;
@@ -605,7 +569,7 @@ static void sprd_isppath_scl_block_set(uint32_t idx,
 	/* config path_eb */
 	ISP_REG_MWR(idx, addr+ISP_SCALER_CFG, BIT_31, 1 << 31);
 	ISP_REG_MWR(idx, addr+ISP_SCALER_CFG, BIT_29, 0 << 29);
-	ISP_REG_MWR(idx, addr+ISP_SCALER_CFG, BIT_9, ~path->valid << 9);
+	ISP_REG_MWR(idx, addr+ISP_SCALER_CFG, BIT_9, 0 << 9);
 	ISP_REG_MWR(idx, addr+ISP_SCALER_CFG, BIT_8, 0 << 8);
 	ISP_REG_MWR(idx, addr+ISP_SCALER_CFG, BIT_10, path->uv_sync_v << 10);
 	/* config frame deci */
@@ -800,6 +764,42 @@ static void sprd_isppath_cap_frame_pre_proc(struct isp_pipe_dev *dev)
 	}
 }
 
+int sprd_isp_path_store_param_get(struct isp_path_desc *path)
+{
+	struct isp_store_info *store_info = NULL;
+
+	if (!path) {
+		pr_err("fail to get valid input ptr\n");
+		return -EFAULT;
+	}
+
+	store_info = &path->store_info;
+	store_info->bypass = 0;
+	store_info->endian = path->data_endian.uv_endian;
+	store_info->speed_2x = 1;
+	store_info->mirror_en = 0;
+	store_info->color_format =
+		sprd_isppath_format_store(path->output_format);
+	store_info->max_len_sel = 0;
+	store_info->shadow_clr_sel = 1;
+	store_info->shadow_clr = 1;
+	store_info->store_res = 1;
+	store_info->rd_ctrl = 0;
+
+	store_info->size.w = path->trim1_info.size_x;
+	store_info->size.h = path->trim1_info.size_y;
+
+	store_info->border.up_border = 0;
+	store_info->border.down_border = 0;
+	store_info->border.left_border = 0;
+	store_info->border.right_border = 0;
+
+	sprd_isppath_store_pitch_get((void *)&store_info->pitch,
+			store_info->color_format, store_info->size.w);
+
+	return 0;
+}
+
 int sprd_isp_path_param_cfg(struct isp_path_desc *path)
 {
 	int rtn = 0;
@@ -821,7 +821,6 @@ int sprd_isp_path_param_cfg(struct isp_path_desc *path)
 	path->trim1_info.start_y = 0;
 	path->trim1_info.size_x = path->dst.w;
 	path->trim1_info.size_y = path->dst.h;
-	path->path_sel = 1;
 
 	pr_debug("param:src %d %d dst %d %d trim0 %d %d %d %d trim1 %d %d %d %d\n",
 		path->src.w, path->src.h,

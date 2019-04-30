@@ -91,6 +91,7 @@ struct camera_node {
 	uint32_t frame_id;
 	uint32_t mfd[3];
 	uint32_t zoom_ratio;
+	uint32_t slave_mfd;
 	uint32_t reserved[2];
 	struct camera_time time;
 	struct dual_sync_info dual_info;
@@ -141,6 +142,7 @@ struct camera_context {
 	uint32_t need_isp;
 	uint32_t need_4in1;
 	uint32_t need_3dnr;
+	uint32_t is_slave_eb;
 	uint32_t need_downsizer;
 	uint32_t dual_cam;
 	uint32_t scene_mode;
@@ -153,6 +155,7 @@ struct camera_context {
 	struct camera_size cap_out_size;
 	struct camera_size sn_max_size;
 	struct camera_size dst_size;
+	struct camera_size slave_dst_size;
 	struct camera_rect path_input_rect;
 	struct camera_path_spec cam_path[CAMERA_MAX_PATH];
 	struct dcam_cap_dec img_deci;
@@ -752,6 +755,7 @@ static ssize_t sprd_camcore_read(struct file *file,
 			read_op.parm.frame.frame_id = node.frame_id;
 			read_op.parm.frame.zoom_ratio = node.zoom_ratio;
 			read_op.parm.frame.mfd = node.mfd[0];
+			read_op.parm.frame.reserved[0] = node.slave_mfd;
 			CAM_TRACE("index %d real_index %d base_id %d mfd %x\n",
 				read_op.parm.frame.index,
 				read_op.parm.frame.real_index,

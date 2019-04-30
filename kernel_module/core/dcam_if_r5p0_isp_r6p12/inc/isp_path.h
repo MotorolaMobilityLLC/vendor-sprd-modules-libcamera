@@ -39,5 +39,6 @@ int sprd_isp_path_4in1_cap_stop(struct isp_pipe_dev *dev);
 void sprd_isp_path_4in1_raw_proc_start(struct isp_pipe_dev *dev,
 	struct camera_frame *frame);
 int sprd_isp_path_4in1_scaler_update(void *isp_handle);
+int sprd_isp_path_store_param_get(struct isp_path_desc *path);
 
 #endif

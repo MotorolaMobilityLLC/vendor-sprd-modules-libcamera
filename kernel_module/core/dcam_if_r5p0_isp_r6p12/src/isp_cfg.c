@@ -58,6 +58,7 @@ static uint32_t ISP_CFG_MAP[] __aligned(8) = {
 		0x0034D110,/*0xD110  - 0xD140 , 13  , SCL_VID_store*/
 		0x0044C010,/*0xC010  - 0xC050 , 17  , SCL_CAP*/
 		0x0034C110,/*0xC110  - 0xC140 , 13  , SCL_CAP_store*/
+		0x0044C210,/*0xC210  - 0xC250 , 17  ,SCL_CAP_noisefilter*/
 		0x00640110,/*0x110   - 0x170  , 25  , FETCH*/
 		0x00300210,/*0x210   - 0x23C  , 12  , STORE*/
 		0x00180310,/*0x310   - 0x324  , 6   , DISPATCH*/

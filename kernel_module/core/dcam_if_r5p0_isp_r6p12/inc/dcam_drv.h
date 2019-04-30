@@ -221,7 +221,8 @@ struct dcam_path_desc {
 struct dcam_3dnr_me {
 	int mv_x;
 	int mv_y;
-	uint32_t mv_ready_cnt;
+	uint32_t bin_mv_ready_cnt;
+	uint32_t full_mv_ready_cnt;
 	uint32_t bin_frame_cnt;
 	uint32_t full_frame_cnt;
 	struct camera_frame bin_frame;
@@ -378,4 +379,6 @@ void sprd_dcam_drv_update_rawsizer_param(
 void sprd_dcam_drv_init_online_pipe(struct zoom_info_t *o_zoom_info,
 	int sensor_width, int sensor_height,
 	int output_width, int output_height);
+int sprd_dcam_drv_path_rect_get(uint32_t idx, struct camera_rect *in_rect,
+	struct sprd_img_path_rect *param);
 #endif /* _DCAM_DRV_H_ */

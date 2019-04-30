@@ -124,7 +124,8 @@ static void sprd_ispslice_noisefilter_seeds(uint32_t image_width,
 	*seed3 = sprd_ispslice_noisefilter_24b_shift8(*seed2, NULL);
 }
 
-static int sprd_ispslice_noisefliter_info_set(struct slice_context_info *cxt)
+static int sprd_ispslice_noisefliter_info_set(struct slice_context_info *cxt,
+	struct slice_param_in *in_ptr)
 {
 	int rtn = 0;
 	uint32_t cur_slice_id = 0, slice_num = 0;
@@ -133,7 +134,7 @@ static int sprd_ispslice_noisefliter_info_set(struct slice_context_info *cxt)
 	struct slice_noisefilter_info *noisefilter_info = NULL;
 	struct slice_scaler_info *scaler_info = NULL;
 
-	if (!cxt) {
+	if (!in_ptr || !cxt) {
 		pr_err("fail to get valid input ptr\n");
 		rtn = -EINVAL;
 		goto exit;
@@ -147,7 +148,10 @@ static int sprd_ispslice_noisefliter_info_set(struct slice_context_info *cxt)
 	for (; cur_slice_id < slice_num; cur_slice_id++) {
 		noisefilter_info = &cxt->noisefilter_info[cur_slice_id];
 		slice_width = scaler_info[cur_slice_id].trim1_size_x;
-		noisefilter_info->seed0 = 0xff;
+		if (in_ptr->shape_mode == 1)
+			noisefilter_info->seed0 = in_ptr->seed_for_mode1;
+		else
+			return rtn;
 		sprd_ispslice_noisefilter_seeds(slice_width,
 			noisefilter_info->seed0,
 			&noisefilter_info->seed1, &noisefilter_info->seed2,
@@ -1307,6 +1311,14 @@ static int sprd_ispslice_scaler_info_set(struct slice_param_in *in_ptr,
 				sprd_ispslice_path_info_set(scaler_info,
 					scaler_frame, base_info, r, c);
 			}
+
+			if (in_ptr->vid_slice_need == 1) {
+				scaler_info = cxt->scaler_info[SLICE_PATH_VID];
+				scaler_frame =
+					&in_ptr->scaler_frame[SLICE_PATH_VID];
+				sprd_ispslice_path_info_set(scaler_info,
+					scaler_frame, base_info, r, c);
+			}
 		}
 	}
 
@@ -1533,6 +1545,15 @@ static int sprd_ispslice_slice_store_info_set(struct slice_param_in *in_ptr,
 		scaler_info = cxt->scaler_info[SLICE_PATH_CAP];
 		store_frame = &in_ptr->store_frame[SLICE_PATH_CAP];
 		scl_bypass = in_ptr->scaler_frame[SLICE_PATH_CAP].scaler_bypass;
+		sprd_ispslice_store_info_set(store_info, store_frame, base_info,
+			scaler_info, scl_bypass);
+	}
+
+	if (in_ptr->vid_slice_need == 1) {
+		store_info = cxt->store_info[SLICE_PATH_VID];
+		scaler_info = cxt->scaler_info[SLICE_PATH_VID];
+		store_frame = &in_ptr->store_frame[SLICE_PATH_VID];
+		scl_bypass = in_ptr->scaler_frame[SLICE_PATH_VID].scaler_bypass;
 		sprd_ispslice_store_info_set(store_info, store_frame, base_info,
 			scaler_info, scl_bypass);
 	}
@@ -2056,6 +2077,25 @@ static int sprd_ispslice_fmcu_postcnr_set(uint32_t *fmcu_buf,
 	return num;
 }
 
+static int sprd_ispslice_fmcu_cfa_set(uint32_t *fmcu_buf,
+	struct slice_cfa_info *cfa_info,
+	uint32_t num, enum isp_id id)
+{
+	uint32_t addr = 0, cmd = 0;
+
+	if (!fmcu_buf || !cfa_info) {
+		pr_err("fail to get valid input ptr\n");
+		return 0;
+	}
+
+	addr = ISP_GET_REG(id, ISP_CFAE_GBUF_CFG);
+	cmd = cfa_info->gbuf_addr_max & 0xfff;
+	num = sprd_ispslice_fmcu_push_back(&fmcu_buf[num], addr, cmd, num);
+
+	return num;
+}
+#endif
+
 static int sprd_ispslice_fmcu_noisefilter_set(uint32_t *fmcu_buf,
 	struct slice_noisefilter_info *noisefilter_info,
 	uint32_t num, enum isp_id idx)
@@ -2085,24 +2125,9 @@ static int sprd_ispslice_fmcu_noisefilter_set(uint32_t *fmcu_buf,
 
 	return num;
 }
-
-static int sprd_ispslice_fmcu_cfa_set(uint32_t *fmcu_buf,
-	struct slice_cfa_info *cfa_info,
-	uint32_t num, enum isp_id id)
-{
-	uint32_t addr = 0, cmd = 0;
-
-	addr = ISP_GET_REG(id, ISP_CFAE_GBUF_CFG);
-	cmd = cfa_info->gbuf_addr_max & 0xfff;
-	num = sprd_ispslice_fmcu_push_back(&fmcu_buf[num], addr, cmd, num);
-
-	return num;
-}
-#endif
-
 static int sprd_ispslice_fmcu_scaler_set(uint32_t *fmcu_buf,
-	struct slice_scaler_info *scaler_info,
-	uint32_t num, enum isp_id idx, uint32_t base)
+	struct slice_scaler_info *scaler_info, uint32_t num,
+	enum isp_id idx, uint32_t base, uint32_t store_base)
 {
 	uint32_t addr = 0, cmd = 0;
 
@@ -2116,10 +2141,8 @@ static int sprd_ispslice_fmcu_scaler_set(uint32_t *fmcu_buf,
 		cmd = ISP_REG_RD(idx, ISP_SCALER_CFG + base) | BIT_9;
 		num = sprd_ispslice_fmcu_push_back(&fmcu_buf[num],
 			addr, cmd, num);
-		addr = ISP_GET_REG(idx, ISP_STORE_PRE_CAP_BASE
-			+ ISP_STORE_PARAM);
-		cmd = ISP_REG_RD(idx, ISP_STORE_PRE_CAP_BASE
-			+ ISP_STORE_PARAM) | BIT_0;
+		addr = ISP_GET_REG(idx, store_base + ISP_STORE_PARAM);
+		cmd = ISP_REG_RD(idx, store_base + ISP_STORE_PARAM) | BIT_0;
 		num = sprd_ispslice_fmcu_push_back(&fmcu_buf[num],
 			addr, cmd, num);
 	}
@@ -2368,10 +2391,11 @@ static int sprd_ispslice_fmcu_info_set(struct slice_param_in *in_ptr,
 #if 0
 		num = sprd_ispslice_fmcu_postcnr_set(fmcu_buf,
 			postcnr_info, num, id);
-		num = sprd_ispslice_fmcu_noisefilter_set(fmcu_buf,
-			noisefilter_info, num, id);
 		num = sprd_ispslice_fmcu_cfa_set(fmcu_buf, cfa_info, num, id);
 #endif
+		if (in_ptr->shape_mode == 1)
+			num = sprd_ispslice_fmcu_noisefilter_set(fmcu_buf,
+				noisefilter_info, num, id);
 		num = sprd_ispslice_fmcu_nlm_set(fmcu_buf, nlm_info, num, id);
 		num = sprd_ispslice_fmcu_ynr_set(fmcu_buf, ynr_info, num, id);
 		if (in_ptr->nr3_info.need_slice) {
@@ -2412,7 +2436,20 @@ static int sprd_ispslice_fmcu_info_set(struct slice_param_in *in_ptr,
 			scl_base = ISP_SCALER_PRE_CAP_BASE;
 			store_base = ISP_STORE_PRE_CAP_BASE;
 			num = sprd_ispslice_fmcu_scaler_set(fmcu_buf,
-				&scaler_info[slice_id], num, id, scl_base);
+				&scaler_info[slice_id], num, id,
+				scl_base, store_base);
+			num = sprd_ispslice_fmcu_store_set(fmcu_buf,
+				&store_info[slice_id], num, id, store_base);
+		}
+
+		if (in_ptr->vid_slice_need == 1) {
+			scaler_info = cxt->scaler_info[SLICE_PATH_VID];
+			store_info = cxt->store_info[SLICE_PATH_VID];
+			scl_base = ISP_SCALER_VID_BASE;
+			store_base = ISP_STORE_VID_BASE;
+			num = sprd_ispslice_fmcu_scaler_set(fmcu_buf,
+				&scaler_info[slice_id], num, id,
+				scl_base, store_base);
 			num = sprd_ispslice_fmcu_store_set(fmcu_buf,
 				&store_info[slice_id], num, id, store_base);
 		}
@@ -2505,7 +2542,7 @@ int sprd_isp_slice_fmcu_slice_cfg(void *fmcu_handler,
 		goto exit;
 	}
 
-	rtn = sprd_ispslice_noisefliter_info_set(cxt);
+	rtn = sprd_ispslice_noisefliter_info_set(cxt, in_ptr);
 	if (rtn) {
 		pr_err("fail to set slice noise fliter info!\n");
 		goto exit;

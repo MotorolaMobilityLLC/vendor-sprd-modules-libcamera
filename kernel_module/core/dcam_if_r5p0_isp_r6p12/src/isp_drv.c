@@ -303,6 +303,7 @@ static int sprd_ispdrv_slice_init_param_get(struct slice_param_in *in_ptr,
 {
 	enum isp_drv_rtn ret = ISP_RTN_SUCCESS;
 	struct isp_path_desc *path_cap = NULL;
+	struct isp_path_desc *path_vid = NULL;
 	struct slice_scaler_path *scaler = NULL;
 	struct slice_store_path *store = NULL;
 	struct isp_module *module = NULL;
@@ -317,6 +318,7 @@ static int sprd_ispdrv_slice_init_param_get(struct slice_param_in *in_ptr,
 
 	module = &dev->module_info;
 	path_cap = &module->isp_path[ISP_SCL_CAP];
+	path_vid = &module->isp_path[ISP_SCL_VID];
 	nr3_info = &path_cap->nr3_param;
 
 	in_ptr->com_idx = module->com_idx;
@@ -334,7 +336,7 @@ static int sprd_ispdrv_slice_init_param_get(struct slice_param_in *in_ptr,
 	in_ptr->fetch_format = ISP_FETCH_CSI2_RAW10;/*TBD*/
 	in_ptr->fmcu_addr_vir = (uint32_t *)dev->fmcu_slice.buf_info.kaddr[0];
 
-	if (nr3_info->need_3dnr) {
+	if (nr3_info->need_3dnr && !dev->is_slave_eb) {
 		slice_3dnr_in = &in_ptr->nr3_info;
 		slice_3dnr_in->need_slice = 1;
 		slice_3dnr_in->fetch_3dnr_frame.format =
@@ -385,8 +387,9 @@ static int sprd_ispdrv_slice_init_param_get(struct slice_param_in *in_ptr,
 		in_ptr->cap_slice_need = 1;
 		scaler = &in_ptr->scaler_frame[SLICE_PATH_CAP];
 		ret = sprd_ispdrv_slice_init_scaler_get(scaler, path_cap);
-		if (!nr3_info->need_3dnr || (nr3_info->need_3dnr
-			&& nr3_info->cur_cap_frame == ISP_3DNR_NUM)) {
+		if (!nr3_info->need_3dnr || dev->is_slave_eb
+			|| (nr3_info->need_3dnr &&
+			nr3_info->cur_cap_frame == ISP_3DNR_NUM)) {
 			ret = sprd_isp_path_next_frm_set(module,
 				ISP_PATH_IDX_CAP, frame);
 		}
@@ -397,6 +400,21 @@ static int sprd_ispdrv_slice_init_param_get(struct slice_param_in *in_ptr,
 		store->addr.chn0 = path_cap->store_info.addr.chn0;
 		store->addr.chn1 = path_cap->store_info.addr.chn1;
 		store->addr.chn2 = path_cap->store_info.addr.chn2;
+
+		if (dev->is_slave_eb) {
+			in_ptr->vid_slice_need = 1;
+			scaler = &in_ptr->scaler_frame[SLICE_PATH_VID];
+			sprd_ispdrv_slice_init_scaler_get(scaler, path_vid);
+			sprd_isp_path_next_frm_set(module,
+				ISP_PATH_IDX_VID, NULL);
+			store = &in_ptr->store_frame[SLICE_PATH_VID];
+			store->format = path_vid->store_info.color_format;
+			store->size.width = path_vid->dst.w;
+			store->size.height = path_vid->dst.h;
+			store->addr.chn0 = path_vid->store_info.addr.chn0;
+			store->addr.chn1 = path_vid->store_info.addr.chn1;
+			store->addr.chn2 = path_vid->store_info.addr.chn2;
+		}
 	}
 
 	in_ptr->nlm_col_center = dev->isp_k_param.nlm_col_center;
@@ -404,6 +422,8 @@ static int sprd_ispdrv_slice_init_param_get(struct slice_param_in *in_ptr,
 	in_ptr->ynr_center_x = dev->isp_k_param.ynr_center_x;
 	in_ptr->ynr_center_y = dev->isp_k_param.ynr_center_y;
 	in_ptr->is_raw_capture = dev->is_raw_capture;
+	in_ptr->seed_for_mode1 = dev->isp_k_param.seed0_for_mode1;
+	in_ptr->shape_mode = dev->isp_k_param.shape_mode;
 
 	return ret;
 }
@@ -931,6 +951,47 @@ static int sprd_ispdrv_path_common_start(struct isp_module *module,
 	return rtn;
 }
 
+static int sprd_ispdrv_magical_video_update(struct isp_module *module)
+{
+	enum isp_drv_rtn ret = ISP_RTN_SUCCESS;
+	struct isp_path_desc *cap = NULL;
+	struct isp_path_desc *vid = NULL;
+
+	if (!module) {
+		pr_err("fail to get valid input ptr\n");
+		return -EFAULT;
+	}
+
+	cap = &module->isp_path[ISP_SCL_CAP];
+	vid = &module->isp_path[ISP_SCL_VID];
+
+	vid->data_endian.uv_endian = cap->data_endian.uv_endian;
+	vid->output_format = cap->output_format;
+	vid->src = cap->src;
+	vid->trim0_info = cap->trim0_info;
+	vid->dst.w = vid->out_size.w;
+	vid->dst.h = vid->out_size.h;
+	vid->trim1_info.start_x = 0;
+	vid->trim1_info.start_y = 0;
+	vid->trim1_info.size_x = vid->dst.w;
+	vid->trim1_info.size_y = vid->dst.h;
+
+	ret = sprd_isp_path_store_param_get(vid);
+	if (ret) {
+		pr_err("fail to get vid store param error\n");
+		return ret;
+	}
+
+	ret = sprd_ispdrv_path_scaler(module, ISP_PATH_IDX_VID, vid);
+	if (ret) {
+		pr_err("fail to set video path scaler\n");
+		return ret;
+	}
+	sprd_isp_path_pathset(module, vid, ISP_PATH_IDX_VID);
+
+	return ret;
+}
+
 static int sprd_ispdrv_path_start(void *isp_handle,
 	enum isp_path_index path_index, struct camera_frame *frame)
 {
@@ -995,6 +1056,12 @@ static int sprd_ispdrv_path_start(void *isp_handle,
 			rtn = sprd_isp_path_4in1_scaler_update(dev);
 		if (rtn) {
 			pr_err("fail to update 4in1 scaler info\n");
+			return rtn;
+		}
+		if (dev->is_slave_eb)
+			rtn = sprd_ispdrv_magical_video_update(module);
+		if (rtn) {
+			pr_err("fail to update video info\n");
 			return rtn;
 		}
 		sprd_ispdrv_path_common_start(module, cur_path,
@@ -1959,6 +2026,13 @@ int sprd_isp_drv_dev_init(void **isp_pipe_dev_handle, enum isp_id id)
 		ret = -EIO;
 		goto exit;
 	}
+	ret = sprd_cam_statistic_queue_init(
+		&dev->module_info.statis_module_info,
+		id, ISP_DEV_STATIS);
+	if (ret) {
+		pr_err("fail to init isp statis queue\n");
+		goto statistic_exit;
+	}
 
 	ret = sprd_isp_slice_fmcu_init(&dev->fmcu_slice.slice_handle);
 	if (unlikely(ret != 0)) {
@@ -1991,6 +2065,8 @@ int sprd_isp_drv_dev_init(void **isp_pipe_dev_handle, enum isp_id id)
 offline_thread_exit:
 	sprd_isp_slice_fmcu_deinit(dev->fmcu_slice.slice_handle);
 fmcu_slice_exit:
+	sprd_cam_statistic_queue_deinit(&dev->module_info.statis_module_info);
+statistic_exit:
 	sprd_ispdrv_module_deinit(&dev->module_info);
 exit:
 	vfree(dev);
@@ -2020,6 +2096,8 @@ int sprd_isp_drv_dev_deinit(void *isp_pipe_dev_handle)
 	ret = sprd_ispdrv_module_deinit(&dev->module_info);
 	if (unlikely(ret != 0))
 		pr_err("fail to init queue\n");
+	sprd_cam_statistic_queue_deinit(
+		&dev->module_info.statis_module_info);
 
 	ret = sprd_isp_slice_fmcu_deinit(dev->fmcu_slice.slice_handle);
 	if (unlikely(ret != 0))
@@ -2436,6 +2514,7 @@ int sprd_isp_drv_stop(void *isp_handle, int is_irq)
 	dev->offline_proc_cap = 0;
 	dev->pre_flag = 0;
 	atomic_set(&dev->shadow_done, 0);
+	dev->is_slave_eb = 0;
 	s_isp_group.dual_cap_sts = 0;
 	s_isp_group.dual_cap_cnt = 0;
 	s_isp_group.dual_sel_cnt = 0;
@@ -2458,8 +2537,6 @@ int sprd_isp_drv_stop(void *isp_handle, int is_irq)
 	}
 	sprd_cam_statistic_queue_clear(
 			&module->statis_module_info);
-	sprd_cam_statistic_queue_deinit(
-		&module->statis_module_info);
 
 	if (isp_k_param->lsc_buf_phys_addr != 0x00) {
 		isp_k_param->lsc_pfinfo.dev = &s_dcam_pdev->dev;

@@ -234,9 +234,12 @@ static void sprd_dcamint_3dnr_done(enum dcam_id idx,
 	if (!dcam_dev->need_nr3)
 		return;
 
-	dcam_dev->fast_me.mv_ready_cnt++;
-	if (dcam_dev->fast_me.mv_ready_cnt > 1)
-		dcam_dev->fast_me.mv_ready_cnt = 1;
+	dcam_dev->fast_me.bin_mv_ready_cnt++;
+	dcam_dev->fast_me.full_mv_ready_cnt++;
+	if (dcam_dev->fast_me.bin_mv_ready_cnt > 1)
+		dcam_dev->fast_me.bin_mv_ready_cnt = 1;
+	if (dcam_dev->fast_me.full_mv_ready_cnt > 1)
+		dcam_dev->fast_me.full_mv_ready_cnt = 1;
 
 	sprd_dcamint_3dnr_frame_mv_get(idx, &x, &y);
 	dcam_dev->fast_me.mv_x = x;
@@ -245,14 +248,14 @@ static void sprd_dcamint_3dnr_done(enum dcam_id idx,
 	if (dcam_dev->fast_me.bin_frame_cnt > 0) {
 		sprd_dcamint_isr_proc(idx, DCAM_BIN_PATH_TX_DONE,
 			&(dcam_dev->fast_me.bin_frame));
-		dcam_dev->fast_me.mv_ready_cnt = 0;
+		dcam_dev->fast_me.bin_mv_ready_cnt = 0;
 		dcam_dev->fast_me.bin_frame_cnt = 0;
 	}
 
 	if (dcam_dev->fast_me.full_frame_cnt > 0) {
 		sprd_dcamint_isr_proc(idx, DCAM_FULL_PATH_TX_DONE,
 			&(dcam_dev->fast_me.full_frame));
-		dcam_dev->fast_me.mv_ready_cnt = 0;
+		dcam_dev->fast_me.full_mv_ready_cnt = 0;
 		dcam_dev->fast_me.full_frame_cnt = 0;
 	}
 }
@@ -321,7 +324,7 @@ static void sprd_dcamint_full_path_done(enum dcam_id idx,
 
 			if (dcam_dev->need_nr3) {
 				uint32_t mv_ready_cnt =
-					dcam_dev->fast_me.mv_ready_cnt;
+					dcam_dev->fast_me.full_mv_ready_cnt;
 				if (mv_ready_cnt == 0) {
 					dcam_dev->fast_me.full_frame_cnt++;
 					sprd_dcamint_3dnr_me_frame_store(
@@ -333,9 +336,9 @@ static void sprd_dcamint_full_path_done(enum dcam_id idx,
 					sprd_dcamint_isr_proc(idx, irq_id,
 						&frame);
 					dcam_dev->fast_me.full_frame_cnt = 0;
-					dcam_dev->fast_me.mv_ready_cnt = 0;
+					dcam_dev->fast_me.full_mv_ready_cnt = 0;
 				} else {
-					dcam_dev->fast_me.mv_ready_cnt = 0;
+					dcam_dev->fast_me.full_mv_ready_cnt = 0;
 					dcam_dev->fast_me.full_frame_cnt = 0;
 					pr_err("DCAM%d:fail to full mv_cnt err\n",
 						idx);
@@ -424,8 +427,7 @@ static void sprd_dcamint_bin_path_done(enum dcam_id idx,
 
 			if (dcam_dev->need_nr3) {
 				uint32_t mv_ready_cnt =
-					dcam_dev->fast_me.mv_ready_cnt;
-
+					dcam_dev->fast_me.bin_mv_ready_cnt;
 				if (mv_ready_cnt == 0) {
 					dcam_dev->fast_me.bin_frame_cnt++;
 					sprd_dcamint_3dnr_me_frame_store(
@@ -437,9 +439,9 @@ static void sprd_dcamint_bin_path_done(enum dcam_id idx,
 					sprd_dcamint_isr_proc(idx, irq_id,
 						&frame);
 					dcam_dev->fast_me.bin_frame_cnt = 0;
-					dcam_dev->fast_me.mv_ready_cnt = 0;
+					dcam_dev->fast_me.bin_mv_ready_cnt = 0;
 				} else {
-					dcam_dev->fast_me.mv_ready_cnt = 0;
+					dcam_dev->fast_me.bin_mv_ready_cnt = 0;
 					dcam_dev->fast_me.bin_frame_cnt = 0;
 					pr_err("DCAM%d:fail to 3DNR bin mv_cnt err\n",
 						idx);

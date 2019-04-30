@@ -20,6 +20,7 @@
 
 extern int s_dcam_irq[DCAM_MAX_COUNT];/*dts parsed INTC irq no*/
 extern spinlock_t dcam_lock[DCAM_MAX_COUNT];
+extern spinlock_t dcam_full_path_lock;
 
 #define DCAM_IRQ_ERR_MASK \
 	((1 << DCAM_DCAM_OVF) | (1 << DCAM_CAP_LINE_ERR) | \
