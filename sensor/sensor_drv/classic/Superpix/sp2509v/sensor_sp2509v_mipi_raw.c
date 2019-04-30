@@ -593,6 +593,23 @@ static cmr_int sp2509v_drv_set_master_FrameSync(cmr_handle handle,
     return SENSOR_SUCCESS;
 }
 
+static cmr_int sp2509v_SetSlave_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    SENSOR_LOGI("E");
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x1f, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x40, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b, 0x02);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0x01);
+
+    return SENSOR_SUCCESS;
+}
+
+
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -604,7 +621,10 @@ static cmr_int sp2509v_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
-    // sp2509v_drv_set_master_FrameSync(handle,param);
+#if defined(CONFIG_DUAL_MODULE)
+    if (sns_drv_cxt->sensor_id == 2)
+        sp2509v_SetSlave_FrameSync(handle, param);
+#endif
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xac, 0x01);
