@@ -834,17 +834,6 @@ void isp_set_ctx_common(struct isp_pipe_context *pctx)
 			BIT_3 | BIT_2, 3 << 2); /* vid path off */
 	ISP_REG_MWR(idx, ISP_COMMON_SCL_PATH_SEL,
 			BIT_1 | BIT_0, 3 << 0);  /* pre/cap path off */
-	if (pctx->fmcu_handle) {
-		unsigned long reg_offset;
-		struct isp_fmcu_ctx_desc *fmcu;
-		uint32_t reg_bits[ISP_CONTEXT_NUM] = { 0x00, 0x02, 0x01, 0x03};
-
-		fmcu = (struct isp_fmcu_ctx_desc *)pctx->fmcu_handle;
-		reg_offset = (fmcu->fid == 0) ?
-					ISP_COMMON_FMCU0_PATH_SEL :
-					ISP_COMMON_FMCU1_PATH_SEL;
-		ISP_HREG_MWR(reg_offset, BIT_1 | BIT_0, reg_bits[pctx->ctx_id]);
-	}
 
 	ISP_REG_MWR(idx, ISP_FETCH_PARAM, BIT_0, bypass);
 	ISP_REG_MWR(idx, ISP_FETCH_PARAM,
@@ -2096,6 +2085,8 @@ static int sprd_isp_get_context(void *isp_handle, void *param)
 	struct sprd_cam_hw_info *hw;
 	struct isp_init_param *init_param;
 	struct img_size *max_size;
+	unsigned long reg_offset;
+	uint32_t reg_bits[ISP_CONTEXT_NUM] = { 0x00, 0x02, 0x01, 0x03};
 
 	if (!isp_handle || !param) {
 		pr_err("fail to get valid input ptr\n");
@@ -2184,6 +2175,11 @@ new_ctx:
 			goto fmcu_err;
 		}
 		pctx->fmcu_handle = fmcu;
+
+		reg_offset = (fmcu->fid == 0) ?
+					ISP_COMMON_FMCU0_PATH_SEL :
+					ISP_COMMON_FMCU1_PATH_SEL;
+		ISP_HREG_MWR(reg_offset, BIT_1 | BIT_0, reg_bits[pctx->ctx_id]);
 	}
 
 	camera_queue_init(&pctx->in_queue, ISP_IN_Q_LEN,
@@ -2202,6 +2198,7 @@ new_ctx:
 
 	hw = dev->isp_hw;
 	ret = hw->ops->enable_irq(hw, &pctx->ctx_id);
+	ret = hw->ops->irq_clear(hw, &pctx->ctx_id);
 
 	goto exit;
 
