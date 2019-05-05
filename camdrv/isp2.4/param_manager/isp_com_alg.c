@@ -425,7 +425,12 @@ static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 			cmr_u32 src1_val_h = src1_val & 0x1FF;
 			cmr_u32 src1_val_s = (src1_val >> 9) & 0x7FF;
 
+			if (src0_val_h + 128 < i)
+				src0_val_h += 360;
+			if (src1_val_h + 128 < i)
+				src1_val_h += 360;
 			cmr_u32 dst_val_h = (src0_val_h * weight[0] + src1_val_h * weight[1]) / INTERP_WEIGHT_UNIT;
+			dst_val_h %= 360;
 			cmr_u32 dst_val_s = (src0_val_s * weight[0] + src1_val_s * weight[1]) / INTERP_WEIGHT_UNIT;
 
 			cmr_u32 dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
