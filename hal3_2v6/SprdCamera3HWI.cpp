@@ -1075,12 +1075,6 @@ void SprdCamera3HWI::getLogLevel() {
     int val = 0;
     int turn_off_flag = 0;
 
-    property_get("persist.vendor.cam.hal.log", value, "0");
-    val = atoi(value);
-    if (val > 0) {
-        gHALLogLevel = (uint32_t)val;
-    }
-
     // to turn off camera log:
     // adb shell setprop persist.vendor.cam.log off
     property_get("persist.vendor.cam.log", value, "on");
@@ -1092,6 +1086,12 @@ void SprdCamera3HWI::getLogLevel() {
     property_get("ro.debuggable", value, "1");
     if (!strcmp(value, "0") || turn_off_flag) {
         gHALLogLevel = LEVEL_OVER_LOGI;
+    }
+
+    property_get("persist.vendor.cam.hal.log", value, "0");
+    val = atoi(value);
+    if (val > 0) {
+        gHALLogLevel = (uint32_t)val;
     }
 }
 

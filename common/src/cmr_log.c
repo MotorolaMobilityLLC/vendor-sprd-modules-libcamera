@@ -27,16 +27,16 @@ void isp_init_log_level(void) {
     char prop[PROPERTY_VALUE_MAX];
     int val = 0;
 
-    property_get("persist.vendor.cam.isp.log", prop, "0");
-    val = atoi(prop);
-    if (0 < val)
-        g_isp_log_level = val;
-
     // user verson camera log dont print >= LOGD
     property_get("ro.debuggable", prop, "1");
     if (!strcmp(prop, "0")) {
         g_isp_log_level = LEVEL_OVER_LOGI;
     }
+
+    property_get("persist.vendor.cam.isp.log", prop, "0");
+    val = atoi(prop);
+    if (0 < val)
+        g_isp_log_level = val;
 }
 
 void oem_init_log_level(void) {
@@ -44,30 +44,30 @@ void oem_init_log_level(void) {
     int val = 0;
     int turn_off_flag = 0;
 
-    property_get("persist.vendor.cam.hal.log", value, "0");
-    val = atoi(value);
-    if (0 < val)
-        g_oem_log_level = val;
-
     // user verson camera log dont print >= LOGD
     property_get("ro.debuggable", value, "1");
     if (!strcmp(value, "0")) {
         g_oem_log_level = LEVEL_OVER_LOGI;
     }
+
+    property_get("persist.vendor.cam.oem.log", value, "0");
+    val = atoi(value);
+    if (0 < val)
+        g_oem_log_level = val;
 }
 
 void sensor_init_log_level(void) {
     char prop[PROPERTY_VALUE_MAX];
     int val = 0;
 
-    property_get("persist.vendor.cam.hal.log", prop, "0");
-    val = atoi(prop);
-    if (0 < val)
-        g_sensor_log_level = val;
-
     // user verson camera log dont print >= LOGD
     property_get("ro.debuggable", prop, "1");
     if (!strcmp(prop, "0")) {
         g_sensor_log_level = LEVEL_OVER_LOGI;
     }
+
+    property_get("persist.vendor.cam.sensor.log", prop, "0");
+    val = atoi(prop);
+    if (0 < val)
+        g_sensor_log_level = val;
 }
