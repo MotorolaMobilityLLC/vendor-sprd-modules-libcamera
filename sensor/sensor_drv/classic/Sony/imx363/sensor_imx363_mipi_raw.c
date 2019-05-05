@@ -747,7 +747,7 @@ static cmr_int imx363_drv_set_pdaf_mode(cmr_handle handle, cmr_uint param) {
 }
 
 static cmr_int imx363_drv_set_master_FrameSync(cmr_handle handle,
-                                                cmr_uint param) {
+                                               cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -758,7 +758,7 @@ static cmr_int imx363_drv_set_master_FrameSync(cmr_handle handle,
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30A1, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4B70, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4BD0, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0350, 0x00);
+    //    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0350, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5D0C, 0x01);
 
     return SENSOR_SUCCESS;
@@ -821,7 +821,8 @@ static cmr_int imx363_drv_stream_off(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
-                        sns_drv_cxt->line_time_def / 1000000) + 10;
+                          sns_drv_cxt->line_time_def / 1000000) +
+                         10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }
