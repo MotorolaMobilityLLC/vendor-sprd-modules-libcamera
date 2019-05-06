@@ -4726,9 +4726,11 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 					cxt->exposure_compensation.ae_base_target = cxt->cur_param->target_lum;
 					cxt->mod_update_list.is_mev = 0;
 					cxt->cur_status.settings.ev_manual_status = 0;
+					cxt->cur_status.settings.touch_ev_flag = 0;
 				}else{
 					cxt->mod_update_list.is_mev = 1;
 					cxt->cur_status.settings.ev_manual_status = 1;
+					cxt->cur_status.settings.touch_ev_flag = 1;
 				}
 				cxt->exposure_compensation.comp_val = exp_comp->comp_val;
 				cxt->exposure_compensation.step_numerator = exp_comp->step_numerator;

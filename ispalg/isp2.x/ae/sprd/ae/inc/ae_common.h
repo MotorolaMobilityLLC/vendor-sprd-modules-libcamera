@@ -579,6 +579,7 @@ struct ae_settings {
 	cmr_u8 threednr_mode;
 	cmr_s16 led_thr_up;		/* judge flash auto mode  flash unable up threahold*/
 	cmr_s16 led_thr_down;	/* judge flash auto mode  flash enable down threahold*/
+	cmr_u8 touch_ev_flag;
 };
 
 struct ae_alg_calc_param {
@@ -592,6 +593,7 @@ struct ae_alg_calc_param {
 	struct ae_trim touch_scrn_win;	//for touch ae
 	cmr_u8 *weight_table;
 	struct ae_stats_sensor_info aux_sensor_data;
+	cmr_u32 posture_calibration;
 	cmr_u32 *stat_img;/*10bit*/
 	cmr_u32 *base_img;/*10bit*/
 	struct ae_size base_size;
