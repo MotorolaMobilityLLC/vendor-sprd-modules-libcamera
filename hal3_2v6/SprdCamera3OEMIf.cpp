@@ -257,7 +257,8 @@ struct stateMachine afModeContinuousPictureStateMachine[] = {
      ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED},
     {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN,
+     AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
     {ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED, AF_INITIATES_NEW_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
@@ -289,7 +290,8 @@ struct stateMachine afModeContinuousVideoStateMachine[] = {
      ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED},
     {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED},
-    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN, AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
+    {ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN,
+     AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED,
      ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED},
     {ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED, AF_INITIATES_NEW_SCAN,
      ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN},
@@ -3456,7 +3458,7 @@ void SprdCamera3OEMIf::receivePreviewATFrame(struct camera_frame_type *frame) {
     HAL_LOGD("frame coordinate x=%d y=%d, status=%d", frame->at_cb_info.objectX,
              frame->at_cb_info.objectY, frame->at_cb_info.status);
 
-    //Do coordinate transition
+    // Do coordinate transition
     zoomWidth = autotrackingInfo.w_ratio;
     zoomHeight = autotrackingInfo.h_ratio;
     if (0 != zoomWidth && 0 != zoomHeight) {
@@ -4946,17 +4948,16 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         mSetting->getLENSTag(&lensInfo);
         lensInfo.aperture = aperture;
         mSetting->setLENSTag(lensInfo);
-        if (checkPreviewStateForCapture() &&
-            (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
-             mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||
-             mTakePictureMode == SNAPSHOT_ZSL_MODE)) {
-            receiveRawPicture((struct camera_frame_type *)parm4);
-        } else {
-            HAL_LOGW("drop current rawPicture");
+        if (checkPreviewStateForCapture()) {
+            if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
+                mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||
+                (getMultiCameraMode() != MODE_SINGLE_CAMERA &&
+                 mTakePictureMode == SNAPSHOT_ZSL_MODE)) {
+                receiveRawPicture((struct camera_frame_type *)parm4);
+            }
         }
         break;
     }
-
     case CAMERA_EXIT_CB_DONE: {
         if (SPRD_WAITING_RAW == getCaptureState()) {
             /**modified for 3d calibration&3d capture return yuv buffer finished
@@ -5153,12 +5154,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                 setAfState(AF_TRIGGER_START_AND_FOCUSED_LOCKED);
             }
 
-            // channel->channelCbRoutine(0, timeStamp,
-            // CAMERA_STREAM_TYPE_DEFAULT);
-            if (controlInfo.af_mode ==
-                ANDROID_CONTROL_AF_MODE_AUTO) // reset autofocus only in TouchAF
-                                              // process
-            {
+            if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO) {
                 mIsAutoFocus = false;
             }
         }
@@ -5175,11 +5171,8 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                        ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
             setAfState(AF_TRIGGER_START_AND_NOT_FOCUSED_LOCKED);
         }
-        // channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
-        if (controlInfo.af_mode ==
-            ANDROID_CONTROL_AF_MODE_AUTO) // reset autofocus only in TouchAF
-                                          // process
-        {
+
+        if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO) {
             mIsAutoFocus = false;
         }
 
@@ -5273,7 +5266,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
 
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
-            // callback ae info [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            // callback ae info [31-16bit:bv, 10-1bit:probability,
+            // 0bit:stable]
             sprddefInfo.ae_info = ae_info;
             mSetting->setSPRDDEFTag(sprddefInfo);
         }
@@ -5678,26 +5672,6 @@ int SprdCamera3OEMIf::setCamSecurity(multiCameraMode multiCamMode) {
     return ret;
 }
 
-int SprdCamera3OEMIf::handleCbData(hal3_trans_info_t &result_info,
-                                   void *userdata) {
-    cam_stream_type_t type = CAM_STREAM_TYPE_DEFAULT;
-    SprdCamera3Channel *channel = (SprdCamera3Channel *)userdata;
-
-    HAL_LOGD("S data=%p", channel);
-    for (List<hal3_trans_info_t>::iterator i = mCbInfoList.begin();
-         i != mCbInfoList.end(); i++) {
-        if (channel == (SprdCamera3Channel *)i->user_data) {
-            type = i->stream_type;
-            HAL_LOGD("type=%d", type);
-            break;
-        }
-    }
-    // channel->channelCbRoutine(result_info.frame.index, result_info.timestamp,
-    // NULL, type);
-    HAL_LOGD("X");
-    return 0;
-}
-
 void SprdCamera3OEMIf::setCamPreformaceScene(
     sys_performance_camera_scene camera_scene) {
 
@@ -5933,7 +5907,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
 
         if (sprddefInfo.sprd_appmode_id == CAMERA_MODE_MANUAL) {
-            // legacy sprd isp ae compensation manual mode, just for manual mode
+            // just for legacy sprd isp ae compensation manual mode
             ae_compensation_param.ae_compensation_range[0] =
                 LEGACY_SPRD_AE_COMPENSATION_RANGE_MIN;
             ae_compensation_param.ae_compensation_range[1] =
@@ -6343,9 +6317,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&touch_param);
 
     } break;
-    case ANDROID_SPRD_3DCALIBRATION_ENABLED: /**add for 3d calibration get max
-                                                sensor size begin*/
-    {
+    case ANDROID_SPRD_3DCALIBRATION_ENABLED: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
@@ -6355,14 +6327,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  "mSprd3dCalibrationEnabled %d",
                  sprddefInfo.sprd_3dcalibration_enabled,
                  mSprd3dCalibrationEnabled);
-    } break; /**add for 3d calibration get max sensor size end*/
-    case ANDROID_SPRD_3DNR_ENABLED: /*add for 3dnr*/
-    {
+    } break;
+    case ANDROID_SPRD_3DNR_ENABLED: {
         //    SPRD_DEF_Tag sprddefInfo;
         //    mSetting->getSPRDDEFTag(&sprddefInfo);
         //     HAL_LOGD("sprddefInfo.sprd_3dnr_enabled=%d ",
         //              sprddefInfo.sprd_3dnr_enabled);
-        //    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
+        //    SET_PARM(mHalOem, mCameraHandle,
+        //    CAMERA_PARAM_SPRD_3DNR_ENABLED,
         //             sprddefInfo.sprd_3dnr_enabled);
     } break;
     case ANDROID_SPRD_FIXED_FPS_ENABLED: {
@@ -6434,14 +6406,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
                  (cmr_uint)&info);
     } break;
-    case ANDROID_SPRD_BLUR_F_NUMBER:{
+    case ANDROID_SPRD_BLUR_F_NUMBER: {
         LENS_Tag lensInfo;
         mSetting->getLENSTag(&lensInfo);
         if (lensInfo.aperture) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_APERTURE,
                      (cmr_uint)(lensInfo.aperture * 100));
         }
-    }break;
+    } break;
     default:
         ret = BAD_VALUE;
         break;
@@ -7656,7 +7628,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             mIspStatisHeapReserved = memory;
         }
         // shark5 dont need kernel software r/w the buffer
-        // rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+        // rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr,
+        // &ksize);
         // if (rtn) {
         //    HAL_LOGE("get kaddr error");
         //    goto mem_fail;
@@ -8869,7 +8842,8 @@ exit:
     return ret;
 }
 
-// this is for real zsl flash capture, like sharkls/sharklt8, not sharkl2-like
+// this is for real zsl flash capture, like sharkls/sharklt8, not
+// sharkl2-like
 void SprdCamera3OEMIf::skipZslFrameForFlashCapture() {
     ATRACE_CALL();
 
@@ -9758,13 +9732,13 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_out = processPreviewEIS(frame_in);
-        HAL_LOGD(
-            "transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
-            frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
-            frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
-            frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
-            frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
-            frame_out.warp.dat[2][2]);
+        HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
+                 "%lf, %lf",
+                 frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
+                 frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
+                 frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
+                 frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
+                 frame_out.warp.dat[2][2]);
 
         double crop_start_w =
             frame_out.warp.dat[0][2] + mPreviewParam.src_w / 12;
@@ -9994,10 +9968,9 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     if (accelerometerSensor != NULL) {
         if (ASensorEventQueue_registerSensor(
                 sensorEventQueue, accelerometerSensor, GsensorRate, 0) < 0) {
-            HAL_LOGE(
-                "Unable to register sensorUnable to register sensor %d with "
-                "rate %d and report latency %d" PRId64 "",
-                ASENSOR_TYPE_ACCELEROMETER, GsensorRate, 0);
+            HAL_LOGE("Unable to register sensorUnable to register sensor "
+                     "%d with rate %d and report latency %d" PRId64 "",
+                     ASENSOR_TYPE_ACCELEROMETER, GsensorRate, 0);
             goto exit;
         } else {
             Gsensor_flag = 1;
@@ -10006,10 +9979,9 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     if (gyroSensor != NULL) {
         if (ASensorEventQueue_registerSensor(sensorEventQueue, gyroSensor,
                                              GyroRate, 0) < 0) {
-            HAL_LOGE(
-                "Unable to register sensorUnable to register sensor %d with "
-                "rate %d and report latency %d" PRId64 "",
-                ASENSOR_TYPE_GYROSCOPE, GyroRate, 0);
+            HAL_LOGE("Unable to register sensorUnable to register sensor "
+                     "%d with rate %d and report latency %d" PRId64 "",
+                     ASENSOR_TYPE_GYROSCOPE, GyroRate, 0);
             goto exit;
         } else {
             Gyro_flag = 1;
@@ -10207,8 +10179,8 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
                 HAL_LOGE("get time failed");
                 return UNKNOWN_ERROR;
             }
-            /*when gyro thread proc time is long when camera close, we should
-             * wait for thread end at last 1000ms*/
+            /*when gyro thread proc time is long when camera close, we
+             * should wait for thread end at last 1000ms*/
             ts.tv_nsec += ms2ns(1000);
             if (ts.tv_nsec > 1000000000) {
                 ts.tv_sec += 1;

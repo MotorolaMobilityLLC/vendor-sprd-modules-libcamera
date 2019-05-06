@@ -447,7 +447,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool switchBufferMode(uint32_t src, uint32_t dst);
     void setCameraPrivateData(void);
 
-    int handleCbData(hal3_trans_info_t &result_info, void *userdata);
     int setCamSecurity(multiCameraMode multiCamMode);
     int zslTakePicture();
     int reprocessInputBuffer();
