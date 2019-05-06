@@ -1917,8 +1917,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
-    HAL_LOGI("auto.tracking.enable=%d",atoi(prop));
-    available_cam_features.add(atoi(prop));
+    if (cameraId == 0) {
+        available_cam_features.add(atoi(prop));
+    }else {
+        available_cam_features.add(0);
+    }
+
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),

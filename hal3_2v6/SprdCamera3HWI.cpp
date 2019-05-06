@@ -1114,6 +1114,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     FLASH_Tag flashInfo;
     CONTROL_Tag controlInfo;
     SPRD_DEF_Tag sprddefInfo;
+    REQUEST_Tag requestInfo;
 
     Mutex::Autolock l(mLock);
 
@@ -1123,19 +1124,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         goto exit;
     }
     mFrameNum = request->frame_number;
+    // For auto tracking to save frame num
+    mSetting->getREQUESTTag(&requestInfo);
+    requestInfo.frame_id = mFrameNum;
+    mSetting->setREQUESTTag(&requestInfo);
+    HAL_LOGV("frame_id = %d", requestInfo.frame_id);
+
     meta = request->settings;
     mMetadataChannel->request(meta);
 
     mSetting->getSPRDDEFTag(&sprddefInfo);
     mSetting->getCONTROLTag(&controlInfo);
     mSetting->getFLASHTag(&flashInfo);
-
-    // For auto tracking to save frame num
-    REQUEST_Tag requestInfo;
-    mSetting->getREQUESTTag(&requestInfo);
-    requestInfo.frame_id = mFrameNum;
-    mSetting->setREQUESTTag(&requestInfo);
-    HAL_LOGV("frame_id = %d", requestInfo.frame_id);
 
     captureIntent = controlInfo.capture_intent;
 

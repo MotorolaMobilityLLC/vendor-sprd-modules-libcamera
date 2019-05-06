@@ -4029,11 +4029,9 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0)) {
             CMR_LOGD("enable auto tracking");
             /*init auto tracking*/
-            if (camera_id == 0) {
-                if (!prev_cxt->auto_tracking_inited) {
-                    prev_auto_tracking_open(handle, camera_id);
-                    prev_cxt->auto_tracking_inited = 1;
-                }
+            if (!prev_cxt->auto_tracking_inited) {
+                prev_auto_tracking_open(handle, camera_id);
+                prev_cxt->auto_tracking_inited = 1;
             }
         }
     }
