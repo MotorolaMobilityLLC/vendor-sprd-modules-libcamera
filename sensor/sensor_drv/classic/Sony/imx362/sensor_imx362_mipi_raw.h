@@ -62,10 +62,10 @@
 #define PREVIEW_MIPI_PER_LANE_BPS 300 // 374
 
 /* please ref your spec */
-#define FRAME_OFFSET 8
+#define FRAME_OFFSET 16
 #define SENSOR_MAX_GAIN 0xF0
 #define SENSOR_BASE_GAIN 0x20
-#define SENSOR_MIN_SHUTTER 8
+#define SENSOR_MIN_SHUTTER 4
 
 /* isp parameters, please don't change it*/
 #define ISP_BASE_GAIN 0x80

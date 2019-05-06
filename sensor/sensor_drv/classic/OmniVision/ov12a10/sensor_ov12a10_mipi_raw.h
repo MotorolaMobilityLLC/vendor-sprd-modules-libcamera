@@ -87,7 +87,7 @@
 #define FRAME_OFFSET 8
 #define SENSOR_MAX_GAIN 0x07FF
 #define SENSOR_BASE_GAIN 0x0080
-#define SENSOR_MIN_SHUTTER 8
+#define SENSOR_MIN_SHUTTER 4
 
 /* please ref your spec
  * 1 : average binning

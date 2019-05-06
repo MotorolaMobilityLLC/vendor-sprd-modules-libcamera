@@ -74,7 +74,7 @@
 #define SNAPSHOT_FRAME_LENGTH 3564
 
 /* please ref your spec */
-#define FRAME_OFFSET 8
+#define FRAME_OFFSET 18
 #define SENSOR_MAX_GAIN 0xF0
 #define SENSOR_BASE_GAIN 0x20
 #define SENSOR_MIN_SHUTTER 8
