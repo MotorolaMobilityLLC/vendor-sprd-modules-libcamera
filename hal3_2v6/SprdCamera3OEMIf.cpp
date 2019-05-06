@@ -4943,7 +4943,8 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         mSetting->setLENSTag(lensInfo);
         if (checkPreviewStateForCapture() &&
             (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
-             mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
+             mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||
+             mTakePictureMode == SNAPSHOT_ZSL_MODE)) {
             receiveRawPicture((struct camera_frame_type *)parm4);
         } else {
             HAL_LOGW("drop current rawPicture");
