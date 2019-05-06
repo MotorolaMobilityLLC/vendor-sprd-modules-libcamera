@@ -1167,7 +1167,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     if (capturePara.cap_intent ==
             ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
         capturePara.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
-        mHDRProcessFlag = true;
+        if (!sprddefInfo.sprd_zsl_enabled)
+            mHDRProcessFlag = true;
     } else {
         mHDRProcessFlag = false;
     }

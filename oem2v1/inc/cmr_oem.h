@@ -338,6 +338,9 @@ struct camera_context {
     cmr_u8 is_cnr;
     cmr_uint is_snapshot;
     cmr_u32 app_mode;
+    cmr_s64 hdr_capture_timestamp;
+    cmr_u32 hdr_skip_frame_enable;
+    cmr_u32 hdr_skip_frame_cnt;
 };
 
 struct prev_threednr_info {
@@ -554,7 +557,11 @@ cmr_int camera_local_start_rotate(cmr_handle oem_handle,
                                   struct rotate_param *rotate_param);
 cmr_int camera_set_trim_info(cmr_handle oem_handle,
                              struct img_rect *rotate_param);
-
+cmr_int camera_local_image_sw_algorithm_processing(
+    cmr_handle oem_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+    cam_img_format_t format);
 #ifdef __cplusplus
 }
 #endif

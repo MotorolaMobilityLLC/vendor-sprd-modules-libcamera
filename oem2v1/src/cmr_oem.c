@@ -60,6 +60,8 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 #define MIN_FLASH_LEVEL 1
 #define MAX_FLASH_LEVEL CONFIG_AVAILABLE_FLASH_LEVEL
 
+#define HDR_SKIP_FRAME_NUM 2
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -915,7 +917,8 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
     if ((chn_bits == cxt->snp_cxt.channel_bits) &&
         ((1 == camera_get_hdr_flag(cxt)) ||
          1 == camera_get_sw_3dnr_flag(cxt)) &&
-        (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt))) {
+        (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) &&
+        (cxt->snp_cxt.snp_mode != CAMERA_ZSL_MODE)) {
         struct img_frm out_param;
         struct img_frm small_out_param;
         struct ipm_frame_in ipm_in_param;
@@ -1944,6 +1947,23 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             prev_frame->lls_info = camera_get_ae_lum_value(oem_handle);
         }
 
+        // skip preview frames for hdr effect
+        if (camera_get_hdr_flag(cxt) == 1 && cxt->hdr_skip_frame_enable == 1 &&
+            cb_type == PREVIEW_EVT_CB_FRAME && cxt->snp_cxt.zsl_frame == 1) {
+            struct camera_frame_type *prev_frame =
+                (struct camera_frame_type *)param;
+
+            if (prev_frame->type == PREVIEW_FRAME) {
+                if (prev_frame->monoboottime > cxt->hdr_capture_timestamp) {
+                    prev_frame->type = PREVIEW_CANCELED_FRAME;
+                    cxt->hdr_skip_frame_cnt++;
+                }
+            }
+            if (cxt->hdr_skip_frame_cnt == HDR_SKIP_FRAME_NUM) {
+                cxt->hdr_skip_frame_enable = 0;
+            }
+        }
+
         memcpy(message.data, param, sizeof(struct camera_frame_type));
     }
 
@@ -1991,7 +2011,7 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             camera_post_share_path_available((cmr_handle)cxt);
             cxt->ipm_cxt.frm_num = 0;
             ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
-                                            SNAPSHOT_EVT_REPROCESS, &frame);
+                                                SNAPSHOT_EVT_REPROCESS, &frame);
         }
     } else if (1 == camera_get_sw_3dnr_flag(cxt)) {
         frame = cxt->snp_cxt.cur_frm_info;
@@ -2098,6 +2118,9 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         break;
     case SNAPSHOT_EVT_HDR_PLUS:
         oem_cb_type = CAMERA_EVT_HDR_PLUS;
+        break;
+    case SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF:
+        oem_cb_type = CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF;
         break;
     default:
         oem_cb_type = cb;
@@ -9115,6 +9138,13 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     }
     out_ptr->rot_angle = setting_param.cmd_type_value;
     jpeg_cxt->param.set_encode_rotation = setting_param.cmd_type_value;
+    if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+        ret = camera_ipm_open_module((cmr_handle)cxt);
+        if (ret) {
+            CMR_LOGE("failed to open ipm module%ld", ret);
+            goto exit;
+        }
+    }
 
     ret = cmr_preview_get_post_proc_param(
         cxt->prev_cxt.preview_handle, cxt->camera_id,
@@ -9942,6 +9972,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         ret = camera_hdr_set_ev(oem_handle);
         if (ret)
             CMR_LOGE("fail to set hdr ev");
+        if (cxt->snp_cxt.zsl_frame == 1) {
+            cxt->hdr_capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+            cxt->hdr_skip_frame_enable = 1;
+            cxt->hdr_skip_frame_cnt = 0;
+        }
     } /*else if (1 == camera_get_sw_3dnr_flag(cxt) &&
                (0 == camera_get_sw_3dnr_flag(cxt))) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
@@ -11060,6 +11095,65 @@ void camera_local_end_burst_notice(cmr_handle oem_handle) {
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     uint32_t caf_switch = 1;
     isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_BURST_NOTICE, &caf_switch);
+}
+
+cmr_int camera_local_image_sw_algorithm_processing(
+    cmr_handle oem_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
+    struct image_sw_algorithm_buf *dst_sw_algorithm_buf,
+    sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
+    cam_img_format_t format) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_exp_info exp_info;
+    struct ipm_frame_in ipm_in_param;
+    struct ipm_frame_out imp_out_param;
+    struct ipm_context *ipm_cxt = &cxt->ipm_cxt;
+
+    ipm_in_param.private_data = (void *)cxt;
+    ipm_in_param.src_frame.size.width = src_sw_algorithm_buf->width;
+    ipm_in_param.src_frame.size.height = src_sw_algorithm_buf->height;
+    ipm_in_param.src_frame.fd = src_sw_algorithm_buf->fd;
+    ipm_in_param.src_frame.fmt = src_sw_algorithm_buf->format;
+    ipm_in_param.src_frame.buf_size = ipm_in_param.src_frame.size.width *
+                                      ipm_in_param.src_frame.size.height * 3 /
+                                      2;
+    ipm_in_param.src_frame.addr_vir.addr_y = src_sw_algorithm_buf->y_vir_addr;
+    ipm_in_param.src_frame.addr_vir.addr_u =
+        src_sw_algorithm_buf->y_vir_addr +
+        ipm_in_param.src_frame.size.width * ipm_in_param.src_frame.size.height;
+    ipm_in_param.src_frame.addr_phy.addr_y = src_sw_algorithm_buf->y_phy_addr;
+    imp_out_param.private_data = src_sw_algorithm_buf->reserved;
+
+    ipm_in_param.dst_frame.size.width = dst_sw_algorithm_buf->width;
+    ipm_in_param.dst_frame.size.height = dst_sw_algorithm_buf->height;
+    ipm_in_param.dst_frame.fd = dst_sw_algorithm_buf->fd;
+    ipm_in_param.dst_frame.fmt = dst_sw_algorithm_buf->format;
+    ipm_in_param.dst_frame.buf_size = ipm_in_param.dst_frame.size.width *
+                                      ipm_in_param.dst_frame.size.height * 3 /
+                                      2;
+    ipm_in_param.dst_frame.addr_vir.addr_y = dst_sw_algorithm_buf->y_vir_addr;
+    ipm_in_param.dst_frame.addr_vir.addr_u =
+        dst_sw_algorithm_buf->y_vir_addr +
+        ipm_in_param.dst_frame.size.width * ipm_in_param.dst_frame.size.height;
+    ipm_in_param.dst_frame.addr_phy.addr_y = dst_sw_algorithm_buf->y_phy_addr;
+
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_HDR) {
+        if (cxt->ipm_cxt.hdr_version.major != 1) {
+            memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
+                   ((HDR_CAP_NUM)-1) * sizeof(float));
+        }
+        ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
+                                 &imp_out_param);
+    }
+
+exit:
+    return ret;
 }
 
 cmr_int

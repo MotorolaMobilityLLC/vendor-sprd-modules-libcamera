@@ -469,8 +469,8 @@ getHalOem_fail:
     mZslPreviewMode = false;
 
     mSprdZslEnabled = false;
-    mZslMaxFrameNum = 1;
-    mZslNum = 2;
+    mZslMaxFrameNum = 3;
+    mZslNum = 3;
     mZslShotPushFlag = 0;
     mZslChannelStatus = 1;
     mZSLQueue.clear();
@@ -5718,6 +5718,14 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         }
         break;
     }
+    case CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF: {
+        for (int i = 0; i < (cmr_int)mZslNum; i++) {
+            mHalOem->ops->camera_set_zsl_buffer(
+                mCameraHandle, mZslHeapArray[i]->phys_addr,
+                (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
+        }
+        break;
+    }
     case CAMERA_EVT_HDR_PLUS: {
         memcpy(&mHDRPlusBackupFrm_info, parm4, sizeof(frm_info));
         mHDRPlusFillState = true;
@@ -10646,8 +10654,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     struct camera_frame_type zsl_frame;
+    struct image_sw_algorithm_buf src_sw_algorithm_buf;
+    struct image_sw_algorithm_buf dst_sw_algorithm_buf;
     uint32_t cnt = 0;
     int64_t diff_ms = 0;
+    uint32_t sw_algorithm_buf_cnt = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
         obj->mZslShotPushFlag == 0) {
@@ -10658,8 +10669,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
-
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
+    bzero(&src_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&dst_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
 
     if (mZslPopFlag == 0 && mVideoWidth != 0 && mVideoHeight != 0) {
         mZslShotWait.waitRelative(mZslPopLock, ZSL_FRAME_TIMEOUT);
@@ -10683,6 +10697,34 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         zsl_frame = obj->popZslFrame();
         if (zsl_frame.y_vir_addr == 0) {
             HAL_LOGD("wait for correct zsl frame");
+            continue;
+        }
+        // for zsl hdr
+        if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+            src_sw_algorithm_buf.height = zsl_frame.height;
+            src_sw_algorithm_buf.width = zsl_frame.width;
+            src_sw_algorithm_buf.fd = zsl_frame.fd;
+            src_sw_algorithm_buf.format = zsl_frame.format;
+            src_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+            src_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
+
+            if (sw_algorithm_buf_cnt == 0) {
+                dst_sw_algorithm_buf.height = zsl_frame.height;
+                dst_sw_algorithm_buf.width = zsl_frame.width;
+                dst_sw_algorithm_buf.fd = zsl_frame.fd;
+                dst_sw_algorithm_buf.format = zsl_frame.format;
+                dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
+                dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
+            }
+            mHalOem->ops->image_sw_algorithm_processing(
+                obj->mCameraHandle, &src_sw_algorithm_buf,
+                &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
+                CAM_IMG_FMT_YUV420_NV21);
+
+            sw_algorithm_buf_cnt++;
+            if (sw_algorithm_buf_cnt >= 3) {
+                goto exit;
+            }
             continue;
         }
 

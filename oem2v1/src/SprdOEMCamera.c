@@ -1209,7 +1209,20 @@ cmr_int image_sw_algorithm_processing(
     sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,
     cam_img_format_t format) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    if (!camera_handle) {
+        CMR_LOGE("Invalid param error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_local_image_sw_algorithm_processing(
+                 camera_handle, src_sw_algorithm_buf, dst_sw_algorithm_buf,
+                 sw_algorithm_type, format);
+    if (ret) {
+        CMR_LOGE("failed %ld", ret);
+    }
 
+exit:
+    CMR_LOGV("done %ld", ret);
     return ret;
 }
 
