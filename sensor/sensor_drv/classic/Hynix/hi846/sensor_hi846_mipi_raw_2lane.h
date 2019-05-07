@@ -29,13 +29,6 @@
 
 #include "parameters/sensor_hi846_raw_param_main.c"
 
-#define FEATURE_OTP
-
-#ifdef FEATURE_OTP
-#include "sensor_hi846_qunhui_otp.h"
-static struct otp_info_t *s_hi846_otp_info_ptr = &s_hi846_qunhui_otp_info;
-#endif
-
 #define VENDOR_NUM 1
 #define SENSOR_NAME "hi846_mipi_raw"
 

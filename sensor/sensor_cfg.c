@@ -234,6 +234,7 @@ extern otp_drv_entry_t dual_master_2e_otp_entry;
 extern otp_drv_entry_t dual_slave_2e_otp_entry;
 extern otp_drv_entry_t single_1e_otp_entry;
 extern otp_drv_entry_t general_otp_entry;
+extern otp_drv_entry_t hi846_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -509,7 +510,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef HI846
-    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {&hi846_drv_entry, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};

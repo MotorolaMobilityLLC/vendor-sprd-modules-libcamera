@@ -3011,7 +3011,13 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
 static cmr_int
 sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     SENSOR_MATCH_T *module = NULL;
+#if defined(CONFIG_CAMERA_SENSOR_OTP)
+    SENSOR_REG_TAB_INFO_T *res_info_ptr = PNULL;
 
+    res_info_ptr = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_RESOLUTION);
+
+    hw_Sensor_SendRegTabToSensor(sensor_cxt->hw_drv_handle, &res_info_ptr[0]);
+#endif
     sensor_af_init(sensor_cxt);
     sensor_otp_module_init(sensor_cxt);
     module = sensor_cxt->current_module;
