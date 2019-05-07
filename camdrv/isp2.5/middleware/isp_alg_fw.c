@@ -572,8 +572,8 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
 	default:
-		cmd = ISP_AE_STAB_CALLBACK;
-		break;
+		ISP_LOGI("fail to get known cb_type=%ld", cb_type);
+		return ret;
 	}
 
 	if (cxt->commn_cxt.callback) {
