@@ -401,7 +401,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mIsRawCapture(0), mIsCameraClearQBuf(0), mLastCafDoneTime(0),
-      mFaceDetectStartedFlag(0), mIsJpegWithBigSizePreview(0)
+      mFaceDetectStartedFlag(0)
 
 {
     ATRACE_CALL();
@@ -1824,11 +1824,6 @@ int SprdCamera3OEMIf::setPreviewParams() {
         previewSize.width = 720;
         previewSize.height = 576;
         mPreviewFormat = CAM_IMG_FMT_YUV420_NV21;
-    }
-    // for cts testAllOutputYUVResolutions
-    if (mIsJpegWithBigSizePreview == 1) {
-        previewSize.width = 720;
-        previewSize.height = 576;
     }
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PREVIEW_SIZE,
              (cmr_uint)&previewSize);
@@ -8218,11 +8213,6 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
             }
         }
 
-        if (mIsJpegWithBigSizePreview == 1) {
-            HAL_LOGD("mIsJpegWithBigSizePreview=%d", mIsJpegWithBigSizePreview);
-            goto exit;
-        }
-
         channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel == NULL) {
             ret = -1;
@@ -9135,10 +9125,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
-        if (mIsJpegWithBigSizePreview == 1) {
-            returnPreviewFrame(&zsl_frame);
-        }
-
         HAL_LOGD("fd=0x%x", zsl_frame.fd);
         mHalOem->ops->camera_set_zsl_snapshot_buffer(
             obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
@@ -9512,15 +9498,6 @@ int32_t SprdCamera3OEMIf::setStreamOnWithZsl() {
 }
 
 int32_t SprdCamera3OEMIf::getStreamOnWithZsl() { return mStreamOnWithZsl; }
-
-int32_t SprdCamera3OEMIf::setJpegWithBigSizePreviewFlag() {
-    mIsJpegWithBigSizePreview = 1;
-    return 0;
-}
-
-int32_t SprdCamera3OEMIf::getJpegWithBigSizePreviewFlag() {
-    return mIsJpegWithBigSizePreview;
-}
 
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EisPreview_init() {

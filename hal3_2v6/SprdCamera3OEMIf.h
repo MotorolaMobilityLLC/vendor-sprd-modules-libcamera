@@ -257,8 +257,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void ispToolModeInit();
     int32_t setStreamOnWithZsl();
     int32_t getStreamOnWithZsl();
-    int32_t setJpegWithBigSizePreviewFlag();
-    int32_t getJpegWithBigSizePreviewFlag();
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
     uint64_t getZslBufferTimestamp();
 
@@ -857,7 +855,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     uint32_t mFaceDetectStartedFlag;
 
-    bool mIsJpegWithBigSizePreview;
     uint32_t isNeedFlashFired;
 };
 
