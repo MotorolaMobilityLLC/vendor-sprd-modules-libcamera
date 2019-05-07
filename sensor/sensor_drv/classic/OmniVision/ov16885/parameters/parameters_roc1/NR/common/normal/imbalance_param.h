@@ -108,7 +108,7 @@
 	/*reversed*/
 	0x0000,
 	/*imblance_en*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -219,7 +219,7 @@
 	/*reversed*/
 	0x0000,
 	/*imblance_en*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param2.&BasePoint=1&*/
@@ -330,7 +330,7 @@
 	/*reversed*/
 	0x0000,
 	/*imblance_en*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param3.&BasePoint=1&*/
@@ -441,7 +441,7 @@
 	/*reversed*/
 	0x0000,
 	/*imblance_en*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param4.&BasePoint=1&*/

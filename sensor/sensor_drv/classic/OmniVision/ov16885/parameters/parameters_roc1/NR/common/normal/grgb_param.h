@@ -1,4 +1,4 @@
-/*versionid=0x00090007*/
+/*versionid=0x000A0008*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_grgb_level*/
@@ -571,15 +571,15 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0xFF,
 	/*hv_edge_thr*/
 	0x1A,
 	/*hv_flat_thr*/
-	0x0019,
+	0x03FF,
 	/*slash_edge_thr*/
-	0x0028,
+	0x001A,
 	/*slash_flat_thr*/
-	0x0019,
+	0x03FF,
 	/*grgb_ratio*/
 	{
 		/*gr_ratio*/
