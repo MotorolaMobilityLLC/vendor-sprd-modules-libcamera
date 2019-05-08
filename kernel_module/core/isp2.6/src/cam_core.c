@@ -1158,9 +1158,14 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 			ch_id = pframe->channel_id;
 
 			ret = camera_enqueue(&module->frm_queue, pframe);
-			complete(&module->frm_com);
-			pr_debug("ch %d get out frame: %p, evt %d\n",
-					ch_id, pframe, pframe->evt);
+			if (ret) {
+				cambuf_put_ionbuf(&pframe->buf);
+				put_empty_frame(pframe);
+			} else {
+				complete(&module->frm_com);
+				pr_debug("ch %d get out frame: %p, evt %d\n",
+						ch_id, pframe, pframe->evt);
+			}
 		} else {
 			cambuf_put_ionbuf(&pframe->buf);
 			put_empty_frame(pframe);
@@ -1172,9 +1177,13 @@ int isp_callback(enum isp_cb_type type, void *param, void *priv_data)
 		pframe->irq_type = CAMERA_IRQ_STATIS;
 		if (atomic_read(&module->state) == CAM_RUNNING) {
 			ret = camera_enqueue(&module->frm_queue, pframe);
-			complete(&module->frm_com);
-			pr_debug("get statis frame: %p, type %d, %d\n",
-				pframe, pframe->irq_type, pframe->irq_property);
+			if (ret) {
+				put_empty_frame(pframe);
+			} else {
+				complete(&module->frm_com);
+				pr_debug("get statis frame: %p, type %d, %d\n",
+					pframe, pframe->irq_type, pframe->irq_property);
+			}
 		} else {
 			put_empty_frame(pframe);
 		}
@@ -1457,9 +1466,13 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 		/* todo: separate statis/irq and frame queue. */
 		if (atomic_read(&module->state) == CAM_RUNNING) {
 			ret = camera_enqueue(&module->frm_queue, pframe);
-			complete(&module->frm_com);
-			pr_debug("get statis frame: %p, type %d, %d\n",
+			if (ret) {
+				put_empty_frame(pframe);
+			} else {
+				complete(&module->frm_com);
+				pr_debug("get statis frame: %p, type %d, %d\n",
 				pframe, pframe->irq_type, pframe->irq_property);
+			}
 		} else {
 			put_empty_frame(pframe);
 		}
@@ -1475,9 +1488,13 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 		/* todo: separate statis/irq and frame queue. */
 		if (atomic_read(&module->state) == CAM_RUNNING) {
 			ret = camera_enqueue(&module->frm_queue, pframe);
-			complete(&module->frm_com);
-			pr_debug("get irq frame: %p, type %d, %d\n",
+			if (ret) {
+				put_empty_frame(pframe);
+			} else {
+				complete(&module->frm_com);
+				pr_debug("get irq frame: %p, type %d, %d\n",
 				pframe, pframe->irq_type, pframe->irq_property);
+			}
 		} else {
 			put_empty_frame(pframe);
 		}
