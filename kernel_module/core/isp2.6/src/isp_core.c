@@ -1636,7 +1636,7 @@ static int isp_offline_start_frame(void *ctx)
 				pr_err("unable to set fmcu slw queue\n");
 		}
 
-	pctx->iommu_status = 0;
+	pctx->iommu_status = (uint32_t)(-1);
 
 	/* start to prepare/kickoff cfg buffer. */
 	if (likely(dev->wmode == ISP_CFG_MODE)) {
