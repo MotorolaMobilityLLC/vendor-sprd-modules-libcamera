@@ -6,7 +6,7 @@
 	/*level_enable*/
 	0x00,
 	/*low_ct_thrd*/
-	0x0FA0,
+	0x0CE4,
 	/*reserved*/
 	0x00,
 	/*filter_en*/

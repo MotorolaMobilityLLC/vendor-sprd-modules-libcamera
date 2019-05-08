@@ -571,15 +571,15 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x64,
+	0xFF,
 	/*hv_edge_thr*/
 	0x1A,
 	/*hv_flat_thr*/
-	0x0040,
+	0x03FF,
 	/*slash_edge_thr*/
 	0x001A,
 	/*slash_flat_thr*/
-	0x0040,
+	0x03FF,
 	/*grgb_ratio*/
 	{
 		/*gr_ratio*/
