@@ -451,7 +451,7 @@ struct sensor_rgb_gain_param {
 //YUV noisefilter
 struct sensor_yuv_noisefilter_gaussian {
 	cmr_u16 random_r_shift;
-	cmr_u16 random_r_offset;
+	cmr_s16 random_r_offset;
 	cmr_u32 random_seed[4];
 	cmr_u8 random_takebit[8];
 };
@@ -460,7 +460,7 @@ struct sensor_yuv_noisefilter_adv {
 	cmr_u8 filter_thr;
 	cmr_u8 filter_thr_mode;
 	cmr_u8 filter_clip_p;
-	cmr_u8 filter_clip_n;
+	cmr_s8 filter_clip_n;
 	cmr_u16 filter_cv_t[4];
 	cmr_u8 filter_cv_r[3];
 	cmr_u8 reserved;
@@ -691,9 +691,9 @@ struct sensor_ynr_level {
 
 // UVDIV
 struct sensor_cce_uvdiv_th {
-	cmr_u8 uvdiv_th_l;
-	cmr_u8 uvdiv_th_h;
-	cmr_u8 reserved[2];
+	cmr_s8 uvdiv_th_l;
+	cmr_s8 uvdiv_th_h;
+	cmr_s8 reserved[2];
 };
 
 struct sensor_cce_uvdiv_chroma {
@@ -1346,8 +1346,8 @@ struct sensor_uv_cdn_level {
 
 //Edge Enhancement
 struct sensor_ee_pn {
-	cmr_u16 negative;
-	cmr_u16 positive;
+	cmr_s16 negative;
+	cmr_s16 positive;
 };
 
 struct sensor_ee_ratio {
@@ -1372,10 +1372,10 @@ struct sensor_ee_r_cfg {
 };
 
 struct sensor_ee_c_cfg {
-	cmr_u8 ee_c1_cfg;
-	cmr_u8 ee_c2_cfg;
-	cmr_u8 ee_c3_cfg;
-	cmr_u8 reserved;
+	cmr_s8 ee_c1_cfg;
+	cmr_s8 ee_c2_cfg;
+	cmr_s8 ee_c3_cfg;
+	cmr_s8 reserved;
 };
 
 struct sensor_ee_polyline_cfg {
@@ -1434,7 +1434,7 @@ struct sensor_ee_offset_list {
 	cmr_u16 clip_layer_cv_pos[3];
 	cmr_u16 thr_layer_cv_neg[4];
 	cmr_u16 ratio_layer_cv_neg[3];
-	cmr_u16 clip_layer_cv_neg[3];
+	cmr_s16 clip_layer_cv_neg[3];
 	cmr_u16 ratio_layer_lum_cv[3];
 	cmr_u16 ratio_layer_freq_cv[3];
 };
