@@ -1185,7 +1185,6 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
 status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     status_t ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
-    char value[PROPERTY_VALUE_MAX];
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -1193,7 +1192,8 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     }
 
     if ((mMultiCameraMode == MODE_BOKEH && mCameraId == 2) ||
-        mMultiCameraMode == MODE_3D_CALIBRATION) {
+        mMultiCameraMode == MODE_3D_CALIBRATION ||
+        (mMultiCameraMode == MODE_TUNING && mCameraId == 2)) {
         return ret;
     }
 
@@ -5590,12 +5590,13 @@ int SprdCamera3OEMIf::openCamera() {
     }
 
 #if defined(CONFIG_CAMERA_FACE_DETECT)
-    if (mIsRawCapture == 1) {
-        faceDectect_enable(0);
-    } else {
+    //if (mIsRawCapture == 1) {
+    //faceDectect_enable(0);
+    //} else {
         faceDectect_enable(1);
-    }
+    //}
 #endif
+
 
 exit:
     HAL_LOGI(":hal3: X");
