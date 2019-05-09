@@ -1132,11 +1132,13 @@ void SprdCamera3SingleFaceIdRegister::processCaptureResultMain(
         }
         return;
     }
-
     // preview process
-    HAL_LOGD("preview process");
+    HAL_LOGD("preview process buffer_status = %d",result_buffer->status);
+    if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
+        CallBackResult(result->frame_number, CAMERA3_BUFFER_STATUS_ERROR);
+        return;
+    }
     CallBackResult(result->frame_number, CAMERA3_BUFFER_STATUS_OK);
-
     return;
 }
 
