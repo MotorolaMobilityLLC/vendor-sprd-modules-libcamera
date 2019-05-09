@@ -8047,12 +8047,19 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         out_param_ptr->channel2_eb = 1;
     }
 
-    //     channel3 will be used later
-    //        out_param_ptr->channel3_size = setting_param.size_param;
-    //        if (out_param_ptr->channel3_size.width > 0 &&
-    //            out_param_ptr->channel3_size.height > 0) {
-    //            out_param_ptr->channel3_eb = 1;
-    //       }
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_YUV2_SIZE,
+                            &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get capture size %ld", ret);
+        goto exit;
+    }
+    out_param_ptr->channel3_size = setting_param.size_param;
+    if (out_param_ptr->channel3_size.width > 0 &&
+        out_param_ptr->channel3_size.height > 0) {
+        out_param_ptr->channel3_eb = 1;
+    }
 
     //     channel4 will be used later
     //        out_param_ptr->channel4_size = setting_param.size_param;
@@ -8082,12 +8089,18 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     CMR_LOGD("channel2_eb=%d, fmt=%d, rot_angle=%d", out_param_ptr->channel2_eb,
              out_param_ptr->channel2_fmt, out_param_ptr->channel2_rot_angle);
 
-    //    channel3 will be used later
-    //    out_param_ptr->channel3_fmt = setting_param.cmd_type_value;
-    //    out_param_ptr->channel3_rot_angle = out_param_ptr->prev_rot;
-    //    CMR_LOGD("channel3_eb=%d, fmt=%d, rot_angle=%d",
-    //    out_param_ptr->channel3_eb, out_param_ptr->channel3_fmt,
-    //    out_param_ptr->channel3_rot_angle);
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_YUV2_FORMAT, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get cap fmt %ld", ret);
+        goto exit;
+    }
+    out_param_ptr->channel3_fmt = setting_param.cmd_type_value;
+    out_param_ptr->channel3_rot_angle = out_param_ptr->prev_rot;
+    CMR_LOGD("channel3_eb=%d, fmt=%d, rot_angle=%d", out_param_ptr->channel3_eb,
+             out_param_ptr->channel3_fmt, out_param_ptr->channel3_rot_angle);
 
     //    channel4 will be used later
     //        out_param_ptr->channel4_fmt = setting_param.cmd_type_value;
@@ -8931,12 +8944,13 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_YUV_CALLBACK_SIZE:
+    case CAMERA_PARAM_YUV2_SIZE:
         if (param) {
             setting_param.size_param = *(struct img_size *)param;
             ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                     &setting_param);
         } else {
-            CMR_LOGE("err, callback size param is null");
+            CMR_LOGE("param is null");
             ret = -CMR_CAMERA_INVALID_PARAM;
         }
         break;
@@ -8951,6 +8965,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     case CAMERA_PARAM_YUV_CALLBACK_FORMAT:
+    case CAMERA_PARAM_YUV2_FORMAT:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
@@ -9290,6 +9305,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
                       &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_YUV_CALLBACK_SIZE, &setting_param);
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle, CAMERA_PARAM_YUV2_SIZE,
+                      &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle, CAMERA_PARAM_RAW_SIZE,
                       &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -9576,6 +9593,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
                       &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_YUV_CALLBACK_SIZE, &setting_param);
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle, CAMERA_PARAM_YUV2_SIZE,
+                      &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle, CAMERA_PARAM_RAW_SIZE,
                       &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -10348,6 +10367,15 @@ cmr_s32 local_queue_buffer(cmr_handle oem_handle, cam_buffer_info_t buffer,
         }
         break;
 
+    case SPRD_CAM_STREAM_YUV2:
+        ret = cmr_channel3_queue_buffer(cxt->prev_cxt.preview_handle,
+                                        cxt->camera_id, buffer);
+        if (ret) {
+            CMR_LOGE("cmr_channel3_queue_buffer failed");
+            goto exit;
+        }
+        break;
+
     case SPRD_CAM_STREAM_RAW:
         ret = cmr_channel0_queue_buffer(cxt->prev_cxt.preview_handle,
                                         cxt->camera_id, buffer);
@@ -10360,12 +10388,6 @@ cmr_s32 local_queue_buffer(cmr_handle oem_handle, cam_buffer_info_t buffer,
     // channel1 will be used later
     //    case FOR_CHANNEL1:
     //        cmr_channel1_queue_buffer(cxt->prev_cxt.preview_handle,
-    //        cxt->camera_id, buffer);
-    //        break;
-
-    // channel3 will be used later
-    //    case FOR_CHANNEL3:
-    //        cmr_channel3_queue_buffer(cxt->prev_cxt.preview_handle,
     //        cxt->camera_id, buffer);
     //        break;
 

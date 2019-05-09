@@ -148,6 +148,7 @@ class SprdCamera3HWI {
         uint32_t height;
         int format;
         camera_stream_type_t type;
+        camera3_stream_t *stream;
     } stream_info_t;
 
     typedef struct {
@@ -155,6 +156,7 @@ class SprdCamera3HWI {
         stream_info_t preview;
         stream_info_t video;
         stream_info_t yuvcallback;
+        stream_info_t yuv2;
         stream_info_t snapshot;
         stream_info_t raw;
     } cam3_stream_configuration_t;
@@ -202,8 +204,6 @@ class SprdCamera3HWI {
     SprdCamera3PicChannel *mPicChan;
     bool mPictureRequest;
     uint8_t mBurstCapCnt;
-
-    SprdCamera3RegularChannel *mCallbackChan;
 
     uint8_t mOldCapIntent;
     int32_t mOldRequesId;

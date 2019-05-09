@@ -161,6 +161,8 @@ struct setting_hal_param {
     cmr_uint yuv_callback_format;
     struct img_size raw_size;
     cmr_uint raw_format;
+    struct img_size yuv2_size;
+    cmr_uint yuv2_format;
     struct beauty_info perfect_skinlevel;
     cmr_uint capture_format;
     cmr_uint capture_mode;
@@ -3079,6 +3081,47 @@ setting_get_yuv_callback_format(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int
+setting_set_yuv2_size(struct setting_component *cpt,
+                              struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->yuv2_size = parm->size_param;
+    return ret;
+}
+
+static cmr_int
+setting_get_yuv2_size(struct setting_component *cpt,
+                              struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->size_param = hal_param->yuv2_size;
+    return ret;
+}
+
+static cmr_int
+setting_set_yuv2_format(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->yuv2_format = parm->cmd_type_value;
+    return ret;
+}
+
+static cmr_int
+setting_get_yuv2_format(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->yuv2_format;
+    return ret;
+}
+
+
 static cmr_int setting_set_raw_size(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -3561,6 +3604,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_yuv_callback_size);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV_CALLBACK_FORMAT,
                              setting_set_yuv_callback_format);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_SIZE,
+                             setting_set_yuv2_size);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_FORMAT,
+                             setting_set_yuv2_format);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_SIZE, setting_set_raw_size);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_FORMAT, setting_set_raw_format);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_RANGE_FPS, setting_set_range_fps);
@@ -3633,6 +3680,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_yuv_callback_size);
     cmr_add_cmd_fun_to_table(SETTING_GET_YUV_CALLBACK_FORMAT,
                              setting_get_yuv_callback_format);
+    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_SIZE,
+                             setting_get_yuv2_size);
+    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_FORMAT,
+                             setting_get_yuv2_format);
     cmr_add_cmd_fun_to_table(SETTING_GET_RAW_SIZE, setting_get_raw_size);
     cmr_add_cmd_fun_to_table(SETTING_GET_RAW_FORMAT, setting_get_raw_format);
     cmr_add_cmd_fun_to_table(SETTING_GET_HDR, setting_get_hdr);

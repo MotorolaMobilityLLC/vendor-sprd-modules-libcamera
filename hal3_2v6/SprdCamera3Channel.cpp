@@ -340,7 +340,6 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
             camera3_stream_t *new_stream;
 
             mCamera3Stream[i]->getStreamInfo(&new_stream);
-
             if (new_stream == stream) {
                 ret = mCamera3Stream[i]->buffDoneQ(frameNumber, buffer);
                 if (ret != NO_ERROR) {
@@ -360,7 +359,9 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
                 } else if (i == (CAMERA_STREAM_TYPE_CALLBACK -
                                  REGULAR_STREAM_TYPE_BASE))
                     mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_CALLBACK);
-
+                else if (i ==
+                         (CAMERA_STREAM_TYPE_YUV2 - REGULAR_STREAM_TYPE_BASE))
+                    mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_YUV2);
                 break;
             }
         }
@@ -384,13 +385,6 @@ int SprdCamera3RegularChannel::addStream(camera_stream_type_t stream_type,
     if (index < 0) {
         HAL_LOGE("stream_type %d is not valied type", stream_type);
         return BAD_VALUE;
-    }
-
-    for (int i = 1; i < CHANNEL_REGULAR_MAX; i++) {
-        if ((index != 0) && (index != i) && mCamera3Stream[i] != NULL) {
-            delete mCamera3Stream[i];
-            mCamera3Stream[i] = NULL;
-        }
     }
 
     if (mCamera3Stream[index]) {

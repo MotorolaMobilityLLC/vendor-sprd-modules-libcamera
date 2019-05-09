@@ -130,8 +130,6 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mPicChan = NULL;
     mPictureRequest = false;
 
-    mCallbackChan = NULL;
-
     mBurstCapCnt = 1;
 
     mOldCapIntent = 0;
@@ -409,12 +407,6 @@ int SprdCamera3HWI::closeCamera() {
         mPicChan = NULL;
     }
 
-    if (mCallbackChan) {
-        mCallbackChan->stop(mFrameNum);
-        delete mCallbackChan;
-        mCallbackChan = NULL;
-    }
-
     if (mOEMIf->isIspToolMode()) {
         stopispserver();
         ispvideo_RegCameraFunc(1, NULL);
@@ -530,37 +522,16 @@ int SprdCamera3HWI::checkStreamList(
 
 int32_t SprdCamera3HWI::getStreamType(camera3_stream_t *stream) {
     int32_t streamType = -1;
-
-    if (stream->stream_type == CAMERA3_STREAM_OUTPUT) {
-        switch (stream->format) {
-        case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
-        case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-            if (stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
-                streamType = CAMERA_STREAM_TYPE_VIDEO;
-            } else {
-                streamType = CAMERA_STREAM_TYPE_PREVIEW;
-            }
-            break;
-
-        case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (mStreamConfiguration.preview.status == CONFIGURED &&
-                mStreamConfiguration.yuvcallback.status == UNCONFIGURED) {
-                streamType = CAMERA_STREAM_TYPE_PREVIEW;
-            } else {
-                streamType = CAMERA_STREAM_TYPE_CALLBACK;
-            }
-            break;
-
-        case HAL_PIXEL_FORMAT_BLOB:
-            streamType = CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT;
-            break;
-
-        default:
-            streamType = CAMERA_STREAM_TYPE_PREVIEW;
-            break;
-        }
-    } else if (stream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
-        // TBD
+    if (stream == mStreamConfiguration.preview.stream) {
+        streamType = CAMERA_STREAM_TYPE_PREVIEW;
+    } else if (stream == mStreamConfiguration.video.stream) {
+        streamType = CAMERA_STREAM_TYPE_VIDEO;
+    } else if (stream == mStreamConfiguration.yuvcallback.stream) {
+        streamType = CAMERA_STREAM_TYPE_CALLBACK;
+    } else if (stream == mStreamConfiguration.yuv2.stream) {
+        streamType = CAMERA_STREAM_TYPE_YUV2;
+    } else if (stream == mStreamConfiguration.snapshot.stream) {
+        streamType = CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT;
     }
 
     return streamType;
@@ -602,17 +573,21 @@ int SprdCamera3HWI::configureStreams(
     size_t i;
     cam_dimension_t preview_size = {0, 0}, video_size = {0, 0};
     cam_dimension_t callback_size = {0, 0}, capture_size = {0, 0};
+    cam_dimension_t yuv2_size = {0, 0};
     int previewFormat = 0, videoFormat = 0;
-    int callbackFormat = 0, captureFormat = 0;
+    int callbackFormat = 0, yuv2Format = 0, captureFormat = 0;
     int previewStreamType = 0, videoStreamType = 0;
-    int callbackStreamType = 0, captureStreamType = 0;
+    int callbackStreamType = 0, yuv2StreamType = 0, captureStreamType = 0;
     SPRD_DEF_Tag sprddefInfo;
     memset(&sprddefInfo, 0x00, sizeof(SPRD_DEF_Tag));
     // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
     uint32_t alreadyHasPreviewStream = 0;
     // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
     uint32_t hasImplementationDefinedOutputStream = 0;
-
+    // for callback stream
+    uint32_t hasCallbackStream = 0;
+    // for yuv2 stream
+    uint32_t hasYuv2Stream = 0;
     ret = checkStreamList(streamList);
     if (ret) {
         HAL_LOGE("check failed ret=%d", ret);
@@ -656,17 +631,6 @@ int SprdCamera3HWI::configureStreams(
         }
     } else {
         mPicChan->stop(mFrameNum);
-    }
-
-    // callback channel
-    if (mCallbackChan == NULL) {
-        mCallbackChan = new SprdCamera3RegularChannel(
-            mOEMIf, captureResultCb, mSetting, mMetadataChannel,
-            CAMERA_CHANNEL_TYPE_YUV_CALLBACK, this);
-        if (mCallbackChan == NULL) {
-            HAL_LOGE("channel created failed");
-            return INVALID_OPERATION;
-        }
     }
 
     resetVariablesToDefault();
@@ -721,9 +685,14 @@ int SprdCamera3HWI::configureStreams(
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
                     // for two HAL_PIXEL_FORMAT_YCBCR_420_888 steam
                     hasImplementationDefinedOutputStream = 1;
-                } else {
+                } else if (hasCallbackStream == 0) {
                     stream_type = CAMERA_STREAM_TYPE_CALLBACK;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                    hasCallbackStream = 1;
+                } else if (hasYuv2Stream == 0) {
+                    stream_type = CAMERA_STREAM_TYPE_YUV2;
+                    channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                    hasYuv2Stream = 1;
                 }
                 break;
 
@@ -774,6 +743,7 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.preview.height = newStream->height;
                 mStreamConfiguration.preview.format = newStream->format;
                 mStreamConfiguration.preview.type = CAMERA_STREAM_TYPE_PREVIEW;
+                mStreamConfiguration.preview.stream = newStream;
             } else if (stream_type == CAMERA_STREAM_TYPE_VIDEO) {
                 video_size.width = newStream->width;
                 video_size.height = newStream->height;
@@ -784,6 +754,7 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.video.height = newStream->height;
                 mStreamConfiguration.video.format = newStream->format;
                 mStreamConfiguration.video.type = CAMERA_STREAM_TYPE_VIDEO;
+                mStreamConfiguration.video.stream = newStream;
             } else if (stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
                 callback_size.width = newStream->width;
                 callback_size.height = newStream->height;
@@ -795,6 +766,18 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.yuvcallback.format = newStream->format;
                 mStreamConfiguration.yuvcallback.type =
                     CAMERA_STREAM_TYPE_CALLBACK;
+                mStreamConfiguration.yuvcallback.stream = newStream;
+            } else if (stream_type == CAMERA_STREAM_TYPE_YUV2) {
+                yuv2_size.width = newStream->width;
+                yuv2_size.height = newStream->height;
+                yuv2Format = newStream->format;
+                yuv2StreamType = CAMERA_STREAM_TYPE_YUV2;
+                mStreamConfiguration.yuv2.status = CONFIGURED;
+                mStreamConfiguration.yuv2.width = newStream->width;
+                mStreamConfiguration.yuv2.height = newStream->height;
+                mStreamConfiguration.yuv2.format = newStream->format;
+                mStreamConfiguration.yuv2.type = CAMERA_STREAM_TYPE_YUV2;
+                mStreamConfiguration.yuv2.stream = newStream;
             }
 
             mSetting->getSPRDDEFTag(&sprddefInfo);
@@ -834,15 +817,12 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.snapshot.format = newStream->format;
                 mStreamConfiguration.snapshot.type =
                     CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT;
+                mStreamConfiguration.snapshot.stream = newStream;
             }
 
             newStream->priv = mPicChan;
             newStream->max_buffers = SprdCamera3PicChannel::kMaxBuffers;
             mPictureRequest = false;
-            break;
-        }
-
-        case CAMERA_CHANNEL_TYPE_YUV_CALLBACK: {
             break;
         }
 
@@ -872,10 +852,11 @@ int SprdCamera3HWI::configureStreams(
     mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
 
     HAL_LOGI(":hal3: camId=%d, prev: w=%d, h=%d, video: w=%d, h=%d, callback: "
-             "w=%d, h=%d, cap: w=%d, h=%d",
+             "w=%d, h=%d, yuv2: w=%d, h=%d, cap: w=%d, h=%d",
              mCameraId, preview_size.width, preview_size.height,
              video_size.width, video_size.height, callback_size.width,
-             callback_size.height, capture_size.width, capture_size.height);
+             callback_size.height, yuv2_size.width, yuv2_size.height,
+             capture_size.width, capture_size.height);
 
 #ifdef CONFIG_CAMERA_EIS
     if (sprddefInfo.sprd_eis_enabled) {
@@ -899,6 +880,7 @@ int SprdCamera3HWI::configureStreams(
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
     mOEMIf->setCamStreamInfo(video_size, videoFormat, videoStreamType);
     mOEMIf->setCamStreamInfo(callback_size, callbackFormat, callbackStreamType);
+    mOEMIf->setCamStreamInfo(yuv2_size, yuv2Format, yuv2StreamType);
 
     // need to update crop region each time when ConfigureStreams
     mOEMIf->setCameraConvertCropRegion();

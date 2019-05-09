@@ -622,6 +622,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mCallbackWidth;
     int mCallbackHeight;
     int mCallbackFormat;
+    int mYuv2Width;
+    int mYuv2Height;
+    int mYuv2Format;
     int mCaptureWidth;
     int mCaptureHeight;
     int mPictureFormat;

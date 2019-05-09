@@ -487,6 +487,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mRawHeight = 0;
     mCallbackWidth = 0;
     mCallbackHeight = 0;
+    mYuv2Width = 0;
+    mYuv2Height = 0;
     mLargestPictureWidth = 0;
     mLargestPictureHeight = 0;
 
@@ -1799,7 +1801,7 @@ void SprdCamera3OEMIf::setSprdCameraLowpower(int flag) {
 int SprdCamera3OEMIf::setPreviewParams() {
     struct img_size previewSize = {0, 0}, videoSize = {0, 0}, rawSize = {0, 0};
     struct img_size captureSize = {0, 0}, callbackSize = {0, 0};
-
+    struct img_size yuv2Size = {0, 0};
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
@@ -1857,6 +1859,13 @@ int SprdCamera3OEMIf::setPreviewParams() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV_CALLBACK_FORMAT,
              (cmr_uint)mCallbackFormat);
 
+    yuv2Size.width = mYuv2Width;
+    yuv2Size.height = mYuv2Height;
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV2_SIZE,
+             (cmr_uint)&yuv2Size);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV2_FORMAT,
+             (cmr_uint)mYuv2Format);
+
     rawSize.width = mRawWidth;
     rawSize.height = mRawHeight;
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RAW_SIZE, (cmr_uint)&rawSize);
@@ -1869,6 +1878,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
         captureSize.width = mCaptureWidth;
         captureSize.height = mCaptureHeight;
     }
+
     if (getMultiCameraMode() == MODE_3D_CALIBRATION) {
         captureSize.width = mCallbackWidth;
         captureSize.height = mCallbackHeight;
@@ -1882,14 +1892,15 @@ int SprdCamera3OEMIf::setPreviewParams() {
 
     setPreviewFps(mRecordingMode);
 
-    HAL_LOGD("preview: w=%d, h=%d, format=%d, video: w=%d, h=%d, format=%d "
-             "calback: w=%d, h=%d, format=%d capture: w=%d, h=%d format=%d, "
-             "raw: w=%d, h=%d, format=%d",
+    HAL_LOGD("preview: w=%d, h=%d, format=%d  video: w=%d, h=%d, format=%d  "
+             "calback: w=%d, h=%d, format=%d  capture: w=%d, h=%d, format=%d,  "
+             "raw: w=%d, h=%d, format=%d  yuv2: w=%d, h=%d, format=%d",
              previewSize.width, previewSize.height, mPreviewFormat,
              videoSize.width, videoSize.height, mVideoFormat,
              callbackSize.width, callbackSize.height, mCallbackFormat,
              captureSize.width, captureSize.height, mPictureFormat,
-             rawSize.width, rawSize.height, mRawFormat);
+             rawSize.width, rawSize.height, mRawFormat, yuv2Size.width,
+             yuv2Size.height, mYuv2Format);
 
     return true;
 }
@@ -3600,7 +3611,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     cmr_uint pre_addr_vir = 0, rec_addr_vir = 0, callback_addr_vir = 0;
     SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL,
-                      *callback_stream = NULL;
+                      *callback_stream = NULL, *yuv2_stream = NULL;
     int32_t pre_dq_num;
     uint32_t frame_num = 0;
     cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
@@ -3645,6 +3656,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
     channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
     channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
+    channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
     HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p", pre_stream,
              rec_stream, callback_stream);
 
@@ -3884,6 +3896,21 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
     bypass_callback:
         HAL_LOGV("callback_stream X");
+    }
+
+    if (yuv2_stream) {
+        ret = yuv2_stream->getQBufNumForVir(buff_vir, &frame_num);
+        if (ret) {
+            goto bypass_yuv2;
+        }
+
+        HAL_LOGD("yuv2 fd=%d, vir=0x%lx, frame_num %d, time %" PRId64
+                 ", frame type = %ld",
+                 frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
+        channel->channelCbRoutine(frame_num, buffer_timestamp,
+                                  CAMERA_STREAM_TYPE_YUV2);
+    bypass_yuv2:
+        HAL_LOGV("yuv2_stream X");
     }
 
     if (mSprdZslEnabled) {
@@ -8067,6 +8094,18 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
             mCallbackFormat = CAM_IMG_FMT_YUV422P;
         }
         break;
+    case CAMERA_STREAM_TYPE_YUV2:
+        mYuv2Width = size.width;
+        mYuv2Height = size.height;
+        if (format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
+            format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+            format == HAL_PIXEL_FORMAT_YCrCb_420_SP) {
+            mYuv2Format = CAM_IMG_FMT_YUV420_NV21;
+        }
+        if (isYuvSensor) {
+            mYuv2Format = CAM_IMG_FMT_YUV422P;
+        }
+        break;
     case CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT:
         mCaptureWidth = size.width;
         mCaptureHeight = size.height;
@@ -8219,7 +8258,28 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
                                        SPRD_CAM_STREAM_CALLBACK);
         }
         break;
+    case CAMERA_STREAM_TYPE_YUV2:
+        channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        if (channel == NULL) {
+            ret = -1;
+            HAL_LOGE("mRegularChan is null");
+            goto exit;
+        }
 
+        ret = channel->getStream(CAMERA_STREAM_TYPE_YUV2, &stream);
+        if (ret || stream == NULL) {
+            HAL_LOGE("getStream failed");
+            goto exit;
+        }
+
+        ret = stream->getQBufInfoForHandle(buff_handle, &buffer);
+        if (ret || buffer.addr_vir == NULL) {
+            HAL_LOGE("getQBufForHandle failed");
+            goto exit;
+        }
+
+        mHalOem->ops->queue_buffer(mCameraHandle, buffer, SPRD_CAM_STREAM_YUV2);
+        break;
     case CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT:
         break;
     }
