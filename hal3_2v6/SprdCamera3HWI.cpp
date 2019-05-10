@@ -378,7 +378,7 @@ int SprdCamera3HWI::closeCamera() {
         return -1;
     }
 
-    // mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+    mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
 
     // for performance: dont delay for dc/dv switch or front/back switch
     mOEMIf->setSensorCloseFlag();
@@ -1876,6 +1876,10 @@ int SprdCamera3HWI::flush() {
     int64_t timestamp;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
+    if (mOEMIf) {
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+    }
+
     {
         Mutex::Autolock l(&mLock);
         mFlush = true;
@@ -1941,6 +1945,9 @@ int SprdCamera3HWI::flush() {
 
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mFlush = false;
+    if (mOEMIf) {
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+    }
     HAL_LOGI(":hal3: X");
 
     return 0;
