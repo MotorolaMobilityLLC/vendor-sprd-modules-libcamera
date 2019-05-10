@@ -431,7 +431,6 @@ static void dcam_cap_sof(void *param)
 		else
 			dcam_put_sync_helper(dev, helper);
 	}
-	dcam_update_lsc(dev);
 
 dispatch_sof:
 	dcam_auto_copy(dev, dev->auto_cpy_id);

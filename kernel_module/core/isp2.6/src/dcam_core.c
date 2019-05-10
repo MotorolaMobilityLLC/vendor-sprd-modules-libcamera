@@ -2551,6 +2551,12 @@ static int sprd_dcam_cfg_param(void *dcam_handle, void *param)
 
 	ret = cfg_fun_ptr(io_param, pm);
 
+	if ((io_param->sub_block == DCAM_BLOCK_LSC) &&
+		(dev->offline == 0) &&
+		(atomic_read(&dev->state) == STATE_RUNNING)) {
+		dcam_update_lsc(dev);
+	}
+
 exit:
 	return ret;
 }
