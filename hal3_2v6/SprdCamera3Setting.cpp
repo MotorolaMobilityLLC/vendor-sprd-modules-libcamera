@@ -1508,6 +1508,11 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                  stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB &&
+                    (stream_info[i].stream_sizes_tbl.width == 176 &&
+                     stream_info[i].stream_sizes_tbl.height == 144)) {
+                    continue;
+                }
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
