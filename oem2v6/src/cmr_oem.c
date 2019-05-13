@@ -126,8 +126,7 @@ static cmr_int camera_before_set(cmr_handle oem_handle,
 static cmr_int camera_after_set(cmr_handle oem_handle,
                                 struct after_set_cb_param *param);
 static cmr_int camera_focus_pre_proc(cmr_handle oem_handle);
-static cmr_int camera_focus_post_proc(cmr_handle oem_handle,
-                                      cmr_int will_capture);
+static cmr_int camera_focus_post_proc(cmr_handle oem_handle);
 static cmr_int camera_get_preview_status(cmr_handle oem_handle);
 static cmr_int camera_sensor_init(cmr_handle oem_handle, cmr_uint is_autotest);
 static cmr_int camera_sensor_deinit(cmr_handle oem_handle);
@@ -2340,7 +2339,7 @@ exit:
     return ret;
 }
 
-cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
+cmr_int camera_focus_post_proc(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
@@ -2360,7 +2359,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
     cmr_bzero(&exp_info_ptr, sizeof(struct sensor_exp_info));
 
     /*close flash*/
-    CMR_LOGD("will_capture %ld", will_capture);
 
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
@@ -2400,12 +2398,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture) {
                                 SETTING_CTRL_FLASH, &setting_param);
         if (ret) {
             CMR_LOGE("failed to open flash %ld", ret);
-        }
-        if (!will_capture) {
-            ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_SNAPSHOT_FINISHED,
-                                   &isp_param);
-            if (ret)
-                CMR_LOGE("failed to set snapshot finished %ld", ret);
         }
     }
 

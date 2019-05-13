@@ -51,7 +51,7 @@ struct af_param {
 
 struct af_md_ops {
     cmr_int (*af_pre_proc)(cmr_handle oem_handle);
-    cmr_int (*af_post_proc)(cmr_handle oem_handle, cmr_int will_capture);
+    cmr_int (*af_post_proc)(cmr_handle oem_handle);
     cmr_int (*get_preview_status)(cmr_handle oem_handle);
     cmr_int (*af_isp_ioctrl)(cmr_handle oem_handle, cmr_uint cmd,
                              struct common_isp_cmd_param *param_ptr);

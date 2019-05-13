@@ -876,7 +876,6 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_u32 i = 0;
     cmr_u32 zone_cnt = 0;
     cmr_u32 af_cancel_is_ext = 0;
-    cmr_u32 will_capture = 0;
     SENSOR_EXT_FUN_PARAM_T af_param;
     struct isp_af_win isp_af_param;
     struct common_isp_cmd_param com_isp_af;
@@ -955,15 +954,6 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
                  isp_af_param.valid_win, isp_af_param.win[i].start_x,
                  isp_af_param.win[i].start_y, isp_af_param.win[i].end_x,
                  isp_af_param.win[i].end_y);
-        if ((isp_af_param.win[0].start_x == 0) &&
-            (isp_af_param.win[0].start_y == 0) &&
-            (isp_af_param.win[0].end_x == 0) &&
-            (isp_af_param.win[0].end_y == 0)) {
-            will_capture = 1; // will capture
-        } else {
-            will_capture = 0;
-        }
-        CMR_LOGD("will_capture %d", will_capture);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
         af_cxt->isp_af_timeout = 0;
@@ -1002,14 +992,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
             yuv_sn_param.yuv_sn_af_param.zone[i].width = af_param.zone[i].w;
             yuv_sn_param.yuv_sn_af_param.zone[i].height = af_param.zone[i].h;
         }
-        if ((yuv_sn_param.yuv_sn_af_param.zone[0].start_x == 0) &&
-            (yuv_sn_param.yuv_sn_af_param.zone[0].start_y == 0) &&
-            (yuv_sn_param.yuv_sn_af_param.zone[0].width == 0) &&
-            (yuv_sn_param.yuv_sn_af_param.zone[0].height == 0)) {
-            will_capture = 1; // will capture
-        } else {
-            will_capture = 0; // will not capture
-        }
+
         ret = af_cxt->ops.af_sensor_ioctrl(af_cxt->oem_handle, COM_SN_SET_FOCUS,
                                            &yuv_sn_param);
     }
@@ -1019,7 +1002,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
 
 exit:
     // if (FOCUS_NEED_QUIT != af_cxt->focus_need_quit) {
-    af_cxt->ops.af_post_proc(af_cxt->oem_handle, will_capture);
+    af_cxt->ops.af_post_proc(af_cxt->oem_handle);
     //}
     CMR_LOGD("focus_need_quit %d ret %ld", af_cxt->focus_need_quit, ret);
     return ret;
