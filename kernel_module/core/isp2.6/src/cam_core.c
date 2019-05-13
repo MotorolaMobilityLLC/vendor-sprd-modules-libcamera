@@ -1833,6 +1833,10 @@ static int cal_channel_size(struct camera_module *module)
 			ch_vid->trim_isp.size_y =
 				divide_ratio16(ch_vid->ch_uinfo.src_crop.h,
 					       ratio_min);
+			ch_vid->trim_isp.size_x =
+				min(ch_vid->trim_isp.size_x, dcam_out.w);
+			ch_vid->trim_isp.size_y =
+				min(ch_vid->trim_isp.size_y, dcam_out.h);
 			ch_vid->trim_isp.start_x =
 				(dcam_out.w - ch_vid->trim_isp.size_x) >> 1;
 			ch_vid->trim_isp.start_y =
