@@ -6418,7 +6418,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t flashMode;
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode, &flashMode);
+        mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode,
+                                             &flashMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
     } break;
     default:
@@ -9073,8 +9074,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             break;
         }
 
-        if (mMultiCameraMode == MODE_BOKEH) {
-            HAL_LOGD("bokeh fd=0x%x", zsl_frame.fd);
+        if (mMultiCameraMode == MODE_BOKEH ||
+            mMultiCameraMode == MODE_3D_CALIBRATION) {
+            HAL_LOGD("bokeh/calibration fd=0x%x", zsl_frame.fd);
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
                 zsl_frame.fd);

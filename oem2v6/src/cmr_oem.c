@@ -11173,8 +11173,9 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
             capture_param.type = DCAM_CAPTURE_START_4IN1_LOWLUX;
         }
 #endif
-    } else if (cxt->is_multi_mode == MODE_BOKEH) {
-        if (cxt->is_yuv_callback_mode) {
+    } else if (cxt->is_multi_mode == MODE_BOKEH ||
+               cxt->is_multi_mode == MODE_3D_CALIBRATION) {
+        if (cxt->is_yuv_callback_mode || cxt->is_3dcalibration_mode) {
             capture_param.type = DCAM_CAPTURE_START_WITH_TIMESTAMP;
             capture_param.timestamp = snp_cxt->cap_need_time_stamp;
         } else {
