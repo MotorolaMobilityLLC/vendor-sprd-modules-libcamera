@@ -1525,7 +1525,13 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
-                available_min_durations.add(stream_info[i].stream_min_duration);
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
+                    (stream_info[i].stream_sizes_tbl.width *
+                     stream_info[i].stream_sizes_tbl.height > 12000000)) {
+                    available_min_durations.add(50000000L);
+                } else {
+                    available_min_durations.add(stream_info[i].stream_min_duration);
+                }
                 if (scaler_formats[j] ==
                     (HAL_PIXEL_FORMAT_BLOB ||
                      HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
