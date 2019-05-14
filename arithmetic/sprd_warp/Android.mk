@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
 ifneq ($(PLATFORM_VERSION),4.4.4)
 LOCAL_PATH := $(call my-dir)
 
@@ -34,4 +35,5 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+endif
 endif

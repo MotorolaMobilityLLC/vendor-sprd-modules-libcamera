@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 ifneq ($(PLATFORM_VERSION),4.4.4)
-#ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -38,4 +38,5 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+endif
 endif
