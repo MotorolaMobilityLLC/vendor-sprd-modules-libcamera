@@ -607,8 +607,8 @@ void snp_post_proc_done(cmr_handle snp_handle) {
     CMR_LOGD("wait end for redisplay sm");
 
     if (isp_video_get_simulation_flag()) {
-            CMR_LOGI("hwsim:snp_set_request\n");
-            snp_set_request(snp_handle, TAKE_PICTURE_NO);
+        CMR_LOGI("hwsim:snp_set_request\n");
+        snp_set_request(snp_handle, TAKE_PICTURE_NO);
     } else {
         if (cxt->cap_cnt >= cxt->req_param.total_num) {
             cxt->cap_cnt = 0;
@@ -661,7 +661,8 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
 
     if (enc_out_ptr->total_height ==
         cxt->req_param.post_proc_setting.actual_snp_size.height) {
-        if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
+        property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+        if ((!strcmp(value, "true")) ||
             (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
             if (isp_video_get_simulation_flag()) {
                 struct img_addr jpeg_addr;
@@ -673,18 +674,23 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
                         memcpy(((char *)jpeg_addr.addr_y +
                                 enc_out_ptr->stream_size),
                                (char *)isp_info_addr, isp_info_size);
-                        cxt->ops.dump_image_with_3a_info(cxt->oem_handle, CAM_IMG_FMT_JPEG,
-                                                cxt->req_param.post_proc_setting.actual_snp_size.width,
-                                                cxt->req_param.post_proc_setting.actual_snp_size.height,
-                                                enc_out_ptr->stream_size + isp_info_size,
-                                                &jpeg_addr);
+                        cxt->ops.dump_image_with_3a_info(
+                            cxt->oem_handle, CAM_IMG_FMT_JPEG,
+                            cxt->req_param.post_proc_setting.actual_snp_size
+                                .width,
+                            cxt->req_param.post_proc_setting.actual_snp_size
+                                .height,
+                            enc_out_ptr->stream_size + isp_info_size,
+                            &jpeg_addr);
                     } else {
                         CMR_LOGD("save jpg without isp debug info.");
-                        cxt->ops.dump_image_with_3a_info(cxt->oem_handle, CAM_IMG_FMT_JPEG,
-                                            cxt->req_param.post_proc_setting.actual_snp_size.width,
-                                            cxt->req_param.post_proc_setting.actual_snp_size.height,
-                                            enc_out_ptr->stream_size,
-                                            &jpeg_addr);
+                        cxt->ops.dump_image_with_3a_info(
+                            cxt->oem_handle, CAM_IMG_FMT_JPEG,
+                            cxt->req_param.post_proc_setting.actual_snp_size
+                                .width,
+                            cxt->req_param.post_proc_setting.actual_snp_size
+                                .height,
+                            enc_out_ptr->stream_size, &jpeg_addr);
                     }
                 }
                 isp_video_set_capture_complete_flag();
@@ -1271,6 +1277,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     struct img_frm cap_raw_big;
     cmr_u32 small_w, small_h;
     cmr_u32 index = frm_ptr->frame_id - frm_ptr->base;
+    char value[PROPERTY_VALUE_MAX];
 
     if (snp_cxt->ops.raw_proc == NULL) {
         CMR_LOGE("raw_proc is null");
@@ -1319,8 +1326,8 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         cap_raw_small.size.height = small_h;
         cap_raw_small.fmt = ISP_DATA_CSI2_RAW10;
     }
-
-    if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) ||
+    property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+    if ((!strcmp(value, "true")) ||
         (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
         cmr_u32 raw_format, raw_pixel_width;
         raw_pixel_width = snp_cxt->sensor_info.sn_interface.pixel_width;
@@ -1343,30 +1350,29 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     }
 
     if (isp_video_get_raw_images_info()) {
-            if (CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) {
-                CMR_LOGD("dump mipi raw tuning mode");
-                snp_cxt->ops.dump_image_with_3a_info(
-                    snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, mem_ptr->cap_raw.size.width,
-                    mem_ptr->cap_raw.size.height,
-                    mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
-                    &mem_ptr->cap_raw.addr_vir);
-
-            }
-        } else {
-            CMR_LOGD("dump mipi raw");
+        if (CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) {
+            CMR_LOGD("dump mipi raw tuning mode");
             snp_cxt->ops.dump_image_with_3a_info(
-                snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, mem_ptr->cap_raw.size.width,
-                mem_ptr->cap_raw.size.height,
-                mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
+                snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
+                mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 /
+                    4,
                 &mem_ptr->cap_raw.addr_vir);
-
         }
+    } else {
+        CMR_LOGD("dump mipi raw");
+        snp_cxt->ops.dump_image_with_3a_info(
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
+            mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
+            &mem_ptr->cap_raw.addr_vir);
+    }
 
     if (frm_ptr->is_4in1_frame) {
         CMR_LOGD("dump 4in1 mipi raw");
         snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, cap_raw_small.size.width,
-            cap_raw_small.size.height,
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
+            cap_raw_small.size.width, cap_raw_small.size.height,
             cap_raw_small.size.width * cap_raw_small.size.height * 5 / 4,
             &cap_raw_small.addr_vir);
 
@@ -1380,8 +1386,8 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         }
         CMR_LOGD("dump 4in1 mipi raw after remosaic");
         snp_cxt->ops.dump_image_with_3a_info(
-            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW, mem_ptr->cap_raw.size.width,
-            mem_ptr->cap_raw.size.height,
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
+            mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
             mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
             &mem_ptr->cap_raw.addr_vir);
     }
@@ -3845,7 +3851,8 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
         frame_type->uv_vir_addr = mem_ptr->target_yuv.addr_vir.addr_u;
         frame_type->uv_phy_addr = mem_ptr->target_yuv.addr_phy.addr_u;
         frame_type->format = CAMERA_YCBCR_4_2_0;
-        if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
+        property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+        if ((!strcmp(value, "true")) ||
             (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
             send_capture_data(
                 0x40, /* yuv420 */
@@ -4024,9 +4031,9 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
         imgadd.addr_y = data->yaddr_vir;
         imgadd.addr_u = data->uaddr_vir;
         imgadd.addr_v = data->vaddr_vir;
-        dump_image("snp_yuv_callback_take_picture_done", CAM_IMG_FMT_YUV420_NV21,
-                   frame_type.width, frame_type.height, 8881, &imgadd,
-                   frame_type.width * frame_type.height * 3 / 2);
+        dump_image("snp_yuv_callback_take_picture_done",
+                   CAM_IMG_FMT_YUV420_NV21, frame_type.width, frame_type.height,
+                   8881, &imgadd, frame_type.width * frame_type.height * 3 / 2);
     }
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                             SNAPSHOT_CB_EVT_SNAPSHOT_DONE, (void *)&frame_type,
@@ -5258,7 +5265,7 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
     ion_buf.fd = img->fd;
     ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
     ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
-    if(img->fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
+    if (img->fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
         ion_buf.size = img->size.width * img->size.height * 5 / 4;
     } else {
         ion_buf.size = img->size.width * img->size.height * 3 / 2;
