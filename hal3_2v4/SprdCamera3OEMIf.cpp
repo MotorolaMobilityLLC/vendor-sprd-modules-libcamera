@@ -136,11 +136,6 @@ enum VIDEO_3DNR {
 
 #define UPDATE_RANGE_FPS_COUNT 0x04
 
-#ifdef CONFIG_SPRD_LCD_FLASH
-#define LCD_BACKLIGHT_MAX_DEV "/sys/class/backlight/sprd_backlight/brightness"
-#define MAX_BRIGHTNESS 0xff
-#endif
-
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -276,10 +271,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #endif
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
     HAL_LOGI(":hal3: E camId=%d", cameraId);
-
-#ifdef CONFIG_SPRD_LCD_FLASH
-    mResetBrightness = -1;
-#endif
 
     SprdCameraSystemPerformance::getSysPerformance(&mSysPerformace);
     if (mSysPerformace) {
@@ -976,18 +967,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
         HAL_LOGE("in error status, deinit capture at first ");
         deinitCapture(mIsPreAllocCapMem);
     }
-
-#if defined(CONFIG_SPRD_LCD_FLASH)
-    int8_t flashMode;
-    CONTROL_Tag controlInfo;
-    mSetting->getCONTROLTag(&controlInfo);
-    mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &flashMode);
-    HAL_LOGI("flash mode %d for camera id %d", flashMode, mCameraId);
-    if ((flashMode == CAMERA_FLASH_MODE_AUTO) && (mCameraId == 1)) {
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                 CAMERA_FLASH_MODE_AUTO);
-    }
-#endif
 
     mZslSnapshotTime = systemTime();
 
@@ -3992,38 +3971,6 @@ void SprdCamera3OEMIf::calculateTimestampForSlowmotion(int64_t frm_timestamp) {
     mSlowPara.last_frm_timestamp = frm_timestamp;
 }
 
-#ifdef CONFIG_SPRD_LCD_FLASH
-bool SprdCamera3OEMIf::set_lcd_brightness(int brightness) {
-    char set_brightness[8];
-    int fd;
-    int ret = 0;
-    fd = open(LCD_BACKLIGHT_MAX_DEV, O_RDWR);
-    if (-1 == fd) {
-        HAL_LOGE("unable to open max brightness interface");
-        return false;
-    }
-    if (-1 == mResetBrightness) {
-        memset(set_brightness, 0, sizeof(set_brightness));
-        if (-1 == (ret = read(fd, set_brightness, sizeof(set_brightness)))) {
-            HAL_LOGE("Error: Could not read from file %s\n", strerror(errno));
-            return false;
-        }
-        set_brightness[ret - 1] = '\0';
-        mResetBrightness = atoi(set_brightness);
-        HAL_LOGI("mResetBrightness : %d", mResetBrightness);
-    }
-    memset(set_brightness, 0, sizeof(set_brightness));
-    sprintf(set_brightness, "%d", brightness);
-    if (-1 == (ret = write(fd, set_brightness, strlen(set_brightness)))) {
-        HAL_LOGE("Error Could not write to file %s\n", strerror(errno));
-        return false;
-    }
-    close(fd);
-    HAL_LOGI("X:%s", __func__);
-    return true;
-}
-#endif
-
 bool SprdCamera3OEMIf::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
     for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
         if (sprddefInfo.perfect_skin_level[i] != 0)
@@ -4332,26 +4279,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%lld", frame->fd,
                  buff_vir, frame_num, buffer_timestamp);
-#ifdef CONFIG_SPRD_LCD_FLASH
-        if (mCameraId == 1 && mFlashCaptureFlag == 1) {
-            HAL_LOGI("LCDFLASH : Whitening the frame ");
-            if (-1 == mResetBrightness) {
-                if (!set_lcd_brightness(MAX_BRIGHTNESS))
-                    HAL_LOGE("Error : Could not set max brightness!!!!!");
-            }
-            int y_size, uv_size;
-            y_size = (frame->width * frame->height);
-            uv_size = (y_size / 2);
-            memset((void *)buff_vir, 255, y_size);
-            memset((void *)(buff_vir + y_size), 128, uv_size);
-        } else if (-1 != mResetBrightness) {
-            HAL_LOGI("Resetting brightness to its actual brightness %d",
-                     mResetBrightness);
-            if (!set_lcd_brightness(mResetBrightness))
-                HAL_LOGE("Error : Could not set previous brightness!!!!!");
-            mResetBrightness = -1;
-        }
-#endif
+
         if (frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum &&
             (frame_num > mPictureFrameNum || frame_num == 0)) {
             if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {

@@ -276,9 +276,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void getOnlineBuffer(void *cali_info);
     bool isNeedAfFullscan();
     bool isVideoCopyFromPreview();
-#ifdef CONFIG_SPRD_LCD_FLASH
-    bool set_lcd_brightness(int brightness);
-#endif
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
 
@@ -843,10 +840,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     struct cmr_path_capability grab_capability;
 
     uint32_t mIsCameraClearQBuf;
-#ifdef CONFIG_SPRD_LCD_FLASH
-    int mResetBrightness;
-#endif
-
     int64_t mLatestFocusDoneTime;
     int32_t mStreamOnWithZsl;
     Mutex mPipelineStartLock;

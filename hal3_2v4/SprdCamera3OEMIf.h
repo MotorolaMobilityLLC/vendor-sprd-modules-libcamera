@@ -248,9 +248,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isVideoCopyFromPreview();
     bool isCallbackCapture;
 
-#ifdef CONFIG_SPRD_LCD_FLASH
-    bool set_lcd_brightness(int brightness);
-#endif
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
 
@@ -849,9 +846,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     struct class_fb face_beauty;
 #endif
     uint32_t mIsCameraClearQBuf;
-#ifdef CONFIG_SPRD_LCD_FLASH
-    int mResetBrightness;
-#endif
     // grab capability
     struct cmr_path_capability grab_capability;
     int64_t mLastCafDoneTime;
