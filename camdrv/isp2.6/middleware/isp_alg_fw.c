@@ -433,6 +433,7 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	struct isp_rgb_gain_info *inptr;
 	struct dcam_dev_rgb_gain_info gain_info;
 	struct isp_u_blocks_info block_info;
+	struct isptool_scene_param scene_param;
 
 	if (!param) {
 		ISP_LOGE("fail to get gain info.\n");
@@ -453,6 +454,15 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	cxt->rgb_gain.b_gain=inptr->b_gain;
 	block_info.scene_id = PM_SCENE_PRE;
 
+	if (isp_video_get_simulation_flag()) {
+		ret = isp_sim_get_scene_parm(&scene_param);
+		if (ISP_SUCCESS == ret) {
+			gain_info.global_gain = scene_param.global_gain;
+			cxt->rgb_gain.global_gain = gain_info.global_gain;
+			ISP_LOGI("hwsim: global_gain :input[%d] scene_param[%d]\n",
+                             inptr->global_gain , scene_param.global_gain);
+		}
+	}
 	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
