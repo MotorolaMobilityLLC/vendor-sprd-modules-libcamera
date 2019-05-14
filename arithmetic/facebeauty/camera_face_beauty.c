@@ -27,6 +27,7 @@
 #define NUM_TYPES 3
 #define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
 int dumpFrameCount = 0;
+char value[PROPERTY_VALUE_MAX];
 
 void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
@@ -77,10 +78,13 @@ void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
         faceBeauty->fb_face[j].height = ey - sy;
         faceBeauty->fb_face[j].rollAngle = angle;
         faceBeauty->fb_face[j].yawAngle = pose;
-        ALOGV("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
-              j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
-              faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
-              angle, pose);
+        property_get("ro.debuggable", value, "0");
+        if (!strcmp(value, "1")) {
+            ALOGD("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
+                    j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
+                    faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
+                    angle, pose);
+        }
     }
 }
 
@@ -276,7 +280,11 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
         duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
         ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
-        ALOGV("SPRD_FB: FB_FaceBeauty_YUV420SP duration is %d ms", duration);
+        property_get("ro.debuggable", value, "0");
+        if (!strcmp(value, "1")) {
+            ALOGD("SPRD_FB: FB_FaceBeauty_YUV420SP duration is %d ms", duration);
+        }
+
         if (faceBeauty->fb_mode == 0) { // this work mode is useless.
             int i = 0;
             for (i = 0; i < faceCount; i++) {
