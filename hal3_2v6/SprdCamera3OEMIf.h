@@ -847,7 +847,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mResetBrightness;
 #endif
 
-    int64_t mLastCafDoneTime;
+    int64_t mLatestFocusDoneTime;
     int32_t mStreamOnWithZsl;
     Mutex mPipelineStartLock;
     Condition mPipelineStartSignal;
