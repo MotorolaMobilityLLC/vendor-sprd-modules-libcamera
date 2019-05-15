@@ -94,7 +94,6 @@ struct setting_local_param {
     struct sensor_exp_info sensor_static_info;
     cmr_uint is_sensor_info_store;
     struct setting_exif_unit exif_unit;
-    cmr_uint exif_flash;
     EXIF_SPEC_PIC_TAKING_COND_T exif_pic_taking;
 };
 
@@ -2807,7 +2806,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     struct setting_init_in *init_in = &cpt->init_in;
     enum sprd_flash_status ctrl_flash_status = 0;
     enum setting_flash_status setting_flash_status = 0;
-    cmr_uint exif_flash = 0;
 
     cmr_int tmpVal = 0;
     cmr_s64 time1 = 0, time2 = 0;
@@ -2830,7 +2828,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         case SETTING_FLASH_PRE_LIGHTING:
         case SETTING_AF_FLASH_PRE_LIGHTING:
             ctrl_flash_status = FLASH_OPEN;
-            exif_flash = 1;
             if (flash_hw_status == FLASH_OPEN) {
                 cmr_setting_clear_sem(cpt);
                 hal_param->flash_param.flash_status = setting_flash_status;
@@ -2881,7 +2878,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         case SETTING_AF_FLASH_PRE_AFTER:
         case SETTING_FLASH_WAIT_TO_CLOSE:
             ctrl_flash_status = FLASH_CLOSE_AFTER_OPEN;
-            exif_flash = 0;
             if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 /*disable*/
                 if (FLASH_CLOSE != flash_hw_status) {
@@ -2917,7 +2913,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 
         case SETTING_FLASH_MAIN_LIGHTING: // high flash
             ctrl_flash_status = FLASH_HIGH_LIGHT;
-            exif_flash = 1;
             if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
                 CMR_LOGD("high flash main before");
                 cmr_setting_clear_sem(cpt);
@@ -2941,13 +2936,11 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
             break;
         default:
             ctrl_flash_status = flash_hw_status;
-            exif_flash = 0;
             CMR_LOGD("reserved flash ctrl");
             break;
         }
     }
 
-    local_param->exif_flash = exif_flash;
 EXIT:
     return ret;
 }
