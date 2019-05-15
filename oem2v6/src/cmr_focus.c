@@ -964,11 +964,9 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         CMR_LOGD("flash %d af_cxt->af_mode %d", flash, af_cxt->af_mode);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-        if (af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF &&
-            1 !=
-                af_cxt->ops.get_flash_info(
-                    af_cxt->oem_handle,
-                    camera_id) /*1 stands for pre-flash turned on*/) {
+        if ((af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF ||
+              af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF_VIDEO) &&
+              1 != flash /*1 stands for pre-flash turned on*/) {
             pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
         } else {
             pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
