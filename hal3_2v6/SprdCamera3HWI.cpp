@@ -377,16 +377,12 @@ int SprdCamera3HWI::closeCamera() {
     }
 
     mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-
-    // for performance: dont delay for dc/dv switch or front/back switch
+    // for performance: dont delay for dc/dv switch
     mOEMIf->setSensorCloseFlag();
 
     if (mMetadataChannel) {
         mMetadataChannel->stop(mFrameNum);
-        delete mMetadataChannel;
-        mMetadataChannel = NULL;
     }
-
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);
         regularChannel->channelClearAllQBuff(timestamp,
@@ -395,16 +391,13 @@ int SprdCamera3HWI::closeCamera() {
                                              CAMERA_STREAM_TYPE_VIDEO);
         regularChannel->channelClearAllQBuff(timestamp,
                                              CAMERA_STREAM_TYPE_CALLBACK);
-        delete mRegularChan;
-        mRegularChan = NULL;
+        regularChannel->channelClearAllQBuff(timestamp,
+                                             CAMERA_STREAM_TYPE_YUV2);
     }
-
     if (mPicChan) {
         mPicChan->stop(mFrameNum);
         picChannel->channelClearAllQBuff(timestamp,
                                          CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
-        delete mPicChan;
-        mPicChan = NULL;
     }
 
     if (mOEMIf->isIspToolMode()) {
@@ -426,6 +419,18 @@ int SprdCamera3HWI::closeCamera() {
     delete mOEMIf;
     mOEMIf = NULL;
 
+    if (mMetadataChannel) {
+        delete mMetadataChannel;
+        mMetadataChannel = NULL;
+    }
+    if (mRegularChan) {
+        delete mRegularChan;
+        mRegularChan = NULL;
+    }
+    if (mPicChan) {
+        delete mPicChan;
+        mPicChan = NULL;
+    }
     if (mSetting) {
         delete mSetting;
         mSetting = NULL;

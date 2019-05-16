@@ -2913,19 +2913,22 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
             ctrl_flash_status = FLASH_HIGH_LIGHT;
             exif_flash = 1;
             if (CAM_IMG_FMT_BAYER_MIPI_RAW == image_format) {
-                CMR_LOGD("high flash Set Ae setting");
-
+                CMR_LOGD("high flash main before");
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
                 setting_isp_wait_notice(cpt);
-                CMR_LOGD("high flash Open flash");
 
+                if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+                    goto EXIT;
+                }
+
+                CMR_LOGD("high flash open flash");
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);
                 hal_param->flash_param.flash_status = setting_flash_status;
 
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_LIGHTING);
                 setting_isp_wait_notice(cpt);
-                CMR_LOGD("high flash Will do-capture");
+                CMR_LOGD("high flash will do-capture");
             } else {
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);
             }
