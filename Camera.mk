@@ -40,6 +40,13 @@ OEM_DIR := oem2v6
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.7
 endif
+ifeq ($(strip $(TARGET_BOARD_CAMERA_CPP_MODULAR_KERNEL)),lite_r5p0)
+CPP_DIR:=cpp/lite_r5p0
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_CPP_MODULAR_KERNEL)),lite_r6p0)
+CPP_DIR:=cpp/lite_r6p0
+else
+$(warning "Old CPP version")
+endif
 
 # TBD: will remove hal1.0/src/SprdCameraParameters.cpp for hal3
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
