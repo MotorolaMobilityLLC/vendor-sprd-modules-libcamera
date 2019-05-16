@@ -3597,8 +3597,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         sprdvcmInfo.vcm_step = vcm_step;
         mSetting->setVCMTag(sprdvcmInfo);
     }
-    HAL_LOGD("mSprdRefocusEnabled %d mSprdFullscanEnabled %d",
-             mSprdRefocusEnabled, mSprdFullscanEnabled);
+
     if (mSprdRefocusEnabled == true && mCameraId == 0 && mSprdFullscanEnabled) {
         struct vcm_range_info range;
         ret = mHalOem->ops->camera_ioctrl(
@@ -9592,6 +9591,10 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             } else {
                 ret_eis = 1;
                 HAL_LOGD("gyro is NOT ready,check  gyro again");
+                if (getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+                    HAL_LOGD("preview is stoped");
+                    goto exit;
+                }
             }
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
@@ -9610,6 +9613,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             HAL_LOGD("no frame out");
     } else
         HAL_LOGD("no gyro data to process EIS");
+exit:
     return frame_out_preview;
 }
 
