@@ -3292,6 +3292,10 @@ int SprdCamera3Setting::updateWorkParameters(
 
     uint8_t is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
+    struct camera_info cameraInfo;
+    memset(&cameraInfo, 0, sizeof(cameraInfo));
+    getCameraInfo(mCameraId, &cameraInfo);
+
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
@@ -4031,7 +4035,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_FLASH_LCD_MODE)) {
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
-            kCameraInfo[mCameraId].facing == CAMERA_FACING_FRONT) {
+            cameraInfo.facing == CAMERA_FACING_FRONT) {
             s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode =
                 frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
             pushAndroidParaTag(ANDROID_SPRD_FLASH_LCD_MODE);
