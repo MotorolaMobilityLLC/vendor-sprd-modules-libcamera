@@ -15,6 +15,15 @@ sprd_fd-objs += $(LOCAL_SRC:%.c=%.o)
 # target includes
 ccflags-y += -I$(REL_PATH)/../core/isp2.6/inc/
 
+else ifeq ($(FD_VER),fd2.0)
+SRC := $(shell find $(REL_PATH)/fd2.0 -name "*.c")
+LOCAL_SRC := $(SRC:$(REL_PATH)/%=%)
+
+sprd_fd-objs += $(LOCAL_SRC:%.c=%.o)
+
+# target includes
+#need to check when SharkL5Pro source code porting to vendor
+ccflags-y += -I$(REL_PATH)/../core/isp2.6/inc/
 endif
 
 # target
