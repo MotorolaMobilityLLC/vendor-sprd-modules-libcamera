@@ -384,6 +384,7 @@ extern "C" {
 		cmr_u32 pf_wait_stable_cnt;
 		cmr_u32 effect_index_index;
 		cmr_u32 effect_index[4];
+		cmr_u32 pf_with_touch;
 		/*for debug*/
 		cmr_s8 history_param[8 * 1024];
 		cmr_s16 ae_comp_value;

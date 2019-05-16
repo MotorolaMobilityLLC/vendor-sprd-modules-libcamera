@@ -1451,7 +1451,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	case AE_FLASH_PRE_BEFORE:
 		ISP_LOGD("ae_flash_status FLASH_PRE_BEFORE");
 		if((!cxt->sync_cur_result.wts.stable || cxt->sync_cur_status.settings.lock_ae) && (cxt->env_cum_changed || (cxt->sync_cur_result.cur_lum < 10)
-|| (cxt->sync_cur_result.cur_lum > 245))){
+|| (cxt->sync_cur_result.cur_lum > 245)) && cxt->pf_with_touch){
 			cmr_u32 ae_base_idx = ae_set_pflash_exposure_compensation(cxt, 0);
 			cxt->pf_wait_stable_cnt++;
 			cxt->cur_status.settings.exp_is_transmit = 1;
@@ -1461,6 +1461,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		else {
 			rtn = do_ae_flash_pre_before(cxt);
 		}
+		cxt->pf_with_touch = 0;
 		break;
 
 	case AE_FLASH_PRE_LIGHTING:
@@ -4396,6 +4397,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->sync_cur_result.wts.stable = cxt->cur_result.wts.stable;
 
 	cxt->effect_index_index = 0;
+	cxt->pf_with_touch = 0;
 
 	cxt->sync_cur_result.wts.frm_len = cxt->cur_result.wts.frm_len;
 	cxt->sync_cur_result.wts.frm_len_def = cxt->cur_result.wts.frm_len_def;
@@ -4583,6 +4585,7 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_result.wts.stable = 0;
 			cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;
 			cxt->cur_status.settings.touch_scrn_status = 1;
+			cxt->pf_with_touch = 1;
 			cxt->cur_status.target_lum_zone = cxt->target_lum_zone_bak;
 			cxt->cur_status.target_range_in_zone = cxt->target_lum_range_in_bak;
 			cxt->cur_status.target_range_out_zone = cxt->target_lum_range_out_bak;
@@ -4591,6 +4594,7 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 				rtn = ae_set_restore_cnt(cxt,4);
 			ISP_LOGD("AE_SET_TOUCH_ZONE ae triger %d", cxt->cur_status.settings.touch_scrn_status);
 		} else {
+			cxt->pf_with_touch = 0;
 			ISP_LOGV("AE_SET_TOUCH_ZONE touch ignore\n");
 		}
 	}
