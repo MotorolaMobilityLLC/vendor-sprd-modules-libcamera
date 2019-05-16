@@ -2333,6 +2333,11 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 		pr_err("ctx %d is already release.\n", ctx_id);
 		atomic_set(&pctx->user_cnt, 0);
 	}
+	memset(pctx, 0, sizeof(struct isp_pipe_context));
+	pctx->ctx_id = ctx_id;
+	pctx->dev = dev;
+	pctx->attach_cam_id = CAM_ID_MAX;
+
 	mutex_unlock(&dev->path_mutex);
 	pr_info("done, put ctx_id: %d\n", ctx_id);
 	return ret;
