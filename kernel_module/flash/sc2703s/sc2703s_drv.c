@@ -438,9 +438,12 @@ static int sprd_flash_sc2703s_remove(struct i2c_client *client)
 static void sprd_flash_sc2703s_shutdown(struct i2c_client *client)
 {
 	struct flash_driver_data *drv_data = i2c_get_clientdata(client);
-	int idx =SPRD_FLASH_LED0|SPRD_FLASH_LED1;
 
-	sc2703_flash_led_enable(drv_data, idx, 0);
+	if (!drv_data || !drv_data->reg_map)
+		return;
+
+	regmap_write(drv_data->reg_map,
+		SC2703_FLASH_DRIVER_ACTIVE, 0x00);
 	sc2703_torch_mode_ac_charge_switch(drv_data, 0);
 	pr_info("sprd_flash_sc2703s_shutdown\n");
 }
