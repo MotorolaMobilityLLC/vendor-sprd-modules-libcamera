@@ -1326,7 +1326,7 @@ status_t SprdCamera3OEMIf::autoFocus() {
         controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO) {
         setAfState(AF_TRIGGER_START);
     } else if (controlInfo.af_mode ==
-                   ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+               ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
         setAfState(AF_INITIATES_NEW_SCAN);
     }
 
@@ -9610,6 +9610,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             HAL_LOGD("no frame out");
     } else
         HAL_LOGD("no gyro data to process EIS");
+
 exit:
     return frame_out_preview;
 }
@@ -9652,6 +9653,10 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             } else {
                 ret_eis = 1;
                 HAL_LOGE("gyro is NOT ready,check  gyro again");
+                if (getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+                    HAL_LOGD("preview is stoped");
+                    goto exit;
+                }
             }
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroVideoCond.waitRelative(
@@ -9669,6 +9674,8 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             HAL_LOGD("no frame out");
     } else
         HAL_LOGD("no gyro data to process EIS");
+
+exit:
     return frame_out_video;
 }
 
