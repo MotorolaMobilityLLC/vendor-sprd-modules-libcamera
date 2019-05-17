@@ -51,6 +51,7 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
 }
 
 void deinit_fb_handle(struct class_fb *faceBeauty) {
+    dumpFrameCount = 0;
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
@@ -64,6 +65,7 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
 
 void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
                        int ex, int ey, int angle, int pose) {
+    char debug_value[PROPERTY_VALUE_MAX];
     if (!faceBeauty) {
         ALOGE("construct_fb_face faceBeauty is null");
         return;
@@ -78,8 +80,8 @@ void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
         faceBeauty->fb_face[j].height = ey - sy;
         faceBeauty->fb_face[j].rollAngle = angle;
         faceBeauty->fb_face[j].yawAngle = pose;
-        property_get("ro.debuggable", value, "0");
-        if (!strcmp(value, "1")) {
+        property_get("ro.debuggable", debug_value, "0");
+        if (!strcmp(debug_value, "1")) {
             ALOGD("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
                     j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
                     faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
@@ -205,15 +207,23 @@ void construct_fb_level(struct class_fb *faceBeauty,
 
 void save_yuv_data(int num, int width, int height, unsigned char *addr_y,
                    char flag[10]) {
-    char file_name[80];
+    char file_name[256];
+    char temp_time[80];
     char tmp_str[20];
     FILE *fp = NULL;
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
     memset(file_name, '\0', 80);
     strcpy(file_name, "/data/vendor/cameraserver/");
-    sprintf(tmp_str, "%d-%d", num, width);
+    sprintf(temp_time , "%04d%02d%02d%02d%02d%02d_" ,(1900+p->tm_year),
+                            (1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec);
+    strcat(file_name, temp_time);
+    sprintf(tmp_str, "%d-%s-%d", num, flag, width);
     strcat(file_name, tmp_str);
     strcat(file_name, "x");
-    sprintf(tmp_str, "%d,nv21", height);
+    sprintf(tmp_str, "%d.nv21", height);
     strcat(file_name, tmp_str);
 
     ALOGD("file name %s", file_name);
@@ -232,7 +242,9 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
 
     int retVal = 0;
     struct timespec start_time, end_time;
-    char value[PROPERTY_VALUE_MAX];
+    char dump_value[PROPERTY_VALUE_MAX];
+    char debug_value[PROPERTY_VALUE_MAX];
+    char faceInfo[PROPERTY_VALUE_MAX];
     unsigned int duration;
     if (!faceBeauty) {
         ALOGE("do_face_beauty faceBeauty is null");
@@ -259,8 +271,8 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             if (faceBeauty->noFaceFrmCnt < 10)
                 faceCount = faceCount > 0 ? faceCount : 1;
         }
-        property_get("debug.camera.dump.frame", value, "null");
-        if (!strcmp(value, "fb")) {
+        property_get("debug.camera.dump.frame", dump_value, "null");
+        if (!strcmp(dump_value, "fb")) {
             save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
                           faceBeauty->fb_image.height,
                           faceBeauty->fb_image.yData, "be");
@@ -269,7 +281,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
                                    &(faceBeauty->fb_option),
                                    faceBeauty->fb_face, faceCount, bokehData);
-        if (!strcmp(value, "fb")) {
+        if (!strcmp(dump_value, "fb")) {
             save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
                           faceBeauty->fb_image.height,
                           faceBeauty->fb_image.yData, "af");
@@ -280,12 +292,14 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
         duration = (end_time.tv_sec - start_time.tv_sec) * 1000 +
                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000;
         ALOGV("FB_FaceBeauty_YUV420SP duration is %d ms", duration);
-        property_get("ro.debuggable", value, "0");
-        if (!strcmp(value, "1")) {
+
+        property_get("ro.debuggable", debug_value, "0");
+        if (!strcmp(debug_value, "1")) {
             ALOGD("SPRD_FB: FB_FaceBeauty_YUV420SP duration is %d ms", duration);
         }
 
-        if (faceBeauty->fb_mode == 0) { // this work mode is useless.
+        property_get("debug.camera.dump.frame.fd", faceInfo, "null");
+        if (faceBeauty->fb_mode == 0 || (!strcmp(faceInfo, "fd"))) { //mode 0 is capture,mode 1 is preview.
             int i = 0;
             for (i = 0; i < faceCount; i++) {
                 ALOGD("SPRD_FB: fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, "
