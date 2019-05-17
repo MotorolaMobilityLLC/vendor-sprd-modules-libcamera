@@ -155,10 +155,12 @@ void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt) {
 
     SENSOR_DRV_CHECK_ZERO_VOID(sensor_cxt);
     slot_id = sensor_cxt->slot_id;
-
+#ifndef CONFIG_CAMERA_SENSOR_MULTI_INSTANCE_SUPPORT
+    sns_drv_cntx[0] = *(struct sensor_drv_context *)sensor_cxt;
+#else
     if (slot_id < SENSOR_ID_MAX)
         sns_drv_cntx[slot_id] = *sensor_cxt;
-
+#endif
     return;
 }
 
@@ -167,9 +169,12 @@ void *sensor_get_dev_cxt(void) { return (void *)&sns_drv_cntx[0]; }
 void *sensor_get_dev_cxt_Ex(cmr_u32 slot_id) {
     struct sensor_drv_context *sensor_cxt = NULL;
 
+#ifndef CONFIG_CAMERA_SENSOR_MULTI_INSTANCE_SUPPORT
+    sensor_cxt = &sns_drv_cntx[0];
+#else
     if (slot_id < SENSOR_ID_MAX)
         sensor_cxt = &sns_drv_cntx[slot_id];
-
+#endif
     return (void *)sensor_cxt;
 }
 
