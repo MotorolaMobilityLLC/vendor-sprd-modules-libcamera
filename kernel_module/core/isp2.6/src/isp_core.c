@@ -2015,6 +2015,8 @@ static int sprd_isp_proc_frame(void *isp_handle,
 static int sprd_isp_update_context(void *isp_handle, int ctx_id, void *param)
 {
 	int ret = 0;
+	unsigned long reg_offset = 0;
+	uint32_t reg_bits[ISP_CONTEXT_NUM] = { 0x00, 0x02, 0x01, 0x03};
 	struct isp_pipe_context *pctx;
 	struct isp_pipe_dev *dev;
 	struct isp_fmcu_ctx_desc *fmcu = NULL;
@@ -2057,6 +2059,10 @@ static int sprd_isp_update_context(void *isp_handle, int ctx_id, void *param)
 			goto fmcu_error;
 		}
 		pctx->fmcu_handle = fmcu;
+		reg_offset = (fmcu->fid == 0) ?
+					ISP_COMMON_FMCU0_PATH_SEL :
+					ISP_COMMON_FMCU1_PATH_SEL;
+		ISP_HREG_MWR(reg_offset, BIT_1 | BIT_0, reg_bits[pctx->ctx_id]);
 	}
 
 	goto exit;
