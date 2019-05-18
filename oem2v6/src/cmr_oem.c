@@ -25,15 +25,16 @@
 #include "cmr_common.h"
 #include <time.h>
 #include "isp_otp_calibration.h"
-#ifdef CONFIG_FACE_BEAUTY
-#include "camera_face_beauty.h"
-#endif
 #include "isp_simulation.h"
 #include "isp_video.h"
 #include "pthread.h"
+#ifdef CONFIG_FACE_BEAUTY
+#include "camera_face_beauty.h"
+#endif
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 #include "cmr_mm_dvfs.h"
 #endif
+
 #define FILE_NAME_LEN 200
 #define PREVIEW_MSG_QUEUE_SIZE 100
 #define SNAPSHOT_MSG_QUEUE_SIZE 50
@@ -55,16 +56,13 @@
 #define MS_TO_NANOSEC 1000
 #define SEC_TO_NANOSEC 1000000000LL
 #define BUF_BLOCK_SIZE (1024 * 1024)
-enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 
 #define OFFLINE_CHANNEL_BIT 0x8
 #define OFFLINE_CHANNEL 3
 
-#define SBS_CMD_SBS_DUAL_MODE 4
-#define SBS_CMD_MASTER_ONLY_MODE 5
-#define SBS_CMD_SLAVE_ONELY_MODE 6
-
 #define HDR_SKIP_FRAME_NUM 2
+
+enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
@@ -78,17 +76,13 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
     ((cxt->camera_id >= 2 && (is_multi_camera_mode_oem == MODE_BLUR ||         \
                               is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
-/**********************************************************************************************/
 
-static uint32_t is_dual_capture = 0;
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
 static multiCameraMode is_multi_camera_mode_oem;
 static uint8_t master_id_oem = 0;
 
-/************************************internal interface
- * ***************************************/
 static void camera_send_channel_data(cmr_handle oem_handle,
                                      cmr_handle receiver_handle, cmr_uint evt,
                                      void *data);
@@ -380,8 +374,6 @@ static cmr_int camera_mm_dvfs_init(cmr_handle oem_handle);
 static cmr_int camera_mm_dvfs_deinit(cmr_handle oem_handle);
 #endif
 
-/**********************************************************************************************/
-
 cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
                       cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                       cmr_uint *vir_addr, cmr_s32 *fd) {
@@ -391,14 +383,24 @@ cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
     if (!oem_handle || !vir_addr || !size_ptr || !sum_ptr || !fd) {
         CMR_LOGE("error param mem_type 0x%x, oem_handle %p vir_addr %p, fd %p",
                  mem_type, oem_handle, vir_addr, fd);
-        return -CMR_CAMERA_INVALID_PARAM;
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
     }
-    CMR_LOGD("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
-    if (cxt->hal_malloc) {
-        ret = cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr,
-                              fd, cxt->client_data);
+    if (cxt->hal_malloc == NULL) {
+        CMR_LOGE("cxt->hal_malloc is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
     }
 
+    CMR_LOGD("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
+
+    ret = cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr, fd,
+                          cxt->client_data);
+    if (ret) {
+        CMR_LOGE("cxt->hal_malloc failed, ret=%d", ret);
+    }
+
+exit:
     return ret;
 }
 
@@ -3814,14 +3816,6 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
     CHECK_HANDLE_VALID(ipm_cxt);
 
     camera_close_4in1(oem_handle);
-
-    if (cxt->ipm_cxt.ai_scene_inited) {
-        ret = camera_close_ai_scene(cxt);
-        if (ret) {
-            CMR_LOGE("failed to close ai scene");
-        }
-        cxt->ipm_cxt.ai_scene_inited = 0;
-    }
 
     if (cxt->ipm_cxt.cnr_inited) {
         ret = camera_close_cnr(cxt);
@@ -7939,29 +7933,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     }
     out_param_ptr->video_slowmotion_eb = setting_param.cmd_type_value;
 
-    if (property_get_bool("persist.vendor.cam.ai.scence.enable", 0)) {
-        cmr_bzero(&setting_param, sizeof(setting_param));
-        setting_param.camera_id = cxt->camera_id;
-        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                                SETTING_GET_APPMODE, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to get app mode %ld", ret);
-            goto exit;
-        }
-        CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
-            setting_param.camera_id == 0) {
-            if (!cxt->ipm_cxt.ai_scene_inited) {
-                struct ipm_open_in in_param;
-                struct ipm_open_out out_param;
-                cmr_bzero(&in_param, sizeof(struct ipm_open_in));
-                cmr_bzero(&out_param, sizeof(struct ipm_open_out));
-                camera_open_ai_scene(oem_handle, &in_param, &out_param);
-                cxt->ipm_cxt.ai_scene_inited = 1;
-            }
-        }
-    }
-
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -9199,16 +9170,42 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct preview_context *prev_cxt = &cxt->prev_cxt;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
+
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     struct prev_sn_param_dvfs_type camParam;
     struct sensor_exp_info sensor_info;
     struct sensor_mode_fps_tag fps_info;
 #endif
+
     ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
     if (ret) {
         CMR_LOGE("failed to set prev param %ld", ret);
         goto exit;
+    }
+
+    if (property_get_bool("persist.vendor.cam.ai.scence.enable", 0)) {
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                SETTING_GET_APPMODE, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get app mode %ld", ret);
+            goto exit;
+        }
+        CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
+            setting_param.camera_id == 0) {
+            if (cxt->ipm_cxt.ai_scene_inited == 0) {
+                struct ipm_open_in in_param;
+                struct ipm_open_out out_param;
+                cmr_bzero(&in_param, sizeof(struct ipm_open_in));
+                cmr_bzero(&out_param, sizeof(struct ipm_open_out));
+                camera_open_ai_scene(oem_handle, &in_param, &out_param);
+                cxt->ipm_cxt.ai_scene_inited = 1;
+            }
+        }
     }
 
     cxt->setting_cxt.is_active = 1;
@@ -9327,6 +9324,14 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
                       &setting_param);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_CAPTURE_SIZE, &setting_param);
+
+    if (cxt->ipm_cxt.ai_scene_inited) {
+        ret = camera_close_ai_scene(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close ai scene");
+        }
+        cxt->ipm_cxt.ai_scene_inited = 0;
+    }
 
 exit:
     CMR_LOGD("X");
