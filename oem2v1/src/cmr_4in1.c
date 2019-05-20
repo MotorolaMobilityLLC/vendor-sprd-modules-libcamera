@@ -159,7 +159,7 @@ static cmr_int transfer_frame_4in1(cmr_handle class_handle,
 
     CMR_LOGD("ipm_frame_in.private_data 0x%lx", (cmr_int)in->private_data);
     message.msg_type = CMR_EVT_4IN1_START;
-    message.sync_flag = CMR_MSG_SYNC_NONE;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     message.data = (void *)malloc(sizeof(struct ipm_frame_in));
     if (!message.data) {
         CMR_LOGE("No mem!");
@@ -233,6 +233,7 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
         ret = handle->common.ipm_cxt->init_in.ops.channel_reproc(oem_handle,
                                                                  &buf_cfg);
     }
+        is_raw_capture = 0;
     if (is_raw_capture){
         struct ipm_frame_out out;
         out.dst_frame = in->src_frame;
