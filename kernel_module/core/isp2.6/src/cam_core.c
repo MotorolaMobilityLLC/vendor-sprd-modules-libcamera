@@ -1440,7 +1440,11 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			}
 
 			/* to isp */
-			ret = camera_enqueue(&channel->share_buf_queue, pframe);
+			/* skip first frame for online capture (in case of non-zsl) because lsc abnormal */
+			if ((module->cap_status != CAM_CAPTURE_RAWPROC) && (pframe->fid < 1))
+				ret = 1;
+			else
+				ret = camera_enqueue(&channel->share_buf_queue, pframe);
 			if (ret) {
 				pr_debug("capture queue overflow\n");
 				ret = dcam_ops->cfg_path(
