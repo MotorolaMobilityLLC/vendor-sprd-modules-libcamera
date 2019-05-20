@@ -800,7 +800,6 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
-        SprdCamera3Flash::releaseFlash(mCameraId);
         stopPreviewInternal();
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
@@ -3061,7 +3060,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         deinitPreview();
         return UNKNOWN_ERROR;
     }
-    SprdCamera3Flash::reserveFlash(mCameraId);
 
     // api1 dont set thumbnail size when preview, so we calculate the value same
     // as camera app
@@ -5587,6 +5585,8 @@ int SprdCamera3OEMIf::openCamera() {
 #if defined(CONFIG_CAMERA_FACE_DETECT)
     faceDectect_enable(1);
 #endif
+
+    SprdCamera3Flash::reserveFlash(mCameraId);
 
 exit:
     HAL_LOGI(":hal3: X");

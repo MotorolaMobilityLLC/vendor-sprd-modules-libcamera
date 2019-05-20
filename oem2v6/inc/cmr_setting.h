@@ -24,8 +24,8 @@ extern "C" {
 #include "SprdOEMCamera.h"
 
 #define PARAM_BUFFER_MAX 200 / sizeof(cmr_int)
-#define ISP_ALG_TIMEOUT 5          /*sec*/
-#define ISP_PREFLASH_ALG_TIMEOUT 5 /*sec*/
+#define ISP_ALG_TIMEOUT 2          /*sec*/
+#define ISP_PREFLASH_ALG_TIMEOUT 2 /*sec*/
 #define ISP_QUICK_AE_TIMEOUT 1
 
 enum setting_cmd_type {
