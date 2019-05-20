@@ -4663,8 +4663,8 @@ cmr_int cmr_snapshot_thumb_yuv_proc(cmr_handle snp_handle,
     src.fmt = CAM_IMG_FMT_YUV420_NV21;
     dst.fmt = CAM_IMG_FMT_YUV420_NV21;
     dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
-    src.data_end.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
-    dst.data_end.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
+    src.data_end.uv_endian = IMG_DATA_ENDIAN_3PLANE;
+    dst.data_end.uv_endian = IMG_DATA_ENDIAN_3PLANE;
 
     if (src.size.width != dst.size.width ||
         src.size.height != dst.size.height) {
