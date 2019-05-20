@@ -1271,9 +1271,7 @@ status_t SprdCamera3OEMIf::autoFocus() {
     HAL_LOGD("E");
     Mutex::Autolock l(&mLock);
     CONTROL_Tag controlInfo;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
+    char prop[PROPERTY_VALUE_MAX];
     property_get("ro.vendor.camera.dualcamera_cali_time", prop, "0");
 
     if (mCameraId == 3) {
@@ -1281,25 +1279,21 @@ status_t SprdCamera3OEMIf::autoFocus() {
     }
 
     mSetting->getCONTROLTag(&controlInfo);
-    if (isPreviewStart()) {
-        HAL_LOGV("Preview not start! wait preview start");
-        WaitForPreviewStart();
-    }
 
     if (!isPreviewing()) {
-        HAL_LOGE("not previewing");
+        HAL_LOGW("preveiw is not start yet");
         controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
         mSetting->setAfCONTROLTag(&controlInfo);
-        return INVALID_OPERATION;
+        goto exit;
     }
 
     if (SPRD_IDLE != getFocusState()) {
         HAL_LOGE("existing, direct return!");
         return NO_ERROR;
     }
+
     setCameraState(SPRD_FOCUS_IN_PROGRESS, STATE_FOCUS);
     mIsAutoFocus = true;
-    /*caf transit to auto focus*/
     if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE ||
         controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO) {
         int verification_enable = mSetting->getVERIFITag();
@@ -1331,7 +1325,7 @@ status_t SprdCamera3OEMIf::autoFocus() {
     }
 
     if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
-        HAL_LOGE("auto foucs fail.");
+        HAL_LOGE("auto foucs fail");
         setCameraState(SPRD_IDLE, STATE_FOCUS);
         if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
             controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
@@ -1344,6 +1338,7 @@ status_t SprdCamera3OEMIf::autoFocus() {
         }
     }
 
+exit:
     HAL_LOGD("X");
     return NO_ERROR;
 }
@@ -5590,13 +5585,8 @@ int SprdCamera3OEMIf::openCamera() {
     }
 
 #if defined(CONFIG_CAMERA_FACE_DETECT)
-    //if (mIsRawCapture == 1) {
-    //faceDectect_enable(0);
-    //} else {
-        faceDectect_enable(1);
-    //}
+    faceDectect_enable(1);
 #endif
-
 
 exit:
     HAL_LOGI(":hal3: X");
