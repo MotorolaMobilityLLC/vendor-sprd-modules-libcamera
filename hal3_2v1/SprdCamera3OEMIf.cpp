@@ -7092,8 +7092,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSetting->getFLASHTag(&flashInfo);
             mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode,
                                                      &flashMode);
-            if (CAMERA_FLASH_MODE_TORCH == flashMode ||
-                CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+            if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+                if (CAMERA_FLASH_MODE_TORCH == flashMode ||
+                    CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+                    HAL_LOGD("set flashMode when ae_mode is not off and TORCH");
+                    mFlashMode = flashMode;
+                    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
+                             mFlashMode);
+                }
+            } else {
+                HAL_LOGD("set flashMode when ANDROID_CONTROL_AE_MODE_OFF");
                 mFlashMode = flashMode;
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
                          mFlashMode);

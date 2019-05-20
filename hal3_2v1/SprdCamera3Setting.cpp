@@ -1120,7 +1120,7 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
     return ret;
 }
 
-void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area){
+void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area) {
     int32_t touch_point[2] = {0};
     cmr_u16 picW, picH, snsW, snsH;
     float w_ratio = 0.000f, h_ratio = 0.000f;
@@ -1131,8 +1131,8 @@ void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area){
 
     getLargestPictureSize(mCameraId, &picW, &picH);
     getLargestSensorSize(mCameraId, &snsW, &snsH);
-    HAL_LOGD("picture size = %d x %d, sensor size = %d x %d,",
-        picW, picH, snsW, snsH);
+    HAL_LOGD("picture size = %d x %d, sensor size = %d x %d,", picW, picH, snsW,
+             snsH);
     // Do coordinate transition
     w_ratio = (float)snsW / (float)picW;
     h_ratio = (float)snsH / (float)picH;
@@ -1432,7 +1432,7 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     if (!mSensorFocusEnable[cameraId]) {
         ptr_lens_inf_tag->mini_focus_distance = 0.0f;
     } else {
-        ptr_lens_inf_tag->mini_focus_distance = cameraId ? 0.0f : 2.0f;
+        ptr_lens_inf_tag->mini_focus_distance = cameraId ? 0.0f : 1023.0f;
     }
     ptr_lens_inf_tag->hyperfocal_distance = 2.0f;
 
@@ -1953,9 +1953,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
-//Bit0 indicates whether or not to support Age.
-//Bit1 indicates whether or not to support Gender.
-//Bit2 indicates whether the skin is supported.
+// Bit0 indicates whether or not to support Age.
+// Bit1 indicates whether or not to support Gender.
+// Bit2 indicates whether the skin is supported.
 #ifdef CONFIG_SPRD_FD_LIB_VERSION_2
     s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable = 7;
 #else
@@ -2056,7 +2056,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features.add(atoi(prop));
-    }else {
+    } else {
         available_cam_features.add(0);
     }
 
@@ -4918,7 +4918,7 @@ int SprdCamera3Setting::updateWorkParameters(
 
         for (i = 0; i < tag_count; i++) {
             touch_area[i] = frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION)
-                             .data.i32[i];
+                                .data.i32[i];
             HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
         }
         autotrackingCoordinateConvert(touch_area);
@@ -5273,7 +5273,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
     // Update ANDROID_SPRD_DEVICE_ORIENTATION
     camMetadata.update(ANDROID_SPRD_DEVICE_ORIENTATION,
-                       &(s_setting[mCameraId].sprddefInfo.device_orietation), 1);
+                       &(s_setting[mCameraId].sprddefInfo.device_orietation),
+                       1);
     // perfect_level
     camMetadata.update(ANDROID_SPRD_UCAM_SKIN_LEVEL,
                        s_setting[mCameraId].sprddefInfo.perfect_skin_level,
@@ -5427,9 +5428,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             HAL_LOGV("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
                      g_face_info1, g_face_info2, g_face_info3, g_face_info4);
         }
-        //Bit0 and Bit1 represent ages,
-        //Bit2 represent gender,
-        //Bit3 represent skin color
+// Bit0 and Bit1 represent ages,
+// Bit2 represent gender,
+// Bit3 represent skin color
 #ifdef CONFIG_SPRD_FD_LIB_VERSION_2
         camMetadata.update(ANDROID_SPRD_FACE_ATTRIBUTES, faceGenderRaceAge,
                            dataSize);
@@ -5638,9 +5639,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_STATISTICS_HISTOGRAM,
                        s_setting[mCameraId].hist_report, CAMERA_ISP_HIST_ITEMS);
 
-    //callback autotracking info
+    // callback autotracking info
     if (!(s_setting[mCameraId].autotrackingInfo.at_start_info[2])) {
-        //s_setting[mCameraId].autotrackingInfo.at_cb_info[0] = AUTO_TRACKING_FAILTURE;
+        // s_setting[mCameraId].autotrackingInfo.at_cb_info[0] =
+        // AUTO_TRACKING_FAILTURE;
         s_setting[mCameraId].autotrackingInfo.at_cb_info[1] = 0;
         s_setting[mCameraId].autotrackingInfo.at_cb_info[2] = 0;
     }
@@ -6348,7 +6350,7 @@ int SprdCamera3Setting::androidEffectModeToDrvMode(uint8_t androidEffectMode,
 }
 
 int SprdCamera3Setting::flashLcdModeToDrvFlashMode(uint8_t flashLcdMode,
-                                                 int8_t *convertDrvMode) {
+                                                   int8_t *convertDrvMode) {
     int ret = 0;
 
     HAL_LOGD("flash lcd mode %d", flashLcdMode);
@@ -6652,7 +6654,7 @@ int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
 
 int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
     memcpy(s_setting[mCameraId].hist_report, hist_report,
-        sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+           sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
     return 0;
 }
 
