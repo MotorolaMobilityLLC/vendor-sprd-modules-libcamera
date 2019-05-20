@@ -1560,10 +1560,11 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 	cmr_s32 rtn = ISP_SUCCESS;
 	int ret = 0;
 	int n = 0;
+	cmr_u32 atm_enable = 0;
 	char value[PROPERTY_VALUE_MAX];
 	char value_1[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.atm.enable", value, "0");
-	bool bATMEnable = strtol(value, NULL, 10);
+	//bool bATMEnable = strtol(value, NULL, 10);
 	property_get("debug.camera.atm.test", value_1, "0");
 	bool bATMTest = strtol(value_1, NULL, 10);
 	struct smart_context *cxt = NULL;
@@ -1580,12 +1581,17 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 	}
 
 	cxt = (struct smart_context *)handle;
+	atm_enable = cxt->atm_tuning_param.atmenable;
 
-	if (cxt->atm_tuning_param.atmenable == 1) {
-		bATMEnable = 1;
+	if (!(strcmp(value, "on"))){
+		atm_enable = 1;
+	}else if(!(strcmp(value, "off"))){
+		atm_enable = 0;
+	}else{
+		;
 	}
 
-	if (bATMEnable) {
+	if (atm_enable) {
 		ret = _smart_gamma(in_ptr, block_result, &sm_gamma_out);
 
 		if (ISP_SUCCESS == ret) {
