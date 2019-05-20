@@ -725,14 +725,12 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
              frame_number);
     mStartFrameNum = frame_number;
 
+    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR: {
         if (mParaDCDVMode == CAMERA_PREVIEW_FORMAT_DV)
             mRecordingFirstFrameTime = 0;
-
-        if (sprddefInfo.slowmotion > 1) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
-        }
 
 #ifdef CONFIG_CAMERA_EIS
         SPRD_DEF_Tag sprddefInfo;
@@ -758,7 +756,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
-        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
         mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
                                                 IS_CAP_BEGIN);
@@ -3527,6 +3524,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
     Mutex::Autolock cbLock(&mPreviewCbLock);
     int ret = NO_ERROR;
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
 
     HAL_LOGV("E");
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
@@ -3534,6 +3533,24 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGE("mCameraHandle=%p, mHalOem=%p,", mCameraHandle, mHalOem);
         HAL_LOGE("frame=%p", frame);
         return;
+    }
+
+    if (!isCapturing() && (miSPreviewFirstFrame || mStartFrameNum)) {
+        if (getMultiCameraMode() == MODE_BLUR ||
+            getMultiCameraMode() == MODE_BOKEH ||
+            mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
+            mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
+            mSprdAppmodeId == CAMERA_MODE_FILTER ||
+            (sprddefInfo.slowmotion > 1)) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+        } else if (mRecordingMode == true) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+        } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+        } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
+            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+        }
+        mStartFrameNum = 0;
     }
 
     if (miSPreviewFirstFrame) {
@@ -3548,23 +3565,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-
-        if (getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_BOKEH ||
-            mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
-            mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
-        } else if (mRecordingMode == true) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-        } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-        } else {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
-        }
     }
-
-    SPRD_DEF_Tag sprddefInfo;
-    mSetting->getSPRDDEFTag(&sprddefInfo);
 
     if (mIsIspToolMode && frame->type == PREVIEW_FRAME) {
         send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight,
