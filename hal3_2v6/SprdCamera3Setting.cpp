@@ -1808,6 +1808,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // better not use default value 0,so set default value -1
     s_setting[cameraId].sprddefInfo.sprd_appmode_id = -1;
+    //set the eis disable for the default setting
+    s_setting[cameraId].sprddefInfo.sprd_eis_enabled = 0;
+    //set the slowmotion value 1 for the default setting
+    s_setting[cameraId].sprddefInfo.slowmotion = 1;
 
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
            camera3_default_info.common.availableBrightNess,

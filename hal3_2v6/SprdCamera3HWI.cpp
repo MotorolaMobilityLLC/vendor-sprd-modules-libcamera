@@ -792,7 +792,7 @@ int SprdCamera3HWI::configureStreams(
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
-            } else if (sprddefInfo.sprd_eis_enabled) {
+            } else if (video_size.width % 4) {
                 /* for sprd_eis_enable,eis video_size=normal video_size+2*/
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
             } else
@@ -864,7 +864,7 @@ int SprdCamera3HWI::configureStreams(
              capture_size.width, capture_size.height);
 
 #ifdef CONFIG_CAMERA_EIS
-    if (sprddefInfo.sprd_eis_enabled) {
+    if (video_size.width % 4) {
         // leave two*height*1.5 bytes space for eis parameters
         video_size.width = video_size.width - 2;
     }
