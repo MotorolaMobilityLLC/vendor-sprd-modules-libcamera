@@ -13,6 +13,7 @@ LOCAL_STRIP_MODULE := keep_symbols
 
 # delete .ko before making anything
 LOCAL_PATH_MMDVFS := $(shell pwd)/$(LOCAL_PATH)
+
 $(shell rm $(LOCAL_PATH_MMDVFS)/$(LOCAL_MODULE) -f)
 $(shell rm $(shell find $(LOCAL_PATH_MMDVFS) -name "*.o") -f)
 
