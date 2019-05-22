@@ -79,6 +79,7 @@ namespace sprdcamera {
 #else
 #define MAX_DIGITAL_ZOOM_RATIO (2.0f)
 #endif
+#define MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO (1.6f)
 
 /* Time related macros */
 typedef int64_t nsecs_t;
@@ -123,7 +124,7 @@ typedef int64_t nsecs_t;
 #define MAX_PIPELINE_DEPTH 5
 #endif
 
-//Histogram items
+// Histogram items
 #define CAMERA_ISP_HIST_ITEMS 256
 
 typedef struct {
@@ -409,6 +410,7 @@ typedef struct {
     int32_t ae_info;
     uint8_t availabe_gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
+    int32_t ultrawide_id;
 } SPRD_DEF_Tag;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -656,7 +658,8 @@ class SprdCamera3Setting {
                                                int8_t *convertAntibandingMode);
 
     int androidAfModeToDrvAfMode(uint8_t androidAfMode, int8_t *convertDrvMode);
-    int flashLcdModeToDrvFlashMode(uint8_t flashLcdMode, int8_t *convertDrvMode);
+    int flashLcdModeToDrvFlashMode(uint8_t flashLcdMode,
+                                   int8_t *convertDrvMode);
     int setTONEMAPTag(TONEMAP_Tag *toneInfo);
     int getTONEMAPTag(TONEMAP_Tag *toneInfo);
 

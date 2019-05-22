@@ -502,6 +502,7 @@ getHalOem_fail:
     isCallbackCapture = false;
     mMasterId = 0;
     memset(&mBokehScaleInfo, 0, sizeof(struct img_frm));
+    mReprocessZoomRatio = 1.0f;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -6559,7 +6560,14 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(bool update_sync) {
 
     mZoomInfo.update_sync = update_sync ? 1 : 0;
     mZoomInfo.mode = ZOOM_INFO;
-    mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
+    if (mIsUltraWideMode) {
+        mReprocessZoomRatio = zoomRatio;
+        mZoomInfo.zoom_info.zoom_ratio = 1.0f;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
+                 (cmr_uint)&mReprocessZoomRatio);
+    } else {
+        mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
+    }
     mZoomInfo.zoom_info.prev_aspect_ratio = prevAspectRatio;
     mZoomInfo.zoom_info.video_aspect_ratio = videoAspectRatio;
     mZoomInfo.zoom_info.capture_aspect_ratio = capAspectRatio;

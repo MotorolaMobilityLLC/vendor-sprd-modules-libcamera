@@ -341,7 +341,7 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
         return 0;
     } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
         return property_get_int32("persist.vendor.camera.ultra_wide.cam_id",
-                                  /*default*/ 0);
+                                  /*default*/ -1);
     } else if (SPRD_3D_CALIBRATION_ID ==
                cameraId) { // ValidationTools apk open  camera id is
         // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to

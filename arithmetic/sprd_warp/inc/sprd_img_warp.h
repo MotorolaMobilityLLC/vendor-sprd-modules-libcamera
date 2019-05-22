@@ -66,11 +66,8 @@ typedef struct {
 typedef struct { float warp_projective[3][3]; } img_warp_projective_param_t;
 
 typedef struct {
-    uint8_t *img_data;
-    float warp_projective[3][3];
-} img_warp_input_t;
-
-typedef struct { uint8_t *img_data; } img_warp_output_t;
+    float zoomRatio; //  [1.0f ~ 1.6f]
+} img_warp_undistort_param_t;
 
 #ifdef _MSC_VER
 #ifdef _USRDLL
@@ -108,7 +105,7 @@ SPRD_ISP_API void img_warp_grid_run(img_warp_inst_t inst,
  * @input: 1 input buffer pointer, use GraphicBuffer by default
  * @output: 1 output buffer, different from input buffer, use GraphicBuffer by
  * default
- * @param: reserved, set 0 for WARP_UNDISTORT mode
+ * @param: img_warp_undistort_param_t for WARP_UNDISTORT mode
  */
 SPRD_ISP_API void img_warp_grid_close(img_warp_inst_t *inst);
 /* img_warp_grid_close

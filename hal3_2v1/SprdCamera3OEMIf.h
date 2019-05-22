@@ -718,6 +718,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     timer_t mPrvTimerID;
 
     struct cmr_zoom_param mZoomInfo;
+    float mReprocessZoomRatio;
     int8_t mFlashMode;
 
     bool mJpegRotaSet;

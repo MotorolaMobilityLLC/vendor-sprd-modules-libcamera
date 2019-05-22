@@ -1544,7 +1544,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
         if (data != NULL) {
-            //data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
+            // data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
             ae_info = *(cmr_u32 *)data;
             cxt->camera_cb(oem_cb, cxt->client_data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, &ae_info);
@@ -1623,7 +1623,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGD("ISP_HIST_REPORT_CALLBACK");
         oem_cb = CAMERA_EVT_CB_HIST_REPORT;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
-                      data);
+                       data);
         break;
     default:
         break;
@@ -9186,6 +9186,16 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
             ret = -CMR_CAMERA_INVALID_PARAM;
         }
         break;
+    case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
+        if (param) {
+            setting_param.cmd_type_value = param;
+            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                    &setting_param);
+        } else {
+            CMR_LOGE("err, zoom ratio param is null");
+            ret = -CMR_CAMERA_INVALID_PARAM;
+        }
+        break;
     case CAMERA_PARAM_ENCODE_ROTATION:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
@@ -10670,6 +10680,12 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     }
+    case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
+        ret = camera_set_setting(oem_handle, id, param);
+        if (ret) {
+            CMR_LOGE("failed to set camera setting of zoom ratio %ld", ret);
+        }
+        break;
     case CAMERA_PARAM_ISO:
         cxt->setting_cxt.iso_value = param;
         ret = camera_set_setting(oem_handle, id, param);

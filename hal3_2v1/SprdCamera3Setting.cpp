@@ -1651,7 +1651,16 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // The maximum ratio between both active area width and crop region width
     // and active area height and crop region height, for
     // android.scaler.cropRegion.
-    s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
+    int ultrawide_id = property_get_int32(
+        "persist.vendor.camera.ultra_wide.cam_id", /*default*/ -1);
+    if (ultrawide_id >= 0) {
+        s_setting[cameraId].scalerInfo.max_digital_zoom =
+            MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO;
+        s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
+    } else {
+        s_setting[cameraId].scalerInfo.max_digital_zoom =
+            MAX_DIGITAL_ZOOM_RATIO;
+    }
     // The minimum frame duration that is supported for each resolution in
     // android.scaler.availableJpegSizes
     memcpy(s_setting[cameraId].scalerInfo.jpeg_min_durations,
@@ -2490,6 +2499,12 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_IS_3DNR_SCENE,
                       &(s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene), 1);
+    int ultrawide_id = property_get_int32(
+        "persist.vendor.camera.ultra_wide.cam_id", /*default*/ -1);
+    if (ultrawide_id >= 0) {
+        staticInfo.update(ANDROID_SPRD_ULTRAWIDE_ID,
+                          &(s_setting[cameraId].sprddefInfo.ultrawide_id), 1);
+    }
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
 #undef FILL_CAM_INFO_ARRAY

@@ -12748,13 +12748,18 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 frm_id = 0;
     cmr_uint ultra_wide_frm_id = 0;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct prev_context *prev_cxt = NULL;
     struct ipm_frame_in ipm_in_param;
     int frame_type = PREVIEW_FRAME;
+    struct setting_cmd_parameter setting_param;
     void *src_buffer_handle = NULL;
     void *dst_buffer_handle = NULL;
     cmr_handle *ultra_wide_handle = NULL;
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     if (prev_cxt->prev_param.is_ultra_wide == 0) {
@@ -12819,6 +12824,14 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                                             &buf_info);
                 dst_buffer_handle = buf_info.graphic_buffer;
             }
+            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_REPROCESS_ZOOM_RATIO,
+                                    &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get zoom ratio %ld", ret);
+                ret = CMR_CAMERA_FAIL;
+                goto exit;
+            }
 
             CMR_LOGD("ultra wide src:%p, dst:%p size:%ld, src_buf_hd:%p, "
                      "dst_buf_hd:%p\n",
@@ -12826,10 +12839,12 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                      (void *)dst_img->addr_vir.addr_y, dst_img->buf_size,
                      src_buffer_handle, dst_buffer_handle);
 
+            cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
             ipm_in_param.src_frame = *src_img;
             ipm_in_param.src_frame.reserved = src_buffer_handle;
             ipm_in_param.dst_frame = *dst_img;
             ipm_in_param.dst_frame.reserved = dst_buffer_handle;
+            ipm_in_param.private_data = (void *)setting_param.cmd_type_value;
 
             if (src_buffer_handle != NULL && dst_buffer_handle != NULL) {
                 ret =
