@@ -4113,8 +4113,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_uint videobuf_vir = 0;
     cmr_uint prebuf_phy = 0;
     cmr_uint prebuf_vir = 0;
+    cmr_uint callbuf_phy = 0;
+    cmr_uint callbuf_vir = 0;
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
+    cmr_s32 callbuf_fd = 0;
 
 #ifdef CONFIG_FACE_BEAUTY
     int sx, sy, ex, ey, angle, pose;
@@ -4365,9 +4368,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                         frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
             }
         }
-        if (callback_stream)
-            callback_stream->getQBufListNum(&buf_num);
-        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE && buf_num == 0) {
+        if (callback_stream) {
+            ret = callback_stream->getQBufAddrForNum(frame_num, &callbuf_vir,
+                                                  &callbuf_phy, &callbuf_fd);
+        }
+        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE && (ret || callbuf_vir == 0 )) {
             timer_set(this, 1, timer_hand_take);
         }
         if (frame_num > mPreviewFrameNum)
@@ -4420,8 +4425,19 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             local_pic_stream->getQBuffFirstNum(&pic_frame_num);
             HAL_LOGI("frame_num %d, pic_frame_num %d", frame_num,
                      pic_frame_num);
-            if (frame_num == pic_frame_num)
+            if (frame_num == pic_frame_num) {
                 isJpegRequest = true;
+                channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
+                if (pre_stream) {
+                    cmr_uint local_prev_phy = 0;
+                    cmr_uint local_prev_vir = 0;
+                    cmr_s32 local_prev_fd = 0;
+                    ret = pre_stream->getQBufAddrForNum(frame_num, &local_prev_vir,
+                                                  &local_prev_phy, &local_prev_fd);
+                    if (ret == NO_ERROR && local_prev_vir != 0)
+                        isJpegRequest = false;
+                }
+            }
         } else {
             isJpegRequest = false;
         }
