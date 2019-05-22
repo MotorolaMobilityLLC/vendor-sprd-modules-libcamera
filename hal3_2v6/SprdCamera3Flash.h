@@ -56,7 +56,6 @@ class SprdCamera3Flash {
     static int32_t setTorchMode(const char *cameraIdStr, bool on);
     static int32_t reserveFlash(const int cameraId);
     static int32_t releaseFlash(const int cameraId);
-    int32_t releaseDisplayFlipFile(const int cameraId);
 
   private:
     virtual ~SprdCamera3Flash();

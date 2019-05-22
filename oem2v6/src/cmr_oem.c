@@ -481,6 +481,19 @@ cmr_int camera_front_lcd_flash_activie(cmr_u32 face_type) {
     return 0;
 }
 
+cmr_int camera_front_lcd_set_color_temperature(struct camera_context *cxt) {
+
+    if (cxt->enhance == NULL) {
+        CMR_LOGE("enhance object invalid");
+        return -1;
+    }
+
+    if (cxt->enhance->set_value(cxt->color_temp))
+        CMR_LOGE("set temperature %ld failed\n", cxt->color_temp);
+
+    return 0;
+}
+
 cmr_int camera_front_lcd_enhance_module_init(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     const hw_module_t *module;
@@ -506,28 +519,31 @@ cmr_int camera_front_lcd_enhance_module_init(cmr_handle oem_handle) {
 
 cmr_int camera_front_lcd_enhance_module_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_u8 flip = 0;
+    const char *refresh = "/sys/class/display/dispc0/refresh";
+    const char *disable_flip = "/sys/class/display/dispc0/disable_flip";
 
     if (!camera_front_lcd_flash_activie(cxt->face_type)) {
         CMR_LOGI("flash is not lcd type");
         return -1;
     }
 
+    camera_read_sysfs_file(disable_flip, &flip);
+    CMR_LOGI("disable_flip %d", flip);
+
+    if (flip) {
+        camera_write_sysfs_file(refresh, 0x01);
+        cxt->color_temp = 0;
+        camera_front_lcd_set_color_temperature(cxt);
+
+        cxt->bg_color = 0;
+        cxt->backlight_brightness = 0;
+        cxt->lcd_flash_highlight = 0;
+    }
+
     if (cxt->enhance) {
         cxt->enhance->common.close((struct hw_device_t *)cxt->enhance);
     }
-
-    return 0;
-}
-
-cmr_int camera_front_lcd_set_color_temperature(struct camera_context *cxt) {
-
-    if (cxt->enhance == NULL) {
-        CMR_LOGE("enhance object invalid");
-        return -1;
-    }
-
-    if (cxt->enhance->set_value(cxt->color_temp))
-        CMR_LOGE("set temperature %ld failed\n", cxt->color_temp);
 
     return 0;
 }

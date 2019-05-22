@@ -639,6 +639,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 void SprdCamera3OEMIf::closeCamera() {
     ATRACE_CALL();
+    FLASH_INFO_Tag flashInfo;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
 
@@ -661,7 +662,10 @@ void SprdCamera3OEMIf::closeCamera() {
         stopPreviewInternal();
     }
 
-    SprdCamera3Flash::releaseFlash(mCameraId);
+    mSetting->getFLASHINFOTag(&flashInfo);
+    if (flashInfo.available) {
+        SprdCamera3Flash::releaseFlash(mCameraId);
+    }
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_deinit((void *)this);
@@ -5424,6 +5428,7 @@ int SprdCamera3OEMIf::openCamera() {
     struct exif_info exif_info = {0, 0};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag sprddefInfo;
+    FLASH_INFO_Tag flashInfo;
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
@@ -5589,7 +5594,10 @@ int SprdCamera3OEMIf::openCamera() {
     faceDectect_enable(1);
 #endif
 
-    SprdCamera3Flash::reserveFlash(mCameraId);
+    mSetting->getFLASHINFOTag(&flashInfo);
+    if (flashInfo.available) {
+        SprdCamera3Flash::reserveFlash(mCameraId);
+    }
 
 exit:
     HAL_LOGI(":hal3: X");

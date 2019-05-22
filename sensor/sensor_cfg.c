@@ -610,6 +610,9 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "s5k5e9yu05", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
 #endif
+#ifdef CONFIG_BLUR_SUPPORT
+    {SPRD_BLUR_FRONT_ID, MODE_BLUR, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
+#endif
 #ifdef CONFIG_SINGLE_FACEID_SUPPORT
     {SPRD_SINGLE_FACEID_REGISTER_ID, MODE_SINGLE_FACEID_REGISTER, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
     {SPRD_SINGLE_FACEID_UNLOCK_ID, MODE_SINGLE_FACEID_UNLOCK, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},

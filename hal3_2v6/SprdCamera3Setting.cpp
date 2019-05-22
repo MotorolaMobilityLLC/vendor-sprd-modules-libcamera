@@ -200,8 +200,8 @@ const int32_t ksupported_preview_formats[4] = {
 
 const int32_t kavailable_fps_ranges_back[] = {
     10, 10, 5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {10, 10, 5,  15, 15, 15,  5, 20,
-                                               20, 20, 5,  30, 15, 30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {10, 10, 5, 15, 15, 15, 5,  20,
+                                               20, 20, 5, 30, 15, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
@@ -1508,10 +1508,12 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.height);
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
                     (stream_info[i].stream_sizes_tbl.width *
-                     stream_info[i].stream_sizes_tbl.height > 12000000)) {
+                         stream_info[i].stream_sizes_tbl.height >
+                     12000000)) {
                     available_min_durations.add(50000000L);
                 } else {
-                    available_min_durations.add(stream_info[i].stream_min_duration);
+                    available_min_durations.add(
+                        stream_info[i].stream_min_duration);
                 }
                 if (scaler_formats[j] ==
                     (HAL_PIXEL_FORMAT_BLOB ||
@@ -1585,12 +1587,13 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
 
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
-    struct phySensorInfo *phyPtr = NULL;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     int i = 0;
+    struct camera_info cameraInfo;
+    memset(&cameraInfo, 0, sizeof(cameraInfo));
+    getCameraInfo(cameraId, &cameraInfo);
 
     memset(&(s_setting[cameraId]), 0, sizeof(sprd_setting_info_t));
-    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
     s_setting[cameraId].supported_hardware_level =
         ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
@@ -1727,9 +1730,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].flashInfo.firing_power = 10;
 
     // flash_info
-    if (phyPtr->face_type == CAMERA_FACING_BACK) {
+    if (cameraInfo.facing == CAMERA_FACING_BACK) {
         s_setting[cameraId].flash_InfoInfo.available = 1;
-    } else if (phyPtr->face_type == CAMERA_FACING_FRONT) {
+    } else if (cameraInfo.facing == CAMERA_FACING_FRONT) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
             s_setting[cameraId].flash_InfoInfo.available = 0;
@@ -1808,9 +1811,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // better not use default value 0,so set default value -1
     s_setting[cameraId].sprddefInfo.sprd_appmode_id = -1;
-    //set the eis disable for the default setting
+    // set the eis disable for the default setting
     s_setting[cameraId].sprddefInfo.sprd_eis_enabled = 0;
-    //set the slowmotion value 1 for the default setting
+    // set the slowmotion value 1 for the default setting
     s_setting[cameraId].sprddefInfo.slowmotion = 1;
 
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
