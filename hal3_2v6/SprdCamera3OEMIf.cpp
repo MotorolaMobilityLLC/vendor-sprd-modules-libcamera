@@ -3137,15 +3137,17 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
-        return;
+        goto exit;
     }
 
-    HAL_LOGI("E camera id %d", mCameraId);
+    HAL_LOGI("E mCameraId=%d", mCameraId);
+    mIsStoppingPreview = 1;
+
     if (isCapturing()) {
         setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
         if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
             HAL_LOGE("camera_stop_capture failed!");
-            return;
+            goto exit;
         }
     }
 
@@ -3156,17 +3158,15 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     if (!isPreviewing()) {
         HAL_LOGD("Preview not in progress! stopPreviewInternal X");
-        return;
+        goto exit;
     }
 
-    mIsStoppingPreview = 1;
     setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_stop_preview(mCameraHandle)) {
         setCameraState(SPRD_ERROR, STATE_PREVIEW);
         HAL_LOGE("camera_stop_preview failed");
     }
-    mIsStoppingPreview = 0;
 
     deinitPreview();
     end_timestamp = systemTime();
@@ -3180,6 +3180,8 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     setCameraState(SPRD_IDLE, STATE_PREVIEW);
 
+exit:
+    mIsStoppingPreview = 0;
     HAL_LOGI("X Time:%" PRId64 " ms camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
 }
@@ -4732,7 +4734,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
         break;
 
     case CAMERA_RSP_CB_SUCCESS:
-        if (mIsStoppingPreview)
+        if (mIsStoppingPreview == 1)
             HAL_LOGW("when is stopping preview, will change previw status");
         setCameraState(SPRD_PREVIEW_IN_PROGRESS, STATE_PREVIEW);
         break;
@@ -9000,6 +9002,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 };
                 property_get("persist.vendor.cam.bokeh.hdr.ev", prop, "3");
                 if (sw_algorithm_buf_cnt == (uint32_t)atoi(prop)) {
+                    if (mIsStoppingPreview == 1) {
+                        HAL_LOGD("preview is stoped");
+                        goto exit;
+                    }
+
                     receiveRawPicture(&zsl_frame);
                 }
                 if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
@@ -9578,7 +9585,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
             } else {
                 ret_eis = 1;
                 HAL_LOGD("gyro is NOT ready,check  gyro again");
-                if (getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+                if (mIsStoppingPreview == 1) {
                     HAL_LOGD("preview is stoped");
                     goto exit;
                 }
@@ -9643,7 +9650,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
             } else {
                 ret_eis = 1;
                 HAL_LOGE("gyro is NOT ready,check  gyro again");
-                if (getPreviewState() != SPRD_PREVIEW_IN_PROGRESS) {
+                if (mIsStoppingPreview == 1) {
                     HAL_LOGD("preview is stoped");
                     goto exit;
                 }
