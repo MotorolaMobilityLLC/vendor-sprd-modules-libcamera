@@ -5177,6 +5177,16 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	}
 	isp_dev_free_buf(cxt->dev_access_handle, &cxt->mem_info);
 
+	if (cxt->ae_cxt.log_alc) {
+		free(cxt->ae_cxt.log_alc);
+		cxt->ae_cxt.log_alc = NULL;
+	}
+
+	if (cxt->commn_cxt.log_isp) {
+		free(cxt->commn_cxt.log_isp);
+		cxt->commn_cxt.log_isp = NULL;
+	}
+
 	free((void *)cxt->pdaf_info);
 	free((void *)cxt);
 
