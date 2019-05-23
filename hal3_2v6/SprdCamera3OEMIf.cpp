@@ -9135,6 +9135,13 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
+    // whether FRONT_CAMERA_FLASH_TYPE is lcd
+    bool isFrontLcd =
+        (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
+    // whether FRONT_CAMERA_FLASH_TYPE is flash
+    bool isFrontFlash =
+        (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
+
     HAL_LOGD("E");
 
     if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
@@ -9153,19 +9160,11 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         WaitForCaptureDone();
     }
 
-    if (isPreviewing()) {
-        // whether FRONT_CAMERA_FLASH_TYPE is lcd
-        bool isFrontLcd =
-            (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
-        // whether FRONT_CAMERA_FLASH_TYPE is flash
-        bool isFrontFlash =
-            (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-        if (mCameraId == 0 || isFrontLcd || isFrontFlash) {
-            obj->mHalOem->ops->camera_start_preflash(obj->mCameraHandle);
-        }
-        obj->mHalOem->ops->camera_snapshot_is_need_flash(
-            obj->mCameraHandle, mCameraId, &mFlashCaptureFlag);
+    if (mCameraId == 0 || isFrontLcd || isFrontFlash) {
+        obj->mHalOem->ops->camera_start_preflash(obj->mCameraHandle);
     }
+    obj->mHalOem->ops->camera_snapshot_is_need_flash(
+        obj->mCameraHandle, mCameraId, &mFlashCaptureFlag);
 
     SET_PARM(obj->mHalOem, obj->mCameraHandle, CAMERA_PARAM_SHOT_NUM,
              mPicCaptureCnt);
