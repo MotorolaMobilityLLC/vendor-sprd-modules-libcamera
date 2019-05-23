@@ -7992,8 +7992,17 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }
+
         if (1 == capability.support_4in1) {
-            out_param_ptr->mode_4in1 = PREVIEW_4IN1_BINNING;
+            if (is_raw_capture == 1 &&
+                out_param_ptr->raw_capture_size.height >
+                    cxt->sn_cxt.info_4in1.limited_4in1_height &&
+                out_param_ptr->raw_capture_size.width >
+                    cxt->sn_cxt.info_4in1.limited_4in1_width) {
+                out_param_ptr->mode_4in1 = PREVIEW_4IN1_FULL;
+            } else {
+                out_param_ptr->mode_4in1 = PREVIEW_4IN1_BINNING;
+            }
             out_param_ptr->limited_4in1_width =
                 cxt->sn_cxt.info_4in1.limited_4in1_width;
             out_param_ptr->limited_4in1_height =
