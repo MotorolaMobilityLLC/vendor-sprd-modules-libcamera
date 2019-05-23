@@ -5106,6 +5106,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	sensor_raw_info_ptr =
 		(struct sensor_raw_info *)input_ptr->init_param->setting_param_ptr;
 
+#ifndef FPGA_BRINGUP
+	return 0;
+#endif
 	ret = ispalg_pm_init(cxt, input_ptr->init_param);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to do ispalg_pm_init");

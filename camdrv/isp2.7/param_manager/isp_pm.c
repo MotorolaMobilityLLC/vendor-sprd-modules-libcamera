@@ -1428,16 +1428,20 @@ static cmr_s32 isp_pm_param_list_init(cmr_handle handle,
 			}
 			case DCAM_BLK_3DNR_PRE:
 			{
+#ifdef FPGA_BRINGUP
 				isp_blk_nr_type = ISP_BLK_3DNR_PRE_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d_pre);
 				nr_set_size = sizeof(struct sensor_3dnr_level);
+#endif
 				break;
 			}
 			case DCAM_BLK_3DNR_CAP:
 			{
+#ifdef FPGA_BRINGUP
 				isp_blk_nr_type = ISP_BLK_3DNR_CAP_T;
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.nr3d_cap);
 				nr_set_size = sizeof(struct sensor_3dnr_level);
+#endif
 				break;
 			}
 			case ISP_BLK_YUV_PRECDN:

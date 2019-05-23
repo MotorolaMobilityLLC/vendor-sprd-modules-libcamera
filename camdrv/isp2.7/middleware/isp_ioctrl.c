@@ -2242,10 +2242,14 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.uvdiv;
 			break;
 		case DCAM_BLK_3DNR_PRE:
+#ifdef FPGA_BRINGUP
 			update_param->dnr_pre_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_pre;
+#endif
 			break;
 		case DCAM_BLK_3DNR_CAP:
+#ifdef FPGA_BRINGUP
 			update_param->dnr_cap_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_cap;
+#endif
 			break;
 		case ISP_BLK_EDGE:
 			update_param->ee_level_ptr = (struct sensor_ee_level *)fix_data_ptr->nr.nr_set_group.edge;
@@ -2270,9 +2274,11 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			update_param->yuv_noisefilter_level_ptr =
 				(struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
 			break;
+#ifdef FPGB_BRINGUP
 		case ISP_BLK_CNR2:
 			update_param->cnr2_level_ptr = (struct sensor_cnr_level *)fix_data_ptr->nr.nr_set_group.cnr2;
 			break;
+#endif
 		default:
 			break;
 		}

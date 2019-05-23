@@ -309,6 +309,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_MODE,	// for isp tool
+	ISP_CTRL_GET_BOKEH_RANGE,
 	ISP_CTRL_FACE_AREA,
 	ISP_CTRL_AF_FACE_AREA,
 	ISP_CTRL_SCALER_TRIM,
@@ -390,6 +391,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_SW3DNR_PARAM,
 	/*camera mode which appearby right slip*/
 	ISP_CTRL_SET_APP_MODE,
+	ISP_CTRL_AI_SET_FD_STATUS,
+	ISP_CTRL_SET_VCM_DIST,
 	ISP_CTRL_MAX
 };
 
@@ -482,6 +485,25 @@ struct yimg_info {
 	cmr_uint camera_id;
 };
 
+
+struct isp_afctrl_roi {
+    cmr_u32 sx;
+    cmr_u32 sy;
+    cmr_u32 ex;
+    cmr_u32 ey;
+};
+
+struct isp_af_notice {
+    cmr_u32 mode;
+    cmr_u32 valid_win;
+    cmr_u32 focus_type;
+    cmr_u32 motor_pos;
+    cmr_u32 af_mode;
+    struct isp_afctrl_roi af_roi;
+    cmr_u32 reserved[4];
+};
+
+
 struct yuv_info_t {
 	cmr_uint camera_id;
 	cmr_u8 *yuv_addr;
@@ -504,12 +526,17 @@ struct trim_info {
 	cmr_u32 trim_height;
 };
 
+#ifdef FPGA_BRINGUP
 struct isp_af_notice {
-	cmr_u32 mode;
-	cmr_u32 valid_win;
-	cmr_u32 focus_type;
-	cmr_u32 reserved[10];
+    cmr_u32 mode;
+    cmr_u32 valid_win;
+    cmr_u32 focus_type;
+    cmr_u32 motor_pos;
+    cmr_u32 af_mode;
+    struct isp_afctrl_roi af_roi;
+    cmr_u32 reserved[4];
 };
+#endif
 
 enum isp_flash_type {
 	ISP_FLASH_TYPE_PREFLASH,
@@ -938,6 +965,7 @@ struct isp_init_param {
 	uint32_t multi_mode;
 	uint32_t is_master;
 	uint32_t is_4in1_sensor;
+	uint32_t is_faceId_unlock;
 };
 
 struct work_mode_info {
@@ -962,6 +990,14 @@ struct isp_sw_cnr2_info {
 	cmr_u8 filter_en[4];
 	cmr_u8 rangTh[4][2];
 	struct isp_sw_filter_weights weight[4][2];
+};
+
+enum isp_ai_rotation {
+    ISP_AI_SD_ORNT_0,
+    ISP_AI_SD_ORNT_90,
+    ISP_AI_SD_ORNT_180,
+    ISP_AI_SD_ORNT_270,
+    ISP_AI_SD_ORNT_MAX
 };
 
 struct isp_ai_rect {
@@ -1018,6 +1054,12 @@ struct isp_ai_img_param {
 	struct isp_ai_img_buf img_buf;
 	cmr_u32 frame_id;
 	cmr_u64 timestamp;
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_u32 img_y_pitch;
+	cmr_u32 img_uv_pitch;
+	cmr_u32 is_continuous;
+	enum isp_ai_rotation orientation;
 };
 
 enum isp_ai_status {
@@ -1108,6 +1150,7 @@ cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
+void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
 

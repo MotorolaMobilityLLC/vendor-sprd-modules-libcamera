@@ -21,7 +21,11 @@ cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void *p
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
+#ifdef FPGA_BRINGUP
 	struct sensor_posterize_param *src_pstrz_ptr = (struct sensor_posterize_param *)src_pstrz_param;
+#else
+	UNUSED(src_pstrz_param);
+#endif
 	struct isp_posterize_param *dst_pstrz_ptr = (struct isp_posterize_param *)dst_pstrz_param;
 	struct isp_pm_block_header *pstrz_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
@@ -29,16 +33,20 @@ cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void *p
 	dst_pstrz_ptr->cur.bypass = pstrz_header_ptr->bypass;
 
 	for (i = 0; i < 8; i++) {
+#ifdef FPGA_BRINGUP
 		dst_pstrz_ptr->cur.posterize_level_bottom[i] = src_pstrz_ptr->pstrz_bot[i];
 		dst_pstrz_ptr->cur.posterize_level_top[i] = src_pstrz_ptr->pstrz_top[i];
 		dst_pstrz_ptr->cur.posterize_level_out[i] = src_pstrz_ptr->pstrz_out[i];
+#endif
 	}
 	for (j = 0; j < MAX_SPECIALEFFECT_NUM; ++j) {
 		dst_pstrz_ptr->specialeffect_tab[j].bypass = 1;
 		for (i = 0; i < 8; i++) {
+#ifdef FPGA_BRINGUP
 			dst_pstrz_ptr->specialeffect_tab[j].posterize_level_bottom[i] = src_pstrz_ptr->specialeffect_bot[j][i];
 			dst_pstrz_ptr->specialeffect_tab[j].posterize_level_top[i] = src_pstrz_ptr->specialeffect_top[j][i];
 			dst_pstrz_ptr->specialeffect_tab[j].posterize_level_out[i] = src_pstrz_ptr->specialeffect_out[j][i];
+#endif
 		}
 	}
 

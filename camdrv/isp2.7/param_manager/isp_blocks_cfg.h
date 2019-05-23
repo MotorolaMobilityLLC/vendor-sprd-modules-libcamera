@@ -22,7 +22,7 @@
 #include <cutils/properties.h>
 #include "isp_video.h"
 #include "cmr_types.h"
-#include "sprd_isp_r6p12.h"
+#include "sprd_isp_r9p0.h"
 
 #ifdef	 __cplusplus
 extern "C" {
@@ -417,7 +417,7 @@ struct isp_ynr_param {
 };
 
 struct isp_3d_nr_pre_param {
-	struct isp_3dnr_tunning_param cur;
+	struct isp_3dnr_tuning_param cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -426,7 +426,7 @@ struct isp_3d_nr_pre_param {
 };
 
 struct isp_3d_nr_cap_param {
-	struct isp_3dnr_tunning_param cur;
+	struct isp_3dnr_tuning_param cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;

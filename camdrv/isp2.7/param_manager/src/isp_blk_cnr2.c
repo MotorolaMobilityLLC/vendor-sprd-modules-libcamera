@@ -49,8 +49,10 @@ cmr_u32 _pm_cnr2_convert_param(void *dst_cnr2_param, cmr_u32 strength_level, cmr
 				dst_ptr->cur.weight[i][1].rangWeight[j] = cnr2_param[strength_level].weight[i][1].rangWeight[j];
 			}
 		}
+#ifdef FPAG_BRINGUP
 		dst_ptr->level_info.level_enable = cnr2_param[strength_level].weight[0][0].level_enable;
 		dst_ptr->level_info.low_ct_thrd = cnr2_param[strength_level].weight[0][0].low_ct_thrd;
+#endif
 	}
 
 	return rtn;

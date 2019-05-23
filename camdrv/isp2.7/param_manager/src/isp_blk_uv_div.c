@@ -38,9 +38,10 @@ cmr_u32 _pm_uv_div_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u3
 		dst_ptr->cur.lum_th_h = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_h;
 		dst_ptr->cur.lum_th_l_len = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_l_len;
 		dst_ptr->cur.lum_th_l = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_l;
-
+#ifdef FPGA_BRINGUP
 		dst_ptr->cur.chroma_min_h = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_min_h;
 		dst_ptr->cur.chroma_min_l = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_min_l;
+#endif
 		dst_ptr->cur.chroma_max_h = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max_h;
 		dst_ptr->cur.chroma_max_l = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max_l;
 
@@ -52,8 +53,9 @@ cmr_u32 _pm_uv_div_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u3
 		dst_ptr->cur.v_th.th_h[1] = cce_uvdiv_param[strength_level].v_th_1.uvdiv_th_h;
 		dst_ptr->cur.v_th.th_l[0] = cce_uvdiv_param[strength_level].v_th_0.uvdiv_th_l;
 		dst_ptr->cur.v_th.th_l[1] = cce_uvdiv_param[strength_level].v_th_1.uvdiv_th_l;
-
+#ifdef FPAG_BRINGUP
 		dst_ptr->cur.ratio = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio;
+#endif
 		dst_ptr->cur.ratio_uv_min = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_uv_min;
 		dst_ptr->cur.ratio_y_min[0] = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_y_min0;
 		dst_ptr->cur.ratio_y_min[1] = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_y_min1;

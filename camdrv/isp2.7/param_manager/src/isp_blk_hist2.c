@@ -20,17 +20,23 @@ cmr_s32 _pm_hist2_init(void *dst_hist2_param, void *src_hist2_param, void *param
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
+#ifdef FPAG_BRINGUP
 	struct sensor_yuv_hists2_param *src_ptr = (struct sensor_yuv_hists2_param *)src_hist2_param;
+#else
+	UNUSED(src_hist2_param);
+#endif
 	struct isp_hist2_param *dst_ptr = (struct isp_hist2_param *)dst_hist2_param;
 	UNUSED(param2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
+#ifdef FPAG_BRINGUP
 	dst_ptr->cur.skip_num = src_ptr->hist2_skip_num;
 	dst_ptr->cur.mode = src_ptr->hist2_mode_sel;
 	dst_ptr->cur.hist_roi.start_x = src_ptr->hist2_roi.start_x;
 	dst_ptr->cur.hist_roi.end_x = src_ptr->hist2_roi.end_x;
 	dst_ptr->cur.hist_roi.start_y = src_ptr->hist2_roi.start_y;
 	dst_ptr->cur.hist_roi.end_y = src_ptr->hist2_roi.end_y;
+#endif
 	header_ptr->is_update = ISP_ONE;
 
 	return rtn;

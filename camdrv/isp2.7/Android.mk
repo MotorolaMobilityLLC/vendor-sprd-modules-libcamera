@@ -61,7 +61,6 @@ LOCAL_C_INCLUDES := \
 # ************************************************
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/middleware/inc \
-	$(LOCAL_PATH)/sw_isp/inc \
 	$(LOCAL_PATH)/isp_tune \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
@@ -83,7 +82,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
 
-LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamrt libcamcommon libcampm
+LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamcommon libcampm
 
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))

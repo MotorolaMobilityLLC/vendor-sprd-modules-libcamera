@@ -1084,8 +1084,10 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	nr_set_size[ISP_BLK_CFA_T] = sizeof(struct sensor_cfa_param_level);
 	nr_set_size[ISP_BLK_RGB_AFM_T] = sizeof(struct sensor_rgb_afm_level);
 	nr_set_size[ISP_BLK_UVDIV_T] = sizeof(struct sensor_cce_uvdiv_level);
+#ifdef FPGA_BRINGUP
 	nr_set_size[ISP_BLK_3DNR_PRE_T] = sizeof(struct sensor_3dnr_level);
 	nr_set_size[ISP_BLK_3DNR_CAP_T] = sizeof(struct sensor_3dnr_level);
+#endif
 	nr_set_size[ISP_BLK_YUV_PRECDN_T] = sizeof(struct sensor_yuv_precdn_level);
 	nr_set_size[ISP_BLK_YNR_T] = sizeof(struct sensor_ynr_level);
 	nr_set_size[ISP_BLK_EDGE_T] = sizeof(struct sensor_ee_level);
