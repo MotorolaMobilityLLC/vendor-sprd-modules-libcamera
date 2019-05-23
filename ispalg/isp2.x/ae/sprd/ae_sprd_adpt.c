@@ -4032,6 +4032,9 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 	}
 }
 
+#include <cutils/sched_policy.h>
+#include <sys/resource.h>
+#include <system/thread_defs.h>
 static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -4053,7 +4056,11 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		ISP_LOGE("param is NULL \n");
 		return AE_ERROR;
 	}
-
+	if(!cxt->pri_set){
+		cxt->pri_set = 1;
+		ISP_LOGI("setpriority = %d",setpriority(PRIO_PROCESS, 0, -10));
+		set_sched_policy(0, SP_FOREGROUND);
+	}
 	cxt->capture_skip_num = work_info->capture_skip_num;
 	ISP_LOGV("capture_skip_num %d", cxt->capture_skip_num);
 
@@ -6474,6 +6481,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 		g_ae_log_level = val;
 
 	ISP_LOGI("done, cam-id %d, flash ver %d", cxt->camera_id, cxt->flash_ver);
+
 	return (cmr_handle) cxt;
 
   ERR_EXIT:

@@ -399,6 +399,8 @@ extern "C" {
 		cmr_s16 previous_lum;
 		float capcompvalue_norm;
 		cmr_u32 end_id;
+
+		cmr_u32 pri_set;
 	};
 
 #endif
