@@ -1321,6 +1321,11 @@ int isp_path_set_store_frm(
 	else
 		planes = 2;
 
+	if (0 == frame->buf.iova[0]) {
+		pr_err("serious error : iova address is 0, fd = 0x%x \n",frame->buf.mfd[0]);
+		return -EINVAL;
+	}
+
 	yuv_addr[0] = frame->buf.iova[0];
 	yuv_addr[1] = frame->buf.iova[1];
 	yuv_addr[2] = frame->buf.iova[2];

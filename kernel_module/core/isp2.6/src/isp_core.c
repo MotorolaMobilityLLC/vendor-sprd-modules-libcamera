@@ -1522,7 +1522,15 @@ static int isp_offline_start_frame(void *ctx)
 		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",
 			 (uint32_t)out_frame->buf.iova[0],
 			 (uint32_t)out_frame->buf.addr_k[0]);
-		isp_path_set_store_frm(path, out_frame);
+		ret = isp_path_set_store_frm(path, out_frame);
+		/* If some error comes then do not start ISP */
+		if (ret) {
+			cambuf_iommu_unmap(&out_frame->buf);
+			cambuf_put_ionbuf(&out_frame->buf);
+			put_empty_frame(out_frame);
+			ret = -EINVAL;
+			goto unlock;
+		}
 
 		if (path->bind_type == ISP_PATH_MASTER) {
 			struct camera_frame temp;
@@ -3155,7 +3163,6 @@ clk_fail:
 	pr_err("fail to open isp dev!\n");
 	return ret;
 }
-
 
 
 int sprd_isp_dev_close(void *isp_handle)
