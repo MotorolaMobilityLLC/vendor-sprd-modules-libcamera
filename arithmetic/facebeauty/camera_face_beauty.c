@@ -215,12 +215,15 @@ void save_yuv_data(int num, int width, int height, unsigned char *addr_y,
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
+    struct timespec st;
+    clock_gettime(CLOCK_BOOTTIME, &st);
+    int millisecond = st.tv_nsec/1000000;
     memset(file_name, '\0', 80);
     strcpy(file_name, "/data/vendor/cameraserver/");
-    sprintf(temp_time , "%04d%02d%02d%02d%02d%02d_" ,(1900+p->tm_year),
-                            (1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec);
+    sprintf(temp_time , "%04d%02d%02d%02d%02d%02d_%03d_" ,(1900+p->tm_year),
+                            (1+p->tm_mon) , p->tm_mday , p->tm_hour, p->tm_min , p->tm_sec,millisecond);
     strcat(file_name, temp_time);
-    sprintf(tmp_str, "%d-%s-%d", num, flag, width);
+    sprintf(tmp_str, "%03d-%s-%d", num, flag, width);
     strcat(file_name, tmp_str);
     strcat(file_name, "x");
     sprintf(tmp_str, "%d.nv21", height);
