@@ -159,12 +159,12 @@ static void sp2509v_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     frame_interval = (uint16_t)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
     SENSOR_LOGI(
-        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
-        mode, shutter, dummy_line, frame_interval);
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms multi_mode %d",
+        mode, shutter, dummy_line, frame_interval,sns_drv_cxt->is_multi_mode);
 
     if (dest_fr_len != cur_fr_len) {
         sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
-        sp2509v_drv_write_frame_length(handle, aec_info, dest_fr_len);
+        sp2509v_drv_write_frame_length(handle, aec_info, dummy_line);
     }
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     sp2509v_drv_write_shutter(handle, aec_info, shutter);
@@ -599,6 +599,10 @@ static cmr_int sp2509v_SetSlave_FrameSync(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x05, 0x02);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x06, 0xa5);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x1f, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x40, 0x01);
@@ -621,8 +625,10 @@ static cmr_int sp2509v_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
+    SENSOR_LOGI("ms multi_mode %d",sns_drv_cxt->is_multi_mode);
+
 #if defined(CONFIG_DUAL_MODULE)
-    if (sns_drv_cxt->sensor_id == 2)
+    if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode != 0)
         sp2509v_SetSlave_FrameSync(handle, param);
 #endif
 

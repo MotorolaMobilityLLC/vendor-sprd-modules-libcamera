@@ -183,7 +183,7 @@ static void hi846_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 sensor_gain = 0;
 
-    sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
+    sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
     if (SENSOR_MAX_GAIN < sensor_gain)
         sensor_gain = SENSOR_MAX_GAIN;
@@ -659,6 +659,14 @@ hi846_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
     sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
+
+    hi846_drv_write_frame_length(
+        sns_drv_cxt, &hi846_aec_info,
+        sns_drv_cxt->sensor_ev_info.preview_framelength);
+    hi846_drv_write_gain(sns_drv_cxt, &hi846_aec_info,
+                          sns_drv_cxt->sensor_ev_info.preview_gain);
+    hi846_drv_write_shutter(sns_drv_cxt, &hi846_aec_info,
+                             sns_drv_cxt->sensor_ev_info.preview_shutter);
 
     sensor_ic_set_match_module_info(sns_drv_cxt,
                                     ARRAY_SIZE(s_hi846_module_info_tab),
