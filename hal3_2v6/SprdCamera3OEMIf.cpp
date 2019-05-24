@@ -7094,7 +7094,6 @@ int SprdCamera3OEMIf::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum,
         HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request "
                  "size 0x%x",
                  mPreviewHeapNum, sum, size);
-        goto mem_fail;
     }
 
     return 0;
