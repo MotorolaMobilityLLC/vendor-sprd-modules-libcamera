@@ -2971,6 +2971,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     char value[PROPERTY_VALUE_MAX];
     char multicameramode[PROPERTY_VALUE_MAX];
     struct img_size jpeg_thumb_size;
+    FLASH_INFO_Tag flashInfo;
 
     HAL_LOGI("E camera id %d", mCameraId);
 
@@ -3062,6 +3063,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         return UNKNOWN_ERROR;
     }
 
+    mSetting->getFLASHINFOTag(&flashInfo);
+    if (flashInfo.available) {
+        SprdCamera3Flash::reserveFlash(mCameraId);
+    }
     // api1 dont set thumbnail size when preview, so we calculate the value same
     // as camera app
     chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
@@ -5428,7 +5433,6 @@ int SprdCamera3OEMIf::openCamera() {
     struct exif_info exif_info = {0, 0};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag sprddefInfo;
-    FLASH_INFO_Tag flashInfo;
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
@@ -5593,11 +5597,6 @@ int SprdCamera3OEMIf::openCamera() {
 #if defined(CONFIG_CAMERA_FACE_DETECT)
     faceDectect_enable(1);
 #endif
-
-    mSetting->getFLASHINFOTag(&flashInfo);
-    if (flashInfo.available) {
-        SprdCamera3Flash::reserveFlash(mCameraId);
-    }
 
 exit:
     HAL_LOGI(":hal3: X");
