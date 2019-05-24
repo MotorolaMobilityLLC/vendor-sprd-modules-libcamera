@@ -2399,6 +2399,12 @@ static cmr_int
 setting_get_device_orientation(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
+
+    if (cpt == NULL || parm == NULL) {
+        CMR_LOGE("input param error");
+        return ret;
+    }
+
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     CMR_LOGD("device_orientation %d", hal_param->device_orientation);

@@ -871,6 +871,8 @@ static cmr_int prev_set_preview_buffer(struct prev_handle *handle,
 static cmr_int prev_pop_preview_buffer(struct prev_handle *handle,
                                        cmr_u32 camera_id, struct frm_info *data,
                                        cmr_u32 is_to_hal);
+static cmr_int prev_clear_preview_buffers(struct prev_handle *handle,
+                                          cmr_u32 camera_id);
 
 static cmr_int prev_set_video_buffer(struct prev_handle *handle,
                                      cmr_u32 camera_id, cmr_uint src_phy_addr,
@@ -1809,7 +1811,7 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
         goto exit;
     }
     for (i = 0; i < HDR_CAP_NUM; i++) {
-        if (in->fd == (cmr_u32)prev_cxt->cap_hdr_fd_path_array[i])
+        if (in->fd == prev_cxt->cap_hdr_fd_path_array[i])
             break;
     }
 
@@ -2441,6 +2443,11 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
              prev_cxt->prev_channel_id, prev_cxt->cap_channel_id);
 
     if (preview_enable && (data->channel_id == prev_cxt->prev_channel_id)) {
+        if (prev_cxt->recovery_status != PREV_RECOVERY_IDLE &&
+            data->fd != prev_cxt->prev_frm[0].fd) {
+            CMR_LOGD("recoverying");
+            return ret;
+        }
         ret = prev_preview_frame_handle(handle, camera_id, data);
     }
 
@@ -2476,7 +2483,6 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
-    /*received frame, reset recovery status*/
     if (prev_cxt->recovery_status != PREV_RECOVERY_IDLE) {
         CMR_LOGD("reset the recover status");
         prev_cxt->recovery_status = PREV_RECOVERY_IDLE;
@@ -3010,9 +3016,7 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     case CMR_GRAB_TX_ERROR:
     case CMR_GRAB_CSI2_ERR:
         if (PREV_RECOVERING == prev_cxt->recovery_status) {
-            /* when in recovering */
             prev_cxt->recovery_cnt--;
-
             CMR_LOGD("recovery_cnt, %ld", prev_cxt->recovery_cnt);
             if (prev_cxt->recovery_cnt) {
                 /* try once more */
@@ -3023,11 +3027,11 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->recovery_status = PREV_RECOVERY_DONE;
             }
         } else {
-            /* not in recovering, start to recover three times */
+            /* now in recovering, start to recover three times */
             mode = RECOVERY_MIDDLE;
             prev_cxt->recovery_status = PREV_RECOVERING;
             prev_cxt->recovery_cnt = PREV_RECOVERY_CNT;
-            CMR_LOGD("Need recover, recovery_cnt, %ld", prev_cxt->recovery_cnt);
+            CMR_LOGD("need recover, recovery_cnt=%ld", prev_cxt->recovery_cnt);
         }
         break;
 
@@ -3035,7 +3039,7 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     case CMR_GRAB_TIME_OUT:
         mode = RECOVERY_HEAVY;
         prev_cxt->recovery_status = PREV_RECOVERY_DONE;
-        CMR_LOGD("Sensor error, restart preview");
+        CMR_LOGD("sensor error, restart preview");
         break;
 
     default:
@@ -3058,26 +3062,6 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    if (ret) {
-        if (prev_cxt->prev_param.preview_eb) {
-            CMR_LOGE("Call cb to notice the upper layer something error "
-                     "blocked preview");
-            cb_data_info.cb_type = PREVIEW_EXIT_CB_FAILED;
-            cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
-            cb_data_info.frame_data = NULL;
-            prev_cb_start(handle, &cb_data_info);
-        }
-
-        if (prev_cxt->prev_param.snapshot_eb) {
-            CMR_LOGE("Call cb to notice the upper layer something error "
-                     "blocked capture");
-            cb_data_info.cb_type = PREVIEW_EXIT_CB_FAILED;
-            cb_data_info.func_type = PREVIEW_FUNC_START_CAPTURE;
-            cb_data_info.frame_data = NULL;
-            prev_cb_start(handle, &cb_data_info);
-        }
-    }
-
     return 0;
 }
 
@@ -3095,12 +3079,13 @@ cmr_int prev_recovery_pre_proc(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
+    prev_clear_preview_buffers(handle, camera_id);
+
     switch (mode) {
     case RECOVERY_HEAVY:
     case RECOVERY_MIDDLE:
         ret = prev_stop(handle, camera_id, 1);
         if (RECOVERY_HEAVY == mode) {
-            /*close sensor*/
             handle->ops.sensor_close(handle->oem_handle, camera_id);
         }
         break;
@@ -3115,7 +3100,6 @@ cmr_int prev_recovery_pre_proc(struct prev_handle *handle, cmr_u32 camera_id,
 cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
                                 enum recovery_mode mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_context *prev_cxt = NULL;
 
     if (!handle->ops.sensor_open) {
         CMR_LOGE("ops is null");
@@ -3124,30 +3108,24 @@ cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
 
     CMR_LOGD("mode %d, camera_id %d", mode, camera_id);
 
-    prev_cxt = &handle->prev_cxt[camera_id];
-
-    if (IDLE == prev_cxt->prev_status && prev_cxt->prev_param.preview_eb &&
-        prev_cxt->prev_param.snapshot_eb) {
-        CMR_LOGE("is idle now, do nothing");
-        return ret;
-    }
-
     switch (mode) {
     case RECOVERY_HEAVY:
     case RECOVERY_MIDDLE:
         if (RECOVERY_HEAVY == mode) {
-            /*open sesnor*/
             handle->ops.sensor_open(handle->oem_handle, camera_id);
         }
 
         ret = prev_set_param_internal(handle, camera_id, 1, NULL);
         if (ret) {
-            CMR_LOGE("set param err");
+            CMR_LOGE("prev_set_param_internal failed");
             return ret;
         }
 
         ret = prev_start(handle, camera_id, 1, 1);
-
+        if (ret) {
+            CMR_LOGE("prev_start failed");
+            return ret;
+        }
         break;
 
     default:
@@ -5812,7 +5790,7 @@ cmr_int prev_get_frm_index(struct img_frm *frame, struct frm_info *data) {
     cmr_int i;
 
     for (i = 0; i < PREV_FRM_CNT; i++) {
-        if (data->fd == (cmr_u32)(frame + i)->fd) {
+        if (data->fd == (frame + i)->fd) {
             break;
         }
     }
@@ -5827,7 +5805,7 @@ int get_frame_index(struct img_frm *frame, int total_num, struct frm_info *data,
     int i;
 
     for (i = 0; i < total_num; i++) {
-        if (data->fd == (cmr_u32)(frame + i)->fd) {
+        if (data->fd == (frame + i)->fd) {
             ret = 0;
             *index = i;
             break;
@@ -5842,7 +5820,7 @@ cmr_int prev_zsl_get_frm_index(struct img_frm *frame, struct frm_info *data) {
     cmr_int i;
 
     for (i = 0; i < ZSL_FRM_CNT; i++) {
-        if (data->fd == (cmr_u32)(frame + i)->fd) {
+        if (data->fd == (frame + i)->fd) {
             break;
         }
     }
@@ -6141,9 +6119,9 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "video")) {
             if (g_video_frame_dump_cnt < 10) {
-                dump_image("prev_construct_video_frame", CAM_IMG_FMT_YUV420_NV21,
-                           frame_type->width, frame_type->height,
-                           prev_cxt->prev_frm_cnt,
+                dump_image("prev_construct_video_frame",
+                           CAM_IMG_FMT_YUV420_NV21, frame_type->width,
+                           frame_type->height, prev_cxt->prev_frm_cnt,
                            &prev_cxt->video_frm[frm_id].addr_vir,
                            frame_type->width * frame_type->height * 3 / 2);
                 g_video_frame_dump_cnt++;
@@ -6348,7 +6326,8 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
 
     if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
         if ((handle->prev_cxt[camera_id].prev_param.tool_eb &&
-            is_raw_capture == 1)||isp_video_get_simulation_flag()) {
+             is_raw_capture == 1) ||
+            isp_video_get_simulation_flag()) {
             ret = prev_set_cap_param_raw(handle, camera_id, is_restart,
                                          out_param_ptr);
         } else {
@@ -7203,7 +7182,8 @@ cmr_int channel0_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->channel0.buf_size = (width * height * 3) >> 1;
     } else if (CAM_IMG_FMT_YUV422P == prev_cxt->prev_param.channel0_fmt) {
         prev_cxt->channel0.buf_size = (width * height) << 1;
-    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel0_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+               prev_cxt->prev_param.channel0_fmt) {
         prev_cxt->channel0.buf_size = width * height * 2;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel0_fmt);
@@ -7707,7 +7687,8 @@ cmr_int channel1_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel1_fmt) {
         prev_cxt->channel1.buf_size = (width * height * 3) >> 1;
         prev_cxt->prev_param.channel1_fmt = CAM_IMG_FMT_YUV420_NV21;
-    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel1_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+               prev_cxt->prev_param.channel1_fmt) {
         prev_cxt->channel1.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel1_fmt);
@@ -8544,7 +8525,8 @@ cmr_int channel2_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel2_fmt) {
         prev_cxt->channel2.buf_size = (width * height * 3) >> 1;
         prev_cxt->prev_param.channel2_fmt = CAM_IMG_FMT_YUV420_NV21;
-    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel2_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+               prev_cxt->prev_param.channel2_fmt) {
         prev_cxt->channel2.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel2_fmt);
@@ -9387,7 +9369,8 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel3_fmt) {
         prev_cxt->channel3.buf_size = (width * height * 3) >> 1;
         prev_cxt->prev_param.channel3_fmt = CAM_IMG_FMT_YUV420_NV21;
-    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel3_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+               prev_cxt->prev_param.channel3_fmt) {
         prev_cxt->channel3.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel3_fmt);
@@ -10224,7 +10207,8 @@ cmr_int channel4_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     } else if (CAM_IMG_FMT_YUV420_YV12 == prev_cxt->prev_param.channel4_fmt) {
         prev_cxt->channel4.buf_size = (width * height * 3) >> 1;
         prev_cxt->prev_param.channel4_fmt = CAM_IMG_FMT_YUV420_NV21;
-    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->prev_param.channel4_fmt) {
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
+               prev_cxt->prev_param.channel4_fmt) {
         prev_cxt->channel4.buf_size = (width * height) << 1;
     } else {
         CMR_LOGE("unsupprot fmt %d", prev_cxt->prev_param.channel4_fmt);
@@ -12343,6 +12327,68 @@ exit:
     return ret;
 }
 
+cmr_int prev_clear_preview_buffers(struct prev_handle *handle,
+                                   cmr_u32 camera_id) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    cmr_int valid_num = 0;
+    cmr_u32 i;
+    struct camera_frame_type frame_type;
+    struct prev_cb_info cb_data_info;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
+    prev_cxt = &handle->prev_cxt[camera_id];
+    valid_num = prev_cxt->prev_mem_valid_num;
+
+    if (valid_num > PREV_FRM_CNT || valid_num < 0) {
+        CMR_LOGE("wrong valid_num %ld", valid_num);
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    while (valid_num > 0) {
+        frame_type.y_phy_addr = prev_cxt->prev_frm[0].addr_phy.addr_y;
+        frame_type.y_vir_addr = prev_cxt->prev_frm[0].addr_vir.addr_y;
+        frame_type.fd = prev_cxt->prev_frm[0].fd;
+        frame_type.type = PREVIEW_CANCELED_FRAME;
+        frame_type.timestamp = systemTime(CLOCK_MONOTONIC);
+        frame_type.monoboottime = systemTime(SYSTEM_TIME_BOOTTIME);
+
+        CMR_LOGI("fd=%x vir_addr=%lx", frame_type.fd, frame_type.y_vir_addr);
+
+        for (i = 0; i < (cmr_u32)(valid_num - 1); i++) {
+            prev_cxt->prev_phys_addr_array[i] =
+                prev_cxt->prev_phys_addr_array[i + 1];
+            prev_cxt->prev_virt_addr_array[i] =
+                prev_cxt->prev_virt_addr_array[i + 1];
+            prev_cxt->prev_fd_array[i] = prev_cxt->prev_fd_array[i + 1];
+            memcpy(&prev_cxt->prev_frm[i], &prev_cxt->prev_frm[i + 1],
+                   sizeof(struct img_frm));
+        }
+        prev_cxt->prev_phys_addr_array[valid_num - 1] = 0;
+        prev_cxt->prev_virt_addr_array[valid_num - 1] = 0;
+        prev_cxt->prev_fd_array[valid_num - 1] = 0;
+        cmr_bzero(&prev_cxt->prev_frm[valid_num - 1], sizeof(struct img_frm));
+
+        cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
+        cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+        cb_data_info.frame_data = &frame_type;
+        prev_cb_start(handle, &cb_data_info);
+
+        prev_cxt->prev_mem_valid_num--;
+        valid_num = prev_cxt->prev_mem_valid_num;
+    }
+
+exit:
+    CMR_LOGI("X");
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                               cmr_uint src_phy_addr, cmr_uint src_vir_addr,
                               cmr_s32 fd) {
@@ -13744,9 +13790,8 @@ cmr_int prev_fd_close(struct prev_handle *handle, cmr_u32 camera_id) {
 
     isp_cmd_parm.cmd_value = 0;
     if (prev_cxt->fd_handle) {
-            ret = handle->ops.isp_ioctl(handle->oem_handle,
-                                        COM_ISP_SET_AI_SET_FD_ON_OFF,
-                                        &isp_cmd_parm);
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
         ret = cmr_ipm_close(prev_cxt->fd_handle);
         prev_cxt->fd_handle = 0;
     }
@@ -13938,8 +13983,7 @@ exit:
     return ret;
 }
 
-cmr_int prev_auto_tracking_open(struct prev_handle *handle,
-                                 cmr_u32 camera_id) {
+cmr_int prev_auto_tracking_open(struct prev_handle *handle, cmr_u32 camera_id) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -14018,15 +14062,14 @@ cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
     at_info.caller_handle = (void *)handle;
     at_info.camera_id = camera_id;
     at_info.data = *frm_info;
-    prev_cxt->auto_tracking_cnt ++;
+    prev_cxt->auto_tracking_cnt++;
     at_info.frm_cnt = prev_cxt->auto_tracking_cnt;
     ipm_in_param.src_frame = *frm;
     ipm_in_param.dst_frame = *frm;
     ipm_in_param.caller_handle = (void *)handle;
 
-    CMR_LOGV("in param: x=%d, y=%d",
-             prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y);
-
+    CMR_LOGV("in param: x=%d, y=%d", prev_cxt->auto_tracking_start_x,
+             prev_cxt->auto_tracking_start_y);
 
     // send touch coordinate to ipm
     ipm_in_param.input.objectX = prev_cxt->auto_tracking_start_x;
@@ -14298,8 +14341,9 @@ exit:
     return ret;
 }
 
-cmr_int cmr_preview_set_autotracking_param(cmr_handle preview_handle,
-                cmr_u32 camera_id, struct auto_tracking_info *input_param) {
+cmr_int
+cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct auto_tracking_info *input_param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
@@ -14308,10 +14352,9 @@ cmr_int cmr_preview_set_autotracking_param(cmr_handle preview_handle,
     prev_cxt->auto_tracking_start_y = input_param->objectY;
     prev_cxt->auto_tracking_status = input_param->status;
     prev_cxt->auto_tracking_frame_id = input_param->frame_id;
-    CMR_LOGD(
-        "start_x=%d, start_y=%d, status=%d, f_id=%d",
-        prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y,
-        prev_cxt->auto_tracking_status, prev_cxt->auto_tracking_frame_id);
+    CMR_LOGD("start_x=%d, start_y=%d, status=%d, f_id=%d",
+             prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y,
+             prev_cxt->auto_tracking_status, prev_cxt->auto_tracking_frame_id);
 
     return ret;
 }

@@ -958,7 +958,7 @@ cmr_int camera_get_post_proc_chn_out_frm_id(struct img_frm *frame,
     cmr_int i;
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-        if ((cmr_u32)frame[i].fd == data->fd)
+        if (frame[i].fd == data->fd)
             break;
     }
     CMR_LOGI("frm id %ld", i);

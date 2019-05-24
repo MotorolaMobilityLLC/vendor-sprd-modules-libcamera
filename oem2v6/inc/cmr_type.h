@@ -145,7 +145,7 @@ struct frm_info {
     cmr_uint uaddr_vir;
     cmr_uint vaddr_vir;
     cmr_uint zsl_private;
-    cmr_uint fd;
+    int fd;
     cmr_s64 monoboottime;
     cmr_uint is_4in1_frame;
     cmr_u32 frame_num;

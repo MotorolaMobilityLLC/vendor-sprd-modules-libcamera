@@ -184,6 +184,7 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     cmr_bzero(&dst, sizeof(struct img_frm));
     cmr_bzero(&mean, sizeof(struct cmr_op_mean));
     cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
+    cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
 
     CHECK_HANDLE_VALID(ai_scene_handle);
     ipm_in = &ai_scene_handle->common.ipm_cxt->init_in;
@@ -211,6 +212,8 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     isp_cmd_parm.ai_img_status.frame_id = info->data.frame_num;
     ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_AI_SCENE_IMAGE_REQ_FLAG,
                                 &isp_cmd_parm);
+
+    setting_param.camera_id = cxt->camera_id;
     ret =
         cmr_setting_ioctl(setting_cxt->setting_handle,
                           CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
