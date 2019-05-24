@@ -2,7 +2,7 @@
 /*  Copyright(C) 2015 by Spreadtrum                                  */
 /*  All Rights Reserved.                                             */
 /*-------------------------------------------------------------------*/
-/* 
+/*
     Face Detection Library API
 */
 
@@ -81,7 +81,7 @@ typedef struct {
 /* Face Detection option */
 typedef struct {
     unsigned int fdEnv;              /*FD_ENV_SW or FD_ENV_HW*/
-    
+
     unsigned int workMode;           /* Work mode: FD_WORKMODE_STILL or FD_WORKMODE_MOVIE           */
     unsigned int threadNum;          /* Number of CPU threads. (In [1, 4], default: 1)              */
 
@@ -142,7 +142,7 @@ FDAPI(int)  FdGetFaceCount(const FD_DETECTOR_HANDLE hDT);
 /* Get the face information at the specified index */
 FDAPI(int)  FdGetFaceInfo(const FD_DETECTOR_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
 
-// This function is provided for speed up face detection. 
+// This function is provided for speed up face detection.
 // minFaceSize and refFaceAngle will override the settings in FD_OPTION
 // It can only run the the STILL mode
 // faceDirection must be a subset of FD_OPTION.directions

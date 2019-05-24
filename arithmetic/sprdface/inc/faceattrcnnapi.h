@@ -2,7 +2,7 @@
 /*  Copyright(C) 2019 by Spreadtrum                                  */
 /*  All Rights Reserved.                                             */
 /*-------------------------------------------------------------------*/
-/* 
+/*
     Face Attribute (CNN Version) Library API
 */
 #ifndef __SPRD_FACE_ATTRIBUTE_CNN_H__
@@ -37,7 +37,7 @@
 #define RATIO_AGE                 5     /* ratio of age                              */
 #define RATIO_GENDER              5     /* ratio of gender                           */
 #define RATIO_INFANT              5     /* ratio of infant                           */
-#define FAR_POINT_NUM             7     
+#define FAR_POINT_NUM             7
 
 // A YUV 4:2:0 image with a plane of 8bit Y samples followed by an
 // interleaved U/V planes.
@@ -76,24 +76,24 @@ typedef struct
 }FAR_FACEINFO_V2;
 
 /* The face information vector structure*/
-typedef struct  
+typedef struct
 {
     FAR_FACEINFO_V2 *faceInfo;
     int faceNum;
 }FAR_FACEINFO_VEC;
 
 /* The face attribute structure*/
-typedef struct  
+typedef struct
 {
-	int smile;                          /* Smile degree: smile(>0); not smile(<0); unknown(0)   */
+    int smile;                          /* Smile degree: smile(>0); not smile(<0); unknown(0)   */
     int eyeClose;                       /* Eye open degree: open(<0); close(>0); unknown(0)     */
     int infant;                         /* Infant degree: infant(>0); not infant(<0); unknown(0)*/
     int genderPre;                      /* Gender: Male(>0); Female(<0); unknown(0)             */
     int agePre;                         /* age: [0,80]*/
     int genderCnn;                      /* [-100, 100], male: > 0, female < 0*/
-	int race;                           /* race: Yellow(0); White(1); Black(2); India(3)        */ 
-	int	raceScore;                      /* raceScore: [0, 100]*/
-	int faceIdx;                        /* Face Index*/
+    int race;                           /* race: Yellow(0); White(1); Black(2); India(3)        */
+    int raceScore;                      /* raceScore: [0, 100]*/
+    int faceIdx;                        /* Face Index*/
 }FAR_ATTRIBUTE_V2;
 
 /* The face attribute vector structure*/
@@ -110,11 +110,11 @@ typedef struct
     unsigned char maxFaceNum;       /* Maximum face number to detect attribute per frame. range: [1, 10], default: 5*/
     unsigned char trackInterval;    /* The frame intervals to detect face attribute in movie mode, range[0, 20], default: 5*/
 
-	unsigned char smileOn;          /* run smile degree estimation: 1-->ON; 0-->OFF, default: ON*/
+    unsigned char smileOn;          /* run smile degree estimation: 1-->ON; 0-->OFF, default: ON*/
     unsigned char genderOn;         /* run gender detection: 1-->ON; 0-->OFF, default: ON*/
     unsigned char genderCnnOn;      /* run gender detection: 1-->ON; 0-->OFF, default: ON*/
-	unsigned char ageOn;            /* run age detection: 1-->ON; 0-->OFF, default: ON*/
-	unsigned char eyeOn;            /* run eye close/open recognition: 1-->ON; 0-->OFF, default: OFF*/
+    unsigned char ageOn;            /* run age detection: 1-->ON; 0-->OFF, default: ON*/
+    unsigned char eyeOn;            /* run eye close/open recognition: 1-->ON; 0-->OFF, default: OFF*/
     unsigned char infantOn;         /* run infant detection: 1-->ON; 0-->OFF, default: OFF*/
     unsigned char raceOn;           /* run race detection: 1-->ON; 0-->OFF, default: ON*/
 }FAR_OPTION_V2;

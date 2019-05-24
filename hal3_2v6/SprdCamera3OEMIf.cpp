@@ -3434,6 +3434,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             faceInfo.face[k].score = frame->face_info[k].smile_level;
             if (faceInfo.face[k].score < 0)
                 faceInfo.face[k].score = 0;
+            faceInfo.gender_age_race[k] = frame->face_info[k].gender_age_race;
         }
     }
 
