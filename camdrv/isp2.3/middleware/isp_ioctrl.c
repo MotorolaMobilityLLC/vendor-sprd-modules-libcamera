@@ -1882,6 +1882,18 @@ static cmr_int ispctl_get_bokeh_range(cmr_handle isp_alg_handle, void *param_ptr
 	return ret;
 }
 
+static cmr_int ispctl_get_rebokeh_data(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct af_relbokeh_golden_data *result= (struct af_relbokeh_golden_data *)param_ptr;
+
+	if (cxt->ops.af_ops.ioctrl)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_BOKEH_GOLDEN_DATA, (void *)result, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_set_vcm_distance(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2613,6 +2625,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AF_POS, ispctl_set_af_pos},	// for tool cali
 	{ISP_CTRL_GET_AF_POS, ispctl_get_af_pos},	// for tool cali
 	{ISP_CTRL_GET_BOKEH_RANGE, ispctl_get_bokeh_range},
+	{ISP_CTRL_GET_REBOKEH_DATA, ispctl_get_rebokeh_data},
 	{ISP_CTRL_SET_VCM_DIST, ispctl_set_vcm_distance},
 	{ISP_CTRL_GET_AF_MODE, ispctl_get_af_mode},	// for tool cali
 	{ISP_CTRL_REG_CTRL, ispctl_reg},	// for tool cali
