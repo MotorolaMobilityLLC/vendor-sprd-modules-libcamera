@@ -108,6 +108,10 @@ void vdsp_power_off_no_boot(void)
 	regmap_write(frc_sleep.regmap, frc_sleep.reg,
 			(u32)stop_en.mask | status);
 	regmap_read(pw_dbg.regmap, pw_dbg.reg, &status);
+	regmap_update_bits(rst.regmap, rst.reg,
+			rst.mask,(u32)rst.mask);
+	regmap_update_bits(rst_core.regmap, rst_core.reg,
+			rst_core.mask,(u32)rst_core.mask);
 /*
 	//waiting pwr_status1_dbg{15:8} = 0x7
 	while ((status & pw_dbg.mask) != 0x700){
