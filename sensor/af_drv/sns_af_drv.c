@@ -29,6 +29,7 @@ int af_drv_create(struct af_drv_init_para *input_ptr,
     } else {
         cmr_bzero(af_drv_cxt, sizeof(*af_drv_cxt));
         af_drv_cxt->hw_handle = input_ptr->hw_handle;
+        af_drv_cxt->i2c_addr = input_ptr->af_work_mode;
         *sns_af_drv_handle = (cmr_handle)af_drv_cxt;
     }
     CMR_LOGV("out");

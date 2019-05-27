@@ -103,6 +103,12 @@ extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
 #ifdef OV16885
 extern SENSOR_INFO_T g_ov16885_mipi_raw_info;
 #endif
+#ifdef OV16885_NORMAL
+extern SENSOR_INFO_T g_ov16885_normal_mipi_raw_info;
+#endif
+#ifdef OV32A1Q
+extern SENSOR_INFO_T g_ov32a1q_mipi_raw_info;
+#endif
 #ifdef OV7251
 extern SENSOR_INFO_T g_ov7251_mipi_raw_info;
 #endif
@@ -254,6 +260,7 @@ extern struct sns_af_drv_entry vcm_zc524_drv_entry;
 extern struct sns_af_drv_entry ad5823_drv_entry;
 extern struct sns_af_drv_entry vm242_drv_entry;
 extern struct sns_af_drv_entry dw9763r_drv_entry;
+extern struct sns_af_drv_entry dw9768v_drv_entry;
 extern struct sns_af_drv_entry ces6301_drv_entry;
 extern struct sns_af_drv_entry vcm_zc533_drv_entry;
 
@@ -344,7 +351,12 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef OV12A10
     {MODULE_SUNNY, "ov12a10", &g_ov12a10_mipi_raw_info, {&dw9714v_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
-
+#ifdef OV32A1Q
+    {MODULE_SUNNY, "ov32a1q", &g_ov32a1q_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef OV16885_NORMAL
+    {MODULE_SUNNY, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {NULL, 0, 0, 0}},
+#endif
 // imx area
 #ifdef IMX258
      {MODULE_SUNNY, "imx258", &g_imx258_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
@@ -480,6 +492,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 
+
 // sp area
 #ifdef SP0A09
     {MODULE_SUNNY, "sp0a09", &g_sp0a09_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -534,7 +547,11 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #endif
 #endif
 #ifdef OV8856_SHINE
+#ifdef SENSOR_OV8856_TELE
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+#else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+#endif
 #endif
 #ifdef OV7251_DUAL
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},

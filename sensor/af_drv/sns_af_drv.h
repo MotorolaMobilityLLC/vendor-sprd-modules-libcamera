@@ -71,6 +71,7 @@ struct sns_af_drv_cxt {
     cmr_handle hw_handle;  /*hardware handle*/
     uint32_t af_work_mode; /*Actual working mode*/
     uint32_t current_pos;  /*vcm steps last time*/
+    uint16_t i2c_addr;
     void *private;         /*vcm private data*/
 };
 
