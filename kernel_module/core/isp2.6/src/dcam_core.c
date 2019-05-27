@@ -2701,6 +2701,7 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 	atomic_set(&dev->state, STATE_RUNNING);
 	dcam_debug_trace(dev);
 	dev->auto_cpy_id = 0;
+	dev->err_count = 1;
 	pr_info("dcam%d done\n", dev->idx);
 	return ret;
 }
@@ -2747,6 +2748,7 @@ static int sprd_dcam_dev_stop(void *dcam_handle)
 	dev->blk_dcam_pm->afl.bypass = 1;
 	dev->blk_dcam_pm->hist.bayerHist_info.hist_bypass = 1;
 	dev->is_pdaf = dev->is_3dnr = dev->is_4in1 = 0;
+	dev->err_count = 0;
 
 	pr_info("stop dcam pipe dev[%d]!\n", dev->idx);
 	return ret;

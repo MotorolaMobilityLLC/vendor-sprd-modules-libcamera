@@ -228,6 +228,7 @@ struct dcam_pipe_dev {
 	spinlock_t glb_reg_lock;
 	bool  dcamsec_eb;
 	uint32_t err_status;// TODO: change to use state
+	uint32_t err_count; /* iommu register dump count in dcam_err */
 
 	uint32_t is_4in1;
 	uint32_t lowlux_4in1; /* 4in1 low lux mode capture */
