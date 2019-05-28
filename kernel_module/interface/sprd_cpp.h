@@ -300,11 +300,110 @@ struct sprd_cpp_scale_endian_sel {
 	unsigned char reserved[2];
 };
 
+struct sprd_cpp_path0_scaler_path_parm {
+	unsigned int trim_eb;
+	unsigned int trim_start_x;
+	unsigned int trim_start_y;
+	unsigned int trim_size_x;
+	unsigned int trim_size_y;
+	unsigned int scaler_en;
+	unsigned int scaler_init_phase_hor;
+	unsigned int scaler_des_size_x;
+	unsigned int scaler_des_size_y;
+	unsigned int scaler_des_pitch;
+	unsigned int scaler_output_format;
+};
+
+struct sprd_cpp_path0_bypass_path_parm {
+	unsigned int bypass_eb;
+	unsigned int trim_eb;
+	unsigned int trim_start_x;
+	unsigned int trim_start_y;
+	unsigned int trim_size_x;
+	unsigned int trim_size_y;
+	unsigned int bp_des_pitch;
+};
+
+#define CPP_MAX_SLICE_NUM 8
+
+struct sprd_cpp_hw_slice_parm {
+	unsigned int path0_src_pitch;
+	unsigned int path0_src_offset_x;
+	unsigned int path0_src_offset_y;
+	unsigned int path0_src_width;
+	unsigned int path0_src_height;
+	struct sprd_cpp_scale_deci deci_param;
+	unsigned int input_format;
+	struct sprd_cpp_size sc_in_trim_src;
+	struct sprd_cpp_trim sc_in_trim;
+	unsigned int sc_slice_in_width;
+	unsigned int sc_slice_in_height;
+	unsigned int sc_slice_out_width;
+	unsigned int sc_slice_out_height;
+	unsigned int sc_full_in_width;
+	unsigned int sc_full_in_height;
+	unsigned int sc_full_out_width;
+	unsigned int sc_full_out_height;
+	unsigned int y_hor_ini_phase_int;
+	unsigned int y_hor_ini_phase_frac;
+	unsigned int uv_hor_ini_phase_int;
+	unsigned int uv_hor_ini_phase_frac;
+	unsigned int y_ver_ini_phase_int;
+	unsigned int y_ver_ini_phase_frac;
+	unsigned int uv_ver_ini_phase_int;
+	unsigned int uv_ver_ini_phase_frac;
+	unsigned int y_ver_tap;
+	unsigned int uv_ver_tap;
+	struct sprd_cpp_size sc_out_trim_src;
+	struct sprd_cpp_trim sc_out_trim;
+	unsigned int path0_sc_des_pitch;
+	unsigned int path0_sc_des_offset_x;
+	unsigned int path0_sc_des_offset_y;
+	unsigned int path0_sc_des_width;
+	unsigned int path0_sc_des_height;
+	unsigned int path0_sc_output_format;
+	unsigned int path0_bypass_path_en;
+	struct sprd_cpp_size bypass_trim_src;
+	struct sprd_cpp_trim bypass_trim;
+	unsigned int path0_bypass_des_pitch;
+	unsigned int path0_bypass_des_offset_x;
+	unsigned int path0_bypass_des_offset_y;
+	unsigned int path0_bypass_des_width;
+	unsigned int path0_bypass_des_height;
+	unsigned int path0_bypass_output_format;
+};
+
+struct sprd_cpp_scaler_coef {
+	unsigned int y_hor_coef[8][8];
+	unsigned int c_hor_coef[8][8];
+	unsigned int y_ver_coef[9][16];
+	unsigned int c_ver_coef[9][16];
+};
+
+struct sprd_cpp_slice_output {
+	struct sprd_cpp_scaler_coef scaler_path_coef;
+	unsigned int slice_count;
+	struct sprd_cpp_hw_slice_parm hw_slice_param[CPP_MAX_SLICE_NUM];
+};
+
 struct sprd_cpp_scale_slice_parm {
 	unsigned int slice_height;
 	struct sprd_cpp_rect input_rect;
 	struct sprd_cpp_addr input_addr;
 	struct sprd_cpp_addr output_addr;
+	unsigned int img_w;
+	unsigned int img_h;
+	unsigned int img_format;
+	unsigned int crop_en;
+	unsigned int crop_start_x;
+	unsigned int crop_start_y;
+	unsigned int crop_width;
+	unsigned int crop_height;
+	unsigned int slice_w;
+	struct sprd_cpp_scale_deci deci_param;
+	struct sprd_cpp_path0_scaler_path_parm scaler_path_param;
+	struct sprd_cpp_path0_bypass_path_parm bypass_path_param;
+	struct sprd_cpp_slice_output output;
 };
 
 struct sprd_cpp_scale_cfg_parm {
@@ -315,6 +414,7 @@ struct sprd_cpp_scale_cfg_parm {
 	struct sprd_cpp_addr input_addr_vir;
 	struct sprd_cpp_scale_endian_sel input_endian;
 	struct sprd_cpp_trim sc_trim;
+	struct sprd_cpp_trim sc_out_trim;
 
 	struct sprd_cpp_size output_size;
 	unsigned int output_pitch;
@@ -341,6 +441,7 @@ struct sprd_cpp_scale_cfg_parm {
 	struct sprd_cpp_addr bp_output_addr;
 	struct sprd_cpp_addr bp_output_addr_vir;
 	slice_drv_param_t slice_param;
+	struct sprd_cpp_scale_slice_parm slice_param_1;
 };
 
 struct sprd_cpp_dma_cfg_parm {

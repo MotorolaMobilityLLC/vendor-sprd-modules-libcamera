@@ -38,6 +38,16 @@ sprd_sensor-objs += $(SRC:%.c=%.o)
 # TODO: refine these includes
 ccflags-y += -I$(REL_PATH)/csi2/csi_sprd/receiver_r2p0/
 
+else ifeq ($(CSI_VER),r3p0)
+
+SRC += csi2/csi_sprd/receiver_r3p0/csi_api.c
+SRC += csi2/csi_sprd/receiver_r3p0/csi_driver.c
+
+sprd_sensor-objs += $(SRC:%.c=%.o)
+
+# TODO: refine these includes
+ccflags-y += -I$(REL_PATH)/csi2/csi_sprd/receiver_r3p0/
+
 endif
 
 # target

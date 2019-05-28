@@ -37,6 +37,8 @@ else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
 ISP_DIR := ../../camdrv/isp2.5
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
 ISP_DIR := ../../camdrv/isp2.6
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
+ISP_DIR := ../../camdrv/isp2.7
 endif
 
 
