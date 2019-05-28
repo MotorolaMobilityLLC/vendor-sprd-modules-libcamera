@@ -397,7 +397,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -477,11 +477,11 @@
 		/*luma_ratio*/
 		0x40,
 		/*ratio_0*/
-		0x30,
+		0x40,
 		/*ratio_1*/
-		0x38,
+		0x40,
 		/*ratio_uv_min*/
-		0x30,
+		0x40,
 		/*ratio_y_min0*/
 		0x40,
 		/*ratio_y_min1*/
@@ -497,7 +497,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -575,17 +575,17 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x30,
+		0x36,
 		/*ratio_0*/
-		0x30,
+		0x36,
 		/*ratio_1*/
 		0x00,
 		/*ratio_uv_min*/
-		0x30,
+		0x36,
 		/*ratio_y_min0*/
-		0x30,
+		0x36,
 		/*ratio_y_min1*/
-		0x30,
+		0x36,
 		/*reserved*/
 		0x00,
 
@@ -675,17 +675,17 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x30,
+		0x36,
 		/*ratio_0*/
-		0x30,
+		0x36,
 		/*ratio_1*/
 		0x00,
 		/*ratio_uv_min*/
-		0x30,
+		0x36,
 		/*ratio_y_min0*/
-		0x30,
+		0x36,
 		/*ratio_y_min1*/
-		0x30,
+		0x36,
 		/*reserved*/
 		0x00,
 
@@ -775,17 +775,17 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x30,
+		0x36,
 		/*ratio_0*/
-		0x30,
+		0x36,
 		/*ratio_1*/
 		0x00,
 		/*ratio_uv_min*/
-		0x30,
+		0x36,
 		/*ratio_y_min0*/
-		0x30,
+		0x36,
 		/*ratio_y_min1*/
-		0x30,
+		0x36,
 		/*reserved*/
 		0x00,
 
