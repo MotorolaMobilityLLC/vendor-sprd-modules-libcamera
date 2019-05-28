@@ -3551,7 +3551,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
             mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
             mSprdAppmodeId == CAMERA_MODE_FILTER ||
-            (sprddefInfo.slowmotion > 1)) {
+            (sprddefInfo.slowmotion > 1) ||
+            (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
         } else if (mRecordingMode == true) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
