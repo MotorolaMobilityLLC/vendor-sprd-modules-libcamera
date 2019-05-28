@@ -26,12 +26,15 @@
 #include "isp_3dnr.h"
 #include "isp_ltm.h"
 
-#define ISP_LINE_BUFFER_W		2560
+#define ISP_LINE_BUFFER_W		ISP_MAX_LINE_WIDTH
 
-#define ISP_IN_Q_LEN			12
-#define ISP_PROC_Q_LEN			12
-#define ISP_RESULT_Q_LEN		12
-#define ISP_OUT_BUF_Q_LEN		32
+#define ISP_IN_Q_LEN			1
+#define ISP_PROC_Q_LEN			2
+#define ISP_RESULT_Q_LEN		2
+#define ISP_SLW_IN_Q_LEN			12
+#define ISP_SLW_PROC_Q_LEN		12
+#define ISP_SLW_RESULT_Q_LEN		12
+#define ISP_OUT_BUF_Q_LEN			32
 #define ISP_RESERVE_BUF_Q_LEN		12
 
 #define ODATA_YUV420			1
@@ -330,6 +333,7 @@ struct isp_path_desc {
 
 struct isp_pipe_context {
 	atomic_t user_cnt;
+	uint32_t started;
 	uint32_t ctx_id;
 	uint32_t in_fmt; /* forcc */
 	enum camera_id attach_cam_id;
@@ -376,6 +380,10 @@ struct isp_pipe_context {
 
 	struct cam_thread_info thread;
 	struct completion frm_done;
+	struct completion slice_done;
+	uint32_t need_slice;
+	uint32_t is_last_slice;
+	uint32_t valid_slc_num;
 
 	struct isp_3dnr_ctx_desc nr3_ctx;
 	struct isp_ltm_ctx_desc ltm_ctx;

@@ -235,7 +235,8 @@ static int get_slice_overlap_info(
 
 static int cfg_slice_base_info(
 			struct slice_cfg_input *in_ptr,
-			struct isp_slice_context *slc_ctx)
+			struct isp_slice_context *slc_ctx,
+			uint32_t *valid_slc_num)
 {
 	int rtn = 0;
 	uint32_t i = 0, j = 0;
@@ -372,11 +373,16 @@ static int cfg_slice_base_info(
 		}
 	}
 
+	if (valid_slc_num)
+		*valid_slc_num = 0;
+
 	for (i = 0; i < SLICE_NUM_MAX; i++) {
 		pr_debug("slice %d valid %d. xy (%d %d)  %p\n",
 			i, slc_ctx->slices[i].valid,
 			slc_ctx->slices[i].x, slc_ctx->slices[i].y,
 			&slc_ctx->slices[i]);
+		if (slc_ctx->slices[i].valid && valid_slc_num)
+			*valid_slc_num = (*valid_slc_num) + 1;
 	}
 
 	return rtn;
@@ -1928,7 +1934,8 @@ int isp_cfg_slice_noisefilter_info(void *cfg_in, struct isp_slice_context *slc_c
 }
 
 int isp_cfg_slices(void *cfg_in,
-		struct isp_slice_context *slc_ctx)
+		struct isp_slice_context *slc_ctx,
+		uint32_t *valid_slc_num)
 {
 	int ret = 0;
 	struct slice_cfg_input *in_ptr = (struct slice_cfg_input *)cfg_in;
@@ -1939,7 +1946,7 @@ int isp_cfg_slices(void *cfg_in,
 	}
 	memset(slc_ctx, 0, sizeof(struct isp_slice_context));
 
-	cfg_slice_base_info(in_ptr, slc_ctx);
+	cfg_slice_base_info(in_ptr, slc_ctx, valid_slc_num);
 
 	cfg_slice_scaler_info(in_ptr, slc_ctx);
 
@@ -2617,6 +2624,247 @@ int isp_set_slices_fmcu_cmds(
 		FMCU_PUSH(fmcu, addr, cmd);
 	}
 
+	return 0;
+}
+
+static int update_slice_nr_info(
+	uint32_t ctx_id,
+	struct isp_slice_desc *cur_slc)
+{
+	uint32_t addr = 0, cmd = 0;
+
+	/* NLM */
+	addr = ISP_NLM_RADIAL_1D_DIST;
+	cmd = ((cur_slc->slice_nlm.center_y_relative & 0x3FFF) << 16) |
+		(cur_slc->slice_nlm.center_x_relative & 0x3FFF);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	/* Post CDN */
+	addr = ISP_POSTCDN_SLICE_CTRL;
+	cmd = cur_slc->slice_postcdn.start_row_mod4;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	/* YNR */
+	addr = ISP_YNR_CFG31;
+	cmd = ((cur_slc->slice_ynr.center_offset_y & 0xFFFF) << 16) |
+		(cur_slc->slice_ynr.center_offset_x & 0xFFFF);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_YNR_CFG33;
+	cmd = ((cur_slc->slice_ynr.slice_height & 0xFFFF) << 16) |
+		(cur_slc->slice_ynr.slice_width & 0xFFFF);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	return 0;
+}
+
+static int update_slice_fetch(uint32_t ctx_id,
+		struct slice_fetch_info *fetch_info)
+{
+	uint32_t addr = 0, cmd = 0;
+
+	addr = ISP_FETCH_MEM_SLICE_SIZE;
+	cmd = ((fetch_info->size.h & 0xFFFF) << 16) |
+			(fetch_info->size.w & 0xFFFF);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_FETCH_SLICE_Y_ADDR;
+	cmd = fetch_info->addr.addr_ch0;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_FETCH_SLICE_U_ADDR;
+	cmd = fetch_info->addr.addr_ch1;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_FETCH_SLICE_V_ADDR;
+	cmd = fetch_info->addr.addr_ch2;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_FETCH_MIPI_INFO;
+	cmd = fetch_info->mipi_word_num |
+			(fetch_info->mipi_byte_rel_pos << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	/* dispatch size same as fetch size */
+	addr = ISP_DISPATCH_CH0_SIZE;
+	cmd = ((fetch_info->size.h & 0xFFFF) << 16) |
+			(fetch_info->size.w & 0xFFFF);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	return 0;
+}
+
+static int update_slice_spath_scaler(
+		uint32_t path_en,
+		uint32_t ctx_id,
+		enum isp_sub_path_id spath_id,
+		struct slice_scaler_info *slc_scaler)
+{
+	uint32_t addr = 0, cmd = 0;
+	uint32_t base = (uint32_t)scaler_base[spath_id];
+
+	if (!path_en) {
+		addr = ISP_SCALER_CFG + base;
+		cmd = (0 << 31) | (1 << 8) | (1 << 9);
+		ISP_REG_WR(ctx_id, addr, cmd);
+		return 0;
+	}
+
+	/* bit31 enable path */
+	addr = ISP_SCALER_CFG + base;
+	cmd = ISP_REG_RD(ctx_id, base + ISP_SCALER_CFG);
+	cmd |= (1 << 31);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_SRC_SIZE + base;
+	cmd = (slc_scaler->src_size_x & 0x3FFF) |
+			((slc_scaler->src_size_y & 0x3FFF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_DES_SIZE + base;
+	cmd = (slc_scaler->dst_size_x & 0x3FFF) |
+			((slc_scaler->dst_size_y & 0x3FFF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_TRIM0_START + base;
+	cmd = (slc_scaler->trim0_start_x & 0x1FFF) |
+			((slc_scaler->trim0_start_y & 0x1FFF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_TRIM0_SIZE + base;
+	cmd = (slc_scaler->trim0_size_x & 0x1FFF) |
+			((slc_scaler->trim0_size_y & 0x1FFF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_IP + base;
+	cmd = (slc_scaler->scaler_ip_rmd & 0x1FFF) |
+			((slc_scaler->scaler_ip_int & 0xF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_CIP + base;
+	cmd = (slc_scaler->scaler_cip_rmd & 0x1FFF) |
+			((slc_scaler->scaler_cip_int & 0xF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_TRIM1_START + base;
+	cmd = (slc_scaler->trim1_start_x & 0x1FFF) |
+			((slc_scaler->trim1_start_y & 0x1FFF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_TRIM1_SIZE + base;
+	cmd = (slc_scaler->trim1_size_x & 0x1FFF) |
+			((slc_scaler->trim1_size_y & 0x1FFF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_VER_IP + base;
+	cmd = (slc_scaler->scaler_ip_rmd_ver & 0x1FFF) |
+			((slc_scaler->scaler_ip_int_ver & 0xF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_SCALER_VER_CIP + base;
+	cmd = (slc_scaler->scaler_cip_rmd_ver & 0x1FFF) |
+			((slc_scaler->scaler_cip_int_ver & 0xF) << 16);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	return 0;
+}
+
+
+static int update_slice_spath_store(
+		uint32_t path_en,
+		uint32_t ctx_id,
+		enum isp_sub_path_id spath_id,
+		struct slice_store_info *slc_store)
+{
+	uint32_t addr = 0, cmd = 0;
+	uint32_t base = (uint32_t)store_base[spath_id];
+
+	if (!path_en) {
+		/* bit0 bypass store */
+		addr = ISP_STORE_PARAM + base;
+		cmd = 1;
+		ISP_REG_WR(ctx_id, addr, cmd);
+		return 0;
+	}
+	addr = ISP_STORE_PARAM + base;
+	cmd = ISP_REG_RD(ctx_id, base + ISP_STORE_PARAM) & ~1;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_STORE_SLICE_SIZE + base;
+	cmd = ((slc_store->size.h & 0xFFFF) << 16) |
+			(slc_store->size.w & 0xFFFF);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_STORE_BORDER + base;
+	cmd = (slc_store->border.up_border & 0xFF) |
+			((slc_store->border.down_border & 0xFF) << 8) |
+			((slc_store->border.left_border & 0xFF) << 16) |
+			((slc_store->border.right_border & 0xFF) << 24);
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_STORE_SLICE_Y_ADDR + base;
+	cmd = slc_store->addr.addr_ch0;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_STORE_SLICE_U_ADDR + base;
+	cmd = slc_store->addr.addr_ch1;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	addr = ISP_STORE_SLICE_V_ADDR + base;
+	cmd = slc_store->addr.addr_ch2;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	return 0;
+
+	addr = ISP_GET_REG(ISP_STORE_SHADOW_CLR) + base;
+	cmd = 1;
+	ISP_REG_WR(ctx_id, addr, cmd);
+
+	return 0;
+}
+
+int isp_update_slice(
+		void *slc_handle,
+		uint32_t ctx_id,
+		uint32_t slice_id)
+{
+	int j;
+	struct isp_slice_desc *cur_slc;
+	struct slice_store_info *slc_store;
+	struct slice_scaler_info *slc_scaler;
+	struct isp_slice_context *slc_ctx;
+
+	if (!slc_handle) {
+		pr_err("error: null input ptr.\n");
+		return -EFAULT;
+	}
+
+	slc_ctx = (struct isp_slice_context *)slc_handle;
+	if (slc_ctx->slice_num < 1) {
+		pr_err("warn: should not use slices.\n");
+		return -EINVAL;
+	}
+
+	if ((slice_id >= SLICE_NUM_MAX) ||
+		(slc_ctx->slices[slice_id].valid == 0)) {
+		pr_err("not valid slice id %d\n", slice_id);
+		return -EINVAL;
+	}
+
+	cur_slc = &slc_ctx->slices[slice_id];
+	update_slice_nr_info(ctx_id, cur_slc);
+	update_slice_fetch(ctx_id, &cur_slc->slice_fetch);
+	for (j = 0; j < ISP_SPATH_NUM; j++) {
+		slc_store = &cur_slc->slice_store[j];
+		if (j != ISP_SPATH_FD) {
+			slc_scaler = &cur_slc->slice_scaler[j];
+			update_slice_spath_scaler(
+				cur_slc->path_en[j], ctx_id, j,
+				slc_scaler);
+		}
+		update_slice_spath_store(
+			cur_slc->path_en[j], ctx_id, j, slc_store);
+	}
 	return 0;
 }
 

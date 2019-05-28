@@ -294,7 +294,8 @@ int isp_cfg_slice_noisefilter_info(void *cfg_in, struct isp_slice_context *slc_c
 
 int isp_cfg_slice_ltm_info(
 	       void *cfg_in, struct isp_slice_context *slc_ctx);
-int isp_cfg_slices(void *cfg_in, struct isp_slice_context *slc_ctx);
+int isp_cfg_slices(void *cfg_in, struct isp_slice_context *slc_ctx,
+		uint32_t *valid_slc_num);
 
 void *get_isp_slice_ctx(void);
 int put_isp_slice_ctx(void **slc_ctx);
@@ -309,4 +310,8 @@ int isp_set_slw_fmcu_cmds(
 		void *fmcu_handle,
 		struct isp_pipe_context *pctx);
 
+int isp_update_slice(
+		void *slc_handle,
+		uint32_t ctx_idx,
+		uint32_t slice_id);
 #endif

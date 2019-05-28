@@ -197,7 +197,17 @@ static void isp_all_done(enum isp_context_id idx, void *isp_handle)
 		pr_debug("fmcu started. skip all done.\n ");
 		return;
 	}
+
 	pr_debug("cxt_id:%d done.\n", idx);
+	if (pctx->slice_ctx && !pctx->fmcu_handle) {
+		pr_debug("slice done. last %d\n", pctx->is_last_slice);
+		if (!pctx->is_last_slice) {
+			complete(&pctx->slice_done);
+			return;
+		}
+		complete(&pctx->slice_done);
+		pr_debug("frame done.\n");
+	}
 	isp_frame_done(idx, dev);
 }
 
@@ -235,7 +245,7 @@ static void isp_fmcu_store_done(enum isp_context_id idx, void *isp_handle)
 	dev = (struct isp_pipe_dev *)isp_handle;
 	pctx = &dev->ctx[idx];
 
-	pr_info("fmcu done cxt_id:%d ch_id[%d]\n", idx, pctx->ch_id);
+	pr_debug("fmcu done cxt_id:%d ch_id[%d]\n", idx, pctx->ch_id);
 	isp_frame_done(idx, dev);
 
 	if (pctx->enable_slowmotion == 1) {
@@ -544,6 +554,12 @@ static irqreturn_t isp_isr_root(int irq, void *priv)
 			return IRQ_HANDLED;
 		}
 
+		if (unlikely(isp_handle->ctx[c_id].started == 0)) {
+			pr_info("ctx %d not started. irq 0x%x\n", c_id, irq_line);
+			isp_handle->ctx[c_id].in_irq_handler = 0;
+			return IRQ_HANDLED;
+		}
+
 		if (unlikely(err_mask & irq_line)) {
 			pr_err("ISP ctx%d status 0x%x\n", c_id, irq_line);
 			if (irq_line & ISP_INT_LINE_MASK_MMU) {
@@ -638,7 +654,8 @@ int trace_isp_irq_cnt(int ctx_id)
 	int i;
 
 	for (i = 0; i < 32; i++)
-		pr_debug("done %d %d :   %d\n", ctx_id, i, irq_done[ctx_id][i]);
+		if(irq_done[ctx_id][i])
+			pr_info("done %d %d :   %d\n", ctx_id, i, irq_done[ctx_id][i]);
 
 #ifdef ISP_INT_RECORD
 	{

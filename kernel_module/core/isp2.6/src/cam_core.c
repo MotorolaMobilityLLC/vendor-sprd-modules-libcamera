@@ -3848,8 +3848,9 @@ static int img_ioctl_set_crop(
 	 */
 	if (atomic_read(&module->state) == CAM_RUNNING) {
 		if ((module->cap_status == CAM_CAPTURE_START) &&
-			module->channel[CAM_CH_CAP].enable) {
-			pr_err("zoom is not allowed during capture\n");
+			module->channel[CAM_CH_CAP].enable &&
+			(module->channel[CAM_CH_CAP].type_3dnr != CAM_3DNR_OFF)) {
+			pr_err("zoom is not allowed during 3DNR capture\n");
 			goto exit;
 		}
 		crop = kzalloc(sizeof(struct sprd_img_rect), GFP_KERNEL);
@@ -4584,6 +4585,10 @@ static int img_ioctl_stream_on(
 		camera_queue_init(&ch->zoom_coeff_queue,
 			(module->is_smooth_zoom ? CAM_ZOOM_COEFF_Q_LEN : 1),
 			0, camera_put_empty_frame);
+
+		if (ch->ch_id == CAM_CH_PRE || ch->ch_id == CAM_CH_CAP)
+			isp_ops->start_context(module->isp_dev_handle,
+					ch->isp_path_id >> ISP_CTXID_OFFSET);
 
 		if (ch->alloc_start) {
 			ret = wait_for_completion_interruptible(&ch->alloc_com);
@@ -5372,9 +5377,13 @@ static int raw_proc_post(
 	module->cap_status = CAM_CAPTURE_RAWPROC;
 	module->dcam_cap_status = DCAM_CAPTURE_START;
 	atomic_set(&module->state, CAM_RUNNING);
-	ret = dcam_ops->proc_frame(module->dcam_dev_handle, src_frame);
+
+	ret = isp_ops->start_context(module->isp_dev_handle,
+			ch->isp_path_id >> ISP_CTXID_OFFSET);
+
+	ret |= dcam_ops->proc_frame(module->dcam_dev_handle, src_frame);
 	if (ret)
-		pr_err("fail to start dcam proc frame\n");
+		pr_err("fail to start dcam/isp for raw proc\n");
 
 	atomic_set(&module->timeout_flag, 1);
 	ret = sprd_start_timer(&module->cam_timer, CAMERA_TIMEOUT);

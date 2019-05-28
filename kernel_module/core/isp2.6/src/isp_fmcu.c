@@ -101,7 +101,7 @@ static int isp_fmcu_cmd_ready(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	ISP_HREG_MWR(base + ISP_FMCU_CTRL, 0xFFFF0000, cmd_num << 16);
 	ISP_HREG_WR(base + ISP_FMCU_CMD_READY, 1);
 
-	pr_info("fmcu%d start done, cmdq len %d\n",
+	pr_debug("fmcu%d start done, cmdq len %d\n",
 		fmcu_ctx->fid,
 		(uint32_t)fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] * 4);
 
@@ -164,7 +164,7 @@ static int isp_fmcu_start(struct isp_fmcu_ctx_desc *fmcu_ctx)
 	ISP_HREG_WR(base + ISP_FMCU_ISP_REG_REGION, ISP_OFFSET_RANGE);
 	ISP_HREG_WR(base + ISP_FMCU_START, 1);
 
-	pr_info("fmcu%d start done, cmdq len %d\n",
+	pr_debug("fmcu%d start done, cmdq len %d\n",
 		fmcu_ctx->fid,
 		(uint32_t)fmcu_ctx->cmdq_pos[fmcu_ctx->cur_buf_id] * 4);
 
@@ -324,7 +324,8 @@ struct isp_fmcu_ctx_desc *get_isp_fmcu_ctx_desc(void)
 	int i;
 	struct isp_fmcu_ctx_desc *fmcu = NULL;
 
-	for (i = 0; i < ISP_FMCU_NUM; i++) {
+	/* workaround: temp disable FMCU 1 for not working */
+	for (i = 0; i < ISP_FMCU_1; i++) {
 		if (atomic_inc_return(&s_fmcu_desc[i].user_cnt) == 1) {
 			fmcu = &s_fmcu_desc[i];
 			pr_info("fmcu %d , %p\n", fmcu->fid, fmcu);

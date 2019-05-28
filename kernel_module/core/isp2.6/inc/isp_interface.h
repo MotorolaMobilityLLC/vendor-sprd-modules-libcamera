@@ -21,7 +21,7 @@
 #include "cam_types.h"
 
 
-#define ISP_MAX_LINE_WIDTH		2560
+#define ISP_MAX_LINE_WIDTH		2592
 
 #define ISP_NR3_BUF_NUM 2
 #define ISP_LTM_BUF_NUM 10
@@ -191,8 +191,9 @@ struct isp_pipe_ops {
 	int (*close)(void *isp_handle);
 	int (*reset)(void *isp_handle, void *arg);
 
-	int (*update_context)(void *isp_handle, int ctx_id, void *param);
 	int (*get_context)(void *isp_handle, void *param);
+	int (*update_context)(void *isp_handle, int ctx_id, void *param);
+	int (*start_context)(void *isp_handle, int ctx_id);
 	int (*put_context)(void *isp_handle, int ctx_id);
 
 	int (*get_path)(void *isp_handle, int ctx_id, int path_id);
