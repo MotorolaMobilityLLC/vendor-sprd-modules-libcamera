@@ -19,20 +19,20 @@
 *
 */
 
-#include "sensor_ov7251_dual_mipi_raw.h"
+#include "sensor_ov9282_dual_mipi_raw.h"
 
 #undef LOG_TAG
-#define LOG_TAG "ov7251_dual_mipi_raw"
+#define LOG_TAG "ov9282_dual_mipi_raw"
 
-#define FPS_INFO s_ov7251_dual_mode_fps_info
-#define STATIC_INFO s_ov7251_dual_static_info
-#define VIDEO_INFO s_ov7251_dual_video_info
-#define MODULE_INFO s_ov7251_dual_module_info_tab
-#define RES_TAB_RAW s_ov7251_dual_resolution_tab_raw
-#define RES_TRIM_TAB s_ov7251_dual_resolution_trim_tab
-#define MIPI_RAW_INFO g_ov7251_dual_mipi_raw_info
+#define FPS_INFO s_ov9282_dual_mode_fps_info
+#define STATIC_INFO s_ov9282_dual_static_info
+#define VIDEO_INFO s_ov9282_dual_video_info
+#define MODULE_INFO s_ov9282_dual_module_info_tab
+#define RES_TAB_RAW s_ov9282_dual_resolution_tab_raw
+#define RES_TRIM_TAB s_ov9282_dual_resolution_trim_tab
+#define MIPI_RAW_INFO g_ov9282_dual_mipi_raw_info
 
-static cmr_int ov7251_dual_drv_init_fps_info(cmr_handle handle) {
+static cmr_int ov9282_dual_drv_init_fps_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -81,7 +81,7 @@ static cmr_int ov7251_dual_drv_init_fps_info(cmr_handle handle) {
 }
 
 static cmr_int
-ov7251_dual_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
+ov9282_dual_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
                           cmr_handle *sns_ic_drv_handle) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
@@ -108,13 +108,13 @@ ov7251_dual_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
 
     /*init exif info,this will be deleted in the future*/
-    ov7251_dual_drv_init_fps_info(sns_drv_cxt);
+    ov9282_dual_drv_init_fps_info(sns_drv_cxt);
 
     /*add private here*/
     return ret;
 }
 
-static cmr_int ov7251_dual_drv_handle_delete(cmr_handle handle, void *param) {
+static cmr_int ov9282_dual_drv_handle_delete(cmr_handle handle, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -124,7 +124,7 @@ static cmr_int ov7251_dual_drv_handle_delete(cmr_handle handle, void *param) {
     return ret;
 }
 
-static cmr_int ov7251_dual_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
+static cmr_int ov9282_dual_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
                                             void **param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -134,11 +134,11 @@ static cmr_int ov7251_dual_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
-static cmr_int ov7251_dual_drv_power_on(cmr_handle handle, cmr_uint power_on) {
+static cmr_int ov9282_dual_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
-    cmr_uint ret = 0;
+
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
@@ -151,34 +151,33 @@ static cmr_int ov7251_dual_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
                               SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-        ret = usleep(1 * 1000);
+        usleep(1 * 1000);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
+        hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_3300MV); 
 
-        ret = usleep(1 * 1000);
+        usleep(1 * 1000);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
-        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        ret = usleep(6 * 1000);
-        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
+        //hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
+        usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
     } else {
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        ret = usleep(500);
-        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
+        usleep(500);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        ret = usleep(200);
+        usleep(200);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);		
+        hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED); 
     }
-    SENSOR_LOGI("(1:on, 0:off): %lu %d", power_on, ret);
+    SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
     return SENSOR_SUCCESS;
 }
 
-static cmr_int ov7251_dual_drv_identify(cmr_handle handle, cmr_uint param) {
+static cmr_int ov9282_dual_drv_identify(cmr_handle handle, cmr_uint param) {
     cmr_u16 chip_id_h = 0x00, chip_id_l = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -186,11 +185,11 @@ static cmr_int ov7251_dual_drv_identify(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("mipi raw identify");
 
-    chip_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov7251_dual_CHIP_ID_H_ADDR);
-    chip_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov7251_dual_CHIP_ID_L_ADDR);
+    chip_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov9282_dual_CHIP_ID_H_ADDR);
+    chip_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov9282_dual_CHIP_ID_L_ADDR);
     SENSOR_LOGI("Identify: CHIP_ID_H = %x, CHIP_ID_L = %x", chip_id_h, chip_id_l);
-    if (chip_id_h == ov7251_dual_CHIP_ID_H_VALUE && chip_id_l == ov7251_dual_CHIP_ID_L_VALUE) {
-        SENSOR_LOGI("this is ov7251_dual sensor");
+    if (chip_id_h == ov9282_dual_CHIP_ID_H_VALUE && chip_id_l == ov9282_dual_CHIP_ID_L_VALUE) {
+        SENSOR_LOGI("this is ov9282_dual sensor");
 	ret_value = SENSOR_SUCCESS;
     } else {
         SENSOR_LOGI("Identify this is %x%x sensor", chip_id_h, chip_id_l);
@@ -198,7 +197,7 @@ static cmr_int ov7251_dual_drv_identify(cmr_handle handle, cmr_uint param) {
     return ret_value;
 }
 
-static cmr_u16 ov7251_dual_drv_read_gain(cmr_handle handle) {
+static cmr_u16 ov9282_dual_drv_read_gain(cmr_handle handle) {
     cmr_u32 gain;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -216,7 +215,7 @@ static cmr_u16 ov7251_dual_drv_read_gain(cmr_handle handle) {
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov7251_dual_drv_write_gain(cmr_handle handle, float gain) {
+static void ov9282_dual_drv_write_gain(cmr_handle handle, float gain) {
     float gain_a = gain;
     float gain_d = 0x400; // spec p70, X1 = 15bit
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
@@ -252,7 +251,7 @@ static void ov7251_dual_drv_write_gain(cmr_handle handle, float gain) {
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_u16 ov7251_dual_drv_read_frame_length(cmr_handle handle) {
+static cmr_u16 ov9282_dual_drv_read_frame_length(cmr_handle handle) {
     cmr_u32 frame_len;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -270,7 +269,7 @@ static cmr_u16 ov7251_dual_drv_read_frame_length(cmr_handle handle) {
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov7251_dual_drv_write_frame_length(cmr_handle handle,
+static void ov9282_dual_drv_write_frame_length(cmr_handle handle,
                                            cmr_u32 frame_len) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -285,7 +284,7 @@ static void ov7251_dual_drv_write_frame_length(cmr_handle handle,
  * read shutter from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_u32 ov7251_dual_drv_read_shutter(cmr_handle handle) {
+static cmr_u32 ov9282_dual_drv_read_shutter(cmr_handle handle) {
     cmr_u32 value = 0x00;
     cmr_u8 shutter_l = 0x00;
     cmr_u8 shutter_m = 0x00;
@@ -312,16 +311,16 @@ static cmr_u32 ov7251_dual_drv_read_shutter(cmr_handle handle) {
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void ov7251_dual_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
+static void ov9282_dual_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
     cmr_u16 value = 0x00;
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    value = (shutter << 0x04) & 0xff;
+    value = (shutter) & 0xff;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3502, value);
-    value = (shutter >> 0x04) & 0xff;
+    value = (shutter >> 8) & 0xff;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3501, value);
-    value = (shutter >> 0x0c) & 0x0f;
+    value = (shutter >> 16) & 0x0f;
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3500, value);
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
 }
@@ -332,7 +331,7 @@ static void ov7251_dual_drv_write_shutter(cmr_handle handle, cmr_u32 shutter) {
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static cmr_int ov7251_dual_drv_write_exposure_dummy(cmr_handle handle,
+static cmr_int ov9282_dual_drv_write_exposure_dummy(cmr_handle handle,
                                                 cmr_u32 shutter,
                                                 cmr_u32 dummy_line,
                                                 cmr_u16 size_index) {
@@ -341,39 +340,39 @@ static cmr_int ov7251_dual_drv_write_exposure_dummy(cmr_handle handle,
     cmr_u32 fr_len = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    fr_len = sns_drv_cxt->frame_length_def;
-    // ov7251_group_hold_on(handle);
-    cmr_u16 frame_interval =
-        (cmr_u16)(((shutter + dummy_line) *
-                   (sns_drv_cxt->trim_tab_info[size_index].line_time)) /
-                  1000000);
-    SENSOR_LOGI(
-        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
-        size_index, shutter, dummy_line, frame_interval);
+    fr_len = sns_drv_cxt->trim_tab_info[size_index].frame_line;
+    // ov9282_group_hold_on(handle);
+	cmr_u16 frame_interval =
+		 (cmr_u16)(((shutter + dummy_line) *
+					(sns_drv_cxt->trim_tab_info[size_index].line_time)) /
+				   1000000);
 
     dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
     dest_fr_len =
         ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;
     sns_drv_cxt->frame_length = dest_fr_len;
 
-    cur_fr_len = ov7251_dual_drv_read_frame_length(handle);
+    cur_fr_len = ov9282_dual_drv_read_frame_length(handle);
 
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
 
     if (dest_fr_len != cur_fr_len)
-        ov7251_dual_drv_write_frame_length(handle, dest_fr_len);
+        ov9282_dual_drv_write_frame_length(handle, dest_fr_len);
 write_sensor_shutter:
     /* write shutter to sensor registers */
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
 
-    ov7251_dual_drv_write_shutter(handle, shutter);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8c, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8d, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8e, (shutter >> 8) & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8f, shutter & 0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b90, ((dest_fr_len - 8)>>8)&0xff);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b91, (dest_fr_len - 8)&0xff);
+    ov9282_dual_drv_write_shutter(handle, shutter);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3925, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3926, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3927, (shutter >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3928, shutter & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3929, ((dest_fr_len - 8)>>8)&0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392a, (dest_fr_len - 8)&0xff);
+    SENSOR_LOGI(
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms %d %d",
+        size_index, shutter, dummy_line, frame_interval, dest_fr_len,fr_len);
 
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
@@ -388,7 +387,7 @@ write_sensor_shutter:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static cmr_int ov7251_dual_drv_write_exposure(cmr_handle handle, cmr_uint param) {
+static cmr_int ov9282_dual_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -415,7 +414,7 @@ static cmr_int ov7251_dual_drv_write_exposure(cmr_handle handle, cmr_uint param)
     sns_drv_cxt->line_time_def =
         sns_drv_cxt->trim_tab_info[size_index].line_time;
 
-    ret_value = ov7251_dual_drv_write_exposure_dummy(handle, exposure_line,
+    ret_value = ov9282_dual_drv_write_exposure_dummy(handle, exposure_line,
                                                  dummy_line, size_index);
 
     return ret_value;
@@ -439,7 +438,7 @@ static cmr_u32 isp_to_real_gain(cmr_handle handle, cmr_u32 param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static cmr_int ov7251_dual_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
+static cmr_int ov9282_dual_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     float real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -454,54 +453,54 @@ static cmr_int ov7251_dual_drv_write_gain_value(cmr_handle handle, cmr_uint para
     SENSOR_LOGI("real_gain = %f", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
-    ov7251_dual_drv_write_gain(handle, real_gain);
+    ov9282_dual_drv_write_gain(handle, real_gain);
 
     return ret_value;
 }
 
-static struct sensor_reg_tag ov7251_dual_shutter_reg[] = {
-    {0x3502, 0}, {0x3501, 0}, {0x3500, 0},
+static struct sensor_reg_tag ov9282_dual_shutter_reg[] = {
+    {0x3502, 0}, {0x3501, 0}, {0x3500, 0},{0x3927, 0},{0x3928, 1}, {0x3929, 0}, {0x392a, 0},
 };
 
-static struct sensor_i2c_reg_tab ov7251_dual_shutter_tab = {
-    .settings = ov7251_dual_shutter_reg, .size = ARRAY_SIZE(ov7251_dual_shutter_reg),
+static struct sensor_i2c_reg_tab ov9282_dual_shutter_tab = {
+    .settings = ov9282_dual_shutter_reg, .size = ARRAY_SIZE(ov9282_dual_shutter_reg),
 };
 
-static struct sensor_reg_tag ov7251_dual_again_reg[] = {
+static struct sensor_reg_tag ov9282_dual_again_reg[] = {
     {0x350a, 0x00}, {0x350b, 0x00},
 };
 
-static struct sensor_i2c_reg_tab ov7251_dual_again_tab = {
-    .settings = ov7251_dual_again_reg, .size = ARRAY_SIZE(ov7251_dual_again_reg),
+static struct sensor_i2c_reg_tab ov9282_dual_again_tab = {
+    .settings = ov9282_dual_again_reg, .size = ARRAY_SIZE(ov9282_dual_again_reg),
 };
 
-static struct sensor_reg_tag ov7251_dual_dgain_reg[] = {
+static struct sensor_reg_tag ov9282_dual_dgain_reg[] = {
 };
 
-struct sensor_i2c_reg_tab ov7251_dual_dgain_tab = {
-    .settings = ov7251_dual_dgain_reg, .size = ARRAY_SIZE(ov7251_dual_dgain_reg),
+struct sensor_i2c_reg_tab ov9282_dual_dgain_tab = {
+    .settings = ov9282_dual_dgain_reg, .size = ARRAY_SIZE(ov9282_dual_dgain_reg),
 };
 
-static struct sensor_reg_tag ov7251_frame_length_reg[] = {
+static struct sensor_reg_tag ov9282_frame_length_reg[] = {
     {0x380e, 0}, {0x380f, 0},
 };
 
-static struct sensor_i2c_reg_tab ov7251_dual_frame_length_tab = {
-    .settings = ov7251_frame_length_reg,
-    .size = ARRAY_SIZE(ov7251_frame_length_reg),
+static struct sensor_i2c_reg_tab ov9282_dual_frame_length_tab = {
+    .settings = ov9282_frame_length_reg,
+    .size = ARRAY_SIZE(ov9282_frame_length_reg),
 };
 
-static struct sensor_aec_i2c_tag ov7251_dual_aec_info = {
+static struct sensor_aec_i2c_tag ov9282_dual_aec_info = {
     .slave_addr = (I2C_SLAVE_ADDR >> 1),
     .addr_bits_type = SENSOR_I2C_REG_16BIT,
     .data_bits_type = SENSOR_I2C_VAL_8BIT,
-    .shutter = &ov7251_dual_shutter_tab,
-    .again = &ov7251_dual_again_tab,
-    .dgain = &ov7251_dual_dgain_tab,
-    .frame_length = &ov7251_dual_frame_length_tab,
+    .shutter = &ov9282_dual_shutter_tab,
+    .again = &ov9282_dual_again_tab,
+    .dgain = &ov9282_dual_dgain_tab,
+    .frame_length = &ov9282_dual_frame_length_tab,
 };
 
-static cmr_u16 ov7251_dual_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
+static cmr_u16 ov9282_dual_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
                                          cmr_u32 dummy_line, cmr_u16 mode,
                                          struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
@@ -520,7 +519,7 @@ static cmr_u16 ov7251_dual_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;
     sns_drv_cxt->frame_length = dest_fr_len;
 
-    cur_fr_len = ov7251_dual_drv_read_frame_length(handle);
+    cur_fr_len = ov9282_dual_drv_read_frame_length(handle);
 
     if (shutter < SENSOR_MIN_SHUTTER)
         shutter = SENSOR_MIN_SHUTTER;
@@ -534,16 +533,20 @@ static cmr_u16 ov7251_dual_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     SENSOR_LOGI("sync fps = %f", fps);
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
     aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
-    value = (shutter << 0x04) & 0xff;
+    value = (shutter) & 0xff;
     aec_info->shutter->settings[0].reg_value = value;
-    value = (shutter >> 0x04) & 0xff;
+    value = (shutter >> 0x08) & 0xff;
     aec_info->shutter->settings[1].reg_value = value;
-    value = (shutter >> 0x0c) & 0x0f;
+    value = (shutter >> 0x10) & 0x0f;
     aec_info->shutter->settings[2].reg_value = value;
+	value = dest_fr_len - 8;
+	aec_info->shutter->settings[4].reg_value = (value >> 8) & 0xff;
+	aec_info->shutter->settings[5].reg_value = value & 0xff;
+	
     return shutter;
 }
 
-static void ov7251_dual_drv_calc_gain(float gain,
+static void ov9282_dual_drv_calc_gain(float gain,
                                   struct sensor_aec_i2c_tag *aec_info) {
     float gain_a = gain;
     float gain_d = 0x400;
@@ -569,7 +572,7 @@ static void ov7251_dual_drv_calc_gain(float gain,
     aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;*/
 }
 
-static cmr_int ov7251_dual_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+static cmr_int ov9282_dual_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     cmr_u16 exposure_line = 0x00;
@@ -582,7 +585,7 @@ static cmr_int ov7251_dual_drv_read_aec_info(cmr_handle handle, cmr_uint param) 
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    info->aec_i2c_info_out = &ov7251_dual_aec_info;
+    info->aec_i2c_info_out = &ov9282_dual_aec_info;
 
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
@@ -595,21 +598,22 @@ static cmr_int ov7251_dual_drv_read_aec_info(cmr_handle handle, cmr_uint param) 
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         mode, exposure_line, dummy_line, frame_interval);
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
-    //        ov7251_dual_drv_get_default_frame_length(handle, mode);
+    //        ov9282_dual_drv_get_default_frame_length(handle, mode);
     //    s_current_default_line_time =
-    //    s_ov7251_resolution_trim_tab[mode].line_time;
+    //    s_ov9282_resolution_trim_tab[mode].line_time;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 
-    sns_drv_cxt->sensor_ev_info.preview_shutter = ov7251_dual_drv_calc_exposure(
-        handle, exposure_line, dummy_line, mode, &ov7251_dual_aec_info);
+    sns_drv_cxt->sensor_ev_info.preview_shutter = ov9282_dual_drv_calc_exposure(
+        handle, exposure_line, dummy_line, mode, &ov9282_dual_aec_info);
 
     gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
     real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
-    ov7251_dual_drv_calc_gain(real_gain, &ov7251_dual_aec_info);
+    ov9282_dual_drv_calc_gain(real_gain, &ov9282_dual_aec_info);
     return ret_value;
 }
 
-static cmr_int ov7251_dual_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
+
+static cmr_int ov9282_dual_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
     cmr_u32 gain = 0;
@@ -664,87 +668,175 @@ snapshot_info:
     return SENSOR_SUCCESS;
 }
 
-cmr_int ov7251_dual_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x00);//2);//0: slave 2:master
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3666, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824,  0x01);//column
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825,  0x07);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826,  0x00);//row
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827,  0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x30);//03);
+#if 0
 
-    SENSOR_LOGI("X");
-    return 0;
+int32_t set_flash_mode(const int camera_id,  uint8_t level) {
+    int32_t retVal = 0;
+    int32_t bytes = 0;
+    char buffer[16];
+    uint8_t default_light_level = 5;
+    const char *const flashInterface =
+        "/sys/projector/brightness";
+    ssize_t wr_ret;
+    SENSOR_LOGI("open driver interface");
+    int fd = open(flashInterface, O_WRONLY);
+    /* open sysfs file parition */
+    if (-1 == fd) {
+        SENSOR_LOGI("Failed to open: interface, %s", flashInterface);
+        return -EINVAL;
+    }
+
+ //   bytes = snprintf(buffer, sizeof(buffer), "%s",   atoi(level));
+
+    wr_ret = write(fd, level, sizeof(level));
+
+    if (-1 == wr_ret) {
+        SENSOR_LOGI("WRITE FAILED \n");
+        retVal = -EINVAL;
+    }
+
+    close(fd);
+    SENSOR_LOGI("Close file");
+    return retVal;
 }
-
-cmr_int ov7251_dual_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x02);//0: slave 2:master
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3666, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x01); // column
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x07);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x00); // row
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x03);
-    SENSOR_LOGI("X");
-
-    return 0;
-}
-
-static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_uint ret = 0;
-    SENSOR_LOGI("E");
-	char value0[PROPERTY_VALUE_MAX];
-	char value1[PROPERTY_VALUE_MAX];
-   // ov7251_dual_drv_write_exposure_dummy(handle, 3261,360, 1);
-	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
-	if (!strcmp(value0, "1")) {
-		 property_get("persist.vendor.cam.ae.ir.expos", value1, "50000"); // us
-		 cmr_u32 size_index = 1;
-		 cmr_u32 exposure = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[size_index].line_time;
-		 cmr_u32 dummy = exposure > PREVIEW_FRAME_LENGTH ? exposure - PREVIEW_FRAME_LENGTH : 0;
-		 dummy = dummy > 0xffff ? 0xffff : dummy;
-		 SENSOR_LOGI("test ae mode %d %d", atoi(value1),exposure);
-		 property_get("persist.vendor.cam.ae.ir.gain", value1, "1280");
-		 ov7251_dual_drv_write_exposure_dummy(handle, exposure, dummy, size_index);
-		 ov7251_dual_drv_write_gain(handle, atoi(value1));
-	 }
-
+#endif
 #if defined(CONFIG_DUAL_MODULE)
-#if defined(CONFIG_ISP_2_7)
-	if (!strcmp(value0, "1"))
-		ov7251_dual_drv_set_slave_FrameSync(handle, param);
-	else
-		ov7251_dual_drv_set_master_FrameSync(handle, param);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
-#else
-    ov7251_dual_drv_set_slave_FrameSync(handle, param);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+cmr_int ov9282_dual_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x02);//0: slave 2:master
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x00);//column
+    return 0;
+}
+cmr_int ov9282_dual_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x00);//0: slave 2:master
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x38b3,  0x07);//column
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3885,  0x07);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382b,  0x3a);//row
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3670,  0x68);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x30);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824,  0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825,  0x08);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826,  0x03);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827,  0x8a);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3740,  0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3741,  0x08);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3742,  0x01);
+    return 0;
+}
+
 #endif
+cmr_int ov9282_dual_drv_set_strobe(cmr_handle handle, cmr_uint param) {
+#if 1
+				SENSOR_IC_CHECK_HANDLE(handle);
+				struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x08);//a);//8); strobe
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3210, 0x04);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3007, 0x02);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x301c, 0xf0);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3020, 0x20);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3025, 0x02);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382c, 0x05);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382d, 0xb0);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3920, 0xff);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3923, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3924, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3925, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3926, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3927, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3928, 0x80);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392b, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392c, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392d, 0x02);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392e, 0xe8);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392f, 0xcb);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x38b3, 0x07);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3885, 0x07);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382b, 0x3a);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3670, 0x68);
+		/*
+		//shutter
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3927, 0x00);//strobe width
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3928, 0x01);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3929, 0x00);//strobe start point is vts - Texposure-7-Tnegative
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x392a, 0x00);
+		
+		//FSIN master
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x02);//bit[1]=1 output
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x00);//0100 01 stream on
+				//slave
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x00);//bit[1]=0 input
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3666, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x38b3, 0x07);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3885, 0x07);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382b, 0x3a);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3670, 0x68);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x30);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x08);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x03);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x8a);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3740, 0x01);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3741, 0x00);
+				hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3742, 0x08);//0100 01
+		
+		
+		*/
 #endif
+	return 0;
+}
+
+static cmr_int ov9282_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    SENSOR_LOGI("E");
+
+    ov9282_dual_drv_set_strobe(handle, param);
+#if 1
+		char value0[PROPERTY_VALUE_MAX];
+		char value1[PROPERTY_VALUE_MAX];
+		property_get("debug.camera.test.mode", value1, "0");
+		if (!strcmp(value1, "1")) {
+		 //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
+		}
+		property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+		if (!strcmp(value0, "1")) {
+			property_get("persist.vendor.cam.ae.ir.expos", value1, "50000"); // us
+			cmr_u32 size_index = 1;
+			cmr_u32 exposure = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[size_index].line_time;
+			cmr_u32 dummy = exposure > FRAME_LINE ? exposure - FRAME_LINE : 0;
+			dummy = dummy > 0xffff ? 0xffff : dummy;			
+			SENSOR_LOGI("test ae mode %d %d", atoi(value1),exposure);
+			property_get("persist.vendor.cam.ae.ir.gain", value1, "1280");
+			ov9282_dual_drv_write_exposure_dummy(handle, exposure, dummy, size_index);
+			ov9282_dual_drv_write_gain(handle, atoi(value1));
+			ov9282_dual_drv_set_slave_FrameSync(handle, param);
+			hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x08);//a);//8); strobe
+		}else{
+			ov9282_dual_drv_set_master_FrameSync(handle, param);
+			hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3006, 0x0a);//8); strobe
+
+		}
+#endif
+
+
+
    if (1){//(sns_drv_cxt->sensor_id % 2 == 0){
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x04);
    }
 //  SENSOR_LOGI("E %x", hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3820));
 //  SENSOR_LOGI("E %x", hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3821));
-#if defined(CONFIG_ISP_2_7)
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x00);
-#endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
+ //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
     /*delay*/
-    ret = usleep(10 * 1000);
-#if 1
-#if 1
+    usleep(10 * 1000);
+#if 0
             /* enable strobe pin for IR1 */
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);//8);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
  //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b96, 0xe0);
      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b81, 0xff);
      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b96, 0xc0);
@@ -754,13 +846,13 @@ static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8d, 0x00);
      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8e, 0x00);
      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8f, 0x80);
-#endif
+
 #if 0
-     ov7251_dual_drv_write_ir1(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
+     ov9282_dual_drv_write_ir1(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
 /* ir1 ir2 aec */
 #if 1
-    ov7251_dual_drv_write_ir1(sns_drv_cxt->hw_handle, 0x3501, 0x80);
-    ov7251_dual_drv_write_ir2(sns_drv_cxt->hw_handle, 0x3501, 0x80);
+    ov9282_dual_drv_write_ir1(sns_drv_cxt->hw_handle, 0x3501, 0x80);
+    ov9282_dual_drv_write_ir2(sns_drv_cxt->hw_handle, 0x3501, 0x80);
 #endif
 
 #endif
@@ -779,13 +871,13 @@ static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x00, 0x01);
             hw_sensor_i2c_set_addr(sns_drv_cxt->hw_handle, 0xc0 >> 1);
 #endif
-	SENSOR_LOGI("E %x", ret);
 
     return 0;
 }
 
-static cmr_int ov7251_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
-    cmr_u8 value = 0, ret = 0;
+static cmr_int ov9282_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
+    SENSOR_LOGI("E");
+    cmr_u8 value;
     cmr_u32 sleep_time = 0, frame_time;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -796,7 +888,7 @@ static cmr_int ov7251_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x0f);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = 50 * 1000;
-            ret = usleep(sleep_time);
+            usleep(sleep_time);
         }
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
@@ -804,11 +896,11 @@ static cmr_int ov7251_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
     }
 
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X sleep_time=%dus %d", sleep_time, ret);
+    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
 }
 
-static cmr_int ov7251_dual_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
+static cmr_int ov9282_dual_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     cmr_u32 up = 0;
@@ -824,7 +916,7 @@ static cmr_int ov7251_dual_drv_get_static_info(cmr_handle handle, cmr_u32 *param
 
     // make sure we have get max fps of all settings.
     if (!fps_info->is_init) {
-        ov7251_dual_drv_init_fps_info(handle);
+        ov9282_dual_drv_init_fps_info(handle);
     }
     ex_info->f_num = static_info->f_num;
     ex_info->focal_length = static_info->focal_length;
@@ -847,7 +939,7 @@ static cmr_int ov7251_dual_drv_get_static_info(cmr_handle handle, cmr_u32 *param
     return rtn;
 }
 
-static cmr_int ov7251_dual_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
+static cmr_int ov9282_dual_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -858,7 +950,7 @@ static cmr_int ov7251_dual_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 
     // make sure have inited fps of every sensor mode.
     if (!fps_data->is_init) {
-        ov7251_dual_drv_init_fps_info(handle);
+        ov9282_dual_drv_init_fps_info(handle);
     }
     cmr_u32 sensor_mode = fps_info->mode;
     fps_info->max_fps = fps_data->sensor_mode_fps[sensor_mode].max_fps;
@@ -874,19 +966,20 @@ static cmr_int ov7251_dual_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-static cmr_int ov7251_dual_drv_access_val(cmr_handle handle, cmr_uint param) {
+static cmr_int ov9282_dual_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-        ret = ov7251_dual_drv_get_static_info(handle, param_ptr->pval);
+        ret = ov9282_dual_drv_get_static_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
-        ret = ov7251_dual_drv_get_fps_info(handle, param_ptr->pval);
+        ret = ov9282_dual_drv_get_fps_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         ret = sns_drv_cxt->is_sensor_close = 1;
@@ -894,33 +987,28 @@ static cmr_int ov7251_dual_drv_access_val(cmr_handle handle, cmr_uint param) {
     default:
         break;
     }
-    SENSOR_LOGV("param_ptr->type=%x %d", param_ptr->type, ret);
+    ret = SENSOR_SUCCESS;
 
     return ret;
 }
 
-void *sensor_ic_open_lib(void)
-{
-     return &g_ov7251_dual_mipi_raw_info;
-}
+static struct sensor_ic_ops s_ov9282_dual_ops_tab = {
+    .create_handle = ov9282_dual_drv_handle_create,
+    .delete_handle = ov9282_dual_drv_handle_delete,
+    .get_data = ov9282_dual_drv_get_private_data,
 
-static struct sensor_ic_ops s_ov7251_dual_ops_tab = {
-    .create_handle = ov7251_dual_drv_handle_create,
-    .delete_handle = ov7251_dual_drv_handle_delete,
-    .get_data = ov7251_dual_drv_get_private_data,
-
-    .power = ov7251_dual_drv_power_on,
-    .identify = ov7251_dual_drv_identify,
-    .ex_write_exp = ov7251_dual_drv_write_exposure,
-    .write_gain_value = ov7251_dual_drv_write_gain_value,
+    .power = ov9282_dual_drv_power_on,
+    .identify = ov9282_dual_drv_identify,
+    .ex_write_exp = ov9282_dual_drv_write_exposure,
+    .write_gain_value = ov9282_dual_drv_write_gain_value,
 #if 0//defined(CONFIG_DUAL_MODULE)
-     .read_aec_info = ov7251_dual_drv_read_aec_info,
+     .read_aec_info = ov9282_dual_drv_read_aec_info,
 #endif
 
     .ext_ops = {
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov7251_dual_drv_before_snapshot,
-        [SENSOR_IOCTL_STREAM_ON].ops = ov7251_dual_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = ov7251_dual_drv_stream_off,
-        [SENSOR_IOCTL_ACCESS_VAL].ops = ov7251_dual_drv_access_val,
+        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov9282_dual_drv_before_snapshot,
+        [SENSOR_IOCTL_STREAM_ON].ops = ov9282_dual_drv_stream_on,
+        [SENSOR_IOCTL_STREAM_OFF].ops = ov9282_dual_drv_stream_off,
+        [SENSOR_IOCTL_ACCESS_VAL].ops = ov9282_dual_drv_access_val,
     },
 };

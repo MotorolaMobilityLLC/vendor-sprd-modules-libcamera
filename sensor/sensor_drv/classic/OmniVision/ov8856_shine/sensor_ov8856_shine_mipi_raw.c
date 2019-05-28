@@ -602,6 +602,17 @@ static cmr_int ov8856_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     dummy_line = ex->dummy;
     size_index = ex->size_index;
 
+	char value0[PROPERTY_VALUE_MAX];
+	char value1[PROPERTY_VALUE_MAX];
+
+	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+	if (!strcmp(value0, "1")) {
+		property_get("persist.vendor.cam.ae.ir.expos", value1, "50000"); // us
+		SENSOR_LOGI("rbg.expos %d ", atoi(value1));
+		exposure_line = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[size_index].line_time;
+		dummy_line = 6;//ex->dummy;
+	}
+
     ov8856_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,
                              &ov8856_aec_info);
     ov8856_drv_write_reg2sensor(handle, ov8856_aec_info.frame_length);
@@ -648,6 +659,16 @@ static cmr_int ov8856_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
+	char value0[PROPERTY_VALUE_MAX];
+	char value1[PROPERTY_VALUE_MAX];
+
+	property_get("persist.camera.ae.ir.manual", value0, "0");
+	if (!strcmp(value0, "1")) {
+		property_get("persist.camera.ae.ir.expos", value1, "50000"); // us
+		SENSOR_LOGI("rbg.expos %d ", atoi(value1));
+		exposure_line = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[mode].line_time;
+		dummy_line = 6;//ex->dummy;
+	}
 
     ov8856_drv_calc_exposure(handle, exposure_line, dummy_line, mode,
                              &ov8856_aec_info);
@@ -665,13 +686,18 @@ static cmr_int ov8856_drv_set_master_FrameSync(cmr_handle handle,
 
     /*TODO*/
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3028, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3000, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x300e, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3816, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3817, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3818, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3819, 0x10);
 
     /*END*/
 
     return SENSOR_SUCCESS;
 }
-unsigned long ov8856s_SetSlave_FrameSync(cmr_handle handle,
+unsigned long ov8856_drv_SetSlave_FrameSync(cmr_handle handle,
                                          unsigned long param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -726,7 +752,7 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x36);
         }
         if (sns_drv_cxt->sensor_id == 2)
-            ov8856s_SetSlave_FrameSync(handle, param);
+            ov8856_drv_SetSlave_FrameSync(handle, param);
     } else {
         /* ov8856 sharkl5 front camera module, sharkl3 back_slave and front new
          * camera module, or SENSOR_OV8856_TELE, 2 lane, IMAGE_NORMAL_MIRROR */
@@ -752,12 +778,15 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #if 0 // defined(CONFIG_DUAL_MODULE)
 //#ifndef SENSOR_OV8856_TELE
     if (sns_drv_cxt->sensor_id == 2)
-        ov8856s_SetSlave_FrameSync(handle, param);
+        ov8856_drv_SetSlave_FrameSync(handle, param);
 //#endif
 #endif
 
-#if 0 // defined(CONFIG_DUAL_MODULE)
-	ov8856_drv_set_master_FrameSync(handle, param);
+#if 1 // defined(CONFIG_DUAL_MODULE)
+	char value0[PROPERTY_VALUE_MAX];
+	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+	 if (!strcmp(value0, "1"))
+		ov8856_drv_set_master_FrameSync(handle, param);
 #endif
     /*TODO*/
 

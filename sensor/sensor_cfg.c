@@ -64,6 +64,12 @@ extern SENSOR_INFO_T g_ov16885_normal_mipi_raw_info;
 #ifdef OV32A1Q
 extern SENSOR_INFO_T g_ov32a1q_mipi_raw_info;
 #endif
+#ifdef OV9282
+extern SENSOR_INFO_T g_ov9282_mipi_raw_info;
+#endif
+#ifdef OV9282_DUAL
+extern SENSOR_INFO_T g_ov9282_dual_mipi_raw_info;
+#endif
 #ifdef OV7251
 extern SENSOR_INFO_T g_ov7251_mipi_raw_info;
 #endif
@@ -495,7 +501,10 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY,  "ov13850r2a", &g_ov13850r2a_mipi_raw_info, {&dw9714a_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV7251
-    {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, NULL},
+    {MODULE_STL3D_IRL_FRONT, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, NULL},
+#endif
+#ifdef OV9282
+    {MODULE_STL3D_IRL_FRONT, "ov9282", &g_ov9282_mipi_raw_info, {NULL, 0}, NULL},
 #endif
 #ifdef OV16885
     {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
@@ -576,6 +585,10 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #ifdef OV2680
     {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+#ifdef OV7251
+    {MODULE_STL3D_IRL_FRONT, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
 #ifdef OV5675_DUAL
 #ifdef OV5675_VCM_OTP_DUAL_CAM_ONE_EEPROM
     {MODULE_SUNNY, "ov5675_dual", &g_ov5675_dual_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
@@ -591,7 +604,10 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #endif
 #endif
 #ifdef OV7251_DUAL
-    {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_STL3D_IRR_FRONT, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef OV9282_DUAL
+    {MODULE_STL3D_IRR_FRONT, "ov9282_dual", &g_ov9282_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV16885_NORMAL
     {MODULE_SPW_NONE_BACK, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {&general_otp_entry, 0xA0, MULTICAM_INDEPENDENT_EEPROM, 8192}},
@@ -640,8 +656,16 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 
 const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 // ov area
+#ifdef OV7251_DUAL
+    {MODULE_STL3D_IRR_FRONT, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
 #ifdef OV7251
-    {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_STL3D_IRL_FRONT, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
+#ifdef OV9282
+    {MODULE_STL3D_IRL_FRONT, "ov9282", &g_ov9282_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
@@ -670,10 +694,10 @@ const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #endif
 
 #ifdef OV7251
-    {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_STL3D_IRL_FRONT, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV7251_DUAL
-    {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_STL3D_IRR_FRONT, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
@@ -687,10 +711,10 @@ const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 
 const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 #ifdef OV7251
-    {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_STL3D_IRL_FRONT, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV7251_DUAL
-    {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_STL3D_IRR_FRONT, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
@@ -722,6 +746,7 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT
     {SPRD_3D_FACE_ID, MODE_3D_FACE, 3, {"s5k4h9yx", "0", "ov7251_dual", "ov7251", "0", "0"}, SNS_FACE_FRONT, 270},
+    {SPRD_3D_FACE_ID, MODE_3D_FACE, 3, {"ov8856_shine", "0", "ov7251_dual", "ov7251", "0", "0"}, SNS_FACE_FRONT, 270},
 #endif
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     {SPRD_3D_FACE_ID, MODE_SOFY_OPTICAL_ZOOM, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},

@@ -348,6 +348,13 @@ static cmr_int ov7251_drv_write_exposure_dummy(cmr_handle handle,
     dest_fr_len =
         ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;
     sns_drv_cxt->frame_length = dest_fr_len;
+    cmr_u16 frame_interval =
+        (cmr_u16)(((shutter + dummy_line) *
+                   (sns_drv_cxt->trim_tab_info[size_index].line_time)) /
+                  1000000);
+    SENSOR_LOGI(
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+        size_index, shutter, dummy_line, frame_interval);
 
     cur_fr_len = ov7251_drv_read_frame_length(handle);
 
@@ -361,6 +368,12 @@ write_sensor_shutter:
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
 
     ov7251_drv_write_shutter(handle, shutter);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8c, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8d, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8e, (shutter >> 8) & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8f, shutter & 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b90, ((dest_fr_len - 8)>>8)&0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b91, (dest_fr_len - 8)&0xff);
 
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
@@ -596,7 +609,6 @@ static cmr_int ov7251_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     return ret_value;
 }
 
-#if defined(CONFIG_DUAL_MODULE)
 cmr_int ov7251_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -607,9 +619,25 @@ cmr_int ov7251_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826,  0x00);//row
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827,  0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x03);
+
+    SENSOR_LOGI("X");
     return 0;
 }
-#endif
+cmr_int ov7251_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x00);//2);//0: slave 2:master
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3666, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824,  0x01);//column
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825,  0x07);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826,  0x00);//row
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827,  0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823,  0x03);
+
+    SENSOR_LOGI("X");
+    return 0;
+}
+
 
 static cmr_int ov7251_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
@@ -666,6 +694,28 @@ snapshot_info:
     return SENSOR_SUCCESS;
 }
 
+cmr_int ov7251_drv_set_strobe(cmr_handle handle, cmr_uint param) {
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    SENSOR_LOGI("E");
+
+	/* enable strobe pin for IR1 */
+
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+ //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b96, 0xe0);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b81, 0xff);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b96, 0xc0);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8a, 0x00);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8b, 0x00);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8c, 0x00);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8d, 0x00);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8e, 0x00);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8f, 0x80);
+
+	return 0;
+
+}
+
+
 static cmr_int ov7251_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
 	cmr_uint ret = 0;
@@ -674,28 +724,43 @@ static cmr_int ov7251_drv_stream_on(cmr_handle handle, cmr_uint param) {
          hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
          hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x04);
     }
-#if defined(CONFIG_DUAL_MODULE)
-    ov7251_drv_set_master_FrameSync(handle, param);
+
+    SENSOR_LOGI("E");
+	ov7251_drv_set_strobe(handle, param);
+	char value0[PROPERTY_VALUE_MAX];
+	char value1[PROPERTY_VALUE_MAX];
+    //ov7251_drv_write_exposure_dummy(handle, 3261,360, 1);
+	// ov7251_dual_drv_write_exposure_dummy(handle, 3261,360, 1);
+	 property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+	 if (!strcmp(value0, "1")) {
+		  property_get("persist.vendor.cam.ae.ir.expos", value1, "50000"); // us
+		  cmr_u32 size_index = 1;
+		  cmr_u32 exposure = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[size_index].line_time;
+		  cmr_u32 dummy = exposure > PREVIEW_FRAME_LENGTH ? exposure - PREVIEW_FRAME_LENGTH : 0;
+		  dummy = dummy > 0xffff ? 0xffff : dummy;
+		  SENSOR_LOGI("test ae mode %d %d", atoi(value1),exposure);
+		  property_get("persist.vendor.cam.ae.ir.gain", value1, "1280");
+		  ov7251_drv_write_exposure_dummy(handle, exposure, dummy, size_index);
+		  ov7251_drv_write_gain(handle, atoi(value1));
+		  ov7251_drv_set_slave_FrameSync(handle, param);
+		  hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+	}else{
+#if defined(CONFIG_ISP_2_7)
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x00);
+    ov7251_drv_set_slave_FrameSync(handle, param);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+#else
+	ov7251_drv_set_master_FrameSync(handle, param);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);//8);
 #endif
+	}
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
     /*delay*/
     ret = usleep(10 * 1000);
-#if 1
-                /* enable strobe pin for IR1 */
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);//8);
-     //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b96, 0xe0);
-#if 1
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b81, 0xff);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b96, 0xc0);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8a, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8b, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8c, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8d, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8e, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3b8f, 0x80);
+#ifndef CONFIG_ISP_2_7
 
-#endif
 #if 0
          ov7251_drv_write_ir1(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
     /* ir1 ir2 aec */
@@ -711,24 +776,24 @@ static cmr_int ov7251_drv_stream_on(cmr_handle handle, cmr_uint param) {
              //   hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, SENSOR_LOW_PULSE_RESET);
 
                 /* use this pin as IR projector reset pin for debug */
-                hw_sensor_i2c_set_addr(sns_drv_cxt->hw_handle, 0x40);//c0>>1);//40);//0x90 >> 1);//0x40);
+            hw_sensor_i2c_set_addr(sns_drv_cxt->hw_handle, 0x40);//c0>>1);//40);//0x90 >> 1);//0x40);
 /*			for(int i=0;i<1000;i++){
     			SENSOR_LOGI("E %d", i);
 				usleep(1000*1000);	
 				hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0c, 0xaa);
 			}*/
-	       hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0c, 0xaa);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0d, 0xaa);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x02, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x03, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x04, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x05, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x06, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x07, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x08, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x09, 0xff);
-                hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x00, 0x01);
-                hw_sensor_i2c_set_addr(sns_drv_cxt->hw_handle, 0xe0 >> 1);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0c, 0xaa);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0d, 0xaa);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x02, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x03, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x04, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x05, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x06, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x07, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x08, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x09, 0xff);
+	        hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x00, 0x01);
+	        hw_sensor_i2c_set_addr(sns_drv_cxt->hw_handle, 0xe0 >> 1);
 #endif
     SENSOR_LOGI("%d", ret);
 

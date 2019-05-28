@@ -526,6 +526,16 @@ static cmr_int s5k4h9yx_drv_write_exposure(cmr_handle handle, cmr_uint param)
     exposure_line = ex->exposure;
 	dummy_line = ex->dummy;
     size_index = ex->size_index;
+	char value0[PROPERTY_VALUE_MAX];
+	char value1[PROPERTY_VALUE_MAX];
+
+	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+	if (!strcmp(value0, "1")) {
+		property_get("persist.vendor.cam.ae.ir.expos", value1, "50000"); // us
+		SENSOR_LOGI("rbg.expos %d ", atoi(value1));
+		exposure_line = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[size_index].line_time;
+		dummy_line = 6;//ex->dummy;
+	}
 
 	s5k4h9yx_drv_calc_exposure(handle,exposure_line, dummy_line, size_index, &s5k4h9yx_aec_info);
 	s5k4h9yx_drv_write_reg2sensor(handle, s5k4h9yx_aec_info.frame_length);
@@ -572,9 +582,20 @@ static cmr_int s5k4h9yx_drv_read_aec_info(cmr_handle handle, cmr_uint param)
     SENSOR_LOGI("E");
 
     info->aec_i2c_info_out = &s5k4h9yx_aec_info;
-    exposure_line = info->exp.exposure;
-    dummy_line = info->exp.dummy;
-    mode = info->exp.size_index;
+    exposure_line = info->exp.exposure;//5413;//info->exp.exposure;
+    dummy_line = info->exp.dummy;//6;//info->exp.dummy;
+    mode = info->exp.size_index; //1;//
+
+	char value0[PROPERTY_VALUE_MAX];
+	char value1[PROPERTY_VALUE_MAX];
+
+	property_get("persist.camera.ae.ir.manual", value0, "0");
+	if (!strcmp(value0, "1")) {
+		property_get("persist.camera.ae.ir.expos", value1, "50000"); // us
+		SENSOR_LOGI("rbg.expos %d ", atoi(value1));
+		exposure_line = atoi(value1) * 1000 / sns_drv_cxt->trim_tab_info[mode].line_time;
+		dummy_line = 6;//ex->dummy;
+	}
 
     s5k4h9yx_drv_calc_exposure(handle, exposure_line, dummy_line, mode, &s5k4h9yx_aec_info);
     s5k4h9yx_drv_calc_gain(handle,info->gain, &s5k4h9yx_aec_info);
@@ -587,13 +608,38 @@ static cmr_int s5k4h9yx_drv_set_master_FrameSync(cmr_handle handle, cmr_uint par
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 	
-	SENSOR_LOGI("E");
+	SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x308c));
+	SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x30c0));
 
 	/*TODO*/
+//    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+//    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c2, 0x0100);
+//    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c4, 0x0100);
 
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c8, 0x1009);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x308c, 0x1009);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c0, 0x0003);	
 	/*END*/
+
+    return SENSOR_SUCCESS;
+}
+
+
+static cmr_int s5k4h9yx_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param)
+{
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+	SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x30bf));
+	SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x30c2));
+	SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x30c4));
+
+	/*TODO*/
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30bf, 0x0004);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c2, 0x0101);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c4, 0x0001);
+//	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x30c0, 0x0003);
+	/*END*/
+	SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x30c3));
 
     return SENSOR_SUCCESS;
 }
@@ -609,8 +655,11 @@ static cmr_int s5k4h9yx_drv_stream_on(cmr_handle handle, cmr_uint param)
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 	cmr_int ret = 0;
 	
-#if defined(CONFIG_DUAL_MODULE)
-	//s5k4h9yx_drv_set_master_FrameSync(handle, param);
+#if 1//defined(CONFIG_DUAL_MODULE)
+	char value0[PROPERTY_VALUE_MAX];
+	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+	 if (!strcmp(value0, "1"))
+		s5k4h9yx_drv_set_master_FrameSync(handle, param);
 	//s5k4h9yx_drv_set_slave_FrameSync(handle, param);
 #endif   
 	/*TODO*/
