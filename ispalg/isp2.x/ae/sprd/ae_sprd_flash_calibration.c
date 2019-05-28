@@ -866,6 +866,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 							caliData->out.error = FlashCali_too_close;
 
 						} else {
+							caliData->expReset[caliData->testInd] = 0; // reset value is not enough for calibration
 							caliData->stateCaliFrameCntStSub = frameCount + 1;
 						}
 					}
