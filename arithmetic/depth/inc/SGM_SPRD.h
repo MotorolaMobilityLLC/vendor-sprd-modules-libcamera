@@ -82,7 +82,7 @@ extern "C" {
 	}DistanceTwoPointInfo;
 
 	typedef struct {
-          unsigned short near;
+	  unsigned short near;
 	  unsigned short far;
 	  unsigned char *confidence_map;
 	  unsigned char *depthnorm_data;
@@ -110,7 +110,6 @@ extern "C" {
 	int sprd_depth_get_gdepthinfo(void* handle , void * a_pOutDisparity, gdepth_outparam *gdepth_output);
 
 	int sprd_depth_userset(char *ptr,int size);
-
 
 #ifdef __cplusplus
 }//extern C

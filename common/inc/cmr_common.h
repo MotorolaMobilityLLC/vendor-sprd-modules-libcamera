@@ -284,6 +284,7 @@ enum img_data_type {
     IMG_DATA_TYPE_RGB888,
     IMG_DATA_TYPE_JPEG,
     IMG_DATA_TYPE_YV12,
+    IMG_DATA_TYPE_YUV400,
     IMG_DATA_TYPE_MAX
 };
 
@@ -623,6 +624,8 @@ struct enc_exif_param {
     struct img_frm pic_enc;  // yuv -> encoded
     struct img_frm last_dst; // in encoded and exif, maybe null
     cmr_u32 stream_real_size;
+    cmr_uint rotation;
+    cmr_uint flip_on;
 };
 
 struct ccir_if {

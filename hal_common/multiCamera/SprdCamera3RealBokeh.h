@@ -40,6 +40,7 @@
 #include <hardware/camera3.h>
 #include <hardware/camera.h>
 #include <system/camera.h>
+#include <string>
 #include <sys/mman.h>
 #include <sprd_ion.h>
 #include <ui/GraphicBuffer.h>
@@ -52,6 +53,12 @@
 #include "IBokehAlgo.h"
 #include "SprdBokehAlgo.h"
 
+#define TXMP_STRING_TYPE std::string
+#define XMP_INCLUDE_XMPFILES 1
+#include <XMP.incl_cpp>
+#include <XMP.hpp>
+
+using namespace std;
 namespace sprdcamera {
 #define YUV_CONVERT_TO_JPEG
 #ifdef CONFIG_CAMERA_MEET_JPG_ALIGNMENT
@@ -61,7 +68,7 @@ namespace sprdcamera {
 #define LOCAL_PREVIEW_NUM (20)
 #define SNAP_DEPTH_NUM 1
 #define SNAP_SCALE_NUM 1
-#define LOCAL_CAPBUFF_NUM 3
+#define LOCAL_CAPBUFF_NUM 4
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
 #define SNAP_TRANSF_NUM 1
@@ -71,7 +78,7 @@ namespace sprdcamera {
 
 #define LOCAL_BUFFER_NUM                                                       \
     LOCAL_PREVIEW_NUM + LOCAL_CAPBUFF_NUM + SNAP_SCALE_NUM + SNAP_TRANSF_NUM + \
-        SNAP_DEPTH_NUM
+        SNAP_DEPTH_NUM * 3
 
 #define REAL_BOKEH_MAX_NUM_STREAMS 3
 
@@ -115,6 +122,10 @@ typedef struct {
 typedef struct {
     PingPangBuffer prev_depth_buffer[2];
     void *snap_depth_buffer;
+    buffer_handle_t *snap_gdepthJpg_buffer;
+    void *snap_gdepthjpeg_buffer_addr;
+    uint8_t *snap_depthConfidence_buffer;
+    uint8_t *depth_normalize_data_buffer;
     void *depth_out_map_table;
     void *prev_depth_scale_buffer;
 } DepthBuffer;
@@ -172,18 +183,23 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
     bool mIsCapturing;
+    bool mIsCapDepthFinish;
+    bool mHdrSkipBlur;
     int mjpegSize;
     uint8_t mCameraId;
     face_beauty_levels mPerfectskinlevel;
     bool mFlushing;
     bool mIsSupportPBokeh;
+    long mXmpSize;
     int mApiVersion;
     int mJpegOrientation;
     int mlimited_infi;
     int mlimited_macro;
 #ifdef YUV_CONVERT_TO_JPEG
     buffer_handle_t *m_pDstJpegBuffer;
+    buffer_handle_t *m_pDstGDepthOriJpegBuffer;
     cmr_uint mOrigJpegSize;
+    cmr_uint mGDepthOriJpegSize;
 #else
     buffer_handle_t *m_pMainSnapBuffer;
 #endif
@@ -198,6 +214,26 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 
     int allocateBuff();
     int thumbYuvProc(buffer_handle_t *src_buffer);
+
+    XMP_StringPtr gCameraURI = "http://ns.google.com/photos/1.0/camera/";
+    XMP_StringPtr gCameraPrefix = "GCamera";
+    XMP_StringPtr gDepthURI = "http://ns.google.com/photos/1.0/depthmap/";
+    XMP_StringPtr gDepthPrefix = "GDepth";
+    XMP_StringPtr gImageURI = "http://ns.google.com/photos/1.0/image/";
+    XMP_StringPtr gImagePrefix = "GImage";
+
+    pthread_t mJpegCallbackThread;
+    camera3_stream_buffer_t *mJpegOutputBuffers;
+    Mutex mJpegCallbackLock;
+
+    int insertGDepthMetadata(unsigned char *result_buffer_addr,
+                             uint32_t result_buffer_size, uint32_t jpeg_size);
+
+    void encodeOriginalJPEGandDepth(string *encodeToBase64String,
+                                    string *encodeToBase64StringOrigJpeg);
+
+    static int jpeg_callback_thread_init(void *p_data);
+    static void *jpeg_callback_thread_proc(void *p_data);
 
   public:
     SprdCamera3RealBokeh();
@@ -234,6 +270,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bokeh_cap_params_t mCapbokehParam;
         bool mAbokehGallery;
         bool mBokehResult;
+        gdepth_outparam mGDepthOutputParam;
         void reprocessReq(buffer_handle_t *output_buffer,
                           capture_queue_msg_t_bokeh capture_msg);
 
@@ -288,6 +325,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     camera3_stream_t mAuxStreams[REAL_BOKEH_MAX_NUM_STREAMS];
     int32_t mFaceInfo[4];
     BokehSize mBokehSize;
+    int far;
+    int near;
+    int mGdepthSize;
     camera_buffer_type_t mDepthPrevbufType;
     uint8_t mCaptureStreamsNum;
     uint8_t mCallbackStreamsNum;
@@ -362,6 +402,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void intDepthPrevBufferFlag();
     int getPrevDepthBuffer(BUFFER_FLAG need_flag);
     void setPrevDepthBufferFlag(BUFFER_FLAG cur_flag, int index);
+    unsigned char *getaddr(unsigned char *buffer_addr, uint32_t buffer_size);
 };
 };
 

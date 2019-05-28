@@ -5201,6 +5201,11 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     struct img_frm pic_enc = param->pic_enc;
     struct img_frm dst = param->last_dst;
     struct cmr_op_mean mean;
+    
+    cmr_uint rotation = param->rotation;
+    cmr_uint flip_on = param->flip_on;
+    cmr_u32 tmp = 0;
+
     struct jpeg_enc_cb_param enc_cb_param;
     struct jpeg_context *jpeg_cxt = NULL;
     int ret = CMR_CAMERA_SUCCESS;
@@ -5208,7 +5213,11 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     cmr_u32 SUPER_FINE = 95;
     cmr_u32 FINE = 80;
     cmr_u32 NORMAL = 70;
-
+    /*
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    cmr_bzero((void *)&setting_param, sizeof(setting_param));
+    */
     if (!oem_handle || !src.addr_vir.addr_y || !pic_enc.addr_vir.addr_y) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
@@ -5223,6 +5232,48 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     mean.slice_mode = JPEG_YUV_SLICE_ONE_BUF;
     mean.slice_height = pic_enc.size.height;
     mean.is_sync = 1;
+    /*
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_ENCODE_ROTATION, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get enc rotation %ld", ret);
+        goto exit;
+    }
+    rotation = setting_param.cmd_type_value;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_FLIP_ON, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
+        goto exit;
+    }
+    */
+    CMR_LOGI("encode_rotation:%ld, flip:%ld", rotation, flip_on);
+
+    if (0 != rotation) {
+        if (90 == rotation)
+            mean.rot = 1;
+        else if (180 == rotation) {
+            mean.flip = 1;
+            mean.mirror = 1;
+        } else if (270 == rotation) {
+            mean.rot = 1;
+            mean.flip = 1;
+            mean.mirror = 1;
+        }
+    }
+    if (flip_on) {
+        if (mean.mirror)
+            mean.mirror = 0;
+        else
+            mean.mirror = 1;
+    }
+    if ((90 == rotation || 270 == rotation)) {
+        tmp = pic_enc.size.height;
+        pic_enc.size.height = pic_enc.size.width;
+        pic_enc.size.width = tmp;
+    }
+
     src.data_end.y_endian = 0;
     src.data_end.uv_endian = 2;
     // for cache coherency

@@ -37,12 +37,17 @@ class SprdBokehAlgo : public IBokehAlgo {
 
     int deinitCapDepth();
 
-    int capDepthRun(void *para1, void *para2, void *para3, void *para4, int vcmCurValue, int vcmUp, int vcmDown);
+    int capDepthRun(void *para1, void *para2, void *para3, void *para4,
+                    int vcmCurValue, int vcmUp, int vcmDown);
 
-
-    int capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH);
+    int capBlurImage(void *para1, void *para2, void *para3, int depthW,
+                     int depthH);
 
     int onLine(void *para1, void *para2, void *para3, void *para4);
+
+    int getGDepthInfo(void *para1, gdepth_outparam *para2);
+
+    int setUserset(char *ptr, int size);
 
   private:
     bool mFirstSprdBokeh;

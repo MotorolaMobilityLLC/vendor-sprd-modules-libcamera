@@ -45,6 +45,7 @@ typedef struct jpeg_codec_caller_handle {
 typedef enum {
     JPEGENC_YUV_420 = 0,
     JPEGENC_YUV_422,
+    JPEGENC_YUV_400 = 4,
     JPEGENC_YUV_MAX
 } JPEGENC_FORMAT_E;
 typedef enum {

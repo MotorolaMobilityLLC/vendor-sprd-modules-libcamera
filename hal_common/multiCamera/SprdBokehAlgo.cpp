@@ -528,6 +528,49 @@ exit:
     return rc;
 }
 
+int SprdBokehAlgo::getGDepthInfo(void *para1, gdepth_outparam *para2) {
+    int rc = NO_ERROR;
+    if (!para1 || !para2) {
+        HAL_LOGE(" para is null");
+        rc = BAD_VALUE;
+        goto exit;
+    }
+
+    rc = sprd_depth_get_gdepthinfo(mDepthCapHandle, para1, para2);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("sprd_depth_get_gdepthinfo failed! %d", rc);
+        rc = UNKNOWN_ERROR;
+        goto exit;
+    }
+exit:
+    return rc;
+}
+
+int SprdBokehAlgo::setUserset(char *ptr, int size) {
+    int rc = NO_ERROR;
+    if (!ptr) {
+        HAL_LOGE(" ptr is null");
+        rc = BAD_VALUE;
+        goto exit;
+    }
+
+    rc = sprd_depth_userset(ptr, size);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("sprd_depth_userset failed! %d", rc);
+        rc = UNKNOWN_ERROR;
+        goto exit;
+    }
+
+    rc = sprd_bokeh_userset(ptr, size);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("sprd_depth_userset failed! %d", rc);
+        rc = UNKNOWN_ERROR;
+        goto exit;
+    }
+exit:
+    return rc;
+}
+
 /*===========================================================================
  * FUNCTION   :checkDepthPara
  *

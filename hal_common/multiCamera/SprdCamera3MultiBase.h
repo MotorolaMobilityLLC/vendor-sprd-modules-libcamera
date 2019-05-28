@@ -110,8 +110,6 @@ class SprdCamera3MultiBase {
     virtual void dumpFps();
     virtual void dumpData(unsigned char *addr, int type, int size, int param1,
                           int param2, int param3, const char param4[20]);
-    virtual void dumpDataDepth16(uint16_t *addr, int type, int size, int param1,
-                          int param2, int param3, const char param4[20]);
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
                                hwi_frame_buffer_info_t *result2);
@@ -149,6 +147,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                    uint16_t a_uwDstHeight, uint8_t *a_ucSrcBuf,
                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,
                    uint32_t a_udFileSize);
+    bool DepthRangLinear(uint8_t *a_ucDstBuf, uint16_t *a_ucSrcBuf,
+                         uint16_t a_uwDstWidth, uint16_t a_uwDstHeight,
+                         int *far, int *near);
     int hwScale(uint8_t *dst_buf, uint16_t dst_width, uint16_t dst_height,
                 uint16_t dst_fd, uint8_t *src_buf, uint16_t src_width,
                 uint16_t src_height, uint16_t src_fd);
@@ -189,6 +190,11 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                   void *pic_vir_addr,
                                   buffer_handle_t *dst_private_handle,
                                   void *dst_vir_addr, SprdCamera3HWI *hwi);
+    int jpeg_encode_exif_simplify_format(
+        buffer_handle_t *src_private_handle, void *src_vir_addr,
+        buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
+        buffer_handle_t *dst_private_handle, void *dst_vir_addr,
+        SprdCamera3HWI *hwi, uint8_t fmt, cmr_uint rotation, cmr_uint flip_on);
     void addAvailableStreamSize(CameraMetadata &metadata,
                                 const char *resolution);
     void setLogicIdTag(CameraMetadata &metadata, uint8_t *physical_ids,

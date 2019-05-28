@@ -153,7 +153,7 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
         return CMR_CAMERA_INVALID_PARAM;
     }
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
-
+    src->fmt = cmr_fmt_transfer(src->fmt);
     ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, (struct yuvbuf_frm *)src,
                                 (struct yuvbuf_frm *)dst, mean, enc_cb_param);
     if (ret) {
@@ -310,4 +310,16 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
     }
     CMR_LOGD("ret %ld", ret);
     return ret;
+}
+cmr_uint cmr_fmt_transfer(cmr_uint src_fmt) {
+    JPEGENC_FORMAT_E fmt = JPEGENC_YUV_420;
+
+    switch (src_fmt) {
+    case IMG_DATA_TYPE_YUV400:
+        fmt = JPEGENC_YUV_400;
+        break;
+    default:
+        break;
+    }
+    return fmt;
 }

@@ -34,10 +34,13 @@
 #if defined(CONFIG_SPRD_ANDROID_8)
 #include <ui/GraphicBuffer.h>
 #endif
+#include <algorithm>
 
 #include <ui/GraphicBufferMapper.h>
 
 using namespace android;
+using namespace std;
+
 namespace sprdcamera {
 #define MAX_UNMATCHED_QUEUE_BASE_SIZE (3)
 
@@ -753,36 +756,15 @@ void SprdCamera3MultiBase::dumpData(unsigned char *addr, int type, int size,
         sprintf(tmp_str, "_%dx%d_%d_%s.yuv", param1, param2, param3, param4);
         strcat(file_name, tmp_str);
 
-        fp = fopen(file_name, "w");
+        fp = fopen(file_name, "wb");
         if (fp == NULL) {
             HAL_LOGE("open yuv file fail!\n");
             return;
         }
-        size = param1 * param2 * 2;
         fwrite((void *)addr, 1, size, fp);
         fclose(fp);
     } break;
-    default:
-        break;
-    }
-}
-
-void SprdCamera3MultiBase::dumpDataDepth16(uint16_t *addr, int type, int size,
-                                     int param1, int param2, int param3,
-                                     const char param4[20]) {
-    FILE *fp = NULL;
-    char tmp_str[64] = {0};
-    time_t timep;
-    struct tm *p;
-    time(&timep);
-    char file_name[256] = {0};
-    p = localtime(&timep);
-    strcpy(file_name, CAMERA_DUMP_PATH);
-    sprintf(tmp_str, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
-    strcat(file_name, tmp_str);
-    switch (type) {
-    case 1: {
+    case 6: {
         memset(tmp_str, 0, sizeof(tmp_str));
         sprintf(tmp_str, "_%dx%d_%d_%s.yuv", param1, param2, param3, param4);
         strcat(file_name, tmp_str);
@@ -792,6 +774,7 @@ void SprdCamera3MultiBase::dumpDataDepth16(uint16_t *addr, int type, int size,
             HAL_LOGE("open yuv file fail!\n");
             return;
         }
+        size = param1 * param2 * 2;
         fwrite((void *)addr, 1, size, fp);
         fclose(fp);
     } break;
@@ -1101,6 +1084,26 @@ bool SprdCamera3MultiBase::ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
     return true;
 }
 
+bool SprdCamera3MultiBase::DepthRangLinear(uint8_t *a_ucDstBuf,
+                                           uint16_t *a_ucSrcBuf,
+                                           uint16_t a_uwSrcWidth,
+                                           uint16_t a_uwSrcHeight, int *far,
+                                           int *near) {
+    int j;
+    int lengh = a_uwSrcWidth * a_uwSrcHeight;
+    if (!a_ucSrcBuf)
+        return false;
+    //*far = *max_element(a_ucSrcBuf, a_ucSrcBuf + lengh);
+    //*near = *min_element(a_ucSrcBuf, a_ucSrcBuf + lengh);
+    HAL_LOGI("DepthRangLinear far %d ,near %d", *far, *near);
+
+    for (j = 0; j < a_uwSrcWidth * a_uwSrcHeight; j++) {
+        a_ucDstBuf[j] =
+            (uint8_t)((a_ucSrcBuf[j] - *near) * 255 / (*far - *near));
+    }
+    return true;
+}
+
 bool SprdCamera3MultiBase::DepthRotateCCW90(uint16_t *a_uwDstBuf,
                                             uint16_t *a_uwSrcBuf,
                                             uint16_t a_uwSrcWidth,
@@ -1376,7 +1379,66 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     if (!strcmp(prop, "encode_exif")) {
         unsigned char *vir_jpeg = (unsigned char *)(pic_vir_addr);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
-                 src_img.size.width, src_img.size.height, 0, "jpegEncode");
+                 src_img.size.width, src_img.size.height, 0, "jpegEncode_Simple");
+    }
+
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
+int SprdCamera3MultiBase::jpeg_encode_exif_simplify_format(
+    buffer_handle_t *src_private_handle, void *src_vir_addr,
+    buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
+    buffer_handle_t *dst_private_handle, void *dst_vir_addr,
+    SprdCamera3HWI *hwi, uint8_t fmt, cmr_uint rotation, cmr_uint flip_on) {
+    void *vir_addr = NULL;
+    int ret = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    struct enc_exif_param encode_exif_param;
+    struct img_frm src_img;
+    struct img_frm pic_enc_img;
+    struct img_frm dst_img;
+
+    HAL_LOGI("src_private_handle :%p, pic_enc_private_handle:%p",
+             src_private_handle, pic_enc_private_handle);
+    if (hwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+
+    memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&pic_enc_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+    convertToImg_frm(src_private_handle, &src_img, fmt, src_vir_addr);
+
+    convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG,
+                     pic_vir_addr);
+    if (dst_private_handle != NULL) {
+        convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG,
+                         dst_vir_addr);
+    }
+
+    memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
+    encode_exif_param.rotation = rotation;
+    encode_exif_param.flip_on = flip_on;
+
+    ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
+                             &encode_exif_param, NULL);
+
+    if (ret == NO_ERROR)
+        ret = encode_exif_param.stream_real_size;
+    else
+        ret = UNKNOWN_ERROR;
+    property_get("persist.vendor.cam.encode_dump", prop, "0");
+    if (!strcmp(prop, "encode_exif")) {
+        unsigned char *vir_jpeg = (unsigned char *)(pic_vir_addr);
+        dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
+                 src_img.size.width, src_img.size.height, 0, "jpegEncode_SimpleFormat");
     }
 
     HAL_LOGI("out,ret=%d", ret);

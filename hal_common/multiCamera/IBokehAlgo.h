@@ -47,15 +47,14 @@ typedef struct {
 
 typedef struct { bokeh_cap_params_t cap; } SPRD_BOKEH_PARAM;
 
-typedef union {
-    SPRD_BOKEH_PARAM sprd;
-} BOKEH_PARAM;
+typedef union { SPRD_BOKEH_PARAM sprd; } BOKEH_PARAM;
 
 class IBokehAlgo {
   public:
     IBokehAlgo(){};
     virtual ~IBokehAlgo(){};
-    virtual int initParam(BokehSize *size, OtpData *data, bool galleryBokeh) = 0;
+    virtual int initParam(BokehSize *size, OtpData *data,
+                          bool galleryBokeh) = 0;
 
     virtual void getVersionInfo() = 0;
 
@@ -63,7 +62,8 @@ class IBokehAlgo {
 
     virtual void setBokenParam(void *param) = 0;
 
-    virtual int prevDepthRun(void *para1, void *para2, void *para3, void *para4) = 0;
+    virtual int prevDepthRun(void *para1, void *para2, void *para3,
+                             void *para4) = 0;
 
     virtual int prevBluImage(sp<GraphicBuffer> &srcBuffer,
                              sp<GraphicBuffer> &dstBuffer, void *param) = 0;
@@ -82,12 +82,17 @@ class IBokehAlgo {
 
     virtual int deinitCapDepth() = 0;
 
-    virtual int capDepthRun(void *para1, void *para2, void *para3,
-                            void *para4, int vcmCurValue, int vcmUp, int vcmDown) = 0;
+    virtual int capDepthRun(void *para1, void *para2, void *para3, void *para4,
+                            int vcmCurValue, int vcmUp, int vcmDown) = 0;
 
-    virtual int capBlurImage(void *para1, void *para2, void *para3, int depthW, int depthH) = 0;
+    virtual int capBlurImage(void *para1, void *para2, void *para3, int depthW,
+                             int depthH) = 0;
 
     virtual int onLine(void *para1, void *para2, void *para3, void *para4) = 0;
+
+    virtual int getGDepthInfo(void *para1, gdepth_outparam *para2) = 0;
+
+    virtual int setUserset(char *ptr, int size) = 0;
 };
 }
 

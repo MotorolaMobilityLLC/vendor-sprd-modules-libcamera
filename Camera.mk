@@ -190,7 +190,9 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/depth_bokeh/inc\
     $(LOCAL_PATH)/arithmetic/sprd_yuvprocess/inc\
     $(LOCAL_PATH)/arithmetic/sprd_scale/inc\
-    $(LOCAL_PATH)/arithmetic/sprd_warp/inc
+    $(LOCAL_PATH)/arithmetic/sprd_warp/inc \
+    $(LOCAL_PATH)/arithmetic/libxmp/inc \
+    $(LOCAL_PATH)/arithmetic/libxmp/inc/client-glue
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/OpticsZoom/inc
@@ -224,7 +226,7 @@ LOCAL_HEADER_LIBRARIES += libutils_headers
 LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_HEADER_LIBRARIES += jni_headers
 
-LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format
+LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format -DXMP_UNIXBuild -DUNIX_ENV -fexceptions
 
 include $(LOCAL_PATH)/SprdCtrl.mk
 

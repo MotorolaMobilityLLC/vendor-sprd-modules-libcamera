@@ -2076,6 +2076,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(0);
 #endif
 
+// BOKEHGDEPTHENBLE
+#ifdef CONFIG_SUPPORT_GDEPTH
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));

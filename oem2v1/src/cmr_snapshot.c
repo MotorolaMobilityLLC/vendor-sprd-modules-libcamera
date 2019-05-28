@@ -995,8 +995,9 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     jpeg_in_ptr->src.data_end =
         snp_cxt->req_param.post_proc_setting.data_endian;
     jpeg_in_ptr->mean.quality_level = quality_param.quality;
-    CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d",
-             jpeg_in_ptr->mean.quality_level);
+    jpeg_in_ptr->src.fmt = IMG_DATA_TYPE_YUV420;
+    CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d jpeg_in_ptr->src.fmt=%d",
+             jpeg_in_ptr->mean.quality_level,jpeg_in_ptr->src.fmt);
 
     if (snp_cxt->ops.start_encode == NULL) {
         CMR_LOGE("snp_cxt->ops.start_encode is null");
@@ -1110,8 +1111,9 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     jpeg_in_ptr->dst.data_end =
         snp_cxt->req_param.post_proc_setting.data_endian;
     jpeg_in_ptr->mean.quality_level = quality_param.thumb_quality;
-    CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d",
-             jpeg_in_ptr->mean.quality_level);
+    jpeg_in_ptr->src.fmt = IMG_DATA_TYPE_YUV420;
+    CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d jpeg_in_ptr->src.fmt=%d",
+             jpeg_in_ptr->mean.quality_level,jpeg_in_ptr->src.fmt);
 
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,

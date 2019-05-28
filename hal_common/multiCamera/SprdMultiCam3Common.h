@@ -101,7 +101,9 @@ typedef enum {
     DEPTH_OUT_BUFFER,
     DEPTH_OUT_WEIGHTMAP,
     YUV420,
-    SNAPSHOT_SCALE_BUFFER
+    SNAPSHOT_SCALE_BUFFER,
+    SNAPSHOT_GDEPTH_BUFFER,
+    SNAP_GDEPTHJPEG_BUFFER
 } camera_buffer_type_t;
 
 typedef enum {
@@ -251,6 +253,9 @@ typedef struct {
     int depth_weight_map_size;
     int depth_snap_size;
     int depth_prev_scale_size;
+    cmr_uint depth_jepg_size;
+    cmr_uint depth_yuv_normalize_size;
+    cmr_uint depth_confidence_map_size;
 } BokehSize;
 
 typedef struct {
