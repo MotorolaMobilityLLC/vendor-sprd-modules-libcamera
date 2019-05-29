@@ -142,7 +142,10 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon libhardware
 LOCAL_SHARED_LIBRARIES += libcamdrv
 LOCAL_SHARED_LIBRARIES += liblog
+
+ifeq ($(strip $(TARGET_BOARD_DEL_CPP)),)
 LOCAL_SHARED_LIBRARIES += libcppdrv
+endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 LOCAL_SHARED_LIBRARIES += libcamfb
