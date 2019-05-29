@@ -432,6 +432,7 @@ struct sprd_slave_info {
 struct sprd_img_parm {
 	uint32_t                  channel_id;
 	uint32_t                  frame_base_id;
+	uint32_t                   user_fid;
 	uint32_t                  sn_fmt;
 	uint32_t                  sensor_id;
 	uint32_t                  pixel_fmt;

@@ -27,6 +27,7 @@
 #include "isp_ltm.h"
 
 #define ISP_LINE_BUFFER_W		ISP_MAX_LINE_WIDTH
+#define CAMERA_RESERVE_FRAME_NUM	0xffffffff
 
 #define ISP_IN_Q_LEN			1
 #define ISP_PROC_Q_LEN			2
@@ -347,6 +348,7 @@ struct isp_pipe_context {
 	uint32_t slw_state;
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
+	uint32_t uframe_sync;
 	uint32_t dispatch_color;
 	uint32_t dispatch_bayer_mode; /* RAWRGB_GR, RAWRGB_Gb, RAWRGB_R... */
 	uint32_t fetch_path_sel;/* 1: fetch_fbd; 0: fetch */

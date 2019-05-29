@@ -689,6 +689,12 @@ int sprd_isp_debugfs_deinit(void)
 }
 /* isp debug fs end */
 
+int uframe_sync_comp(uint32_t data1, uint32_t data2)
+{
+	if (data2 == CAMERA_RESERVE_FRAME_NUM && data1 != data2) return -EINVAL;
+	return (data1 <= data2) ? 0: -EINVAL;
+}
+
 static void free_offline_pararm(void *param)
 {
 	struct isp_offline_param *cur, *prev;
@@ -1441,6 +1447,7 @@ static int isp_offline_start_frame(void *ctx)
 	int ret = 0;
 	int i, loop, kick_fmcu = 0;
 	uint32_t frame_id;
+	uint32_t prev_user_fid = 0;
 	struct isp_pipe_dev *dev = NULL;
 	struct camera_frame *pframe = NULL;
 	struct camera_frame *out_frame = NULL;
@@ -1551,7 +1558,16 @@ static int isp_offline_start_frame(void *ctx)
 				 pctx->nr3_ctx.blending_cnt,
 				 pctx->nr3_ctx.blending_cnt % 5);
 		} else {
-			out_frame = camera_dequeue(&path->out_buf_queue);
+			if (i == ISP_SPATH_VID && pctx->uframe_sync) {
+					out_frame =
+					camera_dequeue_if(&path->out_buf_queue,
+					uframe_sync_comp,
+					(void *)&prev_user_fid);
+			} else {
+				out_frame =
+				camera_dequeue(&path->out_buf_queue);
+			}
+
 			if (out_frame == NULL)
 				out_frame =
 				camera_dequeue(&path->reserved_buf_queue);
@@ -1562,14 +1578,18 @@ static int isp_offline_start_frame(void *ctx)
 			ret = 0;
 			goto unlock;
 		}
+
+		if (i == ISP_SPATH_CP)
+			prev_user_fid = out_frame->user_fid;
+
 		out_frame->fid = frame_id;
 		out_frame->sensor_time = pframe->sensor_time;
 		out_frame->boot_sensor_time = pframe->boot_sensor_time;
 
 		/* config store buffer */
-		pr_debug("isp output buf, iova 0x%x, phy: 0x%x\n",
+		pr_debug("isp output buf, iova 0x%x, phy: 0x%x user_fid: %x\n",
 			 (uint32_t)out_frame->buf.iova[0],
-			 (uint32_t)out_frame->buf.addr_k[0]);
+			 (uint32_t)out_frame->buf.addr_k[0], out_frame->user_fid);
 		ret = isp_path_set_store_frm(path, out_frame);
 		/* If some error comes then do not start ISP */
 		if (ret) {
@@ -2662,6 +2682,7 @@ static int sprd_isp_cfg_path(void *isp_handle,
 				if (newfrm) {
 					newfrm->is_reserved = 2;
 					newfrm->priv_data = path;
+					newfrm->user_fid = pframe->user_fid;
 					memcpy(&newfrm->buf,
 						&pframe->buf,
 						sizeof(pframe->buf));

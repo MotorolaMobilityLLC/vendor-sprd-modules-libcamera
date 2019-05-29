@@ -130,6 +130,48 @@ unlock:
 	return pframe;
 }
 
+struct camera_frame *camera_dequeue_if(struct camera_queue *q,
+		int (*filter)(uint32_t, uint32_t), void *data)
+{
+	int fatal_err;
+	unsigned long flags;
+	struct camera_frame *pframe = NULL;
+
+	if (q == NULL) {
+		pr_err("error: input ptr is NULL\n");
+		return NULL;
+	}
+
+	spin_lock_irqsave(&q->lock, flags);
+	if (q->state == CAM_Q_CLEAR) {
+		pr_warn("q is clear\n");
+		goto unlock;
+	}
+
+	if (list_empty(&q->head) || q->cnt == 0) {
+		pr_debug("queue empty %d, %d\n",
+				list_empty(&q->head), q->cnt);
+		fatal_err = (list_empty(&q->head) ^ (q->cnt == 0));
+		if (fatal_err)
+			pr_err("error:  empty %d, cnt %d\n",
+					list_empty(&q->head), q->cnt);
+		goto unlock;
+	}
+
+	pframe = list_first_entry(&q->head, struct camera_frame, list);
+
+	if (filter && filter(pframe->user_fid, *((uint32_t *)data))) {
+		pframe = NULL;
+	} else {
+		list_del(&pframe->list);
+		q->cnt--;
+	}
+unlock:
+	spin_unlock_irqrestore(&q->lock, flags);
+
+	return pframe;
+}
+
 int camera_queue_init(struct camera_queue *q,
 			uint32_t max, uint32_t type,
 			void (*cb_func)(void *))

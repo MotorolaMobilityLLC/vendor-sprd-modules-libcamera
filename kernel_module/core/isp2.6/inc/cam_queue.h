@@ -40,6 +40,7 @@ struct camera_frame {
 	uint32_t irq_property;
 	uint32_t is_reserved;
 	uint32_t is_compressed;
+	uint32_t user_fid;
 	void *priv_data;
 	/* for more param extend especially in offline process */
 	void *param_data;
@@ -64,6 +65,8 @@ struct camera_queue {
 int camera_enqueue(struct camera_queue *q, struct camera_frame *pframe);
 struct camera_frame *camera_dequeue(struct camera_queue *q);
 struct camera_frame *camera_dequeue_tail(struct camera_queue *q);
+struct camera_frame *camera_dequeue_if(struct camera_queue *q,
+		int (*filter)(uint32_t, uint32_t), void *data);
 
 int camera_queue_init(struct camera_queue *q,
 			uint32_t max, uint32_t type,

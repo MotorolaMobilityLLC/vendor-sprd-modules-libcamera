@@ -142,6 +142,7 @@ struct camera_uchannel {
 	uint32_t is_high_fps;/* for DCAM slow motion feature */
 	uint32_t high_fps_skip_num;/* for DCAM slow motion feature */
 	uint32_t is_compressed;/* for ISP output fbc format */
+	uint32_t uframe_sync;/* frame sync for video and callback channel */
 
 	struct sprd_img_size src_size;
 	struct sprd_img_rect src_crop;
@@ -2970,6 +2971,7 @@ static int init_cam_channel(
 		ctx_desc.enable_slowmotion = ch_uinfo->is_high_fps;
 		ctx_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
 		ctx_desc.slw_state = CAM_SLOWMOTION_OFF;
+		ctx_desc.uframe_sync = ch_uinfo->uframe_sync;
 		ctx_desc.ch_id = channel->ch_id;
 
 		if (module->cam_uinfo.is_3dnr) {
@@ -3859,6 +3861,11 @@ static int img_ioctl_set_output_size(
 	// TODO get this from HAL
 	dst->is_compressed = 0;
 
+	if (scene_mode == DCAM_SCENE_MODE_PREVIEW
+	|| scene_mode == DCAM_SCENE_MODE_RECORDING
+	|| scene_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK)
+		dst->uframe_sync = 1;
+
 	pr_info("high fps %u %u. crop %d %d %d %d. dst size %d %d. aux %d %d %d %d\n",
 		dst->is_high_fps, dst->high_fps_skip_num,
 		dst->src_crop.x, dst->src_crop.y,
@@ -4312,6 +4319,7 @@ static int img_ioctl_set_frame_addr(
 		pframe->buf.offset[1] = param.frame_addr_array[i].u;
 		pframe->buf.offset[2] = param.frame_addr_array[i].v;
 		pframe->channel_id = ch->ch_id;
+		pframe->user_fid = param.user_fid;
 		pframe->buf.addr_vir[0] = param.frame_addr_vir_array[i].y;
 		pframe->buf.addr_vir[1] = param.frame_addr_vir_array[i].u;
 		pframe->buf.addr_vir[2] = param.frame_addr_vir_array[i].v;

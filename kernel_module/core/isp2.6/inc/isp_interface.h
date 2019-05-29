@@ -102,6 +102,7 @@ struct isp_ctx_base_desc {
 	uint32_t bayer_pattern;
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
+	uint32_t uframe_sync;
 	uint32_t slw_state;
 	enum cam_ch_id ch_id;
 };
