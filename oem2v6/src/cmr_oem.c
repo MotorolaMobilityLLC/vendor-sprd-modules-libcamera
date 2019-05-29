@@ -10293,15 +10293,21 @@ cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt;
     struct sensor_exp_info exp_info;
+    cam_buffer_info_t buffer;
     if (!oem_handle || !fd || !src_vir_addr) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
     cxt = (struct camera_context *)oem_handle;
+
+    cmr_bzero(&buffer, sizeof(cam_buffer_info_t));
+    buffer.fd = fd;
+    buffer.addr_phy = (void *)src_phy_addr;
+    buffer.addr_vir = (void *)src_vir_addr;
+
     ret = cmr_preview_set_preview_buffer(cxt->prev_cxt.preview_handle,
-                                         cxt->camera_id, src_phy_addr,
-                                         src_vir_addr, fd);
+                                         cxt->camera_id, buffer);
     if (ret) {
         CMR_LOGE("failed to set preview buffer %ld", ret);
         goto exit;
@@ -10315,15 +10321,19 @@ cmr_int camera_local_set_video_buffer(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt;
     struct sensor_exp_info exp_info;
+    cam_buffer_info_t buffer;
     if (!oem_handle || !fd || !src_vir_addr) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
     cxt = (struct camera_context *)oem_handle;
+    buffer.fd = fd;
+    buffer.addr_phy = (void *)src_phy_addr;
+    buffer.addr_vir = (void *)src_vir_addr;
+
     ret = cmr_preview_set_video_buffer(cxt->prev_cxt.preview_handle,
-                                       cxt->camera_id, src_phy_addr,
-                                       src_vir_addr, fd);
+                                         cxt->camera_id, buffer);
     if (ret) {
         CMR_LOGE("failed to set video buffer %ld", ret);
         goto exit;
@@ -10369,9 +10379,8 @@ cmr_s32 local_queue_buffer(cmr_handle oem_handle, cam_buffer_info_t buffer,
 
     switch (steam_type) {
     case SPRD_CAM_STREAM_PREVIEW:
-        ret = cmr_preview_set_preview_buffer(
-            cxt->prev_cxt.preview_handle, cxt->camera_id,
-            (cmr_uint)buffer.addr_phy, (cmr_uint)buffer.addr_vir, buffer.fd);
+        ret = cmr_preview_set_preview_buffer(cxt->prev_cxt.preview_handle,
+                                        cxt->camera_id, buffer);
         if (ret) {
             CMR_LOGE("cmr_preview_set_preview_buffer failed");
             goto exit;
@@ -10379,9 +10388,8 @@ cmr_s32 local_queue_buffer(cmr_handle oem_handle, cam_buffer_info_t buffer,
         break;
 
     case SPRD_CAM_STREAM_VIDEO:
-        ret = cmr_preview_set_video_buffer(
-            cxt->prev_cxt.preview_handle, cxt->camera_id,
-            (cmr_uint)buffer.addr_phy, (cmr_uint)buffer.addr_vir, buffer.fd);
+        ret = cmr_preview_set_video_buffer(cxt->prev_cxt.preview_handle,
+                                        cxt->camera_id, buffer);
         if (ret) {
             CMR_LOGE("cmr_preview_set_video_buffer failed");
             goto exit;

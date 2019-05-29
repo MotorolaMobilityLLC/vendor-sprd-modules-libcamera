@@ -427,6 +427,7 @@ int SprdCamera3Stream::getQBufInfoForHandle(buffer_handle_t *buff,
             bufInfo->width = (*iter)->mem_info.width;
             bufInfo->height = (*iter)->mem_info.height;
             bufInfo->format = (*iter)->mem_info.format;
+            bufInfo->frame_number = (*iter)->frame_number;
             return ret;
         }
     }

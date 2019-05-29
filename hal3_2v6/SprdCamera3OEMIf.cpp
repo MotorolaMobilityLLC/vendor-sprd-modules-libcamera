@@ -8307,19 +8307,13 @@ int SprdCamera3OEMIf::qFirstBuffer(int stream_type) {
         if (channel) {
             ret = channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
             if (stream) {
-                ret = stream->getQBuffFirstVir(&addr_vir);
-                stream->getQBuffFirstPhy(&addr_phy);
-                stream->getQBuffFirstFd(&fd);
-                HAL_LOGD(
-                    "addr_phy = 0x%lx, addr_vir = 0x%lx, fd = %d, ret = %d",
-                    addr_phy, addr_vir, fd, ret);
-                if (ret || addr_vir == 0) {
-                    HAL_LOGE("getQBuffFirstVir failed");
-                    stream->getQBuffFirstNum(&mDropPreviewFrameNum);
+                ret = stream->getQBufFirstBuf(&buffer);
+                if (ret) {
+                    CMR_LOGE("getQBufFirstBuf failed");
                     goto exit;
                 }
-                mHalOem->ops->camera_set_preview_buffer(mCameraHandle, addr_phy,
-                                                        addr_vir, fd);
+                mHalOem->ops->queue_buffer(mCameraHandle, buffer,
+                                           SPRD_CAM_STREAM_PREVIEW);
             }
         }
         break;
@@ -8329,19 +8323,13 @@ int SprdCamera3OEMIf::qFirstBuffer(int stream_type) {
         if (channel) {
             ret = channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &stream);
             if (stream) {
-                ret = stream->getQBuffFirstVir(&addr_vir);
-                stream->getQBuffFirstPhy(&addr_phy);
-                stream->getQBuffFirstFd(&fd);
-                HAL_LOGD(
-                    "addr_phy = 0x%lx, addr_vir = 0x%lx, fd = %d, ret = %d",
-                    addr_phy, addr_vir, fd, ret);
-                if (ret || addr_vir == 0) {
-                    HAL_LOGE("getQBuffFirstVir failed");
-                    stream->getQBuffFirstNum(&mDropVideoFrameNum);
+                ret = stream->getQBufFirstBuf(&buffer);
+                if (ret) {
+                    CMR_LOGE("getQBufFirstBuf failed");
                     goto exit;
                 }
-                mHalOem->ops->camera_set_video_buffer(mCameraHandle, addr_phy,
-                                                      addr_vir, fd);
+                mHalOem->ops->queue_buffer(mCameraHandle, buffer,
+                                           SPRD_CAM_STREAM_VIDEO);
             }
         }
         break;

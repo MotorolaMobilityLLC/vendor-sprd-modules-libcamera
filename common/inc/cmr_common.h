@@ -592,6 +592,7 @@ struct img_frm {
     struct img_addr addr_phy;
     struct img_addr addr_vir;
     cmr_s32 fd;
+    cmr_u32 frame_number;
     struct img_data_end data_end;
     cmr_u32 format_pattern;
     void *reserved;
@@ -748,6 +749,7 @@ typedef struct {
     int height;
     // format not used for now
     int format;
+    cmr_u32 frame_number;
 } cam_buffer_info_t;
 
 typedef struct {
@@ -848,6 +850,7 @@ struct buffer_cfg {
     struct img_addr addr[GRAB_BUF_MAX];
     struct img_addr addr_vir[GRAB_BUF_MAX];
     cmr_u32 fd[GRAB_BUF_MAX];
+    cmr_u32 frame_number;
     cmr_uint zsl_private;
     cmr_uint is_4in1;
     cmr_s64 monoboottime;

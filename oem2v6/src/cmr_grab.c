@@ -734,6 +734,7 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
     parm.buf_flag = buf_cfg->flag;
     parm.buffer_count = buf_cfg->count;
     parm.reserved[0] = buf_cfg->zsl_private;
+    parm.user_fid = buf_cfg->frame_number;
     for (i = 0; i < buf_cfg->count; i++) {
         parm.frame_addr_array[i].y = buf_cfg->addr[i].addr_y;
         parm.frame_addr_array[i].u = buf_cfg->addr[i].addr_u;
