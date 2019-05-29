@@ -86,8 +86,6 @@ static atomic_t s_dcam_axi_opened;
 #define DCAM_DEBUG
 uint32_t g_dcam_bypass[DCAM_ID_MAX] = { 0, 0, 0 };
 static atomic_t s_dcam_opened[DCAM_ID_MAX];
-uint32_t g_dbg_zoom_mode = 1;
-uint32_t g_dbg_rds_limit = 30;
 
 struct cam_dbg_dump g_dbg_dump;
 
@@ -285,7 +283,8 @@ static const struct file_operations dcam_reg_ops = {
 	.release = single_release,
 };
 
-static char zoom_mode_strings[2][8] = {"binning", "rds"};
+static char zoom_mode_strings[5][8] = {
+	"bypass", "bin2", "bin4", "rds", "adapt"};
 
 static ssize_t zoom_mode_show(
 		struct file *filp, char __user *buffer,
@@ -293,8 +292,8 @@ static ssize_t zoom_mode_show(
 {
 	char buf[16];
 
-	snprintf(buf, sizeof(buf), "%d(%s)\n", g_dbg_zoom_mode,
-		zoom_mode_strings[g_dbg_zoom_mode&1]);
+	snprintf(buf, sizeof(buf), "%d(%s)\n", g_camctrl.dcam_zoom_mode,
+		zoom_mode_strings[g_camctrl.dcam_zoom_mode]);
 
 	return simple_read_from_buffer(
 			buffer, count, ppos,
@@ -322,14 +321,20 @@ static ssize_t zoom_mode_write(
 	msg[1] = '\0';
 	val = simple_strtol(msg, &last, 0);
 	if (val == 0)
-		g_dbg_zoom_mode = 0;
+		g_camctrl.dcam_zoom_mode = ZOOM_DEFAULT;
 	else if (val == 1)
-		g_dbg_zoom_mode = 1;
+		g_camctrl.dcam_zoom_mode = ZOOM_BINNING2;
+	else if (val == 2)
+		g_camctrl.dcam_zoom_mode = ZOOM_BINNING4;
+	else if (val == 3)
+		g_camctrl.dcam_zoom_mode = ZOOM_RDS;
+	else if (val == 4)
+		g_camctrl.dcam_zoom_mode = ZOOM_ADAPTIVE;
 	else
 		pr_err("error: invalid zoom mode: %d", val);
 
-	pr_info("set zoom mode %d(%s)\n", g_dbg_zoom_mode,
-		zoom_mode_strings[g_dbg_zoom_mode&1]);
+	pr_info("set zoom mode %d(%s)\n", g_camctrl.dcam_zoom_mode,
+		zoom_mode_strings[g_camctrl.dcam_zoom_mode]);
 	return count;
 }
 
@@ -346,7 +351,7 @@ static ssize_t rds_limit_show(
 {
 	char buf[16];
 
-	snprintf(buf, sizeof(buf), "%d\n", g_dbg_rds_limit);
+	snprintf(buf, sizeof(buf), "%d\n", g_camctrl.dcam_rds_limit);
 
 	return simple_read_from_buffer(
 			buffer, count, ppos,
@@ -373,12 +378,12 @@ static ssize_t rds_limit_write(
 
 	msg[2] = '\0';
 	val = simple_strtol(msg, &last, 0);
-	if (val > 10 && val <= 40)
-		g_dbg_rds_limit = val;
+	if (val >= 10 && val <= 40)
+		g_camctrl.dcam_rds_limit = val;
 	else
 		pr_err("error: invalid rds limit: %d", val);
 
-	pr_info("set rds limit %d\n", g_dbg_rds_limit);
+	pr_info("set rds limit %d\n", g_camctrl.dcam_rds_limit);
 	return count;
 }
 
@@ -2206,10 +2211,10 @@ static inline void sprd_dcam_show_frame_info(struct dcam_pipe_dev *dev,
 	else
 		size = cal_sprd_raw_pitch(frame->width) * frame->height;
 
-	pr_info("DCAM%u %s frame %u %u size %u %u buf %08lx %08x\n",
+	pr_debug("DCAM%u %s frame %u %u size %u %u buf %08lx %08x\n",
 		dev->idx, to_path_name(path->path_id),
 		frame->is_reserved, frame->is_compressed,
-		frame->width, frame->width,
+		frame->width, frame->height,
 		frame->buf.iova[0], size);
 }
 

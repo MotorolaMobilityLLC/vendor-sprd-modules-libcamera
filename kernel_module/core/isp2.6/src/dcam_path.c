@@ -317,14 +317,19 @@ int dcam_cfg_path_size(void *dcam_handle,
 			(crop_size.h == dst_size.h))
 			path->scaler_sel = DCAM_SCALER_BYPASS;
 		else if ((dst_size.w * 2 == crop_size.w) &&
-			(dst_size.h * 2 == crop_size.h) &&
-			(ch_desc->force_rds == 0)) {
-			/* only if not force_rds and 1/2 bining matched.  */
+			(dst_size.h * 2 == crop_size.h)) {
 			pr_debug("1/2 binning used. src %d %d, dst %d %d\n",
 				crop_size.w, crop_size.h, dst_size.w,
 				dst_size.h);
 			path->scaler_sel = DCAM_SCALER_BINNING;
 			path->bin_ratio = 0;
+		} else if ((dst_size.w * 4 == crop_size.w) &&
+			(dst_size.h * 4 == crop_size.h)) {
+			pr_debug("1/4 binning used. src %d %d, dst %d %d\n",
+				crop_size.w, crop_size.h, dst_size.w,
+				dst_size.h);
+			path->scaler_sel = DCAM_SCALER_BINNING;
+			path->bin_ratio = 1;
 		} else {
 			pr_debug("RDS used. in %d %d, out %d %d\n",
 				crop_size.w, crop_size.h, dst_size.w,
@@ -859,7 +864,7 @@ int dcam_path_set_store_frm(void *dcam_handle,
 		 * or else size may mismatch with frame.
 		 */
 		if (spin_trylock_irqsave(&path->size_lock, flags)) {
-			if (path->size_update) {
+			if (path->size_update && !frame->is_reserved) {
 				dcam_update_path_size(dev, path);
 				frame->param_data = path->priv_size_data;
 				path->size_update = 0;

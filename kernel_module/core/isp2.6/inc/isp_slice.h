@@ -279,8 +279,6 @@ struct isp_slice_context {
 	uint32_t overlap_right;
 };
 
-extern uint32_t line_buffer_len;
-
 int isp_cfg_slice_fetch_info(
 			void *cfg_in, struct isp_slice_context *slc_ctx);
 

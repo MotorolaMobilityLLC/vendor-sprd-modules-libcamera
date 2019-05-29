@@ -56,8 +56,6 @@
 #define pr_fmt(fmt) "ISP_CORE: %d %d %s : "\
 	fmt, current->pid, __LINE__, __func__
 
-
-uint32_t line_buffer_len;
 unsigned long *isp_cfg_poll_addr[ISP_CONTEXT_MAX];
 
 static DEFINE_MUTEX(isp_pipe_dev_mutex);
@@ -2102,7 +2100,7 @@ static int sprd_isp_update_context(void *isp_handle, int ctx_id, void *param)
 
 	mutex_lock(&dev->path_mutex);
 	pctx = &dev->ctx[ctx_id];
-	if (max_size->w > line_buffer_len) {
+	if (max_size->w > g_camctrl.isp_linebuf_len) {
 		pctx->need_slice = 1;
 		pr_info("ctx %d need_slice. w %d\n", pctx->ctx_id, max_size->w);
 	}
@@ -2226,7 +2224,7 @@ new_ctx:
 				pctx->ctx_id);
 		goto thrd_err;
 	}
-	if (max_size->w > line_buffer_len) {
+	if (max_size->w > g_camctrl.isp_linebuf_len) {
 		pctx->need_slice = 1;
 		pr_info("ctx %d need_slice. w %d\n", pctx->ctx_id, max_size->w);
 	}
@@ -2949,7 +2947,7 @@ static int isp_init_statis_bufferq(
 					if (ret)
 						put_empty_frame(pframe);
 					else
-						pr_info("kaddr %p, vaddr %p\n", (void *)kaddr, (void *)uaddr);
+						pr_debug("kaddr %p, vaddr %p\n", (void *)kaddr, (void *)uaddr);
 				}
 			}
 
@@ -3227,17 +3225,18 @@ static int sprd_isp_dev_open(void *isp_handle, void *param)
 		/* line_buffer_len for debug */
 		if (s_dbg_linebuf_len > 0 &&
 			s_dbg_linebuf_len <= ISP_LINE_BUFFER_W)
-			line_buffer_len = s_dbg_linebuf_len;
+			g_camctrl.isp_linebuf_len = s_dbg_linebuf_len;
 		else
-			line_buffer_len = ISP_LINE_BUFFER_W;
+			g_camctrl.isp_linebuf_len = ISP_LINE_BUFFER_W;
 
 		if (dev->sec_mode == SEC_SPACE_PRIORITY)
 			dev->wmode = ISP_AP_MODE;
 		else
 			dev->wmode = s_dbg_work_mode;
+		g_camctrl.isp_wmode = dev->wmode;
 
 		pr_info("camca isp sec_mode=%d, work mode: %d,  line_buf_len: %d\n",
-			dev->sec_mode, dev->wmode, line_buffer_len);
+			dev->sec_mode, dev->wmode, g_camctrl.isp_linebuf_len);
 
 		dev->isp_hw = param;
 		mutex_init(&dev->path_mutex);

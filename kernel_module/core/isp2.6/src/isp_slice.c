@@ -158,14 +158,16 @@ static int get_slice_size_info(
 	uint32_t j;
 	uint32_t slice_num, slice_w, slice_w_out;
 	uint32_t slice_max_w, max_w;
+	uint32_t linebuf_len;
 	struct img_size *input = &in_ptr->frame_in_size;
 	struct img_size *output;
 
 	/* based input */
 	max_w = input->w;
 	slice_num = 1;
-	slice_max_w = line_buffer_len - SLICE_OVERLAP_W_MAX;
-	if (max_w <= line_buffer_len) {
+	linebuf_len = g_camctrl.isp_linebuf_len;
+	slice_max_w = linebuf_len - SLICE_OVERLAP_W_MAX;
+	if (max_w <= linebuf_len) {
 		slice_w = input->w;
 	} else {
 		do {
@@ -179,14 +181,14 @@ static int get_slice_size_info(
 	/* based output */
 	max_w = 0;
 	slice_num = 1;
-	slice_max_w = line_buffer_len;
+	slice_max_w = linebuf_len;
 	for (j = 0; j < ISP_SPATH_NUM; j++) {
 		output = in_ptr->frame_out_size[j];
 		if (output && (output->w > max_w))
 			max_w = output->w;
 	}
 	if (max_w > 0) {
-		if (max_w <= line_buffer_len) {
+		if (max_w <= linebuf_len) {
 			slice_w_out = max_w;
 		} else {
 			do {

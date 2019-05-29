@@ -46,11 +46,14 @@ enum cam_iommu_mode {
 extern int g_dbg_iommu_mode;
 extern int g_dbg_set_iommu_mode;
 
-
-/* for zoom debug during bringup */
-extern uint32_t g_dbg_zoom_mode;
-extern uint32_t g_dbg_rds_limit;
-
+/* for global camera control */
+struct cam_global_ctrl {
+	uint32_t dcam_zoom_mode;
+	uint32_t dcam_rds_limit;
+	uint32_t isp_wmode;
+	uint32_t isp_linebuf_len;
+};
+extern struct cam_global_ctrl g_camctrl;
 
 /* for memory leak debug */
 struct cam_mem_dbg_info {
@@ -131,6 +134,15 @@ enum cam_data_endian {
 	ENDIAN_HALFBIG,
 	ENDIAN_HALFLITTLE,
 	ENDIAN_MAX
+};
+
+enum cam_zoom_type {
+	ZOOM_DEFAULT = 0,
+	ZOOM_BINNING2,
+	ZOOM_BINNING4,
+	ZOOM_RDS,
+	ZOOM_ADAPTIVE,
+	ZOOM_TYPEMAX,
 };
 
 struct camera_format {

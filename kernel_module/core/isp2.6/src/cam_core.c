@@ -241,6 +241,7 @@ struct camera_module {
 	uint32_t is_smooth_zoom;
 	uint32_t zoom_solution; /* for dynamic zoom type swicth. */
 	uint32_t rds_limit; /* raw downsizer limit */
+	uint32_t binning_limit; /* binning limit: 1 - 1/2,  2 - 1/4 */
 	uint32_t zoom_ratio; /* userspace zoom ratio for aem statis */
 	struct camera_uinfo cam_uinfo;
 
@@ -311,6 +312,12 @@ struct cam_ioctl_cmd {
 };
 
 struct camera_queue *g_empty_frm_q;
+struct cam_global_ctrl g_camctrl = {
+	ZOOM_BINNING2,
+	DCAM_SCALE_DOWN_MAX * 10,
+	0,
+	ISP_MAX_LINE_WIDTH
+};
 
 static struct isp_pipe_ops *isp_ops;
 static struct dcam_pipe_ops *dcam_ops;
@@ -625,6 +632,9 @@ static void alloc_buffers(struct work_struct *work)
 	width = channel->swap_size.w;
 	height = channel->swap_size.h;
 	if (channel->compress_input) {
+		width = ALIGN(width, DCAM_FBC_TILE_WIDTH);
+		height = ALIGN(height, DCAM_FBC_TILE_HEIGHT);
+		pr_info("ch %d, FBC size (%d %d)\n", channel->ch_id, width, height);
 		size = dcam_if_cal_compressed_size(width, height);
 	} else if (channel->ch_uinfo.sn_fmt == IMG_PIX_FMT_GREY) {
 		size = cal_sprd_raw_pitch(width) * height;
@@ -1579,20 +1589,6 @@ static inline void get_largest_crop(
 	}
 }
 
-/* align dcam output w to 16 for debug convenience */
-static void align_w16(struct img_size *in, struct img_size *out, uint32_t *ratio)
-{
-	struct img_size align;
-
-	align.w = (out->w + 15) & (~0xF);
-	if (align.w <= in->w) {
-		*ratio = (1 << RATIO_SHIFT) * in->w / align.w;
-		align.h = fix_scale(in->h, *ratio);
-		align.h = (align.h + 1) & ~1;
-		*out = align;
-	}
-}
-
 static inline uint32_t multiply_ratio16(uint64_t num, uint32_t ratio16)
 {
 	return (uint32_t)((num * ratio16) >> 16);
@@ -1603,14 +1599,157 @@ static inline uint32_t divide_ratio16(uint64_t num, uint32_t ratio16)
 	return (uint32_t)div64_u64(num << 16, ratio16);
 }
 
-static int cal_channel_size(struct camera_module *module)
+static int cal_channel_swapsize(struct camera_module *module)
 {
-	uint32_t ratio_min, is_same_fov = 0;
+	uint32_t src_binning = 0;
+	uint32_t ratio_min, shift;
 	uint32_t ratio_p_w, ratio_p_h;
 	uint32_t ratio_v_w, ratio_v_h;
-	uint32_t ratio16_w, ratio16_h;
-	uint32_t align_w, align_h;
-	uint32_t illegal;
+	uint32_t ratio_p_w1, ratio_p_h1;
+	uint32_t ratio_v_w1, ratio_v_h1;
+	uint32_t isp_linebuf_len = g_camctrl.isp_linebuf_len;
+	struct channel_context *ch_prev;
+	struct channel_context *ch_vid;
+	struct channel_context *ch_cap;
+	struct img_size max_bypass, max_bin, max_rds, temp;
+	struct img_size src_p, dst_p, dst_v, max;
+
+	ch_prev = &module->channel[CAM_CH_PRE];
+	ch_cap = &module->channel[CAM_CH_CAP];
+	ch_vid = &module->channel[CAM_CH_VID];
+
+	if (ch_cap->enable) {
+		max.w = ch_cap->ch_uinfo.src_size.w;
+		max.h = ch_cap->ch_uinfo.src_size.h;
+		ch_cap->swap_size = max;
+		pr_info("cap swap size %d %d\n", max.w, max.h);
+	}
+
+	if (!ch_prev->enable)
+		return 0;
+
+	if (module->cam_uinfo.is_4in1) {
+		ch_prev->ch_uinfo.src_size.w >>= 1;
+		ch_prev->ch_uinfo.src_size.h >>= 1;
+		ch_vid->ch_uinfo.src_size.w >>= 1;
+		ch_vid->ch_uinfo.src_size.h >>= 1;
+	}
+
+	src_p.w = ch_prev->ch_uinfo.src_size.w;
+	src_p.h = ch_prev->ch_uinfo.src_size.h;
+	dst_p.w = ch_prev->ch_uinfo.dst_size.w;
+	dst_p.h = ch_prev->ch_uinfo.dst_size.h;
+	dst_v.w = dst_v.h = 1;
+	if (ch_vid->enable) {
+		dst_p.w = ch_vid->ch_uinfo.dst_size.w;
+		dst_p.h = ch_vid->ch_uinfo.dst_size.h;
+	}
+
+	if ((src_p.w * 2) <= module->cam_uinfo.sn_max_size.w)
+		src_binning = 1;
+
+	/* bypass dcam scaler always */
+	max_bypass = src_p;
+
+	/* go through binning path */
+	max_bin = src_p;
+	shift = 0;
+	if (src_binning == 1) {
+		if ((max_bin.w > isp_linebuf_len) &&
+			(dst_p.w <= isp_linebuf_len) &&
+			(dst_v.w <= isp_linebuf_len))
+			shift = 1;
+
+		module->binning_limit = 0;
+		if (module->zoom_solution == ZOOM_BINNING4)
+			module->binning_limit = 1;
+		else if (shift == 1)
+			module->binning_limit = 1;
+
+		pr_info("shift %d for binning, p=%d v=%d  src=%d, %d\n",
+			shift, dst_p.w, dst_v.w, max_bin.w, isp_linebuf_len);
+	} else {
+		if ((max_bin.w >= (dst_p.w * 2)) &&
+			(max_bin.w >= (dst_v.w * 2)))
+			shift = 1;
+		else if ((max_bin.w > isp_linebuf_len) &&
+			(dst_p.w <= isp_linebuf_len) &&
+			(dst_v.w <= isp_linebuf_len))
+			shift = 1;
+
+		module->binning_limit = 1;
+		if (module->zoom_solution == ZOOM_BINNING4)
+			module->binning_limit = 2;
+
+		pr_info("shift %d for full, p=%d v=%d  src=%d, %d\n",
+			shift, dst_p.w, dst_v.w, max_bin.w, isp_linebuf_len);
+	}
+	max_bin.w >>= shift;
+	max_bin.h >>= shift;
+
+	/* go through rds path */
+	max = src_p;
+	ratio_p_w = (1 << RATIO_SHIFT) * max.w / dst_p.w;
+	ratio_p_h = (1 << RATIO_SHIFT) * max.h / dst_p.h;
+	ratio_min = MIN(ratio_p_w, ratio_p_h);
+	temp.w = ((max.h * dst_p.w) / dst_p.h) & (~3);
+	temp.h = ((max.w * dst_p.h) / dst_p.w) & (~3);
+	ratio_p_w1 = (1 << RATIO_SHIFT) * temp.w / dst_p.w;
+	ratio_p_h1 = (1 << RATIO_SHIFT) * temp.h / dst_p.h;
+	ratio_min = MIN(ratio_min, MIN(ratio_p_w1, ratio_p_h1));
+	if (ch_vid->enable) {
+		ratio_v_w = (1 << RATIO_SHIFT) * max.w / dst_v.w;
+		ratio_v_h = (1 << RATIO_SHIFT) * max.h / dst_v.h;
+		ratio_min = MIN(ratio_min, MIN(ratio_v_w, ratio_v_h));
+		temp.w = ((max.h * dst_v.w) / dst_v.h) & (~3);
+		temp.h = ((max.w * dst_v.h) / dst_v.w) & (~3);
+		ratio_v_w1 = (1 << RATIO_SHIFT) * temp.w / dst_v.w;
+		ratio_v_h1 = (1 << RATIO_SHIFT) * temp.h / dst_v.h;
+		ratio_min = MIN(ratio_min, MIN(ratio_v_w1, ratio_v_h1));
+	}
+	ratio_min = MIN(ratio_min, ((module->rds_limit << RATIO_SHIFT) / 10));
+	ratio_min = MAX(ratio_min, (1 << RATIO_SHIFT));
+	max.w = fix_scale(max.w, ratio_min);
+	max.h = fix_scale(max.h, ratio_min);
+	max.w = ALIGN(max.w + ALIGN_OFFSET, ALIGN_OFFSET);
+	max.h = ALIGN(max.h + ALIGN_OFFSET, ALIGN_OFFSET);
+	max_rds = max;
+
+	/* for adaptive solution, select max of rds/bin */
+	switch (module->zoom_solution) {
+	case ZOOM_DEFAULT:
+		ch_prev->swap_size = max_bypass;
+		break;
+	case ZOOM_BINNING2:
+	case ZOOM_BINNING4:
+		ch_prev->swap_size = max_bin;
+		break;
+	case ZOOM_RDS:
+		ch_prev->swap_size = max_rds;
+		break;
+	case ZOOM_ADAPTIVE:
+		ch_prev->swap_size.w = MAX(max_bin.w, max_rds.w);
+		ch_prev->swap_size.h = MAX(max_bin.h, max_rds.h);
+		break;
+	default:
+		pr_warn("unknown zoom solution %d\n", module->zoom_solution);
+		ch_prev->swap_size = max_bypass;
+		break;
+	}
+	pr_info("prev bypass size (%d %d), bin size (%d %d)\n",
+		max_bypass.w, max_bypass.h, max_bin.w, max_bin.h);
+	pr_info("prev swap size (%d %d), rds size (%d %d)\n",
+		ch_prev->swap_size.w, ch_prev->swap_size.h,
+		max_rds.w, max_rds.h);
+
+	return 0;
+}
+
+static int cal_channel_size_bininig(
+	struct camera_module *module, uint32_t bypass_always)
+{
+	uint32_t shift = 0, factor;
+	uint32_t src_binning = 0;
 	struct channel_context *ch_prev;
 	struct channel_context *ch_vid;
 	struct channel_context *ch_cap;
@@ -1618,7 +1757,182 @@ static int cal_channel_size(struct camera_module *module)
 	struct sprd_img_rect crop_dst;
 	struct img_trim trim_pv = {0};
 	struct img_trim trim_c = {0};
-	struct img_size src_p, dst_p, dst_v, dcam_out, max, temp;
+	struct img_trim *isp_trim;
+	struct img_size src_p, dst_p, dst_v, dcam_out;
+
+	ch_prev = &module->channel[CAM_CH_PRE];
+	ch_cap = &module->channel[CAM_CH_CAP];
+	ch_vid = &module->channel[CAM_CH_VID];
+	if (!ch_prev->enable && !ch_cap->enable && !ch_vid->enable)
+		return 0;
+
+	dst_p.w = dst_p.h = 1;
+	dst_v.w = dst_v.h = 1;
+	crop_p = crop_v = crop_c = NULL;
+	if (ch_prev->enable) {
+		src_p.w = ch_prev->ch_uinfo.src_size.w;
+		src_p.h = ch_prev->ch_uinfo.src_size.h;
+		crop_p = &ch_prev->ch_uinfo.src_crop;
+		dst_p.w = ch_prev->ch_uinfo.dst_size.w;
+		dst_p.h = ch_prev->ch_uinfo.dst_size.h;
+		if ((src_p.w * 2) <= module->cam_uinfo.sn_max_size.w)
+			src_binning = 1;
+		pr_info("src crop prev %u %u %u %u\n",
+			crop_p->x, crop_p->y, crop_p->w, crop_p->h);
+	}
+	if (ch_vid->enable) {
+		crop_v = &ch_vid->ch_uinfo.src_crop;
+		dst_v.w = ch_vid->ch_uinfo.dst_size.w;
+		dst_v.h = ch_vid->ch_uinfo.dst_size.h;
+		pr_info("src crop vid %u %u %u %u\n",
+			crop_v->x, crop_v->y, crop_v->w, crop_v->h);
+	}
+	if (ch_prev->enable) {
+		crop_dst = *crop_p;
+		get_largest_crop(&crop_dst, crop_v);
+		trim_pv.start_x = crop_dst.x;
+		trim_pv.start_y = crop_dst.y;
+		trim_pv.size_x = crop_dst.w;
+		trim_pv.size_y = crop_dst.h;
+	}
+
+	if (ch_cap->enable) {
+		trim_c.start_x = ch_cap->ch_uinfo.src_crop.x;
+		trim_c.start_y = ch_cap->ch_uinfo.src_crop.y;
+		trim_c.size_x = ch_cap->ch_uinfo.src_crop.w;
+		trim_c.size_y = ch_cap->ch_uinfo.src_crop.h;
+	}
+	pr_info("trim_pv: %u %u %u %u\n", trim_pv.start_x,
+		trim_pv.start_y, trim_pv.size_x, trim_pv.size_y);
+	pr_info("trim_c: %u %u %u %u\n", trim_c.start_x,
+		trim_c.start_y, trim_c.size_x, trim_c.size_y);
+
+	if (ch_prev->enable) {
+		shift = 0;
+		if (bypass_always == 0) {
+			factor = (src_binning ? 10 : 9);
+			if ((trim_pv.size_x >= (dst_p.w * 4)) &&
+				(trim_pv.size_x >= (dst_v.w * 4)) &&
+				(trim_pv.size_y >= (dst_p.h * 4)) &&
+				(trim_pv.size_y >= (dst_v.h * 4)))
+				shift = 2;
+			else if ((trim_pv.size_x >= (dst_p.w * 2 * factor / 10)) &&
+				(trim_pv.size_x >= (dst_v.w * 2 * factor / 10)) &&
+				(trim_pv.size_y >= (dst_p.h * 2 * factor / 10)) &&
+				(trim_pv.size_y >= (dst_v.h * 2 * factor / 10)))
+					shift = 1;
+			if (((trim_pv.size_x >> shift) > ch_prev->swap_size.w) ||
+				((trim_pv.size_y >> shift) > ch_prev->swap_size.h))
+				shift++;
+		}
+		if (shift > 2) {
+			pr_info("dcam binning should limit to 1/4\n");
+			shift = 2;
+		}
+		if (shift > module->binning_limit) {
+			pr_info("bin shift limit to %d\n", module->binning_limit);
+			shift = module->binning_limit;
+		}
+
+		if (shift == 2) {
+			/* make sure output 2 aligned and trim invalid */
+			pr_debug("shift 2 trim_pv %d %d %d %d\n",
+				trim_pv.start_x, trim_pv.start_y,
+				trim_pv.size_x, trim_pv.size_y);
+			if ((trim_pv.size_x >> 2) & 1) {
+				trim_pv.size_x = (trim_pv.size_x + 4) & ~7;
+				if ((trim_pv.start_x + trim_pv.size_x) > src_p.w)
+					trim_pv.size_x -= 8;
+				trim_pv.start_x = (src_p.w - trim_pv.size_x) >> 1;
+			}
+			if ((trim_pv.size_y >> 2) & 1) {
+				trim_pv.size_y = (trim_pv.size_y + 4) & ~7;
+				if ((trim_pv.start_y + trim_pv.size_y) > src_p.h)
+					trim_pv.size_y -= 8;
+				trim_pv.start_y = (src_p.h - trim_pv.size_y) >> 1;
+			}
+			pr_debug("shift 2 trim_pv final %d %d %d %d\n",
+				trim_pv.start_x, trim_pv.start_y,
+				trim_pv.size_x, trim_pv.size_y);
+		}
+
+		dcam_out.w = (trim_pv.size_x >> shift);
+		dcam_out.h = (trim_pv.size_y >> shift);
+		if (ch_prev->compress_input) {
+			dcam_out.h = ALIGN_DOWN(dcam_out.h, DCAM_FBC_TILE_HEIGHT);
+			trim_pv.size_y = (dcam_out.h << shift);
+		}
+
+		pr_info("shift %d, dst_p %u %u, dst_v %u %u, dcam_out %u %u\n",
+			shift, dst_p.w, dst_p.h, dst_v.w, dst_v.h, dcam_out.w, dcam_out.h);
+
+		/* applied latest rect for aem */
+		module->zoom_ratio = src_p.w * ZOOM_RATIO_DEFAULT / crop_p->w;
+		ch_prev->trim_dcam = trim_pv;
+		ch_prev->rds_ratio = ((1 << shift) << RATIO_SHIFT);
+		ch_prev->dst_dcam = dcam_out;
+
+		isp_trim = &ch_prev->trim_isp;
+		isp_trim->size_x = ((ch_prev->ch_uinfo.src_crop.w >> shift) + 1) & ~1;
+		isp_trim->size_y = ((ch_prev->ch_uinfo.src_crop.h >> shift) + 1) & ~1;
+		isp_trim->size_x = min(isp_trim->size_x, dcam_out.w);
+		isp_trim->size_y = min(isp_trim->size_y, dcam_out.h);
+		isp_trim->start_x = ((dcam_out.w - isp_trim->size_x) >> 1) & ~1;
+		isp_trim->start_y = ((dcam_out.h - isp_trim->size_y) >> 1) & ~1;
+		pr_info("trim isp, prev %u %u %u %u\n",
+			isp_trim->start_x, isp_trim->start_y,
+			isp_trim->size_x, isp_trim->size_y);
+	}
+
+	if (ch_vid->enable) {
+		isp_trim = &ch_vid->trim_isp;
+		isp_trim->size_x = ((ch_vid->ch_uinfo.src_crop.w >> shift) + 1) & ~1;
+		isp_trim->size_y = ((ch_vid->ch_uinfo.src_crop.h >> shift) + 1) & ~1;
+		isp_trim->size_x = min(isp_trim->size_x, dcam_out.w);
+		isp_trim->size_y = min(isp_trim->size_y, dcam_out.h);
+		isp_trim->start_x = ((dcam_out.w - isp_trim->size_x) >> 1) & ~1;
+		isp_trim->start_y = ((dcam_out.h - isp_trim->size_y) >> 1) & ~1;
+		pr_info("trim isp, vid %u %u %u %u\n",
+			isp_trim->start_x, isp_trim->start_y,
+			isp_trim->size_x, isp_trim->size_y);
+	}
+
+	if (ch_cap->enable) {
+		ch_cap->trim_dcam = trim_c;
+		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
+			(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
+		ch_cap->trim_isp.start_x &= ~1;
+		ch_cap->trim_isp.start_y &= ~1;
+		ch_cap->trim_isp.size_x &= ~1;
+		ch_cap->trim_isp.size_y &= ~1;
+		if (ch_cap->trim_isp.size_x > trim_c.size_x)
+			ch_cap->trim_isp.size_x = trim_c.size_x;
+		if (ch_cap->trim_isp.size_y > trim_c.size_y)
+			ch_cap->trim_isp.size_y = trim_c.size_y;
+		pr_info("trim isp, cap %d %d %d %d\n",
+			ch_cap->trim_isp.start_x, ch_cap->trim_isp.start_y,
+			ch_cap->trim_isp.size_x, ch_cap->trim_isp.size_y);
+	}
+
+	pr_info("done\n");
+	return 0;
+}
+
+static int cal_channel_size_rds(struct camera_module *module)
+{
+	uint32_t ratio_min, is_same_fov = 0;
+	uint32_t ratio_p_w, ratio_p_h;
+	uint32_t ratio_v_w, ratio_v_h;
+	uint32_t ratio16_w, ratio16_h;
+	uint32_t align_w, align_h;
+	struct channel_context *ch_prev;
+	struct channel_context *ch_vid;
+	struct channel_context *ch_cap;
+	struct sprd_img_rect *crop_p, *crop_v, *crop_c;
+	struct sprd_img_rect crop_dst;
+	struct img_trim trim_pv = {0};
+	struct img_trim trim_c = {0};
+	struct img_size src_p, dst_p, dst_v, dcam_out;
 
 	ch_prev = &module->channel[CAM_CH_PRE];
 	ch_cap = &module->channel[CAM_CH_CAP];
@@ -1633,10 +1947,6 @@ static int cal_channel_size(struct camera_module *module)
 	if (ch_prev->enable) {
 		src_p.w = ch_prev->ch_uinfo.src_size.w;
 		src_p.h = ch_prev->ch_uinfo.src_size.h;
-		if (module->cam_uinfo.is_4in1) {
-			src_p.w /= 2;
-			src_p.h /= 2;
-		}
 		crop_p = &ch_prev->ch_uinfo.src_crop;
 		dst_p.w = ch_prev->ch_uinfo.dst_size.w;
 		dst_p.h = ch_prev->ch_uinfo.dst_size.h;
@@ -1693,12 +2003,7 @@ static int cal_channel_size(struct camera_module *module)
 		trim_c.size_x, trim_c.size_y);
 
 	if (ch_prev->enable) {
-		if (module->zoom_solution == 0) {
-			if (crop_p->w > ISP_MAX_LINE_WIDTH)
-				ratio_min = (2 << RATIO_SHIFT);
-			else
-				ratio_min = (1 << RATIO_SHIFT);
-		} else {
+		if (module->zoom_solution >= ZOOM_RDS) {
 			ratio_p_w = (1 << RATIO_SHIFT) * crop_p->w / dst_p.w;
 			ratio_p_h = (1 << RATIO_SHIFT) * crop_p->h / dst_p.h;
 			ratio_min = MIN(ratio_p_w, ratio_p_h);
@@ -1756,16 +2061,7 @@ static int cal_channel_size(struct camera_module *module)
 				trim_pv.start_y = 0;
 			trim_pv.start_x = ALIGN_DOWN(trim_pv.start_x, align);
 			trim_pv.start_y = ALIGN_DOWN(trim_pv.start_y, align);
-#if			0 /* if no need, remove later */
-			trim_pv.start_x =
-				ALIGN_DOWN((src_p.w - dcam_out.w) >> 1, align);
-			trim_pv.start_y =
-				ALIGN_DOWN((src_p.h - dcam_out.h) >> 1, align);
-			trim_pv.size_x =
-				ALIGN(src_p.w - (trim_pv.start_x << 1), align);
-			trim_pv.size_y =
-				ALIGN(src_p.h - (trim_pv.start_y << 1), align);
-#endif
+
 			ratio_min = 1 << RATIO_SHIFT;
 			pr_info("trim_pv aligned %u %u %u %u\n",
 				trim_pv.start_x, trim_pv.start_y,
@@ -1778,7 +2074,7 @@ static int cal_channel_size(struct camera_module *module)
 		}
 
 		/* check rds out limit if rds used */
-		if (module->zoom_solution == 1 && dcam_out.w > DCAM_RDS_OUT_LIMIT) {
+		if (dcam_out.w > DCAM_RDS_OUT_LIMIT) {
 			dcam_out.w = DCAM_RDS_OUT_LIMIT;
 			dcam_out.h = dcam_out.w * trim_pv.size_y / trim_pv.size_x;
 			dcam_out.w = ALIGN(dcam_out.w, align_w);
@@ -1804,132 +2100,37 @@ static int cal_channel_size(struct camera_module *module)
 			divide_ratio16(ch_prev->ch_uinfo.src_crop.w, ratio_min);
 		ch_prev->trim_isp.size_y =
 			divide_ratio16(ch_prev->ch_uinfo.src_crop.h, ratio_min);
-		ch_prev->trim_isp.size_x =
-			min(ch_prev->trim_isp.size_x, dcam_out.w);
-		ch_prev->trim_isp.size_y =
-			min(ch_prev->trim_isp.size_y, dcam_out.h);
-		if (dcam_out.w >= ch_prev->trim_isp.size_x)
-			ch_prev->trim_isp.start_x =
+		ch_prev->trim_isp.size_x = min(ch_prev->trim_isp.size_x, dcam_out.w);
+		ch_prev->trim_isp.size_y = min(ch_prev->trim_isp.size_y, dcam_out.h);
+		ch_prev->trim_isp.start_x =
 				(dcam_out.w - ch_prev->trim_isp.size_x) >> 1;
-		else {
-			ch_prev->trim_isp.start_x = 0;
-			pr_warn("shouldn't run here\n");
-		}
-		if (dcam_out.h >= ch_prev->trim_isp.size_y)
-			ch_prev->trim_isp.start_y =
+		ch_prev->trim_isp.start_y =
 				(dcam_out.h - ch_prev->trim_isp.size_y) >> 1;
-		else {
-			ch_prev->trim_isp.start_y = 0;
-			pr_warn("shouldn't run here\n");
-		}
 
 		pr_info("trim isp, prev %u %u %u %u\n",
 			ch_prev->trim_isp.start_x, ch_prev->trim_isp.start_y,
 			ch_prev->trim_isp.size_x, ch_prev->trim_isp.size_y);
 
-		illegal = ((ch_prev->trim_isp.start_x + ch_prev->trim_isp.size_x) > dcam_out.w);
-		illegal |= ((ch_prev->trim_isp.start_y + ch_prev->trim_isp.size_y) > dcam_out.h);
-
 		if (ch_vid->enable) {
 			ch_vid->trim_isp.size_x =
-				divide_ratio16(ch_vid->ch_uinfo.src_crop.w,
-					       ratio_min);
+				divide_ratio16(ch_vid->ch_uinfo.src_crop.w, ratio_min);
 			ch_vid->trim_isp.size_y =
-				divide_ratio16(ch_vid->ch_uinfo.src_crop.h,
-					       ratio_min);
-			ch_vid->trim_isp.size_x =
-				min(ch_vid->trim_isp.size_x, dcam_out.w);
-			ch_vid->trim_isp.size_y =
-				min(ch_vid->trim_isp.size_y, dcam_out.h);
+				divide_ratio16(ch_vid->ch_uinfo.src_crop.h, ratio_min);
+			ch_vid->trim_isp.size_x = min(ch_vid->trim_isp.size_x, dcam_out.w);
+			ch_vid->trim_isp.size_y = min(ch_vid->trim_isp.size_y, dcam_out.h);
 			ch_vid->trim_isp.start_x =
-				(dcam_out.w - ch_vid->trim_isp.size_x) >> 1;
+					(dcam_out.w - ch_vid->trim_isp.size_x) >> 1;
 			ch_vid->trim_isp.start_y =
-				(dcam_out.h - ch_vid->trim_isp.size_y) >> 1;
-			illegal |= ((ch_vid->trim_isp.start_x + ch_vid->trim_isp.size_x) > dcam_out.w);
-			illegal |= ((ch_vid->trim_isp.start_y + ch_vid->trim_isp.size_y) > dcam_out.h);
+					(dcam_out.h - ch_vid->trim_isp.size_y) >> 1;
+
 			pr_info("trim isp, vid %d %d %d %d\n",
 				ch_vid->trim_isp.start_x, ch_vid->trim_isp.start_y,
 				ch_vid->trim_isp.size_x, ch_vid->trim_isp.size_y);
 		}
-		if (illegal)
-			pr_err("fatal error. trim size out of range.");
-	}
-
-	/* calculate possible max swap buffer size before stream on*/
-	if (ch_prev->enable && ch_prev->swap_size.w == 0) {
-		if (module->cam_uinfo.is_4in1) {
-			max.w = module->cam_uinfo.sn_rect.w / 2;
-			max.h = module->cam_uinfo.sn_rect.h / 2;
-		} else {
-			max.w = module->cam_uinfo.sn_rect.w;
-			max.h = module->cam_uinfo.sn_rect.h;
-		}
-		if (module->zoom_solution == 0) {
-			if (crop_p->w > ISP_MAX_LINE_WIDTH)
-				ratio_min = (2 << RATIO_SHIFT);
-			else
-				ratio_min = (1 << RATIO_SHIFT);
-		} else {
-			uint32_t ratio_p_w1, ratio_p_h1;
-			uint32_t ratio_v_w1, ratio_v_h1;
-
-			ratio_p_w = (1 << RATIO_SHIFT) * max.w / dst_p.w;
-			ratio_p_h = (1 << RATIO_SHIFT) * max.h / dst_p.h;
-			ratio_min = MIN(ratio_p_w, ratio_p_h);
-			temp.w = ((max.h * dst_p.w) / dst_p.h) & (~3);
-			temp.h = ((max.w * dst_p.h) / dst_p.w) & (~3);
-			ratio_p_w1 = (1 << RATIO_SHIFT) * temp.w / dst_p.w;
-			ratio_p_h1 = (1 << RATIO_SHIFT) * temp.h / dst_p.h;
-			ratio_min = MIN(ratio_min, MIN(ratio_p_w1, ratio_p_h1));
-			if (ch_vid->enable) {
-				ratio_v_w = (1 << RATIO_SHIFT) * max.w / dst_v.w;
-				ratio_v_h = (1 << RATIO_SHIFT) * max.h / dst_v.h;
-				ratio_min = MIN(ratio_min, MIN(ratio_v_w, ratio_v_h));
-				temp.w = ((max.h * dst_v.w) / dst_v.h) & (~3);
-				temp.h = ((max.w * dst_v.h) / dst_v.w) & (~3);
-				ratio_v_w1 = (1 << RATIO_SHIFT) * temp.w / dst_v.w;
-				ratio_v_h1 = (1 << RATIO_SHIFT) * temp.h / dst_v.h;
-				ratio_min = MIN(ratio_min, MIN(ratio_v_w1, ratio_v_h1));
-			}
-			ratio_min = MIN(ratio_min, ((module->rds_limit << RATIO_SHIFT) / 10));
-			ratio_min = MAX(ratio_min, (1 << RATIO_SHIFT));
-		}
-
-		max.w = fix_scale(max.w, ratio_min);
-		max.w = (max.w + 1) & ~1;
-		max.h = fix_scale(max.h, ratio_min);
-		max.h = (max.h + 1) & ~1;
-		temp.w = module->cam_uinfo.sn_rect.w;
-		temp.h = module->cam_uinfo.sn_rect.h;
-		align_w16(&temp, &max, &ratio_min);
-
-		/* check rds out limit if rds used */
-		if (module->zoom_solution == 1 && max.w > DCAM_RDS_OUT_LIMIT) {
-			temp.w = ch_prev->trim_dcam.size_x;
-			temp.h = ch_prev->trim_dcam.size_y;
-			max.w = DCAM_RDS_OUT_LIMIT;
-			max.h = max.w * temp.h / temp.w;
-			max.w = (max.w + 1) & ~1;
-			max.h = (max.h + 1) & ~1;
-			align_w16(&temp, &max, &ratio_min);
-		}
-
-		max.w += ALIGN_OFFSET;
-		max.h += ALIGN_OFFSET;
-
-		/* enlarge size for fbc */
-		max.w = ALIGN(max.w, DCAM_FBC_TILE_WIDTH);
-		max.h = ALIGN(max.h, DCAM_FBC_TILE_HEIGHT);
-
-		ch_prev->swap_size = max;
-		pr_info("prev path swap size %d %d\n",
-			ch_prev->swap_size.w, ch_prev->swap_size.h);
 	}
 
 	if (ch_cap->enable) {
 		ch_cap->trim_dcam = trim_c;
-		ch_cap->swap_size.w = ch_cap->ch_uinfo.src_size.w;
-		ch_cap->swap_size.h = ch_cap->ch_uinfo.src_size.h;
 		get_diff_trim(&ch_cap->ch_uinfo.src_crop,
 			(1 << RATIO_SHIFT), &trim_c, &ch_cap->trim_isp);
 		ch_cap->trim_isp.start_x &= ~1;
@@ -2002,10 +2203,10 @@ static int config_channel_size(
 		ch_desc.input_trim.size_x = ch_desc.input_size.w;
 		ch_desc.input_trim.size_y = ch_desc.input_size.h;
 	} else {
-		if (module->zoom_solution == 0)
-			ch_desc.force_rds = 0;
-		else
+		if (channel->rds_ratio & ((1 << RATIO_SHIFT) - 1))
 			ch_desc.force_rds = 1;
+		else
+			ch_desc.force_rds = 0;
 		ch_desc.input_trim = channel->trim_dcam;
 		ch_desc.output_size = channel->dst_dcam;
 	}
@@ -2152,7 +2353,6 @@ static int config_4in1_channel_size(struct camera_module *module,
 
 static int zoom_proc(void *param)
 {
-	int ret = 0;
 	int update_pv = 0, update_c = 0;
 	int update_always = 0;
 	struct camera_module *module;
@@ -2204,7 +2404,14 @@ next:
 		if (ch_cap->enable && (ch_cap->mode_ltm == MODE_LTM_CAP))
 			update_always = 1;
 
-		ret = cal_channel_size(module);
+		if (module->zoom_solution == ZOOM_DEFAULT)
+			cal_channel_size_bininig(module, 1);
+		else if (module->zoom_solution == ZOOM_BINNING2 ||
+			module->zoom_solution == ZOOM_BINNING4)
+			cal_channel_size_bininig(module, 0);
+		else
+			cal_channel_size_rds(module);
+
 		if (ch_cap->enable && (update_c || update_always))
 			config_channel_size(module, ch_cap);
 		if (ch_prev->enable && (update_pv || update_always))
@@ -2571,6 +2778,48 @@ static void deinit_4in1_secondary_path(struct camera_module *module,
 	pr_info("done\n");
 }
 
+static int init_channels_size(struct camera_module *module)
+{
+	struct img_size max;
+	struct isp_init_param init_param;
+	struct channel_context *ch_prev, *ch_vid, *ch_cap;
+
+	/* bypass RDS if sensor output binning size for image quality */
+	module->zoom_solution = g_camctrl.dcam_zoom_mode;
+	module->rds_limit = g_camctrl.dcam_rds_limit;
+
+	/* force binning as smaller as possible for security */
+	if (module->grp->camsec_cfg.camsec_mode != SEC_UNABLE)
+		module->zoom_solution = ZOOM_BINNING4;
+
+	cal_channel_swapsize(module);
+
+	pr_info("zoom_solution %d, limit %d %d\n",
+		module->zoom_solution,
+		module->rds_limit, module->binning_limit);
+
+	ch_prev = &module->channel[CAM_CH_PRE];
+	ch_vid = &module->channel[CAM_CH_VID];
+	ch_cap = &module->channel[CAM_CH_CAP];
+
+	if (ch_prev->enable) {
+		max.w = MAX(ch_prev->ch_uinfo.dst_size.w, ch_prev->swap_size.w);
+		if (ch_vid->enable)
+			max.w = MAX(ch_vid->ch_uinfo.dst_size.w, max.w);
+		init_param.max_size = max;
+		isp_ops->update_context(module->isp_dev_handle,
+			ch_prev->isp_path_id >> ISP_CTXID_OFFSET, &init_param);
+	}
+
+	if (ch_cap->enable) {
+		max.w = MAX(ch_cap->ch_uinfo.dst_size.w, ch_cap->swap_size.w);
+		init_param.max_size = max;
+		isp_ops->update_context(module->isp_dev_handle,
+			ch_cap->isp_path_id >> ISP_CTXID_OFFSET, &init_param);
+	}
+
+	return 0;
+}
 
 static int init_cam_channel(
 			struct camera_module *module,
@@ -2579,29 +2828,20 @@ static int init_cam_channel(
 	int ret = 0;
 	int isp_ctx_id = 0, isp_path_id = 0, dcam_path_id = 0;
 	int slave_path_id = 0;
-	int update_isp_ctx, new_isp_ctx, new_isp_path, new_dcam_path;
+	int new_isp_ctx, new_isp_path, new_dcam_path;
 	struct channel_context *channel_prev = NULL;
 	struct channel_context *channel_cap = NULL;
 	struct camera_uchannel *ch_uinfo;
 	struct isp_path_base_desc path_desc;
 	struct isp_init_param init_param;
 
-	/* for debug. */
-	module->zoom_solution = g_dbg_zoom_mode;
-	/* bypass RDS if sensor output binning size for image quality */
-	if ((module->cam_uinfo.sn_size.w * 2) <= module->cam_uinfo.sn_max_size.w)
-		module->zoom_solution = 0;
-	if (module->cam_uinfo.is_4in1)
-		module->zoom_solution = 0;
-	pr_info("zoom_solution %d\n", module->zoom_solution);
-
 	ch_uinfo = &channel->ch_uinfo;
 	ch_uinfo->src_size.w = module->cam_uinfo.sn_rect.w;
 	ch_uinfo->src_size.h = module->cam_uinfo.sn_rect.h;
 	new_isp_ctx = 0;
-	update_isp_ctx = 0;
 	new_isp_path = 0;
 	new_dcam_path = 0;
+	memset(&init_param, 0, sizeof(struct isp_init_param));
 
 	switch (channel->ch_id) {
 	case CAM_CH_PRE:
@@ -2610,15 +2850,6 @@ static int init_cam_channel(
 		new_isp_ctx = 1;
 		new_isp_path = 1;
 		new_dcam_path = 1;
-
-		module->rds_limit = g_dbg_rds_limit;
-		if (module->zoom_solution == 0) {
-			init_param.max_size.w = ch_uinfo->src_size.w / 2;
-		} else {
-			init_param.max_size.w = (ch_uinfo->src_size.w * 10 + 40) / module->rds_limit;
-			if (init_param.max_size.w < ch_uinfo->dst_size.w)
-				init_param.max_size.w = ch_uinfo->dst_size.w;
-		}
 		break;
 
 	case CAM_CH_VID:
@@ -2631,20 +2862,10 @@ static int init_cam_channel(
 			pr_err("vid channel is not independent from preview\n");
 		}
 
-		module->rds_limit = g_dbg_rds_limit;
-		if (module->zoom_solution == 0)
-			init_param.max_size.w = ch_uinfo->src_size.w / 2;
-		else
-			init_param.max_size.w = (ch_uinfo->src_size.w * 10 + 40) / module->rds_limit;
-
-		if (init_param.max_size.w < ch_uinfo->dst_size.w)
-				init_param.max_size.w = ch_uinfo->dst_size.w;
-
 		channel->dcam_path_id = channel_prev->dcam_path_id;
 		isp_ctx_id = (channel_prev->isp_path_id >> ISP_CTXID_OFFSET);
 		isp_path_id = ISP_SPATH_VID;
 		new_isp_path = 1;
-		update_isp_ctx = 1;
 		break;
 
 	case CAM_CH_CAP:
@@ -2653,7 +2874,6 @@ static int init_cam_channel(
 		new_isp_ctx = 1;
 		new_isp_path = 1;
 		new_dcam_path = 1;
-		init_param.max_size.w = MAX(ch_uinfo->src_size.w, ch_uinfo->dst_size.w);
 		break;
 
 	case CAM_CH_PRE_THM:
@@ -2726,15 +2946,6 @@ static int init_cam_channel(
 		ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 				DCAM_PATH_CFG_BASE,
 				channel->dcam_path_id, &ch_desc);
-	}
-
-	if (update_isp_ctx) {
-		ret = isp_ops->update_context(module->isp_dev_handle, isp_ctx_id, &init_param);
-		if (ret < 0) {
-			pr_err("fail to update isp context for size %d %d.\n",
-					init_param.max_size.w, init_param.max_size.h);
-			goto exit;
-		}
 	}
 
 	if (new_isp_ctx) {
@@ -4548,7 +4759,15 @@ static int img_ioctl_stream_on(
 	/* settle down compression policy here */
 	config_compression(module);
 
-	ret = cal_channel_size(module);
+	ret = init_channels_size(module);
+	if (module->zoom_solution == ZOOM_DEFAULT)
+		cal_channel_size_bininig(module, 1);
+	else if (module->zoom_solution == ZOOM_BINNING2 ||
+		module->zoom_solution == ZOOM_BINNING4)
+		cal_channel_size_bininig(module, 0);
+	else
+		cal_channel_size_rds(module);
+
 	ch = &module->channel[CAM_CH_PRE];
 	if (ch->enable)
 		config_channel_size(module, ch);
@@ -4651,13 +4870,9 @@ static int img_ioctl_stream_on(
 
 			for (j = 0; j < ISP_LTM_BUF_NUM; j++) {
 				if (ch->ltm_bufs[j] == NULL) {
-					pr_info("ch->ltm_bufs[%d] NULL\n", j);
+					pr_debug("ch->ltm_bufs[%d] NULL\n", j);
 					continue;
 				}
-				/*
-				pr_info("ch->ltm_bufs[%d] ISP_PATH_CFG_LTM_BUF ctx[%d] path[%d]\n",
-					j, isp_ctx_id, isp_path_id);
-				*/
 				ret = isp_ops->cfg_path(module->isp_dev_handle,
 						ISP_PATH_CFG_LTM_BUF,
 						isp_ctx_id, isp_path_id,

@@ -751,8 +751,9 @@ void dcam_dump_int_tracker(uint32_t idx)
 		return;
 
 	for (i = 0; i < DCAM_IRQ_NUMBER; i++) {
-		pr_info("DCAM%u i=%d, int=%u\n", idx, i,
-			 dcam_int_tracker[idx][i]);
+		if (dcam_int_tracker[idx][i])
+			pr_info("DCAM%u i=%d, int=%u\n", idx, i,
+				 dcam_int_tracker[idx][i]);
 	}
 
 #ifdef DCAM_INT_RECORD
