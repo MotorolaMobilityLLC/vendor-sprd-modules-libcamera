@@ -4586,7 +4586,7 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 
-	if (param) {
+	if (param && !cxt->cur_status.settings.force_lock_ae) {
 		struct ae_set_tuoch_zone *touch_zone = param;
 		if ((touch_zone->touch_zone.w > 1) && (touch_zone->touch_zone.h > 1)) {
 			cxt->cur_result.wts.stable = 0;
