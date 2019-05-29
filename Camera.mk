@@ -34,6 +34,11 @@ HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.6
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
+HAL_DIR := hal3_2v6
+OEM_DIR := oem2v6
+ISPALG_DIR := ispalg/isp2.x
+ISPDRV_DIR := camdrv/isp2.7
 endif
 
 # TBD: will remove hal1.0/src/SprdCameraParameters.cpp for hal3
@@ -119,10 +124,11 @@ LOCAL_SRC_FILES+= \
 endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_DEL_CPP)),)
 LOCAL_SRC_FILES += \
     tool/baseband_autotester_camera/bbat_camera.cpp \
     test.cpp
-
+endif
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/vsp/inc \
     $(LOCAL_PATH)/vsp/src \

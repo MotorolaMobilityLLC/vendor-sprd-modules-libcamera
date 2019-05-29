@@ -6,8 +6,10 @@ LOCAL_STATIC_LIBRARIES += android.hardware.camera.common@1.0-helper
 
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
 
+ifeq ($(strip $(TARGET_BOARD_DEL_CPP)),)
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CPP_USER_DRIVER)),true)
 LOCAL_SHARED_LIBRARIES += libcppdrv
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
