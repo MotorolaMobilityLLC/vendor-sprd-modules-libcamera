@@ -20,7 +20,9 @@
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
-
+#ifdef IPG
+extern SENSOR_INFO_T g_ipg_mipi_raw_info;
+#endif
 // gc area
 #ifdef GC0310
 extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
@@ -423,7 +425,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef HI846
     {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
-
+#ifdef IPG
+    {MODULE_SUNNY, "ipg",  &g_ipg_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor_infor_tab[] = {
@@ -512,7 +516,9 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef HI846
     {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {&hi846_drv_entry, 0, 0, 0}},
 #endif
-
+#ifdef IPG
+    {MODULE_SUNNY, "ipg",  &g_ipg_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
@@ -565,7 +571,9 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #ifdef S5K5E9YU05
     {MODULE_SUNNY, "s5k5e9yu05", &g_s5k5e9yu05_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
-
+#ifdef IPG
+    {MODULE_SUNNY, "ipg",  &g_ipg_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
@@ -578,7 +586,6 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #ifdef C2580
     {MODULE_SUNNY, "c2580", &g_c2580_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
-
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #ifdef OV7251
@@ -587,7 +594,6 @@ const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #ifdef OV7251_DUAL
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
-
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
@@ -597,7 +603,6 @@ const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 #ifdef OV7251_DUAL
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
-
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
