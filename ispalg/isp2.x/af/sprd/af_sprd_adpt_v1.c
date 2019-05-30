@@ -2845,11 +2845,6 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	af->isp_info.height = in_ptr->size.h;
 	ISP_LOGI("af state = %s, focus state = %s; image width = %d, height = %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), in_ptr->size.w, in_ptr->size.h);
 
-	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
-	if (0 != strcmp(af->AF_MODE, "none")) {
-		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
-		return AFV1_SUCCESS;
-	}
 	if (in_ptr->sensor_fps.is_high_fps) {
 		afm_skip_num = in_ptr->sensor_fps.high_fps_skip_num - 1;
 		if (afm_skip_num != af->afm_skip_num) {
@@ -2862,6 +2857,12 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 
 	af_set_default_roi(af, af->algo_mode);
 	do_start_af(af);
+
+	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
+	if (0 != strcmp(af->AF_MODE, "none")) {
+		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
+		return AFV1_SUCCESS;
+	}
 
 	if (AF_STOPPED == af->focus_state) {
 		trigger_notice_force(af);
