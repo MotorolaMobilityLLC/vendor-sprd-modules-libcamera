@@ -10072,6 +10072,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
 
     case CAMERA_PARAM_APERTURE:
         set_exif_flag = 1;
+        set_isp_flag = 0;
         exif_cmd = SENSOR_EXIF_CTRL_APERTUREVALUE;
         isp_param = param;
         CMR_LOGD("aperture %d", param);
