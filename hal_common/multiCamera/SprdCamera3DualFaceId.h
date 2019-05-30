@@ -52,7 +52,6 @@ namespace sprdcamera {
 
 #define DUAL_FACEID_MAX_STREAMS 2
 #define DUAL_FACEID_BUFFER_SUM 4
-#define DUAL_BUFFER_SUM 20
 
 typedef enum { CAM_MAIN_FACE_ID = 0, CAM_AUX_FACE_ID = 2 } FaceId;
 typedef enum { MAIN_BUFFER, AUX_BUFFER } buffer_type_t;
@@ -85,8 +84,6 @@ class SprdCamera3DualFaceId : SprdCamera3MultiBase {
                           const camera3_notify_msg_t *msg);
     static void dump(const struct camera3_device *device, int fd);
     static int flush(const struct camera3_device *device);
-    static void clearFrameNeverMatched(uint32_t main_frame_number,
-                                       uint32_t sub_frame_number);
     static camera3_device_ops_t mCameraCaptureOps;
     static camera3_callback_ops callback_ops_main;
     static camera3_callback_ops callback_ops_aux;
@@ -112,23 +109,14 @@ class SprdCamera3DualFaceId : SprdCamera3MultiBase {
     Mutex mMainLock;
     Mutex mAuxLock;
     Mutex mPendingLock;
-    Mutex mNotifyLockMain;
-    Mutex mNotifyLockAux;
-    Mutex mUnmatchedQueueLock;
-    Mutex mClearBufferLock;
     Condition mRequestSignal;
     List<multi_request_saved_t> mSavedRequestList;
     List<new_mem_t *> mLocalBufferListMain;
     List<new_mem_t *> mLocalBufferListAux;
-    List<new_mem_t *> mLocalBufferList;
-    List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
-    List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
-    List<muxer_queue_msg_t> mMatchMsgList;
-    List<camera3_notify_msg_t> mNotifyListMain;
-    List<camera3_notify_msg_t> mNotifyListAux;
+    List<new_mem_t *> mResultBufferListMain;
+    List<new_mem_t *> mResultBufferListAux;
     new_mem_t mLocalBufferMain[DUAL_FACEID_BUFFER_SUM];
     new_mem_t mLocalBufferAux[DUAL_FACEID_BUFFER_SUM];
-    new_mem_t mLocalBuffer[DUAL_BUFFER_SUM];
     new_mem_t mOtpLocalBuffer;
     camera3_stream_t mMainStreams[DUAL_FACEID_MAX_STREAMS];
     camera3_stream_t mAuxStreams[DUAL_FACEID_MAX_STREAMS - 1];
@@ -155,8 +143,6 @@ class SprdCamera3DualFaceId : SprdCamera3MultiBase {
     int getCameraInfo(int face_camera_id, struct camera_info *info);
     void freeLocalCapBuffer();
     void saveRequest(camera3_capture_request_t *request);
-    int allocateOneBuffe(int w, int h, new_mem_t *new_mem, int type, int usage);
-    void clearBeginMatchlist();
 };
 };
 
