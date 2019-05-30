@@ -1351,10 +1351,12 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
         rc = mRealBokeh->map(output_buf, &output_buf_addr);
         if (rc != NO_ERROR) {
             HAL_LOGE("fail to map output buffer");
+            goto fail_map_output;
         }
         rc = mRealBokeh->map(input_buf1, &input_buf1_addr);
         if (rc != NO_ERROR) {
-            HAL_LOGE("fail to map output buffer");
+            HAL_LOGE("fail to map input buffer");
+            goto fail_map_input;
         }
 
         memcpy(output_buf_addr, input_buf1_addr, ADP_BUFSIZE(*input_buf1));
@@ -1362,7 +1364,10 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
                                    ADP_BUFSIZE(*output_buf));
 
         mRealBokeh->unmap(input_buf1);
+    fail_map_input:
         mRealBokeh->unmap(output_buf);
+    fail_map_output:
+        rc = NO_ERROR;
     }
     HAL_LOGV("X");
 
@@ -2671,7 +2676,9 @@ int SprdCamera3RealBokeh::configureStreams(
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-
+    mPreviewMuxerThread->mPreviewMuxerMsgList.clear();
+    mCaptureThread->mCaptureMsgList.clear();
+    mDepthMuxerThread->mDepthMuxerMsgList.clear();
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
@@ -4115,15 +4122,12 @@ void SprdCamera3RealBokeh::_dump(const struct camera3_device *device, int fd) {
 void SprdCamera3RealBokeh::preClose(void) {
 
     HAL_LOGI("E");
+    if ((mRealBokeh->mApiVersion == SPRD_API_MODE) && mBokehAlgo) {
+        mBokehAlgo->setFlag();
+    }
     if (mCaptureThread != NULL) {
-        if ((mRealBokeh->mApiVersion == SPRD_API_MODE) && mBokehAlgo) {
-            mBokehAlgo->setFlag();
-        }
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
-        }
-        if (mDepthMuxerThread->isRunning()) {
-            mDepthMuxerThread->requestExit();
         }
     }
     if (mPreviewMuxerThread != NULL) {
@@ -4131,10 +4135,17 @@ void SprdCamera3RealBokeh::preClose(void) {
             mPreviewMuxerThread->requestExit();
         }
     }
+    if (mDepthMuxerThread != NULL) {
+        if (mDepthMuxerThread->isRunning()) {
+            mDepthMuxerThread->requestExit();
+        }
+    }
+
     // wait threads quit to relese object
     mCaptureThread->join();
-    mDepthMuxerThread->join();
     mPreviewMuxerThread->join();
+    mDepthMuxerThread->join();
+
     HAL_LOGI("X");
 }
 
