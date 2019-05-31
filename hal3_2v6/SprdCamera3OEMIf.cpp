@@ -143,7 +143,7 @@ enum VIDEO_3DNR {
 #define CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH 0x805
 
 #define UPDATE_RANGE_FPS_COUNT 0x04
-
+#define CAM_POWERHINT_WAIT_COUNT 35
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -3545,29 +3545,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         return;
     }
 
-    if (!isCapturing() && (miSPreviewFirstFrame || mStartFrameNum)) {
-        if (getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_BOKEH ||
-            mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
-            mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
-            mSprdAppmodeId == CAMERA_MODE_FILTER ||
-            (sprddefInfo.slowmotion > 1) ||
-            (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
-        } else if (mRecordingMode == true) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-        } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-        } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
-            setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
-        }
-        mStartFrameNum = 0;
-    }
-
     if (miSPreviewFirstFrame) {
         GET_END_TIME;
         GET_USE_TIME;
-        HAL_LOGD("Launch Camera Time:%d(ms).", s_use_time);
+        HAL_LOGI("Launch Camera Time:%d(ms).", s_use_time);
 
         float cam_init_time;
         if (getApctCamInitSupport()) {
@@ -3795,6 +3776,26 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%" PRId64, frame->fd,
                  buff_vir, frame_num, buffer_timestamp);
+
+        if (!isCapturing()) {
+            if (frame_num - mStartFrameNum == CAM_POWERHINT_WAIT_COUNT) {
+                if (getMultiCameraMode() == MODE_BLUR ||
+                    getMultiCameraMode() == MODE_BOKEH ||
+                    mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
+                    mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
+                    mSprdAppmodeId == CAMERA_MODE_FILTER ||
+                    (sprddefInfo.slowmotion > 1) ||
+                    (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+                } else if (mRecordingMode == true) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+                } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+                }
+            }
+        }
 
         if (frame->type == PREVIEW_FRAME) {
 #ifdef CONFIG_CAMERA_EIS
