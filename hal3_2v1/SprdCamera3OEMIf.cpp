@@ -226,7 +226,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
-      mUsingSW3DNR(false), mVideoProcessedWithPreview(false), mRedisplayFum(0),
+      mUsingSW3DNR(0), mVideoProcessedWithPreview(false), mRedisplayFum(0),
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
@@ -332,10 +332,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         0,
     };
     property_get("persist.vendor.cam.3dnr.version", prop, "0");
-    if (1 == atoi(prop))
-        mUsingSW3DNR = true;
+    mUsingSW3DNR = atoi(prop);
 
-    if (mUsingSW3DNR) {
+    if (mUsingSW3DNR == 1) {
         for (int i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
             m3DNRPrevScaleHeapReserverd[i] = NULL;
         }
@@ -2041,7 +2040,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode) {
 
         // 3dnr video recording on
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
-            if (mUsingSW3DNR) {
+            if (mUsingSW3DNR == 1) {
                 fps_param.max_fps = 20;
                 fps_param.min_fps = 10;
                 HAL_LOGD("sw 3dnr mode, adjust max fps to 20, min fps to 10");
@@ -3031,7 +3030,7 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
         }
     }
 
-    if (mUsingSW3DNR) {
+    if (mUsingSW3DNR == 1) {
         for (i = 0; i < PRE_SW_3DNR_RESERVE_NUM; i++) {
             if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
                 m3DNRPrevScaleHeapReserverd[i]->ion_heap->free_kaddr();
@@ -3044,10 +3043,12 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     }
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-    Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
-    Callback_Sw3DNRSmallPathFree(0, 0, 0, 0);
-#endif
 
+    if (mUsingSW3DNR == 2) {
+        Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+        Callback_Sw3DNRSmallPathFree(0, 0, 0, 0);
+    }
+#endif
     if (NULL != mAISceneScaleHeapReserverd) {
         freeCameraMem(mAISceneScaleHeapReserverd);
         mAISceneScaleHeapReserverd = NULL;
@@ -3132,12 +3133,13 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
-    if ((mUsingSW3DNR) && (sprddefInfo.sprd_3dnr_enabled)) {
+    if ((mUsingSW3DNR == 1) && (sprddefInfo.sprd_3dnr_enabled)) {
         Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     }
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-    if ((sprddefInfo.sprd_3dnr_enabled)) {
+
+    if ((sprddefInfo.sprd_3dnr_enabled && mUsingSW3DNR == 2)) {
         Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
         Callback_Sw3DNRSmallPathFree(0, 0, 0, 0);
     }
@@ -3250,7 +3252,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                 mVideoProcessedWithPreview = false;
                 mVideoCopyFromPreviewFlag = false;
             } else {
-                if (mUsingSW3DNR)
+                if (mUsingSW3DNR == 1)
                     mVideoProcessedWithPreview = true;
                 else
                     mVideoCopyFromPreviewFlag = true;
@@ -3277,7 +3279,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     }
 
-    if ((sprddefInfo.sprd_3dnr_enabled == 1) && (mUsingSW3DNR)) {
+    if ((sprddefInfo.sprd_3dnr_enabled == 1) && (mUsingSW3DNR == 1)) {
         mCaptureMode = CAMERA_NORMAL_MODE;
         HAL_LOGD("SW 3DNR, using NORMAL_MODE");
     }
@@ -7292,18 +7294,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
             (0 == mMultiCameraMode) &&
             (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
-            (false == mRecordingMode) && (!mUsingSW3DNR)) {
+            (false == mRecordingMode) && (mUsingSW3DNR != THREEDNR_SW_1)) {
             property_get("persist.vendor.cam.cnr.mode", value, "0");
             if (atoi(value)) {
                 mCNRMode = 1;
             }
         } else {
             mCNRMode = 0;
-        }
-        if (CAMERA_MODE_3DNR_PHOTO == mSprdAppmodeId && mCNRMode) {
-#ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-            mCNRMode = 0;
-#endif
         }
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR,
                  mCNRMode);
@@ -7314,11 +7311,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_3DNR_ENABLED: /*add for 3dnr*/
     {
         SPRD_DEF_Tag sprddefInfo;
+        int threednr_mode = THREEDNR_NONE;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         HAL_LOGD("sprddefInfo.sprd_3dnr_enabled=%d ",
                  sprddefInfo.sprd_3dnr_enabled);
+#ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
+        if (mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
+            property_get("persist.vendor.cam.3dnr.version", prop, "0");
+            mUsingSW3DNR = atoi(prop);
+        }
+#endif
+        if (sprddefInfo.sprd_3dnr_enabled) {
+            threednr_mode = mUsingSW3DNR ? mUsingSW3DNR : THREEDNR_HW;
+        }
+
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
-                 sprddefInfo.sprd_3dnr_enabled);
+                 threednr_mode);
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;
@@ -9343,7 +9354,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         }
     }
 
-    if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR)) {
+    if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR == 1)) {
         for (i = 0; i < sum; i++) {
             if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
                 freeCameraMem(m3DNRPrevScaleHeapReserverd[i]);
@@ -9407,19 +9418,21 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         if (mCommonHeapReserved == NULL) {
             mem_size = CAMERA_ALIGNED_16(mLargestPictureWidth) *
                        CAMERA_ALIGNED_16(mLargestPictureHeight) * 3 / 2;
-#ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-            SPRD_DEF_Tag sprddefInfo;
-            mSetting->getSPRDDEFTag(&sprddefInfo);
-            if (sprddefInfo.sprd_3dnr_enabled) {
-                HAL_LOGD("size=%d, sum=%d, mem_type=%d sprd_3dnr_enabled %d",
-                         size, sum, type, sprddefInfo.sprd_3dnr_enabled);
-                mem_size = size;
+            if (mUsingSW3DNR == 2) {
+                SPRD_DEF_Tag sprddefInfo;
+                mSetting->getSPRDDEFTag(&sprddefInfo);
+                if (sprddefInfo.sprd_3dnr_enabled) {
+                    HAL_LOGD(
+                        "size=%d, sum=%d, mem_type=%d sprd_3dnr_enabled %d",
+                        size, sum, type, sprddefInfo.sprd_3dnr_enabled);
+                    mem_size = size;
+                } else {
+                    mem_size =
+                        mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
+                }
             } else {
                 mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
             }
-#else
-            mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
-#endif
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
                 HAL_LOGE("memory is null");
@@ -9650,7 +9663,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *vir_addr++ = (cmr_uint)m3DNRPrevHeapReserverd[i]->data;
             *fd++ = m3DNRPrevHeapReserverd[i]->fd;
         }
-    } else if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR)) {
+    } else if ((type == CAMERA_PREVIEW_SCALE_3DNR) && (mUsingSW3DNR == 1)) {
         for (i = 0; i < sum; i++) {
             if (m3DNRPrevScaleHeapReserverd[i] == NULL) {
                 memory = allocCameraMem(size, 1, true);

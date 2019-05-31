@@ -823,7 +823,7 @@ cmr_int camera_is_need_change_fmt(cmr_handle oem_handle,
 
     is_snp_frm = ((1 << data_ptr->channel_id) & snp_cxt->channel_bits);
     if (is_snp_frm &&
-        ((1 == camera_get_hdr_flag(cxt)) || (1 == camera_get_3dnr_flag(cxt)))) {
+        (1 == camera_get_hdr_flag(cxt) || 1 == camera_get_sw_3dnr_flag(cxt))) {
         if (IMG_DATA_TYPE_JPEG == data_ptr->fmt ||
             IMG_DATA_TYPE_RAW == data_ptr->fmt) {
             is_change_fmt = 1;
@@ -911,10 +911,10 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             return;
         }
     }
-
     receiver_handle = cxt->grab_cxt.caller_handle[frame->channel_id];
     if ((chn_bits == cxt->snp_cxt.channel_bits) &&
-        ((1 == camera_get_hdr_flag(cxt)) || (1 == camera_get_3dnr_flag(cxt))) &&
+        ((1 == camera_get_hdr_flag(cxt)) ||
+         1 == camera_get_sw_3dnr_flag(cxt)) &&
         (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt))) {
         struct img_frm out_param;
         struct img_frm small_out_param;
@@ -947,28 +947,20 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             /*if frm_id biger than 0,you should search hdr buffer in
               hdr buffer list. You can't use (frame->yaddr) on 64bit system*/
             if (frm_id >= CMR_CAPTURE_MEM_SUM) {
-                if (1 == camera_get_hdr_flag(cxt))
+                if (1 == camera_get_hdr_flag(cxt)) {
                     ret = cmr_preview_get_hdr_buf(cxt->prev_cxt.preview_handle,
                                                   cxt->camera_id, frame,
                                                   &vir_addr_y);
-                else if (1 == camera_get_3dnr_flag(cxt)) {
-                    if (1 == camera_get_sw_3dnr_flag(cxt)) {
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
-                        ret = cmr_preview_get_3dnr_buf_extra_small(
-                            cxt->prev_cxt.preview_handle, cxt->camera_id, frame,
-                            &vir_addr_y, &threednr_handle,
-                            &(ipm_in_param.small_src_frame));
-#else
-                        ret = cmr_preview_get_3dnr_buf_extra(
-                            cxt->prev_cxt.preview_handle, cxt->camera_id, frame,
-                            &vir_addr_y, 1, &threednr_handle);
-#endif
-                    } else
-                        ret = cmr_preview_get_3dnr_buf(
-                            cxt->prev_cxt.preview_handle, cxt->camera_id, frame,
-                            &vir_addr_y);
+                } else if (THREEDNR_SW_1 == camera_get_3dnr_flag(cxt)) {
+                    ret = cmr_preview_get_3dnr_buf_extra(
+                        cxt->prev_cxt.preview_handle, cxt->camera_id, frame,
+                        &vir_addr_y, 1, &threednr_handle);
+                } else if (THREEDNR_SW_2 == camera_get_3dnr_flag(cxt)) {
+                    ret = cmr_preview_get_3dnr_buf_extra_small(
+                        cxt->prev_cxt.preview_handle, cxt->camera_id, frame,
+                        &vir_addr_y, &threednr_handle,
+                        &(ipm_in_param.small_src_frame));
                 }
-
                 out_param.size =
                     cxt->snp_cxt.post_proc_setting.chn_out_frm[0].size;
                 out_param.fd = frame->fd;
@@ -985,30 +977,24 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
                 /*if frm_id is 0,use default chn_out_frm.
                   This is also dest img buffer         */
                 out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-                if ((1 == camera_get_3dnr_flag(cxt)) &&
-                    (1 == camera_get_sw_3dnr_flag(cxt))) {
-                    struct frm_info frame;
-                    frame.yaddr = out_param.addr_vir.addr_y;
-                    frame.uaddr = out_param.addr_phy.addr_u;
-                    frame.vaddr = out_param.addr_phy.addr_v;
-                    frame.fd = out_param.fd;
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
+                struct frm_info frame;
+                frame.yaddr = out_param.addr_vir.addr_y;
+                frame.uaddr = out_param.addr_phy.addr_u;
+                frame.vaddr = out_param.addr_phy.addr_v;
+                frame.fd = out_param.fd;
+                if (THREEDNR_SW_1 == camera_get_3dnr_flag(cxt)) {
+                    ret = cmr_preview_get_3dnr_buf_extra(
+                        cxt->prev_cxt.preview_handle, cxt->camera_id, &frame,
+                        &vir_addr_y, 0, &threednr_handle);
+                } else if (THREEDNR_SW_2 == camera_get_3dnr_flag(cxt)) {
                     ret = cmr_preview_get_3dnr_buf_extra_small(
                         cxt->prev_cxt.preview_handle, cxt->camera_id, &frame,
                         &vir_addr_y, &threednr_handle,
                         &(ipm_in_param.small_src_frame));
-
-#else
-                    ret = cmr_preview_get_3dnr_buf_extra(
-                        cxt->prev_cxt.preview_handle, cxt->camera_id, &frame,
-                        &vir_addr_y, 0, &threednr_handle);
-#endif
                 }
             }
         }
-#ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-        if ((1 == camera_get_3dnr_flag(cxt)) &&
-            (1 == camera_get_sw_3dnr_flag(cxt))) {
+        if (THREEDNR_SW_2 == camera_get_3dnr_flag(cxt)) {
             ret = cmr_preview_get_3dnr_target_buf(cxt->prev_cxt.preview_handle,
                                                   cxt->camera_id,
                                                   &ipm_in_param.dst_frame);
@@ -1017,9 +1003,6 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
                 cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
         }
 
-#else
-        ipm_in_param.dst_frame = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
-#endif
         cxt->snp_cxt.cur_frm_info = *frame;
         ipm_cxt->frm_num++;
         ipm_in_param.src_frame = out_param;
@@ -1033,14 +1016,12 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
         if (1 == camera_get_hdr_flag(cxt)) {
             ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
                                      &imp_out_param);
-        } else if (1 == camera_get_3dnr_flag(cxt)) {
-            if (1 == camera_get_sw_3dnr_flag(cxt)) {
-                imp_out_param.dst_frame.size.width =
-                    cxt->ipm_cxt.threenr_small_width;
-                imp_out_param.dst_frame.size.height =
-                    cxt->ipm_cxt.threenr_small_height;
-                imp_out_param.private_data = threednr_handle;
-            }
+        } else if (1 == camera_get_sw_3dnr_flag(cxt)) {
+            imp_out_param.dst_frame.size.width =
+                cxt->ipm_cxt.threenr_small_width;
+            imp_out_param.dst_frame.size.height =
+                cxt->ipm_cxt.threenr_small_height;
+            imp_out_param.private_data = threednr_handle;
             CMR_LOGI("y_addr 0x%lx in->src_frame.fd 0x%x "
                      "ipm_in_param.small_src_frame.fd 0x%x",
                      ipm_in_param.src_frame.addr_vir.addr_y,
@@ -2012,7 +1993,7 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                             SNAPSHOT_EVT_REPROCESS, &frame);
         }
-    } else if (1 == camera_get_3dnr_flag(cxt)) {
+    } else if (1 == camera_get_sw_3dnr_flag(cxt)) {
         frame = cxt->snp_cxt.cur_frm_info;
         buf_ptr = &cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
         CMR_LOGI("cb_param->dst_frame.addr_vir.addr_y %p capture_size %d "
@@ -2176,60 +2157,26 @@ exit:
 }
 
 void camera_set_3dnr_flag(struct camera_context *cxt, cmr_u32 threednr_flag) {
-    char value[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    CMR_LOGD("flag %d", threednr_flag);
-    sem_wait(&cxt->threednr_flag_sm);
-    property_get("debug.camera.3dnr.capture", value, "true");
-    if (!strcmp(value, "false")) {
-        threednr_flag = 0;
-    }
 
-    if (threednr_flag) { // the flag is set from user, and need reassign the
-                         // value by the hw capability
-        struct cmr_path_capability capability;
-        cmr_bzero(&capability, sizeof(capability));
-        cmr_grab_path_capability(cxt->grab_cxt.grab_handle, &capability);
-        CMR_LOGD("'capability.support_3dnr_modes:%d",
-                 capability.support_3dnr_mode);
-#ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-        if (capability.support_3dnr_mode == SPRD_3DNR_SW || cxt->is_snapshot) {
-#else
-        if (capability.support_3dnr_mode == SPRD_3DNR_SW) {
-#endif
-            threednr_flag = 1;
-        } else if (capability.support_3dnr_mode == SPRD_3DNR_HW) {
-            threednr_flag = 2;
-        } else {
-            threednr_flag = 0;
-        }
-    }
+    sem_wait(&cxt->threednr_flag_sm);
 
     cxt->snp_cxt.is_3dnr = threednr_flag;
-    if (1 == cxt->snp_cxt.is_3dnr) {
-        property_get("persist.vendor.cam.3dnr.version", value, "0");
-        if (0 == atoi(value))
-            cxt->snp_cxt.is_sw_3dnr = 0;
-        else
-            cxt->snp_cxt.is_sw_3dnr = 1;
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
-        cxt->snp_cxt.is_sw_3dnr = 1;
-#endif
-    } else {
-        cxt->snp_cxt.is_sw_3dnr = 0;
-    }
-    CMR_LOGD("Set 3dnr is : %d, and sw 3dnr is : %d", cxt->snp_cxt.is_3dnr,
-             cxt->snp_cxt.is_sw_3dnr);
+    cxt->snp_cxt.is_sw_3dnr =
+        (THREEDNR_SW_1 == threednr_flag || THREEDNR_SW_2 == threednr_flag) ? 1
+                                                                           : 0;
+    CMR_LOGD(
+        "Set 3dnr is : %d, and sw 3dnr is : %d,threednr_flag=%d,app_mode=%d",
+        cxt->snp_cxt.is_3dnr, cxt->snp_cxt.is_sw_3dnr, threednr_flag,
+        cxt->app_mode);
     sem_post(&cxt->threednr_flag_sm);
 }
 
 cmr_u32 camera_get_3dnr_flag(struct camera_context *cxt) {
     cmr_u32 threednr_flag = 0;
-    // sem_wait(&cxt->threednr_flag_sm);
+
     threednr_flag = cxt->snp_cxt.is_3dnr;
-    // sem_post(&cxt->threednr_flag_sm);
     CMR_LOGV("%d", threednr_flag);
+
     return threednr_flag;
 }
 
@@ -2287,6 +2234,7 @@ cmr_u32 camera_get_sw_3dnr_flag(struct camera_context *cxt) {
     cmr_u32 threednr_flag = 0;
     // sem_wait(&cxt->threednr_flag_sm);
     threednr_flag = cxt->snp_cxt.is_sw_3dnr;
+
     // sem_post(&cxt->threednr_flag_sm);
     CMR_LOGV("%d", threednr_flag);
     return threednr_flag;
@@ -2535,7 +2483,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void *param) {
                     TAKE_PICTURE_NEEDED ==
                         camera_get_snp_req((cmr_handle)cxt) &&
                     1 != camera_get_hdr_flag(cxt) &&
-                    1 != camera_get_3dnr_flag(cxt)) {
+                    1 != camera_get_sw_3dnr_flag(cxt)) {
                     is_need_resume = 1;
                 }
             }
@@ -2590,7 +2538,7 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
             CMR_LOGI("close hdr before jpeg enc done");
             if (1 == camera_get_hdr_flag(cxt)) {
                 ret = camera_close_hdr(cxt);
-            } else if (1 == camera_get_3dnr_flag(cxt)) {
+            } else if (1 == camera_get_sw_3dnr_flag(cxt)) {
                 ret = camera_close_3dnr(cxt);
             }
             CMR_LOGI("jpeg enc done");
@@ -4259,7 +4207,7 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
             CMR_LOGI("get hdr num %d", cxt->ipm_cxt.hdr_num);
         }
     }
-    if (1 == camera_get_3dnr_flag(cxt) && 1 != cxt->is_3dnr_video) {
+    if (1 == camera_get_sw_3dnr_flag(cxt) && 1 != cxt->is_3dnr_video) {
         struct isp_adgain_exp_info adgain_exp_info;
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
@@ -6120,7 +6068,7 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
 
     CMR_LOGI("camera id %d, capture mode %d", camera_id, snp_cxt->snp_mode);
 
-    if ((1 != camera_get_hdr_flag(cxt)) && (1 != camera_get_3dnr_flag(cxt))) {
+    if ((1 != camera_get_hdr_flag(cxt)) && 1 != camera_get_sw_3dnr_flag(cxt)) {
         /*open flash*/
         memset(&setting_param, 0, sizeof(setting_param));
         setting_param.ctrl_flash.capture_mode.capture_mode = snp_cxt->snp_mode;
@@ -6797,7 +6745,10 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 #endif
     param_ptr->cap_inf_cfg.sensor_id = camera_id;
     param_ptr->cap_inf_cfg.cfg.need_3dnr =
-        (2 == camera_get_3dnr_flag(cxt)) ? 1 : 0;
+        (THREEDNR_HW == camera_get_3dnr_flag(cxt) ||
+         THREEDNR_SW_2 == camera_get_3dnr_flag(cxt))
+            ? 1
+            : 0;
     if (1 == sn_cxt->cur_sns_ex_info.embedded_line_enable) {
         SENSOR_VAL_T val;
         struct sensor_embedded_info ebd_info;
@@ -6990,8 +6941,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         /* for sharkl2 offline path */
         if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
             video_snapshot_type != VIDEO_SNAPSHOT_VIDEO &&
-            !((1 == camera_get_3dnr_flag(cxt)) ||
-              (2 == camera_get_3dnr_flag(cxt)))) {
+            !(THREEDNR_NONE != camera_get_3dnr_flag(cxt))) {
             cmr_bzero(&capture_param, sizeof(capture_param));
             capture_param.type = 1;
             ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,
@@ -8487,6 +8437,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
                 CMR_LOGE("failed to get app mode %ld", ret);
                 goto exit;
             }
+            cxt->app_mode = setting_param.cmd_type_value;
             CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
             if (setting_param.camera_id == 0) {
                 if (!cxt->ipm_cxt.ai_scene_inited) {
@@ -8550,21 +8501,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         out_param_ptr->is_3dnr = 0;
         out_param_ptr->is_sw_3dnr = 0;
     } else {
-        // out_param_ptr->is_3dnr = setting_param.cmd_type_value;
         out_param_ptr->is_3dnr = camera_get_3dnr_flag(cxt);
-        if (1 == out_param_ptr->is_3dnr) {
-            property_get("persist.vendor.cam.3dnr.version", value, "0");
-            if (0 == atoi(value))
-                out_param_ptr->is_sw_3dnr = 0;
-            else
-                out_param_ptr->is_sw_3dnr = 1;
-
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
-            out_param_ptr->is_sw_3dnr = 1;
-#endif
-        } else {
-            out_param_ptr->is_sw_3dnr = 0;
-        }
+        out_param_ptr->is_sw_3dnr = camera_get_sw_3dnr_flag(cxt);
     }
     CMR_LOGD("get preview 3dnr param: %d, %d", out_param_ptr->is_3dnr,
              out_param_ptr->is_sw_3dnr);
@@ -8808,7 +8746,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         if (camera_get_hdr_flag(cxt)) {
             out_param_ptr->frame_count = cxt->ipm_cxt.hdr_num;
             out_param_ptr->frame_ctrl = FRAME_HDR_PROC;
-        } else if (1 == camera_get_3dnr_flag(cxt)) {
+        } else if (1 == camera_get_sw_3dnr_flag(cxt)) {
             out_param_ptr->frame_count = cxt->ipm_cxt.threednr_num;
             out_param_ptr->frame_ctrl = FRAME_3DNR_PROC;
         } else {
@@ -9936,7 +9874,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
 #ifdef CONFIG_CAMERA_FRAME_MANUAL
         if (cxt->cmr_set_env != 1) {
-            if (!camera_get_3dnr_flag(cxt) && !camera_get_sw_3dnr_flag(cxt)) {
+            if (THREEDNR_NONE == camera_get_3dnr_flag(cxt) &&
+                !camera_get_sw_3dnr_flag(cxt)) {
                 cxt->setting_cxt.is_active = 1;
                 setting_param.camera_id = cxt->camera_id;
                 cxt->cmr_set_env = 1;
@@ -9952,13 +9891,13 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         ret = camera_hdr_set_ev(oem_handle);
         if (ret)
             CMR_LOGE("fail to set hdr ev");
-    } else if (1 == camera_get_3dnr_flag(cxt) &&
+    } /*else if (1 == camera_get_sw_3dnr_flag(cxt) &&
                (0 == camera_get_sw_3dnr_flag(cxt))) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
         ret = camera_3dnr_set_ev(oem_handle, 1);
         if (ret)
-            CMR_LOGE("fail to set 3dnr ev");
-    } else {
+            CMR_LOGE("fail to set 3dnr ev");*/
+    else {
         if (cxt->camera_id == 0 ||
             !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
               strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))) {
@@ -10051,7 +9990,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     CMR_LOGI("E");
 
     sem_wait(&cxt->snapshot_sm);
-    if (1 == camera_get_3dnr_flag(cxt)) {
+    if (1 == camera_get_sw_3dnr_flag(cxt)) {
 #ifdef OEM_HANDLE_3DNR
         if (0 != cxt->ipm_cxt.frm_num) {
             cxt->ipm_cxt.frm_num = 0;
@@ -11534,7 +11473,8 @@ cmr_int camera_sw_3dnr_info_cfg(cmr_handle oem_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CMR_LOGD("call camera_sw_3dnr_info_cfg, %d, %d", camera_get_3dnr_flag(cxt),
              camera_get_sw_3dnr_flag(cxt));
-    if ((1 == camera_get_3dnr_flag(cxt)) && (1 == camera_get_sw_3dnr_flag(cxt)))
+
+    if (1 == camera_get_sw_3dnr_flag(cxt))
         ret = cmr_grab_sw_3dnr_cfg(cxt->grab_cxt.grab_handle, threednr_info);
 
     return ret;
@@ -11600,8 +11540,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_WITH_FLASH;
     else if (1 == camera_get_hdr_flag(cxt))
         capture_param.type = DCAM_CAPTURE_START_HDR;
-    else if ((1 == camera_get_3dnr_flag(cxt)) ||
-             (2 == camera_get_3dnr_flag(cxt)))
+    else if (THREEDNR_NONE != camera_get_3dnr_flag(cxt))
         capture_param.type = DCAM_CAPTURE_START_3DNR;
     else if (cxt->is_multi_mode == MODE_BOKEH ||
              cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {

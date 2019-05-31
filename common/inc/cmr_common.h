@@ -572,6 +572,13 @@ typedef enum {
     SPRD_CAM_IMAGE_SW_ALGORITHM_MAX
 } sprd_cam_image_sw_algorithm_type_t;
 
+typedef enum {
+    THREEDNR_NONE = 0,
+    THREEDNR_SW_1,
+    THREEDNR_SW_2,
+    THREEDNR_HW,
+} sprd_3dnr_mode;
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;

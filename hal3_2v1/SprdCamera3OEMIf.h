@@ -291,7 +291,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     // sw 3dnr solution used
-    bool mUsingSW3DNR;               // only for blacksesame 3dnr (sw solution)
+    int mUsingSW3DNR; // 1 for blacksesame 3dnr (sw solution): 2 for sprd sw
+                      // 3dnr
     bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
 #ifdef CONFIG_CAMERA_OFFLINE
     bool mCallbackZslEnabled;

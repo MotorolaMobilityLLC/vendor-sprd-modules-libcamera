@@ -2678,7 +2678,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     /* skip num frames for pre-flash, because the frame is black*/
-    if (!prev_cxt->prev_param.is_sw_3dnr && prev_cxt->prev_preflash_skip_en &&
+    if (prev_cxt->prev_preflash_skip_en &&
         IMG_SKIP_SW_KER == prev_cxt->skip_mode) {
         if (prev_cxt->prev_frm_cnt <= prev_cxt->prev_skip_num) {
             CMR_LOGD("ignore this frame, preview cnt %ld, total skip num %ld, "
@@ -2824,7 +2824,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
 
-        if (false == prev_cxt->prev_param.is_sw_3dnr) {
+        if (prev_cxt->prev_param.is_3dnr != THREEDNR_SW_1) {
             prev_cxt->prev_buf_id = frame_type.buf_id;
             if (prev_cxt->prev_param.refocus_eb == 1) {
                 CMR_LOGE("prev_cxt->prev_cnt %ld ,prev_cxt->prev_frm_cnt %ld "
@@ -4123,21 +4123,22 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     if ((prev_cxt->prev_param.frame_ctrl == FRAME_3DNR_PROC) &&
-        prev_cxt->prev_param.is_3dnr && prev_cxt->prev_param.is_sw_3dnr) {
-#ifndef CONFIG_CAMERA_3DNR_CAPTURE_SW
-        struct sprd_img_3dnr_param stream_info;
-        stream_info.w = prev_cxt->threednr_cap_smallwidth;
-        stream_info.h = prev_cxt->threednr_cap_smallheight;
-        stream_info.is_3dnr = 1;
-        CMR_LOGD("sw_3dnr_info_cfg, %d, %d, %d", stream_info.w, stream_info.h,
-                 stream_info.is_3dnr);
-        ret = handle->ops.sw_3dnr_info_cfg(handle->oem_handle, &stream_info);
-        if (ret) {
-            CMR_LOGE("sw 3dnr info cfg failed");
-            ret = CMR_CAMERA_FAIL;
-            goto exit;
+        prev_cxt->prev_param.is_sw_3dnr) {
+        if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1) {
+            struct sprd_img_3dnr_param stream_info;
+            stream_info.w = prev_cxt->threednr_cap_smallwidth;
+            stream_info.h = prev_cxt->threednr_cap_smallheight;
+            stream_info.is_3dnr = 1;
+            CMR_LOGD("sw_3dnr_info_cfg, %d, %d, %d", stream_info.w,
+                     stream_info.h, stream_info.is_3dnr);
+            ret =
+                handle->ops.sw_3dnr_info_cfg(handle->oem_handle, &stream_info);
+            if (ret) {
+                CMR_LOGE("sw 3dnr info cfg failed");
+                ret = CMR_CAMERA_FAIL;
+                goto exit;
+            }
         }
-#endif
         ret = handle->ops.channel_start(handle->oem_handle, channel_bits,
                                         skip_num);
     } else
@@ -4167,7 +4168,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
 
         /*init 3dnr*/
         CMR_LOGD("is_support_3dnr %u", prev_cxt->prev_param.is_3dnr);
-        if (prev_cxt->prev_param.is_3dnr == 1) {
+        if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1) {
             prev_3dnr_open(handle, camera_id);
         }
 
@@ -4326,7 +4327,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
             prev_depthmap_close(handle, camera_id);
         }
         /*deinit 3dnr_preview*/
-        if (prev_cxt->prev_param.is_3dnr == 1) {
+        if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1) {
             prev_3dnr_close(handle, camera_id);
         }
 
@@ -5176,13 +5177,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     if (!is_restart) {
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
-        mem_ops->alloc_mem(CAMERA_SNAPSHOT, handle->oem_handle, &total_mem_size,
-                           &sum, prev_cxt->cap_phys_addr_array,
-                           prev_cxt->cap_virt_addr_array,
-                           prev_cxt->cap_fd_array);
-#else
-        if (prev_cxt->prev_param.is_3dnr && prev_cxt->prev_param.is_sw_3dnr) {
+        if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1) {
             mem_ops->gpu_alloc_mem(
                 CAMERA_SNAPSHOT_SW3DNR, handle->oem_handle, &total_mem_size,
                 &sum, prev_cxt->cap_phys_addr_array,
@@ -5194,14 +5189,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->cap_phys_addr_array, prev_cxt->cap_virt_addr_array,
                 prev_cxt->cap_fd_array);
         }
-#endif
-#if 0 // for coverity 181595
-        for (i = 1; i < CMR_CAPTURE_MEM_SUM; i++) {
-            prev_cxt->cap_phys_addr_array[i] = prev_cxt->cap_phys_addr_array[0];
-            prev_cxt->cap_virt_addr_array[i] = prev_cxt->cap_virt_addr_array[0];
-            prev_cxt->cap_fd_array[i] = prev_cxt->cap_fd_array[0];
-        }
-#endif
+
         CMR_LOGD("virt_addr 0x%lx, fd 0x%x", prev_cxt->cap_virt_addr_array[0],
                  prev_cxt->cap_fd_array[0]);
 
@@ -5251,8 +5239,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             channel_buffer_size += (prev_cxt->threednr_cap_smallwidth *
                                     prev_cxt->threednr_cap_smallheight * 3 / 2);
             // alloc buffer for 3dnr YUV
-            if (prev_cxt->prev_param.is_3dnr &&
-                prev_cxt->prev_param.is_sw_3dnr) {
+            if (prev_cxt->prev_param.is_sw_3dnr) {
                 channel_small_size = prev_cxt->threednr_cap_smallwidth *
                                      prev_cxt->threednr_cap_smallheight;
                 channel_small_buffer_size = channel_small_size * 3 / 2;
@@ -5268,17 +5255,17 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                     prev_cxt->cap_3dnr_fd_path_array,
                     prev_cxt->cap_3dnr_handle_path_array, &real_width,
                     &real_height);
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
-                ret = mem_ops->gpu_alloc_mem(
-                    CAMERA_SNAPSHOT_SW3DNR_SMALL_PATH, handle->oem_handle,
-                    &channel_small_buffer_size, &threednr_cap_sum,
-                    prev_cxt->small_cap_3dnr_phys_addr_path_array,
-                    prev_cxt->small_cap_3dnr_virt_addr_path_array,
-                    prev_cxt->small_cap_3dnr_fd_path_array,
-                    prev_cxt->small_cap_3dnr_handle_path_array,
-                    &(prev_cxt->threednr_cap_smallwidth),
-                    &(prev_cxt->threednr_cap_smallheight));
-#endif
+                if (THREEDNR_SW_2 == prev_cxt->prev_param.is_3dnr) {
+                    ret = mem_ops->gpu_alloc_mem(
+                        CAMERA_SNAPSHOT_SW3DNR_SMALL_PATH, handle->oem_handle,
+                        &channel_small_buffer_size, &threednr_cap_sum,
+                        prev_cxt->small_cap_3dnr_phys_addr_path_array,
+                        prev_cxt->small_cap_3dnr_virt_addr_path_array,
+                        prev_cxt->small_cap_3dnr_fd_path_array,
+                        prev_cxt->small_cap_3dnr_handle_path_array,
+                        &(prev_cxt->threednr_cap_smallwidth),
+                        &(prev_cxt->threednr_cap_smallheight));
+                }
 
             } else {
                 ret =
@@ -5605,56 +5592,59 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         }
         buffer->count = HDR_CAP_NUM;
     } else if (FRAME_3DNR_PROC == prev_cxt->prev_param.frame_ctrl) {
-#if defined(CONFIG_CAMERA_3DNR_CAPTURE_SW)
-        for (i = 0; i < CAP_3DNR_NUM; i++) {
-            if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                 IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-                is_normal_cap) {
-                buffer->addr[i].addr_y =
-                    prev_cxt->cap_3dnr_phys_addr_path_array[i];
-                buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
-                buffer->addr_vir[i].addr_y =
-                    prev_cxt->cap_3dnr_virt_addr_path_array[i];
-                buffer->addr_vir[i].addr_u =
-                    buffer->addr_vir[i].addr_y + channel_size;
-                buffer->fd[i] = prev_cxt->cap_3dnr_fd_path_array[i];
+        if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_2) {
+            for (i = 0; i < CAP_3DNR_NUM; i++) {
+                if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
+                     IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
+                    is_normal_cap) {
+                    buffer->addr[i].addr_y =
+                        prev_cxt->cap_3dnr_phys_addr_path_array[i];
+                    buffer->addr[i].addr_u =
+                        buffer->addr[i].addr_y + channel_size;
+                    buffer->addr_vir[i].addr_y =
+                        prev_cxt->cap_3dnr_virt_addr_path_array[i];
+                    buffer->addr_vir[i].addr_u =
+                        buffer->addr_vir[i].addr_y + channel_size;
+                    buffer->fd[i] = prev_cxt->cap_3dnr_fd_path_array[i];
 
-                buffer->slave_frame_info.frame_addr_array[i].addr_y =
-                    prev_cxt->small_cap_3dnr_phys_addr_path_array[i];
-                buffer->slave_frame_info.frame_addr_array[i].addr_u =
-                    buffer->slave_frame_info.frame_addr_array[i].addr_y +
-                    channel_small_size;
-                buffer->slave_frame_info.frame_addr_vir_array[i].addr_y =
-                    prev_cxt->small_cap_3dnr_virt_addr_path_array[i];
-                buffer->slave_frame_info.frame_addr_vir_array[i].addr_u =
-                    buffer->slave_frame_info.frame_addr_vir_array[i].addr_y +
-                    channel_small_size;
-                buffer->slave_frame_info.fd_array[i] =
-                    prev_cxt->small_cap_3dnr_fd_path_array[i];
-                buffer->slave_frame_info.is_slave_eb = 1;
-                buffer->slave_frame_info.buffer_count = CAP_3DNR_NUM;
-                buffer->slave_frame_info.dst_size.w =
-                    prev_cxt->threednr_cap_smallwidth;
-                buffer->slave_frame_info.dst_size.h =
-                    prev_cxt->threednr_cap_smallheight;
+                    buffer->slave_frame_info.frame_addr_array[i].addr_y =
+                        prev_cxt->small_cap_3dnr_phys_addr_path_array[i];
+                    buffer->slave_frame_info.frame_addr_array[i].addr_u =
+                        buffer->slave_frame_info.frame_addr_array[i].addr_y +
+                        channel_small_size;
+                    buffer->slave_frame_info.frame_addr_vir_array[i].addr_y =
+                        prev_cxt->small_cap_3dnr_virt_addr_path_array[i];
+                    buffer->slave_frame_info.frame_addr_vir_array[i].addr_u =
+                        buffer->slave_frame_info.frame_addr_vir_array[i]
+                            .addr_y +
+                        channel_small_size;
+                    buffer->slave_frame_info.fd_array[i] =
+                        prev_cxt->small_cap_3dnr_fd_path_array[i];
+                    buffer->slave_frame_info.is_slave_eb = 1;
+                    buffer->slave_frame_info.buffer_count = CAP_3DNR_NUM;
+                    buffer->slave_frame_info.dst_size.w =
+                        prev_cxt->threednr_cap_smallwidth;
+                    buffer->slave_frame_info.dst_size.h =
+                        prev_cxt->threednr_cap_smallheight;
+                }
+            }
+        } else {
+            for (i = 1; i < CAP_3DNR_NUM; i++) {
+                if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
+                     IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
+                    is_normal_cap) {
+                    buffer->addr[i].addr_y =
+                        prev_cxt->cap_3dnr_phys_addr_path_array[i - 1];
+                    buffer->addr[i].addr_u =
+                        buffer->addr[i].addr_y + channel_size;
+                    buffer->addr_vir[i].addr_y =
+                        prev_cxt->cap_3dnr_virt_addr_path_array[i - 1];
+                    buffer->addr_vir[i].addr_u =
+                        buffer->addr_vir[i].addr_y + channel_size;
+                    buffer->fd[i] = prev_cxt->cap_3dnr_fd_path_array[i - 1];
+                }
             }
         }
-#else
-        for (i = 1; i < CAP_3DNR_NUM; i++) {
-            if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                 IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-                is_normal_cap) {
-                buffer->addr[i].addr_y =
-                    prev_cxt->cap_3dnr_phys_addr_path_array[i - 1];
-                buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
-                buffer->addr_vir[i].addr_y =
-                    prev_cxt->cap_3dnr_virt_addr_path_array[i - 1];
-                buffer->addr_vir[i].addr_u =
-                    buffer->addr_vir[i].addr_y + channel_size;
-                buffer->fd[i] = prev_cxt->cap_3dnr_fd_path_array[i - 1];
-            }
-        }
-#endif
         buffer->count = CAP_3DNR_NUM;
     }
     ATRACE_END();
@@ -7596,7 +7586,7 @@ cmr_int prev_construct_frame(
             prev_fd_send_data(handle, camera_id, frm_ptr);
         }
 
-        if (prev_cxt->prev_param.is_3dnr == 1) {
+        if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1) {
             struct frm_info data;
             if (((void *)(frm_ptr->addr_vir.addr_y) != NULL) &&
                 (prev_cxt->prev_param.is_sw_3dnr)) {
@@ -10977,8 +10967,7 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     // bypass under sw 3dnr, no need to set video buffer
-    if ((prev_cxt->prev_param.is_3dnr == 1) &&
-        (prev_cxt->prev_param.is_sw_3dnr == 1))
+    if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1)
         ret = 0;
     else
         ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
@@ -13029,7 +13018,7 @@ cmr_int prev_3dnr_evt_cb(cmr_handle preview_handle, cmr_u32 camera_id) {
     CHECK_CAMERA_ID(camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    if (prev_cxt->prev_param.is_3dnr == 1) {
+    if (prev_cxt->prev_param.is_3dnr == THREEDNR_SW_1) {
         ret = cmr_ipm_post_proc(prev_cxt->prev_3dnr_handle);
         if (ret) {
             CMR_LOGE("failed to post proc frame to 3dnr preview %ld", ret);

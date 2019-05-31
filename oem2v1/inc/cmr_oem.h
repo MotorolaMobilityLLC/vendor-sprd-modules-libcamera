@@ -337,6 +337,7 @@ struct camera_context {
     struct img_rect trim_reset_info;
     cmr_u8 is_cnr;
     cmr_uint is_snapshot;
+    cmr_u32 app_mode;
 };
 
 struct prev_threednr_info {
