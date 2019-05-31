@@ -3358,6 +3358,32 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 	}
 
+	if (AE_3DNR_AUTO == cxt->cur_status.settings.threednr_mode) {
+		cmr_u32 is_update = 0, is_en = 0;
+		if ((cxt->sync_cur_result.cur_bv < cxt->threednr_en_thrd.thr_down)
+			&& ((0 == cxt->sync_cur_status.threednr_status) || cxt->is_first)) {
+			is_update = 1;
+			is_en = 1;
+			cxt->cur_status.threednr_status = 1;
+			ISP_LOGI("HJW 1 is low lux: %d 3dnr: %d\n", is_en, cxt->cur_status.threednr_status);
+		}else if ((cxt->sync_cur_result.cur_bv > cxt->threednr_en_thrd.thr_up)
+				&& ((1 == cxt->sync_cur_status.threednr_status) || cxt->is_first)) {
+			is_update = 1;
+			is_en = 0;
+			cxt->cur_status.threednr_status = 0;
+			ISP_LOGI("HJW 2 is low lux: %d 3dnr: %d\n", is_en, cxt->cur_status.threednr_status);
+		}
+		if (is_update) {
+			cb_type = AE_CB_3DNR_NOTIFY;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &is_en);
+		}
+		ISP_LOGI("HJW: bv: %d,[%d, %d], 3dnr: %d\n",
+			cxt->sync_cur_result.cur_bv,
+			cxt->threednr_en_thrd.thr_down,
+			cxt->threednr_en_thrd.thr_up,
+			cxt->cur_status.threednr_status);
+	}
+
 	/* for front flash algorithm (LED+LCD) */
 	if (cxt->camera_id == 1 && cxt->cur_status.settings.flash == FLASH_LED_AUTO) {
 		if ((cxt->sync_cur_result.cur_bv <= cxt->flash_swith.led_thr_down) && cxt->sync_cur_status.led_state == 0) {
@@ -5215,6 +5241,14 @@ static cmr_s32 ae_set_aux_sensor(struct ae_ctrl_cxt *cxt, cmr_handle param0, cmr
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_3dnr_mode(struct ae_ctrl_cxt *cxt, cmr_u32 *mode)
+{
+	cxt->cur_status.settings.threednr_mode = *mode;
+	cxt->cur_status.threednr_status = 0;
+
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -5710,6 +5744,14 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			val_max = atoi(prop) / 100;
 			cxt->cur_status.settings.min_fps = val_min > 5 ? val_min : 5;
 			cxt->cur_status.settings.max_fps = val_max;
+		}
+		property_get("persist.vendor.cam.isp.ae.threednr_thrddown", prop, "");
+		if (atoi(prop) != 0) {
+			cxt->threednr_en_thrd.thr_down = atoi(prop);
+		}
+		property_get("persist.vendor.cam.isp.ae.threednr_thrdup", prop, "");
+		if (atoi(prop) != 0) {
+			cxt->threednr_en_thrd.thr_up = atoi(prop);
 		}
 	}
 	pthread_mutex_lock(&cxt->data_sync_lock);
@@ -6207,6 +6249,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 #endif
 		break;
 
+	case AE_SET_3DNR_MODE:
+		rtn = ae_set_3dnr_mode(cxt, param);
+		break;
+
 	case AE_SET_APP_MODE:
 		cxt->app_mode = *(cmr_u32 *) param;
 		ISP_LOGD("app_mode=%d", cxt->app_mode);
@@ -6371,6 +6417,16 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
 		else
 			cxt->flash_swith.led_thr_up = 500;
+
+		if (0 != cxt->cur_param->threednr_ctrl_param.thr_down)
+			cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down;
+		else
+			cxt->threednr_en_thrd.thr_down = 250;
+
+		if (0 != cxt->cur_param->threednr_ctrl_param.thr_up)
+			cxt->threednr_en_thrd.thr_up = cxt->cur_param->threednr_ctrl_param.thr_up;
+		else
+			cxt->threednr_en_thrd.thr_up = 500;
 	}
 	if (0 == cxt->camera_id) {
 		if (0 != cxt->cur_param->flash_swith_param.flash_open_thr)
@@ -6381,9 +6437,27 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
 		else
 			cxt->flash_swith.led_thr_up = 480;
+		if (0 != cxt->cur_param->threednr_ctrl_param.thr_down)
+			cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down;
+		else
+			cxt->threednr_en_thrd.thr_down = 380;
+
+		if (0 != cxt->cur_param->threednr_ctrl_param.thr_up)
+			cxt->threednr_en_thrd.thr_up = cxt->cur_param->threednr_ctrl_param.thr_up;
+		else
+			cxt->threednr_en_thrd.thr_up = 480;
+	}
+	property_get("persist.vendor.cam.isp.ae.threednr_thrddown", ae_property, "");
+	if (atoi(ae_property) != 0) {
+		cxt->threednr_en_thrd.thr_down = atoi(ae_property);
+	}
+	property_get("persist.vendor.cam.isp.ae.threednr_thrdup", ae_property, "");
+	if (atoi(ae_property) != 0) {
+		cxt->threednr_en_thrd.thr_up = atoi(ae_property);
 	}
 	/*end to read front or rear flash tuning param */
-
+	cxt->cur_status.threednr_status = 0;
+	cxt->cur_status.settings.threednr_mode = AE_3DNR_OFF;
 	/*start read set video fps tuning param */
 	if (0 == cxt->cur_param->ae_video_fps.ae_video_fps_thr_high)
 		cxt->cur_param->ae_video_fps.ae_video_fps_thr_high = 1000;
@@ -6516,4 +6590,3 @@ struct adpt_ops_type ae_sprd_adpt_ops_ver0 = {
 	.adpt_process = ae_sprd_calculation,
 	.adpt_ioctrl = ae_sprd_io_ctrl,
 };
-

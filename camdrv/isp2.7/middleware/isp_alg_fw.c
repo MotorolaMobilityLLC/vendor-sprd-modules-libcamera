@@ -568,6 +568,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_HDR_STATUS:
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
+	case AE_CB_3DNR_NOTIFY:
+		cmd = ISP_3DNR_CALLBACK;
+		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;
@@ -4235,6 +4238,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	ioctl_data.data_size = sizeof(awbc_cfg);
 	ioctl_input.param_data_ptr = &ioctl_data;
 	ioctl_input.param_num = 1;
+
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AWB, (void *)&ioctl_input, NULL);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);

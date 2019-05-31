@@ -588,6 +588,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		hdr_statis_size->w = cxt->hist2_roi.w;
 		hdr_statis_size->h = cxt->hist2_roi.h;
 		return ret;
+	case AE_CB_3DNR_NOTIFY:
+		cmd = ISP_3DNR_CALLBACK;
+		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;

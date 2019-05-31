@@ -2695,6 +2695,21 @@ static cmr_int ispctl_auto_hdr(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_3dnr_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_3DNR_MODE, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2922,6 +2937,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
+	{ISP_CTRL_SET_3DNR_MODE, ispctl_set_3dnr_mode},
 	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
 	{ISP_CTRL_GET_CNR2_EN, ispctl_get_cnr2_en},
 	{ISP_CTRL_SET_CAP_FLAG, ispctl_set_cap_flag},

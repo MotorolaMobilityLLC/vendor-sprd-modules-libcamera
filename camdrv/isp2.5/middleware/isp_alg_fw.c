@@ -571,6 +571,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_HDR_STATUS:
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
+	case AE_CB_3DNR_NOTIFY:
+		cmd = ISP_3DNR_CALLBACK;
+		break;
 	default:
 		ISP_LOGI("fail to get known cb_type=%ld", cb_type);
 		return ret;
@@ -4506,6 +4509,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_CT"));
 	}
+
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_BV_BY_LUM_NEW"));

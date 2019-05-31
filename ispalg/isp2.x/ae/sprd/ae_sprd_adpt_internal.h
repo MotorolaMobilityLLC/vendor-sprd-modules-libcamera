@@ -245,6 +245,7 @@ extern "C" {
 		 */
 		/*ST: for dual flash algorithm */
 		struct flash_swith_param flash_swith;
+		struct ae_thrd_param threednr_en_thrd;/*the 3DNR take effect threshold parmeters*/
 		cmr_u8 flash_ver;
 		cmr_s32 pre_flash_skip;
 		cmr_s32 aem_effect_delay;
