@@ -350,6 +350,7 @@ static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle,
                                              cmr_u32 camera_id,
                                              struct yuv_info_t *yuv);
 static cmr_int camera_set_hdr_ev(cmr_handle oem_handle, void *data);
+static void camera_set_exif_exposure_time(cmr_handle oem_handle);
 /**********************************************************************************************/
 
 cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
@@ -1497,6 +1498,22 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             goto exit;
         }
         message.alloc_flag = 1;
+
+        if (PREVIEW_EVT_CB_FRAME == cb_type &&
+            CAMERA_FUNC_START_PREVIEW == oem_func) {
+            struct exif_spec_pic_taking_cond_tag exif_pic_info;
+            struct camera_frame_type *preview_frame =
+                (struct camera_frame_type *)param;
+            cmr_sensor_get_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                &exif_pic_info);
+            preview_frame->sensor_info.exposure_time_numerator =
+                exif_pic_info.ExposureTime.numerator;
+            preview_frame->sensor_info.exposure_time_denominator =
+                exif_pic_info.ExposureTime.denominator;
+            CMR_LOGV("exposure_time_numerator %d exposure_time_denominator %d",
+                     preview_frame->sensor_info.exposure_time_numerator,
+                     preview_frame->sensor_info.exposure_time_denominator);
+        }
 
         if ((cxt->is_lls_enable) && (PREVIEW_EVT_CB_FRAME == cb_type)) {
             struct camera_frame_type *prev_frame =
@@ -4711,6 +4728,10 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
 
+    if (1 == camera_get_hdr_flag(cxt)) {
+        camera_set_exif_exposure_time(oem_handle);
+    }
+
     enc_exif_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
     enc_exif_param.src_jpeg_addr_virt = pic_src->addr_vir.addr_y;
     enc_exif_param.thumbnail_addr_virt = thumb_src->addr_vir.addr_y;
@@ -7127,6 +7148,16 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_AUTO_HDR_MODE;
         isp_param = param_ptr->cmd_value;
         break;
+    case COM_ISP_SET_AE_MODE_CONTROL:
+        isp_cmd = ISP_CTRL_SET_AE_MODE;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("ae_mode %d", param_ptr->cmd_value);
+        break;
+    case COM_ISP_SET_EXPOSURE_TIME:
+        isp_cmd = ISP_CTRL_SET_AE_EXP_TIME;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("exposure time %d", isp_param);
+        break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -7190,6 +7221,26 @@ void camera_get_iso_value(cmr_handle oem_handle) {
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_ISOSPEEDRATINGS, isp_param);
     }
+}
+
+void camera_set_exif_exposure_time(cmr_handle oem_handle) {
+
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
+    struct exif_spec_pic_taking_cond_tag exif_pic_info;
+    EXIF_RATIONAL_T exposure_time;
+    cmr_sensor_get_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                        &exif_pic_info);
+    exposure_time.numerator = exif_pic_info.ExposureTime.numerator;
+    exposure_time.denominator = exif_pic_info.ExposureTime.denominator;
+
+    setting_param.camera_id = cxt->camera_id;
+    setting_param.cmd_type_value = (cmr_uint)&exposure_time;
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                      SETTING_SET_EXIF_EXPOSURE_TIME, &setting_param);
+
+    CMR_LOGD("exposure_time_numerator %d exposure_time_denominator %d",
+             exposure_time.numerator, exposure_time.denominator);
 }
 
 cmr_int camera_get_ae_lum_value(cmr_handle oem_handle) {
@@ -8332,6 +8383,18 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_AE_MODE:
+        setting_param.cmd_type_value = param;
+        CMR_LOGD("ae_mode=%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_EXPOSURE_TIME:
+        CMR_LOGD("exposure time=%lu", param);
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     case CAMERA_PARAM_SPRD_SET_APPMODE:
         setting_param.cmd_type_value = param;
         CMR_LOGD("sprd app mode id = %d", setting_param.cmd_type_value);
@@ -8621,7 +8684,6 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             goto exit;
         }
     } else {
-        camera_get_iso_value(oem_handle);
         setting_param.camera_id = cxt->camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_GET_THUMB_SIZE, &setting_param);
@@ -8710,6 +8772,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
     camera_snapshot_started((cmr_handle)cxt);
+    camera_get_iso_value(oem_handle);
+    camera_set_exif_exposure_time(oem_handle);
     ret = camera_get_cap_time((cmr_handle)cxt);
     cxt->snp_cxt.status = SNAPSHOTING;
     cxt->snp_cxt.post_proc_setting.actual_snp_size =

@@ -3993,6 +3993,15 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         return;
     }
 
+    SENSOR_Tag sensorInfo;
+    mSetting->getSENSORTag(&sensorInfo);
+    if (0 != frame->sensor_info.exposure_time_denominator) {
+        sensorInfo.exposure_time = 1000000000ll *
+                                   frame->sensor_info.exposure_time_numerator /
+                                   frame->sensor_info.exposure_time_denominator;
+    }
+    mSetting->setSENSORTag(sensorInfo);
+
     if (SHAKE_TEST == getShakeTestState()) {
         overwritePreviewFrame(frame);
     }
@@ -4133,7 +4142,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
     beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
 #endif
-    SENSOR_Tag sensorInfo;
 
     mSetting->getSENSORTag(&sensorInfo);
     sensorInfo.timestamp = buffer_timestamp;
@@ -4844,6 +4852,15 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     HAL_LOGD("mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,
              frame->y_vir_addr);
 
+    SENSOR_Tag sensorInfo;
+    mSetting->getSENSORTag(&sensorInfo);
+    if (0 != frame->sensor_info.exposure_time_denominator) {
+        sensorInfo.exposure_time = 1000000000ll *
+                                   frame->sensor_info.exposure_time_numerator /
+                                   frame->sensor_info.exposure_time_denominator;
+    }
+    mSetting->setSENSORTag(sensorInfo);
+
     display_flag = iSDisplayCaptureFrame();
     callback_flag = iSCallbackCaptureFrame();
 
@@ -5378,6 +5395,26 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         LENS_Tag lensInfo;
         mHalOem->ops->camera_get_sensor_result_exif_info(mCameraHandle,
                                                          &exif_pic_info);
+
+        struct camera_frame_type *frame = NULL;
+        frame = (struct camera_frame_type *)parm4;
+        if (frame) {
+            frame->sensor_info.exposure_time_denominator =
+                exif_pic_info.ExposureTime.denominator;
+            frame->sensor_info.exposure_time_numerator =
+                exif_pic_info.ExposureTime.numerator;
+        }
+
+        SENSOR_Tag sensorInfo;
+        mSetting->getSENSORTag(&sensorInfo);
+        if (0 != frame->sensor_info.exposure_time_denominator) {
+            sensorInfo.exposure_time = 1000000000ll *
+                                       frame->sensor_info.exposure_time_numerator /
+                                       frame->sensor_info.exposure_time_denominator;
+        }
+        sensorInfo.timestamp = frame->timestamp;
+        mSetting->setSENSORTag(sensorInfo);
+
         if (exif_pic_info.ApertureValue.denominator)
             aperture = (float)exif_pic_info.ApertureValue.numerator /
                        (float)exif_pic_info.ApertureValue.denominator;
@@ -6099,6 +6136,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
 int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     int ret = 0;
     CONTROL_Tag controlInfo;
+    SENSOR_Tag sensorInfo;
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
 
@@ -6110,6 +6148,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     }
 
     mSetting->getCONTROLTag(&controlInfo);
+    mSetting->getSENSORTag(&sensorInfo);
     switch (cameraParaTag) {
     case ANDROID_CONTROL_SCENE_MODE: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6349,6 +6388,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
+            HAL_LOGD("ae_mode:%d, drvAeMode:%d, mFlashMode:%d",
+                 controlInfo.ae_mode, drvAeMode, mFlashMode);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
+                 controlInfo.ae_mode);
+
             if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
                 if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
                     mFlashMode != CAMERA_FLASH_MODE_TORCH) {
@@ -6434,11 +6478,19 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSetting->getFLASHTag(&flashInfo);
             mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode,
                                                      &flashMode);
-            if (CAMERA_FLASH_MODE_TORCH == flashMode ||
-                CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+            if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+                if (CAMERA_FLASH_MODE_TORCH == flashMode ||
+                    CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+                    HAL_LOGD("set flashMode when ae_mode is not off and TORCH");
+                    mFlashMode = flashMode;
+                    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
+                                       mFlashMode);
+                }
+            } else {
+                HAL_LOGD("set flashMode when ANDROID_CONTROL_AE_MODE_OFF");
                 mFlashMode = flashMode;
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                         mFlashMode);
+                                   mFlashMode);
             }
         }
         break;
@@ -6625,6 +6677,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode, &flashMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
     } break;
+    case ANDROID_SENSOR_EXPOSURE_TIME:
+        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
+            HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
+                     (cmr_uint)(sensorInfo.exposure_time));
+        } break;
     default:
         ret = BAD_VALUE;
         break;

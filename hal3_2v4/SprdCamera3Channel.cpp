@@ -862,6 +862,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_CONTROL_AE_REGIONS");
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_REGIONS);
             break;
+        case ANDROID_SENSOR_EXPOSURE_TIME:
+            HAL_LOGV("ANDROID_SENSOR_EXPOSURE_TIME");
+            mOEMIf->SetCameraParaTag(ANDROID_SENSOR_EXPOSURE_TIME);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

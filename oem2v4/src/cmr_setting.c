@@ -69,6 +69,8 @@ enum setting_general_type {
     SETTING_GENERAL_AUTO_EXPOSURE_MODE,
     SETTING_GENERAL_ISO,
     SETTING_GENERAL_EXPOSURE_COMPENSATION,
+    SETTING_GENERAL_AE_MODE,
+    SETTING_GENERAL_EXPOSURE_TIME,
     SETTING_GENERAL_PREVIEW_FPS,
     SETTING_GENERAL_PREVIEW_LLS_FPS,
     SETTING_GENERAL_SATURATION,
@@ -120,6 +122,8 @@ struct setting_hal_common {
     cmr_uint video_mode;
     cmr_uint frame_rate;
     cmr_uint auto_exposure_mode;
+    cmr_uint ae_mode;
+    cmr_uint exposure_time;
     cmr_uint sprd_appmode_id;
     struct cmr_ae_compensation_param ae_compensation_param;
     cmr_uint is_auto_hdr;
@@ -182,6 +186,7 @@ struct setting_hal_param {
     cmr_uint exif_mime_type;
     cmr_uint sprd_filter_type;
     cmr_uint device_orientation;
+    EXIF_RATIONAL_T ExposureTime;
 };
 
 struct setting_camera_info {
@@ -516,6 +521,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          (cmr_uint *)&hal_param->hal_common.ae_compensation_param
              .ae_exposure_compensation,
          COM_ISP_SET_EV, COM_SN_SET_EXPOSURE_COMPENSATION},
+         {SETTING_GENERAL_AE_MODE, &hal_param->hal_common.ae_mode,
+         COM_ISP_SET_AE_MODE_CONTROL, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
+         COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_PREVIEW_FPS, &hal_param->hal_common.frame_rate,
          COM_ISP_SET_VIDEO_MODE, COM_SN_SET_VIDEO_MODE},
         {SETTING_GENERAL_PREVIEW_LLS_FPS, &hal_param->hal_common.frame_rate,
@@ -547,6 +556,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
     switch (type) {
     case SETTING_GENERAL_AUTO_EXPOSURE_MODE:
         type_val = parm->ae_param.mode;
+        break;
+    case SETTING_GENERAL_EXPOSURE_TIME:
+        *item->cmd_type_value = 0;
+        type_val = parm->cmd_type_value;
         break;
     case SETTING_GENERAL_PREVIEW_FPS:
         if (setting_is_rawrgb_format(cpt, parm)) {
@@ -1695,6 +1708,13 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         }
     }
 
+    if ((NULL != p_exif_info->spec_ptr) &&
+        (NULL != p_exif_info->spec_ptr->pic_taking_cond_ptr) &&
+        hal_param->ExposureTime.denominator != 0) {
+        p_exif_info->spec_ptr->pic_taking_cond_ptr->ExposureTime =
+            hal_param->ExposureTime;
+    }
+
     parm->exif_all_info_ptr = p_exif_info;
 
     return ret;
@@ -2134,6 +2154,19 @@ setting_get_yuv_callback_enable(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int
+setting_set_exif_exposure_time(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->ExposureTime = *((EXIF_RATIONAL_T *)parm->cmd_type_value);
+    CMR_LOGD("ExposureTime %d %d", hal_param->ExposureTime.numerator,
+             hal_param->ExposureTime.denominator);
+
+    return ret;
+}
+
 static cmr_int setting_get_touch_info(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2355,6 +2388,25 @@ setting_get_sprd_filter_type(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_ae_mode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AE_MODE, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_exposure_time(struct setting_component *cpt,
+                                         struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGD("exposure time = %lu", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_EXPOSURE_TIME, parm);
+
+    return ret;
+}
+
 static cmr_int setting_set_appmode(struct setting_component *cpt,
                                    struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2461,6 +2513,18 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         cmd_param.camera_id = parm->camera_id;
         cmd_param.ae_param.mode = hal_param->hal_common.auto_exposure_mode;
         ret = setting_set_auto_exposure_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.ae_mode) {
+        cmd_param.cmd_type_value = hal_param->hal_common.ae_mode;
+        ret = setting_set_ae_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.exposure_time) {
+        cmd_param.cmd_type_value = hal_param->hal_common.exposure_time;
+        ret = setting_set_exposure_time(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
@@ -3537,6 +3601,12 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_sprd_filter_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,
                              setting_get_sprd_filter_type);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_MODE,
+                             setting_set_ae_mode);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
+                             setting_set_exposure_time);
+    cmr_add_cmd_fun_to_table(SETTING_SET_EXIF_EXPOSURE_TIME,
+                             setting_set_exif_exposure_time);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SET_APPMODE,
                              setting_set_appmode);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
