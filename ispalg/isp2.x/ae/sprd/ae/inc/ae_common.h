@@ -604,6 +604,7 @@ struct ae_alg_calc_param {
 	cmr_u8 win1_weight;			//for touch ae
 	cmr_u8 win2_weight;			//for touch ae
 	cmr_s8 target_offset;
+	cmr_s16 base_target;/*save the default target from tuning*/
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;
 	cmr_u16 target_range_in_zone;

@@ -1936,6 +1936,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	
 	cxt->cur_status.start_index = cxt->cur_param->start_index;
 	ev_table = &cxt->cur_param->ev_table;
+	cxt->cur_status.base_target = cxt->cur_param->target_lum;
 	cxt->cur_status.target_lum = ae_calc_target_lum(cxt, cxt->cur_param->target_lum, ev_table->default_level, ev_table);
 	cxt->cur_status.target_lum_zone = cxt->stable_zone_ev[ev_table->default_level];
 
