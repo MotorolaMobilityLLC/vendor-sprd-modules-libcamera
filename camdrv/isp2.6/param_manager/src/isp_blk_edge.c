@@ -247,6 +247,21 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / sel_coeff;
 		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / sel_coeff;
 		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / sel_coeff;
+
+		/* Bug 1082178 ee_neg_c param value should be betwen
+		  * [-128,0]. To check we just  consider 8 LSBs. If any of the value is
+		  * not in range then we assign 0x80 effectively it will become  128-256 = -128.
+		  */
+
+		if ((dst_ptr->cur.ee_neg_c[0] & 0xFF) < 0x80)
+			dst_ptr->cur.ee_neg_c[0] = 0x80;
+
+		if ((dst_ptr->cur.ee_neg_c[1] & 0xFF) < 0x80)
+			dst_ptr->cur.ee_neg_c[1] = 0x80;
+
+		if ((dst_ptr->cur.ee_neg_c[2] & 0xFF) < 0x80)
+			dst_ptr->cur.ee_neg_c[2] = 0x80;
+
 		if (ee_param_log_en) {
 			for (i = 0; i < 3; i++) {
 				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
