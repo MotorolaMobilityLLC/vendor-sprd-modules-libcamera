@@ -9152,7 +9152,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
-        deinitCapture(mIsPreAllocCapMem);
+        goto exit;
     }
 
     mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);

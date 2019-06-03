@@ -3835,6 +3835,11 @@ cmr_int cmr_pre_flash_notice_flash(cmr_handle setting_handle) {
     struct setting_component *cpt = (struct setting_component *)setting_handle;
     CMR_LOGD("cmr_pre_flash_notice_flash");
 
+    if (cpt == NULL) {
+        CMR_LOGE("cpt is null");
+        return ret;
+    }
+
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_OPEN;
     pthread_mutex_unlock(&cpt->isp_mutex);
