@@ -548,7 +548,7 @@
 	/*level_enable*/
 	0x01,
 	/*low_ct_thrd*/
-	0x0FA0,
+	0x1194,
 	/*reserved*/
 	0x00,
 	/*filter_en*/
