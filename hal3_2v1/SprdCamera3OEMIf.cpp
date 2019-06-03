@@ -6476,7 +6476,9 @@ void SprdCamera3OEMIf::setUltraWideMode() {
     if (channel != NULL) {
         SprdCamera3Stream *stream = NULL;
         channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
-        stream->setUltraWideMode(mIsUltraWideMode);
+        if (stream != NULL) {
+            stream->setUltraWideMode(mIsUltraWideMode);
+        }
     }
 }
 
