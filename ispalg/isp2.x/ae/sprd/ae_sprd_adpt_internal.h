@@ -61,6 +61,8 @@ extern "C" {
 		cmr_u32 frm_len_def;
 		cmr_u32 gain;
 		cmr_u32 table_idx;
+		cmr_u32 lum;
+		cmr_u32 tarlum;
 	};
 	struct ae_exposure_param_switch_m {
 		cmr_u32 target_offset;
