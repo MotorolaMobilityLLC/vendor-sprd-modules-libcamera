@@ -4544,6 +4544,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ISP_LOGI("pdaf_support = %d, pdaf_enable = %d, is_multi_mode = %d",
 			cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable, cxt->is_multi_mode);
+
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support
 		&& in_ptr->pdaf_enable) {
 		if (cxt->ops.pdaf_ops.ioctrl) {
@@ -4968,6 +4969,18 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set rgb gain"));
+	}
+
+	/* PDAF TYPE 3 PD info stored in sensor info, not in pm */
+	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support) {
+		if (cxt->ops.pdaf_ops.ioctrl) {
+			ISP_LOGI("hwsim: pdaf3 set param\n");
+			ret = cxt->ops.pdaf_ops.ioctrl(
+					cxt->pdaf_cxt.handle,
+					PDAF_CTRL_CMD_SET_PARAM,
+					NULL, NULL);
+			ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
+		}
 	}
 
 

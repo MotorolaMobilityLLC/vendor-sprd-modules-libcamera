@@ -2409,8 +2409,8 @@ label_set_awb:
 		return ret;
 	}
 
-	//cxt->rgb_glb_gain = scene_parm->global_gain;
-	//ISP_LOGV("global_gain = %d", cxt->rgb_glb_gain);
+	cxt->rgb_gain.global_gain = scene_parm->global_gain;
+	ISP_LOGI("global_gain = %d", cxt->rgb_gain.global_gain);
 
 	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
 	smart_proc_in.cal_para.bv_gain = scene_parm->gain;

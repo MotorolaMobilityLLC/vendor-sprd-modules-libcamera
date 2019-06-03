@@ -679,13 +679,13 @@ struct memory_param {
 struct isptool_scene_param {
     cmr_u32 width;
     cmr_u32 height;
-    cmr_u32 gain;
+    cmr_s32 gain;
     cmr_u32 awb_gain_r;
     cmr_u32 awb_gain_g;
     cmr_u32 awb_gain_b;
     cmr_u32 smart_ct;
-    cmr_u32 smart_bv;
-    cmr_u32 global_gain;
+    cmr_s32 smart_bv;
+    cmr_s32 global_gain;
 };
 
 struct leds_ctrl {

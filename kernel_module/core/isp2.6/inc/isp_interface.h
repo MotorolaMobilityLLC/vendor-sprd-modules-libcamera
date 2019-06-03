@@ -222,4 +222,7 @@ int sprd_isp_debugfs_deinit(void);
 int sprd_isp_parse_dt(struct device_node *dn,
 		struct sprd_cam_hw_info **isp_hw,
 		uint32_t *isp_count);
+
+void isp_hwsim_extra(uint32_t idx);
+
 #endif

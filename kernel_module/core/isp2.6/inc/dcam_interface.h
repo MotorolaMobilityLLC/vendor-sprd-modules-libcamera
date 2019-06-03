@@ -319,6 +319,8 @@ void *dcam_if_get_dev(uint32_t idx, struct sprd_cam_hw_info *hw);
 int dcam_if_put_dev(void *dcam_handle);
 /* set lbuf share mode for dcam0,dcam1, set before stream on */
 int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width);
+
+int dcam_hwsim_extra(enum dcam_id idx);
 /*
  * Retrieve hardware info from dt.
  */

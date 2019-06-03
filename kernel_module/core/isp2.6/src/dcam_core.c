@@ -3106,6 +3106,46 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width)
 	return ret;
 }
 
+int dcam_hwsim_extra(enum dcam_id idx)
+{
+		uint32_t val;
+#if 0
+		pr_info("bpc\n");
+		val = (1 & 0x1) |
+		((1 & 0x1) << 1) |
+		((1 & 0x1) << 2) |
+		((1 & 0x1) << 3);
+	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xF, val);
+
+
+		
+		pr_info("blc\n");
+		DCAM_REG_MWR(idx, DCAM_BLC_PARA_R_B, BIT_31, 1 << 31);
+
+		pr_info("awb \n");
+		DCAM_REG_MWR(idx, ISP_AWBC_GAIN0, BIT_31, 1 << 31);
+
+		pr_info("lsc \n");
+		DCAM_REG_MWR(idx, DCAM_LENS_LOAD_ENABLE, BIT_0, 1);
+
+		pr_info("rgbg \n");
+		DCAM_REG_MWR(idx, ISP_RGBG_YRANDOM_PARAMETER0, BIT_0, 1);
+
+		pr_info("afl \n");
+		DCAM_REG_MWR(idx, ISP_AFL_FRM_CTRL0, BIT_0, 1);
+		DCAM_REG_MWR(idx, ISP_AFL_PARAM0, BIT_1, 1 << 1);
+
+		pr_info("rgbg_yrandom\n");
+		DCAM_REG_MWR(idx, ISP_RGBG_YRANDOM_PARAMETER0, BIT_1, 1 << 1);
+#endif
+
+		pr_info("ppi ppi_phase_map_corr_en\n");
+		val = ((0 & 1) << 3) | (1 & 1);
+		DCAM_REG_MWR(idx, ISP_PPI_PARAM, BIT_3 | BIT_0, val);
+
+		return 0;
+}
+
 /* return the number of how many buf in the out_buf_queue */
 uint32_t get_outbuf_queue_cnt(void *dev, int path_id)
 {

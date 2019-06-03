@@ -39,9 +39,9 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
         scene_param.awb_gain_r = image_info->raw_image_ptr[image_index].uRGain;
         scene_param.awb_gain_g = image_info->raw_image_ptr[image_index].uGGain;
         scene_param.awb_gain_b = image_info->raw_image_ptr[image_index].uBGain;
-        scene_param.gain = image_info->raw_image_ptr[image_index].uTotalGain;
-        scene_param.global_gain = image_info->raw_image_ptr[image_index].udGain;
-        scene_param.smart_bv = image_info->raw_image_ptr[image_index].uBv;
+        scene_param.gain = image_info->raw_image_ptr[image_index].sTotalGain;
+        scene_param.global_gain = image_info->raw_image_ptr[image_index].sdGain;
+        scene_param.smart_bv = image_info->raw_image_ptr[image_index].sBv;
         scene_param.smart_ct = image_info->raw_image_ptr[image_index].uCt;
 
         ret = isp_sim_set_scene_parm(&scene_param);

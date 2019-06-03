@@ -3449,3 +3449,54 @@ int put_isp_pipe_dev(void *isp_handle)
 
 	return ret;
 }
+
+void isp_hwsim_extra(uint32_t idx) {
+#if 0
+	uint32_t bypass = 1;
+
+	pr_info("ctx_id[%d]\n", idx);
+	
+	pr_info("gamma\n");
+	ISP_REG_MWR(idx, ISP_GAMMA_PARAM, BIT_0, 1);
+
+	pr_info("all\n");
+
+	ISP_REG_MWR(idx, ISP_NLM_PARA, BIT_0, bypass);
+	ISP_REG_MWR(idx, ISP_VST_PARA, BIT_0, bypass);
+	ISP_REG_MWR(idx, ISP_IVST_PARA, BIT_0, bypass);
+
+	ISP_REG_MWR(idx, ISP_CMC10_PARAM, BIT_0, bypass);
+	ISP_REG_MWR(idx, ISP_GAMMA_PARAM, BIT_0, bypass);
+	ISP_REG_MWR(idx, ISP_HSV_PARAM, BIT_0, bypass);
+	ISP_REG_MWR(idx, ISP_PSTRZ_PARAM, BIT_0, bypass);
+	ISP_REG_MWR(idx, ISP_CCE_PARAM, BIT_0, bypass);
+
+	ISP_REG_MWR(idx, ISP_UVD_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_PRECDN_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_YNR_CONTRL0, BIT_0|BIT_1, 0x3);
+	ISP_REG_MWR(idx, ISP_HIST_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_HIST_CFG_READY, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_HIST2_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_HIST2_CFG_RDY, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_CFAE_NEW_CFG0, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_EE_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_GRGB_CTRL, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_YUV_NF_CTRL, BIT_0, 1);
+
+	ISP_REG_MWR(idx, ISP_LTM_HIST_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_LTM_MAP_PARAM0, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_CDN_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_EE_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_BCHS_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_POSTCDN_COMMON_CTRL, BIT_0|BIT_1, 0x3);
+	ISP_REG_MWR(idx, ISP_YGAMMA_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_IIRCNR_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_YRANDOM_PARAM1, BIT_0, 1);
+
+	/* 3DNR bypass */
+	ISP_REG_MWR(idx, ISP_3DNR_MEM_CTRL_PARAM0, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_3DNR_BLEND_CONTROL0, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_3DNR_STORE_PARAM, BIT_0, 1);
+	ISP_REG_MWR(idx, ISP_3DNR_MEM_CTRL_PRE_PARAM0, BIT_0, 1);
+#endif
+}

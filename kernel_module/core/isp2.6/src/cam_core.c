@@ -5601,10 +5601,15 @@ static int raw_proc_post(
 	module->dcam_cap_status = DCAM_CAPTURE_START;
 	atomic_set(&module->state, CAM_RUNNING);
 
+	dcam_hwsim_extra(module->idx);
+	isp_hwsim_extra(ch->isp_path_id >> ISP_CTXID_OFFSET);
+
+
 	ret = isp_ops->start_context(module->isp_dev_handle,
 			ch->isp_path_id >> ISP_CTXID_OFFSET);
 
 	ret |= dcam_ops->proc_frame(module->dcam_dev_handle, src_frame);
+
 	if (ret)
 		pr_err("fail to start dcam/isp for raw proc\n");
 
@@ -5654,6 +5659,7 @@ static int img_ioctl_raw_proc(
 
 	if (proc_info.scene == RAW_PROC_SCENE_HWSIM) {
 		rps_info = 1;
+		pr_info("hwsim\n");
 		ret = dcam_ops->ioctl(module->dcam_dev_handle,
 				DCAM_IOCTL_CFG_RPS, &rps_info);
 	}
