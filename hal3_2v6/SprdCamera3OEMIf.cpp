@@ -5219,7 +5219,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         if (NULL != parm4) {
             ae_info = *((cmr_u32 *)parm4);
             ae_stab = ae_info & (0x00000001);
-            HAL_LOGI("ae_info = %d, ae_stab = %d", ae_info, ae_stab);
+            HAL_LOGV("ae_info = %d, ae_stab = %d", ae_info, ae_stab);
         }
 
         if (ae_stab) {

@@ -854,7 +854,7 @@ cmr_int cmr_grab_get_dcam_path_trim(cmr_handle grab_handle,
     }
 
 exit:
-    CMR_LOGI("ret = %ld", ret);
+    CMR_LOGV("ret = %ld", ret);
     ATRACE_END();
     return ret;
 }
