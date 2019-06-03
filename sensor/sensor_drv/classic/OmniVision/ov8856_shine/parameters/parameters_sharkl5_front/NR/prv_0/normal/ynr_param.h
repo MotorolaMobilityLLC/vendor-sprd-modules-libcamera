@@ -985,9 +985,9 @@
 		/*max_Radius_factor*/
 		0x03F2,
 		/*Radius*/
-		0x01DE,
+		0x038C,
 		/*Radius_factor*/
-		0x00C8,
+		0x017C,
 		/*imgCenterX*/
 		0x0660,
 		/*imgCenterY*/
