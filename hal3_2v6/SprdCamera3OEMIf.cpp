@@ -9516,8 +9516,8 @@ void SprdCamera3OEMIf::EisVideo_init() {
     video_stab_param_default(&mVideoParam);
     mVideoParam.src_w = (uint16_t)mVideoWidth;
     mVideoParam.src_h = (uint16_t)mVideoHeight;
-    mVideoParam.dst_w = (uint16_t)mVideoWidth * 5 / 6;
-    mVideoParam.dst_h = (uint16_t)mVideoHeight * 5 / 6;
+    mVideoParam.dst_w = (uint16_t)mVideoWidth;
+    mVideoParam.dst_h = (uint16_t)mVideoHeight;
     mVideoParam.method = 1;
     mVideoParam.wdx = 0;
     mVideoParam.wdy = 0;

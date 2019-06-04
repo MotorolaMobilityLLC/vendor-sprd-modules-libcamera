@@ -14197,7 +14197,7 @@ cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    ae_time = *(cmr_uint *)data * 1000; // ns
+    ae_time = *(cmr_uint *)data; // ns
 
     prev_cxt = &handle->prev_cxt[camera_id];
     prev_cxt->ae_time = ae_time;
