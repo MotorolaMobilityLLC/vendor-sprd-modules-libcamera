@@ -3108,17 +3108,20 @@ int dcam_lbuf_share_mode(enum dcam_id idx, uint32_t width)
 
 int dcam_hwsim_extra(enum dcam_id idx)
 {
-		uint32_t val;
+
+		DCAM_REG_MWR(idx, ISP_BPC_PARAM, ((1 & 0x1) << 7), ((0 & 0x1) << 7));
+		pr_info("bpc<0x%x>[0x%x]\n", 0x0200, DCAM_REG_RD(idx, 0x0200));
+
 #if 0
-		pr_info("bpc\n");
+
+		uint32_t val;
+
 		val = (1 & 0x1) |
 		((1 & 0x1) << 1) |
 		((1 & 0x1) << 2) |
 		((1 & 0x1) << 3);
-	DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xF, val);
+		DCAM_REG_MWR(idx, ISP_BPC_PARAM, 0xF, val);
 
-
-		
 		pr_info("blc\n");
 		DCAM_REG_MWR(idx, DCAM_BLC_PARA_R_B, BIT_31, 1 << 31);
 
@@ -3139,9 +3142,12 @@ int dcam_hwsim_extra(enum dcam_id idx)
 		DCAM_REG_MWR(idx, ISP_RGBG_YRANDOM_PARAMETER0, BIT_1, 1 << 1);
 #endif
 
-		pr_info("ppi ppi_phase_map_corr_en\n");
+#if 0
 		val = ((0 & 1) << 3) | (1 & 1);
+
+		pr_info("ppi ppi_phase_map_corr_en\n");
 		DCAM_REG_MWR(idx, ISP_PPI_PARAM, BIT_3 | BIT_0, val);
+#endif
 
 		return 0;
 }
