@@ -631,6 +631,9 @@ static void fd_recognize_face_attribute(
 
     face_count = FdGetFaceCount(hDT);
     if (face_count <= 0) {
+        if (sprd_fd_api == SPRD_API_MODE_V2) {
+            ret = FarResetFaceArray(hFAR_v2);
+        }
         return;
     }
 
@@ -724,7 +727,10 @@ static void fd_recognize_face_attribute(
                     fattr->attr_v2.agePre = 0;
                     fattr->attr_v2.genderCnn = 0;
                     fattr->attr_v2.race = 0;
-                    fattr->attr_v2.raceScore = 0;
+                    fattr->attr_v2.raceScore[0] = 0;
+                    fattr->attr_v2.raceScore[1] = 0;
+                    fattr->attr_v2.raceScore[2] = 0;
+                    fattr->attr_v2.raceScore[3] = 0;
                     fattr->attr_v2.faceIdx = info.id;
                     fattr->face_id = info.id;
                     faface_v2.x = info.x;
@@ -764,7 +770,7 @@ static void fd_recognize_face_attribute(
                                 }
                             }
                             CMR_LOGV(
-                                "face num %d fattr_v2_vec %d %d %d %d %d %d %d %d %d",
+                                "face num %d fattr_v2_vec %d %d %d %d %d %d %d %d %d %d %d %d",
                                 fattr_v2_vec.faceNum,
                                 new_attr_array.face_v2[fd_idx].attr_v2.smile,
                                 new_attr_array.face_v2[fd_idx].attr_v2.eyeClose,
@@ -773,7 +779,10 @@ static void fd_recognize_face_attribute(
                                 new_attr_array.face_v2[fd_idx].attr_v2.agePre,
                                 new_attr_array.face_v2[fd_idx].attr_v2.genderCnn,
                                 new_attr_array.face_v2[fd_idx].attr_v2.race,
-                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore,
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[0],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[1],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[2],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[3],
                                 new_attr_array.face_v2[fd_idx].attr_v2.faceIdx);
                         }
                     }

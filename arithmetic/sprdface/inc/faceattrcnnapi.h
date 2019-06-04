@@ -37,7 +37,8 @@
 #define RATIO_AGE                 5     /* ratio of age                              */
 #define RATIO_GENDER              5     /* ratio of gender                           */
 #define RATIO_INFANT              5     /* ratio of infant                           */
-#define FAR_POINT_NUM             7
+#define RATIO_RACE                5     /* ratio of race                             */
+//#define FAR_POINT_NUM             7
 
 // A YUV 4:2:0 image with a plane of 8bit Y samples followed by an
 // interleaved U/V planes.
@@ -92,7 +93,7 @@ typedef struct
     int agePre;                         /* age: [0,80]*/
     int genderCnn;                      /* [-100, 100], male: > 0, female < 0*/
     int race;                           /* race: Yellow(0); White(1); Black(2); India(3)        */
-    int raceScore;                      /* raceScore: [0, 100]*/
+    int raceScore[4];                      /* raceScore: [0, 100]*/
     int faceIdx;                        /* Face Index*/
 }FAR_ATTRIBUTE_V2;
 
@@ -148,6 +149,9 @@ FARAPI(int) FarRun_YUV420(FAR_HANDLE hFAR,
                           const FAR_IMAGE_YUV420 *i_yuvImage,
                           const FAR_FACEINFO_VEC *i_faceInfoVec,
                           FAR_ATTRIBUTE_VEC *o_attributeVec);
+
+/* When there is no face input, reset FaceArray */
+FARAPI(int) FarResetFaceArray(FAR_HANDLE hFAR);
 
 #ifdef  __cplusplus
 }
