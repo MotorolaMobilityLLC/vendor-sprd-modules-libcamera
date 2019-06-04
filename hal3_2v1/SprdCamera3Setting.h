@@ -548,6 +548,7 @@ class SprdCamera3Setting {
                                     cmr_u16 height);
     static int getJpegStreamSize(int32_t cameraId, cmr_u16 width,
                                  cmr_u16 height);
+    static int setFeatureList(int32_t cameraId);
     static int getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
                                      cmr_u16 *height);
     static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);

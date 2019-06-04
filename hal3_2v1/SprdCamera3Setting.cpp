@@ -290,6 +290,20 @@ enum {
     CAMERA_AE_SPOT_METERING,
     CAMERA_AE_MODE_MAX
 };
+
+enum available_cam_features{
+    BEAUTYVERSION = 0,
+    BACKBLURVERSION,
+    FRONTBLURVERSION,
+    BLURCOVEREDID,
+    FRONTFLASHMODE,
+    BACKWPLUSTMODEENABLE,
+    TRACKINGENABLE,
+    BACKULTRAWIDEANGLEENABLE,
+    GDEPTHENABLE,
+    FEATURELISTMAX
+};
+
 const uint8_t availableAmModes[] = {
     CAMERA_AE_FRAME_AVG, CAMERA_AE_CENTER_WEIGHTED, CAMERA_AE_SPOT_METERING,
     CAMERA_AE_MODE_MAX};
@@ -903,6 +917,92 @@ void SprdCamera3Setting::SprdCamera3Setting::parseStringfloat(
         sizeStartPtr++;
         fdStartStr++;
     }
+}
+
+int SprdCamera3Setting::setFeatureList(int32_t cameraId){
+    uint8_t available_cam_features[FEATURELISTMAX];
+    int i;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    //0 beautyversion
+    property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
+    available_cam_features[BEAUTYVERSION] = atoi(prop);
+    uint32_t dualPropSupport = 0;
+    if (mSensorType[cameraId] != FOURINONESENSOR &&
+        mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
+        dualPropSupport = 1;
+    }
+    //1 backblurversion
+    property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+    if (!dualPropSupport) {
+        available_cam_features[BACKBLURVERSION] = 0;
+    } else if (atoi(prop) == 1) {
+        available_cam_features[BACKBLURVERSION] = 3;
+    } else if (atoi(prop) == 6) {
+#ifdef CONFIG_BOKEH_HDR_SUPPORT
+        available_cam_features[BACKBLURVERSION] = 9;
+#else
+        if (sensorGetLogicaInfo4MulitCameraId(SPRD_BLUR_ID)) {
+            available_cam_features[BACKBLURVERSION] = 6;
+        } else {
+            available_cam_features[BACKBLURVERSION] = 0;
+        }
+#endif
+    } else {
+        available_cam_features[BACKBLURVERSION] = atoi(prop);
+    }
+    //2 frontblurversion
+    property_get("persist.vendor.cam.fr.blur.version", prop, "0");
+    available_cam_features[FRONTBLURVERSION] = atoi(prop);
+    //3 blurcoveredid
+    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
+    available_cam_features[BLURCOVEREDID] = atoi(prop);
+    //4 frontflashmode
+    for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
+        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
+            available_cam_features[FRONTFLASHMODE] = atoi(front_flash[i].type_id);
+            break;
+        }
+    }
+    //5 backwplustmodeenable
+    property_get("persist.vendor.cam.wt.enable", prop, "0");
+    if (!dualPropSupport) {
+        available_cam_features[BACKWPLUSTMODEENABLE] = 0;
+    } else {
+        available_cam_features[BACKWPLUSTMODEENABLE] = atoi(prop);
+    }
+    //6 trackingenable
+    property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
+    if (cameraId == 0) {
+        available_cam_features[TRACKINGENABLE] = atoi(prop);
+    } else {
+        available_cam_features[TRACKINGENABLE] = 0;
+    }
+
+    //7 backulrawideangleenable
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    available_cam_features[BACKULTRAWIDEANGLEENABLE] = 1;
+#else
+    available_cam_features[BACKULTRAWIDEANGLEENABLE] = 0;
+#endif
+
+    //8 BOKEHGDEPTHENBLE
+#ifdef CONFIG_SUPPORT_GDEPTH
+    available_cam_features[GDEPTHENABLE] = 1;
+#else
+    available_cam_features[GDEPTHENABLE] = 0;
+#endif
+
+    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+           &(available_cam_features[0]),
+           sizeof(available_cam_features));
+    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
+        FEATURELISTMAX;
+
+    CMR_LOGI("available_cam_features=%d",
+        FEATURELISTMAX);
+   return 0;
 }
 
 int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
@@ -2011,85 +2111,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.availabe_sensor_type =
         mSensorType[cameraId];
 
-    Vector<uint8_t> available_cam_features;
-
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-
-    property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
-    available_cam_features.add(atoi(prop));
-    uint32_t dualPropSupport = 0;
-    if (mSensorType[cameraId] != FOURINONESENSOR &&
-        mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
-        dualPropSupport = 1;
-    }
-
-    property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    if (!dualPropSupport) {
-        available_cam_features.add(0);
-    } else if (atoi(prop) == 1) {
-        available_cam_features.add(3);
-    } else if (atoi(prop) == 6) {
-#ifdef CONFIG_BOKEH_HDR_SUPPORT
-        available_cam_features.add(9);
-#else
-        if (sensorGetLogicaInfo4MulitCameraId(SPRD_BLUR_ID)) {
-            available_cam_features.add(6);
-        } else {
-            available_cam_features.add(0);
-        }
-#endif
-    } else {
-        available_cam_features.add(atoi(prop));
-    }
-    property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-    available_cam_features.add(atoi(prop));
-    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
-    available_cam_features.add(atoi(prop));
-
-    for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
-        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
-            available_cam_features.add(atoi(front_flash[i].type_id));
-            break;
-        }
-    }
-
-    property_get("persist.vendor.cam.wt.enable", prop, "0");
-    if (!dualPropSupport) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(atoi(prop));
-    }
-
-    property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
-    if (cameraId == 0) {
-        available_cam_features.add(atoi(prop));
-    } else {
-        available_cam_features.add(0);
-    }
-
-// BACKULTRAWIDEANGLEENABLE
-#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    available_cam_features.add(1);
-#else
-    available_cam_features.add(0);
-#endif
-
-// BOKEHGDEPTHENBLE
-#ifdef CONFIG_SUPPORT_GDEPTH
-    available_cam_features.add(1);
-#else
-    available_cam_features.add(0);
-#endif
-    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
-           &(available_cam_features[0]),
-           available_cam_features.size() * sizeof(uint8_t));
-    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
-        available_cam_features.size();
-
-    ALOGI("available_cam_features=%d",
-          s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
+    setFeatureList(cameraId);
 
     return ret;
 }
