@@ -6677,7 +6677,6 @@ int SprdCamera3OEMIf::Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum,
         HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request "
                  "size 0x%x",
                  mVideoHeapNum, sum, size);
-        goto mem_fail;
     }
 
     return 0;
@@ -6891,7 +6890,6 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
         HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request "
                  "size 0x%x",
                  mZslHeapNum, sum, size);
-        goto mem_fail;
     }
 
     return 0;
