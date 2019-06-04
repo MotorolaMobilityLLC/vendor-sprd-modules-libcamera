@@ -592,11 +592,11 @@ struct img_frm {
     struct img_addr addr_phy;
     struct img_addr addr_vir;
     cmr_s32 fd;
-    cmr_u32 frame_number;
     struct img_data_end data_end;
     cmr_u32 format_pattern;
     void *reserved;
     cmr_s64 monoboottime;
+    cmr_u32 frame_number;
 };
 
 struct snp_thumb_yuv_param {
