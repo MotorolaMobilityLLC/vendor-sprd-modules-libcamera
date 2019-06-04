@@ -2667,7 +2667,6 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
     phyId = m_pPhyCamera[CAM_TYPE_MAIN].id;
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-
     FACE_Tag *faceDetectionInfo =
         (FACE_Tag *)&(hwiMain->mSetting->s_setting[phyId].faceInfo);
     uint8_t numFaces = faceDetectionInfo->face_num;
@@ -2691,6 +2690,14 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
         }
     }
 
+    if (metaSettings.exists(ANDROID_SPRD_VCM_STEP_FOR_BOKEH)) {
+        if (mbokehParm.vcm !=
+            metaSettings.find(ANDROID_SPRD_VCM_STEP_FOR_BOKEH).data.i32[0]) {
+            mbokehParm.vcm =
+                metaSettings.find(ANDROID_SPRD_VCM_STEP_FOR_BOKEH).data.i32[0];
+            isUpdate = true;
+        }
+    }
     if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
         int fnum = metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
         if (fnum < MIN_F_FUMBER) {
@@ -2949,6 +2956,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mLastOnlieVcm = 0;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
+    struct af_relbokeh_oem_data af_relbokeh_info;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -2960,6 +2968,7 @@ int SprdCamera3RealBokeh::configureStreams(
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
+    bzero(&af_relbokeh_info, sizeof(struct af_relbokeh_oem_data));
 
     Mutex::Autolock l(mLock);
 
@@ -3132,6 +3141,10 @@ int SprdCamera3RealBokeh::configureStreams(
 
     mbokehParm.sel_x = mBokehSize.preview_w / 2;
     mbokehParm.sel_y = mBokehSize.preview_h / 2;
+    hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_REBOKE_DATA, &af_relbokeh_info,
+                           NULL);
+    memcpy(&mbokehParm.relbokeh_oem_data, &af_relbokeh_info,
+           sizeof(af_relbokeh_oem_data));
     rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData,
                                mCaptureThread->mAbokehGallery);
     if (rc != NO_ERROR) {

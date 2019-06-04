@@ -59,6 +59,9 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data,
     mPreviewbokehParam.depth_param.F_number =
         mPreviewbokehParam.weight_params.F_number;
     mPreviewbokehParam.depth_param.DisparityImage = NULL;
+    memset(&mPreviewbokehParam.depth_param.golden_vcm_data, 0,
+           sizeof(af_golden_vcm_data));
+
     if (!galleryBokeh) {
         // capture bokeh params
         mCapbokehParam.sel_x = mSize.capture_w / 2;
@@ -120,6 +123,20 @@ void SprdBokehAlgo::setBokenParam(void *param) {
     mPreviewbokehParam.depth_param.sel_x = bokeh_param.sel_x;
     mPreviewbokehParam.depth_param.sel_y = bokeh_param.sel_y;
     mPreviewbokehParam.depth_param.F_number = fnum;
+    mPreviewbokehParam.depth_param.golden_vcm_data.golden_count =
+        bokeh_param.relbokeh_oem_data.golden_count;
+    mPreviewbokehParam.depth_param.golden_vcm_data.golden_macro =
+        bokeh_param.relbokeh_oem_data.golden_macro;
+    mPreviewbokehParam.depth_param.golden_vcm_data.golden_infinity =
+        bokeh_param.relbokeh_oem_data.golden_infinity;
+    for (int i = 0;
+         i < mPreviewbokehParam.depth_param.golden_vcm_data.golden_count; i++) {
+        mPreviewbokehParam.depth_param.golden_vcm_data.golden_vcm[i] =
+            bokeh_param.relbokeh_oem_data.golden_vcm[i];
+        mPreviewbokehParam.depth_param.golden_vcm_data.golden_distance[i] =
+            bokeh_param.relbokeh_oem_data.golden_distance[i];
+    }
+    mPreviewbokehParam.depth_param.VCM_cur_value = bokeh_param.vcm;
 }
 
 int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3,
@@ -132,10 +149,11 @@ int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3,
         rc = BAD_VALUE;
         goto exit;
     }
-    HAL_LOGD("preview depth fnum %d, coordinate (%d,%d)",
+    HAL_LOGD("preview depth fnum %d, coordinate (%d,%d) vcm %d",
              mPreviewbokehParam.depth_param.F_number,
              mPreviewbokehParam.depth_param.sel_x,
-             mPreviewbokehParam.depth_param.sel_y);
+             mPreviewbokehParam.depth_param.sel_y,
+             mPreviewbokehParam.depth_param.VCM_cur_value);
     depthRun = systemTime();
     if (mDepthPrevHandle) {
         rc = sprd_depth_Run_distance(mDepthPrevHandle, para1, para4, para3,
@@ -430,15 +448,12 @@ int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
     weightParams.DisparityImage = NULL;
     weightParams.VCM_cur_value = vcmCurValue;
 
-    // set vcm range
-    property_get("persist.vendor.cam.vcm.up", prop1, "0");
-    property_get("persist.vendor.cam.vcm.down", prop2, "0");
-    weightParams.VCMup = atoi(prop1);
-    weightParams.VCMdown = atoi(prop2);
-    HAL_LOGD("capture fnum %d coordinate (%d,%d) VCM_INFO:%d, %d, %d",
+    memcpy(&weightParams.golden_vcm_data,
+           &mPreviewbokehParam.depth_param.golden_vcm_data,
+           sizeof(struct af_golden_vcm_data));
+    HAL_LOGD("capture fnum %d coordinate (%d,%d) VCM_INFO:%d",
              weightParams.F_number, mCapbokehParam.sel_x, mCapbokehParam.sel_y,
-             weightParams.VCM_cur_value, weightParams.VCMup,
-             weightParams.VCMdown);
+             weightParams.VCM_cur_value);
 
     rc = sprd_depth_Run(mDepthCapHandle, para1, para2, para3, para4,
                         &weightParams);

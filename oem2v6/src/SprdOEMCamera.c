@@ -1140,6 +1140,14 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         break;
     }
 
+    case CAMERA_IOCTRL_GET_REBOKE_DATA: {
+        ret = cmr_get_reboke_data(handle, (struct af_relbokeh_oem_data *)param);
+        if (ret) {
+            ret = -CMR_CAMERA_FAIL;
+            CMR_LOGE("failed to get af_relbokeh_oem_data %ld", ret);
+        }
+        break;
+    }
     default:
         break;
     }
@@ -1265,8 +1273,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_isp_handle, camera_lls_enable, camera_is_lls_enabled,
     camera_vendor_hdr_enable, camera_is_vendor_hdr, camera_set_lls_shot_mode,
     camera_get_lls_shot_mode, camera_get_isp_info, camera_start_burst_notice,
-    camera_end_burst_notice, NULL,
-    NULL, dump_jpeg_file, camera_get_gain_thrs,
+    camera_end_burst_notice, NULL, NULL, dump_jpeg_file, camera_get_gain_thrs,
     camera_set_sensor_info_to_af, camera_get_sensor_max_fps,
     camera_snapshot_is_need_flash, camera_get_sensor_otp_info,
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,

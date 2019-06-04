@@ -1174,6 +1174,14 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                (struct vcm_disc_info *)param);
         break;
     }
+    case CAMERA_IOCTRL_GET_REBOKE_DATA: {
+        ret = cmr_get_reboke_data(handle, (struct af_relbokeh_oem_data *)param);
+        if (ret) {
+            ret = -CMR_CAMERA_FAIL;
+            CMR_LOGE("failed to get af_relbokeh_oem_data %ld", ret);
+        }
+        break;
+    }
     default:
         break;
     }

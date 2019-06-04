@@ -5224,7 +5224,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     struct img_frm pic_enc = param->pic_enc;
     struct img_frm dst = param->last_dst;
     struct cmr_op_mean mean;
-    
+
     cmr_uint rotation = param->rotation;
     cmr_uint flip_on = param->flip_on;
     cmr_u32 tmp = 0;
@@ -8093,7 +8093,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->vcm_step;
         break;
-
+    case COM_ISP_GET_REBOKEH_DATA:
+        isp_cmd = ISP_CTRL_GET_REBOKEH_DATA;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->relbokeh_info;
+        break;
     case COM_ISP_SET_PREVIEW_PDAF_RAW:
         isp_cmd = ISP_CTRL_SET_PREV_PDAF_RAW;
         ptr_flag = 1;
@@ -11528,6 +11532,37 @@ exit:
     return ret;
 }
 
+cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
+                            struct af_relbokeh_oem_data *golden_distance) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_param;
+
+    if (!oem_handle || golden_distance == NULL) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_REBOKEH_DATA, &isp_param);
+    golden_distance->golden_count = isp_param.relbokeh_info.golden_count;
+    golden_distance->golden_infinity = isp_param.relbokeh_info.golden_infinity;
+    golden_distance->golden_macro = isp_param.relbokeh_info.golden_macro;
+    for (int i = 0; i < golden_distance->golden_count; i++) {
+        golden_distance->golden_distance[i] =
+            isp_param.relbokeh_info.golden_distance[i];
+        golden_distance->golden_vcm[i] = isp_param.relbokeh_info.golden_vcm[i];
+        CMR_LOGD(" -------golden_vcm[%d] ----%d ", i,
+                 golden_distance->golden_vcm[i]);
+    }
+    if (ret) {
+        CMR_LOGE("get isp vcm data error %ld", ret);
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
+
 cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -11585,7 +11620,7 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
         }
     }
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGI("done  %ld", ret);
     return ret;
 }
 

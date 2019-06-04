@@ -59,17 +59,24 @@ extern "C" {
 	{
 		int  outputsize;
 		int  calibration_width;
-		int  calibration_height; 
+		int  calibration_height;
 	};
 
+	struct af_golden_vcm_data{
+        unsigned short golden_macro;
+		unsigned short golden_infinity;
+		unsigned short golden_count;
+		unsigned short golden_distance[40];
+		unsigned short golden_vcm[40];
+		unsigned short reserved[10];
+	};
 	typedef struct {
 		int F_number; // 1 ~ 20
 		int sel_x; /* The point which be touched */
 		int sel_y; /* The point which be touched */
 		unsigned char *DisparityImage;
 		int VCM_cur_value;
-		int VCMup;
-                int VCMdown;
+		struct af_golden_vcm_data golden_vcm_data;
 	} weightmap_param;
 
 	typedef struct DistanceTwoPointInfo
@@ -99,6 +106,7 @@ extern "C" {
 	int sprd_depth_Run_distance(void* handle , void * a_pOutDisparity, void * a_pOutMaptable, void* a_pInSub_YCC420NV21, void* a_pInMain_YCC420NV21,weightmap_param *wParams,distanceRet *distance);
 
 	int sprd_depth_OnlineCalibration(void* handle , void * a_pOutMaptable, void* a_pInSub_YCC420NV21, void* a_pInMain_YCC420NV21);
+
     int sprd_depth_OnlineCalibration_postprocess(void* handle , void * a_pOutMaptable, void* a_pOutMaptable_scale);
 
 	int sprd_depth_rotate(void * a_pOutDisparity,int width,int height,int angle);

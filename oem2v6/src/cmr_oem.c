@@ -1726,14 +1726,17 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
 
         // preflash and highflash shutdown skip preview frame
         if (cxt->flash_skip_frame_enable && cb_type == PREVIEW_EVT_CB_FRAME) {
-            struct camera_frame_type *prev_frame = (struct camera_frame_type *)param;
+            struct camera_frame_type *prev_frame =
+                (struct camera_frame_type *)param;
             if (prev_frame->type == PREVIEW_FRAME) {
                 CMR_LOGD("monoboottime %ld flash_shutdown_timestamp %ld",
-                    prev_frame->monoboottime, cxt->flash_shutdown_timestamp);
+                         prev_frame->monoboottime,
+                         cxt->flash_shutdown_timestamp);
                 if (prev_frame->monoboottime > cxt->flash_shutdown_timestamp) {
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
                     cxt->flash_skip_frame_cnt++;
-                    CMR_LOGD("flash_skip_frame_cnt %d", cxt->flash_skip_frame_cnt);
+                    CMR_LOGD("flash_skip_frame_cnt %d",
+                             cxt->flash_skip_frame_cnt);
                 }
             }
             if (cxt->flash_skip_frame_cnt == cxt->flash_skip_frame_num) {
@@ -6952,29 +6955,34 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         if (camera_front_lcd_flash_activie(flash_opt.flash_index)) {
             camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
         } else {
-			if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN) {
+            if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN) {
                 cmr_u32 flash_capture_skip_num = 0;
                 bool isFrontFlash =
-                    (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
+                    (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true
+                                                                    : false;
                 ret = isp_ioctl(cxt->isp_cxt.isp_handle,
-                        ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, &flash_capture_skip_num);
+                                ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM,
+                                &flash_capture_skip_num);
                 if (ret) {
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
                 CMR_LOGD("preflash_skip_num = %d", flash_capture_skip_num);
                 if (0 == cxt->camera_id || isFrontFlash) {
-                    cxt->flash_skip_frame_num =
-                        (flash_capture_skip_num == 0) ? 1 : flash_capture_skip_num;
+                    cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
+                                                    ? 1
+                                                    : flash_capture_skip_num;
                     cxt->flash_skip_frame_enable = 1;
                     cxt->flash_skip_frame_cnt = 0;
-                    cxt->flash_shutdown_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+                    cxt->flash_shutdown_timestamp =
+                        systemTime(SYSTEM_TIME_BOOTTIME);
                     CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
-                                    cxt->flash_skip_frame_num, cxt->flash_skip_frame_cnt);
+                             cxt->flash_skip_frame_num,
+                             cxt->flash_skip_frame_cnt);
                 }
             }
 
             cmr_grab_flash_cb(grab_handle, &flash_opt);
-		}
+        }
     } break;
     case SETTING_IO_GET_PREVIEW_MODE:
         param_ptr->cmd_value = cxt->prev_cxt.preview_sn_mode;
@@ -7659,7 +7667,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->vcm_step;
         break;
-
+    case COM_ISP_GET_REBOKEH_DATA:
+        isp_cmd = ISP_CTRL_GET_REBOKEH_DATA;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->relbokeh_info;
+        break;
     case COM_ISP_SET_PREVIEW_PDAF_RAW:
         isp_cmd = ISP_CTRL_SET_PREV_PDAF_RAW;
         ptr_flag = 1;
@@ -11131,6 +11143,37 @@ cmr_int cmr_set_vcm_disc(cmr_handle oem_handle, cmr_u32 camera_id,
                            &isp_param);
     if (ret) {
         CMR_LOGE("set isp vcm_disc error %ld", ret);
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
+
+cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
+                            struct af_relbokeh_oem_data *golden_distance) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_param;
+
+    if (!oem_handle || golden_distance == NULL) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_REBOKEH_DATA, &isp_param);
+    golden_distance->golden_count = isp_param.relbokeh_info.golden_count;
+    golden_distance->golden_infinity = isp_param.relbokeh_info.golden_infinity;
+    golden_distance->golden_macro = isp_param.relbokeh_info.golden_macro;
+    for (int i = 0; i < golden_distance->golden_count; i++) {
+        golden_distance->golden_distance[i] =
+            isp_param.relbokeh_info.golden_distance[i];
+        golden_distance->golden_vcm[i] = isp_param.relbokeh_info.golden_vcm[i];
+        CMR_LOGD(" -------golden_vcm[%d] = %d ", i,
+                 golden_distance->golden_vcm[i]);
+    }
+    if (ret) {
+        CMR_LOGE("get isp vcm data error %ld", ret);
         goto exit;
     }
 

@@ -458,6 +458,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AI_SET_FD_ON_OFF,
     COM_ISP_SET_CALIBRATION_VCMDISC,
     COM_ISP_SET_AUTO_3DNR,
+    COM_ISP_GET_REBOKEH_DATA,
     COM_ISP_TYPE_MAX
 };
 
@@ -747,6 +748,15 @@ struct vcm_disc_info {
     cmr_u16 total_seg;
     cmr_u16 distance[VCM_DISTANCE_COUNT];
     cmr_u16 reserved[20];
+};
+
+struct af_relbokeh_oem_data {
+    cmr_u16 golden_macro;
+    cmr_u16 golden_infinity;
+    cmr_u16 golden_count;
+    cmr_u16 golden_distance[40];
+    cmr_u16 golden_vcm[40];
+    cmr_u16 reserved[10];
 };
 
 typedef struct {
@@ -1087,6 +1097,7 @@ struct common_isp_cmd_param {
 #endif
         struct vcm_range_info vcm_range;
         struct vcm_disc_info vcm_disc;
+        struct af_relbokeh_oem_data relbokeh_info;
     };
 };
 
@@ -1901,6 +1912,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_HDR_DISABLE,
     CAMERA_IOCTRL_SET_VCM_DISC,
     CAMERA_IOCTRL_ULTRA_WIDE_MODE,
+    CAMERA_IOCTRL_GET_REBOKE_DATA,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

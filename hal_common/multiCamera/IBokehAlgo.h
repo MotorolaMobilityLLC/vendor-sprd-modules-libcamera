@@ -37,6 +37,7 @@ typedef struct {
     bool isFocus;
     MRECT face_rect[CAMERA3MAXFACE];
     int face_num;
+    struct af_relbokeh_oem_data relbokeh_oem_data;
 } bokeh_params;
 
 typedef struct {
