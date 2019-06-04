@@ -318,12 +318,21 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     threednr_handle->height = in->frame_size.height;
     threednr_handle->width = in->frame_size.width;
-    if ((threednr_handle->width * 10) / threednr_handle->height <= 13) {
+    if ((threednr_handle->width * 10) / threednr_handle->height <= 10) {
+        threednr_handle->small_height = CMR_3DNR_1_1_SMALL_HEIGHT;
+        threednr_handle->small_width = CMR_3DNR_1_1_SMALL_WIDTH;
+    } else if ((threednr_handle->width * 10) / threednr_handle->height <= 13) {
         threednr_handle->small_height = CMR_3DNR_4_3_SMALL_HEIGHT;
         threednr_handle->small_width = CMR_3DNR_4_3_SMALL_WIDTH;
     } else if ((threednr_handle->width * 10) / threednr_handle->height <= 18) {
         threednr_handle->small_height = CMR_3DNR_16_9_SMALL_HEIGHT;
         threednr_handle->small_width = CMR_3DNR_16_9_SMALL_WIDTH;
+    } else if ((threednr_handle->width * 10) / threednr_handle->height <= 20) {
+        threednr_handle->small_height = CMR_3DNR_18_9_SMALL_HEIGHT;
+        threednr_handle->small_width = CMR_3DNR_18_9_SMALL_WIDTH;
+    } else if ((threednr_handle->width * 10) / threednr_handle->height <= 22) {
+        threednr_handle->small_height = CMR_3DNR_19_9_SMALL_HEIGHT;
+        threednr_handle->small_width = CMR_3DNR_19_9_SMALL_WIDTH;
     } else {
         CMR_LOGE("incorrect 3dnr small image mapping, using 16*9 as the "
                  "default setting");
