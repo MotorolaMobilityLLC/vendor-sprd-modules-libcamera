@@ -403,6 +403,12 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		IMAGE_DATA_MAX
 	};
 
+	enum ai_work_mode {
+		AI_WORKMODE_FULL = 1,
+		AI_WORKMODE_PORTRAIT = 2,
+		AI_WORKMODE_MAX
+	};
+
 	struct ai_img_status {
 		cmr_u32 frame_id;
 		cmr_s32 frame_state;

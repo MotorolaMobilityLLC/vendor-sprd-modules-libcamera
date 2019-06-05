@@ -377,9 +377,27 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 			rtn = ISP_ERROR;
 			goto exit;
 		}
-		AIC_StartProcess(cxt->aic_handle);
+		if (!param) {
+			ISP_LOGE("fail to set START work_mode");
+			goto exit;
+		}
+		cmr_s32 ai_work_mode = *(cmr_s32 *)param;
+		cmr_s32 aic_work_mode = 0;
+
+		switch (ai_work_mode) {
+			case AI_WORKMODE_FULL:
+				aic_work_mode = AIC_WORKMODE_FULL;
+				break;
+			case AI_WORKMODE_PORTRAIT:
+				aic_work_mode = AIC_WORKMODE_PORTRAIT;
+				break;
+			default:
+				aic_work_mode = AIC_WORKMODE_FULL;
+				break;
+		}
+		AIC_StartProcess(cxt->aic_handle,aic_work_mode);
 		cxt->aic_status = AI_STATUS_PROCESSING;
-		ISP_LOGI("AI start.");
+		ISP_LOGI("AI start,work_mode %d",aic_work_mode);
 		break;
 	case AI_PROCESS_STOP:
 		if (AI_STATUS_IDLE == cxt->aic_status) {
