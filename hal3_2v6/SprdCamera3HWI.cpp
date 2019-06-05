@@ -1895,6 +1895,8 @@ int SprdCamera3HWI::flush() {
                                                CAMERA_STREAM_TYPE_VIDEO);
             mRegularChan->channelClearAllQBuff(timestamp,
                                                CAMERA_STREAM_TYPE_CALLBACK);
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_YUV2);
         }
         if (mPicChan) {
             // TBD: will add a user-kernel interface, to return all inflight
@@ -1921,6 +1923,8 @@ int SprdCamera3HWI::flush() {
                                                CAMERA_STREAM_TYPE_VIDEO);
             mRegularChan->channelClearAllQBuff(timestamp,
                                                CAMERA_STREAM_TYPE_CALLBACK);
+            mRegularChan->channelClearAllQBuff(timestamp,
+                                               CAMERA_STREAM_TYPE_YUV2);
         }
         if (mPicChan) {
             // TBD: will add a user-kernel interface, to return all inflight
