@@ -439,7 +439,7 @@ static cmr_s32 check_block_skip(struct isp_pm_context *pm_cxt_ptr,
 
 	isp_cxt_prv = &pm_cxt_ptr->cxt_array[set_id];
 	if (isp_cxt_prv->is_validate) {
-		if (pm_cxt_ptr->cam_4in1_mode && !pm_cxt_ptr->lowlight_flag)
+		if (pm_cxt_ptr->cam_4in1_mode)
 			return 0;
 		if (IS_DCAM_BLOCK(blk_id))
 			return 1;
@@ -671,6 +671,13 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 	output->mode = mode;
 	output->scene = scene;
 	output->cus_define = define;
+	if (pm_cxt_ptr->cam_4in1_mode && pm_cxt_ptr->lowlight_flag &&
+                mode == WORKMODE_CAPTURE) {
+                img_w /= 2;
+                img_h /= 2;
+                output->resolution.w = img_w;
+                output->resolution.h = img_h;
+        }
 
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
@@ -788,6 +795,13 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	output->scene = scene;
 	output->cus_define = define;
 	output->compatible_mode_id = mode_id;
+	if (pm_cxt_ptr->cam_4in1_mode && pm_cxt_ptr->lowlight_flag &&
+		mode == WORKMODE_CAPTURE) {
+		img_w /= 2;
+		img_h /= 2;
+		output->resolution.w = img_w;
+		output->resolution.h = img_h;
+	}
 
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
@@ -1007,7 +1021,90 @@ get_blocks:
 	case ISP_PM_CMD_SET_LOWLIGHT_FLAG:
 	{
 		pm_cxt_ptr->lowlight_flag = *(cmr_u32 *)param_ptr;
-		ISP_LOGV("lowlight_flag = %d", pm_cxt_ptr->lowlight_flag);
+		ISP_LOGV("lowlight_flag = %d\n", pm_cxt_ptr->lowlight_flag);
+		if (pm_cxt_ptr->cam_4in1_mode) {
+			cmr_u32 i, j, k;
+			cmr_u32 *cap_mode;
+			struct isp_pm_blocks_param *blk_param_ptr;
+			struct isp_context *isp_cxt_ptr = PNULL;
+			struct isp_pm_mode_param *cap, *comm;
+			struct isp_pm_block_header *src_h, *dst_h;
+			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
+				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
+				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
+				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
+				ISP_BLK_EE_V1, ISP_BLK_GRGB_V1, ISP_BLK_IMBALANCE,
+				ISP_BLK_LTM, ISP_BLK_YUV_NOISEFILTER_V1,
+				ISP_BLK_UV_POSTCDN_V1, ISP_BLK_YUV_PRECDN_V1,
+				ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
+			}; /* blocks from cap1 */
+
+			for (i = 0; i < PARAM_SET_MAX; i++) {
+				blk_param_ptr = &pm_cxt_ptr->blocks_param[i];
+				isp_cxt_ptr = &pm_cxt_ptr->cxt_array[i];
+				if (!isp_cxt_ptr->is_validate || blk_param_ptr->mode != WORKMODE_CAPTURE)
+					continue;
+				if (pm_cxt_ptr->lowlight_flag)
+					isp_cxt_ptr->mode_id = ISP_MODE_ID_CAP_1;
+				else
+					isp_cxt_ptr->mode_id = ISP_MODE_ID_CAP_0;
+				pm_cxt_ptr->cap_mode_id = isp_cxt_ptr->mode_id;
+
+				if (out_ptr) {
+					cap_mode = (cmr_u32 *)out_ptr;
+					*cap_mode = isp_cxt_ptr->mode_id;
+				}
+				ISP_LOGD("lowlight %d, NR mode %d\n", pm_cxt_ptr->lowlight_flag, isp_cxt_ptr->mode_id);
+				for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
+					cap = pm_cxt_ptr->tune_mode_array[j];
+					if (cap && cap->mode_id == isp_cxt_ptr->mode_id)
+						break;
+					cap = NULL;
+				}
+				for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
+                                        comm = pm_cxt_ptr->tune_mode_array[j];
+                                        if (comm && comm->mode_id == ISP_MODE_ID_COMMON)
+                                                break;
+                                        comm = NULL;
+                                }
+				if (comm == NULL || cap == NULL) {
+					ISP_LOGE("NULL point %p %p\n", cap, comm);
+					continue;
+				}
+				for (k = 0; k < sizeof(tb_blk) / sizeof(tb_blk[0]); k++) {
+					for (j = 0; j < ISP_TUNE_BLOCK_MAX; j++) {
+						dst_h = &blk_param_ptr->header[j];
+						if (dst_h->block_id == tb_blk[k])
+							break;
+					}
+					if (j >= ISP_TUNE_BLOCK_MAX)
+						continue;
+					for (j = 0; j < ISP_TUNE_BLOCK_MAX && cap; j++) {
+						src_h = &cap->header[j];
+						if (src_h && src_h->block_id == tb_blk[k])
+							break;
+					}
+					if (src_h && j < ISP_TUNE_BLOCK_MAX) {
+						memcpy(dst_h, src_h, sizeof(struct isp_pm_block_header));
+						dst_h->is_update = 1;
+						dst_h->source_flag |= ISP_PM_BLK_UPDATE;
+						continue;
+					}
+					for (j = 0; j < ISP_TUNE_BLOCK_MAX && comm; j++) {
+                                                src_h = &comm->header[j];
+                                                if (src_h && src_h->block_id == tb_blk[k])
+                                                        break;
+                                        }
+					if (src_h && i < ISP_TUNE_BLOCK_MAX) {
+                                                memcpy(dst_h, src_h, sizeof(struct isp_pm_block_header));
+                                                dst_h->is_update = 1;
+						dst_h->source_flag |= ISP_PM_BLK_UPDATE;
+                                                continue;
+                                        }
+				}
+			}
+			isp_pm_context_init(pm_cxt_ptr, PARAM_SET1);
+		}
 		break;
 	}
 	case ISP_PM_CMD_SET_AWB:
