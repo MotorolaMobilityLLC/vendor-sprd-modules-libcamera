@@ -570,6 +570,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
+    mGetLastPowerHint = CAM_PERFORMNCE_LEVEL_MAX;
 
     mVideo3dnrFlag = 0;
     mCapBufIsAvail = 0;
@@ -1277,6 +1278,11 @@ status_t SprdCamera3OEMIf::autoFocus() {
 
     if (mCameraId == 3) {
         return NO_ERROR;
+    }
+
+    if (mSysPerformace) {
+        mGetLastPowerHint = mSysPerformace->mCurrentPowerHintScene;
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     }
 
     mSetting->getCONTROLTag(&controlInfo);
@@ -5102,6 +5108,9 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("camera cb: autofocus succeeded.");
         {
+            if(mIsAutoFocus){
+                setCamPreformaceScene(mGetLastPowerHint);
+            }
             if (parm4 != NULL) {
                 af_ctrl = (isp_af_notice *)parm4;
                 if (af_ctrl->af_roi.sx != 0 || af_ctrl->af_roi.sy != 0 ||
@@ -5134,6 +5143,9 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
+        if(mIsAutoFocus){
+            setCamPreformaceScene(mGetLastPowerHint);
+        }
         if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
             controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_MACRO) {
             setAfState(AF_SWEEP_DONE_AND_NOT_FOCUSED_LOCKED);

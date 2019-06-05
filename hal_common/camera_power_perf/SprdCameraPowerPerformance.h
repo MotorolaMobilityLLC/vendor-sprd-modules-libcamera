@@ -69,6 +69,7 @@ typedef enum CAMERA_PERFORMACE_SCENE {
     CAM_PERFORMANCE_LEVEL_4,
     CAM_PERFORMANCE_LEVEL_5,
     CAM_PERFORMANCE_LEVEL_6,
+    CAM_PERFORMNCE_LEVEL_MAX
 } sys_performance_camera_scene;
 
 class SprdCameraSystemPerformance {
@@ -76,6 +77,7 @@ class SprdCameraSystemPerformance {
     static void getSysPerformance(SprdCameraSystemPerformance **pmCamSysPer);
     static void freeSysPerformance(SprdCameraSystemPerformance **pgCamSysPer);
     void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
+    sys_performance_camera_scene mCurrentPowerHintScene;
 
   private:
     SprdCameraSystemPerformance();

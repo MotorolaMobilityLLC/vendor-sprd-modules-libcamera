@@ -852,6 +852,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     uint32_t isNeedFlashFired;
     uint32_t mIsPowerhintWait;
+    sys_performance_camera_scene mGetLastPowerHint;
 };
 
 }; // namespace sprdcamera

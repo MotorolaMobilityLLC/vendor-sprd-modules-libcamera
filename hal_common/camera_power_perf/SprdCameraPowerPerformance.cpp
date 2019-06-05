@@ -53,6 +53,7 @@ SprdCameraSystemPerformance::SprdCameraSystemPerformance() {
     mCurrentPowerHint = CAM_POWER_NORMAL;
     mCameraDfsPolicyCur = CAM_EXIT;
     mPowermanageInited = false;
+    mCurrentPowerHintScene = CAM_PERFORMANCE_LEVEL_4;
 
 #if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
     mPowerManager = NULL;
@@ -111,7 +112,7 @@ void SprdCameraSystemPerformance::freeSysPerformance(
 
 void SprdCameraSystemPerformance::setCamPreformaceScene(
     sys_performance_camera_scene camera_scene) {
-
+    Mutex::Autolock l(&mLock);
 #ifndef CONFIG_CAMERA_DFS_FIXED_MAXLEVEL
     switch (camera_scene) {
     case CAM_PERFORMANCE_LEVEL_6:
@@ -159,6 +160,7 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
         HAL_LOGI("camera scene not support");
     }
 #endif
+    mCurrentPowerHintScene = camera_scene;
 
     HAL_LOGD("x camera scene:%d", camera_scene);
 }
@@ -204,7 +206,6 @@ void SprdCameraSystemPerformance::deinitPowerHint() {
 void SprdCameraSystemPerformance::setPowerHint(
     power_hint_state_type_t powerhint_id) {
 
-    Mutex::Autolock l(&mLock);
     if (!mPowermanageInited) {
         HAL_LOGE("need init.");
         return;
@@ -270,7 +271,6 @@ exit:
 
 int SprdCameraSystemPerformance::changeDfsPolicy(dfs_policy_t dfs_policy) {
 
-    Mutex::Autolock l(&mLock);
     switch (dfs_policy) {
     case CAM_EXIT:
         if (CAM_LOW == mCameraDfsPolicyCur) {
