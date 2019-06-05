@@ -2222,6 +2222,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->img_blk_info.data = (cmr_u32 *) &cxt->aem_stats_data;
 		ae_info->ae_rlt_info.bv = ae_in->ae_output.cur_bv;
 		ae_info->ae_rlt_info.is_stab = ae_in->ae_output.is_stab;
+		ae_info->ae_rlt_info.near_stab = ae_in->ae_output.near_stab;
 		ae_info->ae_rlt_info.cur_exp_line = ae_in->ae_output.cur_exp_line;
 		ae_info->ae_rlt_info.cur_dummy = ae_in->ae_output.cur_dummy;
 		ae_info->ae_rlt_info.frame_line = ae_in->ae_output.frame_line;

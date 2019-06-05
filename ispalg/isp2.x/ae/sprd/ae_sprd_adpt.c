@@ -907,6 +907,7 @@ static cmr_u32 ae_calc_target_lum(struct ae_ctrl_cxt *cxt, cmr_u32 cur_target_lu
 
 	cxt->cur_status.target_range_in_zone = ev_table->ev_item[level].stable_zone_in;
 	cxt->cur_status.target_range_out_zone = ev_table->ev_item[level].stable_zone_out;
+	cxt->cur_status.target_range_near_zone = cxt->stable_zone_ev[14];
 
 	ISP_LOGD("target_range_in =%d, target_range_out =%d", cxt->cur_status.target_range_in_zone, cxt->cur_status.target_range_out_zone);
 	
@@ -3462,6 +3463,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_r
 	result->ae_output.cur_exp_line = alg_rt->wts.cur_exp_line;
 	result->ae_output.line_time = cxt->cur_status.line_time;
 	result->ae_output.is_stab = alg_rt->wts.stable;
+	result->ae_output.near_stab = alg_rt->wts.near_stable;
 	result->ae_output.target_lum = alg_rt->target_lum;
 	result->ae_output.target_lum_ori = alg_rt->target_lum_ori;
 	result->ae_output.flag4idx = alg_rt->flag4idx;

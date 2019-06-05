@@ -555,6 +555,7 @@ extern "C" {
 		cmr_u32 cur_dgain;
 		cmr_u32 cur_iso;
 		cmr_u32 is_stab;
+		cmr_u32 near_stab;
 		cmr_u32 line_time;
 		cmr_u32 frame_line;
 		cmr_u32 target_lum;
