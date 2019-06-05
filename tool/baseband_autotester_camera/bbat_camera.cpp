@@ -9,7 +9,7 @@
 #include "hal3_2v4/SprdCamera3OEMIf.h"
 #include "hal3_2v4/SprdCamera3Setting.h"
 #endif
-#if defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_6) ||  defined(CONFIG_ISP_2_7)
 #include "hal3_2v6/SprdCamera3OEMIf.h"
 #include "hal3_2v6/SprdCamera3Setting.h"
 #endif

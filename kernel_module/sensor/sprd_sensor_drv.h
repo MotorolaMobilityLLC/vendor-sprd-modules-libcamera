@@ -98,5 +98,4 @@ int sprd_sensor_read_i2c(struct sensor_i2c_tag *i2c_tab, int sensor_id);
 int sprd_sensor_write_muti_i2c(struct sensor_muti_aec_i2c_tag *muti_aec_i2c);
 void sprd_sensor_unregister_driver(void);
 int sprd_sensor_find_dcam_id(int sensor_id);
-
 #endif

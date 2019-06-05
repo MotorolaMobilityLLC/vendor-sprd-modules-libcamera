@@ -37,10 +37,10 @@ static void cpp_trace_slice_param(struct sprd_cpp_scale_cfg_parm* param)
 	unsigned int i = 0;
 	struct sprd_cpp_hw_slice_parm *slice_ptr;
 	INFO("Trace Slice parameters:\n");
-	INFO("Slice count:%d\n",param->slice_param_l5pro.output.slice_count);
-	for(i = 0; i < param->slice_param_l5pro.output.slice_count;i++){
+	INFO("Slice count:%d\n",param->slice_param_1.output.slice_count);
+	for(i = 0; i < param->slice_param_1.output.slice_count;i++){
 		INFO("Slice %d:\n",i);
-		slice_ptr = &param->slice_param_l5pro.output.hw_slice_param[i];
+		slice_ptr = &param->slice_param_1.output.hw_slice_param[i];
 		INFO("Input : [%d %d %d] [%d %d]\n",
 			slice_ptr->path0_src_width, slice_ptr->path0_src_height,
 			slice_ptr->path0_src_pitch,
@@ -254,7 +254,7 @@ cmr_int cpp_scale_start(struct cpp_scale_param *scale_param)
 	}
 
 	sc_cfg = scale_param->scale_cfg_param;
-	slice_parm = &scale_param->scale_cfg_param->slice_param_l5pro;
+	slice_parm = &scale_param->scale_cfg_param->slice_param_1;
 	if (scale_param->host_fd > 0)
 		fd = scale_param->host_fd;
 	else {

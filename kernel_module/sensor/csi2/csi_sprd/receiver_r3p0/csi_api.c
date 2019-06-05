@@ -70,7 +70,7 @@ static struct csi_dt_node_info *csi_get_dt_node_data(int sensor_id)
 	return s_csi_dt_info_p[sensor_id];
 }
 /* csi src 0 soc, 1 sensor, and csi test pattern clk */
-#ifdef FPGA_BRINGUP
+
 static int csi_ipg_set_clk(int sensor_id)
 {
 	struct csi_dt_node_info *dt_info = csi_get_dt_node_data(sensor_id);
@@ -134,7 +134,6 @@ static int csi_mipi_clk_enable(int sensor_id)
 	}
 	return ret;
 }
-#endif
 
 static void csi_mipi_clk_disable(int sensor_id)
 {
@@ -234,7 +233,7 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 			csi_info->reg_base);
 
 	/* read clocks */
-#ifdef FPAG_BRINGUP
+
 	csi_info->clk_ckg_eb = of_clk_get_by_name(dn,
 					"clk_gate_eb");
 
@@ -242,7 +241,7 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 					"clk_mipi_csi_gate_eb");
 
 	csi_info->csi_eb_clk = of_clk_get_by_name(dn, "clk_csi_eb");
-#endif
+
 
 	/* csi src flag from sensor or csi */
 	csi_info->csi_src_eb = of_clk_get_by_name(dn, "mipi_csi_src_eb");
@@ -269,9 +268,9 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 		pr_err("csi_dt_init:fail to get anlg_phy_g10_controller\n");
 		return PTR_ERR(regmap_syscon);
 	}
-#ifdef FPAG_BRINGUP
+
 	csi_info->phy.anlg_phy_g10_syscon = regmap_syscon;
-#endif
+
 
 	csi_reg_base_save(csi_info, sensor_id);
 	csi_phy_power_down(csi_info, sensor_id, 1);
@@ -357,7 +356,6 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num,
 {
 	int ret = 0;
 
-#ifdef FPAG_BRINGUP
 	struct csi_dt_node_info *dt_info = csi_get_dt_node_data(sensor_id);
 
 	if (!dt_info) {
@@ -383,17 +381,17 @@ int csi_api_open(int bps_per_lane, int phy_id, int lane_num,
 	csi_phy_testclr(sensor_id, &dt_info->phy);
 	csi_phy_init(dt_info, sensor_id);
 	csi_start(lane_num, sensor_id);
-#endif
+
 	if (CSI_PATTERN_ENABLE)
 		csi_ipg_mode_cfg(sensor_id, 1);
 
 	return ret;
-#ifdef FPAG_BRINGUP
+
 EXIT:
 	pr_err("fail to open csi api %d\n", ret);
 	csi_api_close(phy_id, sensor_id);
 	return ret;
-#endif
+
 }
 
 int csi_api_close(uint32_t phy_id, int sensor_id)

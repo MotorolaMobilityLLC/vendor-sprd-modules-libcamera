@@ -404,7 +404,6 @@ int sprd_dcam_drv_3dnr_me_set(uint32_t idx, void *size);
 int sprd_dcam_drv_3dnr_fast_me_info_get(enum dcam_id idx,
 	uint32_t need_nr3, struct camera_size *size);
 struct dcam_fast_me_param *sprd_dcam_drv_3dnr_me_param_get(enum dcam_id idx);
-int sprd_dcam_drv_chip_id_get(void);
 void sprd_dcam_drv_reg_trace(enum dcam_id idx);
 void sprd_dcam_drv_4in1_info_get(uint32_t need_4in1);
 int sprd_dcam_drv_zoom_param_update(struct dcam_zoom_param zoom_param,

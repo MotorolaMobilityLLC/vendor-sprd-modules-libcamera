@@ -26,8 +26,8 @@
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 #include <linux/sprd_iommu.h>
+#include <video/sprd_mmsys_pw_domain.h>
 
-#include "cam_pw_domain.h"
 #include "dcam_drv.h"
 #include "isp_path.h"
 #include "isp_3dnr_drv.h"
@@ -37,7 +37,7 @@
 #ifdef CONFIG_COMPAT
 #include "cam_drv_compat.h"
 #endif
-//#include "csi_api.h"
+#include "csi_api.h"
 
 #ifdef pr_fmt
 #undef pr_fmt
@@ -56,7 +56,7 @@
 #ifdef FPGA_BRINGUP
 #define DCAM_TIMEOUT               (1500)
 #else
-#define DCAM_TIMEOUT               (2000*100)
+#define DCAM_TIMEOUT               (6000*100)
 #endif
 
 enum {
@@ -775,7 +775,7 @@ static ssize_t sprd_camcore_read(struct file *file,
 				read_op.parm.frame.irq_type = node.irq_type;
 				read_op.parm.frame.irq_property
 					= node.irq_property;
-				//csi_api_reg_trace();
+				csi_api_reg_trace();
 				sprd_dcam_drv_reg_trace(idx);
 			}
 		}

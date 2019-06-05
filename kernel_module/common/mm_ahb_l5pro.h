@@ -29,7 +29,7 @@
 #define REG_MM_AHB_MM_AS_BDG_STATE             (0x003C)
 #define REG_MM_AHB_MM_LPC_CTRL_FD              (0x0040)
 
-/* REG_MM_AHB_AHB_EB */
+/* REG_MM_AHB_RF_AHB_EB */
 
 #define BIT_MM_AHB_FD_EB                          BIT(10)
 #define BIT_MM_AHB_DVFS_EB                        BIT(9)
@@ -43,7 +43,7 @@
 #define BIT_MM_AHB_JPG_EB                         BIT(1)
 #define BIT_MM_AHB_CPP_EB                         BIT(0)
 
-/* REG_MM_AHB_AHB_RST */
+/* REG_MM_AHB_RF_AHB_RST */
 
 #define BIT_MM_AHB_FD_SOFT_RST_MASK               BIT(27)
 #define BIT_MM_AHB_FD_SOFT_RST                    BIT(26)
@@ -139,7 +139,7 @@
 #define BIT_MM_AHB_LP_EB_MTX_ASYNC_BDG            BIT(16)
 #define BIT_MM_AHB_LP_NUM_MTX_ASYNC_BDG(x)        (((x) & 0xFFFF))
 
-/* REG_MM_AHB_MIPI_CSI_SEL_CTRL */
+/* REG_MM_AHB_RF_MIPI_CSI_SEL_CTRL */
 
 #define BIT_MM_AHB_ISP_INT_1_MASK                 BIT(27)
 #define BIT_MM_AHB_ISP_INT_0_MASK                 BIT(26)

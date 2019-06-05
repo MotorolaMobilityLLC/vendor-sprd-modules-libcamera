@@ -65,6 +65,7 @@ sprd_camera-objs += $(LOCAL_SRC:%.c=%.o)
 
 # TODO: refine these includes
 ccflags-y += -I$(REL_PATH)/../sensor/
+ccflags-y += -I$(REL_PATH)/../sensor/csi2/csi_sprd/receiver_r3p0/
 ccflags-y += -I$(REL_PATH)/dcam_if_r2p0_isp_r9p0/inc/
 ccflags-y += -I$(REL_PATH)/../flash/flash_drv/
 

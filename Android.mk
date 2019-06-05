@@ -14,7 +14,7 @@ else
 
 define first-makefiles-under-cus
 $(shell build/make/tools/findleaves.py $(FIND_LEAVES_EXCLUDES) \
-        --mindepth=2 --prune=kernel_module --prune=cpp --prune=ispalg $(addprefix --dir=,$(1)) Android.mk)
+        --mindepth=2 --prune=ispalg $(addprefix --dir=,$(1)) Android.mk)
 endef
 include $(call first-makefiles-under-cus,$(LOCAL_PATH))
 endif

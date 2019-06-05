@@ -162,14 +162,6 @@ int csi_reg_base_save(struct csi_dt_node_info *dt_info, int32_t idx)
 	return 0;
 }
 
-int csi_init_reg_base(unsigned long reg_base, int32_t idx)
-{
-	s_csi_regbase[idx] = reg_base;
-
-	return 0;
-}
-EXPORT_SYMBOL(csi_init_reg_base);
-
 void csi_ipg_mode_cfg(uint32_t idx, int enable)
 {
 	CSI_REG_MWR(idx, PHY_PD_N, BIT_0, 1);
@@ -377,13 +369,13 @@ void csi_phy_testclr_init(struct csi_phy_info *phy)
 	unsigned int mask = 0;
 
 	mask =
-	MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_S_EN
-	| MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_M_EN;
-#ifdef FPAG_BRINGUP
+	MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_S_EN
+	| MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_M_EN;
+
 	regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
 		mask, mask);
-#endif
+
 
 	switch (phy->phy_id) {
 	case PHY_CPHY:
@@ -397,22 +389,22 @@ void csi_phy_testclr_init(struct csi_phy_info *phy)
 		break;
 	case PHY_2P2:
 		/* 2p2lane phy as a 4lane phy  */
-#ifdef FPAG_BRINGUP
+
 		regmap_update_bits(phy->anlg_phy_g10_syscon,
-			REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CTRL_CSI_2P2L,
-			MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL,
-			MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL);
-#endif
+			REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CTRL_CSI_2P2L,
+			MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL,
+			MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL);
+
 		break;
 	case PHY_2P2_M:
 	case PHY_2P2_S:
 		/* 2p2lane phy as a 2lane phy  */
-#ifdef FPAG_BRINGUP
+
 		regmap_update_bits(phy->anlg_phy_g10_syscon,
-			REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CTRL_CSI_2P2L,
-			MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL,
-		(int)~MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL);
-#endif
+			REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CTRL_CSI_2P2L,
+			MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL,
+		(int)~MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CSI_MODE_SEL);
+
 		break;
 	default:
 		pr_err("fail to get valid phy id %d\n", phy->phy_id);
@@ -434,18 +426,18 @@ void csi_phy_testclr(int sensor_id, struct csi_phy_info *phy)
 	case PHY_2P2:
 	case PHY_2P2_M:
 	case PHY_2P2_S:
-		mask = MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_DSI_TESTCLR_DB;
-#ifdef FPAG_BRINGUP
+		mask = MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_DSI_TESTCLR_DB;
+
 		regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_2P2L_TEST_DB,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CSI_2P2L_TEST_DB,
 		mask, mask);
-#endif
+
 		CSI_REG_MWR(sensor_id, PHY_TEST_CRTL0, PHY_TESTCLR, 1);
-#ifdef FPAG_BRINGUP
+
 		regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2P2LANE_CSI_2P2L_TEST_DB,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2P2LANE_CSI_2P2L_TEST_DB,
 		mask, ~mask);
-#endif
+
 		CSI_REG_MWR(sensor_id, PHY_TEST_CRTL0, PHY_TESTCLR, 0);
 		break;
 	default:
@@ -470,35 +462,35 @@ static void csi_2p2l_2lane_phy_testclr(struct csi_phy_info *phy)
 		break;
 	case PHY_2P2_M:
 		mask_sel =
-		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_S_SEL;
+		MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_S_SEL;
 		mask_testclr =
-		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_S;
+		MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_S;
 		break;
 	case PHY_2P2_S:
 		mask_sel =
-		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_M_SEL;
+		MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_M_SEL;
 		mask_testclr =
-		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_M;
+		MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_2P2L_TESTCLR_M;
 		break;
 	default:
 		pr_err("fail to get valid phy id %d\n", phy->phy_id);
 		return;
 	}
-#ifdef FPAG_BRINGUP
+
 	regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
 		mask_sel, mask_sel);
 	regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
 		mask_testclr, mask_testclr);
 	udelay(1);
 	regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
 		mask_sel, ~mask_sel);
 	regmap_update_bits(phy->anlg_phy_g10_syscon,
-		REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
+		REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST,
 		mask_testclr, ~mask_testclr);
-#endif
+
 }
 
 void csi_phy_power_down(struct csi_dt_node_info *csi_info,
@@ -516,30 +508,29 @@ void csi_phy_power_down(struct csi_dt_node_info *csi_info,
 	switch (csi_info->controller_id) {
 	case CSI_RX0:
 		shutdownz =
-		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_FORCE_CSI_PHY_SHUTDOWNZ;
-		reg = REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST;
+		MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_FORCE_CSI_PHY_SHUTDOWNZ;
+		reg = REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST;
 		break;
 	case CSI_RX1:
 		shutdownz =
-	MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_FORCE_CSI_S_PHY_SHUTDOWNZ;
-		reg = REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST;
+	MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_FORCE_CSI_S_PHY_SHUTDOWNZ;
+		reg = REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_COMBO_CSI_4L_BIST_TEST;
 		break;
 	case CSI_RX2:
 		shutdownz =
-		MASK_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_FORCE_CSI_PHY_SHUTDOWNZ;
-		reg = REG_ANLG_PHY_G10_ANALOG_MIPI_CSI_2LANE_MIPI_PHY_BIST_TEST;
+		MASK_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2LANE_FORCE_CSI_PHY_SHUTDOWNZ;
+		reg = REG_ANLG_PHY_G10_RF_ANALOG_MIPI_CSI_2LANE_MIPI_PHY_BIST_TEST;
 		break;
 	default:
 		pr_err("fail to get valid csi_rx id\n");
 	}
-#ifdef FPAG_BRINGUP
+
 	if (is_eb)
 		regmap_update_bits(phy->anlg_phy_g10_syscon,
 		reg, shutdownz, ~shutdownz);
 	else
 		regmap_update_bits(phy->anlg_phy_g10_syscon,
 		reg, shutdownz, shutdownz);
-#endif
 }
 
 int csi_ahb_reset(struct csi_phy_info *phy, unsigned int csi_id)
@@ -554,22 +545,22 @@ int csi_ahb_reset(struct csi_phy_info *phy, unsigned int csi_id)
 
 	switch (csi_id) {
 	case CSI_RX0:
-		flag = MASK_MM_AHB_MIPI_CSI0_SOFT_RST;
+		flag = MASK_MM_AHB_RF_MIPI_CSI0_SOFT_RST;
 		break;
 	case CSI_RX1:
-		flag = MASK_MM_AHB_MIPI_CSI1_SOFT_RST;
+		flag = MASK_MM_AHB_RF_MIPI_CSI1_SOFT_RST;
 		break;
 	case CSI_RX2:
-		flag = MASK_MM_AHB_MIPI_CSI2_SOFT_RST;
+		flag = MASK_MM_AHB_RF_MIPI_CSI2_SOFT_RST;
 		break;
 	default:
 		pr_err("fail to get valid csi id %d\n", csi_id);
 	}
 	regmap_update_bits(phy->cam_ahb_syscon,
-			REG_MM_AHB_AHB_RST, flag, flag);
+			REG_MM_AHB_RF_AHB_RST, flag, flag);
 	udelay(1);
 	regmap_update_bits(phy->cam_ahb_syscon,
-			REG_MM_AHB_AHB_RST, flag, ~flag);
+			REG_MM_AHB_RF_AHB_RST, flag, ~flag);
 
 	return 0;
 }
@@ -596,15 +587,15 @@ void csi_controller_enable(struct csi_dt_node_info *dt_info)
 
 	switch (dt_info->controller_id) {
 	case CSI_RX0: {
-		mask_eb = MASK_MM_AHB_CSI0_EB;
+		mask_eb = MASK_MM_AHB_RF_CSI0_EB;
 		break;
 	}
 	case CSI_RX1: {
-		mask_eb = MASK_MM_AHB_CSI1_EB;
+		mask_eb = MASK_MM_AHB_RF_CSI1_EB;
 		break;
 	}
 	case CSI_RX2: {
-		mask_eb = MASK_MM_AHB_CSI2_EB;
+		mask_eb = MASK_MM_AHB_RF_CSI2_EB;
 		break;
 	}
 	default:
@@ -615,7 +606,7 @@ void csi_controller_enable(struct csi_dt_node_info *dt_info)
 	spin_lock_irqsave(&csi_dump_lock[dt_info->controller_id], flag);
 
 	csi_dump_regbase[dt_info->controller_id] = dt_info->reg_base;
-	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_AHB_EB,
+	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_RF_AHB_EB,
 			mask_eb, mask_eb);
 	spin_unlock_irqrestore(&csi_dump_lock[dt_info->controller_id], flag);
 }
@@ -643,18 +634,18 @@ void csi_controller_disable(struct csi_dt_node_info *dt_info, int32_t idx)
 
 	switch (dt_info->controller_id) {
 	case CSI_RX0: {
-		mask_eb = MASK_MM_AHB_CSI0_EB;
-		mask_rst = MASK_MM_AHB_MIPI_CSI0_SOFT_RST;
+		mask_eb = MASK_MM_AHB_RF_CSI0_EB;
+		mask_rst = MASK_MM_AHB_RF_MIPI_CSI0_SOFT_RST;
 		break;
 	}
 	case CSI_RX1: {
-		mask_eb = MASK_MM_AHB_CSI1_EB;
-		mask_rst = MASK_MM_AHB_MIPI_CSI1_SOFT_RST;
+		mask_eb = MASK_MM_AHB_RF_CSI1_EB;
+		mask_rst = MASK_MM_AHB_RF_MIPI_CSI1_SOFT_RST;
 		break;
 	}
 	case CSI_RX2: {
-		mask_eb = MASK_MM_AHB_CSI2_EB;
-		mask_rst = MASK_MM_AHB_MIPI_CSI2_SOFT_RST;
+		mask_eb = MASK_MM_AHB_RF_CSI2_EB;
+		mask_rst = MASK_MM_AHB_RF_MIPI_CSI2_SOFT_RST;
 		break;
 	}
 	default:
@@ -666,12 +657,12 @@ void csi_controller_disable(struct csi_dt_node_info *dt_info, int32_t idx)
 
 	csi_dump_regbase[dt_info->controller_id] = 0;
 
-	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_AHB_EB,
+	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_RF_AHB_EB,
 			mask_eb, mask_eb);
-	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_AHB_RST,
+	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_RF_AHB_RST,
 			mask_rst, ~mask_rst);
 	udelay(1);
-	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_AHB_RST,
+	regmap_update_bits(phy->cam_ahb_syscon, REG_MM_AHB_RF_AHB_RST,
 			mask_rst, ~mask_rst);
 
 	spin_unlock_irqrestore(&csi_dump_lock[dt_info->controller_id], flag);
@@ -756,7 +747,7 @@ void phy_csi_path_cfg(struct csi_dt_node_info *dt_info, int sensor_id)
 		phy_sel_val  <<= 12;
 	}
 	regmap_update_bits(phy->cam_ahb_syscon,
-			REG_MM_AHB_MIPI_CSI_SEL_CTRL,
+			REG_MM_AHB_RF_MIPI_CSI_SEL_CTRL,
 			phy_sel_mask,
 			phy_sel_val);
 }
@@ -815,7 +806,7 @@ void phy_csi_path_clr_cfg(struct csi_dt_node_info *dt_info, int sensor_id)
 	}
 
 	regmap_update_bits(phy->cam_ahb_syscon,
-			REG_MM_AHB_MIPI_CSI_SEL_CTRL,
+			REG_MM_AHB_RF_MIPI_CSI_SEL_CTRL,
 			cphy_sel_mask,
 			cphy_sel_val);
 }
@@ -988,7 +979,6 @@ void cphy_cdr_init(struct csi_dt_node_info *dt_info, int32_t idx)
 
 void csi_phy_init(struct csi_dt_node_info *dt_info, int32_t idx)
 {
-	uint8_t hsfreq = 0x2, hsrx = 9;
 	struct csi_phy_info *phy = NULL;
 
 	if (!dt_info) {
@@ -1009,7 +999,6 @@ void csi_phy_init(struct csi_dt_node_info *dt_info, int32_t idx)
 
 	switch (phy->phy_id) {
 	case PHY_4LANE:
-#ifdef FPAG_BRINGUP
 		/* phy: 4lane phy */
 		CSI_REG_MWR(idx, PHY_TEST_CRTL0, PHY_REG_SEL, 1 << 2);
 		phy_write(idx, 0x60, 0x81, 0xff);
@@ -1019,24 +1008,6 @@ void csi_phy_init(struct csi_dt_node_info *dt_info, int32_t idx)
 		phy_write(idx, 0x3d, BIT_7, BIT_7);
 		phy_write(idx, 0x4d, BIT_7, BIT_7);
 		phy_write(idx, 0x6d, BIT_7, BIT_7);
-#else
-		/*just for haps*/
-		phy_write(idx, 0x34, 0x14, 0xff);
-		hsfreq = ((hsfreq & 0x3F) << 1) & 0x7E;
-		phy_write(idx, 0x44, hsfreq, 0xff);
-		phy_write(idx, 0x54, 0x14, 0xff);
-		phy_write(idx, 0x64, 0x14, 0xff);
-		phy_write(idx, 0x74, 0x14, 0xff);
-		hsrx = (0x80 | (hsrx & 0x7F));
-		phy_write(idx, 0x75, hsrx, 0xff);
-		hsrx = 05;
-		phy_write(idx, 0x37, hsrx, 0xff);
-		phy_write(idx, 0x47, hsrx, 0xff);
-		phy_write(idx, 0x57, hsrx, 0xff);
-		phy_write(idx, 0x67, hsrx, 0xff);
-		phy_write(idx, 0x77, hsrx, 0xff);
-		/*haps cfg end*/
-#endif
 		break;
 	case PHY_CPHY:
 		/* phy: cphy phy */
