@@ -851,6 +851,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFaceDetectStartedFlag;
 
     uint32_t isNeedFlashFired;
+    uint32_t mIsPowerhintWait;
 };
 
 }; // namespace sprdcamera

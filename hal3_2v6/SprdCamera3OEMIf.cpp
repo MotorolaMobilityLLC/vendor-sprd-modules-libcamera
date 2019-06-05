@@ -592,6 +592,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mMasterId = 0;
 
     mStreamOnWithZsl = 0;
+    mIsPowerhintWait = 0;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -728,7 +729,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     HAL_LOGD("channel_type = %d, frame_number = %d", channel_type,
              frame_number);
     mStartFrameNum = frame_number;
-
+    mIsPowerhintWait = 1;
     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
 
     switch (channel_type) {
@@ -3777,23 +3778,24 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%" PRId64, frame->fd,
                  buff_vir, frame_num, buffer_timestamp);
 
-        if (!isCapturing()) {
-            if (frame_num - mStartFrameNum == CAM_POWERHINT_WAIT_COUNT) {
+        if (!isCapturing() && mIsPowerhintWait) {
+            if (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT) {
                 if (getMultiCameraMode() == MODE_BLUR ||
                     getMultiCameraMode() == MODE_BOKEH ||
                     mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
                     mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
                     mSprdAppmodeId == CAMERA_MODE_FILTER ||
-                    (sprddefInfo.slowmotion > 1) ||
                     (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
+                           sprddefInfo.slowmotion > 1) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
                 }
+                mIsPowerhintWait = 0;
             }
         }
 
