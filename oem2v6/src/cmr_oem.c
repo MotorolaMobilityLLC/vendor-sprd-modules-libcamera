@@ -1309,13 +1309,11 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         break;
     case ISP_QUICK_MODE_DOWN:
         cmr_setting_quick_ae_notice_done(cxt->setting_cxt.setting_handle, data);
-        CMR_LOGI("ISP_QUICK_MODE_DOWN");
         break;
     case ISP_ONLINE_FLASH_CALLBACK:
         camera_isp_ctrl_flash(cxt->setting_cxt.setting_handle, data);
         break;
     case ISP_AE_STAB_NOTIFY:
-        CMR_LOGV("ISP_AE_STAB_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
         if (data != NULL) {
             // data [31-16bit:bv, 10-1bit:probability, 0bit:stable]
@@ -1327,13 +1325,11 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, NULL);
         break;
     case ISP_AE_LOCK_NOTIFY:
-        CMR_LOGI("ISP_AE_LOCK_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_LOCK_NOTIFY;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        NULL);
         break;
     case ISP_AE_UNLOCK_NOTIFY:
-        CMR_LOGI("ISP_AE_UNLOCK_NOTIFY");
         oem_cb = CAMERA_EVT_CB_AE_UNLOCK_NOTIFY;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        NULL);
@@ -1353,7 +1349,6 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
        data);
             break;*/
     case ISP_HDR_EV_EFFECT_CALLBACK:
-        CMR_LOGD("ISP_HDR_EV_EFFECT_CALLBACK");
         camera_set_hdr_ev(oem_handle, data);
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
         break;
@@ -1369,19 +1364,17 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         break;
     case ISP_AI_SCENE_TYPE_CALLBACK:
         oem_cb = CAMERA_EVT_CB_AI_SCENE;
-        CMR_LOGD("isp ai scene type:%u", *(cmr_u8 *)data);
+        CMR_LOGV("isp ai scene type:%u", *(cmr_u8 *)data);
         cmr_u8 hal_scene_type = camera_hal_ai_scene_type(*(cmr_uint *)data);
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        &hal_scene_type);
         break;
     case ISP_AF_VCM_NOTICE_CALLBACK:
-        CMR_LOGD("ISP_AF_VCM_NOTICE_CALLBACK");
         oem_cb = CAMERA_EVT_CB_VCM_RESULT;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
     case ISP_HIST_REPORT_CALLBACK:
-        CMR_LOGD("ISP_HIST_REPORT_CALLBACK");
         oem_cb = CAMERA_EVT_CB_HIST_REPORT;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);

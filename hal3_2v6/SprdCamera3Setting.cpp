@@ -1154,7 +1154,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
         return -1;
     }
 
-    HAL_LOGI("cameraId=%d", cameraId);
+    HAL_LOGV("cameraId=%d", cameraId);
 
     // TBD: for spreadtrum internal development use
     // add struct light camera info and three back camera phone info
@@ -1837,9 +1837,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
-//Bit0 indicates whether or not to support Age.
-//Bit1 indicates whether or not to support Gender.
-//Bit2 indicates whether the skin is supported.
+// Bit0 indicates whether or not to support Age.
+// Bit1 indicates whether or not to support Gender.
+// Bit2 indicates whether the skin is supported.
 #ifdef CONFIG_SPRD_FD_LIB_VERSION_2
     s_setting[cameraId].sprddefInfo.availabe_gender_race_age_enable = 7;
 #else
@@ -4821,9 +4821,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             HAL_LOGV("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
                      g_face_info1, g_face_info2, g_face_info3, g_face_info4);
         }
-        //Bit0 and Bit1 represent ages,
-        //Bit2 represent gender,
-        //Bit3 represent skin color
+// Bit0 and Bit1 represent ages,
+// Bit2 represent gender,
+// Bit3 represent skin color
 #ifdef CONFIG_SPRD_FD_LIB_VERSION_2
         camMetadata.update(ANDROID_SPRD_FACE_ATTRIBUTES, faceGenderRaceAge,
                            dataSize);
@@ -4889,10 +4889,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                            s_setting[mCameraId].vcm_num);
         camMetadata.update(ANDROID_SPRD_CALIBRATION_VCM_RESULT,
                            &(s_setting[mCameraId].vcm_result), 1);
-        HAL_LOGD("vcm_result %d vcm_num %d", s_setting[mCameraId].vcm_result,
+        HAL_LOGV("vcm_result %d vcm_num %d", s_setting[mCameraId].vcm_result,
                  s_setting[mCameraId].vcm_num);
         for (j = 0; j < s_setting[mCameraId].vcm_num; j++) {
-            HAL_LOGD("vcm_dac[%d] %d", j, s_setting[mCameraId].vcm_dac[j]);
+            HAL_LOGV("vcm_dac[%d] %d", j, s_setting[mCameraId].vcm_dac[j]);
         }
         if (s_setting[mCameraId].vcm_result == VCM_RESULT_DONE ||
             s_setting[mCameraId].vcm_result == VCM_RESULT_FAIL) {

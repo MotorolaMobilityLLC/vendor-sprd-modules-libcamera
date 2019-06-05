@@ -744,7 +744,7 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
         parm.frame_addr_vir_array[i].v = buf_cfg->addr_vir[i].addr_v;
         parm.fd_array[i] = buf_cfg->fd[i];
         parm.index = buf_cfg->index[i];
-        CMR_LOGD("chn_id=%d, i=%d, fd=0x%x, y=0x%lx, u=0x%lx, reserved=%d",
+        CMR_LOGV("chn_id=%d, i=%d, fd=0x%x, y=0x%lx, u=0x%lx, reserved=%d",
                  buf_cfg->channel_id, i, buf_cfg->fd[i],
                  buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
                  buf_cfg->is_reserved_buf);
