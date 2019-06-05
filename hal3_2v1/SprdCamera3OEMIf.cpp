@@ -6141,14 +6141,25 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_HDR_SCENE: {
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
-        sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
+        if ((sprdInfo.flash_mode == CAMERA_FLASH_MODE_AUTO &&
+             sprdInfo.is_takepicture_with_flash == 1) ||
+            (sprdInfo.sprd_auto_3dnr_enable && sprdInfo.sprd_is_3dnr_scene) ||
+            sprdInfo.flash_mode == CAMERA_FLASH_MODE_ON)
+            sprdInfo.sprd_is_hdr_scene = 0;
+        else
+            sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
         HAL_LOGD("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
     } break;
     case CAMERA_EVT_CB_3DNR_SCENE: {
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
-        sprdInfo.sprd_is_3dnr_scene = *(uint8_t *)parm4;
+        if ((sprdInfo.flash_mode == CAMERA_FLASH_MODE_AUTO &&
+             sprdInfo.is_takepicture_with_flash) ||
+            sprdInfo.flash_mode == CAMERA_FLASH_MODE_ON)
+            sprdInfo.sprd_is_3dnr_scene = 0;
+        else
+            sprdInfo.sprd_is_3dnr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
         HAL_LOGD(" sprd_is_3dnr_scene = %d", sprdInfo.sprd_is_3dnr_scene);
     } break;
