@@ -44,15 +44,15 @@ struct raw_image_info{
 	char filename[MAX_PATH_LEN];
 	cmr_u16 uWidth;
 	cmr_u16 uHeight;
-	cmr_u16 uTotalGain;
-	cmr_u16 udGain;
+	cmr_s16 sTotalGain;
+	cmr_s16 sdGain;
 	cmr_u32 uShutter;
 	cmr_u16 uRGain;
 	cmr_u16 uGGain;
 	cmr_u16 uBGain;
 	cmr_u16 uAfPos;
 	cmr_u16 uCt;
-	cmr_u16 uBv;
+	cmr_s16 sBv;
 	cmr_u16 uReserved[28];
 } __attribute__ ((packed));
 
