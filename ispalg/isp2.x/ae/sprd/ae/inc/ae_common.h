@@ -606,9 +606,10 @@ struct ae_alg_calc_param {
 	cmr_s8 target_offset;
 	cmr_s16 base_target;/*save the default target from tuning*/
 	cmr_s16 target_lum;
-	cmr_s16 target_lum_zone;
-	cmr_u16 target_range_in_zone;
-	cmr_u16 target_range_out_zone;
+	cmr_s16 target_lum_zone;/*for AE2.2*/
+	cmr_u16 target_range_in_zone;/*for AE2.5*/
+	cmr_u16 target_range_out_zone;/*for AE2.5*/
+	cmr_u16 target_range_near_zone;/*for AE2.5*/
 	cmr_s16 start_index;
 	cmr_u32 line_time;
 	cmr_s16 snr_max_fps;
@@ -671,6 +672,7 @@ struct ae_alg_calc_param {
 struct ae1_senseor_out {
 	cmr_s8 stable;
 	cmr_s8 f_stable;
+	cmr_u8 near_stable;
 	cmr_s16 cur_index;			/*the current index of ae table in ae now: 1~1024 */
 	cmr_u32 exposure_time;		/*exposure time, unit: 0.1us */
 	float cur_fps;				/*current fps:1~120 */
