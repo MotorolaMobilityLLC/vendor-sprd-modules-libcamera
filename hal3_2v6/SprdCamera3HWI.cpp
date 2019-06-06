@@ -1165,6 +1165,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+    } else if (mStreamConfiguration.num_streams == 2 &&
+               mStreamConfiguration.preview.status == CONFIGURED &&
+               mStreamConfiguration.snapshot.status == CONFIGURED &&
+               captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
     } else if (mStreamConfiguration.num_streams == 3 &&
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED &&
