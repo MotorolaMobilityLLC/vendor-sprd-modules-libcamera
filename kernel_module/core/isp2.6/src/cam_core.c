@@ -998,7 +998,7 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
 		return pframe;
 	}
 	/* dcam0 full tx done, frame report to HAL or drop */
-	if (atomic_read(&module->capture_frames_dcam) > 0) {
+	if (atomic_read(&module->capture_frames_dcam) > 0 && pframe->fid > 0) {
 		/* 4in1 send buf to hal for remosaic */
 		atomic_dec_return(&module->capture_frames_dcam);
 		pframe->evt = IMG_TX_DONE;
