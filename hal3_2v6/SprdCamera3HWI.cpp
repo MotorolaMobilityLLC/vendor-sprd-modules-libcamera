@@ -789,7 +789,7 @@ int SprdCamera3HWI::configureStreams(
             if (preview_size.width > 3264 && preview_size.height > 2448)
                 SprdCamera3RegularChannel::kMaxBuffers = 2;
             else if (sprddefInfo.slowmotion > 1) {
-                SprdCamera3RegularChannel::kMaxBuffers = 16;
+                SprdCamera3RegularChannel::kMaxBuffers = 24;
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
             } else if (video_size.width % 4) {
