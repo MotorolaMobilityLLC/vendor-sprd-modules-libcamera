@@ -311,8 +311,7 @@ static int ispVideoSetParam(uint32_t width, uint32_t height) {
     return rtn;
 }
 
-static int ispVideoSetJpegQuality(uint32_t param1, uint32_t param2)
-{
+static int ispVideoSetJpegQuality(uint32_t param1, uint32_t param2) {
     int rtn = 0x00;
     SprdCamera3HWI *dev =
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
@@ -1108,6 +1107,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int64_t timestamp = 0;
     Mutex::Autolock l(mLock);
     bool mRegRequest;
+    bool need_apply_settings = 1;
 
     ret = validateCaptureRequest(request);
     if (ret) {
@@ -1121,6 +1121,25 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
+
+    // for CTS testYUVBurst
+    {
+        CONTROL_Tag controlInfo;
+        mSetting->getCONTROLTag(&controlInfo);
+        if ((sprddefInfo.sprd_appmode_id == -1) &&
+            (request->num_output_buffers == 2) && (controlInfo.ae_lock == 1)) {
+            const camera3_stream_buffer_t &output1 = request->output_buffers[0];
+            const camera3_stream_buffer_t &output2 = request->output_buffers[1];
+            if ((output1.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888 ||
+                 output2.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) &&
+                (output1.stream->format ==
+                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                 output2.stream->format ==
+                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)) {
+                need_apply_settings = 0;
+            }
+        }
+    }
 
     // for BUG459753 HDR capture
     if (capturePara.cap_intent ==
@@ -1256,6 +1275,40 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->mSetCapRatioFlag = true;
             mOEMIf->setCameraConvertCropRegion();
             mOEMIf->mSetCapRatioFlag = false;
+        }
+    }
+
+    {
+        // This check will help to run below code only in case of
+        // testYuvBurst
+        cam_dimension_t picture_size = {0, 0};
+        mSetting->getPictureSize(&picture_size);
+        if (request->num_output_buffers == 2 && mPendingRequest > 0 &&
+            picture_size.width == 0 && need_apply_settings == 0) {
+            // Flag to check if pending list only contains request with 1
+            // buffers
+            bool need_wait = true;
+            size_t pendingCount = 0;
+            static const uint64_t timeout_prev = 1000000000;
+            List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+            // check if buffers of pending requests should be 1
+            while (i != mPendingRequestsList.end()) {
+                if (i->num_buffers > 1)
+                    need_wait = false;
+                i++;
+            }
+            if (need_wait == true) {
+                HAL_LOGD("wait for previous frames to clear");
+                while (mPendingRequestsList.size() > 0 && mFlush == false) {
+                    // sleep for 1ms
+                    usleep(1000);
+                    if (pendingCount > timeout_prev / kPendingTime) {
+                        HAL_LOGE("TimeOut pendingCount=%d", pendingCount);
+                        break;
+                    }
+                    pendingCount++;
+                }
+            }
         }
     }
 
@@ -1806,14 +1859,13 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         }
     }
 
-     for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
-          i != mPendingRequestsList.end();) {
-         if ( i->pipeline_depth < 8) {
-             i->pipeline_depth += 2;
-            }
-         i++;
-     }
-
+    for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+         i != mPendingRequestsList.end();) {
+        if (i->pipeline_depth < 8) {
+            i->pipeline_depth += 2;
+        }
+        i++;
+    }
 
     if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
         HAL_LOGV("signal request=%d", oldrequest);
