@@ -479,7 +479,6 @@ int isp_cfg_ctx_base(struct isp_pipe_context *pctx, void *param)
 	cfg_in = (struct isp_ctx_base_desc *)param;
 	pctx->enable_slowmotion = cfg_in->enable_slowmotion;
 	pctx->slowmotion_count = cfg_in->slowmotion_count;
-	pctx->uframe_sync = cfg_in->uframe_sync;
 	pctx->slw_state = cfg_in->slw_state;
 	pctx->mode_3dnr = cfg_in->mode_3dnr;
 	pctx->mode_ltm = cfg_in->mode_ltm;
@@ -711,6 +710,15 @@ int isp_cfg_ctx_compression(struct isp_pipe_context *pctx, void *param)
 	return 0;
 }
 
+int isp_cfg_ctx_uframe_sync(struct isp_pipe_context *pctx, void *param)
+{
+	pctx->uframe_sync |= *(uint32_t *)param;
+
+	pr_info("ctx %u, uframe_sync %u\n", pctx->ctx_id, pctx->uframe_sync);
+
+	return 0;
+}
+
 int isp_cfg_path_base(struct isp_path_desc *path, void *param)
 {
 	int ret = 0;
@@ -851,6 +859,15 @@ int isp_cfg_path_compression(struct isp_path_desc *path, void *param)
 	path->store_fbc = compression->store_fbc;
 
 	pr_info("path %d, store_fbc %u\n", path->spath_id, path->store_fbc);
+
+	return 0;
+}
+
+int isp_cfg_path_uframe_sync(struct isp_path_desc *path, void *param)
+{
+	path->uframe_sync = *(uint32_t *)param;
+
+	pr_info("path %d, uframe_sync %u\n", path->spath_id, path->uframe_sync);
 
 	return 0;
 }

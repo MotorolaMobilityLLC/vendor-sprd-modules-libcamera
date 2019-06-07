@@ -26,6 +26,8 @@
 #define ISP_NR3_BUF_NUM 2
 #define ISP_LTM_BUF_NUM 10
 
+#define CAMERA_RESERVE_FRAME_NUM	0xffffffff
+
 enum isp_context_id {
 	ISP_CONTEXT_P0,
 	ISP_CONTEXT_C0,
@@ -45,9 +47,11 @@ enum isp_path_cfg_cmd {
 	ISP_PATH_CFG_CTX_BASE,
 	ISP_PATH_CFG_CTX_SIZE,
 	ISP_PATH_CFG_CTX_COMPRESSION,
+	ISP_PATH_CFG_CTX_UFRAME_SYNC,
 	ISP_PATH_CFG_PATH_BASE,
 	ISP_PATH_CFG_PATH_SIZE,
 	ISP_PATH_CFG_PATH_COMPRESSION,
+	ISP_PATH_CFG_PATH_UFRAME_SYNC,
 	ISP_PATH_CFG_OUTPUT_BUF,
 	ISP_PATH_CFG_OUTPUT_RESERVED_BUF,
 	ISP_PATH_CFG_3DNR_BUF,
@@ -102,7 +106,6 @@ struct isp_ctx_base_desc {
 	uint32_t bayer_pattern;
 	uint32_t enable_slowmotion;
 	uint32_t slowmotion_count;
-	uint32_t uframe_sync;
 	uint32_t slw_state;
 	enum cam_ch_id ch_id;
 };

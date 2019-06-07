@@ -27,7 +27,7 @@
 #include "isp_ltm.h"
 
 #define ISP_LINE_BUFFER_W		ISP_MAX_LINE_WIDTH
-#define CAMERA_RESERVE_FRAME_NUM	0xffffffff
+
 
 #define ISP_IN_Q_LEN			1
 #define ISP_PROC_Q_LEN			2
@@ -308,6 +308,7 @@ struct isp_path_desc {
 	uint32_t bind_type;
 	uint32_t slave_path_id;
 	uint32_t store_fbc;/* 1 for fbc store; 0 for normal store */
+	uint32_t uframe_sync;
 	struct isp_pipe_context *attach_ctx;
 
 	struct isp_regular_info regular_info;

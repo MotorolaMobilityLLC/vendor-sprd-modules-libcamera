@@ -689,12 +689,6 @@ int sprd_isp_debugfs_deinit(void)
 }
 /* isp debug fs end */
 
-int uframe_sync_comp(uint32_t data1, uint32_t data2)
-{
-	if (data2 == CAMERA_RESERVE_FRAME_NUM && data1 != data2) return -EINVAL;
-	return (data1 <= data2) ? 0: -EINVAL;
-}
-
 static void free_offline_pararm(void *param)
 {
 	struct isp_offline_param *cur, *prev;
@@ -1442,12 +1436,62 @@ exit:
 	return ret;
 }
 
+static uint32_t isp_get_fid_across_context(struct isp_pipe_dev *dev)
+{
+	struct isp_pipe_context *ctx;
+	struct isp_path_desc *path;
+	struct camera_frame *frame;
+	uint32_t target_fid;
+	int ctx_id, path_id;
+
+	if (!dev)
+		return CAMERA_RESERVE_FRAME_NUM;
+
+	target_fid = CAMERA_RESERVE_FRAME_NUM;
+	for (ctx_id = 0; ctx_id < ISP_CONTEXT_NUM; ctx_id++) {
+		ctx = &dev->ctx[ctx_id];
+		if (!ctx || atomic_read(&ctx->user_cnt) < 1)
+			continue;
+
+		for (path_id = 0; path_id < ISP_SPATH_NUM; path_id++) {
+			path = &ctx->isp_path[path_id];
+			if (!path || atomic_read(&path->user_cnt) < 1
+			    || !path->uframe_sync)
+				continue;
+
+			frame = camera_dequeue_peek(&path->out_buf_queue);
+			if (!frame)
+				continue;
+
+			target_fid = min(target_fid, frame->user_fid);
+			pr_info("ISP%d path%d user_fid %u\n",
+				 ctx_id, path_id, frame->user_fid);
+		}
+	}
+
+	pr_info("target_fid %u\n", target_fid);
+
+	return target_fid;
+}
+
+static bool isp_check_fid(struct camera_frame *frame, void *data)
+{
+	uint32_t target_fid;
+
+	if (!frame || !data)
+		return false;
+
+	target_fid = *(uint32_t *)data;
+
+	return frame->user_fid == CAMERA_RESERVE_FRAME_NUM
+		|| frame->user_fid == target_fid;
+}
+
 static int isp_offline_start_frame(void *ctx)
 {
 	int ret = 0;
 	int i, loop, kick_fmcu = 0;
-	uint32_t frame_id;
-	uint32_t prev_user_fid = 0;
+	uint32_t frame_id, target_fid;
 	struct isp_pipe_dev *dev = NULL;
 	struct camera_frame *pframe = NULL;
 	struct camera_frame *out_frame = NULL;
@@ -1480,7 +1524,8 @@ static int isp_offline_start_frame(void *ctx)
 
 	if ((pframe->fid & 0xf) == 0)
 		pr_info("frame %d, ctx %d  ch_id %d.  buf_fd %d\n",
-			pframe->fid, pctx->ctx_id, pframe->channel_id, pframe->buf.mfd[0]);
+			pframe->fid, pctx->ctx_id,
+			pframe->channel_id, pframe->buf.mfd[0]);
 
 	ret = cambuf_iommu_map(&pframe->buf, CAM_IOMMUDEV_ISP);
 	if (ret) {
@@ -1495,7 +1540,7 @@ static int isp_offline_start_frame(void *ctx)
 		ret = camera_enqueue(&pctx->proc_queue, pframe);
 		if (ret == 0)
 			break;
-		printk_ratelimited(KERN_INFO "wait for proc queue. loop %d\n", loop);
+		pr_info_ratelimited("wait for proc queue. loop %d\n", loop);
 		/* wait for previous frame proccessed done.*/
 		mdelay(1);
 	} while (loop++ < 500);
@@ -1538,6 +1583,9 @@ static int isp_offline_start_frame(void *ctx)
 	/* Reset blending count if frame size change */
 	isp_3dnr_process_frame_previous(pctx, pframe);
 
+	if (pctx->uframe_sync)
+		target_fid = isp_get_fid_across_context(dev);
+
 	/* config all paths output */
 	for (i = 0; i < ISP_SPATH_NUM; i++) {
 		path = &pctx->isp_path[i];
@@ -1558,15 +1606,15 @@ static int isp_offline_start_frame(void *ctx)
 				 pctx->nr3_ctx.blending_cnt,
 				 pctx->nr3_ctx.blending_cnt % 5);
 		} else {
-			if (i == ISP_SPATH_VID && pctx->uframe_sync) {
-					out_frame =
-					camera_dequeue_if(&path->out_buf_queue,
-					uframe_sync_comp,
-					(void *)&prev_user_fid);
-			} else {
+			if (path->uframe_sync
+			    && target_fid != CAMERA_RESERVE_FRAME_NUM)
 				out_frame =
-				camera_dequeue(&path->out_buf_queue);
-			}
+					camera_dequeue_if(&path->out_buf_queue,
+							  isp_check_fid,
+							  (void *)&target_fid);
+			else
+				out_frame =
+					camera_dequeue(&path->out_buf_queue);
 
 			if (out_frame == NULL)
 				out_frame =
@@ -1578,9 +1626,6 @@ static int isp_offline_start_frame(void *ctx)
 			ret = 0;
 			goto unlock;
 		}
-
-		if (i == ISP_SPATH_CP)
-			prev_user_fid = out_frame->user_fid;
 
 		out_frame->fid = frame_id;
 		out_frame->sensor_time = pframe->sensor_time;
@@ -2237,6 +2282,7 @@ new_ctx:
 	pctx->fbd_raw.fetch_fbd_bypass = 1;
 	pctx->need_slice = 0;
 	pctx->started = 0;
+	pctx->uframe_sync = 0;
 
 	ret = isp_create_offline_thread(pctx);
 	if (unlikely(ret != 0)) {
@@ -2474,6 +2520,7 @@ static int sprd_isp_put_context(void *isp_handle, int ctx_id)
 			camera_queue_clear(&path->out_buf_queue);
 			camera_queue_clear(&path->reserved_buf_queue);
 		}
+
 		pctx->isp_cb_func = NULL;
 		pctx->cb_priv_data = NULL;
 		trace_isp_irq_cnt(pctx->ctx_id);
@@ -2793,6 +2840,13 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		mutex_unlock(&pctx->param_mutex);
 		break;
 
+	case ISP_PATH_CFG_CTX_UFRAME_SYNC:
+		mutex_lock(&pctx->param_mutex);
+		ret = isp_cfg_ctx_uframe_sync(pctx, param);
+		pctx->updated = 1;
+		mutex_unlock(&pctx->param_mutex);
+		break;
+
 	case ISP_PATH_CFG_PATH_BASE:
 		mutex_lock(&pctx->param_mutex);
 		ret = isp_cfg_path_base(path, param);
@@ -2814,6 +2868,13 @@ static int sprd_isp_cfg_path(void *isp_handle,
 	case ISP_PATH_CFG_PATH_COMPRESSION:
 		mutex_lock(&pctx->param_mutex);
 		ret = isp_cfg_path_compression(path, param);
+		pctx->updated = 1;
+		mutex_unlock(&pctx->param_mutex);
+		break;
+
+	case ISP_PATH_CFG_PATH_UFRAME_SYNC:
+		mutex_lock(&pctx->param_mutex);
+		ret = isp_cfg_path_uframe_sync(path, param);
 		pctx->updated = 1;
 		mutex_unlock(&pctx->param_mutex);
 		break;

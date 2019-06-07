@@ -65,8 +65,11 @@ struct camera_queue {
 int camera_enqueue(struct camera_queue *q, struct camera_frame *pframe);
 struct camera_frame *camera_dequeue(struct camera_queue *q);
 struct camera_frame *camera_dequeue_tail(struct camera_queue *q);
-struct camera_frame *camera_dequeue_if(struct camera_queue *q,
-		int (*filter)(uint32_t, uint32_t), void *data);
+struct camera_frame *
+camera_dequeue_if(struct camera_queue *q,
+		  bool (*filter)(struct camera_frame *, void *),
+		  void *data);
+struct camera_frame *camera_dequeue_peek(struct camera_queue *q);
 
 int camera_queue_init(struct camera_queue *q,
 			uint32_t max, uint32_t type,

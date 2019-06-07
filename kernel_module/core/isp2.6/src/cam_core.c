@@ -142,7 +142,6 @@ struct camera_uchannel {
 	uint32_t is_high_fps;/* for DCAM slow motion feature */
 	uint32_t high_fps_skip_num;/* for DCAM slow motion feature */
 	uint32_t is_compressed;/* for ISP output fbc format */
-	uint32_t uframe_sync;/* frame sync for video and callback channel */
 
 	struct sprd_img_size src_size;
 	struct sprd_img_rect src_crop;
@@ -2971,7 +2970,6 @@ static int init_cam_channel(
 		ctx_desc.enable_slowmotion = ch_uinfo->is_high_fps;
 		ctx_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
 		ctx_desc.slw_state = CAM_SLOWMOTION_OFF;
-		ctx_desc.uframe_sync = ch_uinfo->uframe_sync;
 		ctx_desc.ch_id = channel->ch_id;
 
 		if (module->cam_uinfo.is_3dnr) {
@@ -3861,11 +3859,6 @@ static int img_ioctl_set_output_size(
 	// TODO get this from HAL
 	dst->is_compressed = 0;
 
-	if (scene_mode == DCAM_SCENE_MODE_PREVIEW
-	|| scene_mode == DCAM_SCENE_MODE_RECORDING
-	|| scene_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK)
-		dst->uframe_sync = 1;
-
 	pr_info("high fps %u %u. crop %d %d %d %d. dst size %d %d. aux %d %d %d %d\n",
 		dst->is_high_fps, dst->high_fps_skip_num,
 		dst->src_crop.x, dst->src_crop.y,
@@ -4324,10 +4317,11 @@ static int img_ioctl_set_frame_addr(
 		pframe->buf.addr_vir[1] = param.frame_addr_vir_array[i].u;
 		pframe->buf.addr_vir[2] = param.frame_addr_vir_array[i].v;
 
-		pr_debug("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
+		pr_debug("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d user_fid[%d]\n",
 			pframe->channel_id, pframe->buf.mfd[0],
 			pframe->buf.offset[0], pframe->buf.offset[1],
-			pframe->buf.offset[2], param.is_reserved_buf);
+			pframe->buf.offset[2], param.is_reserved_buf,
+			pframe->user_fid);
 
 		if (param.channel_id == CAM_CH_CAP) {
 			pr_info("ch %d, mfd %d, off 0x%x 0x%x 0x%x, reserved %d\n",
@@ -4752,6 +4746,7 @@ static int img_ioctl_stream_on(
 {
 	int ret = 0;
 	uint32_t i, j, line_w, isp_ctx_id, isp_path_id;
+	uint32_t uframe_sync, live_ch_count;
 	struct channel_context *ch;
 	struct isp_statis_io_desc io_desc;
 
@@ -4808,6 +4803,20 @@ static int img_ioctl_stream_on(
 		ch = &module->channel[i];
 		if (!ch->enable)
 			continue;
+
+		live_ch_count++;
+
+		uframe_sync = ch->ch_id != CAM_CH_CAP;
+		ret = isp_ops->cfg_path(module->isp_dev_handle,
+					ISP_PATH_CFG_PATH_UFRAME_SYNC,
+					ch->isp_path_id >> ISP_CTXID_OFFSET,
+					ch->isp_path_id & ISP_PATHID_MASK,
+					&uframe_sync);
+		ret = isp_ops->cfg_path(module->isp_dev_handle,
+					ISP_PATH_CFG_CTX_UFRAME_SYNC,
+					ch->isp_path_id >> ISP_CTXID_OFFSET,
+					ch->isp_path_id & ISP_PATHID_MASK,
+					&uframe_sync);
 
 		camera_queue_init(&ch->zoom_coeff_queue,
 			(module->is_smooth_zoom ? CAM_ZOOM_COEFF_Q_LEN : 1),
@@ -4890,6 +4899,26 @@ static int img_ioctl_stream_on(
 					goto exit;
 				}
 			}
+		}
+	}
+
+	/* TODO: WORKAROUND for BBAT/factory_test/mini_camera, remove later */
+	if (live_ch_count == 1) {
+		pr_info("disable all uframe_sync feature\n");
+
+		uframe_sync = 0;
+		for (i = 0;  i < CAM_CH_MAX; i++) {
+			ch = &module->channel[i];
+			if (!ch->enable)
+				continue;
+
+			isp_ctx_id = ch->isp_path_id >> ISP_CTXID_OFFSET;
+			isp_path_id = ch->isp_path_id & ISP_PATHID_MASK;
+
+			ret = isp_ops->cfg_path(module->isp_dev_handle,
+						ISP_PATH_CFG_PATH_UFRAME_SYNC,
+						isp_ctx_id, isp_path_id,
+						&uframe_sync);
 		}
 	}
 
