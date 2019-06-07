@@ -140,7 +140,7 @@ static int _lc898213_drv_init(cmr_handle sns_af_drv_handle) {
     }
 
     SENSOR_PRINT("mode = %d\n", mode);
-    lc898213_drv_set_pos(sns_af_drv_handle, 0x200);
+    //lc898213_drv_set_pos(sns_af_drv_handle, 0x200);
     switch (mode) {
     case 1:
         break;
