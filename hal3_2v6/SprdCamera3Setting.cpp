@@ -463,6 +463,9 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #endif
 };
 
+// we have default min_duration and stall_duration here and
+// initStaticParametersforScalerInfo may be change min_duration and
+// stall_duration
 const cam_stream_info_t stream_info[] = {
     {{5312, 3984}, 41666666L, 41666666L},
     {{5312, 2988}, 41666666L, 41666666L},
@@ -1494,6 +1497,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                      stream_info[i].stream_sizes_tbl.height == 144)) {
                     continue;
                 }
+
+                // availableStreamConfigurations
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
@@ -1501,6 +1506,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+
+                // availableMinFrameDurations
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.width);
@@ -1515,10 +1522,9 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
                 }
-                if (scaler_formats[j] ==
-                    (HAL_PIXEL_FORMAT_BLOB ||
-                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
-                     HAL_PIXEL_FORMAT_RAW16)) {
+
+                // availableStallDurations
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
                         stream_info[i].stream_sizes_tbl.width);
@@ -1534,6 +1540,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                         stream_info[i].stream_sizes_tbl.height);
                     available_stall_durations.add(0);
                 }
+
                 /* keep largest */
                 if (stream_info[i].stream_sizes_tbl.width *
                         stream_info[i].stream_sizes_tbl.height >
@@ -1545,6 +1552,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
             }
         }
     }
+
     // This lists the input/output stream configurations for each scaler formats
     memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations,
            &(available_stream_configs[0]),
