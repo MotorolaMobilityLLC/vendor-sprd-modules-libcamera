@@ -636,6 +636,7 @@ static void af_set_default_roi(af_ctrl_t * af, cmr_u32 alg_mode)
 	af_roi.af_mode = alg_mode;
 	af_roi.win_num = 0;
 	af_roi.multi_mode = af->is_multi_mode;
+	af_roi.zoom_ratio = af->zoom_ratio;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 }
 
@@ -2099,6 +2100,7 @@ static void saf_start(af_ctrl_t * af, struct af_trig_info *win)
 		}
 	}
 	af_roi.multi_mode = af->is_multi_mode;
+	af_roi.zoom_ratio = af->zoom_ratio;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
@@ -2140,6 +2142,7 @@ static void faf_start(af_ctrl_t * af, struct af_adpt_roi_info *win)
 		}
 	}
 	af_roi.multi_mode = af->is_multi_mode;
+	af_roi.zoom_ratio = af->zoom_ratio;
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_ROI, &af_roi);
 
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
@@ -3447,7 +3450,7 @@ static cmr_s32 af_sprd_set_realbokeh_distance(cmr_handle handle, void *param0)
 static cmr_s32 af_sprd_set_zoom_ratio(cmr_handle handle, void *param0)
 {
 	UNUSED(handle);
-	//af_ctrl_t *af = (af_ctrl_t *) handle;
+	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_s32 rtn = AFV1_SUCCESS;
 
 	if (NULL == param0) {
@@ -3456,6 +3459,7 @@ static cmr_s32 af_sprd_set_zoom_ratio(cmr_handle handle, void *param0)
 		return rtn;
 	}
 	ISP_LOGI("zoom ratio = %d", *(cmr_u32 *) param0);
+	af->zoom_ratio = *(cmr_u32 *) param0;
 
 	return rtn;
 }

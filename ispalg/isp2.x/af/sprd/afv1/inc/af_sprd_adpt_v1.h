@@ -355,6 +355,7 @@ typedef struct _af_ctrl {
 	cmr_u32 motor_status;
 	cmr_u32 frame_counter;
 	cmr_u32 cont_mode_trigger;
+	cmr_u32 zoom_ratio;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

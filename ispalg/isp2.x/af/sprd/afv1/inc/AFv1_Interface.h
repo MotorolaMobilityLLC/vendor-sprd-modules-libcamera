@@ -189,6 +189,7 @@ typedef struct spaf_roi_s {
 		struct spaf_face_data face_roi[SPAF_MAX_ROI_NUM];
 	};
 	cmr_u32 multi_mode;
+	cmr_u32 zoom_ratio;
 } spaf_roi_t;
 
 struct spaf_coordnicate {
