@@ -5404,7 +5404,10 @@ static int raw_proc_pre(
 		pr_err("wait another camera raw proc time out");
 		return -EFAULT;
 	}
-
+	/* not care 4in1 */
+	if (module->cam_uinfo.is_4in1) {
+		module->cam_uinfo.is_4in1 = 0;
+	}
 	ch = &module->channel[CAM_CH_CAP];
 	ch->dcam_path_id = -1;
 	ch->isp_path_id = -1;

@@ -370,7 +370,7 @@ struct isp_alg_fw_context {
 	cmr_u32 sn_mode;
 	/* 4in1 */
 	cmr_u32 is_4in1_sensor;
-	cmr_u32 is_4in1_prev; /* 1: 4c pixel for prev */
+	cmr_u32 cam_4in1_mode; /* 1: 4c mode for capture */
 	cmr_u32 lowlight_flag; /* low lux for capture */
 	/* for 4x zoom focus */
 	cmr_u32 last_ratio;
@@ -470,7 +470,7 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
 	/* also set capture gain if 4in1 */
-	if (cxt->is_4in1_prev) {
+	if (cxt->cam_4in1_mode) {
 		/* this value for capture, need * 4
 		 * not active while pm * 4
 		 */
@@ -814,7 +814,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		gain.gb = awb_gain->g;
 		gain.b = awb_gain->b;
 		/* todo: also set capture gain if 4in1 */
-		if (cxt->is_4in1_prev) {
+		if (cxt->cam_4in1_mode) {
 			cfg.scene_id = PM_SCENE_CAP;
 			cfg.block_info = &gain;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
@@ -1461,7 +1461,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		for (i = 0; i < output.cap_param_num; i++) {
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
-			if ((!IS_DCAM_BLOCK(param_data->id)) || (cxt->is_4in1_prev)) {
+			if ((!IS_DCAM_BLOCK(param_data->id)) || (cxt->cam_4in1_mode)) {
 				/* todo: refine for 4in1 sensor */
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
@@ -1493,7 +1493,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
 	}
 
-	if (cxt->is_4in1_prev) {
+	if (cxt->cam_4in1_mode) {
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&lowlight_tmp);
 
@@ -2153,7 +2153,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
 			smart_proc_in.cal_para.ct = awb_output->ct;
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-			if (cxt->is_4in1_prev)
+			if (cxt->cam_4in1_mode)
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];
 			smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 			smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
@@ -4486,11 +4486,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
 	cxt->sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	cxt->sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
-	cxt->is_4in1_prev = in_ptr->mode_4in1;
+	cxt->cam_4in1_mode = in_ptr->mode_4in1;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
 	cxt->commn_cxt.prv_size = cxt->commn_cxt.src;
-	if (cxt->is_4in1_prev) {
+	if (cxt->cam_4in1_mode) {
 		cxt->commn_cxt.prv_size.w >>= 1;
 		cxt->commn_cxt.prv_size.h >>= 1;
 	}
@@ -4527,7 +4527,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			pm_input.mode[0] = WORKMODE_PREVIEW;
 		pm_input.img_w[0] = cxt->commn_cxt.src.w;
 		pm_input.img_h[0] = cxt->commn_cxt.src.h;
-		if (cxt->is_4in1_prev) {
+		if (cxt->cam_4in1_mode) {
 			pm_input.cam_4in1_mode = 1;
 			pm_input.define[0] = 1; /* todo: workaround for 4in1 binning prev*/
 			pm_input.img_w[0] >>= 1;
@@ -4953,9 +4953,15 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	pm_input.mode[0] = WORKMODE_CAPTURE;
 	pm_input.img_w[0] = cxt->commn_cxt.src.w;
 	pm_input.img_h[0] = cxt->commn_cxt.src.h;
+
+	ISP_LOGV("flag %d %d\n", cxt->is_4in1_sensor, cxt->cam_4in1_mode);
+	if (cxt->cam_4in1_mode) {
+		pm_input.cam_4in1_mode = cxt->cam_4in1_mode;
+	}
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
 
+	ISP_LOGV("mode %d %d\n", pm_output.mode_id[0],pm_output.mode_id[1]);
 	cxt->commn_cxt.isp_pm_mode[0] = pm_output.mode_id[0];
 	cxt->commn_cxt.isp_pm_mode[1] = ISP_TUNE_MODE_INVALID;
 
