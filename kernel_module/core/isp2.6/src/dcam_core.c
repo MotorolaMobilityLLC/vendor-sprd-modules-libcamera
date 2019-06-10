@@ -2314,6 +2314,7 @@ static int sprd_dcam_cfg_path(
 		break;
 	case DCAM_PATH_CFG_FULL_SOURCE:
 		ret = dcam_cfg_path_full_source(dev, path, param);
+		break;
 	default:
 		pr_warn("unsupported command: %d\n", cfg_cmd);
 		break;
@@ -2678,7 +2679,6 @@ static int sprd_dcam_dev_start(void *dcam_handle)
 	}
 
 	dcam_init_lsc(dev, 1);
-
 	/* DCAM_CTRL_COEF will always set in dcam_init_lsc() */
 	force_ids &= ~DCAM_CTRL_COEF;
 	dcam_force_copy(dev, force_ids);

@@ -322,11 +322,9 @@ struct cam_global_ctrl g_camctrl = {
 static struct isp_pipe_ops *isp_ops;
 static struct dcam_pipe_ops *dcam_ops;
 static struct cam_flash_ops *flash_ops;
-
 static int img_ioctl_stream_off(
 			struct camera_module *module,
 			unsigned long arg);
-
 
 static void put_k_frame(void *param)
 {
@@ -1027,30 +1025,21 @@ static struct camera_frame *deal_4in1_frame(struct camera_module *module,
  * two image save in one fd(one buffer), full + bin
  */
 struct camera_frame *deal_4in1_raw_capture(struct camera_module *module,
-			struct camera_frame *pframe,
-			struct channel_context *ch)
+			struct camera_frame *pframe)
 {
 	static uint32_t flag_path; /* b0:bin tx done, b1:full tx done */
-	static uint32_t offset; /* the offset for 4M, 16m:from 0 */
 
 	/* full path tx done */
 	if (pframe->irq_type == CAMERA_IRQ_4IN1_DONE) {
 		flag_path |= BIT(1);
 	} else { /* bin path tx done */
 		flag_path |= BIT(0);
-		offset = pframe->buf.offset[0];
 	}
 	/* check bin, full both tx done */
 	if ((flag_path & 0x3) == 0x3) {
 		pframe->evt = IMG_TX_DONE;
 		pframe->irq_type = CAMERA_IRQ_4IN1_DONE;
 		flag_path = 0;
-		/* set size, full size */
-		pframe->width = ch->ch_uinfo.dst_size.w;
-		pframe->height = ch->ch_uinfo.dst_size.h;
-		/* offset
-		 * pframe->buf.addr_vir[0] = offset;
-		 */
 		return pframe;
 	}
 	/* not report */
@@ -1298,7 +1287,7 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			if (pframe->irq_type != CAMERA_IRQ_4IN1_DONE)
 				pframe->irq_type = CAMERA_IRQ_IMG;
 			if (module->cam_uinfo.is_4in1) {
-				pframe = deal_4in1_raw_capture(module, pframe, channel);
+				pframe = deal_4in1_raw_capture(module, pframe);
 				if (!pframe)
 					return 0;
 			}
@@ -1307,7 +1296,8 @@ int dcam_callback(enum dcam_cb_type type, void *param, void *priv_data)
 			pframe->height = channel->ch_uinfo.dst_size.h;
 			ret = camera_enqueue(&module->frm_queue, pframe);
 			complete(&module->frm_com);
-			pr_info("get out raw frame: fd:%d\n", pframe->buf.mfd[0]);
+			pr_info("get out raw frame: fd:%d [%d %d]\n",
+				pframe->buf.mfd[0], pframe->width, pframe->height);
 
 		} else if (channel->ch_id == CAM_CH_PRE) {
 
@@ -2747,16 +2737,27 @@ static int init_4in1_secondary_path(struct camera_module *module,
 	 * channel so BIN path can enable slow motion feature correctly.
 	 */
 	ch_desc.slowmotion_count = ch->ch_uinfo.high_fps_skip_num;
-
 	ch_desc.endian.y_endian = ENDIAN_LITTLE;
 	ch_desc.enable_3dnr = module->cam_uinfo.is_3dnr;
+
+	ch_desc.input_size.w = module->cam_uinfo.sn_size.w / 2;
+	ch_desc.input_size.h = module->cam_uinfo.sn_size.h / 2;
+	ch_desc.input_trim.start_x = 0;
+	ch_desc.input_trim.start_y = 0;
+	ch_desc.input_trim.size_x = ch_desc.input_size.w;
+	ch_desc.input_trim.size_y = ch_desc.input_size.h;
+	ch_desc.output_size.w = ch_desc.input_size.w;
+	ch_desc.output_size.h = ch_desc.input_size.h;
+
 	if (ch->ch_id == CAM_CH_RAW)
 		ch_desc.is_raw = 1;
 	ret = dcam_ops->cfg_path(module->dcam_dev_handle,
 			DCAM_PATH_CFG_BASE,
 			ch->second_path_id, &ch_desc);
+	ret = dcam_ops->cfg_path(module->dcam_dev_handle,
+			DCAM_PATH_CFG_SIZE,
+			ch->second_path_id, &ch_desc);
 	/* bypass bin path all sub block except 4in1 */
-
 
 	ch->second_path_enable = 1;
 	pr_info("done\n");
@@ -4248,9 +4249,11 @@ static struct camera_frame *get_secondary_buf(struct sprd_img_parm *p,
 	offset *= ch->ch_uinfo.src_size.h;
 	offset = ALIGN_UP(offset, 4096);
 	/* first buf offset: p->frame_addr_array[i].y */
-	pr_info("start 0x%x, offset 0x%x\n", p->frame_addr_array[i].y,
-			offset);
 	offset += p->frame_addr_array[i].y;
+	pr_debug("start 0x%x 0x%x 0x%x offset 0x%x\n",
+		p->frame_addr_array[i].y,
+		p->frame_addr_array[i].u,
+		p->frame_addr_array[i].v, offset);
 	pframe->buf.offset[0] = offset;
 	pframe->channel_id = ch->ch_id;
 

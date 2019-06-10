@@ -51,6 +51,8 @@ int dcam_init_lsc(void *in, uint32_t online)
 	param = &dev->blk_dcam_pm->lsc;
 	spin_lock(&param->lock);
 	if (!param->update) {
+		/* need, because other block need coef */
+		dcam_force_copy(dev, DCAM_CTRL_COEF);
 		spin_unlock(&param->lock);
 		return 0;
 	}
