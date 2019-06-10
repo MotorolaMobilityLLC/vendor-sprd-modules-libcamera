@@ -2874,6 +2874,10 @@ static cmr_s32 ae_set_flash_charge(struct ae_ctrl_cxt *cxt, enum ae_flash_type f
 		break;
 	}
 
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)cxt->isp_ops.isp_handler;
+	cxt_ptr->multiColorLcdEn = cxt->dflash_param[0].multiColorLcdEn;
+	ISP_LOGV("ae_set_flash_charge, multiColorLcdEn = %d", cxt_ptr->multiColorLcdEn);
+
 	if (flash_level1 == -1) {
 		cxt->ae_leds_ctrl.led0_ctrl = 0;
 	} else {
