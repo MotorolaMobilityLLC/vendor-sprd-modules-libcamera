@@ -648,10 +648,18 @@ int sprd_sensor_set_mclk(unsigned int *saved_clk, unsigned int set_mclk,
 				clk_disable_unprepare(p_dev->ccir_eb);
 
 			if (p_dev->sensor_clk) {
-				clk_set_parent(p_dev->sensor_clk,
+				ret = clk_set_parent(p_dev->sensor_clk,
 					       p_dev->sensor_clk_default);
-				clk_set_rate(p_dev->sensor_clk,
+				if (ret) {
+					pr_err("set_parent failed\n");
+					goto exit;
+				}
+				ret = clk_set_rate(p_dev->sensor_clk,
 					     p_dev->sensor_clk_default_rate);
+				if (ret) {
+					pr_err("set rate failed\n");
+					goto exit;
+				}
 				clk_disable_unprepare(p_dev->sensor_clk);
 			}
 		}
@@ -677,9 +685,17 @@ int sprd_sensor_set_mclk(unsigned int *saved_clk, unsigned int set_mclk,
 			pr_debug("set_mclk %d sensor_id %d\n",
 				set_mclk, sensor_id);
 
-			clk_set_parent(p_dev->sensor_clk, clk_parent);
-			clk_set_rate(p_dev->sensor_clk,
+			ret = clk_set_parent(p_dev->sensor_clk, clk_parent);
+			if (ret) {
+				pr_err("set parent failed\n");
+				goto exit;
+			}
+			ret = clk_set_rate(p_dev->sensor_clk,
 				     (set_mclk * SPRD_SENSOR_MCLK_VALUE));
+			if (ret) {
+				pr_err("set rate failed\n");
+				goto exit;
+			}
 			clk_prepare_enable(p_dev->sensor_eb);
 		} else if (p_dev->ccir_eb && p_dev->sensor_clk) {
 			clk_prepare_enable(p_dev->ccir_eb);
