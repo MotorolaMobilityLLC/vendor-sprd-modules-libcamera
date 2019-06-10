@@ -525,7 +525,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     List<ZslBufferQueue> mZSLQueue;
     bool mSprdZslEnabled;
-    bool mSprd3dnrEnabled;
+    int32_t mSprd3dnrType;
     uint32_t mZslChannelStatus;
     int32_t mZslShotPushFlag;
     // we want to keep mZslMaxFrameNum buffers in mZSLQueue, for snapshot use

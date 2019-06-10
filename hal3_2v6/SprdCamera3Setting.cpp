@@ -97,6 +97,7 @@ typedef struct {
     uint8_t availableIso[7];
     uint8_t availableAutoHdr;
     uint8_t availableAiScene;
+    uint8_t availableAuto3Dnr;
     uint8_t availDistortionCorrectionModes[1];
 } camera3_common_t;
 
@@ -296,6 +297,12 @@ const uint8_t availableSlowMotion[] = {0, 1, 4};
 const uint8_t availableAutoHDR = 1;
 #else
 const uint8_t availableAutoHDR = 0;
+#endif
+
+#ifdef CONFIG_SUPPROT_AUTO_3DNR
+const uint8_t availableAuto3DNR = 1;
+#else
+const uint8_t availableAuto3DNR = 0;
 #endif
 
 enum {
@@ -663,6 +670,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_AVAILABLE_AI_SCENE,
     ANDROID_SPRD_AVAILABLE_SENSORTYPE,
     ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
+    ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -1298,7 +1306,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
 
     camera3_default_info.common.availableAutoHdr = availableAutoHDR;
-
+    camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
     camera3_default_info.common.availableAiScene =
         property_get_bool("persist.vendor.cam.ai.scence.enable", 0);
 
@@ -1857,6 +1865,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
     s_setting[cameraId].sprddefInfo.availabe_auto_hdr =
         camera3_default_info.common.availableAutoHdr;
+    s_setting[cameraId].sprddefInfo.availabe_auto_3dnr =
+        camera3_default_info.common.availableAuto3Dnr;
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
@@ -1890,7 +1900,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene = 0;
-
+    s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene = 0;
     s_setting[cameraId].sprddefInfo.availabe_ai_scene =
         camera3_default_info.common.availableAiScene;
     s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current =
@@ -2384,6 +2394,14 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SENSORTYPE,
                       &(s_setting[cameraId].sprddefInfo.availabe_sensor_type),
                       1);
+
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
+                      &(s_setting[cameraId].sprddefInfo.availabe_auto_3dnr), 1);
+    HAL_LOGI("%s availabe_auto_3dnr =%d,", __FUNCTION__,
+             s_setting[cameraId].sprddefInfo.availabe_auto_3dnr);
+
+    staticInfo.update(ANDROID_SPRD_IS_3DNR_SCENE,
+                      &(s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene), 1);
 
     staticInfo.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
@@ -3522,6 +3540,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 
     uint8_t sprdIsHdrScene = 0;
     requestInfo.update(ANDROID_SPRD_IS_HDR_SCENE, &sprdIsHdrScene, 1);
+    uint8_t sprdAuto3DnrEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_AUTO_3DNR_ENABLED, &sprdAuto3DnrEnabled, 1);
+    uint8_t sprdIs3DnrScene = 0;
+    requestInfo.update(ANDROID_SPRD_IS_3DNR_SCENE, &sprdIs3DnrScene, 1);
     uint8_t sprdAiSceneType = HAL_AI_SCENE_DEFAULT;
     requestInfo.update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT, &sprdAiSceneType, 1);
 
@@ -3899,6 +3921,7 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGD("sprd pipviv enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
     }
+
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
@@ -3911,6 +3934,7 @@ int SprdCamera3Setting::updateWorkParameters(
                              valueU8, ANDROID_SPRD_ZSL_ENABLED, 1)
         }
     }
+
     if (frame_settings.exists(ANDROID_SPRD_FIXED_FPS_ENABLED)) {
         valueU8 =
             frame_settings.find(ANDROID_SPRD_FIXED_FPS_ENABLED).data.u8[0];
@@ -4446,44 +4470,53 @@ int SprdCamera3Setting::updateWorkParameters(
         }
     }
 
-    HAL_LOGD(
-        "focus_distance=%f, ae_precap_trigger= %d, "
-        "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
-        "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
-        "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
-        "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
-        "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d %d",
-        s_setting[mCameraId].lensInfo.focus_distance,
-        s_setting[mCameraId].controlInfo.ae_precap_trigger,
-        isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
-        s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
-        s_setting[mCameraId].flashInfo.mode,
-        s_setting[mCameraId].controlInfo.ae_lock,
-        s_setting[mCameraId].controlInfo.scene_mode,
-        s_setting[mCameraId].sprddefInfo.capture_mode,
-        s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
-        s_setting[mCameraId].sprddefInfo.iso,
-        s_setting[mCameraId].jpgInfo.orientation,
-        s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
-        s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
-        s_setting[mCameraId].scalerInfo.crop_region[0],
-        s_setting[mCameraId].scalerInfo.crop_region[1],
-        s_setting[mCameraId].scalerInfo.crop_region[2],
-        s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
-        s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
-        s_setting[mCameraId].controlInfo.ae_regions[0],
-        s_setting[mCameraId].controlInfo.ae_regions[1],
-        s_setting[mCameraId].controlInfo.ae_regions[2],
-        s_setting[mCameraId].controlInfo.ae_regions[3],
-        s_setting[mCameraId].controlInfo.ae_regions[4],
-        s_setting[mCameraId].controlInfo.af_trigger,
-        s_setting[mCameraId].controlInfo.af_mode,
-        s_setting[mCameraId].controlInfo.af_state,
-        s_setting[mCameraId].controlInfo.af_regions[0],
-        s_setting[mCameraId].controlInfo.af_regions[1],
-        s_setting[mCameraId].controlInfo.af_regions[2],
-        s_setting[mCameraId].controlInfo.af_regions[3],
-        s_setting[mCameraId].controlInfo.af_regions[4]);
+    if (frame_settings.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
+        s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable =
+            frame_settings.find(ANDROID_SPRD_AUTO_3DNR_ENABLED).data.u8[0] == 1
+                ? CAMERA_AUTO_3DNR_SWITCH_ON
+                : CAMERA_AUTO_3DNR_SWITCH_OFF;
+        pushAndroidParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+    }
+
+    HAL_LOGD("focus_distance=%f, ae_precap_trigger= %d, "
+             "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
+             "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
+             "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
+             "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
+             "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
+             "%d, sprd_auto_3dnr_enable:%d",
+             s_setting[mCameraId].lensInfo.focus_distance,
+             s_setting[mCameraId].controlInfo.ae_precap_trigger,
+             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
+             s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
+             s_setting[mCameraId].flashInfo.mode,
+             s_setting[mCameraId].controlInfo.ae_lock,
+             s_setting[mCameraId].controlInfo.scene_mode,
+             s_setting[mCameraId].sprddefInfo.capture_mode,
+             s_setting[mCameraId].sprddefInfo.burst_cap_cnt,
+             s_setting[mCameraId].sprddefInfo.iso,
+             s_setting[mCameraId].jpgInfo.orientation,
+             s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
+             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled,
+             s_setting[mCameraId].scalerInfo.crop_region[0],
+             s_setting[mCameraId].scalerInfo.crop_region[1],
+             s_setting[mCameraId].scalerInfo.crop_region[2],
+             s_setting[mCameraId].scalerInfo.crop_region[3], cropRegionUpdate,
+             s_setting[mCameraId].sprddefInfo.am_mode, updateAE,
+             s_setting[mCameraId].controlInfo.ae_regions[0],
+             s_setting[mCameraId].controlInfo.ae_regions[1],
+             s_setting[mCameraId].controlInfo.ae_regions[2],
+             s_setting[mCameraId].controlInfo.ae_regions[3],
+             s_setting[mCameraId].controlInfo.ae_regions[4],
+             s_setting[mCameraId].controlInfo.af_trigger,
+             s_setting[mCameraId].controlInfo.af_mode,
+             s_setting[mCameraId].controlInfo.af_state,
+             s_setting[mCameraId].controlInfo.af_regions[0],
+             s_setting[mCameraId].controlInfo.af_regions[1],
+             s_setting[mCameraId].controlInfo.af_regions[2],
+             s_setting[mCameraId].controlInfo.af_regions[3],
+             s_setting[mCameraId].controlInfo.af_regions[4],
+             s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable);
 
 #undef GET_VALUE_IF_DIF
     return rc;
@@ -4945,6 +4978,12 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 
     camMetadata.update(ANDROID_SPRD_IS_HDR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
+                       1);
+
+    HAL_LOGV("auto 3dnr scene report %d",
+             s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene);
+    camMetadata.update(ANDROID_SPRD_IS_3DNR_SCENE,
+                       &(s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene),
                        1);
 
     camMetadata.update(

@@ -131,6 +131,13 @@ enum VIDEO_3DNR {
     VIDEO_ON,
 };
 
+enum cmr_flash_lcd_mode {
+    FLASH_LCD_MODE_OFF = 0,
+    FLASH_LCD_MODE_AUTO = 1,
+    FLASH_LCD_MODE_ON = 2,
+    FLASH_LCD_MODE_MAX
+};
+
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM 1
 #define HAS_CAMERA_POWER_HINTS 1
 
@@ -720,7 +727,7 @@ void SprdCamera3OEMIf::initialize() {
     mCallbackHeight = 0;
     mStreamOnWithZsl = 0;
     mSprdZslEnabled = 0;
-    mSprd3dnrEnabled = 0;
+    mSprd3dnrType = 0;
     mVideoSnapshotType = 0;
     mTopAppId = TOP_APP_NONE;
     mChannel2FaceBeautyFlag = 0;
@@ -3018,12 +3025,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         }
     }
 
-    if (sprddefInfo.sprd_3dnr_enabled == 1) {
-        mSprd3dnrEnabled = 1;
-    } else {
-        mSprd3dnrEnabled = 0;
-    }
-
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
     mVideo3dnrFlag = VIDEO_OFF;
@@ -3038,7 +3039,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
-        if (mSprd3dnrEnabled) {
+        if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW) {
             // 1 for 3dnr hw process.
             if (grab_capability.support_3dnr_mode == 1) {
                 mVideoCopyFromPreviewFlag = false;
@@ -3110,13 +3111,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
     }
 
-    if (mSprd3dnrEnabled == 1 && mRecordingMode == false) {
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
     }
-
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_ENABLED,
-             mSprd3dnrEnabled);
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_MODE,
              (uint32_t)mCaptureMode);
@@ -4545,8 +4543,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
 
     if (0 != frame->sensor_info.exposure_time_denominator) {
         exposureTime = 1000000000ll *
-                                   frame->sensor_info.exposure_time_numerator /
-                                   frame->sensor_info.exposure_time_denominator;
+                       frame->sensor_info.exposure_time_numerator /
+                       frame->sensor_info.exposure_time_denominator;
         mSetting->setExposureTimeTag(exposureTime);
     }
     timestamp = frame->monoboottime;
@@ -5317,12 +5315,18 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGD("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_FLASH_FIRED:
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
         if (parm4 != NULL) {
             isNeedFlashFired = *(uint8_t *)parm4;
+            sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
         }
-        if (mSprd3dnrEnabled || mMultiCameraMode == MODE_BOKEH) {
+        if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+            mMultiCameraMode == MODE_BOKEH) {
             isNeedFlashFired = 0;
+            sprddefInfo.is_takepicture_with_flash = 0;
         }
+        mSetting->setSPRDDEFTag(sprddefInfo);
         // isNeedFlashFired is used by APP to check if af_trigger being sent
         // before capture
         HAL_LOGD("isNeedFlashFired = %d", isNeedFlashFired);
@@ -5333,6 +5337,13 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
         HAL_LOGD("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
+        break;
+    case CAMERA_EVT_CB_3DNR_SCENE:
+        SPRD_DEF_Tag sprd3dnrInfo;
+        mSetting->getSPRDDEFTag(&sprd3dnrInfo);
+        sprd3dnrInfo.sprd_is_3dnr_scene = *(uint8_t *)parm4;
+        mSetting->setSPRDDEFTag(sprd3dnrInfo);
+        HAL_LOGV(" sprd_is_3dnr_scene = %d", sprd3dnrInfo.sprd_is_3dnr_scene);
         break;
     case CAMERA_EVT_CB_AI_SCENE:
         SPRD_DEF_Tag sprdAIInfo;
@@ -6358,13 +6369,49 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  mSprd3dCalibrationEnabled);
     } break;
     case ANDROID_SPRD_3DNR_ENABLED: {
-        //    SPRD_DEF_Tag sprddefInfo;
-        //    mSetting->getSPRDDEFTag(&sprddefInfo);
-        //     HAL_LOGD("sprddefInfo.sprd_3dnr_enabled=%d ",
-        //              sprddefInfo.sprd_3dnr_enabled);
-        //    SET_PARM(mHalOem, mCameraHandle,
-        //    CAMERA_PARAM_SPRD_3DNR_ENABLED,
-        //             sprddefInfo.sprd_3dnr_enabled);
+        SPRD_DEF_Tag sprddefInfo;
+        CONTROL_Tag controlInfo;
+        uint8_t sprd_3dnr_enabled;
+
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        mSetting->getCONTROLTag(&controlInfo);
+
+        sprd_3dnr_enabled = sprddefInfo.sprd_3dnr_enabled;
+
+        // on flash auto and torch mode, set 3dnr enable to false
+        if ((controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) ||
+            (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH &&
+             sprddefInfo.is_takepicture_with_flash == 1)) {
+            sprd_3dnr_enabled = 0;
+        }
+
+        HAL_LOGV("sprd_3dnr_enabled: %d, sprd_auto_3dnr_enable:%d, "
+                 "sprd_appmode_id:%d",
+                 sprd_3dnr_enabled, sprddefInfo.sprd_auto_3dnr_enable,
+                 sprddefInfo.sprd_appmode_id);
+
+        if (sprd_3dnr_enabled == CAMERA_3DNR_SWITCH_ON) {
+            if (sprddefInfo.sprd_auto_3dnr_enable ==
+                CAMERA_AUTO_3DNR_SWITCH_ON) {
+                // auto 3dnr mode, detected 3dnr scene
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
+            } else {
+                // night shot
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
+            }
+
+            if (sprddefInfo.sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO) {
+                // 3dnr video mode
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW;
+            }
+        } else {
+            // 3dnr off
+            mSprd3dnrType = CAMERA_3DNR_TYPE_NULL;
+        }
+
+        HAL_LOGD("mSprd3dnrType: %d ", mSprd3dnrType);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_TYPE,
+                 mSprd3dnrType);
     } break;
     case ANDROID_SPRD_FIXED_FPS_ENABLED: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6449,6 +6496,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode,
                                              &flashMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
+    } break;
+    case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        if (mCameraId != 1) {
+            SET_PARM(mHalOem, mCameraHandle,
+                     CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+                     sprdInfo.sprd_auto_3dnr_enable);
+        }
     } break;
     default:
         ret = BAD_VALUE;
@@ -6855,7 +6911,7 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     Mutex::Autolock zsllock(&mZslBufLock);
     SPRD_DEF_Tag sprddefInfo;
 
-    if (mSprd3dnrEnabled) {
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -6893,7 +6949,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *vir_addr = 0;
     *fd = 0;
 
-    if (mSprd3dnrEnabled) {
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
         return ret;
     }
@@ -8988,7 +9044,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         // for 3dnr sw 2.0
-        if (mSprd3dnrEnabled) {
+        if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
             buf_id = getZslBufferIDForFd(zsl_frame.fd);
             if (buf_id == 0xFFFFFFFF) {
                 goto exit;
@@ -9231,8 +9287,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     mSetting->getCONTROLTag(&controlInfo);
     char value[PROPERTY_VALUE_MAX];
     if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-        (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
-        (CAMERA_MODE_3DNR_PHOTO != mSprdAppmodeId) && (0 == mFbOn) &&
+        (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
         (0 == mMultiCameraMode) &&
         (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
         (false == mRecordingMode)) {
@@ -9280,7 +9335,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
         mZslMaxFrameNum = 3;
-    } else if (mSprd3dnrEnabled == 1 && mRecordingMode == false) {
+    } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW &&
+               mRecordingMode == false) {
         mZslMaxFrameNum = 5;
     } else {
         mZslMaxFrameNum = 1;

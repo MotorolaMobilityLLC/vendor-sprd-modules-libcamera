@@ -617,7 +617,9 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     struct sprd_img_parm parm;
     cmr_u32 ch_id;
     struct sprd_img_function_mode function_mode;
+    struct sprd_img_3dnr_mode sprd_3dnr_mode;
     cmr_bzero(&function_mode, sizeof(struct sprd_img_function_mode));
+    cmr_bzero(&sprd_3dnr_mode, sizeof(struct sprd_img_3dnr_mode));
 
     if (NULL == config || NULL == channel_id)
         return -1;
@@ -672,8 +674,13 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     function_mode.need_4in1 = config->cfg.need_4in1;
     function_mode.dual_cam = config->cfg.dual_cam;
-    function_mode.need_3dnr = config->cfg.need_3dnr;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, &function_mode);
+
+    sprd_3dnr_mode.channel_id = ch_id;
+    sprd_3dnr_mode.need_3dnr = config->cfg.need_3dnr;
+    CMR_LOGV("get channel id: %d, need_3dnr:%d", ch_id,
+             sprd_3dnr_mode.need_3dnr);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR_MODE, &sprd_3dnr_mode);
 
     *channel_id = ch_id;
     ret = cmr_grab_cap_cfg_common(grab_handle, config, *channel_id, endian);
@@ -681,6 +688,41 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 exit:
     CMR_LOGI("ret %ld", ret);
     ATRACE_END();
+    return ret;
+}
+
+cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id,
+                          cmr_u32 need_3dnr) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    struct sprd_img_3dnr_mode sprd_3dnr_mode;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    cmr_bzero(&sprd_3dnr_mode, sizeof(struct sprd_img_3dnr_mode));
+
+    sprd_3dnr_mode.channel_id = channel_id;
+    sprd_3dnr_mode.need_3dnr = need_3dnr;
+    CMR_LOGV("channel id:%d, need_3dnr: %d", channel_id,
+             sprd_3dnr_mode.need_3dnr);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR_MODE, &sprd_3dnr_mode);
+
+    CMR_LOGI("ret %ld", ret);
+    return ret;
+}
+
+cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle, cmr_u32 auto_3dnr_enable) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    struct sprd_img_auto_3dnr_mode auto_3dnr_mode;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    cmr_bzero(&auto_3dnr_mode, sizeof(struct sprd_img_auto_3dnr_mode));
+
+    auto_3dnr_mode.auto_3dnr_enable = auto_3dnr_enable;
+    CMR_LOGV("auto_3dnr_enable: %d", auto_3dnr_mode.auto_3dnr_enable);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_AUTO_3DNR_MODE, &auto_3dnr_enable);
+
+    CMR_LOGI("ret %ld", ret);
     return ret;
 }
 

@@ -80,6 +80,7 @@ enum setting_general_type {
     SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_AI_SCENE_ENABLED,
+    SETTING_GENERAL_AUTO_3DNR,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -123,6 +124,7 @@ struct setting_hal_common {
     cmr_uint is_auto_hdr;
     cmr_uint sprd_appmode_id;
     cmr_uint ai_scene;
+    cmr_uint is_auto_3dnr;
     struct cmr_ae_compensation_param ae_compensation_param;
 };
 
@@ -173,6 +175,7 @@ struct setting_hal_param {
     struct camera_position_type position_info;
     cmr_uint is_hdr;
     cmr_uint is_3dnr;
+    cmr_uint sprd_3dnr_type;
     cmr_uint is_cnr;
     cmr_uint is_android_zsl;
     cmr_uint app_mode;
@@ -549,7 +552,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
          COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AI_SCENE_ENABLED, &hal_param->hal_common.ai_scene,
-         COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AUTO_3DNR, &hal_param->hal_common.is_auto_3dnr,
+         COM_ISP_SET_AUTO_3DNR, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -589,6 +594,11 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
         type_val = parm->ae_compensation_param.ae_exposure_compensation;
+        break;
+    case SETTING_GENERAL_AUTO_3DNR:
+
+        item->isp_cmd = COM_ISP_SET_AUTO_3DNR;
+        ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         break;
     case SETTING_GENERAL_AI_SCENE_ENABLED:
         if (parm->cmd_type_value) {
@@ -2025,6 +2035,17 @@ static cmr_int setting_set_3dnr_enable(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_3dnr_type(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->sprd_3dnr_type = parm->cmd_type_value;
+    CMR_LOGD("sprd_3dnr_type=%ld", hal_param->sprd_3dnr_type);
+
+    return ret;
+}
+
 static cmr_int setting_set_appmode(struct setting_component *cpt,
                                    struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2424,6 +2445,18 @@ static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_auto_3dnr(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set auto 3dnr %ld", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_3DNR, parm);
+
+    return ret;
+}
+
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -2581,6 +2614,17 @@ static cmr_int setting_get_3dnr(struct setting_component *cpt,
 
     parm->cmd_type_value = hal_param->is_3dnr;
     CMR_LOGD("get 3dnr %ld", parm->cmd_type_value);
+
+    return ret;
+}
+
+static cmr_int setting_get_3dnr_type(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->sprd_3dnr_type;
+    CMR_LOGD("get 3dnr type %ld", parm->cmd_type_value);
 
     return ret;
 }
@@ -3083,9 +3127,8 @@ setting_get_yuv_callback_format(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int
-setting_set_yuv2_size(struct setting_component *cpt,
-                              struct setting_cmd_parameter *parm) {
+static cmr_int setting_set_yuv2_size(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
@@ -3093,9 +3136,8 @@ setting_set_yuv2_size(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int
-setting_get_yuv2_size(struct setting_component *cpt,
-                              struct setting_cmd_parameter *parm) {
+static cmr_int setting_get_yuv2_size(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
@@ -3103,9 +3145,8 @@ setting_get_yuv2_size(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int
-setting_set_yuv2_format(struct setting_component *cpt,
-                                struct setting_cmd_parameter *parm) {
+static cmr_int setting_set_yuv2_format(struct setting_component *cpt,
+                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
@@ -3113,16 +3154,14 @@ setting_set_yuv2_format(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int
-setting_get_yuv2_format(struct setting_component *cpt,
-                                struct setting_cmd_parameter *parm) {
+static cmr_int setting_get_yuv2_format(struct setting_component *cpt,
+                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->yuv2_format;
     return ret;
 }
-
 
 static cmr_int setting_set_raw_size(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
@@ -3606,10 +3645,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_yuv_callback_size);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV_CALLBACK_FORMAT,
                              setting_set_yuv_callback_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_SIZE,
-                             setting_set_yuv2_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_FORMAT,
-                             setting_set_yuv2_format);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_SIZE, setting_set_yuv2_size);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_FORMAT, setting_set_yuv2_format);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_SIZE, setting_set_raw_size);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_FORMAT, setting_set_raw_format);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_RANGE_FPS, setting_set_range_fps);
@@ -3645,6 +3682,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_CNR, setting_set_cnr);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_ENABLED,
                              setting_set_3dnr_enable);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_TYPE,
+                             setting_set_3dnr_type);
     cmr_add_cmd_fun_to_table(SETTING_SET_EXIF_EXPOSURE_TIME,
                              setting_set_exif_exposure_time);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_TYPE_MAX, NULL);
@@ -3682,14 +3721,13 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_yuv_callback_size);
     cmr_add_cmd_fun_to_table(SETTING_GET_YUV_CALLBACK_FORMAT,
                              setting_get_yuv_callback_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_SIZE,
-                             setting_get_yuv2_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_FORMAT,
-                             setting_get_yuv2_format);
+    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_SIZE, setting_get_yuv2_size);
+    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_FORMAT, setting_get_yuv2_format);
     cmr_add_cmd_fun_to_table(SETTING_GET_RAW_SIZE, setting_get_raw_size);
     cmr_add_cmd_fun_to_table(SETTING_GET_RAW_FORMAT, setting_get_raw_format);
     cmr_add_cmd_fun_to_table(SETTING_GET_HDR, setting_get_hdr);
     cmr_add_cmd_fun_to_table(SETTING_GET_3DNR, setting_get_3dnr);
+    cmr_add_cmd_fun_to_table(SETTING_GET_3DNR_TYPE, setting_get_3dnr_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_ANDROID_ZSL_FLAG,
                              setting_get_android_zsl);
     cmr_add_cmd_fun_to_table(SETTING_CTRL_FLASH, setting_ctrl_flash);
@@ -3750,6 +3788,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_device_orientation);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_DEVICE_ORIENTATION,
                              setting_get_device_orientation);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+                             setting_set_auto_3dnr);
     setting_parms_inited = 1;
     return 0;
 }

@@ -360,6 +360,7 @@ typedef struct {
     uint8_t sprd_3dcapture_enabled;
     int32_t max_preview_size[2];
     uint8_t sprd_3dnr_enabled;
+    uint8_t sprd_auto_3dnr_enable;
     uint8_t sprd_fixedfps_enabled;
     int32_t sprd_appmode_id;
     uint8_t is_takepicture_with_flash;
@@ -379,6 +380,8 @@ typedef struct {
     uint8_t availabe_gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     int32_t top_app_id;
+    uint8_t availabe_auto_3dnr;
+    uint8_t sprd_is_3dnr_scene;
 } SPRD_DEF_Tag;
 
 typedef struct {

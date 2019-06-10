@@ -181,6 +181,7 @@ struct snapshot_context {
     cmr_u32 channel_id;
     cmr_u32 is_hdr;
     cmr_u32 is_3dnr;
+    cmr_u32 sprd_3dnr_type;
     cmr_u32 total_num;
     cmr_u32 snp_mode;
     cmr_u32 is_cfg_rot_cap;

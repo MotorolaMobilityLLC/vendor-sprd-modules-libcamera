@@ -1023,6 +1023,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_FLASH_LCD_MODE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_FLASH_LCD_MODE);
             break;
+        case ANDROID_SPRD_AUTO_3DNR_ENABLED:
+            HAL_LOGV("ANDROID_SPRD_AUTO_3DNR_ENABLED");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+            break;
         default:
             HAL_LOGV("other tag");
             break;
