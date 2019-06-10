@@ -35,25 +35,25 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/alc_awb/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/sprd/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/afv1/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/aft/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sft_af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/alc_af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/lsc/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/common/inc/ \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/afl/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/smart \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/tof \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ai/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/ae/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/ae/flash/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/awb/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/awb/sprd/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/af/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/af/sprd/afv1/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/af/sprd/aft/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/af/sft_af/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/af/alc_af/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/lsc/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/common/inc/ \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/afl/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/smart \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/tof \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/pdaf/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/pdaf/sprd/inc \
+	$(LOCAL_PATH)/../../ispalg/isp3.x/ai/inc \
 	$(LOCAL_PATH)/../../sensor/inc
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)

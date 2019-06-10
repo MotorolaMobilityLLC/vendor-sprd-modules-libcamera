@@ -22,5 +22,10 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
 
 TARGET_BOARD_CAMERA_ISP_3AMOD:=1
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_3AMOD)),1)
-include $(call first-makefiles-under,$(LOCAL_PATH))
+#include $(call first-makefiles-under,$(LOCAL_PATH))
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
+include $(LOCAL_PATH)/isp3.x/Android.mk
+else
+include $(LOCAL_PATH)/isp2.x/Android.mk
+endif
 endif
