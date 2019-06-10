@@ -4834,6 +4834,7 @@ static int img_ioctl_stream_on(
 			if (ret != 0) {
 				pr_err("config channel/path param work %d\n",
 					ret);
+				flush_workqueue(module->workqueue);
 				goto exit;
 			}
 			ch->alloc_start = 0;
