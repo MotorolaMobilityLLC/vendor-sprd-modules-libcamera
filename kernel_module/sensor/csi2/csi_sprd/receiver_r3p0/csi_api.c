@@ -102,16 +102,9 @@ static int csi_mipi_clk_enable(int sensor_id)
 	}
 
 
-	if (!dt_info->clk_ckg_eb || !dt_info->mipi_csi_gate_eb
-		|| !dt_info->csi_eb_clk) {
+	if (!dt_info->mipi_csi_gate_eb || !dt_info->csi_eb_clk) {
 		pr_err("fail to csi mipi clk enable\n");
 		return -EINVAL;
-	}
-
-	ret = clk_prepare_enable(dt_info->clk_ckg_eb);
-	if (ret) {
-		pr_err("fail to csi eb clk\n");
-		return ret;
 	}
 
 	ret = clk_prepare_enable(dt_info->csi_eb_clk);
@@ -126,6 +119,10 @@ static int csi_mipi_clk_enable(int sensor_id)
 		return ret;
 	}
 
+	regmap_update_bits(dt_info->phy.aon_apb_syscon,
+		REG_AON_APB_RF_CGM_CLK_TOP_REG1,
+		MASK_AON_APB_RF_CGM_CPHY_CFG_EN,
+		~MASK_AON_APB_RF_CGM_CPHY_CFG_EN);
 
 	ret = csi_ipg_set_clk(sensor_id);
 	if (ret) {
@@ -149,10 +146,15 @@ static void csi_mipi_clk_disable(int sensor_id)
 		pr_err("fail to csi mipi clk disable\n");
 		return;
 	}
+
+	regmap_update_bits(dt_info->phy.aon_apb_syscon,
+		REG_AON_APB_RF_CGM_CLK_TOP_REG1,
+		MASK_AON_APB_RF_CGM_CPHY_CFG_EN,
+		~MASK_AON_APB_RF_CGM_CPHY_CFG_EN);
+
 	clk_disable_unprepare(dt_info->mipi_csi_gate_eb);
 	clk_disable_unprepare(dt_info->csi_eb_clk);
 	clk_disable_unprepare(dt_info->csi_src_eb);
-	clk_disable_unprepare(dt_info->clk_ckg_eb);
 
 }
 
@@ -233,9 +235,6 @@ int csi_api_dt_node_init(struct device *dev, struct device_node *dn,
 			csi_info->reg_base);
 
 	/* read clocks */
-
-	csi_info->clk_ckg_eb = of_clk_get_by_name(dn,
-					"clk_gate_eb");
 
 	csi_info->mipi_csi_gate_eb = of_clk_get_by_name(dn,
 					"clk_mipi_csi_gate_eb");
