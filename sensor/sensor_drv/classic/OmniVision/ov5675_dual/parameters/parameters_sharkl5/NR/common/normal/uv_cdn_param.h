@@ -121,9 +121,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	8.00,
+	12.00,
 	/*sigma_v*/
-	8.00,
+	12.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
@@ -160,9 +160,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	8.00,
+	18.00,
 	/*sigma_v*/
-	8.00,
+	18.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
@@ -199,9 +199,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	8.00,
+	20.00,
 	/*sigma_v*/
-	8.00,
+	20.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
