@@ -122,6 +122,9 @@ namespace sprdcamera {
 // 300 means 300ms
 #define ZSL_SNAPSHOT_THRESHOLD_TIME 300
 
+// add for default zsl buffer
+#define DEFAULT_ZSL_BUFFER_NUM 3
+
 // 3dnr Video mode
 enum VIDEO_3DNR {
     VIDEO_OFF = 0,
@@ -559,7 +562,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mSprdZslEnabled = false;
     mZslMaxFrameNum = 1;
-    mZslNum = 3;
+    mZslNum = DEFAULT_ZSL_BUFFER_NUM;
     mZslShotPushFlag = 0;
     mZslChannelStatus = 1;
     mZSLQueue.clear();
@@ -700,6 +703,7 @@ void SprdCamera3OEMIf::initialize() {
     memset(&mSlowPara, 0, sizeof(slow_motion_para));
     mIsRecording = false;
     mVideoShotFlag = 0;
+    mZslNum = DEFAULT_ZSL_BUFFER_NUM;
 
     mPreviewWidth = 0;
     mPreviewHeight = 0;
@@ -3043,7 +3047,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
         mSprdZslEnabled = true;
-        mZslNum = 3;
     } else if (mSprdRefocusEnabled == true && mCallbackHeight != 0 &&
                mCallbackWidth != 0) {
         mSprdZslEnabled = true;
