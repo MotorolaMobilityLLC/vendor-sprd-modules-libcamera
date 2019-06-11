@@ -940,7 +940,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		}
 	}
 	if(MULTIZONE != cxt->af_type) {// normal way for PASSIVE and ACTIVE mode
-		ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 4);
+		ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 0);
 		if (ret) {
 			ISP_LOGE("fail to do get pd_result.");
 			goto exit;
@@ -954,7 +954,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	if(cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4) {
 		cmr_u16 i = 0;
 		for(; i < MAX_MULTIZONE_NUM + 1; i++) {
-			pd_calc_result.pdDCCGain[i] = 39;
+			pd_calc_result.pdDCCGain[i] = 34;
 		}
 	}
 
