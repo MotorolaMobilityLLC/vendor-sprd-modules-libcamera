@@ -4121,7 +4121,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             getMultiCameraMode() == MODE_BOKEH ||
             getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM ||
             mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
-            mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
+            mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
+            mSprdAppmodeId == -1) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
         } else if (mRecordingMode == true) {
             setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
