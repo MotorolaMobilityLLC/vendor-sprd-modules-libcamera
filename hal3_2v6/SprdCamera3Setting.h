@@ -107,7 +107,7 @@ typedef int64_t nsecs_t;
 #define MAX_PREVIEW_SIZE_WIDTH 1920
 #define MAX_PREVIEW_SIZE_HEIGHT 1080
 
-//Histogram items
+// Histogram items
 #define CAMERA_ISP_HIST_ITEMS 256
 
 typedef struct {
@@ -136,7 +136,7 @@ typedef struct {
     uint8_t af_mode;
     int32_t af_regions[5];
     uint8_t af_available_modes[6];
-    int32_t af_roi[4];
+    int32_t af_roi[5];
 
     int32_t ae_available_fps_ranges[FPS_RANGE_COUNT];
     int32_t ae_compensation_range[2];
@@ -571,7 +571,8 @@ class SprdCamera3Setting {
                                                int8_t *convertAntibandingMode);
 
     int androidAfModeToDrvAfMode(uint8_t androidAfMode, int8_t *convertDrvMode);
-    int flashLcdModeToDrvFlashMode(uint8_t flashLcdMode, int8_t *convertDrvMode);
+    int flashLcdModeToDrvFlashMode(uint8_t flashLcdMode,
+                                   int8_t *convertDrvMode);
     int setTONEMAPTag(TONEMAP_Tag *toneInfo);
     int getTONEMAPTag(TONEMAP_Tag *toneInfo);
 

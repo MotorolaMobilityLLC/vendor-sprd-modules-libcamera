@@ -5111,7 +5111,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID,
                        &(s_setting[mCameraId].controlInfo.af_trigger_Id), 1);
     camMetadata.update(ANDROID_SPRD_AF_ROI,
-                       s_setting[mCameraId].controlInfo.af_roi, 4);
+                       s_setting[mCameraId].controlInfo.af_roi, 5);
+    s_setting[mCameraId].controlInfo.af_roi[4] = 0;
     camMetadata.update(ANDROID_CONTROL_MODE,
                        &(s_setting[mCameraId].controlInfo.mode), 1);
     camMetadata.update(ANDROID_CONTROL_AE_MODE,
@@ -6489,6 +6490,8 @@ int SprdCamera3Setting::setAfRoiCONTROLTag(CONTROL_Tag *controlInfo) {
     s_setting[mCameraId].controlInfo.af_roi[1] = controlInfo->af_roi[1];
     s_setting[mCameraId].controlInfo.af_roi[2] = controlInfo->af_roi[2];
     s_setting[mCameraId].controlInfo.af_roi[3] = controlInfo->af_roi[3];
+    s_setting[mCameraId].controlInfo.af_roi[4] = controlInfo->af_roi[4];
+
     return 0;
 }
 

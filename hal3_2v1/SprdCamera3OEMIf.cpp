@@ -5885,6 +5885,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                         af_ctrl->af_roi.ex * ISP_BINNING_SIZE;
                     controlInfo.af_roi[3] =
                         af_ctrl->af_roi.ey * ISP_BINNING_SIZE;
+                    controlInfo.af_roi[4] = 1;
                     mSetting->setAfRoiCONTROLTag(&controlInfo);
                     break;
                 }

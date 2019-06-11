@@ -169,6 +169,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
     mHdrCallbackCnt = 0;
+    mAfstate = 0;
     mSavedRequestList.clear();
     setupPhysicalCameras();
     mCaptureThread = new BokehCaptureThread();
@@ -1291,7 +1292,7 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                         HAL_LOGE("sprdBokehPreviewHandle failed");
                         return false;
                     }
-                    if (mRealBokeh->mDepthTrigger != TRIGGER_FLASE &&
+                    if (mRealBokeh->mDepthTrigger != TRIGGER_FALSE &&
                         mRealBokeh->mOtpData.otp_exist) {
                         isDoDepth = sprdDepthHandle(&muxer_msg);
                     }
@@ -2708,6 +2709,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
         int top = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[1];
         int right = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[2];
         int bottom = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[3];
+        mAfstate = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[4];
         int x = left, y = top;
         if (left != 0 && top != 0 && right != 0 && bottom != 0) {
             x = left + (right - left) / 2;
@@ -2953,6 +2955,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mPreviewMuxerThread->mPreviewMuxerMsgList.clear();
     mCaptureThread->mCaptureMsgList.clear();
     mDepthMuxerThread->mDepthMuxerMsgList.clear();
+    mAfstate = 0;
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
@@ -3819,11 +3822,11 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     if (result_buffer == NULL) {
         // meta process
         metadata = result->result;
-        if (metadata.exists(ANDROID_SPRD_VCM_STEP) & cur_frame_number) {
+        updateApiParams(metadata, 1);
+        if (metadata.exists(ANDROID_SPRD_VCM_STEP) && cur_frame_number) {
             vcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
             setDepthTrigger(vcmSteps);
         }
-        updateApiParams(metadata, 1);
         if (metadata.exists(ANDROID_SPRD_VCM_STEP_FOR_BOKEH) &
             cur_frame_number) {
             vcmSteps_fixed =
@@ -4537,7 +4540,7 @@ void SprdCamera3RealBokeh::setDepthStatus(DepthStatus state) {
     case DEPTH_DONING:
         mDepthStatus = state;
         if (state == DEPTH_DONE) {
-            mDepthTrigger = TRIGGER_FLASE;
+            mDepthTrigger = TRIGGER_FALSE;
         }
         break;
     case DEPTH_DONE:
@@ -4572,15 +4575,14 @@ void SprdCamera3RealBokeh::setDepthStatus(DepthStatus state) {
  *==========================================================================*/
 void SprdCamera3RealBokeh::setDepthTrigger(int vcm) {
 
-    if (mVcmSteps == vcm && mVcmSteps) {
-        if (mDepthStatus == DEPTH_INVALID && !mFlushing) {
-            mDepthTrigger = TRIGGER_AF;
-        }
-    } else {
+    if (mAfstate) {
+        mDepthTrigger = TRIGGER_AF;
+    } else if (mVcmSteps != vcm || mFlushing) {
         setDepthStatus(DEPTH_INVALID);
+        mDepthTrigger = TRIGGER_FALSE;
     }
-    HAL_LOGV("mDepthStatus %d,trigger=%d,vcm=%d,%d", mDepthStatus,
-             mDepthTrigger, mVcmSteps, vcm);
+    HAL_LOGV("mDepthStatus %d,trigger=%d,vcm=%d,%d,mAfstate=%d", mDepthStatus,
+             mDepthTrigger, mVcmSteps, vcm, mAfstate);
 
     mVcmSteps = vcm;
 }

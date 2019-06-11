@@ -92,7 +92,7 @@ typedef enum { CAM_TYPE_BOKEH_MAIN = 0, CAM_TYPE_DEPTH } BokehCameraDeviceType;
 typedef enum { PREVIEW_MODE = 0, CAPTURE_MODE } CameraMode;
 typedef enum { SPRD_API_MODE = 0 } ApiMode;
 typedef enum { DEPTH_DONING = 0, DEPTH_DONE, DEPTH_INVALID } DepthStatus;
-typedef enum { TRIGGER_FLASE = 0, TRIGGER_FNUM, TRIGGER_AF } DepthTrigger;
+typedef enum { TRIGGER_FALSE = 0, TRIGGER_FNUM, TRIGGER_AF } DepthTrigger;
 typedef enum { BUFFER_PING = 0, BUFFER_PANG } BUFFER_FLAG;
 typedef enum {
     /* Main camera device id*/
@@ -166,6 +166,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   private:
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
     sprd_virtual_camera_t m_VirtualCamera;
+    int mAfstate;
     uint8_t m_nPhyCameras;
     Mutex mLock;
     Mutex mDefaultStreamLock;

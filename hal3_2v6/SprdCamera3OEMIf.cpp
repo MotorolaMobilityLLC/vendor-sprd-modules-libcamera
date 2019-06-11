@@ -5122,6 +5122,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                     controlInfo.af_roi[1] = af_ctrl->af_roi.sy;
                     controlInfo.af_roi[2] = af_ctrl->af_roi.ex;
                     controlInfo.af_roi[3] = af_ctrl->af_roi.ey;
+                    controlInfo.af_roi[4] = 1;
                     mSetting->setAfRoiCONTROLTag(&controlInfo);
                     break;
                 }

@@ -153,7 +153,7 @@ typedef struct {
     uint8_t af_mode;
     int32_t af_regions[5];
     uint8_t af_available_modes[6];
-    int32_t af_roi[4];
+    int32_t af_roi[5];
 
     int32_t ae_available_fps_ranges[20];
     int32_t ae_compensation_range[2];
