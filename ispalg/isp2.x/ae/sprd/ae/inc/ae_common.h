@@ -721,6 +721,7 @@ struct ae_alg_calc_result {
 	void *ptc;					/*Bethany add touch info to debug info */
 	void *pface_ae;
 	struct ae1_senseor_out wts;
+	cmr_u32 stable_backup;
 	cmr_handle log;
 	cmr_u32 flag4idx;
 	cmr_u32 face_stable;
