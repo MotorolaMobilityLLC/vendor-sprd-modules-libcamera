@@ -84,6 +84,7 @@ typedef int64_t nsecs_t;
 #define MAX_FPS_RANGE_BACK_CAM 30
 #define MAX_FPS_RANGE_FRONT_CAM 30
 #define MIDDLE_FPS_RANGE 20
+#define FPS_RANGE_COUNT 16
 #define SPRD_SHADING_FACTOR_NUM (2 * 2) //(>1*1*4,<=64*64*4)
 #define SPRD_NUM_SHADING_MODES 3        // Shading mode
 #define SPRD_NUM_LENS_SHADING_MODES 2   // Shading mode
@@ -137,7 +138,7 @@ typedef struct {
     uint8_t af_available_modes[6];
     int32_t af_roi[4];
 
-    int32_t ae_available_fps_ranges[18];
+    int32_t ae_available_fps_ranges[FPS_RANGE_COUNT];
     int32_t ae_compensation_range[2];
     uint8_t ae_available_abtibanding_modes[4];
     uint8_t ae_available_modes[5];

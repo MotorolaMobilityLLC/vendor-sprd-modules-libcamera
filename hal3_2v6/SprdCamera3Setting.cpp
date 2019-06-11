@@ -76,7 +76,7 @@ typedef struct {
     int64_t raw_min_duration[1];
     int32_t supported_preview_formats[4];
     int64_t processed_min_durations[1];
-    int32_t available_fps_ranges[18];
+    int32_t available_fps_ranges[FPS_RANGE_COUNT];
     camera_metadata_rational exposureCompensationStep;
     int32_t exposureCompensationRange[2];
     int32_t available_processed_sizes[16];
@@ -198,10 +198,10 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {
-    10, 10, 5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {10, 10, 5, 15, 15, 15, 5,  20,
-                                               20, 20, 5, 30, 15, 30, 30, 30};
+const int32_t kavailable_fps_ranges_back[] = {5, 15, 15, 15, 5, 20, 20, 20,
+                                              5, 24, 24, 24, 5, 30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,  20, 20,
+                                               20, 5,  30, 15, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
@@ -2182,7 +2182,7 @@ int SprdCamera3Setting::initStaticMetadata(
                     ARRAY_SIZE(s_setting[cameraId].controlInfo.ae_available_fps_ranges)
        );*/
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.ae_available_fps_ranges, 2,
-                  18, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                  FPS_RANGE_COUNT, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &(s_setting[cameraId].controlInfo.ae_compensation_step),
                       1);
