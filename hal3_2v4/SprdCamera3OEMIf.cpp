@@ -9876,6 +9876,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
 
     int gyro_num = 0;
     int ret_eis = 1;
+    int ret;
     uint count = 0;
     vsGyro *gyro = NULL;
     vsOutFrame frame_out_preview;
@@ -9884,7 +9885,12 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
     if (mGyromaxtimestamp) {
         HAL_LOGI("frame timestamp: %lf, mGyromaxtimestamp %lf",
                  frame_in.timestamp, mGyromaxtimestamp);
-        video_stab_write_frame(mPreviewInst, &frame_in);
+        ret = video_stab_write_frame(mPreviewInst, &frame_in);
+        if (ret) {
+            HAL_LOGE("video_stab_write_frame failed");
+            goto eis_process_fail;
+        }
+
         do {
             gyro_num = mGyroPreviewInfo.size();
             HAL_LOGI("gyro_num = %d", gyro_num);
@@ -9896,12 +9902,22 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
                 }
                 memset(gyro, 0, gyro_num * sizeof(vsGyro));
                 popEISPreviewQueue(gyro, gyro_num);
-                video_stab_write_gyro(mPreviewInst, gyro, gyro_num);
+                ret = video_stab_write_gyro(mPreviewInst, gyro, gyro_num);
+                if (ret) {
+                    HAL_LOGE("video_stab_write_gyro failed");
+                    if (gyro) {
+                        free(gyro);
+                        gyro = NULL;
+                    }
+                    goto eis_process_fail;
+                }
+
                 if (gyro) {
                     free(gyro);
                     gyro = NULL;
                 }
             }
+
             ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
             if (ret_eis == 0) {
                 HAL_LOGI("frame_in %p, frame_out %p", frame_in.frame_data,
@@ -9914,6 +9930,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
                 HAL_LOGE("fail to read matrix");
                 goto eis_process_fail;
             }
+
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
                                      mReadGyroPreviewLock, 30000000))) {
@@ -9939,6 +9956,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
 
     int gyro_num = 0;
     int ret_eis = 1;
+    int ret;
     uint count = 0;
     vsGyro *gyro = NULL;
     vsOutFrame frame_out_video;
@@ -9947,7 +9965,12 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
     if (mGyromaxtimestamp) {
         HAL_LOGI("frame timestamp: %lf, mGyromaxtimestamp %lf",
                  frame_in.timestamp, mGyromaxtimestamp);
-        video_stab_write_frame(mVideoInst, &frame_in);
+        ret = video_stab_write_frame(mVideoInst, &frame_in);
+        if (ret) {
+            HAL_LOGE("video_stab_write_frame failed");
+            goto eis_process_fail;
+        }
+
         do {
             gyro_num = mGyroVideoInfo.size();
             HAL_LOGV("gyro_num = %d", gyro_num);
@@ -9959,13 +9982,23 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                 }
                 memset(gyro, 0, gyro_num * sizeof(vsGyro));
                 popEISVideoQueue(gyro, gyro_num);
-                video_stab_write_gyro(mVideoInst, gyro, gyro_num);
+                ret = video_stab_write_gyro(mVideoInst, gyro, gyro_num);
+                if (ret) {
+                    HAL_LOGE("video_stab_write_gyro failed");
+                    if (gyro) {
+                        free(gyro);
+                        gyro = NULL;
+                    }
+                    goto eis_process_fail;
+                }
+
                 if (gyro) {
                     free(gyro);
                     gyro = NULL;
                 }
             }
-            ret_eis = video_stab_read(mVideoInst, &frame_out_video);
+
+           ret_eis = video_stab_read(mVideoInst, &frame_out_video);
             if (ret_eis == 0) {
                 HAL_LOGI("frame_in %p, frame_out %p", frame_in.frame_data,
                          frame_out_video.frame_data);
@@ -9977,6 +10010,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                 HAL_LOGE("fail to read matrix");
                 goto eis_process_fail;
             }
+
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroVideoCond.waitRelative(
                                      mReadGyroVideoLock, 30000000))) {

@@ -11060,6 +11060,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
 
     int gyro_num = 0;
     int ret_eis = 1;
+    int ret;
     uint count = 0;
     vsGyro *gyro = NULL;
     vsOutFrame frame_out_preview;
@@ -11068,7 +11069,12 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
     if (mGyromaxtimestamp) {
         HAL_LOGV("in frame timestamp: %lf, mGyromaxtimestamp %lf",
                  frame_in.timestamp, mGyromaxtimestamp);
-        video_stab_write_frame(mPreviewInst, &frame_in);
+        ret = video_stab_write_frame(mPreviewInst, &frame_in);
+        if (ret) {
+            HAL_LOGE("video_stab_write_frame failed");
+            goto exit;
+        }
+
         do {
 
             {
@@ -11083,20 +11089,37 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
                 }
                 memset(gyro, 0, gyro_num * sizeof(vsGyro));
                 popEISPreviewQueue(gyro, gyro_num);
-                video_stab_write_gyro(mPreviewInst, gyro, gyro_num);
+                ret = video_stab_write_gyro(mPreviewInst, gyro, gyro_num);
+                if (ret) {
+                    HAL_LOGE("video_stab_write_gyro failed");
+                    if (gyro) {
+                        free(gyro);
+                        gyro = NULL;
+                    }
+                    goto exit;
+                }
+
                 if (gyro) {
                     free(gyro);
                     gyro = NULL;
                 }
             }
+
             ret_eis = video_stab_check_gyro(mPreviewInst);
-            if (ret_eis == 0) {
-                HAL_LOGV("gyro is ready ");
+            if (ret_eis == -1) {
+                HAL_LOGE("video_stab_check_gyro failed");
+                goto exit;
+            } else if (ret_eis == 1) {
+                HAL_LOGD("gyro is NOT ready,check  gyro again");
+                if (mIsStoppingPreview == 1) {
+                    HAL_LOGD("preview is stoped");
+                    goto exit;
+                }
+            } else if (ret_eis == 0) {
+                HAL_LOGD("gyro is ready");
                 break;
-            } else {
-                ret_eis = 1;
-                HAL_LOGV("gyro is NOT ready,check  gyro again");
             }
+
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
                                      mReadGyroPreviewLock, 30000000))) {
@@ -11106,14 +11129,20 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
         } while (ret_eis == 1);
 
         ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
-        if (ret_eis == 0)
-            HAL_LOGV("out frame_num =%d,frame timestamp %lf, frame_out %p",
-                     frame_out_preview.frame_num, frame_out_preview.timestamp,
-                     frame_out_preview.frame_data);
-        else
-            HAL_LOGV("no frame out");
+        if (ret_eis == 0) {
+            HAL_LOGD("out frame_num =%d,frame timestamp %lf, frame_out %p",
+                 frame_out_preview.frame_num, frame_out_preview.timestamp,
+                 frame_out_preview.frame_data);
+        } else if (ret_eis == -1) {
+            HAL_LOGE("video_stab_read failed");
+            goto exit;
+        } else if (ret_eis == 1) {
+            HAL_LOGD("no frame out");
+        }
     } else
         HAL_LOGV("no gyro data to process EIS");
+
+exit:
     return frame_out_preview;
 }
 
@@ -11122,6 +11151,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
 
     int gyro_num = 0;
     int ret_eis = 1;
+    int ret;
     uint count = 0;
     vsGyro *gyro = NULL;
     vsOutFrame frame_out_video;
@@ -11130,7 +11160,12 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
     if (mGyromaxtimestamp) {
         HAL_LOGD("in frame num %d timestamp: %lf, mGyromaxtimestamp %lf",
                  frame_in.frame_num, frame_in.timestamp, mGyromaxtimestamp);
-        video_stab_write_frame(mVideoInst, &frame_in);
+        ret = video_stab_write_frame(mVideoInst, &frame_in);
+        if (ret) {
+            HAL_LOGE("video_stab_write_frame failed");
+            goto exit;
+        }
+
         do {
             gyro_num = mGyroVideoInfo.size();
             HAL_LOGV("gyro_num = %d", gyro_num);
@@ -11142,20 +11177,37 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                 }
                 memset(gyro, 0, gyro_num * sizeof(vsGyro));
                 popEISVideoQueue(gyro, gyro_num);
-                video_stab_write_gyro(mVideoInst, gyro, gyro_num);
+                ret = video_stab_write_gyro(mVideoInst, gyro, gyro_num);
+                if (ret) {
+                    HAL_LOGE("video_stab_write_gyro failed");
+                    if (gyro) {
+                        free(gyro);
+                        gyro = NULL;
+                    }
+                    goto exit;
+                }
+
                 if (gyro) {
                     free(gyro);
                     gyro = NULL;
                 }
             }
+
             ret_eis = video_stab_check_gyro(mVideoInst);
-            if (ret_eis == 0) {
-                HAL_LOGV("gyro is ready ");
+            if (ret_eis == -1) {
+                HAL_LOGE("video_stab_check_gyro failed");
+                goto exit;
+            } else if (ret_eis == 1) {
+                HAL_LOGV("gyro is NOT ready,check  gyro again");
+                if (mIsStoppingPreview == 1) {
+                    HAL_LOGD("preview is stoped");
+                    goto exit;
+                }
+            } else if (ret_eis == 0) {
+                HAL_LOGV("gyro is ready");
                 break;
-            } else {
-                ret_eis = 1;
-                HAL_LOGE("gyro is NOT ready,check  gyro again");
             }
+
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroVideoCond.waitRelative(
                                      mReadGyroVideoLock, 30000000))) {
@@ -11165,15 +11217,20 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
         } while (ret_eis == 1);
 
         ret_eis = video_stab_read(mVideoInst, &frame_out_video);
-        if (ret_eis == 0)
+        if (ret_eis == 0) {
             HAL_LOGV("out frame_num =%d,frame timestamp %lf, frame_out %p",
-                     frame_out_video.frame_num, frame_out_video.timestamp,
-                     frame_out_video.frame_data);
-        else
+                 frame_out_video.frame_num, frame_out_video.timestamp,
+                 frame_out_video.frame_data);
+        } else if (ret_eis == -1) {
+            HAL_LOGE("video_stab_read failed");
+            goto exit;
+        } else if (ret_eis == 1) {
             HAL_LOGV("no frame out");
+        }
     } else
         HAL_LOGV("no gyro data to process EIS");
 
+exit:
     return frame_out_video;
 }
 

@@ -67,17 +67,24 @@ typedef struct eis_info {
 #else
 #define SPRD_ISP_API
 #endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-SPRD_ISP_API void video_stab_param_default(vsParam *param);
-SPRD_ISP_API void video_stab_open(vsInst *inst, vsParam *param);
-SPRD_ISP_API void video_stab_write_frame(vsInst inst, vsInFrame *frame);
-SPRD_ISP_API void video_stab_write_gyro(vsInst inst, vsGyro *gyro,
-                                        int gyro_num);
+// return value 0: success  -1:faild
+SPRD_ISP_API int video_stab_param_default(vsParam *param);
+// return value 0: success  -1:faild
+SPRD_ISP_API int video_stab_open(vsInst *inst, vsParam *param);
+// return value 0: success  -1:faild
+SPRD_ISP_API int video_stab_write_frame(vsInst inst, vsInFrame *frame);
+// return value 0: success  -1:faild
+SPRD_ISP_API int video_stab_write_gyro(vsInst inst, vsGyro *gyro, int gyro_num);
+// return value 0: gyro is ready  -1:faild 1:gyro is not ready
 SPRD_ISP_API int video_stab_check_gyro(vsInst inst);
+// return value 0: success  -1: faild 1: no frame out
 SPRD_ISP_API int video_stab_read(vsInst inst, vsOutFrame *frame);
-SPRD_ISP_API void video_stab_close(vsInst inst);
+// return value 0: success  -1:faild
+SPRD_ISP_API int video_stab_close(vsInst inst);
 
 const sprd_eis_init_info_t eis_init_info_tab[] = {
     {"sp9853i-1", 0.773f, 0.0177f, 0.012f},
