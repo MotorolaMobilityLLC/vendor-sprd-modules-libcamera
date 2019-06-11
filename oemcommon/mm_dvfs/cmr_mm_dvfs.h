@@ -39,7 +39,10 @@ struct dvfs_mm_status {
 struct class_mm_dvfs {
     struct prev_sn_param_dvfs_type dvfs_param;
     struct dvfs_mm_status dvfs_status;
+    pthread_mutex_t mm_dvfs_mutex;
 };
+
+static struct class_mm_dvfs *mm_dvfs_instance = NULL;
 
 cmr_int cmr_set_mm_dvfs_policy(cmr_handle mm_dvfs_handle,
                                enum DVFS_MM_MODULE module,
@@ -50,6 +53,7 @@ cmr_int cmr_set_mm_dvfs_param(cmr_handle oem_handle,
 cmr_int do_debug_dvfs_policy(cmr_handle mm_dvfs_handle,
                              enum DVFS_MM_MODULE module,
                              enum CamProcessingState camera_state);
+struct class_mm_dvfs *getInstance();
 
 #ifdef __cplusplus
 }

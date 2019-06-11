@@ -45,33 +45,45 @@ const uint PIC_SIZE_5M = 5;
 const char *str_module[] = {"cpp",     "fd",       "jpg", "isp",
                             "dcam-if", "dcam-axi", "mtx"};
 
-cmr_int cmr_mm_dvfs_init(cmr_handle *mm_dvfs_handle) {
-
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_mm_dvfs *p_dvfs = NULL;
-    CMR_LOGI("E");
-    p_dvfs = (struct class_mm_dvfs *)malloc(sizeof(struct class_mm_dvfs));
-    if (!p_dvfs) {
-        CMR_LOGE("No mem");
-        return -1;
+struct class_mm_dvfs *getInstance() {
+    if (mm_dvfs_instance != NULL)
+        return mm_dvfs_instance;
+    else {
+        mm_dvfs_instance =
+            (struct class_mm_dvfs *)malloc(sizeof(struct class_mm_dvfs));
+        if (!mm_dvfs_instance) {
+            CMR_LOGE("No mem");
+            return NULL;
+        }
+        memset(mm_dvfs_instance, 0, sizeof(struct class_mm_dvfs));
+        pthread_mutex_init(&mm_dvfs_instance->mm_dvfs_mutex, NULL);
+        return mm_dvfs_instance;
     }
-    memset(p_dvfs, 0, sizeof(struct class_mm_dvfs));
-    *mm_dvfs_handle = (cmr_handle)p_dvfs;
+}
 
+cmr_int cmr_mm_dvfs_init(cmr_handle *mm_dvfs_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    *mm_dvfs_handle = (cmr_handle)getInstance();
+    if (!mm_dvfs_handle)
+        ret = -1;
     return ret;
 }
 
 cmr_int cmr_mm_dvfs_deinit(cmr_handle mm_dvfs_handle) {
-
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_mm_dvfs *p_dvfs;
-    p_dvfs = (struct class_mm_dvfs *)mm_dvfs_handle;
-
-    if (!p_dvfs) {
+    if (!mm_dvfs_handle) {
         CMR_LOGE("Invalid handle");
         return -1;
     }
-    free((void *)mm_dvfs_handle);
+    struct class_mm_dvfs *p_dvfs = (struct class_mm_dvfs *)mm_dvfs_handle;
+    CMR_LOGI("mm_dvfs_instance %p mm_dvfs_handle %p", mm_dvfs_instance,
+             mm_dvfs_handle);
+    if (mm_dvfs_instance) {
+        pthread_mutex_destroy(&mm_dvfs_instance->mm_dvfs_mutex);
+        free((void *)mm_dvfs_instance);
+        mm_dvfs_instance = NULL;
+    }
+    mm_dvfs_handle = NULL;
     CMR_LOGI("X");
     return ret;
 }
@@ -89,7 +101,12 @@ cmr_int set_dcam_dvfs_policy(cmr_handle mm_dvfs_handle,
         CMR_LOGE("invalid mm_dvfs_handle");
         return -1;
     }
-    if (p_dvfs->dvfs_param.slowmotion != 1) {
+    if (p_dvfs->dvfs_param.is_high_fps == 1 ||
+        p_dvfs->dvfs_param.cam_mode == 1) {
+        freqValue = CLK_DCAM_MAX;
+        CMR_LOGD("dcam_if dvfs vaule is already CLK_DCAM_MAX  %d,do nothing",
+                 freqValue);
+    } else {
         switch (p_dvfs->dvfs_param.lane_num) {
         case 1:
         case 2:
@@ -119,9 +136,6 @@ cmr_int set_dcam_dvfs_policy(cmr_handle mm_dvfs_handle,
         } else {
             freqValue = CLK_DCAM_MAX;
         }
-
-    } else {
-        freqValue = CLK_DCAM_MAX;
     }
     if (freqValue == p_dvfs->dvfs_status.dmca_if_cur_freq) {
         CMR_LOGD("dcam_if dvfs vaule is already %d,do nothing", freqValue);
@@ -139,12 +153,11 @@ cmr_int set_dcam_dvfs_policy(cmr_handle mm_dvfs_handle,
     fclose(fp);
     fp = NULL;
     p_dvfs->dvfs_status.dmca_if_cur_freq = freqValue;
-    if(freqValue < CLK_DCAM_MAX) {
+    if (freqValue < CLK_DCAM_MAX) {
         CMR_LOGI("set dvfs-> %s done, freq is %d", str_module[module - 1],
-        freqValue);
+                 freqValue);
     } else {
-        CMR_LOGI("set dvfs-> %s done, freq is %s", str_module[module - 1],
-        "set clock max");
+        CMR_LOGI("set dvfs-> %s done, freq is max", str_module[module - 1]);
     }
 
     return ret;
@@ -188,21 +201,24 @@ cmr_int set_isp_dvfs_policy(cmr_handle mm_dvfs_handle,
         CMR_LOGE("invalid mm_dvfs_handle");
         return -1;
     }
-    uint picSize = (uint)((
-        (p_dvfs->dvfs_param.sn_trim_h * p_dvfs->dvfs_param.sn_trim_w + 500000) /
-        1000000));
+    uint picSize = (uint)(
+        ((p_dvfs->dvfs_param.sn_max_h * p_dvfs->dvfs_param.sn_max_w + 500000) /
+         1000000));
     switch (camera_state) {
     case IS_PREVIEW_BEGIN:
     case IS_CAP_END:
-        if (picSize <= PIC_SIZE_16M) {
+        if (p_dvfs->dvfs_param.channel_x_enble || p_dvfs->dvfs_param.cam_mode) {
+            freqValue = CLK_ISP_MAX;
+        } else if (picSize <= PIC_SIZE_16M) {
             freqValue = CLK_307M;
         } else {
             freqValue = CLK_468M;
         }
         break;
     case IS_CAP_BEGIN:
-        if (picSize >= PIC_SIZE_32M) {
-            freqValue = CLK_512M;
+        if (p_dvfs->dvfs_param.channel_x_enble || p_dvfs->dvfs_param.cam_mode ||
+            picSize >= PIC_SIZE_32M) {
+            freqValue = CLK_ISP_MAX;
         } else {
             freqValue = CLK_468M;
         }
@@ -222,6 +238,12 @@ cmr_int set_isp_dvfs_policy(cmr_handle mm_dvfs_handle,
         CMR_LOGW("unrecognize dvfs cam processing State ");
         break;
     }
+    if (p_dvfs->dvfs_status.dmca_if_cur_freq > freqValue) {
+        freqValue = p_dvfs->dvfs_status.dmca_if_cur_freq;
+        CMR_LOGD("DCAM_IF clock must higehr than ISP clock,DCAM_IF clock is %d",
+                 p_dvfs->dvfs_status.dmca_if_cur_freq);
+    }
+
     if (freqValue == p_dvfs->dvfs_status.isp_cur_freq) {
         CMR_LOGD("isp dvfs vaule is already %d,do nothing", freqValue);
         return ret;
@@ -238,12 +260,11 @@ cmr_int set_isp_dvfs_policy(cmr_handle mm_dvfs_handle,
     fclose(fp);
     fp = NULL;
     p_dvfs->dvfs_status.isp_cur_freq = freqValue;
-    if(freqValue < CLK_ISP_MAX) {
+    if (freqValue < CLK_ISP_MAX) {
         CMR_LOGI("set dvfs-> %s done, freq is %d", str_module[module - 1],
-        freqValue);
+                 freqValue);
     } else {
-        CMR_LOGI("set dvfs-> %s done, freq is %s", str_module[module - 1],
-        "set clock max");
+        CMR_LOGI("set dvfs-> %s done, freq is max", str_module[module - 1]);
     }
 
     return ret;
@@ -383,15 +404,29 @@ cmr_int cmr_set_mm_dvfs_param(cmr_handle oem_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct class_mm_dvfs *p_dvfs = NULL;
     p_dvfs = (struct class_mm_dvfs *)(cxt->mm_dvfs_cxt.mm_dvfs_handle);
-    if (!p_dvfs || dvfs_param.bps_per_lane < 0 || dvfs_param.lane_num < 0) {
-        CMR_LOGE("invalid mm_dvfs_handle or Invalid param");
+    if (!p_dvfs && (mm_dvfs_instance != p_dvfs)) {
+        CMR_LOGE("invalid mm_dvfs_handle");
         return -1;
     }
-    CMR_LOGD(
-        "bps_per_lane  %d lane_num %d sn_trim_w %d sn_trim_h %d is_high_fps %d",
-        dvfs_param.bps_per_lane, dvfs_param.lane_num, dvfs_param.sn_trim_w,
-        dvfs_param.sn_trim_h, dvfs_param.slowmotion);
+    pthread_mutex_lock(&mm_dvfs_instance->mm_dvfs_mutex);
+    if (dvfs_param.bps_per_lane < 0 || dvfs_param.sn_max_w < 0) {
+        CMR_LOGE("Invalid param");
+        pthread_mutex_unlock(&p_dvfs->mm_dvfs_mutex);
+        return -1;
+    } else if ((dvfs_param.sn_max_w < p_dvfs->dvfs_param.sn_max_w ||
+                dvfs_param.sn_max_h < p_dvfs->dvfs_param.sn_max_h) &&
+               dvfs_param.is_high_fps == p_dvfs->dvfs_param.is_high_fps &&
+               p_dvfs->dvfs_param.sn_max_w != 0) {
+        CMR_LOGD("last sensor param is bigger or no changed, do nothing ,just "
+                 "return");
+        pthread_mutex_unlock(&p_dvfs->mm_dvfs_mutex);
+        return ret;
+    }
+    CMR_LOGD("bps_per_lane  %d lane_num %d sn_max_w %d sn_max_h %d is_high_fps "
+             "%d cam_mode %d",
+             dvfs_param.bps_per_lane, dvfs_param.lane_num, dvfs_param.sn_max_w,
+             dvfs_param.sn_max_h, dvfs_param.is_high_fps, dvfs_param.cam_mode);
     p_dvfs->dvfs_param = dvfs_param;
-
+    pthread_mutex_unlock(&mm_dvfs_instance->mm_dvfs_mutex);
     return ret;
 }

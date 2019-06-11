@@ -1713,12 +1713,11 @@ struct camera_cap_frm_info {
 typedef struct prev_sn_param_dvfs_type {
     cmr_u32 bps_per_lane;
     cmr_u32 lane_num;
-    cmr_u32 sn_trim_w;
-    cmr_u32 sn_trim_h;
     cmr_u32 sn_max_w;
     cmr_u32 sn_max_h;
-    int slowmotion;
-    int cam_mode; // reserved
+    int is_high_fps;
+    int channel_x_enble;// like YUV callback will enable other channel data
+    int cam_mode; // for Dul Cam
 
 } dvfs_cam_param_t;
 

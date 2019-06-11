@@ -78,6 +78,9 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+static pthread_mutex_t mm_dvfs_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
 static multiCameraMode is_multi_camera_mode_oem;
@@ -2539,7 +2542,7 @@ cmr_int camera_mm_dvfs_init(cmr_handle oem_handle) {
         mm_dvfs_cxt->mm_dvfs_handle = mm_dvfs_handle;
     }
 exit:
-    CMR_LOGD("done %ld", ret);
+    CMR_LOGD("done %ld, mm_dvfs_handle %p", ret, mm_dvfs_handle);
     return ret;
 }
 
@@ -4400,12 +4403,6 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         ret = camera_init_thread(oem_handle);
     }
 
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-    ret = camera_mm_dvfs_init(oem_handle);
-    if (ret)
-        CMR_LOGE("failed to init dvfs %ld", ret);
-#endif
-
 exit:
     if (ret) {
         camera_res_deinit_internal(oem_handle);
@@ -4447,10 +4444,6 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     camera_ipm_deinit(oem_handle);
 
     camera_deinit_thread(oem_handle);
-
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-    camera_mm_dvfs_deinit(oem_handle);
-#endif
 
 exit:
 
@@ -4673,6 +4666,13 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto res_deinit;
     }
     ret = camera_res_init_done(oem_handle);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    pthread_mutex_lock(&mm_dvfs_mutex);
+    ret = camera_mm_dvfs_init(oem_handle);
+    pthread_mutex_unlock(&mm_dvfs_mutex);
+    if (ret)
+        CMR_LOGE("failed to init mm dvfs %ld", ret);
+#endif
     camera_front_lcd_enhance_module_init(oem_handle);
     goto exit;
 
@@ -4730,6 +4730,11 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     camera_res_deinit(oem_handle);
     camera_sensor_deinit(oem_handle);
     camera_grab_deinit(oem_handle);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    pthread_mutex_lock(&mm_dvfs_mutex);
+    camera_mm_dvfs_deinit(oem_handle);
+    pthread_mutex_unlock(&mm_dvfs_mutex);
+#endif
     pthread_mutex_lock(&close_mutex);
     closing--;
     if (closing == 0) {
@@ -9175,12 +9180,6 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
 
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-    struct prev_sn_param_dvfs_type camParam;
-    struct sensor_exp_info sensor_info;
-    struct sensor_mode_fps_tag fps_info;
-#endif
-
     ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
     if (ret) {
         CMR_LOGE("failed to set prev param %ld", ret);
@@ -9214,26 +9213,6 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_SET_ENVIRONMENT, &setting_param);
-// for mm dvfs
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-    if (cxt->camera_id == 1 || cxt->camera_id == 0) {
-        camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
-        camera_get_sensor_fps_info(oem_handle, cxt->camera_id,
-                                   prev_cxt->preview_sn_mode, &fps_info);
-        camParam.lane_num = sensor_info.sn_interface.bus_width;
-        camParam.bps_per_lane =
-            sensor_info.mode_info[prev_cxt->preview_sn_mode].bps_per_lane;
-        camParam.sn_trim_w =
-            sensor_info.mode_info[prev_cxt->preview_sn_mode].trim_width;
-        camParam.sn_trim_h =
-            sensor_info.mode_info[prev_cxt->preview_sn_mode].trim_height;
-        camParam.slowmotion = fps_info.is_high_fps;
-        camera_set_mm_dvfs_param(oem_handle, camParam);
-        camera_local_set_mm_dvfs_policy(oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
-        camera_local_set_mm_dvfs_policy(oem_handle, DVFS_DCAM_IF,
-                                        IS_PREVIEW_BEGIN);
-    }
-#endif
 
     ret = cmr_preview_start(prev_cxt->preview_handle, cxt->camera_id);
     if (ret) {

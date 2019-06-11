@@ -31,6 +31,9 @@
 #include "cmr_oem.h"
 #include "isp_simulation.h"
 #include "isp_video.h"
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+#include "cmr_mm_dvfs.h"
+#endif
 
 #undef YUV_TO_ISP
 /**************************MCARO
@@ -864,7 +867,8 @@ static cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
 static cmr_int prev_auto_tracking_cb(cmr_u32 class_type,
                                      struct ipm_frame_out *cb_param);
 
-static cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
+static cmr_int prev_set_preview_buffer(struct prev_handle *handle,
+                                       cmr_u32 camera_id,
                                        cam_buffer_info_t *buffer);
 
 static cmr_int prev_pop_preview_buffer(struct prev_handle *handle,
@@ -873,7 +877,8 @@ static cmr_int prev_pop_preview_buffer(struct prev_handle *handle,
 static cmr_int prev_clear_preview_buffers(struct prev_handle *handle,
                                           cmr_u32 camera_id);
 
-static cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
+static cmr_int prev_set_video_buffer(struct prev_handle *handle,
+                                     cmr_u32 camera_id,
                                      cam_buffer_info_t *buffer);
 
 static cmr_int prev_pop_video_buffer(struct prev_handle *handle,
@@ -1642,7 +1647,8 @@ exit:
     return ret;
 }
 
-cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
+cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle,
+                                       cmr_u32 camera_id,
                                        cam_buffer_info_t buffer) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1690,8 +1696,9 @@ exit:
     return ret;
 }
 
-cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
-                                       cam_buffer_info_t buffer) {
+cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle,
+                                     cmr_u32 camera_id,
+                                     cam_buffer_info_t buffer) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
@@ -5065,6 +5072,12 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     cmr_uint valid_max_sn_mode = 0;
     struct sensor_mode_fps_tag fps_info;
 
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    struct prev_sn_param_dvfs_type dvfs_param;
+    struct sensor_mode_info *sensor_mode_info = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+#endif
+
     CMR_LOGD("E");
 
     CHECK_HANDLE_VALID(handle);
@@ -5373,6 +5386,37 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
              handle->prev_cxt[camera_id].channel3_work_mode,
              handle->prev_cxt[camera_id].channel4_work_mode,
              handle->prev_cxt[camera_id].cap_mode);
+// for mm dvfs
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+    if (handle->prev_cxt[camera_id].prev_param.channel0_eb ||
+        handle->prev_cxt[camera_id].prev_param.channel1_eb ||
+        handle->prev_cxt[camera_id].prev_param.channel2_eb ||
+        handle->prev_cxt[camera_id].prev_param.channel3_eb ||
+        handle->prev_cxt[camera_id].prev_param.channel4_eb) {
+        dvfs_param.channel_x_enble = 1;
+    } else {
+        dvfs_param.channel_x_enble = 0;
+    }
+    if (cxt->is_multi_mode == MODE_BOKEH ||
+        cxt->is_multi_mode == MODE_3D_CAPTURE ||
+        cxt->is_multi_mode == MODE_3D_VIDEO ||
+        cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+        cxt->is_multi_mode == MODE_3D_PREVIEW ||
+        cxt->is_multi_mode == MODE_TUNING) {
+        dvfs_param.cam_mode = 1;
+    } else {
+        dvfs_param.cam_mode = 0;
+    }
+    dvfs_param.lane_num = sensor_info->sn_interface.bus_width;
+    sensor_mode_info = &sensor_info->mode_info[valid_max_sn_mode];
+    dvfs_param.bps_per_lane = sensor_mode_info->bps_per_lane;
+    dvfs_param.sn_max_w = sensor_mode_info->width;
+    dvfs_param.sn_max_h = sensor_mode_info->height;
+    dvfs_param.is_high_fps = fps_info.is_high_fps;
+    cmr_set_mm_dvfs_param(handle->oem_handle, dvfs_param);
+    cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
+    cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_DCAM_IF, IS_PREVIEW_BEGIN);
+#endif
 
 exit:
     CMR_LOGD("X");
@@ -12161,7 +12205,7 @@ exit:
 }
 
 cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
-                              cam_buffer_info_t *buffer) {
+                                cam_buffer_info_t *buffer) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -12428,8 +12472,10 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     frame_size = prev_cxt->video_mem_size;
 
     prev_cxt->video_fd_array[valid_num] = buffer->fd;
-    prev_cxt->video_phys_addr_array[valid_num] = (unsigned long)buffer->addr_phy;
-    prev_cxt->video_virt_addr_array[valid_num] = (unsigned long)buffer->addr_vir;
+    prev_cxt->video_phys_addr_array[valid_num] =
+        (unsigned long)buffer->addr_phy;
+    prev_cxt->video_virt_addr_array[valid_num] =
+        (unsigned long)buffer->addr_vir;
     prev_cxt->video_frm[valid_num].buf_size = frame_size;
     prev_cxt->video_frm[valid_num].addr_vir.addr_y =
         prev_cxt->video_virt_addr_array[valid_num];
