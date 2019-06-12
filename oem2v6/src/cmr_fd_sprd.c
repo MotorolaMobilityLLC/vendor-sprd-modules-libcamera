@@ -888,7 +888,7 @@ static void fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
 
     // Try to keep the face rectangle to be the same with the previous
     // frame (for stable looks)
-    overlap_thr = trust_curr_face ? 90 : 80;
+    overlap_thr = trust_curr_face ? 90 : 96;
     for (prevIdx = 0; prevIdx < i_face_area_prev->face_count; prevIdx++) {
         const struct face_finder_data *prev_face =
             &(i_face_area_prev->range[prevIdx]);
