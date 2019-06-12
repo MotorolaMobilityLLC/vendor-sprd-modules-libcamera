@@ -637,7 +637,7 @@ void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot
         phyPtr->sensor_role = 0;
         phyPtr->face_type = SNS_FACE_BACK;
         phyPtr->angle = 90;
-        phyPtr->resource_cost = 100;
+        phyPtr->resource_cost = 50;
         break;
     case SENSOR_SUB:
         phyPtr->sensor_role = 0;
@@ -649,7 +649,7 @@ void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot
         phyPtr->sensor_role = 0;
         phyPtr->face_type = SNS_FACE_BACK;
         phyPtr->angle = 90;
-        phyPtr->resource_cost = 0;
+        phyPtr->resource_cost = 50;
         break;
     case SENSOR_SUB2:
         phyPtr->sensor_role = 0;
