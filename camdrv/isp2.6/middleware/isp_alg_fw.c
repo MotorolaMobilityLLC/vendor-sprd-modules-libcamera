@@ -4956,7 +4956,12 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	ISP_LOGV("flag %d %d\n", cxt->is_4in1_sensor, cxt->cam_4in1_mode);
 	if (cxt->cam_4in1_mode) {
+		cmr_u32 lowlight_tmp = 0;
+
 		pm_input.cam_4in1_mode = cxt->cam_4in1_mode;
+		/* 4in1 postprocess full size, ignore lowlight_flag */
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG, &lowlight_tmp,
+			&cxt->commn_cxt.isp_pm_mode[1]);
 	}
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));

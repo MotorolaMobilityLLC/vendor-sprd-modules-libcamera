@@ -5198,13 +5198,19 @@ static int img_ioctl_start_capture(
 		atomic_set(&module->capture_frames_dcam, 0);
 		if (param.type == DCAM_CAPTURE_START_4IN1_LOWLUX) {
 			/* 4in1: low lux mode, report until stop capture
+			 * raw capture then not change source of full
 			 * maybe need 1 frame
 			 */
-			module->lowlux_4in1 = 1;
-			dcam_ops->cfg_path(module->dcam_dev_handle,
-				DCAM_PATH_CFG_FULL_SOURCE,
-				DCAM_PATH_FULL,
-				&module->lowlux_4in1);
+			if (module->last_channel_id == CAM_CH_RAW) {
+				atomic_set(&module->capture_frames_dcam, -1);
+				module->lowlux_4in1 = 0;
+			} else {
+				module->lowlux_4in1 = 1;
+				dcam_ops->cfg_path(module->dcam_dev_handle,
+					DCAM_PATH_CFG_FULL_SOURCE,
+					DCAM_PATH_FULL,
+					&module->lowlux_4in1);
+			}
 		} else {
 			/* 4in1: report 1 frame for remosaic */
 			module->lowlux_4in1 = 0;
