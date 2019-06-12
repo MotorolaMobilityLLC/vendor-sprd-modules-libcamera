@@ -3991,7 +3991,6 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 				cxt->last_exp_param.bv = 1;
 		}
 
-		cxt->last_enable = 1;
 		if(cxt->cur_status.settings.manual_mode==1){
 			cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		}else{
@@ -5880,7 +5879,7 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 			rtn = ae_calculation(handle, param, result);
 		}
 	}
-
+	cxt->last_enable = 1;
 	return rtn;
 }
 
