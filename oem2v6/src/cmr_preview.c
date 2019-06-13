@@ -6052,9 +6052,10 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.dump.frame", value, "null");
-        if (!strcmp(value, "preview")) {
-            if (g_preview_frame_dump_cnt < 10) {
+        property_get("debug.camera.preview.dump.count", value, "null");
+        cmr_uint dump_num = atoi(value);
+        if (strcmp(value, "null")) {
+            if (g_preview_frame_dump_cnt < dump_num) {
                 dump_image("prev_construct_frame", CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
@@ -6152,9 +6153,10 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         frame_type->type = PREVIEW_VIDEO_FRAME;
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.dump.frame", value, "null");
-        if (!strcmp(value, "video")) {
-            if (g_video_frame_dump_cnt < 10) {
+        property_get("debug.camera.video.dump.count", value, "null");
+        cmr_uint dump_num = atoi(value);
+        if (strcmp(value, "null")) {
+            if (g_video_frame_dump_cnt < dump_num) {
                 dump_image("prev_construct_video_frame",
                            CAM_IMG_FMT_YUV420_NV21, frame_type->width,
                            frame_type->height, prev_cxt->prev_frm_cnt,
@@ -6228,9 +6230,10 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
                  frame_type->fd);
 
         char value[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.dump.frame", value, "null");
-        if (!strcmp(value, "zsl")) {
-            if (g_zsl_frame_dump_cnt < 10) {
+        property_get("debug.camera.zsl.dump.count", value, "null");
+        cmr_uint dump_num = atoi(value);
+        if (strcmp(value, "null")) {
+            if (g_zsl_frame_dump_cnt < dump_num) {
                 dump_image("prev_construct_zsl_frame", CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
@@ -9157,6 +9160,7 @@ exit:
     return ret;
 }
 
+cmr_uint g_channel2_frame_dump_cnt = 0;
 int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                             struct frm_info *info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -9227,6 +9231,20 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL2_FRAME;
+
+        char value[PROPERTY_VALUE_MAX];
+        property_get("debug.camera.channel2.dump.count", value, "null");
+        cmr_uint dump_num = atoi(value);
+        if (strcmp(value, "null")) {
+            if (g_channel2_frame_dump_cnt < dump_num) {
+                dump_image("dump_channel2_frame", CAM_IMG_FMT_YUV420_NV21,
+                           frame_type.width, frame_type.height,
+                           prev_cxt->channel2.frm_cnt,
+                           &prev_cxt->channel2.frm[0].addr_vir,
+                           frame_type.width * frame_type.height * 3 / 2);
+                g_channel2_frame_dump_cnt++;
+            }
+        }
 
         valid_buf_cnt = prev_cxt->channel2.valid_buf_cnt;
         for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
