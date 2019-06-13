@@ -7921,9 +7921,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0F,
-				/*ee_r3_cfg*/
 				0x19,
+				/*ee_r3_cfg*/
+				0x23,
 				/*reserved*/
 				0x00,
 
@@ -7960,9 +7960,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0F,
-				/*ee_r3_cfg*/
 				0x19,
+				/*ee_r3_cfg*/
+				0x23,
 				/*reserved*/
 				0x00,
 
@@ -8297,11 +8297,11 @@
 			{
 				/*thr_layer_cv_pos*/
 				{
-					0x0005,0x0009,0x000D,0x0013/*0-3*/
+					0x0005,0x0009,0x000D,0x0014/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
 				{
-					0x0028,0x001E,0x001E/*0-2*/
+					0x0032,0x0028,0x0028/*0-2*/
 				},
 				/*clip_layer_cv_pos*/
 				{
@@ -8313,7 +8313,7 @@
 				},
 				/*ratio_layer_cv_neg*/
 				{
-					0x0028,0x001E,0x001E/*0-2*/
+					0x0032,0x0028,0x0028/*0-2*/
 				},
 				/*clip_layer_cv_neg*/
 				{
