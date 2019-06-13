@@ -603,6 +603,8 @@ class SprdCamera3Setting {
     int setSENSORTag(SENSOR_Tag sensorInfo);
     int getSENSORTag(SENSOR_Tag *sensorInfo);
 
+    int setExposureTimeTag(int64_t exposureTime);
+
     int setSHADINGTag(SHADING_Tag shadingInfo);
     int getSHADINGTag(SHADING_Tag *shadingInfo);
 

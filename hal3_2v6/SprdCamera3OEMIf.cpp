@@ -3635,11 +3635,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
     beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
 #endif
-    SENSOR_Tag sensorInfo;
-
-    mSetting->getSENSORTag(&sensorInfo);
-    sensorInfo.timestamp = buffer_timestamp;
-    mSetting->setSENSORTag(sensorInfo);
 
     if (channel == NULL) {
         HAL_LOGE("channel=%p", channel);
@@ -4485,6 +4480,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     unsigned char is_raw_capture = 0;
     void *ispInfoAddr = NULL;
     int ispInfoSize = 0;
+    int64_t exposureTime = 0;
 
     HAL_LOGD("E encInfo->size = %d, enc->buffer = %p, encInfo->need_free = %d "
              "time=%" PRId64,
@@ -4496,15 +4492,12 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-    SENSOR_Tag sensorInfo;
-    mSetting->getSENSORTag(&sensorInfo);
     if (0 != frame->sensor_info.exposure_time_denominator) {
-        sensorInfo.exposure_time = 1000000000ll *
+        exposureTime = 1000000000ll *
                                    frame->sensor_info.exposure_time_numerator /
                                    frame->sensor_info.exposure_time_denominator;
+        mSetting->setExposureTimeTag(exposureTime);
     }
-    sensorInfo.timestamp = frame->monoboottime;
-    mSetting->setSENSORTag(sensorInfo);
     timestamp = frame->monoboottime;
 
     property_get("persist.vendor.cam.debug.mode", debug_value, "non-debug");

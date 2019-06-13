@@ -5664,6 +5664,12 @@ int SprdCamera3Setting::setSENSORTag(SENSOR_Tag sensorInfo) {
     return 0;
 }
 
+int SprdCamera3Setting::setExposureTimeTag(int64_t exposureTime) {
+    Mutex::Autolock l(mLock);
+    s_setting[mCameraId].sensorInfo.exposure_time = exposureTime;
+    return 0;
+}
+
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
     *sensorInfo = s_setting[mCameraId].sensorInfo;
     return 0;
