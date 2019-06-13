@@ -2879,6 +2879,12 @@ static int sprd_isp_cfg_path(void *isp_handle,
 		mutex_unlock(&pctx->param_mutex);
 		break;
 
+	case ISP_PATH_CFG_3DNR_MODE:
+		mutex_lock(&pctx->param_mutex);
+		pctx->mode_3dnr = *(uint32_t *)param;
+		pctx->updated = 1;
+		mutex_unlock(&pctx->param_mutex);
+		break;
 	default:
 		pr_warn("unsupported cmd: %d\n", cfg_cmd);
 		break;

@@ -476,10 +476,19 @@ struct sprd_img_parm {
 #pragma pack(push, 4)
 struct sprd_img_function_mode {
 	uint32_t need_4in1;
-	uint32_t need_3dnr;
+	uint32_t need_3dnr; /* l5, not use,moved to sprd_img_3dnr_mode */
 	uint32_t dual_cam;
 };
 #pragma pack(pop)
+
+struct sprd_img_3dnr_mode {
+	uint32_t need_3dnr;
+	uint32_t channel_id;
+};
+
+struct sprd_img_auto_3dnr_mode {
+	uint32_t auto_3dnr_enable;
+};
 
 struct sprd_img_ccir_if {
 	uint32_t v_sync_pol;
@@ -932,6 +941,10 @@ struct sprd_img_path_rect {
 					   struct sprd_cam_sec_cfg)
 #define SPRD_IMG_IO_GET_PATH_RECT          _IOW(SPRD_IMG_IO_MAGIC, 67,\
 					   struct sprd_img_path_rect)
+#define SPRD_IMG_IO_SET_3DNR_MODE       _IOW(SPRD_IMG_IO_MAGIC, 68, \
+					   struct sprd_img_function_mode)
+#define SPRD_IMG_IO_SET_AUTO_3DNR_MODE       _IOW(SPRD_IMG_IO_MAGIC, 69, \
+					   struct sprd_img_function_mode)
 /*
  * Dump dcam register.
  * buf:      input dump buffer addr

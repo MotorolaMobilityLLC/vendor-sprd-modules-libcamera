@@ -207,7 +207,8 @@ struct channel_context {
 	struct completion alloc_com;
 	struct sprd_cam_work alloc_buf_work;
 
-	uint32_t type_3dnr;
+	uint32_t uinfo_3dnr;	/* set by hal */
+	uint32_t type_3dnr;	/* 1: hardware 3dnr;check with auto_3dnr before stream on */
 	uint32_t mode_ltm;
 	struct camera_frame *nr3_bufs[ISP_NR3_BUF_NUM];
 	struct camera_frame *ltm_bufs[ISP_LTM_BUF_NUM];
@@ -279,6 +280,7 @@ struct camera_module {
 	int64_t capture_times; /* *ns, timestamp get from start_capture */
 	uint32_t lowlux_4in1; /* flag */
 	struct camera_queue remosaic_queue; /* 4in1: save camera_frame when remosaic */
+	uint32_t auto_3dnr; /* 1: auto3dnr, 2:always on,0:always off; now:set 1 */
 };
 
 struct camera_group {
@@ -2737,7 +2739,6 @@ static int init_4in1_secondary_path(struct camera_module *module,
 	 */
 	ch_desc.slowmotion_count = ch->ch_uinfo.high_fps_skip_num;
 	ch_desc.endian.y_endian = ENDIAN_LITTLE;
-	ch_desc.enable_3dnr = module->cam_uinfo.is_3dnr;
 
 	ch_desc.input_size.w = module->cam_uinfo.sn_size.w / 2;
 	ch_desc.input_size.h = module->cam_uinfo.sn_size.h / 2;
@@ -2938,7 +2939,8 @@ static int init_cam_channel(
 		ch_desc.slowmotion_count = ch_uinfo->high_fps_skip_num;
 
 		ch_desc.endian.y_endian = ENDIAN_LITTLE;
-		ch_desc.enable_3dnr = module->cam_uinfo.is_3dnr;
+		/* auto_3dnr:hw enable, channel->uinfo_3dnr == 1: hw enable */
+		ch_desc.enable_3dnr = (module->auto_3dnr | channel->uinfo_3dnr);
 		if (channel->ch_id == CAM_CH_RAW)
 			ch_desc.is_raw = 1;
 		if ((channel->ch_id == CAM_CH_CAP) && module->cam_uinfo.is_4in1)
@@ -2972,13 +2974,34 @@ static int init_cam_channel(
 		ctx_desc.slw_state = CAM_SLOWMOTION_OFF;
 		ctx_desc.ch_id = channel->ch_id;
 
-		if (module->cam_uinfo.is_3dnr) {
-			if (channel->ch_id == CAM_CH_CAP) {
-				channel->type_3dnr = CAM_3DNR_SW;
-				ctx_desc.mode_3dnr = MODE_3DNR_OFF;
-			} else if (channel->ch_id == CAM_CH_PRE) {
+		/* 20190614: have some change for auto 3dnr, maybe some code
+		 * will be refined laster. below show how to use now
+		 * 1: ch->type_3dnr, flag for hw 3dnr for the channnel
+		 * 2: module->auto_3dnr: 1: alloc buffer for prev,cap,
+		 *    later will enable/disable by ch->type_3dnr
+		 * scene1: nightshot:module->auto_3dnr==0,prev_ch->type_3dnr==1
+		 *         cap_ch->type_3dnr == 0,prev hw, cap sw
+		 * scene2: auto_3dnr:module->auto_3dnr==1,ch->type_3dnr==x
+		 *         enable/disable, dynamically;
+		 * scene3: off: module->auto_3dnr == 0, ch->type_3dnr == 0
+		 */
+		ctx_desc.mode_3dnr = MODE_3DNR_OFF;
+		if (module->auto_3dnr) {
+			if (channel->uinfo_3dnr) {
+				if (channel->ch_id == CAM_CH_CAP)
+					ctx_desc.mode_3dnr = MODE_3DNR_CAP;
+				else
+					ctx_desc.mode_3dnr = MODE_3DNR_PRE;
+			}
+			channel->type_3dnr = CAM_3DNR_HW;
+		} else {
+			channel->type_3dnr = CAM_3DNR_OFF;
+			if (channel->uinfo_3dnr) {
 				channel->type_3dnr = CAM_3DNR_HW;
-				ctx_desc.mode_3dnr = MODE_3DNR_PRE;
+				if (channel->ch_id == CAM_CH_CAP)
+					ctx_desc.mode_3dnr = MODE_3DNR_CAP;
+				else
+					ctx_desc.mode_3dnr = MODE_3DNR_PRE;
 			}
 		}
 		if (module->cam_uinfo.is_ltm) {
@@ -3537,6 +3560,8 @@ static int img_ioctl_set_function_mode(
 	ret |= get_user(module->cam_uinfo.is_3dnr, &uparam->need_3dnr);
 	ret |= get_user(module->cam_uinfo.is_dual, &uparam->dual_cam);
 	module->cam_uinfo.is_ltm = 0;
+	/* no use */
+	module->cam_uinfo.is_3dnr = 0;
 
 	pr_info("4in1:[%d], 3dnr[%d], ltm[%d], daul[%d]\n",
 		module->cam_uinfo.is_4in1,
@@ -5139,6 +5164,8 @@ static int img_ioctl_stream_off(
 		camera_queue_clear(&module->remosaic_queue);
 		if (module->dump_thrd.thread_task)
 			camera_queue_clear(&module->dump_queue);
+		/* default 0, hal set 1 when needed */
+		module->auto_3dnr = 0;
 	}
 	atomic_set(&module->state, CAM_IDLE);
 	if (raw_cap)
@@ -5150,6 +5177,27 @@ static int img_ioctl_stream_off(
 	return ret;
 }
 
+static int set_capture_3dnr(struct camera_module *module,
+			struct channel_context *ch)
+{
+	uint32_t mode_3dnr;
+
+	if ((!module) || (!ch))
+		return -EFAULT;
+	mode_3dnr = MODE_3DNR_OFF;
+	if (ch->uinfo_3dnr) {
+		if (ch->ch_id == CAM_CH_CAP)
+			mode_3dnr = MODE_3DNR_CAP;
+		else
+			mode_3dnr = MODE_3DNR_PRE;
+	}
+	pr_debug("mode %d\n", mode_3dnr);
+	isp_ops->cfg_path(module->isp_dev_handle, ISP_PATH_CFG_3DNR_MODE,
+		ch->isp_path_id >> ISP_CTXID_OFFSET,
+		ch->isp_path_id & ISP_PATHID_MASK, &mode_3dnr);
+
+	return 0;
+}
 
 static int img_ioctl_start_capture(
 			struct camera_module *module,
@@ -5940,6 +5988,81 @@ static int img_ioctl_get_path_rect(struct camera_module *module,
 
 	return ret;
 }
+
+/* set which channel use hw 3dnr
+ * if auto 3dnr, will be set when previewing
+ */
+static int ioctl_set_3dnr_mode(struct camera_module *module,
+                        unsigned long arg)
+{
+	int ret = 0;
+	struct sprd_img_3dnr_mode parm;
+	struct channel_context *ch;
+	uint32_t ch_id;
+
+	if (!module) {
+		pr_err("module is NULL\n");
+		return -EINVAL;
+	}
+
+	memset((void *)&parm, 0, sizeof(parm));
+	ret = copy_from_user(&parm, (void __user *)arg,
+				sizeof(parm));
+	if (ret) {
+		pr_err("fail to get user info ret %d\n", ret);
+		return -EFAULT;
+	}
+	ch_id = parm.channel_id;
+	if (ch_id >= CAM_CH_MAX) {
+		pr_err("channel id %d error\n", ch_id);
+		return -EFAULT;
+	}
+	ch = &module->channel[ch_id];
+	pr_debug("ch_id %d, need_3dnr %d\n", ch_id, parm.need_3dnr);
+
+	/* dynamic set when auto 3dnr */
+	if (module->auto_3dnr) {
+		if (ch->uinfo_3dnr == parm.need_3dnr) {
+			pr_info("%d,no need update\n", ch->uinfo_3dnr);
+			return ret;
+		}
+		ch->uinfo_3dnr = parm.need_3dnr;
+		set_capture_3dnr(module, ch);
+
+	} else {
+		ch->uinfo_3dnr = parm.need_3dnr;
+	}
+
+	return ret;
+}
+
+/* set auto_3dnr enable bit to drv
+ * 190614: hal set 1 if need, but not set 0(default 0)
+ */
+static int ioctl_set_auto_3dnr_mode(struct camera_module *module,
+                        unsigned long arg)
+{
+	int ret = 0;
+	struct sprd_img_auto_3dnr_mode parm;
+
+	if (!module) {
+		pr_err("module is NULL\n");
+		return -EINVAL;
+	}
+
+	memset((void *)&parm, 0, sizeof(parm));
+	ret = copy_from_user(&parm, (void __user *)arg,
+				sizeof(parm));
+	if (ret) {
+		pr_err("fail to get user info ret %d\n", ret);
+		return -EFAULT;
+	}
+	module->auto_3dnr = parm.auto_3dnr_enable;
+	pr_info("auto_3dnr %d\n", module->auto_3dnr);
+
+	return ret;
+}
+
 /*--------------- Core controlling interface end --------------- */
 
 
@@ -6478,6 +6601,8 @@ static struct cam_ioctl_cmd ioctl_cmds_table[] = {
 	[_IOC_NR(SPRD_IMG_IO_PATH_PAUSE)]	= {SPRD_IMG_IO_PATH_PAUSE,	ioctl_test_dev},
 	[_IOC_NR(SPRD_IMG_IO_SET_CAM_SECURITY)]   = {SPRD_IMG_IO_SET_CAM_SECURITY,  img_ioctl_set_cam_security},
 	[_IOC_NR(SPRD_IMG_IO_GET_PATH_RECT)]             = {SPRD_IMG_IO_GET_PATH_RECT,   img_ioctl_get_path_rect},
+	[_IOC_NR(SPRD_IMG_IO_SET_3DNR_MODE)]    = {SPRD_IMG_IO_SET_3DNR_MODE,   ioctl_set_3dnr_mode},
+	[_IOC_NR(SPRD_IMG_IO_SET_AUTO_3DNR_MODE)] = {SPRD_IMG_IO_SET_AUTO_3DNR_MODE, ioctl_set_auto_3dnr_mode},
 };
 
 

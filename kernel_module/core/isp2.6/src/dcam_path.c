@@ -160,7 +160,7 @@ int dcam_cfg_path_base(void *dcam_handle,
 		 * architecture defect and not going to be fixed now.
 		 */
 		dev->slowmotion_count = ch_desc->slowmotion_count;
-		dev->is_3dnr = ch_desc->enable_3dnr;
+		dev->is_3dnr |= ch_desc->enable_3dnr;
 		break;
 
 	case DCAM_PATH_VCH2:

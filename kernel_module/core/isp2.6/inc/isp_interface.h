@@ -56,6 +56,7 @@ enum isp_path_cfg_cmd {
 	ISP_PATH_CFG_OUTPUT_RESERVED_BUF,
 	ISP_PATH_CFG_3DNR_BUF,
 	ISP_PATH_CFG_LTM_BUF,
+	ISP_PATH_CFG_3DNR_MODE,
 };
 
 enum isp_3dnr_mode {
