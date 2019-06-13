@@ -2863,8 +2863,23 @@ static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
-
 	return ret;
+}
+
+static cmr_int ispctl_get_flash_skip_num(cmr_handle isp_alg_handle, void *param_ptr)
+{
+    cmr_int ret = ISP_SUCCESS;
+    struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+    cmr_u32 skip_num = 0;
+    if (NULL == param_ptr) {
+            return ISP_PARAM_NULL;
+    }
+    if (cxt->ops.ae_ops.ioctrl)
+        ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_SKIP_FRAME_NUM,
+                                                NULL, (void *)&skip_num);
+    *(cmr_u32 *)param_ptr = skip_num;
+    ISP_LOGD("skip_num %d", skip_num);
+    return ret;
 }
 
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
@@ -2954,6 +2969,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
 	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
+	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
 	{ISP_CTRL_MAX, NULL}
 };
 

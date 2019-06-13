@@ -199,6 +199,7 @@ struct lsc_flash_proc_param {
 	cmr_s32 is_touch_preflash;                                   // 0: normal capture preflash    1: touch preflash     others: not preflash
 	cmr_s32 ae_touch_framecount;                                 // log the frame_count when touching the screen
 	cmr_s32 pre_flash_before_ae_touch_framecount;
+	cmr_s32 flash_close_after_frame_count;
 	cmr_s32 pre_flash_before_framecount;
 };
 
@@ -278,6 +279,13 @@ struct lsc_ctrl_context {
 	cmr_u32 flash_mode;
 	cmr_u32 pre_flash_mode;
 	cmr_u32 can_update_dest;
+	//for pre_flash and main_flash
+	cmr_s32 flash_main_after_count;
+	cmr_s32 flash_pre_after_count;
+	cmr_s32 main_flash_after_flag;
+	cmr_s32 pre_flash_after_flag;
+	cmr_s32 main_flash_before_flag;
+
 	cmr_u32 alsc_update_flag;
 	cmr_u32 fw_start_end;
 	cmr_u32 lsc_id;

@@ -386,6 +386,12 @@ struct camera_context {
     cmr_u32 hdr_skip_frame_cnt;
     struct img_rect trim_reset_info;
     cmr_u8 is_cnr;
+
+    /*for flash skip preview frame*/
+    cmr_s64 flash_shutdown_timestamp;
+    cmr_u32 flash_skip_frame_enable;
+    cmr_u32 flash_skip_frame_cnt;
+    cmr_u32 flash_skip_frame_num;
 };
 
 struct prev_ai_scene_info {

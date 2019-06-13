@@ -1718,6 +1718,24 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             }
         }
 
+        // preflash and highflash shutdown skip preview frame
+        if (cxt->flash_skip_frame_enable && cb_type == PREVIEW_EVT_CB_FRAME) {
+            struct camera_frame_type *prev_frame = (struct camera_frame_type *)param;
+            if (prev_frame->type == PREVIEW_FRAME) {
+                CMR_LOGD("monoboottime %ld flash_shutdown_timestamp %ld",
+                    prev_frame->monoboottime, cxt->flash_shutdown_timestamp);
+                if (prev_frame->monoboottime > cxt->flash_shutdown_timestamp) {
+                    prev_frame->type = PREVIEW_CANCELED_FRAME;
+                    cxt->flash_skip_frame_cnt++;
+                    CMR_LOGD("flash_skip_frame_cnt %d", cxt->flash_skip_frame_cnt);
+                }
+            }
+            if (cxt->flash_skip_frame_cnt == cxt->flash_skip_frame_num) {
+                cxt->flash_skip_frame_enable = 0;
+                CMR_LOGD("flash_skip_frame_cnt done");
+            }
+        }
+
         memcpy(message.data, param, sizeof(struct camera_frame_type));
     }
     message.msg_type = oem_func;
@@ -6898,10 +6916,32 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         flash_opt.flash_index = cxt->face_type % 2;
         CMR_LOGV("led0_enable=%d, led1_enable=%d", flash_opt.led0_enable,
                  flash_opt.led1_enable);
-        if (camera_front_lcd_flash_activie(flash_opt.flash_index))
+        if (camera_front_lcd_flash_activie(flash_opt.flash_index)) {
             camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
-        else
+        } else {
+			if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN) {
+                cmr_u32 flash_capture_skip_num = 0;
+                bool isFrontFlash =
+                    (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
+                ret = isp_ioctl(cxt->isp_cxt.isp_handle,
+                        ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, &flash_capture_skip_num);
+                if (ret) {
+                    CMR_LOGE("failed to get preflash skip number %ld", ret);
+                }
+                CMR_LOGD("preflash_skip_num = %d", flash_capture_skip_num);
+                if (0 == cxt->camera_id || isFrontFlash) {
+                    cxt->flash_skip_frame_num =
+                        (flash_capture_skip_num == 0) ? 1 : flash_capture_skip_num;
+                    cxt->flash_skip_frame_enable = 1;
+                    cxt->flash_skip_frame_cnt = 0;
+                    cxt->flash_shutdown_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+                    CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
+                                    cxt->flash_skip_frame_num, cxt->flash_skip_frame_cnt);
+                }
+            }
+
             cmr_grab_flash_cb(grab_handle, &flash_opt);
+		}
     } break;
     case SETTING_IO_GET_PREVIEW_MODE:
         param_ptr->cmd_value = cxt->prev_cxt.preview_sn_mode;

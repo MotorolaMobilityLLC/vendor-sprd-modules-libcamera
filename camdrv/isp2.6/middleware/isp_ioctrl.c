@@ -2786,6 +2786,22 @@ static cmr_int ispctl_get_sw3dnr_param(cmr_handle isp_alg_handle, void *param_pt
 	return ret;
 }
 
+static cmr_int ispctl_get_flash_skip_num(cmr_handle isp_alg_handle, void *param_ptr)
+{
+    cmr_int ret = ISP_SUCCESS;
+    struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+    cmr_u32 skip_num = 0;
+    if (NULL == param_ptr) {
+            return ISP_PARAM_NULL;
+    }
+    if (cxt->ops.ae_ops.ioctrl)
+        ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_SKIP_FRAME_NUM,
+                                                NULL, (void *)&skip_num);
+    *(cmr_u32 *)param_ptr = skip_num;
+    ISP_LOGD("skip_num %d", skip_num);
+    return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2865,6 +2881,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
 	{ISP_CTRL_AI_SET_FD_STATUS,ispctl_ai_set_fd_status},
+	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
 	{ISP_CTRL_MAX, NULL}
 };
 

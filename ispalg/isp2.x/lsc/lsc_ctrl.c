@@ -1373,7 +1373,9 @@ static void* lsc_flash_proc_init ()
 	param->is_touch_preflash=-99;
 	param->ae_touch_framecount=-99;
 	param->pre_flash_before_ae_touch_framecount=-99;
+	param->flash_close_after_frame_count = -99;
 	param->pre_flash_before_framecount=-99;
+
 	return param;
 }
 
@@ -1971,6 +1973,14 @@ static void *lsc_sprd_init(void *in, void *out)
 
 	cxt->post_shading_gain_param = post_shading_gain_init();
 	cxt->lsc_flash_proc_param = lsc_flash_proc_init();
+
+	//init the flash status
+	cxt->flash_main_after_count = -99;
+	cxt->flash_pre_after_count  = -99;
+	cxt->main_flash_after_flag  = 0;
+	cxt->pre_flash_after_flag   = 0;
+	cxt->main_flash_before_flag   = 0;
+
 	// create lsc_ctrl buffers ---
 
 	// get lsc_id
@@ -2339,10 +2349,10 @@ static void post_shading_gain(cmr_u16 *dst_gain, cmr_u16 *org_gain, cmr_u32 gain
 	//for in MAIN_FLASH or PRE_FLASH
 	if(flash_mode==1 || pre_flash_mode ==1){
         memcpy(dst_gain, org_gain, gain_width*gain_height*4*sizeof(unsigned short));
-        bv2gainw_en = 0;  // bypass post gain during flash
+        bv2gainw_en = 1;  // bypass post gain during flash
         ISP_LOGV("[ALSC] post_gain_act, flash bypass, frame_count=%d", frame_count);
 	}
-
+	ISP_LOGV("[ALSC] post_gain_act, flash bypass, frame_count=%d", frame_count);
 	if(bv2gainw_en){
 		if ((bv < action_bv && LSC_SPD_VERSION <=4) || (bv_gain > action_bv_gain && LSC_SPD_VERSION >4)){
 			cmr_s32 bv2gainw = 1024;
@@ -2359,7 +2369,7 @@ static void post_shading_gain(cmr_u16 *dst_gain, cmr_u16 *org_gain, cmr_u32 gain
 					bv2gainw = linear_lut_bv_gain(bv_gain, bv2gainw_p_bv, bv2gainw_b_gainw, num_ctrl_point);
 				}
 			}
-			ISP_LOGV("[ALSC] post_gain_act, bv=%d, bv_gain=%d, bv2gainw=%d, frame_count=%d", bv, bv_gain, bv2gainw, frame_count);
+			ISP_LOGI("[ALSC] post_gain_act, bv=%d, bv_gain=%d, bv2gainw=%d, frame_count=%d", bv, bv_gain, bv2gainw, frame_count);
 
 			if(bv2gainw == 0){
 				for(i=0; i<gain_width*gain_height*4; i++){
@@ -2394,7 +2404,7 @@ static void post_shading_gain(cmr_u16 *dst_gain, cmr_u16 *org_gain, cmr_u32 gain
 			}
 		}else{
 			memcpy(dst_gain, org_gain, gain_width*gain_height*4*sizeof(unsigned short));
-			ISP_LOGV("[ALSC] post_gain_act, bypass, action_bv=%d, action_bv_gain=%d, bv=%d, bv_gain=%d, frame_count=%d", action_bv, action_bv_gain, bv, bv_gain, frame_count);
+			ISP_LOGI("[ALSC] post_gain_act, bypass, action_bv=%d, action_bv_gain=%d, bv=%d, bv_gain=%d, frame_count=%d", action_bv, action_bv_gain, bv, bv_gain, frame_count);
 		}
 	}else{
 		memcpy(dst_gain, org_gain, gain_width*gain_height*4*sizeof(unsigned short));
@@ -2487,6 +2497,7 @@ static cmr_u32 print_lsc_log(void)
 
 static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 {
+	cmr_u64 time_lsc_calc_start = systemTime(CLOCK_MONOTONIC);
 	cmr_u32 i;
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
@@ -2510,7 +2521,9 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	IIR_weight = cxt->IIR_weight;
 	struct debug_lsc_param* lsc_debug_info_ptr = (struct debug_lsc_param*)cxt->lsc_debug_info_ptr;
 	struct lsc_last_info* lsc_last_info = (struct lsc_last_info*)cxt->lsc_last_info;
-	struct post_shading_gain_param *post_param = (struct post_shading_gain_param*)cxt->post_shading_gain_param;
+	struct post_shading_gain_param *post_param = NULL;
+	post_param = (struct post_shading_gain_param*)cxt->post_shading_gain_param;
+	struct lsc_flash_proc_param *flash_param = (struct lsc_flash_proc_param*)cxt->lsc_flash_proc_param;
 	lsc_last_info->bv = param->bv;
 	lsc_last_info->bv_gain = param->bv_gain;
 
@@ -2656,7 +2669,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	// alsc calculation process
-	if(alg_in && cxt->alg_bypass == 0){
+	//after 3 frames to call the alsc calculation when pre_flash or main_flash is done
+	if(alg_in && cxt->alg_bypass == 0 && cxt->main_flash_after_flag == 0 && cxt->pre_flash_after_flag == 0){
 		// select std lsc param
 		if(cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
 			for(i=0; i<8; i++)
@@ -2761,6 +2775,12 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 					cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3], cxt->lsc_id);
 		}else{
 			if( cxt->can_update_dest ==1 ){
+				if(flash_param->flash_close_after_frame_count >0)
+				{
+					param->bv = 0;
+					param->bv_gain = 0;
+					flash_param->flash_close_after_frame_count--;
+				}
 				post_shading_gain( lsc_debug_info_ptr->output_lsc_table, lsc_debug_info_ptr->last_lsc_table, gain_width, gain_height, cxt->output_gain_pattern, cxt->frame_count,
 								param->bv, param->bv_gain, cxt->flash_mode, cxt->pre_flash_mode, cxt->LSC_SPD_VERSION, post_param);
 				// copy the table after post_gain_act
@@ -2772,8 +2792,58 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}else{
 		ISP_LOGV("[ALSC] cmd bypass");
 	}
-	ISP_LOGV("[ALSC] final output cxt->lsc_buffer[%d,%d,%d,%d], frame_count=%d, lsc_id=%d, can_update_dest=%d",
-			cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3], 
+	//for main_flash_before use pre_flash guessing table
+	if(cxt->main_flash_before_flag == 1) {
+		cxt->main_flash_before_flag = 0;
+		if(cxt->flash_y_gain[0] == 0){
+			// apply the guessing table
+			memcpy(cxt->lsc_buffer, flash_param->preflash_guessing_mainflash_output_table, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+		}else{
+			// apply the guessing table and flash_y_gain
+			ISP_LOGV("[ALSC] flash lsc apply flash_y_gain");
+			for(i=0; i<cxt->gain_width*cxt->gain_height; i++){
+				cxt->lsc_buffer[4*i + 0] = flash_param->preflash_guessing_mainflash_output_table[4*i + 0] * cxt->flash_y_gain[i] / 1024;
+				cxt->lsc_buffer[4*i + 1] = flash_param->preflash_guessing_mainflash_output_table[4*i + 1] * cxt->flash_y_gain[i] / 1024;
+				cxt->lsc_buffer[4*i + 2] = flash_param->preflash_guessing_mainflash_output_table[4*i + 2] * cxt->flash_y_gain[i] / 1024;
+				cxt->lsc_buffer[4*i + 3] = flash_param->preflash_guessing_mainflash_output_table[4*i + 3] * cxt->flash_y_gain[i] / 1024;
+			}
+		}
+		ISP_LOGV("[ALSC] FLASH_MAIN_BEFORE, copy preflash_guessing_mainflash_output_table=[%d,%d,%d,%d] to cxt->lsc_buffer, lsc_id=%d",
+				flash_param->preflash_guessing_mainflash_output_table[0], flash_param->preflash_guessing_mainflash_output_table[1], flash_param->preflash_guessing_mainflash_output_table[2], flash_param->preflash_guessing_mainflash_output_table[3], cxt->lsc_id);
+
+	}
+
+	//for pre_flash_after to use the "preflash_before_output_table"
+	if (cxt->pre_flash_after_flag) {
+		if(cxt->flash_pre_after_count > 0) {
+			//use the lsc table which saved before pre_flash
+			memcpy(cxt->lsc_buffer,flash_param->preflash_current_output_table,gain_width*gain_height*4*sizeof(unsigned short));
+			cxt->flash_pre_after_count--;
+			ISP_LOGI("current_frame:%d,after PRE_FLASH use the lsc table which saved before pre_flash:lsc_buffer[%d,%d,%d,%d]",cxt->frame_count,cxt->lsc_buffer[0],cxt->lsc_buffer[1],cxt->lsc_buffer[2],cxt->lsc_buffer[3]);
+		} else {
+			//clear the status for next pre_flash
+			cxt->pre_flash_after_flag = 0;
+		}
+	} else {
+		ISP_LOGI("[ALSC] frame:%d,pre_flash_after = 0, pre_flash is not end or not flash",cxt->frame_count);
+	}
+
+	//for main_flash_after to use the "preflash_before_output_table"
+	if (cxt->main_flash_after_flag) {
+		if(cxt->flash_main_after_count > 0) {
+		memcpy(cxt->lsc_buffer,flash_param->preflash_current_output_table,gain_width*gain_height*4*sizeof(unsigned short));
+		cxt->flash_main_after_count--;
+		ISP_LOGV("current_frame:%d,after MAIN_FLASH use the lsc table which saved before pre_flash:lsc_buffer[%d,%d,%d,%d]",cxt->frame_count,cxt->lsc_buffer[0],cxt->lsc_buffer[1],cxt->lsc_buffer[2],cxt->lsc_buffer[3]);
+		} else {
+			//clear the status for next main_flash
+			cxt->main_flash_after_flag = 0;
+		}
+	} else {
+		ISP_LOGV("[ALSC] frame:%d,main_flash_after = 0, main_flash is not end or not flash",cxt->frame_count);
+	}
+
+	ISP_LOGI("[ALSC] final output cxt->lsc_buffer[%d,%d,%d,%d], frame_count=%d, lsc_id=%d, can_update_dest=%d",
+			cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3],
 			cxt->frame_count, cxt->lsc_id, cxt->can_update_dest);
 
 	cxt->flash_done_frame_count++;
@@ -2791,6 +2861,10 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+
+	cmr_u64 time_lsc_calc_end = systemTime(CLOCK_MONOTONIC);
+
+	ISP_LOGI("lsc_calc time: %d us",(cmr_s32)(time_lsc_calc_end - time_lsc_calc_start)/1000);
 	return rtn;
 }
 
@@ -3331,10 +3405,10 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
 				}
 
-				ISP_LOGE("[ALSC] FW_START, new dest address = %p, lsc_id=%d", fwstart_info->lsc_result_address_new, cxt->lsc_id);
-				ISP_LOGE("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
-				ISP_LOGE("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
-				ISP_LOGE("[ALSC] FW_START, old table size=[%d,%d] grid=%d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
+				ISP_LOGI("[ALSC] FW_START, new dest address = %p, lsc_id=%d", fwstart_info->lsc_result_address_new, cxt->lsc_id);
+				ISP_LOGI("[ALSC] FW_START, preflash_current_lnc_table_address %p, lsc_id=%d", flash_param->preflash_current_lnc_table_address, cxt->lsc_id);
+				ISP_LOGI("[ALSC] FW_START, main_flash_from_other_parameter %d, lsc_id=%d", flash_param->main_flash_from_other_parameter, cxt->lsc_id);
+				ISP_LOGI("[ALSC] FW_START, old table size=[%d,%d] grid=%d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
 
 				// do parameter normalization
 				if(cxt->LSC_SPD_VERSION >= 6){
@@ -3390,11 +3464,11 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 						std_free(pm_lsc_full);
 						std_free(pm_lsc_crop);
 					}else{
-						ISP_LOGE("[ALSC] FW_START, lsc do not support img_size=[%d,%d], please check, lsc_id=%d", fwstart_info->img_width_new, fwstart_info->img_height_new, cxt->lsc_id);
+						ISP_LOGI("[ALSC] FW_START, lsc do not support img_size=[%d,%d], please check, lsc_id=%d", fwstart_info->img_width_new, fwstart_info->img_height_new, cxt->lsc_id);
 					}
 				}
-				ISP_LOGE("[ALSC] FW_START, new table size=[%d,%d] grid=%d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
-				ISP_LOGE("[ALSC] FW_START, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d, lsc_id=%d ", cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode, cxt->lsc_id);
+				ISP_LOGI("[ALSC] FW_START, new table size=[%d,%d] grid=%d, lsc_id=%d ", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->lsc_id);
+				ISP_LOGI("[ALSC] FW_START, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d, lsc_id=%d ", cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode, cxt->lsc_id);
 
 				// change to 720p mode
 				if(fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720){
@@ -3621,7 +3695,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			//copy the previous table, to restore back when flash off (with post gain)
 			memcpy(flash_param->preflash_current_output_table, lsc_debug_info_ptr->output_lsc_table, cxt->gain_width * cxt->gain_height*4*sizeof(cmr_u16));
 			ISP_LOGV("[ALSC] FLASH_PRE_BEFORE, COPY the output_lsc_table table to flash_param->preflash_current_output_table, lsc_id=%d", cxt->lsc_id);
-
+			ISP_LOGI("[ALSC] FLASH_PRE_BEFORE, LSC_TABLE[%d,%d,%d,%d]",flash_param->preflash_current_output_table[0],flash_param->preflash_current_output_table[1],flash_param->preflash_current_output_table[2],flash_param->preflash_current_output_table[3]);
 			// copy current DNP table
 			memcpy(flash_param->preflash_current_lnc_table, cxt->lsc_pm0, cxt->gain_width * cxt->gain_height*4*sizeof(cmr_u16));
 			ISP_LOGV("[ALSC] FLASH_PRE_BEFORE, COPY the lsc_pm0 table to flash_param->preflash_current_lnc_table, lsc_id=%d", cxt->lsc_id);
@@ -3646,7 +3720,18 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				ISP_LOGV("[ALSC} FLASH_PRE_AFTER, frame_count=0, return 0 do nothing, lsc_id=%d", cxt->lsc_id);
 				return rtn;
 			}
+
+			// set status and flag
+			cxt->pre_flash_after_flag = 1;
+			//after some frames to turn on lsc calculation
+			cxt->flash_pre_after_count = 3;
+
 			cxt->pre_flash_mode=0;
+			flash_param->flash_close_after_frame_count = 4;
+			memcpy(flash_param->preflash_guessing_mainflash_output_table, lsc_debug_info_ptr->output_lsc_table, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+			post_shading_gain( lsc_debug_info_ptr->output_lsc_table, lsc_debug_info_ptr->last_lsc_table, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern, cxt->frame_count,
+								0, 0, cxt->flash_mode, cxt->pre_flash_mode, cxt->LSC_SPD_VERSION, post_param);
+			memcpy(cxt->lsc_buffer, lsc_debug_info_ptr->output_lsc_table, cxt->gain_width*cxt->gain_height*4*sizeof(unsigned short));
 			ISP_LOGV("[ALSC} FLASH_PRE_AFTER, Not setup alg_quick_in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
 
 			flash_info = (struct alsc_flash_info*)in;
@@ -3656,7 +3741,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					flash_param->captureFlashEnvRatio, flash_param->captureFlash1ofALLRatio, cxt->lsc_id);
 
 			// obtain the mainflash guessing table, use the output from preflash (without post gain)
-			memcpy(flash_param->preflash_guessing_mainflash_output_table, lsc_debug_info_ptr->output_lsc_table, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+
 			ISP_LOGV("[ALSC} FLASH_PRE_AFTER, preflash_guessing_mainflash_output_table=[%d,%d,%d,%d], lsc_id=%d",
 					flash_param->preflash_guessing_mainflash_output_table[0], flash_param->preflash_guessing_mainflash_output_table[1], flash_param->preflash_guessing_mainflash_output_table[2], flash_param->preflash_guessing_mainflash_output_table[3], cxt->lsc_id);
 
@@ -3664,14 +3749,19 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			flash_param->ae_touch_framecount=-99;
 			flash_param->pre_flash_before_ae_touch_framecount=-99;
 			flash_param->pre_flash_before_framecount=-99;
+
+			//recover the lsc table which is saved before pre_flash
+			memcpy(cxt->lsc_buffer,flash_param->preflash_current_output_table,cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+			ISP_LOGI("ALSC_FLASH_PRE_AFTER: to recover the lsc table[%d,%d,%d,%d]" ,cxt->lsc_buffer[0],cxt->lsc_buffer[1],cxt->lsc_buffer[2],cxt->lsc_buffer[3]);
+
 		break;
 
 		case ALSC_FLASH_MAIN_LIGHTING:
-			ISP_LOGV("[ALSC] FLASH_MAIN_LIGHTING, Do nothing, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+			ISP_LOGI("[ALSC] FLASH_MAIN_LIGHTING, Do nothing, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
 		break;
 
 		case ALSC_FLASH_PRE_LIGHTING:
-			ISP_LOGV("[ALSC] FLASH_PRE_LIGHTING, Do nothing, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+			ISP_LOGI("[ALSC] FLASH_PRE_LIGHTING, Do nothing, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
 		break;
 
 		case ALSC_FLASH_MAIN_BEFORE:
@@ -3683,26 +3773,11 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			// stop calc update the dest buffer
 			cxt->can_update_dest=0;
 			cxt->alsc_update_flag = 0;
-
-			if(cxt->flash_y_gain[0] == 0){
-				// apply the guessing table
-				memcpy(cxt->lsc_buffer, flash_param->preflash_guessing_mainflash_output_table, cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
-			}else{
-				// apply the guessing table and flash_y_gain
-				ISP_LOGV("[ALSC] flash lsc apply flash_y_gain");
-				for(i=0; i<cxt->gain_width*cxt->gain_height; i++){
-					cxt->lsc_buffer[4*i + 0] = flash_param->preflash_guessing_mainflash_output_table[4*i + 0] * cxt->flash_y_gain[i] / 1024;
-					cxt->lsc_buffer[4*i + 1] = flash_param->preflash_guessing_mainflash_output_table[4*i + 1] * cxt->flash_y_gain[i] / 1024;
-					cxt->lsc_buffer[4*i + 2] = flash_param->preflash_guessing_mainflash_output_table[4*i + 2] * cxt->flash_y_gain[i] / 1024;
-					cxt->lsc_buffer[4*i + 3] = flash_param->preflash_guessing_mainflash_output_table[4*i + 3] * cxt->flash_y_gain[i] / 1024;
-				}
-			}
-			ISP_LOGV("[ALSC] FLASH_MAIN_BEFORE, copy preflash_guessing_mainflash_output_table=[%d,%d,%d,%d] to cxt->lsc_buffer, lsc_id=%d",
-					flash_param->preflash_guessing_mainflash_output_table[0], flash_param->preflash_guessing_mainflash_output_table[1], flash_param->preflash_guessing_mainflash_output_table[2], flash_param->preflash_guessing_mainflash_output_table[3], cxt->lsc_id);
+			cxt->main_flash_before_flag = 1;
 
 			// set flash_mode will quick in
 			cxt->flash_mode = 1;
-			ISP_LOGV("[ALSC] FLASH_MAIN_BEFORE, setup flash_mode=1 to quick in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+			ISP_LOGI("[ALSC] FLASH_MAIN_BEFORE, setup flash_mode=1 to quick in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
 		break;
 
 		case ALSC_FLASH_MAIN_AFTER:
@@ -3712,8 +3787,15 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			}
 
 			// set status
+			cxt->main_flash_after_flag = 1;
+			//set update lsc table
 			cxt->flash_mode = 0;
-
+			flash_param->flash_close_after_frame_count = 3;
+			//after some frames to turn on lsc calculation
+			cxt->flash_main_after_count = 3;
+			post_shading_gain( lsc_debug_info_ptr->output_lsc_table, lsc_debug_info_ptr->last_lsc_table, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern, cxt->frame_count,
+								0, 0, cxt->flash_mode, cxt->pre_flash_mode, cxt->LSC_SPD_VERSION, post_param);
+			memcpy(cxt->lsc_buffer, lsc_debug_info_ptr->output_lsc_table, cxt->gain_width*cxt->gain_height*4*sizeof(unsigned short));
 			// quick in and set bv_skip_frame
 			cxt->alg_quick_in=1;
 			cxt->quik_in_start_frame=-99;
@@ -3722,11 +3804,17 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 			// allow calc update the dest buffer
 			cxt->can_update_dest=1;
+			cxt->alsc_update_flag = 1;
 
 			// reset parameter
 			flash_param->captureFlashEnvRatio = 0.0;
 			flash_param->captureFlash1ofALLRatio = 0.0;
-			ISP_LOGV("[ALSC] FLASH_MAIN_AFTER, setup quick in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+			ISP_LOGI("[ALSC] FLASH_MAIN_AFTER, setup quick in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+
+			//recover the lsc table which is saved before pre_flash
+			memcpy(cxt->lsc_buffer,flash_param->preflash_current_output_table,cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+			ISP_LOGI("ALSC_FLASH_MAIN_AFTER: to recover the lsc table[%d,%d,%d,%d]" ,cxt->lsc_buffer[0],cxt->lsc_buffer[1],cxt->lsc_buffer[2],cxt->lsc_buffer[3]);
+
 		break;
 
 		case ALSC_GET_TOUCH:
@@ -3865,6 +3953,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				alsc_update_info_out->alsc_update_flag = 1;
 				alsc_update_info_out->can_update_dest = 1;
 			}
+			ISP_LOGI("start update the lsc table,alsc_update_flag:%d, frame:%d",alsc_update_info_out->alsc_update_flag,cxt->frame_count);
 		break;
 
 		case ALSC_DO_SIMULATION:
