@@ -387,8 +387,9 @@ static int sprd_cppcore_module_enable(struct cpp_device *dev)
 	CPP_REG_AWR(CPP_MMU_EN, (0xfffffffe));
 	CPP_REG_OWR(MMU_PPN_RANGE1, (0xfff));
 	CPP_REG_OWR(MMU_PPN_RANGE2, (0xfff));
+#ifndef TEST_ON_HAPS
 fail:
-
+#endif
 	mutex_unlock(&dev->lock);
 
 	return ret;
@@ -724,7 +725,9 @@ enable_fail:
 		pr_err("%s: failed to camera power off\n", __func__);
 		return ret;
 	}
+#ifndef TEST_ON_HAPS
 fail:
+#endif
 	if (atomic_dec_return(&dev->users) != 0)
 		CPP_TRACE("others is using cpp device\n");
 	file->private_data = NULL;
