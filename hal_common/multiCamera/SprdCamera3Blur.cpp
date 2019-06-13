@@ -3871,6 +3871,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     int snap_stream_num = 2;
     int af_bypass = 0;
     int fb_on = 0;
+    char prop[PROPERTY_VALUE_MAX] = { 0 };
 
     memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
     rc = validateCaptureRequest(req);
@@ -3909,10 +3910,13 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
         mBlur->fbLevels.largeLevel =
             metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[8];
     }
-    if (metaSettings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-        int32_t aeTargetFpsRange[2] = {25, 30};
-        metaSettings.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                            aeTargetFpsRange, ARRAY_SIZE(aeTargetFpsRange));
+    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
+    if (mCaptureThread->mVersion == 3 || atoi(prop) != 3) {
+        if (metaSettings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
+            int32_t aeTargetFpsRange[2] = {25, 30};
+            metaSettings.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                aeTargetFpsRange, ARRAY_SIZE(aeTargetFpsRange));
+        }
     }
     /*config main camera*/
     req_main = *req;
