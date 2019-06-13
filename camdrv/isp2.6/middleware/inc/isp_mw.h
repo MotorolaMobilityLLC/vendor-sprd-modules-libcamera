@@ -386,6 +386,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_SET_VCM_DIST,
+	ISP_CTRL_GET_REBOKEH_DATA,
 	ISP_CTRL_MAX
 };
 
@@ -595,6 +596,15 @@ struct af_aux_sensor_info_t {
 		struct af_gyro_info_t gyro_info;
 		struct af_gsensor_info gsensor_info;
 	};
+};
+
+struct af_relbokeh_golden_data {
+	cmr_u16 golden_macro;
+	cmr_u16 golden_infinity;
+	cmr_u16 golden_count;
+	cmr_u16 golden_distance[40];
+	cmr_u16 golden_vcm[40];
+	cmr_u16 reserved[10];
 };
 
 struct isp_af_ts {
