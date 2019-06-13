@@ -252,7 +252,8 @@ typedef struct _AE_Report {
 	cmr_u32 flag4idx;
 	cmr_s32 bisFlashOn;
 	cmr_u8 ae_stable_cnt;
-	cmr_u8 reserved[39];
+	cmr_u8 near_stable;
+	cmr_u8 reserved[38];
 } AE_Report;
 
 typedef struct _AF_OTP_Data {

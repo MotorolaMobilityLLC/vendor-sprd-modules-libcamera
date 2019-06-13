@@ -972,6 +972,8 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	rpt->target_lum_ori = ae->ae_report.target_lum_ori;
 	rpt->flag4idx = ae->ae_report.flag4idx;
 	rpt->bisFlashOn = af->flash_on;
+	rpt->near_stable = ae->ae_report.near_stab;
+	ISP_LOGV("(near,full) = (%d,%d)", rpt->near_stable, rpt->bAEisConverge);
 	return 0;
 }
 

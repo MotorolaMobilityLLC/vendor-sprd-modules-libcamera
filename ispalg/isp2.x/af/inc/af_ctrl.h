@@ -260,6 +260,7 @@ extern "C" {
 	struct af_ae_calc_out {
 		cmr_s32 bv;
 		cmr_u32 is_stab;
+		cmr_u32 near_stab;
 		cmr_u32 cur_exp_line;
 		cmr_u32 cur_dummy;
 		cmr_u32 frame_line;
