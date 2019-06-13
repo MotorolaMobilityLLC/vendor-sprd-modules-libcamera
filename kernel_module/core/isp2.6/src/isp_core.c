@@ -1464,12 +1464,12 @@ static uint32_t isp_get_fid_across_context(struct isp_pipe_dev *dev)
 				continue;
 
 			target_fid = min(target_fid, frame->user_fid);
-			pr_info("ISP%d path%d user_fid %u\n",
+			pr_debug("ISP%d path%d user_fid %u\n",
 				 ctx_id, path_id, frame->user_fid);
 		}
 	}
 
-	pr_info("target_fid %u\n", target_fid);
+	pr_debug("target_fid %u\n", target_fid);
 
 	return target_fid;
 }
