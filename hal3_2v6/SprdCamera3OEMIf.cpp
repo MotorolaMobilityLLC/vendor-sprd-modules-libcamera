@@ -6222,6 +6222,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         struct cmr_ae_param ae_param;
         memset(&ae_param, 0, sizeof(ae_param));
         ae_param.mode = sprddefInfo.am_mode;
+        HAL_LOGV("sprddefInfo.am_mode=%d", sprddefInfo.am_mode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE,
                  (cmr_uint)&ae_param);
     } break;

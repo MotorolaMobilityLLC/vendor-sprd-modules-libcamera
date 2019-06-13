@@ -1824,6 +1824,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // set the slowmotion value 1 for the default setting
     s_setting[cameraId].sprddefInfo.slowmotion = 1;
 
+    // default metering mode is 1 (center weighting)
+    s_setting[cameraId].sprddefInfo.am_mode = 1;
+
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
            camera3_default_info.common.availableBrightNess,
            sizeof(camera3_default_info.common.availableBrightNess));
@@ -2182,7 +2185,8 @@ int SprdCamera3Setting::initStaticMetadata(
                     ARRAY_SIZE(s_setting[cameraId].controlInfo.ae_available_fps_ranges)
        );*/
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.ae_available_fps_ranges, 2,
-                  FPS_RANGE_COUNT, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                  FPS_RANGE_COUNT,
+                  ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &(s_setting[cameraId].controlInfo.ae_compensation_step),
                       1);
@@ -3469,8 +3473,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t iso = 0;
     requestInfo.update(ANDROID_SPRD_ISO, &iso, 1);
 
-    uint8_t amMode = 0;
-    requestInfo.update(ANDROID_SPRD_METERING_MODE, &amMode, 1);
+    requestInfo.update(ANDROID_SPRD_METERING_MODE,
+                       &(s_setting[mCameraId].sprddefInfo.am_mode), 1);
 
     uint8_t sprdZslEnabled = 0;
     requestInfo.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
@@ -3762,8 +3766,8 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.am_mode, valueU8,
-                         ANDROID_SPRD_METERING_MODE, 1)
+        s_setting[mCameraId].sprddefInfo.am_mode = valueU8;
+        pushAndroidParaTag(ANDROID_SPRD_METERING_MODE);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_AF_MODE_MACRO_FIXED)) {

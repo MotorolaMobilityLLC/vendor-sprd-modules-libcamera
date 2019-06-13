@@ -1643,7 +1643,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 face_area.face_info[i].score = frame_param->face_info[i].score;
                 face_area.face_info[i].id = frame_param->face_info[i].face_id;
 
-                CMR_LOGV("preview face info sx %d sy %d ex %d, ey %d",
+                CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d",
                          face_area.face_info[i].sx, face_area.face_info[i].sy,
                          face_area.face_info[i].ex, face_area.face_info[i].ey);
             }
