@@ -351,9 +351,11 @@ typedef struct _af_ctrl {
 	cmr_u32 sensor_role;
 	af_ctrl_br_ioctrl bridge_ctrl;
 	struct realbokeh_vcm_range realboekh_range;
+	struct realbokeh_golden_vcm_data golden_data;
 	mlog_AFtime AFtime;
 	cmr_u32 motor_status;
 	cmr_u32 frame_counter;
+	cmr_u16 af_otp_type;
 	cmr_u32 cont_mode_trigger;
 	cmr_u32 zoom_ratio;
 } af_ctrl_t;

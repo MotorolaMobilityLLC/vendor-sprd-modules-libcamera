@@ -3636,6 +3636,29 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 				 limited->vcm_dac[1], limited->vcm_dac[2], limited->vcm_dac[3], limited->vcm_dac[4], limited->vcm_dac[5], limited->vcm_dac[6]);
 			break;
 		}
+	case AF_CMD_GET_BOKEH_GOLDEN_DATA:
+		{
+			struct realbokeh_golden_vcm_data *golden_data = (struct realbokeh_golden_vcm_data *)param0;
+			golden_data->golden_count = af->golden_data.golden_count;
+			golden_data->golden_macro = af->golden_data.golden_macro;
+			golden_data->golden_infinity = af->golden_data.golden_infinity;
+			ISP_LOGD("golden_macro=%d,golden_infinity=%d,golden_count=%d", af->golden_data.golden_macro, af->golden_data.golden_infinity, af->golden_data.golden_count);
+			memcpy(&golden_data->golden_distance[0], &af->golden_data.golden_distance[0], (golden_data->golden_count) * sizeof(cmr_u16));
+			memcpy(&golden_data->golden_vcm[0], &af->golden_data.golden_vcm[0], (golden_data->golden_count) * sizeof(cmr_u16));
+			for (cmr_u8 i = 0; i < golden_data->golden_count; i++) {
+				ISP_LOGD("golden_distance =%d,golden_vcm = %d", golden_data->golden_distance[i], golden_data->golden_vcm[i]);
+			}
+			break;
+		}
+	case AF_CMD_GET_OTP_DATA:
+		{
+			struct afctrl_otp_data *otp_data = (struct afctrl_otp_data *)param0;
+			otp_data->otp_type = af->af_otp_type;
+			otp_data->infinity = af->otp_info.rdm_data.infinite_cali;
+			otp_data->macro = af->otp_info.rdm_data.macro_cali;
+			ISP_LOGD("otp type %d, inf,macro(%d,%d)", otp_data->otp_type, otp_data->infinity, otp_data->macro);
+			break;
+		}
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -3797,6 +3820,20 @@ cmr_s32 pd_otp_info_parser(af_ctrl_t * af, struct afctrl_init_in * in_p)
 	return AFV1_SUCCESS;
 }
 
+static cmr_u8 set_bokeh_golden_data_info(af_ctrl_t * af, bokeh_golden_data_info * bokeh_golden_data)
+{
+	af->golden_data.golden_count = bokeh_golden_data->golden_count;
+	af->golden_data.golden_macro = bokeh_golden_data->golden_macro;
+	af->golden_data.golden_infinity = bokeh_golden_data->golden_infinity;
+	ISP_LOGD("golden_macro=%d,golden_infinity=%d,golden_count=%d", af->golden_data.golden_macro, af->golden_data.golden_infinity, af->golden_data.golden_count);
+	memcpy(&af->golden_data.golden_distance[0], &bokeh_golden_data->golden_distance[0], (bokeh_golden_data->golden_count) * sizeof(cmr_u16));
+	memcpy(&af->golden_data.golden_vcm[0], &bokeh_golden_data->golden_vcm[0], (bokeh_golden_data->golden_count) * sizeof(cmr_u16));
+	for (cmr_u8 i = 0; i < af->golden_data.golden_count; i++) {
+		ISP_LOGD("golden_distance =%d,golden_vcm = %d", af->golden_data.golden_distance[i], af->golden_data.golden_vcm[i]);
+	}
+	return 0;
+}
+
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
@@ -3805,6 +3842,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	AF_OTP_Data otp_info;
+	bokeh_golden_data_info golden_data;
 	memset((void *)&otp_info, 0, sizeof(AF_OTP_Data));
 
 	if (NULL == init_param) {
@@ -3928,7 +3966,10 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	result->log_info.log_len = af->af_dump_info_len;
 
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_GET_OTP, &otp_info);
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_GET_BOKEH_GOLDEN_DATA, &golden_data);
+	set_bokeh_golden_data_info(af, &golden_data);
 	ISP_LOGI("otp bIsExist = %d, (inf, macro) = %d,%d.", otp_info.bIsExist, otp_info.INF, otp_info.MACRO);
+	af->af_otp_type = otp_info.bIsExist;
 	if (T_LENS_BY_OTP != otp_info.bIsExist) {
 		af->otp_info.rdm_data.infinite_cali = otp_info.INF;
 		af->otp_info.rdm_data.macro_cali = otp_info.MACRO;

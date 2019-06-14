@@ -115,6 +115,8 @@ extern "C" {
 		AF_CMD_GET_AF_LOG_INFO = 0x2006,
 		AF_CMD_GET_AFT_LOG_INFO = 0x2007,
 		AF_CMD_GET_REALBOKEH_LIMITED_RANGE = 0x2008,
+		AF_CMD_GET_OTP_DATA = 0x2009,
+		AF_CMD_GET_BOKEH_GOLDEN_DATA = 0x200A,
 		AF_CMD_GET_MAX,
 	};
 
@@ -241,6 +243,12 @@ extern "C" {
 		AF_MOTOR_DONE,
 		AF_MOTOR_FAIL,
 		AF_MOTOR_MAX
+	};
+
+	enum af_otp_type {
+		AF_OTP_BY_DEFAULT = 0,
+		AF_OTP_BY_OTP,
+		AF_OTP_BY_TUNING,
 	};
 
 	struct af_img_blk_info {
@@ -451,6 +459,22 @@ extern "C" {
 	struct SetPD_ROI_param {
 		cmr_u16 ROI_Size;
 		struct PD_Multi_zone_param ROI_info[MAX_MULTIZONE_NUM];
+	};
+
+	struct realbokeh_golden_vcm_data {
+		cmr_u16 golden_macro;
+		cmr_u16 golden_infinity;
+		cmr_u16 golden_count;
+		cmr_u16 golden_distance[40];
+		cmr_u16 golden_vcm[40];
+		cmr_u16 reserved[10];
+	};
+
+	struct afctrl_otp_data {
+		cmr_u16 otp_type;
+		cmr_u16 infinity;
+		cmr_u16 macro;
+		cmr_u16 reserved[20];
 	};
 
 	struct afctrl_cb_ops {
