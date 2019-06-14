@@ -190,8 +190,10 @@ void SprdCameraSystemPerformance::deinitPowerHint() {
 
     if (mPowermanageInited) {
 #if (CONFIG_HAS_CAMERA_HINTS_VERSION == ANDROID_VERSION_P)
-        if (mPowerManager != NULL)
+        if (mPowerManager != NULL) {
+            mPowerManager->deinit();
             mPowerManager.clear();
+        }
         if (mSceneLowPower != NULL)
             mSceneLowPower.clear();
         if (mScenePerformance != NULL)
