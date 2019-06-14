@@ -377,6 +377,7 @@ extern "C" {
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
 		cmr_u32 manual_level;
+		cmr_u32 munaul_iso_index;
 		struct ae_exposure_param_switch mode_switch[32];
 		cmr_u32 last_cam_mode;
 		cmr_u32 last_cur_lum;

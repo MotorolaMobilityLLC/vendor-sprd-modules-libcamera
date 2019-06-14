@@ -2303,7 +2303,12 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 		cur_status->settings.metering_mode = prv_status->settings.metering_mode;
 		cur_status->weight_table = &cur_param->weight_table[prv_status->settings.metering_mode].weight[0];
 		//cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][prv_status->settings.iso];
-		cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][AE_ISO_AUTO];
+		if(cxt->munaul_iso_index && (CAMERA_MODE_MANUAL == cxt->app_mode)){
+			cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][cxt->munaul_iso_index];
+			cxt->mod_update_list.is_miso = 1;
+		}
+		else
+			cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][AE_ISO_AUTO];
 		cur_status->settings.min_fps = prv_status->settings.min_fps;
 		cur_status->settings.max_fps = prv_status->settings.max_fps;
 		cur_status->settings.scene_mode = nxt_scene_mod;
@@ -4532,6 +4537,7 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 		if (iso->mode < AE_ISO_MAX) {
 			cxt->cur_status.settings.iso = iso->mode;
 			cxt->mod_update_list.is_miso = 1;
+			cxt->munaul_iso_index = iso->mode;
 		}
 		ISP_LOGD("AE_SET_ISO %d", cxt->cur_status.settings.iso);
 		if (AE_SCENE_NORMAL == cxt->cur_status.settings.scene_mode) {
