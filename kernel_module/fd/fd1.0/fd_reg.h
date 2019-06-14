@@ -51,44 +51,44 @@
 #define FD_INT_CLR			(0x104UL)
 #define FD_INT_RAW			(0x108)
 #define FD_INT_MASK			(0x10C)
-#define FD_MMU_VERSION			(0x110)
-#define FD_MMU_EN			(0x114)
-#define FD_MMU_UPDATE			(0x118)
-#define FD_MMU_REG_AU_MANAGE		(0x11C)
-#define FD_MMU_PT_ADDR			(0x120)
-#define FD_MMU_DEFAULT_PAGE_RD		(0x124)
-#define FD_MMU_DEFAULT_PAGE_WR		(0x128)
-#define FD_MMU_MIN_VPN			(0x12C)
-#define FD_MMU_VPN_RANGE		(0x130)
-#define FD_MMU_MIN_PPN1			(0x134)
-#define FD_MMU_PPN_RANGE1		(0x138)
-#define FD_MMU_MIN_PPN2			(0x13C)
-#define FD_MMU_PPN_RANGE2		(0x140)
-#define FD_MMU_MIN_PPN3			(0x144)
-#define FD_MMU_PPN_RANGE3		(0x148)
-#define FD_MMU_MIN_PPN4			(0x14C)
-#define FD_MMU_PPN_RANGE4		(0x150)
-#define FD_MMU_VPN_PAOR_RD		(0x154)
-#define FD_MMU_VPN_PAOR_WR		(0x158)
-#define FD_MMU_PPN_PAOR_RD		(0x15C)
-#define FD_MMU_PPN_PAOR_WR		(0x160)
-#define FD_MMU_OR_ADDR_RD		(0x164)
-#define FD_MMU_OR_ADDR_WR		(0x168)
-#define FD_MMU_INV_ADDR_RD		(0x16C)
-#define FD_MMU_INV_ADDR_WR		(0x170)
-#define FD_MMU_UNS_ADDR_RD		(0x174)
-#define FD_MMU_UNS_ADDR_WR		(0x178)
-#define FD_MMU_PAGE_RD_CH		(0x17C)
-#define FD_MMU_PAGE_WR_CH		(0x180)
-#define FD_MMU_DEBUG_USER		(0x184)
-#define FD_MMU_MISS_CNT			(0x188)
-#define FD_MMU_READ_PAGE_LATENCY_CNT	(0x18C)
-#define FD_MMU_PAGE_MAX_LATENCY		(0x190)
-#define FD_MMU_READ_PAGE_CMD_CNT	(0x194)
-#define FD_MMU_INT_EN			(0x1B0)
-#define FD_MMU_INT_CLR			(0x1B4)
-#define FD_MMU_INT_STS			(0x1B8)
-#define FD_MMU_INT_RAW			(0x1BC)
+#define FD_MMU_INT_EN		(0x110)
+#define FD_MMU_INT_CLEAR	(0x114)
+#define FD_MMU_INT_RAW		(0x118)
+#define FD_MMU_INT_MASK	(0x11c)
+
+
+/* FD IOMMU Registers*/
+#define FD_MMU_EN			(0x0200)
+#define FD_MMU_UPDATE			(0x0204)
+#define FD_MMU_MIN_VPN			(0x0208)
+#define FD_MMU_RANGE_VPN		(0x020c)
+#define FD_MMU_PT_ADDR			(0x0210)
+#define FD_MMU_DEFAULT_PAGE		(0x0214)
+#define FD_MMU_VAOR_ADDR_RD		(0x0218)
+#define FD_MMU_VAOR_ADDR_WR		(0x021c)
+#define FD_MMU_INV_ADDR_RD		(0x0220)
+#define FD_MMU_INV_ADDR_WR		(0x0224)
+#define FD_MMU_UNS_ADDR_RD		(0x0228)
+#define FD_MMU_UNS_ADDR_WR		(0x022c)
+#define FD_MMU_MISS_CNT		(0x0230)
+#define FD_MMU_PT_UPDATE_QOS		(0x0234)
+#define FD_MMU_VERSION			(0x0238)
+#define FD_MMU_MIN_PPN1		(0x023c)
+#define FD_MMU_PPN_RANGE1		(0x0240)
+#define FD_MMU_MIN_PPN2		(0x0244)
+#define FD_MMU_PPN_RANGE2		(0x0248)
+#define FD_MMU_VPN_PAOR_RD		(0x024c)
+#define FD_MMU_VPN_PAOR_WR		(0x0250)
+#define FD_MMU_PPN_PAOR_RD		(0x0254)
+#define FD_MMU_PPN_PAOR_WR		(0x0258)
+#define FD_MMU_REG_AU_MANAGE		(0x025c)
+#define FD_MMU_PAGE_RD_CH		(0x0260)
+#define FD_MMU_PAGE_WR_CH		(0x0264)
+#define FD_MMU_READ_PAGE_CMD_CNT	(0x0268)
+#define FD_MMU_PAGE_MAX_LATENCY	(0x026c)
+#define FD_MMU_READ_PAGE_LATENCY_CNT	(0x0270)
+
+
 
 #define FD_MASK_RUN			(0x1<<0)
 
@@ -151,6 +151,26 @@
 #define FD_MASK_INT_ERR_MASK (0x1 << 1)
 #define FD_MASK_INT_RAW_MASK  (0x1 << 0)
 
+
+#define FD_MASK_MMU_INT_VAOR_RD		(0x1 << 0)
+#define FD_MASK_MMU_INT_VAOR_WR		(0x1 << 1)
+#define FD_MASK_MMU_INT_INVALID_RD		(0x1 << 2)
+#define FD_MASK_MMU_INT_INVALID_WR		(0x1 << 3)
+#define FD_MASK_MMU_INT_UNSECURE_RD		(0x1 << 4)
+#define FD_MASK_MMU_INT_UNSECURE_WR		(0x1 << 5)
+#define FD_MASK_MMU_INT_PAOR_RD		(0x1 << 6)
+#define FD_MASK_MMU_INT_PAOR_WR		(0x1 << 7)
+
+
+
+#define FD_MASK_MMU_INT  (FD_MASK_MMU_INT_VAOR_RD | \
+				FD_MASK_MMU_INT_VAOR_WR | \
+				FD_MASK_MMU_INT_INVALID_RD | \
+				FD_MASK_MMU_INT_INVALID_WR | \
+				FD_MASK_MMU_INT_UNSECURE_RD | \
+				FD_MASK_MMU_INT_UNSECURE_RD | \
+				FD_MASK_MMU_INT_PAOR_RD | \
+				FD_MASK_MMU_INT_PAOR_WR)
 
 #define FD_MASK_DVFS_CGM_SEL_START_BIT (0)
 #define FD_MASK_DVFS_VOTE_MTX_SEL_START_BIT (2)

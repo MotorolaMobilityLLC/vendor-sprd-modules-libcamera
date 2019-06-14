@@ -46,6 +46,7 @@
 #include "fd_reg.h"
 
 #define FD_IRQ_MASK ((FD_MASK_INT_ERR) | (FD_MASK_INT_RAW))
+#define FD_MMU_INT_MASK_ERR (FD_MASK_MMU_INT)
 #define FD_AXI_STOP_TIMEOUT			2000
 #define FD_INT_TIMEOUT			2000
 
@@ -323,6 +324,10 @@ static void sprd_fd_irq_enable(struct fd_drv *hw_handle)
 
 	FD_REG_MWR(hw_handle->io_base, FD_INT_EN, mask,
 			mask);
+
+	/*Enable FD IOMMU Interrupt */
+	FD_REG_MWR(hw_handle->io_base, FD_MMU_INT_EN, FD_MMU_INT_MASK_ERR,
+			FD_MMU_INT_MASK_ERR);
 }
 
 static void sprd_fd_irq_disable(struct fd_drv *hw_handle)
@@ -331,6 +336,29 @@ static void sprd_fd_irq_disable(struct fd_drv *hw_handle)
 
 	FD_REG_MWR(hw_handle->io_base, FD_INT_EN, mask,
 			0);
+	FD_REG_MWR(hw_handle->io_base, FD_MMU_INT_EN, FD_MMU_INT_MASK_ERR,
+			0);
+}
+
+static void fd_dump_iommu_regs(struct fd_drv *hw_handle)
+{
+	uint32_t reg = 0;
+	uint32_t val[4];
+
+	for (reg = FD_MMU_EN; reg <= FD_MMU_PAGE_WR_CH; reg += 16) {
+		val[0] = FD_REG_RD(hw_handle->io_base, reg);
+		val[1] = FD_REG_RD(hw_handle->io_base, reg + 4);
+		val[2] = FD_REG_RD(hw_handle->io_base, reg + 8);
+		val[3] = FD_REG_RD(hw_handle->io_base, reg + 12);
+		pr_err("offset=0x%04x: %08x %08x %08x %08x\n",
+				reg, val[0], val[1], val[2], val[3]);
+	}
+	pr_err("cmd %08x image %08x out buff %08x dim buff %08x \n",
+			FD_REG_RD(hw_handle->io_base, FD_CMD_BADDR),
+			FD_REG_RD(hw_handle->io_base, FD_IMAGE_BADDR),
+			FD_REG_RD(hw_handle->io_base, FD_OUT_BUF_ADDR),
+			FD_REG_RD(hw_handle->io_base, FD_DIM_BUF_ADDR));
+
 }
 
 static irqreturn_t fd_isr_root(int irq, void *priv)
@@ -351,6 +379,14 @@ static irqreturn_t fd_isr_root(int irq, void *priv)
 		hw_handle->state = SPRD_FD_STATE_ERROR;
 		/*print_reg_trace*/
 	}
+
+	status = FD_REG_RD(hw_handle->io_base, FD_MMU_INT_RAW);
+	/*clear the interrupt*/
+	FD_REG_MWR(hw_handle->io_base, FD_MMU_INT_CLEAR, FD_MMU_INT_MASK_ERR, status);
+
+	if (status & FD_MMU_INT_MASK_ERR)
+		fd_dump_iommu_regs(hw_handle);
+
 	if (hw_handle->state != SPRD_FD_STATE_ERROR &&
 			hw_handle->state == SPRD_FD_STATE_RUNNING)
 		hw_handle->state = SPRD_FD_STATE_IDLE;
