@@ -4836,7 +4836,10 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 
 		rtn = ae_get_bv_by_lum_new(cxt, &bv);
 
-		if (bv <= cxt->flash_swith.led_thr_down)
+		if (bv <= cxt->flash_swith.led_thr_down &&
+			!(cxt->sync_cur_status.settings.force_lock_ae &&
+			(cxt->sync_cur_status.ae_table->max_index == cxt->sync_cur_result.wts.cur_index)
+			&& (cxt->sync_cur_result.cur_lum > 200)))
 			*flash_eb = 1;
 		else if (bv > cxt->flash_swith.led_thr_up)
 			*flash_eb = 0;
