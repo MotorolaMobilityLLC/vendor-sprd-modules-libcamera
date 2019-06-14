@@ -606,6 +606,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoInst = NULL;
 #endif
 
+    mTopAppId = TOP_APP_NONE;
+    mChannel2FaceBeautyFlag = 0;
+
     HAL_LOGI(":hal3: Constructor X");
 }
 
@@ -719,6 +722,8 @@ void SprdCamera3OEMIf::initialize() {
     mSprdZslEnabled = 0;
     mSprd3dnrEnabled = 0;
     mVideoSnapshotType = 0;
+    mTopAppId = TOP_APP_NONE;
+    mChannel2FaceBeautyFlag = 0;
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -3061,10 +3066,17 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     }
 
-    property_get("vendor.cam.volte.incall.enable", value, "false");
-    if (!strcmp(value, "true")) {
-        mSprdZslEnabled = false;
-        CMR_LOGI("volte incall, don't need to configure zsl ");
+    mTopAppId = sprddefInfo.top_app_id;
+    if (mTopAppId == TOP_APP_WECHAT) {
+        faceDectect(1);
+        if (mPreviewWidth == 640 && mPreviewHeight == 480 &&
+            mCallbackWidth == 640 && mCallbackHeight == 480) {
+            property_get("persist.vendor.wechat.videocall.facebeauty", value,
+                         "off");
+            if (!strcmp(value, "on")) {
+                mChannel2FaceBeautyFlag = 1;
+            }
+        }
     }
 
     if (!initPreview()) {
@@ -3621,21 +3633,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
 
-#ifdef CONFIG_FACE_BEAUTY
-    int sx, sy, ex, ey, angle, pose;
-    struct face_beauty_levels beautyLevels;
-    beautyLevels.blemishLevel =
-        (unsigned char)sprddefInfo.perfect_skin_level[0];
-    beautyLevels.smoothLevel = (unsigned char)sprddefInfo.perfect_skin_level[1];
-    beautyLevels.skinColor = (unsigned char)sprddefInfo.perfect_skin_level[2];
-    beautyLevels.skinLevel = (unsigned char)sprddefInfo.perfect_skin_level[3];
-    beautyLevels.brightLevel = (unsigned char)sprddefInfo.perfect_skin_level[4];
-    beautyLevels.lipColor = (unsigned char)sprddefInfo.perfect_skin_level[5];
-    beautyLevels.lipLevel = (unsigned char)sprddefInfo.perfect_skin_level[6];
-    beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
-    beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
-#endif
-
     if (channel == NULL) {
         HAL_LOGE("channel=%p", channel);
         goto exit;
@@ -3649,42 +3646,95 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
              rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-    if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
-        if (isPreviewing() && frame->type == PREVIEW_FRAME) {
-            if (MODE_3D_VIDEO != mMultiCameraMode &&
-                MODE_3D_PREVIEW != mMultiCameraMode) {
-                FACE_Tag faceInfo;
-                mSetting->getFACETag(&faceInfo);
-                if (faceInfo.face_num > 0) {
-                    for (int i = 0; i < faceInfo.face_num; i++) {
-                        CameraConvertCoordinateFromFramework(
-                            faceInfo.face[i].rect);
-                        sx = faceInfo.face[i].rect[0];
-                        sy = faceInfo.face[i].rect[1];
-                        ex = faceInfo.face[i].rect[2];
-                        ey = faceInfo.face[i].rect[3];
-                        angle = faceInfo.angle[i];
-                        pose = faceInfo.pose[i];
-                        construct_fb_face(&face_beauty, i, sx, sy, ex, ey,
-                                          angle, pose);
-                    }
-                }
-                init_fb_handle(&face_beauty, 1, 2);
-                invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
-                                frame->width * frame->height * 3 / 2);
-                construct_fb_image(
-                    &face_beauty, frame->width, frame->height,
-                    (unsigned char *)(frame->y_vir_addr),
-                    (unsigned char *)(frame->y_vir_addr +
-                                      frame->width * frame->height),
-                    0);
-                construct_fb_level(&face_beauty, beautyLevels);
-                do_face_beauty(&face_beauty, faceInfo.face_num);
-                flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
-                               frame->width * frame->height * 3 / 2);
+    int sx, sy, ex, ey, angle, pose;
+    struct face_beauty_levels beautyLevels;
+    if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME) {
+        FACE_Tag faceInfo;
+        mSetting->getFACETag(&faceInfo);
+        if (faceInfo.face_num > 0) {
+            for (int i = 0; i < faceInfo.face_num; i++) {
+                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
+                sx = faceInfo.face[i].rect[0];
+                sy = faceInfo.face[i].rect[1];
+                ex = faceInfo.face[i].rect[2];
+                ey = faceInfo.face[i].rect[3];
+                angle = faceInfo.angle[i];
+                pose = faceInfo.pose[i];
+                construct_fb_face(&face_beauty, i, sx, sy, ex, ey, angle, pose);
             }
         }
-    } else if (PREVIEW_ZSL_FRAME != frame->type) {
+
+        beautyLevels.blemishLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[0];
+        beautyLevels.smoothLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[1];
+        beautyLevels.skinColor =
+            (unsigned char)sprddefInfo.perfect_skin_level[2];
+        beautyLevels.skinLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[3];
+        beautyLevels.brightLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[4];
+        beautyLevels.lipColor =
+            (unsigned char)sprddefInfo.perfect_skin_level[5];
+        beautyLevels.lipLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[6];
+        beautyLevels.slimLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[7];
+        beautyLevels.largeLevel =
+            (unsigned char)sprddefInfo.perfect_skin_level[8];
+
+        init_fb_handle(&face_beauty, 1, 2);
+        invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
+                        frame->width * frame->height * 3 / 2);
+        construct_fb_image(
+            &face_beauty, frame->width, frame->height,
+            (unsigned char *)(frame->y_vir_addr),
+            (unsigned char *)(frame->y_vir_addr + frame->width * frame->height),
+            0);
+        construct_fb_level(&face_beauty, beautyLevels);
+        do_face_beauty(&face_beauty, faceInfo.face_num);
+        flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
+                       frame->width * frame->height * 3 / 2);
+    } else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME) {
+        FACE_Tag faceInfo;
+        mSetting->getFACETag(&faceInfo);
+        if (faceInfo.face_num > 0) {
+            for (int i = 0; i < faceInfo.face_num; i++) {
+                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
+                sx = faceInfo.face[i].rect[0];
+                sy = faceInfo.face[i].rect[1];
+                ex = faceInfo.face[i].rect[2];
+                ey = faceInfo.face[i].rect[3];
+                angle = faceInfo.angle[i];
+                pose = faceInfo.pose[i];
+                construct_fb_face(&face_beauty, i, sx, sy, ex, ey, angle, pose);
+            }
+        }
+
+        // defalt beautyLevels for third app like wechat
+        beautyLevels.blemishLevel = 0;
+        beautyLevels.smoothLevel = 6;
+        beautyLevels.skinColor = 0;
+        beautyLevels.skinLevel = 0;
+        beautyLevels.brightLevel = 6;
+        beautyLevels.lipColor = 0;
+        beautyLevels.lipLevel = 0;
+        beautyLevels.slimLevel = 2;
+        beautyLevels.largeLevel = 2;
+
+        init_fb_handle(&face_beauty, 1, 2);
+        invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
+                        frame->width * frame->height * 3 / 2);
+        construct_fb_image(
+            &face_beauty, frame->width, frame->height,
+            (unsigned char *)(frame->y_vir_addr),
+            (unsigned char *)(frame->y_vir_addr + frame->width * frame->height),
+            0);
+        construct_fb_level(&face_beauty, beautyLevels);
+        do_face_beauty(&face_beauty, faceInfo.face_num);
+        flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
+                       frame->width * frame->height * 3 / 2);
+    } else {
         deinit_fb_handle(&face_beauty);
     }
 #endif
@@ -5104,7 +5154,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("camera cb: autofocus succeeded.");
         {
-            if(mIsAutoFocus){
+            if (mIsAutoFocus) {
                 setCamPreformaceScene(mGetLastPowerHint);
             }
             if (parm4 != NULL) {
@@ -5140,7 +5190,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
-        if(mIsAutoFocus){
+        if (mIsAutoFocus) {
             setCamPreformaceScene(mGetLastPowerHint);
         }
         if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO ||
@@ -6322,7 +6372,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
     case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag sprddefInfo;
-        char value[PROPERTY_VALUE_MAX];
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
@@ -9627,8 +9676,8 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
         ret_eis = video_stab_read(mPreviewInst, &frame_out_preview);
         if (ret_eis == 0) {
             HAL_LOGV("out frame_num =%d,frame timestamp %lf, frame_out %p",
-                 frame_out_preview.frame_num, frame_out_preview.timestamp,
-                 frame_out_preview.frame_data);
+                     frame_out_preview.frame_num, frame_out_preview.timestamp,
+                     frame_out_preview.frame_data);
         } else if (ret_eis == -1) {
             HAL_LOGE("video_stab_read failed");
             goto exit;
@@ -9717,8 +9766,8 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
         ret_eis = video_stab_read(mVideoInst, &frame_out_video);
         if (ret_eis == 0) {
             HAL_LOGV("out frame_num =%d,frame timestamp %lf, frame_out %p",
-                 frame_out_video.frame_num, frame_out_video.timestamp,
-                 frame_out_video.frame_data);
+                     frame_out_video.frame_num, frame_out_video.timestamp,
+                     frame_out_video.frame_data);
         } else if (ret_eis == -1) {
             HAL_LOGE("video_stab_read failed");
             goto exit;

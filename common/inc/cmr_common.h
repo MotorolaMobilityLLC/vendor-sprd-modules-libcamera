@@ -1408,6 +1408,15 @@ enum sprd_camera_app_mode {
     CAMERA_MODE_MAX
 };
 
+/*
+ * dont edit the enum alone, camera hal have the same enum
+ */
+enum top_app_id {
+    TOP_APP_NONE,
+    TOP_APP_WECHAT,
+    TOP_APP_MAX
+};
+
 enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_AUTO = 0,
     CAMERA_FOCUS_MODE_AUTO_MULTI = 1,

@@ -377,6 +377,7 @@ typedef struct {
     int32_t ae_info;
     uint8_t availabe_gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
+    int32_t top_app_id;
 } SPRD_DEF_Tag;
 
 typedef struct {

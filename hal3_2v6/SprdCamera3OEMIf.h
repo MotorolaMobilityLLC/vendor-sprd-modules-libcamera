@@ -839,6 +839,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
+    // for third part app face beauty in camera hal, for example, weixin videocall
+    int mChannel2FaceBeautyFlag;
+    // top app, like wechat
+    int mTopAppId;
+
     // grab capability
     struct cmr_path_capability grab_capability;
 

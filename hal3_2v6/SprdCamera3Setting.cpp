@@ -3491,6 +3491,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     int32_t sprdAppmodeId = -1;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
+    int32_t topAppId = 0;
+    requestInfo.update(ANDROID_SPRD_TOP_APP_ID, &topAppId, 1);
+
     uint8_t sprdFilterType = 0;
     requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
     uint8_t isTakePictureWithFlash = 0;
@@ -3639,6 +3642,12 @@ int SprdCamera3Setting::updateWorkParameters(
                          valueI32, ANDROID_SPRD_APP_MODE_ID, 1)
         HAL_LOGV("sprd sprd app mode id is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_TOP_APP_ID)) {
+        valueI32 = frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.i32[0];
+        s_setting[mCameraId].sprddefInfo.top_app_id = valueI32;
+        HAL_LOGV("mTopAppId=%d", s_setting[mCameraId].sprddefInfo.top_app_id);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {

@@ -229,6 +229,7 @@ static tags_info_t
         {"sprdAutoChasingTraceRegion", TYPE_INT32},
         {"sprdFlashLcdMode", TYPE_BYTE},
         {"sprdUltraWideId", TYPE_INT32},
+        {"sprdTopAppId", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
