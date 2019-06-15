@@ -80,7 +80,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
 LOCAL_HEADER_LIBRARIES := jni_headers
 ifneq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
-LOCAL_SHARED_LIBRARIES += libbokeh_depth libsprddepth libsprdswisp
+LOCAL_SHARED_LIBRARIES += libsprdswisp
 endif
 
 LOCAL_PROPRIETARY_MODULE := true

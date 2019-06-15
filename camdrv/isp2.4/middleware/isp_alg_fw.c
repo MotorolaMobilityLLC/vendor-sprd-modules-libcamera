@@ -2100,7 +2100,9 @@ cmr_int ispalg_ynr_done(cmr_handle isp_alg_handle) {
 	if (slv_cxt)
 	{
 		ISP_LOGI("sw_isp ynr done");
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 		sprd_realtimebokeh_ynr_callback((void *)slv_cxt->sw_isp_handle);
+#endif
 	}
 	return ISP_SUCCESS;
 }
@@ -3643,9 +3645,10 @@ static cmr_int isp_alg_sw_start(cmr_handle isp_alg_handle, struct soft_isp_start
 
 	ISP_LOGI("sw_isp start");
 	cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 	ISP_LOGI("depth: %d, sw_out: %d", in_param->s_yuv_depth.img_fd.y, in_param->s_yuv_sw_out.img_fd.y);
 	ret = sprd_realtimebokeh_start(cxt->sw_isp_handle, in_param);
+#endif
 	global_isp_block_param->init_flag = 0;
 
 exit:
@@ -3670,14 +3673,18 @@ cmr_int isp_alg_sw_stop(cmr_handle isp_alg_handle)
 	{
 		slv_cxt = isp_br_get_3a_handle(cxt->camera_id + 2);
 		if (slv_cxt && slv_cxt->is_real_bokeh) {
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 			ret = sprd_realtimebokeh_stop(slv_cxt->sw_isp_handle);
+#endif
 			if (ret)
 				goto exit;
 		//	ISP_LOGI("yzl add before sprd_realtimebokeh_ioctl swisphandle:%p , caliinfo:%p"  , slv_cxt->sw_isp_handle,
 		//		(void*)(&cxt->depth_cali_info));
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 			ret = sprd_realtimebokeh_ioctl(slv_cxt->sw_isp_handle,
 				REALTIMEBOKEH_CMD_GET_ONLINECALBINFO ,
 				(void *)&cxt->depth_cali_info);
+#endif
 			if (ret)
 				goto exit;
 		}
@@ -4339,7 +4346,9 @@ cmr_int isp_alg_sw_proc(cmr_handle isp_alg_handle, void *param_ptr)
 
 	ISP_LOGI("sw_isp process");
 	memcpy((void *)&proc_param.block, (void *)global_isp_block_param, sizeof( struct soft_isp_block_param));
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 	ret = sprd_realtimebokeh_process(slv_cxt->sw_isp_handle, &proc_param);
+#endif
 	if (proc_param.release_status == 1)
 	{
 		memset(&slv_cxt->sw_isp_reserved_frm, 0, sizeof(struct soft_isp_frm_param));
@@ -4605,8 +4614,9 @@ exit:
 				sw_isp_input.online_calb_width = CAMERA_TAKEPIC_DEPTH_WIDTH;
 				sw_isp_input.online_calb_height = CAMERA_TAKEPIC_DEPTH_HEIGHT;
 				ISP_LOGI("otp size: %d", global_otp_info.data_size);
-
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 				ret = sprd_realtimebokeh_init(&sw_isp_input, (void **)(&cxt->sw_isp_handle));
+#endif
 				if (ret) {
 					ISP_LOGE("fail to init sw isp!");
 					goto exit1;
@@ -4663,8 +4673,10 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	if (cxt->is_multi_mode == ISP_DUAL_SBS && !cxt->is_master)
 	{
 		ISP_LOGI("sw_isp deinit");
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 		sprd_realtimebokeh_deinit(cxt->sw_isp_handle);
-		if (global_otp_info.data_addr) {
+#endif
+          if (global_otp_info.data_addr) {
 			free(global_otp_info.data_addr);
 		}
 		memset(&global_otp_info, 0, sizeof(struct sensor_otp_data_info));

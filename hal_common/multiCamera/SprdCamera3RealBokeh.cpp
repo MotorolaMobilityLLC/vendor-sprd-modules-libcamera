@@ -391,12 +391,10 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mNotifyListAux.clear();
 
     if (mBokehAlgo) {
-        if (!mCaptureThread->mAbokehGallery) {
-            rc = mBokehAlgo->deinitAlgo();
-            if (rc != NO_ERROR) {
-                HAL_LOGE("fail to deinitAlgo");
-                goto exit;
-            }
+        rc = mBokehAlgo->deinitAlgo();
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to deinitAlgo");
+            goto exit;
         }
         rc = mBokehAlgo->deinitPrevDepth();
         if (rc != NO_ERROR) {
@@ -1285,7 +1283,13 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
 
             if (output_buffer != NULL) {
                 bool isDoDepth = false;
-                if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
+                void *output_buf_addr = NULL;
+                void *input_buf1_addr = NULL;
+                if ((mRealBokeh->mApiVersion == SPRD_API_MODE &&
+                     mRealBokeh->mBokehMode != CAM_PORTRAIT_MODE) ||
+                    (mRealBokeh->mApiVersion == SPRD_API_MODE &&
+                     mRealBokeh->mDoPortrait &&
+                     mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
                     rc = sprdBokehPreviewHandle(output_buffer,
                                                 muxer_msg.combo_frame.buffer1);
                     if (rc != NO_ERROR) {
@@ -1296,6 +1300,31 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                         mRealBokeh->mOtpData.otp_exist) {
                         isDoDepth = sprdDepthHandle(&muxer_msg);
                     }
+                } else {
+
+                    rc = mRealBokeh->map(output_buffer, &output_buf_addr);
+                    if (rc != NO_ERROR) {
+                        HAL_LOGE("fail to map output buffer");
+                        goto fail_map_output;
+                    }
+                    rc = mRealBokeh->map(muxer_msg.combo_frame.buffer1,
+                                         &input_buf1_addr);
+                    if (rc != NO_ERROR) {
+                        HAL_LOGE("fail to map input buffer");
+                        goto fail_map_input;
+                    }
+
+                    memcpy(output_buf_addr, input_buf1_addr,
+                           ADP_BUFSIZE(*muxer_msg.combo_frame.buffer1));
+                    mRealBokeh->flushIonBuffer(ADP_BUFFD(*output_buffer),
+                                               output_buf_addr,
+                                               ADP_BUFSIZE(*output_buffer));
+
+                    mRealBokeh->unmap(muxer_msg.combo_frame.buffer1);
+                fail_map_input:
+                    mRealBokeh->unmap(output_buffer);
+                fail_map_output:
+                    rc = NO_ERROR;
                 }
                 if (!isDoDepth) {
                     mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer,
@@ -2025,7 +2054,10 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
         void *output_handle_addr = NULL;
         void *transform_buffer_addr = NULL;
 
-        if (!mAbokehGallery && mBokehResult) {
+        if ((!mAbokehGallery ||
+             (mRealBokeh->mDoPortrait &&
+              mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) &&
+            mBokehResult) {
             output_handle = output_buffer;
         } else {
             output_handle = capture_msg.combo_buff.buffer1;
@@ -2061,7 +2093,10 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
         input_buffer.stream->height = mRealBokeh->mBokehSize.capture_h;
         output_buffers.stream->width = mRealBokeh->mBokehSize.capture_w;
         output_buffers.stream->height = mRealBokeh->mBokehSize.capture_h;
-        if (!mAbokehGallery && mBokehResult) {
+        if ((!mAbokehGallery ||
+             (mRealBokeh->mDoPortrait &&
+              mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) &&
+            mBokehResult) {
             input_buffer.buffer = output_buffer;
         } else {
             input_buffer.buffer = capture_msg.combo_buff.buffer1;
@@ -2072,7 +2107,9 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
     input_buffer.stream->height = mRealBokeh->mBokehSize.capture_h;
     output_buffers.stream->width = mRealBokeh->mBokehSize.capture_w;
     output_buffers.stream->height = mRealBokeh->mBokehSize.capture_h;
-    if (!mAbokehGallery && mBokehResult) {
+    if ((!mAbokehGallery || (mRealBokeh->mDoPortrait &&
+                             mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) &&
+        mBokehResult) {
         input_buffer.buffer = output_buffer;
     } else {
         input_buffer.buffer = capture_msg.combo_buff.buffer1;
@@ -2085,7 +2122,8 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
     request.output_buffers = &output_buffers;
     request.input_buffer = &input_buffer;
     mReprocessing = true;
-    if (!mAbokehGallery) {
+    if (!mAbokehGallery || (mRealBokeh->mDoPortrait &&
+                            mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
         mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer, output_buffer,
                                    mRealBokeh->mLocalBufferNumber,
                                    mRealBokeh->mLocalBufferList);
@@ -2194,7 +2232,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             }
 #endif
             mBokehResult = true;
-            if (!mAbokehGallery) {
+            if (!mAbokehGallery ||
+                (mRealBokeh->mDoPortrait &&
+                 mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
                 output_buffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
             }
@@ -2239,7 +2279,10 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             if (mRealBokeh->mApiVersion == SPRD_API_MODE) {
                 HAL_LOGD("mRealBokeh->mOtpData.otp_exist %d",
                          mRealBokeh->mOtpData.otp_exist);
-                if (mRealBokeh->mOtpData.otp_exist) {
+                if ((mRealBokeh->mOtpData.otp_exist &&
+                     mRealBokeh->mBokehMode == CAM_DUAL_BOKEH_MODE) ||
+                    (mRealBokeh->mDoPortrait &&
+                     mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
                     rc = sprdDepthCaptureHandle(capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr,
                                                 capture_msg.combo_buff.buffer2);
@@ -2251,8 +2294,11 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     mBokehResult = false;
                 }
 
-                if (!mRealBokeh->mIsHdrMode && !mAbokehGallery &&
-                    (mBokehResult == true)) {
+                if ((!mRealBokeh->mIsHdrMode && !mAbokehGallery &&
+                     (mBokehResult == true) &&
+                     mRealBokeh->mBokehMode == CAM_DUAL_BOKEH_MODE) ||
+                    (mRealBokeh->mDoPortrait &&
+                     mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
                     rc = sprdBokehCaptureHandle(output_buffer,
                                                 capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr);
@@ -2277,6 +2323,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 } else {
                     mime_type = (int)SPRD_MIMETPYE_BOKEH;
                 }
+            }
+            if (mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE) {
+                mime_type = SPRD_MIMETPYE_NONE;
             }
             if (!mRealBokeh->mIsHdrMode) {
 #ifdef YUV_CONVERT_TO_JPEG
@@ -2335,6 +2384,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                                                mRealBokeh->mLocalBufferNumber,
                                                mRealBokeh->mLocalBufferList);
                 }
+
                 mRealBokeh->pushBufferList(mRealBokeh->mLocalBuffer,
                                            capture_msg.combo_buff.buffer1,
                                            mRealBokeh->mLocalBufferNumber,
@@ -2621,7 +2671,8 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdBokehCaptureHandle(
 
     mRealBokeh->mBokehAlgo->capBlurImage(
         input_buf1_addr, mRealBokeh->mDepthBuffer.snap_depth_buffer,
-        output_buf_addr, DEPTH_SNAP_OUTPUT_WIDTH, DEPTH_SNAP_OUTPUT_HEIGHT);
+        output_buf_addr, DEPTH_SNAP_OUTPUT_WIDTH, DEPTH_SNAP_OUTPUT_HEIGHT,
+        mRealBokeh->mDoPortrait);
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
@@ -2665,6 +2716,7 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
     uint8_t phyId = 0;
     bool isUpdate = false;
     phyId = m_pPhyCamera[CAM_TYPE_MAIN].id;
+    int32_t faceInfo[4];
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
     FACE_Tag *faceDetectionInfo =
@@ -2698,6 +2750,101 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             isUpdate = true;
         }
     }
+    // face
+
+    if (metaSettings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
+        mbokehParm.portrait_param.mobile_angle =
+            metaSettings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
+        if (mbokehParm.portrait_param.mobile_angle == 0) {
+            mbokehParm.portrait_param.mobile_angle = 180;
+        } else if (mbokehParm.portrait_param.mobile_angle == 180) {
+            mbokehParm.portrait_param.mobile_angle = 0;
+        }
+    }
+    mbokehParm.portrait_param.mRotation =
+        mJpegOrientation; // mbokehParm.portrait_param.mobile_angle;
+
+    mbokehParm.portrait_param.camera_angle =
+        SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+            .sensorInfo.orientation;
+    if (!mIsCapturing) {
+        for (int i = 0; i < numFaces; i++) {
+            convertToRegions(faceDetectionInfo->face[i].rect,
+                             faceRectangles + j, -1);
+            face_rect[i].left = faceRectangles[0 + j];
+            face_rect[i].top = faceRectangles[1 + j];
+            face_rect[i].right = faceRectangles[2 + j];
+            face_rect[i].bottom = faceRectangles[3 + j];
+            j += 4;
+            if (face_rect[i].right - face_rect[i].left > max) {
+                max_index = i;
+                max = face_rect[i].right - face_rect[i].left;
+            }
+
+            faceInfo[0] = face_rect[i].left;
+            faceInfo[1] = face_rect[i].top;
+            faceInfo[2] = face_rect[i].right;
+            faceInfo[3] = face_rect[i].bottom;
+
+            if (mbokehParm.portrait_param.mobile_angle == 0) {
+                mbokehParm.portrait_param.x1[i] =
+                    faceInfo[2] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y1[i] =
+                    faceInfo[1] * mBokehSize.capture_h / origH;
+                mbokehParm.portrait_param.x2[i] =
+                    faceInfo[0] * mBokehSize.capture_h / origW;
+                mbokehParm.portrait_param.y2[i] =
+                    faceInfo[3] * mBokehSize.capture_h / origH;
+            } else if (mbokehParm.portrait_param.mobile_angle == 90) {
+                mbokehParm.portrait_param.x1[i] =
+                    faceInfo[2] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y1[i] =
+                    faceInfo[3] * mBokehSize.capture_h / origH;
+                mbokehParm.portrait_param.x2[i] =
+                    faceInfo[0] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y2[i] =
+                    faceInfo[1] * mBokehSize.capture_h / origH;
+            } else if (mbokehParm.portrait_param.mobile_angle == 180) {
+                mbokehParm.portrait_param.x1[i] =
+                    faceInfo[0] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y1[i] =
+                    faceInfo[3] * mBokehSize.capture_h / origH;
+                mbokehParm.portrait_param.x2[i] =
+                    faceInfo[2] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y2[i] =
+                    faceInfo[1] * mBokehSize.capture_h / origH;
+            } else {
+                mbokehParm.portrait_param.x1[i] =
+                    faceInfo[0] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y1[i] =
+                    faceInfo[1] * mBokehSize.capture_h / origH;
+                mbokehParm.portrait_param.x2[i] =
+                    faceInfo[2] * mBokehSize.capture_w / origW;
+                mbokehParm.portrait_param.y2[i] =
+                    faceInfo[3] * mBokehSize.capture_h / origH;
+            }
+            mbokehParm.portrait_param.flag[i] = 0;
+            mbokehParm.portrait_param.flag[i + 1] = 1;
+        }
+        mbokehParm.portrait_param.valid_roi = numFaces;
+    }
+
+    if (mbokehParm.portrait_param.valid_roi &&
+        mBokehMode == CAM_PORTRAIT_MODE) {
+        mDoPortrait = 1;
+    } else {
+        mDoPortrait = 0;
+    }
+    HAL_LOGD(".mDoPortrait%d,numFaces=%d,mBokehMode=%d", mDoPortrait, numFaces,
+             mBokehMode);
+    if (mRealBokeh->mCameraId == 0)
+        mbokehParm.portrait_param.rear_cam_en = true;
+    else
+        mbokehParm.portrait_param.rear_cam_en = 0;
+    mbokehParm.portrait_param.face_num = numFaces;
+    mbokehParm.portrait_param.portrait_en = mBokehMode;
+    isUpdate = true;
+    //
     if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
         int fnum = metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
         if (fnum < MIN_F_FUMBER) {
@@ -2743,7 +2890,17 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[3];
     }
 #endif
+    if (mDoPortrait == 1) {
+        int x = face_rect[max_index].left +
+                (face_rect[max_index].right - face_rect[max_index].left) / 2;
+        int y = face_rect[max_index].top +
+                (face_rect[max_index].bottom - face_rect[max_index].top) / 2;
 
+        mbokehParm.sel_x = x * mBokehSize.preview_w / origW;
+        mbokehParm.sel_y = y * mBokehSize.preview_h / origH;
+        HAL_LOGD("update sel_x %d ,sel_y %d", mbokehParm.sel_x,
+                 mbokehParm.sel_y);
+    }
     if (isUpdate) {
         mBokehAlgo->setBokenParam((void *)&mbokehParm);
     }
@@ -3353,7 +3510,11 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             updateApiParams(metaSettingsMain, 0);
         }
     }
-
+    if (metaSettingsMain.exists(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)) {
+        mBokehMode =
+            metaSettingsMain.find(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)
+                .data.u8[0];
+    }
     tagCnt = metaSettingsMain.entryCount();
     if (tagCnt != 0) {
         if (metaSettingsMain.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
@@ -5003,7 +5164,7 @@ void *SprdCamera3RealBokeh::jpeg_callback_thread_proc(void *p_data) {
         save_param = true;
     }
 #endif
-    if (save_param) {
+    if (save_param && mRealBokeh->mBokehMode == CAM_DUAL_BOKEH_MODE) {
         obj->mCaptureThread->saveCaptureBokehParams(result_buffer_addr,
                                                     obj->mjpegSize, jpeg_size);
 #ifdef CONFIG_SUPPORT_GDEPTH

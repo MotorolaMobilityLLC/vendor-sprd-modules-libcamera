@@ -78,7 +78,7 @@ LOCAL_MODULE := libcamrt
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
-LOCAL_SHARED_LIBRARIES += libbokeh_depth libsprddepth libsprdswisp
+LOCAL_SHARED_LIBRARIES += libsprdswisp
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

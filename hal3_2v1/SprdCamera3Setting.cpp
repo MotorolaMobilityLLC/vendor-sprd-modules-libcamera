@@ -17,19 +17,19 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Cam3Setting"
 
-#include <utils/Log.h>
-#include <utils/String16.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "cmr_common.h"
+#include <cutils/properties.h>
+#include <fcntl.h>
+#include <media/hardware/MetadataBufferType.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <time.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <cutils/properties.h>
-#include <media/hardware/MetadataBufferType.h>
-#include "cmr_common.h"
+#include <utils/Log.h>
+#include <utils/String16.h>
 //#include <androidfw/SprdIlog.h>
 #include "SprdCamera3Setting.h"
 
@@ -141,7 +141,10 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
 static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
-    {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
+    {"2", "lcd"},
+    {"1", "led"},
+    {"2", "flash"},
+    {"1", "none"},
 };
 
 #if 0
@@ -227,10 +230,20 @@ const camera_metadata_rational kae_compensation_step = {1, 8};
 //};
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {
-    0, 0, 256, 144, 288, 144, 320, 240, 432, 288
+    0,
+    0,
+    256,
+    144,
+    288,
+    144,
+    320,
+    240,
+    432,
+    288
 #ifdef CAMERA_SERNSOR_SUPPORT_4224
     ,
-    528, 392
+    528,
+    392
 #endif
 };
 const int64_t kFrameDurationRange[2] = {
@@ -303,7 +316,20 @@ enum available_cam_features {
     TRACKINGENABLE,
     BACKULTRAWIDEANGLEENABLE,
     GDEPTHENABLE,
+    BABLURPORTRAITMODE,
+    FRBLURPORTRAITMODE,
     FEATURELISTMAX
+};
+
+enum back_blur_version {
+    BLUR_DISABLE = 0,
+    BLUR_SOFTSHOT_VERSION,
+    BLUR_FULLSCAN_VERSION,
+    BLUR_TWOFRAME_VERSION,
+    BLUR_RESERVE_VERSION,
+    BLUR_RESERVE1_VERSION, // 5
+    BOKEH_VERSION,         // 6
+    BLUR_MAX_VERSION
 };
 
 const uint8_t availableAmModes[] = {
@@ -561,11 +587,15 @@ const int64_t kavailable_min_durations[1] = {
 };
 
 const int32_t kmax_regions[3] = {
-    1, 0, 1,
+    1,
+    0,
+    1,
 };
 
 const int32_t kmax_front_regions[3] = {
-    1, 0, 0,
+    1,
+    0,
+    0,
 };
 
 const int32_t kavailable_test_pattern_modes[] = {
@@ -581,17 +611,24 @@ const uint8_t kavailable_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                          ANDROID_EDGE_MODE_HIGH_QUALITY};
 
 const int32_t ksensitivity_range[2] = {
-    100, 1600,
+    100,
+    1600,
 };
 
 const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
                                              ANDROID_TONEMAP_MODE_HIGH_QUALITY};
 
 const float kcolor_gains[] = {
-    1.69f, 1.00f, 1.00f, 2.41f,
+    1.69f,
+    1.00f,
+    1.00f,
+    2.41f,
 };
 const float kfocus_range[] = {
-    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
 };
 
 camera_metadata_rational_t kcolor_transform[] = {
@@ -957,17 +994,17 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     // 1 backblurversion
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     if (!dualPropSupport) {
-        available_cam_features[BACKBLURVERSION] = 0;
+        available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
     } else if (atoi(prop) == 1) {
-        available_cam_features[BACKBLURVERSION] = 3;
-    } else if (atoi(prop) == 6) {
+        available_cam_features[BACKBLURVERSION] = BLUR_TWOFRAME_VERSION;
+    } else if (atoi(prop) == BOKEH_VERSION) {
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
         available_cam_features[BACKBLURVERSION] = 9;
 #else
         if (sensorGetLogicaInfo4MulitCameraId(SPRD_BLUR_ID)) {
-            available_cam_features[BACKBLURVERSION] = 6;
+            available_cam_features[BACKBLURVERSION] = BOKEH_VERSION;
         } else {
-            available_cam_features[BACKBLURVERSION] = 0;
+            available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
         }
 #endif
     } else {
@@ -975,8 +1012,7 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     }
     // 2 frontblurversion
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-    available_cam_features[FRONTBLURVERSION] = atoi(prop);
-    // 3 blurcoveredid
+    available_cam_features[FRONTBLURVERSION] = atoi(prop);    // 3 blurcoveredid
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features[BLURCOVEREDID] = atoi(prop);
     // 4 frontflashmode
@@ -1015,6 +1051,13 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
 #else
     available_cam_features[GDEPTHENABLE] = 0;
 #endif
+    // 9.portrait mode
+    property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
+    available_cam_features[BABLURPORTRAITMODE] = atoi(prop);
+
+    // 10.front portrait mode
+    property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
+    available_cam_features[FRBLURPORTRAITMODE] = atoi(prop);
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]), sizeof(available_cam_features));
@@ -2628,8 +2671,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         if (characteristicsInfo.exists(
                 ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)) {
             float lensFocusDistance =
-                characteristicsInfo.find(
-                                       ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                characteristicsInfo
+                    .find(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     .data.f[0];
             if (lensFocusDistance > 0)
                 hasFocuser = true;
@@ -6814,4 +6857,4 @@ int SprdCamera3Setting::getAUTOTRACKINGTag(
     *autotrackingInfo = s_setting[mCameraId].autotrackingInfo;
     return 0;
 }
-}
+} // namespace sprdcamera

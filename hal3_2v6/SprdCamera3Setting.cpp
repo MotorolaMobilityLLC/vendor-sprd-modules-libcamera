@@ -17,20 +17,20 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Cam3Setting"
 
-#include <utils/Log.h>
-#include <utils/String16.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <time.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include "cmr_common.h"
 #include <cutils/properties.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <media/hardware/MetadataBufferType.h>
-#include "cmr_common.h"
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <utils/Log.h>
+#include <utils/String16.h>
 //#include <androidfw/SprdIlog.h>
 #include "SprdCamera3Setting.h"
 
@@ -143,7 +143,10 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
 static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
-    {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
+    {"2", "lcd"},
+    {"1", "led"},
+    {"2", "flash"},
+    {"1", "none"},
 };
 
 #if 0
@@ -555,11 +558,15 @@ const int64_t kavailable_min_durations[1] = {
 };
 
 const int32_t kmax_regions[3] = {
-    1, 0, 1,
+    1,
+    0,
+    1,
 };
 
 const int32_t kmax_front_regions[3] = {
-    1, 0, 0,
+    1,
+    0,
+    0,
 };
 
 const int32_t kavailable_test_pattern_modes[] = {
@@ -575,17 +582,24 @@ const uint8_t kavailable_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                          ANDROID_EDGE_MODE_HIGH_QUALITY};
 
 const int32_t ksensitivity_range[2] = {
-    100, 1600,
+    100,
+    1600,
 };
 
 const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
                                              ANDROID_TONEMAP_MODE_HIGH_QUALITY};
 
 const float kcolor_gains[] = {
-    1.69f, 1.00f, 1.00f, 2.41f,
+    1.69f,
+    1.00f,
+    1.00f,
+    2.41f,
 };
 const float kfocus_range[] = {
-    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
 };
 
 camera_metadata_rational_t kcolor_transform[] = {
@@ -1989,14 +2003,21 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #else
     available_cam_features.add(0);
 #endif
-
 // BOKEHGDEPTHENBLE
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
+    // back portrait mode
+    property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+    // front portrait mode
+    property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+    ALOGV("available_cam_features=%d", available_cam_features.size());
 
+#if 0
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         available_cam_features.add(0);
@@ -2007,9 +2028,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
 #endif
     }
-
-    HAL_LOGV("available_cam_features=%d", available_cam_features.size());
-
+#endif
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
@@ -2521,8 +2540,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         if (characteristicsInfo.exists(
                 ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)) {
             float lensFocusDistance =
-                characteristicsInfo.find(
-                                       ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                characteristicsInfo
+                    .find(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     .data.f[0];
             if (lensFocusDistance > 0)
                 hasFocuser = true;
@@ -5854,4 +5873,4 @@ int SprdCamera3Setting::getAUTOTRACKINGTag(
     *autotrackingInfo = s_setting[mCameraId].autotrackingInfo;
     return 0;
 }
-}
+} // namespace sprdcamera

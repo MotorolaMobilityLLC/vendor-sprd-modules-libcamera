@@ -38,6 +38,7 @@ typedef struct {
     MRECT face_rect[CAMERA3MAXFACE];
     int face_num;
     struct af_relbokeh_oem_data relbokeh_oem_data;
+    struct portrait_mode_param portrait_param;
 } bokeh_params;
 
 typedef struct {
@@ -87,7 +88,7 @@ class IBokehAlgo {
                             int vcmCurValue, int vcmUp, int vcmDown) = 0;
 
     virtual int capBlurImage(void *para1, void *para2, void *para3, int depthW,
-                             int depthH) = 0;
+                             int depthH, int mode) = 0;
 
     virtual int onLine(void *para1, void *para2, void *para3, void *para4) = 0;
 

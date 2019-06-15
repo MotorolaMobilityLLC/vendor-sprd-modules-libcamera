@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef CONFIG_SIDEBYSIDE_SUPPORT
 #include "sprd_realtimebokeh.h"
 #include "swisp_log.h"
 #include "thread.h"
@@ -845,4 +846,5 @@ __attribute__ ((visibility("default"))) void sprd_realtimebokeh_ynr_callback(voi
 	sw_isp_handle_t* phandle = (sw_isp_handle_t*)handle;
 	sem_post(&phandle->ynr_sem);
 }
+#endif
 #endif

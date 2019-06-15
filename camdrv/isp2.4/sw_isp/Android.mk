@@ -76,8 +76,11 @@ LOCAL_MODULE := libcamrt
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
-LOCAL_SHARED_LIBRARIES += libbokeh_depth libsprddepth libsprdswisp
+
+LOCAL_SHARED_LIBRARIES += libsprdswisp
+
 LOCAL_HEADER_LIBRARIES += jni_headers
 LOCAL_PROPRIETARY_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)
+

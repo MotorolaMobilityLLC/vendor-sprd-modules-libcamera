@@ -62,20 +62,18 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data,
     memset(&mPreviewbokehParam.depth_param.golden_vcm_data, 0,
            sizeof(af_golden_vcm_data));
 
-    if (!galleryBokeh) {
-        // capture bokeh params
-        mCapbokehParam.sel_x = mSize.capture_w / 2;
-        mCapbokehParam.sel_y = mSize.capture_h / 2;
-        mCapbokehParam.bokeh_level = 255;
-        mCapbokehParam.config_param = NULL;
-        mCapbokehParam.param_state = false;
+    // capture bokeh params
+    mCapbokehParam.sel_x = mSize.capture_w / 2;
+    mCapbokehParam.sel_y = mSize.capture_h / 2;
+    mCapbokehParam.bokeh_level = 255;
+    mCapbokehParam.config_param = NULL;
+    mCapbokehParam.param_state = false;
 
-        rc = sprd_bokeh_Init(&mBokehCapHandle, mSize.capture_w, mSize.capture_h,
-                             mCapbokehParam.config_param);
-        if (rc != NO_ERROR) {
-            HAL_LOGE("sprd_bokeh_Init failed!");
-            goto exit;
-        }
+    rc = sprd_bokeh_Init(&mBokehCapHandle, mSize.capture_w, mSize.capture_h,
+                         mCapbokehParam.config_param);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("sprd_bokeh_Init failed!");
+        goto exit;
     }
     if (mReadOtp == false) {
         loadDebugOtp();
@@ -129,6 +127,8 @@ void SprdBokehAlgo::setBokenParam(void *param) {
         bokeh_param.relbokeh_oem_data.golden_macro;
     mPreviewbokehParam.depth_param.golden_vcm_data.golden_infinity =
         bokeh_param.relbokeh_oem_data.golden_infinity;
+    memcpy(&mPreviewbokehParam.depth_param.portrait_param,
+           &bokeh_param.portrait_param, sizeof(struct portrait_mode_param));
     for (int i = 0;
          i < mPreviewbokehParam.depth_param.golden_vcm_data.golden_count; i++) {
         mPreviewbokehParam.depth_param.golden_vcm_data.golden_vcm[i] =
@@ -447,7 +447,9 @@ int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
     weightParams.sel_y = mCapbokehParam.sel_y;
     weightParams.DisparityImage = NULL;
     weightParams.VCM_cur_value = vcmCurValue;
-
+    memcpy(&weightParams.portrait_param,
+           &mPreviewbokehParam.depth_param.portrait_param,
+           sizeof(struct portrait_mode_param));
     memcpy(&weightParams.golden_vcm_data,
            &mPreviewbokehParam.depth_param.golden_vcm_data,
            sizeof(struct af_golden_vcm_data));
@@ -462,7 +464,7 @@ exit:
 }
 
 int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3,
-                                int depthW, int depthH) {
+                                int depthW, int depthH, int mode) {
     int rc = NO_ERROR;
     int64_t bokehReFocusTime = 0;
     char acVersion[256] = {
@@ -473,6 +475,7 @@ int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3,
         rc = BAD_VALUE;
         goto exit;
     }
+
     if (mBokehCapHandle) {
 
         sprd_bokeh_VersionInfo_Get(acVersion, 256);
@@ -491,10 +494,14 @@ int SprdBokehAlgo::capBlurImage(void *para1, void *para2, void *para3,
     HAL_LOGD("bokeh ReFocusProcess cost %lld ms",
              ns2ms(systemTime() - bokehReFocusTime));
     bokehReFocusTime = systemTime();
-    if (mBokehCapHandle) {
+    if (mBokehCapHandle && 0 == mode) {
         rc = sprd_bokeh_ReFocusGen(mBokehCapHandle, para3,
                                    mCapbokehParam.bokeh_level,
                                    mCapbokehParam.sel_x, mCapbokehParam.sel_y);
+    } else {
+        rc = sprd_bokeh_ReFocusGen_Portrait(
+            mBokehCapHandle, para3, mCapbokehParam.bokeh_level,
+            mCapbokehParam.sel_x, mCapbokehParam.sel_y);
     }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_bokeh_ReFocusGen failed!");
@@ -593,7 +600,7 @@ exit:
  *
  * PARAMETERS : struct sprd_depth_configurable_para *depth_config_param
  *
- * RETURN     :
+ * RETURN:
  *                  0  : success
  *                  other: non-zero failure code
  *==========================================================================*/

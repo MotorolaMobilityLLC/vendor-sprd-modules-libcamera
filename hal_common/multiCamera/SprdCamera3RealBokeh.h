@@ -101,6 +101,8 @@ typedef enum {
     CAM_DEPTH_ID = 2
 } CameraBokehID;
 
+typedef enum { CAM_DUAL_BOKEH_MODE = 0, CAM_PORTRAIT_MODE = 1 } CameraBokehMode;
+
 typedef struct {
     uint32_t frame_number;
     const camera3_stream_buffer_t *input_buffer;
@@ -194,6 +196,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     long mXmpSize;
     int mApiVersion;
     int mJpegOrientation;
+    uint8_t mBokehMode;
+    int mDoPortrait;
     int mlimited_infi;
     int mlimited_macro;
 #ifdef YUV_CONVERT_TO_JPEG

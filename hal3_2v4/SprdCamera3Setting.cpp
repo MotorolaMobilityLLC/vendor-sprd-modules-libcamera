@@ -17,19 +17,19 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Cam3Setting"
 
-#include <utils/Log.h>
-#include <utils/String16.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include "cmr_common.h"
+#include <cutils/properties.h>
+#include <fcntl.h>
+#include <media/hardware/MetadataBufferType.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <time.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <cutils/properties.h>
-#include <media/hardware/MetadataBufferType.h>
-#include "cmr_common.h"
+#include <utils/Log.h>
+#include <utils/String16.h>
 //#include <androidfw/SprdIlog.h>
 #include "SprdCamera3Setting.h"
 
@@ -135,7 +135,10 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
 };
 
 static front_flash_type front_flash[] = {
-    {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
+    {"2", "lcd"},
+    {"1", "led"},
+    {"2", "flash"},
+    {"1", "none"},
 };
 
 #if 0
@@ -312,9 +315,9 @@ enum {
     CAMERA_ISO_100,
     CAMERA_ISO_MAX
 };
-const uint8_t availableIso[] = {
-    CAMERA_ISO_AUTO, CAMERA_ISO_100,  CAMERA_ISO_200, CAMERA_ISO_400,
-    CAMERA_ISO_800,  CAMERA_ISO_1600};
+const uint8_t availableIso[] = {CAMERA_ISO_AUTO, CAMERA_ISO_100,
+                                CAMERA_ISO_200,  CAMERA_ISO_400,
+                                CAMERA_ISO_800,  CAMERA_ISO_1600};
 
 typedef struct cam_stream_info {
     cam_dimension_t stream_sizes_tbl;
@@ -443,11 +446,15 @@ const int64_t kavailable_min_durations[1] = {
 };
 
 const int32_t kmax_regions[3] = {
-    1, 0, 1,
+    1,
+    0,
+    1,
 };
 
 const int32_t kmax_front_regions[3] = {
-    1, 0, 0,
+    1,
+    0,
+    0,
 };
 
 const int32_t kavailable_test_pattern_modes[] = {
@@ -463,17 +470,24 @@ const uint8_t kavailable_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                          ANDROID_EDGE_MODE_HIGH_QUALITY};
 
 const int32_t ksensitivity_range[2] = {
-    100, 1600,
+    100,
+    1600,
 };
 
 const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
                                              ANDROID_TONEMAP_MODE_HIGH_QUALITY};
 
 const float kcolor_gains[] = {
-    1.69f, 1.00f, 1.00f, 2.41f,
+    1.69f,
+    1.00f,
+    1.00f,
+    2.41f,
 };
 const float kfocus_range[] = {
-    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
 };
 
 camera_metadata_rational_t kcolor_transform[] = {
@@ -634,8 +648,7 @@ const int32_t kavailable_result_keys[] = {
     ANDROID_REQUEST_PIPELINE_DEPTH, ANDROID_SCALER_CROP_REGION,
     ANDROID_SENSOR_TIMESTAMP, ANDROID_STATISTICS_FACE_DETECT_MODE,
 
-    ANDROID_SENSOR_FRAME_DURATION,
-    ANDROID_SENSOR_EXPOSURE_TIME,
+    ANDROID_SENSOR_FRAME_DURATION, ANDROID_SENSOR_EXPOSURE_TIME,
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_EDGE_MODE, ANDROID_NOISE_REDUCTION_MODE};
 
@@ -1208,7 +1221,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
             cameraId ? 0.0f : 1023.0f;
     }
 
-
     s_setting[cameraId].lens_InfoInfo.hyperfocal_distance = 2.0f;
 
     s_setting[cameraId].lens_InfoInfo.available_focal_lengths =
@@ -1372,8 +1384,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB ||
-                     scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
-                     scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16) {
+                    scaler_formats[j] ==
+                        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                    scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
                         stream_info[i].stream_sizes_tbl.width);
@@ -1676,7 +1689,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     if (atoi(prop) == 1) {
-        available_cam_features.add(3);
+        available_cam_features.add(0);
     } else if (atoi(prop) == 6) {
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
         available_cam_features.add(9);
@@ -1684,11 +1697,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(6);
 #endif
     } else {
-        available_cam_features.add(atoi(prop));
+        available_cam_features.add(0);
     }
-
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(0);
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features.add(atoi(prop));
 
@@ -1709,7 +1721,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features.add(atoi(prop));
-    }else {
+    } else {
         available_cam_features.add(0);
     }
 
@@ -1719,6 +1731,19 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #else
     available_cam_features.add(0);
 #endif
+// BOKEHGDEPTHENBLE
+#ifdef CONFIG_SUPPORT_GDEPTH
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+    // back portrait mode
+    property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // front portrait mode
+    property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
@@ -2181,8 +2206,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         if (characteristicsInfo.exists(
                 ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)) {
             float lensFocusDistance =
-                characteristicsInfo.find(
-                                       ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                characteristicsInfo
+                    .find(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     .data.f[0];
             if (lensFocusDistance > 0)
                 hasFocuser = true;
@@ -4320,7 +4345,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
                        &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
-    HAL_LOGV("sprddefInfo.ae_info = 0x%x", s_setting[mCameraId].sprddefInfo.ae_info);
+    HAL_LOGV("sprddefInfo.ae_info = 0x%x",
+             s_setting[mCameraId].sprddefInfo.ae_info);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                        &(s_setting[mCameraId].controlInfo.ae_lock), 1);
 
@@ -4334,7 +4360,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.awb_state), 1);
     // Update ANDROID_SPRD_DEVICE_ORIENTATION
     camMetadata.update(ANDROID_SPRD_DEVICE_ORIENTATION,
-                       &(s_setting[mCameraId].sprddefInfo.device_orietation), 1);
+                       &(s_setting[mCameraId].sprddefInfo.device_orietation),
+                       1);
     uint8_t hardware_level_limited = 0;
     if (s_setting[mCameraId].supported_hardware_level ==
         ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
@@ -5024,7 +5051,7 @@ int SprdCamera3Setting::androidEffectModeToDrvMode(uint8_t androidEffectMode,
 }
 
 int SprdCamera3Setting::flashLcdModeToDrvFlashMode(uint8_t flashLcdMode,
-                                                 int8_t *convertDrvMode) {
+                                                   int8_t *convertDrvMode) {
     int ret = 0;
 
     HAL_LOGD("flash lcd mode %d", flashLcdMode);
@@ -5261,8 +5288,7 @@ int SprdCamera3Setting::getMETAInfo(meta_info_t *metaInfo) {
 
 int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
     memcpy(s_setting[mCameraId].hist_report, hist_report,
-        sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+           sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
     return 0;
 }
-
-}
+} // namespace sprdcamera
