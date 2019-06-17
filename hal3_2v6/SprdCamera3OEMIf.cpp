@@ -8174,24 +8174,26 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
             mPictureFormat = CAM_IMG_FMT_YUV422P;
         }
 
-        if (mIsRawCapture == 1) {
-            mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle,
+        if (getMultiCameraMode() != MODE_TUNING) {
+            if (mIsRawCapture == 1) {
+                mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle,
                                                          mode_info);
-            for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-                HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
+                for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+                   HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
                          mode_info[i].trim_height);
-                if (mode_info[i].trim_width >= mCaptureWidth) {
-                    mCaptureWidth = mode_info[i].trim_width;
-                    mCaptureHeight = mode_info[i].trim_height;
-                    break;
+                   if (mode_info[i].trim_width >= mCaptureWidth) {
+                        mCaptureWidth = mode_info[i].trim_width;
+                        mCaptureHeight = mode_info[i].trim_height;
+                        break;
+                   }
                 }
+                req_size.width = mCaptureWidth;
+                req_size.height = mCaptureHeight;
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RAW_CAPTURE_SIZE,
+                         (cmr_uint)&req_size);
+                HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
+                         mCaptureWidth, mCaptureHeight);
             }
-            req_size.width = mCaptureWidth;
-            req_size.height = mCaptureHeight;
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RAW_CAPTURE_SIZE,
-                     (cmr_uint)&req_size);
-            HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
-                     mCaptureWidth, mCaptureHeight);
         }
         break;
 
