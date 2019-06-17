@@ -540,6 +540,10 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef S5K4H7
     {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {&s5k4h7_tsp_drv_entry, 0, 0, 0}},
 #endif
+#ifdef S5KS3P92
+    {MODULE_SUNNY, "s5ks3p92", &g_s5ks3p92_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
 // hynix area
 #ifdef HI556
     {MODULE_SUNNY, "hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -573,6 +577,9 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #endif
 #ifdef OV7251_DUAL
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef OV16885_NORMAL
+    {MODULE_SUNNY, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {NULL, 0, 0, 0}},
 #endif
 
 // gc area
@@ -618,6 +625,13 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 // ov area
 #ifdef OV7251
     {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef OV8856_SHINE
+#ifdef SENSOR_OV8856_TELE
+	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+#else
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+#endif
 #endif
 
 // cista area
