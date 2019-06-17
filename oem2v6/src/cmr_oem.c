@@ -2726,6 +2726,7 @@ cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param) {
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
         isp_param.cmd_value = param;
         ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_HDR, (void *)&isp_param);
+        ret = camera_close_hdr(cxt);
     } else {
         isp_param.cmd_value = param;
         ret = camera_sensor_ioctl(oem_handle, COM_SN_SET_HDR_EV,
