@@ -2755,7 +2755,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	// cmd set table index
 	if(cxt->cmd_alsc_cmd_enable && !cxt->cmd_alsc_bypass){
 		ISP_LOGI("[ALSC] cmd_alsc_table_index=%d", cxt->cmd_alsc_table_index);
-		if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
+		if(cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0){
 			if(cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
 				memcpy(cxt->lsc_buffer, cxt->std_init_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width*gain_height*4*sizeof(cmr_u16));
 			}else{
