@@ -825,6 +825,7 @@ static void fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
     cmr_uint trust_curr_face = 0;
     cmr_uint prevIdx = 0;
     FA_SHAPE fattr_shape;
+    cmr_bzero(&fattr_shape, sizeof(FA_SHAPE));
 
     // Try to correct the face rectangle by the face shape which is often more
     // accurate
