@@ -332,6 +332,8 @@ extern "C" {
 		cmr_s16 hdr_up;
 		cmr_s16 hdr_down;
 		cmr_s16 hdr_base_ae_idx;
+		cmr_u16 hdr_exp_line;
+		cmr_s16 hdr_gain;
 		cmr_u8 hdr_version;
 		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
 		struct hdr_calc_result hdr_calc_result;

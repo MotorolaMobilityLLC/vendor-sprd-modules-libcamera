@@ -3880,12 +3880,9 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		cxt->hdr_flag--;
 		ISP_LOGD("_isp_hdr_2: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 		} else if (1 == cxt->hdr_flag) {
-		base_idx = cxt->hdr_base_ae_idx;
-		base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
-		base_gain = cxt->cur_status.ae_table->again[base_idx];
 		cxt->cur_status.settings.manual_mode = 0;
-		cxt->cur_status.settings.exp_line = base_exposure_line;
-		cxt->cur_status.settings.gain = base_gain;
+		cxt->cur_status.settings.exp_line = cxt->hdr_exp_line;
+		cxt->cur_status.settings.gain = cxt->hdr_gain;
 		cxt->hdr_flag--;
 		ISP_LOGD("_isp_hdr_1: exp_line %d, gain %d\n", cxt->cur_status.settings.exp_line, cxt->cur_status.settings.gain);
 		} else {
@@ -4953,6 +4950,8 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 		if (cxt->hdr_enable) {
 			cxt->hdr_flag = 3;
 			cxt->hdr_base_ae_idx = cxt->sync_cur_result.wts.cur_index;
+			cxt->hdr_exp_line = cxt->sync_cur_result.wts.cur_exp_line;
+			cxt->hdr_gain = cxt->sync_cur_result.wts.cur_again;
 			ae_set_force_pause(cxt, 1);
 		} else {
 			ae_set_force_pause(cxt, 0);
