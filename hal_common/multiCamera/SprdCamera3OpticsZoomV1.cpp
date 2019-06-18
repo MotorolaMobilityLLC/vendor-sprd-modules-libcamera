@@ -796,7 +796,7 @@ bool SprdCamera3OpticsZoomV1::TWPreviewMuxerThread::threadLoop() {
         } break;
         case MUXER_MSG_DATA_PROC: {
             int IsNeedreProcess;
-            camera3_stream_t *preview_stream;
+            camera3_stream_t *preview_stream = NULL;
             {
                 Mutex::Autolock l(gZoomV1->mRequestLock);
                 List<multi_request_saved_t>::iterator itor =
