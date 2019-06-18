@@ -97,6 +97,7 @@ typedef struct {
     uint8_t availableIso[7];
     uint8_t availableAutoHdr;
     uint8_t availableAiScene;
+    uint8_t availDistortionCorrectionModes[1];
 } camera3_common_t;
 
 typedef struct {
@@ -281,6 +282,9 @@ enum {
 const uint8_t availableAmModes[] = {
     CAMERA_AE_FRAME_AVG, CAMERA_AE_CENTER_WEIGHTED, CAMERA_AE_SPOT_METERING,
     CAMERA_AE_MODE_MAX};
+
+const uint8_t availDistortionCorrectionModes[] = {
+    ANDROID_DISTORTION_CORRECTION_MODE_OFF};
 
 const int32_t max_output_streams[3] = {0, 2, 1};
 const uint8_t availableBrightNess[] = {0, 1, 2, 3, 4, 5, 6};
@@ -1298,6 +1302,10 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     camera3_default_info.common.availableAiScene =
         property_get_bool("persist.vendor.cam.ai.scence.enable", 0);
 
+    memcpy(camera3_default_info.common.availDistortionCorrectionModes,
+           availDistortionCorrectionModes,
+           sizeof(availDistortionCorrectionModes));
+
     return 0;
 }
 
@@ -1447,6 +1455,10 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     } else if (cameraInfo.facing == CAMERA_FACING_EXTERNAL) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_EXTERNAL;
     }
+
+    memcpy(s_setting[cameraId].lensInfo.distortion_correction_modes,
+           camera3_default_info.common.availDistortionCorrectionModes,
+           sizeof(camera3_default_info.common.availDistortionCorrectionModes));
 
     HAL_LOGD("log_parameters_lens_statics_info:%d", cameraId);
     return 0;
@@ -2000,6 +2012,11 @@ int SprdCamera3Setting::initStaticMetadataforLensInfo(
     // android.lens.x
     staticInfo.update(ANDROID_LENS_FACING,
                       &(s_setting[cameraId].lensInfo.facing), 1);
+
+    staticInfo.update(
+        ANDROID_DISTORTION_CORRECTION_AVAILABLE_MODES,
+        s_setting[cameraId].lensInfo.distortion_correction_modes,
+        ARRAY_SIZE(s_setting[cameraId].lensInfo.distortion_correction_modes));
 
     HAL_LOGD("log_Metadata_lens_statics_info:%d", cameraId);
     return 0;
