@@ -940,7 +940,7 @@ cmr_int camera_set_3dnr_video_mode(cmr_handle camera_handle,
     return 0;
 }
 
-cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle,
+cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle, cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_info) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
 
@@ -949,7 +949,7 @@ cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    ret = camera_get_otpinfo(camera_handle, otp_info);
+    ret = camera_get_otpinfo(camera_handle, dual_flag, otp_info);
     CMR_LOGV("otp_info data_ptr %p size %d", otp_info->total_otp.data_ptr,
              otp_info->total_otp.size);
 

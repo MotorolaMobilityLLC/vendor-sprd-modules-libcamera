@@ -498,16 +498,16 @@ static cmr_int ov16885_drv_ov4c_init(cmr_handle handle, cmr_u8 *param) {
         SENSOR_LOGV("link libcam_otp_parser.so symbol success");
     }
 
-    rtn = otp_parser_ptr(param_ptr, OTP_PARSER_CROSS_TALK, OTP_EEPROM_SINGLE,
-                         sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH,
-                         &xtalk_data);
+    rtn = otp_parser_ptr(param_ptr, OTP_PARSER_SECTION_XTALK_4IN1,
+                         OTP_EEPROM_SINGLE, sns_drv_cxt->sensor_id, IMG_HEIGHT,
+                         IMG_WIDTH, &xtalk_data);
     if (rtn) {
         dlclose(otp_parser_handle);
         return SENSOR_FAIL;
     }
-    rtn = otp_parser_ptr(param_ptr, OTP_PARSER_DPC, OTP_EEPROM_SINGLE,
-                         sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH,
-                         &dpc_data);
+    rtn = otp_parser_ptr(param_ptr, OTP_PARSER_SECTION_DPC_4IN1,
+                         OTP_EEPROM_SINGLE, sns_drv_cxt->sensor_id, IMG_HEIGHT,
+                         IMG_WIDTH, &dpc_data);
     if (rtn) {
         dlclose(otp_parser_handle);
         return SENSOR_FAIL;

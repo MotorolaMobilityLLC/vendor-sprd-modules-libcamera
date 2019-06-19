@@ -296,47 +296,57 @@ struct sensor_otp_optCenter_info {
 };
 
 enum otp_vendor_type {
-    OTP_VENDOR_SINGLE = 0,      /*ONE CAMERA SENSOR ONE OTP*/
-    OTP_VENDOR_SINGLE_CAM_DUAL, /*TWO CAMERA SENSOR AND ONE OTP,JUST FOR DUAL
-                                   CAMERA*/
-    OTP_VENDOR_DUAL_CAM_DUAL,   /*TWO CAMERA SENSOR AND TWO OTP,JUST FOR DUAL
-                                   CAMERA*/
-    OTP_VENDOR_NONE,            /*CAMERA NOT SOPPROT OTP*/
+    OTP_VENDOR_SINGLE = 0,      /*ONE CAMERA, ONE OTP*/
+    OTP_VENDOR_SINGLE_CAM_DUAL, /*DUAL CAMERA, ONE OTP*/
+    OTP_VENDOR_DUAL_CAM_DUAL,   /*DUAL CAMERA, TWO OTP*/
     OTP_VENDOR_MAX
 };
 
 struct sensor_single_otp_info {
     cmr_u8 program_flag;
-    struct sensor_otp_section_info *module_info;
-    struct sensor_otp_section_info *iso_awb_info;
-    struct sensor_otp_section_info *lsc_info;
-    struct sensor_otp_section_info *af_info;
-    struct sensor_otp_section_info *pdaf_info;
-    /*spc:sesor pixel calibration,used by pdaf*/
-    struct sensor_otp_section_info *spc_info;
-    struct sensor_otp_section_info *optical_center_info;
-    struct sensor_otp_section_info *ae_info;
     cmr_u16 checksum;
+    struct sensor_otp_section_info *module_info;
+    struct sensor_otp_section_info *af_info;
+    struct sensor_otp_section_info *iso_awb_info;
+    struct sensor_otp_section_info *optical_center_info;
+    struct sensor_otp_section_info *lsc_info;
+    struct sensor_otp_section_info *pdaf_info;
+    /*spc:sensor pixel calibration, used by pdaf*/
+    struct sensor_otp_section_info *spc_info;
+    struct sensor_otp_section_info *xtalk_4in1_info;
+    struct sensor_otp_section_info *dpc_4in1_info;
+    struct sensor_otp_section_info *spw_info;
 };
 
 struct sensor_dual_otp_info {
-    cmr_u8 dual_flag; /*for 3ddata calibration flag*/
+    cmr_u8 dual_flag; /*multicam flag, bokeh-1, wt-2, spw-3, stl3d-4*/
     struct sensor_data_info data_3d;
+
     struct sensor_otp_section_info *master_module_info;
     struct sensor_otp_section_info *master_af_info;
     struct sensor_otp_section_info *master_iso_awb_info;
     struct sensor_otp_section_info *master_optical_center_info;
     struct sensor_otp_section_info *master_lsc_info;
     struct sensor_otp_section_info *master_pdaf_info;
+    struct sensor_otp_section_info *master_spc_info;
     struct sensor_otp_section_info *master_ae_info;
-    struct sensor_otp_section_info *master_dualcam_info;
+    struct sensor_otp_section_info *master_xtalk_4in1_info;
+    struct sensor_otp_section_info *master_dpc_4in1_info;
+    struct sensor_otp_section_info *master_spw_info;
+
     struct sensor_otp_section_info *slave_module_info;
     struct sensor_otp_section_info *slave_af_info;
     struct sensor_otp_section_info *slave_iso_awb_info;
     struct sensor_otp_section_info *slave_optical_center_info;
     struct sensor_otp_section_info *slave_lsc_info;
+    struct sensor_otp_section_info *slave_pdaf_info;
+    struct sensor_otp_section_info *slave_spc_info;
     struct sensor_otp_section_info *slave_ae_info;
+    struct sensor_otp_section_info *slave_xtalk_4in1_info;
+    struct sensor_otp_section_info *slave_dpc_4in1_info;
+    struct sensor_otp_section_info *slave_spw_info;
 };
+
 struct sensor_otp_cust_info {
     struct sensor_data_info total_otp;
     enum otp_vendor_type otp_vendor;

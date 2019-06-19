@@ -254,8 +254,7 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
         ALOGE("Allocation of hardware interface failed");
         return NO_MEMORY;
     }
-    HAL_LOGD("SPRD Camera Hal");
-    HAL_LOGD("camera_id=%d", camera_id);
+    HAL_LOGD("SPRD Camera Hal, camera_id=%d", camera_id);
     if (SPRD_3D_CALIBRATION_ID == camera_id) {
         hw->setMultiCameraMode(MODE_3D_CALIBRATION);
     }
@@ -340,8 +339,7 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
         // id is 0 and 2
         return 0;
     } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
-        return property_get_int32("persist.vendor.camera.ultra_wide.cam_id",
-                                  /*default*/ -1);
+        return SprdCamera3Setting::findUltraWideSensor();
     } else if (SPRD_3D_CALIBRATION_ID ==
                cameraId) { // ValidationTools apk open  camera id is
         // SPRD_3D_CALIBRATION_ID and 3 ,camera hal transform to

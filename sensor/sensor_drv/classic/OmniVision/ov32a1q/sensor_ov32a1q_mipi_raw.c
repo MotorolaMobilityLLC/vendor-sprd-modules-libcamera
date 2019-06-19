@@ -693,9 +693,9 @@ static cmr_int ov32a1q_drv_set_xtalk_data(cmr_handle handle, cmr_uint param){
 	  } else {
 		  SENSOR_LOGV("link libcam_otp_parser.so symbol success");
 	  }
-	  otp_parser_ptr(param_ptr, OTP_PARSER_CROSS_TALK, OTP_EEPROM_SINGLE,
+	  otp_parser_ptr(param_ptr, OTP_PARSER_SECTION_XTALK_4IN1, OTP_EEPROM_INDEPENDENT,
 					 sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &xtalk_data);
-//	  otp_parser_ptr(param_ptr, OTP_PARSER_DPC, OTP_EEPROM_SINGLE,
+//	  otp_parser_ptr(param_ptr, OTP_PARSER_SECTION_DPC_4IN1, OTP_EEPROM_INDEPENDENT,
 //					 sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &dpc_data);
 	  for (int i = 0; i < 288; i++)
 		hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x53c0 + i, *(xtalk_data.data_addr + i));

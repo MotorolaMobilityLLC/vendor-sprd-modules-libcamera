@@ -44,6 +44,7 @@ namespace sprdcamera {
 
 uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
 uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
+uint16_t SprdCamera3Setting::mModuleId[] = {0, 0, 0, 0, 0, 0};
 
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -143,10 +144,7 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
 static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
-    {"2", "lcd"},
-    {"1", "led"},
-    {"2", "flash"},
-    {"1", "none"},
+    {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
 };
 
 #if 0
@@ -558,15 +556,11 @@ const int64_t kavailable_min_durations[1] = {
 };
 
 const int32_t kmax_regions[3] = {
-    1,
-    0,
-    1,
+    1, 0, 1,
 };
 
 const int32_t kmax_front_regions[3] = {
-    1,
-    0,
-    0,
+    1, 0, 0,
 };
 
 const int32_t kavailable_test_pattern_modes[] = {
@@ -582,24 +576,17 @@ const uint8_t kavailable_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                          ANDROID_EDGE_MODE_HIGH_QUALITY};
 
 const int32_t ksensitivity_range[2] = {
-    100,
-    1600,
+    100, 1600,
 };
 
 const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
                                              ANDROID_TONEMAP_MODE_HIGH_QUALITY};
 
 const float kcolor_gains[] = {
-    1.69f,
-    1.00f,
-    1.00f,
-    2.41f,
+    1.69f, 1.00f, 1.00f, 2.41f,
 };
 const float kfocus_range[] = {
-    0.0f,
-    0.0f,
-    0.0f,
-    0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
 };
 
 camera_metadata_rational_t kcolor_transform[] = {
@@ -1028,6 +1015,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 
     mSensorType[cameraId] = phyPtr->sensor_type;
     mSensorFocusEnable[cameraId] = phyPtr->focus_eb;
+    mModuleId[cameraId] = phyPtr->module_id;
 
     // if sensor fov info is valid, use it; else use default value
     if (phyPtr->fov_info.physical_size[0] > 0 &&
@@ -1044,11 +1032,13 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
                              phyPtr->source_height_max);
     }
 
-    HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
-             cameraId, phyPtr->source_height_max, phyPtr->source_width_max);
+    HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width = %d, "
+             "module_id = 0x%x",
+             cameraId, phyPtr->source_height_max, phyPtr->source_width_max,
+             phyPtr->module_id);
 
-    HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, "
-             "%f), focal_lengths %f",
+    HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, %f), "
+             "focal_lengths %f",
              mSensorFocusEnable[cameraId],
              sensor_fov[cameraId].physical_size[0],
              sensor_fov[cameraId].physical_size[1],
@@ -1059,6 +1049,23 @@ exit:
 
     HAL_LOGI("X");
     return 0;
+}
+
+int SprdCamera3Setting::findUltraWideSensor() {
+    int cameraId = -1;
+    struct phySensorInfo *phyPtr = NULL;
+
+    for (cameraId = 0; cameraId < CAMERA_ID_COUNT; cameraId++) {
+        phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+        mModuleId[cameraId] = phyPtr->module_id;
+        HAL_LOGV("mModuleId[%d] = 0x%x", cameraId, mModuleId[cameraId]);
+        if (mModuleId[cameraId] == MODULE_SPW_NONE_BACK) {
+            HAL_LOGD("UltraWideSensor ID is %d", cameraId);
+            return cameraId;
+        }
+    }
+    HAL_LOGD("No UltraWideSensor");
+    return -1;
 }
 
 void SprdCamera3Setting::coordinate_struct_convert(int *rect_arr,
@@ -1204,6 +1211,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
     cameraInfo->facing = phyPtr->face_type;
     cameraInfo->orientation = phyPtr->angle;
     cameraInfo->resource_cost = phyPtr->resource_cost;
+
     // TBD: may be will add other variable in struct camera_info
 
     return 0;
@@ -2000,10 +2008,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
 // BACKULTRAWIDEANGLEENABLE
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    available_cam_features.add(1);
-#else
-    available_cam_features.add(0);
+    if (findUltraWideSensor() >= 0)
+        available_cam_features.add(1);
+    else
 #endif
+        available_cam_features.add(0);
+
 // BOKEHGDEPTHENBLE
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features.add(1);
@@ -2018,7 +2028,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
-// MONTIONENABLE
+    // MONTIONENABLE
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         available_cam_features.add(0);
@@ -2548,8 +2558,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         if (characteristicsInfo.exists(
                 ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)) {
             float lensFocusDistance =
-                characteristicsInfo
-                    .find(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                characteristicsInfo.find(
+                                       ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     .data.f[0];
             if (lensFocusDistance > 0)
                 hasFocuser = true;
@@ -3629,6 +3639,15 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         for (j = 0; j < s_setting[mCameraId].vcm_num; j++) {
             HAL_LOGD("vcm_dac[%d] %d", j, s_setting[mCameraId].vcm_dac[j]);
         }
+        if (s_setting[mCameraId].otpInfo.otp_size != 0)
+            requestInfo.update(ANDROID_SPRD_OTP_DATA,
+                               s_setting[mCameraId].otpInfo.otp_data,
+                               s_setting[mCameraId].otpInfo.otp_size);
+        requestInfo.update(ANDROID_SPRD_DUAL_OTP_FLAG,
+                           &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
+    }
+
+    if (mCameraId == findUltraWideSensor()) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             requestInfo.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,
@@ -5004,9 +5023,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].toneInfo.curve_red,
                        SPRD_MAX_TONE_CURVE_POINT);
 
-    if (mCameraId == 0) { // && s_setting[mCameraId].otpInfo.otp_data){ //
-                          // "s_setting[mCameraId].otpInfo.otp_data" always
-                          // "true"
+    if (mCameraId == 0 || mCameraId == findUltraWideSensor()) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             camMetadata.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,

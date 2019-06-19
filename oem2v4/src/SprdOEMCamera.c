@@ -907,7 +907,7 @@ cmr_int camera_set_3dnr_video_mode(cmr_handle camera_handle,
     return 0;
 }
 
-cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle,
+cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle, cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_info) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
 

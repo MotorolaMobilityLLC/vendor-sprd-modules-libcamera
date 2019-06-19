@@ -1548,7 +1548,7 @@ void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     struct sensor_otp_cust_info otp_info;
 
     memset(&otp_info, 0, sizeof(struct sensor_otp_cust_info));
-    mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
+    mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, 1, &otp_info);
 
     if (otp_info.total_otp.data_ptr != NULL && otp_info.dual_otp.dual_flag) {
         *addr = otp_info.dual_otp.data_3d.data_ptr;
@@ -5559,38 +5559,67 @@ int SprdCamera3OEMIf::openCamera() {
 
     if (MODE_3D_CALIBRATION == mMultiCameraMode) {
         mSprdRefocusEnabled = true;
-        CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
+        HAL_LOGD("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
     }
 
     // dual otp
-    if ((mMultiCameraMode == MODE_BOKEH ||
-         mMultiCameraMode == MODE_3D_CALIBRATION ||
-         mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
-        mCameraId < 2) {
+    HAL_LOGD("camera_id %d, mMultiCameraMode %d", mCameraId, mMultiCameraMode);
+    if (((mMultiCameraMode == MODE_BOKEH ||
+          mMultiCameraMode == MODE_3D_CALIBRATION ||
+          mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
+         mCameraId < 2) ||
+        (mCameraId == SprdCamera3Setting::findUltraWideSensor())) {
+        cmr_u8 dual_flag = 0;
+        if ((mMultiCameraMode == MODE_BOKEH ||
+             mMultiCameraMode == MODE_3D_CALIBRATION ||
+             mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
+            mCameraId < 2)
+            dual_flag = 1;
+        else if (mCameraId == SprdCamera3Setting::findUltraWideSensor())
+            dual_flag = 3;
+        else
+            dual_flag = 0;
+
         OTP_Tag otpInfo;
         memset(&otpInfo, 0, sizeof(OTP_Tag));
         mSetting->getOTPTag(&otpInfo);
 
         struct sensor_otp_cust_info otp_info;
         memset(&otp_info, 0, sizeof(struct sensor_otp_cust_info));
-        mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
+        mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, dual_flag,
+                                                 &otp_info);
         if (otp_info.total_otp.data_ptr != NULL &&
             otp_info.dual_otp.dual_flag) {
             memcpy(otpInfo.otp_data, (char *)otp_info.dual_otp.data_3d.data_ptr,
                    otp_info.dual_otp.data_3d.size);
             otpInfo.otp_type = otp_info.dual_otp.data_3d.dualcam_cali_lib_type;
-            otpInfo.dual_otp_flag = 1;
+            otpInfo.dual_otp_flag = otp_info.dual_otp.dual_flag;
+
+            HAL_LOGD("camera_id %d, total_otp raw buffer %p, total_otp size "
+                     "%d, dual_flag %d, dual_otp size %d",
+                     mCameraId, otp_info.total_otp.data_ptr,
+                     otp_info.total_otp.size, otpInfo.dual_otp_flag,
+                     otp_info.dual_otp.data_3d.size);
         } else {
             otpInfo.dual_otp_flag = 0;
-            HAL_LOGD("dual_otp_flag %d", otpInfo.dual_otp_flag);
+            HAL_LOGD("camera_id %d, get no dual_otp data from socket or eeprom",
+                     mCameraId);
         }
+
         {
             bzero(file_name, sizeof(file_name));
             strcpy(file_name, CAMERA_DUMP_PATH);
-            strcat(file_name, "calibration.txt");
+            if (dual_flag == 1)
+                strcat(file_name, "calibration_bokeh_otp.txt");
+            else if (dual_flag == 2)
+                strcat(file_name, "calibration_w_t_otp.txt");
+            else if (dual_flag == 3)
+                strcat(file_name, "calibration_spw_otp.txt");
+
             FILE *fid = fopen(file_name, "rb");
             if (NULL == fid) {
-                HAL_LOGV("calibration read failed!");
+                HAL_LOGD("dual_flag %d, calibration otp txt not exist",
+                         dual_flag);
             } else {
                 int read_byte = 0;
                 cmr_u8 *otp_data = (cmr_u8 *)otpInfo.otp_data;
@@ -5600,17 +5629,29 @@ int SprdCamera3OEMIf::openCamera() {
                     read_byte += 4;
                 }
                 fclose(fid);
-                HAL_LOGD("calibration read_bytes=%d ", read_byte);
+                HAL_LOGD("dual_flag %d, calibration otp txt read_bytes = %d",
+                         dual_flag, read_byte);
                 if (read_byte) {
                     otp_info.dual_otp.data_3d.size = read_byte;
                     otpInfo.otp_type = 0; // OTP_CALI_SPRD;
-                    otpInfo.dual_otp_flag = 1;
+                    otpInfo.dual_otp_flag = dual_flag;
                 }
             }
         }
+
+        HAL_LOGI("dual_flag %d, dual_otp size %d", otpInfo.dual_otp_flag,
+                 otp_info.dual_otp.data_3d.size);
         if (otp_info.dual_otp.data_3d.size > 0) {
-            save_file("dualcamera.bin", otpInfo.otp_data,
-                      otp_info.dual_otp.data_3d.size);
+            if (dual_flag == 1)
+                save_file("bokeh_otp_dump.bin", otpInfo.otp_data,
+                          otp_info.dual_otp.data_3d.size);
+            else if (dual_flag == 2)
+                save_file("w_t_otp_dump.bin", otpInfo.otp_data,
+                          otp_info.dual_otp.data_3d.size);
+            else if (dual_flag == 3)
+                save_file("spw_otp_dump.bin", otpInfo.otp_data,
+                          otp_info.dual_otp.data_3d.size);
+
             mSetting->setOTPTag(&otpInfo, otp_info.dual_otp.data_3d.size,
                                 otpInfo.otp_type);
         }

@@ -49,12 +49,14 @@ enum otp_version_t {
     OTP_0_4 = 4,  /*otp 0.4*/
     OTP_0_5 = 5,  /*otp 0.5*/
     OTP_1_0 = 10, /*otp 1.0*/
+    OTP_1_1 = 11, /*otp 1.1*/
 };
 
 enum eeprom_num_t {
     SINGLE_CAM_ONE_EEPROM = 0,
     DUAL_CAM_ONE_EEPROM = 1,
     DUAL_CAM_TWO_EEPROM = 2,
+    MULTICAM_INDEPENDENT_EEPROM = 3,
 };
 
 enum otp_main_cmd {
@@ -263,7 +265,12 @@ typedef struct {
     otp_section_info_t pdaf_cali_dat;
     /*spc:sensor pixel calibration,used by pdaf*/
     otp_section_info_t spc_cali_dat;
-    otp_section_info_t dual_cam_cali_dat;
+
+    otp_section_info_t xtalk_4in1_cali_dat;
+    otp_section_info_t dpc_4in1_cali_dat;
+    otp_section_info_t spw_cali_dat; /*superwide*/
+    otp_section_info_t dual_cam_cali_dat; /*bokeh*/
+    otp_section_info_t wt_cali_dat; /*w+t:optics_zoom*/
     extended_data_t extend_dat;
     otp_section_info_t lsc_cali_dat;
     otp_section_info_t third_cali_dat;
@@ -389,7 +396,7 @@ typedef struct {
 } otp_drv_info_t;
 
 /*==================================================
-                 for otp v1.0 start
+              for otp v1.0 and v1.1 start
 ====================================================*/
 struct module_id_info_t {
     cmr_u8 master_vendor_id;
@@ -403,6 +410,8 @@ struct module_id_info_t {
     cmr_u8 day;
     cmr_u16 work_station_id;
     cmr_u16 env_record;
+    /*for otp v1.1*/
+    cmr_u8 sensor_num;
 };
 
 struct sensor_setting_t {
@@ -413,38 +422,9 @@ struct sensor_setting_t {
     cmr_u8 slave_ob;
 };
 
-struct master_start_addr_t {
-    cmr_u16 master_af_addr;
-    cmr_u16 master_awb_addr;
-    cmr_u16 master_lsc_addr;
-    cmr_u16 master_pdaf1_addr;
-    cmr_u16 master_pdaf2_addr;
-    cmr_u16 master_ae_addr;
-    cmr_u16 master_dualcam_addr;
-};
-
-struct slave_start_addr_t {
-    cmr_u16 slave_af_addr;
-    cmr_u16 slave_awb_addr;
-    cmr_u16 slave_lsc_addr;
-    cmr_u16 slave_ae_addr;
-};
-
-struct master_size_t {
-    cmr_u8 master_af_size;
-    cmr_u8 master_awb_size;
-    cmr_u16 master_lsc_size;
-    cmr_u16 master_pdaf1_size;
-    cmr_u16 master_pdaf2_size;
-    cmr_u8 master_ae_size;
-    cmr_u16 master_dualcam_size;
-};
-
-struct slave_size_t {
-    cmr_u8 slave_af_size;
-    cmr_u8 slave_awb_size;
-    cmr_u16 slave_lsc_size;
-    cmr_u8 slave_ae_size;
+struct section_info_t {
+    cmr_u16 offset;
+    cmr_u16 size;
 };
 
 struct module_info_t {
@@ -454,10 +434,28 @@ struct module_info_t {
     cmr_u32 otp_map_index;
     struct module_id_info_t module_id_info;
     struct sensor_setting_t sensor_setting;
-    struct master_start_addr_t master_start_addr;
-    struct slave_start_addr_t slave_start_addr;
-    struct master_size_t master_size;
-    struct slave_size_t slave_size;
+    struct section_info_t master_af_info;
+    struct section_info_t master_awb_info;
+    struct section_info_t master_lsc_info;
+    struct section_info_t master_pdaf1_info;
+    struct section_info_t master_pdaf2_info;
+    struct section_info_t master_ae_info;
+    struct section_info_t master_xtalk_4in1_info;
+    struct section_info_t master_dpc_4in1_info;
+    struct section_info_t master_spw_info;
+    struct section_info_t master_bokeh_info;
+    struct section_info_t master_wt_info;
+    struct section_info_t slave_af_info;
+    struct section_info_t slave_awb_info;
+    struct section_info_t slave_lsc_info;
+    struct section_info_t slave_pdaf1_info;
+    struct section_info_t slave_pdaf2_info;
+    struct section_info_t slave_ae_info;
+    struct section_info_t slave_xtalk_4in1_info;
+    struct section_info_t slave_dpc_4in1_info;
+    struct section_info_t slave_spw_info;
+    struct section_info_t slave_bokeh_info;
+    struct section_info_t slave_wt_info;
     cmr_u16 sensor_max_width;
     cmr_u16 sensor_max_height;
     cmr_u8 lsc_grid;
@@ -517,7 +515,7 @@ struct dualcam_data_t {
     cmr_u8 dualcam_location;
 };
 /*==================================================
-                 for otp v1.0 end
+              for otp v1.0 and v1.1 end
 ====================================================*/
 
 typedef struct {

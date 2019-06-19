@@ -21,8 +21,6 @@
 
 #define LOG_TAG "s5k4h7"
 
-#define MIPI_4LANE
-
 #ifdef MIPI_4LANE
 #include "sensor_s5k4h7_mipi_raw_4lane.h"
 #else
@@ -338,6 +336,7 @@ static cmr_int s5k4h7_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->sns_binning_factor = sns_binning_fact;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
@@ -440,8 +439,10 @@ static cmr_int s5k4h7_drv_access_val(cmr_handle handle, cmr_uint param) {
         // ret = s5k4h7_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
-        //ret =
-            //s5k4h7_qtech_identify_otp(handle, s_s5k4h7_otp_info_ptr, param_ptr);
+#ifdef FEATURE_OTP
+        ret =
+            s5k4h7_qtech_identify_otp(handle, s_s5k4h7_otp_info_ptr, param_ptr);
+#endif
         break;
     default:
         break;
@@ -663,7 +664,6 @@ static cmr_int s5k4h7_drv_stream_on(cmr_handle handle, cmr_uint param) {
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
 
     /*END*/
 
@@ -692,7 +692,7 @@ static cmr_int s5k4h7_drv_stream_off(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
 
     /*END*/
-     usleep(50 * 1000);
+    usleep(50 * 1000);
     /*delay*/
     sns_drv_cxt->is_sensor_close = 0;
     SENSOR_LOGI("X");

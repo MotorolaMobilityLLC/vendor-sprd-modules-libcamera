@@ -1032,9 +1032,9 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				ISP_LOGE("lsc otp_info_lsc_ptr = %p, otp_info_optical_center_ptr = %p. Parser fail !", lsc_otp_info_ptr, oc_otp_info_ptr);
 				goto EXIT;
 			}
-		} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53
+		} else if (module_info[4] == 1 && (module_info[5] == 0 || module_info[5] == 1) && module_info[0] == 0x53
 				&& module_info[1] == 0x50 && module_info[2] == 0x52 && module_info[3] == 0x44) {
-			ISP_LOGV("lsc otp map v1.0");
+			ISP_LOGV("lsc otp map v1.0 or v1.1");
 			if (NULL != lsc_otp_info_ptr) {
 				otp_data_ptr = lsc_otp_info_ptr->rdm_info.data_addr;
 				otp_data_len = lsc_otp_info_ptr->rdm_info.data_size;

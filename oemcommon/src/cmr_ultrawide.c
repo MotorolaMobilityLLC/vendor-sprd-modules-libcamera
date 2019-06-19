@@ -201,19 +201,17 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
 }
 
 static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
-    int rc = CMR_CAMERA_SUCCESS;
-    uint32_t read_byte = 0;
-    cmr_u8 otp_info[256] = {0};
-    cmr_u8 otp_size = 0;
+    static cmr_u8 otp_info[1024] = {0};
+    cmr_u32 otp_size = 0;
+    cmr_u32 read_byte = 0;
+    char prop[PROPERTY_VALUE_MAX] = "0";
     struct class_ultrawide *handle = ultrawide_handle;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
+    cmr_handle oem_handle = handle->common.ipm_cxt->init_in.oem_handle;
 
-    FILE *fid = fopen("/mnt/vendor/productinfo/spwOTP.txt", "rb");
+    FILE *fid =
+        fopen("/data/vendor/cameraserver/calibration_spw_otp.txt", "rb");
     if (NULL == fid) {
-        CMR_LOGD("read ultra wide otp failed!");
-        rc = -1;
+        CMR_LOGD("calibration_spw_otp.txt not exist");
     } else {
         cmr_u8 *otp_data = otp_info;
         while (!feof(fid)) {
@@ -222,17 +220,39 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
             read_byte += 4;
         }
         fclose(fid);
+        CMR_LOGD("calibration_spw_otp.txt read_bytes = %d", read_byte);
         otp_size = read_byte;
-        handle->warp_param.otp_buf = otp_info;
-        handle->warp_param.otp_size = otp_size;
-        CMR_LOGD("ultra wide read_bytes=%d ", read_byte);
+    }
 
-        property_get("persist.vendor.cam.dump.ultrawide", prop, "0");
-        if (atoi(prop) == 1) {
-            for (int i = 0; i < otp_size; i++)
-                CMR_LOGD("ultra wid data [%d] = %d", i, otp_info[i]);
+    if (otp_size == 0) {
+        struct sensor_otp_cust_info otpdata;
+        memset(&otpdata, 0, sizeof(struct sensor_otp_cust_info));
+        camera_get_otpinfo(oem_handle, 3, &otpdata);
+
+        if (otpdata.dual_otp.data_3d.size > 0) {
+            otp_size = otpdata.dual_otp.data_3d.size;
+            memcpy(otp_info, (cmr_u8 *)otpdata.dual_otp.data_3d.data_ptr,
+                   otpdata.dual_otp.data_3d.size);
+        }
+    }
+    handle->warp_param.otp_buf = otp_info;
+    handle->warp_param.otp_size = otp_size;
+
+    if (otp_size > 0)
+        CMR_LOGD("load ultra wide otp success, otp_size %d", otp_size);
+    else
+        CMR_LOGD("load ultra wide otp failed, otp_size %d", otp_size);
+
+    property_get("persist.vendor.cam.dump.spw.otp.log", prop, "0");
+    if (atoi(prop) == 1) {
+        for (cmr_u32 i = 0; i < otp_size; i = i + 8) {
+            CMR_LOGD("ultrawide otp data [%d %d %d %d %d %d %d %d]: 0x%x 0x%x "
+                     "0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
+                     i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
+                     otp_info[i], otp_info[i + 1], otp_info[i + 2],
+                     otp_info[i + 3], otp_info[i + 4], otp_info[i + 5],
+                     otp_info[i + 6], otp_info[i + 7]);
         }
     }
 }
-
 #endif

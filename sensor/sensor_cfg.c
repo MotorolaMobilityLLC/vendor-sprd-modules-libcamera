@@ -13,63 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "sns_cfg"
-
+#define LOG_TAG "sensor_cfg"
 #include "sensor_drv_u.h"
 #include "sensor_cfg.h"
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#endif
-#ifdef IPG
-extern SENSOR_INFO_T g_ipg_mipi_raw_info;
-#endif
-// gc area
-#ifdef GC0310
-extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
-#endif
-#ifdef GC2165
-extern SENSOR_INFO_T g_gc2165_mipi_yuv_info;
-#endif
-#ifdef GC2375
-extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
-#endif
-#ifdef GC2375A
-extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
-#endif
-#ifdef GC5005
-extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
-#endif
-#ifdef GC5024
-extern SENSOR_INFO_T g_gc5024_mipi_raw_info;
-#endif
-#ifdef GC5035
-extern SENSOR_INFO_T g_gc5035_mipi_raw_info;
-#endif
-#ifdef GC8024
-extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
-#endif
-#ifdef GC030A
-extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
-#endif
-#ifdef GC030A_F
-extern SENSOR_INFO_T g_gc030af_mipi_raw_info;
-#endif
-#ifdef GC030A_T
-extern SENSOR_INFO_T g_gc030at_mipi_raw_info;
-#endif
-#ifdef GC2385
-extern SENSOR_INFO_T g_gc2385_mipi_raw_info;
-#endif
-#ifdef GC2145
-extern SENSOR_INFO_T g_gc2145_mipi_raw_info;
-#endif
-
-//hynix area
-#ifdef HI556
-extern SENSOR_INFO_T g_hi556_mipi_raw_info;
-#endif
-#ifdef HI846
-extern SENSOR_INFO_T g_hi846_mipi_raw_info;
 #endif
 
 // ov area
@@ -90,6 +39,9 @@ extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
 #endif
 #ifdef OV8858
 extern SENSOR_INFO_T g_ov8858_mipi_raw_info;
+#endif
+#ifdef OV12A10
+extern SENSOR_INFO_T g_ov12a10_mipi_raw_info;
 #endif
 #ifdef OV13855
 extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
@@ -118,11 +70,8 @@ extern SENSOR_INFO_T g_ov7251_mipi_raw_info;
 #ifdef OV7251_DUAL
 extern SENSOR_INFO_T g_ov7251_dual_mipi_raw_info;
 #endif
-#ifdef OV12A10
-extern SENSOR_INFO_T g_ov12a10_mipi_raw_info;
-#endif
 
-// imx 258
+// sony area
 #ifdef IMX135
 extern SENSOR_INFO_T g_imx135_mipi_raw_info;
 #endif
@@ -145,6 +94,61 @@ extern SENSOR_INFO_T g_imx363_mipi_raw_info;
 extern SENSOR_INFO_T g_imx386_mipi_raw_info;
 #endif
 
+// samsung area
+#ifdef S5K3L6
+extern SENSOR_INFO_T g_s5k3l6_mipi_raw_info;
+#endif
+#ifdef S5K3L6XX03
+extern SENSOR_INFO_T g_s5k3l6xx03_mipi_raw_info;
+#endif
+#ifdef S5K3L8XXM3
+extern SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info;
+#endif
+#ifdef S5K3L8XXM3Q
+extern SENSOR_INFO_T g_s5k3l8xxm3q_mipi_raw_info;
+#endif
+#ifdef S5K3L8XXM3R
+extern SENSOR_INFO_T g_s5k3l8xxm3r_mipi_raw_info;
+#endif
+#ifdef S5K3M3SM24
+extern SENSOR_INFO_T g_s5k3m3sm24_mipi_raw_info;
+#endif
+#ifdef S5K3P8SM
+extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
+#endif
+#ifdef S5K3P9SX04
+extern SENSOR_INFO_T g_s5k3p9sx04_mipi_raw_info;
+#endif
+#ifdef S5KS3P92
+extern SENSOR_INFO_T g_s5ks3p92_mipi_raw_info;
+#endif
+#ifdef S5K4H7
+extern SENSOR_INFO_T g_s5k4h7_mipi_raw_info;
+#endif
+#ifdef S5K4H8YX
+extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
+#endif
+#ifdef S5K4H9YX
+extern SENSOR_INFO_T g_s5k4h9yx_mipi_raw_info;
+#endif
+#ifdef S5K5E2YA
+extern SENSOR_INFO_T g_s5k5e2ya_mipi_raw_info;
+#endif
+#ifdef S5K5E8YX
+extern SENSOR_INFO_T g_s5k5e8yx_mipi_raw_info;
+#endif
+#ifdef S5K5E9YU05
+extern SENSOR_INFO_T g_s5k5e9yu05_mipi_raw_info;
+#endif
+
+// hynix area
+#ifdef HI556
+extern SENSOR_INFO_T g_hi556_mipi_raw_info;
+#endif
+#ifdef HI846
+extern SENSOR_INFO_T g_hi846_mipi_raw_info;
+#endif
+
 // cista area
 #ifdef C2390
 extern SENSOR_INFO_T g_c2390_mipi_raw_info;
@@ -157,17 +161,14 @@ extern SENSOR_INFO_T g_c2580_mipi_raw_info;
 #ifdef SP0A09
 extern SENSOR_INFO_T g_sp0a09_mipi_raw_info;
 #endif
-#ifdef SP2509
-extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
-#endif
 #ifdef SP0A09Z
 extern SENSOR_INFO_T g_sp0a09z_mipi_raw_info;
 #endif
-#ifdef SP2509Z
-extern SENSOR_INFO_T g_sp2509z_mipi_raw_info;
-#endif
 #ifdef SP250A
 extern SENSOR_INFO_T g_sp250a_mipi_raw_info;
+#endif
+#ifdef SP2509
+extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
 #endif
 #ifdef SP2509R
 extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
@@ -175,65 +176,66 @@ extern SENSOR_INFO_T g_sp2509r_mipi_raw_info;
 #ifdef SP2509V
 extern SENSOR_INFO_T g_sp2509v_mipi_raw_info;
 #endif
-#ifdef SP8407
-extern SENSOR_INFO_T g_sp8407_mipi_raw_info;
+#ifdef SP2509Z
+extern SENSOR_INFO_T g_sp2509z_mipi_raw_info;
 #endif
 #ifdef SP2509ZZ
 extern SENSOR_INFO_T g_sp2509zz_mipi_raw_info;
 #endif
-
-// samsung area
-#ifdef S5K3L8XXM3
-extern SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info;
-#endif
-#ifdef S5K3L8XXM3Q
-extern SENSOR_INFO_T g_s5k3l8xxm3q_mipi_raw_info;
-#endif
-#ifdef S5K3L8XXM3R
-extern SENSOR_INFO_T g_s5k3l8xxm3r_mipi_raw_info;
-#endif
-#ifdef S5K3P8SM
-extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
-#endif
-#ifdef S5K4H8YX
-extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
-#endif
-#ifdef S5K5E2YA
-extern SENSOR_INFO_T g_s5k5e2ya_mipi_raw_info;
-#endif
-#ifdef S5K5E8YX
-extern SENSOR_INFO_T g_s5k5e8yx_mipi_raw_info;
-#endif
-#ifdef S5K4H9YX
-extern SENSOR_INFO_T g_s5k4h9yx_mipi_raw_info;
-#endif
-#ifdef S5K4H7
-extern SENSOR_INFO_T g_s5k4h7_mipi_raw_info;
-#endif
-#ifdef S5K3L6
-extern SENSOR_INFO_T g_s5k3l6_mipi_raw_info;
-#endif
-#ifdef S5K3L6XX03
-extern SENSOR_INFO_T g_s5k3l6xx03_mipi_raw_info;
-#endif
-#ifdef S5K3P9SX04
-extern SENSOR_INFO_T g_s5k3p9sx04_mipi_raw_info;
-#endif
-#ifdef S5K5E9YU05
-extern SENSOR_INFO_T g_s5k5e9yu05_mipi_raw_info;
-#endif
-#ifdef S5K3M3SM24
-extern SENSOR_INFO_T g_s5k3m3sm24_mipi_raw_info;
-#endif
-#ifdef S5KS3P92
-extern SENSOR_INFO_T g_s5ks3p92_mipi_raw_info;
+#ifdef SP8407
+extern SENSOR_INFO_T g_sp8407_mipi_raw_info;
 #endif
 
+// gc area
+#ifdef GC030A
+extern SENSOR_INFO_T g_gc030a_mipi_raw_info;
+#endif
+#ifdef GC030A_F
+extern SENSOR_INFO_T g_gc030af_mipi_raw_info;
+#endif
+#ifdef GC030A_T
+extern SENSOR_INFO_T g_gc030at_mipi_raw_info;
+#endif
+#ifdef GC0310
+extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
+#endif
+#ifdef GC2145
+extern SENSOR_INFO_T g_gc2145_mipi_raw_info;
+#endif
+#ifdef GC2165
+extern SENSOR_INFO_T g_gc2165_mipi_yuv_info;
+#endif
+#ifdef GC2375
+extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
+#endif
+#ifdef GC2375A
+extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
+#endif
+#ifdef GC2385
+extern SENSOR_INFO_T g_gc2385_mipi_raw_info;
+#endif
+#ifdef GC5005
+extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
+#endif
+#ifdef GC5024
+extern SENSOR_INFO_T g_gc5024_mipi_raw_info;
+#endif
+#ifdef GC5035
+extern SENSOR_INFO_T g_gc5035_mipi_raw_info;
+#endif
+#ifdef GC8024
+extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
+#endif
+
+#ifdef IPG
+extern SENSOR_INFO_T g_ipg_mipi_raw_info;
+#endif
+
+extern otp_drv_entry_t general_otp_entry;
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
 extern otp_drv_entry_t ov13855_sunny_drv_entry;
 extern otp_drv_entry_t ov5675_sunny_drv_entry;
-extern otp_drv_entry_t imx258_truly_drv_entry;
 extern otp_drv_entry_t ov13855_altek_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_qtech_drv_entry;
 extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
@@ -249,10 +251,6 @@ extern otp_drv_entry_t sp8407_otp_entry;
 extern otp_drv_entry_t sp8407_cmk_otp_entry;
 extern otp_drv_entry_t ov8856_shine_otp_entry;
 extern otp_drv_entry_t s5k5e8yx_jd_otp_entry;
-extern otp_drv_entry_t dual_master_2e_otp_entry;
-extern otp_drv_entry_t dual_slave_2e_otp_entry;
-extern otp_drv_entry_t single_1e_otp_entry;
-extern otp_drv_entry_t general_otp_entry;
 extern otp_drv_entry_t hi846_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
@@ -261,19 +259,19 @@ extern struct sns_af_drv_entry dw9714a_drv_entry;
 extern struct sns_af_drv_entry dw9714p_drv_entry;
 extern struct sns_af_drv_entry dw9714v_drv_entry;
 extern struct sns_af_drv_entry dw9718s_drv_entry;
+extern struct sns_af_drv_entry dw9763_drv_entry;
+extern struct sns_af_drv_entry dw9763a_drv_entry;
+extern struct sns_af_drv_entry dw9763r_drv_entry;
+extern struct sns_af_drv_entry dw9768v_drv_entry;
+extern struct sns_af_drv_entry vcm_zc524_drv_entry;
+extern struct sns_af_drv_entry vcm_zc533_drv_entry;
 extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
 extern struct sns_af_drv_entry lc898214_drv_entry;
 extern struct sns_af_drv_entry lc898213_drv_entry;
-extern struct sns_af_drv_entry dw9763_drv_entry;
-extern struct sns_af_drv_entry dw9763a_drv_entry;
-extern struct sns_af_drv_entry vcm_zc524_drv_entry;
 extern struct sns_af_drv_entry ad5823_drv_entry;
 extern struct sns_af_drv_entry vm242_drv_entry;
-extern struct sns_af_drv_entry dw9763r_drv_entry;
-extern struct sns_af_drv_entry dw9768v_drv_entry;
 extern struct sns_af_drv_entry ces6301_drv_entry;
-extern struct sns_af_drv_entry vcm_zc533_drv_entry;
 
 /**
  * NOTE: the interface can only be used by sensor ic.
@@ -300,39 +298,20 @@ const cmr_u8 camera_module_name_str[MODULE_MAX][20] = {
         [MODULE_TONGJU] = "Tongju",
         [MODULE_A_KERR] = "A-kerr",
         [MODULE_LITEARRAY] = "LiteArray",
-        [MODULE_HUAQUAN] = "Huaquan",
+        [MODULE_HUAQUAN] = "Huaquan", /*20*/
         [MODULE_KINGCOM] = "Kingcom",
         [MODULE_BOOYI] = "Booyi",
         [MODULE_LAIMU] = "Laimu",
         [MODULE_WDSEN] = "Wdsen",
-        [MODULE_SUNRISE] = "Sunrise",
+        [MODULE_SUNRISE] = "Sunrise", /*25*/
 
     /*add you camera module name following*/
 };
 
 /*---------------------------------------------------------------------------*
- **                         Constant Variables                                *
- **---------------------------------------------------------------------------*/
-
-//{.sn_name = "imx258_mipi_raw", .sensor_info =  &g_imx258_mipi_raw_info,
-// .af_dev_info = {.af_drv_entry = &dw9800_drv_entry, .af_work_mode = 0},
-// &imx258_drv_entry},
-
+ *                         Constant Variables                                *
+ *---------------------------------------------------------------------------*/
 const SENSOR_MATCH_T back_sensor_infor_tab[] = {
-// gc area
-#ifdef GC5005
-    {MODULE_SUNNY, "gc5005", &g_gc5005_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef GC8024
-    {MODULE_SUNNY, "gc8024", &g_gc8024_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef GC030A
-    {MODULE_SUNNY, "gc030a", &g_gc030a_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef GC2385
-    {MODULE_SUNNY, "gc2385", &g_gc2385_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-
 // ov area
 #ifdef OV8856_SHINE
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
@@ -356,30 +335,25 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef OV13855A
     {MODULE_SUNNY, "ov13855a", &g_ov13855a_mipi_raw_info, {&bu64297gwz_drv_entry, 0}, {&ov13855_altek_drv_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
-#ifdef OV16885
-    {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
-#endif
 #ifdef OV12A10
     {MODULE_SUNNY, "ov12a10", &g_ov12a10_mipi_raw_info, {&dw9714v_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV32A1Q
-    {MODULE_SUNNY, "ov32a1q", &g_ov32a1q_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov32a1q", &g_ov32a1q_mipi_raw_info, {&dw9800_drv_entry, 0}, {&general_otp_entry, 0xA0, MULTICAM_INDEPENDENT_EEPROM, 16384}},
+#endif
+#ifdef OV16885
+    {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef OV16885_NORMAL
     {MODULE_SUNNY, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {NULL, 0, 0, 0}},
 #endif
-// imx area
-#ifdef IMX258
-     {MODULE_SUNNY, "imx258", &g_imx258_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
-#endif
-#ifdef IMX135
-    {MODULE_SUNNY, "imx135", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef IMX230
-    {MODULE_SUNNY, "imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
-#endif
+
+// sony area
 #ifdef IMX351
     {MODULE_SUNNY, "imx351", &g_imx351_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+#endif
+#ifdef IMX258
+     {MODULE_SUNNY, "imx258", &g_imx258_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef IMX362
     {MODULE_SUNNY, "imx362", &g_imx362_mipi_raw_info, {&lc898213_drv_entry, 0}, {NULL, 0, 0, 0}},
@@ -394,28 +368,11 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef IMX386
     {MODULE_SUNNY, "imx386", &g_imx386_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
-
-// cista area
-#ifdef C2390
-    {MODULE_SUNNY, "c2390", &g_c2390_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#ifdef IMX135
+    {MODULE_SUNNY, "imx135", &g_imx135_mipi_raw_info, {&ad5823_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
-
-// sp area
-#ifdef SP2509
-    {MODULE_SUNNY, "sp2509", &g_sp2509_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef SP2509Z
-    {MODULE_SUNNY, "sp2509z", &g_sp2509z_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef SP250A
-    {MODULE_SUNNY, "sp250a", &g_sp250a_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef SP8407
-#ifdef SBS_SENSOR_FRONT
-    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, {&sp8407_cmk_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
-#else
-    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&sp8407_otp_entry, 0xB0, SINGLE_CAM_ONE_EEPROM, 8192}},
-#endif
+#ifdef IMX230
+    {MODULE_SUNNY, "imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 
 // samsung area
@@ -459,39 +416,52 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef HI846
     {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
+
+// cista area
+#ifdef C2390
+    {MODULE_SUNNY, "c2390", &g_c2390_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
+// sp area
+#ifdef SP2509
+    {MODULE_SUNNY, "sp2509", &g_sp2509_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef SP2509Z
+    {MODULE_SUNNY, "sp2509z", &g_sp2509z_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef SP250A
+    {MODULE_SUNNY, "sp250a", &g_sp250a_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef SP8407
+#ifdef SBS_SENSOR_FRONT
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, {&sp8407_cmk_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#else
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&sp8407_otp_entry, 0xB0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
+#endif
+
+// gc area
+#ifdef GC5005
+    {MODULE_SUNNY, "gc5005", &g_gc5005_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC8024
+    {MODULE_SUNNY, "gc8024", &g_gc8024_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC030A
+    {MODULE_SUNNY, "gc030a", &g_gc030a_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC2385
+    {MODULE_SUNNY, "gc2385", &g_gc2385_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
 #ifdef IPG
     {MODULE_SUNNY, "ipg",  &g_ipg_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor_infor_tab[] = {
-// gc area
-#ifdef GC030A_F
-    {MODULE_SUNNY, "gc030a_f", &g_gc030af_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef GC030A_T
-    {MODULE_SUNNY, "gc030a_t", &g_gc030at_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef GC2375
-    {MODULE_SUNNY, "gc2375", &g_gc2375_mipi_raw_info, {NULL, 0}, {NULL, 0, 0 ,0}},
-#endif
-#ifdef GC5005
-    {MODULE_SUNNY, "gc5005", &g_gc5005_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef GC5024
-    {MODULE_SUNNY, "gc5024", &g_gc5024_mipi_raw_info, {NULL, 0}, {&gc5024_common_drv_entry, 0, 0, 0}},
-#endif
-#ifdef GC2145
-    {MODULE_SUNNY, "gc2145", &g_gc2145_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-
 // ov area
-#ifdef OV5675
-    {MODULE_DARLING, "ov5675", &g_ov5675_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef OV8856
-    {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9714_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
@@ -500,6 +470,12 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA2, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
+#endif
+#ifdef OV5675
+    {MODULE_DARLING, "ov5675", &g_ov5675_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef OV8856
+    {MODULE_SUNNY, "ov8856", &g_ov8856_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV8858
     {MODULE_SUNNY, "ov8858", &g_ov8858_mipi_raw_info, {&dw9763a_drv_entry, 0}, {&ov8858_cmk_drv_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
@@ -514,24 +490,10 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "ov16885", &g_ov16885_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 
-
-// sp area
-#ifdef SP0A09
-    {MODULE_SUNNY, "sp0a09", &g_sp0a09_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#ifdef SP0A09Z
-    {MODULE_SUNNY, "sp0a09z", &g_sp0a09z_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-
-#ifdef SP8407
-#ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
-    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, {&sp8407_cmk_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
-#else
-    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
-#endif
-#endif
-
 // samsung area
+#ifdef S5K4H7
+    {MODULE_SPW_NONE_BACK, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
 #ifdef S5K3L8XXM3Q
     {MODULE_QTECH, "s5k3l8xxm3q", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, {&s5k3l8xxm3_qtech_drv_entry, 0xA8, DUAL_CAM_TWO_EEPROM, 8192}},
 #endif
@@ -541,11 +503,8 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef S5K5E2YA
     {MODULE_SUNNY, "s5k5e2ya", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
-#ifdef S5K4H7
-    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {&s5k4h7_tsp_drv_entry, 0, 0, 0}},
-#endif
 #ifdef S5KS3P92
-    {MODULE_SUNNY, "s5ks3p92", &g_s5ks3p92_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "s5ks3p92", &g_s5ks3p92_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA2, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 
 // hynix area
@@ -555,9 +514,46 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 #ifdef HI846
     {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {&hi846_drv_entry, 0, 0, 0}},
 #endif
+
+// sp area
+#ifdef SP8407
+#ifdef CONFIG_FRONT_CAMERA_AUTOFOCUS
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {&dw9763_drv_entry, 0}, {&sp8407_cmk_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#else
+    {MODULE_SUNNY, "sp8407", &g_sp8407_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#endif
+#ifdef SP0A09
+    {MODULE_SUNNY, "sp0a09", &g_sp0a09_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef SP0A09Z
+    {MODULE_SUNNY, "sp0a09z", &g_sp0a09z_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+
+// gc area
+#ifdef GC030A_F
+    {MODULE_SUNNY, "gc030a_f", &g_gc030af_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC030A_T
+    {MODULE_SUNNY, "gc030a_t", &g_gc030at_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC2145
+    {MODULE_SUNNY, "gc2145", &g_gc2145_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC2375
+    {MODULE_SUNNY, "gc2375", &g_gc2375_mipi_raw_info, {NULL, 0}, {NULL, 0, 0 ,0}},
+#endif
+#ifdef GC5005
+    {MODULE_SUNNY, "gc5005", &g_gc5005_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef GC5024
+    {MODULE_SUNNY, "gc5024", &g_gc5024_mipi_raw_info, {NULL, 0}, {&gc5024_common_drv_entry, 0, 0, 0}},
+#endif
+
 #ifdef IPG
     {MODULE_SUNNY, "ipg",  &g_ipg_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
@@ -574,7 +570,7 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c >> 1}, {NULL, 0, 0, 0}},
 #else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
 #endif
@@ -583,15 +579,15 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV16885_NORMAL
-    {MODULE_SUNNY, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {&general_otp_entry, 0xA0, MULTICAM_INDEPENDENT_EEPROM, 8192}},
 #endif
 
-// gc area
-#ifdef GC2165
-    {MODULE_SUNNY, "gc2165", &g_gc2165_mipi_yuv_info, {NULL, 0}, {NULL, 0, 0, 0}},
+// samsung area
+#ifdef S5K3M3SM24
+    {MODULE_SUNNY, "s5k3m3sm24", &g_s5k3m3sm24_mipi_raw_info, {&dw9714a_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
-#ifdef GC2375A
-    {MODULE_SUNNY, "gc2375a", &g_gc2375a_mipi_raw_info, {NULL, 0}, {&gc2375_altek_drv_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
+#ifdef S5K5E9YU05
+    {MODULE_SUNNY, "s5k5e9yu05", &g_s5k5e9yu05_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef GC5035
     {MODULE_SUNNY, "gc5035", &g_gc5035_mipi_raw_info, {NULL, 0}, {&gc5035_common_drv_entry, 0, 0, 0}},
@@ -613,16 +609,18 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
     {MODULE_SUNNY, "sp2509zz", &g_sp2509zz_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
 
-// samsung area
-#ifdef S5K3M3SM24
-    {MODULE_SUNNY, "s5k3m3sm24", &g_s5k3m3sm24_mipi_raw_info, {&dw9714a_drv_entry, 0}, {NULL, 0, 0, 0}},
+// gc area
+#ifdef GC2165
+    {MODULE_SUNNY, "gc2165", &g_gc2165_mipi_yuv_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
-#ifdef S5K5E9YU05
-    {MODULE_SUNNY, "s5k5e9yu05", &g_s5k5e9yu05_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+#ifdef GC2375A
+    {MODULE_SUNNY, "gc2375a", &g_gc2375a_mipi_raw_info, {NULL, 0}, {&gc2375_altek_drv_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
+
 #ifdef IPG
     {MODULE_SUNNY, "ipg",  &g_ipg_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
@@ -632,9 +630,9 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c >> 1}, {NULL, 0, 0, 0}},
 #else
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c >> 1}, {&general_otp_entry, 0xB0, MULTICAM_INDEPENDENT_EEPROM, 8192}},
 #endif
 #endif
 
@@ -642,7 +640,9 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #ifdef C2580
     {MODULE_SUNNY, "c2580", &g_c2580_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
+
 const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #ifdef OV7251
     {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -652,9 +652,9 @@ const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c >> 1}, {NULL, 0, 0, 0}},
 #else
-	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c >> 1}, {NULL, 0, 0, 0}},
 #endif
 #endif
 
@@ -667,6 +667,7 @@ const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 #ifdef OV7251_DUAL
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
@@ -687,8 +688,8 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
     {SPRD_SINGLE_FACEID_REGISTER_ID, MODE_SINGLE_FACEID_REGISTER, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
     {SPRD_SINGLE_FACEID_UNLOCK_ID, MODE_SINGLE_FACEID_UNLOCK, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
 #endif
-#ifdef SENSOR_OV8856_TELE
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
+#ifdef SENSOR_OV8856_TELE
     {SPRD_SOFY_OPTICAL_ZOOM_ID, MODE_SOFY_OPTICAL_ZOOM, 2, {"s5k3p9sx04", "ov8856_shine", "0", "0", "0", "0"}, SNS_FACE_BACK, 90},
 #endif
 #endif
@@ -698,7 +699,6 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     {SPRD_3D_FACE_ID, MODE_SOFY_OPTICAL_ZOOM, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},
 #endif
-
 };
 
 void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot_id) {
@@ -742,10 +742,15 @@ void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot
         break;
     }
 
-    if(slot_id == SENSOR_SUB2 && !strcmp(phyPtr->sensor_name, "ov8856")){
+    if (phyPtr->module_id == MODULE_SPW_NONE_BACK) {
         phyPtr->face_type = SNS_FACE_BACK;
         phyPtr->angle = 90;
-	}
+    }
+
+    if(slot_id == SENSOR_SUB2 && !strcmp(phyPtr->sensor_name, "ov8856_shine")){
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+    }
 
 }
 

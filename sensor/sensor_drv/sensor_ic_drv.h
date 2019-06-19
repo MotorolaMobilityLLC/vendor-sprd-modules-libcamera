@@ -186,14 +186,44 @@ enum camera_module_id {
     /*add camera vendor name index here*/
     MODULE_A_KERR,
     MODULE_LITEARRAY,
-    MODULE_HUAQUAN,
+    MODULE_HUAQUAN, /*20*/
     MODULE_KINGCOM,
     MODULE_BOOYI,
     MODULE_LAIMU,
     MODULE_WDSEN,
-    MODULE_SUNRISE,
+    MODULE_SUNRISE, /*25*/
 
-    MODULE_MAX, /*NOTE:This must be the last line*/
+    MODULE_MAX, /*NOTE:This used to be the last line*/
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+     * MODULE: feature|sensor role|module face
+     * feature:
+     *     NONE-0, BOKEH-1, WT(Wide + Tele)-2, SPW(Superwide)-3,
+     *     STL3D(Structure Light 3D)-4
+     * sensor role:
+     *     NONE-0,
+     *     BOKEH:
+     *         MASTER-1, SLAVE-2
+     *     WT:
+     *         WIDE-1, TELE-2
+     *     STL3D:
+     *         RGB-1, IRL(IR Left)-2, IRR(IR Right)-3
+     * module facing:
+     *     BACK-0, FRONT-1
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+    MODULE_BOKEH_MASTER_BACK = 0x110,
+    MODULE_BOKEH_SLAVE_BACK = 0x120,
+    MODULE_BOKEH_MASTER_FRONT = 0x111,
+    MODULE_BOKEH_SLAVE_FRONT = 0x121,
+    MODULE_WT_WIDE_BACK = 0x210,
+    MODULE_WT_TELE_BACK = 0x220,
+    MODULE_WT_WIDE_FRONT = 0x211,
+    MODULE_WT_TELE_FRONT = 0x221,
+    MODULE_SPW_NONE_BACK = 0x300,
+    MODULE_SPW_NONE_FRONT = 0x301,
+    MODULE_STL3D_RGB_FRONT = 0x411,
+    MODULE_STL3D_IRL_FRONT = 0x421,
+    MODULE_STL3D_IRR_FRONT = 0x431,
 };
 
 typedef enum {
@@ -696,6 +726,7 @@ typedef struct slotSensorInfo {
 typedef struct phySensorInfo {
     int phyId;
     int slotId;
+    cmr_u16 module_id;
     int sensor_role;
     int face_type;
     int angle;

@@ -148,7 +148,7 @@ struct preview_md_ops {
     cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id,
                                    cmr_u32 sn_mode,
                                    struct sensor_mode_fps_tag *fps_info);
-    cmr_int (*get_sensor_otp)(cmr_handle oem_handle,
+    cmr_int (*get_sensor_otp)(cmr_handle oem_handle, cmr_u8 dual_flag,
                               struct sensor_otp_cust_info *dual_otp_data);
     cmr_int (*get_buff_handle)(cmr_handle oem_handle, int frame_type,
                                cam_graphic_buffer_info_t *buf_info);

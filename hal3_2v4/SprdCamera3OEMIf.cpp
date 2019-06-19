@@ -1624,7 +1624,7 @@ void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     struct sensor_otp_cust_info otp_info;
 
     memset(&otp_info, 0, sizeof(struct sensor_otp_cust_info));
-    mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
+    mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, 1, &otp_info);
 
     if (otp_info.total_otp.data_ptr != NULL && otp_info.dual_otp.dual_flag) {
         *addr = otp_info.dual_otp.data_3d.data_ptr;
@@ -2689,7 +2689,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 read_file(psPath_OtpData, dual_otp_data, SPRD_DUAL_OTP_SIZE);
             if (otp_ret == 0) {
                 struct sensor_otp_cust_info otp_info = {0};
-                mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle,
+                mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, 1,
                                                          &otp_info);
                 if (otp_info.total_otp.data_ptr != NULL &&
                     otp_info.dual_otp.dual_flag) {
@@ -2731,7 +2731,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
 
             struct sensor_otp_cust_info otp_info;
             memset(&otp_info, 0, sizeof(struct sensor_otp_cust_info));
-            mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
+            mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, 1,
+                                                     &otp_info);
             if (otp_info.total_otp.data_ptr != NULL &&
                 otp_info.dual_otp.dual_flag) {
                 HAL_LOGD(

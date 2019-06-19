@@ -318,8 +318,8 @@ cmr_s32 pdaf_otp_info_parser(struct pdaf_ctrl_init_in * in_p)
 				ISP_LOGV("pdaf otp map v0.4 or v0.5");
 				in_p->pdaf_otp.otp_data = pdaf_otp_info_ptr->rdm_info.data_addr;
 				in_p->pdaf_otp.size = pdaf_otp_info_ptr->rdm_info.data_size;
-			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52 && module_info[3] == 0x44) {
-				ISP_LOGV("pdaf otp map v1.0");
+			} else if (module_info[4] == 1 && (module_info[5] == 0 || module_info[5] == 1) && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52 && module_info[3] == 0x44) {
+				ISP_LOGV("pdaf otp map v1.0 or v1.1");
 				in_p->pdaf_otp.otp_data = (void *)((cmr_u8 *) pdaf_otp_info_ptr->rdm_info.data_addr + 1);
 				in_p->pdaf_otp.size = pdaf_otp_info_ptr->rdm_info.data_size - 1;
 			} else {

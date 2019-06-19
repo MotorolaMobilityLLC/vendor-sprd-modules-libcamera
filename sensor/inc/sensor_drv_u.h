@@ -765,8 +765,8 @@ PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId);
 
-cmr_int
-sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data);
+cmr_int sensor_read_otp_from_socket(cmr_u8 dual_flag,
+                                    struct sensor_otp_cust_info *otp_data);
 
 // utest refer
 #ifdef __cplusplus

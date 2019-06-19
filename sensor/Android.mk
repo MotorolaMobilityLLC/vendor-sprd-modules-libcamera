@@ -99,7 +99,7 @@ LOCAL_HEADER_LIBRARIES += libutils_headers
 
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl
 
-LOCAL_SHARED_LIBRARIES += liblog
+LOCAL_SHARED_LIBRARIES += liblog libcam_otp_parser
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

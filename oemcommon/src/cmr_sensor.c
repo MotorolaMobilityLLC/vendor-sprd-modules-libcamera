@@ -1286,15 +1286,16 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     // func_ptr = sns_ops->ext_ops[sns_cmd].ops;
     if (!module->otp_drv_info.otp_drv_entry) {
-        ret =
+        /*ret =
             cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr, &read_flag);
         if (read_flag) {
             return ret;
-        }
+        }*/
     } else {
         if (cmd == SENSOR_ACCESS_VAL) {
             SENSOR_VAL_T *val = (SENSOR_VAL_T *)arg;
-            if (val->type == SENSOR_VAL_TYPE_READ_OTP)
+            if (val->type == SENSOR_VAL_TYPE_READ_OTP ||
+                val->type == SENSOR_VAL_TYPE_READ_DUAL_OTP)
                 sensor_drv_ioctl(sensor_cxt,
                                  CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT,
                                  (void *)arg);

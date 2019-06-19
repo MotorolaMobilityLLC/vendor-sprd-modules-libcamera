@@ -36,7 +36,7 @@
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME			"ov8856"
+#define SENSOR_NAME "ov8856_shine"
 
 #define I2C_SLAVE_ADDR 0x6c // 0x20
 

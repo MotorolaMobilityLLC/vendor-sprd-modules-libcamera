@@ -33,9 +33,9 @@
 #include "sensor_ov8856_shine_otp.h"
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "ov8856"
+#define SENSOR_NAME "ov8856_shine"
 
-#define I2C_SLAVE_ADDR 0x6c // 0x20 		/* 8bit slave address*/
+#define I2C_SLAVE_ADDR 0x6c // 0x20
 
 #define ov8856_PID_ADDR 0x300B
 #define ov8856_PID_VALUE 0x88

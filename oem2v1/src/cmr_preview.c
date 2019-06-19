@@ -4178,7 +4178,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->prev_param.refocus_eb == 1) {
             /* get otp  buffer  */
             struct sensor_otp_cust_info sensor_otp;
-            ret = handle->ops.get_sensor_otp(handle->oem_handle, &sensor_otp);
+            ret =
+                handle->ops.get_sensor_otp(handle->oem_handle, 1, &sensor_otp);
             if (ret) {
                 CMR_LOGE("get sensor otp error");
                 goto exit;

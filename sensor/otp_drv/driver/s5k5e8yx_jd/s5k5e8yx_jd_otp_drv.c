@@ -440,10 +440,6 @@ static cmr_int s5k5e8yx_jd_compatible_convert(cmr_handle otp_drv_handle,
         single_otp->lsc_info =
             (struct sensor_otp_section_info *)&format_data->lsc_cali_dat;
 
-    /*ae convert*/
-    single_otp->ae_info =
-        (struct sensor_otp_section_info *)&format_data->ae_cali_dat;
-
     /*pdaf convert*/
     if (pdaf_dst->rdm_info.buffer == NULL)
         single_otp->pdaf_info = NULL;

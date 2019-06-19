@@ -400,30 +400,30 @@ cmr_int cmr_sns_copy_info(struct sensor_exp_info *out_sensor_info,
         in_sensor_info->sensor_interface.pixel_width;
     out_sensor_info->sn_interface.is_loose =
         in_sensor_info->sensor_interface.is_loose;
-    if(in_sensor_info->sensor_interface.lane_switch_eb != 0) {
-          out_sensor_info->sn_interface.lane_switch_eb = 1;
-          out_sensor_info->sn_interface.lane_seq =
-          in_sensor_info->sensor_interface.lane_seq;/*default 0x0123*/
-    }else{
-          out_sensor_info->sn_interface.lane_switch_eb = 0;
-          cmr_u64 lane_seq = 0x0123;
-          in_sensor_info->sensor_interface.lane_seq = lane_seq;/*default 0x0123*/
+    if (in_sensor_info->sensor_interface.lane_switch_eb != 0) {
+        out_sensor_info->sn_interface.lane_switch_eb = 1;
+        out_sensor_info->sn_interface.lane_seq =
+            in_sensor_info->sensor_interface.lane_seq; /*default 0x0123*/
+    } else {
+        out_sensor_info->sn_interface.lane_switch_eb = 0;
+        cmr_u64 lane_seq = 0x0123;
+        in_sensor_info->sensor_interface.lane_seq = lane_seq; /*default 0x0123*/
     }
     out_sensor_info->sn_interface.is_cphy =
         in_sensor_info->sensor_interface.is_cphy;
-    if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_YUV422){
+    if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_YUV422) {
         out_sensor_info->image_format = CAM_IMG_FMT_YUV422P;
-    } else if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_RAW){
+    } else if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_RAW) {
         out_sensor_info->image_format = CAM_IMG_FMT_BAYER_MIPI_RAW;
     }
     for (i = 0; i < SENSOR_MODE_MAX; i++) {
         cmr_sns_copy_mode_info(&out_sensor_info->mode_info[i],
                                &in_sensor_info->sensor_mode_info[i]);
         if (out_sensor_info->mode_info[i].image_format ==
-            SENSOR_IMAGE_FORMAT_YUV422){
+            SENSOR_IMAGE_FORMAT_YUV422) {
             out_sensor_info->mode_info[i].image_format = CAM_IMG_FMT_YUV422P;
         } else if (out_sensor_info->mode_info[i].image_format ==
-                 SENSOR_IMAGE_FORMAT_RAW){
+                   SENSOR_IMAGE_FORMAT_RAW) {
             out_sensor_info->mode_info[i].image_format =
                 CAM_IMG_FMT_BAYER_MIPI_RAW;
         }
@@ -1260,15 +1260,16 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     // func_ptr = sns_ops->ext_ops[sns_cmd].ops;
     if (!module->otp_drv_info.otp_drv_entry) {
-        ret =
+        /*ret =
             cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr, &read_flag);
         if (read_flag) {
             return ret;
-        }
+        }*/
     } else {
         if (cmd == SENSOR_ACCESS_VAL) {
             SENSOR_VAL_T *val = (SENSOR_VAL_T *)arg;
-            if (val->type == SENSOR_VAL_TYPE_READ_OTP)
+            if (val->type == SENSOR_VAL_TYPE_READ_OTP ||
+                val->type == SENSOR_VAL_TYPE_READ_DUAL_OTP)
                 sensor_drv_ioctl(sensor_cxt,
                                  CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT,
                                  (void *)arg);

@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <cutils/sockets.h>
-
 #include "hw_sensor_drv.h"
 #include "sensor_cfg.h"
 #include "sensor_drv_u.h"
@@ -713,7 +712,7 @@ cmr_int _sensor_cali_load_param(struct sensor_drv_context *sensor_cxt,
 }
 
 LOCAL cmr_int sensor_create_ctrl_thread(struct sensor_drv_context *sensor_cxt) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
@@ -728,7 +727,7 @@ LOCAL cmr_int sensor_create_ctrl_thread(struct sensor_drv_context *sensor_cxt) {
                                 sensor_ctrl_thread_proc, (void *)sensor_cxt);
         if (ret) {
             SENSOR_LOGE("send msg failed!");
-            ret = CMR_CAMERA_FAIL;
+            ret = SENSOR_FAIL;
             goto end;
         }
 
@@ -747,7 +746,7 @@ end:
 }
 
 LOCAL cmr_int sensor_ctrl_thread_proc(struct cmr_msg *message, void *p_data) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
     cmr_u32 evt = 0, on_off = 0;
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)p_data;
     otp_ctrl_cmd_t *otp_ctrl_data = NULL;
@@ -802,7 +801,7 @@ LOCAL cmr_int sensor_ctrl_thread_proc(struct cmr_msg *message, void *p_data) {
 LOCAL cmr_int
 sensor_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt) {
     CMR_MSG_INIT(message);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
@@ -1039,9 +1038,9 @@ LOCAL cmr_int sensor_write_dualcam_otpdata(
     cmr_u16 num_byte = SPRD_DUAL_OTP_SIZE;
     char value[PROPERTY_VALUE_MAX];
 
-    SENSOR_LOGI("write dualotp ");
     property_get("debug.dualcamera.write.otp", value, "false");
     if (!strcmp(value, "true") && (sensor_id == 0)) {
+        SENSOR_LOGI("write dualotp");
         const char *psPath_OtpData = "data/vendor/cameraserver/otp.txt";
 
         otp_params_t pdata;
@@ -1065,7 +1064,7 @@ LOCAL cmr_int sensor_write_dualcam_otpdata(
 LOCAL cmr_int sensor_set_mode_msg(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 mode, cmr_u32 is_inited) {
     CMR_MSG_INIT(message);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     message.msg_type = SENSOR_CTRL_EVT_SETMODE;
@@ -1076,7 +1075,7 @@ LOCAL cmr_int sensor_set_mode_msg(struct sensor_drv_context *sensor_cxt,
                               &message);
     if (ret) {
         SENSOR_LOGE("send msg failed!");
-        return CMR_CAMERA_FAIL;
+        return SENSOR_FAIL;
     }
 
     return ret;
@@ -1084,7 +1083,7 @@ LOCAL cmr_int sensor_set_mode_msg(struct sensor_drv_context *sensor_cxt,
 
 cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle) {
     CMR_MSG_INIT(message);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
     struct sensor_drv_context *sensor_cxt =
         (struct sensor_drv_context *)sns_module_handle;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
@@ -1096,7 +1095,7 @@ cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle) {
                               &message);
     if (ret) {
         SENSOR_LOGE("send msg failed!");
-        return CMR_CAMERA_FAIL;
+        return SENSOR_FAIL;
     }
     return ret;
 }
@@ -1251,7 +1250,7 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
 cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off) {
     CMR_MSG_INIT(message);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
@@ -1263,7 +1262,7 @@ cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                               &message);
     if (ret) {
         SENSOR_LOGE("send msg failed!");
-        return CMR_CAMERA_FAIL;
+        return SENSOR_FAIL;
     }
     return ret;
 }
@@ -1799,10 +1798,10 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
 
 cmr_int sensor_update_isparm_from_file(struct sensor_drv_context *sensor_cxt,
                                        cmr_u32 sensor_id) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     if (!sensor_cxt) {
-        return CMR_CAMERA_FAIL;
+        return SENSOR_FAIL;
     }
 
     ret = isp_raw_para_update_from_file(sensor_cxt->sensor_info_ptr, sensor_id);
@@ -1832,7 +1831,7 @@ cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param) {
 
 cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
                              cmr_u8 vendor_id) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_VAL_T val;
     struct sensor_ic_ops *sns_ops = PNULL;
@@ -1850,7 +1849,7 @@ cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
 
 static cmr_int
 sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
     cmr_int sensor_type = 0;
     SENSOR_VAL_T val;
     struct sensor_4in1_info sn_4in1_info;
@@ -1889,7 +1888,7 @@ sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
 }
 
 cmr_int sensor_set_otp_data(struct sensor_drv_context *sensor_cxt) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_VAL_T val;
     struct sensor_ic_ops *sns_ops = PNULL;
@@ -1910,12 +1909,12 @@ cmr_int sensor_set_otp_data(struct sensor_drv_context *sensor_cxt) {
 LOCAL cmr_int sensor_otp_rw_ctrl(struct sensor_drv_context *sensor_cxt,
                                  uint8_t cmd, uint8_t sub_cmd, void *data) {
     CMR_MSG_INIT(message);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     otp_ctrl_cmd_t *otp_cmd = malloc(sizeof(otp_ctrl_cmd_t));
     if (!otp_cmd) {
-        CMR_LOGE("otp cmd buffer alloc failed!");
+        SENSOR_LOGE("otp cmd buffer alloc failed!");
         return -1;
     }
     otp_cmd->cmd = cmd;
@@ -1935,11 +1934,11 @@ LOCAL cmr_int sensor_otp_rw_ctrl(struct sensor_drv_context *sensor_cxt,
     ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle,
                               &message);
     if (ret) {
-        CMR_LOGE("send msg failed!");
+        SENSOR_LOGE("send msg failed!");
         if (message.data) {
             free(message.data);
         }
-        return CMR_CAMERA_FAIL;
+        return SENSOR_FAIL;
     }
     return ret;
 }
@@ -1965,7 +1964,7 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
                 sensor_cxt->otp_drv_handle, NULL);
             ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_parse(
                 sensor_cxt->otp_drv_handle, data);
-            if (ret == CMR_CAMERA_SUCCESS) {
+            if (ret == SENSOR_SUCCESS) {
                 ret = module->otp_drv_info.otp_drv_entry->otp_ops
                           .sensor_otp_calibration(sensor_cxt->otp_drv_handle);
             } else {
@@ -1976,13 +1975,13 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
         case OTP_WRITE_DATA:
             ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_write(
                 sensor_cxt->otp_drv_handle, data);
-            if (ret != CMR_CAMERA_SUCCESS)
+            if (ret != SENSOR_SUCCESS)
                 return ret;
             break;
         case OTP_IOCTL:
             ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_ioctl(
                 sensor_cxt->otp_drv_handle, sub_cmd, data);
-            if (ret != CMR_CAMERA_SUCCESS)
+            if (ret != SENSOR_SUCCESS)
                 return ret;
             break;
         default:
@@ -2378,7 +2377,7 @@ cmr_int sensor_ic_write_gain(cmr_handle handle, cmr_u32 param) {
     }
 #endif
     if (!(sns_ops && sns_ops->write_gain_value)) {
-        CMR_LOGE("write_gain is NULL,return");
+        SENSOR_LOGE("write_gain is NULL,return");
         return SENSOR_FAIL;
     }
     ret = sns_ops->write_gain_value(sensor_cxt->sns_ic_drv_handle, param);
@@ -2407,7 +2406,7 @@ static cmr_int sensor_ic_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     }
 #endif
     if (!(sns_ops && sns_ops->ex_write_exp)) {
-        CMR_LOGE("ex_write_exp is NULL,return");
+        SENSOR_LOGE("ex_write_exp is NULL,return");
         return SENSOR_FAIL;
     }
     ret = sns_ops->ex_write_exp(sensor_cxt->sns_ic_drv_handle, param);
@@ -2436,7 +2435,7 @@ static cmr_int sensor_ic_write_ae_value(cmr_handle handle, cmr_u32 param) {
     }
 #endif
     if (!(sns_ops && sns_ops->write_ae_value)) {
-        CMR_LOGE("write_ae_value is NULL,return");
+        SENSOR_LOGE("write_ae_value is NULL,return");
         return SENSOR_FAIL;
     }
     ret = sns_ops->write_ae_value(sensor_cxt->sns_ic_drv_handle, param);
@@ -2454,7 +2453,7 @@ static cmr_int sensor_ic_read_aec_info(cmr_handle handle, void *param) {
 
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
     if (!(sns_ops && sns_ops->read_aec_info)) {
-        CMR_LOGE("ex_write_exp is NULL,return");
+        SENSOR_LOGE("ex_write_exp is NULL,return");
         return SENSOR_FAIL;
     }
     ret = sns_ops->read_aec_info(sensor_cxt->sns_ic_drv_handle, param);
@@ -2500,7 +2499,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
         SENSOR_LOGV("read aec i %u count %d handle %p", i, count,
                     sensor_handle);
         ret = sensor_ic_read_aec_info(sensor_handle, (&aec_reg_info[i]));
-        if (ret != CMR_CAMERA_SUCCESS)
+        if (ret != SENSOR_SUCCESS)
             return ret;
     }
 
@@ -2559,7 +2558,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     }
 
     ret = sensor_muti_i2c_write(handle, &muti_aec_info);
-    if (ret != CMR_CAMERA_SUCCESS)
+    if (ret != SENSOR_SUCCESS)
         return ret;
 
     return ret;
@@ -2680,7 +2679,7 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
             if (otp_ops && otp_ops->sensor_otp_ioctl) {
                 ret = otp_ops->sensor_otp_ioctl(sensor_cxt->otp_drv_handle, cmd,
                                                 param);
-                if (ret != CMR_CAMERA_SUCCESS)
+                if (ret != SENSOR_SUCCESS)
                     return ret;
             }
         } else {
@@ -2831,6 +2830,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
 
     phyPtr->image_format = sensor_cxt->sensor_info_ptr->image_format;
     phyPtr->sensor_type = sensor_cxt->sensor_type;
+    phyPtr->module_id = module->module_id;
     phyPtr->data_type = 0;
 
     // customize camera attribute
@@ -3237,7 +3237,7 @@ static cmr_int sensor_drv_open(struct sensor_drv_context *sensor_cxt,
             module) {
             cmr_u8 vendor_id = 0;
             if (module->otp_drv_info.otp_drv_entry) {
-                sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
+                // sensor_write_dualcam_otpdata(sensor_cxt, sensor_id);
                 sensor_otp_rw_ctrl(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
                 sensor_set_otp_data(sensor_cxt);
                 sensor_otp_ops_t *otp_ops = PNULL;
@@ -3393,27 +3393,24 @@ sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
     return NULL;
 };
 
-#define OTP_CONTROL_SIZE 30
-#define OTP_LENGTH_SIZE 2
+#define OTP_CONTROL_SIZE 32
 #define OTP_DATA_SIZE 10240
-#define OTP_WRITE_BUFFER_SIZE OTP_CONTROL_SIZE + OTP_LENGTH_SIZE
-#define OTP_READ_BUFFER_SIZE OTP_CONTROL_SIZE + OTP_LENGTH_SIZE + OTP_DATA_SIZE
+#define OTP_WRITE_BUFFER_SIZE OTP_CONTROL_SIZE
+#define OTP_READ_BUFFER_SIZE OTP_CONTROL_SIZE + OTP_DATA_SIZE
 
 #define SOCKET_NAME_OTPD "otpd"
 #define OTPD_WRITE_DATA "Otp Write Data"
 #define OTPD_READ_DATA "Otp Read Data"
-#define OTPD_READ_GOLDEN_DATA "Otp Read Golden Data"
 #define OTPD_READ_RSP "Otp Read Rsp"
 #define OTPD_MSG_OK "Otp Data Ok"
 #define OTPD_MSG_FAILED "Otp Data Failed"
-cmr_int
-sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data) {
+cmr_int sensor_read_otp_from_socket(cmr_u8 dual_flag,
+                                    struct sensor_otp_cust_info *otp_data) {
     cmr_int ret = -1;
     cmr_int s_otpd_fd = -1;
     cmr_u32 read_num = 0;
     cmr_u8 write_buf[OTP_WRITE_BUFFER_SIZE] = {0};
     static cmr_u8 read_buf[OTP_READ_BUFFER_SIZE] = {0};
-    cmr_u8 otp_length[OTP_LENGTH_SIZE] = {0};
 
     SENSOR_LOGV("E");
 
@@ -3425,24 +3422,23 @@ sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data) {
     }
     SENSOR_LOGD("otpd:connect %s success", SOCKET_NAME_OTPD);
 
-    memset(otp_length, 0, OTP_LENGTH_SIZE);
-    otp_length[0] = OTP_DATA_SIZE & 0xFF;
-    otp_length[1] = (OTP_DATA_SIZE >> 8) & 0xFF;
-    memset(write_buf, 0, OTP_WRITE_BUFFER_SIZE);
-    memset(read_buf, 0, OTP_READ_BUFFER_SIZE);
     memcpy(write_buf, OTPD_READ_DATA, sizeof(OTPD_READ_DATA));
-    memcpy(&write_buf[OTP_CONTROL_SIZE], otp_length, OTP_LENGTH_SIZE);
+    write_buf[20] = dual_flag; // 1:bokeh, 2:w+t, 3:superwide
+    write_buf[30] = OTP_DATA_SIZE & 0xff;
+    write_buf[31] = (OTP_DATA_SIZE >> 8) & 0xff;
+    /*
     for (int i = 0; i < OTP_WRITE_BUFFER_SIZE; i = i + 8) {
-        SENSOR_LOGV("otpd:write_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
+        SENSOR_LOGD("otpd:write_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
                     "0x%x 0x%x 0x%x 0x%x 0x%x",
                     i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
                     write_buf[i], write_buf[i + 1], write_buf[i + 2],
                     write_buf[i + 3], write_buf[i + 4], write_buf[i + 5],
                     write_buf[i + 6], write_buf[i + 7]);
     }
-
+    */
     ret = write(s_otpd_fd, write_buf, OTP_WRITE_BUFFER_SIZE);
-    SENSOR_LOGD("otpd:write to fd %d string: %s", s_otpd_fd, write_buf);
+    SENSOR_LOGD("otpd:fd %d, cmd %s, dual_flag %d", s_otpd_fd, write_buf,
+                write_buf[20]);
     if (ret < 0) {
         SENSOR_LOGD("otpd:write to fd %d failed", s_otpd_fd);
         close(s_otpd_fd);
@@ -3459,22 +3455,21 @@ sensor_get_frameless_dualcam_otpd(struct sensor_otp_cust_info *otp_data) {
 
     otp_data->total_otp.data_ptr = read_buf;
     otp_data->total_otp.size = OTP_READ_BUFFER_SIZE;
-    otp_data->dual_otp.dual_flag = 1;
-    otp_data->dual_otp.data_3d.data_ptr =
-        read_buf + OTP_CONTROL_SIZE + OTP_LENGTH_SIZE;
-    otp_length[0] = read_buf[OTP_CONTROL_SIZE];
-    otp_length[1] = read_buf[OTP_CONTROL_SIZE + 1];
-    otp_data->dual_otp.data_3d.size = otp_length[1] << 8 | otp_length[0];
-
-    for (int i = 0; i < OTP_READ_BUFFER_SIZE; i = i + 8) {
-        SENSOR_LOGV("otpd:read_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
+    otp_data->dual_otp.dual_flag = dual_flag;
+    otp_data->dual_otp.data_3d.data_ptr = read_buf + OTP_CONTROL_SIZE;
+    otp_data->dual_otp.data_3d.size =
+        read_buf[OTP_CONTROL_SIZE - 1] << 8 | read_buf[OTP_CONTROL_SIZE - 2];
+    /*
+    for (cmr_u32 i = 0; i < OTP_CONTROL_SIZE + otp_data->dual_otp.data_3d.size;
+         i = i + 8) {
+        SENSOR_LOGD("otpd:read_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
                     "0x%x 0x%x 0x%x 0x%x 0x%x",
                     i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
                     read_buf[i], read_buf[i + 1], read_buf[i + 2],
                     read_buf[i + 3], read_buf[i + 4], read_buf[i + 5],
                     read_buf[i + 6], read_buf[i + 7]);
     }
-
+    */
     close(s_otpd_fd);
 
     SENSOR_LOGV("X");

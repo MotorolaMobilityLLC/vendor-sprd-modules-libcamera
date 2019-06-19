@@ -3826,9 +3826,9 @@ cmr_s32 af_otp_info_parser(struct afctrl_init_in * init_param)
 			    || (module_info[4] == 5 && module_info[5] == 0)) {
 				ISP_LOGV("af otp map v0.4 or v0.5");
 				af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr;
-			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52
+			} else if (module_info[4] == 1 && (module_info[5] == 0 || module_info[5] == 1) && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52
 				   && module_info[3] == 0x44) {
-				ISP_LOGV("af otp map v1.0");
+				ISP_LOGV("af otp map v1.0 or v1.1");
 				af_rdm_otp_data = (cmr_u8 *) af_otp_info_ptr->rdm_info.data_addr + 1;
 			} else {
 				af_rdm_otp_data = NULL;

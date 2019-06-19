@@ -162,7 +162,7 @@ struct preview_md_ops {
     cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id,
                                    cmr_u32 sn_mode,
                                    struct sensor_mode_fps_tag *fps_info);
-    cmr_int (*get_sensor_otp)(cmr_handle oem_handle,
+    cmr_int (*get_sensor_otp)(cmr_handle oem_handle, cmr_u8 dual_flag,
                               struct sensor_otp_cust_info *dual_otp_data);
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
@@ -359,10 +359,12 @@ cmr_int cmr_preview_after_set_param(cmr_handle preview_handle,
                                     enum img_skip_mode skip_mode,
                                     cmr_u32 skip_number);
 
-cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
+cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle,
+                                       cmr_u32 camera_id,
                                        cam_buffer_info_t buffer);
 
-cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
+cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle,
+                                     cmr_u32 camera_id,
                                      cam_buffer_info_t buffer);
 
 cmr_int cmr_preview_set_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
@@ -392,8 +394,9 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
                                 struct frm_info *in, cmr_uint *vir_addr_y);
-cmr_int cmr_preview_set_autotracking_param(cmr_handle preview_handle,
-                    cmr_u32 camera_id, struct auto_tracking_info *input_param);
+cmr_int
+cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct auto_tracking_info *input_param);
 
 #ifdef __cplusplus
 }

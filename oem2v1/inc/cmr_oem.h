@@ -494,7 +494,7 @@ cmr_int prev_set_preview_touch_info(cmr_handle preview_handle,
 cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
                                             cmr_u32 camera_id,
                                             cmr_u32 *is_need_flash);
-cmr_int camera_get_otpinfo(cmr_handle oem_handle,
+cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
                            struct sensor_otp_cust_info *otp_data);
 cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id,
                           void *data);
