@@ -1757,6 +1757,8 @@ static int cal_channel_size_bininig(
 	if (!ch_prev->enable && !ch_cap->enable && !ch_vid->enable)
 		return 0;
 
+	dcam_out.w = dcam_out.h = 0;
+
 	dst_p.w = dst_p.h = 1;
 	dst_v.w = dst_v.h = 1;
 	crop_p = crop_v = crop_c = NULL;
@@ -1994,6 +1996,7 @@ static int cal_channel_size_rds(struct camera_module *module)
 		trim_c.size_x, trim_c.size_y);
 
 	if (ch_prev->enable) {
+		ratio_min = 1 << RATIO_SHIFT;
 		if (module->zoom_solution >= ZOOM_RDS) {
 			ratio_p_w = (1 << RATIO_SHIFT) * crop_p->w / dst_p.w;
 			ratio_p_h = (1 << RATIO_SHIFT) * crop_p->h / dst_p.h;
@@ -2784,6 +2787,8 @@ static int init_channels_size(struct camera_module *module)
 	struct img_size max;
 	struct isp_init_param init_param;
 	struct channel_context *ch_prev, *ch_vid, *ch_cap;
+
+	max.w = max.h = 0;
 
 	/* bypass RDS if sensor output binning size for image quality */
 	module->zoom_solution = g_camctrl.dcam_zoom_mode;
@@ -4767,7 +4772,7 @@ static int img_ioctl_stream_on(
 {
 	int ret = 0;
 	uint32_t i, j, line_w, isp_ctx_id, isp_path_id;
-	uint32_t uframe_sync, live_ch_count;
+	uint32_t uframe_sync, live_ch_count = 0;
 	struct channel_context *ch;
 	struct isp_statis_io_desc io_desc;
 
