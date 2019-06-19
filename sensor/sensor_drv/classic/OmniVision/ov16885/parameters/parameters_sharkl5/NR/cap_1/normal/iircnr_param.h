@@ -539,9 +539,9 @@
 			0x0014,0x0022,0x0022,0x0022,0x0022,0x0022,0x0022,0x0022/*0-7*/
 		},
 		/*iircnr_alpha_hl_diff_u*/
-		0x0320,
+		0x049C,
 		/*iircnr_alpha_hl_diff_v*/
-		0x0320,
+		0x049C,
 		/*iircnr_alpha_low_u*/
 		0x000037B8,
 		/*iircnr_alpha_low_v*/

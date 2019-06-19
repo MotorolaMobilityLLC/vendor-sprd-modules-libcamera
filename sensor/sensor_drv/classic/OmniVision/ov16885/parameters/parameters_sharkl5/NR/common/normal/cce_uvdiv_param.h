@@ -575,17 +575,17 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x36,
+		0x3F,
 		/*ratio_0*/
-		0x36,
+		0x3F,
 		/*ratio_1*/
-		0x00,
+		0x3F,
 		/*ratio_uv_min*/
-		0x36,
+		0x3F,
 		/*ratio_y_min0*/
-		0x36,
+		0x3F,
 		/*ratio_y_min1*/
-		0x36,
+		0x3F,
 		/*reserved*/
 		0x00,
 
@@ -675,17 +675,17 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x36,
+		0x3C,
 		/*ratio_0*/
-		0x36,
+		0x3F,
 		/*ratio_1*/
-		0x00,
+		0x3F,
 		/*ratio_uv_min*/
-		0x36,
+		0x3C,
 		/*ratio_y_min0*/
-		0x36,
+		0x3F,
 		/*ratio_y_min1*/
-		0x36,
+		0x3F,
 		/*reserved*/
 		0x00,
 
@@ -775,17 +775,17 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x36,
+		0x24,
 		/*ratio_0*/
-		0x36,
+		0x24,
 		/*ratio_1*/
-		0x00,
+		0x24,
 		/*ratio_uv_min*/
-		0x36,
+		0x24,
 		/*ratio_y_min0*/
-		0x36,
+		0x24,
 		/*ratio_y_min1*/
-		0x36,
+		0x24,
 		/*reserved*/
 		0x00,
 
