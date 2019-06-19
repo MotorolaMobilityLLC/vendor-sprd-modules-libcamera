@@ -280,9 +280,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setMimeType(int type);
 
   public:
-    static int pre_alloc_cap_mem_thread_init(void *p_data);
-    static int pre_alloc_cap_mem_thread_deinit(void *p_data);
-    static void *pre_alloc_cap_mem_thread_proc(void *p_data);
     uint32_t isPreAllocCapMem();
 
     static int ZSLMode_monitor_thread_init(void *p_data);
@@ -767,7 +764,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mStopFrameNum;
     uint32_t mDropPreviewFrameNum;
     uint32_t mDropVideoFrameNum;
-    uint32_t mDropZslFrameNum;
     slow_motion_para mSlowPara;
     bool mRestartFlag;
     bool mIsRecording;
@@ -778,10 +774,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     // pre-alloc capture memory
     uint32_t mIsPreAllocCapMem;
-    pthread_t mPreAllocCapMemThread;
-    uint32_t mPreAllocCapMemInited;
-    uint32_t mIsPreAllocCapMemDone;
-    sem_t mPreAllocCapMemSemDone;
 
     // ZSL Monitor Thread
     pthread_t mZSLModeMonitorMsgQueHandle;

@@ -396,7 +396,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
       mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
       mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
-      mPreAllocCapMemInited(0), mIsPreAllocCapMemDone(0),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0),
       mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
       mGyroNum(0), mSprdEisEnabled(false), mVideoSnapshotType(0),
@@ -593,9 +592,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mStopFrameNum = 0;
     mDropPreviewFrameNum = 0;
     mDropVideoFrameNum = 0;
-    mDropZslFrameNum = 0;
-    mPreAllocCapMemThread = 0;
-    mPreAllocCapMemSemDone.count = 0;
     mGyroMsgQueHandle = 0;
     mGyromaxtimestamp = 0;
     mGyro_sem.count = 0;
@@ -700,7 +696,6 @@ void SprdCamera3OEMIf::closeCamera() {
         WaitForCameraStop();
     }
 
-    pre_alloc_cap_mem_thread_deinit((void *)this);
     ZSLMode_monitor_thread_deinit((void *)this);
 
     mReleaseFLag = true;
@@ -731,6 +726,7 @@ void SprdCamera3OEMIf::initialize() {
     mVideoSnapshotType = 0;
     mTopAppId = TOP_APP_NONE;
     mChannel2FaceBeautyFlag = 0;
+    mZslCaptureExitLoop = false;
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -3168,6 +3164,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     HAL_LOGI("E mCameraId=%d", mCameraId);
     mIsStoppingPreview = 1;
+    mZslCaptureExitLoop = true;
 
     if (isCapturing()) {
         setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
@@ -4787,9 +4784,6 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
 
     switch (cb) {
     case CAMERA_EXIT_CB_PREPARE:
-        if (isPreAllocCapMem() && mSprdZslEnabled == 1) {
-            pre_alloc_cap_mem_thread_init((void *)this);
-        }
         break;
 
     case CAMERA_EVT_CB_INVALIDATE_CACHE:
@@ -9466,106 +9460,6 @@ uint32_t SprdCamera3OEMIf::isPreAllocCapMem() {
     } else {
         return 1;
     }
-}
-
-int SprdCamera3OEMIf::pre_alloc_cap_mem_thread_init(void *p_data) {
-    int ret = NO_ERROR;
-    pthread_attr_t attr;
-
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-
-    if (!obj) {
-        HAL_LOGE("obj null  error");
-        return -1;
-    }
-
-    HAL_LOGD("inited=%d", obj->mPreAllocCapMemInited);
-
-    if (!obj->mPreAllocCapMemInited) {
-        obj->mPreAllocCapMemInited = 1;
-        obj->mIsPreAllocCapMemDone = 0;
-        sem_init(&obj->mPreAllocCapMemSemDone, 0, 0);
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-        ret = pthread_create(&obj->mPreAllocCapMemThread, &attr,
-                             pre_alloc_cap_mem_thread_proc, (void *)obj);
-        pthread_attr_destroy(&attr);
-        if (ret) {
-            obj->mPreAllocCapMemInited = 0;
-            sem_destroy(&obj->mPreAllocCapMemSemDone);
-            HAL_LOGE("fail to send init msg");
-        }
-    }
-
-    return ret;
-}
-
-int SprdCamera3OEMIf::pre_alloc_cap_mem_thread_deinit(void *p_data) {
-    int ret = NO_ERROR;
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-
-    if (!obj) {
-        HAL_LOGE("obj null  error");
-        return -1;
-    }
-
-    HAL_LOGD("inited=%d", obj->mPreAllocCapMemInited);
-
-    if (obj->mPreAllocCapMemInited) {
-        sem_wait(&obj->mPreAllocCapMemSemDone);
-        sem_destroy(&obj->mPreAllocCapMemSemDone);
-        obj->mPreAllocCapMemInited = 0;
-        obj->mIsPreAllocCapMemDone = 0;
-    }
-    return ret;
-}
-
-void *SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data) {
-    cmr_u32 mem_size = 0;
-    int32_t buffer_id = 0;
-    cmr_u32 sum = 0;
-    int ret = 0;
-    cmr_uint phy_addr, virt_addr;
-    cmr_s32 fd;
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-    HAL_LOGD("E");
-
-    if (!obj) {
-        HAL_LOGE("obj=%p", obj);
-        return NULL;
-    }
-
-    if (NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return NULL;
-    }
-
-    ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(obj->mCameraId,
-                                                                 &mem_size);
-    if (ret) {
-        HAL_LOGE("camera_get_postprocess_capture_size failed");
-        obj->mIsPreAllocCapMem = 0;
-        goto exit;
-    }
-
-    obj->mSubRawHeapSize = mem_size;
-    sum = 1;
-    ret =
-        obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr, &virt_addr, &fd);
-    if (ret) {
-        obj->mIsPreAllocCapMem = 0;
-        HAL_LOGE("Callback_CaptureMalloc failed");
-        goto exit;
-    }
-
-    obj->mIsPreAllocCapMemDone = 1;
-
-exit:
-    sem_post(&obj->mPreAllocCapMemSemDone);
-
-    HAL_LOGD("X");
-
-    return NULL;
 }
 
 void SprdCamera3OEMIf::setSensorCloseFlag() {
