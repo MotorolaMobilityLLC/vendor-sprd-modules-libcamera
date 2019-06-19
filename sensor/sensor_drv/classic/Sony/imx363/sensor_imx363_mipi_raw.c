@@ -775,29 +775,19 @@ static cmr_int imx363_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_LOGI("E");
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_uint sensor_mode = 0;
-    sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
-/*   if(sensor_mode == 3)
-       imx363_drv_set_pdaf_mode(handle, 0x31);
-   else if(sensor_mode == 2)
-       imx363_drv_set_pdaf_mode(handle, 0x21);
-   //imx363_drv_set_pdaf_mode(handle, 1);
-*/
-#if 1
+
     char value1[PROPERTY_VALUE_MAX];
-    property_get("debug.camera.test.mode", value1, "0");
+    property_get("persist.vendor.cam.colorbar", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("enable test mode");
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x780F, 0x00);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0600, 0x00);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0601, 0x02);
     }
-#endif
 
     imx363_drv_set_master_FrameSync(handle, param);
 
-#if 1 // defined(CONFIG_CAMERA_ISP_DIR_3)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x00);
-#endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     return 0;
