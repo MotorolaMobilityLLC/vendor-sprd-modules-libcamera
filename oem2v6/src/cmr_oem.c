@@ -11287,10 +11287,6 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // 5 continuous frames start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
-    } else if (CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW == camera_get_3dnr_flag(cxt)) {
-        // start hardware 3dnr capture
-        CMR_LOGV("set cap_param type to DCAM_CAPTURE_START_3DNR");
-        capture_param.type = DCAM_CAPTURE_START_3DNR;
     } else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
 #ifdef CONFIG_CAMERA_4IN1
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
