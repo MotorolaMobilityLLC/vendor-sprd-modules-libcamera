@@ -2743,7 +2743,7 @@ static cmr_int ispctl_set_3dnr_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	if (cxt->ops.ae_ops.ioctrl)
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_3DNR_MODE, (void *)param_ptr, NULL);
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, 1/* AE_SET_3DNR_MODE */, (void *)param_ptr, NULL);
 
 	return ret;
 }
