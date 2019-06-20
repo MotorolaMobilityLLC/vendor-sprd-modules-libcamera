@@ -3411,9 +3411,9 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					 cxt->camera_id, cxt->cur_status.settings.flash, cxt->sync_cur_result.cur_bv, cxt->flash_swith.led_thr_up, cxt->sync_cur_status.led_state);
 		}
 	}
-
+	bool isFrontLCD = (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
 	/* notify APP if need autofocus or not, just in flash auto mode */
-	if (cxt->camera_id == 0) {
+	if (cxt->camera_id == 0 || (isFrontLCD && cxt->camera_id == 1)) {
 		ISP_LOGV("flash open thr=%d, flash close thr=%d, bv=%d, flash_fired=%d, delay_cnt=%d",
 				 cxt->flash_swith.led_thr_down, cxt->flash_swith.led_thr_up, cxt->sync_cur_result.cur_bv, cxt->sync_cur_status.flash_fired, cxt->delay_cnt);
 
@@ -6423,7 +6423,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 		if (0 != cxt->cur_param->flash_swith_param.flash_close_thr)
 			cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
 		else
-			cxt->flash_swith.led_thr_up = 500;
+			cxt->flash_swith.led_thr_up = 400;
 
 		if (0 != cxt->cur_param->threednr_ctrl_param.thr_down)
 			cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down;
