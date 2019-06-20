@@ -274,6 +274,7 @@ extern "C" {
 		struct flash_cali_data flash_cali[32][32];
 		cmr_u8 flash_debug_buf[256 * 1024];
 		cmr_u32 flash_buf_len;
+		cmr_u8 flash_cap_proc;
 		/*
 		 * fd-ae param
 		 */

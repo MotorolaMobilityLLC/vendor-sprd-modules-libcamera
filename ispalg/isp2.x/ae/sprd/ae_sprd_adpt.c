@@ -1462,6 +1462,10 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		else {
 			rtn = do_ae_flash_pre_before(cxt);
 		}
+
+		if(!cxt->pf_with_touch)
+			cxt->flash_cap_proc = 1;
+
 		cxt->pf_with_touch = 0;
 		break;
 
@@ -1625,6 +1629,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->capcompvalue_norm = 0.0;
 		cxt->cur_status.settings.flash = FLASH_MAIN_AFTER;
+		cxt->flash_cap_proc = 0;
 		break;
 
 	case AE_FLASH_MAIN_AE_MEASURE:
@@ -3358,7 +3363,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		}
 	}
 
-	if (AE_3DNR_AUTO == cxt->cur_status.settings.threednr_mode) {
+	if (AE_3DNR_AUTO == cxt->cur_status.settings.threednr_mode && !cxt->flash_cap_proc) {
 		cmr_u32 is_update = 0, is_en = 0;
 		if ((cxt->sync_cur_result.cur_bv < cxt->threednr_en_thrd.thr_down)
 			&& ((0 == cxt->sync_cur_status.threednr_status) || cxt->is_first)) {
@@ -3412,7 +3417,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		ISP_LOGV("flash open thr=%d, flash close thr=%d, bv=%d, flash_fired=%d, delay_cnt=%d",
 				 cxt->flash_swith.led_thr_down, cxt->flash_swith.led_thr_up, cxt->sync_cur_result.cur_bv, cxt->sync_cur_status.flash_fired, cxt->delay_cnt);
 
-		if (cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) {
+		if ((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down)&& !cxt->flash_cap_proc) {
 			cxt->delay_cnt = 0;
 			flash_fired = 1;
 			cxt->cur_status.flash_fired = 1;
@@ -3421,7 +3426,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGV("flash will fire!\r\n");
 		}
 
-		if ((cxt->sync_cur_result.cur_bv > cxt->flash_swith.led_thr_up) && (cxt->sync_cur_status.flash_fired == 1)) {
+		if ((cxt->sync_cur_result.cur_bv > cxt->flash_swith.led_thr_up) && (cxt->sync_cur_status.flash_fired == 1)&& !cxt->flash_cap_proc) {
 			if (cxt->delay_cnt == cxt->cur_param->flash_control_param.main_flash_notify_delay) {
 				flash_fired = 0;
 				cxt->cur_status.flash_fired = 0;
@@ -4444,6 +4449,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	cxt->effect_index_index = 0;
 	cxt->pf_with_touch = 0;
+	cxt->flash_cap_proc = 0;
 
 	cxt->sync_cur_result.wts.frm_len = cxt->cur_result.wts.frm_len;
 	cxt->sync_cur_result.wts.frm_len_def = cxt->cur_result.wts.frm_len_def;
@@ -5245,6 +5251,7 @@ static cmr_s32 ae_set_3dnr_mode(struct ae_ctrl_cxt *cxt, cmr_u32 *mode)
 {
 	cxt->cur_status.settings.threednr_mode = *mode;
 	cxt->cur_status.threednr_status = 0;
+	ISP_LOGD("threednr_mode:%d",cxt->cur_status.settings.threednr_mode);
 
 	return AE_SUCCESS;
 }
