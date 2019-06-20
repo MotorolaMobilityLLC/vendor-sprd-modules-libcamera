@@ -8042,7 +8042,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     camera_set_3dnr_flag(cxt, setting_param.cmd_type_value);
     property_get("debug.camera.3dnr.preview", value, "true");
     if (!strcmp(value, "false")) {
-        out_param_ptr->sprd_3dnr_type = CAMERA_3DNR_TYPE_NULL; // 0
+        out_param_ptr->sprd_3dnr_type = CAMERA_3DNR_TYPE_NULL;
     } else {
         out_param_ptr->sprd_3dnr_type = camera_get_3dnr_flag(cxt);
     }

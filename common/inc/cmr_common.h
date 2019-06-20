@@ -1631,11 +1631,11 @@ enum camera_3dnr_type {
     CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW
 };
 
-enum camera_3dnr_switch { CAMERA_3DNR_SWITCH_OFF = 0, CAMERA_3DNR_SWITCH_ON };
+enum camera_3dnr_switch { CAMERA_3DNR_ENABLE_OFF = 0, CAMERA_3DNR_ENABLE_ON };
 
 enum camera_auto_3dnr_switch {
-    CAMERA_AUTO_3DNR_SWITCH_OFF = 0,
-    CAMERA_AUTO_3DNR_SWITCH_ON = 2
+    CAMERA_AUTO_3DNR_ENABLE_OFF = 0,
+    CAMERA_AUTO_3DNR_ENABLE_ON = 2
 };
 
 enum camera_preview_mode_type {

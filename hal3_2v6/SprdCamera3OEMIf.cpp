@@ -596,6 +596,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mMasterId = 0;
 
     mStreamOnWithZsl = 0;
+    mIsNeedFlashFired = 0;
     mIsPowerhintWait = 0;
 
 #ifdef CONFIG_CAMERA_EIS
@@ -5273,7 +5274,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
 
         if (ae_stab) {
-            if (!isNeedFlashFired) {
+            if (!mIsNeedFlashFired) {
                 setAeState(AE_STABLE);
             } else {
                 setAeState(AE_STABLE_REQUIRE_FLASH);
@@ -5304,21 +5305,17 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         HAL_LOGD("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_FLASH_FIRED:
-        SPRD_DEF_Tag sprddefInfo;
-        mSetting->getSPRDDEFTag(&sprddefInfo);
         if (parm4 != NULL) {
-            isNeedFlashFired = *(uint8_t *)parm4;
-            sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
+            mIsNeedFlashFired = *(uint8_t *)parm4;
         }
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
             mMultiCameraMode == MODE_BOKEH) {
-            isNeedFlashFired = 0;
-            sprddefInfo.is_takepicture_with_flash = 0;
+            mIsNeedFlashFired = 0;
         }
         mSetting->setSPRDDEFTag(sprddefInfo);
-        // isNeedFlashFired is used by APP to check if af_trigger being sent
+        // mIsNeedFlashFired is used by APP to check if af_trigger being sent
         // before capture
-        HAL_LOGD("isNeedFlashFired = %d", isNeedFlashFired);
+        HAL_LOGD("mIsNeedFlashFired = %d", mIsNeedFlashFired);
         break;
     case CAMERA_EVT_CB_HDR_SCENE:
         SPRD_DEF_Tag sprdInfo;
@@ -6370,18 +6367,21 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         // on flash auto and torch mode, set 3dnr enable to false
         if ((controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) ||
             (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH &&
-             sprddefInfo.is_takepicture_with_flash == 1)) {
+             mIsNeedFlashFired == 1) ||
+            (sprddefInfo.sprd_flash_lcd_mode == FLASH_LCD_MODE_AUTO &&
+             mIsNeedFlashFired == 1) ||
+            (sprddefInfo.sprd_flash_lcd_mode == FLASH_LCD_MODE_ON)) {
             sprd_3dnr_enabled = 0;
         }
 
         HAL_LOGV("sprd_3dnr_enabled: %d, sprd_auto_3dnr_enable:%d, "
-                 "sprd_appmode_id:%d",
+                 "sprd_appmode_id:%d, mIsNeedFlashFired:%d",
                  sprd_3dnr_enabled, sprddefInfo.sprd_auto_3dnr_enable,
-                 sprddefInfo.sprd_appmode_id);
+                 sprddefInfo.sprd_appmode_id, mIsNeedFlashFired);
 
-        if (sprd_3dnr_enabled == CAMERA_3DNR_SWITCH_ON) {
+        if (sprd_3dnr_enabled == CAMERA_3DNR_ENABLE_ON) {
             if (sprddefInfo.sprd_auto_3dnr_enable ==
-                CAMERA_AUTO_3DNR_SWITCH_ON) {
+                CAMERA_AUTO_3DNR_ENABLE_ON) {
                 // auto 3dnr mode, detected 3dnr scene
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
             } else {
@@ -6489,11 +6489,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
-        if (mCameraId != 1) {
-            SET_PARM(mHalOem, mCameraHandle,
-                     CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
-                     sprdInfo.sprd_auto_3dnr_enable);
-        }
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+                 sprdInfo.sprd_auto_3dnr_enable);
     } break;
     default:
         ret = BAD_VALUE;

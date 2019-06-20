@@ -4473,8 +4473,8 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
         s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable =
             frame_settings.find(ANDROID_SPRD_AUTO_3DNR_ENABLED).data.u8[0] == 1
-                ? CAMERA_AUTO_3DNR_SWITCH_ON
-                : CAMERA_AUTO_3DNR_SWITCH_OFF;
+                ? CAMERA_AUTO_3DNR_ENABLE_ON
+                : CAMERA_AUTO_3DNR_ENABLE_OFF;
         pushAndroidParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
     }
 
