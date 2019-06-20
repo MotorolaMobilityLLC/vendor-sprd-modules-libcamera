@@ -1869,6 +1869,7 @@ int SprdCamera3HWI::flush() {
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     if (mOEMIf) {
+        mOEMIf->setFlushFlag(1);
         mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     }
 
@@ -1939,6 +1940,7 @@ int SprdCamera3HWI::flush() {
         }
     }
 
+    mOEMIf->setFlushFlag(0);
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mFlush = false;
     HAL_LOGI(":hal3: X");

@@ -257,6 +257,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void ispToolModeInit();
     int32_t setStreamOnWithZsl();
     int32_t getStreamOnWithZsl();
+    void setFlushFlag(int32_t value);
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
     uint64_t getZslBufferTimestamp();
 
@@ -758,12 +759,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mCancelBufferEb[kPreviewBufferCount];
     int32_t mGraphBufferCount[kPreviewBufferCount];
 
-    uint32_t mPreviewFrameNum;
-    uint32_t mRecordFrameNum;
     uint32_t mStartFrameNum;
     uint32_t mStopFrameNum;
-    uint32_t mDropPreviewFrameNum;
-    uint32_t mDropVideoFrameNum;
     slow_motion_para mSlowPara;
     bool mRestartFlag;
     bool mIsRecording;
@@ -831,7 +828,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif
-    // for third part app face beauty in camera hal, for example, weixin videocall
+    // for third part app face beauty in camera hal, for example, weixin
+    // videocall
     int mChannel2FaceBeautyFlag;
     // top app, like wechat
     int mTopAppId;
@@ -842,6 +840,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mIsCameraClearQBuf;
     int64_t mLatestFocusDoneTime;
     int32_t mStreamOnWithZsl;
+    int32_t mFlush;
     Mutex mPipelineStartLock;
     Condition mPipelineStartSignal;
 

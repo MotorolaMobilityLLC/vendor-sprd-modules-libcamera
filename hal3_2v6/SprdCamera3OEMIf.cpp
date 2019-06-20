@@ -395,16 +395,15 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
       mIspToolStart(false), mSubRawHeapNum(0), mSubRawHeapSize(0),
       mPathRawHeapNum(0), mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0),
-      mPreviewFrameNum(0), mRecordFrameNum(0), mIsRecording(false),
-      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0),
-      mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
-      mGyroNum(0), mSprdEisEnabled(false), mVideoSnapshotType(0),
-      mIommuEnabled(false), mFlashCaptureFlag(0),
-      mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
-      mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
-      mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
-      mIsRawCapture(0), mIsCameraClearQBuf(0), mLatestFocusDoneTime(0),
-      mFaceDetectStartedFlag(0)
+      mIsRecording(false), mZSLModeMonitorMsgQueHandle(0),
+      mZSLModeMonitorInited(0), mCNRMode(0), mGyroInit(0), mGyroExit(0),
+      mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
+      mSprdEisEnabled(false), mVideoSnapshotType(0), mIommuEnabled(false),
+      mFlashCaptureFlag(0), mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
+      mFixedFpsEnabled(0), mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP),
+      mIsTempChanged(0), mFlagOffLineZslStart(0), mZslSnapshotTime(0),
+      mIsIspToolMode(0), mIsRawCapture(0), mIsCameraClearQBuf(0),
+      mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0)
 
 {
     ATRACE_CALL();
@@ -590,8 +589,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslStreamInfo = NULL;
     mStartFrameNum = 0;
     mStopFrameNum = 0;
-    mDropPreviewFrameNum = 0;
-    mDropVideoFrameNum = 0;
     mGyroMsgQueHandle = 0;
     mGyromaxtimestamp = 0;
     mGyro_sem.count = 0;
@@ -611,6 +608,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mTopAppId = TOP_APP_NONE;
     mChannel2FaceBeautyFlag = 0;
+
+    mFlush = 0;
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -727,6 +726,7 @@ void SprdCamera3OEMIf::initialize() {
     mTopAppId = TOP_APP_NONE;
     mChannel2FaceBeautyFlag = 0;
     mZslCaptureExitLoop = false;
+    mFlush = 0;
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -3785,26 +3785,17 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             frame_out.frame_data = NULL;
             HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
             if (sprddefInfo.sprd_eis_enabled) {
-                frame_out = EisVideoFrameStab(frame, frame_num);
-
-                if (frame_out.frame_data) {
-                    channel->channelCbRoutine(frame_out.frame_num,
-                                              frame_out.timestamp * 1000000000,
-                                              CAMERA_STREAM_TYPE_VIDEO);
-                    frame_out.frame_data = NULL;
+                // camera exit/switch dont need to do eis
+                if (mFlush == 0) {
+                    frame_out = EisVideoFrameStab(frame, frame_num);
                 }
+                channel->channelCbRoutine(frame_num, frame->monoboottime,
+                                          CAMERA_STREAM_TYPE_VIDEO);
                 goto bypass_rec;
             }
 #endif
-            if (mMultiCameraMode == MODE_3D_VIDEO) {
-                mSlowPara.rec_timestamp = buffer_timestamp;
-            }
             channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
                                       CAMERA_STREAM_TYPE_VIDEO);
-            if (frame_num == (mDropVideoFrameNum + 1)) // for IOMMU error
-                channel->channelClearInvalidQBuff(mDropVideoFrameNum,
-                                                  buffer_timestamp,
-                                                  CAMERA_STREAM_TYPE_VIDEO);
         } else {
             channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
                                               CAMERA_STREAM_TYPE_VIDEO);
@@ -3853,7 +3844,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #ifdef CONFIG_CAMERA_EIS
             HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
             if (mRecordingMode && sprddefInfo.sprd_eis_enabled) {
-                EisPreviewFrameStab(frame);
+                // camera exit/switch dont need to do eis
+                if (mFlush == 0) {
+                    EisPreviewFrameStab(frame);
+                }
             }
 #endif
 
@@ -4863,6 +4857,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
         break;
     }
 
+exit:
     HAL_LOGV("out, state = %s", getCameraStateStr(getPreviewState()));
     ATRACE_END();
 }
@@ -8227,22 +8222,23 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         if (getMultiCameraMode() != MODE_TUNING) {
             if (mIsRawCapture == 1) {
                 mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle,
-                                                         mode_info);
+                                                             mode_info);
                 for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-                   HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
-                         mode_info[i].trim_height);
-                   if (mode_info[i].trim_width >= mCaptureWidth) {
+                    HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
+                             mode_info[i].trim_height);
+                    if (mode_info[i].trim_width >= mCaptureWidth) {
                         mCaptureWidth = mode_info[i].trim_width;
                         mCaptureHeight = mode_info[i].trim_height;
                         break;
-                   }
+                    }
                 }
                 req_size.width = mCaptureWidth;
                 req_size.height = mCaptureHeight;
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RAW_CAPTURE_SIZE,
                          (cmr_uint)&req_size);
-                HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
-                         mCaptureWidth, mCaptureHeight);
+                HAL_LOGD(
+                    "raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
+                    mCaptureWidth, mCaptureHeight);
             }
         }
         break;
@@ -9037,6 +9033,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
+        if (mFlush) {
+            HAL_LOGD("mFlush=%d", mFlush);
+            goto exit;
+        }
+
         // for 3dnr sw 2.0
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
             buf_id = getZslBufferIDForFd(zsl_frame.fd);
@@ -9488,6 +9489,8 @@ int32_t SprdCamera3OEMIf::setStreamOnWithZsl() {
 }
 
 int32_t SprdCamera3OEMIf::getStreamOnWithZsl() { return mStreamOnWithZsl; }
+
+void SprdCamera3OEMIf::setFlushFlag(int32_t value) { mFlush = value; }
 
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EisPreview_init() {
