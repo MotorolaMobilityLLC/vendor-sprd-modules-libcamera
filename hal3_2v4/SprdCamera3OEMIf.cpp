@@ -9572,9 +9572,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
                 zsl_frame.fd);
-            flash_timestamp = 0;
-            ((struct camera_context *)(obj->mCameraHandle))
-                ->snp_high_flash_time = 0;
             continue;
         }
 
@@ -9594,6 +9591,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             zsl_frame.fd);
         break;
     }
+    ((struct camera_context *)(obj->mCameraHandle))
+         ->snp_high_flash_time = 0;
 
 exit:
     obj->mZslShotPushFlag = 0;
