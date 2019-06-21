@@ -2250,9 +2250,6 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			goto SET_SCENE_MOD_EXIT;
 		}
 
-		if (AE_SCENE_NORMAL == cur_scene_mod) {	/*from normal scene to special scene */
-			cxt->prv_status = cxt->sync_cur_status;	/*backup the normal scene's information */
-		}
 		/*ae table */
 		max_index = scene_info[i].ae_table[0].max_index;
 #if 1
@@ -2267,7 +2264,7 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 			ISP_LOGV("mode is %d", i);
 			cur_status->ae_table = &scene_info[i].ae_table[cur_status->settings.flicker];
 		} else {
-			cur_status->ae_table = cxt->prv_status.ae_table;
+			cur_status->ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
 		}
 		cur_status->ae_table->min_index = 0;
 #endif
@@ -2288,7 +2285,6 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 	}
 
 	if (AE_SCENE_NORMAL == nxt_scene_mod) {	/*special scene --> normal scene */
-	  SET_SCENE_MOD_2_NOAMAL:
 		iso = prv_status->settings.iso;
 		weight_mode = prv_status->settings.metering_mode;
 		if (iso >= AE_ISO_MAX || weight_mode >= AE_WEIGHT_MAX) {
@@ -5642,7 +5638,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	   due to set_scene_mode just be called in ae_sprd_calculation,
 	   and the prv_status just save the normal scene status
 	 */
-	if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
+	if ((AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) &&
+		(cxt->sync_cur_status.settings.exp_line || cxt->sync_cur_status.settings.gain)) {
 		cxt->prv_status = cxt->sync_cur_status;
 		cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
 	}
@@ -6557,6 +6554,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->cur_result.wts.exposure_time = cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index] * cxt->snr_info.line_time;
 	cxt->is_faceId_unlock = init_param->is_faceId_unlock;
 	cxt->face_lock_table_index = 4;
+	cxt->prv_status = cxt->cur_status;
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
 	property_get("persist.vendor.cam.isp.ae.manual", ae_property, "off");
 	//ISP_LOGV("persist.vendor.cam.isp.ae.manual: %s", ae_property);
