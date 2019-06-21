@@ -1491,7 +1491,7 @@ static int isp_offline_start_frame(void *ctx)
 {
 	int ret = 0;
 	int i, loop, kick_fmcu = 0;
-	uint32_t frame_id, target_fid;
+	uint32_t frame_id, target_fid = CAMERA_RESERVE_FRAME_NUM;
 	struct isp_pipe_dev *dev = NULL;
 	struct camera_frame *pframe = NULL;
 	struct camera_frame *out_frame = NULL;
@@ -3507,6 +3507,7 @@ int put_isp_pipe_dev(void *isp_handle)
 	if (atomic_dec_return(&dev->user_cnt) == 0) {
 		pr_info("free isp pipe dev %p\n", dev);
 		vfree(dev);
+		dev = NULL;
 		s_isp_dev = NULL;
 	}
 	mutex_unlock(&isp_pipe_dev_mutex);
@@ -3522,7 +3523,7 @@ void isp_hwsim_extra(uint32_t idx) {
 	uint32_t bypass = 1;
 
 	pr_info("ctx_id[%d]\n", idx);
-	
+
 	pr_info("gamma\n");
 	ISP_REG_MWR(idx, ISP_GAMMA_PARAM, BIT_0, 1);
 
