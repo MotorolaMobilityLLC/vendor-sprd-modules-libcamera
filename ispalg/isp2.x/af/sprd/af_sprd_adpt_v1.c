@@ -1137,7 +1137,7 @@ static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, cmr_u8 AF_Result, void *cookie)
 
 	ISP_LOGI("notify_stop: mode[%d], type[%d], result[%d]!!!", AF_mode, notify_type, AF_Result);
 
-	notify_stop(af, (HAVE_PEAK == AF_Result ? 1 : 0), notify_type);
+	notify_stop(af, 1, notify_type);
 
 	// debug only
 	roi_info_t *r = &af->roi;
