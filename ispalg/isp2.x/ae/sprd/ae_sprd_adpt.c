@@ -3360,25 +3360,27 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	}
 
 	if (AE_3DNR_AUTO == cxt->cur_status.settings.threednr_mode && !cxt->flash_cap_proc) {
-		cmr_u32 is_update = 0, is_en = 0;
+		cmr_u32 is_update = 0, is_en = 0, update_dnr = 0;
+		if(cxt->cur_status.settings.threednr_mode != cxt->sync_cur_status.settings.threednr_mode)
+			update_dnr = 1;
 		if ((cxt->sync_cur_result.cur_bv < cxt->threednr_en_thrd.thr_down)
-			&& ((0 == cxt->sync_cur_status.threednr_status) || cxt->is_first)) {
+			&& ((0 == cxt->sync_cur_status.threednr_status) || cxt->is_first || update_dnr)) {
 			is_update = 1;
 			is_en = 1;
 			cxt->cur_status.threednr_status = 1;
-			ISP_LOGI("HJW 1 is low lux: %d 3dnr: %d\n", is_en, cxt->cur_status.threednr_status);
+			ISP_LOGD("HJW 1 is low lux: %d 3dnr: %d\n", is_en, cxt->cur_status.threednr_status);
 		}else if ((cxt->sync_cur_result.cur_bv > cxt->threednr_en_thrd.thr_up)
-				&& ((1 == cxt->sync_cur_status.threednr_status) || cxt->is_first)) {
+				&& ((1 == cxt->sync_cur_status.threednr_status) || cxt->is_first || update_dnr)) {
 			is_update = 1;
 			is_en = 0;
 			cxt->cur_status.threednr_status = 0;
-			ISP_LOGI("HJW 2 is low lux: %d 3dnr: %d\n", is_en, cxt->cur_status.threednr_status);
+			ISP_LOGD("HJW 2 is low lux: %d 3dnr: %d\n", is_en, cxt->cur_status.threednr_status);
 		}
 		if (is_update) {
 			cb_type = AE_CB_3DNR_NOTIFY;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &is_en);
 		}
-		ISP_LOGI("HJW: bv: %d,[%d, %d], 3dnr: %d\n",
+		ISP_LOGD("HJW: bv: %d,[%d, %d], 3dnr: %d\n",
 			cxt->sync_cur_result.cur_bv,
 			cxt->threednr_en_thrd.thr_down,
 			cxt->threednr_en_thrd.thr_up,
@@ -5246,7 +5248,6 @@ static cmr_s32 ae_set_aux_sensor(struct ae_ctrl_cxt *cxt, cmr_handle param0, cmr
 static cmr_s32 ae_set_3dnr_mode(struct ae_ctrl_cxt *cxt, cmr_u32 *mode)
 {
 	cxt->cur_status.settings.threednr_mode = *mode;
-	cxt->cur_status.threednr_status = 0;
 	ISP_LOGD("threednr_mode:%d",cxt->cur_status.settings.threednr_mode);
 
 	return AE_SUCCESS;
