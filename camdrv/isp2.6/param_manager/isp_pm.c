@@ -1267,8 +1267,10 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		result_param_ptr->cap_param_data = pm_cxt_ptr->getting_data_ptr[1];
 		result_param_ptr->cap_param_num = param_counts;
 		result_param_ptr->cap_param_data->mode_id = pm_cxt_ptr->cap_mode_id;
-	} else if (cmd == ISP_PM_CMD_GET_SINGLE_SETTING) {
+	} else if (cmd == ISP_PM_CMD_GET_SINGLE_SETTING ||
+		cmd == ISP_PM_CMD_GET_CAP_SINGLE_SETTING) {
 		cmr_u32 blk_idx = 0;
+		cmr_u32 set_id;
 
 		if (in_ptr == NULL) {
 			ISP_LOGE("null input ptr.\n");
@@ -1276,9 +1278,10 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		}
 
 		param_data_ptr = pm_cxt_ptr->single_block_data;
+		set_id = (cmd == ISP_PM_CMD_GET_SINGLE_SETTING) ? PARAM_SET0 : PARAM_SET1;
 		rtn = isp_pm_get_single_block_param(pm_cxt_ptr,
 				(struct isp_pm_ioctl_input *)in_ptr, param_data_ptr,
-				&param_counts, &blk_idx, PARAM_SET0);
+				&param_counts, &blk_idx, set_id);
 		if (ISP_SUCCESS != rtn || blk_idx == ISP_TUNE_BLOCK_MAX) {
 			ISP_LOGV("fail to do isp_pm_get_single_block_param");
 			rtn = ISP_ERROR;
