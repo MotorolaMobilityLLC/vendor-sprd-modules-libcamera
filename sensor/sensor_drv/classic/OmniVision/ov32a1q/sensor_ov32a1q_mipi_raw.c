@@ -20,8 +20,11 @@
 */
 
 #define LOG_TAG "ov32a1q"
-
+#ifdef OV32A1Q_USE_CPHY
+#include "sensor_ov32a1q_cphy_mipi_raw.h"
+#else
 #include "sensor_ov32a1q_mipi_raw.h"
+#endif
 #include "otp_parser.h"
 
 /*==============================================================================
@@ -899,6 +902,11 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.colorbar", value1, "0");
+    if (!strcmp(value1, "1")) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
+    }
 
 #if 0 // defined(CONFIG_DUAL_MODULE)
 	ov32a1q_drv_set_master_FrameSync(handle, param);

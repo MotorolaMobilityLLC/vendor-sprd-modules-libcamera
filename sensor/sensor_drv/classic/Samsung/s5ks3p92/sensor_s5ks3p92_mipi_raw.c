@@ -211,28 +211,20 @@ static cmr_int s5ks3p92_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
     // hw_sensor_set_avdd_en_level(sns_drv_cxt->hw_handle,1);
     hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
-
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_2800MV);
-#else
-    hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-#endif
     hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
     hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
     usleep(10);
     hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
 	usleep(1 * 1000);
-    hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
+    hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
 
   } else {
+	hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
     hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
     usleep(500);
     hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
     hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
     usleep(200);
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    hw_sensor_set_monitor_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-#endif
     // hw_sensor_set_avdd_en_level(sns_drv_cxt->hw_handle,0);
 	hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);

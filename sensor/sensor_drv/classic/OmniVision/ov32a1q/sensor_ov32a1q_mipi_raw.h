@@ -49,8 +49,8 @@
 #define VIDEO_HEIGHT 1080
 #define PREVIEW_WIDTH 3264
 #define PREVIEW_HEIGHT 2448
-#define SNAPSHOT_WIDTH 3264//6528
-#define SNAPSHOT_HEIGHT 2448//4896
+#define SNAPSHOT_WIDTH 6528
+#define SNAPSHOT_HEIGHT 4896
 
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
@@ -63,8 +63,8 @@
 #define PREVIEW_TRIM_H 2448
 #define SNAPSHOT_TRIM_X 0
 #define SNAPSHOT_TRIM_Y 0
-#define SNAPSHOT_TRIM_W 6528
-#define SNAPSHOT_TRIM_H 4896
+#define SNAPSHOT_TRIM_W 3280//6528
+#define SNAPSHOT_TRIM_H 2464//4896
 
 /*Mipi output*/
 #define LANE_NUM 4
@@ -107,7 +107,7 @@
 #define ISP_BASE_GAIN 0x80
 
 /* please don't change it */
-#define EX_MCLK 24
+#define EX_MCLK 24 //12//24
 
 static const SENSOR_REG_T ov32a1q_init_setting[] = {
 /*"mclk = 24MHz
@@ -1161,7 +1161,7 @@ register	value*/
 {0x4808, 0x18},
 {0x4809, 0x4c},
 {0x480a, 0x2a},
-{0x480b, 0xe4},//36},//e4},
+{0x480b, 0x36},//e4},
 {0x480c, 0x00},
 {0x480e, 0x00},
 {0x4810, 0xff},
@@ -1208,7 +1208,7 @@ register	value*/
 {0x484b, 0x07},
 {0x484c, 0x00},
 {0x484e, 0x10},
-{0x4850, 0x41},
+{0x4850, 0x41},//0},//1////1},
 {0x4851, 0xaa},
 {0x4852, 0xff},
 {0x4853, 0x8a},
@@ -2828,6 +2828,7 @@ static const SENSOR_REG_T ov32a1q_preview_setting1[] = {
 	MCLK(MHz)	24	
 	V_Blanking(ms)	4.76	
 	0x4837	D	*/
+	{0x0103, 0x01},
 			
 	{0x0305,0x64},	
 	{0x0307,0x1},	
@@ -2927,7 +2928,7 @@ static const SENSOR_REG_T ov32a1q_preview_setting1[] = {
 };
 	
 static const SENSOR_REG_T ov32a1q_preview_setting2[] = {
-/*	size	1280
+/*	size	1280x720
 	HTS 1200
 	VTS 5000
 	fps 15
@@ -3212,7 +3213,7 @@ ob_value @ max_gain  =  64 @ 15.5x
 bayer pattern = BGGR "	
 full size setting	
 register	value*/
-//{0x0103, 0x01},
+{0x0103, 0x01},
 {0x0305, 0x3f},
 {0x0343, 0x05},
 {0x0344, 0x01},
@@ -3531,13 +3532,14 @@ static struct sensor_res_tab_info s_ov32a1q_resolution_tab_raw[VENDOR_NUM] = {
            .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_preview_setting1), PNULL, 0,
+          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_preview_setting), PNULL, 0,
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
- /*         {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting), PNULL, 0,
+          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting), PNULL, 0,
            .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}*/}}
+           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}
+		}}
 
     /*If there are multiple modules,please add here*/
 };
@@ -3572,7 +3574,7 @@ static SENSOR_TRIM_T s_ov32a1q_resolution_trim_tab[VENDOR_NUM] = {
                               .w = PREVIEW_TRIM_W,
                               .h = PREVIEW_TRIM_H}},
 
- /*            {.trim_start_x = SNAPSHOT_TRIM_X,
+             {.trim_start_x = SNAPSHOT_TRIM_X,
               .trim_start_y = SNAPSHOT_TRIM_Y,
               .trim_width = SNAPSHOT_TRIM_W,
               .trim_height = SNAPSHOT_TRIM_H,
@@ -3582,7 +3584,7 @@ static SENSOR_TRIM_T s_ov32a1q_resolution_trim_tab[VENDOR_NUM] = {
               .scaler_trim = {.x = SNAPSHOT_TRIM_X,
                               .y = SNAPSHOT_TRIM_Y,
                               .w = SNAPSHOT_TRIM_W,
-                              .h = SNAPSHOT_TRIM_H}},*/
+                              .h = SNAPSHOT_TRIM_H}},
          }}
 
     /*If there are multiple modules,please add here*/
@@ -3715,6 +3717,8 @@ static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
                              .is_loose = 0,
+                           //  .lane_switch_eb = 1,
+                           //  .lane_seq = 0x2130,
                          },
                      .change_setting_skip_num = 1,
                      .horizontal_view_angle = 65,

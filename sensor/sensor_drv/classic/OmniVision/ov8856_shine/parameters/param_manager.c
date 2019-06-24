@@ -38,9 +38,13 @@ struct sensor_raw_info *ov8856_drv_init_raw_info(int sensor_id, int vendor_id,
 #include "parameters_sharkl5_front/sensor_ov8856_raw_param_main.c"
 	return &s_ov8856_mipi_raw_info;
 	}
+#elif defined(_SENSOR_RAW_SHARKL5PRO_H_)
+#include "parameters_sharkl5_front/sensor_ov8856_raw_param_main.c"
+    return &s_ov8856_mipi_raw_info;
 #else
 #include "parameters_sharkle/sensor_ov8856_raw_param_main.c"
     return &s_ov8856_mipi_raw_info;
+
 #endif
 
     return NULL;

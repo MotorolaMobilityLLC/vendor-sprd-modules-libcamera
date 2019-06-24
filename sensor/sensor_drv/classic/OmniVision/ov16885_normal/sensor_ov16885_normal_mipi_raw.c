@@ -23,11 +23,6 @@
 
 #include "sensor_ov16885_normal_mipi_raw.h"
 
-#undef SENSOR_LOGI
-#define SENSOR_LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#undef SENSOR_LOGE
-#define SENSOR_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-
 /*==============================================================================
  * Description:
  * write register value to sensor
@@ -157,7 +152,7 @@ static void ov16885_normal_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     } else {
      fps = 1000000000.0 / ((shutter + dummy_line) * sns_drv_cxt->trim_tab_info[mode].line_time);
     }
-    SENSOR_LOGI("fps = %f", fps);
+   // SENSOR_LOGI("fps = %f", fps);
 
     frame_interval = (cmr_u16)(((shutter + dummy_line) *
                sns_drv_cxt->line_time_def) / 1000000);
@@ -232,9 +227,10 @@ static cmr_int ov16885_normal_drv_power_on(cmr_handle handle, cmr_uint power_on)
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(2 * 1000);
-        //hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);        
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);        
     } else
-    {
+    {    
+		hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);		
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
@@ -264,7 +260,7 @@ static cmr_int ov16885_normal_drv_init_fps_info(cmr_handle handle)
     struct sensor_trim_tag *trim_info = sns_drv_cxt->trim_tab_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
 
-    SENSOR_LOGI("E");
+  //  SENSOR_LOGI("E");
     if (!fps_info->is_init) {
         cmr_u32 i, modn, tempfps = 0;
         SENSOR_LOGI("start init");
@@ -297,7 +293,7 @@ static cmr_int ov16885_normal_drv_init_fps_info(cmr_handle handle)
         }
         fps_info->is_init = 1;
     }
-    SENSOR_LOGI("X");
+  //  SENSOR_LOGI("X");
     return rtn;
 }
 
@@ -316,7 +312,7 @@ static cmr_int ov16885_normal_drv_init_exif_info(cmr_handle handle, void **exif_
     SENSOR_IC_CHECK_PTR(exif_ptr);
     *exif_info_in = exif_ptr;
 
-    SENSOR_LOGI("Start");
+   // SENSOR_LOGI("Start");
     exif_ptr->valid.FNumber = 1;
     exif_ptr->FNumber.numerator = static_info->f_num;
     exif_ptr->FNumber.denominator = 100;
@@ -509,7 +505,7 @@ static cmr_int ov16885_normal_drv_access_val(cmr_handle handle, cmr_uint param)
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("ov16885 sensor: param_ptr->type=%x", param_ptr->type);
+    SENSOR_LOGV("ov16885 sensor: param_ptr->type=%x", param_ptr->type);
 
     switch(param_ptr->type)
     {
@@ -699,7 +695,7 @@ static cmr_int ov16885_normal_drv_read_aec_info(cmr_handle handle, cmr_uint para
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E");
+  //  SENSOR_LOGI("E");
 
     info->aec_i2c_info_out = &ov16885_normal_aec_info;
     exposure_line = info->exp.exposure;
@@ -717,7 +713,7 @@ static cmr_int ov16885_normal_drv_set_master_FrameSync(cmr_handle handle, cmr_ui
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E");
+   // SENSOR_LOGI("E");
 
     /*TODO*/
 
@@ -743,6 +739,11 @@ static cmr_int ov16885_normal_drv_stream_on(cmr_handle handle, cmr_uint param)
 
     SENSOR_LOGI("E");
 
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.colorbar", value1, "0");
+    if (!strcmp(value1, "1")) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
+    }
 #if defined(CONFIG_DUAL_MODULE)
     ov16885_normal_drv_set_master_FrameSync(handle, param);
     //ov16885_normal_drv_set_slave_FrameSync(handle, param);
@@ -763,7 +764,7 @@ static cmr_int ov16885_normal_drv_stream_on(cmr_handle handle, cmr_uint param)
  *============================================================================*/
 static cmr_int ov16885_normal_drv_stream_off(cmr_handle handle, cmr_uint param)
 {
-    SENSOR_LOGI("E");
+  //  SENSOR_LOGI("E");
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
