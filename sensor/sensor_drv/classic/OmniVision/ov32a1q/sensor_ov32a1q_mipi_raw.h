@@ -49,8 +49,8 @@
 #define VIDEO_HEIGHT 1080
 #define PREVIEW_WIDTH 3264
 #define PREVIEW_HEIGHT 2448
-#define SNAPSHOT_WIDTH 6528
-#define SNAPSHOT_HEIGHT 4896
+#define SNAPSHOT_WIDTH 3280//6528
+#define SNAPSHOT_HEIGHT 2464//4896
 
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
@@ -3536,9 +3536,9 @@ static struct sensor_res_tab_info s_ov32a1q_resolution_tab_raw[VENDOR_NUM] = {
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting), PNULL, 0,
+/*          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting), PNULL, 0,
            .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}
+           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}*/
 		}}
 
     /*If there are multiple modules,please add here*/
@@ -3574,7 +3574,7 @@ static SENSOR_TRIM_T s_ov32a1q_resolution_trim_tab[VENDOR_NUM] = {
                               .w = PREVIEW_TRIM_W,
                               .h = PREVIEW_TRIM_H}},
 
-             {.trim_start_x = SNAPSHOT_TRIM_X,
+ /*            {.trim_start_x = SNAPSHOT_TRIM_X,
               .trim_start_y = SNAPSHOT_TRIM_Y,
               .trim_width = SNAPSHOT_TRIM_W,
               .trim_height = SNAPSHOT_TRIM_H,
@@ -3584,7 +3584,7 @@ static SENSOR_TRIM_T s_ov32a1q_resolution_trim_tab[VENDOR_NUM] = {
               .scaler_trim = {.x = SNAPSHOT_TRIM_X,
                               .y = SNAPSHOT_TRIM_Y,
                               .w = SNAPSHOT_TRIM_W,
-                              .h = SNAPSHOT_TRIM_H}},
+                              .h = SNAPSHOT_TRIM_H}},*/
          }}
 
     /*If there are multiple modules,please add here*/

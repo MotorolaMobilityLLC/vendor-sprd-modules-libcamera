@@ -628,9 +628,9 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #else
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_TWO_EEPROM, 8192}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
 #endif
 #endif
 
