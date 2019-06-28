@@ -440,8 +440,8 @@ static cmr_int s5k4h7_drv_access_val(cmr_handle handle, cmr_uint param) {
         // ret = s5k4h7_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
-        ret =
-            s5k4h7_qtech_identify_otp(handle, s_s5k4h7_otp_info_ptr, param_ptr);
+        //ret =
+            //s5k4h7_qtech_identify_otp(handle, s_s5k4h7_otp_info_ptr, param_ptr);
         break;
     default:
         break;
@@ -663,6 +663,7 @@ static cmr_int s5k4h7_drv_stream_on(cmr_handle handle, cmr_uint param) {
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
 
     /*END*/
 

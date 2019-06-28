@@ -42,6 +42,9 @@ extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 #ifdef GC5024
 extern SENSOR_INFO_T g_gc5024_mipi_raw_info;
 #endif
+#ifdef GC5035
+extern SENSOR_INFO_T g_gc5035_mipi_raw_info;
+#endif
 #ifdef GC8024
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 #endif
@@ -210,6 +213,9 @@ extern SENSOR_INFO_T g_s5k4h7_mipi_raw_info;
 #ifdef S5K3L6
 extern SENSOR_INFO_T g_s5k3l6_mipi_raw_info;
 #endif
+#ifdef S5K3L6XX03
+extern SENSOR_INFO_T g_s5k3l6xx03_mipi_raw_info;
+#endif
 #ifdef S5K3P9SX04
 extern SENSOR_INFO_T g_s5k3p9sx04_mipi_raw_info;
 #endif
@@ -228,7 +234,9 @@ extern otp_drv_entry_t imx258_truly_drv_entry;
 extern otp_drv_entry_t ov13855_altek_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_qtech_drv_entry;
 extern otp_drv_entry_t s5k3p8sm_truly_drv_entry;
+extern otp_drv_entry_t s5k4h7_tsp_drv_entry;
 extern otp_drv_entry_t gc5024_common_drv_entry;
+extern otp_drv_entry_t gc5035_common_drv_entry;
 extern otp_drv_entry_t s5k3l8xxm3_reachtech_drv_entry;
 extern otp_drv_entry_t gc2375_altek_drv_entry;
 extern otp_drv_entry_t ov8856_cmk_drv_entry;
@@ -430,6 +438,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #ifdef S5K3L6
     {MODULE_SUNNY, "s5k3l6", &g_s5k3l6_mipi_raw_info, {&dw9714_drv_entry, 4}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
+#ifdef S5K3L6XX03
+    {MODULE_SUNNY, "s5k3l6xx03", &g_s5k3l6xx03_mipi_raw_info, {&dw9714_drv_entry, 4}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
 #ifdef S5K3P9SX04
     {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
 #endif
@@ -520,7 +531,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "s5k5e2ya", &g_s5k5e2ya_mipi_raw_info, {&dw9714_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef S5K4H7
-    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {&s5k4h7_tsp_drv_entry, 0, 0, 0}},
 #endif
 // hynix area
 #ifdef HI556
@@ -563,6 +574,9 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 #endif
 #ifdef GC2375A
     {MODULE_SUNNY, "gc2375a", &g_gc2375a_mipi_raw_info, {NULL, 0}, {&gc2375_altek_drv_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
+#endif
+#ifdef GC5035
+    {MODULE_SUNNY, "gc5035", &g_gc5035_mipi_raw_info, {NULL, 0}, {&gc5035_common_drv_entry, 0, 0, 0}},
 #endif
 
 // cista area

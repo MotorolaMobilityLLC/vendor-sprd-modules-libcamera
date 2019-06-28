@@ -30,7 +30,7 @@
 
 #include "parameters/sensor_s5k4h7_raw_param_main.c"
 
-#define FEATURE_OTP
+//#define FEATURE_OTP
 
 #ifdef FEATURE_OTP
 #include "sensor_s5k4h7_qtech_otp.h"
@@ -38,7 +38,7 @@ static struct otp_info_t *s_s5k4h7_otp_info_ptr = &s_s5k4h7_qtech_otp_info;
 #endif
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "s5k4h7_mipi_raw"
+#define SENSOR_NAME "s5k4h7yx03"
 #define I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
 
 #define S5K4H7_PID_ADDR 0x0000
@@ -135,7 +135,7 @@ static const SENSOR_REG_T s5k4h7_init_setting[] = {
     {0x306F, 0x28}, {0x301F, 0x20}, {0x306B, 0x9A}, {0x3091, 0x1F},
     {0x30C4, 0x06}, {0x3200, 0x09}, {0x306A, 0x79}, {0x30B0, 0xFF},
     {0x306D, 0x08}, {0x3080, 0x00}, {0x3929, 0x3F}, {0x3084, 0x16},
-    {0x3070, 0x0F}, {0x3950, 0xB4}, // addd csi
+    {0x3070, 0x0F}, //{0x3950, 0xB4}, // addd csi
     {0x3B45, 0x01}, {0x30C2, 0x05}, {0x3069, 0x87}, {0x3924, 0x7F},
     {0x3925, 0xFD}, {0x3C08, 0xFF}, {0x3C09, 0xFF}, {0x3C31, 0xFF},
     {0x3C32, 0xFF}, {0x0A02, 0x14},
@@ -181,7 +181,7 @@ static const SENSOR_REG_T s5k4h7_preview_setting[] = {
 #endif
     {0x0340, 0x09}, {0x0341, 0xE2}, {0x0342, 0x0E}, {0x0343, 0x68},
     {0x0200, 0x0D}, {0x0201, 0xD8}, {0x0202, 0x02}, {0x0203, 0x08},
-    {0x3400, 0x01},
+    {0x3400, 0x01}, {0x0B00, 0x01},
 };
 
 static const SENSOR_REG_T s5k4h7_snapshot_setting[] = {
@@ -218,7 +218,7 @@ static const SENSOR_REG_T s5k4h7_snapshot_setting[] = {
 #endif
     {0x0340, 0x09}, {0x0341, 0xE2}, {0x0342, 0x0E}, {0x0343, 0x68},
     {0x0200, 0x0D}, {0x0201, 0xD8}, {0x0202, 0x02}, {0x0203, 0x08},
-    {0x3400, 0x01},
+    {0x3400, 0x01}, {0x0B00, 0x01},
 };
 
 static const SENSOR_REG_T s5k4h7_video_setting[] = {
@@ -380,7 +380,7 @@ static SENSOR_STATIC_INFO_T s_s5k4h7_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
+                     .fov_info = {{3.656f, 2.742f}, 2.426f}}}
     /*If there are multiple modules,please add here*/
 };
 
@@ -412,7 +412,7 @@ static struct sensor_module_info s_s5k4h7_module_info_tab[VENDOR_NUM] = {
                      .iovdd_val = SENSOR_AVDD_1800MV,
                      .dvdd_val = SENSOR_AVDD_1200MV,
 
-                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
 
                      .preview_skip_num = 1,
                      .capture_skip_num = 1,
