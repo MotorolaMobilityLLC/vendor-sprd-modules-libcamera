@@ -2674,9 +2674,9 @@ static cmr_int setting_set_focus_distance(struct setting_component *cpt,
                                           struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     CMR_LOGI("focus_distance = %lu", parm->cmd_type_value);
-
+    cpt->force_set = 1;
     ret = setting_set_general(cpt, SETTING_GENERAL_FOCUS_DISTANCE, parm);
-
+    cpt->force_set = 0;
     return ret;
 }
 
@@ -2826,11 +2826,11 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
-    if (invalid_word != hal_param->hal_common.focus_distance) {
+    /*if (invalid_word != hal_param->hal_common.focus_distance) {
         cmd_param.cmd_type_value = hal_param->hal_common.focus_distance;
         ret = setting_set_focus_distance(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
-    }
+    }*/
 
     if (invalid_word != hal_param->hal_common.is_auto_hdr) {
         cmd_param.cmd_type_value = hal_param->hal_common.is_auto_hdr;
