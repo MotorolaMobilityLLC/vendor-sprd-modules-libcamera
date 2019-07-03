@@ -338,7 +338,7 @@ enum {
 };
 const uint8_t availableIso[] = {
     CAMERA_ISO_AUTO, CAMERA_ISO_100,  CAMERA_ISO_200, CAMERA_ISO_400,
-    CAMERA_ISO_800,  CAMERA_ISO_1600, CAMERA_ISO_MAX};
+    CAMERA_ISO_800,  CAMERA_ISO_1600};
 
 typedef struct cam_stream_info {
     cam_dimension_t stream_sizes_tbl;
