@@ -53,7 +53,7 @@ LOCAL_C_INCLUDES += \
        $(LOCAL_PATH)/../../hal1.0/inc \
        $(LOCAL_PATH)/../../$(HAL_DIR) \
        $(LOCAL_PATH)/../../arithmetic/facebeauty/inc \
-       $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+       $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
        $(TOP)/vendor/sprd/external/kernel-headers \
        $(TOP)/vendor/sprd/modules/libmemion \
        $(TOP)/kernel/include/video \
@@ -74,6 +74,5 @@ LOCAL_32_BIT_ONLY := true
 LOCAL_SRC_FILES := minicamera.cpp
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := minicamera
-LOCAL_MODULE_TAGS := debug
 
 include $(BUILD_EXECUTABLE)

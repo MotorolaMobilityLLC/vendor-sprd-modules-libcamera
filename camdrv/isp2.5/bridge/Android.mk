@@ -24,7 +24,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Werror
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../../common/inc
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
@@ -46,7 +46,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../param_manager \
 	$(LOCAL_PATH)/../driver/inc
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_SRC_FILES += $(call all-c-files-under, .)
 

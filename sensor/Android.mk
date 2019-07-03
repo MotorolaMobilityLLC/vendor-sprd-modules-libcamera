@@ -22,7 +22,7 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Wno-error=format#-Werror
 
 LOCAL_C_INCLUDES := \
-    $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
     $(LOCAL_PATH)/../vsp/inc \
@@ -59,7 +59,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/utility \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/calibration/inc
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
 include $(LOCAL_PATH)/hw_drv/Sprdroid.mk

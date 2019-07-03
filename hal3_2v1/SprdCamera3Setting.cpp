@@ -1697,8 +1697,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
                 if (scaler_formats[j] ==
-                    (HAL_PIXEL_FORMAT_BLOB ||
-                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                    (HAL_PIXEL_FORMAT_BLOB |
+                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED |
                      HAL_PIXEL_FORMAT_RAW16)) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(

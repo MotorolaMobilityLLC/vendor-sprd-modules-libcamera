@@ -67,7 +67,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS :=  -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wunused-variable -Wunused-function  -Werror
 
 LOCAL_C_INCLUDES := \
-         $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+         $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
          $(LOCAL_PATH)/sprd/inc \
          $(LOCAL_PATH)/../../common/inc \
          $(LOCAL_PATH)/../libgralloc_mali \

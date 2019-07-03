@@ -26,7 +26,7 @@ LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem2v6/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
@@ -64,7 +64,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/param_manager \
 	$(LOCAL_PATH)/bridge
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_SRC_FILES := $(call all-c-files-under, driver) \
 	$(call all-c-files-under, isp_tune) \

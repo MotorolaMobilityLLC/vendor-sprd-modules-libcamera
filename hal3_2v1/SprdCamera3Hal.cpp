@@ -60,4 +60,4 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     .open_legacy = HAL_open_legacy,
     .set_torch_mode = sprdcamera::SprdCamera3Factory::setTorchMode,
     NULL,
-    {0}};
+    0};

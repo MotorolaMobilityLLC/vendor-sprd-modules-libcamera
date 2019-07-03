@@ -28,7 +28,7 @@
  */
 
 #include "SprdCamera3MultiBase.h"
-#include <linux/ion.h>
+//#include <linux/ion.h>
 #include <cutils/ashmem.h>
 #include <sys/mman.h>
 #if defined(CONFIG_SPRD_ANDROID_8)

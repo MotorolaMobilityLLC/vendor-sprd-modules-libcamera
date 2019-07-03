@@ -43,7 +43,7 @@ endif
 
 
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../../jpeg \
@@ -92,7 +92,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/sprd/inc
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 # don't modify this code
 LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)

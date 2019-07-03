@@ -28,7 +28,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 ISPALG_DIR = ispalg/isp2.x
 ISPDRV_DIR = camdrv/isp2.4
 LOCAL_C_INCLUDES := \
-    $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/isp_calibration/inc \
     $(LOCAL_PATH)/../common/inc \
@@ -51,7 +51,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_HEADER_LIBRARIES += jni_headers
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_SRC_FILES+= \
         ../oemcommon/src/cmr_img_debug.c \

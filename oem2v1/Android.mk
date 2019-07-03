@@ -27,7 +27,7 @@ $(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
 
 ifeq ($(strip $(OEM_DIR)),oem2v1)
 LOCAL_C_INCLUDES += \
-    $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/isp_calibration/inc \
     $(LOCAL_PATH)/../common/inc \
@@ -57,7 +57,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_HEADER_LIBRARIES += liblog_headers
 LOCAL_HEADER_LIBRARIES += jni_headers
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_SRC_FILES+= \
 	../oemcommon/src/cmr_img_debug.c \

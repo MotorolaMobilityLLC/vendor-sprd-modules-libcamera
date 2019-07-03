@@ -29,8 +29,7 @@
 #include <linux/fb.h>
 #include "sprd_cpp.h"
 #include <dlfcn.h>
-#include "eng_modules.h"
-#include "eng_diag.h"
+#include "sprd_fts_type.h"
 
 using namespace sprdcamera;
 

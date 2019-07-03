@@ -4098,7 +4098,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	if(!cxt->pri_set){
 		cxt->pri_set = 1;
 		ISP_LOGI("setpriority = %d",setpriority(PRIO_PROCESS, 0, -10));
-		set_sched_policy(0, SP_FOREGROUND);
+		//set_sched_policy(0, SP_FOREGROUND);
 	}
 	cxt->capture_skip_num = work_info->capture_skip_num;
 	ISP_LOGV("capture_skip_num %d", cxt->capture_skip_num);

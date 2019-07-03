@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <utils/Log.h>
 #include "camera_face_beauty.h"
-
+#include <time.h>
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
 #define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))

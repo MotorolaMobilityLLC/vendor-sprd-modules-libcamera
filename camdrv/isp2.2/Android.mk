@@ -25,7 +25,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Werror
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem2v1/inc \
 	$(LOCAL_PATH)/../../oem2v1/isp_calibration/inc \
@@ -64,7 +64,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/utility \
 	$(LOCAL_PATH)/calibration/inc
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 # don't modify this code
 LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name 'param_manager' -prune -o -name '*.c' -print |sed s:^$(LOCAL_PATH)/::g)

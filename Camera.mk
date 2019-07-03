@@ -159,7 +159,7 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/modules/libmemion \
     $(TOP)/frameworks/native/libs/sensor/include \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
-    $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
+    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
 LOCAL_C_INCLUDES += \
@@ -201,7 +201,7 @@ LOCAL_SRC_FILES += \
       arithmetic/sprd_yuvprocess/src/hal_yuvprocess.c
 # for bbat
 LOCAL_C_INCLUDES += \
-   $(TOP)/vendor/sprd/proprietories-source/engmode \
+   $(TOP)/vendor/sprd/proprietories-source/engpc/sprd_fts_inc \
    $(TOP)/vendor/sprd/proprietories-source/autotest/interface/include
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
@@ -219,7 +219,7 @@ LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 ifeq ($(strip $(TARGET_GPU_PLATFORM)),soft)
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)/soft/include
 endif
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_HEADER_LIBRARIES += media_plugin_headers
 LOCAL_HEADER_LIBRARIES += libutils_headers

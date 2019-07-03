@@ -47,7 +47,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Werror -fvisibility=hidden
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../../common/inc
 
 # ************************************************
@@ -67,7 +67,7 @@ LOCAL_C_INCLUDES += \
 
 include $(LOCAL_PATH)/../../../SprdCtrl.mk
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_SRC_FILES += $(call all-c-files-under, .)
 

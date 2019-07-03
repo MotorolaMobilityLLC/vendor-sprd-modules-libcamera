@@ -44,7 +44,7 @@
 #include "SprdCamera3HALHeader.h"
 #include <cutils/ashmem.h>
 #include <dlfcn.h>
-#include <linux/ion.h>
+//#include <linux/ion.h>
 #include <ui/GraphicBuffer.h>
 #ifdef CAMERA_3DNR_CAPTURE_GPU
 #include "gralloc_buffer_priv.h"
@@ -9929,6 +9929,7 @@ int SprdCamera3OEMIf::Callback_GPUMalloc(enum camera_mem_cb_type type,
         // malloc with callback_graphicbuffermalloc
         ret = camera->Callback_ZslGraphicBufferMalloc(
             size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
+        break;
     }
     default:
         break;
