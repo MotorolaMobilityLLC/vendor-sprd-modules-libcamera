@@ -159,6 +159,7 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/modules/libmemion \
     $(TOP)/frameworks/native/libs/sensor/include \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
+    $(TOP)/system/core/libion/kernel-headers \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
