@@ -739,6 +739,34 @@ SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id) {
     return (SENSOR_MATCH_T *)sensor_reg_tab_ptr;
 }
 
+cmr_u32 sensor_get_regist_tab_size(cmr_u32 sensor_id) {
+    cmr_u32 list_num = 0;
+
+    switch (sensor_id) {
+    case SENSOR_MAIN:
+        list_num = ARRAY_SIZE(back_sensor_infor_tab) - 1;
+        break;
+    case SENSOR_SUB:
+        list_num = ARRAY_SIZE(front_sensor_infor_tab) - 1;
+        break;
+    case SENSOR_MAIN2:
+        list_num = ARRAY_SIZE(back_sensor2_infor_tab) - 1;
+        break;
+    case SENSOR_SUB2:
+        list_num = ARRAY_SIZE(front_sensor2_infor_tab) - 1;
+        break;
+    case SENSOR_MAIN3:
+        list_num = ARRAY_SIZE(back_sensor3_infor_tab) - 1;
+        break;
+    case SENSOR_SUB3:
+        list_num = ARRAY_SIZE(front_sensor3_infor_tab) - 1;
+        break;
+    }
+
+    return list_num;
+}
+
+
 char *sensor_get_name_list(cmr_u32 sensor_id) {
     char *sensor_name_list_ptr = NULL;
 
@@ -768,9 +796,11 @@ char *sensor_get_name_list(cmr_u32 sensor_id) {
 }
 
 SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx) {
+    cmr_u32 list_num = 0;
     SENSOR_MATCH_T *sns_reg_tab_ptr = sensor_get_regist_table(sensor_id);
 
-    if (sns_reg_tab_ptr == NULL)
+    list_num = sensor_get_regist_tab_size(sensor_id);
+    if (sns_reg_tab_ptr == NULL || idx > list_num)
         return NULL;
 
     sns_reg_tab_ptr += idx;

@@ -46,6 +46,7 @@ typedef struct snsMultiCameraInfo {
 } SNS_MULTI_CAMERA_INFO_T;
 
 SENSOR_MATCH_T *sensor_get_regist_table(cmr_u32 sensor_id);
+cmr_u32 sensor_get_regist_tab_size(cmr_u32 sensor_id);
 char *sensor_get_name_list(cmr_u32 sensor_id);
 SENSOR_MATCH_T *sensor_get_entry_by_idx(cmr_u32 sensor_id, cmr_u16 idx);
 cmr_int sensor_check_name(cmr_u32 sensor_id, SENSOR_MATCH_T *reg_tab_ptr);

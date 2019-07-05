@@ -933,6 +933,12 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list + physical_id;
 
+    if (phyPtr->slotId == 0xff) {
+        SENSOR_LOGE("slotId is 255.please check and connect the sensor,restart "
+                    "the phone");
+        return ret;
+    }
+
     if (phyPtr->slotId < SENSOR_ID_MAX &&
         devPtr->drv_idx[phyPtr->slotId] != 0xff) {
         has_identified = 1;
@@ -940,6 +946,7 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
         has_identified = sensor_load_idx_inf_file(devPtr->drv_idx);
         if (!has_identified) {
             sensor_drv_scan_hw();
+            has_identified = 1;
         }
     }
 
@@ -3102,6 +3109,7 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
     cmr_u32 saved_index = 0;
     SENSOR_INFO_T *sensor_info_ptr = PNULL;
     SENSOR_MATCH_T *sns_module = PNULL;
+    cmr_u32 list_num = 0;
 
     SENSOR_LOGI("sensor drv identify sensor_id %d", sensor_id);
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
@@ -3114,8 +3122,11 @@ static cmr_int sensor_drv_identify(struct sensor_drv_context *sensor_cxt,
         return SENSOR_FAIL;
     }
 
+    list_num = sensor_get_regist_tab_size(sensor_id);
     saved_index = *sensor_cxt->sensor_index;
-    search_index = (saved_index == 0xff) ? 0 : saved_index;
+    search_index = (saved_index >= list_num) ? 0 : saved_index;
+    SENSOR_LOGI("search_index %d, save_index %d, list_num %d", search_index,
+                saved_index, list_num);
 
     do {
 
