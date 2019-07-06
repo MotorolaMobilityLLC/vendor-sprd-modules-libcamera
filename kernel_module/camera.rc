@@ -1,17 +1,13 @@
-on early-init
-    insmod /vendor/lib/modules/sprd_sensor.ko
-    insmod /vendor/lib/modules/sprd_flash_drv.ko
-    insmod /vendor/lib/modules/sprd_camera.ko
-    insmod /vendor/lib/modules/sprd_cpp.ko
-    insmod /vendor/lib/modules/sprd_fd.ko
-    insmod /vendor/lib/modules/mmdvfs.ko
+on post-fs
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_sensor.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_flash_drv.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_camera.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_cpp.ko
     trigger sprd-flash-ko
 
 on factorytest
-    insmod /vendor/lib/modules/sprd_sensor.ko
-    insmod /vendor/lib/modules/sprd_flash_drv.ko
-    insmod /vendor/lib/modules/sprd_camera.ko
-    insmod /vendor/lib/modules/sprd_cpp.ko
-    insmod /vendor/lib/modules/sprd_fd.ko
-    insmod /vendor/lib/modules/mmdvfs.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_sensor.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_flash_drv.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_camera.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_cpp.ko
     trigger sprd-flash-ko
