@@ -39,6 +39,7 @@ extern "C" {
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
+#include <hardware/enhance.h>
 #define ISP_LSC_BUF_SIZE (32 * 1024)
 #define ISP_LSC_BUF_NUM 1
 #define ISP_ANTI_FLICKER_BUF_SIZE (750 * 1024) /* 3120*4*61 */
@@ -334,6 +335,12 @@ struct camera_context {
     struct isp_pos focus_rect;
     cmr_uint cmr_set_env;
     cmr_u8 mode_4in1;
+    cmr_int lcd_flash_highlight;
+    cmr_u8 backlight_brightness;
+    cmr_u8 backup_brightness;
+    cmr_u16 color_temp;
+    cmr_u32 bg_color;
+    enhance_device_t *enhance;
     struct img_rect trim_reset_info;
     cmr_u8 is_cnr;
     cmr_uint is_snapshot;
