@@ -2867,7 +2867,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		return AFV1_SUCCESS;
 	}
 
-	if (AF_STOPPED == af->focus_state) {
+	if((AF_STOPPED == af->focus_state)||(0 == af->bypass && 1 == af->last_bypass_state)) {
 		trigger_notice_force(af);
 	}
 
@@ -2900,6 +2900,7 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 {
 	UNUSED(param0);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
+	af->last_bypass_state = af->bypass;
 	ISP_LOGI("af state = %s, focus state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
 
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
