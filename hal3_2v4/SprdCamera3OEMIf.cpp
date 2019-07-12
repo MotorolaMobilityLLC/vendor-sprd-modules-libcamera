@@ -5737,7 +5737,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         mSetting->getSPRDDEFTag(&sprddefInfo);
         sprddefInfo.is_takepicture_with_flash = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprddefInfo);
-        HAL_LOGI("is_takepicture_with_flash = %d",
+        HAL_LOGD("is_takepicture_with_flash = %d",
                  sprddefInfo.is_takepicture_with_flash);
         break;
     case CAMERA_EVT_CB_HDR_SCENE:
@@ -5745,7 +5745,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         mSetting->getSPRDDEFTag(&sprdInfo);
         sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
-        HAL_LOGI("sprd_is_hdr_scene = %d", sprddefInfo.sprd_is_hdr_scene);
+        HAL_LOGD("sprd_is_hdr_scene = %d", sprddefInfo.sprd_is_hdr_scene);
         break;
     case CAMERA_EVT_CB_HIST_REPORT: {
         int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};

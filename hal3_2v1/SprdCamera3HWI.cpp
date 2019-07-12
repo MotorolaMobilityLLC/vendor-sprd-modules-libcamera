@@ -1063,9 +1063,9 @@ void SprdCamera3HWI::getLogLevel() {
         turn_off_flag = 1;
     }
 
-    // user verson/turn off camera log dont print >= LOGD
-    property_get("ro.build.type", value, "userdebug");
-    if (!strcmp(value, "user") || turn_off_flag) {
+    // user verson camera log dont print >= LOGD
+    property_get("ro.debuggable", value, "1");
+    if (!strcmp(value, "0") || turn_off_flag) {
         gHALLogLevel = LEVEL_OVER_LOGI;
     }
 

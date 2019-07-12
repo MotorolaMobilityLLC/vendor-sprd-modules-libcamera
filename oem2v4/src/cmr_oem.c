@@ -4862,17 +4862,18 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGI("caller_handle 0x%lx is_sync %d", (cmr_uint)caller_handle,
-             mean->is_sync);
-    CMR_LOGI("src fd 0x%x , dst fd 0x%x", src->fd, dst->fd);
-    CMR_LOGI("src 0x%lx 0x%lx , dst 0x%lx 0x%lx", src->addr_phy.addr_y,
-             src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);
+    CMR_LOGD("caller_handle 0x%lx, is_sync %d, src fd 0x%x, dst fd 0x%x"
+        ", src 0x%lx 0x%lx, dst 0x%lx 0x%lx",
+        (cmr_uint)caller_handle, mean->is_sync, src->fd, dst->fd,
+        src->addr_phy.addr_y, src->addr_phy.addr_u,
+        dst->addr_phy.addr_y, dst->addr_phy.addr_u);
+
     CMR_LOGI(
-        "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
+        "src size %d %d, dst size %d %d, rect %d %d %d %d, endian %d %d, %d %d",
         src->size.width, src->size.height, dst->size.width, dst->size.height,
         src->rect.start_x, src->rect.start_y, src->rect.width, src->rect.height,
-        src->data_end.y_endian, src->data_end.uv_endian, dst->data_end.y_endian,
-        dst->data_end.uv_endian);
+        src->data_end.y_endian, src->data_end.uv_endian,
+        dst->data_end.y_endian, dst->data_end.uv_endian);
 
     if (1 != mean->is_sync) {
         ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
@@ -4942,7 +4943,6 @@ cmr_int camera_preview_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGI("camera id %d", camera_id);
 
     /*
     if (CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) {
@@ -4953,7 +4953,7 @@ cmr_int camera_preview_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id,
     sensor_mode = preview_sn_mode;
     cxt->prev_cxt.preview_sn_mode = preview_sn_mode;
 
-    CMR_LOGI("sensor work mode %d", sensor_mode);
+    CMR_LOGI("camera id %d, sensor work mode %d", camera_id, sensor_mode);
     ret =
         cmr_sensor_set_mode(cxt->sn_cxt.sensor_handle, camera_id, sensor_mode);
     if (ret) {
@@ -6644,7 +6644,7 @@ cmr_int camera_sensor_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             CMR_LOGE("failed to sn ioctrl %ld", ret);
         }
         if (set_exif_flag) {
-            CMR_LOGD("ERIC set exif");
+            CMR_LOGV("ERIC set exif");
             if (cmd_type == COM_SN_SET_WB_MODE) {
                 cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                     exif_cmd, param_ptr->cmd_value);
@@ -7194,7 +7194,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     }
 
     if (set_exif_flag) {
-        CMR_LOGD("ERIC set exif");
+        CMR_LOGV("ERIC set exif");
         if (COM_ISP_SET_AWB_MODE == cmd_type) {
             cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                 exif_cmd, param_ptr->cmd_value);
@@ -7735,7 +7735,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     }
     out_param_ptr->sprd_pipviv_enabled = setting_param.cmd_type_value;
     cxt->is_pipviv_mode = setting_param.cmd_type_value;
-    CMR_LOGI("sprd pipviv_enabled flag %d", out_param_ptr->sprd_pipviv_enabled);
 
     if (cxt->is_refocus_mode == 2) {
         out_param_ptr->sprd_pipviv_enabled = 1;
@@ -7746,9 +7745,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         }
     }
 
-    CMR_LOGI("cxt->is_refocus_mode %d, camera id = %d, isp_to_dram  %d",
-             cxt->is_refocus_mode, cxt->camera_id, out_param_ptr->isp_to_dram);
-
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_SPRD_EIS_ENABLED, &setting_param);
     if (ret) {
@@ -7756,7 +7752,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     out_param_ptr->sprd_eis_enabled = setting_param.cmd_type_value;
-    CMR_LOGI("sprd eis_enabled flag %d", out_param_ptr->sprd_eis_enabled);
+
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
     if (ret) {
@@ -7764,7 +7760,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     out_param_ptr->video_snapshot_type = setting_param.cmd_type_value;
-    CMR_LOGI("video_snapshot_type=%d", out_param_ptr->video_snapshot_type);
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_SPRD_3DCAL_ENABLE, &setting_param);
@@ -7774,8 +7769,14 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     }
     cxt->is_3dcalibration_mode = setting_param.cmd_type_value;
     out_param_ptr->sprd_3dcalibration_enabled = cxt->is_3dcalibration_mode;
-    CMR_LOGD("sprd_3dcalibration_enabled flag %d",
-             out_param_ptr->sprd_3dcalibration_enabled);
+
+    CMR_LOGI("sprd pipviv_enabled flag %d, cxt->is_refocus_mode %d, camera id %d"
+        ", isp_to_dram %d, sprd eis_enabled flag %d, video_snapshot_type %d"
+        ", sprd_3dcalibration_enabled flag %d",
+        out_param_ptr->sprd_pipviv_enabled, cxt->is_refocus_mode, cxt->camera_id,
+        out_param_ptr->isp_to_dram, out_param_ptr->sprd_eis_enabled,
+        out_param_ptr->video_snapshot_type,
+        out_param_ptr->sprd_3dcalibration_enabled);
 
 exit:
     CMR_LOGD(
@@ -9075,7 +9076,7 @@ cmr_uint camera_get_exif_info(cmr_handle oem_handle,
                                 (float)exif_spec->FocalLength.denominator;
 
 exit:
-    CMR_LOGI("apet %f focus dist %f", exif_info->aperture,
+    CMR_LOGD("apet %f focus dist %f", exif_info->aperture,
              exif_info->focus_distance);
     return ret;
 }
@@ -10904,7 +10905,7 @@ cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
                                          cmr_u16 is_enable) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -10916,7 +10917,7 @@ cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
 
     cxt->prev_cxt.snp_fd_enable = is_enable;
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
 
     return ret;
 }

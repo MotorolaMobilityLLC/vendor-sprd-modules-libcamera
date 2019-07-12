@@ -466,10 +466,6 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
         CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_SIZE failed");
     }
 
-    CMR_LOGI("sn_trim x y w h %d, %d, %d, %d", config->sn_trim.start_x,
-             config->sn_trim.start_y, config->sn_trim.width,
-             config->sn_trim.height);
-
     rect.x = config->sn_trim.start_x;
     rect.y = config->sn_trim.start_y;
     rect.w = config->sn_trim.width;
@@ -480,8 +476,6 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     }
 
     // for isp alloc memory use
-    CMR_LOGI("sensor_max_size: w=%d, h=%d", config->sensor_max_size.width,
-             config->sensor_max_size.height);
     sn_max_size.w = config->sensor_max_size.width;
     sn_max_size.h = config->sensor_max_size.height;
 
@@ -503,7 +497,12 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     }
 #endif
     sbs_info.sbs_mode = config->sbs_mode;
-    CMR_LOGI("sbs_mode %d", sbs_info.sbs_mode);
+    CMR_LOGI("sn_trim x y w h %d, %d, %d, %d"
+             ", sensor_max_size: w %d, h %d, sbs_mode %d",
+             config->sn_trim.start_x, config->sn_trim.start_y,
+             config->sn_trim.width, config->sn_trim.height,
+             config->sensor_max_size.width, config->sensor_max_size.height,
+             sbs_info.sbs_mode);
 #if 0
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SBS_MODE, &sbs_info);
     CMR_RTN_IF_ERR(ret);
@@ -672,12 +671,11 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
-    CMR_LOGI("frm_num %d dst width %d dst height %d,slowmotion %d.",
-             config->frm_num, config->cfg.dst_img_size.width,
-             config->cfg.dst_img_size.height, config->cfg.slowmotion);
-
-    CMR_LOGI("src_img_fmt %d dst_img_fmt %d.", config->cfg.src_img_fmt,
-             config->cfg.dst_img_fmt);
+    CMR_LOGI("frm_num %d, dst width %d, dst height %d,"
+                ", src_img_fmt %d, dst_img_fmt %d, slowmotion %d",
+                config->frm_num, config->cfg.dst_img_size.width,
+                config->cfg.dst_img_size.height, config->cfg.src_img_fmt,
+                config->cfg.dst_img_fmt, config->cfg.slowmotion);
 
     parm.dst_size.w = config->cfg.dst_img_size.width;
     parm.dst_size.h = config->cfg.dst_img_size.height;

@@ -9341,15 +9341,15 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGD("camera_id %d", camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
     sensor_size = &prev_cxt->cap_sn_size;
     sn_trim_rect = &prev_cxt->cap_sn_trim_rect;
     sn_mode_info = &prev_cxt->sensor_info.mode_info[prev_cxt->cap_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
-    CMR_LOGD("image_format %d, dst_img_fmt %d", sn_mode_info->image_format,
-             img_cap->dst_img_fmt);
-    CMR_LOGD("isp_to_dram %d", prev_cxt->prev_param.isp_to_dram);
+    CMR_LOGD("camera_id %d, image_format %d, dst_img_fmt %d, isp_to_dram %d",
+            camera_id, sn_mode_info->image_format, img_cap->dst_img_fmt,
+            prev_cxt->prev_param.isp_to_dram);
+
     img_cap->need_isp = 0;
     sensor_size->width = sn_mode_info->trim_width;
     sensor_size->height = sn_mode_info->trim_height;
