@@ -35,6 +35,8 @@
 #define BEGIN_Y_4 24
 #define BEGIN_X_5 0
 #define BEGIN_Y_5 0
+#define BEGIN_X_6 288
+#define BEGIN_Y_6 208
 #define ROI_X_0 1048
 #define ROI_Y_0 792
 #define ROI_X_1 1088
@@ -47,6 +49,8 @@
 #define ROI_Y_4 792
 #define ROI_X_5 1024
 #define ROI_Y_5 768
+#define ROI_X_6 1312
+#define ROI_Y_6 976
 
 #define ROI_Width 2048
 #define ROI_Height 1536
@@ -56,6 +60,7 @@
 #define SENSOR_ID_3 3 //IMX258 Type2
 #define SENSOR_ID_4 4 //IMX362 Dual PD
 #define SENSOR_ID_5 5 //OV12A10
+#define SENSOR_ID_6 6 //OV16885
 
 #define SENSOR_ID_2_BLOCK_W 64
 #define SENSOR_ID_2_BLOCK_H 64

@@ -417,6 +417,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_4;
 	} else if (SENSOR_VENDOR_OV12A10 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_5;
+	} else if (SENSOR_VENDOR_OV16885 == in_p->pd_info->vendor_type) {
+		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_6;
 	} else {
 		ISP_LOGE("fail to support the sensor:%d\n", in_p->pd_info->vendor_type);
 		goto exit;
@@ -503,6 +505,13 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->roi_info.win.end_y = ROI_Y_5 + ROI_Height;
 		cxt->pd_gobal_setting.dBeginX = BEGIN_X_5;
 		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_5;
+	}else if(cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_6){
+		cxt->roi_info.win.start_x = ROI_X_6;
+		cxt->roi_info.win.start_y = ROI_Y_6;
+		cxt->roi_info.win.end_x = ROI_X_6 + ROI_Width;
+		cxt->roi_info.win.end_y = ROI_Y_6 + ROI_Height;
+		cxt->pd_gobal_setting.dBeginX = BEGIN_X_6;
+		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_6;
 	} else {
 		cxt->roi_info.win.start_x = ROI_X_0;
 		cxt->roi_info.win.start_y = ROI_Y_0;
@@ -686,6 +695,11 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_5) {
 		dRectX = ROI_X_5;
 		dRectY = ROI_Y_5;
+		dRectW = ROI_Width;
+		dRectH = ROI_Height;
+	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_6) {
+		dRectX = ROI_X_6;
+		dRectY = ROI_Y_6;
 		dRectW = ROI_Width;
 		dRectH = ROI_Height;
 	}else {
@@ -916,6 +930,10 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		default:
 			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
 		break;
+		}
+		if (ret) {
+			ISP_LOGE("fail to get pd_result.");
+			goto exit;
 		}
 	}
 	else {
