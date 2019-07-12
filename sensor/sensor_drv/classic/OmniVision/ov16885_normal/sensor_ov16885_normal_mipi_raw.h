@@ -31,7 +31,8 @@
 
 //#include "parameters/sensor_ov16885_normal_raw_param_main.c"
 
-//#define FEATURE_OTP
+//#define OV16885_PDAF_USE_VC
+#define OV16885_PDAF_USE_DT
 
 #define VENDOR_NUM                1
 #define SENSOR_NAME               "ov16885_normal"
@@ -539,7 +540,17 @@ static const SENSOR_REG_T ov16885_normal_init_setting1[] = {
 	{0x58c6, 0x0d},
 	{0x58c7, 0xd0},
 	//{0x0100, 0x01},
-
+#ifdef OV16885_PDAF_USE_DT
+	{0x3661, 0x0d},
+	//{0x4640, 0x01},
+	//{0x4641, 0x04},
+	//{0x4809, 0x2b},
+	{0x486e, 0x0b},
+#endif
+#ifdef OV16885_PDAF_USE_VC
+	{0x3661, 0x0f},
+	{0x486e, 0x07},
+#endif
 };
 
 static const SENSOR_REG_T ov16885_normal_init_setting[] = {
@@ -2956,7 +2967,7 @@ static SENSOR_STATIC_INFO_T s_ov16885_normal_static_info[VENDOR_NUM] = {
         .max_fps = 30,
         .max_adgain = 8,
         .ois_supported = 0,
-        .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
+        .pdaf_supported = 3,//CONFIG_CAMERA_PDAF_TYPE,
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,

@@ -406,9 +406,9 @@ static cmr_int ov16885_normal_drv_get_fps_info(cmr_handle handle, cmr_u32 *param
 
 static const cmr_u16 ov16885_normal_pd_is_right[] = {1, 0, 0, 1};
 
-static const cmr_u16 ov16885_normal_pd_row[] = {2, 6, 10, 14};
-
 static const cmr_u16 ov16885_normal_pd_col[] = {14, 14, 6, 6};
+
+static const cmr_u16 ov16885_normal_pd_row[] = {2, 6, 10, 14};
 
 static const struct pd_pos_info _ov16885_normal_pd_pos_l[] = {
     {14, 6}, {6, 10},
@@ -417,6 +417,7 @@ static const struct pd_pos_info _ov16885_normal_pd_pos_l[] = {
 static const struct pd_pos_info _ov16885_normal_pd_pos_r[] = {
     {14, 2}, {6, 14},
 };
+static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
 
 static cmr_int ov16885_normal_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param)
 {
@@ -466,10 +467,19 @@ static cmr_int ov16885_normal_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *para
     pdaf_info->pd_pos_size = pd_pos_r_size;
     pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov16885_normal_pd_pos_r;
     pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov16885_normal_pd_pos_l;
-    pdaf_info->vendor_type = SENSOR_VENDOR_OV13855;
+    pdaf_info->vendor_type = SENSOR_VENDOR_OV16885;
 
     pdaf_info->sns_orientation = 0; /*1: mirror+flip; 0: normal*/
-
+    pdaf_info->sns_mode = pd_sns_mode;
+//#ifdef OV16885_PDAF_USE_VC
+    pdaf_info->vch2_info.bypass = 0;
+    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_data_type = 0x2b;
+    pdaf_info->vch2_info.vch2_mode = 0x03;
+//#endif
+//#ifdef OV16885_PDAF_USE_DT
+//	pdaf_info->type2_info.data_type = 0x2b;
+//#endif
     return rtn;
 }
 
@@ -855,7 +865,7 @@ static struct sensor_ic_ops s_ov16885_normal_ops_tab = {
     .write_gain_value = ov16885_normal_drv_write_gain_value,
 
 #if defined(CONFIG_DUAL_MODULE)
-    .read_aec_info = ov16885_normal_drv_read_aec_info,
+    //.read_aec_info = ov16885_normal_drv_read_aec_info,
 #endif
 
     .ext_ops = {
