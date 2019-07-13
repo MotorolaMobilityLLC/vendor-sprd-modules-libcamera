@@ -1361,10 +1361,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                  stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
-                if (scaler_formats[j] ==
-                    (HAL_PIXEL_FORMAT_BLOB ||
-                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
-                     HAL_PIXEL_FORMAT_RAW16)) {
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB ||
+                     scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                     scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
                         stream_info[i].stream_sizes_tbl.width);
