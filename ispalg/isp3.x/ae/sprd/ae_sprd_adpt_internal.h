@@ -17,7 +17,7 @@
 #ifndef _AE_SPRD_ADPT_INTERNAL_H_
 #define _AE_SPRD_ADPT_INTERNAL_H_
 #include "flash.h"
-#include "ae_tuning_type.h"
+#include "ae_correction.h"
 #include "ae_ctrl_types.h"
 #include "ae_ctrl.h"
 #include "isp_bridge.h"
@@ -83,12 +83,6 @@ extern "C" {
 		struct ae_exposure_param write_data;	/*write to sensor data in current time */
 	};
 
-	struct touch_zone_param {
-		cmr_u32 enable;
-		struct ae_weight_table weight_table;
-		struct touch_zone zone_param;
-	};
-
 	enum initialization {
 		AE_PARAM_NON_INIT,
 		AE_PARAM_INIT
@@ -99,25 +93,18 @@ extern "C" {
 		AE_MANUAL_EV_SET
 	};
 
+	enum {
+		AE_3DNR_ON,
+		AE_3DNR_OFF,
+		AE_3DNR_AUTO,
+		AE_3DNR_MAX,
+	};
+
 	struct flash_cali_data {
 		cmr_u16 ydata;			//1024
 		cmr_u16 rdata;			// base on gdata1024
 		cmr_u16 bdata;			// base on gdata1024
 		cmr_s8 used;
-	};
-
-/*struct ae_monitor_unit {
-	cmr_u32 mode;
-	struct ae_size win_num;
-	struct ae_size win_size;
-	struct ae_trim trim;
-	struct ae_monitor_cfg cfg;
-	cmr_u32 is_stop_monitor;
-};*/
-
-	struct flash_swith_param {
-		cmr_s16 led_thr_up;
-		cmr_s16 led_thr_down;
 	};
 
 	struct ae_exposure_compensation {
@@ -147,14 +134,6 @@ extern "C" {
 								 * will never work */
 		struct ae_fd_param face_info;	/* The current face information */
 	};
-/*
-* END: FDAE related definitions
-*/
-	struct ae_update_list {
-		cmr_u32 is_scene:1;
-		cmr_u32 is_miso:1;
-		cmr_u32 is_mev:1;
-	};
 
 /**************************************************************************/
 /*
@@ -162,10 +141,12 @@ extern "C" {
 */
 	struct ae_ctrl_cxt {
 		cmr_u32 start_id;
-		char alg_id[32];
+		cmr_u16 major_id;
+		cmr_u16 minor_id;
 		cmr_u32 checksum;
 		cmr_u32 bypass;
 		cmr_u32 capture_skip_num;
+		struct ae_flash_timing_param flash_timing_param;
 		cmr_u32 zsl_flag;
 		cmr_u32 skip_update_param_flag;
 		cmr_u32 skip_update_param_cnt;
@@ -176,10 +157,10 @@ extern "C" {
 		/*
 		 * camera id: front camera or rear camera
 		 */
+		cmr_u32 multiColorLcdEn;
 		cmr_s8 camera_id;
 		cmr_s8 is_snapshot;
 		cmr_u8 is_first;
-		cmr_u32 multiColorLcdEn;
 		/*
 		 * ae control operation infaces
 		 */
@@ -204,58 +185,45 @@ extern "C" {
 		 * for ae tuning parameters
 		 */
 		struct ae_stats_monitor_cfg monitor_cfg;
-		struct ae_tuning_param tuning_param[AE_MAX_PARAM_NUM];
-		cmr_s8 tuning_param_enable[AE_MAX_PARAM_NUM];
-		struct ae_tuning_param *cur_param;
-		struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_NUM][AE_FLICKER_NUM];
 		struct flash_tune_param dflash_param[AE_MAX_PARAM_NUM];
 		/*
 		 * sensor related information
 		 */
 		struct ae_resolution_info snr_info;
 		/*
-		 * force update list
-		 */
-		struct ae_update_list mod_update_list;
-		/*
 		 * ae current status: include some tuning
 		 * param/calculatioin result and so on
 		 */
-		struct ae_alg_calc_param prv_status;	/*just backup the alg status of normal scene,
+		struct ae_lib_calc_in prv_status;	/*just backup the alg status of normal scene,
 												   as switch from special scene mode to normal,
 												   and we use is to recover the algorithm status
 												 */
-		struct ae_alg_calc_param cur_status;
-		struct ae_alg_calc_param sync_cur_status;
+		struct ae_lib_calc_in cur_status;
+		struct ae_lib_calc_in sync_cur_status;
 		cmr_s32 target_lum_zone_bak;
-		cmr_u32 target_lum_range_in_bak;
-		cmr_u32 target_lum_range_out_bak;
+		struct tar_lum_range tar_lum_rang;//added by feifan.wang
+		//cmr_u32 target_lum_range_in_bak;
+		//cmr_u32 target_lum_range_out_bak;
 		/*
 		 * convergence & stable zone
 		 */
 		cmr_s8 stable_zone_ev[16];
-		cmr_u8 cnvg_stride_ev_num;
-		cmr_s16 cnvg_stride_ev[32];
 		/* just for 4in1 featue */
 		cmr_s16 bv_thd;
-		/*
-		 * Touch ae param
-		 */
-		struct touch_zone_param touch_zone_param;
 		/*
 		 * flash ae param
 		 */
 		/*ST: for dual flash algorithm */
-		struct flash_swith_param flash_swith;
-		struct ae_thrd_param threednr_en_thrd;/*the 3DNR take effect threshold parmeters*/
+		struct ae_thd_param flash_thrd;
 		cmr_u8 flash_ver;
+		cmr_u8 flash_fired;
 		cmr_s32 pre_flash_skip;
 		cmr_s32 aem_effect_delay;
 		struct ae_leds_ctrl ae_leds_ctrl;
 		cmr_handle flash_alg_handle;
 		cmr_u16 aem_stat_rgb[3 * 1024];	/*save the average data of AEM Stats data */
-		cmr_u32 sync_aem[3 * 1024 + 4];	/*aem statistics data, 0: frame id;1: exposure time, 2: dummy line, 3: gain; */
-		cmr_u16 sync_binning_stats_data[3 * 640 * 480];	/*binning statistics data */
+		cmr_u32 sync_aem[3 * 1024 + 4];	/*low resolution aem statistics data, 0: frame id;1: exposure time, 2: dummy line, 3: gain; */
+		cmr_u32 sync_aem_high[3 * 128 * 128];	/*high resolution statistics data */
 		struct ae_size binning_stat_size;
 		cmr_u8 bakup_ae_status_for_flash;	/* 0:unlock 1:lock 2:pause 3:wait-lock */
 		cmr_s16 pre_flash_level1;
@@ -284,8 +252,8 @@ extern "C" {
 		/*
 		 * control information for sensor update
 		 */
-		struct ae_alg_calc_result cur_result;
-		struct ae_alg_calc_result sync_cur_result;
+		struct ae_lib_calc_out cur_result;
+		struct ae_lib_calc_out sync_cur_result;
 		struct ae_calc_results calc_results;	/*ae current calculation results, and it is just for other algorithm block */
 		/*
 		 * AE write/effective E&G queue
@@ -356,9 +324,7 @@ extern "C" {
 		cmr_u8 is_master;
 		cmr_u32 is_multi_mode;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
-		struct ae_sync_para ae_sync_param;
-		struct ae_sync_info master_ae_sync_info;
-		struct ae_sync_info slave_ae_sync_info;
+		struct ae_lib_frm_sync_in ae_sync_info[2];
 		/*
 		 * for binning facter = 2
 		 */
@@ -379,19 +345,17 @@ extern "C" {
 
 		/* 4in1 param */
 		cmr_u32 cam_4in1_mode;
-		cmr_u32 cam_4in1_cap_flag;
-		cmr_u32 noramosaic_4in1; //for 32m large_pix sensor
+		cmr_u32 cam_cap_flag;
+		cmr_u32 cam_large_pix_num;
 
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
 		cmr_u32 manual_level;
 		cmr_u32 munaul_iso_index;
-		struct ae_exposure_param_switch mode_switch[32];
 		cmr_u32 last_cam_mode;
 		cmr_u32 last_cur_lum;
 		cmr_u32 last_table_index; /* for non-zsl, there is a 'ae_set_video_start' between pf and mf.which we need keep the previous table index */
-		cmr_u32 expchanged;
-		cmr_u32 appunlock;
+		cmr_u32 app_mode_tarlum[64];
 		cmr_u32 pf_wait_stable_cnt;
 		cmr_u32 effect_index_index;
 		cmr_u32 effect_index[4];
@@ -408,12 +372,21 @@ extern "C" {
 		cmr_u32 env_cum_changedCalc_delay_cnt;
 		cmr_u32 env_cum_changed;
 		cmr_s16 previous_lum;
-		float capcompvalue_norm;
-		cmr_u32 end_id;
-
 		cmr_u32 pri_set;
-		cmr_u8 pre_flash_after_delay_cnt;
-		cmr_u8 flash_main_before_flag;
+
+		struct ae_scene_param_out ae_tbl_param;
+		cmr_u32 pause_cnt;
+		cmr_u32 force_lock_ae;
+		cmr_u32 cur_param_target_lum;
+		struct ae_ev_param_table ev_param_table;
+		struct ae_thd_param ae_video_fps;
+		struct ae_thd_param threednr_thrd;
+		cmr_u32 threednr_mode;
+		cmr_u8 led_state;
+
+		cmr_u32 *slave_aem_stat;
+		cmr_u32 *tune_buf;
+		cmr_u32 end_id;
 	};
 
 #endif

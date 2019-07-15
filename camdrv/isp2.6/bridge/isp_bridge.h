@@ -35,6 +35,9 @@ enum isp_br_ioctl_cmd {
 	SET_AEM_STAT_BLK_NUM,
 	SET_MATCH_BV_DATA,
 	GET_MATCH_BV_DATA,
+	SET_SLAVE_AEM_INFO,
+	GET_SLAVE_AEM_INFO,
+	GET_STAT_AWB_DATA_AE,
 
 	// AWB
 	SET_MATCH_AWB_DATA,
@@ -62,6 +65,8 @@ enum isp_br_ioctl_cmd {
 	SET_ALL_MODULE_AND_OTP,
 	GET_ALL_MODULE_AND_OTP,
 
+	//control
+	SET_USER_COUNT,
 	GET_USER_COUNT,
 };
 
@@ -90,6 +95,12 @@ struct sensor_info {
 	cmr_s16 sensor_gain_precision;
 	cmr_u32 line_time;
 	cmr_u32 frm_len_def;
+};
+
+struct aem_info {
+	cmr_u32 aem_stat_blk_pixels;
+	cmr_u32 aem_stat_win_w;
+	cmr_u32 aem_stat_win_h;
 };
 
 struct module_sensor_info {

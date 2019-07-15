@@ -22,16 +22,23 @@ extern "C" {
 #endif
 
 enum ae_cmd_type {
-	AE_SET_BASE = 0x1000,
-	AE_SET_START,
-	AE_SET_STOP,
-	AE_SET_CMD_MAX,
-	AE_GET_BASE = 0x2000,
-	AE_GET_DEBUG_INFO,
-	AE_GET_ALG_ID,
-	AE_GET_SCENE_PARAM,
-	AE_GET_CMD_MAX,
-	AE_CMD_MAX
+	AE_LIB_SET_BASE = 0x1000,
+	AE_LIB_SET_START,
+	AE_LIB_SET_STOP,
+	AE_LIB_SET_CAF_START,
+	AE_LIB_SET_CAF_STOP,
+	AE_LIB_SET_CMD_MAX,
+	AE_LIB_GET_BASE = 0x2000,
+	AE_LIB_GET_DEBUG_INFO,
+	AE_LIB_GET_ALG_ID,
+	AE_LIB_GET_SCENE_PARAM,
+	AE_LIB_GET_CMD_MAX,
+	AE_LIB_CMD_MAX
+};
+
+struct tar_lum_range{//added by feifan.wang
+	cmr_u32 target_lum_range_in_bak;
+	cmr_u32 target_lum_range_out_bak;
 };
 
 struct ae_lib_init_in {
@@ -40,6 +47,7 @@ struct ae_lib_init_in {
 	cmr_u32 log_level;
 	cmr_u32 line_time;
 	void *tuning_param;
+	void *dual_cam_tuning_param;
 	/*will be used in the future*/
 	void *gamma_param;/*gamma curve param*/
 	void *smart_gamma_param;/*smart gamma param*/
@@ -51,6 +59,8 @@ struct ae_lib_init_in {
 };
 
 struct ae_lib_init_out {
+	cmr_u16 major_id;
+	cmr_u16 minor_id;
 	struct ae_control_timing_param ctrl_timing_param;
 	struct ae_ev_setting_param ev_setting;/*init ev setting*/
 	struct ae_monitor_cfg aem_cfg;/*aem cfg from ae tuning param*/
@@ -58,7 +68,7 @@ struct ae_lib_init_out {
 	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
 	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
 	struct ae_range fps_range;/*the fps range of ae table*/
-	struct ae_thd_param thrd_param[AE_SCENE_MAX];/*0: auto flash; 1: auto 3DNR, 2: auto fps adjust in video mode*/
+	struct ae_thd_param thrd_param[AE_LIB_SCENE_MAX];/*0: auto flash; 1: auto 3DNR, 2: auto fps adjust in video mode*/
 	struct ae_ev_param_table ev_param;
 	cmr_u8 lock;				/* default: 0-unlock, 0:unlock 1:lock */
 	/*AE profession Setting*/
@@ -172,24 +182,57 @@ struct ae_scene_param_in {
 };
 
 struct ae_scene_param_out {
-	uint32_t target_lum;
-	uint16_t min_index;
-	uint16_t max_index;
-	uint16_t min_exp;
-	uint16_t min_gain;
-	uint16_t max_exp;
-	uint16_t max_gain;
+	cmr_u32 target_lum;
+	cmr_u16 min_index;
+	cmr_u16 max_index;
+	cmr_u16 min_exp;
+	cmr_u16 min_gain;
+	cmr_u32 max_exp;
+	cmr_u16 max_gain;
+
+	cmr_u16 def_index;
+	cmr_u16 def_expline;
+	cmr_u16 def_gain;
 };
 
+struct ae_otp_info {
+	cmr_u64 gain_1x_exp;
+	cmr_u64 gain_2x_exp;
+	cmr_u64 gain_4x_exp;
+	cmr_u64 gain_8x_exp;
+	cmr_u16 ae_target_lum;
+	cmr_u16 reserve;
+};
+
+struct ae_frm_sync_param {
+	/*ae ev setting limitation*/
+	cmr_s16 min_exp_line;
+	cmr_s16 max_exp_line;
+	cmr_s16 min_gain;
+	cmr_s16 max_gain;
+	cmr_u32 sensor_gain_precision;
+	cmr_u32 frm_len_def;
+	struct ae_otp_info otp_info;
+	cmr_u32 aem[3 * 1024];/*aem statistics data*/
+	cmr_u64 monoboottime;
+	struct ae_ev_setting_param ev_setting;
+};
+
+struct ae_lib_frm_sync_in{//ae_dynamic_sync struct
+	struct ae_frm_sync_param sync_param[2];/*0: master; 1: slave*/
+};
+
+struct ae_lib_frm_sync_out {
+	struct ae_ev_setting_param ev_setting[2];/*0: master; 1: slave*/
+};
 
 cmr_handle ae_lib_init(struct ae_lib_init_in *in_param, struct ae_lib_init_out *out_param);
 cmr_s32 ae_lib_calculation(cmr_handle handle, struct ae_lib_calc_in *in_param, struct ae_lib_calc_out *out_param);
 cmr_s32 ae_lib_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 //cmr_s32 ae_set_param(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 //cmr_s32 ae_get_param(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
-//cmr_s32 ae_frame_sync_calculation(cmr_handle handle,struct ae_sync_param * in_param, struct ae_misc_sync_in * master_param, struct ae_misc_sync_out * slave_param);
+cmr_s32 ae_lib_frame_sync_calculation(cmr_handle handle, void *in_param, void *out_param);
 cmr_s32 ae_lib_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
-
 #ifdef __cplusplus
 }
 #endif

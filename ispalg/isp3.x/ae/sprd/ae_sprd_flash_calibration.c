@@ -627,7 +627,7 @@ void readFCConfig(char *f, struct FCData *d, char *fout)
 
 static void flashCalibration(struct ae_ctrl_cxt *cxt)
 {
-	struct ae_alg_calc_param *cur_status = &cxt->cur_status;
+	struct ae_lib_calc_in *cur_status = &cxt->cur_status;
 	static int frameCount = 0;
 	static int caliState = FlashCali_start;
 	static struct FCData *caliData = 0;
@@ -655,7 +655,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			readFCConfig("/data/vendor/cameraserver/fc_config.txt", caliData, "/data/vendor/cameraserver/fc_config_check.txt");
 #endif
 			frameCount = 0;
-			cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;	//lock ae
+			cxt->cur_status.adv_param.lock = AE_STATE_LOCKED;	//lock ae
 
 			reduceFlashIndexTab(caliData->numP1_hwSample, caliData->indP1_hwSample, caliData->maP1_hwSample, caliData->mAMaxP1, 32, caliData->indHwP1_alg, caliData->maHwP1_alg, &caliData->numP1_alg);
 			reduceFlashIndexTab(caliData->numP2_hwSample, caliData->indP2_hwSample, caliData->maP2_hwSample, caliData->mAMaxP2, 32, caliData->indHwP2_alg, caliData->maHwP2_alg, &caliData->numP2_alg);
@@ -744,9 +744,9 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float rmean;
 				float gmean;
 				float bmean;
-				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+				//struct ae_lib_calc_in *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
 				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
 				if ((gmean > 200 && gmean < 400) || (caliData->expTime == 0.05 * AEC_LINETIME_PRECESION && caliData->gain == 8 * 128)) {
 					caliData->stateCaliFrameCntSt = frameCount + 1;
@@ -818,9 +818,9 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float rmean;
 				float gmean;
 				float bmean;
-				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+				//struct ae_lib_calc_in *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf,cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+							  caliData->rBuf, caliData->gBuf, caliData->bBuf,cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
 				if (gmean > 600) {
 
 					double rat = 2;
@@ -883,9 +883,9 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float rmean;
 				float gmean;
 				float bmean;
-				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
+				//struct ae_lib_calc_in *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
 				caliData->rFrame[caliData->testInd][frmCnt] = rmean;
 				caliData->gFrame[caliData->testInd][frmCnt] = gmean;
 				caliData->bFrame[caliData->testInd][frmCnt] = bmean;
@@ -1603,11 +1603,11 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 		if (caliState < FlashCali_end) {
 			ISP_LOGD("qqfc exp=%d %d", (int)caliData->expTime, (int)caliData->gain);
-			int lineTime = cxt->cur_status.line_time;
-			cur_status->settings.manual_mode = 0;
-			cur_status->settings.table_idx = 0;
-			cur_status->settings.exp_line = caliData->expTime / lineTime;
-			cur_status->settings.gain = caliData->gain;
+			int lineTime = cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cur_status->adv_param.mode_param.mode = 3;
+			cxt->cur_status.adv_param.cur_ev_setting.ae_idx = 0;
+			cxt->cur_status.adv_param.cur_ev_setting.exp_line = caliData->expTime / lineTime;
+			cxt->cur_status.adv_param.cur_ev_setting.ae_gain = caliData->gain;
 		}
 	}
 	frameCount++;
@@ -1615,7 +1615,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 static void _set_led2(struct ae_ctrl_cxt *cxt)
 {
-	struct ae_alg_calc_param *cur_status = &cxt->cur_status;
+	struct ae_lib_calc_in *cur_status = &cxt->cur_status;
 	int propValue[10];
 	int ret;
 	static int led_onOff = 0;
@@ -1651,11 +1651,11 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			exp_dummy = propValue[2];
 			exp_isp_gain = propValue[3];
 			exp_sensor_gain = propValue[4];
-			cur_status->settings.lock_ae = lock_lock;
-			cur_status->settings.manual_mode = 0;
-			cur_status->settings.table_idx = 0;
-			cur_status->settings.exp_line = exp_exp_line;
-			cur_status->settings.gain = exp_isp_gain * exp_sensor_gain / 4096;
+			cur_status->adv_param.lock = lock_lock;
+			cur_status->adv_param.mode_param.mode = 3;
+			cur_status->adv_param.cur_ev_setting.ae_idx = 0;
+			cur_status->adv_param.cur_ev_setting.exp_line = exp_exp_line;
+			cur_status->adv_param.cur_ev_setting.ae_gain = exp_isp_gain * exp_sensor_gain / 4096;
 			ISP_LOGD("qqfc set exp %d %d %d %d %d", exp_exp_line, exp_exp_time, exp_dummy, exp_isp_gain, exp_sensor_gain);
 		}
 	}
@@ -1667,7 +1667,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			lock_lock = propValue[0];
 			if (lock_lock == 1) {
 				//_set_pause(cxt);
-				cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+				cxt->cur_status.adv_param.lock = AE_STATE_LOCKED;
 				ISP_LOGD("qqfc lock");
 			}
 
@@ -1682,7 +1682,7 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 			lock_unlock = propValue[0];
 			if (lock_unlock == 1) {
 				// _set_restore_cnt(cxt);
-				cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+				cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 				ISP_LOGD("qqfc unlock");
 			}
 		}
@@ -1695,10 +1695,10 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		} else {
 			exp2 = propValue[0];
 			if (exp2 == 1) {
-				cur_status->settings.manual_mode = 0;
-				cur_status->settings.table_idx = 0;
-				cur_status->settings.exp_line = 800;
-				cur_status->settings.gain = 256;
+				cur_status->adv_param.mode_param.mode = 3;
+				cur_status->adv_param.cur_ev_setting.ae_idx = 0;
+				cur_status->adv_param.cur_ev_setting.exp_line = 800;
+				cur_status->adv_param.cur_ev_setting.ae_gain = 256;
 			}
 		}
 	}
@@ -1710,10 +1710,10 @@ static void _set_led2(struct ae_ctrl_cxt *cxt)
 		} else {
 			exp1 = propValue[0];
 			if (exp1 == 1) {
-				cur_status->settings.manual_mode = 0;
-				cur_status->settings.table_idx = 0;
-				cur_status->settings.exp_line = 100;
-				cur_status->settings.gain = 256;
+				cur_status->adv_param.mode_param.mode = 3;
+				cur_status->adv_param.cur_ev_setting.ae_idx = 0;
+				cur_status->adv_param.cur_ev_setting.exp_line = 100;
+				cur_status->adv_param.cur_ev_setting.ae_gain = 256;
 				ISP_LOGD("qqfc exp1 set");
 			}
 		}

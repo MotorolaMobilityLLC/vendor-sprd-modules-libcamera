@@ -19,14 +19,14 @@
 
 #include "cmr_types.h"
 
-#define SENSOR_GAMMA_POINT_NUM 256
+#define SENSOR_GAMMA_POINT_NUM 257  //此处重定义 被修改过 原值为256
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
 #define AE_PIECEWISE_MAX_NUM 16
-#define AEC_LINETIME_PRECESION 1000000000.0 /*ns*/
+#define AEC_LINETIME_PRECESION (1000000000.0f) /*ns*/
 #define AEC_HIST_BIN_MAX (1<<16)
 #define AEC_MONITOR_DATA_SIZE_MAX (128 * 128)
 #define AE_EV_LEVEL_MAX 16
-#define AE_SCENE_MAX 8
+#define AE_LIB_SCENE_MAX 8
 
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
@@ -41,6 +41,11 @@ enum {
 	AE_ROLE_ID_MASTER = 1,
 	AE_ROLE_ID_SLAVE0 = 2,
 	AE_ROLE_ID_SLAVE1 = 3,
+};
+
+enum {
+	AE_CAM_REAR = 0,
+	AE_CAM_FRONT = 1,
 };
 
 enum ae_return_value {
@@ -96,7 +101,7 @@ enum ae_scene_mode {
 	AE_SCENE_LANDSPACE,
 	AE_SCENE_FACEID,
 	AE_SCENE_PANORAMA,
-	AE_SCENE_FLASH,
+	AE_SCENE_VIDEO,
 	AE_SCENE_MOD_MAX
 };
 
@@ -349,12 +354,23 @@ struct ae_alg_fun_tab {
 
 
 enum ae_mode_type {
-	AE_MODE_AUTO_ALL = 0,/*AUTO*/
-	AE_MODE_AUTO_FIX_SHUTTER = 1,/*ISO AUTO, SHUTTER FIX*/
-	AE_MODE_AUTO_FIX_ISO = 2,/*ISO FIX, SHUTTER AUTO*/
-	AE_MODE_MANUAL_0 = 3,/*MANUAL AE: MODE 0: BY SHUTTER/ISO*/
-	AE_MODE_MANUAL_1 = 4,/*MANUAL AE: MODE 1: BY AE TABLE INDEX*/
+	AE_MODE_AUTO = 0,/*AUTO*/
+	AE_MODE_AUTO_SHUTTER_PRI = 1,/*AUTO MODE, SHUTTER PRIORITY*/
+	AE_MODE_AUTO_ISO_PRI = 2,/*AUTO MODE, ISO PRIORITY*/
+	AE_MODE_MANUAL_EXP_GAIN = 3,/*MANUAL AE: MODE 0: BY SHUTTER/ISO*/
+	AE_MODE_MANUAL_IDX = 4,/*MANUAL AE: MODE 1: BY AE TABLE INDEX*/
 	//AE_MODE_MANUAL_LOCK = 5,/*MANUAL AE: Just lock ae and dont converge*/
+};
+
+enum ae_ev_mode_type {
+	AE_EV_MOD_COM_VAL,
+	AE_EV_MOD_OFFSET,
+};
+
+enum ae_mod_idx_type {
+	AE_MOD_IDX_EXP = 0,
+	AE_MOD_IDX_GAIN = 1,
+	AE_MOD_IDX_ISO = 1,
 };
 
 struct ae_monitor_cfg {
@@ -429,7 +445,7 @@ struct ae_mode_param {
 	*/
 	enum ae_mode_type mode;
 	union {
-		cmr_u32 exp_gain[2];            /* 0: exp_time; 1: gain*/
+		cmr_u32 exp_gain[2];            /* 0: exp_time; 1: gain or ISO value*/
 		cmr_u32 ae_idx;                    /* set ae-table-index */		
 	} value;
 };
@@ -444,7 +460,8 @@ struct ae_control_timing_param{
 	cmr_u8 exp_skip_num;
 	cmr_u8 gain_skip_num;
 	cmr_u8 isp_gain_skip_num;
-	cmr_u8 reserved[4];
+	cmr_u8 group_hold_en;/*enable the sensor group hold function*/
+	cmr_u8 reserved[3];
 };
 
 struct ae_flash_timing_param {
@@ -455,7 +472,8 @@ struct ae_flash_timing_param {
 	cmr_u8 main_param_update_delay;
 	cmr_u8 main_open_delay;
 	cmr_u8 main_capture_delay;
-	cmr_u8 reserved[2];
+	cmr_u8 pre_skip_num;/*the skip frame number of pre-flash*/
+	cmr_u8 main_skip_num;/*the skip frame number of main-flash*/
 };
 
 struct ae_rgbgamma_curve {
@@ -469,7 +487,8 @@ struct ae_ygamma_curve {
 };
 
 struct ae_compensation_param {
-	cmr_u8 mode;/*0: ae compensation; 1: EV setting in professial mode*/
+	cmr_u8 mode;/*0(AE_EV_MOD_COM_VAL): ae compensation;
+				    1(AE_EV_MOD_OFFSET): EV setting in professial mode*/
 	union {
 		float ev_value;
 		cmr_s32 ev_index;

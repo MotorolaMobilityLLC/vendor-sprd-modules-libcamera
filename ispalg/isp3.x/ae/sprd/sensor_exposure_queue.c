@@ -150,7 +150,8 @@ cmr_s32 s_q_init(cmr_handle q_handle, struct s_q_init_in *in, struct s_q_init_ou
 	struct queue_context *q_cxt = NULL;
 	cmr_u32 i = 0;
 
-	if ((NULL == in) || (NULL == out) || (NULL == out)) {
+	if ((NULL == q_handle)||(NULL == in) || (NULL == out)) {
+		ISP_LOGE("cxt: %p, input: %p, output: %p\n", q_handle, in, out);
 		ret = -1;
 		return ret;
 	}

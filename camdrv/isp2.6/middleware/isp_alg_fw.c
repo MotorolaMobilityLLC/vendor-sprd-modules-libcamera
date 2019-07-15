@@ -786,6 +786,19 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 			return ret;
 		}
 		break;
+	case ISP_AE_SET_RGB_GAIN_SLAVE:
+		ISP_LOGV("ISP_AE_SET_RGB_GAIN_SLAVE");
+
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
+		isp_3a_handle_slv = isp_br_get_3a_handle(slv_camera_id);
+		cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
+		if (cxt_slv != NULL) {
+			ret = ispalg_set_rgb_gain(cxt_slv, param0);
+		} else {
+			ISP_LOGE("fail to get slave sensor handle , it is not ready");
+			return ret;
+		}
+		break;
 	case ISP_AE_SET_GAIN:
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
 		break;
@@ -4167,7 +4180,7 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 
 	cxt->ispalg_lib_handle = dlopen(LIBCAM_ALG_FILE, RTLD_NOW);
 	if (!cxt->ispalg_lib_handle) {
-		ISP_LOGE("fail to dlopen");
+		ISP_LOGE("fail to dlopen (%s)",dlerror());
 		goto error_dlopen;
 	}
 

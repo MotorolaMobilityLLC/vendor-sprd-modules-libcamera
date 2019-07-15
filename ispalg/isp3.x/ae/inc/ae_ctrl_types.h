@@ -17,7 +17,7 @@
 #ifndef _AE_CTRL_TYPES_H_
 #define _AE_CTRL_TYPES_H_
 
-#include "ae_common.h"
+#include "ae_correction.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,6 +106,7 @@ extern "C" {
 		AE_SET_APP_MODE,
 		AE_SET_TOUCH_ZONE,
 		AE_SET_3DNR_MODE,
+		AE_SET_3DNR_THR,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -222,6 +223,11 @@ extern "C" {
 		AE_GYROSCOPE,
 		AE_LIGHT,
 		AE_PROXIMITY,
+	};
+
+	struct ae_set_fps {
+		cmr_u32 min_fps;			// min fps
+		cmr_u32 max_fps;			// fix fps flag
 	};
 
 	struct ae_gyro_info {
@@ -350,10 +356,6 @@ extern "C" {
 		cmr_s16 dgain;
 	};
 
-	struct ae_monitor_cfg {
-		cmr_u32 skip_num;
-	};
-
 	struct ae_monitor_info {
 		cmr_u32 shift;
 		cmr_u32 work_mode;/*single or continue mode*/
@@ -462,6 +464,7 @@ extern "C" {
 		 cmr_s32(*set_stats_monitor) (cmr_handle handler, struct ae_stats_monitor_cfg * in_param);
 		 cmr_s32(*set_blk_num) (cmr_handle handler, struct ae_size *blk_num);
 		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);
+		 cmr_s32(*set_rgb_gain_slave) (cmr_handle handler, double rgb_gain_coeff);
 	};
 
 	struct ae_stat_img_info {
@@ -586,7 +589,7 @@ extern "C" {
 
 	struct ae_calc_results {
 		cmr_u32 is_skip_cur_frame;
-		struct ae_alg_calc_result ae_result;
+		struct ae_lib_calc_out ae_result;
 		struct ae_calc_out ae_output;
 		struct ae_get_ev ae_ev;
 		struct ae_monitor_info monitor_info;

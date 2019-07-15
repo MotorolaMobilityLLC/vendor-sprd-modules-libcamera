@@ -19,8 +19,10 @@
 
 struct ispbr_context {
 	cmr_u32 user_cnt;
+	cmr_u32 start_user_cnt;
 	cmr_handle isp_3afw_handles[SENSOR_NUM_MAX];
 	struct match_data_param match_param;
+	struct aem_info slave_aem_info;
 	void *aem_sync_stat[SENSOR_NUM_MAX];
 	cmr_u32 aem_sync_stat_size;
 	void *awb_stat_data[SENSOR_NUM_MAX];
@@ -65,6 +67,24 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		memcpy(out, &cxt->match_param.ae_info[sensor_role],
 			sizeof(cxt->match_param.ae_info[sensor_role]));
 		sem_post(&cxt->ae_sm);
+		break;
+
+	case SET_SLAVE_AEM_INFO:
+		sem_wait(&cxt->module_sm);
+		memcpy(&cxt->slave_aem_info, in, sizeof(struct aem_info));
+		sem_post(&cxt->module_sm);
+		break;
+
+	case GET_SLAVE_AEM_INFO:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->slave_aem_info, sizeof(struct aem_info));
+		sem_post(&cxt->module_sm);
+		break;	
+
+	case GET_STAT_AWB_DATA_AE:
+		sem_wait(&cxt->module_sm);
+		*(cmr_u32 *)out = (cmr_u32)cxt->awb_stat_data[sensor_role];//tmp code !! tianhui.wang
+		sem_post(&cxt->module_sm);
 		break;
 
 	case SET_AEM_SYNC_STAT:
@@ -267,9 +287,20 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_post(&cxt->module_sm);
 		break;
 
+	case SET_USER_COUNT:
+		sem_wait(&cxt->module_sm);
+		if(2 == cxt->user_cnt){
+			if(*(cmr_u32 *)in)
+				cxt->start_user_cnt++;
+			else
+				cxt->start_user_cnt--;
+		}
+		sem_post(&cxt->module_sm);
+		break;
+
 	case GET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
-		memcpy(out, &cxt->user_cnt,sizeof(cxt->user_cnt));
+		memcpy(out, &cxt->start_user_cnt,sizeof(cxt->start_user_cnt));
 		sem_post(&cxt->module_sm);
 		break;
 

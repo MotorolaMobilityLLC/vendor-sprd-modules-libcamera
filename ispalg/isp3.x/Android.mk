@@ -112,7 +112,7 @@ LOCAL_SHARED_LIBRARIES += libcamsensor
 
 LOCAL_SHARED_LIBRARIES += libdeflicker
 
-LOCAL_SHARED_LIBRARIES += libae libflash libhdr
+LOCAL_SHARED_LIBRARIES += libae3.x libflash libhdr
 LOCAL_SHARED_LIBRARIES += libawb libawb1
 LOCAL_SHARED_LIBRARIES += libalsc
 LOCAL_SHARED_LIBRARIES += libatm

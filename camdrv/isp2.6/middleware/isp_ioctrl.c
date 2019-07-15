@@ -3135,6 +3135,21 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 	return ret;
 }
 
+static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_CAP_FLAG, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3284,6 +3299,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_GET_CNR2_YNR_EN, ispctl_get_cnr2_ynr_en},
+	{ISP_CTRL_SET_CAP_FLAG, ispctl_set_cap_flag},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
 	{ISP_CTRL_AI_SET_FD_STATUS,ispctl_ai_set_fd_status},

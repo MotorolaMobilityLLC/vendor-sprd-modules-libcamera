@@ -29,7 +29,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-LOCAL_MODULE := libae
+LOCAL_MODULE := libae3.x
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
