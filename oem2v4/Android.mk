@@ -49,6 +49,11 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/../kernel_module/interface
+endif
+
 LOCAL_HEADER_LIBRARIES += jni_headers
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr

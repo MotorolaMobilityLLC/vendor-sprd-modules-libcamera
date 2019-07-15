@@ -52,6 +52,11 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../sensor/inc \
 	$(LOCAL_PATH)/../../arithmetic/depth/inc
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+        $(LOCAL_PATH)/../../kernel_module/interface
+endif
+
 # ************************************************
 # internal header file
 # ************************************************
