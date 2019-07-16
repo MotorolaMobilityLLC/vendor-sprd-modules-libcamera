@@ -407,7 +407,7 @@ static void _interp_int14(cmr_u16 * dst, cmr_u16 * src[2], cmr_u16 weight[2], cm
 static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
 	cmr_u32 data_bytes = 0;
-	cmr_u32 i = 0;
+	cmr_s32 i = 0;
 
 	data_bytes = data_num * sizeof(cmr_u32);
 
@@ -416,21 +416,30 @@ static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 	} else if (INTERP_WEIGHT_UNIT == weight[1]) {
 		memcpy(dst, src[1], data_bytes);
 	} else {
-		for (i = 0; i < data_num; i++) {
+		for (i = 0; i < (cmr_s32)data_num; i++) {
 			cmr_u32 src0_val = (cmr_u32) (*src[0]);
 			cmr_u32 src1_val = (cmr_u32) (*src[1]);
 
-			cmr_u32 src0_val_h = src0_val & 0x1FF;
+			cmr_s32 src0_val_h = src0_val & 0x1FF;
 			cmr_u32 src0_val_s = (src0_val >> 9) & 0x7FF;
-			cmr_u32 src1_val_h = src1_val & 0x1FF;
+			cmr_s32 src1_val_h = src1_val & 0x1FF;
 			cmr_u32 src1_val_s = (src1_val >> 9) & 0x7FF;
 
 			if (src0_val_h + 128 < i)
 				src0_val_h += 360;
 			if (src1_val_h + 128 < i)
 				src1_val_h += 360;
-			cmr_u32 dst_val_h = (src0_val_h * weight[0] + src1_val_h * weight[1]) / INTERP_WEIGHT_UNIT;
-			dst_val_h %= 360;
+
+			if (src0_val_h - 128 > i)
+				src0_val_h -= 360;
+			if (src1_val_h - 128 > i)
+				src1_val_h -= 360;
+			cmr_s32 dst_val_h = (src0_val_h * weight[0] + src1_val_h * weight[1]) / INTERP_WEIGHT_UNIT;
+			if (dst_val_h <0)
+				dst_val_h += 360;
+			else
+				dst_val_h %= 360;
+			ISP_LOGV("src0_val_h=%d, src1_val_h=%d, dst_val_h=%d, data_num=%d", src0_val_h,  src1_val_h, dst_val_h, data_num);
 			cmr_u32 dst_val_s = (src0_val_s * weight[0] + src1_val_s * weight[1]) / INTERP_WEIGHT_UNIT;
 
 			cmr_u32 dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
