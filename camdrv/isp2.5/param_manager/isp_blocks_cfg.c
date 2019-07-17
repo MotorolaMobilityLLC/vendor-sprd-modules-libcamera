@@ -80,6 +80,8 @@ struct isp_block_operations s_3d_nr_cap_ops = { _pm_3d_nr_cap_init, _pm_3d_nr_ca
 struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, _pm_yuv_noisefilter_set_param, _pm_yuv_noisefilter_get_param, PNULL, PNULL };
 struct isp_block_operations s_cnr2_ops = { _pm_cnr2_init, _pm_cnr2_set_param, _pm_cnr2_get_param, PNULL, PNULL };
 struct isp_block_operations s_ae_adapt_param_ops = { _pm_ae_adapt_param_init, _pm_ae_adapt_set_param, _pm_ae_adapt_get_param, PNULL, PNULL };
+struct isp_block_operations s_hsv_new_ops = { _pm_hsv_new_init, _pm_hsv_set_new_param, _pm_hsv_get_new_param, _pm_common_rest, _pm_hsv_new_deinit };
+
 
 struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_FLASH_CALI, array_offset(struct isp_context, flash), sizeof(struct isp_flash_param), &s_flash_ops},
@@ -133,6 +135,8 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_AFT, array_offset(struct isp_context, aft), sizeof(struct isp_aft_param), &s_aft_ops},
 	{ISP_BLK_CNR2, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
 	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_param_ops},
+	{ISP_BLK_HSV_NEW, array_offset(struct isp_context, hsv_new), sizeof(struct isp_hsv_new_param), &s_hsv_new_ops},
+
 };
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)

@@ -277,6 +277,7 @@ struct sensor_envi_detect_param {
 #define SENSOR_CMC_NUM 0x09
 #define SENSOR_CTM_NUM 0x09
 #define SENSOR_HSV_NUM 0x09
+#define SENSOR_HSV_NUM_NEW 32
 #define SENSOR_LENS_NUM 0x09
 #define SENSOR_BLC_NUM 0x09
 #define SENSOR_MODE_NUM 0x02
@@ -1036,6 +1037,15 @@ struct sensor_hsv_param {
 	struct isp_sample_point_info cur_idx;
 	struct isp_data_bin_info map[SENSOR_HSV_NUM];
 	void *data_area;
+	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
+	void *specialeffect_data_area;
+};
+
+struct sensor_hsv_new_param {
+	struct sensor_hsv_cfg sensor_hsv_cfg[5];
+	struct isp_sample_point_info cur_idx;
+	struct isp_data_bin_info map_new[SENSOR_HSV_NUM_NEW];
+	void *data_area_new;
 	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
 	void *specialeffect_data_area;
 };

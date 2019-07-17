@@ -63,6 +63,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{DCAM_BLK_RGB_AFM, isp_u_raw_afm_block},
 	{DCAM_BLK_3DNR_PRE,isp_u_3dnr_pre_block},
 	{DCAM_BLK_3DNR_CAP,isp_u_3dnr_cap_block},
+	{ISP_BLK_HSV_NEW, isp_u_hsv_block},
 };
 
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)

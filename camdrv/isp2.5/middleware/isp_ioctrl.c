@@ -1927,6 +1927,10 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 	if (NULL != face_area) {
 		ae_fd_para.width = face_area->frame_width;
 		ae_fd_para.height = face_area->frame_height;
+		if (cxt->camera_4in1_flag) {
+			ae_fd_para.width = face_area->frame_width / 2;
+			ae_fd_para.height = face_area->frame_height / 2;
+		}
 		ae_fd_para.face_num = face_area->face_num;
 		for (i = 0; i < ae_fd_para.face_num; ++i) {
 			ae_fd_para.face_area[i].rect.start_x = face_area->face_info[i].sx;
@@ -2059,6 +2063,8 @@ static cmr_int ispctl_hdr(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_HDR_START, &ae_hdr, NULL);
+	if (cxt->ops.smart_ops.ioctrl)
+		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_ATM_SWITCH_STATE, &(ae_hdr.hdr_enable), NULL);
 	if (ae_hdr.hdr_enable) {
 		if (cxt->ops.smart_ops.block_disable)
 			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_LNC);

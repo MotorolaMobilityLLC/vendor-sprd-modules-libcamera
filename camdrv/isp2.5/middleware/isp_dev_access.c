@@ -303,9 +303,9 @@ cmr_int isp_dev_awb_gain(cmr_handle isp_dev_handle, cmr_u32 r, cmr_u32 g, cmr_u3
 	cmr_u32 b_gain = 0;
 
 	if (cxt->cam_4in1_flag) {
-		r_gain = r * 4;
-		g_gain = g * 4;
-		b_gain = b * 4;
+		r_gain = r ;
+		g_gain = g ;
+		b_gain = b ;
 		ISP_LOGV("r_gain = %d, g_gain = %d, b_gain = %d", r_gain, g_gain, b_gain);
 		ret = isp_u_awbc_gain(cxt->isp_driver_handle, r_gain, g_gain, b_gain, SCENE_MODE_CAP);
 	}

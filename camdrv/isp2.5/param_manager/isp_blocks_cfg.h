@@ -511,6 +511,15 @@ struct isp_hsv_param {
 	cmr_u32 *ct_result[ISP_PM_HSV_CTRESULT_NUM];
 };
 
+struct isp_hsv_new_param {
+	struct isp_dev_hsv_info cur;
+	struct isp_sample_point_info cur_idx;
+	struct isp_data_info final_map;
+	struct isp_data_info map[SENSOR_HSV_NUM_NEW];
+	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+	cmr_u32 *ct_result[ISP_PM_HSV_CTRESULT_NUM];
+};
+
 struct isp_yuv_pre_cdn_param {
 	struct isp_dev_yuv_precdn_info cur;
 	cmr_u32 cur_level;
@@ -754,6 +763,7 @@ struct isp_context {
 	struct dcam_rgb_aem_param dcam_aem;
 	struct isp_cnr2_param cnr2;
 	struct isp_ae_adapt_param ae_adapt;
+	struct isp_hsv_new_param hsv_new;
 };
 
 /*******************************isp_block_com******************************/
@@ -855,6 +865,11 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_hsv_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_hsv_deinit(void *hsv_param);
+
+cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param_new, void *param1, void *param2);
+cmr_s32 _pm_hsv_set_new_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_hsv_get_new_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+cmr_s32 _pm_hsv_new_deinit(void *hsv_param);
 
 cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_posterize_set_param(void *pstrz_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
