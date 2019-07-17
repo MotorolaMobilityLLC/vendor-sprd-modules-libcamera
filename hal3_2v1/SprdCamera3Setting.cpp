@@ -4557,6 +4557,17 @@ int SprdCamera3Setting::updateWorkParameters(
         }
     }
 
+    if (frame_settings.exists(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE)) {
+        if (s_setting[mCameraId].sprddefInfo.gender_race_age_enable !=
+            frame_settings.find(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE)
+                .data.u8[0]) {
+            s_setting[mCameraId].sprddefInfo.gender_race_age_enable =
+                frame_settings.find(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE)
+                    .data.u8[0];
+            pushAndroidParaTag(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE);
+        }
+    }
+
     // control mode
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
@@ -4658,6 +4669,18 @@ int SprdCamera3Setting::updateWorkParameters(
                 }
             }
         }
+    }
+
+    if (frame_settings.find(ANDROID_SPRD_TOUCH_INFO).count == 5) {
+        int32_t touch_area[4] = {0, 0, 0, 0};
+        int32_t is_update = 0;
+        for (size_t i = 0; i < 5; i++)
+            touch_area[i] =
+                frame_settings.find(ANDROID_SPRD_TOUCH_INFO).data.i32[i];
+        is_update = checkTouchAreaUpdate(
+            s_setting[mCameraId].sprddefInfo.am_regions, touch_area);
+        if (is_update)
+            pushAndroidParaTag(ANDROID_SPRD_TOUCH_INFO);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_AF_MODE_MACRO_FIXED)) {
@@ -5060,6 +5083,31 @@ int SprdCamera3Setting::checkROIValid(int32_t *roi_area, int32_t *crop_area) {
         roi_area[2] = crop_area[2];
     if (roi_area[3] >= crop_area[3])
         roi_area[3] = crop_area[3];
+
+exit:
+    return ret;
+}
+
+int SprdCamera3Setting::checkTouchAreaUpdate(int32_t *am_area,
+                                             int32_t *touch_area) {
+    int ret = NO_ERROR;
+    int32_t is_update = 0;
+    if (am_area == NULL || touch_area == NULL) {
+        HAL_LOGE("roi_area=%p,touch_area=%p", am_area, touch_area);
+        goto exit;
+    }
+
+    if ((touch_area[0] == am_area[0]) && (touch_area[1] == am_area[1]) &&
+        (touch_area[2] == am_area[2]) && (touch_area[3] == am_area[3])) {
+        goto exit;
+    } else {
+        is_update = 1;
+        am_area[0] = touch_area[0];
+        am_area[1] = touch_area[1];
+        am_area[2] = touch_area[2];
+        am_area[3] = touch_area[3];
+        return is_update;
+    }
 
 exit:
     return ret;

@@ -209,6 +209,7 @@ struct setting_hal_param {
     cmr_uint request_frame_info;
 #endif
     cmr_uint device_orientation;
+    cmr_uint face_attributes_enabled;
 };
 
 struct setting_camera_info {
@@ -2008,6 +2009,17 @@ setting_get_sprd_zsl_enabled(struct setting_component *cpt,
 }
 
 static cmr_int
+setting_get_face_attributes_enable(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->face_attributes_enabled;
+    CMR_LOGD("face_attributes_enabled=%ld", hal_param->face_attributes_enabled);
+    return ret;
+}
+
+static cmr_int
 setting_get_sprd_pipviv_enabled(struct setting_component *cpt,
                                 struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2181,6 +2193,17 @@ static cmr_int setting_set_3dnr_enable(struct setting_component *cpt,
     hal_param->is_3dnr = parm->cmd_type_value;
 
     CMR_LOGD("sprd_3dnr_enable=%ld", hal_param->is_3dnr);
+    return ret;
+}
+
+static cmr_int
+setting_set_face_attributes_enable(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->face_attributes_enabled = parm->cmd_type_value;
+    CMR_LOGD("face_attributes_enabled=%ld", hal_param->face_attributes_enabled);
     return ret;
 }
 
@@ -3965,6 +3988,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_device_orientation);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
                              setting_set_auto_3dnr);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
+                             setting_set_face_attributes_enable);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,
+                             setting_get_face_attributes_enable);
     setting_parms_inited = 1;
     return 0;
 }

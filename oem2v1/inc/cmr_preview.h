@@ -355,6 +355,10 @@ cmr_int
 cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
                                    struct auto_tracking_info *input_param);
 
+cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
+                                       cmr_u32 camera_id,
+                                       struct fd_touch_info *input_param);
+
 #ifdef __cplusplus
 }
 #endif

@@ -37,7 +37,7 @@
 #define FD_RUN_FAR_INTERVAL                                                    \
     8 /* The frame interval to run FAR. For reducing computation cost */
 #define FD_THREAD_NUM 2
-#define FD_MAX_CNN_FACE_NUM 3
+#define FD_MAX_CNN_FACE_NUM 1
 
 #ifndef ABS
 #define ABS(x) (((x) > 0) ? (x) : -(x))
@@ -91,7 +91,11 @@ struct class_fd {
     FA_ALIGN_HANDLE hFaceAlign; /* Handle for face alignment */
     FAR_RECOGNIZER_HANDLE hFAR; /* Handle for face attribute recognition */
     FAR_HANDLE hFAR_v2;
+    cmr_uint is_face_attribute;
+    cmr_uint face_attributes_off;
     struct frm_info trans_frm;
+    cmr_uint fd_x;
+    cmr_uint fd_y;
 };
 
 struct fd_start_parameter {
@@ -285,6 +289,31 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
 
     // reduce the frame rate, because the current face detection (tracking mode)
     // is too fast!!
+
+    if ((in->face_attribute_on == 1) &&
+        (fd_handle->is_face_attribute != in->face_attribute_on)) {
+        if (sprd_fd_api == SPRD_API_MODE_V2) {
+            FAR_OPTION_V2 opt_v2;
+            FAR_InitOption(&opt_v2);
+            opt_v2.raceOn = 1;
+            opt_v2.ageOn = 1;
+            opt_v2.smileOn = 1;
+            opt_v2.trackInterval = 8;
+            int threadNum = FD_THREAD_NUM;
+            opt_v2.workMode = FAR_WORKMODE_MOVIE;
+            opt_v2.maxFaceNum = FD_MAX_CNN_FACE_NUM;
+            /* set option: only do smile detection */
+            if (FAR_OK != FarCreateRecognizerHandle_V2(&(fd_handle->hFAR_v2),
+                                                       threadNum, &opt_v2)) {
+                CMR_LOGE("FarCreateRecognizerHandle_V2() Error");
+            }
+        }
+    }
+    fd_handle->is_face_attribute = in->face_attribute_on;
+    fd_handle->frame_in.touch_x = in->touch_x;
+    fd_handle->frame_in.touch_y = in->touch_y;
+    fd_handle->frame_in.face_attribute_on = in->face_attribute_on;
+
     {
         const static cmr_uint DROP_RATE = 2;
         if ((fd_handle->curr_frame_idx % DROP_RATE) != 0) {
@@ -521,12 +550,11 @@ end:
     return ret;
 }
 
-static void fd_recognize_face_attribute(
-    FD_DETECTOR_HANDLE hDT, FA_ALIGN_HANDLE hFaceAlign,
-    FAR_RECOGNIZER_HANDLE hFAR, FAR_HANDLE hFAR_v2,
-    struct class_faceattr_array *io_faceattr_arr, const cmr_u8 *i_image_data,
-    const cmr_u8 *i_image_data_u, struct img_size i_image_size,
-    const cmr_uint i_curr_frame_idx) {
+static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
+                                        FA_ALIGN_HANDLE hFaceAlign,
+                                        FAR_RECOGNIZER_HANDLE hFAR,
+                                        FAR_HANDLE hFAR_v2,
+                                        struct class_fd *class_handle) {
     cmr_int face_count = 0;
     cmr_int fd_idx = 0;
     cmr_int i = 0;
@@ -536,6 +564,20 @@ static void fd_recognize_face_attribute(
     FAR_IMAGE_YUV420SP img_420sp;
     FA_SHAPE fattr_shape;
     FAR_FACEINFO_V2 faface_v2;
+
+    struct class_faceattr_array *io_faceattr_arr;
+    cmr_u8 *i_image_data;
+    cmr_u8 *i_image_data_u;
+    struct img_size i_image_size;
+    cmr_uint i_curr_frame_idx;
+    struct ipm_frame_in *frame_in_touch;
+
+    io_faceattr_arr = &(class_handle->faceattr_arr);
+    i_image_data = class_handle->alloc_addr;
+    i_image_data_u = class_handle->alloc_addr_u;
+    i_image_size = class_handle->fd_img_size;
+    i_curr_frame_idx = class_handle->curr_frame_idx;
+    frame_in_touch = &(class_handle->frame_in);
 
     face_count = FdGetFaceCount(hDT);
     if (face_count <= 0) {
@@ -548,11 +590,14 @@ static void fd_recognize_face_attribute(
     FAR_ATTRIBUTE_VEC fattr_v2_vec;
     FAR_FACEINFO_VEC farface_v2_vec;
     FAR_FACEINFO_V2 faceInfo[face_count];
+    FAR_TOUCH_POINT touchPoint;
     /* Don't update face attribute, if the frame interval is not enough. For
      * reducing computation cost */
-    if ((io_faceattr_arr->count > 0) &&
-        (i_curr_frame_idx - io_faceattr_arr->frame_idx) < FD_RUN_FAR_INTERVAL) {
-        return;
+    if (sprd_fd_api == SPRD_API_MODE) {
+        if ((io_faceattr_arr->count > 0) &&
+            (i_curr_frame_idx - io_faceattr_arr->frame_idx) < FD_RUN_FAR_INTERVAL) {
+            return;
+        }
     }
 
     cmr_bzero(&new_attr_array, sizeof(struct class_faceattr_array));
@@ -560,10 +605,21 @@ static void fd_recognize_face_attribute(
     cmr_bzero(&img_420sp, sizeof(FAR_IMAGE_YUV420SP));
     cmr_bzero(faceAtt, sizeof(FAR_ATTRIBUTE_V2) * face_count);
     cmr_bzero(faceInfo, sizeof(FAR_FACEINFO_V2) * face_count);
+    cmr_bzero(&touchPoint, sizeof(FAR_TOUCH_POINT));
     img.data = (unsigned char *)i_image_data;
     img.width = i_image_size.width;
     img.height = i_image_size.height;
     img.step = img.width;
+    if (class_handle->fd_x == frame_in_touch->touch_x &&
+        class_handle->fd_y == frame_in_touch->touch_y) {
+        touchPoint.x = 0;
+        touchPoint.y = 0;
+    } else {
+        touchPoint.x = frame_in_touch->touch_x;
+        touchPoint.y = frame_in_touch->touch_y;
+        class_handle->fd_x = frame_in_touch->touch_x;
+        class_handle->fd_y = frame_in_touch->touch_y;
+    }
 
     // When there are many faces, process every face will be too slow.
     // Limit face count to 2
@@ -653,7 +709,8 @@ static void fd_recognize_face_attribute(
                     }
                     fattr->shape.score = fattr_shape.score;
                     farface_v2_vec.faceNum = face_count;
-                    memcpy(&faceInfo[fd_idx], &faface_v2, sizeof(FAR_FACEINFO_V2));
+                    memcpy(&faceInfo[fd_idx], &faface_v2,
+                           sizeof(FAR_FACEINFO_V2));
                     fattr_v2_vec.faceNum = face_count;
                     memcpy(&faceAtt[fd_idx], &fattr->attr_v2,
                            sizeof(FAR_ATTRIBUTE_V2));
@@ -663,6 +720,13 @@ static void fd_recognize_face_attribute(
                         img_420sp.width = img.width;
                         img_420sp.height = img.height;
                         img_420sp.format = YUV420_FORMAT_CRCB;
+                        if (touchPoint.x != 0 || touchPoint.y != 0) {
+                            CMR_LOGD("TOUCHPOINT %d %d ", touchPoint.x,
+                                     touchPoint.y);
+                            ret = FarSelectFace(
+                                hFAR_v2, (const FAR_TOUCH_POINT *)&touchPoint,
+                                (const FAR_FACEINFO_VEC *)&farface_v2_vec);
+                        }
                         ret = FarRun_YUV420SP(
                             hFAR_v2, (const FAR_IMAGE_YUV420SP *)&img_420sp,
                             (const FAR_FACEINFO_VEC *)&farface_v2_vec,
@@ -1107,23 +1171,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             CMR_LOGE("FaCreateAlignHandle() Error");
             break;
         }
-        if (sprd_fd_api == SPRD_API_MODE_V2) {
-            FAR_OPTION_V2 opt_v2;
-            FAR_InitOption(&opt_v2);
-            opt_v2.raceOn = 1;
-            opt_v2.ageOn = 1;
-            opt_v2.smileOn = 1;
-            opt_v2.trackInterval = 0;
-            int threadNum = FD_THREAD_NUM;
-            opt_v2.workMode = FAR_WORKMODE_MOVIE;
-            opt_v2.maxFaceNum = FD_MAX_CNN_FACE_NUM;
-            /* set option: only do smile detection */
-            if (FAR_OK != FarCreateRecognizerHandle_V2(&(class_handle->hFAR_v2),
-                                                       threadNum, &opt_v2)) {
-                CMR_LOGE("FarCreateRecognizerHandle_V2() Error");
-                break;
-            }
-        } else if (sprd_fd_api == SPRD_API_MODE) {
+
+        if (sprd_fd_api == SPRD_API_MODE) {
             if (FAR_OK != FarCreateRecognizerHandle(&(class_handle->hFAR))) {
                 CMR_LOGE("FarCreateRecognizerHandle() Error");
                 break;
@@ -1167,12 +1216,19 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         }
 
         /* recognize face attribute (smile detection) */
-        fd_recognize_face_attribute(
-            class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
-            class_handle->hFAR_v2, &(class_handle->faceattr_arr),
-            (cmr_u8 *)class_handle->alloc_addr,
-            (cmr_u8 *)class_handle->alloc_addr_u, class_handle->fd_img_size,
-            class_handle->curr_frame_idx);
+        if (class_handle->frame_in.face_attribute_on == 1) {
+            fd_recognize_face_attribute(
+                class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
+                class_handle->hFAR_v2, class_handle);
+        } else if ((class_handle->frame_in.face_attribute_on == 0) &&
+                   (class_handle->face_attributes_off !=
+                    class_handle->frame_in.face_attribute_on)) {
+            if (sprd_fd_api == SPRD_API_MODE_V2) {
+                FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
+            }
+        }
+        class_handle->face_attributes_off =
+            class_handle->frame_in.face_attribute_on;
 
         class_handle->is_get_result = 1;
         /* extract face detection results */

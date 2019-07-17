@@ -1614,6 +1614,8 @@ enum camera_param_type {
     CAMERA_PARAM_AUTO_TRACKING_INFO,
     CAMERA_PARAM_APERTURE,
     CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
+    CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
+    CAMERA_PARAM_TOUCH_INFO_TO_FD,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1684,6 +1686,11 @@ struct camera_jpeg_param {
 struct camera_sensor_info {
     cmr_s32 exposure_time_numerator;
     cmr_s32 exposure_time_denominator;
+};
+
+struct fd_touch_info {
+    cmr_u32 fd_touchX;
+    cmr_u32 fd_touchY;
 };
 
 struct auto_tracking_info {

@@ -215,6 +215,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int SetDimensionCapture(cam_dimension_t capture_size);
     int CameraConvertCoordinateToFramework(int32_t *rect);
     int CameraConvertCoordinateFromFramework(int32_t *rect);
+    int CameraConvertRegionFromFramework(int32_t *rect);
 
     int PushPreviewbuff(buffer_handle_t *buff_handle);
     int PushVideobuff(buffer_handle_t *buff_handle);

@@ -35,9 +35,9 @@
 #define FAR_WORKMODE_DEFAULT     FAR_WORKMODE_STILL /* the default work mode        */
 
 #define RATIO_AGE                 5     /* ratio of age                              */
-#define RATIO_GENDER              5     /* ratio of gender                           */
-#define RATIO_INFANT              5     /* ratio of infant                           */
-#define RATIO_RACE                5     /* ratio of race                             */
+#define RATIO_GENDER           1     /* ratio of gender                           */
+#define RATIO_INFANT            1     /* ratio of infant                           */
+#define RATIO_RACE               5     /* ratio of race                             */
 //#define FAR_POINT_NUM             7
 
 // A YUV 4:2:0 image with a plane of 8bit Y samples followed by an
@@ -66,6 +66,12 @@ typedef struct
     int uvRowStride;            /* bytes per row for U(V) channel    */
     int uvPixelStride;          /* U/V pixel stride                  */
 } FAR_IMAGE_YUV420;
+
+/* The input touch point*/
+typedef struct
+{
+    int x, y;
+}FAR_TOUCH_POINT;
 
 /* The face information structure*/
 typedef struct
@@ -149,6 +155,11 @@ FARAPI(int) FarRun_YUV420(FAR_HANDLE hFAR,
                           const FAR_IMAGE_YUV420 *i_yuvImage,
                           const FAR_FACEINFO_VEC *i_faceInfoVec,
                           FAR_ATTRIBUTE_VEC *o_attributeVec);
+
+/* When there is touch point input, select face */
+FARAPI(int) FarSelectFace(FAR_HANDLE hFAR,
+                          const FAR_TOUCH_POINT *i_touchPoint,
+                          const FAR_FACEINFO_VEC *i_faceInfoVec);
 
 /* When there is no face input, reset FaceArray */
 FARAPI(int) FarResetFaceArray(FAR_HANDLE hFAR);

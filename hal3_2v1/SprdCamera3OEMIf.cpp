@@ -3601,6 +3601,52 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     return ret;
 }
 
+int SprdCamera3OEMIf::CameraConvertRegionFromFramework(int32_t *cropRegion) {
+    float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+          zoomHeight = 0;
+    uint32_t i = 0;
+    int ret = 0;
+    SCALER_Tag scaleInfo;
+    struct img_rect scalerCrop;
+    uint16_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
+    HAL_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
+             mPreviewWidth, mPreviewHeight, cropRegion[0], cropRegion[1],
+             cropRegion[2], cropRegion[3]);
+    fdWid = cropRegion[2] - cropRegion[0];
+    fdHeight = cropRegion[3] - cropRegion[1];
+    if (fdWid == 0 || fdHeight == 0) {
+        HAL_LOGE("parameters error.");
+        return 1;
+    }
+    mSetting->getSCALERTag(&scaleInfo);
+    scalerCrop.start_x = scaleInfo.crop_region[0];
+    scalerCrop.start_y = scaleInfo.crop_region[1];
+    scalerCrop.width = scaleInfo.crop_region[2];
+    scalerCrop.height = scaleInfo.crop_region[3];
+    float previewAspect = (float)mPreviewWidth / mPreviewHeight;
+    float cropAspect = (float)scalerCrop.width / scalerCrop.height;
+    if (previewAspect > cropAspect) {
+        width = scalerCrop.width;
+        height = cropAspect * scalerCrop.height / previewAspect;
+        left = scalerCrop.start_x;
+        top = scalerCrop.start_y + (scalerCrop.height - height) / 2;
+    } else {
+        width = previewAspect * scalerCrop.width / cropAspect;
+        height = scalerCrop.height;
+        left = scalerCrop.start_x + (scalerCrop.width - width) / 2;
+        top = scalerCrop.start_y;
+    }
+    zoomWidth = (float)mPreviewWidth / width;
+    zoomHeight = (float)mPreviewHeight / height;
+    cropRegion[0] = (cmr_u32)(((float)cropRegion[0] - left) * zoomWidth);
+    cropRegion[1] = (cmr_u32)(((float)cropRegion[1] - top) * zoomHeight);
+    cropRegion[2] = (cmr_u32)(((float)cropRegion[2] - left) * zoomWidth);
+    cropRegion[3] = (cmr_u32)(((float)cropRegion[3] - top) * zoomHeight);
+    HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d, )", cropRegion[0],
+             cropRegion[1], cropRegion[2], cropRegion[3]);
+    return ret;
+}
+
 int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
     int32_t *cropRegion) {
     float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
@@ -6965,6 +7011,43 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AI_SCENE_ENABLED,
                  (uint32_t)sprddefInfo.ai_scene_enabled);
+    } break;
+
+    case ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        HAL_LOGD(" sprddefInfo.availabe_gender_race_age_enable: %d",
+                 sprddefInfo.gender_race_age_enable);
+
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
+                 (uint32_t)sprddefInfo.gender_race_age_enable);
+    } break;
+
+    case ANDROID_SPRD_TOUCH_INFO: {
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        struct img_rect touch_areas = {0, 0, 0, 0};
+        struct fd_touch_info info;
+        int32_t touchRegion[4];
+
+        touch_areas.start_x = sprddefInfo.am_regions[0];
+        touch_areas.start_y = sprddefInfo.am_regions[1];
+        touch_areas.width =
+            sprddefInfo.am_regions[2] - sprddefInfo.am_regions[0];
+        touch_areas.height =
+            sprddefInfo.am_regions[3] - sprddefInfo.am_regions[1];
+
+        touchRegion[0] = touch_areas.start_x;
+        touchRegion[1] = touch_areas.start_y;
+        touchRegion[2] = touch_areas.width;
+        touchRegion[3] = touch_areas.height;
+        CameraConvertRegionFromFramework(touchRegion);
+
+        info.fd_touchX = touchRegion[0] + touchRegion[2] / 2;
+        info.fd_touchY = touchRegion[1] + touchRegion[3] / 2;
+        HAL_LOGD("fd_touchX %d fd_touchY %d", info.fd_touchX, info.fd_touchY);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_TOUCH_INFO_TO_FD,
+                 (cmr_uint)&info);
     } break;
 
     case ANDROID_SPRD_CONTRAST: {

@@ -34,6 +34,7 @@ struct ipm_frame_in {
     struct img_depth_map depth_map;
     cmr_s32 touch_x;
     cmr_s32 touch_y;
+    cmr_uint face_attribute_on;
     cmr_uint frame_cnt;
     cmr_handle caller_handle;
     void *private_data;

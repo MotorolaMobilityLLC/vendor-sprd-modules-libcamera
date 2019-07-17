@@ -409,6 +409,7 @@ typedef struct {
     uint8_t flash_mode;
     int32_t ae_info;
     uint8_t availabe_gender_race_age_enable;
+    uint8_t gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     int32_t ultrawide_id;
 } SPRD_DEF_Tag;
@@ -796,6 +797,7 @@ class SprdCamera3Setting {
     static bool getLcdSize(uint32_t *width, uint32_t *height);
     static void convertToRegions(int32_t *rect, int32_t *region, int weight);
     static int checkROIValid(int32_t *roi_area, int32_t *crop_area);
+    static int checkTouchAreaUpdate(int32_t *am_area, int32_t *touch_area);
     void coordinate_struct_convert(int *rect_arr, int arr_size);
     int coordinate_convert(int *rect_arr, int arr_size, int angle,
                            int is_mirror, struct img_size *preview_size,

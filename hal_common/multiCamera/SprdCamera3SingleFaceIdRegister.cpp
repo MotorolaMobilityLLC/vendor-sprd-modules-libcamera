@@ -965,6 +965,10 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::processCaptureRequest(
         // disable zsl mode
         cmr_u8 sprdZslEnabled = 0;
         metaSettings.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
+
+        // disable face attribute
+        cmr_u8 sprdFaceAttributesEnabled = 0;
+        metaSettings.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled, 1);
     }
 
     // get phy addr from faceidservice
