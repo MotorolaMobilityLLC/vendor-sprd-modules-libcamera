@@ -40,12 +40,9 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../../$(ISPDRV_DIR)/middleware/inc \
-	$(LOCAL_PATH)/../../$(ISPDRV_DIR)/driver/inc
+	$(LOCAL_PATH)/../../$(ISPDRV_DIR)/driver/inc \
+	$(LOCAL_PATH)/../../kernel_module/interface
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
-		$(LOCAL_PATH)/../../kernel_module/interface
-endif
 # ************************************************
 # internal header file
 # ************************************************

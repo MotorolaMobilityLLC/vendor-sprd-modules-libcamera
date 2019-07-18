@@ -21,13 +21,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../arithmetic/inc \
     $(LOCAL_PATH)/../$(CPP_DIR)/driver/inc \
     $(LOCAL_PATH)/../$(CPP_DIR)/algo/inc \
-    $(LOCAL_PATH)/../arithmetic/sprd_easy_hdr/inc
-
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/../arithmetic/sprd_easy_hdr/inc \
     $(LOCAL_PATH)/../kernel_module/interface
-endif
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \

@@ -30,12 +30,8 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/dummy \
     $(LOCAL_PATH)/../$(OEM_DIR)/inc \
     $(LOCAL_PATH)/inc \
-    $(LOCAL_PATH)/otp_parser
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
-	   $(LOCAL_PATH)/../kernel_module/interface
-endif
+    $(LOCAL_PATH)/otp_parser \
+    $(LOCAL_PATH)/../kernel_module/interface
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/middleware/inc \

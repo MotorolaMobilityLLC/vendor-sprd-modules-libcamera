@@ -40,12 +40,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/dummy \
     $(LOCAL_PATH)/../sensor/af_drv \
     $(LOCAL_PATH)/../sensor/otp_drv \
-    $(LOCAL_PATH)/../arithmetic/inc
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/../arithmetic/inc \
     $(LOCAL_PATH)/../kernel_module/interface
-endif
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \

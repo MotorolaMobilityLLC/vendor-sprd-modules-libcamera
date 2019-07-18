@@ -54,12 +54,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/pdaf/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/pdaf/sprd/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/ai/inc \
-	$(LOCAL_PATH)/../../sensor/inc
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-	LOCAL_C_INCLUDES += \
-		$(LOCAL_PATH)/../../kernel_module/interface
-endif
+	$(LOCAL_PATH)/../../sensor/inc \
+	$(LOCAL_PATH)/../../kernel_module/interface
 
 # ************************************************
 # internal header file

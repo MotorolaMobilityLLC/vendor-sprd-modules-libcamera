@@ -160,12 +160,8 @@ LOCAL_C_INCLUDES := \
     $(TOP)/frameworks/native/libs/sensor/include \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
     $(TOP)/system/core/libion/kernel-headers \
-    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/kernel_module/interface
-endif
+    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
+    $(LOCAL_PATH)/kernel_module/interface
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \

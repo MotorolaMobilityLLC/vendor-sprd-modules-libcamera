@@ -59,12 +59,8 @@ LOCAL_C_INCLUDES += \
        $(TOP)/kernel/include/video \
        $(TOP)/kernel/include/uapi/video \
        $(TOP)/system/media/camera/include \
-       $(TOP)/system/core/include
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../kernel_module/interface
-endif
+       $(TOP)/system/core/include \
+       $(LOCAL_PATH)/../../kernel_module/interface
 
 LOCAL_SHARED_LIBRARIES := libcutils liblog libcamoem libcamcommon libmemion libcamsensor
 

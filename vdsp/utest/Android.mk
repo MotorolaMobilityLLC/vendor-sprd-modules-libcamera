@@ -28,12 +28,8 @@ LOCAL_C_INCLUDES:= \
 	$(TOP)/vendor/sprd/modules/libcamera/$(ISPDRV_DIR)/driver/inc \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(TOP)/vendor/sprd/modules/libcamera/common/inc \
-	$(TOP)/vendor/sprd/modules/libcamera/arithmetic/inc
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
-LOCAL_C_INCLUDES += \
-		$(TOP)/vendor/sprd/modules/libcamera/kernel_module/interface
-endif
+	$(TOP)/vendor/sprd/modules/libcamera/arithmetic/inc \
+	$(TOP)/vendor/sprd/modules/libcamera/kernel_module/interface
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 

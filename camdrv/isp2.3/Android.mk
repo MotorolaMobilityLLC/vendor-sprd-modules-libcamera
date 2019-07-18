@@ -47,7 +47,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/tof \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc \
-	$(LOCAL_PATH)/../../sensor/inc
+	$(LOCAL_PATH)/../../sensor/inc \
+	$(LOCAL_PATH)/../../kernel_module/interface
 
 # ************************************************
 # internal header file
