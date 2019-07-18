@@ -5758,7 +5758,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->af_cxt.af_supported = input_ptr->init_param->ex_info.af_supported;
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
-	cxt->ebd_cxt.ebd_support = 0;//input_ptr->init_param->ex_info.ebd_supported;
+	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
 	cxt->awb_cxt.color_support = input_ptr->init_param->ex_info.color_support;
 	cxt->commn_cxt.is_face_id_unlock = input_ptr->init_param->is_faceId_unlock;
 	ISP_LOGV("af_supported = %d, pdaf_support = %d, ebd_support = %d, color_support = %d, is_faceid_unlock = %d",
