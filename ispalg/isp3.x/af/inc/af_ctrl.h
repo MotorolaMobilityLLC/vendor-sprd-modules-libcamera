@@ -104,6 +104,8 @@ extern "C" {
 		AF_CMD_SET_SCENE_INFO = 0x101B,
 		AF_CMD_SET_REALBOKEH_DISTANCE = 0x101C,
 		AF_CMD_SET_ZOOM_RATIO = 0x101D,
+		AF_CMD_SET_OT_SWITCH = 0x101E,
+		AF_CMD_SET_OT_INFO = 0x101F,
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
@@ -249,6 +251,23 @@ extern "C" {
 		AF_OTP_BY_DEFAULT = 0,
 		AF_OTP_BY_OTP,
 		AF_OTP_BY_TUNING,
+	};
+
+	enum af_ot_status {
+		AF_OT_LOCKED = 0,
+		AF_OT_MISSING,
+		AF_OT_UNLOCKED,
+		AF_OT_STOPPED,
+		AF_OT_MAX
+	};
+
+	enum af_pdaf_type {
+		AF_PDAF_NONE = 0,
+		AF_PDAF_TYPE1,
+		AF_PDAF_TYPE2,
+		AF_PDAF_TYPE3,
+		AF_PDAF_DUAL,
+		AF_PDAF_MAX
 	};
 
 	struct af_img_blk_info {
@@ -477,6 +496,21 @@ extern "C" {
 		cmr_u16 reserved[20];
 	};
 
+	struct afctrl_ot_info {
+		cmr_u32 centorX;	//Center X Coordinate
+		cmr_u32 centorY;	//Center Y Coordinate
+		cmr_u32 sizeX;	//Object Size Width
+		cmr_u32 sizeY;	//Object Size Height
+		cmr_u32 axis1;	//Object Axis Width
+		cmr_u32 axis2;	//Object Axis Height
+		cmr_u32 otdiff;
+		cmr_u32 otstatus;
+		cmr_u32 otframeid;
+		cmr_u32 imageW;	//pdaf plane width
+		cmr_u32 imageH;	//pdaf plane height
+		cmr_u32 reserved[20];
+	};
+
 	struct afctrl_cb_ops {
 		cmr_s32(*start_notice) (void *handle, struct afctrl_notice * in_param);
 		cmr_s32(*end_notice) (void *handle, struct afctrl_notice * in_param);
@@ -558,6 +592,7 @@ extern "C" {
 		af_ctrl_br_ioctrl br_ctrl;
 		cmr_u32 sensor_role;
 		cmr_u32 is_mono_sensor;
+		cmr_u32 pdaf_type;
 	};
 
 	struct afctrl_init_out {

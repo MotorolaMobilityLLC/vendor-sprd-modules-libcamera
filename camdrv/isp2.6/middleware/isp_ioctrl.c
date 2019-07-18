@@ -1955,8 +1955,7 @@ static cmr_int ispctl_af_mode(cmr_handle isp_alg_handle, void *param_ptr)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_MODE, (void *)&set_mode, NULL);
 
 	if (cxt->ops.pdaf_ops.ioctrl) {
-		cmr_u32 pdaf_mode = set_mode == AF_MODE_NORMAL ? ACTIVE : PASSIVE;
-		ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_MODE, (void *)&pdaf_mode, NULL);
+		ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_MODE, (void *)&set_mode, NULL);
 	}
 
 	return ret;
@@ -2110,6 +2109,35 @@ static cmr_int ispctl_set_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 
 	return ret;
 }
+
+static cmr_int ispctl_set_af_ot_switch(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.af_ops.ioctrl)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_OT_SWITCH, param_ptr, NULL);
+	if (cxt->ops.pdaf_ops.ioctrl)
+		ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_OTSWITCH, param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_set_af_ot_info(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.af_ops.ioctrl)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_OT_INFO, param_ptr, NULL);
+
+	if (cxt->ops.pdaf_ops.ioctrl)
+		ret = cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_OTINFO, param_ptr, NULL);
+
+	return ret;
+}
+
+
 
 static cmr_int ispctl_scaler_trim(cmr_handle isp_alg_handle, void *param_ptr)
 {
@@ -3166,6 +3194,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AF_CTRL, ispctl_af_info},	// for tool cali
 	{ISP_CTRL_SET_AF_POS, ispctl_set_af_pos},	// for tool cali
 	{ISP_CTRL_GET_AF_POS, ispctl_get_af_pos},	// for tool cali
+	{ISP_CTRL_SET_AF_OT_SWITH, ispctl_set_af_ot_switch},
+	{ISP_CTRL_SET_AF_OT_INFO, ispctl_set_af_ot_info},
 	{ISP_CTRL_GET_BOKEH_RANGE, ispctl_get_bokeh_range},
 	{ISP_CTRL_GET_REBOKEH_DATA, ispctl_get_rebokeh_data},
 	{ISP_CTRL_SET_VCM_DIST, ispctl_set_vcm_distance},

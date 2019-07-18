@@ -35,6 +35,8 @@ enum pdaf_ctrl_cmd_type {
 	PDAF_CTRL_CMD_SET_MODE,
 	PDAF_CTRL_CMD_SET_AFMFV,
 	PDAF_CTRL_CMD_SET_MULTIZONE,
+	PDAF_CTRL_CMD_SET_OTSWITCH,
+	PDAF_CTRL_CMD_SET_OTINFO,
 	/*
 	 * warning if you wanna set ioctrl directly
 	 * please add msg id below here
@@ -92,8 +94,10 @@ struct pdaf_ctrl_param_in {
 		struct isp3a_pd_config_t *pd_config;
 		 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
 		 struct af_win_rect touch_area;
-		 cmr_u32 af_type;
+		 cmr_u32 af_mode;
 		 struct SetPD_ROI_param af_roi;
+		 cmr_u32 ot_switch;
+		 struct afctrl_ot_info ot_info;
 	};
 	void *af_addr;// afm statis buffer
 	cmr_u32 af_addr_len;// in bytes

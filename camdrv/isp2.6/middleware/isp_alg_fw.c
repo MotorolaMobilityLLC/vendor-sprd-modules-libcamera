@@ -3712,6 +3712,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
 	af_input.is_supoprt = is_af_support;
+	af_input.pdaf_type = cxt->pdaf_cxt.pdaf_support;
 	cxt->af_cxt.sw_bypass = 0;
 
 	//get af tuning parameters
@@ -3774,8 +3775,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		break;
 	}
 
-	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
-		cxt->is_master, cxt->is_multi_mode);
+	ISP_LOGI("sensor_role=%d, is_multi_mode=%d, pdaf_type%d",
+		cxt->is_master, cxt->is_multi_mode, af_input.pdaf_type);
 
 	af_input.otp_info_ptr = cxt->otp_data;
 	af_input.is_master = cxt->is_master;

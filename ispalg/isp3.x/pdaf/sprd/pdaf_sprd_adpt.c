@@ -33,6 +33,7 @@ static cmr_s32 g_getdual = 0;
 
 struct sprd_pdaf_context {
 	cmr_u32 camera_id;
+	cmr_u8 af_mode;
 	cmr_u8 af_type;
 	cmr_u8 pd_open;
 	cmr_u8 is_busy;
@@ -49,6 +50,9 @@ struct sprd_pdaf_context {
 	struct sprd_pdaf_report_t report_data;
 	struct af_win_rect touch_area;
 	struct SetPD_ROI_param af_roi;
+	cmr_u32 ot_switch;
+	struct afctrl_ot_info ot_info;
+	cmr_u32 pdaf_type;
 	void *af_addr;// afm statis
 	cmr_u32 af_addr_len;// afm statis buffer length
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
@@ -404,6 +408,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
 	cxt->af_type = PASSIVE;
+	cxt->pdaf_type = in_p->pdaf_support;
 	/*TBD dSensorID 0:Imx258 Type3 1:OV13855 2:3L8 3:IMX258 Type2 4:IMX362 Dual PD 5:OV12A10*/
 	if (SENSOR_VENDOR_IMX258_TYPE3 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_0;
@@ -1015,8 +1020,13 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			}
 		break;
 		case ACTIVE:
-			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, ((cxt->touch_area.sx + cxt->touch_area.ex)>>2)<<1, ((cxt->touch_area.sy + cxt->touch_area.ey)>>2)<<1,
-				 480, 480);
+			if(1 == cxt->ot_switch) {
+				ISP_LOGI("center x,y (%d,%d)", cxt->ot_info.centorX, cxt->ot_info.centorY);
+				ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, cxt->ot_info.centorX, cxt->ot_info.centorY, 480, 480);
+			} else {
+				ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, ((cxt->touch_area.sx + cxt->touch_area.ex)>>2)<<1, ((cxt->touch_area.sy + cxt->touch_area.ey)>>2)<<1,
+					 480, 480);
+			}
 		break;
 		case PASSIVE:
 		default:
@@ -1148,7 +1158,21 @@ static cmr_s32 pdafsprd_adpt_set_mode(cmr_handle adpt_handle, struct pdaf_ctrl_p
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	cxt->af_type = in->af_type;
+	cxt->af_mode = in->af_mode;
+
+	switch (in->af_mode) {
+	case AF_MODE_NORMAL:
+		cxt->af_type == ACTIVE;
+		break;
+	case AF_MODE_CONTINUE:
+	case AF_MODE_VIDEO:
+		cxt->af_type == PASSIVE;
+		break;
+	default:
+		cxt->af_type == PASSIVE;
+		ISP_LOGW("af_mode %d is not supported", in->af_mode);
+		break;
+	}
 
 	ISP_LOGI("pdaf mode %s",cxt->af_type == ACTIVE ? "active" : "passive");
 
@@ -1201,6 +1225,38 @@ static cmr_s32 pdafsprd_adpt_set_afmfv(cmr_handle adpt_handle, struct pdaf_ctrl_
 	return ret;
 }
 
+static cmr_s32 pdafsprd_adpt_set_ot_switch(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+
+	ISP_LOGI("ot switch %d", in->ot_switch);
+	cxt->ot_switch = in->ot_switch;
+	if (1 == cxt->ot_switch) {
+		cxt->af_type == ACTIVE;
+	} else {
+		cxt->af_type = AF_MODE_NORMAL == cxt->af_mode ? ACTIVE : PASSIVE;
+	}
+
+	return ret;
+}
+
+static cmr_s32 pdafsprd_adpt_set_ot_info(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+
+	ISP_LOGV("ot coor (%d %d %d %d)", in->ot_info.centorX, in->ot_info.centorY, in->ot_info.sizeX, in->ot_info.sizeY);
+	cxt->ot_info.centorX = in->ot_info.centorX;
+	cxt->ot_info.centorY = in->ot_info.centorY;
+
+	return ret;
+}
+
 static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -1230,6 +1286,12 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 		break;
 	case PDAF_CTRL_CMD_SET_MULTIZONE:
 		pdafsprd_adpt_set_multizone(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_OTSWITCH:
+		pdafsprd_adpt_set_ot_switch(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_OTINFO:
+		pdafsprd_adpt_set_ot_info(adpt_handle, in_ptr);
 		break;
 	default:
 		ISP_LOGE("fail to case cmd = %d", cmd);

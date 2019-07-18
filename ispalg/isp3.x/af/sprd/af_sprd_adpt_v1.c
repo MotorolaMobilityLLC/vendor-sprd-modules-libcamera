@@ -82,6 +82,7 @@ static const char *state_string[] = {
 	"faf",
 	"fullscan",
 	"picture",
+	"objecttracking",
 };
 
 #define STATE_STRING(state)    state_string[state]
@@ -1804,7 +1805,7 @@ static cmr_s32 trigger_deinit(af_ctrl_t * af)
 static void set_manual(af_ctrl_t * af, char *test_param)
 {
 	UNUSED(test_param);
-	af->state = STATE_MANUAL;
+	af->state = STATE_ENGINEER;
 	af->focus_state = AF_IDLE;
 	// property_set("vendor.cam.af_set_pos","0");// to fix lens to position 0
 	trigger_stop(af);
@@ -2383,6 +2384,19 @@ static void pd_start(af_ctrl_t * af, e_AF_TRIGGER type, struct aft_proc_result *
 	}
 
 	af->vcm_stable = 0;
+}
+
+static void otaf_start(af_ctrl_t * af)
+{
+	AF_Trigger_Data aft_in;
+
+	af->algo_mode = OTAF;
+	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
+	aft_in.AFT_mode = af->algo_mode;
+	aft_in.bisTrigger = AF_TRIGGER;
+	aft_in.AF_Trigger_Type = (1 == af->defocus) ? (DEFOCUS) : (RF_NORMAL);
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_TRIGGER, &aft_in);
+	af->focus_state = AF_SEARCHING;
 }
 
 static void af_process_frame(af_ctrl_t * af)
@@ -3577,6 +3591,117 @@ static cmr_s32 af_sprd_set_zoom_ratio(cmr_handle handle, void *param0)
 	return rtn;
 }
 
+static cmr_s32 af_sprd_set_ot_switch(cmr_handle handle, void *param0)
+{
+	UNUSED(handle);
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	cmr_s32 rtn = AFV1_SUCCESS;
+
+	if (NULL == param0) {
+		ISP_LOGE("param null error");
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+
+	ISP_LOGI("ot switch = %d", *(cmr_u32 *) param0);
+	if (AF_PDAF_DUAL != af->pdaf_type) {
+		ISP_LOGE("sensor do not support otaf %d", af->pdaf_type);
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+
+	af->ot_switch = *(cmr_u32 *) param0;
+
+	if (AF_SEARCHING == af->focus_state) {
+		ISP_LOGW("serious problem, current af is not done, af state %s", STATE_STRING(af->state));
+		af_stop_search(af);
+	}
+
+	if (AFV1_TRUE == af->ot_switch) {
+		af->state = STATE_OTAF;
+		trigger_stop(af);
+	} else if (AFV1_FALSE == af->ot_switch) {
+		switch (af->request_mode) {
+		case AF_MODE_NORMAL:
+			af->state = STATE_NORMAL_AF;
+			trigger_start(af);
+			break;
+		case AF_MODE_CONTINUE:
+		case AF_MODE_VIDEO:
+			af->state = AF_MODE_CONTINUE == af->request_mode ? STATE_CAF : STATE_RECORD_CAF;
+			trigger_start(af);
+			break;
+		case AF_MODE_FULLSCAN:
+			af->state = STATE_FULLSCAN;
+			trigger_stop(af);
+			break;
+		case AF_MODE_MANUAL:
+			af->state = STATE_MANUAL;
+			trigger_stop(af);
+			break;
+		default:
+			ISP_LOGW("af_mode %d is not supported", af->request_mode);
+			break;
+		}
+	} else {
+		ISP_LOGE("af->ot_switch %d error", af->ot_switch);
+	}
+	ISP_LOGW("af->ot_switch %d, af state %s", af->ot_switch, STATE_STRING(af->state));
+	return rtn;
+}
+
+static cmr_s32 af_sprd_set_ot_info(cmr_handle handle, void *param0)
+{
+	UNUSED(handle);
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	struct afctrl_ot_info *ot_info = (struct afctrl_ot_info *)param0;
+	cmr_s32 rtn = AFV1_SUCCESS;
+
+	if (NULL == param0) {
+		ISP_LOGE("param null error");
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+
+	if (AF_PDAF_DUAL != af->pdaf_type) {
+		ISP_LOGV("sensor do not support otaf %d", af->pdaf_type);
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+
+	if (AFV1_FALSE == af->ot_switch) {
+		ISP_LOGE("ot switch is off");
+		rtn = AFV1_ERROR;
+		return rtn;
+	}
+	ISP_LOGI("ot switch = %d, status = %d, focus state %d", af->ot_switch, ot_info->otstatus, af->focus_state);
+	ISP_LOGI("ot cx,cy (%d,%d), image w,h (%d,%d)", ot_info->centorX, ot_info->centorY, ot_info->imageW, ot_info->imageH);
+	switch (ot_info->otstatus) {
+	case AF_OT_LOCKED:
+		if (AF_SEARCHING != af->focus_state) {
+			if (0 != ot_info->centorX && 0 != ot_info->centorY) {
+				otaf_start(af);
+			}
+		} else {
+			if (0 == ot_info->centorX || 0 == ot_info->centorY) {
+				af_stop_search(af);
+			}
+		}
+		break;
+	case AF_OT_MISSING:
+		break;
+	case AF_OT_UNLOCKED:
+	case AF_OT_STOPPED:
+		if (AF_SEARCHING == af->focus_state) {
+			af_stop_search(af);
+		}
+		break;
+	default:
+		break;
+	}
+	return rtn;
+}
+
 cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
 	UNUSED(param1);
@@ -3692,6 +3817,14 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 
 	case AF_CMD_SET_ZOOM_RATIO:
 		rtn = af_sprd_set_zoom_ratio(handle, param0);
+		break;
+
+	case AF_CMD_SET_OT_SWITCH:
+		rtn = af_sprd_set_ot_switch(handle, param0);
+		break;
+
+	case AF_CMD_SET_OT_INFO:
+		rtn = af_sprd_set_ot_info(handle, param0);
 		break;
 
 	default:
@@ -4006,6 +4139,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->otp_info.rdm_data.infinite_cali = init_param->otp_info.rdm_data.infinite_cali;
 	af->otp_info.rdm_data.macro_cali = init_param->otp_info.rdm_data.macro_cali;
 	af->is_multi_mode = init_param->is_multi_mode;
+	af->pdaf_type = init_param->pdaf_type;
 	af->cb_ops = init_param->cb_ops;
 
 	// set tuning buffer pointer
@@ -4031,7 +4165,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		}
 	}
 
-	ISP_LOGI("is_multi_mode %d, cameraid %d, sensor_role %d", af->is_multi_mode, af->camera_id, af->sensor_role);
+	ISP_LOGI("is_multi_mode %d, cameraid %d, sensor_role %d, pdaf_type %d", af->is_multi_mode, af->camera_id, af->sensor_role, af->pdaf_type);
 	ISP_LOGI("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
 	ISP_LOGV
 	    ("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)",
@@ -4275,6 +4409,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		switch (af->state) {
 		case STATE_NORMAL_AF:
 		case STATE_FAF:
+		case STATE_OTAF:
 			if (AF_SEARCHING == af->focus_state) {
 				af_process_frame(af);
 			}
@@ -4288,10 +4423,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_Set_Pre_Trigger_Data, NULL);
 			}
 			break;
-		case STATE_MANUAL:
+		case STATE_ENGINEER:
 			af->af_ops.calc(af->af_alg_cxt);
-			break;
-		case STATE_PICTURE:
 			break;
 		default:
 			ISP_LOGW("af->state %s is not supported", STATE_STRING(af->state));

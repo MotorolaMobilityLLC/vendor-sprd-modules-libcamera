@@ -68,7 +68,8 @@ enum af_state {
 	STATE_RECORD_CAF,
 	STATE_FAF,
 	STATE_FULLSCAN,
-	STATE_PICTURE,
+	STATE_ENGINEER,
+	STATE_OTAF,
 };
 
 enum focus_state {
@@ -362,6 +363,8 @@ typedef struct _af_ctrl {
 	cmr_u32 range_L1;
 	cmr_u32 range_L4;
 	struct af_adpt_roi_info win;
+	cmr_u32 ot_switch;	// objecttracking switch
+	cmr_u32 pdaf_type;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

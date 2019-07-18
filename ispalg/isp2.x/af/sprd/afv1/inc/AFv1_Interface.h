@@ -91,6 +91,7 @@ typedef enum _eAF_MODE {
 	Wait_Trigger,		//wait for AF trigger
 	TOF,			//[TOF_---] // Time of flight
 	None,			//nothing to do
+	OTAF,			//objecttracking af
 } eAF_MODE;
 
 typedef enum _e_AF_MULTI_MODE {
