@@ -290,11 +290,6 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		}
 		break;
 	case AI_SET_FD_ON_OFF:
-		if (AI_STATUS_PROCESSING != cxt->aic_status) {
-			ISP_LOGD("ai set fd_on_off doesn't work. status: %d.", cxt->aic_status);
-			rtn = ISP_ERROR;
-			goto exit;
-		}
 		if (!param) {
 			ISP_LOGE("fail to set fd on off");
 			rtn = ISP_ERROR;
