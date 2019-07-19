@@ -1105,6 +1105,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     int receive_req_max = mReciveQeqMax;
     int32_t width = 0, height = 0;
     int64_t timestamp = 0;
+    cam_dimension_t video_size = {0, 0};
     Mutex::Autolock l(mLock);
     bool mRegRequest;
     bool need_apply_settings = 1;
@@ -1180,10 +1181,20 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         break;
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
         if (mOldCapIntent != capturePara.cap_intent) {
-            mOEMIf->setCapturePara(
-                CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, mFrameNum);
-            mPictureRequest = true;
-            mRegRequest = true;
+            mSetting->getVideoSize(&video_size);
+            HAL_LOGV("video size:%d %d", video_size.width, video_size.height);
+            if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD &&
+                    video_size.width != 0 && video_size.height != 0) {
+                HAL_LOGD("set to video snapshot");
+                capturePara.cap_intent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT, mFrameNum);
+                mPictureRequest = true;
+            } else {
+                mOEMIf->setCapturePara(
+                    CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, mFrameNum);
+                mPictureRequest = true;
+                mRegRequest = true;
+            }
         } else {
             mRegRequest = false;
         }
