@@ -5766,9 +5766,11 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     }
     case CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF: {
         for (int i = 0; i < (cmr_int)mZslNum; i++) {
-            mHalOem->ops->camera_set_zsl_buffer(
-                mCameraHandle, mZslHeapArray[i]->phys_addr,
-                (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
+            if(mCameraHandle != NULL && mZslHeapArray[i] != NULL) {
+                mHalOem->ops->camera_set_zsl_buffer(
+                    mCameraHandle, mZslHeapArray[i]->phys_addr,
+                    (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
+            }
         }
         break;
     }
