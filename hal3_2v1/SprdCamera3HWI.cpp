@@ -1720,9 +1720,13 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             /**add for 3d capture reprocessing end   */
 
             if (!i->bNotified) {
+                SENSOR_Tag resultInfo;
+                mSetting->getResultSENSORTag(&resultInfo);
+
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
                 notify_msg.message.shutter.frame_number = i->frame_number;
-                notify_msg.message.shutter.timestamp = capture_time;
+                notify_msg.message.shutter.timestamp =
+                    capture_time - resultInfo.exposure_time * 2;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
                 HAL_LOGD("drop msg frame_num = %d, timestamp = %lld",
@@ -1732,10 +1736,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
                 mSetting->getSENSORTag(&sensorInfo);
-                sensorInfo.timestamp = capture_time;
+                sensorInfo.timestamp = capture_time - resultInfo.exposure_time * 2;
                 mSetting->setSENSORTag(sensorInfo);
-                SENSOR_Tag resultInfo;
-                mSetting->getResultSENSORTag(&resultInfo);
+
                 if (sensorInfo.sensor_timestamp) {
                     sensor_timestamp = sensorInfo.sensor_timestamp;
                 } else {
@@ -1828,6 +1831,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 sensorInfo.timestamp = capture_time;
                 mSetting->setSENSORTag(sensorInfo);
                 mSetting->getResultSENSORTag(&resultInfo);
+
                 if (sensorInfo.sensor_timestamp) {
                     sensor_timestamp = sensorInfo.sensor_timestamp;
                 } else {
