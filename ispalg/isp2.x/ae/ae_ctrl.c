@@ -268,8 +268,7 @@ static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_
 {
 	cmr_s32 ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
-	cmr_u32 multiColorLcdEn = cxt_ptr->multiColorLcdEn;
-
+	cmr_u32 multiColorLcdEn = cfg_ptr->multiColorLcdEn;
 	if (cxt_ptr->ae_set_cb) {
 		struct ae_flash_element flash_element;
 		if (multiColorLcdEn) {
@@ -326,7 +325,7 @@ static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_
 			flash_element.color_temp= 5000;
 		}
 		ISP_LOGV("led_idx=%d, led_type=%d, level=%d", cfg_ptr->led_idx, cfg_ptr->type, element_ptr->index);
-		ISP_LOGD("index: %d, bright: %d, ct: %d, bg_color:0x%x\n", flash_element.index, flash_element.brightness, flash_element.color_temp, flash_element.bg_color);
+		ISP_LOGD("index: %d, bright: %d, ct: %d, bg_color:0x%x, multiColorLcdEn:%d\n", flash_element.index, flash_element.brightness, flash_element.color_temp, flash_element.bg_color, cfg_ptr->multiColorLcdEn);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, cfg_ptr, &flash_element);
 	}
 

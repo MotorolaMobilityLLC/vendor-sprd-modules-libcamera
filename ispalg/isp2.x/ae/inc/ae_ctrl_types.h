@@ -414,6 +414,7 @@ extern "C" {
 		cmr_u32 led_idx;		//enum isp_flash_led
 		cmr_u32 led0_enable;
 		cmr_u32 led1_enable;
+		cmr_u32 multiColorLcdEn;
 	};
 
 	struct ae_awb_gain {

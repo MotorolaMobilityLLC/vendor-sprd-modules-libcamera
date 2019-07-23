@@ -124,7 +124,7 @@ struct face_tuning_param {
 	cmr_u8 ae_thd;
 	cmr_u8 face_low_thd;
 	cmr_u8 face_high_thd;
-	cmr_u8 reserved0;
+	cmr_u8 aem_4_face;
 	cmr_u16 reserved[2];		//?
 };
 
@@ -355,13 +355,15 @@ typedef struct {
 struct abl_tuning_param {
 	cmr_u8 enable;
 	cmr_u8 num;
-	cmr_u16 centerhighbnd;
-	cmr_u32 targetstrength;
-	abl_cfg cfg_info[ABL_CFG_NUM];
+	cmr_u16 target_limit_low;
+	cmr_u16 target_limit_high;
+	cmr_u16 reserved;
+	abl_cfg cfg_info[ABL_CFG_NUM]; /*24 * 4bytes*/
 	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
 	cmr_u32 abl_weight;
 	cmr_u32 center_tar_lum;
-	cmr_u32 tar_lum_ev_diff;
+	cmr_u32 ev_diff_thrd_h;
+	cmr_u32 ev_diff_thrd_l;
 };
 
 typedef struct {
@@ -386,7 +388,8 @@ struct ae_tuning_param {		//total bytes must be 312696
 	cmr_u32 target_lum_zone;	// x16
 	cmr_u8 convergence_speed;
 	cmr_u8 iso_special_mode;
-	cmr_u16 reserved1;
+	cmr_u8 fast_convergence_disab;
+	cmr_u8 reserved1;
 	cmr_u32 flicker_index;
 	cmr_u32 min_line;
 	cmr_u32 start_index;
@@ -432,12 +435,12 @@ struct ae_tuning_param {		//total bytes must be 312696
 	struct ae_video_set_fps_param ae_video_fps;
 	struct ae_monitor_tuning_param monitor_param;
 	struct ae_ai_tuning_param ai_param;  /*240 * 4bytes*/
-	struct abl_tuning_param abl_param;   /*46 * 4bytes*/
+	struct abl_tuning_param abl_param;   /*47 * 4bytes*/
 	struct pcp_tuning_param pcp_param; /*27 * 4bytes*/
 	struct ae_hm_tuning_param hm_param; /*240 * 4bytes*/
 	struct ae_nsm_tuning_param ns_param; /*109 * 4bytes*/
 	struct ae_thrd_param threednr_ctrl_param;
-	cmr_u32 reserved[1348];
+	cmr_u32 reserved[1347];
 };
 
 #endif

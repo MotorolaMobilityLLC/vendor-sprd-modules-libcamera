@@ -178,6 +178,7 @@ extern "C" {
 		cmr_s8 camera_id;
 		cmr_s8 is_snapshot;
 		cmr_u8 is_first;
+		cmr_u32 multiColorLcdEn;
 		/*
 		 * ae control operation infaces
 		 */
@@ -408,6 +409,8 @@ extern "C" {
 		cmr_u32 end_id;
 
 		cmr_u32 pri_set;
+		cmr_u8 pre_flash_after_delay_cnt;
+		cmr_u8 flash_main_before_flag;
 	};
 
 #endif

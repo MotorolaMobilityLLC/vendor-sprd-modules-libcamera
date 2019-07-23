@@ -321,13 +321,13 @@ static int getCenterMean(cmr_u32 * src_aem_stat,
 
 static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int led1, int led2)	//0~31
 {
-	UNUSED(cxt);
+	//UNUSED(cxt);
 	UNUSED(onoff);
 	UNUSED(isMainflash);
 	UNUSED(led1);
 	UNUSED(led2);
 
-	ISP_LOGE("control_led %d %d %d %d", onoff, isMainflash, led1, led2);
+	ISP_LOGD("control_led %d %d %d %d", onoff, isMainflash, led1, led2);
 	int type;
 	struct ae_flash_cfg cfg;
 	struct ae_flash_element element;
@@ -341,6 +341,7 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 		cfg.type = type;
 		cfg.led0_enable = 0;
 		cfg.led1_enable = 0;
+		cfg.multiColorLcdEn = cxt->multiColorLcdEn;
 		cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 	} else {
 		int led1_driver_ind = led1;
@@ -352,6 +353,7 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 
 		cfg.led_idx = 1;
 		cfg.type = type;
+		cfg.multiColorLcdEn = cxt->multiColorLcdEn;
 		element.index = led1_driver_ind;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 
@@ -362,6 +364,7 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 		{
 		cfg.led_idx = 2;
 		cfg.type = type;
+		cfg.multiColorLcdEn = cxt->multiColorLcdEn;
 		element.index = led2_driver_ind;
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 		}
