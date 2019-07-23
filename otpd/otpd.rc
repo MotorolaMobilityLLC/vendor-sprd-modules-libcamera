@@ -1,0 +1,5 @@
+service vendor.otpd /vendor/bin/otpd
+    class main
+    user root
+    group system camera shell
+    oneshot
