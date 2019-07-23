@@ -2705,6 +2705,9 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		trigger_set_mode(af, AFT_MODE_NORMAL);
 		trigger_stop(af);
 		break;
+	case AF_MODE_MANUAL:
+		af->request_mode = af_mode;
+		break;
 	default:
 		ISP_LOGW("af_mode %d is not supported", af_mode);
 		break;
@@ -3476,6 +3479,8 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	switch (cmd) {
 	case AF_CMD_SET_AF_POS:
 		if (NULL != af->cb_ops.af_set_motor_pos) {
+			if (af->request_mode == AF_MODE_MANUAL)
+				*(cmr_u16 *) param0 = af->range_L1 + (*(cmr_u16 *) param0) * (af->range_L4 - af->range_L1) / 1023;	//re-map the lens moving range when MF mode(L1 L4)
 			af->cb_ops.af_set_motor_pos(af->caller, *(cmr_u16 *) param0);
 			af->lens.pos = *(cmr_u16 *) param0;
 			af->motor_status = AF_MOTOR_SET;
@@ -3843,6 +3848,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	AF_OTP_Data otp_info;
+	lens_range_info lens_range;
 	bokeh_golden_data_info golden_data;
 	memset((void *)&otp_info, 0, sizeof(AF_OTP_Data));
 
@@ -3931,6 +3937,11 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 		af = NULL;
 		return NULL;
 	}
+
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_GET_LENS_RANGE, &lens_range);
+	af->range_L1 = lens_range.range_L1;
+	af->range_L4 = lens_range.range_L4;
+	ISP_LOGD("af->range_L1 %d, af->range_L4 %d", af->range_L1, af->range_L4);
 
 	if (trigger_init(af, CAF_TRIGGER_LIB) != 0) {
 		ISP_LOGE("fail to init trigger");

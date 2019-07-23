@@ -150,6 +150,7 @@ typedef enum _AF_IOCTRL_CMD {
 	AF_IOCTRL_GET_OTP,
 	AF_IOCTRL_SET_BOKEH_DISTANCE,
 	AF_IOCTRL_GET_BOKEH_GOLDEN_DATA,
+	AF_IOCTRL_GET_LENS_RANGE,
 	AF_IOCTRL_MAX,
 } AF_IOCTRL_CMD;
 
@@ -328,6 +329,12 @@ typedef struct _saf_extra_data_s {
 	cmr_u8 pd_workable;
 	cmr_u32 reserved[20];
 } saf_extra_data_t;
+
+typedef struct _lens_range_info {
+	cmr_u16 range_L1;
+	cmr_u16 range_L4;
+	cmr_u16 reserved[10];
+} lens_range_info;
 
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;

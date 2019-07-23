@@ -149,6 +149,8 @@ typedef enum _AF_IOCTRL_CMD {
 	AF_IOCTRL_Set_Dac_info,
 	AF_IOCTRL_GET_OTP,
 	AF_IOCTRL_SET_BOKEH_DISTANCE,
+	AF_IOCTRL_GET_BOKEH_GOLDEN_DATA,
+	AF_IOCTRL_GET_LENS_RANGE,
 	AF_IOCTRL_MAX,
 } AF_IOCTRL_CMD;
 
@@ -252,7 +254,8 @@ typedef struct _AE_Report {
 	cmr_u32 flag4idx;
 	cmr_s32 bisFlashOn;
 	cmr_u8 ae_stable_cnt;
-	cmr_u8 reserved[39];
+	cmr_u8 near_stable;
+	cmr_u8 reserved[38];
 } AE_Report;
 
 typedef struct _AF_OTP_Data {
@@ -300,6 +303,15 @@ typedef struct _bokeh_motor_info {
 	cmr_u16 reserved[20];
 } bokeh_motor_info;
 
+typedef struct _bokeh_golden_data_info {
+	cmr_u16 golden_macro;
+	cmr_u16 golden_infinity;
+	cmr_u16 golden_count;
+	cmr_u16 golden_distance[40];
+	cmr_u16 golden_vcm[40];
+	cmr_u16 reserved[10];
+} bokeh_golden_data_info;
+
 struct AFtoPD_info_param {
 	cmr_u16 Center_X;
 	cmr_u16 Center_Y;
@@ -317,6 +329,12 @@ typedef struct _saf_extra_data_s {
 	cmr_u8 pd_workable;
 	cmr_u32 reserved[20];
 } saf_extra_data_t;
+
+typedef struct _lens_range_info {
+	cmr_u16 range_L1;
+	cmr_u16 range_L4;
+	cmr_u16 reserved[10];
+} lens_range_info;
 
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
