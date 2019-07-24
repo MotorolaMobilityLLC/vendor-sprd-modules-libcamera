@@ -4247,6 +4247,7 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("is_flash_on Done");
         is_flash_on = 1;
     }
+    s_setting[mCameraId].controlInfo.is_flash_on = is_flash_on;
 
     // SENSOR
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
@@ -4943,6 +4944,18 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED) && (!is_flash_on)) {
         s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
             frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
+        HAL_LOGV("sprd 3dnr enabled is %d",
+                 s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_3DNR_CAPTURE_ENABLED) &&
+        is_capture) {
+        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled = 0;
+        if (!is_flash_on) {
+            s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled =
+                frame_settings.find(ANDROID_SPRD_3DNR_CAPTURE_ENABLED)
+                    .data.u8[0];
+        }
         pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);

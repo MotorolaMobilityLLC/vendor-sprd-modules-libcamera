@@ -94,6 +94,7 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_TOP_APP_ID,
     ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE,
     ANDROID_SPRD_TOUCH_INFO,
+    ANDROID_SPRD_3DNR_CAPTURE_ENABLED,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

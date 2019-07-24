@@ -181,6 +181,7 @@ typedef struct {
     uint8_t ae_lock_available;
     uint8_t awb_lock_available;
     uint8_t available_modes[SPRD_CONTROL_MODES];
+    uint8_t is_flash_on;
 } CONTROL_Tag;
 
 typedef struct {

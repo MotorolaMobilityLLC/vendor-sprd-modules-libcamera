@@ -95,6 +95,7 @@ typedef struct {
     uint8_t availableIso[7];
     uint8_t availableAutoHdr;
     uint8_t availableAiScene;
+    uint8_t availableAuto3Dnr;
 } camera3_common_t;
 
 typedef struct {
@@ -286,6 +287,12 @@ const uint8_t availableSaturation[] = {0, 1, 2, 3, 4, 5, 6};
 const uint8_t availableAutoHDR = 1;
 #else
 const uint8_t availableAutoHDR = 0;
+#endif
+
+#ifdef CONFIG_SUPPROT_AUTO_3DNR
+const uint8_t availableAuto3DNR = 1;
+#else
+const uint8_t availableAuto3DNR = 0;
 #endif
 
 const uint8_t availableSlowMotion[] = {0, 1, 4};
@@ -552,6 +559,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_AVAILABLE_AUTO_HDR,
     ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
     ANDROID_SPRD_AVAILABLE_AI_SCENE,
+    ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
     ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
 };
 
@@ -1133,6 +1141,8 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
 
     camera3_default_info.common.availableAiScene = availableAiScene;
 
+    camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
+
     return 0;
 }
 
@@ -1608,6 +1618,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
     s_setting[cameraId].sprddefInfo.availabe_auto_hdr =
         camera3_default_info.common.availableAutoHdr;
+    s_setting[cameraId].sprddefInfo.availabe_auto_3dnr =
+        camera3_default_info.common.availableAuto3Dnr;
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
     s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
@@ -2070,6 +2082,11 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
         &(s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current), 1);
+
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
+                      &(s_setting[cameraId].sprddefInfo.availabe_auto_3dnr), 1);
+    HAL_LOGI("%s availabe_auto_3dnr =%d,", __FUNCTION__,
+             s_setting[cameraId].sprddefInfo.availabe_auto_3dnr);
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
                       &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);

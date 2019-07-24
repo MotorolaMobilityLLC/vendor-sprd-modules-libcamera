@@ -232,6 +232,7 @@ static tags_info_t
         {"sprdTopAppId", TYPE_INT32},
         {"sprdFaceAttributesEnable", TYPE_BYTE},
         {"sprdTouchInfo", TYPE_INT32},
+        {"sprd3auto3dnrCaptureEnabled", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
