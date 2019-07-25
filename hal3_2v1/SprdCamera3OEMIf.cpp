@@ -1972,7 +1972,8 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
     //		mVideoWidth = 0;
     //		mVideoHeight = 0;
     //	}
-    if (MODE_BOKEH != mMultiCameraMode) {
+
+    if (!(MODE_BOKEH == mMultiCameraMode || MODE_BLUR == mMultiCameraMode)) {
         mHalOem->ops->camera_fast_ctrl(mCameraHandle, CAMERA_FAST_MODE_FD, 0);
     }
 
