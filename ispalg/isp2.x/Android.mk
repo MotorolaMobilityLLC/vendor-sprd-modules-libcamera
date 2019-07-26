@@ -79,6 +79,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/pdaf/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/pdaf/sprd/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/lsc/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/lsc/sprd/alsc2_1/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/lsc/sprd/alsc2_5/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/common/inc/ \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/afl/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/smart \
@@ -116,7 +118,7 @@ LOCAL_SHARED_LIBRARIES += libdeflicker
 
 LOCAL_SHARED_LIBRARIES += libae libflash libhdr
 LOCAL_SHARED_LIBRARIES += libawb1
-LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc
+LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc liblsc_v1
 LOCAL_SHARED_LIBRARIES += libatm
 LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
 LOCAL_SHARED_LIBRARIES += libsprdaic libsprdscenedetect

@@ -143,8 +143,10 @@ static cmr_s32 adpt_get_af_ops(struct third_lib_info *lib_info, struct adpt_ops_
 }
 
 extern struct adpt_ops_type lsc_sprd_adpt_ops_ver0;
+extern struct adpt_ops_type lsc_sprd_adpt_ops_ver1;
 static cmr_u32 *lsc_sprd_version_ops[] = {
 	(cmr_u32 *) & lsc_sprd_adpt_ops_ver0,
+	(cmr_u32 *) & lsc_sprd_adpt_ops_ver1,
 };
 
 cmr_u32 get_sprd_lsc_ops(cmr_u32 lsc_lib_version, struct adpt_ops_type **lsc_ops)

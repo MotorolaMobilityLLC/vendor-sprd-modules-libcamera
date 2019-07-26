@@ -3660,7 +3660,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.grid = lsc_info->grid;
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
-
+	lsc_param.lib_param.version_id = 1; // for adpt alsc2.1 and alsc2.5 :  0  alsc2.1   1  alsc2.5
 	struct lsc2_tune_param* param = (struct lsc2_tune_param*)lsc_param.tune_param_ptr;
 	cxt->lsc_cxt.full_size_width = lsc_tab_param_ptr->resolution.w;
 	cxt->lsc_cxt.full_size_height = lsc_tab_param_ptr->resolution.h;
