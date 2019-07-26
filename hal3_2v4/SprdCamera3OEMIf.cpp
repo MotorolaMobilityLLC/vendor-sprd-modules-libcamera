@@ -8384,7 +8384,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             }
             mIspStatisHeapReserved = memory;
         }
-        rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+        //rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
         if (rtn) {
             HAL_LOGE("get kaddr error");
             goto mem_fail;
