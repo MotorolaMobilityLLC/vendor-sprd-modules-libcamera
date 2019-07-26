@@ -361,6 +361,7 @@ typedef struct _af_ctrl {
 	cmr_u8 last_bypass_state;
 	cmr_u32 range_L1;
 	cmr_u32 range_L4;
+	struct af_adpt_roi_info win;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

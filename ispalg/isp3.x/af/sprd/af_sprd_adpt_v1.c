@@ -662,11 +662,19 @@ static void notify_start(af_ctrl_t * af, cmr_u32 focus_type)
 	af_result.motor_pos = 0;
 	af_result.af_mode = af->request_mode;
 	if (0 != win_index && win_index < MAX_ROI_NUM) {
-		af_result.af_roi.sx = af->roi.win[win_index].start_x;
-		af_result.af_roi.sy = af->roi.win[win_index].start_y;
-		af_result.af_roi.ex = af->roi.win[win_index].end_x;
-		af_result.af_roi.ey = af->roi.win[win_index].end_y;
-		ISP_LOGI("af roi %d %d %d %d %d", win_index, af_result.af_roi.sx, af_result.af_roi.sy, af_result.af_roi.ex, af_result.af_roi.ey);
+		if (STATE_FAF == af->state && 1 == af->win.win_num) {
+			af_result.af_roi.sx = af->win.face[0].sx;
+			af_result.af_roi.sy = af->win.face[0].sy;
+			af_result.af_roi.ex = af->win.face[0].ex;
+			af_result.af_roi.ey = af->win.face[0].ey;
+		} else {
+			af_result.af_roi.sx = af->roi.win[win_index].start_x;
+			af_result.af_roi.sy = af->roi.win[win_index].start_y;
+			af_result.af_roi.ex = af->roi.win[win_index].end_x;
+			af_result.af_roi.ey = af->roi.win[win_index].end_y;
+		}
+		ISP_LOGI("af roi %d %d %d %d %d, state %d, num%d", win_index, af_result.af_roi.sx, af_result.af_roi.sy, af_result.af_roi.ex, af_result.af_roi.ey, af->state,
+			 af->win.win_num);
 	} else {
 		ISP_LOGI("set_wins data error");
 	}
@@ -685,11 +693,19 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
 	af_result.motor_pos = af->lens.pos;
 	af_result.af_mode = af->request_mode;
 	if (0 != win_index && win_index < MAX_ROI_NUM) {
-		af_result.af_roi.sx = af->roi.win[win_index].start_x;
-		af_result.af_roi.sy = af->roi.win[win_index].start_y;
-		af_result.af_roi.ex = af->roi.win[win_index].end_x;
-		af_result.af_roi.ey = af->roi.win[win_index].end_y;
-		ISP_LOGI("af roi %d %d %d %d %d", win_index, af_result.af_roi.sx, af_result.af_roi.sy, af_result.af_roi.ex, af_result.af_roi.ey);
+		if (STATE_FAF == af->state && 1 == af->win.win_num) {
+			af_result.af_roi.sx = af->win.face[0].sx;
+			af_result.af_roi.sy = af->win.face[0].sy;
+			af_result.af_roi.ex = af->win.face[0].ex;
+			af_result.af_roi.ey = af->win.face[0].ey;
+		} else {
+			af_result.af_roi.sx = af->roi.win[win_index].start_x;
+			af_result.af_roi.sy = af->roi.win[win_index].start_y;
+			af_result.af_roi.ex = af->roi.win[win_index].end_x;
+			af_result.af_roi.ey = af->roi.win[win_index].end_y;
+		}
+		ISP_LOGI("af roi %d %d %d %d %d, state %d, num%d", win_index, af_result.af_roi.sx, af_result.af_roi.sy, af_result.af_roi.ex, af_result.af_roi.ey, af->state,
+			 af->win.win_num);
 	} else {
 		ISP_LOGI("set_wins data error");
 	}
@@ -2313,24 +2329,23 @@ static void af_stop_search(af_ctrl_t * af)
 
 static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm, struct aft_proc_result *result)
 {
-	struct af_adpt_roi_info win;
-	cmr_u32 force_stop;
+	cmr_u32 force_stop = 0;
 
 	if (AF_SEARCHING != af->focus_state) {
 		if (result->is_caf_trig) {
 			ISP_LOGI("lib trigger af %d", result->is_caf_trig);
 			if (AFT_TRIG_FD == result->is_caf_trig) {
-				win.win_num = 1;
-				win.face[0].sx = prm->fd_info.face_info[0].sx;
-				win.face[0].sy = prm->fd_info.face_info[0].sy;
-				win.face[0].ex = prm->fd_info.face_info[0].ex;
-				win.face[0].ey = prm->fd_info.face_info[0].ey;
-				win.face[0].yaw_angle = prm->fd_info.face_info[0].yaw_angle;
-				win.face[0].roll_angle = prm->fd_info.face_info[0].roll_angle;
-				win.face[0].score = prm->fd_info.face_info[0].score;
-				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d, roll_angle %d", win.win_num, win.face[0].sx, win.face[0].sy, win.face[0].ex, win.face[0].ey,
-					 win.face[0].roll_angle);
-				af->roll_angle = win.face[0].roll_angle;
+				af->win.win_num = 1;
+				af->win.face[0].sx = prm->fd_info.face_info[0].sx;
+				af->win.face[0].sy = prm->fd_info.face_info[0].sy;
+				af->win.face[0].ex = prm->fd_info.face_info[0].ex;
+				af->win.face[0].ey = prm->fd_info.face_info[0].ey;
+				af->win.face[0].yaw_angle = prm->fd_info.face_info[0].yaw_angle;
+				af->win.face[0].roll_angle = prm->fd_info.face_info[0].roll_angle;
+				af->win.face[0].score = prm->fd_info.face_info[0].score;
+				ISP_LOGI("face win num %d, x:%d y:%d e_x:%d e_y:%d, roll_angle %d", af->win.win_num, af->win.face[0].sx, af->win.face[0].sy, af->win.face[0].ex,
+					 af->win.face[0].ey, af->win.face[0].roll_angle);
+				af->roll_angle = af->win.face[0].roll_angle;
 				if (af->roll_angle >= -180 && af->roll_angle <= 180) {
 					if (af->roll_angle >= -45 && af->roll_angle <= 45) {
 						af->f_orientation = FACE_UP;
@@ -2347,7 +2362,7 @@ static void caf_monitor_trigger(af_ctrl_t * af, struct aft_proc_calc_param *prm,
 				ISP_LOGI("af->f_orientation=%d", af->f_orientation);
 				af->pre_state = af->state;
 				af->state = STATE_FAF;
-				faf_start(af, &win);
+				faf_start(af, &af->win);
 			} else if (AFT_TRIG_TOF == result->is_caf_trig /*&& af->tof.data.RangeStatus == 0 */ ) {	//[TOF_+++]
 				//ISP_LOGV("ddd flag:%d. dis:%d, maxdis:%d, status:%d ", af->tof.tof_trigger_flag, af->tof.last_distance, af->tof.last_MAXdistance, af->tof.last_status );
 				tof_start(af, AF_TRIGGER, result);	//[TOF_---]
