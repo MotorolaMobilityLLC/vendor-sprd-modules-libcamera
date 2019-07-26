@@ -129,6 +129,7 @@ typedef struct
 	uint16_t blk_num_ver;
 	uint16_t zoom_ratio;
 	bool data_valid;
+	uint16_t stable;
 } aic_aeminfo_t;
 
 typedef struct

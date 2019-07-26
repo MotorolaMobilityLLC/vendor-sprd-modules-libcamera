@@ -2315,6 +2315,7 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
 		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;
 		ae_ctrl_calc_result.flash_param.captureFlash1ofALLRatio = ae_result.flash_param.captureFlash1ofALLRatio;
+		cxt->ae_info.ae_rlt_info.is_stab = ae_result.ae_output.is_stab;
 	}
 
 	ret = ispalg_start_awb_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
@@ -2616,12 +2617,13 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 	cxt->ai_cxt.ae_param.ae_stat.r_info = cxt->aem_stats_data.r_info;
 	cxt->ai_cxt.ae_param.ae_stat.g_info = cxt->aem_stats_data.g_info;
 	cxt->ai_cxt.ae_param.ae_stat.b_info = cxt->aem_stats_data.b_info;
+	cxt->ai_cxt.ae_param.stable = cxt->ae_info.ae_rlt_info.is_stab;
 
 	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_cxt.win_num.w;
 	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_cxt.win_num.h;
 	ISP_LOGI("ai ae info: blk_num_hor: %d, blk_num_ver: %d.", cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
 
-	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu.", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp);
+	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu. ae_stable %d\n", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp, cxt->ai_cxt.ae_param.stable);
 
 	if (cxt->ops.ai_ops.ioctrl) {
 		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_AE_PARAM, (void *)(&cxt->ai_cxt.ae_param), NULL);

@@ -154,6 +154,8 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	cxt->aic_aeminfo.blk_num_ver = ae_param->blk_num_ver;
 	cxt->aic_aeminfo.zoom_ratio = ae_param->zoom_ratio;
 	cxt->aic_aeminfo.data_valid = 1;
+	cxt->aic_aeminfo.stable = ae_param->stable;
+	ISP_LOGV("ae_param_stable: %d, aic_aeminfo_stable:%d", ae_param->stable, cxt->aic_aeminfo.stable);
 
 	if (0 != AIC_SetAemInfo(cxt->aic_handle, &cxt->aic_aeminfo, &cxt->aic_result)) {
 		rtn = ISP_ERROR;

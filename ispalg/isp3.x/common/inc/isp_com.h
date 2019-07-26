@@ -321,6 +321,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u16 blk_num_hor;
 		cmr_u16 blk_num_ver;
 		cmr_u32 zoom_ratio;
+		cmr_u16 stable;
 	};
 
 	struct ai_img_buf {
