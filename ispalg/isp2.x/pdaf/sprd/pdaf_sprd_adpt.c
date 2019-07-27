@@ -528,11 +528,25 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
 	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;
+	cxt->pd_gobal_setting.dAreaW = (in_p->pd_info->pd_end_x - in_p->pd_info->pd_offset_x);
+	cxt->pd_gobal_setting.dAreaH = (in_p->pd_info->pd_end_y - in_p->pd_info->pd_offset_y);
 	cxt->pd_gobal_setting.dCalibration = 1;
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
 	//0: Normal, 1:Mirror+Flip
 	cxt->pd_gobal_setting.dSensorSetting = in_p->pd_info->sns_orientation;
 	ISP_LOGV("gobal_setting.dSensorSetting = %d\n", cxt->pd_gobal_setting.dSensorSetting);
+
+	cxt->pd_gobal_setting.pd_unit_w = (8 << in_p->pd_info->pd_block_w);	//pd_block_w: 1->16*16	2->32*32	3->64*64
+	cxt->pd_gobal_setting.pd_unit_h = (8 << in_p->pd_info->pd_block_h);
+	cxt->pd_gobal_setting.pd_pair_w = in_p->pd_info->pd_density_x;
+	cxt->pd_gobal_setting.pd_pair_h = in_p->pd_info->pd_density_y;
+	cxt->pd_gobal_setting.pd_pairs_num_unit = in_p->pd_info->pd_pos_size;
+
+	for (i = 0; i < in_p->pd_info->pd_pos_size * 2; i++) {
+		cxt->pd_gobal_setting.pd_is_right[i] = in_p->pd_info->pd_is_right[i];
+		cxt->pd_gobal_setting.pd_pos_row[i] = in_p->pd_info->pd_pos_row[i];
+		cxt->pd_gobal_setting.pd_pos_col[i] = in_p->pd_info->pd_pos_col[i];
+	}
 
 	property_get("debug.isp.pdaf.otp.dump", otp_pdaf_name, "/dev/null");
 	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
