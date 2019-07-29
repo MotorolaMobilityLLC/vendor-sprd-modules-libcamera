@@ -489,7 +489,7 @@ static struct sensor_i2c_reg_tab s5k3p9sx04_frame_length_tab = {
 };
 
 static struct sensor_aec_i2c_tag s5k3p9sx04_aec_info = {
-    .slave_addr = (s5k3p9sx04_I2C_ADDR_W >> 1),
+    .slave_addr = (MAJOR_I2C_SLAVE_ADDR >> 1),
     .addr_bits_type = SENSOR_I2C_REG_16BIT,
     .data_bits_type = SENSOR_I2C_VAL_16BIT,
     .shutter = &s5k3p9sx04_shutter_tab,

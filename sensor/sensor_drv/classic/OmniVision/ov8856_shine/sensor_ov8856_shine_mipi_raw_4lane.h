@@ -22,6 +22,7 @@
 #ifndef _SENSOR_ov8856_SHINE_MIPI_RAW_H_
 #define _SENSOR_ov8856_SHINE_MIPI_RAW_H_
 
+#define LOG_TAG "ov8856_shine_4lane"
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"

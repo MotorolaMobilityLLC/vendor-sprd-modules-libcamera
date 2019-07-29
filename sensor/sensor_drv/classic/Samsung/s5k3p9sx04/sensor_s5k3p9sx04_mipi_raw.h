@@ -24,8 +24,8 @@
 #include "sensor_raw.h"
 
 #define VENDOR_NUM 1
-#define s5k3p9sx04_I2C_ADDR_W 0x20
-#define s5k3p9sx04_I2C_ADDR_R 0x21
+#define MAJOR_I2C_SLAVE_ADDR 0x5a
+#define MINOR_I2C_SLAVE_ADDR 0x20
 
 #define s5k3p9sx04_PID_VALUE 0x3109
 #define s5k3p9sx04_PID_ADDR 0x0000
@@ -3094,8 +3094,8 @@ static SENSOR_MODE_FPS_INFO_T s_s5k3p9sx04_mode_fps_info[VENDOR_NUM] = {
 
 static struct sensor_module_info s_s5k3p9sx04_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {.major_i2c_addr = s5k3p9sx04_I2C_ADDR_W >> 1,
-                     .minor_i2c_addr = s5k3p9sx04_I2C_ADDR_W >> 1,
+     .module_info = {.major_i2c_addr = MAJOR_I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = MINOR_I2C_SLAVE_ADDR >> 1,
 
                      .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
                                             SENSOR_I2C_VAL_16BIT |
@@ -3103,7 +3103,7 @@ static struct sensor_module_info s_s5k3p9sx04_module_info_tab[VENDOR_NUM] = {
 
                      .avdd_val = SENSOR_AVDD_2800MV,
                      .iovdd_val = SENSOR_AVDD_1800MV,
-                     .dvdd_val = SENSOR_AVDD_1000MV,
+                     .dvdd_val = SENSOR_AVDD_1200MV,
 
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
 

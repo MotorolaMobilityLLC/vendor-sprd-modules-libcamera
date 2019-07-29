@@ -2427,6 +2427,7 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     char value3[255];
     FILE *fp = NULL;
     cmr_u32 read_size = 0;
+    cmr_u16 calib_version = 0;
 
     if (!otp_cxt->otp_raw_data.buffer) {
         otp_cxt->otp_raw_data.buffer =
@@ -2534,6 +2535,20 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
             } else {
                 OTP_LOGD("read otp raw data from eeprom successfully, size %d",
                          otp_cxt->eeprom_size);
+            }
+
+            if (!strcmp(otp_cxt->dev_name, "ov8856") &&
+                otp_cxt->sensor_id == 2) {
+                /* sharkl3 Android 10.0 new ov8856 module, DUAL_CAM_ONE_EEPROM,
+                 * slave copy raw data from master */
+                calib_version = (otp_cxt->otp_raw_data.buffer[4] << 8) |
+                                otp_cxt->otp_raw_data.buffer[5];
+                if (calib_version == 0xffff || calib_version == 0x0000) {
+                    otp_cxt->otp_raw_data.buffer =
+                        sensor_otp_copy_raw_buffer(otp_cxt->eeprom_size, 0, 2);
+                    OTP_LOGD("ov8856_shine copy otp raw data from master");
+                    sensor_otp_set_buffer_state(otp_cxt->sensor_id, 0);
+                }
             }
         }
     }

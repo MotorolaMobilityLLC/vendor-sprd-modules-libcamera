@@ -115,6 +115,17 @@ static uint32_t ov8856_read_otp_info(cmr_handle handle, void *param_ptr) {
             otp_info->bg_ratio_typical = atoi(value1);
         }
 
+        /* ov8856 sharkl3 new module, no rg_ratio_typical and no
+         * bg_ratio_typical*/
+        if (otp_info->rg_ratio_typical == 0) {
+            otp_info->rg_ratio_typical = otp_info->rg_ratio_current;
+            SENSOR_LOGD("rg_ratio_typical read 0, adjust to rg_ratio_current");
+        }
+        if (otp_info->bg_ratio_typical == 0) {
+            otp_info->bg_ratio_typical = otp_info->bg_ratio_current;
+            SENSOR_LOGD("bg_ratio_typical read 0, adjust to bg_ratio_current");
+        }
+
     } else {
         otp_info->flag = 0x00; // not info and AWB in OTP
         otp_info->module_id = 0;
@@ -181,10 +192,11 @@ static uint32_t ov8856_read_otp_info(cmr_handle handle, void *param_ptr) {
 
     property_get("debug.camera.save.otp.raw.data", value, "0");
     if (atoi(value) == 1) {
-        FILE *fd = fopen("/data/vendor/cameraserver/ov8856.otp.dump.bin", "wb+");
+        FILE *fd =
+            fopen("/data/vendor/cameraserver/ov8856.otp.dump.bin", "wb+");
         for (i = 0x7010; i <= 0x720a; i++) {
-                cmr_u8 low_val = hw_sensor_read_reg(sns_drv_cxt->hw_handle, i);
-                fwrite((char *)&low_val, 1, 1, fd);
+            cmr_u8 low_val = hw_sensor_read_reg(sns_drv_cxt->hw_handle, i);
+            fwrite((char *)&low_val, 1, 1, fd);
         }
         fclose(fd);
     }

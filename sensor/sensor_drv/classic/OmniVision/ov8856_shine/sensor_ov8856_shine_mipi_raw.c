@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "ov8856_shine"
+//#define LOG_TAG "ov8856_shine"
 
 #if defined(OV8856_SHINE_MIPI_4LANE)
 #include "sensor_ov8856_shine_mipi_raw_4lane.h"
@@ -179,9 +179,9 @@ static void ov8856_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
     frame_interval = (uint16_t)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
-    SENSOR_LOGD(
-        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms, fps = %f",
-        mode, shutter, dummy_line, frame_interval, fps);
+    SENSOR_LOGD("mode = %d, exposure_line = %d, dummy_line= %d, "
+                "frame_interval= %d ms, fps = %f",
+                mode, shutter, dummy_line, frame_interval, fps);
 
     if (dest_fr_len != cur_fr_len) {
         sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
@@ -249,11 +249,13 @@ static cmr_int ov8856_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         usleep(500);
 
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1 - sns_drv_cxt->sensor_id%2);
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle,
+                                 1 - sns_drv_cxt->sensor_id % 2);
     } else {
         SENSOR_LOGI("off.");
 
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, sns_drv_cxt->sensor_id%2);
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle,
+                                 sns_drv_cxt->sensor_id % 2);
 
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
@@ -394,13 +396,34 @@ static cmr_int ov8856_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 }
 
 #include "parameters/param_manager.c"
+static cmr_u8 ov8856_otp_module_vendor_id = 0;
 static cmr_int ov8856_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 vendor_id = (cmr_u8)*param;
-    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    SENSOR_LOGV("vendor_id %x", *param);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov8856_shine_mipi_raw_info_ptr =
-        ov8856_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_drv_cxt->caller_handle;
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)sensor_cxt->otp_drv_handle;
+
+    if (otp_cxt) {
+        cmr_u8 *otp = otp_cxt->otp_raw_data.buffer;
+        SENSOR_LOGV("otp_raw_data version 0x: %02x %02x %02x %02x %02x %02x",
+                    otp[0], otp[1], otp[2], otp[3], otp[4], otp[5]);
+        SENSOR_LOGV("otp_raw_data map 0x: %02x %02x %02x %02x", otp[6], otp[7],
+                    otp[8], otp[9]);
+        SENSOR_LOGV("otp_raw_data module_id 0x: %02x %02x %02x %02x %02x %02x",
+                    otp[10], otp[11], otp[12], otp[13], otp[14], otp[15]);
+        SENSOR_LOGV("otp_raw_data date: 0x %02x-%02x-%02x, %d-%d-%d", otp[16],
+                    otp[17], otp[18], otp[16], otp[17], otp[18]);
+        ov8856_otp_module_vendor_id = otp[10];
+        SENSOR_LOGV("ov8856_otp_module_vendor_id = 0x%x",
+                    ov8856_otp_module_vendor_id);
+    } else {
+        SENSOR_LOGI("no otp_cxt");
+    }
+
+    s_ov8856_shine_mipi_raw_info_ptr = ov8856_drv_init_raw_info(
+        sns_drv_cxt->sensor_id, ov8856_otp_module_vendor_id, 0, 0);
 
     return rtn;
 }
@@ -413,6 +436,7 @@ static cmr_int ov8856_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
 static cmr_int ov8856_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int ret = SENSOR_FAIL;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
+    char value[255];
 
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param_ptr);
@@ -436,11 +460,15 @@ static cmr_int ov8856_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_SET_RAW_INFOR:
         ov8856_drv_set_raw_info(handle, param_ptr->pval);
         break;
-#if defined(OV8856_NO_VCM_SENSOR_OTP)
+    //#if defined(OV8856_NO_VCM_SENSOR_OTP)
     case SENSOR_VAL_TYPE_READ_OTP:
-        ov8856_read_otp(handle, param_ptr);
+        property_get("persist.vendor.bypass.sensor.otp", value, "0");
+        if (atoi(value) == 0) {
+            if (ov8856_otp_module_vendor_id == 0 && sns_drv_cxt->sensor_id == 1)
+                ov8856_read_otp(handle, param_ptr);
+        }
         break;
-#endif
+    //#endif
     default:
         break;
     }
@@ -461,10 +489,10 @@ static cmr_int ov8856_drv_identify(cmr_handle handle, cmr_uint param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-#ifdef MIPI_NUM_2LANE
-    SENSOR_LOGI("2lane mipi raw identify");
-#else
+#ifdef OV8856_SHINE_MIPI_4LANE
     SENSOR_LOGI("4lane mipi raw identify");
+#else
+    SENSOR_LOGI("2lane mipi raw identify");
 #endif
 
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov8856_PID_ADDR);
@@ -670,6 +698,9 @@ unsigned long ov8856s_SetSlave_FrameSync(cmr_handle handle,
 static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_drv_cxt->caller_handle;
+    cmr_u32 mode = sensor_cxt->sensor_mode;
 
     char value1[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.colorbar", value1, "0");
@@ -677,8 +708,48 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5e00, 0x80);
     }
 
-    SENSOR_LOGI("E");
-#if defined(CONFIG_DUAL_MODULE)
+    SENSOR_LOGI("E:ov8856_otp_module_vendor_id = 0x%x, sensor_mode %d",
+                ov8856_otp_module_vendor_id, mode);
+    if (ov8856_otp_module_vendor_id == 1) {
+        /* ov8856 old module, IMAGE_HV_MIRROR*/
+        if (mode == 3 /*ov8856_snapshot_setting*/) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0xc6);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x502e, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5001, 0x0e);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x36);
+        } else { /*ov8856_video_setting + ov8856_preview_setting*/
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0xd6);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x21);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x502e, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5001, 0x0e);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x00);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x36);
+        }
+        if (sns_drv_cxt->sensor_id == 2)
+            ov8856s_SetSlave_FrameSync(handle, param);
+    } else {
+        /* ov8856 sharkl5 and sharkl3 new module or SENSOR_OV8856_TELE,
+         * IMAGE_NORMAL_MIRROR*/
+        if (mode == 3 /*ov8856_snapshot_setting*/) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x80);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x46);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x502e, 0x03);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5001, 0x0a);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x04);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x30);
+        } else { /*ov8856_video_setting + ov8856_preview_setting*/
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x90);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x67);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x502e, 0x03);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5001, 0x0a);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x04);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x30);
+        }
+    }
+
+#if 0 // defined(CONFIG_DUAL_MODULE)
 //#ifndef SENSOR_OV8856_TELE
     if (sns_drv_cxt->sensor_id == 2)
         ov8856s_SetSlave_FrameSync(handle, param);
@@ -718,7 +789,8 @@ static cmr_int ov8856_drv_stream_off(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
-                        sns_drv_cxt->line_time_def / 1000000) + 10;
+                          sns_drv_cxt->line_time_def / 1000000) +
+                         10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
         }

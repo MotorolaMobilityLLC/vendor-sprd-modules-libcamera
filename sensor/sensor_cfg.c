@@ -445,7 +445,11 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "s5k3l6xx03", &g_s5k3l6xx03_mipi_raw_info, {&dw9714_drv_entry, 4}, {&general_otp_entry, 0xA0, SINGLE_CAM_ONE_EEPROM, 8192}},
 #endif
 #ifdef S5K3P9SX04
+#ifdef SENSOR_OV8856_TELE
     {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&vcm_zc533_drv_entry, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+#else
+    {MODULE_SUNNY, "s5k3p9sx04", &g_s5k3p9sx04_mipi_raw_info, {&dw9714p_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
+#endif
 #endif
 #ifdef S5KS3P92
     {MODULE_SUNNY, "s5ks3p92", &g_s5ks3p92_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -628,7 +632,7 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
 #endif
@@ -661,6 +665,7 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #ifdef CONFIG_BOKEH_SUPPORT
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov13855", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov8856", "0", "ov2680", "0", "0", "0"}, SNS_FACE_BACK, 90},
@@ -674,8 +679,10 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
     {SPRD_SINGLE_FACEID_REGISTER_ID, MODE_SINGLE_FACEID_REGISTER, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
     {SPRD_SINGLE_FACEID_UNLOCK_ID, MODE_SINGLE_FACEID_UNLOCK, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
 #endif
+#ifdef SENSOR_OV8856_TELE
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     {SPRD_SOFY_OPTICAL_ZOOM_ID, MODE_SOFY_OPTICAL_ZOOM, 2, {"s5k3p9sx04", "ov8856_shine", "0", "0", "0", "0"}, SNS_FACE_BACK, 90},
+#endif
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT
     {SPRD_3D_FACE_ID, MODE_3D_FACE, 3, {"s5k4h9yx", "0", "ov7251_dual", "ov7251", "0", "0"}, SNS_FACE_FRONT, 270},

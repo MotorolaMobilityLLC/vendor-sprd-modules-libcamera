@@ -3058,6 +3058,7 @@ static cmr_int sensor_drv_ic_identify(struct sensor_drv_context *sensor_cxt,
     SENSOR_DRV_CHECK_PTR(sensor_cxt);
     SENSOR_DRV_CHECK_PTR(sensor_cxt->sensor_info_ptr);
     sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    SENSOR_LOGI("E");
 
     ret = sensor_get_module_cfg_info(sensor_cxt, sensor_id, &mod_cfg_info);
     if (ret) {
