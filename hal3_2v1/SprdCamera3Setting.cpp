@@ -291,7 +291,7 @@ enum {
     CAMERA_AE_MODE_MAX
 };
 
-enum available_cam_features{
+enum available_cam_features {
     BEAUTYVERSION = 0,
     BACKBLURVERSION,
     FRONTBLURVERSION,
@@ -336,9 +336,9 @@ enum {
     CAMERA_ISO_100,
     CAMERA_ISO_MAX
 };
-const uint8_t availableIso[] = {
-    CAMERA_ISO_AUTO, CAMERA_ISO_100,  CAMERA_ISO_200, CAMERA_ISO_400,
-    CAMERA_ISO_800,  CAMERA_ISO_1600};
+const uint8_t availableIso[] = {CAMERA_ISO_AUTO, CAMERA_ISO_100,
+                                CAMERA_ISO_200,  CAMERA_ISO_400,
+                                CAMERA_ISO_800,  CAMERA_ISO_1600};
 
 typedef struct cam_stream_info {
     cam_dimension_t stream_sizes_tbl;
@@ -919,13 +919,13 @@ void SprdCamera3Setting::SprdCamera3Setting::parseStringfloat(
     }
 }
 
-int SprdCamera3Setting::setFeatureList(int32_t cameraId){
+int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     uint8_t available_cam_features[FEATURELISTMAX];
     int i;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    //0 beautyversion
+    // 0 beautyversion
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features[BEAUTYVERSION] = atoi(prop);
     uint32_t dualPropSupport = 0;
@@ -933,7 +933,7 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId){
         mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
         dualPropSupport = 1;
     }
-    //1 backblurversion
+    // 1 backblurversion
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     if (!dualPropSupport) {
         available_cam_features[BACKBLURVERSION] = 0;
@@ -952,27 +952,28 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId){
     } else {
         available_cam_features[BACKBLURVERSION] = atoi(prop);
     }
-    //2 frontblurversion
+    // 2 frontblurversion
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     available_cam_features[FRONTBLURVERSION] = atoi(prop);
-    //3 blurcoveredid
+    // 3 blurcoveredid
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features[BLURCOVEREDID] = atoi(prop);
-    //4 frontflashmode
+    // 4 frontflashmode
     for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
-            available_cam_features[FRONTFLASHMODE] = atoi(front_flash[i].type_id);
+            available_cam_features[FRONTFLASHMODE] =
+                atoi(front_flash[i].type_id);
             break;
         }
     }
-    //5 backwplustmodeenable
+    // 5 backwplustmodeenable
     property_get("persist.vendor.cam.wt.enable", prop, "0");
     if (!dualPropSupport) {
         available_cam_features[BACKWPLUSTMODEENABLE] = 0;
     } else {
         available_cam_features[BACKWPLUSTMODEENABLE] = atoi(prop);
     }
-    //6 trackingenable
+    // 6 trackingenable
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features[TRACKINGENABLE] = atoi(prop);
@@ -980,14 +981,14 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId){
         available_cam_features[TRACKINGENABLE] = 0;
     }
 
-    //7 backulrawideangleenable
+// 7 backulrawideangleenable
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
     available_cam_features[BACKULTRAWIDEANGLEENABLE] = 1;
 #else
     available_cam_features[BACKULTRAWIDEANGLEENABLE] = 0;
 #endif
 
-    //8 BOKEHGDEPTHENBLE
+// 8 BOKEHGDEPTHENBLE
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features[GDEPTHENABLE] = 1;
 #else
@@ -995,14 +996,11 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId){
 #endif
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
-           &(available_cam_features[0]),
-           sizeof(available_cam_features));
-    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
-        FEATURELISTMAX;
+           &(available_cam_features[0]), sizeof(available_cam_features));
+    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size = FEATURELISTMAX;
 
-    CMR_LOGI("available_cam_features=%d",
-        FEATURELISTMAX);
-   return 0;
+    CMR_LOGI("available_cam_features=%d", FEATURELISTMAX);
+    return 0;
 }
 
 int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
@@ -1696,10 +1694,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
 #endif
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
-                if (scaler_formats[j] ==
-                    (HAL_PIXEL_FORMAT_BLOB |
-                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED |
-                     HAL_PIXEL_FORMAT_RAW16)) {
+                if ((scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16) ||
+                    (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB)) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
                         stream_info[i].stream_sizes_tbl.width);
