@@ -4392,7 +4392,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				}
 				src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
 			}
-			if(CAMERA_MODE_SLOWMOTION == cxt->app_mode)
+			if((CAMERA_MODE_SLOWMOTION == cxt->app_mode)||(CAMERA_MODE_CONTINUE == cxt->app_mode))
 				last_cam_mode = 0;
 		}
 	} else {
