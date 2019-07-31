@@ -112,12 +112,14 @@ struct ipm_context {
     cmr_handle yde_handle;
     cmr_handle refocus_handle;
     cmr_handle threednr_handle;
+    cmr_handle cnr_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
     cmr_u32 hdr_num;
     cmr_u32 threednr_num;
     cmr_u32 padding;
     cmr_u32 filter_inited;
+    cmr_u32 cnr_inited;
     struct ipm_version hdr_version;
 };
 
@@ -260,6 +262,7 @@ struct camera_context {
     sem_t threednr_flag_sm;
     sem_t threednr_proc_sm;
     sem_t filter_sm;
+    sem_t cnr_flag_sm;
     sem_t share_path_sm;
     sem_t access_sm;
     sem_t sbs_sync_sm;
@@ -335,6 +338,7 @@ struct camera_context {
     cmr_s32 swisp_out_mfd;
     nsecs_t snp_high_flash_time;
     struct img_rect trim_reset_info;
+    cmr_u8 nr_flag;
 };
 
 struct prev_threednr_info {

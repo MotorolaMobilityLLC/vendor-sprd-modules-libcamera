@@ -794,6 +794,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     /*Powerhint for camera power */
     SprdCameraSystemPerformance *mSysPerformace;
 
+    /* enable/disable powerhint for CNR (only for capture)*/
+    uint32_t mCNRMode;
+
+    bool mFbOn = 0;
+
     /* for eis*/
     bool mGyroInit;
     bool mGyroExit;

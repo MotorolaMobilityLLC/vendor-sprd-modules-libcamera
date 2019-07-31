@@ -254,7 +254,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0), mPreviewFrameNum(0),
       mRecordFrameNum(0), mIsRecording(false), mPreAllocCapMemInited(0),
       mIsPreAllocCapMemDone(0), mZSLModeMonitorMsgQueHandle(0),
-      mZSLModeMonitorInited(0), mGyroInit(0), mGyroExit(0),
+      mZSLModeMonitorInited(0), mCNRMode(0), mGyroInit(0), mGyroExit(0),
       mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
       mSprdEisEnabled(false), mIsUpdateRangeFps(false), mPrvBufferTimestamp(0),
       mUpdateRangeFpsCount(0), mPrvMinFps(0), mPrvMaxFps(0),
@@ -6312,6 +6312,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         fb_param.largeLevel = sprddefInfo.perfect_skin_level[8];
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL,
                  (cmr_uint) & (fb_param));
+        mFbOn = fb_param.blemishLevel || fb_param.smoothLevel ||
+                fb_param.skinColor || fb_param.skinLevel ||
+                fb_param.brightLevel || fb_param.lipColor ||
+                fb_param.lipLevel || fb_param.slimLevel || fb_param.largeLevel;
     } break;
     case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6642,10 +6646,31 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
     case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag sprddefInfo;
+        char value[PROPERTY_VALUE_MAX] = { 0};
+
         mSetting->getSPRDDEFTag(&sprddefInfo);
         mSprdAppmodeId = sprddefInfo.sprd_appmode_id;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
                  sprddefInfo.sprd_appmode_id);
+        if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
+            (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
+            (CAMERA_MODE_3DNR_PHOTO != mSprdAppmodeId) &&
+            (0 == mFbOn) &&
+            (0 == mMultiCameraMode) &&
+            (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
+            (false == mRecordingMode)) {
+            property_get("persist.vendor.cam.cnr.mode", value, "0");
+            if (atoi(value)) {
+                mCNRMode = 1;
+            }
+        } else {
+            mCNRMode = 0;
+        }
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR,
+            mCNRMode);
+
+        HAL_LOGD("mCNRMode = %d  ", mCNRMode);
+
     } break;
     case ANDROID_SPRD_FILTER_TYPE: {
         SPRD_DEF_Tag sprddefInfo;
