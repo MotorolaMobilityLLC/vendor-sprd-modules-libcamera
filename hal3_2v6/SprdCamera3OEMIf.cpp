@@ -5926,7 +5926,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_SCENE_MODE: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
-        if (1 == sprddefInfo.sprd_3dnr_enabled) {
+        if (1 == sprddefInfo.sprd_3dnr_enabled &&
+            controlInfo.scene_mode != ANDROID_CONTROL_SCENE_MODE_HDR) {
             controlInfo.scene_mode = ANDROID_CONTROL_SCENE_MODE_NIGHT;
         }
 
@@ -6440,6 +6441,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             (sprddefInfo.sprd_flash_lcd_mode == FLASH_LCD_MODE_AUTO &&
              mIsNeedFlashFired == 1) ||
             (sprddefInfo.sprd_flash_lcd_mode == FLASH_LCD_MODE_ON)) {
+            sprd_3dnr_enabled = 0;
+        }
+
+        if ((sprddefInfo.sprd_is_hdr_scene &&
+             sprddefInfo.sprd_auto_hdr_enable) ||
+            controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
             sprd_3dnr_enabled = 0;
         }
 
