@@ -489,8 +489,8 @@ typedef struct {
 
     COLOR_Tag colorInfo;
     CONTROL_Tag controlInfo;
-#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     CONTROL_Tag resultInfo;
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     SPRD_DEF_Tag sprddeResultfInfo;
 #endif
     EDGE_Tag edgeInfo;
@@ -587,10 +587,11 @@ class SprdCamera3Setting {
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     int getAndroidParaTagSize();
     int getSprdParaTagSize();
-    int setResultTag(CONTROL_Tag *resultInfo);
-    int getResultTag(CONTROL_Tag *resultInfo);
     int constructDefaultResultMetadata(void *result_metadata);
 #endif
+    int setResultTag(CONTROL_Tag *resultInfo);
+    int getResultTag(CONTROL_Tag *resultInfo);
+
     void releaseAndroidParaTag();
 
     int setPreviewSize(cam_dimension_t size);

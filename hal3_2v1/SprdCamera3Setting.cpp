@@ -5184,12 +5184,22 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.id), 1);
     camMetadata.update(ANDROID_REQUEST_FRAME_COUNT,
                        &(s_setting[mCameraId].requestInfo.frame_count), 1);
+
+    if (s_setting[mCameraId].resultInfo.af_trigger != ANDROID_CONTROL_AF_TRIGGER_IDLE)
+        s_setting[mCameraId].resultInfo.af_state =
+            s_setting[mCameraId].controlInfo.af_state;
+
+    if (s_setting[mCameraId].resultInfo.ae_precap_trigger != ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE)
+        s_setting[mCameraId].resultInfo.ae_state =
+            s_setting[mCameraId].controlInfo.ae_state;
+
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
-    //			s_setting[mCameraId].controlInfo.af_mode,
+    //                 s_setting[mCameraId].controlInfo.af_mode,
     // s_setting[mCameraId].controlInfo.af_trigger_Id, mCameraId);
+
     camMetadata.update(ANDROID_CONTROL_AF_STATE,
-                       &(s_setting[mCameraId].controlInfo.af_state), 1);
+                       &(s_setting[mCameraId].resultInfo.af_state), 1);
     camMetadata.update(ANDROID_CONTROL_AF_MODE,
                        &(s_setting[mCameraId].controlInfo.af_mode), 1);
     camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID,
@@ -5260,7 +5270,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     area[3] += area[1];
     camMetadata.update(ANDROID_CONTROL_AF_REGIONS, area, ARRAY_SIZE(area));*/
     camMetadata.update(ANDROID_CONTROL_AF_TRIGGER,
-                       &(s_setting[mCameraId].controlInfo.af_trigger), 1);
+                       &(s_setting[mCameraId].resultInfo.af_trigger), 1);
     camMetadata.update(ANDROID_SCALER_CROP_REGION,
                        s_setting[mCameraId].scalerInfo.crop_region,
                        ARRAY_SIZE(s_setting[mCameraId].scalerInfo.crop_region));
@@ -5366,7 +5376,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         SPRD_FACE_BEAUTY_PARAM_NUM);
 #else
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
-                       &(s_setting[mCameraId].controlInfo.ae_state), 1);
+                       &(s_setting[mCameraId].resultInfo.ae_state), 1);
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
                        &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
@@ -5711,8 +5721,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SHADING_MODE,
                        &(s_setting[mCameraId].shadingInfo.mode), 1);
     camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
-                       &(s_setting[mCameraId].controlInfo.ae_precap_trigger),
-                       1);
+                       &(s_setting[mCameraId].resultInfo.ae_precap_trigger), 1);
     camMetadata.update(ANDROID_CONTROL_CAPTURE_INTENT,
                        &(s_setting[mCameraId].controlInfo.capture_intent), 1);
     camMetadata.update(ANDROID_EDGE_MODE, &(s_setting[mCameraId].edgeInfo.mode),
@@ -6532,21 +6541,22 @@ int SprdCamera3Setting::setCONTROLTag(CONTROL_Tag *controlInfo) {
     s_setting[mCameraId].controlInfo = *controlInfo;
     return 0;
 }
-#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+
 int SprdCamera3Setting::setResultTag(CONTROL_Tag *resultInfo) {
     Mutex::Autolock l(mLock);
     s_setting[mCameraId].resultInfo = *resultInfo;
     return 0;
 }
 
-int SprdCamera3Setting::setSPRDDefResultfInfo(SPRD_DEF_Tag sprddeResultfInfo) {
-    s_setting[mCameraId].sprddeResultfInfo = sprddeResultfInfo;
-    return 0;
-}
-
 int SprdCamera3Setting::getResultTag(CONTROL_Tag *resultInfo) {
     Mutex::Autolock l(mLock);
     *resultInfo = s_setting[mCameraId].resultInfo;
+    return 0;
+}
+
+#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
+int SprdCamera3Setting::setSPRDDefResultfInfo(SPRD_DEF_Tag sprddeResultfInfo) {
+    s_setting[mCameraId].sprddeResultfInfo = sprddeResultfInfo;
     return 0;
 }
 

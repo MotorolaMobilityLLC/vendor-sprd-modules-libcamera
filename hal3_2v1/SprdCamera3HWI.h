@@ -61,6 +61,13 @@ typedef struct {
     camera_channel_type_t channel_type;
 } stream_info_t;
 
+typedef struct {
+    uint8_t af_trigger;
+    uint8_t af_state;
+    uint8_t ae_precap_trigger;
+    uint8_t ae_state;
+} threeA_info_t;
+
 #define MIN_MULTI_CAMERA_FAKE_ID 6
 #define MAX_MULTI_CAMERA_FAKE_ID 50
 
@@ -147,6 +154,7 @@ class SprdCamera3HWI {
         int32_t is_save_metadata;
         int32_t is_restore_metadata;
 #endif
+        threeA_info_t threeA_info;
     } PendingRequestInfo;
 
     int timer_stop();
