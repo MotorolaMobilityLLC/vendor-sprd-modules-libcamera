@@ -440,7 +440,8 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AF_BYPASS,
     COM_ISP_SET_AF_POS,
     COM_ISP_GET_CNR2_PARAM,
-    COM_ISP_GET_CNR2_EN,
+    COM_ISP_GET_YNRS_PARAM,
+    COM_ISP_GET_CNR2_YNR_EN,
     COM_ISP_SET_AUTO_HDR,
     COM_ISP_SET_SPRD_APP_MODE,
     COM_ISP_SET_AI_SCENE_START,
@@ -1096,7 +1097,6 @@ struct common_isp_cmd_param {
         void *cmd_ptr;
         cmr_u32 padding;
         cmr_u32 vcm_step;
-        cmr_u32 cnr2_en;
         struct isp_af_win af_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
         struct cmr_win_area win_area;
@@ -1110,9 +1110,10 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
-
+        cmr_u32 cnr2_ynr_en;
 #ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
+        struct isp_ynrs_info ynr_param;
 #endif
         struct isp_sw3dnr_info threednr_param;
         struct isp_ai_img_param ai_img_param;
