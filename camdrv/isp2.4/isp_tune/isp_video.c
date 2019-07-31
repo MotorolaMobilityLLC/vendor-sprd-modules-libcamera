@@ -131,6 +131,8 @@ typedef enum {
 	PIKE2FLATOFFSET = 0x31,
 	PIKE2IVST = 0x32,
 	PIKE2VST = 0x33,
+	PIKE2CNR2 = 0x3B,
+	PIKE2YNRS = 0x4F,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -719,7 +721,9 @@ unsigned long nr_blk_level_size[ISP_BLK_TYPE_MAX] = {
 	sizeof(struct sensor_iircnr_level),
 	sizeof(struct sensor_iircnr_yrandom_level),
 	sizeof(struct sensor_cce_uvdiv_level),
-	sizeof(struct sensor_rgb_afm_level)
+	sizeof(struct sensor_rgb_afm_level),
+	sizeof(struct sensor_cnr_level),
+	sizeof(struct sensor_ynrs_level),
 };
 
 unsigned int get_nr_block_id_by_sub_type(cmr_u16 sub_type)
@@ -764,6 +768,10 @@ unsigned int get_nr_block_id_by_sub_type(cmr_u16 sub_type)
 		return ISP_BLK_UV_POSTCDN_T;
 	case YUV_PRECDN:
 		return ISP_BLK_YUV_PRECDN_T;
+	case PIKE2CNR2:
+		return ISP_BLK_CNR2_T;
+	case PIKE2YNRS:
+		return ISP_BLK_YNRS_T;
 	default:
 		return ISP_BLK_TYPE_MAX;
 	}
@@ -772,7 +780,7 @@ unsigned int get_nr_block_id_by_sub_type(cmr_u16 sub_type)
 
 unsigned long get_nr_tool_flag_index(unsigned long nr_blk_id)
 {
-#define NR_TOOL_FLAG_MAX 17
+#define NR_TOOL_FLAG_MAX 19
 	switch (nr_blk_id) {
 	case BDN:
 		return 2;
@@ -810,6 +818,10 @@ unsigned long get_nr_tool_flag_index(unsigned long nr_blk_id)
 		return 13;
 	case YUV_PRECDN:
 		return 16;
+	case PIKE2CNR2:
+		return 17;
+	case PIKE2YNRS:
+		return 18;
 	default:
 		return NR_TOOL_FLAG_MAX;
 	}
@@ -856,6 +868,10 @@ void *get_nr_block_level_ptr(struct denoise_param_update *base,
 		return base->cce_uvdiv_level_ptr;
 	case ISP_BLK_RGB_AFM_T:
 		return base->rgb_afm_level_ptr;
+	case ISP_BLK_CNR2_T:
+		return base->cnr2_level_ptr;
+	case ISP_BLK_YNRS_T:
+		return base->ynrs_level_ptr;
 	}
 	return NULL;
 };
@@ -2863,6 +2879,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 			cmd.isp_mode = read_cmd->isp_mode;
 			cmd.main_type = read_cmd->main_type;
 			cmd.sub_type = read_cmd->sub_type;
+			ISP_LOGD("isp mode: %d, main_type,: %d, sub_type: %d", read_cmd->isp_mode, read_cmd->main_type, read_cmd->sub_type);
 			ret = check_cmd_valid(&cmd, msg);
 			if (0 == ret) {
 				if (0x02 > read_cmd->main_type) {

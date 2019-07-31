@@ -2144,6 +2144,12 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 			update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
 			break;
 #endif
+		case ISP_BLK_CNR2:
+			update_param->cnr2_level_ptr = (struct sensor_cnr_level *)fix_data_ptr->nr.nr_set_group.cnr2;
+			break;
+		case ISP_BLK_YNRS:
+			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
+			break;
 		default:
 			break;
 		}
@@ -2575,6 +2581,135 @@ static cmr_int ispctl_get_flash_skip_num(cmr_handle isp_alg_handle, void *param_
     return ret;
 }
 
+static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
+	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_sw_cnr2_level_info *level_info = NULL;
+	struct isp_ynrs_info *ynr_info = NULL;
+	cmr_u32 ct = 0;
+	cmr_u32 level_enable = 0;
+	cmr_u32 low_ct_thrd = 0;
+	cmr_u32 cnr2_en = 0;
+	cmr_u32 ynrs_en = 0;
+	cmr_u32 cnr2_ynr_en = 0;
+	cmr_u32 blk_id = 0, blk_num = 0, blk_ynr = 0;
+	cmr_u32 i = 0;
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
+	}
+	ISP_LOGD("ct = %d", ct);
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, ISP_BLK_CNR2, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		level_info = (struct isp_sw_cnr2_level_info *)output.param_data->data_ptr;
+		level_enable = (cmr_u32)level_info->level_enable;
+		low_ct_thrd = (cmr_u32)level_info->low_ct_thrd;
+		ISP_LOGD("level_enable = %d, low_ct_thrd = %d", level_enable, low_ct_thrd);
+	} else {
+		ISP_LOGE("fail to get valid cnr2 level info");
+	}
+
+	if (level_enable || (ct < low_ct_thrd))
+		cnr2_en = 1;
+
+	blk_num = mode_common_ptr->block_num;
+	for(i; i < blk_num; i++) {
+		blk_id = mode_common_ptr->block_header[i].block_id;
+		if(blk_id == 0x506C) {
+			blk_ynr = 1;
+			break;
+		}
+	}
+
+	if(blk_ynr == 1) {
+		memset(&param_data, 0, sizeof(param_data));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_YNRS, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+		if (ISP_SUCCESS == ret && 1 == output.param_num) {
+			ynr_info = (struct isp_ynrs_info *)output.param_data->data_ptr;
+			if((cmr_u32)ynr_info->bypass == 0)
+				ynrs_en = 1;
+			ISP_LOGD("ynrs_en value = %d \n", ynrs_en);
+		}else {
+			ISP_LOGE("fail to get valid ynrs level info");
+		}
+	}
+
+	cnr2_ynr_en = (cnr2_en << 1) | ynrs_en;
+	ISP_LOGD("cnr_ynr_en = %d", cnr2_ynr_en);
+	*(cmr_u32 *)param_ptr = cnr2_ynr_en;
+
+	return ret;
+}
+
+static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_CNR2, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_sw_cnr2_info));
+	} else {
+		ISP_LOGE("fail to get valid cnr2 param");
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
+	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	cmr_u32 blk_id = 0, blk_num = 0, blk_ynr = 0;
+	cmr_u32 i = 0;
+
+	blk_num = mode_common_ptr->block_num;
+	for(i; i < blk_num; i++){
+		blk_id = mode_common_ptr->block_header[i].block_id;
+		if(blk_id == 0x506C)
+			blk_ynr = 1;
+		ISP_LOGI("ynr blk_ynr = %d, blk_num = %d, i = %d", blk_ynr, blk_num, i);
+	}
+
+	if(blk_ynr != 1){
+		return ret;
+		ISP_LOGI("don't have ynr param");
+	}
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_YNRS, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if(ISP_SUCCESS == ret && 1 == output.param_num)
+		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_ynrs_info));
+	else
+		ISP_LOGE("fail to get valid cnr2 param");
+
+	return ret;
+
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2654,6 +2789,9 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
+	{ISP_CTRL_GET_CNR2_YNR_EN, ispctl_get_cnr2_ynr_en},
+	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
+	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_MAX, NULL}
 };
 

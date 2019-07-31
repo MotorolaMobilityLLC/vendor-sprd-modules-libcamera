@@ -51,6 +51,8 @@ char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"iir_yrandom",
 	"cce_uv",
 	"rgb_afm",
+	"cnr",
+	"ynrs",
 };
 
 char nr_mode_name[MAX_MODE_NUM][8] = {
@@ -281,6 +283,8 @@ static void isp_pm_check_param(cmr_u32 id, cmr_u32 * update_flag)
 	case ISP_BLK_YUV_NOISEFILTER:
 #endif
 	case ISP_BLK_BINNING4AWB:
+	case ISP_BLK_CNR2:
+	case ISP_BLK_YNRS:
 		{
 			*update_flag = ISP_PARAM_FROM_TOOL;
 			break;
@@ -992,6 +996,20 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 				}
 				break;
 #endif
+			case ISP_BLK_CNR2:{
+				isp_blk_nr_type = ISP_BLK_CNR2_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr2);
+				nr_set_size = sizeof(struct sensor_cnr_level);
+				break;
+			}
+			case ISP_BLK_YNRS:
+			{
+				isp_blk_nr_type = ISP_BLK_YNRS_T;
+				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.ynrs);
+				nr_set_size = sizeof(struct sensor_ynrs_level);
+				break;
+			}
+
 			default:
 				break;
 			}
@@ -1016,7 +1034,9 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			    || src_header[j].block_id == ISP_BLK_EDGE
 			    || src_header[j].block_id == ISP_BLK_IIRCNR_IIR
 			    || src_header[j].block_id == ISP_BLK_IIRCNR_YRANDOM
-			    || src_header[j].block_id == ISP_BLK_UV_PREFILTER) {
+			    || src_header[j].block_id == ISP_BLK_UV_PREFILTER
+			    || src_header[j].block_id == ISP_BLK_CNR2
+			    || src_header[j].block_id == ISP_BLK_YNRS) {
 				nr_param_update_info.param_type = isp_blk_nr_type;
 				nr_param_update_info.nr_param_ptr = (cmr_uint *) nr_set_addr;
 				nr_param_update_info.size_of_per_unit = nr_set_size * nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
