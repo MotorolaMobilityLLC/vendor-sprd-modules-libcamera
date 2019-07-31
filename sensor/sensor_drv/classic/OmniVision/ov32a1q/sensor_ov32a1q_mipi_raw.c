@@ -647,6 +647,80 @@ static cmr_int ov32a1q_drv_ov4c_deinit(cmr_handle handle, cmr_u32 *param) {
 }
 
 #endif
+static cmr_int ov32a1q_drv_set_xtalk_data(cmr_handle handle, cmr_uint param){
+	struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+//	cmr_u8 *param_ptr = (cmr_u8 *)param;
+	cmr_u8 param_ptr[0x1000] = {0x00};
+
+	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5386, 0x19);
+	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5387, 0x80);
+	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5388, 0x13);
+	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5389, 0x20);
+#if 1
+	hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa0 >> 1, param_ptr,
+				0x1000 << 16 | SENSOR_I2C_REG_16BIT);
+	for (int i = 0; i < 288; i++)
+		  hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x53c0 + i, *(param_ptr + 0x772 + i));//*(xtalk_data.data_addr + i));
+
+	  // for (int i = 0; i < 600; i++)
+	  //	 param_ptr[i] = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x160f+i);
+	  // SENSOR_LOGI("xtalk: pid_value = %x, ver_value = %x",
+	  //			 param_ptr[0x160f], param_ptr[0x160f+1]);
+//    const char *fcellXtalkFile = XTALK_DATA;
+#else
+	struct otp_parser_section_with_version xtalk_data;
+    struct otp_parser_section_with_version dpc_data;
+    void *otp_parser_handle;
+	  cmr_int (*otp_parser_ptr)(
+		  void *raw_data, enum otp_parser_cmd cmd, cmr_uint eeprom_num,
+		  cmr_int camera_id, cmr_int raw_height, cmr_int raw_width, void *result);
+
+	  otp_parser_handle = dlopen("libcam_otp_parser.so", RTLD_NOW);
+	  if (otp_parser_handle == NULL) {
+		  char const *err_str = dlerror();
+		  SENSOR_LOGE("%s", err_str ? err_str : "unknown");
+	  } else {
+		  SENSOR_LOGV("dlopen libcam_otp_parser.so success");
+	  }
+
+	  otp_parser_ptr = dlsym(otp_parser_handle, "otp_parser");
+	  if (otp_parser_ptr == NULL) {
+		  SENSOR_LOGE(
+			  "load libcam_otp_parser.so: couldn't find symbol otp_parser");
+		  return SENSOR_FAIL;
+	  } else {
+		  SENSOR_LOGV("link libcam_otp_parser.so symbol success");
+	  }
+	  otp_parser_ptr(param_ptr, OTP_PARSER_CROSS_TALK, OTP_EEPROM_SINGLE,
+					 sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &xtalk_data);
+//	  otp_parser_ptr(param_ptr, OTP_PARSER_DPC, OTP_EEPROM_SINGLE,
+//					 sns_drv_cxt->sensor_id, IMG_HEIGHT, IMG_WIDTH, &dpc_data);
+	  for (int i = 0; i < 288; i++)
+		hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x53c0 + i, *(xtalk_data.data_addr + i));
+	  dlclose(otp_parser_handle);
+
+#endif
+
+	  // SENSOR_LOGI("xtalk: pid_value = %x, ver_value = %x",
+	  //			 param_ptr[0x160f], param_ptr[0x160f+1]);
+	  hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5000, 0x40 | hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x5000));
+
+	  SENSOR_LOGD("x");
+	  return 0;
+
+}
+#include "parameters/param_manager.c"
+static cmr_int ov32a1q_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_ov32a1q_mipi_raw_info_ptr =
+        ov32a1q_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
+
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -689,6 +763,9 @@ static cmr_int ov32a1q_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = ov32a1q_drv_ov4c_deinit(handle, param_ptr->pval);
         break;
 #endif
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        ret = ov32a1q_drv_set_raw_info(handle, param_ptr->pval);
+        break;
     default:
         break;
     }
@@ -885,7 +962,7 @@ static cmr_int ov32a1q_drv_set_master_FrameSync(cmr_handle handle,
 
     /*TODO*/
 
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x80);
 
     /*END*/
 
@@ -907,6 +984,10 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
     }
+    cmr_uint sensor_mode = 0;
+    sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
+    if (sensor_mode > 2)
+		ov32a1q_drv_set_xtalk_data(handle, param);
 
 #if 0 // defined(CONFIG_DUAL_MODULE)
 	ov32a1q_drv_set_master_FrameSync(handle, param);

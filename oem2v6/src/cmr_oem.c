@@ -7171,6 +7171,17 @@ cmr_int camera_sensor_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         return ret;
     case COM_SN_GET_4IN1_FORMAT_CONVERT:
         bzero(&img_addr, sizeof(struct frame_4in1_info));
+#if 1
+	struct tuning_param_info tuning_info;
+	bzero(&tuning_info, sizeof(struct tuning_param_info));
+	camera_local_get_tuning_param(oem_handle, &tuning_info);
+
+	img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
+	img_addr.awb_gain.b_gain= tuning_info.awb_info.b_gain;
+	img_addr.awb_gain.g_gain= tuning_info.awb_info.g_gain;
+#endif
+//        img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
+//        camera_local_get_tuning_param(oem_handle, img_addr.tuning_info);
         img_addr.im_addr_in = param_ptr->postproc_info.src.addr_vir.addr_y;
         img_addr.im_addr_out = param_ptr->postproc_info.dst.addr_vir.addr_y;
         cmd = SENSOR_ACCESS_VAL;
@@ -11502,6 +11513,33 @@ cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps) {
 
     ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_FPS, isp_param_ptr);
 
+    return ret;
+}
+
+cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
+                                      struct tuning_param_info *tuning_info) {
+    CMR_LOGD("E");
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    tuning_info->gain = 0;
+    tuning_info->shutter = 0;
+    tuning_info->bv = 0;
+    tuning_info->pos = 0;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct isp_adgain_exp_info adgain_exp_info;
+    (struct isp_awb_info) tuning_info->awb_info;
+
+    camera_get_tuning_info(oem_handle, &adgain_exp_info);
+
+    tuning_info->gain = adgain_exp_info.adgain;
+    tuning_info->shutter = adgain_exp_info.exp_time;
+    tuning_info->bv = adgain_exp_info.bv;
+    isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_AWB_GAIN,
+              (void *)&(tuning_info->awb_info));
+    isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_AF_POS,
+              (void *)&(tuning_info->pos));
+
+    CMR_LOGD("X");
     return ret;
 }
 

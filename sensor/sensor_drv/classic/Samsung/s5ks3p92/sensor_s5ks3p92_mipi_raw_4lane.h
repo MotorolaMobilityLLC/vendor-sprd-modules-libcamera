@@ -25,7 +25,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_s5ks3p92_raw_param_main.c"
+//#include "parameters/sensor_s5ks3p92_raw_param_main.c"
 
 #define FEATURE_OTP
 
@@ -44,9 +44,13 @@
 #define VIDEO_HEIGHT 720
 #define PREVIEW_WIDTH 2320
 #define PREVIEW_HEIGHT 1744
+#ifdef CONFIG_ISP_2_7
+#define SNAPSHOT_WIDTH 4608 //4640
+#define SNAPSHOT_HEIGHT 3488 //3488
+#else
 #define SNAPSHOT_WIDTH 4640 //4640
 #define SNAPSHOT_HEIGHT 3488 //3488
-
+#endif
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
 #define VIDEO_TRIM_Y 0
@@ -58,9 +62,13 @@
 #define PREVIEW_TRIM_H 1744
 #define SNAPSHOT_TRIM_X 0
 #define SNAPSHOT_TRIM_Y 0
+#ifdef CONFIG_ISP_2_7
+#define SNAPSHOT_TRIM_W 4608 //4640
+#define SNAPSHOT_TRIM_H 3488 //3488
+#else
 #define SNAPSHOT_TRIM_W 4640 //4640
 #define SNAPSHOT_TRIM_H 3488 //3488
-
+#endif
 /*Mipi output*/
 #define LANE_NUM 4
 #define RAW_BITS 10
@@ -100,7 +108,9 @@
 
 /*delay 1 frame to write sensor gain*/
 //#define GAIN_DELAY_1_FRAME
-
+#ifndef CONFIG_ISP_2_7
+#define SENSOR_S5KS3P92_MIRROR_FLIP
+#endif
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
@@ -2220,8 +2230,11 @@ static struct sensor_module_info s_s5ks3p92_module_info_tab[VENDOR_NUM] = {
                      .iovdd_val = SENSOR_AVDD_1800MV,
                      .dvdd_val = SENSOR_AVDD_1000MV,
 
+#ifndef SENSOR_S5KS3P92_MIRROR_FLIP
+					  .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
+#else
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
-                     //.image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
+#endif
                      .preview_skip_num = 1,
                      .capture_skip_num = 1,
                      .flash_capture_skip_num = 6,
@@ -2249,8 +2262,7 @@ static struct sensor_module_info s_s5ks3p92_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_s5ks3p92_ops_tab;
-struct sensor_raw_info *s_s5ks3p92_mipi_raw_info_ptr =
-    &s_s5ks3p92_mipi_raw_info;
+struct sensor_raw_info *s_s5ks3p92_mipi_raw_info_ptr = PNULL;// &s_s5ks3p92_mipi_raw_info;
 
 SENSOR_INFO_T g_s5ks3p92_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |

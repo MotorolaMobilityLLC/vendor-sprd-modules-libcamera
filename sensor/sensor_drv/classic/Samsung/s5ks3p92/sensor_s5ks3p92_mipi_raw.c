@@ -29,7 +29,7 @@
 #include "sensor_s5ks3p92_mipi_raw_4lane.h"
 #endif
 
-#define CONFIG_FLIP
+//#define CONFIG_FLIP
 
 /*==============================================================================
  * Description:
@@ -431,6 +431,12 @@ static cmr_int s5k3p9sp04_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
 #include "sprd_fcell_ss.h"
 #include "dlfcn.h"
 #include <fcntl.h>
+#ifdef CONFIG_ISP_2_7
+#define IMG_WIDTH 4608 //4672 //4608 //5120
+#else
+#define IMG_WIDTH 4640 //4672 //4608 //5120
+#endif
+#define IMG_HEIGHT    3488 //3504 //3456 //3840
 
 void *handlelib;
 uint16 *pOutImage; // for mipi_raw to raw16
@@ -450,7 +456,11 @@ static cmr_int s5k3p9sp04_drv_4in1_init(cmr_handle handle, cmr_u32 *param) {
     init.height = IMG_HEIGHT;
     // Step 1: Init Fcell Library
     init.xtalk_len = XTALK_LEN;
+#ifndef SENSOR_S5KS3P92_MIRROR_FLIP
+	init.bayer_order = BAYER_GRBG;
+#else	
     init.bayer_order = BAYER_GBRG;
+#endif
 #if 0
    const char *fcellXtalkFile = XTALK_DATA;
    char pFcellXtalk[XTALK_LEN];
@@ -545,7 +555,7 @@ static cmr_int s5k3p9sp04_drv_4in1_process(cmr_handle handle, cmr_u32 *param) {
 #endif
 #if 1
     const char *sym = "ss4c_process";
-    typedef int (*func_proc)(unsigned short *, unsigned short *, struct st_remosaic_param*);
+    typedef int (*func_proc)(unsigned short *, unsigned short *, struct st_remosaic_param*, uint32_t, uint32_t);
     func_proc proc_ss4c = (int *)dlsym(handlelib, sym);
     if (proc_ss4c == NULL) {
         SENSOR_LOGI("load: couldn't find symbol %s", sym);
@@ -561,7 +571,7 @@ static cmr_int s5k3p9sp04_drv_4in1_process(cmr_handle handle, cmr_u32 *param) {
 
     SENSOR_LOGI("awb gain %x %x %x", frame_4in1->awb_gain.r_gain,
 		frame_4in1->awb_gain.b_gain, frame_4in1->awb_gain.g_gain);
-    proc_ss4c((unsigned short *)pFcellImage, (unsigned short *)pOutImage, &p_param);
+    proc_ss4c((unsigned short *)pFcellImage, (unsigned short *)pOutImage, &p_param, IMG_WIDTH, IMG_HEIGHT);
 //    proc_ss4c((unsigned short *)pFcellImage, (unsigned short *)pFcellImage, &p_param);
     SENSOR_LOGI("X %x %x", frame_4in1->im_addr_in, pOutImage[1]);
     frame_4in1->im_addr_out = frame_4in1->im_addr_in; //(cmr_int)(void *)pFcellImage;
@@ -597,10 +607,15 @@ static cmr_int s5k3p9sp04_drv_4in1_deinit(cmr_handle handle, cmr_u32 *param) {
     */
     const char *sym = "ss4c_release";
     typedef int (*func_release)();
-    func_release release_ss4c = (int *)dlsym(handlelib, sym);
+    func_release release_ss4c = NULL;
+	if (handlelib)
+        release_ss4c = (int *)dlsym(handlelib, sym);
     if (release_ss4c == NULL) {
         SENSOR_LOGI("load: couldn't find symbol %s", sym);
-        free(pOutImage);
+		if (pOutImage) {
+			free(pOutImage);
+			pOutImage = NULL;
+		}
         return SENSOR_FAIL;
     } else {
         SENSOR_LOGI("link symbol success");
@@ -612,6 +627,17 @@ static cmr_int s5k3p9sp04_drv_4in1_deinit(cmr_handle handle, cmr_u32 *param) {
 }
 
 #endif
+#include "parameters/param_manager.c"
+static cmr_int s5k3p9sp04_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_s5ks3p92_mipi_raw_info_ptr =
+        s5ks3p92_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
 
 /*==============================================================================
  * Description:
@@ -646,8 +672,6 @@ static cmr_int s5ks3p92_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = s5k3p9sp04_drv_get_4in1_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_4IN1_INIT:
-    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
-//    case SENSOR_VAL_TYPE_SET_OTP_DATA:
         ret = s5k3p9sp04_drv_4in1_init(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_4IN1_PROC:
@@ -655,6 +679,9 @@ static cmr_int s5ks3p92_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_4IN1_DEINIT:
         ret = s5k3p9sp04_drv_4in1_deinit(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        ret = s5k3p9sp04_drv_set_raw_info(handle, param_ptr->pval);
         break;
 #endif
   default:
@@ -874,7 +901,7 @@ static cmr_int s5ks3p92_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
 	usleep(100 * 1000);
 /*TODO*/
-#ifdef CONFIG_FLIP
+#ifdef SENSOR_S5KS3P92_MIRROR_FLIP
   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0103);
 #else
   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0100);
@@ -950,6 +977,7 @@ s5ks3p92_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
   /*init exif info,this will be deleted in the future*/
   s5ks3p92_drv_init_fps_info(sns_drv_cxt);
+  s5k3p9sp04_drv_4in1_init(sns_drv_cxt, 0);
 
   /*add private here*/
   return ret;

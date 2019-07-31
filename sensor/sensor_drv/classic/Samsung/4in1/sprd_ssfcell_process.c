@@ -113,11 +113,11 @@ int ss4c_raw_process(unsigned short *src, unsigned short *dst, uint32_t input_wi
 #endif
 
 int ss4c_process(unsigned short *src,unsigned short *dst, 
-				struct st_remosaic_param* p_param) {
+				struct st_remosaic_param* p_param, uint32_t input_width, uint32_t input_height) {
     // Step 3: Process Fcell.
  //   struct timeval start, end;
 #if 1
-    int imgsize = IMG_WIDTH * IMG_HEIGHT * 5 / 4;
+    int imgsize = input_width * input_height * 5 / 4;
     uint16 *pFcellImage = (uint16 *)dst;//malloc(imgsize);
 
   //  ss4c_raw_process(src, pFcellImage, IMG_WIDTH, IMG_HEIGHT);
@@ -133,7 +133,7 @@ int ss4c_process(unsigned short *src,unsigned short *dst,
 
  remosaic_process((int32_t)(void *)src, imgsize, (int32_t)(void *)dst, imgsize *8/5);
 
-  ss4c_raw_process1(src, dst, IMG_WIDTH, IMG_HEIGHT);
+  ss4c_raw_process1(src, dst, input_width, input_height);
 #endif
 //    gettimeofday(&end, NULL);
 /*    fprintf(stdout, "fcell process finish, time: %ld ms.\n",

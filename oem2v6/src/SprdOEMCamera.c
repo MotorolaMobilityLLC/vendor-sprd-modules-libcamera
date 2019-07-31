@@ -1154,6 +1154,25 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
 
     return ret;
 }
+cmr_int camera_get_tuning_param(cmr_handle camera_handle,
+                                struct tuning_param_info *tuning_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ret = camera_local_get_tuning_param(camera_handle, tuning_info);
+    if (ret) {
+        CMR_LOGE("failed to get tuning param %ld", ret);
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
 
 cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
                                cmr_s32 *point_y) {
@@ -1176,12 +1195,6 @@ cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
     return ret;
 }
 
-cmr_int camera_get_tuning_param(cmr_handle camera_handle,
-                                struct tuning_param_info *tuning_info) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    return ret;
-}
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,

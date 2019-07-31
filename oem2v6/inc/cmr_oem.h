@@ -598,7 +598,9 @@ cmr_int camera_local_set_mm_dvfs_policy(cmr_handle oem_handle,
                                         enum CamProcessingState camera_state);
 #endif
 
-    cmr_int cmr_get_reboke_data(cmr_handle oem_handle, struct af_relbokeh_oem_data *golden_distance);
+cmr_int cmr_get_reboke_data(cmr_handle oem_handle, struct af_relbokeh_oem_data *golden_distance);
+cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
+                                      struct tuning_param_info *tuning_info);
 #ifdef __cplusplus
 }
 #endif
