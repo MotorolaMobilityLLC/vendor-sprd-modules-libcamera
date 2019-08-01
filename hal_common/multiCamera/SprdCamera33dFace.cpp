@@ -300,11 +300,13 @@ void SprdCamera33dFace::processIRData(const camera3_capture_result_t *result,
 
     hwi_frame_buffer_info_t matched_frame;
     hwi_frame_buffer_info_t cur_frame;
+    memset(&matched_frame, 0, sizeof(matched_frame));
+    memset(&cur_frame, 0, sizeof(cur_frame));
+
     cur_frame.frame_number = cur_frame_number;
     cur_frame.timestamp = result_timestamp;
     cur_frame.buffer = (result->output_buffers)->buffer;
     hwi_frame_buffer_info_t *discard_frame = NULL;
-    memset(&matched_frame, 0, sizeof(matched_frame));
 
     // Match frame
     if (MATCH_SUCCESS ==

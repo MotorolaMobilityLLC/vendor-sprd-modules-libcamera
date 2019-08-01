@@ -11458,7 +11458,7 @@ cmr_uint prev_set_ultra_wide_buffer_flag(struct prev_context *prev_cxt,
     cmr_uint ret = CMR_CAMERA_SUCCESS;
     cmr_uint *frm_is_lock = NULL;
     cmr_uint alloc_cnt = 0;
-    char *debug_str;
+    char *debug_str = NULL;
 
     if (!prev_cxt) {
         return ret;
@@ -11591,7 +11591,7 @@ cmr_uint prev_search_ultra_wide_buffer(struct prev_context *prev_cxt,
     cmr_uint *ultra_wide_index = NULL;
     cmr_uint *frm_is_lock = NULL;
     cmr_uint alloc_cnt = 0;
-    char *debug_str;
+    char *debug_str = NULL;
 
     if (!prev_cxt) {
         ret = CMR_CAMERA_INVALID_PARAM;
