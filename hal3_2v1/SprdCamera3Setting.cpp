@@ -4620,7 +4620,7 @@ int SprdCamera3Setting::updateWorkParameters(
         int32_t crop_area[5] = {0};
         int32_t ae_area[5] = {0};
         size_t i = 0, cnt = 0;
-        int ret = 0;
+        int ret = 0, param_diff = 0;
 
         if (frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count == 5) {
             for (i = 0; i < 5; i++)
@@ -4658,11 +4658,16 @@ int SprdCamera3Setting::updateWorkParameters(
                     for (size_t i = 0;
                          i <
                          frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count;
-                         i++)
-                        s_setting[mCameraId].controlInfo.ae_regions[i] =
-                            ae_area[i];
+                         i++) {
+                        if (s_setting[mCameraId].controlInfo.ae_regions[i] != ae_area[i])
+                            param_diff++;
 
-                    pushAndroidParaTag(ANDROID_CONTROL_AE_REGIONS);
+                        s_setting[mCameraId].controlInfo.ae_regions[i] =
+                                ae_area[i];
+                    }
+                    HAL_LOGV("param_diff %d", param_diff);
+                    if (param_diff)
+                        pushAndroidParaTag(ANDROID_CONTROL_AE_REGIONS);
                 }
             }
         }
