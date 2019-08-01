@@ -71,6 +71,8 @@ SprdCamera3Blur *mBlur = NULL;
 #endif
 
 #define MAX_UPDATE_TIME 3000
+#define Mask_DepthW 800
+#define Mask_DepthH 600
 
 camera3_device_ops_t SprdCamera3Blur::mCameraCaptureOps = {
     .initialize = SprdCamera3Blur::initialize,
@@ -1834,6 +1836,9 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
     if (mBlur->mFlushing) {
         mime_type = 0;
         input_stream_buff.buffer = combe_buffer;
+    } else if (mBlur->mBlurMode == CAM_BLUR_PORTRAIT_MODE){
+        input_stream_buff.buffer = output_buffer;
+        mime_type = (int)SPRD_MIMETPYE_NONE;
     } else {
         input_stream_buff.buffer = output_buffer;
         mime_type = (int)SPRD_MIMETPYE_BLUR;
@@ -2142,6 +2147,9 @@ int SprdCamera3Blur::CaptureThread::initBlurInitParams() {
     mCaptureInitParams.max_slope = (float)(mLastMaxScope) / 10000;
     mCaptureInitParams.findex2gamma_adjust_ratio =
         (float)(mLastAdjustRati) / 10000;
+    mCaptureInitParams.depthW = Mask_DepthW;
+    mCaptureInitParams.depthH = Mask_DepthH;
+    mCaptureInitParams.platform_id = PLATFORM_ID;
 
     return initBlur20Params();
 }
@@ -2218,7 +2226,7 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
                 mPreviewWeightParams.roi_type = 1;
             }
         }
-        if (mBlur->mCameraId == 0) {
+        if (mBlur->mCameraId == 0 && mBlur->mBlurMode != CAM_BLUR_PORTRAIT_MODE) {
             mPreviewWeightParams.roi_type = 0;
             mCaptureWeightParams.roi_type = 0;
             mIsBlurAlways = false;
@@ -2308,12 +2316,24 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
             } else if (fnum > MAX_F_FUMBER) {
                 fnum = MAX_F_FUMBER;
             }
-            fnum = (fnum)*MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
-            if (mPreviewWeightParams.f_number != fnum) {
-                mPreviewWeightParams.f_number = fnum;
-                mCaptureWeightParams.f_number = fnum;
-                mCapture2WeightParams.f_number = fnum;
-                mUpdatePreviewWeightParams = true;
+            if (mBlur->mBlurMode == CAM_BLUR_PORTRAIT_MODE) {
+                fnum = (fnum)*MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
+                if (mPreviewWeightParams.f_number != fnum) {
+                    mPreviewWeightParams.f_number = fnum;
+                    mCaptureWeightParams.f_number =
+                        255 - (fnum) * MAX_F_FUMBER / MAX_BLUR_F_FUMBER * 25;
+                    mCapture2WeightParams.f_number =
+                        255 - (fnum) * MAX_F_FUMBER / MAX_BLUR_F_FUMBER * 25;
+                    mUpdatePreviewWeightParams = true;
+                }
+            } else {
+                fnum = (fnum)*MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
+                if (mPreviewWeightParams.f_number != fnum) {
+                    mPreviewWeightParams.f_number = fnum;
+                    mCaptureWeightParams.f_number = fnum;
+                    mCapture2WeightParams.f_number = fnum;
+                    mUpdatePreviewWeightParams = true;
+                }
             }
         }
         if (metaSettings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
@@ -3190,12 +3210,13 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
         uint32_t weight_width = mWeightWidth;
         uint32_t weight_height = mWeightHeight;
         uint32_t weight_size = mWeightSize;
+        uint32_t platform_id = mCaptureInitParams.platform_id;
         uint32_t version = mCaptureWeightParams.version;
         uint32_t blur_version = 0;
         if (mCaptureWeightParams.roi_type == 2)
-            blur_version = 0x180201;
+            blur_version = 0x180202;
         else
-            blur_version = 0x180101;
+            blur_version = 0x180102;
 
         char prop1[PROPERTY_VALUE_MAX] = {
             0,
@@ -3227,6 +3248,7 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
                                (unsigned char *)&scaleSmoothWidth,
                                (unsigned char *)&scaleSmoothHeight,
                                (unsigned char *)&box_filter_size,
+                               (unsigned char *)&platform_id,
                                (unsigned char *)&version,
                                (unsigned char *)&blur_version,
                                (unsigned char *)&BlurFlag};
@@ -3880,6 +3902,12 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     }
     metaSettings = request->settings;
     saveRequest(req);
+
+    if (metaSettings.exists(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)) {
+        mBlurMode =
+            metaSettings.find(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)
+                .data.u8[0];
+    }
 
     tagCnt = metaSettings.entryCount();
     if (tagCnt != 0) {

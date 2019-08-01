@@ -3479,6 +3479,10 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		af_input.is_multi_mode = AF_ALG_DUAL_W_T;
 		break;
 	}
+	case ISP_BLUR_PORTRAIT: {
+		af_input.is_multi_mode = AF_ALG_BLUR_PORTRAIT;
+		break;
+	}
 	default:
 		af_input.is_multi_mode = AF_ALG_SINGLE;
 		break;

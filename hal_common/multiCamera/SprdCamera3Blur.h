@@ -65,7 +65,7 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM2_NUM (11)
 #endif
 
-#define BLUR_REFOCUS_COMMON_PARAM_NUM (26)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (27)
 #define BLUR_MAX_NUM_STREAMS (3)
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
@@ -151,6 +151,9 @@ typedef struct {
 typedef struct {
     int width;                       // image width
     int height;                      // image height
+    int depthW; // mask depth width
+    int depthH; // mask depth height
+    int platform_id;                 // defined in SprdCtrl.mk
     float min_slope;                 // 0.001~0.01, default is 0.005
     float max_slope;                 // 0.01~0.1, default is 0.05
     float findex2gamma_adjust_ratio; // 2~11, default is 6.0
@@ -294,6 +297,11 @@ typedef enum {
     DUMP_BLUR_TYPE_MAX
 } dump_type;
 
+typedef enum {
+    CAM_Blur_MODE= 0,
+    CAM_BLUR_PORTRAIT_MODE = 1
+} CameraBlurMode;
+
 class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
     static void getCameraBlur(SprdCamera3Blur **pBlur);
@@ -352,6 +360,7 @@ class SprdCamera3Blur : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
     int mCoverValue;
+    uint8_t mBlurMode;
     face_beauty_levels fbLevels;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
