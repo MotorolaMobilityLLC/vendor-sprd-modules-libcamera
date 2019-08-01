@@ -101,6 +101,7 @@ static const char *s_smart_block_name[] = {
 	"ltm",
 	"3dnr",
 	"sw3dnr",
+	"hsvnew",
 
 	"unkown"
 };
@@ -790,7 +791,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
-		if ((smart_id == ISP_SMART_CMC) || (smart_id == ISP_SMART_HSV)) {
+		if ((smart_id == ISP_SMART_CMC) || (smart_id == ISP_SMART_HSV) || (smart_id == ISP_SMART_HSV_NEW)) {
 			result->size = sizeof(bv_result) * 3;
 			fix_data[0].weight[0] = bv_result.weight[0];
 			fix_data[0].weight[1] = bv_result.weight[1];
@@ -806,7 +807,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 			fix_data[2].weight[1] = tmp_result[1].weight[1];
 			fix_data[2].value[0] = tmp_result[1].value[0];
 			fix_data[2].value[1] = tmp_result[1].value[1];
-			if(smart_id == ISP_SMART_HSV)
+			if((smart_id == ISP_SMART_HSV)||(smart_id == ISP_SMART_HSV_NEW))
 			ISP_LOGV("yzl add hsv fixdata0:%d,%d,%d,%d, fixdata1:%d,%d,%d,%d, fixdata2:%d,%d,%d,%d" , 
 			fix_data[0].value[0], fix_data[0].value[1],fix_data[0].weight[0],fix_data[0].weight[1],
 			fix_data[1].value[0] ,fix_data[1].value[1] ,fix_data[1].weight[0],fix_data[1].weight[1],
@@ -818,7 +819,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 				property_get("debug.isp.smart.cmc.index", value, "-1");
 				index = atoi(value);
 			}
-			else if(smart_id == ISP_SMART_HSV)
+			else if((smart_id == ISP_SMART_HSV)||(smart_id == ISP_SMART_HSV_NEW))
 			{
 				property_get("debug.isp.smart.hsv.index", value, "-1");
 				index = atoi(value);
