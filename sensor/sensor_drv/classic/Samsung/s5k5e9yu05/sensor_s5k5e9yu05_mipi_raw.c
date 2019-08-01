@@ -41,7 +41,7 @@ static cmr_int s5k5e9yu05_drv_set_video_mode(cmr_handle handle, cmr_u32 param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_REG_T_PTR sensor_reg_ptr;
     cmr_u16 i = 0x00;
-    cmr_u32 mode;
+    cmr_u32 mode = 0;
 
     if (param >= SENSOR_VIDEO_MODE_MAX)
         return 0;
