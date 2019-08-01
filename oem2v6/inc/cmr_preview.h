@@ -240,6 +240,7 @@ struct preview_param {
     void *private_data;
     cmr_u32 is_lls_enable;
     cmr_u32 sprd_zsl_enabled;
+    cmr_u32 sprd_afbc_enabled;
     cmr_u32 video_slowmotion_eb;
     cmr_u32 sprd_pipviv_enabled;
     cmr_u32 sprd_eis_enabled;

@@ -116,6 +116,14 @@ enum ae_scene_mode {
 	AE_SCENE_PANORAMA,
 	AE_SCENE_MOD_MAX
 };
+
+enum aec_work_mode {
+	AEC_WORK_MODE_COMMON = 0x00,
+	AEC_WORK_MODE_CAPTURE,
+	AEC_WORK_MODE_VIDEO,
+	AEC_WORK_MODE_MAX
+};
+
 enum alg_flash_type {
 	FLASH_NONE,
 	FLASH_PRE_BEFORE,
@@ -584,6 +592,7 @@ struct ae_settings {
 
 struct ae_alg_calc_param {
 	cmr_u32 cam_id;
+	cmr_u32 rear_sub;
 	struct ae_size frame_size;
 	struct ae_size win_size;
 	struct ae_size win_num;
@@ -648,7 +657,7 @@ struct ae_alg_calc_param {
 //adv_alg module init
 	cmr_handle adv[9];
 	/*
-	   0:region
+	   0: region
 	   1: flat
 	   2: mulaes
 	   3: touch ae
@@ -666,6 +675,7 @@ struct ae_alg_calc_param {
 	struct ae_ev_convert ev_convert;
 	cmr_u32 simulate_close_fd_trigger;
 	cmr_u32 simulate_close_tc_trigger;
+	cmr_u8 fast_cvgn_disab;
 	cmr_u32 debug_info_size;
 };
 
@@ -721,11 +731,12 @@ struct ae_alg_calc_result {
 	void *ptc;					/*Bethany add touch info to debug info */
 	void *pface_ae;
 	struct ae1_senseor_out wts;
+	cmr_u32 stable_backup;
 	cmr_handle log;
 	cmr_u32 flag4idx;
 	cmr_u32 face_stable;
 	cmr_u32 face_trigger;
-	cmr_u32 *reserved;			/*resurve for future */
+	cmr_u32 target_offset;
 	cmr_u32 privated_data;
 	cmr_u32 abl_weighting;
 };

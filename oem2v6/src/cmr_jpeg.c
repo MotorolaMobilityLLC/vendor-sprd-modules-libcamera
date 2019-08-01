@@ -205,8 +205,8 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
     jpeg_dst.format_pattern = dst->format_pattern;
     jpeg_dst.reserved = dst->reserved;
 
-    ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src,
-                                &jpeg_dst, mean, enc_cb_param);
+    ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean,
+                                enc_cb_param);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
@@ -274,8 +274,7 @@ cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
     jpeg_dst.format_pattern = dst->format_pattern;
     jpeg_dst.reserved = dst->reserved;
 
-    ret = jcxt->ops.jpeg_decode(jcxt->codec_handle, &jpeg_src,
-                                &jpeg_dst, mean);
+    ret = jcxt->ops.jpeg_decode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
@@ -315,6 +314,7 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
     input_param.wrtie_file_func = NULL;
     if (PNULL == input_param.temp_exif_isp_buf_ptr) {
         free(input_param.temp_buf_ptr);
+        input_param.temp_buf_ptr = NULL;
         return JPEG_CODEC_NO_MEM;
     }
 
@@ -332,6 +332,8 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
     free(input_param.temp_exif_isp_buf_ptr);
     free(input_param.temp_exif_isp_dbg_buf_ptr);
     input_param.temp_buf_ptr = PNULL;
+    input_param.temp_exif_isp_buf_ptr = NULL;
+    input_param.temp_exif_isp_dbg_buf_ptr = NULL;
     CMR_LOGD("jpeg:output: addr 0x%lx,size %d", out_ptr->output_buf_virt_addr,
              (cmr_u32)out_ptr->output_buf_size);
 

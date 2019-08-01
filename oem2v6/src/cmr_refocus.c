@@ -108,9 +108,7 @@ int32_t dBokehImgH = 0;
 int32_t refocus_frame_num = 0;
 int32_t no_callback = 1;
 
-static struct refoucs_ops altek_refoucs_ops = {
-    NULL, NULL, NULL
-};
+static struct refoucs_ops altek_refoucs_ops = {NULL, NULL, NULL};
 
 static struct class_ops refocus_ops_tab_info = {
     refocus_open,     refocus_close,     refocus_transfer_frame,
@@ -402,6 +400,7 @@ static cmr_int refocus_call_init(struct class_refocus *class_handle,
 
 free_all:
     free(message.data);
+    message.data = NULL;
 out:
     return ret;
 }
@@ -643,11 +642,11 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message,
                 }
             } else if (atoi(value) == 1 && altek_refocus_ret != 0) {
                 CMR_LOGE("refocus function fail,0x%x", altek_refocus_ret);
-                refocus_save_to_file(refocus_frame_num, CAM_IMG_FMT_BAYER_MIPI_RAW,
-                                     start_param->depth_map_with,
-                                     start_param->depth_map_height,
-                                     start_param->touch_x, start_param->touch_y,
-                                     start_param->depth_map_data);
+                refocus_save_to_file(
+                    refocus_frame_num, CAM_IMG_FMT_BAYER_MIPI_RAW,
+                    start_param->depth_map_with, start_param->depth_map_height,
+                    start_param->touch_x, start_param->touch_y,
+                    start_param->depth_map_data);
             } else if (atoi(value) == 2 || atoi(value1) == 2) {
                 memcpy(start_param->frame_data, start_param->depth_map_data,
                        start_param->depth_map_with *

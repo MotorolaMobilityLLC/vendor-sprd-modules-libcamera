@@ -135,6 +135,21 @@ extern "C" {
 		};
 	};
 
+	struct aectrl_work_lib {
+		cmr_handle lib_handle;
+		struct adpt_ops_type *adpt_ops;
+	};
+
+	struct aectrl_cxt {
+		cmr_handle thr_handle;
+		cmr_handle caller_handle;
+		isp_ae_cb ae_set_cb;
+		struct aectrl_work_lib work_lib;
+		struct ae_ctrl_param_out ioctrl_out;
+		cmr_u32 bakup_rgb_gain;
+		cmr_u32 multiColorLcdEn;
+	};
+
 	cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle * handle_ae, cmr_handle result);
 	cmr_int ae_ctrl_deinit(cmr_handle * handle_ae);
 	cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);

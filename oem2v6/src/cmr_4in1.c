@@ -109,8 +109,10 @@ static cmr_int open_4in1(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 free_all:
-    if (NULL != handle)
+    if (NULL != handle) {
         free(handle);
+        handle = NULL;
+    }
 
     return CMR_CAMERA_FAIL;
 }
@@ -132,9 +134,10 @@ static cmr_int close_4in1(cmr_handle class_handle) {
     }
     sem_destroy(&handle->sem_4in1);
 
-    if (NULL != handle)
+    if (NULL != handle) {
         free(handle);
-
+        handle = NULL;
+    }
     CMR_LOGD("X");
     return ret;
 }
@@ -172,6 +175,7 @@ static cmr_int transfer_frame_4in1(cmr_handle class_handle,
     if (ret) {
         CMR_LOGE("send msg failed!");
         free(message.data);
+        message.data = NULL;
         return CMR_CAMERA_FAIL;
     }
     return ret;

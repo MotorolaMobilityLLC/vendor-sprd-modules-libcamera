@@ -135,6 +135,9 @@ typedef struct {
     cmr_u32 bus_width;   /* lane number or bit-width */
     cmr_u32 pixel_width; /* bits per pixel */
     cmr_u32 is_loose;    /* 0 packet, 1 half word per pixel */
+    cmr_u8 lane_switch_eb;
+    cmr_u64 lane_seq;/*default 0x01234*/
+    cmr_u32 is_cphy;
 } SENSOR_INF_T;
 
 typedef struct _sensor_rect_tag {
@@ -146,7 +149,9 @@ typedef struct _sensor_rect_tag {
 
 struct hw_mipi_init_param {
     cmr_u32 lane_num;
+    cmr_u64 lane_seq;
     cmr_u32 bps_per_lane;
+    cmr_u32 is_cphy;    /* dphy: 0 cphy: 1  */
 };
 struct hw_drv_init_para {
     cmr_u32 sensor_id;

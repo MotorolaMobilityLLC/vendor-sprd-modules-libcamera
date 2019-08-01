@@ -228,8 +228,8 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         scal_param.scale_cfg_param = &cfg_params->frame_params;
         scal_param.handle = file->handle;
 
-        CMR_LOGD("output_size.width:%d, height: %d", frame_params->output_size.w,
-                 frame_params->output_size.h);
+        CMR_LOGD("output_size.width:%d, height: %d",
+                 frame_params->output_size.w, frame_params->output_size.h);
         file->err_code = CMR_CAMERA_SUCCESS;
         if ((frame_params->output_size.w % 8 != 0)) {
             ret = cmr_scale_sw_start(cfg_params, file);
@@ -576,6 +576,7 @@ cmr_int cmr_scale_close(cmr_handle scale_handle) {
     sem_destroy(&file->sync_sem);
     pthread_mutex_destroy(&file->scale_mutex);
     free(file);
+    file = NULL;
 
 exit:
     CMR_LOGI("scale close device exit");

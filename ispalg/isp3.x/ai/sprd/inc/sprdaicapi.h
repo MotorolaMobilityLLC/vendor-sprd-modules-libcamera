@@ -84,6 +84,13 @@ typedef enum
     SC_LABEL_MAX
 } aic_label_e;
 
+typedef enum
+{
+    AIC_WORKMODE_FULL = 0,
+    AIC_WORKMODE_PORTRAIT = 1,
+    AIC_WORKMODE_MAX
+} aic_workmode_e;
+
 typedef struct
 {
     int min_frame_interval;
@@ -241,6 +248,8 @@ typedef struct
 #define AIC_ERROR_INTERNAL      (-1)
 #define AIC_ERROR_NOMEMORY      (-2)
 #define AIC_ERROR_INVALIDARG    (-3)
+#define AIC_ERROR_NULLPOINTER   (-4)
+#define AIC_ERROR_MAGICNUM      (-5)
 
 typedef void* aic_handle_t;
 
@@ -259,7 +268,7 @@ extern "C" {
     AICAPI(int) AIC_CheckFrameStatus(aic_handle_t handle, aic_status_t* o_status);
     AICAPI(int) AIC_SetImageData(aic_handle_t handle, const aic_image_t* i_image);
     AICAPI(int) AIC_GetSceneResult(aic_handle_t handle, aic_result_t* o_result);  
-    AICAPI(void) AIC_StartProcess(aic_handle_t handle);
+    AICAPI(void) AIC_StartProcess(aic_handle_t handle, int i_work_mode);
     AICAPI(void) AIC_StopProcess(aic_handle_t handle);
 
 #ifdef __cplusplus

@@ -4835,6 +4835,7 @@ exit:
     } else {
         if (cxt) {
             free((void *)cxt);
+            cxt = NULL;
         }
     }
     return ret;
@@ -4867,6 +4868,7 @@ cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle) {
     }
     snp_local_deinit(snapshot_handle);
     free((void *)snapshot_handle);
+    snapshot_handle = NULL;
 exit:
     CMR_LOGI("done %ld", ret);
     return ret;
@@ -4905,10 +4907,10 @@ cmr_int cmr_snapshot_post_proc(cmr_handle snapshot_handle,
     if (ret) {
         goto exit;
     }
-    CMR_LOGD("chn id %d android zsl %d rotation snp %d, cfg rot cap %d hdr %d "
+    CMR_LOGD("chn id %d android zsl %d rotation snp %d, cfg cap mode %d hdr %d "
              "snp mode angle %d total num %d thumb size %d %d",
              param_ptr->channel_id, param_ptr->is_android_zsl,
-             param_ptr->is_cfg_rot_cap, param_ptr->is_hdr, param_ptr->mode,
+             param_ptr->is_cfg_rot_cap, param_ptr->mode, param_ptr->is_hdr,
              param_ptr->rot_angle, param_ptr->total_num,
              param_ptr->jpeg_setting.thum_size.width,
              param_ptr->jpeg_setting.thum_size.height);

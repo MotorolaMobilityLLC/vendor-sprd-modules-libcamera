@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,39 @@
 #include "isp_drv.h"
 #include "isp_mw.h"
 
+#define ISP_EVT_TX				(1 << 2)
+#define ISP_EVT_SOF				(1 << 3)
+#define ISP_EVT_AE				(1 << 4)
+#define ISP_EVT_AF				(1 << 5)
+#define ISP_EVT_AFL				(1 << 6)
+#define ISP_EVT_HIST			(1 << 7)
+#define ISP_EVT_PDAF			(1 << 8)
+#define ISP_EVT_EBD				(1 << 9)
+#define ISP_EVT_3DNR			(1 << 10)
+#define ISP_EVT_HIST2			(1 << 11)
+#define ISP_EVT_CFG				(1 << 12)
+
+
 enum isp_dev_access_ctrl_cmd {
-	ISP_DEV_SET_AE_MONITOR,
+	ISP_DEV_SET_AE_SKIP_NUM,
 	ISP_DEV_SET_AE_MONITOR_WIN,
 	ISP_DEV_SET_AE_MONITOR_BYPASS,
 	ISP_DEV_SET_AE_STATISTICS_MODE,
-	ISP_DEV_SET_AF_MONITOR_WIN_NUM,
-	ISP_DEV_SET_AF_MONITOR,
-	ISP_DEV_SET_AF_MONITOR_WIN,
-	ISP_DEV_SET_AF_BYPASS,
-	ISP_DEV_SET_AF_WORK_MODE,
-	ISP_DEV_SET_AF_SKIP_NUM,
-	ISP_DEV_SET_AE_SHIFT,
-	ISP_DEV_SET_RGB_GAIN,
-	ISP_DEV_SET_RGB_GAIN_FOR_4IN1,
-	ISP_DEV_SET_AFL_BLOCK,
-	ISP_DEV_SET_AFL_NEW_BLOCK,
-	ISP_DEV_RAW_AEM_BYPASS,
-	ISP_DEV_RAW_AFM_BYPASS,
-	ISP_DEV_GET_SYSTEM_TIME,
-	ISP_DEV_CFG_START,
-	ISP_DEV_SET_STSTIS_BUF,
+	ISP_DEV_SET_AWB_GAIN,
+	ISP_DEV_SET_AWB_BYPASS,
+
+	ISP_DEV_SET_AFM_BYPASS,
+	ISP_DEV_SET_AFM_WORK_MODE,
+	ISP_DEV_SET_AFM_SKIP_NUM,
+	ISP_DEV_SET_AFM_MONITOR_WIN,
+	ISP_DEV_SET_AFM_MONITOR_WIN_NUM,
+	ISP_DEV_SET_AFM_CROP_EB,
+	ISP_DEV_SET_AFM_CROP_SIZE,
+	ISP_DEV_SET_AFM_DONE_TILE_NUM,
+
+	ISP_DEV_SET_AFL_NEW_CFG_PARAM,
+	ISP_DEV_SET_AFL_NEW_BYPASS,
+
 	ISP_DEV_SET_PDAF_CFG_PARAM,
 	ISP_DEV_SET_PDAF_PPI_INFO,
 	ISP_DEV_SET_PDAF_BYPASS,
@@ -53,71 +65,43 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_PDAF_SKIP_NUM,
 	ISP_DEV_SET_PDAF_TYPE1_CFG,
 	ISP_DEV_SET_PDAF_TYPE2_CFG,
+	ISP_DEV_SET_PDAF_TYPE3_CFG,
+	ISP_DEV_SET_DUAL_PDAF_CFG,
 	ISP_DEV_SET_EBD_CFG,
-	ISP_DEV_SET_AFL_CFG_PARAM,
-	ISP_DEV_SET_AFL_BYPASS,
-	ISP_DEV_SET_AFL_NEW_CFG_PARAM,
-	ISP_DEV_SET_AFL_NEW_BYPASS,
+
+	ISP_DEV_SET_RGB_GAIN,
+	ISP_DEV_GET_SYSTEM_TIME,
+	ISP_DEV_SET_STSTIS_BUF,
+	ISP_DEV_CFG_START,
+	ISP_DEV_RAW_PROC,
+
 	ISP_DEV_POST_3DNR,
-	ISP_DEV_POST_YNR,
-	ISP_DEV_SET_RAW_SLICE,
-	ISP_DEV_UPDATE_PARAM_START,
-	ISP_DEV_UPDATE_PARAM_END,
-	ISP_DEV_SET_AE_BLK_NUM,
-	ISP_DEV_SET_AE_RGB_THR,
-	ISP_DEV_SET_AE_SKIP_NUM_CLR,
-	ISP_DEV_SET_AF_CROP_EB,
-	ISP_DEV_SET_AF_CROP_SIZE,
-	ISP_DEV_SET_AF_SKIP_NUM_CLR,
-	ISP_DEV_SET_AF_DONE_TILE_NUM,
 	ISP_DEV_RESET,
 	ISP_DEV_CMD_MAX
 };
 
-enum isp_dev_access_ae_stats_mode {
-	ISP_DEV_AE_STATS_MODE_SINGLE,
-	ISP_DEV_AE_STATS_MODE_CONTINUE,
-	ISP_DEV_AE_STATS_MODE_MAX
-};
-
-struct isp_dev_access_ae_stats_info {
-	enum isp_dev_access_ae_stats_mode mode;
-	cmr_u32 skip_num;
-};
-
-struct isp_dev_access_afm_info {
-	cmr_u32 bypass;
-	cmr_u32 skip_num;
-	cmr_u32 cur_envi;
-};
-
-struct isp_dev_access_aem_win_info {
-	struct img_offset offset;
-	struct isp_img_size blk_size;
-};
-
-struct isp_dev_access_aem_blk_num {
-	struct img_offset blk_num;
-};
-
 typedef void (*isp_evt_cb) (cmr_int evt, void *data, void *privdata);
 
-cmr_int isp_dev_4in1_flag(cmr_handle handle, cmr_u32 flag);
-cmr_int isp_dev_statis_buf_malloc(cmr_handle handle, struct isp_statis_mem_info *in_ptr);
-cmr_int isp_dev_trans_addr(cmr_handle handle);
-cmr_int isp_dev_set_interface(struct isp_drv_interface_param *in_ptr);
-cmr_int isp_dev_start(cmr_handle handle, struct isp_drv_interface_param *in_ptr);
-cmr_int isp_dev_anti_flicker_bypass(cmr_handle handle, cmr_int bypass);
-cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle handle, cmr_int bypass);
-cmr_int isp_dev_comm_shadow(cmr_handle handle, cmr_int shadow);
-cmr_int isp_dev_awb_gain(cmr_handle handle, cmr_u32 r, cmr_u32 g, cmr_u32 b);
-cmr_int isp_dev_cfg_block(cmr_handle handle, void *data_ptr, cmr_int data_id);
-void isp_dev_access_evt_reg(cmr_handle handle, isp_evt_cb isp_event_cb, void *privdata);
-cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *handle);
+cmr_int isp_dev_start(cmr_handle isp_dev_handle);
+cmr_int isp_dev_cfg_block(
+			cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id);
+cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr);
+cmr_int isp_dev_free_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr);
+
+void isp_dev_access_evt_reg(
+			cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata);
+void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr);
+void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr);
+
+void isp_raw_proc(cmr_handle isp_dev_handle, void *param_ptr);
+
+cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle);
 cmr_int isp_dev_access_deinit(cmr_handle handle);
-cmr_int isp_dev_access_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *param_ptr);
-cmr_int isp_dev_access_ioctl(cmr_handle handle, cmr_int cmd, void *in, void *out);
-void isp_dev_statis_info_proc(cmr_handle handle, void *param_ptr);
-void isp_dev_irq_info_proc(cmr_handle handle, void *param_ptr);
-cmr_int isp_get_statis_buf_vir_addr(cmr_handle handle, struct isp_statis_info *in_ptr, cmr_uint *u_addr);
+cmr_int isp_dev_access_ioctl(
+			cmr_handle isp_dev_handle, cmr_int cmd,
+			void *param0, void *param1);
+cmr_int isp_dev_access_capability(
+			cmr_handle isp_dev_handle,
+			enum isp_capbility_cmd cmd, void *param_ptr);
+
 #endif

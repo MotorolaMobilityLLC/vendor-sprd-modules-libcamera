@@ -325,7 +325,9 @@ typedef struct cam_stream_info {
 } cam_stream_info_t;
 
 const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
-#if defined(CONFIG_CAMERA_SUPPORT_21M)
+#if defined(CONFIG_CAMERA_SUPPORT_32M)
+    {6528, 4896},
+#elif defined(CONFIG_CAMERA_SUPPORT_21M)
     {5312, 3984},
 #elif defined(CONFIG_CAMERA_SUPPORT_16M)
     {4608, 3456},
@@ -478,6 +480,7 @@ const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 // initStaticParametersforScalerInfo may be change min_duration and
 // stall_duration
 const cam_stream_info_t stream_info[] = {
+    {{6528, 4896}, 41666666L, 41666666L},
     {{5312, 3984}, 41666666L, 41666666L},
     {{5312, 2988}, 41666666L, 41666666L},
     {{5312, 2656}, 41666666L, 41666666L},
@@ -924,6 +927,9 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
     } else if (width * height <= 5312 * 3984) {
         // 21M
         jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 6528 * 4896) {
+        // 32M
+        jpeg_stream_size = (6528 * 4896 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else {
         jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     }
@@ -1192,12 +1198,21 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
 
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.auto.detect.sensor", value, "on");
+    if (!strcmp(value, "off")) {
+        HAL_LOGI("turn off auto detect sensor, just for debug");
+        mPhysicalSensorNum = 2;
+        goto exit;
+    }
+
     mPhysicalSensorNum = sensorGetPhysicalSnsNum();
 
     if (mPhysicalSensorNum) {
         mLogicalSensorNum = sensorGetLogicalSnsNum();
     }
 
+exit:
     num = mPhysicalSensorNum;
 
     LOGI("getNumberOfCameras:%d", num);
@@ -1426,7 +1441,7 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     /*android.lens.focusDistance,The value set will be clamped to
     [0.0f, android.lens.info.minimumFocusDistance]*/
     if (mSensorFocusEnable[cameraId]) {
-        s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 2.0f;
+        s_setting[cameraId].lens_InfoInfo.mini_focus_distance = cameraId ? 0.0f : 1023.0f;
 
     } else {
         s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 0.0f;
@@ -1617,6 +1632,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     int i = 0;
+    char value[PROPERTY_VALUE_MAX];
     struct camera_info cameraInfo;
     memset(&cameraInfo, 0, sizeof(cameraInfo));
     getCameraInfo(cameraId, &cameraInfo);
@@ -1974,7 +1990,25 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(0);
 #endif
 
-    ALOGV("available_cam_features=%d", available_cam_features.size());
+// BOKEHGDEPTHENBLE
+#ifdef CONFIG_SUPPORT_GDEPTH
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        available_cam_features.add(0);
+    } else {
+#ifdef CONFIG_CAMERA_MOTION_PHONE
+        available_cam_features.add(1);
+#else
+        available_cam_features.add(0);
+#endif
+    }
+
+    HAL_LOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -1982,7 +2016,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
 
-    ALOGI("available_cam_features=%d",
+    HAL_LOGI("available_cam_features=%d",
           s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
     return ret;
@@ -3676,9 +3710,9 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
-        valueI32 = frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_appmode_id,
-                         valueI32, ANDROID_SPRD_APP_MODE_ID, 1)
+        s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
+            frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+        pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
         HAL_LOGV("sprd sprd app mode id is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_appmode_id);
     }
@@ -3928,7 +3962,8 @@ int SprdCamera3Setting::updateWorkParameters(
                          valueU8, ANDROID_SPRD_3DNR_ENABLED, 1)
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
-        if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1) {
+        if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1 &&
+            is_raw_capture == 0) {
             valueU8 = 1;
             GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
                              valueU8, ANDROID_SPRD_ZSL_ENABLED, 1)
@@ -4320,6 +4355,7 @@ int SprdCamera3Setting::updateWorkParameters(
                       .data.u8[0];
         s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
         pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
+        HAL_LOGV("ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER %d", valueU8);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
         s_setting[mCameraId].controlInfo.ae_precapture_id =
@@ -4471,11 +4507,14 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
-        s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable =
-            frame_settings.find(ANDROID_SPRD_AUTO_3DNR_ENABLED).data.u8[0] == 1
-                ? CAMERA_AUTO_3DNR_ENABLE_ON
-                : CAMERA_AUTO_3DNR_ENABLE_OFF;
-        pushAndroidParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+        if (s_setting[mCameraId].sprddefInfo.availabe_auto_3dnr) {
+            s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable =
+                frame_settings.find(ANDROID_SPRD_AUTO_3DNR_ENABLED)
+                            .data.u8[0] == 1
+                    ? CAMERA_3DNR_AUTO
+                    : CAMERA_3DNR_OFF;
+            pushAndroidParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+        }
     }
 
     HAL_LOGD("focus_distance=%f, ae_precap_trigger= %d, "

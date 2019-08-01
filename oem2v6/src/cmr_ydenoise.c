@@ -220,8 +220,10 @@ static cmr_int yde_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 exit:
-    if (NULL != yde_handle)
+    if (NULL != yde_handle) {
         free(yde_handle);
+        yde_handle = NULL;
+    }
     return CMR_CAMERA_FAIL;
 }
 
@@ -235,9 +237,10 @@ static cmr_int yde_close(cmr_handle class_handle) {
 
     ret = yde_thread_destroy(yde_handle);
 
-    if (yde_handle)
+    if (yde_handle) {
         free(yde_handle);
-
+        yde_handle = NULL;
+    }
     return ret;
 }
 
@@ -297,8 +300,10 @@ static cmr_int yde_start(cmr_handle class_handle, cmr_uint thread_id,
     ret = cmr_thread_msg_send(*cur_handle_ptr, &message);
     if (ret) {
         CMR_LOGE("send msg fail");
-        if (yde_start_ptr)
+        if (yde_start_ptr) {
             free(yde_start_ptr);
+            yde_start_ptr = NULL;
+        }
         ret = CMR_CAMERA_FAIL;
     }
 

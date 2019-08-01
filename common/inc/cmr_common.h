@@ -641,8 +641,11 @@ struct mipi_if {
     cmr_u8 use_href;
     cmr_u8 bits_per_pxl;
     cmr_u8 is_loose;
+    cmr_u32 is_cphy;
     cmr_u8 lane_num;
     cmr_u32 pclk;
+    cmr_u8 lane_switch_eb;
+    cmr_u64 lane_seq;/*default 0x0123*/
 };
 
 struct cmr_op_mean {
@@ -837,6 +840,7 @@ struct img_frm_cap {
     struct sprd_pdaf_control pdaf_ctrl;
     struct sprd_ebd_control ebd_ctrl;
     cmr_u32 sence_mode;
+    cmr_u32 afbc_enable;
     cmr_u32 slowmotion;
     cmr_u32 chn_skip_num;
     cmr_u32 is_high_fps;
@@ -979,6 +983,9 @@ struct sensor_interface {
     cmr_u32 bus_width;
     cmr_u32 pixel_width;
     cmr_u32 is_loose;
+    cmr_u8 lane_switch_eb;
+    cmr_u8 is_cphy;
+    cmr_u64 lane_seq;/*default 0x0123*/
 };
 struct sensor_mode_info {
     cmr_u16 mode;
@@ -1614,6 +1621,7 @@ enum camera_param_type {
     CAMERA_PARAM_AUTO_TRACKING_INFO,
     CAMERA_PARAM_APERTURE,
     CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
+    CAMERA_PARAM_SPRD_AFBC_ENABLED,
     CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
     CAMERA_PARAM_TOUCH_INFO_TO_FD,
     CAMERA_PARAM_TYPE_MAX
@@ -1631,6 +1639,16 @@ enum camera_3dnr_type {
     CAMERA_3DNR_TYPE_PREV_HW_CAP_SW,
     CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW,
     CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW
+};
+
+/*
+ * auto is used, other value is off
+ */
+enum camera_3dnr {
+    CAMERA_3DNR_ON,
+    CAMERA_3DNR_OFF,
+    CAMERA_3DNR_AUTO,
+    CAMERA_3DNR_MAX,
 };
 
 enum camera_3dnr_switch { CAMERA_3DNR_ENABLE_OFF = 0, CAMERA_3DNR_ENABLE_ON };
@@ -1758,8 +1776,8 @@ typedef struct prev_sn_param_dvfs_type {
     cmr_u32 sn_max_w;
     cmr_u32 sn_max_h;
     int is_high_fps;
-    int channel_x_enble;// like YUV callback will enable other channel data
-    int cam_mode; // for Dul Cam
+    int channel_x_enble; // like YUV callback will enable other channel data
+    int cam_mode;        // for Dul Cam
 
 } dvfs_cam_param_t;
 

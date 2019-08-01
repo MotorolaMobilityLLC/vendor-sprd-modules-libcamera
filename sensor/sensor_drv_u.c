@@ -1288,6 +1288,13 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
                 sensor_cxt->sensor_exp_info.sensor_interface.bus_width;
             init_param.bps_per_lane =
                 sensor_cxt->sensor_exp_info.sensor_mode_info[mode].bps_per_lane;
+            init_param.is_cphy =
+                sensor_cxt->sensor_exp_info.sensor_interface.is_cphy == 1 ? 1 : 0;
+            if (sensor_cxt->sensor_exp_info.sensor_interface.lane_switch_eb)
+                init_param.lane_seq = sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
+            else
+                init_param.lane_seq = 0x0123;
+            SENSOR_LOGI("is_cphy %d %lx", init_param.is_cphy,init_param.lane_seq);
             ret = hw_sensor_mipi_init(sensor_cxt->hw_drv_handle, init_param);
             if (ret) {
                 SENSOR_LOGE("mipi initial failed ret %ld", ret);
@@ -1307,6 +1314,13 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
                 init_param.bps_per_lane =
                     sensor_cxt->sensor_exp_info.sensor_mode_info[mode]
                         .bps_per_lane;
+                init_param.is_cphy =
+                    sensor_cxt->sensor_exp_info.sensor_interface.is_cphy == 1 ? 1 : 0;
+                if (sensor_cxt->sensor_exp_info.sensor_interface.lane_switch_eb)
+                    init_param.lane_seq = sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
+                else
+                    init_param.lane_seq = 0x0123;
+                SENSOR_LOGI("is_cphy %d %lx", init_param.is_cphy,init_param.lane_seq);
                 ret = hw_sensor_mipi_switch(sensor_cxt->hw_drv_handle,
                                             init_param);
             }

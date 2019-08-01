@@ -258,6 +258,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t setStreamOnWithZsl();
     int32_t getStreamOnWithZsl();
     void setFlushFlag(int32_t value);
+    void setVideoAFBCFlag(cmr_u32 value);
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
     uint64_t getZslBufferTimestamp();
 
@@ -849,6 +850,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mIsNeedFlashFired;
     uint32_t mIsPowerhintWait;
     sys_performance_camera_scene mGetLastPowerHint;
+    cmr_u32 mVideoAFBCFlag;
 };
 
 }; // namespace sprdcamera

@@ -89,25 +89,23 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
       mCameraInitialized(false), mLastFrmNum(0), mCallbackOps(NULL),
       mInputStream(NULL), mMetadataChannel(NULL), mPictureChannel(NULL),
       mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false),
-      mFirstRequestGet(false) {
+      mBufferStatusError(false), mFirstRequestGet(false) {
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: Constructor E camId=%d", mCameraId);
 
     // for camera id 2&3 debug
     char value[PROPERTY_VALUE_MAX];
+
     property_get("persist.vendor.cam.id", value, "0");
-    if (mCameraId == 0) {
-        if (!strcmp(value, "2"))
-            mCameraId = 2;
-        else if (!strcmp(value, "4"))
-            mCameraId = 4;
-    } else if (mCameraId == 1) {
-        if (!strcmp(value, "3"))
-            mCameraId = 3;
-        else if (!strcmp(value, "5"))
-            mCameraId = 5;
-    }
+    if (!strcmp(value, "2"))
+        mCameraId = 2;
+    else if (!strcmp(value, "4"))
+        mCameraId = 4;
+    else if (!strcmp(value, "3"))
+        mCameraId = 3;
+    else if (!strcmp(value, "5"))
+        mCameraId = 5;
 
     getLogLevel();
     HAL_LOGD("mCameraId %d,mCameraDevice %p", mCameraId, &mCameraDevice);
@@ -457,6 +455,7 @@ int SprdCamera3HWI::initialize(
     mCameraInitialized = true;
     mFrameNum = 0;
     mCurFrameTimeStamp = 0;
+    mBufferStatusError = false;
 
     HAL_LOGI(":hal3: X");
     return ret;
@@ -654,6 +653,9 @@ int SprdCamera3HWI::configureStreams(
 
     mStreamConfiguration.num_streams = streamList->num_streams;
 
+    mRegularChan->clearAllStreams();
+    mPicChan->clearAllStreams();
+
     /* Allocate channel objects for the requested streams */
     for (i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
@@ -669,7 +671,19 @@ int SprdCamera3HWI::configureStreams(
                 if (newStream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                     stream_type = CAMERA_STREAM_TYPE_VIDEO;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
-                    newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                    // for vsp cant handle no 32-alignment size
+                    if ((newStream->width == 1280 && newStream->height == 720) ||
+                        (newStream->width == 1920 && newStream->height == 1080)) {
+#ifdef AFBC_ENABLE
+                        newStream->usage |= GRALLOC_USAGE_CURSOR;
+                        mOEMIf->setVideoAFBCFlag(1);
+#else
+                        newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+#endif
+                    } else {
+                        newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                    }
+
                 } else if (alreadyHasPreviewStream == 0) {
                     stream_type = CAMERA_STREAM_TYPE_PREVIEW;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
@@ -1733,7 +1747,11 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                     result_buffers->stream = stream;
                     result_buffers->buffer = buffer;
-                    result_buffers->status = buffer_status;
+                    if (mBufferStatusError) {
+                        result_buffers->status = CAMERA3_BUFFER_STATUS_ERROR;
+                    } else {
+                        result_buffers->status = buffer_status;
+                    }
                     result_buffers->acquire_fence = -1;
                     result_buffers->release_fence = -1;
 
@@ -1868,6 +1886,7 @@ int SprdCamera3HWI::flush() {
     int64_t timestamp;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
+    mBufferStatusError = true;
     if (mOEMIf) {
         mOEMIf->setFlushFlag(1);
         mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
@@ -1943,6 +1962,7 @@ int SprdCamera3HWI::flush() {
     mOEMIf->setFlushFlag(0);
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mFlush = false;
+    mBufferStatusError = false;
     HAL_LOGI(":hal3: X");
 
     return 0;

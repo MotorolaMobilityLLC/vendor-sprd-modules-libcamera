@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,61 +33,6 @@ struct isp_mw_context {
 	cmr_u32 isp_mw_sts;
 };
 
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
-{
-    UNUSED(handle);
-    UNUSED(grab_event_cb);
-}
-
-void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
-{
-	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
-	UNUSED(evt);
-
-	isp_dev_statis_info_proc(cxt->dev_access_handle, data);
-}
-
-void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
-{
-	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
-	UNUSED(evt);
-
-	if (cxt == NULL) {
-		ISP_LOGE("fail to get cxt value, cxt is NULL!");
-		return;
-	}
-
-	isp_dev_irq_info_proc(cxt->dev_access_handle, data);
-}
-
-static cmr_int ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-
-	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w & ISP_ONE)) ||
-	    (ISP_ZERO != (in_param_ptr->src_frame.img_size.h & ISP_ONE))) {
-		ret = -ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(ret, ("fail to check start param input size: w:%d, h:%d",
-					 in_param_ptr->src_frame.img_size.w,
-					 in_param_ptr->src_frame.img_size.h));
-	}
-
-	return ret;
-}
-
-static cmr_int ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-
-	if ((ISP_ZERO != (in_param_ptr->src_slice_height & ISP_ONE)) ||
-	    (ISP_ZERO != (in_param_ptr->src_avail_height & ISP_ONE))) {
-		ret = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(ret, ("fail to check param,input size:src_slice_h:%d,src_avail_h:%d",
-					 in_param_ptr->src_slice_height, in_param_ptr->src_avail_height));
-	}
-
-	return ret;
-}
 
 cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *handle)
 {
@@ -99,16 +44,14 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *handle)
 	ISP_LOGV("E");
 	if (!input_ptr || !handle) {
 		ISP_LOGE("fail to check init param, input_ptr %p handler %p", input_ptr, handle);
-		ret = -ISP_PARAM_NULL;
-		goto exit;
+		return -ISP_PARAM_NULL;
 	}
 
 	*handle = NULL;
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
 	if (NULL == cxt) {
 		ISP_LOGE("fail to malloc");
-		ret = -ISP_ALLOC_ERROR;
-		goto exit;
+		return -ISP_ALLOC_ERROR;
 	}
 	memset((void *)cxt, 0x00, sizeof(*cxt));
 
@@ -119,28 +62,27 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *handle)
 
 	ret = isp_dev_access_init(input_ptr->dcam_fd, &cxt->dev_access_handle);
 	if (ret) {
-		goto exit;
+		goto dev_err;
 	}
 
 	ispalg_input.dev_access_handle = cxt->dev_access_handle;
 	ispalg_input.init_param = input_ptr;
 	ret = isp_alg_fw_init(&ispalg_input, &cxt->alg_fw_handle);
-
-exit:
 	if (ret) {
-		if (cxt) {
-			ret = isp_alg_fw_deinit(cxt->alg_fw_handle);
-			ret = isp_dev_access_deinit(cxt->dev_access_handle);
-			pthread_mutex_destroy(&cxt->isp_mw_mutex);
-			free((void *)cxt);
-			cxt = NULL;
-		}
-	} else {
-		*handle = (cmr_handle)cxt;
+		goto fw_err;
 	}
-
+	*handle = (cmr_handle)cxt;
 	ISP_LOGI("done %ld", ret);
+	return 0;
 
+fw_err:
+	isp_dev_access_deinit(cxt->dev_access_handle);
+dev_err:
+	pthread_mutex_destroy(&cxt->isp_mw_mutex);
+	free((void *)cxt);
+	cxt = NULL;
+
+	ISP_LOGE("done %ld", ret);
 	return ret;
 }
 
@@ -163,10 +105,8 @@ cmr_int isp_deinit(cmr_handle handle)
 		ISP_LOGE("fail to deinit access %ld", ret);
 
 	pthread_mutex_destroy(&cxt->isp_mw_mutex);
-	if (NULL != cxt) {
-		free(cxt);
-		cxt = NULL;
-	}
+	free(cxt);
+	cxt = NULL;
 
 	ISP_LOGI("done %ld", ret);
 
@@ -219,14 +159,12 @@ cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 	return ret;
 }
 
+
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
 
-#ifndef FPGA_BRINGUP
-	return ret;
-#endif
 	if (!handle || !param_ptr) {
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
@@ -278,31 +216,56 @@ cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_ptr, struct ip
 	UNUSED(out_ptr);
 
 	if (NULL == cxt) {
-		ISP_LOGE("fail to check isp handler");
+		ISP_LOGE("fail to check isp mw handler");
 		return ISP_PARAM_NULL;
 	}
-
-	ret = ispmw_check_proc_start_param(in_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to check init param"));
+	if ((ISP_ZERO != (in_ptr->src_frame.img_size.w & ISP_ONE)) ||
+	    (ISP_ZERO != (in_ptr->src_frame.img_size.h & ISP_ONE))) {
+		ret = -ISP_PARAM_ERROR;
+		ISP_RETURN_IF_FAIL(ret, ("fail to check start param input size: w:%d, h:%d",
+					 in_ptr->src_frame.img_size.w,
+					 in_ptr->src_frame.img_size.h));
+	}
 
 	ret = isp_alg_fw_proc_start(cxt->alg_fw_handle, in_ptr);
 
 	return ret;
 }
 
+void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
+{
+	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
+	UNUSED(evt);
+
+	isp_dev_statis_info_proc(cxt->dev_access_handle, data);
+}
+
+void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
+{
+	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
+	UNUSED(evt);
+
+	isp_dev_irq_info_proc(cxt->dev_access_handle, data);
+}
+
+
+/************** Unused or unsupported mw interface below******************/
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
+	UNUSED(handle);
+	UNUSED(in_ptr);
 	UNUSED(out_ptr);
 
-	if (NULL == cxt) {
-		ISP_LOGE("fail to check isp handler");
-		return ISP_PARAM_NULL;
-	}
-
-	ret = ispmw_check_proc_next_param(in_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to check init param"));
+	ret = ISP_ERROR;
+	ISP_LOGE("error: not supported interface.\n");
 
 	return ret;
 }
+
+void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
+{
+	UNUSED(handle);
+	UNUSED(grab_event_cb);
+}
+

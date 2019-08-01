@@ -961,8 +961,8 @@ static cmr_int ov32a1q_drv_set_master_FrameSync(cmr_handle handle,
     SENSOR_LOGI("E");
 
     /*TODO*/
-
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x80);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);//80);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x08);//80);
 
     /*END*/
 

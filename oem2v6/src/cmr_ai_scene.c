@@ -24,7 +24,7 @@
 #define SMALL_PIC_SIZE 228
 
 #ifndef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 struct class_ai_scene {
@@ -124,6 +124,7 @@ exit:
             }
             sem_destroy(&ai_scene_handle->sem_ai_scene);
             free(ai_scene_handle);
+            ai_scene_handle = NULL;
         }
     }
     CMR_LOGD("X");
@@ -159,6 +160,7 @@ static cmr_int ai_scene_close(cmr_handle class_handle) {
     sem_post(&ai_scene_handle->sem_ai_scene);
     sem_destroy(&ai_scene_handle->sem_ai_scene);
     free(ai_scene_handle);
+    ai_scene_handle = NULL;
 
     CMR_LOGD("X");
     return ret;
@@ -239,8 +241,8 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     src.data_end.y_endian = 0;
     src.data_end.uv_endian = 0;
     crop_size = min(in->src_frame.size.width, in->src_frame.size.height);
-    src.rect.start_x = (in->src_frame.size.width - crop_size + 1)>>1;
-    src.rect.start_y = (in->src_frame.size.height - crop_size + 1)>>1;
+    src.rect.start_x = (in->src_frame.size.width - crop_size + 1) >> 1;
+    src.rect.start_y = (in->src_frame.size.height - crop_size + 1) >> 1;
     src.rect.width = crop_size;
     src.rect.height = crop_size;
     memcpy(&dst, &src, sizeof(struct img_frm));

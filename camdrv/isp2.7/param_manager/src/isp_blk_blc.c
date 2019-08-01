@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,10 +69,6 @@ cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *
 		blc_header_ptr->is_update = ISP_ONE;
 		break;
 
-	case ISP_PM_BLK_BLC_MODE:
-		blc_ptr->cur.mode = *((cmr_u32 *) param_ptr0);
-		blc_header_ptr->is_update = ISP_ONE;
-		break;
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;

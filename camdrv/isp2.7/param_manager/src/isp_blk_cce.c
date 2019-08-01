@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 #define LOG_TAG "isp_blk_cce"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param * cce_param, cmr_u32 hue, cmr_u32 saturation)
+static cmr_s32 _pm_cce_adjust_hue_saturation(
+	struct isp_cce_param * cce_param,
+	cmr_u32 hue, cmr_u32 saturation)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 cce_coef_index = 0;
@@ -72,7 +74,8 @@ cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param * cce_param, cmr_u32 
 	return rtn;
 }
 
-cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param * cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain)
+static cmr_s32 _pm_cce_adjust_gain_offset(
+	struct isp_cce_param * cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 cce_coef_index = 0;
@@ -122,7 +125,7 @@ cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param * cce_param, cmr_u16 r_g
 	return rtn;
 }
 
-cmr_s32 _pm_cce_adjust(struct isp_cce_param * cce_param)
+static cmr_s32 _pm_cce_adjust(struct isp_cce_param * cce_param)
 {
 	cmr_s32 rtn0 = ISP_SUCCESS;
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -332,7 +335,8 @@ cmr_s32 _pm_cce_set_param(void *cce_param, cmr_u32 cmd, void *param_ptr0, void *
 				b_gain = block_result->component[2].fix_data[0];
 
 				if (dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0] != r_gain ||
-				    dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1] != g_gain || dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2] != b_gain) {
+				    dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1] != g_gain ||
+				    dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2] != b_gain) {
 
 					rtn = _pm_cce_adjust_gain_offset(dst_ptr, r_gain, g_gain, b_gain);
 					if (ISP_SUCCESS == rtn)

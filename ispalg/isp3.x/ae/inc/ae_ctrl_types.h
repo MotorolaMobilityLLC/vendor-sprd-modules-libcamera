@@ -105,6 +105,7 @@ extern "C" {
 		AE_SET_SCENE_INFO,
 		AE_SET_APP_MODE,
 		AE_SET_TOUCH_ZONE,
+		AE_SET_3DNR_MODE,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -175,6 +176,7 @@ extern "C" {
 		AE_CB_AE_CALCOUT_NOTIFY,	//for Binding frame and calc ae dt
 		AE_CB_EXPTIME_NOTIFY,
 		AE_CB_HDR_STATIS_SIZE,
+		AE_CB_3DNR_NOTIFY,
 		AE_CB_MAX
 	};
 
@@ -412,6 +414,7 @@ extern "C" {
 		cmr_u32 led_idx;		//enum isp_flash_led
 		cmr_u32 led0_enable;
 		cmr_u32 led1_enable;
+		cmr_u32 multiColorLcdEn;
 	};
 
 	struct ae_awb_gain {
@@ -555,6 +558,7 @@ extern "C" {
 		cmr_u32 cur_dgain;
 		cmr_u32 cur_iso;
 		cmr_u32 is_stab;
+		cmr_u32 near_stab;
 		cmr_u32 line_time;
 		cmr_u32 frame_line;
 		cmr_u32 target_lum;

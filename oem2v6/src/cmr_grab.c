@@ -25,6 +25,9 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <sys/resource.h>
+#include <cutils/sched_policy.h>
+#include <system/thread_defs.h>
 #include "cmr_grab.h"
 #include "sprd_img.h"
 #include "cmr_oem.h"
@@ -72,6 +75,7 @@ cmr_int cmr_grap_free_grab(struct cmr_grab *p_grab) {
         close(p_grab->fd);
     }
     free((void *)p_grab);
+    p_grab = NULL;
 
     return 0;
 }
@@ -257,6 +261,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
         pthread_mutex_destroy(&p_grab->path_mutex[channel_id]);
     }
     free((void *)grab_handle);
+    grab_handle = NULL;
 
 exit:
     CMR_LOGI("X");
@@ -390,7 +395,9 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
         sensor_if.if_spec.mipi.bits_per_pxl = sn_if->if_spec.mipi.bits_per_pxl;
         sensor_if.if_spec.mipi.is_loose = sn_if->if_spec.mipi.is_loose;
         sensor_if.if_spec.mipi.lane_num = sn_if->if_spec.mipi.lane_num;
-
+        sensor_if.if_spec.mipi.is_cphy = sn_if->if_spec.mipi.is_cphy;
+        sensor_if.if_spec.mipi.lane_switch_eb = sn_if->if_spec.mipi.lane_switch_eb;
+        sensor_if.if_spec.mipi.lane_seq = sn_if->if_spec.mipi.lane_seq;
         if (CAMERA_POWER_OPT_FLAG) {
             CMR_LOGI("support power opt\n");
             sensor_if.if_spec.mipi.pclk = sn_if->if_spec.mipi.pclk;
@@ -674,6 +681,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     function_mode.need_4in1 = config->cfg.need_4in1;
     function_mode.dual_cam = config->cfg.dual_cam;
+    function_mode.need_afbc = config->cfg.afbc_enable;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, &function_mode);
 
     sprd_3dnr_mode.channel_id = ch_id;
@@ -710,7 +718,8 @@ cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id,
     return ret;
 }
 
-cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle, cmr_u32 auto_3dnr_enable) {
+cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle,
+                               cmr_u32 auto_3dnr_enable) {
     cmr_int ret = 0;
     struct cmr_grab *p_grab;
     struct sprd_img_auto_3dnr_mode auto_3dnr_mode;
@@ -1355,6 +1364,10 @@ static void *cmr_grab_thread_proc(void *data) {
         return NULL;
 
     CMR_LOGI("E");
+
+    // change this thread priority
+    setpriority(PRIO_PROCESS, 0, -10);
+    //set_sched_policy(0, SP_FOREGROUND);
 
     struct camera_context *cxt =
         (struct camera_context *)p_grab->init_param.oem_handle;

@@ -79,6 +79,7 @@ cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle) {
         (unsigned int)(count * sizeof(struct cmr_msg_in)));
     if (NULL == msg_cxt->msg_head) {
         free(msg_cxt);
+        msg_cxt = NULL;
         return -CMR_MSG_NO_MEM;
     }
 
@@ -330,6 +331,7 @@ cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle) {
             if (msg_cur->msg.alloc_flag == 1) {
                 if (msg_cur->msg.data) {
                     free(msg_cur->msg.data);
+                    msg_cur->msg.data = NULL;
                 }
             }
             sem_post(&msg_cur->sem);
@@ -349,6 +351,7 @@ cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle) {
     pthread_mutex_destroy(&msg_cxt->mutex);
     bzero(msg_cxt, sizeof(*msg_cxt));
     free(msg_cxt);
+    msg_cxt = NULL;
 
     return CMR_MSG_SUCCESS;
 }
@@ -400,7 +403,7 @@ static void *cmr_common_routine(void *client_data) {
         if (message.alloc_flag) {
             if (message.data) {
                 free(message.data);
-                message.data = 0;
+                message.data = NULL;
             }
         }
 
@@ -439,6 +442,7 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
     if (rtn) {
         CMR_LOGE("No mem to create msg queue");
         free((void *)thread);
+        thread = NULL;
         return rtn;
     }
 
@@ -450,6 +454,8 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
         CMR_LOGE("Fail to create thread");
         free((void *)thread->queue_handle);
         free((void *)thread);
+        thread->queue_handle = NULL;
+        thread = NULL;
         return rtn;
     }
 
@@ -460,6 +466,8 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
         CMR_LOGE("Fail to send INIT message to thread");
         free((void *)thread->queue_handle);
         free((void *)thread);
+        thread->queue_handle = NULL;
+        thread = NULL;
         return rtn;
     }
 

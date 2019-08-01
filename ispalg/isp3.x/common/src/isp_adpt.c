@@ -69,8 +69,9 @@ static cmr_s32 adpt_get_ae_ops(struct third_lib_info *lib_info, struct adpt_ops_
 }
 
 extern struct adpt_ops_type awb_sprd_adpt_ops_ver1;
+extern struct adpt_ops_type awb_sprd_adpt_ops_ver3;
 static cmr_u32 *awb_sprd_version_ops[] = {
-	NULL,						// (cmr_u32*)&awb_sprd_adpt_ops_ver0,
+	(cmr_u32 *) & awb_sprd_adpt_ops_ver3,
 	(cmr_u32 *) & awb_sprd_adpt_ops_ver1,
 };
 

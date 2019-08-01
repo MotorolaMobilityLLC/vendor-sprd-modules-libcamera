@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 #define LOG_TAG "isp_blk_grgb"
 #include "isp_blocks_cfg.h"
 
-cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
+static cmr_u32 _pm_grgb_convert_param(
+	void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
@@ -29,7 +30,8 @@ cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		grgb_param = (struct sensor_grgb_level *)((cmr_u8 *) dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_grgb_level));
+		grgb_param = (struct sensor_grgb_level *)((cmr_u8 *) dst_ptr->param_ptr +
+				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_grgb_level));
 	}
 
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -111,7 +113,8 @@ cmr_s32 _pm_grgb_init(void *dst_grgb_param, void *src_grgb_param, void *param1, 
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
-	rtn = _pm_grgb_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	if (!grgb_header_ptr->bypass)
+		rtn = _pm_grgb_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= grgb_header_ptr->bypass;
 
 	if (ISP_SUCCESS != rtn) {
@@ -142,14 +145,12 @@ cmr_s32 _pm_grgb_set_param(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 cur_level = 0;
 
-			val_range.min = 0;
-			val_range.max = 255;
-
-			if (0 == block_result->update) {
+			if (!block_result->update || header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
-
+			val_range.min = 0;
+			val_range.max = 255;
 			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
@@ -157,10 +158,10 @@ cmr_s32 _pm_grgb_set_param(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void
 			}
 
 			cur_level = (cmr_u32) block_result->component[0].fix_data[0];
-			if (cur_level != dst_ptr->cur_level || nr_tool_flag[5] || block_result->mode_flag_changed) {
+			if (cur_level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_GRGB_T] || block_result->mode_flag_changed) {
 				dst_ptr->cur_level = cur_level;
 				header_ptr->is_update = ISP_ONE;
-				nr_tool_flag[5] = 0;
+				nr_tool_flag[ISP_BLK_GRGB_T] = 0;
 
 				rtn = _pm_grgb_convert_param(dst_ptr, cur_level, header_ptr->mode_id, block_result->scene_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
@@ -169,14 +170,13 @@ cmr_s32 _pm_grgb_set_param(void *grgb_param, cmr_u32 cmd, void *param_ptr0, void
 					return rtn;
 				}
 			}
+			ISP_LOGV("ISP_SMART: cmd = %d, is_update = %d, cur_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 		}
 		break;
 
 	default:
 		break;
 	}
-
-	ISP_LOGV("ISP_SMART: cmd = %d, is_update = %d, cur_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }
@@ -188,7 +188,7 @@ cmr_s32 _pm_grgb_get_param(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_GRGB;
+	param_data_ptr->id = ISP_BLK_GRGB_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

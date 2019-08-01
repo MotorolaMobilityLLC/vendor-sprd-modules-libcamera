@@ -42,7 +42,7 @@
 #include <utils/Log.h>
 //#include <log/logd.h>
 #endif
-#include <log/uio.h>
+//#include <log/uio.h>
 
 #ifdef __cplusplus
 extern "C" {

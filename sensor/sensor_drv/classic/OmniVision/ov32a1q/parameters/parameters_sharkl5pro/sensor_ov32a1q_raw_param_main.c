@@ -31,12 +31,9 @@
 /* Begin Include */
 #include "sensor_ov32a1q_raw_param_common.c"
 #include "sensor_ov32a1q_raw_param_prv_0.c"
-#include "sensor_ov32a1q_raw_param_prv_1.c"
 #include "sensor_ov32a1q_raw_param_cap_0.c"
-#include "sensor_ov32a1q_raw_param_cap_1.c"
 #include "sensor_ov32a1q_raw_param_video_0.c"
 #include "sensor_ov32a1q_raw_param_video_1.c"
-#include "sensor_ov32a1q_raw_param_video_2.c"
 
 /* End Include */
 
@@ -50,7 +47,7 @@
 
 
 /* Capture Sizes:
-	4224x3168,3264x2448,1920x1080
+	3264x2448,1920x1080
 */
 
 
@@ -157,16 +154,16 @@ static struct sensor_raw_info s_ov32a1q_mipi_raw_info=
 	{
 		{s_ov32a1q_tune_info_common, sizeof(s_ov32a1q_tune_info_common)},
 		{s_ov32a1q_tune_info_prv_0, sizeof(s_ov32a1q_tune_info_prv_0)},
-		{s_ov32a1q_tune_info_prv_1, sizeof(s_ov32a1q_tune_info_prv_1)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_ov32a1q_tune_info_cap_0, sizeof(s_ov32a1q_tune_info_cap_0)},
-		{s_ov32a1q_tune_info_cap_1, sizeof(s_ov32a1q_tune_info_cap_1)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_ov32a1q_tune_info_video_0, sizeof(s_ov32a1q_tune_info_video_0)},
 		{s_ov32a1q_tune_info_video_1, sizeof(s_ov32a1q_tune_info_video_1)},
-		{s_ov32a1q_tune_info_video_2, sizeof(s_ov32a1q_tune_info_video_2)},
+		{NULL, 0},
 		{NULL, 0},
 	},
 	&s_ov32a1q_trim_info,
@@ -175,31 +172,31 @@ static struct sensor_raw_info s_ov32a1q_mipi_raw_info=
 	{
 		&s_ov32a1q_fix_info_common,
 		&s_ov32a1q_fix_info_prv_0,
-		&s_ov32a1q_fix_info_prv_1,
+		NULL,
 		NULL,
 		NULL,
 		&s_ov32a1q_fix_info_cap_0,
-		&s_ov32a1q_fix_info_cap_1,
+		NULL,
 		NULL,
 		NULL,
 		&s_ov32a1q_fix_info_video_0,
 		&s_ov32a1q_fix_info_video_1,
-		&s_ov32a1q_fix_info_video_2,
+		NULL,
 		NULL,
 	},
 	{
 		{s_ov32a1q_common_tool_ui_input, sizeof(s_ov32a1q_common_tool_ui_input)},
 		{s_ov32a1q_prv_0_tool_ui_input, sizeof(s_ov32a1q_prv_0_tool_ui_input)},
-		{s_ov32a1q_prv_1_tool_ui_input, sizeof(s_ov32a1q_prv_1_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_ov32a1q_cap_0_tool_ui_input, sizeof(s_ov32a1q_cap_0_tool_ui_input)},
-		{s_ov32a1q_cap_1_tool_ui_input, sizeof(s_ov32a1q_cap_1_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_ov32a1q_video_0_tool_ui_input, sizeof(s_ov32a1q_video_0_tool_ui_input)},
 		{s_ov32a1q_video_1_tool_ui_input, sizeof(s_ov32a1q_video_1_tool_ui_input)},
-		{s_ov32a1q_video_2_tool_ui_input, sizeof(s_ov32a1q_video_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 	},
 	{

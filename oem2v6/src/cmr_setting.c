@@ -182,6 +182,7 @@ struct setting_hal_param {
     struct cmr_range_fps_param range_fps;
     cmr_uint is_update_range_fps;
     cmr_uint sprd_zsl_enabled;
+    cmr_uint sprd_afbc_enabled;
     cmr_uint video_slow_motion_flag;
     cmr_uint sprd_pipviv_enabled;
     cmr_uint sprd_eis_enabled;
@@ -739,7 +740,6 @@ static cmr_int setting_get_encode_rotation(struct setting_component *cpt,
                                            struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-    ;
 
     parm->cmd_type_value = hal_param->encode_rotation;
     return ret;
@@ -2457,6 +2457,18 @@ static cmr_int setting_set_auto_3dnr(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_afbc_enable(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set AFBC enable %ld", parm->cmd_type_value);
+
+    hal_param->sprd_afbc_enabled = parm->cmd_type_value;
+
+    return ret;
+}
+
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -2625,6 +2637,17 @@ static cmr_int setting_get_3dnr_type(struct setting_component *cpt,
 
     parm->cmd_type_value = hal_param->sprd_3dnr_type;
     CMR_LOGD("get 3dnr type %ld", parm->cmd_type_value);
+
+    return ret;
+}
+
+static cmr_int setting_get_afbc_enabled(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->sprd_afbc_enabled;
+    CMR_LOGD("get afbc enabled %ld", parm->cmd_type_value);
 
     return ret;
 }
@@ -3302,7 +3325,7 @@ setting_get_pre_lowflash_value(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->flash_param.has_preflashed;
-    CMR_LOGD("hal_param->flash_param.has_preflashed=%lld",
+    CMR_LOGD("hal_param->flash_param.has_preflashed=%ld",
              hal_param->flash_param.has_preflashed);
 
     return ret;
@@ -3790,6 +3813,9 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_device_orientation);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
                              setting_set_auto_3dnr);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AFBC_ENABLED,
+                             setting_set_afbc_enable);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED, setting_get_afbc_enabled);
     setting_parms_inited = 1;
     return 0;
 }
@@ -3850,8 +3876,10 @@ cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
 setting_out:
     if (ret) {
         CMR_LOGE("error ret %ld", ret);
-        if (cpt)
+        if (cpt) {
             free(cpt);
+            cpt = NULL;
+        }
     }
     return ret;
 }
@@ -3910,6 +3938,7 @@ cmr_int cmr_setting_deinit(cmr_handle setting_handle) {
     pthread_mutex_destroy(&cpt->isp_mutex);
 
     free(cpt);
+    cpt = NULL;
 deinit_out:
     return ret;
 }

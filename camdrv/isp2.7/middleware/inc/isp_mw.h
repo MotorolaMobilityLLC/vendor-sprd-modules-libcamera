@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,6 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 
 #define ISP_FLASH_MAX_CELL	40
 #define ISP_MODE_NUM_MAX 16
-
-#define ISP_CTRL_EVT_TX				(1 << 2)
-#define ISP_CTRL_EVT_SOF			(1 << 3)
-#define ISP_CTRL_EVT_AE				(1 << 4)
-#define ISP_CTRL_EVT_SW_AE			((1 << 4) + 1)
-#define ISP_CTRL_EVT_AF				(1 << 5)
-#define ISP_CTRL_EVT_PDAF			(1 << 6)
-#define ISP_PROC_AFL_DONE			(1 << 7)
-#define ISP_PROC_HIST_DONE			(1 << 8)
-#define ISP_CTRL_EVT_EBD			(1 << 9)
 
 
 #define ISP_THREAD_QUEUE_NUM			(100)
@@ -68,6 +58,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_RGB_GAIN,
 	ISP_AE_SET_WBC_GAIN,
 	ISP_AE_MULTI_WRITE,
+	ISP_AE_HDR_BOKEH,
 	ISP_AE_SET_BLK_NUM,
 
 	ISP_AF_SET_POS,
@@ -277,90 +268,88 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_CHN_GAIN,
 	ISP_CTRL_GET_EXIF_INFO,
 	ISP_CTRL_ISO = 19,
-	ISP_CTRL_WB_TRIM,
+	ISP_CTRL_WB_TRIM = 20,
 	ISP_CTRL_PARAM_UPDATE,
 	ISP_CTRL_FLASH_EG,
 	ISP_CTRL_VIDEO_MODE,
-	ISP_CTRL_AF_STOP,
+	ISP_CTRL_AF_STOP = 24,
 	ISP_CTRL_AE_TOUCH,
 	ISP_CTRL_AE_INFO,
 	ISP_CTRL_SHARPNESS,
-	ISP_CTRL_GET_FAST_AE_STAB,
+	ISP_CTRL_GET_FAST_AE_STAB = 28,
 	ISP_CTRL_GET_AE_STAB,
 	ISP_CTRL_GET_AE_CHG,
 	ISP_CTRL_GET_AWB_STAT,
-	ISP_CTRL_GET_AF_STAT,
+	ISP_CTRL_GET_AF_STAT = 32,
 	ISP_CTRL_GAMMA,
 	ISP_CTRL_DENOISE,
 	ISP_CTRL_SMART_AE,
-	ISP_CTRL_CONTINUE_AF,
+	ISP_CTRL_CONTINUE_AF = 36,
 	ISP_CTRL_AF_DENOISE,
 	ISP_CTRL_FLASH_CTRL = 38,	// for isp tool
 	ISP_CTRL_AE_CTRL = 39,	// for isp tool
 	ISP_CTRL_AF_CTRL = 40,	// for isp tool
-	ISP_CTRL_REG_CTRL = 41,	// for isp tool
 	ISP_CTRL_DENOISE_PARAM_READ,	//for isp tool
 	ISP_CTRL_DUMP_REG,	//for isp tool
 	ISP_CTRL_AF_END_INFO,	// for isp tool
-	ISP_CTRL_FLASH_NOTICE,
+	ISP_CTRL_FLASH_NOTICE = 44,
 	ISP_CTRL_AE_FORCE_CTRL,	// for mp tool
 	ISP_CTRL_GET_AE_STATE,	// for isp tool
 	ISP_CTRL_SET_LUM,	// for isp tool
-	ISP_CTRL_GET_LUM,	// for isp tool
+	ISP_CTRL_GET_LUM = 48,	// for isp tool
 	ISP_CTRL_SET_AF_POS,	// for isp tool
 	ISP_CTRL_GET_AF_POS,	// for isp tool
-	ISP_CTRL_GET_AF_MODE,	// for isp tool
 	ISP_CTRL_GET_BOKEH_RANGE,
-	ISP_CTRL_GET_REBOKEH_DATA,
-	ISP_CTRL_FACE_AREA,
+	ISP_CTRL_GET_AF_MODE,	// for isp tool
+	ISP_CTRL_FACE_AREA = 53,
 	ISP_CTRL_AF_FACE_AREA,
 	ISP_CTRL_SCALER_TRIM,
 	ISP_CTRL_START_3A,
-	ISP_CTRL_STOP_3A,
+	ISP_CTRL_STOP_3A = 57,
 	IST_CTRL_SNAPSHOT_NOTICE,
 	ISP_CTRL_SFT_READ,
 	ISP_CTRL_SFT_WRITE,
-	ISP_CTRL_SFT_SET_PASS,
+	ISP_CTRL_SFT_SET_PASS = 61,
 	ISP_CTRL_SFT_GET_AF_VALUE,
 	ISP_CTRL_SFT_SET_BYPASS,
 	ISP_CTRL_GET_AWB_GAIN,	// for mp tool
-	ISP_CTRL_GET_AWB_CT,
+	ISP_CTRL_GET_AWB_CT = 65,
 	ISP_CTRL_RANGE_FPS,
 	ISP_CTRL_SET_AE_FPS,	// for LLS feature
 	ISP_CTRL_BURST_NOTICE,
-	ISP_CTRL_GET_INFO,
+	ISP_CTRL_GET_INFO = 69,
 	ISP_CTRL_SET_AE_NIGHT_MODE,
 	ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK,
 	ISP_CTRL_SET_AE_LOCK_UNLOCK,
-	ISP_CTRL_TOOL_SET_SCENE_PARAM,
+	ISP_CTRL_TOOL_SET_SCENE_PARAM = 73,
 	ISP_CTRL_IFX_PARAM_UPDATE,
 	ISP_CTRL_FORCE_AE_QUICK_MODE,
 	ISP_CTRL_DENOISE_PARAM_UPDATE,	//for isp tool
-	ISP_CTRL_SET_AE_EXP_TIME,
+	ISP_CTRL_SET_AE_EXP_TIME = 77,
 	ISP_CTRL_SET_AE_SENSITIVITY,
 	ISP_CTRL_SET_DZOOM_FACTOR,
 	ISP_CTRL_SET_CONVERGENCE_REQ,
-	ISP_CTRL_SET_SNAPSHOT_FINISHED,
+	ISP_CTRL_SET_SNAPSHOT_FINISHED = 81,
 	ISP_CTRL_GET_EXIF_DEBUG_INFO,
 	ISP_CTRL_GET_CUR_ADGAIN_EXP,
 	ISP_CTRL_SET_FLASH_MODE,
-	ISP_CTRL_SET_AE_MODE,
+	ISP_CTRL_SET_AE_MODE = 85,
 	ISP_CTRL_SET_AE_FIX_EXP_TIME,
 	ISP_CTRL_SET_AE_FIX_SENSITIVITY,
 	ISP_CTRL_SET_AE_FIX_FRAM_DURA,
-	ISP_CTRL_SET_AE_MANUAL_EXPTIME,
+	ISP_CTRL_SET_AE_MANUAL_EXPTIME = 89,
 	ISP_CTRL_SET_AE_MANUAL_GAIN,
 	ISP_CTRL_SET_AE_MANUAL_ISO,
 	ISP_CTRL_SET_AE_ENGINEER_MODE,
-	ISP_CTRL_GET_YIMG_INFO,
+	ISP_CTRL_GET_YIMG_INFO = 93,
 	ISP_CTRL_SET_PREV_YIMG,
 	ISP_CTRL_SET_PREV_YUV,
 	ISP_CTRL_SET_PREV_PDAF_RAW,
-	ISP_CTRL_GET_VCM_INFO,
+	ISP_CTRL_GET_VCM_INFO = 97,
 	ISP_CTRL_GET_FPS,
 	ISP_CTRL_GET_LEDS_CTRL,
 	ISP_CTRL_GET_GLB_GAIN,
-	ISP_CTRL_AE_EXP_COMPENSATION,
+	ISP_CTRL_AE_EXP_COMPENSATION = 101,
 	/* warning if you wanna send async msg
 	 * please add msg id below here
 	 */
@@ -370,33 +359,34 @@ enum isp_ctrl_cmd {
 	 * please add msg id below here
 	 */
 	ISP_CTRL_DIRECT_MSG_BEGIN,
-	ISP_CTRL_SET_AUX_SENSOR_INFO,
+	ISP_CTRL_SET_AUX_SENSOR_INFO = 105,
 	ISP_CTRL_DIRECT_MSG_END,
 	ISP_CTRL_SET_DCAM_TIMESTAMP,
 	ISP_CTRL_GET_FULLSCAN_INFO,
-	ISP_CTRL_SET_AF_BYPASS,
+	ISP_CTRL_SET_AF_BYPASS = 109,
 	ISP_CTRL_POST_3DNR,
 	ISP_CTRL_POST_YNR,
 	ISP_CTRL_3DNR,
-	ISP_CTRL_GET_MICRODEPTH_PARAM,
+	ISP_CTRL_GET_MICRODEPTH_PARAM = 113,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_SENSITIVITY,
-	ISP_CTRL_GET_CNR2_PARAM,
-	ISP_CTRL_AUTO_HDR_MODE,
-	ISP_CTRL_SET_3DNR_MODE,
 	ISP_CTRL_GET_CNR2_EN,
+	ISP_CTRL_GET_CNR2_PARAM = 117,
+	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_CAP_FLAG,
 	ISP_CTRL_AI_PROCESS_START,
-	ISP_CTRL_AI_PROCESS_STOP,
+	ISP_CTRL_AI_PROCESS_STOP = 121,
 	ISP_CTRL_AI_SET_IMG_PARAM,
 	ISP_CTRL_AI_GET_IMG_FLAG,
 	ISP_CTRL_AI_GET_STATUS,
-	ISP_CTRL_GET_SW3DNR_PARAM,
+	ISP_CTRL_GET_SW3DNR_PARAM = 125,
 	ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM,
 	/*camera mode which appearby right slip*/
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_SET_VCM_DIST,
+	ISP_CTRL_GET_REBOKEH_DATA,
+	ISP_CTRL_SET_3DNR_MODE,
 	ISP_CTRL_MAX
 };
 
@@ -420,9 +410,11 @@ enum isp_flash_led_tag {
 	ISP_FLASH_LED_1 = 0x0002
 };
 
+
 enum {
 	ISP_SINGLE = 0,
 	ISP_DUAL_NORMAL,
+	ISP_DUAL_SBS,
 	ISP_BLUR_REAR,
 	ISP_BOKEH,
 	ISP_WIDETELE,
@@ -454,6 +446,14 @@ enum isp_ai_scene_type {
 	ISP_AI_SCENE_PET,
 	ISP_AI_SCENE_FLOWER,
 	ISP_AI_SCENE_MAX
+};
+
+enum isp_ai_rotation {
+	ISP_AI_SD_ORNT_0,
+	ISP_AI_SD_ORNT_90,
+	ISP_AI_SD_ORNT_180,
+	ISP_AI_SD_ORNT_270,
+	ISP_AI_SD_ORNT_MAX
 };
 
 struct isp_flash_cfg {
@@ -489,25 +489,6 @@ struct yimg_info {
 	cmr_uint camera_id;
 };
 
-
-struct isp_afctrl_roi {
-    cmr_u32 sx;
-    cmr_u32 sy;
-    cmr_u32 ex;
-    cmr_u32 ey;
-};
-
-struct isp_af_notice {
-    cmr_u32 mode;
-    cmr_u32 valid_win;
-    cmr_u32 focus_type;
-    cmr_u32 motor_pos;
-    cmr_u32 af_mode;
-    struct isp_afctrl_roi af_roi;
-    cmr_u32 reserved[4];
-};
-
-
 struct yuv_info_t {
 	cmr_uint camera_id;
 	cmr_u8 *yuv_addr;
@@ -521,26 +502,22 @@ struct pd_frame_in {
 	void *private_data;
 };
 
-struct trim_info {
-	cmr_u32 image_width;
-	cmr_u32 image_height;
-	cmr_u32 trim_start_x;
-	cmr_u32 trim_start_y;
-	cmr_u32 trim_width;
-	cmr_u32 trim_height;
+struct isp_afctrl_roi {
+    cmr_u32 sx;
+    cmr_u32 sy;
+    cmr_u32 ex;
+    cmr_u32 ey;
 };
 
-#ifdef FPGA_BRINGUP
 struct isp_af_notice {
-    cmr_u32 mode;
-    cmr_u32 valid_win;
-    cmr_u32 focus_type;
-    cmr_u32 motor_pos;
-    cmr_u32 af_mode;
-    struct isp_afctrl_roi af_roi;
-    cmr_u32 reserved[4];
+	cmr_u32 mode;
+	cmr_u32 valid_win;
+	cmr_u32 focus_type;
+	cmr_u32 motor_pos;
+	cmr_u32 af_mode;
+	struct isp_afctrl_roi af_roi;
+	cmr_u32 reserved[4];
 };
-#endif
 
 enum isp_flash_type {
 	ISP_FLASH_TYPE_PREFLASH,
@@ -621,6 +598,15 @@ struct af_aux_sensor_info_t {
 	};
 };
 
+struct af_relbokeh_golden_data {
+	cmr_u16 golden_macro;
+	cmr_u16 golden_infinity;
+	cmr_u16 golden_count;
+	cmr_u16 golden_distance[40];
+	cmr_u16 golden_vcm[40];
+	cmr_u16 reserved[10];
+};
+
 struct isp_af_ts {
 	cmr_u64 timestamp;
 	cmr_u32 capture;
@@ -665,25 +651,6 @@ struct isp_img_frm {
 	cmr_u32 format_pattern;
 };
 
-struct soft_isp_misc_img_frm {
-	struct isp_img_frm cpu_frminfo;
-	void *graphicbuffer;
-};
-
-typedef struct {
-	int F_number;
-	int sel_x;
-	int sel_y;
-	unsigned char *DisparityImage;
-} WeightParams_t;
-
-struct soft_isp_frm_param {
-	struct isp_img_frm raw;
-	struct soft_isp_misc_img_frm m_yuv_pre;
-	struct soft_isp_misc_img_frm m_yuv_bokeh;
-	WeightParams_t weightparam;
-	uint32_t af_status;
-};
 
 struct isp_flash_element {
 	cmr_u16 index;
@@ -722,6 +689,7 @@ struct isp_sensor_ex_info {
 	struct drv_fov_info fov_info;
 };
 
+
 struct isp_video_limit {
 	cmr_u32 width;
 	cmr_u32 height;
@@ -734,12 +702,6 @@ struct isp_sensor_fps_info {
 	cmr_u32 min_fps;
 	cmr_u32 is_high_fps;
 	cmr_u32 high_fps_skip_num;
-};
-
-struct isp_snapshot_notice {
-	cmr_u32 type;
-	cmr_u32 preview_line_time;
-	cmr_u32 capture_line_time;
 };
 
 struct isp_range_fps {
@@ -762,10 +724,6 @@ struct isp_info {
 	cmr_s32 size;
 };
 
-struct isp_hdr_ev_param {
-	cmr_s32 level;
-	cmr_s32 skip_frame_num;
-};
 
 struct isp_sensor_resolution_info {
 	struct isp_size yuv_img_size;
@@ -779,6 +737,7 @@ struct isp_sensor_resolution_info {
 	struct isp_size sensor_max_size;
 	struct isp_size sensor_output_size;
 };
+
 
 struct ips_in_param {
 	struct isp_img_frm src_frame;
@@ -796,6 +755,7 @@ struct ips_in_param {
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
 	cmr_u32 sensor_id;
+	cmr_u32 hwsim_4in1_width;
 };
 
 struct ips_out_param {
@@ -821,7 +781,6 @@ struct isp_video_start {
 	struct isp_size size;
 	struct isp_size dcam_size;
 	struct isp_sensor_resolution_info resolution_info;
-	cmr_u16 is_slow_motion;
 	cmr_u16 is_refocus;
 	enum isp_format format;
 	enum isp_video_mode mode;
@@ -832,31 +791,14 @@ struct isp_video_start {
 	cmr_uint lsc_phys_addr;
 	cmr_uint lsc_virt_addr;
 	cmr_s32 lsc_mfd;
-	cmr_uint anti_flicker_buf_size;
-	cmr_uint anti_flicker_buf_num;
-	cmr_uint anti_flicker_phys_addr;
-	cmr_uint anti_flicker_virt_addr;
 	cmr_u32 is_need_flash;
 	cmr_u32 capture_skip_num;
 	struct isp_sensor_fps_info sensor_fps;
-	void *tuning_ae_addr;
-	cmr_s32 raw_buf_fd;
-	cmr_uint raw_buf_phys_addr;
-	cmr_uint raw_buf_virt_addr;
-	cmr_uint raw_buf_size;
-	cmr_uint raw_buf_width;
-	cmr_uint raw_buf_height;
-	cmr_s32 highiso_buf_fd;
-	cmr_uint highiso_buf_phys_addr;
-	cmr_uint highiso_buf_virt_addr;
-	cmr_uint highiso_buf_size;
 	struct isp_size live_view_sz;
 	cmr_u8 pdaf_enable;
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
-	struct isp_img_frm s_yuv_depth;
-	struct isp_img_frm s_yuv_sw_out;
 	cmr_u32 is_4in1_sensor;
 	cmr_uint mode_4in1;
 };
@@ -912,21 +854,6 @@ struct isp_sw3dnr_info {
         cmr_s32 reserverd[16];
 };
 
-struct isp_ynr_info {
-	unsigned int src_img_w;
-	unsigned int src_img_h;
-	unsigned int dst_img_w;
-	unsigned int dst_img_h;
-	unsigned int src_buf_fd;
-	unsigned int dst_buf_fd;
-	struct ynr_param ynr_param;
-};
-
-struct isp_exp_comprnsation {
-	cmr_u16 idx;
-	cmr_s16 value;
-};
-
 struct isp_exp_compensation{
 	cmr_s32 comp_val;
 	struct isp_range_l comp_range;
@@ -972,20 +899,8 @@ struct isp_init_param {
 	uint32_t is_faceId_unlock;
 };
 
-struct work_mode_info {
-	cmr_u32 is_4in1_sensor;
-	cmr_u32 cam_4in1_mode;
-	cmr_u32 mode_id;
-	cmr_u32 prv_mode_id;
-	cmr_u32 cap_mode_id;
-};
-
-struct isp_sw_cnr2_level_info {
-	cmr_u8 level_enable;
-	cmr_u16 low_ct_thrd;
-};
-
-struct isp_sw_filter_weights {
+struct isp_sw_filter_weights
+{
 	cmr_u8 distWeight[9];
 	cmr_u8 rangWeight[128];
 };
@@ -996,12 +911,9 @@ struct isp_sw_cnr2_info {
 	struct isp_sw_filter_weights weight[4][2];
 };
 
-enum isp_ai_rotation {
-    ISP_AI_SD_ORNT_0,
-    ISP_AI_SD_ORNT_90,
-    ISP_AI_SD_ORNT_180,
-    ISP_AI_SD_ORNT_270,
-    ISP_AI_SD_ORNT_MAX
+struct img_offset {
+	uint32_t x;
+	uint32_t y;
 };
 
 struct isp_ai_rect {
@@ -1135,12 +1047,7 @@ struct isp_ai_img_status {
 	enum isp_ai_img_flag img_flag;
 };
 
-typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,
-				    cmr_uint *sum_ptr, cmr_uint *phy_addr,
-				    cmr_uint *vir_addr, cmr_s32 *mfd, void *private_data);
-typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint *phy_addr,
-				  cmr_uint *vir_addr, cmr_s32 *fd,
-				  cmr_uint sum, void *private_data);
+
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
@@ -1153,9 +1060,10 @@ cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
+
+
 cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
-
 #endif

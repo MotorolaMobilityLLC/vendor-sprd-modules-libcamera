@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,74 @@
 
 #define INTERP_WEIGHT_UNIT 256
 
+cmr_s32 isp_gamma_adjust(struct isp_gamma_curve_info * src_ptr0,
+		struct isp_gamma_curve_info * src_ptr1,
+		struct isp_gamma_curve_info * dst_ptr,
+		struct isp_weight_value * point_ptr)
+{
 
-cmr_s32 isp_cmc_adjust_4_reduce_saturation(cmr_u16 cmc_in[9], cmr_u16 cmc_out[9], cmr_u32 percent)
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0, tmp = 0;
+	cmr_u32 scale_coef = 0;
+
+	if (point_ptr->value[0] == point_ptr->value[1]) {
+		memcpy((void *)dst_ptr, src_ptr0, sizeof(struct isp_gamma_curve_info));
+	} else {
+		scale_coef = point_ptr->weight[0] + point_ptr->weight[1];
+		if (0 == scale_coef) {
+			ISP_LOGE("fail to get weight[2] (%d, %d)\n",
+						point_ptr->weight[0], point_ptr->weight[1]);
+			return ISP_ERROR;
+		}
+		for (i = ISP_ZERO; i < ISP_GAMMA_SAMPLE_NUM; i++) {
+			dst_ptr->axis[0][i] = src_ptr0->axis[0][i];
+			tmp = (src_ptr0->axis[0][i] * point_ptr->weight[0] + \
+					src_ptr1->axis[0][i] * point_ptr->weight[1]) / scale_coef;
+			dst_ptr->axis[1][i] = tmp;
+		}
+	}
+
+	return rtn;
+}
+
+cmr_s32 isp_cmc_adjust(cmr_u16 src0[9], cmr_u16 src1[9],
+		struct isp_sample_point_info * point_ptr, cmr_u16 dst[9])
+{
+	cmr_u32 i, scale_coeff;
+
+	if ((NULL == src0) || (NULL == src1) || (NULL == dst)) {
+		ISP_LOGE("fail to get vailed pointer src0;%p /src1:%p /dst:%p\n", src0, src1, dst);
+		return ISP_ERROR;
+	}
+
+	if ((0 == point_ptr->weight0) && (0 == point_ptr->weight1)) {
+		ISP_LOGE("fail to get validate all weight \n");
+		return ISP_ERROR;
+	}
+
+	if (point_ptr->x0 == point_ptr->x1) {
+		memcpy((void *)dst, (void *)src0, sizeof(cmr_u16) * 9);
+	} else {
+		if (0 == point_ptr->weight0) {
+			memcpy((void *)dst, (void *)src1, sizeof(cmr_u16) * 9);
+		} else if (0 == point_ptr->weight1) {
+			memcpy((void *)dst, (void *)src0, sizeof(cmr_u16) * 9);
+		} else {
+			scale_coeff = point_ptr->weight0 + point_ptr->weight1;
+			for (i = 0; i < 9; i++) {
+				cmr_s32 x0 = (cmr_s16) (src0[i] << 2);
+				cmr_s32 x1 = (cmr_s16) (src1[i] << 2);
+				cmr_s32 x = (x0 * point_ptr->weight0 + x1 * point_ptr->weight1) / scale_coeff;
+				dst[i] = (cmr_u16) ((x >> 2) & 0x3fff);
+			}
+		}
+	}
+
+	return ISP_SUCCESS;
+}
+
+cmr_s32 isp_cmc_adjust_4_reduce_saturation(
+		cmr_u16 cmc_in[9], cmr_u16 cmc_out[9], cmr_u32 percent)
 {
 	static const cmr_s64 r2y[9] = { 299, 587, 114, -168, -331, 500, 500, -419, -81 };
 	static const cmr_s64 y2r[9] = { 1000, 0, 1402, 1000, -344, -714, 1000, 1772, 0 };
@@ -171,6 +237,55 @@ cmr_s32 isp_cce_adjust(cmr_u16 src[9], cmr_u16 coef[3], cmr_u16 dst[9], cmr_u16 
 	}
 
 	return ISP_SUCCESS;
+}
+
+cmr_s32 isp_lsc_adjust(void *lnc0_ptr, void *lnc1_ptr, cmr_u32 lnc_len,
+			struct isp_weight_value * point_ptr, void *dst_lnc_ptr)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0x00;
+
+	cmr_u16 *src0_ptr = (cmr_u16 *) lnc0_ptr;
+	cmr_u16 *src1_ptr = (cmr_u16 *) lnc1_ptr;
+	cmr_u16 *dst_ptr = (cmr_u16 *) dst_lnc_ptr;
+
+	if ((NULL == lnc0_ptr)
+	    || (NULL == dst_lnc_ptr)) {
+		ISP_LOGE("fail to get lnc buf  %p, %p, %p \n", lnc0_ptr, lnc1_ptr, dst_lnc_ptr);
+		return ISP_ERROR;
+	}
+
+	if ((0 == point_ptr->weight[0]) && (0 == point_ptr->weight[1])) {
+		ISP_LOGE("fail to get weight[2]\n");
+		return ISP_ERROR;
+	}
+
+	if (point_ptr->value[0] == point_ptr->value[1]) {
+		memcpy(dst_lnc_ptr, lnc0_ptr, lnc_len);
+	} else {
+		if (0 == point_ptr->weight[0]) {
+			memcpy(dst_lnc_ptr, lnc1_ptr, lnc_len);
+		} else if (0 == point_ptr->weight[1]) {
+			memcpy(dst_lnc_ptr, lnc0_ptr, lnc_len);
+		} else {
+			cmr_u32 lnc_num = lnc_len / sizeof(cmr_u16);
+			cmr_u32 scale_coeff = 0;
+
+			ISP_LOGV("lnc interpolation: index(%d, %d); weight: (%d, %d), num=%d, src0 = %p, src1 = %p",
+				 point_ptr->value[0], point_ptr->value[1],
+				 point_ptr->weight[0], point_ptr->weight[1],
+				 lnc_num, src0_ptr, src1_ptr);
+
+			scale_coeff = point_ptr->weight[0] + point_ptr->weight[1];
+
+			for (i = 0x00; i < lnc_num; i++) {
+				dst_ptr[i] = (src0_ptr[i] * point_ptr->weight[0] + \
+							src1_ptr[i] * point_ptr->weight[1]) / scale_coeff;
+			}
+		}
+	}
+
+	return rtn;
 }
 
 cmr_s32 isp_hue_saturation_2_gain(cmr_s32 hue, cmr_s32 saturation, struct isp_rgb_gains * gain)
@@ -321,7 +436,12 @@ static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 			cmr_u32 src1_val_h = src1_val & 0x1FF;
 			cmr_u32 src1_val_s = (src1_val >> 9) & 0x7FF;
 
+			if (src0_val_h + 128 < i)
+				src0_val_h += 360;
+			if (src1_val_h + 128 < i)
+				src1_val_h += 360;
 			cmr_u32 dst_val_h = (src0_val_h * weight[0] + src1_val_h * weight[1]) / INTERP_WEIGHT_UNIT;
+			dst_val_h %= 360;
 			cmr_u32 dst_val_s = (src0_val_s * weight[0] + src1_val_s * weight[1]) / INTERP_WEIGHT_UNIT;
 
 			cmr_u32 dst_val = (dst_val_h & 0x1FF) | ((dst_val_s & 0x7FF) << 9);
@@ -333,14 +453,17 @@ static void _interp_uint20(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], c
 	}
 }
 
-cmr_s32 isp_interp_data(void *dst, void *src[2], cmr_u16 weight[2], cmr_u32 data_num, cmr_u32 data_type)
+cmr_s32 isp_interp_data(void *dst, void *src[2],
+			cmr_u16 weight[2], cmr_u32 data_num, cmr_u32 data_type)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 
-	ISP_LOGV("src[0]=%p, src[1]=%p, dst=%p, weight=(%d, %d), data_num=%d, type=%d", src[0], src[1], dst, weight[0], weight[1], data_num, data_type);
+	ISP_LOGV("src[0]=%p, src[1]=%p, dst=%p, weight=(%d, %d), data_num=%d, type=%d",
+				src[0], src[1], dst, weight[0], weight[1], data_num, data_type);
 
 	if (NULL == dst || NULL == src[0] || NULL == src[1] || 0 == data_num) {
-		ISP_LOGE("fail to get valid param: dst=%p, src=(%p, %p), data_num=%d\n", dst, src[0], src[1], data_num);
+		ISP_LOGE("fail to get valid param: dst=%p, src=(%p, %p), data_num=%d\n",
+					dst, src[0], src[1], data_num);
 		return ISP_ERROR;
 	}
 

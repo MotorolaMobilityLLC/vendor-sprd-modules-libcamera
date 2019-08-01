@@ -326,7 +326,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	memset(&param_data, 0, sizeof(param_data));
 #endif
-#if defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	char data[16];
 	cmr_s32 *out = NULL;
 	cmr_u32 k=0;
@@ -367,7 +367,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	}
 #endif
 
-#if defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 #define AFL_BATCH_SIZE_GLB ((80)*24)
 #define AFL_GLB_ROW (80)
 #define AFL_RIG_ROW (481)
@@ -533,7 +533,7 @@ exit:
        if(ae_stat_ptr)
                free(ae_stat_ptr);
 
-#if defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	if (out)
 		free(out);
 #endif
@@ -689,7 +689,7 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	cxt->start_col = 0;
 	cxt->end_col = cxt->width;
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	afl_info_v3.bayer2y_chanel = 0;
 	afl_info_v3.bayer2y_mode = 2;
 #endif

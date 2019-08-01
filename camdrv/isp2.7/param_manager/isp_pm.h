@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,12 @@
 		input.param_data_ptr = &param_data;\
 		input.param_num = 1;} while (0)
 
+#define IS_DCAM_BLOCK(id) ((id == ISP_BLK_BLC) ||\
+	(id == DCAM_BLK_RGB_DITHER) || (id == ISP_BLK_RGB_GAIN) || \
+	(id == ISP_BLK_2D_LSC) || (id == ISP_BLK_AWB_NEW) || \
+	(id == DCAM_BLK_BPC_V1) || (id == DCAM_BLK_RGB_AFM_V1) ||\
+	(id == ISP_BLK_RGB_AEM) || (id == DCAM_BLK_PPE))
+
 enum isp_pm_cmd {
 	ISP_PM_CMD_SET_BASE = 0x1000,
 	ISP_PM_CMD_SET_MODE,
@@ -40,12 +46,8 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_SET_AF,
 	ISP_PM_CMD_SET_SMART,
 	ISP_PM_CMD_SET_OTHERS,
-	ISP_PM_CMD_SET_SCENE_MODE,
 	ISP_PM_CMD_SET_SPECIAL_EFFECT,
-	ISP_PM_CMD_ALLOC_BUF_MEMORY,
 	ISP_PM_CMD_SET_PARAM_SOURCE,
-	ISP_PM_CMD_SET_PRV_PARAM,
-	ISP_PM_CMD_SET_CAP_PARAM,
 	ISP_PM_CMD_SET_LOWLIGHT_FLAG,
 
 	ISP_PM_CMD_GET_BASE = 0x2000,
@@ -57,19 +59,19 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_GET_INIT_SMART,
 	ISP_PM_CMD_GET_INIT_AFT,
 	ISP_PM_CMD_GET_INIT_DUAL_FLASH,
+	ISP_PM_CMD_GET_INIT_PDAF,
+	ISP_PM_CMD_GET_INIT_TOF,
 	ISP_PM_CMD_GET_SINGLE_SETTING,
 	ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
 	ISP_PM_CMD_GET_ISP_SETTING,
 	ISP_PM_CMD_GET_ISP_ALL_SETTING,
 	ISP_PM_CMD_GET_DV_MODEID_BY_FPS,
 	ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION,
-	ISP_PM_CMD_GET_AE_VERSION_ID,
 	ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION,
 	ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION,
 	ISP_PM_CMD_GET_AE_SYNC,
+	ISP_PM_CMD_GET_AE_ADAPT_PARAM,
 	ISP_PM_CMD_GET_4IN1_PARAM,
-	ISP_PM_CMD_GET_INIT_PDAF,
-	ISP_PM_CMD_GET_INIT_TOF,
 	ISP_PM_CMD_GET_ATM_PARAM,
 
 	ISP_PM_CMD_UPDATE_BASE = 0x3000,
@@ -77,12 +79,25 @@ enum isp_pm_cmd {
 
 	ISP_PM_CMD_SET_THIRD_PART_BASE = 0x4000,
 	ISP_PM_CMD_GET_THIRD_PART_BASE = 0x5000,
-	ISP_PM_CMD_GET_THIRD_PART_INIT_SFT_AF,
-
 	ISP_PM_CMD_UPDATE_THIRD_PART_BASE = 0x6000,
 };
 
+struct pm_workmode_input {
+	cmr_u32 cam_4in1_mode;
+	cmr_u32 pm_sets_num;
+	enum tuning_mode mode[PARAM_SET_MAX];
+	enum tuning_scene_mode scene[PARAM_SET_MAX];
+	enum tuning_custom define[PARAM_SET_MAX];
+	cmr_u32 img_w[PARAM_SET_MAX];
+	cmr_u32 img_h[PARAM_SET_MAX];
+};
+
+struct pm_workmode_output {
+	cmr_u32 mode_id[PARAM_SET_MAX];
+};
+
 struct isp_pm_init_input {
+	struct sensor_raw_info *sensor_raw_info_ptr;
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
@@ -125,5 +140,6 @@ cmr_handle isp_pm_init(struct isp_pm_init_input *input, struct isp_pm_init_outpu
 cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_deinit(cmr_handle handle);
+
 
 #endif

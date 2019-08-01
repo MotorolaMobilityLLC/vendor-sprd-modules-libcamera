@@ -401,7 +401,17 @@ cmr_int cmr_sns_copy_info(struct sensor_exp_info *out_sensor_info,
         in_sensor_info->sensor_interface.pixel_width;
     out_sensor_info->sn_interface.is_loose =
         in_sensor_info->sensor_interface.is_loose;
-
+    if(in_sensor_info->sensor_interface.lane_switch_eb != 0) {
+          out_sensor_info->sn_interface.lane_switch_eb = 1;
+          out_sensor_info->sn_interface.lane_seq =
+          in_sensor_info->sensor_interface.lane_seq;/*default 0x0123*/
+    }else{
+          out_sensor_info->sn_interface.lane_switch_eb = 0;
+          cmr_u64 lane_seq = 0x0123;
+          in_sensor_info->sensor_interface.lane_seq = lane_seq;/*default 0x0123*/
+    }
+    out_sensor_info->sn_interface.is_cphy =
+        in_sensor_info->sensor_interface.is_cphy;
     if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_YUV422){
         out_sensor_info->image_format = CAM_IMG_FMT_YUV422P;
     } else if (out_sensor_info->image_format == SENSOR_IMAGE_FORMAT_RAW){

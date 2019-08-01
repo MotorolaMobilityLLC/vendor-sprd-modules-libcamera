@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,15 @@ cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void *param1, voi
 
 	dst_ptr->ct_value = 5000;
 	memset((void *)&dst_ptr->cur, 0x00, sizeof(dst_ptr->cur));
-		dst_ptr->cur.awbc_bypass = header_ptr->bypass;
 
+	dst_ptr->cur.awbc_bypass = header_ptr->bypass;
 	dst_ptr->cur.gain.r = 0x700;
 	dst_ptr->cur.gain.gr = 0x400;
 	dst_ptr->cur.gain.gb = 0x400;
 	dst_ptr->cur.gain.b = 0x5d0;
 	dst_ptr->cur.thrd.r = 0x3ff;
-	dst_ptr->cur.thrd.g = 0x3ff;
+	dst_ptr->cur.thrd.gr = 0x3ff;
+	dst_ptr->cur.thrd.gb = 0x3ff;
 	dst_ptr->cur.thrd.b = 0x3ff;
 	dst_ptr->cur.gain_offset.r = 0;
 	dst_ptr->cur.gain_offset.gr = 0;
@@ -70,31 +71,10 @@ cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0
 		}
 		break;
 
-	case ISP_PM_BLK_AWBM:
-
-		break;
-
-	case ISP_PM_BLK_AWB_CT:
-		dst_ptr->ct_value = *((cmr_u32 *) param_ptr0);
-		break;
-
 	case ISP_PM_BLK_AWBC_BYPASS:
 		dst_ptr->cur.awbc_bypass = *((cmr_u32 *) param_ptr0);
 		break;
 
-	case ISP_PM_BLK_AWBM_BYPASS:
-		break;
-
-	case ISP_PM_BLK_MEMORY_INIT:
-		{
-			cmr_u32 i = 0;
-			struct isp_pm_memory_init_param *memory_ptr = (struct isp_pm_memory_init_param *)param_ptr0;
-			for (i = 0; i < memory_ptr->size_info.count_lines; ++i) {
-				dst_ptr->awb_statistics[i].data_ptr = ((cmr_u8 *) memory_ptr->buffer.data_ptr + memory_ptr->size_info.pitch * i);
-				dst_ptr->awb_statistics[i].size = memory_ptr->size_info.pitch;
-			}
-		}
-		break;
 	default:
 		awb_header_ptr->is_update = ISP_ZERO;
 		break;
@@ -119,22 +99,6 @@ cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void *rtn_param0
 		param_data_ptr->data_ptr = &awb_param_ptr->cur;
 		param_data_ptr->data_size = sizeof(awb_param_ptr->cur);
 		*update_flag = 0;
-		break;
-
-	case ISP_PM_BLK_AWBM:
-		break;
-
-	case ISP_PM_BLK_AWBC_BYPASS:
-		break;
-
-	case ISP_PM_BLK_AWB_CT:
-		param_data_ptr->data_ptr = &awb_param_ptr->ct_value;
-		param_data_ptr->data_size = sizeof(awb_param_ptr->ct_value);
-		break;
-
-	case ISP_PM_BLK_AWBM_STATISTIC:
-		param_data_ptr->data_ptr = (void *)&awb_param_ptr->stat;
-		param_data_ptr->data_size = sizeof(awb_param_ptr->stat);
 		break;
 
 	default:

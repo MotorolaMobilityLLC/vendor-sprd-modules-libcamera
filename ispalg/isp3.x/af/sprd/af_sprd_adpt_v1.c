@@ -97,7 +97,7 @@ static const char *focus_state_str[] = {
 
 static char AFlog_buffer[2048] = { 0 };
 
-#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6)
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
 static struct af_iir_nr_info_u af_iir_nr[3] = {
 	{			// weak
 	 .iir_nr_en = 1,
@@ -208,14 +208,14 @@ static void afm_disable(af_ctrl_t * af)
 
 static void afm_setup(af_ctrl_t * af)
 {
-#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6)
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
 	struct af_enhanced_module_info_u afm_enhanced_module;
 #endif
 	cmr_u32 mode = 1;
 
 	af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 	af->cb_ops.af_monitor_mode(af->caller, (void *)&mode);
-#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6)
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
 	af->cb_ops.af_monitor_iir_nr_cfg(af->caller, (void *)&(af_iir_nr[af->afm_tuning.iir_level]));
 
 	memcpy(&(afm_enhanced_module), &af_enhanced_module, sizeof(struct af_enhanced_module_info_u));
@@ -249,7 +249,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		win[i].end_y = 2;
 	}
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 #define PIXEL_OFFSET 100
 	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face roi settings
 		// crop enable
@@ -408,14 +408,14 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 	property_get("debug.isp.af.fvlog", prop, "0");
 	val = atoi(prop);
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 
 #if defined(CONFIG_ISP_2_5)
 #define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
 #define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
 #endif
 
-#if defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 #define FV0_INDEX(block) ((block) * 3)
 #define FV1_INDEX(block) (((block) * 3) + 1)
 #endif
@@ -1079,6 +1079,8 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	rpt->target_lum_ori = ae->ae_report.target_lum_ori;
 	rpt->flag4idx = ae->ae_report.flag4idx;
 	rpt->bisFlashOn = af->flash_on;
+	rpt->near_stable = ae->ae_report.near_stab;
+	ISP_LOGV("(near,full) = (%d,%d)", rpt->near_stable, rpt->bAEisConverge);
 	return 0;
 }
 
@@ -1242,7 +1244,7 @@ static cmr_u8 if_af_end_notify(eAF_MODE AF_mode, cmr_u8 AF_Result, void *cookie)
 
 	ISP_LOGI("notify_stop: mode[%d], type[%d], result[%d]!!!", AF_mode, notify_type, AF_Result);
 
-	notify_stop(af, (HAVE_PEAK == AF_Result ? 1 : 0), notify_type);
+	notify_stop(af, 1, notify_type);
 
 	// debug only
 	roi_info_t *r = &af->roi;
@@ -2976,7 +2978,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		return AFV1_SUCCESS;
 	}
 
-	if((AF_STOPPED == af->focus_state)||(0 == af->bypass && 1 == af->last_bypass_state)) {
+	if ((AF_STOPPED == af->focus_state) || (0 == af->bypass && 1 == af->last_bypass_state)) {
 		trigger_notice_force(af);
 	}
 
@@ -3746,6 +3748,29 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 				 limited->vcm_dac[1], limited->vcm_dac[2], limited->vcm_dac[3], limited->vcm_dac[4], limited->vcm_dac[5], limited->vcm_dac[6]);
 			break;
 		}
+	case AF_CMD_GET_BOKEH_GOLDEN_DATA:
+		{
+			struct realbokeh_golden_vcm_data *golden_data = (struct realbokeh_golden_vcm_data *)param0;
+			golden_data->golden_count = af->golden_data.golden_count;
+			golden_data->golden_macro = af->golden_data.golden_macro;
+			golden_data->golden_infinity = af->golden_data.golden_infinity;
+			ISP_LOGD("golden_macro=%d,golden_infinity=%d,golden_count=%d", af->golden_data.golden_macro, af->golden_data.golden_infinity, af->golden_data.golden_count);
+			memcpy(&golden_data->golden_distance[0], &af->golden_data.golden_distance[0], (golden_data->golden_count) * sizeof(cmr_u16));
+			memcpy(&golden_data->golden_vcm[0], &af->golden_data.golden_vcm[0], (golden_data->golden_count) * sizeof(cmr_u16));
+			for (cmr_u8 i = 0; i < golden_data->golden_count; i++) {
+				ISP_LOGD("golden_distance =%d,golden_vcm = %d", golden_data->golden_distance[i], golden_data->golden_vcm[i]);
+			}
+			break;
+		}
+	case AF_CMD_GET_OTP_DATA:
+		{
+			struct afctrl_otp_data *otp_data = (struct afctrl_otp_data *)param0;
+			otp_data->otp_type = af->af_otp_type;
+			otp_data->infinity = af->otp_info.rdm_data.infinite_cali;
+			otp_data->macro = af->otp_info.rdm_data.macro_cali;
+			ISP_LOGD("otp type %d, inf,macro(%d,%d)", otp_data->otp_type, otp_data->infinity, otp_data->macro);
+			break;
+		}
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -3907,6 +3932,20 @@ cmr_s32 pd_otp_info_parser(af_ctrl_t * af, struct afctrl_init_in * in_p)
 	return AFV1_SUCCESS;
 }
 
+static cmr_u8 set_bokeh_golden_data_info(af_ctrl_t * af, bokeh_golden_data_info * bokeh_golden_data)
+{
+	af->golden_data.golden_count = bokeh_golden_data->golden_count;
+	af->golden_data.golden_macro = bokeh_golden_data->golden_macro;
+	af->golden_data.golden_infinity = bokeh_golden_data->golden_infinity;
+	ISP_LOGD("golden_macro=%d,golden_infinity=%d,golden_count=%d", af->golden_data.golden_macro, af->golden_data.golden_infinity, af->golden_data.golden_count);
+	memcpy(&af->golden_data.golden_distance[0], &bokeh_golden_data->golden_distance[0], (bokeh_golden_data->golden_count) * sizeof(cmr_u16));
+	memcpy(&af->golden_data.golden_vcm[0], &bokeh_golden_data->golden_vcm[0], (bokeh_golden_data->golden_count) * sizeof(cmr_u16));
+	for (cmr_u8 i = 0; i < af->golden_data.golden_count; i++) {
+		ISP_LOGD("golden_distance =%d,golden_vcm = %d", af->golden_data.golden_distance[i], af->golden_data.golden_vcm[i]);
+	}
+	return 0;
+}
+
 cmr_handle sprd_afv1_init(void *in, void *out)
 {
 	af_ctrl_t *af = NULL;
@@ -3916,6 +3955,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	AF_OTP_Data otp_info;
 	lens_range_info lens_range;
+	bokeh_golden_data_info golden_data;
 	memset((void *)&otp_info, 0, sizeof(AF_OTP_Data));
 
 	if (NULL == init_param) {
@@ -3952,7 +3992,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->isp_info.width = init_param->src.w;
 	af->isp_info.height = init_param->src.h;
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	// sharkl3 & later arch with many rois
 	af->isp_info.win_num = 10;	// keep invariant as original
 #else
@@ -4044,7 +4084,10 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	result->log_info.log_len = af->af_dump_info_len;
 
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_GET_OTP, &otp_info);
+	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_GET_BOKEH_GOLDEN_DATA, &golden_data);
+	set_bokeh_golden_data_info(af, &golden_data);
 	ISP_LOGI("otp bIsExist = %d, (inf, macro) = %d,%d.", otp_info.bIsExist, otp_info.INF, otp_info.MACRO);
+	af->af_otp_type = otp_info.bIsExist;
 	if (T_LENS_BY_OTP != otp_info.bIsExist) {
 		af->otp_info.rdm_data.infinite_cali = otp_info.INF;
 		af->otp_info.rdm_data.macro_cali = otp_info.MACRO;

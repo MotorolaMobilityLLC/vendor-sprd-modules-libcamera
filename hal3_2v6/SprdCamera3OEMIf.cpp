@@ -49,6 +49,10 @@
 #include <cutils/ashmem.h>
 #include <ui/GraphicBufferMapper.h>
 
+#include <sys/resource.h>
+#include <cutils/sched_policy.h>
+#include <system/thread_defs.h>
+
 #include "libyuv/convert.h"
 #include "libyuv/convert_from.h"
 #include "libyuv/scale.h"
@@ -121,6 +125,8 @@ namespace sprdcamera {
 
 // 300 means 300ms
 #define ZSL_SNAPSHOT_THRESHOLD_TIME 300
+// modification for mZslSnapshotTime, 30 means 30 ms
+#define MODIFICATION_TIME 30
 
 // add for default zsl buffer
 #define DEFAULT_ZSL_BUFFER_NUM 3
@@ -611,6 +617,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mChannel2FaceBeautyFlag = 0;
 
     mFlush = 0;
+    mVideoAFBCFlag = 0;
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -721,6 +728,7 @@ void SprdCamera3OEMIf::initialize() {
     mCallbackWidth = 0;
     mCallbackHeight = 0;
     mStreamOnWithZsl = 0;
+    mIsNeedFlashFired = 0;
     mSprdZslEnabled = 0;
     mSprd3dnrType = 0;
     mVideoSnapshotType = 0;
@@ -728,6 +736,7 @@ void SprdCamera3OEMIf::initialize() {
     mChannel2FaceBeautyFlag = 0;
     mZslCaptureExitLoop = false;
     mFlush = 0;
+    mVideoAFBCFlag = 0;
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -819,12 +828,12 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         stopPreviewInternal();
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
-            video_stab_close(mPreviewInst);
+            video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
             HAL_LOGI("preview stab close");
         }
         if (mEisVideoInit) {
-            video_stab_close(mVideoInst);
+            video_stab_close(&mVideoInst);
             mEisVideoInit = false;
             HAL_LOGI("video stab close");
         }
@@ -1894,6 +1903,11 @@ int SprdCamera3OEMIf::setPreviewParams() {
         captureSize.width = mCallbackWidth;
         captureSize.height = mCallbackHeight;
         mPictureFormat = mCallbackFormat;
+    }
+
+    if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
+        captureSize.width = 0;
+        captureSize.height = 0;
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE,
@@ -3022,6 +3036,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         }
     }
 
+    mZslCaptureExitLoop = false;
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
     mVideo3dnrFlag = VIDEO_OFF;
@@ -3031,6 +3046,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = true;
     } else if (mRecordingMode == false && mIsIspToolMode == 1) {
         mSprdZslEnabled = false;
+    } else if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
+        mSprdZslEnabled = false;
     } else if (mRecordingMode == false && mStreamOnWithZsl == 1) {
         mSprdZslEnabled = true;
     } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
@@ -3039,9 +3056,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW) {
             // 1 for 3dnr hw process.
             if (grab_capability.support_3dnr_mode == 1) {
-                mVideoCopyFromPreviewFlag = false;
+                // TBD: check the code later
             } else {
-                mVideoCopyFromPreviewFlag = true;
                 mVideo3dnrFlag = VIDEO_ON;
                 camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag,
                               NULL);
@@ -3102,6 +3118,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     HAL_LOGD("mVideoSnapshotType=%d", mVideoSnapshotType);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
              (cmr_uint)mVideoSnapshotType);
+
+    HAL_LOGD("mVideoAFBCFlag=%d", mVideoAFBCFlag);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AFBC_ENABLED,
+             (cmr_uint)mVideoAFBCFlag);
 
     if (sprddefInfo.sprd_3dcapture_enabled) {
         mZslNum = DUALCAM_ZSL_NUM;
@@ -3731,7 +3751,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
                        frame->width * frame->height * 3 / 2);
     } else {
-        deinit_fb_handle(&face_beauty);
+        if (frame->type != PREVIEW_ZSL_FRAME &&
+            frame->type != PREVIEW_CANCELED_FRAME) {
+            deinit_fb_handle(&face_beauty);
+        }
     }
 #endif
 
@@ -3833,7 +3856,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                            sprddefInfo.slowmotion > 1) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
                 } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
                 }
@@ -3844,7 +3867,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (frame->type == PREVIEW_FRAME) {
 #ifdef CONFIG_CAMERA_EIS
             HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
-            if (mRecordingMode && sprddefInfo.sprd_eis_enabled) {
+            if (sprddefInfo.sprd_eis_enabled) {
                 // camera exit/switch dont need to do eis
                 if (mFlush == 0) {
                     EisPreviewFrameStab(frame);
@@ -3864,41 +3887,32 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                         }
                     }
                 }
-            }
 
-            if (mIsRecording && rec_stream) {
                 calculateTimestampForSlowmotion(buffer_timestamp);
-
-                if (mVideoCopyFromPreviewFlag) {
-                    ret = rec_stream->getQBufAddrForNum(
-                        frame_num, &videobuf_vir, &videobuf_phy, &fd0);
-                    if (ret || videobuf_vir == 0) {
-                        HAL_LOGE("getQBufAddrForNum failed");
-                        goto exit;
-                    }
-
-                    pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
-                                                  &prebuf_phy, &fd1);
-                    HAL_LOGV(
-                        "frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx",
-                        frame_num, videobuf_phy, videobuf_vir);
-                    HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
-                             frame_num, prebuf_phy, prebuf_vir);
-                    memcpy((void *)videobuf_vir, (void *)prebuf_vir,
-                           mPreviewWidth * mPreviewHeight * 3 / 2);
-                    flushIonBuffer(fd0, (void *)videobuf_vir, 0,
-                                   mPreviewWidth * mPreviewHeight * 3 / 2);
-                    channel->channelCbRoutine(frame_num,
-                                              mSlowPara.rec_timestamp,
-                                              CAMERA_STREAM_TYPE_VIDEO);
+                ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir,
+                                                    &videobuf_phy, &fd0);
+                if (ret || videobuf_vir == 0) {
+                    HAL_LOGE("getQBufAddrForNum failed");
+                    goto exit;
                 }
 
+                pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
+                                              &prebuf_phy, &fd1);
+                HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx",
+                         frame_num, videobuf_phy, videobuf_vir);
+                HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
+                         frame_num, prebuf_phy, prebuf_vir);
+                memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+                       mPreviewWidth * mPreviewHeight * 3 / 2);
+                flushIonBuffer(fd0, (void *)videobuf_vir, 0,
+                               mPreviewWidth * mPreviewHeight * 3 / 2);
                 channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
-                                          CAMERA_STREAM_TYPE_PREVIEW);
-            } else {
-                channel->channelCbRoutine(frame_num, buffer_timestamp,
-                                          CAMERA_STREAM_TYPE_PREVIEW);
+                                          CAMERA_STREAM_TYPE_VIDEO);
             }
+
+            channel->channelCbRoutine(frame_num, buffer_timestamp,
+                                      CAMERA_STREAM_TYPE_PREVIEW);
+
         } else {
             channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
                                               CAMERA_STREAM_TYPE_PREVIEW);
@@ -4657,7 +4671,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
     } else if (mRecordingMode == true) {
-        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
     } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     } else {
@@ -4835,14 +4849,6 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
                  parm4, getCameraStateStr(getPreviewState()));
         transitionState(getPreviewState(), SPRD_ERROR, STATE_PREVIEW);
         receiveCameraExitError();
-        break;
-
-    case CAMERA_EVT_CB_FLUSH:
-        ionBuf = (cam_ion_buffer_t *)parm4;
-        if (ionBuf) {
-            flushIonBuffer(ionBuf->fd, ionBuf->addr_vir, ionBuf->addr_phy,
-                           ionBuf->size);
-        }
         break;
 
     case CAMERA_EVT_CB_RESUME:
@@ -5031,6 +5037,10 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         break;
     }
     case CAMERA_EVT_CB_RETURN_SW_ALGORITHM_ZSL_BUF: {
+        if (mFlush) {
+            HAL_LOGD("mFlush=%d", mFlush);
+            goto exit;
+        }
         for (i = 0; i < (cmr_int)mZslNum; i++) {
             mHalOem->ops->camera_set_zsl_buffer(
                 mCameraHandle, mZslHeapArray[i]->phys_addr,
@@ -5042,11 +5052,11 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         HAL_LOGE("unkown cb = %d", cb);
         transitionState(getCaptureState(), SPRD_ERROR, STATE_CAPTURE);
         receiveTakePictureError();
-        // camera_set_capture_trace(0);
         break;
     }
     }
 
+exit:
     HAL_LOGD("X, state = %s", getCameraStateStr(getCaptureState()));
     ATRACE_END();
 }
@@ -6216,8 +6226,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSetting->getFLASHTag(&flashInfo);
             mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode,
                                                      &flashMode);
-            if (CAMERA_FLASH_MODE_TORCH == flashMode ||
-                CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+            if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+                if (CAMERA_FLASH_MODE_TORCH == flashMode ||
+                    CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+                    HAL_LOGD("set flashMode when ae_mode is not off and TORCH");
+                    mFlashMode = flashMode;
+                    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
+                             mFlashMode);
+                }
+            } else {
+                HAL_LOGD("set flashMode when ANDROID_CONTROL_AE_MODE_OFF");
                 mFlashMode = flashMode;
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
                          mFlashMode);
@@ -6379,9 +6397,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprd_3dnr_enabled, sprddefInfo.sprd_auto_3dnr_enable,
                  sprddefInfo.sprd_appmode_id, mIsNeedFlashFired);
 
-        if (sprd_3dnr_enabled == CAMERA_3DNR_ENABLE_ON) {
-            if (sprddefInfo.sprd_auto_3dnr_enable ==
-                CAMERA_AUTO_3DNR_ENABLE_ON) {
+        if (sprd_3dnr_enabled == 1) {
+            if (sprddefInfo.sprd_auto_3dnr_enable == CAMERA_3DNR_AUTO) {
                 // auto 3dnr mode, detected 3dnr scene
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
             } else {
@@ -9214,6 +9231,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
+        // for debug
+        // diff_ms = (zsl_frame.monoboottime - mZslSnapshotTime) / 1000000;
+        // HAL_LOGD("diff_ms=%" PRId64, diff_ms);
         HAL_LOGD("fd=0x%x", zsl_frame.fd);
         mHalOem->ops->camera_set_zsl_snapshot_buffer(
             obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
@@ -9255,6 +9275,9 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
+    // modification for mZslSnapshotTime
+    mZslSnapshotTime = mZslSnapshotTime - MODIFICATION_TIME * 1000000;
+
     if (isCapturing()) {
         WaitForCaptureDone();
     }
@@ -9289,6 +9312,12 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     } else {
         mCNRMode = 0;
+    }
+    if (getMultiCameraMode() == MODE_BLUR) {
+        property_get("persist.vendor.cam.cnr.mode", value, "0");
+        if (atoi(value)) {
+            mCNRMode = 1;
+        }
     }
     HAL_LOGD("mCNRMode = %d", mCNRMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
@@ -9420,6 +9449,9 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
 
     switch (message->msg_type) {
     case CMR_EVT_ZSL_MON_INIT:
+        // change this thread priority
+        setpriority(PRIO_PROCESS, 0, -10);
+        //set_sched_policy(0, SP_FOREGROUND);
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:
@@ -9488,6 +9520,10 @@ int32_t SprdCamera3OEMIf::setStreamOnWithZsl() {
 int32_t SprdCamera3OEMIf::getStreamOnWithZsl() { return mStreamOnWithZsl; }
 
 void SprdCamera3OEMIf::setFlushFlag(int32_t value) { mFlush = value; }
+
+void SprdCamera3OEMIf::setVideoAFBCFlag(cmr_u32 value) {
+    mVideoAFBCFlag = value;
+}
 
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EisPreview_init() {

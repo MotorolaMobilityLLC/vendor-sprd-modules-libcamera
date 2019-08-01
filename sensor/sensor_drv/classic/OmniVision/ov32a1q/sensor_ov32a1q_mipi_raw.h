@@ -1433,7 +1433,7 @@ static const SENSOR_REG_T ov32a1q_init_setting[] = {
     {0x034a, 0x09}, {0x034b, 0x00}, {0x034c, 0x00}, {0x034d, 0x00},
     {0x034e, 0x00}, {0x0360, 0x09}, {0x0361, 0x00}, {0x3000, 0x00},
     {0x3001, 0x00}, {0x3002, 0x00}, {0x3003, 0x00}, {0x3004, 0x04},
-    {0x3005, 0x00}, {0x3006, 0x00}, {0x3007, 0x08}, {0x3008, 0x00},
+    {0x3005, 0x08}, {0x3006, 0x00}, {0x3007, 0x08}, {0x3008, 0x00},
     {0x3009, 0x04}, {0x300d, 0x22}, {0x300e, 0x22}, {0x300f, 0x11},
     {0x3010, 0x00}, {0x3011, 0x04}, {0x3012, 0x41}, {0x3013, 0x00},
     {0x3014, 0x00}, {0x3015, 0x00}, {0x3016, 0x96}, {0x3017, 0x78},
@@ -2617,7 +2617,7 @@ static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
                      .avdd_val = SENSOR_AVDD_2800MV,
                      .iovdd_val = SENSOR_AVDD_1800MV,
                      .dvdd_val = SENSOR_AVDD_1200MV,
-#ifdef IMAGE_V_MIRROR
+#if defined(IMAGE_V_MIRROR)
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 #else
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
@@ -2640,8 +2640,8 @@ static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
                              .is_loose = 0,
-                             //  .lane_switch_eb = 1,
-                             //  .lane_seq = 0x2130,
+                             .lane_switch_eb = 1,
+                             .lane_seq = 0xfffff,//mipi pn swap all, others :0x2130, only for ums512
                          },
                      .change_setting_skip_num = 1,
                      .horizontal_view_angle = 65,

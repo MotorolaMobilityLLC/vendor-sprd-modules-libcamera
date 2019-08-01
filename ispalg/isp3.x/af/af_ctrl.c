@@ -219,7 +219,7 @@ static cmr_s32 af_set_monitor_win(void *handle_af, struct af_monitor_win *in_par
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
 
 	if (cxt_ptr->af_set_cb) {
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 		// only set most up and left roi
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_MONITOR_WIN, (void *)&(in_param->win_rect), NULL);
 #else

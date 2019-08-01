@@ -100,6 +100,7 @@ class SprdCamera3RegularChannel : public SprdCamera3Channel {
 
     int addStream(camera_stream_type_t stream_type, camera3_stream_t *stream);
     int deleteStream();
+    int clearAllStreams();
     int getStream(camera_stream_type_t stream_type, SprdCamera3Stream **stream);
     int channelClearInvalidQBuff(uint32_t frame_num, int64_t timestamp,
                                  camera_stream_type_t stream_type);
@@ -117,7 +118,6 @@ class SprdCamera3RegularChannel : public SprdCamera3Channel {
     static int kMaxBuffers;
 
   private:
-    int32_t stream_num;
     camera_channel_type_t mChannelType;
 
     SprdCamera3Stream *mCamera3Stream[CHANNEL_MAX_STREAM_NUM];
@@ -150,6 +150,7 @@ class SprdCamera3PicChannel : public SprdCamera3Channel {
 
     int addStream(camera_stream_type_t stream_type, camera3_stream_t *stream);
     int deleteStream();
+    int clearAllStreams();
     int getStream(camera_stream_type_t stream_type, SprdCamera3Stream **stream);
     int setCapturePara(camera_capture_mode_t cap_mode);
     int channelClearInvalidQBuff(uint32_t frame_num, int64_t timestamp,
@@ -162,7 +163,6 @@ class SprdCamera3PicChannel : public SprdCamera3Channel {
     static int kMaxBuffers;
 
   private:
-    int32_t stream_num;
     camera_channel_type_t mChannelType;
 
     SprdCamera3Stream *mCamera3Stream[CHANNEL_MAX_STREAM_NUM];

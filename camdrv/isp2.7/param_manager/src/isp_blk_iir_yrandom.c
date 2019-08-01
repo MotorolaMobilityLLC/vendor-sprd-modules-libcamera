@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 #define LOG_TAG "isp_blk_yrandom"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_iircnr_yrandom_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_iircnr_yrandom_init(
+	void *dst_iircnr_param, void *src_iircnr_param,
+	void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
@@ -25,7 +27,7 @@ cmr_s32 _pm_iircnr_yrandom_init(void *dst_iircnr_param, void *src_iircnr_param, 
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	dst_ptr->cur.yrandom_bypass = header_ptr->bypass;
+	dst_ptr->cur.bypass = header_ptr->bypass;
 
 	dst_ptr->cur.seed = src_ptr->iircnr_yrandom_level.yrandom_seed;
 	dst_ptr->cur.offset = src_ptr->iircnr_yrandom_level.yrandom_offset;
@@ -47,7 +49,7 @@ cmr_s32 _pm_iircnr_yrandom_set_param(void *iircnr_param, cmr_u32 cmd, void *para
 	UNUSED(cmd);
 
 	header_ptr->is_update = ISP_ONE;
-	dst_ptr->cur.yrandom_bypass = *((cmr_u32 *) param_ptr0);
+	dst_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 
 	return rtn;
 }
@@ -69,8 +71,8 @@ cmr_s32 _pm_iircnr_yrandom_get_param(void *iircnr_param, cmr_u32 cmd, void *rtn_
 		*update_flag = 0;
 		break;
 	case ISP_PM_BLK_GRGB_BYPASS:
-		param_data_ptr->data_ptr = (void *)&iircnr_ptr->cur.yrandom_bypass;
-		param_data_ptr->data_size = sizeof(iircnr_ptr->cur.yrandom_bypass);
+		param_data_ptr->data_ptr = (void *)&iircnr_ptr->cur.bypass;
+		param_data_ptr->data_size = sizeof(iircnr_ptr->cur.bypass);
 		break;
 	default:
 		break;

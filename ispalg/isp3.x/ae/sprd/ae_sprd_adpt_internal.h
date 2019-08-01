@@ -178,6 +178,7 @@ extern "C" {
 		cmr_s8 camera_id;
 		cmr_s8 is_snapshot;
 		cmr_u8 is_first;
+		cmr_u32 multiColorLcdEn;
 		/*
 		 * ae control operation infaces
 		 */
@@ -245,6 +246,7 @@ extern "C" {
 		 */
 		/*ST: for dual flash algorithm */
 		struct flash_swith_param flash_swith;
+		struct ae_thrd_param threednr_en_thrd;/*the 3DNR take effect threshold parmeters*/
 		cmr_u8 flash_ver;
 		cmr_s32 pre_flash_skip;
 		cmr_s32 aem_effect_delay;
@@ -273,6 +275,7 @@ extern "C" {
 		struct flash_cali_data flash_cali[32][32];
 		cmr_u8 flash_debug_buf[256 * 1024];
 		cmr_u32 flash_buf_len;
+		cmr_u8 flash_cap_proc;
 		/*
 		 * fd-ae param
 		 */
@@ -317,6 +320,7 @@ extern "C" {
 		 *Save exposure & iso value on manual ae mode
 		 */
 		cmr_u32 manual_exp_time;
+		cmr_u32 manual_exp_line_bkup;
 		cmr_u32 manual_iso_value;
 		/*
 		 * flash_callback control
@@ -332,6 +336,8 @@ extern "C" {
 		cmr_s16 hdr_up;
 		cmr_s16 hdr_down;
 		cmr_s16 hdr_base_ae_idx;
+		cmr_u16 hdr_exp_line;
+		cmr_s16 hdr_gain;
 		cmr_u8 hdr_version;
 		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
 		struct hdr_calc_result hdr_calc_result;
@@ -377,6 +383,7 @@ extern "C" {
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
 		cmr_u32 manual_level;
+		cmr_u32 munaul_iso_index;
 		struct ae_exposure_param_switch mode_switch[32];
 		cmr_u32 last_cam_mode;
 		cmr_u32 last_cur_lum;
@@ -403,6 +410,8 @@ extern "C" {
 		cmr_u32 end_id;
 
 		cmr_u32 pri_set;
+		cmr_u8 pre_flash_after_delay_cnt;
+		cmr_u8 flash_main_before_flag;
 	};
 
 #endif

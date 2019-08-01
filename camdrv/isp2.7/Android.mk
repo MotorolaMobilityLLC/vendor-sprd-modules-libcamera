@@ -22,19 +22,13 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),$(strip $(PLATFORM_VERSION_FILTER))),)
-ISP_HW_VER = 2v1a
-else
-ISP_HW_VER = 2v1
-endif
-
 # ************************************************
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
-	$(LOCAL_PATH)/../../oem$(ISP_HW_VER)/inc \
+	$(LOCAL_PATH)/../../oem2v6/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/ae/flash/inc \
@@ -50,13 +44,16 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/common/inc/ \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/afl/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/smart \
-	$(LOCAL_PATH)/../../ispalg/isp3.x/tof \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/pdaf/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/pdaf/sprd/inc \
 	$(LOCAL_PATH)/../../ispalg/isp3.x/ai/inc \
-	$(LOCAL_PATH)/../../sensor/inc \
-	$(LOCAL_PATH)/../../kernel_module/interface
+	$(LOCAL_PATH)/../../ispalg/isp3.x/tof \
+	$(LOCAL_PATH)/../../sensor/inc
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MODULAR)),true)
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../../kernel_module/interface
+endif
 # ************************************************
 # internal header file
 # ************************************************
@@ -65,15 +62,13 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/isp_tune \
 	$(LOCAL_PATH)/driver/inc \
 	$(LOCAL_PATH)/param_manager \
-	$(LOCAL_PATH)/bridge \
-	$(LOCAL_PATH)/param_parse
+	$(LOCAL_PATH)/bridge
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 LOCAL_SRC_FILES := $(call all-c-files-under, driver) \
 	$(call all-c-files-under, isp_tune) \
-	$(call all-c-files-under, middleware) \
-	$(call all-c-files-under, param_parse)
+	$(call all-c-files-under, middleware)
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 
@@ -90,6 +85,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
+LOCAL_CFLAGS += -DTEST_ON_HAPS
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))

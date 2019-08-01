@@ -210,8 +210,10 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 free_all:
-    if (NULL != hdr_handle)
+    if (NULL != hdr_handle) {
         free(hdr_handle);
+        hdr_handle = NULL;
+    }
     return CMR_CAMERA_NO_MEM;
 }
 
@@ -237,9 +239,10 @@ static cmr_int hdr_close(cmr_handle class_handle) {
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
     ret = hdr_sprd_adapter_deinit(hdr_handle);
 #endif
-    if (NULL != hdr_handle)
+    if (NULL != hdr_handle) {
         free(hdr_handle);
-
+        hdr_handle = NULL;
+    }
 #ifdef CONFIG_SPRD_HDR_LIB
     sprd_hdr_pool_destroy();
 #endif
@@ -285,6 +288,7 @@ static cmr_int req_hdr_save_frame(cmr_handle class_handle,
         CMR_LOGE("Failed to send one msg to hdr thread.");
         if (message.data) {
             free(message.data);
+            message.data = NULL;
         }
     }
     return ret;

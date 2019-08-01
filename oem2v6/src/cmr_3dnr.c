@@ -294,8 +294,10 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 free_all:
-    if (NULL != threednr_handle)
+    if (NULL != threednr_handle) {
         free(threednr_handle);
+        threednr_handle = NULL;
+    }
     return CMR_CAMERA_NO_MEM;
 }
 
@@ -333,19 +335,18 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     }
 
     ret = cam_cxt->hal_free(
-                        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
-                        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
-                        cam_cxt->client_data);
+        CAMERA_SNAPSHOT_3DNR_DST, &threednr_handle->out_buf_phy,
+        &threednr_handle->out_buf_vir, &threednr_handle->out_buf_fd, 1,
+        cam_cxt->client_data);
 
     if (ret) {
         CMR_LOGE("Fail to free the output buffer");
     }
 
-    ret = cam_cxt->hal_free(CAMERA_SNAPSHOT_3DNR,
-                            (cmr_uint *)threednr_handle->small_buf_phy,
-                            (cmr_uint *)threednr_handle->small_buf_vir,
-                            threednr_handle->small_buf_fd, CAP_3DNR_NUM,
-                            cam_cxt->client_data);
+    ret = cam_cxt->hal_free(
+        CAMERA_SNAPSHOT_3DNR, (cmr_uint *)threednr_handle->small_buf_phy,
+        (cmr_uint *)threednr_handle->small_buf_vir,
+        threednr_handle->small_buf_fd, CAP_3DNR_NUM, cam_cxt->client_data);
     if (ret) {
         CMR_LOGE("Fail to free the small image buffers");
     }
@@ -358,8 +359,10 @@ exit:
 
     sem_post(&cam_cxt->threednr_proc_sm);
 
-    if (NULL != threednr_handle)
+    if (NULL != threednr_handle) {
         free(threednr_handle);
+        threednr_handle = NULL;
+    }
 
     CMR_LOGI("X");
 
@@ -506,8 +509,10 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
         CMR_LOGD("cam_cxt->hal_free is NULL");
     }
 
-    if (NULL != threednr_prev_handle)
+    if (NULL != threednr_prev_handle) {
         free(threednr_prev_handle);
+        threednr_prev_handle = NULL;
+    }
 
     CMR_LOGI("X");
 
@@ -621,6 +626,7 @@ static cmr_int req_3dnr_save_frame(cmr_handle class_handle,
         CMR_LOGE("Failed to send one msg to 3dnr thread");
         if (message.data) {
             free(message.data);
+            message.data = NULL;
         }
     }
     return ret;

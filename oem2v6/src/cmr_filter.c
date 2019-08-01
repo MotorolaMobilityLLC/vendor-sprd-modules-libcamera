@@ -115,8 +115,10 @@ static cmr_int filter_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 exit:
-    if (NULL != filter_handle)
+    if (NULL != filter_handle) {
         free(filter_handle);
+        filter_handle = NULL;
+    }
     return CMR_CAMERA_FAIL;
 }
 
@@ -141,6 +143,7 @@ static cmr_int filter_close(cmr_handle class_handle) {
 
     filter_handle->is_inited = 0;
     free(filter_handle);
+    filter_handle = NULL;
     CMR_LOGD("X");
 
     return ret;
@@ -175,8 +178,8 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.dump.filter.frame", value, "null");
     if (!strcmp(value, "true")) {
-        dump_image("filter_transfer_frame", CAM_IMG_FMT_YUV420_NV21, width, height,
-                   0, addr, width * height * 3 / 2);
+        dump_image("filter_transfer_frame", CAM_IMG_FMT_YUV420_NV21, width,
+                   height, 0, addr, width * height * 3 / 2);
     }
     CMR_LOGD("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);
 

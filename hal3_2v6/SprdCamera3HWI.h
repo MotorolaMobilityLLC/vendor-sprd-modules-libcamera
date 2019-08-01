@@ -196,6 +196,7 @@ class SprdCamera3HWI {
     static const int64_t kPendingTime = 1000000;       // 1ms
     static const int64_t kPendingTimeOut = 5000000000; // 5s
     bool mFlush;
+    bool mBufferStatusError; //change buffer status to CAMERA3_BUFFER_STATUS_ERROR when in flush
 
     SprdCamera3RegularChannel *mRegularChan;
     bool mFirstRegularRequest;

@@ -396,14 +396,17 @@ cmr_int hw_sensor_mipi_init(cmr_handle hw_handle,
 
     cmr_u32 lane_num = init_param.lane_num;
     cmr_u32 bps = init_param.bps_per_lane;
+    cmr_u32 is_cphy = init_param.is_cphy;
+    cmr_u64 lane_seq = init_param.lane_seq;
 
     cmr_bzero((void *)&if_cfg, sizeof(SENSOR_IF_CFG_T));
     if_cfg.if_type = INTERFACE_MIPI;
     if_cfg.is_open = INTERFACE_OPEN;
+    if_cfg.lane_seq = lane_seq;
     if_cfg.lane_num = lane_num;
     if_cfg.bps_per_lane = bps;
-
-    HW_LOGI("Lane num %d, bps %d", lane_num, bps);
+    if_cfg.is_cphy = is_cphy;
+    HW_LOGI("Lane num %d, bps %d, is_cphy %d", lane_num, bps, is_cphy);
     ret = ioctl(hw_drv_cxt->fd_sensor, SENSOR_IO_IF_CFG, &if_cfg);
     if (0 != ret) {
         HW_LOGE("failed, ret=%ld, lane=%d, bps=%d,fd=%d", ret, lane_num, bps,

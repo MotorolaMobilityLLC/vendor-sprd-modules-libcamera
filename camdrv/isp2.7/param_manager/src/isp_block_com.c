@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #define LOG_TAG "isp_blk_com"
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
+#include "math.h"
 
 #define ISP_NR_AUTO_MODE_BIT (0x01 << ISP_SCENEMODE_AUTO)
 #define ISP_NR_NIGHT_MODE_BIT (0x01 << ISP_SCENEMODE_NIGHT)
@@ -33,7 +34,8 @@
 #define ISP_NR_13_MODE_BIT (0x01 << 13)
 #define ISP_NR_14_MODE_BIT (0x01 << 14)
 #define ISP_NR_15_MODE_BIT (0x01 << 15)
-cmr_u8 nr_tool_flag[18] = { 0 };
+cmr_u8 nr_tool_flags[ISP_BLK_TYPE_MAX] = { 0 };
+cmr_u8 *nr_tool_flag = &nr_tool_flags[0];
 
 cmr_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
 	ISP_NR_AUTO_MODE_BIT,
@@ -107,7 +109,7 @@ cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 *
 		ISP_LOGE("fail to find multi NR version\n");
 		offset_units = 0;
 	}
-	ISP_LOGV("offset_units = %d",offset_units);
+	ISP_LOGV("offset_units = %d)",offset_units);
 
 	quotient = offset_units / MAX_SCENEMODE_NUM;
 	remainder = offset_units % MAX_SCENEMODE_NUM;
@@ -138,8 +140,6 @@ cmr_s32 PM_CLIP(cmr_s32 x, cmr_s32 bottom, cmr_s32 top)
 		val = x;
 	}
 
-	ISP_LOGV("val = %d\n", val);
-
 	return val;
 }
 
@@ -168,6 +168,11 @@ cmr_s32 _pm_check_smart_param(struct smart_block_result * block_result, struct i
 
 	if (comp_num != block_result->component_num) {
 		ISP_LOGE("fail to component num : %d (%d)\n", block_result->component_num, comp_num);
+		return ISP_ERROR;
+	}
+
+	if (0 == block_result->update) {
+		ISP_LOGV("do not need update\n");
 		return ISP_ERROR;
 	}
 
@@ -253,6 +258,36 @@ cmr_u16 _pm_get_lens_grid_pitch(cmr_u32 grid_pitch, cmr_u32 width, cmr_u32 flag)
 	}
 
 	return pitch;
+}
+
+
+void _pm_generate_bicubic_weight_table(cmr_s16 * lnc_bicubic_weight_t_simple, cmr_u32 lsc_grid)
+{
+	double PRECISION = 1024;
+	double param[4][4] =
+	{
+		{0, 2, 0, 0},
+		{-1,0, 1, 0},
+		{2, -5, 4, -1},
+		{-1, 3, -3, 1},
+	};
+
+	double t,matrix_result;
+	cmr_u32 relative;
+
+	//generate weight table based on current lsc_grid
+	for (relative = 0; relative < ((lsc_grid/2)+1); relative++) {
+		t = relative * 1.0 / lsc_grid;
+
+		matrix_result = 1*param[0][0] + t*param[1][0] + t*t*param[2][0] + t*t*t*param[3][0];
+		lnc_bicubic_weight_t_simple[relative*3+0] = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+
+		matrix_result = 1*param[0][1] + t*param[1][1] + t*t*param[2][1] + t*t*t*param[3][1];
+		lnc_bicubic_weight_t_simple[relative*3+1]  = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+
+		matrix_result = 1*param[0][2] + t*param[1][2] + t*t*param[2][2] + t*t*t*param[3][2];
+		lnc_bicubic_weight_t_simple[relative*3+2] = (cmr_s16)(floor((0.5 * matrix_result * PRECISION) +0.5));
+	}
 }
 
 cmr_u32 _ispLog2n(cmr_u32 index)

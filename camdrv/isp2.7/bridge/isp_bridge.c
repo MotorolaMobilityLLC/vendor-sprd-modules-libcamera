@@ -20,8 +20,6 @@
 struct ispbr_context {
 	cmr_u32 user_cnt;
 	cmr_handle isp_3afw_handles[SENSOR_NUM_MAX];
-	struct sensor_raw_ioctrl *ioctrl_ptr[SENSOR_NUM_MAX];
-	struct sensor_dual_otp_info *dual_otp[SENSOR_NUM_MAX];
 	struct match_data_param match_param;
 	void *aem_sync_stat[SENSOR_NUM_MAX];
 	cmr_u32 aem_sync_stat_size;
@@ -42,7 +40,7 @@ struct ispbr_context {
 static struct ispbr_context br_cxt;
 static pthread_mutex_t g_br_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-cmr_handle isp_br_get_slv_3a_handle(cmr_u32 camera_id)
+cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id)
 {
 	ISP_LOGV("slave_camera_id %d", camera_id);
 	return br_cxt.isp_3afw_handles[camera_id];
@@ -70,7 +68,12 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		break;
 
 	case SET_AEM_SYNC_STAT:
-		sem_wait(&cxt->ae_sm);
+		sem_wait(&cxt->module_sm);
+		/*
+ 		if (NULL != cxt->aem_sync_stat[sensor_role]) {
+ 			memcpy(cxt->aem_sync_stat[sensor_role], in,
+ 				3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
+		}*/
 		{
 			struct ae_match_stats_data *stats_data= (struct ae_match_stats_data*)in;
 			if ((NULL != cxt->aem_sync_stat[sensor_role]) && (NULL != stats_data)) {
@@ -78,18 +81,22 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 					memcpy(cxt->aem_sync_stat[sensor_role], stats_data->stats_data,
 							3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
 					cxt->match_param.ae_stats_data[sensor_role].stats_data = cxt->aem_sync_stat[sensor_role];
-					cxt->match_param.ae_stats_data[sensor_role].len =
-						3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32);
+					cxt->match_param.ae_stats_data[sensor_role].len = 3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32);
 					cxt->match_param.ae_stats_data[sensor_role].monoboottime = stats_data->monoboottime;
 					cxt->match_param.ae_stats_data[sensor_role].is_last_frm = stats_data->is_last_frm;
 				}
 			}
-		}
-		sem_post(&cxt->ae_sm);
+ 		}
+		sem_post(&cxt->module_sm);
 		break;
 
 	case GET_AEM_SYNC_STAT:
-		sem_wait(&cxt->ae_sm);
+		sem_wait(&cxt->module_sm);
+		/*
+ 		if (NULL != cxt->aem_sync_stat[sensor_role]) {
+ 			memcpy(out, cxt->aem_sync_stat[sensor_role],
+ 				3 * cxt->aem_stat_blk_num[sensor_role] * sizeof(cmr_u32));
+		}*/
 		{
 			struct ae_match_stats_data *stats_data= (struct ae_match_stats_data*)out;
 			if ((NULL != cxt->aem_sync_stat[sensor_role]) && (NULL != stats_data)) {
@@ -101,16 +108,16 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 					stats_data->is_last_frm = cxt->match_param.ae_stats_data[sensor_role].is_last_frm;
 				}
 			}
-		}
-		sem_post(&cxt->ae_sm);
+ 		}
+		sem_post(&cxt->module_sm);
 		break;
 
 	case SET_AEM_STAT_BLK_NUM:
-		sem_wait(&cxt->ae_sm);
+		sem_wait(&cxt->module_sm);
 		cxt->aem_stat_blk_num[sensor_role] = *(cmr_u32 *)in;
 		ISP_LOGV("sensor_role %d, aem_stat_blk_num %d",
 			sensor_role, cxt->aem_stat_blk_num[sensor_role]);
-		sem_post(&cxt->ae_sm);
+		sem_post(&cxt->module_sm);
 		break;
 
 	case SET_MATCH_BV_DATA:
@@ -203,20 +210,6 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_post(&cxt->af_sm);
 		break;
 
-	case SET_AF_MANUAL_INFO:
-		sem_wait(&cxt->af_sm);
-		memcpy(&cxt->match_param.af_manual[sensor_role], in,
-			sizeof(cxt->match_param.af_manual[sensor_role]));
-		sem_post(&cxt->af_sm);
-		break;
-
-	case GET_AF_MANUAL_INFO:
-		sem_wait(&cxt->af_sm);
-		memcpy(out, &cxt->match_param.af_manual[sensor_role],
-			sizeof(cxt->match_param.af_manual[sensor_role]));
-		sem_post(&cxt->af_sm);
-		break;
-
 	// OTP
 	case SET_OTP_AE:
 		sem_wait(&cxt->module_sm);
@@ -235,14 +228,14 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 	case SET_OTP_AWB:
 		sem_wait(&cxt->module_sm);
 		memcpy(&cxt->match_param.module_info.module_otp_info.awb_otp[sensor_role], in,
-		sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[sensor_role]));
+			sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[sensor_role]));
 		sem_post(&cxt->module_sm);
 		break;
 
 	case GET_OTP_AWB:
 		sem_wait(&cxt->module_sm);
 		memcpy(out, &cxt->match_param.module_info.module_otp_info.awb_otp[sensor_role],
-		sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[sensor_role]));
+			sizeof(cxt->match_param.module_info.module_otp_info.awb_otp[sensor_role]));
 		sem_post(&cxt->module_sm);
 		break;
 
@@ -276,7 +269,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case GET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
-		memcpy(out, &cxt->user_cnt, sizeof(cxt->user_cnt));
+		memcpy(out, &cxt->user_cnt,sizeof(cxt->user_cnt));
 		sem_post(&cxt->module_sm);
 		break;
 
@@ -290,13 +283,11 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 	case SET_ALL_MODULE_AND_OTP:
 		ISP_LOGW("not implemented");
 		break;
-
 	case GET_ALL_MODULE_AND_OTP:
 		sem_wait(&cxt->ae_sm);
 		memcpy(out, &cxt->match_param.module_info, sizeof(cxt->match_param.module_info));
 		sem_post(&cxt->ae_sm);
 		break;
-
 	default:
 		break;
 	}
@@ -327,7 +318,8 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	cxt->user_cnt++;
 	pthread_mutex_unlock(&g_br_mutex);
 	ISP_LOGI("cnt = %d", cxt->user_cnt);
-	if (1 == cxt->user_cnt) {
+
+	if (cxt->user_cnt == 1) {
 		sem_init(&cxt->ae_sm, 0, 1);
 		sem_init(&cxt->awb_sm, 0, 1);
 		sem_init(&cxt->af_sm, 0, 1);
@@ -372,6 +364,7 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	return ret;
 
 exit:
+
 	for (i = 0; i < SENSOR_NUM_MAX; i++) {
 		if (cxt->aem_sync_stat[i]) {
 			free(cxt->aem_sync_stat[i]);
@@ -384,6 +377,10 @@ exit:
 		}
 	}
 
+	cxt->isp_3afw_handles[camera_id] = NULL;
+	pthread_mutex_lock(&g_br_mutex);
+	cxt->user_cnt--;
+	pthread_mutex_unlock(&g_br_mutex);
 	return ret;
 }
 
@@ -394,11 +391,13 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 	cmr_u8 i = 0;
 
 	cxt->isp_3afw_handles[camera_id] = NULL;
+
 	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt--;
 	pthread_mutex_unlock(&g_br_mutex);
 	ISP_LOGI("camera_id = %d, cnt = %d", camera_id, cxt->user_cnt);
-	if (0 == cxt->user_cnt) {
+
+	if (cxt->user_cnt == 0) {
 		sem_destroy(&cxt->ae_sm);
 		sem_destroy(&cxt->awb_sm);
 		sem_destroy(&cxt->af_sm);
@@ -406,8 +405,6 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 		sem_destroy(&cxt->ae_wait_sm);
 		sem_destroy(&cxt->awb_wait_sm);
 		sem_destroy(&cxt->af_wait_sm);
-		for (i = 0; i < SENSOR_NUM_MAX; i++)
-			cxt->isp_3afw_handles[i] = NULL;
 	}
 
 	for (i = 0; i < SENSOR_NUM_MAX; i++) {
@@ -422,35 +419,5 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 		}
 	}
 
-	return ret;
-}
-
-cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dual_otp)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct ispbr_context *cxt = &br_cxt;
-
-	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("fail to save camera_id %d dual otp", camera_id);
-		ret = ISP_PARAM_ERROR;
-		goto exit;
-	}
-	cxt->dual_otp[camera_id] = dual_otp;
-exit:
-	return ret;
-}
-
-cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dual_otp)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct ispbr_context *cxt = &br_cxt;
-
-	if (camera_id >= SENSOR_NUM_MAX) {
-		ISP_LOGE("fail to get camera_id %d dual otp", camera_id);
-		ret = ISP_PARAM_ERROR;
-		goto exit;
-	}
-	*dual_otp = cxt->dual_otp[camera_id];
-exit:
 	return ret;
 }

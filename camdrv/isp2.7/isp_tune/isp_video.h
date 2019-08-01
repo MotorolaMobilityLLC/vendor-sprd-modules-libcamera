@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ struct isp_raw_image{
 
 extern char raw_filename[200];
 extern cmr_u32 tool_fmt_pattern;
-extern cmr_u8 nr_tool_flag[18];
+extern cmr_u8 nr_tool_flags[ISP_BLK_TYPE_MAX];
+extern cmr_u8 *nr_tool_flag;
 extern struct denoise_param_update nr_update_param;
 
 cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32));

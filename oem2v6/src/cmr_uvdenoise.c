@@ -127,8 +127,10 @@ static cmr_int uvde_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 exit:
-    if (NULL != uvde_handle)
+    if (NULL != uvde_handle) {
         free(uvde_handle);
+        uvde_handle = NULL;
+    }
     return CMR_CAMERA_FAIL;
 }
 
@@ -142,9 +144,10 @@ static cmr_int uvde_close(cmr_handle class_handle) {
 
     ret = uvde_thread_destroy(uvde_handle);
 
-    if (uvde_handle)
+    if (uvde_handle) {
         free(uvde_handle);
-
+        uvde_handle = NULL;
+    }
     return ret;
 }
 
@@ -596,8 +599,10 @@ static cmr_int uvde_start(cmr_handle class_handle, cmr_uint thread_id,
     ret = cmr_thread_msg_send(*cur_handle_ptr, &message);
     if (ret) {
         CMR_LOGE("send msg fail");
-        if (uvde_start_ptr)
+        if (uvde_start_ptr) {
             free(uvde_start_ptr);
+            uvde_start_ptr = NULL;
+        }
         ret = CMR_CAMERA_FAIL;
     }
 

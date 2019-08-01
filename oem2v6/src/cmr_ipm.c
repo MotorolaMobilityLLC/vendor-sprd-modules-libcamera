@@ -120,6 +120,7 @@ cmr_int cmr_ipm_deinit(cmr_handle ipm_handle) {
     CHECK_HANDLE_VALID(handle);
 
     free(handle);
+    handle = NULL;
 
     return ret;
 }

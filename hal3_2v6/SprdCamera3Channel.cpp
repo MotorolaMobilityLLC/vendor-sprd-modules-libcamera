@@ -85,7 +85,6 @@ SprdCamera3RegularChannel::SprdCamera3RegularChannel(
     for (size_t i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
         mCamera3Stream[i] = NULL;
     }
-    stream_num = 0;
     mInputBuff = NULL;
     mMemory = new SprdCamera3GrallocMemory();
     if (NULL == mMemory) {
@@ -410,20 +409,30 @@ int SprdCamera3RegularChannel::addStream(camera_stream_type_t stream_type,
         return INVALID_OPERATION;
     }
 
-    stream_num++;
-
     HAL_LOGD("X");
     return NO_ERROR;
 }
 
-int SprdCamera3RegularChannel::deleteStream(void) {
+int SprdCamera3RegularChannel::deleteStream() {
     int8_t index = 0;
     while (mCamera3Stream[index]) {
         delete mCamera3Stream[index];
         HAL_LOGD("index=%d", index);
         mCamera3Stream[index++] = NULL;
-        stream_num--;
     }
+    return NO_ERROR;
+}
+
+int SprdCamera3RegularChannel::clearAllStreams() {
+    size_t i;
+
+    for (i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
+        if (mCamera3Stream[i]) {
+            delete mCamera3Stream[i];
+            mCamera3Stream[i] = NULL;
+        }
+    }
+
     return NO_ERROR;
 }
 
@@ -494,7 +503,6 @@ SprdCamera3PicChannel::SprdCamera3PicChannel(
     for (size_t i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
         mCamera3Stream[i] = NULL;
     }
-    stream_num = 0;
     buff_index = 0;
 
     mMetadataChannel = metadata_channel;
@@ -732,20 +740,30 @@ int SprdCamera3PicChannel::addStream(camera_stream_type_t stream_type,
         return INVALID_OPERATION;
     }
 
-    stream_num++;
-
     HAL_LOGD("X");
     return NO_ERROR;
 }
 
-int SprdCamera3PicChannel::deleteStream(void) {
+int SprdCamera3PicChannel::deleteStream() {
     int8_t index = 0;
     while (mCamera3Stream[index]) {
         delete mCamera3Stream[index];
         HAL_LOGD("index=%d", index);
         mCamera3Stream[index++] = NULL;
-        stream_num--;
     }
+    return NO_ERROR;
+}
+
+int SprdCamera3PicChannel::clearAllStreams() {
+    size_t i;
+
+    for (i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
+        if (mCamera3Stream[i]) {
+            delete mCamera3Stream[i];
+            mCamera3Stream[i] = NULL;
+        }
+    }
+
     return NO_ERROR;
 }
 

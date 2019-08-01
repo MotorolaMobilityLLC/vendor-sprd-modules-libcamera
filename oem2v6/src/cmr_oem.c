@@ -1506,9 +1506,6 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     case PREVIEW_EXIT_CB_FAILED:
         oem_cb_type = CAMERA_EXIT_CB_FAILED;
         break;
-    case PREVIEW_EVT_CB_FLUSH:
-        oem_cb_type = CAMERA_EVT_CB_FLUSH;
-        break;
     case PREVIEW_EVT_CB_FD:
         oem_cb_type = CAMERA_EVT_CB_FD;
         if (param) {
@@ -1754,6 +1751,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     if (ret) {
         CMR_LOGE("failed to send msg, ret %ld", ret);
         free(message.data);
+        message.data = NULL;
     }
 exit:
     return ret;
@@ -1941,6 +1939,7 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         CMR_LOGE("failed to send msg %ld", ret);
         if (message.data) {
             free(message.data);
+            message.data = NULL;
         }
         goto exit;
     }
@@ -3389,7 +3388,10 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         CMR_LOGE("get sensor 4ini1 failed %ld", ret);
         goto exit;
     }
-    cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
+    if (isp_video_get_simulation_flag())
+	cxt->sn_cxt.info_4in1.is_4in1_supported = 0;
+    else
+	cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
 #endif
 
     isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
@@ -5903,6 +5905,9 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                            param_ptr->src_frame.size.height * 5 / 4);
         }
 
+	if (isp_video_get_simulation_flag())
+		in_param.hwsim_4in1_width = cxt->sn_cxt.info_4in1.limited_4in1_width;
+
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to start proc %ld", ret);
@@ -6206,8 +6211,13 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.dv_mode, isp_param.capture_mode, isp_param.is_snapshot);
 
 #ifdef CONFIG_CAMERA_4IN1
-    isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
-    isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
+	if (isp_video_get_simulation_flag()) {
+		isp_param.is_4in1_sensor = 0;
+		isp_param.mode_4in1 = 0;
+	} else {
+		isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
+		isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
+	}
 #endif
 
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
@@ -6335,6 +6345,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     param_ptr->sn_if.sensor_width = sensor_mode_info->width;
     param_ptr->sn_if.sensor_height = sensor_mode_info->height;
     param_ptr->sn_if.if_spec.mipi.pclk = sensor_mode_info->bps_per_lane;
+    param_ptr->sn_if.if_spec.mipi.is_cphy = sensor_info.sn_interface.is_cphy;
     if (cxt->isp_to_dram)
         param_ptr->sn_if.res[0] = 1;
     else
@@ -8043,7 +8054,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
-
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_3DNR_TYPE,
                             &setting_param);
     if (ret) {
@@ -8057,6 +8067,16 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     } else {
         out_param_ptr->sprd_3dnr_type = camera_get_3dnr_flag(cxt);
     }
+
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_SPRD_AFBC_ENABLED, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get dv mode %ld", ret);
+        goto exit;
+    }
+    out_param_ptr->sprd_afbc_enabled = setting_param.cmd_type_value;
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -8076,7 +8096,10 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         CMR_LOGE("get sensor 4ini1 failed %ld", ret);
         goto exit;
     }
-    cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
+	if (isp_video_get_simulation_flag())
+		cxt->sn_cxt.info_4in1.is_4in1_supported = 0;
+	else
+		cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
     cxt->sn_cxt.info_4in1.limited_4in1_width = sn_4in1_info.limited_4in1_width;
     cxt->sn_cxt.info_4in1.limited_4in1_height =
         sn_4in1_info.limited_4in1_height;
@@ -9182,6 +9205,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_SPRD_AFBC_ENABLED:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     default:
         CMR_LOGI("don't support %d", id);
     }
@@ -9263,6 +9291,7 @@ exit:
     } else {
         if (cxt) {
             free((void *)cxt);
+            cxt = NULL;
         }
     }
     return ret;
@@ -9276,6 +9305,7 @@ cmr_int camera_local_deinit(cmr_handle oem_handle) {
 
     camera_deinit_internal(oem_handle);
     free((void *)oem_handle);
+    oem_handle = NULL;
     ATRACE_END();
     return ret;
 }
@@ -10010,7 +10040,7 @@ cmr_int camera_local_redisplay_data(
 
 #ifdef CAMERA_BRINGUP
     CMR_LOGD("cpp is not ok, sw scale crashed, so dont do scale here");
-// camera_scale_down_software(&src_img, &dst_img);
+    camera_scale_down_software(&src_img, &dst_img);
 #else
     CMR_LOGD("src_img with %d, height %d, dst_img with %d, height %d",
              src_img.size.width, src_img.size.height, dst_img.size.width,

@@ -134,6 +134,7 @@ struct smart_context {
     // new debug
 	smart_debuginfo smt_dbginfo;
 	struct atm_tune_param atm_tuning_param;
+	enum smart_ctrl_atm_switch_state atm_switch_state;
 
 };
 
@@ -317,6 +318,27 @@ static cmr_s32 smart_ctl_set_flash(struct smart_context *cxt, void *in_param)
 		return ISP_ERROR;
 	}
 	cxt->flash_mode = flash_mode;
+
+	return rtn;
+}
+
+static cmr_s32 smart_ctl_set_atm_switch_state(struct smart_context *cxt, void *in_param)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	enum smart_ctrl_atm_switch_state atm_switch_state = SMART_CTRL_ATM_SWITCH_ON;
+
+	if (NULL == in_param) {
+		ISP_LOGE("fail to get valid in param");
+		return ISP_ERROR;
+	}
+
+	atm_switch_state = *(enum smart_ctrl_atm_switch_state *)in_param;
+
+	if (atm_switch_state >= SMART_CTRL_ATM_SWITCH_MAX) {
+		ISP_LOGE("fail to get valid switch state");
+		return ISP_ERROR;
+	}
+	cxt->atm_switch_state = atm_switch_state;
 
 	return rtn;
 }
@@ -1571,6 +1593,7 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 	struct sensor_rgbgamma_curve sm_gamma_out;
 	struct sensor_rgbgamma_curve atm_gamma_out;
 	struct isp_pm_ioctl_output io_pm_output = { NULL, 0 };
+	enum smart_ctrl_atm_switch_state atm_switch_state = SMART_CTRL_ATM_SWITCH_ON;
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
@@ -1582,6 +1605,7 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 
 	cxt = (struct smart_context *)handle;
 	atm_enable = cxt->atm_tuning_param.atmenable;
+	atm_switch_state = cxt->atm_switch_state;
 
 	if (!(strcmp(value, "on"))){
 		atm_enable = 1;
@@ -1591,7 +1615,8 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 		;
 	}
 
-	if (atm_enable) {
+	ISP_LOGV("atm_switch_state:%d\n", atm_switch_state);
+	if ((atm_enable) && (SMART_CTRL_ATM_SWITCH_ON == atm_switch_state)) {
 		ret = _smart_gamma(in_ptr, block_result, &sm_gamma_out);
 
 		if (ISP_SUCCESS == ret) {
@@ -1890,6 +1915,10 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 
 	case ISP_SMART_IOCTL_GET_UPDATE_PARAM:
 		rtn = smart_ctl_get_update_param(cxt_ptr, param);
+		break;
+
+	case ISP_SMART_IOCTL_SET_ATM_SWITCH_STATE:
+		rtn = smart_ctl_set_atm_switch_state(cxt_ptr, param);
 		break;
 
 	default:

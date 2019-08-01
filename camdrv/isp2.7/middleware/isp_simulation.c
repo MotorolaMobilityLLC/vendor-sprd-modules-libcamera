@@ -21,7 +21,7 @@
 #include "isp_com.h"
 
 static struct isptool_scene_param g_scene_param;
-static char s_r_file_name[260] = { 0 };
+static char s_r_file_name[200] = { 0 };
 
 cmr_int isp_sim_set_mipi_raw_file_name(char *file_name)
 {
@@ -87,6 +87,8 @@ cmr_int isp_sim_save_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32
 	FILE *fp = NULL;
 	char file_name[260] = { 0 };
 
+	ISP_LOGI("hwsim:w[%d] h[%d]\n", stat_w, stat_h);
+
 	if (awb_statis == NULL) {
 		ISP_LOGE("fail to get ae statis pointer.");
 		return ISP_ERROR;
@@ -107,7 +109,7 @@ cmr_int isp_sim_save_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32
 
 	fprintf(fp, "stat_w:%d\n", stat_w);
 	fprintf(fp, "stat_h:%d\n", stat_h);
-	for (i = 0; i < stat_w*stat_h; i++) {
+	for (i=0; i < stat_w*stat_h; i++) {
 		fprintf(fp, "blk_id:%d R:%d G:%d B:%d\n",
 			i, awb_statis->r_info[i], awb_statis->g_info[i], awb_statis->b_info[i]);
 	}
@@ -125,6 +127,8 @@ cmr_int isp_sim_get_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32 
 	char *tmp_ptr = NULL;
 	char file_name[260] = { 0 };
 
+	ISP_LOGI("hwsim:w[%d] h[%d]\n", *stat_w, *stat_h);
+
 	if (awb_statis == NULL) {
 		ISP_LOGE("fail to get ae statis pointer.");
 		return ISP_ERROR;
@@ -140,12 +144,13 @@ cmr_int isp_sim_get_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32 
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
-		ISP_LOGE("fail to open file");
+		ISP_LOGE("fail to open file[%s]\n",file_name);
 		return ISP_ERROR;
 	}
 
 	fscanf(fp, "stat_w:%d\n", stat_w);
 	fscanf(fp, "stat_h:%d\n", stat_h);
+
 	while (!feof(fp)) {
 		fscanf(fp, "blk_id:%d ", &i);
 		fscanf(fp, "R:%d G:%d B:%d\n",

@@ -48,6 +48,7 @@ extern "C" {
 		ISP_SMART_IOCTL_SET_PARAM,
 		ISP_SMART_IOCTL_SET_WORK_MODE,
 		ISP_SMART_IOCTL_SET_FLASH_MODE,
+		ISP_SMART_IOCTL_SET_ATM_SWITCH_STATE,
 		ISP_SMART_IOCTL_CMD_MAX,
 	};
 
@@ -56,6 +57,12 @@ extern "C" {
 		SMART_CTRL_FLASH_PRE = 0x1,
 		SMART_CTRL_FLASH_MAIN = 0x2,
 		SMART_CTRL_FLASH_END = 0x3
+	};
+
+	enum smart_ctrl_atm_switch_state {
+		SMART_CTRL_ATM_SWITCH_ON = 0x0,
+		SMART_CTRL_ATM_SWITCH_OFF = 0x1,
+		SMART_CTRL_ATM_SWITCH_MAX = 0x2
 	};
 
 	struct smart_component_result {

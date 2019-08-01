@@ -146,7 +146,7 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
 static cmr_int save_yuv(char *filename, char *buffer, uint32_t width,
                         uint32_t height);
 static cmr_int threadnr_scaler_process(cmr_handle class_handle,
-                                                    struct thread_3dnr_info *p_data);
+                                       struct thread_3dnr_info *p_data);
 
 static struct class_ops threednr_ops_tab_info = {threednr_open, threednr_close,
                                                  threednr_transfer_frame, NULL,
@@ -463,8 +463,10 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     return ret;
 
 free_all:
-    if (NULL != threednr_handle)
+    if (NULL != threednr_handle) {
         free(threednr_handle);
+        threednr_handle = NULL;
+    }
     return CMR_CAMERA_NO_MEM;
 }
 
@@ -508,9 +510,10 @@ exit:
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
     }
 
-    if (NULL != threednr_handle)
+    if (NULL != threednr_handle) {
         free(threednr_handle);
-
+        threednr_handle = NULL;
+    }
     CMR_LOGD("X");
     return ret;
 }
@@ -556,7 +559,7 @@ static cmr_int threednr_save_frame(cmr_handle class_handle,
 }
 
 static cmr_int req_3dnr_process_frame(cmr_handle class_handle,
-                                   struct thread_3dnr_info *p_data) {
+                                      struct thread_3dnr_info *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_3dnr *threednr_handle = (struct class_3dnr *)class_handle;
 
@@ -567,7 +570,8 @@ static cmr_int req_3dnr_process_frame(cmr_handle class_handle,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    message.data = (struct thread_3dnr_info *)malloc(sizeof(struct thread_3dnr_info));
+    message.data =
+        (struct thread_3dnr_info *)malloc(sizeof(struct thread_3dnr_info));
     if (!message.data) {
         CMR_LOGE("No mem!");
         ret = CMR_CAMERA_NO_MEM;
@@ -582,13 +586,14 @@ static cmr_int req_3dnr_process_frame(cmr_handle class_handle,
         CMR_LOGE("Failed to send one msg to 3dnr thread");
         if (message.data) {
             free(message.data);
+            message.data = NULL;
         }
     }
     return ret;
 }
 
 static cmr_int req_3dnr_scaler_frame(cmr_handle class_handle,
-                                   struct thread_3dnr_info *p_data) {
+                                     struct thread_3dnr_info *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_3dnr *threednr_handle = (struct class_3dnr *)class_handle;
 
@@ -599,7 +604,8 @@ static cmr_int req_3dnr_scaler_frame(cmr_handle class_handle,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    message.data = (struct thread_3dnr_info *)malloc(sizeof(struct thread_3dnr_info));
+    message.data =
+        (struct thread_3dnr_info *)malloc(sizeof(struct thread_3dnr_info));
     if (!message.data) {
         CMR_LOGE("No mem!");
         ret = CMR_CAMERA_NO_MEM;
@@ -614,13 +620,14 @@ static cmr_int req_3dnr_scaler_frame(cmr_handle class_handle,
         CMR_LOGE("Failed to send one msg to 3dnr thread");
         if (message.data) {
             free(message.data);
+            message.data = NULL;
         }
     }
     return ret;
 }
 
 static cmr_int threednr_process_frame(cmr_handle class_handle,
-                                   struct thread_3dnr_info *p_data) {
+                                      struct thread_3dnr_info *p_data) {
     struct thread_3dnr_info *info = (struct thread_3dnr_info *)p_data;
     struct ipm_frame_in *in = &info->in;
     struct ipm_frame_out *out = &info->out;
@@ -634,7 +641,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     char filename[128];
     // call 3dnr function
     CMR_LOGD("Call the threednr_function() yaddr 0x%x cur_frm: %d",
-                    in->src_frame.addr_vir.addr_y, cur_frm);
+             in->src_frame.addr_vir.addr_y, cur_frm);
     orig_image.gpuHandle = out->private_data;
     orig_image.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
     orig_image.bufferU =
@@ -701,7 +708,6 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
 exit:
     CMR_LOGD("X");
     return ret;
-
 }
 
 static cmr_int threednr_process_thread_proc(struct cmr_msg *message,
@@ -744,7 +750,7 @@ static cmr_int threednr_process_thread_proc(struct cmr_msg *message,
 }
 
 static cmr_int threednr_scaler_thread_proc(struct cmr_msg *message,
-                                            void *private_data) {
+                                           void *private_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_3dnr *class_handle = (struct class_3dnr *)private_data;
     cmr_u32 evt = 0;
@@ -763,7 +769,8 @@ static cmr_int threednr_scaler_thread_proc(struct cmr_msg *message,
         break;
     case CMR_EVT_3DNR_SCALER_START:
         p_data = message->data;
-        ret = threadnr_scaler_process(class_handle, (struct thread_3dnr_info *)p_data);
+        ret = threadnr_scaler_process(class_handle,
+                                      (struct thread_3dnr_info *)p_data);
         if (ret != CMR_CAMERA_SUCCESS) {
             CMR_LOGE("3dnr sclaer process failed.");
         }
@@ -778,7 +785,7 @@ static cmr_int threednr_scaler_thread_proc(struct cmr_msg *message,
 }
 
 static cmr_int threadnr_scaler_process(cmr_handle class_handle,
-                                                    struct thread_3dnr_info *p_data) {
+                                       struct thread_3dnr_info *p_data) {
     struct thread_3dnr_info *info = (struct thread_3dnr_info *)p_data;
     struct ipm_frame_in *in = &info->in;
     struct ipm_frame_out *out = &info->out;
@@ -796,7 +803,8 @@ static cmr_int threadnr_scaler_process(cmr_handle class_handle,
     }
 
     cur_frm = info->cur_frame_num;
-    CMR_LOGD("E. yaddr 0x %x cur_frm: %d", in->src_frame.addr_vir.addr_y, cur_frm);
+    CMR_LOGD("E. yaddr 0x %x cur_frm: %d", in->src_frame.addr_vir.addr_y,
+             cur_frm);
     if (NULL == in->private_data) {
         CMR_LOGE("private_data is ptr of camera_context, now is null");
         goto exit;
@@ -985,7 +993,7 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
         threednr_handle->g_info_3dnr[cur_num].cur_frame_num = cur_num;
         CMR_LOGD("yaddr 0x%x", in->src_frame.addr_vir.addr_y);
         ret = req_3dnr_scaler_frame(threednr_handle,
-                                            &threednr_handle->g_info_3dnr[cur_num]);
+                                    &threednr_handle->g_info_3dnr[cur_num]);
         if (ret) {
             CMR_LOGE("failed to sensor scaler frame");
         }
