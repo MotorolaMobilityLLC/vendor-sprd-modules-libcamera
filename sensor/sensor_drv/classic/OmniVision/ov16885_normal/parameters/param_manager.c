@@ -9,6 +9,8 @@ struct sensor_raw_info *ov16885_normal_drv_init_raw_info(int sensor_id, int vend
 #include "parameters_sharkl3/sensor_ov16885_raw_param_main.c"
 #elif defined(SHARKL5_SENSOR_OV16885)
 #include "parameters_sharkl5/sensor_ov16885_raw_param_main.c"
+#elif defined(_SENSOR_RAW_SHARKL5PRO_H_)
+#include "parameters_sharkl5pro/sensor_ov16885_raw_param_main.c"
 #else
 #include "parameters_roc1/sensor_ov16885_raw_param_main.c"
 #endif
