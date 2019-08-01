@@ -67,7 +67,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_s32 fds[2];
-	cmr_uint kaddr[2];
+	cmr_uint kaddr[2] = {0};
 	cmr_u32 dcam_stats_buffer_size = 0;
 	cmr_u32 isp_stats_buffer_size = 0;
 
@@ -338,6 +338,11 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
+	if(!irq_info || !cxt || !cxt->isp_event_cb){
+		ISP_LOGE("fail to get ptr irq_info %p cxt %p", irq_info, cxt);
+		return;
+	}
+
 	statis_info = malloc(sizeof(*statis_info));
 
 	statis_info->phy_addr = irq_info->phy_addr;
@@ -362,34 +367,24 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		 statis_info->frame_id,
 		 statis_info->sec, statis_info->usec);
 	if (irq_info->irq_property == IRQ_AEM_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_AFM_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_AFL_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_PROC_AFL_DONE, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_PROC_AFL_DONE, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_PDAF_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_EBD_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_HIST_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
 	} else {
 		free((void *)statis_info);
 		statis_info = NULL;
 		ISP_LOGW("there is no irq_property %d", irq_info->irq_property);
 	}
+
+	return;
 }
 
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)

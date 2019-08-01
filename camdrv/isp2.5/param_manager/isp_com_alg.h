@@ -22,7 +22,6 @@
 enum isp_interp_type {
 	ISP_INTERP_UINT8 = 0,
 	ISP_INTERP_UINT16 = 1,
-	ISP_INTERP_UINT32 = 2,
 	ISP_INTERP_INT14 = 3,
 	ISP_INTERP_UINT20 = 4,
 };

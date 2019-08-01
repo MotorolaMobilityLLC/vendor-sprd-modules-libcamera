@@ -350,32 +350,6 @@ static void _interp_uint16(cmr_u16 * dst, cmr_u16 * src[2], cmr_u16 weight[2], c
 	}
 }
 
-static void _interp_uint32(cmr_u32 * dst, cmr_u32 * src[2], cmr_u16 weight[2], cmr_u32 data_num)
-{
-	cmr_u32 data_bytes = 0;
-	cmr_u32 i = 0;
-
-	data_bytes = data_num * sizeof(cmr_u32);
-
-	if (INTERP_WEIGHT_UNIT == weight[0]) {
-		memcpy(dst, src[0], data_bytes);
-	} else if (INTERP_WEIGHT_UNIT == weight[1]) {
-		memcpy(dst, src[1], data_bytes);
-	} else {
-
-		for (i = 0; i < data_num; i++) {
-
-			cmr_u32 dst_val = 0;
-			cmr_u32 src0_val = *src[0]++;
-			cmr_u32 src1_val = *src[1]++;
-
-			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
-
-			*dst++ = dst_val;
-		}
-	}
-}
-
 static void _interp_int14(cmr_u16 * dst, cmr_u16 * src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
 	cmr_u32 data_bytes = 0;
@@ -465,10 +439,6 @@ cmr_s32 isp_interp_data(void *dst, void *src[2], cmr_u16 weight[2], cmr_u32 data
 
 	case ISP_INTERP_UINT16:
 		_interp_uint16((cmr_u16 *) dst, (cmr_u16 **) src, weight, data_num);
-		break;
-
-	case ISP_INTERP_UINT32:
-		_interp_uint32((cmr_u32 *) dst, (cmr_u32 **) src, weight, data_num);
 		break;
 
 	case ISP_INTERP_INT14:

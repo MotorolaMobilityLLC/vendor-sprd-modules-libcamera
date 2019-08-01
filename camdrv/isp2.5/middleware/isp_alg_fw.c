@@ -5501,8 +5501,8 @@ static void transfer_ynr_param(struct isp_ynr_info *param, struct isp_pm_ioctl_o
 	param->ynr_param.ydenoise_radius = ynr_param.radius;
 	param->ynr_param.ydenoise_imgcenterx = ynr_param.center.x;
 	param->ynr_param.ydenoise_imgcentery = ynr_param.center.y;
-	memcpy(&param->ynr_param.ydenoise_sal_nr_str[0], &ynr_param.sal_nr_str[0], 8 * sizeof(unsigned int));
-	memcpy(&param->ynr_param.ydenoise_sal_offset[0], &ynr_param.sal_offset[0], 8 * sizeof(unsigned int));
+	memcpy(&param->ynr_param.ydenoise_sal_nr_str[0], &ynr_param.sal_nr_str[0], 8 * sizeof(unsigned char));
+	memcpy(&param->ynr_param.ydenoise_sal_offset[0], &ynr_param.sal_offset[0], 8 * sizeof(unsigned char));
 	ISP_LOGI("nr_eb: %d, l1_blf: %d, l2_blf: %d, l3_blf_eb: %d",
 		 param->ynr_param.ydenoise_wv_nr_enable,
 		 param->ynr_param.ydenoise_l1_blf_enable,
