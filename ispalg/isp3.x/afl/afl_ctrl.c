@@ -479,9 +479,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 								  thr[7], thr[8],
                                                                   (cmr_s32 *)ae_stat_ptr,
                                                                   (cmr_s32 *)(ae_stat_ptr + 1024),
-                                                                  (cmr_s32 *)(ae_stat_ptr + 2048));
+                                                                  (cmr_s32 *)(ae_stat_ptr + 2048),
+                                                                  in_ptr->max_fps);
 
-				ISP_LOGV("flag %ld %s", flag, "60Hz");
+				ISP_LOGV("flag %ld %s, max_fps:%d", flag, "60Hz", in_ptr->max_fps);
 			} else {
 				flag = antiflcker_sw_process_v2p2(algo_width,
 								  algo_height, addr, 1, thr[0], thr[1],
@@ -489,8 +490,9 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 								  thr[7], thr[8],
                                                                   (cmr_s32 *)ae_stat_ptr,
                                                                   (cmr_s32 *)(ae_stat_ptr + 1024),
-                                                                  (cmr_s32 *)(ae_stat_ptr + 2048));
-				ISP_LOGV("flag %ld %s", flag, "50Hz");
+                                                                  (cmr_s32 *)(ae_stat_ptr + 2048),
+                                                                  in_ptr->max_fps);
+				ISP_LOGV("flag %ld %s, max_fps:%d", flag, "50Hz", in_ptr->max_fps);
 			}
 			if (flag)
 				break;
@@ -805,9 +807,10 @@ static cmr_u32 aflctrl_get_info(struct isp_anti_flicker_cfg *cxt, void *result)
 {
 	cmr_u32 rtn = ISP_SUCCESS;
 	struct afl_ctrl_proc_out *param = (struct afl_ctrl_proc_out *)result;
-
+	ISP_LOGV("aflctrl_get_info, max_fps:%d\n", cxt->max_fps);
 	param->cur_flicker = cxt->cur_flicker;
 	param->flag = cxt->flag;
+	param->max_fps = cxt->max_fps;
 
 	return rtn;
 }
@@ -820,6 +823,17 @@ static cmr_u32 aflctrl_set_img_size(cmr_handle handle, void *in)
 
 	cxt->width = size->w;
 	cxt->height = size->h;
+
+	return rtn;
+}
+
+static cmr_u32 aflctrl_set_max_fps(cmr_handle handle, cmr_handle *in)
+{
+	cmr_u32 rtn = ISP_SUCCESS;
+	struct isp_anti_flicker_cfg *cxt = (struct isp_anti_flicker_cfg *)handle;
+	cmr_u32 max_fps = *(cmr_u32 *) in;
+	cxt->max_fps = max_fps;
+	ISP_LOGV("aflctrl_set_max_fps, max_fps:%d\n", cxt->max_fps);
 
 	return rtn;
 }
@@ -858,6 +872,9 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_io_ctrl_cmd cmd, void *in_pt
 		break;
 	case AFL_SET_IMG_SIZE:
 		rtn = aflctrl_set_img_size(cxt, in_ptr);
+		break;
+	case AFL_SET_MAX_FPS:
+		rtn = aflctrl_set_max_fps(cxt, in_ptr);
 		break;
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);

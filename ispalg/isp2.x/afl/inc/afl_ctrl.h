@@ -32,6 +32,7 @@ enum afl_io_ctrl_cmd {
 	AFL_SET_BYPASS,
 	AFL_NEW_SET_BYPASS,
 	AFL_SET_IMG_SIZE,
+	AFL_SET_MAX_FPS,
 };
 
 struct afl_ae_stat_win_num {
@@ -57,6 +58,7 @@ struct afl_proc_in {
 #ifdef CONFIG_ISP_2_2
 	cmr_u16 thr[9];
 #endif
+	cmr_u32 max_fps;
 };
 
 struct afl_ctrl_param_in {

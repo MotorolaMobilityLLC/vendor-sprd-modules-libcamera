@@ -1699,7 +1699,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	nsecs_t time_start = 0;
 	nsecs_t time_end = 0;
 	cmr_u32 awb_mode = 0;
-	struct afl_ctrl_proc_out afl_info = {0, 0};
+	struct afl_ctrl_proc_out afl_info = {0, 0, 0};
 	cmr_int nxt_flicker = 0;
 
 	memset(&gain, 0, sizeof(gain));
@@ -2335,6 +2335,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct isp_pm_param_data pm_afl_data;
 	struct isp_pm_ioctl_input pm_afl_input = {NULL, 0};
 	struct isp_pm_ioctl_output pm_afl_output = {NULL, 0};
+	struct afl_ctrl_proc_out afl_info = {0, 0, 0};
 
 	memset(&pm_afl_data, 0, sizeof(pm_afl_data));
 	memset(&afl_input, 0, sizeof(afl_input));
@@ -2383,6 +2384,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FLICKER_SWITCH_FLAG"));
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_GET_INFO, (void *)&afl_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_GET_INFO"));
+	}
 	BLOCK_PARAM_CFG(pm_afl_input, pm_afl_data, ISP_PM_BLK_ISP_SETTING,
 		ISP_BLK_ANTI_FLICKER,
 		NULL, 0);
@@ -2407,6 +2412,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 
 	afl_input.ae_win_num.w = cxt->ae_cxt.win_num.w;
 	afl_input.ae_win_num.h = cxt->ae_cxt.win_num.h;
+	afl_input.max_fps = afl_info.max_fps;
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, &afl_output);
@@ -4108,6 +4114,7 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 	struct ae_set_work_param ae_param;
 	enum ae_work_mode ae_mode = 0;
 	struct isp_range_thr shift;
+	cmr_u32 max_fps = 0;
 
 	memset(&ae_param, 0, sizeof(ae_param));
 	memset(&shift, 0, sizeof(shift));
@@ -4201,6 +4208,13 @@ static cmr_int ispalg_ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mo
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_START"));
 	}
+
+	max_fps = ae_param.sensor_fps.max_fps;
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_SET_MAX_FPS, (void *)&max_fps, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_MAX_FPS"));
+	}
+
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_SHIFT, &shift, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_DEV_SET_AE_SHIFT"));
 

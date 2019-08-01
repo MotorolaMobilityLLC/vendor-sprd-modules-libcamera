@@ -191,6 +191,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 	struct afl_ctrl_proc_out {
 		cmr_int flag;
 		cmr_int cur_flicker;
+		cmr_u32 max_fps;
 	};
 
 	struct isp_anti_flicker_cfg {
@@ -218,6 +219,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_int cur_flicker;
 		cmr_s8 version;
 		cmr_u32 cam_4in1_mode;
+		cmr_u32 max_fps;
 	};
 
 	struct isp_antiflicker_param {
