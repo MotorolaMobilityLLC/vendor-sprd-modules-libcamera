@@ -2342,6 +2342,15 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
             }
             message.alloc_flag = 1;
             memcpy(message.data, param, sizeof(cam_ion_buffer_t));
+        } else if (oem_cb_type == CAMERA_EVT_HDR_PLUS) {
+            message.data = malloc(sizeof(struct frm_info));
+            if (!message.data) {
+                CMR_LOGE("malloc failed");
+                ret = -CMR_CAMERA_NO_MEM;
+                goto exit;
+            }
+            message.alloc_flag = 1;
+            memcpy(message.data, param, sizeof(struct frm_info));
         } else {
             message.data = malloc(sizeof(struct camera_frame_type));
             if (!message.data) {
@@ -12235,7 +12244,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     frm_data->vaddr = 0;
     frm_data->uaddr_vir = yaddr_vir + buffer_size;
     frm_data->vaddr_vir = 0;
-
+    bzero(&snp_param,sizeof(struct snapshot_param));
     ret = camera_get_snapshot_param(oem_handle, &snp_param);
 
     // check snp size

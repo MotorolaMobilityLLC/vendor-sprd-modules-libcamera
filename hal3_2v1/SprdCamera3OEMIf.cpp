@@ -158,7 +158,7 @@ static void writeCamInitTimeToApct(char *buf) {
 
     if (apct_fd >= 0) {
         char buf[100] = {0};
-        sprintf(buf, "\n%s", buf);
+        sprintf(buf, "\n");
         write(apct_fd, buf, strlen(buf));
         fchmod(apct_fd, 0666);
         close(apct_fd);
@@ -10666,10 +10666,14 @@ int SprdCamera3OEMIf::pushZslFrame(struct camera_frame_type *frame) {
     ZslBufferQueue zsl_buffer_q;
 
     frame->buf_id = getZslBufferIDForFd(frame->fd);
-    memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
-    zsl_buffer_q.frame = *frame;
-    zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
-    pushZSLQueue(&zsl_buffer_q);
+    if(frame->buf_id != 0xFFFF) {
+        memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
+        zsl_buffer_q.frame = *frame;
+        zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
+        pushZSLQueue(&zsl_buffer_q);
+    } else {
+        HAL_LOGE("mZslHeapArray id not found.");
+    }
     return ret;
 }
 

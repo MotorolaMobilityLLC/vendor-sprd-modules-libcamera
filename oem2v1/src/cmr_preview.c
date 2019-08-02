@@ -8101,7 +8101,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(prev_cxt->prev_rot_frm_is_lock,
                   PREV_ROT_FRM_CNT * sizeof(cmr_uint));
         cmr_bzero(prev_cxt->prev_ultra_wide_frm_is_lock,
-                  PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+                  PREV_ULTRA_WIDE_ALLOC_CNT * sizeof(cmr_uint));
     }
     prev_cxt->prev_rot_index = 0;
     prev_cxt->prev_ultra_wide_index = 0;
