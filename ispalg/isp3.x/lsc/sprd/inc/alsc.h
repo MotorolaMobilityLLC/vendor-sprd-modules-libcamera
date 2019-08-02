@@ -81,6 +81,8 @@ struct lsc_sprd_init_in {
 	unsigned int lsc_otp_table_width;
 	unsigned int lsc_otp_table_height;
 	unsigned int lsc_otp_grid;
+	unsigned int lsc_otp_raw_width;
+	unsigned int lsc_otp_raw_height;
 	unsigned short *lsc_otp_table_addr;
 
 	unsigned int lsc_otp_oc_en;
@@ -136,7 +138,7 @@ struct lsc_post_shading_param {
 };
 
 struct addr_info {
-	void *addr;
+	unsigned char *addr;
 	int size;
 };
 

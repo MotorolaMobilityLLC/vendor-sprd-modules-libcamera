@@ -108,7 +108,7 @@ struct alsc_fwstart_info {
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
-	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 	cmr_u32 img_width_new;
 	cmr_u32 img_height_new;
 };
@@ -121,7 +121,7 @@ struct alsc_fwprocstart_info {
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
-	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 };
 
 //update flash info
@@ -130,18 +130,18 @@ struct alsc_flash_info {
 	float io_captureFlash1Ratio;
 };
 
-struct alsc_do_simulation{
-	cmr_u32* stat_r;
-	cmr_u32* stat_g;
-	cmr_u32* stat_b;
+struct alsc_do_simulation {
+	cmr_u32 *stat_r;
+	cmr_u32 *stat_g;
+	cmr_u32 *stat_b;
 	cmr_u32 ct;
 	cmr_s32 bv;
 	cmr_s32 bv_gain;
-	cmr_u16* sim_output_table;
+	cmr_u16 *sim_output_table;
 };
 
 struct binning_info {
-	float ratio;			// binning = 1/2,  double = 2
+	float ratio;		// binning = 1/2,  double = 2
 };
 
 struct crop_info {
@@ -174,7 +174,7 @@ struct pm_lsc_full {
 	unsigned int grid;
 	unsigned int gain_width;
 	unsigned int gain_height;
-	unsigned short* input_table_buffer;
+	unsigned short *input_table_buffer;
 };
 
 struct pm_lsc_crop {
@@ -185,14 +185,13 @@ struct pm_lsc_crop {
 	unsigned int grid;
 	unsigned int gain_width;
 	unsigned int gain_height;
-	unsigned short* output_table_buffer;
+	unsigned short *output_table_buffer;
 };
 
 struct lsc_size {
 	cmr_u32 w;
 	cmr_u32 h;
 };
-
 
 struct lsc_adv_init_param {
 	cmr_u32 img_width;
@@ -203,25 +202,27 @@ struct lsc_adv_init_param {
 	cmr_u32 output_gain_pattern;
 	cmr_u32 change_pattern_flag;
 	cmr_u32 grid;
-	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 	cmr_u32 lsc_id;
 
 	// isp2.1 added , need to modify to match old version
 	struct third_lib_info lib_param;
 
 	/* added parameters */
-	cmr_u16 *lum_gain;              // output from smart lsc, no used now
+	cmr_u16 *lum_gain;	// output from smart lsc, no used now
 	cmr_u16 *lsc_tab_address[9];	// the address of table parameter
 	void *tune_param_ptr;
 	void *lsc_debug_info_ptr;
 
-	//struct lsc2_tune_param lsc2_tune_param;	// alsc tuning structure
+	//struct lsc2_tune_param lsc2_tune_param;       // alsc tuning structure
 
 	//otp data
 	cmr_u32 lsc_otp_table_en;
 	cmr_u32 lsc_otp_table_width;
 	cmr_u32 lsc_otp_table_height;
 	cmr_u32 lsc_otp_grid;
+	cmr_u32 lsc_otp_raw_width;
+	cmr_u32 lsc_otp_raw_height;
 	cmr_u16 *lsc_otp_table_addr;
 
 	cmr_u32 lsc_otp_oc_en;
@@ -255,23 +256,23 @@ struct statistic_raw_t {
 struct lsc_adv_calc_param {
 	struct statistic_raw_t stat_img;	// statistic value of 4 channels
 	struct lsc_size stat_size;	// size of statistic value matrix
-	cmr_s32 gain_width;		// width  of shading table
+	cmr_s32 gain_width;	// width  of shading table
 	cmr_s32 gain_height;	// height of shading table
-	cmr_u32 ct;				// ct from AWB calc
-	cmr_s32 r_gain;			// r_gain from AWB calc
-	cmr_s32 b_gain;			// b_gain from AWB calc
-	cmr_s32 bv;				// bv from AE calc
-	cmr_s32 bv_gain;		// AE_gain from AE calc
-	cmr_u32 isp_mode;		// about the mode of interperlation of shading table
-	cmr_u32 isp_id;			// 0. alg0.c ,  2. alg2.c
-	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
+	cmr_u32 ct;		// ct from AWB calc
+	cmr_s32 r_gain;		// r_gain from AWB calc
+	cmr_s32 b_gain;		// b_gain from AWB calc
+	cmr_s32 bv;		// bv from AE calc
+	cmr_s32 bv_gain;	// AE_gain from AE calc
+	cmr_u32 isp_mode;	// about the mode of interperlation of shading table
+	cmr_u32 isp_id;		// 0. alg0.c ,  2. alg2.c
+	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 	struct lsc_size img_size;	// raw size
-	cmr_s32 grid;			// grid size
+	cmr_s32 grid;		// grid size
 
 	// no use in HLSC_V2.0
 	struct lsc_size block_size;
-	cmr_u16 *lum_gain;		// pre_table from smart1.0
-	cmr_u32 ae_stable;		// ae stable info from AE calc
+	cmr_u16 *lum_gain;	// pre_table from smart1.0
+	cmr_u32 ae_stable;	// ae stable info from AE calc
 	cmr_s32 awb_pg_flag;
 
 	cmr_u16 *lsc_tab_address[9];	// lsc_tab_address
@@ -283,7 +284,7 @@ struct lsc_adv_calc_param {
 	cmr_u32 pre_ct;
 
 	//for single and dual flash.
-	float captureFlashEnvRatio;	    //0-1, flash/ (flash+environment)
+	float captureFlashEnvRatio;	//0-1, flash/ (flash+environment)
 	float captureFlash1ofALLRatio;	//0-1,  flash1 / (flash1+flash2)
 
 	cmr_handle handle_pm;
@@ -304,7 +305,8 @@ cmr_int lsc_ctrl_deinit(cmr_handle * handle_lsc);
 cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
 cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
 
-cmr_s32 lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, cmr_u32 input_pattern, cmr_u32 output_pattern);
+cmr_s32 lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, cmr_u32 input_pattern,
+			    cmr_u32 output_pattern);
 float table_bicubic_interpolation(unsigned short *src_tab, unsigned int src_gain_width, unsigned int src_gain_height, int TL_i, int TL_j, float dx, float dy);
 
 /**----------------------------------------------------------------------------*

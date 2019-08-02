@@ -13,11 +13,9 @@
 #include "isp_pm.h"
 #include "alsc.h"
 
-
 /**---------------------------------------------------------------------------*
 **				Compiler Flag				*
 **---------------------------------------------------------------------------*/
-
 
 /**---------------------------------------------------------------------------*
 **				Micro Define				**
@@ -70,12 +68,10 @@ struct lsc_wrapper_ops {
 	int (*lsc2d_table_postproc) (uint16_t * tbl_chn[4], int w, int h, int sx, int sy, lsc2d_calib_param_t * calib_param);
 };
 
-
 struct LSC_info2AWB {
-	cmr_u16 value[2];		//final_index;
-	cmr_u16 weight[2];		// final_ratio;
+	cmr_u16 value[2];	//final_index;
+	cmr_u16 weight[2];	// final_ratio;
 };
-
 
 //simulation info
 struct alsc_simulation_info {
@@ -88,23 +84,23 @@ struct alsc_simulation_info {
 	cmr_u32 ct;
 	cmr_s32 bv;
 	cmr_s32 bv_gain;
-	cmr_u32 stat_r[32*32];
-	cmr_u32 stat_g[32*32];
-	cmr_u32 stat_b[32*32];
-	cmr_u16 lsc_table[32*32*4];
+	cmr_u32 stat_r[32 * 32];
+	cmr_u32 stat_g[32 * 32];
+	cmr_u32 stat_b[32 * 32];
+	cmr_u16 lsc_table[32 * 32 * 4];
 };
 
 struct lsc_lib_ops {
 	cmr_s32(*alsc_calc) (void *handle, struct lsc_sprd_calc_in * param, struct lsc_sprd_calc_out * adv_calc_result);
 	void *(*alsc_init) (struct lsc_sprd_init_in * param);
-	cmr_s32(*alsc_deinit) (void *handle);
-	cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+	 cmr_s32(*alsc_deinit) (void *handle);
+	 cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
 };
 
 struct post_shading_gain_param {
 	cmr_s32 bv2gainw_en;
-	cmr_s32 bv2gainw_p_bv[6];     // tunable param, src + 4 points + dst
-	cmr_s32 bv2gainw_b_gainw[6];  // tunable param, src + 4 points + dst
+	cmr_s32 bv2gainw_p_bv[6];	// tunable param, src + 4 points + dst
+	cmr_s32 bv2gainw_b_gainw[6];	// tunable param, src + 4 points + dst
 	cmr_s32 pbits_gainw;
 	cmr_s32 pbits_trunc;
 	cmr_s32 action_bv;
@@ -112,19 +108,19 @@ struct post_shading_gain_param {
 };
 
 struct lsc_flash_proc_param {
-	float captureFlashEnvRatio;     //0-1,  flash  / (flash+environment)
-	float captureFlash1ofALLRatio;  //0-1,  flash1 / (flash1+flash2)
+	float captureFlashEnvRatio;	//0-1,  flash  / (flash+environment)
+	float captureFlash1ofALLRatio;	//0-1,  flash1 / (flash1+flash2)
 
 	//for change mode flash
 	cmr_s32 main_flash_from_other_parameter;
-	cmr_u16 *preflash_current_lnc_table_address;                 // log the current tab[0] when preflash on
-	cmr_u16 preflash_current_output_table[32*32*4];              // copy the current table to restore back when flash off (with post gain)
-	cmr_u16 preflash_current_lnc_table[32*32*4];                 // copy the current DNP table
-	cmr_u16 preflash_guessing_mainflash_output_table[32*32*4];   // lsc table after preflash (without post gain)
+	cmr_u16 *preflash_current_lnc_table_address;	// log the current tab[0] when preflash on
+	cmr_u16 preflash_current_output_table[32 * 32 * 4];	// copy the current table to restore back when flash off (with post gain)
+	cmr_u16 preflash_current_lnc_table[32 * 32 * 4];	// copy the current DNP table
+	cmr_u16 preflash_guessing_mainflash_output_table[32 * 32 * 4];	// lsc table after preflash (without post gain)
 
 	//for touch preflash
-	cmr_s32 is_touch_preflash;                                   // 0: normal capture preflash    1: touch preflash     others: not preflash
-	cmr_s32 ae_touch_framecount;                                 // log the frame_count when touching the screen
+	cmr_s32 is_touch_preflash;	// 0: normal capture preflash    1: touch preflash     others: not preflash
+	cmr_s32 ae_touch_framecount;	// log the frame_count when touching the screen
 	cmr_s32 pre_flash_before_ae_touch_framecount;
 	cmr_s32 pre_flash_before_framecount;
 };
@@ -134,21 +130,21 @@ struct lsc_last_info {
 	cmr_s32 bv_gain;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
-	cmr_u16 table[32*32*4];
+	cmr_u16 table[32 * 32 * 4];
 };
 
 struct lsc_sprd_ctrl_context {
 	pthread_mutex_t status_lock;
-	void *alsc_handle;		// alsc handler
+	void *alsc_handle;	// alsc handler
 	void *lib_handle;
-	void* lsc_debug_info_ptr;
-	void* post_shading_gain_param;
-	void* lsc_flash_proc_param;
-	void* lsc_last_info;
+	void *lsc_debug_info_ptr;
+	void *post_shading_gain_param;
+	void *lsc_flash_proc_param;
+	void *lsc_last_info;
 	struct lsc_lib_ops lib_ops;
 	struct third_lib_info *lib_info;
-	cmr_u16 *std_init_lsc_table_param_buffer[8];   // without table no.8, golden OTP table
-	cmr_u16 *std_lsc_table_param_buffer[8];       // without table no.8, golden OTP table
+	cmr_u16 *std_init_lsc_table_param_buffer[8];	// without table no.8, golden OTP table
+	cmr_u16 *std_lsc_table_param_buffer[8];	// without table no.8, golden OTP table
 	cmr_u16 *lsc_pm0;
 	cmr_u16 *dst_gain;
 	cmr_u16 *lsc_buffer;
@@ -208,12 +204,16 @@ struct lsc_sprd_ctrl_context {
 	cmr_u32 cmd_alsc_dump_otp;
 	cmr_u32 cur_lsc_pm_mode;
 	cmr_u32 pre_lsc_pm_mode;
-        cmr_u16 *last_lsc_table;
+	cmr_u16 *last_lsc_table;
 	cmr_u16 *output_lsc_table;
+	cmr_u16 *lsc_buffer_interlace;
 	cmr_u32 is_planar;
+	cmr_u32 flash_enhance_ratio;
+	cmr_u32 flash_center_shiftx;
+	cmr_u32 flash_center_shifty;
 };
 
-struct lsc_param{
+struct lsc_param {
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
 	cmr_u32 pattern;
