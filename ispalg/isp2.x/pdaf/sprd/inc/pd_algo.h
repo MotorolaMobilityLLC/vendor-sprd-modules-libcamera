@@ -23,7 +23,7 @@
 #define PD_UNIT_W_SHIFT (4)
 #define PD_UNIT_H_SHIFT (4)
 #define PD_SLIDE_RANGE (33)   /* number of 33 means -16 to +16 */
-#define PD_PIXEL_PAIRS_NUM (16)
+#define PD_PIXEL_PAIRS_NUM (32)
 #ifdef __cplusplus
 extern "C"{
 #endif //__cplusplus

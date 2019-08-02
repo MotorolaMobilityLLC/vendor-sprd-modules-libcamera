@@ -542,6 +542,10 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.pd_pair_h = in_p->pd_info->pd_density_y;
 	cxt->pd_gobal_setting.pd_pairs_num_unit = in_p->pd_info->pd_pos_size;
 
+	if((in_p->pd_info->pd_pos_size * 2) > PD_PIXEL_PAIRS_NUM){
+		ISP_LOGE("Pd pixels number greater than Array Size!");
+		goto exit;
+	}
 	for (i = 0; i < in_p->pd_info->pd_pos_size * 2; i++) {
 		cxt->pd_gobal_setting.pd_is_right[i] = in_p->pd_info->pd_is_right[i];
 		cxt->pd_gobal_setting.pd_pos_row[i] = in_p->pd_info->pd_pos_row[i];
