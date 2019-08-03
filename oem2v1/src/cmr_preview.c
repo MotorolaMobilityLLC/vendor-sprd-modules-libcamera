@@ -12426,10 +12426,8 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     }
 
     isp_cmd_parm.cmd_value = 1;
-    if (cxt->ai_scene_enable) {
-        ret = handle->ops.isp_ioctl(
+    ret = handle->ops.isp_ioctl(
             handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
-    }
 
     if (prev_cxt->fd_handle) {
         CMR_LOGD("fd inited already");
