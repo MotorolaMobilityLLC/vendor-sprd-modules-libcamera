@@ -1552,6 +1552,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
 #endif
 
+        pendingRequest.timestamp = systemTime(CLOCK_MONOTONIC);
         {
             Mutex::Autolock lr(mRequestLock);
             mPendingRequestsList.push_back(pendingRequest);
@@ -1725,18 +1726,17 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
                 notify_msg.message.shutter.frame_number = i->frame_number;
-                notify_msg.message.shutter.timestamp =
-                    capture_time - resultInfo.exposure_time * 2;
+                notify_msg.message.shutter.timestamp = i->timestamp;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
-                HAL_LOGD("drop msg frame_num = %d, timestamp = %lld",
-                         i->frame_number, capture_time);
+                HAL_LOGD("drop msg frame_num = %d, timestamp = %lld i->timestamp %lld",
+                         i->frame_number, capture_time, i->timestamp);
 
                 SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
                 mSetting->getSENSORTag(&sensorInfo);
-                sensorInfo.timestamp = capture_time - resultInfo.exposure_time * 2;
+                sensorInfo.timestamp =  i->timestamp;
                 mSetting->setSENSORTag(sensorInfo);
 
                 if (sensorInfo.sensor_timestamp) {
