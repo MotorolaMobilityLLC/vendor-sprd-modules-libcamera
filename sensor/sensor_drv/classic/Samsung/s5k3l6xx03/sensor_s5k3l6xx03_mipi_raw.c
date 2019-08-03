@@ -446,6 +446,8 @@ static cmr_int s5k3l6xx03_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_offset_y = 24;
     pdaf_info->pd_end_x = 4184;
     pdaf_info->pd_end_y = 3096;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 16;
     pdaf_info->pd_block_w = 3;
     pdaf_info->pd_block_h = 3;
     pdaf_info->pd_block_num_x = 65;
