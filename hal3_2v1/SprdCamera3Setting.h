@@ -71,6 +71,7 @@ namespace sprdcamera {
 #endif
 
 #define CAMERA_ID_COUNT 6
+#define BLUR_FNUM_COUNT 10
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 
@@ -218,6 +219,7 @@ typedef struct {
     uint8_t state;
     uint8_t facing;
     float aperture;
+    float f_number;
     float filter_density;
     uint8_t optical_stabilization_mode;
 } LENS_Tag;

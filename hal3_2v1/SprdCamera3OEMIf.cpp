@@ -7543,13 +7543,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
                  (cmr_uint)&info);
     } break;
-    case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
-        SPRD_DEF_Tag sprdInfo;
-        mSetting->getSPRDDEFTag(&sprdInfo);
-        HAL_LOGD("sprdInfo.sprd_auto_3dnr_enables=%d ",
-                 sprdInfo.sprd_auto_3dnr_enable);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
-                 sprdInfo.sprd_auto_3dnr_enable);
+    case ANDROID_SPRD_BLUR_F_NUMBER: {
+        LENS_Tag lensInfo;
+        mSetting->getLENSTag(&lensInfo);
+        if (lensInfo.f_number) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_F_NUMBER,
+                     (cmr_uint)(lensInfo.f_number * 100));
+        }
     } break;
     case ANDROID_SPRD_FLASH_LCD_MODE: {
         int8_t flashMode;
@@ -7558,6 +7558,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode,
                                              &flashMode);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
+    } break;
+    case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        HAL_LOGD("sprdInfo.sprd_auto_3dnr_enables=%d ",
+                 sprdInfo.sprd_auto_3dnr_enable);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
+                 sprdInfo.sprd_auto_3dnr_enable);
     } break;
     default:
         ret = BAD_VALUE;

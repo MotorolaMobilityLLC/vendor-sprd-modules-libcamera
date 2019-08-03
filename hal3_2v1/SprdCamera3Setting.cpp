@@ -128,6 +128,8 @@ static int64_t largest_yuv_min_duration[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
 
+static float blur_fnum[BLUR_FNUM_COUNT] = {0.95, 1.4, 2.0, 2.8, 4.0, 5.6, 8.0, 11.0, 13.0, 16.0};
+
 // if cant get valid sensor fov info, use the default value
 static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f},
@@ -4110,6 +4112,12 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].lensInfo.focal_length;
 #endif
         HAL_LOGV("lens focal len is %f", valueFloat);
+    }
+    if (frame_settings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
+        valueI32 = frame_settings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.f_number,
+                         blur_fnum[valueI32 - 1], ANDROID_SPRD_BLUR_F_NUMBER)
+        HAL_LOGD("lens f_number is %f", blur_fnum[valueI32 - 1]);
     }
     if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
         valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];

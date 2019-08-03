@@ -84,6 +84,7 @@ enum setting_general_type {
     SETTING_GENERAL_SENSITIVITY,
     SETTING_GENERAL_AF_BYPASS,
     SETTING_GENERAL_FOCUS_DISTANCE,
+    SETTING_GENERAL_F_NUMBER,
     SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_AI_SCENE_ENABLED,
@@ -135,6 +136,8 @@ struct setting_hal_common {
     cmr_uint sensitivity;
     cmr_uint af_bypass;
     cmr_uint focus_distance;
+    cmr_uint aperture;
+    cmr_uint f_number;
     cmr_uint is_auto_hdr;
     cmr_uint sprd_appmode_id;
     cmr_uint ai_scene;
@@ -579,6 +582,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AF_BYPASS, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_FOCUS_DISTANCE, &hal_param->hal_common.focus_distance,
          COM_ISP_SET_AF_POS, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_F_NUMBER, &hal_param->hal_common.aperture,
+         COM_ISP_SET_F_NUMBER, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
          COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
@@ -2680,6 +2685,14 @@ static cmr_int setting_set_focus_distance(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_f_number(struct setting_component *cpt,
+                                          struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGI("aperture = %lu", parm->cmd_type_value);
+    ret = setting_set_general(cpt, SETTING_GENERAL_F_NUMBER, parm);
+    return ret;
+}
+
 static cmr_int
 setting_set_device_orientation(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm) {
@@ -3980,6 +3993,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AF_BYPASS, setting_set_af_bypass);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_LENS_FOCUS_DISTANCE,
                              setting_set_focus_distance);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_F_NUMBER,
+                             setting_set_f_number);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
                              setting_set_auto_hdr);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SET_DEVICE_ORIENTATION,
@@ -3992,6 +4007,7 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_face_attributes_enable);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,
                              setting_get_face_attributes_enable);
+
     setting_parms_inited = 1;
     return 0;
 }

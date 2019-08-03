@@ -1561,7 +1561,7 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
     case SENSOR_EXIF_CTRL_FNUMBER:
         sensor_exif_info_ptr->valid.FNumber = 1;
         sensor_exif_info_ptr->FNumber.numerator = param;
-        sensor_exif_info_ptr->FNumber.denominator = 10;
+        sensor_exif_info_ptr->FNumber.denominator = 100;
         break;
         break;
     case SENSOR_EXIF_CTRL_EXPOSUREPROGRAM:
@@ -1588,7 +1588,7 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
     case SENSOR_EXIF_CTRL_APERTUREVALUE:
         sensor_exif_info_ptr->valid.ApertureValue = 1;
         sensor_exif_info_ptr->ApertureValue.numerator = param;
-        sensor_exif_info_ptr->ApertureValue.denominator = 100;
+        sensor_exif_info_ptr->ApertureValue.denominator = 10;
         break;
     case SENSOR_EXIF_CTRL_BRIGHTNESSVALUE: {
         sensor_exif_info_ptr->valid.BrightnessValue = 1;
