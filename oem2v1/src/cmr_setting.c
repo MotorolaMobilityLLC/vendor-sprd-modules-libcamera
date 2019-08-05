@@ -1054,9 +1054,9 @@ static cmr_int
 setting_set_exposure_compensation(struct setting_component *cpt,
                                   struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
-
+    cpt->force_set = 1;
     ret = setting_set_general(cpt, SETTING_GENERAL_EXPOSURE_COMPENSATION, parm);
-
+    cpt->force_set = 0;
     return ret;
 }
 
@@ -2761,6 +2761,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
+    if (invalid_word != hal_param->hal_common.sprd_appmode_id) {
+        cmd_param.cmd_type_value = hal_param->hal_common.sprd_appmode_id;
+        ret = setting_set_appmode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
     if (invalid_word !=
         (cmr_uint)hal_param->hal_common.ae_compensation_param
             .ae_exposure_compensation) {
@@ -2835,12 +2841,6 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
     if (invalid_word != hal_param->hal_common.is_auto_hdr) {
         cmd_param.cmd_type_value = hal_param->hal_common.is_auto_hdr;
         ret = setting_set_auto_hdr(cpt, &cmd_param);
-        CMR_RTN_IF_ERR(ret);
-    }
-
-    if (invalid_word != hal_param->hal_common.sprd_appmode_id) {
-        cmd_param.cmd_type_value = hal_param->hal_common.sprd_appmode_id;
-        ret = setting_set_appmode(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
