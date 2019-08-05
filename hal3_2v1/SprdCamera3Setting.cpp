@@ -798,6 +798,25 @@ const uint8_t kavailable_control_modes[] = {
     ANDROID_CONTROL_MODE_OFF, ANDROID_CONTROL_MODE_AUTO,
     ANDROID_CONTROL_MODE_USE_SCENE_MODE};
 /**********************Static Members**********************/
+const camera_info CameraInfo[] = {
+    {CAMERA_FACING_BACK, 90, /*orientation*/
+     0, 0, 100, 0, 0},
+
+    {CAMERA_FACING_FRONT, 270, /*orientation*/
+     0, 0, 100, 0, 0},
+
+    {CAMERA_FACING_BACK, 90, /*orientation*/
+     0, 0, 0, 0, 0},
+
+    {CAMERA_FACING_FRONT, 270, /*orientation*/
+     0, 0, 0, 0, 0},
+
+    {CAMERA_FACING_BACK, 90, /*orientation*/
+     0, 0, 0, 0, 0},
+
+    {CAMERA_FACING_FRONT, 270, /*orientation*/
+     0, 0, 0, 0, 0},
+};
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
@@ -1919,9 +1938,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // flash_info
     // s_setting[cameraId].flash_InfoInfo.available = (cameraId == 0) ? 1 : 0;
-    if (cameraId == 0) {
+    if (CameraInfo[cameraId].facing == CAMERA_FACING_BACK) {
         s_setting[cameraId].flash_InfoInfo.available = 1;
-    } else if (cameraId == 1) {
+    } else if (CameraInfo[cameraId].facing == CAMERA_FACING_FRONT) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
             s_setting[cameraId].flash_InfoInfo.available = 0;
@@ -5338,7 +5357,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     else {
         // s_setting[mCameraId].flashInfo.state = mCameraId == 0 ?
         // ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
-        if (mCameraId == 0) {
+        if (mCameraId == 0 || mCameraId == 2) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
             if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
