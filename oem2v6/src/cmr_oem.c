@@ -10310,18 +10310,17 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     }
-    /*
-        case CAMERA_PARAM_ISO:
-            cxt->setting_cxt.iso_value = param;
-            ret = camera_set_setting(oem_handle, id, param);
-            break;
-    */
+
+    case CAMERA_PARAM_ISO:
+        cxt->setting_cxt.iso_value = param;
+        ret = camera_set_setting(oem_handle, id, param);
+        break;
 
     case CAMERA_PARAM_AUTO_EXPOSURE_MODE:
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
     case CAMERA_PARAM_ANTIBANDING:
-    case CAMERA_PARAM_ISO:
+    //case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
     case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:
