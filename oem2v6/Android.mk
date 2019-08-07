@@ -58,6 +58,10 @@ LOCAL_SRC_FILES+= \
     src/jpeg_stream.c \
     src/cmr_4in1.c
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_warp/inc
+LOCAL_SRC_FILES += ../oemcommon/src/cmr_ultrawide.c
+endif
 ifeq ($(strip $(CONFIG_CAMERA_MM_DVFS_SUPPORT)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../oemcommon/mm_dvfs/
 LOCAL_SRC_FILES += ../oemcommon/mm_dvfs/cmr_mm_dvfs.c
@@ -142,6 +146,10 @@ LOCAL_SHARED_LIBRARIES += libcppdrv
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 LOCAL_SHARED_LIBRARIES += libcamfb
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
+LOCAL_SHARED_LIBRARIES += libsprdwarp
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)

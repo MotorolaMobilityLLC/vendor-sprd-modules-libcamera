@@ -16,18 +16,18 @@
 #define LOG_TAG "cmr_oem"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <math.h>
-#include <cutils/properties.h>
-#include <cutils/trace.h>
 #include "cmr_oem.h"
 #include "cmr_common.h"
-#include <time.h>
 #include "isp_otp_calibration.h"
 #include "isp_simulation.h"
 #include "isp_video.h"
 #include "pthread.h"
+#include <cutils/properties.h>
+#include <cutils/trace.h>
+#include <math.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <time.h>
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
@@ -402,6 +402,38 @@ cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
                           cxt->client_data);
     if (ret) {
         CMR_LOGE("cxt->hal_malloc failed, ret=%d", ret);
+    }
+
+exit:
+    return ret;
+}
+
+cmr_int camera_gpu_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
+                          cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
+                          cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
+                          void **handle, cmr_uint *width, cmr_uint *height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!oem_handle || !vir_addr || !size_ptr || !sum_ptr || !fd || !handle) {
+        CMR_LOGE("error param mem_type 0x%x, oem_handle %p vir_addr %p, fd %p "
+                 "handle %p",
+                 mem_type, oem_handle, vir_addr, fd, handle);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    if (cxt->hal_gpu_malloc == NULL) {
+        CMR_LOGE("cxt->hal_gpu_malloc is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    CMR_LOGD("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
+
+    ret = cxt->hal_gpu_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr,
+                              fd, handle, width, height, cxt->client_data);
+    if (ret) {
+        CMR_LOGE("cxt->hal_gpu_malloc failed, ret=%d", ret);
     }
 
 exit:
@@ -828,8 +860,8 @@ exit:
 }
 
 /*
-*privdata:oem handle
-*/
+ *privdata:oem handle
+ */
 cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)privdata;
@@ -3066,6 +3098,38 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_buff_handle(cmr_handle oem_handle, int frame_type,
+                               cam_graphic_buffer_info_t *buf_cfg) {
+    int32_t ret = 0;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (cxt->camera_cb) {
+        enum camera_cb_type cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
+        if (frame_type == PREVIEW_ZSL_FRAME)
+            cb = CAMERA_EVT_CAPTURE_BUF_HANDLE;
+
+        cxt->camera_cb(cb, cxt->client_data, CAMERA_FUNC_GET_BUF_HANDLE,
+                       buf_cfg);
+    }
+    return ret;
+}
+
+cmr_int camera_release_buff_handle(cmr_handle oem_handle, int frame_type,
+                                   cam_graphic_buffer_info_t *buf_cfg) {
+    int32_t ret = 0;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (cxt->camera_cb) {
+        enum camera_cb_type cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
+        if (frame_type == PREVIEW_ZSL_FRAME)
+            cb = CAMERA_EVT_CAPTURE_BUF_HANDLE;
+
+        cxt->camera_cb(cb, cxt->client_data, CAMERA_FUNC_RELEASE_BUF_HANDLE,
+                       buf_cfg);
+    }
+    return ret;
+}
+
 int32_t camera_isp_flash_get_charge(void *handler,
                                     struct isp_flash_cfg *cfg_ptr,
                                     struct isp_flash_cell *cell) {
@@ -3601,6 +3665,8 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.set_preview_yuv = camera_preview_set_yuv_to_isp;
     init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
     init_param.ops.get_sensor_otp = camera_get_otpinfo;
+    init_param.ops.get_buff_handle = camera_get_buff_handle;
+    init_param.ops.release_buff_handle = camera_release_buff_handle;
     init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
     init_param.ops.hdr_set_ev = camera_hdr_set_ev;
     init_param.ops.set_3dnr_ev = camera_3dnr_set_ev;
@@ -5719,6 +5785,15 @@ cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video) {
     return ret;
 }
 
+cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
+                                   cmr_uint is_ultra_wide) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->is_ultra_wide = is_ultra_wide;
+    CMR_LOGI("is_ultra_wide %ld", cxt->is_ultra_wide);
+    return ret;
+}
+
 cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -6250,10 +6325,10 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     }
 #endif
 
-	if (isp_param.resolution_info.sensor_output_size.w > PICTURE_W)
-		isp_param.noramosaic_4in1 = 1;
-	else
-		isp_param.noramosaic_4in1 = 0;
+    if (isp_param.resolution_info.sensor_output_size.w > PICTURE_W)
+        isp_param.noramosaic_4in1 = 1;
+    else
+        isp_param.noramosaic_4in1 = 0;
 
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (ret) {
@@ -7008,9 +7083,6 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                 bool isFrontFlash =
                     (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true
                                                                     : false;
-                ret = isp_ioctl(cxt->isp_cxt.isp_handle,
-                                ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM,
-                                &flash_capture_skip_num);
                 if (ret) {
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
@@ -7992,6 +8064,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 
     out_param_ptr->memory_setting.alloc_mem = camera_malloc;
     out_param_ptr->memory_setting.free_mem = camera_free;
+    out_param_ptr->memory_setting.gpu_alloc_mem = camera_gpu_malloc;
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
@@ -8027,6 +8100,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->is_fd_on = cxt->fd_on_off;
     out_param_ptr->is_support_fd = cxt->is_support_fd;
     out_param_ptr->is_lls_enable = cxt->is_lls_enable;
+    out_param_ptr->is_ultra_wide = cxt->is_ultra_wide;
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -8869,6 +8943,16 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
             ret = -CMR_CAMERA_INVALID_PARAM;
         }
         break;
+    case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
+        if (param) {
+            setting_param.cmd_type_value = param;
+            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                    &setting_param);
+        } else {
+            CMR_LOGE("err, zoom ratio param is null");
+            ret = -CMR_CAMERA_INVALID_PARAM;
+        }
+        break;
     case CAMERA_PARAM_ENCODE_ROTATION:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
@@ -9367,6 +9451,14 @@ exit:
             cxt = NULL;
         }
     }
+    return ret;
+}
+
+cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
+                                     void *cb_of_free) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->hal_gpu_malloc = cb_of_malloc;
     return ret;
 }
 
@@ -10383,18 +10475,24 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
             }
         }
         break;
+    case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
+        ret = camera_set_setting(oem_handle, id, param);
+        if (ret) {
+            CMR_LOGE("failed to set camera setting of zoom ratio %ld", ret);
+        }
+        break;
     }
-
+    /*
     case CAMERA_PARAM_ISO:
         cxt->setting_cxt.iso_value = param;
         ret = camera_set_setting(oem_handle, id, param);
         break;
-
+    */
     case CAMERA_PARAM_AUTO_EXPOSURE_MODE:
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
     case CAMERA_PARAM_ANTIBANDING:
-    //    case CAMERA_PARAM_ISO:
+    // case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
     case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:
@@ -10410,7 +10508,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                                              cxt->camera_id,
                                              (struct fd_touch_info *)param);
         break;
-		
+
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;

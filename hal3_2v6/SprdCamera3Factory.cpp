@@ -258,13 +258,20 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
 
     // Only 3d calibration use this
     // TBD: move 3d calibration to multi camera
+    HAL_LOGD("SPRD Camera Hal, camera_id=%d", camera_id);
     if (SPRD_3D_CALIBRATION_ID == camera_id) {
         hw->setMultiCameraMode(MODE_3D_CALIBRATION);
     }
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;
+    } else {
+        unsigned int on_off = 0;
+        if (SPRD_ULTRA_WIDE_ID == camera_id)
+            on_off = 1;
+        hw->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
     }
+
     return rc;
 }
 
@@ -320,7 +327,8 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         return false;
     }
 
-    if (SPRD_REFOCUS_ID == cameraId || SPRD_3D_CALIBRATION_ID == cameraId) {
+    if (SPRD_REFOCUS_ID == cameraId || (SPRD_3D_CALIBRATION_ID == cameraId) ||
+        (SPRD_ULTRA_WIDE_ID == cameraId)) {
         return false;
     }
 
@@ -340,6 +348,8 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
             return 0;
         }
         return 1;
+    } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
+        return SprdCamera3Setting::findUltraWideSensor();
     }
 
     return 0xff;

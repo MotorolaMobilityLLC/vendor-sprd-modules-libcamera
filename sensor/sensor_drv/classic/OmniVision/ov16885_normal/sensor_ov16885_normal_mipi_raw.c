@@ -366,6 +366,7 @@ static cmr_int ov16885_normal_drv_get_static_info(cmr_handle handle, cmr_u32 *pa
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
+    ex_info->sns_binning_factor = sns_binning_fact;
 
     return rtn;
 }

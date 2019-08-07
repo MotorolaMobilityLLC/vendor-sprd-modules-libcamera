@@ -164,6 +164,10 @@ struct preview_md_ops {
                                    struct sensor_mode_fps_tag *fps_info);
     cmr_int (*get_sensor_otp)(cmr_handle oem_handle, cmr_u8 dual_flag,
                               struct sensor_otp_cust_info *dual_otp_data);
+    cmr_int (*get_buff_handle)(cmr_handle oem_handle, int frame_type,
+                               cam_graphic_buffer_info_t *buf_info);
+    cmr_int (*release_buff_handle)(cmr_handle oem_handle, int frame_type,
+                                   cam_graphic_buffer_info_t *buf_info);
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
     cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
@@ -239,6 +243,7 @@ struct preview_param {
     cmr_u32 tool_eb;
     void *private_data;
     cmr_u32 is_lls_enable;
+    cmr_u32 is_ultra_wide;
     cmr_u32 sprd_zsl_enabled;
     cmr_u32 sprd_afbc_enabled;
     cmr_u32 video_slowmotion_eb;
@@ -394,9 +399,9 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
                                 struct frm_info *in, cmr_uint *vir_addr_y);
-
-cmr_int cmr_preview_set_autotracking_param(cmr_handle preview_handle,
-                    cmr_u32 camera_id, struct auto_tracking_info *input_param);
+cmr_int
+cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct auto_tracking_info *input_param);
 
 cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
                                        cmr_u32 camera_id,

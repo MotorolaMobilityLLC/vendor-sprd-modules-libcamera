@@ -348,7 +348,114 @@ int SprdCamera3GrallocMemory::unmap(buffer_handle_t *buffer_handle,
     }
     return ret;
 }
+/*===========================================================================
+ * FUNCTION   : map3
+ *
+ * DESCRIPTION: for ultrawide map
+ *
+ * PARAMETERS :
+ *   @num_buffer : number of buffers to be registered
+ *   @buffers    : array of buffer_handle_t pointers
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
+                                   hal_mem_info_t *mem_info) {
+    int ret = NO_ERROR;
 
+    if (NULL == mem_info || NULL == buffer_handle) {
+        HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
+        return -EINVAL;
+    }
+
+    int width = ADP_WIDTH(*buffer_handle);
+    int height = ADP_HEIGHT(*buffer_handle);
+    int format = ADP_FORMAT(*buffer_handle);
+    android_ycbcr ycbcr;
+    Rect bounds(width, height);
+    void *vaddr = NULL;
+    int usage;
+
+    native_handle_t *native_handle = (native_handle_t *)(*buffer_handle);
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+    mem_info->pbuffer = new GraphicBuffer(
+        native_handle, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, width,
+        height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, width);
+    mem_info->bufferPtr = (void *)(mem_info->pbuffer.get());
+
+    bzero((void *)&ycbcr, sizeof(ycbcr));
+    usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+
+    if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+        ret = mem_info->pbuffer->lockYCbCr(usage, bounds, &ycbcr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
+                     "lockycbcr. %p, ret %d",
+                     *buffer_handle, ret);
+            ret = mem_info->pbuffer->lock(usage, bounds, &vaddr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = vaddr;
+            }
+        } else {
+            mem_info->addr_vir = ycbcr.y;
+        }
+    } else {
+        ret = mem_info->pbuffer->lock(usage, bounds, &vaddr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
+                     "ret %d",
+                     *buffer_handle, ret);
+            ret = mem_info->pbuffer->lockYCbCr(usage, bounds, &ycbcr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = ycbcr.y;
+            }
+        } else {
+            mem_info->addr_vir = vaddr;
+        }
+    }
+    mem_info->fd = ADP_BUFFD(*buffer_handle);
+    // mem_info->addr_phy is offset, always set to 0 for yaddr
+    mem_info->addr_phy = (void *)0;
+    mem_info->size = ADP_BUFSIZE(*buffer_handle);
+    HAL_LOGV("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
+             "%d,height =%d",
+             mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
+             mem_info->size, width, height);
+
+err_out:
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : unmap3
+ *
+ * DESCRIPTION: unregister buffers for ultrawid
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+int SprdCamera3GrallocMemory::unmap3(buffer_handle_t *buffer_handle,
+                                     hal_mem_info_t *mem_info) {
+    if (mem_info->pbuffer != NULL) {
+        mem_info->pbuffer->unlock();
+        mem_info->pbuffer.clear();
+        mem_info->pbuffer = NULL;
+        mem_info->bufferPtr = NULL;
+    }
+    return NO_ERROR;
+}
 /*===========================================================================
  * FUNCTION   : cacheOps
  *

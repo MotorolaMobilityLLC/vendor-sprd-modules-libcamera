@@ -46,7 +46,9 @@ extern struct class_tab_t cnr_tab_info;
 #ifdef CONFIG_CAMERA_AUTO_TRACKING
 extern struct class_tab_t auto_tracking_tab_info;
 #endif
-
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+extern struct class_tab_t ultrawide_tab_info;
+#endif
 extern struct class_tab_t ai_scene_tab_info;
 
 struct ipm_class_tab class_type_tab[] = {
@@ -79,6 +81,9 @@ struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_AI_SCENE, &ai_scene_tab_info},
 #ifdef CONFIG_CAMERA_AUTO_TRACKING
     {IPM_TYPE_AUTO_TRACKING, &auto_tracking_tab_info},
+#endif
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    {IPM_TYPE_ULTRA_WIDE, &ultrawide_tab_info},
 #endif
 };
 
@@ -138,7 +143,7 @@ cmr_int cmr_ipm_open(cmr_handle ipm_handle, cmr_uint class_type,
     }
 
     class_type_max = cmr_array_size(class_type_tab);
-    CMR_LOGD("class_type_max = %d ",class_type_max);
+    CMR_LOGD("class_type_max = %d ", class_type_max);
     for (index = 0; index < class_type_max; index++) {
         if (class_type_tab[index].class_type == class_type)
             break;

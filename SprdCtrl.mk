@@ -1,3 +1,4 @@
+#testtest
 ifeq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 LOCAL_CFLAGS += -DSC_FPGA=1
 else

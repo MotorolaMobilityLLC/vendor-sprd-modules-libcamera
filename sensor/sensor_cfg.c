@@ -492,7 +492,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 
 // samsung area
 #ifdef S5K4H7
-#ifndef TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE
+#ifndef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
     {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {&s5k4h7_tsp_drv_entry, 0, 0, 0}},
 #else
     {MODULE_SPW_NONE_BACK, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -583,7 +583,7 @@ const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV16885_NORMAL
-    {MODULE_SUNNY, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {&general_otp_entry, 0xA0, MULTICAM_INDEPENDENT_EEPROM, 8192}},
+    {MODULE_SPW_NONE_BACK, "ov16885_normal", &g_ov16885_normal_mipi_raw_info, {&dw9768v_drv_entry, 0x18 >> 1}, {&general_otp_entry, 0xA0, MULTICAM_INDEPENDENT_EEPROM, 8192}},
 #endif
 
 // samsung area

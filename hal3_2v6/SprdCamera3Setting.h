@@ -73,6 +73,7 @@ namespace sprdcamera {
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 #define MAX_DIGITAL_ZOOM_RATIO (4.0f)
+#define MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO (1.6f)
 
 /* Time related macros */
 typedef int64_t nsecs_t;
@@ -381,6 +382,7 @@ typedef struct {
     int32_t ae_info;
     uint8_t availabe_gender_race_age_enable;
     uint8_t gender_race_age_enable;
+    int32_t ultrawide_id;
     uint8_t sprd_flash_lcd_mode;
     int32_t top_app_id;
     uint8_t availabe_auto_3dnr;

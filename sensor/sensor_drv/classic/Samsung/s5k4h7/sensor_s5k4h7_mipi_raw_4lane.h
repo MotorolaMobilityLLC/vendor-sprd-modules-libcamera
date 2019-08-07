@@ -22,6 +22,7 @@
 #ifndef _SENSOR_S5K4H7_MIPI_RAW_H_
 #define _SENSOR_S5K4H7_MIPI_RAW_H_
 
+#define LOG_TAG "s5k4h7_mipi_raw_4lane"
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
@@ -39,7 +40,8 @@ static struct otp_info_t *s_s5k4h7_otp_info_ptr = &s_s5k4h7_qtech_otp_info;
 
 #define VENDOR_NUM 1
 #define SENSOR_NAME "s5k4h7yx03"
-#define I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
+#define MAJOR_I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
+#define MINOR_I2C_SLAVE_ADDR 0x5A
 
 #define S5K4H7_PID_ADDR 0x0000
 #define S5K4H7_PID_VALUE 0x48
@@ -343,7 +345,7 @@ static struct sensor_i2c_reg_tab s5k4h7_frame_length_tab = {
 };
 
 static struct sensor_aec_i2c_tag s5k4h7_aec_info = {
-    .slave_addr = (I2C_SLAVE_ADDR >> 1),
+    .slave_addr = (MAJOR_I2C_SLAVE_ADDR >> 1),
     .addr_bits_type = SENSOR_I2C_REG_16BIT,
     .data_bits_type = SENSOR_I2C_VAL_8BIT,
     .shutter = &s5k4h7_shutter_tab,
@@ -401,8 +403,8 @@ static SENSOR_MODE_FPS_INFO_T s_s5k4h7_mode_fps_info[VENDOR_NUM] = {
 
 static struct sensor_module_info s_s5k4h7_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .module_info = {.major_i2c_addr = MAJOR_I2C_SLAVE_ADDR >> 1,
+                     .minor_i2c_addr = MINOR_I2C_SLAVE_ADDR >> 1,
 
                      .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
                                             SENSOR_I2C_VAL_8BIT |

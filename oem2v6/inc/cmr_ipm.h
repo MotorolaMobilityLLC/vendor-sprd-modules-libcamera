@@ -83,12 +83,14 @@ struct ipm_open_in {
     ipm_callback reg_cb;
     struct img_size frame_size;
     struct img_rect frame_rect;
+    struct img_size sensor_size;
     cmr_uint frame_cnt;
     struct img_otp_data otp_data;
     cmr_u32 adgain_valid_frame_num;
     cmr_u32 adgain;
     struct img_size frame_full_size;
     struct img_size frame_scale_size;
+    cmr_u32 binning_factor;
 };
 
 struct ipm_version {

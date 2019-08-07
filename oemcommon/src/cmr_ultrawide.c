@@ -84,9 +84,8 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     ultrawide_handle->common.class_type = IPM_TYPE_ULTRA_WIDE;
     ultrawide_handle->common.ops = &ultrawide_ops_tab_info;
 
-    loadUltrawideOtp(ultrawide_handle);
-
     img_warp_grid_config_default(&ultrawide_handle->warp_param);
+    loadUltrawideOtp(ultrawide_handle);
 
     ultrawide_handle->warp_param.input_info.input_width = in->frame_size.width;
     ultrawide_handle->warp_param.input_info.input_height =
@@ -96,15 +95,25 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     ultrawide_handle->warp_param.input_info.crop_y = in->frame_rect.start_y;
     ultrawide_handle->warp_param.input_info.crop_width = in->frame_rect.width;
     ultrawide_handle->warp_param.input_info.crop_height = in->frame_rect.height;
-
+    ultrawide_handle->warp_param.input_info.fullsize_width =
+        in->sensor_size.width;
+    ultrawide_handle->warp_param.input_info.fullsize_height =
+        in->sensor_size.height;
+    if (2 == in->binning_factor) {
+        ultrawide_handle->warp_param.input_info.binning_mode = 1;
+    } else {
+        ultrawide_handle->warp_param.input_info.binning_mode = 0;
+    }
     ultrawide_handle->warp_param.dst_width = in->frame_size.width;
     ultrawide_handle->warp_param.dst_height = in->frame_size.height;
 
-    CMR_LOGD(
-        "ultra wide open:param:%p, size:%dx%d cx:%d, cy:%d,cw:%d,ch:%d",
-        &ultrawide_handle->warp_param, ultrawide_handle->warp_param.dst_width,
-        ultrawide_handle->warp_param.dst_height, in->frame_rect.start_x,
-        in->frame_rect.start_y, in->frame_rect.width, in->frame_rect.height);
+    CMR_LOGD("ultra wide open:param:%p,fullsize=%d,%d, size:%dx%d cx:%d, "
+             "cy:%d,cw:%d,ch:%d,binning:%d",
+             &ultrawide_handle->warp_param, in->sensor_size.width,
+             in->sensor_size.height, ultrawide_handle->warp_param.dst_width,
+             ultrawide_handle->warp_param.dst_height, in->frame_rect.start_x,
+             in->frame_rect.start_y, in->frame_rect.width,
+             in->frame_rect.height, in->binning_factor);
     img_warp_grid_open(&ultrawide_handle->warp_inst,
                        &ultrawide_handle->warp_param);
 
@@ -197,7 +206,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
                  (void *)src_img->addr_vir.addr_y, dst_img->buf_size);
     }
 
-    return 0;
+    return ret;
 }
 
 static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
@@ -210,6 +219,7 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
 
     FILE *fid =
         fopen("/data/vendor/cameraserver/calibration_spw_otp.txt", "rb");
+
     if (NULL == fid) {
         CMR_LOGD("calibration_spw_otp.txt not exist");
     } else {

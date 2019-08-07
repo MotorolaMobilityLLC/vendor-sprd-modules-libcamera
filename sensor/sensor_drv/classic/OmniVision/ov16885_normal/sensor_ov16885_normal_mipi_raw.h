@@ -109,6 +109,7 @@
 
 /* please don't change it */
 #define EX_MCLK                  24
+static const cmr_u32 sns_binning_fact[] = {1,1, 2, 1};
 
 /*==============================================================================
  * Description:
@@ -2852,7 +2853,7 @@ static const SENSOR_REG_T ov16885_normal_video_setting[] = {
 
 static struct sensor_res_tab_info s_ov16885_normal_resolution_tab_raw[VENDOR_NUM] = {
     {
-      .module_id = MODULE_SUNNY,
+      .module_id = MODULE_SPW_NONE_BACK,
       .reg_tab = {
         {ADDR_AND_LEN_OF_ARRAY(ov16885_normal_init_setting1), PNULL, 0,
         .width = 0, .height = 0,
@@ -2877,7 +2878,7 @@ static struct sensor_res_tab_info s_ov16885_normal_resolution_tab_raw[VENDOR_NUM
 
 static SENSOR_TRIM_T s_ov16885_normal_resolution_trim_tab[VENDOR_NUM] = {
     {
-     .module_id = MODULE_SUNNY,
+     .module_id = MODULE_SPW_NONE_BACK,
      .trim_info = {
        {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 
@@ -2960,7 +2961,7 @@ static struct sensor_aec_i2c_tag ov16885_normal_aec_info = {
 
 
 static SENSOR_STATIC_INFO_T s_ov16885_normal_static_info[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
      .static_info = {
         .f_num = 200,
         .focal_length = 357,
@@ -2978,7 +2979,7 @@ static SENSOR_STATIC_INFO_T s_ov16885_normal_static_info[VENDOR_NUM] = {
 
 
 static SENSOR_MODE_FPS_INFO_T s_ov16885_normal_mode_fps_info[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
        {.is_init = 0,
          {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
          {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
@@ -2995,7 +2996,7 @@ static SENSOR_MODE_FPS_INFO_T s_ov16885_normal_mode_fps_info[VENDOR_NUM] = {
 
 
 static struct sensor_module_info s_ov16885_normal_module_info_tab[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
      .module_info = {
          .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
          .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,

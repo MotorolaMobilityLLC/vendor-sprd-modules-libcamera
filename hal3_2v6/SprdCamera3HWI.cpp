@@ -871,6 +871,7 @@ int SprdCamera3HWI::configureStreams(
 
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
+    mOEMIf->setUltraWideMode();
 
     HAL_LOGI(":hal3: camId=%d, prev: w=%d, h=%d, video: w=%d, h=%d, callback: "
              "w=%d, h=%d, yuv2: w=%d, h=%d, cap: w=%d, h=%d",

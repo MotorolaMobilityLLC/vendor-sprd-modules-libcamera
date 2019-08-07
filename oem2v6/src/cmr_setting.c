@@ -144,6 +144,7 @@ struct setting_zoom_unit {
 struct setting_hal_param {
     struct setting_hal_common hal_common;
     struct cmr_zoom_param zoom_value;
+    cmr_uint ratio_value;
     cmr_uint sensor_orientation; /*screen orientation: landscape and portrait */
     cmr_uint capture_angle;
 
@@ -562,10 +563,11 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_3DNR, &hal_param->hal_common.is_auto_3dnr,
          COM_ISP_SET_AUTO_3DNR, COM_SN_TYPE_MAX},
-         {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
+        {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
          COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE, &hal_param->hal_common.is_auto_tracking,
-         COM_ISP_SET_AUTO_TRACKING_ENABLE, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_AUTO_TRACKING_ENABLE, COM_SN_TYPE_MAX}
+    };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -606,7 +608,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
         type_val = parm->ae_compensation_param.ae_exposure_compensation;
         break;
-   case SETTING_GENERAL_EXPOSURE_TIME:
+    case SETTING_GENERAL_EXPOSURE_TIME:
         *item->cmd_type_value = 0;
         type_val = parm->cmd_type_value;
         break;
@@ -1267,6 +1269,30 @@ static cmr_int setting_get_zoom_param(struct setting_component *cpt,
     pthread_mutex_lock(&cpt->status_lock);
     parm->zoom_param = hal_param->zoom_value;
     pthread_mutex_unlock(&cpt->status_lock);
+    return ret;
+}
+
+static cmr_int
+setting_set_reprocess_zoom_ratio(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    pthread_mutex_lock(&cpt->status_lock);
+    hal_param->ratio_value = parm->cmd_type_value;
+    pthread_mutex_unlock(&cpt->status_lock);
+    return ret;
+}
+
+static cmr_int
+setting_get_reprocess_zoom_ratio(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    pthread_mutex_lock(&cpt->status_lock);
+    parm->cmd_type_value = hal_param->ratio_value;
+    CMR_LOGD("get zoom ratio %f", *((float *)parm->cmd_type_value));
+    pthread_mutex_unlock(&cpt->status_lock);
+
     return ret;
 }
 
@@ -2508,7 +2534,7 @@ static cmr_int setting_set_auto_3dnr(struct setting_component *cpt,
 }
 
 static cmr_int setting_set_afbc_enable(struct setting_component *cpt,
-                                     struct setting_cmd_parameter *parm) {
+                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
@@ -2633,11 +2659,11 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
-   if (invalid_word != hal_param->hal_common.exposure_time) {
+    if (invalid_word != hal_param->hal_common.exposure_time) {
         cmd_param.cmd_type_value = hal_param->hal_common.exposure_time;
         ret = setting_set_exposure_time(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
-   }
+    }
 
     if (invalid_word != hal_param->hal_common.iso) {
         cmd_param.cmd_type_value = hal_param->hal_common.iso;
@@ -2650,13 +2676,13 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         ret = setting_set_scene_mode(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
-
-/*    if (invalid_word != hal_param->hal_common.focus_distance) {
-        cmd_param.cmd_type_value = hal_param->hal_common.focus_distance;
-        ret = setting_set_focus_distance(cpt, &cmd_param);
-        CMR_RTN_IF_ERR(ret);
-    }*/
-
+    /*
+    if (invalid_word != hal_param->hal_common.focus_distance) {
+            cmd_param.cmd_type_value = hal_param->hal_common.focus_distance;
+            ret = setting_set_focus_distance(cpt, &cmd_param);
+            CMR_RTN_IF_ERR(ret);
+    }
+    */
     if (invalid_word != hal_param->hal_common.is_auto_hdr) {
         cmd_param.cmd_type_value = hal_param->hal_common.is_auto_hdr;
         ret = setting_set_auto_hdr(cpt, &cmd_param);
@@ -2740,7 +2766,7 @@ static cmr_int setting_get_3dnr_type(struct setting_component *cpt,
 }
 
 static cmr_int setting_get_afbc_enabled(struct setting_component *cpt,
-                                     struct setting_cmd_parameter *parm) {
+                                        struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
@@ -3705,6 +3731,8 @@ static cmr_int cmr_setting_parms_init() {
            sizeof(setting_ioctl_fun_ptr) * SETTING_TYPE_MAX);
 
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_ZOOM, setting_set_zoom_param);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
+                             setting_set_reprocess_zoom_ratio);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_ENCODE_ROTATION,
                              setting_set_encode_angle);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_CONTRAST, setting_set_contrast);
@@ -3813,6 +3841,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_GET_CAPTURE_ANGLE,
                              setting_get_capture_angle);
     cmr_add_cmd_fun_to_table(SETTING_GET_ZOOM_PARAM, setting_get_zoom_param);
+    cmr_add_cmd_fun_to_table(SETTING_GET_REPROCESS_ZOOM_RATIO,
+                             setting_get_reprocess_zoom_ratio);
     cmr_add_cmd_fun_to_table(SETTING_GET_ENCODE_ANGLE,
                              setting_get_encode_angle);
     cmr_add_cmd_fun_to_table(SETTING_GET_EXIF_INFO, setting_get_exif_info);
@@ -3913,7 +3943,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_auto_3dnr);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AFBC_ENABLED,
                              setting_set_afbc_enable);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED, setting_get_afbc_enabled);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED,
+                             setting_get_afbc_enabled);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
                              setting_set_exposure_time);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,

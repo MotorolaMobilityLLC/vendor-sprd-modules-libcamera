@@ -1061,6 +1061,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_set_3dnr_video(handle, *(cmr_uint *)param);
         break;
     }
+    case CAMERA_IOCTRL_ULTRA_WIDE_MODE: {
+        ret = camera_set_ultra_wide_mode(handle, *(cmr_uint *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
         ret = cmr_set_snapshot_timestamp(handle, *(int64_t *)param);
         break;
@@ -1195,7 +1199,6 @@ cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
     return ret;
 }
 
-
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
                                       cmr_uint yaddr, cmr_uint yaddr_vir,
@@ -1264,7 +1267,17 @@ cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
     return ret;
 }
 #endif
+cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
+                               void *cb_of_free) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    ret = camera_local_set_gpu_mem_ops(camera_handle, cb_of_malloc, cb_of_free);
+    if (ret) {
+        ret = -CMR_CAMERA_FAIL;
+        CMR_LOGE("failed to set camera gpu callback %ld", ret);
+    }
 
+    return ret;
+}
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1297,6 +1310,11 @@ static oem_ops_t oem_module_ops = {
 #if defined(CONFIG_ISP_2_1)
     camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
     camera_raw_post_proc, camera_get_tuning_param,
+#endif
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
+    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
+    defined(CONFIG_CAMERA_SUPPORT_ULTRA_WIDE)
+    camera_set_gpu_mem_ops,
 #endif
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     camera_set_mm_dvfs_policy,

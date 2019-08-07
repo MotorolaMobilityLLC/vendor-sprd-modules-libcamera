@@ -19,10 +19,10 @@
 *
 */
 
-#define LOG_TAG "s5k4h7"
-#ifndef TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE
+#ifndef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
 #define MIPI_4LANE
 #endif
+
 #ifdef MIPI_4LANE
 #include "sensor_s5k4h7_mipi_raw_4lane.h"
 #else
@@ -666,7 +666,7 @@ static cmr_int s5k4h7_drv_stream_on(cmr_handle handle, cmr_uint param) {
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
-#ifndef TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE
+#ifndef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0101, 0x03);
 #endif
     /*END*/

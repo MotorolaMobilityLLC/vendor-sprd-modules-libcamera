@@ -21,21 +21,21 @@ extern "C" {
 #endif
 
 #include "cmr_common.h"
+#include "SprdOEMCamera.h"
+#include "cmr_cvt.h"
+#include "cmr_focus.h"
+#include "cmr_grab.h"
+#include "cmr_ipm.h"
+#include "cmr_isptool.h"
+#include "cmr_jpeg.h"
 #include "cmr_mem.h"
 #include "cmr_msg.h"
-#include "cmr_grab.h"
-#include "cmr_sensor.h"
-#include "isp_app.h"
-#include "cmr_cvt.h"
-#include "cmr_jpeg.h"
-#include "jpeg_exif_header.h"
-#include "SprdOEMCamera.h"
-#include "cmr_snapshot.h"
-#include "cmr_isptool.h"
-#include "cmr_setting.h"
-#include "cmr_focus.h"
 #include "cmr_preview.h"
-#include "cmr_ipm.h"
+#include "cmr_sensor.h"
+#include "cmr_setting.h"
+#include "cmr_snapshot.h"
+#include "isp_app.h"
+#include "jpeg_exif_header.h"
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 #include "cmr_mm_dvfs.h"
 #endif
@@ -339,6 +339,7 @@ struct camera_context {
     /*memory func*/
     camera_cb_of_malloc hal_malloc;
     camera_cb_of_free hal_free;
+    camera_cb_of_gpu_malloc hal_gpu_malloc;
     void *hal_mem_privdata;
 
     /*for isp lsc buffer*/
@@ -359,6 +360,7 @@ struct camera_context {
     cmr_uint is_start_snapshot;
     cmr_uint is_3dnr_video;
     cmr_u32 blur_facebeauty_flag;
+    cmr_uint is_ultra_wide;
     cmr_u32 is_real_bokeh;
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
@@ -567,6 +569,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             cmr_uint yaddr, cmr_uint yaddr_vir,
                                             cmr_uint fd);
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
+cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
+                                   cmr_uint is_ultra_wide);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 cmr_int cmr_get_microdepth_param(cmr_handle oem_handle, void *param);
 cmr_int cmr_set_microdepth_debug_info(cmr_handle oem_handle, void *param);
@@ -578,6 +582,8 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
 cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param);
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
                                          struct enc_exif_param *param);
+cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
+                                     void *cb_of_free);
 cmr_int camera_get_grab_capability(cmr_handle oem_handle,
                                    struct cmr_path_capability *capability);
 cmr_int camera_local_image_sw_algorithm_processing(
@@ -598,7 +604,8 @@ cmr_int camera_local_set_mm_dvfs_policy(cmr_handle oem_handle,
                                         enum CamProcessingState camera_state);
 #endif
 
-cmr_int cmr_get_reboke_data(cmr_handle oem_handle, struct af_relbokeh_oem_data *golden_distance);
+cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
+                            struct af_relbokeh_oem_data *golden_distance);
 cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
                                       struct tuning_param_info *tuning_info);
 #ifdef __cplusplus

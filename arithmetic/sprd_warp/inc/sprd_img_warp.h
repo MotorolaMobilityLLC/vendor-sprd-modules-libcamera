@@ -20,6 +20,7 @@ typedef struct {
     int crop_y;
     int crop_width;
     int crop_height;
+    int binning_mode;
 } img_warp_input_info_t;
 
 typedef struct {
