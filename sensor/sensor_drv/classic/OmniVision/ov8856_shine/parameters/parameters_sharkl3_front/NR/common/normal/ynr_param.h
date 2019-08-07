@@ -1143,10 +1143,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x05,
+			0x08,
 			/*eurodist*/
 			{
-				0x0F,0x07,0x03/*0-2*/
+				0x0F,0x0A,0x07/*0-2*/
 			},
 			/*reserved*/
 			{
