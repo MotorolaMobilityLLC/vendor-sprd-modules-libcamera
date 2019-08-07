@@ -1364,7 +1364,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
     void *input_buf1_addr = NULL;
     int buffer_index = 0;
     Mutex::Autolock l(mLock);
-    HAL_LOGV("E");
+    HAL_LOGD("E");
 
     if (output_buf == NULL || input_buf1 == NULL) {
         HAL_LOGE("buffer is NULL!");
@@ -1462,7 +1462,7 @@ int SprdCamera3RealBokeh::PreviewMuxerThread::sprdBokehPreviewHandle(
     fail_map_output:
         rc = NO_ERROR;
     }
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 
     return rc;
 }
@@ -3309,7 +3309,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     if (rc != NO_ERROR) {
         return rc;
     }
-    HAL_LOGV("frame_number:%d,num_output_buffers=%d", request->frame_number,
+    HAL_LOGD("frame_number:%d,num_output_buffers=%d", request->frame_number,
              request->num_output_buffers);
     metaSettingsMain = request->settings;
     metaSettingsAux = request->settings;
@@ -3387,7 +3387,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             getStreamType(request->output_buffers[i].stream);
         new_stream = (req->output_buffers[i]).stream;
         new_buffer = (req->output_buffers[i]).buffer;
-        HAL_LOGV("num_output_buffers:%d, streamtype:%d",
+        HAL_LOGD("num_output_buffers:%d, streamtype:%d",
                  req->num_output_buffers, requestStreamType);
 
         if (requestStreamType == SNAPSHOT_STREAM) {
