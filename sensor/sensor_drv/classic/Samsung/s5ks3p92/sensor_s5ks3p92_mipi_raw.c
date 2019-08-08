@@ -456,6 +456,7 @@ static cmr_int s5k3p9sp04_drv_4in1_init(cmr_handle handle, cmr_u32 *param) {
     init.height = IMG_HEIGHT;
     // Step 1: Init Fcell Library
     init.xtalk_len = XTALK_LEN;
+    init.pedestal = XTALK_BLC;
 #ifndef SENSOR_S5KS3P92_MIRROR_FLIP
 	init.bayer_order = BAYER_GRBG;
 #else	

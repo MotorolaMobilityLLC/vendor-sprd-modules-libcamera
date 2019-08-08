@@ -8,7 +8,7 @@ set correctly */
 //int main(int argc, char **argv) {
 int ss4c_init(ssfcell_init init){
 
-  remosaic_init(init.width, init.height,init.bayer_order, XTALK_BLC);
+  remosaic_init(init.width, init.height,init.bayer_order, init.pedestal);
   remosaic_gainmap_gen(init.xtalk, init.xtalk_len);
 
     return 0;

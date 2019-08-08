@@ -217,16 +217,15 @@ static cmr_int ov16885_normal_drv_power_on(cmr_handle handle, cmr_uint power_on)
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 
-        usleep(5 * 1000);
+        usleep(2 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
 
         usleep(5 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
-        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(2 * 1000);
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);        
     } else
     {    
@@ -708,7 +707,7 @@ static cmr_int ov16885_normal_drv_read_aec_info(cmr_handle handle, cmr_uint para
     return ret_value;
 }
 
-static cmr_int ov16885_normal_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) 
+static cmr_int ov16885_normal_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) 
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -717,7 +716,15 @@ static cmr_int ov16885_normal_drv_set_master_FrameSync(cmr_handle handle, cmr_ui
 
     /*TODO*/
 
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x00);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3008, 0x00);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3009, 0x02);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x30);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x08);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x0e);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0xc0);
+   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4902, 0x01);
 
     /*END*/
 
@@ -744,9 +751,9 @@ static cmr_int ov16885_normal_drv_stream_on(cmr_handle handle, cmr_uint param)
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
     }
-#if defined(CONFIG_DUAL_MODULE)
-    ov16885_normal_drv_set_master_FrameSync(handle, param);
-    //ov16885_normal_drv_set_slave_FrameSync(handle, param);
+#if 0//defined(CONFIG_DUAL_MODULE)
+    //ov16885_normal_drv_set_master_FrameSync(handle, param);
+    ov16885_normal_drv_set_slave_FrameSync(handle, param);
 #endif
     /*TODO*/    
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
@@ -866,7 +873,7 @@ static struct sensor_ic_ops s_ov16885_normal_ops_tab = {
     .write_gain_value = ov16885_normal_drv_write_gain_value,
 
 #if defined(CONFIG_DUAL_MODULE)
-    //.read_aec_info = ov16885_normal_drv_read_aec_info,
+    .read_aec_info = ov16885_normal_drv_read_aec_info,
 #endif
 
     .ext_ops = {

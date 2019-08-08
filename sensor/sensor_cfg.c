@@ -632,7 +632,7 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #endif
 #ifdef OV8856_SHINE
 #ifdef SENSOR_OV8856_TELE
-    {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
 #else
     {MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
 #endif
@@ -650,6 +650,14 @@ const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
 #ifdef OV7251_DUAL
     {MODULE_SUNNY, "ov7251_dual", &g_ov7251_dual_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
+#ifdef OV8856_SHINE
+#ifdef SENSOR_OV8856_TELE
+	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+#else
+	{MODULE_SUNNY, "ov8856_shine", &g_ov8856_shine_mipi_raw_info, {&dw9768v_drv_entry, 0x1c>>1}, {NULL, 0, 0, 0}},
+#endif
+#endif
+
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
@@ -687,6 +695,10 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #ifdef CONFIG_3DFACE_SUPPORT
     {SPRD_3D_FACE_ID, MODE_3D_FACE, 3, {"s5k4h9yx", "0", "ov7251_dual", "ov7251", "0", "0"}, SNS_FACE_FRONT, 270},
 #endif
+#ifdef CONFIG_OPTICSZOOM_SUPPORT
+    {SPRD_3D_FACE_ID, MODE_SOFY_OPTICAL_ZOOM, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},
+#endif
+
 };
 
 void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot_id) {
@@ -729,6 +741,11 @@ void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot
         phyPtr->resource_cost = 0;
         break;
     }
+
+    if(slot_id == SENSOR_SUB2 && !strcmp(phyPtr->sensor_name, "ov8856")){
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+	}
 
 }
 
