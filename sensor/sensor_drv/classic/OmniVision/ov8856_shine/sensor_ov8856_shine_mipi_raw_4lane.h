@@ -30,7 +30,7 @@
 #include "sensor_raw.h"
 #include "isp_com.h"
 
-//#define FEATURE_OTP
+#include "sensor_ov8856_shine_otp.h"
 
 #define VENDOR_NUM 1
 #define SENSOR_NAME "ov8856"
