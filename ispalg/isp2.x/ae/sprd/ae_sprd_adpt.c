@@ -4488,7 +4488,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->effect_index_index = 0;
 	cxt->pf_with_touch = 0;
 	cxt->flash_cap_proc = 0;
-	cxt->pre_flash_after_delay_cnt = 0;
+	//cxt->pre_flash_after_delay_cnt = 0;
 
 	cxt->sync_cur_result.wts.frm_len = cxt->cur_result.wts.frm_len;
 	cxt->sync_cur_result.wts.frm_len_def = cxt->cur_result.wts.frm_len_def;
