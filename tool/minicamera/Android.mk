@@ -52,7 +52,7 @@ LOCAL_C_INCLUDES += \
        $(TOP)/system/core/include \
        $(LOCAL_PATH)/../../kernel_module/interface
 
-LOCAL_SHARED_LIBRARIES := libcutils liblog libcamoem libcamcommon libmemion libcamsensor
+LOCAL_SHARED_LIBRARIES := libcutils liblog libcamoem libcamcommon libmemion libcamsensor libxml2
 
 include $(LOCAL_PATH)/../../SprdCtrl.mk
 

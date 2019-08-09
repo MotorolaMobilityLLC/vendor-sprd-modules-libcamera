@@ -972,6 +972,10 @@ static cmr_int gc5035_drv_get_private_data(cmr_handle handle, cmr_uint cmd, void
 	return ret;
 }
 
+void *sensor_ic_open_lib(void)
+{
+     return &g_gc5035_mipi_raw_info;
+}
 /*==============================================================================
  * Description:
  * all ioctl functoins

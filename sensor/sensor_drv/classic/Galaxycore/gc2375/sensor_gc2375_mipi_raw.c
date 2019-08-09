@@ -802,6 +802,10 @@ static cmr_int gc2375_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
+void *sensor_ic_open_lib(void)
+{
+     return &g_gc2375_mipi_raw_info;
+}
 /*==============================================================================
  * Description:
  * all ioctl functoins

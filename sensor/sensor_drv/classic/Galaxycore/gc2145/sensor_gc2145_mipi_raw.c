@@ -775,6 +775,11 @@ static cmr_int gc2145_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
+void *sensor_ic_open_lib(void)
+{
+     return &g_gc2145_mipi_raw_info;
+}
+
 /*==============================================================================
  * Description:
  * all ioctl functoins

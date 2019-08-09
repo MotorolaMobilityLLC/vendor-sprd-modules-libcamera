@@ -27,14 +27,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#define SENSOR_S5K5E8YX_PIKE2_PARAM
-
-#ifdef SENSOR_S5K5E8YX_PIKE2_PARAM
-#include "parameters_pike2/sensor_s5k5e8yx_raw_param_main.c"
-#else
-#include "parameters/sensor_s5k5e8yx_raw_param_main.c"
-#endif
-
 #define VENDOR_NUM 2
 
 #define CAMERA_IMAGE_180
@@ -334,8 +326,8 @@ static struct sensor_module_info s_s5k5e8yx_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s5k5e8yx_ops_tab;
-static struct sensor_raw_info *s_s5k5e8yx_mipi_raw_info_ptr =
-    &s_s5k5e8yx_mipi_raw_info;
+static struct sensor_raw_info *s_s5k5e8yx_mipi_raw_info_ptr = PNULL;
+
 /*==============================================================================
  * Description:
  * sensor all info

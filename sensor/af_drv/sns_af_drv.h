@@ -80,6 +80,11 @@ struct sns_af_drv_cfg {
     uint32_t af_work_mode; /*config by user*/
 };
 
+struct vcm_drv_lib {
+    void *vcm_lib_handle;
+    struct sns_af_drv_entry *vcm_info_ptr;
+};
+
 int af_drv_create(struct af_drv_init_para *input_ptr,
                   cmr_handle *sns_af_drv_handle);
 int af_drv_delete(cmr_handle sns_af_drv_handle, void *param);

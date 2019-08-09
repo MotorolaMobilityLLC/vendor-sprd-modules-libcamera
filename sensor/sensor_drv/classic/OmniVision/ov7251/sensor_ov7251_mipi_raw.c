@@ -674,8 +674,9 @@ static cmr_int ov7251_drv_stream_on(cmr_handle handle, cmr_uint param) {
          hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
          hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x04);
     }
-
+#if defined(CONFIG_DUAL_MODULE)
     ov7251_drv_set_master_FrameSync(handle, param);
+#endif
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
     /*delay*/
@@ -825,18 +826,6 @@ static cmr_int ov7251_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-#include "parameters/param_manager.c"
-static cmr_int ov7251_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 vendor_id = (cmr_u8)*param;
-    SENSOR_LOGI("*param %x %x", *param, vendor_id);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov7251_mipi_raw_info_ptr =
-        ov7251_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
-
-    return rtn;
-}
-
 static cmr_int ov7251_drv_access_val(cmr_handle handle, cmr_uint param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
@@ -854,15 +843,17 @@ static cmr_int ov7251_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
-    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
-        ret = ov7251_drv_set_raw_info(handle, param_ptr->pval);
-        break;
     default:
         break;
     }
     SENSOR_LOGV("param_ptr->type=%x %d", param_ptr->type, ret);
 
     return ret;
+}
+
+void *sensor_ic_open_lib(void)
+{
+     return &g_ov7251_mipi_raw_info;
 }
 
 static struct sensor_ic_ops s_ov7251_ops_tab = {

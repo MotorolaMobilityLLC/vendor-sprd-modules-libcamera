@@ -168,3 +168,8 @@ static int _lc898213_drv_init(cmr_handle sns_af_drv_handle) {
 
     return ret_value;
 }
+
+void *vcm_driver_open_lib(void)
+{
+     return &lc898213_drv_entry;
+}

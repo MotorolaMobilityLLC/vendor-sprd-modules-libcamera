@@ -714,6 +714,11 @@ static cmr_int hi846_wide_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
+void *sensor_ic_open_lib(void)
+{
+     return &g_hi846_wide_mipi_raw_info;
+}
+
 /*==============================================================================
  * Description:
  * all ioctl functoins

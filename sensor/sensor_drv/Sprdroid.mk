@@ -42,7 +42,7 @@ split_sensor:=$(sort $(subst $(sensor_comma),$(sensor_space) ,$(shell echo $(SEN
 
 sensor_macro:=$(shell echo $(split_sensor) | tr a-z A-Z)
 #$(warning $(sensor_macro))
-$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))=\"$(item)\"))
+#$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))=\"$(item)\"))
 
 define sensor-ic-identifier
 $(shell echo $(sensor_macro) | grep -w $(shell echo $(1) | tr a-z A-Z))
@@ -56,7 +56,7 @@ $(eval LOCAL_SRC_FILES += $(c_src_dir)/$(notdir $(file)))
 endef
 #sensor makefile config
 
-LOCAL_C_INCLUDES += $(shell find $(LOCAL_SRC_DIR)/$(SUB_DIR) -maxdepth 2 -type d)
+#LOCAL_C_INCLUDES += $(shell find $(LOCAL_SRC_DIR)/$(SUB_DIR) -maxdepth 2 -type d)
 
 LOCAL_C_INCLUDES += sensor_ic_drv.h
 
@@ -80,4 +80,5 @@ LOCAL_SRC_FILES += \
 
 
 #$(foreach item,$(split_sensor),$(eval $(call sensor-c-file-search,$(shell echo $(item) | tr A-Z a-z))))
-$(foreach item,$(split_sensor),$(eval $(call sensor-c-file-search,$(shell echo $(item)))))
+#$(foreach item,$(split_sensor),$(eval $(call sensor-c-file-search,$(shell echo $(item)))))
+

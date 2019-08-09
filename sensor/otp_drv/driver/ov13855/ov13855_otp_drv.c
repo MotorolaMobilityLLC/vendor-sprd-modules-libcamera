@@ -473,3 +473,8 @@ static cmr_int ov13855_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
     OTP_LOGV("out");
     return ret;
 }
+
+void *otp_driver_open_lib(void)
+{
+     return &ov13855_drv_entry;
+}

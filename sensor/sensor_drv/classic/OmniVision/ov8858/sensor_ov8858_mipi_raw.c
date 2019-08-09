@@ -380,15 +380,6 @@ static cmr_int ov8858_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-static cmr_int ov8858_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 vendor_id = (cmr_u8)*param;
-    SENSOR_LOGI("*param %x %x", *param, vendor_id);
-
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    return rtn;
-}
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -411,9 +402,6 @@ static cmr_int ov8858_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         sns_drv_cxt->is_sensor_close = 1;
-        break;
-    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
-        ov8858_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -890,6 +878,11 @@ static cmr_int ov8858_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
 
     ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
+}
+
+void *sensor_ic_open_lib(void)
+{
+     return &g_ov8858_mipi_raw_info;
 }
 
 /*==============================================================================

@@ -46,9 +46,6 @@ typedef struct {
 
 #define GC2145_MIPI_2Lane
 //#define SENSOR_GC2145_RAW
-#ifdef SENSOR_GC2145_RAW
-#include "parameters/sensor_gc2145_raw_param_main.c"
-#endif
 
 static const SENSOR_REG_T gc2145_init_yuv_setting[] = {
 
@@ -1200,11 +1197,7 @@ static struct sensor_module_info s_gc2145_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_gc2145_ops_tab;
-#ifdef SENSOR_GC2145_RAW
-struct sensor_raw_info *s_gc2145_mipi_raw_info_ptr = &s_gc2145_mipi_raw_info;
-#else
 struct sensor_raw_info *s_gc2145_mipi_raw_info_ptr = PNULL;
-#endif
 SENSOR_INFO_T g_gc2145_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_N | SENSOR_HW_SIGNAL_VSYNC_N |
                           SENSOR_HW_SIGNAL_HSYNC_P,

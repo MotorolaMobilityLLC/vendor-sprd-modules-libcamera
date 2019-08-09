@@ -25,8 +25,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_gc2375_raw_param_main.c"
-
 #define VENDOR_NUM 1
 
 #define SENSOR_NAME "gc2375"
@@ -155,8 +153,8 @@
  * global variable
  *===========================================================================*/
 static struct sensor_ic_ops s_gc2375_ops_tab;
-static struct sensor_raw_info *s_gc2375_mipi_raw_info_ptr =
-    &s_gc2375_mipi_raw_info;
+static struct sensor_raw_info *s_gc2375_mipi_raw_info_ptr = PNULL;
+
 static const SENSOR_REG_T gc2375_init_setting[] = {
     /*System*/
     {0xfe, 0x00},

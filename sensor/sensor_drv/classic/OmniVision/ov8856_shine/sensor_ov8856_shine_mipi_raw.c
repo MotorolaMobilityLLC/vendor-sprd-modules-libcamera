@@ -395,7 +395,6 @@ static cmr_int ov8856_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-#include "parameters/param_manager.c"
 static cmr_u8 ov8856_otp_module_vendor_id = 0;
 static cmr_int ov8856_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -421,9 +420,6 @@ static cmr_int ov8856_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     } else {
         SENSOR_LOGI("no otp_cxt");
     }
-
-    s_ov8856_shine_mipi_raw_info_ptr = ov8856_drv_init_raw_info(
-        sns_drv_cxt->sensor_id, ov8856_otp_module_vendor_id, 0, 0);
 
     return rtn;
 }
@@ -874,6 +870,10 @@ static cmr_int ov8856_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
+void *sensor_ic_open_lib(void)
+{
+     return &g_ov8856_shine_mipi_raw_info;
+}
 /*==============================================================================
  * Description:
  * all ioctl functoins

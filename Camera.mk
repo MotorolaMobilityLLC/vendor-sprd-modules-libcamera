@@ -219,7 +219,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += media_plugin_headers
 LOCAL_HEADER_LIBRARIES += libutils_headers
-LOCAL_SHARED_LIBRARIES += liblog
+LOCAL_SHARED_LIBRARIES += liblog libxml2
 LOCAL_HEADER_LIBRARIES += jni_headers
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format -DXMP_UNIXBuild -DUNIX_ENV -fexceptions

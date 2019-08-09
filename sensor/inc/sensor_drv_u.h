@@ -21,14 +21,21 @@
 #include "cmr_msg.h"
 #include "sensor_raw.h"
 #include "cmr_log.h"
-#include "../../sensor/hw_drv/hw_sensor_drv.h"
-#include "../../sensor/sensor_drv/sensor_ic_drv.h"
+#include "../hw_drv/hw_sensor_drv.h"
+#include "../sensor_drv/sensor_ic_drv.h"
+#include "sensor_drv_xml.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define CAMERA_CONFIG_SENSOR_NUM
+
+#define CONFIG_XML_PATH "/vendor/etc/"
+#define CONFIG_XML_FILE "sensor_config.xml"
+#define CONFIG_XML_NAME_LEN 64
+#define MODULE_CFG_MAX_NUM 20
+#define SENSOR_LIB_NAME_LEN 64
 
 /*sensor operation return status*/
 #define SENSOR_SUCCESS CMR_CAMERA_SUCCESS
@@ -691,6 +698,7 @@ struct sensor_drv_context {
     SENSOR_EXP_INFO_T sensor_exp_info; /*!!!BE CAREFUL!!! for the 3rd party
                                           issue, the SENSOR_EXP_INFO_T must
                                           equal the sensor_exp_info*/
+    struct xml_camera_cfg_info *xml_info;
     enum sensor_mode sensor_mode;
     cmr_uint is_autotest;
     cmr_int i2c_init_ok;
@@ -707,6 +715,16 @@ struct sensor_drv_context {
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
     cmr_handle sns_ic_drv_handle;
+};
+
+struct tuning_param_lib {
+    void *tuning_lib_handle;
+    struct sensor_raw_info *raw_info_ptr;
+};
+
+struct sensor_drv_lib {
+    void *drv_lib_handle;
+    SENSOR_INFO_T *sensor_info_ptr;
 };
 
 struct camera_device_manager {

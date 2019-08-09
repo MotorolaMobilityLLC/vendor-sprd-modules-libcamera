@@ -304,3 +304,8 @@ static int _dw9800_drv_init(cmr_handle sns_af_drv_handle) {
 
     return ret_value;
 }
+
+void *vcm_driver_open_lib(void)
+{
+     return &dw9800_drv_entry;
+}

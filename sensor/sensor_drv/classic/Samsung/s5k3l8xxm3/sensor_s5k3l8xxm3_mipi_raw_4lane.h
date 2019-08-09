@@ -25,8 +25,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_s5k3l8xxm3_raw_param_main.c"
-
 #define FEATURE_OTP
 
 #define VENDOR_NUM 1
@@ -491,8 +489,7 @@ static struct sensor_module_info s_s5k3l8xxm3_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_s5k3l8xxm3_ops_tab;
-struct sensor_raw_info *s_s5k3l8xxm3_mipi_raw_info_ptr =
-    &s_s5k3l8xxm3_mipi_raw_info;
+struct sensor_raw_info *s_s5k3l8xxm3_mipi_raw_info_ptr = PNULL;
 
 SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |

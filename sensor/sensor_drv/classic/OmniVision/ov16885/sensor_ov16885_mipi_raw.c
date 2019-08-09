@@ -685,18 +685,6 @@ static cmr_int ov16885_drv_ov4c_deinit(cmr_handle handle, cmr_u32 *param) {
 
 #endif
 
-#include "parameters/param_manager.c"
-static cmr_int ov16885_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 vendor_id = (cmr_u8)*param;
-    SENSOR_LOGI("*param %x %x", *param, vendor_id);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov16885_mipi_raw_info_ptr =
-        ov16885_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
-
-    return rtn;
-}
-
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -727,9 +715,6 @@ static cmr_int ov16885_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = ov16885_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
 #endif
-    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
-        ov16885_drv_set_raw_info(handle, param_ptr->pval);
-        break;
 #if 1
     case SENSOR_VAL_TYPE_GET_4IN1_INFO:
         ret = ov16885_drv_get_4in1_info(handle, param_ptr->pval);
@@ -1065,6 +1050,11 @@ static cmr_int ov16885_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
 
     ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
+}
+
+void *sensor_ic_open_lib(void)
+{
+     return &g_ov16885_mipi_raw_info;
 }
 
 /*==============================================================================

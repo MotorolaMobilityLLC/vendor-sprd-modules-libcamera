@@ -16,6 +16,9 @@
 
 LOCAL_PATH:= $(call my-dir)
 LOCAL_PATH_BAK:= $(call my-dir)
+LOCAL_SENSOR_PATH:= $(call my-dir)
+LOCAL_OTP_PATH:= $(call my-dir)
+LOCAL_VCM_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
@@ -69,7 +72,8 @@ include $(LOCAL_PATH)/tuning_param/Sprdroid.mk
 LOCAL_SRC_FILES += \
     dummy/isp_otp_calibration.c \
     sensor_cfg.c \
-    sensor_drv_u.c
+    sensor_drv_u.c \
+    sensor_drv_xml_parse.c
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 LOCAL_C_INCLUDES += ois
@@ -100,7 +104,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_HEADER_LIBRARIES += libutils_headers
 
-LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl
+LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libxml2
 
 LOCAL_SHARED_LIBRARIES += liblog libcam_otp_parser
 
@@ -120,7 +124,9 @@ include $(BUILD_SHARED_LIBRARY)
 include $(LOCAL_PATH)/otp_parser/Android.mk
 LOCAL_PATH:= $(LOCAL_PATH_BAK)
 
-include $(wildcard $(LOCAL_PATH)/*/*/*/*/Android.mk)
+include $(wildcard $(LOCAL_OTP_PATH)/otp_drv/*/*/Android.mk)
+include $(wildcard $(LOCAL_VCM_PATH)/af_drv/*/Android.mk)
+include $(wildcard $(LOCAL_SENSOR_PATH)/*/*/*/*/Android.mk)
 LOCAL_PATH:= $(LOCAL_PATH_BAK)
 #include $(call all-subdir-makefiles)
 #include $(call first-makefiles-under,$(LOCAL_PATH))

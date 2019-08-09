@@ -544,4 +544,10 @@ typedef struct {
 
     struct module_info_t otp_module_info;
 } otp_drv_cxt_t;
+
+struct otp_drv_lib {
+    void *otp_lib_handle;
+    otp_drv_entry_t *otp_info_ptr;
+};
+
 #endif

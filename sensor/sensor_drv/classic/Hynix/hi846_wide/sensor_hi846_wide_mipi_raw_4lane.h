@@ -27,12 +27,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#if defined(CONFIG_DUAL_MODULE)
-#include "parameters_dual/sensor_hi846_wide_raw_param_main.c"
-#else
-#include "parameters/sensor_hi846_wide_raw_param_main.c"
-#endif
-
 #define VENDOR_NUM 1
 #define SENSOR_NAME "hi846_wide_mipi_raw"
 
@@ -629,7 +623,7 @@ static struct sensor_module_info s_hi846_wide_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_hi846_wide_ops_tab;
-struct sensor_raw_info *s_hi846_wide_mipi_raw_info_ptr = &s_hi846_wide_mipi_raw_info;
+struct sensor_raw_info *s_hi846_wide_mipi_raw_info_ptr = PNULL;
 
 /*==============================================================================
  * Description:

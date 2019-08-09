@@ -25,8 +25,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters_sharkl3/sensor_imx362_raw_param_main.c"
-
 //#include "parameters/sensor_imx362_otp_truly.h"
 
 #define SENSOR_NAME "imx362_mipi_raw"
@@ -82,7 +80,7 @@
 // struct sensor_ev_info_t s_sensor_ev_info;
 
 static struct sensor_ic_ops s_imx362_ops_tab;
-struct sensor_raw_info *s_imx362_mipi_raw_info_ptr = &s_imx362_mipi_raw_info;
+struct sensor_raw_info *s_imx362_mipi_raw_info_ptr = NULL;
 
 static const SENSOR_REG_T imx362_init_setting[] = {
     {0x0136, 0x18}, {0x0137, 0x00}, {0x31A3, 0x00}, {0x4B5F, 0x00},

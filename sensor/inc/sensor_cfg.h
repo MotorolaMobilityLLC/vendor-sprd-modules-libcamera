@@ -16,8 +16,8 @@
 #ifndef _SENSOR_CFG_H_
 #define _SENSOR_CFG_H_
 
-#include "sns_af_drv.h"
-#include "otp_info.h"
+#include "../af_drv/sns_af_drv.h"
+#include "../otp_drv/otp_info.h"
 
 /*boardconfig.mk sensor name len*/
 #define MAX_SENSOR_NAME_LEN 128

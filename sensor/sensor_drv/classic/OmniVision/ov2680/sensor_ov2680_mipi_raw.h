@@ -23,8 +23,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-//#include "parameters/sensor_ov2680_raw_param_main.c"
-
 #define SENSOR_NAME "ov2680_mipi_raw"
 #define I2C_SLAVE_ADDR 0x20 /* 16bit slave address*/
 
@@ -568,7 +566,8 @@ static struct sensor_module_info s_ov2680_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov2680_ops_tab;
-struct sensor_raw_info *s_ov2680_mipi_raw_info_ptr = PNULL;//&s_ov2680_mipi_raw_info;
+
+struct sensor_raw_info *s_ov2680_mipi_raw_info_ptr = PNULL;
 
 SENSOR_INFO_T g_ov2680_mipi_raw_info = {
     .hw_signal_polarity = SENSOR_HW_SIGNAL_PCLK_P | SENSOR_HW_SIGNAL_VSYNC_P |

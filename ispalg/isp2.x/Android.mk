@@ -106,7 +106,7 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 LOCAL_SHARED_LIBRARIES += libcampm
-LOCAL_SHARED_LIBRARIES += libcutils libutils libdl libcamcommon
+LOCAL_SHARED_LIBRARIES += libcutils libutils libdl libcamcommon libxml2
 
 LOCAL_SHARED_LIBRARIES += libcamsensor
 

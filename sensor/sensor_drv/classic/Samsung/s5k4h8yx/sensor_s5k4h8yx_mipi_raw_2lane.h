@@ -28,8 +28,6 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_s5k4h8yx_raw_param_main.c"
-
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
@@ -410,8 +408,7 @@ static struct sensor_module_info s_s5k4h8yx_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_s5k4h8yx_ops_tab;
-struct sensor_raw_info *s_s5k4h8yx_mipi_raw_info_ptr =
-    &s_s5k4h8yx_mipi_raw_info;
+struct sensor_raw_info *s_s5k4h8yx_mipi_raw_info_ptr = PNULL;
 
 /*==============================================================================
  * Description:

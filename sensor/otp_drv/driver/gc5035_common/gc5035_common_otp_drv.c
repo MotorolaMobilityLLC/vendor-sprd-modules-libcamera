@@ -942,3 +942,8 @@ static cmr_int gc5035_common_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint c
 	OTP_LOGI("out");
 	return ret;
 }
+
+void *otp_driver_open_lib(void)
+{
+     return &gc5035_common_drv_entry;
+}

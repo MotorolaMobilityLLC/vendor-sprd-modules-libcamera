@@ -831,7 +831,10 @@ static cmr_int s5k3l6xx03_drv_get_private_data(cmr_handle handle, cmr_uint cmd, 
     return ret;
 }
 
-
+void *sensor_ic_open_lib(void)
+{
+     return &g_s5k3l6xx03_mipi_raw_info;
+}
 /*==============================================================================
  * Description:
  * all ioctl functoins

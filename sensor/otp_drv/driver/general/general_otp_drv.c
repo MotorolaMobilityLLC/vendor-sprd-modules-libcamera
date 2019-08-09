@@ -3215,3 +3215,8 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
     OTP_LOGD("X");
     return ret;
 }
+
+void *otp_driver_open_lib(void)
+{
+     return &general_otp_entry;
+}

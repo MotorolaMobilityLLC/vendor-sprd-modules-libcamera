@@ -16,5 +16,6 @@
 CUR_DIR := af_drv
 
 LOCAL_SRC_DIR := $(LOCAL_PATH)/$(CUR_DIR)
-LOCAL_SRC_FILES += $(shell find $(LOCAL_SRC_DIR) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
-LOCAL_C_INCLUDES += $(shell find $(LOCAL_SRC_DIR) -name '*.h' | sed -r 's/(.*)\//\1 /' | cut -d" " -f1 )
+
+LOCAL_C_INCLUDES += $(CUR_DIR)/sns_af_drv.h
+LOCAL_SRC_FILES += $(CUR_DIR)/sns_af_drv.c

@@ -474,3 +474,8 @@ static cmr_int s5k5e8yx_jd_otp_drv_ioctl(cmr_handle otp_drv_handle,
     OTP_LOGV("out");
     return ret;
 }
+
+void *otp_driver_open_lib(void)
+{
+     return &s5k5e8yx_jd_otp_entry;
+}

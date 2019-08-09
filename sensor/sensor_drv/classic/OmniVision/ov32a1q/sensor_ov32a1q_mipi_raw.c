@@ -714,17 +714,7 @@ static cmr_int ov32a1q_drv_set_xtalk_data(cmr_handle handle, cmr_uint param){
 	  return 0;
 
 }
-#include "parameters/param_manager.c"
-static cmr_int ov32a1q_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 vendor_id = (cmr_u8)*param;
-    SENSOR_LOGI("*param %x %x", *param, vendor_id);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    s_ov32a1q_mipi_raw_info_ptr =
-        ov32a1q_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
 
-    return rtn;
-}
 #ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
 #include "../../../../ams/tcs3430/tcs_3430_drv.h"
 static cmr_int ov32a1q_drv_get_cct_data(cmr_handle handle, cmr_u8 *param) {
@@ -787,9 +777,6 @@ static cmr_int ov32a1q_drv_access_val(cmr_handle handle, cmr_uint param) {
 		break;
 	#endif
 
-    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
-        ret = ov32a1q_drv_set_raw_info(handle, param_ptr->pval);
-        break;
     default:
         break;
     }
@@ -1140,6 +1127,11 @@ static cmr_int ov32a1q_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
 
     ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
+}
+
+void *sensor_ic_open_lib(void)
+{
+     return &g_ov32a1q_mipi_raw_info;
 }
 
 /*==============================================================================

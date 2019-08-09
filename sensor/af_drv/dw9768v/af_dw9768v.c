@@ -251,3 +251,8 @@ static int _dw9768v_drv_set_mode(cmr_handle sns_af_drv_handle) {
 
     return ret_value;
 }
+
+void *vcm_driver_open_lib(void)
+{
+     return &dw9768v_drv_entry;
+}
