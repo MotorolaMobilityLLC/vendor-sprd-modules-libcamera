@@ -6158,6 +6158,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
         break;
 
+    case ANDROID_SENSOR_EXPOSURE_TIME:
+        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
+            SENSOR_Tag sensorInfo;
+            mSetting->getSENSORTag(&sensorInfo);
+            HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
+                     (cmr_uint)(sensorInfo.exposure_time));
+        }
+        break;
+
     case ANDROID_CONTROL_AE_LOCK: {
         uint8_t ae_lock;
         ae_lock = controlInfo.ae_lock;

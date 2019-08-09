@@ -7437,6 +7437,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         }
         CMR_LOGD("ae mode %d", param_ptr->cmd_value);
         break;
+    case COM_ISP_SET_EXPOSURE_TIME:
+        CMR_LOGD("exposure time %d", param_ptr->cmd_value);
+        isp_cmd = ISP_CTRL_SET_AE_EXP_TIME;
+        isp_param = param_ptr->cmd_value;
+        break;
     case COM_ISP_SET_AE_MEASURE_LUM:
         isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
         isp_param = param_ptr->cmd_value;
@@ -7494,7 +7499,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_SPECIAL_EFFECT:
         isp_cmd = ISP_CTRL_SPECIAL_EFFECT;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
         isp_cmd = ISP_CTRL_AE_EXP_COMPENSATION;
@@ -8907,6 +8911,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
             CMR_LOGE("err, fps param is null");
             ret = -CMR_CAMERA_INVALID_PARAM;
         }
+        break;
+
+    case CAMERA_PARAM_EXPOSURE_TIME:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
         break;
 
     case CAMERA_PARAM_SPRD_3DNR_ENABLED:
@@ -10323,7 +10333,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
     case CAMERA_PARAM_ANTIBANDING:
-    //case CAMERA_PARAM_ISO:
+    //    case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
     case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:

@@ -5431,8 +5431,8 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     dvfs_param.sn_max_h = sensor_mode_info->height;
     dvfs_param.is_high_fps = fps_info.is_high_fps;
     cmr_set_mm_dvfs_param(handle->oem_handle, dvfs_param);
-    cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
     cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_DCAM_IF, IS_PREVIEW_BEGIN);
+    cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
 #endif
 
 exit:

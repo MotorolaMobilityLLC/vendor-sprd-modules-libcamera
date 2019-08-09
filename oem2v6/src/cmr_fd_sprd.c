@@ -88,6 +88,7 @@ struct class_fd {
     FAR_RECOGNIZER_HANDLE hFAR; /* Handle for face attribute recognition */
     FAR_HANDLE hFAR_v2;
     struct img_frm fd_small;
+    struct frm_info trans_frm;
 };
 
 struct fd_start_parameter {
@@ -402,7 +403,12 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     if (!is_busy) {
         fd_handle->frame_cnt = 0;
         fd_handle->frame_in = *in;
-
+        if (in->dst_frame.reserved) {
+            memcpy((void *)&fd_handle->trans_frm, in->dst_frame.reserved,
+                   sizeof(struct frm_info));
+            fd_handle->frame_in.dst_frame.reserved =
+                (void *)&fd_handle->trans_frm;
+        }
         param.frame_data = (void *)in->src_frame.addr_vir.addr_y;
         param.frame_cb = fd_handle->frame_cb;
         param.caller_handle = in->caller_handle;

@@ -1455,7 +1455,8 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     /*android.lens.focusDistance,The value set will be clamped to
     [0.0f, android.lens.info.minimumFocusDistance]*/
     if (mSensorFocusEnable[cameraId]) {
-        s_setting[cameraId].lens_InfoInfo.mini_focus_distance = cameraId ? 0.0f : 1023.0f;
+        s_setting[cameraId].lens_InfoInfo.mini_focus_distance =
+            cameraId ? 0.0f : 1023.0f;
 
     } else {
         s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 0.0f;
@@ -2036,7 +2037,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.size();
 
     HAL_LOGI("available_cam_features=%d",
-          s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
+             s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
     return ret;
 }
@@ -4182,17 +4183,15 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
-        double gps_coordinates[3];
         size_t num_elements =
             frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count;
         for (size_t i = 0; i < num_elements; i++) {
-            gps_coordinates[i] =
+            s_setting[mCameraId].jpgInfo.gps_coordinates[i] =
                 frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d[i];
-            HAL_LOGD("GPS coordinates %lf", gps_coordinates[i]);
+            HAL_LOGD("GPS coordinates %lf",
+                     s_setting[mCameraId].jpgInfo.gps_coordinates[i]);
         }
-        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.gps_coordinates[0],
-                         gps_coordinates[0], ANDROID_JPEG_GPS_COORDINATES,
-                         num_elements)
+        pushAndroidParaTag(ANDROID_JPEG_GPS_COORDINATES);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
@@ -5460,8 +5459,10 @@ int SprdCamera3Setting::androidAntibandingModeToDrvAntibandingMode(
 int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
                                                  int8_t *convertDrvMode) {
     int ret = 0;
+    LENS_Tag lensInfo = s_setting[mCameraId].lensInfo;
 
-    HAL_LOGD("afMode %d", androidAfMode);
+    HAL_LOGD("afMode %d, focus_distance: %f", androidAfMode,
+             lensInfo.focus_distance);
 
     switch (androidAfMode) {
     case ANDROID_CONTROL_AF_MODE_AUTO:
@@ -5477,7 +5478,11 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
 
     case ANDROID_CONTROL_AF_MODE_EDOF:
     case ANDROID_CONTROL_AF_MODE_OFF:
-        *convertDrvMode = CAMERA_FOCUS_MODE_INFINITY;
+        if (lensInfo.focus_distance > 0) {
+            *convertDrvMode = CAMERA_FOCUS_MODE_MANUAL; // Professional mode
+        } else {
+            *convertDrvMode = CAMERA_FOCUS_MODE_INFINITY;
+        }
         break;
 
     case ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO:

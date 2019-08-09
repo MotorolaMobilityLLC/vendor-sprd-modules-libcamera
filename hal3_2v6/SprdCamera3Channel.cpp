@@ -886,6 +886,9 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_CONTROL_AE_MODE");
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_MODE);
             break;
+        case ANDROID_SENSOR_EXPOSURE_TIME:
+            mOEMIf->SetCameraParaTag(ANDROID_SENSOR_EXPOSURE_TIME);
+            break;
         case ANDROID_CONTROL_AE_ANTIBANDING_MODE:
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_ANTIBANDING_MODE);
             break;

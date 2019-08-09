@@ -81,6 +81,7 @@ enum setting_general_type {
     SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_AI_SCENE_ENABLED,
     SETTING_GENERAL_AUTO_3DNR,
+    SETTING_GENERAL_EXPOSURE_TIME,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -112,6 +113,7 @@ struct setting_hal_common {
     cmr_uint contrast;
     cmr_uint effect;
     cmr_uint wb_mode;
+    cmr_uint exposure_time;
     cmr_uint saturation;
     cmr_uint sharpness;
     cmr_uint scene_mode;
@@ -555,7 +557,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AI_SCENE_ENABLED, &hal_param->hal_common.ai_scene,
          COM_ISP_SET_AI_SCENE_ENABLED, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_3DNR, &hal_param->hal_common.is_auto_3dnr,
-         COM_ISP_SET_AUTO_3DNR, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_AUTO_3DNR, COM_SN_TYPE_MAX},
+         {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
+         COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -595,6 +599,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
         type_val = parm->ae_compensation_param.ae_exposure_compensation;
+        break;
+   case SETTING_GENERAL_EXPOSURE_TIME:
+        *item->cmd_type_value = 0;
+        type_val = parm->cmd_type_value;
         break;
     case SETTING_GENERAL_AUTO_3DNR:
 
@@ -937,6 +945,16 @@ static cmr_int setting_set_ae_region(struct setting_component *cpt,
             }
         }
     }
+
+    return ret;
+}
+
+static cmr_int setting_set_exposure_time(struct setting_component *cpt,
+                                         struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    CMR_LOGI("exposure time = %lu", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_EXPOSURE_TIME, parm);
 
     return ret;
 }
@@ -2541,6 +2559,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
+   if (invalid_word != hal_param->hal_common.exposure_time) {
+        cmd_param.cmd_type_value = hal_param->hal_common.exposure_time;
+        ret = setting_set_exposure_time(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+   }
+
     if (invalid_word != hal_param->hal_common.iso) {
         cmd_param.cmd_type_value = hal_param->hal_common.iso;
         ret = setting_set_iso(cpt, &cmd_param);
@@ -3816,6 +3840,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AFBC_ENABLED,
                              setting_set_afbc_enable);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED, setting_get_afbc_enabled);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
+                             setting_set_exposure_time);
     setting_parms_inited = 1;
     return 0;
 }
