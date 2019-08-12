@@ -1478,6 +1478,28 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		}
 	}
 
+	/* Enable hist statis (Y-256). Only one will take effect. Driver MUST decide it */
+	if (start) {
+		struct isp_dev_hist2_info hist2_info;
+		struct isp_dev_hist_info hist_info;
+
+		memset(&hist2_info, 0, sizeof(struct isp_dev_hist2_info));
+		hist2_info.bypass = 0;
+		hist2_info.mode = 1; /* 0 - single;  1 - continue multi */
+		hist2_info.hist_roi.end_x = cxt->commn_cxt.prv_size.w - 1;
+		hist2_info.hist_roi.end_y = cxt->commn_cxt.prv_size.h - 1;
+		sub_block_info.block_info = &hist2_info;
+		sub_block_info.scene_id = PM_SCENE_PRE;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, ISP_BLK_HIST2);
+
+		memset(&hist_info, 0, sizeof(struct isp_dev_hist_info));
+		hist_info.bypass = 0;
+		hist_info.mode = 1; /* 0 - single;  1 - continue multi */
+		sub_block_info.block_info = &hist_info;
+		sub_block_info.scene_id = PM_SCENE_PRE;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, ISP_BLK_HIST);
+	}
+
 	return ret;
 }
 
@@ -1549,6 +1571,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	ae_shift = cxt->ae_cxt.shift;
 	blk_num = cxt->ae_cxt.win_num.w * cxt->ae_cxt.win_num.h;
 	uaddr = (cmr_u64 *)statis_info->uaddr;
+#ifdef CONFIG_ISP_2_6
 	for (i = 0; i < blk_num; i++) {
 		stats_val0 = *uaddr++;
 		stats_val1 = *uaddr++;
@@ -1585,6 +1608,43 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		  * here we shift 1 to get average of G for AE algo compatibility */
 		ae_stat_ptr->g_info[i] >>= 1;
 	}
+#else //CONFIG_ISP_2_5
+	for (i = 0x00; i < blk_num; i++) {
+		stats_val0 = *uaddr++;
+		sum_b_oe = stats_val0 & 0x1fffff;
+		sum_g_oe = (stats_val0 >> 21) & 0x3fffff;
+		sum_r_oe = (stats_val0 >> 43) & 0x1fffff;
+
+		stats_val0 = *uaddr++;
+		sum_b_ue = stats_val0 & 0x1fffff;
+		sum_g_ue = (stats_val0 >> 21) & 0x3fffff;
+		sum_r_ue = (stats_val0 >> 43) & 0x1fffff;
+
+		stats_val0 = *uaddr++;
+		sum_b_ae = stats_val0 & 0x1fffff;
+		sum_g_ae = (stats_val0 >> 21) & 0x3fffff;
+		sum_r_ae = (stats_val0 >> 43) & 0x1fffff;
+
+		stats_val0 = *uaddr++;
+		cnt_b_ue = stats_val0 & 0x1fff;
+		cnt_b_oe = (stats_val0 >> 16) & 0x1fff;
+		cnt_r_ue = (stats_val0 >> 32) & 0x1fff;
+		cnt_r_oe = (stats_val0 >> 48) & 0x1fff;
+
+		stats_val1 = *uaddr++;
+		cnt_g_ue = stats_val1 & 0x1fff;
+		cnt_g_oe = (stats_val1 >> 16) & 0x1fff;
+
+		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
+		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
+		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
+	}
+#endif
+
+	ae_stat_ptr->sec = statis_info->sec;
+	ae_stat_ptr->usec = statis_info->usec;
+	ISP_LOGV("frame_id %d, time %d.%06d\n",
+		statis_info->frame_id, statis_info->sec, statis_info->usec);
 	ISP_LOGV("sum[0]: r 0x%x, g 0x%x, b 0x%x cam[%d]\n",
 		ae_stat_ptr->r_info[0], ae_stat_ptr->g_info[0], ae_stat_ptr->b_info[0], (cmr_u32)cxt->camera_id);
 	ISP_LOGV("cnt: r 0x%x, 0x%x,  g 0x%x, 0x%x, b 0x%x, 0x%x cam[%d]\n",
@@ -1744,6 +1804,11 @@ static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGE("fail to set statis buf");
 	}
 
+	ISP_LOGD("frame %d, time %03d.%06d, image size %d %d\n", hist_stats->frame_id,
+		hist_stats->sec, hist_stats->usec, hist2_roi_info->w, hist2_roi_info->h);
+	ISP_LOGD("data %d %d %d %d,  %d %d %d %d\n",
+		hist_stats->value[0], hist_stats->value[8] , hist_stats->value[16], hist_stats->value[32],
+		hist_stats->value[64], hist_stats->value[128] , hist_stats->value[192], hist_stats->value[255]);
 	return ret;
 }
 
@@ -1799,7 +1864,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	struct ae_calc_out ae_result;
 	struct awb_gain gain = {0, 0, 0};
 	struct awb_gain cur_gain = {0, 0, 0};
-	struct afl_ctrl_proc_out afl_info = {0, 0};
+	struct afl_ctrl_proc_out afl_info = {0, 0, 0};
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&gain, NULL);
@@ -2318,7 +2383,6 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
 		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;
 		ae_ctrl_calc_result.flash_param.captureFlash1ofALLRatio = ae_result.flash_param.captureFlash1ofALLRatio;
-		cxt->ae_info.ae_rlt_info.is_stab = ae_result.ae_output.is_stab;
 	}
 
 	ret = ispalg_start_awb_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
@@ -2620,14 +2684,13 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 	cxt->ai_cxt.ae_param.ae_stat.r_info = cxt->aem_stats_data.r_info;
 	cxt->ai_cxt.ae_param.ae_stat.g_info = cxt->aem_stats_data.g_info;
 	cxt->ai_cxt.ae_param.ae_stat.b_info = cxt->aem_stats_data.b_info;
-	cxt->ai_cxt.ae_param.stable = cxt->ae_info.ae_rlt_info.is_stab;
 
 	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_cxt.win_num.w;
 	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_cxt.win_num.h;
 	cxt->ai_cxt.ae_param.curr_bv = cxt->curr_bv;
 	ISP_LOGI("ai ae info: blk_num_hor: %d, blk_num_ver: %d.", cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
 
-	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu. ae_stable %d\n", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp, cxt->ai_cxt.ae_param.stable);
+	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu.", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp);
 
 	if (cxt->ops.ai_ops.ioctrl) {
 		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_AE_PARAM, (void *)(&cxt->ai_cxt.ae_param), NULL);
@@ -3193,74 +3256,66 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_DUAL_FLASH, NULL, &output);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("fail to get dual flash param");
-		return ret;
+	if (ISP_SUCCESS != ret || 0 == output.param_num) {
+		ISP_LOGW("warn: get dual flash param, ret %ld, num %d\n", ret, output.param_num);
+	} else {
+		param_data = output.param_data;
+		for (i = 0; i < output.param_num; i++) {
+			if (NULL != param_data->data_ptr && (dflash_num < AE_MAX_PARAM_NUM)) {
+				ae_input.flash_tuning[dflash_num].param = param_data->data_ptr;
+				ae_input.flash_tuning[dflash_num].size = param_data->data_size;
+				++dflash_num;
+			}
+			++param_data;
+		}
 	}
 
-	if (0 == output.param_num) {
-		ISP_LOGE("fail to check param: dual flash param num=%d", output.param_num);
-		return ISP_ERROR;
-	}
-	param_data = output.param_data;
-	for (i = 0; i < output.param_num; i++) {
-		if (NULL != param_data->data_ptr) {
-			ae_input.flash_tuning[dflash_num].param = param_data->data_ptr;
-			ae_input.flash_tuning[dflash_num].size = param_data->data_size;
-			++dflash_num;
-		}
-		++param_data;
-	}
 	/* 4in1 bv_thd */
-	memset(&output, 0, sizeof(output));
-        ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_4IN1_PARAM, NULL, &output);
-        if (ISP_SUCCESS != ret) {
-                ISP_LOGE("fail to get 4in1 param");
-                return ret;
-        }
-        if (0 == output.param_num) {
-                ISP_LOGE("fail to check param: 4in1 param num=%d", output.param_num);
-                return ISP_ERROR;
-        }
-        param_data = output.param_data;
-        for (i = 0; i < output.param_num; ++i) {
-                if (NULL != param_data->data_ptr) {
-                        ae_input.bv_thd = *(cmr_s16 *)param_data->data_ptr;
-                }
-                ++param_data;
-        }
+	if (cxt->is_4in1_sensor) {
+		memset(&output, 0, sizeof(output));
+	        ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_4IN1_PARAM, NULL, &output);
+	        if (ISP_SUCCESS == ret && 0 == output.param_num) {
+		        param_data = output.param_data;
+		        for (i = 0; i < output.param_num; ++i) {
+		                if (NULL != param_data->data_ptr) {
+		                        ae_input.bv_thd = *(cmr_s16 *)param_data->data_ptr;
+		                }
+		                ++param_data;
+		        }
+	        } else {
+		        ISP_LOGW("warn: no 4in1 param for 4in1 sensor!");
+			ae_input.bv_thd = 0;
+	        }
+	}
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_SYNC, NULL, &output);
-	if (ISP_SUCCESS != ret || 1 != output.param_num)
+	if (ISP_SUCCESS != ret || 1 != output.param_num) {
 		ISP_LOGW("warn: get ae sync param ret %ld, num %d\n", ret, output.param_num);
-
-	param_data = output.param_data;
-	if (output.param_num == 1 && param_data->data_ptr != NULL) {
-		ae_input.ae_sync_param.param = param_data->data_ptr;
-		ae_input.ae_sync_param.size = param_data->data_size;
 	} else {
-		ae_input.ae_sync_param.param = NULL;
-		ae_input.ae_sync_param.size = 0;
+		param_data = output.param_data;
+		if (param_data->data_ptr != NULL) {
+			ae_input.ae_sync_param.param = param_data->data_ptr;
+			ae_input.ae_sync_param.size = param_data->data_size;
+		}
 	}
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
 	if (ISP_SUCCESS != ret || output.param_num == 0) {
-		ISP_LOGE("fail to get ae init param");
-		return ret;
-	}
-
-	param_data = output.param_data;
-	if (param_data)
-		ae_input.has_force_bypass = param_data->user_data[0];
-	for (i = 0; i < output.param_num; i++) {
-		if (NULL != param_data->data_ptr) {
-			ae_input.param[num].param = param_data->data_ptr;
-			ae_input.param[num].size = param_data->data_size;
-			++num;
+		ISP_LOGW("warn: get ae init param, ret %ld, num %d\n", ret, output.param_num);
+	} else {
+		param_data = output.param_data;
+		if (param_data)
+			ae_input.has_force_bypass = param_data->user_data[0];
+		for (i = 0; i < output.param_num; i++) {
+			if (NULL != param_data->data_ptr && (num < AE_MAX_PARAM_NUM)) {
+				ae_input.param[num].param = param_data->data_ptr;
+				ae_input.param[num].size = param_data->data_size;
+				++num;
+			}
+			++param_data;
 		}
-		++param_data;
 	}
 	ae_input.param_num = num;
 	ae_input.dflash_num = dflash_num;
@@ -3351,7 +3406,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.stat_win_size.w = info.win_size.w;
 	param.stat_win_size.h = info.win_size.h;
 
-	ISP_LOGE("awb get ae win %d %d %d %d %d %d\n", info.trim.x, info.trim.y,
+	ISP_LOGI("awb get ae win %d %d %d %d %d %d\n", info.trim.x, info.trim.y,
 		info.win_size.w, info.win_size.h, info.win_num.w, info.win_num.h);
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
@@ -3445,12 +3500,12 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ATM_PARAM, NULL, &pm_output);
 	if (ISP_SUCCESS != ret || pm_output.param_num != 1) {
-		ISP_LOGE("fail to get atm param");
-		return ret;
-	}
-	if (pm_output.param_data->data_ptr) {
-		smart_init_param.atm_info = pm_output.param_data->data_ptr;
-		smart_init_param.atm_size = pm_output.param_data->data_size;
+		ISP_LOGW("warn: no atm param. ret %ld, num %d\n", ret, pm_output.param_num);
+	} else {
+		if (pm_output.param_data->data_ptr) {
+			smart_init_param.atm_info = pm_output.param_data->data_ptr;
+			smart_init_param.atm_size = pm_output.param_data->data_size;
+		}
 	}
 
 	if (cxt->ops.smart_ops.init) {
@@ -3664,7 +3719,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.grid = lsc_info->grid;
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
-	lsc_param.lib_param.version_id = 1; // for adpt alsc2.1 and alsc2.5 :  0  alsc2.1   1  alsc2.5
+
 	struct lsc2_tune_param* param = (struct lsc2_tune_param*)lsc_param.tune_param_ptr;
 	cxt->lsc_cxt.full_size_width = lsc_tab_param_ptr->resolution.w;
 	cxt->lsc_cxt.full_size_height = lsc_tab_param_ptr->resolution.h;

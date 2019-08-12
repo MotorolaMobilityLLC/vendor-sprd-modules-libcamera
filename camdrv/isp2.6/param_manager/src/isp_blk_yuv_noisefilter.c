@@ -40,8 +40,9 @@ static cmr_u32 _pm_yuv_noisefilter_convert_param(
 		dst_ptr->cur.yrandom_bypass = yuv_noisefilter_param[strength_level].bypass;
 
 		dst_ptr->cur.shape_mode = yuv_noisefilter_param[strength_level].noisefilter_shape_mode;
+#ifdef CONFIG_ISP_2_6
 		dst_ptr->cur.yrandom_mode = yuv_noisefilter_param[strength_level].noisefilter_random_seed_mode;
-
+#endif
 		for (i = 0; i < 4; i++) {
 			dst_ptr->cur.yrandom_seed[i] = yuv_noisefilter_param[strength_level].yuv_noisefilter_gaussian.random_seed[i];
 		}
@@ -161,7 +162,6 @@ cmr_s32 _pm_yuv_noisefilter_get_param(void *yuv_noisefilter_param, cmr_u32 cmd, 
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_YUV_NOISEFILTER_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

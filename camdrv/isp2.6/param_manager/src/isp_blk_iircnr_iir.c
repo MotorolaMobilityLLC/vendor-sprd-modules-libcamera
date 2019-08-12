@@ -175,7 +175,6 @@ cmr_s32 _pm_iircnr_iir_get_param(void *iircnr_param, cmr_u32 cmd, void *rtn_para
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_IIRCNR_IIR_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

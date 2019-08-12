@@ -27,7 +27,7 @@ static cmr_u32 _pm_edge_convert_param(
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
-	cmr_u32 i, j;
+	cmr_u32 i;
 	char prop[PROPERTY_VALUE_MAX];
 	cmr_u32 ee_param_log_en = 0;
 	cmr_u32 foliage_coeff = 10;
@@ -176,12 +176,15 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_neg_c[1] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c2_cfg;
 		dst_ptr->cur.ee_neg_c[2] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c3_cfg;
 
+#ifdef CONFIG_ISP_2_6
 		/* (from sharkl5) newly added bellow */
 		dst_ptr->cur.ee_new_pyramid_en = edge_param[strength_level].ee_offset_layer.ee_new_pyramid_en;
 		dst_ptr->cur.ee_old_gradient_en = edge_param[strength_level].ee_offset_layer.ee_old_gradient_en;
 		dst_ptr->cur.ee_ratio_old_gradient = edge_param[strength_level].ee_offset_layer.ee_ratio_old_gradient;
 		dst_ptr->cur.ee_ratio_new_pyramid = edge_param[strength_level].ee_offset_layer.ee_ratio_new_pyramid;
 		for (i = 0; i < 3; i++) {
+			cmr_u32 i = 0, j = 0;
+
 			for (j = 0; j < 4; j++) {
 				dst_ptr->cur.ee_offset_thr_layer_curve_pos[i][j] =
 					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].thr_layer_cv_pos[j];
@@ -203,6 +206,7 @@ static cmr_u32 _pm_edge_convert_param(
 					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_freq_cv[j];
 			}
 		}
+#endif
 	}
 
 	property_get("debug.isp.ee.foliage_coeff.val", prop, "10");
@@ -381,7 +385,6 @@ cmr_s32 _pm_edge_get_param(void *edge_param,
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_EE_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

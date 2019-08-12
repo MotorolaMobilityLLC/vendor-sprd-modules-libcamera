@@ -16,23 +16,23 @@
 #define LOG_TAG "isp_blk_cnr2"
 #include "isp_blocks_cfg.h"
 
-static cmr_u32 _pm_cnr2_convert_param(void *dst_cnr2_param,
+static cmr_u32 _pm_cnr2_v0_convert_param(void *dst_cnr2_param,
 	cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
 	struct isp_cnr2_param *dst_ptr = (struct isp_cnr2_param *)dst_cnr2_param;
-	struct sensor_cnr_level_v1 *cnr2_param = PNULL;
+	struct sensor_cnr_level_v0 *cnr2_param = PNULL;
 	cmr_s32 i = 0, j = 0;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
-		cnr2_param = (struct sensor_cnr_level_v1 *)(dst_ptr->param_ptr);
+		cnr2_param = (struct sensor_cnr_level_v0 *)(dst_ptr->param_ptr);
 	} else {
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		cnr2_param = (struct sensor_cnr_level_v1 *)((cmr_u8 *) dst_ptr->param_ptr +
-				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_cnr_level_v1));
+		cnr2_param = (struct sensor_cnr_level_v0 *)((cmr_u8 *) dst_ptr->param_ptr +
+				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_cnr_level_v0));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
@@ -50,14 +50,14 @@ static cmr_u32 _pm_cnr2_convert_param(void *dst_cnr2_param,
 				dst_ptr->cur.weight[i][1].rangWeight[j] = cnr2_param[strength_level].weight[i][1].rangWeight[j];
 			}
 		}
-		dst_ptr->level_info.level_enable = cnr2_param[strength_level].level_enable;
-		dst_ptr->level_info.low_ct_thrd = cnr2_param[strength_level].low_ct_thrd;
+		dst_ptr->level_info.level_enable = cnr2_param[strength_level].weight[0][0].level_enable;
+		dst_ptr->level_info.low_ct_thrd = cnr2_param[strength_level].weight[0][0].low_ct_thrd;
 	}
 
 	return rtn;
 }
 
-cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2)
+cmr_s32 _pm_cnr2_v0_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
@@ -71,7 +71,7 @@ cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, 
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
-	rtn = _pm_cnr2_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	rtn = _pm_cnr2_v0_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm cnr2 param !");
 		return rtn;
@@ -82,7 +82,7 @@ cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, 
 	return rtn;
 }
 
-cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_cnr2_v0_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
@@ -115,7 +115,7 @@ cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_CNR2_T] = 0;
 
-				rtn = _pm_cnr2_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
+				rtn = _pm_cnr2_v0_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");
 					return rtn;
@@ -132,7 +132,7 @@ cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void
 	return rtn;
 }
 
-cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_cnr2_v0_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_cnr2_param *cnr2_ptr = (struct isp_cnr2_param *)cnr2_param;

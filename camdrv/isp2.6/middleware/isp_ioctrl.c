@@ -611,7 +611,9 @@ static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_BRIGHT, ISP_BLK_BCHS, &cfg, sizeof(cfg));
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_BRIGHT, ISP_BLK_BRIGHT, &cfg, sizeof(cfg));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -629,7 +631,9 @@ static cmr_int ispctl_contrast(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CONTRAST, ISP_BLK_BCHS, &cfg, sizeof(cfg));
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CONTRAST, ISP_BLK_CONTRAST, &cfg, sizeof(cfg));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -647,7 +651,9 @@ static cmr_int ispctl_saturation(cmr_handle isp_alg_handle, void *param_ptr)
 	cfg.factor = *(cmr_u32 *) param_ptr;
 	memset(&param_data, 0x0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SATURATION, ISP_BLK_BCHS, &cfg, sizeof(cfg));
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_SATURATION, ISP_BLK_SATURATION, &cfg, sizeof(cfg));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 
 	return ret;
@@ -2089,9 +2095,11 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
 
 		switch (header->block_id) {
+#ifdef CONFIG_ISP_2_6
 		case DCAM_BLK_PPE:
 			update_param->ppe_level_ptr = (struct sensor_ppe_level *)fix_data_ptr->nr.nr_set_group.ppe;
 			break;
+#endif
 		case DCAM_BLK_BPC_V1:
 			update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;
 			break;
@@ -2115,9 +2123,11 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		case ISP_BLK_UVDIV_V1:
 			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.uvdiv;
 			break;
+#ifdef CONFIG_ISP_2_6
 		case ISP_BLK_3DNR:
 			update_param->dnr_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d;
 			break;
+#endif
 		case ISP_BLK_EE_V1:
 			update_param->ee_level_ptr = (struct sensor_ee_level *)fix_data_ptr->nr.nr_set_group.edge;
 			break;
@@ -2139,18 +2149,22 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		case ISP_BLK_YUV_NOISEFILTER_V1:
 			update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
 			break;
+#ifdef CONFIG_ISP_2_6
 		case ISP_BLK_IMBALANCE:
 			update_param->imbalance_level_ptr = (struct sensor_nlm_imbalance_level *)fix_data_ptr->nr.nr_set_group.imblance;
 			break;
 		case ISP_BLK_LTM:
 			update_param->ltm_level_ptr = (struct sensor_ltm_level *)fix_data_ptr->nr.nr_set_group.ltm;
 			break;
+#endif
 		case ISP_BLK_CNR2_V1:
 			update_param->cnr2_level_ptr = (struct sensor_cnr_level *)fix_data_ptr->nr.nr_set_group.cnr2;
 			break;
+#ifdef CONFIG_ISP_2_6
 		case ISP_BLK_SW3DNR:
 			update_param->sw3dnr_level_ptr = (struct sensor_sw3dnr_level *)fix_data_ptr->nr.nr_set_group.sw_3dnr;
 			break;
+#endif
 		default:
 			break;
 		}
@@ -2751,14 +2765,21 @@ static cmr_int ispctl_get_cnr2_en(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_u32 level_enable = 0;
 	cmr_u32 low_ct_thrd = 0;
 	cmr_u32 cnr2_en = 0;
+	cmr_u32 blk_id;
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
 	}
 	ISP_LOGV("ct = %d", ct);
 
+#ifdef CONFIG_ISP_2_6
+	blk_id = ISP_BLK_CNR2_V1;
+#else
+	blk_id = ISP_BLK_CNR2;
+#endif
+
 	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, ISP_BLK_CNR2_V1, NULL, 0);
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, blk_id, NULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		level_info = (struct isp_cnr2_level_info *)output.param_data->data_ptr;
@@ -2786,10 +2807,16 @@ static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
+	cmr_u32 blk_id;
 
 	memset(&param_data, 0, sizeof(param_data));
 
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_CNR2_V1, NULL, 0);
+#ifdef CONFIG_ISP_2_6
+	blk_id = ISP_BLK_CNR2_V1;
+#else
+	blk_id = ISP_BLK_CNR2;
+#endif
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_sw_cnr2_info));

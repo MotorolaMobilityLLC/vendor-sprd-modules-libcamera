@@ -188,7 +188,6 @@ cmr_s32 _pm_grgb_get_param(void *grgb_param, cmr_u32 cmd, void *rtn_param0, void
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_GRGB_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

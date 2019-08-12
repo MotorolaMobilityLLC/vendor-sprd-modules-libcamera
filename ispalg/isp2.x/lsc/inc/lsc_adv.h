@@ -169,10 +169,8 @@ struct alsc_fwstart_info {
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
 	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
-#if defined (CONFIG_ISP_2_6)
 	cmr_u32 img_width_new;
 	cmr_u32 img_height_new;
-#endif
 };
 
 //for fw proc start

@@ -4068,7 +4068,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_size org_size;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
 	cmr_s32 mode = 0, dv_mode = 0;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL

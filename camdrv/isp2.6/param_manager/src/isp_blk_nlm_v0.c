@@ -16,7 +16,7 @@
 #define LOG_TAG "isp_blk_nlm"
 #include "isp_blocks_cfg.h"
 
-cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
+cmr_u32 _pm_nlm_v0_convert_param(void *dst_nlm_param,
 		cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -25,12 +25,12 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 	cmr_uint addr;
 	struct isp_nlm_param *dst_ptr = (struct isp_nlm_param *)dst_nlm_param;
 
-	struct sensor_nlm_level_v1 *nlm_param = NULL;
+	struct sensor_nlm_level_v0 *nlm_param = NULL;
 	struct sensor_vst_level *vst_param = NULL;
 	struct sensor_ivst_level *ivst_param = NULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
-		nlm_param = (struct sensor_nlm_level_v1 *)(dst_ptr->nlm_ptr);
+		nlm_param = (struct sensor_nlm_level_v0 *)(dst_ptr->nlm_ptr);
 		vst_param = (struct sensor_vst_level *)(dst_ptr->vst_ptr);
 		ivst_param = (struct sensor_ivst_level *)(dst_ptr->ivst_ptr);
 	} else {
@@ -38,8 +38,8 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		nlm_param = (struct sensor_nlm_level_v1 *)((cmr_u8 *) dst_ptr->nlm_ptr +
-				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_nlm_level_v1));
+		nlm_param = (struct sensor_nlm_level_v0 *)((cmr_u8 *) dst_ptr->nlm_ptr +
+				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_nlm_level_v0));
 
 		vst_param = (struct sensor_vst_level *)((cmr_u8 *) dst_ptr->vst_ptr +
 				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_vst_level));
@@ -107,7 +107,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 
 			for (j = 0; j < 4; j++) {
 				dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].radius_threshold_filter_ratio;
-				dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio_factor[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].radius_threshold_filter_ratio_factor;
+				dst_ptr->cur.nlm_radial_1D_radius_threshold_filter_ratio_factor[i][j] = 1024;//nlm_param[strength_level].radius_1d.radius[i][j].radius_threshold_filter_ratio_factor;
 				dst_ptr->cur.nlm_radial_1D_coef2[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].coef2;
 				dst_ptr->cur.nlm_radial_1D_protect_gain_min[i][j] = nlm_param[strength_level].radius_1d.radius[i][j].protect_gain_min;
 
@@ -124,8 +124,8 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 		dst_ptr->cur.nlm_radial_1D_radius_threshold = nlm_param[strength_level].radius_1d.radius_threshold;
 		dst_ptr->cur.nlm_radial_1D_protect_gain_max = nlm_param[strength_level].radius_1d.protect_gain_max;
 
-		dst_ptr->cur.nlm_radial_1D_radius_threshold_factor = nlm_param[strength_level].radius_1d.radius_threshold_factor;
-		dst_ptr->cur.radius_base = nlm_param[strength_level].radius_base;
+		dst_ptr->cur.nlm_radial_1D_radius_threshold_factor = 1024;//nlm_param[strength_level].radius_1d.radius_threshold_factor;
+		dst_ptr->cur.radius_base = 1024;//nlm_param[strength_level].radius_base;
 
 		dst_ptr->cur.simple_bpc_bypass = nlm_param[strength_level].simple_bpc.simple_bpc_bypass;
 		dst_ptr->cur.simple_bpc_lum_th = nlm_param[strength_level].simple_bpc.simple_bpc_lum_thr;
@@ -137,7 +137,7 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param,
 	return rtn;
 }
 
-cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_nlm_v0_init(void *dst_nlm_param, void *src_nlm_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param *dst_ptr = (struct isp_nlm_param *)dst_nlm_param;
@@ -184,7 +184,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	if (!header_ptr->bypass)
-		rtn = _pm_nlm_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+		rtn = _pm_nlm_v0_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	dst_ptr->cur.vst_bypass = dst_ptr->cur.bypass;
 	dst_ptr->cur.ivst_bypass = dst_ptr->cur.bypass;
@@ -198,7 +198,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	return rtn;
 }
 
-cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_nlm_v0_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param *nlm_ptr = (struct isp_nlm_param *)nlm_param;
@@ -235,7 +235,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 				nlm_header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_NLM_T] = 0;
 
-				rtn = _pm_nlm_convert_param(nlm_ptr, nlm_ptr->cur_level, nlm_header_ptr->mode_id, block_result->scene_flag);
+				rtn = _pm_nlm_v0_convert_param(nlm_ptr, nlm_ptr->cur_level, nlm_header_ptr->mode_id, block_result->scene_flag);
 				nlm_ptr->cur.bypass |= nlm_header_ptr->bypass;
 				nlm_ptr->cur.vst_bypass = nlm_ptr->cur.bypass;
 				nlm_ptr->cur.ivst_bypass = nlm_ptr->cur.bypass;
@@ -256,7 +256,7 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 	return rtn;
 }
 
-cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_nlm_v0_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param *nlm_ptr = (struct isp_nlm_param *)nlm_param;
@@ -279,7 +279,7 @@ cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *
 	return rtn;
 }
 
-cmr_s32 _pm_nlm_deinit(void *nlm_param)
+cmr_s32 _pm_nlm_v0_deinit(void *nlm_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param *nlm_ptr = (struct isp_nlm_param *)nlm_param;

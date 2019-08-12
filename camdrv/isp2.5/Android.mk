@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
+# todo - will delete this dir later
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)

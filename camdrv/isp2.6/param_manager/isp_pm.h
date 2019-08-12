@@ -36,6 +36,8 @@
 	(id == DCAM_BLK_RGB_DITHER) || (id == ISP_BLK_RGB_GAIN) || \
 	(id == ISP_BLK_2D_LSC) || (id == ISP_BLK_AWB_NEW) || \
 	(id == DCAM_BLK_BPC_V1) || (id == DCAM_BLK_RGB_AFM_V1) ||\
+	(id == DCAM_BLK_BPC) || (id == DCAM_BLK_RGB_AFM) ||\
+	(id == ISP_BLK_GRGB) || (id == ISP_BLK_RGB_DITHER) ||\
 	(id == ISP_BLK_RGB_AEM) || (id == DCAM_BLK_PPE))
 
 enum isp_pm_cmd {

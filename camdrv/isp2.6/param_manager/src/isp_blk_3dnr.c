@@ -155,10 +155,13 @@ cmr_u32 _pm_3dnr_convert_param(
 		dst_ptr->cur.blend.r1_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap[0];
 		dst_ptr->cur.blend.r2_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap[1];
 		dst_ptr->cur.blend.r3_circle = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap[2];
+
+#ifdef CONFIG_ISP_2_6
 		dst_ptr->cur.blend.r1_circle_factor = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap_factor[0];
 		dst_ptr->cur.blend.r2_circle_factor = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap_factor[1];
 		dst_ptr->cur.blend.r3_circle_factor = nr_3d_param[strength_level].sensor_3dnr_cor.r_circle_cap_factor[2];
 		dst_ptr->cur.blend.r_circle_base = nr_3d_param[strength_level].radius_base;
+#endif
 	}
 	return rtn;
 }
@@ -197,6 +200,7 @@ cmr_s32 _pm_3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, voi
 	struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 	struct isp_range val_range = { 0, 0 };
 	cmr_u32 level = 0;
+	cmr_u32 nr_type;
 
 	switch (cmd) {
 	case ISP_PM_BLK_3D_NR_BYPASS:
@@ -223,12 +227,20 @@ cmr_s32 _pm_3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, voi
 			return rtn;
 		}
 
+		if (header_ptr->block_id == DCAM_BLK_3DNR_PRE)
+			nr_type = ISP_BLK_3DNR_PRE_T;
+		else if (header_ptr->block_id == DCAM_BLK_3DNR_CAP)
+			nr_type = ISP_BLK_3DNR_CAP_T;
+		else
+			nr_type = ISP_BLK_3DNR_T;
+		ISP_LOGV("blk id 0x%x,  mode_id %d, nr_type %d\n", header_ptr->block_id, header_ptr->mode_id, nr_type);
+
 		level = (cmr_u32) block_result->component[0].fix_data[0];
 
-		if (level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_3DNR_T] || block_result->mode_flag_changed) {
+		if (level != dst_ptr->cur_level || nr_tool_flag[nr_type] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
 			header_ptr->is_update = ISP_ONE;
-			nr_tool_flag[ISP_BLK_3DNR_T] = 0;
+			nr_tool_flag[nr_type] = 0;
 
 			rtn = _pm_3dnr_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
 			if (ISP_SUCCESS != rtn) {
@@ -253,7 +265,6 @@ cmr_s32 _pm_3dnr_get_param(void *nr_3d_param, cmr_u32 cmd, void *rtn_param0, voi
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_3DNR;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

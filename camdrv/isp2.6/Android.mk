@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)), $(filter $(TARGET_BOARD_CAMERA_ISP_VERSION), 2.5 2.6))
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)

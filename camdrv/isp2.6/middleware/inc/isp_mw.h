@@ -755,6 +755,7 @@ struct ips_in_param {
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
 	cmr_u32 sensor_id;
+	cmr_u32 hwsim_4in1_width;
 };
 
 struct ips_out_param {

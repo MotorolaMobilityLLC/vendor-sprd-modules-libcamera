@@ -16,5 +16,5 @@
 #ifndef _SPRD_ISP_K_H_
 #define _SPRD_ISP_K_H_
 
-#include "sprd_isp_r8p1.h"
+#include "sprd_isp_2v6.h"
 #endif

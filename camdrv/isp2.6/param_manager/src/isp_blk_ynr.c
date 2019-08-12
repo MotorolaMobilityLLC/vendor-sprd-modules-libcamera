@@ -23,19 +23,19 @@ static cmr_u32 _pm_ynr_convert_param(
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
 	struct isp_ynr_param *dst_ptr = (struct isp_ynr_param *)dst_param;
-	struct sensor_ynr_level *ynr_param = PNULL;
+	struct sensor_ynr_level_v1 *ynr_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
-		ynr_param = (struct sensor_ynr_level *)(dst_ptr->param_ptr);
+		ynr_param = (struct sensor_ynr_level_v1 *)(dst_ptr->param_ptr);
 	} else {
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		ynr_param = (struct sensor_ynr_level *)((cmr_u8 *) dst_ptr->param_ptr +
-				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ynr_level));
+		ynr_param = (struct sensor_ynr_level_v1 *)((cmr_u8 *) dst_ptr->param_ptr +
+				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ynr_level_v1));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
-	
+
 	if (ynr_param != NULL) {
 		dst_ptr->cur.bypass = ynr_param[strength_level].bypass;
 		dst_ptr->cur.coef_model = ynr_param[strength_level].coef_mode;
@@ -299,7 +299,6 @@ cmr_s32 _pm_ynr_get_param(void *ynr_param, cmr_u32 cmd, void *rtn_param0, void *
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_YNR_V1;
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {

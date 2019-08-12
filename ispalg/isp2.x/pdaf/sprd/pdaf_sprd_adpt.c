@@ -65,7 +65,7 @@ struct sprd_pdaf_context {
 #define PDAF_FULL_NUM_IMX258 49920
 #define PDAF_FULL_NUM_IMX362 1524096 //4032*756/2
 #define PDAF_FULL_NUM_IMX362_SIZE 3810240  //4032*756*5/4
-#ifdef CONFIG_ISP_2_5
+#ifdef CONFIG_ISP_2_5_OLD
 struct isp_dev_pdaf_info pdafTestCase[] = {
 	//bypass,  corrector_bypass      phase_map_corr_en; block_size; grid_mode;win;block;gain_upperbound;phase_txt_smooth;phase_gfilter;phase_flat_smoother;
 	//hot_pixel_th[3]dead_pixel_th[3];flat_th;edge_ratio_hv;edge_ratio_rd;edge_ratio_hv_rd;phase_left_addr;phase_right_addr;phase_pitch;
@@ -159,7 +159,7 @@ cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 	cmr_s32 i = 0;
 	struct isp_dev_pdaf_info *pdaf_info_ptr = (struct isp_dev_pdaf_info *)param;
 	struct isp_dev_pdaf_info *pdafTestCase_ptr = ispGetPdafTestCase(index);
-#ifndef CONFIG_ISP_2_5
+#ifndef CONFIG_ISP_2_5_OLD
 	cmr_u16 phase_left[128] = { 0 }, phase_right[128] = {
 	0};
 	cmr_u32 data_left[128] = { 0 }, data_right[128] = {
@@ -426,7 +426,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	ISP_LOGV("PDALGO Init. Sensor Mode[%d] ", cxt->pd_gobal_setting.dSensorMode);
 
-	#ifdef CONFIG_ISP_2_5
+	#ifdef CONFIG_ISP_2_5_OLD
 	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
 	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
 	for (i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {

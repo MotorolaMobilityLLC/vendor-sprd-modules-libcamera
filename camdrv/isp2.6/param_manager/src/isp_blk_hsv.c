@@ -105,10 +105,12 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 			dst_ptr->cur.curve_info.s_curve[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_s_curve[j];
 			dst_ptr->cur.curve_info.v_curve[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_v_curve[j];
 		}
+#ifdef CONFIG_ISP_2_6
 		for (j = 0; j < 2; j++) {
 			dst_ptr->cur.curve_info.r_s[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_r_s[j];
 			dst_ptr->cur.curve_info.r_v[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_r_v[j];
 		}
+#endif
 		dst_ptr->cur.curve_info.hrange_left[i] = src_ptr->sensor_hsv_cfg[i].hsv_hrange_left;
 		dst_ptr->cur.curve_info.hrange_right[i] = src_ptr->sensor_hsv_cfg[i].hsv_hrange_right;
 

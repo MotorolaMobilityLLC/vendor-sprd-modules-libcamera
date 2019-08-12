@@ -133,13 +133,21 @@ cmr_s32 dcam_u_pdaf_type3_block(cmr_handle handle, void *block_info);
 
 cmr_s32 dcam_u_dual_pdaf_block(cmr_handle handle, void *block_info);
 
+cmr_s32 dcam_u_grgb_block(cmr_handle handle, void *block_info);
+
 cmr_s32 isp_u_bchs_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_brightness_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_contrast_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_hue_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_csa_block(cmr_handle handle, void *block_info);
+
 cmr_s32 isp_u_cce_matrix_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_cfa_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_cmc_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_edge_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_gamma_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_grgb_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_hist_block(void *handle, void *block_info);
 cmr_s32 isp_u_hist2_block(void *handle, void *block_info);
 cmr_s32 isp_u_hsv_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_iircnr_block(cmr_handle handle, void *block_info);
