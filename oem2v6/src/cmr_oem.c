@@ -6386,9 +6386,11 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 
     sprd_3dnr_type = camera_get_3dnr_flag(cxt);
 
-    if ((sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW &&
+    if ((((sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) ||
+          (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
          param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW) ||
-        (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW &&
+        (((sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW) ||
+         (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
          param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_CAPTURE) ||
         (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW)) {
         // hardware 3dnr
@@ -9542,7 +9544,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         goto exit;
     }
 
-    if (snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW) {
+    if ((snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW) ||
+        (snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) {
         need_3dnr = 1;
     }
     ret = cmr_grab_3dnr_cfg(cxt->grab_cxt.grab_handle, snp_param.channel_id,
@@ -11358,7 +11361,6 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
 
     cmr_bzero(&capture_param, sizeof(capture_param));
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
-
     capture_param.type = DCAM_CAPTURE_START;
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
@@ -11370,6 +11372,11 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // 5 continuous frames start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
+    } else if ((CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW == camera_get_3dnr_flag(cxt)) ||
+                (CAMERA_3DNR_TYPE_PREV_HW_CAP_HW == camera_get_3dnr_flag(cxt))) {
+        // start hardware 3dnr capture
+        CMR_LOGV("set cap_param type to DCAM_CAPTURE_START_3DNR");
+        capture_param.type = DCAM_CAPTURE_START_3DNR;
     } else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
 #ifdef CONFIG_CAMERA_4IN1
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,

@@ -6402,8 +6402,19 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 // auto 3dnr mode, detected 3dnr scene
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
             } else {
+#ifdef  CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
+                // night shot
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_HW;
+#elif   CONFIG_NIGHT_3DNR_PREV_HW_CAP_SW
                 // night shot
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
+#elif    CONFIG_NIGHT_3DNR_PREV_NULL_CAP_HW
+                // night shot
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW;
+#else
+                // default,night shot
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
+#endif
             }
 
             if (sprddefInfo.sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO) {

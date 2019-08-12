@@ -25,7 +25,6 @@
 #include "sensor_cfg.h"
 #include "cmr_msg.h"
 #include "cmr_sensor.h"
-#include "ylog.h"
 
 /**---------------------------------------------------------------------------*
  **                         MACRO definition                                  *
