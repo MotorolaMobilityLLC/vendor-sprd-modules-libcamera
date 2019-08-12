@@ -380,6 +380,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		ae_notice.mode = AE_FLASH_PRE_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 
 		ae_notice.power.max_charge = flash_notice->power.max_charge;
 		ae_notice.power.max_time = flash_notice->power.max_time;
@@ -420,7 +422,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_LIGHTING, NULL, NULL);
-
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		break;
 
 	case ISP_FLASH_PRE_AFTER:
@@ -442,7 +445,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
-
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		cxt->lsc_flash_onoff = 0;
 		captureFlashEnvRatio = 0.0; //0-1, flash/ (flash+environment)
 		captureFlash1ofALLRatio = 0.0; //0-1,  flash1 / (flash1+flash2)
@@ -461,6 +465,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		ae_notice.mode = AE_FLASH_MAIN_BEFORE;
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		if (cxt->ops.ae_ops.ioctrl) {
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXP_GAIN, NULL, NULL);
@@ -496,6 +502,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		break;
 
 	case ISP_FLASH_MAIN_AE_MEASURE:
@@ -537,6 +545,8 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_FLASH_MODE, (void *)&flash_mode, NULL);
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
+		if (cxt->ops.ai_ops.ioctrl)
+			ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		break;
 
 	case ISP_FLASH_AF_DONE:

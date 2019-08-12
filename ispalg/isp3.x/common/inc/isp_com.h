@@ -323,6 +323,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u16 blk_num_hor;
 		cmr_u16 blk_num_ver;
 		cmr_u32 zoom_ratio;
+		cmr_s32 curr_bv;
 		cmr_u16 stable;
 	};
 
@@ -410,6 +411,21 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		AI_WORKMODE_FULL = 1,
 		AI_WORKMODE_PORTRAIT = 2,
 		AI_WORKMODE_MAX
+	};
+
+	enum ai_flash_status {
+		AI_FLASH_PRE_BEFORE,
+		AI_FLASH_PRE_LIGHTING,
+		AI_FLASH_PRE_AFTER,
+		AI_FLASH_MAIN_BEFORE,
+		AI_FLASH_MAIN_LIGHTING,
+		AI_FLASH_MAIN_AE_MEASURE,
+		AI_FLASH_MAIN_AFTER,
+		AI_FLASH_AF_DONE,
+		AI_FLASH_SLAVE_FLASH_OFF,
+		AI_FLASH_SLAVE_FLASH_TORCH,
+		AI_FLASH_SLAVE_FLASH_AUTO,
+		AI_FLASH_MODE_MAX
 	};
 
 	struct ai_img_status {

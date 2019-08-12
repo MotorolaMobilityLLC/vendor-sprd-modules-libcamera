@@ -344,6 +344,7 @@ struct isp_alg_fw_context {
 	cmr_u32 is_mono_sensor;
 	cmr_u32 sn_mode;
 	cmr_u32 lowlight_flag_4in1;
+	cmr_s32 curr_bv;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -2244,6 +2245,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 			ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
 		}
+		cxt->curr_bv = ae_in->ae_output.cur_bv;
+		ISP_LOGI("ae_in->ae_output.cur_bv:%d lux", ae_in->ae_output.cur_bv);
 		cxt->smart_cxt.log_smart = smart_proc_in.log;
 		cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
@@ -2757,6 +2760,7 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 
 	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_info.img_blk_info.block_w;
 	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_info.img_blk_info.block_h;
+	cxt->ai_cxt.ae_param.curr_bv = cxt->curr_bv;
 	ISP_LOGV("ai ae info: blk_num_hor: %d, blk_num_ver: %d.", cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
 
 	ISP_LOGV("ai ae info: frame_id: %d, timestamp: %llu. ae_stable %d\n", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp, cxt->ai_cxt.ae_param.stable);

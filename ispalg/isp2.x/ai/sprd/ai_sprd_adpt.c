@@ -49,6 +49,7 @@ struct ai_ctrl_cxt {
 	enum ai_status aic_status;
 	cmr_u32 fd_on_off;
 	cmr_u32 temp_fd_frameid;
+	cmr_u32 flash_enable;
 };
 
 cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
@@ -141,6 +142,7 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	ISP_LOGV("timestamp: %"PRIu64".", ae_param->timestamp);
 	ISP_LOGV("r_g_b_info: %p, %p, %p.", ae_param->ae_stat.r_info, ae_param->ae_stat.g_info, ae_param->ae_stat.b_info);
 	ISP_LOGV("r_g_b_info data: %d, %d, %d.", *ae_param->ae_stat.r_info, *ae_param->ae_stat.g_info, *ae_param->ae_stat.b_info);
+	ISP_LOGV("curr_bv: %d, flash_enable: %d.", ae_param->curr_bv, cxt->flash_enable);
 
 	cxt->aic_aeminfo.frame_id = ae_param->frame_id;
 	cxt->aic_aeminfo.timestamp = ae_param->timestamp;
@@ -153,8 +155,10 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	cxt->aic_aeminfo.blk_num_hor = ae_param->blk_num_hor;
 	cxt->aic_aeminfo.blk_num_ver = ae_param->blk_num_ver;
 	cxt->aic_aeminfo.zoom_ratio = ae_param->zoom_ratio;
-	cxt->aic_aeminfo.data_valid = 1;
+	cxt->aic_aeminfo.curr_bv = ae_param->curr_bv;
+	cxt->aic_aeminfo.flash_enable = cxt->flash_enable;
 	cxt->aic_aeminfo.stable = ae_param->stable;
+	cxt->aic_aeminfo.data_valid = 1;
 	ISP_LOGV("ae_param_stable: %d, aic_aeminfo_stable:%d", ae_param->stable, cxt->aic_aeminfo.stable);
 
 	if (0 != AIC_SetAemInfo(cxt->aic_handle, &cxt->aic_aeminfo, &cxt->aic_result)) {
@@ -311,6 +315,31 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 				ISP_LOGE("fail to AIC_SetFaceInfo.");
 				goto exit;
 			}
+		}
+		break;
+	case AI_SET_FLASH_NOTICE:
+		if (!param) {
+			ISP_LOGE("fail to set flash notice");
+			goto exit;
+		}
+		cmr_u32 flash_status = *(cmr_u32 *) param;
+		switch (flash_status) {
+			case AI_FLASH_PRE_BEFORE:
+			case AI_FLASH_PRE_LIGHTING:
+			case AI_FLASH_MAIN_BEFORE:
+			case AI_FLASH_MAIN_LIGHTING:
+				cxt->flash_enable = 1;
+				break;
+
+			case AI_FLASH_MAIN_AFTER:
+			case AI_FLASH_PRE_AFTER:
+				cxt->flash_enable = 0;
+				break;
+
+			default:
+				break;
+
+			ISP_LOGI("flash_enable flag is: %d", cxt->flash_enable);
 		}
 		break;
 	case AI_SET_AE_PARAM:

@@ -128,8 +128,10 @@ typedef struct
 	uint16_t blk_num_hor;
 	uint16_t blk_num_ver;
 	uint16_t zoom_ratio;
-	bool data_valid;
+	int curr_bv;
+	uint32_t flash_enable;
 	uint16_t stable;
+	bool data_valid;
 } aic_aeminfo_t;
 
 typedef struct

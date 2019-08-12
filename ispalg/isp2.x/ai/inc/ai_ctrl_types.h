@@ -37,6 +37,7 @@ extern "C" {
 		AI_PROCESS_START,
 		AI_PROCESS_STOP,
 		AI_SET_FD_ON_OFF,
+		AI_SET_FLASH_NOTICE,
 		AI_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

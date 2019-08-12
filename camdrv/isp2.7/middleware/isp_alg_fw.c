@@ -377,6 +377,7 @@ struct isp_alg_fw_context {
 	/* for 4x zoom focus */
 	cmr_u32 last_ratio;
 	cmr_u32 cur_ratio;
+	cmr_s32 curr_bv;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -2192,7 +2193,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
 				}
 			}
-
+			cxt->curr_bv = ae_in->ae_output.cur_bv;
+			ISP_LOGI("ae_in->ae_output.cur_bv:%d lux", ae_in->ae_output.cur_bv);
 			cxt->smart_cxt.log_smart = smart_proc_in.log;
 			cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 		}
@@ -2624,6 +2626,7 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 
 	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_cxt.win_num.w;
 	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_cxt.win_num.h;
+	cxt->ai_cxt.ae_param.curr_bv = cxt->curr_bv;
 	ISP_LOGI("ai ae info: blk_num_hor: %d, blk_num_ver: %d.", cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
 
 	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu. ae_stable %d\n", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp, cxt->ai_cxt.ae_param.stable);
