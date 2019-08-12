@@ -41,7 +41,7 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x00000400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x00000384,
+			0x000003E8,
 			/*nlm_imblance_lum_flag_1_r*/
 			0x0000012C,
 
@@ -55,7 +55,7 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x00000400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x00000384,
+			0x000003E8,
 			/*nlm_imblance_lum_flag_1_r*/
 			0x0000012C,
 
@@ -69,7 +69,7 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x00000400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x00000384,
+			0x000003E8,
 			/*nlm_imblance_lum_flag_1_r*/
 			0x0000012C,
 
@@ -100,15 +100,15 @@
 	/*nlm_imblance_flag12_frezthr*/
 	0x00C8,
 	/*nlm_imblance_diff*/
-	0x0028,
+	0x03E8,
 	/*imblance_hv_flat_thr*/
-	0x0014,
+	0x03FF,
 	/*imblance_slash_flat_thr*/
-	0x0014,
+	0x03FF,
 	/*reversed*/
 	0x0000,
 	/*imblance_en*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -368,43 +368,43 @@
 		/*[0x0]*/
 		{
 			/*nlm_imblance_lum_flag_2_r*/
-			0x00000064,
+			0x000001F4,
 			/*nlm_imblance_lum_flag_4_r*/
-			0x000000C8,
+			0x000002BC,
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x00000400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x00000384,
+			0x000003FF,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x0000012C,
+			0x000002BC,
 
 		},
 		/*[0x1]*/
 		{
 			/*nlm_imblance_lum_flag_2_r*/
-			0x00000064,
+			0x000001F4,
 			/*nlm_imblance_lum_flag_4_r*/
-			0x000000C8,
+			0x000002BC,
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x00000400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x00000384,
+			0x000003FF,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x0000012C,
+			0x000002BC,
 
 		},
 		/*[0x2]*/
 		{
 			/*nlm_imblance_lum_flag_2_r*/
-			0x00000064,
+			0x000001F4,
 			/*nlm_imblance_lum_flag_4_r*/
-			0x000000C8,
+			0x000002BC,
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x00000400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x00000384,
+			0x000003FF,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x0000012C,
+			0x000002BC,
 
 		}
 	},
@@ -433,15 +433,15 @@
 	/*nlm_imblance_flag12_frezthr*/
 	0x00C8,
 	/*nlm_imblance_diff*/
-	0x0028,
+	0x03E8,
 	/*imblance_hv_flat_thr*/
-	0x0014,
+	0x0064,
 	/*imblance_slash_flat_thr*/
-	0x0014,
+	0x0064,
 	/*reversed*/
 	0x0000,
 	/*imblance_en*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param4.&BasePoint=1&*/
