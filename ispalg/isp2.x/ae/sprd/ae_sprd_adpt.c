@@ -4119,7 +4119,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cmr_u32 j;
 	cmr_u32 last_cam_mode = 0;
 	cmr_u32 ae_target_lum = 0;
-	cmr_s32 need_recal_expgain =1;
+	cmr_s32 zsl_flag_setting =1;
 
 	if (NULL == param) {
 		ISP_LOGE("param is NULL \n");
@@ -4319,8 +4319,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->cur_status.ae_table->min_index = 0;
 	cxt->mod_update_list.is_mev = (CAMERA_MODE_MANUAL == cxt->app_mode) ? 1 : 0;
 
-	if (CAMERA_MODE_3DNR_PHOTO == cxt->app_mode||cxt->hdr_enable)
-		need_recal_expgain = 0;
+	if((cxt->prv_status.frame_size.w != work_info->resolution_info.frame_size.w)||(cxt->prv_status.frame_size.h !=work_info->resolution_info.frame_size.h))
+		zsl_flag_setting = 0;
 
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
@@ -4367,7 +4367,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				if(cxt->mode_switch[cxt->app_mode].tarlum)
 					ae_target_lum = cxt->mode_switch[cxt->app_mode].tarlum;
 
-				if(ae_target_lum && (ISP_ALG_SINGLE == cxt->is_multi_mode)&&need_recal_expgain){
+				if(ae_target_lum && (ISP_ALG_SINGLE == cxt->is_multi_mode)&&zsl_flag_setting){
 					ISP_LOGD("1. exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 					cmr_u32 tmp_gain = 0;
 					cxt->mode_switch[last_app_mode].lum = cxt->mode_switch[last_app_mode].lum ? cxt->mode_switch[last_app_mode].lum : 1;
