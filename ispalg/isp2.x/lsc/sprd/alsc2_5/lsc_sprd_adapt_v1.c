@@ -25,20 +25,6 @@
 
 #define SMART_LSC_VERSION 1
 
-#define LSC_PARAM_FILE_NAME_ANDROIDP "/data/vendor/cameraserver/lsc.file"
-#define LSC_PARAM_FILE_NAME_ANDROIDP1 "/data/vendor/cameraserver/lsc_front.file"
-#define LSC_PARAM_FILE_NAME_ANDROIDP_v "/data/vendor/cameraserver/lsc_video.file"
-#define LSC_PARAM_FILE_NAME_ANDROIDP1_v "/data/vendor/cameraserver/lsc_front_video.file"
-#define LSC_PARAM_FILE_NAME_CAMERASERVER "/data/misc/cameraserver/lsc.file"
-#define LSC_PARAM_FILE_NAME_CAMERASERVER1 "/data/misc/cameraserver/lsc_front.file"
-#define LSC_PARAM_FILE_NAME_CAMERASERVER_v "/data/misc/cameraserver/lsc_video.file"
-#define LSC_PARAM_FILE_NAME_CAMERASERVER1_v "/data/misc/cameraserver/lsc_front_video.file"
-#define LSC_PARAM_FILE_NAME_MEDIA "/data/misc/media/lsc.file"
-#define LSC_PARAM_FILE_NAME_MEDIA1 "/data/misc/media/lsc_front.file"
-#define LSC_PARAM_FILE_NAME_MEDIA_v "/data/misc/media/lsc_video.file"
-#define LSC_PARAM_FILE_NAME_MEDIA1_v "/data/misc/media/lsc_front_video.file"
-
-
 cmr_u32 proc_start_gain_w = 0;                  // SBS master gain width
 cmr_u32 proc_start_gain_h = 0;                  // SBS master gain height
 cmr_u32 proc_start_gain_pattern = 0;            // SBS master gain pattern
@@ -2332,50 +2318,17 @@ static cmr_s32 fwstart_update_first_tab(struct lsc_ctrl_context *cxt, struct als
 static void lsc_save_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr_u32 full_flag)
 {
 	FILE* fp = NULL;
-	char version[1024];
-	property_get("ro.build.version.release", version, (char*)"");
-
-	if (version[0] >= '9'){
-		if(camera_id == 0){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP, "wb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP_v, "wb");
-			}
-		}else if(camera_id == 1){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP1, "wb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP1_v, "wb");
-			}
+	if(camera_id == 0){
+		if(full_flag == 1){
+			fp = fopen(CAMERA_DATA_FILE"/lsc.file", "wb");
+		}else{
+			fp = fopen(CAMERA_DATA_FILE"/lsc_video.file", "wb");
 		}
-	}else if(version[0]>='7'){
-		if(camera_id == 0){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER, "wb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER_v, "wb");
-			}
-		}else if(camera_id == 1){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER1, "wb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER1_v, "wb");
-			}
-		}
-	}else{
-		if(camera_id == 0){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA, "wb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA_v, "wb");
-			}
-		}else if(camera_id == 1){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA1, "wb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA1_v, "wb");
-			}
+	}else if(camera_id == 1){
+		if(full_flag == 1){
+			fp = fopen(CAMERA_DATA_FILE"/lsc_front.file", "wb");
+		}else{
+			fp = fopen(CAMERA_DATA_FILE"/lsc_front_video.file", "wb");
 		}
 	}
 
@@ -2392,50 +2345,18 @@ static void lsc_save_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr
 static void lsc_read_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr_u32 full_flag)
 {
 	FILE* fp = NULL;
-	char version[1024];
-	property_get("ro.build.version.release", version, (char*)"");
 
-	if (version[0] >= '9'){
-		if(camera_id == 0){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP, "rb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP_v, "rb");
-			}
-		}else if(camera_id == 1){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP1, "rb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_ANDROIDP1_v, "rb");
-			}
+	if(camera_id == 0){
+		if(full_flag == 1){
+			fp = fopen(CAMERA_DATA_FILE"/lsc.file", "rb");
+		}else{
+			fp = fopen(CAMERA_DATA_FILE"/lsc_video.file", "rb");
 		}
-	}else if(version[0]>='7'){
-		if(camera_id == 0){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER, "rb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER_v, "rb");
-			}
-		}else if(camera_id == 1){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER1, "rb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_CAMERASERVER1_v, "rb");
-			}
-		}
-	}else{
-		if(camera_id == 0){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA, "rb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA_v, "rb");
-			}
-		}else if(camera_id == 1){
-			if(full_flag == 1){
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA1, "rb");
-			}else{
-				fp = fopen(LSC_PARAM_FILE_NAME_MEDIA1_v, "rb");
-			}
+	}else if(camera_id == 1){
+		if(full_flag == 1){
+			fp = fopen(CAMERA_DATA_FILE"/lsc_front.file", "rb");
+		}else{
+			fp = fopen(CAMERA_DATA_FILE"/lsc_front_video.file", "rb");
 		}
 	}
 
