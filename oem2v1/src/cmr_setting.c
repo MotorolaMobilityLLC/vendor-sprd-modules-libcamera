@@ -622,7 +622,6 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             type_val = parm->preview_fps_param.frame_rate;
         }
         break;
-
     case SETTING_GENERAL_AWB_LOCK_UNLOCK:
     case SETTING_GENERAL_AE_LOCK_UNLOCK:
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -633,17 +632,14 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         }
         break;
-
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
         type_val = parm->ae_compensation_param.ae_exposure_compensation;
         break;
-
     case SETTING_GENERAL_EXPOSURE_TIME:
         *item->cmd_type_value = 0;
         type_val = parm->cmd_type_value;
         break;
     case SETTING_GENERAL_AUTO_3DNR:
-
         item->isp_cmd = COM_ISP_SET_AUTO_3DNR;
         ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         break;
@@ -656,7 +652,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         }
         break;
-
+    case SETTING_GENERAL_SCENE_MODE:
+        item->isp_cmd = COM_ISP_SET_AE_MODE;
+        ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        break;
     default:
         type_val = parm->cmd_type_value;
         break;

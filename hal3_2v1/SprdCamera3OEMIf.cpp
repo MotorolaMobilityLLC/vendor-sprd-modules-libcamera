@@ -6786,7 +6786,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                                             &drvSceneMode);
         HAL_LOGV(" controlInfo.scene_mode: %d drvSceneMode: %d",
                  controlInfo.scene_mode, drvSceneMode);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+        if (1 != sprddefInfo.sprd_is_3dnr_scene) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+        }
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {
