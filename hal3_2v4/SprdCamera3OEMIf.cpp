@@ -701,12 +701,12 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         }
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
-            video_stab_close(mPreviewInst);
+            video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
             HAL_LOGI("preview stab close");
         }
         if (mEisVideoInit) {
-            video_stab_close(mVideoInst);
+            video_stab_close(&mVideoInst);
             mEisVideoInit = false;
             HAL_LOGI("video stab close");
         }

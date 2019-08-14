@@ -84,7 +84,7 @@ SPRD_ISP_API int video_stab_check_gyro(vsInst inst);
 // return value 0: success  -1: faild 1: no frame out
 SPRD_ISP_API int video_stab_read(vsInst inst, vsOutFrame *frame);
 // return value 0: success  -1:faild
-SPRD_ISP_API int video_stab_close(vsInst inst);
+SPRD_ISP_API int video_stab_close(vsInst *inst);
 
 const sprd_eis_init_info_t eis_init_info_tab[] = {
     {"sp9853i-1", 0.773f, 0.0177f, 0.012f},
@@ -93,6 +93,7 @@ const sprd_eis_init_info_t eis_init_info_tab[] = {
     {"sp9861e-1", 1230.0f, 0.004f, 0.021f},
     {"sp9861e-2", 1230.0f, 0.004f, 0.021f},
     {"sp9863a-1", 0.7747f, 0.038f, 0.024f},
+    {"ums312-1", 0.768f, 0.01f, 0.0144f},
 };
 
 #ifdef __cplusplus
