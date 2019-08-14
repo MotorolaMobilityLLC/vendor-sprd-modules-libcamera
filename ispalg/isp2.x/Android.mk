@@ -25,11 +25,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror
 # external header file
 # ************************************************
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.1)
-ISP_DIR := ../../camdrv/isp2.1
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.2)
-ISP_DIR := ../../camdrv/isp2.2
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
 ISP_DIR := ../../camdrv/isp2.3
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 ISP_DIR := ../../camdrv/isp2.4
