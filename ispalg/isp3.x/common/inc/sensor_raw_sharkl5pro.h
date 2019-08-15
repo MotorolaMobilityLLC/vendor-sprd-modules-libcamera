@@ -25,6 +25,9 @@
 #include "cmr_sensor_info.h"
 #include "../../ae/sprd/ae/inc/ae_tuning_type.h"
 
+//Gamma Correction in full RGB domain
+#define SENSOR_GAMMA_POINT_NUM 257
+
 #define AWB_POS_WEIGHT_LEN 64
 #define AWB_POS_WEIGHT_WIDTH_HEIGHT 4
 
@@ -47,8 +50,8 @@
 
 #define AE_FLICKER_NUM 2
 #define AE_ISO_NUM_NEW 8
-#define AE_WEIGHT_TABLE_NUM 3
 #define AE_SCENE_NUM 8
+#define AEC_EXP_GAIN_TABLE_SIZE 512
 #define LNC_MAP_COUNT 9
 #define LNC_WEIGHT_LEN 4096
 #define PDAF_GAIN_MAP_LEN 128
@@ -66,6 +69,25 @@
 
 #define TUNE_FILE_CHIP_VER_MASK 0x0000FFFF
 #define TUNE_FILE_SW_VER_MASK 0xFFFF0000
+
+#define _HAIT_MODIFIED_FLAG
+#define SENSOR_CCE_NUM 0x09
+#define SENSOR_CMC_NUM 0x16
+#define SENSOR_CTM_NUM 0x09
+#define SENSOR_HSV_NUM 0x32
+#define SENSOR_LENS_NUM 0x09
+#define SENSOR_BLC_NUM 0x09
+#define SENSOR_MODE_NUM 0x02
+#define SENSOR_AWBM_WHITE_NUM 0x05
+#define SENSOR_LNC_RC_NUM 0x04
+#define SENSOR_HIST2_ROI_NUM 0x04
+#define SENSOR_GAMMA_POINT_NUM	257
+#define SENSOR_GAMMA_NUM 9
+#define SENSOR_LEVEL_NUM 16
+#define SENSOR_CMC_POINT_NUM 9
+//#define SENSOR_SMART_LEVEL_NUM 25
+//#define SENSOR_SMART_LEVEL_DEFAULT 15
+#define AE_WEIGHT_TABLE_NUM 3
 
 enum isp_scene_mode {
 	ISP_SCENEMODE_AUTO = 0x00,
@@ -187,6 +209,7 @@ struct ae_exp_gain_table_2 {
 	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE];
 };
 
+//AE 2.5
 struct ae_scence_info_header_2 {
 	cmr_u32 enable;
 	cmr_u32 scene_mode;
@@ -199,10 +222,12 @@ struct ae_scence_info_header_2 {
 	cmr_u32 default_index;
 	cmr_u32 table_enable;
 };
+
 struct ae_scene_info_2 {
 	struct ae_scence_info_header_2 ae_header;
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM];
 };
+
 struct ae_table_param_2 {
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
 	struct ae_exp_gain_table_2 flash_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
@@ -354,27 +379,6 @@ struct sensor_envi_detect_param {
 	struct isp_range envi_range[SENSOR_ENVI_NUM];
 };
 
-#define AE_FLICKER_NUM 2
-#define AE_ISO_NUM_NEW 8
-#define AE_WEIGHT_TABLE_NUM 3
-#define AE_SCENE_NUM 8
-
-#define _HAIT_MODIFIED_FLAG
-#define SENSOR_CCE_NUM 0x09
-#define SENSOR_CMC_NUM 16
-#define SENSOR_CTM_NUM 0x09
-#define SENSOR_HSV_NUM 32
-#define SENSOR_LENS_NUM 0x09
-#define SENSOR_BLC_NUM 0x09
-#define SENSOR_MODE_NUM 0x02
-#define SENSOR_AWBM_WHITE_NUM 0x05
-#define SENSOR_LNC_RC_NUM 0x04
-#define SENSOR_HIST2_ROI_NUM 0x04
-#define SENSOR_GAMMA_POINT_NUM	257
-#define SENSOR_GAMMA_NUM 9
-#define SENSOR_LEVEL_NUM 16
-#define SENSOR_CMC_POINT_NUM 9
-
 //Black level correction, between preGain and PDAF
 struct sensor_blc_offset {
 	cmr_u16 r;
@@ -424,12 +428,11 @@ struct sensor_ppe_block_size{
 	cmr_u16 width;
 	cmr_u16 height;
 };
+
 struct sensor_ppe_level {
 	struct sensor_pdaf_pattern_map pdaf_pattern[64];
 	struct sensor_pdaf_af_win pdaf_af_win;
 	struct sensor_pdaf_block_pos pdaf_block_pos;
-	struct sensor_pdaf_param pdaf_upperbound;
-	struct sensor_pdaf_param pdaf_blacklevel;
 	struct sensor_ppe_block_size ppe_block_size;
 	cmr_u16 pdaf_l_gain_map[PDAF_GAIN_MAP_LEN];
 	cmr_u16 pdaf_r_gain_map[PDAF_GAIN_MAP_LEN];
@@ -440,6 +443,7 @@ struct sensor_ppe_level {
 	cmr_u8 ppe_bypass;
 	cmr_u8 ppe_extractor_en;
 };
+
 //rgb gain
 struct sensor_rgb_gain_param {
 	cmr_u16 glb_gain;
@@ -560,9 +564,46 @@ struct sensor_rgb_aem_param {
 };
 
 struct sensor_bpc_pixel_pos{
-		cmr_s32 x;
-		cmr_s32 y;
+	cmr_s32 x;
+	cmr_s32 y;
 };
+
+// bwu1
+struct sensor_bwu1{
+	cmr_u8 bwu1_bypass;
+	cmr_u8 bwu1_bitshift;
+	cmr_u8 reserved[2];
+};
+
+// bwu2
+struct sensor_bwu2{
+	cmr_u8 bwu2_bypass;
+	cmr_u8 bwu2_outbits;
+	cmr_u8 reserved[2];
+};
+
+// bwd1
+struct sensor_bwd1{
+	cmr_u8 bwd1_bypass;
+	cmr_u8 bwd1_outbits;
+	cmr_u8 reserved[2];
+};
+
+// bwd2
+struct sensor_bwd2{
+	cmr_u8 bwd2_bypass;
+	cmr_u8 bwd2_outbits;
+	cmr_u8 reserved[2];
+};
+
+// bwu,bwd block
+struct sensor_bwu_bwd_level{
+	struct sensor_bwu1 bwu1;
+	struct sensor_bwu2 bwu2;
+	struct sensor_bwd1 bwd1;
+	struct sensor_bwd2 bwd2;
+};
+
 
 // Bad Pixel Correction
 struct sensor_bpc_ppi_block{
@@ -697,7 +738,7 @@ struct sensor_cce_uvdiv_th {
 };
 
 struct sensor_cce_uvdiv_chroma {
-	cmr_u8 chroma_max_h; 
+	cmr_u8 chroma_max_h;
 	cmr_u8 chroma_max_l;
 	cmr_u8 reserved[2];
 };
@@ -735,12 +776,12 @@ struct sensor_cce_uvdiv_level {
 };
 
 struct sensor_3dnr_thr_cfg{
-       cmr_u8 src_wgt[4];	// dynamic weight needs 4 buffer
-       cmr_u8 nr_thr;
-       cmr_u8 nr_wgt;
-       cmr_u8 reserved[2];//for 4 bytes align
-       cmr_u16 thr_polyline_cap[9];
-       cmr_u16 gain_polyline_cap[9];
+    cmr_u8 src_wgt[4];// dynamic weight needs 4 buffer
+    cmr_u8 nr_thr;
+    cmr_u8 nr_wgt;
+    cmr_u8 reserved[2];//for 4 bytes align
+    cmr_u16 thr_polyline_cap[9];
+    cmr_u16 gain_polyline_cap[9];
 };
 
 struct sensor_3dnr_yuv_cfg {
@@ -757,10 +798,10 @@ struct sensor_3dnr_radialval {
 };
 
 struct sensor_3dnr_factor {
-      cmr_u8 u_thr[4];
-      cmr_u8 v_thr[4];
-      cmr_u8 u_div[4];
-      cmr_u8 v_div[4];
+    cmr_u8 u_thr[4];
+    cmr_u8 v_thr[4];
+    cmr_u8 u_div[4];
+    cmr_u8 v_div[4];
 };
 
 //reduce color noise around corners
@@ -769,7 +810,7 @@ struct sensor_3dnr_radialval_str {
 	cmr_u16 r_circle_cap_factor[3]; //r_circle_cap_factor/radius_base*(w+h) = r_circle_cap
 	struct sensor_3dnr_radialval u_range;
 	struct sensor_3dnr_radialval v_range;
-       struct sensor_3dnr_factor uv_factor;
+	struct sensor_3dnr_factor uv_factor;
 };
 //mem_ctrl_submodule
 struct sensor_3dnr_ctrl{
@@ -940,16 +981,17 @@ struct sensor_nlm_direction {
 };
 
 struct sensor_vst_level {
-	cmr_u32 vst_param[1024];
+	cmr_u32 vst_param[1025];
 };
 
 struct sensor_ivst_level {
-	cmr_u32 ivst_param[1024];
+	cmr_u32 ivst_param[1025];
 };
 
 struct sensor_lutw_level {
 	cmr_u32 lut_w[72];
 };
+
 struct sensor_nlm_level {
 	struct sensor_nlm_first_lum first_lum;
 	struct sensor_nlm_radius_1D radius_1d;
@@ -964,17 +1006,21 @@ struct sensor_nlm_level {
 };
 
 struct sensor_nlm_imblance_lum_flag {
-	cmr_u32 nlm_imblance_lum_flag_2_r;
-	cmr_u32 nlm_imblance_lum_flag_4_r;
-	cmr_u32 nlm_imblance_lum_flag_0_rs;
-	cmr_u32 nlm_imblance_lum_flag_0_r;
-	cmr_u32 nlm_imblance_lum_flag_1_r;
+	cmr_u16 nlm_imblance_lum_flag_0_rs;
+	cmr_u16 nlm_imblance_lum_flag_0_r;
+	cmr_u16 nlm_imblance_lum_flag_1_r;
+	cmr_u16 nlm_imblance_lum_flag_2_r;
+	cmr_u16 nlm_imblance_lum_flag_3_r;
+	cmr_u16 nlm_imblance_lum_flag_4_r;
 };
+
 struct sensor_imblance_flag3{
-	cmr_u32 flag3_grid;
-	cmr_u32 flag3_lum;
-	cmr_u32 flag3_frez;
+	cmr_u16 flag3_grid;
+	cmr_u16 flag3_lum;
+	cmr_u16 flag3_frez;
+	cmr_u16 flag12_frezthr;
 };
+
 struct sensor_imblance_face_rgb_level{
 	cmr_u16 face_max;
 	cmr_u16 face_min;
@@ -985,20 +1031,52 @@ struct sensor_imblance_face_rgb{
 	struct sensor_imblance_face_rgb_level face_b;
 };
 //sensor_nlm_imblance
+struct sensor_imblance_hv{
+	cmr_u16 imblance_hv_edge_thr;
+	cmr_u16 imblance_hv_slash_edge_thr;
+	cmr_u16 imblance_hv_flat_thr;
+	cmr_u16 imblance_slash_flat_thr;
+};
+
+struct sensor_imblance_curve{
+	cmr_u16 imblance_curve_wt0;
+	cmr_u16 imblance_curve_wt1;
+	cmr_u16 imblance_curve_wt2;
+	cmr_u16 imblance_curve_wt3;
+	cmr_u8 imblance_curve_wr0;
+	cmr_u8 imblance_curve_wr1;
+	cmr_u8 imblance_curve_wr2;
+	cmr_u8 imblance_curve_wr3;
+	cmr_u8 imblance_curve_wr4;
+	cmr_u8 resvered[3];  //for 4-byte alignment
+};
+
+struct sensor_imblance_1D{
+	cmr_u16 imblance_radial_1D_en;
+	cmr_u16 imblance_radial_1D_center_x;
+	cmr_u16 imblance_radial_1D_center_y;
+	cmr_u16 imblance_radial_1D_radius_thr;
+	cmr_u16 imblance_radial_1D_protect_ratio_max;
+	cmr_s16 imblance_radial_1D_coef_r0;
+	cmr_s16 imblance_radial_1D_coef_r1;
+	cmr_s16 imblance_radial_1D_coef_r2;
+	cmr_s16 imblance_radial_1D_coef_r3;
+	cmr_s16 imblance_radial_1D_coef_r4;
+};
+
 struct sensor_nlm_imbalance_level {
 	struct sensor_imblance_face_rgb imblance_face_rbg;
 	struct sensor_nlm_imblance_lum_flag lum_flag[3];
 	struct sensor_imblance_flag3 nlm_imblance_flag3;
-	cmr_u32 sensor_imblance_lumth[2];
-	cmr_u32 sensor_imblance_S_baohedu[2];
-	cmr_u16 imblance_slash_edge_thr;
-	cmr_u16 imblance_hv_edge_thr;
-	cmr_u16 nlm_imblance_flag12_frezthr;
-	cmr_u16 nlm_imblance_diff;
-	cmr_u16 imblance_hv_flat_thr;
-	cmr_u16 imblance_slash_flat_thr;
-	cmr_u16 reversed;//for 4-byte alignment
-	cmr_u16 imblance_en;
+	struct sensor_imblance_hv imblance_hv[3];
+	struct sensor_imblance_1D imblance_1D;
+	struct sensor_imblance_curve imblance_curve;
+	cmr_u16 imblance_lumth[2];
+	cmr_u16 imblance_S_baohedu[3][2];
+	cmr_u16 imblance_diff[3];
+	cmr_u8 imblance_sat_lumth;
+	cmr_u8 reversed[3];//for 4-byte alignment
+	cmr_u16 imblance_bypass;
 };
 
 // CFAI, css color saturation suppression
@@ -1136,9 +1214,6 @@ struct sensor_cmc10_param {
 	cmr_u16 matrix[SENSOR_CMC_NUM][9];
 };
 
-//Gamma Correction in full RGB domain
-#define SENSOR_GAMMA_POINT_NUM 257
-
 struct sensor_gamma_curve {
 	struct isp_point points[SENSOR_GAMMA_POINT_NUM];
 };
@@ -1183,6 +1258,19 @@ struct sensor_hsv_param {
 	struct isp_sample_point_info cur_idx;
 	struct isp_data_bin_info map[SENSOR_HSV_NUM];
 	void *data_area;
+	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
+	void *specialeffect_data_area;
+};
+
+struct sensor_hsv_table {
+	cmr_s16 hue_table[360];
+	cmr_u16 sat_table[360];
+};
+
+struct sensor_hsv_new2_param {
+	struct sensor_hsv_cfg sensor_hsv_cfg[5];
+	struct isp_sample_point_info cur_idx;
+	struct sensor_hsv_table hsv_table[SENSOR_HSV_NUM];
 	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
 	void *specialeffect_data_area;
 };
@@ -1445,6 +1533,7 @@ struct sensor_ee_offset_layer {
 	cmr_u16 ee_ratio_new_pyramid;
 	struct sensor_ee_offset_list ee_offset_layer[3];
 };
+
 //sensor_ee_param:
 struct sensor_ee_level {
 	struct sensor_ee_pn str_d_p;
@@ -1463,6 +1552,61 @@ struct sensor_ee_level {
 	cmr_u8 flat_smooth_mode;
 	cmr_u8 edge_smooth_mode;
 	cmr_u8 bypass;
+};
+
+struct raw_gtm_stat_rgb2y{
+	cmr_u8 rgb2y_mode;
+	cmr_u8 reserved;
+	cmr_u16 rgb2y_r_coeff;
+	cmr_u16 rgb2y_g_coeff;
+	cmr_u16 rgb2y_b_coeff;
+};
+
+struct raw_gtm_stat_percentile_16bit{
+	cmr_u16 min_percentile_16bit;
+	cmr_u16 max_percentile_16bit;
+};
+
+struct raw_gtm_stat_target_norm{
+	cmr_u16 target_norm_set_mode;
+	cmr_u16 target_norm;
+	float target_norm_coeff;
+};
+
+struct raw_gtm_stat_image{
+	cmr_u8 image_key_set_mode;
+	cmr_u8 reserved;
+	cmr_u16 image_key;
+};
+
+struct raw_gtm_stat_video{
+	cmr_u16 luma_sm_Ymax_diff_thr;
+	cmr_u16 luma_sm_Yavg_diff_thr;
+	cmr_u16 cur_Ymin_weight;
+	cmr_u16 pre_Ymin_weight;
+};
+
+// raw gtm stat
+struct sensor_raw_gtm_stat{
+	cmr_u8 gtm_stat_bypass;
+	cmr_u8 reserved[3];
+	struct raw_gtm_stat_rgb2y gtm_stat_rgb2y;
+	struct raw_gtm_stat_percentile_16bit percentile_16bit;
+	struct raw_gtm_stat_target_norm target_norm;
+	struct raw_gtm_stat_image gtm_stat_image;
+	struct raw_gtm_stat_video gtm_stat_video;
+};
+
+//ltm map
+struct sensor_stat_map{
+	cmr_u16 map_video_mode;
+	cmr_u16 bypass;
+};
+
+//raw gtm level
+struct sensor_raw_gtm_level{
+	struct sensor_raw_gtm_stat raw_gtm_stat;
+	struct sensor_stat_map raw_gtm_map;
 };
 
 //sensor_ltm_stat
@@ -1505,6 +1649,35 @@ struct sensor_ltm_level{
 	struct sensor_ltm_map ltm_map;
 };
 
+struct sensor_ltm_text{
+	float text_point_alpha;
+	cmr_u8 text_point_thres;
+	cmr_u8 textture_proporion;
+	cmr_u8 reserved[2];
+};
+
+//ltm stat
+struct sensor_ltm_stat_l5pro{
+	struct sensor_ltm_tile_num_minus1 tile_num;
+	struct sensor_ltm_text ltm_text;
+	cmr_u8 strength;
+	cmr_u8 region_est_en;
+	cmr_u8 tile_num_auto;
+	cmr_u8 bypass;
+};
+
+//yuv ltm level
+struct sensor_yuv_ltm_level{
+	struct sensor_ltm_stat_l5pro yuv_ltm_stat;
+	struct sensor_ltm_map yuv_ltm_map;
+};
+
+//rgb ltm level
+struct sensor_rgb_ltm_level{
+	struct sensor_ltm_stat_l5pro rgb_ltm_stat;
+	struct sensor_ltm_map rgb_ltm_map;
+};
+
 //4A, smart, AFT
 struct isp_pdaf_tune_param {
 	cmr_u32 min_pd_vcm_steps;
@@ -1537,9 +1710,9 @@ struct sensor_filter_weights
 };
 
 struct sensor_cnr_level {
-       cmr_u8 level_enable;
-       cmr_u16 low_ct_thrd;
-       cmr_u8 reserved; //for 4 bytes allign
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+	cmr_u8 reserved; //for 4 bytes allign
 	cmr_u8 filter_en[CNR_LEVEL]; //enable control of filter
 	cmr_u8 rangTh[CNR_LEVEL][2]; //threshold for different scale(rangTh[CNR_LEVEL][0]:U threshold, rangTh[CNR_LEVEL][1]:V threshold)
 	struct sensor_filter_weights weight[CNR_LEVEL][2]; //weight table(wTable[CNR_LEVEL][0]:U weight table, wTable[CNR_LEVEL][1]:V weight table)
@@ -1829,18 +2002,18 @@ struct alsc_alg0_turn_param {
 
 /* sw 3DNR tuning param */
 struct sensor_sw3dnr_level {
-        cmr_s32 threshold[4];
-        cmr_s32 slope[4];
-        cmr_u16 searchWindow_x;
-        cmr_u16 searchWindow_y;
-        cmr_s32 recur_str;
-        cmr_s32 match_ratio_sad;
-        cmr_s32 match_ratio_pro;
-        cmr_s32 feat_thr;
-        cmr_s32 zone_size;
-        cmr_s32 luma_ratio_high;
-        cmr_s32 luma_ratio_low;
-        cmr_s32 reserverd[16];
+	cmr_s32 threshold[4];
+	cmr_s32 slope[4];
+	cmr_u16 searchWindow_x;
+	cmr_u16 searchWindow_y;
+	cmr_s32 recur_str;
+	cmr_s32 match_ratio_sad;
+	cmr_s32 match_ratio_pro;
+	cmr_s32 feat_thr;
+	cmr_s32 zone_size;
+	cmr_s32 luma_ratio_high;
+	cmr_s32 luma_ratio_low;
+	cmr_s32 reserverd[16];
 };
 
 enum {
@@ -1866,6 +2039,10 @@ enum {
 	ISP_BLK_IMBALANCEE_T,
 	ISP_BLK_LTM_T,
 	ISP_BLK_SW3DNR_T,
+	ISP_BLK_BWU_BWD_T,
+	ISP_BLK_RAW_GTM_T,
+	ISP_BLK_RGB_LTM_T,
+	ISP_BLK_YUV_LTM_T,
 	ISP_BLK_TYPE_MAX
 };
 
@@ -2073,6 +2250,14 @@ struct sensor_nr_set_group_param {
 	cmr_u32 ltm_len;
 	cmr_u8 *sw_3dnr;
 	cmr_u32 sw_3dnr_len;
+	cmr_u8 *bwu_bwd;
+	cmr_u32 bwu_bwd_len;
+	cmr_u8 *raw_gtm;
+	cmr_u32 raw_gtm_len;
+	cmr_u8 *rgb_ltm;
+	cmr_u32 rgb_ltm_len;
+	cmr_u8 *yuv_ltm;
+	cmr_u32 yuv_ltm_len;
 };
 
 struct sensor_nr_param {
@@ -2159,6 +2344,10 @@ struct denoise_param_update {
 	struct sensor_nlm_imbalance_level *imbalance_level_ptr;
 	struct sensor_ltm_level *ltm_level_ptr;
 	struct sensor_sw3dnr_level *sw3dnr_level_ptr;
+	struct sensor_bwu_bwd_level *bwu_bwd_level_ptr;
+	struct sensor_raw_gtm_level *raw_gtm_level_ptr;
+	struct sensor_rgb_ltm_level *rgb_ltm_level_ptr;
+	struct sensor_yuv_ltm_level *yuv_ltm_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
