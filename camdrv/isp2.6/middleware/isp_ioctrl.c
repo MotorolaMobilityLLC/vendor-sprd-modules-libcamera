@@ -1815,6 +1815,10 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 
 		ae_fd_param.width = face_area->frame_width;
 		ae_fd_param.height = face_area->frame_height;
+		if (cxt->cam_4in1_mode) {
+			ae_fd_param.width = face_area->frame_width / 2;
+			ae_fd_param.height = face_area->frame_height / 2;
+		}
 		ae_fd_param.face_num = face_area->face_num;
 		for (i = 0; i < ae_fd_param.face_num; ++i) {
 			ae_fd_param.face_area[i].rect.start_x = face_area->face_info[i].sx;

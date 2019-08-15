@@ -33,9 +33,12 @@
 #define ISP_EVT_EBD				(1 << 9)
 #define ISP_EVT_3DNR			(1 << 10)
 #define ISP_EVT_HIST2			(1 << 11)
+#define ISP_EVT_CFG				(1 << 12)
 
 
 enum isp_dev_access_ctrl_cmd {
+	ISP_DEV_SET_BAYERHIST_CFG,
+
 	ISP_DEV_SET_AE_SKIP_NUM,
 	ISP_DEV_SET_AE_MONITOR_WIN,
 	ISP_DEV_SET_AE_MONITOR_BYPASS,

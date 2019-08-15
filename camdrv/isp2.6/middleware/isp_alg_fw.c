@@ -18,6 +18,10 @@
 #include <math.h>
 #include <dlfcn.h>
 #include <cutils/properties.h>
+#include <cutils/sched_policy.h>
+#include <sys/resource.h>
+#include <system/thread_defs.h>
+
 #include "isp_alg_fw.h"
 #include "cmr_msg.h"
 #include "cmr_prop.h"
@@ -39,7 +43,7 @@
 
 #define LIBCAM_ALG_FILE "libispalg.so"
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
-#define MIN_FRAME_INTERVAL_MS  (20)
+#define MIN_FRAME_INTERVAL_MS  (10)
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
@@ -312,6 +316,7 @@ struct isp_alg_fw_context {
 	cmr_u8 aem_is_update;
 	cmr_u8 fw_started;
 	cmr_u8 first_frm;
+	cmr_u8 aethd_pri_set;
 	nsecs_t last_sof_time;
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
@@ -336,6 +341,7 @@ struct isp_alg_fw_context {
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_mem_info mem_info;
 	cmr_handle thr_handle;
+	cmr_handle thr_aehandle;
 	cmr_handle thr_afhandle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
@@ -674,6 +680,7 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct dcam_dev_aem_win aem_win;
+	struct dcam_dev_hist_info bayerHist_info;
 
 	ISP_LOGD("win %d %d %d %d %d %d\n",
 			aem_info->trim.x, aem_info->trim.y,
@@ -703,6 +710,21 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
 			ISP_DEV_SET_AE_MONITOR_WIN,
 			&aem_win, NULL);
+
+	/* temp enable and configure bayerhist to fixed mode */
+	/* todo - configure bayer hist according to algo requirement */
+	memset(&bayerHist_info, 0, sizeof(bayerHist_info));
+	bayerHist_info.hist_bypass = 0;
+	bayerHist_info.bayer_hist_endx = cxt->commn_cxt.prv_size.w;
+	bayerHist_info.bayer_hist_endy = cxt->commn_cxt.prv_size.h;
+	bayerHist_info.hist_mode_sel = 1;
+	bayerHist_info.hist_mul_enable = 1;
+	bayerHist_info.hist_initial_clear = 1;
+	bayerHist_info.hist_skip_num_clr = 1;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_SET_BAYERHIST_CFG, &bayerHist_info, NULL);
+
 	return ret;
 }
 
@@ -1512,8 +1534,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 lowlight_tmp = 0;
 
-	ret = ispalg_cfg_param(cxt, 0);
-
 	if (cxt->ops.af_ops.ioctrl) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_SYSTEM_TIME, &sec, &usec);
 		af_ts.timestamp = sec * 1000000000LL + usec * 1000LL;
@@ -1759,7 +1779,8 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 	hist_stats->value[j++] = (cmr_u32)(val0 & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)((val0 >> 24) & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)(((val1 & 0xff) << 16) | ((val0 >> 48) & 0xffff));
-	ISP_LOGV("data: r %d %d, g %d %d, b %d %d\n",
+	ISP_LOGV("frm %d, time %d.%06d, data: r %d %d, g %d %d, b %d %d\n",
+		statis_info->frame_id, statis_info->sec, statis_info->usec,
 		cxt->bayer_hist_stats[0].value[0], cxt->bayer_hist_stats[0].value[1],
 		cxt->bayer_hist_stats[1].value[0], cxt->bayer_hist_stats[1].value[1],
 		cxt->bayer_hist_stats[2].value[0], cxt->bayer_hist_stats[2].value[1]);
@@ -1942,6 +1963,11 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	/* copy isp hist2 statis and pass to ae algo */
 	memcpy((void *)&in_param.hist_stats, (void *)&cxt->hist2_stats,
 		sizeof(struct isp_hist_statistic_info));
+
+	/* todo - add bayerhist_stats in { struct ae_calc_in }
+	memcpy((void *)&in_param.bayerhist_stats[0], (void *)&cxt->bayer_hist_stats[0],
+		sizeof(cxt->bayer_hist_stats));
+	*/
 
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.ae_ops.process) {
@@ -2256,7 +2282,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 				}
 			}
 			cxt->curr_bv = ae_in->ae_output.cur_bv;
-			ISP_LOGI("ae_in->ae_output.cur_bv:%d lux", ae_in->ae_output.cur_bv);
+			ISP_LOGD("ae_in->ae_output.cur_bv:%d lux", ae_in->ae_output.cur_bv);
 
 			cxt->smart_cxt.log_smart = smart_proc_in.log;
 			cxt->smart_cxt.log_smart_size = smart_proc_in.size;
@@ -2383,6 +2409,7 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
 		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;
 		ae_ctrl_calc_result.flash_param.captureFlash1ofALLRatio = ae_result.flash_param.captureFlash1ofALLRatio;
+		cxt->ae_info.ae_rlt_info.is_stab = ae_result.ae_output.is_stab;
 	}
 
 	ret = ispalg_start_awb_process((cmr_handle) cxt, &ae_ctrl_calc_result, &awb_output);
@@ -2410,7 +2437,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct afl_proc_in afl_input;
-	struct afl_ctrl_proc_out afl_output;
+	struct afl_ctrl_proc_out afl_output = {0, 0, 0};
+	struct afl_ctrl_proc_out afl_info = {0, 0, 0};
 
 	memset(&afl_input, 0, sizeof(afl_input));
 	memset(&afl_output, 0, sizeof(afl_output));
@@ -2446,6 +2474,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
 	}
 
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_GET_INFO, (void *)&afl_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_GET_INFO"));
+	}
+
 	cxt->afl_cxt.afl_statis_info = *statis_info;
 	afl_input.ae_stat_ptr = &cxt->aem_stats_data;
 	afl_input.ae_exp_flag = ae_exp_flag;
@@ -2457,6 +2490,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.private_data = &cxt->afl_cxt.afl_statis_info;
 	afl_input.ae_win_num.w = cxt->ae_cxt.win_num.w;
 	afl_input.ae_win_num.h = cxt->ae_cxt.win_num.h;
+	afl_input.max_fps = afl_info.max_fps;
 	ISP_LOGV("afl_mode %d\n",  cxt->afl_cxt.afl_mode);
 
 	if (cxt->ops.afl_ops.process) {
@@ -2684,13 +2718,15 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 	cxt->ai_cxt.ae_param.ae_stat.r_info = cxt->aem_stats_data.r_info;
 	cxt->ai_cxt.ae_param.ae_stat.g_info = cxt->aem_stats_data.g_info;
 	cxt->ai_cxt.ae_param.ae_stat.b_info = cxt->aem_stats_data.b_info;
+	cxt->ai_cxt.ae_param.stable = cxt->ae_info.ae_rlt_info.is_stab;
 
 	cxt->ai_cxt.ae_param.blk_num_hor = cxt->ae_cxt.win_num.w;
 	cxt->ai_cxt.ae_param.blk_num_ver = cxt->ae_cxt.win_num.h;
 	cxt->ai_cxt.ae_param.curr_bv = cxt->curr_bv;
-	ISP_LOGI("ai ae info: blk_num_hor: %d, blk_num_ver: %d.", cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
-
-	ISP_LOGI("ai ae info: frame_id: %d, timestamp: %llu.", cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp);
+	ISP_LOGV("ai ae info: blk_num_hor: %d, blk_num_ver: %d.",
+		cxt->ai_cxt.ae_param.blk_num_hor, cxt->ai_cxt.ae_param.blk_num_ver);
+	ISP_LOGD("ai ae info: frame_id: %d, timestamp: %llu.",
+		cxt->ai_cxt.ae_param.frame_id, (unsigned long long)cxt->ai_cxt.ae_param.timestamp);
 
 	if (cxt->ops.ai_ops.ioctrl) {
 		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_AE_PARAM, (void *)(&cxt->ai_cxt.ae_param), NULL);
@@ -2744,14 +2780,13 @@ exit:
 	return ret;
 }
 
-cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
+cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
-	nsecs_t cur_time;
-	cmr_u32 timems_diff;
 	cmr_u32 is_raw_capture = 0;
 	char value[PROPERTY_VALUE_MAX];
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+	CMR_MSG_INIT(message1);
 
 	if (!message || !p_data) {
 		ISP_LOGE("fail to check input param ");
@@ -2759,15 +2794,28 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 	}
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
+	/* set priority to -10 */
+	/* same as grab/aectrl to make sure whole AE process priority */
+	if (cxt->aethd_pri_set == 0) {
+		cmr_s32 priority = -10;
+
+		setpriority(PRIO_PROCESS, 0, priority);
+		/* todo: set_sched_policy() applied in Android P, Android Q needs new API for it */
+		//set_sched_policy(0, SP_FOREGROUND);
+		cxt->aethd_pri_set = 1;
+		ISP_LOGI("set priority to %d", priority);
+	}
+
 	switch (message->msg_type) {
-	case ISP_EVT_TX:
-		ret = ispalg_evt_process_cb((cmr_handle) cxt);
-		break;
-	case ISP_EVT_AE:
+	case ISP_EVT_AE: {
+		struct isp_statis_info *statis_info = (struct isp_statis_info *)message->data;
+
+		ISP_LOGV("aem no.%d, timestamp %03d.%06d\n", statis_info->frame_id, statis_info->sec, statis_info->usec);
+
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->aem_stats_data;
 		if (cxt->is_multi_mode)
-			ISP_LOGD("is_master :%d\n", cxt->is_master);
+			ISP_LOGV("is_master :%d\n", cxt->is_master);
 		if (cxt->is_master) {
 			isp_br_ioctrl(CAM_SENSOR_MASTER, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
 		} else {
@@ -2775,7 +2823,12 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		}
 		ret = ispalg_ai_process((cmr_handle)cxt);
 		break;
-	case ISP_EVT_SOF:
+	}
+	case ISP_EVT_SOF: {
+		struct sprd_irq_info *irq_info = (struct sprd_irq_info *)message->data;
+
+		ISP_LOGV("sof no.%d, timestamp %03d.%06d\n", irq_info->frame_id, irq_info->sec, irq_info->usec);
+
 		if (cxt->fw_started == 0) {
 			/* workaround for raw capture with flash
 			  * because no statis data for raw, force AE process running to return flash messege to HAL
@@ -2791,15 +2844,6 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 			break;
 		}
 
-		cur_time = ispalg_get_sys_timestamp();
-		timems_diff = (cmr_u32)(cur_time - cxt->last_sof_time);
-		if (timems_diff < MIN_FRAME_INTERVAL_MS) {
-			/* workaround for AE jittering when high CPU loading causing SOF delay
-			    todo: improve whole system performance and optimize SOF message queue.
-			    */
-			ISP_LOGW("time interval is too small: %d\n", timems_diff);
-			goto exit;
-		}
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
@@ -2807,8 +2851,39 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		if (ret)
 			ISP_LOGE("fail to start awb process");
 		cxt->aem_is_update = 0;
-		cxt->last_sof_time = cur_time;
+
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
+
+		message1.msg_type = ISP_EVT_CFG;
+		message1.sync_flag = CMR_MSG_SYNC_NONE;
+		ret = cmr_thread_msg_send(cxt->thr_handle, &message1);
+		break;
+	}
+	default:
+		ISP_LOGV("don't support msg");
+		break;
+	}
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
+cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	nsecs_t cur_time;
+	cmr_u32 timems_diff;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+
+	if (!message || !p_data) {
+		ISP_LOGE("fail to check input param ");
+		goto exit;
+	}
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+
+	switch (message->msg_type) {
+	case ISP_EVT_TX:
+		ret = ispalg_evt_process_cb((cmr_handle) cxt);
 		break;
 	case ISP_EVT_AFL:
 		ret = ispalg_afl_process((cmr_handle) cxt, message->data);
@@ -2827,6 +2902,16 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_EVT_3DNR:
 		ret = ispalg_3dnr_statis_parser((cmr_handle) cxt, message->data);
+		break;
+	case ISP_EVT_CFG:
+		cur_time = ispalg_get_sys_timestamp();
+		timems_diff = (cmr_u32)(cur_time - cxt->last_sof_time);
+		if (timems_diff < MIN_FRAME_INTERVAL_MS) {
+			ISP_LOGW("time interval is too small: %d\n", timems_diff);
+		}
+		cxt->last_sof_time = cur_time;
+		ret = ispalg_cfg_param(cxt, 0);
+		break;
 	default:
 		ISP_LOGV("don't support msg");
 		break;
@@ -2847,6 +2932,17 @@ void ispalg_dev_evt_msg(cmr_int evt, void *data, void *privdata)
 		return;
 	}
 
+	if (evt == ISP_EVT_SOF && data) {
+		struct sprd_irq_info *irq_info = (struct sprd_irq_info *)data;;
+		ISP_LOGV("sof no.%d, timestamp %03d.%06d\n",
+			irq_info->frame_id, irq_info->sec, irq_info->usec);
+	}
+	if (evt == ISP_EVT_AE && data) {
+		struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+		ISP_LOGV("aem no.%d, timestamp %03d.%06d\n",
+			statis_info->frame_id, statis_info->sec, statis_info->usec);
+	}
+
 	message.msg_type = evt;
 	message.sub_msg_type = 0;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
@@ -2855,6 +2951,8 @@ void ispalg_dev_evt_msg(cmr_int evt, void *data, void *privdata)
 	if (ISP_EVT_AF == message.msg_type) {
 		message.sub_msg_type = AF_DATA_AFM_STAT;
 		ret = cmr_thread_msg_send(cxt->thr_afhandle, &message);
+	} else if (evt == ISP_EVT_AE || evt == ISP_EVT_SOF) {
+		ret = cmr_thread_msg_send(cxt->thr_aehandle, &message);
 	} else {
 		ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 	}
@@ -3100,6 +3198,22 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 		ret = CMR_MSG_SUCCESS;
 	}
 
+
+
+	ret = cmr_thread_create(&cxt->thr_aehandle,
+			ISP_THREAD_QUEUE_NUM,
+			ispalg_aethread_proc, (void *)cxt);
+
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to create algae process thread");
+		ret = -ISP_ERROR;
+	}
+	ret = cmr_thread_set_name(cxt->thr_aehandle, "algae");
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to set algae name");
+		ret = CMR_MSG_SUCCESS;
+	}
+
 #if 0 /* maybe optimized for data queue instead of message queue. */
 	pthread_attr_t attr;
 	/* thread for reading statis & IRQs */
@@ -3165,6 +3279,14 @@ static cmr_int ispalg_destroy_thread_proc(cmr_handle isp_alg_handle)
 		}
 	}
 
+	if (cxt->thr_aehandle) {
+		ret = cmr_thread_destroy(cxt->thr_aehandle);
+		if (!ret) {
+			cxt->thr_aehandle = (cmr_handle) NULL;
+		} else {
+			ISP_LOGE("fail to destroy algae process thread");
+		}
+	}
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -4189,6 +4311,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	enum ae_work_mode ae_mode = 0;
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_rgb_aem_info aem_info;
+	cmr_u32 max_fps = 0;
 
 	memset(&ae_param, 0, sizeof(ae_param));
 
@@ -4271,6 +4394,12 @@ static cmr_int ispalg_ae_set_work_mode(
 		ISP_LOGD("trigger ae start.");
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_START"));
+	}
+
+	max_fps = ae_param.sensor_fps.max_fps;
+	if (cxt->ops.afl_ops.ioctrl) {
+		ret = cxt->ops.afl_ops.ioctrl(cxt->afl_cxt.handle, AFL_SET_MAX_FPS, (void *)&max_fps, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_MAX_FPS"));
 	}
 
 	return ret;

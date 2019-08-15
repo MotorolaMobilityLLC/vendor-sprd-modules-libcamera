@@ -221,19 +221,26 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	struct sprd_irq_info *irq_info = (struct sprd_irq_info *)param_ptr;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_raw_proc_info raw_proc_in;
+	struct sprd_irq_info *data = NULL;
+
+	data = (struct sprd_irq_info *)malloc(sizeof(struct sprd_irq_info));
+	if (data)
+		memcpy(data, irq_info, sizeof(struct sprd_irq_info));
 
 	if (irq_info->irq_property == IRQ_DCAM_SOF) {
 		if (cxt->isp_event_cb) {
-			(cxt->isp_event_cb) (ISP_EVT_SOF, NULL, (void *)cxt->evt_alg_handle);
+			(cxt->isp_event_cb) (ISP_EVT_SOF, data, (void *)cxt->evt_alg_handle);
 		}
 	} else if ((irq_info->irq_property == IRQ_RAW_PROC_DONE) ||
 			(irq_info->irq_property == IRQ_RAW_PROC_TIMEOUT)){
 		raw_proc_in.cmd = RAW_PROC_DONE;
 		isp_dev_raw_proc(cxt->isp_driver_handle, &raw_proc_in);
 		if (cxt->isp_event_cb) {
-			(cxt->isp_event_cb) (ISP_EVT_TX, NULL, (void *)cxt->evt_alg_handle);
+			(cxt->isp_event_cb) (ISP_EVT_TX, data, (void *)cxt->evt_alg_handle);
 		}
 	} else {
+		free((void *)data);
+		data = NULL;
 		ISP_LOGW("there is no irq_property %d", irq_info->irq_property);
 	}
 }
@@ -327,6 +334,10 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	switch (cmd) {
 	case ISP_DEV_RESET:
 		ret = isp_dev_reset(cxt->isp_driver_handle);
+		break;
+	/* bayerhist */
+	case ISP_DEV_SET_BAYERHIST_CFG:
+		dcam_u_bayerhist_block(cxt->isp_driver_handle, param0);
 		break;
 	/* aem */
 	case ISP_DEV_SET_AE_SKIP_NUM:
