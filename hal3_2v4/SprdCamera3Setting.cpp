@@ -96,6 +96,7 @@ typedef struct {
     uint8_t availableAutoHdr;
     uint8_t availableAiScene;
     uint8_t availableAuto3Dnr;
+    uint8_t availDistortionCorrectionModes[1];
 } camera3_common_t;
 
 typedef struct {
@@ -281,6 +282,9 @@ enum {
 const uint8_t availableAmModes[] = {
     CAMERA_AE_FRAME_AVG, CAMERA_AE_CENTER_WEIGHTED, CAMERA_AE_SPOT_METERING,
     CAMERA_AE_MODE_MAX};
+
+const uint8_t availDistortionCorrectionModes[] = {
+    ANDROID_DISTORTION_CORRECTION_MODE_OFF};
 
 const int32_t max_output_streams[3] = {0, 2, 1};
 const uint8_t availableBrightNess[] = {0, 1, 2, 3, 4, 5, 6};
@@ -1155,6 +1159,9 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     camera3_default_info.common.availableAiScene = availableAiScene;
 
     camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
+    memcpy(camera3_default_info.common.availDistortionCorrectionModes,
+        availDistortionCorrectionModes,
+        sizeof(availDistortionCorrectionModes));
 
     return 0;
 }
@@ -1764,6 +1771,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            available_cam_features.size() * sizeof(uint8_t));
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
+    memcpy(s_setting[cameraId].lensInfo.distortion_correction_modes,
+        camera3_default_info.common.availDistortionCorrectionModes,
+        sizeof(camera3_default_info.common.availDistortionCorrectionModes));
 
     HAL_LOGI("available_cam_features = %d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
@@ -2134,6 +2144,10 @@ int SprdCamera3Setting::initStaticMetadata(
         ANDROID_SPRD_CAM_FEATURE_LIST,
         s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
         s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
+    staticInfo.update(
+        ANDROID_DISTORTION_CORRECTION_AVAILABLE_MODES,
+        s_setting[cameraId].lensInfo.distortion_correction_modes,
+        ARRAY_SIZE(s_setting[cameraId].lensInfo.distortion_correction_modes));
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO

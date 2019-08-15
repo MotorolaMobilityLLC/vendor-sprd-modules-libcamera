@@ -199,6 +199,7 @@ typedef struct {
     float aperture;
     float filter_density;
     uint8_t optical_stabilization_mode;
+    uint8_t distortion_correction_modes[1];
 } LENS_Tag;
 
 typedef struct {
