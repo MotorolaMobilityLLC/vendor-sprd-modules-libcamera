@@ -318,6 +318,7 @@ enum available_cam_features {
     GDEPTHENABLE,
     BABLURPORTRAITMODE,
     FRBLURPORTRAITMODE,
+    MONTIONENABLE,
     FEATURELISTMAX
 };
 
@@ -1058,6 +1059,12 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     // 10.front portrait mode
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features[FRBLURPORTRAITMODE] = atoi(prop);
+
+#ifdef CONFIG_CAMERA_MOTION_PHONE
+    available_cam_features[MONTIONENABLE] = 1;
+#else
+    available_cam_features[MONTIONENABLE] = 0;
+#endif
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]), sizeof(available_cam_features));

@@ -1199,7 +1199,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     int i = 0;
-
+    char value[PROPERTY_VALUE_MAX];
     memset(&(s_setting[cameraId]), 0, sizeof(sprd_setting_info_t));
 
     s_setting[cameraId].supported_hardware_level =
@@ -1744,6 +1744,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // front portrait mode
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features.add(atoi(prop));
+
+#ifdef CONFIG_CAMERA_MOTION_PHONE
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 

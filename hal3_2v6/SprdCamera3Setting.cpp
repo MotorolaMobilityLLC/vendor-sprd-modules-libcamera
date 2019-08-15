@@ -2018,7 +2018,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
-#if 0
+
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         available_cam_features.add(0);
@@ -2029,7 +2029,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
 #endif
     }
-#endif
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
