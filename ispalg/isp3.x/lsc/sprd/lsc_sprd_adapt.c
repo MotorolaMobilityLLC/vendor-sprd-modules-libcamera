@@ -369,7 +369,7 @@ static void lsc_dump_gain(cmr_u16* table, cmr_u32 width, cmr_u32 height, cmr_u32
 	}
 
 	property_get("ro.build.version.release",version,(char*)"");
-	if(version[0] > '6'){
+	if(atoi(version) > 6){
 		if(mkdir(CAMERA_DATA_FILE"/lsc/", 0755) != 0){
 			char filename[256];
 			sprintf(filename,CAMERA_DATA_FILE"/lsc/%05d_gr.txt",frame_count);

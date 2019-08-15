@@ -444,7 +444,7 @@ static void _awb_save_gain(struct awb_save_gain *cxt, cmr_u32 num)
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
 
-	if (version[0] > '6') {
+	if (atoi(version) > 6) {
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "wb");
 		if (fp) {
 			for (i = 0; i < num; ++i) {
@@ -485,7 +485,7 @@ static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
 
-	if (version[0] > '6') {
+	if (atoi(version) > 6) {
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
 		if (fp) {
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain) * num);

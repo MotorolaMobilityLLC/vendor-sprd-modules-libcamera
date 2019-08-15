@@ -3995,7 +3995,7 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 	FILE *pf = NULL;
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
-	if (version[0] > '6') {
+	if (atoi(version > 6) {
 		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "wb");
 		if (pf) {
 			for (i = 0; i < num; ++i) {
@@ -4029,7 +4029,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 	FILE *pf = NULL;
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
-	if (version[0] > '6') {
+	if (atoi(version) > 6) {
 		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
