@@ -345,7 +345,10 @@ struct isp_nlm_param {
 };
 
 struct isp_imblance_param {
-	struct isp_dev_nlm_imblance cur;
+	union {
+		struct isp_dev_nlm_imblance cur;
+		struct isp_dev_nlm_imblance_v1 cur_v1;
+	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;

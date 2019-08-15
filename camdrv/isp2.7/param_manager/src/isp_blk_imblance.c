@@ -37,45 +37,94 @@ static cmr_u32 _pm_imblance_convert_param(
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 
 	if (imblance_param != NULL) {
-		dst_ptr->cur.nlm_imblance_en = imblance_param[strength_level].imblance_en;
-		dst_ptr->cur.nlm_imblance_hv_edge_thr = imblance_param[strength_level].imblance_hv_edge_thr;
-		dst_ptr->cur.nlm_imblance_slash_edge_thr = imblance_param[strength_level].imblance_slash_edge_thr;
-		dst_ptr->cur.nlm_imblance_hv_flat_thr = imblance_param[strength_level].imblance_hv_flat_thr;
-		dst_ptr->cur.nlm_imblance_slash_flat_thr = imblance_param[strength_level].imblance_slash_flat_thr;
-		dst_ptr->cur.nlm_imblance_flag3_grid = imblance_param[strength_level].nlm_imblance_flag3.flag3_grid;
-		dst_ptr->cur.nlm_imblance_flag3_lum = imblance_param[strength_level].nlm_imblance_flag3.flag3_lum;
-		dst_ptr->cur.nlm_imblance_flag3_frez = imblance_param[strength_level].nlm_imblance_flag3.flag3_frez;
-		dst_ptr->cur.nlm_imblance_S_baohedu1 = imblance_param[strength_level].sensor_imblance_S_baohedu[0];
-		dst_ptr->cur.nlm_imblance_S_baohedu2 = imblance_param[strength_level].sensor_imblance_S_baohedu[1];
+		dst_ptr->cur_v1.nlm_imblance_bypass = imblance_param[strength_level].imblance_bypass;
+		dst_ptr->cur_v1.imblance_radial_1D_en = imblance_param[strength_level].imblance_1D.imblance_radial_1D_en;
+		dst_ptr->cur_v1.nlm_imblance_hv_edge_thr[0] = imblance_param[strength_level].imblance_hv[0].imblance_hv_edge_thr;
+		dst_ptr->cur_v1.nlm_imblance_slash_edge_thr[0] = imblance_param[strength_level].imblance_hv[0].imblance_hv_slash_edge_thr;
+		dst_ptr->cur_v1.nlm_imblance_S_baohedu[0][0] = imblance_param[strength_level].imblance_S_baohedu[0][0];
+		dst_ptr->cur_v1.nlm_imblance_S_baohedu[0][1] = imblance_param[strength_level].imblance_S_baohedu[0][1];
+		dst_ptr->cur_v1.nlm_imblance_hv_flat_thr[0] = imblance_param[strength_level].imblance_hv[0].imblance_hv_flat_thr;
+		dst_ptr->cur_v1.nlm_imblance_slash_flat_thr[0] = imblance_param[strength_level].imblance_hv[0].imblance_slash_flat_thr;
+		dst_ptr->cur_v1.nlm_imblance_flag3_grid = imblance_param[strength_level].nlm_imblance_flag3.flag3_grid;
+		dst_ptr->cur_v1.nlm_imblance_flag3_lum = imblance_param[strength_level].nlm_imblance_flag3.flag3_lum;
+		dst_ptr->cur_v1.nlm_imblance_flag3_frez = imblance_param[strength_level].nlm_imblance_flag3.flag3_frez;
 
-		dst_ptr->cur.nlm_imblance_lum1_flag2_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_2_r;
-		dst_ptr->cur.nlm_imblance_lum1_flag4_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_4_r;
-		dst_ptr->cur.nlm_imblance_lum1_flag0_rs = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_0_rs;
-		dst_ptr->cur.nlm_imblance_lum1_flag0_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_0_r;
-		dst_ptr->cur.nlm_imblance_lum1_flag1_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_1_r;
+		dst_ptr->cur_v1.nlm_imblance_lumth1 = imblance_param[strength_level].imblance_lumth[0];
+		dst_ptr->cur_v1.nlm_imblance_lumth2 = imblance_param[strength_level].imblance_lumth[1];
 
-		dst_ptr->cur.nlm_imblance_lum2_flag2_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_2_r;
-		dst_ptr->cur.nlm_imblance_lum2_flag4_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_4_r;
-		dst_ptr->cur.nlm_imblance_lum2_flag0_rs = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_0_rs;
-		dst_ptr->cur.nlm_imblance_lum2_flag0_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_0_r;
-		dst_ptr->cur.nlm_imblance_lum2_flag1_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_1_r;
+		dst_ptr->cur_v1.nlm_imblance_flag12_frezthr = imblance_param[strength_level].nlm_imblance_flag3.flag12_frezthr;
+		dst_ptr->cur_v1.nlm_imblance_lum1_flag2_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_2_r;
+		dst_ptr->cur_v1.nlm_imblance_lum1_flag4_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_4_r;
+		dst_ptr->cur_v1.nlm_imblance_lum1_flag0_rs = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_0_rs;
+		dst_ptr->cur_v1.nlm_imblance_lum1_flag0_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_0_r;
+		dst_ptr->cur_v1.nlm_imblance_lum1_flag1_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_1_r;
 
-		dst_ptr->cur.nlm_imblance_lum3_flag2_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_2_r;
-		dst_ptr->cur.nlm_imblance_lum3_flag4_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_4_r;
-		dst_ptr->cur.nlm_imblance_lum3_flag0_rs = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_0_rs;
-		dst_ptr->cur.nlm_imblance_lum3_flag0_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_0_r;
-		dst_ptr->cur.nlm_imblance_lum3_flag1_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_1_r;
+		dst_ptr->cur_v1.nlm_imblance_lum2_flag2_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_2_r;
+		dst_ptr->cur_v1.nlm_imblance_lum2_flag4_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_4_r;
+		dst_ptr->cur_v1.nlm_imblance_lum2_flag0_rs = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_0_rs;
+		dst_ptr->cur_v1.nlm_imblance_lum2_flag0_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_0_r;
+		dst_ptr->cur_v1.nlm_imblance_lum2_flag1_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_1_r;
 
-		dst_ptr->cur.nlm_imblance_lumth1 = imblance_param[strength_level].sensor_imblance_lumth[0];
-		dst_ptr->cur.nlm_imblance_lumth2 = imblance_param[strength_level].sensor_imblance_lumth[1];
-		dst_ptr->cur.nlm_imblance_flag12_frezthr = imblance_param[strength_level].nlm_imblance_flag12_frezthr;
-		dst_ptr->cur.nlm_imblance_diff = imblance_param[strength_level].nlm_imblance_diff;
-		dst_ptr->cur.nlm_imblance_faceRmin = imblance_param[strength_level].imblance_face_rbg.face_r.face_min;
-		dst_ptr->cur.nlm_imblance_faceRmax= imblance_param[strength_level].imblance_face_rbg.face_r.face_max;
-		dst_ptr->cur.nlm_imblance_faceGmin = imblance_param[strength_level].imblance_face_rbg.face_g.face_min;
-		dst_ptr->cur.nlm_imblance_faceGmax= imblance_param[strength_level].imblance_face_rbg.face_g.face_max;
-		dst_ptr->cur.nlm_imblance_faceBmin = imblance_param[strength_level].imblance_face_rbg.face_b.face_min;
-		dst_ptr->cur.nlm_imblance_faceBmax= imblance_param[strength_level].imblance_face_rbg.face_b.face_max;
+		dst_ptr->cur_v1.nlm_imblance_lum3_flag2_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_2_r;
+		dst_ptr->cur_v1.nlm_imblance_lum3_flag4_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_4_r;
+		dst_ptr->cur_v1.nlm_imblance_lum3_flag0_rs = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_0_rs;
+		dst_ptr->cur_v1.nlm_imblance_lum3_flag0_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_0_r;
+		dst_ptr->cur_v1.nlm_imblance_lum3_flag1_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_1_r;
+
+		dst_ptr->cur_v1.nlm_imblance_diff[0] = imblance_param[strength_level].imblance_diff[0];
+		dst_ptr->cur_v1.nlm_imblance_faceRmin = imblance_param[strength_level].imblance_face_rbg.face_r.face_min;
+		dst_ptr->cur_v1.nlm_imblance_faceRmax= imblance_param[strength_level].imblance_face_rbg.face_r.face_max;
+		dst_ptr->cur_v1.nlm_imblance_faceGmin = imblance_param[strength_level].imblance_face_rbg.face_g.face_min;
+		dst_ptr->cur_v1.nlm_imblance_faceGmax= imblance_param[strength_level].imblance_face_rbg.face_g.face_max;
+		dst_ptr->cur_v1.nlm_imblance_faceBmin = imblance_param[strength_level].imblance_face_rbg.face_b.face_min;
+		dst_ptr->cur_v1.nlm_imblance_faceBmax= imblance_param[strength_level].imblance_face_rbg.face_b.face_max;
+
+		dst_ptr->cur_v1.nlm_imblance_hv_edge_thr[1] = imblance_param[strength_level].imblance_hv[1].imblance_hv_edge_thr;
+		dst_ptr->cur_v1.nlm_imblance_hv_edge_thr[2] = imblance_param[strength_level].imblance_hv[2].imblance_hv_edge_thr;
+		dst_ptr->cur_v1.nlm_imblance_slash_edge_thr[1] = imblance_param[strength_level].imblance_hv[1].imblance_hv_slash_edge_thr;
+		dst_ptr->cur_v1.nlm_imblance_slash_edge_thr[2] = imblance_param[strength_level].imblance_hv[2].imblance_hv_slash_edge_thr;
+
+		dst_ptr->cur_v1.nlm_imblance_hv_flat_thr[1] = imblance_param[strength_level].imblance_hv[1].imblance_hv_flat_thr;
+		dst_ptr->cur_v1.nlm_imblance_hv_flat_thr[2] = imblance_param[strength_level].imblance_hv[2].imblance_hv_flat_thr;
+
+		dst_ptr->cur_v1.nlm_imblance_slash_flat_thr[1] = imblance_param[strength_level].imblance_hv[1].imblance_slash_flat_thr;
+		dst_ptr->cur_v1.nlm_imblance_slash_flat_thr[2] = imblance_param[strength_level].imblance_hv[2].imblance_slash_flat_thr;
+
+		dst_ptr->cur_v1.nlm_imblance_S_baohedu[1][0] = imblance_param[strength_level].imblance_S_baohedu[1][0];
+		dst_ptr->cur_v1.nlm_imblance_S_baohedu[1][1] = imblance_param[strength_level].imblance_S_baohedu[1][1];
+		dst_ptr->cur_v1.nlm_imblance_S_baohedu[2][0] = imblance_param[strength_level].imblance_S_baohedu[2][0];
+		dst_ptr->cur_v1.nlm_imblance_S_baohedu[2][1] = imblance_param[strength_level].imblance_S_baohedu[2][1];
+
+		dst_ptr->cur_v1.nlm_imblance_lum1_flag3_r = imblance_param[strength_level].lum_flag[0].nlm_imblance_lum_flag_3_r;
+		dst_ptr->cur_v1.nlm_imblance_lum2_flag3_r = imblance_param[strength_level].lum_flag[1].nlm_imblance_lum_flag_3_r;
+
+		dst_ptr->cur_v1.nlm_imblance_lum3_flag3_r = imblance_param[strength_level].lum_flag[2].nlm_imblance_lum_flag_3_r;
+		dst_ptr->cur_v1.imblance_sat_lumth = imblance_param[strength_level].imblance_sat_lumth;
+
+		dst_ptr->cur_v1.nlm_imblance_diff[1] = imblance_param[strength_level].imblance_diff[1];
+		dst_ptr->cur_v1.nlm_imblance_diff[2] = imblance_param[strength_level].imblance_diff[2];
+
+		dst_ptr->cur_v1.nlm_imblance_ff_wt2 = imblance_param[strength_level].imblance_curve.imblance_curve_wt2;
+		dst_ptr->cur_v1.nlm_imblance_ff_wt3 = imblance_param[strength_level].imblance_curve.imblance_curve_wt3;
+		dst_ptr->cur_v1.nlm_imblance_ff_wt1 = imblance_param[strength_level].imblance_curve.imblance_curve_wt1;
+		dst_ptr->cur_v1.nlm_imblance_ff_wt0 = imblance_param[strength_level].imblance_curve.imblance_curve_wt0;
+
+		dst_ptr->cur_v1.nlm_imblance_ff_wr2 = imblance_param[strength_level].imblance_curve.imblance_curve_wr2;
+		dst_ptr->cur_v1.nlm_imblance_ff_wr3 = imblance_param[strength_level].imblance_curve.imblance_curve_wr3;
+		dst_ptr->cur_v1.nlm_imblance_ff_wr1 = imblance_param[strength_level].imblance_curve.imblance_curve_wr1;
+		dst_ptr->cur_v1.nlm_imblance_ff_wr0 = imblance_param[strength_level].imblance_curve.imblance_curve_wr0;
+
+		dst_ptr->cur_v1.imblance_radial_1D_coef_r0 = imblance_param[strength_level].imblance_1D.imblance_radial_1D_coef_r0;
+		dst_ptr->cur_v1.imblance_radial_1D_coef_r1 = imblance_param[strength_level].imblance_1D.imblance_radial_1D_coef_r1;
+		dst_ptr->cur_v1.imblance_radial_1D_coef_r2 = imblance_param[strength_level].imblance_1D.imblance_radial_1D_coef_r2;
+		dst_ptr->cur_v1.nlm_imblance_ff_wr4 = imblance_param[strength_level].imblance_curve.imblance_curve_wr4;
+
+		dst_ptr->cur_v1.imblance_radial_1D_coef_r3 = imblance_param[strength_level].imblance_1D.imblance_radial_1D_coef_r3;
+		dst_ptr->cur_v1.imblance_radial_1D_coef_r4 = imblance_param[strength_level].imblance_1D.imblance_radial_1D_coef_r4;
+		dst_ptr->cur_v1.imblance_radial_1D_protect_ratio_max = imblance_param[strength_level].imblance_1D.imblance_radial_1D_protect_ratio_max;
+		dst_ptr->cur_v1.imblance_radial_1D_center_x = imblance_param[strength_level].imblance_1D.imblance_radial_1D_center_x;
+		dst_ptr->cur_v1.imblance_radial_1D_center_y = imblance_param[strength_level].imblance_1D.imblance_radial_1D_center_y;
+		dst_ptr->cur_v1.imblance_radial_1D_radius_thr = imblance_param[strength_level].imblance_1D.imblance_radial_1D_radius_thr;
 	}
 
 	return rtn;
@@ -90,7 +139,7 @@ cmr_s32 _pm_imblance_init(void *dst_imblance_param, void *src_imblance_param, vo
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	dst_ptr->cur.nlm_imblance_en = !header_ptr->bypass;
+	dst_ptr->cur_v1.nlm_imblance_bypass = header_ptr->bypass;
 	dst_ptr->cur_level = src_ptr->default_strength_level;
 	dst_ptr->level_num = src_ptr->level_number;
 	dst_ptr->param_ptr = src_ptr->param_ptr;
@@ -98,7 +147,7 @@ cmr_s32 _pm_imblance_init(void *dst_imblance_param, void *src_imblance_param, vo
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 	if (!header_ptr->bypass)
 		rtn = _pm_imblance_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	dst_ptr->cur.nlm_imblance_en &= !header_ptr->bypass;
+	dst_ptr->cur_v1.nlm_imblance_bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm imblance param !");
 		return rtn;
@@ -143,7 +192,7 @@ cmr_s32 _pm_imblance_set_param(void *imblance_param, cmr_u32 cmd, void *param_pt
 
 				rtn = _pm_imblance_convert_param(imblance_ptr,
 					imblance_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
-				imblance_ptr->cur.nlm_imblance_en &= !header_ptr->bypass;
+				imblance_ptr->cur_v1.nlm_imblance_bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm imblance param");
 					return rtn;
@@ -173,8 +222,8 @@ cmr_s32 _pm_imblance_get_param(void *imblance_param, cmr_u32 cmd, void *rtn_para
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
-		param_data_ptr->data_ptr = &imblance_ptr->cur;
-		param_data_ptr->data_size = sizeof(imblance_ptr->cur);
+		param_data_ptr->data_ptr = &imblance_ptr->cur_v1;
+		param_data_ptr->data_size = sizeof(imblance_ptr->cur_v1);
 		*update_flag = 0;
 		break;
 	default:

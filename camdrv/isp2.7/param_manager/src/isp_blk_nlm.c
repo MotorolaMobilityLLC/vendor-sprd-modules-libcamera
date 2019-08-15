@@ -149,7 +149,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	dst_ptr->cur.vst_bypass = header_ptr->bypass;
 	dst_ptr->cur.ivst_bypass = header_ptr->bypass;
-	dst_ptr->vst_map.size = 1024 * sizeof(cmr_u32);
+	dst_ptr->vst_map.size = 1025 * sizeof(cmr_u32);
 	if (PNULL == dst_ptr->vst_map.data_ptr) {
 		dst_ptr->vst_map.data_ptr = (void *)malloc(dst_ptr->vst_map.size);
 		if (PNULL == dst_ptr->vst_map.data_ptr) {
@@ -162,7 +162,7 @@ cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void *param1, voi
 	dst_ptr->cur.vst_len = dst_ptr->vst_map.size;
 	dst_ptr->cur.vst_table_addr = (cmr_u64)dst_ptr->vst_map.data_ptr;
 
-	dst_ptr->ivst_map.size = 1024 * sizeof(cmr_u32);
+	dst_ptr->ivst_map.size = 1025 * sizeof(cmr_u32);
 	if (PNULL == dst_ptr->ivst_map.data_ptr) {
 		dst_ptr->ivst_map.data_ptr = (void *)malloc(dst_ptr->ivst_map.size);
 		if (PNULL == dst_ptr->ivst_map.data_ptr) {
