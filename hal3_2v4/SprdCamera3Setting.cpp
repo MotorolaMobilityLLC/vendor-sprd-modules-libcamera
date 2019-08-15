@@ -81,7 +81,7 @@ typedef struct {
     int32_t jpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE];
     int64_t FrameDurationRange[2];
     uint8_t availableFaceDetectModes[SPRD_MAX_AVAILABLE_FACE_DETECT_MODES];
-    uint8_t availableVideoStabModes[2];
+    uint8_t availableVideoStabModes[1];
     uint8_t availEffectModes[9];
     uint8_t availSceneModes[18];
     uint8_t availAntibandingModes[4];
@@ -1384,8 +1384,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB ||
-                    scaler_formats[j] ==
-                        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
                     scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(

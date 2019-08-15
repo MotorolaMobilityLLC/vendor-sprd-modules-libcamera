@@ -122,7 +122,7 @@ typedef struct {
 
 typedef struct {
     uint8_t capture_intent;
-    uint8_t available_video_stab_modes[2];
+    uint8_t available_video_stab_modes[1];
     int32_t max_regions[3];
     uint8_t available_effects[9];
     uint8_t available_scene_modes[18];
