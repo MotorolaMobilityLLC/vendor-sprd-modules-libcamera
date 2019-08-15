@@ -728,22 +728,67 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
 	if(atoi(value)) {
-			#define MLOG_BUF_SIZE 1024
+		if((PD_FRAME_ID % 30) ==0){
+			//#define MLOG_BUF_SIZE 1024
 			#define MLOG_FILE_NAME_SIZE 200
 			char file_name_r[MLOG_FILE_NAME_SIZE] = {0};
 			char file_name_l[MLOG_FILE_NAME_SIZE] = {0};
+			cmr_s32 temp_int = 0;
+			cmr_s16 temp_short = 0;
+			cmr_s32 *pTempBuf = NULL;
+			cmr_s32 tp3index = 0, count = 0;
 			FILE *fp = NULL;
-			sprintf(file_name_l, CAMERA_DATA_FILE"/pdaf_l_%d.txt", 1);
-			sprintf(file_name_r, CAMERA_DATA_FILE"/pdaf_r_%d.txt", 1);
+			sprintf(file_name_l, CAMERA_DATA_FILE"/pdaf_L_tp3_128X192_%d.raw", PD_FRAME_ID);
+			sprintf(file_name_r, CAMERA_DATA_FILE"/pdaf_R_tp3_128X192_%d.raw", PD_FRAME_ID);
 
-			fp = fopen(file_name_l, "wb");
-			fwrite((void*)pInPhaseBuf_left, 1, 0x8100, fp);
+			pTempBuf = pInPhaseBuf_left;
+			fp = fopen(file_name_l, "wb+");
+			while(tp3index != (33024/4) && *pTempBuf){	//pdaf raw total of 33024 bytes, storing 3 pixels every four bytes
+				temp_int = *pTempBuf;
+				for(count = 0; count < 3; count++){
+					if(0 == count)
+						temp_short = (temp_int & 0x3ff);	//extract the first pixel
+					else if(1 == count)
+						temp_short = ((temp_int >> 10) & 0x3ff); //extract the second pixel
+					else
+						temp_short = ((temp_int >> 20) & 0x3ff); //extract the third pixel
+
+					fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
+					temp_short = 0;
+				}
+				temp_int = 0;
+				pTempBuf++;
+				tp3index++;
+			}
 			fclose(fp);
+			pTempBuf = NULL;
+			tp3index = 0;
+			fp = NULL;
 
-			fp = fopen(file_name_r, "wb");
-			fwrite((void*)pInPhaseBuf_right, 1, 0x8100, fp);
+			pTempBuf = pInPhaseBuf_right;
+			fp = fopen(file_name_r, "wb+");
+			while(tp3index != (33024/4) && *pTempBuf){
+				temp_int = *pTempBuf;
+				for(count = 0; count < 3; count++){
+					if(0 == count)
+						temp_short = (temp_int & 0x3ff);
+					else if(1 == count)
+						temp_short = ((temp_int >> 10) & 0x3ff);
+					else
+						temp_short = ((temp_int >> 20) & 0x3ff);
+
+					fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
+					temp_short = 0;
+				}
+				temp_int = 0;
+				pTempBuf++;
+				tp3index++;
+			}
 			fclose(fp);
 			fp = NULL;
+			pTempBuf = NULL;
+		}
+		PD_FRAME_ID++;
 	}
 
 	ucOTPBuffer = (cmr_u8 *) cxt->pd_gobal_setting.OTPBuffer;
@@ -881,16 +926,45 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		//Dump Left/Right Dual PD Buffer [adb shell setprop debug.isp.pdaf.getdual 1]
 		if(g_getdual == 1) {
 			if((PD_FRAME_ID % 30) ==0){
-				char file_name_dual[200] = {0};
+				char file_name_dual_l[200] = {0};
+				char file_name_dual_r[200] = {0};
+				cmr_u8 temp[5] = {0};
+				cmr_s32 dual_index = 0;
+				cmr_s16 dual_left0 = 0, dual_left1 = 0;
+				cmr_s16 dual_right0 = 0, dual_right1 = 0;
+				cmr_u8 *DualTempBuf = NULL;
 
-				FILE *fpp = NULL;
-				sprintf(file_name_dual, CAMERA_DATA_FILE"/DualPDBuf_%d.raw", PD_FRAME_ID);
+				FILE *fpL = NULL;
+				FILE *fpR = NULL;
+				sprintf(file_name_dual_l, CAMERA_DATA_FILE"/DualPDBuf_L_2016X756_%d.raw", PD_FRAME_ID);
+				sprintf(file_name_dual_r, CAMERA_DATA_FILE"/DualPDBuf_R_2016X756_%d.raw", PD_FRAME_ID);
 
-				fpp = fopen(file_name_dual, "wb");
-				fwrite((void*)pInPhaseBuf_Dual_PD, 1, PDAF_FULL_NUM_IMX362_SIZE, fpp); //4032*756*5/4 bytes
-				fclose(fpp);
+				DualTempBuf = pInPhaseBuf_Dual_PD;
+				fpL = fopen(file_name_dual_l, "wb+");
+				fpR = fopen(file_name_dual_r, "wb+");
+				while(dual_index != PDAF_FULL_NUM_IMX362_SIZE && *DualTempBuf){	//4032*756*5/4 bytes
+					for(int i = 0; i < 5; i++){
+						temp[i] = *DualTempBuf;
+						DualTempBuf++;
+					}
+					dual_left0 = ((temp[0] << 2) | (temp[4] & 0x03));	//mipi_raw convert to raw
+					dual_left1 = ((temp[2] << 2) | ((temp[4] & 0x30) >> 4));
 
-				fpp = NULL;
+					dual_right0 = ((temp[1] << 2) | ((temp[4] & 0x0c) >> 2));
+					dual_right1 = ((temp[3] << 2) | ((temp[4] & 0xc0) >> 6));
+
+					fwrite(&dual_left0, sizeof(cmr_s16), 1, fpL);
+					fwrite(&dual_left1, sizeof(cmr_s16), 1, fpL);
+					fwrite(&dual_right0, sizeof(cmr_s16), 1, fpR);
+					fwrite(&dual_right1, sizeof(cmr_s16), 1, fpR);
+					dual_index = dual_index + 5;
+				}
+
+				fclose(fpL);
+				fclose(fpR);
+				DualTempBuf = NULL;
+				fpL = NULL;
+				fpR = NULL;
 			}
 			PD_FRAME_ID++;
 		}
