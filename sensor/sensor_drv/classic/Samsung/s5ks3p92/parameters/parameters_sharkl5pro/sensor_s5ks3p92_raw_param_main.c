@@ -50,7 +50,7 @@
 
 
 /* Capture Sizes:
-	4640x3488,2320x1744,1280x720
+	4608x3488,2320x1744,1280x720
 */
 
 
@@ -105,7 +105,7 @@ static struct sensor_raw_ioctrl s_s5ks3p92_ioctrl=
 
 static struct sensor_version_info s_s5ks3p92_version_info=
 {
-	0x000A0008,
+	0x000B0009,
 	{
 		{
 			0x736B3573,

@@ -50,7 +50,7 @@
 
 
 /* Capture Sizes:
-	3264x2448,1632x1224,1280x720
+	3264x2448,1632x1224,1080x720
 */
 
 
@@ -105,7 +105,7 @@ static struct sensor_raw_ioctrl s_ov8856_ioctrl=
 
 static struct sensor_version_info s_ov8856_version_info=
 {
-	0x000A0008,
+	0x000B0009,
 	{
 		{
 			0x3838766F,
