@@ -413,6 +413,10 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_MOTION_PHONE)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MOTION_PHONE
 endif
 
+ifeq ($(strip $(TARGET_BOARD__DEFAULT_CAPTURE_SIZE_8M)),true)
+LOCAL_CFLAGS += -DCONFIG_DEFAULT_CAPTURE_SIZE_8M
+endif
+
 ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_OPTICSZOOM_SUPPORT
 #max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)

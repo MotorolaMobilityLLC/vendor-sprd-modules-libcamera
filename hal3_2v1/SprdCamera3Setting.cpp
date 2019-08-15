@@ -319,6 +319,7 @@ enum available_cam_features {
     BABLURPORTRAITMODE,
     FRBLURPORTRAITMODE,
     MONTIONENABLE,
+    DEFAULTQUARTERSIZE,
     FEATURELISTMAX
 };
 
@@ -1060,10 +1061,18 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features[FRBLURPORTRAITMODE] = atoi(prop);
 
+// 11 MONTIONENABLE
 #ifdef CONFIG_CAMERA_MOTION_PHONE
     available_cam_features[MONTIONENABLE] = 1;
 #else
     available_cam_features[MONTIONENABLE] = 0;
+#endif
+
+// 12 DEFAULTQUARTERSIZE
+#ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
+    available_cam_features[DEFAULTQUARTERSIZE] = 1;
+#else
+    available_cam_features[DEFAULTQUARTERSIZE] = 0;
 #endif
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,

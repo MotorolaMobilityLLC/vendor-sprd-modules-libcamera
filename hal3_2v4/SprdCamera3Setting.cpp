@@ -1745,7 +1745,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
+//  MONTIONENABLE
 #ifdef CONFIG_CAMERA_MOTION_PHONE
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+
+//  DEFAULTQUARTERSIZE
+#ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
