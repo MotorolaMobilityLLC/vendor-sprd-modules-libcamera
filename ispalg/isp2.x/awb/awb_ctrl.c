@@ -28,6 +28,11 @@
 #define AWBCTRL_EVT_IOCTRL          (AWBCTRL_EVT_BASE + 2)
 #define AWBCTRL_EVT_PROCESS         (AWBCTRL_EVT_BASE + 3)
 #define AWBCTRL_EVT_EXIT            (AWBCTRL_EVT_BASE + 4)
+//for debug
+#define AWB_3X_TURNING_PARAM_BACK  "/vendor/lib/awb3_tuning_param_back.bin"
+#define AWB_3X_TURNING_PARAM_FRONT  "/vendor/lib/awb3_tuning_param_front.bin"
+
+#define AWB_3_0_TURNNING_VERSION 0x00030000
 
 struct awbctrl_work_lib {
 	cmr_handle lib_handle;
@@ -40,7 +45,7 @@ struct awbctrl_cxt {
 };
 cmr_u32 _awb_get_cmd_property(void)
 {
-  //prot = 1:on,other:off
+	//prot = 1:on,other:off
 	char prop[PROPERTY_VALUE_MAX];
 	int val = 0;
 	property_get("persist.vendor.cam.isp.awb.test_log", prop, "0");
@@ -49,6 +54,7 @@ cmr_u32 _awb_get_cmd_property(void)
 		return val;
 	return 0;
 }
+
 
 static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 {
@@ -77,14 +83,19 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct awbctrl_work_lib *lib_ptr = NULL;
-
+	ISP_LOGV("ENTER THE awbctrl_init_lib");
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param,param is NULL!");
 		goto exit;
 	}
-
 	lib_ptr = &cxt_ptr->work_lib;
+	if(lib_ptr == NULL)
+		ISP_LOGE("cxt_ptr->work_lib == NULL");
+	if(lib_ptr->adpt_ops == NULL)
+		ISP_LOGE("cxt_ptr->work_lib->adpt_ops == NULL");
+	ISP_LOGV("ENTER THE awbctrl_init_lib2");
 	if (lib_ptr->adpt_ops->adpt_init) {
+		ISP_LOGV("ENTER THE awbctrl_init_lib3");
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
@@ -103,13 +114,53 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 		goto exit;
 	}
 
+	char *paramfile_path;
+
 	/* find vendor adpter */
+	//1、judge the camera id
+	if (in_ptr->camera_id ==0){
+		//back camera
+		ISP_LOGV("back camera, camera_id = %d",in_ptr->camera_id);
+		paramfile_path = AWB_3X_TURNING_PARAM_BACK;
+	} else if(in_ptr->camera_id == 1){
+		//front camera
+		ISP_LOGV("front camera, camera_id = %d",in_ptr->camera_id);
+		paramfile_path = AWB_3X_TURNING_PARAM_FRONT;
+	}
+
+	//2、get the param file
+	FILE* fp_3 = NULL;
+	unsigned char awb_param_3[64 * 1024] = {0};
+	unsigned int awb_param_size_3 = 0;
+	fp_3 = fopen(paramfile_path, "rb");
+	if(!fp_3) {
+		in_ptr->tuning_param = in_ptr->tuning_param;
+		ISP_LOGV("Get the trunning param from upper layer!");
+	} else {
+		awb_param_size_3 = fread(awb_param_3,1,64 * 1024,fp_3);
+		fclose(fp_3);
+		in_ptr->tuning_param = &awb_param_3;
+		ISP_LOGV("Get the trunning param from param file!");
+	}
+
+	//3、judge the awblib is 2.x or 3.x
+	int* turnning_version = (int*) in_ptr->tuning_param + 1;
+	if(!turnning_version)
+		ISP_LOGV("awb ctrl:input turnning param is null!");
+	if((*(turnning_version)) == AWB_3_0_TURNNING_VERSION) {
+		in_ptr->lib_param.version_id = 0;	//isp3.x
+		ISP_LOGV("lib_param.version_id = 0 (isp3.x)");
+	} else {
+		in_ptr->lib_param.version_id = 1;	//isp2.x
+		ISP_LOGV("lib_param.version_id = 1 (isp2.x)");
+	}
+
 	rtn = adpt_get_ops(ADPT_LIB_AWB, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
 		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
 		goto exit;
 	}
-
+	ISP_LOGV("awbctrl_init_lib ");
 	rtn = awbctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
   exit:
 	ISP_LOGI("done %ld", rtn);
@@ -127,13 +178,14 @@ cmr_int awbctrl_ioctrl(struct awbctrl_cxt * cxt_ptr, enum awb_ctrl_cmd cmd, void
 	}
 
 	lib_ptr = &cxt_ptr->work_lib;
+	ISP_LOGV("awbctrl_ioctrl cmd is %x",cmd);
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
 		ISP_LOGI("ioctrl fun is NULL");
 	}
   exit:
-	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %x,done %ld", cmd, rtn);
 	return rtn;
 }
 
@@ -262,7 +314,7 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle, enum awb_ctrl_cmd cmd, cmr_handle in_
 	}
 
   exit:
-	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGV("cmd = %x,done %ld", cmd, rtn);
 	return rtn;
 }
 

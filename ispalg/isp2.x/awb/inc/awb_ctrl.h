@@ -57,6 +57,8 @@ extern "C" {
 		AWB_CTRL_CMD_SET_AE_STAT_WIN_NUM = 0x108,
 		AWB_CTRL_CMD_SET_START_WORK_MODE = 0x109,
 		AWB_CTRL_CMD_SET_4IN1_MODE = 0x10A,
+		//add the isp3.x cmd
+		AWB_CTRL_CMD_SET_FACE_DETECT = 0x10b,
 		AWB_CTRL_CMD_GET_BASE = 0x200,
 		AWB_CTRL_CMD_GET_PARAM_WIN_START = 0X201,
 		AWB_CTRL_CMD_GET_PARAM_WIN_SIZE = 0x202,
@@ -92,7 +94,7 @@ extern "C" {
 		AWB_CTRL_CMD_RESULT_INFO,
 		AWB_CTRL_CMD_SET_SCENE_INFO,
 		AWB_CTRL_CMD_GET_GAIN_AND_OFFSET,
-		AWB_DIRECT_MSG_END
+		AWB_DIRECT_MSG_END,
 	};
 
 	enum awb_ctrl_wb_mode {
@@ -211,6 +213,9 @@ extern "C" {
 	struct awb_ctrl_init_result {
 		struct awb_ctrl_gain gain;
 		cmr_u32 ct;
+//awb3.0
+		int tint;
+		int ct_mean;
 //ALC_S 20150517
 		cmr_u32 use_ccm;
 		cmr_u16 ccm[9];

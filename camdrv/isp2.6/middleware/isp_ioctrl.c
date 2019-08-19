@@ -16,6 +16,7 @@
 
 #ifdef FEATRUE_ISP_FW_IOCTRL
 #include "awb.h"
+#include "awblib.h"
 #include "af_ctrl.h"
 
 #define SEPARATE_GAMMA_IN_VIDEO
@@ -1808,6 +1809,7 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 	struct ai_fd_param ai_fd_para;
 	struct afctrl_face_info af_fd_para;
 	enum ai_status ai_sta = AI_STATUS_MAX;
+	struct awb_face_info_3_0 awb_fd_para;
 
 	if (NULL != face_area) {
 		struct ae_fd_param ae_fd_param;
@@ -1881,6 +1883,22 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 		}
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)&af_fd_para, NULL);
+
+		//add the awb_ioctrl
+		//face AWB
+		awb_fd_para.face_num = face_area->face_num;
+		awb_fd_para.img_width = face_area->frame_width;
+		awb_fd_para.img_height = face_area->frame_height;
+		for (i = 0; i < af_fd_para.face_num; ++i) {
+			awb_fd_para.face[i].start_x = face_area->face_info[i].sx;
+			awb_fd_para.face[i].start_y = face_area->face_info[i].sy;
+			awb_fd_para.face[i].end_x = face_area->face_info[i].ex;
+			awb_fd_para.face[i].end_y = face_area->face_info[i].ey;
+			awb_fd_para.face[i].pose = face_area->face_info[i].pose;
+			awb_fd_para.face[i].score = face_area->face_info[i].score;
+		}
+		if (cxt->ops.awb_ops.ioctrl)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FACE_DETECT, (void *)&awb_fd_para, NULL);
 	}
 
 	return ret;

@@ -29,6 +29,7 @@
 #include "isp_debug.h"
 #include "isp_pm.h"
 #include "awb.h"
+#include "awblib.h"
 #include "af_ctrl.h"
 #include "ae_ctrl.h"
 #include "afl_ctrl.h"
