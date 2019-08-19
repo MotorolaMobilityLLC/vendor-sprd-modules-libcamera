@@ -27,6 +27,7 @@
 
 //Gamma Correction in full RGB domain
 #define SENSOR_GAMMA_POINT_NUM 257
+#define SENSOR_Y_GAMMA_POINT_NUM 129
 
 #define AWB_POS_WEIGHT_LEN 64
 #define AWB_POS_WEIGHT_WIDTH_HEIGHT 4
@@ -1208,7 +1209,7 @@ struct sensor_cmc10_param {
 };
 
 struct sensor_gamma_curve {
-	struct isp_point points[SENSOR_GAMMA_POINT_NUM];
+	struct isp_point points[SENSOR_Y_GAMMA_POINT_NUM];
 };
 
 struct sensor_rgbgamma_curve {
