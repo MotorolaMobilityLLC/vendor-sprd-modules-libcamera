@@ -7,6 +7,8 @@ struct sensor_raw_info *imx363_drv_init_raw_info(int sensor_id, int vendor_id,
 
 #ifdef SHARKL5_OIS_IMX363
 #include "parameters_sharkl5/sensor_imx363_raw_param_main.c"
+#elif defined (_SENSOR_RAW_SHARKL5PRO_H_)
+#include "parameters_sharkl5pro/sensor_imx363_raw_param_main.c"
 #else
 #include "parameters_roc1/sensor_imx363_raw_param_main.c"
 #endif

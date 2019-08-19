@@ -1,0 +1,1377 @@
+/*versionid=0x000A0008*/
+/*maxGain=0.00*/
+/*param0.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param1.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param2.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param3.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param4.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param5.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param6.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param7.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param8.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param9.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param10.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param11.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param12.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param13.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param14.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param15.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param16.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param17.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param18.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param19.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param20.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param21.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param22.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param23.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param24.&BasePoint=1&*/
+/*sharkl5_sensor_ltm_level*/
+{
+	/*ltm_stat*/
+	{
+		/*tile_num*/
+		{
+			/*tile_num_x*/
+			0x0008,
+			/*tile_num_y*/
+			0x0008,
+
+		},
+		/*tile_size*/
+		{
+			/*tile_width*/
+			0x0000,
+			/*tile_height*/
+			0x0000,
+
+		},
+		/*clip_limit*/
+		{
+			/*limt*/
+			0x0000,
+			/*limt_min*/
+			0x0000,
+
+		},
+		/*strength*/
+		0x01,
+		/*tile_num_auto*/
+		0x00,
+		/*text_point_thres*/
+		0x10,
+		/*textture_proporion*/
+		0x0A,
+		/*region_est_en*/
+		0x01,
+		/*binning_en*/
+		0x00,
+		/*bypass*/
+		0x0000,
+
+	},
+	/*ltm_map*/
+	{
+		/*ltm_map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
