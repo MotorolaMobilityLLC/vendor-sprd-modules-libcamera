@@ -4153,7 +4153,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		work_info->mode = AE_WORK_MODE_COMMON;
 	}
 
-	if (1 == work_info->dv_mode)
+	if ((CAMERA_MODE_3DNR_VIDEO == cxt->app_mode)||(CAMERA_MODE_AUTO_VIDEO == cxt->app_mode))
 		cxt->cur_status.settings.work_mode = AE_WORK_MODE_VIDEO;
 	else
 		cxt->cur_status.settings.work_mode = AE_WORK_MODE_COMMON;
@@ -4405,7 +4405,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				}
 				src_exp.exp_time = src_exp.exp_line * cxt->cur_status.line_time;
 			}
-			if((CAMERA_MODE_SLOWMOTION == cxt->app_mode)||(CAMERA_MODE_CONTINUE == cxt->app_mode))
+			if((CAMERA_MODE_SLOWMOTION == cxt->app_mode)||(CAMERA_MODE_CONTINUE == cxt->app_mode)||(AE_WORK_MODE_VIDEO == cxt->cur_status.settings.work_mode))
 				last_cam_mode = 0;
 		}
 	} else {
@@ -4473,7 +4473,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}else if(CAMERA_MODE_SLOWMOTION == cxt->app_mode){
 			fps_range.min = cxt->cur_status.snr_max_fps;
 			fps_range.max = cxt->cur_status.snr_max_fps;
-		}else {
+		}else if(AE_WORK_MODE_VIDEO == cxt->cur_status.settings.work_mode ){
+			fps_range.min = cxt->fps_range.max;
+			fps_range.max = cxt->fps_range.max;
+		}else{
 			fps_range.min = cxt->fps_range.min;
 			fps_range.max = cxt->fps_range.max;
 		}
