@@ -80,10 +80,25 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	cxt->aictrl_cxt_ptr = (struct aictrl_cxt *)handle;
 
 	AIC_InitOption(&cxt->aic_opt);
-	ISP_LOGI("aci opt: min_frame_interval: %d.\n", cxt->aic_opt.min_frame_interval);
-	ISP_LOGI("aci opt: max_frame_interval: %d.\n", cxt->aic_opt.max_frame_interval);
-	ISP_LOGI("aci opt: thread_num: %d.\n", cxt->aic_opt.thread_num);
-	ISP_LOGI("aci opt: sync_with_worker: %d.\n", cxt->aic_opt.sync_with_worker);
+	ISP_LOGI("01_aci opt: min_frame_interval: %d.\n", cxt->aic_opt.min_frame_interval);
+	ISP_LOGI("01_aci opt: max_frame_interval: %d.\n", cxt->aic_opt.max_frame_interval);
+	ISP_LOGI("01_aci opt: thread_num: %d.\n", cxt->aic_opt.thread_num);
+	ISP_LOGI("01_aci opt: sync_with_worker: %d.\n", cxt->aic_opt.sync_with_worker);
+
+	#ifdef CONFIG_ISP_2_5
+	cxt->aic_opt.min_frame_interval = 6;
+	cxt->aic_opt.thread_num = 2;
+	#endif
+
+	#ifdef CONFIG_ISP_2_6
+	cxt->aic_opt.min_frame_interval = 5;
+	cxt->aic_opt.thread_num = 1;
+	#endif
+
+	ISP_LOGI("02_aci opt: min_frame_interval:%d, max_frame_interval:%d,\
+	thread_num:%d, sync_with_worker:%d\n",\
+	cxt->aic_opt.min_frame_interval, cxt->aic_opt.max_frame_interval,\
+	cxt->aic_opt.thread_num, cxt->aic_opt.sync_with_worker);
 
 	if (0 != AIC_CreateHandle(&cxt->aic_handle, &cxt->aic_opt)) {
 		ISP_LOGE("fail to creat aic handle.\n");
