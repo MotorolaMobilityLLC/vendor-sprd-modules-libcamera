@@ -2813,6 +2813,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		break;
 	case AF_MODE_MANUAL:
 		af->request_mode = af_mode;
+		trigger_stop(af);
 		break;
 	default:
 		ISP_LOGW("af_mode %d is not supported", af_mode);
@@ -2978,7 +2979,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		return AFV1_SUCCESS;
 	}
 
-	if ((AF_STOPPED == af->focus_state) || (0 == af->bypass && 1 == af->last_bypass_state)) {
+	if ((AF_STOPPED == af->focus_state) || (AF_MODE_MANUAL != af->request_mode && AF_MODE_MANUAL == af->last_request_mode)) {
 		trigger_notice_force(af);
 	}
 
@@ -3011,7 +3012,7 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 {
 	UNUSED(param0);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	af->last_bypass_state = af->bypass;
+	af->last_request_mode = af->request_mode;
 	ISP_LOGI("af state = %s, focus state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
 
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {

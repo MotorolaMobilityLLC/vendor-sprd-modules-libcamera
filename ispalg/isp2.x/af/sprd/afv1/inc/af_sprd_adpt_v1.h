@@ -358,7 +358,7 @@ typedef struct _af_ctrl {
 	cmr_u16 af_otp_type;
 	cmr_u32 cont_mode_trigger;
 	cmr_u32 zoom_ratio;
-	cmr_u8 last_bypass_state;
+	cmr_u32 last_request_mode;
 	cmr_u32 range_L1;
 	cmr_u32 range_L4;
 	struct af_adpt_roi_info win;
