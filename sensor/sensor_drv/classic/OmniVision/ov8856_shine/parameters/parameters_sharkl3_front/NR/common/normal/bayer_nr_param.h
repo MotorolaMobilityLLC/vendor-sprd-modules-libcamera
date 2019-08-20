@@ -10474,7 +10474,7 @@
 		/*first_lum_bypass*/
 		0x00,
 		/*lum_thr0*/
-		0x00C8,
+		0x008C,
 		/*lum_thr1*/
 		0x01F4,
 		/*nlm_lum*/
@@ -10486,7 +10486,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x03,
+						0x01,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10504,7 +10504,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x02,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10522,7 +10522,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x07,
+						0x05,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -10562,7 +10562,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x04,
+						0x01,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10580,7 +10580,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x07,
+						0x04,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10598,7 +10598,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x09,
+						0x07,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
