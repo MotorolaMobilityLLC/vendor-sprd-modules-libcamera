@@ -556,7 +556,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 dual_sensor_status = 0;
 	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0};
+	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item actual_item;
 
 	if (0 == cxt) {
@@ -1979,6 +1979,7 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->cur_status.adv[4] = (cmr_handle) & cxt->cur_param->face_param;
 	cxt->cur_status.adv[6] = (cmr_handle) & cxt->cur_param->ai_param;
 	cxt->cur_status.adv[7] = (cmr_handle) & cxt->cur_param->abl_param;
+	cxt->cur_status.adv[9] = (cmr_handle) & cxt->cur_param->face_param_adv;
 	/* caliberation for bv match with lv */
 	cxt->cur_status.lv_cali_bv = cxt->cur_param->lv_cali.bv_value;
 	{
@@ -6428,7 +6429,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	struct ae_init_out *ae_init_out = NULL;
 	struct ae_misc_init_in misc_init_in = { 0, 0, 0, NULL, 0 };
 	struct ae_misc_init_out misc_init_out = { 0, {0} };
-	struct s_q_open_param s_q_param = { 0, 0, 0 };
+	struct s_q_open_param s_q_param = { 0, 0, 0, 0 };
 	struct ae_set_work_param work_param;
 	struct ae_init_in *init_param = NULL;
 	struct Flash_initInput flash_in;

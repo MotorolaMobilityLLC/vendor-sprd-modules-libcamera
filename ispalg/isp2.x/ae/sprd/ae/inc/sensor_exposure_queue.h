@@ -31,12 +31,14 @@ extern "C" {
 		cmr_u32 frm_len_def;
 		cmr_u32 sensor_gain;
 		cmr_u32 isp_gain;
+		cmr_u32 binning_mode;
 	};
 
 	struct s_q_open_param {
 		cmr_s32 exp_valid_num;
 		cmr_s32 sensor_gain_valid_num;
 		cmr_s32 isp_gain_valid_num;
+		cmr_s32 binning_mode_valid_num;
 	};
 
 	struct s_q_init_in {
@@ -47,6 +49,7 @@ extern "C" {
 		cmr_u32 frm_len_def;
 		cmr_u32 sensor_gain;
 		cmr_u32 isp_gain;
+		cmr_u32 binning_mode;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 		cmr_u32 slave_exp_line;	//it is invalid value while 0
 		cmr_u32 slave_gain;		//it is invalid value while 0

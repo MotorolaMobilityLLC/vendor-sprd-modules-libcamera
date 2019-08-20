@@ -44,6 +44,7 @@
 #define AE_WEIGHT_UNIT 256
 #define AE_FIX_PCT 1024
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
+#define AE_TARGET_WEIGHT_NUM 5
 #define AE_CFG_NUM 8
 #define AE_FD_NUM 20
 #define AE_BASE_GAIN 128
@@ -167,6 +168,11 @@ enum ae_sensor_role_type {
 	AE_SENSOR_MAX
 };
 
+enum ae_binning_mode {
+	AE_BNNG_MOD_AVG = 0,
+	AE_BNNG_MOD_SUM,
+};
+
 typedef cmr_handle ae_handle_t;
 
 struct ae_ct_table {
@@ -187,6 +193,11 @@ struct ae_sample {
 struct ae_piecewise_func {
 	cmr_s32 num;
 	struct ae_sample samples[AE_PIECEWISE_SAMPLE_NUM];
+};
+
+struct ae_target_weight_func {
+	cmr_s32 num;
+	struct ae_sample samples[AE_TARGET_WEIGHT_NUM];
 };
 
 struct ae_range {
@@ -577,7 +588,10 @@ struct ae_settings {
 	cmr_s8 scene_mode;			/* pano sports night */
 	cmr_s16 intelligent_module;	/* pano sports night */
 	cmr_s8 af_info;				/*AF trigger info */
-	cmr_s8 reserve_case;		/*0: normal mode, 1: just for debug mode, and manual control the exp/gain by APP*/
+	cmr_s8 reserve_case;			/*0 normal mode, all auto
+								    1 manual AE:all fix: the exp/gain by APP
+                                                                2 Shutter priority: shutter fix, ISO auto
+                                                                3 ISO priority: ISO fix, shutter fix.*/
 	cmr_u32 iso_special_mode;
 	cmr_u32 iso_manual_status;	/*iso manual setting */
 	cmr_u32 ev_manual_status;	/*ev manual setting */
@@ -588,11 +602,14 @@ struct ae_settings {
 	cmr_s16 led_thr_up;		/* judge flash auto mode  flash unable up threahold*/
 	cmr_s16 led_thr_down;	/* judge flash auto mode  flash enable down threahold*/
 	cmr_u8 touch_ev_flag;
+	cmr_u8 af_status;
+	cmr_u8 is_fourcell;/*1: four cell mode(indoor&low-light); 0: remosaic(outdoor); -1: invalidate*/
 };
 
 struct ae_alg_calc_param {
 	cmr_u32 cam_id;
-	cmr_u32 rear_sub;
+	cmr_u32 rear_sub; /*0: rear 1: sub*/
+	cmr_u32 ai_mode_en;
 	struct ae_size frame_size;
 	struct ae_size win_size;
 	struct ae_size win_num;
@@ -629,6 +646,7 @@ struct ae_alg_calc_param {
 	cmr_u32 *b;
 	cmr_s8 ae_initial;
 	cmr_u32 alg_id;
+	cmr_u8 effect_binning_mod;
 	cmr_s32 effect_expline;
 	cmr_s32 effect_gain;
 	cmr_s32 effect_dummy;
@@ -655,7 +673,7 @@ struct ae_alg_calc_param {
 	//for face AE
 	struct ae1_fd_param ae1_finfo;
 //adv_alg module init
-	cmr_handle adv[9];
+	cmr_handle adv[10];
 	/*
 	   0: region
 	   1: flat
@@ -665,7 +683,8 @@ struct ae_alg_calc_param {
 	   5: flash ae
 	   6: AI
 	   7: abl
-	   8: pcp
+	   8: hm
+	   9: face adv
 	 */
 	struct ae_settings settings;
 	cmr_u32 awb_mode;
@@ -677,6 +696,7 @@ struct ae_alg_calc_param {
 	cmr_u32 simulate_close_tc_trigger;
 	cmr_u8 fast_cvgn_disab;
 	cmr_u32 debug_info_size;
+	cmr_u32 cam_4in1_cap_flag;
 };
 
 struct ae1_senseor_out {
@@ -693,6 +713,7 @@ struct ae1_senseor_out {
 	cmr_s32 cur_bv;
 	cmr_u32 frm_len;
 	cmr_u32 frm_len_def;
+	cmr_u8 binning_mode;
 };
 
 struct ae_alg_calc_result {

@@ -128,11 +128,31 @@ struct face_tuning_param {
 	cmr_u16 reserved[2];		//?
 };
 
+struct face_tuning_param_adv {
+	cmr_u8 u4face_trigger_sensitivity1;	//face ae trigger sensitivity lum thrd .The bigger the number, the more sensitive it is.3
+	cmr_u8 u4face_trigger_sensitivity2;	//face ae trigger sensitivity num thrd.The small the number, the more sensitive it is.6
+	cmr_u8 u4face_trigger_sensitivity3;	//face ae trigger sensitivity num thrd.The small the number, the more sensitive it is.4
+	cmr_u8 u4face_trigger_sensitivity4;	//face ae calculate sensitivity num thrd.The small the number, the more calculate it is.3
+	cmr_u8 u4face_frame_thrd;		//count for no face detect thrd
+	cmr_u8 u4smooth_weight[5];		//face ae offset smooth weight
+	cmr_u8 u4abl_face_offset;			//abl up limit offset
+	cmr_u8 u4abl_offset_thrd;			//abl up limit offset thrd
+	cmr_u8 u4face_roi_ratio;			//ratio for calculate small face roi
+	cmr_u8 u4face_weight1;			//small face roi luma weight
+	cmr_u8 u4face_weight2;			//big face roi luma weight
+	cmr_u8 u4small_weight_thrd;		//change face small roi from abl weight thrd
+	cmr_u8 u4small_weight_raise;		//change face small roi from abl weight value
+	cmr_u8 u4offset_ratio_thrd;		//change face offset from roi size thrd
+	cmr_u8 u4offset_ratio_value;		//change face offset from roi size value
+	cmr_u8 reserved1;
+	cmr_u32 reserved[45];
+};
+
 struct ae_touch_param {
 	cmr_u8 win2_weight;			//for touch ae
 	cmr_u8 enable;				//for touch ae
 	cmr_u8 win1_weight;			//for touch ae
-	cmr_u8 reserved;			//for touch ae
+	cmr_u8 max_offset;			//for touch ae
 	struct ae_size touch_tuning_win;	//for touch ae
 };
 
@@ -215,20 +235,22 @@ struct hist_metering_tuning_param{
 	struct bv_evd_ranges_type bv_evd_range;
 };
 
-struct target_weight{
-	cmr_u16 ratio4base;
-	cmr_u16 ratio4hm;
-	cmr_u32 reserved;/*1 * 4bytes*/
-};/*3 * 4bytes*/
 
+struct target_weight{
+	struct ae_target_weight_func weight_cfg;/*6*4bytes*/
+	//cmr_u16 ratio4base;
+	//cmr_u16 ratio4hm;
+	cmr_u32 reserved;/*1 * 4bytes*/
+};/*2 * 4bytes---->7*4bytes*/
+/*
 struct hm_ratio_cfg{
 	cmr_u32 evd_low;
 	cmr_u32 evd_high;
 	cmr_u16 ratio0;
 	cmr_u16 ratio1;
-	cmr_u32 reserved;/*1 * 4bytes*/
-};/*4 * 4bytes*/
-
+	cmr_u32 reserved;////1 * 4bytes
+};///4 * 4bytes
+*/
 struct hm_basic_cfg {
 	struct ae_piecewise_func bv_ratio_cfg;/*17*4bytes*/
 	struct ae_piecewise_func evd_ratio_cfg[HM_CFG_NUM];/*8 * 17*4bytes*/
@@ -258,7 +280,7 @@ struct ae_hm_tuning_param {
 	cmr_u16 magic;
 	cmr_u8 enable;/*bit0:hm basic alg; bit1:aoe alg; bit2: coe alg*/
 	cmr_u8 reserved;/*1 * 4bytes*/
-	cmr_u32 weight;/*histogram algorithm weight*//*1 * 4bytes*/
+	//cmr_u32 weight;/*histogram algorithm weight*//*1 * 4bytes*/
 	cmr_u32 evd_dr_pcent;/*the dark regio define for EVD*/
 	cmr_u32 evd_br_pcent;/*the bright regio define for EVD*/
 	cmr_u16 highdy_tag_thd;/*target to high dynamic */
@@ -268,8 +290,9 @@ struct ae_hm_tuning_param {
 	struct hm_aoe_cfg aoe_cfg;/*20*4bytes*/
 	/*central overexposure*/	
 	struct hm_coe_cfg coe_cfg;	/*39*4bytes*/
-	struct target_weight ratio;/*2*4bytes*/
-	struct hm_ratio_cfg flat4ratio; /*4*4bytes*/
+	//struct target_weight ratio;/*2*4bytes*/
+	struct target_weight weight_lut;/*7*4bytes*/
+	//struct hm_ratio_cfg flat4ratio; /*4*4bytes*/
 };/*240 * 4bytes*/
 
 struct ns_basic_cfg {
@@ -357,11 +380,15 @@ struct abl_tuning_param {
 	cmr_u8 num;
 	cmr_u16 target_limit_low;
 	cmr_u16 target_limit_high;
-	cmr_u16 reserved;
+	cmr_u8 base_angle;
+	cmr_u8 reserved;
 	abl_cfg cfg_info[ABL_CFG_NUM]; /*24 * 4bytes*/
 	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
 	cmr_u32 abl_weight;
-	cmr_u32 center_tar_lum;
+	cmr_u8 center_tar_lum;
+	cmr_u8 weight_inner_o;
+	cmr_u8 weight_inner_d;
+	cmr_u8 weight_inner_c;
 	cmr_u32 ev_diff_thrd_h;
 	cmr_u32 ev_diff_thrd_l;
 };
@@ -439,8 +466,11 @@ struct ae_tuning_param {		//total bytes must be 312696
 	struct pcp_tuning_param pcp_param; /*27 * 4bytes*/
 	struct ae_hm_tuning_param hm_param; /*240 * 4bytes*/
 	struct ae_nsm_tuning_param ns_param; /*109 * 4bytes*/
-	struct ae_thrd_param threednr_ctrl_param;
-	cmr_u32 reserved[1347];
+	struct ae_thrd_param threednr_ctrl_param;/*3DNR control param*/
+	struct ae_thrd_param fourcell_ctrl_param;/*4in1 control param*/
+	struct ae_thrd_param auto_flash_ctrl_param;/*auto flash control param*/
+	struct face_tuning_param_adv face_param_adv;/*50 * 4bytes*/
+	cmr_u32 reserved[1295];
 };
 
 #endif
