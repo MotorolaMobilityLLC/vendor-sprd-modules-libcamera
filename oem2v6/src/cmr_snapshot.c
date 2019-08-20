@@ -3578,7 +3578,7 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
 
     if (0 == snp_get_request(snp_handle)) {
         if (IPM_WORKING == snp_get_status(snp_handle)) {
-            if (cxt->req_param.filter_type || cxt->req_param.is_cnr) {
+            if (cxt->req_param.filter_type || cxt->req_param.nr_flag) {
                 sem_wait(&cxt->ipm_sync_sm);
             } else {
                 sem_post(&cxt->hdr_sync_sm);
@@ -4193,7 +4193,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     }
 
     snp_set_status(snp_handle, POST_PROCESSING);
-    if (cxt->req_param.filter_type || cxt->req_param.is_cnr) {
+    if (cxt->req_param.filter_type || cxt->req_param.nr_flag) {
         snp_ipm_process(snp_handle, data);
     }
     if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||

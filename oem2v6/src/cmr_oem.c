@@ -2044,18 +2044,18 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
     int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct common_isp_cmd_param isp_param;
-    cmr_u32 cnr_flag = 0;
+    cmr_u32 cnr_ynr_flag = 0;
 
-    cnr_flag = camera_get_cnr_flag(oem_handle);
-    if (cnr_flag) {
+    cnr_ynr_flag = camera_get_cnr_flag(oem_handle);
+    if (cnr_ynr_flag) {
         cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
-        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_EN, &isp_param);
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_YNR_EN, &isp_param);
         if (ret) {
-            CMR_LOGE("isp get COM_ISP_GET_CNR2_EN  failed");
+            CMR_LOGE("isp get COM_ISP_GET_CNR2_YNR_EN  failed");
             return false;
         }
-        CMR_LOGD("isp cnr enable %d", isp_param.cnr2_en);
-        return cnr_flag && isp_param.cnr2_en;
+        CMR_LOGD("isp cnr enable %d", isp_param.cnr2_ynr_en);
+        return isp_param.cnr2_ynr_en;
     }
 
     return false;
@@ -4027,7 +4027,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     CHECK_HANDLE_VALID(ipm_cxt);
 
     is_filter = cxt->snp_cxt.filter_type;
-    if (cxt->is_cnr || is_filter) {
+    if (cxt->nr_flag || is_filter) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
@@ -4037,7 +4037,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
         imp_out_param.dst_frame = *img_frame;
 
         // do cnr
-        if (cxt->is_cnr)
+        if (cxt->nr_flag)
             ret = ipm_transfer_frame(ipm_cxt->cnr_handle, &ipm_in_param, NULL);
         if (ret) {
             CMR_LOGE("failed to do cnr process %ld", ret);
@@ -7858,10 +7858,20 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 #endif
         break;
 
-    case COM_ISP_GET_CNR2_EN:
-        isp_cmd = ISP_CTRL_GET_CNR2_EN;
+    case COM_ISP_GET_YNRS_PARAM:
+#ifdef CONFIG_CAMERA_CNR
+        isp_cmd = ISP_CTRL_GET_YNRS_PARAM;
         ptr_flag = 1;
-        isp_param_ptr = (void *)&param_ptr->cnr2_en;
+        isp_param_ptr = (void *)&param_ptr->ynr_param;
+#else
+        isp_cmd = ISP_CTRL_MAX;
+#endif
+        break;
+
+    case COM_ISP_GET_CNR2_YNR_EN:
+        isp_cmd = ISP_CTRL_GET_CNR2_YNR_EN;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cnr2_ynr_en;
         break;
 
     case COM_ISP_SET_AUTO_HDR:
@@ -8875,8 +8885,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     }
 
     cnr_typ = camera_get_cnr_realtime_flag(oem_handle);
-    out_ptr->is_cnr = cnr_typ;
-    cxt->is_cnr = cnr_typ;
+    out_ptr->nr_flag = cnr_typ;
+    cxt->nr_flag = cnr_typ;
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_ENCODE_ANGLE, &setting_param);
