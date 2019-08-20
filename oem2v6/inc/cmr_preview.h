@@ -394,9 +394,13 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle, cmr_u32 camera_id);
 cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
                                 struct frm_info *in, cmr_uint *vir_addr_y);
-cmr_int
-cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
-                                   struct auto_tracking_info *input_param);
+
+cmr_int cmr_preview_set_autotracking_param(cmr_handle preview_handle,
+                    cmr_u32 camera_id, struct auto_tracking_info *input_param);
+
+cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
+                                       cmr_u32 camera_id,
+                                       struct fd_touch_info *input_param);
 
 #ifdef __cplusplus
 }

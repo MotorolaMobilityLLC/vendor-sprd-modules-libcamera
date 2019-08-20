@@ -138,6 +138,7 @@ cmr_int cmr_ipm_open(cmr_handle ipm_handle, cmr_uint class_type,
     }
 
     class_type_max = cmr_array_size(class_type_tab);
+    CMR_LOGD("class_type_max = %d ",class_type_max);
     for (index = 0; index < class_type_max; index++) {
         if (class_type_tab[index].class_type == class_type)
             break;

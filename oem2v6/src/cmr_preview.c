@@ -13901,6 +13901,11 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     struct ipm_frame_in ipm_in_param;
     struct ipm_frame_out imp_out_param;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
@@ -13919,8 +13924,15 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,
+                            &setting_param);
+    ipm_in_param.face_attribute_on = setting_param.cmd_type_value;
+	
     ipm_in_param.src_frame = *frm;
     ipm_in_param.dst_frame = *frm;
+    ipm_in_param.touch_x = prev_cxt->touch_info.touchX;
+    ipm_in_param.touch_y = prev_cxt->touch_info.touchY;
     ipm_in_param.caller_handle = (void *)handle;
     ipm_in_param.private_data = (void *)((unsigned long)camera_id);
 
@@ -14419,5 +14431,17 @@ cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
              prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y,
              prev_cxt->auto_tracking_status, prev_cxt->auto_tracking_frame_id);
 
+    return ret;
+}
+
+cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
+                                       cmr_u32 camera_id,
+                                       struct fd_touch_info *input_param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
+
+    prev_cxt->touch_info.touchX = input_param->fd_touchX;
+    prev_cxt->touch_info.touchY = input_param->fd_touchY;
     return ret;
 }

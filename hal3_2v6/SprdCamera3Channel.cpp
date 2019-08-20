@@ -1048,6 +1048,14 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_AUTO_3DNR_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
             break;
+	case ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE:
+            HAL_LOGV("ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE);
+            break;
+        case ANDROID_SPRD_TOUCH_INFO:
+            HAL_LOGV("ANDROID_SPRD_TOUCH_INFO");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_TOUCH_INFO);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

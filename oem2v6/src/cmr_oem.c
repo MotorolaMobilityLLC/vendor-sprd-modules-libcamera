@@ -9228,6 +9228,12 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
+    case CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI(" face attributes enable =%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
     default:
         CMR_LOGI("don't support %d", id);
     }
@@ -10349,6 +10355,12 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         ret = camera_isp_set_params(oem_handle, id, param);
         break;
 
+    case CAMERA_PARAM_TOUCH_INFO_TO_FD:
+        ret = cmr_preview_set_fd_touch_param(cxt->prev_cxt.preview_handle,
+                                             cxt->camera_id,
+                                             (struct fd_touch_info *)param);
+        break;
+		
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;

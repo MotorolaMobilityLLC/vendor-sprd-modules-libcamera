@@ -378,6 +378,7 @@ typedef struct {
     int32_t device_orietation;
     int32_t ae_info;
     uint8_t availabe_gender_race_age_enable;
+    uint8_t gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     int32_t top_app_id;
     uint8_t availabe_auto_3dnr;
@@ -696,6 +697,7 @@ class SprdCamera3Setting {
                                   camera_metadata_t **static_metadata);
     static void convertToRegions(int32_t *rect, int32_t *region, int weight);
     static int checkROIValid(int32_t *roi_area, int32_t *crop_area);
+    static int checkTouchAreaUpdate(int32_t *am_area, int32_t *touch_area);
     void coordinate_struct_convert(int *rect_arr, int arr_size);
     int coordinate_convert(int *rect_arr, int arr_size, int angle,
                            int is_mirror, struct img_size *preview_size,

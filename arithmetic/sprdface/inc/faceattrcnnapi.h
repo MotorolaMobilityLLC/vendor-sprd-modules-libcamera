@@ -35,8 +35,8 @@
 #define FAR_WORKMODE_DEFAULT     FAR_WORKMODE_STILL /* the default work mode        */
 
 #define RATIO_AGE                 5     /* ratio of age                              */
-#define RATIO_GENDER           1     /* ratio of gender                           */
-#define RATIO_INFANT            1     /* ratio of infant                           */
+#define RATIO_GENDER           5     /* ratio of gender                           */
+#define RATIO_INFANT            5     /* ratio of infant                           */
 #define RATIO_RACE               5     /* ratio of race                             */
 //#define FAR_POINT_NUM             7
 

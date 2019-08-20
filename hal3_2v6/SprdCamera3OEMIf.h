@@ -243,6 +243,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int setCamStreamInfo(cam_dimension_t size, int format, int stream_type);
     int CameraConvertCoordinateToFramework(int32_t *rect);
     int CameraConvertCoordinateFromFramework(int32_t *rect);
+    int CameraConvertRegionFromFramework(int32_t *rect);
 
     int queueBuffer(buffer_handle_t *buff_handle, int stream_type);
     int qFirstBuffer(int stream_type);
