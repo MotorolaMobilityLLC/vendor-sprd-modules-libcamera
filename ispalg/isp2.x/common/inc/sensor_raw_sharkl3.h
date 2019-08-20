@@ -31,7 +31,6 @@
 #define MAX_MODE_NUM 16
 #define MAX_NR_NUM 32
 
-#define MAX_NRTYPE_NUM 19
 
 #define MAX_SCENEMODE_NUM 16
 #define MAX_SPECIALEFFECT_NUM 16
@@ -96,6 +95,83 @@ enum isp_special_effect_mode {
 	ISP_EFFECT_CARTOON,
 	ISP_EFFECT_MAX
 };
+
+
+/* Following enum/structure used for new isp pm searching solution */
+
+/* ***Custom*** */
+enum tuning_custom {
+	DEFMODE_DEFAULT = 0x0000,
+	DEFMODE_CUSTOM0,
+	DEFMODE_CUSTOM1,
+	DEFMODE_CUSTOM2,
+	DEFMODE_CUSTOM_MAX
+};
+
+/* ***Mode*** */
+enum tuning_mode {
+	WORKMODE_PREVIEW = 0x0000,
+	WORKMODE_CAPTURE,
+	WORKMODE_VIDEO,
+	WORKMODE_MAX,
+};
+
+/* ***Scene (app scene mode)*** */
+enum tuning_scene_mode {
+	//normal scene
+	SCENEMODE_NROMAL = 0x0000,
+	SCENEMODE_NIGHT,
+	SCENEMODE_SPORT, //0x0002
+	SCENEMODE_PORTRAIT,
+	SCENEMODE_LANDSCAPE,
+	SCENEMODE_PANORAMA, //0x0005
+	SCENEMODE_BOKEH,
+	SCENEMODE_FIREWORK,
+	SCENEMODE_DUSK,
+	SCENEMODE_AUTUMN,   //0x0009
+	SCENEMODE_SLOWMOTION,
+
+	//known AI  scene
+	SCENEMODE_AI_NIGHT = 0x0100,
+	SCENEMODE_AI_BACKLIGHT,
+	SCENEMODE_AI_SUNRISESET,
+	SCENEMODE_AI_FIREWORK,
+	SCENEMODE_AI_OTHERS,
+	SCENEMODE_AI_FOOD,
+	SCENEMODE_AI_GREENPLANT,
+	SCENEMODE_AI_DOCUMENT, //texture
+	SCENEMODE_AI_CATDOG,
+	SCENEMODE_AI_FLOWER,
+	SCENEMODE_AI_BLUESKY,
+	SCENEMODE_AI_BUILDING,
+	SCENEMODE_AI_SNOW,
+
+	//custom scene
+	SCENEMODE_WECHAT= 0x0200,
+	SCENEMODE_HDR,
+	SCENEMODE_FACE_YELLOW,
+	SCENEMODE_FACE_BLACK,
+	SCENEMODE_FACE_WHITE,
+	SCENEMODE_CUSTOM0,
+	SCENEMODE_CUSTOM1,
+	SCENEMODE_CUSTOM2,
+
+	SCENEMODE_MAX
+};
+
+struct sensor_find_param_list {
+    cmr_u32 custom; /* should be enum tuning_custom */
+    cmr_u32 scene;  /* should be enum tuning_scene_mode*/
+    cmr_u32 mode;  /* should be enum tuning_mode*/
+    cmr_u32 size_w;
+    cmr_u32 size_h;
+    cmr_u32 blk_id;
+    cmr_u32 param_mode_id;
+    cmr_u32 param_scene_id;
+};
+/* End of new isp pm searching solution enum/structure define */
+
+
 
 #if 1
 //testcode,should ask AE module to change struct define mothod
@@ -1805,7 +1881,7 @@ enum {
 	ISP_BLK_IIRCNR_T,
 	ISP_BLK_YUV_NOISEFILTER_T,
 	ISP_BLK_CNR2_T,
-	ISP_BLK_TYPE_MAX
+	ISP_BLK_NR_MAX
 };
 
 enum {

@@ -197,6 +197,12 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_CNR2_LEVEL_INFO,
 };
 
+struct isp_pm_nrblk_info {
+	cmr_u32 blk_id;
+	cmr_u32 nr_type;
+	cmr_u32 unit_size;
+};
+
 struct isp_pm_param_data {
 	cmr_u32 mode_id;
 	cmr_u32 id;

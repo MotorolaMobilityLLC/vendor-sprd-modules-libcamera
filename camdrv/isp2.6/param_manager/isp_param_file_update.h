@@ -25,9 +25,10 @@
 extern "C" {
 #endif
 
-extern char nr_param_name[ISP_BLK_TYPE_MAX][20];
+extern char nr_param_name[ISP_BLK_NR_MAX][20];
 extern char nr_mode_name[MAX_MODE_NUM][12];
 extern char nr_scene_name[MAX_SCENEMODE_NUM][12];
+extern struct isp_pm_nrblk_info nr_blocks_info[ISP_BLK_NR_MAX];
 
 cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr);
 #if 0

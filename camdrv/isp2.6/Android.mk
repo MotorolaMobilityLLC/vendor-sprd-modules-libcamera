@@ -15,10 +15,18 @@
 #
 
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)), $(filter $(TARGET_BOARD_CAMERA_ISP_VERSION), 2.5 2.6))
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)), $(filter $(TARGET_BOARD_CAMERA_ISP_VERSION), 2.5 2.6 2.7))
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
+ALG_DIR := ispalg/isp2.x
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
+ALG_DIR := ispalg/isp2.x
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
+ALG_DIR := ispalg/isp3.x
+endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function  -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
@@ -30,25 +38,25 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../oem2v6/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/alc_awb/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/sprd/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/afv1/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/aft/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sft_af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/alc_af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/lsc/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/common/inc/ \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/afl/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/smart \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ai/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/tof \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/ae/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/ae/flash/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/sprd/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/af/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/af/sprd/afv1/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/af/sprd/aft/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/af/sft_af/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/af/alc_af/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/lsc/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/common/inc/ \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/afl/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/smart \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/pdaf/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/pdaf/sprd/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/ai/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/tof \
 	$(LOCAL_PATH)/../../sensor/inc \
 	$(LOCAL_PATH)/../../kernel_module/interface
 

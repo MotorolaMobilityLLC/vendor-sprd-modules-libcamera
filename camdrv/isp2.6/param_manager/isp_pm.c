@@ -36,7 +36,93 @@ struct blk_info {
 	cmr_u32 data_size;
 };
 
-#ifdef CONFIG_ISP_2_6  // ---- for SharkL5
+/************************** Project adapt data START ****************************************************/
+
+#ifdef CONFIG_ISP_2_5  // ---- for SharkL3
+
+static struct blk_info blocks_array[] = {
+	/* DCAM blocks */
+	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
+	{ ISP_BLK_RGB_GAIN, 0 },  // ?? sharkl3 get bytes 12. why ?
+	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
+	{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
+	{ ISP_BLK_AWB_NEW, 0 },
+	{ DCAM_BLK_RGB_AFM, 0 }, /* NR block */
+	{ DCAM_BLK_BPC, 0 }, /* NR block */
+	{ ISP_BLK_RGB_DITHER, 0 }, /* NR block */
+	{ ISP_BLK_GRGB, 0 }, /* NR block */
+
+	/*  ISP blocks */
+	{ ISP_BLK_HSV, 0 }, /* size parsed in hsv block init() */
+	{ ISP_BLK_BRIGHT, sizeof(struct sensor_bright_param) },
+	{ ISP_BLK_CONTRAST, sizeof(struct sensor_contrast_param) },
+	{ ISP_BLK_SATURATION, sizeof(struct sensor_saturation_param) },
+	{ ISP_BLK_HUE, sizeof(struct sensor_hue_param) },
+	{ ISP_BLK_CCE, sizeof(struct sensor_cce_param) },
+	{ ISP_BLK_CMC10, sizeof(struct sensor_cmc10_param) },
+	{ ISP_BLK_RGB_GAMC, sizeof(struct sensor_frgb_gammac_param) },
+	{ ISP_BLK_HIST2, 0 },
+	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
+	{ ISP_BLK_POSTERIZE, sizeof(struct sensor_posterize_param) },
+	{ ISP_BLK_Y_GAMMC, sizeof(struct sensor_y_gamma_param) },
+	{ ISP_BLK_HIST, 0 },
+	{ ISP_BLK_ANTI_FLICKER, 0 },
+
+	{ DCAM_BLK_3DNR_PRE, 0 }, /* NR block */
+	{ DCAM_BLK_3DNR_CAP, 0 }, /* NR block */
+	{ DCAM_BLK_NLM, 0 }, /* NR block */
+	{ ISP_BLK_UVDIV, 0 }, /* NR block */
+	{ ISP_BLK_CFA, 0 }, /* NR block */
+	{ ISP_BLK_YUV_PRECDN, 0 }, /* NR block */
+	{ ISP_BLK_YNR, 0 }, /* NR block */
+	{ ISP_BLK_EDGE, 0 }, /* NR block */
+	{ ISP_BLK_UV_CDN, 0 }, /* NR block */
+	{ ISP_BLK_UV_POSTCDN, 0 }, /* NR block */
+	{ ISP_BLK_IIRCNR_IIR, 0 }, /* NR block */
+	{ ISP_BLK_YUV_NOISEFILTER, 0 }, /* NR block */
+
+	/* software algo blocks */
+	{ ISP_BLK_CNR2, 0 }, /* NR block */
+	{ ISP_BLK_AE_NEW, 0 },
+	{ ISP_BLK_ALSC, 0 },
+	{ ISP_BLK_AF_NEW, 0 },
+	{ ISP_BLK_SMART, 0 },
+	{ ISP_BLK_AFT, 0 },
+	{ ISP_BLK_PDAF_TUNE, 0 },
+	{ ISP_BLK_DUAL_FLASH, 0 },
+	{ ISP_BLK_AE_SYNC, 0 },
+	{ ISP_BLK_AE_ADAPT_PARAM, 0 },
+	{ ISP_BLK_4IN1_PARAM, 0 },
+	{ ISP_BLK_TOF_TUNE, 0 },
+	{ ISP_BLK_ATM_TUNE, 0 },
+};
+
+struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
+	{DCAM_BLK_RGB_AFM,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
+	{DCAM_BLK_BPC,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
+	{ISP_BLK_RGB_DITHER,	ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
+	{ISP_BLK_GRGB,			ISP_BLK_GRGB_T,  sizeof(struct sensor_grgb_level) },
+
+	{ DCAM_BLK_3DNR_PRE,	ISP_BLK_3DNR_PRE_T, sizeof(struct sensor_3dnr_level) },
+	{ DCAM_BLK_3DNR_CAP,	ISP_BLK_3DNR_CAP_T, sizeof(struct sensor_3dnr_level) },
+	{ ISP_BLK_UVDIV,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
+	{ ISP_BLK_CFA,			ISP_BLK_CFA_T,  sizeof(struct sensor_cfa_param_level) },
+	{ ISP_BLK_YUV_PRECDN,	ISP_BLK_YUV_PRECDN_T, sizeof(struct sensor_yuv_precdn_level) },
+	{ ISP_BLK_YNR,			ISP_BLK_YNR_T, sizeof(struct sensor_ynr_level) },
+	{ ISP_BLK_EDGE,			ISP_BLK_EDGE_T, sizeof(struct sensor_ee_level) },
+	{ ISP_BLK_UV_CDN,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
+	{ ISP_BLK_UV_POSTCDN,	ISP_BLK_POSTCDN_T, sizeof(struct sensor_uv_postcdn_level) },
+	{ ISP_BLK_IIRCNR_IIR,		ISP_BLK_IIRCNR_T, sizeof(struct sensor_iircnr_level) },
+	{ ISP_BLK_YUV_NOISEFILTER,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
+	{ ISP_BLK_CNR2,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
+
+	{ DCAM_BLK_NLM,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
+	{ DCAM_BLK_NLM,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
+	{ DCAM_BLK_NLM,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+};
+
+#elif defined CONFIG_ISP_2_6 /* for SharkL5 */
+
 static struct blk_info blocks_array[] = {
 	/* DCAM blocks */
 	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
@@ -90,51 +176,74 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
 };
-#else // #ifdef CONFIG_ISP_2_5  ---- for SharkL3
+
+struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
+	{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
+	{ DCAM_BLK_BPC_V1,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
+	{ DCAM_BLK_RGB_DITHER,		ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
+	{ DCAM_BLK_PPE,				ISP_BLK_GRGB_T,  sizeof(struct sensor_ppe_level) },
+	{ ISP_BLK_GRGB_V1,			ISP_BLK_GRGB_T, sizeof(struct sensor_grgb_level) },
+	{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
+	{ ISP_BLK_UVDIV_V1,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
+	{ ISP_BLK_CFA_V1,			ISP_BLK_CFA_T,  sizeof(struct sensor_cfa_param_level) },
+	{ ISP_BLK_YUV_PRECDN_V1,	ISP_BLK_YUV_PRECDN_T, sizeof(struct sensor_yuv_precdn_level) },
+	{ ISP_BLK_YNR_V1,			ISP_BLK_YNR_T, sizeof(struct sensor_ynr_level) },
+	{ ISP_BLK_EE_V1,				ISP_BLK_EDGE_T, sizeof(struct sensor_ee_level) },
+	{ ISP_BLK_UV_CDN_V1,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
+	{ ISP_BLK_UV_POSTCDN_V1,	ISP_BLK_POSTCDN_T, sizeof(struct sensor_uv_postcdn_level) },
+	{ ISP_BLK_IIRCNR_IIR_V1,		ISP_BLK_IIRCNR_T, sizeof(struct sensor_iircnr_level) },
+	{ ISP_BLK_LTM,				ISP_BLK_LTM_T, sizeof(struct sensor_ltm_level) },
+	{ ISP_BLK_IMBALANCE,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
+	{ ISP_BLK_CNR2_V1,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
+	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },
+	{ ISP_BLK_YUV_NOISEFILTER_V1,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
+	{ ISP_BLK_NLM_V1,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
+	{ ISP_BLK_NLM_V1,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
+	{ ISP_BLK_NLM_V1,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+};
+
+#elif defined CONFIG_ISP_2_7 /* for SharkL5Pro */
+
 static struct blk_info blocks_array[] = {
 	/* DCAM blocks */
 	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
-	{ ISP_BLK_RGB_GAIN, 0 },  // ?? sharkl3 get bytes 12. why ?
+	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
 	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
 	{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
 	{ ISP_BLK_AWB_NEW, 0 },
-	{ DCAM_BLK_RGB_AFM, 0 }, /* NR block */
-	{ DCAM_BLK_BPC, 0 }, /* NR block */
-	{ ISP_BLK_RGB_DITHER, 0 }, /* NR block */
-	{ ISP_BLK_GRGB, 0 }, /* NR block */
+	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
+	{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
+	{ DCAM_BLK_PPE, 0 }, /* NR block */
+	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
 	/*  ISP blocks */
-	{ ISP_BLK_HSV, 0 }, /* size parsed in hsv block init() */
-	{ ISP_BLK_BRIGHT, sizeof(struct sensor_bright_param_v0) },
-	{ ISP_BLK_CONTRAST, sizeof(struct sensor_contrast_param_v0) },
-	{ ISP_BLK_SATURATION, sizeof(struct sensor_saturation_param_v0) },
-	{ ISP_BLK_HUE, sizeof(struct sensor_hue_param_v0) },
+	{ ISP_BLK_HSV, 0 }, /* parsed in hsv block init() */
+	{ ISP_BLK_BCHS, sizeof(struct sensor_bchs_level) },
 	{ ISP_BLK_CCE, sizeof(struct sensor_cce_param) },
 	{ ISP_BLK_CMC10, sizeof(struct sensor_cmc10_param) },
 	{ ISP_BLK_RGB_GAMC, sizeof(struct sensor_frgb_gammac_param) },
-	{ ISP_BLK_HIST2, sizeof(struct sensor_hists2_param) },
+	{ ISP_BLK_HIST2, 0 }, // todo: should be sizeof(struct sensor_hists2_param)
 	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
-	{ ISP_BLK_POSTERIZE, sizeof(struct sensor_posterize_param_v0) },
+	{ ISP_BLK_POSTERIZE, sizeof(struct sensor_posterize_param) },
 	{ ISP_BLK_Y_GAMMC, sizeof(struct sensor_y_gamma_param) },
-	{ ISP_BLK_HIST, 0 },
-	{ ISP_BLK_ANTI_FLICKER, 0 },
-
-	{ DCAM_BLK_3DNR_PRE, 0 }, /* NR block */
-	{ DCAM_BLK_3DNR_CAP, 0 }, /* NR block */
-	{ DCAM_BLK_NLM, 0 }, /* NR block */
-	{ ISP_BLK_UVDIV, 0 }, /* NR block */
-	{ ISP_BLK_CFA, 0 }, /* NR block */
-	{ ISP_BLK_YUV_PRECDN, 0 }, /* NR block */
-	{ ISP_BLK_YNR, 0 }, /* NR block */
-	{ ISP_BLK_EDGE, 0 }, /* NR block */
-	{ ISP_BLK_UV_CDN, 0 }, /* NR block */
-	{ ISP_BLK_UV_POSTCDN, 0 }, /* NR block */
-	{ ISP_BLK_IIRCNR_IIR, 0 }, /* NR block */
-
-	{ ISP_BLK_YUV_NOISEFILTER, 0 }, /* NR block */
+	{ ISP_BLK_3DNR, 0 }, /* NR block */
+	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
+	{ ISP_BLK_EE_V1, 0 }, /* NR block */
+	{ ISP_BLK_GRGB_V1, 0 }, /* NR block */
+	{ ISP_BLK_IIRCNR_IIR_V1, 0 }, /* NR block */
+	{ ISP_BLK_LTM, 0 }, /* NR block */
+	{ ISP_BLK_NLM_V1, 0 }, /* NR block */
+	{ ISP_BLK_IMBALANCE, 0 }, /* NR block */
+	{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
+	{ ISP_BLK_YNR_V1, 0 }, /* NR block */
+	{ ISP_BLK_YUV_PRECDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_UV_POSTCDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
 
 	/* software algo blocks */
-	{ ISP_BLK_CNR2, 0 }, /* NR block */
+	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
+	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
 	{ ISP_BLK_ALSC, 0 },
 	{ ISP_BLK_AF_NEW, 0 },
@@ -148,7 +257,36 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
 };
+
+struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
+	{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
+	{ DCAM_BLK_BPC_V1,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
+	{ DCAM_BLK_RGB_DITHER,		ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
+	{ DCAM_BLK_PPE,				ISP_BLK_GRGB_T,  sizeof(struct sensor_ppe_level) },
+	{ ISP_BLK_GRGB_V1,			ISP_BLK_GRGB_T, sizeof(struct sensor_grgb_level) },
+	{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
+	{ ISP_BLK_UVDIV_V1,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
+	{ ISP_BLK_CFA_V1,			ISP_BLK_CFA_T,  sizeof(struct sensor_cfa_param_level) },
+	{ ISP_BLK_YUV_PRECDN_V1,	ISP_BLK_YUV_PRECDN_T, sizeof(struct sensor_yuv_precdn_level) },
+	{ ISP_BLK_YNR_V1,			ISP_BLK_YNR_T, sizeof(struct sensor_ynr_level) },
+	{ ISP_BLK_EE_V1,				ISP_BLK_EDGE_T, sizeof(struct sensor_ee_level) },
+	{ ISP_BLK_UV_CDN_V1,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
+	{ ISP_BLK_UV_POSTCDN_V1,	ISP_BLK_POSTCDN_T, sizeof(struct sensor_uv_postcdn_level) },
+	{ ISP_BLK_IIRCNR_IIR_V1,		ISP_BLK_IIRCNR_T, sizeof(struct sensor_iircnr_level) },
+	{ ISP_BLK_LTM,				ISP_BLK_LTM_T, sizeof(struct sensor_ltm_level) },
+	{ ISP_BLK_IMBALANCE,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
+	{ ISP_BLK_CNR2_V1,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
+	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },
+	{ ISP_BLK_YUV_NOISEFILTER_V1,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
+	{ ISP_BLK_NLM_V1,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
+	{ ISP_BLK_NLM_V1,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
+	{ ISP_BLK_NLM_V1,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+};
 #endif
+/************************ Project adapt data END *******************************************/
+
+
+
 
 static cmr_u32 search_modes[3][ISP_TUNE_MODE_MAX] = {
 	{
@@ -1487,7 +1625,7 @@ static cmr_s32 debug_save_nr_data(void *dataptr, cmr_u32 datalen,
 	char file_name[256];
 
 	datalen = (datalen < (unit_len * level_num)) ? datalen : (unit_len * level_num);
-	if (nr_type >= ISP_BLK_TYPE_MAX) {
+	if (nr_type >= ISP_BLK_NR_MAX) {
 		ISP_LOGE("Invalid nr type %d\n", nr_type);
 		return ISP_ERROR;
 	}
@@ -1504,6 +1642,21 @@ static cmr_s32 debug_save_nr_data(void *dataptr, cmr_u32 datalen,
 	}
 
 	return 0;
+}
+
+
+cmr_s32 check_nr_blks(cmr_u32 blk_id, cmr_u32 *nr_type, cmr_u32 *unit_size)
+{
+	cmr_u32 i;
+
+	for (i = 0; i < sizeof(nr_blocks_info)/sizeof(nr_blocks_info[0]); i++) {
+		if (nr_blocks_info[i].blk_id == blk_id) {
+			*nr_type = nr_blocks_info[i].nr_type;
+			*unit_size = nr_blocks_info[i].unit_size;
+			return 0;
+		}
+	}
+	return -1;
 }
 
 static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
@@ -1537,12 +1690,12 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	struct isp_pm_nr_header_param *dst_nlm_data = PNULL;
 	struct isp_pm_nr_simple_header_param *dst_blk_data = PNULL;
 	cmr_u32 multi_nr_flag = 0;
-	cmr_u32 isp_blk_nr_type = ISP_BLK_TYPE_MAX;
+	cmr_u32 isp_blk_nr_type = ISP_BLK_NR_MAX;
 	intptr_t nr_set_addr = 0;
 	cmr_u32 nr_set_size = 0, nr_unit_size = 0;
-	cmr_u32 nr_mode_offset[ISP_BLK_TYPE_MAX];
-	cmr_u32 nr_data_len[ISP_BLK_TYPE_MAX];
-	cmr_u32 nr_blk_id[ISP_BLK_TYPE_MAX];
+	cmr_u32 nr_mode_offset[ISP_BLK_NR_MAX];
+	cmr_u32 nr_data_len[ISP_BLK_NR_MAX];
+	cmr_u32 nr_blk_id[ISP_BLK_NR_MAX];
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	cmr_u32 val, dump_nrdata = 0;
 	cmr_s8 *sensor_name;
@@ -1777,6 +1930,7 @@ start_parse:
 				}
 				break;
 			}
+#if 0
 			case DCAM_BLK_RGB_DITHER:
 			case ISP_BLK_RGB_DITHER:
 			{
@@ -1794,7 +1948,7 @@ start_parse:
 				nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.bpc);
 				nr_set_size = fix_data_ptr->nr.nr_set_group.bpc_len;
 				nr_unit_size = sizeof(struct sensor_bpc_level);
-				nr_blk_id[ISP_BLK_PPE_T] = src_header[j].block_id;
+				nr_blk_id[ISP_BLK_BPC_T] = src_header[j].block_id;
 				break;
 			}
 			case ISP_BLK_GRGB_V1:
@@ -1984,10 +2138,54 @@ start_parse:
 				break;
 			}
 #endif
+#endif
+
 			default:
+			{
+				cmr_s32 ret;
+				struct nr_set_group_unit *nr_ptr;
+
+				nr_ptr = (struct nr_set_group_unit *)&(fix_data_ptr->nr.nr_set_group);
+
+				ret = check_nr_blks(src_header[j].block_id, &isp_blk_nr_type, &nr_unit_size);
+				if (ret == 0) {
+					nr_set_addr = (intptr_t)nr_ptr[isp_blk_nr_type].nr_ptr;
+					nr_set_size = nr_ptr[isp_blk_nr_type].nr_len;
+					nr_blk_id[isp_blk_nr_type] = src_header[j].block_id;
+
+					dst_blk_data = (struct isp_pm_nr_simple_header_param *)dst_data_ptr;
+					memset((void *)dst_blk_data, 0x00, sizeof(struct isp_pm_nr_simple_header_param));
+
+					dst_blk_data->level_number = nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
+					dst_blk_data->default_strength_level = nr_default_level_ptr->nr_level_map[isp_blk_nr_type];
+					dst_blk_data->nr_mode_setting = multi_nr_flag;
+					dst_blk_data->multi_nr_map_ptr = (cmr_uint *)&(nr_scene_map_ptr->nr_scene_map[0]);
+					dst_blk_data->param_ptr = (cmr_uint *)nr_set_addr;
+
+					extend_offset += sizeof(struct isp_pm_nr_simple_header_param);
+					dst_header[j].size = sizeof(struct isp_pm_nr_simple_header_param);
+
+					nr_data_len[isp_blk_nr_type] = nr_set_size;
+					nr_set_size = nr_unit_size * dst_blk_data->level_number;
+					nr_scene_map = nr_scene_map_ptr->nr_scene_map[src_mod_ptr->mode_id];
+					for (nr_scene_id = ISP_SCENEMODE_AUTO; nr_scene_id < ISP_SCENEMODE_MAX; nr_scene_id++) {
+						if ((nr_scene_map & (1 << nr_scene_id)) == 0)
+							continue;
+						ISP_LOGV("blk id 0x%x, mode %d, scene_id %d\n", src_header[j].block_id, src_mod_ptr->mode_id, nr_scene_id);
+						if (dump_nrdata)
+							debug_save_nr_data((void *)(nr_set_addr + nr_mode_offset[isp_blk_nr_type]),
+								nr_set_size,
+								nr_unit_size,
+								dst_blk_data->level_number,
+								isp_blk_nr_type,
+								sensor_name, src_mod_ptr->mode_id, nr_scene_id);
+						nr_mode_offset[isp_blk_nr_type] += nr_set_size;
+					}
+				}
 				break;
 			}
-
+			}
+#if 0
 			if (src_header[j].block_id == DCAM_BLK_RGB_DITHER
 				|| src_header[j].block_id == DCAM_BLK_BPC_V1
 				|| src_header[j].block_id == DCAM_BLK_PPE
@@ -2054,6 +2252,8 @@ start_parse:
 					nr_mode_offset[isp_blk_nr_type] += nr_set_size;
 				}
 			}
+#endif
+
 		}
 
 		if (max_num < src_mod_ptr->block_num)
@@ -2073,7 +2273,7 @@ start_parse:
 	}
 
 	/* check if NR block data is legal or not. If not, discard it */
-	for (i = 0; i < ISP_BLK_TYPE_MAX; i++) {
+	for (i = 0; i < ISP_BLK_NR_MAX; i++) {
 		if (nr_blk_id[i] == 0)
 			continue;
 		if (nr_blk_id[i] == ISP_BLK_NLM_V1 || nr_blk_id[i] == DCAM_BLK_NLM) {

@@ -369,6 +369,1740 @@ static cmr_u32 g_af_pos = 0;
 static cmr_u32 g_command = CMD_TAKE_PICTURE;
 struct denoise_param_update nr_update_param;
 
+
+
+/****************************** Project adapt START *********************************************/
+
+cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len,
+	void *src_ptr, cmr_u32 src_size, cmr_u8 * data_ptr,  cmr_u8 * data_status);
+
+static cmr_s32 isp_tool_calc_nr_addr_offset(cmr_u8 isp_mode,
+	cmr_u8 nr_mode, cmr_u32 * one_multi_mode_ptr, cmr_u32 * offset_units_ptr);
+
+
+
+typedef cmr_s32(*isp_denoise_write_t) (cmr_u8 * data_buf, cmr_u32 * data_size);
+typedef cmr_s32(*isp_denoise_read_t) (cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head);
+
+
+#ifdef CONFIG_ISP_2_5
+
+cmr_s32 isp_denoise_write_v25(cmr_u8 * data_buf, cmr_u32 * data_size)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	cmr_u8 *data_actual_ptr;
+	cmr_u32 data_actual_len;
+	cmr_u8 isp_mode = 0;
+	cmr_u8 nr_mode = 0;
+	cmr_u32 offset_units = 0;
+	cmr_u32 nr_offset_addr = 0;
+	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+
+	if ((NULL == data_buf) || (NULL == data_size)) {
+		ISP_LOGE("fail to check param");
+		return ISP_PARAM_NULL;
+	}
+	struct isp_data_header_normal *data_head = (struct isp_data_header_normal *)data_buf;
+
+	data_actual_ptr = data_buf + sizeof(struct isp_data_header_normal);
+	data_actual_len = *data_size - sizeof(struct isp_data_header_normal);
+
+	if (nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
+		isp_mode = 0;
+		nr_mode = 0;
+	} else {
+		isp_mode = data_head->isp_mode;
+		nr_mode = data_head->nr_mode;
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	}
+	switch (data_head->sub_type) {
+	case V21DITHER:
+		{
+			static cmr_u32 rgb_dither_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				rgb_dither_ptr_offset += data_actual_len;
+			else
+				rgb_dither_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_RGB_DITHER_T] = 1;
+			break;
+		}
+	case V21GRGB:
+		{
+			static cmr_u32 grgb_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			memcpy(((cmr_u8 *) (nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				grgb_ptr_offset += data_actual_len;
+			else
+				grgb_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_GRGB_T] = 1;
+			break;
+		}
+	case V21CFA:
+		{
+			static cmr_u32 cfae_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cfae_ptr_offset += data_actual_len;
+			else
+				cfae_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CFA_T] = 1;
+			break;
+		}
+	case V21UVDIV:
+		{
+			static cmr_u32 uvdiv_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				uvdiv_ptr_offset += data_actual_len;
+			else
+				uvdiv_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_UVDIV_T] = 1;
+			break;
+		}
+	case V21EDGE:
+		{
+			static cmr_u32 edge_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				edge_ptr_offset += data_actual_len;
+			else
+				edge_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_EDGE_T] = 1;
+			break;
+		}
+	case V21PRECDN:
+		{
+			static cmr_u32 precdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				precdn_ptr_offset += data_actual_len;
+			else
+				precdn_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_YUV_PRECDN_T] = 1;
+			break;
+		}
+	case V21Y_NR:
+		{
+			static cmr_u32 ynr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ynr_ptr_offset += data_actual_len;
+			else
+				ynr_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_YNR_T] = 1;
+			break;
+		}
+	case V21CDN:
+		{
+			static cmr_u32 cdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cdn_ptr_offset += data_actual_len;
+			else
+				cdn_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CDN_T] = 1;
+			break;
+		}
+	case V21POSTCDN:
+		{
+			static cmr_u32 postcdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				postcdn_ptr_offset += data_actual_len;
+			else
+				postcdn_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_POSTCDN_T] = 1;
+			break;
+		}
+	case V21IIRCNR:
+		{
+			static cmr_u32 ynr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ynr_ptr_offset += data_actual_len;
+			else
+				ynr_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_IIRCNR_T] = 1;
+			break;
+		}
+	case V21NOISEFILTER:
+		{
+			static cmr_u32 yuv_noisefilter_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				yuv_noisefilter_ptr_offset += data_actual_len;
+			else
+				yuv_noisefilter_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_YUV_NOISEFILTER_T] = 1;
+			break;
+		}
+	case SHARKL3NLM:
+		{
+			static cmr_u32 bayer_nr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				bayer_nr_ptr_offset += data_actual_len;
+			else
+				bayer_nr_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3VST:
+		{
+			static cmr_u32 vst_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			memcpy(((cmr_u8 *) (nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				vst_ptr_offset += data_actual_len;
+			else
+				vst_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3IVST:
+		{
+			static cmr_u32 ivst_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ivst_ptr_offset += data_actual_len;
+			else
+				ivst_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3_BPC:
+		{
+			static cmr_u32 bpc_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
+			memcpy(((cmr_u8 *) (nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				bpc_ptr_offset += data_actual_len;
+			else
+				bpc_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_BPC_T] = 1;
+			break;
+		}
+	case SHARKL3_RGBAFM:
+		{
+			static cmr_u32 rgb_afm_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				rgb_afm_ptr_offset += data_actual_len;
+			else
+				rgb_afm_ptr_offset = 0;
+			nr_tool_flag[9] = 1;
+			break;
+		}
+	case SHARKL3_PRE3DNR:
+		{
+			static cmr_u32 dnr_pre_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_pre_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				dnr_pre_ptr_offset += data_actual_len;
+			else
+				dnr_pre_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_3DNR_PRE_T] = 1;
+			break;
+		}
+	case SHARKL3_CAP3DNR:
+		{
+			static cmr_u32 dnr_cap_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_cap_level_ptr)) + nr_offset_addr + dnr_cap_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				dnr_cap_ptr_offset += data_actual_len;
+			else
+				dnr_cap_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_3DNR_CAP_T] = 1;
+			break;
+		}
+	case SHARKL3_CNR20:
+		{
+			static cmr_u32 cnr2_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cnr2_level_ptr)) + nr_offset_addr + cnr2_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cnr2_ptr_offset += data_actual_len;
+			else
+				cnr2_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
+			break;
+		}
+	default:
+		break;
+	}
+	return ret;
+}
+
+
+cmr_s32 isp_denoise_read_v25(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_data_header_normal *data_head_ptr;
+	cmr_u8 *data_ptr;
+	cmr_u32 data_valid_len;
+	cmr_u32 src_size = 0;
+	cmr_s32 file_num = 0;
+	cmr_u8 isp_mode = 0;
+	cmr_u8 nr_mode = 0;
+	cmr_u8 *nr_scene_and_level_map = NULL;
+	cmr_u32 *temp_nr_map_addr = NULL;
+
+	if (NULL == tx_buf) {
+		ISP_LOGE("fail to check tx_buf:%p", tx_buf);
+		return ISP_PARAM_ERROR;
+	}
+
+	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
+	data_head_ptr->main_type = 0x01;	//denoise param
+	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
+	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
+	file_num = data_head->sub_type;
+	cmr_u32 offset_units = 0;
+	void *nr_offset_addr = PNULL;
+	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+
+	isp_mode = data_head->isp_mode;
+	nr_mode = data_head->nr_mode;
+	if (nr_update_param.nr_scene_map_ptr != PNULL) {
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	switch (file_num) {
+	case SCENEINFO:
+		{
+			data_head_ptr->sub_type = SCENEINFO;
+			src_size = sizeof(struct sensor_nr_scene_map_param)
+			    + sizeof(struct sensor_nr_level_map_param)
+			    + sizeof(struct sensor_nr_level_map_param);
+
+			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
+				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
+				if (!nr_scene_and_level_map) {
+					ISP_LOGE("fail to do ispParserAlloc!");
+					return -1;
+				}
+				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
+
+			} else {
+				ISP_LOGE("fail to check param");
+			}
+			break;
+		}
+	case SHARKL3NLM:
+		{
+			data_head_ptr->sub_type = SHARKL3NLM;
+			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.nlm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3VST:
+		{
+			data_head_ptr->sub_type = SHARKL3VST;
+			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.vst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3IVST:
+		{
+			data_head_ptr->sub_type = SHARKL3IVST;
+			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21DITHER:
+		{
+			data_head_ptr->sub_type = V21DITHER;
+			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_BPC:
+		{
+			data_head_ptr->sub_type = SHARKL3_BPC;
+			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.bpc_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21GRGB:
+		{
+			data_head_ptr->sub_type = V21GRGB;
+			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.grgb_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CFA:
+		{
+			data_head_ptr->sub_type = V21CFA;
+			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cfae_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_RGBAFM:
+		{
+			data_head_ptr->sub_type = SHARKL3_RGBAFM;
+			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21UVDIV:
+		{
+			data_head_ptr->sub_type = V21UVDIV;
+			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_PRE3DNR:
+		{
+			data_head_ptr->sub_type = SHARKL3_PRE3DNR;
+			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_pre_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_CAP3DNR:
+		{
+			data_head_ptr->sub_type = SHARKL3_CAP3DNR;
+			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21EDGE:
+		{
+			data_head_ptr->sub_type = V21EDGE;
+			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ee_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21PRECDN:
+		{
+			data_head_ptr->sub_type = V21PRECDN;
+			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21Y_NR:
+		{
+			data_head_ptr->sub_type = V21Y_NR;
+			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ynr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CDN:
+		{
+			data_head_ptr->sub_type = V21CDN;
+			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21POSTCDN:
+		{
+			data_head_ptr->sub_type = V21POSTCDN;
+			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21IIRCNR:
+		{
+			data_head_ptr->sub_type = V21IIRCNR;
+			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21NOISEFILTER:
+		{
+			data_head_ptr->sub_type = V21NOISEFILTER;
+			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_CNR20:
+		{
+			data_head_ptr->sub_type = SHARKL3_CNR20;
+			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
+			break;
+		}
+	default:
+		break;
+	}
+	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+
+	if (nr_scene_and_level_map) {
+		ispParserFree(nr_scene_and_level_map);
+	}
+	return ret;
+}
+
+
+static isp_denoise_write_t s_adapt_isp_denoise_write = isp_denoise_write_v25;
+static isp_denoise_read_t s_adapt_isp_denoise_read = isp_denoise_read_v25;
+
+#elif defined CONFIG_ISP_2_6
+
+cmr_s32 isp_denoise_write_v26(cmr_u8 * data_buf, cmr_u32 * data_size)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	cmr_u8 *data_actual_ptr;
+	cmr_u32 data_actual_len;
+	cmr_u8 isp_mode = 0;
+	cmr_u8 nr_mode = 0;
+	cmr_u32 offset_units = 0;
+	cmr_u32 nr_offset_addr = 0;
+	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+
+	if ((NULL == data_buf) || (NULL == data_size)) {
+		ISP_LOGE("fail to check param");
+		return ISP_PARAM_NULL;
+	}
+	struct isp_data_header_normal *data_head = (struct isp_data_header_normal *)data_buf;
+
+	data_actual_ptr = data_buf + sizeof(struct isp_data_header_normal);
+	data_actual_len = *data_size - sizeof(struct isp_data_header_normal);
+
+	if (nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
+		isp_mode = 0;
+		nr_mode = 0;
+	} else {
+		isp_mode = data_head->isp_mode;
+		nr_mode = data_head->nr_mode;
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	}
+	switch (data_head->sub_type) {
+	case SHARKL5_PPE:
+		{
+			static cmr_u32 ppe_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PPE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ppe_level_ptr)) + nr_offset_addr + ppe_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ppe_ptr_offset += data_actual_len;
+			else
+				ppe_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_PPE_T] = 1;
+			break;
+		}
+	case SHARKL5_NLM:
+		{
+			static cmr_u32 bayer_nr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				bayer_nr_ptr_offset += data_actual_len;
+			else
+				bayer_nr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3VST:
+		{
+			static cmr_u32 vst_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			memcpy(((cmr_u8 *) (nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				vst_ptr_offset += data_actual_len;
+			else
+				vst_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3IVST:
+		{
+			static cmr_u32 ivst_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ivst_ptr_offset += data_actual_len;
+			else
+				ivst_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case V21DITHER:
+		{
+			static cmr_u32 rgb_dither_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				rgb_dither_ptr_offset += data_actual_len;
+			else
+				rgb_dither_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_RGB_DITHER_T] = 1;
+			break;
+		}
+	case SHARKL5_BPC:
+		{
+			static cmr_u32 bpc_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
+			memcpy(((cmr_u8 *) (nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				bpc_ptr_offset += data_actual_len;
+			else
+				bpc_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_BPC_T] = 1;
+			break;
+		}
+	case V21GRGB:
+		{
+			static cmr_u32 grgb_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			memcpy(((cmr_u8 *) (nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				grgb_ptr_offset += data_actual_len;
+			else
+				grgb_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_GRGB_T] = 1;
+			break;
+		}
+	case V21CFA:
+		{
+			static cmr_u32 cfae_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cfae_ptr_offset += data_actual_len;
+			else
+				cfae_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_CFA_T] = 1;
+			break;
+		}
+	case SHARKL3_RGBAFM:
+		{
+			static cmr_u32 rgb_afm_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				rgb_afm_ptr_offset += data_actual_len;
+			else
+				rgb_afm_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_RGB_AFM_T] = 1;
+			break;
+		}
+	case SHARKL5_UVDIV:
+		{
+			static cmr_u32 uvdiv_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				uvdiv_ptr_offset += data_actual_len;
+			else
+				uvdiv_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_UVDIV_T] = 1;
+			break;
+		}
+	case SHARKL5_3DNR:
+		{
+			static cmr_u32 dnr_pre_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				dnr_pre_ptr_offset += data_actual_len;
+			else
+				dnr_pre_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_3DNR_T] = 1;
+			break;
+		}
+	case SHARKL5_SW3DNR:
+		{
+			static cmr_u32 sw3dnr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + sw3dnr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				sw3dnr_ptr_offset += data_actual_len;
+			else
+				sw3dnr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_SW3DNR_T] = 1;
+			break;
+		}
+	case SHARKL5_EE:
+		{
+			static cmr_u32 edge_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				edge_ptr_offset += data_actual_len;
+			else
+				edge_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_EDGE_T] = 1;
+			break;
+		}
+	case V21PRECDN:
+		{
+			static cmr_u32 precdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				precdn_ptr_offset += data_actual_len;
+			else
+				precdn_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_YUV_PRECDN_T] = 1;
+			break;
+		}
+	case SHARKL5_YNR:
+		{
+			static cmr_u32 ynr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ynr_ptr_offset += data_actual_len;
+			else
+				ynr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_YNR_T] = 1;
+			break;
+		}
+	case V21CDN:
+		{
+			static cmr_u32 cdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cdn_ptr_offset += data_actual_len;
+			else
+				cdn_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_CDN_T] = 1;
+			break;
+		}
+	case V21POSTCDN:
+		{
+			static cmr_u32 postcdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				postcdn_ptr_offset += data_actual_len;
+			else
+				postcdn_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_POSTCDN_T] = 1;
+			break;
+		}
+	case SHARKL5_IIRCNR:
+		{
+			static cmr_u32 ynr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ynr_ptr_offset += data_actual_len;
+			else
+				ynr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_IIRCNR_T] = 1;
+			break;
+		}
+	case SHARKL5_NOISEFILTER:
+		{
+			static cmr_u32 yuv_noisefilter_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				yuv_noisefilter_ptr_offset += data_actual_len;
+			else
+				yuv_noisefilter_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_YUV_NOISEFILTER_T] = 1;
+			break;
+		}
+	case SHARKL5_CNR20:
+		{
+			static cmr_u32 cnr2_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cnr2_level_ptr)) + nr_offset_addr + cnr2_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cnr2_ptr_offset += data_actual_len;
+			else
+				cnr2_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
+			break;
+		}
+	case SHARKL5_LTM:
+		{
+			static cmr_u32 ltm_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ltm_level_ptr)) + nr_offset_addr + ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ltm_ptr_offset += data_actual_len;
+			else
+				ltm_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_LTM_T] = 1;
+			break;
+		}
+	case SHARKL5_IMBALANCE:
+		{
+			static cmr_u32 imblance_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.imbalance_level_ptr)) + nr_offset_addr + imblance_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				imblance_ptr_offset += data_actual_len;
+			else
+				imblance_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_IMBALANCEE_T] = 1;
+			break;
+		}
+	default:
+		break;
+	}
+	return ret;
+}
+
+cmr_s32 isp_denoise_read_v26(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_data_header_normal *data_head_ptr;
+	cmr_u8 *data_ptr;
+	cmr_u32 data_valid_len;
+	cmr_u32 src_size = 0;
+	cmr_s32 file_num = 0;
+	cmr_u8 isp_mode = 0;
+	cmr_u8 nr_mode = 0;
+	cmr_u8 *nr_scene_and_level_map = NULL;
+	cmr_u32 *temp_nr_map_addr = NULL;
+
+	if (NULL == tx_buf) {
+		ISP_LOGE("fail to check tx_buf:%p", tx_buf);
+		return ISP_PARAM_ERROR;
+	}
+
+	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
+	data_head_ptr->main_type = 0x01;	//denoise param
+	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
+	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
+	file_num = data_head->sub_type;
+	cmr_u32 offset_units = 0;
+	void *nr_offset_addr = PNULL;
+	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+
+	isp_mode = data_head->isp_mode;
+	nr_mode = data_head->nr_mode;
+	if (nr_update_param.nr_scene_map_ptr != PNULL) {
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	switch (file_num) {
+	case SCENEINFO:
+		{
+			data_head_ptr->sub_type = SCENEINFO;
+			src_size = sizeof(struct sensor_nr_scene_map_param)
+			    + sizeof(struct sensor_nr_level_map_param)
+			    + sizeof(struct sensor_nr_level_map_param);
+
+			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
+				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
+				if (!nr_scene_and_level_map) {
+					ISP_LOGE("fail to do ispParserAlloc!");
+					return -1;
+				}
+				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
+
+			} else {
+				ISP_LOGE("fail to check param");
+			}
+			break;
+		}
+	case SHARKL5_PPE:
+		{
+			data_head_ptr->sub_type = SHARKL5_PPE;
+			src_size = sizeof(struct sensor_ppe_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PPE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ppe_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_NLM:
+		{
+			data_head_ptr->sub_type = SHARKL5_NLM;
+			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.nlm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3VST:
+		{
+			data_head_ptr->sub_type = SHARKL3VST;
+			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.vst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3IVST:
+		{
+			data_head_ptr->sub_type = SHARKL3IVST;
+			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21DITHER:
+		{
+			data_head_ptr->sub_type = V21DITHER;
+			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_BPC:
+		{
+			data_head_ptr->sub_type = SHARKL5_BPC;
+			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.bpc_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21GRGB:
+		{
+			data_head_ptr->sub_type = V21GRGB;
+			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.grgb_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CFA:
+		{
+			data_head_ptr->sub_type = V21CFA;
+			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cfae_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_RGBAFM:
+		{
+			data_head_ptr->sub_type = SHARKL3_RGBAFM;
+			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_UVDIV:
+		{
+			data_head_ptr->sub_type = SHARKL5_UVDIV;
+			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_3DNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_3DNR;
+			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_SW3DNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_SW3DNR;
+			src_size = sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.sw3dnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_EE:
+		{
+			data_head_ptr->sub_type = SHARKL5_EE;
+			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ee_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21PRECDN:
+		{
+			data_head_ptr->sub_type = V21PRECDN;
+			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_YNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_YNR;
+			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ynr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CDN:
+		{
+			data_head_ptr->sub_type = V21CDN;
+			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21POSTCDN:
+		{
+			data_head_ptr->sub_type = V21POSTCDN;
+			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_IIRCNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_IIRCNR;
+			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_NOISEFILTER:
+		{
+			data_head_ptr->sub_type = SHARKL5_NOISEFILTER;
+			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_CNR20:
+		{
+			data_head_ptr->sub_type = SHARKL5_CNR20;
+			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_LTM:
+		{
+			data_head_ptr->sub_type = SHARKL5_LTM;
+			src_size = sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ltm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_IMBALANCE:
+		{
+			data_head_ptr->sub_type = SHARKL5_IMBALANCE;
+			src_size = sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
+			break;
+		}
+	default:
+		break;
+	}
+	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+
+	if (nr_scene_and_level_map) {
+		ispParserFree(nr_scene_and_level_map);
+	}
+	return ret;
+}
+
+static isp_denoise_write_t s_adapt_isp_denoise_write = isp_denoise_write_v26;
+static isp_denoise_read_t s_adapt_isp_denoise_read = isp_denoise_read_v26;
+
+#elif defined CONFIG_ISP_2_7
+cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	cmr_u8 *data_actual_ptr;
+	cmr_u32 data_actual_len;
+	cmr_u8 isp_mode = 0;
+	cmr_u8 nr_mode = 0;
+	cmr_u32 offset_units = 0;
+	cmr_u32 nr_offset_addr = 0;
+	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+
+	if ((NULL == data_buf) || (NULL == data_size)) {
+		ISP_LOGE("fail to check param");
+		return ISP_PARAM_NULL;
+	}
+	struct isp_data_header_normal *data_head = (struct isp_data_header_normal *)data_buf;
+
+	data_actual_ptr = data_buf + sizeof(struct isp_data_header_normal);
+	data_actual_len = *data_size - sizeof(struct isp_data_header_normal);
+
+	if (nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
+		isp_mode = 0;
+		nr_mode = 0;
+	} else {
+		isp_mode = data_head->isp_mode;
+		nr_mode = data_head->nr_mode;
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	}
+	switch (data_head->sub_type) {
+	case SHARKL5_PPE:
+		{
+			static cmr_u32 ppe_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PPE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ppe_level_ptr)) + nr_offset_addr + ppe_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ppe_ptr_offset += data_actual_len;
+			else
+				ppe_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_PPE_T] = 1;
+			break;
+		}
+	case SHARKL5_NLM:
+		{
+			static cmr_u32 bayer_nr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				bayer_nr_ptr_offset += data_actual_len;
+			else
+				bayer_nr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3VST:
+		{
+			static cmr_u32 vst_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			memcpy(((cmr_u8 *) (nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				vst_ptr_offset += data_actual_len;
+			else
+				vst_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case SHARKL3IVST:
+		{
+			static cmr_u32 ivst_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ivst_ptr_offset += data_actual_len;
+			else
+				ivst_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_NLM_T] = 1;
+			break;
+		}
+	case V21DITHER:
+		{
+			static cmr_u32 rgb_dither_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				rgb_dither_ptr_offset += data_actual_len;
+			else
+				rgb_dither_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_RGB_DITHER_T] = 1;
+			break;
+		}
+	case SHARKL5_BPC:
+		{
+			static cmr_u32 bpc_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
+			memcpy(((cmr_u8 *) (nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				bpc_ptr_offset += data_actual_len;
+			else
+				bpc_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_BPC_T] = 1;
+			break;
+		}
+	case V21GRGB:
+		{
+			static cmr_u32 grgb_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			memcpy(((cmr_u8 *) (nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				grgb_ptr_offset += data_actual_len;
+			else
+				grgb_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_GRGB_T] = 1;
+			break;
+		}
+	case V21CFA:
+		{
+			static cmr_u32 cfae_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cfae_ptr_offset += data_actual_len;
+			else
+				cfae_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_CFA_T] = 1;
+			break;
+		}
+	case SHARKL3_RGBAFM:
+		{
+			static cmr_u32 rgb_afm_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				rgb_afm_ptr_offset += data_actual_len;
+			else
+				rgb_afm_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_RGB_AFM_T] = 1;
+			break;
+		}
+	case SHARKL5_UVDIV:
+		{
+			static cmr_u32 uvdiv_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				uvdiv_ptr_offset += data_actual_len;
+			else
+				uvdiv_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_UVDIV_T] = 1;
+			break;
+		}
+	case SHARKL5_3DNR:
+		{
+			static cmr_u32 dnr_pre_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				dnr_pre_ptr_offset += data_actual_len;
+			else
+				dnr_pre_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_3DNR_T] = 1;
+			break;
+		}
+	case SHARKL5_SW3DNR:
+		{
+			static cmr_u32 sw3dnr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + sw3dnr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				sw3dnr_ptr_offset += data_actual_len;
+			else
+				sw3dnr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_SW3DNR_T] = 1;
+			break;
+		}
+	case SHARKL5_EE:
+		{
+			static cmr_u32 edge_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				edge_ptr_offset += data_actual_len;
+			else
+				edge_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_EDGE_T] = 1;
+			break;
+		}
+	case V21PRECDN:
+		{
+			static cmr_u32 precdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				precdn_ptr_offset += data_actual_len;
+			else
+				precdn_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_YUV_PRECDN_T] = 1;
+			break;
+		}
+	case SHARKL5_YNR:
+		{
+			static cmr_u32 ynr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ynr_ptr_offset += data_actual_len;
+			else
+				ynr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_YNR_T] = 1;
+			break;
+		}
+	case V21CDN:
+		{
+			static cmr_u32 cdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cdn_ptr_offset += data_actual_len;
+			else
+				cdn_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_CDN_T] = 1;
+			break;
+		}
+	case V21POSTCDN:
+		{
+			static cmr_u32 postcdn_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
+			memcpy(((cmr_u8 *) (nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				postcdn_ptr_offset += data_actual_len;
+			else
+				postcdn_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_POSTCDN_T] = 1;
+			break;
+		}
+	case SHARKL5_IIRCNR:
+		{
+			static cmr_u32 ynr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ynr_ptr_offset += data_actual_len;
+			else
+				ynr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_IIRCNR_T] = 1;
+			break;
+		}
+	case SHARKL5_NOISEFILTER:
+		{
+			static cmr_u32 yuv_noisefilter_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			memcpy(((cmr_u8 *) (nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				yuv_noisefilter_ptr_offset += data_actual_len;
+			else
+				yuv_noisefilter_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_YUV_NOISEFILTER_T] = 1;
+			break;
+		}
+	case SHARKL5_CNR20:
+		{
+			static cmr_u32 cnr2_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cnr2_level_ptr)) + nr_offset_addr + cnr2_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cnr2_ptr_offset += data_actual_len;
+			else
+				cnr2_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
+			break;
+		}
+	case SHARKL5_LTM:
+		{
+			static cmr_u32 ltm_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
+			memcpy(((cmr_u8 *) (nr_update_param.ltm_level_ptr)) + nr_offset_addr + ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				ltm_ptr_offset += data_actual_len;
+			else
+				ltm_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_LTM_T] = 1;
+			break;
+		}
+	case SHARKL5_IMBALANCE:
+		{
+			static cmr_u32 imblance_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.imbalance_level_ptr)) + nr_offset_addr + imblance_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				imblance_ptr_offset += data_actual_len;
+			else
+				imblance_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_IMBALANCEE_T] = 1;
+			break;
+		}
+	default:
+		break;
+	}
+	return ret;
+}
+
+cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_data_header_normal *data_head_ptr;
+	cmr_u8 *data_ptr;
+	cmr_u32 data_valid_len;
+	cmr_u32 src_size = 0;
+	cmr_s32 file_num = 0;
+	cmr_u8 isp_mode = 0;
+	cmr_u8 nr_mode = 0;
+	cmr_u8 *nr_scene_and_level_map = NULL;
+	cmr_u32 *temp_nr_map_addr = NULL;
+
+	if (NULL == tx_buf) {
+		ISP_LOGE("fail to check tx_buf:%p", tx_buf);
+		return ISP_PARAM_ERROR;
+	}
+
+	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
+	data_head_ptr->main_type = 0x01;	//denoise param
+	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
+	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
+	file_num = data_head->sub_type;
+	cmr_u32 offset_units = 0;
+	void *nr_offset_addr = PNULL;
+	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
+	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+
+	isp_mode = data_head->isp_mode;
+	nr_mode = data_head->nr_mode;
+	if (nr_update_param.nr_scene_map_ptr != PNULL) {
+		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
+		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
+		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
+	} else {
+		return ISP_PARAM_ERROR;
+	}
+	switch (file_num) {
+	case SCENEINFO:
+		{
+			data_head_ptr->sub_type = SCENEINFO;
+			src_size = sizeof(struct sensor_nr_scene_map_param)
+			    + sizeof(struct sensor_nr_level_map_param)
+			    + sizeof(struct sensor_nr_level_map_param);
+
+			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
+				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
+				if (!nr_scene_and_level_map) {
+					ISP_LOGE("fail to do ispParserAlloc!");
+					return -1;
+				}
+				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
+				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
+				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
+
+			} else {
+				ISP_LOGE("fail to check param");
+			}
+			break;
+		}
+	case SHARKL5_PPE:
+		{
+			data_head_ptr->sub_type = SHARKL5_PPE;
+			src_size = sizeof(struct sensor_ppe_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PPE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ppe_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_NLM:
+		{
+			data_head_ptr->sub_type = SHARKL5_NLM;
+			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.nlm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3VST:
+		{
+			data_head_ptr->sub_type = SHARKL3VST;
+			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.vst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3IVST:
+		{
+			data_head_ptr->sub_type = SHARKL3IVST;
+			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21DITHER:
+		{
+			data_head_ptr->sub_type = V21DITHER;
+			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_BPC:
+		{
+			data_head_ptr->sub_type = SHARKL5_BPC;
+			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.bpc_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21GRGB:
+		{
+			data_head_ptr->sub_type = V21GRGB;
+			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.grgb_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CFA:
+		{
+			data_head_ptr->sub_type = V21CFA;
+			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cfae_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL3_RGBAFM:
+		{
+			data_head_ptr->sub_type = SHARKL3_RGBAFM;
+			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_UVDIV:
+		{
+			data_head_ptr->sub_type = SHARKL5_UVDIV;
+			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_3DNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_3DNR;
+			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_SW3DNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_SW3DNR;
+			src_size = sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.sw3dnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_EE:
+		{
+			data_head_ptr->sub_type = SHARKL5_EE;
+			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ee_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21PRECDN:
+		{
+			data_head_ptr->sub_type = V21PRECDN;
+			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_YNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_YNR;
+			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ynr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21CDN:
+		{
+			data_head_ptr->sub_type = V21CDN;
+			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case V21POSTCDN:
+		{
+			data_head_ptr->sub_type = V21POSTCDN;
+			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_IIRCNR:
+		{
+			data_head_ptr->sub_type = SHARKL5_IIRCNR;
+			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_NOISEFILTER:
+		{
+			data_head_ptr->sub_type = SHARKL5_NOISEFILTER;
+			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_CNR20:
+		{
+			data_head_ptr->sub_type = SHARKL5_CNR20;
+			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_LTM:
+		{
+			data_head_ptr->sub_type = SHARKL5_LTM;
+			src_size = sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.ltm_level_ptr + offset_units * src_size;
+			break;
+		}
+	case SHARKL5_IMBALANCE:
+		{
+			data_head_ptr->sub_type = SHARKL5_IMBALANCE;
+			src_size = sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
+			break;
+		}
+	default:
+		break;
+	}
+	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+
+	if (nr_scene_and_level_map) {
+		ispParserFree(nr_scene_and_level_map);
+	}
+	return ret;
+}
+
+static isp_denoise_write_t s_adapt_isp_denoise_write = isp_denoise_write_v27;
+static isp_denoise_read_t s_adapt_isp_denoise_read = isp_denoise_read_v27;
+
+#else
+
+static isp_denoise_write_t s_adapt_isp_denoise_write;
+static isp_denoise_read_t s_adapt_isp_denoise_read;
+
+#endif
+
+/****************************** Project adapt END *********************************************/
+
+
 struct camera_func *ispvideo_GetCameraFunc(void)
 {
 	return s_camera_fun_ptr;
@@ -713,328 +2447,17 @@ static cmr_s32 isp_tool_calc_nr_addr_offset(cmr_u8 isp_mode, cmr_u8 nr_mode, cmr
 	return rtn;
 }
 
+
 cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	cmr_u8 *data_actual_ptr;
-	cmr_u32 data_actual_len;
-	cmr_u8 isp_mode = 0;
-	cmr_u8 nr_mode = 0;
-	cmr_u32 offset_units = 0;
-	cmr_u32 nr_offset_addr = 0;
-	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
-	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
-	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
+	isp_denoise_write_t write_func;
 
-	if ((NULL == data_buf) || (NULL == data_size)) {
-		ISP_LOGE("fail to check param");
-		return ISP_PARAM_NULL;
+	write_func = s_adapt_isp_denoise_write;
+	if (write_func) {
+		ret = write_func(data_buf, data_size);
 	}
-	struct isp_data_header_normal *data_head = (struct isp_data_header_normal *)data_buf;
 
-	data_actual_ptr = data_buf + sizeof(struct isp_data_header_normal);
-	data_actual_len = *data_size - sizeof(struct isp_data_header_normal);
-
-	if (nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
-		isp_mode = 0;
-		nr_mode = 0;
-	} else {
-		isp_mode = data_head->isp_mode;
-		nr_mode = data_head->nr_mode;
-		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
-		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
-		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
-	}
-	switch (data_head->sub_type) {
-	case SHARKL5_PPE:
-		{
-			static cmr_u32 ppe_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PPE_T];
-			memcpy(((cmr_u8 *) (nr_update_param.ppe_level_ptr)) + nr_offset_addr + ppe_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ppe_ptr_offset += data_actual_len;
-			else
-				ppe_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_PPE_T] = 1;
-			break;
-		}
-	case SHARKL5_NLM:
-		{
-			static cmr_u32 bayer_nr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				bayer_nr_ptr_offset += data_actual_len;
-			else
-				bayer_nr_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_NLM_T] = 1;
-			break;
-		}
-	case SHARKL3VST:
-		{
-			static cmr_u32 vst_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
-			memcpy(((cmr_u8 *) (nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				vst_ptr_offset += data_actual_len;
-			else
-				vst_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_NLM_T] = 1;
-			break;
-		}
-	case SHARKL3IVST:
-		{
-			static cmr_u32 ivst_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
-			memcpy(((cmr_u8 *) (nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ivst_ptr_offset += data_actual_len;
-			else
-				ivst_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_NLM_T] = 1;
-			break;
-		}
-	case V21DITHER:
-		{
-			static cmr_u32 rgb_dither_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
-			memcpy(((cmr_u8 *) (nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				rgb_dither_ptr_offset += data_actual_len;
-			else
-				rgb_dither_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_RGB_DITHER_T] = 1;
-			break;
-		}
-	case SHARKL5_BPC:
-		{
-			static cmr_u32 bpc_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((cmr_u8 *) (nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				bpc_ptr_offset += data_actual_len;
-			else
-				bpc_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_BPC_T] = 1;
-			break;
-		}
-	case V21GRGB:
-		{
-			static cmr_u32 grgb_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
-			memcpy(((cmr_u8 *) (nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				grgb_ptr_offset += data_actual_len;
-			else
-				grgb_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_GRGB_T] = 1;
-			break;
-		}
-	case V21CFA:
-		{
-			static cmr_u32 cfae_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
-			memcpy(((cmr_u8 *) (nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				cfae_ptr_offset += data_actual_len;
-			else
-				cfae_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_CFA_T] = 1;
-			break;
-		}
-	case SHARKL3_RGBAFM:
-		{
-			static cmr_u32 rgb_afm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				rgb_afm_ptr_offset += data_actual_len;
-			else
-				rgb_afm_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_RGB_AFM_T] = 1;
-			break;
-		}
-	case SHARKL5_UVDIV:
-		{
-			static cmr_u32 uvdiv_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
-			memcpy(((cmr_u8 *) (nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				uvdiv_ptr_offset += data_actual_len;
-			else
-				uvdiv_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_UVDIV_T] = 1;
-			break;
-		}
-	case SHARKL5_3DNR:
-		{
-			static cmr_u32 dnr_pre_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
-			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				dnr_pre_ptr_offset += data_actual_len;
-			else
-				dnr_pre_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_3DNR_T] = 1;
-			break;
-		}
-	case SHARKL5_SW3DNR:
-		{
-			static cmr_u32 sw3dnr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
-			memcpy(((cmr_u8 *) (nr_update_param.dnr_level_ptr)) + nr_offset_addr + sw3dnr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				sw3dnr_ptr_offset += data_actual_len;
-			else
-				sw3dnr_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_SW3DNR_T] = 1;
-			break;
-		}
-	case SHARKL5_EE:
-		{
-			static cmr_u32 edge_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
-			memcpy(((cmr_u8 *) (nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				edge_ptr_offset += data_actual_len;
-			else
-				edge_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_EDGE_T] = 1;
-			break;
-		}
-	case V21PRECDN:
-		{
-			static cmr_u32 precdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
-			memcpy(((cmr_u8 *) (nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				precdn_ptr_offset += data_actual_len;
-			else
-				precdn_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_YUV_PRECDN_T] = 1;
-			break;
-		}
-	case SHARKL5_YNR:
-		{
-			static cmr_u32 ynr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
-			memcpy(((cmr_u8 *) (nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ynr_ptr_offset += data_actual_len;
-			else
-				ynr_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_YNR_T] = 1;
-			break;
-		}
-	case V21CDN:
-		{
-			static cmr_u32 cdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
-			memcpy(((cmr_u8 *) (nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				cdn_ptr_offset += data_actual_len;
-			else
-				cdn_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_CDN_T] = 1;
-			break;
-		}
-	case V21POSTCDN:
-		{
-			static cmr_u32 postcdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
-			memcpy(((cmr_u8 *) (nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				postcdn_ptr_offset += data_actual_len;
-			else
-				postcdn_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_POSTCDN_T] = 1;
-			break;
-		}
-	case SHARKL5_IIRCNR:
-		{
-			static cmr_u32 ynr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			memcpy(((cmr_u8 *) (nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ynr_ptr_offset += data_actual_len;
-			else
-				ynr_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_IIRCNR_T] = 1;
-			break;
-		}
-	case SHARKL5_NOISEFILTER:
-		{
-			static cmr_u32 yuv_noisefilter_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
-			memcpy(((cmr_u8 *) (nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				yuv_noisefilter_ptr_offset += data_actual_len;
-			else
-				yuv_noisefilter_ptr_offset = 0;
-			nr_tool_flags[ISP_BLK_YUV_NOISEFILTER_T] = 1;
-			break;
-		}
-	case SHARKL5_CNR20:
-		{
-			static cmr_u32 cnr2_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
-			memcpy(((cmr_u8 *) (nr_update_param.cnr2_level_ptr)) + nr_offset_addr + cnr2_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				cnr2_ptr_offset += data_actual_len;
-			else
-				cnr2_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
-			break;
-		}
-	case SHARKL5_LTM:
-		{
-			static cmr_u32 ltm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.ltm_level_ptr)) + nr_offset_addr + ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ltm_ptr_offset += data_actual_len;
-			else
-				ltm_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_LTM_T] = 1;
-			break;
-		}
-	case SHARKL5_IMBALANCE:
-		{
-			static cmr_u32 imblance_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
-			memcpy(((cmr_u8 *) (nr_update_param.imbalance_level_ptr)) + nr_offset_addr + imblance_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				imblance_ptr_offset += data_actual_len;
-			else
-				imblance_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_IMBALANCEE_T] = 1;
-			break;
-		}
-	default:
-		break;
-	}
 	return ret;
 }
 
@@ -1079,263 +2502,17 @@ cmr_s32 denoise_param_send(cmr_u8 * tx_buf, cmr_u32 valid_len, void *src_ptr, cm
 	return ret;
 }
 
+
 cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_read * data_head)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	struct isp_data_header_normal *data_head_ptr;
-	cmr_u8 *data_ptr;
-	cmr_u32 data_valid_len;
-	cmr_u32 src_size = 0;
-	cmr_s32 file_num = 0;
-	cmr_u8 isp_mode = 0;
-	cmr_u8 nr_mode = 0;
-	cmr_u8 *nr_scene_and_level_map = NULL;
-	cmr_u32 *temp_nr_map_addr = NULL;
+	isp_denoise_read_t read_func;
 
-	if (NULL == tx_buf) {
-		ISP_LOGE("fail to check tx_buf:%p", tx_buf);
-		return ISP_PARAM_ERROR;
+	read_func = s_adapt_isp_denoise_read;
+	if (read_func) {
+		ret = read_func(tx_buf, len, data_head);
 	}
 
-	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
-	data_head_ptr->main_type = 0x01;	//denoise param
-	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
-	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
-	file_num = data_head->sub_type;
-	cmr_u32 offset_units = 0;
-	void *nr_offset_addr = PNULL;
-	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
-	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
-	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
-
-	isp_mode = data_head->isp_mode;
-	nr_mode = data_head->nr_mode;
-	if (nr_update_param.nr_scene_map_ptr != PNULL) {
-		multi_nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
-	} else {
-		return ISP_PARAM_ERROR;
-	}
-	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
-		multi_nr_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
-	} else {
-		return ISP_PARAM_ERROR;
-	}
-	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
-		multi_nr_default_level_map_ptr = (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
-	} else {
-		return ISP_PARAM_ERROR;
-	}
-	switch (file_num) {
-	case SCENEINFO:
-		{
-			data_head_ptr->sub_type = SCENEINFO;
-			src_size = sizeof(struct sensor_nr_scene_map_param)
-			    + sizeof(struct sensor_nr_level_map_param)
-			    + sizeof(struct sensor_nr_level_map_param);
-
-			if ((multi_nr_scene_map_ptr != NULL) && (multi_nr_level_map_ptr != NULL) && (multi_nr_default_level_map_ptr != NULL)) {
-				nr_scene_and_level_map = (cmr_u8 *) ispParserAlloc(src_size);
-				if (!nr_scene_and_level_map) {
-					ISP_LOGE("fail to do ispParserAlloc!");
-					return -1;
-				}
-				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
-				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
-				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				temp_nr_map_addr = (cmr_u32 *) ((cmr_u8 *) temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
-				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				nr_offset_addr = (cmr_u32 *) nr_scene_and_level_map;
-
-			} else {
-				ISP_LOGE("fail to check param");
-			}
-			break;
-		}
-	case SHARKL5_PPE:
-		{
-			data_head_ptr->sub_type = SHARKL5_PPE;
-			src_size = sizeof(struct sensor_ppe_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PPE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.ppe_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_NLM:
-		{
-			data_head_ptr->sub_type = SHARKL5_NLM;
-			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.nlm_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL3VST:
-		{
-			data_head_ptr->sub_type = SHARKL3VST;
-			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.vst_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL3IVST:
-		{
-			data_head_ptr->sub_type = SHARKL3IVST;
-			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
-			break;
-		}
-	case V21DITHER:
-		{
-			data_head_ptr->sub_type = V21DITHER;
-			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_BPC:
-		{
-			data_head_ptr->sub_type = SHARKL5_BPC;
-			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.bpc_level_ptr + offset_units * src_size;
-			break;
-		}
-	case V21GRGB:
-		{
-			data_head_ptr->sub_type = V21GRGB;
-			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.grgb_level_ptr + offset_units * src_size;
-			break;
-		}
-	case V21CFA:
-		{
-			data_head_ptr->sub_type = V21CFA;
-			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.cfae_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL3_RGBAFM:
-		{
-			data_head_ptr->sub_type = SHARKL3_RGBAFM;
-			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_UVDIV:
-		{
-			data_head_ptr->sub_type = SHARKL5_UVDIV;
-			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_3DNR:
-		{
-			data_head_ptr->sub_type = SHARKL5_3DNR;
-			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_SW3DNR:
-		{
-			data_head_ptr->sub_type = SHARKL5_SW3DNR;
-			src_size = sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.sw3dnr_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_EE:
-		{
-			data_head_ptr->sub_type = SHARKL5_EE;
-			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.ee_level_ptr + offset_units * src_size;
-			break;
-		}
-	case V21PRECDN:
-		{
-			data_head_ptr->sub_type = V21PRECDN;
-			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_YNR:
-		{
-			data_head_ptr->sub_type = SHARKL5_YNR;
-			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.ynr_level_ptr + offset_units * src_size;
-			break;
-		}
-	case V21CDN:
-		{
-			data_head_ptr->sub_type = V21CDN;
-			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
-			break;
-		}
-	case V21POSTCDN:
-		{
-			data_head_ptr->sub_type = V21POSTCDN;
-			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_IIRCNR:
-		{
-			data_head_ptr->sub_type = SHARKL5_IIRCNR;
-			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_NOISEFILTER:
-		{
-			data_head_ptr->sub_type = SHARKL5_NOISEFILTER;
-			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_CNR20:
-		{
-			data_head_ptr->sub_type = SHARKL5_CNR20;
-			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_LTM:
-		{
-			data_head_ptr->sub_type = SHARKL5_LTM;
-			src_size = sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.ltm_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_IMBALANCE:
-		{
-			data_head_ptr->sub_type = SHARKL5_IMBALANCE;
-			src_size = sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
-			break;
-		}
-	default:
-		break;
-	}
-	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
-
-	if (nr_scene_and_level_map) {
-		ispParserFree(nr_scene_and_level_map);
-	}
 	return ret;
 }
 

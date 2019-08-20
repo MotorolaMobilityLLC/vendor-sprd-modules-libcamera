@@ -64,7 +64,7 @@ struct isp_raw_image{
 
 extern char raw_filename[200];
 extern cmr_u32 tool_fmt_pattern;
-extern cmr_u8 nr_tool_flags[ISP_BLK_TYPE_MAX];
+extern cmr_u8 nr_tool_flags[ISP_BLK_NR_MAX];
 extern cmr_u8 *nr_tool_flag;
 extern struct denoise_param_update nr_update_param;
 

@@ -360,7 +360,10 @@ struct isp_nlm_param {
 };
 
 struct isp_imblance_param {
-	struct isp_dev_nlm_imblance cur;
+	union {
+		struct isp_dev_nlm_imblance cur;
+		struct isp_dev_nlm_imblance_v1 cur_v1;
+	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -573,10 +576,6 @@ cmr_s32 _pm_bpc_init(void *dst_bpc_param, void *src_bpc_param, void *param1, voi
 cmr_s32 _pm_bpc_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_bpc_get_param(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_bpc_v0_init(void *dst_bpc_param, void *src_bpc_param, void *param1, void *param2);
-cmr_s32 _pm_bpc_v0_set_param(void *bpc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_bpc_v0_get_param(void *bpc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
 cmr_s32 _pm_ppe_init(void *dst_ppe_param, void *src_ppe_param, void *param1, void *param2);
 cmr_s32 _pm_ppe_set_param(void *ppe_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_ppe_get_param(void *ppe_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -664,11 +663,6 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_nlm_deinit(void *nlm_param);
 
-cmr_s32 _pm_nlm_v0_init(void *dst_nlm_param, void *src_nlm_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_nlm_v0_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_nlm_v0_get_param(void *nlm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-cmr_s32 _pm_nlm_v0_deinit(void *nlm_param);
-
 cmr_s32 _pm_imblance_init(void *dst_imblance_param, void *src_imblance_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_imblance_set_param(void *imblance_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_imblance_get_param(void *imblance_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -677,10 +671,6 @@ cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void *p
 cmr_s32 _pm_posterize_set_param(void *pstrz_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_posterize_get_param(void *pstrz_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_posterize_v0_init(void *dst_pstrz_param, void *src_pstrz_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_posterize_v0_set_param(void *pstrz_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_posterize_v0_get_param(void *pstrz_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
 cmr_s32 _pm_yuv_ygamma_init(void *dst_gamc_param, void *src_gamc_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_yuv_ygamma_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_yuv_ygamma_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -688,10 +678,6 @@ cmr_s32 _pm_yuv_ygamma_get_param(void *gamc_param, cmr_u32 cmd, void *rtn_param0
 cmr_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_ynr_set_param(void *ynr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_ynr_get_param(void *ynr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_ynr_v0_init(void *dst_ynr_param, void *src_ynr_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_ynr_v0_set_param(void *ynr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_ynr_v0_get_param(void *ynr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_yuv_precdn_init(void *dst_precdn_param, void *src_precdn_param, void *param1, void *param2);
 cmr_s32 _pm_yuv_precdn_set_param(void *precdn_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
@@ -713,9 +699,6 @@ cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *pa
 cmr_s32 _pm_uv_div_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-cmr_s32 _pm_uv_div_v0_init(void *dst_uv_div_param, void *src_uv_div_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_uv_div_v0_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_uv_div_v0_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 /* ISP blocks end..... */
 
@@ -724,10 +707,6 @@ cmr_s32 _pm_uv_div_v0_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param
 cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
 cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_cnr2_v0_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
-cmr_s32 _pm_cnr2_v0_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_cnr2_v0_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_sw3dnr_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_sw3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

@@ -129,6 +129,14 @@ enum ISP_BLK_ID {
 	ISP_BLK_SW3DNR = 0x5066,
 	ISP_BLK_HSV_NEW = 0x5067,
 	ISP_BLK_BOKEH_DUALCAM = 0x5068,
+	ISP_BLK_BWU_BWD = 0x5069,
+	ISP_BLK_RAW_GTM = 0x506A,
+	ISP_BLK_RGB_LTM = 0x506B,
+	ISP_BLK_IMBALANCE_V1 = 0x506E,
+	ISP_BLK_NLM_V2 = 0x506F,		// + ISP_BLK_VST + ISP_BLK_IVST
+	ISP_BLK_YUV_LTM = 0x5071,
+	ISP_BLK_HSV_NEW2 = 0x5072,
+	ISP_BLK_PPE_V1 = 0x5073,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };
@@ -171,21 +179,22 @@ enum isp_smart_id {
 	ISP_SMART_3DNR = 33,
 	ISP_SMART_SW3DNR = 34,
 	ISP_SMART_HSV_NEW = 35,
+	ISP_SMART_BWU_BWD = 38,
+	ISP_SMART_RAW_GTM = 39,
+	ISP_SMART_RGB_LTM = 40,
+	ISP_SMART_IMBALANCE_V1 = 43,
+	ISP_SMART_NLM_V2 = 44,
+	ISP_SMART_YUV_LTM = 46,
+	ISP_SMART_PPE_V1 = 47,
 	ISP_SMART_MAX
 };
 
 #ifdef CONFIG_ISP_2_4
 #include "sensor_raw_pike2.h"
 #elif defined CONFIG_ISP_2_5
-#ifndef _SENSOR_RAW_SHARKL3_H_
-#define _SENSOR_RAW_SHARKL3_H_
-#endif
-#include "sensor_raw_isp2.6.h"
+#include "sensor_raw_sharkl3.h"
 #elif defined CONFIG_ISP_2_6
-#ifndef _SENSOR_RAW_SHARKL5_H_
-#define _SENSOR_RAW_SHARKL5_H_
-#endif
-#include "sensor_raw_isp2.6.h"
+#include "sensor_raw_sharkl5.h"
 #elif defined CONFIG_ISP_2_7
 #include "sensor_raw_sharkl5pro.h"
 #else

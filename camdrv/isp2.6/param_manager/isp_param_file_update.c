@@ -26,9 +26,33 @@
 
 #define LNC_MAP_NUM 9
 #define SCENE_INFO_NUM 10
+#define ISP_PARAM_VERSION_V25 0x0007
 #define ISP_PARAM_VERSION_V26 0x0008
 
-char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
+#ifdef CONFIG_ISP_2_5   /* for SharkL3 */
+char nr_param_name[ISP_BLK_NR_MAX][20] = {
+	"bayer_nr",
+	"vst",
+	"ivst",
+	"rgb_dither",
+	"bpc",
+	"grgb",
+	"cfai",
+	"rgb_afm",
+	"cce_uvdiv",
+	"pre_3dnr",
+	"cap_3dnr",
+	"yuv_precdn",
+	"uv_cdn",
+	"uv_postcdn",
+	"ynr",
+	"ee",
+	"iircnr",
+	"yuv_noisefilter",
+	"cnr",
+};
+#elif defined CONFIG_ISP_2_6 /* for SharkL5 */
+char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"bayer_nr",
 	"vst",
 	"ivst",
@@ -52,6 +76,34 @@ char nr_param_name[ISP_BLK_TYPE_MAX][20] = {
 	"ltm",
 	"sw3dnr",
 };
+#elif defined CONFIG_ISP_2_7 /* for SharkL5Pro */
+char nr_param_name[ISP_BLK_NR_MAX][20] = {
+	/* todo */
+	"bayer_nr",
+	"vst",
+	"ivst",
+	"rgb_dither",
+	"bpc",
+	"grgb",
+	"cfai",
+	"rgb_afm",
+	"cce_uvdiv",
+	"3dnr",
+	"ppe",
+	"yuv_precdn",
+	"uv_cdn",
+	"uv_postcdn",
+	"ynr",
+	"ee",
+	"iircnr",
+	"yuv_noisefilter",
+	"cnr",
+	"imbalance",
+	"ltm",
+	"sw3dnr",
+};
+#endif
+
 
 char nr_mode_name[MAX_MODE_NUM][12] = {
 	"common",
@@ -1079,7 +1131,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0, k = 0;
-	cmr_u32 nr_set_size[ISP_BLK_TYPE_MAX] = {0};
+	cmr_u32 nr_set_size[ISP_BLK_NR_MAX] = {0};
 	struct sensor_nr_scene_map_param *nr_map_ptr = PNULL;
 	cmr_u32 *multi_nr_scene_map_ptr = PNULL;
 	struct sensor_nr_level_map_param *nr_level_number_ptr = PNULL;
@@ -1096,6 +1148,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		return rtn;
 	}
 
+#if 0
 	nr_set_size[ISP_BLK_NLM_T] = sizeof(struct sensor_nlm_level);
 	nr_set_size[ISP_BLK_VST_T] = sizeof(struct sensor_vst_level);
 	nr_set_size[ISP_BLK_IVST_T] = sizeof(struct sensor_ivst_level);
@@ -1118,6 +1171,14 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	nr_set_size[ISP_BLK_LTM_T] = sizeof(struct sensor_ltm_level);
 	nr_set_size[ISP_BLK_IMBALANCEE_T] = sizeof(struct sensor_nlm_imbalance_level);
 	nr_set_size[ISP_BLK_SW3DNR_T] = sizeof(struct sensor_sw3dnr_level);
+#endif
+
+	for (i = 0; i < ISP_BLK_NR_MAX; i++) {
+		cmr_u32 nr_type;
+		nr_type = nr_blocks_info[i].nr_type;
+		if (nr_type < ISP_BLK_NR_MAX)
+			nr_set_size[nr_type] = nr_blocks_info[i].unit_size;
+	}
 
 	nr_map_ptr = sensor_raw_ptr->nr_fix.nr_scene_ptr;
 	multi_nr_scene_map_ptr = (cmr_u32 *)&(nr_map_ptr->nr_scene_map[0]);
@@ -1133,7 +1194,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	fix_data_ptr = sensor_raw_ptr->fix_ptr[0];
 	nr_ptr = (struct nr_set_group_unit *)&(fix_data_ptr->nr.nr_set_group);
 
-	for (k = 0; k < ISP_BLK_TYPE_MAX; k++) {
+	for (k = 0; k < ISP_BLK_NR_MAX; k++) {
 		size_of_per_unit = nr_set_size[k] * nr_level_number_ptr->nr_level_map[k];
 		nr_param_ptr = nr_ptr[k].nr_ptr;
 		for (i = 0; i < MAX_MODE_NUM; i++) {
@@ -1401,13 +1462,15 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 		ISP_LOGI("the param file is %s, version = %d", filename, version);
 	}
 
-	if (ISP_PARAM_VERSION_V26 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
+	if (ISP_PARAM_VERSION_V26 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id) ||
+		ISP_PARAM_VERSION_V25 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
 		rtn = update_param_v26(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
 			ISP_LOGE("fail to update param!");
 			return rtn;
 		}
 	}
+
 	return rtn;
 }
 #if 0

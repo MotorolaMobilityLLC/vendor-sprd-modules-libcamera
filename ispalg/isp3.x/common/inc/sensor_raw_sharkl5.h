@@ -31,7 +31,6 @@
 #define MAX_MODE_NUM 16
 #define MAX_NR_NUM 32
 
-#define MAX_NRTYPE_NUM ISP_BLK_TYPE_MAX
 
 #define MAX_SCENEMODE_NUM 16
 #define MAX_SPECIALEFFECT_NUM 16
@@ -52,6 +51,7 @@
 #define LNC_MAP_COUNT 9
 #define LNC_WEIGHT_LEN 4096
 #define PDAF_GAIN_MAP_LEN 128
+#define VST_IVST_NUM 1024
 
 #define CNR_LEVEL 4
 
@@ -940,11 +940,11 @@ struct sensor_nlm_direction {
 };
 
 struct sensor_vst_level {
-	cmr_u32 vst_param[1024];
+	cmr_u32 vst_param[VST_IVST_NUM];
 };
 
 struct sensor_ivst_level {
-	cmr_u32 ivst_param[1024];
+	cmr_u32 ivst_param[VST_IVST_NUM];
 };
 
 struct sensor_lutw_level {
@@ -1866,7 +1866,7 @@ enum {
 	ISP_BLK_IMBALANCEE_T,
 	ISP_BLK_LTM_T,
 	ISP_BLK_SW3DNR_T,
-	ISP_BLK_TYPE_MAX
+	ISP_BLK_NR_MAX
 };
 
 enum {
