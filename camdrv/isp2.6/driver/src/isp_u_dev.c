@@ -99,10 +99,20 @@ cmr_s32 isp_dev_get_video_size(
 			isp_handle handle, cmr_u32 *width, cmr_u32 *height)
 {
 	cmr_s32 ret = 0;
-	UNUSED(handle);
+	struct isp_file *file = NULL;
+	struct sprd_img_size size = {0};
 
-	*width = ISP_MAX_WIDTH;
-	*height = ISP_MAX_HEIGHT;
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, SPRD_IMG_IO_CAPABILITY, &size);
+	if (ret) {
+		ISP_LOGE("fail to get video size.");
+		return ret;
+	}
+
+	*width = size.w;
+	*height = size.h;
+	ISP_LOGI("get video size width=%d, height=%d", *width , *height);
 
 	return ret;
 }
