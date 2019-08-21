@@ -31,6 +31,7 @@
 #define MAX_MODE_NUM 16
 #define MAX_NR_NUM 32
 
+#define MAX_NRTYPE_NUM ISP_BLK_TYPE_MAX
 
 #define MAX_SCENEMODE_NUM 16
 #define MAX_SPECIALEFFECT_NUM 16
@@ -1395,6 +1396,25 @@ struct sensor_cnr_level {
 	float rang_sigma[CNR_LEVEL][2];
 };
 
+// SOFTYNR domain
+/************************************************************************************/
+struct sensor_ynrs_level {
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
+ };
+
 struct sensor_ae_adapt_param {
 	cmr_u16 binning_factor; // 1x = 128
 	cmr_u16 reserved[19];
@@ -1881,6 +1901,7 @@ enum {
 	ISP_BLK_IIRCNR_T,
 	ISP_BLK_YUV_NOISEFILTER_T,
 	ISP_BLK_CNR2_T,
+	ISP_BLK_YNRS_T,
 	ISP_BLK_NR_MAX
 };
 
@@ -2082,6 +2103,8 @@ struct sensor_nr_set_group_param {
 	cmr_u32 yuv_noisefilter_len;
 	cmr_u8 *cnr2;
 	cmr_u32 cnr2_len;
+	cmr_u8 *ynrs;
+	cmr_u32 ynrs_len;
 };
 struct sensor_nr_param {
 	struct sensor_nr_set_group_param nr_set_group;
@@ -2165,6 +2188,7 @@ struct denoise_param_update {
 	struct sensor_ynr_level *ynr_level_ptr;
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_level_ptr;
 	struct sensor_cnr_level *cnr2_level_ptr;
+	struct sensor_ynrs_level *ynrs_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
