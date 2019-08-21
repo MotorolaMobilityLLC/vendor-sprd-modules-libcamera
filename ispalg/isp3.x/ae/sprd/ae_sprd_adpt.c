@@ -615,10 +615,17 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	exp_data->actual_data.frm_len = actual_item.frm_len;
 	exp_data->actual_data.frm_len_def = actual_item.frm_len_def;
 
-	if (write_item.isp_gain && cxt->cam_4in1_mode && !cxt->cam_4in1_cap_flag) {
-		double rgb_coeff = write_item.isp_gain * 1.0 / 4096 * 4;
-		if (cxt->isp_ops.set_rgb_gain_4in1) {
-			cxt->isp_ops.set_rgb_gain_4in1(cxt->isp_ops.isp_handler, rgb_coeff);
+	if(!cxt->cam_4in1_cap_flag) {
+		if (cxt->noramosaic_4in1 || (write_item.isp_gain && cxt->cam_4in1_mode)) {
+			double rgb_coeff = 0;
+			if (cxt->noramosaic_4in1)
+				rgb_coeff = write_item.isp_gain * 1.0 / 4096;
+			else
+				rgb_coeff = write_item.isp_gain * 1.0 / 4096 * 4;
+
+			if (cxt->isp_ops.set_rgb_gain_4in1) {
+				cxt->isp_ops.set_rgb_gain_4in1(cxt->isp_ops.isp_handler, rgb_coeff);
+			}
 		}
 	}
 	return ret;
@@ -4178,6 +4185,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	ISP_LOGD("zsl_flag %d  prev_size (%d x %d)", cxt->zsl_flag,cxt->prv_status.frame_size.w,cxt->prv_status.frame_size.h);
 
 	cxt->expchanged = 0;
+	cxt->noramosaic_4in1 = work_info->noramosaic_4in1;
 
 	if((work_info->blk_num.w != work_info->blk_num.h) || (work_info->blk_num.w < 32) || (work_info->blk_num.w % 32)){
 		work_info->blk_num.w = 32;

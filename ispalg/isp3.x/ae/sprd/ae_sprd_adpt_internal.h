@@ -380,6 +380,7 @@ extern "C" {
 		/* 4in1 param */
 		cmr_u32 cam_4in1_mode;
 		cmr_u32 cam_4in1_cap_flag;
+		cmr_u32 noramosaic_4in1; //for 32m large_pix sensor
 
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;

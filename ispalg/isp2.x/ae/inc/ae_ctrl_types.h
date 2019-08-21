@@ -301,6 +301,7 @@ extern "C" {
 		cmr_u16 binning_factor;
 		struct ae_size blk_num;
 		cmr_u32 cam_4in1_mode;
+		cmr_u32 noramosaic_4in1;
 	};
 
 	struct ae_set_iso {
