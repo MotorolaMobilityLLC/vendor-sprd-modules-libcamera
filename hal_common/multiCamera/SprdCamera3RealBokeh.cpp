@@ -1801,7 +1801,7 @@ SprdCamera3RealBokeh::BokehCaptureThread::BokehCaptureThread() {
     char prop1[PROPERTY_VALUE_MAX] = {
         0,
     };
-    property_get("persist.vendor.cam.gallery.abokeh", prop1, "1");
+    property_get("persist.vendor.cam.gallery.abokeh", prop1, "0");
     if (1 == atoi(prop1)) {
         mAbokehGallery = true;
     } else {
