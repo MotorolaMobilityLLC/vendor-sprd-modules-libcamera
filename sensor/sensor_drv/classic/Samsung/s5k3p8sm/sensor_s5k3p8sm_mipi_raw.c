@@ -19,19 +19,19 @@
 
 #define LOG_TAG "s5k3p8sm_drv_mipi_raw"
 
-#define RES_TAB_RAW   s_s5k3p8sm_resolution_Tab_RAW
-#define RES_TRIM_TAB  s_s5k3p8sm_Resolution_Trim_Tab
-#define STATIC_INFO   s_s5k3p8sm_static_info
-#define FPS_INFO      s_s5k3p8sm_mode_fps_info
+#define RES_TAB_RAW s_s5k3p8sm_resolution_Tab_RAW
+#define RES_TRIM_TAB s_s5k3p8sm_Resolution_Trim_Tab
+#define STATIC_INFO s_s5k3p8sm_static_info
+#define FPS_INFO s_s5k3p8sm_mode_fps_info
 #define MIPI_RAW_INFO g_s5k3p8sm_mipi_raw_info
-#define MODULE_INFO   s_s5k3p8sm_module_info_tab
+#define MODULE_INFO s_s5k3p8sm_module_info_tab
 
 static cmr_int s5k3p8sm_drv_get_raw_info(cmr_handle handle);
 
 static cmr_int s5k3p8sm_drv_init_fps_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
@@ -56,16 +56,19 @@ static cmr_int s5k3p8sm_drv_init_fps_info(cmr_handle handle) {
                     fps_info->sensor_mode_fps[i].high_fps_skip_num =
                         fps_info->sensor_mode_fps[i].max_fps / 30;
                 }
-                if (fps_info->sensor_mode_fps[i].max_fps > static_info->max_fps) {
+                if (fps_info->sensor_mode_fps[i].max_fps >
+                    static_info->max_fps) {
                     static_info->max_fps = fps_info->sensor_mode_fps[i].max_fps;
                 }
             }
             SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ", i,
-                      tempfps, trim_info[i].frame_line, trim_info[i].line_time);
-            SENSOR_LOGI("mode %d,max_fps: %d ", i, fps_info->sensor_mode_fps[i].max_fps);
+                        tempfps, trim_info[i].frame_line,
+                        trim_info[i].line_time);
+            SENSOR_LOGI("mode %d,max_fps: %d ", i,
+                        fps_info->sensor_mode_fps[i].max_fps);
             SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
-                fps_info->sensor_mode_fps[i].is_high_fps,
-                fps_info->sensor_mode_fps[i].high_fps_skip_num);
+                        fps_info->sensor_mode_fps[i].is_high_fps,
+                        fps_info->sensor_mode_fps[i].high_fps_skip_num);
         }
         fps_info->is_init = 1;
     }
@@ -84,7 +87,7 @@ static cmr_int s5k3p8sm_drv_identify(cmr_handle handle, cmr_int param) {
     cmr_u16 i = 0;
     cmr_u16 ret;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("identify E:\n");
 
@@ -111,9 +114,8 @@ static cmr_int s5k3p8sm_drv_identify(cmr_handle handle, cmr_int param) {
 #endif
             s5k3p8sm_drv_init_fps_info(handle);
         } else {
-            SENSOR_LOGE(
-                "SENSOR_S5K3P8SM: Identify this is hm%x%x sensor !", pid_value,
-                ver_value);
+            SENSOR_LOGE("SENSOR_S5K3P8SM: Identify this is hm%x%x sensor !",
+                        pid_value, ver_value);
             return ret_value;
         }
     } else {
@@ -135,9 +137,10 @@ static cmr_u32 s5k3p8sm_drv_GetMaxFrameLine(cmr_u32 index) {
     return max_line;
 }
 #endif
-static cmr_int s5k3p8sm_drv_write_exp_dummy(cmr_handle handle, 
-                 cmr_u16 expsure_line, cmr_u16 dummy_line, cmr_u16 size_index)
-{
+static cmr_int s5k3p8sm_drv_write_exp_dummy(cmr_handle handle,
+                                            cmr_u16 expsure_line,
+                                            cmr_u16 dummy_line,
+                                            cmr_u16 size_index) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u32 frame_len_cur = 0x00;
     cmr_u32 frame_len = 0x00;
@@ -145,10 +148,10 @@ static cmr_int s5k3p8sm_drv_write_exp_dummy(cmr_handle handle,
     cmr_u32 linetime = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_PRINT("exposure_line:%d, dummy:%d, size_index:%d",
-                         expsure_line, dummy_line, size_index);
+    SENSOR_PRINT("exposure_line:%d, dummy:%d, size_index:%d", expsure_line,
+                 dummy_line, size_index);
     max_frame_len = sns_drv_cxt->trim_tab_info[size_index].frame_line;
     if (expsure_line < 3) {
         expsure_line = 3;
@@ -166,16 +169,19 @@ static cmr_int s5k3p8sm_drv_write_exp_dummy(cmr_handle handle,
     frame_len_cur = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0340);
 
     if (frame_len_cur != frame_len) {
-        ret_value = hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, frame_len);
+        ret_value =
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, frame_len);
     }
 
-    ret_value = hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x202, expsure_line);
+    ret_value =
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x202, expsure_line);
 
     sns_drv_cxt->exp_line = expsure_line;
     linetime = sns_drv_cxt->trim_tab_info[size_index].line_time;
-    if(sns_drv_cxt->ops_cb.set_exif_info) {
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_EXPOSURETIME, expsure_line);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          expsure_line);
     } else {
         sns_drv_cxt->exif_info.exposure_time = expsure_line;
         sns_drv_cxt->exif_info.exposure_time = expsure_line * linetime / 1000;
@@ -190,17 +196,17 @@ static cmr_int s5k3p8sm_drv_write_exposure(cmr_handle handle, cmr_int param) {
     cmr_u32 dummy_line = 0x00;
     cmr_u32 size_index = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     expsure_line = param & 0xffff;
     dummy_line = (param >> 0x10) & 0x0fff;
     size_index = (param >> 0x1c) & 0x0f;
 
-    SENSOR_PRINT("line:%d, dummy:%d, size_index:%d",
-                   expsure_line, dummy_line, size_index);
+    SENSOR_PRINT("line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line,
+                 size_index);
 
-    ret_value =
-        s5k3p8sm_drv_write_exp_dummy(handle, expsure_line, dummy_line, size_index);
+    ret_value = s5k3p8sm_drv_write_exp_dummy(handle, expsure_line, dummy_line,
+                                             size_index);
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = sns_drv_cxt->exp_line;
 
@@ -214,10 +220,10 @@ static struct sensor_otp_cust_info s5k3p3_otp_info;
 
 static cmr_u8 s5k3p8sm_i2c_read_otp_set(cmr_handle handle, cmr_u16 addr) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    return hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 
-                                  0xA0 >> 1, addr, BITS_ADDR16_REG8);
+    return hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0xA0 >> 1, addr,
+                                  BITS_ADDR16_REG8);
 }
 
 static int s5k3p8sm_otp_init(cmr_handle handle) { return 0; }
@@ -230,7 +236,7 @@ static int s5k3p8sm_otp_read_data(cmr_handle handle) {
     struct sensor_single_otp_info *single_otp = NULL;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     single_otp = &s5k3p3_otp_info.single_otp;
     single_otp->program_flag = s5k3p8sm_i2c_read_otp(0x0000);
@@ -303,7 +309,7 @@ static int s5k3p8sm_otp_read_data(cmr_handle handle) {
 
     single_otp->checksum = s5k3p8sm_i2c_read_otp(0x06A5);
     SENSOR_LOGI("checksum = 0x%x s5k3p3_otp_info.checksum = 0x%x", checksum,
-                 single_otp->checksum);
+                single_otp->checksum);
 
     if ((checksum % 0xff) != single_otp->checksum) {
         SENSOR_LOGE("checksum error!");
@@ -314,8 +320,7 @@ static int s5k3p8sm_otp_read_data(cmr_handle handle) {
     return 0;
 }
 
-static cmr_int s5k3p8sm_otp_read(cmr_handle handle,
-                                       SENSOR_VAL_T *param) {
+static cmr_int s5k3p8sm_otp_read(cmr_handle handle, SENSOR_VAL_T *param) {
     struct sensor_otp_cust_info *otp_info = NULL;
     SENSOR_LOGI("E");
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -336,8 +341,7 @@ static cmr_int s5k3p8sm_otp_read(cmr_handle handle,
     return 0;
 }
 
-static cmr_int s5k3p8sm_parse_otp(cmr_handle handle,
-                                        SENSOR_VAL_T *param) {
+static cmr_int s5k3p8sm_parse_otp(cmr_handle handle, SENSOR_VAL_T *param) {
     cmr_u8 *buff = NULL;
     struct sensor_single_otp_info *single_otp = NULL;
     cmr_u16 i = 0;
@@ -443,7 +447,7 @@ static cmr_int s5k3p8sm_parse_otp(cmr_handle handle,
 }
 
 static cmr_int s5k3p8sm_drv_ex_write_exposure(cmr_handle handle,
-                                                 cmr_int param) {
+                                              cmr_int param) {
     cmr_int ret = SENSOR_SUCCESS;
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
@@ -452,13 +456,14 @@ static cmr_int s5k3p8sm_drv_ex_write_exposure(cmr_handle handle,
 
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     size_index = ex->size_index;
 
-    ret = s5k3p8sm_drv_write_exp_dummy(handle, exposure_line, dummy_line, size_index);
+    ret = s5k3p8sm_drv_write_exp_dummy(handle, exposure_line, dummy_line,
+                                       size_index);
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = sns_drv_cxt->exp_line;
 
@@ -472,7 +477,7 @@ static cmr_int s5k3p8sm_drv_update_gain(cmr_handle handle, cmr_int param) {
     uint32_t d_gain = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     real_gain = param >> 2;
 
@@ -506,7 +511,7 @@ static cmr_int s5k3p8sm_drv_write_gain(cmr_handle handle, cmr_s32 param) {
     cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("param: %ld", param);
 
     ret = s5k3p8sm_drv_update_gain(handle, param);
@@ -522,7 +527,7 @@ static cmr_int s5k3p8sm_drv_read_gain(cmr_handle handle, cmr_u32 param) {
     cmr_u32 gain = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     again = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0204);
     dgain = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0210);
@@ -535,15 +540,14 @@ static cmr_int s5k3p8sm_drv_read_gain(cmr_handle handle, cmr_u32 param) {
 static uint16_t s5k3p8sm_drv_get_shutter(cmr_handle handle) {
     uint16_t shutter;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     shutter = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0202) & 0xffff;
 
     return shutter;
 }
 
-static cmr_int s5k3p8sm_drv_before_snapshot(cmr_handle handle,
-                                              cmr_int param) {
+static cmr_int s5k3p8sm_drv_before_snapshot(cmr_handle handle, cmr_int param) {
     cmr_u8 ret_l, ret_m, ret_h;
     cmr_u32 capture_exposure, preview_maxline;
     cmr_u32 capture_maxline, preview_exposure;
@@ -552,7 +556,7 @@ static cmr_int s5k3p8sm_drv_before_snapshot(cmr_handle handle,
     cmr_u16 exposure_line = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     cmr_u32 prv_linetime = sns_drv_cxt->trim_tab_info[preview_mode].line_time;
     cmr_u32 cap_linetime = sns_drv_cxt->trim_tab_info[capture_mode].line_time;
@@ -566,9 +570,9 @@ static cmr_int s5k3p8sm_drv_before_snapshot(cmr_handle handle,
         goto CFG_INFO;
     }
 
-    if(sns_drv_cxt->ops_cb.set_mode)
+    if (sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if(sns_drv_cxt->ops_cb.set_mode_wait_done) 
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     preview_exposure = sns_drv_cxt->sensor_ev_info.preview_shutter;
@@ -576,8 +580,8 @@ static cmr_int s5k3p8sm_drv_before_snapshot(cmr_handle handle,
 
     capture_exposure = preview_exposure * prv_linetime / cap_linetime;
 
-    SENSOR_LOGI("prev_exp=%d,cap_exp=%d,gain=%d",
-                 preview_exposure, capture_exposure, gain);
+    SENSOR_LOGI("prev_exp=%d,cap_exp=%d,gain=%d", preview_exposure,
+                capture_exposure, gain);
 
     s5k3p8sm_drv_write_exp_dummy(handle, capture_exposure, 0, capture_mode);
     s5k3p8sm_drv_update_gain(handle, gain);
@@ -585,15 +589,16 @@ static cmr_int s5k3p8sm_drv_before_snapshot(cmr_handle handle,
 CFG_INFO:
     exposure_line = s5k3p8sm_drv_get_shutter(handle);
 
-    if(sns_drv_cxt->ops_cb.set_exif_info) {
+    if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_EXPOSURETIME, exposure_line);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          exposure_line);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_APERTUREVALUE, 200);
+                                          SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+        sns_drv_cxt->ops_cb.set_exif_info(
+            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
-        sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                  SENSOR_EXIF_CTRL_FNUMBER, 20);
+                                          SENSOR_EXIF_CTRL_FNUMBER, 200);
     } else {
         sns_drv_cxt->exif_info.exposure_line = exposure_line;
         sns_drv_cxt->exif_info.aperture_value = 29;
@@ -610,7 +615,7 @@ static cmr_int s5k3p8sm_drv_get_raw_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct raw_param_info_tab *tab_ptr =
         (struct raw_param_info_tab *)s_s5k3p8sm_raw_param_tab;
-    cmr_u32 param_id ,i = 0x00;
+    cmr_u32 param_id, i = 0x00;
 
     /*read param id from sensor omap*/
     param_id = S5K3P8SM_RAW_PARAM_COM;
@@ -631,13 +636,14 @@ static cmr_int s5k3p8sm_drv_get_raw_info(cmr_handle handle) {
     return rtn;
 }
 
-static cmr_int s5k3p8sm_drv_init_exif_info(cmr_handle handle, void**exif_info_in/*in*/) {
+static cmr_int s5k3p8sm_drv_init_exif_info(cmr_handle handle,
+                                           void **exif_info_in /*in*/) {
     cmr_int ret = SENSOR_FAIL;
     EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
     *exif_info_in = NULL;
     SENSOR_IC_CHECK_HANDLE(handle);
 
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     ret = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
     SENSOR_IC_CHECK_PTR(exif_ptr);
     *exif_info_in = exif_ptr;
@@ -667,7 +673,7 @@ static cmr_int s5k3p8sm_drv_init_exif_info(cmr_handle handle, void**exif_info_in
 static cmr_int s5k3p8sm_drv_stream_on(cmr_handle handle, cmr_s32 param) {
     cmr_s32 ret = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("StreamOn E");
 
@@ -692,7 +698,7 @@ static cmr_int s5k3p8sm_drv_stream_off(cmr_handle handle, cmr_int param) {
     uint16_t value;
 
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("StreamOff:E");
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
@@ -704,7 +710,7 @@ static cmr_int s5k3p8sm_drv_stream_off(cmr_handle handle, cmr_int param) {
 }
 
 static cmr_int s5k3p8sm_drv_com_Identify_otp(cmr_handle handle,
-                                           void *param_ptr) {
+                                             void *param_ptr) {
     UNUSED(param_ptr);
     cmr_s32 rtn = SENSOR_FAIL;
     cmr_s32 param_id;
@@ -723,7 +729,7 @@ static cmr_int s5k3p8sm_drv_com_Identify_otp(cmr_handle handle,
 
 static cmr_int s5k3p8sm_drv_power_on(cmr_handle handle, cmr_int power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
@@ -735,8 +741,8 @@ static cmr_int s5k3p8sm_drv_power_on(cmr_handle handle, cmr_int power_on) {
     if (SENSOR_TRUE == power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val,
-                              avdd_val, iovdd_val);
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val,
+                              iovdd_val);
         usleep(1);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
@@ -747,18 +753,17 @@ static cmr_int s5k3p8sm_drv_power_on(cmr_handle handle, cmr_int power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle,SENSOR_AVDD_CLOSED,
+        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
                               SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
     }
 
     SENSOR_LOGI("s5k3p8sm_drv_power_on(1:on, 0:off): %ld, "
-                     "reset_level %d, dvdd_val %d",
-                     power_on, reset_level, dvdd_val);
+                "reset_level %d, dvdd_val %d",
+                power_on, reset_level, dvdd_val);
     return SENSOR_SUCCESS;
 }
 
-static cmr_int s5k3p8sm_drv_write_otp_gain(cmr_handle handle,
-                                         cmr_u32 *param) {
+static cmr_int s5k3p8sm_drv_write_otp_gain(cmr_handle handle, cmr_u32 *param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     uint16_t value = 0x00;
     float a_gain = 0;
@@ -766,7 +771,7 @@ static cmr_int s5k3p8sm_drv_write_otp_gain(cmr_handle handle,
     float real_gain = 0.0f;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("write_gain:0x%x\n", *param);
 
@@ -790,13 +795,12 @@ static cmr_int s5k3p8sm_drv_write_otp_gain(cmr_handle handle,
     return ret_value;
 }
 
-static cmr_int s5k3p8sm_drv_read_otp_gain(cmr_handle handle,
-                                        uint32_t *param) {
+static cmr_int s5k3p8sm_drv_read_otp_gain(cmr_handle handle, uint32_t *param) {
     cmr_int ret = SENSOR_SUCCESS;
     cmr_u16 gain_a = 0;
     cmr_u16 gain_d = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     gain_a = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0204) & 0xffff;
     gain_d = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0210) & 0xffff;
@@ -807,20 +811,19 @@ static cmr_int s5k3p8sm_drv_read_otp_gain(cmr_handle handle,
     return ret;
 }
 
-static cmr_int s5k3p8sm_drv_get_static_info(cmr_handle handle,
-                                          cmr_u32 *param) {
+static cmr_int s5k3p8sm_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info;
     uint32_t up = 0;
     uint32_t down = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
-    if(!(fps_info && static_info && module_info)) {
+    if (!(fps_info && static_info && module_info)) {
         SENSOR_LOGE("error:null pointer checked.return");
         return SENSOR_FAIL;
     }
@@ -843,25 +846,25 @@ static cmr_int s5k3p8sm_drv_get_static_info(cmr_handle handle,
     ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
 
-    memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
+    memcpy(&ex_info->fov_info, &static_info->fov_info,
+           sizeof(static_info->fov_info));
 
 #if defined(CONFIG_CAMERA_OIS_FUNC)
     Ois_get_pose_dis(handle, &up, &down);
 #endif
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-    sensor_ic_print_static_info("s5k3p8sm",ex_info);
+    sensor_ic_print_static_info("s5k3p8sm", ex_info);
 
     return ret;
 }
 
-static cmr_int s5k3p8sm_drv_get_fps_info(cmr_handle handle,
-                                       uint32_t *param) {
+static cmr_int s5k3p8sm_drv_get_fps_info(cmr_handle handle, uint32_t *param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_MODE_FPS_T *fps_info;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_fps_info *fps_data = sns_drv_cxt->fps_info;
 
     if (!fps_data->is_init) {
@@ -883,19 +886,18 @@ static cmr_int s5k3p8sm_drv_get_fps_info(cmr_handle handle,
 }
 
 static const struct pd_pos_info s5k3p8sm_drv_pd_pos_l[] = {
-	{ 4,  7}, {20, 11}, {40, 11}, {56,  7}, { 8, 27}, {24, 31},
-	{36, 31}, {52, 27}, { 8, 43}, {24, 39}, {36, 39}, {52, 43},
-	{ 4, 63}, {20, 59}, {40, 59}, {56, 63},
+    {4, 7},   {20, 11}, {40, 11}, {56, 7},  {8, 27},  {24, 31},
+    {36, 31}, {52, 27}, {8, 43},  {24, 39}, {36, 39}, {52, 43},
+    {4, 63},  {20, 59}, {40, 59}, {56, 63},
 };
 
 static const struct pd_pos_info s5k3p8sm_drv_pd_pos_r[] = {
-	{ 4, 11}, {20, 15}, {40, 15}, {56, 11}, { 8, 23}, {24, 27},
-	{36, 27}, {52, 23}, { 8, 47}, {24, 43}, {36, 43}, {52, 47},
-	{ 4, 59}, {20, 55}, {40, 55}, {56, 59},
+    {4, 11},  {20, 15}, {40, 15}, {56, 11}, {8, 23},  {24, 27},
+    {36, 27}, {52, 23}, {8, 47},  {24, 43}, {36, 43}, {52, 47},
+    {4, 59},  {20, 55}, {40, 55}, {56, 59},
 };
 
-static cmr_int s5k3p8sm_drv_get_pdaf_info(cmr_handle handle,
-                                        cmr_u32 *param) {
+static cmr_int s5k3p8sm_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
     cmr_u16 pd_pos_r_size = 0;
@@ -927,7 +929,8 @@ static cmr_int s5k3p8sm_drv_get_pdaf_info(cmr_handle handle,
     pdaf_info->type2_info.data_format = DATA_RAW10;
     pdaf_info->type2_info.width = 72 * 2;
     pdaf_info->type2_info.height = 54 * 16;
-    pdaf_info->type2_info.pd_size = pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
+    pdaf_info->type2_info.pd_size =
+        pdaf_info->type2_info.width * pdaf_info->type2_info.height * 10 / 8;
 
     return ret;
 }
@@ -944,16 +947,16 @@ static cmr_int s5k3p8sm_drv_access_val(cmr_handle handle, cmr_int param) {
     SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_INIT_OTP:
-      //  s5k3p8sm_otp_init(handle);
+        //  s5k3p8sm_otp_init(handle);
         break;
     case SENSOR_VAL_TYPE_SHUTTER:
         *((uint32_t *)param_ptr->pval) = s5k3p8sm_drv_get_shutter(handle);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
-       // s5k3p8sm_otp_read(handle, param_ptr);
+        // s5k3p8sm_otp_read(handle, param_ptr);
         break;
     case SENSOR_VAL_TYPE_PARSE_OTP:
-        //s5k3p8sm_parse_otp(handle, param_ptr);
+        // s5k3p8sm_parse_otp(handle, param_ptr);
         break;
     case SENSOR_VAL_TYPE_WRITE_OTP:
         break;
@@ -986,23 +989,28 @@ static cmr_int s5k3p8sm_drv_access_val(cmr_handle handle, cmr_int param) {
     return rtn;
 }
 
-static cmr_int s5k3p8sm_drv_handle_create(
-          struct sensor_ic_drv_init_para *init_param, cmr_handle* sns_ic_drv_handle) {
+static cmr_int
+s5k3p8sm_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
+                           cmr_handle *sns_ic_drv_handle) {
     cmr_int ret = SENSOR_SUCCESS;
-    struct sensor_ic_drv_cxt * sns_drv_cxt = NULL; 
+    struct sensor_ic_drv_cxt *sns_drv_cxt = NULL;
 
     SENSOR_LOGI("E:");
-    ret = sensor_ic_drv_create(init_param,sns_ic_drv_handle);
-    if(SENSOR_IC_FAILED == ret) {
+    ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
+    if (SENSOR_IC_FAILED == ret) {
         SENSOR_LOGE("sensor instance create failed!");
         return ret;
     }
     sns_drv_cxt = *sns_ic_drv_handle;
 
-    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO), MODULE_INFO);
-    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW), RES_TAB_RAW);
-    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB), RES_TRIM_TAB);
-    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO), STATIC_INFO);
+    sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
+                                    MODULE_INFO);
+    sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(RES_TAB_RAW),
+                                        RES_TAB_RAW);
+    sensor_ic_set_match_trim_info(sns_drv_cxt, ARRAY_SIZE(RES_TRIM_TAB),
+                                  RES_TRIM_TAB);
+    sensor_ic_set_match_static_info(sns_drv_cxt, ARRAY_SIZE(STATIC_INFO),
+                                    STATIC_INFO);
     sensor_ic_set_match_fps_info(sns_drv_cxt, ARRAY_SIZE(FPS_INFO), FPS_INFO);
 
     s5k3p8sm_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
@@ -1017,28 +1025,28 @@ static cmr_s32 s5k3p8sm_drv_handle_delete(cmr_handle handle, uint32_t *param) {
     /*if has private data,you must release it here*/
     SENSOR_LOGI("E:");
     SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    ret = sensor_ic_drv_delete(handle,param);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    ret = sensor_ic_drv_delete(handle, param);
     SENSOR_LOGI("X:");
 
     return ret;
 }
 
-static cmr_int s5k3p8sm_drv_get_private_data(cmr_handle handle,
-                                                     cmr_uint cmd, void**param){
+static cmr_int s5k3p8sm_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
+                                             void **param) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
 
-    ret = sensor_ic_get_private_data(handle,cmd, param);
+    ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
 }
 
-static struct sensor_ic_ops s5k3p8sm_ops_tab  = {
+static struct sensor_ic_ops s5k3p8sm_ops_tab = {
     .create_handle = s5k3p8sm_drv_handle_create,
     .delete_handle = s5k3p8sm_drv_handle_delete,
     .get_data = s5k3p8sm_drv_get_private_data,
-    .power  = s5k3p8sm_drv_power_on,
+    .power = s5k3p8sm_drv_power_on,
     .identify = s5k3p8sm_drv_identify,
 
     .write_exp = s5k3p8sm_drv_write_exposure,
@@ -1046,11 +1054,9 @@ static struct sensor_ic_ops s5k3p8sm_ops_tab  = {
     .ex_write_exp = s5k3p8sm_drv_ex_write_exposure,
     .read_aec_info = NULL,
     .ext_ops = {
-        [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = s5k3p8sm_drv_before_snapshot,
-        [SENSOR_IOCTL_STREAM_ON].ops = s5k3p8sm_drv_stream_on,
-        [SENSOR_IOCTL_STREAM_OFF].ops = s5k3p8sm_drv_stream_off,
-        //[SENSOR_IOCTL_CUS_FUNC_3].ops = s5k3p8sm_drv_get_exif_info,
-        [SENSOR_IOCTL_ACCESS_VAL].ops = s5k3p8sm_drv_access_val,
-    }
-};
-
+            [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = s5k3p8sm_drv_before_snapshot,
+            [SENSOR_IOCTL_STREAM_ON].ops = s5k3p8sm_drv_stream_on,
+            [SENSOR_IOCTL_STREAM_OFF].ops = s5k3p8sm_drv_stream_off,
+            //[SENSOR_IOCTL_CUS_FUNC_3].ops = s5k3p8sm_drv_get_exif_info,
+            [SENSOR_IOCTL_ACCESS_VAL].ops = s5k3p8sm_drv_access_val,
+    }};

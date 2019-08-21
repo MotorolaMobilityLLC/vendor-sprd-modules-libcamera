@@ -3395,9 +3395,10 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         goto exit;
     }
     if (isp_video_get_simulation_flag())
-	cxt->sn_cxt.info_4in1.is_4in1_supported = 0;
+        cxt->sn_cxt.info_4in1.is_4in1_supported = 0;
     else
-	cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
+        cxt->sn_cxt.info_4in1.is_4in1_supported =
+            sn_4in1_info.is_4in1_supported;
 #endif
 
     isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
@@ -5911,8 +5912,9 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                            param_ptr->src_frame.size.height * 5 / 4);
         }
 
-	if (isp_video_get_simulation_flag())
-		in_param.hwsim_4in1_width = cxt->sn_cxt.info_4in1.limited_4in1_width;
+        if (isp_video_get_simulation_flag())
+            in_param.hwsim_4in1_width =
+                cxt->sn_cxt.info_4in1.limited_4in1_width;
 
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
         if (ret) {
@@ -6217,13 +6219,13 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.dv_mode, isp_param.capture_mode, isp_param.is_snapshot);
 
 #ifdef CONFIG_CAMERA_4IN1
-	if (isp_video_get_simulation_flag()) {
-		isp_param.is_4in1_sensor = 0;
-		isp_param.mode_4in1 = 0;
-	} else {
-		isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
-		isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
-	}
+    if (isp_video_get_simulation_flag()) {
+        isp_param.is_4in1_sensor = 0;
+        isp_param.mode_4in1 = 0;
+    } else {
+        isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
+        isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
+    }
 #endif
 
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
@@ -6396,7 +6398,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
           (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
          param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW) ||
         (((sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW) ||
-         (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
+          (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
          param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_CAPTURE) ||
         (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW)) {
         // hardware 3dnr
@@ -7191,16 +7193,17 @@ cmr_int camera_sensor_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_SN_GET_4IN1_FORMAT_CONVERT:
         bzero(&img_addr, sizeof(struct frame_4in1_info));
 #if 1
-	struct tuning_param_info tuning_info;
-	bzero(&tuning_info, sizeof(struct tuning_param_info));
-	camera_local_get_tuning_param(oem_handle, &tuning_info);
+        struct tuning_param_info tuning_info;
+        bzero(&tuning_info, sizeof(struct tuning_param_info));
+        camera_local_get_tuning_param(oem_handle, &tuning_info);
 
-	img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
-	img_addr.awb_gain.b_gain= tuning_info.awb_info.b_gain;
-	img_addr.awb_gain.g_gain= tuning_info.awb_info.g_gain;
+        img_addr.awb_gain.r_gain = tuning_info.awb_info.r_gain;
+        img_addr.awb_gain.b_gain = tuning_info.awb_info.b_gain;
+        img_addr.awb_gain.g_gain = tuning_info.awb_info.g_gain;
 #endif
-//        img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
-//        camera_local_get_tuning_param(oem_handle, img_addr.tuning_info);
+        //        img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
+        //        camera_local_get_tuning_param(oem_handle,
+        //        img_addr.tuning_info);
         img_addr.im_addr_in = param_ptr->postproc_info.src.addr_vir.addr_y;
         img_addr.im_addr_out = param_ptr->postproc_info.dst.addr_vir.addr_y;
         cmd = SENSOR_ACCESS_VAL;
@@ -8108,10 +8111,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         CMR_LOGE("get sensor 4ini1 failed %ld", ret);
         goto exit;
     }
-	if (isp_video_get_simulation_flag())
-		cxt->sn_cxt.info_4in1.is_4in1_supported = 0;
-	else
-		cxt->sn_cxt.info_4in1.is_4in1_supported = sn_4in1_info.is_4in1_supported;
+    if (isp_video_get_simulation_flag())
+        cxt->sn_cxt.info_4in1.is_4in1_supported = 0;
+    else
+        cxt->sn_cxt.info_4in1.is_4in1_supported =
+            sn_4in1_info.is_4in1_supported;
     cxt->sn_cxt.info_4in1.limited_4in1_width = sn_4in1_info.limited_4in1_width;
     cxt->sn_cxt.info_4in1.limited_4in1_height =
         sn_4in1_info.limited_4in1_height;
@@ -10225,10 +10229,10 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         isp_param = param;
         break;
 
-    case CAMERA_PARAM_APERTURE:
+    case CAMERA_PARAM_F_NUMBER:
         set_exif_flag = 1;
         set_isp_flag = 0;
-        exif_cmd = SENSOR_EXIF_CTRL_APERTUREVALUE;
+        exif_cmd = SENSOR_EXIF_CTRL_FNUMBER;
         isp_param = param;
         CMR_LOGD("aperture %d", param);
         break;
@@ -10351,7 +10355,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_BRIGHTNESS:
     case CAMERA_PARAM_CONTRAST:
     case CAMERA_PARAM_SATURATION:
-    case CAMERA_PARAM_APERTURE:
+    case CAMERA_PARAM_F_NUMBER:
         ret = camera_isp_set_params(oem_handle, id, param);
         break;
 
@@ -11399,8 +11403,9 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // 5 continuous frames start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
-    } else if ((CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW == camera_get_3dnr_flag(cxt)) ||
-                (CAMERA_3DNR_TYPE_PREV_HW_CAP_HW == camera_get_3dnr_flag(cxt))) {
+    } else if ((CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW ==
+                camera_get_3dnr_flag(cxt)) ||
+               (CAMERA_3DNR_TYPE_PREV_HW_CAP_HW == camera_get_3dnr_flag(cxt))) {
         // start hardware 3dnr capture
         CMR_LOGV("set cap_param type to DCAM_CAPTURE_START_3DNR");
         capture_param.type = DCAM_CAPTURE_START_3DNR;

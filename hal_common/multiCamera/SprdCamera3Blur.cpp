@@ -1836,7 +1836,7 @@ bool SprdCamera3Blur::CaptureThread::yuvReprocessCaptureRequest(
     if (mBlur->mFlushing) {
         mime_type = 0;
         input_stream_buff.buffer = combe_buffer;
-    } else if (mBlur->mBlurMode == CAM_BLUR_PORTRAIT_MODE){
+    } else if (mBlur->mBlurMode == CAM_BLUR_PORTRAIT_MODE) {
         input_stream_buff.buffer = output_buffer;
         mime_type = (int)SPRD_MIMETPYE_NONE;
     } else {
@@ -2226,7 +2226,8 @@ void SprdCamera3Blur::CaptureThread::initBlurWeightParams() {
                 mPreviewWeightParams.roi_type = 1;
             }
         }
-        if (mBlur->mCameraId == 0 && mBlur->mBlurMode != CAM_BLUR_PORTRAIT_MODE) {
+        if (mBlur->mCameraId == 0 &&
+            mBlur->mBlurMode != CAM_BLUR_PORTRAIT_MODE) {
             mPreviewWeightParams.roi_type = 0;
             mCaptureWeightParams.roi_type = 0;
             mIsBlurAlways = false;
@@ -2321,9 +2322,9 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                 if (mPreviewWeightParams.f_number != fnum) {
                     mPreviewWeightParams.f_number = fnum;
                     mCaptureWeightParams.f_number =
-                        255 - (fnum) * MAX_F_FUMBER / MAX_BLUR_F_FUMBER * 25;
+                        255 - (fnum)*MAX_F_FUMBER / MAX_BLUR_F_FUMBER * 25;
                     mCapture2WeightParams.f_number =
-                        255 - (fnum) * MAX_F_FUMBER / MAX_BLUR_F_FUMBER * 25;
+                        255 - (fnum)*MAX_F_FUMBER / MAX_BLUR_F_FUMBER * 25;
                     mUpdatePreviewWeightParams = true;
                 }
             } else {
@@ -3222,8 +3223,8 @@ void SprdCamera3Blur::CaptureThread::saveCaptureBlurParams(
             0,
         };
 
-        HAL_LOGD("jpegorientation=%d, blur=%d", orientation,
-                 mCaptureWeightParams.rotate_angle);
+        HAL_LOGD("jpegorientation=%d, blur=%d, FNum=%d", orientation,
+                 mCaptureWeightParams.rotate_angle, FNum);
         unsigned char BlurFlag[] = {'B', 'L', 'U', 'R'};
         unsigned char *p1[] = {(unsigned char *)&orientation,
                                (unsigned char *)&MainWidthData,
@@ -3893,7 +3894,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     int snap_stream_num = 2;
     int af_bypass = 0;
     int fb_on = 0;
-    char prop[PROPERTY_VALUE_MAX] = { 0 };
+    char prop[PROPERTY_VALUE_MAX] = {0};
 
     memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
     rc = validateCaptureRequest(req);
@@ -3904,9 +3905,8 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
     saveRequest(req);
 
     if (metaSettings.exists(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)) {
-        mBlurMode =
-            metaSettings.find(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)
-                .data.u8[0];
+        mBlurMode = metaSettings.find(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)
+                        .data.u8[0];
     }
 
     tagCnt = metaSettings.entryCount();

@@ -4058,9 +4058,9 @@ int SprdCamera3Setting::updateWorkParameters(
     }
     if (frame_settings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
         valueI32 = frame_settings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.aperture,
+        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.f_number,
                          blur_fnum[valueI32 - 1], ANDROID_SPRD_BLUR_F_NUMBER, 1)
-        HAL_LOGD("lens aperture is %f", blur_fnum[valueI32 - 1]);
+        HAL_LOGD("lens f_number is %f", blur_fnum[valueI32 - 1]);
     }
     if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
         valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];

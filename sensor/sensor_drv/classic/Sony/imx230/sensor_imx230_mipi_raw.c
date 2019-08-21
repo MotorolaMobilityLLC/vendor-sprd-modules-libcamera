@@ -431,11 +431,11 @@ static cmr_uint imx230_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
                                           SENSOR_EXIF_CTRL_EXPOSURETIME,
                                           cap_shutter);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_APERTUREVALUE, 220);
+                                          SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
         sns_drv_cxt->ops_cb.set_exif_info(
             sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_FNUMBER, 22);
+                                          SENSOR_EXIF_CTRL_FNUMBER, 220);
     }
     SENSOR_LOGI("capture_shutter = %d, capture_gain = %f", cap_shutter,
                 cap_gain);

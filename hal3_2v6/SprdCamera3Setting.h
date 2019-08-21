@@ -196,6 +196,7 @@ typedef struct {
     uint8_t state;
     uint8_t facing;
     float aperture;
+    float f_number;
     float filter_density;
     uint8_t optical_stabilization_mode;
     uint8_t distortion_correction_modes[1];

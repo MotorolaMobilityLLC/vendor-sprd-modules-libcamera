@@ -6542,13 +6542,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 // auto 3dnr mode, detected 3dnr scene
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
             } else {
-#ifdef  CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
+#ifdef CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
                 // night shot
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_HW;
-#elif   CONFIG_NIGHT_3DNR_PREV_HW_CAP_SW
+#elif CONFIG_NIGHT_3DNR_PREV_HW_CAP_SW
                 // night shot
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
-#elif    CONFIG_NIGHT_3DNR_PREV_NULL_CAP_HW
+#elif CONFIG_NIGHT_3DNR_PREV_NULL_CAP_HW
                 // night shot
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW;
 #else
@@ -6641,9 +6641,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_BLUR_F_NUMBER: {
         LENS_Tag lensInfo;
         mSetting->getLENSTag(&lensInfo);
-        if (lensInfo.aperture) {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_APERTURE,
-                     (cmr_uint)(lensInfo.aperture * 100));
+        if (lensInfo.f_number) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_F_NUMBER,
+                     (cmr_uint)(lensInfo.f_number * 100));
         }
     } break;
     case ANDROID_SPRD_FLASH_LCD_MODE: {
@@ -9602,7 +9602,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
     case CMR_EVT_ZSL_MON_INIT:
         // change this thread priority
         setpriority(PRIO_PROCESS, 0, -10);
-        //set_sched_policy(0, SP_FOREGROUND);
+        // set_sched_policy(0, SP_FOREGROUND);
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:

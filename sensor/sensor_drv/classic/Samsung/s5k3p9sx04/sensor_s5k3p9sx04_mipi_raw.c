@@ -330,11 +330,11 @@ CFG_INFO:
                                           SENSOR_EXIF_CTRL_EXPOSURETIME,
                                           exposure_line);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_APERTUREVALUE, 200);
+                                          SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
         sns_drv_cxt->ops_cb.set_exif_info(
             sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_FNUMBER, 20);
+                                          SENSOR_EXIF_CTRL_FNUMBER, 200);
     } else {
         sns_drv_cxt->exif_info.exposure_line = exposure_line;
         sns_drv_cxt->exif_info.aperture_value = 29;

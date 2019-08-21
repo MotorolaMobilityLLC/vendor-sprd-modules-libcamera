@@ -2293,7 +2293,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 } else {
                     mBokehResult = false;
                 }
-
+                HAL_LOGI("mRealBokeh->mIsHdrMode=%d,mAbokehGallery=%d,"
+                         "mBokehResult=%d",
+                         mRealBokeh->mIsHdrMode, mAbokehGallery, mBokehResult);
                 if ((!mRealBokeh->mIsHdrMode && !mAbokehGallery &&
                      (mBokehResult == true) &&
                      mRealBokeh->mBokehMode == CAM_DUAL_BOKEH_MODE) ||
@@ -3514,7 +3516,9 @@ int SprdCamera3RealBokeh::processCaptureRequest(
         mBokehMode =
             metaSettingsMain.find(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)
                 .data.u8[0];
+        HAL_LOGD("mBokehMode=%d", mBokehMode);
     }
+
     tagCnt = metaSettingsMain.entryCount();
     if (tagCnt != 0) {
         if (metaSettingsMain.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
