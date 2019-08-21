@@ -45,8 +45,8 @@
 /* sensor parameters begin */
 
 /* effective sensor output image size */
-#define VIDEO_WIDTH				1280
-#define VIDEO_HEIGHT			720
+#define VIDEO_WIDTH				1920
+#define VIDEO_HEIGHT			1080
 #define PREVIEW_WIDTH 			2104
 #define PREVIEW_HEIGHT 			1560
 #define SNAPSHOT_WIDTH 			4208
@@ -70,17 +70,17 @@
 #define LANE_NUM			4
 #define RAW_BITS			10
 
-#define VIDEO_MIPI_PER_LANE_BPS 		568    /* 2*Mipi clk */
+#define VIDEO_MIPI_PER_LANE_BPS 		552    /* 2*Mipi clk */
 #define PREVIEW_MIPI_PER_LANE_BPS 		568  /* 2*Mipi clk */
 #define SNAPSHOT_MIPI_PER_LANE_BPS 		1200 /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
-#define VIDEO_LINE_TIME		 	10200
+#define VIDEO_LINE_TIME		 	9660
 #define PREVIEW_LINE_TIME 		10200
 #define SNAPSHOT_LINE_TIME 		10200
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH 			3282
+#define VIDEO_FRAME_LENGTH 			1146
 #define PREVIEW_FRAME_LENGTH 		3282
 #define SNAPSHOT_FRAME_LENGTH 		3282
 
@@ -308,8 +308,23 @@ static const SENSOR_REG_T s5k3l6xx03_snapshot_setting[] = {
 };
 
 static const SENSOR_REG_T s5k3l6xx03_video_setting[] = {
-    // 720p setting @120fps, 24Mclk,p566.4M,1124M/lane,4lanes
+    {0x0344, 0x00C0}, {0x0346, 0x01E8}, {0x0348, 0x0FBF}, {0x034A, 0x0A57},
+    {0x034C, 0x0780}, {0x034E, 0x0438}, {0x0900, 0x0122}, {0x0380, 0x0001},
+    {0x0382, 0x0001}, {0x0384, 0x0001}, {0x0386, 0x0003}, {0x0114, 0x0330},
+    {0x0110, 0x0002}, {0x0136, 0x1800}, {0x0304, 0x0004}, {0x0306, 0x0078},
+    {0x3C1E, 0x0000}, {0x030C, 0x0003}, {0x030E, 0x0045}, {0x3C16, 0x0001},
+    {0x0300, 0x0006}, {0x0342, 0x1220}, {0x0340, 0x047A}, {0x38C4, 0x0004},
+    {0x38D8, 0x0010}, {0x38DA, 0x0005}, {0x38DC, 0x0005}, {0x38C2, 0x0005},
+    {0x38C0, 0x0004}, {0x38D6, 0x0004}, {0x38D4, 0x0004}, {0x38B0, 0x0007},
+    {0x3932, 0x1000}, {0x3938, 0x000C}, {0x0820, 0x0228}, {0x380C, 0x003B},
+    {0x3064, 0xEFCF}, {0x309C, 0x0640}, {0x3090, 0x8000}, {0x3238, 0x000B},
+    {0x314A, 0x5F02}, {0x3300, 0x0000}, {0x3400, 0x0000}, {0x3402, 0x4E46},
+    {0x32B2, 0x0008}, {0x32B4, 0x0008}, {0x32B6, 0x0008}, {0x32B8, 0x0008},
+    // 1920*1080 90fpsfps, 24Mclk,lane,4lanes
+    {0x3C34, 0x0048}, {0x3C36, 0x3000}, {0x3C38, 0x0020}, {0x393E, 0x4000},
 
+    {0x303A, 0x0202}, {0x3034, 0x4B00}, {0x3036, 0xF729}, {0x3032, 0x3500},
+    {0x320E, 0x0480},
 };
 
 static struct sensor_res_tab_info s_s5k3l6xx03_resolution_tab_raw[VENDOR_NUM] = {
@@ -320,9 +335,9 @@ static struct sensor_res_tab_info s_s5k3l6xx03_resolution_tab_raw[VENDOR_NUM] = 
         .width = 0, .height = 0,
         .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-		/*{ADDR_AND_LEN_OF_ARRAY(s5k3l6xx03_video_setting), PNULL, 0,
+		{ADDR_AND_LEN_OF_ARRAY(s5k3l6xx03_video_setting), PNULL, 0,
         .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
-        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
+        .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 		
         {ADDR_AND_LEN_OF_ARRAY(s5k3l6xx03_preview_setting), PNULL, 0,
         .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -343,11 +358,11 @@ static SENSOR_TRIM_T s_s5k3l6xx03_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info = {
        {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	   
-	   /*{.trim_start_x = VIDEO_TRIM_X, .trim_start_y = VIDEO_TRIM_Y,
+	   {.trim_start_x = VIDEO_TRIM_X, .trim_start_y = VIDEO_TRIM_Y,
         .trim_width = VIDEO_TRIM_W,   .trim_height = VIDEO_TRIM_H,
         .line_time = VIDEO_LINE_TIME, .bps_per_lane = VIDEO_MIPI_PER_LANE_BPS,
         .frame_line = VIDEO_FRAME_LENGTH,
-        .scaler_trim = {.x = VIDEO_TRIM_X, .y = VIDEO_TRIM_Y, .w = VIDEO_TRIM_W, .h = VIDEO_TRIM_H}},*/
+        .scaler_trim = {.x = VIDEO_TRIM_X, .y = VIDEO_TRIM_Y, .w = VIDEO_TRIM_W, .h = VIDEO_TRIM_H}},
 	   
 	   {.trim_start_x = PREVIEW_TRIM_X, .trim_start_y = PREVIEW_TRIM_Y,
         .trim_width = PREVIEW_TRIM_W,   .trim_height = PREVIEW_TRIM_H,
@@ -425,7 +440,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l6xx03_static_info[VENDOR_NUM] = {
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 0,
-        .fov_info = {{4.713f, 3.494f}, 3.547f}}
+        .fov_info = {{4.713f, 3.494f}, 3.774f}}
     }
     /*If there are multiple modules,please add here*/
 };
