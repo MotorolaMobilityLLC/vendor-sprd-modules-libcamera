@@ -4117,7 +4117,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
 			cxt->mode_switch[cxt->app_mode].table_idx = cxt->last_exp_param.cur_index;
 			cxt->mode_switch[cxt->app_mode].lum = cxt->sync_cur_result.cur_lum;
-			cxt->mode_switch[cxt->app_mode].tarlum = cxt->cur_status.target_lum;
+			cxt->mode_switch[cxt->app_mode].tarlum = cxt->sync_cur_result.target_lum;
 			cxt->mode_switch[cxt->app_mode].ev_index = cxt->cur_status.settings.ev_index;
 		}
 		if(CAMERA_MODE_MANUAL == cxt->app_mode){
