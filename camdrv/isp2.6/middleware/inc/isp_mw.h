@@ -801,6 +801,7 @@ struct isp_video_start {
 	cmr_free free_cb;
 	cmr_u32 is_4in1_sensor;
 	cmr_uint mode_4in1;
+	cmr_uint noramosaic_4in1;
 };
 
 struct isp_img_param {

@@ -383,6 +383,7 @@ struct isp_alg_fw_context {
 	cmr_u32 last_ratio;
 	cmr_u32 cur_ratio;
 	cmr_s32 curr_bv;
+	cmr_s32 noramosaic_4in1;
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -4398,6 +4399,7 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.highflash_measure.capture_skip_num = param_ptr->capture_skip_num;
 	ae_param.capture_skip_num = param_ptr->capture_skip_num;
 	/* ae_param.zsl_flag = param_ptr->capture_mode; */
+	ae_param.noramosaic_4in1 = cxt->noramosaic_4in1;
 	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.prv_size.w;
 	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.prv_size.h;
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
@@ -4742,10 +4744,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	cxt->sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	cxt->cam_4in1_mode = in_ptr->mode_4in1;
+	cxt->noramosaic_4in1= in_ptr->noramosaic_4in1;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
 	cxt->commn_cxt.prv_size = cxt->commn_cxt.src;
-	if (cxt->cam_4in1_mode) {
+	if (cxt->cam_4in1_mode || cxt->noramosaic_4in1) {
 		cxt->commn_cxt.prv_size.w >>= 1;
 		cxt->commn_cxt.prv_size.h >>= 1;
 	}

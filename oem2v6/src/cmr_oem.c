@@ -56,6 +56,7 @@
 #define MS_TO_NANOSEC 1000
 #define SEC_TO_NANOSEC 1000000000LL
 #define BUF_BLOCK_SIZE (1024 * 1024)
+#define PICTURE_W 5664
 
 #define OFFLINE_CHANNEL_BIT 0x8
 #define OFFLINE_CHANNEL 3
@@ -6227,6 +6228,11 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
     }
 #endif
+
+	if (isp_param.resolution_info.sensor_output_size.w > PICTURE_W)
+		isp_param.noramosaic_4in1 = 1;
+	else
+		isp_param.noramosaic_4in1 = 0;
 
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (ret) {
