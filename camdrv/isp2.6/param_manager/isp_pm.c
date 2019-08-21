@@ -84,6 +84,7 @@ static struct blk_info blocks_array[] = {
 
 	/* software algo blocks */
 	{ ISP_BLK_CNR2, 0 }, /* NR block */
+	{ ISP_BLK_YNRS, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
 	{ ISP_BLK_ALSC, 0 },
 	{ ISP_BLK_AF_NEW, 0 },
@@ -116,6 +117,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_IIRCNR_IIR,		ISP_BLK_IIRCNR_T, sizeof(struct sensor_iircnr_level) },
 	{ ISP_BLK_YUV_NOISEFILTER,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
 	{ ISP_BLK_CNR2,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
+	{ ISP_BLK_YNRS,			ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 
 	{ DCAM_BLK_NLM,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
 	{ DCAM_BLK_NLM,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
@@ -516,6 +518,7 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_IIRCNR_IIR:
 	case ISP_BLK_YUV_NOISEFILTER:
 	case ISP_BLK_CNR2:
+	case ISP_BLK_YNRS:
 		return 1;
 	default:
 		break;

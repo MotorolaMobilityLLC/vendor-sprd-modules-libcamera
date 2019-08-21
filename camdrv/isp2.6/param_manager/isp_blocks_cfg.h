@@ -485,6 +485,32 @@ struct isp_cnr2_param {
 	cmr_u32 nr_mode_setting;
 };
 
+struct isp_ynrs_level{
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
+};
+
+struct isp_ynrs_param {
+ 	struct isp_ynrs_level cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -535,6 +561,7 @@ struct isp_context {
 
 	/* soft algo block */
 	struct isp_cnr2_param cnr2;
+	struct isp_ynrs_param ynrs;
 };
 
 /*******************************isp_block_com******************************/
@@ -726,6 +753,10 @@ cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, 
 cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
 cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_ynrs_init(void *dst_ynrs_param, void *src_ynrs_param, void *param1, void *param2);
+cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ynrs_get_param(void *ynrs_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_sw3dnr_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_sw3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

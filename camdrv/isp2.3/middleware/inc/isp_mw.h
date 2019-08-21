@@ -353,7 +353,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_3DNR_MODE,
-	ISP_CTRL_GET_CNR2_EN,
+	ISP_CTRL_GET_CNR2_YNR_EN,
 	ISP_CTRL_SET_CAP_FLAG,
 	ISP_CTRL_AI_PROCESS_START,
 	ISP_CTRL_AI_PROCESS_STOP,
@@ -365,6 +365,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_SET_VCM_DIST,
+	ISP_CTRL_GET_YNRS_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -920,6 +921,23 @@ struct isp_init_param {
 	uint32_t is_master;
 	uint32_t is_4in1_sensor;
 	uint32_t is_faceId_unlock;
+};
+
+struct isp_ynrs_info{
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
 };
 
 struct isp_ai_rect {

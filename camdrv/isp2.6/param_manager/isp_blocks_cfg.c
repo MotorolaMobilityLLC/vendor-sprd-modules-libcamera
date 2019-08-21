@@ -65,6 +65,7 @@ struct isp_block_operations s_bright_ops = { _pm_brightness_init, _pm_brightness
 struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_set_param, _pm_contrast_get_param, PNULL, PNULL };
 struct isp_block_operations s_saturation_ops = { _pm_saturation_init, _pm_saturation_set_param, _pm_saturation_get_param, PNULL, PNULL };
 struct isp_block_operations s_hue_ops = { _pm_hue_init, _pm_hue_set_param, _pm_hue_get_param, PNULL, PNULL };
+struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_6
@@ -124,6 +125,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 
 	/* ======== soft algo blocks list starts ======= */
 	{ISP_BLK_CNR2, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
+	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
 };
 #elif defined CONFIG_ISP_2_6
 struct isp_block_cfg s_blk_cfgs[] = {

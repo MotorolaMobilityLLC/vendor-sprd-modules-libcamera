@@ -50,6 +50,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"iircnr",
 	"yuv_noisefilter",
 	"cnr",
+	"ynrs",
 };
 #elif defined CONFIG_ISP_2_6 /* for SharkL5 */
 char nr_param_name[ISP_BLK_NR_MAX][20] = {

@@ -1581,6 +1581,22 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	return ret;
 }
 
+static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	UNUSED(isp_alg_handle);
+	UNUSED(param_ptr);
+
+	return 0;
+}
+
+static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	UNUSED(isp_alg_handle);
+	UNUSED(param_ptr);
+
+	return 0;
+}
+
 static cmr_int ispctl_3ndr_ioctrl(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2658,6 +2674,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_GET_GLB_GAIN, ispctl_get_glb_gain},
+	{ISP_CTRL_GET_CNR2_YNR_EN, ispctl_get_cnr2_ynr_en},
+	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_MAX, NULL}
 };
 

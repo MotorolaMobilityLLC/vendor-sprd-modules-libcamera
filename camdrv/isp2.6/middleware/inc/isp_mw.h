@@ -370,7 +370,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_MICRODEPTH_PARAM = 113,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_SENSITIVITY,
-	ISP_CTRL_GET_CNR2_EN,
+	ISP_CTRL_GET_CNR2_YNR_EN,
 	ISP_CTRL_GET_CNR2_PARAM = 117,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_CAP_FLAG,
@@ -389,6 +389,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_3DNR_MODE,
 	ISP_CTRL_SET_AF_OT_SWITH,
 	ISP_CTRL_SET_AF_OT_INFO,
+	ISP_CTRL_GET_YNRS_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -913,6 +914,23 @@ struct isp_sw_cnr2_info {
 	cmr_u8 filter_en[4];
 	cmr_u8 rangTh[4][2];
 	struct isp_sw_filter_weights weight[4][2];
+};
+
+struct isp_ynrs_info{
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
 };
 
 struct img_offset {
