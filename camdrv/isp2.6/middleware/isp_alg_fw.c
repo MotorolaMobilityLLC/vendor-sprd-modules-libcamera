@@ -2558,20 +2558,30 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			cmr_u32 i = 0;
 			cmr_u32 blk_num;
 			cmr_u32 af_temp[15*20][3];
-			cmr_u32 *ptr;
+			cmr_u32 *ptr, *dst;
 			cmr_u32 *zoom_ratio;
 			struct isp_statis_info *statis_info = NULL;
 
 			statis_info = (struct isp_statis_info *)in_ptr;
 			ptr = (cmr_u32 *)statis_info->uaddr;
+			dst = &af_temp[0][0];
 			blk_num = cxt->af_cxt.win_num.x * cxt->af_cxt.win_num.y;
+#ifndef CONFIG_ISP_2_5
 			for (i = 0; i < blk_num; i++) {
 				af_temp[i][0] = *ptr++;
 				af_temp[i][1] = *ptr++;
 				af_temp[i][2] = *ptr++;
 				ptr++;
 			}
-			ISP_LOGV("data: %x %x %x\n", af_temp[0][0], af_temp[0][1], af_temp[0][2]);
+#else
+			for (i = 0; i < sizeof(af_temp)/sizeof(af_temp[0][0]); i++) {
+				*dst++ = *ptr++;
+			}
+#endif
+			ISP_LOGV("data: %x %x %x %x %x %x\n",
+				af_temp[0][0], af_temp[0][1], af_temp[0][2], af_temp[1][0], af_temp[1][1], af_temp[1][2]);
+			ISP_LOGV("data: %x %x %x %x %x %x\n",
+				af_temp[16][0], af_temp[16][1], af_temp[16][2], af_temp[17][0], af_temp[17][1], af_temp[17][2]);
 
 			calc_param.data_type = AF_DATA_AF;
 			calc_param.data = (void *)(af_temp);
