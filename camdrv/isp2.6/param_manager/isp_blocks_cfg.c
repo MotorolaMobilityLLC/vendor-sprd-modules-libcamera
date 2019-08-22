@@ -60,6 +60,7 @@ struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, 
 struct isp_block_operations s_cnr2_ops = { _pm_cnr2_init, _pm_cnr2_set_param, _pm_cnr2_get_param, PNULL, PNULL };
 
 #ifdef CONFIG_ISP_2_5
+struct isp_block_operations s_hsv_new_ops = { _pm_hsv_new_init, _pm_hsv_new_set_param, _pm_hsv_new_get_param, _pm_common_rest, _pm_hsv_new_deinit };
 struct isp_block_operations s_bright_ops = { _pm_brightness_init, _pm_brightness_set_param, _pm_brightness_get_param, PNULL, PNULL };
 struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_set_param, _pm_contrast_get_param, PNULL, PNULL };
 struct isp_block_operations s_saturation_ops = { _pm_saturation_init, _pm_saturation_set_param, _pm_saturation_get_param, PNULL, PNULL };
@@ -94,6 +95,8 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_CMC10, array_offset(struct isp_context, cmc10), sizeof(struct isp_cmc10_param), &s_cmc10_ops},
 	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, rgb_gamma), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
 	{ISP_BLK_HSV, array_offset(struct isp_context, hsv), sizeof(struct isp_hsv_param), &s_hsv_ops},
+	{ISP_BLK_HSV_NEW, array_offset(struct isp_context, hsv_new), sizeof(struct isp_hsv_param_new), &s_hsv_new_ops},
+
 	{ISP_BLK_IIRCNR_YRANDOM, array_offset(struct isp_context, yrandom), sizeof(struct isp_iircnr_yrandom_param), &s_iircnr_yrandom_ops},
 	{ISP_BLK_Y_GAMMC, array_offset(struct isp_context, ygamma), sizeof(struct isp_yuv_ygamma_param), &s_yuv_ygamma_ops},
 	{ISP_BLK_POSTERIZE, array_offset(struct isp_context, posterize), sizeof(struct isp_posterize_param), &s_posterize_ops},

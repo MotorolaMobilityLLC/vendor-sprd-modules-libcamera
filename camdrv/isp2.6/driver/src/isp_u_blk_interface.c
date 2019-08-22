@@ -69,6 +69,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_YUV_NOISEFILTER_V1, isp_u_noisefilter_block},
 
 	/* isp blocks for sharkl3 */
+	{ISP_BLK_HSV_NEW, isp_u_hsv_block},
 	{ISP_BLK_BRIGHT, isp_u_brightness_block},
 	{ISP_BLK_CONTRAST, isp_u_contrast_block},
 	{ISP_BLK_SATURATION, isp_u_csa_block},

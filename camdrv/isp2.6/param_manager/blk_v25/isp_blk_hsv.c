@@ -222,17 +222,7 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 				break;
 			}
 
-			/* todo: delete it later. just for tuning trace */
-			if (dst_hsv_ptr->cur_idx.weight0 != block_result->ai_scene_id) {
-				if (hsv_level != -1)
-					ISP_LOGD("ai_scene_id %d, hsv_index %d\n", block_result->ai_scene_id, hsv_level);
-				else
-					ISP_LOGD("ai_scene_id change to %d, apply smart result\n", block_result->ai_scene_id);
-			}
-			dst_hsv_ptr->cur_idx.weight0 = block_result->ai_scene_id;
-			/* todo: end */
-
-			if (hsv_level != -1) {
+			if (hsv_level != -1 && hsv_level < SENSOR_HSV_NUM) {
 				src_map[0] = dst_hsv_ptr->map[hsv_level].data_ptr;
 				if (src_map[0] != NULL) {
 					cmr_u32 *temp = (cmr_u32 *)src_map[0];

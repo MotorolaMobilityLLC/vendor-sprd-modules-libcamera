@@ -54,6 +54,7 @@ static struct blk_info blocks_array[] = {
 
 	/*  ISP blocks */
 	{ ISP_BLK_HSV, 0 }, /* size parsed in hsv block init() */
+	{ ISP_BLK_HSV_NEW, 0 }, /* size parsed in hsv block init() */
 	{ ISP_BLK_BRIGHT, sizeof(struct sensor_bright_param) },
 	{ ISP_BLK_CONTRAST, sizeof(struct sensor_contrast_param) },
 	{ ISP_BLK_SATURATION, sizeof(struct sensor_saturation_param) },
@@ -1678,6 +1679,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	struct isp_pm_mode_param *dst_mod_ptr = PNULL;
 	struct isp_block_header *src_header = PNULL;
 	struct isp_pm_block_header *dst_header = PNULL;
+	struct isp_pm_block_header *hsv_header, *hsv_new_header;
 	cmr_u8 *src_data_ptr = PNULL;
 	cmr_u8 *dst_data_ptr = PNULL;
 
@@ -1823,6 +1825,7 @@ start_parse:
 
 		dst_mod_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->tune_mode_array[i];
 		dst_header = (struct isp_pm_block_header *)dst_mod_ptr->header;
+		hsv_header = hsv_new_header = PNULL;
 
 		for (j = 0; j < src_mod_ptr->block_num; j++) {
 			if (!check_blk_id_valid(src_header[j].block_id, src_header[j].size)) {
@@ -1854,6 +1857,18 @@ start_parse:
 			memcpy((void *)dst_header[j].name, (void *)src_header[j].block_name, sizeof(dst_header[j].name));
 
 			switch (src_header[j].block_id) {
+			case ISP_BLK_HSV:
+			{
+				hsv_header = &dst_header[j];
+				ISP_LOGD("block hsv \n");
+				break;
+			}
+			case ISP_BLK_HSV_NEW:
+			{
+				hsv_new_header = &dst_header[j];
+				ISP_LOGD("block hsv new\n");
+				break;
+			}
 			case ISP_BLK_2D_LSC:
 			{
 				extend_offset += add_lnc_len;
@@ -2254,6 +2269,13 @@ start_parse:
 			}
 #endif
 
+		}
+
+		/* ISP_BLK_HSV & ISP_BLK_HSV_NEW only one is required */
+		/* If there is new hsv, old one will be discarded */
+		if (hsv_header && hsv_new_header) {
+			hsv_header->block_id = 0;
+			ISP_LOGD("discard hsv because of hsv_new\n");
 		}
 
 		if (max_num < src_mod_ptr->block_num)

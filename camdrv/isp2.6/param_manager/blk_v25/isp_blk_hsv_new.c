@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "isp_blk_hsv"
+#define LOG_TAG "isp_blk_hsv_new"
 #include "isp_blocks_cfg.h"
 
-cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, void *param2)
+cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param, void *param1, void *param2)
 {
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
@@ -25,8 +25,8 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	cmr_uint addr = 0, tmp_addr = 0, addr1 = 0;
 	cmr_uint base, end;
 	struct isp_data_bin_info *specialeffect = PNULL;
-	struct isp_hsv_param *dst_ptr = (struct isp_hsv_param *)dst_hsv_param;
-	struct sensor_hsv_param *src_ptr = (struct sensor_hsv_param *)src_hsv_param;
+	struct isp_hsv_param_new *dst_ptr = (struct isp_hsv_param_new *)dst_hsv_param;
+	struct sensor_hsv_new_param *src_ptr = (struct sensor_hsv_new_param *)src_hsv_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
@@ -40,23 +40,23 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	end = base + header_ptr->size;
 	ISP_LOGD("data size %d, addr range (%p ~ %p)\n", header_ptr->size, (void *)base, (void *)end);
 
-	for (i = 0; i < SENSOR_HSV_NUM; i++) {
-		dst_ptr->map[i].size = src_ptr->map[i].size;
-		addr = (cmr_uint) & src_ptr->data_area + src_ptr->map[i].offset;
+	for (i = 0; i < SENSOR_HSV_NUM_NEW; i++) {
+		dst_ptr->map[i].size = src_ptr->map_new[i].size;
+		addr = (cmr_uint) & src_ptr->data_area_new+ src_ptr->map_new[i].offset;
 		dst_ptr->map[i].data_ptr = (void *)addr;
 
-		addr1 = addr + src_ptr->map[i].size;
+		addr1 = addr + src_ptr->map_new[i].size;
 		ISP_LOGV("index %d, offset %d, size %d,  cur %p, end %p\n", i,
-			src_ptr->map[i].offset, src_ptr->map[i].size, (void *)addr, (void *)addr1);
+			src_ptr->map_new[i].offset, src_ptr->map_new[i].size, (void *)addr, (void *)addr1);
 
 		if ((addr > base) && (addr1 <= end))
 			continue;
 
 		ISP_LOGE("out of range, index %d, offset %d, size %d,  cur %p, end %p\n",
-			i, src_ptr->map[i].offset, src_ptr->map[i].size, (void *)addr, (void *)addr1);
+			i, src_ptr->map_new[i].offset, src_ptr->map_new[i].size, (void *)addr, (void *)addr1);
 		goto exit;
 	}
-	addr += src_ptr->map[SENSOR_HSV_NUM - 1].size;
+	addr += src_ptr->map_new[SENSOR_HSV_NUM_NEW - 1].size;
 	specialeffect = (struct isp_data_bin_info *)addr;
 	addr += sizeof(struct isp_data_bin_info) * MAX_SPECIALEFFECT_NUM;
 	for (i = 0; i < MAX_SPECIALEFFECT_NUM; i++) {
@@ -77,7 +77,7 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 	}
 
 	if (PNULL == dst_ptr->final_map.data_ptr) {
-		dst_ptr->final_map.data_ptr = (void *)malloc(src_ptr->map[index].size);
+		dst_ptr->final_map.data_ptr = (void *)malloc(src_ptr->map_new[index].size);
 		if (PNULL == dst_ptr->final_map.data_ptr) {
 			ISP_LOGE("fail to malloc  hsv map\n");
 			rtn = ISP_ERROR;
@@ -87,7 +87,7 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 
 	for (i = 0; i < 2; i++) {
 		if (PNULL == dst_ptr->ct_result[i]) {
-			dst_ptr->ct_result[i] = (cmr_u32 *)malloc(src_ptr->map[index].size);
+			dst_ptr->ct_result[i] = (cmr_u32 *)malloc(src_ptr->map_new[index].size);
 			if (PNULL == dst_ptr->ct_result[i]) {
 				ISP_LOGE("fail to malloc hsv ct\n");
 				rtn = ISP_ERROR;
@@ -104,10 +104,6 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 		for (j = 0; j < 4; j++) {
 			dst_ptr->cur.curve_info.s_curve[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_s_curve[j];
 			dst_ptr->cur.curve_info.v_curve[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_v_curve[j];
-		}
-		for (j = 0; j < 2; j++) {
-			dst_ptr->cur.curve_info.r_s[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_r_s[j];
-			dst_ptr->cur.curve_info.r_v[i][j] = src_ptr->sensor_hsv_cfg[i].hsv_r_v[j];
 		}
 		dst_ptr->cur.curve_info.hrange_left[i] = src_ptr->sensor_hsv_cfg[i].hsv_hrange_left;
 		dst_ptr->cur.curve_info.hrange_right[i] = src_ptr->sensor_hsv_cfg[i].hsv_hrange_right;
@@ -139,10 +135,10 @@ exit:
 	return rtn;
 }
 
-cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_hsv_param *dst_hsv_ptr = (struct isp_hsv_param *)hsv_param;
+	struct isp_hsv_param_new *dst_hsv_ptr = (struct isp_hsv_param_new *)hsv_param;
 	struct isp_pm_block_header *hsv_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
@@ -226,13 +222,14 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 				break;
 			}
 
-			if (hsv_level != -1 && hsv_level < SENSOR_HSV_NUM) {
+			if (hsv_level != -1 && hsv_level < SENSOR_HSV_NUM_NEW) {
 				src_map[0] = dst_hsv_ptr->map[hsv_level].data_ptr;
 				if (src_map[0] != NULL) {
 					cmr_u32 *temp = (cmr_u32 *)src_map[0];
 					memcpy((void *)dst_hsv_ptr->final_map.data_ptr, src_map[0], dst_hsv_ptr->final_map.size);
-					ISP_LOGV("hsv level %d, val %05x %05x %05x %05x %05x %05x %05x %05x\n",
-						hsv_level, temp[0], temp[1], temp[2], temp[3], temp[4], temp[5], temp[6], temp[7]);
+					ISP_LOGV("hsv level %d for ai scene %d, val %05x %05x %05x %05x %05x %05x %05x %05x\n",
+						hsv_level, block_result->ai_scene_id,
+						temp[0], temp[1], temp[2], temp[3], temp[4], temp[5], temp[6], temp[7]);
 				} else {
 					ISP_LOGE("hsv level %d data table is null\n", hsv_level);
 				}
@@ -300,10 +297,10 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 	return rtn;
 }
 
-cmr_s32 _pm_hsv_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
+cmr_s32 _pm_hsv_new_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_hsv_param *hsv_ptr = (struct isp_hsv_param *)hsv_param;
+	struct isp_hsv_param_new *hsv_ptr = (struct isp_hsv_param_new *)hsv_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
@@ -323,11 +320,11 @@ cmr_s32 _pm_hsv_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *
 	return rtn;
 }
 
-cmr_s32 _pm_hsv_deinit(void *hsv_param)
+cmr_s32 _pm_hsv_new_deinit(void *hsv_param)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_s32 j;
-	struct isp_hsv_param *dst_ptr = (struct isp_hsv_param *)hsv_param;
+	struct isp_hsv_param_new *dst_ptr = (struct isp_hsv_param_new *)hsv_param;
 
 	if (dst_ptr->final_map.data_ptr) {
 		free(dst_ptr->final_map.data_ptr);
