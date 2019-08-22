@@ -49,7 +49,9 @@
 
 #define AE_FLICKER_NUM 2
 #define AE_ISO_NUM_NEW 8
+#define AEC_ISO_NUM 10
 #define AE_SCENE_NUM 8
+#define AEC_WEIGHT_TABLE_SIZE 1024
 #define AEC_EXP_GAIN_TABLE_SIZE 512
 #define LNC_MAP_COUNT 9
 #define LNC_WEIGHT_LEN 4096
@@ -87,7 +89,7 @@
 #define SENSOR_CMC_POINT_NUM 9
 //#define SENSOR_SMART_LEVEL_NUM 25
 //#define SENSOR_SMART_LEVEL_DEFAULT 15
-#define AE_WEIGHT_TABLE_NUM 3
+#define AE_WEIGHT_TABLE_SZ 4
 
 enum isp_scene_mode {
 	ISP_SCENEMODE_AUTO = 0x00,
@@ -195,32 +197,35 @@ struct sensor_find_param_list {
 };
 /* End of new isp pm searching solution enum/structure define */
 
-
 //testcode,should ask AE module to change struct define mothod
 struct ae_exp_gain_index_2 {
-	cmr_u32 min_index;
-	cmr_u32 max_index;
-};
-struct ae_exp_gain_table_2 {
-	struct ae_exp_gain_index_2 index;
-	cmr_u32 exposure[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u32 dummy[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u16 again[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u16 min_index;
+	cmr_u16 max_index;
+	cmr_u8 exp_mode;   /* 0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
+	cmr_u8 reserved[3];
 };
 
-//AE 2.5
+struct ae_exp_gain_table_2 {
+	struct ae_exp_gain_index_2 index;
+	cmr_u16 gain[AEC_EXP_GAIN_TABLE_SIZE];
+	cmr_u32 exposure[AEC_EXP_GAIN_TABLE_SIZE];
+};
+
+//AE 3.0
 struct ae_scence_info_header_2 {
-	cmr_u32 enable;
-	cmr_u32 scene_mode;
-	cmr_u32 target_lum;
-	cmr_u32 iso_index;
-	cmr_u32 ev_offset;
-	cmr_u32 max_fps;
-	cmr_u32 min_fps;
-	cmr_u32 weight_mode;
-	cmr_u32 default_index;
-	cmr_u32 table_enable;
+	cmr_u8 enable;
+	cmr_u8 scene_mode;
+	cmr_u8 iso_index;
+	cmr_u8 ev_offset;
+	cmr_u16 target_lum;
+	cmr_u8 target_zone_in;
+	cmr_u8 target_zone_out;
+	cmr_u16 max_fps;
+	cmr_u16 min_fps;
+	cmr_u8 weight_mode;
+	cmr_u8 table_enable;
+	cmr_u8 cvg_speed;/*include convergent speed and trigger sensitivity*/
+	cmr_u8 reserved[9];
 };
 
 struct ae_scene_info_2 {
@@ -228,12 +233,16 @@ struct ae_scene_info_2 {
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM];
 };
 
+struct aec_weight_table {
+	cmr_u8 weight[AEC_WEIGHT_TABLE_SIZE];
+};
+
 struct ae_table_param_2 {
-	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
-	struct ae_exp_gain_table_2 flash_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
-	struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
+	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM][AEC_ISO_NUM];
+	struct ae_exp_gain_table_2 ae_table_cus[AE_FLICKER_NUM][AE_ISO_NUM_NEW];/*it is for user define, 0: video, 1: flash*/
+	struct aec_weight_table weight_table[AE_WEIGHT_TABLE_SZ];/*average/center/spot/user define*/
 	struct ae_scene_info_2 scene_info[AE_SCENE_NUM];
-	struct ae_auto_iso_tab auto_iso_tab;
+	cmr_u32 ae_tab_reserved[8996];
 };
 
 struct sensor_nr_header_param {
@@ -2037,6 +2046,7 @@ enum {
 	ISP_BLK_YUV_NOISEFILTER_T,
 	ISP_BLK_CNR2_T,
 	ISP_BLK_IMBALANCEE_T,
+
 	ISP_BLK_SW3DNR_T,
 	ISP_BLK_BWU_BWD_T,
 	ISP_BLK_RAW_GTM_T,
@@ -2099,11 +2109,6 @@ struct sensor_version_info {
 	cmr_u32 reserve6;
 };
 
-struct sensor_ae_tab_param {
-	cmr_u8 *ae;
-	cmr_u32 ae_len;
-};
-
 struct sensor_awb_tab_param {
 	cmr_u8 *awb;
 	cmr_u32 awb_len;
@@ -2114,32 +2119,29 @@ struct sensor_lnc_tab_param {
 	cmr_u32 lnc_len;
 };
 
+struct sensor_ae_tab_param {
+	cmr_u8 *ae;
+	cmr_u32 ae_len;
+};
+
 struct ae_exp_gain_tab {
-	cmr_u32 *index;
+	cmr_u16 *index;
 	cmr_u32 index_len;
+	cmr_u16 *gain;
+	cmr_u32 gain_len;
 	cmr_u32 *exposure;
 	cmr_u32 exposure_len;
-	cmr_u32 *dummy;
-	cmr_u32 dummy_len;
-	cmr_u16 *again;
-	cmr_u32 again_len;
-	cmr_u16 *dgain;
-	cmr_u32 dgain_len;
 };
 
 struct ae_scene_exp_gain_tab {
-	cmr_u32 *scene_info;
+	cmr_u16 *scene_info;
 	cmr_u32 scene_info_len;
-	cmr_u32 *index;
+	cmr_u16 *index;
 	cmr_u32 index_len;
+	cmr_u16 *gain;
+	cmr_u32 gain_len;
 	cmr_u32 *exposure;
 	cmr_u32 exposure_len;
-	cmr_u32 *dummy;
-	cmr_u32 dummy_len;
-	cmr_u16 *again;
-	cmr_u32 again_len;
-	cmr_u16 *dgain;
-	cmr_u32 dgain_len;
 };
 
 struct ae_weight_tab {
@@ -2147,18 +2149,18 @@ struct ae_weight_tab {
 	cmr_u32 len;
 };
 
-struct ae_auto_iso_tab_v1 {
-	cmr_u16 *auto_iso_tab;
+struct ae_reserve {
+	cmr_u32 *ae_reserve;
 	cmr_u32 len;
 };
 
 struct sensor_ae_tab {
 	struct sensor_ae_tab_param ae_param;
-	struct ae_exp_gain_tab ae_tab[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
-	struct ae_exp_gain_tab ae_flash_tab[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
-	struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_NUM];
-	struct ae_scene_exp_gain_tab scene_tab[AE_SCENE_NUM][AE_FLICKER_NUM];
-	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
+	struct ae_exp_gain_tab ae_tab[AE_FLICKER_NUM][AEC_ISO_NUM];
+	struct ae_exp_gain_tab ae_table_cus[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
+	struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_SZ];
+	struct ae_scene_exp_gain_tab scene_info[AE_SCENE_NUM][AE_FLICKER_NUM];
+	struct ae_reserve ae_reserve;
 };
 
 struct sensor_lens_map_info {

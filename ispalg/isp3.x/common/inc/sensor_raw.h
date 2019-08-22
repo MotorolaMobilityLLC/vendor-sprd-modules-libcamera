@@ -187,6 +187,7 @@ enum isp_smart_id {
 	ISP_SMART_NLM_V2 = 44,
 	ISP_SMART_YUV_LTM = 46,
 	ISP_SMART_PPE_V1 = 47,
+	ISP_SMART_HSV_NEW2 = 49,
 	ISP_SMART_MAX
 };
 
