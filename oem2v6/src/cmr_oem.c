@@ -3279,6 +3279,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
     char value[PROPERTY_VALUE_MAX];
+    char ba_portrait[PROPERTY_VALUE_MAX];
+    char fr_portrait[PROPERTY_VALUE_MAX];
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = NULL;
@@ -3442,6 +3444,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     }
 
     property_get("persist.vendor.cam.ba.blur.version", value, "0");
+    property_get("persist.vendor.cam.ba.portrait.enable", ba_portrait, "0");
+    property_get("persist.vendor.cam.fr.portrait.enable", fr_portrait, "0");
 
     if (cxt->is_multi_mode == MODE_3D_CAPTURE ||
         cxt->is_multi_mode == MODE_3D_VIDEO ||
@@ -3453,6 +3457,9 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.multi_mode = ISP_DUAL_NORMAL;
     } else if (cxt->is_multi_mode == MODE_BLUR && atoi(value) == 3) {
         isp_param.multi_mode = ISP_BLUR_REAR;
+    } else if (cxt->is_multi_mode == MODE_BLUR &&
+                  (atoi(fr_portrait) == 1 || atoi(ba_portrait) == 1)) {
+        isp_param.multi_mode = ISP_BLUR_PORTRAIT;
     } else if (cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {
         isp_param.multi_mode = ISP_WIDETELE;
     } else if (cxt->is_multi_mode == MODE_BOKEH) {

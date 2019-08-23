@@ -1977,7 +1977,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     if (!dualPropSupport) {
         available_cam_features.add(0);
     } else if (atoi(prop) == 1) {
-        available_cam_features.add(3);
+        available_cam_features.add(0);
     } else if (atoi(prop) == 6) {
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
         available_cam_features.add(9);
@@ -1985,10 +1985,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(6);
 #endif
     } else {
-        available_cam_features.add(atoi(prop));
+        available_cam_features.add(0);
     }
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(0);
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features.add(atoi(prop));
 

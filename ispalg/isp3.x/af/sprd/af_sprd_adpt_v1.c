@@ -1746,8 +1746,11 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 	aft_in.aft_ops.binfile_is_exist = if_aft_binfile_is_exist;
 	aft_in.aft_ops.is_aft_mlog = if_is_aft_mlog;
 	aft_in.aft_ops.aft_log = if_aft_log;
+	if (AF_ALG_BLUR_PORTRAIT == af->is_multi_mode) {
+		af->is_multi_mode = AF_ALG_DUAL_C_C;
+	}
 	aft_in.is_multi_mode = af->is_multi_mode;
-
+	
 	af->trig_ops.init(&aft_in, &aft_out, &af->trig_ops.handle);
 	ISP_LOGV("af->trig_ops.handle = %p", af->trig_ops.handle);
 	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_AE_SKIP_INFO, &af->trig_ops.ae_skip_info, NULL);
