@@ -492,7 +492,11 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 
 // samsung area
 #ifdef S5K4H7
+#ifndef TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE
+    {MODULE_SUNNY, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {&s5k4h7_tsp_drv_entry, 0, 0, 0}},
+#else
     {MODULE_SPW_NONE_BACK, "s5k4h7", &g_s5k4h7_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+#endif
 #endif
 #ifdef S5K3L8XXM3Q
     {MODULE_QTECH, "s5k3l8xxm3q", &g_s5k3l8xxm3q_mipi_raw_info, {NULL, 0}, {&s5k3l8xxm3_qtech_drv_entry, 0xA8, DUAL_CAM_TWO_EEPROM, 8192}},

@@ -117,7 +117,7 @@ static struct otp_info_t *s_s5k4h7_otp_info_ptr = &s_s5k4h7_qtech_otp_info;
  * Description:
  * register setting
  *============================================================================*/
-
+static const cmr_u32 sns_binning_fact[] = {1, 2, 1};
 static const SENSOR_REG_T s5k4h7_init_setting[] = {
     // Sensor Information////////////////////////////
     // Sensor      : s5k4h7
