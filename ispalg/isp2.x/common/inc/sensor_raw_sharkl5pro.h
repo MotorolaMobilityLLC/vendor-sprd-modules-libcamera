@@ -2037,7 +2037,6 @@ enum {
 	ISP_BLK_YUV_NOISEFILTER_T,
 	ISP_BLK_CNR2_T,
 	ISP_BLK_IMBALANCEE_T,
-	ISP_BLK_LTM_T,
 	ISP_BLK_SW3DNR_T,
 	ISP_BLK_BWU_BWD_T,
 	ISP_BLK_RAW_GTM_T,
@@ -2246,8 +2245,6 @@ struct sensor_nr_set_group_param {
 	cmr_u32 cnr2_len;
 	cmr_u8 *imblance;
 	cmr_u32 imblance_len;
-	cmr_u8 *ltm;
-	cmr_u32 ltm_len;
 	cmr_u8 *sw_3dnr;
 	cmr_u32 sw_3dnr_len;
 	cmr_u8 *bwu_bwd;
@@ -2342,7 +2339,6 @@ struct denoise_param_update {
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_level_ptr;
 	struct sensor_cnr_level *cnr2_level_ptr;
 	struct sensor_nlm_imbalance_level *imbalance_level_ptr;
-	struct sensor_ltm_level *ltm_level_ptr;
 	struct sensor_sw3dnr_level *sw3dnr_level_ptr;
 	struct sensor_bwu_bwd_level *bwu_bwd_level_ptr;
 	struct sensor_raw_gtm_level *raw_gtm_level_ptr;
