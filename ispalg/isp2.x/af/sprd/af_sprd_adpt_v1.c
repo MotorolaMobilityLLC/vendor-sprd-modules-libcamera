@@ -282,6 +282,26 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 
 		win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
 		win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+#if defined(CONFIG_ISP_2_5)
+		if (win[9].end_x - win[9].start_x > 2336) {
+			cmr_u32 center_x = (win[9].start_x + win[9].end_x) >> 1;
+			switch (af->f_orientation) {
+			case FACE_UP:
+			case FACE_DOWN:
+				win[9].start_x = center_x - (2336 >> 1);
+				win[9].end_x = center_x + (2336 >> 1);
+				break;
+			case FACE_LEFT:
+				win[9].end_x = win[9].start_x + 2336;
+				break;
+			case FACE_RIGHT:
+				win[9].start_x = win[9].end_x - 2336;
+				break;
+			default:
+				break;
+			}
+		}
+#endif
 		win[9].start_x = (win[9].start_x >> 1) << 1;
 		win[9].start_y = (win[9].start_y >> 1) << 1;
 		win[9].end_x = (win[9].end_x >> 1) << 1;
@@ -2982,7 +3002,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		return AFV1_SUCCESS;
 	}
 
-	if ((AF_STOPPED == af->focus_state) || (AF_MODE_MANUAL != af->request_mode && AF_MODE_MANUAL == af->last_request_mode )) {
+	if ((AF_STOPPED == af->focus_state) || (AF_MODE_MANUAL != af->request_mode && AF_MODE_MANUAL == af->last_request_mode)) {
 		trigger_notice_force(af);
 	}
 
