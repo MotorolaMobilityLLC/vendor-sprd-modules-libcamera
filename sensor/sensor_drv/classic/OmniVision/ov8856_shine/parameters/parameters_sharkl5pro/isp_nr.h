@@ -87,6 +87,9 @@ static struct sensor_nr_scene_map_param s_ov8856_nr_scene_map_param = {{
 #include "NR/common/normal/uv_postcdn_param.h"
 #endif
 
+#ifdef _NR_CNR_PARAM_
+#include "NR/common/normal/cnr_param.h"
+#endif
 
 #ifdef _NR_IMBALANCE_PARAM_
 #include "NR/common/normal/imbalance_param.h"
@@ -111,3 +114,4 @@ static struct sensor_nr_scene_map_param s_ov8856_nr_scene_map_param = {{
 #ifdef _NR_YUV_LTM_PARAM_
 #include "NR/common/normal/yuv_ltm_param.h"
 #endif
+
