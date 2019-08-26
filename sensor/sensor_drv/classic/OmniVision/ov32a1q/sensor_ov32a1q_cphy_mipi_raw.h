@@ -28,7 +28,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/parameters_sharkl5/sensor_ov32a1q_raw_param_main.c"
+//#include "parameters/parameters_sharkl5/sensor_ov32a1q_raw_param_main.c"
 
 //#define FEATURE_OTP
 
@@ -1923,7 +1923,7 @@ static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov32a1q_ops_tab;
-struct sensor_raw_info *s_ov32a1q_mipi_raw_info_ptr = &s_ov32a1q_mipi_raw_info;
+struct sensor_raw_info *s_ov32a1q_mipi_raw_info_ptr = PNULL;//&s_ov32a1q_mipi_raw_info;
 
 /*==============================================================================
  * Description:
