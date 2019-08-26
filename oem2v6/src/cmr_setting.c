@@ -83,6 +83,7 @@ enum setting_general_type {
     SETTING_GENERAL_AUTO_3DNR,
     SETTING_GENERAL_EXPOSURE_TIME,
     SETTING_GENERAL_ZOOM,
+    SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE,
     SETTING_GENERAL_TYPE_MAX
 };
 
@@ -127,6 +128,7 @@ struct setting_hal_common {
     cmr_uint sprd_appmode_id;
     cmr_uint ai_scene;
     cmr_uint is_auto_3dnr;
+    cmr_uint is_auto_tracking;
     struct cmr_ae_compensation_param ae_compensation_param;
 };
 
@@ -199,6 +201,7 @@ struct setting_hal_param {
     cmr_uint sprd_filter_type;
     EXIF_RATIONAL_T ExposureTime;
     cmr_uint device_orientation;
+    cmr_uint ot_status;
     cmr_uint face_attributes_enabled;
 };
 
@@ -560,12 +563,14 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AUTO_3DNR, &hal_param->hal_common.is_auto_3dnr,
          COM_ISP_SET_AUTO_3DNR, COM_SN_TYPE_MAX},
          {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
-         COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},};
+         COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE, &hal_param->hal_common.is_auto_tracking,
+         COM_ISP_SET_AUTO_TRACKING_ENABLE, COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
 
-    if (type >= SETTING_GENERAL_ZOOM) {
+    if (type >= SETTING_GENERAL_TYPE_MAX) {
         CMR_LOGE("type is invalid");
         return -CMR_CAMERA_INVALID_PARAM;
     }
@@ -618,6 +623,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             item->isp_cmd = COM_ISP_SET_AI_SCENE_STOP;
             ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         }
+        break;
+    case SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE:
+        item->isp_cmd = COM_ISP_SET_AUTO_TRACKING_ENABLE;
+        ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         break;
 
     default:
@@ -2509,6 +2518,48 @@ static cmr_int setting_set_afbc_enable(struct setting_component *cpt,
 
     return ret;
 }
+static cmr_int setting_set_auto_tracking_enable(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set auto tracking %ld", parm->cmd_type_value);
+    hal_param->hal_common.is_auto_tracking = parm->cmd_type_value;
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE,
+                              parm);
+    if (ret)
+        CMR_LOGE("set auto tracking error");
+    return ret;
+}
+
+static cmr_int setting_get_auto_tracking_enable(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->hal_common.is_auto_tracking;
+    CMR_LOGD("get auto tracking enabled %ld", parm->cmd_type_value);
+
+    return ret;
+}
+
+static cmr_int setting_set_auto_tracking_status(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->ot_status = parm->cmd_type_value;
+    return ret;
+}
+
+static cmr_int setting_get_auto_tracking_status(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->cmd_type_value = hal_param->ot_status;
+
+    return ret;
+}
 
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
@@ -3865,6 +3916,14 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED, setting_get_afbc_enabled);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
                              setting_set_exposure_time);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
+                             setting_set_auto_tracking_enable);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AUTOCHASING_REGION_ENABLE,
+                             setting_get_auto_tracking_enable);
+    cmr_add_cmd_fun_to_table(SETTING_SET_SPRD_AUTOCHASING_STATUS,
+                             setting_set_auto_tracking_status);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AUTOCHASING_STATUS,
+                             setting_get_auto_tracking_status);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
                              setting_set_face_attributes_enable);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,

@@ -388,10 +388,14 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
             out->output.objectY = a_OTResult.dMovingY;
             out->output.status = a_OTResult.dOTStatus;
             out->output.frame_id = a_OTResult.dOTFrameID;
-        } else {
+            out->output.objectSize_X = a_OTResult.dSize_X;
+            out->output.objectSize_Y = a_OTResult.dSize_Y;
+            out->output.objectAxis1 = a_OTResult.dAxis1;
+            out->output.objectAxis2 = a_OTResult.dAxis2;
+        }else {
             x_point = 0;
             y_point = 0;
-            if (info->data.frame_num > auto_tracking_handle->save_frame_id) {
+            if (info->frm_cnt> auto_tracking_handle->save_frame_id) {
                 CMR_LOGD("OT_Do_Without coordinate");
                 // Alg do with [0, 0]
                 ret = OT_Do(a_pScalingBuf, x_point, y_point);
@@ -405,12 +409,20 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
                 out->output.objectY = a_OTResult.dMovingY;
                 out->output.status = a_OTResult.dOTStatus;
                 out->output.frame_id = a_OTResult.dOTFrameID;
+                out->output.objectSize_X = a_OTResult.dSize_X;
+                out->output.objectSize_Y = a_OTResult.dSize_Y;
+                out->output.objectAxis1 = a_OTResult.dAxis1;
+                out->output.objectAxis2 = a_OTResult.dAxis2;
             } else {
                 CMR_LOGD("Do not Track");
                 out->output.objectX = 0;
                 out->output.objectY = 0;
                 out->output.status = 0;
                 out->output.frame_id = 0;
+                out->output.objectSize_X = 0;
+                out->output.objectSize_Y = 0;
+                out->output.objectAxis1 = 0;
+                out->output.objectAxis2 = 0;
             }
         }
     } else {
@@ -418,18 +430,29 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
         out->output.objectY = a_OTResult.dMovingY;
         out->output.status = a_OTResult.dOTStatus;
         out->output.frame_id = a_OTResult.dOTFrameID;
+        out->output.objectSize_X = a_OTResult.dSize_X;
+        out->output.objectSize_Y = a_OTResult.dSize_Y;
+        out->output.objectAxis1 = a_OTResult.dAxis1;
+        out->output.objectAxis2 = a_OTResult.dAxis2;
     }
 
     out->private_data = (void *)info->camera_id;
     out->caller_handle = in->caller_handle;
+    out->output.imageW = in->input.imageW;
+    out->output.imageH = in->input.imageH;
 
     //reset pre_status when failure
     if (AUTO_TRACKING_FAILURE == out->output.status) {
         auto_tracking_handle->pre_status = 0;
     }
 
-    CMR_LOGD("Callback param:%d,%d,%d,%d", out->output.objectX, out->output.objectY,
-             out->output.status, out->output.frame_id);
+    CMR_LOGD("auto tracking Callback param:%d,%d,%d,%d SIZEX SIZEY axis1 axis2 "
+             "%d %d %d %d",
+             out->output.objectX, out->output.objectY, out->output.status,
+             out->output.frame_id, out->output.objectSize_X,
+             out->output.objectSize_Y, out->output.objectAxis1,
+             out->output.objectAxis2);
+
 
     if (auto_tracking_handle->reg_cb) {
         (auto_tracking_handle->reg_cb)(IPM_TYPE_AUTO_TRACKING, out);

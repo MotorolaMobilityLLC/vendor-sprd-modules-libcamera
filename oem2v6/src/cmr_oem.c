@@ -1670,6 +1670,27 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     case PREVIEW_EVT_CB_AT:
         oem_cb_type = CAMERA_EVT_CB_AUTO_TRACKING;
         CMR_LOGV("PREVIEW_EVT_CB_AT");
+        struct camera_frame_type *frame_param_one =
+            (struct camera_frame_type *)param;
+        struct common_isp_cmd_param isp_cmd_parm;
+        cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
+        struct setting_context *setting_cxt = &cxt->setting_cxt;
+        struct setting_cmd_parameter setting_param;
+        cmr_bzero(&setting_param, sizeof(setting_param));
+
+        isp_cmd_parm.camera_id = cxt->camera_id;
+        memcpy(&(isp_cmd_parm.af_ot_info), &(frame_param_one->at_cb_info),
+               sizeof(struct auto_tracking_info));
+        camera_isp_ioctl(oem_handle, COM_ISP_SET_AUTO_TRACKING_INFO,
+                         &isp_cmd_parm);
+
+        setting_param.camera_id = cxt->camera_id;
+        setting_param.cmd_type_value = isp_cmd_parm.af_ot_info.status;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                SETTING_SET_SPRD_AUTOCHASING_STATUS,
+                                &setting_param);
+        if (ret)
+            CMR_LOGD("SET AUTO TRACKING STATUS ERROR");
         break;
 
     default:
@@ -7812,6 +7833,20 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
         break;
+    case COM_ISP_SET_AUTO_TRACKING_ENABLE:
+        CMR_LOGD("set auto tracking enable %d", param_ptr->cmd_value);
+        isp_cmd = ISP_CTRL_SET_AF_OT_SWITH;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cmd_value;
+        break;
+    case COM_ISP_SET_AUTO_TRACKING_INFO:
+        isp_cmd = ISP_CTRL_SET_AF_OT_INFO;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&(param_ptr->af_ot_info);
+        CMR_LOGD("set auto tracking info X %d Y %d status %d",
+                 param_ptr->af_ot_info.objectX, param_ptr->af_ot_info.objectY,
+                 param_ptr->af_ot_info.status);
+        break;
     case COM_ISP_SET_CALIBRATION_VCMDISC:
         isp_cmd = ISP_CTRL_SET_VCM_DIST;
         ptr_flag = 1;
@@ -9234,6 +9269,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_SPRD_AFBC_ENABLED:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);

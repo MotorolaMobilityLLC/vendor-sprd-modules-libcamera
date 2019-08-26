@@ -4539,6 +4539,16 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("fd mode %d",
                  s_setting[mCameraId].statisticsInfo.face_detect_mode);
     }
+    if (frame_settings.exists(ANDROID_SPRD_AUTOCHASING_REGION_ENABLE)) {
+        if (s_setting[mCameraId].sprddefInfo.sprd_ot_switch !=
+            frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION_ENABLE)
+                .data.u8[0]) {
+            s_setting[mCameraId].sprddefInfo.sprd_ot_switch =
+                frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION_ENABLE)
+                    .data.u8[0];
+            pushAndroidParaTag(ANDROID_SPRD_AUTOCHASING_REGION_ENABLE);
+        }
+    }
 
     // update auto tracking start point.
     if (frame_settings.exists(ANDROID_SPRD_AUTOCHASING_REGION)) {
@@ -4547,13 +4557,15 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("tag_count %d", tag_count);
         int32_t touch_area[5] = {0};
         int32_t i = 0;
-
-        for (i = 0; i < tag_count; i++) {
-            touch_area[i] = frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION)
-                                .data.i32[i];
-            HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
-        }
-        autotrackingCoordinateConvert(touch_area);
+       if (tag_count == 5) {
+             for (i = 0; i < tag_count; i++) {
+                    touch_area[i] =
+                    frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION)
+                    .data.i32[i];
+                    HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
+            }
+            autotrackingCoordinateConvert(touch_area);
+       }
     } else {
         HAL_LOGV("Not AUTOCHASING tag");
         s_setting[mCameraId].autotrackingInfo.at_start_info[0] = 0;

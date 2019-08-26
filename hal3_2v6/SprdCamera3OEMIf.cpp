@@ -6662,6 +6662,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
                  sprdInfo.sprd_auto_3dnr_enable);
     } break;
+    case ANDROID_SPRD_AUTOCHASING_REGION_ENABLE: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
+                 sprdInfo.sprd_ot_switch);
+    } break;
     default:
         ret = BAD_VALUE;
         break;

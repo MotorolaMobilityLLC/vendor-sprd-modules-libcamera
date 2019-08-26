@@ -460,6 +460,8 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AUTO_3DNR,
     COM_ISP_GET_REBOKEH_DATA,
     COM_ISP_SET_F_NUMBER,
+    COM_ISP_SET_AUTO_TRACKING_ENABLE,
+    COM_ISP_SET_AUTO_TRACKING_INFO,
     COM_ISP_TYPE_MAX
 };
 
@@ -761,6 +763,21 @@ struct af_relbokeh_oem_data {
     cmr_u16 golden_distance[40];
     cmr_u16 golden_vcm[40];
     cmr_u16 reserved[10];
+};
+
+struct auto_tracking_info {
+    cmr_s32 objectX;
+    cmr_s32 objectY;
+    cmr_s32 objectSize_X; // Object Size Width
+    cmr_s32 objectSize_Y; // Object Size Height
+    cmr_s32 objectAxis1; // Object Axis Width
+    cmr_s32 objectAxis2; // Object Axis Height
+    cmr_s32 objectTDiff;
+    cmr_s32 status;
+    cmr_s32 frame_id;
+    cmr_s32 imageW;
+    cmr_u32 imageH;
+    cmr_u32 reserved[20];
 };
 
 typedef struct {
@@ -1079,6 +1096,7 @@ struct common_isp_cmd_param {
         void *cmd_ptr;
         cmr_u32 padding;
         cmr_u32 vcm_step;
+        cmr_u32 cnr2_en;
         struct isp_af_win af_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
         struct cmr_win_area win_area;
@@ -1092,7 +1110,7 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
-        cmr_u32 cnr2_en;
+
 #ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
 #endif
@@ -1106,6 +1124,7 @@ struct common_isp_cmd_param {
         struct vcm_range_info vcm_range;
         struct vcm_disc_info vcm_disc;
         struct af_relbokeh_oem_data relbokeh_info;
+        struct auto_tracking_info af_ot_info;
     };
 };
 
@@ -1627,6 +1646,7 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_AFBC_ENABLED,
     CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
     CAMERA_PARAM_TOUCH_INFO_TO_FD,
+    CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1713,13 +1733,6 @@ struct camera_sensor_info {
 struct fd_touch_info {
     cmr_u32 fd_touchX;
     cmr_u32 fd_touchY;
-};
-
-struct auto_tracking_info {
-    cmr_s32 objectX;
-    cmr_s32 objectY;
-    cmr_s32 status;
-    cmr_s32 frame_id;
 };
 
 struct camera_frame_type {

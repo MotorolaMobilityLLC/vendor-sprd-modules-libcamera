@@ -14182,6 +14182,8 @@ cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
     ipm_in_param.input.objectY = prev_cxt->auto_tracking_start_y;
     ipm_in_param.input.status = prev_cxt->auto_tracking_status;
     ipm_in_param.input.frame_id = prev_cxt->auto_tracking_frame_id;
+    ipm_in_param.input.imageW = cxt->sn_cxt.sensor_info.source_width_max;
+    ipm_in_param.input.imageH = cxt->sn_cxt.sensor_info.source_height_max;
 
     ret = ipm_transfer_frame(prev_cxt->auto_tracking_handle, &ipm_in_param,
                              &ipm_out_param);
@@ -14219,13 +14221,9 @@ cmr_int prev_auto_tracking_cb(cmr_u32 class_type,
     camera_id = (cmr_u32)((unsigned long)cb_param->private_data);
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-
     prev_cxt = &handle->prev_cxt[camera_id];
-
-    frame_type.at_cb_info.objectX = cb_param->output.objectX;
-    frame_type.at_cb_info.objectY = cb_param->output.objectY;
-    frame_type.at_cb_info.status = cb_param->output.status;
-
+    memcpy(&(frame_type.at_cb_info), &(cb_param->output),
+           sizeof(struct auto_tracking_info));
     /*notify fd info directly*/
     cb_data_info.cb_type = PREVIEW_EVT_CB_AT;
     cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -14422,14 +14420,43 @@ cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
+    struct common_isp_cmd_param isp_cmd_parm;
+    cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
 
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    cmr_uint is_autochasing_enable = 0;
+    cmr_uint ot_status = 0;
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_SPRD_AUTOCHASING_REGION_ENABLE,
+                            &setting_param);
+    is_autochasing_enable = setting_param.cmd_type_value;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                          SETTING_GET_SPRD_AUTOCHASING_STATUS, &setting_param);
+    ot_status = setting_param.cmd_type_value;
     prev_cxt->auto_tracking_start_x = input_param->objectX;
     prev_cxt->auto_tracking_start_y = input_param->objectY;
     prev_cxt->auto_tracking_status = input_param->status;
     prev_cxt->auto_tracking_frame_id = input_param->frame_id;
-    CMR_LOGD("start_x=%d, start_y=%d, status=%d, f_id=%d",
-             prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y,
-             prev_cxt->auto_tracking_status, prev_cxt->auto_tracking_frame_id);
+    CMR_LOGD(
+        "start_x=%d, start_y=%d, status=%d, f_id=%d enable=%d ot_status= %d",
+        prev_cxt->auto_tracking_start_x, prev_cxt->auto_tracking_start_y,
+        prev_cxt->auto_tracking_status, prev_cxt->auto_tracking_frame_id,
+        is_autochasing_enable, ot_status);
+    if ((prev_cxt->auto_tracking_start_x == 0) &&
+        (prev_cxt->auto_tracking_start_y == 0) &&
+        (is_autochasing_enable == 1) && (ot_status != 2)) {
+        isp_cmd_parm.af_ot_info.status = 3;
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AUTO_TRACKING_INFO, &isp_cmd_parm);
+        if (ret)
+            CMR_LOGE("SET_AUTO_TRACKING_INFO_STATUS ERROR : %d", ret);
+    }
 
     return ret;
 }
