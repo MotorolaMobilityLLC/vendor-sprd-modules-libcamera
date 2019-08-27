@@ -1058,9 +1058,7 @@ static cmr_int
 setting_set_exposure_compensation(struct setting_component *cpt,
                                   struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
-    cpt->force_set = 1;
     ret = setting_set_general(cpt, SETTING_GENERAL_EXPOSURE_COMPENSATION, parm);
-    cpt->force_set = 0;
     return ret;
 }
 
