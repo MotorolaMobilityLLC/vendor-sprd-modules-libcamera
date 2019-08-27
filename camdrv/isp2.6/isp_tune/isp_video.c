@@ -4657,7 +4657,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					if (NULL != fun_ptr->set_capture_size) {
 						fun_ptr->set_capture_size(rtn_cmd.param[1], rtn_cmd.param[2]);
 					}
-                                  #if 0
 					fun_ptr->take_picture(0, capture_format);
 					sem_wait(&capture_sem_lock);
 
@@ -4670,7 +4669,6 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 					if (NULL != fun_ptr->start_preview) {
 						fun_ptr->start_preview(0, 0);
 					}
-					#endif
 
 				}
 			}
