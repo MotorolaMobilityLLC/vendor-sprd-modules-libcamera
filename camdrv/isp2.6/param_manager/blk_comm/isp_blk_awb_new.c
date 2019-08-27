@@ -54,12 +54,16 @@ cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0
 	struct isp_awb_param *dst_ptr = (struct isp_awb_param *)awb_new_param;
 	struct isp_pm_block_header *awb_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
-	awb_header_ptr->is_update = ISP_ONE;
-
 	switch (cmd) {
 	case ISP_PM_BLK_AWBC:
 		{
 			struct isp_awbc_cfg *cfg_ptr = (struct isp_awbc_cfg *)param_ptr0;
+
+			if (cfg_ptr->r_gain == 0 && cfg_ptr->g_gain == 0 && cfg_ptr->b_gain == 0) {
+				ISP_LOGW("warn: zero value\n");
+				return 0;
+			}
+
 			dst_ptr->cur.gain.r = cfg_ptr->r_gain;
 			dst_ptr->cur.gain.gr = cfg_ptr->g_gain;
 			dst_ptr->cur.gain.gb = cfg_ptr->g_gain;
@@ -68,11 +72,13 @@ cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0
 			dst_ptr->cur.gain_offset.gr = cfg_ptr->g_offset;
 			dst_ptr->cur.gain_offset.gb = cfg_ptr->g_offset;
 			dst_ptr->cur.gain_offset.b = cfg_ptr->b_offset;
+			awb_header_ptr->is_update = ISP_ONE;
 		}
 		break;
 
 	case ISP_PM_BLK_AWBC_BYPASS:
 		dst_ptr->cur.awbc_bypass = *((cmr_u32 *) param_ptr0);
+		awb_header_ptr->is_update = ISP_ONE;
 		break;
 
 	default:

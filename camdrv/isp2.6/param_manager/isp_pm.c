@@ -626,13 +626,17 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 	struct isp_block_cfg *blk_cfg_ptr = PNULL;
 	struct isp_context *isp_cxt_ptr = PNULL;
 	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
+	struct isp_pm_block_header *blk_header_array = PNULL;
+	struct isp_pm_blocks_param *blk_param_ptr = PNULL;
 
 	ISP_LOGD("start.\n");
 	for (j = 0; j < PARAM_SET_MAX; j++) {
 		isp_cxt_ptr = &pm_cxt_ptr->cxt_array[j];
-		blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
+		blk_param_ptr = &pm_cxt_ptr->blocks_param[j];
+		blk_header_array = blk_param_ptr->header;
+		blk_num = blk_param_ptr->block_num;
 		for (i = 0; i < blk_num; i++) {
-			id = blocks_array[i].blk_id;
+			id = blk_header_array[i].block_id;
 			blk_cfg_ptr = isp_pm_get_block_cfg(id);
 			if (PNULL != blk_cfg_ptr && blk_cfg_ptr->ops) {
 				ops = blk_cfg_ptr->ops;
