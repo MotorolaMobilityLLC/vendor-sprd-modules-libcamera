@@ -2817,6 +2817,11 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 	}
 
 	af->pre_state = af->state;
+
+	if (AF_MODE_MANUAL == af_mode) {
+		af->last_request_mode = af_mode;
+	}
+
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
 		if (AF_ALG_BLUR_REAR == af->is_multi_mode) {
@@ -2839,6 +2844,12 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		mode = STATE_CAF == af->state ? AFT_MODE_CONTINUE : AFT_MODE_VIDEO;
 		trigger_set_mode(af, mode);
 		trigger_start(af);
+
+		if (AF_MODE_MANUAL == af->last_request_mode) {
+			af->last_request_mode = af_mode;
+			trigger_notice_force(af);
+		}
+
 		break;
 	case AF_MODE_PICTURE:
 		break;
@@ -3015,8 +3026,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		ISP_LOGI("AF_MODE %s is not null, af test mode", af->AF_MODE);
 		return AFV1_SUCCESS;
 	}
-
-	if ((AF_STOPPED == af->focus_state) || (AF_MODE_MANUAL != af->request_mode && AF_MODE_MANUAL == af->last_request_mode)) {
+	if (AF_STOPPED == af->focus_state) {
 		trigger_notice_force(af);
 	}
 
@@ -3049,7 +3059,6 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 {
 	UNUSED(param0);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	af->last_request_mode = af->request_mode;
 	ISP_LOGI("af state = %s, focus state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
 
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
