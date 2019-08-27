@@ -84,7 +84,7 @@ typedef struct {
     int32_t jpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE];
     int64_t FrameDurationRange[2];
     uint8_t availableFaceDetectModes[SPRD_MAX_AVAILABLE_FACE_DETECT_MODES];
-    uint8_t availableVideoStabModes[2];
+    uint8_t availableVideoStabModes[1];
     uint8_t availEffectModes[9];
     uint8_t availSceneModes[18];
     uint8_t availAntibandingModes[4];
