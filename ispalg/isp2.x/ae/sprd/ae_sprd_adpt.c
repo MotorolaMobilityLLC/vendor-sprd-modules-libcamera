@@ -4938,7 +4938,7 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 	if (result) {
 		cmr_u32 *flash_eb = (cmr_u32 *) result;
 		cmr_s32 bv = 0;
-		cmr_s32 index_range = 20;
+		cmr_s32 index_range = 25;
 
 		rtn = ae_get_bv_by_lum_new(cxt, &bv);
 
@@ -4953,7 +4953,7 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 		else
 			*flash_eb = 0;
 
-		ISP_LOGD("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d, effect_index=%d", *flash_eb, bv, cxt->flash_swith.led_thr_down, cxt->flash_swith.led_thr_up, effect_index);
+		ISP_LOGD("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d, effect_index=%d, max_index=%d", *flash_eb, bv, cxt->flash_swith.led_thr_down, cxt->flash_swith.led_thr_up, effect_index, cxt->sync_cur_status.ae_table->max_index);
 	}
 	return rtn;
 }
