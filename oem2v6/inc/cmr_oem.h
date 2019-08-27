@@ -40,7 +40,7 @@ extern "C" {
 #include "cmr_mm_dvfs.h"
 #endif
 #ifdef CONFIG_FACE_BEAUTY
-#include "camera_face_beauty.h"
+#include "sprd_facebeauty_adapter.h"
 #endif
 #include <hardware/enhance.h>
 #define ISP_LSC_BUF_SIZE (32 * 1024)
@@ -362,7 +362,7 @@ struct camera_context {
     cmr_uint b4awb_phys_addr[ISP_B4AWB_BUF_CNT];
     cmr_uint b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #ifdef CONFIG_FACE_BEAUTY
-    struct class_fb face_beauty;
+    struct fb_beauty_param face_beauty;
 #endif
     cmr_u8 flag_highiso_alloc_mem;
     cmr_uint dump_cnt;

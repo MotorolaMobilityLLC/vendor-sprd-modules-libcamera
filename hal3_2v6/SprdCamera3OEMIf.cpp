@@ -70,7 +70,7 @@ extern "C" {
 #include "isp_video.h"
 }
 #ifdef CONFIG_FACE_BEAUTY
-#include "camera_face_beauty.h"
+#include "sprd_facebeauty_adapter.h"
 #endif
 using namespace android;
 
@@ -645,8 +645,9 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
-         deinit_fb_handle(&face_beauty);
-         mflagfb = false;
+
+        face_beauty_deinit(&face_beauty);
+        mflagfb = false;
     }
 #endif
 
@@ -763,7 +764,6 @@ void SprdCamera3OEMIf::initialize() {
 #ifdef CONFIG_FACE_BEAUTY
     mflagfb = false;
 #endif
-
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -3311,8 +3311,10 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     end_timestamp = systemTime();
 
 #ifdef CONFIG_FACE_BEAUTY
-    deinit_fb_handle(&face_beauty);
-    mflagfb = false;
+    if (mflagfb){
+        face_beauty_deinit(&face_beauty);
+        mflagfb = false;
+    }
 #endif
 
     // used for single camera need raw stream
@@ -3816,23 +3818,27 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
 #ifdef CONFIG_FACE_BEAUTY
     int sx, sy, ex, ey, angle, pose;
-    struct face_beauty_levels beautyLevels;
+    struct faceBeautyLevels beautyLevels;
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME && isPreviewing()) {
         FACE_Tag faceInfo;
+        fb_beauty_face_t beauty_face;
+        fb_beauty_image_t beauty_image;
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
-                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
-                sx = faceInfo.face[i].rect[0];
-                sy = faceInfo.face[i].rect[1];
-                ex = faceInfo.face[i].rect[2];
-                ey = faceInfo.face[i].rect[3];
-                angle = faceInfo.angle[i];
-                pose = faceInfo.pose[i];
-                construct_fb_face(&face_beauty, i, sx, sy, ex, ey, angle, pose);
+                CameraConvertCoordinateFromFramework(
+                    faceInfo.face[i].rect);
+                beauty_face.idx = i;
+                beauty_face.startX = faceInfo.face[i].rect[0];
+                beauty_face.startY = faceInfo.face[i].rect[1];
+                beauty_face.endX = faceInfo.face[i].rect[2];
+                beauty_face.endY = faceInfo.face[i].rect[3];
+                beauty_face.angle = faceInfo.angle[i];
+                beauty_face.pose = faceInfo.pose[i];
+                ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                               &beauty_face);
             }
         }
-
         beautyLevels.blemishLevel =
             (unsigned char)sprddefInfo.perfect_skin_level[0];
         beautyLevels.smoothLevel =
@@ -3852,7 +3858,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.largeLevel =
             (unsigned char)sprddefInfo.perfect_skin_level[8];
         if (!mflagfb){
-            init_fb_handle(&face_beauty, 1, 2);
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+    face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
+#else
+    face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
+#endif
+            face_beauty_init(&face_beauty, 1, 2);
             if (face_beauty.hSprdFB != NULL){
                 mflagfb = true;
             }
@@ -3860,30 +3871,45 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
                         frame->width * frame->height * 3 / 2);
-        construct_fb_image(
-            &face_beauty, frame->width, frame->height,
-            (unsigned char *)(frame->y_vir_addr),
-            (unsigned char *)(frame->y_vir_addr + frame->width * frame->height),
-            0);
-        construct_fb_level(&face_beauty, beautyLevels);
-        do_face_beauty(&face_beauty, faceInfo.face_num);
+        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+        beauty_image.inputImage.addr[0] = (void*)frame->y_vir_addr;
+        beauty_image.inputImage.addr[1] = (void*)frame->uv_vir_addr;
+        beauty_image.inputImage.addr[2] = (void*)frame->uv_vir_addr;
+        beauty_image.inputImage.ion_fd = frame->fd;
+        beauty_image.inputImage.offset[0] = 0;
+        beauty_image.inputImage.offset[1] = frame->width * frame->height;
+        beauty_image.inputImage.width = frame->width;
+        beauty_image.inputImage.height = frame->height;
+        beauty_image.inputImage.stride = frame->width;
+        beauty_image.inputImage.size = frame->width * frame->height *3 / 2;
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                       &beauty_image);
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                       &beautyLevels);
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_PROCESS_CMD,
+                       &(faceInfo.face_num));
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
                        frame->width * frame->height * 3 / 2);
-    } else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME) {
+    }else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME) {
         FACE_Tag faceInfo;
+        fb_beauty_face_t beauty_face;
+        fb_beauty_image_t beauty_image;
         mSetting->getFACETag(&faceInfo);
-        if (faceInfo.face_num > 0) {
-            for (int i = 0; i < faceInfo.face_num; i++) {
-                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
-                sx = faceInfo.face[i].rect[0];
-                sy = faceInfo.face[i].rect[1];
-                ex = faceInfo.face[i].rect[2];
-                ey = faceInfo.face[i].rect[3];
-                angle = faceInfo.angle[i];
-                pose = faceInfo.pose[i];
-                construct_fb_face(&face_beauty, i, sx, sy, ex, ey, angle, pose);
-            }
-        }
+                if (faceInfo.face_num > 0) {
+                    for (int i = 0; i < faceInfo.face_num; i++) {
+                        CameraConvertCoordinateFromFramework(
+                            faceInfo.face[i].rect);
+                        beauty_face.idx = i;
+                        beauty_face.startX = faceInfo.face[i].rect[0];
+                        beauty_face.startY = faceInfo.face[i].rect[1];
+                        beauty_face.endX = faceInfo.face[i].rect[2];
+                        beauty_face.endY = faceInfo.face[i].rect[3];
+                        beauty_face.angle = faceInfo.angle[i];
+                        beauty_face.pose = faceInfo.pose[i];
+                        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                       &beauty_face);
+                    }
+                }
 
         // defalt beautyLevels for third app like wechat
         beautyLevels.blemishLevel = 0;
@@ -3896,7 +3922,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.slimLevel = 2;
         beautyLevels.largeLevel = 2;
         if (!mflagfb){
-            init_fb_handle(&face_beauty, 1, 2);
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+    face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
+#else
+    face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
+#endif
+            face_beauty_init(&face_beauty, 1, 2);
             if (face_beauty.hSprdFB != NULL){
                 mflagfb = true;
             }
@@ -3904,20 +3935,31 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
                         frame->width * frame->height * 3 / 2);
-        construct_fb_image(
-            &face_beauty, frame->width, frame->height,
-            (unsigned char *)(frame->y_vir_addr),
-            (unsigned char *)(frame->y_vir_addr + frame->width * frame->height),
-            0);
-        construct_fb_level(&face_beauty, beautyLevels);
-        do_face_beauty(&face_beauty, faceInfo.face_num);
+        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+        beauty_image.inputImage.addr[0] = (void*)frame->y_vir_addr;
+        beauty_image.inputImage.addr[1] = (void*)frame->uv_vir_addr;
+        beauty_image.inputImage.addr[2] = (void*)frame->uv_vir_addr;
+        beauty_image.inputImage.ion_fd = frame->fd;
+        beauty_image.inputImage.offset[0] = 0;
+        beauty_image.inputImage.offset[1] = frame->width * frame->height;
+        beauty_image.inputImage.width = frame->width;
+        beauty_image.inputImage.height = frame->height;
+        beauty_image.inputImage.stride = frame->width;
+        beauty_image.inputImage.size = frame->width * frame->height *3 / 2;
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                       &beauty_image);
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                       &beautyLevels);
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_PROCESS_CMD,
+                       &(faceInfo.face_num));
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
                        frame->width * frame->height * 3 / 2);
+
     } else {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME &&
-            frame->type != CHANNEL2_FRAME) {
-            deinit_fb_handle(&face_beauty);
+            frame->type != CHANNEL2_FRAME && mflagfb) {
+            face_beauty_deinit(&face_beauty);
             mflagfb = false;
         }
     }

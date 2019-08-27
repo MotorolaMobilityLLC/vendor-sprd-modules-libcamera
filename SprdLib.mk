@@ -11,7 +11,7 @@ LOCAL_SHARED_LIBRARIES += libcppdrv
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
-LOCAL_SHARED_LIBRARIES += libcamfb
+LOCAL_SHARED_LIBRARIES += libcamfb libcamfacebeauty
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)

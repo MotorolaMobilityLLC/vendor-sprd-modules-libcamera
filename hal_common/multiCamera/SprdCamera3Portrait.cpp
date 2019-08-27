@@ -181,7 +181,11 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
     memset(mMainStreams, 0,
            sizeof(camera3_stream_t) * PORTRAIT__MAX_NUM_STREAMS);
     memset(mFaceInfo, 0, sizeof(int32_t) * 4);
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+    memset(&mPerfectskinlevel, 0, sizeof(faceBeautyLevels));
+#else
     memset(&mPerfectskinlevel, 0, sizeof(face_beauty_levels));
+#endif
     memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
     memset(&mDepthBuffer, 0, sizeof(DepthBufferPortrait));
     memset(&mOtpData, 0, sizeof(OtpData));

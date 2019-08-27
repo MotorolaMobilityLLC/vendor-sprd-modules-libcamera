@@ -111,8 +111,11 @@ SprdCamera3Blur::SprdCamera3Blur() {
     memset(&mLocalCapBuffer, 0, sizeof(new_mem_t) * BLUR_LOCAL_CAPBUFF_NUM);
     memset(&mSavedReqStreams, 0,
            sizeof(camera3_stream_t *) * BLUR_MAX_NUM_STREAMS);
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+    memset(&fbLevels, 0, sizeof(faceBeautyLevels));
+#else
     memset(&fbLevels, 0, sizeof(face_beauty_levels));
-
+#endif
     m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
     mStaticMetadata = NULL;
     mCaptureThread = new CaptureThread();

@@ -39,13 +39,30 @@ endif
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := libsprdfacebeauty_vdsp
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := libsprdfacebeauty_vdsp.so
+LOCAL_MODULE_STEM_64 := libsprdfacebeauty_vdsp.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty_vdsp.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty_vdsp.so
+LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
 
 LOCAL_HEADER_LIBRARIES += libutils_headers
 LOCAL_HEADER_LIBRARIES += liblog_headers
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
+LOCAL_C_INCLUDES := \
+        $(LOCAL_PATH)/inc \
+        $(LOCAL_PATH)/../inc
 
-LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
+LOCAL_SRC_FILES += camera_face_beauty.c
 
 LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
 include $(LOCAL_PATH)/../../SprdCtrl.mk
@@ -64,5 +81,33 @@ endif
 
 include $(BUILD_SHARED_LIBRARY)
 
+include $(CLEAR_VARS)
+
+LOCAL_HEADER_LIBRARIES += libutils_headers
+LOCAL_HEADER_LIBRARIES += liblog_headers
+
+LOCAL_C_INCLUDES := \
+        $(LOCAL_PATH)/inc \
+        $(LOCAL_PATH)/../inc
+
+LOCAL_SRC_FILES += sprd_facebeauty_adapter.cpp
+
+LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
+include $(LOCAL_PATH)/../../SprdCtrl.mk
+
+LOCAL_SHARED_LIBRARIES:= \
+     liblog \
+     libcutils \
+     libsprdfacebeauty \
+     libsprdfacebeauty_vdsp
+
+LOCAL_MODULE := libcamfacebeauty
+LOCAL_MODULE_TAGS := optional
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
 endif
 
+include $(BUILD_SHARED_LIBRARY)
+
+endif

@@ -30,7 +30,7 @@
 #include <time.h>
 #include <dlfcn.h>
 #ifdef CONFIG_FACE_BEAUTY
-#include "camera_face_beauty.h"
+#include "sprd_facebeauty_adapter.h"
 #endif
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 #include "cmr_mm_dvfs.h"
@@ -6056,11 +6056,12 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
               cxt->blur_facebeauty_flag == 1)) &&
             (filter_type == 0)) {
 #ifdef CONFIG_FACE_BEAUTY
-            struct face_beauty_levels beautyLevels;
-            memset(&beautyLevels, 0, sizeof(struct face_beauty_levels));
-            int pic_width = src->size.width;
-            int pic_height = src->size.height;
             int face_beauty_on = 0;
+            int facecount = cxt->fd_face_area.face_num;
+            fb_beauty_face_t beauty_face;
+            fb_beauty_image_t beauty_image;
+            struct faceBeautyLevels beautyLevels;
+            memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_PERFECT_SKINLEVEL,
                                     &setting_param);
@@ -6109,27 +6110,40 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 }
                 int sx, sy, ex, ey, angle, pose;
                 for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
-                    sx = (cxt->fd_face_area.face_info[i].sx * pic_width) /
-                         (cxt->fd_face_area.frame_width);
-                    sy = (cxt->fd_face_area.face_info[i].sy * pic_height) /
-                         (cxt->fd_face_area.frame_height);
-                    ex = (cxt->fd_face_area.face_info[i].ex * pic_width) /
-                         (cxt->fd_face_area.frame_width);
-                    ey = (cxt->fd_face_area.face_info[i].ey * pic_height) /
-                         (cxt->fd_face_area.frame_height);
-                    angle = cxt->fd_face_area.face_info[i].angle;
-                    pose = cxt->fd_face_area.face_info[i].pose;
-                    construct_fb_face(&(cxt->face_beauty), i, sx, sy, ex, ey,
-                                      angle, pose);
+                        beauty_face.idx = i;
+                        beauty_face.startX = (cxt->fd_face_area.face_info[i].sx * src->size.width) /
+                                    (cxt->fd_face_area.frame_width);
+                        beauty_face.startY = (cxt->fd_face_area.face_info[i].sy * src->size.height) /
+                                    (cxt->fd_face_area.frame_height);
+                        beauty_face.endX = (cxt->fd_face_area.face_info[i].ex * src->size.width) /
+                                    (cxt->fd_face_area.frame_width);
+                        beauty_face.endY = (cxt->fd_face_area.face_info[i].ey * src->size.height) /
+                                    (cxt->fd_face_area.frame_height);
+                        beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
+                        beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+                        ret = face_beauty_ctrl(&(cxt->face_beauty),
+                                FB_BEAUTY_CONSTRUCT_FACE_CMD, (void*)&beauty_face);
                 }
-                init_fb_handle(&(cxt->face_beauty), 0, 2);
-                construct_fb_image(&(cxt->face_beauty), pic_width, pic_height,
-                                   (unsigned char *)(src->addr_vir.addr_y),
-                                   (unsigned char *)(src->addr_vir.addr_u), 0);
-                construct_fb_level(&(cxt->face_beauty), beautyLevels);
-                do_face_beauty(&(cxt->face_beauty), cxt->fd_face_area.face_num);
-                deinit_fb_handle(&(cxt->face_beauty));
-
+                face_beauty_set_devicetype(&(cxt->face_beauty), SPRD_CAMALG_RUN_TYPE_CPU);
+                face_beauty_init(&(cxt->face_beauty), 0, 2);
+                beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+                beauty_image.inputImage.addr[0] = (void*)(src->addr_vir.addr_y);
+                beauty_image.inputImage.addr[1] = (void*)(src->addr_vir.addr_u);
+                beauty_image.inputImage.addr[2] = (void*)(src->addr_vir.addr_v);
+                beauty_image.inputImage.ion_fd = src->fd;
+                beauty_image.inputImage.offset[0] = 0;
+                beauty_image.inputImage.offset[1] = src->size.width * src->size.height;
+                beauty_image.inputImage.width = src->size.width;
+                beauty_image.inputImage.height = src->size.height;
+                beauty_image.inputImage.stride = src->size.width;
+                beauty_image.inputImage.size = src->size.width * src->size.height * 3 / 2;
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                        FB_BEAUTY_CONSTRUCT_IMAGE_CMD, (void*)&beauty_image);
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                        FB_BEAUTY_CONSTRUCT_LEVEL_CMD, (void*)&beautyLevels);
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                        FB_BEAUTY_PROCESS_CMD, (void*)&facecount);
+                face_beauty_deinit(&(cxt->face_beauty));
                 // for cache coherency
                 cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
             }
@@ -10821,7 +10835,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
     cxt->is_start_snapshot = 1;
 #ifdef CONFIG_FACE_BEAUTY
-    memset(&(cxt->face_beauty), 0, sizeof(struct class_fb));
+    memset(&(cxt->face_beauty), 0, sizeof(struct fb_beauty_param));
 #endif
     cxt->snp_cxt.actual_capture_size =
         snp_param.post_proc_setting.chn_out_frm[0].size;

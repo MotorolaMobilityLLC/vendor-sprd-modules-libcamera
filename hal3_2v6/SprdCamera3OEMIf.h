@@ -56,7 +56,7 @@ extern "C" {
 #include "sprd_eis.h"
 #endif
 #ifdef CONFIG_FACE_BEAUTY
-#include "camera_face_beauty.h"
+#include "sprd_facebeauty_adapter.h"
 #endif
 
 #include <cutils/sockets.h>
@@ -877,9 +877,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mIsUltraWideMode;
     bool mIsRawCapture;
 #ifdef CONFIG_FACE_BEAUTY
-    struct class_fb face_beauty;
+    struct fb_beauty_param face_beauty;
     bool mflagfb;
-
 #endif
     // for third part app face beauty in camera hal, for example, weixin
     // videocall
