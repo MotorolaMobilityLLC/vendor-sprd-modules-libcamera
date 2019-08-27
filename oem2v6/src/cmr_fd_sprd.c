@@ -93,6 +93,7 @@ struct class_fd {
     struct frm_info trans_frm;
     cmr_uint fd_x;
     cmr_uint fd_y;
+    cmr_uint is_face_attribute_init;
 };
 
 struct fd_start_parameter {
@@ -392,26 +393,6 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
 
     fd_handle->curr_frame_idx++;
 
-    if ((in->face_attribute_on == 1) &&
-        (fd_handle->is_face_attribute != in->face_attribute_on)) {
-        if (sprd_fd_api == SPRD_API_MODE_V2) {
-            FAR_OPTION_V2 opt_v2;
-            FAR_InitOption(&opt_v2);
-            opt_v2.raceOn = 1;
-            opt_v2.ageOn = 1;
-            opt_v2.smileOn = 1;
-            opt_v2.trackInterval = 8;
-            int threadNum = FD_THREAD_NUM;
-            opt_v2.workMode = FAR_WORKMODE_MOVIE;
-            opt_v2.maxFaceNum = FD_MAX_CNN_FACE_NUM;
-            /* set option: only do smile detection */
-            if (FAR_OK != FarCreateRecognizerHandle_V2(&(fd_handle->hFAR_v2),
-                                                       threadNum, &opt_v2)) {
-                CMR_LOGE("FarCreateRecognizerHandle_V2() Error");
-            }
-        }
-    }
-    fd_handle->is_face_attribute = in->face_attribute_on;
     fd_handle->frame_in.touch_x = in->touch_x;
     fd_handle->frame_in.touch_y = in->touch_y;
     fd_handle->frame_in.face_attribute_on = in->face_attribute_on;
@@ -1488,18 +1469,41 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             fd_set_busy(class_handle, 0);
             break;
         }
+       if ((class_handle->frame_in.face_attribute_on == 1) &&
+         (class_handle->is_face_attribute_init == 0)) {
+         if (sprd_fd_api == SPRD_API_MODE_V2) {
+             FAR_OPTION_V2 opt_v2;
+             FAR_InitOption(&opt_v2);
+             opt_v2.raceOn = 1;
+             opt_v2.ageOn = 1;
+             opt_v2.smileOn = 1;
+             opt_v2.trackInterval = 8;
+             int threadNum = FD_THREAD_NUM;
+             opt_v2.workMode = FAR_WORKMODE_MOVIE;
+             opt_v2.maxFaceNum = FD_MAX_CNN_FACE_NUM;
+             /* set option: only do smile detection */
+             if (FAR_OK != FarCreateRecognizerHandle_V2(&(class_handle->hFAR_v2),
+                                                        threadNum, &opt_v2)) {
+                 CMR_LOGE("FarCreateRecognizerHandle_V2() Error");
+             } else {
+                 class_handle->is_face_attribute_init = 1;
+                 CMR_LOGD("FarRecognizerHandle_V2: Create");
 
+             }
+         }
+       }
         /* recognize face attribute (smile detection) */
         if (class_handle->frame_in.face_attribute_on == 1) {
             fd_recognize_face_attribute(
                 class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
                 class_handle->hFAR_v2, class_handle);
         } else if ((class_handle->frame_in.face_attribute_on == 0) &&
-                   (class_handle->face_attributes_off !=
-                    class_handle->frame_in.face_attribute_on)) {
+                   (class_handle->is_face_attribute_init == 1)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
                 FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
-            }
+                CMR_LOGD("FarRecognizerHandle_V2: Delete");
+           }
+	    class_handle->is_face_attribute_init = 0;
         }
         class_handle->face_attributes_off =
             class_handle->frame_in.face_attribute_on;
@@ -1547,8 +1551,12 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         FaDeleteAlignHandle(&(class_handle->hFaceAlign));
         if (sprd_fd_api == SPRD_API_MODE)
             FarDeleteRecognizerHandle(&(class_handle->hFAR));
-        else if (sprd_fd_api == SPRD_API_MODE_V2)
+        else if (sprd_fd_api == SPRD_API_MODE_V2 &&
+	    class_handle->is_face_attribute_init == 1) {
             FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
+	    class_handle->is_face_attribute_init = 0;
+	    CMR_LOGD("FarRecognizerHandle_V2: Delete");
+	}
         FdDeleteDetector(&(class_handle->hDT));
         break;
 
