@@ -202,9 +202,9 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
 const int32_t kavailable_fps_ranges_back[] = {5, 15, 15, 15, 5, 20, 20, 20,
-                                              5, 24, 24, 24, 5, 30, 30, 30};
+                                              5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
 const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,  20, 20,
-                                               20, 5,  30, 15, 30, 30, 30};
+                                               20, 5,  30, 15, 30, 20, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
