@@ -212,7 +212,7 @@ struct snapshot_param {
     cmr_u32 is_3dcalibration_mode;
     cmr_u32 is_yuv_callback_mode;
     cmr_uint filter_type;
-    cmr_u32 is_cnr;
+    cmr_u32 nr_flag;
     cmr_u32 is_snapshot;
 };
 

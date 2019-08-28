@@ -342,7 +342,7 @@ struct camera_context {
     cmr_u32 bg_color;
     enhance_device_t *enhance;
     struct img_rect trim_reset_info;
-    cmr_u8 is_cnr;
+    cmr_u8 nr_flag;
     cmr_uint is_snapshot;
     cmr_u32 app_mode;
     cmr_s64 hdr_capture_timestamp;

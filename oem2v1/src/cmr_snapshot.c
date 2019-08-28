@@ -3918,7 +3918,7 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
         cmr_s32 sm_val = 0;
         sem_getvalue(&cxt->ipm_sync_sm, &sm_val);
         if ((IPM_WORKING == snp_get_status(snp_handle)) || (sm_val == 0)) {
-            if (cxt->req_param.filter_type || cxt->req_param.is_cnr) {
+            if (cxt->req_param.filter_type || cxt->req_param.nr_flag) {
                 sem_wait(&cxt->ipm_sync_sm);
                 sem_post(&cxt->ipm_sync_sm);
                 CMR_LOGD("post ipm sm");

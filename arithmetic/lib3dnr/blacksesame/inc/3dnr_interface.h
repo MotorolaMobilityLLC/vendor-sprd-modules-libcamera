@@ -16,12 +16,21 @@ extern "C" {
 
 //#include "cmr_types.h"
 //#include "isp_mw.h"
-typedef  struct private_handle
-{
-    uint8_t *bufferY;
-}private_handle_t;
-
 //typedef cmr_int (* isp_ioctl_fun)(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr);
+
+typedef enum {
+    MODE_PROC_YNR,
+    MODE_PROC_CNR,
+    MODE_PROC_YNR_CNR,
+    MODE_PROC_ONLY_3DNR
+} Process_mode;
+
+typedef struct _ThreadInfo {
+    unsigned int threadNum;
+    unsigned int coreBundle;
+} ThreadInfo;
+
+typedef struct private_handle { uint8_t *bufferY; } private_handle_t;
 
 typedef struct c3dnr_cpu_buffer
 {
@@ -99,8 +108,19 @@ typedef enum PLATFORM_FLAG{NORMAL, SPECIAL} PLATFORM_FLAG;
 
 int threednr_init(c3dnr_param_info_t *param);
 int threednr_function(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image);
-int threednr_function_new(c3dnr_buffer_t *small_image, c3dnr_cap_gpu_buffer_t *orig_image);
-int threednr_function_pre(c3dnr_buffer_t *small_image, c3dnr_buffer_t *orig_image , c3dnr_buffer_t *video_image , c3dnr_pre_inparam_t* inputparam);
+int threednr_function_enhance(c3dnr_buffer_t *small_image,
+                              c3dnr_buffer_t *orig_image, Process_mode mode,
+                              ThreadInfo threadInfo, void *params);
+int threednr_function_new(c3dnr_buffer_t *small_image,
+                          c3dnr_cap_gpu_buffer_t *orig_image);
+int threednr_function_new_enhance(c3dnr_buffer_t *small_image,
+                                  c3dnr_cap_gpu_buffer_t *orig_image,
+                                  Process_mode mode, ThreadInfo threadInfo,
+                                  void *params);
+int threednr_function_pre(c3dnr_buffer_t *small_image,
+                          c3dnr_buffer_t *orig_image,
+                          c3dnr_buffer_t *video_image,
+                          c3dnr_pre_inparam_t *inputparam);
 int threednr_deinit();
 int threednr_callback();
 int threednr_setstop_flag();

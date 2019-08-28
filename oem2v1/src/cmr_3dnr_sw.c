@@ -28,6 +28,9 @@
 #include <cutils/properties.h>
 #include "isp_mw.h"
 #include "sw_3dnr_param.h"
+#ifdef CONFIG_CAMERA_CNR
+#include "Denoise_SPRD.h"
+#endif
 
 typedef struct c3dn_io_info {
     c3dnr_buffer_t image[3];
@@ -855,6 +858,20 @@ void *thread_3dnr(void *p_data) {
     cmr_u32 sensor_id = 0;
     cmr_u32 threednr_enable = 0;
     union c3dnr_buffer big_buf, small_buf;
+#ifdef CONFIG_CAMERA_CNR
+    struct camera_context *cxt = (struct camera_context *)in->private_data;
+    Denoise_Param denoiseParam;
+    YNR_Param ynrParam;
+    CNR_Param cnrParam;
+    struct common_isp_cmd_param isp_cmd_parm;
+    struct ipm_init_in *ipm_in = &threednr_handle->common.ipm_cxt->init_in;
+    cmr_bzero(&denoiseParam, sizeof(Denoise_Param));
+    cmr_bzero(&ynrParam, sizeof(YNR_Param));
+    cmr_bzero(&cnrParam, sizeof(CNR_Param));
+#endif
+    Process_mode mode = MODE_PROC_ONLY_3DNR;
+    ThreadInfo threadInfo;
+    cmr_bzero(&threadInfo, sizeof(threadInfo));
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
     c3dnr_cap_gpu_buffer_t big_image;
 #endif
@@ -965,7 +982,70 @@ void *thread_3dnr(void *p_data) {
     threednr_handle->width , threednr_handle->height);*/
     LAUNCHLOGS(CMR_THREEDNR_DO_T);
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE_SW
-    ret = threednr_function_new(&small_buf, &big_image);
+       // ret = threednr_function_new(&small_buf, &big_image);
+    char value[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("vendor.cam.cnr.threadnum", value, "4");
+    threadInfo.threadNum = atoi(value);
+    property_get("vendor.cam.cnr.corebundle", value, "0");
+    threadInfo.coreBundle = atoi(value);
+
+#ifdef CONFIG_CAMERA_CNR
+    CMR_LOGI("cxt->nr_flag %d", cxt->nr_flag);
+    if (cxt->nr_flag) {
+        mode = cxt->nr_flag - 1;
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("debug.dump.cnr.mode", prop, "0");
+        if (atoi(prop) != 0) {
+            mode = atoi(prop) - 1;
+        }
+
+        if (cxt->nr_flag & 1) {
+            ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
+                                        &isp_cmd_parm);
+            if (CMR_CAMERA_SUCCESS != ret) {
+                CMR_LOGE("failed to get isp YNR param  %ld", ret);
+                goto exit;
+            }
+            memcpy(&ynrParam, &isp_cmd_parm.ynr_param, sizeof(YNR_Param));
+            denoiseParam.ynrParam = &ynrParam;
+            if (cxt->nr_flag == 3) {
+                ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
+                                            &isp_cmd_parm);
+                if (CMR_CAMERA_SUCCESS != ret) {
+                    CMR_LOGE("failed to get isp CNR param  %ld", ret);
+                    goto exit;
+                }
+                memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Param));
+                denoiseParam.cnrParam = &cnrParam;
+            } else {
+                denoiseParam.cnrParam = NULL;
+            }
+
+        } else {
+            ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
+                                        &isp_cmd_parm);
+            if (CMR_CAMERA_SUCCESS != ret) {
+                CMR_LOGE("failed to get isp YNR param  %ld", ret);
+                goto exit;
+            }
+            memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Param));
+            denoiseParam.cnrParam = &cnrParam;
+            denoiseParam.ynrParam = NULL;
+        }
+        ret = threednr_function_new_enhance(&small_buf, &big_image, mode,
+                                        threadInfo, &denoiseParam);
+    } else {
+        mode = MODE_PROC_ONLY_3DNR;
+        ret = threednr_function_new_enhance(&small_buf, &big_image, mode,
+                                        threadInfo, NULL);
+    }
+#else
+    mode = MODE_PROC_ONLY_3DNR;
+    ret = threednr_function_new_enhance(&small_buf, &big_image, mode, threadInfo,
+                                    NULL);
+#endif
 #else
     ret = threednr_function(&small_buf, &big_buf);
 #endif
