@@ -4005,13 +4005,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 	if (val < 2)
 		cxt->awb_cxt.sw_bypass = val;
 
-	/* TODO - temp bypass lsc for SharkL5Pro bringup*/
-#ifdef CONFIG_ISP_2_7
-	property_get(PROP_ISP_LSC_BYPASS, value, "1");
-#else
 	property_get(PROP_ISP_LSC_BYPASS, value, "0");
-#endif
-
 	val = atoi(value);
 	if (val < 2)
 		cxt->lsc_cxt.sw_bypass = val;
