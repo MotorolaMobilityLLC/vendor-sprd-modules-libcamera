@@ -214,6 +214,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     void antiShakeParamSetup();
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    bool mManualExposureEnabled;
 
     enum camera_flush_mem_type_e {
         CAMERA_FLUSH_RAW_HEAP,

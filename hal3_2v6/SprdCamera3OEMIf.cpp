@@ -195,6 +195,8 @@ struct stateMachine aeStateMachine[] = {
      ANDROID_CONTROL_AE_STATE_LOCKED},
     {ANDROID_CONTROL_AE_STATE_LOCKED, AE_LOCK_OFF,
      ANDROID_CONTROL_AE_STATE_SEARCHING},
+    {ANDROID_CONTROL_AE_STATE_LOCKED, AE_START,
+     ANDROID_CONTROL_AE_STATE_SEARCHING},
     {ANDROID_CONTROL_AE_STATE_PRECAPTURE, AE_STABLE,
      ANDROID_CONTROL_AE_STATE_CONVERGED},
     {ANDROID_CONTROL_AE_STATE_PRECAPTURE, AE_LOCK_ON,
@@ -5330,6 +5332,11 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
 
         if (ae_stab) {
+            if (mManualExposureEnabled && controlInfo.ae_lock) {
+                mManualExposureEnabled = false;
+                setAeState(AE_LOCK_ON);
+                goto exit;
+            }
             if (!mIsNeedFlashFired) {
                 setAeState(AE_STABLE);
             } else {
@@ -5347,7 +5354,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             sprddefInfo.ae_info = ae_info;
             mSetting->setSPRDDEFTag(sprddefInfo);
         }
-
+    exit:
         HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY");
         break;
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
@@ -5981,7 +5988,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
         if (1 != sprddefInfo.sprd_is_3dnr_scene) {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE,
+                     drvSceneMode);
         }
     } break;
 
@@ -6055,6 +6063,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 controlInfo.ae_compensation_step.denominator;
             ae_compensation_param.ae_exposure_compensation =
                 controlInfo.ae_exposure_compensation;
+            mManualExposureEnabled = true;
         }
 
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,

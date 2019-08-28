@@ -152,6 +152,7 @@ typedef struct {
     uint8_t ae_mode;
     uint8_t ae_abtibanding_mode;
     uint8_t ae_precap_trigger;
+    uint8_t ae_manual_trigger;
     uint8_t ae_state;
     int32_t ae_precapture_id;
 

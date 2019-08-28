@@ -1463,7 +1463,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     pendingRequest.threeA_info.ae_precap_trigger =
         controlInfo.ae_precap_trigger;
     pendingRequest.threeA_info.ae_state = controlInfo.ae_state;
-
+    pendingRequest.threeA_info.ae_manual_trigger =
+        controlInfo.ae_manual_trigger;
     pendingRequest.num_buffers = request->num_output_buffers;
     pendingRequest.request_id = captureRequestId;
     pendingRequest.bNotified = 0;
@@ -1697,6 +1698,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 threeAControlInfo.ae_precap_trigger =
                     i->threeA_info.ae_precap_trigger;
                 threeAControlInfo.ae_state = i->threeA_info.ae_state;
+                threeAControlInfo.ae_manual_trigger =
+                    i->threeA_info.ae_manual_trigger;
+
                 mSetting->setResultTag(&threeAControlInfo);
 
                 result.result = mSetting->translateLocalToFwMetadata();
@@ -1752,6 +1756,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 threeAControlInfo.ae_precap_trigger =
                     i->threeA_info.ae_precap_trigger;
                 threeAControlInfo.ae_state = i->threeA_info.ae_state;
+                threeAControlInfo.ae_manual_trigger =
+                    i->threeA_info.ae_manual_trigger;
+
                 mSetting->setResultTag(&threeAControlInfo);
 
                 result.result = mSetting->translateLocalToFwMetadata();

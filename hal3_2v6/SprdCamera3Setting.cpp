@@ -4296,6 +4296,13 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
+        s_setting[mCameraId].controlInfo.ae_manual_trigger == 0;
+        if (s_setting[mCameraId].controlInfo.ae_exposure_compensation !=
+            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+                .data.i32[0]) {
+            s_setting[mCameraId].controlInfo.ae_manual_trigger = 1;
+        }
+
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
                 .data.i32[0];
@@ -4752,7 +4759,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].controlInfo.af_state;
 
     if (s_setting[mCameraId].resultInfo.ae_precap_trigger !=
-        ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE)
+            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE ||
+        s_setting[mCameraId].resultInfo.ae_manual_trigger)
         s_setting[mCameraId].resultInfo.ae_state =
             s_setting[mCameraId].controlInfo.ae_state;
 
@@ -4786,8 +4794,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         s_setting[mCameraId].controlInfo.ae_target_fps_range,
         ARRAY_SIZE(s_setting[mCameraId].controlInfo.ae_target_fps_range));
     camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
-                       &(s_setting[mCameraId].resultInfo.ae_precap_trigger),
-                       1);
+                       &(s_setting[mCameraId].resultInfo.ae_precap_trigger), 1);
     /*for (int i = 0; i < 5; i++)
             area[i] = s_setting[mCameraId].controlInfo.af_regions[i];
     area[2] += area[0];
@@ -4893,6 +4900,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].resultInfo.ae_state), 1);
+
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
                        &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
