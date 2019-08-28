@@ -329,7 +329,7 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_GRGB_V1:
 			update_param->grgb_level_ptr = (struct sensor_grgb_level *)fix_data_ptr->nr.nr_set_group.grgb;
 			break;
-		case ISP_BLK_NLM_V1:
+		case ISP_BLK_NLM_V2:
 			update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;
 			update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;
 			update_param->ivst_level_ptr = (struct sensor_ivst_level *)fix_data_ptr->nr.nr_set_group.ivst;
@@ -381,6 +381,21 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 			break;
 		case ISP_BLK_SW3DNR:
 			update_param->sw3dnr_level_ptr = (struct sensor_sw3dnr_level *)fix_data_ptr->nr.nr_set_group.sw_3dnr;
+			break;
+		case ISP_BLK_PPE_V1:
+			update_param->ppe_level_ptr = (struct sensor_ppe_level *)fix_data_ptr->nr.nr_set_group.ppe;
+			break;
+		case ISP_BLK_BWU_BWD:
+			update_param->bwu_bwd_level_ptr = (struct sensor_bwu_bwd_level *)fix_data_ptr->nr.nr_set_group.bwu_bwd;
+			break;
+		case ISP_BLK_RAW_GTM:
+			update_param->raw_gtm_level_ptr = (struct sensor_raw_gtm_level *)fix_data_ptr->nr.nr_set_group.raw_gtm;
+			break;
+		case ISP_BLK_RGB_LTM:
+			update_param->rgb_ltm_level_ptr = (struct sensor_rgb_ltm_level *)fix_data_ptr->nr.nr_set_group.rgb_ltm;
+			break;
+		case ISP_BLK_YUV_LTM:
+			update_param->yuv_ltm_level_ptr = (struct sensor_yuv_ltm_level *)fix_data_ptr->nr.nr_set_group.yuv_ltm;
 			break;
 		default:
 			break;

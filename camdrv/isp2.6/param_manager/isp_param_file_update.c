@@ -101,6 +101,10 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"imbalance",
 	"ltm",
 	"sw3dnr",
+	"bwu_bwd",
+	"raw_gtm",
+	"rgb_ltm",
+	"yuv_ltm"
 };
 #endif
 
@@ -1171,6 +1175,10 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	nr_set_size[ISP_BLK_LTM_T] = sizeof(struct sensor_ltm_level);
 	nr_set_size[ISP_BLK_IMBALANCEE_T] = sizeof(struct sensor_nlm_imbalance_level);
 	nr_set_size[ISP_BLK_SW3DNR_T] = sizeof(struct sensor_sw3dnr_level);
+	nr_set_size[ISP_BLK_BWU_BWD_T] = sizeof(struct sensor_bwu_bwd_level);
+	nr_set_size[ISP_BLK_RAW_GTM_T] = sizeof(struct sensor_raw_gtm_level);
+	nr_set_size[ISP_BLK_RGB_LTM_T] = sizeof(struct sensor_rgb_ltm_level);
+	nr_set_size[ISP_BLK_YUV_LTM_T] = sizeof(struct sensor_yuv_ltm_level);
 #endif
 
 	for (i = 0; i < ISP_BLK_NR_MAX; i++) {
