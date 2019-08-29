@@ -1497,6 +1497,10 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->cur_status.settings.exp_is_transmit = 1;
 			cxt->cur_status.settings.manual_mode = 1;
 			cxt->cur_status.settings.table_idx = ae_base_idx;
+			if ((cxt->exposure_compensation.ae_compensation_flag) && (cxt->exposure_compensation.ae_base_idx != cxt->cur_status.settings.table_idx)){
+				cxt->cur_status.settings.table_idx = cxt->exposure_compensation.ae_base_idx;
+				ISP_LOGD("ae_flash_status FLASH_PRE_BEFORE: table_idx:%d", cxt->cur_status.settings.table_idx);
+			}
 		}
 		else {
 			rtn = do_ae_flash_pre_before(cxt);
