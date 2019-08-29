@@ -179,15 +179,6 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 		input_item.isp_gain = exp_data->lib_data.isp_gain;
 		input_item.sensor_gain = exp_data->lib_data.sensor_gain;
 		s_q_put(cxt->seq_handle, &input_item, write_item, actual_item);
-
-		if(cxt->cur_status.settings.lock_ae == AE_STATE_LOCKED){
-			if((actual_item->sensor_gain == write_item->sensor_gain)&&(actual_item->exp_line == write_item->exp_line))
-				cxt->ae_lock_stable_flag = 1;
-			else
-				cxt->ae_lock_stable_flag = 0;
-
-		}
-
 	}
 
 	ISP_LOGV("type: %d, lib_out:(%d, %d, %d, %d)--write: (%d, %d, %d, %d)--actual: (%d, %d, %d, %d)\n",
@@ -5972,9 +5963,21 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			cxt->has_mf_cnt++;
 		}
 	}
-	if((cxt->ae_lock_stable_flag == 0)&&(cxt->cur_status.settings.lock_ae == AE_STATE_LOCKED)){
-		cur_calc_result->ae_output.is_stab = 0;
-		ISP_LOGV("ae lock not stable");
+
+	if(cxt->cur_status.settings.lock_ae == AE_STATE_LOCKED){
+		float ev_compare = 0.0;
+		ev_compare = 1.0 * backup_expgain / (cxt->cur_result.wts.cur_exp_line*cxt->cur_result.wts.cur_again);
+
+		if((ev_compare >= 0.97) && (ev_compare <= 1.03)){
+			cur_calc_result->ae_output.is_stab = 1;
+			ISP_LOGV("ae lock is stable");
+		}
+		else{
+			cur_calc_result->ae_output.is_stab = 0;
+			ISP_LOGV("ae lock not stable");
+		}
+		ISP_LOGV("cur_exp_line %d effect_expline %d ",cxt->cur_result.wts.cur_exp_line,cxt->cur_status.effect_expline);
+		ISP_LOGV("cur_again %d effect_gain %d ",cxt->cur_result.wts.cur_again,cxt->cur_status.effect_gain);
 	}
 
 /* send STAB notify to HAL */

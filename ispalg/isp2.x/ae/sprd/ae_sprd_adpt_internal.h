@@ -385,7 +385,6 @@ extern "C" {
 		cmr_u32 app_mode;
 		cmr_u32 manual_level;
 		cmr_u32 munaul_iso_index;
-		cmr_u32 ae_lock_stable_flag;
 		struct ae_exposure_param_switch mode_switch[32];
 		cmr_u32 last_cam_mode;
 		cmr_u32 last_cur_lum;
