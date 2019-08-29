@@ -2321,33 +2321,24 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 	}
 
 	if (AE_SCENE_NORMAL == nxt_scene_mod) {	/*special scene --> normal scene */
-		iso = prv_status->settings.iso;
-		weight_mode = prv_status->settings.metering_mode;
+		iso = cur_status->settings.iso;
+		weight_mode = cur_status->settings.metering_mode;
 		if (iso >= AE_ISO_MAX || weight_mode >= AE_WEIGHT_MAX) {
 			ISP_LOGE("fail to get iso=%d, weight_mode=%d", iso, weight_mode);
 			rtn = AE_ERROR;
 			goto SET_SCENE_MOD_EXIT;
 		}
-		if(CAMERA_MODE_MANUAL == cxt->app_mode && (cxt->manual_level != AE_MANUAL_EV_INIT))
-			prv_status->settings.ev_index = cxt->manual_level;
-		ISP_LOGD("ev_index = %d %d",prv_status->settings.ev_index,cxt->manual_level);
-		target_lum = ae_calc_target_lum(cxt, cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
+		target_lum = ae_calc_target_lum(cxt, cur_param->target_lum, cur_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum = target_lum;
 		cur_status->target_lum_zone = cur_param->stable_zone_ev[cur_param->ev_table.default_level];
-		//cur_status->target_lum_zone = (cmr_s16)(cur_param->target_lum_zone * (target_lum * 1.0 / cur_param->target_lum) + 0.5);
-		cur_status->settings.ev_index = prv_status->settings.ev_index;
-		cur_status->settings.iso = prv_status->settings.iso;
-		cur_status->settings.metering_mode = prv_status->settings.metering_mode;
-		cur_status->weight_table = &cur_param->weight_table[prv_status->settings.metering_mode].weight[0];
-		//cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][prv_status->settings.iso];
+		cur_status->weight_table = &cur_param->weight_table[cur_status->settings.metering_mode].weight[0];
 		if(cxt->munaul_iso_index && (CAMERA_MODE_MANUAL == cxt->app_mode)){
-			cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][cxt->munaul_iso_index];
+			cur_status->ae_table = &cur_param->ae_table[cur_status->settings.flicker][cxt->munaul_iso_index];
 			cxt->mod_update_list.is_miso = 1;
 		}
 		else
-			cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][AE_ISO_AUTO];
-		cur_status->settings.min_fps = prv_status->settings.min_fps;
-		cur_status->settings.max_fps = prv_status->settings.max_fps;
+			cur_status->ae_table = &cur_param->ae_table[cur_status->settings.flicker][AE_ISO_AUTO];
+
 		cur_status->settings.scene_mode = nxt_scene_mod;
 	}
   SET_SCENE_MOD_EXIT:
