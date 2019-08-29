@@ -1926,6 +1926,24 @@ struct sensor_y_delay_param {
 	cmr_u16 ydelay_step;
 };
 
+// ynrs domain
+struct sensor_ynrs_level {
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
+ };
+
 //IIR color noise reduction, should named CCNR in tuning tool
 struct sensor_iircnr_pre {
 	cmr_u16 iircnr_pre_uv_th;
@@ -2052,6 +2070,7 @@ enum {
 	ISP_BLK_RAW_GTM_T,
 	ISP_BLK_RGB_LTM_T,
 	ISP_BLK_YUV_LTM_T,
+	ISP_BLK_YNRS_T,
 	ISP_BLK_NR_MAX
 };
 
@@ -2257,6 +2276,8 @@ struct sensor_nr_set_group_param {
 	cmr_u32 rgb_ltm_len;
 	cmr_u8 *yuv_ltm;
 	cmr_u32 yuv_ltm_len;
+	cmr_u8 *ynrs;
+	cmr_u32 ynrs_len;
 };
 
 struct sensor_nr_param {
@@ -2346,6 +2367,7 @@ struct denoise_param_update {
 	struct sensor_raw_gtm_level *raw_gtm_level_ptr;
 	struct sensor_rgb_ltm_level *rgb_ltm_level_ptr;
 	struct sensor_yuv_ltm_level *yuv_ltm_level_ptr;
+	struct sensor_ynrs_level *ynrs_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
