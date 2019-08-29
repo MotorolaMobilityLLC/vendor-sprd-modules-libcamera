@@ -232,7 +232,6 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_EE_V1, 0 }, /* NR block */
 	{ ISP_BLK_GRGB_V1, 0 }, /* NR block */
 	{ ISP_BLK_IIRCNR_IIR_V1, 0 }, /* NR block */
-	{ ISP_BLK_LTM, 0 }, /* NR block */
 	{ ISP_BLK_NLM_V1, 0 }, /* NR block */
 	{ ISP_BLK_IMBALANCE, 0 }, /* NR block */
 	{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
@@ -274,7 +273,6 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_UV_CDN_V1,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
 	{ ISP_BLK_UV_POSTCDN_V1,	ISP_BLK_POSTCDN_T, sizeof(struct sensor_uv_postcdn_level) },
 	{ ISP_BLK_IIRCNR_IIR_V1,		ISP_BLK_IIRCNR_T, sizeof(struct sensor_iircnr_level) },
-	{ ISP_BLK_LTM,				ISP_BLK_LTM_T, sizeof(struct sensor_ltm_level) },
 	{ ISP_BLK_IMBALANCE,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
 	{ ISP_BLK_CNR2_V1,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
 	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },

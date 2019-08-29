@@ -1806,19 +1806,6 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
 			break;
 		}
-	case SHARKL5_LTM:
-		{
-			static cmr_u32 ltm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.ltm_level_ptr)) + nr_offset_addr + ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				ltm_ptr_offset += data_actual_len;
-			else
-				ltm_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_LTM_T] = 1;
-			break;
-		}
 	case SHARKL5_IMBALANCE:
 		{
 			static cmr_u32 imblance_ptr_offset;
@@ -2172,14 +2159,6 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			src_size = sizeof(struct sensor_cnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR2_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_LTM:
-		{
-			data_head_ptr->sub_type = SHARKL5_LTM;
-			src_size = sizeof(struct sensor_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_LTM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.ltm_level_ptr + offset_units * src_size;
 			break;
 		}
 	case SHARKL5_IMBALANCE:

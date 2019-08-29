@@ -69,7 +69,6 @@ LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
 	blk_v26/isp_blk_cnr2.c \
 	blk_v26/isp_blk_edge.c \
 	blk_v26/isp_blk_hsv.c \
-	blk_v26/isp_blk_ltm.c \
 	blk_v26/isp_blk_nlm.c \
 	blk_v26/isp_blk_posterize.c \
 	blk_v26/isp_blk_sw3dnr.c \

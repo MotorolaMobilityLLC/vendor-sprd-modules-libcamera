@@ -67,15 +67,20 @@ struct isp_block_operations s_saturation_ops = { _pm_saturation_init, _pm_satura
 struct isp_block_operations s_hue_ops = { _pm_hue_init, _pm_hue_set_param, _pm_hue_get_param, PNULL, PNULL };
 #endif
 
-#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#ifdef CONFIG_ISP_2_6
 struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_ppe_get_param, PNULL, PNULL };
 struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
 struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_ltm_ops = { _pm_ltm_init, _pm_ltm_set_param, _pm_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_set_param, _pm_imblance_get_param, PNULL, PNULL};
-
 #endif
 
+#ifdef CONFIG_ISP_2_7
+struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_ppe_get_param, PNULL, PNULL };
+struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
+struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
+struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_set_param, _pm_imblance_get_param, PNULL, PNULL};
+#endif
 
 #ifdef CONFIG_ISP_2_5
 struct isp_block_cfg s_blk_cfgs[] = {
@@ -188,7 +193,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_EE_V1, array_offset(struct isp_context, edge), sizeof(struct isp_edge_param), &s_edge_ops},
 	{ISP_BLK_GRGB_V1, array_offset(struct isp_context, grgb), sizeof(struct isp_grgb_param), &s_grgb_ops},
 	{ISP_BLK_IIRCNR_IIR_V1, array_offset(struct isp_context, iircnr), sizeof(struct isp_iircnr_iir_param), &s_iircnr_iir_ops},
-	{ISP_BLK_LTM, array_offset(struct isp_context, ltm), sizeof(struct isp_ltm_param), &s_ltm_ops},
 	{ISP_BLK_NLM_V1, array_offset(struct isp_context, nlm), sizeof(struct isp_nlm_param), &s_nlm_ops},
 	{ISP_BLK_IMBALANCE, array_offset(struct isp_context, imblance), sizeof(struct isp_imblance_param), &s_imblance_ops},
 	{ISP_BLK_UVDIV_V1, array_offset(struct isp_context, uvd), sizeof(struct isp_uvdiv_param), &s_uvdiv_ops},
