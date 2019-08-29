@@ -1564,7 +1564,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 ae_shift = 0;
 	cmr_u32 i = 0;
-	cmr_u32 blk_num = 0;
+	cmr_u32 blk_num = 0, blk_size = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
@@ -1592,6 +1592,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	ae_stat_ptr = &cxt->aem_stats_data;
 	ae_shift = cxt->ae_cxt.shift;
 	blk_num = cxt->ae_cxt.win_num.w * cxt->ae_cxt.win_num.h;
+	blk_size = cxt->ae_cxt.win_size.w * cxt->ae_cxt.win_size.h / 4;
 	uaddr = (cmr_u64 *)statis_info->uaddr;
 #ifdef CONFIG_ISP_2_6
 	for (i = 0; i < blk_num; i++) {
@@ -1666,27 +1667,27 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		//g
 		stats_val0 = *uaddr++;
 		stats_val1 = *uaddr++;
-		sum_g_ue = (cmr_u32)(stats_val0 & 0xffffff);
-		sum_g_ae = (cmr_u32)((stats_val0 >> 32) & 0xffffff);
-		sum_g_oe = (cmr_u32)(stats_val1 & 0xffffff);
-		sum_g_ue += (cmr_u32)((stats_val1 >> 32) & 0x7fff);
-		sum_g_oe += (cmr_u32)((stats_val1 >> 47) & 0x7fff);
+		sum_g_ue = (cmr_u32)(stats_val0 & 0x1ffffff);
+		sum_g_ae = (cmr_u32)((stats_val0 >> 32) & 0x1ffffff);
+		sum_g_oe = (cmr_u32)(stats_val1 & 0x1ffffff);
+		cnt_g_ue = (cmr_u32)((stats_val1 >> 32) & 0x7fff);
+		cnt_g_oe = (cmr_u32)((stats_val1 >> 48) & 0x7fff);
 		//r
 		stats_val0 = *uaddr++;
 		stats_val1 = *uaddr++;
-		sum_r_ue = (cmr_u32)(stats_val0 & 0xffffff);
-		sum_r_ae = (cmr_u32)((stats_val0 >> 32) & 0xffffff);
-		sum_r_oe = (cmr_u32)(stats_val1 & 0xffffff);
-		sum_r_ue += (cmr_u32)((stats_val1 >> 32) & 0x7fff);
-		sum_r_oe += (cmr_u32)((stats_val1 >> 47) & 0x7fff);
+		sum_r_ue = (cmr_u32)(stats_val0 & 0x1ffffff);
+		sum_r_ae = (cmr_u32)((stats_val0 >> 32) & 0x1ffffff);
+		sum_r_oe = (cmr_u32)(stats_val1 & 0x1ffffff);
+		cnt_r_ue = (cmr_u32)((stats_val1 >> 32) & 0x7fff);
+		cnt_r_oe = (cmr_u32)((stats_val1 >> 48) & 0x7fff);
 		//b
 		stats_val0 = *uaddr++;
 		stats_val1 = *uaddr++;
-		sum_b_ue = (cmr_u32)(stats_val0 & 0xffffff);
-		sum_b_ae = (cmr_u32)((stats_val0 >> 32) & 0xffffff);
-		sum_b_oe = (cmr_u32)(stats_val1 & 0xffffff);
-		sum_b_ue += (cmr_u32)((stats_val1 >> 32) & 0x7fff);
-		sum_b_oe += (cmr_u32)((stats_val1 >> 47) & 0x7fff);
+		sum_b_ue = (cmr_u32)(stats_val0 & 0x1ffffff);
+		sum_b_ae = (cmr_u32)((stats_val0 >> 32) & 0x1ffffff);
+		sum_b_oe = (cmr_u32)(stats_val1 & 0x1ffffff);
+		cnt_b_ue = (cmr_u32)((stats_val1 >> 32) & 0x7fff);
+		cnt_b_oe = (cmr_u32)((stats_val1 >> 48) & 0x7fff);
 
 		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae);
 		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae);
@@ -1696,6 +1697,14 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		  * which is different from previous version average Gr/Gb
 		  * here we shift 1 to get average of G for AE algo compatibility */
 		ae_stat_ptr->g_info[i] >>= 1;
+
+		if (ae_stat_ptr->r_info[i] > (blk_size * 1023) ||
+			ae_stat_ptr->g_info[i] > (blk_size * 1023) ||
+			ae_stat_ptr->b_info[i] > (blk_size * 1023) )
+			ISP_LOGE("data overflow. i %d, blk size %d %d,  r 0x%x, g 0x%x, b 0x%x\n",
+				i, cxt->ae_cxt.win_size.w, cxt->ae_cxt.win_size.h,
+				ae_stat_ptr->r_info[i], ae_stat_ptr->g_info[i], ae_stat_ptr->b_info[i]);
+
 	}
 #endif
 
