@@ -1677,7 +1677,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	cmr_u32 extend_offset = 0;
 	cmr_u32 data_area_size = 0;
 	cmr_u32 size = 0;
-	cmr_u32 add_ae_len = 0, add_awb_len = 0, add_lnc_len = 0;
+	cmr_u32 add_ae_len = 0,ae_end_len = 16, add_awb_len = 0, add_lnc_len = 0;
 	cmr_u32 nr_scene_map;
 	cmr_u32 nr_scene_id;
 
@@ -1887,11 +1887,18 @@ start_parse:
 			{
 				extend_offset += add_ae_len;
 				dst_header[j].size = src_header[j].size + add_ae_len;
-				memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)),
-					(void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
-				memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001) + add_ae_len),
-					(void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)),
-					(src_header[j].size - sizeof(struct ae_param_tmp_001)));
+				if (src_mod_ptr->version_id >= ISP_TOOL_VERSION_ID) {
+					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len),
+						(void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
+					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len + add_ae_len),
+						(void *)(src_data_ptr + src_header[j].size - ae_end_len),ae_end_len);
+				} else {
+					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)),
+						(void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
+					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001) + add_ae_len),
+						(void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)),
+						(src_header[j].size - sizeof(struct ae_param_tmp_001)));
+				}
 				break;
 			}
 			case ISP_BLK_AWB_NEW:
