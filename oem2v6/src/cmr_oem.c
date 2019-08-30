@@ -7090,6 +7090,9 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                 bool isFrontFlash =
                     (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true
                                                                     : false;
+                ret = isp_ioctl(cxt->isp_cxt.isp_handle,
+                                ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM,
+                                &flash_capture_skip_num);
                 if (ret) {
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
