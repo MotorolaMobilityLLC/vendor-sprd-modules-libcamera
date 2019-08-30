@@ -689,9 +689,10 @@ const int32_t kavailable_request_keys[] = {
     // ANDROID_CONTROL_AWB_REGIONS,
     ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE,
     ANDROID_CONTROL_MODE, ANDROID_CONTROL_SCENE_MODE,
-    ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, ANDROID_FLASH_MODE,
-    ANDROID_JPEG_GPS_COORDINATES, ANDROID_JPEG_GPS_PROCESSING_METHOD,
-    ANDROID_JPEG_GPS_TIMESTAMP, ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
+    ANDROID_CONTROL_ENABLE_ZSL, ANDROID_CONTROL_VIDEO_STABILIZATION_MODE,
+    ANDROID_FLASH_MODE, ANDROID_JPEG_GPS_COORDINATES,
+    ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
+    ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
     ANDROID_JPEG_THUMBNAIL_QUALITY, ANDROID_JPEG_THUMBNAIL_SIZE,
     // ANDROID_LENS_FOCAL_LENGTH,
     // ANDROID_NOISE_REDUCTION_MODE,
@@ -718,9 +719,10 @@ const int32_t front_kavailable_request_keys[] = {
     // ANDROID_CONTROL_AWB_REGIONS,
     ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE,
     ANDROID_CONTROL_MODE, ANDROID_CONTROL_SCENE_MODE,
-    ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, ANDROID_FLASH_MODE,
-    ANDROID_JPEG_GPS_COORDINATES, ANDROID_JPEG_GPS_PROCESSING_METHOD,
-    ANDROID_JPEG_GPS_TIMESTAMP, ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
+    ANDROID_CONTROL_ENABLE_ZSL, ANDROID_CONTROL_VIDEO_STABILIZATION_MODE,
+    ANDROID_FLASH_MODE, ANDROID_JPEG_GPS_COORDINATES,
+    ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
+    ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
     ANDROID_JPEG_THUMBNAIL_QUALITY, ANDROID_JPEG_THUMBNAIL_SIZE,
     // ANDROID_LENS_FOCAL_LENGTH,
     // ANDROID_NOISE_REDUCTION_MODE,
@@ -742,8 +744,8 @@ const int32_t kavailable_result_keys[] = {
     ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION, ANDROID_CONTROL_AE_LOCK,
     ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AF_MODE, ANDROID_CONTROL_AF_STATE,
     ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_MODE,
-    ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, ANDROID_SHADING_MODE,
-    ANDROID_FLASH_MODE, ANDROID_JPEG_GPS_COORDINATES,
+    ANDROID_CONTROL_ENABLE_ZSL, ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
+    ANDROID_SHADING_MODE, ANDROID_FLASH_MODE, ANDROID_JPEG_GPS_COORDINATES,
     ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
     ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
     ANDROID_JPEG_THUMBNAIL_QUALITY, ANDROID_LENS_FOCAL_LENGTH,
@@ -3562,6 +3564,14 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         }
     }
 
+    uint8_t enableZSL = 0;
+    if (type == CAMERA3_TEMPLATE_STILL_CAPTURE) {
+        enableZSL = 1;
+        requestInfo.update(ANDROID_CONTROL_ENABLE_ZSL, &enableZSL, 1);
+    } else {
+        requestInfo.update(ANDROID_CONTROL_ENABLE_ZSL, &enableZSL, 1);
+    }
+
     uint8_t captureIntent = type;
     requestInfo.update(ANDROID_CONTROL_CAPTURE_INTENT, &captureIntent, 1);
 
@@ -4052,6 +4062,12 @@ int SprdCamera3Setting::updateWorkParameters(
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.antibanding_mode,
                          valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE, 1)
         HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d", valueU8);
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_ENABLE_ZSL)) {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_ENABLE_ZSL).data.u8[0];
+        s_setting[mCameraId].controlInfo.enable_zsl = valueU8;
+        HAL_LOGD("Enable Zsl = %d", valueU8);
     }
 
     // CONTROL
@@ -4657,7 +4673,8 @@ int SprdCamera3Setting::updateWorkParameters(
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
              "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
-             "%d, sprd_auto_3dnr_enable:%d",
+             "%d, sprd_auto_3dnr_enable:%d, "
+             "android zsl enable = %d",
              s_setting[mCameraId].lensInfo.focus_distance,
              s_setting[mCameraId].controlInfo.ae_precap_trigger,
              isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
@@ -4689,7 +4706,8 @@ int SprdCamera3Setting::updateWorkParameters(
              s_setting[mCameraId].controlInfo.af_regions[2],
              s_setting[mCameraId].controlInfo.af_regions[3],
              s_setting[mCameraId].controlInfo.af_regions[4],
-             s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable);
+             s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable,
+             s_setting[mCameraId].controlInfo.enable_zsl);
 
 #undef GET_VALUE_IF_DIF
     return rc;
@@ -4786,6 +4804,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // = %d",s_setting[mCameraId].sensorInfo.timestamp,
     //			s_setting[mCameraId].requestInfo.id,
     // s_setting[mCameraId].requestInfo.frame_count, mCameraId);
+    camMetadata.update(ANDROID_CONTROL_ENABLE_ZSL,
+                       &(s_setting[mCameraId].controlInfo.enable_zsl), 1);
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP,
                        &(s_setting[mCameraId].sensorInfo.timestamp), 1);
     camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_MODE,
