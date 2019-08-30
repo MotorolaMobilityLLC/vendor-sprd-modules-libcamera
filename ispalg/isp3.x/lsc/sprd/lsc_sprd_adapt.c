@@ -1061,13 +1061,13 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 
 		if (cxt->cmd_alsc_dump_otp == 1) {
 			char filename[256];
-			sprintf(filename, CAMERA_DATA_FILE "/lsc/otp_dump_r.txt");
+			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_r.txt", lsc_param->camera_id);
 			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 0, lsc_otp_width, lsc_otp_height, filename);
-			sprintf(filename, CAMERA_DATA_FILE "/lsc/otp_dump_gr.txt");
+			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_gr.txt", lsc_param->camera_id);
 			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 1, lsc_otp_width, lsc_otp_height, filename);
-			sprintf(filename, CAMERA_DATA_FILE "/lsc/otp_dump_gb.txt");
+			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_gb.txt", lsc_param->camera_id);
 			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 2, lsc_otp_width, lsc_otp_height, filename);
-			sprintf(filename, CAMERA_DATA_FILE "/lsc/otp_dump_b.txt");
+			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_b.txt", lsc_param->camera_id);
 			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 3, lsc_otp_width, lsc_otp_height, filename);
 		}
 
@@ -1960,6 +1960,7 @@ static void lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id
 	FILE *fp = NULL;
 	struct lsc_last_info full_cxt[MAX_CAMERA_ID];
 	char *ptr = (char *)full_cxt;
+	int num_read;
 
 	if (full_flag == 1) {
 		fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
@@ -1969,7 +1970,7 @@ static void lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id
 
 	if (fp) {
 		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * MAX_CAMERA_ID);
-		fread((char *)ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID, fp);
+		num_read = fread((char *)ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID, fp);
 
 		ptr = ptr + sizeof(struct lsc_last_info) * camera_id;
 		memcpy((char *)cxt, (char *)ptr, sizeof(struct lsc_last_info));
@@ -2570,7 +2571,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	switch (cmd) {
 	case ALSC_FW_START:	// You have to update two table in FW_START: 1.fwstart_info->lsc_result_address_new, 2.cxt->fwstart_new_scaled_table
 		fwstart_info = (struct alsc_fwstart_info *)in;
-		ISP_LOGV("FW_START +++++, frame_count=%d, camera_id=%d, lsc_id=%d", cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id);
+		ISP_LOGV("FW_START +++++, frame_count=%d, camera_id=%d, lsc_id=%d, LSC_SPD_VERSION=%d", cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id, cxt->LSC_SPD_VERSION);
 		ISP_LOGV("FW_START, old tab0 address = %p, (%d,%d), grid %d", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
 		ISP_LOGV("FW_START, new tab0 address = %p, (%d,%d), grid %d", fwstart_info->lsc_tab_address_new[0],
 			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new);
@@ -2744,7 +2745,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		} else {
 			if (cxt->pre_lsc_pm_mode == cxt->cur_lsc_pm_mode) {
 				//reset the flag
-				cxt->fw_start_end = 0;	//set 0, we hope calc don't perform change mode.
+				cxt->fw_start_end = 1;	//set 1, we hope skip 3 frames when change raw size
 				cxt->can_update_dest = 1;	//set 1, then the calc can keep update the destination buffer and post gain.
 			} else {
 				cxt->fw_start_end = 1;	// calc will perforem the change mode
