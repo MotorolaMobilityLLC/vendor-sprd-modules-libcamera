@@ -1421,6 +1421,8 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             ae_info = *(cmr_u32 *)data;
             cxt->camera_cb(oem_cb, cxt->client_data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, &ae_info);
+            cmr_preview_facedetect_set_ae_stab(cxt->prev_cxt.preview_handle,
+                                               cxt->camera_id, ae_info);
         } else
             cxt->camera_cb(oem_cb, cxt->client_data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, NULL);
@@ -1471,6 +1473,8 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         oem_cb = CAMERA_EVT_CB_HIST_REPORT;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
+        cmr_preview_facedetect_set_hist(cxt->prev_cxt.preview_handle,
+                                        cxt->camera_id, data);
     default:
         break;
     }

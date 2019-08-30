@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------*/
-/*  Copyright(C) 2015 by Spreadtrum                                  */
+/*  Copyright(C) 2019 by Spreadtrum                                  */
 /*  All Rights Reserved.                                             */
 /*-------------------------------------------------------------------*/
 /*
     Face Detection Library API
 */
 
-#ifndef __SPRD_FDAPI_H__
-#define __SPRD_FDAPI_H__
+#ifndef __SPRD_FD_API_H__
+#define __SPRD_FD_API_H__
 
 #if (defined( WIN32 ) || defined( WIN64 )) && (defined FDAPI_EXPORTS)
 #define FD_EXPORTS __declspec(dllexport)
@@ -39,6 +39,8 @@
 
 #define FD_WORKMODE_STILL       0x00  /* Still mode: only detection               */
 #define FD_WORKMODE_MOVIE       0x01  /* Movie mode: detection + tracking         */
+#define FD_WORKMODE_FACEENROLL  0x02  /* Face enroll mode                         */
+#define FD_WORKMODE_FACEAUTH    0x03  /* Face authentication mode                 */
 #define FD_WORKMODE_DEFAULT     FD_WORKMODE_STILL /* the default work mode        */
 
 #define FD_ENV_SW  0x00
@@ -50,38 +52,66 @@
 */
 typedef struct
 {
-    unsigned char major;              /*!< API major version */
-    unsigned char minor;              /*!< API minor version */
-    unsigned char micro;              /*!< API micro version */
-    unsigned char nano;               /*!< API nano version */
+    unsigned char major;        /*!< API major version */
+    unsigned char minor;        /*!< API minor version */
+    unsigned char micro;        /*!< API micro version */
+    unsigned char nano;         /*!< API nano version */
     char built_date[0x20];      /*!< API built date */
     char built_time[0x20];      /*!< API built time */
     char built_rev[0x100];      /*!< API built version, linked with vcs resivion?> */
-} FD_VERSION_T;
+} FD_VERSION;
+
+/* The image context */
+typedef struct
+{
+    int orientation;                  /* orientation compare to device            */
+    int brightValue;                  /* AE result: bright value                  */
+    bool aeStable;                    /* AE result: stable state                  */
+    unsigned int backlightPro;        /* AE result: backlight probability         */
+    unsigned int hist[256];           /* HIST result                              */
+    int zoomRatio;                    /* zoom ratio                               */
+    int frameID;                      /* frame ID                                 */
+} FD_IMAGE_CONTEXT;
 
 /* The gray-scale image structure */
 typedef struct
 {
     unsigned char *data;              /* Image data                               */
-    int data_handle;                  /* Image data from Ion handle               */
+    int data_handle;                  /* Image data from Ion handle for HW FD     */
     int width;                        /* Image width                              */
     int height;                       /* Image height                             */
     int step;                         /* The byte count per scan line             */
+    FD_IMAGE_CONTEXT context;         /* Image context                            */
 }FD_IMAGE;
 
 /* The face information structure */
-typedef struct {
+typedef struct
+{
     int x, y, width, height;          /* Face rectangle                           */
     int yawAngle;                     /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees;   */
     int rollAngle;                    /* In-plane rotation angle (Roll); In (-180, +180] degrees;   */
     int score;                        /* Confidence score; In [0, 1000]           */
-    int id;                           /* Human ID Number                          */
+    int hid;                          /* Human ID Number                          */
+    int fid;                          /* frame id */
 } FD_FACEINFO;
 
-/* Face Detection option */
-typedef struct {
-    unsigned int fdEnv;              /*FD_ENV_SW or FD_ENV_HW*/
+/*platform*/
+#define PLATFORM_ID_GENERIC    0x0000
+#define PLATFORM_ID_PIKE2      0x0100
+#define PLATFORM_ID_SHARKLE    0x0200
+#define PLATFORM_ID_SHARKLER   0x0201
+#define PLATFORM_ID_SHARKL3    0x0300
+#define PLATFORM_ID_SHARKL5    0x0400
+#define PLATFORM_ID_SHARKL5P   0x0401
+#define PLATFORM_ID_SHARKL6    0x0500
+#define PLATFORM_ID_SHARKL6P   0x0501
+#define PLATFORM_ID_ROC1       0x0600
 
+/* Face Detection option */
+typedef struct
+{
+    unsigned int platform;           /* Piek2/SharkLE/SharkL3 and so on*/
+    unsigned int fdEnv;              /* FD_ENV_SW or FD_ENV_HW*/
     unsigned int workMode;           /* Work mode: FD_WORKMODE_STILL or FD_WORKMODE_MOVIE           */
     unsigned int threadNum;          /* Number of CPU threads. (In [1, 4], default: 1)              */
 
@@ -105,48 +135,45 @@ typedef struct {
     unsigned int holdSizeRate;       /* If the size change during tracking is below the rate, the face size will be corrected back to the previous one. (In [0, 30]) */
     unsigned int swapFaceRate;       /* When the detected face count is larger than "maxFaceNum", only if the new face is larger than the old face by the rate, the old face is replaced by the new face. */
     unsigned int guessFaceDirection; /* 1-->TRUE; 0 --> FALSE; If set as TRUE, new face search will only be performed on the guessed directions, which can speed up the detection */
-    unsigned int cfgPoolingMode;     /*pooling mode 0:off 1:on. default is off*/
-    unsigned int cfgPoolingFrameNum; /*frame number for pooling detect. [1, detectDensity]. default is detectDensity*/
 
 } FD_OPTION;
 
 /* Face Detector handle */
-typedef void * FD_DETECTOR_HANDLE;
-
+typedef void * FD_HANDLE;
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /* Get the software version_new*/
-FDAPI(int) FdGetVersion(FD_VERSION_T* o_version);
+FDAPI(int)  FdGetVersion(FD_VERSION* version);
 
 /* Init the FD_OPTION structure by default values */
 FDAPI(void) FdInitOption(FD_OPTION *option);
 
 /* Create a Face Detector handle according to the input option */
-FDAPI(int)  FdCreateDetector(FD_DETECTOR_HANDLE *hDT, const FD_OPTION *option);
+FDAPI(int)  FdCreateDetector(FD_HANDLE *hDT, const FD_OPTION *option);
 
 /* Release the Face Detector handle */
-FDAPI(void) FdDeleteDetector(FD_DETECTOR_HANDLE *hDT);
+FDAPI(void) FdDeleteDetector(FD_HANDLE *hDT);
 
 /* Detect face on the input gray-scale image */
-FDAPI(int)  FdDetectFace(FD_DETECTOR_HANDLE hDT, const FD_IMAGE *grayImage);
+FDAPI(int)  FdDetectFace(FD_HANDLE hDT, const FD_IMAGE *grayImage);
 
 /* Clear the faces detected in the previous image */
-FDAPI(int) FdClearFace(FD_DETECTOR_HANDLE hDT);
+FDAPI(int)  FdClearFace(FD_HANDLE hDT);
 
 /* Get the detected face count */
-FDAPI(int)  FdGetFaceCount(const FD_DETECTOR_HANDLE hDT);
+FDAPI(int)  FdGetFaceCount(const FD_HANDLE hDT);
 
 /* Get the face information at the specified index */
-FDAPI(int)  FdGetFaceInfo(const FD_DETECTOR_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
+FDAPI(int)  FdGetFaceInfo(const FD_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
 
 // This function is provided for speed up face detection.
 // minFaceSize and refFaceAngle will override the settings in FD_OPTION
 // It can only run the the STILL mode
 // faceDirection must be a subset of FD_OPTION.directions
-FDAPI(int)  FdDetectFaceExt(FD_DETECTOR_HANDLE hDT,
+FDAPI(int)  FdDetectFaceExt(FD_HANDLE hDT,
                             const FD_IMAGE *grayImage,
                             unsigned int minFaceSize,
                             unsigned int faceDirection);

@@ -198,6 +198,9 @@ extern "C" {
 
 #define PERFORMANCE_OPTIMIZATION 1
 
+/* Histogram items */
+#define CAMERA_ISP_HIST_ITEMS 256
+
 /*********************************** common* **********************************/
 #define cmr_bzero(b, len) memset((b), '\0', (len))
 #define cmr_copy(b, a, len) memcpy((b), (a), (len))

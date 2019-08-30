@@ -391,6 +391,10 @@ struct prev_context {
     cmr_s32 auto_tracking_start_y;
     cmr_s32 auto_tracking_status;
     cmr_s32 auto_tracking_frame_id;
+
+    /* face detect */
+    cmr_u32 ae_stab;/* [31:16]bv, [10:1]probability, [0]stable */
+    cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
 };
 
 struct prev_thread_cxt {
@@ -1319,6 +1323,36 @@ exit:
             free(inter_param);
         }
     }
+
+    return ret;
+}
+
+cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
+                                           cmr_u32 camera_id, cmr_u32 ae_stab) {
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = NULL;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    prev_cxt->ae_stab = ae_stab;
+
+    return ret;
+}
+
+cmr_int cmr_preview_facedetect_set_hist(cmr_handle preview_handle,
+                                        cmr_u32 camera_id, const cmr_u32 *data) {
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = NULL;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    memcpy(&prev_cxt->hist, data, sizeof(prev_cxt->hist));
 
     return ret;
 }
@@ -12468,6 +12502,7 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    in_param.multi_mode = cxt->is_multi_mode;
     in_param.reg_cb = prev_fd_cb;
     ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_FD, &in_param, &out_param,
                        &prev_cxt->fd_handle);
@@ -12518,13 +12553,13 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
+    struct frm_info *info = NULL;
+    struct fd_auxiliary_data private_data;
     struct ipm_frame_in ipm_in_param;
     struct ipm_frame_out imp_out_param;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
-    cmr_bzero(&setting_param, sizeof(setting_param));
-    setting_param.camera_id = camera_id;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     if (!prev_cxt->fd_handle) {
@@ -12542,17 +12577,33 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,
                             &setting_param);
     ipm_in_param.face_attribute_on = setting_param.cmd_type_value;
+
+    /* collect face detect private data */
+    private_data.camera_id = camera_id;
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                      CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
+    private_data.orientation = (cmr_u32)setting_param.cmd_type_value;
+    private_data.bright_value = (prev_cxt->ae_stab >> 16) & 0xffff;
+    private_data.ae_stable = prev_cxt->ae_stab & 0x1;
+    private_data.backlight_pro = (prev_cxt->ae_stab >> 1) & 0x3ff;
+    info = frm->reserved;
+    private_data.zoom_ratio = (cmr_u32)prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
+    memcpy(&private_data.hist, prev_cxt->hist, sizeof(private_data.hist));
 
     ipm_in_param.src_frame = *frm;
     ipm_in_param.dst_frame = *frm;
     ipm_in_param.touch_x = prev_cxt->touch_info.touchX;
     ipm_in_param.touch_y = prev_cxt->touch_info.touchY;
     ipm_in_param.caller_handle = (void *)handle;
-    ipm_in_param.private_data = (void *)((unsigned long)camera_id);
+    ipm_in_param.private_data = &private_data;
 
     ret = ipm_transfer_frame(prev_cxt->fd_handle, &ipm_in_param, NULL);
     if (ret) {

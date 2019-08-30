@@ -39,6 +39,7 @@
 #include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
+#include "cmr_common.h"
 
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
@@ -108,9 +109,6 @@ typedef int64_t nsecs_t;
 
 #define MAX_PREVIEW_SIZE_WIDTH 1280
 #define MAX_PREVIEW_SIZE_HEIGHT 720
-
-//Histogram items
-#define CAMERA_ISP_HIST_ITEMS 256
 
 typedef struct {
     uint8_t correction_mode;

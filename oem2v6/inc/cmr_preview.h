@@ -339,6 +339,12 @@ cmr_int cmr_preview_release_frame(cmr_handle preview_handle, cmr_u32 camera_id,
 cmr_int cmr_preview_ctrl_facedetect(cmr_handle preview_handle,
                                     cmr_u32 camera_id, cmr_uint on_off);
 
+cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
+                                           cmr_u32 camera_id, cmr_u32 ae_stab);
+
+cmr_int cmr_preview_facedetect_set_hist(cmr_handle preview_handle,
+                                        cmr_u32 camera_id, const cmr_u32 *ae_stab);
+
 cmr_int cmr_preview_is_support_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
                                    cmr_uint *is_support);
 

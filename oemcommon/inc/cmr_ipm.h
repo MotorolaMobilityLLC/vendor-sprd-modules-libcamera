@@ -94,6 +94,7 @@ struct ipm_open_in {
     struct img_size frame_full_size;
     struct img_size frame_scale_size;
     cmr_u32 binning_factor;
+    multiCameraMode multi_mode;
 };
 
 struct ipm_version {
@@ -139,6 +140,17 @@ struct ipm_common {
     cmr_uint receive_frame_count;
     cmr_uint save_frame_count;
     struct class_ops *ops;
+};
+
+/* facedetect specific data type */
+struct fd_auxiliary_data {
+    cmr_u32 camera_id;
+    cmr_u32 orientation;
+    cmr_u32 bright_value;
+    cmr_u32 ae_stable;
+    cmr_u32 backlight_pro;
+    cmr_u32 zoom_ratio;
+    cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
 };
 
 cmr_int cmr_ipm_init(struct ipm_init_in *in, cmr_handle *ipm_handle);

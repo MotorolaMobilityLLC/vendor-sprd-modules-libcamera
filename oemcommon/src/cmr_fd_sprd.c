@@ -87,7 +87,7 @@ struct class_fd {
     struct class_faceattr_array faceattr_arr; /* face attributes */
     cmr_uint curr_frame_idx;
     cmr_uint is_get_result;
-    FD_DETECTOR_HANDLE hDT;     /* Face Detection Handle */
+    FD_HANDLE hDT;              /* Face Detection Handle */
     FA_ALIGN_HANDLE hFaceAlign; /* Handle for face alignment */
     FAR_RECOGNIZER_HANDLE hFAR; /* Handle for face attribute recognition */
     FAR_HANDLE hFAR_v2;
@@ -96,6 +96,7 @@ struct class_fd {
     struct frm_info trans_frm;
     cmr_uint fd_x;
     cmr_uint fd_y;
+    cmr_int work_mode;
 };
 
 struct fd_start_parameter {
@@ -103,6 +104,15 @@ struct fd_start_parameter {
     ipm_callback frame_cb;
     cmr_handle caller_handle;
     void *private_data;
+
+    /* FD_IMAGE_CONTEXT */
+    cmr_u32 orientation;
+    cmr_u32 bright_value;
+    cmr_u32 ae_stable;
+    cmr_u32 backlight_pro;
+    cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
+    cmr_u32 zoom_ratio;
+    cmr_u32 frame_id;
 };
 
 typedef enum { SPRD_API_MODE = 0, SPRD_API_MODE_V2 } ApiMode;
@@ -205,9 +215,18 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         goto free_fd_handle;
     }
 
+    if (in->multi_mode == MODE_SINGLE_FACEID_REGISTER
+            || in->multi_mode == MODE_DUAL_FACEID_REGISTER)
+        fd_handle->work_mode = FD_WORKMODE_FACEENROLL;
+    else if (in->multi_mode == MODE_SINGLE_FACEID_UNLOCK
+            || in->multi_mode == MODE_DUAL_FACEID_UNLOCK)
+        fd_handle->work_mode = FD_WORKMODE_FACEAUTH;
+    else
+        fd_handle->work_mode = FD_WORKMODE_MOVIE;
+
     fd_img_size = &in->frame_size;
-    CMR_LOGI("sprd_fd_api %d fd_img_size height = %d, width = %d", sprd_fd_api, fd_img_size->height,
-             fd_img_size->width);
+    CMR_LOGD("sprd_fd_api %d fd_img_size %dx%d work_mode %d", sprd_fd_api,
+             fd_img_size->width, fd_img_size->height, fd_handle->work_mode);
     ret = fd_call_init(fd_handle, fd_img_size);
     if (ret) {
         CMR_LOGE("failed to init fd");
@@ -263,11 +282,16 @@ out:
     return ret;
 }
 
+/*
+ * in->private is a (struct fd_auxiliary_data) variable
+ * while out->private is a camera_id converted to (void *)
+ */
 static cmr_int fd_transfer_frame(cmr_handle class_handle,
                                  struct ipm_frame_in *in,
                                  struct ipm_frame_out *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_fd *fd_handle = (struct class_fd *)class_handle;
+    struct fd_auxiliary_data *auxiliary = NULL;
     cmr_uint frame_cnt;
     cmr_u32 is_busy = 0;
     struct fd_start_parameter param;
@@ -278,6 +302,7 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     }
 
     frame_cnt = ++fd_handle->frame_cnt;
+    auxiliary = (struct fd_auxiliary_data *)in->private_data;
 
     if (frame_cnt < fd_handle->frame_total_num) {
         CMR_LOGD("This is fd 0x%ld frame. need the 0x%ld frame,", frame_cnt,
@@ -326,6 +351,8 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     if (!is_busy) {
         fd_handle->frame_cnt = 0;
         fd_handle->frame_in = *in;
+        /* don't hold pointer to variable in caller stack */
+        fd_handle->frame_in.private_data = NULL;
         if (in->dst_frame.reserved) {
             memcpy((void *)&fd_handle->trans_frm, in->dst_frame.reserved,
                    sizeof(struct frm_info));
@@ -335,7 +362,28 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
         param.frame_data = (void *)in->src_frame.addr_vir.addr_y;
         param.frame_cb = fd_handle->frame_cb;
         param.caller_handle = in->caller_handle;
-        param.private_data = in->private_data;
+
+        if (auxiliary) {
+            param.orientation = auxiliary->orientation;
+            param.bright_value = auxiliary->bright_value;
+            param.ae_stable = auxiliary->ae_stable;
+            param.backlight_pro = auxiliary->backlight_pro;
+            memcpy(param.hist, auxiliary->hist, sizeof(param.hist));
+            param.zoom_ratio = auxiliary->zoom_ratio;
+            param.frame_id = fd_handle->curr_frame_idx;
+            /* callback needs this */
+            param.private_data = (void *)((unsigned long)auxiliary->camera_id);
+        } else {
+            param.orientation = (cmr_u32)(-1);
+            param.bright_value = (cmr_u32)(-1);
+            param.ae_stable = 0;
+            param.backlight_pro = (cmr_u32)(-1);
+            memset(param.hist, 0, sizeof(param.hist));
+            param.zoom_ratio = (cmr_u32)(-1);
+            param.frame_id = (cmr_u32)(-1);
+            /* callback needs this */
+            param.private_data = NULL;
+        }
 
         memcpy(fd_handle->alloc_addr, (void *)in->src_frame.addr_vir.addr_y,
                fd_handle->mem_size);
@@ -372,7 +420,12 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
 
         /*callback*/
         if (fd_handle->frame_cb) {
-            fd_handle->frame_out.private_data = in->private_data;
+            if (auxiliary) {
+                /* callback needs this */
+                fd_handle->frame_out.private_data = (void *)((unsigned long)auxiliary->camera_id);
+            } else {
+                fd_handle->frame_out.private_data = NULL;
+            }
             fd_handle->frame_out.caller_handle = in->caller_handle;
             fd_handle->frame_out.is_plus = 0;
             fd_handle->frame_cb(IPM_TYPE_FD, &fd_handle->frame_out);
@@ -550,7 +603,7 @@ end:
     return ret;
 }
 
-static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
+static void fd_recognize_face_attribute(FD_HANDLE hDT,
                                         FA_ALIGN_HANDLE hFaceAlign,
                                         FAR_RECOGNIZER_HANDLE hFAR,
                                         FAR_HANDLE hFAR_v2,
@@ -637,7 +690,7 @@ static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
         FdGetFaceInfo(hDT, fd_idx, &info);
 
         /* Assign the same face id with FD */
-        fattr->face_id = info.id;
+        fattr->face_id = info.fid;
         fattr->attr.smile = 0;
         fattr->attr.eyeClose = 0;
 
@@ -652,8 +705,8 @@ static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
             faface.rollAngle = info.rollAngle;
             ret = FaFaceAlign(hFaceAlign, &img, &faface, &(fattr->shape));
         }
-        for (i = 0; i < 7; i++) {
 
+        for (i = 0; i < 7; i++) {
             fattr_shape.data[i * 2] = fattr->shape.data[i * 2];
             fattr_shape.data[i * 2 + 1] = fattr->shape.data[i * 2 + 1];
         }
@@ -679,7 +732,6 @@ static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
                     ret = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface,
                                        &opt, &(fattr->attr));
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
-
                     struct class_faceattr_v2 *fattr =
                         &(new_attr_array.face_v2[fd_idx]);
                     fattr->attr_v2.smile = 0;
@@ -693,15 +745,15 @@ static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
                     fattr->attr_v2.raceScore[1] = 0;
                     fattr->attr_v2.raceScore[2] = 0;
                     fattr->attr_v2.raceScore[3] = 0;
-                    fattr->attr_v2.faceIdx = info.id;
-                    fattr->face_id = info.id;
+                    fattr->attr_v2.faceIdx = info.fid;
+                    fattr->face_id = info.fid;
                     faface_v2.x = info.x;
                     faface_v2.y = info.y;
                     faface_v2.width = info.width;
                     faface_v2.height = info.height;
                     faface_v2.yawAngle = info.yawAngle;
                     faface_v2.rollAngle = info.rollAngle;
-                    faface_v2.faceIdx = info.id;
+                    faface_v2.faceIdx = info.fid;
                     for (i = 0; i < 7; i++) {
                         fattr->shape.data[i * 2] = fattr_shape.data[i * 2];
                         fattr->shape.data[i * 2 + 1] =
@@ -886,7 +938,7 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
     }
 }
 
-static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
+static void fd_get_fd_results(FD_HANDLE hDT,
                               const struct class_faceattr_array *i_faceattr_arr,
                               const struct img_face_area *i_face_area_prev,
                               struct img_face_area *o_face_area,
@@ -937,7 +989,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
         face_ptr->ely = ey;
         face_ptr->ex = ex;
         face_ptr->ey = ey;
-        face_ptr->face_id = info.id;
+        face_ptr->face_id = info.fid;
         face_ptr->pose = info.yawAngle;
         face_ptr->angle = info.rollAngle;
         face_ptr->score =
@@ -984,7 +1036,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
                 if (sprd_fd_api == SPRD_API_MODE) {
                     const struct class_faceattr *fattr =
                         &(i_faceattr_arr->face[i]);
-                    if (fattr->face_id == info.id) {
+                    if (fattr->face_id == info.fid) {
                         /* Note: The original smile score is in [-100, 100].
                            But the Camera APP needs a score in [0, 100], and
                            also
@@ -1014,7 +1066,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
                     const struct class_faceattr_v2 *fattr =
                         &(i_faceattr_arr->face_v2[i]);
-                    if (fattr->face_id == info.id) {
+                    if (fattr->face_id == info.fid) {
                         /* Note: The original smile score is in [-100, 100].
                            But the Camera APP needs a score in [0, 100], and
                            also
@@ -1079,14 +1131,20 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
     o_face_area->face_count = valid_count;
 }
 
-static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
-                                  const struct img_size *fd_img_size) {
+static cmr_int fd_create_detector(FD_HANDLE *hDT,
+                                  const struct img_size *fd_img_size,
+                                  cmr_int work_mode) {
     FD_OPTION opt;
-    FD_VERSION_T version;
+    FD_VERSION version;
     FdGetVersion(&version);
-    CMR_LOGI("SPRD FD version: %s .", version.built_rev);
+    opt.fdEnv = FD_ENV_SW;
     FdInitOption(&opt);
-    opt.workMode = FD_WORKMODE_MOVIE;
+#ifdef PLATFORM_ID
+    opt.platform = PLATFORM_ID;
+#else
+    opt.platform = PLATFORM_ID_GENERIC;
+#endif
+    opt.workMode = work_mode;
     opt.maxFaceNum = FACE_DETECT_NUM;
     opt.minFaceSize = MIN(fd_img_size->width, fd_img_size->height) / 12;
     opt.directions = FD_DIRECTION_ALL;
@@ -1103,6 +1161,9 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
     opt.holdSizeRate = 4;
     opt.swapFaceRate = 200;
     opt.guessFaceDirection = 1;
+
+    CMR_LOGI("SPRD FD version: \"%s\", platform: 0x%04x",
+             version.built_rev, opt.platform);
 
     /* For tuning FD parameter: read parameter from file */
     /*
@@ -1181,9 +1242,10 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
 
         /* Creates Face Detection handle */
         fd_img_size = (struct img_size *)message->data;
-        ret = fd_create_detector(&(class_handle->hDT), fd_img_size);
+        ret = fd_create_detector(&(class_handle->hDT), fd_img_size,
+                                 class_handle->work_mode);
         if (ret != FD_OK) {
-            CMR_LOGE("fd_create_detector() Error");
+            CMR_LOGE("fd_create_detector() Error: %d", ret);
             break;
         }
 
@@ -1204,6 +1266,21 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         fd_img.width = class_handle->fd_img_size.width;
         fd_img.height = class_handle->fd_img_size.height;
         fd_img.step = fd_img.width;
+        fd_img.context.orientation = (int)start_param->orientation;
+        fd_img.context.brightValue = (int)start_param->bright_value;
+        fd_img.context.aeStable = !!start_param->ae_stable;
+        fd_img.context.backlightPro = (unsigned int)start_param->backlight_pro;
+        for (int i = 0; i < CAMERA_ISP_HIST_ITEMS; i++)
+            fd_img.context.hist[i] = (unsigned int)start_param->hist[i];
+        fd_img.context.zoomRatio = (int)start_param->zoom_ratio;
+        fd_img.context.frameID = (int)start_param->frame_id;
+
+        CMR_LOGD("orientation %d, brightValue %d, aeStable %d, backlightPro %u, hist[0~3] %u %u %u %u, zoomRatio %d frameID %d",
+                 fd_img.context.orientation, fd_img.context.brightValue,
+                 fd_img.context.aeStable, fd_img.context.backlightPro,
+                 fd_img.context.hist[0], fd_img.context.hist[1],
+                 fd_img.context.hist[2], fd_img.context.hist[3],
+                 fd_img.context.zoomRatio, fd_img.context.frameID);
 
         start_time = clock();
         ret = FdDetectFace(class_handle->hDT, &fd_img);

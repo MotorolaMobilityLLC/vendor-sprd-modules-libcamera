@@ -40,6 +40,7 @@
 #include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
+#include "cmr_common.h"
 
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
@@ -124,9 +125,6 @@ typedef int64_t nsecs_t;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
 #define MAX_PIPELINE_DEPTH 5
 #endif
-
-// Histogram items
-#define CAMERA_ISP_HIST_ITEMS 256
 
 typedef struct {
     uint8_t correction_mode;
