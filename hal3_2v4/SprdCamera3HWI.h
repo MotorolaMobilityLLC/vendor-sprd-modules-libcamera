@@ -148,6 +148,13 @@ class SprdCamera3HWI {
     uint32_t mFrameNum;
 
   private:
+    typedef struct {
+        uint8_t af_trigger;
+        uint8_t af_state;
+        uint8_t ae_precap_trigger;
+        uint8_t ae_state;
+    } threeA_info_t;
+
     /* Data structure to store pending request */
     typedef struct {
         uint32_t frame_number;
@@ -161,6 +168,7 @@ class SprdCamera3HWI {
         camera3_stream_buffer_t *input_buffer;
         int32_t receive_req_max;
         uint32_t pipeline_depth;
+        threeA_info_t threeA_info;
     } PendingRequestInfo;
 
     int timer_stop();

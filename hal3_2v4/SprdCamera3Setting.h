@@ -401,6 +401,7 @@ typedef struct {
 
     COLOR_Tag colorInfo;
     CONTROL_Tag controlInfo;
+    CONTROL_Tag resultInfo;
     EDGE_Tag edgeInfo;
     FLASH_Tag flashInfo;
     FLASH_INFO_Tag flash_InfoInfo;
@@ -497,6 +498,9 @@ class SprdCamera3Setting {
 
     int setCONTROLTag(CONTROL_Tag *controlInfo);
     int getCONTROLTag(CONTROL_Tag *controlInfo);
+
+    int setResultTag(CONTROL_Tag *resultInfo);
+    int getResultTag(CONTROL_Tag *resultInfo);
 
     int setAeCONTROLTag(CONTROL_Tag *controlInfo);
     int setAfCONTROLTag(CONTROL_Tag *controlInfo);

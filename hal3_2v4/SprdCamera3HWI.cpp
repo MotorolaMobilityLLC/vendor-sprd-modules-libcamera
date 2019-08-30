@@ -1360,6 +1360,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         memcpy(pendingRequest.meta_info.af_regions, controlInfo.af_regions,
                5 * sizeof(controlInfo.af_regions[0]));
         pendingRequest.frame_number = frameNumber;
+        pendingRequest.threeA_info.af_trigger = controlInfo.af_trigger;
+        pendingRequest.threeA_info.af_state = controlInfo.af_state;
+        pendingRequest.threeA_info.ae_precap_trigger = controlInfo.ae_precap_trigger;
+        pendingRequest.threeA_info.ae_state = controlInfo.ae_state;
         pendingRequest.num_buffers = request->num_output_buffers;
         pendingRequest.request_id = capturePara.cap_request_id;
         pendingRequest.bNotified = 0;
@@ -1739,6 +1743,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
+                CONTROL_Tag threeAControlInfo;
+
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
                 mSetting->setSENSORTag(sensorInfo);
@@ -1753,6 +1759,13 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 memcpy(metaInfo.af_regions, i->meta_info.af_regions,
                        5 * sizeof(i->meta_info.af_regions[0]));
                 mSetting->setMETAInfo(metaInfo);
+                mSetting->getResultTag(&threeAControlInfo);
+                threeAControlInfo.af_trigger = i->threeA_info.af_trigger;
+                threeAControlInfo.af_state = i->threeA_info.af_state;
+                threeAControlInfo.ae_precap_trigger =
+                    i->threeA_info.ae_precap_trigger;
+                threeAControlInfo.ae_state = i->threeA_info.ae_state;
+                mSetting->setResultTag(&threeAControlInfo);
 
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
@@ -1781,6 +1794,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
+                CONTROL_Tag threeAControlInfo;
+
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
                 mSetting->setSENSORTag(sensorInfo);
@@ -1795,6 +1810,13 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 memcpy(metaInfo.af_regions, i->meta_info.af_regions,
                        5 * sizeof(i->meta_info.af_regions[0]));
                 mSetting->setMETAInfo(metaInfo);
+                mSetting->getResultTag(&threeAControlInfo);
+                threeAControlInfo.af_trigger = i->threeA_info.af_trigger;
+                threeAControlInfo.af_state = i->threeA_info.af_state;
+                threeAControlInfo.ae_precap_trigger =
+                    i->threeA_info.ae_precap_trigger;
+                threeAControlInfo.ae_state = i->threeA_info.ae_state;
+                mSetting->setResultTag(&threeAControlInfo);
 
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
