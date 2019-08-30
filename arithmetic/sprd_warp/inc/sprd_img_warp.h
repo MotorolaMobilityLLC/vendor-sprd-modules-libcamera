@@ -21,7 +21,7 @@ typedef struct {
     int crop_y;           /*crop_y is the start y coordinate*/
     int crop_width;       /*crop_width is the output width of croping*/
     int crop_height;      /*crop height is the output height of croping*/
-    int binning_mode;     /*binning mode 0: no binning 1:binning*/
+    int binning_mode;     /*binning mode 0: fullsize 1:binning*/
 } img_warp_input_info_t;
 
 typedef struct {
@@ -72,6 +72,28 @@ typedef struct {
     float zoomRatio; //  [1.0f ~ 1.6f]
 } img_warp_undistort_param_t;
 
+typedef struct {
+	void *dl_handle;
+	int (*sprd_caa_vdsp_open)(void **h_vdsp);
+	int (*sprd_caa_vdsp_close)(void *h_vdsp);
+	int (*sprd_caa_vdsp_send)(void *h_vdsp, const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
+	int (*sprd_caa_cadence_vdsp_load_library)(void *h_vdsp, const char *nsid);
+	int (*sprd_caa_vdsp_Send)(const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
+	void *(*sprd_caa_ionmem_alloc)(uint32_t size, bool iscache);
+	int (*sprd_caa_ionmem_free)(void *h_ionmem);
+	void *(*sprd_caa_ionmem_get_vaddr)(void *h_ionmem);
+	int (*sprd_caa_ionmem_get_fd)(void *h_ionmem);
+	void (*ProcessState_initWithDriver)(const char *driver);
+	void (*ProcessState_startThreadPool)();
+	void (*IPCThreadState_joinThreadPool)(bool isMain);
+	void (*IPCThreadState_stopProcess)(bool immediate);
+} camalg_assist_lib_api_t;
+
+typedef enum {
+	WARP_CAPTURE,
+	WARP_PREVIEW,
+} INST_TAG;
+
 #ifdef _MSC_VER
 #ifdef _USRDLL
 #ifdef SPRD_ISP_EXPORTS
@@ -89,6 +111,10 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * API for GPU
+ */
 
 SPRD_ISP_API void img_warp_grid_config_default(img_warp_param_t *param);
 /* img_warp_grid_config_default
@@ -116,15 +142,41 @@ SPRD_ISP_API void img_warp_grid_close(img_warp_inst_t *inst);
  */
 
 /*
- * API for vdsp
+ * API for VDSP
  */
 SPRD_ISP_API int img_warp_grid_vdsp_open(img_warp_inst_t *inst,
-                                         img_warp_param_t *param);
+                                         img_warp_param_t *param, INST_TAG tag);
 SPRD_ISP_API void img_warp_grid_vdsp_run(img_warp_inst_t inst,
                                          img_warp_buffer_t *input,
                                          img_warp_buffer_t *output,
                                          void *param);
 SPRD_ISP_API void img_warp_grid_vdsp_close(img_warp_inst_t *inst);
+SPRD_ISP_API int sprd_load_caa_api(camalg_assist_lib_api_t *libapi);
+
+/*
+ * API for CPU
+ */
+SPRD_ISP_API int img_warp_grid_cpu_open(img_warp_inst_t *inst,
+                                         img_warp_param_t *param, INST_TAG tag);
+SPRD_ISP_API void img_warp_grid_cpu_run(img_warp_inst_t inst,
+                                         img_warp_buffer_t *input,
+                                         img_warp_buffer_t *output,
+                                         void *param);
+SPRD_ISP_API void img_warp_grid_cpu_close(img_warp_inst_t *inst);
+
+
+/*
+ * adapter
+ */
+SPRD_ISP_API int sprd_warp_adapter_open(img_warp_inst_t *inst,
+                                        void *param, INST_TAG tag);
+SPRD_ISP_API void sprd_warp_adapter_run(img_warp_inst_t inst,
+                                        img_warp_buffer_t *input,
+                                        img_warp_buffer_t *output,
+                                        void *param, INST_TAG tag);
+SPRD_ISP_API void sprd_warp_adapter_close(img_warp_inst_t *inst, INST_TAG tag);
+SPRD_ISP_API float sprd_warp_adapter_get_isp_ratio(img_warp_inst_t *inst,
+                                                   float real_ratio, INST_TAG tag);
 
 #ifdef __cplusplus
 }
