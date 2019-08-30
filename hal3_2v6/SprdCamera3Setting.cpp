@@ -201,10 +201,10 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5, 15, 15, 15, 5, 20, 20, 20,
-                                              5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,  20, 20,
-                                               20, 5,  30, 15, 30, 20, 30, 30, 30};
+const int32_t kavailable_fps_ranges_back[] = {
+    5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {5, 15, 15, 15, 5,  20, 20, 20,
+                                               5, 30, 15, 30, 20, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
@@ -4628,15 +4628,15 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("tag_count %d", tag_count);
         int32_t touch_area[5] = {0};
         int32_t i = 0;
-       if (tag_count == 5) {
-             for (i = 0; i < tag_count; i++) {
-                    touch_area[i] =
+        if (tag_count == 5) {
+            for (i = 0; i < tag_count; i++) {
+                touch_area[i] =
                     frame_settings.find(ANDROID_SPRD_AUTOCHASING_REGION)
-                    .data.i32[i];
-                    HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
+                        .data.i32[i];
+                HAL_LOGV("touch_area[%d]=%d", i, touch_area[i]);
             }
             autotrackingCoordinateConvert(touch_area);
-       }
+        }
     } else {
         HAL_LOGV("Not AUTOCHASING tag");
         s_setting[mCameraId].autotrackingInfo.at_start_info[0] = 0;
@@ -4826,11 +4826,19 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         s_setting[mCameraId].resultInfo.af_state =
             s_setting[mCameraId].controlInfo.af_state;
 
+    /* TO DO: Need sync AE precapture trigger event and ae_stab notification */
     if (s_setting[mCameraId].resultInfo.ae_precap_trigger !=
             ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE ||
-        s_setting[mCameraId].resultInfo.ae_manual_trigger)
+        s_setting[mCameraId].resultInfo.ae_manual_trigger) {
         s_setting[mCameraId].resultInfo.ae_state =
             s_setting[mCameraId].controlInfo.ae_state;
+    } else if ((s_setting[mCameraId].controlInfo.ae_state ==
+                ANDROID_CONTROL_AE_STATE_CONVERGED) &&
+               (s_setting[mCameraId].resultInfo.ae_precap_trigger ==
+                ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE)) {
+        s_setting[mCameraId].resultInfo.ae_state =
+            s_setting[mCameraId].controlInfo.ae_state;
+    }
 
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
