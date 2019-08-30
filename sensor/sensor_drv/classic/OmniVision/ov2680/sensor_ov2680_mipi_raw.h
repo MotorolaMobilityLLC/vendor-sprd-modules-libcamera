@@ -265,8 +265,37 @@ LOCAL const SENSOR_REG_T ov2680_800X600_mipi_raw[] = {
 
 };
 
-LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
-    /* 2680 Full 1600x1200 RAW 30fps 1lane */
+static const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
+    {0x0103, 0x01}, {0x3002, 0x00}, {0x3016, 0x1c}, {0x3018, 0x44},
+    {0x3020, 0x00}, {0x3080, 0x02}, {0x3082, 0x37}, {0x3084, 0x09},
+    {0x3085, 0x04}, {0x3086, 0x00}, {0x3501, 0x4e}, {0x3502, 0xe0},
+    {0x3503, 0x03}, {0x350b, 0x36}, {0x3600, 0xb4}, {0x3603, 0x35},
+    {0x3604, 0x24}, {0x3605, 0x00}, {0x3620, 0x24}, {0x3621, 0x34},
+    {0x3622, 0x03}, {0x3628, 0x00}, {0x3701, 0x64}, {0x3705, 0x3c},
+    {0x370c, 0x50}, {0x370d, 0xc0}, {0x3718, 0x80}, {0x3720, 0x00},
+    {0x3721, 0x09}, {0x3722, 0x06}, {0x3723, 0x59}, {0x3738, 0x99},
+    {0x370a, 0x21}, {0x3717, 0x58}, {0x3781, 0x80}, {0x3784, 0x0c},
+    {0x3789, 0x60}, {0x3800, 0x00}, {0x3801, 0x00}, {0x3802, 0x00},
+    {0x3803, 0x00}, {0x3804, 0x06}, {0x3805, 0x4f}, {0x3806, 0x04},
+    {0x3807, 0xbf}, {0x3808, 0x06}, {0x3809, 0x40}, {0x380a, 0x04},
+    {0x380b, 0xb0},                 //
+    {0x380c, 0x06}, {0x380d, 0xa4}, // hts 1700
+    {0x380e, 0x05}, {0x380f, 0x0e}, // vts 1294
+    {0x3810, 0x00}, {0x3811, 0x08}, {0x3812, 0x00}, {0x3813, 0x08},
+    {0x3814, 0x11}, {0x3815, 0x11}, {0x3819, 0x04}, //
+    {0x3820, 0xc0}, {0x3821, 0x00},                 // mirror flip
+    {0x4000, 0x81}, {0x4001, 0x40}, {0x4008, 0x02}, {0x4009, 0x09},
+    {0x4602, 0x02}, {0x481f, 0x36}, {0x4825, 0x36}, {0x4837, 0x18},
+    {0x5002, 0x30}, {0x5080, 0x00}, {0x5081, 0x41}, {0x5780, 0x3e},
+    {0x5781, 0x0f}, {0x5782, 0x04}, {0x5783, 0x02}, {0x5784, 0x01},
+    {0x5785, 0x01}, {0x5786, 0x00}, {0x5787, 0x04}, {0x5788, 0x02},
+    {0x5789, 0x00}, {0x578a, 0x01}, {0x578b, 0x02}, {0x578c, 0x03},
+    {0x578d, 0x03}, {0x578e, 0x08}, {0x578f, 0x0c}, {0x5790, 0x08},
+    {0x5791, 0x04}, {0x5792, 0x00}, {0x5793, 0x00}, {0x5794, 0x03},
+};
+
+LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw_15fps[] = {
+    /* 2680 Full 1600x1200 RAW 15fps 1lane */
     {0x0103, 0x01}, //
     {0xffff, 0x0a}, //
     {0x3002, 0x00}, //
@@ -318,9 +347,9 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
     {0x380a, 0x04}, //
     {0x380b, 0xb0}, //
     {0x380c, 0x06}, //
-    {0x380d, 0xe8}, // ;e7 ;e4 ;a4
-    {0x380e, 0x04}, // ;05
-    {0x380f, 0xdc}, // ;0e
+    {0x380d, 0xe8}, // ;e8 ;e4 ;a4
+    {0x380e, 0x04}, // 1244
+    {0x380f, 0xdc}, // 1244
     {0x3810, 0x00}, //
     {0x3811, 0x08}, //
     {0x3812, 0x00}, //
@@ -384,36 +413,6 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
 
 };
 
-static SENSOR_STATIC_INFO_T s_ov2680_static_info[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
-     .static_info = {.f_num = 220,
-                     .focal_length = 227,
-                     .max_fps = 0,
-                     .max_adgain = 8 * 4,
-                     .ois_supported = 0,
-                     .pdaf_supported = 0,
-                     .exp_valid_frame_num = 1,
-                     .clamp_level = 4,
-                     .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
-    /*If there are multiple modules,please add here*/
-};
-
-static SENSOR_MODE_FPS_INFO_T s_ov2680_mode_fps_info[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
-     {.is_init = 0,
-      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
-       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
-       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
-       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
-       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
-       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
-       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
-       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
-       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
-    /*If there are multiple modules,please add here*/
-};
-
 static struct sensor_res_tab_info s_ov2680_resolution_tab_raw[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .reg_tab =
@@ -439,9 +438,9 @@ static SENSOR_TRIM_T s_ov2680_resolution_trim_tab[VENDOR_NUM] = {
               .trim_start_y = 0,
               .trim_width = 1600,
               .trim_height = 1200,
-              .line_time = 53590,
+              .line_time = 25760,
               .bps_per_lane = 628,
-              .frame_line = 1244,
+              .frame_line = 1294,
               .scaler_trim = {.x = 0, .y = 0, .w = 1600, .h = 1200}},
 
          }}
@@ -449,36 +448,78 @@ static SENSOR_TRIM_T s_ov2680_resolution_trim_tab[VENDOR_NUM] = {
     /*If there are multiple modules,please add here*/
 };
 
-static const SENSOR_REG_T
-    s_ov2680_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        /*video mode 0: ?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
-        /* video mode 1:?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
-        /* video mode 2:?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
-        /* video mode 3:?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+static struct sensor_reg_tag ov2680_shutter_reg[] = {
+    {0x3502, 0}, {0x3501, 0}, {0x3500, 0},
 };
 
-static const SENSOR_REG_T
-    s_ov2680_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
-        /*video mode 0: ?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
-        /* video mode 1:?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
-        /* video mode 2:?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
-        /* video mode 3:?fps*/
-        {{.reg_addr = 0xffff, .reg_value = 0xff}},
+static struct sensor_i2c_reg_tab ov2680_shutter_tab = {
+    .settings = ov2680_shutter_reg, .size = ARRAY_SIZE(ov2680_shutter_reg),
 };
 
-static SENSOR_VIDEO_INFO_T s_ov2680_video_info[SENSOR_MODE_MAX] = {
-    {{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
-    {{{30, 30, 270, 90}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-     (SENSOR_REG_T **)s_ov2680_preview_size_video_tab},
-    {{{2, 5, 338, 1000}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-     (SENSOR_REG_T **)s_ov2680_capture_size_video_tab},
+static struct sensor_reg_tag ov2680_again_reg[] = {
+    {0x3208, 0x01}, {0x350b, 0x00}, {0x350a, 0x00},
+};
+
+static struct sensor_i2c_reg_tab ov2680_again_tab = {
+    .settings = ov2680_again_reg, .size = ARRAY_SIZE(ov2680_again_reg),
+};
+
+static struct sensor_reg_tag ov2680_dgain_reg[] = {
+    {0x5004, 0}, {0x5005, 0}, {0x5006, 0},    {0x5007, 0},
+    {0x5008, 0}, {0x5009, 0}, {0x3208, 0x11}, {0x3208, 0xA1},
+};
+
+struct sensor_i2c_reg_tab ov2680_dgain_tab = {
+    .settings = ov2680_dgain_reg, .size = ARRAY_SIZE(ov2680_dgain_reg),
+};
+
+static struct sensor_reg_tag ov2680_frame_length_reg[] = {
+    {0x380e, 0}, {0x380f, 0},
+};
+
+static struct sensor_i2c_reg_tab ov2680_frame_length_tab = {
+    .settings = ov2680_frame_length_reg,
+    .size = ARRAY_SIZE(ov2680_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag ov2680_aec_info = {
+    .slave_addr = (I2C_SLAVE_ADDR >> 1),
+    .addr_bits_type = SENSOR_I2C_REG_16BIT,
+    .data_bits_type = SENSOR_I2C_VAL_8BIT,
+    .shutter = &ov2680_shutter_tab,
+    .again = &ov2680_again_tab,
+    .dgain = &ov2680_dgain_tab,
+    .frame_length = &ov2680_frame_length_tab,
+};
+
+static SENSOR_MODE_FPS_INFO_T s_ov2680_mode_fps_info[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     {.is_init = 0,
+      {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_ONE_THIRD, 0, 1, 0, 0},
+       {SENSOR_MODE_PREVIEW_TWO, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_FIRST, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_SECOND, 0, 1, 0, 0},
+       {SENSOR_MODE_SNAPSHOT_TWO_THIRD, 0, 1, 0, 0}}}}
+    /*If there are multiple modules,please add here*/
+};
+
+static SENSOR_STATIC_INFO_T s_ov2680_static_info[VENDOR_NUM] = {
+    {.module_id = MODULE_SUNNY,
+     .static_info = {.f_num = 220,
+                     .focal_length = 227,
+                     .max_fps = 0,
+                     .max_adgain = 8 * 4,
+                     .ois_supported = 0,
+                     .pdaf_supported = 0,
+                     .exp_valid_frame_num = 1,
+                     .clamp_level = 4,
+                     .adgain_valid_frame_num = 1,
+                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
+    /*If there are multiple modules,please add here*/
 };
 
 static struct sensor_module_info s_ov2680_module_info_tab[VENDOR_NUM] = {

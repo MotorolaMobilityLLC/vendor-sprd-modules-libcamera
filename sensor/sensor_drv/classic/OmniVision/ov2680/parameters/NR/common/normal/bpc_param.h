@@ -1,6 +1,4 @@
-/*versionid=0x00090007*/
-/*maxGain=0.00*/
-/*param0.&BasePoint=1&*/
+/*param0.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -102,7 +100,7 @@
 	0x00000000,
 }
 ,
-/*param1.&BasePoint=1&*/
+/*param1.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -204,7 +202,7 @@
 	0x00000000,
 }
 ,
-/*param2.&BasePoint=1&*/
+/*param2.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -306,7 +304,7 @@
 	0x00000000,
 }
 ,
-/*param3.&BasePoint=1&*/
+/*param3.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -408,7 +406,7 @@
 	0x00000000,
 }
 ,
-/*param4.&BasePoint=1&*/
+/*param4.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -510,7 +508,7 @@
 	0x00000000,
 }
 ,
-/*param5.&BasePoint=1&*/
+/*param5.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -612,7 +610,7 @@
 	0x00000000,
 }
 ,
-/*param6.&BasePoint=1&*/
+/*param6.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -714,7 +712,7 @@
 	0x00000000,
 }
 ,
-/*param7.&BasePoint=1&*/
+/*param7.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -816,7 +814,7 @@
 	0x00000000,
 }
 ,
-/*param8.&BasePoint=1&*/
+/*param8.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -918,7 +916,7 @@
 	0x00000000,
 }
 ,
-/*param9.&BasePoint=1&*/
+/*param9.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1020,7 +1018,7 @@
 	0x00000000,
 }
 ,
-/*param10.&BasePoint=1&*/
+/*param10.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1122,7 +1120,7 @@
 	0x00000000,
 }
 ,
-/*param11.&BasePoint=1&*/
+/*param11.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1224,7 +1222,7 @@
 	0x00000000,
 }
 ,
-/*param12.&BasePoint=1&*/
+/*param12.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1326,7 +1324,7 @@
 	0x00000000,
 }
 ,
-/*param13.&BasePoint=1&*/
+/*param13.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1428,7 +1426,7 @@
 	0x00000000,
 }
 ,
-/*param14.&BasePoint=1&*/
+/*param14.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1530,7 +1528,7 @@
 	0x00000000,
 }
 ,
-/*param15.&BasePoint=1&*/
+/*param15.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1632,7 +1630,7 @@
 	0x00000000,
 }
 ,
-/*param16.&BasePoint=1&*/
+/*param16.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1734,7 +1732,7 @@
 	0x00000000,
 }
 ,
-/*param17.&BasePoint=1&*/
+/*param17.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1836,7 +1834,7 @@
 	0x00000000,
 }
 ,
-/*param18.&BasePoint=1&*/
+/*param18.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -1938,7 +1936,7 @@
 	0x00000000,
 }
 ,
-/*param19.&BasePoint=1&*/
+/*param19.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -2040,7 +2038,7 @@
 	0x00000000,
 }
 ,
-/*param20.&BasePoint=1&*/
+/*param20.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -2142,7 +2140,7 @@
 	0x00000000,
 }
 ,
-/*param21.&BasePoint=1&*/
+/*param21.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -2244,7 +2242,7 @@
 	0x00000000,
 }
 ,
-/*param22.&BasePoint=1&*/
+/*param22.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -2346,7 +2344,7 @@
 	0x00000000,
 }
 ,
-/*param23.&BasePoint=1&*/
+/*param23.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/
@@ -2448,7 +2446,7 @@
 	0x00000000,
 }
 ,
-/*param24.&BasePoint=1&*/
+/*param24.*/
 /*sharkl3_sensor_bpc_level*/
 {
 	/*bpc_com*/

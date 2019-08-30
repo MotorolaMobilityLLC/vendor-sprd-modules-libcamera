@@ -515,11 +515,8 @@ static cmr_int ov2680_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->line_time_def =
         sns_drv_cxt->trim_tab_info[size_index].line_time;
 
-    char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.ae.slave.manual", value1, "0");
-    if (!strcmp(value1, "0"))
-        ret_value = ov2680_drv_write_exposure_dummy(handle, exposure_line,
-                                                    dummy_line, size_index);
+    ret_value = ov2680_drv_write_exposure_dummy(handle, exposure_line,
+                                                dummy_line, size_index);
 
     return ret_value;
 }
@@ -545,57 +542,10 @@ static cmr_int ov2680_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
 
-    char value1[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.ae.slave.manual", value1, "0");
-    if (!strcmp(value1, "0"))
-        ov2680_drv_write_gain(handle, real_gain);
+    ov2680_drv_write_gain(handle, real_gain);
 
     return ret_value;
 }
-
-static struct sensor_reg_tag ov2680_shutter_reg[] = {
-    {0x3502, 0}, {0x3501, 0}, {0x3500, 0},
-};
-
-static struct sensor_i2c_reg_tab ov2680_shutter_tab = {
-    .settings = ov2680_shutter_reg, .size = ARRAY_SIZE(ov2680_shutter_reg),
-};
-
-static struct sensor_reg_tag ov2680_again_reg[] = {
-    {0x3208, 0x01}, {0x350b, 0x00}, {0x350a, 0x00},
-};
-
-static struct sensor_i2c_reg_tab ov2680_again_tab = {
-    .settings = ov2680_again_reg, .size = ARRAY_SIZE(ov2680_again_reg),
-};
-
-static struct sensor_reg_tag ov2680_dgain_reg[] = {
-    {0x5004, 0}, {0x5005, 0}, {0x5006, 0},    {0x5007, 0},
-    {0x5008, 0}, {0x5009, 0}, {0x3208, 0x11}, {0x3208, 0xA1},
-};
-
-struct sensor_i2c_reg_tab ov2680_dgain_tab = {
-    .settings = ov2680_dgain_reg, .size = ARRAY_SIZE(ov2680_dgain_reg),
-};
-
-static struct sensor_reg_tag ov2680_frame_length_reg[] = {
-    {0x380e, 0}, {0x380f, 0},
-};
-
-static struct sensor_i2c_reg_tab ov2680_frame_length_tab = {
-    .settings = ov2680_frame_length_reg,
-    .size = 0, // ARRAY_SIZE(ov2680_frame_length_reg),
-};
-
-static struct sensor_aec_i2c_tag ov2680_aec_info = {
-    .slave_addr = (I2C_SLAVE_ADDR >> 1),
-    .addr_bits_type = SENSOR_I2C_REG_16BIT,
-    .data_bits_type = SENSOR_I2C_VAL_8BIT,
-    .shutter = &ov2680_shutter_tab,
-    .again = &ov2680_again_tab,
-    .dgain = &ov2680_dgain_tab,
-    .frame_length = &ov2680_frame_length_tab,
-};
 
 static cmr_u16 ov2680_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
                                         cmr_u32 dummy_line, cmr_u16 mode,
@@ -623,19 +573,26 @@ static cmr_u16 ov2680_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
 
     line_time = sns_drv_cxt->trim_tab_info[mode].line_time;
     if (cur_fr_len > shutter) {
-        fps = 1000000.0 / (cur_fr_len * line_time);
+        fps = 1000000000.0 / (cur_fr_len * line_time);
     } else {
-        fps = 1000000.0 / ((shutter + dummy_line) * line_time);
+        fps = 1000000000.0 / ((shutter + dummy_line) * line_time);
     }
     SENSOR_LOGI("sync fps = %f", fps);
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
     aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
-    value = (shutter << 0x04) & 0xff;
-    aec_info->shutter->settings[0].reg_value = value;
-    value = (shutter >> 0x04) & 0xff;
-    aec_info->shutter->settings[1].reg_value = value;
-    value = (shutter >> 0x0c) & 0x0f;
-    aec_info->shutter->settings[2].reg_value = value;
+    value = (shutter << 4) & 0xf0;
+    aec_info->shutter->settings[0].reg_value = value; // 0x3502, low bits
+    value = (shutter >> 4) & 0xff;
+    aec_info->shutter->settings[1].reg_value = value; // 0x3501
+    value = (shutter >> 12) & 0x0f;
+    aec_info->shutter->settings[2].reg_value = value; // 0x3500, high bits
+    /*SENSOR_LOGI("frame_line:(0x380e, 0x380f):(0x%x 0x%x), "
+                "shutter:(0x3500,0x3501,0x3502):(0x%x, 0x%x, 0x%x)",
+                aec_info->frame_length->settings[0].reg_value,
+                aec_info->frame_length->settings[1].reg_value,
+                aec_info->shutter->settings[2].reg_value,
+                aec_info->shutter->settings[1].reg_value,
+                aec_info->shutter->settings[0].reg_value);*/
 
     return shutter;
 }
@@ -693,9 +650,6 @@ static cmr_int ov2680_drv_read_aec_info(cmr_handle handle, void *param) {
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         mode, exposure_line, dummy_line, frame_interval);
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
-    //        ov2680_drv_get_default_frame_length(handle, mode);
-    //    s_current_default_line_time =
-    //    s_ov2680_resolution_trim_tab[mode].line_time;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = ov2680_drv_calc_exposure(
@@ -728,27 +682,6 @@ static cmr_int ov2680_drv_stream_on(cmr_handle handle, cmr_uint param) {
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
-    }
-    property_get("persist.vendor.cam.ae.slave.manual", value1, "0");
-
-    if (!strcmp(value1, "1")) {
-        SENSOR_LOGI("test ae mode ");
-        property_get("persist.vendor.cam.ae.expos", value1, "100"); // us
-        //_ov2680_set_shutter(handle,atoi(value1));
-        // struct sensor_ex_exposure *ex={0x00};
-        // memset(ex, 0, sizeof(struct sensor_ex_exposure));
-        cmr_u32 exposure =
-            atoi(value1) * 1000 / (sns_drv_cxt->trim_tab_info[1].line_time);
-        // ex->size_index =1;
-        cmr_u32 dummy = exposure > 1244 ? exposure - 1244 : 0;
-        // dummy = exposure > sns_drv_cxt->trim_tab_info[1].frame_line
-        // ?exposure- sns_drv_cxt->trim_tab_info[1].frame_line :	0;
-        // sensor_ic_ex_write_exposure((void *)sensor_cxt2, (cmr_uint) ex);
-        ov2680_drv_write_exposure_dummy(handle, exposure, 0, 1);
-        property_get("persist.vendor.cam.ae.slave.gain", value1, "100");
-        //_ov2680_write_gain(handle,atoi(value1));
-        // sensor_ic_write_gain((void *)&sensor_cxt2, atoi(value1));
-        ov2680_drv_write_gain(handle, atoi(value1));
     }
 #endif
 
@@ -861,8 +794,9 @@ static struct sensor_ic_ops s_ov2680_ops_tab = {
     .identify = ov2680_drv_identify,
     .ex_write_exp = ov2680_drv_write_exposure,
     .write_gain_value = ov2680_drv_write_gain_value,
+#if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = ov2680_drv_read_aec_info,
-
+#endif
     .ext_ops = {
             [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = ov2680_drv_before_snapshot,
             [SENSOR_IOCTL_STREAM_ON].ops = ov2680_drv_stream_on,

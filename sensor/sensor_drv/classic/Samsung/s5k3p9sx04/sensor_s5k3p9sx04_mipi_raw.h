@@ -32,6 +32,14 @@
 #define s5k3p9sx04_VER_VALUE 0xa001
 #define s5k3p9sx04_VER_ADDR 0x0002
 
+#ifdef CONFIG_CAMERA_SUPPORT_8M
+#define SNAPSHOT_WIDTH 2320
+#define SNAPSHOT_HEIGHT 1744
+#else
+#define SNAPSHOT_WIDTH 4640
+#define SNAPSHOT_HEIGHT 3488
+#endif
+
 #define SENSOR_BASE_GAIN 0x20
 #define ISP_BASE_GAIN 0x80
 #define SENSOR_MIN_SHUTTER 2
@@ -3154,8 +3162,8 @@ SENSOR_INFO_T g_s5k3p9sx04_mipi_raw_info = {
                       {.reg_addr = s5k3p9sx04_VER_ADDR,
                        .reg_value = s5k3p9sx04_VER_VALUE}},
 
-    .source_width_max = 4640,
-    .source_height_max = 3488,
+    .source_width_max = SNAPSHOT_WIDTH,
+    .source_height_max = SNAPSHOT_HEIGHT,
     .name = (cmr_s8 *)"s5k3p9sx04",
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,

@@ -711,7 +711,8 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E:ov8856_otp_module_vendor_id = 0x%x, sensor_mode %d",
                 ov8856_otp_module_vendor_id, mode);
     if (ov8856_otp_module_vendor_id == 1) {
-        /* ov8856 old module, IMAGE_HV_MIRROR*/
+        /* ov8856 sharkl3 back_slave and front old camera module, 2 lane,
+         * IMAGE_HV_MIRROR */
         if (mode == 3 /*ov8856_snapshot_setting*/) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0xc6);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x00);
@@ -730,8 +731,10 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
         if (sns_drv_cxt->sensor_id == 2)
             ov8856s_SetSlave_FrameSync(handle, param);
     } else {
-        /* ov8856 sharkl5 and sharkl3 new module or SENSOR_OV8856_TELE,
-         * IMAGE_NORMAL_MIRROR*/
+        /* ov8856 sharkl5 front camera module, sharkl3 back_slave and front new
+         * camera module, or SENSOR_OV8856_TELE, 2 lane, IMAGE_NORMAL_MIRROR */
+        /* ov8856 sharkle and pike2 back single camera module, 4 lane,
+         * IMAGE_H_MIRROR */
         if (mode == 3 /*ov8856_snapshot_setting*/) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x80);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x46);

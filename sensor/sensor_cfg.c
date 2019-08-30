@@ -672,14 +672,16 @@ const SENSOR_MATCH_T front_sensor3_infor_tab[] = {
 
 const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #ifdef CONFIG_BOKEH_SUPPORT
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov13855", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov8856", "0", "ov2680", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "s5k5e9yu05", "0", "0", "0"}, SNS_FACE_BACK, 90},
-    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 s9863a1h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx351", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 s9863a1h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "ov8856_shine", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 s9863a1h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov32a1q", "0", "ov16885_normal", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl5pro ums512_1h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov8856", "0", "ov2680", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 s9863a1h10_go_32b
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3l6xx03", "0", "gc5035", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 9863a3c10 sprocomm
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"s5k3p9sx04", "0", "s5k5e9yu05", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 s9863a1h10 3-camera demo module
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov13855", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkle sp9832e_1h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl5 ums312_1h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for roc1 ud710_3h10
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     {SPRD_BLUR_FRONT_ID, MODE_BLUR, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
