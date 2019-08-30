@@ -60,8 +60,14 @@ struct isp_mem_info {
 	cmr_u32 statis_mem_num;
 	cmr_s32 statis_mfd;
 	cmr_u64 statis_k_addr;
-	cmr_uint statis_phys_addr;
 	cmr_uint statis_u_addr;
+
+	/* temp solution for isp hist statis buffer */
+	cmr_u32 isp_alloc_flag;
+	cmr_u32 isp_mem_size;
+	cmr_u32 isp_mem_num;
+	cmr_s32 isp_mfd;
+	cmr_uint isp_u_addr;
 
 	void *buffer_client_data;
 	cmr_malloc alloc_cb;

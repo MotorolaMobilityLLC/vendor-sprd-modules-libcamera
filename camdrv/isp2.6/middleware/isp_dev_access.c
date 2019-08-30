@@ -62,7 +62,6 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 		stats_buffer_size += STATIS_EBD_BUF_NUM * STATIS_EBD_BUF_SIZE;
 		stats_buffer_size += STATIS_HIST_BUF_NUM * STATIS_HIST_BUF_SIZE;
 		stats_buffer_size += STATIS_3DNR_BUF_NUM * STATIS_3DNR_BUF_SIZE;
-		stats_buffer_size += STATIS_ISP_HIST2_BUF_NUM * STATIS_ISP_HIST2_BUF_SIZE;
 		in_ptr->statis_mem_num = 1;
 		in_ptr->statis_mem_size = stats_buffer_size;
 		ret = in_ptr->alloc_cb(CAMERA_ISP_STATIS,
@@ -72,7 +71,7 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 				kaddr, &in_ptr->statis_u_addr, fds);
 
 		if (ret || (fds[0] <= 0) || (fds[1] <= 0)) {
-			ISP_LOGE("fail to alloc statis buffer. ret %ld\n", ret);
+			ISP_LOGE("fail to alloc statis buffer. ret %ld, fd %d %d\n", ret, fds[0], fds[1]);
 			return ISP_ALLOC_ERROR;
 		}
 		in_ptr->statis_mfd = fds[0];
@@ -81,17 +80,40 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 		in_ptr->statis_k_addr |= (cmr_u64)(kaddr[0] & 0xffffffff);
 		in_ptr->statis_alloc_flag = 1;
 
-		ISP_LOGD("alloc statis buffer, size %d, mfd %d, kaddr 0x%llx\n",
-				in_ptr->statis_mem_size, in_ptr->statis_mfd,
-				(unsigned long long)in_ptr->statis_k_addr);
+		ISP_LOGD("alloc statis buffer, size %d, mfd %d, uaddr %p\n",
+			in_ptr->statis_mem_size, in_ptr->statis_mfd, (void *)in_ptr->statis_u_addr);
 	}
 
+	/* temp solution for isp hist buffer */
+	if (in_ptr->isp_mfd <= 0 && in_ptr->isp_alloc_flag == 0) {
+		stats_buffer_size = STATIS_ISP_HIST2_BUF_SIZE * STATIS_ISP_HIST2_BUF_NUM;
+		in_ptr->isp_mem_num = 1;
+		in_ptr->isp_mem_size = stats_buffer_size;
+		fds[0] = fds[1] = 0;
+		ret = in_ptr->alloc_cb(CAMERA_ISP_ANTI_FLICKER,
+				in_ptr->oem_handle,
+				&in_ptr->isp_mem_size,
+				&in_ptr->isp_mem_num,
+				kaddr, &in_ptr->isp_u_addr, fds);
+
+		if (ret || (fds[0] <= 0)) {
+			ISP_LOGE("fail to alloc isp statis buffer. ret %ld, fd %d\n", ret, fds[0]);
+			return ISP_ALLOC_ERROR;
+		}
+		in_ptr->isp_mfd = fds[0];
+		in_ptr->isp_alloc_flag = 1;
+		ISP_LOGD("alloc isp statis buffer, size %d, mfd %d, uaddr %p\n",
+			in_ptr->isp_mem_size, in_ptr->isp_mfd, (void *)in_ptr->isp_u_addr);
+	}
 	/* Initialize statis buffer setting for driver. */
 	statis_buf.type = STATIS_INIT;
 	statis_buf.u.init_data.mfd = in_ptr->statis_mfd;
 	statis_buf.u.init_data.buf_size = in_ptr->statis_mem_size;
+	statis_buf.u.init_data.mfd_isp = in_ptr->isp_mfd;
+	statis_buf.u.init_data.isp_buf_size = in_ptr->isp_mem_size;
 	statis_buf.uaddr = (cmr_u64)in_ptr->statis_u_addr;
 	statis_buf.kaddr = in_ptr->statis_k_addr;
+	statis_buf.isp_uaddr = (cmr_u64)in_ptr->isp_u_addr;
 	ret = isp_dev_set_statis_buf(cxt->isp_driver_handle, &statis_buf);
 
 	return ret;
@@ -103,6 +125,8 @@ cmr_int isp_dev_free_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
 	UNUSED(isp_dev_handle);
 
 	if (in_ptr->statis_alloc_flag) {
+		ISP_LOGD("free statis buffer, size %d, mfd %d\n",
+				in_ptr->statis_mem_size, in_ptr->statis_mfd);
 		in_ptr->free_cb(CAMERA_ISP_STATIS,
 				in_ptr->oem_handle,
 				NULL,
@@ -112,6 +136,20 @@ cmr_int isp_dev_free_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
 		in_ptr->statis_alloc_flag = 0;
 		in_ptr->statis_mfd = 0;
 		in_ptr->statis_mem_size = 0;
+	}
+
+	if (in_ptr->isp_alloc_flag) {
+		ISP_LOGD("free isp statis buffer, size %d, mfd %d\n",
+				in_ptr->isp_mem_size, in_ptr->isp_mfd);
+		in_ptr->free_cb(CAMERA_ISP_ANTI_FLICKER,
+				in_ptr->oem_handle,
+				NULL,
+				&in_ptr->isp_u_addr,
+				&in_ptr->isp_mfd,
+				in_ptr->isp_mem_size);
+		in_ptr->isp_alloc_flag = 0;
+		in_ptr->isp_mfd = 0;
+		in_ptr->isp_mem_size = 0;
 	}
 
 	return ret;

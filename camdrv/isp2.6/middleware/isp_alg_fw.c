@@ -1872,9 +1872,9 @@ static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
 		ISP_LOGE("fail to set statis buf");
 	}
 
-	ISP_LOGD("frame %d, time %03d.%06d, image size %d %d\n", hist_stats->frame_id,
+	ISP_LOGV("frame %d, time %03d.%06d, image size %d %d\n", hist_stats->frame_id,
 		hist_stats->sec, hist_stats->usec, hist2_roi_info->w, hist2_roi_info->h);
-	ISP_LOGD("data %d %d %d %d,  %d %d %d %d\n",
+	ISP_LOGV("data %d %d %d %d,  %d %d %d %d\n",
 		hist_stats->value[0], hist_stats->value[8] , hist_stats->value[16], hist_stats->value[32],
 		hist_stats->value[64], hist_stats->value[128] , hist_stats->value[192], hist_stats->value[255]);
 	return ret;
@@ -4781,7 +4781,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
 		in_ptr->size.w, in_ptr->size.h, (cmr_u32)in_ptr->mode_4in1);
 
-	memset(&cxt->mem_info, 0, sizeof(struct isp_mem_info));
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->mem_info.free_cb = in_ptr->free_cb;
 	cxt->mem_info.oem_handle = in_ptr->oem_handle;

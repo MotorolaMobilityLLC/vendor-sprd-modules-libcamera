@@ -7845,7 +7845,6 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
 
     if (type == CAMERA_ISP_STATIS) {
         if (NULL != mIspStatisHeapReserved) {
-            mIspStatisHeapReserved->ion_heap->free_kaddr();
             freeCameraMem(mIspStatisHeapReserved);
         }
         mIspStatisHeapReserved = NULL;
@@ -8428,6 +8427,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_PREVIEW_DEPTH == type || CAMERA_PREVIEW_SW_OUT == type ||
                CAMERA_4IN1_PROC == type || CAMERA_CHANNEL_0_RESERVED == type ||
+               CAMERA_ISP_ANTI_FLICKER == type ||
                CAMERA_CHANNEL_1_RESERVED == type ||
                CAMERA_CHANNEL_2_RESERVED == type ||
                CAMERA_CHANNEL_3_RESERVED == type ||
@@ -8502,6 +8502,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_PREVIEW_DEPTH == type || CAMERA_PREVIEW_SW_OUT == type ||
                CAMERA_4IN1_PROC == type || CAMERA_CHANNEL_0_RESERVED == type ||
+               CAMERA_ISP_ANTI_FLICKER == type ||
                CAMERA_CHANNEL_1_RESERVED == type ||
                CAMERA_CHANNEL_2_RESERVED == type ||
                CAMERA_CHANNEL_3_RESERVED == type ||
