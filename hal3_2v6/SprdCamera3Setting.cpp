@@ -3725,6 +3725,7 @@ int SprdCamera3Setting::updateWorkParameters(
     int32_t valueI32 = 0;
     int64_t valueI64 = 0;
     bool is_push = false;
+    int32_t is_capture = 0;
 
     uint8_t is_raw_capture = 0;
     uint8_t is_isptool_mode = 0;
@@ -4218,6 +4219,41 @@ int SprdCamera3Setting::updateWorkParameters(
         thum[1] = frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[1];
         GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.thumbnail_size[0],
                          thum[0], ANDROID_JPEG_THUMBNAIL_SIZE, 2)
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {
+        valueU8 =
+            frame_settings.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.capture_intent,
+                         valueU8, ANDROID_CONTROL_CAPTURE_INTENT, 1)
+        if (ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE ==
+                s_setting[mCameraId].controlInfo.capture_intent ||
+            ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT ==
+                s_setting[mCameraId].controlInfo.capture_intent) {
+            is_capture = 1;
+        }
+    }
+
+    if (frame_settings.exists(ANDROID_JPEG_ORIENTATION) && is_capture) {
+        int32_t jpeg_orientation =
+            frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+        s_setting[mCameraId].jpgInfo.orientation_original = jpeg_orientation;
+        if (jpeg_orientation == -1) {
+            HAL_LOGV("rot not specified or invalid, set to 0");
+            jpeg_orientation = 0;
+        } else if (jpeg_orientation % 90) {
+            HAL_LOGV("rot %d is not a multiple of 90 degrees!  set to zero.",
+                     jpeg_orientation);
+            jpeg_orientation = 0;
+        } else {
+            // normalize to [0 - 270] degrees
+            jpeg_orientation %= 360;
+            if (jpeg_orientation < 0)
+                jpeg_orientation += 360;
+        }
+
+        s_setting[mCameraId].jpgInfo.orientation = jpeg_orientation;
+        pushAndroidParaTag(ANDROID_JPEG_ORIENTATION);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
