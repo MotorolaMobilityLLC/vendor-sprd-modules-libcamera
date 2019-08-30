@@ -992,7 +992,7 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     }
     // 2 frontblurversion
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-    available_cam_features[FRONTBLURVERSION] = atoi(prop);
+    available_cam_features[FRONTBLURVERSION] = BLUR_DISABLE;
     // 3 blurcoveredid
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features[BLURCOVEREDID] = atoi(prop);
