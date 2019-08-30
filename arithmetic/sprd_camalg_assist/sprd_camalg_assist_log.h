@@ -1,5 +1,9 @@
-#ifndef __SPRD_VDSP_CMD_LOG_H__
-#define __SPRD_VDSP_CMD_LOG_H__
+#ifndef __SPRD_CAMALG_ASSIST_LOG_H__
+#define __SPRD_CAMALG_ASSIST_LOG_H__
+
+#include <log/log.h>
+#include <time.h>
+#include <sys/time.h>
 
 enum {
 	LEVEL_OVER_LOGE = 1,
@@ -9,27 +13,28 @@ enum {
 	LEVEL_OVER_LOGV
 };
 
-#define DEBUG_STR "%d, %s: "
-#define ERROR_STR "%d, %s: sprd_camalg_vdsp_cmd error "
-#define DEBUG_ARGS __LINE__, __FUNCTION__
+#define LOG_TAG "sprd_caa"
 
-long g_vdsp_cmd_log_level = 5;
+#define LOG_LEVEL	5
 
-#define VDSP_CMD_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CAA_LOGE(format, ...) ALOGE(format, ##__VA_ARGS__)
+#define CAA_LOGI(format, ...) ALOGI_IF(LOG_LEVEL >= LEVEL_OVER_LOGI, format, ##__VA_ARGS__)
+#define CAA_LOGD(format, ...) ALOGD_IF(LOG_LEVEL >= LEVEL_OVER_LOGD, format, ##__VA_ARGS__)
 
-#define VDSP_CMD_LOGW(format, ...)                                                  \
-    ALOGW_IF(g_vdsp_cmd_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS,##__VA_ARGS__)
+#define VDSP_CMD_LOGE CAA_LOGE
+#define VDSP_CMD_LOGI CAA_LOGI
+#define VDSP_CMD_LOGD CAA_LOGD
 
-#define VDSP_CMD_LOGI(format, ...)                                                  \
-    ALOGI_IF(g_vdsp_cmd_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
+inline double getTime()
+{
+	double cur_t;
+	struct timespec t;
+	long long cur_ns;
+	t.tv_sec = t.tv_nsec = 0;
+	clock_gettime(CLOCK_MONOTONIC, &t);
+	cur_ns = (long long)t.tv_sec * 1e9 + (long long)t.tv_nsec;
+	cur_t = (double)cur_ns / 1e6;
+	return cur_t;
+}
 
-#define VDSP_CMD_LOGD(format, ...)                                                  \
-    ALOGD_IF(g_vdsp_cmd_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-
-/* ISP_LOGV uses ALOGD_IF */
-#define VDSP_CMD_LOGV(format, ...)                                                  \
-    ALOGD_IF(g_vdsp_cmd_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
 #endif

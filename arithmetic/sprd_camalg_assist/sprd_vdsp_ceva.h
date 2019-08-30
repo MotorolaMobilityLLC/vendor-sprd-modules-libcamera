@@ -1,5 +1,5 @@
-#ifndef _SPRD_VDSP_H
-#define _SPRD_VDSP_H
+#ifndef __SPRD_VDSP_CEVA_H__
+#define __SPRD_VDSP_CEVA_H__
 
 #define SPRD_DSP_CMD_INLINE_DATA_SIZE	16
 #define SPRD_DSP_CMD_INLINE_BUFFER_COUNT	1
@@ -39,9 +39,16 @@ struct sprd_dsp_cmd {
 		uint32_t buffer_addr; /*same as in_data_size*/
 		struct sprd_dsp_buffer buffer_data[SPRD_DSP_CMD_INLINE_BUFFER_COUNT];
 		uint8_t buffer_alignment[SPRD_DSP_CMD_INLINE_DATA_SIZE];
-	}; 
+	};
 	char nsid[SPRD_DSP_CMD_NAMESPACE_ID_SIZE]; /* algo id, ex. "hdr"*/
 	uint32_t priority; /* 0 is normal, 1 is high priority */
 };
+
+int ceva_vdsp_open(void **h_vdsp);
+int ceva_vdsp_close(void *h_vdsp);
+int ceva_vdsp_send(void *h_vdsp, const char *nsid, int priority,
+	void **h_ionmem_list, uint32_t h_ionmem_num);
+int ceva_vdsp_Send(const char *nsid, int priority,
+	void **h_ionmem_list, uint32_t h_ionmem_num);
 
 #endif
