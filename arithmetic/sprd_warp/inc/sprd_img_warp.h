@@ -3,38 +3,40 @@
 
 #define MAX_CHANNAL_NUM 3
 
-typedef enum { WARP_FMT_YUV420P, WARP_FMT_YUV420SP } warp_fmt_e;
+typedef enum { WARP_FMT_YUV420SP, WARP_FMT_YUV420P } warp_fmt_e;
 
 typedef enum {
-    WARP_RECTIFY,
     WARP_UNDISTORT,
+    WARP_RECTIFY,
     WARP_PROJECTIVE,
 } img_warp_mode_t;
 
 typedef struct {
-    int fullsize_width;
-    int fullsize_height;
-    int input_width;
-    int input_height;
-    int crop_x;
-    int crop_y;
-    int crop_width;
-    int crop_height;
-    int binning_mode;
+    int fullsize_width;  /*sensor fullsize width*/
+    int fullsize_height; /*sensor fullsize height*/
+    int input_width;     /*input image width*/
+    int input_height;    /*input image height*/
+    /* crop relation between input image and sensor output image*/
+    int crop_x;           /*crop_x is the start x coordinate*/
+    int crop_y;           /*crop_y is the start y coordinate*/
+    int crop_width;       /*crop_width is the output width of croping*/
+    int crop_height;      /*crop height is the output height of croping*/
+    int binning_mode;     /*binning mode 0: no binning 1:binning*/
 } img_warp_input_info_t;
 
 typedef struct {
-    int fullsize_width;
-    int fullsize_height;
-    int calib_width;
-    int calib_height;
-    int crop_x;
-    int crop_y;
-    int crop_width;
-    int crop_height;
-    float fov_scale;
+    int fullsize_width;  /*sensor fullsize width*/
+    int fullsize_height; /*sensor fullsize height*/
+    int calib_width;     /*calib image width*/
+    int calib_height;    /*calib image height*/
+    /* crop relation between input image and sensor fullsize image*/
+    int crop_x;          /*crop_x is the start x coordinate*/
+    int crop_y;          /*crop_y is the start y coordinate*/
+    int crop_width;      /*crop_width is the output width of croping*/
+    int crop_height;     /*crop height is the output height of croping*/
+    float fov_scale;     /*field of view scale*/
     float camera_k[3][3];  // for WARP_UNDISTORT
-    float dist_coefs[5];   // k1, k2, p1, p2, k3	// for WARP_UNDISTORT
+    float dist_coefs[14];  // 0~7:k1, k2, p1, p2, k3, k4, k5, k6, s1, s2, s3, s4, tauX, tauY for WARP_UNDISTORT
     float rectify_r[3][3]; // for WARP_RECTIFY
     float rectify_p[3][3]; // for WARP_RECTIFY
 } img_warp_calib_info_t;
@@ -112,6 +114,18 @@ SPRD_ISP_API void img_warp_grid_close(img_warp_inst_t *inst);
 /* img_warp_grid_close
  * usage: call once at deinitialization
  */
+
+/*
+ * API for vdsp
+ */
+SPRD_ISP_API int img_warp_grid_vdsp_open(img_warp_inst_t *inst,
+                                         img_warp_param_t *param);
+SPRD_ISP_API void img_warp_grid_vdsp_run(img_warp_inst_t inst,
+                                         img_warp_buffer_t *input,
+                                         img_warp_buffer_t *output,
+                                         void *param);
+SPRD_ISP_API void img_warp_grid_vdsp_close(img_warp_inst_t *inst);
+
 #ifdef __cplusplus
 }
 #endif
