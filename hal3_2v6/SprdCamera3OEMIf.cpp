@@ -5888,7 +5888,9 @@ void SprdCamera3OEMIf::setUltraWideMode() {
     if (channel != NULL) {
         SprdCamera3Stream *stream = NULL;
         channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
-        stream->setUltraWideMode(mIsUltraWideMode);
+        if (stream != NULL) {
+            stream->setUltraWideMode(mIsUltraWideMode);
+        }
     }
 }
 int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
@@ -6763,7 +6765,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_AUTOCHASING_REGION_ENABLE: {
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
+        SET_PARM(mHalOem, mCameraHandle,
+                 CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
                  sprdInfo.sprd_ot_switch);
     } break;
     default:
