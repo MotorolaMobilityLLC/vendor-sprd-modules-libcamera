@@ -86,6 +86,7 @@ enum isp_pm_cmd {
 
 struct pm_workmode_input {
 	cmr_u32 cam_4in1_mode;
+	cmr_u32 noramosaic_4in1;
 	cmr_u32 pm_sets_num;
 	enum tuning_mode mode[PARAM_SET_MAX];
 	enum tuning_scene_mode scene[PARAM_SET_MAX];

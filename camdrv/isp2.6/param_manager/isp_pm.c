@@ -424,6 +424,7 @@ struct isp_pm_context {
 	pthread_mutex_t pm_mutex;
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 cam_4in1_mode;
+	cmr_u32 noramosaic_4in1;
 	cmr_u32 lowlight_flag;
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
@@ -667,7 +668,7 @@ static cmr_s32 check_block_skip(struct isp_pm_context *pm_cxt_ptr,
 
 	isp_cxt_prv = &pm_cxt_ptr->cxt_array[set_id];
 	if (isp_cxt_prv->is_validate) {
-		if (pm_cxt_ptr->cam_4in1_mode)
+		if (pm_cxt_ptr->cam_4in1_mode || pm_cxt_ptr->noramosaic_4in1)
 			return 0;
 		if (IS_DCAM_BLOCK(blk_id))
 			return 1;
@@ -1162,6 +1163,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 		}
 
 		pm_cxt_ptr->cam_4in1_mode = input->cam_4in1_mode;
+		pm_cxt_ptr->noramosaic_4in1 = input->noramosaic_4in1;
 		for (i  = 0; i < input->pm_sets_num && i < PARAM_SET_MAX; i++) {
 			if (input->mode[i] >= WORKMODE_MAX)
 				continue;
@@ -1361,7 +1363,6 @@ get_blocks:
 			rtn = ISP_ERROR;
 			return rtn;
 		}
-
 		for (i = 0; i < ioctrl_input_ptr->param_num; i++, param_data_ptr++) {
 			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, PARAM_SET0);
 			rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, PARAM_SET1);

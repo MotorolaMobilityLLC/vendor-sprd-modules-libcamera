@@ -479,12 +479,13 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
 	/* also set capture gain if 4in1 */
-	if (cxt->cam_4in1_mode) {
+	if (cxt->noramosaic_4in1 || cxt->cam_4in1_mode) {
 		/* this value for capture, need * 4
 		 * not active while pm * 4
 		 */
 		block_info.scene_id = PM_SCENE_CAP;
-		gain_info.global_gain *= 4;
+		if (cxt->cam_4in1_mode)
+			gain_info.global_gain *= 4;
 		ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 			gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
@@ -842,7 +843,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		gain.gb = awb_gain->g;
 		gain.b = awb_gain->b;
 		/* todo: also set capture gain if 4in1 */
-		if (cxt->cam_4in1_mode) {
+		if (cxt->noramosaic_4in1 || cxt->cam_4in1_mode) {
 			cfg.scene_id = PM_SCENE_CAP;
 			cfg.block_info = &gain;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
@@ -1493,7 +1494,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		for (i = 0; i < output.cap_param_num; i++) {
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
-			if ((!IS_DCAM_BLOCK(param_data->id)) || (cxt->cam_4in1_mode)) {
+			if ((!IS_DCAM_BLOCK(param_data->id)) || (cxt->cam_4in1_mode || cxt->noramosaic_4in1)) {
 				/* todo: refine for 4in1 sensor */
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
@@ -4814,6 +4815,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			pm_input.img_w[0] >>= 1;
 			pm_input.img_h[0] >>= 1;
 		}
+		if (cxt->noramosaic_4in1)
+			pm_input.noramosaic_4in1 = 1;
 		if (cxt->zsl_flag)  {
 			pm_input.pm_sets_num++;
 			pm_input.mode[1] = WORKMODE_CAPTURE;
