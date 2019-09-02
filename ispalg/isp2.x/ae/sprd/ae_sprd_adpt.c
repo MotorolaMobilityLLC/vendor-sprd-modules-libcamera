@@ -3366,7 +3366,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				}
 			}
 
-		if (1 == cxt->flash_main_esti_result.isEnd) {
+		if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts)) {
 			if (cxt->isp_ops.set_wbc_gain) {
 				struct ae_alg_rgb_gain awb_gain;
 				awb_gain.r = cxt->flash_main_esti_result.captureRGain;
