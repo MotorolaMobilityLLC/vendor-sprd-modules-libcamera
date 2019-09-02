@@ -3108,6 +3108,145 @@ cmr_s32 send_libuse_info_param(struct isp_data_header_read * read_cmd, struct ms
 	return rtn;
 }
 
+#ifdef CONFIG_ISP_2_7
+cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if (NULL != data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].gain_len;
+		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if (NULL != data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].gain, sensor_raw_fix->ae.ae_tab[flicker][iso].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].gain_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_table_cus_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if ((flicker < AE_FLICKER_NUM)  && (iso < AE_ISO_NUM_NEW) && data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae.ae_table_cus[flicker][iso].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae.ae_table_cus[flicker][iso].gain_len;
+		*data_len = *data_len + sensor_raw_fix->ae.ae_table_cus[flicker][iso].exposure_len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_table_cus_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if ((flicker < AE_FLICKER_NUM)  && (iso < AE_ISO_NUM_NEW) && data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.ae_table_cus[flicker][iso].index, sensor_raw_fix->ae.ae_table_cus[flicker][iso].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.ae_table_cus[flicker][iso].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_table_cus[flicker][iso].gain, sensor_raw_fix->ae.ae_table_cus[flicker][iso].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_table_cus[flicker][iso].gain_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_table_cus[flicker][iso].exposure, sensor_raw_fix->ae.ae_table_cus[flicker][iso].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_table_cus[flicker][iso].exposure_len);
+	}
+	return rtn;
+}
+cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u16 weight = sub_type;
+	*data_len = *data_len + sensor_raw_fix->ae.weight_tab[weight].len;
+	return rtn;
+}
+
+cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u16 weight = sub_type;
+	if (NULL != data_addr)
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, sensor_raw_fix->ae.weight_tab[weight].len);
+	return rtn;
+}
+
+cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
+	cmr_u8 flicker = sub_type & 0x0f;
+
+	if (NULL != data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae.scene_info[scene][flicker].scene_info_len;
+		*data_len = *data_len + sensor_raw_fix->ae.scene_info[scene][flicker].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae.scene_info[scene][flicker].gain_len;
+		*data_len = *data_len + sensor_raw_fix->ae.scene_info[scene][flicker].exposure_len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
+	cmr_u8 flicker = sub_type & 0x0f;
+
+	if (NULL != data_addr && flicker < 2) {
+		memcpy(data_addr, sensor_raw_fix->ae.scene_info[scene][flicker].scene_info, sensor_raw_fix->ae.scene_info[scene][flicker].scene_info_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.scene_info[scene][flicker].scene_info_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_info[scene][flicker].index, sensor_raw_fix->ae.scene_info[scene][flicker].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_info[scene][flicker].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_info[scene][flicker].gain, sensor_raw_fix->ae.scene_info[scene][flicker].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_info[scene][flicker].gain_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_info[scene][flicker].exposure, sensor_raw_fix->ae.scene_info[scene][flicker].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_info[scene][flicker].exposure_len);
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_reserve_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	*data_len = *data_len + sensor_raw_fix->ae.ae_reserve.len;
+	return rtn;
+}
+
+cmr_s32 get_ae_reserve_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	if (NULL != data_addr)
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.ae_reserve.ae_reserve, sensor_raw_fix->ae.ae_reserve.len);
+
+	return rtn;
+}
+#else
 cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
@@ -3264,6 +3403,7 @@ cmr_s32 get_ae_auto_iso_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u
 
 	return rtn;
 }
+#endif
 
 cmr_s32 get_lnc_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
@@ -3432,6 +3572,17 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				return rtn;
 			}
 			data_len = 0;
+#ifdef CONFIG_ISP_2_7
+			rtn = get_ae_table_cus_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			ISP_LOGD("read MODE_AE_FLASH_TABLE data %p, len %d, sub_type 0x%x\n",
+				data_addr, data_len, read_cmd->sub_type);
+			if (0 != data_len && NULL != data_addr) {
+				memset((cmr_u8 *) data_addr, 0x00, data_len);
+				rtn = get_ae_table_cus_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
+#else
 			rtn = get_ae_flash_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			ISP_LOGD("read MODE_AE_FLASH_TABLE data %p, len %d, sub_type 0x%x\n",
@@ -3441,6 +3592,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				rtn = get_ae_flash_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
+#endif
 		}
 		break;
 	case MODE_AE_WEIGHT_TABLE:
@@ -3479,6 +3631,15 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				return rtn;
 			}
 			data_len = 0;
+#ifdef CONFIG_ISP_2_7
+			rtn = get_ae_reserve_length(sensor_raw_fix, &data_len);
+			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
+			if (0 != data_len && NULL != data_addr) {
+				rtn = get_ae_reserve_param(sensor_raw_fix, data_addr);
+				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+			}
+#else
 			rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
@@ -3486,6 +3647,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
+#endif
 		}
 		break;
 	case MODE_LNC_DATA:
@@ -3535,6 +3697,103 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	return rtn;
 }
 
+#ifdef CONFIG_ISP_2_7
+cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].gain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].gain_len);
+	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].gain_len;
+	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
+	return rtn;
+}
+
+cmr_s32 down_ae_table_cus_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+	struct ae_exp_gain_tab *cur_tab;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr || (flicker >= AE_FLICKER_NUM) || (iso >= AE_ISO_NUM_NEW)) {
+		ISP_LOGE("fail to check param %p %p, sub_type 0x%x\n", sensor_raw_fix, data_addr, sub_type);
+		rtn = 0x01;
+		return rtn;
+	}
+	cur_tab = &sensor_raw_fix->ae.ae_table_cus[flicker][iso];
+	memcpy((void *)cur_tab->index, (void *)(data_addr + offset_tmp), cur_tab->index_len);
+	offset_tmp += cur_tab->index_len;
+	memcpy((void *)cur_tab->gain, (void *)(data_addr + offset_tmp), cur_tab->gain_len);
+	offset_tmp += cur_tab->gain_len;
+	memcpy((void *)cur_tab->exposure, (void *)(data_addr + offset_tmp), cur_tab->exposure_len);
+	offset_tmp += cur_tab->exposure_len;
+
+	return rtn;
+}
+
+cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 weight = sub_type;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.weight_tab[weight].len);
+	return rtn;
+}
+
+cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
+	cmr_u8 flicker = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae.scene_info[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_info[scene][flicker].scene_info_len);
+	offset_tmp += sensor_raw_fix->ae.scene_info[scene][flicker].scene_info_len;
+	memcpy((void *)sensor_raw_fix->ae.scene_info[scene][flicker].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_info[scene][flicker].index_len);
+	offset_tmp += sensor_raw_fix->ae.scene_info[scene][flicker].index_len;
+	memcpy((void *)sensor_raw_fix->ae.scene_info[scene][flicker].gain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_info[scene][flicker].gain_len);
+	offset_tmp += sensor_raw_fix->ae.scene_info[scene][flicker].gain_len;
+	memcpy((void *)sensor_raw_fix->ae.scene_info[scene][flicker].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_info[scene][flicker].exposure_len);
+	return rtn;
+}
+
+cmr_s32 down_ae_reserve_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae.ae_reserve.ae_reserve, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_reserve.len);
+	return rtn;
+}
+#else
 cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
@@ -3642,6 +3901,7 @@ cmr_s32 down_ae_auto_iso_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_
 	memcpy((void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.auto_iso_tab[iso].len);
 	return rtn;
 }
+#endif
 
 cmr_s32 down_lnc_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 data_len)
 {
@@ -3817,7 +4077,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					rtn = 0x01;
 					return rtn;
 				}
+#ifdef CONFIG_ISP_2_7
+				rtn = get_ae_table_cus_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+#else
 				rtn = get_ae_flash_table_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+#endif
 				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -3838,7 +4102,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
+#ifdef CONFIG_ISP_2_7
+				rtn = down_ae_table_cus_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+#else
 				rtn = down_ae_flash_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+#endif
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
@@ -3949,7 +4217,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 					rtn = 0x01;
 					return rtn;
 				}
+#ifdef CONFIG_ISP_2_7
+				rtn = get_ae_reserve_length(sensor_raw_fix, &buf_len);
+#else
 				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+#endif
 				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -3968,7 +4240,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
+#ifdef CONFIG_ISP_2_7
+				rtn = down_ae_reserve_param(sensor_raw_fix, data_addr);
+#else
 				rtn = down_ae_auto_iso_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+#endif
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);

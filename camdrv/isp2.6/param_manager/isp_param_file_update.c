@@ -365,6 +365,297 @@ cmr_s32 read_ae_weight(FILE * fp, struct ae_weight_tab * weight_ptr)
 	return 0;
 }
 
+#ifdef CONFIG_ISP_2_7
+cmr_s32 read_ae_scene_info(FILE * fp, struct sensor_ae_tab * ae_ptr, cmr_s32 scene_mode)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u16 *param_buf = ae_ptr->scene_info[scene_mode][0].scene_info;
+	cmr_u16 *param_buf1 = ae_ptr->scene_info[scene_mode][1].scene_info;
+	cmr_s32 i = 0;
+	char line_buff[512] = { 0 };
+
+	while (!feof(fp)) {
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL) {
+			break;
+		}
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+				&c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10],
+				&c[11], &c[12], &c[13], &c[14], &c[15]);
+
+		for (i = 0; i < n; i++) {
+			*param_buf++ = c[i];
+			*param_buf1++ = c[i];
+		}
+	}
+	ae_ptr->scene_info[scene_mode][0].scene_info_len =
+		(cmr_int) param_buf - (cmr_int) (ae_ptr->scene_info[scene_mode][0].scene_info);
+	ae_ptr->scene_info[scene_mode][1].scene_info_len =
+		(cmr_int) param_buf - (cmr_int) (ae_ptr->scene_info[scene_mode][1].scene_info);
+
+	return rtn;
+}
+
+cmr_s32 read_ae_reserve(FILE * fp, struct ae_reserve * ae_reserve)
+{
+	cmr_u32 *param_buf = ae_reserve->ae_reserve;
+	cmr_s32 i;
+	char line_buff[512];
+
+	while (!feof(fp)) {
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL) {
+			break;
+		}
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+				&c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10],
+				&c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i = 0; i < n; i++) {
+			*param_buf++ = (cmr_u16) c[i];
+		}
+	}
+
+	ae_reserve->len = (cmr_int) param_buf - (cmr_int) (ae_reserve->ae_reserve);
+
+	return 0;
+}
+
+cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_s32 flag_end = 0;
+	cmr_s32 i, j;
+	char *ae_tab_info[3] = { NULL };
+	char *ae_scene_info[6] = { NULL };
+	char ae_auto_iso_info[64];
+	char ae_weight_info[64];
+
+	char *line_buf = (char *)malloc(512 * sizeof(char));
+	if (NULL == line_buf) {
+		ISP_LOGE("fail to malloc mem!");
+		rtn = 0x01;
+		return rtn;
+	}
+
+	for (i = 0; i < 3; i++) {
+		ae_tab_info[i] = (char *)malloc(64 * sizeof(char));
+		if (NULL == ae_tab_info[i]) {
+			ISP_LOGE("fail to malloc mem!");
+			rtn = 0x01;
+			goto exit;
+		}
+	}
+
+	for (i = 0; i < 6; i++) {
+		ae_scene_info[i] = (char *)malloc(64 * sizeof(char));
+		if (NULL == ae_scene_info[i]) {
+			ISP_LOGE("fail to malloc mem!");
+			rtn = 0x01;
+			goto exit;
+		}
+	}
+	while (!feof(fp)) {
+		if (NULL == fgets(line_buf, 512, fp)) {
+			break;
+		}
+		if (strstr(line_buf, "_common_ae_tab_") != NULL) {
+			for (i = 0; i < AE_FLICKER_NUM; i++) {
+				cmr_s32 break_flag = 0;
+				for (j = 0; j < AEC_ISO_NUM; j++) {
+					sprintf(ae_tab_info[0], "_common_ae_tab_index_%d%d", i, j);
+					sprintf(ae_tab_info[1], "_common_ae_tab_gain_%d%d", i, j);
+					sprintf(ae_tab_info[2], "_common_ae_tab_exposure_%d%d", i, j);
+
+					if (strstr(line_buf, ae_tab_info[0]) != NULL) {
+						rtn = read_ae_table_16bit(fp, ae_ptr->ae_tab[i][j].index, &ae_ptr->ae_tab[i][j].index_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+					if (strstr(line_buf, ae_tab_info[1]) != NULL) {
+						rtn = read_ae_table_16bit(fp, ae_ptr->ae_tab[i][j].gain, &ae_ptr->ae_tab[i][j].gain_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+					if (strstr(line_buf, ae_tab_info[2]) != NULL) {
+						rtn = read_ae_table_32bit(fp, ae_ptr->ae_tab[i][j].exposure, &ae_ptr->ae_tab[i][j].exposure_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+				}
+				if (0 != break_flag)
+					break;
+			}
+		}
+
+		if (strstr(line_buf, "_ae_table_cus_") != NULL) {
+			for (i = 0; i < AE_FLICKER_NUM; i++) {
+				cmr_s32 break_flag = 0;
+				for (j = 0; j < AE_ISO_NUM_NEW; j++) {
+					sprintf(ae_tab_info[0], "_ae_table_cus_index_%d%d", i, j);
+					sprintf(ae_tab_info[1], "_ae_table_cus_gain_%d%d", i, j);
+					sprintf(ae_tab_info[2], "_ae_table_cus_exposure_%d%d", i, j);
+
+					if (strstr(line_buf, ae_tab_info[0]) != NULL) {
+						rtn = read_ae_table_16bit(fp, ae_ptr->ae_table_cus[i][j].index, &ae_ptr->ae_table_cus[i][j].index_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+					if (strstr(line_buf, ae_tab_info[1]) != NULL) {
+						rtn = read_ae_table_16bit(fp, ae_ptr->ae_table_cus[i][j].gain, &ae_ptr->ae_table_cus[i][j].gain_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+					if (strstr(line_buf, ae_tab_info[2]) != NULL) {
+						rtn = read_ae_table_32bit(fp, ae_ptr->ae_table_cus[i][j].exposure, &ae_ptr->ae_table_cus[i][j].exposure_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+				}
+				if (0 != break_flag)
+					break;
+			}
+		}
+		if (strstr(line_buf, "_ae_weight_") != NULL) {
+			for (i = 0; i < AE_WEIGHT_TABLE_SZ; i++) {
+				sprintf(ae_weight_info, "_ae_weight_%d", i);
+				if (strstr(line_buf, ae_weight_info) != NULL) {
+
+					rtn = read_ae_weight(fp, &ae_ptr->weight_tab[i]);
+					break;
+				}
+			}
+		}
+		if ((strstr(line_buf, "_scene_") != NULL) && (strstr(line_buf, "_ae_") != NULL)) {
+			for (i = 0; i < AE_SCENE_NUM; i++) {
+				cmr_s32 break_flag = 0;
+				sprintf(ae_scene_info[0], "_ae_scene_info_%d", i);
+				if (strstr(line_buf, ae_scene_info[0]) != NULL) {
+
+					rtn = read_ae_scene_info(fp, ae_ptr, i);
+					if (rtn != 0x00) {
+						rtn = 0x01;
+						goto exit;
+					}
+					break;
+				}
+				for (j = 0; j < AE_FLICKER_NUM; j++) {
+					sprintf(ae_scene_info[1], "_scene_ae_tab_index_%d%d", i, j);
+					sprintf(ae_scene_info[2], "_scene_ae_tab_gain_%d%d", i, j);
+					sprintf(ae_scene_info[3], "_scene_ae_tab_exposure_%d%d", i, j);
+					if (strstr(line_buf, ae_scene_info[1]) != NULL) {
+
+						rtn = read_ae_table_16bit(fp, ae_ptr->scene_info[i][j].index, &ae_ptr->scene_info[i][j].index_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+					if (strstr(line_buf, ae_scene_info[2]) != NULL) {
+
+						rtn = read_ae_table_16bit(fp, ae_ptr->scene_info[i][j].gain, &ae_ptr->scene_info[i][j].gain_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+					if (strstr(line_buf, ae_scene_info[3]) != NULL) {
+
+						rtn = read_ae_table_32bit(fp, ae_ptr->scene_info[i][j].exposure, &ae_ptr->scene_info[i][j].exposure_len);
+						if (0x00 != rtn) {
+							goto exit;
+						}
+						break_flag = 1;
+						break;
+					}
+				}
+				if (0 != break_flag)
+					break;
+			}
+		}
+		if (strstr(line_buf, "_ae_reserve_") != NULL) {
+			for (i = 0; i < AE_FLICKER_NUM; i++) {
+				sprintf(ae_auto_iso_info, "_ae_auto_iso_%d", i);
+				if (strstr(line_buf, ae_auto_iso_info) != NULL) {
+
+					rtn = read_ae_reserve(fp, &ae_ptr->ae_reserve);
+					if (0x00 != rtn) {
+						goto exit;
+					}
+					if (1 == i)
+						flag_end = 1;
+					break;
+				}
+			}
+		}
+		if (0 != flag_end)
+			break;
+	}
+
+exit:
+	if (NULL != line_buf) {
+		free(line_buf);
+	}
+	for (i = 0; i < 3; i++) {
+		if (NULL != ae_tab_info[i]) {
+			free(ae_tab_info[i]);
+		}
+	}
+	for (i = 0; i < 3; i++) {
+		if (NULL != ae_scene_info[i]) {
+			free(ae_scene_info[i]);
+		}
+	}
+	return rtn;
+}
+#else
 cmr_s32 read_ae_scene_info(FILE * fp, struct sensor_ae_tab * ae_ptr, cmr_s32 scene_mode)
 {
 	cmr_s32 rtn = 0x00;
@@ -710,6 +1001,7 @@ exit:
 	}
 	return rtn;
 }
+#endif
 
 cmr_s32 read_awb_win_map(FILE * fp, struct sensor_awb_map * awb_map_ptr)
 {
