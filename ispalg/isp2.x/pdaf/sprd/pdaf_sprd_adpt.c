@@ -746,48 +746,52 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			sprintf(file_name_l, CAMERA_DATA_FILE"/pdaf_L_tp3_128X192_%d.raw", PD_FRAME_ID);
 			sprintf(file_name_r, CAMERA_DATA_FILE"/pdaf_R_tp3_128X192_%d.raw", PD_FRAME_ID);
 
-			pTempBuf = pInPhaseBuf_left;
+			pTempBuf = ((pInPhaseBuf_left == NULL) ? NULL : pInPhaseBuf_left);
 			fp = fopen(file_name_l, "wb+");
-			while(tp3index != (33024/4) && *pTempBuf){	//pdaf raw total of 33024 bytes, storing 3 pixels every four bytes
-				temp_int = *pTempBuf;
-				for(count = 0; count < 3; count++){
-					if(0 == count)
-						temp_short = (temp_int & 0x3ff);	//extract the first pixel
-					else if(1 == count)
-						temp_short = ((temp_int >> 10) & 0x3ff); //extract the second pixel
-					else
-						temp_short = ((temp_int >> 20) & 0x3ff); //extract the third pixel
+			if(fp != NULL && pTempBuf != NULL){
+				while(tp3index != (33024/4)){	//pdaf raw total of 33024 bytes, storing 3 pixels every four bytes
+					temp_int = *pTempBuf;
+					for(count = 0; count < 3; count++){
+						if(0 == count)
+							temp_short = (temp_int & 0x3ff);	//extract the first pixel
+						else if(1 == count)
+							temp_short = ((temp_int >> 10) & 0x3ff); //extract the second pixel
+						else
+							temp_short = ((temp_int >> 20) & 0x3ff); //extract the third pixel
 
-					fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
-					temp_short = 0;
+						fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
+						temp_short = 0;
+					}
+					temp_int = 0;
+					pTempBuf++;
+					tp3index++;
 				}
-				temp_int = 0;
-				pTempBuf++;
-				tp3index++;
 			}
 			fclose(fp);
 			pTempBuf = NULL;
 			tp3index = 0;
 			fp = NULL;
 
-			pTempBuf = pInPhaseBuf_right;
+			pTempBuf = ((pInPhaseBuf_right == NULL) ? NULL : pInPhaseBuf_right);
 			fp = fopen(file_name_r, "wb+");
-			while(tp3index != (33024/4) && *pTempBuf){
-				temp_int = *pTempBuf;
-				for(count = 0; count < 3; count++){
-					if(0 == count)
-						temp_short = (temp_int & 0x3ff);
-					else if(1 == count)
-						temp_short = ((temp_int >> 10) & 0x3ff);
-					else
-						temp_short = ((temp_int >> 20) & 0x3ff);
+			if(fp != NULL && pTempBuf != NULL){
+				while(tp3index != (33024/4)){
+					temp_int = *pTempBuf;
+					for(count = 0; count < 3; count++){
+						if(0 == count)
+							temp_short = (temp_int & 0x3ff);
+						else if(1 == count)
+							temp_short = ((temp_int >> 10) & 0x3ff);
+						else
+							temp_short = ((temp_int >> 20) & 0x3ff);
 
-					fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
-					temp_short = 0;
+						fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
+						temp_short = 0;
+					}
+					temp_int = 0;
+					pTempBuf++;
+					tp3index++;
 				}
-				temp_int = 0;
-				pTempBuf++;
-				tp3index++;
 			}
 			fclose(fp);
 			fp = NULL;
@@ -1162,14 +1166,14 @@ static cmr_s32 pdafsprd_adpt_set_mode(cmr_handle adpt_handle, struct pdaf_ctrl_p
 
 	switch (in->af_mode) {
 	case AF_MODE_NORMAL:
-		cxt->af_type == ACTIVE;
+		cxt->af_type = ACTIVE;
 		break;
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
-		cxt->af_type == PASSIVE;
+		cxt->af_type = PASSIVE;
 		break;
 	default:
-		cxt->af_type == PASSIVE;
+		cxt->af_type = PASSIVE;
 		ISP_LOGW("af_mode %d is not supported", in->af_mode);
 		break;
 	}
@@ -1235,7 +1239,7 @@ static cmr_s32 pdafsprd_adpt_set_ot_switch(cmr_handle adpt_handle, struct pdaf_c
 	ISP_LOGI("ot switch %d", in->ot_switch);
 	cxt->ot_switch = in->ot_switch;
 	if (1 == cxt->ot_switch) {
-		cxt->af_type == ACTIVE;
+		cxt->af_type = ACTIVE;
 	} else {
 		cxt->af_type = AF_MODE_NORMAL == cxt->af_mode ? ACTIVE : PASSIVE;
 	}

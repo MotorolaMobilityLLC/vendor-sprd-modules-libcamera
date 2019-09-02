@@ -35,12 +35,19 @@ cmr_int vl53l0_init()
 	FILE *fp_xtak = NULL;
 	int XtalkInt = 0;
 	int XtalkEnable = 0;
+	int Xtalk_rtn[2] = {0};
 
 	//fp_xtak = fopen("/productinfo/vl53l0_xtak_calibration.file","rb");
 	fp_xtak = fopen("/mnt/vendor/vl53l0_xtak_calibration.file","rb");
 	if(NULL!=fp_xtak){
-		fscanf(fp_xtak, "%d\n", &XtalkInt);
-		fscanf(fp_xtak, "%d\n", &XtalkEnable);
+		Xtalk_rtn[0] = fscanf(fp_xtak, "%d\n", &XtalkInt);
+		Xtalk_rtn[1] = fscanf(fp_xtak, "%d\n", &XtalkEnable);
+		if(Xtalk_rtn[0] == EOF || Xtalk_rtn[1] == EOF){
+			fclose(fp_xtak);
+			ISP_LOGE("Error: Could not read Xtalk Values from vl53l0_xtak_calibration.file");
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		fclose(fp_xtak);
 		ISP_LOGI("XtalkInt=%d, XtalkEnable=%d", XtalkInt, XtalkEnable);
 	}
@@ -52,15 +59,22 @@ cmr_int vl53l0_init()
 	int PhaseCal = 0;
 	int SpadCount = 0;
 	int IsApertureSpads = 0;
+	int offset_rtn[5] = {0};
 
 	//fp_offset = fopen("/productinfo/vl53l0_offset_calibration.file", "rb");
 	fp_offset = fopen("/mnt/vendor/vl53l0_offset_calibration.file", "rb");
 	if(NULL!=fp_offset){
-		fscanf(fp_offset, "%d\n", &offset);
-		fscanf(fp_offset, "%d\n", &VhvSettings);
-		fscanf(fp_offset, "%d\n", &PhaseCal);
-		fscanf(fp_offset, "%d\n", &SpadCount);
-		fscanf(fp_offset, "%d\n", &IsApertureSpads);
+		offset_rtn[0] = fscanf(fp_offset, "%d\n", &offset);
+		offset_rtn[1] = fscanf(fp_offset, "%d\n", &VhvSettings);
+		offset_rtn[2] = fscanf(fp_offset, "%d\n", &PhaseCal);
+		offset_rtn[3] = fscanf(fp_offset, "%d\n", &SpadCount);
+		offset_rtn[4] = fscanf(fp_offset, "%d\n", &IsApertureSpads);
+		if(offset_rtn[0] == EOF || offset_rtn[1] == EOF || offset_rtn[2] == EOF || offset_rtn[3] == EOF || offset_rtn[4] == EOF){
+			fclose(fp_offset);
+			ISP_LOGE("Error: Could not read offset Values from vl53l0_offset_calibration.file");
+			rtn = ISP_ERROR;
+			goto exit;
+		}
 		fclose(fp_offset);
 		ISP_LOGI("offset=%d, VhvSettings=%d, PhaseCal=%d, SpadCount=%d, IsApertureSpads=%d", offset, VhvSettings,PhaseCal,SpadCount,IsApertureSpads);
 	}
@@ -242,6 +256,7 @@ static void *  _tof_ctrl_thr_proc(void *p_data)
 {
 	struct tof_ctrl_cxt *cxt_ptr = (struct tof_ctrl_cxt *)p_data;
 	VL53L0_RangingMeasurementData_t data;
+	int sleep_rtn = 0;
 
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("Error: handle is NULL");
@@ -257,7 +272,9 @@ static void *  _tof_ctrl_thr_proc(void *p_data)
 			_set_tof_info_to_af(cxt_ptr, &data);
 		}
 
-		usleep(30000);
+		sleep_rtn = usleep(30000);
+		if(sleep_rtn)
+			ISP_LOGE("Error: No pause for 30ms!");
 	}
 
 	return NULL;
