@@ -1216,11 +1216,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         }
 
         /* recognize face attribute (smile detection) */
-        if (class_handle->frame_in.face_attribute_on == 1) {
-            fd_recognize_face_attribute(
-                class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
-                class_handle->hFAR_v2, class_handle);
-        } else if ((class_handle->frame_in.face_attribute_on == 0) &&
+
+        fd_recognize_face_attribute(
+            class_handle->hDT, class_handle->hFaceAlign, class_handle->hFAR,
+            class_handle->hFAR_v2, class_handle);
+        if ((class_handle->frame_in.face_attribute_on == 0) &&
                    (class_handle->face_attributes_off !=
                     class_handle->frame_in.face_attribute_on)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
