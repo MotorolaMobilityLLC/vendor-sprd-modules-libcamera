@@ -130,6 +130,7 @@ struct ae_info {
 struct awb_info {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
+	cmr_u32 color_support;
 	cmr_u32 alc_awb;
 	cmr_s32 awb_pg_flag;
 	cmr_u8 *log_alc_awb;
@@ -2070,6 +2071,14 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 
 	out_ptr->scalar_factor = (ae_in->monitor_info.win_size.h / 2) * (ae_in->monitor_info.win_size.w / 2);
 
+	if (cxt->awb_cxt.color_support) {
+		if (cxt->ioctrl_ptr->sns_ioctl) {
+			cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+						CMD_SNS_IC_GET_CCT_DATA,
+						&out_ptr->xyz_info);
+		}
+	}
+
 	memset(&pm_param, 0, sizeof(pm_param));
 
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
@@ -3601,6 +3610,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.otp_info_ptr = cxt->otp_data;
 	param.is_master = cxt->is_master;
 	param.sensor_role = cxt->is_master;
+	param.color_support = cxt->awb_cxt.color_support;
 
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
@@ -5419,6 +5429,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
+	cxt->awb_cxt.color_support = input_ptr->init_param->ex_info.color_support;
 	cxt->is_4in1_sensor = input_ptr->init_param->is_4in1_sensor;
 	ISP_LOGI("camera_id = %ld, master %d, is_4in1_sensor %d\n", cxt->camera_id,
 		cxt->is_master, cxt->is_4in1_sensor);
