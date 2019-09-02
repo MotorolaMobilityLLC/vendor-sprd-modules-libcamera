@@ -157,7 +157,7 @@ LOCAL_MODULE := libcamoem
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon
+LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon libhardware
 LOCAL_SHARED_LIBRARIES += libcamdrv
 
 LOCAL_SHARED_LIBRARIES += liblog
