@@ -42,14 +42,16 @@
 /* effective sensor output image size */
 #define VIDEO_WIDTH 1280
 #define VIDEO_HEIGHT 720
-#define PREVIEW_WIDTH 2320
+#ifdef CONFIG_ISP_2_7 //need 64bit alian
+#define PREVIEW_WIDTH 2304
 #define PREVIEW_HEIGHT 1744
-#ifdef CONFIG_ISP_2_7
 #define SNAPSHOT_WIDTH 4608 //4640
 #define SNAPSHOT_HEIGHT 3488 //3488
 #else
+#define PREVIEW_WIDTH 2320
+#define PREVIEW_HEIGHT 1744
 #define SNAPSHOT_WIDTH 4640 //4640
-#define SNAPSHOT_HEIGHT 3488 //3488
+#define SNAPSHOT_HEIGHT 3488 //3488z
 #endif
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
@@ -58,14 +60,16 @@
 #define VIDEO_TRIM_H 720
 #define PREVIEW_TRIM_X 0
 #define PREVIEW_TRIM_Y 0
-#define PREVIEW_TRIM_W 2320
-#define PREVIEW_TRIM_H 1744
 #define SNAPSHOT_TRIM_X 0
 #define SNAPSHOT_TRIM_Y 0
 #ifdef CONFIG_ISP_2_7
+#define PREVIEW_TRIM_W 2304
+#define PREVIEW_TRIM_H 1744
 #define SNAPSHOT_TRIM_W 4608 //4640
 #define SNAPSHOT_TRIM_H 3488 //3488
 #else
+#define PREVIEW_TRIM_W 2320
+#define PREVIEW_TRIM_H 1744
 #define SNAPSHOT_TRIM_W 4640 //4640
 #define SNAPSHOT_TRIM_H 3488 //3488
 #endif

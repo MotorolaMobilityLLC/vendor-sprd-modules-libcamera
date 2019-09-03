@@ -1914,6 +1914,8 @@ static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
                              .pixel_width = RAW_BITS,
                              .is_loose = 0,
                              .is_cphy = 1,
+                             .lane_switch_eb = 1,
+                             .lane_seq = 0x210,//combo cphy swap:0x210, only for ov32a1q ums512
                          },
                      .change_setting_skip_num = 1,
                      .horizontal_view_angle = 65,
