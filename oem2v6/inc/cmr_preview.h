@@ -171,6 +171,8 @@ struct preview_md_ops {
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
     cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
+    cmr_int (*sw_3dnr_info_cfg)(cmr_handle oem_handle,
+                                struct sprd_img_3dnr_param *threednr_info);
     cmr_int (*isp_ioctl)(cmr_handle oem_handle, cmr_uint cmd_type,
                          struct common_isp_cmd_param *parm);
 };

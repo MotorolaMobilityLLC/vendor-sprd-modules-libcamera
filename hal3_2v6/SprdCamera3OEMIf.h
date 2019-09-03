@@ -775,6 +775,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mIspAntiFlickerHeapReserved;
     sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
     sprd_camera_memory_t *m3DNRScaleHeapReserverd[CAP_3DNR_NUM];
+    sprd_camera_memory_t *m3DNRPrevHeapReserverd[PRE_3DNR_NUM];
+    sprd_camera_memory_t *m3DNRPrevScaleHeapReserverd[PRE_SW_3DNR_RESERVE_NUM];
     sprd_camera_memory_t *m4in1HeapArray[CAP_4IN1_NUM];
     sprd_camera_memory_t *mAISceneScaleHeapReserverd;
     sprd_camera_memory_t *mAutoTrackingScaleHeapReserverd;

@@ -417,6 +417,28 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
     return ret;
 }
 
+cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
+                             struct sprd_img_3dnr_param *threednr_info) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    if (NULL == threednr_info)
+        return -1;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR, threednr_info);
+    CMR_RTN_IF_ERR(ret);
+    CMR_LOGI("SPRD_IMG_IO_SET_3DNR = %ld ", ret);
+exit:
+    CMR_LOGI("ret = %ld", ret);
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     ATRACE_BEGIN(__FUNCTION__);
 

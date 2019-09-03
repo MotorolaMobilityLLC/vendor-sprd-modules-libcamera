@@ -74,7 +74,15 @@ struct sensor_context {
     struct sensor_ex_info cur_sns_ex_info;
     struct sensor_4in1_info info_4in1;
 };
-
+struct prev_threednr_info {
+    struct img_frm frm_preview;
+    struct img_frm frm_smallpreview;
+    struct img_frm frm_video;
+    struct camera_frame_type framtype;
+    unsigned long camera_id;
+    void *caller_handle;
+    struct frm_info data;
+};
 struct isp_context {
     cmr_handle isp_handle;
     cmr_handle caller_handle;

@@ -136,7 +136,8 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
 cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
                            struct sprd_flash_cfg_param *cfg);
 cmr_int cmr_grab_deinit_notice(cmr_handle grab_handle);
-
+cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
+                             struct sprd_img_3dnr_param *threednr);
 // for offline isp architecture
 cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
                                struct sprd_img_capture_param capture_param);

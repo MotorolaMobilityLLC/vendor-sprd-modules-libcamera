@@ -33,6 +33,7 @@ extern struct class_tab_t yde_tab_info;
 #endif
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
 extern struct class_tab_t threednr_tab_info;
+extern struct class_tab_t threednr_prev_tab_info;
 #endif
 #ifdef CONFIG_CAMERA_FILTER
 extern struct class_tab_t filter_tab_info;
@@ -67,6 +68,7 @@ struct ipm_class_tab class_type_tab[] = {
 #endif
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
     {IPM_TYPE_3DNR, &threednr_tab_info},
+    {IPM_TYPE_3DNR_PRE, &threednr_prev_tab_info},
 #endif
 #ifdef CONFIG_CAMERA_FILTER
     {IPM_TYPE_FILTER, &filter_tab_info},

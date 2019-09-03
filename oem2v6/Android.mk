@@ -5,6 +5,26 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=format
 LOCAL_LDFLAGS += -ldl
 
+#sensor makefile config
+SENSOR_FILE_COMPILER := $(CAMERA_SENSOR_TYPE_BACK)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_FRONT)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_BACK_EXT)
+SENSOR_FILE_COMPILER += $(CAMERA_SENSOR_TYPE_FRONT_EXT)
+
+SENSOR_FILE_COMPILER := $(shell echo $(SENSOR_FILE_COMPILER))
+#$(warning $(SENSOR_FILE_COMPILER))
+
+sensor_comma:=,
+sensor_empty:=
+sensor_space:=$(sensor_empty)
+
+split_sensor:=$(sort $(subst $(sensor_comma),$(sensor_space) ,$(shell echo $(SENSOR_FILE_COMPILER))))
+#$(warning $(split_sensor))
+
+sensor_macro:=$(shell echo $(split_sensor) | tr a-z A-Z)
+#$(warning $(sensor_macro))
+$(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
+
 ifeq ($(strip $(OEM_DIR)),oem2v6)
 LOCAL_C_INCLUDES += \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
@@ -98,7 +118,7 @@ LOCAL_SRC_FILES += src/cmr_uvdenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums312 ud710 ums512 ums518 ums518-zebu),)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums312 ud710 ums512 ums518 ums518-zebu sp9832e),)
 LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
 LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
