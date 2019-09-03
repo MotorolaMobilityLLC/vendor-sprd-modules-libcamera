@@ -6078,7 +6078,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
-        if (1 != sprddefInfo.sprd_is_3dnr_scene) {
+        HAL_LOGD("get sprd_auto_3dnr_enable:%d", sprddefInfo.sprd_auto_3dnr_enable);
+        if(sprddefInfo.sprd_auto_3dnr_enable != CAMERA_3DNR_AUTO) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE,
                      drvSceneMode);
         }
