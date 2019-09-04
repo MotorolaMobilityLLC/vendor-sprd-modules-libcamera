@@ -81,6 +81,8 @@ typedef struct {
 	int (*sprd_caa_vdsp_Send)(const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
 	void *(*sprd_caa_ionmem_alloc)(uint32_t size, bool iscache);
 	int (*sprd_caa_ionmem_free)(void *h_ionmem);
+	int (*sprd_caa_ionmem_flush)(void *h_ionmem, uint32_t size);
+	int (*sprd_caa_ionmem_invalid)(void *h_ionmem);
 	void *(*sprd_caa_ionmem_get_vaddr)(void *h_ionmem);
 	int (*sprd_caa_ionmem_get_fd)(void *h_ionmem);
 	void (*ProcessState_initWithDriver)(const char *driver);
