@@ -601,7 +601,11 @@ int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_leve
 	}
 	mworking ++;
 	mLock.unlock();
-	ret = sprd_cavdsp_power_hint(mDevice , level , permanent);
+#ifdef DVFS_OPEN
+	ret = set_powerhint_flag(mDevice , level ,permanent);//sprd_cavdsp_power_hint(mDevice , level , permanent);
+#else
+	__android_log_print(ANDROID_LOG_DEBUG , TAG_Server, "func:%s , level:%d, permant:%d\n" , __func__ , level, permanent);
+#endif
 	mLock.lock();
 	mworking --;
 	mLock.unlock();

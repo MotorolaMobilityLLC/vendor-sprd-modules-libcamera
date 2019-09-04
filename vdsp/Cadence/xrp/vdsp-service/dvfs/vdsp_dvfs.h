@@ -13,10 +13,10 @@ extern "C" {
 #endif
 
 int32_t init_dvfs(void *device);
-void deinit_dvfs();
+void deinit_dvfs(void *device);
 void preprocess_work_piece();
 void postprocess_work_piece();
-void set_powerhint_flag(void* device , enum sprd_vdsp_power_level level , uint32_t permanent);
+int32_t set_powerhint_flag(void* device , enum sprd_vdsp_power_level level , uint32_t permanent);
 #ifdef __cplusplus
 }
 #endif

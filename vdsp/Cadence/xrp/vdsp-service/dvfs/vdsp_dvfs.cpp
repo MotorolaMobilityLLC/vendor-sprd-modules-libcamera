@@ -17,8 +17,6 @@ enum dvfs_enum_index {
 	DVFS_INDEX_3,
 	DVFS_INDEX_4,
 	DVFS_INDEX_5,
-	DVFS_INDEX_6,
-	DVFS_INDEX_7,
 	DVFS_INDEX_MAX,
 };
 static Mutex timepiece_lock;
@@ -42,6 +40,7 @@ int32_t init_dvfs(void* device)
 	g_tempset = 0;
 	dvfs.en_ctl_flag = 1;
 	dvfs.enable = 1;
+	dvfs.index = DVFS_INDEX_5;
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
 	ret = pthread_create(&g_monitor_threadid , NULL , dvfs_monitor_thread , device);
 	if(0 == ret)
@@ -102,16 +101,24 @@ void postprocess_work_piece()
 		g_currentpiece->end_time = systemTime(CLOCK_MONOTONIC);
 	}
 }
-void set_powerhint_flag(__unused void *device , enum sprd_vdsp_power_level level , uint32_t permanent)
+int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t permanent)
 {
+	struct xrp_dvfs_ctrl dvfs;
+	int ret;
+	struct xrp_device *dev = (struct xrp_device *)device;
 	powerhint_lock.lock();
 	if(permanent) {
 		g_freqlevel = level;
 	} else {
 		g_tempset = 1;
 	}
+	__android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s permant:%d , level:%d\n" , __func__ , permanent , level);
 	/*set power hint*/
+	dvfs.index = level;
+	dvfs.en_ctl_flag = 0;
+	ret = ioctl(dev->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
 	powerhint_lock.unlock();
+	return ret;
 }
 static uint32_t calculate_vdsp_usage(int64_t fromtime , int64_t endtime)
 {
@@ -168,7 +175,7 @@ static uint32_t calculate_dvfs_index(uint32_t percent)
 	static uint32_t last_percent = 0;
 	last_percent = percent;
 	if((last_percent > 50) && (percent > 50)) {
-		return DVFS_INDEX_7;
+		return DVFS_INDEX_5;
 	} else if(((percent <= 50) && (percent > 20)) && (last_percent <= 50)) {
 		return DVFS_INDEX_3;
 	} else {
@@ -192,7 +199,10 @@ static void *dvfs_monitor_thread(__unused void* data)
 			g_tempset = 0;
 			if(g_freqlevel != SPRD_VDSP_POWERHINT_NORMAL) {
 				/*set freq to g_freqlevel*/
-				;
+				dvfs.index = g_freqlevel;
+				dvfs.en_ctl_flag = 0;
+				 __android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s before set dvfs index:%d\n" , __func__ , g_freqlevel);
+				ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
 			}
 		}
 		if(SPRD_VDSP_POWERHINT_NORMAL == g_freqlevel) {

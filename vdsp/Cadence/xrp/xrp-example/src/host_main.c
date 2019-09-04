@@ -1085,13 +1085,12 @@ static void f12()
 //        ret = sprd_vdsp_send_command_directly(device , (const char*)XRP_EXAMPLE_V3_NSID , &input, NULL,buffer, 1, 0);
 	ret = sprd_vdsp_load_library(device , buffer , "test_lib" , 0);
 	fprintf(stderr , "yzl add %s , sprd_vdsp_load_library load test_lib ret:%d\n" , __func__ , ret);
-#if 0
 	input.fd = fd;
         input.vir_addr = ionviraddr;
         input.size = 44;
         input.vir_addr[0] = 1; /*load flag*/
         sprintf(&input.vir_addr[1] , "%s" , "test_lib1");
-#endif
+
 	sprintf(filename , "/vendor/firmware/%s.bin" , "test_lib1");
         fp = fopen(filename , "rb");
         if(fp) {
