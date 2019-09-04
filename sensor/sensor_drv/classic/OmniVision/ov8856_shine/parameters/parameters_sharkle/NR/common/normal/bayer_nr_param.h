@@ -6746,7 +6746,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x37,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -6822,7 +6822,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x23,
+						0x28,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
