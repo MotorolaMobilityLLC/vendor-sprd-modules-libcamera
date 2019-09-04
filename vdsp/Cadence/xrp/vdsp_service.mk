@@ -7,6 +7,7 @@ PRODUCT_PACKAGES += libxrp-common \
 PRODUCT_COPY_FILES += \
     vendor/sprd/modules/libcamera/vdsp/Cadence/xrp/vdsp-service/service.vdspservice.rc:vendor/etc/init/service.vdspservice.rc \
 	vendor/sprd/modules/libcamera/vdsp/Cadence/xrp/xrp-firmware/vdsp_firmware.bin:vendor/firmware/vdsp_firmware.bin \
+	vendor/sprd/modules/libcamera/vdsp/Cadence/xrp/xrp-firmware/hdr_cadence.bin:vendor/firmware/hdr_cadence.bin \
 	vendor/sprd/modules/libcamera/vdsp/Cadence/xrp/xrp-firmware/test_lib.o:/vendor/lib/test_lib.o \
 	vendor/sprd/modules/libcamera/vdsp/Cadence/xrp/xrp-firmware/test_lib.bin:vendor/firmware/test_lib.bin \
 	vendor/sprd/modules/libcamera/vdsp/Cadence/xrp/xrp-firmware/faceid_fw.bin:vendor/firmware/faceid_fw.bin \
