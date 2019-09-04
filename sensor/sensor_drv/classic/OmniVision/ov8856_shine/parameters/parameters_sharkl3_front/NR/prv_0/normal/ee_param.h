@@ -3575,11 +3575,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x08,
+			0x40,
 			/*ee_r2_cfg*/
-			0x08,
+			0x40,
 			/*ee_r3_cfg*/
-			0x08,
+			0x40,
 			/*reserved*/
 			0x00,
 
@@ -3619,13 +3619,13 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
-				0x0028,
+				0x001E,
 				/*ee_t2_cfg*/
-				0x0068,
+				0x005E,
 				/*ee_t3_cfg*/
-				0x0078,
+				0x0064,
 				/*ee_t4_cfg*/
-				0x00F8,
+				0x00E4,
 
 			},
 			/*r_cfg*/
@@ -3633,9 +3633,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x05,
+				0x00,
 				/*ee_r3_cfg*/
-				0x0A,
+				0x00,
 				/*reserved*/
 				0x00,
 
@@ -3644,11 +3644,11 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
-			0x03,
+			0x00,
 			/*ee_c2_cfg*/
-			0x05,
+			0x00,
 			/*ee_c3_cfg*/
-			0x0A,
+			0x00,
 			/*reserved*/
 			0x00,
 
@@ -3658,13 +3658,13 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
-				0x0028,
+				0x001E,
 				/*ee_t2_cfg*/
-				0x0068,
+				0x005E,
 				/*ee_t3_cfg*/
-				0x0078,
+				0x0064,
 				/*ee_t4_cfg*/
-				0x00F8,
+				0x00E4,
 
 			},
 			/*r_cfg*/
@@ -3672,9 +3672,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x05,
+				0x00,
 				/*ee_r3_cfg*/
-				0x0A,
+				0x00,
 				/*reserved*/
 				0x00,
 
@@ -3683,11 +3683,11 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
-			0xFD,
+			0x00,
 			/*ee_c2_cfg*/
-			0xFB,
+			0x00,
 			/*ee_c3_cfg*/
-			0xF6,
+			0x00,
 			/*reserved*/
 			0x00,
 
@@ -3735,9 +3735,9 @@
 		/*ipd_flat_thr*/
 		{
 			/*negative*/
-			0x0000,
+			0x0004,
 			/*positive*/
-			0x0000,
+			0x0006,
 
 		},
 		/*ipd_eq_thr*/
@@ -3797,7 +3797,7 @@
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
-		0x0001,
+		0x0000,
 		/*wgt_hv2diag*/
 		0x000A,
 		/*wgt_diag2hv*/
@@ -3831,9 +3831,9 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x08,
+				0x18,
 				/*ee_r2_cfg*/
-				0x08,
+				0x10,
 				/*ee_r3_cfg*/
 				0x08,
 				/*reserved*/
@@ -3858,11 +3858,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x02,
+				0x18,
 				/*ee_r2_cfg*/
-				0x02,
+				0x10,
 				/*ee_r3_cfg*/
-				0x02,
+				0x08,
 				/*reserved*/
 				0x00,
 
@@ -3885,9 +3885,9 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x08,
+				0x18,
 				/*ee_r2_cfg*/
-				0x08,
+				0x10,
 				/*ee_r3_cfg*/
 				0x08,
 				/*reserved*/
@@ -3912,11 +3912,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x02,
+				0x18,
 				/*ee_r2_cfg*/
-				0x02,
+				0x10,
 				/*ee_r3_cfg*/
-				0x02,
+				0x08,
 				/*reserved*/
 				0x00,
 
