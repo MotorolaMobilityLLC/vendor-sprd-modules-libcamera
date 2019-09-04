@@ -114,7 +114,7 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 		goto exit;
 	}
 
-	char *paramfile_path;
+	char *paramfile_path = NULL;
 
 	/* find vendor adpter */
 	//1、judge the camera id
