@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <utils/Timers.h>
+#include <time.h>
 #ifdef HAVE_NANOSLEEP
 #include <time.h>
 #endif
@@ -1154,18 +1156,21 @@ static void f12()
         sprd_free_ionmem(ioninputhandle);
         sprd_vdsp_release_device(device);
 }
-static void f13()
+static void f13(devid)
 {
 	void *device = NULL;
-	void *ionhandle = NULL;
+	void *ionhandle = NULL;//input image
+	void *ionhandle2 = NULL;//out buffer
 	void *ionviraddr = NULL;
+	void *ionviraddr2 = NULL;
 	unsigned long inphyaddr;
-	unsigned long outphyaddr;
+	FACEID_INFO *face_info;
+	unsigned int out_result;
 	//void *ioninputhandle = NULL;
 	struct sprd_vdsp_inout buffer[1];
 	//struct sprd_vdsp_inout input;
 	uint32_t buffersize = 960*720*3/2;
-	int32_t fd;
+	int32_t fd,fd_out;
 	int ret = 0;
 	char filename[128];
 	FILE *fp = NULL;
@@ -1204,16 +1209,41 @@ static void f13()
     else {
             fprintf(stderr , "yzl add %s , fopen test.yuv failed\n" , __func__);
     }
+
+	ionhandle2 = sprd_alloc_ionmem(sizeof(FACEID_INFO), 0 , &fd_out , &ionviraddr2);
+	if(ionhandle2 == NULL)
+	{
+			fprintf(stderr , "yzl add %s , sprd_alloc_ionmem NULL\n" , __func__);
+			sprd_vdsp_release_device(device);
+			sprd_free_ionmem(ionhandle2);
+			return;
+	}
+
+	printf("out_fd %d\n",fd_out);
+	int64_t start_time = systemTime(CLOCK_MONOTONIC);
+	if (devid == 0)
+		devid = 1;
+	for(int i = 0;i<devid;i++)
+	{
+		if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_run_faceid_command_directly(device, inphyaddr, 720,960,&out_result,fd_out))
+			fprintf(stderr , "xrp_run_faceid_command failed\n");
+		else
+		{
+			face_info = (FACEID_INFO *)ionviraddr2;
+			fprintf(stderr ,"vdsp result %d,out addr %lX\n",out_result,face_info->facepoint_addr);
+			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
+		}
+	}
 	
-	if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_run_faceid_command_directly(device, inphyaddr, 720,960,&outphyaddr))
-		fprintf(stderr , "xrp_run_faceid_command failed\n");
-
-
+	int64_t end_time = systemTime(CLOCK_MONOTONIC);
+	int duration = (int)((end_time - start_time)/1000000);
+	printf("run %d times take %d ms\n",devid,duration/devid);
 	//fprintf(stderr , "wait\n");
 	//sleep(30);
 
 	sprd_vdsp_release_device(device);
 	sprd_free_ionmem(ionhandle);
+	sprd_free_ionmem(ionhandle2);
 }
 int main(int argc, char **argv)
 {
@@ -1298,10 +1328,10 @@ int main(int argc, char **argv)
 				f11();
 			}
 			if(tests & 0x800) {
-				f12();
+				f13(devid);
 			}
 			if(tests & 0x2000) {
-				f13();
+				f13(devid);
 			}
 			if(tests & 0x1000) {
 				void *device;

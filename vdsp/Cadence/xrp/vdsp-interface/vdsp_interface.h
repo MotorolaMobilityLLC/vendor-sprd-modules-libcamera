@@ -1,6 +1,7 @@
 #ifndef _SPRD_VDSP_INTERFACE__H
 #define _SPRD_VDSP_INTERFACE__H
 
+
 enum sprd_vdsp_status
 {
         SPRD_XRP_STATUS_SUCCESS = 0,

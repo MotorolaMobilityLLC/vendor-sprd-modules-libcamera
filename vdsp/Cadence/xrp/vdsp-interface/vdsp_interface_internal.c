@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vdsp_interface_internal.h"
-#include "xrp_api.h"
 #include "example_namespace.h"
 #include <android/log.h>
 __attribute__ ((visibility("default"))) void *sprd_vdsp_open_device(int idx , enum sprd_vdsp_worktype type)
@@ -140,9 +139,9 @@ static enum xrp_access_flags translate_access_flag(enum sprd_vdsp_bufflag inflag
 	}
 }
 __attribute__ ((visibility("default"))) int sprd_vdsp_run_faceid_command_directly(void *device,unsigned long in_data, unsigned int in_height,
-								unsigned int in_width,unsigned long *out_data)
+								unsigned int in_width,unsigned int *out_result,int out_fd)
 {
-	if (XRP_STATUS_SUCCESS != xrp_run_faceid_command(device,in_data, in_height, in_width, out_data))
+	if (XRP_STATUS_SUCCESS != xrp_run_faceid_command(device,in_data, in_height, in_width, out_result, out_fd))
 		return SPRD_XRP_STATUS_FAILURE;
 
 	return SPRD_XRP_STATUS_SUCCESS;

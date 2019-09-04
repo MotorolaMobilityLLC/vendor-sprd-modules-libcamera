@@ -367,21 +367,22 @@ void xrp_run_command_directly(struct xrp_device *device ,const char * nsid , uns
 }
 enum xrp_status xrp_run_faceid_command(struct xrp_device *device,
 												unsigned long in_data, unsigned int in_height,unsigned int in_width,
-												unsigned long *out_data)
+												unsigned int *out_result,int out_fd)
 {
 	int ret;
-
+	printf("out fd %d\n",out_fd);
 	struct xrp_faceid_ctrl ioctrl_faceid = {
 	    .in_data_addr = in_data,
 		.in_height = in_height,
 		.in_width = in_width,
-	    //.out_data_addr = out_data,
+	    .out_fd = out_fd,
 	};
-	printf("%p\n",out_data);
-
+	
 	ret = ioctl(device->impl.fd,XRP_IOCTL_FACEID_CMD, &ioctrl_faceid);
 	if (ret < 0)
 		return XRP_STATUS_FAILURE;
+
+	*out_result = ioctrl_faceid.out_result;
 
 	return XRP_STATUS_SUCCESS;
 }

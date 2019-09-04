@@ -99,7 +99,12 @@ enum xrp_buffer_group_info {
 	/*! Number of buffers in the buffer group. Buffer index is ignored. */
 	XRP_BUFFER_GROUP_SIZE_SIZE_T,
 };
-
+typedef struct
+{
+	int x, y, width, height;
+	int yawAngle, pitchAngle;
+	unsigned long facepoint_addr;
+}FACEID_INFO;
 #define XRP_NAMESPACE_ID_SIZE	32
 
 /*!
@@ -594,7 +599,7 @@ void xrp_run_command_directly(struct xrp_device *device, const char *nsid , unsi
                                 enum xrp_status *status);
 enum xrp_status xrp_run_faceid_command(struct xrp_device *device,
 												unsigned long in_data, unsigned int in_height,unsigned int in_width,
-												unsigned long *out_data);
+												unsigned int *out_result,int out_fd);
 #endif
 
 #ifdef __cplusplus
