@@ -335,7 +335,7 @@ static void writeCamInitTimeToApct(char *buf) {
 
     if (apct_fd >= 0) {
         char buf[100] = {0};
-        sprintf(buf, "\n%s", buf);
+        sprintf(buf,"\n");
         write(apct_fd, buf, strlen(buf));
         fchmod(apct_fd, 0666);
         close(apct_fd);
@@ -9324,14 +9324,15 @@ int SprdCamera3OEMIf::pushRawFrame(struct camera_frame_type *frame) {
     int ret = 0;
     struct rawBufferQueue node;
 
-    memset(&node, 0, sizeof(struct rawBufferQueue));
-
     frame->buf_id = getRawBufferIDForFd(frame->fd);
-
-    node.frame = *frame;
-    node.heap_array = mZslHeapArray[frame->buf_id];
-
-    pushRawQueue(&node);
+    if(frame->buf_id != 0xFFFFFFFF){
+        memset(&node, 0, sizeof(struct rawBufferQueue));
+        node.frame = *frame;
+        node.heap_array = mZslHeapArray[frame->buf_id];
+        pushRawQueue(&node);
+    }else {
+        HAL_LOGE("mZslHeapArray id not found.");
+    }
 
     return ret;
 }
@@ -9459,6 +9460,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     int64_t diff_ms = 0;
     uint32_t sw_algorithm_buf_cnt = 0;
     cmr_u32 buf_id = 0;
+    int sleep_rtn = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
         obj->mZslShotPushFlag == 0) {
@@ -9489,8 +9491,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         zsl_frame = obj->popZslFrame();
         if (zsl_frame.y_vir_addr == 0) {
-            HAL_LOGD("wait for zsl frame");
-            usleep(20 * 1000);
+            HAL_LOGD("wait for correct zsl frame");
+            sleep_rtn = usleep(20 * 1000);
+            if (sleep_rtn) {
+                HAL_LOGE("ERROR: no pause for 1000ms");
+            }
             continue;
         }
 
