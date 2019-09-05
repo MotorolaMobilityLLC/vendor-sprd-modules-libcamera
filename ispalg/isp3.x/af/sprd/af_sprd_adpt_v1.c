@@ -1044,8 +1044,11 @@ static cmr_u8 if_get_sys_time(cmr_u64 * time, void *cookie)
 static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 {
 	UNUSED(cookie);
+	int sleep_rtn = 0;
 	// ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
-	usleep(sleep_time * 1000);
+	sleep_rtn = usleep(sleep_time * 1000);
+	if (sleep_rtn)
+		ISP_LOGE("error:no pause!");
 	return 0;
 }
 
@@ -1750,7 +1753,7 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 		af->is_multi_mode = AF_ALG_DUAL_C_C;
 	}
 	aft_in.is_multi_mode = af->is_multi_mode;
-	
+
 	af->trig_ops.init(&aft_in, &aft_out, &af->trig_ops.handle);
 	ISP_LOGV("af->trig_ops.handle = %p", af->trig_ops.handle);
 	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_AE_SKIP_INFO, &af->trig_ops.ae_skip_info, NULL);
@@ -1865,8 +1868,10 @@ static void trigger_saf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
 	UNUSED(test_param);
-	property_set("vendor.cam.af_set_pos", "none");
-
+	int pro_rtn = 0;
+	pro_rtn = property_set("vendor.cam.af_set_pos", "none");
+	if (pro_rtn)
+		ISP_LOGE("unable to property set!");
 	memset(&aft_in, 0, sizeof(AF_Trigger_Data));
 	af->request_mode = AF_MODE_NORMAL;
 	af->state = STATE_NORMAL_AF;
@@ -2129,6 +2134,7 @@ static void *loop_for_test_mode(void *data_client)
 	af_ctrl_t *af = NULL;
 	char AF_MODE[PROPERTY_VALUE_MAX] = { '\0' };
 	char AF_POS[PROPERTY_VALUE_MAX] = { '\0' };
+	int sleep_rtn = 0;
 	af = data_client;
 
 	while (0 == af->test_loop_quit) {
@@ -2143,7 +2149,9 @@ static void *loop_for_test_mode(void *data_client)
 		if (0 != strcmp(AF_POS, "none")) {
 			af_test_lens(af, (cmr_u16) atoi(AF_POS));
 		}
-		usleep(1000 * 100);
+		sleep_rtn = usleep(1000 * 100);
+		if (sleep_rtn)
+			ISP_LOGE("error: no pause for 100ms");
 	}
 	af->test_loop_quit = 1;
 
@@ -2857,9 +2865,12 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	struct af_trig_info *win = (struct af_trig_info *)param0;	//win = (struct isp_af_win *)param;
 	AF_Trigger_Data aft_in;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	int pro_rtn = 0;
 
 	ISP_LOGI("trigger af state = %s", STATE_STRING(af->state));
-	property_set("vendor.cam.af_mode", "none");
+	pro_rtn = property_set("vendor.cam.af_mode", "none");
+	if (pro_rtn)
+		ISP_LOGE("unable to property set!");
 	af->test_loop_quit = 1;
 
 	if (STATE_FULLSCAN == af->state) {
