@@ -137,7 +137,7 @@ int yuv_scale_nv21_hal(const struct img_frm *src,
     tmp_w >>= 2;
     tmp_h >>= 2;
     if ((tmp_w > dst->size.width) && (tmp_h > dst->size.height)) {
-        ret = I420Scale(i420_src, i420_src_w, i420_src_u, (i420_src_w + 1) / 2,
+        I420Scale(i420_src, i420_src_w, i420_src_u, (i420_src_w + 1) / 2,
                         i420_src_v, (i420_src_w + 1) / 2, tmp_w << 2,
                         tmp_h << 2, tmp, tmp_w, tmp_u, tmp_w / 2, tmp_v,
                         tmp_w / 2, tmp_w, tmp_h, kFilterBox); // kFilterLinear);
@@ -163,7 +163,7 @@ int yuv_scale_nv21_hal(const struct img_frm *src,
         tmp_h = (i420_src_h >> 1) << 1;
         tmp_w >>= 1;
         tmp_h >>= 1;
-        ret = I420Scale(i420_src, i420_src_w, i420_src_u, (i420_src_w + 1) / 2,
+        I420Scale(i420_src, i420_src_w, i420_src_u, (i420_src_w + 1) / 2,
                         i420_src_v, (i420_src_w + 1) / 2, tmp_w << 1,
                         tmp_h << 1, tmp, tmp_w, tmp_u, tmp_w / 2, tmp_v,
                         tmp_w / 2, tmp_w, tmp_h, kFilterBox); // kFilterLinear);
