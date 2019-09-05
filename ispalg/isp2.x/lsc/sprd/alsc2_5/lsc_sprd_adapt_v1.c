@@ -1686,6 +1686,7 @@ static cmr_s32 linear_lut_bv(cmr_s32 input, cmr_s32 *lut_x_val, cmr_s32 *lut_y_v
 	cmr_s32 x0, x1;
 	cmr_s32 y0, y1;
 	cmr_s32 input_clip = (input >= 1600) ? 1599 : ((input < 0) ? 0 : input);
+	x0 = x1 = y0 = y1 = 0;
 	for (cmr_s32 i = 0 ; i < num_ctrl_point-1; i++){
 		if (lut_x_val[i] <= input_clip && input_clip < lut_x_val[i+1]){
 			x0 = lut_x_val[i];
@@ -1709,6 +1710,7 @@ static cmr_s32 linear_lut_bv_gain(cmr_s32 input, cmr_s32 *lut_x_val, cmr_s32 *lu
 	cmr_s32 output;
 	cmr_s32 x0, x1;
 	cmr_s32 y0, y1;
+	x0 = x1 = y0 = y1 = 0;
 	for (cmr_s32 i = 0 ; i < num_ctrl_point-1; i++){
 		if (lut_x_val[i] >= input && input > lut_x_val[i+1]){
 			x0 = lut_x_val[i];
@@ -1753,7 +1755,11 @@ static void post_shading_gain(cmr_u16 *dst_gain, cmr_u16 *org_gain, cmr_u32 gain
 			off_r  = 2;
 			off_gr = 3;
 			break;
-		default:
+		default:   //	default B first pattern
+			off_b  = 0;
+			off_gb = 1;
+			off_gr = 2;
+			off_r  = 3;
 			break;
 	}
 	cmr_u32 i;
@@ -1846,7 +1852,7 @@ cmr_u32 get_alsc_alg_in_flag(struct lsc_ctrl_context *cxt, cmr_u32 *IIR_weight)
 
 	if(cxt->frame_count == 1){
 		cxt->alg_quick_in = 1;
-		cxt->quik_in_start_frame == -99;
+		cxt->quik_in_start_frame = -99;
 		ISP_LOGV("[ALSC] frame_count=1, set alg_quick_in=1 and wait for init_skip_frame, lsc_id=%d", cxt->lsc_id);
 	}
 
@@ -2345,6 +2351,7 @@ static void lsc_save_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr
 static void lsc_read_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr_u32 full_flag)
 {
 	FILE* fp = NULL;
+	cmr_s32 numread = 0;
 
 	if(camera_id == 0){
 		if(full_flag == 1){
@@ -2362,12 +2369,12 @@ static void lsc_read_last_info(struct lsc_last_info* cxt, cmr_u32 camera_id, cmr
 
 	if (fp) {
 		memset((void*)cxt, 0, sizeof(struct lsc_last_info));
-		fread((char*)cxt, 1, sizeof(struct lsc_last_info), fp);
+		numread = fread((char*)cxt, 1, sizeof(struct lsc_last_info), fp);
 		fclose(fp);
 		fp = NULL;
 
-		ISP_LOGV("[ALSC] read_lsc_last_info, bv=%d, table_rgb[%d,%d,%d], gain_widht=%d, gain_height=%d", cxt->bv
-				, cxt->table_r[0], cxt->table_g[0], cxt->table_b[0], cxt->gain_width, cxt->gain_height);
+		ISP_LOGV("[ALSC] read_lsc_last_info, bv=%d, table_rgb[%d,%d,%d], gain_widht=%d, gain_height=%d, last_info_size: %d", cxt->bv
+				, cxt->table_r[0], cxt->table_g[0], cxt->table_b[0], cxt->gain_width, cxt->gain_height, numread);
 	}
 }
 
