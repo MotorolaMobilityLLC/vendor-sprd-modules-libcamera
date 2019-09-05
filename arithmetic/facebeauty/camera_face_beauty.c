@@ -25,7 +25,6 @@
 #include <time.h>
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
-#define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
 int dumpFrameCount = 0;
 char value[PROPERTY_VALUE_MAX];
 
@@ -120,12 +119,12 @@ void construct_fb_level(struct class_fb *faceBeauty,
     // convert the skin_level set by APP to skinLevel & smoothLevel according to
     // the table saved.
     {
-        beautyLevels.smoothLevel = CLIP(beautyLevels.smoothLevel, 0, 10);
-        beautyLevels.brightLevel = CLIP(beautyLevels.brightLevel, 0, 10);
-        beautyLevels.slimLevel = CLIP(beautyLevels.slimLevel, 0, 10);
-        beautyLevels.largeLevel = CLIP(beautyLevels.largeLevel, 0, 10);
-        beautyLevels.lipLevel = CLIP(beautyLevels.lipLevel, 0, 10);
-        beautyLevels.skinLevel = CLIP(beautyLevels.skinLevel, 0, 10);
+        beautyLevels.smoothLevel = beautyLevels.smoothLevel > 10 ? 10 : beautyLevels.smoothLevel;
+        beautyLevels.brightLevel = beautyLevels.brightLevel > 10 ? 10 : beautyLevels.brightLevel;
+        beautyLevels.slimLevel = beautyLevels.slimLevel > 10 ? 10 : beautyLevels.slimLevel;
+        beautyLevels.largeLevel = beautyLevels.largeLevel > 10 ? 10 : beautyLevels.largeLevel;
+        beautyLevels.lipLevel = beautyLevels.lipLevel > 10 ? 10 : beautyLevels.lipLevel;
+        beautyLevels.skinLevel = beautyLevels.skinLevel > 10 ? 10 : beautyLevels.skinLevel;
     }
 
     char isDebug[PROPERTY_VALUE_MAX];
