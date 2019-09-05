@@ -1180,6 +1180,7 @@ exit:
 
 cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
     ATRACE_BEGIN(__FUNCTION__);
+	cmr_int ret = 0;
 
     cmr_int err = 0xff;
     cmr_u32 param = 0;
@@ -1239,10 +1240,10 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
                 res_trim_ptr[mode].trim_width, res_trim_ptr[mode].trim_height,
                 res_trim_ptr[mode].bps_per_lane);
             SENSOR_LOGI("trigger %s\n", value1);
-            property_set("persist.vendor.cam.sensor.info", value1);
+            ret = property_set("persist.vendor.cam.sensor.info", value1);
         }
     }
-    SENSOR_LOGI("X");
+    SENSOR_LOGI("X %d", ret);
     ATRACE_END();
     return err;
 }

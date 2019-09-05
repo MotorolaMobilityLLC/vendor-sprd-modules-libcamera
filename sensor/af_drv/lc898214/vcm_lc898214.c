@@ -126,7 +126,7 @@ static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos) {
         // ret_value
         // =hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle,slave_addr,0xA0,
         // BITS_ADDR8_REG16);
-        usleep(50);
+        ret_value = usleep(50);
         if (SlvCh == 0x00) {
             break;
         }
@@ -173,11 +173,12 @@ static int _lc898214_drv_power_on(cmr_handle sns_af_drv_handle,
     CHECK_PTR(sns_af_drv_handle);
     struct sns_af_drv_cxt *af_drv_cxt =
         (struct sns_af_drv_cxt *)sns_af_drv_handle;
+    uint32_t ret_value = AF_SUCCESS;
 
     if (AF_TRUE == power_on) {
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle,
                                   lc898214_drv_entry.motor_avdd_val);
-        usleep(LC898214_POWERON_DELAY * 1000);
+        ret_value = usleep(LC898214_POWERON_DELAY * 1000);
     } else {
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
@@ -210,12 +211,12 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     for (i = 0; i < 30; i++) {
         SlvCh = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, SlaveID, 0xF0,
                                        BITS_ADDR8_REG8);
-        usleep(50);
+        ret_value = usleep(50);
         if (SlvCh == 0x42) {
             break;
         }
     }
-    usleep(100);
+    ret_value = usleep(100);
     cmd_len = 2;
 
     cmd_val[0] = 0x87;
@@ -223,20 +224,20 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, SlaveID,
                                    (uint8_t *)&cmd_val[0], cmd_len);
 
-    usleep(20);
+    ret_value = usleep(20);
     uint16_t Max_H = 0xff, Max_L = 0xff, Min_H = 0xff, Min_L = 0xff;
     Max_H = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, EepromSlaveID, 0x38,
                                    BITS_ADDR8_REG8);
-    usleep(50);
+    ret_value = usleep(50);
     Max_L = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, EepromSlaveID, 0x39,
                                    BITS_ADDR8_REG8);
-    usleep(50);
+    ret_value = usleep(50);
     Min_H = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, EepromSlaveID, 0x3A,
                                    BITS_ADDR8_REG8);
-    usleep(50);
+    ret_value = usleep(50);
     Min_L = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, EepromSlaveID, 0x3B,
                                    BITS_ADDR8_REG8);
-    usleep(50);
+    ret_value = usleep(50);
     uint16_t Max = (uint16_t)((Max_H << 8) | Max_L);
     uint16_t Min = (uint16_t)((Min_H << 8) | Min_L);
     pri_data->Hall_Max = (int16_t)Max; //(int16_t)Max;//0x6000
@@ -252,7 +253,7 @@ static int _lc898214_drv_init(cmr_handle sns_af_drv_handle) {
     for (i = 0; i < 30; i++) {
         EepCh = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, SlaveID, 0xE0,
                                        BITS_ADDR8_REG8);
-        usleep(50);
+        ret_value = usleep(50);
         if (EepCh == 0x00) {
             break;
         }

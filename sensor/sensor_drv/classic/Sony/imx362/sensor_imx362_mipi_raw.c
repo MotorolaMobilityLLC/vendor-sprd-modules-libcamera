@@ -281,7 +281,7 @@ static cmr_int imx362_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
     SENSOR_IC_CHECK_PTR(module_info);
-
+    cmr_uint ret = SENSOR_SUCCESS;
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
@@ -294,22 +294,22 @@ static cmr_int imx362_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
                               SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-        usleep(1 * 1000);
+        ret = usleep(1 * 1000);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val,
                               iovdd_val);
-        usleep(1 * 1000);
+        ret = usleep(1 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DEFALUT_MCLK);
-        usleep(1 * 1000);
+        ret = usleep(1 * 1000);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(1 * 1000);
+        ret = usleep(1 * 1000);
     } else {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        usleep(10 * 1000);
+        ret = usleep(10 * 1000);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
                               SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %ld %d", power_on, ret);
     return SENSOR_SUCCESS;
 }
 
@@ -801,7 +801,7 @@ static cmr_int imx362_drv_stream_on(cmr_handle handle, cmr_uint param) {
 static cmr_int imx362_drv_stream_off(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
     unsigned char value;
-    unsigned int sleep_time = 0;
+    unsigned int sleep_time = 0, ret = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("E");
@@ -811,14 +811,14 @@ static cmr_int imx362_drv_stream_off(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = 100 * 1000;
-            usleep(sleep_time);
+            ret = usleep(sleep_time);
         }
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
 
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
+    SENSOR_LOGI("X sleep_time=%dus %d", sleep_time, ret);
     return 0;
 }
 

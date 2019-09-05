@@ -872,10 +872,12 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
         goto exit;
     }
 
-    if (cxt->is_multi_mode > 0)
+    if (cxt->is_multi_mode > 0){
         ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
                                          cxt->camera_id, cxt->is_multi_mode);
-    ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+        CMR_LOGV("cmr_sensor_set_bypass_mode %d", ret);
+	}
+	ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                  on_off);
     if (ret) {
         CMR_LOGE("err to set stream %ld", ret);

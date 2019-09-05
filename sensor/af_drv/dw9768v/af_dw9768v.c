@@ -98,7 +98,7 @@ static int dw9768v_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos) {
             m_cur_dac_code = m_cur_dac_code - MOVE_CODE_STEP_MAX;
             _dw9768v_write_dac_code(sns_af_drv_handle, m_cur_dac_code);
             CMR_LOGI("dac_target_code = %d\n", m_cur_dac_code);
-            usleep(WAIT_STABLE_TIME * 1000);
+            ret_value = usleep(WAIT_STABLE_TIME * 1000);
         }
     }
     _dw9768v_write_dac_code(sns_af_drv_handle, target_code);
@@ -146,11 +146,12 @@ static int _dw9768v_drv_power_on(cmr_handle sns_af_drv_handle,
     CHECK_PTR(sns_af_drv_handle);
     struct sns_af_drv_cxt *af_drv_cxt =
         (struct sns_af_drv_cxt *)sns_af_drv_handle;
+    uint32_t ret_value = AF_SUCCESS;
 
     if (AF_TRUE == power_on) {
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle,
                                   dw9768v_drv_entry.motor_avdd_val);
-        usleep(DW9768V_POWERON_DELAY * 1000);
+        ret_value = usleep(DW9768V_POWERON_DELAY * 1000);
     } else {
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
@@ -192,7 +193,7 @@ static int _dw9768v_drv_set_mode(cmr_handle sns_af_drv_handle) {
         ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                        (uint8_t *)&cmd_val[0], cmd_len);
 
-        usleep(200);
+        ret_value = usleep(200);
 
         /*Ringing Setting On */
         cmd_val[0] = 0x02;

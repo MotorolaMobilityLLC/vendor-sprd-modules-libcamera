@@ -12,10 +12,10 @@ static struct tcs_calib_data tcs3430_calib_data = {
 };
 
 static int read_tcs3430(const char *filename) {
-    int data = -1;
+    int data = -1, ret = 0;
     FILE *fd = fopen(filename, "r");
     if (fd != NULL) {
-        fscanf(fd, "%d", &data);
+        ret = fscanf(fd, "%d", &data);
         fclose(fd);
     }
     return data;
@@ -23,6 +23,7 @@ static int read_tcs3430(const char *filename) {
 
 static void calc_lux_cct(struct tcs_data *tcs3430_data) {
     double IR_boundary = 1.0;
+    int ret = 0;
 
     if (0 == tcs3430_calib_data.x_raw_golden) {
         FILE *fd =
@@ -38,14 +39,14 @@ static void calc_lux_cct(struct tcs_data *tcs3430_data) {
             tcs3430_calib_data.ir_raw_unit = 100;
             SENSOR_LOGE("ams tcs3430 calib file not exit, set calib data to default");
         } else {
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.x_raw_golden);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.y_raw_golden);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.z_raw_golden);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.ir_raw_golden);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.x_raw_unit);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.y_raw_unit);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.z_raw_unit);
-            fscanf(fd, "%hd\n", &tcs3430_calib_data.ir_raw_unit);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.x_raw_golden);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.y_raw_golden);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.z_raw_golden);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.ir_raw_golden);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.x_raw_unit);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.y_raw_unit);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.z_raw_unit);
+            ret = fscanf(fd, "%hd\n", &tcs3430_calib_data.ir_raw_unit);
             fclose(fd);
             SENSOR_LOGI("ams tcs3430 calibration Golden x:%d, y:%d, z:%d, ir:%d, Uint x:%d, y:%d, z:%d, ir:%d\n",
                 tcs3430_calib_data.x_raw_golden, tcs3430_calib_data.y_raw_golden,
@@ -65,7 +66,7 @@ static void calc_lux_cct(struct tcs_data *tcs3430_data) {
                 tcs3430_calib_data.y_raw_unit = 100;
                 tcs3430_calib_data.z_raw_unit = 100;
                 tcs3430_calib_data.ir_raw_unit = 100;
-                SENSOR_LOGE("ams tcs3430 calib data error, set to default");
+                SENSOR_LOGE("ams tcs3430 calib data error, set to default %d", ret);
             }
         }
     }

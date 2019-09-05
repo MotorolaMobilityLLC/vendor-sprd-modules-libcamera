@@ -199,7 +199,7 @@ static cmr_int s5k4h9yx_drv_power_on(cmr_handle handle, cmr_uint power_on)
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
-
+    cmr_uint ret = 0;
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
@@ -215,27 +215,27 @@ static cmr_int s5k4h9yx_drv_power_on(cmr_handle handle, cmr_uint power_on)
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 		
-        usleep(10 * 1000);
+        ret = usleep(10 * 1000);
 		//hw_sensor_set_mipi_switcher_power_level(sns_drv_cxt->hw_handle,1); // mipi switcher power on
 		hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
 		
 
-        usleep(10 * 1000);
+        ret = usleep(10 * 1000);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(5 * 1000);
+        ret = usleep(5 * 1000);
 		hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         //hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
 	//	hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);		
     } else 
 	{
 		hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        usleep(5 * 1000);
+        ret = usleep(5 * 1000);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-		usleep(1 * 1000);
+		ret = usleep(1 * 1000);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -243,7 +243,7 @@ static cmr_int s5k4h9yx_drv_power_on(cmr_handle handle, cmr_uint power_on)
 		//hw_sensor_set_mipi_switcher_power_level(sns_drv_cxt->hw_handle,0); // mipi switcher power off
     }
 	
-    SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %lu %d", power_on, ret);
     return SENSOR_SUCCESS;
 }
 
@@ -389,14 +389,13 @@ static cmr_int s5k4h9yx_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
  *============================================================================*/
 static cmr_int s5k4h9yx_drv_access_val(cmr_handle handle, cmr_uint param)
 {
-	cmr_int ret = SENSOR_FAIL;
+	cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
     
 	SENSOR_IC_CHECK_HANDLE(handle);
 	SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-	SENSOR_LOGI("sensor s5k4h9yx: param_ptr->type=%x", param_ptr->type);
 	
 	switch(param_ptr->type)
 	{
@@ -418,7 +417,7 @@ static cmr_int s5k4h9yx_drv_access_val(cmr_handle handle, cmr_uint param)
 		default:
 			break;
     }
-    ret = SENSOR_SUCCESS;
+	SENSOR_LOGV("sensor s5k4h9yx: param_ptr->type=%x %d", param_ptr->type, ret);
 
     return ret;
 }
@@ -623,8 +622,7 @@ static cmr_int s5k4h9yx_drv_stream_on(cmr_handle handle, cmr_uint param)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
-	SENSOR_LOGI("E");
+	cmr_int ret = 0;
 	
 #if defined(CONFIG_DUAL_MODULE)
 	//s5k4h9yx_drv_set_master_FrameSync(handle, param);
@@ -638,8 +636,9 @@ static cmr_int s5k4h9yx_drv_stream_on(cmr_handle handle, cmr_uint param)
 	/*END*/
 	
 	/*delay*/
-	usleep(1 * 1000);
+	ret = usleep(1 * 1000);
 	
+	SENSOR_LOGI("E %d", ret);
 	return SENSOR_SUCCESS;
 }
 
@@ -650,13 +649,12 @@ static cmr_int s5k4h9yx_drv_stream_on(cmr_handle handle, cmr_uint param)
  *============================================================================*/
 static cmr_int s5k4h9yx_drv_stream_off(cmr_handle handle, cmr_uint param)
 {
-	SENSOR_LOGI("E");
-	
+	cmr_int ret = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     if (!sns_drv_cxt->is_sensor_close) {
-        usleep(5 * 1000);
+        ret = usleep(5 * 1000);
     }
    	/*TODO*/
    
@@ -665,7 +663,7 @@ static cmr_int s5k4h9yx_drv_stream_off(cmr_handle handle, cmr_uint param)
 	/*END*/
 	/*delay*/
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X");
+    SENSOR_LOGI("X %d", ret);
 	
     return SENSOR_SUCCESS;
 }

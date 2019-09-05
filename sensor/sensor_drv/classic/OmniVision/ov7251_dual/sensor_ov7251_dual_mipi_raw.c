@@ -138,7 +138,7 @@ static cmr_int ov7251_dual_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
-
+    cmr_uint ret = 0;
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
@@ -151,27 +151,27 @@ static cmr_int ov7251_dual_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_voltage(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED,
                               SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-        usleep(1 * 1000);
+        ret = usleep(1 * 1000);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
 
-        usleep(1 * 1000);
+        ret = usleep(1 * 1000);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
       //  hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(6 * 1000);
+        ret = usleep(6 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
     } else {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        usleep(500);
+        ret = usleep(500);
         //hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        usleep(200);
+        ret = usleep(200);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %lu %d", power_on, ret);
     return SENSOR_SUCCESS;
 }
 
@@ -681,7 +681,7 @@ cmr_int ov7251_dual_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
 static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    SENSOR_LOGI("E");
+    cmr_uint ret = 0;
 
     ov7251_dual_drv_set_slave_FrameSync(handle, param);
    if (1){//(sns_drv_cxt->sensor_id % 2 == 0){
@@ -693,7 +693,7 @@ static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
     /*delay*/
-    usleep(10 * 1000);
+    ret = usleep(10 * 1000);
 #if 0
             /* enable strobe pin for IR1 */
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
@@ -731,13 +731,13 @@ static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x00, 0x01);
             hw_sensor_i2c_set_addr(sns_drv_cxt->hw_handle, 0xc0 >> 1);
 #endif
+	SENSOR_LOGI("E %x", ret);
 
     return 0;
 }
 
 static cmr_int ov7251_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
-    SENSOR_LOGI("E");
-    cmr_u8 value;
+    cmr_u8 value = 0, ret = 0;
     cmr_u32 sleep_time = 0, frame_time;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -748,7 +748,7 @@ static cmr_int ov7251_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x0f);
         if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = 50 * 1000;
-            usleep(sleep_time);
+            ret = usleep(sleep_time);
         }
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
@@ -756,7 +756,7 @@ static cmr_int ov7251_dual_drv_stream_off(cmr_handle handle, cmr_uint param) {
     }
 
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
+    SENSOR_LOGI("X sleep_time=%dus %d", sleep_time, ret);
     return 0;
 }
 
@@ -845,7 +845,6 @@ static cmr_int ov7251_dual_drv_access_val(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("param_ptr->type=%x", param_ptr->type);
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
         ret = ov7251_dual_drv_get_static_info(handle, param_ptr->pval);
@@ -862,7 +861,7 @@ static cmr_int ov7251_dual_drv_access_val(cmr_handle handle, cmr_uint param) {
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
+    SENSOR_LOGV("param_ptr->type=%x %d", param_ptr->type, ret);
 
     return ret;
 }
