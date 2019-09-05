@@ -163,6 +163,10 @@ int yuv_scale_nv21(void *handle, const struct img_frm *src,
                         i420_src_v, (i420_src_w + 1) / 2, tmp_w << 2,
                         tmp_h << 2, tmp, tmp_w, tmp_u, tmp_w / 2, tmp_v,
                         tmp_w / 2, tmp_w, tmp_h, kFilterLinear); // kFilterBox);
+        if (ret) {
+            CMR_LOGE("libyuv::I420 scale failed");
+            goto exit;
+        }
         tmp_swp = i420_src;
         i420_src = tmp;
         tmp = tmp_swp;
@@ -189,6 +193,10 @@ int yuv_scale_nv21(void *handle, const struct img_frm *src,
                         i420_src_v, (i420_src_w + 1) / 2, tmp_w << 1,
                         tmp_h << 1, tmp, tmp_w, tmp_u, tmp_w / 2, tmp_v,
                         tmp_w / 2, tmp_w, tmp_h, kFilterLinear); // kFilterBox);
+        if (ret) {
+            CMR_LOGE("libyuv::I420 scale failed");
+            goto exit;
+        }
         tmp_swp = i420_src;
         i420_src = tmp;
         tmp = tmp_swp;
