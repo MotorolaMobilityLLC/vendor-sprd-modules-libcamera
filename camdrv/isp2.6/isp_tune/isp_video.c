@@ -937,7 +937,7 @@ cmr_s32 isp_denoise_read_v25(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 		break;
 	}
 	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+	ret = denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);
@@ -1528,7 +1528,7 @@ cmr_s32 isp_denoise_read_v26(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 		break;
 	}
 	ISP_LOGV("nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+	ret = denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);
@@ -2264,7 +2264,7 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 		break;
 	}
 	ISP_LOGV("file_num=%d, nr_offset_addr = %p, size_src = %d", file_num, nr_offset_addr, src_size);
-	denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
+	ret = denoise_param_send(tx_buf, data_valid_len, (void *)nr_offset_addr, src_size, data_ptr, &data_head_ptr->packet_status);
 
 	if (nr_scene_and_level_map) {
 		ispParserFree(nr_scene_and_level_map);

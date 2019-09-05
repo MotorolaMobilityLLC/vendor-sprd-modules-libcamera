@@ -49,43 +49,6 @@
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 
-#if 0
-enum statis_event_id {
-	ISP_EVENT_SOF = 0,
-	ISP_EVENT_RAW_DONE,
-	ISP_EVENT_AEM_STATIS,
-	ISP_EVENT_AFM_STATIS,
-	ISP_EVENT_AFL_STATIS,
-	ISP_EVENT_HIST_STATIS,
-	ISP_EVENT_PDAF_STATIS,
-	ISP_EVENT_MAX
-};
-
-struct isp_event_info {
-	uint32_t irq_type;
-	uint32_t irq_property;
-	enum isp_statis_buf_type type;
-	union {
-		struct init {
-			int mfd;
-			uint32_t  buf_size;
-		} init_data;
-		struct block {
-			uint32_t hw_addr;
-		} block_data;
-	} u;
-	uint32_t uaddr[2];
-	uint32_t kaddr[2];
-	uint32_t sec;
-	uint32_t usec;
-	uint32_t frame_id;
-};
-struct isp_event_node {
-	struct isp_event_info data;
-	void *next;
-};
-#endif
-
 struct commn_info {
 	cmr_s32 isp_pm_mode[PARAM_SET_MAX];
 	cmr_u32 multi_nr_flag;
@@ -362,19 +325,6 @@ struct isp_alg_fw_context {
 	cmr_u32 work_mode;
 	cmr_u32 zsl_flag;
 
-#if 0
-	/* thread for statis/irq reading/process */
-	pthread_t read_thr_handle;
-	pthread_t proc_thr_handle;
-	cmr_s32 read_should_exit;
-	cmr_s32 proc_should_exit;
-	sem_t read_start_sem;
-	sem_t read_exit_sem;
-	sem_t proc_start_sem;
-	sem_t proc_exit_sem;
-	pthread_mutex_t list_lock;
-	struct isp_event_node *event_list_head;
-#endif
 	cmr_u32 sn_mode;
 	/* 4in1 */
 	cmr_u32 is_4in1_sensor;
@@ -3043,208 +2993,6 @@ void ispalg_dev_evt_msg(cmr_int evt, void *data, void *privdata)
 	}
 }
 
-
-#if 0
-void insert_data_q_tail(struct isp_event_node **head,
-	struct isp_event_node *newnode)
-{
-	struct isp_event_node *cur;
-	if (*head == NULL) {
-		*head = newnode;
-		newnode->next = NULL;
-	} else {
-		cur = *head;
-		while (cur->next != NULL) {
-			cur = cur->next;
-		}
-		cur->next = newnode;
-		newnode->next = NULL;
-	}
-}
-
-void delete_node_from_dataq(struct isp_event_node **head,
-	struct isp_event_node *del_node)
-{
-	struct isp_event_node *cur, *prev;
-
-	if (*head == NULL) {
-		ISP_LOGE("error: data queue should not be empty.\n");
-		return;
-	} else if(del_node == *head) {
-		*head = del_node->next;
-		del_node->next = NULL;
-	} else {
-		prev = *head;
-		cur = prev->next;
-		while (cur!= NULL) {
-			if (cur == del_node) {
-				prev->next = cur->next;
-				del_node->next = NULL;
-				break;
-			}
-			prev = cur;
-			cur = cur->next;
-		}
-	}
-}
-
-
-
-static void * ispalg_event_read(void *param)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = NULL;
-	struct isp_event_node *pnode;
-	struct isp_event_node *new_node, *prev_node;
-	struct isp_event_info rd_data;
-
-	cxt = (struct isp_alg_fw_context *)param;
-
-	do {
-		ISP_LOGD("wait for read start.\n");
-		sem_wait(&cxt->read_start_sem);
-		ISP_LOGD("start read event...\n");
-
-		if (cxt->read_should_exit)
-			break;
-
-		while (1) {
-			ret = ispdev_get_statis(cxt, &rd_data);
-			if (ret) {
-				ISP_LOGE("failed to get statis or irq event.\n");
-				break;
-			}
-			if (rd_data.irq_type >= ISP_EVENT_MAX) {
-				ISP_LOGE("unknown irq type %d\n", rd_data.irq_type);
-				break;
-			}
-
-			prev_node = new_node = pnode = NULL;
-
-			pthread_mutex_lock(&cxt->list_lock);
-			pnode = cxt->event_list_head;
-			while (pnode) {
-				if (pnode->data.irq_type == rd_data.irq_type) {
-					ISP_LOGD("unprocessed data of event: %d\n", pnode->data.irq_type);
-					break;
-				}
-				pnode = pnode->next;
-			}
-
-			if (pnode != NULL) {
-				delete_node_from_dataq(&cxt->event_list_head, pnode);
-				prev_node = pnode;
-			}
-
-			new_node = malloc(sizeof(struct statis_event_node));
-			if (new_node == NULL) {
-				ISP_LOGE("fail to malloc memory.\n");
-				ret = ISP_ALLOC_ERROR;
-				pthread_mutex_unlock(&cxt->list_lock);
-				break;
-			}
-			memcpy(&new_node->data, &rd_data, sizeof(struct isp_irq_info));
-			insert_data_q_tail(&cxt->event_list_head, new_node);
-
-			pthread_mutex_unlock(&cxt->list_lock);
-			sem_post(&cxt->dataq_sem);
-
-			/* free unprocess data */
-			if (prev_node) {
-				switch(prev_node->data.irq_type) {
-				case ISP_EVENT_AEM_STATIS:
-					break;
-				default:
-					break;
-				}
-				free(prev_node);
-			}
-		};
-	} while (1);
-
-	sem_post(&cxt->read_exit_sem);
-	ISP_LOGD("exit.\n");
-	return NULL;
-}
-
-void * ispalg_event_proc(void *data)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt;
-	struct isp_event_node *pnode;
-//	struct statis_event_node *new_node, *prev_node;
-
-	cxt = (struct isp_alg_fw_context *)data;
-
-	do {
-		ISP_LOGD("wait for proc start.\n");
-		sem_wait(&cxt->proc_start_sem);
-		ISP_LOGD("start proc event...\n");
-
-		if (cxt->proc_should_exit)
-			break;
-
-		while(1) {
-			pnode = NULL;
-			pthread_mutex_lock(&cxt->list_lock);
-			pnode = cxt->event_list_head;
-			if (pnode == NULL) {
-				pthread_mutex_unlock(&cxt->list_lock);
-				break;
-			}
-			delete_node_from_dataq(&cxt->event_list_head, pnode);
-			pthread_mutex_unlock(&cxt->list_lock);
-
-			switch(pnode->data.irq_type) {
-			case ISP_EVENT_SOF:
-				ret = ispalg_ae_process((cmr_handle) cxt);
-				if (ret)
-					ISP_LOGE("fail to start ae process");
-				ret = ispalg_awb_process((cmr_handle) cxt);
-				if (ret)
-					ISP_LOGE("fail to start awb process");
-				cxt->aem_is_update = 0;
-				ret = ispalg_handle_sensor_sof((cmr_handle) cxt, (void *)&pnode->data);
-
-				break;
-
-			case ISP_EVENT_RAW_DONE:
-				ret = ispalg_evt_process_cb((cmr_handle) cxt);
-				break;
-
-			case ISP_EVENT_AEM_STATIS:
-				ret = ispalg_aem_stats_parser((cmr_handle) cxt, (void *)&pnode->data);
-				isp_br_ioctrl(cxt->camera_id, SET_STAT_AWB_DATA, (void *)&cxt->aem_stats, NULL);
-
-				break;
-
-			case ISP_EVENT_AFM_STATIS:
-				ret = ispalg_af_process((cmr_handle) cxt, AF_DATA_AFM_STAT, (void *)&pnode->data);
-				break;
-
-			case ISP_EVENT_AFL_STATIS:
-				ret = ispalg_afl_process((cmr_handle) cxt, (void *)&pnode->data);
-				break;
-
-			case ISP_EVENT_HIST_STATIS:
-				break;
-			case ISP_EVENT_PDAF_STATIS:
-				ret = ispalg_pdaf_process((cmr_handle) cxt, (void *)&pnode->data);
-				break;
-
-			default:
-				break;
-			}
-			free(pnode);
-		}
-	} while (1);
-
-	sem_post(&cxt->proc_exit_sem);
-	ISP_LOGD("exit.\n");
-	return NULL;
-}
-#endif
-
 static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3256,7 +3004,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create isp algfw  process thread");
-		ret = -ISP_ERROR;
+		return ISP_ERROR;
 	}
 	ret = cmr_thread_set_name(cxt->thr_handle, "algfw");
 	if (CMR_MSG_SUCCESS != ret) {
@@ -3270,7 +3018,9 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create afstats process thread");
-		ret = -ISP_ERROR;
+		cmr_thread_destroy(cxt->thr_handle);
+		cxt->thr_handle = (cmr_handle) NULL;
+		return ISP_ERROR;
 	}
 	ret = cmr_thread_set_name(cxt->thr_afhandle, "afstats");
 	if (CMR_MSG_SUCCESS != ret) {
@@ -3286,52 +3036,17 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create algae process thread");
-		ret = -ISP_ERROR;
+		cmr_thread_destroy(cxt->thr_handle);
+		cxt->thr_handle = (cmr_handle) NULL;
+		cmr_thread_destroy(cxt->thr_afhandle);
+		cxt->thr_afhandle = (cmr_handle) NULL;
+		return ISP_ERROR;
 	}
 	ret = cmr_thread_set_name(cxt->thr_aehandle, "algae");
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to set algae name");
 		ret = CMR_MSG_SUCCESS;
 	}
-
-#if 0 /* maybe optimized for data queue instead of message queue. */
-	pthread_attr_t attr;
-	/* thread for reading statis & IRQs */
-	pthread_mutex_init(&cxt->list_lock, NULL);
-	sem_init(&cxt->read_start_sem, 0, 0);
-	sem_init(&cxt->read_exit_sem, 0, 0);
-	sem_init(&cxt->proc_start_sem, 0, 0);
-	sem_init(&cxt->proc_exit_sem, 0, 0);
-	cxt->event_list_head = NULL;
-	cxt->proc_should_exit = 0;
-	cxt->read_should_exit = 0;
-
-	if (1) {
-		pthread_attr_t attr;
-
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-		ret = pthread_create(&cxt->read_thr_handle,
-						&attr,
-						ispalg_event_read,
-						(void *)cxt);
-		pthread_setname_np(cxt->read_thr_handle, "ispevt_read");
-		pthread_attr_destroy(&attr);
-	}
-
-	if (1) {
-		pthread_attr_t attr;
-
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-		ret = pthread_create(&cxt->proc_thr_handle,
-						&attr,
-						ispalg_event_proc,
-						(void *)cxt);
-		pthread_setname_np(cxt->proc_thr_handle, "ispevt_read");
-		pthread_attr_destroy(&attr);
-	}
-#endif
 
 	return ret;
 }
@@ -3510,7 +3225,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		param_data = output.param_data;
 		if (param_data)
 			ae_input.has_force_bypass = param_data->user_data[0];
-		for (i = 0; i < output.param_num; i++) {
+		for (i = 0; (i < output.param_num) && param_data; i++) {
 			if (NULL != param_data->data_ptr && (num < AE_MAX_PARAM_NUM)) {
 				ae_input.param[num].param = param_data->data_ptr;
 				ae_input.param[num].size = param_data->data_size;
@@ -5316,6 +5031,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		param.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 		param.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 		ret = ispalg_ae_set_work_mode(cxt, cxt->commn_cxt.isp_pm_mode[0], 0, &param);
+		ISP_RETURN_IF_FAIL(ret, ("fail to set ae work mode"));
 	}
 
 	if (cxt->ops.ae_ops.ioctrl) {
