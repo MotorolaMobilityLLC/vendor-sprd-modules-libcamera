@@ -4360,7 +4360,6 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
-        s_setting[mCameraId].controlInfo.ae_manual_trigger == 0;
         if (s_setting[mCameraId].controlInfo.ae_exposure_compensation !=
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
                 .data.i32[0]) {
