@@ -1828,7 +1828,11 @@ static void trigger_caf(af_ctrl_t * af, char *test_param)
 	char *p1 = test_param;
 	char *p2;
 	char *p3;
-	property_set("vendor.cam.af_set_pos", "none");
+	int w2 = 0;
+	w2 = property_set("vendor.cam.af_set_pos", "none");
+	if (w2) {
+		ISP_LOGE("set af_pos to none fail");
+	}
 
 	if (AF_SEARCHING == af->focus_state) {
 		af_stop_search(af);
@@ -2136,13 +2140,17 @@ static void *loop_for_test_mode(void *data_client)
 	char AF_POS[PROPERTY_VALUE_MAX] = { '\0' };
 	int sleep_rtn = 0;
 	af = data_client;
+	int w1 = 0;
 
 	while (0 == af->test_loop_quit) {
 		property_get("vendor.cam.af_mode", AF_MODE, "none");
 		ISP_LOGV("test AF_MODE %s", AF_MODE);
 		if (0 != strcmp(AF_MODE, "none") && 0 != strcmp(AF_MODE, "ISP_DEFAULT")) {
 			set_af_test_mode(af, AF_MODE);
-			property_set("vendor.cam.af_mode", "ISP_DEFAULT");
+			w1 = property_set("vendor.cam.af_mode", "ISP_DEFAULT");
+			if (w1) {
+				ISP_LOGE("set af_mode to ISP_DEFAULT fail");
+			}
 		}
 		property_get("vendor.cam.af_set_pos", AF_POS, "none");
 		ISP_LOGV("test AF_POS %s", AF_POS);
@@ -3290,9 +3298,11 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 		memcpy(&af->face_info, face, sizeof(struct afctrl_face_info));
 		af->trigger_source_type |= AF_DATA_FD;
 	}
-	for (i = 0; i < face->face_num; i++) {
-		ISP_LOGV("idx=%d,sx=%d, sy=%d,ex=%d,ey=%d,roll_angle=%d", i, face->face_info[i].sx, face->face_info[i].sy, face->face_info[i].ex, face->face_info[i].ey,
-			 face->face_info[i].angle);
+	if (NULL != face && 0 != face->face_num) {
+		for (i = 0; i < face->face_num; i++) {
+			ISP_LOGV("idx=%d,sx=%d, sy=%d,ex=%d,ey=%d,roll_angle=%d", i, face->face_info[i].sx, face->face_info[i].sy, face->face_info[i].ex, face->face_info[i].ey,
+				 face->face_info[i].angle);
+		}
 	}
 	return rtn;
 }
@@ -4275,6 +4285,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	ISP_LOGI("Enter");
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	int w1 = 0, w2 = 0;
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -4282,8 +4293,14 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 		return AFV1_ERROR;
 	}
 
-	property_set("vendor.cam.af_mode", "none");
-	property_set("vendor.cam.af_set_pos", "none");
+	w1 = property_set("vendor.cam.af_mode", "none");
+	if (w1) {
+		ISP_LOGE("change af_mode to none fail");
+	}
+	w2 = property_set("vendor.cam.af_set_pos", "none");
+	if (w2) {
+		ISP_LOGE("set af_pos to none fail");
+	}
 	if (0 == af->test_loop_quit) {
 		af->test_loop_quit = 1;
 		pthread_join(af->test_loop_handle, NULL);
