@@ -1559,12 +1559,12 @@ int SprdCamera3MultiBase::NV21Rotate(int8_t *dst_buf, uint16_t dst_fd,
 #define SUPPORT_RES_NUM 15
 static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_0_3M, {{640, 480}}},
-    {RES_2M, {{1600, 1200}, {960, 720}}},
+    {RES_2M, {{1600, 1200}, {960, 720}, {320, 240}}},
     {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720}}},
-    {RES_5M, {{2592, 1944}, {960, 720}}},
-    {RES_8M, {{3264, 2448}, {960, 720}}},
-    {RES_12M, {{4000, 3000}, {960, 720}}},
-    {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}}},
+    {RES_5M, {{2592, 1944}, {960, 720}, {320, 240}}},
+    {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
+    {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},
+    {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}, {320, 240}}},
 };
 
 int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
