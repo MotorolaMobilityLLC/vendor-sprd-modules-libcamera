@@ -66,12 +66,20 @@ cmr_int isp_sim_get_no_lsc_ae_stats(struct isp_awb_statistic_info *awb_statis, c
 		return ISP_ERROR;
 	}
 
-	fscanf(fp, "stat_w:%d\n", stat_w);
-	fscanf(fp, "stat_h:%d\n", stat_h);
+	if(EOF==fscanf(fp, "stat_w:%d\n", stat_w)){
+                ISP_LOGD("end to file");
+	}
+	if(EOF==fscanf(fp, "stat_h:%d\n", stat_h)){
+		ISP_LOGD("end to file");
+	}
 	while (!feof(fp)) {
-		fscanf(fp, "blk_id:%d ", &i);
-		fscanf(fp, "R:%d G:%d B:%d\n",
-			&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i]);
+		if(EOF==fscanf(fp, "blk_id:%d ", &i)){
+			ISP_LOGD("end to file");
+		}
+		if(EOF==fscanf(fp, "R:%d G:%d B:%d\n",
+			&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
+			ISP_LOGD("end to file");
+		}
 	}
 
 	fclose(fp);

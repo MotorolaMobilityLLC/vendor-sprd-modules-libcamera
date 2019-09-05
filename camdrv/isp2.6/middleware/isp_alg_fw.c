@@ -811,6 +811,10 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 			cfg.scene_id = PM_SCENE_CAP;
 			cfg.block_info = &gain;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
+			if(ret != ISP_SUCCESS){
+				ISP_LOGE("fail to set isp device access ioctl.");
+				return ret;
+			}
 		}
 		cfg.scene_id = PM_SCENE_PRE;
 		cfg.block_info = &gain;
