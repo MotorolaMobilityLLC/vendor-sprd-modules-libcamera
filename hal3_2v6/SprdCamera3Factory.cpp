@@ -239,12 +239,16 @@ void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
 int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
                                          struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
+    int phyId = 0;
     struct phySensorInfo *phyPtr = NULL;
 
     if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) >= mNumOfCameras)
         return -ENODEV;
 
-    phyPtr = sensorGetPhysicalSnsInfo(multiCameraModeIdToPhyId(camera_id));
+    phyId = multiCameraModeIdToPhyId(camera_id);
+    if (phyId < 0)
+        phyId = 0;
+    phyPtr = sensorGetPhysicalSnsInfo(phyId);
     if (phyPtr->phyId != phyPtr->slotId)
         return -ENODEV;
 

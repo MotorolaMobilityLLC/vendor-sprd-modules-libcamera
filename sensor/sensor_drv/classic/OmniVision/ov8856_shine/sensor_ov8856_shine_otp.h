@@ -70,7 +70,7 @@ static uint32_t ov8856_read_otp_info(cmr_handle handle, void *param_ptr) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3d8B, 0x0a);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3d81,
                         0x01); // load otp into buffer
-    usleep(10 * 1000);
+    usleep(10000U);
 
     // OTP base information and WB calibration data
     otp_flag = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x7010);

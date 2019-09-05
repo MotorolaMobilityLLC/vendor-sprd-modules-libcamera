@@ -2031,7 +2031,7 @@ static void sensor_rid_save_sensor_info(char *sensor_info) {
         close(fd);
         goto exit;
     }
-    property_set("vendor.cam.sensor.info", sensor_info);
+    ret = property_set("vendor.cam.sensor.info", sensor_info);
     close(fd);
 
 exit:
@@ -3030,8 +3030,8 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
         sensor_cxt->sensor_info_ptr->sensor_version_info != NULL &&
         strlen((const char *)sensor_cxt->sensor_info_ptr->sensor_version_info) >
             1) {
-        sensor_size = sensor_cxt->sensor_info_ptr->source_width_max *
-                      sensor_cxt->sensor_info_ptr->source_height_max;
+        sensor_size = (cmr_u64)((cmr_uint)sensor_cxt->sensor_info_ptr->source_width_max *
+                      (cmr_uint)sensor_cxt->sensor_info_ptr->source_height_max);
         if (sensor_size >= 1000000) {
             sprintf(buffer, "%s %ldM \n",
                     sensor_cxt->sensor_info_ptr->sensor_version_info,
@@ -3039,7 +3039,7 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
         } else {
             sprintf(buffer, "%s 0.%ldM \n",
                     sensor_cxt->sensor_info_ptr->sensor_version_info,
-                    sensor_size / 100000);
+                    (cmr_u32)(sensor_size / 100000));
         }
 
         strcat(sensor_info, buffer);

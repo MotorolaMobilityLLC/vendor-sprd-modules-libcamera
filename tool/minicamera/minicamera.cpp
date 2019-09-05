@@ -145,8 +145,7 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
             }
         } else if (strcmp(argv[i], "-fps") == 0 && (i < argc - 1)) {
             cxt->fps = atoi(argv[++i]);
-            if (cxt->fps > MINICAMERA_MAX_FPS ||
-                (0 < cxt->fps < MINICAMERA_MIN_FPS)) {
+            if (cxt->fps > MINICAMERA_MAX_FPS || cxt->fps < MINICAMERA_MIN_FPS) {
                 cxt->fps = 10;
             }
         } else if (strcmp(argv[i], "-dump_cnt") == 0 && (i < argc - 1)) {

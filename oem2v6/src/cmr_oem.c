@@ -498,7 +498,8 @@ cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
         return -EINVAL;
     }
 
-    if (read(fd, buffer, sizeof(buffer)) <= 0) {
+    ret = read(fd, buffer, sizeof(buffer));
+    if (ret <= 0) {
         CMR_LOGE("read failed\n");
         ret = -EINVAL;
     }
@@ -513,7 +514,10 @@ cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
 }
 
 cmr_int camera_front_lcd_flash_activie(cmr_u32 face_type) {
-    if (face_type == 1 && !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
+    bool isFrontLCD =
+        (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
+
+    if (face_type == 1 && isFrontLCD)
         return 1;
 
     return 0;
@@ -3464,7 +3468,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     } else if (cxt->is_multi_mode == MODE_BLUR && atoi(value) == 3) {
         isp_param.multi_mode = ISP_BLUR_REAR;
     } else if (cxt->is_multi_mode == MODE_BLUR &&
-                  (atoi(fr_portrait) == 1 || atoi(ba_portrait) == 1)) {
+               (atoi(fr_portrait) == 1 || atoi(ba_portrait) == 1)) {
         isp_param.multi_mode = ISP_BLUR_PORTRAIT;
     } else if (cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {
         isp_param.multi_mode = ISP_WIDETELE;

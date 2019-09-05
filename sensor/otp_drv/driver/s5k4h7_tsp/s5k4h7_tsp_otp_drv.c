@@ -700,12 +700,12 @@ static cmr_int s5k4h7_tsp_otp_drv_read(cmr_handle otp_drv_handle, void *p_params
 		/*TODO*/
 		/*stream on*/
 		hw_sensor_write_reg(otp_cxt->hw_handle, 0x0100, 0x01);
-		usleep(50 * 1000);
+		usleep(50000U);
 		/*page set*/
 		hw_sensor_write_reg(otp_cxt->hw_handle, 0x0A02, 0x15);
 		/*otp enable read*/
 		hw_sensor_write_reg(otp_cxt->hw_handle, 0x0A00, 0x01);
-		usleep(55 * 1000);
+		usleep(55000U);
 		
 		for(i = 0; i < OTP_LEN; i++)
 		{
@@ -714,7 +714,7 @@ static cmr_int s5k4h7_tsp_otp_drv_read(cmr_handle otp_drv_handle, void *p_params
 		}
 	
 		hw_sensor_write_reg(otp_cxt->hw_handle, 0x0A00, 0x00);
-		usleep(5 * 1000);		
+		usleep(5000U);		
 	/*
 		if (OTP_CAMERA_SUCCESS == ret) {
 			property_get("debug.camera.save.otp.raw.data", value, "0");

@@ -465,7 +465,6 @@ static cmr_int s5k5e9yu05_drv_access_val(cmr_handle handle,
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
 
     return ret;
 }

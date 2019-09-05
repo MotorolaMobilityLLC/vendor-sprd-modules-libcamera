@@ -964,8 +964,8 @@ int autotest_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
             memcpy(rsp, p_buf, 768);
             ret = 768; // rsp_size-1;
         } else {
-            memcpy(rsp, p_buf, 768);
-            ret = 768; // rec_image_size;
+            memcpy(rsp, p_buf, rec_image_size);
+            ret = rec_image_size; // rec_image_size;
         }
         break;
 

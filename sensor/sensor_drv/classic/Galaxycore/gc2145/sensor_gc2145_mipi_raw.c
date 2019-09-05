@@ -193,7 +193,7 @@ static cmr_int gc2145_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     //    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
     //    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x03);
-    usleep(100*1000);
+    usleep(100000U);
 #ifdef GC2145_MIPI_2Lane
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x03);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x10, 0x95);
@@ -203,7 +203,7 @@ static cmr_int gc2145_drv_stream_on(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x10, 0x94);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
 #endif
-    usleep(20*1000);
+    usleep(20000U);
 
     return 0;
 }
@@ -227,7 +227,7 @@ static cmr_u32 gc2145_drv_stream_off(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x10, 0x84);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
 #endif
-    usleep(20 * 1000);
+    usleep(20000U);
 
     return 0;
 }
@@ -448,31 +448,31 @@ static cmr_int gc2145_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
-        usleep(1000);
+        usleep(1000U);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
-        usleep(1000);
+        usleep(1000U);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
-        usleep(1 * 1000);
+        usleep(1000U);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle,
                            SENSOR_DEFALUT_MCLK); // SENSOR_DEFALUT_MCLK);
-        usleep(1 * 1000);
+        usleep(1000U);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
-        usleep(1 * 1000);
+        usleep(1000U);
         // step 3 reset pin high
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
     } else {
         // step 1 reset and PWDN
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
-        usleep(1000);
+        usleep(1000U);
         // step 4 xvclk
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        usleep(1000);
+        usleep(1000U);
         // step 5 AVDD IOVDD
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-        usleep(1000);
+        usleep(1000U);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-        usleep(1000);
+        usleep(1000U);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
     SENSOR_LOGI("Power_On(1:on, 0:off): %d", power_on);
@@ -540,7 +540,7 @@ static cmr_int gc2145_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 
         if (frame_len_cur != frame_len) {
 
-            ret_value = gc2145_drv_set_vts(
+            gc2145_drv_set_vts(
                 handle,
                 frame_len - max_frame_len > 0 ? frame_len - max_frame_len : 0);
         }

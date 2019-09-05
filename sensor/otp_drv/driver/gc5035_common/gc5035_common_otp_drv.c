@@ -425,12 +425,8 @@ static cmr_int gc5035_common_parse_awb_data(cmr_handle otp_drv_handle) {
 			OTP_LOGE("golden data checksum error, parse failed!");
 	} else if (awb_flag & 0xf0 == 0x00) {
 		OTP_LOGE("golden info is empty!");
-		gc5035_common_awb[0].rg_ratio = gc5035_common_awb[0].rg_ratio;
-		gc5035_common_awb[0].bg_ratio = gc5035_common_awb[0].bg_ratio;
 	} else {
 		OTP_LOGE("golden info is invalid!");
-		gc5035_common_awb[0].rg_ratio = gc5035_common_awb[0].rg_ratio;
-		gc5035_common_awb[0].bg_ratio = gc5035_common_awb[0].bg_ratio;
 	}
 
 	if (OTP_CAMERA_SUCCESS != ret) {
