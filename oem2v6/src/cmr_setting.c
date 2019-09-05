@@ -76,6 +76,7 @@ enum setting_general_type {
     SETTING_GENERAL_SENSOR_ROTATION,
     SETTING_GENERAL_AE_LOCK_UNLOCK,
     SETTING_GENERAL_AWB_LOCK_UNLOCK,
+    SETTING_GENERAL_AE_MODE,
     SETTING_GENERAL_FOCUS_DISTANCE,
     SETTING_GENERAL_AUTO_HDR,
     SETTING_GENERAL_SPRD_APP_MODE,
@@ -123,6 +124,7 @@ struct setting_hal_common {
     cmr_uint video_mode;
     cmr_uint frame_rate;
     cmr_uint auto_exposure_mode;
+    cmr_uint ae_mode;
     cmr_uint focus_distance;
     cmr_uint is_auto_hdr;
     cmr_uint sprd_appmode_id;
@@ -553,6 +555,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
          COM_ISP_SET_AE_LOCK_UNLOCK, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AWB_LOCK_UNLOCK, &hal_param->is_awb_lock,
          COM_ISP_SET_AWB_LOCK_UNLOCK, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AE_MODE, &hal_param->hal_common.ae_mode,
+         COM_ISP_SET_AE_MODE_CONTROL, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_FOCUS_DISTANCE, &hal_param->hal_common.focus_distance,
          COM_ISP_SET_AF_POS, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
@@ -2509,6 +2513,15 @@ setting_get_device_orientation(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_ae_mode(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AE_MODE, parm);
+
+    return ret;
+}
+
 static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2656,6 +2669,12 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         cmd_param.camera_id = parm->camera_id;
         cmd_param.ae_param.mode = hal_param->hal_common.auto_exposure_mode;
         ret = setting_set_auto_exposure_mode(cpt, &cmd_param);
+        CMR_RTN_IF_ERR(ret);
+    }
+
+    if (invalid_word != hal_param->hal_common.ae_mode) {
+        cmd_param.cmd_type_value = hal_param->hal_common.ae_mode;
+        ret = setting_set_ae_mode(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
     }
 
@@ -3945,6 +3964,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_afbc_enable);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED,
                              setting_get_afbc_enabled);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_MODE,
+                             setting_set_ae_mode);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
                              setting_set_exposure_time);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,

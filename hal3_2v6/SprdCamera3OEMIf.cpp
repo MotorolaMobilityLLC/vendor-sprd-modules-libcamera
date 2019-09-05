@@ -6359,6 +6359,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
+                 controlInfo.ae_mode);
+
             if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
                 if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
                     mFlashMode != CAMERA_FLASH_MODE_TORCH) {

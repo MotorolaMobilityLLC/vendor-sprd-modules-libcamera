@@ -7841,6 +7841,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->leds_ctrl;
         break;
 
+    case COM_ISP_SET_AE_MODE_CONTROL:
+        isp_cmd = ISP_CTRL_SET_AE_MODE;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("ae_mode %d", param_ptr->cmd_value);
+        break;
+
     case COM_ISP_SET_AF_POS:
         isp_cmd = ISP_CTRL_SET_AF_POS;
         isp_param = param_ptr->cmd_value;
@@ -9068,6 +9074,13 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
             CMR_LOGE("err, fps param is null");
             ret = -CMR_CAMERA_INVALID_PARAM;
         }
+        break;
+
+    case CAMERA_PARAM_AE_MODE:
+        setting_param.cmd_type_value = param;
+        CMR_LOGI("ae_mode=%lu", param);
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
         break;
 
     case CAMERA_PARAM_EXPOSURE_TIME:

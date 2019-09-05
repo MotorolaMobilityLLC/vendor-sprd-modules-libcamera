@@ -2800,6 +2800,17 @@ static cmr_int ispctl_set_ae_sensitivity(cmr_handle isp_alg_handle, void *param_
 	return ret;
 }
 
+static cmr_int ispctl_set_ae_manual_mode(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int rtn = ISP_SUCCESS;
+	cmr_u32 manual_mode = *(cmr_u32 *) param_ptr;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MANUAL_MODE, (void *)&manual_mode, NULL);
+	return rtn;
+}
+
 static cmr_int ispctl_set_dcam_timestamp(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -3283,6 +3294,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_TOOL_SET_SCENE_PARAM, ispctl_tool_set_scene_param},	// for tool scene param setting
 	{ISP_CTRL_FORCE_AE_QUICK_MODE, ispctl_force_ae_quick_mode},
 	{ISP_CTRL_SET_AE_EXP_TIME, ispctl_set_ae_exp_time},
+	{ISP_CTRL_SET_AE_MODE, ispctl_set_ae_manual_mode},
 	{ISP_CTRL_SET_AE_SENSITIVITY, ispctl_set_ae_sensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, ispctl_set_dcam_timestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, ispctl_set_aux_sensor_info},
