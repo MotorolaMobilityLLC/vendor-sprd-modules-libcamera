@@ -2422,7 +2422,7 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
         &(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported), 1);
-    if (cameraId == 0 || cameraId == 1 || cameraId == 2) {
+    if (cameraId == 0 || cameraId == 1 || cameraId == 2 || cameraId == 3 ) {
         staticInfo.update(
             ANDROID_SPRD_AVAILABLE_ISO,
             s_setting[cameraId].sprddefInfo.availabe_iso,
