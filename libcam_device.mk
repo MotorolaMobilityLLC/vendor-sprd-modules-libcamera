@@ -14,3 +14,5 @@ SPRD_LIB += libfcell
 SPRD_LIB += libsprd_fcell
 #endif
 PRODUCT_PACKAGES += $(SPRD_LIB)
+
+PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_easy_hdr/param/sprd_hdr_tuning.param:vendor/etc/sprd_hdr_tuning.param

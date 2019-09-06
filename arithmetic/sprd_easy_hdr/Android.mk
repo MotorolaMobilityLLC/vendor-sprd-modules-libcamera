@@ -115,4 +115,6 @@ endif
 
 include $(BUILD_SHARED_LIBRARY)
 
+include $(call all-makefiles-under, $(LOCAL_PATH))
+
 endif
