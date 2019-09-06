@@ -10061,10 +10061,17 @@ cmr_int camera_get_sensor_mode_trim(cmr_handle oem_handle,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    sn_trim->start_x = sensor_info->mode_info[sensor_mode].trim_start_x;
-    sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
-    sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
-    sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height;
+    if (sensor_info->mode_info[sensor_mode].trim_width > PICTURE_W){
+        sn_trim->start_x = sensor_info->mode_info[sensor_mode].trim_start_x;
+        sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
+        sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width >> 1;
+        sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height >> 1;
+    }else{
+        sn_trim->start_x = sensor_info->mode_info[sensor_mode].trim_start_x;
+        sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
+        sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
+        sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height;
+    }
     CMR_LOGD("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
              sn_trim->width, sn_trim->height);
 exit:
