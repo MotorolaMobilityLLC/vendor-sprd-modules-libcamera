@@ -37,9 +37,14 @@
 #define ISP_READ_MODE_ID_MAX 13
 
 #define ISP_NR_BLOCK_MIN 0
+#ifdef CONFIG_ISP_2_7
+#define ISP_ISO_NUM_MAX 9
+#define ISP_AE_WEIGHT_TYPE_MAX 3
+#else
 #define ISP_ISO_NUM_MAX 7
-#define ISP_ISO_NUM_MIN 0
 #define ISP_AE_WEIGHT_TYPE_MAX 2
+#endif
+#define ISP_ISO_NUM_MIN 0
 #define ISP_AE_WEIGHT_TYPE_MIN 0
 #define ISP_SCENE_NUM_MAX 7
 #define ISP_SCENE_NUM_MIN 0
