@@ -756,10 +756,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				} else {
 					if (gmean < 10) {
 						caliData->expTime *= 25;
-						caliData->gain = caliData->gain;
+						//caliData->gain = caliData->gain;
 					} else {
 						caliData->expTime *= 300 / gmean;
-						caliData->gain = caliData->gain;
+						//caliData->gain = caliData->gain;
 					}
 					if (caliData->expTime > 0.05 * AEC_LINETIME_PRECESION) {
 						float ratio = caliData->expTime / (0.05 * AEC_LINETIME_PRECESION);
