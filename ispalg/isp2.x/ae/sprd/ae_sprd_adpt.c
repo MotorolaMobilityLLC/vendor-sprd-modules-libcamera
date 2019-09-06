@@ -2714,8 +2714,8 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.otp_gldn_g = cxt->awb_otp_info.gldn_stat_info.g;
 	in.otp_gldn_b = cxt->awb_otp_info.gldn_stat_info.b;
 	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.r;
-	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.g;
-	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.b;
+	in.otp_rdm_g = cxt->awb_otp_info.rdm_stat_info.g;
+	in.otp_rdm_b = cxt->awb_otp_info.rdm_stat_info.b;
 
 	ISP_LOGV("gldn-(%d, %d, %d), rdm-(%d, %d, %d)\n",
 			cxt->awb_otp_info.gldn_stat_info.r, cxt->awb_otp_info.gldn_stat_info.g, cxt->awb_otp_info.gldn_stat_info.b,
