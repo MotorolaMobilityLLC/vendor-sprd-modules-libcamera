@@ -767,7 +767,9 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 					tp3index++;
 				}
 			}
-			fclose(fp);
+			if(fp != NULL){
+				fclose(fp);
+			}
 			pTempBuf = NULL;
 			tp3index = 0;
 			fp = NULL;
@@ -793,9 +795,12 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 					tp3index++;
 				}
 			}
-			fclose(fp);
+			if(fp != NULL){
+				fclose(fp);
+			}
 			fp = NULL;
 			pTempBuf = NULL;
+			tp3index = 0;
 		}
 		PD_FRAME_ID++;
 	}
