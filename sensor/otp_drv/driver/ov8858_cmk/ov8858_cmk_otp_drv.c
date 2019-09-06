@@ -467,7 +467,6 @@ static cmr_int ov8858_cmk_otp_drv_write(cmr_handle otp_drv_handle,
         free(buffer);
     } else {
         OTP_LOGE("ERROR:buffer pointer is null");
-        ret = OTP_CAMERA_FAIL;
     }
 
     /*close write permission*/
