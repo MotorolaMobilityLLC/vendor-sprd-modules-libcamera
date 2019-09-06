@@ -2690,7 +2690,7 @@ static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
 		blk_id = mode_common_ptr->block_header[i].block_id;
 		if(blk_id == 0x506C)
 			blk_ynr = 1;
-		ISP_LOGI("ynr blk_ynr = %d, blk_num = %d, i = %d", blk_ynr, blk_num, i);
+		ISP_LOGV("ynr blk_ynr = %d, blk_num = %d, i = %d", blk_ynr, blk_num, i);
 	}
 
 	if(blk_ynr != 1){
