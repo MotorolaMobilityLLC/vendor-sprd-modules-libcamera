@@ -5810,6 +5810,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
 		if(-1 == auto_hdr_enable)
 			auto_hdr_enable = 0;
+		if (cxt->isp_ops.callback)
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
 	}
 #endif
