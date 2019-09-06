@@ -2770,24 +2770,15 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
         SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
             .sensorInfo.orientation;
     if (!mIsCapturing) {
+        j = 0;
         for (int i = 0; i < numFaces; i++) {
             convertToRegions(faceDetectionInfo->face[i].rect,
                              faceRectangles + j, -1);
-            face_rect[i].left = faceRectangles[0 + j];
-            face_rect[i].top = faceRectangles[1 + j];
-            face_rect[i].right = faceRectangles[2 + j];
-            face_rect[i].bottom = faceRectangles[3 + j];
+            faceInfo[0] = faceRectangles[0 + j];
+            faceInfo[1] = faceRectangles[1 + j];
+            faceInfo[2] = faceRectangles[2 + j];
+            faceInfo[3] = faceRectangles[3 + j];
             j += 4;
-            if (face_rect[i].right - face_rect[i].left > max) {
-                max_index = i;
-                max = face_rect[i].right - face_rect[i].left;
-            }
-
-            faceInfo[0] = face_rect[i].left;
-            faceInfo[1] = face_rect[i].top;
-            faceInfo[2] = face_rect[i].right;
-            faceInfo[3] = face_rect[i].bottom;
-
             if (mbokehParm.portrait_param.mobile_angle == 0) {
                 mbokehParm.portrait_param.x1[i] =
                     faceInfo[2] * mBokehSize.capture_w / origW;
