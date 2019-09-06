@@ -88,7 +88,6 @@ static struct sensor_nr_scene_map_param s_ov32a1q_nr_scene_map_param = {{
 #endif
 
 #ifdef _NR_CNR_PARAM_
-#include "NR/common/normal/cnr_param.h"
 #endif
 
 #ifdef _NR_IMBALANCE_PARAM_
