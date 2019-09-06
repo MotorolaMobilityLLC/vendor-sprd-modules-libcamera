@@ -210,7 +210,7 @@ int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 	sprintf(dev , "/dev/%s" ,SPRD_FD_DEVICE_NAME);
 
 	fd = open(dev, O_RDWR, 0);
-	if (fd > 0)
+	if ((fd > 0) && (file))
 	{
 		file->fd = fd;
 		*hDT = (HWFD_DETECTOR_HANDLE)file;
