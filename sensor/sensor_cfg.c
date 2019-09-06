@@ -93,6 +93,9 @@ extern SENSOR_INFO_T g_imx363_mipi_raw_info;
 #ifdef IMX386
 extern SENSOR_INFO_T g_imx386_mipi_raw_info;
 #endif
+#ifdef IMX586
+extern SENSOR_INFO_T g_imx586_mipi_raw_info;
+#endif
 
 // samsung area
 #ifdef S5K3L6
@@ -378,6 +381,9 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
 #endif
 #ifdef IMX230
     {MODULE_SUNNY, "imx230", &g_imx230_mipi_raw_info, {&dw9800_drv_entry, 0}, {NULL, 0, 0, 0}},
+#endif
+#ifdef IMX586
+    {MODULE_SUNNY, "imx586", &g_imx586_mipi_raw_info, {NULL, 0}/*{&vcm_ak7371_drv_entry, 0}*/, {NULL, 0, 0, 0}},
 #endif
 
 // samsung area
