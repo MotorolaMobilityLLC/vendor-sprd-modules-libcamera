@@ -1435,7 +1435,7 @@ static cmr_u32 ae_set_pflash_exposure_compensation(struct ae_ctrl_cxt *cxt, int 
 	else{
 		value = (cmr_s16)(log(temp) /0.026 - 0.5);
 		ae_base_idx = effect_index + value;
-		ae_base_idx = ae_base_idx < 0 ? 0 : ae_base_idx;
+		//ae_base_idx = ae_base_idx < 0 ? 0 : ae_base_idx;
 	}
 
 	if(!cxt->sync_cur_result.cur_lum){
