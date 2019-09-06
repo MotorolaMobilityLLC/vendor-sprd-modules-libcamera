@@ -257,7 +257,7 @@ static int get_prop_multi(const char *name, int n, int *data)
 static int _aem_stat_preprocess2(cmr_u32 * src_aem_stat, float *dst_r, float *dst_g, float *dst_b, struct ae_size aem_blk_size, struct ae_size aem_blk_num, cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u64 bayer_pixels = aem_blk_size.w * aem_blk_size.h / 4;
+	cmr_u64 bayer_pixels = (cmr_u64)aem_blk_size.w * (cmr_u64)aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32 *) src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32 *) src_aem_stat + stat_blocks;
