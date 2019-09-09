@@ -976,7 +976,7 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     if (!dualPropSupport) {
         available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
     } else if (atoi(prop) == 1) {
-        available_cam_features[BACKBLURVERSION] = BLUR_TWOFRAME_VERSION;
+        available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
     } else if (atoi(prop) == BOKEH_VERSION) {
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
         available_cam_features[BACKBLURVERSION] = 9;
@@ -988,7 +988,7 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
         }
 #endif
     } else {
-        available_cam_features[BACKBLURVERSION] = atoi(prop);
+        available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
     }
     // 2 frontblurversion
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
