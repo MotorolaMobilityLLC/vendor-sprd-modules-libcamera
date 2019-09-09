@@ -13,13 +13,13 @@
 extern "C" {
 #endif
 
-	struct awb_stat_img {
+	struct awb_stat_img_v1 {
 		cmr_u32 *r;
 		cmr_u32 *g;
 		cmr_u32 *b;
 	};
 
-	struct awb_rgb_gain {
+	struct awb_rgb_gain_v1 {
 		cmr_u32 r_gain;
 		cmr_u32 g_gain;
 		cmr_u32 b_gain;
@@ -183,8 +183,8 @@ extern "C" {
 		/* MWB table */
 		cmr_u8 wbModeNum;
 		cmr_u8 wbModeId[10];
-		struct awb_rgb_gain wbMode_gain[10];
-		struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain
+		struct awb_rgb_gain_v1 wbMode_gain[10];
+		struct awb_rgb_gain_v1 mwb_gain[101];	// mwb_gain[0] is init_gain
 
 		/* AWB parameter */
 		cmr_s32 rgb_12bit_sat_value;
@@ -284,7 +284,7 @@ extern "C" {
 		cmr_s32 check;
 	};
 
-	struct awb_init_param {
+	struct awb_init_param_v1 {
 		cmr_u32 stat_w;			// will be deprecated
 		cmr_u32 stat_h;			// will be deprecated
 
@@ -298,8 +298,8 @@ extern "C" {
 		struct awb_tuning_param tuning_param;
 	};
 
-	struct awb_calc_param {
-		struct awb_stat_img stat_img;
+	struct awb_calc_param_v1 {
+		struct awb_stat_img_v1 stat_img;
 
 		cmr_u32 stat_img_w;
 		cmr_u32 stat_img_h;
@@ -324,8 +324,8 @@ extern "C" {
 		void* xyz_info;
 	};
 
-	struct awb_calc_result {
-		struct awb_rgb_gain awb_gain[8];
+	struct awb_calc_result_v1 {
+		struct awb_rgb_gain_v1 awb_gain[8];
 
 		int r_offset;
 		int g_offset;
@@ -340,7 +340,7 @@ extern "C" {
 
 #ifdef WIN32
 	// for AI
-	enum ai_scene_type {
+typedef enum ai_scene_type {
 		AI_SCENE_DEFAULT,
 		AI_SCENE_FOOD,
 		AI_SCENE_PORTRAIT,
@@ -358,24 +358,24 @@ extern "C" {
 		AI_SCENE_PET,
 		AI_SCENE_FLOWER,
 		AI_SCENE_MAX
-	};
+	}ai_scene_type_v1;
 
-	enum ai_task_0 {
+typedef	enum ai_task_0 {
 		AI_SCENE_TASK0_INDOOR,
 		AI_SCENE_TASK0_OUTDOOR,
 		AI_SCENE_TASK0_MAX
-	};
+	}ai_task_0_v1;
 
-	enum ai_task_1 {
+typedef enum ai_task_1 {
 		AI_SCENE_TASK1_NIGHT,
 		AI_SCENE_TASK1_BACKLIGHT,
 		AI_SCENE_TASK1_SUNRISESET,
 		AI_SCENE_TASK1_FIREWORK,
 		AI_SCENE_TASK1_OTHERS,
 		AI_SCENE_TASK1_MAX
-	};
+	}ai_task_1_v1;
 
-	enum ai_task_2 {
+typedef	enum ai_task_2 {
 		AI_SCENE_TASK2_FOOD,
 		AI_SCENE_TASK2_GREENPLANT,
 		AI_SCENE_TASK2_DOCUMENT,
@@ -386,7 +386,7 @@ extern "C" {
 		AI_SCENE_TASK2_SNOW,
 		AI_SCENE_TASK2_OTHERS,
 		AI_SCENE_TASK2_MAX
-	};
+	}ai_task_2_v1;
 
 	struct ai_task0_result {
 		enum ai_task_0 id;
@@ -413,7 +413,7 @@ extern "C" {
 #endif
 
 	// for XYZ color sensor
-	struct xyz_color_info
+	struct xyz_color_info_v1
 	{
 		unsigned int x_data;
 		unsigned int y_data;
@@ -434,11 +434,11 @@ extern "C" {
 
 	// for flash
 	enum {
-		AWB_IOCTRL_GET_CTTABLE20 = 2,
-		AWB_IOCTRL_CMD_MAX,
+		AWB_IOCTRL_GET_CTTABLE20_v1 = 2,
+		AWB_IOCTRL_CMD_MAX_v1,
 	};
 
-	struct awb_ct_table {
+	struct awb_ct_table_v1 {
 		float ct[20];
 		float rg[20];
 	};
@@ -479,8 +479,8 @@ extern "C" {
 *				Function Prototype					*
 *-------------------------------------------------------------------------------*/
 #ifdef WIN32
-	void *awb_init_v1(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
-	cmr_s32 awb_calc_v1(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
+	void *awb_init_v1(struct awb_init_param_v1 *init_param, struct awb_rgb_gain_v1 *gain);
+	cmr_s32 awb_calc_v1(void *awb_handle, struct awb_calc_param_v1 *calc_param, struct awb_calc_result_v1 *calc_result);
 	cmr_s32 awb_ioctrl_v1(void *awb_handle, cmr_s32 cmd, void *param);
 	cmr_s32 awb_deinit_v1(void *awb_handle);
 	cmr_s32 awb_sync_gain(struct awb_sync_info *sync_info, cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master, cmr_u32 * gain_r_slave, cmr_u32 * gain_g_slave, cmr_u32 * gain_b_slave);
