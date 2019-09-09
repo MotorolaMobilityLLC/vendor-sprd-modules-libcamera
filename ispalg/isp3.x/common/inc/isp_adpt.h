@@ -12,7 +12,7 @@ enum ae_product_lib_id {
 enum awb_product_lib_id {
 	ADPT_SPRD_AWB_LIB,
 	ADPT_AL_AWb_LIB,
-	ADPT_MAX_AWB_LIB = 3,
+	ADPT_MAX_AWB_LIB,
 };
 
 enum af_product_lib_id {
