@@ -156,15 +156,6 @@ struct ae_touch_param {
 	struct ae_size touch_tuning_win;	//for touch ae
 };
 
-struct ae_face_tune_param {
-	cmr_s32 param_face_weight;	/* The ratio of face area weight (in percent) */
-	cmr_s32 param_convergence_speed;	/* AE convergence speed */
-	cmr_s32 param_lock_ae;		/* frames to lock AE */
-	cmr_s32 param_lock_weight_has_face;	/* frames to lock the weight table, when has faces */
-	cmr_s32 param_lock_weight_no_face;	/* frames to lock the weight table, when no faces */
-	cmr_s32 param_shrink_face_ratio;	/* The ratio to shrink face area. In percent */
-};
-
 struct ae_hdr_tuning_param {
 	cmr_s32 ev_minus_offset;
 	cmr_s32 ev_plus_offset;
@@ -435,8 +426,8 @@ struct ae_tuning_param {		//total bytes must be 312696
 	struct ae_ev_cali ev_cali;
 	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
 	struct ae_touch_param touch_info;	/*it is in here,just for compatible; 3 * 4bytes */
-	struct ae_face_tune_param face_info;
-
+	//struct ae_face_tune_param face_info;
+	cmr_u32 reserved0[6];
 	/*13 * 4bytes */
 	cmr_u8 monitor_mode;		/*0: single, 1: continue */
 	cmr_u8 ae_tbl_exp_mode;		/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
