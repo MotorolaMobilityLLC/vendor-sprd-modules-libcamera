@@ -1,6 +1,7 @@
 #ifndef AWBLIB_H_
 #define AWBLIB_H_
 
+
 #ifndef WIN32
 typedef long long __int64;
 #include <linux/types.h>
@@ -24,7 +25,12 @@ struct awb_rgb_gain_3_0
 	int ct;
 	int tint;
 	int ct_mean;
+	int tint_mean;
 };
+
+
+
+
 
 struct awb_stat_img_3_0
 {
@@ -64,6 +70,7 @@ struct awb_face_info_3_0
 	unsigned short img_width;
 	unsigned short img_height;
 };
+
 
 // AI scene
 enum awb_aiscene_type_3_0
@@ -170,11 +177,16 @@ struct awb_colorsensor_info_3_0
 	unsigned int lux;
 	unsigned int cct;
 };
+
 struct awb_ct_table_3_0
 {
 	int ct[20];
 	float rg[20];
 };
+
+
+
+
 
 struct awb_init_param_3_0
 {
@@ -185,6 +197,8 @@ struct awb_init_param_3_0
 	unsigned int otp_unit_b;
 
 	void* tool_param;
+
+
 	// xyz color sensor info
 	void* xyz_info;
 };
@@ -194,7 +208,6 @@ struct awb_calc_param_3_0
 	// common info
 	unsigned int frame_index;
 	unsigned int timestamp;
-
 
 	// stat info
 	struct awb_stat_img_3_0 stat_img_3_0;
@@ -236,8 +249,35 @@ enum
 {
 	AWB_IOCTRL_GET_MWB_BY_MODEID_3_0 = 1,
 	AWB_IOCTRL_GET_MWB_BY_CT_3_0 = 2,
+
 	AWB_IOCTRL_GET_CTTABLE20_3_0 = 3,
+
 	AWB_IOCTRL_SET_CMC_3_0 = 4,
+
+	AWB_IOCTRL_COLOR_CALIBRATION = 5,
+
+// for WIN32 debugtool
+	AWB_IOCTRL_GET_AWBLIB_VERSION,
+
+	AWB_IOCTRL_GET_CURRENT_BV,
+	AWB_IOCTRL_GET_STAT_WIDTH,
+	AWB_IOCTRL_GET_STAT_HEIGHT,
+	AWB_IOCTRL_GET_STAT_AEM,
+	AWB_IOCTRL_GET_RANDOM_OTP,
+	AWB_IOCTRL_GET_GOLDEN_OTP,
+
+	AWB_IOCTRL_GET_ZONE_CTTINT,
+	AWB_IOCTRL_GET_BASIC_CTTINT,
+	AWB_IOCTRL_GET_FINAL_RESULT,
+
+	AWB_IOCTRL_GET_CURRENT_BOUNDARY,
+	AWB_IOCTRL_GET_CT_TINT_BUFFER,
+
+	AWB_IOCTRL_GET_ZONE_BUFFER,
+// for WIN32 debugtool
+
+
+
 	AWB_IOCTRL_CMD_MAX_3_0,
 };
 
@@ -248,6 +288,11 @@ extern __declspec(dllexport) void *awb_init(struct awb_init_param_3_0 *init_para
 extern __declspec(dllexport) int awb_deinit(void *awb_handle);
 extern __declspec(dllexport) int awb_calc(void *awb_handle, struct awb_calc_param_3_0 *calc_param, struct awb_calc_result_3_0 *calc_result);
 extern __declspec(dllexport) int awb_ioctrl(void *awb_handle, int cmd, void *in, void *out);
+#else
+void *awb_init(struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
+int awb_deinit(void *awb_handle);
+int awb_calc(void *awb_handle, struct awb_calc_param_3_0 *calc_param, struct awb_calc_result_3_0 *calc_result);
+int awb_ioctrl(void *awb_handle, int cmd, void *param1, void *param2);
 #endif
 #endif
 
