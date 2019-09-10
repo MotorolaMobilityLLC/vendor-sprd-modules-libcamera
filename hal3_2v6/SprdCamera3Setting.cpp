@@ -549,6 +549,14 @@ const cam_stream_info_t stream_info[] = {
     {{240, 320}, 33331760L, 33331760L},
     {{176, 144}, 33331760L, 33331760L}};
 
+const cam_stream_info_t subSensor_stream_info[] = {
+    {{4160, 3120}, 33331760L, 33331760L}, {{4000, 3000}, 33331760L, 33331760L},
+    {{3264, 2448}, 33331760L, 33331760L}, {{2592, 1944}, 33331760L, 33331760L},
+    {{1920, 1080}, 33331760L, 33331760L}, {{1600, 1200}, 33331760L, 33331760L},
+    {{1440, 1080}, 33331760L, 33331760L}, {{1280, 720}, 33331760L, 33331760L},
+    {{960, 720}, 33331760L, 33331760L},   {{640, 480}, 33331760L, 33331760L},
+    {{320, 240}, 33331760L, 33331760L}};
+
 const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.6, 2.8, 3.0};
 
 const int64_t kavailable_min_durations[1] = {
@@ -1537,7 +1545,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                                 HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
 
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
-    size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
+    size_t stream_sizes_tbl_cnt;
+    const cam_stream_info_t *p_stream_info = NULL;
 
     /* Add input/output stream configurations for each scaler formats*/
     Vector<int32_t> available_stream_configs;
@@ -1546,68 +1555,77 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     /*available stall durations*/
     Vector<int64_t> available_stall_durations;
 
+    if (cameraId > 1) {
+        p_stream_info = subSensor_stream_info;
+        stream_sizes_tbl_cnt =
+            sizeof(subSensor_stream_info) / sizeof(cam_stream_info);
+    } else {
+        p_stream_info = stream_info;
+        stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
+    }
+
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
-            if ((stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
-                 stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
-                (stream_info[i].stream_sizes_tbl.width == 480 &&
-                 stream_info[i].stream_sizes_tbl.height == 640)) {
+            if ((p_stream_info[i].stream_sizes_tbl.width <= largest_sensor_w &&
+                 p_stream_info[i].stream_sizes_tbl.height <=
+                     largest_sensor_h) ||
+                (p_stream_info[i].stream_sizes_tbl.width == 480 &&
+                 p_stream_info[i].stream_sizes_tbl.height == 640)) {
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB &&
-                    (stream_info[i].stream_sizes_tbl.width == 176 &&
-                     stream_info[i].stream_sizes_tbl.height == 144)) {
+                    (p_stream_info[i].stream_sizes_tbl.width == 176 &&
+                     p_stream_info[i].stream_sizes_tbl.height == 144)) {
                     continue;
                 }
-
                 // availableStreamConfigurations
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
-                    stream_info[i].stream_sizes_tbl.width);
+                    p_stream_info[i].stream_sizes_tbl.width);
                 available_stream_configs.add(
-                    stream_info[i].stream_sizes_tbl.height);
+                    p_stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
 
                 // availableMinFrameDurations
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
-                    stream_info[i].stream_sizes_tbl.width);
+                    p_stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
-                    stream_info[i].stream_sizes_tbl.height);
+                    p_stream_info[i].stream_sizes_tbl.height);
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
-                    (stream_info[i].stream_sizes_tbl.width *
-                         stream_info[i].stream_sizes_tbl.height >
+                    (p_stream_info[i].stream_sizes_tbl.width *
+                         p_stream_info[i].stream_sizes_tbl.height >
                      12000000)) {
                     available_min_durations.add(50000000L);
                 } else {
                     available_min_durations.add(
-                        stream_info[i].stream_min_duration);
+                        p_stream_info[i].stream_min_duration);
                 }
 
                 // availableStallDurations
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
-                        stream_info[i].stream_sizes_tbl.width);
+                        p_stream_info[i].stream_sizes_tbl.width);
                     available_stall_durations.add(
-                        stream_info[i].stream_sizes_tbl.height);
+                        p_stream_info[i].stream_sizes_tbl.height);
                     available_stall_durations.add(
-                        stream_info[i].stream_stall_duration);
+                        p_stream_info[i].stream_stall_duration);
                 } else {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
-                        stream_info[i].stream_sizes_tbl.width);
+                        p_stream_info[i].stream_sizes_tbl.width);
                     available_stall_durations.add(
-                        stream_info[i].stream_sizes_tbl.height);
+                        p_stream_info[i].stream_sizes_tbl.height);
                     available_stall_durations.add(0);
                 }
 
                 /* keep largest */
-                if (stream_info[i].stream_sizes_tbl.width *
-                        stream_info[i].stream_sizes_tbl.height >
+                if (p_stream_info[i].stream_sizes_tbl.width *
+                        p_stream_info[i].stream_sizes_tbl.height >
                     largest_picture_size[cameraId].width *
                         largest_picture_size[cameraId].height) {
                     largest_picture_size[cameraId] =
-                        stream_info[i].stream_sizes_tbl;
+                        p_stream_info[i].stream_sizes_tbl;
                 }
             }
         }
