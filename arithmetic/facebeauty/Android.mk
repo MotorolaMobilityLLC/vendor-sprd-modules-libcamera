@@ -48,6 +48,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
 LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
 
 LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
+include $(LOCAL_PATH)/../../SprdCtrl.mk
 
 LOCAL_SHARED_LIBRARIES:= \
      liblog \

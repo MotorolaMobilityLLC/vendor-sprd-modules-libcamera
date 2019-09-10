@@ -46,6 +46,12 @@ void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
         } else {
             faceBeauty->fb_mode = 0;
         }
+#ifdef CONFIG_CAMERA_BEAUTY_FOR_SHARKL5PRO
+        faceBeauty->fb_option.fbVersion = 1;
+#else
+        faceBeauty->fb_option.fbVersion = 0;
+#endif
+        ALOGD("fb_option.fbVersion = %d",faceBeauty->fb_option.fbVersion);
     }
 }
 
@@ -55,6 +61,7 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         if (faceBeauty->hSprdFB != 0) {
+            ALOGD("deinit_fb_handle to FB_DeleteBeautyHandle begin");
             FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
             faceBeauty->hSprdFB = NULL;
         }
@@ -133,25 +140,25 @@ void construct_fb_level(struct class_fb *faceBeauty,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         unsigned char map_pictureSkinSmoothLevel[NUM_LEVELS] = {
-            0, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7};
+            0, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14};
         unsigned char map_previewSkinSmoothLevel[NUM_LEVELS] = {
-            0, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4};
-        unsigned char map_skinBrightLevel[NUM_LEVELS] = {0, 1, 2, 3, 3, 4,
-                                                         4, 5, 5, 6, 6};
-        unsigned char map_slimFaceLevel[NUM_LEVELS] = {0, 1, 1, 2, 2, 3,
-                                                       3, 4, 4, 5, 5};
-        unsigned char map_largeEyeLevel[NUM_LEVELS] = {0, 1, 1, 2, 2, 3,
-                                                       4, 5, 5, 6, 7};
+            0, 2, 2, 3, 3, 4, 4, 6, 6, 8, 8};
+        unsigned char map_skinBrightLevel[NUM_LEVELS] = {0, 2, 4, 6, 6, 8,
+                                                         8, 10, 10, 12, 12};
+        unsigned char map_slimFaceLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
+                                                       6, 7, 8, 9, 10};
+        unsigned char map_largeEyeLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
+                                                       6, 7, 8, 9, 10};
         unsigned char map_skinSmoothRadiusCoeff[NUM_LEVELS] = {
             55, 55, 55, 50, 50, 40, 40, 30, 30, 20, 20};
         unsigned char map_pictureSkinTextureHiFreqLevel[NUM_LEVELS] = {
             0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
         unsigned char map_pictureSkinTextureLoFreqLevel[NUM_LEVELS] = {
             4, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0};
-        unsigned char map_lipColorLevel[NUM_LEVELS] = {0, 1, 1, 2, 2, 3,
-                                                       3, 4, 4, 5, 5};
-        unsigned char map_skinColorLevel[NUM_LEVELS] = {0, 1, 1, 2, 2, 3,
-                                                        3, 4, 4, 5, 5};
+        unsigned char map_lipColorLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
+                                                       6, 7, 8, 9, 10};
+        unsigned char map_skinColorLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
+                                                        6, 7, 8, 9, 10};
 
         faceBeauty->fb_option.skinBrightLevel =
             map_skinBrightLevel[beautyLevels.brightLevel];
@@ -168,9 +175,7 @@ void construct_fb_level(struct class_fb *faceBeauty,
         faceBeauty->fb_option.removeBlemishFlag = 0;
         faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
         faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
-        faceBeauty->fb_option.lipColorLevel = beautyLevels.lipLevel;
         faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
-        faceBeauty->fb_option.skinColorLevel = beautyLevels.skinLevel;
         if (faceBeauty->fb_mode == 1) {
             faceBeauty->fb_option.skinSmoothRadiusCoeff =
                 map_skinSmoothRadiusCoeff[beautyLevels.smoothLevel];
@@ -187,7 +192,6 @@ void construct_fb_level(struct class_fb *faceBeauty,
             faceBeauty->fb_option.skinTextureLoFreqLevel =
                 map_pictureSkinTextureLoFreqLevel[beautyLevels.smoothLevel];
         }
-        faceBeauty->fb_option.bokehON = 0;
 
         if (!strcmp(isDebug, "1")) {
             faceBeauty->fb_option.debugMode = 1;
@@ -255,7 +259,6 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         clock_gettime(CLOCK_BOOTTIME, &start_time);
-        BOKEH_DATA *bokehData = 0;
 
         /*wait first face frame*/
         if (0 == faceBeauty->isFaceGot && faceCount > 0) {
@@ -281,7 +284,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
         retVal =
             FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
                                    &(faceBeauty->fb_option),
-                                   faceBeauty->fb_face, faceCount, bokehData);
+                                   faceBeauty->fb_face, faceCount);
         if (!strcmp(dump_value, "fb")) {
             save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
                           faceBeauty->fb_image.height,
