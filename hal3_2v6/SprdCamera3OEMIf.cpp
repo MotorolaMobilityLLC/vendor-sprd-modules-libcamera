@@ -6074,15 +6074,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             controlInfo.scene_mode != ANDROID_CONTROL_SCENE_MODE_HDR) {
             controlInfo.scene_mode = ANDROID_CONTROL_SCENE_MODE_NIGHT;
         }
+        if (sprddefInfo.sprd_auto_3dnr_enable == CAMERA_3DNR_AUTO) {
+            controlInfo.scene_mode = ANDROID_CONTROL_SCENE_MODE_DISABLED;
+        }
 
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
-        HAL_LOGD("get sprd_auto_3dnr_enable:%d", sprddefInfo.sprd_auto_3dnr_enable);
-        if(sprddefInfo.sprd_auto_3dnr_enable != CAMERA_3DNR_AUTO) {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE,
-                     drvSceneMode);
-        }
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {
@@ -6359,8 +6358,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
-                 controlInfo.ae_mode);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
+                     controlInfo.ae_mode);
 
             if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
                 if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
