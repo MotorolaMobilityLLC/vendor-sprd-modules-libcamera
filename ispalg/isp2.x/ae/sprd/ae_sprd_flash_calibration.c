@@ -257,7 +257,7 @@ static int get_prop_multi(const char *name, int n, int *data)
 static int _aem_stat_preprocess2(cmr_u32 * src_aem_stat, float *dst_r, float *dst_g, float *dst_b, struct ae_size aem_blk_size, struct ae_size aem_blk_num, cmr_u8 aem_shift)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u64 bayer_pixels = (cmr_u64)aem_blk_size.w * (cmr_u64)aem_blk_size.h / 4;
+	cmr_u64 bayer_pixels = (cmr_u64) aem_blk_size.w * (cmr_u64) aem_blk_size.h / 4;
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32 *) src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32 *) src_aem_stat + stat_blocks;
@@ -295,8 +295,8 @@ static int _aem_stat_preprocess2(cmr_u32 * src_aem_stat, float *dst_r, float *ds
 	return rtn;
 }
 
-static int getCenterMean(cmr_u32 * src_aem_stat,
-						 float *dst_r, float *dst_g, float *dst_b, struct ae_size aem_blk_size, struct ae_size aem_blk_num, cmr_u8 aem_shift, float *rmean, float *gmean, float *bmean)
+static int getCenterMean(cmr_u32 * src_aem_stat, float *dst_r, float *dst_g, float *dst_b, struct ae_size aem_blk_size,
+        struct ae_size aem_blk_num, cmr_u8 aem_shift, float *rmean, float *gmean, float *bmean)
 {
 	int ret;
 	ret = _aem_stat_preprocess2(src_aem_stat, dst_r, dst_g, dst_b, aem_blk_size, aem_blk_num, aem_shift);
@@ -527,7 +527,10 @@ void readDebugBin2(const char *f, struct FCData *d)
 {
 	FILE *fp;
 	fp = fopen(f, "rb");
-	fread(d, 1, sizeof(struct FCData), fp);
+	if(fp)
+	    fread(d, 1, sizeof(struct FCData), fp);
+	else
+	    ISP_LOGD("readDebugBin2 fail");
 	fclose(fp);
 }
 
@@ -657,10 +660,14 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			frameCount = 0;
 			cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;	//lock ae
 
-			reduceFlashIndexTab(caliData->numP1_hwSample, caliData->indP1_hwSample, caliData->maP1_hwSample, caliData->mAMaxP1, 32, caliData->indHwP1_alg, caliData->maHwP1_alg, &caliData->numP1_alg);
-			reduceFlashIndexTab(caliData->numP2_hwSample, caliData->indP2_hwSample, caliData->maP2_hwSample, caliData->mAMaxP2, 32, caliData->indHwP2_alg, caliData->maHwP2_alg, &caliData->numP2_alg);
-			reduceFlashIndexTab(caliData->numM1_hwSample, caliData->indM1_hwSample, caliData->maM1_hwSample, caliData->mAMaxM1, 32, caliData->indHwM1_alg, caliData->maHwM1_alg, &caliData->numM1_alg);
-			reduceFlashIndexTab(caliData->numM2_hwSample, caliData->indM2_hwSample, caliData->maM2_hwSample, caliData->mAMaxM2, 32, caliData->indHwM2_alg, caliData->maHwM2_alg, &caliData->numM2_alg);
+			reduceFlashIndexTab(caliData->numP1_hwSample, caliData->indP1_hwSample, caliData->maP1_hwSample,
+			        caliData->mAMaxP1, 32, caliData->indHwP1_alg, caliData->maHwP1_alg, &caliData->numP1_alg);
+			reduceFlashIndexTab(caliData->numP2_hwSample, caliData->indP2_hwSample, caliData->maP2_hwSample,
+			        caliData->mAMaxP2, 32, caliData->indHwP2_alg, caliData->maHwP2_alg, &caliData->numP2_alg);
+			reduceFlashIndexTab(caliData->numM1_hwSample, caliData->indM1_hwSample, caliData->maM1_hwSample,
+			        caliData->mAMaxM1, 32, caliData->indHwM1_alg, caliData->maHwM1_alg, &caliData->numM1_alg);
+			reduceFlashIndexTab(caliData->numM2_hwSample, caliData->indM2_hwSample, caliData->maM2_hwSample,
+			        caliData->mAMaxM2, 32, caliData->indHwM2_alg, caliData->maHwM2_alg, &caliData->numM2_alg);
 
 			//gen test
 			int i;
@@ -745,8 +752,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				float gmean;
 				float bmean;
 				struct ae_alg_calc_param *current_status = &cxt->sync_cur_status;
-				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
-							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
+				getCenterMean((cmr_u32 *) & cxt->sync_aem[0], caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size,
+				        cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
 				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
 				if ((gmean > 200 && gmean < 400) || (caliData->expTime == 0.05 * AEC_LINETIME_PRECESION && caliData->gain == 8 * 128)) {
 					caliData->stateCaliFrameCntSt = frameCount + 1;
@@ -756,10 +763,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				} else {
 					if (gmean < 10) {
 						caliData->expTime *= 25;
-						//caliData->gain = caliData->gain;
 					} else {
 						caliData->expTime *= 300 / gmean;
-						//caliData->gain = caliData->gain;
 					}
 					if (caliData->expTime > 0.05 * AEC_LINETIME_PRECESION) {
 						float ratio = caliData->expTime / (0.05 * AEC_LINETIME_PRECESION);

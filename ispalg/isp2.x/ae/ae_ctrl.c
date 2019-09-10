@@ -300,16 +300,14 @@ static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_
 					index2 = atoi(prop);
 				}
 				ISP_LOGD("led; %d, idx: %d, max: %d\n", cfg_ptr->led_idx, index2, max_index);
-				if (ct_rgb_cfg_ptr) {
-				bg_color = (ct_rgb_cfg_ptr->ct_rgb_info[index2].r<<16)
-							|(ct_rgb_cfg_ptr->ct_rgb_info[index2].g<<8)
-							|(ct_rgb_cfg_ptr->ct_rgb_info[index2].b);
 
-				ISP_LOGD("%s, index: (%d, %d), ct: %d (%d, %d, %d)\n", prop, index, index2,
-							ct_rgb_cfg_ptr->ct_rgb_info[index2].ct,
-							ct_rgb_cfg_ptr->ct_rgb_info[index2].r,
-							ct_rgb_cfg_ptr->ct_rgb_info[index2].g,
-							ct_rgb_cfg_ptr->ct_rgb_info[index2].b);
+				if(ct_rgb_cfg_ptr != NULL){
+				    bg_color = (ct_rgb_cfg_ptr->ct_rgb_info[index2].r<<16)  \
+				            | (ct_rgb_cfg_ptr->ct_rgb_info[index2].g<<8)    \
+				            | (ct_rgb_cfg_ptr->ct_rgb_info[index2].b);
+				    ISP_LOGD("%s, index: (%d, %d), ct: %d (%d, %d, %d)\n", prop, index, index2,
+				            ct_rgb_cfg_ptr->ct_rgb_info[index2].ct, ct_rgb_cfg_ptr->ct_rgb_info[index2].r,
+				            ct_rgb_cfg_ptr->ct_rgb_info[index2].g, ct_rgb_cfg_ptr->ct_rgb_info[index2].b);
 				}
 				index = index2;
 			}
