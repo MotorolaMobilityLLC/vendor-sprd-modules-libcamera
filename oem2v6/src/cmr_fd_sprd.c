@@ -778,7 +778,7 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
         FdGetFaceInfo(hDT, fd_idx, &info);
 
         /* Assign the same face id with FD */
-        fattr->face_id = info.fid;
+        fattr->face_id = info.hid;
         fattr->attr.smile = 0;
         fattr->attr.eyeClose = 0;
 
@@ -833,15 +833,15 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
                     fattr->attr_v2.raceScore[1] = 0;
                     fattr->attr_v2.raceScore[2] = 0;
                     fattr->attr_v2.raceScore[3] = 0;
-                    fattr->attr_v2.faceIdx = info.fid;
-                    fattr->face_id = info.fid;
+                    fattr->attr_v2.faceIdx = info.hid;
+                    fattr->face_id = info.hid;
                     faface_v2.x = info.x;
                     faface_v2.y = info.y;
                     faface_v2.width = info.width;
                     faface_v2.height = info.height;
                     faface_v2.yawAngle = info.yawAngle;
                     faface_v2.rollAngle = info.rollAngle;
-                    faface_v2.faceIdx = info.fid;
+                    faface_v2.faceIdx = info.hid;
                     for (i = 0; i < 7; i++) {
                         fattr->shape.data[i * 2] = fattr_shape.data[i * 2];
                         fattr->shape.data[i * 2 + 1] =
@@ -1084,7 +1084,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
         face_ptr->ely = ey;
         face_ptr->ex = ex;
         face_ptr->ey = ey;
-        face_ptr->face_id = info.fid;
+        face_ptr->face_id = info.hid;
         face_ptr->pose = info.yawAngle;
         face_ptr->angle = info.rollAngle;
         /* Make it in [0,100]. HAL1.0 requires so */
@@ -1116,7 +1116,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                 if (sprd_fd_api == SPRD_API_MODE) {
                     const struct class_faceattr *fattr =
                         &(i_faceattr_arr->face[i]);
-                    if (fattr->face_id == info.fid) {
+                    if (fattr->face_id == info.hid) {
                         /* Note: The original smile score is in [-100, 100].
                             But the Camera APP needs a score in [0, 100],
                             and also the definitions for smile degree are
@@ -1146,7 +1146,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
                     const struct class_faceattr_v2 *fattr =
                         &(i_faceattr_arr->face_v2[i]);
-                    if (fattr->face_id == info.fid) {
+                    if (fattr->face_id == info.hid) {
                         /* Note: The original smile score is in [-100, 100].
                             But the Camera APP needs a score in [0, 100],
                             and also the definitions for smile degree are
