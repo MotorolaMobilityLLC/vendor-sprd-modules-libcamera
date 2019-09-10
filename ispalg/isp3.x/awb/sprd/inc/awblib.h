@@ -1,7 +1,6 @@
 #ifndef AWBLIB_H_
 #define AWBLIB_H_
 
-
 #ifndef WIN32
 typedef long long __int64;
 #include <linux/types.h>
@@ -16,7 +15,7 @@ typedef long long __int64;
 extern "C" {
 #endif
 
-typedef struct awb_rgb_gain
+struct awb_rgb_gain_3_0
 {
 	unsigned int r_gain;
 	unsigned int g_gain;
@@ -25,14 +24,9 @@ typedef struct awb_rgb_gain
 	int ct;
 	int tint;
 	int ct_mean;
-	int tint_mean;
-}awb_rgb_gain_3_0;
+};
 
-
-
-
-
-typedef struct awb_stat_img
+struct awb_stat_img_3_0
 {
 	//r, g, b channel statistic
 	unsigned int* r_stat;
@@ -49,11 +43,11 @@ typedef struct awb_stat_img
 	unsigned int b_pixel_cnt;
 
 	unsigned int isp_pixel_bitcount_version; // 10bits or 14bits, 0 - 10bits, 1 - 14bits
-}awb_stat_img_3_0;
+};
 
 
 // Face coordinate info
-typedef struct awb_face
+struct awb_face_3_0
 {
 	unsigned int start_x;
 	unsigned int start_y;
@@ -61,95 +55,94 @@ typedef struct awb_face
 	unsigned int end_y;
 	unsigned int pose; /* face pose: frontal, half-profile, full-profile */
 	unsigned int score;
-}awb_face_3_0;
+};
 //Face info
-typedef struct awb_face_info
+struct awb_face_info_3_0
 {
 	unsigned int face_num;
-	struct awb_face face[20];
+	struct awb_face_3_0 face[20];
 	unsigned short img_width;
 	unsigned short img_height;
-}awb_face_info_3_0;
-
+};
 
 // AI scene
-typedef enum awb_aiscene_type_3_0
+enum awb_aiscene_type_3_0
 {
-	AI_SCENE_DEFAULT_v3,
-	AI_SCENE_FOOD_v3,
-	AI_SCENE_PORTRAIT_v3,
-	AI_SCENE_FOLIAGE_v3,
-	AI_SCENE_SKY_v3,
-	AI_SCENE_NIGHT_v3,
-	AI_SCENE_BACKLIGHT_v3,
-	AI_SCENE_TEXT_v3,
-	AI_SCENE_SUNRISE_v3,
-	AI_SCENE_BUILDING_v3,
-	AI_SCENE_LANDSCAPE_v3,
-	AI_SCENE_SNOW_v3,
-	AI_SCENE_FIREWORK_v3,
-	AI_SCENE_BEACH_v3,
-	AI_SCENE_PET_v3,
-	AI_SCENE_FLOWER_v3,
-	AI_SCENE_MAX_v3
-}awb_aiscene_type_3_0;
+	AI_SCENE_DEFAULT_3_0,
+	AI_SCENE_FOOD_3_0,
+	AI_SCENE_PORTRAIT_3_0,
+	AI_SCENE_FOLIAGE_3_0,
+	AI_SCENE_SKY_3_0,
+	AI_SCENE_NIGHT_3_0,
+	AI_SCENE_BACKLIGHT_3_0,
+	AI_SCENE_TEXT_3_0,
+	AI_SCENE_SUNRISE_3_0,
+	AI_SCENE_BUILDING_3_0,
+	AI_SCENE_LANDSCAPE_3_0,
+	AI_SCENE_SNOW_3_0,
+	AI_SCENE_FIREWORK_3_0,
+	AI_SCENE_BEACH_3_0,
+	AI_SCENE_PET_3_0,
+	AI_SCENE_FLOWER_3_0,
+	AI_SCENE_MAX_3_0
+};
 
-typedef enum awb_ai_task_0
+enum awb_ai_task_0_3_0
 {
-	AI_SCENE_TASK0_INDOOR_v3,
-	AI_SCENE_TASK0_OUTDOOR_v3,
-	AI_SCENE_TASK0_MAX_v3
-}awb_ai_task_0_3_0;
+	AI_SCENE_TASK0_INDOOR_3_0,
+	AI_SCENE_TASK0_OUTDOOR_3_0,
+	AI_SCENE_TASK0_MAX_3_0
+};
 
-typedef enum awb_ai_task_1
+enum awb_ai_task_1_3_0
 {
-	AI_SCENE_TASK1_NIGHT_v3,
-	AI_SCENE_TASK1_BACKLIGHT_v3,
-	AI_SCENE_TASK1_SUNRISESET_v3,
-	AI_SCENE_TASK1_FIREWORK_v3,
-	AI_SCENE_TASK1_OTHERS_v3,
-	AI_SCENE_TASK1_MAX_v3
-}awb_ai_task_1_3_0;
+	AI_SCENE_TASK1_NIGHT_3_0,
+	AI_SCENE_TASK1_BACKLIGHT_3_0,
+	AI_SCENE_TASK1_SUNRISESET_3_0,
+	AI_SCENE_TASK1_FIREWORK_3_0,
+	AI_SCENE_TASK1_OTHERS_3_0,
+	AI_SCENE_TASK1_MAX_3_0
+};
 
-typedef enum awb_ai_task_2
+enum awb_ai_task_2_3_0
 {
-	AI_SCENE_TASK2_FOOD_v3,
-	AI_SCENE_TASK2_GREENPLANT_v3,
-	AI_SCENE_TASK2_DOCUMENT_v3,
-	AI_SCENE_TASK2_CATDOG_v3,
-	AI_SCENE_TASK2_FLOWER_v3,
-	AI_SCENE_TASK2_BLUESKY_v3,
-	AI_SCENE_TASK2_BUILDING_v3,
-	AI_SCENE_TASK2_SNOW_v3,
-	AI_SCENE_TASK2_OTHERS_v3,
-	AI_SCENE_TASK2_MAX_v3
-}awb_ai_task_2_3_0;
+	AI_SCENE_TASK2_FOOD_3_0,
+	AI_SCENE_TASK2_GREENPLANT_3_0,
+	AI_SCENE_TASK2_DOCUMENT_3_0,
+	AI_SCENE_TASK2_CATDOG_3_0,
+	AI_SCENE_TASK2_FLOWER_3_0,
+	AI_SCENE_TASK2_BLUESKY_3_0,
+	AI_SCENE_TASK2_BUILDING_3_0,
+	AI_SCENE_TASK2_SNOW_3_0,
+	AI_SCENE_TASK2_OTHERS_3_0,
+	AI_SCENE_TASK2_MAX_3_0
+};
 
-typedef struct awb_ai_task0_result
+struct awb_ai_task0_result_3_0
 {
-	awb_ai_task_0_3_0 id;
+	enum awb_ai_task_0_3_0 id;
 	unsigned short score;
-}awb_ai_task0_result_3_0;
+};
 
-typedef struct awb_ai_task1_result
+struct awb_ai_task1_result_3_0
 {
-	awb_ai_task_1_3_0 id;
+	enum awb_ai_task_1_3_0 id;
 	unsigned short score;
-}awb_ai_task1_result_3_0;
+};
 
-typedef struct awb_ai_task2_result
+struct awb_ai_task2_result_3_0
 {
-	awb_ai_task_2_3_0 id;
+	enum awb_ai_task_2_3_0 id;
 	unsigned short score;
-}awb_ai_task2_result_3_0;
+};
 
-typedef struct awb_aiscene_info
+struct awb_aiscene_info_3_0
 {
-	awb_aiscene_type_3_0 cur_scene_id;
-	struct awb_ai_task0_result task0[AI_SCENE_TASK0_MAX];
-	struct awb_ai_task1_result task1[AI_SCENE_TASK1_MAX];
-	struct awb_ai_task2_result task2[AI_SCENE_TASK2_MAX];
-}awb_aiscene_info_3_0;
+	enum awb_aiscene_type_3_0 cur_scene_id;
+	struct awb_ai_task0_result_3_0 task0[AI_SCENE_TASK0_MAX];
+	struct awb_ai_task1_result_3_0 task1[AI_SCENE_TASK1_MAX];
+	struct awb_ai_task2_result_3_0 task2[AI_SCENE_TASK2_MAX];
+};
 struct awb_aiscene_info_old {
 	cmr_u32 frame_id;
 	enum awb_aiscene_type_3_0 cur_scene_id;
@@ -160,7 +153,7 @@ struct awb_aiscene_info_old {
 
 
 // XYZ colorsensor
-typedef struct awb_colorsensor_info
+struct awb_colorsensor_info_3_0
 {
 	unsigned int x_data;
 	unsigned int y_data;
@@ -176,19 +169,14 @@ typedef struct awb_colorsensor_info
 	unsigned int atime;
 	unsigned int lux;
 	unsigned int cct;
-}awb_colorsensor_info_3_0;
-
-typedef struct awb_ct_table
+};
+struct awb_ct_table_3_0
 {
 	int ct[20];
 	float rg[20];
-}awb_ct_table_3_0;
+};
 
-
-
-
-
-typedef struct awb_init_param
+struct awb_init_param_3_0
 {
 	unsigned int camera_id;
 
@@ -197,20 +185,19 @@ typedef struct awb_init_param
 	unsigned int otp_unit_b;
 
 	void* tool_param;
-
-
 	// xyz color sensor info
 	void* xyz_info;
-}awb_init_param_3_0;
+};
 
-typedef struct awb_calc_param
+struct awb_calc_param_3_0
 {
 	// common info
 	unsigned int frame_index;
 	unsigned int timestamp;
 
+
 	// stat info
-	struct awb_stat_img stat_img;
+	struct awb_stat_img_3_0 stat_img_3_0;
 
 	// AE info
 	int bv;
@@ -234,65 +221,33 @@ typedef struct awb_calc_param
 
 	// other info
 	void* gyro_info;
-}awb_calc_param_3_0;
+};
 
-typedef struct awb_calc_result
+struct awb_calc_result_3_0
 {
-	struct awb_rgb_gain awb_gain;
+	struct awb_rgb_gain_3_0 awb_gain;
 
 	unsigned char* log_buffer;  //debug info log buf
 	unsigned int log_size;
-}awb_calc_result_3_0;
+};
 
 
-typedef enum
+enum
 {
-	AWB_IOCTRL_GET_MWB_BY_MODEID = 1,
-	AWB_IOCTRL_GET_MWB_BY_CT = 2,
-
-	AWB_IOCTRL_GET_CTTABLE20 = 3,
-
-	AWB_IOCTRL_SET_CMC = 4,
-
-	AWB_IOCTRL_COLOR_CALIBRATION = 5,
-
-// for WIN32 debugtool
-	AWB_IOCTRL_GET_AWBLIB_VERSION,
-
-	AWB_IOCTRL_GET_CURRENT_BV,
-	AWB_IOCTRL_GET_STAT_WIDTH,
-	AWB_IOCTRL_GET_STAT_HEIGHT,
-	AWB_IOCTRL_GET_STAT_AEM,
-	AWB_IOCTRL_GET_RANDOM_OTP,
-	AWB_IOCTRL_GET_GOLDEN_OTP,
-
-	AWB_IOCTRL_GET_ZONE_CTTINT,
-	AWB_IOCTRL_GET_BASIC_CTTINT,
-	AWB_IOCTRL_GET_FINAL_RESULT,
-
-	AWB_IOCTRL_GET_CURRENT_BOUNDARY,
-	AWB_IOCTRL_GET_CT_TINT_BUFFER,
-
-	AWB_IOCTRL_GET_ZONE_BUFFER,
-// for WIN32 debugtool
-
-
-
-	AWB_IOCTRL_CMD_MAX,
-}AWB3X_CMD;
+	AWB_IOCTRL_GET_MWB_BY_MODEID_3_0 = 1,
+	AWB_IOCTRL_GET_MWB_BY_CT_3_0 = 2,
+	AWB_IOCTRL_GET_CTTABLE20_3_0 = 3,
+	AWB_IOCTRL_SET_CMC_3_0 = 4,
+	AWB_IOCTRL_CMD_MAX_3_0,
+};
 
 
 #ifdef WIN32
 #ifdef AWBDLL_EXPORTS
-extern __declspec(dllexport) void *awb_init(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
+extern __declspec(dllexport) void *awb_init(struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
 extern __declspec(dllexport) int awb_deinit(void *awb_handle);
-extern __declspec(dllexport) int awb_calc(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
-extern __declspec(dllexport) int awb_ioctrl(void *awb_handle, int cmd, void *param1, void *param2);
-#else
-void *awb_init(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
-int awb_deinit(void *awb_handle);
-int awb_calc(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
-int awb_ioctrl(void *awb_handle, int cmd, void *param1, void *param2);
+extern __declspec(dllexport) int awb_calc(void *awb_handle, struct awb_calc_param_3_0 *calc_param, struct awb_calc_result_3_0 *calc_result);
+extern __declspec(dllexport) int awb_ioctrl(void *awb_handle, int cmd, void *in, void *out);
 #endif
 #endif
 

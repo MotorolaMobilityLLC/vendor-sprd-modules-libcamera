@@ -63,8 +63,8 @@ static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
 static cmr_u8 awb_log_buff[256 * 1024] = {0};
 struct isp_awbsprd_lib_ops {
-	void *(*awb_init_v1) (struct awb_init_param_v1 *init_param, struct awb_rgb_gain_v1 *gain);
-	cmr_s32(*awb_calc_v1) (void *awb_handle, struct awb_calc_param_v1 *calc_param, struct awb_calc_result_v1 *calc_result);
+	void *(*awb_init_v1) (struct awb_init_param *init_param, struct awb_rgb_gain *gain);
+	cmr_s32(*awb_calc_v1) (void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
 	cmr_s32(*awb_deinit_v1) (void *awb_handle);
 };
 
@@ -2184,7 +2184,7 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 	struct ai_fd_param ai_fd_para;
 	struct afctrl_face_info af_fd_para;
 	enum ai_status ai_sta = AI_STATUS_MAX;
-	awb_face_info_3_0 awb_fd_para;
+	struct awb_face_info_3_0 awb_fd_para;
 
 	if (NULL != face_area) {
 		struct ae_fd_param ae_fd_param;
@@ -2473,7 +2473,7 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 	return ISP_SUCCESS;
 }
 
-static cmr_int isp_sim_dump_awb_info_v1(struct awb_init_param_v1 *init_param, struct awb_calc_param_v1 *calc_param, struct awb_rgb_gain_v1 *out_gain)
+static cmr_int isp_sim_dump_awb_info(struct awb_init_param *init_param, struct awb_calc_param *calc_param, struct awb_rgb_gain *out_gain)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 i = 0;
@@ -2536,7 +2536,7 @@ static cmr_int isp_sim_dump_awb_info_v1(struct awb_init_param_v1 *init_param, st
 	return ret;
 }
 
-static cmr_int ispctl_calc_awb_v1(cmr_handle isp_alg_handle,
+static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 			       cmr_u32 width, cmr_u32 height,
 			       cmr_u32 stat_w, cmr_u32 stat_h,
 			       struct isp_awb_statistic_info *awb_statis,
@@ -2549,10 +2549,10 @@ static cmr_int ispctl_calc_awb_v1(cmr_handle isp_alg_handle,
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct awb_init_param_v1 init_param;
-	struct awb_calc_param_v1 calc_param;
-	struct awb_calc_result_v1 calc_result;
-	struct awb_rgb_gain_v1 rgb_gain;
+	struct awb_init_param init_param;
+	struct awb_calc_param calc_param;
+	struct awb_calc_result calc_result;
+	struct awb_rgb_gain rgb_gain;
 	struct isp_awbsprd_lib_ops lib_ops;
 	void *lib_handle = NULL;
 	char value[PROPERTY_VALUE_MAX];
@@ -2622,7 +2622,7 @@ static cmr_int ispctl_calc_awb_v1(cmr_handle isp_alg_handle,
 
 	property_get("persist.vendor.cam.debug.simulation", value, "false");
 	if (!strcmp(value, "true")) {
-		isp_sim_dump_awb_info_v1(&init_param, &calc_param, &calc_result.awb_gain[0]);
+		isp_sim_dump_awb_info(&init_param, &calc_param, &calc_result.awb_gain[0]);
 	}
 
 	/*for debug info*/
@@ -2730,7 +2730,7 @@ static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *para
 
 		stat_w = (stat_w == 0) ? 32 : stat_w;
 		stat_h = (stat_h == 0) ? 32 : stat_h;
-		ispctl_calc_awb_v1(cxt,
+		ispctl_calc_awb(cxt,
 				scene_parm->width, scene_parm->height,
 				stat_w, stat_h,
 				&awb_stat,
