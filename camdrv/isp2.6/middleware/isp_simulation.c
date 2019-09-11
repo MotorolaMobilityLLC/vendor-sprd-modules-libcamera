@@ -156,13 +156,21 @@ cmr_int isp_sim_get_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32 
 		return ISP_ERROR;
 	}
 
-	fscanf(fp, "stat_w:%d\n", stat_w);
-	fscanf(fp, "stat_h:%d\n", stat_h);
+	if(EOF == fscanf(fp, "stat_w:%d\n", stat_w)){
+		ISP_LOGD("to the end of file.");
+	}
+	if(EOF == fscanf(fp, "stat_h:%d\n", stat_h)){
+		ISP_LOGD("to the end of file.");
+	}
 
 	while (!feof(fp)) {
-		fscanf(fp, "blk_id:%d ", &i);
-		fscanf(fp, "R:%d G:%d B:%d\n",
-			&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i]);
+		if(EOF == fscanf(fp, "blk_id:%d ", &i)){
+			ISP_LOGD("to the end of file.");
+		}
+		if(EOF == fscanf(fp, "R:%d G:%d B:%d\n",
+			&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
+			ISP_LOGD("to the end of file.");
+		}
 		ISP_LOGV("blk_id:%d R:%d G:%d B:%d",
 			i, awb_statis->r_info[i], awb_statis->g_info[i], awb_statis->b_info[i]);
 	}
