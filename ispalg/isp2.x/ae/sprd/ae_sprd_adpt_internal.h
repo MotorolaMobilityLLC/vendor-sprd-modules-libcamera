@@ -407,6 +407,8 @@ extern "C" {
 		cmr_u32 env_cum_changedCalc_delay_cnt;
 		cmr_u32 env_cum_changed;
 		cmr_s16 previous_lum;
+		/*for callback to HAL*/
+		cmr_u32 ae_cb_result[10];
 		float capcompvalue_norm;
 		cmr_u32 end_id;
 

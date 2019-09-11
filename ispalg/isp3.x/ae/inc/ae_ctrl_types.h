@@ -182,6 +182,14 @@ extern "C" {
 		AE_CB_3DNR_NOTIFY,
 		AE_CB_MAX
 	};
+	enum ae_cb_result_notify_hal {
+		AE_CB_RESULT_STAB,
+		AE_CB_RESULT_BLS_VALUE,
+		AE_CB_RESULT_BLS_ENABLE,
+		AE_CB_RESULT_BV_VALUE,
+		AE_CB_RESULT_FACA_LUM,
+		AE_CB_RESULT_MAX
+	};
 
 	enum ae_flash_mode {
 		AE_FLASH_PRE_BEFORE,

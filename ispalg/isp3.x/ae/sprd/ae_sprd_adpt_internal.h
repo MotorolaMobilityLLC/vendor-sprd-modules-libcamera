@@ -379,6 +379,8 @@ extern "C" {
 		cmr_u32 env_cum_changed;
 		cmr_s16 previous_lum;
 		cmr_u32 pri_set;
+		/*for callback to HAL*/
+		cmr_u32 ae_cb_result[10];
 
 		struct ae_scene_param_out ae_tbl_param;
 		cmr_u32 pause_cnt;
