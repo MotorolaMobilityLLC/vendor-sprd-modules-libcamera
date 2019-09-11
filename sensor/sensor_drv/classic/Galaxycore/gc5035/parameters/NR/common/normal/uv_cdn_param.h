@@ -34,7 +34,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -73,7 +73,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x003C,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -112,7 +112,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x003C,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
