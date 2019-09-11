@@ -81,6 +81,7 @@ struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_p
 struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
 struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_set_param, _pm_imblance_get_param, PNULL, PNULL};
+struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -207,6 +208,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	/* ======== soft algo blocks list starts ======= */
 	{ISP_BLK_CNR2_V1, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
 	{ISP_BLK_SW3DNR, array_offset(struct isp_context, sw3dnr), sizeof(struct isp_sw3dnr_param), &s_sw3dnr_ops},
+	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
 };
 #endif
 

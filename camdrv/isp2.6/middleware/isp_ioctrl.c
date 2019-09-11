@@ -397,6 +397,9 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_YUV_LTM:
 			update_param->yuv_ltm_level_ptr = (struct sensor_yuv_ltm_level *)fix_data_ptr->nr.nr_set_group.yuv_ltm;
 			break;
+		case ISP_BLK_YNRS:
+			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
+			break;
 		default:
 			break;
 		}

@@ -105,6 +105,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"raw_gtm",
 	"rgb_ltm",
 	"yuv_ltm"
+	"ynrs",
 };
 #endif
 

@@ -246,6 +246,7 @@ static struct blk_info blocks_array[] = {
 	/* software algo blocks */
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
+	{ ISP_BLK_YNRS, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
 	{ ISP_BLK_ALSC, 0 },
 	{ ISP_BLK_AF_NEW, 0 },
@@ -282,6 +283,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_NLM_V1,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
 	{ ISP_BLK_NLM_V1,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
 	{ ISP_BLK_NLM_V1,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 };
 #endif
 /************************ Project adapt data END *******************************************/
