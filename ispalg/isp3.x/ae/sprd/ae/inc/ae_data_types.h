@@ -372,7 +372,6 @@ enum ae_mod_idx_type {
 	AE_MOD_IDX_GAIN = 1,
 	AE_MOD_IDX_ISO = 1,
 };
-
 struct ae_monitor_cfg {
 	struct ae_rect monitor_rect;
 	struct ae_size blk_size;
@@ -404,6 +403,14 @@ struct ae_monitor_data_type {
 	cmr_u32 shift;
 	struct ae_size size;/*stats data resolution*/
 	struct ae_size blk_size;
+};
+
+struct ae_bayer_hist_cfg {
+	cmr_u32 bypass;
+	cmr_u32 skip_num;
+	cmr_u32 shift;
+	cmr_u32 mode;
+	struct ae_rect hist_rect;
 };
 
 struct ae_hist_data_type {

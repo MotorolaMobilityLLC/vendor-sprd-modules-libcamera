@@ -46,6 +46,7 @@ struct ae_lib_init_in {
 	cmr_u32 mlog_en;
 	cmr_u32 log_level;
 	cmr_u32 line_time;
+	struct ae_size img_size;/*image resolution*/
 	void *tuning_param;
 	void *dual_cam_tuning_param;
 	/*will be used in the future*/
@@ -64,6 +65,7 @@ struct ae_lib_init_out {
 	struct ae_control_timing_param ctrl_timing_param;
 	struct ae_ev_setting_param ev_setting;/*init ev setting*/
 	struct ae_monitor_cfg aem_cfg;/*aem cfg from ae tuning param*/
+	struct ae_bayer_hist_cfg bhist_cfg;/*bayer hist config from tuning*/
 	struct ae_flash_timing_param flash_timing_param;
 	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
 	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
@@ -88,8 +90,8 @@ struct ae_adv_param {
 	/*will switch to struct ae_monitor_data_type soon*/
 	/*struct ae_monitor_data_type stats_data_adv*/
 	/*Histogram Data*/
-	struct ae_hist_data_type hist_data;/*raw rgb histogram data in raw bayer domain*/
-	struct ae_hist_data_type hist_y_data;/*yuv histogram data in yuv domain*/
+	struct ae_hist_data_type hist_data;/*yuv histogram data in yuv domain*/
+	struct ae_hist_data_type bhist_data[3];/*raw rgb histogram data in raw bayer domain*/
 	/*ASD: advanced Scene Detection: based on AI*/
 	struct ai_scene_detect detect_scene;
 	/*Touch AE ROI*/
@@ -128,6 +130,7 @@ struct ae_lib_calc_in {
 	cmr_u32 frm_id;
 	/*basic information*/
 	struct ae_size img_size;/*image resolution*/
+	struct ae_rect bhist_size;
 	/*AE Stats Data*/
 	float fno;/*F-Number*/
 	struct ae_stats_data_type stats_data_basic;/*the normal aem stats data*/
