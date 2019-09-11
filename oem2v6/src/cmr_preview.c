@@ -11846,7 +11846,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
     cmr_bzero(prev_cxt->cap_zsl_rot_frm_is_lock,
               PREV_ROT_FRM_CNT * sizeof(cmr_uint));
     cmr_bzero(prev_cxt->cap_zsl_ultra_wide_frm_is_lock,
-              ZSL_ROT_FRM_CNT * sizeof(cmr_uint));
+              ZSL_ULTRA_WIDE_ALLOC_CNT * sizeof(cmr_uint));
     prev_cxt->prev_rot_index = 0;
     prev_cxt->prev_ultra_wide_index = 0;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
@@ -13446,7 +13446,7 @@ cmr_uint prev_set_ultra_wide_buffer_flag(struct prev_context *prev_cxt,
     cmr_uint ret = CMR_CAMERA_SUCCESS;
     cmr_uint *frm_is_lock = NULL;
     cmr_uint alloc_cnt = 0;
-    char *debug_str;
+    char *debug_str = NULL;
 
     if (!prev_cxt) {
         return ret;
