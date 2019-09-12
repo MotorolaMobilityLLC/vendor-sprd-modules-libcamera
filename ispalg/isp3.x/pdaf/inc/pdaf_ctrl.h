@@ -17,10 +17,9 @@
 #define _PDAF_CTRL_H_
 
 #include <sys/types.h>
+#include "isp_com.h"
 #include "af_ctrl.h"
 #include "pdaf_sprd_adpt.h"
-
-typedef cmr_int(*pdaf_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
 enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_RAW = 0,
@@ -63,16 +62,6 @@ enum pdaf_ctrl_data_bit {
 	PD_DATA_BIT_12 = 12,
 };
 
-enum pdctrl_set_cmd_cb{
-	PDCTRL_AF_SET_PD_INFO = 41,
-	PDCTRL_PDAF_SET_BYPASS = 51,
-	PDCTRL_PDAF_SET_WORK_MODE,
-	PDCTRL_PDAF_SET_SKIP_NUM,
-	PDCTRL_PDAF_SET_PPI_INFO,	//none
-	PDCTRL_PDAF_SET_ROI,
-	PDCTRL_PDAF_SET_EXTRACTOR_BYPASS,
-};
-
 struct pdaf_ctrl_otp_info_t {
 	void *otp_data;
 	cmr_int size;
@@ -100,16 +89,10 @@ struct pdaf_ctrl_cb_ops_type {
 	cmr_int(*call_back) (cmr_handle caller_handle, struct pdaf_ctrl_callback_in * in);
 };
 
-struct pdctrl_frame_in {
-	cmr_handle caller_handle;
-	cmr_u32 camera_id;
-	void *private_data;
-};
-
 struct pdaf_ctrl_param_in {
 	union {
 		struct isp3a_pd_config_t *pd_config;
-		 cmr_int(*pd_set_buffer) (struct pdctrl_frame_in * cb_param);
+		 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
 		 struct af_win_rect touch_area;
 		 cmr_u32 af_mode;
 		 struct SetPD_ROI_param af_roi;
@@ -137,18 +120,6 @@ struct isp_lib_config {
 
 struct pd_result;
 
-struct pdaf_coord {
-	uint32_t start_x;
-	uint32_t start_y;
-	uint32_t end_x;
-	uint32_t end_y;
-};
-
-struct pdalgo_pdroi_info {
-	struct pdaf_coord win;
-	uint32_t phase_data_write_num;
-};
-
 struct pdaf_ctrl_init_in {
 	cmr_u32 camera_id;
 	void *caller;
@@ -161,14 +132,16 @@ struct pdaf_ctrl_init_in {
 	struct pdaf_ctrl_otp_info_t pdaf_otp;
 	struct sensor_pdaf_info *pd_info;
 	struct pdaf_ctrl_cb_ops_type pdaf_ctrl_cb_ops;
-	pdaf_ctrl_cb pdaf_set_cb;
+	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
 	cmr_handle handle_pm;
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info * pd_info);
 	 cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_roi) (void *handle, struct pdalgo_pdroi_info * in_parm);
+	 cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
+	 cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
 	 cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 	struct sensor_otp_cust_info *otp_info_ptr;
 	cmr_u8 is_master;
