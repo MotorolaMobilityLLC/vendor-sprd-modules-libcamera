@@ -147,43 +147,39 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
         CMR_LOGE("scale erro: frame_params is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    if (frame_params->input_size.w >= frame_params->output_size.w &&
-        frame_params->input_size.h >= frame_params->output_size.h) {
-        src.addr_vir.addr_y = frame_params->input_addr_vir.y;
-        src.addr_vir.addr_u = frame_params->input_addr_vir.u;
-        src.addr_vir.addr_v = frame_params->input_addr_vir.v;
-        src.size.width = frame_params->input_size.w;
-        src.size.height = frame_params->input_size.h;
-        dst.addr_vir.addr_y = frame_params->output_addr_vir.y;
-        dst.addr_vir.addr_u = frame_params->output_addr_vir.u;
-        dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
-        dst.size.width = frame_params->output_size.w;
-        dst.size.height = frame_params->output_size.h;
 
-        CMR_LOGI("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
-                 src.addr_vir.addr_y, src.addr_vir.addr_u, dst.addr_vir.addr_y,
-                 dst.addr_vir.addr_u);
+    src.addr_vir.addr_y = frame_params->input_addr_vir.y;
+    src.addr_vir.addr_u = frame_params->input_addr_vir.u;
+    src.addr_vir.addr_v = frame_params->input_addr_vir.v;
+    src.size.width = frame_params->input_size.w;
+    src.size.height = frame_params->input_size.h;
+    dst.addr_vir.addr_y = frame_params->output_addr_vir.y;
+    dst.addr_vir.addr_u = frame_params->output_addr_vir.u;
+    dst.addr_vir.addr_v = frame_params->output_addr_vir.v;
+    dst.size.width = frame_params->output_size.w;
+    dst.size.height = frame_params->output_size.h;
 
-        ret = yuv_scale_nv21((void *)&frame_params->input_rect, &src, &dst);
-        if (ret) {
-            CMR_LOGI("yuv_scale_nv21 failed ret:%d", ret);
-            goto exit;
-        }
-        if (cfg_params->scale_cb) {
-            sem_post(&file->sync_sem);
-        }
-        if (cfg_params->scale_cb) {
-            memset((void *)&frame, 0x00, sizeof(frame));
-            frame.size.width = frame_params->output_size.w;
-            frame.size.height = frame_params->output_size.h;
-            frame.addr_phy.addr_y = (cmr_uint)frame_params->output_addr.y;
-            frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
-            frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
-            (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
-                                    cfg_params->cb_handle);
-        }
-    } else {
-        ret = CMR_CAMERA_FAIL;
+    CMR_LOGI("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
+             src.addr_vir.addr_y, src.addr_vir.addr_u, dst.addr_vir.addr_y,
+             dst.addr_vir.addr_u);
+
+    ret = yuv_scale_nv21((void *)&frame_params->input_rect, &src, &dst);
+    if (ret) {
+        CMR_LOGI("yuv_scale_nv21 failed ret:%d", ret);
+        goto exit;
+    }
+    if (cfg_params->scale_cb) {
+        sem_post(&file->sync_sem);
+    }
+    if (cfg_params->scale_cb) {
+        memset((void *)&frame, 0x00, sizeof(frame));
+        frame.size.width = frame_params->output_size.w;
+        frame.size.height = frame_params->output_size.h;
+        frame.addr_phy.addr_y = (cmr_uint)frame_params->output_addr.y;
+        frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
+        frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
+        (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
+                                cfg_params->cb_handle);
     }
 exit:
     CMR_LOGI("done ret %ld", ret);
@@ -224,6 +220,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         struct sprd_cpp_scale_cfg_parm *frame_params =
             &cfg_params->frame_params;
         struct cpp_scale_param scal_param;
+        struct sprd_cpp_scale_capability cpp_cap;
         scal_param.host_fd = -1;
         scal_param.scale_cfg_param = &cfg_params->frame_params;
         scal_param.handle = file->handle;
@@ -231,7 +228,16 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         CMR_LOGD("output_size.width:%d, height: %d",
                  frame_params->output_size.w, frame_params->output_size.h);
         file->err_code = CMR_CAMERA_SUCCESS;
-        if ((frame_params->output_size.w % 8 != 0)) {
+
+        cpp_cap.src_size = frame_params->input_size;
+        cpp_cap.rect_size = frame_params->input_rect;
+        cpp_cap.src_format = frame_params->input_format;
+        cpp_cap.dst_size = frame_params->output_size;
+        cpp_cap.dst_format = frame_params->output_format;
+        cpp_cap.is_supported = 0;
+        ret = ioctl((((struct sc_file *)file->handle)->fd), SPRD_CPP_IO_SCALE_CAPABILITY, &cpp_cap);
+
+        if (!cpp_cap.is_supported) {
             ret = cmr_scale_sw_start(cfg_params, file);
         } else {
             ret = cpp_scale_start(&scal_param);
