@@ -420,6 +420,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
 #ifdef CONFIG_FACE_BEAUTY
     memset(&face_beauty, 0, sizeof(face_beauty));
+    mflagfb = false;
 #endif
 
     memset(&grab_capability, 0, sizeof(grab_capability));
@@ -630,6 +631,13 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
     HAL_LOGI(":hal3: Destructor E camId=%d", mCameraId);
 
+#ifdef CONFIG_FACE_BEAUTY
+    if (mflagfb) {
+         deinit_fb_handle(&face_beauty);
+         mflagfb = false;
+    }
+#endif
+
     if (!mReleaseFLag) {
         closeCamera();
     }
@@ -740,6 +748,10 @@ void SprdCamera3OEMIf::initialize() {
     mZslCaptureExitLoop = false;
     mFlush = 0;
     mVideoAFBCFlag = 0;
+#ifdef CONFIG_FACE_BEAUTY
+    mflagfb = false;
+#endif
+
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -3222,6 +3234,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
 #ifdef CONFIG_FACE_BEAUTY
     deinit_fb_handle(&face_beauty);
+    mflagfb = false;
 #endif
 
     // used for single camera need raw stream
@@ -3715,7 +3728,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 #ifdef CONFIG_FACE_BEAUTY
     int sx, sy, ex, ey, angle, pose;
     struct face_beauty_levels beautyLevels;
-    if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME) {
+    if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME && isPreviewing()) {
         FACE_Tag faceInfo;
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
@@ -3749,8 +3762,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             (unsigned char)sprddefInfo.perfect_skin_level[7];
         beautyLevels.largeLevel =
             (unsigned char)sprddefInfo.perfect_skin_level[8];
+        if (!mflagfb){
+            init_fb_handle(&face_beauty, 1, 2);
+            if (face_beauty.hSprdFB != NULL){
+                mflagfb = true;
+            }
+        }
 
-        init_fb_handle(&face_beauty, 1, 2);
         invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
                         frame->width * frame->height * 3 / 2);
         construct_fb_image(
@@ -3788,8 +3806,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.lipLevel = 0;
         beautyLevels.slimLevel = 2;
         beautyLevels.largeLevel = 2;
+        if (!mflagfb){
+            init_fb_handle(&face_beauty, 1, 2);
+            if (face_beauty.hSprdFB != NULL){
+                mflagfb = true;
+            }
+        }
 
-        init_fb_handle(&face_beauty, 1, 2);
         invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
                         frame->width * frame->height * 3 / 2);
         construct_fb_image(
@@ -3803,8 +3826,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                        frame->width * frame->height * 3 / 2);
     } else {
         if (frame->type != PREVIEW_ZSL_FRAME &&
-            frame->type != PREVIEW_CANCELED_FRAME) {
+            frame->type != PREVIEW_CANCELED_FRAME &&
+            frame->type != CHANNEL2_FRAME) {
             deinit_fb_handle(&face_beauty);
+            mflagfb = false;
         }
     }
 #endif
