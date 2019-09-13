@@ -645,7 +645,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         goto setting_out;
     }
 
-    if ((type_val != *item->cmd_type_value) || (cpt->force_set)) {
+    if ((type_val != *(item->cmd_type_value)) || (cpt->force_set)) {
         if (setting_is_active(cpt)) {
             ret = setting_before_set_ctrl(cpt, PARAM_NORMAL);
             if (ret) {
