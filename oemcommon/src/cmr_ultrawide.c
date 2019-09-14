@@ -175,7 +175,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
     if ((cmr_uint)in->private_data) {
         param.zoomRatio = *((float *)(in->private_data));
     }
-    CMR_LOGV("ultrawid set ratio %f", param.zoomRatio);
+    CMR_LOGD("ultrawid set ratio %f", param.zoomRatio);
     if (ultrawide_handle->warp_inst != NULL) {
         input.width = src_img->size.width;
         input.height = src_img->size.height;

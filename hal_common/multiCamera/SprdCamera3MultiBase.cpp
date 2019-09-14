@@ -98,8 +98,8 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
         mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
     else if (mode == MODE_DUAL_FACEID_UNLOCK)
         mMatchTimeThreshold = MATCH_FACEUNLOCK_FRAME_TIME_DIFF;
-    else
-        mMatchTimeThreshold = MATCH_FRAME_TIME_DIFF;
+    else if (mode == MODE_MULTI_CAMERA)
+        mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
 
     return rc;
 }
@@ -528,6 +528,7 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
         HAL_LOGE("backbuf is NULL");
         return;
     }
+    HAL_LOGV("E");
     Mutex::Autolock l(mBufferListLock);
     for (i = 0; i < localbuffer_num; i++) {
         if (localbuffer[i].native_handle == NULL)
@@ -800,18 +801,66 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
             if (ns2ms(abs((cmr_s32)diff)) < mMatchTimeThreshold) {
                 *result2 = *itor2;
                 list.erase(itor2);
-                HAL_LOGV("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
+                HAL_LOGD("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
                          result1.frame_number, itor2->frame_number, diff,
                          result1.timestamp, itor2->timestamp);
                 return MATCH_SUCCESS;
             }
             itor2++;
         }
-        HAL_LOGV("no match for idx:%d, could not find matched frame",
+        HAL_LOGD("no match for idx:%d, could not find matched frame",
                  result1.frame_number);
         return MATCH_FAILED;
     }
 }
+
+bool SprdCamera3MultiBase::matchThreeFrame(hwi_frame_buffer_info_t result1,
+                                           List<hwi_frame_buffer_info_t> &list2,
+                                           List<hwi_frame_buffer_info_t> &list3,
+                                           hwi_frame_buffer_info_t *result2,
+                                           hwi_frame_buffer_info_t *result3) {
+    List<hwi_frame_buffer_info_t>::iterator itor2;
+    List<hwi_frame_buffer_info_t>::iterator itor3;
+    int flag = 0;
+    int64_t diff = 0, diff2 = 0;
+    HAL_LOGD("matchThreeFrame");
+    if (list2.empty() || list3.empty()) {
+        HAL_LOGD("match failed for idx:%d, unmatched queue is empty",
+                 result1.frame_number);
+        return MATCH_FAILED;
+    } else {
+        itor2 = list2.begin();
+        itor3 = list3.begin();
+        while (itor2 != list2.end()) {
+            diff = (int64_t)result1.timestamp - (int64_t)itor2->timestamp;
+            if (ns2ms(abs((cmr_s32)diff)) < mMatchTimeThreshold) {
+                *result2 = *itor2;
+                HAL_LOGD("[%d:match:%d],diff1=%llu T1:%llu,T2:%llu",
+                         result1.frame_number, itor2->frame_number, diff,
+                         result1.timestamp, itor2->timestamp);
+                while (itor3 != list3.end()) {
+                    int64_t diff2 =
+                        (int64_t)result1.timestamp - (int64_t)itor3->timestamp;
+                    if (ns2ms(abs((cmr_s32)diff2)) < mMatchTimeThreshold) {
+                        *result3 = *itor3;
+                        list3.erase(itor3);
+                        list2.erase(itor2);
+                        HAL_LOGD("[%d:match:%d],diff2=%llu T1:%llu,T2:%llu",
+                                 result1.frame_number, itor3->frame_number,
+                                 diff2, result1.timestamp, itor3->timestamp);
+                        return MATCH_SUCCESS;
+                    }
+                    itor3++;
+                }
+            }
+            itor2++;
+        }
+        HAL_LOGD("no match for idx:%d, could not find matched frame",
+                 result1.frame_number);
+        return MATCH_FAILED;
+    }
+}
+
 hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
     hwi_frame_buffer_info_t new_buffer_info,
     List<hwi_frame_buffer_info_t> &queue) {
@@ -1379,7 +1428,8 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     if (!strcmp(prop, "encode_exif")) {
         unsigned char *vir_jpeg = (unsigned char *)(pic_vir_addr);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
-                 src_img.size.width, src_img.size.height, 0, "jpegEncode_Simple");
+                 src_img.size.width, src_img.size.height, 0,
+                 "jpegEncode_Simple");
     }
 
     HAL_LOGI("out,ret=%d", ret);
@@ -1438,7 +1488,8 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify_format(
     if (!strcmp(prop, "encode_exif")) {
         unsigned char *vir_jpeg = (unsigned char *)(pic_vir_addr);
         dumpData(vir_jpeg, 2, encode_exif_param.stream_real_size,
-                 src_img.size.width, src_img.size.height, 0, "jpegEncode_SimpleFormat");
+                 src_img.size.width, src_img.size.height, 0,
+                 "jpegEncode_SimpleFormat");
     }
 
     HAL_LOGI("out,ret=%d", ret);
@@ -1565,6 +1616,7 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
     {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},
     {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}, {320, 240}}},
+    {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2048, 1152},{1440, 1080}}},
 };
 
 int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
@@ -1587,6 +1639,8 @@ int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
         size = RES_12M;
     else if (!strncmp(resolution, "RES_13M", 12))
         size = RES_13M;
+    else if (!strncmp(resolution, "RES_MULTI", 12))
+        size = RES_MULTI;
     else
         HAL_LOGE("Error,not support resolution %s", resolution);
 

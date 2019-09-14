@@ -119,6 +119,10 @@ ifeq ($(strip $(TARGET_BOARD_3DFACE_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera33dFace.cpp
 endif
+ifeq ($(strip $(TARGET_BOARD_MULTICAMERA_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+    hal_common/multiCamera/SprdCamera3MultiCamera.cpp
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_DEL_CPP)),)

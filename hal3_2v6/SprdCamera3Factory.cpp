@@ -39,6 +39,8 @@
 #include "SprdCamera3Flash.h"
 #include "hal_common/multiCamera/SprdCamera3Wrapper.h"
 
+#include "hal_common/multiCamera/SprdCamera3MultiCamera.h"
+
 using namespace android;
 
 namespace sprdcamera {
@@ -110,6 +112,10 @@ int SprdCamera3Factory::get_number_of_cameras() {
  *==========================================================================*/
 int SprdCamera3Factory::get_camera_info(int camera_id,
                                         struct camera_info *info) {
+#ifdef CONFIG_MULTICAMERA_SUPPORT
+    if (camera_id == SPRD_MULTI_CAMERA_ID)
+        return SprdCamera3MultiCamera::get_camera_info(camera_id, info);
+#endif
     if (isSingleIdExposeOnMultiCameraMode(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
@@ -306,6 +312,12 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     }
 
     HAL_LOGI("SPRD Camera Hal :hal3: cameraId=%d", atoi(id));
+
+#ifdef CONFIG_MULTICAMERA_SUPPORT
+    if (atoi(id) == SPRD_MULTI_CAMERA_ID) {
+        return SprdCamera3MultiCamera::camera_device_open(module, id, hw_device);
+    }
+#endif
 
     if (isSingleIdExposeOnMultiCameraMode(atoi(id))) {
         return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);

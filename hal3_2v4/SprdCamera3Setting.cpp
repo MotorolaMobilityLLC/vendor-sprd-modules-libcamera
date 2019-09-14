@@ -1690,7 +1690,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         0,
     };
     uint32_t dualPropSupport = 0;
+
+    // 0 facebeauty version
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
+
+    // 1 back blur or bokeh version
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     if (atoi(prop) == 1) {
@@ -1704,11 +1708,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     } else {
         available_cam_features.add(0);
     }
+
+    // 2 front blur version
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     available_cam_features.add(0);
+
+    // 3 blur cover id
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features.add(atoi(prop));
 
+    // 4 front flash type
     for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
             available_cam_features.add(atoi(front_flash[i].type_id));
@@ -1716,6 +1725,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         }
     }
 
+    // 5 wide and tele enable
     property_get("persist.vendor.cam.wt.enable", prop, "0");
     if (!dualPropSupport) {
         available_cam_features.add(0);
@@ -1723,6 +1733,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(atoi(prop));
     }
 
+    // 6 auto tracking enable
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features.add(atoi(prop));
@@ -1730,39 +1741,49 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     }
 
-// BACKULTRAWIDEANGLEENABLE
+    // 7 back ultra wide enable
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
-// BOKEHGDEPTHENBLE
+
+    // 8 bokeh gdepth enable
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
-    // back portrait mode
+
+    // 9 back portrait mode
     property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
-    // front portrait mode
+    // 10 front portrait mode
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
-//  MONTIONENABLE
+    // 11 montion photo enable
 #ifdef CONFIG_CAMERA_MOTION_PHONE
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
 
-//  DEFAULTQUARTERSIZE
+    // 12 default quarter size
 #ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
+
+    // 13 multi camera superwide & wide & tele
+    property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 14 camera high resolution definition mode
+    property_get("persist.vendor.cam.high.definition.mode", prop, "0");
+    available_cam_features.add(atoi(prop));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 

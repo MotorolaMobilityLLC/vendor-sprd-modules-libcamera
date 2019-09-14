@@ -74,6 +74,7 @@ typedef enum {
     RES_8M,
     RES_12M,
     RES_13M,
+    RES_MULTI,
     RES_END
 } custom_size;
 
@@ -113,6 +114,9 @@ class SprdCamera3MultiBase {
     virtual bool matchTwoFrame(hwi_frame_buffer_info_t result1,
                                List<hwi_frame_buffer_info_t> &list,
                                hwi_frame_buffer_info_t *result2);
+    virtual bool matchThreeFrame(hwi_frame_buffer_info_t result1,
+                               List<hwi_frame_buffer_info_t> &list2,List<hwi_frame_buffer_info_t> &list3,
+                               hwi_frame_buffer_info_t *result2, hwi_frame_buffer_info_t *result3);
     virtual hwi_frame_buffer_info_t *
     pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info,
                          List<hwi_frame_buffer_info_t> &queue);
@@ -195,11 +199,11 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
         buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
         buffer_handle_t *dst_private_handle, void *dst_vir_addr,
         SprdCamera3HWI *hwi, uint8_t fmt, cmr_uint rotation, cmr_uint flip_on);
-    void addAvailableStreamSize(CameraMetadata &metadata,
+    static void addAvailableStreamSize(CameraMetadata &metadata,
                                 const char *resolution);
     void setLogicIdTag(CameraMetadata &metadata, uint8_t *physical_ids,
                        uint8_t physical_ids_size);
-    int get_support_res_size(const char *resolution);
+    static int get_support_res_size(const char *resolution);
 
   private:
     Mutex mBufferListLock;

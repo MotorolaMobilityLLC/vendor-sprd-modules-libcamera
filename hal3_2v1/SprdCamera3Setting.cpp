@@ -309,6 +309,8 @@ enum available_cam_features {
     FRBLURPORTRAITMODE,
     MONTIONENABLE,
     DEFAULTQUARTERSIZE,
+    MULTICAMERAMODE,
+    HIGHDEFINITIONMODE,
     FEATURELISTMAX
 };
 
@@ -963,7 +965,8 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
-    // 0 beautyversion
+
+    // 0 facebeauty version
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features[BEAUTYVERSION] = atoi(prop);
     uint32_t dualPropSupport = 0;
@@ -971,7 +974,8 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
         mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
         dualPropSupport = 1;
     }
-    // 1 backblurversion
+
+    // 1 back blur or bokeh version
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     if (!dualPropSupport) {
         available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
@@ -990,13 +994,16 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     } else {
         available_cam_features[BACKBLURVERSION] = BLUR_DISABLE;
     }
-    // 2 frontblurversion
+
+    // 2 front blur version
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     available_cam_features[FRONTBLURVERSION] = BLUR_DISABLE;
-    // 3 blurcoveredid
+
+    // 3 blur cover id
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features[BLURCOVEREDID] = atoi(prop);
-    // 4 frontflashmode
+
+    // 4 front flash type
     for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
             available_cam_features[FRONTFLASHMODE] =
@@ -1004,14 +1011,16 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
             break;
         }
     }
-    // 5 backwplustmodeenable
+
+    // 5 wide and tele enable
     property_get("persist.vendor.cam.wt.enable", prop, "0");
     if (!dualPropSupport) {
         available_cam_features[BACKWPLUSTMODEENABLE] = 0;
     } else {
         available_cam_features[BACKWPLUSTMODEENABLE] = atoi(prop);
     }
-    // 6 trackingenable
+
+    // 6 auto tracking enable
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features[TRACKINGENABLE] = atoi(prop);
@@ -1019,7 +1028,7 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
         available_cam_features[TRACKINGENABLE] = 0;
     }
 
-// 7 backulrawideangleenable
+    // 7 back ultra wide enable
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
     if (findUltraWideSensor() >= 0)
         available_cam_features[BACKULTRAWIDEANGLEENABLE] = 1;
@@ -1027,33 +1036,42 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
 #endif
         available_cam_features[BACKULTRAWIDEANGLEENABLE] = 0;
 
-// 8 BOKEHGDEPTHENBLE
+    // 8 bokeh gdepth enable
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features[GDEPTHENABLE] = 1;
 #else
     available_cam_features[GDEPTHENABLE] = 0;
 #endif
-    // 9.portrait mode
+
+    // 9 back portrait mode
     property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
     available_cam_features[BABLURPORTRAITMODE] = atoi(prop);
 
-    // 10.front portrait mode
+    // 10 front portrait mode
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features[FRBLURPORTRAITMODE] = atoi(prop);
 
-// 11 MONTIONENABLE
+    // 11 montion photo enable
 #ifdef CONFIG_CAMERA_MOTION_PHONE
     available_cam_features[MONTIONENABLE] = 1;
 #else
     available_cam_features[MONTIONENABLE] = 0;
 #endif
 
-// 12 DEFAULTQUARTERSIZE
+    // 12 default quarter size
 #ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
     available_cam_features[DEFAULTQUARTERSIZE] = 1;
 #else
     available_cam_features[DEFAULTQUARTERSIZE] = 0;
 #endif
+
+    // 13 multi camera superwide & wide & tele
+    property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
+    available_cam_features[MULTICAMERAMODE] = atoi(prop);
+
+    // 14 camera high resolution definition mode
+    property_get("persist.vendor.cam.high.definition.mode", prop, "0");
+    available_cam_features[HIGHDEFINITIONMODE] = atoi(prop);
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]), sizeof(available_cam_features));
@@ -1833,7 +1851,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // and active area height and crop region height, for
     // android.scaler.cropRegion.
     int ultrawide_id = findUltraWideSensor();
-    if (ultrawide_id >= 0) {
+    if (ultrawide_id == cameraId) {
         s_setting[cameraId].scalerInfo.max_digital_zoom =
             MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO;
         s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
@@ -1841,6 +1859,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         s_setting[cameraId].scalerInfo.max_digital_zoom =
             MAX_DIGITAL_ZOOM_RATIO;
     }
+    HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
+        cameraId,ultrawide_id, s_setting[cameraId].scalerInfo.max_digital_zoom);
     // The minimum frame duration that is supported for each resolution in
     // android.scaler.availableJpegSizes
     memcpy(s_setting[cameraId].scalerInfo.jpeg_min_durations,

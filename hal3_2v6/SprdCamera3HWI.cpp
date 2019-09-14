@@ -1173,7 +1173,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
         camera3_stream_t *stream = output.stream;
         streamType[i] = getStreamType(stream);
-        HAL_LOGD("streamType[%d]=%d", i, streamType[i]);
+        HAL_LOGD("streamType[%d]=%d", i,streamType[i]);
 
         if (streamType[i] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
             if (meta.exists(ANDROID_JPEG_ORIENTATION)) {
@@ -1245,7 +1245,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             if (mMultiCameraMode == MODE_BLUR ||
                 mMultiCameraMode == MODE_3D_CAPTURE ||
                 mMultiCameraMode == MODE_3D_CALIBRATION ||
-                mMultiCameraMode == MODE_BOKEH) {
+                mMultiCameraMode == MODE_BOKEH ||
+                mMultiCameraMode == MODE_MULTI_CAMERA) {
                 if (streamType[0] == CAMERA_STREAM_TYPE_CALLBACK ||
                     streamType[1] == CAMERA_STREAM_TYPE_CALLBACK ||
                     streamType[2] == CAMERA_STREAM_TYPE_CALLBACK) {

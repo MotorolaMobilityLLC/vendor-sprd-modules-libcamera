@@ -1,4 +1,3 @@
-#testtest
 ifeq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 LOCAL_CFLAGS += -DSC_FPGA=1
 else
@@ -29,14 +28,9 @@ else
 LOCAL_CFLAGS += -DAT_CAMERA_SENSOR_TYPE_DEV_2=\"\\0\"
 endif
 
-
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION),HAL1.0 hal1.0 1.0))
 LOCAL_CFLAGS += -DCONFIG_CAMERA_HAL_VERSION_1
 endif
-
-
-
-
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_AE_VERSION)),1)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_ISP_AE_VERSION_V1
@@ -425,6 +419,10 @@ endif
 ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_OPTICSZOOM_SUPPORT
 #max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
+endif
+
+ifeq ($(strip $(TARGET_BOARD_MULTICAMERA_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_MULTICAMERA_SUPPORT
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)

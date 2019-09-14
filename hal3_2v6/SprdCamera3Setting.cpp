@@ -551,6 +551,7 @@ const cam_stream_info_t stream_info[] = {
     {{176, 144}, 33331760L, 33331760L}};
 
 const cam_stream_info_t subSensor_stream_info[] = {
+    {{4672, 3504}, 33331760L, 33331760L},
     {{4608, 3456}, 33331760L, 33331760L},
     {{4160, 3120}, 33331760L, 33331760L}, {{4000, 3000}, 33331760L, 33331760L},
     {{3264, 2448}, 33331760L, 33331760L}, {{2592, 1944}, 33331760L, 33331760L},
@@ -1658,7 +1659,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // and active area height and crop region height, for
     // android.scaler.cropRegion.
     int ultrawide_id = findUltraWideSensor();
-    if (ultrawide_id >= 0) {
+    if (ultrawide_id == cameraId) {
         s_setting[cameraId].scalerInfo.max_digital_zoom =
             MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO;
         s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
@@ -1666,6 +1667,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         s_setting[cameraId].scalerInfo.max_digital_zoom =
             MAX_DIGITAL_ZOOM_RATIO;
     }
+    HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
+        cameraId,ultrawide_id, s_setting[cameraId].scalerInfo.max_digital_zoom);
     // The minimum frame duration that is supported for each resolution in
     // android.scaler.availableJpegSizes
     memcpy(s_setting[cameraId].scalerInfo.jpeg_min_durations,
@@ -1989,14 +1992,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int physicalNumberOfCameras;
     physicalNumberOfCameras = SprdCamera3Setting::mPhysicalSensorNum;
 
+    // 0 facebeauty version
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));
+
     uint32_t dualPropSupport = 0;
     if (mSensorType[cameraId] != FOURINONESENSOR &&
         mSensorType[cameraId] != YUVSENSOR && physicalNumberOfCameras != 1) {
         dualPropSupport = 1;
     }
 
+    // 1 back blur or bokeh version
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     if (!dualPropSupport) {
         available_cam_features.add(0);
@@ -2015,12 +2021,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     } else {
         available_cam_features.add(0);
     }
+
+    // 2 front blur version
     property_get("persist.vendor.cam.fr.blur.version", prop, "0");
     available_cam_features.add(0);
+
+    // 3 blur cover id
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     available_cam_features.add(atoi(prop));
 
-    // front flash type
+    // 4 front flash type
     for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
             available_cam_features.add(atoi(front_flash[i].type_id));
@@ -2028,6 +2038,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         }
     }
 
+    // 5 wide and tele enable
     property_get("persist.vendor.cam.wt.enable", prop, "0");
     if (!dualPropSupport) {
         available_cam_features.add(0);
@@ -2035,6 +2046,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(atoi(prop));
     }
 
+    // 6 auto tracking enable
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
     if (cameraId == 0) {
         available_cam_features.add(atoi(prop));
@@ -2042,7 +2054,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     }
 
-// BACKULTRAWIDEANGLEENABLE
+    // 7 back ultra wide enable
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
     if (findUltraWideSensor() >= 0)
         available_cam_features.add(1);
@@ -2050,21 +2062,22 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
         available_cam_features.add(0);
 
-// BOKEHGDEPTHENBLE
+    // 8 bokeh gdepth enable
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
-    // back portrait mode
+
+    // 9 back portrait mode
     property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
     available_cam_features.add(atoi(prop));
-    // front portrait mode
+
+    // 10 front portrait mode
     property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
     available_cam_features.add(atoi(prop));
-    ALOGV("available_cam_features=%d", available_cam_features.size());
 
-    // MONTIONENABLE
+    // 11 montion photo enable
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         available_cam_features.add(0);
@@ -2076,12 +2089,22 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
     }
 
-// DEFAULTQUARTERSIZE
+    // 12 default quarter size
 #ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
+
+    // 13 multi camera superwide & wide & tele
+    property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 14 camera high resolution definition mode
+    property_get("persist.vendor.cam.high.definition.mode", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    ALOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -4053,9 +4076,9 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
-        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled = valueU8;
-        pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
-        HAL_LOGV("sprd 3dnr enabled is %d",
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
+                         valueU8, ANDROID_SPRD_3DNR_ENABLED, 1)
+        HAL_LOGD("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
         if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1 &&
             is_raw_capture == 0 && is_isptool_mode == 0) {
@@ -4692,7 +4715,7 @@ int SprdCamera3Setting::updateWorkParameters(
         }
     }
 
-    HAL_LOGD("focus_distance=%f, ae_precap_trigger= %d, "
+    HAL_LOGD("mCameraId=%d, focus_distance=%f, ae_precap_trigger= %d, "
              "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
              "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
@@ -4700,6 +4723,7 @@ int SprdCamera3Setting::updateWorkParameters(
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
              "%d, sprd_auto_3dnr_enable:%d, "
              "android zsl enable = %d",
+             mCameraId,
              s_setting[mCameraId].lensInfo.focus_distance,
              s_setting[mCameraId].controlInfo.ae_precap_trigger,
              isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
@@ -5240,7 +5264,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
                        1);
 
-    HAL_LOGV("auto 3dnr scene report %d",
+    HAL_LOGD("auto 3dnr scene report %d",
              s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene);
     camMetadata.update(ANDROID_SPRD_IS_3DNR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene),

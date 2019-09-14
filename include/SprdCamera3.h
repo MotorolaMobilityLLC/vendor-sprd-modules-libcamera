@@ -235,6 +235,8 @@ static tags_info_t
         {"sprdTouchInfo", TYPE_INT32},
         {"sprd3auto3dnrCaptureEnabled", TYPE_BYTE},
         {"sprdBokehMode", TYPE_BYTE},
+        {"sprdZoomRatioSection", TYPE_FLOAT},
+        {"sprdZoomRatio", TYPE_FLOAT},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

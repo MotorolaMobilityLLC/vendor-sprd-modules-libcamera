@@ -1019,7 +1019,8 @@ int SprdCamera3OEMIf::reprocessYuvForJpeg(cmr_uint yaddr, cmr_uint yaddr_vir,
                  sprddefInfo.sprd_3dcalibration_enabled);
     }
     if (getMultiCameraMode() == MODE_BLUR ||
-        getMultiCameraMode() == MODE_BOKEH) {
+        getMultiCameraMode() == MODE_BOKEH ||
+        getMultiCameraMode() == MODE_MULTI_CAMERA) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
                  mSprdYuvCallBack);
         HAL_LOGD("reprocess mode, force enable reprocess");
@@ -1437,7 +1438,8 @@ void SprdCamera3OEMIf::setCallBackYuvMode(bool mode) {
         }
 
         if (getMultiCameraMode() == MODE_BLUR ||
-            getMultiCameraMode() == MODE_BOKEH) {
+            getMultiCameraMode() == MODE_BOKEH ||
+            getMultiCameraMode() == MODE_MULTI_CAMERA) {
             SET_PARM(mHalOem, mCameraHandle,
                      CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
             HAL_LOGD("yuv call back mode");
@@ -1886,7 +1888,8 @@ int SprdCamera3OEMIf::setPreviewParams() {
     // standard yuvcallback later
     if (getMultiCameraMode() != MODE_BLUR &&
         getMultiCameraMode() != MODE_BOKEH &&
-        getMultiCameraMode() != MODE_3D_CALIBRATION) {
+        getMultiCameraMode() != MODE_3D_CALIBRATION &&
+        getMultiCameraMode() != MODE_MULTI_CAMERA) {
         callbackSize.width = mCallbackWidth;
         callbackSize.height = mCallbackHeight;
     }
@@ -3338,9 +3341,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     SCALER_Tag scaleInfo;
     struct img_rect scalerCrop;
     uint16_t picW = 0, picH = 0, fdWid = 0, fdHeight = 0;
-    HAL_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
-             mPreviewWidth, mPreviewHeight, cropRegion[0], cropRegion[1],
-             cropRegion[2], cropRegion[3]);
+
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
     if (fdWid == 0 || fdHeight == 0) {
@@ -3348,6 +3349,10 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
         return 1;
     }
     mSetting->getSCALERTag(&scaleInfo);
+    HAL_LOGD("mCameraId=%d,face rect %d %d %d %d, scaleInfo crop %d %d %d %d",
+            mCameraId, cropRegion[0], cropRegion[1], cropRegion[2], cropRegion[3],
+            scaleInfo.crop_region[0], scaleInfo.crop_region[1],
+            scaleInfo.crop_region[2], scaleInfo.crop_region[3]);
     scalerCrop.start_x = scaleInfo.crop_region[0];
     scalerCrop.start_y = scaleInfo.crop_region[1];
     scalerCrop.width = scaleInfo.crop_region[2];
@@ -3373,12 +3378,18 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     }
     zoomWidth = width / (float)mPreviewWidth;
     zoomHeight = height / (float)mPreviewHeight;
+    HAL_LOGD("mCameraId=%d, previewAspect=%f, cropAspect=%f,"
+            "width=%f, height=%f, left=%f, top=%f, zoomWidth=%f, zoomHeight=%f",
+            mCameraId, previewAspect, cropAspect, width, height, left, top,
+            zoomWidth, zoomHeight);
     cropRegion[0] = (cmr_u32)((float)cropRegion[0] * zoomWidth + left);
     cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight + top);
     cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth + left);
     cropRegion[3] = (cmr_u32)((float)cropRegion[3] * zoomHeight + top);
-    HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d, )", cropRegion[0],
-             cropRegion[1], cropRegion[2], cropRegion[3]);
+    HAL_LOGD("mCameraId=%d, crop_face_rect calculated "
+            "(xs=%d,ys=%d,xe=%d,ye=%d, )",
+            mCameraId, cropRegion[0], cropRegion[1],
+            cropRegion[2], cropRegion[3]);
     return ret;
 }
 
@@ -3915,8 +3926,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
         ATRACE_BEGIN("preview_frame");
 
-        HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%" PRId64, frame->fd,
-                 buff_vir, frame_num, buffer_timestamp);
+        HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, height=%d, time=%" PRId64, mCameraId, frame->fd,
+                 buff_vir, frame_num, frame->width, frame->height, buffer_timestamp);
 
         if (!isCapturing() && mIsPowerhintWait) {
             if ((frame_num > mStartFrameNum) &&
@@ -5091,7 +5102,8 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_RETURN_ZSL_BUF: {
         if (isPreviewing() && iSZslMode() &&
             (mSprd3dCalibrationEnabled || mSprdYuvCallBack ||
-             mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH)) {
+             mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH ||
+             mMultiCameraMode == MODE_MULTI_CAMERA)) {
             cmr_u32 buf_id = 0;
             struct camera_frame_type *zsl_frame = NULL;
             zsl_frame = (struct camera_frame_type *)parm4;
@@ -5949,7 +5961,10 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
 
     mZoomInfo.mode = ZOOM_INFO;
-    if (mIsUltraWideMode) {
+    HAL_LOGD("mCameraId=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,
+             zoomRatio, mIsUltraWideMode);
+    if (mIsUltraWideMode &&
+        mCameraId == SprdCamera3Setting::findUltraWideSensor()) {
         mReprocessZoomRatio = zoomRatio;
         mZoomInfo.zoom_info.zoom_ratio = 1.0f;
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
@@ -5958,8 +5973,6 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     }
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
-
-    HAL_LOGD("camId=%d, zoomRatio=%f", mCameraId, zoomRatio);
 
     return ret;
 }
@@ -8918,7 +8931,8 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         // TBD: bokeh use standard callback strem, dont use zsl capture
         if (getMultiCameraMode() != MODE_BLUR &&
             getMultiCameraMode() != MODE_BOKEH &&
-            getMultiCameraMode() != MODE_3D_CALIBRATION) {
+            getMultiCameraMode() != MODE_3D_CALIBRATION &&
+            getMultiCameraMode() != MODE_MULTI_CAMERA) {
             mHalOem->ops->queue_buffer(mCameraHandle, buffer,
                                        SPRD_CAM_STREAM_CALLBACK);
         }

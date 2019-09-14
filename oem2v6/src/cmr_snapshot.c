@@ -695,8 +695,8 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
                 }
                 isp_video_set_capture_complete_flag();
             } else {
-                    usleep(500*1000);
-		    send_capture_data(
+                usleep(500 * 1000);
+                send_capture_data(
                     0x10, /* jpg */
                     cxt->req_param.post_proc_setting.actual_snp_size.width,
                     cxt->req_param.post_proc_setting.actual_snp_size.height,
@@ -1345,8 +1345,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
                           mem_ptr->cap_raw.size.height,
                           (char *)mem_ptr->cap_raw.addr_vir.addr_y,
-                          mem_ptr->cap_raw.buf_size,
-                          0, 0, 0, 0);
+                          mem_ptr->cap_raw.buf_size, 0, 0, 0, 0);
     }
 
     if (isp_video_get_raw_images_info()) {
@@ -1355,16 +1354,14 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             snp_cxt->ops.dump_image_with_3a_info(
                 snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
                 mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                mem_ptr->cap_raw.buf_size,
-                &mem_ptr->cap_raw.addr_vir);
+                mem_ptr->cap_raw.buf_size, &mem_ptr->cap_raw.addr_vir);
         }
     } else {
         CMR_LOGD("dump mipi raw");
         snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
             mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-            mem_ptr->cap_raw.buf_size,
-            &mem_ptr->cap_raw.addr_vir);
+            mem_ptr->cap_raw.buf_size, &mem_ptr->cap_raw.addr_vir);
     }
 
     if (frm_ptr->is_4in1_frame) {
@@ -1580,13 +1577,16 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
 
     CMR_LOGD("cxt->req_param.is_zsl_snapshot=%d",
              cxt->req_param.is_zsl_snapshot);
-    CMR_LOGD("cxt->req_param.is_3dnr %d" ,cxt->req_param.is_3dnr);
+    CMR_LOGD("cxt->req_param.is_3dnr %d", cxt->req_param.is_3dnr);
     if (cxt->req_param.is_zsl_snapshot) {
-        if (cxt->req_param.is_3dnr == 1 || cxt->req_param.is_hdr == 1 || cxt->req_param.is_3dnr == 5) {
+        if (cxt->req_param.is_3dnr == 1 || cxt->req_param.is_hdr == 1 ||
+            cxt->req_param.is_3dnr == 5) {
             // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
             // snp_yuv_callback_take_picture_done
-            if (cmr_cxt->is_multi_mode != MODE_BOKEH) {
-                CMR_LOGI("send SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here ");
+            if (cmr_cxt->is_multi_mode != MODE_BOKEH &&
+                cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
+                CMR_LOGI(
+                    "send SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here ");
                 snp_send_msg_notify_thr(
                     snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                     SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
@@ -4041,7 +4041,9 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                             SNAPSHOT_CB_EVT_DONE, (void *)&frame_type,
                             sizeof(struct camera_frame_type));
-    if (cxt->req_param.is_hdr == 1 && cmr_cxt->is_multi_mode == MODE_BOKEH) {
+    if (cxt->req_param.is_hdr == 1 &&
+        (cmr_cxt->is_multi_mode == MODE_BOKEH ||
+         cmr_cxt->is_multi_mode == MODE_MULTI_CAMERA)) {
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
                                 NULL, sizeof(struct camera_frame_type));
