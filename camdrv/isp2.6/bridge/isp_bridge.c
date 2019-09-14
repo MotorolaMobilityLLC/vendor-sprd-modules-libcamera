@@ -300,7 +300,11 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case GET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
+#ifdef CONFIG_ISP_2_7
 		memcpy(out, &cxt->start_user_cnt,sizeof(cxt->start_user_cnt));
+#else
+		memcpy(out, &cxt->user_cnt,sizeof(cxt->user_cnt));
+#endif
 		sem_post(&cxt->module_sm);
 		break;
 
