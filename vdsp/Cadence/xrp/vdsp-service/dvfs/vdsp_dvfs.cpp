@@ -30,6 +30,20 @@ static uint32_t g_tempset;
 List<struct vdsp_work_piece*> g_workpieces_list;
 static void *dvfs_monitor_thread(void* data);
 
+int32_t set_dvfs_maxminfreq(void *device , int32_t maxminflag)
+{
+	struct xrp_dvfs_ctrl dvfs;
+	struct xrp_device *dev = (struct xrp_device *)device;
+	dvfs.en_ctl_flag = 0;
+	dvfs.enable = 1;
+	if(maxminflag)
+		dvfs.index = DVFS_INDEX_5;
+	else
+		dvfs.index = DVFS_INDEX_0;
+	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
+	return 0;
+}
+
 int32_t init_dvfs(void* device)
 {
 	int ret;

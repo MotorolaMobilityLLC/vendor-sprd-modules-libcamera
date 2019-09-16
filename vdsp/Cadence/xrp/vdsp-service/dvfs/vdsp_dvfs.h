@@ -11,7 +11,7 @@ struct vdsp_work_piece
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+int32_t set_dvfs_maxminfreq(void *device , int32_t maxminflag);
 int32_t init_dvfs(void *device);
 void deinit_dvfs(void *device);
 void preprocess_work_piece();

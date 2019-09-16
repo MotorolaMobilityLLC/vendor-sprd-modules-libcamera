@@ -10,12 +10,10 @@
 #include <ion/ion.h>
 #include <sprd_ion.h>
 #include <sys/mman.h>
-#ifdef DVFS_OPEN
 #include "vdsp_dvfs.h"
-#endif
+#include <cutils/properties.h>
 
-
-
+#define VENDOR_PROPERTY_SET_DEFAULT_DVFS   "persist.vendor.vdsp.default.dvfs"
 namespace android {
 class ClientCallback : public BBinder{
 public:
@@ -329,6 +327,7 @@ status_t BnVdspService::onTransact(
 
 int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_worktype type) {
 	int32_t newclient;
+	char value[128];
 	AutoMutex _l(mLock);
 	if(mopen_count == 0) {
 		mDevice = sprd_vdsp_open_device(0 , type);
@@ -338,8 +337,12 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 		mDvfs = init_dvfs(mDevice);
 		#endif
 		__android_log_print(ANDROID_LOG_DEBUG,TAG_Server,"func:%s , really open device type:%d device:%p , IondevFd:%d\n" , __func__ , type , mDevice , mIonDevFd);
-		if((mDevice != NULL) && (mIonDevFd > 0))
+		if((mDevice != NULL) && (mIonDevFd > 0)) {
+			property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
+			if(atoi(value) == 1)
+				set_dvfs_maxminfreq(mDevice , 1);
 			mopen_count++;
+		}
 		else {
 			#ifdef DVFS_OPEN
 			if(0 != mDvfs) {
@@ -375,6 +378,7 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 	int32_t ret = 0;
 	int32_t count;
+	char value[128];
 	AutoMutex _l(mLock);
 	count = GetClientOpenNum(client);
 	if(count <= 0) {
@@ -395,6 +399,9 @@ int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 			mDvfs = 0;
 		}
 		#endif
+		property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
+		if(atoi(value) == 1)
+			set_dvfs_maxminfreq(mDevice , 0);
 		sprd_vdsp_release_device(mDevice);
 		close(mIonDevFd);
 		mIonDevFd = -1;
@@ -414,6 +421,7 @@ int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
         int32_t ret = 0;
         int32_t count;
+	char value[128];
         count = GetClientOpenNum(client);
         if(count <= 0) {
                 __android_log_print(ANDROID_LOG_ERROR,TAG_Server, "func:%s , client:%p open count is 0, return invalid client\n" , __func__ , client.get());
@@ -433,6 +441,9 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
 			if(mopen_count != 0)
 				goto __exitprocess;
 		}
+		property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
+		if(atoi(value) == 1)
+			set_dvfs_maxminfreq(mDevice , 0);
                 sprd_vdsp_release_device(mDevice);
                 close(mIonDevFd);
                 mIonDevFd = -1;
