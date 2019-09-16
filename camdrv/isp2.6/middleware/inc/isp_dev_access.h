@@ -34,6 +34,7 @@
 #define ISP_EVT_3DNR			(1 << 10)
 #define ISP_EVT_HIST2			(1 << 11)
 #define ISP_EVT_CFG				(1 << 12)
+#define ISP_EVT_LSC				(1 << 13)
 
 
 enum isp_dev_access_ctrl_cmd {
@@ -80,6 +81,9 @@ enum isp_dev_access_ctrl_cmd {
 
 	ISP_DEV_POST_3DNR,
 	ISP_DEV_RESET,
+
+	ISP_DEV_SET_LSC_MONITOR_BYPASS,
+	ISP_DEV_SET_LSC_MONITOR,
 	ISP_DEV_CMD_MAX
 };
 

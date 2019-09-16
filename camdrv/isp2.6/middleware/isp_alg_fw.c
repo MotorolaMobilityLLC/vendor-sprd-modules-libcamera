@@ -90,6 +90,28 @@ struct ae_info {
 	cmr_u32 flash_version;
 };
 
+struct lscm_info {
+	cmr_handle handle;
+	cmr_u32 sw_bypass;
+	cmr_u8 *log_alc_lscm;
+	cmr_u32 log_alc_lscm_size;
+	cmr_u8 *log_alc;
+	cmr_u32 log_alc_size;
+	cmr_u8 *log_lscm;
+	cmr_u32 log_lscm_size;
+	cmr_uint vir_addr;
+	cmr_int buf_size;
+	cmr_int buf_num;
+	cmr_uint phy_addr;
+	cmr_uint mfd;
+	cmr_int buf_property;
+	void *buffer_client_data;
+	struct lsc_size win_num;
+	struct lsc_size win_size;
+	cmr_u32 shift;
+	cmr_u32 flash_version;
+};
+
 struct awb_info {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
@@ -280,6 +302,7 @@ struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
 	cmr_u8 bayerhist_update;
+	cmr_u8 lscm_is_update;
 	cmr_u8 fw_started;
 	cmr_u8 first_frm;
 	cmr_u8 aethd_pri_set;
@@ -290,10 +313,14 @@ struct isp_alg_fw_context {
 	struct isp_awb_statistic_info aem_oe;
 	struct isp_awb_statistic_info cnt_ue;
 	struct isp_awb_statistic_info cnt_oe;
+#ifdef CONFIG_ISP_2_7
+	struct isp_lsc_statistic_info lscm_stats_data;
+#endif
 	struct isp_hist_statistic_info bayer_hist_stats[3];
 	struct isp_hist_statistic_info hist2_stats;
 	struct ae_size hist2_roi;
 	struct afctrl_ae_info ae_info;
+	struct lscm_info lscm_cxt;
 	struct afctrl_awb_info awb_info;
 	struct commn_info commn_cxt;
 	struct sensor_data_info sn_cxt;
@@ -615,6 +642,37 @@ exit:
 	return ret;
 }
 
+#ifdef CONFIG_ISP_2_7
+static cmr_int ispalg_set_lsc_monitor(cmr_handle isp_alg_handle, struct lsc_monitor_info *lscm_info)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct dcam_dev_lscm_param lscm_monitor;
+
+	ISP_LOGD("win %d %d %d %d %d %d\n",
+			lscm_info->trim.x, lscm_info->trim.y,
+			lscm_info->win_size.w, lscm_info->win_size.h,
+			lscm_info->win_num.w, lscm_info->win_num.h);
+
+	cxt->lscm_cxt.win_num.w = lscm_info->win_num.w;
+	cxt->lscm_cxt.win_num.h = lscm_info->win_num.h;
+	cxt->lscm_cxt.win_size.w = lscm_info->win_size.w;
+	cxt->lscm_cxt.win_size.h = lscm_info->win_size.h;
+	lscm_monitor.mode = lscm_info->work_mode;
+	lscm_monitor.skip_num = lscm_info->skip_num;
+	lscm_monitor.offset_x = lscm_info->trim.x;
+	lscm_monitor.offset_y = lscm_info->trim.y;
+	lscm_monitor.blk_width = lscm_info->win_size.w;
+	lscm_monitor.blk_height = lscm_info->win_size.h;
+	lscm_monitor.blk_num_x = lscm_info->win_num.w;
+	lscm_monitor.blk_num_y = lscm_info->win_num.h;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_SET_LSC_MONITOR,
+			&lscm_monitor, NULL);
+	return ret;
+}
+#endif
 static cmr_int ispalg_set_ae_stats_mode(
 	cmr_handle isp_alg_handle, cmr_u32 mode,
 	cmr_u32 skip_number)
@@ -707,8 +765,38 @@ static cmr_int ispalg_set_aem_thrd(cmr_handle isp_alg_handle, struct ae_monitor_
 	aem_thrd.aem_b_thr.high_thr = in->high_region_thrd.b;
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
 	ISP_DEV_SET_AE_RGB_THR, &aem_thrd, NULL);
+
 	return ret;
 }
+
+#ifdef CONFIG_ISP_2_7
+static cmr_int ispalg_lsc_set_cb(cmr_handle isp_alg_handle,
+		cmr_int type, void *param0, void *param1)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	UNUSED(param1);
+
+	if (!cxt) {
+		ISP_LOGE("fail to get valid cxt ptr\n");
+		return ISP_PARAM_NULL;
+	}
+
+	switch (type) {
+	case ISP_LSC_SET_MONITOR:
+		ret = ispalg_set_lsc_monitor(cxt, param0);
+		break;
+	case ISP_LSC_SET_MONITOR_BYPASS:
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_LSC_MONITOR_BYPASS, param0, NULL);
+		break;
+	default:
+		ISP_LOGV("unsupported ae cb: %lx\n", type);
+		break;
+	}
+
+	return ret;
+}
+#endif
 
 static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		cmr_int type, void *param0, void *param1)
@@ -1783,6 +1871,51 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 
 	return ret;
 }
+
+#ifdef CONFIG_ISP_2_7
+static cmr_int ispalg_lscm_stats_parser(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 lscm_shift = 0;
+	cmr_u32 i = 0;
+	cmr_u32 blk_num = 0;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_lsc_statistic_info *lscm_stat_ptr = NULL;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+
+	cmr_u64 *uaddr;
+	cmr_u64 stats_val0 = { 0 };
+	cmr_u64 stats_val1 = { 0 };
+	cmr_u32 sum_g = 0;
+	cmr_u32 sum_g1 = 0;
+
+	lscm_stat_ptr = &cxt->lscm_stats_data;
+	lscm_shift = cxt->lscm_cxt.shift;
+	blk_num = cxt->lscm_cxt.win_num.w * cxt->lscm_cxt.win_num.h;
+	uaddr = (cmr_u64 *)statis_info->uaddr;
+	for (i = 0; i < blk_num; i++) {
+		stats_val0 = *uaddr++;
+		stats_val1 = *uaddr++;
+		lscm_stat_ptr->b_info[i] = (cmr_u32)(stats_val0 & 0xffffff);
+		lscm_stat_ptr->r_info[i] = (cmr_u32)((stats_val0 >> 24) & 0xffffff);
+		sum_g = (cmr_u32)((stats_val0 >> 48) & 0xffff);
+		sum_g1 = (cmr_u32)(stats_val1 & 0x1ff);
+		lscm_stat_ptr->g_info[i] = (sum_g1 << 16) + sum_g;
+	}
+
+	ISP_LOGI("sum[0]: r 0x%x, g 0x%x, b 0x%x cam[%d]\n",
+		lscm_stat_ptr->r_info[0], lscm_stat_ptr->g_info[0], lscm_stat_ptr->b_info[0], (cmr_u32)cxt->camera_id);
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+
+	cxt->lscm_is_update = 1;
+
+	return ret;
+}
+#endif
 
 static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
@@ -3053,6 +3186,11 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		cxt->last_sof_time = cur_time;
 		ret = ispalg_cfg_param(cxt, 0);
 		break;
+#ifdef CONFIG_ISP_2_7
+	case ISP_EVT_LSC:
+		ret = ispalg_lscm_stats_parser((cmr_handle) cxt, message->data);
+		break;
+#endif
 	default:
 		ISP_LOGV("don't support msg");
 		break;
@@ -3773,7 +3911,9 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.grid = lsc_info->grid;
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
-
+#ifdef CONFIG_ISP_2_7
+	lsc_param.lsc_set_cb = ispalg_lsc_set_cb;
+#endif
 	/*  alsc tuning param should be private and parsed in alsc lib */
 	//struct lsc2_tune_param* param = (struct lsc2_tune_param*)lsc_param.tune_param_ptr;
 	cxt->lsc_cxt.full_size_width = lsc_tab_param_ptr->resolution.w;

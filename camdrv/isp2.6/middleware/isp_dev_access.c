@@ -62,6 +62,8 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 		stats_buffer_size += STATIS_EBD_BUF_NUM * STATIS_EBD_BUF_SIZE;
 		stats_buffer_size += STATIS_HIST_BUF_NUM * STATIS_HIST_BUF_SIZE;
 		stats_buffer_size += STATIS_3DNR_BUF_NUM * STATIS_3DNR_BUF_SIZE;
+		stats_buffer_size += STATIS_LSCM_BUF_NUM * STATIS_LSCM_BUF_SIZE;
+
 		in_ptr->statis_mem_num = 1;
 		in_ptr->statis_mem_size = stats_buffer_size;
 		ret = in_ptr->alloc_cb(CAMERA_ISP_STATIS,
@@ -247,6 +249,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_EVT_HIST2, statis_info, (void *)cxt->evt_alg_handle);
 		}
+	} else if (irq_info->irq_property == STATIS_LSCM) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_EVT_LSC, statis_info, (void *)cxt->evt_alg_handle);
+		}
 	} else {
 		free((void *)statis_info);
 		statis_info = NULL;
@@ -406,7 +412,13 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	case ISP_DEV_SET_AE_RGB_THR:
 		dcam_u_aem_rgb_thr(cxt->isp_driver_handle, param0);
 		break;
-
+	/*lsc*/
+	case ISP_DEV_SET_LSC_MONITOR_BYPASS:
+		dcam_u_lscm_bypass(cxt->isp_driver_handle, *(cmr_u32 *)param0);
+		break;
+	case ISP_DEV_SET_LSC_MONITOR:
+		dcam_u_lsc_monitor(cxt->isp_driver_handle, param0);
+		break;
 	/* awbc */
 	case ISP_DEV_SET_AWB_GAIN:
 		dcam_u_awbc_gain(cxt->isp_driver_handle, param0);

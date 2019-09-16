@@ -95,6 +95,9 @@ cmr_s32 dcam_u_aem_skip_num(cmr_handle handle, cmr_u32 skip_num);
 cmr_s32 dcam_u_aem_win(cmr_handle handle, void *aem_win);
 cmr_s32 dcam_u_aem_rgb_thr(cmr_handle handle, void *rgb_thr);
 
+cmr_s32 dcam_u_lscm_bypass(cmr_handle handle, cmr_u32 bypass);
+cmr_s32 dcam_u_lsc_monitor(cmr_handle handle, void *block_info);
+
 cmr_s32 dcam_u_afm_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_afm_bypass(cmr_handle handle, cmr_u32 bypass);
 cmr_s32 dcam_u_afm_mode(cmr_handle handle, cmr_u32 mode);
