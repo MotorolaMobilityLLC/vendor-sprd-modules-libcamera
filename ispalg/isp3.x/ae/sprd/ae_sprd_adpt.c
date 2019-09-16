@@ -2827,8 +2827,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = cxt->ae_tbl_param.def_expline;
 			cxt->last_exp_param.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cxt->last_exp_param.cur_index = cxt->ae_tbl_param.def_index;
-			if(CAMERA_MODE_MANUAL != cxt->app_mode)
-				cxt->last_cur_lum = cxt->cur_result.cur_lum;
+			cxt->last_cur_lum = cxt->cur_result.cur_lum;
 			cxt->last_exp_param.is_lock = cxt->cur_status.adv_param.lock;
 			cxt->last_index = cxt->ae_tbl_param.def_index;
 			if (0 != cxt->cur_result.cur_bv)
@@ -2842,8 +2841,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = cxt->sync_cur_result.ev_setting.ae_gain;
 			cxt->last_exp_param.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.ev_setting.ae_idx;
-			if(CAMERA_MODE_MANUAL != cxt->app_mode)
-				cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
+			cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
 			cxt->last_exp_param.is_lock = cxt->sync_cur_status.adv_param.lock;
 			cxt->last_index = cxt->sync_cur_result.ev_setting.ae_idx;
 			if (0 != cxt->cur_result.cur_bv)
