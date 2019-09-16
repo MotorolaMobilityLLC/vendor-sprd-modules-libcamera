@@ -1762,8 +1762,7 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 		ISP_LOGI("the param file is %s, version = %d", filename, version);
 	}
 
-	if (ISP_PARAM_VERSION_V26 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id) ||
-		ISP_PARAM_VERSION_V25 == (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
+	if (ISP_PARAM_VERSION_V25 <= (TUNE_FILE_CHIP_VER_MASK & sensor_raw_info_ptr->version_info->version_id)) {
 		rtn = update_param_v26(sensor_raw_info_ptr, sensor_name);
 		if (0x00 != rtn) {
 			ISP_LOGE("fail to update param!");
