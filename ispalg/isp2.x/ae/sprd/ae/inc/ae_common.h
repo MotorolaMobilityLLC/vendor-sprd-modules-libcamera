@@ -16,63 +16,30 @@
 
 #ifndef _AE_COMMON_H_
 #define _AE_COMMON_H_
-
-#ifdef CONFIG_FOR_TIZEN
-#include "stdint.h"
-#elif WIN32
 #include "cmr_types.h"
-#else
-#include "cmr_types.h"
-#endif
 
-#define AEC_LINETIME_PRECESION 1000000000.0 /*ns*/
-
-#define AE_EXP_GAIN_TABLE_SIZE 512
-#define AE_WEIGHT_TABLE_SIZE	1024
+#define AEC_LINETIME_PRECESION (1000000000.0f) /*ns*/
 #define AE_ISO_NUM	6
-#define AE_ISO_NUM_NEW 8
-#define AE_SCENE_NUM   8
-#define AE_FLICKER_NUM 2
-#define AE_WEIGHT_TABLE_NUM 3
-#define AE_EV_LEVEL_NUM 16
 #define AE_PARAM_VERIFY	0x61656165
-#define AE_OFFSET_NUM 20
-#define AE_CVGN_NUM  4
 #define AE_TABLE_32
 #define AE_BAYER_CHNL_NUM 4
 #define AE_PIECEWISE_MAX_NUM 16
-#define AE_WEIGHT_UNIT 256
-#define AE_FIX_PCT 1024
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
-#define AE_TARGET_WEIGHT_NUM 5
-#define AE_CFG_NUM 8
 #define AE_FD_NUM 20
-#define AE_BASE_GAIN 128
 #define AE_BASE_TABLE_SIZE 16384
 #define NGT_BV 600
 #define IDR_BV 900
 #define ODR_BV 1500
 #define INDOOR_THD 700
-#define OUTDOOR_THD 1300
-enum ae_environ_mod {
-	ae_environ_night,
-	ae_environ_lowlux,
-	ae_environ_normal,
-	ae_environ_hightlight,
-	ae_environ_num,
-};
 
-enum ae_state {
-	AE_STATE_NORMAL,
-	AE_STATE_LOCKED,
-	//AE_STATE_PAUSE,
-	AE_STATE_SEARCHING,
-	AE_STATE_CONVERGED,
-	AE_STATE_FLASH_REQUIRED,
-	AE_STATE_PRECAPTURE,
-	AE_STATE_INACTIVE,
-	AE_STATE_MAX
-};
+#ifndef _AE_COMMON_DATA_TYPE_DEF
+#define _AE_COMMON_DATA_TYPE_DEF
+
+#define AE_WEIGHT_UNIT 256
+#define AE_BASE_GAIN 128
+#define AE_FIX_PCT 1024
+
+typedef cmr_handle ae_handle_t;
 
 enum ae_return_value {
 	AE_SUCCESS = 0x00,
@@ -105,6 +72,18 @@ enum ae_iso_mode {
 	AE_ISO_6400,
 	AE_ISO_12800,
 	AE_ISO_MAX
+};
+
+enum ae_state {
+	AE_STATE_NORMAL,
+	AE_STATE_LOCKED,
+	//AE_STATE_PAUSE,
+	AE_STATE_SEARCHING,
+	AE_STATE_CONVERGED,
+	AE_STATE_FLASH_REQUIRED,
+	AE_STATE_PRECAPTURE,
+	AE_STATE_INACTIVE,
+	AE_STATE_MAX
 };
 
 enum ae_scene_mode {
@@ -145,13 +124,6 @@ enum alg_flash_type {
 	FLASH_MAX
 };
 
-enum {
-	AE_3DNR_ON,
-	AE_3DNR_OFF,
-	AE_3DNR_AUTO,
-	AE_3DNR_MAX,
-};
-
 enum ae_flicker_mode {
 	AE_FLICKER_50HZ = 0x00,
 	AE_FLICKER_60HZ,
@@ -166,291 +138,6 @@ enum ae_sensor_role_type {
 	AE_SENSOR_SLAVE0 = 2,
 	AE_SENSOR_SLAVE1 = 3,
 	AE_SENSOR_MAX
-};
-
-enum ae_binning_mode {
-	AE_BNNG_MOD_AVG = 0,
-	AE_BNNG_MOD_SUM,
-};
-
-typedef cmr_handle ae_handle_t;
-
-struct ae_ct_table {
-	float ct[20];
-	float rg[20];
-};
-
-struct ae_weight_value {
-	cmr_s16 value[2];
-	cmr_s16 weight[2];
-};
-
-struct ae_sample {
-	cmr_s16 x;
-	cmr_s16 y;
-};
-
-struct ae_piecewise_func {
-	cmr_s32 num;
-	struct ae_sample samples[AE_PIECEWISE_SAMPLE_NUM];
-};
-
-struct ae_target_weight_func {
-	cmr_s32 num;
-	struct ae_sample samples[AE_TARGET_WEIGHT_NUM];
-};
-
-struct ae_range {
-	cmr_s32 min;
-	cmr_s32 max;
-};
-
-struct ae_ranges_type {
-	cmr_u32 num;
-	struct ae_range range[AE_PIECEWISE_MAX_NUM];
-};
-
-struct ae_size {
-	cmr_u32 w;
-	cmr_u32 h;
-};
-
-struct ae_trim {
-	cmr_u32 x;
-	cmr_u32 y;
-	cmr_u32 w;
-	cmr_u32 h;
-};
-
-struct ae_rect {
-	cmr_u32 start_x;
-	cmr_u32 start_y;
-	cmr_u32 end_x;
-	cmr_u32 end_y;
-};
-
-struct ae1_face {
-	cmr_u32 start_x;
-	cmr_u32 start_y;
-	cmr_u32 end_x;
-	cmr_u32 end_y;				/*4 x 4bytes */
-	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
-	cmr_u32 face_lum;
-	cmr_s32 angle;
-};
-
-struct ae1_face_info {
-	cmr_u16 face_num;
-	cmr_u16 reserved;			/*1 x 4bytes */
-	cmr_u32 rect[1024];			/*1024 x 4bytes */
-	struct ae1_face face_area[20];	/*20 x 5 * 4bytes */
-};								/*1125 x 4bytes */
-
-struct ae1_fd_param {
-	struct ae1_face_info cur_info;	/*1125 x 4bytes */
-	cmr_u8 update_flag;
-	cmr_u8 enable_flag;
-	cmr_u16 reserved;			/*1 x 4bytes */
-	cmr_u16 img_width;
-	cmr_u16 img_height;			/*1 x 4bytes */
-};								/*1127 x 4bytes */
-
-struct ae_param {
-	cmr_handle param;
-	cmr_u32 size;
-};
-
-struct ae_exp_gain_delay_info {
-	cmr_u8 group_hold_flag;
-	cmr_u8 valid_exp_num;
-	cmr_u8 valid_gain_num;
-};
-
-struct ae_set_fps {
-	cmr_u32 min_fps;			// min fps
-	cmr_u32 max_fps;			// fix fps flag
-};
-
-struct ae_exp_gain_table {
-	cmr_s32 min_index;
-	cmr_s32 max_index;
-	cmr_u32 exposure[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u32 dummy[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u16 again[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE];
-};
-
-struct ae_weight_table {
-	cmr_u8 weight[AE_WEIGHT_TABLE_SIZE];
-};
-
-struct ae_ev_setting_item {
-	cmr_s16 lum_diff;
-	cmr_u8 stable_zone_in;
-	cmr_u8 stable_zone_out;
-};
-
-struct ae_ev_table {
-	struct ae_ev_setting_item ev_item[AE_EV_LEVEL_NUM];
-	/* number of level */
-	cmr_u32 diff_num;
-	/* index of default */
-	cmr_u32 default_level;
-};
-
-struct ae_flash_ctrl {
-	cmr_u32 enable;
-	cmr_u32 main_flash_lum;
-	cmr_u32 convergence_speed;
-};
-
-struct touch_zone {
-	cmr_u32 level_0_weight;
-	cmr_u32 level_1_weight;
-	cmr_u32 level_1_percent;	//x64
-	cmr_u32 level_2_weight;
-	cmr_u32 level_2_percent;	//x64
-};
-
-struct ae_flash_tuning {
-	cmr_u32 exposure_index;
-};
-
-struct ae_stat_req {
-	cmr_u32 mode;				//0:normal, 1:G(center area)
-	cmr_u32 G_width;			//100:G mode(100x100)
-};
-
-struct ae_auto_iso_tab {
-	cmr_u16 tbl[AE_FLICKER_NUM][AE_EXP_GAIN_TABLE_SIZE];
-};
-
-struct ae_ev_cali_param {
-	cmr_u32 index;
-	cmr_u32 lux;
-	cmr_u32 lv;
-};
-
-struct ae_ev_cali {
-	cmr_u32 num;
-	cmr_u32 min_lum;			// close all the module of after awb module
-	struct ae_ev_cali_param tab[16];	// cali EV sequence is low to high
-};
-
-struct ae_rgb_l {
-	cmr_u32 r;
-	cmr_u32 g;
-	cmr_u32 b;
-};
-
-struct ae_opt_info {
-	struct ae_rgb_l gldn_stat_info;
-	struct ae_rgb_l rdm_stat_info;
-};
-
-struct ae_exp_anti {
-	cmr_u32 enable;
-	cmr_u8 hist_thr[40];
-	cmr_u8 hist_weight[40];
-	cmr_u8 pos_lut[256];
-	cmr_u8 hist_thr_num;
-	cmr_u8 adjust_thr;
-	cmr_u8 stab_conter;
-	cmr_u8 reserved1;
-
-	cmr_u32 reserved[175];
-};
-
-struct ae_convergence_parm {
-	cmr_u32 highcount;
-	cmr_u32 lowcount;
-	cmr_u32 highlum_offset_default[AE_OFFSET_NUM];
-	cmr_u32 lowlum_offset_default[AE_OFFSET_NUM];
-	cmr_u32 highlum_index[AE_OFFSET_NUM];
-	cmr_u32 lowlum_index[AE_OFFSET_NUM];
-};
-
-struct ae_flash_tuning_param {
-	cmr_u8 skip_num;
-	cmr_u8 target_lum;
-	cmr_u8 adjust_ratio;		/* 1x --> 32 */
-	cmr_u8 reserved;
-};
-
-struct ae_sensor_cfg {
-	cmr_u16 max_gain;			/*sensor max gain */
-	cmr_u16 min_gain;			/*sensor min gain */
-	cmr_u8 gain_precision;
-	cmr_u8 exp_skip_num;
-	cmr_u8 gain_skip_num;
-	cmr_u8 min_exp_line;
-};
-
-struct ae_lv_calibration {
-	cmr_u16 lux_value;
-	cmr_s16 bv_value;
-};
-
-struct ae_scene_info {
-	cmr_u32 enable;
-	cmr_u32 scene_mode;
-	cmr_u32 target_lum;
-	cmr_u32 iso_index;
-	cmr_u32 ev_offset;
-	cmr_u32 max_fps;
-	cmr_u32 min_fps;
-	cmr_u32 weight_mode;
-	cmr_u8 table_enable;
-	cmr_u8 exp_tbl_mode;
-	cmr_u16 reserved0;
-	cmr_u32 reserved1;
-	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM];
-};
-
-struct ae_alg_init_in {
-	cmr_u32 flash_version;
-	cmr_u32 start_index;
-	cmr_handle param_ptr;
-	cmr_u32 size;
-};
-
-struct ae_alg_init_out {
-	cmr_u32 start_index;
-};
-
-struct ae_alg_rgb_gain {
-	cmr_u32 r;
-	cmr_u32 g;
-	cmr_u32 b;
-};
-
-struct ae_alg_aoe {
-	cmr_u32 OE_str;
-	cmr_u32 lowend;
-	cmr_u32 highend;
-};
-
-struct ae_stats_gyro_info{
-	/* Gyro data in float */
-	cmr_u32 validate;
-	cmr_s64 timestamp;
-	float x;
-	float y;
-	float z;
-};
-
-struct ae_stats_accelerator_info {
-	cmr_u32 validate;
-	cmr_s64 timestamp;
-	float x;
-	float y;
-	float z;
-};
-
-struct ae_stats_sensor_info {
-	cmr_u32 aux_sensor_support;
-	struct ae_stats_gyro_info gyro;
-	struct ae_stats_accelerator_info accelerator;
 };
 
 enum ae_ai_scene_type {
@@ -501,6 +188,103 @@ enum ai_task2 {
 	AE_AI_SCENE_TASK2_MAX
 };
 
+enum ae_binning_mode {
+	AE_BNNG_MOD_AVG = 0,
+	AE_BNNG_MOD_SUM,
+};
+
+struct ae_ct_table {
+	float ct[20];
+	float rg[20];
+};
+
+struct ae_weight_value {
+	cmr_s16 value[2];
+	cmr_s16 weight[2];
+};
+
+#ifndef _AE_SAMPLE_DEF_
+#define _AE_SAMPLE_DEF_
+struct ae_sample {
+	cmr_s16 x;
+	cmr_s16 y;
+};
+#endif
+
+struct ae_piecewise_func {
+	cmr_s32 num;
+	struct ae_sample samples[AE_PIECEWISE_SAMPLE_NUM];
+};
+
+struct ae_range {
+	cmr_s32 min;
+	cmr_s32 max;
+};
+
+struct ae_ranges_type {
+	cmr_u32 num;
+	struct ae_range range[AE_PIECEWISE_MAX_NUM];
+};
+
+struct ae_size {
+	cmr_u32 w;
+	cmr_u32 h;
+};
+
+struct ae_trim {
+	cmr_u32 x;
+	cmr_u32 y;
+	cmr_u32 w;
+	cmr_u32 h;
+};
+
+struct ae_rect {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+};
+
+struct ae_rgb_l {
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
+};
+
+struct ae_opt_info {
+	struct ae_rgb_l gldn_stat_info;
+	struct ae_rgb_l rdm_stat_info;
+};
+
+struct ae_alg_rgb_gain {
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
+};
+
+struct ae_stats_gyro_info{
+	/* Gyro data in float */
+	cmr_u32 validate;
+	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+};
+
+struct ae_stats_accelerator_info {
+	cmr_u32 validate;
+	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+};
+
+struct ae_stats_sensor_info {
+	cmr_u32 aux_sensor_support;
+	struct ae_stats_gyro_info gyro;
+	struct ae_stats_accelerator_info accelerator;
+};
+
 struct ai_task0_rt {
 	enum ai_task0 id;
 	cmr_u16 reliability;
@@ -524,16 +308,153 @@ struct ai_scene_detect {
 	struct ai_task2_rt task2[AE_AI_SCENE_TASK2_MAX];
 };
 
+struct otp_ae_info {
+    cmr_u16 ae_target_lum;
+    cmr_u64 gain_1x_exp;
+    cmr_u64 gain_2x_exp;
+    cmr_u64 gain_4x_exp;
+    cmr_u64 gain_8x_exp;
+    cmr_u64 reserve;
+};
+
+struct ae_sync_info{			//ae_dynamic_sync struct
+	cmr_s16 min_exp_line;
+	cmr_s16 max_again;
+	cmr_s16 min_again;
+	cmr_s16 sensor_gain_precision;
+	cmr_u32 line_time;
+	cmr_u32 aem[3 * 1024];
+	struct otp_ae_info ae_otp_info;
+	cmr_u32 exposure;
+	cmr_u32 gain;
+	cmr_s32 dmy_line;
+	cmr_u32 frm_len;
+	cmr_u32 frm_len_def;
+	cmr_u64 monoboottime;
+};
+
+//ae_sync_param
+ struct ae_sync_para{
+	cmr_u32 magic_first_num;
+	cmr_u32 version;
+	cmr_u32 mode ; //0: OTP mode;1:dynamic mode
+	cmr_u32 y_ratio_chg_thr; //thr,cnt
+	cmr_u32 y_ratio_chg_cnt ;
+	cmr_u32 y_ratio_stb_thr;
+	cmr_u32 y_ratio_stb_cnt;
+	cmr_u32 adpt_speed; //adapt speed
+	cmr_u8 soft_frm_sync;/*software frame sync--enable*/
+	cmr_u8 adj_ratio;/*software frame sync--ajdust ratio: 0~100*/
+	cmr_u8 reserved[2];
+	cmr_u32 adj_thrd;/*software frame sync--adjust threshold: unit: us*/
+	cmr_s8 reserve[20];
+	cmr_u32 magic_end_num;
+};
+
+struct ae_alg_fun_tab {
+	cmr_handle(*init) (cmr_handle, cmr_handle);
+	cmr_s32(*deinit) (cmr_handle, cmr_handle, cmr_handle);
+	cmr_s32(*calc) (cmr_handle, cmr_handle, cmr_handle);
+	cmr_s32(*sync_calc) (cmr_handle,cmr_handle, cmr_handle, cmr_handle);
+	cmr_s32(*ioctrl) (cmr_handle, cmr_u32, cmr_handle, cmr_handle);
+};
+#else
+#ifdef AE3X_PORTING_DEBUG
+#include "ae_data_types.h"
+#endif
+#endif
+
+enum ae_environ_mod {
+	ae_environ_night,
+	ae_environ_lowlux,
+	ae_environ_normal,
+	ae_environ_hightlight,
+	ae_environ_num,
+};
+
+enum {
+	AE_3DNR_ON,
+	AE_3DNR_OFF,
+	AE_3DNR_AUTO,
+	AE_3DNR_MAX,
+};
+
+#ifndef FD_AE_PARAM_DEF
+#define FD_AE_PARAM_DEF
+struct ae1_face {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;				/*4 x 4bytes */
+	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
+	cmr_u32 face_lum;
+	cmr_s32 angle;
+};
+
+struct ae1_face_info {
+	cmr_u16 face_num;
+	cmr_u16 reserved;			/*1 x 4bytes */
+	cmr_u32 rect[1024];			/*1024 x 4bytes */
+	struct ae1_face face_area[20];	/*20 x 5 * 4bytes */
+};								/*1125 x 4bytes */
+struct ae1_fd_param {
+	struct ae1_face_info cur_info;	/*1125 x 4bytes */
+	cmr_u8 update_flag;
+	cmr_u8 enable_flag;
+	cmr_u16 reserved;			/*1 x 4bytes */
+	cmr_u16 img_width;
+	cmr_u16 img_height;			/*1 x 4bytes */
+};
+#endif
+
+#ifndef _AE_TARGET_WEIGHT_FUNC_DEF
+#define _AE_TARGET_WEIGHT_FUNC_DEF
+#define AE_TARGET_WEIGHT_NUM 5
+struct ae_target_weight_func {
+	cmr_s32 num;
+	struct ae_sample samples[AE_TARGET_WEIGHT_NUM];
+};
+#endif
+
+struct ae_param {
+	cmr_handle param;
+	cmr_u32 size;
+};
+
+struct ae_exp_gain_delay_info {
+	cmr_u8 group_hold_flag;
+	cmr_u8 valid_exp_num;
+	cmr_u8 valid_gain_num;
+};
+
+struct ae_set_fps {
+	cmr_u32 min_fps;			// min fps
+	cmr_u32 max_fps;			// fix fps flag
+};
+
+
+struct ae_flash_ctrl {
+	cmr_u32 enable;
+	cmr_u32 main_flash_lum;
+	cmr_u32 convergence_speed;
+};
+
+struct ae_alg_init_in {
+	cmr_u32 flash_version;
+	cmr_u32 start_index;
+	cmr_handle param_ptr;
+	cmr_u32 size;
+};
+
+struct ae_alg_init_out {
+	cmr_u32 start_index;
+};
+
 struct ae_hist_info {
 	cmr_u32 value[256];
 	cmr_s32 frame_id;
 	cmr_u32 sec;
 	cmr_u32 usec;
-};
-
-struct ae_thrd_param {
-	cmr_s16 thr_up;
-	cmr_s16 thr_down;
 };
 
 struct ae_buffer_param {
@@ -752,7 +673,6 @@ struct ae_alg_calc_result {
 	void *ptc;					/*Bethany add touch info to debug info */
 	void *pface_ae;
 	struct ae1_senseor_out wts;
-	cmr_u32 stable_backup;
 	cmr_handle log;
 	cmr_u32 flag4idx;
 	cmr_u32 face_stable;
@@ -760,56 +680,5 @@ struct ae_alg_calc_result {
 	cmr_u32 target_offset;
 	cmr_u32 privated_data;
 	cmr_u32 abl_weighting;
-};
-
-struct otp_ae_info {
-    cmr_u16 ae_target_lum;
-    cmr_u64 gain_1x_exp;
-    cmr_u64 gain_2x_exp;
-    cmr_u64 gain_4x_exp;
-    cmr_u64 gain_8x_exp;
-    cmr_u64 reserve;
-};
-
-struct ae_sync_info{			//ae_dynamic_sync struct
-	cmr_s16 min_exp_line;
-	cmr_s16 max_again;
-	cmr_s16 min_again;
-	cmr_s16 sensor_gain_precision;
-	cmr_u32 line_time;
-	cmr_u32 aem[3 * 1024];
-	struct otp_ae_info ae_otp_info;
-	cmr_u32 exposure;
-	cmr_u32 gain;
-	cmr_s32 dmy_line;
-	cmr_u32 frm_len;
-	cmr_u32 frm_len_def;
-	cmr_u64 monoboottime;
-};
-
-//ae_sync_param
- struct ae_sync_para{
-	cmr_u32 magic_first_num;
-	cmr_u32 version;
-	cmr_u32 mode ; //0: OTP mode;1:dynamic mode
-	cmr_u32 y_ratio_chg_thr; //thr,cnt
-	cmr_u32 y_ratio_chg_cnt ;
-	cmr_u32 y_ratio_stb_thr;
-	cmr_u32 y_ratio_stb_cnt;
-	cmr_u32 adpt_speed; //adapt speed
-	cmr_u8 soft_frm_sync;/*software frame sync--enable*/
-	cmr_u8 adj_ratio;/*software frame sync--ajdust ratio: 0~100*/
-	cmr_u8 reserved[2];
-	cmr_u32 adj_thrd;/*software frame sync--adjust threshold: unit: us*/
-	cmr_s8 reserve[20];
-	cmr_u32 magic_end_num;
-};
-
-struct ae_alg_fun_tab {
-	cmr_handle(*init) (cmr_handle, cmr_handle);
-	cmr_s32(*deinit) (cmr_handle, cmr_handle, cmr_handle);
-	cmr_s32(*calc) (cmr_handle, cmr_handle, cmr_handle);
-	cmr_s32(*sync_calc) (cmr_handle,cmr_handle, cmr_handle, cmr_handle);
-	cmr_s32(*ioctrl) (cmr_handle, cmr_u32, cmr_handle, cmr_handle);
 };
 #endif

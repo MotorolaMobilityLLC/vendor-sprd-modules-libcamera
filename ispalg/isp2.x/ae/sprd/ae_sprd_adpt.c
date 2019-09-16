@@ -3479,23 +3479,21 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 		memset((cmr_handle) & debug_info_out, 0, sizeof(struct ae_debug_info_packet_out));
 
 		alg_id_ptr = ae_debug_info_get_lib_version();
-		debug_info_in.alg_id = cxt->cur_status.alg_id;
-		debug_info_in.aem_stats = (cmr_handle) cxt->sync_aem;
-		debug_info_in.base_aem_stats = (cmr_handle) cxt->cur_status.base_img;
-		debug_info_in.alg_status = (cmr_handle) & cxt->sync_cur_status;
-		debug_info_in.alg_results = (cmr_handle) & cxt->sync_cur_result;
+		debug_info_in.major_id = cxt->cur_status.alg_id;
+		debug_info_in.minor_id = 0;
+		debug_info_in.data.aem_stats = (cmr_handle) cxt->sync_aem;
+		debug_info_in.data.base_aem_stats = (cmr_handle) cxt->cur_status.base_img;
+		debug_info_in.data.alg_status = (cmr_handle) & cxt->sync_cur_status;
+		debug_info_in.data.alg_results = (cmr_handle) & cxt->sync_cur_result;
 		rtn = ae_misc_ioctrl(cxt->misc_handle, AEC_GET_Q_ARRAY, cxt->history_param, NULL);
 		rtn = ae_misc_ioctrl(cxt->misc_handle, AEC_GET_PRV_PARAM, cxt->history_param, NULL);
 		rtn = ae_misc_ioctrl(cxt->misc_handle, AEC_GET_AE_TABLE, cxt->history_param, NULL);
-		debug_info_in.history_param = (cmr_handle) & cxt->history_param[0];
+		debug_info_in.data.history_param = (cmr_handle) & cxt->history_param[0];
 		debug_info_in.packet_buf = (cmr_handle) & cxt->debug_info_buf[0];
+		debug_info_in.packet_size_max = sizeof(cxt->debug_info_buf);
 		memcpy((cmr_handle) & debug_info_in.alg_version[0], alg_id_ptr, sizeof(debug_info_in.alg_version));
 		memcpy((cmr_handle) & debug_info_in.flash_version[0], &cxt->flash_ver, sizeof(debug_info_in.flash_version));
-
-		if(debug_info_in.alg_id == 3)
-			rtn = ae_simulation_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
-		else
-			rtn = ae_debug_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
+		rtn = ae_debug_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
 		/*add flash debug information */
 		memcpy((cmr_handle) & cxt->debug_info_buf[debug_info_out.size], (cmr_handle) & cxt->flash_debug_buf[0], cxt->flash_buf_len);
 

@@ -18,6 +18,8 @@
 #define _AE_TUNING_TYPE_H_
 #include "ae_common.h"
 
+#define AE_CVGN_NUM  4
+#define AE_CFG_NUM 8
 #define MULAES_CFG_NUM AE_CFG_NUM
 #define REGION_CFG_NUM AE_CFG_NUM
 #define FLAT_CFG_NUM AE_CFG_NUM
@@ -26,7 +28,173 @@
 #define PCP_CFG_NUM AE_CFG_NUM
 #define HM_CFG_NUM AE_CFG_NUM
 #define AI_CFG_NUM AE_CFG_NUM
+#define AE_EV_LEVEL_NUM 16
+#define AE_FLICKER_NUM 2
+#define AE_EXP_GAIN_TABLE_SIZE 512
+#define AE_OFFSET_NUM 20
+#define ISP_BAYER_CHNL_NUM 4
+#define ISP_HIST_BIN_MX 1024
+#define BV_STEP_NUM 3
+#define AE_ISO_NUM_NEW 8
+#define AE_SCENE_NUM   8
+#define AE_WEIGHT_TABLE_NUM 3
+#define AE_WEIGHT_TABLE_SIZE	1024
+#define ISP_BAYER_CHNL_NUM 4
+#define ISP_HIST_BIN_MX 1024
+#define BV_STEP_NUM 3
 
+/*ae common structure define*/
+#ifndef FD_AE_PARAM_DEF
+#define FD_AE_PARAM_DEF
+struct ae1_face {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;				/*4 x 4bytes */
+	cmr_s32 pose;				/* face pose: frontal, half-profile, full-profile */
+	cmr_u32 face_lum;
+	cmr_s32 angle;
+};
+
+struct ae1_face_info {
+	cmr_u16 face_num;
+	cmr_u16 reserved;			/*1 x 4bytes */
+	cmr_u32 rect[1024];			/*1024 x 4bytes */
+	struct ae1_face face_area[20];	/*20 x 5 * 4bytes */
+};								/*1125 x 4bytes */
+
+struct ae1_fd_param {
+	struct ae1_face_info cur_info;	/*1125 x 4bytes */
+	cmr_u8 update_flag;
+	cmr_u8 enable_flag;
+	cmr_u16 reserved;			/*1 x 4bytes */
+	cmr_u16 img_width;
+	cmr_u16 img_height;			/*1 x 4bytes */
+};								/*1127 x 4bytes */
+#endif
+
+struct ae_stat_req {
+	cmr_u32 mode;				//0:normal, 1:G(center area)
+	cmr_u32 G_width;			//100:G mode(100x100)
+};
+
+struct ae_flash_tuning {
+	cmr_u32 exposure_index;
+};
+
+struct touch_zone {
+	cmr_u32 level_0_weight;
+	cmr_u32 level_1_weight;
+	cmr_u32 level_1_percent;	//x64
+	cmr_u32 level_2_weight;
+	cmr_u32 level_2_percent;	//x64
+};
+
+struct ae_ev_setting_item {
+	cmr_s16 lum_diff;
+	cmr_u8 stable_zone_in;
+	cmr_u8 stable_zone_out;
+};
+
+struct ae_ev_table {
+	struct ae_ev_setting_item ev_item[AE_EV_LEVEL_NUM];
+	/* number of level */
+	cmr_u32 diff_num;
+	/* index of default */
+	cmr_u32 default_level;
+};
+
+struct ae_exp_anti {
+	cmr_u32 enable;
+	cmr_u8 hist_thr[40];
+	cmr_u8 hist_weight[40];
+	cmr_u8 pos_lut[256];
+	cmr_u8 hist_thr_num;
+	cmr_u8 adjust_thr;
+	cmr_u8 stab_conter;
+	cmr_u8 reserved1;
+	cmr_u32 reserved[175];
+};
+
+struct ae_auto_iso_tab {
+	cmr_u16 tbl[AE_FLICKER_NUM][AE_EXP_GAIN_TABLE_SIZE];
+};
+
+struct ae_ev_cali_param {
+	cmr_u32 index;
+	cmr_u32 lux;
+	cmr_u32 lv;
+};
+
+struct ae_ev_cali {
+	cmr_u32 num;
+	cmr_u32 min_lum;			// close all the module of after awb module
+	struct ae_ev_cali_param tab[16];	// cali EV sequence is low to high
+};
+
+struct ae_convergence_parm {
+	cmr_u32 highcount;
+	cmr_u32 lowcount;
+	cmr_u32 highlum_offset_default[AE_OFFSET_NUM];
+	cmr_u32 lowlum_offset_default[AE_OFFSET_NUM];
+	cmr_u32 highlum_index[AE_OFFSET_NUM];
+	cmr_u32 lowlum_index[AE_OFFSET_NUM];
+};
+
+struct ae_exp_gain_table {
+	cmr_s32 min_index;
+	cmr_s32 max_index;
+	cmr_u32 exposure[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u32 dummy[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u16 again[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE];
+};
+
+struct ae_weight_table {
+	cmr_u8 weight[AE_WEIGHT_TABLE_SIZE];
+};
+
+struct ae_scene_info {
+	cmr_u32 enable;
+	cmr_u32 scene_mode;
+	cmr_u32 target_lum;
+	cmr_u32 iso_index;
+	cmr_u32 ev_offset;
+	cmr_u32 max_fps;
+	cmr_u32 min_fps;
+	cmr_u32 weight_mode;
+	cmr_u8 table_enable;
+	cmr_u8 exp_tbl_mode;
+	cmr_u16 reserved0;
+	cmr_u32 reserved1;
+	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM];
+};
+
+struct ae_sensor_cfg {
+	cmr_u16 max_gain;			/*sensor max gain */
+	cmr_u16 min_gain;			/*sensor min gain */
+	cmr_u8 gain_precision;
+	cmr_u8 exp_skip_num;
+	cmr_u8 gain_skip_num;
+	cmr_u8 min_exp_line;
+};
+
+struct ae_lv_calibration {
+	cmr_u16 lux_value;
+	cmr_s16 bv_value;
+};
+
+struct ae_flash_tuning_param {
+	cmr_u8 skip_num;
+	cmr_u8 target_lum;
+	cmr_u8 adjust_ratio;		/* 1x --> 32 */
+	cmr_u8 reserved;
+};
+
+struct ae_thrd_param {
+	cmr_s16 thr_up;
+	cmr_s16 thr_down;
+};
 struct ae_param_tmp_001 {
 	cmr_u32 version;
 	cmr_u32 verify;
@@ -182,10 +350,6 @@ struct ae_video_set_fps_param {
 	cmr_s32 ae_video_fps_thr_high;
 };
 
-#define ISP_BAYER_CHNL_NUM 4
-#define ISP_HIST_BIN_MX 1024
-#define BV_STEP_NUM 3
-
 struct hist_meter_range_type{
 	cmr_u32 num;
 	struct ae_range range[AE_PIECEWISE_MAX_NUM];
@@ -199,6 +363,12 @@ struct bv_evd_ranges_type {
 	cmr_s32 dark_ref[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
 	cmr_s32 tar_adj_ratio_min[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
 	cmr_s32 tar_adj_ratio_max[AE_PIECEWISE_MAX_NUM][AE_PIECEWISE_MAX_NUM];
+};
+
+struct ae_alg_aoe {
+	cmr_u32 OE_str;
+	cmr_u32 lowend;
+	cmr_u32 highend;
 };
 
 struct hist_metering_tuning_param{
@@ -371,8 +541,7 @@ struct abl_tuning_param {
 	cmr_u8 num;
 	cmr_u16 target_limit_low;
 	cmr_u16 target_limit_high;
-	cmr_u8 base_angle;
-	cmr_u8 reserved;
+	cmr_u16 base_angle;
 	abl_cfg cfg_info[ABL_CFG_NUM]; /*24 * 4bytes*/
 	struct ae_piecewise_func in_piecewise; /*17 * 4bytes*/
 	cmr_u32 abl_weight;
