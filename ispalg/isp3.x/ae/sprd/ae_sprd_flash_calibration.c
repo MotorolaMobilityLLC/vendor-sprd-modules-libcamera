@@ -1104,6 +1104,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			for (i = 0; i < 20; i++) {
 				caliData->out.rgTab[i] = cxt->ctTabRg[i];
 				caliData->out.ctTab[i] = cxt->ctTab[i];
+				ISP_LOGD("cali out data 1, i:%d, cxt_ctTab:%f, out_ctTab:%f", i, cxt->ctTab[i], caliData->out.ctTab[i]);
 
 			}
 
@@ -1586,6 +1587,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #else
 				fp = fopen("/data/vendor/cameraserver/flashcalibration.bin", "wb");
 #endif
+				ISP_LOGD("cali out data 2,out_ctTab:%f", caliData->out.ctTab[0]);
 				fwrite(&caliData->out, 1, sizeof(struct flash_calibration_data), fp);
 				fclose(fp);
 			}

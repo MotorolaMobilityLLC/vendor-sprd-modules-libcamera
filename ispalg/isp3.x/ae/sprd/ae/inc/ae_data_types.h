@@ -189,7 +189,7 @@ enum ai_task2 {
 
 
 struct ae_ct_table {
-	float ct[20];
+	cmr_s32 ct[20];
 	float rg[20];
 };
 

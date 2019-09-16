@@ -2937,13 +2937,14 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	memset(&cxt->ctTab[0], 0, sizeof(cxt->ctTab));
 	memset(&cxt->ctTabRg[0], 0, sizeof(cxt->ctTabRg));
-	if (!ae_is_equal(work_info->ct_table.ct[0], 0.0)
+	if (!ae_is_equal((float)(work_info->ct_table.ct[0]), 0.0)
 		&& !ae_is_equal(work_info->ct_table.rg[0], 0.0)) {
 		for (k = 0; k < 20; k++) {
-			cxt->ctTab[k] = work_info->ct_table.ct[k];
+			cxt->ctTab[k] = (float)(work_info->ct_table.ct[k]);
 			cxt->ctTabRg[k] = work_info->ct_table.rg[k];
 		}
 	}
+	ISP_LOGD("ct[0]:%f", cxt->ctTab[0]);
 	cxt->awb_otp_info = work_info->awb_otp_info;
 
 	if (0 == work_info->is_snapshot) {
