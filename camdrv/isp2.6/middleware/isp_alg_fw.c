@@ -279,11 +279,17 @@ struct isp_alg_sw_init_in {
 struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
+	cmr_u8 bayerhist_update;
 	cmr_u8 fw_started;
 	cmr_u8 first_frm;
 	cmr_u8 aethd_pri_set;
 	nsecs_t last_sof_time;
 	struct isp_awb_statistic_info aem_stats_data;
+	struct isp_awb_statistic_info aem_ue;
+	struct isp_awb_statistic_info aem_ae;
+	struct isp_awb_statistic_info aem_oe;
+	struct isp_awb_statistic_info cnt_ue;
+	struct isp_awb_statistic_info cnt_oe;
 	struct isp_hist_statistic_info bayer_hist_stats[3];
 	struct isp_hist_statistic_info hist2_stats;
 	struct ae_size hist2_roi;
@@ -682,6 +688,27 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 	return ret;
 }
 
+
+static cmr_int ispalg_set_aem_thrd(cmr_handle isp_alg_handle, struct ae_monitor_info *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct dcam_dev_aem_thr aem_thrd;
+	ISP_LOGD("aem_threshold, rgb high(%d %d %d)  rgb low(%d %d %d)\n",
+	in->high_region_thrd.r,in->high_region_thrd.g,in->high_region_thrd.b,
+	in->low_region_thrd.r,in->low_region_thrd.g,in->low_region_thrd.b);
+	memset(&aem_thrd, 0, sizeof(struct dcam_dev_aem_thr));
+	aem_thrd.aem_r_thr.low_thr = in->low_region_thrd.r;//in->r_low;
+	aem_thrd.aem_r_thr.high_thr = in->high_region_thrd.r;//in->r_high;
+	aem_thrd.aem_g_thr.low_thr = in->low_region_thrd.g;//in->g_low;
+	aem_thrd.aem_g_thr.high_thr = in->high_region_thrd.g;
+	aem_thrd.aem_b_thr.low_thr = in->low_region_thrd.b;
+	aem_thrd.aem_b_thr.high_thr = in->high_region_thrd.b;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+	ISP_DEV_SET_AE_RGB_THR, &aem_thrd, NULL);
+	return ret;
+}
+
 static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		cmr_int type, void *param0, void *param1)
 {
@@ -763,6 +790,9 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		break;
 	case ISP_AE_SET_MONITOR_WIN:
 		ret = ispalg_set_aem_win(cxt, param0);
+		break;
+	case ISP_AE_SET_RGB_THRD:
+		ret = ispalg_set_aem_thrd(cxt, param0);
 		break;
 	case ISP_AE_SET_MONITOR_BYPASS:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_MONITOR_BYPASS, param0, NULL);
@@ -1531,7 +1561,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 ae_shift = 0;
+	cmr_u32 ae_shift = 0, g_shift = 0;
 	cmr_u32 i = 0;
 	cmr_u32 blk_num = 0, blk_size = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1563,8 +1593,9 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	blk_num = cxt->ae_cxt.win_num.w * cxt->ae_cxt.win_num.h;
 	blk_size = cxt->ae_cxt.win_size.w * cxt->ae_cxt.win_size.h / 4;
 	uaddr = (cmr_u64 *)statis_info->uaddr;
-#ifdef CONFIG_ISP_2_6
+
 	for (i = 0; i < blk_num; i++) {
+#ifdef CONFIG_ISP_2_6 /* sharkl5/ROC1*/
 		stats_val0 = *uaddr++;
 		stats_val1 = *uaddr++;
 		sum_g_ue = (cmr_u32)(stats_val0 & 0xffffff);
@@ -1591,17 +1622,10 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		sum_b_oe |= (cmr_u32)((stats_val1 & 0xff) << 16);
 		cnt_b_ue += (cmr_u32)((stats_val1 >> 8) & 0x3fff);
 		cnt_b_oe += (cmr_u32)((stats_val1 >> 22) & 0x3fff);
+		g_shift = 1;
 
-		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
-		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
-		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
-		/* from sharkl5/roc1, aem output G is the sum of Gr & Gb
-		  * which is different from previous version average Gr/Gb
-		  * here we shift 1 to get average of G for AE algo compatibility */
-		ae_stat_ptr->g_info[i] >>= 1;
-	}
 #elif defined CONFIG_ISP_2_5 /* for SharkL3 */
-	for (i = 0x00; i < blk_num; i++) {
+
 		stats_val0 = *uaddr++;
 		sum_b_oe = stats_val0 & 0x1fffff;
 		sum_g_oe = (stats_val0 >> 21) & 0x3fffff;
@@ -1626,13 +1650,10 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		stats_val1 = *uaddr++;
 		cnt_g_ue = stats_val1 & 0x1fff;
 		cnt_g_oe = (stats_val1 >> 16) & 0x1fff;
+		g_shift = 0;
 
-		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
-		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
-		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
-	}
-#else //CONFIG_ISP_2_7
-	for (i = 0; i < blk_num; i++) {
+#else /* CONFIG_ISP_2_7  for  SharkL5Pro */
+
 		//g
 		stats_val0 = *uaddr++;
 		stats_val1 = *uaddr++;
@@ -1657,15 +1678,37 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		sum_b_oe = (cmr_u32)(stats_val1 & 0x1ffffff);
 		cnt_b_ue = (cmr_u32)((stats_val1 >> 32) & 0x7fff);
 		cnt_b_oe = (cmr_u32)((stats_val1 >> 48) & 0x7fff);
+		g_shift = 1;
+#endif
 
-		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae);
-		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae);
-		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae);
+		cxt->cnt_ue.r_info[i] = cnt_r_ue;
+		cxt->cnt_ue.g_info[i] = cnt_g_ue;
+		cxt->cnt_ue.b_info[i] = cnt_b_ue;
+
+		cxt->cnt_oe.r_info[i] = cnt_r_oe;
+		cxt->cnt_oe.g_info[i] = cnt_g_oe;
+		cxt->cnt_oe.b_info[i] = cnt_b_oe;
+
+		cxt->aem_ae.r_info[i] = sum_r_ae << ae_shift;
+		cxt->aem_ae.g_info[i] = sum_g_ae << ae_shift;
+		cxt->aem_ae.b_info[i] = sum_b_ae << ae_shift;
+
+		cxt->aem_ue.r_info[i] = sum_r_ue << ae_shift;
+		cxt->aem_ue.g_info[i] = sum_g_ue << ae_shift;
+		cxt->aem_ue.b_info[i] = sum_b_ue << ae_shift;
+
+		cxt->aem_oe.r_info[i] = sum_r_oe << ae_shift;
+		cxt->aem_oe.g_info[i] = sum_g_oe << ae_shift;
+		cxt->aem_oe.b_info[i] = sum_b_oe << ae_shift;
+
+		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
+		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
+		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
 
 		/* from sharkl5 and after, aem output G is the sum of Gr & Gb
 		  * which is different from previous version average Gr/Gb
 		  * here we shift 1 to get average of G for AE algo compatibility */
-		ae_stat_ptr->g_info[i] >>= 1;
+		ae_stat_ptr->g_info[i] >>= g_shift;
 
 		if (ae_stat_ptr->r_info[i] > (blk_size * 1023) ||
 			ae_stat_ptr->g_info[i] > (blk_size * 1023) ||
@@ -1673,9 +1716,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 			ISP_LOGE("data overflow. i %d, blk size %d %d,  r 0x%x, g 0x%x, b 0x%x\n",
 				i, cxt->ae_cxt.win_size.w, cxt->ae_cxt.win_size.h,
 				ae_stat_ptr->r_info[i], ae_stat_ptr->g_info[i], ae_stat_ptr->b_info[i]);
-
 	}
-#endif
 
 	ae_stat_ptr->sec = statis_info->sec;
 	ae_stat_ptr->usec = statis_info->usec;
@@ -1714,7 +1755,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
-static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
+static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 i, j;
@@ -1724,10 +1765,12 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 
+	cxt->bayerhist_update = 1;
 	ptr = (cmr_u64 *)statis_info->uaddr;
 
 	/* G */
 	hist_stats = &cxt->bayer_hist_stats[0];
+	hist_stats->bin = 256;
 	hist_stats->sec = statis_info->sec;
 	hist_stats->usec = statis_info->usec;
 	hist_stats->frame_id = statis_info->frame_id;
@@ -1748,6 +1791,7 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 
 	/* R */
 	hist_stats = &cxt->bayer_hist_stats[1];
+	hist_stats->bin = 256;
 	hist_stats->sec = statis_info->sec;
 	hist_stats->usec = statis_info->usec;
 	hist_stats->frame_id = statis_info->frame_id;
@@ -1773,6 +1817,7 @@ static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 
 	/* B */
 	hist_stats = &cxt->bayer_hist_stats[2];
+	hist_stats->bin = 256;
 	hist_stats->sec = statis_info->sec;
 	hist_stats->usec = statis_info->usec;
 	hist_stats->frame_id = statis_info->frame_id;
@@ -1828,6 +1873,7 @@ static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
 
 	/* Y */
 	hist_stats = &cxt->hist2_stats;
+	hist_stats->bin = 256;
 	hist_stats->sec = statis_info->sec;
 	hist_stats->usec = statis_info->usec;
 	hist_stats->frame_id = statis_info->frame_id;
@@ -1960,6 +2006,21 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.stat_img = cxt->aem_stats_data.r_info;
 	in_param.sec = cxt->aem_stats_data.sec;
 	in_param.usec = cxt->aem_stats_data.usec;
+	in_param.sum_ue_r = cxt->aem_ue.r_info;
+	in_param.sum_ue_g = cxt->aem_ue.g_info;
+	in_param.sum_ue_b = cxt->aem_ue.b_info;
+	in_param.sum_ae_r = cxt->aem_ae.r_info;
+	in_param.sum_ae_g = cxt->aem_ae.g_info;
+	in_param.sum_ae_b = cxt->aem_ae.b_info;
+	in_param.sum_oe_r = cxt->aem_oe.r_info;
+	in_param.sum_oe_g = cxt->aem_oe.g_info;
+	in_param.sum_oe_b = cxt->aem_oe.b_info;
+	in_param.cnt_ue_r = cxt->cnt_ue.r_info;
+	in_param.cnt_ue_g = cxt->cnt_ue.g_info;
+	in_param.cnt_ue_b = cxt->cnt_ue.b_info;
+	in_param.cnt_oe_r = cxt->cnt_oe.r_info;
+	in_param.cnt_oe_g = cxt->cnt_oe.g_info;
+	in_param.cnt_oe_b = cxt->cnt_oe.b_info;
 	in_param.monoboottime = -1;
 	in_param.is_last_frm = 0;
 	in_param.time_diff = -1;
@@ -1980,10 +2041,12 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	memcpy((void *)&in_param.hist_stats, (void *)&cxt->hist2_stats,
 		sizeof(struct isp_hist_statistic_info));
 
-	/* todo - add bayerhist_stats in { struct ae_calc_in }
-	memcpy((void *)&in_param.bayerhist_stats[0], (void *)&cxt->bayer_hist_stats[0],
-		sizeof(cxt->bayer_hist_stats));
-	*/
+	if (cxt->bayerhist_update) {
+		memcpy((void *)&in_param.bayerhist_stats[0],
+			(void *)&cxt->bayer_hist_stats[0],
+			sizeof(cxt->bayer_hist_stats));
+		cxt->bayerhist_update = 0;
+	}
 
 	time_start = ispalg_get_sys_timestamp();
 	if (cxt->ops.ae_ops.process) {
@@ -2929,7 +2992,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ebd_process((cmr_handle) cxt, message->sub_msg_type, message->data);
 		break;
 	case ISP_EVT_HIST:
-		ret = ispalg_hist_stats_parser((cmr_handle) cxt, message->data);
+		ret = ispalg_bayerhist_stats_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_EVT_HIST2:
 		ret = ispalg_hist2_process((cmr_handle) cxt, message->data);
@@ -4738,6 +4801,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
+
 	cxt->fw_started = 1;
 exit:
 	ISP_LOGD("done %ld", ret);

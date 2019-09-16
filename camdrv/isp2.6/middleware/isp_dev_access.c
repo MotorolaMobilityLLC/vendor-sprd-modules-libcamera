@@ -391,6 +391,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 	case ISP_DEV_SET_AE_MONITOR_WIN:
 		dcam_u_aem_win(cxt->isp_driver_handle, param0);
 		break;
+	case ISP_DEV_SET_AE_RGB_THR:
+		dcam_u_aem_rgb_thr(cxt->isp_driver_handle, param0);
+		break;
 
 	/* awbc */
 	case ISP_DEV_SET_AWB_GAIN:
