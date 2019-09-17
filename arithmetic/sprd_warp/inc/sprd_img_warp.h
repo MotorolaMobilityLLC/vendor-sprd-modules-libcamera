@@ -166,19 +166,16 @@ SPRD_ISP_API void img_warp_grid_cpu_run(img_warp_inst_t inst,
                                          void *param);
 SPRD_ISP_API void img_warp_grid_cpu_close(img_warp_inst_t *inst);
 
-
 /*
  * adapter
  */
-SPRD_ISP_API int sprd_warp_adapter_open(img_warp_inst_t *inst,
+SPRD_ISP_API int sprd_warp_adapter_open(img_warp_inst_t *inst, bool *isISPZoom,
                                         void *param, INST_TAG tag);
 SPRD_ISP_API void sprd_warp_adapter_run(img_warp_inst_t inst,
                                         img_warp_buffer_t *input,
                                         img_warp_buffer_t *output,
                                         void *param, INST_TAG tag);
 SPRD_ISP_API void sprd_warp_adapter_close(img_warp_inst_t *inst, INST_TAG tag);
-SPRD_ISP_API float sprd_warp_adapter_get_isp_ratio(img_warp_inst_t *inst,
-                                                   float real_ratio, INST_TAG tag);
 
 #ifdef __cplusplus
 }
