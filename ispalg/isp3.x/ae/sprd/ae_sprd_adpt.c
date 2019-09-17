@@ -3274,57 +3274,63 @@ static cmr_s32 ae_set_scene(struct ae_ctrl_cxt *cxt, void *param)
 
 static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 {
-	if (param && (CAMERA_MODE_MANUAL == cxt->app_mode)) {
+	if (param) {
 		struct ae_set_iso *iso = param;
 		if (iso->mode < AE_ISO_MAX) {
 			cxt->cur_status.adv_param.iso = iso->mode;
 		}
 
-		switch (iso->mode) {
-		case AE_ISO_100:
-			cxt->manual_iso_value = 256;
-			break;
-		case AE_ISO_200:
-			cxt->manual_iso_value = 512;
-			break;
-		case AE_ISO_400:
-			cxt->manual_iso_value = 1024;
-			break;
-		case AE_ISO_800:
-			cxt->manual_iso_value = 2048;
-			break;
-		case AE_ISO_1600:
-			cxt->manual_iso_value = 4096;
-			break;
-		case AE_ISO_AUTO:
-		case AE_ISO_MAX:
-		default:
-			cxt->manual_iso_value = 0;
-			break;
-		}
+		if(CAMERA_MODE_MANUAL == cxt->app_mode){
 
-		if(cxt->manual_exp_time){
-			if(cxt->manual_iso_value){
-				ae_set_force_pause(cxt, 1, 8);
-				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
-				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-			}else{
-				ae_set_force_pause(cxt, 0, 9);
-				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
+			switch (iso->mode) {
+			case AE_ISO_100:
+				cxt->manual_iso_value = 256;
+				break;
+			case AE_ISO_200:
+				cxt->manual_iso_value = 512;
+				break;
+			case AE_ISO_400:
+				cxt->manual_iso_value = 1024;
+				break;
+			case AE_ISO_800:
+				cxt->manual_iso_value = 2048;
+				break;
+			case AE_ISO_1600:
+				cxt->manual_iso_value = 4096;
+				break;
+			case AE_ISO_AUTO:
+			case AE_ISO_MAX:
+			default:
+				cxt->manual_iso_value = 0;
+				break;
 			}
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_time;
-		} else {
-			if(cxt->manual_iso_value){
-				ae_set_force_pause(cxt, 0, 10);
-				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
-				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
 
-			}else{
-				ae_set_force_pause(cxt, 0, 11);
-				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+			if(cxt->manual_exp_time){
+				if(cxt->manual_iso_value){
+					ae_set_force_pause(cxt, 1, 8);
+					cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+				}else{
+					ae_set_force_pause(cxt, 0, 9);
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
+				}
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_time;
+			} else {
+				if(cxt->manual_iso_value){
+					ae_set_force_pause(cxt, 0, 10);
+					cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+
+				}else{
+					ae_set_force_pause(cxt, 0, 11);
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+				}
 			}
-		}
-		ISP_LOGD("manual_exp_time %d, manual_iso_value %d, exp %d, mode %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
+			ISP_LOGD("manual_exp_time %d, manual_iso_value %d, exp %d, mode %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
+		}else{
+			if(AE_ISO_AUTO != iso->mode)
+				ISP_LOGE("ISO mode is not auto mode at non-manual mode:%d",iso->mode);
+                }
 	}
 	return AE_SUCCESS;
 }
