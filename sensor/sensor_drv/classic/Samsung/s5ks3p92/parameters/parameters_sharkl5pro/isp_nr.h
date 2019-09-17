@@ -114,3 +114,6 @@ static struct sensor_nr_scene_map_param s_s5ks3p92_nr_scene_map_param = {{
 #include "NR/common/normal/yuv_ltm_param.h"
 #endif
 
+#ifdef _NR_YNRS_PARAM_
+#include "NR/common/normal/ynrs_param.h"
+#endif
