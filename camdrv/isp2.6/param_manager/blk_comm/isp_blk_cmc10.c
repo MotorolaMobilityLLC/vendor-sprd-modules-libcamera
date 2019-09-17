@@ -112,7 +112,7 @@ cmr_s32 _pm_cmc10_set_param(void *cmc10_param,
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 update = 0;
 
-			if (!block_result->update || cmc10_header_ptr->bypass) {
+			if (!block_result->update) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
