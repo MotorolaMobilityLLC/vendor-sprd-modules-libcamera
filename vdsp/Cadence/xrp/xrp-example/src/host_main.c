@@ -1225,7 +1225,7 @@ static void f13(devid)
 		devid = 1;
 	for(int i = 0;i<devid;i++)
 	{
-		if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_run_faceid_command_directly(device, inphyaddr, 720,960,&out_result,fd_out))
+		if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_run_faceid_command_directly(device, inphyaddr, 720,960,1,&out_result,fd_out))
 			fprintf(stderr , "xrp_run_faceid_command failed\n");
 		else
 		{

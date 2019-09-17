@@ -43,7 +43,7 @@ extern "C" {
 	int sprd_vdsp_send_command_directly(void *device , const char *nsid , struct sprd_vdsp_inout *input, struct sprd_vdsp_inout *output,
 					struct sprd_vdsp_inout *buffer ,  uint32_t buf_num, enum sprd_xrp_queue_priority priority);
 	int sprd_vdsp_run_faceid_command_directly(void *device,unsigned long in_data, unsigned int in_height,
-								unsigned int in_width,unsigned int *out_result,int out_fd);
+								unsigned int in_width,unsigned int in_liveness,unsigned int *out_result,int out_fd);
 	int sprd_vdsp_load_library(void *device , struct sprd_vdsp_inout *buffer , const char *libname , enum sprd_xrp_queue_priority priority);
 	int sprd_vdsp_unload_library(void *device , const char *libname , enum sprd_xrp_queue_priority priority);
 #ifdef __cplusplus

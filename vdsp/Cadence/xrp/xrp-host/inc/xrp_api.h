@@ -598,7 +598,7 @@ void xrp_run_command_directly(struct xrp_device *device, const char *nsid , unsi
                                 struct xrp_buffer_group *buffer_group,
                                 enum xrp_status *status);
 enum xrp_status xrp_run_faceid_command(struct xrp_device *device,
-												unsigned long in_data, unsigned int in_height,unsigned int in_width,
+												unsigned long in_data, unsigned int in_height,unsigned int in_width,unsigned int in_liveness,
 												unsigned int *out_result,int out_fd);
 #endif
 

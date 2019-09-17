@@ -89,6 +89,7 @@ struct xrp_faceid_ctrl {
 	__u32 in_data_addr;
 	__u32 in_height;
 	__u32 in_width;
+	__u32 in_liveness;
 	__u32 out_result;
 	int32_t out_fd;
 };

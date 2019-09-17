@@ -366,7 +366,7 @@ void xrp_run_command_directly(struct xrp_device *device ,const char * nsid , uns
                 set_status(status, XRP_STATUS_SUCCESS);
 }
 enum xrp_status xrp_run_faceid_command(struct xrp_device *device,
-												unsigned long in_data, unsigned int in_height,unsigned int in_width,
+												unsigned long in_data, unsigned int in_height,unsigned int in_width,unsigned int in_liveness,
 												unsigned int *out_result,int out_fd)
 {
 	int ret;
@@ -375,6 +375,7 @@ enum xrp_status xrp_run_faceid_command(struct xrp_device *device,
 	    .in_data_addr = in_data,
 		.in_height = in_height,
 		.in_width = in_width,
+		.in_liveness = in_liveness,
 	    .out_fd = out_fd,
 	};
 	
