@@ -1340,12 +1340,11 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
             raw_format = 0x04;
         }
+        CMR_LOGI("fetch_pitch raw buf size, %d\n", mem_ptr->cap_raw.buf_size);
         send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
                           mem_ptr->cap_raw.size.height,
                           (char *)mem_ptr->cap_raw.addr_vir.addr_y,
-                          mem_ptr->cap_raw.size.width *
-                              mem_ptr->cap_raw.size.height * raw_pixel_width /
-                              8,
+                          mem_ptr->cap_raw.buf_size,
                           0, 0, 0, 0);
     }
 
@@ -1355,8 +1354,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             snp_cxt->ops.dump_image_with_3a_info(
                 snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
                 mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 /
-                    4,
+                mem_ptr->cap_raw.buf_size,
                 &mem_ptr->cap_raw.addr_vir);
         }
     } else {
@@ -1364,7 +1362,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
             mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
+            mem_ptr->cap_raw.buf_size,
             &mem_ptr->cap_raw.addr_vir);
     }
 
@@ -4437,7 +4435,7 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
         height = mem_ptr->cap_raw2.size.height;
         snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW, width, height,
-            width * height * 5 / 4, &mem_ptr->cap_raw2.addr_vir);
+            mem_ptr->cap_raw2.buf_size, &mem_ptr->cap_raw2.addr_vir);
 
         CMR_LOGD("dump yuv");
         width = mem_ptr->target_yuv.size.width;

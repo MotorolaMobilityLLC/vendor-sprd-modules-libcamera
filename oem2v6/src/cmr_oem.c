@@ -12484,10 +12484,10 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
 
     if (img_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
         strcat(file_name, ".mipi_raw");
-        size = width * height * 5 / 4;
+        size = dump_size;
     } else if (img_fmt == CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW) {
         strcat(file_name, "_dcam.mipi_raw");
-        size = width * height * 5 / 4;
+        size = dump_size;
     } else if (img_fmt == CAM_IMG_FMT_YUV420_NV21) {
         strcat(file_name, ".yuv");
         size = width * height * 3 / 2;

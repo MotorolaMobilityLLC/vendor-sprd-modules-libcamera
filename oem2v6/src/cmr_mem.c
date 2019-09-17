@@ -509,12 +509,21 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     uint32_t raw_size = 0, raw2_size = 0;
     uint32_t tmp1, tmp2, tmp3, max_size;
     struct cmr_cap_mem *cap_mem = capture_mem;
+    uint32_t fetch_pitch;
 
     mem_res = *io_mem_res;
     mem_end = *io_mem_end;
 
+#ifdef CAMERA_PITCH_SUPPORT
+    #define _pitch(w)  (((w + 3) / 4 * 5 + 3) & (~0x3))
+    fetch_pitch = _pitch(sn_size->width);
+    raw_size = fetch_pitch * sn_size->height;
+    raw2_size = fetch_pitch * sn_size->height;
+    CMR_LOGI("fetch_pitch, %d\n", fetch_pitch);
+#else
     raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
     raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+#endif
 
     tmp1 = image_size->width * image_size->height * 3 / 2;
     tmp2 = cap_size->width * cap_size->height * 3 / 2;
