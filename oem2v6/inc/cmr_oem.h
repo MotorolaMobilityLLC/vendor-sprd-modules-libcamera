@@ -128,6 +128,7 @@ struct ipm_context {
     cmr_handle handle_4in1;
     cmr_handle ai_scene_handle;
     cmr_handle cnr_handle;
+    cmr_handle dre_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
     cmr_u32 hdr_num;
@@ -136,6 +137,7 @@ struct ipm_context {
     cmr_u32 filter_inited;
     cmr_u32 ai_scene_inited;
     cmr_u32 cnr_inited;
+    cmr_u32 dre_inited;
     struct ipm_version hdr_version;
     cmr_u32 four_in_one_inited;
 };
@@ -308,6 +310,7 @@ struct camera_context {
     sem_t hdr_flag_sm;
     sem_t ai_scene_flag_sm;
     sem_t cnr_flag_sm;
+    sem_t dre_flag_sm;
     sem_t threednr_flag_sm;
     sem_t threednr_proc_sm;
     sem_t filter_sm;
@@ -393,10 +396,15 @@ struct camera_context {
     cmr_s32 swisp_out_mfd;
 
     cmr_s64 hdr_capture_timestamp;
+    cmr_s64 dre_capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
+    cmr_u32 dre_skip_frame_enable;
+    cmr_u32 dre_skip_frame_cnt;
     struct img_rect trim_reset_info;
     cmr_u8 nr_flag;
+    cmr_u8 dre_flag;
+    cmr_u8 dre_skipframe;
 
     /*for flash skip preview frame*/
     cmr_s64 flash_shutdown_timestamp;

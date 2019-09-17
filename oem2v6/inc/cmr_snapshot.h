@@ -192,6 +192,7 @@ struct snapshot_param {
     cmr_u32 is_3dcalibration_mode;
     cmr_u32 is_yuv_callback_mode;
     cmr_u32 nr_flag;
+    cmr_u32 dre_flag;
     cmr_handle threednr_handle;
     cmr_handle hdr_handle;
     struct img_size req_size;

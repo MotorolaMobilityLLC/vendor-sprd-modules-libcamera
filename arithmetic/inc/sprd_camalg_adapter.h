@@ -18,10 +18,18 @@ typedef enum camalg_run_type {
 
 /*Camera image format , IMG_BUF is special buffer ,such as depth*/
 typedef enum sprd_camalg_image_format {
-	SPRD_CAMALG_IMG_NV21 = 1,
-	SPRD_CAMALG_IMG_NV12,
-	SPRD_CAMALG_IMG_BUF,
-	SPRD_CAMALG_MAX
+        SPRD_CAMALG_IMG_RAW16_GRBG,
+        SPRD_CAMALG_IMG_RAW16_RGGB,
+        SPRD_CAMALG_IMG_RAW16_BGGR,
+        SPRD_CAMALG_IMG_RAW16_GBRG,
+        SPRD_CAMALG_IMG_MIPI_GRBG,
+        SPRD_CAMALG_IMG_MIPI_RGGB,
+        SPRD_CAMALG_IMG_MIPI_BGGR,
+        SPRD_CAMALG_IMG_MIPI_GBRG,
+        SPRD_CAMALG_IMG_NV21 = 0x10, //1
+        SPRD_CAMALG_IMG_NV12,
+        SPRD_CAMALG_IMG_BUF,
+        SPRD_CAMALG_MAX
 } sprd_camalg_imageformat;
 
 /*sprd_camalg_image struct*/

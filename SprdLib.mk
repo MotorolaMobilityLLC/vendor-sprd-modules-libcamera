@@ -45,6 +45,10 @@ LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_DRE_CAPTURE)),true)
+LOCAL_SHARED_LIBRARIES += libsprddre
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
 LOCAL_SHARED_LIBRARIES += libuvdenoise
 endif

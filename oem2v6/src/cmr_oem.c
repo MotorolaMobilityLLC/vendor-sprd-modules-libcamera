@@ -63,7 +63,7 @@
 #define OFFLINE_CHANNEL 3
 
 #define HDR_SKIP_FRAME_NUM 2
-
+#define DRE_SKIP_FRAME_NUM 5
 enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 
 #define Clamp(x, a, b) (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
@@ -97,7 +97,7 @@ typedef struct {
                               is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 
-typedef int (*INTERFACE_INIT)(char** error, char *input_key);
+typedef int (*INTERFACE_INIT)(char **error, char *input_key);
 typedef int (*INTERFACE_CLOSE_ALL)(char **error);
 typedef int (*INTERFACE_FOR_ALGO)(char *name, char **error, char **level);
 
@@ -275,6 +275,7 @@ static cmr_int camera_channel_dcam_size(cmr_handle oem_handle,
 
 static cmr_int camera_isp_buff_cfg(cmr_handle oem_handle,
                                    struct buffer_cfg *buf_cfg);
+static cmr_int camera_dre_set_ev(cmr_handle oem_handle, cmr_u32 value);
 static cmr_int camera_hdr_set_ev(cmr_handle oem_handle);
 static cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable);
 static cmr_int camera_channel_scale_capability(cmr_handle oem_handle,
@@ -336,6 +337,10 @@ static cmr_int camera_open_cnr(struct camera_context *cxt,
                                struct ipm_open_in *in_ptr,
                                struct ipm_open_out *out_ptr);
 static cmr_int camera_close_cnr(struct camera_context *cxt);
+static cmr_int camera_open_dre(struct camera_context *cxt,
+                               struct ipm_open_in *in_ptr,
+                               struct ipm_open_out *out_ptr);
+static cmr_int camera_close_dre(struct camera_context *cxt);
 static cmr_int camera_open_ai_scene(struct camera_context *cxt,
                                     struct ipm_open_in *in_ptr,
                                     struct ipm_open_out *out_ptr);
@@ -375,7 +380,8 @@ camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *out_isp_fps,
                                    SENSOR_MODE_FPS_T *in_fps);
 static cmr_uint
 camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
-                                  struct sensor_ex_info *in_sn_ex_info, cmr_u32 sensor_id);
+                                  struct sensor_ex_info *in_sn_ex_info,
+                                  cmr_u32 sensor_id);
 static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color,
                                                  cmr_u32 sensor_color);
 static cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle,
@@ -1414,11 +1420,18 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGV("ISP_AE_EXP_TIME,data %" PRId64, *(uint64_t *)data);
         prev_set_ae_time(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
         break;
-    /*    case ISP_VCM_STEP:
-            CMR_LOGI("ISP_VCM_STEP,data %d", *(uint32_t *)data);
-            prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id,
-       data);
-            break;*/
+/*    case ISP_VCM_STEP:
+        CMR_LOGI("ISP_VCM_STEP,data %d", *(uint32_t *)data);
+        prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id,
+   data);
+        break;*/
+#ifdef CONFIG_CAMERA_DRE
+    case ISP_DRE_EV_EFFECT_CALLBACK:
+        CMR_LOGD("DRE scene=%d", *(cmr_u8 *)data);
+        cxt->dre_skipframe = *(cmr_u8 *)data;
+        cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
+        break;
+#endif
     case ISP_HDR_EV_EFFECT_CALLBACK:
         camera_set_hdr_ev(oem_handle, data);
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
@@ -1614,8 +1627,9 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
 #endif
         cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
         cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
-        if(cxt->is_capture_face == true){
-            cmr_copy(&cxt->fd_face_area_capture,&cxt->fd_face_area,sizeof(struct isp_face_area));
+        if (cxt->is_capture_face == true) {
+            cmr_copy(&cxt->fd_face_area_capture, &cxt->fd_face_area,
+                     sizeof(struct isp_face_area));
             cxt->is_capture_face = false;
         }
         face_area->face_info[i].brightness =
@@ -1638,6 +1652,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_uint oem_func;
     cmr_uint oem_cb_type;
+    struct setting_cmd_parameter setting_param;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    bool is_3dnrphoto = false;
     CMR_MSG_INIT(message);
 
     if (!oem_handle) {
@@ -1830,20 +1847,77 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
 
             if (prev_frame->type == PREVIEW_FRAME) {
                 CMR_LOGD("monoboottime %llu hdr_capture_timestamp %llu",
-                         prev_frame->monoboottime,
-                         cxt->hdr_capture_timestamp);
+                         prev_frame->monoboottime, cxt->hdr_capture_timestamp);
 
                 if (prev_frame->monoboottime > cxt->hdr_capture_timestamp) {
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
                     cxt->hdr_skip_frame_cnt++;
-                    CMR_LOGD("hdr_skip_frame_cnt %d",
-                             cxt->hdr_skip_frame_cnt);
-
+                    CMR_LOGD("hdr_skip_frame_cnt %d", cxt->hdr_skip_frame_cnt);
                 }
             }
             if (cxt->hdr_skip_frame_cnt == HDR_SKIP_FRAME_NUM) {
                 cxt->hdr_skip_frame_enable = 0;
                 CMR_LOGD("hdr_skip_frame_cnt done");
+            }
+        }
+
+        if (cxt->dre_flag == 1 && cxt->dre_skip_frame_enable == 1 &&
+            cb_type == PREVIEW_EVT_CB_FRAME) {
+            struct camera_frame_type *prev_frame =
+                (struct camera_frame_type *)param;
+            if (prev_frame->type == PREVIEW_FRAME) {
+                CMR_LOGD("monoboottime %llu dre_capture_timestamp %llu",
+                         prev_frame->monoboottime, cxt->dre_capture_timestamp);
+
+                if (prev_frame->monoboottime > cxt->dre_capture_timestamp) {
+                    prev_frame->type = PREVIEW_CANCELED_FRAME;
+                    cxt->dre_skip_frame_cnt++;
+                    CMR_LOGD("dre_skip_frame_cnt %d", cxt->dre_skip_frame_cnt);
+                }
+            }
+            cmr_bzero(&setting_param, sizeof(setting_param));
+            setting_param.camera_id = cxt->camera_id;
+            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_APPMODE, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get app mode %ld", ret);
+            }
+            CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+            if (setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) {
+                // 3dnr photo available
+                is_3dnrphoto = true;
+                if (ret) {
+                    CMR_LOGE("failed to cap cfg %ld", ret);
+                }
+            }
+
+            char value[PROPERTY_VALUE_MAX];
+            int skipnum = 0;
+            property_get("debug.skipframe.dre", value, "null");
+            if (!strcmp(value, "10")) {
+                skipnum = 10;
+            } else if (!strcmp(value, "9")) {
+                skipnum = 9;
+            } else if (!strcmp(value, "8")) {
+                skipnum = 8;
+            } else if (!strcmp(value, "7")) {
+                skipnum = 7;
+            } else if (!strcmp(value, "6")) {
+                skipnum = 6;
+            } else {
+                skipnum = 10;
+            }
+            if (is_3dnrphoto) {
+                if (cxt->dre_skip_frame_cnt == 10) {
+                    cxt->dre_skip_frame_enable = 0;
+                    CMR_LOGD("dre_skip_frame_cnt 3dnr ");
+                }
+            } else {
+                if (cxt->dre_skip_frame_cnt == skipnum) {
+                    cxt->dre_skip_frame_enable = 0;
+                    CMR_LOGD("dre_skip_frame_cnt non 3dnr ,skipnum =%d",
+                             skipnum);
+                }
             }
         }
 
@@ -1986,7 +2060,8 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         send_thr_handle = cxt->snp_send_raw_image_handle;
         break;
     case SNAPSHOT_CB_EVT_DONE:
-        if (cxt->is_multi_mode == MODE_MULTI_CAMERA || 0 == cxt->camera_id || 4 == cxt->camera_id) {
+        if (cxt->is_multi_mode == MODE_MULTI_CAMERA || 0 == cxt->camera_id ||
+            4 == cxt->camera_id) {
             af_ts.timestamp = ((struct camera_frame_type *)param)->timestamp;
             af_ts.capture = 1;
             isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_DCAM_TIMESTAMP,
@@ -2288,6 +2363,32 @@ cmr_int camera_close_cnr(struct camera_context *cxt) {
     return ret;
 }
 
+cmr_int camera_open_dre(struct camera_context *cxt, struct ipm_open_in *in_ptr,
+                        struct ipm_open_out *out_ptr) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    sem_wait(&cxt->dre_flag_sm);
+    if (NULL == cxt->ipm_cxt.dre_handle) {
+        ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_DRE, in_ptr,
+                           out_ptr, &cxt->ipm_cxt.dre_handle);
+    }
+    sem_post(&cxt->dre_flag_sm);
+
+    return ret;
+}
+
+cmr_int camera_close_dre(struct camera_context *cxt) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    sem_wait(&cxt->dre_flag_sm);
+    if (cxt->ipm_cxt.dre_handle) {
+        ret = cmr_ipm_close(cxt->ipm_cxt.dre_handle);
+        cxt->ipm_cxt.dre_handle = 0;
+    }
+    sem_post(&cxt->dre_flag_sm);
+    CMR_LOGI("close dre done %ld", ret);
+    return ret;
+}
 cmr_int camera_open_ai_scene(struct camera_context *cxt,
                              struct ipm_open_in *in_ptr,
                              struct ipm_open_out *out_ptr) {
@@ -2782,7 +2883,7 @@ cmr_int camera_set_mm_dvfs_param(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     CHECK_HANDLE_VALID(oem_handle);
     ret = cmr_set_mm_dvfs_param(oem_handle, dvfs_param);
-    //CMR_LOGD("done %ld", ret);
+    // CMR_LOGD("done %ld", ret);
     return ret;
 }
 #endif
@@ -3423,7 +3524,7 @@ cmr_s32 camera_isp_set_pulse_line(void *handler, cmr_u32 line) {
     ret = cmr_grab_set_pulse_line(cxt->grab_cxt.grab_handle, line);
     return ret;
 #else
-    //CMR_LOGI("sharkl5 TBD");
+    // CMR_LOGI("sharkl5 TBD");
     return ret;
 #endif
 }
@@ -3459,7 +3560,7 @@ cmr_s32 camera_isp_set_next_vcm_pos(void *handler, cmr_s32 pos) {
 exit:
     return ret;
 #else
-    //CMR_LOGI("sharkl5 TBD");
+    // CMR_LOGI("sharkl5 TBD");
     return ret;
 #endif
 }
@@ -3473,7 +3574,7 @@ cmr_s32 camera_isp_set_pulse_log(void *handler, cmr_u32 enable) {
     ret = cmr_grab_set_pulse_log(cxt->grab_cxt.grab_handle, enable);
     return ret;
 #else
-    //CMR_LOGI("sharkl5 TBD");
+    // CMR_LOGI("sharkl5 TBD");
     return ret;
 #endif
 }
@@ -3592,7 +3693,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
             goto exit;
         }
     } else {
-        camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info, sns_ex_info_ptr, cxt->camera_id);
+        camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info, sns_ex_info_ptr,
+                                          cxt->camera_id);
     }
 
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == sn_cxt->sensor_info.image_format) {
@@ -3929,25 +4031,22 @@ exit:
     return ret;
 }
 
-void get_input_key(char **input_key)
-{
-    *input_key = NULL;
-}
+void get_input_key(char **input_key) { *input_key = NULL; }
 
-cmr_int camera_interface_init(cmr_handle oem_handle)
-{
+cmr_int camera_interface_init(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    if(!cxt->handle_interface) {
+    if (!cxt->handle_interface) {
         CMR_LOGD("First time to do interface init");
         cxt->handle_interface = dlopen("libinterface.so", RTLD_NOW);
 
-        if(!cxt->handle_interface) {
+        if (!cxt->handle_interface) {
             CMR_LOGE("decrypt interface open failed with %s", dlerror());
             return ret;
         }
-        INTERFACE_INIT interface_init = dlsym(cxt->handle_interface, "interface_init");
-        if(!interface_init) {
+        INTERFACE_INIT interface_init =
+            dlsym(cxt->handle_interface, "interface_init");
+        if (!interface_init) {
             CMR_LOGE("func open failed with error = %s", dlerror());
             return ret;
         }
@@ -3957,26 +4056,28 @@ cmr_int camera_interface_init(cmr_handle oem_handle)
         get_input_key(&input_key);
         CMR_LOGD("interface input key is %s", input_key);
         int init = interface_init(&error, input_key);
-        if(init) {
+        if (init) {
             ret = CMR_CAMERA_FAIL;
-            CMR_LOGE("interface init func failed with %s and ret is %d", error, init);
+            CMR_LOGE("interface init func failed with %s and ret is %d", error,
+                     init);
         }
-        INTERFACE_FOR_ALGO interface_for_algo = dlsym(cxt->handle_interface, "interface_for_algo");
+        INTERFACE_FOR_ALGO interface_for_algo =
+            dlsym(cxt->handle_interface, "interface_for_algo");
         interface_for_algo("_portrait_cap", &error, &level);
     } else
         CMR_LOGD("libinterface is inited");
-    
+
     return ret;
 }
 
-cmr_int camera_interface_deinit(cmr_handle oem_handle)
-{
-    int ret = CMR_CAMERA_SUCCESS; 
+cmr_int camera_interface_deinit(cmr_handle oem_handle) {
+    int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    if(cxt->handle_interface) {
-        INTERFACE_CLOSE_ALL interface_close = dlsym(cxt->handle_interface, "interface_close_all");
+    if (cxt->handle_interface) {
+        INTERFACE_CLOSE_ALL interface_close =
+            dlsym(cxt->handle_interface, "interface_close_all");
         char *error;
-        if(interface_close) {
+        if (interface_close) {
             CMR_LOGD("prepare to close interface");
             ret = interface_close(&error);
         }
@@ -4190,6 +4291,15 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         cxt->ipm_cxt.cnr_inited = 1;
     }
 
+#ifdef CONFIG_CAMERA_DRE
+    if (!cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+        in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+        in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+        ret = camera_open_dre(cxt, &in_param, NULL);
+        cxt->ipm_cxt.dre_inited = 1;
+    }
+#endif
+
     return ret;
 }
 
@@ -4215,6 +4325,16 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
         }
         cxt->ipm_cxt.cnr_inited = 0;
     }
+
+#ifdef CONFIG_CAMERA_DRE
+    if (cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+        ret = camera_close_dre(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close cnr");
+        }
+        cxt->ipm_cxt.dre_inited = 0;
+    }
+#endif
 
     if (0 == ipm_cxt->inited) {
         CMR_LOGD("ipm has been de-intialized");
@@ -4284,14 +4404,15 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     struct ipm_frame_out imp_out_param;
     struct img_frm *img_frame = (struct img_frm *)data;
     cmr_uint is_filter;
-    CMR_LOGV("E");
+    CMR_LOGI("E");
 
     CHECK_HANDLE_VALID(oem_handle);
     CHECK_HANDLE_VALID(data);
     CHECK_HANDLE_VALID(ipm_cxt);
 
     is_filter = cxt->snp_cxt.filter_type;
-    if (cxt->nr_flag || is_filter) {
+
+    if (cxt->nr_flag || is_filter || cxt->dre_flag) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
@@ -4311,6 +4432,41 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
         CMR_LOGD("img_frame width = %d , height = %d ",
                  imp_out_param.dst_frame.size.width,
                  imp_out_param.dst_frame.size.height);
+
+        // do dre
+        if (cxt->dre_flag && (camera_get_hdr_flag(cxt) != 1)) {
+            // do dre except burst mode
+            struct setting_cmd_parameter setting_param;
+            struct setting_context *setting_cxt = &cxt->setting_cxt;
+            cmr_uint app_mode;
+
+            cmr_bzero(&setting_param, sizeof(setting_param));
+            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                    SETTING_CLEAR_DRE, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to clear dre sem");
+            }
+            if (cxt->dre_skipframe)
+                camera_dre_set_ev(oem_handle, 0);
+
+            cmr_bzero(&setting_param, sizeof(setting_param));
+            setting_param.camera_id = cxt->camera_id;
+            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_APPMODE, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get app mode %ld", ret);
+                goto exit;
+            }
+            app_mode = setting_param.cmd_type_value;
+            if (app_mode != CAMERA_MODE_CONTINUE) {
+                ret = ipm_transfer_frame(ipm_cxt->dre_handle, &ipm_in_param,
+                                         NULL);
+                if (ret) {
+                    CMR_LOGE("failed to do dre process %ld", ret);
+                    goto exit;
+                }
+            }
+        }
 
         // do filter:
         if (is_filter) {
@@ -4789,7 +4945,7 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         goto exit;
     }
     ret = camera_interface_init(oem_handle);
-    if(ret) {
+    if (ret) {
         CMR_LOGD("decrypt interface init failed");
     }
     ret = camera_snapshot_init(oem_handle);
@@ -4797,7 +4953,7 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         CMR_LOGE("failed to init snapshot %ld", ret);
         goto exit;
     } else {
-        //CMR_LOGI("init mds ok");
+        // CMR_LOGI("init mds ok");
         ret = camera_init_thread(oem_handle);
     }
 
@@ -4906,6 +5062,7 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     sem_init(&cxt->threednr_flag_sm, 0, 1);
 #endif
     sem_init(&cxt->cnr_flag_sm, 0, 1);
+    sem_init(&cxt->dre_flag_sm, 0, 1);
 
     sem_init(&cxt->ai_scene_flag_sm, 0, 1);
 
@@ -4995,6 +5152,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     sem_destroy(&cxt->threednr_flag_sm);
 #endif
     sem_destroy(&cxt->cnr_flag_sm);
+    sem_destroy(&cxt->dre_flag_sm);
 
     sem_destroy(&cxt->ai_scene_flag_sm);
 
@@ -5132,7 +5290,7 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     camera_grab_deinit(oem_handle);
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     if (active_camera_num > 0)
-	active_camera_num--;
+        active_camera_num--;
 
     if (active_camera_num == 0) {
         pthread_mutex_lock(&mm_dvfs_mutex);
@@ -5618,13 +5776,17 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     cmr_s32 rtn = -1;
     char tmp_name[128];
     /* info of source file for number */
-    const char file_name[] = "time.yuv"; /* source file for number:0123456789-:  */
+    const char file_name[] =
+        "time.yuv";               /* source file for number:0123456789-:  */
     const int subnum_total = 13;  /* 0--9,-,:, (space), all= 13 */
     const int subnum_width = 80;  /* sub number width:align 2 */
     const int subnum_height = 40; /* sub number height:align 2 */
-    const int num_height = subnum_height * subnum_total; /* as time.yuv height */
-    const int subnum_len = subnum_width * subnum_height; /* sub number pixels,y data size */
-    const int src_filelen = subnum_width * num_height * 3 / 2; /* size for alloc buf for time.yuv */
+    const int num_height =
+        subnum_height * subnum_total; /* as time.yuv height */
+    const int subnum_len =
+        subnum_width * subnum_height; /* sub number pixels,y data size */
+    const int src_filelen =
+        subnum_width * num_height * 3 / 2; /* size for alloc buf for time.yuv */
 
     cmr_u8 *pnum = NULL, *ptext = NULL, *ptextout = NULL;
     time_t timep;
@@ -5674,7 +5836,7 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     pdst = ptext;
     for (i = 0; i < sizeof(time_text); i++) {
         if (time_text[i] == '\0')
-             break;
+            break;
         if (time_text[i] == '-')
             j = 10;
         else if (time_text[i] == ':')
@@ -5749,8 +5911,8 @@ static void watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
                 (cmr_u8 *)malloc((sizeparam->logoW) * (sizeparam->logoH) * 4);
 
             /* logo position: If set in camera_select_logo, remove this
-	     * suggest: align 2
-	     */
+             * suggest: align 2
+             */
             sizeparam->posX = 0;
             sizeparam->posY = 0;
             ret = camera_get_logo_data(logo_buf, sizeparam->logoW,
@@ -5768,10 +5930,10 @@ static void watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
         ret = camera_get_time_yuv420(&ptime, &time_width, &time_height);
         if (!ret) {
             /* time watermark position,align 2 */
-	    if (!((sizeparam->imgW - sizeparam->logoW) & 0x1))
+            if (!((sizeparam->imgW - sizeparam->logoW) & 0x1))
                 sizeparam->posX = sizeparam->imgW - sizeparam->logoW;
-	    else
-	        sizeparam->posX = sizeparam->imgW - sizeparam->logoW - 1;
+            else
+                sizeparam->posX = sizeparam->imgW - sizeparam->logoW - 1;
             sizeparam->posY = 0;
             sizeparam->logoW = time_width;
             sizeparam->logoH = time_height;
@@ -6080,44 +6242,59 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 CMR_LOGD("face_beauty smooth %d,bright %d,slim %d,large %d",
                          beautyLevels.smoothLevel, beautyLevels.brightLevel,
                          beautyLevels.slimLevel, beautyLevels.largeLevel);
-                if(cxt->is_multi_mode == MODE_BOKEH){
-                    cmr_copy(&cxt->fd_face_area,&cxt->fd_face_area_capture,sizeof(struct isp_face_area));
+                if (cxt->is_multi_mode == MODE_BOKEH) {
+                    cmr_copy(&cxt->fd_face_area, &cxt->fd_face_area_capture,
+                             sizeof(struct isp_face_area));
                 }
                 int sx, sy, ex, ey, angle, pose;
                 for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
-                        beauty_face.idx = i;
-                        beauty_face.startX = (cxt->fd_face_area.face_info[i].sx * src->size.width) /
-                                    (cxt->fd_face_area.frame_width);
-                        beauty_face.startY = (cxt->fd_face_area.face_info[i].sy * src->size.height) /
-                                    (cxt->fd_face_area.frame_height);
-                        beauty_face.endX = (cxt->fd_face_area.face_info[i].ex * src->size.width) /
-                                    (cxt->fd_face_area.frame_width);
-                        beauty_face.endY = (cxt->fd_face_area.face_info[i].ey * src->size.height) /
-                                    (cxt->fd_face_area.frame_height);
-                        beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
-                        beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
-                        ret = face_beauty_ctrl(&(cxt->face_beauty),
-                                FB_BEAUTY_CONSTRUCT_FACE_CMD, (void*)&beauty_face);
+                    beauty_face.idx = i;
+                    beauty_face.startX =
+                        (cxt->fd_face_area.face_info[i].sx * src->size.width) /
+                        (cxt->fd_face_area.frame_width);
+                    beauty_face.startY =
+                        (cxt->fd_face_area.face_info[i].sy * src->size.height) /
+                        (cxt->fd_face_area.frame_height);
+                    beauty_face.endX =
+                        (cxt->fd_face_area.face_info[i].ex * src->size.width) /
+                        (cxt->fd_face_area.frame_width);
+                    beauty_face.endY =
+                        (cxt->fd_face_area.face_info[i].ey * src->size.height) /
+                        (cxt->fd_face_area.frame_height);
+                    beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
+                    beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+                    ret = face_beauty_ctrl(&(cxt->face_beauty),
+                                           FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                           (void *)&beauty_face);
                 }
-                face_beauty_set_devicetype(&(cxt->face_beauty), SPRD_CAMALG_RUN_TYPE_CPU);
+                face_beauty_set_devicetype(&(cxt->face_beauty),
+                                           SPRD_CAMALG_RUN_TYPE_CPU);
                 face_beauty_init(&(cxt->face_beauty), 0, 2);
                 beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-                beauty_image.inputImage.addr[0] = (void*)(src->addr_vir.addr_y);
-                beauty_image.inputImage.addr[1] = (void*)(src->addr_vir.addr_u);
-                beauty_image.inputImage.addr[2] = (void*)(src->addr_vir.addr_v);
+                beauty_image.inputImage.addr[0] =
+                    (void *)(src->addr_vir.addr_y);
+                beauty_image.inputImage.addr[1] =
+                    (void *)(src->addr_vir.addr_u);
+                beauty_image.inputImage.addr[2] =
+                    (void *)(src->addr_vir.addr_v);
                 beauty_image.inputImage.ion_fd = src->fd;
                 beauty_image.inputImage.offset[0] = 0;
-                beauty_image.inputImage.offset[1] = src->size.width * src->size.height;
+                beauty_image.inputImage.offset[1] =
+                    src->size.width * src->size.height;
                 beauty_image.inputImage.width = src->size.width;
                 beauty_image.inputImage.height = src->size.height;
                 beauty_image.inputImage.stride = src->size.width;
-                beauty_image.inputImage.size = src->size.width * src->size.height * 3 / 2;
+                beauty_image.inputImage.size =
+                    src->size.width * src->size.height * 3 / 2;
                 ret = face_beauty_ctrl(&(cxt->face_beauty),
-                        FB_BEAUTY_CONSTRUCT_IMAGE_CMD, (void*)&beauty_image);
+                                       FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                                       (void *)&beauty_image);
                 ret = face_beauty_ctrl(&(cxt->face_beauty),
-                        FB_BEAUTY_CONSTRUCT_LEVEL_CMD, (void*)&beautyLevels);
-                ret = face_beauty_ctrl(&(cxt->face_beauty),
-                        FB_BEAUTY_PROCESS_CMD, (void*)&facecount);
+                                       FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                                       (void *)&beautyLevels);
+                ret =
+                    face_beauty_ctrl(&(cxt->face_beauty), FB_BEAUTY_PROCESS_CMD,
+                                     (void *)&facecount);
                 face_beauty_deinit(&(cxt->face_beauty));
                 // for cache coherency
                 cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
@@ -6601,8 +6778,8 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
     // whether FRONT_CAMERA_FLASH_TYPE is flash
     bool isFrontFlash =
         (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-    if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-        camera_id == 0 || isFrontLcd || isFrontFlash || camera_id == 4) {
+    if (cxt->is_multi_mode == MODE_MULTI_CAMERA || camera_id == 0 ||
+        isFrontLcd || isFrontFlash || camera_id == 4) {
         setting_param.camera_id = camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_GET_HW_FLASH_STATUS, &setting_param);
@@ -6612,7 +6789,7 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
         }
         flash_status = setting_param.cmd_type_value;
         CMR_LOGD("HW flash_status=%ld", flash_status);
-		CMR_LOGD("start");
+        CMR_LOGD("start");
         if (FLASH_OPEN == flash_status || FLASH_HIGH_LIGHT == flash_status) {
             /*close flash*/
             memset(&setting_param, 0, sizeof(setting_param));
@@ -6777,9 +6954,7 @@ cmr_int camera_get_af_support(cmr_handle oem_handle, cmr_u16 *af_support) {
 exit:
     ATRACE_END();
     return ret;
-
 }
-
 
 cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
                                    cmr_uint is_ultra_wide) {
@@ -7241,8 +7416,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         sensor_info_ptr->mode_info[sn_mode].binning_factor =
             sns_ex_info_ptr->sns_binning_factor[sn_mode];
     else
-        sensor_info_ptr->mode_info[sn_mode].binning_factor =
-            1;
+        sensor_info_ptr->mode_info[sn_mode].binning_factor = 1;
     isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
 
     ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
@@ -7323,7 +7497,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.lsc_phys_addr, isp_param.lsc_virt_addr, isp_param.work_mode,
         isp_param.dv_mode, isp_param.capture_mode, isp_param.is_snapshot);
 
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
+#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
 #ifdef CONFIG_CAMERA_4IN1
     if (isp_video_get_simulation_flag()) {
         isp_param.is_4in1_sensor = 0;
@@ -7343,15 +7517,17 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
 #endif
 #else
     /* set remosaic_type */
-    isp_param.remosaic_type = camera_get_remosaic_type(&(cxt->sn_cxt.info_4in1),
-			isp_param.resolution_info.sensor_output_size.w,
-			isp_param.resolution_info.sensor_output_size.h);
-	isp_param.is_4in1_sensor = camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
-	if (isp_video_get_simulation_flag()) {
-	    isp_param.is_4in1_sensor = 0;
-	    isp_param.remosaic_type = 0;
-	}
-	isp_param.is_high_res_mode = cxt->is_high_res_mode;
+    isp_param.remosaic_type = camera_get_remosaic_type(
+        &(cxt->sn_cxt.info_4in1),
+        isp_param.resolution_info.sensor_output_size.w,
+        isp_param.resolution_info.sensor_output_size.h);
+    isp_param.is_4in1_sensor =
+        camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
+    if (isp_video_get_simulation_flag()) {
+        isp_param.is_4in1_sensor = 0;
+        isp_param.remosaic_type = 0;
+    }
+    isp_param.is_high_res_mode = cxt->is_high_res_mode;
 #endif
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (ret) {
@@ -7468,8 +7644,9 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     sensor_cfg.sn_trim.start_y = sensor_mode_info->trim_start_y;
     sensor_cfg.sn_trim.width = sensor_mode_info->trim_width;
     sensor_cfg.sn_trim.height = sensor_mode_info->trim_height;
-    CMR_LOGD("sn_size: width=%d, height=%d, camera_id=%d", sensor_cfg.sn_size.width,
-             sensor_cfg.sn_size.height, cxt->camera_id);
+    CMR_LOGD("sn_size: width=%d, height=%d, camera_id=%d",
+             sensor_cfg.sn_size.width, sensor_cfg.sn_size.height,
+             cxt->camera_id);
     CMR_LOGD("sn_trim: width=%d, height=%d", sensor_cfg.sn_trim.width,
              sensor_cfg.sn_trim.height);
     CMR_LOGD("scaler_trim: width=%d, height=%d",
@@ -7586,14 +7763,14 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     param_ptr->cap_inf_cfg.cfg.is_high_fps = fps_info.is_high_fps;
     param_ptr->cap_inf_cfg.cfg.high_fps_skip_num = fps_info.high_fps_skip_num;
 
-	/* set 4in1 remosaic_type */
-	do {
-		cxt->remosaic_type =
-			camera_get_remosaic_type(&(sn_cxt->info_4in1), sensor_mode_info->width,
-					sensor_mode_info->height);
-		if (cxt->remosaic_type == 1)
-			param_ptr->cap_inf_cfg.cfg.need_4in1 = 1;
-	} while (0);
+    /* set 4in1 remosaic_type */
+    do {
+        cxt->remosaic_type = camera_get_remosaic_type(&(sn_cxt->info_4in1),
+                                                      sensor_mode_info->width,
+                                                      sensor_mode_info->height);
+        if (cxt->remosaic_type == 1)
+            param_ptr->cap_inf_cfg.cfg.need_4in1 = 1;
+    } while (0);
     if (!param_ptr->is_lightly) {
         ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,
                                &param_ptr->cap_inf_cfg, channel_id, endian);
@@ -7728,9 +7905,9 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     camera_take_snapshot_step(CMR_STEP_CAP_S);
 
 #ifdef CONFIG_CAMERA_4IN1_SOLUTION2
-    if(cxt->remosaic_type) {
-       skip_number = 3;
-       CMR_LOGI("skip_num %ld", skip_number);
+    if (cxt->remosaic_type) {
+        skip_number = 3;
+        CMR_LOGI("skip_num %ld", skip_number);
     }
 #endif
 
@@ -8103,7 +8280,8 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
 
         if ((param_ptr->cmd_value == FLASH_OPEN ||
              param_ptr->cmd_value == FLASH_HIGH_LIGHT) &&
-            (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0 || cxt->camera_id == 4)) {
+            (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0 ||
+             cxt->camera_id == 4)) {
             cmr_get_leds_ctrl(oem_handle, &flash_opt.led0_enable,
                               &flash_opt.led1_enable);
         } else {
@@ -8119,8 +8297,9 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
         } else {
 
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||    \
-        defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
+    defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_7)
             if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN) {
                 cmr_u32 flash_capture_skip_num = 0;
                 bool isFrontFlash =
@@ -8133,7 +8312,9 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
                 CMR_LOGD("preflash_skip_num = %d", flash_capture_skip_num);
-                if (cxt->is_multi_mode == MODE_MULTI_CAMERA || 0 == cxt->camera_id || isFrontFlash || 4 == cxt->camera_id) {
+                if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+                    0 == cxt->camera_id || isFrontFlash ||
+                    4 == cxt->camera_id) {
                     cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
                                                     ? 1
                                                     : flash_capture_skip_num;
@@ -8546,6 +8727,9 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_range_fps isp_fps;
     struct isp_ae_fps ae_fps;
     struct isp_hdr_param hdr_param;
+#ifdef CONFIG_CAMERA_DRE
+    struct isp_dre_param dre_param;
+#endif
     struct isp_3dnr_ctrl_param param_3dnr;
     struct isp_exp_compensation ae_compensation;
 
@@ -8782,6 +8966,16 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&hdr_param;
         break;
 
+#ifdef CONFIG_CAMERA_DRE
+    case COM_ISP_SET_DRE:
+        isp_cmd = ISP_CTRL_DRE;
+        dre_param.dre_enable = param_ptr->cmd_value;
+        ptr_flag = 1;
+        CMR_LOGD("set dre enable %d", dre_param.dre_enable);
+        isp_param_ptr = (void *)&dre_param;
+        break;
+#endif
+
     case COM_ISP_SET_3DNR:
         isp_cmd = ISP_CTRL_3DNR;
         param_3dnr.enable = param_ptr->cmd_value;
@@ -8896,6 +9090,16 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_GET_CNR2_PARAM;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cnr2_param;
+#else
+        isp_cmd = ISP_CTRL_MAX;
+#endif
+        break;
+
+    case COM_ISP_GET_DRE_PARAM:
+#ifdef CONFIG_CAMERA_DRE
+        isp_cmd = ISP_CTRL_GET_DRE_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->dre_param;
 #else
         isp_cmd = ISP_CTRL_MAX;
 #endif
@@ -9313,8 +9517,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     cxt->sn_cxt.info_4in1.limited_4in1_height =
         sn_4in1_info.limited_4in1_height;
 
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-	if (1 == cxt->sn_cxt.info_4in1.is_4in1_supported) {
+#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
+    if (1 == cxt->sn_cxt.info_4in1.is_4in1_supported) {
         struct cmr_path_capability capability;
         CMR_LOGD(" 4in1 path capability");
         camera_channel_path_capability(oem_handle, &capability);
@@ -9352,23 +9556,24 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }
-     }
+    }
     out_param_ptr->limited_4in1_width =
         cxt->sn_cxt.info_4in1.limited_4in1_width;
     out_param_ptr->limited_4in1_height =
         cxt->sn_cxt.info_4in1.limited_4in1_height;
     if (is_raw_capture == 1) {
-		out_param_ptr->remosaic_type = camera_get_remosaic_type(
-			&(cxt->sn_cxt.info_4in1), out_param_ptr->raw_capture_size.width,
-			out_param_ptr->raw_capture_size.height);
+        out_param_ptr->remosaic_type = camera_get_remosaic_type(
+            &(cxt->sn_cxt.info_4in1), out_param_ptr->raw_capture_size.width,
+            out_param_ptr->raw_capture_size.height);
     } else {
-		/* TODO, if capture run to here, maybe need call camera_get_remosaic_type */
-		out_param_ptr->remosaic_type = 0;
+        /* TODO, if capture run to here, maybe need call
+         * camera_get_remosaic_type */
+        out_param_ptr->remosaic_type = 0;
     }
     cxt->mode_4in1 = out_param_ptr->remosaic_type;
     if (cxt->remosaic_type == 1) {
-		camera_open_4in1((cmr_handle)cxt);
-		CMR_LOGD("prepare software remosaic");
+        camera_open_4in1((cmr_handle)cxt);
+        CMR_LOGD("prepare software remosaic");
     }
 #endif
 #endif
@@ -9755,7 +9960,8 @@ exit:
         jpeg_cxt->param.set_encode_rotation, jpeg_cxt->param.thum_size.width,
         jpeg_cxt->param.thum_size.height, out_param_ptr->frame_count,
         out_param_ptr->flip_on, out_param_ptr->sprd_3dnr_type,
-        cxt->sn_cxt.info_4in1.is_4in1_supported, cxt->sn_cxt.info_4in1.limited_4in1_width,
+        cxt->sn_cxt.info_4in1.is_4in1_supported,
+        cxt->sn_cxt.info_4in1.limited_4in1_width,
         cxt->sn_cxt.info_4in1.limited_4in1_height);
 
     ATRACE_END();
@@ -9983,6 +10189,28 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     cnr_typ = camera_get_cnr_realtime_flag(oem_handle);
     out_ptr->nr_flag = cnr_typ;
     cxt->nr_flag = cnr_typ;
+
+#ifdef CONFIG_CAMERA_DRE
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
+                            &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+    }
+    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
+        cxt->camera_id == 0) {
+        // auto 3dnr available
+        out_ptr->dre_flag = 1;
+        cxt->dre_flag = 1;
+    } else {
+        out_ptr->dre_flag = 0;
+        cxt->dre_flag = 0;
+    }
+#else
+    out_ptr->dre_flag = 0;
+    cxt->dre_flag = 0;
+#endif
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_ENCODE_ANGLE, &setting_param);
@@ -10575,8 +10803,8 @@ exit:
     if (CMR_CAMERA_SUCCESS == ret) {
         cxt->inited = 1;
         *oem_handle = (cmr_handle)cxt;
-	active_camera_num++;
-	CMR_LOGD("active_camera_num = %d", active_camera_num);
+        active_camera_num++;
+        CMR_LOGD("active_camera_num = %d", active_camera_num);
     } else {
         if (cxt) {
             free((void *)cxt);
@@ -10636,7 +10864,9 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         }
         CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
         if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
-            (setting_param.camera_id == 0 || cxt->is_multi_mode == MODE_MULTI_CAMERA || setting_param.camera_id == 4)) {
+            (setting_param.camera_id == 0 ||
+             cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+             setting_param.camera_id == 4)) {
             if (cxt->ipm_cxt.ai_scene_inited == 0) {
                 struct ipm_open_in in_param;
                 struct ipm_open_out out_param;
@@ -10805,7 +11035,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     struct snapshot_param snp_param;
     struct common_sn_cmd_param param;
     struct setting_cmd_parameter setting_param;
-    cmr_int flash_status = FLASH_CLOSE;
+    cmr_u32 flash_status = 0;
     cmr_s32 sm_val = 0;
     cmr_u32 need_3dnr = 0;
     cmr_uint video_snapshot_type;
@@ -10829,9 +11059,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             CMR_LOGE("failed to set preview param %ld", ret);
             goto exit;
         }
-#if    defined(CONFIG_CAMERA_4IN1_SOLUTION2)
-		if (cxt->remosaic_type == 1)
-			camera_open_4in1(oem_handle);
+#if defined(CONFIG_CAMERA_4IN1_SOLUTION2)
+        if (cxt->remosaic_type == 1)
+            camera_open_4in1(oem_handle);
 #endif
     } else {
         camera_get_iso_value(oem_handle);
@@ -10899,6 +11129,24 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cxt->camera_mode = mode;
     }
 
+    camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
+                                        &flash_status);
+    if (1 == cxt->dre_flag && (camera_get_hdr_flag(cxt) != 1) &&
+        !flash_status && (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL)) {
+            ret = camera_dre_set_ev(oem_handle, 1);
+            if (ret) {
+                CMR_LOGE("fail to set dre ev");
+            }
+        cxt->dre_capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+        if (cxt->dre_skipframe)
+            cxt->dre_skip_frame_enable = 1;
+        else {
+            cxt->dre_skip_frame_enable = 0;
+        }
+        CMR_LOGI("dre_skip_frame_enable =%d", cxt->dre_skip_frame_enable);
+        cxt->dre_skip_frame_cnt = 0;
+    }
+
     if (1 == camera_get_hdr_flag(cxt)) {
         ret = camera_hdr_set_ev(oem_handle);
         if (ret) {
@@ -10920,8 +11168,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         // whether FRONT_CAMERA_FLASH_TYPE is flash
         bool isFrontFlash =
             (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-        if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-            cxt->camera_id == 0 || isFrontLcd || isFrontFlash || cxt->camera_id == 4) {
+        if (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0 ||
+            isFrontLcd || isFrontFlash || cxt->camera_id == 4) {
             ret = camera_capture_highflash(oem_handle, cxt->camera_id);
             if (ret)
                 CMR_LOGE("open high flash fail");
@@ -10991,9 +11239,9 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
-#if    defined(CONFIG_CAMERA_4IN1_SOLUTION2)
-		if (cxt->remosaic_type == 1)
-			camera_close_4in1(oem_handle);
+#if defined(CONFIG_CAMERA_4IN1_SOLUTION2)
+    if (cxt->remosaic_type == 1)
+        camera_close_4in1(oem_handle);
 #endif
     if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
@@ -11542,8 +11790,8 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
             trim.end_y = ae_param.win_area.rect[0].start_y +
                          ae_param.win_area.rect[0].height - 1;
 
-        CMR_LOGD("AE ROI (%d,%d,%d,%d)",
-            trim.start_x, trim.start_y, trim.end_x, trim.end_y);
+        CMR_LOGD("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y, trim.end_x,
+                 trim.end_y);
         ptr_flag = 1;
         isp_param_ptr = (void *)&trim;
         break;
@@ -11664,14 +11912,18 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_ZOOM: {
         struct cmr_zoom zoom_factor;
         const float EPSINON = 0.0001f;
-        struct cmr_zoom_param *zoom_param = (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
-        struct cmr_zoom_param *zoom_reprocess = (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
+        struct cmr_zoom_param *zoom_param =
+            (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
+        struct cmr_zoom_param *zoom_reprocess =
+            (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
         cmr_uint zoom_factor_changed = 0;
         if (param) {
             cmr_bzero(zoom_param, sizeof(struct cmr_zoom_param));
             cmr_bzero(zoom_reprocess, sizeof(struct cmr_zoom_param));
-            memcpy(zoom_param, (struct cmr_zoom_param *)param,sizeof(struct cmr_zoom_param));
-            memcpy(zoom_reprocess, (struct cmr_zoom_param *)param,sizeof(struct cmr_zoom_param));
+            memcpy(zoom_param, (struct cmr_zoom_param *)param,
+                   sizeof(struct cmr_zoom_param));
+            memcpy(zoom_reprocess, (struct cmr_zoom_param *)param,
+                   sizeof(struct cmr_zoom_param));
 
             if (zoom_param->mode == ZOOM_INFO) {
                 ret = cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
@@ -11679,30 +11931,38 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 if (ret) {
                     CMR_LOGE("fail to get zoom factor  %ld", ret);
                 } else {
-                    if(!zoom_factor.prev_zoom){
+                    if (!zoom_factor.prev_zoom) {
                         zoom_param->zoom_info.prev_aspect_ratio = 1.0f;
-                        zoom_reprocess->zoom_info.prev_aspect_ratio = zoom_reprocess->zoom_info.zoom_ratio;
-                    }else{
-                        zoom_param->zoom_info.prev_aspect_ratio = zoom_param->zoom_info.zoom_ratio;
+                        zoom_reprocess->zoom_info.prev_aspect_ratio =
+                            zoom_reprocess->zoom_info.zoom_ratio;
+                    } else {
+                        zoom_param->zoom_info.prev_aspect_ratio =
+                            zoom_param->zoom_info.zoom_ratio;
                         zoom_reprocess->zoom_info.prev_aspect_ratio = 1.0f;
                     }
-                    if(!zoom_factor.cap_zoom){
+                    if (!zoom_factor.cap_zoom) {
                         zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
-                        zoom_reprocess->zoom_info.capture_aspect_ratio = zoom_reprocess->zoom_info.zoom_ratio;
-                    }else{
-                        zoom_param->zoom_info.capture_aspect_ratio = zoom_param->zoom_info.zoom_ratio;
+                        zoom_reprocess->zoom_info.capture_aspect_ratio =
+                            zoom_reprocess->zoom_info.zoom_ratio;
+                    } else {
+                        zoom_param->zoom_info.capture_aspect_ratio =
+                            zoom_param->zoom_info.zoom_ratio;
                         zoom_reprocess->zoom_info.capture_aspect_ratio = 1.0f;
                     }
-                    if (fabs(zoom_param->zoom_info.prev_aspect_ratio - zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio) > EPSINON
-                            || fabs(zoom_param->zoom_info.capture_aspect_ratio - zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio) > EPSINON){
+                    if (fabs(zoom_param->zoom_info.prev_aspect_ratio -
+                             zoom_factor.zoom_setting.zoom_info
+                                 .prev_aspect_ratio) > EPSINON ||
+                        fabs(zoom_param->zoom_info.capture_aspect_ratio -
+                             zoom_factor.zoom_setting.zoom_info
+                                 .capture_aspect_ratio) > EPSINON) {
                         zoom_factor_changed = 1;
                     }
-                    CMR_LOGD("zoom_factor_changed=%d",zoom_factor_changed);
+                    CMR_LOGD("zoom_factor_changed=%d", zoom_factor_changed);
                 }
             }
         }
         ret = cmr_preview_update_zoom(cxt->prev_cxt.preview_handle,
-                cxt->camera_id, zoom_param);
+                                      cxt->camera_id, zoom_param);
         if (ret) {
             CMR_LOGE("failed to update zoom %ld", ret);
         }
@@ -11710,7 +11970,8 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         if (ret) {
             CMR_LOGE("failed to set camera setting of zoom %ld", ret);
         }
-        ret = camera_set_setting(oem_handle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO, (cmr_uint)zoom_reprocess);
+        ret = camera_set_setting(oem_handle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
+                                 (cmr_uint)zoom_reprocess);
         if (ret) {
             CMR_LOGE("failed to set camera setting of reprocess zoom %ld", ret);
         }
@@ -11721,8 +11982,8 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 CMR_LOGE("failed to set zoom factor to isp  %ld", ret);
             }
         }
-	free(zoom_param);
-	free(zoom_reprocess);
+        free(zoom_param);
+        free(zoom_reprocess);
         break;
     case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
         ret = camera_set_setting(oem_handle, id, param);
@@ -11743,7 +12004,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_ANTIBANDING:
     // case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
-    //case CAMERA_PARAM_EXPOSURE_COMPENSATION:
+    // case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:
     case CAMERA_PARAM_BRIGHTNESS:
     case CAMERA_PARAM_CONTRAST:
@@ -12281,7 +12542,8 @@ camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *out_isp_fps,
 
 static cmr_uint
 camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
-                                  struct sensor_ex_info *in_sn_ex_info, cmr_u32 sensor_id) {
+                                  struct sensor_ex_info *in_sn_ex_info,
+                                  cmr_u32 sensor_id) {
     if (NULL == in_sn_ex_info || NULL == out_isp_sn_ex_info) {
         CMR_LOGE("input param or out param is null!");
         return CMR_CAMERA_FAIL;
@@ -12313,12 +12575,12 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
 
     if (0 == sensor_id) {
 #ifdef TARGET_CAMERA_SENSOR_TOF_VL53L0
-       out_isp_sn_ex_info->tof_support = 1;
+        out_isp_sn_ex_info->tof_support = 1;
 #else
-       out_isp_sn_ex_info->tof_support = 0;
+        out_isp_sn_ex_info->tof_support = 0;
 #endif
     } else {
-       out_isp_sn_ex_info->tof_support = 0;
+        out_isp_sn_ex_info->tof_support = 0;
     }
 
     out_isp_sn_ex_info->fov_info.physical_size[0] =
@@ -12617,7 +12879,7 @@ exit:
 }
 
 cmr_int cmr_get_ae_fps_range(cmr_handle oem_handle, cmr_u32 camera_id,
-                          struct ae_fps_range_info *ae_fps_range) {
+                             struct ae_fps_range_info *ae_fps_range) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct common_isp_cmd_param isp_param;
@@ -12629,16 +12891,16 @@ cmr_int cmr_get_ae_fps_range(cmr_handle oem_handle, cmr_u32 camera_id,
     }
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
     isp_param.camera_id = cxt->camera_id;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_AE_FPS_RANGE,
-                           &isp_param);
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_AE_FPS_RANGE, &isp_param);
     if (ret) {
         CMR_LOGE("get isp vcm range error %ld", ret);
         goto exit;
     }
 
-    memcpy(ae_fps_range, &isp_param.ae_fps_range, sizeof(struct ae_fps_range_info));
-    CMR_LOGV("AE_FPS_RANGE_INFO in DV mode:isp_param.range [%d, %d]", ae_fps_range->dv_fps_min,
-             ae_fps_range->dv_fps_max);
+    memcpy(ae_fps_range, &isp_param.ae_fps_range,
+           sizeof(struct ae_fps_range_info));
+    CMR_LOGV("AE_FPS_RANGE_INFO in DV mode:isp_param.range [%d, %d]",
+             ae_fps_range->dv_fps_min, ae_fps_range->dv_fps_max);
 
 exit:
     return ret;
@@ -12717,6 +12979,24 @@ cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle) {
     return ret;
 }
 
+cmr_int camera_dre_set_ev(cmr_handle oem_handle, cmr_u32 value) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
+    struct common_isp_cmd_param isp_param;
+    isp_param.cmd_value = value;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_DRE, (void *)&isp_param);
+    if (value != 0)
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_CTRL_DRE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to wait hdr ev effect");
+        goto exit;
+    }
+exit:
+    CMR_LOGD("X, ret=%ld", ret);
+    return ret;
+}
 cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -12871,19 +13151,19 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // start hardware 3dnr capture
         CMR_LOGI("set cap_param type to DCAM_CAPTURE_START_3DNR");
         capture_param.type = DCAM_CAPTURE_START_3DNR;
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-	} else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
+#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
+    } else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
 #ifdef CONFIG_CAMERA_4IN1
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
                                &isp_param);
-		lowlight_flag = isp_param.isp_adgain.lowlight_flag;
-		CMR_LOGD("lowlight_flag=%d", lowlight_flag);
+        lowlight_flag = isp_param.isp_adgain.lowlight_flag;
+        CMR_LOGD("lowlight_flag=%d", lowlight_flag);
         if (1 == lowlight_flag) {
             capture_param.type = DCAM_CAPTURE_START_4IN1_LOWLUX;
         }
 #endif
 #else
-	} else if (cxt->remosaic_type != 0) {
+    } else if (cxt->remosaic_type != 0) {
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
                                &isp_param);
         ambient_highlight = isp_param.isp_adgain.ambient_highlight;
@@ -12897,6 +13177,11 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         } else {
             return ret;
         }
+    } else if (cxt->dre_flag == 1 && cxt->dre_skipframe == 1) {
+        // need get 1 frame start from next sof interrupt
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = 3;
+        CMR_LOGI("dre flag");
     } else if (flash_status > 0) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
@@ -12946,11 +13231,10 @@ void camera_set_oem_masterid(uint8_t master_id) {
 }
 
 cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
-        cmr_u32 *ref_camera_id) {
+                                       cmr_u32 *ref_camera_id) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    return isp_ioctl(cxt->isp_cxt.isp_handle,
-                     ISP_CTRL_AE_SET_REF_CAMERA_ID,
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_REF_CAMERA_ID,
                      ref_camera_id);
 }
 
@@ -13466,17 +13750,16 @@ exit:
  * is_4in1_sensor: 1: 4in1 senor(contain software remosaic, hardware remosai)
  *               0: normal sensor
  */
-cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p)
-{
-	cmr_int ret = 0;
+cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p) {
+    cmr_int ret = 0;
 
-#ifdef	CONFIG_CAMERA_4IN1_SOLUTION2
-	ret = (p->is_4in1_supported == 1) || (p->limited_4in1_width > 0);
+#ifdef CONFIG_CAMERA_4IN1_SOLUTION2
+    ret = (p->is_4in1_supported == 1) || (p->limited_4in1_width > 0);
 #else
-	ret = (p->is_4in1_supported == 1);
+    ret = (p->is_4in1_supported == 1);
 #endif
 
-	return ret;
+    return ret;
 }
 
 /* oem use
@@ -13487,34 +13770,32 @@ cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p)
  * 1: .is_4in1_supported == 1 && sensor current size > limited
  * 2: .sensor current size > limited
  */
-cmr_int camera_get_remosaic_type(struct sensor_4in1_info *p, cmr_u32 sensor_w, cmr_u32 sensor_h)
-{
-	cmr_int remosaic_type = 0;
+cmr_int camera_get_remosaic_type(struct sensor_4in1_info *p, cmr_u32 sensor_w,
+                                 cmr_u32 sensor_h) {
+    cmr_int remosaic_type = 0;
 
-	CMR_LOGD("[%d %d %d], {%d %d]", p->is_4in1_supported, p->limited_4in1_width,
-		p->limited_4in1_height,sensor_w, sensor_h);
+    CMR_LOGD("[%d %d %d], {%d %d]", p->is_4in1_supported, p->limited_4in1_width,
+             p->limited_4in1_height, sensor_w, sensor_h);
     if (p->limited_4in1_width == 0 || p->limited_4in1_height == 0)
-		remosaic_type = 0;
-    else if (p->is_4in1_supported &&
-		sensor_w > p->limited_4in1_width &&
-		sensor_h > p->limited_4in1_height)
-		remosaic_type = 1;
+        remosaic_type = 0;
+    else if (p->is_4in1_supported && sensor_w > p->limited_4in1_width &&
+             sensor_h > p->limited_4in1_height)
+        remosaic_type = 1;
     else if (sensor_w > p->limited_4in1_width &&
-		sensor_h > p->limited_4in1_height)
-		remosaic_type = 2;
+             sensor_h > p->limited_4in1_height)
+        remosaic_type = 2;
 
-	CMR_LOGI("remosaic_type=%d", remosaic_type);
+    CMR_LOGI("remosaic_type=%d", remosaic_type);
 
-	return remosaic_type;
+    return remosaic_type;
 }
 
 /* report some 4in1 info to hal
  *
  */
-cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param)
-{
-	cmr_int ret = CMR_CAMERA_SUCCESS;
-	struct camera_context *cxt = (struct camera_context *)handle;
+cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)handle;
     struct common_isp_cmd_param isp_param;
 
     if (!handle) {
@@ -13525,7 +13806,7 @@ cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param)
 
     ret = camera_isp_ioctl(handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
     if (ret) {
-		goto exit;
+        goto exit;
     }
     cxt->ambient_highlight = isp_param.isp_adgain.ambient_highlight;
 
@@ -13533,13 +13814,13 @@ cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param)
     param->ambient_highlight = cxt->ambient_highlight;
 
 exit:
-	CMR_LOGV("done ret = %d", ret);
+    CMR_LOGV("done ret = %d", ret);
 
-	return ret;
+    return ret;
 }
 
 cmr_int camera_set_high_res_mode(cmr_handle oem_handle,
-                                   cmr_uint is_high_res_mode) {
+                                 cmr_uint is_high_res_mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cxt->is_high_res_mode = is_high_res_mode;
@@ -13877,7 +14158,6 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
         strcat(file_name, "_dcam.raw");
         size = width * height * 2;
     }
-
 
     CMR_LOGD("file name %s", file_name);
     fp = fopen(file_name, "wb");

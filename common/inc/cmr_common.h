@@ -427,6 +427,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_RANGE_FPS,
     COM_ISP_GET_AE_LUM,
     COM_ISP_SET_HDR,
+    COM_ISP_SET_DRE,
     COM_ISP_SET_AE_LOCK_UNLOCK,
     COM_ISP_SET_ROI_CONVERGENCE_REQ,
     COM_ISP_SET_SNAPSHOT_FINISHED,
@@ -451,6 +452,8 @@ enum common_isp_cmd_type {
     COM_ISP_GET_CNR2_PARAM,
     COM_ISP_GET_YNRS_PARAM,
     COM_ISP_GET_CNR2_YNR_EN,
+    COM_ISP_GET_CNR2_EN,
+    COM_ISP_GET_DRE_PARAM,
     COM_ISP_SET_AUTO_HDR,
     COM_ISP_SET_SPRD_APP_MODE,
     COM_ISP_SET_AI_SCENE_START,
@@ -1137,6 +1140,9 @@ struct common_isp_cmd_param {
         struct isp_ynrs_info ynr_param;
 #endif
         struct isp_sw3dnr_info threednr_param;
+#ifdef CONFIG_CAMERA_DRE
+        struct isp_dre_level dre_param;
+#endif
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -1211,7 +1217,8 @@ enum ipm_class_type {
     IPM_TYPE_4IN1 = 0x00000101,
     IPM_TYPE_AI_SCENE = 0x00000200,
     IPM_TYPE_ULTRA_WIDE = 0x00000300,
-    IPM_TYPE_AUTO_TRACKING = 0x00000400
+    IPM_TYPE_AUTO_TRACKING = 0x00000400,
+    IPM_TYPE_DRE = 0x00000500,
 };
 
 enum img_fmt {
