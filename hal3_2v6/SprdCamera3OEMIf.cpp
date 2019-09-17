@@ -335,7 +335,7 @@ static void writeCamInitTimeToApct(char *buf) {
 
     if (apct_fd >= 0) {
         char buf[100] = {0};
-        sprintf(buf,"\n");
+        sprintf(buf, "\n");
         write(apct_fd, buf, strlen(buf));
         fchmod(apct_fd, 0666);
         close(apct_fd);
@@ -6083,6 +6083,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
+        if (sprddefInfo.sprd_appmode_id == CAMERA_MODE_PANORAMA) {
+            drvSceneMode = CAMERA_SCENE_MODE_PANORAMA;
+        }
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
     } break;
 
@@ -9393,12 +9396,12 @@ int SprdCamera3OEMIf::pushRawFrame(struct camera_frame_type *frame) {
     struct rawBufferQueue node;
 
     frame->buf_id = getRawBufferIDForFd(frame->fd);
-    if(frame->buf_id != 0xFFFFFFFF){
+    if (frame->buf_id != 0xFFFFFFFF) {
         memset(&node, 0, sizeof(struct rawBufferQueue));
         node.frame = *frame;
         node.heap_array = mZslHeapArray[frame->buf_id];
         pushRawQueue(&node);
-    }else {
+    } else {
         HAL_LOGE("mZslHeapArray id not found.");
     }
 
