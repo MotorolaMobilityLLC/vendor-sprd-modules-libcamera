@@ -4553,8 +4553,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			pm_input.img_w[0] >>= 1;
 			pm_input.img_h[0] >>= 1;
 		}
-		if (cxt->noramosaic_4in1)
+		if (cxt->noramosaic_4in1){
 			pm_input.noramosaic_4in1 = 1;
+			pm_input.define[0] = 1;
+			pm_input.img_w[0] >>= 1;
+			pm_input.img_h[0] >>= 1;
+		}
 		if (cxt->zsl_flag)  {
 			pm_input.pm_sets_num++;
 			pm_input.mode[1] = WORKMODE_CAPTURE;
