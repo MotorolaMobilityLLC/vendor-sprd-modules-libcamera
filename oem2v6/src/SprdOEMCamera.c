@@ -1152,6 +1152,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         }
         break;
     }
+    case CAMERA_TOCTRL_GET_BOKEH_SN_TRIM: {
+        ret = cmr_get_bokeh_sn_trim(handle, (struct sprd_img_path_rect *)param);
+        break;
+    }
     default:
         break;
     }

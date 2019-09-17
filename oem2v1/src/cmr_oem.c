@@ -4052,7 +4052,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     } else if (cxt->is_multi_mode == MODE_BLUR && atoi(value) == 3) {
         isp_param.multi_mode = ISP_BLUR_REAR;
     } else if (cxt->is_multi_mode == MODE_BLUR &&
-                  (atoi(fr_portrait) == 1 || atoi(ba_portrait) == 1)) {
+               (atoi(fr_portrait) == 1 || atoi(ba_portrait) == 1)) {
         isp_param.multi_mode = ISP_BLUR_PORTRAIT;
     } else if (cxt->is_multi_mode == MODE_SOFY_OPTICAL_ZOOM) {
         isp_param.multi_mode = ISP_WIDETELE;
@@ -4502,7 +4502,8 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
         }
     }
 
-    if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited && 1 != cxt->snp_cxt.is_sw_3dnr) {
+    if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited &&
+        1 != cxt->snp_cxt.is_sw_3dnr) {
         ret = camera_open_cnr(cxt, NULL, NULL);
         if (ret) {
             CMR_LOGE("failed to open cnr %ld", ret);
@@ -7058,9 +7059,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 #endif
     param_ptr->cap_inf_cfg.sensor_id = camera_id;
     param_ptr->cap_inf_cfg.cfg.need_3dnr =
-	 (THREEDNR_HW == camera_get_3dnr_flag(cxt))
-            ? 1
-            : 0;
+        (THREEDNR_HW == camera_get_3dnr_flag(cxt)) ? 1 : 0;
     if (1 == sn_cxt->cur_sns_ex_info.embedded_line_enable) {
         SENSOR_VAL_T val;
         struct sensor_embedded_info ebd_info;
@@ -7824,16 +7823,17 @@ cmr_int camera_sensor_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_SN_GET_4IN1_FORMAT_CONVERT:
         bzero(&img_addr, sizeof(struct frame_4in1_info));
 #if 1
-	struct tuning_param_info tuning_info;
-	bzero(&tuning_info, sizeof(struct tuning_param_info));
-	camera_local_get_tuning_param(oem_handle, &tuning_info);
+        struct tuning_param_info tuning_info;
+        bzero(&tuning_info, sizeof(struct tuning_param_info));
+        camera_local_get_tuning_param(oem_handle, &tuning_info);
 
-	img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
-	img_addr.awb_gain.b_gain= tuning_info.awb_info.b_gain;
-	img_addr.awb_gain.g_gain= tuning_info.awb_info.g_gain;
+        img_addr.awb_gain.r_gain = tuning_info.awb_info.r_gain;
+        img_addr.awb_gain.b_gain = tuning_info.awb_info.b_gain;
+        img_addr.awb_gain.g_gain = tuning_info.awb_info.g_gain;
 #endif
-//        img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
-//        camera_local_get_tuning_param(oem_handle, img_addr.tuning_info);
+        //        img_addr.awb_gain.r_gain= tuning_info.awb_info.r_gain;
+        //        camera_local_get_tuning_param(oem_handle,
+        //        img_addr.tuning_info);
         img_addr.im_addr_in = param_ptr->postproc_info.src.addr_vir.addr_y;
         img_addr.im_addr_out = param_ptr->postproc_info.dst.addr_vir.addr_y;
         cmd = SENSOR_ACCESS_VAL;
@@ -8415,7 +8415,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_MAX;
 #endif
         break;
-        case COM_ISP_GET_YNRS_PARAM:
+    case COM_ISP_GET_YNRS_PARAM:
 #ifdef CONFIG_CAMERA_CNR
         isp_cmd = ISP_CTRL_GET_YNRS_PARAM;
         ptr_flag = 1;
@@ -12282,7 +12282,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     frm_data->vaddr = 0;
     frm_data->uaddr_vir = yaddr_vir + buffer_size;
     frm_data->vaddr_vir = 0;
-    bzero(&snp_param,sizeof(struct snapshot_param));
+    bzero(&snp_param, sizeof(struct snapshot_param));
     ret = camera_get_snapshot_param(oem_handle, &snp_param);
 
     // check snp size
@@ -12686,6 +12686,24 @@ cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
     cxt->prev_cxt.snp_fd_enable = is_enable;
 
     CMR_LOGI("X");
+
+    return ret;
+}
+
+cmr_int cmr_get_bokeh_sn_trim(cmr_handle handle,
+                              struct sprd_img_path_rect *trim_param) {
+    struct camera_context *cxt = (struct camera_context *)handle;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+#ifndef CONFIG_CAMERA_FACE_ROI
+    ret = cmr_grab_get_dcam_path_trim(cxt->grab_cxt.grab_handle, trim_param);
+#else
+    cmr_u32 sn_mode = 0;
+    cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
+    struct sensor_mode_info *sensor_mode_info = NULL;
+    sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
+    trim_param->trim_valid_rect.w = sensor_mode_info->trim_width;
+    trim_param->trim_valid_rect.h = sensor_mode_info->trim_height;
+#endif
 
     return ret;
 }

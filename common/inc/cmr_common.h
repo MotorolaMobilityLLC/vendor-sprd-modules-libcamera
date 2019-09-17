@@ -652,7 +652,7 @@ struct mipi_if {
     cmr_u8 lane_num;
     cmr_u32 pclk;
     cmr_u8 lane_switch_eb;
-    cmr_u64 lane_seq;/*default 0x0123*/
+    cmr_u64 lane_seq; /*default 0x0123*/
 };
 
 struct cmr_op_mean {
@@ -774,8 +774,8 @@ struct auto_tracking_info {
     cmr_s32 objectY;
     cmr_s32 objectSize_X; // Object Size Width
     cmr_s32 objectSize_Y; // Object Size Height
-    cmr_s32 objectAxis1; // Object Axis Width
-    cmr_s32 objectAxis2; // Object Axis Height
+    cmr_s32 objectAxis1;  // Object Axis Width
+    cmr_s32 objectAxis2;  // Object Axis Height
     cmr_s32 objectTDiff;
     cmr_s32 status;
     cmr_s32 frame_id;
@@ -1007,7 +1007,7 @@ struct sensor_interface {
     cmr_u32 is_loose;
     cmr_u8 lane_switch_eb;
     cmr_u8 is_cphy;
-    cmr_u64 lane_seq;/*default 0x0123*/
+    cmr_u64 lane_seq; /*default 0x0123*/
 };
 struct sensor_mode_info {
     cmr_u16 mode;
@@ -1454,11 +1454,7 @@ enum sprd_camera_app_mode {
 /*
  * dont edit the enum alone, camera hal have the same enum
  */
-enum top_app_id {
-    TOP_APP_NONE,
-    TOP_APP_WECHAT,
-    TOP_APP_MAX
-};
+enum top_app_id { TOP_APP_NONE, TOP_APP_WECHAT, TOP_APP_MAX };
 
 enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_AUTO = 0,
@@ -1962,6 +1958,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_VCM_DISC,
     CAMERA_IOCTRL_ULTRA_WIDE_MODE,
     CAMERA_IOCTRL_GET_REBOKE_DATA,
+    CAMERA_TOCTRL_GET_BOKEH_SN_TRIM,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

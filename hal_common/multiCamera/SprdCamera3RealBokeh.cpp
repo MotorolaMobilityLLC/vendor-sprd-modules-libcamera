@@ -2858,11 +2858,22 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
         int bottom = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[3];
         mAfstate = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[4];
         int x = left, y = top;
+        if (sn_trim_flag) {
+            struct sprd_img_path_rect sn_trim;
+            bzero(&sn_trim, sizeof(struct sprd_img_path_rect));
+            hwiMain->camera_ioctrl(CAMERA_TOCTRL_GET_BOKEH_SN_TRIM, &sn_trim,
+                                   NULL);
+
+            trim_W = sn_trim.trim_valid_rect.w;
+            trim_H = sn_trim.trim_valid_rect.h;
+            sn_trim_flag = false;
+        }
+
         if (left != 0 && top != 0 && right != 0 && bottom != 0) {
             x = left + (right - left) / 2;
             y = top + (bottom - top) / 2;
-            x = x * mBokehSize.preview_w / origW;
-            y = y * mBokehSize.preview_h / origH;
+            x = x * mBokehSize.preview_w / trim_W;
+            y = y * mBokehSize.preview_h / trim_H;
             if (x != mbokehParm.sel_x || y != mbokehParm.sel_y) {
                 mbokehParm.sel_x = x;
                 mbokehParm.sel_y = y;
@@ -3106,6 +3117,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mLastOnlieVcm = 0;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
+    sn_trim_flag = true;
     struct af_relbokeh_oem_data af_relbokeh_info;
     char prop[PROPERTY_VALUE_MAX] = {
         0,

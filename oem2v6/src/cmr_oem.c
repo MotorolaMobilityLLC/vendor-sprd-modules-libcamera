@@ -879,12 +879,12 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata) {
         goto exit;
     }
 
-    if (cxt->is_multi_mode > 0){
+    if (cxt->is_multi_mode > 0) {
         ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,
                                          cxt->camera_id, cxt->is_multi_mode);
         CMR_LOGV("cmr_sensor_set_bypass_mode %d", ret);
-	}
-	ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+    }
+    ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                  on_off);
     if (ret) {
         CMR_LOGE("err to set stream %ld", ret);
@@ -10095,12 +10095,12 @@ cmr_int camera_get_sensor_mode_trim(cmr_handle oem_handle,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    if (sensor_info->mode_info[sensor_mode].trim_width > PICTURE_W){
+    if (sensor_info->mode_info[sensor_mode].trim_width > PICTURE_W) {
         sn_trim->start_x = sensor_info->mode_info[sensor_mode].trim_start_x;
         sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
         sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width >> 1;
         sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height >> 1;
-    }else{
+    } else {
         sn_trim->start_x = sensor_info->mode_info[sensor_mode].trim_start_x;
         sn_trim->start_y = sensor_info->mode_info[sensor_mode].trim_start_y;
         sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
@@ -12547,4 +12547,22 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     fclose(fp);
 
     return 0;
+}
+
+cmr_int cmr_get_bokeh_sn_trim(cmr_handle handle,
+                              struct sprd_img_path_rect *trim_param) {
+    struct camera_context *cxt = (struct camera_context *)handle;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+#ifndef CONFIG_CAMERA_FACE_ROI
+    ret = cmr_grab_get_dcam_path_trim(cxt->grab_cxt.grab_handle, trim_param);
+#else
+    cmr_u32 sn_mode = 0;
+    cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
+    struct sensor_mode_info *sensor_mode_info = NULL;
+    sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
+    trim_param->trim_valid_rect.w = sensor_mode_info->trim_width;
+    trim_param->trim_valid_rect.h = sensor_mode_info->trim_height;
+#endif
+
+    return ret;
 }
