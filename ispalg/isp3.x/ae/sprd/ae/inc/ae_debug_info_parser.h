@@ -17,12 +17,7 @@
 #define _AE_DEBUG_INFO_PARSER_H_
 
 #include "cmr_types.h"
-#ifdef CONFIG_LIBAE2_X
-#include "ae_common.h"
-#else
 #include "ae_data_types.h"
-#endif
-#include "ae_tuning_type.h"
 
 #ifdef __cplusplus
 extern "C" {

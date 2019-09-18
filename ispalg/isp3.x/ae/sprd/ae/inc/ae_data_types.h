@@ -198,10 +198,13 @@ struct ae_weight_value {
 	cmr_s16 weight[2];
 };
 
+#ifndef _AE_SAMPLE_DEF_
+#define _AE_SAMPLE_DEF_
 struct ae_sample {
 	cmr_s16 x;
 	cmr_s16 y;
 };
+#endif
 
 struct ae_piecewise_func {
 	cmr_s32 num;
