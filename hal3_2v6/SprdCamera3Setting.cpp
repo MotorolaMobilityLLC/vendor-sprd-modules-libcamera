@@ -1475,9 +1475,7 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     /*android.lens.focusDistance,The value set will be clamped to
     [0.0f, android.lens.info.minimumFocusDistance]*/
     if (mSensorFocusEnable[cameraId]) {
-        s_setting[cameraId].lens_InfoInfo.mini_focus_distance =
-            cameraId ? 0.0f : 1023.0f;
-
+        s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 1023.0f;
     } else {
         s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 0.0f;
     }
@@ -2441,7 +2439,7 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
         &(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported), 1);
-    if (cameraId == 0 || cameraId == 1 || cameraId == 2 || cameraId == 3 ) {
+    if (cameraId == 0 || cameraId == 1 || cameraId == 2 || cameraId == 3) {
         staticInfo.update(
             ANDROID_SPRD_AVAILABLE_ISO,
             s_setting[cameraId].sprddefInfo.availabe_iso,

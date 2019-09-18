@@ -1301,10 +1301,6 @@ status_t SprdCamera3OEMIf::autoFocus() {
     char prop[PROPERTY_VALUE_MAX];
     property_get("ro.vendor.camera.dualcamera_cali_time", prop, "0");
 
-    if (mCameraId == 3) {
-        return NO_ERROR;
-    }
-
     if (mSysPerformace) {
         mGetLastPowerHint = mSysPerformace->mCurrentPowerHintScene;
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
@@ -1391,9 +1387,6 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
     }
 
     Mutex::Autolock l(&mLock);
-
-    if (mCameraId == 3)
-        return NO_ERROR;
 
     ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
 
