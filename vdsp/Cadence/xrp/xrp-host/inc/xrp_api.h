@@ -103,6 +103,7 @@ typedef struct
 {
 	int x, y, width, height;
 	int yawAngle, pitchAngle;
+	int ret;
 	unsigned long facepoint_addr;
 }FACEID_INFO;
 #define XRP_NAMESPACE_ID_SIZE	32
@@ -597,9 +598,12 @@ void xrp_run_command_directly(struct xrp_device *device, const char *nsid , unsi
                                 void *out_data, int out_data_fd , size_t out_data_size,
                                 struct xrp_buffer_group *buffer_group,
                                 enum xrp_status *status);
-enum xrp_status xrp_run_faceid_command(struct xrp_device *device,
-												unsigned long in_data, unsigned int in_height,unsigned int in_width,unsigned int in_liveness,
-												unsigned int *out_result,int out_fd);
+
+void xrp_run_faceid_command_directly(struct xrp_device *device,
+								unsigned long in_data, unsigned int in_height,unsigned int in_width,unsigned int in_liveness,int out_fd,
+                                enum xrp_status *status);
+
+
 #endif
 
 #ifdef __cplusplus

@@ -1165,7 +1165,7 @@ static void f13(devid)
 	void *ionviraddr2 = NULL;
 	unsigned long inphyaddr;
 	FACEID_INFO *face_info;
-	unsigned int out_result;
+	unsigned int out_result = 0;
 	//void *ioninputhandle = NULL;
 	struct sprd_vdsp_inout buffer[1];
 	//struct sprd_vdsp_inout input;
@@ -1225,16 +1225,16 @@ static void f13(devid)
 		devid = 1;
 	for(int i = 0;i<devid;i++)
 	{
-		if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_run_faceid_command_directly(device, inphyaddr, 720,960,1,&out_result,fd_out))
-			fprintf(stderr , "xrp_run_faceid_command failed\n");
-		else
+		//if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_run_faceid_command_directly(device, inphyaddr, 720,960,1,&out_result,fd_out))
+		//	fprintf(stderr , "xrp_run_faceid_command failed\n");
+		//else
 		{
 			face_info = (FACEID_INFO *)ionviraddr2;
 			fprintf(stderr ,"vdsp result %d,out addr %lX\n",out_result,face_info->facepoint_addr);
 			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
 		}
 	}
-	
+
 	int64_t end_time = systemTime(CLOCK_MONOTONIC);
 	int duration = (int)((end_time - start_time)/1000000);
 	printf("run %d times take %d ms\n",devid,duration/devid);
@@ -1245,6 +1245,107 @@ static void f13(devid)
 	sprd_free_ionmem(ionhandle);
 	sprd_free_ionmem(ionhandle2);
 }
+
+static void f14(devid)
+{
+	void *device = NULL;
+	void *ionhandle = NULL;//input image
+	void *ionhandle2 = NULL;//out buffer
+	void *ionviraddr = NULL;
+	void *ionviraddr2 = NULL;
+	unsigned long inphyaddr;
+	FACEID_INFO *face_info;
+	unsigned int out_result = 0;
+	//void *ioninputhandle = NULL;
+	struct sprd_vdsp_inout output;
+	struct sprd_vdsp_inout input;
+	int w = 960, h = 720,liveness = 1;
+	uint32_t buffersize = (w*h*3/2) + 12;//add width height liveness
+	int32_t fd,fd_out;
+	int ret = 0;
+	char filename[128];
+	FILE *fp = NULL;
+
+
+	fprintf(stderr , "yzl add %s , file buffer size:%d\n" , __func__ , buffersize);
+	device = sprd_vdsp_open_device(0 , SPRD_VDSP_WORK_FACEID);
+	if(device == NULL)
+	{
+	        fprintf(stderr , "yzl add %s , sprd_vdsp_open_device NULL device\n" , __func__);
+	        return;
+	}
+
+	ionhandle = sprd_alloc_ionmem2(buffersize, 0 , &fd , &ionviraddr, &inphyaddr);
+	if(ionhandle == NULL)
+	{
+			fprintf(stderr , "yzl add %s , sprd_alloc_ionmem NULL\n" , __func__);
+			sprd_vdsp_release_device(device);
+			return;
+	}
+	input.fd = fd;
+	input.vir_addr = ionviraddr;
+	input.phy_addr = inphyaddr;
+	input.size = buffersize;
+
+	sprintf(filename , "/vendor/bin/test.yuv" );
+    fp = fopen(filename , "rb");
+    if(fp) {
+
+            ret = fread(input.vir_addr , 1, w*h*3/2 , fp);
+            fprintf(stderr , "yzl add %s , test.yuv , size:%d\n" , __func__ , ret);
+            fclose(fp);
+    }
+    else {
+            fprintf(stderr , "yzl add %s , fopen test.yuv failed\n" , __func__);
+    }
+
+	memcpy(input.vir_addr + w*h*3/2,&w,sizeof(int));
+	memcpy(input.vir_addr + w*h*3/2 + 4,&h,sizeof(int));
+	memcpy(input.vir_addr + w*h*3/2 + 8,&liveness,sizeof(int));
+
+
+	ionhandle2 = sprd_alloc_ionmem(sizeof(FACEID_INFO), 0 , &fd_out , &ionviraddr2);
+	if(ionhandle2 == NULL)
+	{
+			fprintf(stderr , "yzl add %s , sprd_alloc_ionmem NULL\n" , __func__);
+			sprd_vdsp_release_device(device);
+			sprd_free_ionmem(ionhandle2);
+			return;
+	}
+
+	printf("out_fd %d\n",fd_out);
+	output.fd = fd_out;
+	output.vir_addr = ionviraddr2;
+	output.phy_addr = 0;
+	output.size = sizeof(FACEID_INFO);
+
+	int64_t start_time = systemTime(CLOCK_MONOTONIC);
+	if (devid == 0)
+		devid = 1;
+	for(int i = 0;i<devid;i++)
+	{
+		if (SPRD_XRP_STATUS_SUCCESS != sprd_vdsp_send_command_directly(device , FACEID_NSID , &input , &output , NULL , 1 , 1))
+			fprintf(stderr , "xrp_run_faceid_command failed\n");
+		else
+		{
+			face_info = (FACEID_INFO *)ionviraddr2;
+			fprintf(stderr ,"vdsp result %d,out addr %lX\n",out_result,face_info->facepoint_addr);
+			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
+		}
+	}
+
+	int64_t end_time = systemTime(CLOCK_MONOTONIC);
+	int duration = (int)((end_time - start_time)/1000000);
+	printf("run %d times take %d ms\n",devid,duration/devid);
+	//fprintf(stderr , "wait\n");
+	//sleep(30);
+
+	sprd_vdsp_release_device(device);
+	sprd_free_ionmem(ionhandle);
+	sprd_free_ionmem(ionhandle2);
+
+}
+
 int main(int argc, char **argv)
 {
 	int devid = 0;
@@ -1328,7 +1429,7 @@ int main(int argc, char **argv)
 				f11();
 			}
 			if(tests & 0x800) {
-				f13(devid);
+				f14(devid);
 			}
 			if(tests & 0x2000) {
 				f13(devid);

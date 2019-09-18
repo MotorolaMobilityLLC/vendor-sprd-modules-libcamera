@@ -104,6 +104,106 @@ void* thread2(__unused void* test)
 	}
 	return NULL;
 }
+typedef struct
+{
+	int x, y, width, height;
+	int yawAngle, pitchAngle;
+	int ret;
+	unsigned int facepoint_addr;
+}FACEID_INFO;
+
+void* thread_faceid(__unused void* test)
+{
+	struct sprd_vdsp_client_inout in,out;
+	uint32_t w = 960,h = 720, liveness = 1,devid = 10;
+	struct vdsp_handle handle;
+	int ret;
+	FILE *fp;
+	char filename[256];
+	void *inputhandle;
+	void *outputhandle;
+	void *inviraddr;
+	unsigned long inphyaddr;
+	void *outviraddr;
+	FACEID_INFO *face_info;
+	uint32_t *p_load;
+	int64_t start_time,end_time,duration;
+
+	in.size = w*h*3/2 + 12;
+	out.size = sizeof(FACEID_INFO);
+	
+	inputhandle = sprd_alloc_ionmem2(in.size , 0 , &in.fd , &inviraddr, &inphyaddr);
+	outputhandle = sprd_alloc_ionmem(out.size , 0 , &out.fd , &outviraddr);
+
+	in.viraddr = inviraddr;
+	out.viraddr = outviraddr;
+	in.phy_addr = inphyaddr;
+	out.phy_addr = 0;
+
+
+	if(outputhandle != NULL)
+	{
+		memset(outviraddr , 0x00 , out.size);
+	}
+	sprintf(filename , "/vendor/bin/test.yuv" );
+    fp = fopen(filename , "rb");
+    if(fp) {
+            ret = fread(in.viraddr , 1, in.size , fp);
+            fprintf(stderr , "yzl add %s , fread size:%d\n" , __func__ , ret);
+            fclose(fp);
+    }
+    else
+    {
+            fprintf(stderr , "fopen test.yuv failed\n");
+    }
+
+	p_load = (uint32_t *)(in.viraddr);
+
+	p_load[in.size / 4 - 3] = w;
+	p_load[in.size / 4 - 2] = h;
+	p_load[in.size / 4 - 1] = liveness;
+
+
+	start_time = systemTime(CLOCK_MONOTONIC);
+
+	ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_FACEID , &handle);
+	end_time = systemTime(CLOCK_MONOTONIC);
+	duration = (int)((end_time - start_time)/1000000);
+	printf("open take %ld ms\n",duration);
+
+	if(SPRD_VDSP_RESULT_SUCCESS != ret)
+	{
+		printf("----------open device fail-------------\n");
+		sprd_free_ionmem(inputhandle);
+		sprd_free_ionmem(outputhandle);
+		return NULL;
+	}
+	start_time = systemTime(CLOCK_MONOTONIC);
+
+	for(int i = 0;i<devid;i++)
+	{
+		ret = sprd_cavdsp_send_cmd(&handle , "faceid_fw" , &in , &out , NULL , 0 , 1);
+		if (SPRD_XRP_STATUS_SUCCESS != ret)
+			fprintf(stderr , "xrp_run_faceid_command failed\n");
+		else
+		{
+			face_info = (FACEID_INFO *)outviraddr;
+			fprintf(stderr ,"vdsp result %d,out addr %X\n",face_info->ret,face_info->facepoint_addr);
+			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
+		}
+
+	}
+	end_time = systemTime(CLOCK_MONOTONIC);
+	duration = (int)((end_time - start_time)/1000000);
+	printf("run %d times take %ld ms\n",devid,duration/devid);
+	sprd_cavdsp_close_device(&handle);
+
+
+	sprd_free_ionmem(inputhandle);
+	sprd_free_ionmem(outputhandle);
+	return NULL;
+}
+
 int main() {
 #if 0
 		sp<IVdspService> cs = NULL;

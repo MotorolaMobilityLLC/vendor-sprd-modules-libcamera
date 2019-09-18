@@ -135,17 +135,10 @@ static enum xrp_access_flags translate_access_flag(enum sprd_vdsp_bufflag inflag
 	case SPRD_VDSP_XRP_READ_WRITE:
 		return XRP_READ_WRITE;
 	default:
-		return XRP_READ;	
+		return XRP_READ;
 	}
 }
-__attribute__ ((visibility("default"))) int sprd_vdsp_run_faceid_command_directly(void *device,unsigned long in_data, unsigned int in_height,
-								unsigned int in_width,unsigned int in_liveness,unsigned int *out_result,int out_fd)
-{
-	if (XRP_STATUS_SUCCESS != xrp_run_faceid_command(device,in_data, in_height, in_width, in_liveness,out_result, out_fd))
-		return SPRD_XRP_STATUS_FAILURE;
 
-	return SPRD_XRP_STATUS_SUCCESS;
-}
 __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void *device , const char *nsid ,
                                                                         struct sprd_vdsp_inout *input, struct sprd_vdsp_inout *output,
                                                                         struct sprd_vdsp_inout *buffer ,  uint32_t buf_num,
@@ -161,82 +154,115 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 	int32_t outputfd = -1;;
 	uint32_t inputsize = 0;
 	uint32_t outputsize = 0;
+	uint32_t w = 0,h = 0,liveness = 0;
+	uint32_t *p_load;
 	char ns_id[XRP_NAMESPACE_ID_SIZE];
-        enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
+    enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
 	memset(ns_id , 0 , XRP_NAMESPACE_ID_SIZE);
 	strncpy(ns_id , nsid , strlen(nsid));
-	if(input != NULL)
-        {
-                input_vir = input->vir_addr;
-                inputfd = input->fd;
-                inputsize = (uint32_t)input->size;
-        }
-        if(output != NULL)
-        {
-                output_vir = output->vir_addr;
-                outputfd = output->fd;
-                outputsize = (uint32_t) output->size;
-        }
-        buf = calloc(buf_num , sizeof(struct xrp_buffer *));
-        if(buf == NULL)
-        {
-                ret = SPRD_XRP_STATUS_FAILURE;
-		__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , buf is NULL, error\n" , __func__ , __LINE__);
-                return ret;
-        }
-        group = xrp_create_buffer_group(&status);
-        if(XRP_STATUS_SUCCESS != status)
-        {
-                free(buf);
-		__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , xrp_create_buffer_group , error\n" , __func__ , __LINE__);
-                return SPRD_XRP_STATUS_FAILURE;
-        }
-        status = -1;
-	for(i = 0; i < buf_num; i++)
-        {
-                buf[i] = xrp_create_buffer(device, buffer[i].size , buffer[i].vir_addr, buffer[i].fd , &status);
-                if(XRP_STATUS_SUCCESS != status)
-                {
-                        xrp_release_buffer_group(group);
-                        for(unsigned int j = 0; j < i; j++)
-                        {
-                                xrp_release_buffer(buf[j]);
-                        }
-                        free(buf);
-			__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , xrp_create_buffer i:%d, error\n" , __func__ , __LINE__ , i);
-                        return SPRD_XRP_STATUS_FAILURE;
-                }
-                status = -1;
-                xrp_add_buffer_to_group(group, buf[i], translate_access_flag(buffer[i].flag), &status);
-                if(XRP_STATUS_SUCCESS != status)
-                {
-                        xrp_release_buffer_group(group);
-                        for(unsigned int j = 0; j < i; j++)
-                        {
-                                xrp_release_buffer(buf[j]);
-                        }
-                        free(buf);
-			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s line:%d , xrp_add_buffer_to_group i:%d, error\n" , __func__ , __LINE__ , i);
-                        return SPRD_XRP_STATUS_FAILURE;
-                }
-                status = -1;
-        }
 
-	/*ioctl */
-	xrp_run_command_directly(device,ns_id , priority, input_vir , inputfd ,inputsize,output_vir , outputfd , outputsize, group, &status);
-        if(XRP_STATUS_SUCCESS != status)
-        {
-		__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s xrp_run_command_directly status:%d\n" , __func__ , status);
-                ret = SPRD_XRP_STATUS_FAILURE;
-        }
-        xrp_release_buffer_group(group);
-	for(i = 0; i < buf_num; i++)
-        {
-                xrp_release_buffer(buf[i]);
-        }
-        free(buf);
+	if(input != NULL)
+	{
+		input_vir = input->vir_addr;
+		inputfd = input->fd;
+		inputsize = (uint32_t)input->size;
+	}
+
+	if(output != NULL)
+	{
+		output_vir = output->vir_addr;
+		outputfd = output->fd;
+		outputsize = (uint32_t) output->size;
+	}
+
+	if(0 == strncmp(ns_id,FACEID_NSID,9))
+	{
+		if(NULL != input_vir)
+		{
+			p_load = (uint32_t *)(input_vir);
+
+			w = p_load[inputsize / 4 - 3];
+			h = p_load[inputsize / 4 - 2];
+			liveness = p_load[inputsize / 4 - 1];
+			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "phy_addr %X, w %d h %d liveness %d\n" , input->phy_addr , w, h,liveness);
+			xrp_run_faceid_command_directly(device,input->phy_addr, h, w, liveness, outputfd, &status);
+			if(XRP_STATUS_SUCCESS != status)
+			{
+				__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s status:%d\n" , __func__ , status);
+				ret = SPRD_XRP_STATUS_FAILURE;
+			}
+		}
+		else
+		{
+			ret = SPRD_XRP_STATUS_FAILURE;
+		}
+	}
+	else
+	{
+		buf = calloc(buf_num , sizeof(struct xrp_buffer *));
+		if(buf == NULL)
+		{
+				ret = SPRD_XRP_STATUS_FAILURE;
+				__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , buf is NULL, error\n" , __func__ , __LINE__);
+				return ret;
+		}
+		group = xrp_create_buffer_group(&status);
+		if(XRP_STATUS_SUCCESS != status)
+		{
+				free(buf);
+				__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , xrp_create_buffer_group , error\n" , __func__ , __LINE__);
+				return SPRD_XRP_STATUS_FAILURE;
+		}
+		status = -1;
+		for(i = 0; i < buf_num; i++)
+		{
+				buf[i] = xrp_create_buffer(device, buffer[i].size , buffer[i].vir_addr, buffer[i].fd , &status);
+				if(XRP_STATUS_SUCCESS != status)
+				{
+						xrp_release_buffer_group(group);
+						for(unsigned int j = 0; j < i; j++)
+						{
+								xrp_release_buffer(buf[j]);
+						}
+						free(buf);
+						__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , xrp_create_buffer i:%d, error\n" , __func__ , __LINE__ , i);
+						return SPRD_XRP_STATUS_FAILURE;
+				}
+				status = -1;
+				xrp_add_buffer_to_group(group, buf[i], translate_access_flag(buffer[i].flag), &status);
+				if(XRP_STATUS_SUCCESS != status)
+				{
+						xrp_release_buffer_group(group);
+						for(unsigned int j = 0; j < i; j++)
+						{
+								xrp_release_buffer(buf[j]);
+						}
+						free(buf);
+						__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s line:%d , xrp_add_buffer_to_group i:%d, error\n" , __func__ , __LINE__ , i);
+						return SPRD_XRP_STATUS_FAILURE;
+				}
+				status = -1;
+		}
+
+		/*ioctl */
+
+		xrp_run_command_directly(device,ns_id , priority, input_vir , inputfd ,inputsize,output_vir , outputfd , outputsize, group, &status);
+
+		if(XRP_STATUS_SUCCESS != status)
+		{
+			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s xrp_run_command_directly status:%d\n" , __func__ , status);
+				ret = SPRD_XRP_STATUS_FAILURE;
+		}
+		xrp_release_buffer_group(group);
+		for(i = 0; i < buf_num; i++)
+		{
+				xrp_release_buffer(buf[i]);
+		}
+		free(buf);
+	}
+
 	__android_log_print(ANDROID_LOG_DEBUG,"vdsp_interface_interna" , "func:%s ret:%d\n" , __func__ , ret);
-        return ret;
+	return ret;
 }
 #endif
 __attribute__ ((visibility("default"))) int sprd_vdsp_load_library(void *device , struct sprd_vdsp_inout *buffer , const char *libname , enum sprd_xrp_queue_priority priority)

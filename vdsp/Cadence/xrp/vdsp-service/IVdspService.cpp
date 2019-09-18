@@ -87,6 +87,7 @@ public:
 		/*write input*/
 		if(input != NULL) {
 			data.writeFileDescriptor(input->fd);
+			data.writeUint32(input->phy_addr);
 			data.writeUint32(input->size);
 		}
 		/*write output exist flag*/
@@ -235,6 +236,7 @@ status_t BnVdspService::onTransact(
 		bufvalid = data.readInt32();
 		if(bufvalid) {
 			input.fd = data.readFileDescriptor();
+			input.phy_addr = data.readUint32();
 			input.size = data.readUint32();
 			pinput = &input;
 		}
