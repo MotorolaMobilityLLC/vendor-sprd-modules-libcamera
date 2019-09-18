@@ -6038,7 +6038,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
             in_param.hwsim_4in1_width =
                 cxt->sn_cxt.info_4in1.limited_4in1_width;
 #endif
-
+        usleep(10*1000);
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to start proc %ld", ret);

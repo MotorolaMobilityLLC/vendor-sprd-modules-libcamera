@@ -572,7 +572,8 @@ int SprdCamera3HWI::configureStreams(
 
     HAL_LOGD("E");
     Mutex::Autolock l(mLock);
-
+    char value[PROPERTY_VALUE_MAX];
+    char value2[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     size_t i;
     cam_dimension_t preview_size = {0, 0}, video_size = {0, 0};
@@ -777,17 +778,22 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.video.type = CAMERA_STREAM_TYPE_VIDEO;
                 mStreamConfiguration.video.stream = newStream;
             } else if (stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
-                callback_size.width = newStream->width;
-                callback_size.height = newStream->height;
-                callbackFormat = newStream->format;
-                callbackStreamType = CAMERA_STREAM_TYPE_CALLBACK;
-                mStreamConfiguration.yuvcallback.status = CONFIGURED;
-                mStreamConfiguration.yuvcallback.width = newStream->width;
-                mStreamConfiguration.yuvcallback.height = newStream->height;
-                mStreamConfiguration.yuvcallback.format = newStream->format;
-                mStreamConfiguration.yuvcallback.type =
-                    CAMERA_STREAM_TYPE_CALLBACK;
-                mStreamConfiguration.yuvcallback.stream = newStream;
+                property_get("persist.vendor.cam.isptool.mode.enable", value2, "false");
+                property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+                if (strcmp(value2, "true") && strcmp(value, "raw")) {
+                    callback_size.width = newStream->width;
+                    callback_size.height = newStream->height;
+                    callbackFormat = newStream->format;
+                    callbackStreamType = CAMERA_STREAM_TYPE_CALLBACK;
+                    mStreamConfiguration.yuvcallback.status = CONFIGURED;
+                    mStreamConfiguration.yuvcallback.width = newStream->width;
+                    mStreamConfiguration.yuvcallback.height = newStream->height;
+                    mStreamConfiguration.yuvcallback.format = newStream->format;
+                    mStreamConfiguration.yuvcallback.type =
+                        CAMERA_STREAM_TYPE_CALLBACK;
+                    mStreamConfiguration.yuvcallback.stream = newStream;}else {
+                    mStreamConfiguration.num_streams = streamList->num_streams - 1;
+                }
             } else if (stream_type == CAMERA_STREAM_TYPE_YUV2) {
                 yuv2_size.width = newStream->width;
                 yuv2_size.height = newStream->height;

@@ -695,7 +695,8 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
                 }
                 isp_video_set_capture_complete_flag();
             } else {
-                send_capture_data(
+                    usleep(500*1000);
+		    send_capture_data(
                     0x10, /* jpg */
                     cxt->req_param.post_proc_setting.actual_snp_size.width,
                     cxt->req_param.post_proc_setting.actual_snp_size.height,

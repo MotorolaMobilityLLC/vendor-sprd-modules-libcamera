@@ -4053,7 +4053,7 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
         if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1 &&
-            is_raw_capture == 0) {
+            is_raw_capture == 0 && is_isptool_mode == 0) {
             valueU8 = 1;
             GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
                              valueU8, ANDROID_SPRD_ZSL_ENABLED, 1)
