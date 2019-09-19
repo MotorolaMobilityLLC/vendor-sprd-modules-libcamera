@@ -1252,7 +1252,7 @@ static void lsc_gen_flash_y_gain(cmr_u16 * flash_y_gain, cmr_u32 gain_width, cmr
 		ratio_2 = (float)(sqrt((double)(ratio_4)));
 		x_2 = ratio_2 / (1.0 - ratio_2);
 
-		ISP_LOGI("flash_y_gain, percent=%d, shift_x=%d, shift_y=%d, center_x=%d, center_y=%d, length_2=%d, ratio_4=%f, ratio_2=%f, x_2=%f",
+		ISP_LOGD("flash_y_gain, percent=%d, shift_x=%d, shift_y=%d, center_x=%d, center_y=%d, length_2=%d, ratio_4=%f, ratio_2=%f, x_2=%f",
 			 percent, shift_x, shift_y, center_x, center_y, length_2, ratio_4, ratio_2, x_2);
 
 		for (j = 0; j < table_height; j++) {
@@ -2298,7 +2298,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 					cxt->lsc_pm0 = param->lsc_tab_address[0];
 					memcpy(cxt->last_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
 					memcpy(cxt->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
-
+					memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
 					// do lsc param preprocess without otp
 					if (cxt->is_planar == 1) {
 						for (i = 0; i < 8; i++) {
@@ -2365,6 +2365,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	if (cxt->frame_count == 0) {	//lunch camera with fullsize
 		memcpy(cxt->last_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
 		memcpy(cxt->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
+		memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
 		alg_in = 0;
 	} else {
 		alg_in = lsc_get_alg_in_flag(cxt, &IIR_weight);
@@ -2456,31 +2457,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		param->bv = cxt->bv_before_flash;
 		param->bv_gain = cxt->bv_gain_before_flash;
 	}
-	// cmd set lsc output
-	if (!cxt->cmd_alsc_bypass) {
-		if (cxt->cmd_alsc_table_pattern) {
-			lsc_cmd_set_output(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern);
-			if(cxt->is_planar == 1){
-				lsc_table_interlace2planar(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->output_gain_pattern);
-			}
-			ISP_LOGV("lsc_cmd_set_output, final output cxt->lsc_buffer[%d,%d,%d,%d]",
-				cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
-			return rtn;
-		}
-	}
-	// cmd set table index
-	if (!cxt->cmd_alsc_bypass) {
-		if (cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0) {
-			if (cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
-				memcpy(cxt->lsc_buffer, cxt->std_init_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
-			} else {
-				memcpy(cxt->lsc_buffer, cxt->std_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
-			}
-			ISP_LOGI("cmd set table index %d, final output cxt->lsc_buffer[%d,%d,%d,%d]", cxt->cmd_alsc_table_index,
-				 cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
-			return rtn;
-		}
-	}
+
 	// do post shading gain
 	if (!cxt->cmd_alsc_bypass) {
 		if (cxt->alg_count <= cxt->alg_quick_in_frame + 1 && cxt->frame_count < cxt->calc_freq * 3 + 1 && cxt->can_update_dest == 1 && param->bv * cxt->fw_start_bv > 0) {
@@ -2511,19 +2488,41 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	} else {
 		ISP_LOGV("cmd_alsc_bypass = 1");
 	}
-
-	ISP_LOGV("final output [%d,%d,%d,%d]", cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
 	// alsc_calc --
-
-	if (cxt->cmd_alsc_dump_table) {
-		lsc_dump_gain(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->is_planar, cxt->frame_count);
-	}
 
 	cxt->flash_done_frame_count++;
 	cxt->frame_count++;
 	cxt->alsc_update_flag = 1;
 	if (!cxt->can_update_dest)
 		cxt->alsc_update_flag = 0;
+
+	// cmd set lsc output
+	if (cxt->cmd_alsc_table_pattern) {
+		lsc_cmd_set_output(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern);
+		if(cxt->is_planar == 1){
+			lsc_table_interlace2planar(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->output_gain_pattern);
+		}
+		ISP_LOGD("lsc_cmd_set_output, final output cxt->lsc_buffer[%d,%d,%d,%d]",
+			cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
+		return rtn;
+	}
+	// cmd set table index
+	if (cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0) {
+		if (cxt->LSC_SPD_VERSION <= 5) {
+			memcpy(cxt->lsc_buffer, cxt->std_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
+		} else {
+			memcpy(cxt->lsc_buffer, cxt->std_init_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
+		}
+		ISP_LOGD("cmd set table index %d, final output cxt->lsc_buffer[%d,%d,%d,%d]", cxt->cmd_alsc_table_index,
+			 cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
+		return rtn;
+	}
+
+	ISP_LOGV("final output [%d,%d,%d,%d]", cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
+
+	if (cxt->cmd_alsc_dump_table) {
+		lsc_dump_gain(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->is_planar, cxt->frame_count);
+	}
 
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
@@ -2575,26 +2574,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		ISP_LOGV("FW_START, old tab0 address = %p, (%d,%d), grid %d", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
 		ISP_LOGV("FW_START, new tab0 address = %p, (%d,%d), grid %d", fwstart_info->lsc_tab_address_new[0],
 			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new);
-
-		if (!cxt->cmd_alsc_bypass) {
-			if (cxt->cmd_alsc_table_pattern) {
-				lsc_cmd_set_output(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new, cxt->output_gain_pattern);
-				ISP_LOGI("FW_START, lsc_cmd_set_output, [%d,%d,%d,%d]", fwstart_info->lsc_result_address_new[0],
-					 fwstart_info->lsc_result_address_new[1], fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3]);
-				return rtn;
-			}
-		}
-		// cmd set table index
-		//if(!cxt->cmd_alsc_bypass){
-		//if(cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0){
-		//memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[cxt->cmd_alsc_table_index],
-		//      fwstart_info->gain_width_new*fwstart_info->gain_height_new*4*sizeof(cmr_u16));
-		//ISP_LOGV("[ALSC]  cmd set table index %d, [%d,%d,%d,%d]", cxt->cmd_alsc_table_index,
-		//fwstart_info->lsc_result_address_new[0], fwstart_info->lsc_result_address_new[1],
-		//fwstart_info->lsc_result_address_new[2], fwstart_info->lsc_result_address_new[3]);
-		//return rtn;
-		//}
-		//}
 
 		// read last info
 		if (cxt->init_img_width == fwstart_info->img_width_new && cxt->init_img_height == fwstart_info->img_height_new)
