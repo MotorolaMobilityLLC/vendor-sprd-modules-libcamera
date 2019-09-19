@@ -63,7 +63,7 @@ struct isp_raw_image{
 };
 extern char raw_filename[200];
 extern cmr_u32 tool_fmt_pattern;
-extern cmr_u8 nr_tool_flag[19];
+extern cmr_u8 nr_tool_flag[20];
 extern struct denoise_param_update nr_update_param;
 
 cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32));
