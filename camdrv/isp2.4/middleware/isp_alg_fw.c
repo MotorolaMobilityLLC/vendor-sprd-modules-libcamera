@@ -1240,6 +1240,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	cmr_int nxt_flicker = 0;
 
 	memset(&gain, 0, sizeof(gain));
+	memset(&afl_info, 0, sizeof(afl_info));
 	if (cxt->ae_cxt.sw_bypass) {
 		return ret;
 	}
