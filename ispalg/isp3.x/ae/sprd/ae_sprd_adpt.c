@@ -1595,11 +1595,6 @@ static cmr_s32 ae_set_pause(struct ae_ctrl_cxt *cxt, int call)
 		ISP_LOGD("ae_base_idx:%d",cxt->exposure_compensation.ae_base_idx);
 	}
 	cxt->cur_status.adv_param.lock = AE_STATE_LOCKED;
-	if (0 == cxt->pause_cnt) {
-		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = 0;
-		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = 0;
-		cxt->cur_status.adv_param.mode_param.mode = 5;
-	}
 	cxt->pause_cnt++;
 	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, call=%d", cxt->pause_cnt, cxt->cur_status.adv_param.lock, call);
 	return ret;
@@ -1615,9 +1610,6 @@ static cmr_s32 ae_set_restore_cnt(struct ae_ctrl_cxt *cxt, int call)
 	if (2 > cxt->pause_cnt) {
 		cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 		cxt->pause_cnt = 0;
-		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
-		ISP_LOGV("table_idx:%d->0",cxt->cur_status.adv_param.mode_param.value.ae_idx);
-		cxt->cur_status.adv_param.mode_param.value.ae_idx = 0;
 	} else {
 		cxt->pause_cnt--;
 	}
