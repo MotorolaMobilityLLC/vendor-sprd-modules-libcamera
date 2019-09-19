@@ -550,11 +550,13 @@ const cam_stream_info_t stream_info[] = {
     {{176, 144}, 33331760L, 33331760L}};
 
 const cam_stream_info_t subSensor_stream_info[] = {
+    {{4608, 3456}, 33331760L, 33331760L},
     {{4160, 3120}, 33331760L, 33331760L}, {{4000, 3000}, 33331760L, 33331760L},
     {{3264, 2448}, 33331760L, 33331760L}, {{2592, 1944}, 33331760L, 33331760L},
     {{1920, 1080}, 33331760L, 33331760L}, {{1600, 1200}, 33331760L, 33331760L},
     {{1440, 1080}, 33331760L, 33331760L}, {{1280, 720}, 33331760L, 33331760L},
-    {{960, 720}, 33331760L, 33331760L},   {{640, 480}, 33331760L, 33331760L},
+    {{960, 720}, 33331760L, 33331760L}, {{800, 600}, 33331760L, 33331760L},
+    {{640, 480}, 33331760L, 33331760L},
     {{320, 240}, 33331760L, 33331760L}};
 
 const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.6, 2.8, 3.0};
@@ -1554,7 +1556,6 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     Vector<int64_t> available_min_durations;
     /*available stall durations*/
     Vector<int64_t> available_stall_durations;
-
     if (cameraId > 1) {
         p_stream_info = subSensor_stream_info;
         stream_sizes_tbl_cnt =
