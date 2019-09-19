@@ -527,11 +527,10 @@ void readDebugBin2(const char *f, struct FCData *d)
 {
 	FILE *fp;
 	fp = fopen(f, "rb");
-	if(fp)
-	    fread(d, 1, sizeof(struct FCData), fp);
-	else
-	    ISP_LOGD("readDebugBin2 fail");
-	fclose(fp);
+	if(fp){
+        fread(d, 1, sizeof(struct FCData), fp);
+        fclose(fp);
+	}
 }
 
 void readFCConfig(char *f, struct FCData *d, char *fout)

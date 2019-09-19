@@ -250,8 +250,8 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 				}
 			}
 			ISP_LOGV("AE@OTP master %d, slave %d", (int)ae_otp_master.gain_1x_exp, (int)ae_otp_slave.gain_1x_exp);
-			float iso_ratio;
-			if ( ae_otp_master.gain_1x_exp !=0 )
+			float iso_ratio = 1.0f;
+			if ( ae_otp_master.gain_1x_exp != 0 )
 			    iso_ratio = ((float)ae_otp_slave.gain_1x_exp) / ((float)ae_otp_master.gain_1x_exp);
 			if (ae_info[0].gain > 128 * 8) {
 				if ((ae_otp_master.gain_8x_exp != 0) && (ae_otp_slave.gain_8x_exp != 0)) {
@@ -321,7 +321,6 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
-
 	return ISP_SUCCESS;
 }
 
@@ -3815,9 +3814,9 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		}else if(!exp_time){
 			if(in_exposure > min_frame_line * cxt->cur_status.line_time){
 				gain = 128;
-				exp_line = (cmr_u32) (1.0 * in_exposure * in_gain/ (128 * cxt->cur_status.line_time) + 0.5);
+				exp_line = (cmr_u32) (1.0 * in_exposure * in_gain / (128 * cxt->cur_status.line_time) + 0.5);
 			}else
-				exp_time = min_frame_line * cxt->cur_status.line_time;
+				exp_time = (cmr_u32) (min_frame_line * cxt->cur_status.line_time);
 		}
 
 		if(!exp_line){
@@ -3827,7 +3826,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 			else
 				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
 			if(gain < 128){
-				ISP_LOGD("flicker1:clip gain (%d) to 128",gain);
+				ISP_LOGD("flicker1:clip gain (%d) to 128", gain);
 				gain = 128;
 			}
 		}
@@ -3989,12 +3988,17 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 	FILE *pf = NULL;
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
+	cmr_u32 readnum;
 	if (atoi(version) > 6) {
 		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
-			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			readnum = fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			if (readnum != num * sizeof(struct ae_exposure_param))
+			    ISP_LOGV("Failed to read ae_exposure_param \n");
+			readnum = fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			if (readnum != num * sizeof(struct ae_exposure_param_switch_m))
+			    ISP_LOGV("Failed to read ae_exposure_param_switch_m \n");
 			fclose(pf);
 			pf = NULL;
 
@@ -4006,8 +4010,12 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
-			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			readnum = fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			if (readnum != num * sizeof(struct ae_exposure_param))
+			    ISP_LOGV("Failed to read ae_exposure_param \n");
+			readnum = fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			if (readnum != num * sizeof(struct ae_exposure_param_switch_m))
+			    ISP_LOGV("Failed to read ae_exposure_param_switch_m \n");
 			fclose(pf);
 			pf = NULL;
 
@@ -6401,14 +6409,14 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 
 	rtn = ae_check_handle(handle);
 	if (AE_SUCCESS != rtn) {
-		return AE_ERROR;
+		return rtn;
 	}
 	cxt = (struct ae_ctrl_cxt *)handle;
 
 	rtn = flash_deinit(cxt->flash_alg_handle);
 	if (0 != rtn) {
 		ISP_LOGE("fail to deinit flash, rtn: %d\n", rtn);
-		rtn = AE_ERROR;
+		return rtn;
 	} else {
 		cxt->flash_alg_handle = NULL;
 	}
@@ -6418,8 +6426,10 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 		free(cxt->cur_status.base_img);
 	cxt->cur_status.base_img = NULL;
 
-	if (AE_SUCCESS != rtn) 
-		ISP_LOGE("fail to deinit ae misc ");
+	if (AE_SUCCESS != rtn) {
+        ISP_LOGE("fail to deinit ae misc ");
+        return rtn;
+	}
 	//ae_seq_reset(cxt->seq_handle);
 	rtn = s_q_close(cxt->seq_handle);
 

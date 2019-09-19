@@ -280,7 +280,7 @@ static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_
 			if (1 == cfg_ptr->led_idx) {
 				ct_rgb_cfg_ptr = &s_lcd_ct_rgb_cfg_0;
 				max_index = s_lcd_ct_rgb_cfg_0.num -1;
-			} else if (2 == cfg_ptr->led_idx) {
+			} else {
 				ct_rgb_cfg_ptr = &s_lcd_ct_rgb_cfg_1;
 				max_index = s_lcd_ct_rgb_cfg_1.num -1;
 			}
