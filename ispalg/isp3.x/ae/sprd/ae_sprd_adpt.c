@@ -1469,7 +1469,7 @@ static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
 				ae_set_force_pause(cxt, 0, 4);
 			}
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_line_bkup * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_line_bkup ;
 		}else if (0 == cxt->exposure_compensation.ae_compensation_flag) {//on
 			ae_set_force_pause(cxt, 0, 5);
 			cxt->manual_exp_time = 0;
