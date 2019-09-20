@@ -44,7 +44,6 @@ struct isp_block_operations s_cmc10_ops = { _pm_cmc10_init, _pm_cmc10_set_param,
 struct isp_block_operations s_edge_ops = { _pm_edge_init, _pm_edge_set_param, _pm_edge_get_param, PNULL, PNULL };
 struct isp_block_operations s_frgb_gamc_ops = { _pm_frgb_gamc_init, _pm_frgb_gamc_set_param, _pm_frgb_gamc_get_param, PNULL, PNULL };
 struct isp_block_operations s_grgb_ops = { _pm_grgb_init, _pm_grgb_set_param, _pm_grgb_get_param, PNULL, PNULL };
-struct isp_block_operations s_hsv_ops = { _pm_hsv_init, _pm_hsv_set_param, _pm_hsv_get_param, _pm_common_rest, _pm_hsv_deinit };
 struct isp_block_operations s_iircnr_iir_ops = { _pm_iircnr_iir_init, _pm_iircnr_iir_set_param, _pm_iircnr_iir_get_param, PNULL, PNULL };
 struct isp_block_operations s_iircnr_yrandom_ops = { _pm_iircnr_yrandom_init, _pm_iircnr_yrandom_set_param, _pm_iircnr_yrandom_get_param, PNULL, PNULL };
 struct isp_block_operations s_nlm_ops = { _pm_nlm_init, _pm_nlm_set_param, _pm_nlm_get_param, _pm_common_rest, _pm_nlm_deinit };
@@ -60,6 +59,7 @@ struct isp_block_operations s_yuv_noisefilter_ops = { _pm_yuv_noisefilter_init, 
 struct isp_block_operations s_cnr2_ops = { _pm_cnr2_init, _pm_cnr2_set_param, _pm_cnr2_get_param, PNULL, PNULL };
 
 #ifdef CONFIG_ISP_2_5
+struct isp_block_operations s_hsv_ops = { _pm_hsv_init, _pm_hsv_set_param, _pm_hsv_get_param, _pm_common_rest, _pm_hsv_deinit };
 struct isp_block_operations s_hsv_new_ops = { _pm_hsv_new_init, _pm_hsv_new_set_param, _pm_hsv_new_get_param, _pm_common_rest, _pm_hsv_new_deinit };
 struct isp_block_operations s_bright_ops = { _pm_brightness_init, _pm_brightness_set_param, _pm_brightness_get_param, PNULL, PNULL };
 struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_set_param, _pm_contrast_get_param, PNULL, PNULL };
@@ -69,6 +69,7 @@ struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _p
 #endif
 
 #ifdef CONFIG_ISP_2_6
+struct isp_block_operations s_hsv_ops = { _pm_hsv_init, _pm_hsv_set_param, _pm_hsv_get_param, _pm_common_rest, _pm_hsv_deinit };
 struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_ppe_get_param, PNULL, PNULL };
 struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
 struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
@@ -77,6 +78,7 @@ struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_s
 #endif
 
 #ifdef CONFIG_ISP_2_7
+struct isp_block_operations s_hsv_new2_ops = { _pm_hsv_new2_init, _pm_hsv_new2_set_param, _pm_hsv_new2_get_param, _pm_common_rest, PNULL};
 struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_ppe_get_param, PNULL, PNULL };
 struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
 struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
@@ -186,7 +188,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_CCE, array_offset(struct isp_context, cce), sizeof(struct isp_cce_param), &s_cce_ops},
 	{ISP_BLK_CMC10, array_offset(struct isp_context, cmc10), sizeof(struct isp_cmc10_param), &s_cmc10_ops},
 	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, rgb_gamma), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
-	{ISP_BLK_HSV, array_offset(struct isp_context, hsv), sizeof(struct isp_hsv_param), &s_hsv_ops},
+	{ISP_BLK_HSV_NEW2, array_offset(struct isp_context, hsv_new2), sizeof(struct isp_hsv_param_new2), &s_hsv_new2_ops},
 	{ISP_BLK_IIRCNR_YRANDOM, array_offset(struct isp_context, yrandom), sizeof(struct isp_iircnr_yrandom_param), &s_iircnr_yrandom_ops},
 	{ISP_BLK_Y_GAMMC, array_offset(struct isp_context, ygamma), sizeof(struct isp_yuv_ygamma_param), &s_yuv_ygamma_ops},
 	{ISP_BLK_POSTERIZE, array_offset(struct isp_context, posterize), sizeof(struct isp_posterize_param), &s_posterize_ops},

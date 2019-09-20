@@ -220,7 +220,7 @@ static struct blk_info blocks_array[] = {
 	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
 	/*  ISP blocks */
-	{ ISP_BLK_HSV, 0 }, /* parsed in hsv block init() */
+	{ ISP_BLK_HSV_NEW2, 0 }, /* parsed in hsv block init() */
 	{ ISP_BLK_BCHS, sizeof(struct sensor_bchs_level) },
 	{ ISP_BLK_CCE, sizeof(struct sensor_cce_param) },
 	{ ISP_BLK_CMC10, sizeof(struct sensor_cmc10_param) },

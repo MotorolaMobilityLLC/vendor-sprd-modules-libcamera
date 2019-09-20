@@ -40,8 +40,11 @@ extern "C" {
 #define array_offset(type, member) (intptr_t)(&((type*)0)->member)
 
 #ifndef SENSOR_HSV_NUM_NEW
-#define SENSOR_HSV_NUM_NEW	SENSOR_HSV_NUM
+#define SENSOR_HSV_NUM_NEW SENSOR_HSV_NUM
 #endif
+
+#define SENSOR_HSV_TAB_NUM 360
+#define ISP_PM_HSV_CTRESULT_NUM 2
 
 /*************************************************************************/
 
@@ -335,6 +338,18 @@ struct isp_hsv_param {
 	cmr_u32 *ct_result[2];
 };
 
+struct isp_hsv_table {
+	cmr_s16 hue_table[SENSOR_HSV_TAB_NUM];
+	cmr_u16 sat_table[SENSOR_HSV_TAB_NUM];
+};
+
+struct isp_hsv_param_new2 {
+	struct isp_dev_hsv_info_v2 cur;
+	struct isp_sample_point_info cur_idx;
+	struct isp_hsv_table hsv_table[SENSOR_HSV_NUM];
+	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+};
+
 struct isp_hsv_param_new {
 	struct isp_dev_hsv_info_v2 cur;
 	struct isp_sample_point_info cur_idx;
@@ -544,6 +559,7 @@ struct isp_context {
 	union {
 		struct isp_hsv_param hsv;
 		struct isp_hsv_param_new hsv_new;
+		struct isp_hsv_param_new2 hsv_new2;
 	};
 	struct isp_iircnr_iir_param iircnr;
 	struct isp_iircnr_yrandom_param yrandom;
@@ -691,6 +707,10 @@ cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param, void *param1,
 cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_hsv_new_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 cmr_s32 _pm_hsv_new_deinit(void *hsv_param);
+
+cmr_s32 _pm_hsv_new2_init(void *dst_hsv_param, void *src_hsv_param, void *param1, void *param2);
+cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_hsv_new2_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
