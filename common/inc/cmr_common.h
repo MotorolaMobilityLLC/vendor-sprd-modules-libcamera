@@ -999,6 +999,7 @@ enum sensor_mode {
 enum sensor_type { RAWSENSOR = 0, FOURINONESENSOR, YUVSENSOR };
 
 #define SENSOR_VIDEO_MODE_MAX 4
+#define SENSOR_IC_NAME_LEN 36
 
 struct sensor_interface {
     cmr_u32 type;

@@ -6,8 +6,6 @@
 #define SENSOR_IC_SUCCESS CMR_CAMERA_SUCCESS
 #define SENSOR_IC_FAILED CMR_CAMERA_FAIL
 
-#define SENSOR_IC_NAME_LEN 36
-
 #define SENSOR_IC_CHECK_HANDLE(handle)                                         \
     if (NULL == handle) {                                                      \
         SENSOR_LOGE("Handle is invalid " #handle);                             \

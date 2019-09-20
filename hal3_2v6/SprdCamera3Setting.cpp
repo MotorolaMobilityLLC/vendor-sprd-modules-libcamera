@@ -44,6 +44,7 @@ namespace sprdcamera {
 
 uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
 uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
+char SprdCamera3Setting::mSensorName[][SENSOR_IC_NAME_LEN];
 uint16_t SprdCamera3Setting::mModuleId[] = {0, 0, 0, 0, 0, 0};
 
 /**********************Macro Define**********************/
@@ -1030,6 +1031,8 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     mSensorType[cameraId] = phyPtr->sensor_type;
     mSensorFocusEnable[cameraId] = phyPtr->focus_eb;
     mModuleId[cameraId] = phyPtr->module_id;
+    memcpy(mSensorName[cameraId], phyPtr->sensor_name,
+           sizeof(mSensorName[cameraId]));
 
     // if sensor fov info is valid, use it; else use default value
     if (phyPtr->fov_info.physical_size[0] > 0 &&
@@ -1047,9 +1050,9 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     }
 
     HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width = %d, "
-             "module_id = 0x%x",
+             "module_id = 0x%x sensor_name =%s",
              cameraId, phyPtr->source_height_max, phyPtr->source_width_max,
-             phyPtr->module_id);
+             phyPtr->module_id, phyPtr->sensor_name);
 
     HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, %f), "
              "focal_lengths %f",
@@ -1592,10 +1595,18 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     p_stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     p_stream_info[i].stream_sizes_tbl.height);
-                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
+
+                if (!strcmp(mSensorName[cameraId], "ov32a1q") &&
+                    (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) &&
                     (p_stream_info[i].stream_sizes_tbl.width *
                          p_stream_info[i].stream_sizes_tbl.height >
-                     12000000)) {
+                     8000000)) {
+                    available_min_durations.add(66666666L);
+                } else if (scaler_formats[j] ==
+                               HAL_PIXEL_FORMAT_YCbCr_420_888 &&
+                           (p_stream_info[i].stream_sizes_tbl.width *
+                                p_stream_info[i].stream_sizes_tbl.height >
+                            12000000)) {
                     available_min_durations.add(50000000L);
                 } else {
                     available_min_durations.add(
