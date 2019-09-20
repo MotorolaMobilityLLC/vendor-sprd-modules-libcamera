@@ -3040,7 +3040,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
 
-	cxt->handle_pm = isp_pm_init(&input, &output);
+	cxt->handle_pm = isp_pm_init(input_ptr->isp_pm_mem, &input, &output);
 	cxt->commn_cxt.multi_nr_flag = output.multi_nr_flag;
 	cxt->commn_cxt.src.w = input_ptr->size.w;
 	cxt->commn_cxt.src.h = input_ptr->size.h;
@@ -4453,6 +4453,16 @@ exit:
 		fp = NULL;
 	}
 	return ret;
+}
+
+cmr_int isp_alg_fw_pm_mem_init(void *mem)
+{
+    return isp_pm_mem_init(mem);
+}
+
+void isp_alg_fw_pm_mem_deinit(void *mem)
+{
+    isp_pm_mem_deinit(mem);
 }
 
 struct sensor_otp_data_info global_otp_info;

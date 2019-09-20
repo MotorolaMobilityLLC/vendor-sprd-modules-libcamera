@@ -27,6 +27,8 @@ struct isp_alg_fw_init_in {
 	struct isp_init_param *init_param;
 };
 
+cmr_int isp_alg_fw_pm_mem_init(void *mem);
+void isp_alg_fw_pm_mem_deinit(void *mem);
 cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle * isp_alg_handle);
 cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle);
 cmr_int isp_alg_sw_proc(cmr_handle isp_alg_handle, void *param_ptr);

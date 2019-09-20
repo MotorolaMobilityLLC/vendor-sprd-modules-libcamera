@@ -106,7 +106,9 @@ struct isp_pm_update_output {
 	cmr_u32 param_size;
 };
 
-cmr_handle isp_pm_init(struct isp_pm_init_input *input, void *output);
+cmr_int isp_pm_mem_init(void *mem);
+void isp_pm_mem_deinit(void *mem);
+cmr_handle isp_pm_init(void *handle, struct isp_pm_init_input *input, void *output);
 cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_update(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_deinit(cmr_handle handle, void *input, void *output);

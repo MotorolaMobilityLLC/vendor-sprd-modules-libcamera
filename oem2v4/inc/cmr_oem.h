@@ -338,6 +338,9 @@ struct camera_context {
     cmr_uint swisp_depth_virt_addr;
     cmr_s32 swisp_depth_mfd;
 
+	/*for isp pm context*/
+	cmr_uint isp_pm_context_addr;
+
     /*for sw isp out buffer*/
     cmr_uint swisp_out_malloc_flag;
     cmr_uint swisp_out_phys_addr;

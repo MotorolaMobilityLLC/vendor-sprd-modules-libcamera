@@ -926,6 +926,7 @@ struct isp_init_param {
 	uint32_t is_master;
 	uint32_t is_4in1_sensor;
 	uint32_t is_faceId_unlock;
+	void *isp_pm_mem;
 };
 
 struct isp_ai_rect {
@@ -1104,6 +1105,8 @@ typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
+cmr_int isp_mw_pm_mem_init(void *mem);
+void isp_mw_pm_mem_deinit(void *mem);
 cmr_int isp_init(struct isp_init_param *ptr, cmr_handle *handle);
 cmr_int isp_deinit(cmr_handle handle);
 cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *param_ptr);
@@ -1121,7 +1124,5 @@ cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
-cmr_int isp_mem_init(void);
-cmr_int isp_mem_deinit(void);
 
 #endif

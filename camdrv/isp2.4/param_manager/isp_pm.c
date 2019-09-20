@@ -26,7 +26,7 @@
 #include "isp_pm.h"
 #include "isp_blocks_cfg.h"
 #include "cmr_types.h"
-#include <utils/Timers.h>
+#include <errno.h>
 
 #define ISP_PM_BUF_NUM     10
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
@@ -158,105 +158,39 @@ static cmr_s32 isp_pm_handle_check(cmr_handle handle)
 	return ISP_SUCCESS;
 }
 
-static struct isp_pm_context * isp_mem_ptr = NULL;
-sem_t sem_mem;
-cmr_s32 isp_mem_alloc(void)
+cmr_int isp_pm_mem_init(void *mem)
 {
-	ISP_LOGD("E");
-	if (isp_mem_ptr) {
-		ISP_LOGI("isp_mem_ptr not null");
-		goto exit;
-	}
-
-	isp_mem_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
-	if (PNULL == isp_mem_ptr) {
-		ISP_LOGE("fail to malloc");
-		goto exit;
-	}
-	ISP_LOGI("isp_pm_context: %p, size %d", isp_mem_ptr, sizeof(struct isp_pm_context));
-
-	memset((void *)isp_mem_ptr, 0x00, sizeof(struct isp_pm_context));
-
-exit:
-	sem_post(&sem_mem);
-	ISP_LOGD("X");
-
-	return 0;
-}
-
-cmr_s32 isp_mem_free(void)
-{
-	ISP_LOGI("free mem %p", isp_mem_ptr);
-	if (isp_mem_ptr) {
-		usleep(5000);
-		free(isp_mem_ptr);
-		isp_mem_ptr = NULL;
-	}
-	return 0;
-}
-
-void * thread_isp_proc(void *handle)
-{
-	UNUSED(handle);
-	isp_mem_alloc();
-	return NULL;
-}
-
-cmr_int isp_create_mem_thread(void)
-{
-    cmr_int rtn = 0;
-    pthread_attr_t attr;
-    pthread_t handle;
-
-    sem_init(&sem_mem, 0, 0);
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    rtn = pthread_create(&handle, &attr, thread_isp_proc, (void *)NULL);
-    if (rtn) {
-        CMR_LOGE("Fail to create thread for thread_isp_proc");
-        return rtn;
-    }
-
-    pthread_attr_destroy(&attr);
-
-    CMR_LOGI("done.");
-    return rtn;
-}
-
-static cmr_handle isp_pm_context_create(void)
-{
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_context *cxt_ptr = PNULL;
 
-#if 0
 	cxt_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
 	if (PNULL == cxt_ptr) {
 		ISP_LOGE("fail to malloc");
-		return cxt_ptr;
+		rtn = -ENOMEM;
+		goto exit;
 	}
 	ISP_LOGI("the isp_pm_context: %p", cxt_ptr);
 
 	memset((void *)cxt_ptr, 0x00, sizeof(struct isp_pm_context));
-#else
-	ISP_LOGD("E");
-	sem_wait(&sem_mem);
-	if (isp_mem_ptr == PNULL) {
-		ISP_LOGE("isp_mem_ptr is null fail, please check");
-		cxt_ptr = (struct isp_pm_context *)malloc(sizeof(struct isp_pm_context));
-		if (PNULL == cxt_ptr) {
-			ISP_LOGE("fail to malloc");
-			return cxt_ptr;
-		}
-		memset((void *)cxt_ptr, 0x00, sizeof(struct isp_pm_context));
-	} else {
-		cxt_ptr = isp_mem_ptr;
-	}
-	ISP_LOGI("cxt_ptr %p", cxt_ptr);
-#endif
+	*((cmr_u32 *)mem) = (cmr_u32)cxt_ptr;
+
+exit:
+	return rtn;
+}
+
+void isp_pm_mem_deinit(void *mem)
+{
+	if (mem)
+		free(mem);
+}
+
+static void isp_pm_context_create(void *handle)
+{
+	struct isp_pm_context *cxt_ptr = handle;
+
 	cxt_ptr->magic_flag = ISP_PM_MAGIC_FLAG;
 
 	pthread_mutex_init(&cxt_ptr->pm_mutex, NULL);
-
-	return (cmr_handle) cxt_ptr;
 }
 
 static void isp_pm_check_param(cmr_u32 id, cmr_u32 * update_flag)
@@ -1760,29 +1694,20 @@ static void isp_pm_free(cmr_handle handle)
 		isp_pm_context_deinit(handle);
 		isp_pm_mode_list_deinit(handle);
 		isp_pm_buffer_free(&cxt_ptr->buffer);
-
-		free(handle);
-
-		ISP_LOGI("free mem cxt_ptr %p, isp_mem_ptr %p",
-			cxt_ptr, isp_mem_ptr);
-		sem_destroy(&sem_mem);
-		isp_mem_ptr = NULL;
-
 	}
 }
 
-cmr_handle isp_pm_init(struct isp_pm_init_input * input, void *output)
+cmr_handle isp_pm_init(void *handle, struct isp_pm_init_input * input, void *output)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_handle handle = PNULL;
 	UNUSED(output);
 
-	if (PNULL == input) {
+	if (PNULL == handle || PNULL == input) {
 		ISP_LOGE("fail to get valid input param");
 		return PNULL;
 	}
 
-	handle = isp_pm_context_create();
+	isp_pm_context_create(handle);
 	rtn = isp_pm_handle_check(handle);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to get valid handle");

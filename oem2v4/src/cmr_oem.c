@@ -38,6 +38,8 @@
 #define CMR_EVT_INIT (CMR_EVT_OEM_BASE)
 #define CMR_EVT_WAIT (CMR_EVT_OEM_BASE + 1)
 #define CMR_EVT_EXIT (CMR_EVT_OEM_BASE + 2)
+#define CMR_EVT_ISP_PM_MEM_INIT (CMR_EVT_OEM_BASE + 3)
+#define CMR_EVT_ISP_PM_MEM_DEINIT (CMR_EVT_OEM_BASE + 4)
 
 #define CAMERA_OEM_MSG_QUEUE_SIZE 10
 #define CAMERA_RECOVER_CNT 3
@@ -166,6 +168,8 @@ static cmr_int camera_init_thread(cmr_handle oem_handle);
 static cmr_int camera_deinit_thread(cmr_handle oem_handle);
 static cmr_int camera_res_init(cmr_handle);
 static cmr_int camera_res_deinit(cmr_handle);
+cmr_int camera_isp_pm_mem_init(cmr_handle oem_handle);
+cmr_int camera_isp_pm_mem_deinit(cmr_handle oem_handle);
 static cmr_int camera_res_init_internal(cmr_handle oem_handle);
 static cmr_int camera_res_deinit_internal(cmr_handle oem_handle);
 static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data);
@@ -3285,6 +3289,13 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         goto exit;
     }
 
+	if (!cxt->isp_pm_context_addr) {
+        CMR_LOGE("isp pm mem has not been intialized");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+	isp_param.isp_pm_mem = (void *)cxt->isp_pm_context_addr;
+
     ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id,
                               &(sn_cxt->sensor_info));
     if (ret) {
@@ -4483,12 +4494,70 @@ static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data) {
         CMR_LOGI("camera exit");
         break;
 
+    case CMR_EVT_ISP_PM_MEM_INIT:
+		cxt->err_code = isp_mw_pm_mem_init(&cxt->isp_pm_context_addr);
+		ISP_LOGI("pm_context_addr: 0x%x, ret: %d", cxt->isp_pm_context_addr, cxt->err_code);
+        break;
+
+    case CMR_EVT_ISP_PM_MEM_DEINIT:
+		isp_mw_pm_mem_deinit((void *)cxt->isp_pm_context_addr);
+		cxt->isp_pm_context_addr = 0;
+        break;
+
     default:
         break;
     }
 
     return ret;
 }
+
+static cmr_int camera_create_init_thread(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
+
+    CMR_PRINT_TIME;
+
+    cxt->err_code = CMR_CAMERA_SUCCESS;
+    /*create thread*/
+    ret = cmr_thread_create((cmr_handle *)&cxt->init_thread,
+                            CAMERA_OEM_MSG_QUEUE_SIZE, camera_init_thread_proc,
+                            (void *)cxt);
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("create thread fail");
+    }
+    ret = cmr_thread_set_name(cxt->init_thread, "camera_init");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = CMR_MSG_SUCCESS;
+    }
+
+    CMR_LOGI("init thread created");
+    ATRACE_END();
+    return ret;
+}
+
+static cmr_int camera_destroy_init_thread(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
+
+    CMR_LOGI("E");
+
+    if (cxt->init_thread) {
+        cmr_thread_destroy(cxt->init_thread);
+        cxt->init_thread = 0;
+    }
+
+    CMR_LOGI("X");
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int camera_res_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -4512,22 +4581,9 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     sem_init(&cxt->snapshot_sm, 0, 1);
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
-    /*create thread*/
-    ret = cmr_thread_create((cmr_handle *)&cxt->init_thread,
-                            CAMERA_OEM_MSG_QUEUE_SIZE, camera_init_thread_proc,
-                            (void *)cxt);
-    if (CMR_MSG_SUCCESS != ret) {
-        CMR_LOGE("create thread fail");
-    }
-    ret = cmr_thread_set_name(cxt->init_thread, "res_init");
-    if (CMR_MSG_SUCCESS != ret) {
-        CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
-    }
 
-    CMR_LOGI("init thread created");
     message.msg_type = CMR_EVT_INIT;
-    message.sync_flag = CMR_MSG_SYNC_NONE;
+    message.sync_flag = CMR_MSG_SYNC_RECEIVED;
     ret = cmr_thread_msg_send(cxt->init_thread, &message);
     if (ret) {
         CMR_LOGE("send msg failed!");
@@ -4577,11 +4633,6 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
                        0);
     }
 
-    if (cxt->init_thread) {
-        cmr_thread_destroy(cxt->init_thread);
-        cxt->init_thread = 0;
-    }
-
 #ifdef OEM_HANDLE_HDR
     sem_destroy(&cxt->hdr_flag_sm);
 #endif
@@ -4603,6 +4654,50 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     return ret;
 }
 
+cmr_int camera_isp_pm_mem_init(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
+
+    cxt->err_code = CMR_CAMERA_SUCCESS;
+
+    message.msg_type = CMR_EVT_ISP_PM_MEM_INIT;
+    message.sync_flag = CMR_MSG_SYNC_NONE;
+    ret = cmr_thread_msg_send(cxt->init_thread, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        ret = CMR_CAMERA_FAIL;
+    }
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int camera_isp_pm_mem_deinit(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
+	if (!cxt->isp_pm_context_addr) {
+		CMR_LOGI("isp pm mem has been free!");
+		return ret;
+	}
+
+    cxt->err_code = CMR_CAMERA_SUCCESS;
+
+    message.msg_type = CMR_EVT_ISP_PM_MEM_DEINIT;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    ret = cmr_thread_msg_send(cxt->init_thread, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        ret = CMR_CAMERA_FAIL;
+    }
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -4616,13 +4711,19 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     CMR_LOGI("E");
+    ret = camera_create_init_thread(oem_handle);
+    if (ret) {
+        CMR_LOGE("failed to create init thread %ld", ret);
+        goto exit;
+    }
+
     /*for multicamera mode,when open convered sensor,only need to init sensor
      * and res*/
     if (CONVERED_CAMERA_INIT) {
         ret = camera_sensor_init(oem_handle, is_autotest);
         if (ret) {
             CMR_LOGE("failed to init sensor %ld", ret);
-            goto exit;
+            goto thread_deinit;
         }
         ret = camera_res_init(oem_handle);
         if (ret) {
@@ -4633,12 +4734,16 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto exit;
     }
 
-    isp_mem_init();
+    ret = camera_isp_pm_mem_init(oem_handle);
+    if (ret) {
+        CMR_LOGE("failed to init isp pm mem %ld", ret);
+        goto thread_deinit;
+    }
+
     ret = camera_sensor_init(oem_handle, is_autotest);
     if (ret) {
         CMR_LOGE("failed to init sensor %ld", ret);
-        isp_mem_deinit();
-        goto exit;
+        goto isp_pm_mem_deinit;
     }
 
     ret = camera_grab_init(oem_handle);
@@ -4675,10 +4780,21 @@ grab_deinit:
     }
 
 sensor_deinit:
-    isp_mem_deinit();
     ret_deinit = camera_sensor_deinit(oem_handle);
     if (ret_deinit) {
         CMR_LOGE("failed to camera_sensor_deinit %ld", ret_deinit);
+    }
+
+isp_pm_mem_deinit:
+    ret_deinit = camera_isp_pm_mem_deinit(oem_handle);
+    if (ret_deinit) {
+        CMR_LOGE("failed to camera_isp_pm_mem_deinit %ld", ret_deinit);
+    }
+
+thread_deinit:
+    ret_deinit = camera_destroy_init_thread(oem_handle);
+    if (ret_deinit) {
+        CMR_LOGE("failed to destory init thread %ld", ret_deinit);
     }
 
 exit:
@@ -4702,6 +4818,7 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     if (CONVERED_CAMERA_INIT) {
         camera_res_deinit(oem_handle);
         camera_sensor_deinit(oem_handle);
+        camera_destroy_init_thread(oem_handle);
         pthread_mutex_lock(&close_mutex);
         closing--;
         if (closing == 0) {
@@ -4717,6 +4834,8 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     camera_res_deinit(oem_handle);
     camera_sensor_deinit(oem_handle);
     camera_grab_deinit(oem_handle);
+    camera_isp_pm_mem_deinit(oem_handle);
+    camera_destroy_init_thread(oem_handle);
     pthread_mutex_lock(&close_mutex);
     closing--;
     if (closing == 0) {

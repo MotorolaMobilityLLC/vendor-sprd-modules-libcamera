@@ -76,6 +76,16 @@ static cmr_s32 ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
 	return ret;
 }
 
+cmr_int isp_mw_pm_mem_init(void *mem)
+{
+	return isp_alg_fw_pm_mem_init(mem);
+}
+
+void isp_mw_pm_mem_deinit(void *mem)
+{
+	isp_alg_fw_pm_mem_deinit(mem);
+}
+
 cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -123,25 +133,6 @@ exit:
 	ISP_LOGI("done %ld", ret);
 
 	return ret;
-}
-
-extern cmr_int isp_create_mem_thread(void);
-extern cmr_s32 isp_mem_free(void);
-
-cmr_int isp_mem_init(void)
-{
-	cmr_int rtn = 0;
-
-	rtn = isp_create_mem_thread();
-	return rtn;
-}
-
-cmr_int isp_mem_deinit(void)
-{
-	cmr_int rtn = 0;
-
-	rtn = isp_mem_free();
-	return rtn;
 }
 
 cmr_int isp_deinit(cmr_handle handle)
