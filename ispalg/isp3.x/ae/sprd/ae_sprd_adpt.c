@@ -1232,7 +1232,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		}
 		cxt->has_mf = 1;
 		if (cxt->exposure_compensation.ae_compensation_flag) {
-			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_IDX;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 			//cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->flash_backup.table_idx;//注意此处
 			ISP_LOGV("AE_FLASH_MAIN_AFTER restore ae's table_idx : %d, cur manual_mode:%d", cxt->flash_backup.table_idx,cxt->cur_status.adv_param.mode_param.mode);
 		}
