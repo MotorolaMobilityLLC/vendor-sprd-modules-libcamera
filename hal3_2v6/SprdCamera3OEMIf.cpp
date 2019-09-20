@@ -10290,6 +10290,11 @@ void SprdCamera3OEMIf::pushEISPreviewQueue(vsGyro *mGyrodata) {
     Mutex::Autolock l(&mEisPreviewLock);
 
     mGyroPreviewInfo.push_back(mGyrodata);
+     /* Clear any pending gyro information from previous session. Also gyro data size is only kGyrocount so
+       *  size of list shouldn't go beyond this.
+       */
+	if (SprdCamera3OEMIf::kGyrocount <= mGyroPreviewInfo.size() || !mEisPreviewInit)
+		mGyroPreviewInfo.clear();
 }
 
 void SprdCamera3OEMIf::popEISPreviewQueue(vsGyro *gyro, int gyro_num) {
@@ -10316,6 +10321,12 @@ void SprdCamera3OEMIf::pushEISVideoQueue(vsGyro *mGyrodata) {
     Mutex::Autolock l(&mEisVideoLock);
 
     mGyroVideoInfo.push_back(mGyrodata);
+
+   /* Clear any pending gyro information from previous session. Also gyro data size is only kGyrocount so
+    *  size of list shouldn't go beyond this.
+    */
+   if (SprdCamera3OEMIf::kGyrocount <= mGyroVideoInfo.size() || !mEisVideoInit)
+		mGyroVideoInfo.clear();
 }
 
 void SprdCamera3OEMIf::popEISVideoQueue(vsGyro *gyro, int gyro_num) {
