@@ -1,0 +1,1900 @@
+/*param0.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0001,
+			/*rgb2y_g_coeff*/
+			0x0001,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0002,
+			/*max_percentile_16bit*/
+			0x0002,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0002,
+			/*target_norm_coeff*/
+			0.10,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0001,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param1.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param2.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param3.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param4.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param5.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param6.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param7.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param8.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param9.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param10.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param11.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param12.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param13.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param14.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param15.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param16.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param17.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param18.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param19.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param20.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param21.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param22.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param23.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,
+/*param24.*/
+/*sharkl5pro_sensor_raw_gtm_level*/
+{
+	/*raw_gtm_stat*/
+	{
+		/*gtm_stat_bypass*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00,0x00/*0-2*/
+		},
+		/*gtm_stat_rgb2y*/
+		{
+			/*rgb2y_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*rgb2y_r_coeff*/
+			0x0000,
+			/*rgb2y_g_coeff*/
+			0x0000,
+			/*rgb2y_b_coeff*/
+			0x0000,
+
+		},
+		/*percentile_16bit*/
+		{
+			/*min_percentile_16bit*/
+			0x0000,
+			/*max_percentile_16bit*/
+			0x0000,
+
+		},
+		/*target_norm*/
+		{
+			/*target_norm_set_mode*/
+			0x0000,
+			/*target_norm*/
+			0x0000,
+			/*target_norm_coeff*/
+			0.00,
+
+		},
+		/*gtm_stat_image*/
+		{
+			/*image_key_set_mode*/
+			0x00,
+			/*reserved*/
+			0x00,
+			/*image_key*/
+			0x0000,
+
+		},
+		/*gtm_stat_video*/
+		{
+			/*luma_sm_Ymax_diff_thr*/
+			0x0000,
+			/*luma_sm_Yavg_diff_thr*/
+			0x0000,
+			/*cur_Ymin_weight*/
+			0x0000,
+			/*pre_Ymin_weight*/
+			0x0000,
+
+		}
+	},
+	/*raw_gtm_map*/
+	{
+		/*map_video_mode*/
+		0x0000,
+		/*bypass*/
+		0x0000,
+
+	}
+}
+,

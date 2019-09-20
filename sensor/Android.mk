@@ -62,6 +62,9 @@ include $(LOCAL_PATH)/hw_drv/Sprdroid.mk
 include $(LOCAL_PATH)/af_drv/Sprdroid.mk
 include $(LOCAL_PATH)/otp_drv/Sprdroid.mk
 include $(LOCAL_PATH)/sensor_drv/Sprdroid.mk
+include $(LOCAL_PATH)/tuning_param/Sprdroid.mk
+#include $(LOCAL_PATH)/tuning_param/tunning_lib_cfg.mk
+
 
 LOCAL_SRC_FILES += \
     dummy/isp_otp_calibration.c \
