@@ -33,6 +33,9 @@ static cmr_u32 _pm_edge_convert_param(
 	cmr_u32 foliage_coeff = 10;
 	cmr_u32 text_coeff = 7;
 	cmr_u32 pet_coeff = 8;
+	cmr_u32 building_coeff = 2;
+	cmr_u32 snow_coeff = 6;
+	cmr_u32 night_coeff = 9;
 	cmr_u32 sel_coeff = INVALID_EE_COEFF;
 	cmr_u32 max_ee_neg = 0x100;
 	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
@@ -183,6 +186,12 @@ static cmr_u32 _pm_edge_convert_param(
 	text_coeff = atoi(prop);
 	property_get("debug.isp.ee.pet_coeff.val", prop, "8");
 	pet_coeff = atoi(prop);
+	property_get("debug.isp.ee.building_coeff.val", prop, "2");
+	building_coeff = atoi(prop);
+	property_get("debug.isp.ee.snow_coeff.val", prop, "6");
+	snow_coeff = atoi(prop);
+	property_get("debug.isp.ee.night_coeff.val", prop, "9");
+	night_coeff = atoi(prop);
 	property_get("debug.isp.ee.param.log.en", prop, "0");
 	ee_param_log_en = atoi(prop);
 
@@ -200,6 +209,18 @@ static cmr_u32 _pm_edge_convert_param(
 
 	case ISP_PM_AI_SCENE_PET:
 		sel_coeff = pet_coeff;
+		break;
+
+	case ISP_PM_AI_SCENE_BUILDING:
+		sel_coeff = building_coeff;
+		break;
+
+	case ISP_PM_AI_SCENE_SNOW:
+		sel_coeff = snow_coeff;
+		break;
+
+	case ISP_PM_AI_SCENE_NIGHT:
+		sel_coeff = night_coeff;
 		break;
 
 	default:
