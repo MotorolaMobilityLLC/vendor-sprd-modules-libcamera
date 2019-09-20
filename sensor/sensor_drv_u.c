@@ -2376,6 +2376,8 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     cmr_u32 count = 0;
     struct sensor_reg_tag msettings[AEC_I2C_SETTINGS_MAX];
     struct sensor_reg_tag ssettings[AEC_I2C_SETTINGS_MAX];
+    // TODO optimize this later
+    struct sensor_reg_tag ssettings_2[AEC_I2C_SETTINGS_MAX];
     struct sensor_reg_tag *settings = NULL;
     cmr_u16 sensor_id[AEC_I2C_SENSOR_MAX];
     cmr_u16 i2c_slave_addr[AEC_I2C_SENSOR_MAX];
@@ -2427,6 +2429,9 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
         } else if (k == 1) {
             muti_aec_info.slave_i2c_tab = ssettings;
             settings = ssettings;
+        } else if (k == 2) {
+            muti_aec_info.slave_i2c_tab_2 = ssettings_2;
+            settings = ssettings_2;
         }
 
         for (i = 0; i < aec_info->frame_length->size; i++) {
@@ -2454,6 +2459,10 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
                 aec_info->dgain->size + aec_info->frame_length->size;
         } else if (k == 1) {
             muti_aec_info.ssize =
+                aec_info->shutter->size + aec_info->again->size +
+                aec_info->dgain->size + aec_info->frame_length->size;
+        } else if (k == 2) {
+            muti_aec_info.ssize_2 =
                 aec_info->shutter->size + aec_info->again->size +
                 aec_info->dgain->size + aec_info->frame_length->size;
         }

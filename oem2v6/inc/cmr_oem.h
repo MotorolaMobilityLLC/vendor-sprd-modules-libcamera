@@ -570,6 +570,8 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle);
 
 void camera_set_oem_multimode(multiCameraMode camera_mode);
 void camera_set_oem_masterid(uint8_t master_id);
+cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
+        cmr_u32 *ref_camera_id);
 
 cmr_int camera_local_get_cover(cmr_handle cmr_handle,
                                struct dual_sensor_luma_info *cover_value);

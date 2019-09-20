@@ -3706,6 +3706,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.multi_mode = ISP_WIDETELE;
     } else if (cxt->is_multi_mode == MODE_BOKEH) {
         isp_param.multi_mode = ISP_BOKEH;
+    } else if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
+        isp_param.multi_mode = ISP_WIDETELEULTRAWIDE;
     } else {
         isp_param.multi_mode = ISP_SINGLE;
     }
@@ -8946,6 +8948,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&(param_ptr->vcm_disc);
         break;
+    case COM_ISP_SET_AE_TARGET_REGION:
+        isp_cmd = ISP_CTRL_AE_SET_TARGET_REGION;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&(param_ptr->ae_target_region);
+        break;
 
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
@@ -12758,6 +12765,15 @@ void camera_set_oem_multimode(multiCameraMode camera_mode) {
 void camera_set_oem_masterid(uint8_t master_id) {
     CMR_LOGD("master id %d", master_id);
     master_id_oem = master_id;
+}
+
+cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
+        cmr_u32 *ref_camera_id) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle,
+                     ISP_CTRL_AE_SET_REF_CAMERA_ID,
+                     ref_camera_id);
 }
 
 cmr_int camera_local_get_cover(cmr_handle oem_handle,

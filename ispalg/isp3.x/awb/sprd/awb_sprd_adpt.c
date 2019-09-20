@@ -1566,10 +1566,12 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	cxt->flash_pre_state = 0;
 	cxt->color_support = param->color_support;
 	cxt->sensor_role = param->is_master;
+	cxt->sensor_role_type = param->sensor_role;
 	cxt->is_multi_mode = param->is_multi_mode;
 	cxt->is_mono_sensor = param->is_mono_sensor;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
 	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
+#if 0
 	if(cxt->sensor_role == 1)
 	{
 		cxt->sensor_role_type = CAM_SENSOR_MASTER;
@@ -1585,6 +1587,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0 , SET_FOV_DATA , &param->fov_info , NULL);
 		#endif
 	}
+#endif
 	// paser awb otp info
 	ISP_LOGI("start parse the awb_otp_info");
 	_awb_parser_otp_info(param);
@@ -2407,6 +2410,11 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 	}
 
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C) && (cxt->ptr_isp_br_ioctrl != NULL)) {
+		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_GAIN_AWB_DATA, &result.gain, NULL);
+		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_MATCH_AWB_DATA, &result.ct , NULL);
+	}
+
+	if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (cxt->ptr_isp_br_ioctrl != NULL)) {
 		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_GAIN_AWB_DATA, &result.gain, NULL);
 		cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_MATCH_AWB_DATA, &result.ct , NULL);
 	}

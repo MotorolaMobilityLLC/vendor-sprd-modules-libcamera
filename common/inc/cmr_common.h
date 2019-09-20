@@ -472,6 +472,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_F_NUMBER,
     COM_ISP_SET_AUTO_TRACKING_ENABLE,
     COM_ISP_SET_AUTO_TRACKING_INFO,
+    COM_ISP_SET_AE_TARGET_REGION,
     COM_ISP_TYPE_MAX
 };
 
@@ -1136,6 +1137,7 @@ struct common_isp_cmd_param {
         struct vcm_disc_info vcm_disc;
         struct af_relbokeh_oem_data relbokeh_info;
         struct auto_tracking_info af_ot_info;
+        struct img_rect ae_target_region;
     };
 };
 
@@ -1965,6 +1967,7 @@ typedef enum {
     CAMERA_IOCTRL_CB_FACE_DETECT,
     CAMERA_IOCTRL_ROTATE,
     CAMERA_IOCTRL_SET_MASTER_ID,
+    CAMERA_IOCTRL_SET_REF_CAMERA_ID,
     CAMERA_IOCTRL_SET_BOKEH_SCALE_INFO,
     CAMERA_IOCTRL_SET_TRIM_INFO,
     CAMERA_IOCTRL_SET_CAM_SECURITY,

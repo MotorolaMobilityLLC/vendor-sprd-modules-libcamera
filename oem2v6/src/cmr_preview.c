@@ -7435,6 +7435,18 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
              chn_param.cap_inf_cfg.cfg.src_img_rect.width,
              chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
+    if (handle->ops.isp_ioctl) {
+        struct common_isp_cmd_param param;
+
+        param.camera_id = camera_id;
+        param.ae_target_region = chn_param.cap_inf_cfg.cfg.src_img_rect;
+        ret = handle->ops.isp_ioctl(handle->oem_handle,
+                COM_ISP_SET_AE_TARGET_REGION, &param);
+        if (ret < 0) {
+            CMR_LOGW("fail to set AE roi");
+        }
+    }
+
     /*save the rect*/
     prev_cxt->prev_rect.start_x =
         chn_param.cap_inf_cfg.cfg.src_img_rect.start_x;

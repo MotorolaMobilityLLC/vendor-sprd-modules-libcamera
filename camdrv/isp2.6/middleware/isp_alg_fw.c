@@ -328,6 +328,7 @@ struct isp_alg_fw_context {
 	struct ispalg_lib_ops ops;
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
+	cmr_u32 sensor_role;
 	cmr_u32 work_mode;
 	cmr_u32 zsl_flag;
 
@@ -714,11 +715,10 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_handle isp_3a_handle_slv;
-	struct isp_alg_fw_context *cxt_slv = NULL;
 	struct sensor_multi_ae_info *ae_info = NULL;
-	cmr_u32 slv_camera_id = 0;
-	cmr_u32 slv_sensor_mode = 0;
+	struct isp_alg_fw_context *context = NULL;
+	cmr_handle handle = NULL;
+	cmr_u32 camera_id = 0;
 
 	if (!cxt) {
 		ISP_LOGE("fail to get valid cxt ptr\n");
@@ -727,50 +727,71 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 
 	switch (type) {
 	case ISP_AE_MULTI_WRITE:
-		ISP_LOGV("ISP_AE_MULTI_WRITE");
-		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
-		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_SENSOR_MODE, NULL, &slv_sensor_mode);
-		ae_info = (struct sensor_multi_ae_info *)param0;
-		ae_info[0].handle = cxt->ioctrl_ptr->caller_handler;
-		ae_info[0].camera_id = cxt->camera_id;
-		ae_info[0].exp.size_index = cxt->sn_mode;
-		if (ae_info[0].count == 2) {
-			isp_3a_handle_slv = isp_br_get_3a_handle(slv_camera_id);
-			cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
-			if (cxt_slv != NULL) {
-				ae_info[1].handle = cxt_slv->ioctrl_ptr->caller_handler;
-				ae_info[1].camera_id = slv_camera_id;
-				ae_info[1].exp.size_index = slv_sensor_mode;
-			} else {
-				ISP_LOGE("fail to get slave sensor handle , it is not ready");
-				return ret;
+		{
+			cmr_u32 index = 0;
+
+#define index2role(index) (index)
+			ae_info = (struct sensor_multi_ae_info *)param0;
+			while (index < ae_info->count) {
+				/*
+				 * ae_info ordered by master, slave0, slave1, ...
+				 * this is same as role definition
+				 */
+				isp_br_ioctrl(index2role(index), GET_CAMERA_ID, NULL, &camera_id);
+				isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+				context = (struct isp_alg_fw_context *)handle;
+				if (!context) {
+					ISP_LOGE("slave context not ready");
+					return ISP_ERROR;
+				}
+
+				ae_info[index].handle = context->ioctrl_ptr->caller_handler;
+				ae_info[index].camera_id = context->camera_id;
+				ae_info[index].exp.size_index = context->sn_mode;
+
+				index++;
 			}
+
+			if (cxt->ioctrl_ptr->sns_ioctl)
+				ret = cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+						CMD_SNS_IC_WRITE_MULTI_AE, ae_info);
+#undef index2role
 		}
-		if (cxt->ioctrl_ptr->sns_ioctl)
-			ret = cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
-				CMD_SNS_IC_WRITE_MULTI_AE, ae_info);
 		break;
 	case ISP_AE_HDR_BOKEH:
 		ISP_LOGV("ISP_AE_HDR_BOKEH");
 
-		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
-		isp_3a_handle_slv = isp_br_get_3a_handle(slv_camera_id);
-		cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
-		if (cxt_slv != NULL) {
-			ret = ispalg_ae_callback(cxt_slv, AE_CB_HDR_START, (void *)param0);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_CAMERA_ID, NULL, &camera_id);
+		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+		context = (struct isp_alg_fw_context *)handle;
+		if (context != NULL) {
+			ret = ispalg_ae_callback(context, AE_CB_HDR_START, (void *)param0);
 		} else {
 			ISP_LOGE("fail to get slave sensor handle , it is not ready");
 			return ret;
 		}
 		break;
-	case ISP_AE_SET_RGB_GAIN_SLAVE:
-		ISP_LOGV("ISP_AE_SET_RGB_GAIN_SLAVE");
+	case ISP_AE_SET_RGB_GAIN_SLAVE0:
+		ISP_LOGV("ISP_AE_SET_RGB_GAIN_SLAVE0");
 
-		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SLAVE_CAMERA_ID, NULL, &slv_camera_id);
-		isp_3a_handle_slv = isp_br_get_3a_handle(slv_camera_id);
-		cxt_slv = (struct isp_alg_fw_context *)isp_3a_handle_slv;
-		if (cxt_slv != NULL) {
-			ret = ispalg_set_rgb_gain(cxt_slv, param0);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_CAMERA_ID, NULL, &camera_id);
+		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+		context = (struct isp_alg_fw_context *)handle;
+		if (context != NULL) {
+			ret = ispalg_set_rgb_gain(context, param0);
+		} else {
+			ISP_LOGE("fail to get slave sensor handle , it is not ready");
+			return ret;
+		}
+		break;
+	case ISP_AE_SET_RGB_GAIN_SLAVE1:
+		ISP_LOGV("ISP_AE_SET_RGB_GAIN_SLAVE1");
+
+		isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_CAMERA_ID, NULL, &camera_id);
+		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+		context = (struct isp_alg_fw_context *)handle;
+		if (context != NULL) {
+			ret = ispalg_set_rgb_gain(context, param0);
 		} else {
 			ISP_LOGE("fail to get slave sensor handle , it is not ready");
 			return ret;
@@ -2920,11 +2941,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->aem_stats_data;
 		if (cxt->is_multi_mode)
 			ISP_LOGV("is_master :%d\n", cxt->is_master);
-		if (cxt->is_master) {
-			isp_br_ioctrl(CAM_SENSOR_MASTER, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
-		} else {
-			isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
-		}
+		isp_br_ioctrl(cxt->sensor_role, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
 		ret = ispalg_ai_process((cmr_handle)cxt);
 		break;
 	}
@@ -3327,7 +3344,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 	ae_input.monitor_win_num.w = cxt->ae_cxt.win_num.w;
 	ae_input.monitor_win_num.h = cxt->ae_cxt.win_num.h;
-	ae_input.sensor_role = cxt->is_master;
+	ae_input.sensor_role = cxt->sensor_role;
+ 	ae_input.is_master = cxt->is_master;
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
@@ -3341,17 +3359,27 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	case ISP_WIDETELE:
 		ae_input.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
+	case ISP_WIDETELEULTRAWIDE:
+		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
+		break;
 	default:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
 		break;
 	}
-	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
-		cxt->is_master, cxt->is_multi_mode);
 
-	if (cxt->is_multi_mode) {
-		ae_input.otp_info_ptr = cxt->otp_data;
-		ae_input.is_master = cxt->is_master;
+	// TODO joseph run AE separately until lib ready
+	if (ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+		char value[PROPERTY_VALUE_MAX] = { 0x00 };
+		property_get("persist.vendor.cam.debug.ae_sync", value, "0");
+
+		if (atoi(value) == 0) {
+			ae_input.is_multi_mode = ISP_ALG_SINGLE;
+		}
 	}
+
+	ISP_LOGI("camera_id %u, is_master %u, is_multi_mode %u, sensor_role %u",
+			ae_input.camera_id, ae_input.is_master,
+			ae_input.is_multi_mode, ae_input.sensor_role);
 
 	ae_input.ptr_isp_br_ioctrl = isp_br_ioctrl;
 
@@ -3411,7 +3439,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 
 	param.otp_info_ptr = cxt->otp_data;
 	param.is_master = cxt->is_master;
-	param.sensor_role = cxt->is_master;
+	param.sensor_role = cxt->sensor_role;
 	param.color_support = cxt->awb_cxt.color_support;
 
 	switch (cxt->is_multi_mode) {
@@ -3427,12 +3455,15 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	case ISP_WIDETELE:
 		param.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
+	case ISP_WIDETELEULTRAWIDE:
+		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
+		break;
 	default:
 		param.is_multi_mode = ISP_ALG_SINGLE;
 		break;
 	}
-	ISP_LOGI("sensor_role=%d, is_multi_mode=%d",
-		cxt->is_master, cxt->is_multi_mode);
+	ISP_LOGI("is_master %u, sensor_role %u, is_multi_mode %u",
+			cxt->is_master, cxt->sensor_role, cxt->is_multi_mode);
 	param.ptr_isp_br_ioctrl = isp_br_ioctrl;
 
 	if (cxt->ops.awb_ops.init) {
@@ -5342,6 +5373,20 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	if (ret) {
 		ISP_LOGE("fail to init isp bridge");
 		goto err_br;
+	}
+
+	if (cxt->is_multi_mode) {
+		cmr_u32 id = cxt->camera_id;
+		cmr_u32 role = CAM_SENSOR_MAX;
+
+		ret = isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_ROLE, &id, &role);
+		if (ret) {
+			ISP_LOGE("fail to get sensor role");
+			goto err_alg;
+		}
+
+		cxt->sensor_role = role;
+		ISP_LOGI("sensor_role %u", role);
 	}
 
 	isp_alg_input.lib_use_info = cxt->lib_use_info;
