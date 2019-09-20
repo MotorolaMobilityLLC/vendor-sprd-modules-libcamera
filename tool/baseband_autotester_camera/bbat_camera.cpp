@@ -825,14 +825,27 @@ int autotest_read_cam_buf(void **pp_image_addr, int size, int *p_out_size) {
 }
 }
 
+int set_file_value(const char *file_name, int value)
+{
+    int fd;
+    int ret;
+    char buffer[8];
+    CMR_LOGD("SetFileValue file_name=%s,value=0x%x",file_name,value);
+    fd = open(file_name, O_RDWR);
+    if(fd < 0){
+        CMR_LOGE("open %s failed! %d IN", file_name, __LINE__);
+        return -1;
+    }
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "0x%x", value);
+    ret = write(fd, buffer, strlen(buffer));
+    close(fd);
+    return ret;
+}
+
 int flashlightSetValue(int value) {
     int ret = 0;
-    char cmd[200] = " ";
-
-    sprintf(cmd, "echo 0x%02x > /sys/class/misc/sprd_flash/test", value);
-    ret = system(cmd) ? -1 : 0;
-    CMR_LOGD("cmd = %s,ret = %d", cmd, ret);
-
+    ret = set_file_value("/sys/class/misc/sprd_flash/test",value);
     return ret;
 }
 
