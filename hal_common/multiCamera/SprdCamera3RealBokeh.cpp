@@ -3591,10 +3591,8 @@ int SprdCamera3RealBokeh::processCaptureRequest(
                     &out_streams_main[main_buffer_index];
                 *sbuf = req->output_buffers[i];
                 sbuf->stream = &mMainStreams[mCallbackStreamsNum];
-                if (mCaptureThread->mAbokehGallery) {
-                    sbuf->buffer =
+                sbuf->buffer =
                         popBufferList(mLocalBufferList, SNAPSHOT_MAIN_BUFFER);
-                }
                 main_buffer_index++;
             }
 
