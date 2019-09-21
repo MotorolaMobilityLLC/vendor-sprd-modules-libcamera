@@ -185,6 +185,7 @@ extern "C" {
 		 * for ae tuning parameters
 		 */
 		struct ae_stats_monitor_cfg monitor_cfg;
+		struct ae_bayer_hist_cfg bhist_cfg;
 		struct flash_tune_param dflash_param[AE_MAX_PARAM_NUM];
 		/*
 		 * sensor related information

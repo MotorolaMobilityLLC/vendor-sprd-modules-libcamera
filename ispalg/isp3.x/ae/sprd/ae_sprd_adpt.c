@@ -57,6 +57,7 @@ extern long g_isp_log_level;
 
 #endif
 
+#define DUMP_AEM_DATA 0
 #define AE_UPDATE_BASE_EOF 0
 #define AE_UPDATE_BASE_SOF 0
 #define AE_UPDAET_BASE_OFFSET AE_UPDATE_BASE_SOF
@@ -825,6 +826,28 @@ static cmr_s32 ae_update_monitor_unit(struct ae_ctrl_cxt *cxt, struct ae_trim *t
 	return rtn;
 }
 
+static cmr_s32 ae_update_bayer_hist(struct ae_ctrl_cxt *cxt, struct ae_rect *hist_rect)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	struct ae_bayer_hist_cfg *bhist = NULL;
+
+	if (NULL == cxt || NULL == hist_rect) {
+		ISP_LOGE("fail to update monitor unit, cxt=%p, work_info=%p", cxt, hist_rect);
+		return AE_ERROR;
+	}
+	bhist = &cxt->bhist_cfg;
+
+	if (bhist) {
+		bhist->hist_rect.start_x = hist_rect->start_x;
+		bhist->hist_rect.start_y = hist_rect->start_y;
+		bhist->hist_rect.end_x = hist_rect->end_x;
+		bhist->hist_rect.end_y = hist_rect->end_y;
+	}
+
+	return rtn;
+}
+
+
 cmr_s32 iso_shutter_mapping[7][15] = {
 	// 50 ,64 ,80 ,100
 	// ,125
@@ -1013,13 +1036,20 @@ static cmr_s32 ae_cfg_monitor_block(struct ae_ctrl_cxt *cxt)
 	info.trim = cxt->monitor_cfg.trim;
 	info.work_mode = cxt->monitor_cfg.mode;
 	info.skip_num = cxt->monitor_cfg.skip_num;
+	info.high_region_thrd = cxt->monitor_cfg.high_region_thrd;
+	info.low_region_thrd = cxt->monitor_cfg.low_region_thrd;
 	
 	if (cxt->isp_ops.set_statistics_mode) {
 		rtn = cxt->isp_ops.set_statistics_mode(cxt->isp_ops.isp_handler, (enum ae_statistics_mode)info.work_mode, info.skip_num);
 	}
+	
 	if (cxt->isp_ops.set_monitor_win) {
 		rtn = cxt->isp_ops.set_monitor_win(cxt->isp_ops.isp_handler, &info);
 	}
+	
+	if (cxt->isp_ops.set_monitor_rgb_thd) {
+		rtn = cxt->isp_ops.set_monitor_rgb_thd(cxt->isp_ops.isp_handler, &info);
+	}//added by beth for aem
 	
 	if (cxt->isp_ops.set_blk_num){
 		rtn = cxt->isp_ops.set_blk_num(cxt->isp_ops.isp_handler, &info.win_num);
@@ -1096,6 +1126,36 @@ static cmr_s32 ae_set_monitor(struct ae_ctrl_cxt *cxt, struct ae_trim *trim)
 		cxt->isp_ops.set_stats_monitor(cxt->isp_ops.isp_handler, monitor_cfg);
 	} else {
 		ISP_LOGE("fail to set aem mode");
+		return AE_ERROR;
+	}
+	return rtn;
+}
+
+static cmr_s32 ae_set_bayer_hist(struct ae_ctrl_cxt *cxt, struct ae_rect *hist_rect)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	struct ae_bayer_hist_cfg *bhist_cfg = NULL;
+
+	if (NULL == cxt || NULL == hist_rect) {
+		ISP_LOGE("fail to update monitor unit, cxt=%p, work_info=%p", cxt, hist_rect);
+		return AE_ERROR;
+	}
+	bhist_cfg = &cxt->bhist_cfg;
+
+	if (bhist_cfg) {
+		bhist_cfg->bypass = cxt->bhist_cfg.bypass;
+		bhist_cfg->mode = cxt->bhist_cfg.mode;
+		bhist_cfg->skip_num = cxt->bhist_cfg.skip_num;
+		bhist_cfg->hist_rect.start_x = hist_rect->start_x;
+		bhist_cfg->hist_rect.start_y = hist_rect->start_y;
+		bhist_cfg->hist_rect.end_x = hist_rect->end_x;
+		bhist_cfg->hist_rect.end_y = hist_rect->end_y;
+	}
+
+	if (cxt->isp_ops.set_bayer_hist) {
+		cxt->isp_ops.set_bayer_hist(cxt->isp_ops.isp_handler, bhist_cfg);
+	} else {
+		ISP_LOGE("fail to set bayer hist");
 		return AE_ERROR;
 	}
 	return rtn;
@@ -1568,7 +1628,8 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable, int c
 			ISP_LOGD("ae_base_idx:%d ",cxt->exposure_compensation.ae_base_idx);
 		}
 		cxt->cur_status.adv_param.lock = AE_STATE_LOCKED;
-	} else {
+		cxt->cur_status.adv_param.app_force_lock = AE_STATE_LOCKED;
+		} else {
 		if (2 > cxt->pause_cnt) {
 			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 			cxt->pause_cnt = 0;
@@ -1580,6 +1641,7 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable, int c
 			if(AE_MODE_MANUAL_IDX == cxt->cur_status.adv_param.mode_param.mode)
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 		}
+		cxt->cur_status.adv_param.app_force_lock = AE_STATE_NORMAL;
 	}
 	cxt->force_lock_ae = enable;
 	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d, call = %d", cxt->pause_cnt, cxt->cur_status.adv_param.lock, cxt->force_lock_ae,cxt->cur_status.adv_param.mode_param.mode, call);
@@ -2878,6 +2940,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_s32 ae_skip_num = 0;
 	struct ae_trim trim;
+	struct ae_rect bayer_hist_trim = { 0, 0, 0, 0 };
 	cmr_u32 max_expl = 0;
 	
 	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -3013,7 +3076,20 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	ae_set_monitor(cxt, &trim);
 
 	ISP_LOGD("shift = %d",work_info->shift);
-
+	cxt->bhist_cfg.mode = AE_BAYER_HIST_MODE_CONTINUE;
+	cxt->bhist_cfg.skip_num = 0;
+	cxt->bhist_cfg.bypass = 0;
+	bayer_hist_trim.start_x = 0;
+	bayer_hist_trim.start_y = 0;
+	bayer_hist_trim.end_x = work_info->resolution_info.frame_size.w;
+	bayer_hist_trim.end_y = work_info->resolution_info.frame_size.h;
+	/*for bayer hist monitor*/
+	ae_update_bayer_hist(cxt, &bayer_hist_trim);
+	ae_set_bayer_hist(cxt, &bayer_hist_trim);//this value should be from cxt->bhist_cfg,this value should be from ae_set_ae_init_param;but now it is from above assignment operator at ae_update_bayer_hist 
+	cxt->cur_status.bhist_size.start_x = cxt->bhist_cfg.hist_rect.start_x;
+	cxt->cur_status.bhist_size.start_y = cxt->bhist_cfg.hist_rect.start_y;
+	cxt->cur_status.bhist_size.end_x = cxt->bhist_cfg.hist_rect.end_x;
+	cxt->cur_status.bhist_size.end_y = cxt->bhist_cfg.hist_rect.end_y;
 	if((cxt->is_master == 0) && cxt->is_multi_mode){
 		struct aem_info slave_aem_info;
 		slave_aem_info.aem_stat_blk_pixels = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h;
@@ -3850,6 +3926,186 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	return rtn;
 }
 
+static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_in *aem_stat_ptr)
+{
+	cmr_u64 sum_oe = 0,sum_me = 0,sum_ue = 0;
+	cmr_u64 num_oe = 0,num_me = 0,num_ue = 0;
+	cmr_u32 avg_r = 0,avg_g = 0,avg_b = 0;
+	cmr_u32 tmp_r = 0,tmp_g = 0,tmp_b = 0;
+	cmr_u32 i = 0,j = 0;
+	cmr_u32 ii = 0,jj = 0;
+	cmr_u32 blk_num_w = cxt->monitor_cfg.blk_num.w;//64
+	cmr_u32 blk_num_h = cxt->monitor_cfg.blk_num.h;
+	//static cmr_u32 sync_aem_new[3 * 128 * 128];
+	memset(&cxt->sync_aem[0],0,sizeof(cxt->sync_aem));
+	cmr_u32 ratio_h = blk_num_h/BLK_NUM_W_ALG;///2
+	cmr_u32 ratio_w = blk_num_w/BLK_NUM_W_ALG;
+	cmr_u32 bayer_chnl = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/4;
+	cmr_u32 bayer_chnl_g = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/2;
+	
+	cxt->cur_status.adv_param.stats_data_adv.size.h = cxt->monitor_cfg.blk_num.h;
+	cxt->cur_status.adv_param.stats_data_adv.size.w = cxt->monitor_cfg.blk_num.w;
+	cxt->cur_status.adv_param.stats_data_adv.blk_size.w = cxt->monitor_cfg.blk_size.w;
+	cxt->cur_status.adv_param.stats_data_adv.blk_size.h = cxt->monitor_cfg.blk_size.h;
+
+	//cxt->cur_status.stats_data_basicv2.stat_data = &sync_aem_new[0];
+	cxt->cur_status.stats_data_basic.stat_data = &cxt->sync_aem[0];
+	cxt->cur_status.stats_data_basic.counts_per_pixel = 1;//bayer_pixels;
+	cxt->cur_status.stats_data_basic.size.h = 32;
+	cxt->cur_status.stats_data_basic.size.w = 32;
+	cxt->cur_status.stats_data_basic.shift = 0;
+	cxt->cur_status.stats_data_basic.blk_size.w = ratio_w * cxt->monitor_cfg.blk_size.w;
+	cxt->cur_status.stats_data_basic.blk_size.h = ratio_h * cxt->monitor_cfg.blk_size.h;
+
+	for(i = 0; i < BLK_NUM_W_ALG; i++){
+		for(j = 0; j < BLK_NUM_W_ALG; j++){
+			for(ii = 0; ii < ratio_w; ii++){
+				for(jj = 0; jj < ratio_h; jj++){
+					cmr_u32 idx = i * ratio_w * ratio_h * BLK_NUM_W_ALG + j * ratio_w + ii * ratio_h * BLK_NUM_W_ALG + jj;//if 64*64:(0,1,64,65;2,3,66,67;.......)
+					//r channel
+						sum_oe = aem_stat_ptr->sum_oe_r[idx];
+						sum_ue = aem_stat_ptr->sum_ue_r[idx];
+						sum_me = aem_stat_ptr->sum_ae_r[idx];
+						num_oe = aem_stat_ptr->cnt_oe_r[idx];
+						num_ue = aem_stat_ptr->cnt_ue_r[idx];
+						num_me = bayer_chnl - num_oe - num_ue;
+						avg_r = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
+						tmp_r += avg_r/(ratio_w * ratio_h);//binning is average of adjacent pixels
+						
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].oe_stats_data = sum_oe;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].med_stats_data = sum_me;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].ue_stats_data = sum_ue;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].oe_conts = num_oe;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].med_conts = num_me;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].ue_conts = num_ue;
+
+					//g channel
+						sum_oe = aem_stat_ptr->sum_oe_g[idx];
+						sum_ue = aem_stat_ptr->sum_ue_g[idx];
+						sum_me = aem_stat_ptr->sum_ae_g[idx];
+						num_oe = aem_stat_ptr->cnt_oe_g[idx];
+						num_ue = aem_stat_ptr->cnt_ue_g[idx];
+						num_me = bayer_chnl_g - num_oe - num_ue;
+						avg_g = (sum_oe + sum_ue + sum_me)/ bayer_chnl_g;
+						tmp_g += avg_g/(ratio_w * ratio_h);//binning is average of adjacent pixels
+						
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].oe_stats_data = sum_oe;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].med_stats_data = sum_me;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].ue_stats_data = sum_ue;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].oe_conts = num_oe;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].med_conts = num_me;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].ue_conts = num_ue;
+
+					//b channel
+						sum_oe = aem_stat_ptr->sum_oe_b[idx];
+						sum_ue = aem_stat_ptr->sum_ue_b[idx];
+						sum_me = aem_stat_ptr->sum_ae_b[idx];
+						num_oe = aem_stat_ptr->cnt_oe_b[idx];
+						num_ue = aem_stat_ptr->cnt_ue_b[idx];
+						num_me = bayer_chnl - num_oe - num_ue;
+						avg_b = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
+						tmp_b += avg_b/(ratio_w * ratio_h);//binning is average of adjacent pixels
+						
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].oe_stats_data = sum_oe;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].med_stats_data = sum_me;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].ue_stats_data = sum_ue;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].oe_conts = num_oe;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].med_conts = num_me;
+						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].ue_conts = num_ue;
+				}
+			}
+			
+			cxt->sync_aem[i * BLK_NUM_W_ALG + j] = tmp_r;
+			cxt->sync_aem[i * BLK_NUM_W_ALG + j + 1024] = tmp_g;
+			cxt->sync_aem[i * BLK_NUM_W_ALG + j + 2048] = tmp_b;
+			tmp_r = tmp_g = tmp_b = 0;
+		}
+	}
+#if 0
+	cmr_u32 idx = 0;
+	num_me = 0;
+	for(i = 0; i < BLK_NUM_W_ALG; i++){
+		for(j = 0; j < BLK_NUM_W_ALG; j++){
+			sum_oe = aem_stat_ptr->sum_oe_r[idx];
+			sum_ue = aem_stat_ptr->sum_ue_r[idx];
+			sum_me = aem_stat_ptr->sum_ae_r[idx];
+			num_oe = aem_stat_ptr->cnt_oe_r[idx];
+			num_ue = aem_stat_ptr->cnt_ue_r[idx];
+			tmp_r = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
+
+
+			sum_oe = aem_stat_ptr->sum_oe_g[idx];
+			sum_ue = aem_stat_ptr->sum_ue_g[idx];
+			sum_me = aem_stat_ptr->sum_ae_g[idx];
+			num_oe = aem_stat_ptr->cnt_oe_g[idx];
+			num_ue = aem_stat_ptr->cnt_ue_g[idx];
+			tmp_g = (sum_oe + sum_ue + sum_me)/ bayer_chnl_g;
+
+			sum_oe = aem_stat_ptr->sum_oe_b[idx];
+			sum_ue = aem_stat_ptr->sum_ue_b[idx];
+			sum_me = aem_stat_ptr->sum_ae_b[idx];
+			num_oe = aem_stat_ptr->cnt_oe_b[idx];
+			num_ue = aem_stat_ptr->cnt_ue_b[idx];
+			tmp_b = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
+			
+			sync_aem_new[idx] = tmp_r;
+			sync_aem_new[idx + 64 * 64] = tmp_g;
+			sync_aem_new[idx + 64 * 64 * 2] = tmp_b;
+			idx++;
+		}
+	}
+#endif
+#if 0
+	 {
+		char fname11[256];
+		char dir_str11[256] ="/data/vendor/cameraserver/";
+		sprintf(fname11, "%saem_new_binning_avg4RGB.txt",dir_str11);
+		FILE* fp11 = fopen(fname11, "w");
+		if (fp11){
+			for (int ii = 0; ii < 64; ii++){
+				for (int jj = 0; jj < 64; jj++ ){
+					fprintf(fp11,"%d,%d,%d  ",cxt->cur_status.stats_data_basicv2.stat_data[ii * 32 + jj],
+						cxt->cur_status.stats_data_basicv2.stat_data[ii * 32 + jj + 32*32],
+						cxt->cur_status.stats_data_basicv2.stat_data[ii * 32 + jj + 2 * 32*32] );
+					//fprintf(fp11,"%d,%d,%d  ",sync_aem_new[ii * 64 + jj],
+					//	sync_aem_new[ii * 64 + jj + 64*64],
+					//	sync_aem_new[ii * 64 + jj + 2 * 64*64]);
+				}
+					fprintf(fp11,"\n");
+			}
+		}
+		fclose(fp11);
+	}
+#endif
+#if 0
+{
+		char fname22[256];
+		char dir_str22[256] ="/data/vendor/cameraserver/";
+		sprintf(fname22, "%saem_new_sum.txt",dir_str22);
+		FILE* fp22 = fopen(fname22, "w");
+		if (fp22){
+			for (int ii = 0; ii < 64; ii++){
+				for (int jj = 0; jj < 64; jj++ ){
+				fprintf(fp22,"%d,%d,%d,%d,%d,%d,%d,%d,%d     ",
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[0][ii * 64 + jj].oe_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[0][ii * 64 + jj].ue_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[0][ii * 64 + jj].med_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[1][ii * 64 + jj].oe_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[1][ii * 64 + jj].ue_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[1][ii * 64 + jj].med_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[2][ii * 64 + jj].oe_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[2][ii * 64 + jj].ue_stats_data,
+					cxt->cur_status.adv_param.stats_data_adv.stats_data[2][ii * 64 + jj].med_stats_data);
+				}
+					fprintf(fp22,"\n");
+			}
+		}
+		fclose(fp22);
+	}
+#endif
+}
+
+
 static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
 {
 	cmr_u32 i,j,ii,jj = 0;
@@ -3866,7 +4122,8 @@ static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
 
 	cmr_u32 ratio_h = blk_num_h / BLK_NUM_W_ALG;
 	cmr_u32 ratio_w = blk_num_w / BLK_NUM_W_ALG;
-
+	memset(&cxt->sync_aem[0],0,sizeof(cxt->sync_aem));
+	
 	//cxt->cur_status.adv_param.stats_data_high.stat_data = img_stat;
 	cxt->cur_status.adv_param.stats_data_high.stat_data = &cxt->sync_aem_high[0];
 	cxt->cur_status.adv_param.stats_data_high.counts_per_pixel = 1;//bayer_pixels;
@@ -3907,6 +4164,34 @@ static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
 			tmp_r = tmp_g = tmp_b = 0;
 		}
 	}
+#if 0
+ 	{
+		char fname11[256];
+		char dir_str11[256] ="/data/vendor/cameraserver/";
+		sprintf(fname11, "%saem_old_sum.txt",dir_str11);
+		FILE* fp11 = fopen(fname11, "w");
+		if (fp11){
+			for (int ii = 0; ii < 64; ii++){
+				for (int jj = 0; jj < 64; jj++ ){
+
+				fprintf(fp11,"%d,%d,%d  ",r_stat[ii * 64 + jj],
+						g_stat[ii * 64 + jj],
+						b_stat[ii * 64 + jj] );
+
+
+	/*				fprintf(fp11,"%d,%d,%d  ",cxt->cur_status.adv_param.stats_data_high.stat_data[ii * 64 + jj],
+						cxt->cur_status.adv_param.stats_data_high.stat_data[ii * 64 + jj + 64*64],
+						cxt->cur_status.adv_param.stats_data_high.stat_data[ii * 64 + jj + 2 * 64*64] );*/
+					//fprintf(fp11,"%d,%d,%d  ",cxt->cur_status.stats_data_basic.stat_data[ii * 32 + jj],
+					//	cxt->cur_status.adv_param.stats_data_high.stat_data[ii * 32 + jj + 32*32],
+					//	cxt->cur_status.adv_param.stats_data_high.stat_data[ii * 32 + jj + 2 * 32*32] );
+				}
+					fprintf(fp11,"\n");
+			}
+		}
+		fclose(fp11);
+	}
+#endif
 }
 
 static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, cmr_handle result)
@@ -3927,6 +4212,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cmr_s32 backup_expgain = 0;
 	cmr_s32 effect_ebd_expgain = 0;
 	UNUSED(result);
+	cmr_s32 aem_type = 0;
 
 	if (NULL == param) {
 		ISP_LOGE("fail to get param, in %p", param);
@@ -3946,15 +4232,21 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cur_calc_result = &cxt->calc_results;
 
 	calc_in = (struct ae_calc_in *)param;
+	aem_type = cxt->monitor_cfg.data_type;
 	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
 	cxt->cur_status.adv_param.awb_mode = calc_in->awb_mode;
-	ae_binning_for_aem_stats(cxt, calc_in->stat_img);
-	cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
+	if(0 == aem_type){
+		ae_binning_for_aem_stats(cxt, calc_in->stat_img);
+		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
+	}else{
+		ae_binning_for_aem_statsv2(cxt, calc_in);
+		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
+	}
 
-	// get effective E&g	
+	// get effective E&g
 	cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.actual_data.cur_index;
 	cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.actual_data.frm_len;
 	cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->exp_data.actual_data.exp_line;
@@ -4056,6 +4348,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cmr_s32 backup_expgain = 0;
 	cmr_s32 effect_ebd_expgain = 0;
 	UNUSED(result);
+	cmr_s32 aem_type = 0;
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	struct _tag_hdr_detect_t hdr_param;
 	struct _tag_hdr_stat_t hdr_stat;
@@ -4084,13 +4377,99 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	
 	calc_in = (struct ae_calc_in *)param;
 
+	aem_type = cxt->monitor_cfg.data_type;
+	ISP_LOGD("aem type is %d\n",aem_type);
 	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
 	cxt->cur_status.adv_param.awb_mode = calc_in->awb_mode;
-	ae_binning_for_aem_stats(cxt, calc_in->stat_img);	
+	
+	if(0 == aem_type){
+		ae_binning_for_aem_stats(cxt, calc_in->stat_img);
+		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
+	}else{
+		ae_binning_for_aem_statsv2(cxt, calc_in);
+		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
+	}
+#if 0
+	{
+		uint32_t n = 0;
+		uint32_t i = 0;
+		uint32_t j = 0;
+		char filename[256];
+		char dir_str[256] ="/data/vendor/cameraserver/";
+		uint32_t ww = cxt->monitor_cfg.blk_num.w;
+		uint32_t hh = cxt->monitor_cfg.blk_num.h;
+		ISP_LOGD("w and h %d,%d\n",ww,hh);
+		sprintf(filename, "%smw-aem_sum_new.txt",dir_str);
+		FILE* fp = fopen(filename, "w");
+		
+		if (fp){
+			//for (n = 0;n < 3; n++){
+				n = 0;
+				for (j = 0; j < 64; j++){
+					for (i = 0; i < 64; i++ ){
+						fprintf(fp,"%d,%d,%d,%d,%d,%d,%d,%d,%d     ",
+							calc_in->sum_ue_r[n * ww * hh + j * ww + i],calc_in->sum_ae_r[n * ww * hh + j * ww + i],calc_in->sum_oe_r[n * ww * hh + j * ww + i],
+							calc_in->sum_ue_g[n * ww * hh + j * ww + i],calc_in->sum_ae_g[n * ww * hh + j * ww + i],calc_in->sum_oe_g[n * ww * hh + j * ww + i],
+							calc_in->sum_ue_b[n * ww * hh + j * ww + i],calc_in->sum_ae_b[n * ww * hh + j * ww + i],calc_in->sum_oe_b[n * ww * hh + j * ww + i]);
+					}
+					fprintf(fp,"\n");
+				}
+			//}
+		}
 
+		fclose(fp);
+	}
+
+	{
+		uint32_t nn = 0;
+		uint32_t ii = 0;
+		uint32_t jj = 0;
+		char filename33[256];
+		char dir_str33[256] ="/data/vendor/cameraserver/";
+		uint32_t ww = cxt->monitor_cfg.blk_num.w;
+		uint32_t hh = cxt->monitor_cfg.blk_num.h;
+		ISP_LOGD("w and h %d,%d\n",ww,hh);
+		sprintf(filename33, "%smw-aem_new_num.txt",dir_str33);
+		FILE* fp33 = fopen(filename33, "w");
+		
+		if (fp33){
+			for (nn = 0;nn < 3; nn++){
+				for (jj = 0; jj < ww; jj++){
+					for (ii = 0; ii < hh; ii++ ){
+						fprintf(fp33,"%d,%d,%d,%d,%d,%d     ",
+							calc_in->cnt_oe_r[nn * ww * hh + jj * ww + ii],calc_in->cnt_ue_r[nn * ww * hh + jj * ww + ii],
+							calc_in->cnt_oe_g[nn * ww * hh + jj * ww + ii],calc_in->cnt_ue_g[nn * ww * hh + jj * ww + ii],
+							calc_in->cnt_oe_b[nn * ww * hh + jj * ww + ii],calc_in->cnt_ue_b[nn * ww * hh + jj * ww + ii]);
+					}
+					fprintf(fp33,"\n");
+				}
+			}
+		}
+
+		fclose(fp33);
+	}
+
+
+ 	{
+		char fname[256];
+		char dir_str1[256] ="/data/vendor/cameraserver/";
+		sprintf(fname, "%smw-aem_sum_old.txt",dir_str1);
+		FILE* fp0 = fopen(fname, "w");
+		if (fp0){
+			for (int ii = 0; ii < 128; ii++){
+				for (int jj = 0; jj < 128; jj++ ){
+					fprintf(fp0,"%d,%d,%d  ",calc_in->stat_img[ii * 128 + jj],calc_in->stat_img[ii * 128 + jj + 128*128],calc_in->stat_img[ii * 128 + jj + 2 * 128*128] );
+				}
+					fprintf(fp0,"\n");
+			}
+		}
+		fclose(fp0);
+	}
+
+#endif
 	// get effective E&g
 	cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.actual_data.cur_index;
 	cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.actual_data.frm_len;
@@ -4139,6 +4518,13 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	rtn = ae_pre_process(cxt);
 	flash_calibration_script((cmr_handle) cxt);	/*for flash calibration */
 	ae_set_led(cxt);
+	
+	memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
+	memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &calc_in->bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
+	memcpy(&cxt->cur_status.adv_param.bhist_data[2].hist_data, &calc_in->bayerhist_stats[2].value, 256 * sizeof(cmr_u32));
+	cxt->cur_status.adv_param.bhist_data[0].hist_bin = calc_in->bayerhist_stats[0].bin;
+	cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
+	cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
 
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	if(!cxt->is_snapshot) {
@@ -4799,7 +5185,27 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 	cxt->monitor_cfg.blk_num.w = misc_init_out->aem_cfg.blk_num.w;
 	cxt->monitor_cfg.blk_num.h = misc_init_out->aem_cfg.blk_num.h;
 	cxt->monitor_cfg.shift = misc_init_out->aem_cfg.monitor_shift;
+	cxt->monitor_cfg.data_type = misc_init_out->aem_cfg.data_type;
 
+	//cxt->monitor_cfg.oe_thrd = misc_init_out->aem_cfg.oe_thrd;
+	//cxt->monitor_cfg.ue_thrd = misc_init_out->aem_cfg.ue_thrd;
+	//because to match the setting in the middleware 
+	cxt->monitor_cfg.high_region_thrd.r = misc_init_out->aem_cfg.oe_thrd;
+	cxt->monitor_cfg.high_region_thrd.g = misc_init_out->aem_cfg.oe_thrd;
+	cxt->monitor_cfg.high_region_thrd.b = misc_init_out->aem_cfg.oe_thrd;
+	cxt->monitor_cfg.low_region_thrd.r = misc_init_out->aem_cfg.ue_thrd;
+	cxt->monitor_cfg.low_region_thrd.g = misc_init_out->aem_cfg.ue_thrd;
+	cxt->monitor_cfg.low_region_thrd.b = misc_init_out->aem_cfg.ue_thrd;
+//bayer hist tuning setting from lib parser
+	cxt->bhist_cfg.hist_rect.start_x = misc_init_out->bhist_cfg.hist_rect.start_x;
+	cxt->bhist_cfg.hist_rect.start_y = misc_init_out->bhist_cfg.hist_rect.start_y;
+	cxt->bhist_cfg.hist_rect.end_x = misc_init_out->bhist_cfg.hist_rect.end_x;
+	cxt->bhist_cfg.hist_rect.end_y = misc_init_out->bhist_cfg.hist_rect.end_y;
+	cxt->bhist_cfg.bypass = misc_init_out->bhist_cfg.bypass;
+	cxt->bhist_cfg.mode = misc_init_out->bhist_cfg.mode;
+	cxt->bhist_cfg.shift = misc_init_out->bhist_cfg.shift;
+	cxt->bhist_cfg.skip_num = misc_init_out->bhist_cfg.skip_num;
+	
 	cxt->flash_timing_param = misc_init_out->flash_timing_param;
 	if (0 == cxt->flash_timing_param.pre_param_update_delay)
 		cxt->flash_timing_param.pre_param_update_delay = 2;

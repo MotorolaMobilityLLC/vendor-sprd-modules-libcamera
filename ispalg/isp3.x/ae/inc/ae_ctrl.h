@@ -94,10 +94,27 @@ extern "C" {
 		union {
 			cmr_u32 *stat_img;
 			cmr_u32 *rgb_stat_img;
+			//struct ae_monitor_stats_info *stat_data;
 		};
+		cmr_u32 *sum_ue_r;
+		cmr_u32 *sum_ue_g;
+		cmr_u32 *sum_ue_b;
+		cmr_u32 *sum_ae_r;
+		cmr_u32 *sum_ae_g;
+		cmr_u32 *sum_ae_b;
+		cmr_u32 *sum_oe_r;
+		cmr_u32 *sum_oe_g;
+		cmr_u32 *sum_oe_b;
+		cmr_u32 *cnt_ue_r;
+		cmr_u32 *cnt_ue_g;
+		cmr_u32 *cnt_ue_b;
+		cmr_u32 *cnt_oe_r;
+		cmr_u32 *cnt_oe_g;
+		cmr_u32 *cnt_oe_b;
 		cmr_u32 *yiq_stat_img;
 		struct ae_binning_stats_info binning_stat_info;
 		struct isp_hist_statistic_info hist_stats;
+		struct isp_hist_statistic_info bayerhist_stats[3];
 		cmr_u32 awb_gain_r;
 		cmr_u32 awb_gain_g;
 		cmr_u32 awb_gain_b;

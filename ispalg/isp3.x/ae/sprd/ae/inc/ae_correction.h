@@ -88,7 +88,7 @@ struct ae_adv_param {
 	/*the high resolution aem stats data*/
 	struct ae_stats_data_type stats_data_high;/*the high resolution aem stats data: ae monitor stats data or the binning data*/
 	/*will switch to struct ae_monitor_data_type soon*/
-	/*struct ae_monitor_data_type stats_data_adv*/
+	struct ae_monitor_data_type stats_data_adv;
 	/*Histogram Data*/
 	struct ae_hist_data_type hist_data;/*yuv histogram data in yuv domain*/
 	struct ae_hist_data_type bhist_data[3];/*raw rgb histogram data in raw bayer domain*/
@@ -124,6 +124,7 @@ struct ae_adv_param {
 	cmr_u8 is_snapshot;
 	cmr_u8 prof_mode;		/*in professional mode*/
 	cmr_u8 reserve_case;		/*will be removed, 0: normal mode, 1: just for debug mode, and manual control the exp/gain by APP*/
+	cmr_u8 app_force_lock;
 };
 
 struct ae_lib_calc_in {
@@ -134,8 +135,8 @@ struct ae_lib_calc_in {
 	/*AE Stats Data*/
 	float fno;/*F-Number*/
 	struct ae_stats_data_type stats_data_basic;/*the normal aem stats data*/
-	/*will switch to struct ae_monitor_data_type soon*/
-	/*struct ae_monitor_data_type stats_data_basic*/
+	/*will switch to struct ae_monitor_data_type soon,now low resolution still used the old struct*/
+	//struct ae_stats_data_type stats_data_basicv2;//under-exposure,normal-exposure,over-exposure
 	/*AWB gain*/
 	struct ae_alg_rgb_gain awb_gain;
 	/*Aux Sensor Data*/

@@ -33,7 +33,8 @@
 
 #define AE_WEIGHT_UNIT 256
 #define AE_BASE_GAIN 128
-#define AE_FIX_PCT 1024
+#define AE_FIX_PCT100 100
+#define AE_FIX_PCT1024 1024
 typedef cmr_handle ae_handle_t;
 
 enum {
@@ -185,12 +186,6 @@ enum ai_task2 {
 	AE_AI_SCENE_TASK2_SNOW,
 	AE_AI_SCENE_TASK2_OTHERS,
 	AE_AI_SCENE_TASK2_MAX
-};
-
-
-struct ae_ct_table {
-	cmr_s32 ct[20];
-	float rg[20];
 };
 
 struct ae_weight_value {
@@ -382,6 +377,7 @@ struct ae_monitor_cfg {
 	cmr_u8 monitor_shift;		//for ae monitor data overflow
 	cmr_u16 oe_thrd;
 	cmr_u16 ue_thrd;
+	cmr_u32 data_type;
 };
 
 struct ae_monitor_item_data_type {
@@ -402,7 +398,7 @@ struct ae_stats_data_type {
 };
 
 struct ae_monitor_data_type {
-	struct ae_monitor_item_data_type stats_data[4][AEC_MONITOR_DATA_SIZE_MAX];
+	struct ae_monitor_item_data_type stats_data[3][AEC_MONITOR_DATA_SIZE_MAX];
 	cmr_u32 shift;
 	struct ae_size size;/*stats data resolution*/
 	struct ae_size blk_size;

@@ -204,6 +204,12 @@ extern "C" {
 		AE_STATISTICS_MODE_MAX
 	};
 
+	enum ae_bayer_hist_mode {
+		AE_BAYER_HIST_MODE_SINGLE,
+		AE_BAYER_HIST_MODE_CONTINUE,
+		AE_BAYER_HIST_MODE_MAX
+	};
+
 	enum ae_aem_fmt {
 		AE_AEM_FMT_RGB = 0x0001,
 		AE_AEM_FMT_YIQ = 0x0002,
@@ -265,7 +271,12 @@ extern "C" {
 	struct ae_set_scene {
 		enum ae_scene_mode mode;
 	};
-
+	
+	struct ae_ct_table {
+		cmr_s32 ct[20];
+		float rg[20];
+	};
+	
 	struct ae_resolution_info {
 		struct ae_size frame_size;
 		cmr_u32 line_time;
@@ -431,9 +442,12 @@ extern "C" {
 		cmr_u32 skip_num;
 		cmr_u32 shift;
 		cmr_u32 mode;
+		cmr_u32 data_type;
 		struct ae_size blk_size;
 		struct ae_size blk_num;
 		struct ae_trim trim;
+		struct ae_rgb_l high_region_thrd;
+		struct ae_rgb_l low_region_thrd;
 	};
 
 	struct ae_isp_ctrl_ops {
@@ -443,6 +457,7 @@ extern "C" {
 		 cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
 		 cmr_s32(*set_monitor) (cmr_handle handler, cmr_u32 skip_number);
 		 cmr_s32(*set_monitor_win) (cmr_handle handler, struct ae_monitor_info * in_param);
+		 cmr_s32(*set_monitor_rgb_thd) (cmr_handle handler, struct ae_monitor_info * in_param);//added by beth for aem
 		 cmr_s32(*callback) (cmr_handle handler, cmr_int cb_type, cmr_handle param);
 		 cmr_s32(*set_monitor_bypass) (cmr_handle handler, cmr_u32 is_bypass);
 		 cmr_s32(*get_system_time) (cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec);
@@ -465,6 +480,7 @@ extern "C" {
 		 cmr_s32(*set_blk_num) (cmr_handle handler, struct ae_size *blk_num);
 		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);
 		 cmr_s32(*set_rgb_gain_slave) (cmr_handle handler, double rgb_gain_coeff);
+ 		 cmr_s32(*set_bayer_hist) (cmr_handle handler, struct ae_bayer_hist_cfg * in_param);
 	};
 
 	struct ae_stat_img_info {

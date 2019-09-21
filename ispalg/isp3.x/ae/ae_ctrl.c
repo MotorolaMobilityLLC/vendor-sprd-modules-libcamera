@@ -128,6 +128,17 @@ static cmr_s32 ae_set_monitor_win(cmr_handle handler, struct ae_monitor_info *in
 	return 0;
 }
 
+static cmr_s32 ae_set_rgb_thrd(cmr_handle handler, struct ae_monitor_info *in_param)
+{
+
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_THRD, in_param, NULL);
+	}
+
+	return 0;
+}
+
 static cmr_s32 ae_set_monitor_bypass(cmr_handle handler, cmr_u32 is_bypass)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -145,6 +156,16 @@ static cmr_s32 ae_set_stats_monitor(cmr_handle handler, struct ae_stats_monitor_
 
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_STATS_MONITOR, in_param, NULL);
+	}
+
+	return 0;
+}
+
+static cmr_s32 ae_set_bayer_hist(cmr_handle handler, struct ae_bayer_hist_cfg *in_param)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_BAYER_HIST, in_param, NULL);
 	}
 
 	return 0;
@@ -670,6 +691,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_again = ae_set_again;
 	input_ptr->isp_ops.set_exposure = ae_set_exposure;
 	input_ptr->isp_ops.set_monitor_win = ae_set_monitor_win;
+	input_ptr->isp_ops.set_monitor_rgb_thd = ae_set_rgb_thrd;//added by beth for aem
 	input_ptr->isp_ops.set_monitor = ae_set_monitor;
 	input_ptr->isp_ops.callback = ae_callback;
 	input_ptr->isp_ops.set_monitor_bypass = ae_set_monitor_bypass;
@@ -690,7 +712,8 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_blk_num = ae_set_blk_num;
 	input_ptr->isp_ops.set_rgb_gain_4in1 = ae_set_rgb_gain_4in1;
 	input_ptr->isp_ops.set_rgb_gain_slave = ae_set_rgb_gain_slave;
-
+	input_ptr->isp_ops.set_bayer_hist = ae_set_bayer_hist;
+	
 	cxt_ptr = (struct aectrl_cxt *)calloc(1,sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("fail to create ae ctrl context!");
