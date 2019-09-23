@@ -2342,6 +2342,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_flicker = 0;
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
+	cmr_u32 app_mode = 0;
 	float ae_exp = 0.0;
 	cmr_u32 u_addr = 0;
 	struct afl_proc_in afl_input;
@@ -2387,6 +2388,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_SWITCH_FLAG, &cur_exp_flag, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FLICKER_SWITCH_FLAG"));
 		ISP_LOGV("cur exposure flag %d", cur_exp_flag);
+
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_APP_MODE, NULL, &app_mode);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_APP_MODE"));
+		ISP_LOGV("app_mode %d", app_mode);
 	}
 
 	afl_input.ae_stat_ptr = &cxt->afl_cxt.ae_stats;
@@ -2397,6 +2402,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.afl_mode = cxt->afl_cxt.afl_mode;
 	afl_input.private_len = sizeof(struct isp_statis_info);
 	afl_input.private_data = &cxt->afl_stat_info;
+	afl_input.app_mode = app_mode;
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, NULL);

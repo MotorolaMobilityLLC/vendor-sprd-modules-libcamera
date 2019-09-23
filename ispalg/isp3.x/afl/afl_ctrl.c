@@ -480,9 +480,9 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
                                                                   (cmr_s32 *)ae_stat_ptr,
                                                                   (cmr_s32 *)(ae_stat_ptr + 1024),
                                                                   (cmr_s32 *)(ae_stat_ptr + 2048),
-                                                                  in_ptr->max_fps);
+                                                                  in_ptr->max_fps, in_ptr->app_mode);
 
-				ISP_LOGV("flag %d 60Hz, max_fps:%d", flag, in_ptr->max_fps);
+				ISP_LOGV("flag %d 60Hz, max_fps:%d, app_mode:%d", flag, in_ptr->max_fps, in_ptr->app_mode);
 			} else {
 				flag = antiflcker_sw_process_v2p2(algo_width,
 								  algo_height, addr, 1, thr[0], thr[1],
@@ -491,8 +491,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
                                                                   (cmr_s32 *)ae_stat_ptr,
                                                                   (cmr_s32 *)(ae_stat_ptr + 1024),
                                                                   (cmr_s32 *)(ae_stat_ptr + 2048),
-									in_ptr->max_fps);
-				ISP_LOGV("flag %d 50HZ, max_fps:%d", flag, in_ptr->max_fps);
+									in_ptr->max_fps, in_ptr->app_mode);
+				ISP_LOGV("flag %d 50HZ, max_fps:%d, app_mode:%d", flag, in_ptr->max_fps, in_ptr->app_mode);
 			}
 			if (flag)
 				break;

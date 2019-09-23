@@ -5040,6 +5040,16 @@ static cmr_s32 ae_get_flicker_mode(struct ae_ctrl_cxt *cxt, void *result)
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_get_app_mode(struct ae_ctrl_cxt *cxt, void *result)
+{
+	if (result) {
+		cmr_u32 *mode = result;
+		*mode = cxt->app_mode;
+		ISP_LOGV("app_mode:%d", *mode);
+	}
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
 	if((cxt->is_multi_mode) && (!cxt->is_master)){
@@ -6173,6 +6183,9 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		if (result) {
 			*(cmr_u32 *) result = cxt->cur_param->flash_control_param.flash_frameskip_count;
 		}
+		break;
+	case AE_GET_APP_MODE:
+		rtn = ae_get_app_mode(cxt, result);
 		break;
 	default:
 		rtn = AE_ERROR;

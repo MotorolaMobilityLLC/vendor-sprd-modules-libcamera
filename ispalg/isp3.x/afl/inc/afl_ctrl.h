@@ -59,6 +59,7 @@ struct afl_proc_in {
 	cmr_u16 thr[9];
 #endif
 	cmr_u32 max_fps;
+	cmr_u32 app_mode;
 };
 
 struct afl_ctrl_param_in {
