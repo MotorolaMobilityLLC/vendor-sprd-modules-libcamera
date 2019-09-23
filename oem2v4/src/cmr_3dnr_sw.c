@@ -230,6 +230,7 @@ init_queue_preview_smallbuffer(struct preview_smallbuf_queue *psmall_buf_queue);
 static cmr_int
 dequeue_preview_smallbuffer(struct preview_smallbuf_queue *psmall_buf_queue,
                             struct preview_smallbuf_node *pnode);
+
 static cmr_int
 queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
                          struct preview_smallbuf_node *pnode);
@@ -979,6 +980,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
         return CMR_CAMERA_NO_MEM;
     }
 
+    cmr_bzero(&(smallbuff_node), sizeof(struct preview_smallbuf_node));
     cmr_bzero(threednr_prev_handle, sizeof(struct class_3dnr_pre));
     ret = threednr_prevthread_create(threednr_prev_handle);
     if (ret != CMR_CAMERA_SUCCESS) {
