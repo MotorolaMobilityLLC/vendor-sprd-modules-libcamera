@@ -404,6 +404,10 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
             out_param = ISP_LANDSCAPE;
             break;
 
+        case CAMERA_SCENE_MODE_PANORAMA:
+            out_param = ISP_PANORAMA;
+            break;
+
         default:
             out_param = CAMERA_SCENE_MODE_AUTO;
             break;
