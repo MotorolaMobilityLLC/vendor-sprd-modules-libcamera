@@ -73,7 +73,11 @@ namespace sprdcamera {
 #define BLUR_FNUM_COUNT 10
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
+#ifndef CONFIG_ISP_2_3
 #define MAX_DIGITAL_ZOOM_RATIO (4.0f)
+#else
+#define MAX_DIGITAL_ZOOM_RATIO (2.0f)
+#endif
 #define MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO (1.6f)
 
 /* Time related macros */
