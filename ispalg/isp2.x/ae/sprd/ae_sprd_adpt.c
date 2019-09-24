@@ -4116,7 +4116,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cmr_s32 mode = 0;
 	struct ae_trim trim;
 	cmr_u32 max_exp = 0;
-	
+
 	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
@@ -4125,7 +4125,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cmr_u32 j;
 	cmr_u32 last_cam_mode = 0;
 	cmr_u32 ae_target_lum = 0;
-	cmr_s32 zsl_flag_setting =1;
 
 	if (NULL == param) {
 		ISP_LOGE("param is NULL \n");
@@ -4326,9 +4325,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->cur_status.ae_table->min_index = 0;
 	cxt->mod_update_list.is_mev = (CAMERA_MODE_MANUAL == cxt->app_mode) ? 1 : 0;
 
-	if((cxt->prv_status.frame_size.w != work_info->resolution_info.frame_size.w)||(cxt->prv_status.frame_size.h !=work_info->resolution_info.frame_size.h))
-		zsl_flag_setting = 0;
-
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
 			src_exp.exp_line = cxt->last_exp_param.exp_line;
@@ -4385,7 +4381,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 					if(cxt->mode_switch[cxt->app_mode].tarlum)
 						ae_target_lum = cxt->mode_switch[cxt->app_mode].tarlum;
 
-					if(ae_target_lum && (ISP_ALG_SINGLE == cxt->is_multi_mode)&&zsl_flag_setting){
+					if(ae_target_lum && (ISP_ALG_SINGLE == cxt->is_multi_mode)){
 						ISP_LOGD("1. exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 						cmr_u32 tmp_gain = 0;
 						cxt->mode_switch[last_app_mode].lum = cxt->mode_switch[last_app_mode].lum ? cxt->mode_switch[last_app_mode].lum : 1;
@@ -4479,9 +4475,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}else if(CAMERA_MODE_SLOWMOTION == cxt->app_mode){
 			fps_range.min = cxt->cur_status.snr_max_fps;
 			fps_range.max = cxt->cur_status.snr_max_fps;
-		}else if(AE_WORK_MODE_VIDEO == cxt->cur_status.settings.work_mode ){
-			fps_range.min = cxt->fps_range.max;
-			fps_range.max = cxt->fps_range.max;
 		}else{
 			fps_range.min = cxt->fps_range.min;
 			fps_range.max = cxt->fps_range.max;
