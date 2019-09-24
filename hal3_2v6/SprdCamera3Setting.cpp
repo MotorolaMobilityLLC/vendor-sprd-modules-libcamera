@@ -4976,16 +4976,16 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     else {
         // s_setting[mCameraId].flashInfo.state = mCameraId == 0 ?
         // ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
-        if (mCameraId == 0 || mCameraId == 2) {
+        if (mCameraId == 0) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
-            if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
-                !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
-                s_setting[mCameraId].flashInfo.state =
-                    ANDROID_FLASH_STATE_UNAVAILABLE;
-            else
+            if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "led") ||
+                !strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))
                 s_setting[mCameraId].flashInfo.state =
                     ANDROID_FLASH_STATE_READY;
+            else
+                s_setting[mCameraId].flashInfo.state =
+                    ANDROID_FLASH_STATE_UNAVAILABLE;
         } else {
             s_setting[mCameraId].flashInfo.state =
                 ANDROID_FLASH_STATE_UNAVAILABLE;
