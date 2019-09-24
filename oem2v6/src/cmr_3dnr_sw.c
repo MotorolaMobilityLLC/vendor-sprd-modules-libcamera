@@ -449,7 +449,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
     isp_cxt = (struct isp_context *)&(cam_cxt->isp_cxt);
-    if(cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ){
+    if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
 
         buf_size = threednr_handle->width * threednr_handle->height * 3 / 2;
         buf_num = 1;
@@ -538,8 +538,12 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
              sensor_id, param_3dnr_index, param.SearchWindow_x,
              param.SearchWindow_y, param.threthold[3][2]);
 
-    threednr_set_platform_flag(SPECIAL);
-
+    //due to gpu difference,sharkle need set 0
+    if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+        threednr_set_platform_flag(SPECIAL);
+    } else {
+        threednr_set_platform_flag(0);
+    }
     ret = threednr_init(&param);
     if (ret < 0) {
         CMR_LOGE("Fail to call threednr_init");
