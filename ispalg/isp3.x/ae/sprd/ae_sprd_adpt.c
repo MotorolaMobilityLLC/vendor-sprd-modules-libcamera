@@ -3577,12 +3577,14 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 
 		rtn = ae_get_bv_by_lum_new(cxt, &bv);
 
-		if (bv <= cxt->flash_thrd.thd_down && cxt->last_enable)
+		if (bv <= cxt->flash_thrd.thd_down && cxt->last_enable && (cxt->sync_cur_result.cur_lum < 200))
 			*flash_eb = 1;
 		else if (bv > cxt->flash_thrd.thd_up)
 			*flash_eb = 0;
+		else
+			*flash_eb = 0;
 
-		ISP_LOGV("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d", *flash_eb, bv, cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up);
+		ISP_LOGD("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d", *flash_eb, bv, cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up);
 	}
 	return rtn;
 }
