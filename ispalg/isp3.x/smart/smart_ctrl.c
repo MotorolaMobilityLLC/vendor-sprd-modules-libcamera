@@ -982,6 +982,8 @@ static const char *smart_ctl_find_block_name(cmr_u32 smart_id)
 	smart_id_tmp = smart_id;
 	if (smart_id_tmp >= ISP_SMART_MAX)
 		smart_id_tmp = ISP_SMART_MAX;
+	if (smart_id_tmp >= (sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0])))
+		smart_id_tmp = sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0]);
 
 	return s_smart_block_name[smart_id_tmp];
 }

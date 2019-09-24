@@ -979,12 +979,14 @@ static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, struct smar
 
 static const char *smart_ctl_find_block_name(cmr_u32 smart_id)
 {
-	cmr_u32 smard_id_tmp = 0;
-	smard_id_tmp = smart_id;
-	if (smard_id_tmp >= ISP_SMART_MAX)
-		smard_id_tmp = ISP_SMART_MAX;
+	cmr_u32 smart_id_tmp = 0;
+	smart_id_tmp = smart_id;
+	if (smart_id_tmp >= ISP_SMART_MAX)
+		smart_id_tmp = ISP_SMART_MAX;
+	if (smart_id_tmp >= (sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0])))
+		smart_id_tmp = sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0]);
 
-	return s_smart_block_name[smard_id_tmp];
+	return s_smart_block_name[smart_id_tmp];
 }
 
 static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param, struct smart_calc_result *result, char *debug_buf,smart_gamma_debuginfo smt_dbg )
