@@ -425,6 +425,11 @@ ifeq ($(strip $(TARGET_BOARD_MULTICAMERA_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_MULTICAMERA_SUPPORT
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SUPPORT)),true)
+#max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
+LOCAL_CFLAGS += -DCONFIG_PORTRAIT_SUPPORT
+endif
+
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),sbs)
 LOCAL_CFLAGS += -DCONFIG_SIDEBYSIDE_SUPPORT
 endif

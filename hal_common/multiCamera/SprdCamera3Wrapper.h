@@ -77,6 +77,9 @@
 #ifdef CONFIG_3DFACE_SUPPORT
 #include "SprdCamera33dFace.h"
 #endif
+#ifdef CONFIG_PORTRAIT_SUPPORT
+#include "SprdCamera3Portrait.h"
+#endif
 
 namespace sprdcamera {
 
@@ -129,6 +132,9 @@ class SprdCamera3Wrapper {
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT
     SprdCamera3Multi *m3dFace;
+#endif
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    SprdCamera3Portrait *mPortrait;
 #endif
 };
 };

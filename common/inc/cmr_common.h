@@ -1859,6 +1859,7 @@ typedef enum {
     MODE_TUNING,
     MODE_3D_FACE,
     MODE_MULTI_CAMERA,
+    MODE_PORTRAIT,
     MODE_CAMERA_MAX
 } multiCameraMode;
 
@@ -1885,6 +1886,7 @@ typedef enum {
     SPRD_3D_VIDEO_ID,
     SPRD_ULTRA_WIDE_ID = 35,
     SPRD_MULTI_CAMERA_ID,
+    SPRD_PORTRAIT_ID = 38,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 

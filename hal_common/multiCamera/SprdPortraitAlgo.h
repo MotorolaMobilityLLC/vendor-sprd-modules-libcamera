@@ -1,5 +1,5 @@
-#ifndef SPRDBOKEHALGO_H_HEADER
-#define SPRDBOKEHALGO_H_HEADER
+#ifndef SPRDPORTRAITALGO_H_HEADER
+#define SPRDPORTRAITALGO_H_HEADER
 
 #include "./spreadst/sprd_depth_configurable_param.h"
 #include "IBokehAlgo.h"
@@ -7,10 +7,10 @@
 
 namespace sprdcamera {
 
-class SprdBokehAlgo : public IBokehAlgo {
+class SprdPortraitAlgo : public IBokehAlgo {
   public:
-    SprdBokehAlgo();
-    ~SprdBokehAlgo();
+    SprdPortraitAlgo();
+    ~SprdPortraitAlgo();
     int initParam(BokehSize *size, OtpData *data, bool galleryBokeh);
 
     void getVersionInfo();
@@ -78,4 +78,4 @@ class SprdBokehAlgo : public IBokehAlgo {
 };
 }
 
-#endif /* IBOKEHALGO_H_HEADER*/
+#endif

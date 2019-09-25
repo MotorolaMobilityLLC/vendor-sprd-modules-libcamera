@@ -46,6 +46,10 @@ const multiCameraMode available_mutiCamera_mode[MODE_CAMERA_MAX] = {
     MODE_BOKEH,
 #endif
 
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    MODE_PORTRAIT,
+#endif
+
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     MODE_SOFY_OPTICAL_ZOOM,
 #endif
@@ -70,7 +74,9 @@ const muti_camera_mode_map_t cameraid_map_mode[MODE_CAMERA_MAX] = {
     {SPRD_DUAL_FACEID_UNLOCK_ID, MODE_DUAL_FACEID_UNLOCK},
     {SPRD_SOFY_OPTICAL_ZOOM_ID, MODE_SOFY_OPTICAL_ZOOM},
     {SPRD_3D_FACE_ID, MODE_3D_FACE},
-    {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA}};
+    {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA},
+    {SPRD_PORTRAIT_ID, MODE_PORTRAIT}};
+
 
 int SprdCamera3Wrapper::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
 int SprdCamera3Wrapper::mPhysicalSensorNum = CAMERA_SENSOR_NUM;
@@ -108,6 +114,9 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
 #endif
 #ifdef CONFIG_3DFACE_SUPPORT
     SprdCamera33dFace::getCamera3dFace(&m3dFace);
+#endif
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    SprdCamera3Portrait::getCameraPortrait(&mPortrait);
 #endif
 }
 
@@ -164,7 +173,6 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
-    HAL_LOGI("id= %d", atoi(id));
     switch (getMultiCameraMode(atoi(id))) {
 #ifdef CONFIG_STEREOVIDEO_SUPPORT
     case MODE_3D_VIDEO:
@@ -232,6 +240,11 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 #ifdef CONFIG_3DFACE_SUPPORT
     case MODE_3D_FACE:
         rc = m3dFace->camera_device_open(module, id, hw_device, m3dFace);
+        break;
+#endif
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    case MODE_PORTRAIT:
+        rc = mPortrait->camera_device_open(module, id, hw_device);
         break;
 #endif
     default:
@@ -314,6 +327,11 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #ifdef CONFIG_3DFACE_SUPPORT
     case MODE_3D_FACE:
         rc = m3dFace->get_camera_info(camera_id, info, m3dFace);
+        break;
+#endif
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    case MODE_PORTRAIT:
+        rc = mPortrait->get_camera_info(camera_id, info);
         break;
 #endif
     default:

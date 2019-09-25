@@ -95,6 +95,16 @@ class IBokehAlgo {
     virtual int getGDepthInfo(void *para1, gdepth_outparam *para2) = 0;
 
     virtual int setUserset(char *ptr, int size) = 0;
+
+    virtual int capPortraitDepthRun(void *para1, void *para2, void *para3,
+                                    void *para4, void *input_buf1_addr,
+                                    void *output_buf, int vcmCurValue,
+                                    int vcmUp, int vcmDown) = 0;
+
+    virtual int deinitPortrait() = 0;
+
+    virtual int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
+                                   bool galleryBokeh) = 0;
 };
 }
 

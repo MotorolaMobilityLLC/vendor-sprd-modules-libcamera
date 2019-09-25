@@ -69,6 +69,12 @@ LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libSegLite
 #LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SUPPORT)),true)
+LOCAL_SHARED_LIBRARIES += libsprd_portrait_cap libsprddepth libbokeh_depth libSegLite
+#else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
+#LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
+endif
+
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
 else ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)
