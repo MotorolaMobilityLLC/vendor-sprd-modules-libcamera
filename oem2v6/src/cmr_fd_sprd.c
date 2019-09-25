@@ -952,7 +952,7 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
 
     // Try to correct the face rectangle by the face shape which is often more
     // accurate
-    if (i_faceattr_arr != NULL) {
+    /*if (i_faceattr_arr != NULL) {
         // find the face shape with the same face ID
         const cmr_int shape_score_thr = 200;
         cmr_int i = 0;
@@ -1008,11 +1008,11 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
                 trust_curr_face = 1;
             }
         }
-    }
+    }*/
 
     // Try to keep the face rectangle to be the same with the previous
     // frame (for stable looks)
-    overlap_thr = trust_curr_face ? 90 : 96;
+    overlap_thr = 90;
     for (prevIdx = 0; prevIdx < i_face_area_prev->face_count; prevIdx++) {
         const struct face_finder_data *prev_face =
             &(i_face_area_prev->range[prevIdx]);
