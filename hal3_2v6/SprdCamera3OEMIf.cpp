@@ -7183,8 +7183,7 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     SPRD_DEF_Tag sprddefInfo;
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
+         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -8264,7 +8263,6 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *fd++ = m3DNRPrevHeapReserverd[i]->fd;
         }
     } else if (type == CAMERA_PREVIEW_SCALE_3DNR){
-        HAL_LOGI("malloc for CAMERA_PREVIEW_SCALE_3DNR begin");
         for (i = 0; i < sum; i++) {
           if (m3DNRPrevScaleHeapReserverd[i] == NULL) {
               memory = allocCameraMem(size, 1, true);
@@ -8486,6 +8484,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_PREVIEW_DEPTH == type || CAMERA_PREVIEW_SW_OUT == type ||
                CAMERA_4IN1_PROC == type || CAMERA_CHANNEL_0_RESERVED == type ||
                CAMERA_ISP_ANTI_FLICKER == type ||
+               CAMERA_PREVIEW_3DNR == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type ||
                CAMERA_CHANNEL_1_RESERVED == type ||
                CAMERA_CHANNEL_2_RESERVED == type ||
                CAMERA_CHANNEL_3_RESERVED == type ||
