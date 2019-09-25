@@ -3192,8 +3192,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
-			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)
-			&& (0 == s_bakup_exp_param[cxt->camera_id].is_lock)) {
+			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)) {
 			src_exp.exp_line = s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			src_exp.exp_time = s_bakup_exp_param[cxt->camera_id].exp_time;
 			src_exp.gain = s_bakup_exp_param[cxt->camera_id].gain;
