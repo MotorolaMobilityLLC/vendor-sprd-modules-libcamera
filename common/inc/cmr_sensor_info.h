@@ -347,11 +347,53 @@ struct sensor_dual_otp_info {
     struct sensor_otp_section_info *slave_spw_info;
 };
 
+struct sensor_triple_otp_info {
+	cmr_u8 triple_flag; /*multicam flag, bokeh-1, wt-2, spw-3, stl3d-4*/
+	struct sensor_data_info data_3d;
+
+	struct sensor_otp_section_info *master_module_info;
+	struct sensor_otp_section_info *master_af_info;
+	struct sensor_otp_section_info *master_iso_awb_info;
+	struct sensor_otp_section_info *master_optical_center_info;
+	struct sensor_otp_section_info *master_lsc_info;
+	struct sensor_otp_section_info *master_pdaf_info;
+	struct sensor_otp_section_info *master_spc_info;
+	struct sensor_otp_section_info *master_ae_info;
+	struct sensor_otp_section_info *master_xtalk_4in1_info;
+	struct sensor_otp_section_info *master_dpc_4in1_info;
+	struct sensor_otp_section_info *master_spw_info;
+
+	struct sensor_otp_section_info *slave0_module_info;
+	struct sensor_otp_section_info *slave0_af_info;
+	struct sensor_otp_section_info *slave0_iso_awb_info;
+	struct sensor_otp_section_info *slave0_optical_center_info;
+	struct sensor_otp_section_info *slave0_lsc_info;
+	struct sensor_otp_section_info *slave0_pdaf_info;
+	struct sensor_otp_section_info *slave0_spc_info;
+	struct sensor_otp_section_info *slave0_ae_info;
+	struct sensor_otp_section_info *slave0_xtalk_4in1_info;
+	struct sensor_otp_section_info *slave0_dpc_4in1_info;
+	struct sensor_otp_section_info *slave0_spw_info;
+
+	struct sensor_otp_section_info *slave1_module_info;
+	struct sensor_otp_section_info *slave1_af_info;
+	struct sensor_otp_section_info *slave1_iso_awb_info;
+	struct sensor_otp_section_info *slave1_optical_center_info;
+	struct sensor_otp_section_info *slave1_lsc_info;
+	struct sensor_otp_section_info *slave1_pdaf_info;
+	struct sensor_otp_section_info *slave1_spc_info;
+	struct sensor_otp_section_info *slave1_ae_info;
+	struct sensor_otp_section_info *slave1_xtalk_4in1_info;
+	struct sensor_otp_section_info *slave1_dpc_4in1_info;
+	struct sensor_otp_section_info *slave1_spw_info;
+};
+
 struct sensor_otp_cust_info {
     struct sensor_data_info total_otp;
     enum otp_vendor_type otp_vendor;
     struct sensor_single_otp_info single_otp;
     struct sensor_dual_otp_info dual_otp;
+	struct sensor_triple_otp_info triple_otp;
 };
 
 enum sensor_pdaf_type {

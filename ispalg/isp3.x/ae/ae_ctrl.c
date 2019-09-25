@@ -403,9 +403,10 @@ static cmr_s32 __ae_set_rgb_gain(cmr_handle handler, double gain, cmr_u32 flag)
 		else if(1 == flag)
 			cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN_FOR_4IN1, (void *)&gain_info, NULL);
 		else if(2 == flag)
-			cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN_SLAVE, (void *)&gain_info, NULL);
+			cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN_SLAVE0, (void *)&gain_info, NULL);
+		else if(3 == flag)
+			cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_RGB_GAIN_SLAVE1, (void *)&gain_info, NULL);
 	}
-
 	return rtn;
 }
 
@@ -419,10 +420,16 @@ static cmr_s32 ae_set_rgb_gain_4in1(cmr_handle handler, double gain)
 	return __ae_set_rgb_gain(handler, gain, 1);
 }
 
-static cmr_s32 ae_set_rgb_gain_slave(cmr_handle handler, double gain)
+static cmr_s32 ae_set_rgb_gain_slave0(cmr_handle handler, double gain)
 {
 	return __ae_set_rgb_gain(handler, gain, 2);
 }
+
+static cmr_s32 ae_set_rgb_gain_slave1(cmr_handle handler, double gain)
+{
+	return __ae_set_rgb_gain(handler, gain, 3);
+}
+
 static cmr_s32 ae_set_wbc_gain(cmr_handle handler, struct ae_alg_rgb_gain *awb_gain)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -477,7 +484,7 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to deinit");
-		goto exit;
+		goto aectrl_deinit_adpt_exit;
 	}
 
 	lib_ptr = &cxt_ptr->work_lib;
@@ -488,7 +495,7 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 		ISP_LOGI("fail to do adpt_deinit");
 	}
 
-  exit:
+  aectrl_deinit_adpt_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -500,7 +507,7 @@ static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_io_ctrl_cmd cmd
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param");
-		goto exit;
+		goto aectrl_ioctrl_exit;
 	}
 
 	lib_ptr = &cxt_ptr->work_lib;
@@ -510,7 +517,7 @@ static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_io_ctrl_cmd cmd
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 
-  exit:
+  aectrl_ioctrl_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -522,7 +529,7 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param, param is NULL!");
-		goto exit;
+		goto aectrl_process_exit;
 	}
 
 	lib_ptr = &cxt_ptr->work_lib;
@@ -532,7 +539,7 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 
-  exit:
+  aectrl_process_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -544,7 +551,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 
 	if (!message || !p_data) {
 		ISP_LOGE("fail to check param");
-		goto exit;
+		goto aectrl_ctrl_thr_proc_exit;
 	}
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
@@ -567,7 +574,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 		break;
 	}
 
-  exit:
+  aectrl_ctrl_thr_proc_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -580,14 +587,14 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
-		goto exit;
+		goto aectrl_create_thread_exit;
 	}
 	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "aectrl");
 	if (CMR_MSG_SUCCESS != rtn) {
 		ISP_LOGE("fail to set aectrl name");
 		rtn = CMR_MSG_SUCCESS;
 	}
-  exit:
+  aectrl_create_thread_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -599,7 +606,7 @@ static cmr_int aectrl_destroy_thread(struct aectrl_cxt *cxt_ptr)
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check input param");
 		rtn = ISP_ERROR;
-		goto exit;
+		goto aectrl_destroy_thread_exit;
 	}
 
 	if (cxt_ptr->thr_handle) {
@@ -610,7 +617,7 @@ static cmr_int aectrl_destroy_thread(struct aectrl_cxt *cxt_ptr)
 			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
-  exit:
+  aectrl_destroy_thread_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -622,16 +629,23 @@ static cmr_int aectrl_init_lib(struct aectrl_cxt *cxt_ptr, struct ae_init_in *in
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param,param is NULL!");
-		goto exit;
+		goto aectrl_init_lib_exit;
+	} else {
+		ISP_LOGE("ae cxt: %p\n", cxt_ptr);
 	}
 
 	lib_ptr = &cxt_ptr->work_lib;
-	if (lib_ptr->adpt_ops->adpt_init) {
-		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
+	if (lib_ptr->adpt_ops) {
+		if (lib_ptr->adpt_ops->adpt_init) {
+			lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
+		} else {
+			ISP_LOGW("adpt_ops_init fun is NULL");
+		}
 	} else {
-		ISP_LOGI("adpt_init fun is NULL");
+		ISP_LOGW("adpt_ops fun is NULL");
 	}
-  exit:
+
+  aectrl_init_lib_exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -642,18 +656,19 @@ static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *i
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check param,param is NULL!");
-		goto exit;
+		goto aectrl_init_adpt_exit;
 	}
 
 	/* find vendor adpter */
 	rtn = adpt_get_ops(ADPT_LIB_AE, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
 		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
-		goto exit;
+		goto aectrl_init_adpt_exit;
 	}
 
 	rtn = aectrl_init_lib(cxt_ptr, in_ptr, out_ptr);
-  exit:
+
+  aectrl_init_adpt_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
@@ -678,8 +693,8 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in
 		rtn = aectrl_ioctrl(cxt_ptr, cmd, in_ptr, out_ptr);
 	}
 
-  exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
+
 	return rtn;
 }
 
@@ -711,14 +726,15 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_stats_monitor = ae_set_stats_monitor;
 	input_ptr->isp_ops.set_blk_num = ae_set_blk_num;
 	input_ptr->isp_ops.set_rgb_gain_4in1 = ae_set_rgb_gain_4in1;
-	input_ptr->isp_ops.set_rgb_gain_slave = ae_set_rgb_gain_slave;
+	input_ptr->isp_ops.set_rgb_gain_slave0 = ae_set_rgb_gain_slave0;
+	input_ptr->isp_ops.set_rgb_gain_slave1 = ae_set_rgb_gain_slave1;
 	input_ptr->isp_ops.set_bayer_hist = ae_set_bayer_hist;
-	
+
 	cxt_ptr = (struct aectrl_cxt *)calloc(1,sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("fail to create ae ctrl context!");
 		rtn = ISP_ALLOC_ERROR;
-		goto exit;
+		goto ae_ctrl_init_exit;
 	}
 
 	input_ptr->isp_ops.isp_handler = (cmr_handle) cxt_ptr;
@@ -727,7 +743,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 
 	rtn = aectrl_create_thread(cxt_ptr);
 	if (rtn) {
-		goto exit;
+		goto ae_ctrl_init_exit;
 	}
 
 	ae_get_rgb_gain(cxt_ptr, &cxt_ptr->bakup_rgb_gain);
@@ -747,7 +763,8 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 
   error_adpt_init:
 	aectrl_destroy_thread(cxt_ptr);
-  exit:
+
+  ae_ctrl_init_exit:
 	if (cxt_ptr) {
 		free((cmr_handle) cxt_ptr);
 		cxt_ptr = NULL;
@@ -774,16 +791,16 @@ cmr_int ae_ctrl_deinit(cmr_handle * handle_ae)
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 	if (rtn) {
 		ISP_LOGE("fail to send msg to main thr %ld", rtn);
-		goto exit;
+		goto ae_ctrl_deinit_exit;
 	}
 
 	rtn = aectrl_destroy_thread(cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to destroy aectrl thread %ld", rtn);
-		goto exit;
+		goto ae_ctrl_deinit_exit;
 	}
 
-  exit:
+  ae_ctrl_deinit_exit:
 	if (cxt_ptr) {
 		free((cmr_handle) cxt_ptr);
 		*handle_ae = NULL;
@@ -806,7 +823,7 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 	if (!message.data) {
 		ISP_LOGE("fail to malloc msg");
 		rtn = ISP_ALLOC_ERROR;
-		goto exit;
+		goto ae_ctrl_process_exit;
 	}
 	memcpy(message.data, (cmr_handle) in_ptr, sizeof(struct ae_calc_in));
 	message.alloc_flag = 1;
@@ -819,10 +836,10 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in * in_ptr, struct
 		ISP_LOGE("fail to send msg to main thr %ld", rtn);
 		if (message.data)
 			free(message.data);
-		goto exit;
+		goto ae_ctrl_process_exit;
 	}
 
-  exit:
+  ae_ctrl_process_exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }

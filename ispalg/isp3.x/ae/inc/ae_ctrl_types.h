@@ -481,6 +481,8 @@ extern "C" {
 		 cmr_s32(*set_blk_num) (cmr_handle handler, struct ae_size *blk_num);
 		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);
 		 cmr_s32(*set_rgb_gain_slave) (cmr_handle handler, double rgb_gain_coeff);
+		 cmr_s32(*set_rgb_gain_slave0) (cmr_handle handler, double rgb_gain_coeff);
+		cmr_s32(*set_rgb_gain_slave1) (cmr_handle handler, double rgb_gain_coeff);
  		 cmr_s32(*set_bayer_hist) (cmr_handle handler, struct ae_bayer_hist_cfg * in_param);
 	};
 

@@ -260,6 +260,8 @@ extern "C" {
 		 * AE write/effective E&G queue
 		 */
 		cmr_handle seq_handle;
+		cmr_handle seq_handle_s0;
+		cmr_handle seq_handle_s1;
 		cmr_s8 exp_skip_num;
 		cmr_s8 gain_skip_num;
 		cmr_s16 sensor_gain_precision;
@@ -324,8 +326,8 @@ extern "C" {
 		 */
 		cmr_u8 is_master;
 		cmr_u32 is_multi_mode;
+		cmr_u8 sensor_role;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
-		struct ae_lib_frm_sync_in ae_sync_info[2];
 		/*
 		 * for binning facter = 2
 		 */
@@ -385,10 +387,14 @@ extern "C" {
 		cmr_u32 threednr_mode;
 		cmr_u8 led_state;
 
-		cmr_u32 *slave_aem_stat;
+		cmr_u32 *slave0_aem_stat;
+		cmr_u32 *slave1_aem_stat;
 		cmr_u32 *tune_buf;
-		cmr_u32 end_id;
+		struct ae_frm_sync_param sync_param[4];
 		cmr_u8 mainFlashEn;
+		cmr_u8 calcFirstFlag;
+		cmr_u32 end_id;
+
 	};
 
 #endif
