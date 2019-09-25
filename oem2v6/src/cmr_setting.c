@@ -2682,7 +2682,8 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
         CMR_RTN_IF_ERR(ret);
     }
 
-    if (invalid_word != hal_param->hal_common.exposure_time) {
+    if (invalid_word != hal_param->hal_common.exposure_time &&
+        hal_param->hal_common.ae_mode == 0) {
         cmd_param.cmd_type_value = hal_param->hal_common.exposure_time;
         ret = setting_set_exposure_time(cpt, &cmd_param);
         CMR_RTN_IF_ERR(ret);
