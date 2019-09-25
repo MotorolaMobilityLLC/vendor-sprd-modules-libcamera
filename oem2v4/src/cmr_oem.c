@@ -3179,6 +3179,9 @@ int32_t camera_isp_flash_set_charge(void *handler,
     cfg.real_cell.element[0].val = element->val;
     cfg.io_id = FLASH_IOID_SET_CHARGE;
     cfg.flash_idx = cxt->face_type % 2;
+    cfg.real_cell.element[0].brightness = element->brightness;
+    cfg.real_cell.element[0].color_temp = element->color_temp;
+    cfg.real_cell.element[0].bg_color = element->bg_color;
     CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type,
              element->index);
     if (camera_front_lcd_flash_activie(cfg.flash_idx))
