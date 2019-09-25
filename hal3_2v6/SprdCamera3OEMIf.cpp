@@ -3894,7 +3894,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                  buff_vir, frame_num, buffer_timestamp);
 
         if (!isCapturing() && mIsPowerhintWait) {
-            if (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT) {
+            if ((frame_num > mStartFrameNum) &&
+                (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
                 if (getMultiCameraMode() == MODE_BLUR ||
                     getMultiCameraMode() == MODE_BOKEH ||
                     mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
