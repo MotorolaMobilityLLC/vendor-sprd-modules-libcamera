@@ -212,24 +212,8 @@ struct ae_exp_gain_table_2 {
 };
 
 //AE 3.0
-struct ae_scence_info_header_2 {
-	cmr_u8 enable;
-	cmr_u8 scene_mode;
-	cmr_u8 iso_index;
-	cmr_u8 ev_offset;
-	cmr_u16 target_lum;
-	cmr_u8 target_zone_in;
-	cmr_u8 target_zone_out;
-	cmr_u16 max_fps;
-	cmr_u16 min_fps;
-	cmr_u8 weight_mode;
-	cmr_u8 table_enable;
-	cmr_u8 cvg_speed;/*include convergent speed and trigger sensitivity*/
-	cmr_u8 reserved[9];
-};
-
 struct ae_scene_info_2 {
-	struct ae_scence_info_header_2 ae_header;
+	cmr_u16 ae_header[12];
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM];
 };
 
