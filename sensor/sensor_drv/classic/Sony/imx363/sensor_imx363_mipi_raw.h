@@ -288,11 +288,7 @@ static SENSOR_STATIC_INFO_T s_imx363_static_info[VENDOR_NUM] = {
                      .focal_length = 352,
                      .max_fps = 0,
                      .max_adgain = 16 * 16,
-#ifdef SHARKL5_OIS_IMX363
                      .ois_supported = 1,
-#else
-                     .ois_supported = 0,
-#endif
                      .pdaf_supported = 4,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,

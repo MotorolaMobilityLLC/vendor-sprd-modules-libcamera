@@ -359,11 +359,7 @@ const SENSOR_MATCH_T back_sensor_infor_tab[] = {
     {MODULE_SUNNY, "imx362", &g_imx362_mipi_raw_info, {&lc898213_drv_entry, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef IMX363
-#ifdef SHARKL5_OIS_IMX363
     {MODULE_SUNNY, "imx363", &g_imx363_mipi_raw_info, {&lc898213_drv_entry, 0}, {NULL, 0, 0, 0}},
-#else
-    {MODULE_SUNNY, "imx363", &g_imx363_mipi_raw_info, {&dw9800_drv_entry, 0}, {&general_otp_entry, 0xA0, DUAL_CAM_ONE_EEPROM, 8192}},
-#endif
 #endif
 #ifdef IMX386
     {MODULE_SUNNY, "imx386", &g_imx386_mipi_raw_info, {&vcm_ak7371_drv_entry, 0}, {NULL, 0, 0, 0}},
