@@ -106,6 +106,10 @@ cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
 cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg);
 cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
                              struct buffer_cfg *buf_cfg);
+cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle,
+                                  struct sprd_img_vcm_param *info);
+cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line);
+cmr_int cmr_grab_set_pulse_log(cmr_handle grab_handle, cmr_u32 enable);
 
 #ifdef CONFIG_CAMERA_OFFLINE
 cmr_int cmr_grab_dcam_size(cmr_handle grab_handle,

@@ -311,6 +311,56 @@ cmr_int cmr_grab_set_security(cmr_handle grab_handle,
     return ret;
 }
 
+cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line) {
+    cmr_int ret = 0;
+    cmr_u32 is_on;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    pthread_mutex_lock(&p_grab->status_mutex);
+    is_on = p_grab->is_on;
+    pthread_mutex_unlock(&p_grab->status_mutex);
+    if (is_on) {
+        ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_PULSE_LINE, &line);
+        if (ret) {
+            CMR_LOGE("error");
+        }
+    }
+
+    return ret;
+}
+
+cmr_int cmr_grab_set_pulse_log(cmr_handle grab_handle, cmr_u32 enable) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_VCM_LOG, &enable);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+
+cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle,
+                                  struct sprd_img_vcm_param *info) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    ret = ioctl(p_grab->fd, SPRD_ISP_IO_SET_NEXT_VCM_POS, info);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    return ret;
+}
+
 void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb grab_event_cb) {
     struct cmr_grab *p_grab;
 

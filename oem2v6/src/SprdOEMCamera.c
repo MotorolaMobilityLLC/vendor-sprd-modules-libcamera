@@ -427,6 +427,23 @@ exit:
     return ret;
 }
 
+cmr_int camera_get_sensor_trim2(cmr_handle camera_handle,
+                                struct img_rect *sn_trim) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!camera_handle || !sn_trim) {
+        CMR_LOGE("error 0x%lx 0x%lx", (cmr_uint)camera_handle,
+                 (cmr_uint)sn_trim);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_get_senor_mode_trim2(camera_handle, sn_trim);
+
+exit:
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
 cmr_uint camera_get_preview_rot_angle(cmr_handle camera_handle) {
     cmr_uint ret = CMR_CAMERA_SUCCESS;
 
@@ -1291,7 +1308,7 @@ static oem_ops_t oem_module_ops = {
     camera_get_redisplay_data, camera_is_change_size,
     camera_get_postprocess_capture_size, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
-    camera_get_sensor_trim, NULL, camera_get_preview_rot_angle,
+    camera_get_sensor_trim, camera_get_sensor_trim2, camera_get_preview_rot_angle,
     camera_fd_enable, camera_flip_enable, camera_fd_start,
     camera_is_need_stop_preview, camera_takepicture_process,
     camera_get_size_align_page, camera_fast_ctrl, camera_start_preflash,

@@ -3270,24 +3270,101 @@ int32_t camera_isp_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr,
     return ret;
 }
 
+
+cmr_s32 camera_get_pos_info(cmr_handle oem_handle,
+                            struct sensor_vcm_info *info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_context *sn_cxt = NULL;
+    struct sensor_exp_info *sensor_info_ptr;
+    struct sensor_raw_ioctrl *ioctrl_ptr;
+
+    sn_cxt = &(cxt->sn_cxt);
+
+    ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id,
+                              &(sn_cxt->sensor_info));
+    if (ret) {
+        CMR_LOGE("fail to get sensor info ret %ld", ret);
+        return ret;
+    }
+
+    sensor_info_ptr = &(sn_cxt->sensor_info);
+    CHECK_HANDLE_VALID(sensor_info_ptr);
+    ioctrl_ptr = sensor_info_ptr->raw_info_ptr->ioctrl_ptr;
+    CHECK_HANDLE_VALID(ioctrl_ptr);
+
+    if (sensor_info_ptr->raw_info_ptr &&
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr &&
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr->get_pos) {
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr->get_pos(
+            ioctrl_ptr->caller_handler, info);
+    }
+
+    return ret;
+}
+
 cmr_s32 camera_isp_set_pulse_line(void *handler, cmr_u32 line) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+
+#ifdef CONFIG_ISP_2_3
+    struct camera_context *cxt = (struct camera_context *)handler;
+
+    ret = cmr_grab_set_pulse_line(cxt->grab_cxt.grab_handle, line);
+    return ret;
+#else
     CMR_LOGI("sharkl5 TBD");
     return ret;
+#endif
 }
 
 cmr_s32 camera_isp_set_next_vcm_pos(void *handler, cmr_s32 pos) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("sharkl5 TBD");
+#ifdef CONFIG_ISP_2_3
+    struct camera_context *cxt = (struct camera_context *)handler;
+    struct sensor_vcm_info info;
+    struct sprd_img_vcm_param vcm_param;
+
+    cmr_bzero(&info, sizeof(info));
+    cmr_bzero(&vcm_param, sizeof(vcm_param));
+
+    if (0 <= pos) {
+        info.pos = pos;
+        camera_get_pos_info(handler, &info);
+        vcm_param.next_vcm_pos = pos;
+        vcm_param.vcm_i2c_count = info.cmd_len;
+        memcpy(vcm_param.vcm_i2c_data, info.cmd_val, info.cmd_len);
+        vcm_param.vcm_slave_addr = info.slave_addr;
+
+        if ((0 == info.slave_addr) && (0 == info.cmd_len)) {
+            CMR_LOGE("warning! fail to get vcm info");
+            goto exit;
+        }
+    } else {
+        vcm_param.next_vcm_pos = pos;
+    }
+
+    ret = cmr_grab_set_next_vcm_pos(cxt->grab_cxt.grab_handle, &vcm_param);
 exit:
     return ret;
+#else
+    CMR_LOGI("sharkl5 TBD");
+    return ret;
+#endif
 }
 
 cmr_s32 camera_isp_set_pulse_log(void *handler, cmr_u32 enable) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+
+#ifdef CONFIG_ISP_2_3
+    struct camera_context *cxt = (struct camera_context *)handler;
+
+    ret = cmr_grab_set_pulse_log(cxt->grab_cxt.grab_handle, enable);
+    return ret;
+#else
     CMR_LOGI("sharkl5 TBD");
     return ret;
+#endif
 }
 
 cmr_int camera_isp_init(cmr_handle oem_handle) {
@@ -10106,6 +10183,77 @@ cmr_int camera_get_sensor_mode_trim(cmr_handle oem_handle,
         sn_trim->width = sensor_info->mode_info[sensor_mode].trim_width;
         sn_trim->height = sensor_info->mode_info[sensor_mode].trim_height;
     }
+    CMR_LOGD("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
+             sn_trim->width, sn_trim->height);
+exit:
+    if (sensor_info) {
+        free(sensor_info);
+        sensor_info = NULL;
+    }
+    CMR_LOGV("done %ld", ret);
+    return ret;
+}
+
+cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
+                                    struct img_rect *sn_trim) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct preview_context *prev_cxt = &cxt->prev_cxt;
+    struct sensor_exp_info *sensor_info = NULL;
+    struct sensor_mode_info *sensor_mode_info = NULL;
+    struct sprd_dcam_path_size dcam_cfg;
+    cmr_u32 sensor_mode = SENSOR_MODE_MAX;
+
+    if (!oem_handle || !sn_trim) {
+        CMR_LOGE("error param");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    sensor_info =
+        (struct sensor_exp_info *)malloc(sizeof(struct sensor_exp_info));
+    if (!sensor_info) {
+        CMR_LOGE("No mem!");
+        ret = CMR_CAMERA_NO_MEM;
+        goto exit;
+    }
+    ret = camera_get_sensor_info(cxt, cxt->camera_id, sensor_info);
+    if (ret) {
+        CMR_LOGE("get_sensor info failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                              &sensor_mode);
+    CMR_LOGD("camera_id =%d sns mode =%d", cxt->camera_id, sensor_mode);
+    if (sensor_mode >= SENSOR_MODE_MAX) {
+        // note:cmr_sensor_get_mode would not set parameter.so sensor_mode
+        // ==SENSOR_MODE_MAX
+        // then mode_info[sensor_mode] would overflow.
+        CMR_LOGE("cmr_sensor_get_mode failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    sensor_mode_info = &sensor_info->mode_info[sensor_mode];
+    dcam_cfg.dcam_in_w = sensor_mode_info->trim_width;
+    dcam_cfg.dcam_in_h = sensor_mode_info->trim_height;
+    dcam_cfg.pre_dst_w = prev_cxt->size.width;
+    dcam_cfg.pre_dst_h = prev_cxt->size.height;
+    dcam_cfg.vid_dst_w = prev_cxt->actual_video_size.width;
+    dcam_cfg.vid_dst_h = prev_cxt->actual_video_size.height;
+
+    ret = camera_channel_dcam_size(oem_handle, &dcam_cfg);
+    if (ret) {
+        CMR_LOGE("get dcam output size failed.");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    sn_trim->width = dcam_cfg.dcam_out_w;
+    sn_trim->height = dcam_cfg.dcam_out_h;
+
     CMR_LOGD("sensor x=%d y=%d w=%d h=%d", sn_trim->start_x, sn_trim->start_y,
              sn_trim->width, sn_trim->height);
 exit:

@@ -454,6 +454,9 @@ cmr_int camera_get_sensor_mode_info(cmr_handle oem_handle,
 cmr_int camera_get_sensor_mode_trim(cmr_handle oem_handle,
                                     struct img_rect *sn_trim);
 
+cmr_int camera_get_senor_mode_trim2(cmr_handle oem_handle,
+                                    struct img_rect *sn_trim);
+
 cmr_uint camera_get_preview_angle(cmr_handle oem_handle);
 
 cmr_uint camera_get_exif_info(cmr_handle oem_handle,

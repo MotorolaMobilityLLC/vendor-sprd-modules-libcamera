@@ -88,6 +88,9 @@ cmr_int camera_get_sensor_info_for_raw(cmr_handle camera_handle,
 cmr_int camera_get_sensor_trim(cmr_handle camera_handle,
                                struct img_rect *sn_trim);
 
+cmr_int camera_get_sensor_trim2(cmr_handle camera_handle,
+                               struct img_rect *sn_trim);
+
 cmr_uint camera_get_preview_rot_angle(cmr_handle camera_handle);
 
 void camera_fd_enable(cmr_handle camera_handle, cmr_u32 is_enable);
