@@ -3133,7 +3133,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
     }
@@ -3761,7 +3761,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         construct_fb_level(&face_beauty, beautyLevels);
         do_face_beauty(&face_beauty, faceInfo.face_num);
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
-                        frame->width * frame->height * 3 / 2);
+                       frame->width * frame->height * 3 / 2);
     } else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME) {
         FACE_Tag faceInfo;
         mSetting->getFACETag(&faceInfo);
@@ -3800,7 +3800,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         construct_fb_level(&face_beauty, beautyLevels);
         do_face_beauty(&face_beauty, faceInfo.face_num);
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
-                         frame->width * frame->height * 3 / 2);
+                       frame->width * frame->height * 3 / 2);
     } else {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME) {
@@ -5376,7 +5376,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             mIsNeedFlashFired = *(uint8_t *)parm4;
         }
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW  ||
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
             mMultiCameraMode == MODE_BOKEH) {
             mIsNeedFlashFired = 0;
         }
@@ -6301,6 +6301,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t AfMode = 0;
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
 
+        if (mMultiCameraMode == MODE_3D_CALIBRATION &&
+            AfMode == CAMERA_FOCUS_MODE_MANUAL) {
+            AfMode = CAMERA_FOCUS_MODE_INFINITY;
+        }
+
         if (!mIsAutoFocus) {
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==
@@ -6659,18 +6664,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 #elif CONFIG_NIGHT_3DNR_PREV_SW_CAP_SW
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_CAP_SW;
 
-#else                // default,night shot
+#else // default,night shot
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
 #endif
             }
 
             if (sprddefInfo.sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO) {
-                    // 3dnr video mode
-                #if defined(CONFIG_ISP_2_3)   //for sharkle
-                    mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW;
-                #else
-                    mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW;
-                #endif
+// 3dnr video mode
+#if defined(CONFIG_ISP_2_3) // for sharkle
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW;
+#else
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW;
+#endif
             }
         } else {
             // 3dnr off
@@ -7184,7 +7189,7 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     SPRD_DEF_Tag sprddefInfo;
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -7654,8 +7659,8 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
 
     SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
 
-    HAL_LOGV("ultra wide malloc %d, shape: %d x %d, size: %d!", sum, width, height,
-         size);
+    HAL_LOGV("ultra wide malloc %d, shape: %d x %d, size: %d!", sum, width,
+             height, size);
     for (cmr_u32 i = 0; i < sum; i++) {
         if (mGraphicBufNum >= MAX_GRAPHIC_BUF_NUM)
             goto malloc_failed;
@@ -7921,12 +7926,12 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
         mPrevDepthHeapReserved = NULL;
     }
 
-     if (type == CAMERA_PREVIEW_3DNR) {
+    if (type == CAMERA_PREVIEW_3DNR) {
         for (i = 0; i < sum; i++) {
             if (NULL != m3DNRPrevHeapReserverd[i]) {
                 freeCameraMem(m3DNRPrevHeapReserverd[i]);
             }
-          m3DNRPrevHeapReserverd[i] = NULL;
+            m3DNRPrevHeapReserverd[i] = NULL;
         }
     }
 
@@ -7935,7 +7940,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
             if (NULL != m3DNRPrevScaleHeapReserverd[i]) {
                 freeCameraMem(m3DNRPrevScaleHeapReserverd[i]);
             }
-          m3DNRPrevScaleHeapReserverd[i] = NULL;
+            m3DNRPrevScaleHeapReserverd[i] = NULL;
         }
     }
 
@@ -8249,7 +8254,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *vir_addr++ = (cmr_uint)m3DNRScaleHeapReserverd[i]->data;
             *fd++ = m3DNRScaleHeapReserverd[i]->fd;
         }
-    } else if (type == CAMERA_PREVIEW_3DNR){
+    } else if (type == CAMERA_PREVIEW_3DNR) {
         for (i = 0; i < sum; i++) {
             if (m3DNRPrevHeapReserverd[i] == NULL) {
                 memory = allocCameraMem(size, 1, true);
@@ -8263,13 +8268,13 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *vir_addr++ = (cmr_uint)m3DNRPrevHeapReserverd[i]->data;
             *fd++ = m3DNRPrevHeapReserverd[i]->fd;
         }
-    } else if (type == CAMERA_PREVIEW_SCALE_3DNR){
+    } else if (type == CAMERA_PREVIEW_SCALE_3DNR) {
         for (i = 0; i < sum; i++) {
-          if (m3DNRPrevScaleHeapReserverd[i] == NULL) {
-              memory = allocCameraMem(size, 1, true);
-              if (NULL == memory) {
-                  HAL_LOGE("error memory is null,malloced type %d", type);
-                  goto mem_fail;
+            if (m3DNRPrevScaleHeapReserverd[i] == NULL) {
+                memory = allocCameraMem(size, 1, true);
+                if (NULL == memory) {
+                    HAL_LOGE("error memory is null,malloced type %d", type);
+                    goto mem_fail;
                 }
                 m3DNRPrevScaleHeapReserverd[i] = memory;
             }
@@ -8277,8 +8282,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             *vir_addr++ = (cmr_uint)m3DNRPrevScaleHeapReserverd[i]->data;
             *fd++ = m3DNRPrevScaleHeapReserverd[i]->fd;
         }
-    }
-        else if (type == CAMERA_PREVIEW_DEPTH) {
+    } else if (type == CAMERA_PREVIEW_DEPTH) {
         HAL_LOGD("REAL TIME DEPTH");
         if (mPrevDepthHeapReserved == NULL) {
             memory = allocCameraMem(size, 1, false);
@@ -8484,8 +8488,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
                CAMERA_PREVIEW_DEPTH == type || CAMERA_PREVIEW_SW_OUT == type ||
                CAMERA_4IN1_PROC == type || CAMERA_CHANNEL_0_RESERVED == type ||
-               CAMERA_ISP_ANTI_FLICKER == type ||
-               CAMERA_PREVIEW_3DNR == type ||
+               CAMERA_ISP_ANTI_FLICKER == type || CAMERA_PREVIEW_3DNR == type ||
                CAMERA_PREVIEW_SCALE_3DNR == type ||
                CAMERA_CHANNEL_1_RESERVED == type ||
                CAMERA_CHANNEL_2_RESERVED == type ||
@@ -8569,8 +8572,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
                CAMERA_CHANNEL_3_RESERVED == type ||
                CAMERA_CHANNEL_4_RESERVED == type ||
                CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
-               CAMERA_PREVIEW_3DNR == type || CAMERA_PREVIEW_SCALE_3DNR == type ||
-               CAMERA_FD_SMALL == type ||
+               CAMERA_PREVIEW_3DNR == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type || CAMERA_FD_SMALL == type ||
                CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
@@ -9571,7 +9574,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         // for 3dnr sw 2.0
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
             buf_id = getZslBufferIDForFd(zsl_frame.fd);
             if (buf_id == 0xFFFFFFFF) {
                 goto exit;
@@ -9875,8 +9878,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
         mZslMaxFrameNum = 3;
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-                        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) &&
-                        mRecordingMode == false) {
+                mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) &&
+               mRecordingMode == false) {
         mZslMaxFrameNum = 5;
     } else {
         mZslMaxFrameNum = 1;
@@ -10294,11 +10297,12 @@ void SprdCamera3OEMIf::pushEISPreviewQueue(vsGyro *mGyrodata) {
     Mutex::Autolock l(&mEisPreviewLock);
 
     mGyroPreviewInfo.push_back(mGyrodata);
-     /* Clear any pending gyro information from previous session. Also gyro data size is only kGyrocount so
-       *  size of list shouldn't go beyond this.
-       */
-	if (SprdCamera3OEMIf::kGyrocount <= mGyroPreviewInfo.size() || !mEisPreviewInit)
-		mGyroPreviewInfo.clear();
+    /* Clear any pending gyro information from previous session. Also gyro data
+     * size is only kGyrocount so size of list shouldn't go beyond this.
+     */
+    if (SprdCamera3OEMIf::kGyrocount <= mGyroPreviewInfo.size() ||
+        !mEisPreviewInit)
+        mGyroPreviewInfo.clear();
 }
 
 void SprdCamera3OEMIf::popEISPreviewQueue(vsGyro *gyro, int gyro_num) {
@@ -10326,11 +10330,11 @@ void SprdCamera3OEMIf::pushEISVideoQueue(vsGyro *mGyrodata) {
 
     mGyroVideoInfo.push_back(mGyrodata);
 
-   /* Clear any pending gyro information from previous session. Also gyro data size is only kGyrocount so
-    *  size of list shouldn't go beyond this.
-    */
-   if (SprdCamera3OEMIf::kGyrocount <= mGyroVideoInfo.size() || !mEisVideoInit)
-		mGyroVideoInfo.clear();
+    /* Clear any pending gyro information from previous session. Also gyro data
+     * size is only kGyrocount so size of list shouldn't go beyond this.
+     */
+    if (SprdCamera3OEMIf::kGyrocount <= mGyroVideoInfo.size() || !mEisVideoInit)
+        mGyroVideoInfo.clear();
 }
 
 void SprdCamera3OEMIf::popEISVideoQueue(vsGyro *gyro, int gyro_num) {
