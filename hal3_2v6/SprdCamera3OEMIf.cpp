@@ -9826,8 +9826,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
-    // modification for mZslSnapshotTime
-    mZslSnapshotTime = mZslSnapshotTime - MODIFICATION_TIME * 1000000;
 
     if (isCapturing()) {
         WaitForCaptureDone();
