@@ -3116,7 +3116,12 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 			}
 			if (FLASH_MAIN == current_status->settings.flash) {
 				rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->cur_status.win_size, cxt->cur_status.win_num, current_status->monitor_shift);
-				flash_high_flash_reestimation(cxt);
+
+				ISP_LOGD("main_flash, mainFlashEn:%d\n", cxt->mainFlashEn);
+				if (cxt->mainFlashEn !=0) {
+					flash_high_flash_reestimation(cxt);
+				}
+
 				ISP_LOGV("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain,
 						 cxt->flash_main_esti_result.captureBGain);
 			}
@@ -3305,7 +3310,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				ISP_LOGD("ae_flash1_callback do-main-flash!\r\n");
-			} else if (main_flash_capture_counts == cxt->send_once[4]) {
+			} else if (((main_flash_capture_counts == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((2 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
 				if(cxt->ebd_support) {
 					if((cxt->ebd_stable_flag) || (2 < cxt->send_once[5])) {
 						cb_type = AE_CB_CONVERGED;
@@ -3349,7 +3354,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		cxt->send_once[2]++;
 
 		/*write flash awb gain*/
-		if (1 == cxt->flash_esti_result.isEnd ) {
+		if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)) {
 			if (cxt->isp_ops.set_wbc_gain) {
 				struct ae_alg_rgb_gain awb_m_b_flash_gain;
 				awb_m_b_flash_gain.r = cxt->flash_esti_result.captureRGain;
@@ -3360,7 +3365,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				}
 			}
 
-		if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts)) {
+		if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1)) {
 			if (cxt->isp_ops.set_wbc_gain) {
 				struct ae_alg_rgb_gain awb_gain;
 				awb_gain.r = cxt->flash_main_esti_result.captureRGain;
@@ -6604,6 +6609,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
 	flash_out.version = 1;		//remove later
 	cxt->flash_ver = flash_out.version;
+	cxt->mainFlashEn = flash_out.mainFlashEn;
 	ae_init_out->flash_ver = cxt->flash_ver;
 	/*HJW_E */
 

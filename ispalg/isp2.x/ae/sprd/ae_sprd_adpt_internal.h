@@ -413,6 +413,7 @@ extern "C" {
 		cmr_u32 pri_set;
 		cmr_u8 pre_flash_after_delay_cnt;
 		cmr_u8 flash_main_before_flag;
+		cmr_u8 mainFlashEn;
 	};
 
 #endif
