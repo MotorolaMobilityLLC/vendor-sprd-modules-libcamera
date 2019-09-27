@@ -154,8 +154,9 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 	int32_t outputfd = -1;;
 	uint32_t inputsize = 0;
 	uint32_t outputsize = 0;
-	uint32_t w = 0,h = 0,liveness = 0;
-	uint32_t *p_load;
+	uint32_t w,h,phyaddr,liveness;
+	FACEID_IN *faceid_in;
+	
 	char ns_id[XRP_NAMESPACE_ID_SIZE];
     enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
 	memset(ns_id , 0 , XRP_NAMESPACE_ID_SIZE);
@@ -177,15 +178,18 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 
 	if(0 == strncmp(ns_id,FACEID_NSID,9))
 	{
-		if(NULL != input_vir)
+		if(NULL != input->vir_addr)
 		{
-			p_load = (uint32_t *)(input_vir);
 
-			w = p_load[inputsize / 4 - 3];
-			h = p_load[inputsize / 4 - 2];
-			liveness = p_load[inputsize / 4 - 1];
-			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "phy_addr %X, w %d h %d liveness %d\n" , input->phy_addr , w, h,liveness);
-			xrp_run_faceid_command_directly(device,input->phy_addr, h, w, liveness, outputfd, &status);
+			faceid_in = (FACEID_IN*)input->vir_addr;
+			w = faceid_in->width;
+			h = faceid_in->height;
+			phyaddr = faceid_in->phyaddr;
+			liveness = faceid_in->liveness;
+			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "phy_addr %X, w %d h %d liveness %d\n" , 
+																phyaddr , w, h,liveness);
+
+			xrp_run_faceid_command_directly(device,phyaddr, h, w, liveness, outputfd, &status);
 			if(XRP_STATUS_SUCCESS != status)
 			{
 				__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s status:%d\n" , __func__ , status);

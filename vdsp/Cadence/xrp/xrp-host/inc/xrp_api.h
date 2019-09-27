@@ -104,7 +104,7 @@ typedef struct
 	int x, y, width, height;
 	int yawAngle, pitchAngle;
 	int ret;
-	unsigned long facepoint_addr;
+	unsigned int facepoint_addr;
 }FACEID_INFO;
 #define XRP_NAMESPACE_ID_SIZE	32
 

@@ -1230,7 +1230,7 @@ static void f13(devid)
 		//else
 		{
 			face_info = (FACEID_INFO *)ionviraddr2;
-			fprintf(stderr ,"vdsp result %d,out addr %lX\n",out_result,face_info->facepoint_addr);
+			fprintf(stderr ,"vdsp result %d,out addr %X\n",out_result,face_info->facepoint_addr);
 			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
 		}
 	}
@@ -1329,7 +1329,7 @@ static void f14(devid)
 		else
 		{
 			face_info = (FACEID_INFO *)ionviraddr2;
-			fprintf(stderr ,"vdsp result %d,out addr %lX\n",out_result,face_info->facepoint_addr);
+			fprintf(stderr ,"vdsp result %d,out addr %X\n",out_result,face_info->facepoint_addr);
 			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
 		}
 	}

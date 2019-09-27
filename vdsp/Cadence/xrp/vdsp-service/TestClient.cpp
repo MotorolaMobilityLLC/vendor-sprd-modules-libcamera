@@ -49,7 +49,7 @@ void* thread1(__unused void* test)
         {
                 fprintf(stderr , "yzl add %s , fopen test_lib.bin failed\n" , __func__);
         }
-	while(1) {
+	for(int i = 0;i<6;i++){
 	ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_NORMAL , &handle);
 	printf("----------open device-------------\n");
 	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_open_device ret:%d\n" , __func__ ,ret);
@@ -114,42 +114,31 @@ typedef struct
 
 void* thread_faceid(__unused void* test)
 {
-	struct sprd_vdsp_client_inout in,out;
-	uint32_t w = 960,h = 720, liveness = 1,devid = 10;
+	struct sprd_vdsp_client_inout in,out,image;
+	uint32_t devid = 10;
+	uint32_t liveness = 1;
 	struct vdsp_handle handle;
 	int ret;
 	FILE *fp;
 	char filename[256];
 	void *inputhandle;
 	void *outputhandle;
-	void *inviraddr;
-	unsigned long inphyaddr;
-	void *outviraddr;
+	void *imagehandle;
 	FACEID_INFO *face_info;
-	uint32_t *p_load;
 	int64_t start_time,end_time,duration;
+	unsigned long inphyaddr;
+	FACEID_IN *faceid_in;
+	uint32_t w = 960, h = 720;
+	/*camera simulation*/
+	image.size = w*h*3/2;
+	imagehandle = sprd_alloc_ionmem2(image.size , 0 , &image.fd , &image.viraddr, &inphyaddr);
+	image.phy_addr = inphyaddr;
 
-	in.size = w*h*3/2 + 12;
-	out.size = sizeof(FACEID_INFO);
-	
-	inputhandle = sprd_alloc_ionmem2(in.size , 0 , &in.fd , &inviraddr, &inphyaddr);
-	outputhandle = sprd_alloc_ionmem(out.size , 0 , &out.fd , &outviraddr);
-
-	in.viraddr = inviraddr;
-	out.viraddr = outviraddr;
-	in.phy_addr = inphyaddr;
-	out.phy_addr = 0;
-
-
-	if(outputhandle != NULL)
-	{
-		memset(outviraddr , 0x00 , out.size);
-	}
 	sprintf(filename , "/vendor/bin/test.yuv" );
     fp = fopen(filename , "rb");
     if(fp) {
-            ret = fread(in.viraddr , 1, in.size , fp);
-            fprintf(stderr , "yzl add %s , fread size:%d\n" , __func__ , ret);
+            ret = fread(image.viraddr , 1, image.size , fp);
+            fprintf(stderr , "%s , fread size:%d\n" , __func__ , ret);
             fclose(fp);
     }
     else
@@ -157,11 +146,30 @@ void* thread_faceid(__unused void* test)
             fprintf(stderr , "fopen test.yuv failed\n");
     }
 
-	p_load = (uint32_t *)(in.viraddr);
+	in.size = sizeof(FACEID_IN);
 
-	p_load[in.size / 4 - 3] = w;
-	p_load[in.size / 4 - 2] = h;
-	p_load[in.size / 4 - 1] = liveness;
+	inputhandle = sprd_alloc_ionmem(in.size, 0 , &in.fd , &in.viraddr);
+
+	if(inputhandle != NULL)
+	{
+		memset(in.viraddr , 0x00 , in.size);
+	}
+
+	faceid_in = (FACEID_IN*)in.viraddr;
+	faceid_in->height = h;
+	faceid_in->width = w;
+	faceid_in->liveness = liveness;
+	faceid_in->phyaddr = image.phy_addr;
+
+	out.size = sizeof(FACEID_INFO);
+	outputhandle = sprd_alloc_ionmem(out.size , 0 , &out.fd , &out.viraddr);
+	out.phy_addr = 0;
+
+
+	if(outputhandle != NULL)
+	{
+		memset(out.viraddr , 0x00 , out.size);
+	}
 
 
 	start_time = systemTime(CLOCK_MONOTONIC);
@@ -174,6 +182,7 @@ void* thread_faceid(__unused void* test)
 	if(SPRD_VDSP_RESULT_SUCCESS != ret)
 	{
 		printf("----------open device fail-------------\n");
+		sprd_free_ionmem(imagehandle);
 		sprd_free_ionmem(inputhandle);
 		sprd_free_ionmem(outputhandle);
 		return NULL;
@@ -187,7 +196,7 @@ void* thread_faceid(__unused void* test)
 			fprintf(stderr , "xrp_run_faceid_command failed\n");
 		else
 		{
-			face_info = (FACEID_INFO *)outviraddr;
+			face_info = (FACEID_INFO *)out.viraddr;
 			fprintf(stderr ,"vdsp result %d,out addr %X\n",face_info->ret,face_info->facepoint_addr);
 			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
 		}
@@ -197,8 +206,9 @@ void* thread_faceid(__unused void* test)
 	duration = (int)((end_time - start_time)/1000000);
 	printf("run %d times take %ld ms\n",devid,duration/devid);
 	sprd_cavdsp_close_device(&handle);
+	
 
-
+	sprd_free_ionmem(imagehandle);
 	sprd_free_ionmem(inputhandle);
 	sprd_free_ionmem(outputhandle);
 	return NULL;
@@ -216,14 +226,17 @@ int main() {
 #else
 	android::ProcessState::initWithDriver("/dev/vndbinder");
 	struct sprd_vdsp_client_inout in,out;
-	pthread_t a ;//,b;
+	//pthread_t a ;//,b;
 	in.fd = 0;
 	in.size = 10;
 	out.fd = 0;
 	out.size = 10;
 #if 1
-	pthread_create(&a , NULL , thread1 , NULL);
+	//pthread_create(&a , NULL , thread1 , NULL);
 //	pthread_create(&b , NULL , thread2 , NULL);
+	thread1(NULL);
+	thread_faceid(NULL);
+	thread1(NULL);
 #else
 	sprd_cavdsp_open_device();
 	sprd_cavdsp_open_device();

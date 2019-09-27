@@ -57,6 +57,12 @@ struct vdsp_handle
         int32_t fd;
         uint32_t generation;
 };
+typedef struct
+{
+	uint32_t width, height;
+	uint32_t phyaddr;
+	uint32_t liveness;
+}FACEID_IN;
 #ifdef __cplusplus
 extern "C" {
 #endif
