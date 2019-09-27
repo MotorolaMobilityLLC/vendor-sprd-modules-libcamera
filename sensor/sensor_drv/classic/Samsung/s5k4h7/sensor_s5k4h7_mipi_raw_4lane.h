@@ -370,7 +370,7 @@ static const cmr_u16 s5k4h7_pd_col[] = {
 static SENSOR_STATIC_INFO_T s_s5k4h7_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 200,
-                     .focal_length = 354,
+                     .focal_length = 325,
                      .max_fps = 30,
                      .max_adgain = 8,
                      .ois_supported = 0,
@@ -382,7 +382,7 @@ static SENSOR_STATIC_INFO_T s_s5k4h7_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{3.656f, 2.742f}, 2.426f}}}
+                     .fov_info = {{4.614f, 3.444f}, 3.256f}}}
     /*If there are multiple modules,please add here*/
 };
 
