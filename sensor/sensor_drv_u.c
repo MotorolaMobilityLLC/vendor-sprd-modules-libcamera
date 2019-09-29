@@ -2349,6 +2349,10 @@ static void *sensor_ic_get_data(struct sensor_drv_context *sensor_cxt,
         sns_ops->get_data(sensor_cxt->sns_ic_drv_handle, SENSOR_CMD_GET_EXIF,
                           &data);
         break;
+    case SENSOR_CMD_GET_STATIC_INFO:
+        sns_ops->get_data(sensor_cxt->sns_ic_drv_handle, SENSOR_CMD_GET_STATIC_INFO,
+                          &data);
+        break;
     default:
         SENSOR_LOGW("not support cmd:0x%lx", cmd);
     }
@@ -2833,6 +2837,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->sensor_type = sensor_cxt->sensor_type;
     phyPtr->module_id = module->module_id;
     phyPtr->data_type = 0;
+    phyPtr->pdaf_supported = sensor_cxt->static_info->pdaf_supported;
 
     // customize camera attribute
     sensor_customize_cam_attribute(phyPtr, slot_id);
@@ -2955,6 +2960,7 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
     sensor_cxt->sensor_type = sensor_drv_get_sensor_type(sensor_cxt);
     sensor_drv_get_fov_info(sensor_cxt);
     sensor_drv_get_module_otp_data(sensor_cxt);
+    sensor_cxt->static_info = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
 
     return 0;
 }

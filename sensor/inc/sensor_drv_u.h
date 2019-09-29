@@ -698,6 +698,7 @@ struct sensor_drv_context {
     struct sns_thread_cxt ctrl_thread_cxt;
     cmr_u32 bypass_mode;
     struct drv_fov_info fov_info;
+    struct sensor_static_info *static_info;
     cmr_int sensor_type;
 
     cmr_handle sensor_hw_handler;

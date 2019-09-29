@@ -151,6 +151,7 @@ typedef enum {
     SENSOR_CMD_GET_RESOLUTION,
     SENSOR_CMD_GET_MODULE_CFG,
     SENSOR_CMD_GET_EXIF,
+    SENSOR_CMD_GET_STATIC_INFO,
 
     SENSOR_CMD_GET_MAX,
 } sensor_get_private_data;
@@ -736,6 +737,7 @@ typedef struct phySensorInfo {
     cmr_u16 source_width_max;
     cmr_u16 source_height_max;
     int sensor_type;
+    cmr_u16 pdaf_supported;
     char sensor_name[SENSOR_IC_NAME_LEN];
 } PHYSICAL_SENSOR_INFO_T;
 

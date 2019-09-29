@@ -46,6 +46,8 @@ uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
 uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
 char SprdCamera3Setting::mSensorName[][SENSOR_IC_NAME_LEN];
 uint16_t SprdCamera3Setting::mModuleId[] = {0, 0, 0, 0, 0, 0};
+uint16_t SprdCamera3Setting::mpdaf_type[] = {0, 0, 0, 0, 0, 0};
+
 
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -1046,6 +1048,8 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     mSensorType[cameraId] = phyPtr->sensor_type;
     mSensorFocusEnable[cameraId] = phyPtr->focus_eb;
     mModuleId[cameraId] = phyPtr->module_id;
+    mpdaf_type[cameraId] = phyPtr->pdaf_supported;
+
     memcpy(mSensorName[cameraId], phyPtr->sensor_name,
            sizeof(mSensorName[cameraId]));
 
@@ -1065,10 +1069,9 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     }
 
     HAL_LOGI("camera id = %d, sensor_max_height = %d, sensor_max_width = %d, "
-             "module_id = 0x%x sensor_name =%s",
+             "module_id = 0x%x sensor_name =%s,pdaf_supported=%d",
              cameraId, phyPtr->source_height_max, phyPtr->source_width_max,
-             phyPtr->module_id, phyPtr->sensor_name);
-
+             phyPtr->module_id, phyPtr->sensor_name, phyPtr->pdaf_supported);
     HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, %f), "
              "focal_lengths %f",
              mSensorFocusEnable[cameraId],
@@ -1741,6 +1744,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     int i = 0;
+    int pdaf_type = 0;
     char value[PROPERTY_VALUE_MAX];
     struct camera_info cameraInfo;
     memset(&cameraInfo, 0, sizeof(cameraInfo));
@@ -2036,9 +2040,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current =
         HAL_AI_SCENE_DEFAULT;
     HAL_LOGI(
-        "cameraId:%d, availabe_ai_scene:%d,  sprd_ai_scene_type_current:%d",
+        "cameraId:%d, availabe_ai_scene:%d,  sprd_ai_scene_type_current:%d,pdaf_type=%d",
         cameraId, s_setting[cameraId].sprddefInfo.availabe_ai_scene,
-        s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current);
+        s_setting[cameraId].sprddefInfo.sprd_ai_scene_type_current, mpdaf_type[cameraId]);
     s_setting[cameraId].sprddefInfo.availabe_sensor_type =
         mSensorType[cameraId];
 
@@ -2104,10 +2108,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 6 auto tracking enable
     property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
+    pdaf_type = mpdaf_type[cameraId];
     if (cameraId == 0) {
-        available_cam_features.add(atoi(prop));
+        /* dual pd sensor default open 4d auto tracking */
+       if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0) || pdaf_type == DUAL_PD) {
+          available_cam_features.add(1);
+       } else
+          available_cam_features.add(0);
     } else {
-        available_cam_features.add(0);
+         available_cam_features.add(0);
     }
 
     // 7 back ultra wide enable

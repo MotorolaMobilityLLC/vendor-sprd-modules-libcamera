@@ -96,6 +96,7 @@ extern "C" {
 #define INVALID_FORMAT_PATTERN 255
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
 #define FOCUS_FAIL 2048
+#define DUAL_PD 4
 
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080

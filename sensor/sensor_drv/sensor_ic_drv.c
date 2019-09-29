@@ -86,6 +86,9 @@ cmr_int sensor_ic_get_private_data(cmr_handle handle, cmr_uint cmd,
         // else
         //    *param = &sns_drv_cxt->exif_info;
         break;
+    case SENSOR_CMD_GET_STATIC_INFO:
+        *param = sns_drv_cxt->static_info;
+        break;
     default:
         SENSOR_LOGE("not support cmd:%lu", cmd);
     }

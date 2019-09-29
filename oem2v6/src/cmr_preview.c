@@ -3502,10 +3502,14 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 channel_bits = 0;
     cmr_uint work_mode = 0;
     cmr_uint skip_num = 0;
+    cmr_u8 pdaf_type = 0;
     struct video_start_param isp_param;
     struct sensor_mode_info *sensor_mode_info = NULL;
+    struct sensor_context *sn_cxt = NULL;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    sn_cxt = &(cxt->sn_cxt);
 
+    CHECK_HANDLE_VALID(sn_cxt);
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     cmr_bzero(&isp_param, sizeof(struct video_start_param));
@@ -3527,15 +3531,15 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-
+    pdaf_type = sn_cxt->cur_sns_ex_info.pdaf_supported;
     preview_enable = prev_cxt->prev_param.preview_eb;
     snapshot_enable = prev_cxt->prev_param.snapshot_eb;
     video_enable = prev_cxt->prev_param.video_eb;
     tool_eb = prev_cxt->prev_param.tool_eb;
     CMR_LOGD("camera_id %d, prev_status %ld, preview_eb %d, snapshot_eb %d, "
-             "need_isp %d",
+             "need_isp %d,pdaf_type %d",
              camera_id, prev_cxt->prev_status, preview_enable, snapshot_enable,
-             prev_cxt->need_isp);
+             prev_cxt->need_isp, pdaf_type);
 
     if (preview_enable && PREVIEWING == prev_cxt->prev_status) {
         CMR_LOGE("is previewing now, do nothing");
@@ -3660,8 +3664,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
             prev_3dnr_open(handle, camera_id);
         }
-        /*init at*/
-        if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0)) {
+        /*init at, dual pd sensor default open 4d auto tracking */
+        if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0) || pdaf_type == DUAL_PD) {
             CMR_LOGD("enable auto tracking");
             /*init auto tracking*/
             if (!prev_cxt->auto_tracking_inited) {
