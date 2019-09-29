@@ -3634,6 +3634,11 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_JPEG_ORIENTATION) && is_capture) {
         int32_t jpeg_orientation =
             frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+        HAL_LOGV("jpeg_orientation %d ", jpeg_orientation);
+        if (s_setting[mCameraId].sprddefInfo.sprd_appmode_id == -1 && jpeg_orientation == 0) {
+            jpeg_orientation = cameraInfo.orientation;
+        }
+        HAL_LOGV("jpeg_orientation %d ", jpeg_orientation);
         s_setting[mCameraId].jpgInfo.orientation_original = jpeg_orientation;
         if (jpeg_orientation == -1) {
             HAL_LOGV("rot not specified or invalid, set to 0");
