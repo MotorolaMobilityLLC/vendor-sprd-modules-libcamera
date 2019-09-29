@@ -32,6 +32,7 @@ static cmr_int _hw_sensor_dev_init(cmr_handle hw_handle, cmr_u32 sensor_id) {
 
     cmr_int ret = HW_SUCCESS;
     cmr_s8 sensor_dev_name[50] = HW_SENSOR_DEV_NAME;
+    cmr_int i =0;
 
     CHECK_HANDLE(hw_handle);
     struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt *)hw_handle;
@@ -41,6 +42,18 @@ static cmr_int _hw_sensor_dev_init(cmr_handle hw_handle, cmr_u32 sensor_id) {
     if (SENSOR_FD_INIT == hw_drv_cxt->fd_sensor) {
         hw_drv_cxt->fd_sensor = open(HW_SENSOR_DEV_NAME, O_RDWR, 0);
         HW_LOGI("fd 0x%x", hw_drv_cxt->fd_sensor);
+
+        if (SENSOR_FD_INIT == hw_drv_cxt->fd_sensor) {
+            for (i = 0; i < 50; i++) {
+                usleep(40000);
+                hw_drv_cxt->fd_sensor = open(HW_SENSOR_DEV_NAME, O_RDWR, 0);
+                HW_LOGI("open again, fd 0x%x", hw_drv_cxt->fd_sensor);
+                if (SENSOR_FD_INIT != hw_drv_cxt->fd_sensor) {
+                    break;
+                }
+            }
+        }
+
         if (SENSOR_FD_INIT == hw_drv_cxt->fd_sensor) {
             HW_LOGE("Failed to open sensor device.errno : %d", errno);
             fprintf(stderr, "Cannot open '%s': %d, %s", sensor_dev_name, errno,
