@@ -5303,14 +5303,17 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
-        if (!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_CAF) {
+        if (!mIsAutoFocus) {
             if (focus_status->is_in_focus) {
                 setAfState(AF_INITIATES_NEW_SCAN);
             } else {
                 setAfState(AF_COMPLETES_CURRENT_SCAN);
                 mLatestFocusDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
+                controlInfo.af_type = focus_status->af_focus_type;
+                mSetting->setAfCONTROLTag(&controlInfo);
             }
         }
+
         break;
 
     case CAMERA_EVT_CB_FOCUS_END:
@@ -6828,6 +6831,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle,
                  CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
                  sprdInfo.sprd_ot_switch);
+    } break;
+    case ANDROID_SPRD_SMILE_CAPTURE: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
     } break;
     default:
         ret = BAD_VALUE;
@@ -9830,7 +9837,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
 
     HAL_LOGD("E");
-
     if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
         NULL == obj->mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -9929,7 +9935,26 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     } else {
         mZslMaxFrameNum = 1;
     }
-
+    if(sprddefInfo.is_smile_capture == 1) {
+       int count=0;
+       while (1) {
+           mSetting->getCONTROLTag(&controlInfo);
+           usleep(1000);
+           if(count>2500) {
+              HAL_LOGD("wait for af locked timeout 2.5s");
+              count=0;
+              break;
+           }
+           if(controlInfo.af_type == CAM_AF_FOCUS_FAF) {
+              HAL_LOGV("af_state=%d,af_type =%d,wait_smile_capture =%d ms",
+                       controlInfo.af_state,controlInfo.af_type,count);
+              break;
+           } else {
+              count++;
+              continue;
+           }
+       }
+    }
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     ret = obj->mHalOem->ops->camera_take_picture(obj->mCameraHandle,
                                                  obj->mCaptureMode);

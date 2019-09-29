@@ -3699,6 +3699,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     requestInfo.update(ANDROID_SPRD_IS_3DNR_SCENE, &sprdIs3DnrScene, 1);
     uint8_t sprdAiSceneType = HAL_AI_SCENE_DEFAULT;
     requestInfo.update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT, &sprdAiSceneType, 1);
+    uint8_t is_smile_capture = 0;
+    requestInfo.update(ANDROID_SPRD_SMILE_CAPTURE, &is_smile_capture, 1);
 
     if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd")) {
         uint8_t sprdFlashLcdMode = FLASH_LCD_MODE_OFF;
@@ -4726,14 +4728,20 @@ int SprdCamera3Setting::updateWorkParameters(
         }
     }
 
-    HAL_LOGD("mCameraId=%d, focus_distance=%f, ae_precap_trigger= %d, "
+    if (frame_settings.exists(ANDROID_SPRD_SMILE_CAPTURE)) {
+        s_setting[mCameraId].sprddefInfo.is_smile_capture =
+        frame_settings.find(ANDROID_SPRD_SMILE_CAPTURE).data.u8[0];
+        pushAndroidParaTag(ANDROID_SPRD_SMILE_CAPTURE);
+    }
+
+        HAL_LOGD("mCameraId=%d, focus_distance=%f, ae_precap_trigger= %d, "
              "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
              "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
              "zsl=%d, 3dcali=%d, crop %d %d %d %d cropRegionUpdate=%d, "
              "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
              "%d, sprd_auto_3dnr_enable:%d, "
-             "android zsl enable = %d",
+             "android zsl enable = %d,is_smile_capture=%d",
              mCameraId,
              s_setting[mCameraId].lensInfo.focus_distance,
              s_setting[mCameraId].controlInfo.ae_precap_trigger,
@@ -4767,7 +4775,8 @@ int SprdCamera3Setting::updateWorkParameters(
              s_setting[mCameraId].controlInfo.af_regions[3],
              s_setting[mCameraId].controlInfo.af_regions[4],
              s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable,
-             s_setting[mCameraId].controlInfo.enable_zsl);
+             s_setting[mCameraId].controlInfo.enable_zsl,
+             s_setting[mCameraId].sprddefInfo.is_smile_capture);
 
 #undef GET_VALUE_IF_DIF
     return rc;
@@ -5943,6 +5952,7 @@ int SprdCamera3Setting::setAeCONTROLTag(CONTROL_Tag *controlInfo) {
 int SprdCamera3Setting::setAfCONTROLTag(CONTROL_Tag *controlInfo) {
     Mutex::Autolock l(mLock);
     s_setting[mCameraId].controlInfo.af_state = controlInfo->af_state;
+    s_setting[mCameraId].controlInfo.af_type = controlInfo->af_type;
     return 0;
 }
 

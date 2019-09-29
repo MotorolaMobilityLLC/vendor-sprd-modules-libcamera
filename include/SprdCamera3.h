@@ -237,6 +237,7 @@ static tags_info_t
         {"sprdBokehMode", TYPE_BYTE},
         {"sprdZoomRatioSection", TYPE_FLOAT},
         {"sprdZoomRatio", TYPE_FLOAT},
+        {"sprdSmileCapture", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

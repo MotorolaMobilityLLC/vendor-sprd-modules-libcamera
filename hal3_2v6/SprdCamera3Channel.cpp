@@ -1060,6 +1060,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_AUTOCHASING_REGION_ENABLE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTOCHASING_REGION_ENABLE);
             break;
+        case ANDROID_SPRD_SMILE_CAPTURE:
+            HAL_LOGV("ANDROID_SPRD_SMILE_CAPTURE");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_SMILE_CAPTURE);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

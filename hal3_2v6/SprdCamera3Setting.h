@@ -140,6 +140,7 @@ typedef struct {
     int32_t af_regions[5];
     uint8_t af_available_modes[6];
     int32_t af_roi[5];
+    uint8_t af_type;
 
     int32_t ae_available_fps_ranges[FPS_RANGE_COUNT];
     int32_t ae_compensation_range[2];
@@ -392,6 +393,7 @@ typedef struct {
     uint8_t availabe_auto_3dnr;
     uint8_t sprd_is_3dnr_scene;
     uint8_t sprd_ot_switch;
+    uint8_t is_smile_capture;
 } SPRD_DEF_Tag;
 
 typedef struct {
