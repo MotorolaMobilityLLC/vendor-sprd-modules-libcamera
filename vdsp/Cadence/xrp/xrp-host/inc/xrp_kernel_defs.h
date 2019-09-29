@@ -86,11 +86,7 @@ struct xrp_dvfs_ctrl {
 	};
 };
 struct xrp_faceid_ctrl {
-	__u32 in_data_addr;
-	__u32 in_height;
-	__u32 in_width;
-	__u32 in_liveness;
-	__u32 out_result;	//vdsp process return value
-	int32_t out_fd;		//vdsp process buffer fd
+	__u32 in_fd;
+	__u32 out_fd;		//vdsp process buffer fd
 };
 #endif

@@ -111,6 +111,20 @@ typedef struct
 	int ret;
 	unsigned int facepoint_addr;
 }FACEID_INFO;
+/*
+ * Help info from hal.
+ * The first part: one int32 is CONTROL_AE_STATE;
+ * The second part: one int32 is ae info. Bit 31-16 is the bv value,which is a signed value. 
+ *                              Bit 10-1 is the probability of backlight, range[0-1000].
+ *                              Bit 0 is whether ae is stable, range[0, 1].
+ * The third part: 256 int32 is hist_statistics.
+ * The fouth part: one int32 is the phone orientation info.
+ */
+typedef struct
+{
+    const int32_t *helpInfo;
+    int32_t count;
+} FACEID_HELPINFO;
 
 void* thread_faceid(__unused void* test)
 {
@@ -146,10 +160,9 @@ void* thread_faceid(__unused void* test)
             fprintf(stderr , "fopen test.yuv failed\n");
     }
 
+	/*input ion*/
 	in.size = sizeof(FACEID_IN);
-
 	inputhandle = sprd_alloc_ionmem(in.size, 0 , &in.fd , &in.viraddr);
-
 	if(inputhandle != NULL)
 	{
 		memset(in.viraddr , 0x00 , in.size);
@@ -160,7 +173,13 @@ void* thread_faceid(__unused void* test)
 	faceid_in->width = w;
 	faceid_in->liveness = liveness;
 	faceid_in->phyaddr = image.phy_addr;
+	faceid_in->help_info[0] = 0xFF;
+	faceid_in->l_ir_phyaddr = 0x12;
+	faceid_in->r_ir_phyaddr = 0x34;
+	faceid_in->bgr_phyaddr = 0x56;
+	faceid_in->otp_phyaddr = 0x78;
 
+	/*out ion*/
 	out.size = sizeof(FACEID_INFO);
 	outputhandle = sprd_alloc_ionmem(out.size , 0 , &out.fd , &out.viraddr);
 	out.phy_addr = 0;
@@ -234,9 +253,9 @@ int main() {
 #if 1
 	//pthread_create(&a , NULL , thread1 , NULL);
 //	pthread_create(&b , NULL , thread2 , NULL);
-	thread1(NULL);
+	//thread1(NULL);
 	thread_faceid(NULL);
-	thread1(NULL);
+	//thread1(NULL);
 #else
 	sprd_cavdsp_open_device();
 	sprd_cavdsp_open_device();

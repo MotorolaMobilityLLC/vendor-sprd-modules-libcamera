@@ -367,16 +367,13 @@ void xrp_run_command_directly(struct xrp_device *device ,const char * nsid , uns
 }
 
 void xrp_run_faceid_command_directly(struct xrp_device *device,
-								unsigned long in_data, unsigned int in_height,unsigned int in_width,unsigned int in_liveness,int out_fd,
+								int in_fd , int out_fd,
                                 enum xrp_status *status)
 {
         int ret;
         {
 			struct xrp_faceid_ctrl ioctrl_faceid = {
-			    .in_data_addr = in_data,
-				.in_height = in_height,
-				.in_width = in_width,
-				.in_liveness = in_liveness,
+			    .in_fd = in_fd,
 			    .out_fd = out_fd,
 			};
 
