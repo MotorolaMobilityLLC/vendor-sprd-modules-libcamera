@@ -141,6 +141,14 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
     src_trim_rect->width = trim_width;
     src_trim_rect->height = trim_height;
 
+#ifdef CONFIG_ISP_2_3
+    //do 2 aligment for sharkle only
+    src_trim_rect->start_x = CAMERA_START(src_trim_rect->start_x);
+    src_trim_rect->start_y = CAMERA_START(src_trim_rect->start_y);
+    src_trim_rect->width = CAMERA_START(src_trim_rect->width);
+    src_trim_rect->height = CAMERA_START(src_trim_rect->height);
+#endif
+
     CMR_LOGD("output trim rect %d %d %d %d", src_trim_rect->start_x,
              src_trim_rect->start_y, src_trim_rect->width,
              src_trim_rect->height);
