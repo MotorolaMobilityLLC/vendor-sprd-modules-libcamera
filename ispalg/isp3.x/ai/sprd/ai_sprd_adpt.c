@@ -86,12 +86,17 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	ISP_LOGI("01_aci opt: sync_with_worker: %d.\n", cxt->aic_opt.sync_with_worker);
 
 	#ifdef CONFIG_ISP_2_5
-	cxt->aic_opt.min_frame_interval = 6;
+	cxt->aic_opt.min_frame_interval = 3;
 	cxt->aic_opt.thread_num = 2;
 	#endif
 
 	#ifdef CONFIG_ISP_2_6
-	cxt->aic_opt.min_frame_interval = 5;
+	cxt->aic_opt.min_frame_interval = 2;
+	cxt->aic_opt.thread_num = 1;
+	#endif
+
+	#ifdef CONFIG_ISP_2_7
+	cxt->aic_opt.min_frame_interval = 2;
 	cxt->aic_opt.thread_num = 1;
 	#endif
 
