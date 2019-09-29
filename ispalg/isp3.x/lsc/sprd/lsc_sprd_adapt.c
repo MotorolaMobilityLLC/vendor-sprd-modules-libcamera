@@ -39,6 +39,10 @@ cmr_u16 proc_start_output_table[32 * 32 * 4] = { 0 };	// SBS master output table
 cmr_u16 *id1_addr = NULL;
 cmr_u16 *id2_addr = NULL;
 
+#define LSC_GAIN_LOWER (1<<10)
+#define LSC_GAIN_UPPER ((1<<14)-1)
+#define LSC_CLIP(x, l, u) ((x) < (l) ? (l) : ((x) > (u) ? (u) : (x)))
+
 char liblsc_path[][20] = {
 	"libalsc.so",
 	"liblsc_v1.so",
@@ -1484,7 +1488,7 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 			det_D = 2 * grid - det_U;
 
 			tmp = coef * (TL * det_D * det_R + TR * det_D * det_L + BL * det_U * det_R + BR * det_U * det_L);
-			new_tab[j * stat_width + i] = (unsigned short)(tmp + 0.5f);
+			new_tab[j * stat_width + i] = (unsigned short)LSC_CLIP(tmp + 0.5f, LSC_GAIN_LOWER, LSC_GAIN_UPPER);
 		}
 	}
 }
@@ -1529,8 +1533,8 @@ static void lsc_inverse_ae_stat(struct lsc_sprd_ctrl_context *cxt, cmr_u16 * inv
 
 	for (i = 0; i < MAX_STAT_WIDTH * MAX_STAT_HEIGHT; i++) {
 		stat_r[i] = (cmr_u32) (stat_r[i] / scaled_gain_r[i]) << 10;
-		stat_g[i] = (cmr_u32) (stat_g[i] / scaled_gain_r[i]) << 10;
-		stat_b[i] = (cmr_u32) (stat_b[i] / scaled_gain_r[i]) << 10;
+		stat_g[i] = (cmr_u32) (stat_g[i] / scaled_gain_g[i]) << 10;
+		stat_b[i] = (cmr_u32) (stat_b[i] / scaled_gain_b[i]) << 10;
 	}
 }
 
