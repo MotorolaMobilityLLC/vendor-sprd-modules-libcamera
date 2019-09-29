@@ -357,7 +357,7 @@ enum ae_mode_type {
 	AE_MODE_AUTO_ISO_PRI = 2,/*AUTO MODE, ISO PRIORITY*/
 	AE_MODE_MANUAL_EXP_GAIN = 3,/*MANUAL AE: MODE 0: BY SHUTTER/ISO*/
 	AE_MODE_MANUAL_IDX = 4,/*MANUAL AE: MODE 1: BY AE TABLE INDEX*/
-	//AE_MODE_MANUAL_LOCK = 5,/*MANUAL AE: Just lock ae and dont converge*/
+	AE_MODE_MANUAL_LOCK = 5,/*MANUAL AE: Just lock ae and don't converge*/
 };
 
 enum ae_ev_mode_type {
@@ -370,6 +370,7 @@ enum ae_mod_idx_type {
 	AE_MOD_IDX_GAIN = 1,
 	AE_MOD_IDX_ISO = 1,
 };
+
 struct ae_monitor_cfg {
 	struct ae_rect monitor_rect;
 	struct ae_size blk_size;
