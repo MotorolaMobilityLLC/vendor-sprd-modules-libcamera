@@ -252,6 +252,12 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		statis_info = NULL;
 		ISP_LOGW("there is no irq_property %d", irq_info->irq_property);
 	}
+
+	if (!cxt->isp_event_cb) {
+		free((void *)statis_info);
+		statis_info = NULL;
+		ISP_LOGW("there is no irq_property!");
+	}
 }
 
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
@@ -280,6 +286,12 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		free((void *)data);
 		data = NULL;
 		ISP_LOGW("there is no irq_property %d", irq_info->irq_property);
+	}
+
+	if (!cxt->isp_event_cb) {
+		free((void *)data);
+		data = NULL;
+		ISP_LOGW("there is no irq_property!");
 	}
 }
 
