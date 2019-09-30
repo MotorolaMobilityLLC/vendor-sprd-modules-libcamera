@@ -6415,7 +6415,15 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 height = sensor_info->mode_info[i].trim_height;
                 width = sensor_info->mode_info[i].trim_width;
                 CMR_LOGD("candidate height = %d, width = %d", height, width);
-                if (search_height == height && search_width == width) {
+                if (search_height <= height && search_width <= width) {
+                    /* dont choose high fps setting for no-slowmotion */
+                    ret = handle->ops.get_sensor_fps_info(
+                        handle->oem_handle, camera_id, i, &fps_info);
+                    if (fps_info.is_high_fps) {
+                        CMR_LOGD("dont choose high fps setting, mode %d", i);
+                        continue;
+                    }
+
                     target_mode = i;
                     ret = CMR_CAMERA_SUCCESS;
                     break;
