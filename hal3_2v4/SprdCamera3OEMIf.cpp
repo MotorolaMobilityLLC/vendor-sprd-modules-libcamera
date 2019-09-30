@@ -6651,7 +6651,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             (0 == mFbOn) &&
             (0 == mMultiCameraMode) &&
             (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
-            (false == mRecordingMode)) {
+            (false == mRecordingMode) &&
+            (sprddefInfo.sprd_appmode_id != -1)) {
             property_get("persist.vendor.cam.cnr.mode", value, "0");
             if (atoi(value)) {
                 mCNRMode = 1;
