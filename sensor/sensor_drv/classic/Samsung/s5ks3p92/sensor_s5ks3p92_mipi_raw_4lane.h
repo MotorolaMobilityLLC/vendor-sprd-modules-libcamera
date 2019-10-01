@@ -2194,7 +2194,7 @@ static struct sensor_aec_i2c_tag s5ks3p92_aec_info = {
 static SENSOR_STATIC_INFO_T s_s5ks3p92_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 200,
-                     .focal_length = 354,
+                     .focal_length = 385,
                      .max_fps = 0,
                      .max_adgain = 15 * 2,
                      .ois_supported = 0,
@@ -2202,7 +2202,7 @@ static SENSOR_STATIC_INFO_T s_s5ks3p92_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
+                     .fov_info = {{4.614f, 3.444f}, 3.856f}}}
     /*If there are multiple modules,please add here*/
 };
 
