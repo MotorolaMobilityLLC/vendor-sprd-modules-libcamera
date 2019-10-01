@@ -213,24 +213,34 @@ struct ae_otp_info {
 
 struct ae_frm_sync_param {
 	/*ae ev setting limitation*/
+	cmr_u32 is_benchmark;
 	cmr_s16 min_exp_line;
 	cmr_s16 max_exp_line;
 	cmr_s16 min_gain;
 	cmr_s16 max_gain;
 	cmr_u32 sensor_gain_precision;
 	cmr_u32 frm_len_def;
+	/*the OTP information*/
 	struct ae_otp_info otp_info;
+	/*the AEM statistic data, and other information*/
 	cmr_u32 aem[3 * 1024];/*aem statistics data*/
+	struct ae_rect roi_rect;
+	struct ae_size img_size;/*the resolution of AEM*/
+	struct ae_size blks_num;
+	struct ae_size blk_size;
 	cmr_u64 monoboottime;
+	/*the EV setting, that come from the ae lib*/
 	struct ae_ev_setting_param ev_setting;
 };
 
 struct ae_lib_frm_sync_in{//ae_dynamic_sync struct
-	struct ae_frm_sync_param sync_param[2];/*0: master; 1: slave*/
+	cmr_u32 num;
+	struct ae_frm_sync_param* sync_param[4];/*benchmark sensor is must the first one*/
 };
 
 struct ae_lib_frm_sync_out {
-	struct ae_ev_setting_param ev_setting[2];/*0: master; 1: slave*/
+	cmr_u32 num;
+	struct ae_ev_setting_param ev_setting[4];/*it follow the input's order*/
 };
 
 AE_PUBLIC cmr_handle ae_lib_init(struct ae_lib_init_in *in_param, struct ae_lib_init_out *out_param);
@@ -240,6 +250,7 @@ AE_PUBLIC cmr_s32 ae_lib_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_pa
 //cmr_s32 ae_get_param(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 AE_PUBLIC cmr_s32 ae_lib_frame_sync_calculation(cmr_handle handle, void *in_param, void *out_param);
 AE_PUBLIC cmr_s32 ae_lib_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
+
 #ifdef __cplusplus
 }
 #endif

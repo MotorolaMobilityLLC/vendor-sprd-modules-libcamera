@@ -111,7 +111,6 @@ extern "C" {
 		cmr_u32 reserved;
 	};
 	
-
 AE_PUBLIC cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);/*according to the debug structure, save the debug infomation*/	
 AE_PUBLIC cmr_s32 ae_debug_info_unpacket(cmr_handle input, cmr_handle output);/*parser the debug information to debug structure*/
 AE_PUBLIC cmr_s32 ae_debug_info_print(cmr_handle input, cmr_handle output);	
