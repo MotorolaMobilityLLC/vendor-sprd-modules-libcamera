@@ -1211,7 +1211,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.snapshot.status == CONFIGURED &&
                captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
+        //keep original captureIntent for sharkle
+#ifndef CONFIG_ISP_2_3
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+#endif
     } else if (mStreamConfiguration.num_streams == 3 &&
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED &&
