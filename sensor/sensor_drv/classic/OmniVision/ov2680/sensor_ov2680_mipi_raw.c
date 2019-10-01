@@ -359,6 +359,17 @@ static cmr_int ov2680_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+#include "parameters/param_manager.c"
+static cmr_int ov2680_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_ov2680_mipi_raw_info_ptr =
+        ov2680_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -381,6 +392,9 @@ static cmr_int ov2680_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         sns_drv_cxt->is_sensor_close = 1;
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        ov2680_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -577,7 +591,7 @@ static cmr_u16 ov2680_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     } else {
         fps = 1000000000.0 / ((shutter + dummy_line) * line_time);
     }
-    SENSOR_LOGI("sync fps = %f", fps);
+    SENSOR_LOGI("sync fps = %f,dest_fr_len =%d", fps, dest_fr_len);
     aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
     aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
     value = (shutter << 4) & 0xf0;
@@ -646,12 +660,13 @@ static cmr_int ov2680_drv_read_aec_info(cmr_handle handle, void *param) {
                                 (sns_drv_cxt->trim_tab_info[mode].line_time)) /
                                1000000);
 
-    SENSOR_LOGI(
-        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
-        mode, exposure_line, dummy_line, frame_interval);
+
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 
+    SENSOR_LOGI(
+        "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms, length_def =%d time_def =%d",
+        mode, exposure_line, dummy_line, frame_interval,sns_drv_cxt->frame_length_def,sns_drv_cxt->line_time_def);
     sns_drv_cxt->sensor_ev_info.preview_shutter = ov2680_drv_calc_exposure(
         handle, exposure_line, dummy_line, mode, &ov2680_aec_info);
 
@@ -664,6 +679,34 @@ static cmr_int ov2680_drv_read_aec_info(cmr_handle handle, void *param) {
 
 cmr_int ov2680_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) {
     // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3028, 0x20);
+    return 0;
+}
+
+cmr_int ov2680_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
+    SENSOR_LOGI("E");
+    //cmr_u16 r_rst_timer_h = 0;
+    //cmr_u16 r_rst_timer_l = 0;
+    //cmr_u16 cur_frame_len_l = 0;
+    //uint32_t cur_fr_len = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    /* 0x3826/0x3827(row reset timing): slave adjust to row number when Fsync
+       comes.
+        It should be dynamically configured based on VTS. Calc method: 2*VTS
+       -16. */
+
+    //cur_fr_len = ov2680_drv_read_frame_length(handle);
+    //r_rst_timer_h = ((2 * cur_fr_len - 16) >> 8) & 0xFF;
+    //r_rst_timer_l = (2 * cur_fr_len - 16) & 0xFF;
+
+    /* setting from ov5675 */
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x30);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x07);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x8f);
     return 0;
 }
 
@@ -684,7 +727,11 @@ static cmr_int ov2680_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }
 #endif
-
+    if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode &&
+        sns_drv_cxt->is_multi_mode != MODE_TUNING) {
+        ov2680_drv_set_slave_FrameSync(handle, 0);
+        SENSOR_LOGI("set frame sync");
+    }
     // SENSOR_LOGI("X");
     // ov2680_drv_set_master_FrameSync(handle,param);
 

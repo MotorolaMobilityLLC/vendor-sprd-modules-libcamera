@@ -28,7 +28,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_s5k3l6_raw_param_main.c"
+//#include "parameters/sensor_s5k3l6_raw_param_main.c"
 
 //#define FEATURE_OTP
 
@@ -375,7 +375,7 @@ static struct sensor_module_info s_s5k3l6_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_s5k3l6_ops_tab;
-struct sensor_raw_info *s_s5k3l6_mipi_raw_info_ptr = &s_s5k3l6_mipi_raw_info;
+struct sensor_raw_info *s_s5k3l6_mipi_raw_info_ptr = PNULL;//&s_s5k3l6_mipi_raw_info;
 
 /*==============================================================================
  * Description:

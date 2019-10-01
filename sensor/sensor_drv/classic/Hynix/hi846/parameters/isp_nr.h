@@ -88,18 +88,29 @@ static struct sensor_nr_scene_map_param s_hi846_nr_scene_map_param = {{
 #endif
 
 #ifdef _NR_CNR_PARAM_
-#include "NR/common/normal/cnr_param.h"
 #endif
 
 #ifdef _NR_IMBALANCE_PARAM_
 #include "NR/common/normal/imbalance_param.h"
 #endif
 
-#ifdef _NR_LTM_PARAM_
-#include "NR/common/normal/ltm_param.h"
-#endif
-
 #ifdef _NR_SW3DNR_PARAM_
 #include "NR/common/normal/sw3dnr_param.h"
+#endif
+
+#ifdef _NR_BWU_BWD_PARAM_
+#include "NR/common/normal/bwud_param.h"
+#endif
+
+#ifdef _NR_RAW_GTM_PARAM_
+#include "NR/common/normal/raw_gtm_param.h"
+#endif
+
+#ifdef _NR_RGB_LTM_PARAM_
+#include "NR/common/normal/rgb_ltm_param.h"
+#endif
+
+#ifdef _NR_YUV_LTM_PARAM_
+#include "NR/common/normal/yuv_ltm_param.h"
 #endif
 

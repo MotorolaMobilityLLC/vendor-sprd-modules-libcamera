@@ -512,7 +512,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef HI846
-    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {&hi846_drv_entry, 0, 0, 0}},
+    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 
 // sp area

@@ -426,6 +426,17 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+#include "parameters/param_manager.c"
+static cmr_int s5k3l6_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u8 vendor_id = (cmr_u8)*param;
+    SENSOR_LOGI("*param %x %x", *param, vendor_id);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    s_s5k3l6_mipi_raw_info_ptr =
+        s5k3l6_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
+
+    return rtn;
+}
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -454,6 +465,9 @@ static cmr_int s5k3l6_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = s5k3l6_drv_get_pdaf_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
+        ret = s5k3l6_drv_set_raw_info(handle, param_ptr->pval);
         break;
     default:
         break;
@@ -657,7 +671,7 @@ static cmr_int s5k3l6_drv_set_master_FrameSync(cmr_handle handle,
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c67,
                         (0x10 << 8) | val1 & 0x00ff);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3c71,
-                        (0x83 << 8) | val2 & 0x00ff);
+                        (0x03 << 8) | val2 & 0x00ff);
     cmr_u16 val3 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c67);
 
     cmr_u16 val4 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3c71);
