@@ -6366,6 +6366,13 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     if (param_ptr->is_lightly) {
         CMR_LOGD("channel id %d, caller_handle 0x%lx, skip num %d", *channel_id,
                  (cmr_uint)caller_handle, param_ptr->skip_num);
+        if (*channel_id >= CHN_MAX)
+        {
+            CMR_LOGE("invalid chanel_id: %d", *channel_id);
+            ret = -CMR_CAMERA_INVALID_PARAM;
+            goto exit;
+        }
+
         ret = cmr_grab_cap_cfg_lightly(cxt->grab_cxt.grab_handle,
                                        &param_ptr->cap_inf_cfg, *channel_id);
         if (ret) {
@@ -6446,13 +6453,11 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     param_ptr->cap_inf_cfg.cfg.need_3dnr =
         (2 == camera_get_3dnr_flag(cxt)) ? 1 : 0;
 
-    if (!param_ptr->is_lightly) {
-        ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,
-                               &param_ptr->cap_inf_cfg, channel_id, endian);
-        if (ret) {
-            CMR_LOGE("failed to cap cfg %ld", ret);
-            goto exit;
-        }
+    ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle,
+                           &param_ptr->cap_inf_cfg, channel_id, endian);
+    if (ret) {
+        CMR_LOGE("failed to cap cfg %ld", ret);
+        goto exit;
     }
 
     cxt->grab_cxt.caller_handle[*channel_id] = caller_handle;
@@ -6476,6 +6481,12 @@ cmr_int camera_channel_buff_cfg(cmr_handle oem_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    if (buf_cfg->channel_id >= CHN_MAX)
+    {
+        CMR_LOGE("invalid chanel_id: %d", buf_cfg->channel_id);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
 
     ret = cmr_grab_buff_cfg(cxt->grab_cxt.grab_handle, buf_cfg);
     if (ret) {
@@ -6496,6 +6507,12 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     if (!oem_handle) {
         CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    if (*channel_id >= CHN_MAX)
+    {
+        CMR_LOGE("invalid chanel_id: %d", *channel_id);
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
@@ -6663,6 +6680,13 @@ cmr_int camera_channel_pause(cmr_handle oem_handle, cmr_uint channel_id,
         ret = -CMR_CAMERA_INVALID_PARAM;
         return ret;
     }
+    if (channel_id >= CHN_MAX)
+    {
+        CMR_LOGE("invalid chanel_id: %d", channel_id);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        return ret;
+    }
+
     CMR_LOGI("channel id %ld, reconfig flag %d", channel_id, reconfig_flag);
 
     /* for sharkl2 offline path */
@@ -6700,6 +6724,13 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    if (channel_id >= CHN_MAX)
+    {
+        CMR_LOGE("invalid chanel_id: %d", channel_id);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
     CMR_LOGI("channel id %ld, skip num %d, deci %d, frm num %d", channel_id,
              skip_number, deci_factor, frm_num);
     camera_set_discard_frame(cxt, 0);
@@ -6732,6 +6763,13 @@ cmr_int camera_channel_free_frame(cmr_handle oem_handle, cmr_u32 channel_id,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    if (channel_id >= CHN_MAX)
+    {
+        CMR_LOGE("invalid chanel_id: %d", channel_id);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
     ret = cmr_grab_free_frame(cxt->grab_cxt.grab_handle, channel_id, index);
     if (ret) {
         CMR_LOGE("failed to free frame %d %ld", channel_id, ret);

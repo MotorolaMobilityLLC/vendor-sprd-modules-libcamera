@@ -7227,6 +7227,9 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
 
     handle->prev_cxt[camera_id].camera_id = camera_id;
     handle->prev_cxt[camera_id].out_ret_val = CMR_CAMERA_SUCCESS;
+    handle->prev_cxt[camera_id].prev_channel_id = CHN_MAX;
+    handle->prev_cxt[camera_id].cap_channel_id = CHN_MAX;
+    handle->prev_cxt[camera_id].video_channel_id = CHN_MAX;
 
     CMR_LOGD("camera_id %ld, preview_eb %d, snapshot_eb %d, video_eb %d, "
              "tool_eb %d, prev_status %ld",
@@ -8219,6 +8222,11 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle,
     if (!handle->ops.channel_cfg) {
         CMR_LOGE("ops channel_cfg is null");
         ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+    /*config channel*/
+    if (prev_cxt->prev_param.is_3dnr == 1) {
+        CMR_LOGD("no need config video path.");
         goto exit;
     }
     channel_id = prev_cxt->video_channel_id;

@@ -1176,10 +1176,11 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
     capability->capture_pause = 1;
 
     CMR_LOGD("video prev %d scale %d capture_no_trim %d capture_pause %d "
-             "zoom_post_proc %d",
+             "zoom_post_proc %d, yuv_available_cnt: %d",
              capability->is_video_prev_diff, capability->hw_scale_available,
              capability->capture_no_trim, capability->capture_pause,
-             capability->zoom_post_proc);
+             capability->zoom_post_proc,
+             capability->yuv_available_cnt);
 
     ATRACE_END();
     return ret;
