@@ -237,6 +237,7 @@ static cmr_int ov32a1q_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(5 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
+        usleep(1 * 1000);
         // hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
     } else {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
@@ -749,7 +750,7 @@ static cmr_int ov32a1q_drv_access_val(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("sensor ov32a1q: param_ptr->type=%x", param_ptr->type);
+    SENSOR_LOGV("sensor ov32a1q: param_ptr->type=%x", param_ptr->type);
 
     switch (param_ptr->type) {
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:

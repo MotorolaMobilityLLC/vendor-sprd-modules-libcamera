@@ -226,7 +226,8 @@ static cmr_int ov16885_normal_drv_power_on(cmr_handle handle, cmr_uint power_on)
 
         usleep(5 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);        
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
+        usleep(1 * 1000);
     } else
     {    
 		hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);		
