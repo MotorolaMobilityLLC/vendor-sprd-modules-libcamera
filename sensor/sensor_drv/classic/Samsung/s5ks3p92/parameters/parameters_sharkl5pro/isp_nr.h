@@ -88,6 +88,7 @@ static struct sensor_nr_scene_map_param s_s5ks3p92_nr_scene_map_param = {{
 #endif
 
 #ifdef _NR_CNR_PARAM_
+#include "NR/common/normal/cnr_param.h"
 #endif
 
 #ifdef _NR_IMBALANCE_PARAM_

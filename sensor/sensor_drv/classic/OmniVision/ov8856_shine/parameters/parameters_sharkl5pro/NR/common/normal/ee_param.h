@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_ee_level*/
@@ -79,11 +79,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x18,
+			0x1F,
 			/*ee_r2_cfg*/
-			0x18,
+			0x1F,
 			/*ee_r3_cfg*/
-			0x18,
+			0x1F,
 			/*reserved*/
 			0x00,
 
@@ -106,11 +106,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x0C,
+			0x1F,
 			/*ee_r2_cfg*/
-			0x20,
+			0x1F,
 			/*ee_r3_cfg*/
-			0x08,
+			0x1F,
 			/*reserved*/
 			0x00,
 
@@ -137,9 +137,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0F,
+				0x14,
 				/*ee_r3_cfg*/
-				0x19,
+				0x1E,
 				/*reserved*/
 				0x00,
 
@@ -150,9 +150,9 @@
 			/*ee_c1_cfg*/
 			0x00,
 			/*ee_c2_cfg*/
-			0x0F,
+			0x14,
 			/*ee_c3_cfg*/
-			0x19,
+			0x1E,
 			/*reserved*/
 			0x00,
 
@@ -176,9 +176,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0F,
+				0x14,
 				/*ee_r3_cfg*/
-				0x19,
+				0x1E,
 				/*reserved*/
 				0x00,
 
@@ -189,9 +189,9 @@
 			/*ee_c1_cfg*/
 			0x00,
 			/*ee_c2_cfg*/
-			0xF1,
+			0xEC,
 			/*ee_c3_cfg*/
-			0xE7,
+			0xE2,
 			/*reserved*/
 			0x00,
 
@@ -335,11 +335,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x0A,
+				0x1F,
 				/*ee_r2_cfg*/
-				0x18,
+				0x1F,
 				/*ee_r3_cfg*/
-				0x14,
+				0x1F,
 				/*reserved*/
 				0x00,
 
@@ -362,11 +362,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x0A,
+				0x1F,
 				/*ee_r2_cfg*/
-				0x18,
+				0x1F,
 				/*ee_r3_cfg*/
-				0x14,
+				0x1F,
 				/*reserved*/
 				0x00,
 
@@ -389,11 +389,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x0A,
+				0x1F,
 				/*ee_r2_cfg*/
-				0x18,
+				0x1F,
 				/*ee_r3_cfg*/
-				0x14,
+				0x1F,
 				/*reserved*/
 				0x00,
 
@@ -416,11 +416,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x0A,
+				0x1F,
 				/*ee_r2_cfg*/
-				0x18,
+				0x1F,
 				/*ee_r3_cfg*/
-				0x14,
+				0x1F,
 				/*reserved*/
 				0x00,
 
@@ -432,7 +432,7 @@
 		/*ee_old_gradient_en*/
 		0x0001,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
