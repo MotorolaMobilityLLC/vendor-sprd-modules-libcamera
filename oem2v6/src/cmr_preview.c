@@ -921,6 +921,10 @@ static cmr_int prev_set_preview_buffer(struct prev_handle *handle,
 static cmr_int prev_pop_preview_buffer(struct prev_handle *handle,
                                        cmr_u32 camera_id, struct frm_info *data,
                                        cmr_u32 is_to_hal);
+static cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
+                                             cmr_u32 camera_id,
+                                             struct frm_info *data,
+                                             cmr_u32 is_to_hal);
 static cmr_int prev_clear_preview_buffers(struct prev_handle *handle,
                                           cmr_u32 camera_id);
 
@@ -2063,6 +2067,8 @@ cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_param) {
     prev_cxt = &prev_handle->prev_cxt[threednr_info->camera_id];
     camera_id = threednr_info->camera_id;
 
+    prev_pop_video_buffer_sw_3dnr(prev_handle, threednr_info->camera_id,
+                                  &threednr_info->data, 0);
     if (IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
         cmr_uint rot_index;
         ret =
@@ -2805,49 +2811,52 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
          }
 
     } else {
-        /*need rotation*/
-        if (prev_cxt->prev_mem_valid_num > 0) {
-            ret = prev_start_rotate(handle, camera_id, data);
-            if (ret) {
-                CMR_LOGE("rot failed, skip this frm");
-                ret = CMR_CAMERA_SUCCESS;
-                goto exit;
-            }
-            CMR_LOGD("rot done");
+        if(prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
+        {
+            /*need rotation*/
+            if (prev_cxt->prev_mem_valid_num > 0) {
+                ret = prev_start_rotate(handle, camera_id, data);
+                if (ret) {
+                    CMR_LOGE("rot failed, skip this frm");
+                    ret = CMR_CAMERA_SUCCESS;
+                    goto exit;
+                }
+                CMR_LOGD("rot done");
 
             /*construct frame*/
-            ret = prev_construct_frame(handle, camera_id, data, &frame_type);
-            if (ret) {
-                CMR_LOGE("construct frm 0x%x err", data->frame_id);
-                goto exit;
-            }
+                ret = prev_construct_frame(handle, camera_id, data, &frame_type);
+                if (ret) {
+                    CMR_LOGE("construct frm 0x%x err", data->frame_id);
+                    goto exit;
+                }
 
-            ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_PREVIEW, rot_index,
+                ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_PREVIEW, rot_index,
                                            0);
-            if (ret) {
-                CMR_LOGE("prev_set_rot_buffer_flag failed");
-                goto exit;
-            }
-            /*notify frame*/
-            ret = prev_pop_preview_buffer(handle, camera_id, data, 0);
-            if (ret) {
-                CMR_LOGE("pop frm 0x%x err", data->channel_id);
-                goto exit;
-            }
-            cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
-            cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
-            cb_data_info.frame_data = &frame_type;
-            prev_cb_start(handle, &cb_data_info);
+                if (ret) {
+                    CMR_LOGE("prev_set_rot_buffer_flag failed");
+                    goto exit;
+                }
+                /*notify frame*/
+                ret = prev_pop_preview_buffer(handle, camera_id, data, 0);
+                if (ret) {
+                    CMR_LOGE("pop frm 0x%x err", data->channel_id);
+                    goto exit;
+                }
+                cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
+                cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+                cb_data_info.frame_data = &frame_type;
+                prev_cb_start(handle, &cb_data_info);
 
-        } else {
-            CMR_LOGW("no available buf, drop! channel_id 0x%x",
-                     data->channel_id);
-            ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_PREVIEW, rot_index,
+                } else {
+                CMR_LOGW("no available buf, drop! channel_id 0x%x",
+                         data->channel_id);
+                ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_PREVIEW, rot_index,
                                            0);
-            if (ret) {
-                CMR_LOGE("prev_set_rot_buffer_flag failed");
-                goto exit;
-            }
+                if (ret) {
+                     CMR_LOGE("prev_set_rot_buffer_flag failed");
+                    goto exit;
+                 }
+             }
         }
     }
 
@@ -13074,6 +13083,76 @@ exit:
     return ret;
 }
 
+cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
+                                      cmr_u32 camera_id, struct frm_info *data,
+                                      cmr_u32 is_to_hal) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    cmr_int valid_num = 0;
+    cmr_u32 i;
+    struct camera_frame_type frame_type;
+    struct prev_cb_info cb_data_info;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    if (!data) {
+        CMR_LOGE("frm data is null");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    prev_cxt = &handle->prev_cxt[camera_id];
+    valid_num = prev_cxt->video_mem_valid_num;
+
+    if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
+        if (prev_cxt->prev_param.video_eb)
+            CMR_LOGE("wrong valid_num %ld", valid_num);
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+    if (/*(prev_cxt->video_frm[0].fd == (cmr_s32)data->fd) &&*/ valid_num > 0) {
+        for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
+            prev_cxt->video_phys_addr_array[i] =
+                prev_cxt->video_phys_addr_array[i + 1];
+            prev_cxt->video_virt_addr_array[i] =
+                prev_cxt->video_virt_addr_array[i + 1];
+            prev_cxt->video_fd_array[i] = prev_cxt->video_fd_array[i + 1];
+            memcpy(&prev_cxt->video_frm[i], &prev_cxt->video_frm[i + 1],
+                   sizeof(struct img_frm));
+        }
+        prev_cxt->video_phys_addr_array[valid_num - 1] = 0;
+        prev_cxt->video_virt_addr_array[valid_num - 1] = 0;
+        prev_cxt->video_fd_array[valid_num - 1] = 0;
+        cmr_bzero(&prev_cxt->video_frm[valid_num - 1], sizeof(struct img_frm));
+        prev_cxt->video_mem_valid_num--;
+        if (is_to_hal) {
+            cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
+            frame_type.y_phy_addr = prev_cxt->video_phys_addr_array[0];
+            frame_type.y_vir_addr = prev_cxt->video_virt_addr_array[0];
+            frame_type.fd = prev_cxt->video_fd_array[0];
+            frame_type.type = PREVIEW_VIDEO_CANCELED_FRAME;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.monoboottime = data->monoboottime;
+            cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
+            cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+            cb_data_info.frame_data = &frame_type;
+            prev_cb_start(handle, &cb_data_info);
+        }
+    } else {
+        CMR_LOGE(
+            "got wrong buf: data->fd=0x%x, video_frm[0].fd=0x%x, valid_num=%ld",
+            data->fd, prev_cxt->video_frm[0].fd, valid_num);
+        return CMR_CAMERA_INVALID_FRAME;
+    }
+
+exit:
+    CMR_LOGD("fd=0x%x, chn_id=0x%x, valid_num=%ld, cam_id=%ld", data->fd,
+             data->channel_id, prev_cxt->video_mem_valid_num,
+             prev_cxt->camera_id);
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int prev_clear_preview_buffers(struct prev_handle *handle,
                                    cmr_u32 camera_id) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -13279,7 +13358,25 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             buf_cfg.fd[0] = prev_cxt->video_frm[valid_num].fd;
         }
     }
+
+#if defined(CONFIG_ISP_2_3)   //just for sharkle
+    pthread_mutex_lock(&handle->thread_cxt.prev_stop_mutex);
+    if (prev_cxt->prev_status !=IDLE) {
+        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW)
+            ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+        else {
+            CMR_LOGV("skip set video buffer for CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW");
+            pthread_mutex_unlock(&handle->thread_cxt.prev_stop_mutex);
+            return 0 ;
+        }
+    } else {
+        cmr_bzero(&prev_cxt->video_frm[valid_num], sizeof(struct img_frm));
+    }
+    pthread_mutex_unlock(&handle->thread_cxt.prev_stop_mutex);
+#else
     ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+#endif
+
     if (ret) {
         CMR_LOGE("channel_buff_cfg failed");
         goto exit;

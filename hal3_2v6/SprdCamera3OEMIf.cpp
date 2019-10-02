@@ -3061,6 +3061,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     mZslCaptureExitLoop = false;
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
+    mVideoProcessedWithPreview = false;
     mVideo3dnrFlag = VIDEO_OFF;
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag, NULL);
 
@@ -3154,6 +3155,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
+    }
+
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
+        mVideoProcessedWithPreview = true;
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_MODE,
@@ -3966,7 +3971,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
 #endif
 
-            if (mVideoCopyFromPreviewFlag) {
+            if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
                 if (rec_stream) {
                     ret = rec_stream->getQBufAddrForNum(
                         frame_num, &videobuf_vir, &videobuf_phy, &fd0);
@@ -3978,32 +3983,42 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                         }
                     }
                 }
-
-                calculateTimestampForSlowmotion(buffer_timestamp);
-                ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir,
-                                                    &videobuf_phy, &fd0);
-                if (ret || videobuf_vir == 0) {
-                    HAL_LOGE("getQBufAddrForNum failed");
-                    goto exit;
-                }
-
-                pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
-                                              &prebuf_phy, &fd1);
-                HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx",
-                         frame_num, videobuf_phy, videobuf_vir);
-                HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
-                         frame_num, prebuf_phy, prebuf_vir);
-                memcpy((void *)videobuf_vir, (void *)prebuf_vir,
-                       mPreviewWidth * mPreviewHeight * 3 / 2);
-                flushIonBuffer(fd0, (void *)videobuf_vir, 0,
-                               mPreviewWidth * mPreviewHeight * 3 / 2);
-                channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
-                                          CAMERA_STREAM_TYPE_VIDEO);
             }
 
-            channel->channelCbRoutine(frame_num, buffer_timestamp,
-                                      CAMERA_STREAM_TYPE_PREVIEW);
+            if (mIsRecording && rec_stream) {
+                calculateTimestampForSlowmotion(buffer_timestamp);
+                if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
+                    ret = rec_stream->getQBufAddrForNum(
+                        frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+                    if (ret || videobuf_vir == 0) {
+                        HAL_LOGE("getQBufAddrForNum failed");
+                        goto exit;
+                    }
+                    pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
+                                                  &prebuf_phy, &fd1);
+                    HAL_LOGV(
+                        "frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx,fd=0x%x",
+                        frame_num, videobuf_phy, videobuf_vir,fd0);
+                    HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
+                             frame_num, prebuf_phy, prebuf_vir);
+                    if (mVideoCopyFromPreviewFlag) {
+                        memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+                               mPreviewWidth * mPreviewHeight * 3 / 2);
+                    }
+                    flushIonBuffer(fd0, (void *)videobuf_vir, 0,
+                                   mPreviewWidth * mPreviewHeight * 3 / 2);
 
+                    channel->channelCbRoutine(frame_num,
+                                              mSlowPara.rec_timestamp,
+                                              CAMERA_STREAM_TYPE_VIDEO);
+                }
+
+                channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
+                                          CAMERA_STREAM_TYPE_PREVIEW);
+            } else {
+                channel->channelCbRoutine(frame_num, buffer_timestamp,
+                                          CAMERA_STREAM_TYPE_PREVIEW);
+            }
         } else {
             channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
                                               CAMERA_STREAM_TYPE_PREVIEW);

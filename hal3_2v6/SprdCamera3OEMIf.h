@@ -333,6 +333,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setUltraWideMode();
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
+    bool mVideoProcessedWithPreview;
     cmr_uint mVideo3dnrFlag;
 
   private:
