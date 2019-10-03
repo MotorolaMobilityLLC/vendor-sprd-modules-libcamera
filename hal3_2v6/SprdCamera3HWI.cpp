@@ -885,6 +885,10 @@ int SprdCamera3HWI::configureStreams(
    //do aligment for sharkle due to hardware diff
     if (capture_size.height == 1944 && capture_size.width == 2592) {
         capture_size.height = 1952;
+    } else if (capture_size.height == 1458 && capture_size.width == 2592) {
+        capture_size.height = 1456;
+    } else if (capture_size.height == 1740 && capture_size.width == 2320) {
+        capture_size.height = 1744;
     } else if (capture_size.height == 1836 && capture_size.width == 3264) {
         capture_size.height = 1840;
     } else if (capture_size.height == 900 && capture_size.width == 1600) {
