@@ -1514,6 +1514,96 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     }
 }
 
+static void camera_cfg_face_roi(cmr_handle oem_handle,
+                                struct camera_frame_type *frame_param,
+                                struct isp_face_area *face_area,
+                                struct sprd_img_path_rect *sn_trim) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_s32 sx = 0;
+    cmr_s32 sy = 0;
+    cmr_s32 ex = 0;
+    cmr_s32 ey = 0;
+    cmr_s32 i = 0;
+    cmr_uint face_info_max_num =
+        sizeof(face_area->face_info) / sizeof(struct isp_face_info);
+
+    if (face_info_max_num < face_area->face_num)
+        face_area->face_num = face_info_max_num;
+
+    for (i = 0; i < face_area->face_num; i++) {
+        sx = MIN(
+            MIN(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
+            MIN(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
+        sy = MIN(
+            MIN(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
+            MIN(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
+        ex = MAX(
+            MAX(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
+            MAX(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
+        ey = MAX(
+            MAX(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
+            MAX(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
+        // save face info in cmr cxt for other case.such as face beauty
+        // takepicture
+        cxt->fd_face_area.face_info[i].sx = sx;
+        cxt->fd_face_area.face_info[i].sy = sy;
+        cxt->fd_face_area.face_info[i].ex = ex;
+        cxt->fd_face_area.face_info[i].ey = ey;
+#ifdef CONFIG_CAMERA_FACE_ROI
+        face_area->face_info[i].sx = 1.0 * sx * (float)face_area->frame_width /
+                                     (float)frame_param->width;
+        face_area->face_info[i].sy = 1.0 * sy * (float)face_area->frame_height /
+                                     (float)frame_param->height;
+        face_area->face_info[i].ex = 1.0 * ex * (float)face_area->frame_width /
+                                     (float)frame_param->width;
+        face_area->face_info[i].ey = 1.0 * ey * (float)face_area->frame_height /
+                                     (float)frame_param->height;
+#else
+        float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+              zoomHeight = 0;
+        struct sprd_img_rect scalerCrop;
+        CMR_LOGD("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
+                 frame_param->width, frame_param->height, sx, sy, ex, ey);
+        scalerCrop.x = sn_trim->trim_valid_rect.x;
+        scalerCrop.y = sn_trim->trim_valid_rect.y;
+        scalerCrop.w = sn_trim->trim_valid_rect.w;
+        scalerCrop.h = sn_trim->trim_valid_rect.h;
+        float previewAspect = (float)frame_param->width / frame_param->height;
+        float cropAspect = (float)scalerCrop.w / scalerCrop.h;
+        if (previewAspect > cropAspect) {
+            width = scalerCrop.w;
+            height = scalerCrop.w / previewAspect;
+            left = scalerCrop.x;
+            top = scalerCrop.y + (scalerCrop.h - height) / 2;
+        } else {
+            width = previewAspect * scalerCrop.h;
+            height = scalerCrop.h;
+            left = scalerCrop.x + (scalerCrop.w - width) / 2;
+            top = scalerCrop.y;
+        }
+        zoomWidth = width / (float)frame_param->width;
+        zoomHeight = height / (float)frame_param->height;
+        face_area->face_info[i].sx = (cmr_s32)((float)sx * zoomWidth + left);
+        face_area->face_info[i].sy = (cmr_s32)((float)sy * zoomHeight + top);
+        face_area->face_info[i].ex = (cmr_s32)((float)ex * zoomWidth + left);
+        face_area->face_info[i].ey = (cmr_s32)((float)ey * zoomHeight + top);
+#endif
+        cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
+        cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
+        face_area->face_info[i].brightness =
+            frame_param->face_info[i].brightness;
+        face_area->face_info[i].angle = frame_param->face_info[i].angle;
+        face_area->face_info[i].pose = frame_param->face_info[i].pose;
+        face_area->face_info[i].yaw_angle = frame_param->face_info[i].pose;
+        face_area->face_info[i].roll_angle = frame_param->face_info[i].angle;
+        face_area->face_info[i].score = frame_param->face_info[i].score;
+        face_area->face_info[i].id = frame_param->face_info[i].face_id;
+        CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d",
+                 face_area->face_info[i].sx, face_area->face_info[i].sy,
+                 face_area->face_info[i].ex, face_area->face_info[i].ey);
+    }
+}
+
 cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                           enum preview_func_type func, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1568,6 +1658,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             cmr_u32 sn_mode = 0;
             struct sprd_img_path_rect sn_trim;
             bzero(&sn_trim, sizeof(struct sprd_img_path_rect));
+#ifdef CONFIG_ISP_2_3
+            struct img_rect af_trim = {0, 0, 0, 0};
+#endif
             cmr_uint face_info_max_num =
                 sizeof(face_area.face_info) / sizeof(struct isp_face_info);
 
@@ -1603,99 +1696,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             if (face_info_max_num < face_area.face_num) {
                 face_area.face_num = face_info_max_num;
             }
-
-            for (i = 0; i < face_area.face_num; i++) {
-                sx = MIN(MIN(frame_param->face_info[i].sx,
-                             frame_param->face_info[i].srx),
-                         MIN(frame_param->face_info[i].ex,
-                             frame_param->face_info[i].elx));
-                sy = MIN(MIN(frame_param->face_info[i].sy,
-                             frame_param->face_info[i].sry),
-                         MIN(frame_param->face_info[i].ey,
-                             frame_param->face_info[i].ely));
-                ex = MAX(MAX(frame_param->face_info[i].sx,
-                             frame_param->face_info[i].srx),
-                         MAX(frame_param->face_info[i].ex,
-                             frame_param->face_info[i].elx));
-                ey = MAX(MAX(frame_param->face_info[i].sy,
-                             frame_param->face_info[i].sry),
-                         MAX(frame_param->face_info[i].ey,
-                             frame_param->face_info[i].ely));
-                // save face info in cmr cxt for other case.such as face beauty
-                // takepicture
-                cxt->fd_face_area.face_info[i].sx = sx;
-                cxt->fd_face_area.face_info[i].sy = sy;
-                cxt->fd_face_area.face_info[i].ex = ex;
-                cxt->fd_face_area.face_info[i].ey = ey;
-#ifdef CONFIG_CAMERA_FACE_ROI
-                face_area.face_info[i].sx = 1.0 * sx *
-                                            (float)face_area.frame_width /
-                                            (float)frame_param->width;
-                face_area.face_info[i].sy = 1.0 * sy *
-                                            (float)face_area.frame_height /
-                                            (float)frame_param->height;
-                face_area.face_info[i].ex = 1.0 * ex *
-                                            (float)face_area.frame_width /
-                                            (float)frame_param->width;
-                face_area.face_info[i].ey = 1.0 * ey *
-                                            (float)face_area.frame_height /
-                                            (float)frame_param->height;
-#else
-                float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
-                      zoomHeight = 0;
-                struct sprd_img_rect scalerCrop;
-                CMR_LOGD(
-                    "mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
-                    frame_param->width, frame_param->height, sx, sy, ex, ey);
-                scalerCrop.x = sn_trim.trim_valid_rect.x;
-                scalerCrop.y = sn_trim.trim_valid_rect.y;
-                scalerCrop.w = sn_trim.trim_valid_rect.w;
-                scalerCrop.h = sn_trim.trim_valid_rect.h;
-                float previewAspect =
-                    (float)frame_param->width / frame_param->height;
-                float cropAspect = (float)scalerCrop.w / scalerCrop.h;
-                if (previewAspect > cropAspect) {
-                    width = scalerCrop.w;
-                    height = scalerCrop.w / previewAspect;
-                    left = scalerCrop.x;
-                    top = scalerCrop.y + (scalerCrop.h - height) / 2;
-                } else {
-                    width = previewAspect * scalerCrop.h;
-                    height = scalerCrop.h;
-                    left = scalerCrop.x + (scalerCrop.w - width) / 2;
-                    top = scalerCrop.y;
-                }
-                zoomWidth = width / (float)frame_param->width;
-                zoomHeight = height / (float)frame_param->height;
-                face_area.face_info[i].sx =
-                    (cmr_s32)((float)sx * zoomWidth + left);
-                face_area.face_info[i].sy =
-                    (cmr_s32)((float)sy * zoomHeight + top);
-                face_area.face_info[i].ex =
-                    (cmr_s32)((float)ex * zoomWidth + left);
-                face_area.face_info[i].ey =
-                    (cmr_s32)((float)ey * zoomHeight + top);
-#endif
-                cxt->fd_face_area.face_info[i].angle =
-                    frame_param->face_info[i].angle;
-                cxt->fd_face_area.face_info[i].pose =
-                    frame_param->face_info[i].pose;
-                face_area.face_info[i].brightness =
-                    frame_param->face_info[i].brightness;
-                face_area.face_info[i].angle = frame_param->face_info[i].angle;
-                face_area.face_info[i].pose = frame_param->face_info[i].pose;
-
-                face_area.face_info[i].yaw_angle =
-                    frame_param->face_info[i].pose;
-                face_area.face_info[i].roll_angle =
-                    frame_param->face_info[i].angle;
-                face_area.face_info[i].score = frame_param->face_info[i].score;
-                face_area.face_info[i].id = frame_param->face_info[i].face_id;
-
-                CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d",
-                         face_area.face_info[i].sx, face_area.face_info[i].sy,
-                         face_area.face_info[i].ex, face_area.face_info[i].ey);
-            }
+            camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
             /* SS requires to disable FD when HDR is on */
             if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
                     cxt->sn_cxt.sensor_info.image_format &&
@@ -1703,6 +1704,27 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_FACE_AREA,
                           (void *)&face_area);
             }
+
+#ifdef CONFIG_ISP_2_3
+            cmr_bzero(&face_area, sizeof(struct isp_face_area));
+
+            camera_get_senor_mode_trim2(cxt, &af_trim);
+            face_area.frame_width = af_trim.width;
+            face_area.frame_height = af_trim.height;
+            face_area.face_num = frame_param->face_num;
+            CMR_LOGV("af face_num %d, size:%dx%d", face_area.face_num,
+                     face_area.frame_width, face_area.frame_height);
+
+            camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
+
+            if (CAM_IMG_FMT_BAYER_MIPI_RAW == cxt->sn_cxt.sensor_info.image_format &&
+                (!cxt->is_vendor_hdr) && /* SS requires to disable FD when HDR
+                                            is on */
+                frame_param->is_update_isp) {
+                isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AF_FACE_AREA,
+                          (void *)&face_area);
+            }
+#endif
         }
 
         break;
