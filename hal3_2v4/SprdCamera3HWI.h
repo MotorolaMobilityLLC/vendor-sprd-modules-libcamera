@@ -153,6 +153,7 @@ class SprdCamera3HWI {
         uint8_t af_state;
         uint8_t ae_precap_trigger;
         uint8_t ae_state;
+        uint8_t ae_manual_trigger;
     } threeA_info_t;
 
     /* Data structure to store pending request */

@@ -3765,6 +3765,11 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
+        if (s_setting[mCameraId].controlInfo.ae_exposure_compensation !=
+            frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+            .data.i32[0]) {
+            s_setting[mCameraId].controlInfo.ae_manual_trigger = 1;
+        }
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
                 .data.i32[0];
@@ -4261,10 +4266,17 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].controlInfo.af_state;
 
     if (s_setting[mCameraId].resultInfo.ae_precap_trigger !=
-        ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE)
+            ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE ||
+        s_setting[mCameraId].resultInfo.ae_manual_trigger) {
         s_setting[mCameraId].resultInfo.ae_state =
             s_setting[mCameraId].controlInfo.ae_state;
-
+    } else if ((s_setting[mCameraId].controlInfo.ae_state ==
+                ANDROID_CONTROL_AE_STATE_CONVERGED) &&
+               (s_setting[mCameraId].resultInfo.ae_precap_trigger ==
+                ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE)) {
+        s_setting[mCameraId].resultInfo.ae_state =
+            s_setting[mCameraId].controlInfo.ae_state;
+    }
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
     //			s_setting[mCameraId].controlInfo.af_mode,
@@ -4399,6 +4411,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].resultInfo.ae_state), 1);
+
+    HAL_LOGV("result ae_state=%d",
+             s_setting[mCameraId].resultInfo.ae_state);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
     //			s_setting[mCameraId].controlInfo.ae_precapture_id);

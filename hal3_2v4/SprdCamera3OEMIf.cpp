@@ -483,6 +483,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     isCallbackCapture = false;
     mMasterId = 0;
     clearPrevStream = false;
+    mManualExposureEnabled = false;
 
     HAL_LOGI(":hal3: X");
 }
@@ -5686,6 +5687,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_u32 ae_info = 0;
+    cmr_u32 ae_stab = 0;
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
     SPRD_DEF_Tag sprddefInfo;
@@ -5698,7 +5700,19 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (parm4 != NULL) {
             ae_info = *((cmr_u32 *)parm4);
+            ae_stab = ae_info & (0x00000001);
             HAL_LOGD("ae_info = 0x%x", ae_info);
+        }
+        if (ae_stab == 0 && controlInfo.ae_lock && mManualExposureEnabled) {
+            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+            mSetting->setAeCONTROLTag(&controlInfo);
+            goto exit;
+        } else if (ae_stab == 1 && mManualExposureEnabled &&
+                   controlInfo.ae_lock) {
+            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
+            mSetting->setAeCONTROLTag(&controlInfo);
+            mManualExposureEnabled = false;
+            goto exit;
         }
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
@@ -5711,6 +5725,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
             mSetting->setAwbCONTROLTag(&controlInfo);
         }
+
+        exit:
         HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
                  controlInfo.ae_state);
         break;
@@ -6228,6 +6244,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 controlInfo.ae_compensation_step.denominator;
             ae_compensation_param.ae_exposure_compensation =
                 controlInfo.ae_exposure_compensation;
+            mManualExposureEnabled = true;
         }
 
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
