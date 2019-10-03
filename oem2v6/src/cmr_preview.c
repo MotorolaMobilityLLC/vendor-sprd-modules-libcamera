@@ -8015,6 +8015,7 @@ cmr_int channel0_configure(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.dst_img_size.width = sensor_mode_info->trim_width;
     chn_param.cap_inf_cfg.cfg.dst_img_size.height =
         sensor_mode_info->trim_height;
+    chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_PREVIEW;
 
     /*get sensor interface info*/
     ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
@@ -12212,6 +12213,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
+    chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE;
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
                            &chn_param.cap_inf_cfg.cfg);
     if (ret) {
