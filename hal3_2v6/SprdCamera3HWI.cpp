@@ -697,6 +697,8 @@ int SprdCamera3HWI::configureStreams(
                 } else {
                     stream_type = CAMERA_STREAM_TYPE_CALLBACK;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                    newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                    newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
                 }
                 break;
 
