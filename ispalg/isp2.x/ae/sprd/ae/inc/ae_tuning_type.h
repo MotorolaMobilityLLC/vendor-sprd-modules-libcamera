@@ -70,9 +70,10 @@ struct ae1_fd_param {
 	cmr_u16 reserved;			/*1 x 4bytes */
 	cmr_u16 img_width;
 	cmr_u16 img_height;			/*1 x 4bytes */
-};								/*1127 x 4bytes */
-#endif
+};
+#endif							/*1127 x 4bytes */
 
+/*ae tuning parameter structure define*/
 struct ae_stat_req {
 	cmr_u32 mode;				//0:normal, 1:G(center area)
 	cmr_u32 G_width;			//100:G mode(100x100)
@@ -144,10 +145,10 @@ struct ae_convergence_parm {
 struct ae_exp_gain_table {
 	cmr_s32 min_index;
 	cmr_s32 max_index;
-	cmr_u32 exposure[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u32 dummy[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u16 again[AE_EXP_GAIN_TABLE_SIZE];
-	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u32 exposure[AE_EXP_GAIN_TABLE_SIZE]; /*512 * 4bytes*/
+	cmr_u32 dummy[AE_EXP_GAIN_TABLE_SIZE]; /*512 * 4bytes*/
+	cmr_u16 again[AE_EXP_GAIN_TABLE_SIZE]; /*256 * 4bytes*/
+	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE]; /*256 * 4bytes*/
 };
 
 struct ae_weight_table {
@@ -195,6 +196,7 @@ struct ae_thrd_param {
 	cmr_s16 thr_up;
 	cmr_s16 thr_down;
 };
+
 struct ae_param_tmp_001 {
 	cmr_u32 version;
 	cmr_u32 verify;
@@ -312,8 +314,17 @@ struct face_tuning_param_adv {
 	cmr_u8 u4small_weight_raise;		//change face small roi from abl weight value
 	cmr_u8 u4offset_ratio_thrd;		//change face offset from roi size thrd
 	cmr_u8 u4offset_ratio_value;		//change face offset from roi size value
+	/*face id unlock */
+	cmr_u8 u4fdunlock_enable;
+	cmr_u8 u4fdunlock_face_target;	//face target in face id unlock mode
+	cmr_u8 u4fdunlock_face_weight1;	//small face roi luma weight in face id unlock mode
+	cmr_u8 u4fdunlock_face_weight2;	//big face roi luma weight in face id unlock mode
+	cmr_u8 u4fdunlock_face_roi_ratio;	//ratio for calculate small face roi in face id unlock mode
+	cmr_u8 u4fdunlock_unlinear_cancel;	//cancel face offset with unlinear in face id unlock mode
+	cmr_u8 u4fdunlock_range_high;
+	cmr_u8 u4fdunlock_range_low;
 	cmr_u8 reserved1;
-	cmr_u32 reserved[45];
+	cmr_u32 reserved[43];
 };
 
 struct ae_touch_param {
@@ -632,5 +643,4 @@ struct ae_tuning_param {		//total bytes must be 312696
 	struct face_tuning_param_adv face_param_adv;/*50 * 4bytes*/
 	cmr_u32 reserved[1295];
 };
-
 #endif

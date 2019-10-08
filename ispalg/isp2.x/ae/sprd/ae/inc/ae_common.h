@@ -31,13 +31,16 @@
 #define IDR_BV 900
 #define ODR_BV 1500
 #define INDOOR_THD 700
+#define OUTDOOR_THD 1300
+
 
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
 
 #define AE_WEIGHT_UNIT 256
 #define AE_BASE_GAIN 128
-#define AE_FIX_PCT 1024
+#define AE_FIX_PCT1024 1024
+#define AE_FIX_PCT100 100
 
 typedef cmr_handle ae_handle_t;
 
@@ -432,7 +435,6 @@ struct ae_set_fps {
 	cmr_u32 max_fps;			// fix fps flag
 };
 
-
 struct ae_flash_ctrl {
 	cmr_u32 enable;
 	cmr_u32 main_flash_lum;
@@ -481,6 +483,14 @@ struct ae_ev_convert {
 	float ev_change;
 };
 
+struct ae_zoom_info {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+	cmr_u32 zoom_ratio;
+};
+
 struct ae_settings {
 	cmr_u16 ver;
 	cmr_u8 force_lock_ae;
@@ -491,9 +501,9 @@ struct ae_settings {
 	cmr_u32 exp_line;			/* set exposure lines */
 	cmr_u16 gain;				/* set gain: 128 means 1 time gain , user can set any value to it */
 	cmr_u16 table_idx;			/* set ae-table-index */
-	cmr_s16 min_fps;			/* e.g. 2000 means 20.00fps , 0 means Auto */
-	cmr_s16 max_fps;
-	cmr_u8 sensor_max_fps;		/*the fps of sensor setting: it always is 30fps in normal setting */
+	cmr_u16 min_fps;				/* e.g. 2000 means 20.00fps , 0 means Auto */
+	cmr_u16 max_fps;
+	cmr_u16 sensor_max_fps;		/*the fps of sensor setting: it always is 30fps in normal setting */
 	cmr_s8 flash;				/*flash */
 	cmr_s16 flash_ration;		/* mainflash : preflash -> 1x = 32 */
 	cmr_s16 flash_target;
@@ -559,8 +569,8 @@ struct ae_alg_calc_param {
 	cmr_u16 target_range_near_zone;/*for AE2.5*/
 	cmr_s16 start_index;
 	cmr_u32 line_time;
-	cmr_s16 snr_max_fps;
-	cmr_s16 snr_min_fps;
+	cmr_u16 snr_max_fps;
+	cmr_u16 snr_min_fps;
 	cmr_u32 frame_id;
 	cmr_u32 *r;
 	cmr_u32 *g;
@@ -618,6 +628,7 @@ struct ae_alg_calc_param {
 	cmr_u8 fast_cvgn_disab;
 	cmr_u32 debug_info_size;
 	cmr_u32 cam_4in1_cap_flag;
+	struct ae_zoom_info zoom_info;
 };
 
 struct ae1_senseor_out {
@@ -681,4 +692,5 @@ struct ae_alg_calc_result {
 	cmr_u32 privated_data;
 	cmr_u32 abl_weighting;
 };
+
 #endif

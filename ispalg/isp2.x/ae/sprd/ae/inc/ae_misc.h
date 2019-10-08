@@ -24,14 +24,15 @@ extern "C" {
 #endif
 
 	enum aec_io_ctrl_cmd {
-		AEC_SET_BASE = 0x00,
-		AEC_SET_Q_ARRAY,	
+		AEC_SET_BASE = 0x100,
+		AEC_SET_Q_ARRAY,
 		AEC_SET_PRV_PARAM,
 		AEC_SET_CMD_MAX,
-		AEC_GET_BASE,
+		AEC_GET_BASE = 0x200,
 		AEC_GET_Q_ARRAY,
 		AEC_GET_PRV_PARAM,
 		AEC_GET_AE_TABLE,
+		AEC_GET_DEBUG_INFO,
 		AEC_GET_CMD_MAX,	
 		AEC_IO_CTRL_MAX
 	};
@@ -42,6 +43,9 @@ extern "C" {
 		cmr_u32 start_index;
 		cmr_handle param_ptr;
 		cmr_u32 size;
+#ifdef AE3X_PORTING_DEBUG
+		cmr_handle ae_tune_param;/*just for debug*/
+#endif
 	};
 
 	struct ae_misc_init_out {
