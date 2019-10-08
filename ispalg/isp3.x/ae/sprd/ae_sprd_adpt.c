@@ -575,7 +575,7 @@ static cmr_s32 ae_adjust_exp_gain(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 	double product = 1.0 * src_exp_param->exp_time * src_exp_param->gain;
 	cmr_u32 exp_cnts = 0;
 	cmr_u32 sensor_maxfps = cxt->cur_status.adv_param.sensor_fps_range.max;
-	double product_max = 1.0 * cxt->ae_tbl_param.max_exp * cxt->ae_tbl_param.max_index;
+	double product_max = 1.0 * cxt->ae_tbl_param.max_exp * cxt->ae_tbl_param.max_gain;
 	max_gain = cxt->ae_tbl_param.max_gain;
 
 	ISP_LOGV("max:src %.f, dst %.f, max index: %d\n", product, product_max, cxt->ae_tbl_param.max_index);
@@ -3142,9 +3142,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		src_exp.cur_index = cxt->last_index;
 		src_exp.target_offset = cxt->last_exp_param.target_offset;
 		if((cxt->app_mode < 64) && (cxt->app_mode >= 0) && !work_info->is_snapshot){
-			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
-			if(CAMERA_MODE_MANUAL == last_app_mode )
-				last_app_mode = 0;
 			if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
 				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
 				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
@@ -3228,7 +3225,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}
 	}
 
-	if ((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode))) {
+	if (((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode))) || (CAMERA_MODE_MANUAL == cxt->app_mode)) {
 		dst_exp.exp_time = src_exp.exp_time;
 		dst_exp.exp_line = src_exp.exp_line;
 		dst_exp.gain = src_exp.gain;
