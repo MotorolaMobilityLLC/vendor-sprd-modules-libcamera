@@ -314,6 +314,20 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     HAL_LOGI("SPRD Camera Hal :hal3: cameraId=%d", atoi(id));
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
+    // for camera id 0&2&3 debug
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.multi.cam.id", value, "null");
+    if (!strcmp(value, "0") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+        id = "0";
+    else if (!strcmp(value, "2") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+        id = "2";
+    else if (!strcmp(value, "3") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+        id = "3";
+    else if (!strcmp(value, "4") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+        id = "4";
+    else if (!strcmp(value, "5") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+        id = "5";
+    HAL_LOGV("multi cameraId=%d", atoi(id));
     if (atoi(id) == SPRD_MULTI_CAMERA_ID) {
         return SprdCamera3MultiCamera::camera_device_open(module, id, hw_device);
     }

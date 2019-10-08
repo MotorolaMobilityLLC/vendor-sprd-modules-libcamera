@@ -2091,7 +2091,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 12 default quarter size
 #ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
-    available_cam_features.add(1);
+    available_cam_features.add(0);
 #else
     available_cam_features.add(0);
 #endif
