@@ -10013,7 +10013,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
-    if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
+    if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
 #ifdef OEM_HANDLE_3DNR
         if (0 != cxt->ipm_cxt.frm_num) {
             cxt->ipm_cxt.frm_num = 0;
