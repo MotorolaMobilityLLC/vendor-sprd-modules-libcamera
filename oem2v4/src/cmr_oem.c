@@ -4498,13 +4498,18 @@ static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data) {
         break;
 
     case CMR_EVT_ISP_PM_MEM_INIT:
-		cxt->err_code = isp_mw_pm_mem_init(&cxt->isp_pm_context_addr);
-		ISP_LOGI("pm_context_addr: 0x%x, ret: %d", cxt->isp_pm_context_addr, cxt->err_code);
+        pthread_mutex_lock(&cxt->isp_pm_mutex);
+        cxt->isp_pm_initing = true;
+        cxt->err_code = isp_mw_pm_mem_init(&cxt->isp_pm_context_addr);
+        pthread_cond_signal(&cxt->isp_pm_cond);
+        cxt->isp_pm_initing = false;
+        pthread_mutex_unlock(&cxt->isp_pm_mutex);
+        ISP_LOGI("pm_context_addr: 0x%x, ret: %d", cxt->isp_pm_context_addr, cxt->err_code);
         break;
 
     case CMR_EVT_ISP_PM_MEM_DEINIT:
-		isp_mw_pm_mem_deinit((void *)cxt->isp_pm_context_addr);
-		cxt->isp_pm_context_addr = 0;
+        isp_mw_pm_mem_deinit((void *)cxt->isp_pm_context_addr);
+        cxt->isp_pm_context_addr = 0;
         break;
 
     default:
@@ -4683,10 +4688,16 @@ cmr_int camera_isp_pm_mem_deinit(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CMR_MSG_INIT(message);
-	if (!cxt->isp_pm_context_addr) {
-		CMR_LOGI("isp pm mem has been free!");
-		return ret;
-	}
+    pthread_mutex_lock(&cxt->isp_pm_mutex);
+
+    while (cxt->isp_pm_initing) {
+        pthread_cond_wait(&cxt->isp_pm_cond, &cxt->isp_pm_mutex);
+    }
+
+    if (!cxt->isp_pm_context_addr) {
+        CMR_LOGI("isp pm mem has been free!");
+        return ret;
+    }
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
 
@@ -4697,6 +4708,7 @@ cmr_int camera_isp_pm_mem_deinit(cmr_handle oem_handle) {
         CMR_LOGE("send msg failed!");
         ret = CMR_CAMERA_FAIL;
     }
+    pthread_mutex_unlock(&cxt->isp_pm_mutex);
     ATRACE_END();
     return ret;
 }
@@ -4846,6 +4858,8 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     }
     pthread_mutex_unlock(&close_mutex);
 
+    pthread_mutex_destroy(&cxt->isp_pm_mutex);
+    pthread_cond_destroy(&cxt->isp_pm_cond);
 exit:
 
     ATRACE_END();
@@ -8993,6 +9007,9 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     cxt->blur_facebeauty_flag = 0;
     phyPtr = sensorGetPhysicalSnsInfo(camera_id);
     cxt->face_type = phyPtr->face_type;
+    cxt->isp_pm_initing = false;
+    pthread_mutex_init(&cxt->isp_pm_mutex, NULL);
+    pthread_cond_init(&cxt->isp_pm_cond, NULL);
 
     CMR_LOGI("cxt=%p, client_data=%p", cxt, cxt->client_data);
     ret = camera_init_internal((cmr_handle)cxt, is_autotest);
