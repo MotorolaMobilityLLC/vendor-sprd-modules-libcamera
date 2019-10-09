@@ -2121,6 +2121,9 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 0;
 
+        char fps_prop[PROPERTY_VALUE_MAX];
+        property_get("ro.vendor.camera.dualcamera_fps", fps_prop, "20");
+
         // TBD: check why 20fps, not 30fps
         if (mMultiCameraMode == MODE_BOKEH ||
             mMultiCameraMode == MODE_3D_CALIBRATION ||
@@ -2129,8 +2132,8 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             mMultiCameraMode == MODE_TUNING ||
             mMultiCameraMode == MODE_DUAL_FACEID_REGISTER ||
             mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) {
-            fps_param.min_fps = 20;
-            fps_param.max_fps = 20;
+            fps_param.min_fps = atoi(fps_prop);
+            fps_param.max_fps = atoi(fps_prop);
         }
 
         // to set preview fps by setprop
