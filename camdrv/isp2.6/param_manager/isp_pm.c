@@ -235,7 +235,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_GRGB_V1, 0 }, /* NR block */
 	{ ISP_BLK_IIRCNR_IIR_V1, 0 }, /* NR block */
 	{ ISP_BLK_NLM_V1, 0 }, /* NR block */
-	{ ISP_BLK_IMBALANCE, 0 }, /* NR block */
+	{ ISP_BLK_IMBALANCE_V1, 0 }, /* NR block */
 	{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
 	{ ISP_BLK_YNR_V1, 0 }, /* NR block */
 	{ ISP_BLK_YUV_PRECDN_V1, 0 }, /* NR block */
@@ -276,7 +276,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_UV_CDN_V1,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
 	{ ISP_BLK_UV_POSTCDN_V1,	ISP_BLK_POSTCDN_T, sizeof(struct sensor_uv_postcdn_level) },
 	{ ISP_BLK_IIRCNR_IIR_V1,		ISP_BLK_IIRCNR_T, sizeof(struct sensor_iircnr_level) },
-	{ ISP_BLK_IMBALANCE,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
+	{ ISP_BLK_IMBALANCE_V1,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
 	{ ISP_BLK_CNR2_V1,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
 	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },
 	{ ISP_BLK_YUV_NOISEFILTER_V1,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
@@ -522,6 +522,13 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_YUV_NOISEFILTER:
 	case ISP_BLK_CNR2:
 	case ISP_BLK_YNRS:
+		return 1;
+	case ISP_BLK_IMBALANCE_V1:
+	case ISP_BLK_NLM_V2:
+	case ISP_BLK_PPE_V1:
+	case ISP_BLK_YUV_LTM:
+	case ISP_BLK_RGB_LTM:
+	case ISP_BLK_RAW_GTM:
 		return 1;
 	default:
 		break;
@@ -1272,6 +1279,16 @@ get_blocks:
 			struct isp_context *isp_cxt_ptr = PNULL;
 			struct isp_pm_mode_param *cap, *comm;
 			struct isp_pm_block_header *src_h, *dst_h;
+#ifdef CONFIG_ISP_2_7
+			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
+				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
+				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
+				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
+				ISP_BLK_EE_V1, ISP_BLK_GRGB_V1, ISP_BLK_IMBALANCE_V1,
+				ISP_BLK_YUV_NOISEFILTER_V1, ISP_BLK_UV_POSTCDN_V1,
+				ISP_BLK_YUV_PRECDN_V1, ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
+			}; /* blocks from cap1 */
+#elif CONFIG_ISP_2_6
 			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
 				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
 				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
@@ -1281,7 +1298,16 @@ get_blocks:
 				ISP_BLK_UV_POSTCDN_V1, ISP_BLK_YUV_PRECDN_V1,
 				ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
 			}; /* blocks from cap1 */
-
+#elif CONFIG_ISP_2_5
+			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
+				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
+				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
+				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
+				ISP_BLK_EE_V1, ISP_BLK_GRGB_V1, ISP_BLK_IMBALANCE,
+				ISP_BLK_YUV_NOISEFILTER_V1,ISP_BLK_UV_POSTCDN_V1,
+				ISP_BLK_YUV_PRECDN_V1,ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
+			}; /* blocks from cap1 */
+#endif
 			for (i = 0; i < PARAM_SET_MAX; i++) {
 				blk_param_ptr = &pm_cxt_ptr->blocks_param[i];
 				isp_cxt_ptr = &pm_cxt_ptr->cxt_array[i];

@@ -87,6 +87,8 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_UV_POSTCDN, isp_u_yuv_postcdn_block},
 	{ISP_BLK_IIRCNR_IIR, isp_u_iircnr_block},
 	{ISP_BLK_YUV_NOISEFILTER, isp_u_noisefilter_block},
+	/* isp blocks for sharkl5 pro */
+	{ISP_BLK_IMBALANCE_V1, isp_u_nlm_imblance},
 };
 
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)

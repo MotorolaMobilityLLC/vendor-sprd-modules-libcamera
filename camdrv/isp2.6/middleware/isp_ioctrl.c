@@ -373,7 +373,7 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_YUV_NOISEFILTER_V1:
 			update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
 			break;
-		case ISP_BLK_IMBALANCE:
+		case ISP_BLK_IMBALANCE_V1:
 			update_param->imbalance_level_ptr = (struct sensor_nlm_imbalance_level *)fix_data_ptr->nr.nr_set_group.imblance;
 			break;
 		case ISP_BLK_CNR2_V1:

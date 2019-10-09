@@ -199,7 +199,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_GRGB_V1, array_offset(struct isp_context, grgb), sizeof(struct isp_grgb_param), &s_grgb_ops},
 	{ISP_BLK_IIRCNR_IIR_V1, array_offset(struct isp_context, iircnr), sizeof(struct isp_iircnr_iir_param), &s_iircnr_iir_ops},
 	{ISP_BLK_NLM_V1, array_offset(struct isp_context, nlm), sizeof(struct isp_nlm_param), &s_nlm_ops},
-	{ISP_BLK_IMBALANCE, array_offset(struct isp_context, imblance), sizeof(struct isp_imblance_param), &s_imblance_ops},
+	{ISP_BLK_IMBALANCE_V1, array_offset(struct isp_context, imblance), sizeof(struct isp_imblance_param), &s_imblance_ops},
 	{ISP_BLK_UVDIV_V1, array_offset(struct isp_context, uvd), sizeof(struct isp_uvdiv_param), &s_uvdiv_ops},
 	{ISP_BLK_YNR_V1, array_offset(struct isp_context, ynr), sizeof(struct isp_ynr_param), &s_ynr_ops},
 	{ISP_BLK_YUV_PRECDN_V1, array_offset(struct isp_context, pre_cdn), sizeof(struct isp_yuv_precdn_param), &s_yuv_precdn_ops},
