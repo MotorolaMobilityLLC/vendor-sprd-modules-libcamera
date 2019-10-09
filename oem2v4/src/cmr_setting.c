@@ -1630,7 +1630,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         if (is_raw_capture == 0) {
             p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
             p_exif_info->primary.data_struct_ptr->Orientation =
-                ORIENTATION_UNDEFINED;
+                ORIENTATION_NORMAL;
         } else {
             p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
             p_exif_info->primary.data_struct_ptr->Orientation =
