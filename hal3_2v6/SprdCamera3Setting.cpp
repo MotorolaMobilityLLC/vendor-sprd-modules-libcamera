@@ -1659,10 +1659,10 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // and active area height and crop region height, for
     // android.scaler.cropRegion.
     int ultrawide_id = findUltraWideSensor();
+    s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
     if (ultrawide_id == cameraId) {
         s_setting[cameraId].scalerInfo.max_digital_zoom =
             MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO;
-        s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
     } else {
         s_setting[cameraId].scalerInfo.max_digital_zoom =
             MAX_DIGITAL_ZOOM_RATIO;
