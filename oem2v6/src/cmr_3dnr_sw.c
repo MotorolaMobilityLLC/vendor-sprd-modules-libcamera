@@ -540,7 +540,11 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     //due to gpu difference,sharkle need set 0
     if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+#ifdef CAMERA_3DNR_GPU_ENABLE
+        threednr_set_platform_flag(0);
+#else
         threednr_set_platform_flag(SPECIAL);
+#endif
     } else {
         threednr_set_platform_flag(0);
     }
