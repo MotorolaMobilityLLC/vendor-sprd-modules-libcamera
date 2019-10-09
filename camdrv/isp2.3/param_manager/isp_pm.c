@@ -425,7 +425,7 @@ static cmr_s32 isp_pm_context_deinit(cmr_handle handle)
 				}
 			}
 		}
-		isp_cxt_ptr->is_validate == ISP_CXT_VALID_DEFAULT;
+		isp_cxt_ptr->is_validate = ISP_CXT_VALID_DEFAULT;
 	}
 	pm_cxt_ptr->active_cxt_ptr = PNULL;
 
