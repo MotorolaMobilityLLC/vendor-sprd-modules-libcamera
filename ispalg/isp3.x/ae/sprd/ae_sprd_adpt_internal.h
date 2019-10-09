@@ -388,6 +388,7 @@ extern "C" {
 		cmr_u32 *slave_aem_stat;
 		cmr_u32 *tune_buf;
 		cmr_u32 end_id;
+		cmr_u8 mainFlashEn;
 	};
 
 #endif

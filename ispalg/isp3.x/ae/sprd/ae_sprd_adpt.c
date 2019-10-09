@@ -2071,7 +2071,10 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		}
 		if (FLASH_MAIN == current_status->adv_param.flash) {
 			rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, current_status->stats_data_basic.shift);
-			flash_high_flash_reestimation(cxt);
+			ISP_LOGD("main_flash, mainFlashEn:%d\n", cxt->mainFlashEn);
+			if (cxt->mainFlashEn !=0) {
+				flash_high_flash_reestimation(cxt);
+			}
 			ISP_LOGV("ae_flash: main flash calc, rgb gain %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
 		}
 
@@ -2194,7 +2197,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				ISP_LOGD("ae_flash1_callback do-main-flash!\r\n");
-			} else if (main_flash_capture_counts == cxt->send_once[4]) {
+			} else if (((main_flash_capture_counts == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((2 == cxt->send_once[4]) && (cxt->mainFlashEn == 0)))  {
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
@@ -2225,7 +2228,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->send_once[2]++;
 
 			/*write flash awb gain*/
-			if (1 == cxt->flash_esti_result.isEnd ) {
+			if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)) {
 				if (cxt->isp_ops.set_wbc_gain) {
 					struct ae_alg_rgb_gain awb_m_b_flash_gain;
 					awb_m_b_flash_gain.r = cxt->flash_esti_result.captureRGain;
@@ -2236,7 +2239,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				}
 			}
 
-			if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts)) {
+			if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1)) {
 				if (cxt->isp_ops.set_wbc_gain) {
 					struct ae_alg_rgb_gain awb_gain;
 					awb_gain.r = cxt->flash_main_esti_result.captureRGain;
@@ -5345,8 +5348,9 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	flash_out.version = 1;		//remove later
 	cxt->flash_ver = flash_out.version;
 	ae_init_out->flash_ver = cxt->flash_ver;
+	cxt->mainFlashEn = flash_out.mainFlashEn;
 	cxt->multiColorLcdEn = cxt->dflash_param[0].multiColorLcdEn;
-	
+
 	/*jhin add flash mode*/
 	cxt->cur_status.adv_param.flash_mode = 0;//ok
 	/*jhin add touch ev to reset */
