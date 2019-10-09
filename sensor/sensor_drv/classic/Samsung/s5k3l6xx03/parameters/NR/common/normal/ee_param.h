@@ -123,9 +123,9 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
-				0x000A,
+				0x000F,
 				/*ee_t2_cfg*/
-				0x004A,
+				0x004F,
 				/*ee_t3_cfg*/
 				0x0050,
 				/*ee_t4_cfg*/
@@ -162,9 +162,9 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
-				0x000A,
+				0x000F,
 				/*ee_t2_cfg*/
-				0x004A,
+				0x004F,
 				/*ee_t3_cfg*/
 				0x0050,
 				/*ee_t4_cfg*/
