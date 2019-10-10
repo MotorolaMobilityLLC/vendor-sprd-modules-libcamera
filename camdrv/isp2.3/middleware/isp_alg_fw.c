@@ -1622,6 +1622,8 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, void *data)
 	cmr_uint u_addr = 0;
 	struct sensor_embedded_info sensor_ebd_info;
 
+	memset(&sensor_ebd_info, 0x0, sizeof(sensor_ebd_info));
+
 	u_addr = statis_info->vir_addr;
 	sensor_ebd_info.embedded_data = (cmr_u8 *)u_addr;
 
