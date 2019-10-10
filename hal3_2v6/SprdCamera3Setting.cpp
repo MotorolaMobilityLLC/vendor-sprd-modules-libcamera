@@ -1596,6 +1596,32 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                 available_min_durations.add(
                     p_stream_info[i].stream_sizes_tbl.height);
 
+#if defined(CONFIG_ISP_2_3)
+                int64_t stream_min_duration;
+                int32_t stream_size = stream_info[i].stream_sizes_tbl.width *
+                                      stream_info[i].stream_sizes_tbl.height;
+                if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+                    if (stream_size > 8000000) {
+                        HAL_LOGD("YUV %d*%d output in ~100ms in sharkle"
+                                 "offline so change min frame duration",
+                                 stream_info[i].stream_sizes_tbl.width,
+                                 stream_info[i].stream_sizes_tbl.height);
+                        stream_min_duration = 100000000L;
+                    } else if (stream_size > 5000000) {
+                        HAL_LOGD("YUV %d*%d output in ~100ms in sharkle"
+                                 "offline so change min frame duration",
+                                 stream_info[i].stream_sizes_tbl.width,
+                                 stream_info[i].stream_sizes_tbl.height);
+                        stream_min_duration = 66666670L;
+                    } else {
+                        stream_min_duration =
+                            stream_info[i].stream_min_duration;
+                    }
+                    available_min_durations.add(stream_min_duration);
+                } else {
+                    available_min_durations.add(p_stream_info[i].stream_min_duration);
+                }
+#else
                 if (!strcmp(mSensorName[cameraId], "ov32a1q") &&
                     (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) &&
                     (p_stream_info[i].stream_sizes_tbl.width *
@@ -1612,7 +1638,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     available_min_durations.add(
                         p_stream_info[i].stream_min_duration);
                 }
-
+#endif
                 // availableStallDurations
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB) {
                     available_stall_durations.add(scaler_formats[j]);
