@@ -50,8 +50,8 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
-	cmr_s32 fds[2];
-	cmr_uint kaddr[2];
+	cmr_s32 fds[2] = {0};
+	cmr_uint kaddr[2] = {0};
 
 	statis_mem_info->oem_handle = in_ptr->oem_handle;
 	if (statis_mem_info->isp_lsc_alloc_flag == 0) {
