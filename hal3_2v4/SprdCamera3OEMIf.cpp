@@ -9435,10 +9435,14 @@ int SprdCamera3OEMIf::pushZslFrame(struct camera_frame_type *frame) {
     ZslBufferQueue zsl_buffer_q;
 
     frame->buf_id = getZslBufferIDForFd(frame->fd);
-    memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
-    zsl_buffer_q.frame = *frame;
-    zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
-    pushZSLQueue(&zsl_buffer_q);
+    if (frame->buf_id != 0xFFFFFFFF) {
+        memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
+        zsl_buffer_q.frame = *frame;
+        zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
+        pushZSLQueue(&zsl_buffer_q);
+    } else {
+        HAL_LOGE("mZslHeapArray id not found.");
+    }
     return ret;
 }
 
