@@ -164,7 +164,7 @@ static void writeCamInitTimeToApct(char *buf) {
 
     if (apct_fd >= 0) {
         char buf[100] = {0};
-        sprintf(buf, "\n%s", buf);
+        sprintf(buf, "\n");
         write(apct_fd, buf, strlen(buf));
         fchmod(apct_fd, 0666);
         close(apct_fd);
