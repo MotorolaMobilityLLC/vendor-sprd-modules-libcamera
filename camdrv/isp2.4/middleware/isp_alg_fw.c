@@ -3609,6 +3609,10 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	}
 
 	lsc_info_new = (struct isp_lsc_info *)output.param_data->data_ptr;
+	if(NULL == cxt->lsc_cxt.lsc_tab_address) {
+		ISP_LOGE("lsc_tab_address is null");
+		return ISP_PARAM_ERROR;
+	}
 	lsc_tab_pram_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	for (i = 0; i < 9; i++)
 		fwstart_info->lsc_tab_address_new[i] = lsc_tab_pram_ptr->map_tab[i].param_addr;
