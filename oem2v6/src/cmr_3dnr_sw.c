@@ -1329,6 +1329,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     cmr_bzero(threednr_prev_handle, sizeof(struct class_3dnr_pre));
+    cmr_bzero(&smallbuff_node, sizeof(struct preview_smallbuf_node));
     ret = threednr_prevthread_create(threednr_prev_handle);
     if (ret != CMR_CAMERA_SUCCESS) {
         CMR_LOGE("threednr_prevthread_create failed");
