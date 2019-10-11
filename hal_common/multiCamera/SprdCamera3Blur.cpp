@@ -2635,13 +2635,13 @@ void SprdCamera3Blur::CaptureThread::updateBlurWeightParams(
                         }
                         mCaptureWeightParams.total_roi = face_num;
                     }
-                    if ((faceInfo[2] - faceInfo[0]) < max * max_width / 100) {
+                    /*if ((faceInfo[2] - faceInfo[0]) < max * max_width / 100) {
                         if (mPreviewWeightParams.valid_roi == face_num * 2) {
                             mUpdatePreviewWeightParams = true;
                         }
                         k++;
                         continue;
-                    }
+                    }*/
 
                     if (mRotation == 270) {
                         int w = faceInfo[2] - faceInfo[0];
