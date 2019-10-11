@@ -83,8 +83,8 @@ enum setting_general_type {
     SETTING_GENERAL_AI_SCENE_ENABLED,
     SETTING_GENERAL_AUTO_3DNR,
     SETTING_GENERAL_EXPOSURE_TIME,
-    SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE,
+    SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
 
@@ -580,7 +580,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
 
-    if (type >= SETTING_GENERAL_TYPE_MAX) {
+    if (type >= SETTING_GENERAL_ZOOM) {
         CMR_LOGE("type is invalid");
         return -CMR_CAMERA_INVALID_PARAM;
     }
