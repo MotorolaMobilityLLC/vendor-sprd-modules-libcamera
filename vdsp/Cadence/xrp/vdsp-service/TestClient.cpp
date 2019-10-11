@@ -129,7 +129,7 @@ typedef struct
 void* thread_faceid(__unused void* test)
 {
 	struct sprd_vdsp_client_inout in,out,image;
-	uint32_t devid = 10;
+	uint32_t devid = 30;
 	uint32_t liveness = 1;
 	struct vdsp_handle handle;
 	int ret;
@@ -189,7 +189,17 @@ void* thread_faceid(__unused void* test)
 	{
 		memset(out.viraddr , 0x00 , out.size);
 	}
-
+	/*move up DDR frequency*/
+	FILE *dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs", "wb");
+	if (dfs_fp == NULL) {
+		printf("fail to open file for DFS: %d ", errno);
+	}
+	else
+	{
+		fprintf(dfs_fp, "%s", "faceid");
+		fclose(dfs_fp);
+		dfs_fp= NULL;
+	}
 
 	start_time = systemTime(CLOCK_MONOTONIC);
 
@@ -225,7 +235,18 @@ void* thread_faceid(__unused void* test)
 	duration = (int)((end_time - start_time)/1000000);
 	printf("run %d times take %ld ms\n",devid,duration/devid);
 	sprd_cavdsp_close_device(&handle);
-	
+
+	/*move down DDR frequency*/
+	dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd_governor/exit_scene", "wb");
+	if (dfs_fp == NULL) {
+		printf("fail to open file for DFS: %d ", errno);
+	}
+	else
+	{
+		fprintf(dfs_fp, "%s", "faceid");
+		fclose(dfs_fp);
+		dfs_fp = NULL;
+	}
 
 	sprd_free_ionmem(imagehandle);
 	sprd_free_ionmem(inputhandle);
