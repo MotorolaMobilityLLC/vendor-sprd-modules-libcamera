@@ -1670,8 +1670,10 @@ static cmr_s32 ae_set_restore_cnt(struct ae_ctrl_cxt *cxt, int call)
 		return ret;
 
 	if (2 > cxt->pause_cnt) {
-		cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
-		cxt->pause_cnt = 0;
+		if(AE_STATE_NORMAL == cxt->cur_status.adv_param.app_force_lock){
+			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
+			cxt->pause_cnt = 0;
+		}
 	} else {
 		cxt->pause_cnt--;
 	}
