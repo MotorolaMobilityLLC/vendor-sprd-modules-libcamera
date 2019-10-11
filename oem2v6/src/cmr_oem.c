@@ -5210,6 +5210,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
         if ((cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
              cxt->is_multi_mode == MODE_SELF_SHOT ||
+             cxt->is_multi_mode == MODE_MULTI_CAMERA ||
              (cxt->is_multi_mode == MODE_BLUR &&
               cxt->blur_facebeauty_flag == 1)) &&
             (filter_type == 0)) {
