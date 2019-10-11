@@ -256,6 +256,7 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     int rc = NO_ERROR;
     int phyId = 0;
     struct phySensorInfo *phyPtr = NULL;
+    char prop[PROPERTY_VALUE_MAX];
 
     if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) >= mNumOfCameras)
         return -ENODEV;
@@ -286,8 +287,9 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
         delete hw;
     } else {
         unsigned int on_off = 0;
+	property_get("persist.vendor.cam.ultrawide.enable", prop, "1");
         if (SPRD_ULTRA_WIDE_ID == camera_id)
-            on_off = 1;
+            on_off = atoi(prop);
         hw->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
     }
 
