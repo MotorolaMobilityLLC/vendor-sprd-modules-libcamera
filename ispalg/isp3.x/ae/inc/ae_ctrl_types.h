@@ -148,6 +148,7 @@ extern "C" {
 		AE_GET_GLB_GAIN,
 		AE_GET_FLASH_SKIP_FRAME_NUM,
 		AE_GET_APP_MODE,
+		AE_GET_DC_DV_FPS_RANGE,
 		AE_DIRECT_MSG_END,
 		AE_IO_MAX
 	};
@@ -436,6 +437,13 @@ extern "C" {
 		cmr_u32 r;
 		cmr_u32 g;
 		cmr_u32 b;
+	};
+
+	struct ae_fps_range {
+		cmr_u32 dc_fps_min;
+		cmr_u32 dc_fps_max;
+		cmr_u32 dv_fps_min;
+		cmr_u32 dv_fps_max;
 	};
 
 	struct ae_stats_monitor_cfg {

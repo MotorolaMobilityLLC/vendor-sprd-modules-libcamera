@@ -5055,6 +5055,21 @@ static cmr_s32 ae_get_app_mode(struct ae_ctrl_cxt *cxt, void *result)
 	}
 	return AE_SUCCESS;
 }
+static cmr_s32 ae_get_dc_dv_fps_range(struct ae_ctrl_cxt *cxt, void *result)
+{
+	if (result) {
+		struct ae_fps_range *fps = (struct ae_fps_range *)result;
+		fps->dc_fps_max = cxt->cur_param->dc_fps.max?cxt->cur_param->dc_fps.max:30;
+		fps->dc_fps_min = cxt->cur_param->dc_fps.min?cxt->cur_param->dc_fps.min:5;
+		fps->dv_fps_max = cxt->cur_param->dv_fps.max?cxt->cur_param->dv_fps.max:30;
+		fps->dv_fps_min = cxt->cur_param->dv_fps.min?cxt->cur_param->dv_fps.min:5;
+		ISP_LOGD("dc min/max:(%d %d) dv min/max:(%d %d)", fps->dc_fps_min,fps->dc_fps_max,fps->dv_fps_min,fps->dv_fps_max);
+	}else{
+		ISP_LOGE("result pointer is NULL");
+	}
+	return AE_SUCCESS;
+}
+
 
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
@@ -6192,6 +6207,9 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		break;
 	case AE_GET_APP_MODE:
 		rtn = ae_get_app_mode(cxt, result);
+		break;
+	case AE_GET_DC_DV_FPS_RANGE:
+		rtn = ae_get_dc_dv_fps_range(cxt, result);
 		break;
 	default:
 		rtn = AE_ERROR;

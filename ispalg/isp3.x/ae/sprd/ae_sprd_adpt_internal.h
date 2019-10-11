@@ -177,6 +177,8 @@ extern "C" {
 		 * ae fps range
 		 */
 		struct ae_range fps_range;
+		struct ae_range dv_fps_range;
+		struct ae_range dc_fps_range;
 		/*
 		 * current flicker flag
 		 */
