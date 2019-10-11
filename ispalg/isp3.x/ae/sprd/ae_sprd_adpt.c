@@ -174,8 +174,8 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 			exp_data->lib_data.isp_gain);
 
 	if (is_force) {
-		/**/ struct s_q_init_in init_in;
-		struct s_q_init_out init_out;
+		/**/ struct s_q_init_in init_in = {0, 0, 0, 0, 0, 0, 0};
+		struct s_q_init_out init_out = {{0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}};
 
 		init_in.exp_line = exp_data->lib_data.exp_line;
 		init_in.exp_time = exp_data->lib_data.exp_time;
