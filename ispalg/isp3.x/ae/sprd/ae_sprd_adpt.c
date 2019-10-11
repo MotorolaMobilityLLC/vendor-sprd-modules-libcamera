@@ -3288,7 +3288,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		&& ((FLASH_NONE == cxt->cur_status.adv_param.flash)
 			|| (FLASH_LED_OFF == cxt->cur_status.adv_param.flash))) {
 		if (0 == work_info->is_snapshot) {
-			cxt->last_enable = 0;
+			//cxt->last_enable = 0;
 			cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 			cxt->cur_status.adv_param.cur_ev_setting.ae_gain = cxt->sync_cur_result.ev_setting.ae_gain;
 			cxt->cur_status.adv_param.is_snapshot =  work_info->is_snapshot;//ok
