@@ -234,7 +234,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_EE_V1, 0 }, /* NR block */
 	{ ISP_BLK_GRGB_V1, 0 }, /* NR block */
 	{ ISP_BLK_IIRCNR_IIR_V1, 0 }, /* NR block */
-	{ ISP_BLK_NLM_V1, 0 }, /* NR block */
+	{ ISP_BLK_NLM_V2, 0 }, /* NR block */
 	{ ISP_BLK_IMBALANCE_V1, 0 }, /* NR block */
 	{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
 	{ ISP_BLK_YNR_V1, 0 }, /* NR block */
@@ -280,9 +280,9 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_CNR2_V1,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
 	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },
 	{ ISP_BLK_YUV_NOISEFILTER_V1,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
-	{ ISP_BLK_NLM_V1,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
-	{ ISP_BLK_NLM_V1,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
-	{ ISP_BLK_NLM_V1,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+	{ ISP_BLK_NLM_V2,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
+	{ ISP_BLK_NLM_V2,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
+	{ ISP_BLK_NLM_V2,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
 	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 };
 #endif
@@ -1280,7 +1280,7 @@ get_blocks:
 			struct isp_pm_mode_param *cap, *comm;
 			struct isp_pm_block_header *src_h, *dst_h;
 #ifdef CONFIG_ISP_2_7
-			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
+			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V2,
 				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
 				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
 				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
@@ -1935,6 +1935,7 @@ start_parse:
 			}
 			case DCAM_BLK_NLM:
 			case ISP_BLK_NLM_V1:
+			case ISP_BLK_NLM_V2:
 			{
 				dst_nlm_data = (struct isp_pm_nr_header_param *)dst_data_ptr;
 				memset((void *)dst_nlm_data, 0x00, sizeof(struct isp_pm_nr_header_param));
@@ -2339,7 +2340,7 @@ start_parse:
 	for (i = 0; i < ISP_BLK_NR_MAX; i++) {
 		if (nr_blk_id[i] == 0)
 			continue;
-		if (nr_blk_id[i] == ISP_BLK_NLM_V1 || nr_blk_id[i] == DCAM_BLK_NLM) {
+		if (nr_blk_id[i] == ISP_BLK_NLM_V1 || nr_blk_id[i] == DCAM_BLK_NLM || nr_blk_id[i] == ISP_BLK_NLM_V2) {
 			if ((nr_data_len[i] == nr_mode_offset[i]) &&
 				(nr_data_len[ISP_BLK_VST_T] == nr_mode_offset[ISP_BLK_VST_T]) &&
 				(nr_data_len[ISP_BLK_IVST_T] == nr_mode_offset[ISP_BLK_IVST_T]))
