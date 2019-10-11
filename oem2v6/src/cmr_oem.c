@@ -5118,6 +5118,10 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     if (is_raw_capture == 0) {
         if (dst->size.height == 1952 && dst->size.width == 2592) {
             enc_dst.size.height = 1944;
+        } else if (dst->size.height == 1456 && dst->size.width == 2592) {
+            enc_dst.size.height = 1458;
+        } else if (dst->size.height == 1744 && dst->size.width == 2320) {
+            enc_dst.size.height = 1740;
         } else if (dst->size.height == 1840 && dst->size.width == 3264) {
             enc_dst.size.height = 1836;
         } else if (dst->size.height == 912 && dst->size.width == 1600) {
