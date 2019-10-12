@@ -480,7 +480,7 @@ struct isp_3dnr_ctrl_param {
 struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
-	cmr_u32 bv;
+	cmr_s32 bv;
 	cmr_u32 lowlight_flag;
 };
 

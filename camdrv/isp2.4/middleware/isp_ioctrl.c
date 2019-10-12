@@ -1479,7 +1479,7 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	struct isp_adgain_exp_info *info_ptr = (struct isp_adgain_exp_info *)param_ptr;
 	cmr_s32 gain = 0;
 	cmr_u32 exp_time = 0;
-	cmr_int bv = 0;
+	cmr_s32 bv = 0;
 
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
