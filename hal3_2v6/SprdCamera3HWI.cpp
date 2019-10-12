@@ -870,18 +870,12 @@ int SprdCamera3HWI::configureStreams(
 
 #if defined(CONFIG_ISP_2_3)
    //do aligment for sharkle due to hardware diff
-    if (capture_size.height == 1944 && capture_size.width == 2592) {
-        capture_size.height = 1952;
-    } else if (capture_size.height == 1458 && capture_size.width == 2592) {
-        capture_size.height = 1456;
-    } else if (capture_size.height == 1740 && capture_size.width == 2320) {
-        capture_size.height = 1744;
-    } else if (capture_size.height == 1836 && capture_size.width == 3264) {
-        capture_size.height = 1840;
-    } else if (capture_size.height == 900 && capture_size.width == 1600) {
-        capture_size.height = 912;
-    } else if (capture_size.height == 360 && capture_size.width == 640) {
-        capture_size.height = 368;
+    if (capture_size.height % 16 != 0) {
+        if (capture_size.height % 16 < 8) {
+            capture_size.height = capture_size.height - capture_size.height % 16;
+        } else {
+            capture_size.height = capture_size.height + 16 - capture_size.height % 16;
+        }
     }
 #endif
 
