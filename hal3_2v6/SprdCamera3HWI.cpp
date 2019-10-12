@@ -94,19 +94,6 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
 
     HAL_LOGI(":hal3: Constructor E camId=%d", mCameraId);
 
-    // for camera id 2&3 debug
-    char value[PROPERTY_VALUE_MAX];
-
-    property_get("persist.vendor.cam.id", value, "0");
-    if (!strcmp(value, "2"))
-        mCameraId = 2;
-    else if (!strcmp(value, "4"))
-        mCameraId = 4;
-    else if (!strcmp(value, "3"))
-        mCameraId = 3;
-    else if (!strcmp(value, "5"))
-        mCameraId = 5;
-
     getLogLevel();
     HAL_LOGD("mCameraId %d,mCameraDevice %p", mCameraId, &mCameraDevice);
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;

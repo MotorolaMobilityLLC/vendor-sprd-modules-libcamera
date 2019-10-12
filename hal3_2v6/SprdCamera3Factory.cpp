@@ -112,6 +112,28 @@ int SprdCamera3Factory::get_number_of_cameras() {
  *==========================================================================*/
 int SprdCamera3Factory::get_camera_info(int camera_id,
                                         struct camera_info *info) {
+
+#ifdef CONFIG_MULTICAMERA_SUPPORT
+   if (camera_id == SPRD_MULTI_CAMERA_ID) {
+       if (NULL == sensorGetLogicaInfo4MulitCameraId(SPRD_MULTI_CAMERA_ID)) {
+           camera_id = 0;
+       }
+   }
+#endif
+										
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.id", value, "null");
+    if (!strcmp(value, "0"))
+        camera_id = 0;
+    else if (!strcmp(value, "2"))
+        camera_id = 2;
+    else if (!strcmp(value, "3"))
+        camera_id = 3;
+    else if (!strcmp(value, "4"))
+        camera_id = 4;
+    else if (!strcmp(value, "5"))
+        camera_id = 5;
+
 #ifdef CONFIG_MULTICAMERA_SUPPORT
     if (camera_id == SPRD_MULTI_CAMERA_ID)
         return SprdCamera3MultiCamera::get_camera_info(camera_id, info);
@@ -150,19 +172,6 @@ int SprdCamera3Factory::getNumberOfCameras() { return mNumOfCameras; }
 int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     int rc;
     Mutex::Autolock l(mLock);
-
-    HAL_LOGV("E, camera_id = %d", camera_id);
-    char value[PROPERTY_VALUE_MAX];
-
-    property_get("persist.vendor.cam.id", value, "0");
-    if (!strcmp(value, "2"))
-        camera_id = 2;
-    else if (!strcmp(value, "4"))
-        camera_id = 4;
-    else if (!strcmp(value, "3"))
-        camera_id = 3;
-    else if (!strcmp(value, "5"))
-        camera_id = 5;
 
     HAL_LOGI("E, camera_id = %d", camera_id);
 
@@ -314,20 +323,30 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     HAL_LOGI("SPRD Camera Hal :hal3: cameraId=%d", atoi(id));
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
+   if (atoi(id) == SPRD_MULTI_CAMERA_ID) {
+       if (NULL == sensorGetLogicaInfo4MulitCameraId(SPRD_MULTI_CAMERA_ID)) {
+           id = "0";
+       }
+   }
+#endif
+
     // for camera id 0&2&3 debug
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.multi.cam.id", value, "null");
-    if (!strcmp(value, "0") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+    property_get("persist.vendor.cam.id", value, "null");
+    if (!strcmp(value, "0"))
         id = "0";
-    else if (!strcmp(value, "2") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+    else if (!strcmp(value, "2"))
         id = "2";
-    else if (!strcmp(value, "3") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+    else if (!strcmp(value, "3"))
         id = "3";
-    else if (!strcmp(value, "4") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+    else if (!strcmp(value, "4"))
         id = "4";
-    else if (!strcmp(value, "5") && atoi(id) == SPRD_MULTI_CAMERA_ID)
+    else if (!strcmp(value, "5"))
         id = "5";
-    HAL_LOGV("multi cameraId=%d", atoi(id));
+	
+    HAL_LOGI("multi cameraId=%d", atoi(id));
+
+#ifdef CONFIG_MULTICAMERA_SUPPORT
     if (atoi(id) == SPRD_MULTI_CAMERA_ID) {
         return SprdCamera3MultiCamera::camera_device_open(module, id, hw_device);
     }

@@ -701,6 +701,9 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     {SPRD_3D_FACE_ID, MODE_SOFY_OPTICAL_ZOOM, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},
 #endif
+#ifdef CONFIG_MULTICAMERA_SUPPORT
+    {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},
+#endif
 };
 
 void sensor_customize_cam_attribute(PHYSICAL_SENSOR_INFO_T *phyPtr, cmr_u32 slot_id) {
