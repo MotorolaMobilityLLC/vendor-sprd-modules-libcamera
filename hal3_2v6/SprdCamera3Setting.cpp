@@ -1304,7 +1304,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            ksupported_preview_formats, sizeof(ksupported_preview_formats));
     camera3_default_info.common.processed_min_durations[0] =
         camera3_default_info.common.frame_duration_range[0];
-    if (cameraId == 0)
+    if (cameraId == 0 || cameraId == 2 || cameraId == 3)
         memcpy(camera3_default_info.common.available_fps_ranges,
                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back));
     else
@@ -1749,7 +1749,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     initStaticParametersforSensorInfo(cameraId);
 
     // control
-    if (cameraId == 0)
+    if (cameraId == 0 || cameraId == 2 || cameraId == 3)
         memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges,
                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back));
     else
@@ -1841,7 +1841,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // flash_info
     if (cameraInfo.facing == CAMERA_FACING_BACK) {
         if (cameraId == 2 || cameraId == 3) {
-            s_setting[cameraId].flash_InfoInfo.available = 0;
+            s_setting[cameraId].flash_InfoInfo.available = 1;
         } else {
             s_setting[cameraId].flash_InfoInfo.available = 1;
         }
@@ -3711,7 +3711,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         requestInfo.update(ANDROID_SPRD_FLASH_LCD_MODE, &sprdFlashLcdMode, 1);
     }
 
-    if (mCameraId == 0) {
+    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
         requestInfo.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
@@ -5024,7 +5024,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     else {
         // s_setting[mCameraId].flashInfo.state = mCameraId == 0 ?
         // ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
-        if (mCameraId == 0) {
+        if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
             if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "led") ||
@@ -5250,7 +5250,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].toneInfo.curve_red,
                        SPRD_MAX_TONE_CURVE_POINT);
 
-    if (mCameraId == 0 || mCameraId == findUltraWideSensor()) {
+    if (mCameraId == 0 || mCameraId == findUltraWideSensor() ||
+            mCameraId == 2 || mCameraId == 3) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             camMetadata.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,
@@ -5258,7 +5259,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         camMetadata.update(ANDROID_SPRD_DUAL_OTP_FLAG,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
-    if (mCameraId == 0) {
+    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3) {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
         camMetadata.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,

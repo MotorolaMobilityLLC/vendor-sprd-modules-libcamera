@@ -1950,7 +1950,7 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         send_thr_handle = cxt->snp_send_raw_image_handle;
         break;
     case SNAPSHOT_CB_EVT_DONE:
-        if (0 == cxt->camera_id) {
+        if (cxt->is_multi_mode == MODE_MULTI_CAMERA || 0 == cxt->camera_id) {
             af_ts.timestamp = ((struct camera_frame_type *)param)->timestamp;
             af_ts.capture = 1;
             isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_DCAM_TIMESTAMP,
@@ -5795,7 +5795,8 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
     // whether FRONT_CAMERA_FLASH_TYPE is flash
     bool isFrontFlash =
         (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-    if (0 == camera_id || isFrontLcd || isFrontFlash) {
+    if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+        camera_id == 0 || isFrontLcd || isFrontFlash) {
         setting_param.camera_id = camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_GET_HW_FLASH_STATUS, &setting_param);
@@ -7224,7 +7225,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
 
         if ((param_ptr->cmd_value == FLASH_OPEN ||
              param_ptr->cmd_value == FLASH_HIGH_LIGHT) &&
-            cxt->camera_id == 0) {
+            (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0)) {
             cmr_get_leds_ctrl(oem_handle, &flash_opt.led0_enable,
                               &flash_opt.led1_enable);
         } else {
@@ -7254,7 +7255,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
                 CMR_LOGD("preflash_skip_num = %d", flash_capture_skip_num);
-                if (0 == cxt->camera_id || isFrontFlash) {
+                if (cxt->is_multi_mode == MODE_MULTI_CAMERA || 0 == cxt->camera_id || isFrontFlash) {
                     cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
                                                     ? 1
                                                     : flash_capture_skip_num;
@@ -9699,7 +9700,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         }
         CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
         if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
-            setting_param.camera_id == 0) {
+            (setting_param.camera_id == 0 || cxt->is_multi_mode == MODE_MULTI_CAMERA)) {
             if (cxt->ipm_cxt.ai_scene_inited == 0) {
                 struct ipm_open_in in_param;
                 struct ipm_open_out out_param;
@@ -9979,7 +9980,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         // whether FRONT_CAMERA_FLASH_TYPE is flash
         bool isFrontFlash =
             (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-        if (cxt->camera_id == 0 || isFrontLcd || isFrontFlash) {
+        if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+            cxt->camera_id == 0 || isFrontLcd || isFrontFlash ) {
             ret = camera_capture_highflash(oem_handle, cxt->camera_id);
             if (ret)
                 CMR_LOGE("open high flash fail");

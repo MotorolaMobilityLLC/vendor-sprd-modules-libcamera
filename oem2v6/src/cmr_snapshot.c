@@ -862,7 +862,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
 
 #ifdef CONFIG_CAPTURE_DENOISE
     struct camera_context *cxt = (struct camera_context *)snp_cxt->oem_handle;
-    if (cxt->camera_id == 0) {
+    if (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0) {
         ret = camera_start_uvde(cxt, &jpeg_in_ptr->src);
         if (ret != CMR_CAMERA_SUCCESS) {
             CMR_LOGE("camera_start_uvde fail");
