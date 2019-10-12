@@ -2288,7 +2288,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	}
 
 	/* notify APP if need autofocus or not, just in flash auto mode */
-	if (cxt->camera_id == 0) {
+	if (cxt->camera_id == 0){
 		ISP_LOGV("flash open thr=%d, flash close thr=%d, bv=%d, flash_fired=%d, delay_cnt=%d",
 				 cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up, cxt->sync_cur_result.cur_bv, cxt->flash_fired, cxt->delay_cnt);
 
@@ -5366,7 +5366,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->manual_level = AE_MANUAL_EV_INIT;
 	cxt->debug_enable = ae_is_mlog(cxt);
 
-	ISP_LOGD("role: %d, is master: %d, is_multi_mod: %d\n", cxt->camera_id, init_param->is_master, init_param->is_multi_mode);
+	ISP_LOGD("cameraId: %d, is master: %d, is_multi_mod: %d\n", cxt->camera_id, init_param->is_master, init_param->is_multi_mode);
 	if((init_param->is_master == 1) && (init_param->is_multi_mode)) {//dual camera && master sensor
 		misc_init_in.dual_cam_tuning_param = init_param->ae_sync_param.param;
 		misc_init_in.cam_id = AE_ROLE_ID_MASTER;//ok
@@ -5376,16 +5376,24 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			misc_init_in.cam_id = AE_ROLE_ID_NORMAL;
 		} else if (2 == cxt->camera_id) {
 			misc_init_in.cam_id = AE_ROLE_ID_SLAVE0;
+		} else if (3 == cxt->camera_id) {
+			misc_init_in.cam_id = AE_ROLE_ID_SLAVE1;
 		}
 	}
 
 	if (0 == cxt->camera_id) {
 		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
-	}else if (1 == cxt->camera_id)  {
+	}else if (1 == cxt->camera_id) {
 		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_FRONT& 0xff)<<16);
 	} else if (2 == cxt->camera_id) {
 		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
+	} else if (3 == cxt->camera_id) {
+		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
 	}
+
+	ISP_LOGD("cameraId to lib, cameraId:%d, is_master:%d", misc_init_in.cam_id, init_param->is_master);
+
+	#if 0
 	if (init_param->is_multi_mode) {
 		if (init_param->is_master) {
 			misc_init_in.cam_id = misc_init_in.cam_id | ((AE_ROLE_ID_MASTER & 0xff));
@@ -5393,7 +5401,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			misc_init_in.cam_id = misc_init_in.cam_id | ((AE_ROLE_ID_SLAVE0 & 0xff));
 		}
 	}
-	
+	#endif
+
 	misc_init_in.mlog_en = cxt->debug_enable;//ok
 	misc_init_in.log_level = g_isp_log_level;
 	misc_init_in.line_time = init_param->resolution_info.line_time;
@@ -5409,7 +5418,9 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			} else if (1 == cxt->camera_id) {
 				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_f.bin");/*get the front camera ae tune param bin*/
 			} else if (2 == cxt->camera_id) {
-				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_b_s.bin");/*get the rear slave camera ae tune param bin*/
+				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_b_s0.bin");/*get the rear slave camera ae tune param bin*/
+			} else if (3 == cxt->camera_id) {
+				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_b_s1.bin");/*get the rear slave camera ae tune param bin*/
 			}
 			pf = fopen(file_name, "rb");
 			ISP_LOGD("cam id:%d, tune bin: %s, pf: %p\n", cxt->camera_id, file_name, pf);
