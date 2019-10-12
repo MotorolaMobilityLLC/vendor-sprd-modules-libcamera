@@ -137,17 +137,17 @@ error:
 int tcs3430_read_data(void *param) {
     struct tcs_data *tcs3430_data = (struct tcs_data *)param;
     tcs3430_data->x_raw =
-        read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_x");
+        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_x");
     tcs3430_data->y_raw =
-        read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_y");
+        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_y");
     tcs3430_data->z_raw =
-        read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_z");
+        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_z");
     tcs3430_data->ir_raw =
-        read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_ir1");
+        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_ir1");
     tcs3430_data->gain_data =
-        read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_gain");
+        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_gain");
     tcs3430_data->atime_data =
-        read_tcs3430("/sys/devices/virtual/input/input5/tcs3430_als_atime");
+        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_atime");
 
     if (-1 == tcs3430_data->x_raw || -1 == tcs3430_data->y_raw ||
         -1 == tcs3430_data->z_raw || -1 == tcs3430_data->ir_raw ||
