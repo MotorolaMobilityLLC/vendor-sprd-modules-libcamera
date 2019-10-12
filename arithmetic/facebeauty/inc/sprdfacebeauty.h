@@ -41,10 +41,11 @@
 /* Face beautify options */
 typedef struct {
     unsigned char removeBlemishFlag;       /* Flag for removing blemish; 0 --> OFF; 1 --> ON    */
+    unsigned char blemishSizeThrCoeff;     /* Blemish diameter coeff. Value range [13, 20]      */
     unsigned char skinSmoothLevel;         /* Smooth skin level. Value range [0, 20]            */
     unsigned char skinTextureHiFreqLevel;  /* Skin Texture high freq level. Value range [0, 10] */
     unsigned char skinTextureLoFreqLevel;  /* Skin Texture low freq level. Value range [0, 10]  */
-    unsigned char skinSmoothRadiusCoeff;   /* Smooth skin radius coeff. Value range [1, 255]  */
+    unsigned char skinSmoothRadiusCoeff;   /* Smooth skin radius coeff. Value range [1, 255]    */
     unsigned char skinColorType;           /* The target skin color: white, rosy, or wheat      */
     unsigned char skinColorLevel;          /* The level to tune skin color. Value range [0, 20] */
     unsigned char skinBrightLevel;         /* Skin brightness level. Value range [0, 20]        */

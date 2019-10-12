@@ -176,6 +176,8 @@ void construct_fb_level(struct class_fb *faceBeauty,
         faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
         faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
         faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
+        faceBeauty->fb_option.blemishSizeThrCoeff = 14;
+
         if (faceBeauty->fb_mode == 1) {
             faceBeauty->fb_option.skinSmoothRadiusCoeff =
                 map_skinSmoothRadiusCoeff[beautyLevels.smoothLevel];
