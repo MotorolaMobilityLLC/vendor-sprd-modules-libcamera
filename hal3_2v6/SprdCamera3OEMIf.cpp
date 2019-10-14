@@ -843,11 +843,13 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         stopPreviewInternal();
 #ifdef CONFIG_CAMERA_EIS
         if (mEisPreviewInit) {
+            Mutex::Autolock l(&mEisPreviewProcessLock);
             video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
             HAL_LOGI("preview stab close");
         }
         if (mEisVideoInit) {
+            Mutex::Autolock l(&mEisVideoProcessLock);
             video_stab_close(&mVideoInst);
             mEisVideoInit = false;
             HAL_LOGI("video stab close");
@@ -3908,6 +3910,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             if (sprddefInfo.sprd_eis_enabled) {
                 // camera exit/switch dont need to do eis
                 if (mFlush == 0) {
+                    Mutex::Autolock l(&mEisVideoProcessLock);
                     frame_out = EisVideoFrameStab(frame, frame_num);
                 }
                 channel->channelCbRoutine(frame_num, frame->monoboottime,
@@ -3968,6 +3971,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             if (sprddefInfo.sprd_eis_enabled) {
                 // camera exit/switch dont need to do eis
                 if (mFlush == 0) {
+                    Mutex::Autolock l(&mEisPreviewProcessLock);
                     EisPreviewFrameStab(frame);
                 }
             }
@@ -10934,10 +10938,13 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
         obj->mGyroMsgQueHandle = 0;
 
 #ifdef CONFIG_CAMERA_EIS
-        while (!obj->mGyroPreviewInfo.empty())
-            obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
-        while (!obj->mGyroVideoInfo.empty())
-            obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+        {
+            Mutex::Autolock l(&obj->mEisPreviewLock);
+            while (!obj->mGyroPreviewInfo.empty())
+                obj->mGyroPreviewInfo.erase(obj->mGyroPreviewInfo.begin());
+            while (!obj->mGyroVideoInfo.empty())
+                obj->mGyroVideoInfo.erase(obj->mGyroVideoInfo.begin());
+        }
 #endif
     }
     HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);

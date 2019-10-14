@@ -841,6 +841,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     vsParam mVideoParam;
     vsInst mPreviewInst;
     vsInst mVideoInst;
+    Mutex mEisPreviewProcessLock;
+    Mutex mEisVideoProcessLock;
 #endif
     bool mSprdEisEnabled;
     // 0 - not use, default value is 0; 1 - use video buffer to jpeg enc;
