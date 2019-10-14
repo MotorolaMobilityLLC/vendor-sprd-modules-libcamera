@@ -22,6 +22,13 @@ extern "C" {
 
 #include "cmr_common.h"
 
+enum isp_raw_format{
+    ISP_RAW_PACK10 = 0x00,
+    ISP_RAW_HALF10 = 0x01,
+    ISP_RAW_HALF14 = 0x02,
+    ISP_RAW_FORMAT_MAX
+};
+
 typedef int (*alloc_mem_ptr)(void *handle, unsigned int size,
                              unsigned long *addr_phy, unsigned long *addr_vir,
                              signed int *fd);
@@ -40,14 +47,14 @@ struct cmr_cap_2_frm {
 int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
                                  cmr_u16 height);
 
-int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size);
-int camera_get_4in1_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size);
+int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cmr_u32 is_loose);
+int camera_get_4in1_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cmr_u32 is_loose);
 
 int camera_arrange_capture_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     struct img_rect *sn_trim, struct img_size *image_size, uint32_t orig_fmt,
     struct img_size *cap_size, struct img_size *thum_size,
-    struct cmr_cap_mem *capture_mem, uint32_t need_rot, uint32_t need_scale,
+    struct cmr_cap_mem *capture_mem, struct sensor_exp_info *sn_if, uint32_t need_rot, uint32_t need_scale,
     uint32_t image_cnt, cmr_u32 is_4in1_mode);
 uint32_t camera_get_aligned_size(uint32_t type, uint32_t size);
 

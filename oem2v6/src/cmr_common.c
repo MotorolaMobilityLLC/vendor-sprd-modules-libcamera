@@ -23,6 +23,7 @@
 
 #define CAMERA_ZOOM_LEVEL_MAX 8
 #define ZOOM_STEP(x) (((x) - (x) / CMR_ZOOM_FACTOR) / CAMERA_ZOOM_LEVEL_MAX)
+#define ROTATE_LEFT(x, s, n) ((x) << (n)) | ((x) >> ((s) - (n)))
 
 struct CAMERA_TAKEPIC_STAT cap_stp[CMR_STEP_MAX] = {
     {"takepicture", 0, 0, 0},    {"capture start", 0, 0, 0},
@@ -682,3 +683,48 @@ void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step) {
     cap_stp[step].timestamp = systemTime(CLOCK_MONOTONIC);
     cap_stp[step].valid = 1;
 }
+
+int raw14bit_process(struct img_addr *src, struct img_addr *dst, uint32_t input_width, uint32_t input_height){
+
+    uint32_t aFrameLen10 = (input_width*input_height * 5 / 4);
+    uint32_t aFrameLen16 = (input_width*input_height * 2);
+    unsigned char *m_pInputBuffer = (unsigned char *)src->addr_y;
+    uint16_t *inputRaw16 = (uint16_t*)dst->addr_y;
+
+    uint32_t count = aFrameLen10;
+    uint8_t *pIn = (uint8_t *)(m_pInputBuffer);
+    uint8_t *pOut = (uint8_t *)(inputRaw16);
+
+    uint16_t *pOut_pixel = NULL;
+    pOut_pixel = (uint16_t *)pOut;
+
+    for (uint32_t i = 0; i < count; i = i+5) {
+        *pOut = ((*(pIn+4)) & 0x3) |  ((*pIn & 0x3f)<<2);
+        pOut ++;
+        *pOut = ((*pIn) & 0xc0) >> 6;
+        pOut ++;
+        *pOut_pixel = ROTATE_LEFT(*pOut_pixel,16,4);
+        pOut_pixel++;
+        *pOut = (((*(pIn+4)) & 0x0c) >> 2) |  (((*(pIn+1)) & 0x3f)<<2);
+        pOut ++;
+        *pOut = ((*(pIn+1)) & 0xc0) >> 6;
+        pOut ++;
+        *pOut_pixel = ROTATE_LEFT(*pOut_pixel,16,4);
+        pOut_pixel++;
+        *pOut = (((*(pIn+4)) & 0x30) >> 4) |  (((*(pIn+2)) & 0x3f)<<2);
+        pOut ++;
+        *pOut = ((*(pIn+2)) & 0xc0) >> 6;
+        pOut ++;
+        *pOut_pixel = ROTATE_LEFT(*pOut_pixel,16,4);
+        pOut_pixel++;
+        *pOut = (((*(pIn+4)) & 0xc0) >> 6) |  (((*(pIn+3)) & 0x3f)<<2);
+        pOut ++;
+        *pOut = ((*(pIn+3)) & 0xc0) >> 6;
+        pOut ++;
+        *pOut_pixel = ROTATE_LEFT(*pOut_pixel,16,4);
+        pOut_pixel++;
+        pIn = pIn + 5;
+    }
+    return 0;
+}
+

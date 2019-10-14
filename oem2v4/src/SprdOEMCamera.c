@@ -640,8 +640,9 @@ cmr_int camera_takepicture_process(cmr_handle camera_handle,
     return ret;
 }
 
-int camera_get_postprocess_capture_size(cmr_u32 camera_id, cmr_u32 *mem_size) {
+int camera_get_postprocess_capture_size(cmr_u32 camera_id, cmr_u32 *mem_size, struct sensor_exp_info *sn_if) {
     int ret = CMR_CAMERA_SUCCESS;
+    UNUSED(sn_if);
 
     ret = camera_get_postproc_capture_size(camera_id, mem_size);
     return ret;

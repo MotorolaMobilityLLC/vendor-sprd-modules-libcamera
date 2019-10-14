@@ -6169,7 +6169,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
             in_param.hwsim_4in1_width =
                 cxt->sn_cxt.info_4in1.limited_4in1_width;
 #endif
-        usleep(10 * 1000);
+        usleep(500 * 1000);
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to start proc %ld", ret);
@@ -12729,16 +12729,29 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     if (img_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
         strcat(file_name, ".mipi_raw");
         size = dump_size;
+    } else if (img_fmt == REMOSAIC_CAM_IMG_FMT_BAYER_MIPI_RAW) {
+        strcat(file_name, "_remosaic.mipi_raw");
+        size = dump_size;
+    } else if (img_fmt == REMOSAIC_CAM_IMG_FMT_RAW14BIT) {
+        strcat(file_name, "_remosaic.raw");
+        size = dump_size;
     } else if (img_fmt == CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW) {
         strcat(file_name, "_dcam.mipi_raw");
         size = dump_size;
+    } else if (img_fmt == CAM_IMG_FMT_RAW14BIT) {
+        strcat(file_name, ".raw");
+        size = width * height * 2;
     } else if (img_fmt == CAM_IMG_FMT_YUV420_NV21) {
         strcat(file_name, ".yuv");
         size = width * height * 3 / 2;
     } else if (img_fmt == CAM_IMG_FMT_JPEG) {
         strcat(file_name, ".jpg");
         size = dump_size;
+    } else if (img_fmt == CAM_IMG_FMT_DCAM_RAW14BIT) {
+        strcat(file_name, "_dcam.raw");
+        size = width * height * 2;
     }
+
 
     CMR_LOGD("file name %s", file_name);
     fp = fopen(file_name, "wb");

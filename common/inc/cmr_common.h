@@ -66,6 +66,7 @@ extern "C" {
 #define CMR_BASE_ID(x) ((x)&0xF000)
 #define JPEG_EXIF_SIZE (64 * 1024)
 #define RAWRGB_BIT_WIDTH 10
+#define RAWRGB_RAW14BIT_WIDTH 16
 #define CMR_ZOOM_FACTOR 2
 #define CMR_SLICE_HEIGHT 256
 #define CMR_SHARK_SCALING_TH 2048
@@ -313,6 +314,10 @@ typedef enum {
     // raw
     CAM_IMG_FMT_BAYER_MIPI_RAW = 0x30,
     CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW,
+    CAM_IMG_FMT_RAW14BIT,
+    CAM_IMG_FMT_DCAM_RAW14BIT,
+    REMOSAIC_CAM_IMG_FMT_BAYER_MIPI_RAW,
+    REMOSAIC_CAM_IMG_FMT_RAW14BIT,
 
     // jpeg
     CAM_IMG_FMT_JPEG = 0x40,
@@ -1377,6 +1382,8 @@ void camera_snapshot_step_statisic(struct img_size *img_size);
 
 void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step);
 
+int raw14bit_process(struct img_addr *src, struct img_addr *dst, uint32_t input_width, uint32_t input_height);
+
 /* White balancing type, used for CAMERA_PARM_WHITE_BALANCING */
 enum {
     CAMERA_WB_AUTO = 0,
@@ -2035,7 +2042,7 @@ typedef struct oem_ops {
                                      cmr_u32 video_width, cmr_u32 video_height,
                                      cmr_uint *is_change);
     int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
-                                               cmr_u32 *mem_size);
+                                               cmr_u32 *mem_size, struct sensor_exp_info *sn_if);
     cmr_int (*camera_get_preview_rect)(cmr_handle camera_handle,
                                        cmr_uint *rect_x, cmr_uint *rect_y,
                                        cmr_uint *rect_width,

@@ -9817,7 +9817,7 @@ void *SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data) {
     }
 
     ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(obj->mCameraId,
-                                                                 &mem_size);
+                                                                 &mem_size, NULL);
     if (ret) {
         HAL_LOGE("camera_get_postprocess_capture_size failed");
         obj->mIsPreAllocCapMem = 0;

@@ -4629,9 +4629,9 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
              prev_cxt->prev_param.mode_4in1, prev_cxt->cap_org_fmt);
     if (prev_cxt->prev_param.mode_4in1 > 0 &&
         CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
-        ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size);
+        ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size, prev_cxt->sensor_info.sn_interface.is_loose);
     } else {
-        ret = camera_get_postproc_capture_size(camera_id, &total_mem_size);
+        ret = camera_get_postproc_capture_size(camera_id, &total_mem_size, prev_cxt->sensor_info.sn_interface.is_loose);
     }
     if (ret) {
         CMR_LOGE("get mem size err");
@@ -4688,6 +4688,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 &prev_cxt->cap_sn_trim_rect, &prev_cxt->max_size,
                 prev_cxt->cap_org_fmt, &prev_cxt->cap_org_size,
                 &prev_cxt->prev_param.thumb_size, &prev_cxt->cap_mem[i],
+                &prev_cxt->sensor_info,
                 ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) ||
                  prev_cxt->prev_param.is_cfg_rot_cap),
                 is_need_scaling, 1, prev_cxt->prev_param.mode_4in1);
@@ -4697,6 +4698,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 &prev_cxt->cap_sn_trim_rect, &prev_cxt->max_size,
                 prev_cxt->cap_org_fmt, &prev_cxt->cap_org_size,
                 &prev_cxt->prev_param.thumb_size, &prev_cxt->cap_mem[i],
+                &prev_cxt->sensor_info,
                 (prev_cxt->prev_param.is_cfg_rot_cap &&
                  (IMG_ANGLE_0 != prev_cxt->prev_param.encode_angle)),
                 is_need_scaling, 1, prev_cxt->prev_param.mode_4in1);

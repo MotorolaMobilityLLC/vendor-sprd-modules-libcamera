@@ -120,14 +120,14 @@ static int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
                            struct img_size *thum_size,
                            struct cmr_cap_mem *capture_mem, uint32_t need_rot,
                            uint32_t *io_mem_res, uint32_t *io_mem_end,
-                           uint32_t *io_channel_size);
+                           uint32_t *io_channel_size, cmr_u32 is_loose);
 
 static int arrange_4in1_raw_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     struct img_rect *sn_trim, struct img_size *image_size, uint32_t orig_fmt,
     struct img_size *cap_size, struct img_size *thum_size,
     struct cmr_cap_mem *capture_mem, uint32_t need_rot, uint32_t *io_mem_res,
-    uint32_t *io_mem_end, uint32_t *io_channel_size);
+    uint32_t *io_mem_end, uint32_t *io_channel_size, cmr_u32 is_loose);
 
 static int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm,
                             struct img_size *sn_size, struct img_rect *sn_trim,
@@ -208,7 +208,7 @@ int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
 * w * h * 3 / 2 + w * h * 3 / 2 + thumW * thumH * 3 = 3 * w * h + thumW * thumH
 * * 3(bytes);
 */
-int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
+int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cmr_u32 is_loose) {
     cmr_u32 max_w, max_h, thumb_w, thumb_h;
     cmr_u32 redundance_size;
     char value[PROPERTY_VALUE_MAX];
@@ -233,7 +233,11 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
     // for raw capture
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if ((!strcmp(value, "raw"))||isp_video_get_simulation_flag()) {
-        *pp_cap_size += 3 * max_w * max_h / 2;
+        if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10) {
+            *pp_cap_size += 5 * max_w * max_h / 2;
+        } else {
+            *pp_cap_size += 3 * max_w * max_h / 2;
+        }
     }
 
     // the above is default configuration, for some special case, you can change
@@ -248,7 +252,7 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
 }
 
 int camera_get_4in1_postproc_capture_size(cmr_u32 camera_id,
-                                          cmr_u32 *pp_cap_size) {
+                                          cmr_u32 *pp_cap_size, cmr_u32 is_loose) {
     cmr_u32 max_w, max_h, thumb_w, thumb_h, small_w, small_h;
     cmr_u32 redundance_size;
     char value[PROPERTY_VALUE_MAX];
@@ -276,8 +280,13 @@ int camera_get_4in1_postproc_capture_size(cmr_u32 camera_id,
     // for raw capture
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
-        *pp_cap_size += 3 * max_w * max_h / 2;
-        *pp_cap_size += 3 * small_w * small_h / 2;
+        if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10) {
+            *pp_cap_size += 5 * max_w * max_h / 2;
+            *pp_cap_size += 5 * small_w * small_h / 2;
+        } else {
+            *pp_cap_size += 3 * max_w * max_h / 2;
+            *pp_cap_size += 3 * small_w * small_h / 2;
+        }
     }
 
     // the above is default configuration, for some special case, you can change
@@ -296,7 +305,7 @@ int camera_arrange_capture_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     struct img_rect *sn_trim, struct img_size *image_size, uint32_t orig_fmt,
     struct img_size *cap_size, struct img_size *thum_size,
-    struct cmr_cap_mem *capture_mem, uint32_t need_rot, uint32_t need_scale,
+    struct cmr_cap_mem *capture_mem,struct sensor_exp_info *sn_if, uint32_t need_rot, uint32_t need_scale,
     uint32_t image_cnt, cmr_u32 is_4in1_mode) {
     if (NULL == cap_2_frm || NULL == image_size || NULL == thum_size ||
         NULL == capture_mem || NULL == sn_size || NULL == sn_trim) {
@@ -338,7 +347,7 @@ int camera_arrange_capture_buf(
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == orig_fmt && is_4in1_mode > 0) {
         ret = arrange_4in1_raw_buf(cap_2_frm, sn_size, sn_trim, image_size,
                                    orig_fmt, cap_size, thum_size, cap_mem,
-                                   need_rot, &mem_res, &mem_end, &channel_size);
+                                   need_rot, &mem_res, &mem_end, &channel_size, sn_if->sn_interface.is_loose);
         if (ret) {
             CMR_LOGE("raw fmt arrange failed!");
             return -1;
@@ -346,7 +355,7 @@ int camera_arrange_capture_buf(
     } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == orig_fmt) {
         ret = arrange_raw_buf(cap_2_frm, sn_size, sn_trim, image_size, orig_fmt,
                               cap_size, thum_size, cap_mem, need_rot, &mem_res,
-                              &mem_end, &channel_size);
+                              &mem_end, &channel_size, sn_if->sn_interface.is_loose);
         if (ret) {
             CMR_LOGE("raw fmt arrange failed!");
             return -1;
@@ -497,7 +506,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
                     uint32_t orig_fmt, struct img_size *cap_size,
                     struct img_size *thum_size, struct cmr_cap_mem *capture_mem,
                     uint32_t need_rot, uint32_t *io_mem_res,
-                    uint32_t *io_mem_end, uint32_t *io_channel_size) {
+                    uint32_t *io_mem_end, uint32_t *io_channel_size, cmr_u32 is_loose) {
     UNUSED(thum_size);
     if (CAM_IMG_FMT_BAYER_MIPI_RAW != orig_fmt || NULL == io_mem_res ||
         NULL == io_mem_end || NULL == io_channel_size) {
@@ -521,8 +530,15 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     raw2_size = fetch_pitch * sn_size->height;
     CMR_LOGI("fetch_pitch, %d\n", fetch_pitch);
 #else
-    raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
-    raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    CMR_LOGI("is_loose %d", is_loose);
+    if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10) {
+        raw_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
+        raw2_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
+    } else {
+        raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+        raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    }
+
 #endif
 
     tmp1 = image_size->width * image_size->height * 3 / 2;
@@ -570,9 +586,9 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
 
     cap_mem->cap_raw2.addr_phy.addr_y =
-        cap_2_frm->mem_frm.addr_phy.addr_y + max_size + max_size;
+        cap_2_frm->mem_frm.addr_phy.addr_y + max_size + raw_size;
     cap_mem->cap_raw2.addr_vir.addr_y =
-        cap_2_frm->mem_frm.addr_vir.addr_y + max_size + max_size;
+        cap_2_frm->mem_frm.addr_vir.addr_y + max_size + raw_size;
     cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
     cap_mem->cap_raw2.buf_size = raw2_size;
     cap_mem->cap_raw2.size.width = sn_size->width;
@@ -583,8 +599,8 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
 
-    tmp1 = max_size + max_size + max_size;
-    tmp2 = max_size + max_size + cap_mem->target_jpeg.buf_size;
+    tmp1 = max_size + raw_size + raw2_size;
+    tmp2 = raw_size + raw2_size + cap_mem->target_jpeg.buf_size;
     tmp3 = tmp1 > tmp2 ? tmp1 : tmp2;
     tmp3 = (tmp3 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
@@ -602,7 +618,7 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
                          struct img_size *cap_size, struct img_size *thum_size,
                          struct cmr_cap_mem *capture_mem, uint32_t need_rot,
                          uint32_t *io_mem_res, uint32_t *io_mem_end,
-                         uint32_t *io_channel_size) {
+                         uint32_t *io_channel_size, cmr_u32 is_loose) {
     UNUSED(thum_size);
     if (CAM_IMG_FMT_BAYER_MIPI_RAW != orig_fmt || NULL == io_mem_res ||
         NULL == io_mem_end || NULL == io_channel_size) {
@@ -622,8 +638,13 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
     mem_res = *io_mem_res;
     mem_end = *io_mem_end;
 
-    raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
-    raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10) {
+        raw_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
+        raw2_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
+    } else {
+        raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+        raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+    }
     raw_size_4K_align = (raw_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
     tmp1 = image_size->width * image_size->height * 3 / 2 +
@@ -667,8 +688,13 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
     cap_mem->cap_raw.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->cap_raw.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->cap_raw.fd = cap_mem->cap_yuv.fd;
-    cap_mem->cap_raw.buf_size =
+    if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10){
+        cap_mem->cap_raw.buf_size =
+        raw_size_4K_align + small_w * small_h * RAWRGB_RAW14BIT_WIDTH/ 8;
+    } else {
+        cap_mem->cap_raw.buf_size =
         raw_size_4K_align + small_w * small_h * RAWRGB_BIT_WIDTH / 8;
+    }
     cap_mem->cap_raw.size.width = sn_size->width;
     cap_mem->cap_raw.size.height = sn_size->height;
     cap_mem->cap_raw.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
@@ -677,9 +703,9 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
              cap_mem->cap_raw.buf_size, small_w, small_h);
 
     cap_mem->cap_raw2.addr_phy.addr_y =
-        cap_2_frm->mem_frm.addr_phy.addr_y + max_size + max_size;
+        cap_2_frm->mem_frm.addr_phy.addr_y + max_size + raw_size;
     cap_mem->cap_raw2.addr_vir.addr_y =
-        cap_2_frm->mem_frm.addr_vir.addr_y + max_size + max_size;
+        cap_2_frm->mem_frm.addr_vir.addr_y + max_size + raw_size;
     cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
     cap_mem->cap_raw2.buf_size = raw2_size;
     cap_mem->cap_raw2.size.width = sn_size->width;
@@ -690,8 +716,8 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
 
-    tmp1 = max_size + max_size + max_size;
-    tmp2 = max_size + max_size + cap_mem->target_jpeg.buf_size;
+    tmp1 = max_size + raw_size + raw2_size;
+    tmp2 = raw_size + raw2_size + cap_mem->target_jpeg.buf_size;
     tmp3 = tmp1 > tmp2 ? tmp1 : tmp2;
     tmp3 = (tmp3 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
