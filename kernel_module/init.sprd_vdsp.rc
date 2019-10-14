@@ -1,5 +1,7 @@
 on post-fs
 	insmod ${ro.vendor.ko.mount.point}/socko/sprd_vdsp.ko
+	insmod ${ro.vendor.ko.mount.point}/socko/vdsp_sipc.ko
+	insmod ${ro.vendor.ko.mount.point}/socko/vdsp_spipe.ko
 	trigger sprd-flash-ko
 
 
