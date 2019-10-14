@@ -1,13 +1,17 @@
 #include <utils/Mutex.h>
 #include <utils/List.h>
-#include <android/log.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
+#include <log/log_main.h>
 #include "vdsp_dvfs.h"
 #include "xrp_host_common.h"
 #include "xrp_kernel_defs.h"
 
-#define TAG_DVFS  "vdsp_dvfs"
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG  "vdsp_dvfs"
+
 #define DVFS_MONITOR_CYCLE_TIME   (1000*1000)
 using namespace android;
 enum dvfs_enum_index {
@@ -126,7 +130,7 @@ int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uin
 	} else {
 		g_tempset = 1;
 	}
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s permant:%d , level:%d\n" , __func__ , permanent , level);
+	ALOGD("%s permant:%d , level:%d\n" , __func__ , permanent , level);
 	/*set power hint*/
 	dvfs.index = level;
 	dvfs.en_ctl_flag = 0;
@@ -180,7 +184,7 @@ static uint32_t calculate_vdsp_usage(int64_t fromtime , int64_t endtime)
 		break;
 	}
 	timepiece_lock.unlock();
-//	__android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s count:%d, notinrange:%d , removecount:%d, costtime:%ld, end-from:%ld\n" ,
+//	ALOGD(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s count:%d, notinrange:%d , removecount:%d, costtime:%ld, end-from:%ld\n" ,
 //				__func__ , count, notinrange , removecount , costtime , (endtime-fromtime));
 	return (costtime*100) / (endtime - fromtime);
 }
@@ -205,7 +209,7 @@ static void *dvfs_monitor_thread(__unused void* data)
 	struct xrp_device *device = (struct xrp_device *)data;
 	while(1) {
 		if(0 != g_monitor_exit) {
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s exit\n" , __func__);
+			ALOGD("%s exit\n" , __func__);
 			break;
 		}
 		powerhint_lock.lock();
@@ -215,13 +219,13 @@ static void *dvfs_monitor_thread(__unused void* data)
 				/*set freq to g_freqlevel*/
 				dvfs.index = g_freqlevel;
 				dvfs.en_ctl_flag = 0;
-				 __android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s before set dvfs index:%d\n" , __func__ , g_freqlevel);
+				 ALOGD("%s before set dvfs index:%d\n" , __func__ , g_freqlevel);
 				ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
 			}
 		}
 		if(SPRD_VDSP_POWERHINT_NORMAL == g_freqlevel) {
 			percentage = calculate_vdsp_usage(start_time  , systemTime(CLOCK_MONOTONIC));
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_DVFS ,"%s percentage:%d\n" , __func__ , percentage);
+			ALOGD("%s percentage:%d\n" , __func__ , percentage);
 			start_time = systemTime(CLOCK_MONOTONIC);
 			/*dvfs set freq*/
 			dvfs.index = calculate_dvfs_index(percentage);

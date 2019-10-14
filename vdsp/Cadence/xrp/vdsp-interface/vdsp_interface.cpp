@@ -5,6 +5,13 @@
 #include "vdsp_interface.h"
 #include <cutils/properties.h>
 #include "xrp_interface.h"
+
+
+#ifdef LOG_TAG
+#undef LOG_TAG
+#define LOG_TAG  TAG_Client
+#endif
+
 using namespace android;
 #define USE_FD_MAX_NUM  32
 #define CHECK_SUM_PROPERTY   "persist.vendor.vdsp.checksum"
@@ -33,14 +40,14 @@ public:
 		AutoMutex _l(gLock);
 		gInitFlag = 0;
 		gGeneration ++;
-		__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"binderDied func:%s , gGeneration:%d\n" , __func__ , gGeneration);
+		ALOGD("binderDied func:%s , gGeneration:%d\n" , __func__ , gGeneration);
 	}
 };
 static sp<VdspClientDeathRecipient> gDeathRecipient = NULL;
 static int32_t check_sum_flag()
 {
 	char value[128];
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Client, "func:%s" , __func__);
+	ALOGD("func:%s" , __func__);
 	property_get(CHECK_SUM_PROPERTY , value , "");
 	if(!strcmp(value ,  "1"))
 		return 1;
@@ -67,7 +74,7 @@ static void print_checksum_result(const char *nsid , const char *info , struct V
 		result[i] = tempresult;
 	}
 	for(i = 0; i < num; i++) {
-		__android_log_print(ANDROID_LOG_DEBUG,TAG_Client, "func:%s nsid:%s %s index:%d , sum:%llx" , __func__ , nsid , info , i , (unsigned long long)result[i]);
+		ALOGD("func:%s nsid:%s %s index:%d , sum:%llx" , __func__ , nsid , info , i , (unsigned long long)result[i]);
 	}
 	free(result);
 }
@@ -115,7 +122,7 @@ static sp<IVdspService> getVdspService()
 {
 	AutoMutex _l(gLock);
 	int ret;
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s  , gInitFlag:%d\n" , __func__ , gInitFlag);
+	ALOGD("func:%s  , gInitFlag:%d\n" , __func__ , gInitFlag);
 	if(0 == gInitFlag)
 	{
 		sp < IServiceManager > sm = defaultServiceManager();
@@ -132,12 +139,12 @@ static sp<IVdspService> getVdspService()
 			}
 			ret = binder->linkToDeath(gDeathRecipient);
 			gVdspService = interface_cast<IVdspService>(binder);
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_Client, "func:%s  , gDeathRecipient:%p , linkTodeath:%d\n" , __func__ , gDeathRecipient.get() ,ret);
+			ALOGD("func:%s  , gDeathRecipient:%p , linkTodeath:%d\n" , __func__ , gDeathRecipient.get() ,ret);
 			gInitFlag = 1;
 			gOpenedCount = 0;
 		}
 	}
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Client, "func:%s  , gInitFlag:%d , xrpService:%p\n" , __func__ , gInitFlag , gVdspService.get());
+	ALOGD("func:%s  , gInitFlag:%d , xrpService:%p\n" , __func__ , gInitFlag , gVdspService.get());
 	return gVdspService;
 }
 
@@ -149,11 +156,11 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 	cs = getVdspService();
 	if((handle == NULL) || (cs == NULL))
 	{
-		 __android_log_print(ANDROID_LOG_ERROR,TAG_Client,"func:%s get resource failed cs:%p , handle:%p\n" , __func__ ,cs.get() , handle);
+		 ALOGE("func:%s get resource failed cs:%p , handle:%p\n" , __func__ ,cs.get() , handle);
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 	printf("func:%s enter cs:%p\n" , __func__ , cs.get());
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s enter cs:%p\n" , __func__ ,cs.get());
+	ALOGD("func:%s enter cs:%p\n" , __func__ ,cs.get());
 	{
 		AutoMutex _l(gLock);
 		handle->fd = -1;
@@ -161,7 +168,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 		fd = Alloc_Fd();
 		if(fd < 0)
 		{
-			 __android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s Alloc_Fd faild fd:%d\n" , __func__ , fd);
+			 ALOGE("func:%s Alloc_Fd faild fd:%d\n" , __func__ , fd);
 			goto __openerror;;
 		}
 		handle->fd = fd;
@@ -173,23 +180,23 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 			{
 				gOpenedCount ++;
 				gWorkType = type;
-				__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s gOpenedCount 0 fd:%d\n" , __func__ , fd);
+				ALOGD("func:%s gOpenedCount 0 fd:%d\n" , __func__ , fd);
 				goto __openok;
 			}
 			else {
-				__android_log_print(ANDROID_LOG_ERROR,TAG_Client,"func:%s openXrpDevice failed fd:%d\n" , __func__ , fd);
+				ALOGE("func:%s openXrpDevice failed fd:%d\n" , __func__ , fd);
 				goto __openerror;
 			}
 		} else {
 			if(type == gWorkType) {
 				gOpenedCount++;
 			} else {
-				__android_log_print(ANDROID_LOG_ERROR,TAG_Client,"func:%s openXrpDevice fail type:%d, gWorkType:%d\n" , __func__ , type , gWorkType);
+				ALOGE("func:%s openXrpDevice fail type:%d, gWorkType:%d\n" , __func__ , type , gWorkType);
 				Free_Fd(fd);
 				goto __openerror;
 			}
 		}
-		__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s fd:%d\n" , __func__ , fd);
+		ALOGD("func:%s fd:%d\n" , __func__ , fd);
 			
 		goto __openok;
 		//return (enum sprd_vdsp_result) cs->openXrpDevice(gfakeBinder);
@@ -212,7 +219,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_
 	if(handle == NULL)
 	{
 		/*fd is abnormal value*/
-		 __android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s close invalid input hadle is NULL\n" , __func__);
+		 ALOGE("func:%s close invalid input hadle is NULL\n" , __func__);
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 	generation = hnd->generation;
@@ -223,14 +230,14 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_
 		AutoMutex _l(gLock);
 		if(0 != Check_GenrationValid(generation))
 		{
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
+			ALOGE("func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
 				generation , gGeneration);
 			gLock.unlock();
 			return SPRD_VDSP_RESULT_OLD_GENERATION;
 		}
 		if(0 != Check_FdValid(fd))
 		{
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 		gOpenedCount--;
@@ -238,29 +245,29 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_
 		{
 			if(gWorking != 0)
 			{
-				__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s gWorking is not zerofd:%d\n" , __func__ , fd);
+				ALOGE("func:%s gWorking is not zerofd:%d\n" , __func__ , fd);
 				return SPRD_VDSP_RESULT_FAIL;
 			}
 			result = (enum sprd_vdsp_result)cs->closeXrpDevice(gfakeBinder);
 			if(result == SPRD_VDSP_RESULT_SUCCESS)
 			{
 				Free_Fd(fd);
-				__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s closeXrpDevice ok fd:%d\n" , __func__ , fd);
+				ALOGD("func:%s closeXrpDevice ok fd:%d\n" , __func__ , fd);
 				gWorkType = SPRD_VDSP_WORK_MAXTYPE;
 				return SPRD_VDSP_RESULT_SUCCESS;
 			}
 			else {
-				__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s closeXrpDevice failed fd:%d\n" , __func__ , fd);
+				ALOGE("func:%s closeXrpDevice failed fd:%d\n" , __func__ , fd);
 				return SPRD_VDSP_RESULT_FAIL;
 			}
 		}
 		if(g_FdInfo[fd].working == 0){
 			Free_Fd(fd);
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s freefd ok fd:%d\n" , __func__ , fd);
+			ALOGD("func:%s freefd ok fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_SUCCESS;
 		}
 		else {
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s freefd faild working fd:%d\n" , __func__ , fd);
+			ALOGE(TAG_Client,"func:%s freefd faild working fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 	}
@@ -279,7 +286,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
-                 __android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
+                 ALOGE(TAG_Client,"func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
                 return SPRD_VDSP_RESULT_FAIL;
 	}
 	generation = hnd->generation;
@@ -289,21 +296,21 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 		gLock.lock();
 		if(0 != Check_GenrationValid(generation))
 		{
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
+			ALOGE(TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
 				generation , gGeneration);
 			gLock.unlock();
 			return SPRD_VDSP_RESULT_OLD_GENERATION;
 		}
 		if(0 != Check_FdValid(fd))
                 {
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
 			gLock.unlock();
                         return SPRD_VDSP_RESULT_FAIL;
                 }
 		if(gOpenedCount == 0)
 		{
 			gLock.unlock();
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 		g_FdInfo[fd].working++;
@@ -321,10 +328,10 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 		g_FdInfo[fd].working --;
 		gLock.unlock();
 		if(0 == result) {
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s  ok fd:%d result:%d\n" , __func__ , fd , result);
+			ALOGD("func:%s  ok fd:%d result:%d\n" , __func__ , fd , result);
 			return SPRD_VDSP_RESULT_SUCCESS;
 		} else {
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s  err fd:%d result:%d\n" , __func__ , fd , result);
+			ALOGE("func:%s  err fd:%d result:%d\n" , __func__ , fd , result);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 	}
@@ -341,7 +348,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadli
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
-		__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
+		ALOGE("func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 	fd = hnd->fd;
@@ -351,21 +358,21 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadli
 		gLock.lock();
 		if(0 != Check_GenrationValid(generation))
 		{
-			__android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
+			ALOGE("func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
 				generation , gGeneration);
 			gLock.unlock();
 			return SPRD_VDSP_RESULT_OLD_GENERATION;
 		}
 		if(0 != Check_FdValid(fd))
                 {
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
 			gLock.unlock();
                         return SPRD_VDSP_RESULT_FAIL;
                 }
 		if(gOpenedCount == 0)
 		{
 			gLock.unlock();
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 		gWorking++;
@@ -377,10 +384,10 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadli
 		g_FdInfo[fd].working --;
 		gLock.unlock();
 		if( 0 == result) {
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s ok fd:%d result:%d\n" , __func__ , fd , result);
+			ALOGD("func:%s ok fd:%d result:%d\n" , __func__ , fd , result);
 			return SPRD_VDSP_RESULT_SUCCESS;
 		} else {
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s err fd:%d result:%d\n" , __func__ , fd , result);
+			ALOGE("func:%s err fd:%d result:%d\n" , __func__ , fd , result);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 	}
@@ -398,7 +405,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
-		__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
+		ALOGE("func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 	generation = hnd->generation;
@@ -408,21 +415,21 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 		gLock.lock();
 		if(0 != Check_GenrationValid(generation))
 		{
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
+			ALOGE("func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
 				generation , gGeneration);
 			gLock.unlock();
 			return SPRD_VDSP_RESULT_OLD_GENERATION;
 		}
 		if(0 != Check_FdValid(fd))
                 {
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
 			gLock.unlock();
                         return SPRD_VDSP_RESULT_FAIL;
                 }
 		if(gOpenedCount == 0)
 		{
 			gLock.unlock();
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 		gWorking ++;
@@ -434,10 +441,10 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 		g_FdInfo[fd].working --;
 		gLock.unlock();
 		if(0 == result) {
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s  fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
+			ALOGD("func:%s  fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
 			return SPRD_VDSP_RESULT_SUCCESS;
 		} else {
-			__android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s err fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
+			ALOGE("func:%s err fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 	}
@@ -453,7 +460,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
         if((cs == NULL) || (NULL == handle))
         {
                 /*fd is abnormal value*/
-                __android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
+                ALOGE("func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
                 return SPRD_VDSP_RESULT_FAIL;
         }
         generation = hnd->generation;
@@ -463,21 +470,21 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
                 gLock.lock();
                 if(0 != Check_GenrationValid(generation))
                 {
-                        __android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
+                        ALOGE("func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
                                 generation , gGeneration);
                         gLock.unlock();
                         return SPRD_VDSP_RESULT_OLD_GENERATION;
                 }
                 if(0 != Check_FdValid(fd))
                 {
-                        __android_log_print(ANDROID_LOG_ERROR ,TAG_Client,"func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
+                        ALOGE("func:%s Check_FdValid failed fd:%d\n" , __func__ , fd);
                         gLock.unlock();
                         return SPRD_VDSP_RESULT_FAIL;
                 }
                 if(gOpenedCount == 0)
                 {
                         gLock.unlock();
-                        __android_log_print(ANDROID_LOG_ERROR , TAG_Client,"func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
+                        ALOGE("func:%s gOpenedCount 0 failed fd:%d\n" , __func__ , fd);
                         return SPRD_VDSP_RESULT_FAIL;
                 }
                 gWorking ++;
@@ -489,10 +496,10 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
                 g_FdInfo[fd].working --;
                 gLock.unlock();
                 if(0 == result) {
-			__android_log_print(ANDROID_LOG_DEBUG,TAG_Client,"func:%s ok fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
+			ALOGD("func:%s ok fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
                         return SPRD_VDSP_RESULT_SUCCESS;
                 } else {
-			__android_log_print(ANDROID_LOG_ERROR,TAG_Client,"func:%s err fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
+			ALOGE("func:%s err fd:%d result:%d , gDeathRecipient:%p\n" , __func__ , fd , result ,gDeathRecipient.get());
                         return SPRD_VDSP_RESULT_FAIL;
                 }
         }

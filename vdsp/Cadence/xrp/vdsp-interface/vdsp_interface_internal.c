@@ -3,7 +3,14 @@
 #include <string.h>
 #include "vdsp_interface_internal.h"
 #include "example_namespace.h"
-#include <android/log.h>
+#include <log/log_main.h>
+
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+
+#define LOG_TAG "vdsp_interface_internal"
+
 __attribute__ ((visibility("default"))) void *sprd_vdsp_open_device(int idx , enum sprd_vdsp_worktype type)
 {
 	enum xrp_status in_status = -1;
@@ -182,7 +189,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 
 			faceid_in = (FACEID_IN*)input_vir;
 
-			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "phy_addr %X, w %d h %d liveness %d\n" , 
+			ALOGE("phy_addr %X, w %d h %d liveness %d\n" , 
 													faceid_in->phyaddr,
 													faceid_in->width,
 													faceid_in->height,
@@ -191,7 +198,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 			xrp_run_faceid_command_directly(device,inputfd, outputfd,&status);
 			if(XRP_STATUS_SUCCESS != status)
 			{
-				__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s status:%d\n" , __func__ , status);
+				ALOGE("func:%s status:%d\n" , __func__ , status);
 				ret = SPRD_XRP_STATUS_FAILURE;
 			}
 		}
@@ -206,14 +213,14 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 		if(buf == NULL)
 		{
 				ret = SPRD_XRP_STATUS_FAILURE;
-				__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , buf is NULL, error\n" , __func__ , __LINE__);
+				ALOGE("func:%s line:%d , buf is NULL, error\n" , __func__ , __LINE__);
 				return ret;
 		}
 		group = xrp_create_buffer_group(&status);
 		if(XRP_STATUS_SUCCESS != status)
 		{
 				free(buf);
-				__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , xrp_create_buffer_group , error\n" , __func__ , __LINE__);
+				ALOGE("func:%s line:%d , xrp_create_buffer_group , error\n" , __func__ , __LINE__);
 				return SPRD_XRP_STATUS_FAILURE;
 		}
 		status = -1;
@@ -228,7 +235,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 								xrp_release_buffer(buf[j]);
 						}
 						free(buf);
-						__android_log_print(ANDROID_LOG_ERROR , "vdsp_interface_interna" , "func:%s line:%d , xrp_create_buffer i:%d, error\n" , __func__ , __LINE__ , i);
+						ALOGE("func:%s line:%d , xrp_create_buffer i:%d, error\n" , __func__ , __LINE__ , i);
 						return SPRD_XRP_STATUS_FAILURE;
 				}
 				status = -1;
@@ -241,7 +248,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 								xrp_release_buffer(buf[j]);
 						}
 						free(buf);
-						__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s line:%d , xrp_add_buffer_to_group i:%d, error\n" , __func__ , __LINE__ , i);
+						ALOGE("func:%s line:%d , xrp_add_buffer_to_group i:%d, error\n" , __func__ , __LINE__ , i);
 						return SPRD_XRP_STATUS_FAILURE;
 				}
 				status = -1;
@@ -253,7 +260,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 
 		if(XRP_STATUS_SUCCESS != status)
 		{
-			__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s xrp_run_command_directly status:%d\n" , __func__ , status);
+			ALOGE("func:%s xrp_run_command_directly status:%d\n" , __func__ , status);
 				ret = SPRD_XRP_STATUS_FAILURE;
 		}
 		xrp_release_buffer_group(group);
@@ -264,7 +271,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 		free(buf);
 	}
 
-	__android_log_print(ANDROID_LOG_DEBUG,"vdsp_interface_interna" , "func:%s ret:%d\n" , __func__ , ret);
+	ALOGD("func:%s ret:%d\n" , __func__ , ret);
 	return ret;
 }
 #endif
@@ -278,7 +285,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_load_library(void *device 
 	inputhandle = sprd_alloc_ionmem(USER_LIBRARY_CMD_LOAD_UNLOAD_INPUTSIZE , 0 , &fd , &inputaddr);
         if(inputhandle == NULL)
         {
-		__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s sprd_alloc_ionmem failed\n" , __func__);
+		ALOGE("func:%s sprd_alloc_ionmem failed\n" , __func__);
                 return SPRD_XRP_STATUS_FAILURE;
         }
         input.fd = fd;
@@ -301,7 +308,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_unload_library(void *devic
 	inputhandle = sprd_alloc_ionmem(USER_LIBRARY_CMD_LOAD_UNLOAD_INPUTSIZE , 0 , &fd , &inputaddr);
 	if(inputhandle == NULL)
 	{
-		__android_log_print(ANDROID_LOG_ERROR ,"vdsp_interface_interna" , "func:%s sprd_alloc_ionmem failed\n" , __func__);
+		ALOGE("func:%s sprd_alloc_ionmem failed\n" , __func__);
 		return ret;
 	}
 	input.fd = fd;

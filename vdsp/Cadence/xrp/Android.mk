@@ -129,16 +129,6 @@ LOCAL_C_INCLUDES := \
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
 
-LOCAL_SRC_FILES := \
-			xrp-example/src/host_main.c
-
-LOCAL_SHARED_LIBRARIES := libutils libcutils libvdspservice
-
-LOCAL_MODULE := xrptest
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/bin
-
-include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Werror -fvisibility=hidden
 

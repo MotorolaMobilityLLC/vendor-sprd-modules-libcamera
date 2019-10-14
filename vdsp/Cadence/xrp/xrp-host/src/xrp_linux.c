@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <log/log_main.h>
 #ifndef _UAPI_ASM_GENERIC_INT_LL64_H
 typedef uint32_t __u32;
 typedef uint64_t __u64;
@@ -43,6 +43,12 @@ typedef uint64_t __u64;
 #include "vdsp_interface.h"
 #include <android/log.h>
 #endif
+
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "XrpServer"
+
 struct xrp_request {
 	struct xrp_queue_item q;
 
@@ -136,7 +142,7 @@ struct xrp_device *xrp_open_device_newmode(int idx, enum xrp_open_type type , en
         else if(type == XRP_OPEN_FACEID_TYPE) {
                 fd = open(name, O_RDWR);
         }
-	__android_log_print(ANDROID_LOG_DEBUG,"XrpServer" ,"xrp_open_device_newmode name:%s , type:%d , fd:%d\n" , name , type , fd);
+	ALOGD("xrp_open_device_newmode name:%s , type:%d , fd:%d\n" , name , type , fd);
         if (fd == -1) {
                 set_status(status, XRP_STATUS_FAILURE);
                 return NULL;

@@ -9,6 +9,11 @@
 #include "vdsp_interface.h"
 #include "Test.h"
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "TestClient"
+
 //using namespace android;
 
 
@@ -52,19 +57,19 @@ void* thread1(__unused void* test)
 	for(int i = 0;i<6;i++){
 	ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_NORMAL , &handle);
 	printf("----------open device-------------\n");
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_open_device ret:%d\n" , __func__ ,ret);
+	ALOGD("function:%s , sprd_cavdsp_open_device ret:%d\n" , __func__ ,ret);
 	usleep(1000000*3);
-	ret = sprd_cavdsp_loadlibrary(&handle , "testlib" , &in);
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_loadlibrary ret:%d\n" , __func__ ,ret);
+	ret = sprd_cavdsp_loadlibrary(&handle , "test_lib" , &in);
+	ALOGD("function:%s , sprd_cavdsp_loadlibrary ret:%d\n" , __func__ ,ret);
 	ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , NULL , NULL , 0 , 1);
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_send_cmd ret:%d\n" , __func__ ,ret);
-	ret = sprd_cavdsp_unloadlibrary(&handle , "testlib");
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_unloadlibrary ret:%d\n" , __func__ ,ret);
+	ALOGD("function:%s , sprd_cavdsp_send_cmd ret:%d\n" , __func__ ,ret);
+	ret = sprd_cavdsp_unloadlibrary(&handle , "test_lib");
+	ALOGD("function:%s , sprd_cavdsp_unloadlibrary ret:%d\n" , __func__ ,ret);
 	ret = sprd_cavdsp_close_device(&handle);
 
-	//__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_close_device ret:%d\n" , __func__ ,ret);
+	//ALOGD(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_close_device ret:%d\n" , __func__ ,ret);
 	//ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , &out , NULL , 0 , 1);
-	//__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_send_cmd after close ret:%d\n" , __func__ ,ret);
+	//ALOGD(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_send_cmd after close ret:%d\n" , __func__ ,ret);
 	usleep(1000000*2);
 	}
 	return NULL;
@@ -93,10 +98,10 @@ void* thread2(__unused void* test)
         }
 	while(1) {
         ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_NORMAL , &handle);
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_open_device ret:%d\n" , __func__ ,ret);
+	ALOGD("function:%s , sprd_cavdsp_open_device ret:%d\n" , __func__ ,ret);
 //        sprd_cavdsp_loadlibrary("testlib1" , &in);
         ret = sprd_cavdsp_send_cmd(&handle , "testlib1" , &in , &out , NULL , 0 , 1);
-	__android_log_print(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_send_cmd ret:%d\n" , __func__ ,ret);
+	ALOGD("function:%s , sprd_cavdsp_send_cmd ret:%d\n" , __func__ ,ret);
 //        sprd_cavdsp_unloadlibrary("testlib1");
 //        sprd_cavdsp_close_device();
 	//sprd_cavdsp_close_device(fd);
