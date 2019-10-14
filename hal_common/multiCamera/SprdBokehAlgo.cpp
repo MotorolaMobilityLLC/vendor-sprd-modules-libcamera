@@ -677,145 +677,18 @@ int sprdcamera::SprdBokehAlgo::initPortraitParams(BokehSize *size,
                                                   OtpData *data,
                                                   bool galleryBokeh) {
     int rc = NO_ERROR;
-    PortraitCap_Init_Params initParams;
-    BokehSize m_Size;
-    OtpData m_CalData;
-    if (!size || !data) {
-        HAL_LOGE(" para is null");
-        rc = BAD_VALUE;
-        return rc;
-    }
-    memset(&initParams, 0, sizeof(PortraitCap_Init_Params));
-    memcpy(&m_Size, size, sizeof(BokehSize));
-    memcpy(&m_CalData, data, sizeof(OtpData));
-    initParams.libLevel = 1;
-    initParams.productInfo = PLATFORM_ID;
-    initParams.calcDepth = 1;
-
-    // single capture
-    initParams.width = m_Size.capture_w;         // 3264
-    initParams.height = m_Size.capture_h;        // 2448
-    initParams.depthW = m_Size.depth_snap_out_w; // 800
-    initParams.depthH = m_Size.depth_snap_out_h; // 600
-
-    // capture 5M v1.0 v1.1 v1.2
-    int mLastMinScope = 4;        // min_slope*10000
-    int mLastMaxScope = 19;       // max_slope*10000
-    int mLastAdjustRati = 150000; // findex2gamma_adjust_ratio*10000
-    initParams.min_slope =
-        (float)(mLastMinScope) / 10000; // 0.001~0.01, default is 0.005 ->0.0004
-    initParams.max_slope =
-        (float)(mLastMaxScope) / 10000; // 0.01~0.1, default is 0.05 ->0.0019
-    initParams.Findex2Gamma_AdjustRatio =
-        (float)(mLastAdjustRati) / 10000; // 2~11, default is 6.0 ->15.0f
-    initParams.Scalingratio = 8;  // only support 2,4,6,8 ->8 for input 5M(1952)
-    initParams.SmoothWinSize = 5; // odd number ->5
-    initParams.box_filter_size = 0; // odd number ->0
-
-    /*double capture*/
-    initParams.input_width_main = m_Size.depth_snap_main_w;
-    initParams.input_height_main = m_Size.depth_snap_main_h;
-    initParams.input_width_sub = m_Size.depth_snap_sub_w;
-    initParams.input_height_sub = m_Size.depth_snap_sub_h;
-    initParams.potpbuf = m_CalData.otp_data;
-    initParams.otpsize = m_CalData.otp_size;
-    initParams.config_param = NULL;
-    initParams.imageFormat_main = ImageFormat(YUV420_NV12);
-    initParams.imageFormat_sub = ImageFormat(YUV420_NV12);
-    sprd_portrait_capture_init(&mPortraitHandle, &initParams);
-    unsigned int maskW = mSize.depth_snap_out_w, maskH = mSize.depth_snap_out_h;
-    unsigned int maskSize = maskW * maskH * 2;
-    rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
-                                             &maskSize);
-
-exit:
     return rc;
 }
 
 int sprdcamera::SprdBokehAlgo::capPortraitDepthRun(
     void *para1, void *para2, void *para3, void *para4, void *input_buf1_addr,
     void *output_buf, int vcmCurValue, int vcmUp, int vcmDown) {
-    HAL_LOGI(" E");
     int rc = NO_ERROR;
-    int f_number = 0;
-    weightmap_param weightParams;
-    ProcDepthInputMap depthData;
-    PortaitCapProcParams wParams;
-    InoutYUV yuvData;
-    char prop1[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    char prop2[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    if (!para1 || !para3 || !para4) {
-        HAL_LOGE(" para is null");
-        rc = BAD_VALUE;
-        return rc;
-    }
-    memset(&depthData, 0, sizeof(ProcDepthInputMap));
-    memset(&wParams, 0, sizeof(PortaitCapProcParams));
-    memset(&yuvData, 0, sizeof(InoutYUV));
-
-    depthData.mainMap = para4;
-    depthData.subMap = para3;
-    wParams.DisparityImage = NULL;
-    wParams.VCM_cur_value = vcmCurValue;
-    memcpy(&wParams.golden_vcm_data, &mPortraitCapParam.relbokeh_oem_data,
-           sizeof(struct af_golden_vcm_data));
-
-    wParams.version = 1;
-    wParams.roi_type = 2;
-
-    f_number = mPortraitCapParam.f_number;
-    wParams.F_number = (MAX_F_FUMBER + 1 - f_number) * 255 / MAX_F_FUMBER;
-    wParams.sel_x = mPortraitCapParam.sel_x * mSize.capture_w / mSize.preview_w;
-    wParams.sel_y = mPortraitCapParam.sel_y * mSize.capture_h / mSize.preview_h;
-    wParams.CircleSize = 50;
-    wParams.valid_roi = mPortraitCapParam.portrait_param.valid_roi;
-    wParams.total_roi = mPortraitCapParam.portrait_param.face_num;
-    memcpy(&wParams.x1, &mPortraitCapParam.portrait_param.x1,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    memcpy(&wParams.x2, &mPortraitCapParam.portrait_param.x2,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    memcpy(&wParams.y1, &mPortraitCapParam.portrait_param.y1,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    memcpy(&wParams.y2, &mPortraitCapParam.portrait_param.y2,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    wParams.rear_cam_en = mPortraitCapParam.portrait_param.rear_cam_en; // true
-    wParams.rotate_angle = mPortraitCapParam.portrait_param.mRotation;  //--
-    wParams.camera_angle = mPortraitCapParam.portrait_param.camera_angle;
-    wParams.mobile_angle = mPortraitCapParam.portrait_param.mobile_angle;
-
-    yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
-    yuvData.Dst_YUV = (unsigned char *)output_buf;
-    /*
-    unsigned int maskW = mSize.depth_snap_out_w, maskH = mSize.depth_snap_out_h;
-    unsigned int maskSize = maskW * maskH * 2;
-    rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
-                                             &maskSize);
-    */
-    rc = sprd_portrait_capture_process(mPortraitHandle, &depthData, &wParams,
-                                       &yuvData, para1, 1);
-
-exit:
-    HAL_LOGI(" X");
     return rc;
 }
 
 int sprdcamera::SprdBokehAlgo::deinitPortrait() {
     int rc = NO_ERROR;
-    if (mFirstSprdBokeh) {
-        if (mPortraitHandle) {
-            rc = sprd_portrait_capture_deinit(mPortraitHandle);
-        }
-        if (rc != NO_ERROR) {
-            HAL_LOGE("cap sprd_portrait_capture_deinit failed! %d", rc);
-            return rc;
-        }
-    }
-    mPortraitHandle = NULL;
-
     return rc;
 }
 }
