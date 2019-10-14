@@ -224,6 +224,7 @@ SprdCamera3MultiCamera::SprdCamera3MultiCamera() {
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux1.clear();
     mUnmatchedFrameListAux2.clear();
+    mRefIdex = 0;
 
     HAL_LOGI("X");
 }
@@ -1070,7 +1071,7 @@ int SprdCamera3MultiCamera::reprocessReq(buffer_handle_t *input_buffers) {
     }
     HAL_LOGD("find snap_stream");
     snap_stream = findStream(
-        SNAPSHOT_STREAM, (sprdcamera_physical_descriptor_t *)&m_pPhyCamera[0]);
+        SNAPSHOT_STREAM, (sprdcamera_physical_descriptor_t *)&m_pPhyCamera[mRefIdex]);
     capture_w = snap_stream->width;
     capture_h = snap_stream->height;
     HAL_LOGI("capture frame num %lld, size w=%d x h=%d", mCapFrameNum,
@@ -1160,7 +1161,7 @@ int SprdCamera3MultiCamera::reprocessReq(buffer_handle_t *input_buffers) {
     mRequstState = REPROCESS_STATE;
     HAL_LOGD("reprocessReq request.frame_number %d", request.frame_number);
 
-    if (0 > m_pPhyCamera[0].hwi->process_capture_request(m_pPhyCamera[0].dev,
+    if (0 > m_pPhyCamera[mRefIdex].hwi->process_capture_request(m_pPhyCamera[mRefIdex].dev,
                                                          &request)) {
         HAL_LOGE("failed to  reprocess capture request!");
         ret = UNKNOWN_ERROR;
@@ -1284,17 +1285,17 @@ int SprdCamera3MultiCamera::processCaptureRequest(
 
     {
         if (mZoomValue < 1.0) {
-            index = 1;
+            mRefIdex = 1;
         } else if (mZoomValue >= 2.0) {
-            index = 2;
+            mRefIdex = 2;
         } else {
-            index = 0;
+            mRefIdex = 0;
         }
         HAL_LOGD("mZoomValue = %f", mZoomValue);
     }
 
     // 3.  save request;
-    saveRequest(request, fw_buffer, index);
+    saveRequest(request, fw_buffer, mRefIdex);
     HAL_LOGD("frame:id=%lld,capture id=%lld,cameraMNIndex=%d,sendF=%lld",
              mCurFrameNum, mCapFrameNum, cameraMNIndex, mSendFrameNum);
 
@@ -1336,7 +1337,7 @@ int SprdCamera3MultiCamera::processCaptureRequest(
         SprdCamera3HWI *hwi = m_pPhyCamera[i].hwi;
         int streamConfig = req_stream_mak[i];
         HAL_LOGD("streamConfig:%d i %d index %d", streamConfig, i, index);
-        if (streamConfig == 64 && (i != index)) {
+        if (streamConfig == 64 && (i != mRefIdex)) {
             continue;
         }
         // if(streamConfig == 64 && (i == 1)){
@@ -3540,8 +3541,14 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
         }
         //}
     } else if (currStreamType == SNAPSHOT_STREAM) {
-        HAL_LOGD("should not entry here, shutter frame:%d",
-                 result->frame_number);
+        if (mCapInputbuffer) {
+            gMultiCam->pushBufferList(gMultiCam->mLocalBuffer, mCapInputbuffer,
+                                      gMultiCam->mLocalBufferNumber,
+                                      gMultiCam->mLocalBufferList);
+            mCapInputbuffer = NULL;
+        }
+        CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK,
+                       currStreamType, CAM_TYPE_MAIN);
     } else if (currStreamType == CALLBACK_STREAM) {
         // process preview buffer
         {
@@ -3783,8 +3790,6 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
             }
         }
     } else if (currStreamType == SNAPSHOT_STREAM) {
-        HAL_LOGD("should not entry here, shutter frame:%d",
-                 result->frame_number);
         HAL_LOGD("xiaokun SNAPSHOT_STREAM");
 
         if (mCapInputbuffer) {

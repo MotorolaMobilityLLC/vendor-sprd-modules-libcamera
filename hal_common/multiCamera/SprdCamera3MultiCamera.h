@@ -225,6 +225,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     int mVcmSteps;
     int mAlgoStatus;
     Mutex mUnmatchedQueueLock;
+    uint32_t mRefIdex;
 
     Mutex mClearBufferLock;
     cmr_u16 mTeleMaxWidth;
