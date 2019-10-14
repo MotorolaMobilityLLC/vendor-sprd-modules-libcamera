@@ -6875,6 +6875,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SPRD_DEF_Tag sprdInfo;
         mSetting->getSPRDDEFTag(&sprdInfo);
     } break;
+    case ANDROID_SPRD_LOGOWATERMARK_ENABLED: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_LOGO_WATERMARK_ENABLED,
+                 sprdInfo.sprd_is_logo_watermark);
+    } break;
+    case ANDROID_SPRD_TIMEWATERMARK_ENABLED: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED,
+                 sprdInfo.sprd_is_time_watermark);
+    } break;
     default:
         ret = BAD_VALUE;
         break;

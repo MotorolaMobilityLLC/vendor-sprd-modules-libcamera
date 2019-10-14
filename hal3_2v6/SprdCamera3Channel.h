@@ -36,6 +36,7 @@
 #include "SprdCamera3Setting.h"
 #include "SprdCamera3OEMIf.h"
 #include "SprdCamera3Stream.h"
+#include "include/SprdCamera3Tags.h"
 
 using namespace android;
 

@@ -193,7 +193,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                   buffer_handle_t *pic_enc_private_handle,
                                   void *pic_vir_addr,
                                   buffer_handle_t *dst_private_handle,
-                                  void *dst_vir_addr, SprdCamera3HWI *hwi);
+                                  void *dst_vir_addr, SprdCamera3HWI *hwi, cmr_uint rotation);
     int jpeg_encode_exif_simplify_format(
         buffer_handle_t *src_private_handle, void *src_vir_addr,
         buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,

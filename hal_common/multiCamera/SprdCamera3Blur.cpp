@@ -1599,7 +1599,9 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer1(
         mBlur->mNearJpegSize = mBlur->jpeg_encode_exif_simplify(
             combo_buffer, combo_buff_addr, mBlur->m_pNearJpegBuffer,
             nearJpegBufferAddr, NULL, NULL,
-            mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+            mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi,
+            SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                                .jpgInfo.orientation);
         mBlur->unmap(mBlur->m_pNearJpegBuffer);
         nearJpegBufferAddr = NULL;
     } else {
@@ -1707,7 +1709,9 @@ int SprdCamera3Blur::CaptureThread::blurProcessVer3(
     if (mBlur->map(m_pJpegBuffer, &m_pJpegBufferAddr) == NO_ERROR) {
         *m_pJpegSize = mBlur->jpeg_encode_exif_simplify(
             combo_buffer, combo_buff_addr, m_pJpegBuffer, m_pJpegBufferAddr,
-            NULL, NULL, mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+            NULL, NULL, mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi,
+            SprdCamera3Setting::s_setting[mBlur->mCameraId]
+                                .jpgInfo.orientation);
 
         mBlur->unmap(m_pJpegBuffer);
         m_pJpegBufferAddr = NULL;

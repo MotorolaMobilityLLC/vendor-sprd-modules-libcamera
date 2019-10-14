@@ -1381,7 +1381,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     buffer_handle_t *src_private_handle, void *src_vir_addr,
     buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
     buffer_handle_t *dst_private_handle, void *dst_vir_addr,
-    SprdCamera3HWI *hwi) {
+    SprdCamera3HWI *hwi, cmr_uint rotation) {
     void *vir_addr = NULL;
     int ret = NO_ERROR;
     char prop[PROPERTY_VALUE_MAX] = {
@@ -1416,6 +1416,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
     memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
     memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
+    encode_exif_param.rotation = rotation;
 
     ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
                              &encode_exif_param, NULL);

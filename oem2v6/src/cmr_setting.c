@@ -206,6 +206,8 @@ struct setting_hal_param {
     cmr_uint device_orientation;
     cmr_uint ot_status;
     cmr_uint face_attributes_enabled;
+    cmr_uint sprd_logo_watermark;
+    cmr_uint sprd_time_watermark;
 };
 
 struct setting_camera_info {
@@ -2609,6 +2611,51 @@ static cmr_int setting_get_auto_tracking_status(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_logo_watermark(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->sprd_logo_watermark = parm->cmd_type_value;
+    CMR_LOGD("logo watermark=%d", hal_param->sprd_logo_watermark);
+
+    return ret;
+}
+
+static cmr_int setting_get_logo_watermark(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->sprd_logo_watermark;
+    CMR_LOGD("logo watermark=%d", hal_param->sprd_logo_watermark);
+
+    return ret;
+}
+
+
+static cmr_int setting_set_time_watermark(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->sprd_time_watermark = parm->cmd_type_value;
+    CMR_LOGD("time watermark=%d", hal_param->sprd_time_watermark);
+
+    return ret;
+}
+
+static cmr_int setting_get_time_watermark(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->sprd_time_watermark;
+    CMR_LOGD("time watermark=%d", hal_param->sprd_time_watermark);
+
+    return ret;
+}
+
 static cmr_int setting_set_environment(struct setting_component *cpt,
                                        struct setting_cmd_parameter *parm) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -3990,6 +4037,15 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_face_attributes_enable);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,
                              setting_get_face_attributes_enable);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_LOGO_WATERMARK_ENABLED,
+                             setting_set_logo_watermark);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED,
+                             setting_set_time_watermark);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_LOGO_WATERMARK,
+                             setting_get_logo_watermark);
+    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_TIME_WATERMARK,
+                             setting_get_time_watermark);
+
     setting_parms_inited = 1;
     return 0;
 }

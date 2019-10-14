@@ -2251,11 +2251,14 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 if (rc != NO_ERROR) {
                     HAL_LOGE("fail to map jpeg buffer");
                 }
+
                 mRealBokeh->mOrigJpegSize =
                     mRealBokeh->jpeg_encode_exif_simplify(
                         capture_msg.combo_buff.buffer1, input_buf1_addr,
                         mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
-                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                        SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                                .jpgInfo.orientation);
                 mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #else
                 mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
@@ -2342,12 +2345,15 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     if (rc != NO_ERROR) {
                         HAL_LOGE("fail to map jpeg buffer");
                     }
+
                     mRealBokeh->mOrigJpegSize =
                         mRealBokeh->jpeg_encode_exif_simplify(
                             capture_msg.combo_buff.buffer1, input_buf1_addr,
                             mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL,
                             NULL,
-                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                            SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                                .jpgInfo.orientation);
                     mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #ifdef CONFIG_SUPPORT_GDEPTH
                     rc = mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,

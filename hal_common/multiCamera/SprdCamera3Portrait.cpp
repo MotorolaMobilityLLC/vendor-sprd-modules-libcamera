@@ -2262,7 +2262,8 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                         ->mOrigJpegSize = mPortrait->jpeg_encode_exif_simplify(
                         capture_msg.combo_buff.buffer1, input_buf1_addr,
                         mPortrait->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
-                        mPortrait->m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi);
+                        mPortrait->m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi,
+			SprdCamera3Setting::s_setting[mPortrait->mCameraId].jpgInfo.orientation);
                     mPortrait->unmap(mPortrait->m_pDstJpegBuffer);
                 }
 #else

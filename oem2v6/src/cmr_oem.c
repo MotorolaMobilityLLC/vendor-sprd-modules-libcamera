@@ -65,6 +65,24 @@
 
 enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 
+#define Clamp(x, a, b) (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
+
+#define CAMERA_LOGO_PATH "/vendor/logo/"
+
+typedef struct {
+    int imgW;
+    int imgH;
+    int logoW;
+    int logoH;
+    int posX;
+    int posY;
+    int isMirror; /* !0: mirror */
+    int angle;    /* angle,use:[0,90,180,270] */
+    ;
+} sizeParam_t;
+#define WATERMARK_LOGO 0x1
+#define WATERMARK_TIME 0x2
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -182,6 +200,7 @@ static cmr_int camera_start_encode(cmr_handle oem_handle,
                                    struct img_frm *src, struct img_frm *dst,
                                    struct cmr_op_mean *mean,
                                    struct jpeg_enc_cb_param *enc_cb_param);
+static cmr_int camera_get_logo_data(unsigned char *logo, int Width, int Height);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
                                    struct img_frm *src, struct img_frm *dst,
@@ -2128,6 +2147,76 @@ cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle) {
         CMR_LOGV("cnr_flag is : %d", cnr_flag);
     }
     return cnr_flag;
+}
+/* camera_get_watermark_flag
+ * return: 0: none, 1:logo,2:time,3:both
+ */
+cmr_u32 camera_get_watermark_flag(cmr_handle oem_handle) {
+
+    int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 watermark_flag = 0;
+    struct setting_cmd_parameter setting_param;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+
+    /* watermark test */
+    do {
+        char chr[PROPERTY_VALUE_MAX];
+
+        property_get("debug.vendor.cam.watermark.test", chr, "0");
+        ret = atoi(chr);
+        if (ret)
+            return ret;
+    } while (0);
+
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_SPRD_LOGO_WATERMARK, &setting_param);
+    if (setting_param.cmd_type_value)
+        watermark_flag |= WATERMARK_LOGO;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_SPRD_TIME_WATERMARK, &setting_param);
+    if (setting_param.cmd_type_value)
+        watermark_flag |= WATERMARK_TIME;
+
+    return watermark_flag;
+}
+
+/* select one logo for capture
+ * return: 0 success,other fail
+ */
+cmr_int camera_select_logo(sizeParam_t *size) {
+    cmr_int ret = -1;
+    cmr_int i;
+    const sizeParam_t cap_logo[] = {
+        /* cap: width,height;logo:width,height;cap:posx,posy */
+        /* L3 */
+        {4000, 3000, 1200, 240, 0, 0, 0, 0},
+        {4000, 2250, 1200, 240, 0, 0, 0, 0},
+        {2592, 1944, 1000, 200, 0, 0, 0, 0},
+        {2592, 1458, 1000, 200, 0, 0, 0, 0},
+        {2048, 1536, 800, 160, 0, 0, 0, 0},
+        {2048, 1152, 800, 160, 0, 0, 0, 0},
+        {4608, 3456, 1200, 240, 0, 0, 0, 0},
+        {4608, 2592, 1000, 200, 0, 0, 0, 0},
+        {3264, 2448, 1000, 200, 0, 0, 0, 0},
+        {3264, 1836, 1000, 200, 0, 0, 0, 0},
+        {2320, 1740, 800, 160, 0, 0, 0, 0},
+    };
+    for (i = 0; i < ARRAY_SIZE(cap_logo); i++) {
+        if (size->imgW == cap_logo[i].imgW && size->imgH == cap_logo[i].imgH) {
+            size->posX = cap_logo[i].posX;
+            size->posY = cap_logo[i].posY;
+            size->logoW = cap_logo[i].logoW;
+            size->logoH = cap_logo[i].logoH;
+            ret = 0; /* got */
+        }
+    }
+
+    return ret;
 }
 
 cmr_int camera_open_3dnr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
@@ -5030,6 +5119,627 @@ exit:
     return ret;
 }
 
+int ImageRotate(unsigned char *imgIn, unsigned char *imgOut, int *width,
+                int *height, int angle) {
+
+    int i, j;
+    int proc_x = 0;
+    int proc_y = 0;
+    int widthSrc, heightSrc;
+    int widthDst, heightDst;
+    widthSrc = *width;
+    heightSrc = *height;
+
+    if (90 == angle || 270 == angle) {
+        widthDst = heightSrc;
+        heightDst = widthSrc;
+    } else if (180 == angle) {
+        widthDst = widthSrc;
+        heightDst = heightSrc;
+    } else {
+        return -1;
+    }
+    for (i = 0; i < heightDst; i++) {
+        for (j = 0; j < widthDst; j++) {
+            if (90 == angle) {
+                proc_y = j;
+                proc_x = widthSrc - 1 - i;
+            } else if (180 == angle) {
+                proc_y = heightSrc - 1 - i;
+                proc_x = widthSrc - 1 - j;
+            } else if (270 == angle) {
+                proc_y = heightSrc - 1 - j;
+                proc_x = i;
+            }
+
+            imgOut[(i * widthDst + j) * 4] =
+                imgIn[(proc_y * widthSrc + proc_x) * 4];
+            imgOut[(i * widthDst + j) * 4 + 1] =
+                imgIn[(proc_y * widthSrc + proc_x) * 4 + 1];
+            imgOut[(i * widthDst + j) * 4 + 2] =
+                imgIn[(proc_y * widthSrc + proc_x) * 4 + 2];
+            imgOut[(i * widthDst + j) * 4 + 3] =
+                imgIn[(proc_y * widthSrc + proc_x) * 4 + 3];
+        }
+    }
+
+    *width = widthDst;
+    *height = heightDst;
+
+    return 0;
+}
+
+int ImageRotateYuv420(cmr_u8 *imgIn, cmr_u8 *imgOut, int *width, int *height,
+                      int angle) {
+
+    int i, j;
+    int proc_x = 0;
+    int proc_y = 0;
+    int widthSrc, heightSrc;
+    int widthDst, heightDst;
+    cmr_u8 *puvIn, *puvOut;
+
+    widthSrc = *width;
+    heightSrc = *height;
+
+    if (90 == angle || 270 == angle) {
+        widthDst = heightSrc;
+        heightDst = widthSrc;
+    } else if (180 == angle) {
+        widthDst = widthSrc;
+        heightDst = heightSrc;
+    } else if (0 == angle) {
+        widthDst = widthSrc;
+        heightDst = heightSrc;
+        *width = widthDst;
+        *height = heightDst;
+        memcpy(imgOut, imgIn, widthSrc * heightSrc * 3 / 2);
+
+        return 0;
+    } else {
+        return -1;
+    }
+    memset(imgOut, 0x00, widthSrc * heightSrc * 3 / 2);
+    puvIn = imgIn + widthSrc * heightSrc * 3 / 2;
+    puvOut = imgOut + widthSrc * heightSrc * 3 / 2;
+    /* y */
+    for (i = 0; i < heightDst; i++) {
+        for (j = 0; j < widthDst; j++) {
+            if (90 == angle) {
+                proc_y = j;
+                proc_x = widthSrc - 1 - i;
+            } else if (180 == angle) {
+                proc_y = heightSrc - 1 - i;
+                proc_x = widthSrc - 1 - j;
+            } else if (270 == angle) {
+                proc_y = heightSrc - 1 - j;
+                proc_x = i;
+            }
+            *imgOut = imgIn[(proc_y * widthSrc + proc_x)];
+            imgOut++;
+        }
+    }
+    /* uv */
+    imgIn += (widthSrc * heightSrc);
+    for (i = 0; i < heightDst / 2; i++) {
+        for (j = 0; j < widthDst / 2; j++) {
+            if (90 == angle) {
+                proc_y = j;
+                proc_x = widthSrc / 2 - 1 - i;
+            } else if (180 == angle) {
+                proc_y = heightSrc / 2 - 1 - i;
+                proc_x = widthSrc / 2 - 1 - j;
+            } else if (270 == angle) {
+                proc_y = heightSrc / 2 - 1 - j;
+                proc_x = i;
+            }
+            *imgOut = imgIn[(proc_y * widthSrc + proc_x * 2)];
+            imgOut++;
+            *imgOut = imgIn[(proc_y * widthSrc + proc_x * 2) + 1];
+            imgOut++;
+        }
+    }
+    *width = widthDst;
+    *height = heightDst;
+
+    return 0;
+}
+
+void RGBA2YUV420_semiplanar(unsigned char *R, unsigned char *Yout, int nWidth,
+                            int nHeight) {
+    int i, j;
+    unsigned char *Y, *Cb, *Cr;
+    unsigned char *UVout = Yout + nWidth * nHeight;
+    Y = (unsigned char *)calloc(nWidth * nHeight, sizeof(unsigned char));
+    Cb = (unsigned char *)calloc(nWidth * nHeight, sizeof(unsigned char));
+    Cr = (unsigned char *)calloc(nWidth * nHeight, sizeof(unsigned char));
+    for (i = 0; i < nHeight; i++) {
+        for (j = 0; j < nWidth; j++) {
+            int loc = i * nWidth + j;
+            Y[loc] = Clamp((floor(R[4 * loc] * 0.299 + 0.587 * R[4 * loc + 1] +
+                                  0.114 * R[4 * loc + 2])),
+                           0, 255);
+            Cb[loc] = Clamp(
+                (floor(R[4 * loc] * (-0.1687) + (-0.3312) * R[4 * loc + 1] +
+                       0.5 * R[4 * loc + 2] + 128)),
+                0, 255);
+            Cr[loc] =
+                Clamp((floor(R[4 * loc] * (0.5) + (-0.4186) * R[4 * loc + 1] +
+                             (-0.0813) * R[4 * loc + 2] + 128)),
+                      0, 255);
+        }
+    }
+
+    for (i = 0; i < (nWidth * nHeight); i++)
+        Yout[i] = Y[i];
+
+    for (i = 0; i < (nHeight / 2); i++) {
+        for (j = 0; j < (nWidth / 2); j++) {
+            int loc_y = i * 2;
+            int loc_x = j * 2;
+            int loc1 = loc_y * nWidth + loc_x;
+            int loc2 = loc_y * nWidth + loc_x + 1;
+            int loc3 = (loc_y + 1) * nWidth + loc_x;
+            int loc4 = (loc_y + 1) * nWidth + loc_x + 1;
+
+            UVout[i * nWidth + 2 * j] =
+                (unsigned char)((Cr[loc1] + Cr[loc2] + Cr[loc3] + Cr[loc4] +
+                                 2) /
+                                4); // v
+            UVout[i * nWidth + 2 * j + 1] =
+                (unsigned char)((Cb[loc1] + Cb[loc2] + Cb[loc3] + Cb[loc4] +
+                                 2) /
+                                4); // u
+        }
+    }
+
+    free(Y);
+    free(Cb);
+    free(Cr);
+}
+
+int sprd_fusion_yuv420_semiplanar(unsigned char *img, unsigned char *logo,
+                                  sizeParam_t *param) {
+
+    if (img == NULL || logo == NULL || param == NULL) {
+        CMR_LOGE("%p %p %p", img, logo, param);
+        return -1;
+    }
+
+    int imgW = param->imgW;
+    int imgH = param->imgH;
+    int logoW = param->logoW;
+    int logoH = param->logoH;
+    int posX = param->posX;
+    int posY = param->posY;
+    int isMirror = param->isMirror;
+    int angle = param->angle;
+    int imgSize = imgW * imgH;
+    int logoSize = logoW * logoH;
+    unsigned char *imgY, *imgUV;
+    unsigned char *logoY, *logoUV;
+    int proc_x, proc_y;
+    unsigned char alpha;
+    unsigned char *logoRotate =
+        (unsigned char *)malloc(logoSize * 4 * sizeof(unsigned char));
+    if (logoRotate == NULL) {
+        CMR_LOGE("Alloc buf fail");
+        return -1;
+    }
+    if (angle == 0) {
+        memcpy(logoRotate, logo, logoSize * 4);
+        posY = imgH - logoH - posY;
+        if (isMirror != 0) {
+            posX = imgW - logoW - posX;
+        }
+    } else if (angle == 90) {
+        ImageRotate(logo, logoRotate, &logoW, &logoH, 90);
+        posX ^= posY;
+        posY ^= posX;
+        posX ^= posY;
+        posX = imgW - logoW - posX;
+        if (isMirror == 0) {
+            posY = imgH - logoH - posY;
+        }
+    } else if (angle == 180) {
+        ImageRotate(logo, logoRotate, &logoW, &logoH, 180);
+        if (isMirror == 0) {
+            posX = imgW - logoW - posX;
+        }
+    } else if (angle == 270) {
+        ImageRotate(logo, logoRotate, &logoW, &logoH, 270);
+        posX ^= posY;
+        posY ^= posX;
+        posX ^= posY;
+        if (isMirror != 0) {
+            posY = imgH - logoH - posY;
+        }
+    }
+    CMR_LOGI("src[%d %d], logo[%d %d %d %d] angle[%d %d]", imgW, imgH, posX,
+             posY, logoW, logoH, angle, isMirror);
+    posX = posX < 0 ? 0 : posX;
+    posY = posY < 0 ? 0 : posY;
+    if (posX + logoW > imgW)
+        posX = imgW - logoW;
+    if (posY + logoH > imgH)
+        posY = imgH - logoH;
+
+    imgY = img + posY * imgW + posX;
+    imgUV = img + imgSize + posY / 2 * imgW + posX;
+    logoY = logo;
+    logoUV = logoY + logoSize;
+
+    RGBA2YUV420_semiplanar(logoRotate, logoY, logoW, logoH);
+
+    if (isMirror == 0) {
+        for (int i = 0; i < logoH; i++) {
+            for (int j = 0; j < logoW; j++) {
+                alpha = logoRotate[4 * (i * logoW + j) + 3];
+                imgY[i * imgW + j] = ((255 - alpha) * imgY[i * imgW + j] +
+                                      alpha * logoY[i * logoW + j]) /
+                                     255;
+
+                if (i % 2 == 0 && j % 2 == 0) {
+                    imgUV[i / 2 * imgW + j] =
+                        ((255 - alpha) * imgUV[i / 2 * imgW + j] +
+                         alpha * logoUV[i / 2 * logoW + j]) /
+                        255;
+                    imgUV[i / 2 * imgW + j + 1] =
+                        ((255 - alpha) * imgUV[i / 2 * imgW + j + 1] +
+                         alpha * logoUV[i / 2 * logoW + j + 1]) /
+                        255;
+                }
+            }
+        }
+    } else {
+        for (int i = 0; i < logoH; i++) {
+            for (int j = 0; j < logoW; j++) {
+                if (angle == 0 || angle == 180) {
+                    proc_x = logoW - 1 - j;
+                    proc_y = i;
+                } else {
+                    proc_x = j;
+                    proc_y = logoH - 1 - i;
+                }
+                alpha = logoRotate[4 * (proc_y * logoW + proc_x) + 3];
+                imgY[i * imgW + j] = ((255 - alpha) * imgY[i * imgW + j] +
+                                      alpha * logoY[proc_y * logoW + proc_x]) /
+                                     255;
+
+                if (i % 2 == 0 && j % 2 == 0) {
+                    imgUV[i / 2 * imgW + j] =
+                        ((255 - alpha) * imgUV[i / 2 * imgW + j] +
+                         alpha * logoUV[proc_y / 2 * logoW + proc_x]) /
+                        255;
+                    imgUV[i / 2 * imgW + j + 1] =
+                        ((255 - alpha) * imgUV[i / 2 * imgW + j + 1] +
+                         alpha * logoUV[proc_y / 2 * logoW + proc_x + 1]) /
+                        255;
+                }
+            }
+        }
+    }
+    free(logoRotate);
+
+    return 0;
+}
+
+static int fusion_yuv420_yuv420(cmr_u8 *img, cmr_u8 *logo, sizeParam_t *param) {
+
+    if (img == NULL || logo == NULL || param == NULL)
+        return -1;
+
+    int imgW = param->imgW;
+    int imgH = param->imgH;
+    int logoW = param->logoW;
+    int logoH = param->logoH;
+    int posX = param->posX;
+    int posY = param->posY;
+    int isMirror = param->isMirror;
+    int angle = param->angle;
+    int imgSize = imgW * imgH;
+    int logoSize = logoW * logoH;
+    cmr_u8 *imgY, *imgUV;
+    cmr_u8 *logoY, *logoUV;
+    int proc_x, proc_y;
+    cmr_u8 alpha = 190; /* [0,255] */
+    cmr_u8 *logoRotate = (cmr_u8 *)malloc(logoSize * 3 / 2);
+
+    if (!logoRotate) {
+        CMR_LOGE("alloc buf fail");
+        return -ENOMEM;
+    }
+    if (angle == 0) {
+        ImageRotateYuv420(logo, logoRotate, &logoW, &logoH, 0);
+        posY = imgH - logoH - posY;
+        if (isMirror != 0) {
+            posX = imgW - logoW - posX;
+        }
+    } else if (angle == 90) {
+        ImageRotateYuv420(logo, logoRotate, &logoW, &logoH, 90);
+        posX ^= posY;
+        posY ^= posX;
+        posX ^= posY;
+        posX = imgW - logoW - posX;
+        if (isMirror == 0) {
+            posY = imgH - logoH - posY;
+        }
+    } else if (angle == 180) {
+        ImageRotateYuv420(logo, logoRotate, &logoW, &logoH, 180);
+        if (isMirror == 0) {
+            posX = imgW - logoW - posX;
+        }
+    } else if (angle == 270) {
+        ImageRotateYuv420(logo, logoRotate, &logoW, &logoH, 270);
+        posX ^= posY;
+        posY ^= posX;
+        posX ^= posY;
+        if (isMirror != 0) {
+            posY = imgH - logoH - posY;
+        }
+    }
+    /* check */
+    posX = posX < 0 ? 0 : posX;
+    posY = posY < 0 ? 0 : posY;
+    if (posX + logoW > imgW)
+        posX = imgW - logoW;
+    if (posY + logoH > imgH)
+        posY = imgH - logoH;
+    CMR_LOGI("src[%d %d], text[%d %d %d %d], angle %d %d", imgW, imgH, posX,
+             posY, logoW, logoH, angle, isMirror);
+
+    imgY = img + posY * imgW + posX;
+    imgUV = img + imgSize + posY / 2 * imgW + posX;
+    logoY = logoRotate;
+    logoUV = logoY + logoSize;
+    if (isMirror == 0) {
+        for (int i = 0; i < logoH; i++) {
+            for (int j = 0; j < logoW; j++) {
+                if (logoY[i * logoW + j] != 0) {
+                    imgY[i * imgW + j] = ((255 - alpha) * imgY[i * imgW + j] +
+                                          alpha * logoY[i * logoW + j]) /
+                                         255;
+                    if (i % 2 == 0 && j % 2 == 0) {
+                        imgUV[i / 2 * imgW + j] =
+                            ((255 - alpha) * imgUV[i / 2 * imgW + j] +
+                             alpha * logoUV[i / 2 * logoW + j]) /
+                            255;
+                        imgUV[i / 2 * imgW + j + 1] =
+                            ((255 - alpha) * imgUV[i / 2 * imgW + j + 1] +
+                             alpha * logoUV[i / 2 * logoW + j + 1]) /
+                            255;
+                    }
+                }
+            }
+        }
+    } else {
+        for (int i = 0; i < logoH; i++) {
+            for (int j = 0; j < logoW; j++) {
+                if (angle == 0 || angle == 180) {
+                    proc_x = logoW - 1 - j;
+                    proc_y = i;
+                } else {
+                    proc_x = j;
+                    proc_y = logoH - 1 - i;
+                }
+                if (logoY[proc_y * logoW + proc_x] != 0) {
+                    imgY[i * imgW + j] =
+                        ((255 - alpha) * imgY[i * imgW + j] +
+                         alpha * logoY[proc_y * logoW + proc_x]) /
+                        255;
+
+                    if (i % 2 == 0 && j % 2 == 0) {
+                        imgUV[i / 2 * imgW + j] =
+                            ((255 - alpha) * imgUV[i / 2 * imgW + j] +
+                             alpha * logoUV[proc_y / 2 * logoW + proc_x]) /
+                            255;
+                        imgUV[i / 2 * imgW + j + 1] =
+                            ((255 - alpha) * imgUV[i / 2 * imgW + j + 1] +
+                             alpha * logoUV[proc_y / 2 * logoW + proc_x + 1]) /
+                            255;
+                    }
+                }
+            }
+        }
+    }
+
+    free(logoRotate);
+
+    return 0;
+}
+
+cmr_int camera_get_logo_data(cmr_u8 *logo, int Width, int Height) {
+    cmr_s32 rtn = 0;
+    char tmp_name[128];
+    char file_name[40];
+
+    strcpy(tmp_name, CAMERA_LOGO_PATH);
+    sprintf(file_name, "logo_%d", Width);
+    strcat(tmp_name, file_name);
+    strcat(tmp_name, "x");
+    sprintf(file_name, "%d", Height);
+    strcat(tmp_name, file_name);
+    strcat(tmp_name, ".rgba");
+    FILE *fp = fopen(tmp_name, "rb");
+    if (fp == NULL) {
+        CMR_LOGW("open logo watermark src file failed");
+        rtn = -ENOENT;
+        goto exit;
+    }
+    fread(logo, 1, Width * Height * 4, fp);
+
+exit:
+    fclose(fp);
+    return rtn;
+}
+
+/* for time watermark
+ * source: yuv file,"0123456789-: ",last one is space
+ * output: data as text:2019-10-10 10:37:45
+ * return: 0:seccuss,other:fail;
+ */
+cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
+    cmr_s32 rtn = -1;
+    char tmp_name[128];
+    /* info of source file for number */
+    const char file_name[] = "time.yuv"; /* source file for number:0123456789-:  */
+    const int subnum_total = 13;  /* 0--9,-,:, (space), all= 13 */
+    const int subnum_width = 80;  /* sub number width:align 2 */
+    const int subnum_height = 40; /* sub number height:align 2 */
+    const int num_height = subnum_height * subnum_total; /* as time.yuv height */
+    const int subnum_len = subnum_width * subnum_height; /* sub number pixels,y data size */
+    const int src_filelen = subnum_width * num_height * 3 / 2; /* size for alloc buf for time.yuv */
+
+    cmr_u8 *pnum = NULL, *ptext = NULL, *ptextout = NULL;
+    time_t timep;
+    struct tm *p;
+    char time_text[20];
+    cmr_u32 i, j;
+    cmr_u8 *pdst, *psrc, *puvs;
+    int dst_width, dst_height;
+
+    CMR_LOGV("sub number w,h[%d %d],total %d", subnum_width, subnum_height,
+             subnum_total);
+    /* read source of number */
+    pnum = (cmr_u8 *)malloc(src_filelen);
+    if (pnum == NULL) {
+        rtn = -ENOMEM;
+        goto exit;
+    }
+    strcpy(tmp_name, CAMERA_LOGO_PATH);
+    strcat(tmp_name, file_name);
+    FILE *fp = fopen(tmp_name, "rb");
+    if (fp == NULL) {
+        CMR_LOGW("open time watermark src file failed");
+        rtn = -ENOENT;
+        goto exit;
+    }
+    fread(pnum, 1, src_filelen, fp);
+    fclose(fp);
+    /* for text of time */
+    ptext = (cmr_u8 *)malloc(subnum_len * (sizeof(time_text)) * 3 / 2);
+    if (!ptext) {
+        rtn = -ENOMEM;
+        goto exit;
+    }
+    ptextout = (cmr_u8 *)malloc(subnum_len * (sizeof(time_text)) * 3 / 2);
+    if (!ptextout) {
+        rtn = -ENOMEM;
+        goto exit;
+    }
+    /* get time */
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(time_text, "%04d-%02d-%02d %02d:%02d:%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    CMR_LOGV("Time watermark: %s", time_text);
+    /* copy y */
+    pdst = ptext;
+    for (i = 0; time_text[i] != '\0' && i < sizeof(time_text); i++) {
+        if (time_text[i] == '-')
+            j = 10;
+        else if (time_text[i] == ':')
+            j = 11;
+        else if (time_text[i] >= '0' && time_text[i] <= '9')
+            j = time_text[i] - '0';
+        else
+            j = 12;
+        psrc = pnum + subnum_len * j;
+        memcpy(pdst, psrc, subnum_len);
+        pdst += subnum_len;
+    }
+    /* copy uv:420 */
+    puvs = pnum + subnum_len * subnum_total;
+    for (i = 0; time_text[i] != '\0' && i < sizeof(time_text); i++) {
+        if (time_text[i] == '-')
+            j = 10;
+        else if (time_text[i] == ':')
+            j = 11;
+        else if (time_text[i] >= '0' && time_text[i] <= '9')
+            j = time_text[i] - '0';
+        else
+            j = 12;
+        psrc = puvs + subnum_len / 2 * j;
+        memcpy(pdst, psrc, subnum_len / 2);
+        pdst += (subnum_len / 2);
+    }
+    free(pnum);
+    pnum = NULL;
+    /* rotation 90 anticlockwise */
+    dst_width = subnum_width;
+    dst_height = subnum_height * i;
+    ImageRotateYuv420(ptext, ptextout, &dst_width, &dst_height, 90);
+    free(ptext);
+    ptext = NULL;
+    *data = ptextout; /* free after return */
+    *width = dst_width;
+    *height = dst_height;
+    rtn = 0;
+    CMR_LOGD("done, %p", ptextout);
+
+    return rtn;
+
+exit:
+    if (pnum)
+        free(pnum);
+    if (ptext)
+        free(ptext);
+    if (ptextout)
+        free(ptextout);
+    CMR_LOGE("fail,rtn = %d", rtn);
+
+    return rtn;
+}
+
+static void watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
+                              sizeParam_t *sizeparam) {
+    cmr_int ret;
+    cmr_int flag;
+
+    flag = camera_get_watermark_flag(oem_handle);
+    CMR_LOGI("watermark flag %x,[%d %d]", flag, sizeparam->imgW,
+             sizeparam->imgH);
+    if ((flag & (WATERMARK_LOGO | WATERMARK_TIME)) == 0x00)
+        return;
+    if (flag & WATERMARK_LOGO) {
+        ret = camera_select_logo(sizeparam);
+        if (ret == 0) {
+            cmr_u8 *logo_buf =
+                (cmr_u8 *)malloc((sizeparam->logoW) * (sizeparam->logoH) * 4);
+
+            /* logo position: If set in camera_select_logo, remove this
+	     * suggest: align 2
+	     */
+            sizeparam->posX = 0;
+            sizeparam->posY = 0;
+            ret = camera_get_logo_data(logo_buf, sizeparam->logoW,
+                                       sizeparam->logoH);
+            if (!ret)
+                sprd_fusion_yuv420_semiplanar(pyuv, logo_buf, sizeparam);
+            free(logo_buf);
+            logo_buf = NULL;
+        }
+    }
+    /* time */
+    if (flag & WATERMARK_TIME) { /* time watermark */
+        int time_width, time_height;
+        cmr_u8 *ptime;
+        ret = camera_get_time_yuv420(&ptime, &time_width, &time_height);
+        if (!ret) {
+            /* time watermark position,align 2 */
+	    if (!((sizeparam->imgW - sizeparam->logoW) & 0x1))
+                sizeparam->posX = sizeparam->imgW - sizeparam->logoW;
+	    else
+	        sizeparam->posX = sizeparam->imgW - sizeparam->logoW - 1;
+            sizeparam->posY = 0;
+            sizeparam->logoW = time_width;
+            sizeparam->logoH = time_height;
+            fusion_yuv420_yuv420(pyuv, ptime, sizeparam);
+            free(ptime);
+        }
+    }
+}
+
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
                                          struct enc_exif_param *param) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -5041,11 +5751,16 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     struct cmr_op_mean mean;
     struct jpeg_enc_cb_param enc_cb_param;
     struct jpeg_context *jpeg_cxt = NULL;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
     int ret = CMR_CAMERA_SUCCESS;
     int need_exif_flag = (dst.addr_vir.addr_y == 0) ? 0 : 1;
     cmr_u32 SUPER_FINE = 95;
     cmr_u32 FINE = 80;
     cmr_u32 NORMAL = 70;
+    sizeParam_t sizeparam;
+    cmr_u32 do_watermark = 0;
+    cmr_bzero(&sizeparam, sizeof(sizeparam));
 
     if (!oem_handle || !src.addr_vir.addr_y || !pic_enc.addr_vir.addr_y) {
         CMR_LOGE("in parm error");
@@ -5066,6 +5781,12 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 
     // for cache coherency
     cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &src);
+    /* add watermark: logo, or time */
+    sizeparam.imgW = src.size.width;
+    sizeparam.imgH = src.size.height;
+    sizeparam.angle = param->rotation;
+    sizeparam.isMirror = 0;
+    watermark_add_yuv(oem_handle, (cmr_u8 *)src.addr_vir.addr_y, &sizeparam);
 
     // 2.call jpeg interface
     ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &src, &pic_enc,
@@ -5124,6 +5845,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     unsigned int duration;
     cmr_s32 filter_type = 0;
     struct jpeg_context *jpeg_cxt = NULL;
+    cmr_u32 do_watermark = 0;
+    sizeParam_t sizeparam;
+    cmr_bzero(&sizeparam, sizeof(sizeparam));
 
     jpeg_cxt = &cxt->jpeg_cxt;
     CHECK_HANDLE_VALID(jpeg_cxt);
@@ -5203,7 +5927,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             goto exit;
         }
         flip_on = setting_param.cmd_type_value;
-        CMR_LOGV("encode_rotation:%ld, flip:%ld", rotation, flip_on);
+        CMR_LOGI("encode_rotation:%ld, flip:%ld", rotation, flip_on);
 
         if (0 != rotation) {
             if (90 == rotation)
@@ -5345,6 +6069,13 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             }
 #endif
         }
+        /* add watermark: logo, or time */
+        sizeparam.imgW = enc_src.size.width;
+        sizeparam.imgH = enc_src.size.height;
+        sizeparam.angle = rotation;
+        sizeparam.isMirror = flip_on;
+        watermark_add_yuv(oem_handle, (cmr_u8 *)enc_src.addr_vir.addr_y,
+                          &sizeparam);
 
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
                               (struct jpg_op_mean *)&enc_mean, enc_cb_param);
@@ -9570,6 +10301,16 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_SPRD_AFBC_ENABLED:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_SPRD_LOGO_WATERMARK_ENABLED:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
