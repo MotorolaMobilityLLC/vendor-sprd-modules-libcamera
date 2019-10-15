@@ -37,6 +37,12 @@
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
 
+#ifndef WIN32
+#define AE_PUBLIC __attribute__ ((visibility("default")))
+#else
+#define AE_PUBLIC __declspec( dllexport )
+#endif
+
 #define AE_WEIGHT_UNIT 256
 #define AE_BASE_GAIN 128
 #define AE_FIX_PCT1024 1024

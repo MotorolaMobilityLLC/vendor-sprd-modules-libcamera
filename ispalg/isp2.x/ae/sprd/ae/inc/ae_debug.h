@@ -30,6 +30,7 @@
 #endif
 #endif
 #include <stdio.h>
+#include "ae_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,20 +49,20 @@ extern "C" {
 		FILE *pf;
 	};
 
-	cmr_u32 debug_print_enable(void);
-	debug_handle_t debug_file_init(const char file_name[], const char open_mode[]);
+AE_PUBLIC cmr_u32 debug_print_enable(void);
+AE_PUBLIC debug_handle_t debug_file_init(const char file_name[], const char open_mode[]);
 
-	void debug_file_deinit(debug_handle_t handle);
+AE_PUBLIC void debug_file_deinit(debug_handle_t handle);
 
-	cmr_u32 debug_file_open(debug_handle_t handle, cmr_u32 debug_level, cmr_u32 debug_level_thres);
+AE_PUBLIC cmr_u32 debug_file_open(debug_handle_t handle, cmr_u32 debug_level, cmr_u32 debug_level_thres);
 
-	void debug_file_close(debug_handle_t handle);
+AE_PUBLIC void debug_file_close(debug_handle_t handle);
 
-	void debug_file_print(debug_handle_t handle, char *str);
+AE_PUBLIC void debug_file_print(debug_handle_t handle, char *str);
 
-	void write_data_uint8_dec(const char *file_name, cmr_u8 * data, cmr_u32 item_per_line, cmr_u32 size);
+AE_PUBLIC void write_data_uint8_dec(const char *file_name, cmr_u8 * data, cmr_u32 item_per_line, cmr_u32 size);
 
-	void write_data_uint32_dec(const char *file_name, cmr_u32 * data, cmr_u32 item_per_line, cmr_u32 size);
+AE_PUBLIC void write_data_uint32_dec(const char *file_name, cmr_u32 * data, cmr_u32 item_per_line, cmr_u32 size);
 
 #ifdef __cplusplus
 }

@@ -607,7 +607,9 @@ struct ae_tuning_param {		//total bytes must be 312696
 	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
 	struct ae_touch_param touch_info;	/*it is in here,just for compatible; 3 * 4bytes */
 	//struct ae_face_tune_param face_info;
-	cmr_u32 reserved0[6];
+	struct ae_range dc_fps;/*normal dc preview fps, 100x-->1x*/
+	struct ae_range dv_fps;/*video fps, 100x-->1x*/
+	cmr_u32 reserved0[2];
 	/*13 * 4bytes */
 	cmr_u8 monitor_mode;		/*0: single, 1: continue */
 	cmr_u8 ae_tbl_exp_mode;		/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */

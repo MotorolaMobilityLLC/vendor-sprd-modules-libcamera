@@ -72,6 +72,8 @@ struct ae_lib_init_out {
 	struct ae_range fps_range;/*the fps range of ae table*/
 	struct ae_thd_param thrd_param[AE_LIB_SCENE_MAX];/*0: auto flash; 1: auto 3DNR, 2: auto fps adjust in video mode*/
 	struct ae_ev_param_table ev_param;
+	struct ae_range dc_fps;/*normal dc preview fps, 100x-->1x*/
+	struct ae_range dv_fps;/*video fps, 100x-->1x*/
 	cmr_u8 lock;				/* default: 0-unlock, 0:unlock 1:lock */
 	/*AE profession Setting*/
 	cmr_u8 metering_mode;	/*default: center metering; the metering mode*/
@@ -230,13 +232,13 @@ struct ae_lib_frm_sync_out {
 	struct ae_ev_setting_param ev_setting[2];/*0: master; 1: slave*/
 };
 
-cmr_handle ae_lib_init(struct ae_lib_init_in *in_param, struct ae_lib_init_out *out_param);
-cmr_s32 ae_lib_calculation(cmr_handle handle, struct ae_lib_calc_in *in_param, struct ae_lib_calc_out *out_param);
-cmr_s32 ae_lib_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
+AE_PUBLIC cmr_handle ae_lib_init(struct ae_lib_init_in *in_param, struct ae_lib_init_out *out_param);
+AE_PUBLIC cmr_s32 ae_lib_calculation(cmr_handle handle, struct ae_lib_calc_in *in_param, struct ae_lib_calc_out *out_param);
+AE_PUBLIC cmr_s32 ae_lib_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 //cmr_s32 ae_set_param(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 //cmr_s32 ae_get_param(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
-cmr_s32 ae_lib_frame_sync_calculation(cmr_handle handle, void *in_param, void *out_param);
-cmr_s32 ae_lib_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
+AE_PUBLIC cmr_s32 ae_lib_frame_sync_calculation(cmr_handle handle, void *in_param, void *out_param);
+AE_PUBLIC cmr_s32 ae_lib_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
 #ifdef __cplusplus
 }
 #endif

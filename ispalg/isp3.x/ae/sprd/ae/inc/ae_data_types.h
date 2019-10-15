@@ -31,6 +31,12 @@
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
 
+#ifndef WIN32
+#define AE_PUBLIC __attribute__ ((visibility("default")))
+#else
+#define AE_PUBLIC __declspec( dllexport )
+#endif
+
 #define AE_WEIGHT_UNIT 256
 #define AE_BASE_GAIN 128
 #define AE_FIX_PCT100 100
@@ -378,7 +384,7 @@ struct ae_monitor_cfg {
 	cmr_u8 monitor_shift;		//for ae monitor data overflow
 	cmr_u16 oe_thrd;
 	cmr_u16 ue_thrd;
-	cmr_u32 data_type;
+	cmr_u32 data_type;//
 };
 
 struct ae_monitor_item_data_type {
