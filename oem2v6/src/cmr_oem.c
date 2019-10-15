@@ -7241,8 +7241,8 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
         } else {
 
-#if defined(CONFIG_ISP_2_4) || defined(CONFIG_ISP_2_6) ||                      \
-    defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||    \
+        defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
             if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN) {
                 cmr_u32 flash_capture_skip_num = 0;
                 bool isFrontFlash =
