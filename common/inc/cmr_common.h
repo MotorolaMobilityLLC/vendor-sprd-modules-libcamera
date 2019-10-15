@@ -473,6 +473,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AUTO_TRACKING_ENABLE,
     COM_ISP_SET_AUTO_TRACKING_INFO,
     COM_ISP_SET_AE_TARGET_REGION,
+    COM_ISP_GET_AE_FPS_RANGE,
     COM_ISP_TYPE_MAX
 };
 
@@ -759,6 +760,13 @@ struct vcm_range_info {
     cmr_u16 total_seg;
     cmr_u16 vcm_dac[VCM_DISTANCE_COUNT];
     cmr_u16 reserved[20];
+};
+
+struct ae_fps_range_info {
+    cmr_u32 dc_fps_min;
+    cmr_u32 dc_fps_max;
+    cmr_u32 dv_fps_min;
+    cmr_u32 dv_fps_max;
 };
 
 struct vcm_disc_info {
@@ -1133,6 +1141,7 @@ struct common_isp_cmd_param {
         struct req_frame_info req_info;
         struct isp_pfc_per_frame_cxt *per_frame_res;
 #endif
+        struct ae_fps_range_info ae_fps_range;
         struct vcm_range_info vcm_range;
         struct vcm_disc_info vcm_disc;
         struct af_relbokeh_oem_data relbokeh_info;
@@ -1978,6 +1987,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_REBOKE_DATA,
     CAMERA_TOCTRL_GET_BOKEH_SN_TRIM,
     CAMERA_TOCTRL_GET_AF_SUPPORT,
+    CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

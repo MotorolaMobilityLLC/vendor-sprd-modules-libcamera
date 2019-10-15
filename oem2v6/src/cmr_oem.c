@@ -8920,6 +8920,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->vcm_range;
         break;
+    case COM_ISP_GET_AE_FPS_RANGE:
+        isp_cmd = ISP_CTRL_GET_AE_FPS_RANGE;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->ae_fps_range;
+        break;
     case COM_ISP_SET_AI_SET_FD_ON_OFF:
         CMR_LOGD("set FD on/off %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AI_SET_FD_STATUS;
@@ -12470,6 +12475,34 @@ cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
     memcpy(vcm_range, &isp_param.vcm_range, sizeof(struct vcm_range_info));
     CMR_LOGD("VCM_INFO:isp_param.range [%d, %d]", vcm_range->limited_infi,
              vcm_range->limited_macro);
+
+exit:
+    return ret;
+}
+
+cmr_int cmr_get_ae_fps_range(cmr_handle oem_handle, cmr_u32 camera_id,
+                          struct ae_fps_range_info *ae_fps_range) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct common_isp_cmd_param isp_param;
+
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    isp_param.camera_id = cxt->camera_id;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_AE_FPS_RANGE,
+                           &isp_param);
+    if (ret) {
+        CMR_LOGE("get isp vcm range error %ld", ret);
+        goto exit;
+    }
+
+    memcpy(ae_fps_range, &isp_param.ae_fps_range, sizeof(struct ae_fps_range_info));
+    CMR_LOGV("AE_FPS_RANGE_INFO in DV mode:isp_param.range [%d, %d]", ae_fps_range->dv_fps_min,
+             ae_fps_range->dv_fps_max);
 
 exit:
     return ret;

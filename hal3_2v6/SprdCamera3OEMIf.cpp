@@ -2103,6 +2103,8 @@ exit:
 
 void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
     struct cmr_range_fps_param fps_param;
+    int ret = NO_ERROR;
+    struct ae_fps_range_info range;
     char value[PROPERTY_VALUE_MAX];
     CONTROL_Tag controlInfo;
     SPRD_DEF_Tag sprddefInfo;
@@ -2114,11 +2116,31 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         return;
     }
 
+    cmr_bzero(&range, sizeof(ae_fps_range_info));
     fps_param.is_recording = isRecordMode;
     if (isRecordMode) {
         fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
+
+        // get DV fps from tunning
+        ret = mHalOem->ops->camera_ioctrl(
+            mCameraHandle, CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO, &range);
+        if (ret) {
+            HAL_LOGE("get range fps failed, ret=%d", ret);
+        } else {
+            if (fps_param.min_fps < range.dv_fps_min &&
+                range.dv_fps_min < fps_param.max_fps) {
+                fps_param.min_fps = range.dv_fps_min;
+            }
+        }
+
         fps_param.video_mode = 1;
+
+        HAL_LOGV(
+            "get DV mode tuning fps range[%d, %d], ae_target_fps_range[%d, %d]",
+            range.dv_fps_min, range.dv_fps_max,
+            controlInfo.ae_target_fps_range[0],
+            controlInfo.ae_target_fps_range[1]);
 
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];

@@ -556,6 +556,8 @@ cmr_int cmr_get_sensor_vcm_step(cmr_handle oem_handle, cmr_u32 camera_id,
                                 cmr_u32 *max_fps);
 cmr_int cmr_get_vcm_range(cmr_handle oem_handle, cmr_u32 camera_id,
                           struct vcm_range_info *vcm_range);
+cmr_int cmr_get_ae_fps_range(cmr_handle oem_handle, cmr_u32 camera_id,
+                          struct ae_fps_range_info *ae_fps_range);
 cmr_int cmr_set_vcm_disc(cmr_handle oem_handle, cmr_u32 camera_id,
                          struct vcm_disc_info *vcm_disc);
 int af_state_focus_to_hal(cmr_u32 valid_win);

@@ -1153,6 +1153,12 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                 (struct vcm_range_info *)param);
         break;
     }
+    case CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO: {
+        struct camera_context *cxt = (struct camera_context *)handle;
+        ret = cmr_get_ae_fps_range(handle, cxt->camera_id,
+                                   (struct ae_fps_range_info *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_VCM_DISC: {
         struct camera_context *cxt = (struct camera_context *)handle;
         ret = cmr_set_vcm_disc(handle, cxt->camera_id,
@@ -1315,9 +1321,9 @@ static oem_ops_t oem_module_ops = {
     camera_get_redisplay_data, camera_is_change_size,
     camera_get_postprocess_capture_size, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
-    camera_get_sensor_trim, camera_get_sensor_trim2, camera_get_preview_rot_angle,
-    camera_fd_enable, camera_flip_enable, camera_fd_start,
-    camera_is_need_stop_preview, camera_takepicture_process,
+    camera_get_sensor_trim, camera_get_sensor_trim2,
+    camera_get_preview_rot_angle, camera_fd_enable, camera_flip_enable,
+    camera_fd_start, camera_is_need_stop_preview, camera_takepicture_process,
     camera_get_size_align_page, camera_fast_ctrl, camera_start_preflash,
     camera_get_viewangle, camera_get_sensor_exif_info,
     camera_get_sensor_result_exif_info, camera_get_iommu_status,
