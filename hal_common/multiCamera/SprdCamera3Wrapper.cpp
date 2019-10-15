@@ -167,6 +167,18 @@ multiCameraMode SprdCamera3Wrapper::getMultiCameraMode(int camera_id) {
         }
     }
 
+    if (mode == MODE_PORTRAIT) {
+        property_get("persist.vendor.cam.raw.mode", prop, "jpeg");
+        if (!strcmp(prop, "raw")) {
+            mode = MODE_TUNING;
+        } else {
+            property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+            if (3 == atoi(prop) || 1 == atoi(prop)) {
+                mode = MODE_BLUR;
+            }
+        }
+    }
+
     return mode;
 }
 int SprdCamera3Wrapper::cameraDeviceOpen(
