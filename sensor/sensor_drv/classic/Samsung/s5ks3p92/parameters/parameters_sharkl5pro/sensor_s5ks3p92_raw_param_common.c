@@ -28625,7 +28625,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_00 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_00 */
 				{
@@ -28702,7 +28702,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_01 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_01 */
 				{
@@ -28779,7 +28779,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_02 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_02 */
 				{
@@ -28856,7 +28856,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_03 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_03 */
 				{
@@ -28933,7 +28933,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_04 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_04 */
 				{
@@ -29010,7 +29010,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_05 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_05 */
 				{
@@ -29087,7 +29087,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_06 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_06 */
 				{
@@ -29164,7 +29164,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_07 */
 				{
-					0x0000,0x016B,0xFFFF,0xFFFF
+					0x0000,0x016B,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_07 */
 				{
@@ -29244,7 +29244,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_10 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_10 */
 				{
@@ -29321,7 +29321,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_11 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_11 */
 				{
@@ -29398,7 +29398,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_12 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_12 */
 				{
@@ -29475,7 +29475,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_13 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_13 */
 				{
@@ -29552,7 +29552,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_14 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_14 */
 				{
@@ -29629,7 +29629,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_15 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_15 */
 				{
@@ -29706,7 +29706,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_16 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_16 */
 				{
@@ -29783,7 +29783,7 @@ static struct ae_table_param_2 s_s5ks3p92_common_ae_table_param =
 			{
 				/* _s5ks3p92_common_ae_cus_tab_index_17 */
 				{
-					0x0000,0x0165,0xFFFF,0xFFFF
+					0x0000,0x0165,0x0000,0x0000
 				},
 				/* _s5ks3p92_common_ae_cus_tab_gain_17 */
 				{
