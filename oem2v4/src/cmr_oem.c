@@ -1484,6 +1484,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                        data);
         cmr_preview_facedetect_set_hist(cxt->prev_cxt.preview_handle,
                                         cxt->camera_id, data);
+        break;
     default:
         break;
     }
@@ -2033,7 +2034,6 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
 
     return false;
 }
-
 
 cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle) {
 
@@ -3921,7 +3921,8 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
         }
     }
 
-    if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited && 1 != cxt->snp_cxt.is_sw_3dnr) {
+    if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited &&
+        1 != cxt->snp_cxt.is_sw_3dnr) {
         ret = camera_open_cnr(cxt, &in_param, NULL);
         if (ret) {
             CMR_LOGE("failed to open cnr %ld", ret);
@@ -11703,4 +11704,3 @@ exit:
     CMR_LOGI("X");
     return ret;
 }
-

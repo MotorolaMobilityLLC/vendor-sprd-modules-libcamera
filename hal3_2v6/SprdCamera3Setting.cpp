@@ -1090,6 +1090,31 @@ exit:
     return 0;
 }
 
+int SprdCamera3Setting::isStl3dAvailable() {
+    int irL = 0;
+    int irR = 0;
+    int cameraId = -1;
+    struct phySensorInfo *phyPtr = NULL;
+
+    for (cameraId = 0; cameraId < CAMERA_ID_COUNT; cameraId++) {
+        phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+        mModuleId[cameraId] = phyPtr->module_id;
+        HAL_LOGV("mModuleId[%d] = 0x%x", cameraId, mModuleId[cameraId]);
+        switch (mModuleId[cameraId]) {
+        case MODULE_STL3D_IRL_FRONT:
+            irL = 1;
+            break;
+        case MODULE_STL3D_IRR_FRONT:
+            irR = 1;
+            break;
+        }
+        if (irL && irR)
+            return irL + irR;
+    }
+    HAL_LOGD("Stl3d is not available");
+    return 0;
+}
+
 void SprdCamera3Setting::coordinate_struct_convert(int *rect_arr,
                                                    int arr_size) {
     int i = 0;
@@ -1905,6 +1930,11 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
              cameraId, ultrawide_id,
              s_setting[cameraId].scalerInfo.max_digital_zoom);
+
+    if (isStl3dAvailable()) {
+        s_setting[cameraId].sprddefInfo.stl3d_id = 1;
+    }
+
     // The minimum frame duration that is supported for each resolution in
     // android.scaler.availableJpegSizes
     memcpy(s_setting[cameraId].scalerInfo.jpeg_min_durations,
@@ -2419,6 +2449,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(!!i);
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
+
+    // 21 stl3denable
+    if (isStl3dAvailable())
+        available_cam_features.add(1);
+    else
+        available_cam_features.add(0);
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -5469,7 +5505,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
                        s_setting[mCameraId].sprddefInfo.ae_info,
-                       AE_CB_MAX_INDEX);
+                       AE_CB_MAX_INDEX - 1);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
     // s_setting[mCameraId].controlInfo.ae_precapture_id);

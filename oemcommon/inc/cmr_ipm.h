@@ -92,8 +92,10 @@ struct ipm_open_in {
     cmr_u32 adgain_valid_frame_num;
     cmr_uint is_plus;
     cmr_u32 adgain;
+
     struct img_size frame_full_size;
     struct img_size frame_scale_size;
+
     cmr_u32 binning_factor;
     multiCameraMode multi_mode;
 };

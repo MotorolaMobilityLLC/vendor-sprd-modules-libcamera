@@ -3505,13 +3505,13 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
         left = scalerCrop.start_x + (scalerCrop.width - width) / 2;
         top = scalerCrop.start_y;
     }
+
     zoomWidth = width / (float)mPreviewWidth;
     zoomHeight = height / (float)mPreviewHeight;
-    HAL_LOGD(
-        "mCameraId=%d, previewAspect=%f, cropAspect=%f,"
-        "width=%f, height=%f, left=%f, top=%f, zoomWidth=%f, zoomHeight=%f",
-        mCameraId, previewAspect, cropAspect, width, height, left, top,
-        zoomWidth, zoomHeight);
+    HAL_LOGD("mCameraId=%d, previewAspect=%f, cropAspect=%f,"
+            "width=%f, height=%f, left=%f, top=%f, zoomWidth=%f, zoomHeight=%f",
+            mCameraId, previewAspect, cropAspect, width, height, left, top,
+            zoomWidth, zoomHeight);
     cropRegion[0] = (cmr_u32)((float)cropRegion[0] * zoomWidth + left);
     cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight + top);
     cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth + left);
@@ -5950,8 +5950,11 @@ int SprdCamera3OEMIf::openCamera() {
         (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) ||
         ((mMultiCameraMode == MODE_MULTI_CAMERA ||
           mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-         (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
-          mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK)))) {
+        (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
+          mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))) ||
+        (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
+         mMultiCameraMode == MODE_3D_FACEID_UNLOCK) ||
+         mMultiCameraMode == MODE_3D_FACE) {
         cmr_u8 dual_flag = 0;
         if ((mMultiCameraMode == MODE_BOKEH ||
              mMultiCameraMode == MODE_3D_CALIBRATION ||
@@ -5968,9 +5971,12 @@ int SprdCamera3OEMIf::openCamera() {
                   mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
                  mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))
             dual_flag = 6;
+        else if (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
+                 mMultiCameraMode == MODE_3D_FACEID_UNLOCK ||
+                 mMultiCameraMode == MODE_3D_FACE)
+            dual_flag = 4;
         else
             dual_flag = 0;
-
         OTP_Tag otpInfo;
         memset(&otpInfo, 0, sizeof(OTP_Tag));
         mSetting->getOTPTag(&otpInfo);
@@ -6008,6 +6014,8 @@ int SprdCamera3OEMIf::openCamera() {
                 strcat(file_name, "otp_manual_oz1.txt");
             else if (dual_flag == 6)
                 strcat(file_name, "otp_manual_oz2.txt");
+            else if (dual_flag == 4)
+                strcat(file_name, "otp_manual_slt3d.txt");
 
             FILE *fid = fopen(file_name, "rb");
             if (NULL == fid) {
@@ -6053,6 +6061,9 @@ int SprdCamera3OEMIf::openCamera() {
                           otp_info.dual_otp.data_3d.size);
             else if (dual_flag == 6)
                 save_file("otp_dump_oz2.bin", otpInfo.otp_data,
+                          otp_info.dual_otp.data_3d.size);
+            else if (dual_flag == 4)
+                save_file("otp_dump_slt3d.bin", otpInfo.otp_data,
                           otp_info.dual_otp.data_3d.size);
 
             mSetting->setOTPTag(&otpInfo, otp_info.dual_otp.data_3d.size,

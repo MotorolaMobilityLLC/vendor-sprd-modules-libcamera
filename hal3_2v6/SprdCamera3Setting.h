@@ -409,6 +409,7 @@ typedef struct {
     int32_t face_angle_info[20];
     uint8_t high_resolution_mode;
     uint8_t fin1_highlight_mode;
+    int32_t stl3d_id;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -526,6 +527,7 @@ class SprdCamera3Setting {
     virtual ~SprdCamera3Setting();
 
     static int getSensorStaticInfo(int32_t cameraId);
+    static int isStl3dAvailable();
     static int getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                     cmr_u16 *height);
     static int setLargestSensorSize(int32_t cameraId, cmr_u16 width,
@@ -680,6 +682,7 @@ class SprdCamera3Setting {
 
     int setFACETag(FACE_Tag *faceInfo);
     int setORIFACETag(FACE_Tag *faceInfo);
+
     int getFACETag(FACE_Tag *faceInfo);
 
     int setEISCROPTag(EIS_CROP_Tag eiscrop_Info);

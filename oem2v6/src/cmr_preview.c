@@ -531,6 +531,7 @@ struct prev_context {
     cmr_s32 auto_tracking_start_y;
     cmr_s32 auto_tracking_status;
     cmr_s32 auto_tracking_frame_id;
+    /* face detect */
     cmr_u32 ae_stab[AE_CB_MAX_INDEX];
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
     cmr_uint threednr_cap_smallwidth;
@@ -16153,7 +16154,8 @@ cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
                             &setting_param);
     is_autochasing_enable = setting_param.cmd_type_value;
 
-    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+    ret =
+        cmr_setting_ioctl(setting_cxt->setting_handle,
                           SETTING_GET_SPRD_AUTOCHASING_STATUS, &setting_param);
     ot_status = setting_param.cmd_type_value;
     prev_cxt->auto_tracking_start_x = input_param->objectX;

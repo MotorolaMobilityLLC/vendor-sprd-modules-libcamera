@@ -80,8 +80,9 @@ const muti_camera_mode_map_t cameraid_map_mode[MODE_CAMERA_MAX] = {
     {SPRD_3D_FACE_ID, MODE_3D_FACE},
     {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA},
     {SPRD_PORTRAIT_ID, MODE_PORTRAIT},
-    {SPRD_PORTRAIT_SINGLE_ID, MODE_PORTRAIT_SINGLE}};
-
+    {SPRD_PORTRAIT_SINGLE_ID, MODE_PORTRAIT_SINGLE},
+    {SPRD_3D_FACEID_REGISTER_ID, MODE_3D_FACEID_REGISTER},
+    {SPRD_3D_FACEID_UNLOCK_ID, MODE_3D_FACEID_UNLOCK}};
 
 int SprdCamera3Wrapper::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
 int SprdCamera3Wrapper::mPhysicalSensorNum = CAMERA_SENSOR_NUM;
@@ -110,9 +111,15 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
     SprdCamera3SingleFaceIdRegister::getCameraFaceId(&mSingleFaceIdRegister);
     SprdCamera3SingleFaceIdUnlock::getCameraFaceId(&mSingleFaceIdUnlock);
 #endif
+
 #ifdef CONFIG_DUAL_FACEID_SUPPORT
     SprdCamera3DualFaceId::getCameraFaceId(&mDualFaceId);
 #endif
+
+#ifdef CONFIG_3D_FACEID_SUPPORT
+    SprdCamera33DFaceId::getCameraFaceId(&m3DFaceId);
+#endif
+
 #ifdef CONFIG_OPTICSZOOM_SUPPORT
     SprdCamera3OpticsZoomV1::getCamera3dZoomV1(&mZoomV1);
 // SprdCamera3OpticsZoom::getCamera3dZoom(&mZoom);
@@ -245,7 +252,12 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         rc = mSingleFaceIdUnlock->camera_device_open(module, id, hw_device);
         break;
 #endif
-
+#ifdef CONFIG_3D_FACEID_SUPPORT
+    case MODE_3D_FACEID_REGISTER:
+    case MODE_3D_FACEID_UNLOCK:
+        rc = m3DFaceId->camera_device_open(module, id, hw_device);
+        break;
+#endif
 #ifdef CONFIG_DUAL_FACEID_SUPPORT
     case MODE_DUAL_FACEID_UNLOCK:
         rc = mDualFaceId->camera_device_open(module, id, hw_device);
@@ -343,6 +355,12 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #ifdef CONFIG_DUAL_FACEID_SUPPORT
     case MODE_DUAL_FACEID_UNLOCK:
         rc = mDualFaceId->get_camera_info(camera_id, info);
+        break;
+#endif
+#ifdef CONFIG_3D_FACEID_SUPPORT
+    case MODE_3D_FACEID_REGISTER:
+    case MODE_3D_FACEID_UNLOCK:
+        rc = m3DFaceId->get_camera_info(camera_id, info);
         break;
 #endif
 #ifdef CONFIG_OPTICSZOOM_SUPPORT

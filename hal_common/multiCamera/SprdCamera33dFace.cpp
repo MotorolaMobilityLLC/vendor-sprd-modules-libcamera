@@ -498,6 +498,7 @@ bool SprdCamera33dFace::MuxerThread::threadLoop() {
                     List<hwi_frame_buffer_info_t>::iterator itor;
                     itor = m_3dface->mFrameListMainPreview.begin();
                     muxer_msg.combo_frame.buffer1 = itor->buffer;
+                    muxer_msg.combo_frame.frame_number = itor->frame_number;
                     m_3dface->mFrameListMainPreview.erase(itor);
 
                     if (!m_3dface->mFrameListMainCallback.empty()) {
@@ -768,7 +769,7 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         src_addr = (int8_t *)input_buf2_addr;
         src_fd = ADP_BUFFD(*combPreviewResult->buffer2);
         property_get("persist.vendor.dump.3dface", prop, "null");
-        if (!strcmp(prop, "aux1_raw10") || !strcmp(prop, "all")) {
+        if (!strcmp(prop, "aux1_raw10") || !strcmp(prop, "all_raw10")) {
             m_3dface->dumpData((unsigned char *)input_buf2_addr, 4, src_size,
                                width, height, itor->frame_number, "aux1_raw10");
         }
@@ -811,7 +812,7 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         src_addr = (int8_t *)input_buf3_addr;
         src_fd = ADP_BUFFD(*combPreviewResult->buffer3);
         property_get("persist.vendor.dump.3dface", prop, "null");
-        if (!strcmp(prop, "aux2_raw10") || !strcmp(prop, "all")) {
+        if (!strcmp(prop, "aux2_raw10") || !strcmp(prop, "all_raw10")) {
             m_3dface->dumpData((unsigned char *)input_buf3_addr, 4, src_size,
                                width, height, itor->frame_number, "aux2_raw10");
         }
@@ -867,7 +868,7 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         src_addr = (int8_t *)input_buf4_addr;
         src_fd = ADP_BUFFD(*combPreviewResult->buffer4);
         property_get("persist.vendor.dump.3dface", prop, "null");
-        if (!strcmp(prop, "main_raw10") || !strcmp(prop, "all")) {
+        if (!strcmp(prop, "main_raw10") || !strcmp(prop, "all_raw10")) {
             m_3dface->dumpData((unsigned char *)input_buf4_addr, 4, src_size,
                                width, height, itor->frame_number, "main_raw10");
         }

@@ -4411,9 +4411,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
         if (callback_stream) {
             ret = callback_stream->getQBufAddrForNum(frame_num, &callbuf_vir,
-                                                  &callbuf_phy, &callbuf_fd);
+                                                     &callbuf_phy, &callbuf_fd);
         }
-        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE && (ret || callbuf_vir == 0 )) {
+        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE &&
+            (ret || callbuf_vir == 0)) {
             timer_set(this, 1, timer_hand_take);
         }
         if (frame_num > mPreviewFrameNum)
@@ -4473,8 +4474,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     cmr_uint local_prev_phy = 0;
                     cmr_uint local_prev_vir = 0;
                     cmr_s32 local_prev_fd = 0;
-                    ret = pre_stream->getQBufAddrForNum(frame_num, &local_prev_vir,
-                                                  &local_prev_phy, &local_prev_fd);
+                    ret = pre_stream->getQBufAddrForNum(
+                        frame_num, &local_prev_vir, &local_prev_phy,
+                        &local_prev_fd);
                     if (ret == NO_ERROR && local_prev_vir != 0)
                         isJpegRequest = false;
                 }
@@ -4555,18 +4557,18 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width, uint32_t height) {
             freeCameraMem(mReDisplayHeap);
             mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
             if (mReDisplayHeap) {
-                iommu_buf_map(&mReDisplayHeap->fd, 
-                               mRedisplayMallocIommuMapList);
-                HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, 
-                        mReDisplayHeap->fd);
+                iommu_buf_map(&mReDisplayHeap->fd,
+                              mRedisplayMallocIommuMapList);
+                HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data,
+                         mReDisplayHeap->fd);
             }
         }
     } else {
         mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
         if (mReDisplayHeap) {
             iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
-            HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, 
-                        mReDisplayHeap->fd);
+             HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data,
+                     mReDisplayHeap->fd);
         }
     }
 
@@ -5444,9 +5446,9 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         SENSOR_Tag sensorInfo;
         mSetting->getSENSORTag(&sensorInfo);
         if (0 != frame->sensor_info.exposure_time_denominator) {
-            sensorInfo.exposure_time = 1000000000ll *
-                                       frame->sensor_info.exposure_time_numerator /
-                                       frame->sensor_info.exposure_time_denominator;
+            sensorInfo.exposure_time =
+                1000000000ll * frame->sensor_info.exposure_time_numerator /
+                frame->sensor_info.exposure_time_denominator;
         }
         sensorInfo.timestamp = frame->timestamp;
         mSetting->setSENSORTag(sensorInfo);
@@ -5726,7 +5728,6 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
-
     cmr_u32 *ae_info = NULL;
     cmr_u32 ae_stab = 0;
     CONTROL_Tag controlInfo;
@@ -5801,8 +5802,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         break;
     case CAMERA_EVT_CB_HIST_REPORT: {
         int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};
-        memcpy(hist_report, (int32_t *)parm4, 
-                sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+        memcpy(hist_report, (int32_t *)parm4,
+               sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
         mSetting->setHISTOGRAMTag(hist_report);
 
         // control log print
@@ -5810,7 +5811,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         property_get("persist.vendor.cam.histogram.log.enable", prop, "0");
         if (atoi(prop)) {
             for (int i = 0; i < CAMERA_ISP_HIST_ITEMS; i++) {
-                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d", hist_report[i]);
+                HAL_LOGI("CAMERA_EVT_CB_HIST_REPORT histogram %d",
+                         hist_report[i]);
             }
         }
     } break;
@@ -6446,9 +6448,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
             HAL_LOGD("ae_mode:%d, drvAeMode:%d, mFlashMode:%d",
-                 controlInfo.ae_mode, drvAeMode, mFlashMode);
+                     controlInfo.ae_mode, drvAeMode, mFlashMode);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AE_MODE,
-                 controlInfo.ae_mode);
+                     controlInfo.ae_mode);
 
             if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
                 if (drvAeMode != CAMERA_FLASH_MODE_TORCH &&
@@ -6541,13 +6543,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                     HAL_LOGD("set flashMode when ae_mode is not off and TORCH");
                     mFlashMode = flashMode;
                     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                                       mFlashMode);
+                             mFlashMode);
                 }
             } else {
                 HAL_LOGD("set flashMode when ANDROID_CONTROL_AE_MODE_OFF");
                 mFlashMode = flashMode;
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                                   mFlashMode);
+                         mFlashMode);
             }
         }
         break;
@@ -6761,7 +6763,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
                      (cmr_uint)(sensorInfo.exposure_time));
-        } break;
+        }
+        break;
     default:
         ret = BAD_VALUE;
         break;

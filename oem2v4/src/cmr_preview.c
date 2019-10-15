@@ -356,7 +356,7 @@ struct prev_context {
     cmr_uint vcm_step;
     cmr_uint threednr_cap_smallwidth;
     cmr_uint threednr_cap_smallheight;
-
+    /* face detect */
     cmr_u32 ae_stab[AE_CB_MAX_INDEX];
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
 
@@ -1244,6 +1244,7 @@ exit:
     return ret;
 }
 
+
 cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
                                            cmr_u32 camera_id, cmr_u32 *ae_stab) {
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
@@ -1386,14 +1387,14 @@ cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle,
 }
 /**add for 3d capture to reset reprocessing capture size end*/
 
-cmr_int cmr_preview_set_thumb_size(cmr_handle preview_handle,
-                                        cmr_u32 camera_id, struct img_size thum_size) {
+cmr_int cmr_preview_set_thumb_size(cmr_handle preview_handle, cmr_u32 camera_id,
+                                   struct img_size thum_size) {
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     CHECK_HANDLE_VALID(handle);
 
     if (thum_size.width * thum_size.height >
         handle->prev_cxt[camera_id].prev_param.thumb_size.width *
-        handle->prev_cxt[camera_id].prev_param.thumb_size.height)
+			handle->prev_cxt[camera_id].prev_param.thumb_size.height)
         handle->prev_cxt[camera_id].prev_param.thumb_size = thum_size;
 
     CMR_LOGD("update thumb size %dx%d", thum_size.width, thum_size.height);
@@ -12002,9 +12003,11 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
     prev_cxt = &handle->prev_cxt[camera_id];
 
-    if (!prev_cxt->fd_handle) {
+    if (!prev_cxt->fd_handle || !cxt) {
         CMR_LOGE("fd closed");
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
@@ -12019,12 +12022,10 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    /* collect face detect private data */
+	/* collect face detect private data */
     private_data.camera_id = camera_id;
-    cmr_bzero(&setting_param, sizeof(setting_param));
-    setting_param.camera_id = camera_id;
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                      CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
+            CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
     private_data.orientation = (cmr_u32)setting_param.cmd_type_value;
     private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
     private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];

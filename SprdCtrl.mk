@@ -498,6 +498,10 @@ ifeq ($(strip $(TARGET_BOARD_TIMEWATERMARK_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_TIMEWATERMARK_SUPPORT
 endif
 
+ifeq ($(strip $(TARGET_BOARD_3D_FACE_UNLOCK_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_3D_FACEID_SUPPORT
+endif
+
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 #max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 LOCAL_CFLAGS += -DCONFIG_BOKEH_SUPPORT

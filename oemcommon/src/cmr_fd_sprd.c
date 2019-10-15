@@ -211,10 +211,12 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     CMR_LOGI("multi_mode %d", in->multi_mode);
 
     if (in->multi_mode == MODE_SINGLE_FACEID_REGISTER ||
-        in->multi_mode == MODE_DUAL_FACEID_REGISTER)
+        in->multi_mode == MODE_DUAL_FACEID_REGISTER ||
+        in->multi_mode == MODE_3D_FACEID_REGISTER)
         fd_handle->work_mode = FD_WORKMODE_FACEENROLL;
     else if (in->multi_mode == MODE_SINGLE_FACEID_UNLOCK ||
-             in->multi_mode == MODE_DUAL_FACEID_UNLOCK)
+        in->multi_mode == MODE_DUAL_FACEID_UNLOCK ||
+        in->multi_mode == MODE_3D_FACEID_UNLOCK)
         fd_handle->work_mode = FD_WORKMODE_FACEAUTH;
     else
         fd_handle->work_mode = FD_WORKMODE_MOVIE;
@@ -224,18 +226,8 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         CMR_LOGE("failed to create thread.");
         goto free_fd_handle;
     }
-
-    if (in->multi_mode == MODE_SINGLE_FACEID_REGISTER
-            || in->multi_mode == MODE_DUAL_FACEID_REGISTER)
-        fd_handle->work_mode = FD_WORKMODE_FACEENROLL;
-    else if (in->multi_mode == MODE_SINGLE_FACEID_UNLOCK
-            || in->multi_mode == MODE_DUAL_FACEID_UNLOCK)
-        fd_handle->work_mode = FD_WORKMODE_FACEAUTH;
-    else
-        fd_handle->work_mode = FD_WORKMODE_MOVIE;
-
     fd_img_size = &in->frame_size;
-    CMR_LOGD("sprd_fd_api %d fd_img_size %dx%d work_mode %d", sprd_fd_api,
+    CMR_LOGI("sprd_fd_api %d fd_img_size %dx%d work_mode %d", sprd_fd_api,
              fd_img_size->width, fd_img_size->height, fd_handle->work_mode);
     ret = fd_call_init(fd_handle, fd_img_size);
     if (ret) {
@@ -432,7 +424,7 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
         if (fd_handle->frame_cb) {
             if (auxiliary) {
                 /* callback needs this */
-                fd_handle->frame_out.private_data = 
+                fd_handle->frame_out.private_data =
                     (void *)((unsigned long)auxiliary->camera_id);
             } else {
                 fd_handle->frame_out.private_data = NULL;
@@ -1175,7 +1167,6 @@ static cmr_int fd_create_detector(FD_HANDLE *hDT,
 
     CMR_LOGI("SPRD FD version: \"%s\", platform: 0x%04x",
              version.built_rev, opt.platform);
-
     /* For tuning FD parameter: read parameter from file */
     /*
     {

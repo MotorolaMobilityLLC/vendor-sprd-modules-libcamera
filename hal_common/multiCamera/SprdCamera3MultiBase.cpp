@@ -96,7 +96,8 @@ int SprdCamera3MultiBase::initialize(multiCameraMode mode,
     }
     if (mode == MODE_3D_FACE)
         mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
-    else if (mode == MODE_DUAL_FACEID_UNLOCK)
+    else if (mode == MODE_DUAL_FACEID_UNLOCK ||
+             mode == MODE_3D_FACEID_UNLOCK)
         mMatchTimeThreshold = MATCH_FACEUNLOCK_FRAME_TIME_DIFF;
     else if (mode == MODE_MULTI_CAMERA)
         mMatchTimeThreshold = MATCH_3dFACE_FRAME_TIME_DIFF;
@@ -127,7 +128,9 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
 
     if (mCameraMode == MODE_DUAL_FACEID_REGISTER ||
-        mCameraMode == MODE_DUAL_FACEID_UNLOCK) {
+        mCameraMode == MODE_DUAL_FACEID_UNLOCK ||
+        mCameraMode == MODE_3D_FACEID_REGISTER ||
+        mCameraMode == MODE_3D_FACEID_UNLOCK) {
         yuvTextUsage |= GRALLOC_USAGE_CAMERA_BUFFER;
     } else if (!mIommuEnabled) {
         yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
@@ -143,7 +146,9 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     native_handle = (native_handle_t *)graphicBuffer->handle;
 
     if (mCameraMode == MODE_DUAL_FACEID_REGISTER ||
-        mCameraMode == MODE_DUAL_FACEID_UNLOCK) {
+        mCameraMode == MODE_DUAL_FACEID_UNLOCK ||
+        mCameraMode == MODE_3D_FACEID_REGISTER ||
+        mCameraMode == MODE_3D_FACEID_UNLOCK) {
         if (0 != MemIon::Get_phy_addr_from_ion(ADP_BUFFD(native_handle),
                                                &phy_addr, &buf_size)) {
             ALOGE("Get_phy_addr_from_ion error");
@@ -1612,7 +1617,7 @@ int SprdCamera3MultiBase::NV21Rotate(int8_t *dst_buf, uint16_t dst_fd,
 static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_0_3M, {{640, 480}}},
     {RES_2M, {{1600, 1200}, {960, 720}, {320, 240}}},
-    {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720}}},
+    {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720},{640, 480}}},
     {RES_5M, {{2592, 1944}, {960, 720}, {320, 240}}},
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
     {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},

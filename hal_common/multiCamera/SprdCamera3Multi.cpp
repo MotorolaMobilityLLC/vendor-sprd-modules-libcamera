@@ -1343,6 +1343,8 @@ int SprdCamera3Multi::processCaptureRequest(
                      tempReq->frame_number, i);
             goto req_fail;
         }
+        tempOutBuffer->acquire_fence = -1;
+        tempOutBuffer->release_fence = -1;
         if (!buffer_num) {
             HAL_LOGI("check num_output_buffers is 0");
             continue;
@@ -1353,6 +1355,7 @@ int SprdCamera3Multi::processCaptureRequest(
         tempReq->num_output_buffers = buffer_num;
         tempReq->settings = metaSettings[i].release();
         tempReq->output_buffers = tempOutBuffer;
+
         if (getStreamType(tempOutBuffer->stream) == DEFAULT_STREAM && i == 0) {
             HAL_LOGD("save main camera meta setting");
             mSavedCapReqsettings = clone_camera_metadata(tempReq->settings);

@@ -1744,6 +1744,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             if (face_info_max_num < face_area.face_num) {
                 face_area.face_num = face_info_max_num;
             }
+
             camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
             /* SS requires to disable FD when HDR is on */
             if (CAM_IMG_FMT_BAYER_MIPI_RAW ==
@@ -3794,7 +3795,8 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     }
 
     if (cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
-        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK) {
+        cxt->is_multi_mode == MODE_SINGLE_FACEID_UNLOCK ||
+        cxt->is_multi_mode == MODE_3D_FACEID_UNLOCK) {
         isp_param.is_faceId_unlock = 1;
     }
 
@@ -13530,7 +13532,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     frm_data->vaddr = 0;
     frm_data->uaddr_vir = yaddr_vir + buffer_size;
     frm_data->vaddr_vir = 0;
-
+    bzero(&snp_param, sizeof(struct snapshot_param));
     ret = camera_get_snapshot_param(oem_handle, &snp_param);
 
     // check snp size

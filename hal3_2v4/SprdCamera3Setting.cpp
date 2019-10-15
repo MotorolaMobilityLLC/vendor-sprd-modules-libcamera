@@ -4514,7 +4514,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
                        s_setting[mCameraId].sprddefInfo.ae_info,
-                       AE_CB_MAX_INDEX);
+                       AE_CB_MAX_INDEX - 1);
     HAL_LOGV("sprddefInfo.ae_info = 0x%x",
              s_setting[mCameraId].sprddefInfo.ae_info);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
