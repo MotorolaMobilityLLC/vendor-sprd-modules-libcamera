@@ -134,7 +134,7 @@ int SprdCamera3MultiCamera::get_camera_info(int id, struct camera_info *info) {
         info->conflicting_devices_length = 0;
         if (!mStaticCameraCharacteristics) {
             camera_metadata_t *metadata_0;
-           HAL_LOGD("36get_camera_info");
+            HAL_LOGD("36get_camera_info");
             SprdCamera3Setting::getSensorStaticInfo(0);
             SprdCamera3Setting::initDefaultParameters(0);
             SprdCamera3Setting::getStaticMetadata(0, &metadata_0);
@@ -225,6 +225,8 @@ SprdCamera3MultiCamera::SprdCamera3MultiCamera() {
     mUnmatchedFrameListAux1.clear();
     mUnmatchedFrameListAux2.clear();
     mRefIdex = 0;
+    aux1_ai_scene_type = 0;
+    aux2_ai_scene_type = 0;
 
     HAL_LOGI("X");
 }
@@ -252,7 +254,8 @@ SprdCamera3MultiCamera::~SprdCamera3MultiCamera() {
  * RETURN             :  NONE
  *==========================================================================*/
 /*
-void SprdCamera3MultiCamera::getCameraMultiCamera(SprdCamera3MultiCamera **pMuxer) {
+void SprdCamera3MultiCamera::getCameraMultiCamera(SprdCamera3MultiCamera
+**pMuxer) {
     *pMuxer = NULL;
     if (!gMultiCam) {
         gMultiCam = new SprdCamera3MultiCamera();
@@ -687,8 +690,8 @@ int SprdCamera3MultiCamera::configureStreams(
     // first.get stream form fw.
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         int requestStreamType = getStreamType(stream_list->streams[i]);
-        HAL_LOGI("stream num %d, requestStreamType %d", stream_list->num_streams,
-                 requestStreamType);
+        HAL_LOGI("stream num %d, requestStreamType %d",
+                 stream_list->num_streams, requestStreamType);
         if (requestStreamType == PREVIEW_STREAM) {
             previewStream = stream_list->streams[i];
             previewStream->max_buffers = 4;
@@ -872,7 +875,8 @@ void SprdCamera3MultiCamera::saveRequest(
                    sizeof(camera3_stream_buffer_t));
         } else if (getStreamType(newStream) == DEFAULT_STREAM) { // callback
             currRequest.callback_stream = request->output_buffers[i].stream;
-            HAL_LOGD("save callck request:id %d,to list ", request->frame_number);
+            HAL_LOGD("save callck request:id %d,to list ",
+                     request->frame_number);
             mSavedCallbackRequestList.push_back(currRequest);
             memcpy(&fw_buffer[CALLBACK_STREAM], &request->output_buffers[i],
                    sizeof(camera3_stream_buffer_t));
@@ -1070,8 +1074,9 @@ int SprdCamera3MultiCamera::reprocessReq(buffer_handle_t *input_buffers) {
         goto exit;
     }
     HAL_LOGD("find snap_stream");
-    snap_stream = findStream(
-        SNAPSHOT_STREAM, (sprdcamera_physical_descriptor_t *)&m_pPhyCamera[mRefIdex]);
+    snap_stream =
+        findStream(SNAPSHOT_STREAM,
+                   (sprdcamera_physical_descriptor_t *)&m_pPhyCamera[mRefIdex]);
     capture_w = snap_stream->width;
     capture_h = snap_stream->height;
     HAL_LOGI("capture frame num %lld, size w=%d x h=%d", mCapFrameNum,
@@ -1161,8 +1166,8 @@ int SprdCamera3MultiCamera::reprocessReq(buffer_handle_t *input_buffers) {
     mRequstState = REPROCESS_STATE;
     HAL_LOGD("reprocessReq request.frame_number %d", request.frame_number);
 
-    if (0 > m_pPhyCamera[mRefIdex].hwi->process_capture_request(m_pPhyCamera[mRefIdex].dev,
-                                                         &request)) {
+    if (0 > m_pPhyCamera[mRefIdex].hwi->process_capture_request(
+                m_pPhyCamera[mRefIdex].dev, &request)) {
         HAL_LOGE("failed to  reprocess capture request!");
         ret = UNKNOWN_ERROR;
         goto exit;
@@ -2141,7 +2146,7 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
     if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
         float left_offest = 0, top_offest = 0;
         left_offest = ((float)mWideMaxWidth / 0.6 - (float)mSwMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mSwMaxHeight) / 2;
+        top_offest = ((float)mWideMaxHeight / 0.6 - (float)mSwMaxHeight) / 2;
         crop_Region[2] = static_cast<int32_t>(
             static_cast<float>(mSwMaxWidth * 0.6f) / (mZoomValue));
         crop_Region[3] = static_cast<int32_t>(
@@ -2149,16 +2154,19 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
         crop_Region[0] = ((mSwMaxWidth - crop_Region[2]) >> 1) + left_offest;
         crop_Region[1] = ((mSwMaxHeight - crop_Region[3]) >> 1) + top_offest;
         camMetadata->update(ANDROID_SCALER_CROP_REGION, crop_Region,
-                           ARRAY_SIZE(crop_Region));
-        HAL_LOGD("sw crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
-                 crop_Region[2], crop_Region[3]);
+                            ARRAY_SIZE(crop_Region));
+        camMetadata->update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
+                            &(gMultiCam->aux1_ai_scene_type), 1);
+        HAL_LOGD("sw crop=%d,%d,%d,%d ai_scene_type %d", crop_Region[0],
+                 crop_Region[1], crop_Region[2], crop_Region[3],
+                 gMultiCam->aux1_ai_scene_type);
     } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
         float inputRatio = mZoomValue / mSwitch_W_T_Threshold;
         HAL_LOGD("tele inputRatio = %f", inputRatio);
         inputRatio = inputRatio > 4 ? 4 : inputRatio;
         float left_offest = 0, top_offest = 0;
         left_offest = ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
+        top_offest = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
         crop_Region[2] = static_cast<int32_t>(
             static_cast<float>(mTeleMaxWidth) / (inputRatio));
         crop_Region[3] = static_cast<int32_t>(
@@ -2166,13 +2174,16 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
         crop_Region[0] = ((mTeleMaxWidth - crop_Region[2]) >> 1) + left_offest;
         crop_Region[1] = ((mTeleMaxHeight - crop_Region[3]) >> 1) + top_offest;
         camMetadata->update(ANDROID_SCALER_CROP_REGION, crop_Region,
-                             ARRAY_SIZE(crop_Region));
-        HAL_LOGD("tele crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
-                 crop_Region[2], crop_Region[3]);
+                            ARRAY_SIZE(crop_Region));
+        camMetadata->update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
+                            &(gMultiCam->aux2_ai_scene_type), 1);
+        HAL_LOGD("tele crop=%d,%d,%d,%d ai_scene_type %d", crop_Region[0],
+                 crop_Region[1], crop_Region[2], crop_Region[3],
+                 gMultiCam->aux2_ai_scene_type);
     } else { // wide
         float left_offest = 0, top_offest = 0;
         left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
+        top_offest = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
         crop_Region[2] = static_cast<int32_t>(
             static_cast<float>(mWideMaxWidth) / (mZoomValue));
         crop_Region[3] = static_cast<int32_t>(
@@ -2180,7 +2191,7 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
         crop_Region[0] = ((mWideMaxWidth - crop_Region[2]) >> 1) + left_offest;
         crop_Region[1] = ((mWideMaxHeight - crop_Region[3]) >> 1) + top_offest;
         camMetadata->update(ANDROID_SCALER_CROP_REGION, crop_Region,
-                             ARRAY_SIZE(crop_Region));
+                            ARRAY_SIZE(crop_Region));
         HAL_LOGD("wide crop=%d,%d,%d,%d", crop_Region[0], crop_Region[1],
                  crop_Region[2], crop_Region[3]);
     }
@@ -2191,34 +2202,39 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
             mZoomValue < mSwitch_W_T_Threshold && real_face_num) {
             for (int i = 0; i < real_face_num; i++) {
                 float left_offest = 0, top_offest = 0;
-                left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
-                top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
+                left_offest =
+                    ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
+                top_offest =
+                    ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
                 faceRectangles[i * 4 + 0] =
                     camMetadata->find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[i * 4 + 0] + left_offest;
+                        .data.i32[i * 4 + 0] +
+                    left_offest;
                 faceRectangles[i * 4 + 1] =
                     camMetadata->find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[i * 4 + 1] + top_offest;
+                        .data.i32[i * 4 + 1] +
+                    top_offest;
                 faceRectangles[i * 4 + 2] =
                     camMetadata->find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[i * 4 + 2] + left_offest;
+                        .data.i32[i * 4 + 2] +
+                    left_offest;
                 faceRectangles[i * 4 + 3] =
                     camMetadata->find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                    .data.i32[i * 4 + 3] + top_offest;
+                        .data.i32[i * 4 + 3] +
+                    top_offest;
                 HAL_LOGV("the %d st face, faceRectangles = %d, %d, %d, %d ", i,
-                     faceRectangles[i * 4], faceRectangles[i * 4 + 1],
-                     faceRectangles[i * 4 + 2], faceRectangles[i * 4 + 3]);
+                         faceRectangles[i * 4], faceRectangles[i * 4 + 1],
+                         faceRectangles[i * 4 + 2], faceRectangles[i * 4 + 3]);
             }
-        camMetadata->update(ANDROID_STATISTICS_FACE_RECTANGLES, faceRectangles,
-                            face_num * 4);
+            camMetadata->update(ANDROID_STATISTICS_FACE_RECTANGLES,
+                                faceRectangles, face_num * 4);
         } else if (mZoomValue < mSwitch_W_Sw_Threshold) {
             camMetadata->update(ANDROID_STATISTICS_FACE_RECTANGLES,
-                        gMultiCam->aux1FaceRect, face_num * 4);
+                                gMultiCam->aux1FaceRect, face_num * 4);
         } else {
             camMetadata->update(ANDROID_STATISTICS_FACE_RECTANGLES,
-                        gMultiCam->aux2FaceRect, face_num * 4);
-         }
-
+                                gMultiCam->aux2FaceRect, face_num * 4);
+        }
     }
     camMetadata->update(ANDROID_CONTROL_AF_STATE,
                         &(SprdCamera3Setting::s_setting[m_VirtualCamera.id]
@@ -2281,7 +2297,7 @@ void SprdCamera3MultiCamera::setZoomCropRegion(CameraMetadata *WideSettings,
                  crop_Region[2], crop_Region[3]);
     } else { // wide
         crop_Region_sw[2] = static_cast<int32_t>(
-        static_cast<float>(mSwMaxWidth * 0.6f) / (0.9999));
+            static_cast<float>(mSwMaxWidth * 0.6f) / (0.9999));
         crop_Region_sw[3] = static_cast<int32_t>(
             static_cast<float>(mSwMaxHeight * 0.6f) / (0.9999));
         crop_Region_sw[0] = (mSwMaxWidth - crop_Region_sw[2]) >> 1;
@@ -2402,13 +2418,13 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
-/*
-    if (meta->exists(ANDROID_SPRD_ZOOM_RATIO)) {
-        mZoomValue = meta->find(ANDROID_SPRD_ZOOM_RATIO).data.f[0];
+    /*
+        if (meta->exists(ANDROID_SPRD_ZOOM_RATIO)) {
+            mZoomValue = meta->find(ANDROID_SPRD_ZOOM_RATIO).data.f[0];
+            HAL_LOGD("mZoomValue %f", mZoomValue);
+        }
         HAL_LOGD("mZoomValue %f", mZoomValue);
-    }
-    HAL_LOGD("mZoomValue %f", mZoomValue);
-*/
+    */
     int tagCnt1 = meta[CAM_TYPE_MAIN].entryCount();
     if (tagCnt1 != 0) {
         if (meta[CAM_TYPE_MAIN].exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
@@ -2456,14 +2472,10 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
 
     if (meta->exists(ANDROID_SCALER_CROP_REGION)) {
         int32_t crop_region[4];
-        crop_region[0] =
-            meta->find(ANDROID_SCALER_CROP_REGION).data.i32[0];
-        crop_region[1] =
-            meta->find(ANDROID_SCALER_CROP_REGION).data.i32[1];
-        crop_region[2] =
-            meta->find(ANDROID_SCALER_CROP_REGION).data.i32[2];
-        crop_region[3] =
-            meta->find(ANDROID_SCALER_CROP_REGION).data.i32[3];
+        crop_region[0] = meta->find(ANDROID_SCALER_CROP_REGION).data.i32[0];
+        crop_region[1] = meta->find(ANDROID_SCALER_CROP_REGION).data.i32[1];
+        crop_region[2] = meta->find(ANDROID_SCALER_CROP_REGION).data.i32[2];
+        crop_region[3] = meta->find(ANDROID_SCALER_CROP_REGION).data.i32[3];
         HAL_LOGD("app crop=%d,%d,%d,%d", crop_region[0], crop_region[1],
                  crop_region[2], crop_region[3]);
         mZoomValue = (float)mWideMaxWidth / (float)crop_region[2];
@@ -2476,23 +2488,23 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                           mZoomValue);
         if (mZoomValue == -1) {
         } else if (mZoomValue < mSwitch_W_T_Threshold &&
-            mZoomValue >= mSwitch_W_Sw_Threshold && mAlgoStatus == 1) {
+                   mZoomValue >= mSwitch_W_Sw_Threshold && mAlgoStatus == 1) {
             mReqConfigNum = 0;
         } else {
             mReqConfigNum = 1;
-        }/*
-        if (metaSettingsWide->exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-            int32_t aeTargetFpsRange[2] = {20, 20};
-            metaSettingsWide->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                     aeTargetFpsRange,
-                                     ARRAY_SIZE(aeTargetFpsRange));
-            metaSettingsSw->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                   aeTargetFpsRange,
-                                   ARRAY_SIZE(aeTargetFpsRange));
-            metaSettingsTele->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                     aeTargetFpsRange,
-                                     ARRAY_SIZE(aeTargetFpsRange));
-        }*/
+        } /*
+         if (metaSettingsWide->exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
+             int32_t aeTargetFpsRange[2] = {20, 20};
+             metaSettingsWide->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                      aeTargetFpsRange,
+                                      ARRAY_SIZE(aeTargetFpsRange));
+             metaSettingsSw->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                    aeTargetFpsRange,
+                                    ARRAY_SIZE(aeTargetFpsRange));
+             metaSettingsTele->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                      aeTargetFpsRange,
+                                      ARRAY_SIZE(aeTargetFpsRange));
+         }*/
         if (metaSettingsWide->exists(ANDROID_CONTROL_AF_REGIONS)) {
             int32_t af_w_area[5] = {0};
             int32_t af_t_area[5] = {0};
@@ -2504,21 +2516,21 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                     af_w_area[i] =
                         metaSettingsWide->find(ANDROID_CONTROL_AF_REGIONS)
                             .data.i32[i];
-                    HAL_LOGD("af_w_i = %d,af_w_area = %d, %d, %d, %d, %d",
-                         i, af_w_area[0], af_w_area[1], af_w_area[2],
-                         af_w_area[3], af_w_area[4]);
+                    HAL_LOGD("af_w_i = %d,af_w_area = %d, %d, %d, %d, %d", i,
+                             af_w_area[0], af_w_area[1], af_w_area[2],
+                             af_w_area[3], af_w_area[4]);
                     af_t_area[i] =
                         metaSettingsWide->find(ANDROID_CONTROL_AF_REGIONS)
                             .data.i32[i];
-                    HAL_LOGD("af_t_i = %d,af_t_area = %d, %d, %d, %d, %d",
-                         i, af_t_area[0], af_t_area[1], af_t_area[2],
-                         af_t_area[3], af_t_area[4]);
+                    HAL_LOGD("af_t_i = %d,af_t_area = %d, %d, %d, %d, %d", i,
+                             af_t_area[0], af_t_area[1], af_t_area[2],
+                             af_t_area[3], af_t_area[4]);
                     af_sw_area[i] =
                         metaSettingsSw->find(ANDROID_CONTROL_AF_REGIONS)
                             .data.i32[i];
-                    HAL_LOGD("af_sw_i = %d,af_sw_area = %d, %d, %d, %d, %d",
-                         i, af_sw_area[0], af_sw_area[1], af_sw_area[2],
-                         af_sw_area[3], af_sw_area[4]);
+                    HAL_LOGD("af_sw_i = %d,af_sw_area = %d, %d, %d, %d, %d", i,
+                             af_sw_area[0], af_sw_area[1], af_sw_area[2],
+                             af_sw_area[3], af_sw_area[4]);
                 }
             }
             if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
@@ -2569,21 +2581,21 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                     ae_w_area[i] =
                         metaSettingsWide->find(ANDROID_CONTROL_AE_REGIONS)
                             .data.i32[i];
-                    HAL_LOGD("ae_w_i = %d,ae_w_area = %d, %d, %d, %d, %d",
-                         i, ae_w_area[0], ae_w_area[1], ae_w_area[2],
-                         ae_w_area[3], ae_w_area[4]);
+                    HAL_LOGD("ae_w_i = %d,ae_w_area = %d, %d, %d, %d, %d", i,
+                             ae_w_area[0], ae_w_area[1], ae_w_area[2],
+                             ae_w_area[3], ae_w_area[4]);
                     ae_t_area[i] =
                         metaSettingsWide->find(ANDROID_CONTROL_AE_REGIONS)
                             .data.i32[i];
-                    HAL_LOGD("ae_t_i = %d,ae_t_area = %d, %d, %d, %d, %d",
-                         i, ae_t_area[0], ae_t_area[1], ae_t_area[2],
-                         ae_t_area[3], ae_t_area[4]);
+                    HAL_LOGD("ae_t_i = %d,ae_t_area = %d, %d, %d, %d, %d", i,
+                             ae_t_area[0], ae_t_area[1], ae_t_area[2],
+                             ae_t_area[3], ae_t_area[4]);
                     ae_sw_area[i] =
                         metaSettingsSw->find(ANDROID_CONTROL_AE_REGIONS)
                             .data.i32[i];
-                    HAL_LOGD("ae_sw_i = %d,ae_sw_area = %d, %d, %d, %d, %d",
-                         i, ae_sw_area[0], ae_sw_area[1], ae_sw_area[2],
-                         ae_sw_area[3], ae_sw_area[4]);
+                    HAL_LOGD("ae_sw_i = %d,ae_sw_area = %d, %d, %d, %d, %d", i,
+                             ae_sw_area[0], ae_sw_area[1], ae_sw_area[2],
+                             ae_sw_area[3], ae_sw_area[4]);
                 }
             }
             if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
@@ -2834,8 +2846,10 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                     };
                     property_get("persist.vendor.cam.twv1.zoomratio", prop2,
                                  "0");
-                    if (gMultiCam->mZoomValue >= gMultiCam->mSwitch_W_Sw_Threshold &&
-                        gMultiCam->mZoomValue < gMultiCam->mSwitch_W_T_Threshold) {// wide
+                    if (gMultiCam->mZoomValue >=
+                            gMultiCam->mSwitch_W_Sw_Threshold &&
+                        gMultiCam->mZoomValue <
+                            gMultiCam->mSwitch_W_T_Threshold) { // wide
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
                                             &input_buf1_addr);
@@ -2850,7 +2864,9 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
                         gMultiCam->unmap(output_buffer);
-                    } else if (gMultiCam->mZoomValue < gMultiCam->mSwitch_W_Sw_Threshold) {// super wide
+                    } else if (gMultiCam->mZoomValue <
+                               gMultiCam
+                                   ->mSwitch_W_Sw_Threshold) { // super wide
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
                                             &input_buf1_addr);
@@ -2865,8 +2881,9 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
                         gMultiCam->unmap(output_buffer);
-                    } else if (gMultiCam->mZoomValue >= gMultiCam->mSwitch_W_T_Threshold &&
-                               gMultiCam->mZoomValue <= 8.0) {// tele
+                    } else if (gMultiCam->mZoomValue >=
+                                   gMultiCam->mSwitch_W_T_Threshold &&
+                               gMultiCam->mZoomValue <= 8.0) { // tele
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
                                             &input_buf1_addr);
@@ -3076,7 +3093,8 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
                 gMultiCam->mSavedSnapRequest.snap_stream->height));
             HAL_LOGD("capture MUXER_MSG_DATA_PROC1");
             if (gMultiCam->mZoomValue >= gMultiCam->mSwitch_W_Sw_Threshold &&
-                gMultiCam->mZoomValue < gMultiCam->mSwitch_W_T_Threshold) {// wide
+                gMultiCam->mZoomValue <
+                    gMultiCam->mSwitch_W_T_Threshold) { // wide
                 rc = gMultiCam->map(capture_msg.combo_frame.buffer1,
                                     &input_buf1_addr);
                 rc = gMultiCam->map(output_buffer, &output_buf_addr);
@@ -3085,7 +3103,8 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
                        ADP_BUFSIZE(*output_buffer));
                 gMultiCam->unmap(capture_msg.combo_frame.buffer1);
                 gMultiCam->unmap(output_buffer);
-            } else if (gMultiCam->mZoomValue < gMultiCam->mSwitch_W_Sw_Threshold) {// super wide
+            } else if (gMultiCam->mZoomValue <
+                       gMultiCam->mSwitch_W_Sw_Threshold) { // super wide
                 rc = gMultiCam->map(capture_msg.combo_frame.buffer2,
                                     &input_buf2_addr);
                 rc = gMultiCam->map(output_buffer, &output_buf_addr);
@@ -3094,8 +3113,9 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
                        ADP_BUFSIZE(*output_buffer));
                 gMultiCam->unmap(capture_msg.combo_frame.buffer2);
                 gMultiCam->unmap(output_buffer);
-            } else if (gMultiCam->mZoomValue >= gMultiCam->mSwitch_W_T_Threshold &&
-                       gMultiCam->mZoomValue <= 8.0) {// tele
+            } else if (gMultiCam->mZoomValue >=
+                           gMultiCam->mSwitch_W_T_Threshold &&
+                       gMultiCam->mZoomValue <= 8.0) { // tele
                 rc = gMultiCam->map(capture_msg.combo_frame.buffer3,
                                     &input_buf3_addr);
                 rc = gMultiCam->map(output_buffer, &output_buf_addr);
@@ -3431,41 +3451,58 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
     HAL_LOGD("aux1 frame_number %d", cur_frame_number);
     if (result_buffer == NULL) {
         // meta process
+        if (metadata.exists(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT)) {
+
+            gMultiCam->aux1_ai_scene_type =
+                metadata.find(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT).data.u8[0];
+        }
         entry = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES);
         if (entry.count != 0) {
             gMultiCam->face_number = entry.count / 4;
         } else {
             gMultiCam->face_number = 0;
         }
-        HAL_LOGD("Aux1_face_number=%d,metadata=%p", gMultiCam->face_number, &metadata);
+
+        HAL_LOGD("Aux1_face_number=%d,metadata=%p", gMultiCam->face_number,
+                 &metadata);
         if (gMultiCam->face_number) {
             for (int i = 0; i < gMultiCam->face_number; i++) {
-                //zoomWidth = (float)mWideMaxWidth / ((float)mSwMaxWidth);
-                //zoomHeight = (float)mWideMaxHeight / ((float)mSwMaxHeight);
+                // zoomWidth = (float)mWideMaxWidth / ((float)mSwMaxWidth);
+                // zoomHeight = (float)mWideMaxHeight / ((float)mSwMaxHeight);
                 zoomWidth = 1.0;
                 zoomHeight = 1.0;
                 float left_offest = 0, top_offest = 0;
-                left_offest = ((float)mWideMaxWidth / 0.6 - (float)mSwMaxWidth) / 2;
-                top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mSwMaxHeight) / 2;
+                left_offest =
+                    ((float)mWideMaxWidth / 0.6 - (float)mSwMaxWidth) / 2;
+                top_offest =
+                    ((float)mWideMaxHeight / 0.6 - (float)mSwMaxHeight) / 2;
                 gMultiCam->aux1FaceRect[i * 4 + 0] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 0] * zoomWidth + left_offest;
+                            .data.i32[i * 4 + 0] *
+                        zoomWidth +
+                    left_offest;
                 gMultiCam->aux1FaceRect[i * 4 + 1] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 1] * zoomHeight + top_offest;
+                            .data.i32[i * 4 + 1] *
+                        zoomHeight +
+                    top_offest;
                 gMultiCam->aux1FaceRect[i * 4 + 2] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 2] * zoomWidth + left_offest;
+                            .data.i32[i * 4 + 2] *
+                        zoomWidth +
+                    left_offest;
                 gMultiCam->aux1FaceRect[i * 4 + 3] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 3] * zoomHeight + top_offest;
+                            .data.i32[i * 4 + 3] *
+                        zoomHeight +
+                    top_offest;
                 HAL_LOGD("aux1FaceRect =  %d, %d, %d, %d zoomWidth %f "
                          "zoomHeight %f gMultiCam->face_num %d",
                          gMultiCam->aux1FaceRect[i * 4 + 0],
                          gMultiCam->aux1FaceRect[i * 4 + 1],
                          gMultiCam->aux1FaceRect[i * 4 + 2],
-                         gMultiCam->aux1FaceRect[i * 4 + 3], zoomWidth, zoomHeight,
-                         gMultiCam->face_number);
+                         gMultiCam->aux1FaceRect[i * 4 + 3], zoomWidth,
+                         zoomHeight, gMultiCam->face_number);
             }
         }
 
@@ -3676,44 +3713,64 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
     HAL_LOGD("aux2 frame_number %d", cur_frame_number);
     if (result_buffer == NULL) {
         // meta process
+
+        if (metadata.exists(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT)) {
+
+            gMultiCam->aux2_ai_scene_type =
+                metadata.find(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT).data.u8[0];
+        }
+
         entry = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES);
         if (entry.count != 0) {
             gMultiCam->face_number = entry.count / 4;
         } else {
             gMultiCam->face_number = 0;
         }
-        HAL_LOGD("Aux2_face_number=%d,metadata=%p", gMultiCam->face_number, &metadata);
+        HAL_LOGD("Aux2_face_number=%d,metadata=%p", gMultiCam->face_number,
+                 &metadata);
         if (gMultiCam->face_number) {
             for (int i = 0; i < gMultiCam->face_number; i++) {
-                //zoomWidth = ((float)mWideMaxWidth) / ((float)mTeleMaxWidth)/0.6;
-                //zoomHeight = ((float)mWideMaxHeight) / ((float)mTeleMaxHeight)/0.6;
+                // zoomWidth = ((float)mWideMaxWidth) /
+                // ((float)mTeleMaxWidth)/0.6;
+                // zoomHeight = ((float)mWideMaxHeight) /
+                // ((float)mTeleMaxHeight)/0.6;
                 zoomWidth = 1.0;
                 zoomHeight = 1.0;
                 float left_offest = 0, top_offest = 0;
-                left_offest = ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
-                top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
-                //left_offest = 0;
-                //top_offest  = 0;
+                left_offest =
+                    ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
+                top_offest =
+                    ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
+                // left_offest = 0;
+                // top_offest  = 0;
                 gMultiCam->aux2FaceRect[i * 4 + 0] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 0] * zoomWidth + left_offest;
+                            .data.i32[i * 4 + 0] *
+                        zoomWidth +
+                    left_offest;
                 gMultiCam->aux2FaceRect[i * 4 + 1] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 1] * zoomHeight + top_offest;
+                            .data.i32[i * 4 + 1] *
+                        zoomHeight +
+                    top_offest;
                 gMultiCam->aux2FaceRect[i * 4 + 2] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 2] * zoomWidth + left_offest;
+                            .data.i32[i * 4 + 2] *
+                        zoomWidth +
+                    left_offest;
                 gMultiCam->aux2FaceRect[i * 4 + 3] =
                     metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
-                        .data.i32[i * 4 + 3] * zoomHeight + top_offest;
+                            .data.i32[i * 4 + 3] *
+                        zoomHeight +
+                    top_offest;
 
                 HAL_LOGD("aux2_FaceRect =  %d, %d, %d, %d zoomWidth %f "
                          "zoomHeight %f gMultiCam->face_num %d",
                          gMultiCam->aux2FaceRect[i * 4 + 0],
                          gMultiCam->aux2FaceRect[i * 4 + 1],
                          gMultiCam->aux2FaceRect[i * 4 + 2],
-                         gMultiCam->aux2FaceRect[i * 4 + 3], zoomWidth, zoomHeight,
-                         gMultiCam->face_number);
+                         gMultiCam->aux2FaceRect[i * 4 + 3], zoomWidth,
+                         zoomHeight, gMultiCam->face_number);
             }
         }
 

@@ -43,9 +43,10 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
   public:
     SprdCamera3MultiCamera();
     virtual ~SprdCamera3MultiCamera();
-    //static void getCameraMultiCamera(SprdCamera3MultiCamera **pMuxer);
-    static int camera_device_open(__unused const struct hw_module_t *module, const char *id,
-    struct hw_device_t **hw_device);
+    // static void getCameraMultiCamera(SprdCamera3MultiCamera **pMuxer);
+    static int camera_device_open(__unused const struct hw_module_t *module,
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
     static int close_camera_device(struct hw_device_t *device);
     static int initialize(const struct camera3_device *device,
                           const camera3_callback_ops_t *ops);
@@ -96,7 +97,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     virtual void _dump(const struct camera3_device *device, int fd);
 
     virtual int _flush(const struct camera3_device *device);
-    //virtual int getCameraInfo(int id, struct camera_info *info);
+    // virtual int getCameraInfo(int id, struct camera_info *info);
     virtual void
     saveRequest(camera3_capture_request_t *request,
                 camera3_stream_buffer_t fw_buffer[MAX_MULTI_NUM_STREAMS + 1],
@@ -116,7 +117,8 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     config_multi_camera *load_config_file(void);
     void setAlgoTrigger(int vcm);
     void setZoomCropRegion(CameraMetadata *WideSettings,
-                      CameraMetadata *TeleSettings, CameraMetadata *SwSettings, float multi_zoom_ratio);
+                           CameraMetadata *TeleSettings,
+                           CameraMetadata *SwSettings, float multi_zoom_ratio);
     void reConfigInit();
     void reConfigStream();
     camera_metadata_t *reConfigResultMeta(camera_metadata_t *meta);
@@ -128,7 +130,8 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     void processCaptureResultAux1(const camera3_capture_result_t *result);
     void processCaptureResultMain(const camera3_capture_result_t *result);
     void clearFrameNeverMatched(uint32_t main_frame_number,
-                                uint32_t sub_frame_number,uint32_t sub2_frame_number);
+                                uint32_t sub_frame_number,
+                                uint32_t sub2_frame_number);
     void reConfigFlush();
     void reConfigClose();
     void TWThreadExit();
@@ -204,7 +207,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     sprd_virtual_camera_t m_VirtualCamera;
     sprdcamera_physical_descriptor_t m_pPhyCamera[MAX_MULTI_NUM_CAMERA];
     hal_buffer_info mBufferInfo[MAX_MULTI_NUM_BUFFER];
-    new_mem_t mLocalBuffer[MAX_MULTI_NUM_BUFFER * (MAX_MULTI_NUM_BUFFER+2)];
+    new_mem_t mLocalBuffer[MAX_MULTI_NUM_BUFFER * (MAX_MULTI_NUM_BUFFER + 2)];
     hal_req_stream_config_total mHalReqConfigStreamInfo[MAX_MULTI_NUM_STREAMS];
     request_state mRequstState;
 
@@ -222,6 +225,8 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     int32_t aux1FaceRect[10 * 4];
     int32_t aux2FaceRect[10 * 4];
     int face_number;
+    uint8_t aux1_ai_scene_type;
+    uint8_t aux2_ai_scene_type;
     int mVcmSteps;
     int mAlgoStatus;
     Mutex mUnmatchedQueueLock;
@@ -278,9 +283,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
         void waitMsgAvailable();
     };
     sp<TWCaptureThread> mTWCaptureThread;
-
 };
-
 };
 
 /* SPRDCAMERA3MULTICAMERA_H_HEADER*/
