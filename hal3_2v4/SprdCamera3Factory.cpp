@@ -304,7 +304,8 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         (SPRD_BLUR_ID == cameraId) || (SPRD_SELF_SHOT_ID == cameraId) ||
         (SPRD_PAGE_TURN_ID == cameraId) || (SPRD_BLUR_FRONT_ID == cameraId) ||
         (SPRD_SINGLE_FACEID_REGISTER_ID == cameraId) ||
-        (SPRD_SINGLE_FACEID_UNLOCK_ID == cameraId)) {
+        (SPRD_SINGLE_FACEID_UNLOCK_ID == cameraId) ||
+        (SPRD_PORTRAIT_ID == cameraId)) {
         return true;
     } else if (SPRD_REFOCUS_ID == cameraId ||
                (SPRD_3D_CALIBRATION_ID == cameraId)) {
