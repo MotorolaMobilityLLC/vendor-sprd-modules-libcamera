@@ -653,6 +653,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             after_cb_param.skip_number = skip_number;
             after_cb_param.timestamp = systemTime(CLOCK_MONOTONIC);
             ret = setting_after_set_ctrl(cpt, &after_cb_param);
+        } else if (SETTING_GENERAL_EFFECT == type) {
+            ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+            if (ret)
+                CMR_LOGE("set effect error!");
         }
         *item->cmd_type_value = type_val;
     }
