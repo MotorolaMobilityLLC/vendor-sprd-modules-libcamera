@@ -167,6 +167,7 @@ static int s_use_time = 0;
 static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
+static int af_type = 0;
 
 sprd_camera_memory_t *SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
 uint32_t SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
@@ -5330,8 +5331,8 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
             } else {
                 setAfState(AF_COMPLETES_CURRENT_SCAN);
                 mLatestFocusDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
-                controlInfo.af_type = focus_status->af_focus_type;
-                mSetting->setAfCONTROLTag(&controlInfo);
+                af_type = focus_status->af_focus_type;
+
             }
         }
 
@@ -9961,16 +9962,15 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if(sprddefInfo.is_smile_capture == 1) {
        int count=0;
        while (1) {
-           mSetting->getCONTROLTag(&controlInfo);
            usleep(1000);
            if(count>2500) {
               HAL_LOGD("wait for af locked timeout 2.5s");
               count=0;
               break;
            }
-           if(controlInfo.af_type == CAM_AF_FOCUS_FAF) {
+           if(af_type == CAM_AF_FOCUS_FAF) {
               HAL_LOGV("af_state=%d,af_type =%d,wait_smile_capture =%d ms",
-                       controlInfo.af_state,controlInfo.af_type,count);
+                       controlInfo.af_state,af_type,count);
               break;
            } else {
               count++;

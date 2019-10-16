@@ -5957,7 +5957,6 @@ int SprdCamera3Setting::setAeCONTROLTag(CONTROL_Tag *controlInfo) {
 int SprdCamera3Setting::setAfCONTROLTag(CONTROL_Tag *controlInfo) {
     Mutex::Autolock l(mLock);
     s_setting[mCameraId].controlInfo.af_state = controlInfo->af_state;
-    s_setting[mCameraId].controlInfo.af_type = controlInfo->af_type;
     return 0;
 }
 
