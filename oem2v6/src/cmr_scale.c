@@ -237,10 +237,12 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         cpp_cap.is_supported = 0;
         ret = ioctl((((struct sc_file *)file->handle)->fd), SPRD_CPP_IO_SCALE_CAPABILITY, &cpp_cap);
 
-        if (!cpp_cap.is_supported) {
-            ret = cmr_scale_sw_start(cfg_params, file);
-        } else {
+        if (cpp_cap.is_supported) {
             ret = cpp_scale_start(&scal_param);
+        }
+
+        if (!cpp_cap.is_supported || ret) {
+            ret = cmr_scale_sw_start(cfg_params, file);
         }
 
         if (ret) {
