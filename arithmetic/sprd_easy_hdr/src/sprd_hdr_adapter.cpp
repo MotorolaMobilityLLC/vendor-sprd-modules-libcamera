@@ -92,9 +92,9 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
 				input[i].stride = hdr_param->input[i].stride;
 				input[i].ev = hdr_param->ev[i];
 			}
-			
+
 			uint8_t *output = (uint8_t *)hdr_param->output.addr[0];
-			
+
 			ret = sprd_hdr_process(handle, input, output);
 		} else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP) {
 			ldr_image_vdsp_t input_vdsp[2], output_vdsp;
@@ -106,13 +106,13 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
 				input_vdsp[i].image.ev = hdr_param->ev[i];
 				input_vdsp[i].fd = hdr_param->input[i].ion_fd;
 			}
-			
+
 			output_vdsp.image.data = (uint8_t *)hdr_param->output.addr[0];
 			output_vdsp.image.width = hdr_param->output.width;
 			output_vdsp.image.height = hdr_param->output.height;
 			output_vdsp.image.stride = hdr_param->output.stride;
 			output_vdsp.fd = hdr_param->output.ion_fd;
-			
+
 			ret = sprd_hdr_vdsp_process(handle, input_vdsp, &output_vdsp);
 		}
 #endif
@@ -142,7 +142,6 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
 		HDR_LOGW("unknown cmd: %d\n", cmd);
 		break;
 	}
-	
 	return ret;
 }
 
@@ -157,14 +156,15 @@ int sprd_hdr_get_devicetype(enum camalg_run_type *type)
 #ifdef CONFIG_SPRD_HDR_LIB
 	*type = SPRD_CAMALG_RUN_TYPE_CPU;
 #endif
+
 	return 0;
 }
 
 int sprd_hdr_set_devicetype(enum camalg_run_type type)
 {
-	if (type < SPRD_HDR_GET_VERSION_CMD || type >= SPRD_HDR_MAX_CMD)
+	if (type < SPRD_CAMALG_RUN_TYPE_CPU || type >= SPRD_CAMALG_RUN_TYPE_MAX)
 		return 1;
 	g_run_type = type;
-	
+
 	return 0;
 }
