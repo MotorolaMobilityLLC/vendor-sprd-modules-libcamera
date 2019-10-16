@@ -222,9 +222,13 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     float mZoomValue;
     float mSwitch_W_Sw_Threshold;
     float mSwitch_W_T_Threshold;
-    int32_t aux1FaceRect[10 * 4];
-    int32_t aux2FaceRect[10 * 4];
-    int face_number;
+    int32_t main_FaceRect[10 * 4];
+    int32_t aux1_FaceRect[10 * 4];
+    int32_t aux2_FaceRect[10 * 4];
+    int32_t aux1_FaceGenderRaceAge[10];
+    int32_t aux2_FaceGenderRaceAge[10];
+    int aux1_face_number;
+    int aux2_face_number;
     uint8_t aux1_ai_scene_type;
     uint8_t aux2_ai_scene_type;
     int mVcmSteps;

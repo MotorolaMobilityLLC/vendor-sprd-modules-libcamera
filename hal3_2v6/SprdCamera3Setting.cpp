@@ -1840,11 +1840,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // flash_info
     if (cameraInfo.facing == CAMERA_FACING_BACK) {
-        if (cameraId == 2 || cameraId == 3) {
             s_setting[cameraId].flash_InfoInfo.available = 1;
-        } else {
-            s_setting[cameraId].flash_InfoInfo.available = 1;
-        }
     } else if (cameraInfo.facing == CAMERA_FACING_FRONT) {
         if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "none") ||
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd"))
@@ -4466,7 +4462,7 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.find(ANDROID_SPRD_TOUCH_INFO).count == 5) {
-        int32_t touch_area[4] = {0, 0, 0, 0};
+        int32_t touch_area[5] = {0, 0, 0, 0, 0};
         int32_t is_update = 0;
         for (size_t i = 0; i < 5; i++)
             touch_area[i] =

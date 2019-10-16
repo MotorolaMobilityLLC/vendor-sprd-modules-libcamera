@@ -6654,13 +6654,30 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->auto_tracking_inited) {
             prev_auto_tracking_send_data(handle, camera_id, frm_ptr, info);
         }
+
     if (camera_id == 0) {
+        char value0[PROPERTY_VALUE_MAX];
+        property_get("debug.camera.preview.dump.count0", value0, "null");
+        cmr_uint dump_num = atoi(value0);
+        if (strcmp(value0, "null")) {
+            if (g_preview_frame_dump_cnt < dump_num) {
+                dump_image("prev_construct_frame_id0", CAM_IMG_FMT_YUV420_NV21,
+                           frame_type->width, frame_type->height,
+                           prev_cxt->prev_frm_cnt,
+                           &prev_cxt->prev_frm[frm_id].addr_vir,
+                           frame_type->width * frame_type->height * 3 / 2);
+                g_preview_frame_dump_cnt++;
+            }
+        }
+    }
+
+    if (camera_id == 1) {
         char value1[PROPERTY_VALUE_MAX];
         property_get("debug.camera.preview.dump.count1", value1, "null");
         cmr_uint dump_num = atoi(value1);
         if (strcmp(value1, "null")) {
             if (g_preview_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_frame_id0", CAM_IMG_FMT_YUV420_NV21,
+                dump_image("prev_construct_frame_id1", CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
                            &prev_cxt->prev_frm[frm_id].addr_vir,
@@ -13938,7 +13955,7 @@ cmr_uint prev_search_ultra_wide_buffer(struct prev_context *prev_cxt,
     cmr_uint *ultra_wide_index = NULL;
     cmr_uint *frm_is_lock = NULL;
     cmr_uint alloc_cnt = 0;
-    char *debug_str;
+    char *debug_str = NULL;;
 
     if (!prev_cxt) {
         ret = CMR_CAMERA_INVALID_PARAM;
