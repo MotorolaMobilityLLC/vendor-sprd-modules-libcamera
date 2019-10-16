@@ -311,6 +311,8 @@ enum available_cam_features {
     DEFAULTQUARTERSIZE,
     MULTICAMERAMODE,
     HIGHDEFINITIONMODE,
+    HDR_ZSL,
+
     FEATURELISTMAX
 };
 
@@ -1072,6 +1074,10 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     // 14 camera high resolution definition mode
     property_get("persist.vendor.cam.high.definition.mode", prop, "0");
     available_cam_features[HIGHDEFINITIONMODE] = atoi(prop);
+
+    // 15 camera hdr_zsl
+    property_get("persist.vendor.cam.hdr.zsl", prop, "0");
+    available_cam_features[HDR_ZSL] = atoi(prop);
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]), sizeof(available_cam_features));
