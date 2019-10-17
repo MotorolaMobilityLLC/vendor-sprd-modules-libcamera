@@ -904,6 +904,15 @@ int SprdCamera3HWI::configureStreams(
     //    capture_size.height = 368;
     //}
 
+#if defined (CONFIG_ISP_2_3)
+    if (mStreamConfiguration.preview.width > 2592 &&
+        mStreamConfiguration.snapshot.status == CONFIGURED) {
+        mOEMIf->setJpegWithBigSizePreviewFlag(1);
+    } else {
+        mOEMIf->setJpegWithBigSizePreviewFlag(0);
+    }
+#endif
+
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
     mOEMIf->setCamStreamInfo(video_size, videoFormat, videoStreamType);
@@ -1274,11 +1283,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             }
 
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
-                // when sensor_rotation is 1 for volte, volte dont need capture
-                if (sprddefInfo.sensor_rotation == 0) {
-                    mOEMIf->setStreamOnWithZsl();
+#ifdef CONFIG_ISP_2_3
+                if (mOEMIf->getJpegWithBigSizePreviewFlag()) {
+                    mFirstRegularRequest = 0;
+                } else
+#endif
+                {
+                    // when sensor_rotation is 1 for volte, volte dont need capture
+                    if (sprddefInfo.sensor_rotation == 0) {
+                        mOEMIf->setStreamOnWithZsl();
+                    }
+                    mFirstRegularRequest = 1;
                 }
-                mFirstRegularRequest = 1;
                 mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
                 if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
                     streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||

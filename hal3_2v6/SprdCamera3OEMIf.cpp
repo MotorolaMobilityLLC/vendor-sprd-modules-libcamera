@@ -413,7 +413,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mIsUltraWideMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
-      mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0)
+      mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
+      mIsJpegWithBigSizePreview(0)
 
 {
     ATRACE_CALL();
@@ -10130,6 +10131,14 @@ void SprdCamera3OEMIf::ispToolModeInit() {
 int32_t SprdCamera3OEMIf::setStreamOnWithZsl() {
     mStreamOnWithZsl = 1;
     return 0;
+}
+
+void SprdCamera3OEMIf::setJpegWithBigSizePreviewFlag(bool value) {
+    mIsJpegWithBigSizePreview = value;
+}
+
+bool SprdCamera3OEMIf::getJpegWithBigSizePreviewFlag() {
+    return mIsJpegWithBigSizePreview;
 }
 
 int32_t SprdCamera3OEMIf::getStreamOnWithZsl() { return mStreamOnWithZsl; }

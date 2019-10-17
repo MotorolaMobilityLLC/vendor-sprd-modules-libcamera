@@ -347,6 +347,9 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
                 }
 
                 if (i == 0) {
+#ifdef CONFIG_ISP_2_3
+                    if(!mOEMIf->getJpegWithBigSizePreviewFlag())
+#endif
                     mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_PREVIEW);
                 } else if (i == (CAMERA_STREAM_TYPE_VIDEO -
                                  REGULAR_STREAM_TYPE_BASE)) {
