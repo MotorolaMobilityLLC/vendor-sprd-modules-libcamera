@@ -3110,6 +3110,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		lsc_calc_in->stat_img.r = tmp_buffer_r;
 		lsc_calc_in->stat_img.gr = tmp_buffer_g;
 		lsc_calc_in->stat_img.b = tmp_buffer_b;
+		lsc_calc_in->stat_img.w = MAX_STAT_WIDTH;
+		lsc_calc_in->stat_img.h = MAX_STAT_HEIGHT;
 		lsc_calc_out->dst_gain = tmp_buffer;
 
 		memcpy(lsc_calc_in->last_lsc_table, cxt->std_init_lsc_table_param_buffer[DEFAULT_TAB_INDEX], cxt->init_gain_width * cxt->init_gain_height * 4 * sizeof(cmr_u16));
@@ -3122,16 +3124,21 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		memcpy(lsc_calc_in->stat_img.r, alsc_do_simulation->stat_r, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
 		memcpy(lsc_calc_in->stat_img.gr, alsc_do_simulation->stat_g, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
 		memcpy(lsc_calc_in->stat_img.b, alsc_do_simulation->stat_b, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
+
+		ISP_LOGI("do_simulation img_size[%d,%d], gain_size[%d,%d], stat_size[%d,%d] grid: %d",lsc_calc_in->img_width,lsc_calc_in->img_height,lsc_calc_in->gain_width,lsc_calc_in->gain_height,lsc_calc_in->stat_img.w,lsc_calc_in->stat_img.h,lsc_calc_in->grid);
+
 		for (i = 0; i < 8; i++)
 			lsc_calc_in->lsc_tab[i] = cxt->std_init_lsc_table_param_buffer[i];
 
 		// first alsc calc
+		ISP_LOGI("first alsc calc last_lsc_table[%d,%d,%d,%d]",lsc_calc_in->last_lsc_table[0],lsc_calc_in->last_lsc_table[1],lsc_calc_in->last_lsc_table[2],lsc_calc_in->last_lsc_table[3]);
 		rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, lsc_calc_in, lsc_calc_out);
 
 		memcpy(lsc_calc_in->last_lsc_table, lsc_calc_out->dst_gain, cxt->init_gain_width * cxt->init_gain_height * 4 * sizeof(cmr_u16));
 		// second alsc calc
+		ISP_LOGI("second alsc calc last_lsc_table[%d,%d,%d,%d]",lsc_calc_in->last_lsc_table[0],lsc_calc_in->last_lsc_table[1],lsc_calc_in->last_lsc_table[2],lsc_calc_in->last_lsc_table[3]);
 		rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, lsc_calc_in, lsc_calc_out);
-
+		ISP_LOGI("second alsc end! lsc_calc_out[%d,%d,%d,%d]",lsc_calc_out->dst_gain[0],lsc_calc_out->dst_gain[1],lsc_calc_out->dst_gain[2],lsc_calc_out->dst_gain[3]);
 		// post shading gain
 		post_gain_param.org_gain = lsc_calc_out->dst_gain;
 		post_gain_param.gain_width = cxt->init_gain_width;
@@ -3147,6 +3154,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, LSC_CMD_DO_POSTPROCESS, &post_gain_param, alsc_do_simulation->sim_output_table);
 
 		memcpy(cxt->output_lsc_table, alsc_do_simulation->sim_output_table, cxt->init_gain_width * cxt->init_gain_height * 4 * sizeof(cmr_u16));
+		ISP_LOGI("post process output_lsc_table[%d,%d,%d,%d]",cxt->output_lsc_table[0],cxt->output_lsc_table[1],cxt->output_lsc_table[2],cxt->output_lsc_table[3]);
 		//planar2interlace for driver use
 		if(cxt->is_planar == 1){
 			lsc_table_planar2interlace(alsc_do_simulation->sim_output_table, cxt->init_gain_width,
