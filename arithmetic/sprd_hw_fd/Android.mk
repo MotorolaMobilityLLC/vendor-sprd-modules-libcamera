@@ -22,11 +22,15 @@ endif
 
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libsprdfd_hw
 
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_PROPRIETARY_MODULE := true
+
+
+ifeq ($(TARGET_BOARD_CAMERA_FD_MODULAR_KERNEL),fd1.0)
 LOCAL_SRC_FILES := src/sprd_fd_hw_api.cpp
+else
+LOCAL_SRC_FILES := src/sprd_fd_hw_api2.cpp
+endif
+
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/modules/libmemion
 LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/external/kernel-headers
@@ -40,6 +44,9 @@ ifeq ($(TARGET_BUILD_VARIANT),userdebug)
 LOCAL_CFLAGS += -DLOG_DEBUG
 endif
 
+LOCAL_MODULE := libsprdfd_hw
 LOCAL_MODULE_TAGS := optional
 LOCAL_PROPRIETARY_MODULE := true
 include $(BUILD_SHARED_LIBRARY)
+include $(call all-makefiles-under,$(LOCAL_PATH))
+
