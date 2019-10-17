@@ -194,6 +194,11 @@ private:
 	sp<ClientCallback> callback;
 };
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG TAG_Server
+
 
 IMPLEMENT_META_INTERFACE(VdspService, "android.camera.IVdspService");
 

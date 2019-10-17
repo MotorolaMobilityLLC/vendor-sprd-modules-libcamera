@@ -7,6 +7,7 @@
 #include <string.h>
 #include "IVdspService.h"
 #include "vdsp_interface.h"
+#include <stdlib.h>
 #include "Test.h"
 
 #ifdef LOG_TAG
@@ -14,15 +15,22 @@
 #endif
 #define LOG_TAG "TestClient"
 
-//using namespace android;
+struct test_control
+{
+	char * libname;
+	int loadflag;
+	int unloadflag;
+	int openflag;
+	int closeflag;
+};
 
-
-void* thread1(__unused void* test)
+void* test_load_unload_lib(void* test)
 {
 	struct sprd_vdsp_client_inout in,out;
 	uint32_t size = 8192;
 	struct vdsp_handle handle;
 	int ret;
+	int openflag, closeflag, loadflag, unloadflag;
 	FILE *fp;
 	char filename[256];
 	int buffersize = 8192;
@@ -30,6 +38,18 @@ void* thread1(__unused void* test)
 	void *outputhandle;
 	void *inviraddr;
 	void *outviraddr;
+	openflag = 1;
+	closeflag = 1;
+	loadflag = 1;
+	unloadflag = 1;
+	struct test_control *control = (struct test_control *)test;
+	if(control != NULL)
+	{
+		openflag = control->openflag;
+		closeflag = control->closeflag;
+		loadflag = control->loadflag;
+		unloadflag = control->unloadflag;
+	}
 	inputhandle = sprd_alloc_ionmem(size , 0 , &in.fd , &inviraddr);
 	outputhandle = sprd_alloc_ionmem(size , 0 , &out.fd , &outviraddr);
 	in.size = size;
@@ -43,34 +63,44 @@ void* thread1(__unused void* test)
 	{
 		memset(outviraddr , 0xcc , size);
 	}
-	sprintf(filename , "/vendor/firmware/%s.bin" , "test_lib");
+	sprintf(filename , "/vendor/firmware/%s.bin" , control->libname);
         fp = fopen(filename , "rb");
         if(fp) {
                 ret = fread(in.viraddr , 1, buffersize , fp);
-                fprintf(stderr , "yzl add %s , fwrite test_lib.bin buffersize:%d , size:%d\n" , __func__ ,buffersize , ret);
+                fprintf(stderr , "yzl add %s , fwrite %s buffersize:%d , size:%d\n" , __func__ , control->libname , buffersize , ret);
                 fclose(fp);
         }
         else
         {
-                fprintf(stderr , "yzl add %s , fopen test_lib.bin failed\n" , __func__);
+                fprintf(stderr , "yzl add %s , fopen %s failed\n" , __func__ , control->libname);
         }
-	for(int i = 0;i<6;i++){
-	ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_NORMAL , &handle);
-	printf("----------open device-------------\n");
-	ALOGD("function:%s , sprd_cavdsp_open_device ret:%d\n" , __func__ ,ret);
-	usleep(1000000*3);
-	ret = sprd_cavdsp_loadlibrary(&handle , "test_lib" , &in);
-	ALOGD("function:%s , sprd_cavdsp_loadlibrary ret:%d\n" , __func__ ,ret);
-	ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , NULL , NULL , 0 , 1);
-	ALOGD("function:%s , sprd_cavdsp_send_cmd ret:%d\n" , __func__ ,ret);
-	ret = sprd_cavdsp_unloadlibrary(&handle , "test_lib");
-	ALOGD("function:%s , sprd_cavdsp_unloadlibrary ret:%d\n" , __func__ ,ret);
-	ret = sprd_cavdsp_close_device(&handle);
-
-	//ALOGD(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_close_device ret:%d\n" , __func__ ,ret);
-	//ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , &out , NULL , 0 , 1);
-	//ALOGD(ANDROID_LOG_DEBUG,TAG_Test,"function:%s , sprd_cavdsp_send_cmd after close ret:%d\n" , __func__ ,ret);
-	usleep(1000000*2);
+	while(1){
+		if(openflag) {
+			ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_NORMAL , &handle);
+			printf("----------after open device libname:%s-------------\n" , control->libname);
+			ALOGD("function:%s , sprd_cavdsp_open_device libname:%s , ret:%d\n" , __func__ , control->libname , ret);
+		}
+		usleep(1000000);
+		if(loadflag) {
+			ret = sprd_cavdsp_loadlibrary(&handle , control->libname , &in);
+			ALOGD("function:%s , sprd_cavdsp_loadlibrary libname:%s ret:%d\n" , __func__ ,control->libname , ret);
+			printf("----------after sprd_cavdsp_loadlibrary libname:%s-------------\n" , control->libname);
+		}
+		
+		ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , NULL , NULL , 0 , 1);
+		ALOGD("function:%s , sprd_cavdsp_send_cmd libname:%s ret:%d\n" , __func__ , control->libname  , ret);
+		printf("----------after sprd_cavdsp_send_cmd libname:%s-------------\n" , control->libname);
+		if(unloadflag) {
+			ret = sprd_cavdsp_unloadlibrary(&handle , control->libname);
+			ALOGD("function:%s , sprd_cavdsp_unloadlibrary libname:%s ret:%d\n" , __func__ ,control->libname  , ret);
+			printf("----------after sprd_cavdsp_unloadlibrary libname:%s-------------\n" , control->libname);
+		}
+		if(closeflag) {
+			ret = sprd_cavdsp_close_device(&handle);
+			ALOGD("function:%s ,sprd_cavdsp_close_device libname:%s ret:%d\n" , __func__ ,control->libname , ret);
+			printf("----------after sprd_cavdsp_close_device libname:%s-------------\n" , control->libname);
+		}
+		usleep(1000000);
 	}
 	return NULL;
 }
@@ -259,38 +289,64 @@ void* thread_faceid(__unused void* test)
 	return NULL;
 }
 
-int main() {
-#if 0
-		sp<IVdspService> cs = NULL;
-	android::ProcessState::initWithDriver("/dev/vndbinder");
-		sp < IServiceManager > sm = defaultServiceManager();
-		sp < IBinder > binder = sm->getService(String16("service.algorithmservice"));
-		cs = interface_cast<IVdspService>(binder);
-	cs->openXrpDevice();
-	cs->closeXrpDevice();
-#else
+
+int main(__unused int argc , char *argv[]) {
 	android::ProcessState::initWithDriver("/dev/vndbinder");
 	struct sprd_vdsp_client_inout in,out;
-	//pthread_t a ;//,b;
+	int caseid;
+	struct test_control control , control1;
+	pthread_t a , b;
+	char libname[128] = "test_lib";
+	char libname1[128] = "test_lib1";
+	caseid = atoi(argv[1]);
 	in.fd = 0;
 	in.size = 10;
 	out.fd = 0;
 	out.size = 10;
-#if 1
-	//pthread_create(&a , NULL , thread1 , NULL);
-//	pthread_create(&b , NULL , thread2 , NULL);
-	//thread1(NULL);
-	thread_faceid(NULL);
-	//thread1(NULL);
-#else
-	sprd_cavdsp_open_device();
-	sprd_cavdsp_open_device();
-	sprd_cavdsp_loadlibrary("testlib" , &in);
-	sprd_cavdsp_send_cmd("testlib" , &in , &out , NULL , 0 , 1);
-	sprd_cavdsp_close_device();
-	sprd_cavdsp_unloadlibrary("testlib");
-#endif
-#endif
+	control.openflag = 1;
+	control.closeflag = 1;
+	control.loadflag = 1;
+	control.unloadflag = 1;
+	control.libname = libname;
+	control1 = control;
+	printf("test caseid :%d\n" , caseid);
+	switch(caseid) {
+	case 0:
+		/*normal open device load teset_lib , unload, close device, cycle 6*/
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 1:
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		control1.libname = libname1;
+		pthread_create(&b , NULL , test_load_unload_lib , &control1);
+		break;
+	case 2:
+		control.openflag = 0;
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 3:
+		control.closeflag = 0;
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 4:
+		control.loadflag = 0;
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 5:
+		control.unloadflag = 0;
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 6:
+		control.loadflag = 0;
+		control.unloadflag = 0;
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 10:
+		thread_faceid(NULL);
+		break;
+	default:
+		break;
+	}
 	ProcessState::self()->startThreadPool();
                         IPCThreadState::self()->joinThreadPool();
 	return 0;

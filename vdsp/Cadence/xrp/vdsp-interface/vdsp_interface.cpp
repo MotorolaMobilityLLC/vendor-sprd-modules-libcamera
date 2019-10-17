@@ -267,7 +267,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_
 			return SPRD_VDSP_RESULT_SUCCESS;
 		}
 		else {
-			ALOGE(TAG_Client,"func:%s freefd faild working fd:%d\n" , __func__ , fd);
+			ALOGE("func:%s freefd faild working fd:%d\n" , __func__ , fd);
 			return SPRD_VDSP_RESULT_FAIL;
 		}
 	}
@@ -286,7 +286,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
-                 ALOGE(TAG_Client,"func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
+                 ALOGE("func:%s err param cs:%p , handle:%p\n" , __func__ , cs.get() , handle);
                 return SPRD_VDSP_RESULT_FAIL;
 	}
 	generation = hnd->generation;
@@ -296,7 +296,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 		gLock.lock();
 		if(0 != Check_GenrationValid(generation))
 		{
-			ALOGE(TAG_Client,"func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
+			ALOGE("func:%s Check_GenrationValid failed generation:%d , gGeneration:%d\n" , __func__ ,
 				generation , gGeneration);
 			gLock.unlock();
 			return SPRD_VDSP_RESULT_OLD_GENERATION;
