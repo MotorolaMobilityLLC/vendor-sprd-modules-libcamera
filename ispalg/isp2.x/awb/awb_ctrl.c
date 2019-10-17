@@ -132,9 +132,10 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	FILE* fp_3 = NULL;
 	unsigned char awb_param_3[64 * 1024] = {0};
 	unsigned int awb_param_size_3 = 0;
-	fp_3 = fopen(paramfile_path, "rb");
+	if(paramfile_path)
+		fp_3 = fopen(paramfile_path, "rb");
 	if(!fp_3) {
-		in_ptr->tuning_param = in_ptr->tuning_param;
+		//in_ptr->tuning_param = in_ptr->tuning_param;
 		ISP_LOGV("Get the trunning param from upper layer!");
 	} else {
 		awb_param_size_3 = fread(awb_param_3,1,64 * 1024,fp_3);
