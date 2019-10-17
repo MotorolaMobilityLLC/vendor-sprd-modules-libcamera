@@ -405,6 +405,8 @@ struct camera_context {
     cmr_u32 flash_skip_frame_num;
     struct isp_face_area fd_face_area_capture;
     bool is_capture_face;
+
+    void *handle_interface;
 };
 
 struct prev_ai_scene_info {

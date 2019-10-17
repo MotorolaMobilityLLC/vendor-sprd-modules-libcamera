@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <dlfcn.h>
 #ifdef CONFIG_FACE_BEAUTY
 #include "camera_face_beauty.h"
 #endif
@@ -95,6 +96,10 @@ typedef struct {
     ((cxt->camera_id >= 2 && (is_multi_camera_mode_oem == MODE_BLUR ||         \
                               is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
+
+typedef int (*INTERFACE_INIT)(char** error);
+typedef int (*INTERFACE_CLOSE_ALL)(char **error);
+typedef int (*INTERFACE_FOR_ALGO)(char *name, char **error, char **level);
 
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
@@ -3960,6 +3965,46 @@ exit:
     return ret;
 }
 
+cmr_int camera_interface_init(cmr_handle oem_handle)
+{
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->handle_interface = dlopen("libinterface.so", RTLD_NOW);
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    if(!cxt->handle_interface) {
+        CMR_LOGE("decrypt interface open failed with %s", dlerror());
+        return ret;
+    }
+    INTERFACE_INIT interface_init = dlsym(cxt->handle_interface, "interface_init");
+    if(!interface_init) {
+        CMR_LOGE("func open failed with error = %s", dlerror());
+        return ret;
+    }
+    char *error;
+    int init = interface_init(&error);
+    if(init) {
+        ret = CMR_CAMERA_FAIL;
+        CMR_LOGE("interface init func failed with %s and ret is %d", error, init);
+        return ret;
+    }
+    return ret;
+}
+
+cmr_int camera_interface_deinit(cmr_handle oem_handle)
+{
+    int ret = CMR_CAMERA_SUCCESS; 
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if(cxt->handle_interface) {
+        INTERFACE_CLOSE_ALL interface_close = dlsym(cxt->handle_interface, "interface_close_all");
+        char *error;
+        ret = interface_close(&error);
+        if(ret) {
+            CMR_LOGD("interface close failed with %s", error);
+            return ret;
+        }
+    }
+    return ret;
+}
+
 cmr_int camera_snapshot_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -4763,7 +4808,10 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         CMR_LOGE("failed to init preview %ld", ret);
         goto exit;
     }
-
+    ret = camera_interface_init(oem_handle);
+    if(ret) {
+        CMR_LOGD("decrypt interface init failed");
+    }
     ret = camera_snapshot_init(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init snapshot %ld", ret);
@@ -4812,6 +4860,8 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     //	camera_grab_deinit(oem_handle);
 
     camera_ipm_deinit(oem_handle);
+
+    camera_interface_deinit(oem_handle);
 
     camera_deinit_thread(oem_handle);
 
