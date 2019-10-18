@@ -75,7 +75,13 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		ISP_ALG_CAMERA_MAX
 	};
 
-
+	struct isp_lsc_statistic_info{
+		cmr_u32 r_info[16384];
+		cmr_u32 g_info[16384];
+		cmr_u32 b_info[16384];
+		cmr_u32 sec;
+		cmr_u32 usec;
+	};
 
 	struct isp_awb_statistic_info {
 		cmr_u32 r_info[16384];

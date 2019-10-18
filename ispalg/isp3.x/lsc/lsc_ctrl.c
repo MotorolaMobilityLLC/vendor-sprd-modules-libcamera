@@ -33,6 +33,7 @@ struct lsc_ctrl_work_lib {
 struct lsc_ctrl_cxt {
 	cmr_handle thr_handle;
 	cmr_handle caller_handle;
+	isp_lsc_cb lsc_set_cb;
 	struct lsc_ctrl_work_lib work_lib;
 	struct lsc_adv_calc_result proc_out;
 };
@@ -152,7 +153,7 @@ static cmr_s32 _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_in
 
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_init) {
-		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, NULL);
+		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, (cmr_handle)cxt_ptr);
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}
@@ -220,7 +221,8 @@ cmr_int lsc_ctrl_init(struct lsc_adv_init_param * input_ptr, cmr_handle * handle
 	if (rtn) {
 		goto exit;
 	}
-
+	cxt_ptr->lsc_set_cb = input_ptr->lsc_set_cb;
+	cxt_ptr->caller_handle = input_ptr->caller_handle;
 	rtn = _lscctrl_init_adpt(cxt_ptr, input_ptr);
 	if (rtn) {
 		goto exit;
@@ -313,6 +315,18 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param * in_p
 exit:
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
+}
+
+cmr_s32 lsc_set_monitor(cmr_handle handler, struct lsc_monitor_info *in_param)
+{
+	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt *)handler;
+	ISP_LOGI("in_param win_size[%d,%d] win_num[%d,%d]",in_param->win_size.w,in_param->win_size.h,in_param->win_num.w,in_param->win_num.h);
+
+	if (cxt_ptr->lsc_set_cb) {
+		cxt_ptr->lsc_set_cb(cxt_ptr->caller_handle, ISP_LSC_SET_MONITOR, in_param, NULL);
+	}
+
+	return 0;
 }
 
 cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr)

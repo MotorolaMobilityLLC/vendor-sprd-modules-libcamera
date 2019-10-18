@@ -137,6 +137,7 @@ struct lsc_sprd_ctrl_context {
 	pthread_mutex_t status_lock;
 	void *alsc_handle;	// alsc handler
 	void *lib_handle;
+	cmr_handle ctrl_handle;
 	void *lsc_debug_info_ptr;
 	void *post_shading_gain_param;
 	void *lsc_flash_proc_param;

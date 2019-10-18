@@ -2209,7 +2209,7 @@ static void *lsc_sprd_init(void *in, void *out)
 	if (LSC_ALLOC_ERROR == rtn) {
 		goto EXIT;
 	}
-
+	cxt->ctrl_handle = (cmr_handle)out;
 	lsc_get_prop_cmd(cxt);
 
 	lsc_parser_otp(init_param, cxt);
@@ -2451,7 +2451,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		}
 
 		// inverse the LSC on AEM
-		lsc_inverse_ae_stat(cxt, cxt->output_lsc_table);
+		//lsc_inverse_ae_stat(cxt, cxt->output_lsc_table);
 
 		// cmd dump AEM1
 		if (cxt->cmd_alsc_dump_aem) {
@@ -2571,6 +2571,33 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	return rtn;
 }
 
+static cmr_s32 lsc_sprd_set_monitor(struct alsc_fwstart_info* in, struct lsc_monitor_info* out)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	struct lsc_monitor_info* info = out;
+	struct lsc_trim trim;
+	info->skip_num = 0;
+	info->work_mode = 1;
+
+	info->win_num.w = 32;  //default value
+	info->win_num.h = 32;
+	trim.x = 0;
+	trim.y = 0;
+	trim.w = in->img_width_new;
+	trim.h = in->img_height_new;
+	info->win_size.w = ((trim.w / info->win_num.w) / 2) * 2;
+	info->win_size.h = ((trim.h / info->win_num.h) / 2) * 2;
+	info->trim.w = info->win_size.w * info->win_num.w;
+	info->trim.h =  info->win_size.h * info->win_num.h;
+	info->trim.x = trim.x + (trim.w - info->trim.w) / 2;
+	info->trim.x = (info->trim.x / 2) * 2;
+	info->trim.y = trim.y + (trim.h - info->trim.h) / 2;
+	info->trim.y = (info->trim.y / 2) * 2;
+
+	return rtn;
+
+}
+
 static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 {
 	cmr_u32 i;
@@ -2605,6 +2632,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	cmr_u32 full_flag = 0;
 	cmr_u32 chnl_gain_num = 0;
 	cmr_u32 will_do_post_gain = 0;
+	struct lsc_monitor_info* in_param = (struct lsc_monitor_info*)malloc(sizeof(struct lsc_monitor_info));
 
 	lsc_get_channel_index(cxt->output_gain_pattern, &is_gr, &is_r, &is_b, &is_gb);
 
@@ -2615,6 +2643,9 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		ISP_LOGV("FW_START, old tab0 address = %p, (%d,%d), grid %d", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
 		ISP_LOGV("FW_START, new tab0 address = %p, (%d,%d), grid %d", fwstart_info->lsc_tab_address_new[0],
 			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new);
+
+		lsc_sprd_set_monitor(fwstart_info, in_param);
+		lsc_set_monitor(cxt->ctrl_handle, in_param);
 
 		// read last info
 		if (cxt->init_img_width == fwstart_info->img_width_new && cxt->init_img_height == fwstart_info->img_height_new)

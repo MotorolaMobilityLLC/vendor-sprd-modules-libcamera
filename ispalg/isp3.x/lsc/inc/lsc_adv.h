@@ -243,6 +243,8 @@ struct lsc_adv_init_param {
 
 	//add lsc buffer addr
 	cmr_u16 *lsc_buffer_addr;
+	isp_lsc_cb lsc_set_cb;
+	cmr_handle caller_handle;
 	cmr_s32 reserved[50];
 };
 
@@ -295,6 +297,22 @@ struct lsc_adv_calc_result {
 	cmr_u16 *dst_gain;
 };
 
+struct lsc_trim {
+	cmr_u32 x;
+	cmr_u32 y;
+	cmr_u32 w;
+	cmr_u32 h;
+};
+
+struct lsc_monitor_info {
+	cmr_u32 shift;
+	cmr_u32 work_mode;/*single or continue mode*/
+	cmr_u32 skip_num;/*skip num: default value is 0*/
+	struct lsc_size win_size;
+	struct lsc_size win_num;
+	struct lsc_trim trim;
+};
+
 /**---------------------------------------------------------------------------*
 **					Data Prototype				**
 **----------------------------------------------------------------------------*/
@@ -308,6 +326,7 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 cmr_s32 lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, cmr_u32 input_pattern,
 			    cmr_u32 output_pattern);
 float table_bicubic_interpolation(unsigned short *src_tab, unsigned int src_gain_width, unsigned int src_gain_height, int TL_i, int TL_j, float dx, float dy);
+cmr_s32 lsc_set_monitor(cmr_handle handler, struct lsc_monitor_info *in_param);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
