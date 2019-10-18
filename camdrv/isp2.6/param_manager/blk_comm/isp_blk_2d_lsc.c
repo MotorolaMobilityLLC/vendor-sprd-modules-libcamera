@@ -27,15 +27,15 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	struct sensor_2d_lsc_param *src_ptr = (struct sensor_2d_lsc_param *)src_lnc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 
-	ISP_LOGD("src: %p,  tab_num=%d, image size %d %d", src_lnc_param,
-		src_ptr->tab_num, img_size_ptr->w, img_size_ptr->h);
+	ISP_LOGD("src: %p,  tab_num=%d, image size %d %d, hdr %p\n", src_lnc_param,
+		src_ptr->tab_num, img_size_ptr->w, img_size_ptr->h, dst_ptr);
 
 	dst_ptr->tab_num = src_ptr->tab_num;
 	for (i = 0; i < ISP_COLOR_TEMPRATURE_NUM; ++i) {
 		addr = (intptr_t) & (src_ptr->tab_info.lsc_2d_map) + src_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset;
 		dst_ptr->map_tab[i].param_addr = (void *)addr;
 		dst_ptr->map_tab[i].len = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_len;
-		dst_ptr->map_tab[i].grid = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;			
+		dst_ptr->map_tab[i].grid = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
 		dst_ptr->map_tab[i].gain_w = _pm_get_lens_grid_pitch(dst_ptr->map_tab[i].grid, img_size_ptr->w, ISP_ONE);
 		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(dst_ptr->map_tab[i].grid, img_size_ptr->h, ISP_ONE);
 
@@ -124,6 +124,12 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	dst_ptr->cur.update_all = 1;
 	header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
+
+	ISP_LOGD("image size %d %d, grid %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
+		dst_ptr->resolution.w, dst_ptr->resolution.h, dst_ptr->cur.grid_width,
+		dst_ptr->lsc_info.gain_w, dst_ptr->lsc_info.gain_h,
+		dst_ptr->cur.grid_x_num, dst_ptr->cur.grid_y_num, dst_ptr);
+
 	return rtn;
 }
 
@@ -151,15 +157,14 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 
 	case ISP_PM_BLK_LSC_UPDATE_GRID:
 		{
-			//cmr_u32 i = 0;
 			cmr_u32* adaptive_size_info = (cmr_u32 *) param_ptr0;
 			cmr_u32 cur_resolution_w = adaptive_size_info[0];
 			cmr_u32 cur_resolution_h = adaptive_size_info[1];
 			cmr_u32 lsc_grid = adaptive_size_info[2];
 			struct isp_2d_lsc_param *dst_ptr = dst_lnc_ptr;
 
-			ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_grid=%d, orig=%d",
-						lsc_grid, dst_lnc_ptr->cur.grid_width);
+			ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_grid=%d, orig=%d, hdr %p\n",
+						lsc_grid, dst_lnc_ptr->cur.grid_width, dst_ptr);
 
 			if (lsc_grid != dst_lnc_ptr->cur.grid_width) {
 				ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_resolution[%d,%d], orig[%d,%d]",
@@ -182,9 +187,14 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 				dst_ptr->cur.grid_num_t = dst_ptr->cur.grid_x_num * dst_ptr->cur.grid_y_num ;
 				dst_ptr->cur.weight_num = (lsc_grid / 2 + 1)* 3 * sizeof(cmr_s16);
 
-				dst_ptr->cur.update_all = 1;
-				lnc_header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 			}
+
+			dst_ptr->cur.update_all = 1;
+			lnc_header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
+			ISP_LOGD("image size %d %d, grid %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
+				dst_ptr->resolution.w, dst_ptr->resolution.h, dst_ptr->cur.grid_width,
+				dst_ptr->lsc_info.gain_w, dst_ptr->lsc_info.gain_h,
+				dst_ptr->cur.grid_x_num, dst_ptr->cur.grid_y_num, dst_ptr);
 		}
 		break;
 

@@ -1397,6 +1397,22 @@ get_blocks:
 		}
 		break;
 	}
+	case ISP_PM_CMD_SET_GRID0:
+	case ISP_PM_CMD_SET_GRID1:
+	{
+		cmr_u32 set_id = PARAM_SET0;
+		struct isp_pm_ioctl_input *ioctrl_input_ptr = (struct isp_pm_ioctl_input *)param_ptr;
+		struct isp_pm_param_data *param_data_ptr = ioctrl_input_ptr->param_data_ptr;
+
+		if (PNULL == param_data_ptr) {
+			ISP_LOGE("fail to get valid param_data_ptr");
+			rtn = ISP_ERROR;
+			return rtn;
+		}
+		set_id = (cmd == ISP_PM_CMD_SET_GRID0) ? PARAM_SET0 : PARAM_SET1;
+		rtn = isp_pm_set_block_param(pm_cxt_ptr, param_data_ptr, set_id);
+		break;
+	}
 	case ISP_PM_CMD_SET_SMART:
 	{
 		cmr_u32 i = 0;

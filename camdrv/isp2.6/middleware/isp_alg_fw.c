@@ -2386,7 +2386,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					       cxt->aem_stats_data.g_info,
 					       cxt->aem_stats_data.b_info,
 					       &stat_img_size, &win_size,
-					       cxt->commn_cxt.src.w, cxt->commn_cxt.src.h,
+					       cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
 					       awb_output->ct, awb_output->gain.r, awb_output->gain.b,
 					       ae_in->ae_output.is_stab, ae_in);
 			ISP_TRACE_IF_FAIL(ret, ("fail to do alsc_calc"));
@@ -4460,9 +4460,11 @@ static cmr_int ispalg_update_smart_param(cmr_handle isp_alg_handle)
 static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
+	enum isp_pm_cmd  cmd;
 	cmr_s32 i =0;
 	cmr_s32 lsc_result_size = 0;
 	cmr_u16 *lsc_result_address_new = NULL;
+	struct isp_size pic_size;
 	struct isp_2d_lsc_param *lsc_tab_param_ptr;
 	struct isp_lsc_info *lsc_info_new;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -4476,8 +4478,9 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	if (cxt->lsc_cxt.sw_bypass)
 		return 0;
 
-	fwstart_info->img_width_new  = cxt->commn_cxt.src.w;
-	fwstart_info->img_height_new = cxt->commn_cxt.src.h;
+	pic_size = cxt->commn_cxt.prv_size;
+	fwstart_info->img_width_new  = cxt->commn_cxt.prv_size.w;
+	fwstart_info->img_height_new = cxt->commn_cxt.prv_size.h;
 
 	memset(&input, 0, sizeof(struct isp_pm_ioctl_input));
 	memset(&pm_param, 0, sizeof(pm_param));
@@ -4487,26 +4490,47 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	lsc_info_new = (struct isp_lsc_info *)cxt->lsc_cxt.lsc_info;
 
-	if(cxt->lsc_cxt.LSC_SPD_VERSION >= 6){
-		ISP_LOGI("[ALSC] lsc_pm_normalization, new_image_size[%d,%d], full_image_size[%d,%d]",cxt->commn_cxt.src.w,cxt->commn_cxt.src.h,cxt->lsc_cxt.full_size_width,
-			cxt->lsc_cxt.full_size_height);
-		if(cxt->lsc_cxt.full_size_width/cxt->commn_cxt.src.w == cxt->lsc_cxt.full_size_height/cxt->commn_cxt.src.h){
+	ISP_LOGD("size0 (%d, %d), size1 (%d %d), lsc size (%d %d),  grid %d, gain_w %d gain_h %d\n",
+		pic_size.w, pic_size.h, cxt->commn_cxt.src.w, cxt->commn_cxt.src.h,
+		lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h,
+		lsc_info_new->grid, lsc_info_new->gain_w, lsc_info_new->gain_h);
+
+	for (i = 0; (i < (cxt->zsl_flag ? 2 : 1)) && (cxt->lsc_cxt.LSC_SPD_VERSION >= 6); i++) {
+
+		if (i == 0) {
+			pic_size = cxt->commn_cxt.prv_size;
+			cmd = ISP_PM_CMD_SET_GRID0;
+		} else {
+			pic_size = cxt->commn_cxt.src;
+			cmd = ISP_PM_CMD_SET_GRID1;
+		}
+
+		ISP_LOGI("[ALSC] lsc_pm_normalization, new_image_size[%d,%d], full_image_size[%d,%d]",
+			pic_size.w, pic_size.h, cxt->lsc_cxt.full_size_width, cxt->lsc_cxt.full_size_height);
+
+		if((cxt->lsc_cxt.full_size_width * pic_size.h) == (cxt->lsc_cxt.full_size_height * pic_size.w)){
 			ISP_LOGI("[ALSC] lsc_pm_normalization case1, n binning");
-			adaptive_size_info[0] = cxt->commn_cxt.src.w;
-			adaptive_size_info[1] = cxt->commn_cxt.src.h;
-			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * cxt->commn_cxt.src.w/cxt->lsc_cxt.full_size_width;
+			adaptive_size_info[0] = pic_size.w;
+			adaptive_size_info[1] = pic_size.h;
+			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * pic_size.w / cxt->lsc_cxt.full_size_width;
 			memset(&param_data_grid, 0, sizeof(param_data_grid));
-			BLOCK_PARAM_CFG(input2,param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, &adaptive_size_info[0], 0);
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input2, NULL);
-		}else if(cxt->commn_cxt.src.w == 1280 && cxt->commn_cxt.src.h == 720){
-			ISP_LOGI("[ALSC] lsc_pm_normalization case2, 720p");
+			BLOCK_PARAM_CFG(input2, param_data_grid,
+				ISP_PM_BLK_LSC_UPDATE_GRID,
+				ISP_BLK_2D_LSC,
+				&adaptive_size_info[0], 0);
+			ret = isp_pm_ioctl(cxt->handle_pm, cmd, &input2, NULL);
+		} else if ((pic_size.w == 1280) && (pic_size.h == 720)) {
+			ISP_LOGI("[ALSC] lsc_pm_normalization case2. image size %d %d\n", pic_size.w, pic_size.h);
 			adaptive_size_info[0] = cxt->commn_cxt.src.w;
 			adaptive_size_info[1] = cxt->commn_cxt.src.h;
 			adaptive_size_info[2] = 32;
 			memset(&param_data_grid, 0, sizeof(param_data_grid));
-			BLOCK_PARAM_CFG(input2,param_data_grid, ISP_PM_BLK_LSC_UPDATE_GRID, ISP_BLK_2D_LSC, &adaptive_size_info[0], 0);
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input2, NULL);
-		}else{
+			BLOCK_PARAM_CFG(input2, param_data_grid,
+				ISP_PM_BLK_LSC_UPDATE_GRID,
+				ISP_BLK_2D_LSC,
+				&adaptive_size_info[0], 0);
+			ret = isp_pm_ioctl(cxt->handle_pm, cmd, &input2, NULL);
+		} else {
 			ISP_LOGE("[ALSC] lsc_pm_normalization error");
 		}
 	}
@@ -4590,9 +4614,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		cxt->commn_cxt.prv_size.h >>= 1;
 	}
 
-	ISP_LOGD("work_mode %d, is_dv %d, zsl %d,  size %d %d, 4in1_prev %d\n",
+	ISP_LOGD("work_mode %d, is_dv %d, zsl %d,  size %d %d, prv_size %d %d,  4in1_prev %d %d\n",
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
-		in_ptr->size.w, in_ptr->size.h, (cmr_u32)in_ptr->mode_4in1);
+		in_ptr->size.w, in_ptr->size.h, cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
+		(cmr_u32)in_ptr->mode_4in1, cxt->noramosaic_4in1);
 
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->mem_info.free_cb = in_ptr->free_cb;
@@ -4894,6 +4919,9 @@ static cmr_int ispalg_dump_alsc_info(struct alsc_do_simulation *alsc_param, cmr_
 static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
+	enum isp_pm_cmd  cmd;
+	cmr_u32 adaptive_size_info[3] = {0, 0, 0};
+	struct isp_size pic_size;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	cmr_handle pm_handle = cxt->handle_pm;
@@ -4928,6 +4956,44 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 			ISP_LOGE("fail to Get ALSC ver info!");
 		}
 	}
+
+	if (cxt->lsc_cxt.LSC_SPD_VERSION >= 6) {
+
+		pic_size = cxt->commn_cxt.src;
+		cmd = ISP_PM_CMD_SET_GRID0;
+
+		ISP_LOGI("[ALSC] lsc_pm_normalization, new_image_size[%d,%d], full_image_size[%d,%d]",
+			pic_size.w, pic_size.h, cxt->lsc_cxt.full_size_width, cxt->lsc_cxt.full_size_height);
+
+		if((cxt->lsc_cxt.full_size_width * pic_size.h) == (cxt->lsc_cxt.full_size_height * pic_size.w)){
+			ISP_LOGI("[ALSC] lsc_pm_normalization case1, n binning");
+			adaptive_size_info[0] = pic_size.w;
+			adaptive_size_info[1] = pic_size.h;
+			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * pic_size.w / cxt->lsc_cxt.full_size_width;
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(io_pm_input, pm_param,
+				ISP_PM_BLK_LSC_UPDATE_GRID,
+				ISP_BLK_2D_LSC,
+				&adaptive_size_info[0], 0);
+			ret = isp_pm_ioctl(cxt->handle_pm, cmd, &io_pm_input, NULL);
+		} else if ((pic_size.w == 1280) && (pic_size.h == 720)) {
+			ISP_LOGI("[ALSC] lsc_pm_normalization case2. image size %d %d\n", pic_size.w, pic_size.h);
+			adaptive_size_info[0] = cxt->commn_cxt.src.w;
+			adaptive_size_info[1] = cxt->commn_cxt.src.h;
+			adaptive_size_info[2] = 32;
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(io_pm_input, pm_param,
+				ISP_PM_BLK_LSC_UPDATE_GRID,
+				ISP_BLK_2D_LSC,
+				&adaptive_size_info[0], 0);
+			ret = isp_pm_ioctl(cxt->handle_pm, cmd, &io_pm_input, NULL);
+		} else {
+			ISP_LOGE("[ALSC] lsc_pm_normalization error");
+		}
+	}
+
+	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE)
+		return ISP_SUCCESS;
 
 	if (lsc_ver.LSC_SPD_VERSION >= 2) {
 		memset(&pm_param, 0, sizeof(pm_param));
@@ -5088,10 +5154,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		ISP_RETURN_IF_FAIL(ret, ("fail to update smart parm"));
 	}
 
-	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
-		ispalg_alsc_update(isp_alg_handle);
-	}
-
+	ispalg_alsc_update(isp_alg_handle);
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
