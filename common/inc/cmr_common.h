@@ -1156,6 +1156,7 @@ struct raw_format_postproc_info {
 };
 
 struct common_sn_cmd_param {
+    struct ae_fps_range_info ae_fps_range;
     cmr_uint camera_id;
     struct sensor_exp_info sensor_static_info;
     struct sensor_flash_level flash_level;

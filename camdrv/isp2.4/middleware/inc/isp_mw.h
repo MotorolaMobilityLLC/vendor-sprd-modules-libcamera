@@ -336,6 +336,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_LEDS_CTRL,
 	ISP_CTRL_GET_GLB_GAIN,
 	ISP_CTRL_AE_EXP_COMPENSATION,
+	ISP_CTRL_GET_AE_FPS_RANGE,
 	/* warning if you wanna send async msg
 	 * please add msg id below here
 	 */

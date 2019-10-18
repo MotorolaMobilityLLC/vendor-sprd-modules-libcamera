@@ -1118,6 +1118,12 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_unmap_iommu(handle, (struct sprd_img_iova *)param);
         break;
     }
+    case CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO: {
+        struct camera_context *cxt = (struct camera_context *)handle;
+        ret = cmr_get_ae_fps_range(handle, cxt->camera_id,
+                                   (struct ae_fps_range_info *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_MASTER_ID: {
         int8_t *master_id = (int8_t *)param;
         CMR_LOGD("master id %d", *master_id);
