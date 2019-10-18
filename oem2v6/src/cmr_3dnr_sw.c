@@ -771,6 +771,8 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     }
     else
     {
+        big_buf.gpu_buffer.handle =
+        out->private_data; //(unsigned char *)in->src_frame.addr_vir.addr_y;
         small_image.cpu_buffer.bufferY =
             (unsigned char *)in->src_frame.addr_vir.addr_y +
             threednr_handle->width * threednr_handle->height * 3 / 2;
@@ -790,6 +792,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     }
     CMR_LOGD("big_buf.gpu_buffer.handle %p", big_buf.gpu_buffer.handle);
     ret = threednr_function_new(&small_image, &orig_image);
+
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }

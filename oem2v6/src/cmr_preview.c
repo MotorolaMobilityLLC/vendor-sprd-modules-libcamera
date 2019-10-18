@@ -5245,8 +5245,6 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         if(prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW )
         {
                 prev_cal_3dnr_smallsize (handle,camera_id);
-                real_width = real_width+prev_cxt->threednr_cap_smallwidth;
-                real_height = real_height + prev_cxt->threednr_cap_smallheight;
                 prev_cxt->cap_zsl_mem_size += (prev_cxt->threednr_cap_smallwidth *
                                    prev_cxt->threednr_cap_smallheight * 3 / 2);
                 CMR_LOGI("3dnr type ,add  small buffer to zsl buffer,smallwith=%d,height=%d",prev_cxt->threednr_cap_smallwidth,

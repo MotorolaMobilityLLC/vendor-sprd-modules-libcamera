@@ -529,6 +529,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd,
                                void *private_data);
+    int Callback_Sw3DNRCapturePathMalloc(cmr_u32 size, cmr_u32 sum,
+                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                         cmr_s32 *fd, void **handle,
+                                         cmr_uint width, cmr_uint height);
+    int Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                       cmr_s32 *fd, cmr_u32 sum);
     static int Callback_GPUMalloc(enum camera_mem_cb_type type,
                                   cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
                                   cmr_uint *phy_addr, cmr_uint *vir_addr,
@@ -643,6 +649,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_graphic_memory_t mGraphicBufArray[MAX_GRAPHIC_BUF_NUM];
+    sprd_graphic_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
+
     sprd_camera_memory_t *mReDisplayHeap;
 
     int mPreviewHeight;
@@ -731,6 +739,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;
+    uint32_t m3dnrGraphicPathHeapNum;
 
     uint32_t mPreviewDcamAllocBufferCnt;
     sprd_camera_memory_t
