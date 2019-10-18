@@ -5326,17 +5326,18 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
-        if (!mIsAutoFocus) {
+        if (!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_CAF) {
             if (focus_status->is_in_focus) {
                 setAfState(AF_INITIATES_NEW_SCAN);
             } else {
                 setAfState(AF_COMPLETES_CURRENT_SCAN);
                 mLatestFocusDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
-                af_type = focus_status->af_focus_type;
 
             }
+        }else if(!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_FAF){
+            if(!(focus_status->is_in_focus))
+               af_type = focus_status->af_focus_type;
         }
-
         break;
 
     case CAMERA_EVT_CB_FOCUS_END:
