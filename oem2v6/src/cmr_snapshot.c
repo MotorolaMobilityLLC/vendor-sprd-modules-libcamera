@@ -695,7 +695,9 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
                 }
                 isp_video_set_capture_complete_flag();
             } else {
-                usleep(500 * 1000);
+                int u_ret = usleep(500 * 1000);
+                if (u_ret)
+                    CMR_LOGE("usleep failed !");
                 send_capture_data(
                     0x10, /* jpg */
                     cxt->req_param.post_proc_setting.actual_snp_size.width,
@@ -1437,24 +1439,20 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             CMR_LOGE("failed to sensor ioctl");
         }
         CMR_LOGD("dump 4in1 mipi raw after remosaic");
-		{
-			struct img_addr raw_buff;
-			void *buff_for14bit = NULL;
-			buff_for14bit = malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height*2);
-		
-			raw_buff.addr_y = (cmr_uint)buff_for14bit;
-		
-			if ( raw_buff.addr_y != 0) {
-				raw14bit_process( &mem_ptr->cap_raw.addr_vir, &raw_buff, mem_ptr->cap_raw.size.width,  mem_ptr->cap_raw.size.height);
-				CMR_LOGI("raw_process after");
-				snp_cxt->ops.dump_image_with_3a_info(
-					snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_RAW14BIT,
-					mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-					mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2,
-					&raw_buff);
-		    }
-			free(buff_for14bit);
-	    }
+        struct img_addr raw_buff;
+        void *buff_for14bit = NULL;
+        buff_for14bit = malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height*2);
+        raw_buff.addr_y = (cmr_uint)buff_for14bit;
+        if ( raw_buff.addr_y != 0) {
+             raw14bit_process( &mem_ptr->cap_raw.addr_vir, &raw_buff, mem_ptr->cap_raw.size.width,  mem_ptr->cap_raw.size.height);
+             CMR_LOGI("raw_process after");
+             snp_cxt->ops.dump_image_with_3a_info(
+                 snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_RAW14BIT,
+                 mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                 mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2,
+                 &raw_buff);
+        }
+        free(buff_for14bit);
     }
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
     if (ret) {
@@ -4442,7 +4440,7 @@ cmr_u32 isp_get_saved_file_count(cmr_handle snp_handle) {
 }
 
 cmr_int isp_overwrite_cap_mem(cmr_handle snp_handle) {
-    FILE *fp = 0;
+    FILE *fp = NULL;
     char isptool_src_mipi_raw[] = SRC_MIPI_RAW;
     struct camera_frame_type frame_type;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
@@ -4454,7 +4452,7 @@ cmr_int isp_overwrite_cap_mem(cmr_handle snp_handle) {
               pixel_width / 8;
     fp = fopen(isptool_src_mipi_raw, "r");
     if (fp != NULL) {
-        fread((void *)mem_ptr->cap_raw.addr_vir.addr_y, 1, memsize, fp);
+        size_t f_ret = fread((void *)mem_ptr->cap_raw.addr_vir.addr_y, 1, memsize, fp);
         fclose(fp);
     } else {
         CMR_LOGE("no input_raw source file");
@@ -4975,7 +4973,9 @@ cmr_int cmr_snapshot_post_proc(cmr_handle snapshot_handle,
             } else {
                 ret = -CMR_CAMERA_FAIL;
             }
-            usleep(10000);
+            int u_ret = usleep(10000);
+            if (u_ret)
+                CMR_LOGE("usleep failed !");
         }
         if (ret == -CMR_CAMERA_FAIL) {
             CMR_LOGE("post proc is going, is_request  is abnormal");
