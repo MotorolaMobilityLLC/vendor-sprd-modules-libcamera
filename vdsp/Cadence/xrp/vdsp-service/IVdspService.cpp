@@ -433,13 +433,14 @@ int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
         int32_t ret = 0;
         int32_t count;
+	int32_t i;
 	char value[128];
         count = GetClientOpenNum(client);
         if(count <= 0) {
                 ALOGE("func:%s , client:%p open count is 0, return invalid client\n" , __func__ , client.get());
                 return -3;
         }
-        mopen_count --;
+        mopen_count -= count;
         if(mopen_count == 0) {
 		if(mworking != 0) {
 			/*busying*/
@@ -463,7 +464,9 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
                 ALOGD("func:%s , really release device:%p\n" , __func__ , mDevice);
         }
 __exitprocess:
-        ret = DecClientOpenNumber(client);
+	for(i =0; i < count; i++)
+        	ret |= DecClientOpenNumber(client);
+	ALOGD("func:%s return value:%d" , __func__ , ret);
         return ret;
 }
 int32_t BnVdspService::sendXrpCommand(sp<IBinder> &client , const char *nsid , struct VdspInputOutput *input , struct VdspInputOutput *output ,
@@ -812,6 +815,7 @@ int32_t BnVdspService::DecClientOpenNumber(sp<IBinder> &client) {
 				for(iter1 = (*iter)->mloadinfo.begin(); iter1 != (*iter)->mloadinfo.end(); /*iter1++*/) {
 					iter1 = (*iter)->mloadinfo.erase(iter1);
 				}
+				(*iter)->mclientbinder->unlinkToDeath((*iter)->mDepthRecipient);
 				mClientInfo.erase(iter);
 				ALOGD("func:%s , erase client:%p\n" , __func__ , client.get());
 			}
@@ -846,6 +850,7 @@ int32_t BnVdspService::ClearClientInfo(sp<IBinder> &client) {
 				iter1 = (*iter)->mloadinfo.erase(iter1);
 				ALOGD("func:%s ,iter1:%p  , mloadinfo end:%p , client:%p\n"  , __func__ , iter1 , (*iter)->mloadinfo.end() , client.get());
 			}
+			(*iter)->mclientbinder->unlinkToDeath((*iter)->mDepthRecipient);
 			iter = mClientInfo.erase(iter);
 			ALOGD("ClearClientInfo client:%p\n" , client.get());
 			return 0;
