@@ -548,14 +548,15 @@ int32_t BnVdspService::loadXrpLibrary(sp<IBinder> &client , const char *name , s
 		return -1;
 	}
 	mworking ++;
-	mLock.unlock();
 	//buffer = input->fd;
 	if(0 == GetLoadNumTotalByName(name)) {
 		#ifdef DVFS_OPEN
 		preprocess_work_piece();
 		#endif
+		mLock.unlock();
 		ALOGD("func:%s , before really load lib:%s , device:%p\n" , __func__ , name , mDevice);
 		ret = sprd_vdsp_load_library(mDevice , (struct sprd_vdsp_inout*)input , name , SPRD_XRP_PRIORITY_2);
+		mLock.lock();
 		ALOGD("func:%s , after really load lib:%s , device:%p result:%d\n" , __func__ , name , mDevice ,ret);
 		#ifdef DVFS_OPEN
 		postprocess_work_piece();
@@ -565,7 +566,6 @@ int32_t BnVdspService::loadXrpLibrary(sp<IBinder> &client , const char *name , s
 		AddClientLoadNumByName(name , client);
 		ALOGD("func:%s , current libname:%s , total count:%d\n" , __func__ , name , GetLoadNumTotalByName(name));
 	}
-	mLock.lock();
 	mworking --;
 	mLock.unlock();
 	return ret;
@@ -583,11 +583,9 @@ int32_t BnVdspService::unloadXrpLibrary(sp<IBinder> &client , const char *name) 
 		return -1;
 	}
 	mworking ++;
-	mLock.unlock();
 	ret = DecClientLoadNumByName(name , client);
 	if(ret != 0) {
 		ALOGE("func:%s , DecClientLoadNumByName name:%s , client:%p , return error\n" , __func__ ,name , client.get());
-		mLock.lock();
 		mworking --;
 		mLock.unlock();
 		return -1;
@@ -597,19 +595,14 @@ int32_t BnVdspService::unloadXrpLibrary(sp<IBinder> &client , const char *name) 
 		#ifdef DVFS_OPEN
                 preprocess_work_piece();
                 #endif
+		mLock.unlock();
 		ret = sprd_vdsp_unload_library(mDevice , name , SPRD_XRP_PRIORITY_2);
+		mLock.lock();
 		#ifdef DVFS_OPEN
                 postprocess_work_piece();
                 #endif
 		ALOGD("func:%s , really unload lib:%s , device:%p\n" , __func__ , name , mDevice);
 	}
-#if 0
-	if(0 == ret) {
-		DecClientLoadNumByName(name , client);
-		ALOGD(ANDROID_LOG_DEBUG,TAG_Server, "func:%s , current libname:%s , total count:%d\n" , __func__ , name , GetLoadNumTotalByName(name));
-	}
-#endif
-	mLock.lock();
 	mworking --;
 	mLock.unlock();
 	return ret;
