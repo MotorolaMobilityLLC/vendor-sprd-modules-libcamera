@@ -420,6 +420,8 @@ static const cmr_u16 s5k3l6xx03_pd_row[] = {
     7,  7,  11, 11, 11, 11, 15, 15, 23, 23, 27, 27, 27, 27, 31, 31,
     39, 39, 43, 43, 43, 43, 47, 47, 55, 55, 59, 59, 59, 59, 63, 63};
 
+static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
+
 static cmr_int s5k3l6xx03_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
@@ -458,6 +460,12 @@ static cmr_int s5k3l6xx03_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_size = (pd_pos_is_right_size / 2);
     pdaf_info->vendor_type = SENSOR_VENDOR_S5K3L8XXM3;
     pdaf_info->sns_orientation = 0; // 1: mirror+flip; 0: normal
+
+    pdaf_info->sns_mode = pd_sns_mode;
+    pdaf_info->vch2_info.bypass = 0;
+    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_data_type = 0;
+    pdaf_info->vch2_info.vch2_mode = 3;
 
     return rtn;
 }
