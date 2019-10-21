@@ -284,6 +284,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
+	if (!cxt->isp_event_cb) {
+		ISP_LOGE("No call back function!");
+		return;
+	}
 	statis_info = malloc(sizeof(*statis_info));
 
 	statis_info->phy_addr = irq_info->phy_addr;
@@ -305,37 +309,21 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		 statis_info->frame_id,
 		 statis_info->sec, statis_info->usec);
 	if (irq_info->irq_property == IRQ_AEM_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_AFM_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_DCAM_PULSE) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_AFL_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_PROC_AFL_DONE, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_PROC_AFL_DONE, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_BINNING_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_BINNING, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_BINNING, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_PDAF_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_EBD_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_HIST_STATIS) {
-		if (cxt->isp_event_cb) {
-			(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
-		}
+		(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
 	} else {
 		free((void *)statis_info);
 		statis_info = NULL;
