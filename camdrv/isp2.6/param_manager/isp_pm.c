@@ -228,7 +228,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_HIST2, 0 }, // todo: should be sizeof(struct sensor_hists2_param)
 	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
 	{ ISP_BLK_POSTERIZE, sizeof(struct sensor_posterize_param) },
-	{ ISP_BLK_Y_GAMMC, sizeof(struct sensor_y_gamma_param) },
+	{ ISP_BLK_Y_GAMMC_V1, sizeof(struct sensor_y_gamma_param) },
 	{ ISP_BLK_3DNR, 0 }, /* NR block */
 	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
 	{ ISP_BLK_EE_V1, 0 }, /* NR block */

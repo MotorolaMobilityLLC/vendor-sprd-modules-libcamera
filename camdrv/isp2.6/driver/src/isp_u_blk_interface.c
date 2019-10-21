@@ -91,6 +91,8 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_PPE_V1, dcam_u_bpc_ppe},
 	{ISP_BLK_IMBALANCE_V1, isp_u_nlm_imblance},
 	{ISP_BLK_NLM_V2, isp_u_nlm_block},
+	{ISP_BLK_Y_GAMMC_V1, isp_u_ygamma_block},
+
 };
 
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)

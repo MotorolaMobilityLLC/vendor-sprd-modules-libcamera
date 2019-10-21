@@ -190,7 +190,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, rgb_gamma), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
 	{ISP_BLK_HSV_NEW2, array_offset(struct isp_context, hsv_new2), sizeof(struct isp_hsv_param_new2), &s_hsv_new2_ops},
 	{ISP_BLK_IIRCNR_YRANDOM, array_offset(struct isp_context, yrandom), sizeof(struct isp_iircnr_yrandom_param), &s_iircnr_yrandom_ops},
-	{ISP_BLK_Y_GAMMC, array_offset(struct isp_context, ygamma), sizeof(struct isp_yuv_ygamma_param), &s_yuv_ygamma_ops},
+	{ISP_BLK_Y_GAMMC_V1, array_offset(struct isp_context, ygamma), sizeof(struct isp_yuv_ygamma_param), &s_yuv_ygamma_ops},
 	{ISP_BLK_POSTERIZE, array_offset(struct isp_context, posterize), sizeof(struct isp_posterize_param), &s_posterize_ops},
 	{ISP_BLK_3DNR, array_offset(struct isp_context, nr3d), sizeof(struct isp_nr3d_param), &s_3dnr_ops},
 	{ISP_BLK_BCHS, array_offset(struct isp_context, bchs), sizeof(struct isp_bchs_param), &s_bchs_ops},

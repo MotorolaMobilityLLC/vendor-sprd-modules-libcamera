@@ -1,0 +1,155 @@
+[W][2019-10-21T15:37:46+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk:17: warning: KERNEL_PATH: export has been deprecated. It is a global setting. See https://android.googlesource.com/platform/build/+/master/Changes.md#export_keyword.
+device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Base.mk:88: warning: BOARD_SECBOOT_CONFIG=true
+device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Base.mk:93: warning: NORMAL_FSTAB=device/sprd/sharkl5Pro/ums512_1h10/rootdir/root/fstab.ums512_1h10.f2fs
+device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Base.mk:96: warning: RAMDISK_FSTAB=device/sprd/sharkl5Pro/ums512_1h10/rootdir/root/fstab.ramdisk
+vendor/sprd/telephony-res/apply_telephony_res.mk:58: warning: Volte config file: vendor/sprd/telephony-res/volte/volte-conf.xml is not needed
+device/sprd/sharkl5Pro/common/DeviceCommon.mk:325: warning: "GPU: TARGET PLATFORM is Gondul"
+device/sprd/sharkl5Pro/common/DeviceCommon.mk:714: warning: "common/DeviceCommon.mk: PRODUCT_PACKAGES:  calibration_init modem_control refnotify slogmodem slogmodem_vendor iqfeed cplogctl cp_diskserver mlogservice  @inherit:build/target/product/telephony.mk MmsFolderView messaging Stk UplmnSettings urild librilcore libimpl-ril libril-lite librilutils libatci ModemNotifier vendor.sprd.hardware.radio@1.0 vendor.sprd.hardware.radio.lite@1.0 libFactoryRadioTest android.hardware.radio@1.2 android.hardware.radio@1.3 android.hardware.radio@1.4 libril-private ims CallFireWall SprdContacts SprdContactsProvider radio_interactor_service radio_interactor_common unisoc_ims_common FMPlayer Flashlight LogManager ylogkat libylog ValidationTools SprdAutoSlt DrmProvider CellBroadcastReceiver Carddav-Sync SystemUpdate Caldav-Sync.apk NoteBook libsprd_agps_agent FMRadio CarrierConfig UASetting DreamFMRadio DreamSoundRecorder SprdMediaProvider DreamCamera2 QuickCamera Omacp NewGallery2 NewMusic ExactCalculator @inherit:build/target/product/gsi_keys.mk engpc  libcomcontrol libengpc_adapt librebootcmd libreadfixednv libdloader libapcomm  libtsxrawdata libmiscdata libapdeepsleep libftmode libeng_tok libap_opt libdcxcali dcxsrv libchipid libtsensor libnefuse  libgpio autotestsensorinfo autotestgps autotestsim autotesttcard libkeypadnpi liblcdnpi liblkvnpi libsensornpi libeng_tok libnpi_rtc libcharge  libdrmomaplugin SGPS ProxyControlNI ProxyControlSI ProxySuplNI uniGNSSTool audio.a2dp.default audio.usb.default audio.r_submix.default android.hardware.audio@5.0-impl android.hardware.audio.effect@5.0-impl android.hardware.broadcastradio@1.0-impl android.hardware.soundtrigger@2.0-impl android.hardware.audio@2.0-service vndk_package android.hardware.power.stats@1.0-service.mock vendor.sprd.hardware.power@4.0-impl vendor.sprd.hardware.power@4.0-service android.hardware.health@2.0-service android.hardware.health@1.0-impl android.hardware.light@2.0-service android.hardware.light@2.0-impl android.hardware.keymaster@4.0-unisoc.service  android.hardware.renderscript@1.0-impl android.hardware.usb@1.1-service @inherit:build/target/product/updatable_apex.mk charge phasecheckserver power_scene_id_define.txt power_scene_config.xml power_resource_file_info.xml libpowerhal_cli libpowerhal_cli.vendor libmemion libion libmapuser libsprd_omx_core libstagefrighthw libstagefright_sprd_h264dec libstagefright_sprd_h264enc libstagefright_sprd_mpeg4dec libstagefright_sprd_mpeg4enc libstagefright_sprd_vpxdec libstagefright_sprd_vp9dec libstagefright_sprd_h265dec libstagefright_sprd_h265enc libstagefright_sprd_mp3dec libstagefright_soft_imaadpcmdec libstagefright_soft_mjpgdec libstagefright_sprd_mp3enc factorytest android.hardware.sensors@1.0-service android.hardware.sensors@1.0-impl android.hardware.vibrator@1.0-service android.hardware.vibrator@1.0-impl vibrator.ums512 android.hardware.memtrack@1.0-service android.hardware.memtrack@1.0-impl vendor.sprd.hardware.gnss@2.0-service vendor.sprd.hardware.gnss@2.0-impl gps.default libgnssmgt libsupl liblcsagent liblcscp liblcswbxml2 liblcsmgt libgpspc sensors.firmware libsensorsdrvcfg libsensorlistcfg mali_gondul.ko gralloc.ums512.so libGLES_mali_64.so libGLES_mali.so libRSDriverArm_64.so libRSDriverArm.so libbccArm_64.so libbccArm.so libmalicore_64.bc libmalicore.bc libhwc2on1adapter.so android.hardware.camera.provider@2.4-impl-sprd android.hardware.camera.provider@2.4-service android.hardware.graphics.mapper@2.0-impl-2.1 android.hardware.graphics.allocator@2.0-impl android.hardware.graphics.allocator@2.0-service android.hardware.graphics.composer@2.1-impl android.hardware.graphics.composer@2.1-service hwcomposer.ums512 PowerSaveModeLauncher connmgr EngineerMode EngineerInternal LogManager dhcp6c dhcp6s radvd tcpdump ext_data ip_monitor.sh tiny_firewall.sh data_rps.sh netbox.sh thermal.default vendor.sprd.hardware.thermal@1.0 vendor.sprd.hardware.thermal@1.0-impl vendor.sprd.hardware.thermal@1.0-service android.hardware.thermal@2.0-service.mock android.hardware.drm@1.0-impl android.hardware.drm@1.0-service android.hardware.drm@1.2-service.clearkey DownloadProviderDrmAddon DocumentsUIXposed dataLogDaemon Email2 Exchange2 SprdCalendar SprdCalendarProvider SprdQuickSearchBox SprdDeskClock tune2fs otpd libapdeepsleep android.hardware.drm@1.2-service.widevine performancemanager"
+device/sprd/sharkl5Pro/common/DeviceCommon.mk:798: warning: "common/DeviceCommon.mk: version type: gms"
+device/sprd/sharkl5Pro/common/DeviceCommon.mk:887: warning: "PRODUCT_USE_PROFILE_FOR_BOOT_IMAGE: false"
+vendor/sprd/generic/misc/launchercfg/LauncherPackages.mk:6: warning: "config begin, TARGET_BOARD_PLATFORM:ums512 USE_PLATFORM_LAUNCHER3:true"
+vendor/sprd/generic/misc/launchercfg/LauncherPackages.mk:7: warning: "config begin, PRODUCT_GO_DEVICE: TARGET_BUILD_VERSION:native CHIPRAM_DDR_CUSTOMIZE_SIZE:"
+vendor/sprd/generic/misc/launchercfg/LauncherPackages.mk:52: warning: "config done, launcher package is: Launcher3QuickStep"
+vendor/sprd/build/core/apply_product_revision.mk:88: warning: -------------------------------------------------
+vendor/sprd/build/core/apply_product_revision.mk:89: warning: PRODUCT_REVISION : "base ctcc storage_trunk multiuser"
+vendor/sprd/build/core/apply_product_revision.mk:90: warning: -------------------------------------------------
+device/sprd/sharkl5Pro/common/features/base/config.mk:19: warning: "SUPPORT_LOCATION = enabled, SUPPORT_LOCATION_GNSS = enabled"
+device/sprd/sharkl5Pro/common/features/base/config.mk:108: warning: "BOARD_HAVE_SPRD_WCN_COMBO = marlin3_lite"
+vendor/sprd/generic/misc/launchercfg/LauncherFeatures.mk:8: warning: "config begin, TARGET_BOARD_PLATFORM:ums512 USE_PLATFORM_LAUNCHER3:true"
+vendor/sprd/generic/misc/launchercfg/LauncherFeatures.mk:9: warning: "config begin, PRODUCT_GO_DEVICE: TARGET_BUILD_VERSION:native CHIPRAM_DDR_CUSTOMIZE_SIZE:"
+vendor/sprd/generic/misc/launchercfg/LauncherFeatures.mk:57: warning: "config done, launcher features is:  ro.launcher.dynamic=true ro.launcher.desktopgrid=true ro.launcher.notifbadge.count=true ro.launcher.multimode=true"
+device/sprd/sharkl5Pro/common/BoardCommon.mk:123: warning: MALI_PLATFORM_NAME:sharkl5Pro
+build/make/core/dumpvar.mk:28: warning: var resolved:NINJA_GOALS~build/make/core/ninja_config.mk~MODULES-IN-vendor-sprd-modules-libcamera
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_DEVICE~build/make/core/product_config.mk~ums512_1h10
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_DEVICE_DIR~build/make/core/board_config.mk~device/sprd/sharkl5Pro/ums512_1h10
+build/make/core/dumpvar.mk:28: warning: var resolved:BUILD_BROKEN_DUP_RULES~device/sprd/sharkl5Pro/common/BoardCommon.mk~true
+build/make/core/dumpvar.mk:28: warning: var resolved:BOARD_VNDK_VERSION~build/make/core/config.mk device/sprd/sharkl5Pro/common/DeviceCommon.mk~current
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_PRODUCT~build/make/core/envsetup.mk build/make/core/product_config.mk~ums512_1h10_ctcc
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_BUILD_VARIANT~build/make/core/envsetup.mk build/make/core/product_config.mk~userdebug
+build/make/core/dumpvar.mk:28: warning: var resolved:PLATFORM_VERSION_CODENAME~build/make/core/version_defaults.mk~REL
+build/make/core/dumpvar.mk:28: warning: var resolved:PLATFORM_VERSION~build/make/core/version_defaults.mk~10
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_PRODUCT~build/make/core/envsetup.mk build/make/core/product_config.mk~ums512_1h10_ctcc
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_BUILD_VARIANT~build/make/core/envsetup.mk build/make/core/product_config.mk~userdebug
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_BUILD_VERSION~~native
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_BUILD_TYPE~build/make/core/envsetup.mk~release
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_ARCH~device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk~arm64
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_ARCH_VARIANT~device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk build/make/core/combo/TARGET_linux-arm64.mk~armv8-2a
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_CPU_VARIANT~device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk~cortex-a75
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_2ND_ARCH~device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk~arm
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_2ND_ARCH_VARIANT~device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk~armv8-2a
+build/make/core/dumpvar.mk:28: warning: var resolved:TARGET_2ND_CPU_VARIANT~device/sprd/sharkl5Pro/ums512_1h10/ums512_1h10_Natv.mk~cortex-a55
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_ARCH~build/make/core/envsetup.mk~x86_64
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_2ND_ARCH~build/make/core/envsetup.mk~x86
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_OS~build/make/core/envsetup.mk~linux
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_OS_EXTRA~build/make/core/envsetup.mk~Linux-3.19.0-25-generic-x86_64-Ubuntu-14.04.3-LTS
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_CROSS_OS~build/make/core/envsetup.mk~windows
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_CROSS_ARCH~build/make/core/envsetup.mk~x86
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_CROSS_2ND_ARCH~build/make/core/envsetup.mk~x86_64
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_BUILD_TYPE~build/make/core/envsetup.mk~release
+build/make/core/dumpvar.mk:28: warning: var resolved:HOST_PYTHON_VERSION~build/make/core/envsetup.mk~Python 2.7.15+
+build/make/core/dumpvar.mk:28: warning: var resolved:BUILD_ID~build/make/core/version_defaults.mk~QP1A.190711.020
+build/make/core/dumpvar.mk:28: warning: var resolved:OUT_DIR~~out
+============================================
+PLATFORM_VERSION_CODENAME=REL
+PLATFORM_VERSION=10
+TARGET_PRODUCT=ums512_1h10_ctcc
+TARGET_BUILD_VARIANT=userdebug
+TARGET_BUILD_VERSION=native
+TARGET_BUILD_TYPE=release
+TARGET_ARCH=arm64
+TARGET_ARCH_VARIANT=armv8-2a
+TARGET_CPU_VARIANT=cortex-a75
+TARGET_2ND_ARCH=arm
+TARGET_2ND_ARCH_VARIANT=armv8-2a
+TARGET_2ND_CPU_VARIANT=cortex-a55
+HOST_ARCH=x86_64
+HOST_2ND_ARCH=x86
+HOST_OS=linux
+HOST_OS_EXTRA=Linux-3.19.0-25-generic-x86_64-Ubuntu-14.04.3-LTS
+HOST_CROSS_OS=windows
+HOST_CROSS_ARCH=x86
+HOST_CROSS_2ND_ARCH=x86_64
+HOST_BUILD_TYPE=release
+HOST_PYTHON_VERSION=Python 2.7.15+
+BUILD_ID=QP1A.190711.020
+OUT_DIR=out
+============================================
+[W][2019-10-21T15:37:53+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+ninja: no work to do.
+[W][2019-10-21T15:37:54+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+ninja: no work to do.
+[W][2019-10-21T15:37:55+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+[W][2019-10-21T15:37:57+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+No need to regenerate ninja file
+[W][2019-10-21T15:37:58+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+No need to regenerate ninja file
+[W][2019-10-21T15:38:13+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+No need to regenerate ninja file
+Starting ninja...
+[  1% 1/60] target thumb C: libcamdrv_32 <= vendor/sprd/modules/libcamera/camdrv/isp2.6/driver/src/isp_u_blk_interface.c
+[  3% 2/60] target thumb C: libcampm_32 <= vendor/sprd/modules/libcamera/camdrv/isp2.6/param_manager/isp_blocks_cfg.c
+[  5% 3/60] target  C: libcampm <= vendor/sprd/modules/libcamera/camdrv/isp2.6/param_manager/isp_blocks_cfg.c
+[  6% 4/60] target  C: libcamdrv <= vendor/sprd/modules/libcamera/camdrv/isp2.6/driver/src/isp_u_blk_interface.c
+[  8% 5/60] target thumb C: libispalg_32 <= vendor/sprd/modules/libcamera/ispalg/isp3.x/smart/smart_ctrl.c
+[ 10% 6/60] target  C: libispalg <= vendor/sprd/modules/libcamera/ispalg/isp3.x/smart/smart_ctrl.c
+[ 11% 7/60] target SharedLib: libcampm (out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libcampm_intermediates/LINKED/libcampm.so)
+[ 13% 8/60] target SharedLib: libcampm_32 (out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libcampm_intermediates/LINKED/libcampm.so)
+[ 15% 9/60] target Symbolic: libcampm_32 (out/target/product/ums512_1h10/symbols/vendor/lib/libcampm.so)
+[ 16% 10/60] target Symbolic: libcampm (out/target/product/ums512_1h10/symbols/vendor/lib64/libcampm.so)
+[ 18% 11/60] target Strip: libcampm (out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libcampm_intermediates/libcampm.so)
+[ 20% 12/60] Install: out/target/product/ums512_1h10/vendor/lib64/libcampm.so
+[ 21% 13/60] build out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libcampm_intermediates/libcampm.so.toc
+[ 23% 14/60] target Strip: libcampm_32 (out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libcampm_intermediates/libcampm.so)
+[ 25% 15/60] Install: out/target/product/ums512_1h10/vendor/lib/libcampm.so
+[ 26% 16/60] build out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libcampm_intermediates/libcampm.so.toc
+[ 28% 17/60] target SharedLib: libcamdrv (out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libcamdrv_intermediates/LINKED/libcamdrv.so)
+[ 30% 18/60] target SharedLib: libispalg (out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libispalg_intermediates/LINKED/libispalg.so)
+[ 31% 19/60] target Symbolic: libcamdrv (out/target/product/ums512_1h10/symbols/vendor/lib64/libcamdrv.so)
+[ 33% 20/60] target Symbolic: libispalg (out/target/product/ums512_1h10/symbols/vendor/lib64/libispalg.so)
+[ 35% 21/60] target SharedLib: libispalg_32 (out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libispalg_intermediates/LINKED/libispalg.so)
+[ 36% 22/60] target SharedLib: libcamdrv_32 (out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libcamdrv_intermediates/LINKED/libcamdrv.so)
+[ 38% 23/60] target Symbolic: libispalg_32 (out/target/product/ums512_1h10/symbols/vendor/lib/libispalg.so)
+[ 40% 24/60] target Symbolic: libcamdrv_32 (out/target/product/ums512_1h10/symbols/vendor/lib/libcamdrv.so)
+[ 41% 25/60] target Strip: libispalg (out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libispalg_intermediates/libispalg.so)
+[ 43% 26/60] target Strip: libcamdrv (out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libcamdrv_intermediates/libcamdrv.so)
+[ 45% 27/60] Install: out/target/product/ums512_1h10/vendor/lib64/libispalg.so
+[ 46% 28/60] Install: out/target/product/ums512_1h10/vendor/lib64/libcamdrv.so
+[ 48% 29/60] build out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libcamdrv_intermediates/libcamdrv.so.toc
+[ 60% 30/50] build out/target/product/ums512_1h10/obj/SHARED_LIBRARIES/libispalg_intermediates/libispalg.so.toc
+[ 62% 31/50] target Strip: libcamdrv_32 (out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libcamdrv_intermediates/libcamdrv.so)
+[ 64% 32/50] target Strip: libispalg_32 (out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libispalg_intermediates/libispalg.so)
+[ 66% 33/50] Install: out/target/product/ums512_1h10/vendor/lib/libcamdrv.so
+[ 68% 34/50] Install: out/target/product/ums512_1h10/vendor/lib/libispalg.so
+[ 70% 35/50] build out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libispalg_intermediates/libispalg.so.toc
+[ 72% 36/50] build out/target/product/ums512_1h10/obj_arm/SHARED_LIBRARIES/libcamdrv_intermediates/libcamdrv.so.toc
+[W][2019-10-21T15:38:13+0800][1] bool caps::initNs(nsjconf_t *)():215 prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL): Invalid argument
+
+[0;32m#### build completed successfully (59 seconds) ####[00m
+Failed to copy build_record.txt
+===============BUILD TIME ANALYSIS===============
+[33mFailed to open build_record.txt[0m
+[32m[total build time 0:00:59 (hh:mm:ss)][0m
+android build time: 0:00:59(100.00%)
+	[android build]regen: 0:00:51(85.99%)
+	[android build]real build: 0:00:08(14.01%)
+[32m[android build time details][0m
+startup: 307.39ms(0.52%)
+find modules: 14,731.07ms(25.04%)
+path: 7,958.76ms(13.53%)
+dumpvars: 7,506.91ms(12.76%)
+[soong]blueprint bootstrap: 375.26ms(0.64%)
+[soong]environment check: 352.07ms(0.60%)
+[soong]minibp: 70.55ms(0.12%)
+[soong]bpglob: 18.64ms(0.03%)
+[soong]minibootstrap: 658.92ms(1.12%)
+[soong]bootstrap: 2,687.57ms(4.57%)
+soong: 4,163.24ms(7.08%)
+kati cleanspec: 556.03ms(0.95%)
+kati build: 14,775.88ms(25.12%)
+kati package: 355.88ms(0.61%)
+ninja: 8,241.03ms(14.01%)
+[32m[build command][0m
+/home8/payne.zhang/l5pro_q/build/soong/soong_ui.bash --make-mode MODULES-IN-vendor-sprd-modules-libcamera -j16
+===============BUILD TIME ANALYSIS===============
+
