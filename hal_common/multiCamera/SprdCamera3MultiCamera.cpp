@@ -2645,136 +2645,124 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                      touch_area[4]);
         }
 
-        if (metaSettingsWide->exists(ANDROID_CONTROL_AF_REGIONS)) {
-            int32_t af_w_area[5] = {0};
-            int32_t af_t_area[5] = {0};
-            int32_t af_sw_area[5] = {0};
-            size_t i = 0;
+    int32_t af_area[5] = {0};
+    if (meta->exists(ANDROID_CONTROL_AF_REGIONS)) {
+        af_area[0] =
+            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[0];
+        af_area[1] =
+            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[1];
+        af_area[2] =
+            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[2];
+        af_area[3] =
+            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[3];
+        af_area[4] =
+            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[4];
+        HAL_LOGD("app af_area = %d, %d, %d, %d, %d", af_area[0],
+            af_area[1], af_area[2], af_area[3], af_area[4]);
+    }
 
-            if (metaSettingsWide->find(ANDROID_CONTROL_AF_REGIONS).count == 5) {
-                for (i = 0; i < 5; i++) {
-                    af_w_area[i] =
-                        metaSettingsWide->find(ANDROID_CONTROL_AF_REGIONS)
-                            .data.i32[i];
-                    HAL_LOGD("af_w_i = %d,af_w_area = %d, %d, %d, %d, %d", i,
-                             af_w_area[0], af_w_area[1], af_w_area[2],
-                             af_w_area[3], af_w_area[4]);
-                    af_t_area[i] =
-                        metaSettingsWide->find(ANDROID_CONTROL_AF_REGIONS)
-                            .data.i32[i];
-                    HAL_LOGD("af_t_i = %d,af_t_area = %d, %d, %d, %d, %d", i,
-                             af_t_area[0], af_t_area[1], af_t_area[2],
-                             af_t_area[3], af_t_area[4]);
-                    af_sw_area[i] =
-                        metaSettingsSw->find(ANDROID_CONTROL_AF_REGIONS)
-                            .data.i32[i];
-                    HAL_LOGD("af_sw_i = %d,af_sw_area = %d, %d, %d, %d, %d", i,
-                             af_sw_area[0], af_sw_area[1], af_sw_area[2],
-                             af_sw_area[3], af_sw_area[4]);
-                }
-            }
-            if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mWideMaxWidth,
-                              mWideMaxHeight, mZoomValue, 1, af_w_area);
-                metaSettingsWide->update(ANDROID_CONTROL_AF_REGIONS, af_w_area,
-                                         ARRAY_SIZE(af_w_area));
+    if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
+        float left_offest = 0, top_offest = 0;
+        float left_dst = 0, top_dst = 0;
+        left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
+        top_offest = ((float)mWideMaxHeight - (float)mSwMaxHeight) / 2;
+        left_dst = af_area[2]- af_area[0];
+        top_dst = af_area[3]- af_area[1];
+        //af_area[0] = af_area[0] * mZoomValue - left_offest;
+        //af_area[1] = af_area[1] * mZoomValue - top_offest;
+        af_area[0] = af_area[0] * ((float)mSwMaxWidth / (float)mWideMaxWidth) * 0.6;
+        af_area[1] = af_area[1] * ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
+        af_area[2] = af_area[0] + left_dst;
+        af_area[3] = af_area[1] + top_dst;
+        metaSettingsSw->update(ANDROID_CONTROL_AF_REGIONS,
+                           af_area, ARRAY_SIZE(af_area));
+        HAL_LOGD("sw af_area = %d, %d, %d, %d, %d", af_area[0],
+            af_area[1], af_area[2], af_area[3], af_area[4]);
+    } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
+        float left_offest = 0, top_offest = 0;
+        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
+        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
+        af_area[0] = af_area[0] - left_offest;
+        af_area[1] = af_area[1] - top_offest + 1;
+        af_area[2] = af_area[2] - left_offest;
+        af_area[3] = af_area[3] - top_offest + 1;
+        metaSettingsTele->update(ANDROID_CONTROL_AF_REGIONS,
+                             af_area, ARRAY_SIZE(af_area));
+        HAL_LOGD("tele af_area = %d, %d, %d, %d, %d", af_area[0],
+            af_area[1], af_area[2], af_area[3], af_area[4]);
+    } else { // wide
+        float left_offest = 0, top_offest = 0;
+        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
+        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
+        af_area[0] = af_area[0] - left_offest;
+        af_area[1] = af_area[1] - top_offest + 1;
+        af_area[2] = af_area[2] - left_offest;
+        af_area[3] = af_area[3] - top_offest + 1;
+        metaSettingsWide->update(ANDROID_CONTROL_AF_REGIONS,
+                             af_area, ARRAY_SIZE(af_area));
+        HAL_LOGD("wide af_area = %d, %d, %d, %d, %d", af_area[0],
+            af_area[1], af_area[2], af_area[3], af_area[4]);
+    }
 
-                float inputRatio = mZoomValue / mSwitch_W_T_Threshold;
-                inputRatio = inputRatio > 4 ? 4 : inputRatio;
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mTeleMaxWidth,
-                              mTeleMaxHeight, mZoomValue, inputRatio,
-                              af_t_area);
-                metaSettingsTele->update(ANDROID_CONTROL_AF_REGIONS, af_t_area,
-                                         ARRAY_SIZE(af_t_area));
-            } else if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
-                coordinateTra(mSwMaxWidth, mSwMaxHeight, mWideMaxWidth,
-                              mWideMaxHeight, mZoomValue, mZoomValue,
-                              af_w_area);
-                metaSettingsWide->update(ANDROID_CONTROL_AF_REGIONS, af_w_area,
-                                         ARRAY_SIZE(af_w_area));
+    int32_t ae_area[5] = {0};
+    if (meta->exists(ANDROID_CONTROL_AE_REGIONS)) {
+        ae_area[0] =
+            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[0];
+        ae_area[1] =
+            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[1];
+        ae_area[2] =
+            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[2];
+        ae_area[3] =
+            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[3];
+        ae_area[4] =
+            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[4];
+        HAL_LOGD("app ae_area = %d, %d, %d, %d, %d", ae_area[0],
+            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
+    }
 
-                coordinateTra(mSwMaxWidth, mSwMaxHeight, mSwMaxWidth,
-                              mSwMaxHeight, mZoomValue, 1, af_sw_area);
-                metaSettingsSw->update(ANDROID_CONTROL_AF_REGIONS, af_sw_area,
-                                       ARRAY_SIZE(af_sw_area));
-            } else { // wide
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mWideMaxWidth,
-                              mWideMaxHeight, mZoomValue, mZoomValue,
-                              af_w_area);
-                metaSettingsWide->update(ANDROID_CONTROL_AF_REGIONS, af_w_area,
-                                         ARRAY_SIZE(af_w_area));
+    if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
+        float left_offest = 0, top_offest = 0;
+        float left_dst = 0, top_dst = 0;
+        left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
+        top_offest = ((float)mWideMaxHeight - (float)mSwMaxHeight) / 2;
+        left_dst = ae_area[2]- ae_area[0];
+        top_dst = ae_area[3]- ae_area[1];
+        //ae_area[0] = ae_area[0] * mZoomValue - left_offest;
+        //ae_area[1] = ae_area[1] * mZoomValue - top_offest;
+        ae_area[0] = ae_area[0] * ((float)mSwMaxWidth / (float)mWideMaxWidth) * 0.6;
+        ae_area[1] = ae_area[1] * ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
+        ae_area[2] = ae_area[0] + left_dst;
+        ae_area[3] = ae_area[1] + top_dst;
+        metaSettingsSw->update(ANDROID_CONTROL_AE_REGIONS,
+                           ae_area, ARRAY_SIZE(ae_area));
+        HAL_LOGD("sw ae_area = %d, %d, %d, %d, %d", ae_area[0],
+            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
+    } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
+        float left_offest = 0, top_offest = 0;
+        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
+        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
+        ae_area[0] = ae_area[0] - left_offest;
+        ae_area[1] = ae_area[1] - top_offest + 1;
+        ae_area[2] = ae_area[2] - left_offest;
+        ae_area[3] = ae_area[3] - top_offest + 1;
+        metaSettingsTele->update(ANDROID_CONTROL_AE_REGIONS,
+                             ae_area, ARRAY_SIZE(ae_area));
+        HAL_LOGD("tele ae_area = %d, %d, %d, %d, %d", ae_area[0],
+            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
+    } else { // wide
+        float left_offest = 0, top_offest = 0;
+        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
+        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
+        ae_area[0] = ae_area[0] - left_offest;
+        ae_area[1] = ae_area[1] - top_offest + 1;
+        ae_area[2] = ae_area[2] - left_offest;
+        ae_area[3] = ae_area[3] - top_offest + 1;
+        metaSettingsWide->update(ANDROID_CONTROL_AE_REGIONS,
+                             ae_area, ARRAY_SIZE(ae_area));
+        HAL_LOGD("wide ae_area = %d, %d, %d, %d, %d", ae_area[0],
+            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
+    }
 
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mTeleMaxWidth,
-                              mTeleMaxHeight, mZoomValue, 1, af_t_area);
-                metaSettingsTele->update(ANDROID_CONTROL_AF_REGIONS, af_t_area,
-                                         ARRAY_SIZE(af_t_area));
-            }
-        }
-
-        if (metaSettingsWide->exists(ANDROID_CONTROL_AE_REGIONS)) {
-            int32_t ae_w_area[5] = {0};
-            int32_t ae_t_area[5] = {0};
-            int32_t ae_sw_area[5] = {0};
-            size_t i = 0;
-            if (metaSettingsWide->find(ANDROID_CONTROL_AE_REGIONS).count == 5) {
-                for (i = 0; i < 5; i++) {
-                    ae_w_area[i] =
-                        metaSettingsWide->find(ANDROID_CONTROL_AE_REGIONS)
-                            .data.i32[i];
-                    HAL_LOGD("ae_w_i = %d,ae_w_area = %d, %d, %d, %d, %d", i,
-                             ae_w_area[0], ae_w_area[1], ae_w_area[2],
-                             ae_w_area[3], ae_w_area[4]);
-                    ae_t_area[i] =
-                        metaSettingsWide->find(ANDROID_CONTROL_AE_REGIONS)
-                            .data.i32[i];
-                    HAL_LOGD("ae_t_i = %d,ae_t_area = %d, %d, %d, %d, %d", i,
-                             ae_t_area[0], ae_t_area[1], ae_t_area[2],
-                             ae_t_area[3], ae_t_area[4]);
-                    ae_sw_area[i] =
-                        metaSettingsSw->find(ANDROID_CONTROL_AE_REGIONS)
-                            .data.i32[i];
-                    HAL_LOGD("ae_sw_i = %d,ae_sw_area = %d, %d, %d, %d, %d", i,
-                             ae_sw_area[0], ae_sw_area[1], ae_sw_area[2],
-                             ae_sw_area[3], ae_sw_area[4]);
-                }
-            }
-            if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mWideMaxWidth,
-                              mWideMaxHeight, mZoomValue, 1, ae_w_area);
-                metaSettingsWide->update(ANDROID_CONTROL_AE_REGIONS, ae_w_area,
-                                         ARRAY_SIZE(ae_w_area));
-
-                float inputRatio = mZoomValue / mSwitch_W_T_Threshold;
-                inputRatio = inputRatio > 4 ? 4 : inputRatio;
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mTeleMaxWidth,
-                              mTeleMaxHeight, mZoomValue, inputRatio,
-                              ae_t_area);
-                metaSettingsTele->update(ANDROID_CONTROL_AE_REGIONS, ae_t_area,
-                                         ARRAY_SIZE(ae_t_area));
-            } else if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
-                coordinateTra(mSwMaxWidth, mSwMaxHeight, mWideMaxWidth,
-                              mWideMaxHeight, mZoomValue, mZoomValue,
-                              ae_w_area);
-                metaSettingsWide->update(ANDROID_CONTROL_AE_REGIONS, ae_w_area,
-                                         ARRAY_SIZE(ae_w_area));
-
-                coordinateTra(mSwMaxWidth, mSwMaxHeight, mSwMaxWidth,
-                              mSwMaxHeight, mZoomValue, 1, ae_sw_area);
-                metaSettingsSw->update(ANDROID_CONTROL_AE_REGIONS, ae_sw_area,
-                                       ARRAY_SIZE(ae_sw_area));
-            } else { // wide
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mWideMaxWidth,
-                              mWideMaxHeight, mZoomValue, mZoomValue,
-                              ae_w_area);
-                metaSettingsWide->update(ANDROID_CONTROL_AE_REGIONS, ae_w_area,
-                                         ARRAY_SIZE(ae_w_area));
-
-                coordinateTra(mTeleMaxWidth, mTeleMaxHeight, mTeleMaxWidth,
-                              mTeleMaxHeight, mZoomValue, 1, ae_t_area);
-                metaSettingsTele->update(ANDROID_CONTROL_AE_REGIONS, ae_t_area,
-                                         ARRAY_SIZE(ae_t_area));
-            }
-        }
     }
 
     if (mZoomValue < mSwitch_W_T_Threshold &&
