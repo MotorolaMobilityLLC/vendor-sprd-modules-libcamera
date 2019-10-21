@@ -16,15 +16,13 @@
 #ifndef _AE_DEBUG_H_
 #define _AE_DEBUG_H_
 
-#ifdef WIN32
 #include <stdlib.h>
-#include "ae_porting.h"
-#include "cmr_types.h"
-#else
-#include "cmr_types.h"
-#include "ae_data_types.h"
-#endif
 #include <stdio.h>
+#include "ae_data_types.h"
+#ifdef WIN32
+#include "ae_porting.h"
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
