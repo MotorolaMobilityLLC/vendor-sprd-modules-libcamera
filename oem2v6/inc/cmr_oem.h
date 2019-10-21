@@ -403,6 +403,8 @@ struct camera_context {
     cmr_u32 flash_skip_frame_enable;
     cmr_u32 flash_skip_frame_cnt;
     cmr_u32 flash_skip_frame_num;
+    struct isp_face_area fd_face_area_capture;
+    bool is_capture_face;
 };
 
 struct prev_ai_scene_info {

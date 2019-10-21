@@ -1590,6 +1590,10 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
 #endif
         cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
         cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
+        if(cxt->is_capture_face == true){
+            cmr_copy(&cxt->fd_face_area_capture,&cxt->fd_face_area,sizeof(struct isp_face_area));
+            cxt->is_capture_face = false;
+        }
         face_area->face_info[i].brightness =
             frame_param->face_info[i].brightness;
         face_area->face_info[i].angle = frame_param->face_info[i].angle;
@@ -5245,6 +5249,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         if ((cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
              cxt->is_multi_mode == MODE_SELF_SHOT ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+             cxt->is_multi_mode == MODE_BOKEH ||
              (cxt->is_multi_mode == MODE_BLUR &&
               cxt->blur_facebeauty_flag == 1)) &&
             (filter_type == 0)) {
@@ -5297,6 +5302,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 CMR_LOGD("face_beauty smooth %d,bright %d,slim %d,large %d",
                          beautyLevels.smoothLevel, beautyLevels.brightLevel,
                          beautyLevels.slimLevel, beautyLevels.largeLevel);
+                if(cxt->is_multi_mode == MODE_BOKEH){
+                    cmr_copy(&cxt->fd_face_area,&cxt->fd_face_area_capture,sizeof(struct isp_face_area));
+                }
                 int sx, sy, ex, ey, angle, pose;
                 for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
                     sx = (cxt->fd_face_area.face_info[i].sx * pic_width) /
@@ -11880,7 +11888,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         CMR_LOGE("cmr_grab_start_capture failed");
         goto exit;
     }
-
+    cxt->is_capture_face = true;
     isp_param.cmd_value = 0;
     ret =
         camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
