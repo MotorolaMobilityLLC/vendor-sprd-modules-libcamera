@@ -214,7 +214,6 @@ static void afm_setup(af_ctrl_t * af)
 #endif
 	cmr_u32 mode = 1;
 
-	af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 	af->cb_ops.af_monitor_mode(af->caller, (void *)&mode);
 #if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
 	af->cb_ops.af_monitor_iir_nr_cfg(af->caller, (void *)&(af_iir_nr[af->afm_tuning.iir_level]));
@@ -3016,6 +3015,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 		af->afm_skip_num = 0;
 	}
 	ISP_LOGI("afm_skip_num %d", af->afm_skip_num);
+	af->cb_ops.af_monitor_skip_num(af->caller, (void *)&af->afm_skip_num);
 
 	af_set_default_roi(af, af->algo_mode);
 	do_start_af(af);
