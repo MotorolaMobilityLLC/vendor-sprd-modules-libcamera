@@ -31,6 +31,15 @@ extern "C" {
 #define ISP_PM_MAGIC_FLAG        0xFFEE5511
 #define ISP_PM_BLK_UPDATE   (1 << 31)
 
+#define PM_VER_CHIP_MASK		(0xFFFF0000)
+#define PM_VER_SW_MASK		(0x0000FFFF)
+
+enum {
+	PM_CHIP_VER_V25 = 0x00090000,
+	PM_CHIP_VER_V26 = 0x000A0000,
+	PM_CHIP_VER_V27 = 0x000B0000,
+};
+
 enum {
 	PARAM_SET0 = 0,
 	PARAM_SET1,

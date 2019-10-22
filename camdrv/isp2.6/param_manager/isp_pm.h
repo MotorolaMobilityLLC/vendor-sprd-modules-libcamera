@@ -22,7 +22,6 @@
 #define isp_pm_cmd_mask 0xf000
 
 #define ISP_PARAM_FROM_TOOL 1
-#define ISP_TOOL_VERSION_ID 0xb0009
 
 #define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\
 	do {\
