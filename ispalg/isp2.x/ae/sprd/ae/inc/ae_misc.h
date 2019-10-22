@@ -18,6 +18,7 @@
 #define _AE_MISC_H_
 
 #include "cmr_types.h"
+#include "ae_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +34,7 @@ extern "C" {
 		AEC_GET_PRV_PARAM,
 		AEC_GET_AE_TABLE,
 		AEC_GET_DEBUG_INFO,
-		AEC_GET_CMD_MAX,	
+		AEC_GET_CMD_MAX,
 		AEC_IO_CTRL_MAX
 	};
 
@@ -73,11 +74,11 @@ extern "C" {
 		cmr_handle ae_sync_param;
 	};
 
-	cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
-	cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
-	cmr_s32 ae_misc_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
-	cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
-	cmr_s32 ae_misc_sync_calculation(cmr_handle handle,struct ae_misc_sync_param * in_param, struct ae_misc_sync_in * master_param, struct ae_misc_sync_out * slave_param);
+	AE_PUBLIC cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
+	AE_PUBLIC cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
+	AE_PUBLIC cmr_s32 ae_misc_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
+	AE_PUBLIC cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
+	AE_PUBLIC cmr_s32 ae_misc_sync_calculation(cmr_handle handle,struct ae_misc_sync_param * in_param, struct ae_misc_sync_in * master_param, struct ae_misc_sync_out * slave_param);
 
 #ifdef __cplusplus
 }

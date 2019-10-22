@@ -693,6 +693,7 @@ struct ae_alg_calc_result {
 	cmr_handle log;
 	cmr_u32 flag4idx;
 	cmr_u32 face_stable;
+	cmr_u32 face_enable;
 	cmr_u32 face_trigger;
 	cmr_u32 target_offset;
 	cmr_u32 privated_data;
