@@ -871,11 +871,7 @@ int SprdCamera3HWI::configureStreams(
 #if defined(CONFIG_ISP_2_3)
    //do aligment for sharkle due to hardware diff
     if (capture_size.height % 16 != 0) {
-        if (capture_size.height % 16 < 8) {
-            capture_size.height = capture_size.height - capture_size.height % 16;
-        } else {
             capture_size.height = capture_size.height + 16 - capture_size.height % 16;
-        }
     }
 #endif
 

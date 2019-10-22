@@ -1607,14 +1607,16 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                                  &cmd_param);
         exif_unit->actual_picture_size = cmd_param.size_param;
 
-        // sharkl5 or later dont need these code
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
-        // issue, we will remove these code
-        /*
+        // issue, for sharkle only
+#if defined(CONFIG_ISP_2_3)
                 if (is_raw_capture == 0) {
                     if (exif_unit->picture_size.height == 1952 &&
                         exif_unit->picture_size.width == 2592) {
                         exif_unit->picture_size.height = 1944;
+                    } else if (exif_unit->picture_size.height == 1472 &&
+                               exif_unit->picture_size.width == 2592) {
+                        exif_unit->picture_size.height = 1458;
                     } else if (exif_unit->picture_size.height == 1840 &&
                                exif_unit->picture_size.width == 3264) {
                         exif_unit->picture_size.height = 1836;
@@ -1626,6 +1628,9 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                     if (exif_unit->actual_picture_size.height == 1952 &&
                         exif_unit->actual_picture_size.width == 2592) {
                         exif_unit->actual_picture_size.height = 1944;
+                    } else if (exif_unit->actual_picture_size.height == 1472 &&
+                               exif_unit->actual_picture_size.width == 2592) {
+                        exif_unit->actual_picture_size.height = 1458;
                     } else if (exif_unit->actual_picture_size.height == 1840 &&
                                exif_unit->actual_picture_size.width == 3264) {
                         exif_unit->actual_picture_size.height = 1836;
@@ -1634,7 +1639,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                         exif_unit->actual_picture_size.height = 360;
                     }
                 }
-        */
+#endif
     }
 
     time(&timep);
