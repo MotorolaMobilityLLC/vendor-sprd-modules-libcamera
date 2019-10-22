@@ -40,7 +40,9 @@ public:
 
 		callback = new ClientCallback;
 	}
-
+	virtual ~BpVdspService() {
+		callback = NULL;
+	}
 	virtual int32_t openXrpDevice(__unused sp<IBinder> &client , enum sprd_vdsp_worktype type) {
 		ALOGD("call proxy  function openXrpDevice\n");
 		Parcel data, reply;
@@ -340,7 +342,12 @@ status_t BnVdspService::onTransact(
 int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_worktype type) {
 	int32_t newclient;
 	char value[128];
+	int32_t ret;
 	AutoMutex _l(mLock);
+	ret = AddClientOpenNumber(client , &newclient);
+	if(ret != NO_ERROR) {
+		return ret;
+	}
 	if(mopen_count == 0) {
 		mDevice = sprd_vdsp_open_device(0 , type);
 		mType = type;
@@ -370,6 +377,7 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 			mIonDevFd = -1;
 			mType = SPRD_VDSP_WORK_MAXTYPE;
 			ALOGE("func:%s , error mDevice:%p ,mIonDevFd:%d" , __func__ , mDevice , mIonDevFd);
+			DecClientOpenNumber(client);
 			return -1;
 		}
 	}
@@ -380,11 +388,11 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 		else {
 			ALOGE("func:%s , open failed client:%p , mType:%d, type:%d\n" , __func__ , client.get() ,
 						mType , type);
+			DecClientOpenNumber(client);
 			return -2;
 		}
 	}
-	ALOGD("func:%s , before AddClientOpenNumber client:%p, mopen_count:%d\n" , __func__ , client.get() , mopen_count);
-	AddClientOpenNumber(client , &newclient);
+	ALOGD("func:%s , client:%p, mopen_count:%d\n" , __func__ , client.get() , mopen_count);
 	return 0;
 }
 int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
@@ -773,6 +781,7 @@ int32_t BnVdspService::GetLoadNumTotalByName(const char *libname) {
 int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newclient) {
 	int32_t find = 0;
 	*newclient = 0;
+	status_t ret = NO_ERROR;
 	Vector<sp<ClientInfo>>::iterator iter;
 	ALOGD("func:%s enter , client:%p , iter:%p ,end:%p\n" , __func__ , client.get(), mClientInfo.begin() , mClientInfo.end());
 	for(iter = mClientInfo.begin(); iter != mClientInfo.end(); iter++) {
@@ -789,12 +798,14 @@ int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newcli
 		newclientinfo->mclientbinder = client;
 		newclientinfo->mopencount = 1;
 		newclientinfo->mDepthRecipient = new VdspServerDeathRecipient(this);
-                client->linkToDeath(newclientinfo->mDepthRecipient);
-		mClientInfo.push_back(newclientinfo);
-		*newclient = 1;
-		ALOGD("AddClientOpenNumber new client opencount is 1\n");
+                ret = client->linkToDeath(newclientinfo->mDepthRecipient);
+		if(ret == NO_ERROR) {
+			mClientInfo.push_back(newclientinfo);
+			*newclient = 1;
+		}
+		ALOGD("AddClientOpenNumber new client ret:%d , newclient:%d\n" , ret , *newclient);
 	}
-	return 0;
+	return ret;
 }
 int32_t BnVdspService::DecClientOpenNumber(sp<IBinder> &client) {
 	int32_t find = 0;

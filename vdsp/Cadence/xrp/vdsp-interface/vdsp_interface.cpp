@@ -118,12 +118,12 @@ static int32_t Check_GenrationValid(uint32_t generation)
 	}
 	return -1;
 }
-static sp<IVdspService> getVdspService()
+static sp<IVdspService> getVdspService(int32_t realget)
 {
 	AutoMutex _l(gLock);
 	int ret;
 	ALOGD("func:%s  , gInitFlag:%d\n" , __func__ , gInitFlag);
-	if(0 == gInitFlag)
+	if((0 == gInitFlag) && (realget != 0))
 	{
 		sp < IServiceManager > sm = defaultServiceManager();
 		sp < IBinder > binder = sm->getService(String16("service.vdspservice"));
@@ -153,7 +153,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 	sp<IVdspService> cs = NULL;
 	enum sprd_vdsp_result result;
 	int32_t fd = -1;
-	cs = getVdspService();
+	cs = getVdspService(1);
 	if((handle == NULL) || (cs == NULL))
 	{
 		 ALOGE("func:%s get resource failed cs:%p , handle:%p\n" , __func__ ,cs.get() , handle);
@@ -224,7 +224,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_
 	}
 	generation = hnd->generation;
 	fd = hnd->fd;
-	cs = getVdspService();
+	cs = getVdspService(0);
 	if(cs != NULL)
 	{
 		AutoMutex _l(gLock);
@@ -282,7 +282,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 	uint32_t generation;
 	uint32_t fd;
 	struct vdsp_handle *hnd = (struct vdsp_handle*) handle;
-	cs = getVdspService();
+	cs = getVdspService(0);
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
@@ -344,7 +344,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadli
 	uint32_t generation;
 	int32_t fd;
 	struct vdsp_handle *hnd = (struct vdsp_handle*) handle;
-	cs = getVdspService();
+	cs = getVdspService(0);
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
@@ -401,7 +401,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 	uint32_t generation;
 	int32_t fd;
 	struct vdsp_handle *hnd = (struct vdsp_handle*) handle;
-	cs = getVdspService();
+	cs = getVdspService(0);
 	if((cs == NULL) || (NULL == handle))
 	{
 		/*fd is abnormal value*/
@@ -456,7 +456,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
         uint32_t generation;
         int32_t fd;
         struct vdsp_handle *hnd = (struct vdsp_handle*) handle;
-        cs = getVdspService();
+        cs = getVdspService(0);
         if((cs == NULL) || (NULL == handle))
         {
                 /*fd is abnormal value*/
