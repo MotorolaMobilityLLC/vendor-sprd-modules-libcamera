@@ -88,6 +88,9 @@
 #define SENSOR_GAMMA_NUM 9
 #define SENSOR_LEVEL_NUM 16
 #define SENSOR_CMC_POINT_NUM 9
+#define SENSOR_RAW_GTM_NUM 16
+#define SENSOR_RGB_LTM_NUM 16
+#define SENSOR_YUV_LTM_NUM 16
 //#define SENSOR_SMART_LEVEL_NUM 25
 //#define SENSOR_SMART_LEVEL_DEFAULT 15
 #define AE_WEIGHT_TABLE_SZ 4
@@ -1548,7 +1551,7 @@ struct sensor_ee_level {
 	cmr_u8 bypass;
 };
 
-struct raw_gtm_stat_rgb2y{
+struct raw_gtm_stat_rgb2y {
 	cmr_u8 rgb2y_mode;
 	cmr_u8 reserved;
 	cmr_u16 rgb2y_r_coeff;
@@ -1556,24 +1559,24 @@ struct raw_gtm_stat_rgb2y{
 	cmr_u16 rgb2y_b_coeff;
 };
 
-struct raw_gtm_stat_percentile_16bit{
+struct raw_gtm_stat_percentile_16bit {
 	cmr_u16 min_percentile_16bit;
 	cmr_u16 max_percentile_16bit;
 };
 
-struct raw_gtm_stat_target_norm{
+struct raw_gtm_stat_target_norm {
 	cmr_u16 target_norm_set_mode;
 	cmr_u16 target_norm;
 	float target_norm_coeff;
 };
 
-struct raw_gtm_stat_image{
+struct raw_gtm_stat_image {
 	cmr_u8 image_key_set_mode;
 	cmr_u8 reserved;
 	cmr_u16 image_key;
 };
 
-struct raw_gtm_stat_video{
+struct raw_gtm_stat_video {
 	cmr_u16 luma_sm_Ymax_diff_thr;
 	cmr_u16 luma_sm_Yavg_diff_thr;
 	cmr_u16 cur_Ymin_weight;
@@ -1581,7 +1584,7 @@ struct raw_gtm_stat_video{
 };
 
 // raw gtm stat
-struct sensor_raw_gtm_stat{
+struct sensor_raw_gtm_stat {
 	cmr_u8 gtm_stat_bypass;
 	cmr_u8 reserved[3];
 	struct raw_gtm_stat_rgb2y gtm_stat_rgb2y;
@@ -1592,34 +1595,39 @@ struct sensor_raw_gtm_stat{
 };
 
 //ltm map
-struct sensor_stat_map{
+struct sensor_stat_map {
 	cmr_u16 map_video_mode;
 	cmr_u16 bypass;
 };
 
 //raw gtm level
-struct sensor_raw_gtm_level{
+struct sensor_raw_gtm_level {
 	struct sensor_raw_gtm_stat raw_gtm_stat;
 	struct sensor_stat_map raw_gtm_map;
 };
 
+struct sensor_raw_gtm_param {
+	struct isp_sample_point_info cur_idx;
+	struct sensor_raw_gtm_level raw_gtm_param[SENSOR_RAW_GTM_NUM];
+};
+
 //sensor_ltm_stat
-struct sensor_ltm_tile_num_minus1{
+struct sensor_ltm_tile_num_minus1 {
 	cmr_u16 tile_num_x;
 	cmr_u16 tile_num_y;
 };
 
-struct sensor_ltm_tile_size{
+struct sensor_ltm_tile_size {
 	cmr_u16 tile_width;
 	cmr_u16 tile_height;
 };
 
-struct sensor_ltm_clip_limit{
+struct sensor_ltm_clip_limit {
 	cmr_u16 limt;
 	cmr_u16 limt_min;
 };
 
-struct sensor_ltm_stat{
+struct sensor_ltm_stat {
 	struct sensor_ltm_tile_num_minus1 tile_num;
 	struct sensor_ltm_tile_size tile_size;
 	struct sensor_ltm_clip_limit clip_limit;
@@ -1633,17 +1641,17 @@ struct sensor_ltm_stat{
 };
 
 //sensor_ltm_map
-struct sensor_ltm_map{
+struct sensor_ltm_map {
 	cmr_u16 ltm_map_video_mode;
 	cmr_u16 bypass;
 };
 
-struct sensor_ltm_level{
+struct sensor_ltm_level {
 	struct sensor_ltm_stat ltm_stat;
 	struct sensor_ltm_map ltm_map;
 };
 
-struct sensor_ltm_text{
+struct sensor_ltm_text {
 	float text_point_alpha;
 	cmr_u8 text_point_thres;
 	cmr_u8 textture_proporion;
@@ -1651,25 +1659,46 @@ struct sensor_ltm_text{
 };
 
 //ltm stat
-struct sensor_ltm_stat_l5pro{
+struct sensor_yuv_ltm_stat_l5pro {
 	struct sensor_ltm_tile_num_minus1 tile_num;
 	struct sensor_ltm_text ltm_text;
 	cmr_u8 strength;
 	cmr_u8 region_est_en;
 	cmr_u8 tile_num_auto;
 	cmr_u8 bypass;
+	cmr_u8 reserved[8];
 };
 
+struct sensor_rgb_ltm_stat_l5pro {
+	struct sensor_ltm_tile_num_minus1 tile_num;
+	struct sensor_ltm_text ltm_text;
+	cmr_u8 strength;
+	cmr_u8 region_est_en;
+	cmr_u8 tile_num_auto;
+	cmr_u8 bypass;
+	cmr_u8 channel_sel;
+	cmr_u8 reserved[7];
+};
 //yuv ltm level
-struct sensor_yuv_ltm_level{
-	struct sensor_ltm_stat_l5pro yuv_ltm_stat;
+struct sensor_yuv_ltm_level {
+	struct sensor_yuv_ltm_stat_l5pro yuv_ltm_stat;
 	struct sensor_ltm_map yuv_ltm_map;
 };
 
+struct sensor_yuv_ltm_param {
+	struct isp_sample_point_info cur_idx;
+	struct sensor_yuv_ltm_level yuv_ltm_param[SENSOR_YUV_LTM_NUM];
+};
+
 //rgb ltm level
-struct sensor_rgb_ltm_level{
-	struct sensor_ltm_stat_l5pro rgb_ltm_stat;
+struct sensor_rgb_ltm_level {
+	struct sensor_rgb_ltm_stat_l5pro rgb_ltm_stat;
 	struct sensor_ltm_map rgb_ltm_map;
+};
+
+struct sensor_rgb_ltm_param {
+	struct isp_sample_point_info cur_idx;
+	struct sensor_rgb_ltm_level rgb_ltm_param[SENSOR_RGB_LTM_NUM];
 };
 
 //4A, smart, AFT
@@ -1830,6 +1859,7 @@ enum isp_smart_x_type {
 	ISP_SMART_X_TYPE_BV_GAIN = 1,
 	ISP_SMART_X_TYPE_CT = 2,
 	ISP_SMART_X_TYPE_BV_CT = 3,
+	ISP_SMART_X_TYPE_BV_ABLWEIGHT = 4,//raw_gtm,rgb_ltm,yuv_ltm
 };
 
 enum isp_smart_y_type {
@@ -2052,9 +2082,6 @@ enum {
 
 	ISP_BLK_SW3DNR_T,
 	ISP_BLK_BWU_BWD_T,
-	ISP_BLK_RAW_GTM_T,
-	ISP_BLK_RGB_LTM_T,
-	ISP_BLK_YUV_LTM_T,
 	ISP_BLK_YNRS_T,
 	ISP_BLK_NR_MAX
 };
@@ -2255,12 +2282,6 @@ struct sensor_nr_set_group_param {
 	cmr_u32 sw_3dnr_len;
 	cmr_u8 *bwu_bwd;
 	cmr_u32 bwu_bwd_len;
-	cmr_u8 *raw_gtm;
-	cmr_u32 raw_gtm_len;
-	cmr_u8 *rgb_ltm;
-	cmr_u32 rgb_ltm_len;
-	cmr_u8 *yuv_ltm;
-	cmr_u32 yuv_ltm_len;
 	cmr_u8 *ynrs;
 	cmr_u32 ynrs_len;
 };
@@ -2349,9 +2370,6 @@ struct denoise_param_update {
 	struct sensor_nlm_imbalance_level *imbalance_level_ptr;
 	struct sensor_sw3dnr_level *sw3dnr_level_ptr;
 	struct sensor_bwu_bwd_level *bwu_bwd_level_ptr;
-	struct sensor_raw_gtm_level *raw_gtm_level_ptr;
-	struct sensor_rgb_ltm_level *rgb_ltm_level_ptr;
-	struct sensor_yuv_ltm_level *yuv_ltm_level_ptr;
 	struct sensor_ynrs_level *ynrs_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
